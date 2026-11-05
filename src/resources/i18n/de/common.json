@@ -1,8 +1,32 @@
 {
 	"groupCardParticipants": {
 		"loading": "Teilnehmende werden geladen …",
+		"crowd": "{{count}} Teilnehmende",
 		"unavailable": "Teilnehmende konnten nicht geladen werden.",
 		"empty": "Keine Teilnehmenden."
+	},
+	"timelineSettings": {
+		"title": "Termine in der Gesprächsliste",
+		"description": "Wie die Liste anstehende Termine zeigt. Gilt auf allen Geräten.",
+		"scrollModel": {
+			"legend": "Blättern",
+			"panes": "Zwei Bereiche: oben die Zukunft, unten die Vergangenheit",
+			"single": "Eine Zeitleiste: die Zukunft öffnet sich erst, wenn man über „Jetzt“ hinaus weiterzieht"
+		},
+		"reveal": {
+			"legend": "Bei anstehenden Terminen zeigen",
+			"none": "Nichts",
+			"next": "Den nächsten Termin",
+			"half": "Die halbe Liste",
+			"most": "Fast alles"
+		},
+		"pastDate": {
+			"legend": "Datum bei vergangenen Gesprächen",
+			"corner": "In der Kartenecke",
+			"line": "In einer eigenen Zeile",
+			"off": "Nicht anzeigen"
+		},
+		"writeFailed": "Die Einstellung konnte nicht gespeichert werden. Bitte versuche es noch einmal."
 	},
 	"menuEffects": {
 		"title": "Menüdarstellung",
@@ -165,6 +189,29 @@
 		}
 	},
 	"attachments": {
+		"composer": {
+			"group": "Anhang: {{name}}",
+			"remove": "{{name}} entfernen",
+			"cancel": "Abbrechen",
+			"retry": "Erneut senden",
+			"chooseAnother": "Andere Datei wählen",
+			"captionHint": "Der Text wird als Beschriftung mitgesendet.",
+			"progressLabel": "{{name}} wird gesendet",
+			"status": {
+				"preparing": "Wird vorbereitet …",
+				"uploading": "Wird hochgeladen",
+				"finishing": "Wird gesendet …"
+			},
+			"error": {
+				"tooLarge": "Diese Datei ist {{size}} groß. Erlaubt sind höchstens {{limit}} MB. Es wurde nichts hochgeladen.",
+				"format": "Dieses Dateiformat ist nicht erlaubt. Möglich sind jpg, png, pdf, docx, xlsx, webm, ogg und mp3.",
+				"serverTooLarge": "Der Server lehnt diese Datei als zu groß ab. Datei und Text bleiben hier.",
+				"network": "Die Verbindung ist abgebrochen. Datei und Text bleiben hier.",
+				"service": "Der Dienst ist gerade nicht erreichbar. Datei und Text bleiben hier.",
+				"cancelled": "Abgebrochen. Datei und Text bleiben hier.",
+				"other": "Das Senden hat nicht geklappt. Datei und Text bleiben hier."
+			}
+		},
 		"download": {
 			"label": "Herunterladen",
 			"aria": "{{name}} herunterladen"
@@ -202,6 +249,18 @@
 				"png": "PNG",
 				"xlsx": "XLSX"
 			}
+		},
+		"gate": {
+			"check": "Prüfen und öffnen",
+			"checking": "Wird auf Viren geprüft …",
+			"checkingImage": "Bild wird geprüft …",
+			"checkVirus": "Virenprüfung",
+			"checkImage": "Bildanalyse: sicher und ohne Richtlinienverstoß?",
+			"decrypt": "Entschlüsseln",
+			"decrypting": "Wird entschlüsselt …",
+			"encryptedHint": "Ende-zu-Ende-verschlüsselt",
+			"loadFailed": "Die Datei konnte nicht geladen werden",
+			"retry": "Erneut versuchen"
 		},
 		"mediaCheck": {
 			"unchecked": "Bild aus anonymem Chat – noch nicht geprüft",
@@ -365,7 +424,8 @@
 		"participants": {
 			"label": "Beteiligte: {{names}}",
 			"more": "{{count}} weitere Beteiligte",
-			"more_one": "1 weitere Person"
+			"more_one": "1 weitere Person",
+			"moreList": "Weitere Beteiligte ({{count}})"
 		},
 		"panel": {
 			"channelOptions": "Kanal wechseln",
@@ -767,22 +827,6 @@
 			"shareHint": "Kalenderlinks für Ihre Webseite: ein Termin, ohne Einladungslink oder automatische Aktualisierung.",
 			"addThis": "Diesen Termin zum Kalender hinzufügen",
 			"shareHintSeries": "Kalenderlinks für Ihre Webseite: alle Termine als Serie, ohne Einladungslink oder automatische Aktualisierung."
-		},
-		"futureTimeline": {
-			"appointmentFallback": "Termin",
-			"ariaLabel": "Zukünftige Termine",
-			"commandError": "Der Termin konnte nicht geändert werden. Bitte erneut versuchen.",
-			"duplicate": "Als Einzeltermin duplizieren",
-			"empty": "Keine bevorstehenden Termine.",
-			"groupChatFallback": "Gruppenchat",
-			"hide": "Zukünftige Termine ausblenden",
-			"loadMore": "Drei weitere Monate laden",
-			"loadError": "Einige zukünftige Termine konnten nicht geladen werden.",
-			"loading": "Zukünftige Termine werden geladen…",
-			"now": "Jetzt",
-			"revealAriaLabel": "Zukünftige Termine anzeigen",
-			"show": "Zukünftige Termine anzeigen",
-			"skip": "Termin überspringen"
 		},
 		"roles": {
 			"CO_MODERATOR": "Co-Moderator:in",
@@ -1998,6 +2042,8 @@
 			}
 		},
 		"mention": {
+			"check": "{{name}} zusätzlich auswählen",
+			"checked": "Ausgewählt: {{value}}. Daneben klicken fügt ein.",
 			"notInChat": "nicht im Chat",
 			"empty": "Niemand gefunden",
 			"unavailable": "Liste konnte nicht geladen werden",
@@ -2493,6 +2539,10 @@
 			"serviceNoticePlanned": {
 				"title": "Geplante Wartung",
 				"text": "Am {{maintenanceDate}} ist die Plattform zwischen {{maintenanceStart}} und {{maintenanceEnd}} Uhr nicht erreichbar. Bereits geschriebene Nachrichten gehen nicht verloren."
+			},
+			"sessionAskerDeleted": {
+				"title": "Gelöschte:r Ratsuchende:r",
+				"text": "Ein Chat mit einer ratsuchenden Person wurde gelöscht. Persönliche Daten und Nachrichten sind nicht mehr verfügbar."
 			}
 		},
 		"error": "Fehlgeschlagen",
@@ -4261,6 +4311,10 @@
 			}
 		},
 		"anonymous": {
+			"queueNotFirst": {
+				"headline": "Ein anderer Gast ist zuerst an der Reihe",
+				"text": "Eine frühere Anfrage in dieser Warteschlange muss zuerst angenommen werden."
+			},
 			"takenByOtherConsultant": {
 				"button": {
 					"label": "Schließen"
@@ -4408,7 +4462,7 @@
 		"item": {
 			"sessionType": {
 				"liveChat": "Live Chat",
-				"selfHelp": "Gesprächskreis",
+				"selfHelp": "Kreis",
 				"internal": "Interna",
 				"team": "Team Beratung",
 				"directLinkVideo": "Videoanruf",
@@ -4535,13 +4589,57 @@
 			"ariaLabel": "Breite der Gesprächsliste ändern: ziehen zum Verändern, gedrückt halten oder doppelt klicken zum Ein- und Ausklappen, Pfeil hoch/runter blättert die Liste.",
 			"expand": "Beratungsliste einblenden",
 			"collapse": "Beratungsliste einklappen, um den Chatraum zu vergrößern",
-			"scrollAriaLabel": "Zum Scrollen der Liste ziehen."
+			"scrollAriaLabel": "Zum Scrollen der Liste ziehen.",
+			"futureAriaLabel": "Anstehende Termine: nach unten ziehen zum Einblenden, Pfeil hoch/runter springt zwischen den Stufen."
 		},
 		"rail": {
 			"unreadCount": "{{count}} neue Nachrichten",
 			"unreadCount_one": "{{count}} neue Nachricht",
 			"openEnquiries": "{{count}} offene Anfragen",
 			"openEnquiries_one": "{{count}} offene Anfrage"
+		},
+		"timeline": {
+			"now": "Jetzt",
+			"running": "läuft",
+			"upcoming": "Anstehende Termine",
+			"nextAppointment": "Nächster Termin: {{date}}",
+			"appointment": {
+				"create": "Termin anlegen",
+				"dialog": {
+					"createTitle": "Termin anlegen",
+					"moveTitle": "Termin verschieben",
+					"description": "Der Termin gehört zu dieser Beratung. In der Unterhaltung erscheint ein Hinweis.",
+					"createAction": "Anlegen",
+					"moveAction": "Verschieben",
+					"date": "Datum",
+					"start": "Beginn",
+					"end": "Ende",
+					"error": {
+						"incomplete": "Bitte Datum und Uhrzeit wählen.",
+						"past": "Der Termin muss in der Zukunft liegen.",
+						"order": "Das Ende muss nach dem Beginn liegen.",
+						"conflict": "Dieser Termin lässt sich nicht mehr ändern: Er wurde abgesagt oder die Beratung ist beendet.",
+						"failed": "Der Termin konnte nicht gespeichert werden. Bitte versuchen Sie es erneut."
+					}
+				},
+				"notice": {
+					"created": "Termin vereinbart: {{date}}",
+					"moved": "Termin verschoben auf: {{date}}",
+					"cancelled": "Termin abgesagt: {{date}}"
+				},
+				"noticeFailed": {
+					"title": "Hinweis nicht gesendet",
+					"text": "Der Termin ist gespeichert, der Hinweis in der Unterhaltung konnte aber nicht gesendet werden."
+				},
+				"cancelFailed": {
+					"title": "Termin nicht abgesagt",
+					"text": "Der Termin konnte nicht abgesagt werden. Bitte versuchen Sie es erneut."
+				}
+			}
+		},
+		"deletedAsker": {
+			"title": "Gelöschte:r Ratsuchende:r",
+			"hint": "Dieser Chat wurde gelöscht. Persönliche Daten und Nachrichten sind nicht mehr verfügbar."
 		}
 	},
 	"statusOverlay": {
@@ -5129,6 +5227,7 @@
 		"label": "Sprachnachricht",
 		"play": "Sprachnachricht abspielen",
 		"pause": "Sprachnachricht anhalten",
+		"loading": "Sprachnachricht wird geladen",
 		"timeline": "Zeitachse",
 		"jumpTo": "Zu {{time}} springen",
 		"aria": "Sprachnachricht, {{duration}}, abspielen",
@@ -5636,7 +5735,18 @@
 			"browser": "Geben Sie mir hier ein Signal",
 			"browserHint": "Ohne Adresse — funktioniert aber nur auf diesem Gerät.",
 			"enableBrowser": "Browser aktivieren",
+			"dialog": {
+				"title": "Browser-Benachrichtigungen einschalten",
+				"description": "Wählen Sie den Ton, den Sie hören werden, und erlauben Sie dann Benachrichtigungen in Ihrem Browser.",
+				"stayInBrowser": "Das funktioniert, solange ORISO in diesem Browser auf diesem Gerät geöffnet bleibt.",
+				"toneLabel": "Benachrichtigungston",
+				"tone": "Ton {{number}}",
+				"noTone": "Kein Ton"
+			},
 			"browserDenied": "Browser-Benachrichtigungen sind nicht aktiviert. Bitte prüfen Sie die Berechtigung in Ihrem Browser.",
+			"optionActive": "Aktiv",
+			"browserBlockedHelp": "Browser-Benachrichtigungen sind für diese Seite blockiert. Klicken Sie in der Adressleiste auf das Schloss-Symbol, öffnen Sie die Website-Einstellungen, stellen Sie Benachrichtigungen auf Zulassen oder wählen Sie Zurücksetzen, und versuchen Sie es dann erneut.",
+			"emailSavedNext": "Ihre E-Mail-Adresse ist gespeichert. Ein Schritt fehlt noch: Erlauben Sie Benachrichtigungen in Ihrem Browser.",
 			"saveFailed": "Die Einstellung konnte nicht bestätigt werden. Bitte versuchen Sie es erneut.",
 			"active": "Aktiviert: {{channel}}",
 			"bothSetup": "Beides einrichten",
@@ -5692,6 +5802,8 @@
 			"headline": "Benachrichtigung per E-Mail",
 			"body": "Sie können freiwillig eine E-Mail-Adresse hinterlegen. Dann erhalten Sie eine Nachricht, sobald eine Antwort da ist. Der Inhalt der Beratung steht nie in dieser E-Mail.",
 			"action": "E-Mail-Adresse angeben",
+			"dialogTitle": "Zugang sichern",
+			"dialogDescription": "Hinterlegen Sie eine E-Mail-Adresse, damit Sie Ihr Passwort später zurücksetzen können und von Antworten erfahren. Der Inhalt der Beratung steht nie in dieser E-Mail.",
 			"saveFailed": "Speichern hat nicht geklappt. Bitte versuchen Sie es noch einmal.",
 			"notAllowed": "Für dieses Konto ist das Hinterlegen einer E-Mail-Adresse nicht freigegeben. Bitte kontaktieren Sie unseren Support.",
 			"refreshFailed": "Ihre E-Mail-Adresse ist gespeichert. Die aktuellen Einstellungen konnten nicht geladen werden.",

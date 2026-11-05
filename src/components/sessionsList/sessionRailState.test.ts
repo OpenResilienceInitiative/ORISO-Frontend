@@ -50,7 +50,14 @@ describe('getSessionRailMarks', () => {
 		expect(getSessionRailMarks({ unread: null })).toEqual([]);
 	});
 
-	it("keeps Frank's order — thread, supervision, mail, unread — whatever the input order", () => {
+	it('shows the calendar mark only for a room with a next appointment', () => {
+		expect(getSessionRailMarks({ appointment: true })).toEqual([
+			'appointment'
+		]);
+		expect(getSessionRailMarks({ appointment: false })).toEqual([]);
+	});
+
+	it("keeps Frank's order — thread, supervision, mail, then the date, unread — whatever the input order", () => {
 		expect(
 			getSessionRailMarks({
 				unread: true,
@@ -66,6 +73,7 @@ describe('getSessionRailMarks', () => {
 			'videoCall',
 			'audioCall',
 			'directLink',
+			'appointment',
 			'unread'
 		]);
 	});
@@ -119,16 +127,17 @@ describe('getSessionRailMarks', () => {
 	});
 
 	it('never emits more marks than the pill has slots', () => {
-		// Four slots: thread, supervision, origin (mail or a direct link), unread.
+		// Five slots: thread, supervision, origin (mail or a direct link), appointment, unread.
 		for (const directLinkMedium of [undefined, 'VIDEO', 'AUDIO', 'CHAT']) {
 			const all = getSessionRailMarks({
 				unread: true,
 				modality: 'AGENCY_COUNSELLING',
 				directLinkMedium,
+				appointment: true,
 				supervisionState: 'supervisedByOthers',
 				previewChannel: 'thread'
 			});
-			expect(all).toHaveLength(4);
+			expect(all).toHaveLength(5);
 			expect(new Set(all).size).toBe(all.length);
 		}
 	});

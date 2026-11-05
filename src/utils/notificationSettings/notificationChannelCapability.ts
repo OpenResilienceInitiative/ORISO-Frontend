@@ -292,6 +292,12 @@ export const EVENT_CASES: ReadonlyArray<EventCase> = [
 		emitted: true,
 		source: 'ServiceNoticeConfirmation'
 	},
+	{
+		eventType: 'session.asker_deleted',
+		recipients: CONSULTANT,
+		emitted: true,
+		source: 'DeletedAskerSessionService.recordDeletionAfterCommit'
+	},
 	// Drafts never notify on any channel
 	{
 		eventType: 'draft.created',

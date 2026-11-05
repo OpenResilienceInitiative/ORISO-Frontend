@@ -125,6 +125,9 @@ vi.mock('../../api/apiGetSessionRooms', () => ({
 		boundary.sessionRoom(...args),
 	apiGetSessionRoomsByRoomIds: async () => ({ sessions: [] })
 }));
+vi.mock('../../api/apiSessionAppointments', () => ({
+	apiGetSessionAppointments: async () => []
+}));
 vi.mock('../../api/apiGetAgencyConsultantList', () => ({
 	apiGetAgencyConsultantList: async () => [],
 	fetchAgencyConsultantList: async () => [],

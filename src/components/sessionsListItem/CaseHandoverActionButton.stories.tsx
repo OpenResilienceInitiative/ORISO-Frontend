@@ -648,7 +648,7 @@ const NarrowCard = ({
 				trailing={
 					<div className="sessionsListItem__consultingTypeIcon sessionsListItem__consultingTypeIcon--nearby">
 						<span
-							className="sessionsListItem__consultingTypeIcon--nearbyIcon"
+							className="sessionsListItem__consultingTypeIcon--kindIcon"
 							aria-hidden="true"
 						/>
 						<span className="sessionsListItem__consultingTypeIcon--nearbyLabel">

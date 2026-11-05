@@ -1,8 +1,32 @@
 {
 	"groupCardParticipants": {
 		"loading": "ተሳተፍቲ ይጽዓኑ ኣለዉ …",
+		"crowd": "{{count}} ተሳተፍቲ",
 		"unavailable": "ተሳተፍቲ ክጽዓኑ ኣይከኣሉን።",
 		"empty": "ተሳተፍቲ የለዉን።"
+	},
+	"timelineSettings": {
+		"title": "ቆጸራታት ኣብ ዝርዝር ዘተታት",
+		"description": "እቲ ዝርዝር ዝመጽእ ቆጸራታት ብኸመይ ከም ዘርኢ። ኣብ ኩሎም መሳርሒታት ይሰርሕ።",
+		"scrollModel": {
+			"legend": "ምጥቅላል",
+			"panes": "ክልተ ክፍልታት፦ ላዕሊ መጻኢ፣ ታሕቲ ሕሉፍ",
+			"single": "ሓደ መስመር ግዜ፦ መጻኢ ዝኽፈት ልዕሊ „ሕጂ“ ምስ ቀጸልካ ጥራይ እዩ"
+		},
+		"reveal": {
+			"legend": "ቆጸራታት ክቐርቡ ከለዉ ኣርኢ",
+			"none": "ዋላ ሓንቲ",
+			"next": "ዝቕጽል ቆጸራ",
+			"half": "ፍርቂ ዝርዝር",
+			"most": "ዳርጋ ኩሉ"
+		},
+		"pastDate": {
+			"legend": "ዕለት ኣብ ዝሓለፉ ዘተታት",
+			"corner": "ኣብ ኩርናዕ ካርድ",
+			"line": "ኣብ ናይ ባዕሉ መስመር",
+			"off": "ኣይተርኢ"
+		},
+		"writeFailed": "እቲ ምድላው ክዕቀብ ኣይከኣለን። በጃኻ እንደገና ፈትን።"
 	},
 	"menuEffects": {
 		"title": "ኣቀራርባ ምናሌ",
@@ -165,6 +189,29 @@
 		}
 	},
 	"attachments": {
+		"composer": {
+			"group": "ተሓዝቶ፦ {{name}}",
+			"remove": "{{name}} ኣልግስ",
+			"cancel": "ሰርዝ",
+			"retry": "ደጊምካ ስደድ",
+			"chooseAnother": "ካልእ ፋይል ምረጽ",
+			"captionHint": "እቲ ጽሑፍ ከም መግለጺ ናይቲ ፋይል ይለኣኽ።",
+			"progressLabel": "{{name}} ይለኣኽ ኣሎ",
+			"status": {
+				"preparing": "ይዳሎ ኣሎ …",
+				"uploading": "ይጽዓን ኣሎ",
+				"finishing": "ይለኣኽ ኣሎ …"
+			},
+			"error": {
+				"tooLarge": "እዚ ፋይል {{size}} እዩ። እቲ ዝለዓለ ገደብ {{limit}} MB እዩ። ዝተጻዕነ የለን።",
+				"format": "እዚ ዓይነት ፋይል ኣይፍቀድን። jpg፣ png፣ pdf፣ docx፣ xlsx፣ webm፣ ogg ከምኡ'ውን mp3 ክትጥቀሙ ትኽእሉ።",
+				"serverTooLarge": "እቲ ሰርቨር እዚ ፋይል ኣዝዩ ዓቢ ስለዝኾነ ነጺግዎ። ፋይልን ጽሑፍን ኣብዚ ይጸንሑ።",
+				"network": "እቲ ምትእስሳር ተቋሪጹ። ፋይልን ጽሑፍን ኣብዚ ይጸንሑ።",
+				"service": "እቲ ኣገልግሎት ሕጂ ኣይርከብን። ፋይልን ጽሑፍን ኣብዚ ይጸንሑ።",
+				"cancelled": "ተሰሪዙ። ፋይልን ጽሑፍን ኣብዚ ይጸንሑ።",
+				"other": "ምልኣኽ ኣይተዓወተን። ፋይልን ጽሑፍን ኣብዚ ይጸንሑ።"
+			}
+		},
 		"download": {
 			"label": "ምውራድ",
 			"aria": "{{name}} ኣውርድ"
@@ -202,6 +249,18 @@
 				"png": "ፒኤንጂ",
 				"xlsx": "XLSX"
 			}
+		},
+		"gate": {
+			"check": "መርሚርካ ክፈት",
+			"checking": "ቫይረስ ይምርመር ኣሎ …",
+			"checkingImage": "ስእሊ ይምርመር ኣሎ …",
+			"checkVirus": "መርመራ ቫይረስ",
+			"checkImage": "ትንተና ስእሊ፦ ውሑስን መምርሒታት ዘኽብርን ድዩ?",
+			"decrypt": "ምስጢር ፍታሕ",
+			"decrypting": "ምስጢር ይፍታሕ ኣሎ …",
+			"encryptedHint": "ካብ ጫፍ ናብ ጫፍ ምስጢራዊ",
+			"loadFailed": "ፋይል ክጽዓን ኣይከኣለን",
+			"retry": "እንደገና ፈትን"
 		},
 		"mediaCheck": {
 			"unchecked": "ስእሊ ካብ ስሙ ዘይተፈልጠ ቻት – ገና ኣይተመርመረን",
@@ -358,7 +417,8 @@
 		"participants": {
 			"label": "ተሳተፍቲ፡ {{names}}",
 			"more": "{{count}} ተወሰኽቲ ተሳተፍቲ",
-			"more_one": "1 ተወሳኺ ሰብ"
+			"more_one": "1 ተወሳኺ ሰብ",
+			"moreList": "ተወሰኽቲ ተሳተፍቲ ({{count}})"
 		},
 		"panel": {
 			"channelOptions": "ቻነል ቀይር",
@@ -772,22 +832,6 @@
 			"shareHint": "ናይ ካላንደር መላግቦታት ንመርበብኩም፦ ሓደ ቆጸራ፣ ብዘይ መላግቦ ዕድመ ወይ ኣውቶማቲክ ምሕዳስ።",
 			"addThis": "ነዚ ቆጸራ ናብ ዓውደ-ኣዋርሕ ወስኽ",
 			"shareHintSeries": "ናይ ካላንደር መላግቦታት ንመርበብኩም፦ ኩሎም ቆጸራታት ከም ተኸታታሊ፣ ብዘይ መላግቦ ዕድመ ወይ ኣውቶማቲክ ምሕዳስ።"
-		},
-		"futureTimeline": {
-			"appointmentFallback": "ቆጸራ",
-			"ariaLabel": "መጻኢ ቆጸራታት",
-			"commandError": "እቲ ቆጸራ ክቕየር ኣይከኣለን። በጃኹም ደጊምኩም ፈትኑ።",
-			"duplicate": "ከም ናይ ሓደ ግዜ ቆጸራ ቅዳሕ ግበር",
-			"empty": "ዝመጽእ ቆጸራ የለን።",
-			"groupChatFallback": "ጉጅለ ዕላል",
-			"hide": "መጻኢ ቆጸራታት ሕባእ",
-			"loadMore": "ተወሳኺ ሰለስተ ኣዋርሕ ጸዓን",
-			"loadError": "ገለ መጻኢ ቆጸራታት ክጽዕኑ ኣይከኣሉን።",
-			"loading": "መጻኢ ቆጸራታት ይጽዕኑ ኣለዉ…",
-			"now": "ሕጂ",
-			"revealAriaLabel": "መጻኢ ቆጸራታት ኣርኢ",
-			"show": "መጻኢ ቆጸራታት ኣርኢ",
-			"skip": "ቆጸራ ዘሊልካ ሕለፍ"
 		},
 		"roles": {
 			"CO_MODERATOR": "ተሓጋጋዚ መራሒ ዘተ",
@@ -1977,6 +2021,8 @@
 			}
 		},
 		"mention": {
+			"check": "{{name}} ወስኺ ምረጽ",
+			"checked": "ዝተመርጹ፦ {{value}}። ንምእታው ኣብ ጎኒ ጠውቕ።",
 			"notInChat": "ኣብቲ ቻት የለን",
 			"empty": "ሓደ እኳ ኣይተረኽበን",
 			"unavailable": "እቲ ዝርዝር ክጽዕን ኣይከኣለን",
@@ -2472,6 +2518,10 @@
 			"serviceNoticePlanned": {
 				"title": "ብመደብ ዝተታሕዘ ጽገና",
 				"text": "ኣብ {{maintenanceDate}}፣ እቲ መድረኽ ካብ {{maintenanceStart}} ክሳብ {{maintenanceEnd}} ኣይርከብን። ቅድሚ ሕጂ ዝጸሓፍኩምዎም መልእኽትታት ኣይጠፍኡን።"
+			},
+			"sessionAskerDeleted": {
+				"title": "ዝተሰረዘ ደላዪ ምኽሪ",
+				"text": "ምስ ደላዪ ምኽሪ ዝነበረ ቻት ተሰሪዙ። ውልቃዊ ሓበሬታን መልእኽትታትን ድሕሪ ሕጂ ኣይርከቡን።"
 			}
 		},
 		"error": "ወዲቑ",
@@ -4241,6 +4291,10 @@
 			}
 		},
 		"anonymous": {
+			"queueNotFirst": {
+				"headline": "ካልእ ጋሻ ኣቐዲሙ ኣብ መስርዕ ኣሎ",
+				"text": "ኣብዚ መስርዕ ኣቐዲሙ ዝመጸ ሕቶ መጀመርታ ክቕበል ኣለዎ።"
+			},
 			"takenByOtherConsultant": {
 				"button": {
 					"label": "ዕፁው"
@@ -4502,7 +4556,7 @@
 		"item": {
 			"sessionType": {
 				"liveChat": "Live Chat",
-				"selfHelp": "ክቢ ዝርርብ",
+				"selfHelp": "ክቢ",
 				"internal": "ውሽጣዊ",
 				"team": "ጋንታዊ ምኽሪ",
 				"directLinkVideo": "ናይ ቪድዮ ጻውዒት",
@@ -4518,13 +4572,57 @@
 			"ariaLabel": "ስፍሓት ዝርዝር ዝርርባት ቀይር፡ ንምቕያር ስሓብ፡ ንምዕጻው ወይ ንምኽፋት ተጻዒንካ ሓዝ ወይ ክልተ ግዜ ጠውቕ፡ ናይ ላዕሊ/ታሕቲ መልክዕ ንዝርዝር የንቀሳቕስ።",
 			"expand": "ዝርዝር ምኽሪ ኣርእይ",
 			"collapse": "ዝርዝር ምኽሪ ዕጸው",
-			"scrollAriaLabel": "ነቲ ዝርዝር ንምጥቅላል ጎተት።"
+			"scrollAriaLabel": "ነቲ ዝርዝር ንምጥቅላል ጎተት።",
+			"futureAriaLabel": "ዝመጽእ ቆጸራታት፦ ንምርኣዮም ንታሕቲ ጎተት፣ ላዕሊን ታሕትን ኣብ መንጎ ደረጃታት የሰጋግሩ።"
 		},
 		"rail": {
 			"unreadCount": "{{count}} ሓደስቲ መልእኽታት",
 			"unreadCount_one": "{{count}} ሓድሽ መልእኽቲ",
 			"openEnquiries": "{{count}} ክፉታት ሕቶታት",
 			"openEnquiries_one": "{{count}} ክፉት ሕቶ"
+		},
+		"timeline": {
+			"now": "ሕጂ",
+			"running": "ይካየድ ኣሎ",
+			"upcoming": "መጻኢ ቆጸራታት",
+			"nextAppointment": "ቆጸራ: {{date}}",
+			"appointment": {
+				"create": "ቆጸራ ፍጠር",
+				"dialog": {
+					"createTitle": "ቆጸራ ፍጠር",
+					"moveTitle": "ቆጸራ ኣግፋሕ",
+					"description": "እዚ ቆጸራ ናይዚ ምኽሪ እዩ። ኣብ ዝርርብ መተሓሳሰቢ ክርአ እዩ።",
+					"createAction": "ፍጠር",
+					"moveAction": "ኣግፋሕ",
+					"date": "ዕለት",
+					"start": "መጀመሪ",
+					"end": "መወዳእታ",
+					"error": {
+						"incomplete": "በጃኹም ዕለትን ሰዓትን ምረጹ።",
+						"past": "እቲ ቆጸራ ኣብ መጻኢ ክኸውን ኣለዎ።",
+						"order": "እቲ መወዳእታ ድሕሪ እቲ መጀመሪ ክኸውን ኣለዎ።",
+						"conflict": "እዚ ቆጸራ ክቕየር ኣይክእልን፡ ተሰሪዙ ወይ እቲ ምኽሪ ተወዲኡ እዩ።",
+						"failed": "እቲ ቆጸራ ክዕቀብ ኣይከኣለን። በጃኹም እንደገና ፈትኑ።"
+					}
+				},
+				"notice": {
+					"created": "ቆጸራ ተሓዚ፦ {{date}}",
+					"moved": "ቆጸራ ናብ ተቐይሩ፦ {{date}}",
+					"cancelled": "ቆጸራ ተሰሪዙ፦ {{date}}"
+				},
+				"noticeFailed": {
+					"title": "መተሓሳሰቢ ኣይተላእከን",
+					"text": "እቲ ቆጸራ ተዓቂቡ ኣሎ፡ ግን እቲ መተሓሳሰቢ ናብ ዝርርብ ክለኣኽ ኣይከኣለን።"
+				},
+				"cancelFailed": {
+					"title": "ቆጸራ ኣይተሰረዘን",
+					"text": "እቲ ቆጸራ ክስረዝ ኣይከኣለን። በጃኹም እንደገና ፈትኑ።"
+				}
+			}
+		},
+		"deletedAsker": {
+			"title": "ዝተሰረዘ ደላዪ ምኽሪ",
+			"hint": "እዚ ቻት ተሰሪዙ። ውልቃዊ ሓበሬታን መልእኽትታትን ድሕሪ ሕጂ ኣይርከቡን።"
 		}
 	},
 	"statusOverlay": {
@@ -5112,6 +5210,7 @@
 		"label": "ናይ ድምጺ መልእኽቲ",
 		"play": "ናይ ድምጺ መልእኽቲ ኣስምዕ",
 		"pause": "ናይ ድምጺ መልእኽቲ ደው ኣብል",
+		"loading": "ናይ ድምጺ መልእኽቲ ይጽዓን ኣሎ",
 		"timeline": "መስመር ግዜ",
 		"jumpTo": "ናብ {{time}} ዘሊልካ ኺድ",
 		"aria": "ናይ ድምጺ መልእኽቲ፡ {{duration}}፡ ኣስምዕ",
@@ -5653,6 +5752,8 @@
 			"action": "ናይ ኢመይል ኣድራሻ ግለጽ",
 			"saveFailed": "ምዕቃብ ኣይሰለጠን። በጃኹም ደጊምኩም ፈትኑ።",
 			"notAllowed": "እዚ ሕሳብ እዚ ኢመይል ኣድራሻ ክዕቅብ ፍቓድ የብሉን። በጃኹም ንደገፍና ተወከሱ።",
+			"dialogDescription": "ብድሕሪ ምስጢራዊ ቃልኩም ከተሐድሱን መልስ ክመጽእ ከሎ ክትፈልጡን ዝኽእል ኢ-መይል ሓዱ ሕደጉ። ትሕዝቶ ምኽሪ ኣብዚ ኢ-መይል ፈጺሙ ኣይግለጽን።",
+			"dialogTitle": "ኣቶምኩም የስተማቕሩ",
 			"refreshFailed": "ኢመይል ኣድራሻኹም ተዓቂቡ ኣሎ። ናይ ሕጂ ቅጥዕታትኩም ክጽዓኑ ኣይከኣሉን።",
 			"retryRefresh": "ደጊምኩም ጽዓኑ"
 		},
@@ -5704,6 +5805,17 @@
 			"channelEmail": "ኢ-መይል",
 			"enableBrowser": "ናይ መርበብ መርኣዪ ምልክታታት ወልዑ",
 			"saveFailed": "እቲ ቅጥዒ ክረጋገጽ ኣይከኣለን። በጃኹም ደጊምኩም ፈትኑ።",
+			"browserBlockedHelp": "ናይ ብሮውዘር መተሓሳሰቢታት ንዚ ሳይት ተኸሊኽሎም ኣለዉ። ኣብ ኣድራሻ መስመር ዘሎ ናይ መቆለፊ ምልክት ጠውቑ፡ ናይ ሳይት ቅጥዕታት ክፈቱ፡ መተሓሳሰቢታት ናብ ፍቐድ ኣቐምጡ ወይ ከም ብሓድሽ ኣቐምጡ ምረጹ፡ ደጊምኩም ፈትኑ።",
+			"optionActive": "ንጡፍ",
+			"emailSavedNext": "ኢ-መይል ኣድራሻኹም ተቐሚጡ። ሓደ ስጉምቲ ተሪፉ፦ ኣብ ብሮውዘርኩም መተሓሳሰቢታት ፍቐዱ።",
+			"dialog": {
+				"description": "እትሰምዕዎ ድምጺ ምረጹ፡ ድሕሪኡ ኣብ ብሮውዘርኩም መተሓሳሰቢታት ፍቐዱ።",
+				"noTone": "ድምጺ የለን",
+				"stayInBrowser": "እዚ ORISO ኣብዚ ብሮውዘር ኣብዚ መሳርሒ ክሳብ ዝኸፈተ ይሰርሕ።",
+				"title": "ናይ ብሮውዘር መተሓሳሰቢታት ኣንቅሑ",
+				"tone": "ድምጺ {{number}}",
+				"toneLabel": "ድምጺ መተሓሳሰቢ"
+			},
 			"emailAccepted": "ለውጢ ናይ ኢመይል ምልክታታት ተቐቢሉ ኣሎ።",
 			"refreshFailed": "እቲ ለውጢ ተቐቢሉ ኣሎ። ናይ ሕጂ ቅጥዕታትኩም ክጽዓኑ ኣይከኣሉን።"
 		},

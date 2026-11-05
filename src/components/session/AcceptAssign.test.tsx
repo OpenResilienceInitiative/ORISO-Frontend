@@ -59,7 +59,8 @@ vi.mock('../../api/counsellingDpaFailure', () => ({
 	getCounsellingDpaFailure: () => null
 }));
 vi.mock('./getModality', () => ({
-	getModality: () => 'REGISTERED',
+	getModality: (session: { item?: { conversationType?: string } }) =>
+		session.item?.conversationType ?? 'REGISTERED',
 	Modality: { LIVE_CHAT: 'LIVE_CHAT' }
 }));
 vi.mock('./sessionHelpers', () => ({ SESSION_LIST_TAB: {} }));
@@ -103,6 +104,9 @@ vi.mock('../overlay/Overlay', () => ({
 }));
 
 const { apiEnquiryAcceptance } = await import('../../api');
+const { apiAcceptAnonymousEnquiry } = await import(
+	'../../api/apiAcceptAnonymousEnquiry'
+);
 const { ActiveSessionContext } = await import('../../globalState');
 const { AcceptAssign } = await import('./AcceptAssign');
 
@@ -125,6 +129,7 @@ const renderAccept = (
 afterEach(() => {
 	cleanup();
 	vi.mocked(apiEnquiryAcceptance).mockReset();
+	vi.mocked(apiAcceptAnonymousEnquiry).mockReset();
 	watcher.start.mockReset();
 	watcher.running = true;
 });
@@ -164,6 +169,36 @@ describe('AcceptAssign', () => {
 			)
 		);
 	});
+
+	it.each([
+		[
+			'LIVE_CHAT_QUEUE_NOT_FIRST',
+			'session.anonymous.queueNotFirst.headline'
+		],
+		[null, 'session.anonymous.takenByOtherConsultant.overlay.headline']
+	])(
+		'explains an anonymous accept conflict with reason %s',
+		async (reason, headline) => {
+			vi.mocked(apiAcceptAnonymousEnquiry).mockRejectedValue(
+				new Response(null, {
+					status: 409,
+					headers: reason ? { 'X-Reason': reason } : undefined
+				})
+			);
+			renderAccept({
+				item: { id: 76, conversationType: 'LIVE_CHAT' },
+				isEnquiry: true
+			});
+			fireEvent.click(screen.getByText('enquiry.acceptButton.known'));
+
+			expect(apiAcceptAnonymousEnquiry).toHaveBeenCalledWith(76);
+			await waitFor(() =>
+				expect(screen.getByTestId('overlay-headline').textContent).toBe(
+					headline
+				)
+			);
+		}
+	);
 
 	it('watches an open enquiry for a colleague taking it over', () => {
 		watcher.running = false;

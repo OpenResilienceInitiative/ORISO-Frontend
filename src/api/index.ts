@@ -16,6 +16,7 @@ export * from './apiGetAgencyConsultantList';
 export * from './apiGetAgencyId';
 export * from './apiGetAskerSessionList';
 export * from './apiGetConsultantSessionList';
+export * from './apiGetDeletedAskerSessions';
 export * from './apiGetConsultantStatistics';
 export * from './apiGetConsultingType';
 export * from './apiGetConsultingTypes';

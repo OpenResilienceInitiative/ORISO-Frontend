@@ -1,8 +1,32 @@
 {
 	"groupCardParticipants": {
 		"loading": "Katılımcılar yükleniyor …",
+		"crowd": "{{count}} katılımcı",
 		"unavailable": "Katılımcılar yüklenemedi.",
 		"empty": "Katılımcı yok."
+	},
+	"timelineSettings": {
+		"title": "Görüşme listesinde randevular",
+		"description": "Listenin yaklaşan randevuları nasıl gösterdiği. Tüm cihazlarda geçerlidir.",
+		"scrollModel": {
+			"legend": "Kaydırma",
+			"panes": "İki alan: üstte gelecek, altta geçmiş",
+			"single": "Tek zaman çizelgesi: gelecek ancak „Şimdi“nin ötesine çekmeye devam edince açılır"
+		},
+		"reveal": {
+			"legend": "Randevular yaklaşırken göster",
+			"none": "Hiçbir şey",
+			"next": "Bir sonraki randevu",
+			"half": "Listenin yarısı",
+			"most": "Neredeyse hepsi"
+		},
+		"pastDate": {
+			"legend": "Geçmiş görüşmelerde tarih",
+			"corner": "Kartın köşesinde",
+			"line": "Ayrı bir satırda",
+			"off": "Gösterme"
+		},
+		"writeFailed": "Ayar kaydedilemedi. Lütfen tekrar deneyin."
 	},
 	"menuEffects": {
 		"title": "Menü görünümü",
@@ -165,6 +189,29 @@
 		}
 	},
 	"attachments": {
+		"composer": {
+			"group": "Ek: {{name}}",
+			"remove": "{{name}} dosyasını kaldır",
+			"cancel": "İptal",
+			"retry": "Tekrar gönder",
+			"chooseAnother": "Başka dosya seç",
+			"captionHint": "Metin, dosyanın açıklaması olarak gönderilir.",
+			"progressLabel": "{{name}} gönderiliyor",
+			"status": {
+				"preparing": "Hazırlanıyor …",
+				"uploading": "Yükleniyor",
+				"finishing": "Gönderiliyor …"
+			},
+			"error": {
+				"tooLarge": "Bu dosyanın boyutu {{size}}. Sınır {{limit}} MB. Hiçbir şey yüklenmedi.",
+				"format": "Bu dosya biçimine izin verilmiyor. jpg, png, pdf, docx, xlsx, webm, ogg ve mp3 kullanılabilir.",
+				"serverTooLarge": "Sunucu bu dosyayı çok büyük olduğu için reddetti. Dosya ve metin burada kalır.",
+				"network": "Bağlantı kesildi. Dosya ve metin burada kalır.",
+				"service": "Hizmet şu anda kullanılamıyor. Dosya ve metin burada kalır.",
+				"cancelled": "İptal edildi. Dosya ve metin burada kalır.",
+				"other": "Gönderilemedi. Dosya ve metin burada kalır."
+			}
+		},
 		"download": {
 			"label": "İndir",
 			"aria": "{{name}} dosyasını indir"
@@ -184,7 +231,7 @@
 			},
 			"size": {
 				"headline": "Seçtiğiniz dosya çok büyük.",
-				"message": "{{attachment_filesize}}En fazla MB yükleyebilirsiniz."
+				"message": "En fazla {{attachment_filesize}} MB yükleyebilirsiniz."
 			}
 		},
 		"list": {
@@ -202,6 +249,18 @@
 				"png": "PNG",
 				"xlsx": "XLSX"
 			}
+		},
+		"gate": {
+			"check": "Kontrol et ve aç",
+			"checking": "Virüs kontrolü yapılıyor …",
+			"checkingImage": "Görsel kontrol ediliyor …",
+			"checkVirus": "Virüs taraması",
+			"checkImage": "Görsel analizi: güvenli ve kurallara uygun mu?",
+			"decrypt": "Şifreyi çöz",
+			"decrypting": "Şifre çözülüyor …",
+			"encryptedHint": "Uçtan uca şifreli",
+			"loadFailed": "Dosya yüklenemedi",
+			"retry": "Tekrar dene"
 		},
 		"mediaCheck": {
 			"unchecked": "Anonim sohbetten görsel – henüz kontrol edilmedi",
@@ -358,7 +417,8 @@
 		"participants": {
 			"label": "Katılımcılar: {{names}}",
 			"more": "{{count}} katılımcı daha",
-			"more_one": "1 kişi daha"
+			"more_one": "1 kişi daha",
+			"moreList": "Diğer katılımcılar ({{count}})"
 		},
 		"panel": {
 			"channelOptions": "Kanal değiştir",
@@ -772,22 +832,6 @@
 			"shareHint": "Web siteniz için takvim bağlantıları: tek bir randevu için; davet bağlantısı veya otomatik güncelleme içermez.",
 			"addThis": "Bu randevuyu takvime ekle",
 			"shareHintSeries": "Web siteniz için takvim bağlantıları: tüm randevular seri olarak; davet bağlantısı veya otomatik güncelleme içermez."
-		},
-		"futureTimeline": {
-			"appointmentFallback": "Randevu",
-			"ariaLabel": "Gelecekteki randevular",
-			"commandError": "Randevu değiştirilemedi. Lütfen tekrar deneyin.",
-			"duplicate": "Tek seferlik randevu olarak çoğalt",
-			"empty": "Yaklaşan randevu yok.",
-			"groupChatFallback": "Grup sohbeti",
-			"hide": "Gelecekteki randevuları gizle",
-			"loadMore": "Üç ay daha yükle",
-			"loadError": "Gelecekteki bazı randevular yüklenemedi.",
-			"loading": "Gelecekteki randevular yükleniyor…",
-			"now": "Şimdi",
-			"revealAriaLabel": "Gelecekteki randevuları göster",
-			"show": "Gelecekteki randevuları göster",
-			"skip": "Randevuyu atla"
 		},
 		"roles": {
 			"CO_MODERATOR": "Yardımcı moderatör",
@@ -1977,6 +2021,8 @@
 			}
 		},
 		"mention": {
+			"check": "{{name}} kişisini de seç",
+			"checked": "Seçilen: {{value}}. Eklemek için yanına tıklayın.",
 			"notInChat": "sohbette değil",
 			"empty": "Kimse bulunamadı",
 			"unavailable": "Liste yüklenemedi",
@@ -2472,6 +2518,10 @@
 			"serviceNoticePlanned": {
 				"title": "Planlı bakım",
 				"text": "{{maintenanceDate}} tarihinde platform, {{maintenanceStart}} ile {{maintenanceEnd}} arasında erişilemez olacak. Daha önce yazdığınız mesajlar kaybolmaz."
+			},
+			"sessionAskerDeleted": {
+				"title": "Silinmiş danışan",
+				"text": "Bir danışanla yapılan sohbet silindi. Kişisel veriler ve mesajlar artık mevcut değil."
 			}
 		},
 		"error": "Başarısız",
@@ -4241,6 +4291,10 @@
 			}
 		},
 		"anonymous": {
+			"queueNotFirst": {
+				"headline": "Sırada önce başka bir misafir var",
+				"text": "Bu sıradaki daha önce gelen bir istek önce kabul edilmelidir."
+			},
 			"takenByOtherConsultant": {
 				"button": {
 					"label": "Kapat"
@@ -4502,7 +4556,7 @@
 		"item": {
 			"sessionType": {
 				"liveChat": "Live Chat",
-				"selfHelp": "Sohbet çemberi",
+				"selfHelp": "Çember",
 				"internal": "Dahili",
 				"team": "Ekip danışmanlığı",
 				"directLinkVideo": "Görüntülü arama",
@@ -4518,13 +4572,57 @@
 			"ariaLabel": "Görüşme listesinin genişliğini değiştir: boyutlandırmak için sürükleyin, daraltmak veya genişletmek için basılı tutun ya da çift tıklayın, yukarı/aşağı okları listeyi kaydırır.",
 			"expand": "Görüşme listesini genişlet",
 			"collapse": "Sohbeti büyütmek için görüşme listesini daralt",
-			"scrollAriaLabel": "Listeyi kaydırmak için sürükleyin."
+			"scrollAriaLabel": "Listeyi kaydırmak için sürükleyin.",
+			"futureAriaLabel": "Yaklaşan randevular: göstermek için aşağı sürükleyin, Yukarı ve Aşağı tuşları kademeler arasında geçer."
 		},
 		"rail": {
 			"unreadCount": "{{count}} yeni mesaj",
 			"unreadCount_one": "{{count}} yeni mesaj",
 			"openEnquiries": "{{count}} açık talep",
 			"openEnquiries_one": "{{count}} açık talep"
+		},
+		"timeline": {
+			"now": "Şimdi",
+			"running": "devam ediyor",
+			"upcoming": "Gelecekteki randevular",
+			"nextAppointment": "Sonraki randevu: {{date}}",
+			"appointment": {
+				"create": "Randevu oluştur",
+				"dialog": {
+					"createTitle": "Randevu oluştur",
+					"moveTitle": "Randevuyu ertele",
+					"description": "Randevu bu danışmanlığa aittir. Sohbette bir bildirim görünür.",
+					"createAction": "Oluştur",
+					"moveAction": "Ertele",
+					"date": "Tarih",
+					"start": "Başlangıç",
+					"end": "Bitiş",
+					"error": {
+						"incomplete": "Lütfen tarih ve saat seçin.",
+						"past": "Randevu gelecekte olmalıdır.",
+						"order": "Bitiş, başlangıçtan sonra olmalıdır.",
+						"conflict": "Bu randevu artık değiştirilemez: iptal edilmiş veya danışmanlık sona ermiştir.",
+						"failed": "Randevu kaydedilemedi. Lütfen tekrar deneyin."
+					}
+				},
+				"notice": {
+					"created": "Randevu belirlendi: {{date}}",
+					"moved": "Randevu şu tarihe ertelendi: {{date}}",
+					"cancelled": "Randevu iptal edildi: {{date}}"
+				},
+				"noticeFailed": {
+					"title": "Bildirim gönderilmedi",
+					"text": "Randevu kaydedildi ancak sohbetteki bildirim gönderilemedi."
+				},
+				"cancelFailed": {
+					"title": "Randevu iptal edilmedi",
+					"text": "Randevu iptal edilemedi. Lütfen tekrar deneyin."
+				}
+			}
+		},
+		"deletedAsker": {
+			"title": "Silinmiş danışan",
+			"hint": "Bu sohbet silindi. Kişisel veriler ve mesajlar artık mevcut değil."
 		}
 	},
 	"statusOverlay": {
@@ -5112,6 +5210,7 @@
 		"label": "Sesli mesaj",
 		"play": "Sesli mesajı oynat",
 		"pause": "Sesli mesajı duraklat",
+		"loading": "Sesli mesaj yükleniyor",
 		"timeline": "Zaman çizelgesi",
 		"jumpTo": "{{time}} konumuna atla",
 		"aria": "Sesli mesaj, {{duration}}, oynat",
@@ -5653,6 +5752,8 @@
 			"action": "E-posta adresi ekle",
 			"saveFailed": "Kaydetme başarısız oldu. Lütfen tekrar deneyin.",
 			"notAllowed": "Bu hesabın e-posta adresi kaydetme yetkisi bulunmamaktadır. Lütfen destek ekibimizle iletişime geçin.",
+			"dialogDescription": "Şifrenizi daha sonra sıfırlayabilmek ve yanıt geldiğinde haberdar olmak için bir e-posta adresi bırakın. Danışmanlığın içeriği bu e-postada asla yer almaz.",
+			"dialogTitle": "Erişiminizi güvence altına alın",
 			"refreshFailed": "E-posta adresiniz kaydedildi. Güncel ayarlarınız yüklenemedi.",
 			"retryRefresh": "Yeniden yükle"
 		},
@@ -5704,6 +5805,17 @@
 			"channelEmail": "E-posta",
 			"enableBrowser": "Tarayıcı bildirimlerini etkinleştir",
 			"saveFailed": "Ayar doğrulanamadı. Lütfen tekrar deneyin.",
+			"browserBlockedHelp": "Bu site için tarayıcı bildirimleri engellendi. Adres çubuğundaki kilit simgesine tıklayın, site ayarlarını açın, Bildirimler'i İzin ver olarak ayarlayın veya Sıfırla'yı seçin, ardından tekrar deneyin.",
+			"optionActive": "Etkin",
+			"emailSavedNext": "E-posta adresiniz kaydedildi. Bir adım kaldı: tarayıcınızda bildirimlere izin verin.",
+			"dialog": {
+				"description": "Duyacağınız sesi seçin, ardından tarayıcınızda bildirimlere izin verin.",
+				"noTone": "Ses yok",
+				"stayInBrowser": "Bu, ORISO bu cihazda bu tarayıcıda açık kaldığı sürece çalışır.",
+				"title": "Tarayıcı bildirimlerini aç",
+				"tone": "Ses {{number}}",
+				"toneLabel": "Bildirim sesi"
+			},
 			"emailAccepted": "E-posta bildirimi değişikliği kabul edildi.",
 			"refreshFailed": "Değişiklik kabul edildi. Güncel ayarlarınız yüklenemedi."
 		},

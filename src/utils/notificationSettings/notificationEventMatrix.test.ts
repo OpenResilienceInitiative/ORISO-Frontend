@@ -129,6 +129,7 @@ const EXPECTED_ROW: Record<
 	'supervisor.assigned': { consultant: 'conversations/standard' },
 	'counselor.renamed': { asker: 'conversations/standard' },
 	'service.notice.planned': { consultant: 'conversations/standard' },
+	'session.asker_deleted': { consultant: 'conversations/standard' },
 	'draft.created': { consultant: NONE }
 };
 

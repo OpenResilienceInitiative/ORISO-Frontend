@@ -240,6 +240,8 @@ const toKindPreview = (
 	content: Record<string, any>
 ): MatrixRoomPreview | null => {
 	const body = `${content.body || ''}`.trim();
+	// MSC2530: with a caption, `body` is the caption and `filename` the name.
+	const fileName = `${content.filename || content.body || ''}`.trim();
 	switch (content.msgtype) {
 		case 'm.text':
 		case 'm.notice':
@@ -263,14 +265,14 @@ const toKindPreview = (
 		}
 		case 'm.audio': {
 			const duration = content.info?.duration;
-			const recorded = isVoiceMessageFileName(body);
+			const recorded = isVoiceMessageFileName(fileName);
 			const durationMs =
 				typeof duration === 'number' &&
 				Number.isFinite(duration) &&
 				duration >= 0
 					? duration
 					: recorded
-						? voiceDurationMsFromFileName(body)
+						? voiceDurationMsFromFileName(fileName)
 						: null;
 			return {
 				kind:
@@ -290,7 +292,7 @@ const toKindPreview = (
 		case 'm.video':
 			return { kind: 'video', text: null };
 		case 'm.file':
-			return { kind: 'file', text: body || null };
+			return { kind: 'file', text: fileName || null };
 		default:
 			return null;
 	}

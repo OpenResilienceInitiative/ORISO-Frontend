@@ -17,6 +17,7 @@ import {
 	MATRIX_USER_ID_STORAGE_KEY
 } from '../../utils/matrixStorageKeys';
 import { registerDeviceSigningPassword } from '../../services/matrixInteractiveAuth';
+import { MatrixBootstrapThrottledError } from '../../services/matrixBootstrapRetry';
 
 export interface MatrixLoginData {
 	accessToken: string;
@@ -103,7 +104,7 @@ const getOrCreateRequestedDeviceId = (): string => {
 	return deviceId;
 };
 
-const getCurrentAuthSubject = (): string | null => {
+export const getCurrentAuthSubject = (): string | null => {
 	try {
 		const keycloakToken = getValueFromCookie('keycloak');
 		if (!keycloakToken) {
@@ -251,43 +252,61 @@ const requestMatrixAccessToken = (): Promise<MatrixLoginData> => {
 	return fetchData({
 		url: matrixTokenUrl(requestedDeviceId),
 		method: FETCH_METHODS.GET,
-		responseHandling: [FETCH_ERRORS.CATCH_ALL],
+		responseHandling: [FETCH_ERRORS.CATCH_ALL_WITH_RESPONSE],
 		recoverOnPublicAuthRoute: false
-	}).then((response) => {
-		if (requestedGeneration !== deviceBootstrapGeneration) {
-			throw new Error('Matrix device changed during token bootstrap');
-		}
-		if (getCurrentAuthSubject() !== requestedSubject) {
-			throw new Error('Matrix session changed during token bootstrap');
-		}
-		const homeserverUrl = getMatrixHomeserverUrl();
-		if (!homeserverUrl) {
-			throw new Error(
-				'REACT_APP_MATRIX_HOMESERVER_URL is not configured'
-			);
-		}
-		if (!response.accessToken || !response.userId || !response.deviceId) {
-			throw new Error(
-				'Matrix login did not return a device-bound access token'
-			);
-		}
+	})
+		.catch((error: unknown) => {
+			if (!(error instanceof Response)) throw error;
+			const delay = error.headers.get('Retry-After');
+			if (error.status === 429 && delay && /^\d+$/.test(delay)) {
+				const retryAfterMs = Number(delay) * 1000;
+				if (retryAfterMs > 0 && retryAfterMs <= 2_147_483_647) {
+					throw new MatrixBootstrapThrottledError(retryAfterMs);
+				}
+			}
+			throw new Error(FETCH_ERRORS.CATCH_ALL);
+		})
+		.then((response) => {
+			if (requestedGeneration !== deviceBootstrapGeneration) {
+				throw new Error('Matrix device changed during token bootstrap');
+			}
+			if (getCurrentAuthSubject() !== requestedSubject) {
+				throw new Error(
+					'Matrix session changed during token bootstrap'
+				);
+			}
+			const homeserverUrl = getMatrixHomeserverUrl();
+			if (!homeserverUrl) {
+				throw new Error(
+					'REACT_APP_MATRIX_HOMESERVER_URL is not configured'
+				);
+			}
+			if (
+				!response.accessToken ||
+				!response.userId ||
+				!response.deviceId
+			) {
+				throw new Error(
+					'Matrix login did not return a device-bound access token'
+				);
+			}
 
-		return {
-			accessToken: response.accessToken,
-			deviceGeneration: requestedGeneration,
-			userId: response.userId,
-			deviceId: getOrCreateMatrixDeviceId(
-				response.userId,
-				response.deviceId
-			),
-			homeserverUrl,
-			expiresInMs: response.expiresInMs,
-			uiaPassword: response.uiaPassword,
-			...(requestedSubject
-				? { authenticatedSubject: requestedSubject }
-				: {})
-		};
-	});
+			return {
+				accessToken: response.accessToken,
+				deviceGeneration: requestedGeneration,
+				userId: response.userId,
+				deviceId: getOrCreateMatrixDeviceId(
+					response.userId,
+					response.deviceId
+				),
+				homeserverUrl,
+				expiresInMs: response.expiresInMs,
+				uiaPassword: response.uiaPassword,
+				...(requestedSubject
+					? { authenticatedSubject: requestedSubject }
+					: {})
+			};
+		});
 };
 
 export const getMatrixAccessToken = (
