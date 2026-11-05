@@ -1189,6 +1189,56 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 			}
 		});
 
+		it('keeps at most five waiting requests per room and says so', async () => {
+			const { harness, service } = setup();
+			const senders = Array.from(
+				{ length: 6 },
+				(_, i) => `@s${i}:matrix`
+			);
+			senders.forEach((id) => harness.memberships.set(id, member(id)));
+			harness.crypto.getUserDeviceInfo.mockImplementation(
+				async (userIds: string[]) =>
+					new Map(
+						userIds.map((id) => [
+							id,
+							new Map([['D1', { deviceId: 'D1' }]])
+						])
+					)
+			);
+			const stages: string[] = [];
+			const onDiagnostic = (e: Event) =>
+				stages.push((e as CustomEvent).detail.stage);
+			window.addEventListener(
+				MATRIX_HISTORY_KEYS_DIAGNOSTIC_EVENT,
+				onDiagnostic
+			);
+			try {
+				senders.forEach((id, i) =>
+					harness.emitToDevice(
+						event('org.oriso.room_history_key_request', id, {
+							room_id: ROOM_ID,
+							request_id: `cap-${i}`,
+							requester_user_id: id,
+							requester_device_id: 'D1',
+							reason: 'hello'
+						})
+					)
+				);
+				await vi.waitFor(() =>
+					expect(stages).toContain('approval-queue-full')
+				);
+				expect(service.getPendingApprovals()).toHaveLength(5);
+				expect(
+					service.getPendingApprovals().map((a) => a.requestId)
+				).not.toContain('cap-5');
+			} finally {
+				window.removeEventListener(
+					MATRIX_HISTORY_KEYS_DIAGNOSTIC_EVENT,
+					onDiagnostic
+				);
+			}
+		});
+
 		it('sends nothing when the client was replaced during the approval', async () => {
 			const { harness, service } = setup();
 			harness.emitToDevice(unverifiedRequest('It was about my school'));

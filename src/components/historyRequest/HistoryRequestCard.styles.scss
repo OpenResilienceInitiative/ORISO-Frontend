@@ -71,6 +71,12 @@
 	color: var(--m3-primary, inherit);
 }
 
+.historyRequestCard__spinner {
+	margin-right: 8px;
+	vertical-align: middle;
+	color: inherit;
+}
+
 .historyAsk__failed {
 	margin: 8px 0 0;
 	color: var(--m3-error, inherit);

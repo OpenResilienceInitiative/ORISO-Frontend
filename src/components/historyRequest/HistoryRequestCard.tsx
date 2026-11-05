@@ -1,3 +1,4 @@
+import { CircularProgress } from '@mui/material';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import './HistoryRequestCard.styles.scss';
@@ -91,8 +92,16 @@ export const HistoryRequestCard: React.FC<HistoryRequestCardProps> = ({
 					type="button"
 					className="historyRequestCard__approve"
 					disabled={busy}
+					aria-busy={busy || undefined}
 					onClick={onApprove}
 				>
+					{busy && (
+						<CircularProgress
+							size={14}
+							aria-hidden="true"
+							className="historyRequestCard__spinner"
+						/>
+					)}
 					{t('historyRequest.card.approve')}
 				</button>
 			</div>

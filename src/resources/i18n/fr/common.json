@@ -610,7 +610,7 @@
 			"title": "Les anciens messages ne sont pas lisibles ici",
 			"intro": "Vous vous êtes connecté·e sur un nouvel appareil, vos anciens messages de cette conversation sont donc verrouillés. Vous pouvez demander à votre conseiller de les débloquer.",
 			"button": "Demander les anciens messages",
-			"waiting": "Demande envoyée. Votre conseiller doit la confirmer ; les messages apparaîtront ensuite ici.",
+			"waiting": "Demande envoyée. Votre conseiller doit la confirmer ; les messages apparaîtront ensuite ici. Si rien ne se passe, envoyez la demande à nouveau.",
 			"done": "Vos anciens messages sont de nouveau lisibles.",
 			"failed": "La demande n'a pas pu être envoyée. Veuillez réessayer.",
 			"dialog": {
