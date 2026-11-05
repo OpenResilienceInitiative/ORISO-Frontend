@@ -325,7 +325,8 @@
 			"vacatedHint": "nicht mehr in der Beratungsstelle",
 			"scope": {
 				"AGENCY": "Du kannst Kolleg:innen deiner Beratungsstelle auswählen.",
-				"TENANT": "Du kannst Kolleg:innen deines Trägers auswählen."
+				"TENANT": "Du kannst Kolleg:innen deines Trägers auswählen.",
+				"PLATFORM": "Du kannst Kolleg:innen deines Trägers und anderer teilnehmender Träger auswählen."
 			},
 			"tooMany": "Du kannst bis zu {{max}} Personen auswählen.",
 			"error": {
@@ -594,7 +595,13 @@
 			"counsellorsEmpty": "In diesem Raum sind keine Beratenden",
 			"moderatorsEmpty": "In diesem Raum sind keine Moderierenden",
 			"toggleSection": "Bereich umschalten",
-			"selectAllBottom": "Alle auswählen"
+			"selectAllBottom": "Alle auswählen",
+			"unresolved": {
+				"text": "Die gewählten Adressaten konnten für diesen Chat nicht bestätigt werden. Wähle die Adressaten erneut aus und sende dann. Dein Text bleibt in diesem Feld erhalten."
+			},
+			"attachmentBlocked": {
+				"text": "Dateien und Sprachnachrichten lassen sich nicht auf ausgewählte Kolleg:innen beschränken. Wähle „Alle“, um sie mit allen zu teilen, oder sende stattdessen eine Textnachricht. Deine Datei oder Aufnahme bleibt erhalten."
+			}
 		},
 		"delete": {
 			"deleted": {
@@ -736,6 +743,15 @@
 				"coAccess": {
 					"text": "{{fromConsultantName}} bietet dir vorübergehenden Zugriff auf diese Beratung an. Die bisherige Beratungsperson bleibt verantwortlich."
 				}
+			},
+			"callKnockRequested": {
+				"text": "Eine Person möchte in deinen Anruf. Tritt dem Anruf bei, um sie einzulassen.",
+				"video": {
+					"text": "Eine Person möchte über deinen Direktlink in deinen Videoanruf. Tritt dem Anruf bei, um sie einzulassen."
+				},
+				"audio": {
+					"text": "Eine Person möchte über deinen Direktlink in deinen Audioanruf. Tritt dem Anruf bei, um sie einzulassen."
+				}
 			}
 		}
 	},
@@ -784,7 +800,7 @@
 				}
 			},
 			"publicSlug": {
-				"info": "Verwende nur Kleinbuchstaben und Bindestriche. Neue Namen werden erst nach Freigabe durch eine Administration aktiv.",
+				"info": "Verwende nur Kleinbuchstaben und Ziffern, getrennt durch einzelne Bindestriche (z. B. team-2), höchstens {{max}} Zeichen. Neue Namen werden erst nach Freigabe durch eine Administration aktiv.",
 				"notification": {
 					"error": "Der Name des Kontakt-Links konnte nicht gespeichert werden. Bitte prüfe das Format oder wähle einen anderen Namen."
 				}
@@ -846,7 +862,7 @@
 			"password": {
 				"reset": {
 					"insecure": "Dein Passwort ist nicht sicher.",
-					"instructions": "<span class=\"text--bold\">Dein Passwort muss folgende Kriterien erfüllen, um eine geschützte Beratung zu garantieren:</span><ul class=\"pl--2 my--1\"><li>Groß-/Kleinschreibung</li><li>mind. eine Zahl</li><li>mind. ein Sonderzeichen (z.B.: ?, !, +, #, &, ...)</li><li>mind. 9 Zeichen</li></ul>",
+					"instructions": "<span class=\"text--bold\">Dein Passwort muss folgende Kriterien erfüllen, um eine geschützte Beratung zu garantieren:</span><ul class=\"pl--2 my--1\"><li>Groß-/Kleinschreibung</li><li>mind. eine Zahl</li><li>mind. ein Sonderzeichen (z.B.: ?, !, +, #, &, ...)</li><li>mind. 16 Zeichen</li></ul>",
 					"not": {
 						"same": "Dein Passwort ist nicht identisch."
 					},
@@ -1291,6 +1307,9 @@
 				"incompleteLink": "Dieser Einladungslink ist unvollständig, daher ist das Beitreten ohne Konto nicht möglich. Bitte registriere dich mit einem Konto oder frag nach einem neuen Link.",
 				"title": "Diese Sitzung endet, wenn du den Browser schließt.",
 				"note": "Bis dahin schreibst du ganz normal, und deine Nachrichten bleiben für die anderen erhalten. Du selbst kannst danach nicht mehr in dieses Gespräch zurück."
+			},
+			"displayName": {
+				"optional": "Anzeigename (optional). Ohne Angabe wird deine User-ID angezeigt."
 			}
 		},
 		"errors": {
@@ -1773,8 +1792,10 @@
 			},
 			"decision": {
 				"app": "Sicher per App verbinden",
+				"appActive": "Die Authenticator-App ist bereits als zweiter Faktor aktiv. Zum Wechseln wähle die andere Methode.",
 				"copy": "Schütze Dein Konto mit einem zweiten Faktor. Die Authenticator-App ist die sicherere Variante; alternativ kannst Du Codes per E-Mail erhalten.",
-				"email": "E-Mail-Code verwenden (weniger sicher)"
+				"email": "E-Mail-Code verwenden (weniger sicher)",
+				"emailActive": "E-Mail-Codes sind bereits als zweiter Faktor aktiv. Zum Wechseln wähle die App."
 			},
 			"email": {
 				"connect": {
@@ -2353,6 +2374,7 @@
 			"headline": "Benachrichtigung per E-Mail",
 			"body": "Du kannst freiwillig eine E-Mail-Adresse hinterlegen. Dann bekommst Du eine Nachricht, sobald eine Antwort da ist. Der Inhalt der Beratung steht nie in dieser E-Mail.",
 			"action": "E-Mail-Adresse angeben",
+			"dialogDescription": "Hinterlege eine E-Mail-Adresse, damit du dein Passwort später zurücksetzen kannst und von Antworten erfährst. Der Inhalt der Beratung steht nie in dieser E-Mail.",
 			"saveFailed": "Speichern hat nicht geklappt. Bitte versuch es noch einmal.",
 			"notAllowed": "Für Dein Konto ist das Hinterlegen einer E-Mail-Adresse nicht freigegeben. Bitte kontaktiere unseren Support."
 		},
@@ -2388,7 +2410,13 @@
 			"email": "Schreib mir eine E-Mail",
 			"emailHint": "Was du hier besprichst, steht nie in dieser E-Mail.",
 			"browser": "Gib mir hier ein Signal",
+			"browserHint": "Ohne Adresse – funktioniert aber nur auf diesem Gerät.",
+			"dialog": {
+				"description": "Wähle den Ton, den du hören wirst, und erlaube dann Benachrichtigungen in deinem Browser."
+			},
 			"browserDenied": "Browser-Benachrichtigungen sind nicht aktiviert. Bitte prüfe die Berechtigung in deinem Browser.",
+			"browserBlockedHelp": "Browser-Benachrichtigungen sind für diese Seite blockiert. Klicke in der Adressleiste auf das Schloss-Symbol, öffne die Website-Einstellungen, stelle Benachrichtigungen auf Zulassen oder wähle Zurücksetzen, und versuche es dann erneut.",
+			"emailSavedNext": "Deine E-Mail-Adresse ist gespeichert. Ein Schritt fehlt noch: Erlaube Benachrichtigungen in deinem Browser.",
 			"saveFailed": "Die Einstellung konnte nicht bestätigt werden. Bitte versuche es erneut.",
 			"browserSilenced": "Browser-Benachrichtigungen sind in deinen Benachrichtigungseinstellungen stummgeschaltet."
 		}
@@ -2516,7 +2544,20 @@
 			"passwordChangeFailed": "Das Passwort konnte nicht sicher geändert werden. Prüfe das alte Passwort und stelle gegebenenfalls zuerst deinen Gesprächsverlauf mit dem Ersatzschlüssel wieder her. Bei einem Verbindungsabbruch kann das Passwort bereits geändert sein.",
 			"enrollmentFailed": "Die Einrichtung konnte nicht abgeschlossen werden. Prüfe Passwort und gegebenenfalls Einmalcode und versuche es erneut.",
 			"enrollmentExplanation": "Schütze deinen vorhandenen Ersatzschlüssel zusätzlich mit deinem aktuellen Passwort. Dein gespeicherter Ersatzschlüssel bleibt gültig. Ein gestohlenes verschlüsseltes Backup kann mit dem Passwort auch ohne zweiten Faktor geöffnet werden.",
-			"repairBlocked": "Die vorhandenen Passwortsicherungen können hier nicht sicher ersetzt werden. Dein Gesprächsverlauf bleibt mit dem Ersatzschlüssel zugänglich. Die Einrichtung mit einem neuen Passwort ist vorerst nicht möglich."
+			"repairBlocked": "Die vorhandenen Passwortsicherungen können hier nicht sicher ersetzt werden. Dein Gesprächsverlauf bleibt mit dem Ersatzschlüssel zugänglich. Die Einrichtung mit einem neuen Passwort ist vorerst nicht möglich.",
+			"notEnrolled": "Passwort-Wiederherstellung nicht eingerichtet: Dein Passwort entsperrt deinen Gesprächsverlauf auf einem neuen Gerät noch nicht. Gib einmal deinen Ersatzschlüssel ein, um das einzurichten.",
+			"afterChange": {
+				"title": "Dein Passwort wurde geändert.",
+				"explanation": "Damit dein neues Passwort deine Chats auf neuen Geräten entsperrt, gib einmal deinen Ersatzschlüssel ein.",
+				"laterHint": "Ohne diesen Schritt entsperrt dein neues Passwort deinen Verlauf auf neuen Geräten nicht. Du kannst ihn jederzeit in den Sicherheitseinstellungen nachholen."
+			},
+			"stale": {
+				"explanation": "Dein aktuelles Passwort öffnet die Sicherung deines Gesprächsverlaufs nicht. Das passiert, wenn dein Passwort außerhalb dieser App geändert wurde, zum Beispiel im Verwaltungsbereich unter „Mein Konto“ oder über „Passwort vergessen“. Sichere deinen Verlauf auf einem dieser Wege mit deinem aktuellen Passwort, damit er sich auf neuen Geräten wieder mit deinem Passwort öffnet.",
+				"choose": "Wie möchtest du deinen Verlauf neu sichern?",
+				"previousPasswordHint": "Gib das Passwort ein, das du vor der Änderung verwendet hast. Danach öffnet nur noch dein aktuelles Passwort deinen Verlauf.",
+				"recoveryKeyHint": "Gib deinen gespeicherten Ersatzschlüssel ein. Die alte Sicherung wird danach durch eine Sicherung mit deinem aktuellen Passwort ersetzt. Dein Ersatzschlüssel bleibt gültig.",
+				"previousPasswordRejected": "Mit diesem vorherigen Passwort lässt sich die Sicherung nicht öffnen. Prüfe die Eingabe oder verwende deinen Ersatzschlüssel."
+			}
 		}
 	},
 	"accountInvite": {
@@ -2760,6 +2801,12 @@
 		},
 		"devices": {
 			"micMeter": "Lautstärke deines Mikrofons"
+		},
+		"ready": {
+			"description": "Niemand sieht oder hört dich, bevor du beitrittst. Die Vorschau siehst nur du.",
+			"descriptionCheck": "Deine Einstellung gilt, wenn du in dieser Gruppe einem Gespräch beitrittst. Die Vorschau siehst nur du.",
+			"knocking": "Anfrage gesendet, bitte warte …",
+			"notApplied": "Deine Einstellung für Kamera und Mikrofon wurde nicht übernommen. Bitte prüfe beide im Anruf."
 		}
 	},
 	"furtherCounselling": {
@@ -2788,6 +2835,9 @@
 			"endsCurrentUnnamed": "Wenn du annimmst, endet dein laufendes Gespräch."
 		},
 		"share": {
+			"signInToJoin": "Melde dich an, um diesem Anruf beizutreten.",
+			"conversationMember": "Du gehörst bereits zu diesem Gespräch. Tritt dem Anruf im zugehörigen Chat bei.",
+			"joinForbidden": "Du kannst diesem Anruf über diesen Link nicht beitreten.",
 			"knock": {
 				"on": "Gäste warten, bis du sie einlässt. Schaltest du es aus, kommen alle Wartenden sofort herein."
 			},
@@ -2834,6 +2884,10 @@
 			},
 			"note": "Deine Antwort gilt für dieses ganze Gespräch.",
 			"failed": "Deine Antwort konnte nicht gespeichert werden. Deine Nachricht ist noch nicht gesendet."
+		},
+		"lookupFailed": {
+			"title": "Wir konnten dein Konto nicht prüfen",
+			"text": "Deine Nachricht ist noch nicht gesendet und bleibt im Eingabefeld. Bitte prüfe deine Verbindung und sende sie erneut."
 		}
 	}
 }

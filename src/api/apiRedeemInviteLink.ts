@@ -1,6 +1,7 @@
 import { apiUrl } from '../resources/scripts/endpoints';
 import { FETCH_METHODS } from './fetchData';
 import { getCounsellingDpaFailure } from './counsellingDpaFailure';
+import { traceHeaders } from '../utils/observability/traceparent';
 
 /** Response from POST /service/users/invitelinks/{token}/redeem (topic-based links). */
 export interface RedeemInviteLinkSessionResponse {
@@ -30,18 +31,34 @@ export const isRedeemInviteLinkSessionResponse = (
 	typeof (data as RedeemInviteLinkSessionResponse).accessToken === 'string' &&
 	typeof (data as RedeemInviteLinkSessionResponse).sessionId === 'number';
 
+export const isPausedInvite = async (error: unknown): Promise<boolean> => {
+	if (!(error instanceof Response) || error.status !== 410) return false;
+	const body = await error
+		.clone()
+		.json()
+		.catch(() => null);
+	return (
+		body?.reason === 'INVITE_LINK_PAUSED' ||
+		body?.reason === 'DIRECT_LINK_INACTIVE'
+	);
+};
+
 export const redeemInviteLink = async (
 	token: string
 ): Promise<RedeemInviteLinkResponse> => {
 	const url = `${apiUrl}/service/users/invitelinks/${encodeURIComponent(token)}/redeem`;
 	const response = await fetch(url, {
 		method: FETCH_METHODS.POST,
-		headers: { 'Content-Type': 'application/json' },
+		headers: { 'Content-Type': 'application/json', ...traceHeaders(url) },
 		credentials: 'include'
 	});
 
 	if (!response.ok) {
-		if (getCounsellingDpaFailure(response)) throw response;
+		if (
+			getCounsellingDpaFailure(response) ||
+			(await isPausedInvite(response))
+		)
+			throw response;
 		const body = await response.text().catch(() => '');
 		throw new Error(body || `Redeem failed (HTTP ${response.status})`);
 	}

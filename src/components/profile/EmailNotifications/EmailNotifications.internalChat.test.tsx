@@ -10,6 +10,11 @@ import {
 
 vi.mock('../../../api/apiPatchUserData', () => ({ apiPatchUserData: vi.fn() }));
 vi.mock('lottie-react', () => ({ default: () => null }));
+const tenant = vi.hoisted(() => ({ current: null as unknown }));
+vi.mock('../../../globalState/provider/TenantProvider', () => ({
+	useTenant: () => tenant.current,
+	useTenantState: () => ({ tenant: tenant.current, isLoading: false })
+}));
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({ t: (key: string) => key })
 }));
@@ -75,6 +80,22 @@ describe('ordinary internal-chat mail preference', () => {
 		expect(addNotification).toHaveBeenCalledWith(
 			expect.objectContaining({ notificationType: 'error' })
 		);
+	});
+
+	it('hides the internal-chat switch when the Träger switched that e-mail off (#1979)', () => {
+		tenant.current = {
+			settings: { featureConsultantEmailInternalGroupEnabled: false }
+		};
+		try {
+			renderSettings();
+			expect(
+				screen.queryByRole('switch', {
+					name: 'profile.notifications.matrix.consultant.internalChat.title'
+				})
+			).toBeNull();
+		} finally {
+			tenant.current = null;
+		}
 	});
 
 	it('does not offer internal counsellor mail to advice seekers', () => {

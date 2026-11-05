@@ -129,10 +129,14 @@ function DemoCard({
 						</div>
 					) : (
 						<div className="sessionsListItem__consultingTypeIcon sessionsListItem__consultingTypeIcon--nearby">
-							<img
-								src={nearbyConversationIcon}
-								alt="Mail"
-								className="sessionsListItem__consultingTypeIcon--nearbyIcon"
+							<span
+								className="sessionsListItem__consultingTypeIcon--kindIcon"
+								aria-hidden="true"
+								style={
+									{
+										'--kind-icon-url': `url("${nearbyConversationIcon}")`
+									} as React.CSSProperties
+								}
 							/>
 							<span className="sessionsListItem__consultingTypeIcon--nearbyLabel">
 								Mail
@@ -368,6 +372,10 @@ const RAIL_DEMO_COPY = {
 	thread: 'Thread',
 	supervision: 'Supervision',
 	mail: 'Mail',
+	videoCall: 'Videoanruf',
+	audioCall: 'Audioanruf',
+	directLink: 'Direktlink',
+	appointment: 'Nächster Termin: Fr 30. Okt 18:00',
 	unread: 'Ungelesen'
 };
 

@@ -118,6 +118,127 @@
 		padding-right: 0;
 	}
 
+	// Clickable "+N" (badge / bubble): a real button, same chip shape.
+	&__overflow--button {
+		border: 0;
+		cursor: pointer;
+		font-family: inherit;
+
+		&:focus-visible {
+			outline: 2px solid var(--m3-primary, #a5000a);
+			outline-offset: 2px;
+		}
+	}
+
+	// Badge: sits on the last avatar and costs no width.
+	&--badge {
+		// The badge overhangs by 8px; keep the title clear of it.
+		margin-right: 8px;
+		padding-right: 0;
+
+		.participantStack__item--overflow {
+			position: absolute;
+			right: -8px;
+			bottom: -6px;
+			width: auto;
+			height: auto;
+			margin: 0 !important;
+		}
+
+		.participantStack__overflow {
+			// 24px: the smallest target the a11y gate accepts inside a card.
+			height: 24px;
+			min-width: 24px;
+			padding: 0 6px;
+			border-radius: 12px;
+			background: var(--m3-primary-container, #cc1e1c);
+			color: var(--m3-on-primary, #fff);
+			font-size: 12px;
+			transition: background-color 120ms ease;
+
+			&:hover {
+				background: var(--m3-primary, #a5000a);
+			}
+		}
+	}
+
+	// Bubble: a grey speech bubble whose tail points at the avatars.
+	&--bubble {
+		.participantStack__item--overflow {
+			display: flex;
+			align-items: center;
+		}
+
+		.participantStack__overflow {
+			position: relative;
+			height: 28px;
+			min-width: 28px;
+			padding: 0 9px;
+			border-radius: 14px;
+			background: var(--m3-surface-container-high, #ece6e6);
+			color: var(--m3-on-surface, #1e1e1e);
+			font-size: 13px;
+			box-shadow: none;
+			transition: background-color 120ms ease;
+
+			// The tail: a small corner turned towards the avatars.
+			&::after {
+				position: absolute;
+				bottom: 2px;
+				left: -3px;
+				width: 8px;
+				height: 8px;
+				border-radius: 0 0 0 3px;
+				background: inherit;
+				content: '';
+				transform: rotate(45deg);
+			}
+
+			&:hover {
+				background: var(--m3-surface-container-highest, #e0d9d9);
+			}
+		}
+	}
+
+	// The folded people, in the primary colour.
+	&__list {
+		position: fixed;
+		z-index: 1400;
+		width: 240px;
+		max-height: 280px;
+		overflow-y: auto;
+		box-sizing: border-box;
+		padding: 12px;
+		border: 2px solid var(--m3-primary-container, #cc1e1c);
+		border-radius: 16px;
+		background: var(--m3-surface-container-lowest, #fff);
+		box-shadow: 0 6px 20px rgba(0, 0, 0, 0.16);
+	}
+
+	&__listTitle {
+		margin: 0 0 8px;
+		color: var(--m3-primary, #a5000a);
+		font-size: 13px;
+		font-weight: 600;
+		line-height: 18px;
+	}
+
+	&__listItems {
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	&__listItem {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		padding: 4px 0;
+		color: var(--m3-on-surface, #1e1e1e);
+		font-size: 14px;
+		line-height: 20px;
+	}
+
 	// Phone: the compact chip (label/small) keeps the row's width for the title.
 	@media screen and (width < 900px) {
 		&__overflow {

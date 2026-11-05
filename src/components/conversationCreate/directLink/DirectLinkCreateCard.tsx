@@ -21,6 +21,13 @@ export interface DirectLinkCreateCardProps {
 	className?: string;
 	topicsLoadFailed?: boolean;
 	onRetryTopics?: () => void;
+	/**
+	 * Hands the created link to the caller, which then shows the share
+	 * dialog itself. The card unmounts when the layout switches between the
+	 * picker's cards and a phone's rows (window resized, phone turned), and
+	 * a dialog inside it would vanish with it.
+	 */
+	onCreated?: (link: DirectLink) => void;
 }
 
 /**
@@ -36,13 +43,16 @@ export const DirectLinkCreateCard = ({
 	compact = false,
 	className,
 	topicsLoadFailed,
-	onRetryTopics
+	onRetryTopics,
+	onCreated
 }: DirectLinkCreateCardProps) => {
 	const { t } = useTranslation();
 	const { create } = useDirectLinks({ load: false });
 	const [submitting, setSubmitting] = useState(false);
 	const [failed, setFailed] = useState(false);
-	const [shared, setShared] = useState<DirectLink>();
+	const [ownShared, setOwnShared] = useState<DirectLink>();
+	const shared = onCreated ? undefined : ownShared;
+	const setShared = onCreated ?? setOwnShared;
 
 	const handleCreate = async ({
 		topic,

@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { ReactNode, useId } from 'react';
 import clsx from 'clsx';
-import { Dialog } from '@mui/material';
+import { CircularProgress, Dialog } from '@mui/material';
 import { CrossMarkIcon } from '../../resources/img/icons';
 import './m3Dialog.styles.scss';
 
@@ -14,6 +14,8 @@ export interface M3DialogAction {
 	/** Paints the label in the primary role. Exactly one action should set it. */
 	primary?: boolean;
 	disabled?: boolean;
+	/** Something is under way: a small spinner before the label. */
+	busy?: boolean;
 	/** Overrides the generated `data-testid`. */
 	testId?: string;
 }
@@ -200,8 +202,17 @@ export const M3Dialog = ({
 									)}
 									disabled={action.disabled}
 									onClick={action.onClick}
+									aria-busy={action.busy || undefined}
 									data-testid={action.testId}
 								>
+									{action.busy && (
+										<CircularProgress
+											size={14}
+											thickness={5}
+											color="inherit"
+											aria-hidden
+										/>
+									)}
 									{action.label}
 								</button>
 							))}

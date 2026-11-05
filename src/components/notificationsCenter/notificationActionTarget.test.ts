@@ -165,7 +165,9 @@ describe('shared params contract (#846)', () => {
 				'maintenanceDate',
 				'maintenanceStart',
 				'maintenanceEnd',
-				'statusUrl'
+				'statusUrl',
+				// FE#1952: which call a direct-link knock is for (AUDIO / VIDEO).
+				'medium'
 			].sort()
 		);
 	});

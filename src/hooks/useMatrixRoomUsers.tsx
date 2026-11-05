@@ -6,6 +6,8 @@ export type RoomUser = {
 	_id: string;
 	username: string;
 	displayName?: string;
+	/** Matrix power level in this room; a supervisor reads along at 10. */
+	powerLevel?: number;
 };
 
 const mapMembersToRoomUsers = (members: any[]): RoomUser[] =>
@@ -17,7 +19,11 @@ const mapMembersToRoomUsers = (members: any[]): RoomUser[] =>
 			return {
 				_id: userId,
 				username: localPart,
-				displayName: member?.name || member?.rawDisplayName || localPart
+				displayName:
+					member?.name || member?.rawDisplayName || localPart,
+				...(typeof member?.powerLevel === 'number' && {
+					powerLevel: member.powerLevel
+				})
 			};
 		});
 
@@ -35,7 +41,9 @@ const MEMBER_RETRY_MAX_ATTEMPTS = 8;
  * (loadMembersIfNeeded) before reading and re-reads on membership updates
  * (RoomState.members / RoomMember.membership).
  */
-export const useMatrixRoomUsers = (): {
+export const useMatrixRoomUsers = (
+	roomIdOverride?: string | null
+): {
 	users: RoomUser[];
 	moderators: string[];
 } => {
@@ -43,8 +51,12 @@ export const useMatrixRoomUsers = (): {
 	const [users, setUsers] = useState<RoomUser[]>([]);
 
 	const matrixRoomId = useMemo(
-		() => chatTransportService.resolveSession(activeSession).matrixRoomId,
-		[activeSession]
+		() =>
+			roomIdOverride === undefined
+				? chatTransportService.resolveSession(activeSession)
+						.matrixRoomId
+				: roomIdOverride,
+		[activeSession, roomIdOverride]
 	);
 
 	useEffect(() => {

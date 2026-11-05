@@ -300,18 +300,23 @@ class ChatTransportService {
 		options: SendFileMessageOptions = {}
 	): Promise<any> {
 		const matrixClientService = getMatrixClientService();
+		if (!matrixClientService) {
+			throw new Error('Matrix client not initialized');
+		}
 		const matrixSenderUserId =
 			options.feedbackMailIntent && !options.teamDiscussion
-				? matrixClientService?.getClient()?.getUserId() || null
+				? matrixClientService.getClient()?.getUserId() || null
 				: null;
-		const response = await matrixClientService?.sendFileMessage(
+		const response = await matrixClientService.sendFileMessage(
 			matrixRoomId,
 			file,
 			{
 				abortController: options.abortController,
 				uploadProgress: options.uploadProgress,
 				threadRootId: options.threadRootId,
-				replyToEventId: options.replyToEventId
+				replyToEventId: options.replyToEventId,
+				caption: options.caption,
+				mentionedUserIds: options.mentionedUserIds
 			}
 		);
 
@@ -333,6 +338,9 @@ class ChatTransportService {
 				supervisorMessage: !!options.supervisorMessage,
 				teamDiscussion: !!options.teamDiscussion,
 				senderDisplayName: options.senderDisplayName || null,
+				mentionedUserIds: options.mentionedUserIds?.length
+					? options.mentionedUserIds
+					: null,
 				matrixEventId: response?.event_id || null
 			}).catch(() => undefined);
 
@@ -419,6 +427,65 @@ class ChatTransportService {
 		return () => (matrixClient as any).off('Room.timeline', handleTimeline);
 	}
 
+	/**
+	 * A message of `matrixRoomId` has just been redacted (`Room.redaction`).
+	 * That is the moment the SDK flips the target event to "redacted" — also
+	 * when the redaction is our OWN, whose remote echo never emits a second
+	 * `Room.timeline` event, so a timeline listener alone shows the deletion
+	 * only after some unrelated event triggers the next refresh.
+	 */
+	public onMatrixRedaction(
+		matrixRoomId: string,
+		listener: () => void
+	): (() => void) | null {
+		const matrixClient = getMatrixClientService()?.getClient?.();
+		if (!matrixClient) {
+			return null;
+		}
+		const handleRedaction = (_event: MatrixEvent, room?: Room) => {
+			if (room?.roomId === matrixRoomId) {
+				listener();
+			}
+		};
+		(matrixClient as any).on('Room.redaction', handleRedaction);
+		return () =>
+			(matrixClient as any).off('Room.redaction', handleRedaction);
+	}
+
+	/**
+	 * Read receipts of OTHER members in one room (FE#1802): they flip own
+	 * messages from "sent" to "read". Our own receipts are skipped — marking
+	 * the room read must not trigger the refresh that marks it read again.
+	 */
+	public onMatrixReadReceipt(
+		matrixRoomId: string,
+		listener: () => void
+	): (() => void) | null {
+		const matrixClient = getMatrixClientService()?.getClient?.();
+		if (!matrixClient) return null;
+
+		const isObject = (value: unknown): value is Record<string, unknown> =>
+			typeof value === 'object' && value !== null;
+		const handleReceipt = (event: MatrixEvent, room: Room) => {
+			// Only a real m.receipt counts: the practice fake emits the message
+			// itself here, and reading its body as receipts looped the refresh.
+			if (room?.roomId !== matrixRoomId) return;
+			if (event?.getType?.() !== 'm.receipt') return;
+			const me = (matrixClient as any).getUserId?.();
+			const readers = Object.values(event.getContent?.() || {})
+				.filter(isObject)
+				.flatMap((byType) =>
+					Object.values(byType)
+						.filter(isObject)
+						.flatMap((byUser) => Object.keys(byUser))
+				);
+			if (readers.some((userId) => userId !== me)) listener();
+		};
+
+		(matrixClient as any).on('Room.receipt', handleReceipt);
+		return () => (matrixClient as any).off('Room.receipt', handleReceipt);
+	}
+
 	public onMatrixTimeline(
 		matrixRoomId: string,
 		listener: TimelineListener
@@ -480,7 +547,31 @@ class ChatTransportService {
 			}
 		};
 
+		// A late success for an event without a per-event watch: the watch
+		// expired, or the event never passed through this view's timeline
+		// listener (scrollback, a re-attached view). Retries after a key import,
+		// a backup restore or a sender-device update land here (#69). The SDK
+		// re-emits on the client before the event's own listeners run, so a
+		// watched event is left to its watch and notified once.
+		const handleClientDecrypted = (
+			decryptedEvent: MatrixEvent,
+			error?: Error
+		) => {
+			if (
+				detached ||
+				error ||
+				pendingDecryptions.has(decryptedEvent) ||
+				decryptedEvent?.getRoomId?.() !== matrixRoomId ||
+				awaitsTimelineDecryption(decryptedEvent)
+			) {
+				return;
+			}
+			const room = matrixClient.getRoom?.(matrixRoomId);
+			if (room) listener(decryptedEvent, room, false);
+		};
+
 		(matrixClient as any).on('Room.timeline', handleTimeline);
+		(matrixClient as any).on('Event.decrypted', handleClientDecrypted);
 		// Reload hydration may precede this view subscription. Historical events
 		// still need a clear-content refresh when their asynchronous decrypt ends.
 		const cachedRoom = matrixClient.getRoom?.(matrixRoomId);
@@ -493,6 +584,7 @@ class ChatTransportService {
 		return () => {
 			detached = true;
 			(matrixClient as any).off('Room.timeline', handleTimeline);
+			(matrixClient as any).off('Event.decrypted', handleClientDecrypted);
 			Array.from(pendingDecryptions.keys()).forEach(
 				clearPendingDecryption
 			);

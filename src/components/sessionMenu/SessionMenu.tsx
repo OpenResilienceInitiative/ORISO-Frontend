@@ -1,3 +1,4 @@
+import { useConversationFeatureSettings } from '../../hooks/useConversationFeatureSettings';
 import { getSessionMenuAgency } from './sessionMenuAgency';
 import { createPortal } from 'react-dom';
 import { MenuBackdrop } from '../chatMenuDropdown/MenuBackdrop';
@@ -58,6 +59,7 @@ import { logout } from '../logout/logout';
 import { mobileListView } from '../app/navigationHandler';
 import {
 	canModerateGroupChat,
+	getStoppedGroupChatRemovalIds,
 	isGroupChatOwner
 } from '../groupChat/groupChatHelpers';
 import { ReactComponent as LeaveChatIcon } from '../../resources/img/icons/out.svg';
@@ -97,16 +99,20 @@ import {
 import { sessionMenuOwnsCallControls } from './callControlOwnership';
 import { usePracticeActive } from '../../practice';
 import { useSessionTenantSettings } from '../../hooks/useSessionTenantSettings';
+import { hasEmailSettingsPanel } from '../profile/EmailNotifications/emailNotificationAccess';
+import { useTenant } from '../../globalState/provider/TenantProvider';
 import { useSupervisionPanel } from '../supervisionPanel/SupervisionPanelContext';
 import { ReactComponent as SupervisionIcon } from '../../resources/img/icons/supervision_nocirc_400_24px.svg';
 import { ReactComponent as RecommendIcon } from '../../resources/img/icons/arrow-forward.svg';
 import { ReactComponent as EndDuplicateIcon } from '../../resources/img/icons/close-circle.svg';
 import { apiPutEndTopicDuplicate } from '../../api/apiFurtherCounselling';
+import { FETCH_ERRORS } from '../../api/fetchData';
 import {
 	canEndTopicDuplicate,
 	canRecommendFurtherCounselling
 } from '../furtherCounselling/furtherCounsellingRules';
 import { RecommendFurtherCounsellingDialog } from '../furtherCounselling/RecommendFurtherCounsellingDialog';
+import { getGroupChatInfoLink } from '../groupChat/groupChatInfoLink';
 
 export interface SessionMenuProps {
 	hasUserInitiatedStopOrLeaveRequest: React.MutableRefObject<boolean>;
@@ -149,6 +155,9 @@ export const SessionMenu = (props: SessionMenuProps) => {
 		settings: currentTenantSettings,
 		isLoading: isLoadingTenantSettings
 	} = useSessionTenantSettings(activeSession.item?.id);
+	const effectiveFeatures = useConversationFeatureSettings(
+		currentTenantSettings
+	);
 	const { dispatch: sessionsDispatch, sessions: sessionList } =
 		useContext(SessionsDataContext);
 	// WP-B2: the supervision parallel panel; null outside a session view.
@@ -196,10 +205,15 @@ export const SessionMenu = (props: SessionMenuProps) => {
 	const { settings: notifSettings, updateSettings: updateNotifSettings } =
 		useNotificationSettings();
 	const appConfig = useAppConfig();
-	// Settings > Notifications has an email panel only with the toggle, or for counsellors.
-	const hasEmailSettings =
-		!!appConfig?.releaseToggles?.enableNewNotifications ||
-		!!hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData);
+	// Never link to an e-mail panel the Admin permissions hide (#1979). Read
+	// the merged tenant context, like the Settings panel itself: the
+	// per-session refresh is a raw partial answer and could disagree.
+	const tenant = useTenant();
+	const hasEmailSettings = hasEmailSettingsPanel(
+		appConfig,
+		tenant?.settings,
+		!!hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
+	);
 	const [overlayActive, setOverlayActive] = useState(false);
 	const [legalModal, setLegalModal] = useState<{
 		title: string;
@@ -342,15 +356,34 @@ export const SessionMenu = (props: SessionMenuProps) => {
 		setOverlayActive(true);
 	};
 
+	// The "archived" confirmation is shown only once the server accepted; a
+	// refusal shows the error and leaves the chat where it is.
 	const handleArchiveSession = () => {
 		closeMenu();
 		menuTriggerRef.current?.focus();
-		setOverlayItem(archiveSessionSuccessOverlayItem);
-		setOverlayActive(true);
+		if (isRequestInProgress) return;
+		setIsRequestInProgress(true);
+		const sessionId = activeSession.item.id;
+		const sessionGroupId = activeSession.item.matrixRoomId;
+		apiPutArchive(sessionId)
+			.then(() => {
+				sessionsDispatch({
+					type: REMOVE_SESSIONS,
+					ids: sessionGroupId ? [sessionGroupId] : [sessionId]
+				});
+				setOverlayItem(archiveSessionSuccessOverlayItem);
+			})
+			.catch(() => setOverlayItem(groupChatErrorOverlayItem))
+			.finally(() => {
+				setOverlayActive(true);
+				setIsRequestInProgress(false);
+			});
 	};
 
 	const handleDearchiveSession = () => {
-		apiPutDearchive(activeSession.item.id)
+		apiPutDearchive(activeSession.item.id, [
+			FETCH_ERRORS.CATCH_ALL_EXCEPT_UNAUTHORIZED
+		])
 			.then(() => {
 				reloadActiveSession();
 				// Short timeout to wait for RC events finished
@@ -366,8 +399,9 @@ export const SessionMenu = (props: SessionMenuProps) => {
 					closeMenu();
 				}, 1000);
 			})
-			.catch((error) => {
-				// console.error(error);
+			.catch(() => {
+				setOverlayItem(groupChatErrorOverlayItem);
+				setOverlayActive(true);
 			});
 	};
 
@@ -389,6 +423,15 @@ export const SessionMenu = (props: SessionMenuProps) => {
 
 			apiPutGroupChat(activeSession.item.id, GROUP_CHAT_API.STOP)
 				.then(() => {
+					const removedIds = getStoppedGroupChatRemovalIds(
+						activeSession.item
+					);
+					if (removedIds) {
+						sessionsDispatch({
+							type: REMOVE_SESSIONS,
+							ids: removedIds
+						});
+					}
 					setOverlayItem(stopGroupChatSuccessOverlayItem);
 				})
 				.catch(() => {
@@ -427,29 +470,13 @@ export const SessionMenu = (props: SessionMenuProps) => {
 		} else if (buttonFunction === OVERLAY_FUNCTIONS.LOGOUT) {
 			logout();
 		} else if (buttonFunction === OVERLAY_FUNCTIONS.ARCHIVE) {
-			const sessionId = activeSession.item.id;
-			const sessionGroupId = activeSession.item.matrixRoomId;
-
-			apiPutArchive(sessionId)
-				.then(() => {
-					// Remove from current sessions list immediately
-					sessionsDispatch({
-						type: REMOVE_SESSIONS,
-						ids: sessionGroupId ? [sessionGroupId] : [sessionId]
-					});
-
-					mobileListView();
-					navigate(listPath);
-				})
-				.catch((error) => {
-					// console.error(error);
-				})
-				.finally(() => {
-					setOverlayActive(false);
-					setOverlayItem(null);
-					setIsRequestInProgress(false);
-					closeMenu();
-				});
+			// The request already succeeded; this only leaves the archived chat.
+			setOverlayActive(false);
+			setOverlayItem(null);
+			setIsRequestInProgress(false);
+			closeMenu();
+			mobileListView();
+			navigate(listPath);
 		} else if (buttonFunction === 'END_TOPIC_DUPLICATE') {
 			const sessionId = activeSession.item.id;
 			const sessionGroupId = activeSession.item.matrixRoomId;
@@ -495,13 +522,12 @@ export const SessionMenu = (props: SessionMenuProps) => {
 		? `${listPath}/:groupId/:id/:subRoute?/:extraPath?${getSessionListTab()}`
 		: `${listPath}/session/:id/:subRoute?/:extraPath?${getSessionListTab()}`;
 
-	const groupChatInfoLink = hasMatrixRoom
-		? generatePath(baseUrl, {
-				groupId: activeSession.item.matrixRoomId,
-				id: String(activeSession.item.id),
-				subRoute: 'groupChatInfo'
-			})
-		: '';
+	const groupChatInfoLink = getGroupChatInfoLink(
+		listPath,
+		activeSession.item.matrixRoomId,
+		activeSession.item.id,
+		getSessionListTab()
+	);
 	const editGroupChatSettingsLink = hasMatrixRoom
 		? generatePath(baseUrl, {
 				groupId: activeSession.item.matrixRoomId,
@@ -556,7 +582,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 
 	// One gate for every caller: the side room's controls ask the same
 	// question with `chatType: 'supervision'` (`call/callFeatureGates.ts`).
-	const callGates = resolveCallFeatureGates(currentTenantSettings, chatType);
+	const callGates = resolveCallFeatureGates(effectiveFeatures, chatType);
 	const isAudioCallsEnabled = callGates.audio && !isPracticing;
 	const isVideoCallsEnabled = callGates.video && !isPracticing;
 
@@ -1251,6 +1277,9 @@ export const SessionMenu = (props: SessionMenuProps) => {
 				}}
 				onClose={() => setNotifConfigOpen(false)}
 				showEmailLink={hasEmailSettings}
+				showLiveChatRow={
+					!!hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
+				}
 			/>
 		</div>
 	);

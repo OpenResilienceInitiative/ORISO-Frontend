@@ -9,6 +9,7 @@ import {
 	it,
 	vi
 } from 'vite-plus/test';
+import { MemoryRouter } from 'react-router-dom';
 import { MemberAvatarStack, StackMember } from './MemberAvatarStack';
 import { AVATAR_STACK_METRICS } from './GroupChatHeader/memberActivity';
 
@@ -158,5 +159,34 @@ describe('MemberAvatarStack (#1193 Job 2)', () => {
 			unmount();
 			expect(disconnect).toHaveBeenCalledTimes(1);
 		});
+	});
+});
+
+// OBP 2.1 #107: testers expected the member row in the chat header to open
+// the members view.
+describe('MemberAvatarStack opens the member view', () => {
+	afterEach(cleanup);
+
+	it('is a link to the member view with an accessible name', () => {
+		render(
+			<MemoryRouter>
+				<MemberAvatarStack
+					members={members(3)}
+					to="/sessions/consultant/sessionView/!r:x/7/groupChatInfo"
+					label="Teilnehmende"
+				/>
+			</MemoryRouter>
+		);
+
+		const link = screen.getByRole('link', { name: 'Teilnehmende' });
+		expect(link.getAttribute('href')).toBe(
+			'/sessions/consultant/sessionView/!r:x/7/groupChatInfo'
+		);
+		expect(within(link).getAllByTestId('user-avatar')).toHaveLength(3);
+	});
+
+	it('stays a plain picture without a target', () => {
+		render(<MemberAvatarStack members={members(3)} />);
+		expect(screen.queryByRole('link')).toBeNull();
 	});
 });

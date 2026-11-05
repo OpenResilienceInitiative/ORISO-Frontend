@@ -11,6 +11,7 @@ import { removeTokenExpiryFromLocalStorage } from '../components/sessionCookie/a
 import { appConfig } from '../utils/appConfig';
 import { RequestLog } from '../utils/requestCollector';
 import { getCounsellingDpaFailure } from './counsellingDpaFailure';
+import { traceHeaders } from '../utils/observability/traceparent';
 
 const nodeEnv: string = process.env.NODE_ENV as string;
 const isLocalDevelopment = nodeEnv === 'development';
@@ -29,6 +30,8 @@ export const FETCH_ERRORS = {
 	BAD_REQUEST: 'BAD_REQUEST',
 	CATCH_ALL: 'CATCH_ALL',
 	CATCH_ALL_WITH_RESPONSE: 'CATCH_ALL_WITH_RESPONSE',
+	/** Like CATCH_ALL, but a 401 still takes the normal session handling (logout). */
+	CATCH_ALL_EXCEPT_UNAUTHORIZED: 'CATCH_ALL_EXCEPT_UNAUTHORIZED',
 	COUNSELLING_DPA_RESPONSE: 'COUNSELLING_DPA_RESPONSE',
 	CONFLICT: 'CONFLICT',
 	CONFLICT_WITH_RESPONSE: 'CONFLICT_WITH_RESPONSE',
@@ -188,6 +191,7 @@ export const fetchData = ({
 			...authorization,
 			'X-CSRF-TOKEN': csrfToken,
 			...headersData,
+			...traceHeaders(url),
 			...localDevelopmentHeader
 		};
 
@@ -293,7 +297,11 @@ export const fetchData = ({
 						responseHandling.includes(FETCH_ERRORS.CATCH_ALL) ||
 						responseHandling.includes(
 							FETCH_ERRORS.CATCH_ALL_WITH_RESPONSE
-						)
+						) ||
+						(response.status !== 401 &&
+							responseHandling.includes(
+								FETCH_ERRORS.CATCH_ALL_EXCEPT_UNAUTHORIZED
+							))
 					) {
 						reject(
 							responseHandling.includes(

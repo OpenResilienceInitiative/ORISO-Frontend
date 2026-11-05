@@ -387,3 +387,98 @@ describe('formatMatrixTimelineEvent m.image dimensions (WP-4)', () => {
 		);
 	});
 });
+
+describe('formatMatrixTimelineEvent missing-key marker (#1827)', () => {
+	const failure = (reason: string | null) => ({
+		...makeEncryptedEvent(
+			{ msgtype: 'm.bad.encrypted', body: '** Unable to decrypt **' },
+			true
+		),
+		decryptionFailureReason: reason
+	});
+
+	it('marks a message whose key is missing on this device', () => {
+		const formatted = formatMatrixTimelineEvent(
+			failure('MEGOLM_UNKNOWN_INBOUND_SESSION_ID'),
+			null,
+			'Nachricht verschlüsselt'
+		);
+		expect(formatted.undecryptableReason).toBe('missing-key');
+		expect(formatted.msg).toBe('Nachricht verschlüsselt');
+	});
+
+	it('leaves other failures unmarked', () => {
+		const formatted = formatMatrixTimelineEvent(
+			failure('UNKNOWN_ERROR'),
+			null,
+			'Nachricht verschlüsselt'
+		);
+		expect(formatted.undecryptableReason).toBeUndefined();
+	});
+
+	it('leaves readable messages unmarked', () => {
+		const formatted = formatMatrixTimelineEvent(
+			makeEvent({ msgtype: 'm.text', body: 'Hallo' }),
+			null,
+			'Nachricht verschlüsselt'
+		);
+		expect(formatted.undecryptableReason).toBeUndefined();
+	});
+});
+
+describe('a file with a caption (MSC2530)', () => {
+	const fileEvent = (content: Record<string, unknown>) =>
+		formatMatrixTimelineEvent(
+			makeEvent({
+				msgtype: 'm.file',
+				file: { url: 'mxc://hs/file' },
+				info: { mimetype: 'application/pdf', size: 2048 },
+				...content
+			}),
+			null,
+			'encrypted'
+		);
+
+	it('shows the body as text and keeps the name on the file', () => {
+		const message = fileEvent({
+			body: 'Bitte Seite 2 lesen',
+			filename: 'befund.pdf'
+		});
+
+		expect(message?.msg).toBe('Bitte Seite 2 lesen');
+		expect(message?.attachments?.[0]).toMatchObject({
+			title: 'befund.pdf',
+			hasCaption: true
+		});
+		expect(message?.file?.name).toBe('befund.pdf');
+	});
+
+	it('marks no caption when body and filename are the same', () => {
+		const message = fileEvent({
+			body: 'befund.pdf',
+			filename: 'befund.pdf'
+		});
+
+		expect(message?.attachments?.[0].title).toBe('befund.pdf');
+		expect(message?.attachments?.[0].hasCaption).toBeUndefined();
+	});
+
+	it.each([
+		[{ filename: { bad: true }, body: 'safe.pdf' }, 'safe.pdf'],
+		[{ filename: 42, body: { bad: true } }, ''],
+		[{ filename: 'safe.pdf', body: 42 }, 'safe.pdf']
+	])('uses only string filenames and bodies: %j', (content, expected) => {
+		const message = fileEvent(content);
+		expect(message?.attachments?.[0].title).toBe(expected);
+		expect(message?.file?.name).toBe(expected);
+		expect(typeof message?.msg).toBe('string');
+		expect(message?.attachments?.[0].hasCaption).toBeUndefined();
+	});
+
+	it('reads an older event without a filename as before', () => {
+		const message = fileEvent({ body: 'befund.pdf' });
+
+		expect(message?.attachments?.[0].title).toBe('befund.pdf');
+		expect(message?.attachments?.[0].hasCaption).toBeUndefined();
+	});
+});
