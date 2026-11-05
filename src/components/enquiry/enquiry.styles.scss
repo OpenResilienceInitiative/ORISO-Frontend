@@ -10,6 +10,10 @@ $background-circle-size: 1800px !default;
 		align-items: stretch;
 		justify-content: stretch;
 		overflow: hidden;
+
+		// Same as `.session`: `clip` forbids programmatic scrolling of the card
+		// (focus, `scrollIntoView`); `hidden` above is the fallback.
+		overflow: clip;
 		min-height: 0;
 
 		@include breakpoint($fromLarge) {
