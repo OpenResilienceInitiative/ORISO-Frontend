@@ -34,39 +34,3 @@
 .historyRequestCard__failed {
 	color: var(--m3-error, inherit);
 }
-
-.historyRequestCard__actions {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 8px;
-	justify-content: flex-end;
-}
-
-.historyRequestCard__decline,
-.historyRequestCard__approve {
-	padding: 8px 16px;
-	border: 0;
-	border-radius: 999px;
-	background: transparent;
-	font: inherit;
-	font-weight: 500;
-	cursor: pointer;
-
-	&:disabled {
-		cursor: default;
-		opacity: 0.5;
-	}
-
-	&:focus-visible {
-		outline: 2px solid var(--m3-primary, currentColor);
-		outline-offset: 2px;
-	}
-}
-
-.historyRequestCard__decline {
-	color: var(--m3-on-surface-variant, inherit);
-}
-
-.historyRequestCard__approve {
-	color: var(--m3-primary, inherit);
-}
