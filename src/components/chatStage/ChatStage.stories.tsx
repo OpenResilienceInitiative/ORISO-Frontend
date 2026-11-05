@@ -2169,17 +2169,32 @@ export const PhoneComposerDragHandleIsReachable: Story = {
 		const hit = canvasElement.ownerDocument.elementFromPoint(x, y);
 
 		await expect(hit === handle || handle.contains(hit)).toBe(true);
-		const toolbarButton = canvasElement.querySelector<HTMLElement>(
-			'[data-cy="stage-main"] [data-cy="composer-back"]'
+		const bar = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="stage-main"] [data-cy="composer-action-bar"]'
 		)!;
-		const buttonBox = toolbarButton.getBoundingClientRect();
-		const buttonHit = canvasElement.ownerDocument.elementFromPoint(
-			buttonBox.left + buttonBox.width / 2,
-			buttonBox.top + buttonBox.height / 2
+		const barBox = bar.getBoundingClientRect();
+		const buttons = Array.from(
+			bar.querySelectorAll<HTMLButtonElement>('button:not(:disabled)')
 		);
-		await expect(
-			buttonHit === toolbarButton || toolbarButton.contains(buttonHit)
-		).toBe(true);
+		for (const button of buttons) {
+			const buttonBox = button.getBoundingClientRect();
+			const cx = buttonBox.left + buttonBox.width / 2;
+			const cy = buttonBox.top + buttonBox.height / 2;
+			if (
+				cx < barBox.left ||
+				cx > barBox.right ||
+				cy < barBox.top ||
+				cy > barBox.bottom
+			)
+				continue;
+			const buttonHit = canvasElement.ownerDocument.elementFromPoint(
+				cx,
+				cy
+			);
+			await expect(
+				buttonHit === button || button.contains(buttonHit)
+			).toBe(true);
+		}
 		const before = shell.getBoundingClientRect().height;
 		await userEvent.pointer([
 			{
