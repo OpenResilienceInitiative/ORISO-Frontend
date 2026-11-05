@@ -2377,7 +2377,10 @@ export const MessageItemComponent = ({
 									<FurtherCounsellingNoticeBody
 										notice={furtherCounsellingNotice}
 										viewerIsAsker={
+											// The button opens a new enquiry, which leaves the
+											// Timeline: never offered in a preview (#1824).
 											!readOnly &&
+											!blocksLeavingActions &&
 											hasUserAuthority(
 												AUTHORITIES.ASKER_DEFAULT,
 												userData
@@ -2642,6 +2645,18 @@ export const MessageItemComponent = ({
 										isOwnMessage={isMyMessage}
 									/>
 								))}
+							{/* MSC2530: the text sent with the file, under it. */}
+							{attachments?.some(
+								(attachment) => attachment.hasCaption
+							) &&
+								renderedMessageWithoutPrefix && (
+									<span
+										className="messageItem__attachmentCaption"
+										dangerouslySetInnerHTML={{
+											__html: renderedMessageWithoutPrefix
+										}}
+									/>
+								)}
 							{/*
 							 * Figma App.Oriso 8498-32373 shows the time rail on system
 							 * notices too — they are messages, so they carry a timestamp

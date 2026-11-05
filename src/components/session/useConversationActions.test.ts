@@ -1,7 +1,10 @@
 // @vitest-environment jsdom
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
-import { useConversationActions } from './useConversationActions';
+import {
+	conversationActionsResetKey,
+	useConversationActions
+} from './useConversationActions';
 
 const transport = vi.hoisted(() => ({
 	sendReaction: vi.fn(async () => ({ success: true })),
@@ -113,5 +116,29 @@ describe('useConversationActions (#1824 S1)', () => {
 		rerender({ roomId: ROOM, resetKey: 'b' });
 		expect(result.current.replyTo).toBeNull();
 		expect(result.current.editingMessage).toBeNull();
+	});
+});
+
+describe('conversationActionsResetKey', () => {
+	it('changes with the session, also when neither session has a room', () => {
+		expect(
+			conversationActionsResetKey({ rid: undefined, item: { id: 1 } })
+		).not.toBe(
+			conversationActionsResetKey({ rid: undefined, item: { id: 2 } })
+		);
+	});
+
+	it('changes with the room of the same session', () => {
+		expect(
+			conversationActionsResetKey({ rid: '!a:x', item: { id: 1 } })
+		).not.toBe(
+			conversationActionsResetKey({ rid: '!b:x', item: { id: 1 } })
+		);
+	});
+
+	it('stays the same for the same conversation', () => {
+		expect(
+			conversationActionsResetKey({ rid: '!a:x', item: { id: 1 } })
+		).toBe(conversationActionsResetKey({ rid: '!a:x', item: { id: 1 } }));
 	});
 });

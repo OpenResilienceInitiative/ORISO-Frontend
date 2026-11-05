@@ -163,6 +163,15 @@ import {
 	sessionKindLabel
 } from '../displayFilter/kindOptions';
 import { NOTIFICATION_SETTINGS_PATH } from '../profile/notificationSettingsPath';
+import {
+	apiGetDeletedAskerSessions,
+	type DeletedAskerSession
+} from '../../api/apiGetDeletedAskerSessions';
+import { DeletedAskerListItem } from './DeletedAskerListItem';
+import {
+	buildDeletedAskerRows,
+	placeDeletedAskerRows
+} from './deletedAskerRows';
 
 /** Keep paging while the display filter hides rows and fewer than this are visible (§5.2). */
 const MIN_VISIBLE_SESSION_ROWS = 10;
@@ -196,6 +205,15 @@ const normalizeTimestamp = (value?: string | number | null): number => {
 
 	const parsed = Date.parse(value);
 	return Number.isNaN(parsed) ? 0 : parsed;
+};
+
+const liveChatArrivalTime = (createDate?: string): number => {
+	if (!createDate) return Number.POSITIVE_INFINITY;
+	// Some API responses omit the UTC suffix on a server timestamp.
+	const withoutTimezone =
+		/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?$/.test(createDate);
+	const arrival = Date.parse(withoutTimezone ? `${createDate}Z` : createDate);
+	return Number.isFinite(arrival) ? arrival : Number.POSITIVE_INFINITY;
 };
 
 const formatDraftTime = (timestamp?: string | null) => {
@@ -430,12 +448,20 @@ export const SessionsList = ({
 			initialID?: string,
 			count?: number,
 			signal?: AbortSignal
-		): Promise<{ sessions: ListItemInterface[]; total: number }> => {
+		): Promise<{
+			sessions: ListItemInterface[];
+			total: number;
+			nextOffset: number;
+		}> => {
 			const pageSize = count ?? SESSION_COUNT;
 
 			const fetchPage = (
 				pageOffset: number
-			): Promise<{ sessions: ListItemInterface[]; total: number }> =>
+			): Promise<{
+				sessions: ListItemInterface[];
+				total: number;
+				nextOffset: number;
+			}> =>
 				apiGetConsultantSessionList({
 					type,
 					offset: pageOffset,
@@ -448,13 +474,22 @@ export const SessionsList = ({
 							getExtendedSession(initialID, sessions) ||
 							total <= pageOffset + pageSize
 						) {
-							return { sessions, total };
+							return {
+								sessions,
+								total,
+								nextOffset: pageOffset + pageSize
+							};
 						}
 
 						return fetchPage(pageOffset + pageSize).then(
-							({ sessions: moreSessions, total: nextTotal }) => ({
+							({
+								sessions: moreSessions,
+								total: nextTotal,
+								nextOffset
+							}) => ({
 								sessions: [...sessions, ...moreSessions],
-								total: nextTotal
+								total: nextTotal,
+								nextOffset
 							})
 						);
 					}
@@ -462,14 +497,22 @@ export const SessionsList = ({
 					if (
 						type !== SESSION_LIST_TYPES.ENQUIRY ||
 						sessions.length === 0 ||
-						total <= pageOffset + sessions.length
+						total <= pageOffset + pageSize
 					) {
-						return { sessions, total };
+						return {
+							sessions,
+							total,
+							nextOffset: pageOffset + pageSize
+						};
 					}
 
 					const chip = sessionToolbarChipRef.current;
 					if (chip !== 'nearby' && chip !== 'liveChat') {
-						return { sessions, total };
+						return {
+							sessions,
+							total,
+							nextOffset: pageOffset + pageSize
+						};
 					}
 
 					const anyMatch = sessions.some((raw) => {
@@ -479,16 +522,26 @@ export const SessionsList = ({
 						);
 						return chip === 'liveChat' ? isAnon : !isAnon;
 					});
-					const pagesFetched =
-						(pageOffset + sessions.length) / SESSION_COUNT;
-					if (anyMatch || pagesFetched >= 10) {
-						return { sessions, total };
+					if (
+						anyMatch ||
+						pageOffset + pageSize >= 10 * SESSION_COUNT
+					) {
+						return {
+							sessions,
+							total,
+							nextOffset: pageOffset + pageSize
+						};
 					}
 
-					return fetchPage(pageOffset + sessions.length).then(
-						({ sessions: moreSessions, total: nextTotal }) => ({
+					return fetchPage(pageOffset + pageSize).then(
+						({
+							sessions: moreSessions,
+							total: nextTotal,
+							nextOffset
+						}) => ({
 							sessions: [...sessions, ...moreSessions],
-							total: nextTotal
+							total: nextTotal,
+							nextOffset
 						})
 					);
 				});
@@ -519,7 +572,7 @@ export const SessionsList = ({
 				count,
 				controller.signal
 			)
-				.then(({ sessions, total }) => {
+				.then(({ sessions, total, nextOffset }) => {
 					// A superseded transport may still resolve after abort. Do not
 					// let its pagination state or rows reach the caller.
 					if (
@@ -528,9 +581,10 @@ export const SessionsList = ({
 					) {
 						throw new Error(FETCH_ERRORS.ABORT);
 					}
-					const pageSize = count ?? SESSION_COUNT;
-					const lastLoadedOffset =
-						offset + Math.max(0, sessions.length - pageSize);
+					const lastLoadedOffset = Math.max(
+						0,
+						nextOffset - SESSION_COUNT
+					);
 					setCurrentOffset(lastLoadedOffset);
 					setTotalItems(total);
 					return { sessions, total };
@@ -2016,13 +2070,35 @@ export const SessionsList = ({
 	);
 	// Sorted as pairs so the rendered row and the hidden-active lookup use
 	// the same id (`sessionPairId`), whatever `item` the extended row holds.
-	const sortedSessionPairs = useMemo(
-		() =>
-			[...sessionToolbarFilteredPairs].sort((left, right) =>
-				sortSessions(left.extended, right.extended)
-			),
-		[sessionToolbarFilteredPairs, sortSessions]
-	);
+	const sortedSessionPairs = useMemo(() => {
+		const sorted = [...sessionToolbarFilteredPairs].sort((left, right) =>
+			sortSessions(left.extended, right.extended)
+		);
+		if (type !== SESSION_LIST_TYPES.ENQUIRY) return sorted;
+
+		// Replace only the Live Chat slots in a mixed view. Mail keeps its
+		// existing order without a comparator that changes direction by pair.
+		const isLiveChatRequest = ({
+			raw,
+			extended
+		}: (typeof sorted)[number]) =>
+			extended.isEnquiry && classifyRequest(raw, extended) === 'liveChat';
+		const liveChats = sorted
+			.filter(isLiveChatRequest)
+			.sort((left, right) => {
+				const a = left.extended.item;
+				const b = right.extended.item;
+				const arrivalA = liveChatArrivalTime(a?.createDate);
+				const arrivalB = liveChatArrivalTime(b?.createDate);
+				return arrivalA === arrivalB
+					? (a?.id ?? 0) - (b?.id ?? 0)
+					: arrivalA - arrivalB;
+			});
+		let liveChatIndex = 0;
+		return sorted.map((pair) =>
+			isLiveChatRequest(pair) ? liveChats[liveChatIndex++] : pair
+		);
+	}, [sessionToolbarFilteredPairs, sortSessions, type]);
 	const sortedSessions = useMemo(
 		() => sortedSessionPairs.map(({ extended }) => extended),
 		[sortedSessionPairs]
@@ -2031,6 +2107,81 @@ export const SessionsList = ({
 		() => sortedSessionPairs.map(sessionPairId),
 		[sortedSessionPairs]
 	);
+
+	/*
+	 * ORISO-Frontend#1159: a grey "Gelöschte:r Ratsuchende:r" row where a
+	 * deleted advice-seeker chat used to be. Only in the counsellor's unfiltered
+	 * list: a placeholder matches no chip, search, person, centre or topic.
+	 */
+	// Not in the rail: its pills are tabs, and a placeholder is no tab.
+	const showDeletedAskerRows =
+		showConsultantToolbarActions &&
+		!isRail &&
+		sessionListTab !== SESSION_LIST_TAB_ARCHIVE;
+	const [deletedAskerPlaceholders, setDeletedAskerPlaceholders] = useState<
+		DeletedAskerSession[]
+	>([]);
+	useEffect(() => {
+		if (!showDeletedAskerRows) {
+			setDeletedAskerPlaceholders([]);
+			return undefined;
+		}
+		const controller = new AbortController();
+		apiGetDeletedAskerSessions(controller.signal).then((placeholders) => {
+			if (!controller.signal.aborted) {
+				setDeletedAskerPlaceholders(placeholders);
+			}
+		});
+		return () => controller.abort();
+	}, [showDeletedAskerRows]);
+	const toolbarNarrowsList =
+		!!sessionToolbarChip ||
+		!!listSearchQuery ||
+		sessionToolbarSelectedPeople.length > 0 ||
+		!!sessionToolbarSelectedAgency ||
+		!!sessionToolbarSelectedTopic;
+	const deletedAskerPlacement = useMemo(() => {
+		if (!showDeletedAskerRows || toolbarNarrowsList) {
+			return { before: [], trailing: [] };
+		}
+		const markedForDeletion = (sessions ?? [])
+			.filter(
+				(raw: ListItemInterface) =>
+					!raw?.chat &&
+					raw?.user?.deleted &&
+					typeof raw?.session?.id === 'number'
+			)
+			.map((raw: ListItemInterface) => ({
+				sessionId: raw.session.id,
+				lastInteraction: getLastInteractionTimestamp(
+					buildExtendedSession(raw, groupIdFromParam)
+				)
+			}));
+		const shownSessionIds = new Set<number>(
+			sortedSessions
+				.filter((session) => !session.isGroup)
+				.map((session) => Number(session.item?.id))
+		);
+		return placeDeletedAskerRows(
+			sortedSessions.map(getLastInteractionTimestamp),
+			buildDeletedAskerRows(
+				deletedAskerPlaceholders,
+				markedForDeletion,
+				shownSessionIds
+			),
+			totalItems > currentOffset + SESSION_COUNT
+		);
+	}, [
+		currentOffset,
+		deletedAskerPlaceholders,
+		getLastInteractionTimestamp,
+		groupIdFromParam,
+		sessions,
+		showDeletedAskerRows,
+		sortedSessions,
+		toolbarNarrowsList,
+		totalItems
+	]);
 	const handleCaseHandoverSelect = useCallback((sessionId: number) => {
 		setCaseHandoverSelectedIds((current) =>
 			current.includes(sessionId)
@@ -2985,111 +3136,161 @@ export const SessionsList = ({
 								activeSession: ExtendedSessionInterface,
 								index
 							) => (
-								<ActiveSessionProvider
+								<React.Fragment
 									key={`${activeSession.isGroup ? 'chat' : 'session'}:${activeSession.item.id}`}
-									activeSession={activeSession}
 								>
-									<div
-										className={clsx(
-											hiddenActiveRowIds.has(
-												sortedSessionIds[index]
-											) && 'sessionsList__hiddenActiveRow'
-										)}
+									{deletedAskerPlacement.before[index]?.map(
+										(row) => (
+											<DeletedAskerListItem
+												key={row.key}
+												row={row}
+												locale={defaultLanguage}
+												translate={translate}
+											/>
+										)
+									)}
+									<ActiveSessionProvider
+										activeSession={activeSession}
 									>
-										{hiddenActiveRowIds.has(
-											sortedSessionIds[index]
-										) && (
-											// Announced like a status, without a
-											// status role inside the list (#1338).
-											<p
-												className="sessionsList__hiddenActiveRowHint"
-												aria-live="polite"
-												aria-atomic="true"
-											>
-												{translate(
-													'notifications.displayFilter.hiddenActiveRow'
+										<div
+											className={clsx(
+												hiddenActiveRowIds.has(
+													sortedSessionIds[index]
+												) &&
+													'sessionsList__hiddenActiveRow'
+											)}
+										>
+											{hiddenActiveRowIds.has(
+												sortedSessionIds[index]
+											) && (
+												// Announced like a status, without a
+												// status role inside the list (#1338).
+												<p
+													className="sessionsList__hiddenActiveRowHint"
+													aria-live="polite"
+													aria-atomic="true"
+												>
+													{translate(
+														'notifications.displayFilter.hiddenActiveRow'
+													)}
+												</p>
+											)}
+											<SessionListItemComponent
+												defaultLanguage={
+													defaultLanguage
+												}
+												itemRef={(el) =>
+													(ref_list_array.current[
+														index
+													] = el)
+												}
+												handleKeyDownLisItemContent={(
+													e
+												) =>
+													handleKeyDownLisItemContent(
+														e,
+														index
+													)
+												}
+												index={index}
+												isBeforeActive={
+													!!sortedSessions[
+														index + 1
+													] &&
+													isSessionListItemActive(
+														sortedSessions[
+															index + 1
+														]
+													)
+												}
+												isAfterActive={
+													!!sortedSessions[
+														index - 1
+													] &&
+													isSessionListItemActive(
+														sortedSessions[
+															index - 1
+														]
+													)
+												}
+												grouped={!isRail}
+												upcomingAppointment={upcomingLabelOf(
+													activeSession
 												)}
-											</p>
-										)}
-										<SessionListItemComponent
-											defaultLanguage={defaultLanguage}
-											itemRef={(el) =>
-												(ref_list_array.current[index] =
-													el)
-											}
-											handleKeyDownLisItemContent={(e) =>
-												handleKeyDownLisItemContent(
-													e,
-													index
-												)
-											}
-											index={index}
-											isBeforeActive={
-												!!sortedSessions[index + 1] &&
-												isSessionListItemActive(
-													sortedSessions[index + 1]
-												)
-											}
-											isAfterActive={
-												!!sortedSessions[index - 1] &&
-												isSessionListItemActive(
-													sortedSessions[index - 1]
-												)
-											}
-											grouped={!isRail}
-											upcomingAppointment={upcomingLabelOf(
-												activeSession
-											)}
-											upcomingAppointmentModality={
-												nextAppointmentOf(activeSession)
-													?.modality
-											}
-											appointmentAction={appointmentActionOf(
-												activeSession
-											)}
-											datePlacement={
-												timelineSettings.pastDate
-											}
-											isGroupStart={
-												index === 0 ||
-												isSessionListItemActive(
-													sortedSessions[index - 1]
-												)
-											}
-											isGroupEnd={
-												index ===
-													sortedSessions.length - 1 ||
-												isSessionListItemActive(
-													sortedSessions[index + 1]
-												)
-											}
-											caseHandoverBatchMode={
-												caseHandoverBatchMode
-											}
-											caseHandoverSelected={caseHandoverSelectedIds.includes(
-												activeSession.item.id
-											)}
-											onCaseHandoverSelect={
-												handleCaseHandoverSelect
-											}
-											onCaseHandoverBatchStart={() => {
-												setCaseHandoverBatchMode(true);
-												setCaseHandoverReviewOpen(
-													false
-												);
-												setCaseHandoverBatchSummary('');
-											}}
-											onCaseHandoverBatchConfirm={
-												handleOpenCaseHandoverWizard
-											}
-											onCaseHandoverBatchClose={
-												handleCloseCaseHandoverBatch
-											}
-										/>
-									</div>
-								</ActiveSessionProvider>
+												upcomingAppointmentModality={
+													nextAppointmentOf(
+														activeSession
+													)?.modality
+												}
+												appointmentAction={appointmentActionOf(
+													activeSession
+												)}
+												datePlacement={
+													timelineSettings.pastDate
+												}
+												isGroupStart={
+													index === 0 ||
+													isSessionListItemActive(
+														sortedSessions[
+															index - 1
+														]
+													)
+												}
+												isGroupEnd={
+													index ===
+														sortedSessions.length -
+															1 ||
+													isSessionListItemActive(
+														sortedSessions[
+															index + 1
+														]
+													)
+												}
+												caseHandoverBatchMode={
+													caseHandoverBatchMode
+												}
+												caseHandoverSelected={caseHandoverSelectedIds.includes(
+													activeSession.item.id
+												)}
+												onCaseHandoverSelect={
+													handleCaseHandoverSelect
+												}
+												onCaseHandoverBatchStart={() => {
+													setCaseHandoverBatchMode(
+														true
+													);
+													setCaseHandoverReviewOpen(
+														false
+													);
+													setCaseHandoverBatchSummary(
+														''
+													);
+												}}
+												onCaseHandoverBatchConfirm={
+													handleOpenCaseHandoverWizard
+												}
+												onCaseHandoverBatchClose={
+													handleCloseCaseHandoverBatch
+												}
+											/>
+										</div>
+									</ActiveSessionProvider>
+								</React.Fragment>
 							)
 						)}
+
+					{/* A failed page load leaves the page count unknown, so rows
+					    "older than everything" wait for a successful retry. */}
+					{!isLoading &&
+						!isReloadButtonVisible &&
+						deletedAskerPlacement.trailing.map((row) => (
+							<DeletedAskerListItem
+								key={row.key}
+								row={row}
+								locale={defaultLanguage}
+								translate={translate}
+							/>
+						))}
 
 					{!isLoading &&
 						sessionToolbarChip === 'drafts' &&

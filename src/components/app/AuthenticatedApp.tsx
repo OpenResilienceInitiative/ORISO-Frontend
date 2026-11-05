@@ -1,3 +1,7 @@
+import {
+	MatrixBootstrapThrottledError,
+	retryMatrixBootstrap
+} from '../../services/matrixBootstrapRetry';
 import { clearLoginRecoveryPassword } from '../../services/loginRecoveryHandoff';
 import { RecoveryKeySaveReminder } from '../E2EEncryptionSupportBanner/RecoveryKeySaveReminder';
 import * as React from 'react';
@@ -55,9 +59,11 @@ import { PracticeLayer } from '../../practice/PracticeLayer';
 import { JoinRequestCenter } from '../groupChat/joinRequest/JoinRequestCenter';
 import { httpJoinRequestTransport } from '../groupChat/joinRequest/httpJoinRequestTransport';
 import {
+	getCurrentAuthSubject,
 	getMatrixAccessToken,
 	persistMatrixLoginData
 } from '../sessionCookie/getMatrixAccessToken';
+import { AUTH_SESSION_CHANGE_EVENT } from '../sessionCookie/accessSessionCookie';
 import { withAuthenticatedSessionContext } from './authenticatedMatrixLoginData';
 import { AuthenticatedBuildIdentityBoundary } from './BuildIdentity';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
@@ -111,13 +117,28 @@ export const AuthenticatedApp = ({
 	// and the dialog would land over the setup gate. Unknown counts as pending here.
 	useNotificationPermission(!!userData && !isAccountSetupPending(userData));
 	const mounted = useRef(true);
-	useEffect(
-		() => () => {
+	const matrixBootstrap = useRef<{
+		controller: AbortController;
+		subject: string | null;
+	} | null>(null);
+	useEffect(() => {
+		const onAuthSessionChange = () => {
+			const bootstrap = matrixBootstrap.current;
+			if (bootstrap && bootstrap.subject !== getCurrentAuthSubject()) {
+				bootstrap.controller.abort();
+			}
+		};
+		window.addEventListener(AUTH_SESSION_CHANGE_EVENT, onAuthSessionChange);
+		return () => {
+			window.removeEventListener(
+				AUTH_SESSION_CHANGE_EVENT,
+				onAuthSessionChange
+			);
 			mounted.current = false;
+			matrixBootstrap.current?.controller.abort();
 			clearLoginRecoveryPassword();
-		},
-		[]
-	);
+		};
+	}, []);
 
 	const [appReady, setAppReady] = useState<boolean>(false);
 	const [loading, setLoading] = useState<boolean>(true);
@@ -127,6 +148,7 @@ export const AuthenticatedApp = ({
 	   keeps running on leftover cookies, and the next sign-in starts from a
 	   clean Matrix registry instead of inheriting the old device. */
 	const abandonSession = useCallback(() => {
+		matrixBootstrap.current?.controller.abort();
 		displayFilterStore.detachClient();
 		setMatrixClientService(null);
 		teardownLocalSession();
@@ -208,94 +230,105 @@ export const AuthenticatedApp = ({
 							return userProfileData;
 						})
 						.then(async (userProfileData) => {
-							const matrixBootstrapActive = { current: true };
+							const controller = new AbortController();
+							const subject = getCurrentAuthSubject();
+							matrixBootstrap.current = { controller, subject };
+							const isCurrent = () =>
+								mounted.current &&
+								!controller.signal.aborted &&
+								getCurrentAuthSubject() === subject;
+							const startMatrix = async (
+								isActive: () => boolean
+							) => {
+								const loginData = await getMatrixAccessToken();
+								if (!isActive()) return;
+								persistMatrixLoginData(loginData);
+								if (!loginData.homeserverUrl) return;
+								const { MatrixClientService } = await import(
+									'../../services/matrixClientService'
+								);
+								if (!isActive()) return;
+								const clientService = new MatrixClientService();
+								await clientService.initializeClient(
+									withAuthenticatedSessionContext(
+										loginData,
+										hasUserAuthority(
+											AUTHORITIES.ANONYMOUS_DEFAULT,
+											userProfileData
+										)
+									)
+								);
+								if (!isActive()) {
+									clientService.stopAndCleanup();
+									return;
+								}
+
+								setMatrixClientService(clientService);
+								markHandoverMilestone('chat');
+								(window as any).callContext = callContext;
+
+								// Account setup needs the client for key backup. Live
+								// events still wait until the account setup is complete.
+								if (isAccountSetupPending(userProfileData))
+									return;
+
+								const { matrixLiveEventBridge } = await import(
+									'../../services/matrixLiveEventBridge'
+								);
+								if (!isActive()) {
+									clientService.stopAndCleanup();
+									return;
+								}
+								const client = clientService.getClient();
+								if (!client) {
+									throw new Error(
+										'Matrix client missing after initialization'
+									);
+								}
+								matrixLiveEventBridge.initialize(client);
+								markHandoverMilestone('liveEvents');
+							};
+							const connect = async () => {
+								if (!isCurrent()) return;
+								let active = true;
+								try {
+									await withTimeout(
+										startMatrix(
+											() => active && isCurrent()
+										),
+										15_000,
+										'Matrix bootstrap timed out'
+									);
+								} finally {
+									active = false;
+								}
+							};
+							const reportMatrixFailure = (error: unknown) => {
+								if (isCurrent()) {
+									clearLoginRecoveryPassword();
+									console.error(
+										'Matrix bootstrap failed; continuing with non-chat features',
+										error
+									);
+								}
+							};
 							try {
-								await withTimeout(
-									(async () => {
-										const matrixLoginData =
-											await getMatrixAccessToken();
-										persistMatrixLoginData(matrixLoginData);
-										const { homeserverUrl } =
-											matrixLoginData;
-										if (homeserverUrl) {
-											const { MatrixClientService } =
-												await import(
-													'../../services/matrixClientService'
-												);
-											const matrixClientService =
-												new MatrixClientService();
-											await matrixClientService.initializeClient(
-												withAuthenticatedSessionContext(
-													matrixLoginData,
-													hasUserAuthority(
-														AUTHORITIES.ANONYMOUS_DEFAULT,
-														userProfileData
-													)
-												)
-											);
-											if (
-												!matrixBootstrapActive.current ||
-												!mounted.current
-											) {
-												matrixClientService.stopAndCleanup();
-												return;
-											}
-
-											setMatrixClientService(
-												matrixClientService
-											);
-											markHandoverMilestone('chat');
-											(window as any).callContext =
-												callContext;
-
-											// Deliberately NOT gated: the client has
-											// already started, and the password step needs
-											// a PREPARED client whenever there is
-											// key-backup material to rotate. What IS
-											// withheld is everything acting on the content:
-											// live events, notifications, the deep link.
-											if (
-												isAccountSetupPending(
-													userProfileData
-												)
-											) {
-												return;
-											}
-
-											const { matrixLiveEventBridge } =
-												await import(
-													'../../services/matrixLiveEventBridge'
-												);
-											if (
-												!matrixBootstrapActive.current ||
-												!mounted.current
-											) {
-												matrixClientService.stopAndCleanup();
-												return;
-											}
-											const matrixClient =
-												matrixClientService.getClient();
-											if (!matrixClient) {
-												throw new Error(
-													'Matrix client missing after initialization'
-												);
-											}
-											matrixLiveEventBridge.initialize(
-												matrixClient
-											);
-											markHandoverMilestone('liveEvents');
-										}
-									})(),
-									15_000,
-									'Matrix bootstrap timed out'
-								);
-							} catch (matrixError) {
-								matrixBootstrapActive.current = false;
-								clearLoginRecoveryPassword();
-								console.error(
-									'Matrix bootstrap failed; continuing with non-chat features',
-									matrixError
-								);
+								await connect();
+							} catch (error) {
+								if (
+									error instanceof
+									MatrixBootstrapThrottledError
+								) {
+									// The pending sign-in password has its own expiry and
+									// is still needed if the resumed client restores keys.
+									void retryMatrixBootstrap(
+										connect,
+										error,
+										controller.signal
+									).catch(reportMatrixFailure);
+								} else {
+									reportMatrixFailure(error);
+								}
 							}
 
 							/* Without chat (no homeserver, or a failed bootstrap)
@@ -345,6 +378,7 @@ export const AuthenticatedApp = ({
 	}, [appReady]); // eslint-disable-line react-hooks/exhaustive-deps
 
 	const handleLogout = useCallback(() => {
+		matrixBootstrap.current?.controller.abort();
 		// Synchronously, before the async pre-logout handlers and the storage
 		// purge: a pending display-filter write must not recreate this user's
 		// mirror afterwards (#1377 §7.5). The effect cleanup detaches again.

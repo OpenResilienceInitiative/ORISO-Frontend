@@ -14,6 +14,7 @@ const GroupCallIntent = {};
 const GroupCallType = {};
 const GroupCallEvent = {};
 const CallFeedEvent = {};
+const RoomEvent = { Timeline: 'Room.timeline' };
 
 const createClient = () => ({
 	getRoom: () => null,
@@ -37,5 +38,6 @@ module.exports = {
 	MatrixCall,
 	MatrixClient,
 	MatrixEvent,
-	Room
+	Room,
+	RoomEvent
 };

@@ -2614,3 +2614,56 @@ export const SentVoiceNotes: Story = {
 		</>
 	)
 };
+
+const captionedFile = (isMyMessage: boolean, message: string) => {
+	const props = mockMessageItemComponentProps({
+		isMyMessage,
+		userId: MOCK_ASKER_MATRIX_ID,
+		askerMatrixUserId: MOCK_ASKER_MATRIX_ID,
+		message
+	}) as React.ComponentProps<typeof MessageItemComponent>;
+	return (
+		<MessageItemComponent
+			{...props}
+			{...baseHandlers}
+			attachments={[
+				{
+					title: 'befund.pdf',
+					downloadUrl: 'https://media.storybook.test/befund.pdf',
+					type: 'file',
+					mediaType: 'application/pdf',
+					size: 1_250_000,
+					hasCaption: message !== 'befund.pdf'
+				}
+			]}
+			file={{ name: 'befund.pdf', type: 'application/pdf' }}
+		/>
+	);
+};
+
+/** Was die Empfängerin sieht: eine Nachricht, erst die Datei, darunter der Text. */
+export const FileWithCaption: Story = {
+	name: 'Datei mit Beschriftung, und ohne',
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData()
+	},
+	render: () => (
+		<>
+			{captionedFile(false, 'Bitte Seite 2 lesen')}
+			{captionedFile(true, 'Das ist der **Befund** vom Montag')}
+			{captionedFile(false, 'befund.pdf')}
+		</>
+	),
+	play: async ({ canvasElement }) => {
+		const captions = canvasElement.querySelectorAll(
+			'.messageItem__attachmentCaption'
+		);
+		expect(captions).toHaveLength(2);
+		expect(captions[0].textContent).toBe('Bitte Seite 2 lesen');
+		// The same formatting a text message gets.
+		expect(captions[1].querySelector('strong')?.textContent).toBe('Befund');
+		// Without a caption the name is not repeated as text under the file.
+		expect(canvasElement.textContent).not.toContain('befund.pdfbefund.pdf');
+	}
+};

@@ -67,6 +67,17 @@ import { useResponsive } from '../../hooks/useResponsive';
 import { useTranslation } from 'react-i18next';
 import { apiDecideCaseHandoverClientConsent } from '../../api';
 import { ResizableHandle } from '../sessionsList/ResizableHandle';
+import { SessionRailPill } from '../sessionsList/SessionRailPill';
+import { directLinkLabelKey } from '../session/directLinkOrigin';
+import { getSessionRailMarks } from '../sessionsList/sessionRailState';
+import { STAGE_LAYOUT } from '../chatStage/stageLayout';
+import {
+	loadTimelineListWidth,
+	normalizeTimelineListWidth,
+	saveTimelineListWidth,
+	TIMELINE_MAX_WIDTH
+} from './timelineListWidth';
+import { ReactComponent as LoadOlderIcon } from '../../resources/img/icons/arrow-down.svg';
 import { ListSearchField } from '../listSearchField/ListSearchField';
 import { MatrixActivityPreviewHydrator } from './MatrixActivityPreviewHydrator';
 import { ReactComponent as ImageMessageIcon } from '../../resources/img/icons/file-image.svg';
@@ -101,11 +112,6 @@ import { ActivityTimelineEmptyState } from './ActivityTimelineEmptyState';
 import { NOTIFICATION_SETTINGS_PATH } from '../profile/notificationSettingsPath';
 import '../sessionsList/sessionsList.styles';
 import './notificationsCenter.styles';
-
-const TIMELINE_WIDTH_STORAGE_KEY = 'notificationsTimeline_width';
-const TIMELINE_MIN_WIDTH = 300;
-const TIMELINE_MAX_WIDTH = 600;
-const TIMELINE_DEFAULT_WIDTH = 400;
 
 /**
  * Keep paging (#1377 §5.1): a loaded page can be entirely hidden, so the
@@ -209,7 +215,7 @@ export const NotificationsCenter = () => {
 	// (master-detail) selection, but defers to the active conversation when one
 	// is open, so it can never disagree with the conversation/request lists.
 	const { selection: activeSelection } = useActiveListItem();
-	const { untilL, fromL } = useResponsive();
+	const { untilL, fromXL } = useResponsive();
 	const { userData } = useContext(UserDataContext);
 	const sessionsContext = useContext(SessionsDataContext);
 	const sessions = sessionsContext?.sessions;
@@ -341,23 +347,22 @@ export const NotificationsCenter = () => {
 
 	// Timeline redesign: resizable list column, same interaction pattern as the
 	// conversation page (SessionsListWrapper + ResizableHandle).
-	const [listWidth, setListWidth] = useState<number>(() => {
-		const saved = localStorage.getItem(TIMELINE_WIDTH_STORAGE_KEY);
-		const width = saved
-			? Number.parseInt(saved, 10)
-			: TIMELINE_DEFAULT_WIDTH;
-		return Math.min(
-			Math.max(
-				Number.isNaN(width) ? TIMELINE_DEFAULT_WIDTH : width,
-				TIMELINE_MIN_WIDTH
-			),
-			TIMELINE_MAX_WIDTH
-		);
-	});
-
+	const [listWidth, setListWidth] = useState(loadTimelineListWidth);
+	const isIconRail = fromXL && listWidth === STAGE_LAYOUT.RAIL_WIDTH;
+	const railMarkLabels = {
+		thread: translate('chatStage.switcher.kind.thread'),
+		supervision: translate('sessionList.toolbar.chips.supervision'),
+		mail: translate('sessionList.toolbar.chips.nearby'),
+		videoCall: translate(directLinkLabelKey('VIDEO')),
+		audioCall: translate(directLinkLabelKey('AUDIO')),
+		directLink: translate(directLinkLabelKey('CHAT')),
+		appointment: translate('sessionList.timeline.upcoming'),
+		unread: translate('sessionList.toolbar.chips.unread')
+	};
 	const handleListResize = useCallback((width: number) => {
-		setListWidth(width);
-		localStorage.setItem(TIMELINE_WIDTH_STORAGE_KEY, width.toString());
+		const next = normalizeTimelineListWidth(width);
+		setListWidth(next);
+		saveTimelineListWidth(next);
 	}, []);
 
 	// Kinds actually present in the VISIBLE feed, in canonical order.
@@ -810,10 +815,13 @@ export const NotificationsCenter = () => {
 				/>
 			))}
 			<div
-				className="notificationsCenter__listColumn"
-				style={{ width: fromL ? `${listWidth}px` : undefined }}
+				className={`notificationsCenter__listColumn ${isIconRail ? 'notificationsCenter__listColumn--rail' : ''}`}
+				style={{ width: fromXL ? `${listWidth}px` : undefined }}
 			>
-				<div className="sessionsListToolbar notificationsCenter__toolbar">
+				<div
+					className="sessionsListToolbar notificationsCenter__toolbar"
+					hidden={isIconRail}
+				>
 					<ListSearchField
 						leading={
 							<DisplayFilterButton
@@ -934,7 +942,10 @@ export const NotificationsCenter = () => {
 					}}
 					labels={displayFilterLabels.dialogLabels}
 				/>
-				<div className="notificationsCenter__list" ref={listScrollRef}>
+				<div
+					className={`notificationsCenter__list ${isIconRail ? 'sessionRailList' : ''}`}
+					ref={listScrollRef}
+				>
 					{filteredFeed.length === 0 ? (
 						<div className="notificationsCenter__empty">
 							{translate('notifications.center.noResults')}
@@ -965,6 +976,45 @@ export const NotificationsCenter = () => {
 								? MESSAGE_PREVIEW_ICONS[hydratedPreview.kind] ||
 									getEventIcon(descriptor.icon)
 								: getEventIcon(descriptor.icon);
+							if (isIconRail) {
+								return (
+									<div
+										key={item.id}
+										data-notification-id={item.id}
+									>
+										<SessionRailPill
+											name={title}
+											avatar={
+												<span className="notificationsCenter__railIcon">
+													<Icon />
+												</span>
+											}
+											marks={getSessionRailMarks({
+												unread: !item.readAt
+											})}
+											markLabels={railMarkLabels}
+											tooltips={{
+												pill: {
+													title,
+													body: visibleText,
+													meta: formatRelativeTime(
+														item.createdAt,
+														i18n.language
+													)
+												}
+											}}
+											active={isActive}
+											aria-current={
+												isActive ? 'true' : undefined
+											}
+											onClick={() =>
+												openNotification(item)
+											}
+											data-cy="timeline-rail-pill"
+										/>
+									</div>
+								);
+							}
 							return (
 								<div
 									key={item.id}
@@ -984,6 +1034,10 @@ export const NotificationsCenter = () => {
 									} ${
 										isAfterActive
 											? 'notificationsCenter__listRow--afterActive'
+											: ''
+									} ${
+										index === filteredFeed.length - 1
+											? 'notificationsCenter__listRow--last'
 											: ''
 									}`}
 								>
@@ -1091,50 +1145,76 @@ export const NotificationsCenter = () => {
 							);
 						})
 					)}
-					{notificationFeed.length > 0 && (
-						<div className="notificationsCenter__pagination">
-							{olderNotificationsError ? (
-								<>
-									<span role="alert">
-										{translate(
-											'notifications.center.olderError'
-										)}
-									</span>
+					{notificationFeed.length > 0 &&
+						(hasOlderNotifications || olderNotificationsError) && (
+							<div className="notificationsCenter__pagination">
+								{olderNotificationsError ? (
+									<>
+										<span
+											role="alert"
+											className={
+												isIconRail
+													? 'notificationsCenter__visuallyHidden'
+													: undefined
+											}
+										>
+											{translate(
+												'notifications.center.olderError'
+											)}
+										</span>
+										<button
+											type="button"
+											disabled={
+												isLoadingOlderNotifications
+											}
+											aria-label={translate(
+												'notifications.center.retryOlder'
+											)}
+											title={translate(
+												'notifications.center.retryOlder'
+											)}
+											onClick={() =>
+												void loadOlderNotifications()
+											}
+										>
+											{isIconRail ? (
+												<LoadOlderIcon aria-hidden="true" />
+											) : (
+												translate(
+													'notifications.center.retryOlder'
+												)
+											)}
+										</button>
+									</>
+								) : hasOlderNotifications ? (
 									<button
 										type="button"
 										disabled={isLoadingOlderNotifications}
+										aria-label={translate(
+											isLoadingOlderNotifications
+												? 'notifications.center.loadingOlder'
+												: 'notifications.center.loadOlder'
+										)}
+										title={translate(
+											'notifications.center.loadOlder'
+										)}
 										onClick={() =>
 											void loadOlderNotifications()
 										}
 									>
-										{translate(
-											'notifications.center.retryOlder'
+										{isIconRail ? (
+											<LoadOlderIcon aria-hidden="true" />
+										) : (
+											translate(
+												isLoadingOlderNotifications
+													? 'notifications.center.loadingOlder'
+													: 'notifications.center.loadOlder'
+											)
 										)}
 									</button>
-								</>
-							) : hasOlderNotifications ? (
-								<button
-									type="button"
-									disabled={isLoadingOlderNotifications}
-									onClick={() =>
-										void loadOlderNotifications()
-									}
-								>
-									{translate(
-										isLoadingOlderNotifications
-											? 'notifications.center.loadingOlder'
-											: 'notifications.center.loadOlder'
-									)}
-								</button>
-							) : (
-								<span role="status">
-									{translate(
-										'notifications.center.endOfHistory'
-									)}
-								</span>
-							)}
-						</div>
-					)}
+								) : null}
+							</div>
+						)}
 				</div>
 				<Menu
 					anchorEl={cardMenuAnchor}
@@ -1191,12 +1271,13 @@ export const NotificationsCenter = () => {
 						{translate('notifications.center.markAllRead')}
 					</MenuItem>
 				</Menu>
-				{fromL && (
+				{fromXL && (
 					<ResizableHandle
 						currentWidth={listWidth}
 						onResize={handleListResize}
 						scrollTargetRef={listScrollRef}
-						minWidth={TIMELINE_MIN_WIDTH}
+						minWidth={STAGE_LAYOUT.RAIL_WIDTH}
+						ariaLabel={translate('notifications.center.title')}
 						maxWidth={TIMELINE_MAX_WIDTH}
 					/>
 				)}
