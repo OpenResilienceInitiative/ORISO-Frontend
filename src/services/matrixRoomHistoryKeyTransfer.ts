@@ -131,6 +131,8 @@ export class MatrixRoomHistoryKeyTransfer {
 	private readonly lastReasonedRequestAt = new Map<string, number>();
 	private readonly lastHandledRequestAt = new Map<string, number>();
 	private readonly pendingRooms = new Set<string>();
+	/** Written reasons of requests queued before the client was ready. */
+	private readonly pendingReasons = new Map<string, string>();
 	private readonly lastReasonRequestAt = new Map<string, number>();
 	private readonly approvalsInFlight = new Set<string>();
 	private readonly pendingApprovals = new Map<
@@ -147,11 +149,16 @@ export class MatrixRoomHistoryKeyTransfer {
 			this.onReceivedToDeviceMessage
 		);
 		for (const roomId of this.pendingRooms) {
-			void this.requestKeys(roomId).catch(() => undefined);
+			const reason = this.pendingReasons.get(roomId);
+			void this.requestKeys(roomId, reason ? { reason } : {}).catch(
+				() => undefined
+			);
 		}
 	}
 
 	public detach(): void {
+		// A reason belongs to the account that wrote it.
+		if (this.client) this.pendingReasons.clear();
 		this.client?.off(
 			ClientEvent.ReceivedToDeviceMessage,
 			this.onReceivedToDeviceMessage
@@ -316,6 +323,11 @@ export class MatrixRoomHistoryKeyTransfer {
 		);
 	}
 
+	private rememberReason(roomId: string, reason?: string): void {
+		const normalized = normalizeReason(reason);
+		if (normalized) this.pendingReasons.set(roomId, normalized);
+	}
+
 	public async requestKeys(
 		roomId: string,
 		options: { reason?: string } = {}
@@ -328,6 +340,7 @@ export class MatrixRoomHistoryKeyTransfer {
 		if (!client || !crypto || !userId || !deviceId || !room) {
 			emitDiagnostic('request-prerequisite-missing');
 			this.pendingRooms.add(roomId);
+			this.rememberReason(roomId, options.reason);
 			return false;
 		}
 		// Lazy sync can omit joined peers that have not sent a recent event.
@@ -337,6 +350,7 @@ export class MatrixRoomHistoryKeyTransfer {
 		if (room.getMember(userId)?.membership !== 'join') {
 			emitDiagnostic('request-membership-rejected');
 			this.pendingRooms.add(roomId);
+			this.rememberReason(roomId, options.reason);
 			return false;
 		}
 
@@ -481,6 +495,7 @@ export class MatrixRoomHistoryKeyTransfer {
 			})
 		);
 		this.pendingRooms.delete(roomId);
+		this.pendingReasons.delete(roomId);
 		return true;
 	}
 
