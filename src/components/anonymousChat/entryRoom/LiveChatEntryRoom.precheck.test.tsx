@@ -30,8 +30,9 @@ vi.mock('../../../api/apiGetTenantTheming', () => ({
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({ t: (key: string) => key })
 }));
+const navigation = vi.hoisted(() => vi.fn());
 vi.mock('react-router-dom', () => ({
-	useNavigate: () => vi.fn()
+	useNavigate: () => navigation
 }));
 vi.mock('./EntryRoomShell', () => ({
 	EntryRoomShell: ({ children }: { children: React.ReactNode }) => (
@@ -100,6 +101,39 @@ afterEach(() => {
 });
 
 describe('LiveChatEntryRoom — who is live, before anything is created', () => {
+	it('opens normal registration when nobody is live before redeeming', async () => {
+		vi.mocked(apiGetConsultantAvailability).mockResolvedValue(live(0));
+		renderInvite();
+		await flush(1000);
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: /Anfrage an eine Beratungsstelle schreiben/
+			})
+		);
+		expect(navigation).toHaveBeenCalledWith('/registration');
+		expect(redeem).not.toHaveBeenCalled();
+	});
+	it('keeps an already redeemed guest when choosing written counselling', async () => {
+		vi.mocked(apiGetConsultantAvailability).mockResolvedValue(live(0));
+		vi.mocked(apiGetAnonymousEnquiryDetails).mockResolvedValue({
+			status: 'NEW',
+			numAvailableConsultants: 0,
+			peopleAhead: 1
+		} as never);
+		sessionStorage.setItem('anonymous-pseudonym-name-42', 'guest');
+		render(<LiveChatEntryRoom sessionId={42} topicSlug="U25" />);
+		await flush(4000);
+		await flush(4000);
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: /Anfrage an eine Beratungsstelle schreiben/
+			})
+		);
+		expect(navigation).toHaveBeenCalledWith('/live-chat/convert', {
+			state: { topicId: undefined }
+		});
+	});
+
 	it('uses the link tenant for the name rule when the landing tenant differs', async () => {
 		vi.mocked(apiGetConsultantAvailability).mockResolvedValue(live(1));
 		vi.mocked(apiGetPublicTenantById).mockResolvedValue({

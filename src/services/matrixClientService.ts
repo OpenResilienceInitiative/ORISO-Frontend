@@ -267,6 +267,11 @@ export class MatrixClientService {
 		// console.log("✅ Matrix client starting with real-time sync...");
 	}
 
+	/** Authentication subject that established this exact Matrix client. */
+	public getAuthenticatedSubject(): string | null {
+		return this.loginData?.authenticatedSubject ?? null;
+	}
+
 	// Get current client
 	public getClient(): MatrixClient | null {
 		return this.client;

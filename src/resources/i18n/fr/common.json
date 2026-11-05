@@ -1,4 +1,27 @@
 {
+	"liveChatConversion": {
+		"title": "Conserver votre conversation",
+		"intro": "Créez un mot de passe pour ce compte. Votre conversation en direct sera conservée.",
+		"keyHelp": "Conservez cette clé de récupération en lieu sûr. Vous en aurez besoin, ainsi que de votre mot de passe, pour lire cette conversation sur un nouvel appareil.",
+		"keySaved": "J'ai enregistré ma clé de récupération",
+		"password": "Mot de passe",
+		"passwordHelp": "Au moins 16 caractères",
+		"repeat": "Répéter le mot de passe",
+		"submit": "Créer mon compte",
+		"readyTitle": "Votre compte est prêt",
+		"loginName": "Votre nom d'utilisateur :",
+		"readyHelp": "Votre conversation en direct reste dans ce compte. Vous pouvez maintenant envoyer une demande écrite.",
+		"startRequest": "Commencer une demande écrite",
+		"saveError": "Le compte n'a pas pu être enregistré. Réessayez avec le même mot de passe.",
+		"statusError": "Le statut du compte est indisponible. Rechargez la page pour réessayer.",
+		"unavailable": "Ce compte ne peut pas être converti. Contactez votre conseiller ou conseillère.",
+		"recoveryIntro": "Préparez d'abord la clé de récupération de votre conversation actuelle. Vos messages resteront ainsi accessibles sur un nouvel appareil.",
+		"pending": "Une tentative précédente est en attente. Utilisez le même mot de passe pour la terminer.",
+		"recoveryError": "La clé de récupération n'est pas encore disponible. Réessayez ou saisissez la clé enregistrée précédemment.",
+		"existingKey": "Clé de récupération enregistrée précédemment (si nécessaire)",
+		"prepare": "Préparer la clé de récupération",
+		"accountChanged": "Le compte connecté a changé. Rechargez la page pour continuer en toute sécurité."
+	},
 	"groupCardParticipants": {
 		"loading": "Chargement des participants …",
 		"crowd": "{{count}} personnes",

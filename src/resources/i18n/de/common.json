@@ -1,4 +1,27 @@
 {
+	"liveChatConversion": {
+		"title": "Gespräch behalten",
+		"intro": "Erstellen Sie ein Passwort für dieses Konto. Ihr Live-Chat bleibt erhalten.",
+		"keyHelp": "Bewahren Sie diesen Wiederherstellungsschlüssel sicher auf. Sie benötigen ihn und Ihr Passwort, um das Gespräch auf einem neuen Gerät zu lesen.",
+		"keySaved": "Ich habe meinen Wiederherstellungsschlüssel gespeichert",
+		"password": "Passwort",
+		"passwordHelp": "Mindestens 16 Zeichen",
+		"repeat": "Passwort wiederholen",
+		"submit": "Mein Konto erstellen",
+		"readyTitle": "Ihr Konto ist bereit",
+		"loginName": "Ihr Anmeldename:",
+		"readyHelp": "Ihr Live-Chat bleibt in diesem Konto. Sie können jetzt eine schriftliche Anfrage starten.",
+		"startRequest": "Schriftliche Anfrage starten",
+		"saveError": "Das Konto konnte nicht gespeichert werden. Versuchen Sie es mit demselben Passwort erneut.",
+		"statusError": "Der Kontostatus ist nicht verfügbar. Laden Sie die Seite erneut.",
+		"unavailable": "Dieses Konto kann nicht umgewandelt werden. Bitte wenden Sie sich an Ihre Beratungsfachkraft.",
+		"recoveryIntro": "Bereiten Sie zuerst den Wiederherstellungsschlüssel für Ihr bestehendes Gespräch vor. So bleiben Ihre Nachrichten auf einem neuen Gerät lesbar.",
+		"pending": "Ein vorheriger Versuch ist noch offen. Verwenden Sie dasselbe Passwort, um ihn abzuschließen.",
+		"recoveryError": "Der Wiederherstellungsschlüssel ist noch nicht verfügbar. Versuchen Sie es erneut oder geben Sie Ihren zuvor gespeicherten Schlüssel ein.",
+		"existingKey": "Zuvor gespeicherter Wiederherstellungsschlüssel (falls benötigt)",
+		"prepare": "Wiederherstellungsschlüssel vorbereiten",
+		"accountChanged": "Das angemeldete Konto hat sich geändert. Laden Sie die Seite für eine sichere Fortsetzung neu."
+	},
 	"groupCardParticipants": {
 		"loading": "Teilnehmende werden geladen …",
 		"crowd": "{{count}} Teilnehmende",
