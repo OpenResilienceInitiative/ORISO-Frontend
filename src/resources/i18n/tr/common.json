@@ -4259,6 +4259,10 @@
 			}
 		},
 		"anonymous": {
+			"queueNotFirst": {
+				"headline": "Sırada önce başka bir misafir var",
+				"text": "Bu sıradaki daha önce gelen bir istek önce kabul edilmelidir."
+			},
 			"takenByOtherConsultant": {
 				"button": {
 					"label": "Kapat"

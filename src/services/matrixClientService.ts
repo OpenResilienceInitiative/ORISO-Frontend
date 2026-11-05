@@ -9,6 +9,10 @@ import {
 } from '../components/sessionCookie/getMatrixAccessToken';
 import { matrixCallService } from './matrixCallService';
 import { buildMatrixCryptoStorePrefix } from './matrixCrypto';
+import {
+	canSubmitRustKeysQuery,
+	submitRustKeysQuery
+} from './matrixRustKeysQuery';
 import { applyDeviceIsolationMode } from './matrixDeviceIsolation';
 import { matrixDecryptionRetry } from './matrixDecryptionRetry';
 import { appConfig } from '../utils/appConfig';
@@ -521,14 +525,11 @@ export class MatrixClientService {
 				| RefreshableRustCrypto
 				| undefined;
 			const olmMachine = crypto?.olmMachine;
-			const makeOutgoingRequest =
-				crypto?.outgoingRequestProcessor?.makeOutgoingRequest;
 			if (
 				!room ||
 				typeof room.getEncryptionTargetMembers !== 'function' ||
 				typeof olmMachine?.trackedUsers !== 'function' ||
-				typeof olmMachine.queryKeysForUsers !== 'function' ||
-				typeof makeOutgoingRequest !== 'function'
+				!canSubmitRustKeysQuery(crypto)
 			) {
 				return false;
 			}
@@ -552,12 +553,7 @@ export class MatrixClientService {
 				return false;
 			}
 
-			const request = olmMachine.queryKeysForUsers(queryUsers);
-			await makeOutgoingRequest.call(
-				crypto.outgoingRequestProcessor,
-				request
-			);
-			return true;
+			return submitRustKeysQuery(crypto, queryUsers);
 		})();
 
 		roomRefreshes.set(roomId, refresh);

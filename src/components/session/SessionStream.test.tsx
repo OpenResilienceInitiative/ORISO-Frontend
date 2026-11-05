@@ -77,6 +77,7 @@ const mocks = vi.hoisted(() => {
 		suspendedRender: null as Promise<unknown> | null,
 		suspendedRenders: 0,
 		clientChangeListeners: [] as ((client: unknown) => void)[],
+		matrixServicePublished: true,
 		matrixClientService: {
 			getClient: () => null,
 			onClientChange: (listener: (client: unknown) => void) => {
@@ -145,6 +146,7 @@ vi.mock('../../services/chatTransportService', () => ({
 				_roomId: string,
 				listener: (event: any, room: any, toStart: boolean) => void
 			) => {
+				if (!mocks.matrixServicePublished) return null;
 				mocks.timelineListeners.push(listener);
 				return () => {
 					const index = mocks.timelineListeners.indexOf(listener);
@@ -153,6 +155,7 @@ vi.mock('../../services/chatTransportService', () => ({
 			}
 		),
 		onMatrixRedaction: vi.fn((_roomId: string, listener: () => void) => {
+			if (!mocks.matrixServicePublished) return null;
 			mocks.redactionListeners.push(listener);
 			return () => {
 				const index = mocks.redactionListeners.indexOf(listener);
@@ -168,6 +171,7 @@ vi.mock('../../services/chatTransportService', () => ({
 		}),
 		onMatrixRoomLifecycle: vi.fn(
 			(_roomId: string, listener: (change: any) => void) => {
+				if (!mocks.matrixServicePublished) return null;
 				mocks.lifecycleListeners.push(listener);
 				return mocks.detachLifecycle;
 			}
@@ -223,7 +227,9 @@ vi.mock(
 			typeof import('../../globalState/context/MatrixClientContext')
 		>()),
 		useMatrixClient: () => ({
-			matrixClientService: mocks.matrixClientService
+			matrixClientService: mocks.matrixServicePublished
+				? mocks.matrixClientService
+				: null
 		})
 	})
 );
@@ -1395,6 +1401,61 @@ describe('SessionStream Matrix room lifecycle', () => {
 				'groupChat.removed.overlay.headline'
 			);
 		});
+	});
+
+	it('hydrates a mounted live chat when the first Matrix service arrives after the listener timeout', async () => {
+		const options = {
+			isGroup: false,
+			notificationFeed: [],
+			activeSession: {
+				rid: ROOM_ID,
+				isGroup: false,
+				isSession: true,
+				item: {
+					id: 1,
+					matrixRoomId: ROOM_ID,
+					active: true,
+					status: 2,
+					conversationType: 'LIVE_CHAT'
+				}
+			}
+		};
+		const existingMessage = {
+			getType: () => 'm.room.message',
+			getSender: () => '@counsellor:example.org',
+			getId: () => '$during-throttle',
+			getTs: () => 1000,
+			getContent: () => ({ msgtype: 'm.text', body: 'First reply' }),
+			isRedacted: () => false
+		};
+		vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
+		mocks.matrixServicePublished = false;
+		try {
+			const view = renderSessionStream(options);
+			await act(async () => {
+				await vi.advanceTimersByTimeAsync(11_000);
+			});
+			expect(mocks.timelineListeners).toHaveLength(0);
+			expect(mocks.lifecycleListeners).toHaveLength(0);
+
+			// Initialization already happened before the provider exposed the
+			// service, so no later client-change notification will wake us.
+			mocks.getMatrixRoomMessages.mockImplementation(() => [
+				existingMessage
+			]);
+			mocks.matrixServicePublished = true;
+			view.rerender(sessionStreamElement(options));
+
+			expect(mocks.timelineListeners).toHaveLength(1);
+			expect(mocks.lifecycleListeners).toHaveLength(1);
+			expect(mocks.sessionItemProps?.messages).toEqual([
+				expect.objectContaining({ message: 'First reply' })
+			]);
+		} finally {
+			mocks.getMatrixRoomMessages.mockImplementation(() => []);
+			mocks.matrixServicePublished = true;
+			vi.useRealTimers();
+		}
 	});
 
 	it('re-attaches room listeners after a token refresh swaps the Matrix client', async () => {

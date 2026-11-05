@@ -1,3 +1,4 @@
+import { reportComposerExpanded } from '../../utils/embeddedComposerFullscreen';
 import { useConversationFeatureSettings } from '../../hooks/useConversationFeatureSettings';
 import { getCounsellingDpaFailure } from '../../api/counsellingDpaFailure';
 import { resolveFeedbackMailIntent } from './feedbackMailIntent';
@@ -8,6 +9,7 @@ import {
 	useContext,
 	useEffect,
 	useLayoutEffect,
+	useId,
 	useMemo,
 	useRef,
 	useState
@@ -618,6 +620,15 @@ export const MessageSubmitInterfaceComponent = ({
 		typeof window !== 'undefined' ? window.innerWidth <= 899 : false
 	);
 	const [isExpandedComposer, setIsExpandedComposer] = useState(false);
+	// Inside the Drafts center iframe the embedding page widens the frame.
+	const composerOwnerId = useId();
+	useEffect(() => {
+		reportComposerExpanded(composerOwnerId, isExpandedComposer);
+	}, [composerOwnerId, isExpandedComposer]);
+	useEffect(
+		() => () => reportComposerExpanded(composerOwnerId, false),
+		[composerOwnerId]
+	);
 	const [composerHeight, setComposerHeight] = useState<number | null>(null);
 	const [autoComposerHeight, setAutoComposerHeight] = useState<number | null>(
 		null
