@@ -1,5 +1,10 @@
 import { useContext, useEffect, useRef } from 'react';
 import { NotificationsContext } from '../../globalState/provider/NotificationsProvider';
+import {
+	activityEventCaseHandoverRequestId,
+	activityEventNamesCaseHandoverRequest,
+	activityEventSessionId
+} from '../notificationsCenter/activityEvent';
 import { CASE_HANDOVER_RESOLUTION_EVENTS } from './caseHandoverEvents';
 
 interface UseCaseHandoverResolutionEventsProps {
@@ -48,12 +53,11 @@ export const useCaseHandoverResolutionEvents = ({
 		if (!enabled || !sessionId || !requestId) return;
 		if (pausedRef?.current) return;
 		const notification = notificationFeed?.find((item) => {
-			const eventRequestId = item.params?.caseHandoverRequestId;
 			return (
 				CASE_HANDOVER_RESOLUTION_EVENTS.has(item.eventType) &&
-				String(item.sourceSessionId) === String(sessionId) &&
-				(eventRequestId == null ||
-					String(eventRequestId) === String(requestId)) &&
+				activityEventSessionId(item) === sessionId &&
+				(!activityEventNamesCaseHandoverRequest(item) ||
+					activityEventCaseHandoverRequestId(item) === requestId) &&
 				!handledEventIdsRef.current.has(`${actorId}:${item.id}`)
 			);
 		});

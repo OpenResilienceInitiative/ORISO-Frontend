@@ -1,7 +1,3 @@
-import {
-	parseChannel,
-	rewriteLegacyChannelPath
-} from '../../utils/channelRoute';
 import { NavActivityIcon } from '../app/navigationSidebarIcons';
 import * as React from 'react';
 import {
@@ -19,20 +15,13 @@ import OpenInFullIcon from '@mui/icons-material/OpenInFull';
 import { ReactComponent as OpenInNewIcon } from '../../resources/img/icons/open-in-new-tab.svg';
 import MarkChatUnreadOutlinedIcon from '@mui/icons-material/MarkChatUnreadOutlined';
 import { Menu, MenuItem } from '@mui/material';
-import {
-	getEventDescriptor,
-	getEventIcon,
-	renderEventStrings,
-	isKnownEventType
-} from './eventDescriptors';
+import { getEventDescriptor, getEventIcon } from './eventDescriptors';
 import {
 	resolveEndedCallConversationPath,
 	resolveNotificationActionPath,
-	resolveStatusPageAction,
-	toInterpolationValues
+	resolveStatusPageAction
 } from './notificationActionTarget';
 import { useActiveListItem } from '../../hooks/useActiveListItem';
-import { pickActiveItemKey } from '../../utils/listItemSelection';
 import {
 	filterTimelineItems,
 	getFamiliesInFeed,
@@ -74,7 +63,6 @@ import {
 	AUTHORITIES,
 	hasUserAuthority
 } from '../../globalState';
-import { getExtendedSession } from '../../globalState/helpers/stateHelpers';
 import { useResponsive } from '../../hooks/useResponsive';
 import { useTranslation } from 'react-i18next';
 import { apiDecideCaseHandoverClientConsent } from '../../api';
@@ -92,28 +80,24 @@ import {
 import { ReactComponent as LoadOlderIcon } from '../../resources/img/icons/arrow-down.svg';
 import { ListSearchField } from '../listSearchField/ListSearchField';
 import { MatrixActivityPreviewHydrator } from './MatrixActivityPreviewHydrator';
-import {
-	requiresCaseHandoverCheck,
-	useCaseHandoverPreviewGate
-} from './caseHandoverPreviewGate';
 import { ReactComponent as ImageMessageIcon } from '../../resources/img/icons/file-image.svg';
 import { ReactComponent as FileMessageIcon } from '../../resources/img/icons/file-doc.svg';
 import { ReactComponent as AudioMessageIcon } from '../../resources/img/icons/notification_audio.svg';
 import { ReactComponent as VideoMessageIcon } from '../../resources/img/icons/video-call.svg';
-import type {
-	MatrixActivityPreviewKind,
-	MatrixActivityPreviewLabels
-} from '../../utils/matrixActivityPreview';
+import type { MatrixActivityPreviewKind } from '../../utils/matrixActivityPreview';
 import { ConversationPreview } from './ConversationPreview';
-import { chatEndedTextKey } from '../message/messageConstants';
-import { MarkAllReadButton } from './MarkAllReadButton';
-import { getNextNotificationId } from './notificationQueue';
 import {
-	isTimelineDraftId,
-	mergeDraftsIntoFeed,
-	toNonEmbeddedPath
-} from './timelineDrafts';
-import { useTimelineDrafts } from '../../hooks/useTimelineDrafts';
+	activityEventCaseHandoverRequestId,
+	activityEventCategory,
+	activityEventSessionId,
+	describeActivityEvent
+} from './activityEvent';
+import { useTimelineConversation } from './useTimelineConversation';
+import { useTimelineFeed } from './useTimelineFeed';
+import { MarkAllReadButton } from './MarkAllReadButton';
+import { useActivityTimeline } from './useActivityTimeline';
+import { useActivityPreviewHydration } from './useActivityPreviewHydration';
+import { toNonEmbeddedPath } from './timelineDrafts';
 import { isDirectLinkCallRoom } from '../directLinkEntry/directLinkEntryFlow';
 import { callManager } from '../../services/CallManager';
 import { startRoomCall } from '../call/startRoomCall';
@@ -126,7 +110,6 @@ import {
 } from './timelineTime';
 import { ActivityTimelineEmptyState } from './ActivityTimelineEmptyState';
 import { NOTIFICATION_SETTINGS_PATH } from '../profile/notificationSettingsPath';
-import { MISSING_KEY_COPY_KEY } from '../../utils/matrixDecryptionFailure';
 import '../sessionsList/sessionsList.styles';
 import './notificationsCenter.styles';
 
@@ -155,114 +138,10 @@ const MESSAGE_PREVIEW_ICONS: Partial<
 // hardcoded English strings ('now', 'Xm ago') with locale-aware formatting in
 // `timelineTime.ts`, which is imported above.
 
-const getNotificationCategory = (item: any): 'system' | 'message' => {
-	if (item?.category === 'message') return 'message';
-	if (resolveThreadRootId(item)) return 'message';
-	return 'system';
-};
-
-// WP-06 Activity Timeline (Slice 0a): category is registry-driven for known
-// event types; unknown / local-only types keep the legacy heuristic so nothing
-// regresses while the backend is incremental.
-const resolveItemCategory = (item: any): 'system' | 'message' =>
-	isKnownEventType(item?.eventType)
-		? getEventDescriptor(item.eventType).category
-		: getNotificationCategory(item);
-
-// WP-06: render an item's visible strings from its event descriptor's i18n
-// templates (ADR-AT-01 — the server record is text-free), falling back to the
-// server-provided title/text until the strict text-free migration (Slice 2).
-const describeItem = (
-	item: any,
-	translate: (key: string, options?: Record<string, unknown>) => string,
-	language?: string
-) => {
-	const descriptor = getEventDescriptor(item?.eventType);
-	const { title, text } = renderEventStrings(descriptor, translate, {
-		fallbackTitle: item?.title,
-		fallbackText: item?.text,
-		// #846: params metadata feeds template placeholders such as
-		// {{senderDisplayName}} — previously they rendered unresolved.
-		interpolation: toInterpolationValues(item?.params, language)
-	});
-	return { descriptor, title, text };
-};
-
 // #876: a planned maintenance notice links out to the public status page
 // instead of an in-app origin, so it never falls back to the sessions list.
 const openStatusPage = (url: string) => {
 	window.open(url, '_blank', 'noopener,noreferrer');
-};
-
-const resolveSessionId = (item: any): string | null => {
-	if (item?.sourceSessionId != null) {
-		return String(item.sourceSessionId);
-	}
-	if (item?.params?.sourceSessionId != null) {
-		return String(item.params.sourceSessionId);
-	}
-	if (item?.params?.seriesId != null) {
-		return String(item.params.seriesId);
-	}
-	const path = item?.actionPath;
-	if (!path) {
-		return null;
-	}
-	const match = String(path).match(/\/(\d+)(?:\?|$)/);
-	return match?.[1] || null;
-};
-
-const searchFromPath = (path?: string | null): string => {
-	const query = String(path || '').split('?')[1];
-	return query ? `?${query}` : '';
-};
-
-// B2 / T24: the thread lives in `?channel=thread:<root>`; a server path that
-// still carries the legacy `threadRootId` is rewritten first.
-const resolveThreadRootId = (item: any): string | null => {
-	const path = rewriteLegacyChannelPath(item?.actionPath as string | null);
-	const search = searchFromPath(path);
-	if (!search) {
-		return null;
-	}
-	const { channel } = parseChannel(search);
-	return channel?.kind === 'thread' ? channel.rootId : null;
-};
-
-// #847: Matrix room for the embedded preview — params.roomRef when the
-// backend sent it (#846), else the room segment of the stored actionPath
-// (/sessions/<role>/<list>/<roomId>/<sessionId>).
-const resolveRoomId = (item: any): string | null => {
-	if (item?.params?.roomRef) {
-		return String(item.params.roomRef);
-	}
-	const path = item?.actionPath;
-	if (!path) {
-		return null;
-	}
-	const segments = String(path).split('?')[0].split('/').filter(Boolean);
-	const roomSegment = segments.find(
-		(segment) => segment.startsWith('!') || segment.startsWith('%21')
-	);
-	return roomSegment ? decodeURIComponent(roomSegment) : null;
-};
-
-const resolveCaseHandoverRequestId = (item: any): string | null => {
-	const path = item?.actionPath;
-	const search = searchFromPath(path);
-	if (!search) {
-		return null;
-	}
-	const params = new URLSearchParams(search);
-	return params.get('caseHandoverRequestId');
-};
-
-const parseNumericId = (value?: string | null): number | null => {
-	if (!value || !/^\d+$/.test(value)) {
-		return null;
-	}
-	const parsed = Number(value);
-	return Number.isSafeInteger(parsed) ? parsed : null;
 };
 
 type JoinOutcome = Awaited<ReturnType<typeof callManager.joinExistingCall>>;
@@ -355,17 +234,8 @@ export const NotificationsCenter = () => {
 		addNotification
 	} = useContext(NotificationsContext);
 	// #1535: unsent drafts join the list here only, not the provider feed.
-	const timelineDrafts = useTimelineDrafts();
-	const notificationFeed = useMemo(
-		() => mergeDraftsIntoFeed(serverFeed, timelineDrafts),
-		[serverFeed, timelineDrafts]
-	);
-	const markNotificationAsRead = useCallback(
-		(id: string) => {
-			if (!isTimelineDraftId(id)) markServerNotificationAsRead(id);
-		},
-		[markServerNotificationAsRead]
-	);
+	const { feed: notificationFeed, markRead: markNotificationAsRead } =
+		useTimelineFeed(serverFeed, markServerNotificationAsRead);
 	// #1377 slice 3: the user's display filter for this list (spec §4/§5.1).
 	const {
 		effective: timelineFilter,
@@ -384,13 +254,6 @@ export const NotificationsCenter = () => {
 		() => applyTimelineFilter(notificationFeed, timelineFilter),
 		[notificationFeed, timelineFilter]
 	);
-	// Design feedback 2026-07-12: on mobile nothing is pre-selected — a
-	// selection immediately opens the conversation there, so an auto-selected
-	// first card would be surprising. Desktop keeps the first card selected so
-	// the detail pane is never empty.
-	const [selectedNotificationId, setSelectedNotificationId] = useState<
-		string | null
-	>(untilL ? null : notificationFeed[0]?.id || null);
 	// WP-06 Slice 1: timeline family filter chip + search. `null` = no chip
 	// active = show everything (the former "All" chip duplicated this default
 	// and is gone). Chips toggle and always compose on top of the search query.
@@ -398,17 +261,16 @@ export const NotificationsCenter = () => {
 		useState<TimelineFamilyFilter>(null);
 	const [unreadOnly, setUnreadOnly] = useState(false);
 	const [searchQuery, setSearchQuery] = useState('');
-	const [hydratedMessagePreviews, setHydratedMessagePreviews] = useState<
-		Record<string, { text: string; kind: MatrixActivityPreviewKind }>
-	>({});
+	// #924: decrypted card previews, behind the case-handover gate.
+	const {
+		sources: messagePreviewSources,
+		onPreviewChange: handlePreviewChange,
+		visiblePreview
+	} = useActivityPreviewHydration(notificationFeed);
 	const [caseHandoverConsentSubmitting, setCaseHandoverConsentSubmitting] =
 		useState(false);
 	const [caseHandoverConsentError, setCaseHandoverConsentError] =
 		useState('');
-	// Timeline redesign: embedded conversation preview is opt-in through the
-	// expander pill attached to the active card (Figma: Active Chat History
-	// Selection state) instead of always-on.
-	const [embeddedChatOpen, setEmbeddedChatOpen] = useState(false);
 	const [cardMenuAnchor, setCardMenuAnchor] = useState<HTMLElement | null>(
 		null
 	);
@@ -459,7 +321,7 @@ export const NotificationsCenter = () => {
 	// Preserve the first visible card when a live refresh prepends new events.
 	// Appending an older page naturally keeps the same anchor position.
 	//
-	// `hydratedMessagePreviews` belongs in the dependencies as much as the feed
+	// `visiblePreview` belongs in the dependencies as much as the feed
 	// does: a card above the viewport growing from one line to two on
 	// decryption shifts the list by exactly as much as a prepended event would.
 	useLayoutEffect(() => {
@@ -481,7 +343,7 @@ export const NotificationsCenter = () => {
 		}
 
 		captureListAnchor();
-	}, [captureListAnchor, notificationFeed, hydratedMessagePreviews]);
+	}, [captureListAnchor, notificationFeed, visiblePreview]);
 
 	// Timeline redesign: resizable list column, same interaction pattern as the
 	// conversation page (SessionsListWrapper + ResizableHandle).
@@ -582,201 +444,6 @@ export const NotificationsCenter = () => {
 				: current
 		);
 	}, [timelineFilter]);
-	const previewLabels = useMemo<MatrixActivityPreviewLabels>(
-		() => ({
-			image: translate('notifications.center.preview.image'),
-			file: translate('notifications.center.preview.file'),
-			audio: translate('notifications.center.preview.audio'),
-			video: translate('notifications.center.preview.video'),
-			notice: translate('notifications.center.preview.notice'),
-			// System notices read as the chat words them (MessageItemComponent).
-			userLeftChat: hasUserAuthority(
-				AUTHORITIES.CONSULTANT_DEFAULT,
-				userData
-			)
-				? translate('message.userLeftChat')
-				: translate('message.consultantLeftChat'),
-			chatEndedText: (endedBy) =>
-				translate(
-					chatEndedTextKey(
-						endedBy,
-						hasUserAuthority(
-							AUTHORITIES.CONSULTANT_DEFAULT,
-							userData
-						)
-					)
-				),
-			inquiryAccepted: translate(
-				'notifications.events.inquiryAccepted.text'
-			),
-			caseHandoverTakenOver: translate(
-				'caseHandover.systemMessage.tookOverTitle'
-			),
-			systemNotification: translate('message.systemNotificationTitle'),
-			unsupported: translate('notifications.center.preview.unsupported'),
-			// The chat's own wording for a message this device cannot decrypt.
-			undecryptable: translate('e2ee.message.encryption.text'),
-			undecryptableMissingKey: translate(
-				`${MISSING_KEY_COPY_KEY}.title`,
-				{ count: 1 }
-			),
-			pending: translate('notifications.center.preview.pending'),
-			roomUnavailable: translate(
-				'notifications.center.preview.roomUnavailable'
-			),
-			eventUnavailable: translate(
-				'notifications.center.preview.eventUnavailable'
-			)
-		}),
-		[translate, userData]
-	);
-	const candidatePreviewSources = useMemo(
-		() =>
-			notificationFeed.flatMap((item) => {
-				if (
-					item.eventType !== 'message.new' &&
-					item.eventType !== 'thread.reply.new'
-				) {
-					return [];
-				}
-				const matrixEventId = item.params?.matrixEventId;
-				const sessionId = resolveSessionId(item);
-				const session = getExtendedSession(
-					sessionId || undefined,
-					sessions || []
-				);
-				const roomRef = item.params?.roomRef || session?.rid;
-				if (!matrixEventId || !roomRef) {
-					return [];
-				}
-				return [
-					{
-						activityEventId: item.id,
-						roomRef,
-						matrixEventId,
-						senderName: item.params?.senderName,
-						fallbackText: describeItem(
-							item,
-							translate,
-							i18n.language
-						).text,
-						labels: previewLabels,
-						sessionId,
-						needsCaseHandoverCheck: requiresCaseHandoverCheck(
-							session,
-							userData?.userId
-						)
-					}
-				];
-			}),
-		[
-			notificationFeed,
-			previewLabels,
-			sessions,
-			translate,
-			i18n.language,
-			userData?.userId
-		]
-	);
-	// Only sessions that could be curtained cost a status request; a group
-	// chat, an enquiry or one's own case previews without one.
-	const checkedSessionIds = useMemo(
-		() =>
-			Array.from(
-				new Set(
-					candidatePreviewSources
-						.filter(
-							(source) =>
-								source.needsCaseHandoverCheck &&
-								source.sessionId
-						)
-						.map((source) => source.sessionId as string)
-				)
-			).sort(),
-		[candidatePreviewSources]
-	);
-	const isCaseHandoverPreviewAllowed =
-		useCaseHandoverPreviewGate(checkedSessionIds);
-	const messagePreviewSources = useMemo(
-		() =>
-			candidatePreviewSources
-				.filter((source) => {
-					if (!source.needsCaseHandoverCheck) {
-						return true;
-					}
-					// A card whose session cannot even be named is one we have
-					// no way to clear, so it never hydrates.
-					return (
-						Boolean(source.sessionId) &&
-						isCaseHandoverPreviewAllowed(source.sessionId)
-					);
-				})
-				.map(
-					({
-						needsCaseHandoverCheck: _needsCheck,
-						sessionId: _sessionId,
-						...source
-					}) => source
-				),
-		[candidatePreviewSources, isCaseHandoverPreviewAllowed]
-	);
-	// Previews are dropped again the moment their card stops being allowed —
-	// a session arriving late in SessionsDataContext can turn a hydrated card
-	// into a curtained one, and the decrypted text would otherwise survive in
-	// this map, still feeding the card body and the search index.
-	const allowedPreviewIds = useMemo(
-		() =>
-			new Set(
-				messagePreviewSources.map((source) => source.activityEventId)
-			),
-		[messagePreviewSources]
-	);
-	useEffect(() => {
-		setHydratedMessagePreviews((current) => {
-			const staleIds = Object.keys(current).filter(
-				(activityEventId) => !allowedPreviewIds.has(activityEventId)
-			);
-			if (staleIds.length === 0) {
-				return current;
-			}
-			const next = { ...current };
-			staleIds.forEach((activityEventId) => delete next[activityEventId]);
-			return next;
-		});
-	}, [allowedPreviewIds]);
-	/**
-	 * The only way a hydrated preview should ever be read.
-	 *
-	 * The purge above is state cleanup and lands one render late; in the render
-	 * where a card loses its allowance the decrypted text is still in the map.
-	 * Reading through this guard means a curtained card never shows it, not
-	 * even for a single paint.
-	 */
-	const visiblePreview = useCallback(
-		(activityEventId: string) =>
-			allowedPreviewIds.has(activityEventId)
-				? hydratedMessagePreviews[activityEventId]
-				: undefined,
-		[allowedPreviewIds, hydratedMessagePreviews]
-	);
-	const handlePreviewChange = useCallback(
-		(
-			activityEventId: string,
-			preview: string,
-			kind: MatrixActivityPreviewKind
-		) => {
-			setHydratedMessagePreviews((current) =>
-				current[activityEventId]?.text === preview &&
-				current[activityEventId]?.kind === kind
-					? current
-					: {
-							...current,
-							[activityEventId]: { text: preview, kind }
-						}
-			);
-		},
-		[]
-	);
 
 	// WP-06 Slice 1: client-side filter (family chip + search). Search matches
 	// the client-rendered strings only — ADR-AT-01 forbids server full-text.
@@ -794,7 +461,7 @@ export const NotificationsCenter = () => {
 					)
 				},
 				(item) => {
-					const { title, text } = describeItem(
+					const { title, text } = describeActivityEvent(
 						item,
 						translate,
 						i18n.language
@@ -815,28 +482,26 @@ export const NotificationsCenter = () => {
 		]
 	);
 
-	// Keep the master-detail selection inside the visible (filtered) feed.
-	// Mobile never auto-selects (see selectedNotificationId above).
-	const effectiveSelectedId = useMemo(() => {
-		if (
-			selectedNotificationId &&
-			filteredFeed.some((item) => item.id === selectedNotificationId)
-		) {
-			return selectedNotificationId;
-		}
-		return untilL ? null : (filteredFeed[0]?.id ?? null);
-	}, [filteredFeed, selectedNotificationId, untilL]);
-
-	useEffect(() => {
-		if (selectedNotificationId !== effectiveSelectedId) {
-			setSelectedNotificationId(effectiveSelectedId);
-		}
-	}, [effectiveSelectedId, selectedNotificationId]);
+	// #1888: selection, #845 auto-read and "next unread" in one hook.
+	const {
+		selectedId: activeNotificationId,
+		selectedEvent: selectedNotification,
+		select: selectNotification,
+		nextUnreadId,
+		conversationShown: showEmbeddedChat,
+		toggleConversation
+	} = useActivityTimeline({
+		feed: filteredFeed,
+		routeSelection: activeSelection,
+		isPhone: untilL,
+		unreadOnly,
+		markRead: markNotificationAsRead
+	});
 
 	// Clear any stale case-handover consent error when the selection changes.
 	useEffect(() => {
 		setCaseHandoverConsentError('');
-	}, [selectedNotificationId]);
+	}, [activeNotificationId]);
 
 	// Clear the active family filter when that family is no longer in the feed
 	// (no selection means "show everything" — there is no "All" chip).
@@ -850,77 +515,29 @@ export const NotificationsCenter = () => {
 		}
 	}, [familiesInFeed, activeFamily]);
 
-	// WP-06 Slice 0b: resolve a SINGLE active card id through the shared
-	// selection primitive over the visible feed. When a conversation is
-	// route-active its card wins; otherwise the in-page master-detail selection
-	// is used. Exactly one card is active by construction.
-	const activeNotificationId = useMemo(
-		() =>
-			pickActiveItemKey(
-				filteredFeed,
-				activeSelection,
-				(item) => ({ sessionId: resolveSessionId(item) }),
-				(item) => item.id,
-				effectiveSelectedId
-			),
-		[filteredFeed, activeSelection, effectiveSelectedId]
-	);
-
-	// Preview-first (design feedback 2026-07-12): selecting a chat event shows
-	// the embedded conversation preview right away (Slack-style activity view);
-	// the plain text detail is one toggle away via the card menu. Non-message
-	// events keep the text detail. The preview never outlives its notification.
-	// E2EE note: the preview is the user's own session view rendered in the
-	// same client — decryption stays client-side, nothing extra leaves the
-	// device (same boundary as ADR-AT-01).
-	useEffect(() => {
-		const item =
-			filteredFeed.find(
-				(feedItem) => feedItem.id === activeNotificationId
-			) || null;
-		setEmbeddedChatOpen(
-			Boolean(item && resolveItemCategory(item) === 'message')
-		);
-	}, [activeNotificationId, filteredFeed]);
-
-	const selectedNotification = useMemo(
-		() =>
-			filteredFeed.find((item) => item.id === activeNotificationId) ||
-			null,
-		[filteredFeed, activeNotificationId]
-	);
+	// Preview-first (design feedback 2026-07-12): a chat event shows its
+	// conversation right away; the text detail is one toggle away via the card
+	// menu (useActivityTimeline). E2EE note: the preview is the user's own
+	// session view rendered in the same client — decryption stays client-side
+	// (same boundary as ADR-AT-01).
 	const selectedNotificationCategory = useMemo(
 		() =>
 			selectedNotification
-				? resolveItemCategory(selectedNotification)
+				? activityEventCategory(selectedNotification)
 				: 'system',
 		[selectedNotification]
 	);
 
-	// #845: on desktop the selected card is rendered in the detail pane —
-	// displayed means read (Slack semantics). This also covers the
-	// auto-selected first card, which previously stayed unread and made
-	// the Next button die on its first click. Skipped while the unread
-	// filter is on: marking read would drop the card from the filtered
-	// list and cascade-read the entire feed one selection at a time.
-	useEffect(() => {
-		if (untilL || unreadOnly) {
-			return;
-		}
-		if (selectedNotification && !selectedNotification.readAt) {
-			markNotificationAsRead(selectedNotification.id);
-		}
-	}, [untilL, unreadOnly, selectedNotification, markNotificationAsRead]);
 	const selectedDisplay = useMemo(
 		() =>
 			selectedNotification
-				? describeItem(selectedNotification, translate, i18n.language)
+				? describeActivityEvent(
+						selectedNotification,
+						translate,
+						i18n.language
+					)
 				: null,
 		[selectedNotification, translate, i18n.language]
-	);
-	const selectedSessionId = useMemo(
-		() => resolveSessionId(selectedNotification),
-		[selectedNotification]
 	);
 	const {
 		linksToStatusPage: selectedLinksToStatusPage,
@@ -939,21 +556,19 @@ export const NotificationsCenter = () => {
 			);
 	const canOpenSelected =
 		!selectedLinksToStatusPage || selectedStatusPageUrl !== null;
-	const selectedThreadRootId = useMemo(
-		() => resolveThreadRootId(selectedNotification),
-		[selectedNotification]
-	);
-	const selectedCaseHandoverRequestId = useMemo(
-		() => resolveCaseHandoverRequestId(selectedNotification),
-		[selectedNotification]
-	);
 	const selectedSessionNumericId = useMemo(
-		() => parseNumericId(selectedSessionId),
-		[selectedSessionId]
+		() =>
+			selectedNotification
+				? activityEventSessionId(selectedNotification)
+				: null,
+		[selectedNotification]
 	);
 	const selectedCaseHandoverRequestNumericId = useMemo(
-		() => parseNumericId(selectedCaseHandoverRequestId),
-		[selectedCaseHandoverRequestId]
+		() =>
+			selectedNotification
+				? activityEventCaseHandoverRequestId(selectedNotification)
+				: null,
+		[selectedNotification]
 	);
 	const canShowChatPreview = selectedNotificationCategory === 'message';
 	const canDecideCaseHandoverConsent =
@@ -987,17 +602,6 @@ export const NotificationsCenter = () => {
 			),
 		[getDefaultSessionsPath, getDefaultRequestsPath]
 	);
-	// #847: the preview renders from the app's own Matrix client — no more
-	// embeddedNotifications iframe (a second SPA whose session view registered
-	// an active view and suppressed the timeline's own message events).
-	const selectedRoomId = useMemo(
-		() =>
-			canShowChatPreview && selectedNotification
-				? resolveRoomId(selectedNotification)
-				: null,
-		[canShowChatPreview, selectedNotification]
-	);
-
 	const isGroupCallRoom = (roomRef: string) =>
 		Boolean(
 			sessions?.some(
@@ -1113,7 +717,7 @@ export const NotificationsCenter = () => {
 			navigate(getDefaultSessionsPath());
 			return;
 		}
-		setSelectedNotificationId(item.id);
+		selectNotification(item.id);
 	};
 
 	const handleOpenAction = () => {
@@ -1125,14 +729,9 @@ export const NotificationsCenter = () => {
 			}
 			return;
 		}
-		const nextUnreadId = getNextNotificationId(
-			filteredFeed,
-			selectedNotification.id,
-			true
-		);
 		markNotificationAsRead(selectedNotification.id);
-		if (nextUnreadId && nextUnreadId !== selectedNotification.id) {
-			setSelectedNotificationId(nextUnreadId);
+		if (nextUnreadId) {
+			selectNotification(nextUnreadId);
 		}
 		if (openKnock(selectedNotification)) return;
 		if (joinCall(selectedNotification)) return;
@@ -1145,14 +744,7 @@ export const NotificationsCenter = () => {
 	};
 
 	const handleNextNotification = () => {
-		const nextUnreadId = getNextNotificationId(
-			filteredFeed,
-			selectedNotificationId,
-			true
-		);
-		// #845: defensive self-guard — the queue already excludes the
-		// anchor, so a match is always a different card.
-		if (nextUnreadId && nextUnreadId !== selectedNotificationId) {
+		if (nextUnreadId) {
 			const nextItem = filteredFeed.find(
 				(item) => item.id === nextUnreadId
 			);
@@ -1190,15 +782,20 @@ export const NotificationsCenter = () => {
 			.finally(() => setCaseHandoverConsentSubmitting(false));
 	};
 
-	const nextUnreadId = getNextNotificationId(
-		filteredFeed,
-		selectedNotificationId,
-		true
-	);
 	const SelectedIcon = selectedDisplay
 		? getEventIcon(selectedDisplay.descriptor.icon)
 		: null;
-	const showEmbeddedChat = Boolean(embeddedChatOpen && canShowChatPreview);
+	// #847 / #1824: the conversation behind the selected card, rendered from
+	// the app's own Matrix client (no embeddedNotifications iframe, whose
+	// session view registered an active view and suppressed the Timeline's
+	// own message events), with D1 and D2 (useTimelineConversation).
+	const conversation = useTimelineConversation({
+		event: showEmbeddedChat ? selectedNotification : null,
+
+		feed: notificationFeed,
+		unreadOnly,
+		markRead: markNotificationAsRead
+	});
 
 	if (notificationFeed.length === 0) {
 		return (
@@ -1367,11 +964,12 @@ export const NotificationsCenter = () => {
 								activeIndex !== -1 && index === activeIndex - 1;
 							const isAfterActive =
 								activeIndex !== -1 && index === activeIndex + 1;
-							const { descriptor, title, text } = describeItem(
-								item,
-								translate,
-								i18n.language
-							);
+							const { descriptor, title, text } =
+								describeActivityEvent(
+									item,
+									translate,
+									i18n.language
+								);
 							const hydratedPreview = visiblePreview(item.id);
 							const visibleText = hydratedPreview?.text || text;
 							const Icon = hydratedPreview?.kind
@@ -1641,7 +1239,7 @@ export const NotificationsCenter = () => {
 					{canShowChatPreview && (
 						<MenuItem
 							onClick={() => {
-								setEmbeddedChatOpen((value) => !value);
+								toggleConversation();
 								setCardMenuAnchor(null);
 							}}
 						>
@@ -1698,8 +1296,22 @@ export const NotificationsCenter = () => {
 						</div>
 					) : showEmbeddedChat ? (
 						<ConversationPreview
-							roomId={selectedRoomId}
-							threadRootId={selectedThreadRootId}
+							roomId={conversation.roomId}
+							threadRootId={conversation.preview?.threadRootId}
+							access={conversation.preview ?? undefined}
+							openedThreadRootId={conversation.openedThreadRootId}
+							onShownThreadChange={
+								conversation.setOpenedThreadRootId
+							}
+							conversationPath={
+								selectedNotification
+									? getNotificationActionPath(
+											selectedNotification
+										)
+									: null
+							}
+							onConversationRead={conversation.onConversationRead}
+							onOpenConversation={handleOpenAction}
 						/>
 					) : (
 						<div className="notificationsCenter__detailBody">

@@ -133,7 +133,7 @@ const renderErstantwortMessage = (
 		agency,
 		timelineMessages,
 		ownEvent = false,
-		readOnly = false
+		previewMode
 	} = {} as {
 		raw?: string;
 		account?: Record<string, unknown>;
@@ -142,7 +142,7 @@ const renderErstantwortMessage = (
 		agency?: Record<string, unknown>;
 		timelineMessages?: MessageItem[];
 		ownEvent?: boolean;
-		readOnly?: boolean;
+		previewMode?: 'read' | 'interactive';
 	}
 ) =>
 	render(
@@ -205,7 +205,7 @@ const renderErstantwortMessage = (
 										handleDecryptionErrors={() => {}}
 										handleDecryptionSuccess={() => {}}
 										e2eeParams={mockE2eeParams() as any}
-										readOnly={readOnly}
+										previewMode={previewMode}
 									/>
 								)}
 							</ActiveSessionContext.Provider>
@@ -883,9 +883,22 @@ describe('read-only preview keeps the cards readable, without their controls', (
 		expect(node.closest('[aria-hidden="true"]')).toBeNull();
 	};
 
+	it('embedded in the Activity Timeline (#1824): text without actions or notification setup, even when writable', () => {
+		const result = renderErstantwortMessage(tenantWith(true), {
+			previewMode: 'interactive'
+		});
+		expectReadable(GREETING_BAUSTEIN_BODY);
+		expect(
+			screen.queryByRole('button', { name: 'E-Mail-Adresse angeben' })
+		).toBeNull();
+		expect(
+			result.container.querySelector('.notificationChoiceHost')
+		).toBeNull();
+	});
+
 	it('shows the Erstantwort text, but no action or notification-setup buttons', () => {
 		const result = renderErstantwortMessage(tenantWith(true), {
-			readOnly: true
+			previewMode: 'read'
 		});
 		expectReadable(GREETING_BAUSTEIN_BODY);
 		expectReadable(EMAIL_BAUSTEIN_BODY);
@@ -901,7 +914,7 @@ describe('read-only preview keeps the cards readable, without their controls', (
 
 	it('shows the case-handover notice text, but no settings button', () => {
 		const result = renderErstantwortMessage(tenantWith(true), {
-			readOnly: true,
+			previewMode: 'read',
 			account: { grantedAuthorities: [AUTHORITIES.ASKER_DEFAULT] },
 			session: { id: 73, status: 2 },
 			raw:
@@ -927,7 +940,7 @@ describe('read-only preview keeps the cards readable, without their controls', (
 
 	it('shows the acceptance notice text, but no settings button', () => {
 		const result = renderErstantwortMessage(tenantWith(true), {
-			readOnly: true,
+			previewMode: 'read',
 			account: { grantedAuthorities: [AUTHORITIES.ASKER_DEFAULT] },
 			session: { id: 73, status: 2 },
 			raw:
