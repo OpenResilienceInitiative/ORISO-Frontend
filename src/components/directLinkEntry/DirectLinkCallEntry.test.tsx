@@ -10,6 +10,7 @@ import {
 	vi
 } from 'vite-plus/test';
 import { apiPostRegistration } from '../../api/apiPostRegistration';
+import { TenantContext } from '../../globalState';
 import type { InviteLinkContext } from '../../api/apiGetInviteLinkContext';
 import type { CallEntryRoomProps } from '../waitingRoom/callEntry/CallEntryRoom';
 import { DirectLinkCallEntry } from './DirectLinkCallEntry';
@@ -44,9 +45,11 @@ vi.mock('../waitingRoom/callEntry/CallEntryRoom', () => ({
 		onJoin,
 		signedIn,
 		hidePassword,
-		consent
+		consent,
+		usernameEditable
 	}: CallEntryRoomProps) => (
 		<>
+			<div>{usernameEditable ? 'typed names' : 'generated names'}</div>
 			<div>
 				{signedIn
 					? 'existing account'
@@ -107,6 +110,45 @@ const call: InviteLinkContext = {
 	temporaryAccount: true,
 	hidePasswordField: true
 };
+
+const renderWithSettings = (settings: Record<string, boolean>) =>
+	render(
+		<TenantContext.Provider
+			value={
+				{ tenant: { settings }, setTenant: () => undefined } as never
+			}
+		>
+			<DirectLinkCallEntry
+				token="shared-token"
+				context={call}
+				modality="video"
+			/>
+		</TenantContext.Provider>
+	);
+
+describe('the User-ID of a call guest', () => {
+	afterEach(cleanup);
+
+	it('can be typed where the counselling name rule allows it', async () => {
+		renderWithSettings({});
+		await screen.findByText('typed names');
+	});
+
+	it.each([
+		'featureDisplayNameEditable',
+		'featureDisplayNameEditableAgencyCounsellingEnabled'
+	])('is generated only when %s is off', async (setting) => {
+		renderWithSettings({ [setting]: false });
+		await screen.findByText('generated names');
+	});
+
+	it('follows the counselling rule, not the live chat one', async () => {
+		renderWithSettings({
+			featureDisplayNameEditableLiveChatEnabled: false
+		});
+		await screen.findByText('typed names');
+	});
+});
 
 describe('entry before a shared call', () => {
 	beforeEach(() => {

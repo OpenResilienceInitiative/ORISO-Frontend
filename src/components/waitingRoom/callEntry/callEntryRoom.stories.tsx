@@ -253,6 +253,31 @@ export const VideoUserIdTooShort: Story = {
 	}
 };
 
+export const VideoUserIdGeneratedOnly: Story = {
+	name: 'Video · User-ID generated only',
+	globals: desktop1440Globals,
+	args: {
+		...ready,
+		modality: 'video',
+		initialUsername: 'not-a-suggestion',
+		usernameEditable: false
+	},
+	play: async ({ canvasElement, canvas }) => {
+		await expectWaitingRoomLayout(canvasElement);
+		// The Träger allows no typed names; the suggest buttons still work.
+		const field = canvasElement.querySelector<HTMLInputElement>(
+			'input[autocomplete="username"]'
+		);
+		await expect(field).toHaveAttribute('readonly');
+		const suggest = canvas.getByRole('button', { name: 'User-ID' });
+		await expect(suggest).toBeEnabled();
+		await userEvent.click(suggest);
+		await waitFor(() =>
+			expect(field?.value).toMatch(/^[a-z0-9_]+_[1-9][0-9]{3}$/)
+		);
+	}
+};
+
 export const VideoUserIdTaken: Story = {
 	name: 'Video · User-ID already taken',
 	globals: desktop1440Globals,

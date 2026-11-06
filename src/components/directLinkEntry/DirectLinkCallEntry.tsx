@@ -36,6 +36,7 @@ import { loginPathForDirectLink } from '../../utils/directLinkReturn';
 import { SharedCallGuest } from './SharedCallGuest';
 import { EntryRoomShell } from '../anonymousChat/entryRoom/EntryRoomShell';
 import { hasActiveAuthSession } from '../auth/auth';
+import { isAskerDisplayNameTypingAllowed } from '../../utils/askerAccountPolicy';
 
 const AuthenticatedApp = lazyWithReload(loadAuthenticatedApp);
 
@@ -247,6 +248,10 @@ const DirectLinkCallEntryForm = ({
 			onJoin={handleJoin}
 			hidePassword={Boolean(
 				context.temporaryAccount && context.hidePasswordField
+			)}
+			usernameEditable={isAskerDisplayNameTypingAllowed(
+				tenant?.settings,
+				'AGENCY_COUNSELLING'
 			)}
 		/>
 	);

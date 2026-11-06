@@ -118,6 +118,11 @@ export interface CallEntryRoomProps {
 	 * but the field and its suggest button are not shown.
 	 */
 	hidePassword?: boolean;
+	/**
+	 * `false` when the Träger allows no typed names: the account creation
+	 * accepts only a generated User-ID then (ORISO-UserService#1494).
+	 */
+	usernameEditable?: boolean;
 	/** An existing account only needs the device and consent checks. */
 	signedIn?: boolean;
 	loginLink?: React.ReactNode;
@@ -161,6 +166,7 @@ export const CallEntryRoom = ({
 	playTone,
 	checkUsername,
 	hidePassword = false,
+	usernameEditable = true,
 	signedIn = false,
 	loginLink
 }: CallEntryRoomProps) => {
@@ -206,6 +212,16 @@ export const CallEntryRoom = ({
 	useEffect(() => {
 		onDeviceStateChange?.({ micOn, cameraOn, selection });
 	}, [onDeviceStateChange, micOn, cameraOn, selection]);
+
+	// Typing closed while the room is open: a typed User-ID would be refused
+	// at the end, and the field can no longer correct it.
+	const wasEditable = useRef(usernameEditable);
+	useEffect(() => {
+		if (wasEditable.current && !usernameEditable) {
+			setUsername(toRegistrationUsername(identity));
+		}
+		wasEditable.current = usernameEditable;
+	}, [usernameEditable, identity]);
 
 	const select = (kind: CallDeviceKind, id: string) => {
 		setSelection((current) => ({ ...current, [kind]: id }));
@@ -345,6 +361,7 @@ export const CallEntryRoom = ({
 								hidePassword={hidePassword}
 								usernameFeedback={usernameFeedback}
 								onUsernameBlur={() => setUsernameBlurred(true)}
+								usernameEditable={usernameEditable}
 							/>
 							{loginLink}
 						</Box>
