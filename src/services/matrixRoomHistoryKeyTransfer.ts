@@ -452,7 +452,16 @@ export class MatrixRoomHistoryKeyTransfer {
 				)
 			: candidates;
 		if (this.client !== client) return false;
-		if (targets.length === 0) {
+		// The lookups above are asynchronous. The written reason describes the
+		// conversation, so re-check who is still in the room right before it
+		// leaves: someone removed in the meantime must not receive it.
+		const stillJoined = new Set(
+			room.getJoinedMembers().map((member) => member.userId)
+		);
+		const deliverable = reasoned
+			? targets.filter((target) => stillJoined.has(target.userId))
+			: targets;
+		if (deliverable.length === 0) {
 			emitDiagnostic('request-no-target-device');
 			return false;
 		}
@@ -472,7 +481,7 @@ export class MatrixRoomHistoryKeyTransfer {
 			...(reason ? { reason } : {})
 		};
 		const deliveryResults = await Promise.allSettled(
-			targets.map((target) =>
+			deliverable.map((target) =>
 				client.encryptAndSendToDevice(
 					KEY_REQUEST_EVENT,
 					[target],
@@ -497,7 +506,7 @@ export class MatrixRoomHistoryKeyTransfer {
 				detail: {
 					roomId,
 					targetCount: deliveredTargetCount,
-					attemptedTargetCount: targets.length
+					attemptedTargetCount: deliverable.length
 				}
 			})
 		);

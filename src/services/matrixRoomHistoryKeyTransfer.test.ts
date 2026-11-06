@@ -244,6 +244,27 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 		expect(harness.client.encryptAndSendToDevice).not.toHaveBeenCalled();
 	});
 
+	it('does not send a written reason to a member who left during the trust lookups', async () => {
+		const harness = buildHarness();
+		harness.crypto.getDeviceVerificationStatus.mockImplementation(
+			async () => {
+				harness.memberships.set(PEER, member(PEER, 'leave'));
+				return {
+					isVerified: () => false,
+					signedByOwner: true,
+					crossSigningVerified: false
+				};
+			}
+		);
+		const service = new MatrixRoomHistoryKeyTransfer();
+		service.initialize(harness.client as any);
+
+		expect(
+			await service.requestKeys(ROOM_ID, { reason: 'about my school' })
+		).toBe(false);
+		expect(harness.client.encryptAndSendToDevice).not.toHaveBeenCalled();
+	});
+
 	it('does not send a written reason to a user whose identity changed', async () => {
 		const harness = buildHarness();
 		harness.crypto.getUserVerificationStatus.mockResolvedValue({
