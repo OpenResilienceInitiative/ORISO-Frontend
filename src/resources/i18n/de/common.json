@@ -3032,6 +3032,7 @@
 				},
 				"kind": {
 					"new": "Neue Anfrage",
+					"teamDiscussion": "Team-Besprechung",
 					"standard": "Standard-Benachrichtigung",
 					"liveChat": "Live-Chat-Nachricht",
 					"mention": "@ Erwähnung",
@@ -3042,7 +3043,11 @@
 				"play": "Ton vorhören",
 				"volumeUp": "Lauter",
 				"volumeDown": "Leiser",
+				"unavailable": {
+					"notSentYet": "Diese Benachrichtigung ist noch nicht verfügbar."
+				},
 				"showBanner": "Banner anzeigen",
+				"systemTone": "Ton für Systemmeldungen",
 				"ringTone": "Klingelton",
 				"wecker": {
 					"title": "Wecker-Modus (geplant)",
