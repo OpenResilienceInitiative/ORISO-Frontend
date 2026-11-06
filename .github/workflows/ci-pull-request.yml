@@ -2,13 +2,16 @@ name: Frontend PR Validation
 
 on:
     pull_request:
+    # Runs this workflow for GitHub merge queue groups. It does nothing until the
+    # merge queue is switched on for the branch.
+    merge_group:
 
 env:
     REGISTRY: ghcr.io
     ORG: openresilienceinitiative
 
 concurrency:
-    group: frontend-pr-${{ github.event.pull_request.number }}
+    group: frontend-pr-${{ github.event.pull_request.number || github.ref }}
     cancel-in-progress: true
 
 jobs:
@@ -20,6 +23,9 @@ jobs:
         steps:
             - name: Checkout repository
               uses: actions/checkout@v6
+
+            - name: Test immutable release publisher guard
+              run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s .github/scripts/release-publisher -p 'test_*.py'
 
             # Runs lint, type-check, unit tests and the app build.
             - name: Run frontend validation and build

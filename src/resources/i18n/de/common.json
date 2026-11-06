@@ -189,6 +189,29 @@
 		}
 	},
 	"attachments": {
+		"composer": {
+			"group": "Anhang: {{name}}",
+			"remove": "{{name}} entfernen",
+			"cancel": "Abbrechen",
+			"retry": "Erneut senden",
+			"chooseAnother": "Andere Datei wählen",
+			"captionHint": "Der Text wird als Beschriftung mitgesendet.",
+			"progressLabel": "{{name}} wird gesendet",
+			"status": {
+				"preparing": "Wird vorbereitet …",
+				"uploading": "Wird hochgeladen",
+				"finishing": "Wird gesendet …"
+			},
+			"error": {
+				"tooLarge": "Diese Datei ist {{size}} groß. Erlaubt sind höchstens {{limit}} MB. Es wurde nichts hochgeladen.",
+				"format": "Dieses Dateiformat ist nicht erlaubt. Möglich sind jpg, png, pdf, docx, xlsx, webm, ogg und mp3.",
+				"serverTooLarge": "Der Server lehnt diese Datei als zu groß ab. Datei und Text bleiben hier.",
+				"network": "Die Verbindung ist abgebrochen. Datei und Text bleiben hier.",
+				"service": "Der Dienst ist gerade nicht erreichbar. Datei und Text bleiben hier.",
+				"cancelled": "Abgebrochen. Datei und Text bleiben hier.",
+				"other": "Das Senden hat nicht geklappt. Datei und Text bleiben hier."
+			}
+		},
 		"download": {
 			"label": "Herunterladen",
 			"aria": "{{name}} herunterladen"
@@ -2527,6 +2550,10 @@
 			"serviceNoticePlanned": {
 				"title": "Geplante Wartung",
 				"text": "Am {{maintenanceDate}} ist die Plattform zwischen {{maintenanceStart}} und {{maintenanceEnd}} Uhr nicht erreichbar. Bereits geschriebene Nachrichten gehen nicht verloren."
+			},
+			"sessionAskerDeleted": {
+				"title": "Gelöschte:r Ratsuchende:r",
+				"text": "Ein Chat mit einer ratsuchenden Person wurde gelöscht. Persönliche Daten und Nachrichten sind nicht mehr verfügbar."
 			}
 		},
 		"error": "Fehlgeschlagen",
@@ -2579,7 +2606,21 @@
 				"loadingOlder": "Ältere Nachrichten werden geladen …",
 				"loadOlderFailed": "Ältere Nachrichten konnten nicht geladen werden.",
 				"retryLoadOlder": "Erneut versuchen",
-				"historyStart": "Beginn des Gesprächs"
+				"historyStart": "Beginn des Gesprächs",
+				"markRead": "Unterhaltung als gelesen markieren",
+				"openToReply": "Zum Antworten die Unterhaltung öffnen",
+				"sendFailed": "Senden fehlgeschlagen. Ihr Text bleibt erhalten.",
+				"composerPlaceholder": "Antwort schreiben …",
+				"markedRead": "Als gelesen markiert",
+				"archivedOpenToReply": "Diese Unterhaltung ist archiviert. Öffnen Sie die Unterhaltung, um zu antworten.",
+				"notJoined": "Nur lesen, bis Ihr Beitritt bestätigt und der Raum geladen ist.",
+				"supervisorNoComposer": "Als Supervisor:in können Sie hier reagieren, aber nicht schreiben.",
+				"teamClosed": "Die Teamberatung ist geschlossen.",
+				"curtained": "Dieser Fall ist für Sie gerade nicht einsehbar.",
+				"backToConversation": "Zurück zur Unterhaltung",
+				"enquiryOpenToAccept": "Diese Anfrage ist noch nicht angenommen. Öffnen Sie die Unterhaltung, um sie anzunehmen.",
+				"consentOpenToContinue": "Bitte bestätigen Sie zuerst im Chat, wie es weitergeht. Öffnen Sie dazu die Unterhaltung.",
+				"actionFailed": "Das hat nicht geklappt. Bitte versuchen Sie es erneut."
 			},
 			"loadOlder": "Ältere Aktivitäten laden",
 			"loadingOlder": "Ältere Aktivitäten werden geladen…",
@@ -3016,6 +3057,7 @@
 				},
 				"kind": {
 					"new": "Neue Anfrage",
+					"teamDiscussion": "Team-Besprechung",
 					"standard": "Standard-Benachrichtigung",
 					"liveChat": "Live-Chat-Nachricht",
 					"mention": "@ Erwähnung",
@@ -3026,7 +3068,11 @@
 				"play": "Ton vorhören",
 				"volumeUp": "Lauter",
 				"volumeDown": "Leiser",
+				"unavailable": {
+					"notSentYet": "Diese Benachrichtigung ist noch nicht verfügbar."
+				},
 				"showBanner": "Banner anzeigen",
+				"systemTone": "Ton für Systemmeldungen",
 				"ringTone": "Klingelton",
 				"wecker": {
 					"title": "Wecker-Modus (geplant)",
@@ -4290,6 +4336,10 @@
 			}
 		},
 		"anonymous": {
+			"queueNotFirst": {
+				"headline": "Ein anderer Gast ist zuerst an der Reihe",
+				"text": "Eine frühere Anfrage in dieser Warteschlange muss zuerst angenommen werden."
+			},
 			"takenByOtherConsultant": {
 				"button": {
 					"label": "Schließen"
@@ -4611,6 +4661,10 @@
 					"text": "Der Termin konnte nicht abgesagt werden. Bitte versuchen Sie es erneut."
 				}
 			}
+		},
+		"deletedAsker": {
+			"title": "Gelöschte:r Ratsuchende:r",
+			"hint": "Dieser Chat wurde gelöscht. Persönliche Daten und Nachrichten sind nicht mehr verfügbar."
 		}
 	},
 	"statusOverlay": {
@@ -5706,7 +5760,18 @@
 			"browser": "Geben Sie mir hier ein Signal",
 			"browserHint": "Ohne Adresse — funktioniert aber nur auf diesem Gerät.",
 			"enableBrowser": "Browser aktivieren",
+			"dialog": {
+				"title": "Browser-Benachrichtigungen einschalten",
+				"description": "Wählen Sie den Ton, den Sie hören werden, und erlauben Sie dann Benachrichtigungen in Ihrem Browser.",
+				"stayInBrowser": "Das funktioniert, solange ORISO in diesem Browser auf diesem Gerät geöffnet bleibt.",
+				"toneLabel": "Benachrichtigungston",
+				"tone": "Ton {{number}}",
+				"noTone": "Kein Ton"
+			},
 			"browserDenied": "Browser-Benachrichtigungen sind nicht aktiviert. Bitte prüfen Sie die Berechtigung in Ihrem Browser.",
+			"optionActive": "Aktiv",
+			"browserBlockedHelp": "Browser-Benachrichtigungen sind für diese Seite blockiert. Klicken Sie in der Adressleiste auf das Schloss-Symbol, öffnen Sie die Website-Einstellungen, stellen Sie Benachrichtigungen auf Zulassen oder wählen Sie Zurücksetzen, und versuchen Sie es dann erneut.",
+			"emailSavedNext": "Ihre E-Mail-Adresse ist gespeichert. Ein Schritt fehlt noch: Erlauben Sie Benachrichtigungen in Ihrem Browser.",
 			"saveFailed": "Die Einstellung konnte nicht bestätigt werden. Bitte versuchen Sie es erneut.",
 			"active": "Aktiviert: {{channel}}",
 			"bothSetup": "Beides einrichten",
@@ -5762,6 +5827,8 @@
 			"headline": "Benachrichtigung per E-Mail",
 			"body": "Sie können freiwillig eine E-Mail-Adresse hinterlegen. Dann erhalten Sie eine Nachricht, sobald eine Antwort da ist. Der Inhalt der Beratung steht nie in dieser E-Mail.",
 			"action": "E-Mail-Adresse angeben",
+			"dialogTitle": "Zugang sichern",
+			"dialogDescription": "Hinterlegen Sie eine E-Mail-Adresse, damit Sie Ihr Passwort später zurücksetzen können und von Antworten erfahren. Der Inhalt der Beratung steht nie in dieser E-Mail.",
 			"saveFailed": "Speichern hat nicht geklappt. Bitte versuchen Sie es noch einmal.",
 			"notAllowed": "Für dieses Konto ist das Hinterlegen einer E-Mail-Adresse nicht freigegeben. Bitte kontaktieren Sie unseren Support.",
 			"refreshFailed": "Ihre E-Mail-Adresse ist gespeichert. Die aktuellen Einstellungen konnten nicht geladen werden.",

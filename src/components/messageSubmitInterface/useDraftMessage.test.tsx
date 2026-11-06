@@ -218,6 +218,40 @@ describe('useDraftMessage', () => {
 		}
 	);
 
+	it('a side-room composer never loads or clears the main room’s draft (#1824)', async () => {
+		const side = 'scope:!side:matrix.test|thread:main';
+		mocks.apiGetUserDraft.mockImplementation(async (key) => {
+			if (key === side) throw new Error('EMPTY');
+			return { scopeKey: key, text: '<p>Main-room draft</p>' } as any;
+		});
+		const loadDraft = vi.fn();
+		const { result } = renderHook(
+			() =>
+				useDraftMessage(true, loadDraft, {
+					forcedScopeKey: side,
+					isolateScope: true
+				}),
+			{ wrapper }
+		);
+		await waitFor(() => expect(result.current.loaded).toBe(true));
+		expect(mocks.apiGetUserDraft.mock.calls.map(([key]) => key)).toEqual([
+			side
+		]);
+		expect(loadDraft).not.toHaveBeenCalledWith(
+			expect.anything(),
+			'<p>Main-room draft</p>'
+		);
+		await act(async () => {
+			await result.current.clearDraftMessage();
+		});
+		const deleted = mocks.apiDeleteUserDraft.mock.calls.map(([key]) => key);
+		expect(deleted).toContain(side);
+		// The main room's and the session's drafts stay (the shared draft
+		// index is bookkeeping, not a conversation's draft).
+		expect(deleted).not.toContain('scope:!room:matrix.test|thread:main');
+		expect(deleted).not.toContain('scope:42|thread:main');
+	});
+
 	it('does not resume a disabled buffer into a different conversation', async () => {
 		const loadDraft = vi.fn();
 		const { result, rerender } = renderHook(
@@ -293,6 +327,25 @@ describe('useDraftMessage', () => {
 		expect(mocks.apiDeleteUserDraft).toHaveBeenCalledWith(
 			'scope:session-42|thread:main'
 		);
+	});
+
+	it('retires the draft of a scope the composer has left', async () => {
+		const loadDraft = vi.fn();
+		const { result, rerender } = renderHook(
+			({ scope }) =>
+				useDraftMessage(true, loadDraft, { forcedScopeKey: scope }),
+			{ wrapper, initialProps: { scope: 'scope:room-a|thread:main' } }
+		);
+		const leftScope = result.current.draftScope;
+
+		rerender({ scope: 'scope:room-b|thread:main' });
+		await act(async () => {
+			await result.current.retireDraftScope(leftScope);
+		});
+
+		const deleted = mocks.apiDeleteUserDraft.mock.calls.map(([key]) => key);
+		expect(deleted).toContain('scope:room-a|thread:main');
+		expect(deleted).not.toContain('scope:room-b|thread:main');
 	});
 
 	// #976: a zero-content autosave used to upsert `text: ''`, which left a

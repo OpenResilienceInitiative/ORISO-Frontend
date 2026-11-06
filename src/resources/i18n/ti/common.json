@@ -189,6 +189,29 @@
 		}
 	},
 	"attachments": {
+		"composer": {
+			"group": "ተሓዝቶ፦ {{name}}",
+			"remove": "{{name}} ኣልግስ",
+			"cancel": "ሰርዝ",
+			"retry": "ደጊምካ ስደድ",
+			"chooseAnother": "ካልእ ፋይል ምረጽ",
+			"captionHint": "እቲ ጽሑፍ ከም መግለጺ ናይቲ ፋይል ይለኣኽ።",
+			"progressLabel": "{{name}} ይለኣኽ ኣሎ",
+			"status": {
+				"preparing": "ይዳሎ ኣሎ …",
+				"uploading": "ይጽዓን ኣሎ",
+				"finishing": "ይለኣኽ ኣሎ …"
+			},
+			"error": {
+				"tooLarge": "እዚ ፋይል {{size}} እዩ። እቲ ዝለዓለ ገደብ {{limit}} MB እዩ። ዝተጻዕነ የለን።",
+				"format": "እዚ ዓይነት ፋይል ኣይፍቀድን። jpg፣ png፣ pdf፣ docx፣ xlsx፣ webm፣ ogg ከምኡ'ውን mp3 ክትጥቀሙ ትኽእሉ።",
+				"serverTooLarge": "እቲ ሰርቨር እዚ ፋይል ኣዝዩ ዓቢ ስለዝኾነ ነጺግዎ። ፋይልን ጽሑፍን ኣብዚ ይጸንሑ።",
+				"network": "እቲ ምትእስሳር ተቋሪጹ። ፋይልን ጽሑፍን ኣብዚ ይጸንሑ።",
+				"service": "እቲ ኣገልግሎት ሕጂ ኣይርከብን። ፋይልን ጽሑፍን ኣብዚ ይጸንሑ።",
+				"cancelled": "ተሰሪዙ። ፋይልን ጽሑፍን ኣብዚ ይጸንሑ።",
+				"other": "ምልኣኽ ኣይተዓወተን። ፋይልን ጽሑፍን ኣብዚ ይጸንሑ።"
+			}
+		},
 		"download": {
 			"label": "ምውራድ",
 			"aria": "{{name}} ኣውርድ"
@@ -2495,6 +2518,10 @@
 			"serviceNoticePlanned": {
 				"title": "ብመደብ ዝተታሕዘ ጽገና",
 				"text": "ኣብ {{maintenanceDate}}፣ እቲ መድረኽ ካብ {{maintenanceStart}} ክሳብ {{maintenanceEnd}} ኣይርከብን። ቅድሚ ሕጂ ዝጸሓፍኩምዎም መልእኽትታት ኣይጠፍኡን።"
+			},
+			"sessionAskerDeleted": {
+				"title": "ዝተሰረዘ ደላዪ ምኽሪ",
+				"text": "ምስ ደላዪ ምኽሪ ዝነበረ ቻት ተሰሪዙ። ውልቃዊ ሓበሬታን መልእኽትታትን ድሕሪ ሕጂ ኣይርከቡን።"
 			}
 		},
 		"error": "ወዲቑ",
@@ -2547,7 +2574,21 @@
 				"loadingOlder": "ዝቐደሙ መልእኽትታት ይመጹ ኣለዉ …",
 				"loadOlderFailed": "ዝቐደሙ መልእኽትታት ክመጹ ኣይከኣሉን።",
 				"retryLoadOlder": "እንደገና ፈትን",
-				"historyStart": "መጀመርታ ዝርርብ"
+				"historyStart": "መጀመርታ ዝርርብ",
+				"markRead": "ዘተ ከም ዝተነበበ ምልካዕ",
+				"openToReply": "ንምምላስ ዘተ ክፈት",
+				"sendFailed": "ምስዳድ ኣይተሳኽዐን። ጽሑፍካ ይተርፍ።",
+				"composerPlaceholder": "መልሲ ጽሓፍ …",
+				"markedRead": "ከም ዝተነበበ ተመልኪቱ",
+				"archivedOpenToReply": "እዚ ዘተ ኣብ መዝገብ ተቐሚጡ ኣሎ። ንምምላስ ዘተ ክፈት።",
+				"notJoined": "ምስታፍካ ክሳብ ዝጸድቕን እቲ ክፍሊ ክሳብ ዝጽዓንን ንምንባብ ጥራይ።",
+				"supervisorNoComposer": "ከም ተቆጻጻሪ ኣብዚ ምላሽ ክትህብ ትኽእል ኢኻ፡ ክትጽሕፍ ግን ኣይትኽእልን።",
+				"teamClosed": "ዘተ ጉጅለ ተዓጽዩ ኣሎ።",
+				"curtained": "እዚ ጉዳይ ሕጂ ንዓኻ ኣይረኣይን እዩ።",
+				"backToConversation": "ናብ ዘተ ተመለስ",
+				"enquiryOpenToAccept": "እዚ ሕቶ ገና ኣይተቐበለን። ንምቕባሉ ዘተ ክፈት።",
+				"consentOpenToContinue": "በጃኹም ቅድሚ ኩሉ ኣብ ቻት ከመይ ከም እትቕጽሉ ኣረጋግጹ። ንዕኡ ዘተ ክፈቱ።",
+				"actionFailed": "ኣይሰርሐን። በጃኹም ደጊምኩም ፈትኑ።"
 			},
 			"loadOlder": "ዝዓበየ ንጥፈታት ጽዓን",
 			"loadingOlder": "ዝዓበየ ንጥፈታት ይጽዕን ኣሎ…",
@@ -2953,6 +2994,7 @@
 				},
 				"kind": {
 					"new": "ሓድሽ ሕቶ",
+					"teamDiscussion": "ናይ ጋንታ ዕላል",
 					"standard": "ልሙድ መፍለጢ",
 					"liveChat": "መልእኽቲ ቀጥታ ዕላል",
 					"mention": "@ ምጥቃስ",
@@ -2963,7 +3005,11 @@
 				"play": "ድምጺ ቅድመ ስማዕ",
 				"volumeUp": "ዓው ኣብል",
 				"volumeDown": "ትሕት ኣብል",
+				"unavailable": {
+					"notSentYet": "እዚ መፍለጢ ገና ኣይተረኽበን።"
+				},
 				"showBanner": "ባነር ኣርኢ",
+				"systemTone": "ናይ ሲስተም ሓበሬታታት ድምጺ",
 				"ringTone": "ናይ ደወል ድምጺ",
 				"wecker": {
 					"title": "ናይ ኣላርም ኩነታት (ተመዲቡ ዘሎ)",
@@ -4259,6 +4305,10 @@
 			}
 		},
 		"anonymous": {
+			"queueNotFirst": {
+				"headline": "ካልእ ጋሻ ኣቐዲሙ ኣብ መስርዕ ኣሎ",
+				"text": "ኣብዚ መስርዕ ኣቐዲሙ ዝመጸ ሕቶ መጀመርታ ክቕበል ኣለዎ።"
+			},
 			"takenByOtherConsultant": {
 				"button": {
 					"label": "ዕፁው"
@@ -4583,6 +4633,10 @@
 					"text": "እቲ ቆጸራ ክስረዝ ኣይከኣለን። በጃኹም እንደገና ፈትኑ።"
 				}
 			}
+		},
+		"deletedAsker": {
+			"title": "ዝተሰረዘ ደላዪ ምኽሪ",
+			"hint": "እዚ ቻት ተሰሪዙ። ውልቃዊ ሓበሬታን መልእኽትታትን ድሕሪ ሕጂ ኣይርከቡን።"
 		}
 	},
 	"statusOverlay": {
@@ -5712,6 +5766,8 @@
 			"action": "ናይ ኢመይል ኣድራሻ ግለጽ",
 			"saveFailed": "ምዕቃብ ኣይሰለጠን። በጃኹም ደጊምኩም ፈትኑ።",
 			"notAllowed": "እዚ ሕሳብ እዚ ኢመይል ኣድራሻ ክዕቅብ ፍቓድ የብሉን። በጃኹም ንደገፍና ተወከሱ።",
+			"dialogDescription": "ብድሕሪ ምስጢራዊ ቃልኩም ከተሐድሱን መልስ ክመጽእ ከሎ ክትፈልጡን ዝኽእል ኢ-መይል ሓዱ ሕደጉ። ትሕዝቶ ምኽሪ ኣብዚ ኢ-መይል ፈጺሙ ኣይግለጽን።",
+			"dialogTitle": "ኣቶምኩም የስተማቕሩ",
 			"refreshFailed": "ኢመይል ኣድራሻኹም ተዓቂቡ ኣሎ። ናይ ሕጂ ቅጥዕታትኩም ክጽዓኑ ኣይከኣሉን።",
 			"retryRefresh": "ደጊምኩም ጽዓኑ"
 		},
@@ -5763,6 +5819,17 @@
 			"channelEmail": "ኢ-መይል",
 			"enableBrowser": "ናይ መርበብ መርኣዪ ምልክታታት ወልዑ",
 			"saveFailed": "እቲ ቅጥዒ ክረጋገጽ ኣይከኣለን። በጃኹም ደጊምኩም ፈትኑ።",
+			"browserBlockedHelp": "ናይ ብሮውዘር መተሓሳሰቢታት ንዚ ሳይት ተኸሊኽሎም ኣለዉ። ኣብ ኣድራሻ መስመር ዘሎ ናይ መቆለፊ ምልክት ጠውቑ፡ ናይ ሳይት ቅጥዕታት ክፈቱ፡ መተሓሳሰቢታት ናብ ፍቐድ ኣቐምጡ ወይ ከም ብሓድሽ ኣቐምጡ ምረጹ፡ ደጊምኩም ፈትኑ።",
+			"optionActive": "ንጡፍ",
+			"emailSavedNext": "ኢ-መይል ኣድራሻኹም ተቐሚጡ። ሓደ ስጉምቲ ተሪፉ፦ ኣብ ብሮውዘርኩም መተሓሳሰቢታት ፍቐዱ።",
+			"dialog": {
+				"description": "እትሰምዕዎ ድምጺ ምረጹ፡ ድሕሪኡ ኣብ ብሮውዘርኩም መተሓሳሰቢታት ፍቐዱ።",
+				"noTone": "ድምጺ የለን",
+				"stayInBrowser": "እዚ ORISO ኣብዚ ብሮውዘር ኣብዚ መሳርሒ ክሳብ ዝኸፈተ ይሰርሕ።",
+				"title": "ናይ ብሮውዘር መተሓሳሰቢታት ኣንቅሑ",
+				"tone": "ድምጺ {{number}}",
+				"toneLabel": "ድምጺ መተሓሳሰቢ"
+			},
 			"emailAccepted": "ለውጢ ናይ ኢመይል ምልክታታት ተቐቢሉ ኣሎ።",
 			"refreshFailed": "እቲ ለውጢ ተቐቢሉ ኣሎ። ናይ ሕጂ ቅጥዕታትኩም ክጽዓኑ ኣይከኣሉን።"
 		},

@@ -10,5 +10,3 @@ export const dispatchHighlightSnippetSelected = (
 		new CustomEvent(HIGHLIGHT_SNIPPET_SELECTED_EVENT, { detail: payload })
 	);
 };
-
-

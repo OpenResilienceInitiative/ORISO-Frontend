@@ -75,6 +75,7 @@ import { ReactComponent as ProfileIcon } from '../../resources/img/icons/profil_
 import { ReactComponent as MenuVideoCallIcon } from '../../resources/img/icons/modality-video.svg';
 import { ReactComponent as MenuAudioCallIcon } from '../../resources/img/icons/timeline-add-call.svg';
 import { NotificationConfigDialog } from '../profile/NotificationSettings/NotificationConfigDialog';
+import { notificationRoleFor } from '../profile/NotificationSettings/notificationRole';
 import { useNotificationSettings } from '../../hooks/useNotificationSettings';
 import { LegalLinkMenuIcon } from '../legalLinks/LegalLinkMenuIcon';
 import { getLegalLinkKind } from '../legalLinks/useLegalLinkContent';
@@ -205,6 +206,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 	const { settings: notifSettings, updateSettings: updateNotifSettings } =
 		useNotificationSettings();
 	const appConfig = useAppConfig();
+	const notificationRole = notificationRoleFor(userData);
 	// Never link to an e-mail panel the Admin permissions hide (#1979). Read
 	// the merged tenant context, like the Settings panel itself: the
 	// per-session refresh is a raw partial answer and could disagree.
@@ -212,7 +214,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 	const hasEmailSettings = hasEmailSettingsPanel(
 		appConfig,
 		tenant?.settings,
-		!!hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
+		notificationRole === 'consultant'
 	);
 	const [overlayActive, setOverlayActive] = useState(false);
 	const [legalModal, setLegalModal] = useState<{
@@ -1277,9 +1279,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 				}}
 				onClose={() => setNotifConfigOpen(false)}
 				showEmailLink={hasEmailSettings}
-				showLiveChatRow={
-					!!hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
-				}
+				role={notificationRole}
 			/>
 		</div>
 	);

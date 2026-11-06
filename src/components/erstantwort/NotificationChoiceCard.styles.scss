@@ -46,6 +46,22 @@
 	border-width: 2px;
 }
 
+.notificationChoiceCard__head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+}
+
+.notificationChoiceCard__check {
+	display: inline-flex;
+	flex: 0 0 auto;
+	align-items: center;
+	gap: 4px;
+	font-size: 13px;
+	font-weight: 600;
+}
+
 .notificationChoiceCard__label {
 	font-size: 15px;
 	font-weight: 600;

@@ -37,10 +37,13 @@ export interface ResolvedChatTransportSession {
 }
 
 export interface SendTextMessageOptions {
-	roomIdOrSessionId: string | number;
+	/** @deprecated unused by the Matrix transport; callers may omit it. */
+	roomIdOrSessionId?: string | number;
 	message: string;
-	sendMailNotification: boolean;
-	isEncrypted: boolean;
+	/** @deprecated unused by the Matrix transport; callers may omit it. */
+	sendMailNotification?: boolean;
+	/** @deprecated unused by the Matrix transport; callers may omit it. */
+	isEncrypted?: boolean;
 	sessionId?: number;
 	matrixRoomId?: string;
 	threadRootId?: string | null;
@@ -300,18 +303,23 @@ class ChatTransportService {
 		options: SendFileMessageOptions = {}
 	): Promise<any> {
 		const matrixClientService = getMatrixClientService();
+		if (!matrixClientService) {
+			throw new Error('Matrix client not initialized');
+		}
 		const matrixSenderUserId =
 			options.feedbackMailIntent && !options.teamDiscussion
-				? matrixClientService?.getClient()?.getUserId() || null
+				? matrixClientService.getClient()?.getUserId() || null
 				: null;
-		const response = await matrixClientService?.sendFileMessage(
+		const response = await matrixClientService.sendFileMessage(
 			matrixRoomId,
 			file,
 			{
 				abortController: options.abortController,
 				uploadProgress: options.uploadProgress,
 				threadRootId: options.threadRootId,
-				replyToEventId: options.replyToEventId
+				replyToEventId: options.replyToEventId,
+				caption: options.caption,
+				mentionedUserIds: options.mentionedUserIds
 			}
 		);
 
@@ -333,6 +341,9 @@ class ChatTransportService {
 				supervisorMessage: !!options.supervisorMessage,
 				teamDiscussion: !!options.teamDiscussion,
 				senderDisplayName: options.senderDisplayName || null,
+				mentionedUserIds: options.mentionedUserIds?.length
+					? options.mentionedUserIds
+					: null,
 				matrixEventId: response?.event_id || null
 			}).catch(() => undefined);
 
@@ -703,23 +714,25 @@ class ChatTransportService {
 	 * Safe no-op when the Matrix client or room is not available —
 	 * there is no legacy fallback transport.
 	 */
-	public async markRoomAsRead(matrixRoomId: string): Promise<void> {
+	public async markRoomAsRead(matrixRoomId: string): Promise<boolean> {
 		const matrixClient = getMatrixClientService()?.getClient?.();
 		if (!matrixClient || !matrixRoomId) {
-			return;
+			return false;
 		}
 
 		const room = matrixClient.getRoom?.(matrixRoomId);
 		const events = room?.getLiveTimeline?.()?.getEvents?.() || [];
 		const latestEvent = events[events.length - 1];
 		if (!latestEvent) {
-			return;
+			return false;
 		}
 
 		try {
 			await (matrixClient as any).sendReadReceipt(latestEvent);
+			return true;
 		} catch {
 			// keep UI responsive; the receipt is retried on the next read
+			return false;
 		}
 	}
 }

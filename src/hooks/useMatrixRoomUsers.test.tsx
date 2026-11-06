@@ -11,6 +11,7 @@ import {
 } from 'vite-plus/test';
 import { ActiveSessionContext } from '../globalState';
 import { useMatrixRoomUsers } from './useMatrixRoomUsers';
+import { resolvePanelCallActions } from '../components/chatStage/panelCallActionsState';
 
 const ROOM_ID = '!room:matrix.example.org';
 
@@ -83,6 +84,44 @@ describe('useMatrixRoomUsers', () => {
 	afterEach(() => {
 		cleanup();
 		vi.useRealTimers();
+	});
+
+	it('refreshes the supervision room when membership changes without a new message', async () => {
+		const sideRoom = '!supervision:matrix.example.org';
+		let onMembership: () => void = () => {};
+		mocks.onMatrixRoomMembers.mockImplementation((roomId, listener) => {
+			if (roomId === sideRoom) onMembership = listener;
+			return () => {};
+		});
+		mocks.loadMatrixRoomMembers.mockResolvedValueOnce([
+			{ userId: '@marge:x' }
+		]);
+		const { result } = renderHook(() => useMatrixRoomUsers(sideRoom), {
+			wrapper
+		});
+		await waitFor(() => expect(result.current.users).toHaveLength(1));
+		const isCallDisabled = () =>
+			resolvePanelCallActions({
+				width: 640,
+				participantCount: result.current.users.length,
+				audioEnabled: true,
+				videoEnabled: true
+			}).disabled;
+		expect(isCallDisabled()).toBe(true);
+		expect(mocks.loadMatrixRoomMembers).toHaveBeenCalledWith(sideRoom);
+		mocks.loadMatrixRoomMembers.mockResolvedValue([
+			{ userId: '@marge:x' },
+			{ userId: '@selma:x' }
+		]);
+		act(() => onMembership());
+		await waitFor(() => expect(result.current.users).toHaveLength(2));
+		expect(isCallDisabled()).toBe(false);
+	});
+
+	it('does not load the main room while no supervision room is known', () => {
+		renderHook(() => useMatrixRoomUsers(null), { wrapper });
+		expect(mocks.loadMatrixRoomMembers).not.toHaveBeenCalled();
+		expect(mocks.onMatrixRoomMembers).not.toHaveBeenCalled();
 	});
 
 	it('returns the complete member set after the lazy load resolved', async () => {
