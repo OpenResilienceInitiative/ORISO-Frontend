@@ -87,6 +87,8 @@ export const endpoints = {
 	ownCallKnocks: userServiceOrigin + '/service/users/call-knocks/mine/',
 	/* A direct-link guest's own temporary account (ORISO-UserService#1486). */
 	temporaryAccount: userServiceOrigin + '/service/users/temporary-account',
+	liveChatConversion:
+		userServiceOrigin + '/service/users/live-chat-account/conversion',
 	consultantStatistics:
 		userServiceOrigin + '/service/users/statistics/consultant',
 	consultantsLanguages:

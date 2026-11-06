@@ -3455,7 +3455,17 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 															event.preventDefault();
 															event.stopPropagation();
 															navigate(
-																'/registration'
+																isAnonymousAskerExperience
+																	? '/live-chat/convert'
+																	: '/registration',
+																{
+																	state: {
+																		topicId:
+																			activeSession
+																				.item
+																				.mainTopicId
+																	}
+																}
 															);
 														}}
 													>
@@ -3714,6 +3724,25 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 								!selectedPseudonym.displayName.trim()
 							}
 						/>
+					</div>
+				)}
+
+				{isAnonymousAskerExperience && sessionStatusNum === 3 && (
+					<div className="session__pseudonymActionBarSlot">
+						<MuiButton
+							variant="contained"
+							onClick={() =>
+								navigate('/live-chat/convert', {
+									state: {
+										topicId: activeSession.item.mainTopicId
+									}
+								})
+							}
+						>
+							{translate(
+								'anonymousChat.noAvailability.startMailCounseling'
+							)}
+						</MuiButton>
 					</div>
 				)}
 
@@ -4113,7 +4142,13 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					<MuiButton
 						fullWidth
 						variant="contained"
-						onClick={() => navigate('/registration')}
+						onClick={() =>
+							navigate('/live-chat/convert', {
+								state: {
+									topicId: activeSession.item.mainTopicId
+								}
+							})
+						}
 						sx={{
 							mb: '8px',
 							borderRadius: '999px',
