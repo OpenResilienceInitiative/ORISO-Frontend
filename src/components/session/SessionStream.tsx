@@ -1643,7 +1643,9 @@ export const SessionStream = ({
 									}
 								/>
 							)}
-						{recoveryStatus === 'needs-recovery-key' &&
+						{(recoveryStatus === 'needs-recovery-key' ||
+							unreadableRoomId ===
+								resolvedChatSession.matrixRoomId) &&
 							hasUserAuthority(
 								AUTHORITIES.ASKER_DEFAULT,
 								userData
