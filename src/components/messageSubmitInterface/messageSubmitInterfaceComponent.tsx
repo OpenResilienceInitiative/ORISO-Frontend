@@ -62,6 +62,7 @@ import {
 	shouldShowAudienceSelector
 } from './audienceSelectorVisibility';
 import { useComposerDock } from './useComposerDock';
+import { useEditorResize } from './useEditorResize';
 import {
 	createEnquirySubmissionGuard,
 	dispatchAskerMessageTransport,
@@ -678,6 +679,16 @@ export const MessageSubmitInterfaceComponent = ({
 	// transition reads the old chrome and locks a mid-flight height into
 	// `--composer-height`; every ended height transition re-measures.
 	const [composerSettleTick, setComposerSettleTick] = useState(0);
+	const observeEditorContainer = useEditorResize(() =>
+		setComposerSettleTick((tick) => tick + 1)
+	);
+	const setTextareaInputRef = useCallback(
+		(node: HTMLDivElement | null) => {
+			textareaInputRef.current = node;
+			observeEditorContainer(node);
+		},
+		[observeEditorContainer]
+	);
 	const [isComposerResizing, setIsComposerResizing] = useState(false);
 	const [isComposerSelected, setIsComposerSelected] = useState(false);
 	const composerResizeStartRef = useRef<{
@@ -4163,8 +4174,10 @@ export const MessageSubmitInterfaceComponent = ({
 			composerChromeHeight,
 			bounds
 		});
-		setAutoComposerHeight(
-			nextHeight > bounds.minHeight ? nextHeight : null
+		const nextAutoHeight =
+			nextHeight > bounds.minHeight ? nextHeight : null;
+		setAutoComposerHeight((previous) =>
+			previous === nextAutoHeight ? previous : nextAutoHeight
 		);
 	}, [
 		attachmentCardFile,
@@ -4819,7 +4832,7 @@ export const MessageSubmitInterfaceComponent = ({
 									editingMessageId &&
 										'textarea__input--editing'
 								)}
-								ref={textareaInputRef}
+								ref={setTextareaInputRef}
 								style={
 									attachmentCardFile && attachmentCardHeight
 										? ({

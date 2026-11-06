@@ -3017,6 +3017,17 @@ export const NewMessagesFollowWhileWatching: Story = {
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
 		const timeline = mainTimeline(canvasElement);
+		await waitFor(() => {
+			expect(
+				canvasElement
+					.querySelector('[data-cy="stage-main"]')
+					?.getAttribute('data-scroll-ready')
+			).toBe('true');
+			expect(
+				timeline.scrollHeight -
+					(timeline.scrollTop + timeline.clientHeight)
+			).toBeLessThanOrEqual(BOTTOM_TOLERANCE_PX);
+		});
 		for (const body of ARRIVALS) {
 			await userEvent.click(deliverNext(canvasElement));
 			await canvas.findByText(body);

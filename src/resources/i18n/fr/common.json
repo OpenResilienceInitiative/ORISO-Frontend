@@ -3020,6 +3020,7 @@
 				},
 				"kind": {
 					"new": "Nouvelle demande",
+					"teamDiscussion": "Discussion d'équipe",
 					"standard": "Notification standard",
 					"liveChat": "Message du chat en direct",
 					"mention": "Mention @",
@@ -3030,7 +3031,11 @@
 				"play": "Écouter le son",
 				"volumeUp": "Plus fort",
 				"volumeDown": "Moins fort",
+				"unavailable": {
+					"notSentYet": "Cette notification n'est pas encore disponible."
+				},
 				"showBanner": "Afficher la bannière",
+				"systemTone": "Son des notifications système",
 				"ringTone": "Sonnerie",
 				"wecker": {
 					"title": "Mode réveil (prévu)",
