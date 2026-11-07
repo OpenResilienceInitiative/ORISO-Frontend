@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vite-plus/test';
 import {
 	getGroupSeries,
 	getGroupUpcomingDates,
+	getGroupWaitingRoomSchedule,
 	getGroupWaitingRoomTopic
 } from './groupWaitingRoomData';
 
@@ -32,6 +33,73 @@ describe('groupWaitingRoomData', () => {
 	afterAll(() => {
 		if (runnerZone === undefined) delete process.env.TZ;
 		else process.env.TZ = runnerZone;
+	});
+
+	const projected = (
+		start: string,
+		occurrenceIndex: number,
+		duration = 60
+	) => ({
+		seriesId: 15,
+		occurrenceIndex,
+		start,
+		originalStart: start,
+		duration,
+		modality: 'TEXT' as const
+	});
+	const recurring = {
+		startDateWithTime: '2026-11-10T20:59:00Z',
+		chatInterval: 'WEEKLY',
+		repeatCount: 3,
+		duration: 60,
+		timezone: 'Europe/Berlin'
+	};
+
+	it('offers only projected dates and never exports a recurrence across a skipped date', () => {
+		const surviving = [
+			projected(recurring.startDateWithTime, 0),
+			projected('2026-11-24T20:59:00Z', 2)
+		];
+		const schedule = getGroupWaitingRoomSchedule(
+			recurring,
+			surviving,
+			Date.parse('2026-11-09')
+		);
+		expect(
+			schedule.upcomingDates?.map((date) => date.toISOString())
+		).toEqual(surviving.map(({ start }) => new Date(start).toISOString()));
+		expect(schedule.series).toBeUndefined();
+	});
+
+	it('keeps an in-progress scheduled date until it ends and preserves an active clock anchor', () => {
+		const next = projected('2026-11-17T20:59:00Z', 1);
+		const running = projected(recurring.startDateWithTime, 0, 90);
+		const now = Date.parse('2026-11-10T22:00:00Z');
+		const schedule = getGroupWaitingRoomSchedule(
+			recurring,
+			[next, running],
+			now
+		);
+		expect(schedule.plannedStart).toEqual(new Date(running.start));
+		expect(schedule.durationMinutes).toBe(90);
+		const active = getGroupWaitingRoomSchedule(
+			{ ...recurring, active: true },
+			[next],
+			now
+		);
+		expect(active.plannedStart).toEqual(
+			new Date(recurring.startDateWithTime)
+		);
+	});
+
+	it('does not substitute legacy dates for an empty server projection', () => {
+		const schedule = getGroupWaitingRoomSchedule(recurring, []);
+		expect(schedule.plannedStart).toBeNull();
+		expect(schedule.upcomingDates).toEqual([]);
+		expect(schedule.series).toBeUndefined();
+		expect(getGroupWaitingRoomSchedule(recurring).plannedStart).toEqual(
+			new Date(recurring.startDateWithTime)
+		);
 	});
 
 	it('keeps the topic out until the privacy agreement is on record', () => {

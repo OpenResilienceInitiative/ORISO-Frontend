@@ -60,7 +60,10 @@ export const useAppointmentActions = ({
 							occurrence.seriesId,
 							occurrence.originalStart
 						).then(
-							() => onCancelled?.(entry),
+							() => {
+								onCancelled?.(entry);
+								notifyAppointmentsChanged();
+							},
 							() => onError?.()
 						);
 					} else if (

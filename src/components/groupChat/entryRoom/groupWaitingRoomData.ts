@@ -1,3 +1,4 @@
+import type { ChatOccurrence } from '../../../api/apiGetChatOccurrences';
 import { getGroupChatPlannedStart } from '../groupChatDate';
 import {
 	getGroupChatOccurrences,
@@ -11,7 +12,10 @@ import {
  * in the app's chat card (`JoinGroupChatView`). One reading, so the two
  * cannot drift apart (#1219).
  */
-interface GroupWaitingRoomChat {
+export interface GroupWaitingRoomChat {
+	id?: number;
+	active?: boolean;
+	duration?: number;
 	startDateWithTime?: string;
 	startDate?: string;
 	startTime?: string;
@@ -60,6 +64,53 @@ export const getGroupUpcomingDates = (
 	}
 	const series = getGroupSeries(chat);
 	return series ? getGroupChatOccurrences(start, series) : [start];
+};
+
+/** A loaded empty projection has no upcoming dates. Undefined allows legacy data. */
+export const getGroupWaitingRoomSchedule = (
+	chat: GroupWaitingRoomChat | undefined | null,
+	occurrences?: ChatOccurrence[],
+	now = Date.now()
+) => {
+	const series = getGroupSeries(chat);
+	const savedStart = chat ? getGroupChatPlannedStart(chat) : null;
+	if (occurrences === undefined) {
+		return {
+			plannedStart: savedStart,
+			upcomingDates: getGroupUpcomingDates(chat),
+			durationMinutes: chat?.duration,
+			series
+		};
+	}
+
+	const scheduled = occurrences
+		.map(({ start, duration }) => ({ date: new Date(start), duration }))
+		.filter(
+			({ date, duration }) => date.getTime() + duration * 60_000 > now
+		)
+		.sort((a, b) => a.date.getTime() - b.date.getTime());
+	const upcomingDates = scheduled.map(({ date }) => date);
+	const next = scheduled[0];
+	const durationMinutes = chat?.active ? chat.duration : next?.duration;
+	const projectedSeries =
+		series && upcomingDates.length > 1
+			? { ...series, count: upcomingDates.length }
+			: undefined;
+	// A recurring calendar rule must represent the projected dates exactly.
+	// An irregular series still offers individual exports for its surviving dates.
+	const canExportSeries =
+		projectedSeries &&
+		next &&
+		scheduled.every(({ duration }) => duration === durationMinutes) &&
+		getGroupChatOccurrences(next.date, projectedSeries).every(
+			(date, index) => date.getTime() === upcomingDates[index].getTime()
+		);
+	return {
+		plannedStart: chat?.active ? savedStart : (next?.date ?? null),
+		upcomingDates,
+		durationMinutes,
+		series: canExportSeries ? projectedSeries : undefined
+	};
 };
 
 /**
