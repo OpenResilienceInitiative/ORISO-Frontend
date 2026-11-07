@@ -609,7 +609,7 @@
 		},
 		"successOverlay": {
 			"button": "close",
-			"headline": "You have successfully deleted your Caritas Consulting & Help account."
+			"headline": "You have successfully deleted your ORISO account."
 		}
 	},
 	"deleteSession": {
@@ -3509,7 +3509,7 @@
 			"success": {
 				"button": "Compose message",
 				"copy": "You have successfully registered.",
-				"headline": "Welcome<br>to the consulting & help of Caritas."
+				"headline": "Welcome<br>to ORISO."
 			}
 		},
 		"overline": "Welcome to online consulting",
@@ -3784,7 +3784,7 @@
 				"buttonLabel": "Register",
 				"helperText": "Not registered yet?"
 			},
-			"subline": "How does Caritas Counseling & Assistance work?",
+			"subline": "How does counselling at ORISO work?",
 			"login": {
 				"buttonLabel": "Login",
 				"helperText": "Already registered?"

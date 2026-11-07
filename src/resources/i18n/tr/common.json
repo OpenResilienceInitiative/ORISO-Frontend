@@ -626,7 +626,7 @@
 		},
 		"successOverlay": {
 			"button": "Kapat",
-			"headline": "Caritas Beratung hesabınızı başarıyla sildiniz."
+			"headline": "ORISO hesabınızı başarıyla sildiniz."
 		}
 	},
 	"deleteSession": {
@@ -3540,7 +3540,7 @@
 			"success": {
 				"button": "Mesaj oluştur",
 				"copy": "Başarıyla kayıt oldunuz.",
-				"headline": "Caritas danışmanlık hizmetine<br>hoş geldiniz."
+				"headline": "ORISO'ya<br>hoş geldiniz."
 			}
 		},
 		"overline": "Çevrimiçi danışmanlığa hoş geldiniz",
@@ -3820,7 +3820,7 @@
 				"buttonLabel": "Kayıt Olun",
 				"helperText": "Çevrimiçi danışmanlıkta yeni misiniz?"
 			},
-			"subline": "Caritas danışmanlığı nasıl çalışır?",
+			"subline": "ORISO danışmanlığı nasıl çalışır?",
 			"login": {
 				"buttonLabel": "Giriş yap",
 				"helperText": "Zaten kayıtlı mısınız?"
@@ -5328,10 +5328,10 @@
 		}
 	},
 	"consultingTypes": {
-		"title": "Welcome to Caritas online counselling",
+		"title": "Welcome to ORISO online counselling",
 		"intro": "I am looking for counselling on the following topic:",
 		"selectGroup": "Please select a topic",
-		"learnMore": "Learn more about how Caritas counselling works",
+		"learnMore": "Learn more about how ORISO counselling works",
 		"info": "Info",
 		"details": {
 			"explanation": {
@@ -5340,7 +5340,7 @@
 			}
 		},
 		"overlay": {
-			"title": "How Caritas counselling works",
+			"title": "How ORISO counselling works",
 			"close": "Close"
 		},
 		"register": "Register"
