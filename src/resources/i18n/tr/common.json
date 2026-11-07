@@ -3767,6 +3767,7 @@
 				"note": "O ana kadar normal şekilde yazarsınız ve mesajlarınız diğerleri için kalır. Siz ise sonrasında bu görüşmeye geri dönemezsiniz."
 			},
 			"displayName": {
+				"matchesPassword": "Şifreniz görünen adınızda yer almamalıdır.",
 				"optional": "Görünen ad (isteğe bağlı). Boş bırakırsanız User-ID gösterilir.",
 				"suggest": "Ad öner",
 				"useUsername": "User-ID kullan"

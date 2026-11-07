@@ -335,6 +335,46 @@ it('rolling the login suggestion preserves the independently chosen avatar (#102
 });
 
 describe('optional ordinary registration alias', () => {
+	it('blocks the step while the alias contains the password (#2073)', async () => {
+		const password = 'Sichere-Passphrase9!';
+		setAccountDataDraft({
+			identity: generatePseudonym('de'),
+			generatedUsername: 'generated_login_1234',
+			username: 'fixed_login',
+			password,
+			repeatPassword: password,
+			acceptedConsentBinding: null,
+			email: '',
+			twoFactorAuthEnabled: false,
+			displayName: password
+		});
+		const onChange = vi.fn();
+		renderAccountData(
+			tenantWith({ featureDisplayNameEditable: true }),
+			{},
+			false,
+			onChange,
+			'snackbar',
+			'AGENCY_COUNSELLING'
+		);
+		expect(
+			await screen.findByText(
+				'registration.account.displayName.matchesPassword'
+			)
+		).not.toBeNull();
+		fireEvent.change(screen.getByLabelText('profile.data.displayName'), {
+			target: { value: 'Chosen alias' }
+		});
+		await waitFor(() =>
+			expect(onChange).toHaveBeenCalledWith(
+				expect.objectContaining({ displayName: 'Chosen alias' })
+			)
+		);
+		expect(onChange).not.toHaveBeenCalledWith(
+			expect.objectContaining({ displayName: password })
+		);
+	});
+
 	it('starts blank and keeps credentials and avatar when alias typing or dice changes', () => {
 		renderAccountData(tenantWith({}));
 		const login = screen.getByLabelText<HTMLInputElement>(

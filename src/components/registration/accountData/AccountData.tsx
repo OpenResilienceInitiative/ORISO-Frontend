@@ -375,6 +375,10 @@ export const AccountData: FC<{
 		failed: usernameAvailabilityFailed
 	} = useUsernameAvailability(username, isUsernameLongEnough);
 	const isPasswordValid = allPasswordCriteriaPass(password);
+	/* The alias is shown to counsellors in plain text (#2073). Only a complete
+	   password counts, so a half-typed one cannot flag an ordinary name. */
+	const displayNameContainsPassword =
+		isPasswordValid && effectiveDisplayName.includes(password.trim());
 	const repeatPasswordMismatch =
 		repeatPassword.length > 0 && repeatPassword !== password;
 	const repeatPasswordMatches =
@@ -392,6 +396,7 @@ export const AccountData: FC<{
 		isUsernameAvailable &&
 		isUsernameLongEnough &&
 		isPasswordValid &&
+		!displayNameContainsPassword &&
 		password === repeatPassword &&
 		emailFeedback.isSatisfied &&
 		effectiveDisplayName.length <= 255;
@@ -446,6 +451,9 @@ export const AccountData: FC<{
 	});
 
 	const usernameHelperText = t(helperTextKey);
+	const displayNameErrorText = displayNameContainsPassword
+		? t('registration.account.displayName.matchesPassword')
+		: undefined;
 	const emailHelperText = emailFeedback.helperTextKey
 		? t(emailFeedback.helperTextKey)
 		: undefined;
@@ -755,6 +763,7 @@ export const AccountData: FC<{
 						}
 						onChange={setDisplayName}
 						editable={aliasEditable}
+						errorText={displayNameErrorText}
 					/>
 					<Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
 						<IdentitySuggestButton

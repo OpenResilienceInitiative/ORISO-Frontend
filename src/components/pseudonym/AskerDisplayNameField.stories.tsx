@@ -37,6 +37,9 @@ export const Editable: Story = {
 	play: async ({ canvasElement }) => {
 		const input = within(canvasElement).getByRole('textbox');
 		await expect(input).toHaveAttribute('autocomplete', 'off');
+		await expect(input).toHaveAttribute('data-1p-ignore', 'true');
+		await expect(input).toHaveAttribute('data-lpignore', 'true');
+		await expect(input).toHaveAttribute('data-bwignore', 'true');
 		await userEvent.clear(input);
 		await userEvent.type(input, 'My session alias');
 		await expect(input).toHaveValue('My session alias');
@@ -53,3 +56,11 @@ export const GeneratedOnly: Story = {
 	}
 };
 export const Saving: Story = { args: { disabled: true } };
+export const WithError: Story = {
+	args: { errorText: 'Your password must not be part of your display name.' },
+	play: async ({ canvasElement }) => {
+		await expect(
+			within(canvasElement).getByRole('textbox')
+		).toHaveAttribute('aria-invalid', 'true');
+	}
+};

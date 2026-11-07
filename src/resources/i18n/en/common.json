@@ -3740,6 +3740,7 @@
 				"note": "Until then you write as usual, and your messages stay for the others. You yourself cannot come back into this conversation afterwards."
 			},
 			"displayName": {
+				"matchesPassword": "Your password must not be part of your display name.",
 				"optional": "Display name (optional). Leave blank to show your User-ID.",
 				"suggest": "New name",
 				"useUsername": "Use User-ID"
