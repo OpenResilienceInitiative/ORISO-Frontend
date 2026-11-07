@@ -113,7 +113,7 @@ const renderRoomAsCounsellor = (path = '/groups/15/entry') =>
 						element={<GroupEntryRoom />}
 					/>
 					<Route
-						path="/sessions/consultant/sessionView/session/:sessionId"
+						path="/sessions/consultant/sessionView/chat/:chatId"
 						element={<div data-testid="counsellor-group" />}
 					/>
 					<Route
@@ -142,7 +142,7 @@ const roomFor = (userData: unknown) => (
 					element={<GroupEntryRoom />}
 				/>
 				<Route
-					path="/sessions/consultant/sessionView/session/:sessionId"
+					path="/sessions/consultant/sessionView/chat/:chatId"
 					element={<div data-testid="counsellor-group" />}
 				/>
 			</Routes>

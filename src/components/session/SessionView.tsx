@@ -1,6 +1,11 @@
 import * as React from 'react';
 import { useCallback, useContext, useEffect, useState } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import {
+	Navigate,
+	useParams,
+	useNavigate,
+	useLocation
+} from 'react-router-dom';
 import { Loading } from '../app/Loading';
 import {
 	SessionTypeContext,
@@ -43,7 +48,8 @@ const positiveInteger = (value: string | null | undefined): number | null => {
 };
 
 export const SessionView = () => {
-	const { groupId, sessionId } = useParams<{
+	const { chatId, groupId, sessionId } = useParams<{
+		chatId: string;
 		groupId: string;
 		sessionId: string;
 	}>();
@@ -63,6 +69,10 @@ export const SessionView = () => {
 		}
 		desktopView();
 	}, [fromL]);
+
+	if (chatId !== undefined && positiveInteger(chatId) === null) {
+		return <Navigate to={sessionType.path} replace />;
+	}
 
 	const parsedSessionId = positiveInteger(sessionId);
 	const requestId = positiveInteger(
@@ -99,8 +109,11 @@ export const SessionView = () => {
 };
 
 const SessionViewBody = () => {
-	const { groupId: groupIdFromParam, sessionId: sessionIdFromParam } =
-		useParams<{ groupId: string; sessionId: string }>();
+	const {
+		groupId: groupIdFromParam,
+		sessionId: sessionIdFromParam,
+		chatId: chatIdFromParam
+	} = useParams<{ groupId: string; sessionId: string; chatId: string }>();
 	const navigate = useNavigate();
 	const { pathname } = useLocation();
 
@@ -121,7 +134,7 @@ const SessionViewBody = () => {
 	} = useSession(
 		groupIdFromParam,
 		sessionIdFromParam ? parseInt(sessionIdFromParam) : undefined,
-		undefined,
+		positiveInteger(chatIdFromParam) ?? undefined,
 		(hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) ||
 			(userData?.userRoles || []).includes('USER')) &&
 			!(

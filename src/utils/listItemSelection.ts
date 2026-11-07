@@ -13,8 +13,7 @@
  *
  * Invariant: exactly one active item. The active identity is derived once from
  * the URL and every list item compares against it, so two items cannot both be
- * active unless their identities collide (they don't — sessionId and groupId
- * are unique per conversation).
+ * active. A chat id and a one-to-one session id use separate namespaces.
  */
 
 import { matchPath } from 'react-router-dom';
@@ -25,6 +24,7 @@ export interface ActiveListSelection {
 	groupId: string | null;
 	/** Numeric session id (as string) of the active conversation, if any. */
 	sessionId: string | null;
+	chatId?: string;
 }
 
 /** Identity of a single rendered list item, compared against the selection. */
@@ -35,6 +35,7 @@ export interface ListItemIdentity {
 	rid?: string | number | null;
 	/** Numeric session id. */
 	sessionId?: string | number | null;
+	chatId?: string | number | null;
 }
 
 /**
@@ -68,6 +69,13 @@ export const deriveActiveSelection = (
 	if (!pathname) {
 		return EMPTY_SELECTION;
 	}
+	const group = matchPath(
+		{ path: '/sessions/consultant/sessionView/chat/:chatId', end: false },
+		pathname
+	);
+	if (group?.params.chatId) {
+		return { ...EMPTY_SELECTION, chatId: group.params.chatId };
+	}
 	for (const path of SESSION_ROUTE_PATTERNS) {
 		// react-router v7: matchPath(pattern, pathname) — pattern first, and
 		// `end: false` replaces v5's `exact: false` (prefix match).
@@ -98,6 +106,9 @@ export const isListItemActive = (
 ): boolean => {
 	if (!selection) {
 		return false;
+	}
+	if (selection.chatId != null) {
+		return norm(identity.chatId) === selection.chatId;
 	}
 	const itemSessionId = norm(identity.sessionId);
 	if (
@@ -143,7 +154,9 @@ export const pickActiveItemKey = <T>(
 ): string | null => {
 	if (
 		selection &&
-		(selection.sessionId != null || selection.groupId != null)
+		(selection.sessionId != null ||
+			selection.groupId != null ||
+			selection.chatId != null)
 	) {
 		for (const item of items) {
 			if (isListItemActive(selection, getIdentity(item))) {

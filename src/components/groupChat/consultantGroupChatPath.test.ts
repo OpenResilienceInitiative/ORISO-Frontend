@@ -32,7 +32,9 @@ describe('isGroupChatId', () => {
 });
 
 describe('consultantGroupChatPath', () => {
-	it('keeps the exact id in the counsellor route', () => {
-		expect(consultantGroupChatPath('42')).toContain('/42');
+	it('opens the group rather than the one-to-one case with the same id', () => {
+		expect(consultantGroupChatPath('42')).toBe(
+			'/sessions/consultant/sessionView/chat/42'
+		);
 	});
 });
