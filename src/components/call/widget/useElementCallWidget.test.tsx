@@ -249,6 +249,34 @@ describe('useElementCallWidget', () => {
 		);
 	});
 
+	it('reports a membership timeout and stops listening without mounting the widget', async () => {
+		vi.useFakeTimers();
+		try {
+			const client = createClient({
+				getWidgetMembership: () => 'invite'
+			});
+			const { result } = renderHook(() =>
+				useElementCallWidget(client, {
+					roomId: CALL_ROOM,
+					isVideo: false
+				})
+			);
+
+			await act(() => vi.advanceTimersByTimeAsync(20_000));
+
+			expect(result.current.error?.name).toBe(
+				'CallRoomMembershipTimeoutError'
+			);
+			expect(result.current.url).toBeNull();
+			expect(client.off).toHaveBeenCalledWith(
+				RoomStateEvent.Events,
+				expect.any(Function)
+			);
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
 	it('omits media E2EE when the environment kill-switch is false', async () => {
 		// The on path alone would still pass if the parameter were always set,
 		// which would silently make the kill-switch unusable (ElementCall#35).

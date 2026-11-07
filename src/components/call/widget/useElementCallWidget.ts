@@ -183,6 +183,10 @@ const releaseIframeDevices = (iframe: HTMLIFrameElement | null): void => {
 	}
 };
 
+export class CallRoomMembershipTimeoutError extends Error {
+	readonly name = 'CallRoomMembershipTimeoutError';
+}
+
 const waitForWidgetRoomMembership = (
 	client: MatrixClient,
 	roomId: string,
@@ -226,7 +230,11 @@ const waitForWidgetRoomMembership = (
 		};
 		const timeout = setTimeout(() => {
 			cleanup();
-			reject(new Error('Matrix did not sync the call room membership.'));
+			reject(
+				new CallRoomMembershipTimeoutError(
+					'Matrix did not sync the call room membership.'
+				)
+			);
 		}, 20_000);
 
 		client.on(ClientEvent.Room, check);
