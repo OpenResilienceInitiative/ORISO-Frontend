@@ -4,6 +4,8 @@ import { ClientEvent } from 'matrix-js-sdk';
 import {
 	MATRIX_HISTORY_KEYS_DIAGNOSTIC_EVENT,
 	MATRIX_HISTORY_KEYS_IMPORTED_EVENT,
+	MATRIX_HISTORY_REQUEST_PENDING_EVENT,
+	MATRIX_HISTORY_REQUEST_RESOLVED_EVENT,
 	MatrixRoomHistoryKeyTransfer,
 	isUndecryptedRoomEvent
 } from './matrixRoomHistoryKeyTransfer';
@@ -46,7 +48,14 @@ const buildHarness = () => {
 	const crypto = {
 		setDeviceIsolationMode: vi.fn(),
 		getDeviceVerificationStatus: vi.fn().mockResolvedValue({
-			isVerified: () => true
+			isVerified: () => true,
+			signedByOwner: true,
+			crossSigningVerified: true
+		}),
+		getUserVerificationStatus: vi.fn().mockResolvedValue({
+			needsUserApproval: false,
+			wasCrossSigningVerified: () => false,
+			isCrossSigningVerified: () => false
 		}),
 		getUserDeviceInfo: vi
 			.fn()
@@ -168,6 +177,162 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 		expect(harness.client.encryptAndSendToDevice).toHaveBeenCalledTimes(1);
 	});
 
+	it('lets a request with a reason follow the automatic one at once', async () => {
+		const harness = buildHarness();
+		const service = new MatrixRoomHistoryKeyTransfer();
+		service.initialize(harness.client as any);
+
+		expect(await service.requestKeys(ROOM_ID)).toBe(true);
+		expect(
+			await service.requestKeys(ROOM_ID, { reason: 'about my school' })
+		).toBe(true);
+		// A second click on the same dialog is still held back.
+		expect(
+			await service.requestKeys(ROOM_ID, { reason: 'about my school' })
+		).toBe(false);
+		expect(harness.client.encryptAndSendToDevice).toHaveBeenCalledTimes(2);
+	});
+
+	it('sends the written reason only to devices signed by their owner', async () => {
+		const harness = buildHarness();
+		harness.crypto.getUserDeviceInfo.mockResolvedValue(
+			new Map([
+				[
+					PEER,
+					new Map([
+						['TRUSTED', { deviceId: 'TRUSTED' }],
+						['PASSWORD_ONLY', { deviceId: 'PASSWORD_ONLY' }]
+					])
+				]
+			])
+		);
+		harness.crypto.getDeviceVerificationStatus.mockImplementation(
+			async (_userId: string, deviceId: string) => ({
+				isVerified: () => false,
+				signedByOwner: deviceId === 'TRUSTED',
+				// The asker has not verified the counsellor's identity.
+				crossSigningVerified: false
+			})
+		);
+		const service = new MatrixRoomHistoryKeyTransfer();
+		service.initialize(harness.client as any);
+
+		expect(
+			await service.requestKeys(ROOM_ID, { reason: 'about my school' })
+		).toBe(true);
+		expect(harness.client.encryptAndSendToDevice).toHaveBeenCalledTimes(1);
+		expect(harness.client.encryptAndSendToDevice).toHaveBeenCalledWith(
+			'org.oriso.room_history_key_request',
+			[{ userId: PEER, deviceId: 'TRUSTED' }],
+			expect.objectContaining({ reason: 'about my school' })
+		);
+	});
+
+	it('does not send a written reason when no device is signed by its owner', async () => {
+		const harness = buildHarness();
+		harness.crypto.getDeviceVerificationStatus.mockResolvedValue({
+			isVerified: () => false,
+			signedByOwner: false,
+			crossSigningVerified: false
+		});
+		const service = new MatrixRoomHistoryKeyTransfer();
+		service.initialize(harness.client as any);
+
+		expect(
+			await service.requestKeys(ROOM_ID, { reason: 'about my school' })
+		).toBe(false);
+		expect(harness.client.encryptAndSendToDevice).not.toHaveBeenCalled();
+	});
+
+	it('does not send a written reason to a member who left during the trust lookups', async () => {
+		const harness = buildHarness();
+		harness.crypto.getDeviceVerificationStatus.mockImplementation(
+			async () => {
+				harness.memberships.set(PEER, member(PEER, 'leave'));
+				return {
+					isVerified: () => false,
+					signedByOwner: true,
+					crossSigningVerified: false
+				};
+			}
+		);
+		const service = new MatrixRoomHistoryKeyTransfer();
+		service.initialize(harness.client as any);
+
+		expect(
+			await service.requestKeys(ROOM_ID, { reason: 'about my school' })
+		).toBe(false);
+		expect(harness.client.encryptAndSendToDevice).not.toHaveBeenCalled();
+	});
+
+	it('does not send a written reason to a user whose identity changed', async () => {
+		const harness = buildHarness();
+		harness.crypto.getUserVerificationStatus.mockResolvedValue({
+			needsUserApproval: true,
+			wasCrossSigningVerified: () => false,
+			isCrossSigningVerified: () => false
+		});
+		const service = new MatrixRoomHistoryKeyTransfer();
+		service.initialize(harness.client as any);
+
+		expect(
+			await service.requestKeys(ROOM_ID, { reason: 'about my school' })
+		).toBe(false);
+		expect(harness.client.encryptAndSendToDevice).not.toHaveBeenCalled();
+		// The automatic request carries no reason and is unaffected.
+		expect(await service.requestKeys(ROOM_ID)).toBe(true);
+	});
+
+	it('keeps the written reason of a request queued before the client was ready', async () => {
+		const harness = buildHarness();
+		const service = new MatrixRoomHistoryKeyTransfer();
+
+		expect(
+			await service.requestKeys(ROOM_ID, { reason: 'about my school' })
+		).toBe(false);
+		service.initialize(harness.client as any);
+
+		await vi.waitFor(() =>
+			expect(harness.client.encryptAndSendToDevice).toHaveBeenCalledWith(
+				'org.oriso.room_history_key_request',
+				[{ userId: PEER, deviceId: 'ASKER1' }],
+				expect.objectContaining({ reason: 'about my school' })
+			)
+		);
+	});
+
+	it('drops a queued reason when the service is torn down', async () => {
+		const harness = buildHarness();
+		const service = new MatrixRoomHistoryKeyTransfer();
+
+		await service.requestKeys(ROOM_ID, { reason: 'about my school' });
+		service.detach();
+		service.initialize(harness.client as any);
+
+		await vi.waitFor(() =>
+			expect(harness.client.encryptAndSendToDevice).toHaveBeenCalled()
+		);
+		expect(
+			harness.client.encryptAndSendToDevice.mock.calls[0][2]
+		).not.toHaveProperty('reason');
+	});
+
+	it('lets the person retry at once when no device received the request', async () => {
+		const harness = buildHarness();
+		harness.client.encryptAndSendToDevice.mockRejectedValueOnce(
+			new Error('offline')
+		);
+		const service = new MatrixRoomHistoryKeyTransfer();
+		service.initialize(harness.client as any);
+
+		expect(
+			await service.requestKeys(ROOM_ID, { reason: 'about my school' })
+		).toBe(false);
+		expect(
+			await service.requestKeys(ROOM_ID, { reason: 'about my school' })
+		).toBe(true);
+	});
+
 	it('still requests from valid devices when another device has no Olm session', async () => {
 		const harness = buildHarness();
 		harness.crypto.getUserDeviceInfo.mockResolvedValue(
@@ -279,7 +444,8 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 	it('rejects an unverified requester device when invisible crypto is enabled', async () => {
 		const harness = buildHarness();
 		harness.crypto.getDeviceVerificationStatus.mockResolvedValue({
-			isVerified: () => false
+			isVerified: () => false,
+			crossSigningVerified: true
 		});
 		applyDeviceIsolationMode(harness.client as any, true);
 		const service = new MatrixRoomHistoryKeyTransfer();
@@ -812,5 +978,551 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 		await Promise.resolve();
 
 		expect(harness.crypto.exportRoomKeys).not.toHaveBeenCalled();
+	});
+
+	describe('approval of a request from an unverified device', () => {
+		const unverifiedRequest = (reason?: unknown) =>
+			event('org.oriso.room_history_key_request', PEER, {
+				room_id: ROOM_ID,
+				request_id: 'reset-request',
+				requester_user_id: PEER,
+				requester_device_id: 'ASKER1',
+				...(reason === undefined ? {} : { reason })
+			});
+		// The requesting device never counts as cross-signed; only the
+		// approving device's status varies, so one cannot mask the other.
+		const verificationFor =
+			(approvingDeviceCrossSigned: boolean) =>
+			async (_userId: string, deviceId: string) => ({
+				isVerified: () => false,
+				crossSigningVerified:
+					deviceId === 'ASKER1' ? false : approvingDeviceCrossSigned
+			});
+		const setup = () => {
+			const harness = buildHarness();
+			harness.crypto.getDeviceVerificationStatus.mockImplementation(
+				verificationFor(true)
+			);
+			applyDeviceIsolationMode(harness.client as any, true);
+			const service = new MatrixRoomHistoryKeyTransfer();
+			service.initialize(harness.client as any);
+			return { harness, service };
+		};
+
+		it('keeps a request that carries a reason waiting instead of dropping it', async () => {
+			const { harness, service } = setup();
+			const pending = vi.fn();
+			window.addEventListener(
+				MATRIX_HISTORY_REQUEST_PENDING_EVENT,
+				pending
+			);
+			harness.emitToDevice(unverifiedRequest('It was about my school'));
+			await vi.waitFor(() => expect(pending).toHaveBeenCalled());
+			window.removeEventListener(
+				MATRIX_HISTORY_REQUEST_PENDING_EVENT,
+				pending
+			);
+
+			expect(service.getPendingApprovals(ROOM_ID)).toEqual([
+				expect.objectContaining({
+					requestId: 'reset-request',
+					requesterUserId: PEER,
+					requesterDeviceId: 'ASKER1',
+					reason: 'It was about my school'
+				})
+			]);
+			expect(harness.crypto.exportRoomKeys).not.toHaveBeenCalled();
+			expect(
+				harness.client.encryptAndSendToDevice
+			).not.toHaveBeenCalled();
+		});
+
+		it('still drops an unverified request without a reason', async () => {
+			const { harness, service } = setup();
+			harness.emitToDevice(unverifiedRequest());
+			await vi.waitFor(() =>
+				expect(
+					harness.crypto.getDeviceVerificationStatus
+				).toHaveBeenCalled()
+			);
+
+			expect(service.getPendingApprovals()).toEqual([]);
+			expect(harness.crypto.exportRoomKeys).not.toHaveBeenCalled();
+		});
+
+		it('ignores a blank reason and caps a long one at 500 characters', async () => {
+			const { harness, service } = setup();
+			harness.emitToDevice(unverifiedRequest('   '));
+			await vi.waitFor(() =>
+				expect(
+					harness.crypto.getDeviceVerificationStatus
+				).toHaveBeenCalledTimes(1)
+			);
+			expect(service.getPendingApprovals()).toEqual([]);
+
+			harness.emitToDevice(unverifiedRequest('x'.repeat(900)));
+			await vi.waitFor(() =>
+				expect(service.getPendingApprovals()).toHaveLength(1)
+			);
+			expect(service.getPendingApprovals()[0].reason).toHaveLength(500);
+		});
+
+		it('keeps one waiting request per requesting device, the newest', async () => {
+			vi.useFakeTimers({ toFake: ['Date'] });
+			try {
+				const { harness, service } = setup();
+				const send = (id: string) =>
+					harness.emitToDevice(
+						event('org.oriso.room_history_key_request', PEER, {
+							room_id: ROOM_ID,
+							request_id: id,
+							requester_user_id: PEER,
+							requester_device_id: 'ASKER1',
+							reason: 'hello'
+						})
+					);
+				send('first');
+				await vi.waitFor(() =>
+					expect(service.getPendingApprovals()).toHaveLength(1)
+				);
+				vi.setSystemTime(Date.now() + 31_000);
+				send('second');
+				await vi.waitFor(() =>
+					expect(
+						service.getPendingApprovals().map((r) => r.requestId)
+					).toEqual(['second'])
+				);
+			} finally {
+				vi.useRealTimers();
+			}
+		});
+
+		it('ignores a second reason request from the same device within 30 seconds', async () => {
+			const { harness, service } = setup();
+			for (const id of ['first', 'second']) {
+				harness.emitToDevice(
+					event('org.oriso.room_history_key_request', PEER, {
+						room_id: ROOM_ID,
+						request_id: id,
+						requester_user_id: PEER,
+						requester_device_id: 'ASKER1',
+						reason: 'hello'
+					})
+				);
+			}
+			await vi.waitFor(() =>
+				expect(service.getPendingApprovals()).toHaveLength(1)
+			);
+			await new Promise((resolve) => setTimeout(resolve, 20));
+			expect(
+				service.getPendingApprovals().map((r) => r.requestId)
+			).toEqual(['first']);
+			expect(
+				harness.crypto.getDeviceVerificationStatus
+			).toHaveBeenCalledTimes(1);
+		});
+
+		it('does not let another device take over a waiting request id', async () => {
+			const { harness, service } = setup();
+			harness.emitToDevice(unverifiedRequest('It was about my school'));
+			await vi.waitFor(() =>
+				expect(service.getPendingApprovals()).toHaveLength(1)
+			);
+			harness.emitToDevice(
+				event('org.oriso.room_history_key_request', PEER, {
+					room_id: ROOM_ID,
+					request_id: 'reset-request',
+					requester_user_id: PEER,
+					requester_device_id: 'OTHER',
+					reason: 'take over'
+				})
+			);
+			await new Promise((resolve) => setTimeout(resolve, 20));
+
+			expect(service.getPendingApprovals()).toEqual([
+				expect.objectContaining({
+					requesterDeviceId: 'ASKER1',
+					reason: 'It was about my school'
+				})
+			]);
+		});
+
+		it('drops requests nobody decided on after a day', async () => {
+			vi.useFakeTimers({ toFake: ['Date'] });
+			try {
+				const { harness, service } = setup();
+				harness.emitToDevice(
+					unverifiedRequest('It was about my school')
+				);
+				await vi.waitFor(() =>
+					expect(service.getPendingApprovals()).toHaveLength(1)
+				);
+				vi.setSystemTime(Date.now() + 25 * 60 * 60 * 1000);
+				expect(service.getPendingApprovals()).toEqual([]);
+			} finally {
+				vi.useRealTimers();
+			}
+		});
+
+		it('removes a card by itself when its deadline passes', async () => {
+			vi.useFakeTimers({
+				toFake: ['Date', 'setTimeout', 'clearTimeout']
+			});
+			try {
+				const { harness, service } = setup();
+				const resolved = vi.fn();
+				window.addEventListener(
+					MATRIX_HISTORY_REQUEST_RESOLVED_EVENT,
+					resolved
+				);
+				harness.emitToDevice(
+					unverifiedRequest('It was about my school')
+				);
+				await vi.waitFor(() =>
+					expect(service.getPendingApprovals()).toHaveLength(1)
+				);
+				await vi.advanceTimersByTimeAsync(25 * 60 * 60 * 1000);
+				expect(resolved).toHaveBeenCalledTimes(1);
+				expect(
+					(resolved.mock.calls[0][0] as CustomEvent).detail.outcome
+				).toBe('dropped');
+				window.removeEventListener(
+					MATRIX_HISTORY_REQUEST_RESOLVED_EVENT,
+					resolved
+				);
+			} finally {
+				vi.useRealTimers();
+			}
+		});
+
+		it('keeps the request when this device is not cross-signed', async () => {
+			const { harness, service } = setup();
+			harness.emitToDevice(unverifiedRequest('It was about my school'));
+			await vi.waitFor(() =>
+				expect(service.getPendingApprovals()).toHaveLength(1)
+			);
+			harness.crypto.getDeviceVerificationStatus.mockImplementation(
+				verificationFor(false)
+			);
+			await expect(service.getReleaseBlock()).resolves.toBe(
+				'needs-cross-signing'
+			);
+			await expect(service.approveRequest('reset-request')).resolves.toBe(
+				false
+			);
+			expect(
+				harness.client.encryptAndSendToDevice
+			).not.toHaveBeenCalled();
+			expect(service.getPendingApprovals()).toHaveLength(1);
+		});
+
+		it('sends nothing when the requester leaves during the export', async () => {
+			const { harness, service } = setup();
+			harness.emitToDevice(unverifiedRequest('It was about my school'));
+			await vi.waitFor(() =>
+				expect(service.getPendingApprovals()).toHaveLength(1)
+			);
+			harness.crypto.exportRoomKeys.mockImplementationOnce(async () => {
+				harness.memberships.set(PEER, member(PEER, 'leave'));
+				return [{ room_id: ROOM_ID }];
+			});
+			await expect(service.approveRequest('reset-request')).resolves.toBe(
+				false
+			);
+			expect(
+				harness.client.encryptAndSendToDevice
+			).not.toHaveBeenCalled();
+			expect(service.getPendingApprovals()).toEqual([]);
+		});
+
+		it('refuses an approval after the request expired', async () => {
+			vi.useFakeTimers({ toFake: ['Date'] });
+			try {
+				const { harness, service } = setup();
+				harness.emitToDevice(
+					unverifiedRequest('It was about my school')
+				);
+				await vi.waitFor(() =>
+					expect(service.getPendingApprovals()).toHaveLength(1)
+				);
+				vi.setSystemTime(Date.now() + 25 * 60 * 60 * 1000);
+				await expect(
+					service.approveRequest('reset-request')
+				).resolves.toBe(false);
+				expect(
+					harness.client.encryptAndSendToDevice
+				).not.toHaveBeenCalled();
+			} finally {
+				vi.useRealTimers();
+			}
+		});
+
+		it('ignores a decline while the keys are being sent', async () => {
+			const { harness, service } = setup();
+			harness.emitToDevice(unverifiedRequest('It was about my school'));
+			await vi.waitFor(() =>
+				expect(service.getPendingApprovals()).toHaveLength(1)
+			);
+			let release: () => void = () => undefined;
+			harness.client.encryptAndSendToDevice.mockImplementationOnce(
+				() => new Promise<void>((resolve) => (release = resolve))
+			);
+			const approval = service.approveRequest('reset-request');
+			await vi.waitFor(() =>
+				expect(harness.client.encryptAndSendToDevice).toHaveBeenCalled()
+			);
+
+			service.declineRequest('reset-request');
+			expect(service.getPendingApprovals()).toHaveLength(1);
+			release();
+			await expect(approval).resolves.toBe(true);
+			expect(harness.client.encryptAndSendToDevice).toHaveBeenCalledTimes(
+				1
+			);
+			expect(service.getPendingApprovals()).toEqual([]);
+		});
+
+		it('sends nothing when a newer request replaced the one being approved', async () => {
+			vi.useFakeTimers({ toFake: ['Date'] });
+			try {
+				const { harness, service } = setup();
+				const send = (id: string) =>
+					harness.emitToDevice(
+						event('org.oriso.room_history_key_request', PEER, {
+							room_id: ROOM_ID,
+							request_id: id,
+							requester_user_id: PEER,
+							requester_device_id: 'ASKER1',
+							reason: 'hello'
+						})
+					);
+				send('first');
+				await vi.waitFor(() =>
+					expect(service.getPendingApprovals()).toHaveLength(1)
+				);
+				let finishExport: (keys: unknown[]) => void = () => undefined;
+				harness.crypto.exportRoomKeys.mockImplementationOnce(
+					() =>
+						new Promise<unknown[]>(
+							(resolve) => (finishExport = resolve)
+						)
+				);
+				const approval = service.approveRequest('first');
+				await vi.waitFor(() =>
+					expect(harness.crypto.exportRoomKeys).toHaveBeenCalled()
+				);
+
+				vi.setSystemTime(Date.now() + 31_000);
+				send('second');
+				await vi.waitFor(() =>
+					expect(
+						service.getPendingApprovals().map((a) => a.requestId)
+					).toEqual(['second'])
+				);
+				service.declineRequest('second');
+				finishExport([{ room_id: ROOM_ID, session_id: 'wanted' }]);
+
+				await expect(approval).resolves.toBe(false);
+				expect(
+					harness.client.encryptAndSendToDevice
+				).not.toHaveBeenCalled();
+			} finally {
+				vi.useRealTimers();
+			}
+		});
+
+		it('throttles reason requests per sender, whatever device id they claim', async () => {
+			const { harness, service } = setup();
+			for (const device of ['ASKER1', 'FAKE2', 'FAKE3']) {
+				harness.emitToDevice(
+					event('org.oriso.room_history_key_request', PEER, {
+						room_id: ROOM_ID,
+						request_id: `r-${device}`,
+						requester_user_id: PEER,
+						requester_device_id: device,
+						reason: 'hello'
+					})
+				);
+			}
+			await vi.waitFor(() =>
+				expect(service.getPendingApprovals()).toHaveLength(1)
+			);
+			await new Promise((resolve) => setTimeout(resolve, 20));
+			expect(
+				harness.crypto.getDeviceVerificationStatus
+			).toHaveBeenCalledTimes(1);
+		});
+
+		it('accepts a reasoned retry once the 30 second window has passed', async () => {
+			vi.useFakeTimers({ toFake: ['Date'] });
+			try {
+				const { harness, service } = setup();
+				const send = (id: string) =>
+					harness.emitToDevice(
+						event('org.oriso.room_history_key_request', PEER, {
+							room_id: ROOM_ID,
+							request_id: id,
+							requester_user_id: PEER,
+							requester_device_id: 'ASKER1',
+							reason: 'hello'
+						})
+					);
+				send('first');
+				await vi.waitFor(() =>
+					expect(service.getPendingApprovals()).toHaveLength(1)
+				);
+				service.declineRequest('first');
+				vi.setSystemTime(Date.now() + 31_000);
+				send('retry');
+				await vi.waitFor(() =>
+					expect(
+						service.getPendingApprovals().map((a) => a.requestId)
+					).toEqual(['retry'])
+				);
+			} finally {
+				vi.useRealTimers();
+			}
+		});
+
+		it('keeps at most five waiting requests per room and says so', async () => {
+			const { harness, service } = setup();
+			const senders = Array.from(
+				{ length: 6 },
+				(_, i) => `@s${i}:matrix`
+			);
+			senders.forEach((id) => harness.memberships.set(id, member(id)));
+			harness.crypto.getUserDeviceInfo.mockImplementation(
+				async (userIds: string[]) =>
+					new Map(
+						userIds.map((id) => [
+							id,
+							new Map([['D1', { deviceId: 'D1' }]])
+						])
+					)
+			);
+			const stages: string[] = [];
+			const onDiagnostic = (e: Event) =>
+				stages.push((e as CustomEvent).detail.stage);
+			window.addEventListener(
+				MATRIX_HISTORY_KEYS_DIAGNOSTIC_EVENT,
+				onDiagnostic
+			);
+			try {
+				senders.forEach((id, i) =>
+					harness.emitToDevice(
+						event('org.oriso.room_history_key_request', id, {
+							room_id: ROOM_ID,
+							request_id: `cap-${i}`,
+							requester_user_id: id,
+							requester_device_id: 'D1',
+							reason: 'hello'
+						})
+					)
+				);
+				await vi.waitFor(() =>
+					expect(stages).toContain('approval-queue-full')
+				);
+				expect(service.getPendingApprovals()).toHaveLength(5);
+				expect(
+					service.getPendingApprovals().map((a) => a.requestId)
+				).not.toContain('cap-5');
+			} finally {
+				window.removeEventListener(
+					MATRIX_HISTORY_KEYS_DIAGNOSTIC_EVENT,
+					onDiagnostic
+				);
+			}
+		});
+
+		it('sends nothing when the client was replaced during the approval', async () => {
+			const { harness, service } = setup();
+			harness.emitToDevice(unverifiedRequest('It was about my school'));
+			await vi.waitFor(() =>
+				expect(service.getPendingApprovals()).toHaveLength(1)
+			);
+			let finishExport: (keys: unknown[]) => void = () => undefined;
+			harness.crypto.exportRoomKeys.mockImplementationOnce(
+				() => new Promise((resolve) => (finishExport = resolve))
+			);
+			const approval = service.approveRequest('reset-request');
+			await vi.waitFor(() =>
+				expect(harness.crypto.exportRoomKeys).toHaveBeenCalled()
+			);
+
+			service.detach();
+			finishExport([{ room_id: ROOM_ID, session_id: 'wanted' }]);
+
+			await expect(approval).resolves.toBe(false);
+			expect(
+				harness.client.encryptAndSendToDevice
+			).not.toHaveBeenCalled();
+		});
+
+		it('does not let a request id from another room overwrite a waiting one', async () => {
+			const { harness, service } = setup();
+			harness.emitToDevice(unverifiedRequest('It was about my school'));
+			await vi.waitFor(() =>
+				expect(service.getPendingApprovals()).toHaveLength(1)
+			);
+			const original = harness.client.getRoom.getMockImplementation();
+			harness.client.getRoom.mockImplementation(() =>
+				original?.(ROOM_ID)
+			);
+			harness.emitToDevice(
+				event('org.oriso.room_history_key_request', PEER, {
+					room_id: '!other:matrix',
+					request_id: 'reset-request',
+					requester_user_id: PEER,
+					requester_device_id: 'ASKER1',
+					reason: 'other room'
+				})
+			);
+			await new Promise((resolve) => setTimeout(resolve, 20));
+
+			expect(service.getPendingApprovals()).toEqual([
+				expect.objectContaining({
+					roomId: ROOM_ID,
+					reason: 'It was about my school'
+				})
+			]);
+		});
+
+		it('forgets waiting requests when the client is detached', async () => {
+			const { harness, service } = setup();
+			harness.emitToDevice(unverifiedRequest('It was about my school'));
+			await vi.waitFor(() =>
+				expect(service.getPendingApprovals()).toHaveLength(1)
+			);
+
+			const resolved = vi.fn();
+			window.addEventListener(
+				MATRIX_HISTORY_REQUEST_RESOLVED_EVENT,
+				resolved
+			);
+			service.detach();
+			window.removeEventListener(
+				MATRIX_HISTORY_REQUEST_RESOLVED_EVENT,
+				resolved
+			);
+
+			expect(service.getPendingApprovals()).toEqual([]);
+			expect(resolved).toHaveBeenCalledTimes(1);
+		});
+
+		it('sends the reason along when the person asks for the history', async () => {
+			const harness = buildHarness();
+			const service = new MatrixRoomHistoryKeyTransfer();
+			service.initialize(harness.client as any);
+
+			await service.requestKeys(ROOM_ID, {
+				reason: '  It was about my school  '
+			});
+
+			expect(harness.client.encryptAndSendToDevice).toHaveBeenCalledWith(
+				'org.oriso.room_history_key_request',
+				[{ userId: PEER, deviceId: 'ASKER1' }],
+				expect.objectContaining({ reason: 'It was about my school' })
+			);
+		});
 	});
 });
