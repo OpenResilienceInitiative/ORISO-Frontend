@@ -1145,6 +1145,7 @@
 			"subscribers": {
 				"empty": "keine Teilnehmenden vorhanden",
 				"headline": "Teilnehmende",
+				"protectedName": "Teilnehmende Person {{number}}",
 				"menuLabel": "Optionen für {{name}}",
 				"role": {
 					"asker": "Ratsuchende:r",

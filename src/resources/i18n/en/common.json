@@ -1131,6 +1131,7 @@
 			"subscribers": {
 				"empty": "no participants available",
 				"headline": "Participants",
+				"protectedName": "Participant {{number}}",
 				"menuLabel": "Options for {{name}}",
 				"role": {
 					"asker": "Advice seeker",

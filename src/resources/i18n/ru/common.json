@@ -1062,6 +1062,7 @@
 			"subscribers": {
 				"empty": "Нет участников",
 				"headline": "Участники",
+				"protectedName": "Участник {{number}}",
 				"menuLabel": "Действия для {{name}}",
 				"role": {
 					"asker": "Обращающийся за советом",
