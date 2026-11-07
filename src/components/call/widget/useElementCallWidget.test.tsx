@@ -323,14 +323,16 @@ describe('useElementCallWidget', () => {
 	});
 
 	it('uses a different opaque widget id for each mounted call surface', async () => {
+		const firstClient = createClient();
+		const secondClient = createClient();
 		const first = renderHook(() =>
-			useElementCallWidget(createClient(), {
+			useElementCallWidget(firstClient, {
 				roomId: CALL_ROOM,
 				isVideo: true
 			})
 		);
 		const second = renderHook(() =>
-			useElementCallWidget(createClient(), {
+			useElementCallWidget(secondClient, {
 				roomId: CALL_ROOM,
 				isVideo: true
 			})
