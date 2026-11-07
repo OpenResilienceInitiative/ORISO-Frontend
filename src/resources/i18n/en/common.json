@@ -31,7 +31,8 @@
 		"loading": "Loading participants …",
 		"crowd": "{{count}} participants",
 		"unavailable": "Participants could not be loaded.",
-		"empty": "No participants."
+		"empty": "No participants.",
+		"memberCount": "Chat members: {{count}}"
 	},
 	"timelineSettings": {
 		"title": "Appointments in the conversation list",
@@ -6657,8 +6658,7 @@
 		},
 		"circles": {
 			"title": "Upcoming self-help circles",
-			"participants": "{{count}} participants",
-			"participants_one": "{{count}} participant"
+			"assignedCounsellors": "Counselling team: {{count}}"
 		}
 	},
 	"temporaryAccount": {

@@ -31,7 +31,8 @@
 		"loading": "Chargement des participants …",
 		"crowd": "{{count}} personnes",
 		"unavailable": "Les participants n’ont pas pu être chargés.",
-		"empty": "Aucun participant."
+		"empty": "Aucun participant.",
+		"memberCount": "Membres du chat : {{count}}"
 	},
 	"timelineSettings": {
 		"title": "Rendez-vous dans la liste des conversations",
@@ -6742,8 +6743,7 @@
 		},
 		"circles": {
 			"title": "Prochains groupes d’entraide",
-			"participants": "{{count}} participant·e·s",
-			"participants_one": "{{count}} participant·e"
+			"assignedCounsellors": "Équipe de conseil : {{count}}"
 		}
 	},
 	"temporaryAccount": {

@@ -31,7 +31,8 @@
 		"loading": "ተሳተፍቲ ይጽዓኑ ኣለዉ …",
 		"crowd": "{{count}} ተሳተፍቲ",
 		"unavailable": "ተሳተፍቲ ክጽዓኑ ኣይከኣሉን።",
-		"empty": "ተሳተፍቲ የለዉን።"
+		"empty": "ተሳተፍቲ የለዉን።",
+		"memberCount": "ኣባላት ዕላል፡ {{count}}"
 	},
 	"timelineSettings": {
 		"title": "ቆጸራታት ኣብ ዝርዝር ዘተታት",
@@ -6739,8 +6740,7 @@
 		},
 		"circles": {
 			"title": "ዝቕጽሉ ጉጅለታት ርእሰ-ሓገዝ",
-			"participants": "{{count}} ተሳተፍቲ",
-			"participants_one": "{{count}} ተሳታፊ"
+			"assignedCounsellors": "ጉጅለ ኣማኸርቲ፡ {{count}}"
 		}
 	},
 	"temporaryAccount": {
