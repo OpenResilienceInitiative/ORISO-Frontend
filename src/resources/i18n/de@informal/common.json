@@ -150,6 +150,12 @@
 			"headline": "Du hast den Chat erfolgreich gelöscht."
 		}
 	},
+	"historyRequest": {
+		"card": {
+			"origin": "Angefragt von {{user}} auf einem neuen Gerät ({{device}}), {{time}}. Das Gerät ist noch nicht verifiziert – gib nur frei, wenn du diese Anfrage erwartest.",
+			"failed": "Die Schlüssel konnten nicht gesendet werden. Bitte versuche es noch einmal."
+		}
+	},
 	"e2ee": {
 		"attachment": {
 			"error": {
