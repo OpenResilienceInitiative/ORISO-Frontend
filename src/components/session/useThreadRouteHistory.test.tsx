@@ -1,6 +1,6 @@
 /* @vitest-environment jsdom */
 
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { useThreadRouteHistory } from './useThreadRouteHistory';
 
@@ -69,5 +69,35 @@ describe('history for a thread deep link', () => {
 		);
 
 		await waitFor(() => expect(result.current).toBe('error'));
+	});
+
+	it('shows loading while retrying the same thread after leaving it', async () => {
+		let resolveRetry!: (hasMore: boolean) => void;
+		const loadEarlier = vi
+			.fn()
+			.mockRejectedValueOnce(new Error('offline'))
+			.mockImplementationOnce(
+				() =>
+					new Promise<boolean>((resolve) => {
+						resolveRetry = resolve;
+					})
+			);
+		const { rerender, result } = renderHook(
+			(props: { rootId: string | null; hasRoot: boolean }) =>
+				useThreadRouteHistory({ ...target, ...props, loadEarlier }),
+			{ initialProps: { rootId: '$root', hasRoot: false } }
+		);
+		await waitFor(() => expect(result.current).toBe('error'));
+
+		rerender({ rootId: null, hasRoot: false });
+		expect(result.current).toBeNull();
+		rerender({ rootId: '$root', hasRoot: false });
+		expect(loadEarlier).toHaveBeenCalledTimes(2);
+		expect(result.current).toBe('loading');
+
+		rerender({ rootId: '$root', hasRoot: true });
+		await act(async () => resolveRetry(true));
+		expect(result.current).toBeNull();
+		expect(loadEarlier).toHaveBeenCalledTimes(2);
 	});
 });

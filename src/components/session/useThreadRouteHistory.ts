@@ -24,6 +24,7 @@ export const useThreadRouteHistory = ({
 	const [result, setResult] = useState<HistoryResult | null>(null);
 
 	useEffect(() => {
+		setResult(null);
 		if (!target || hasRoot || !historyReady || !loadEarlier) return;
 		let cancelled = false;
 
