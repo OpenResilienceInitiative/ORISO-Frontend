@@ -220,20 +220,6 @@ export const GroupChatInfo = ({ dialog = false }: { dialog?: boolean }) => {
 		}
 	};
 
-	const getDurationTranslation = useCallback(
-		() =>
-			durationSelectOptionsSet
-				.map((option) => ({
-					...option,
-					label: translate(option.label)
-				}))
-				.filter(
-					(item) =>
-						parseInt(item.value) === activeSession.item.duration
-				)[0].label,
-		[activeSession?.item.duration, translate]
-	);
-
 	const getCreationDate = useCallback(
 		(date: Date) => {
 			const prettyDate = getPrettyDateFromMessageDate(
@@ -284,6 +270,9 @@ export const GroupChatInfo = ({ dialog = false }: { dialog?: boolean }) => {
 		});
 	const showInviteActions =
 		!!featureGroupChatV2Enabled && isV2GroupChat && isCurrentUserModerator;
+	const durationOption = durationSelectOptionsSet.find(
+		({ value }) => Number(value) === activeSession.item.duration
+	);
 
 	const preparedSettings: Array<{ label: string; value: string }> = [
 		{
@@ -311,7 +300,7 @@ export const GroupChatInfo = ({ dialog = false }: { dialog?: boolean }) => {
 		},
 		{
 			label: translate('groupChat.info.settings.duration'),
-			value: getDurationTranslation()
+			value: durationOption ? translate(durationOption.label) : ''
 		},
 		{
 			label: translate('groupChat.info.settings.repetition.label'),
