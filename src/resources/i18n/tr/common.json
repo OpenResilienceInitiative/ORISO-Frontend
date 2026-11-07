@@ -2470,8 +2470,8 @@
 				}
 			},
 			"caseHandoverConsentDeclined": {
-				"title": "Vaka devri reddedildi",
-				"text": "Danışan onayı reddedildi. İçerikler kilitli kalır."
+				"title": "Onay verilmedi",
+				"text": "Danışan onay vermedi. Mevcut erişim durumunu görüşmede görebilirsiniz."
 			},
 			"caseHandoverOfferSent": {
 				"title": "Devir teklifi gönderildi",

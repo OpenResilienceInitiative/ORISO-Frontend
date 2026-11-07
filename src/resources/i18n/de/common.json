@@ -2491,8 +2491,8 @@
 				}
 			},
 			"caseHandoverConsentDeclined": {
-				"title": "Fallübergabe abgelehnt",
-				"text": "Die Klient:innen-Zustimmung wurde abgelehnt. Inhalte bleiben gesperrt."
+				"title": "Einwilligung abgelehnt",
+				"text": "Die ratsuchende Person hat die Einwilligung abgelehnt. Den aktuellen Zugriff sehen Sie im Gespräch."
 			},
 			"caseHandoverOfferSent": {
 				"title": "Übergabeangebot gesendet",

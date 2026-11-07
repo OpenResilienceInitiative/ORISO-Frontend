@@ -2470,8 +2470,8 @@
 				}
 			},
 			"caseHandoverConsentDeclined": {
-				"title": "Transfert de dossier refusé",
-				"text": "Le consentement du·de la client·e a été refusé. Les contenus restent verrouillés."
+				"title": "Consentement refusé",
+				"text": "La personne conseillée a refusé de donner son accord. Vous pouvez vérifier votre accès actuel dans la conversation."
 			},
 			"caseHandoverOfferSent": {
 				"title": "Offre de transfert envoyée",
