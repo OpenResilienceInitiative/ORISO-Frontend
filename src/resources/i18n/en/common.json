@@ -2472,7 +2472,7 @@
 			},
 			"caseHandoverOfferSent": {
 				"title": "Case handover offer sent",
-				"text": "The offer is waiting for the colleague's answer. It can be withdrawn as long as the handover is not complete."
+				"text": "You offered to hand over the case to a colleague."
 			},
 			"caseHandoverOfferDeclined": {
 				"title": "Case handover offer declined",

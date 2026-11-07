@@ -2475,7 +2475,7 @@
 			},
 			"caseHandoverOfferSent": {
 				"title": "Devir teklifi gönderildi",
-				"text": "Teklif meslektaşın yanıtını bekliyor. Devir tamamlanmadığı sürece geri çekilebilir."
+				"text": "Vakayı devralması için bir meslektaşınıza teklif gönderdiniz."
 			},
 			"caseHandoverOfferDeclined": {
 				"title": "Devir teklifi reddedildi",

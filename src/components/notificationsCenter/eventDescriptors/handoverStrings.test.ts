@@ -167,6 +167,16 @@ describe('offer lifecycle timeline entries (withdraw / decline / sent)', () => {
 		}
 	);
 
+	it.each(['de', 'de@informal'])(
+		'%s describes a sent offer as a historical event',
+		(lng) => {
+			const { text } = render('case.handover.offer.sent', {}, lng);
+			expect(text).toBe(
+				'Das Angebot zur Fallübergabe wurde an eine andere Beratungsperson gesendet.'
+			);
+		}
+	);
+
 	it('words the withdrawal as "off", not as a handover to accept', () => {
 		const { title, text } = render('case.handover.offer.withdrawn', {});
 		expect(title).toBe('Übergabeangebot zurückgezogen');
