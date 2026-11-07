@@ -224,11 +224,6 @@ export const RouterConfigUser = (
 				component: SessionView,
 				type: SESSION_LIST_TYPES.MY_SESSION
 			},
-			{
-				path: '/sessions/consultant/sessionView/chat/:chatId',
-				component: SessionView,
-				type: SESSION_LIST_TYPES.MY_SESSION
-			},
 			// Sessions addressed by their Matrix group id
 			{
 				path: '/sessions/user/view/:groupId/:sessionId',
@@ -359,6 +354,11 @@ export const RouterConfigConsultant = (settings: AppConfigInterface): any => {
 			},
 			{
 				path: '/sessions/consultant/sessionView/session/:sessionId',
+				component: SessionView,
+				type: SESSION_LIST_TYPES.MY_SESSION
+			},
+			{
+				path: '/sessions/consultant/sessionView/chat/:chatId',
 				component: SessionView,
 				type: SESSION_LIST_TYPES.MY_SESSION
 			},
