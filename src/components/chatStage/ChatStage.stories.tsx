@@ -2151,6 +2151,70 @@ export const PhoneComposerGrowsWhileTyping: Story = {
 	}
 };
 
+/** The visible handle must receive a real pointer on a 390px phone. */
+export const PhoneComposerDragHandleIsReachable: Story = {
+	name: 'Phone — drag handle receives pointer',
+	globals: phone390Globals,
+	args: { panel: 'supervision', phone: 'main', supervisionUnread: 0 },
+	play: async ({ canvasElement }) => {
+		const handle = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="stage-main"] .dragHandle'
+		)!;
+		const shell = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="stage-main"] .textarea__wrapper-send-message'
+		)!;
+		const box = handle.getBoundingClientRect();
+		const x = box.left + box.width / 2;
+		const y = box.top + box.height / 2;
+		const hit = canvasElement.ownerDocument.elementFromPoint(x, y);
+
+		await expect(hit === handle || handle.contains(hit)).toBe(true);
+		const bar = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="stage-main"] [data-cy="composer-action-bar"]'
+		)!;
+		const barBox = bar.getBoundingClientRect();
+		const buttons = Array.from(
+			bar.querySelectorAll<HTMLButtonElement>('button:not(:disabled)')
+		);
+		for (const button of buttons) {
+			const buttonBox = button.getBoundingClientRect();
+			const cx = buttonBox.left + buttonBox.width / 2;
+			const cy = buttonBox.top + buttonBox.height / 2;
+			if (
+				cx < barBox.left ||
+				cx > barBox.right ||
+				cy < barBox.top ||
+				cy > barBox.bottom
+			)
+				continue;
+			const buttonHit = canvasElement.ownerDocument.elementFromPoint(
+				cx,
+				cy
+			);
+			await expect(
+				buttonHit === button || button.contains(buttonHit)
+			).toBe(true);
+		}
+		const before = shell.getBoundingClientRect().height;
+		await userEvent.pointer([
+			{
+				keys: '[MouseLeft>]',
+				target: handle,
+				coords: { clientX: x, clientY: y }
+			},
+			{ target: handle, coords: { clientX: x, clientY: y - 48 } },
+			{
+				keys: '[/MouseLeft]',
+				target: handle,
+				coords: { clientX: x, clientY: y - 48 }
+			}
+		]);
+		await waitFor(() =>
+			expect(shell.getBoundingClientRect().height).toBeGreaterThan(before)
+		);
+	}
+};
+
 /** (e2) Phone: inside the supervision chat, the FAB switches back. */
 export const PhoneSecondaryChatWithBackFab: Story = {
 	name: '(e) Phone — secondary chat, FAB as back switcher',
