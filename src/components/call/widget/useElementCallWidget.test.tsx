@@ -2,7 +2,12 @@
 
 import React from 'react';
 import { act, render, renderHook, waitFor } from '@testing-library/react';
-import type { MatrixClient } from 'matrix-js-sdk';
+import {
+	EventType,
+	RoomEvent,
+	RoomStateEvent,
+	type MatrixClient
+} from 'matrix-js-sdk';
 import { webcrypto } from 'node:crypto';
 import {
 	afterEach,
@@ -85,9 +90,11 @@ type TestMatrixClient = MatrixClient & {
 
 const createClient = ({
 	membership = 'join',
+	getWidgetMembership = () => membership,
 	joinRoom = vi.fn().mockResolvedValue(undefined)
 }: {
 	membership?: string;
+	getWidgetMembership?: () => string;
 	joinRoom?: ReturnType<typeof vi.fn>;
 } = {}): TestMatrixClient => {
 	const listeners = new Map<string, Set<(...args: unknown[]) => void>>();
@@ -101,7 +108,15 @@ const createClient = ({
 			getMyMembership: () => membership,
 			getLiveTimeline: () => ({
 				getState: () => ({
-					getStateEvents: () => []
+					getStateEvents: (type: string, stateKey?: string) =>
+						type === EventType.RoomMember &&
+						stateKey === '@user:oriso.example'
+							? {
+									getContent: () => ({
+										membership: getWidgetMembership()
+									})
+								}
+							: []
 				})
 			})
 		}),
@@ -132,6 +147,7 @@ describe('useElementCallWidget', () => {
 	});
 
 	afterEach(() => {
+		vi.restoreAllMocks();
 		vi.unstubAllGlobals();
 		setAppConfig(null as never);
 	});
@@ -144,7 +160,15 @@ describe('useElementCallWidget', () => {
 					finishJoin = resolve;
 				})
 		);
-		const client = createClient({ membership: 'invite', joinRoom });
+		let stateMembership = 'invite';
+		const client = createClient({
+			membership: 'invite',
+			getWidgetMembership: () => stateMembership,
+			joinRoom
+		});
+		const originalRoom = client.getRoom(CALL_ROOM);
+		const hostMembership = vi.fn().mockReturnValue('invite');
+		if (originalRoom) originalRoom.getMyMembership = hostMembership;
 
 		const { result } = renderHook(() =>
 			useElementCallWidget(client, {
@@ -156,7 +180,26 @@ describe('useElementCallWidget', () => {
 		expect(joinRoom).toHaveBeenCalledWith(CALL_ROOM);
 		expect(result.current.url).toBeNull();
 
-		act(() => finishJoin?.());
+		const digest = vi.spyOn(globalThis.crypto.subtle, 'digest');
+		await act(async () => finishJoin?.());
+		expect(digest).not.toHaveBeenCalled();
+		expect(result.current.url).toBeNull();
+
+		act(() => {
+			hostMembership.mockReturnValue('join');
+			client.emitTest(RoomEvent.MyMembership, originalRoom, 'join');
+		});
+		expect(digest).not.toHaveBeenCalled();
+		expect(result.current.url).toBeNull();
+
+		act(() => {
+			stateMembership = 'join';
+			client.emitTest(
+				RoomStateEvent.Events,
+				{ getType: () => EventType.RoomMember },
+				{ roomId: CALL_ROOM }
+			);
+		});
 		await waitFor(() => expect(result.current.url).not.toBeNull());
 
 		const url = new URL(result.current.url!);
@@ -179,6 +222,31 @@ describe('useElementCallWidget', () => {
 		expect(fragment.has('enableE2EE')).toBe(false);
 		// ADR-018 default: host asks Element Call for per-participant media E2EE.
 		expect(fragment.get('perParticipantE2EE')).toBe('true');
+	});
+
+	it('stops waiting for unsynced membership when the call is closed', async () => {
+		const client = createClient({ membership: 'invite' });
+		const { unmount, result } = renderHook(() =>
+			useElementCallWidget(client, { roomId: CALL_ROOM, isVideo: false })
+		);
+
+		await waitFor(() =>
+			expect(client.on).toHaveBeenCalledWith(
+				RoomStateEvent.Events,
+				expect.any(Function)
+			)
+		);
+		expect(result.current.url).toBeNull();
+		unmount();
+
+		expect(client.off).toHaveBeenCalledWith(
+			RoomStateEvent.Events,
+			expect.any(Function)
+		);
+		expect(client.off).toHaveBeenCalledWith(
+			RoomEvent.MyMembership,
+			expect.any(Function)
+		);
 	});
 
 	it('omits media E2EE when the environment kill-switch is false', async () => {
@@ -332,14 +400,16 @@ describe('useElementCallWidget', () => {
 	});
 
 	it('uses a different opaque widget id for each mounted call surface', async () => {
+		const firstClient = createClient();
+		const secondClient = createClient();
 		const first = renderHook(() =>
-			useElementCallWidget(createClient(), {
+			useElementCallWidget(firstClient, {
 				roomId: CALL_ROOM,
 				isVideo: true
 			})
 		);
 		const second = renderHook(() =>
-			useElementCallWidget(createClient(), {
+			useElementCallWidget(secondClient, {
 				roomId: CALL_ROOM,
 				isVideo: true
 			})
