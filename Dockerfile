@@ -43,7 +43,8 @@ ARG PORT=80
 #
 # CVE-2026-85091: zlib heap buffer overflow in gz_vacate(). Same situation:
 # the pinned base carries 1.3.2-r0, Alpine 3.24 ships the fix in 1.3.2-r1.
-RUN apk upgrade --no-cache libssl3 libcrypto3 zlib
+# CVE-2026-107891: Alpine 3.24 fixes musl and musl-utils in 1.2.6-r3.
+RUN apk upgrade --no-cache libssl3 libcrypto3 zlib musl musl-utils
 
 # The node base image bundles an npm whose vendored dependencies (tar,
 # sigstore, picomatch, brace-expansion, undici) carry fixable HIGH/CRITICAL
