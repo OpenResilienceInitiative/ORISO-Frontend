@@ -350,7 +350,10 @@ it('explains a blocked browser permission up front, without asking the browser a
 	expect(request).not.toHaveBeenCalled();
 });
 it.each([
-	['the window regains focus', () => window.dispatchEvent(new Event('focus'))],
+	[
+		'the window regains focus',
+		() => window.dispatchEvent(new Event('focus'))
+	],
 	[
 		'the tab becomes visible again',
 		() => document.dispatchEvent(new Event('visibilitychange'))
@@ -372,7 +375,9 @@ it.each([
 	act(() => trigger());
 	await waitFor(() =>
 		expect(
-			screen.queryByText('erstantwort.notificationChoice.browserBlockedHelp')
+			screen.queryByText(
+				'erstantwort.notificationChoice.browserBlockedHelp'
+			)
 		).toBeNull()
 	);
 });

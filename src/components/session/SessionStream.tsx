@@ -85,6 +85,7 @@ import { formatToHHMM } from '../../utils/dateHelpers';
 import { usePracticeSupervisorsRevision } from '../../practice';
 import { isPracticeRoomId } from '../../practice/practiceIds';
 import { useCaseHandoverStatusRefresh } from './useCaseHandoverStatusRefresh';
+import { HistoryRequestApprovals } from '../historyRequest/HistoryRequestApprovals';
 
 const EMPTY_MESSAGES: MessageItem[] = [];
 /** Browsers fire a longer setTimeout immediately. */
@@ -330,6 +331,10 @@ export const SessionStream = ({
 	);
 	const isMatrixSession = resolvedChatSession.isMatrixSession;
 	const matrixRoomId = resolvedChatSession.matrixRoomId || '';
+	const isConsultant = hasUserAuthority(
+		AUTHORITIES.CONSULTANT_DEFAULT,
+		userData
+	);
 	// The chat's typing rule, shared with the Activity Timeline preview (#1824).
 	const handleSessionTyping = useMatrixTyping(
 		isMatrixSession ? matrixRoomId : null
@@ -1572,54 +1577,63 @@ export const SessionStream = ({
 			)}
 			<SessionItemComponent
 				mainTimelineSupplement={
-					displayedConsent &&
-					activityEventCaseHandoverRequestId(displayedConsent) !==
-						null && (
-						<CaseHandoverConversation
-							sessionId={activeSession.item.id}
-							conversationType={notificationConversationType(
-								activeSession
+					<>
+						{displayedConsent &&
+							activityEventCaseHandoverRequestId(
+								displayedConsent
+							) !== null && (
+								<CaseHandoverConversation
+									sessionId={activeSession.item.id}
+									conversationType={notificationConversationType(
+										activeSession
+									)}
+									key={String(activeSession.item?.id)}
+									status={
+										displayedConsent.id ===
+										confirmedConsent?.notification.id
+											? confirmedConsent.status.status
+											: undefined
+									}
+									auditOutcome={
+										displayedConsent.id ===
+										confirmedConsent?.notification.id
+											? confirmedConsent.status
+													.auditOutcome
+											: undefined
+									}
+									consentGranted={
+										displayedConsent.params
+											?.clientConsent === 'OPT_OUT'
+									}
+									mode={
+										displayedConsentMode === 'NONE' ||
+										displayedConsentMode === 'OPT_OUT'
+											? displayedConsentMode
+											: 'OPT_IN'
+									}
+									isSubmitting={caseHandoverConsentSubmitting}
+									error={caseHandoverConsentError}
+									timestamp={formatToHHMM(
+										String(
+											new Date(
+												displayedConsent.createdAt
+											).getTime()
+										)
+									)}
+									onApprove={() =>
+										handleCaseHandoverConsentDecision(true)
+									}
+									onDecline={() =>
+										handleCaseHandoverConsentDecision(false)
+									}
+								/>
 							)}
-							key={String(activeSession.item?.id)}
-							status={
-								displayedConsent.id ===
-								confirmedConsent?.notification.id
-									? confirmedConsent.status.status
-									: undefined
-							}
-							auditOutcome={
-								displayedConsent.id ===
-								confirmedConsent?.notification.id
-									? confirmedConsent.status.auditOutcome
-									: undefined
-							}
-							consentGranted={
-								displayedConsent.params?.clientConsent ===
-								'OPT_OUT'
-							}
-							mode={
-								displayedConsentMode === 'NONE' ||
-								displayedConsentMode === 'OPT_OUT'
-									? displayedConsentMode
-									: 'OPT_IN'
-							}
-							isSubmitting={caseHandoverConsentSubmitting}
-							error={caseHandoverConsentError}
-							timestamp={formatToHHMM(
-								String(
-									new Date(
-										displayedConsent.createdAt
-									).getTime()
-								)
-							)}
-							onApprove={() =>
-								handleCaseHandoverConsentDecision(true)
-							}
-							onDecline={() =>
-								handleCaseHandoverConsentDecision(false)
-							}
-						/>
-					)
+						{isConsultant && (
+							<HistoryRequestApprovals
+								roomId={resolvedChatSession.matrixRoomId}
+							/>
+						)}
+					</>
 				}
 				mainTimelineSupplementTime={
 					displayedConsent
