@@ -249,6 +249,55 @@ describe('GroupEntryRoom', () => {
 		expect(navigate).not.toHaveBeenCalled();
 	});
 
+	it('holds the registered join and shows the existing removal notice for a fresh banned participant', async () => {
+		const { apiGetGroupChatInfo } = await import('../../../api');
+		const reply =
+			Promise.withResolvers<
+				Awaited<ReturnType<typeof apiGetGroupChatInfo>>
+			>();
+		vi.mocked(apiGetGroupChatInfo).mockReturnValueOnce(reply.promise);
+		sessionState.item = { ...sessionState.item, active: true };
+		renderRoom({ ...CLIENT_AGREED, userId: 'asker-id' });
+
+		const join = await screen.findByText('join');
+		expect(join.hasAttribute('disabled')).toBe(true);
+		expect(screen.queryByRole('alert')).toBeNull();
+		reply.resolve({
+			active: true,
+			id: 15,
+			matrixRoomId: '!room:oriso',
+			callerBanState: 'BANNED'
+		} as Awaited<ReturnType<typeof apiGetGroupChatInfo>>);
+		expect((await screen.findByRole('alert')).textContent).toBe(
+			'groupChat.removed.overlay.headline'
+		);
+		expect(join.hasAttribute('disabled')).toBe(true);
+		expect(apiPutGroupChat).not.toHaveBeenCalled();
+	});
+
+	it('lets the authoritative join reject a ban when the older read gives no caller state', async () => {
+		const { apiGetGroupChatInfo } = await import('../../../api');
+		vi.mocked(apiGetGroupChatInfo).mockResolvedValueOnce({
+			id: 15,
+			active: true,
+			matrixRoomId: '!room:oriso'
+		});
+		vi.mocked(apiPutGroupChat).mockRejectedValueOnce(
+			new Error('USER_BANNED_FROM_CHAT')
+		);
+		sessionState.item = { ...sessionState.item, active: true };
+		renderRoom({ ...CLIENT_AGREED, userId: 'asker-id' });
+
+		const join = await screen.findByText('join');
+		await waitFor(() => expect(join.hasAttribute('disabled')).toBe(false));
+		expect(screen.queryByRole('alert')).toBeNull();
+		fireEvent.click(join);
+		expect(apiPutGroupChat).toHaveBeenCalledWith(15, '/join');
+		expect((await screen.findByRole('alert')).textContent).toBe(
+			'groupChat.removed.overlay.headline'
+		);
+	});
+
 	// #1923: a banned asker got "an error occurred" and could press join again.
 	it('says the person was removed and blocks joining when the server refuses a banned member', async () => {
 		vi.mocked(apiPutGroupChat).mockRejectedValueOnce(

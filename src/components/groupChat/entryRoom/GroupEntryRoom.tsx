@@ -3,6 +3,7 @@ import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { Box, Typography } from '@mui/material';
 import { Loading } from '../../app/Loading';
+import { useGroupCallerBan } from '../useGroupCallerBan';
 import { WaitingRoomFrame } from '../../waitingRoom/WaitingRoomFrame';
 import { RegistrationFooter } from '../../registrationFooter/RegistrationFooter';
 import { HandoverGateButton } from '../../app/registrationLoader/HandoverGateButton';
@@ -80,7 +81,7 @@ export const GroupEntryRoom = () => {
 		);
 	}
 
-	return <ClientGroupEntryRoom />;
+	return <ClientGroupEntryRoom key={chatIdParam} />;
 };
 
 /* The frame stands while the group loads, so the waiting room after
@@ -161,6 +162,16 @@ const ClientGroupEntryRoom = () => {
 
 	const item = session?.item;
 	const active = Boolean(item?.active);
+	const callerBan = useGroupCallerBan({
+		askerId: hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData)
+			? userData.userId
+			: undefined,
+		chatId: item?.id,
+		roomId: item?.matrixRoomId || session?.rid,
+		active
+	});
+	const isRemoved = removed || callerBan === 'BANNED';
+	const joinBlocked = isRemoved || callerBan === 'PENDING';
 
 	useEffect(() => {
 		if (!item?.id) {
@@ -199,7 +210,7 @@ const ClientGroupEntryRoom = () => {
 	);
 
 	const handleJoin = useCallback(() => {
-		if (!item?.id || joinBusy) {
+		if (!item?.id || joinBusy || joinBlocked) {
 			return false;
 		}
 		setJoinBusy(true);
@@ -235,7 +246,7 @@ const ClientGroupEntryRoom = () => {
 				// The person stays: the closing animation need not wait for a chat.
 				return false;
 			});
-	}, [item, joinBusy, navigate, session?.rid, notifications, t]);
+	}, [item, joinBusy, joinBlocked, navigate, session?.rid, notifications, t]);
 
 	if (!ready) {
 		return <EntryRoomLoading />;
@@ -286,9 +297,9 @@ const ClientGroupEntryRoom = () => {
 				active={active}
 				onJoin={handleJoin}
 				joinBusy={joinBusy}
-				joinBlocked={removed}
+				joinBlocked={joinBlocked}
 				joinNotice={
-					removed
+					isRemoved
 						? t('groupChat.removed.overlay.headline')
 						: joinFailed
 							? t(
