@@ -383,9 +383,7 @@ export class MatrixLiveEventBridge {
 				// Keep the existing metadata refresh, but also redispatch the clear
 				// event when a later decryption retry succeeds.
 				this.handleRoomMessage(event, room);
-				const ageSeconds = Math.floor(
-					(Date.now() - event.getTs()) / 1000
-				);
+				const ageSeconds = Math.floor(event.getLocalAge() / 1000);
 				this.waitForSuccessfulDecryption(
 					event,
 					room,
@@ -547,9 +545,7 @@ export class MatrixLiveEventBridge {
 		const sender = event.getSender();
 		const content = event.getContent();
 		const callId = content.call_id;
-		const eventTimestamp = event.getTs();
-		const now = Date.now();
-		const ageMs = now - eventTimestamp;
+		const ageMs = event.getLocalAge();
 		const ageSeconds = Math.floor(ageMs / 1000);
 		const isOld = ageSeconds > CALL_INVITE_FRESHNESS_SECONDS;
 		const callRoomId = content.call_room_id || room.roomId;
@@ -584,17 +580,17 @@ export class MatrixLiveEventBridge {
 		if (isOrisoInvite && hasMatchingOrisoHangup(event, later)) return false;
 		if (this.deferredCallInvites.has(event)) return false;
 
-		const delayedDeadline =
+		const delayedTimeRemaining =
 			isOld && wasFreshAndLive
-				? this.delayedInviteDeadline(event, timeline, now)
+				? this.remainingDelayedInviteMs(event, timeline, ageMs)
 				: undefined;
 		// A later encrypted event from the caller or this account may be a hangup. Wait
 		// for its decryption rather than presenting an already ended call.
 		if (
-			delayedDeadline &&
+			delayedTimeRemaining &&
 			later.some((item) => item.getType() === 'm.room.encrypted')
 		) {
-			this.deferCallInvite(event, room, delayedDeadline - now);
+			this.deferCallInvite(event, room, delayedTimeRemaining);
 			return false;
 		}
 		const isVideo = isElementCall
@@ -607,13 +603,12 @@ export class MatrixLiveEventBridge {
 		// console.log("📞 Call ID:", callId);
 		// console.log("👤 Sender:", sender);
 		// console.log("🏠 Room:", room.roomId);
-		// console.log("⏰ Event timestamp:", new Date(eventTimestamp).toISOString());
 		// console.log("⏱️  Age:", ageSeconds, "seconds old");
 		// console.log("═══════════════════════════════════════════════");
 
 		// Active MatrixRTC membership can recover a historical invite that is
 		// still eligible to ring, even after the browser reloads.
-		if (isOld && !hasActiveMatrixRtcMembership && !delayedDeadline) {
+		if (isOld && !hasActiveMatrixRtcMembership && !delayedTimeRemaining) {
 			// console.log("🚫 IGNORING OLD CALL INVITE (from history, not a new call!)");
 			// console.log("═══════════════════════════════════════════════");
 			// A partially synced Element Call room can gain active MatrixRTC
@@ -694,10 +689,10 @@ export class MatrixLiveEventBridge {
 		return true;
 	}
 
-	private delayedInviteDeadline(
+	private remainingDelayedInviteMs(
 		event: MatrixEvent,
 		timeline: MatrixEvent[],
-		now: number
+		ageMs: number
 	): number | undefined {
 		const { call_id: callId, lifetime } = event.getContent();
 		// The normal freshness filter still applies to history, including initial
@@ -711,10 +706,9 @@ export class MatrixLiveEventBridge {
 		) {
 			return;
 		}
-		const deadline =
-			event.getTs() +
-			Math.min(lifetime, MAX_LIVE_CALL_INVITE_LIFETIME_MS);
-		return now < deadline ? deadline : undefined;
+		const remaining =
+			Math.min(lifetime, MAX_LIVE_CALL_INVITE_LIFETIME_MS) - ageMs;
+		return remaining > 0 ? remaining : undefined;
 	}
 
 	private deferCallInvite(
@@ -768,9 +762,7 @@ export class MatrixLiveEventBridge {
 	 * Handle m.call.hangup events.
 	 */
 	private handleCallHangup(event: MatrixEvent, room: Room): void {
-		const eventTimestamp = event.getTs();
-		const now = Date.now();
-		const ageSeconds = Math.floor((now - eventTimestamp) / 1000);
+		const ageSeconds = Math.floor(event.getLocalAge() / 1000);
 
 		// console.log("═══════════════════════════════════════════════");
 		// console.log("📴 CALL HANGUP EVENT RECEIVED");
@@ -778,7 +770,6 @@ export class MatrixLiveEventBridge {
 		// console.log("📞 Call ID:", event.getContent().call_id);
 		// console.log("👤 Sender:", event.getSender());
 		// console.log("🏠 Room:", room.roomId);
-		// console.log("⏰ Event timestamp:", new Date(eventTimestamp).toISOString());
 		// console.log("⏱️  Age:", ageSeconds, "seconds old");
 		// console.log("═══════════════════════════════════════════════");
 
