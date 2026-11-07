@@ -279,9 +279,14 @@ export class MatrixRoomHistoryKeyTransfer {
 				}
 			}
 			// A failed send keeps the request, so the person can try again.
-			if (sent && this.pendingApprovals.get(requestId) === request) {
-				this.pendingApprovals.delete(requestId);
-				this.announceResolved(request, 'approved');
+			if (sent) {
+				// A newer request from the same device may have replaced this one
+				// while the keys were sent: it stays, but the keys did go out for
+				// this one, so the other devices are told either way.
+				if (this.pendingApprovals.get(requestId) === request) {
+					this.pendingApprovals.delete(requestId);
+					this.announceResolved(request, 'approved');
+				}
 				void this.tellOwnDevices(client, request, 'approved');
 			}
 			return sent;

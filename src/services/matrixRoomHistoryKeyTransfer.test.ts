@@ -1675,6 +1675,36 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 				expect(service.getPendingApprovals()).toHaveLength(0);
 			});
 
+			it('still tells the other devices when a newer request replaced the approved one', async () => {
+				const { harness, service } = await setup();
+				harness.client.encryptAndSendToDevice.mockClear();
+				// While the keys are on their way, the same device asks again.
+				harness.client.encryptAndSendToDevice.mockImplementationOnce(
+					async () => {
+						(service as any).pendingApprovals.set('req-1', {
+							...(service as any).pendingApprovals.get('req-1')
+						});
+					}
+				);
+				await expect(service.approveRequest('req-1')).resolves.toBe(
+					true
+				);
+				await vi.waitFor(() =>
+					expect(
+						harness.client.encryptAndSendToDevice
+					).toHaveBeenCalledWith(
+						DECIDED,
+						[{ userId: ME, deviceId: 'NEW2' }],
+						expect.objectContaining({
+							request_id: 'req-1',
+							outcome: 'approved'
+						})
+					)
+				);
+				// The replacement stays.
+				expect(service.getPendingApprovals()).toHaveLength(1);
+			});
+
 			it('leaves a release that is already sending to finish', async () => {
 				const { harness, service } = await setup();
 				let release!: () => void;
