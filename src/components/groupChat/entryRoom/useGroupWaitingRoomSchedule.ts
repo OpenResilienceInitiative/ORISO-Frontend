@@ -65,15 +65,18 @@ export const useGroupWaitingRoomSchedule = (chat?: GroupWaitingRoomChat) => {
 					if (request === current)
 						setProjection({ seriesId, occurrences });
 				},
-				() => {
-					// Older or inaccessible endpoints still use the saved schedule on
-					// initial load. After a known edit we cannot trust stale dates.
-					if (request === current && allowLegacyFallback)
-						setProjection((previous) =>
-							previous?.seriesId === seriesId
-								? previous
-								: { seriesId }
-						);
+				(error: unknown) => {
+					if (request !== current) return;
+					// Only an unsupported projection may use the legacy dates on
+					// initial load. Other errors cannot confirm those dates.
+					const unsupported =
+						error instanceof Response &&
+						(error.status === 404 || error.status === 501);
+					setProjection({
+						seriesId,
+						occurrences:
+							allowLegacyFallback && unsupported ? undefined : []
+					});
 				}
 			);
 		};

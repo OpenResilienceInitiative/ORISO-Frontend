@@ -65,9 +65,12 @@ describe('groupWaitingRoomData', () => {
 			surviving,
 			Date.parse('2026-11-09')
 		);
-		expect(
-			schedule.upcomingDates?.map((date) => date.toISOString())
-		).toEqual(surviving.map(({ start }) => new Date(start).toISOString()));
+		expect(schedule.upcomingDates).toEqual(
+			surviving.map(({ start, duration }) => ({
+				start: new Date(start),
+				durationMinutes: duration
+			}))
+		);
 		expect(schedule.series).toBeUndefined();
 	});
 
@@ -100,6 +103,20 @@ describe('groupWaitingRoomData', () => {
 		expect(getGroupWaitingRoomSchedule(recurring).plannedStart).toEqual(
 			new Date(recurring.startDateWithTime)
 		);
+	});
+
+	it('ignores an earlier occurrence even when its original time window has not ended', () => {
+		const next = '2026-11-17T20:59:00Z';
+		const schedule = getGroupWaitingRoomSchedule(
+			{
+				...recurring,
+				currentOccurrenceIndex: 1,
+				startDateWithTime: next
+			},
+			[projected(recurring.startDateWithTime, 0, 90), projected(next, 1)],
+			Date.parse('2026-11-10T21:30:00Z')
+		);
+		expect(schedule.plannedStart).toEqual(new Date(next));
 	});
 
 	it('keeps the topic out until the privacy agreement is on record', () => {

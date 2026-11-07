@@ -83,15 +83,24 @@ export const getGroupWaitingRoomSchedule = (
 		};
 	}
 
-	const scheduled = occurrences
-		.map(({ start, duration }) => ({ date: new Date(start), duration }))
+	const upcomingDates = occurrences
 		.filter(
-			({ date, duration }) => date.getTime() + duration * 60_000 > now
+			({ occurrenceIndex }) =>
+				occurrenceIndex >= (chat?.currentOccurrenceIndex ?? 0)
 		)
-		.sort((a, b) => a.date.getTime() - b.date.getTime());
-	const upcomingDates = scheduled.map(({ date }) => date);
-	const next = scheduled[0];
-	const durationMinutes = chat?.active ? chat.duration : next?.duration;
+		.map(({ start, duration }) => ({
+			start: new Date(start),
+			durationMinutes: duration
+		}))
+		.filter(
+			({ start, durationMinutes }) =>
+				start.getTime() + durationMinutes * 60_000 > now
+		)
+		.sort((a, b) => a.start.getTime() - b.start.getTime());
+	const next = upcomingDates[0];
+	const durationMinutes = chat?.active
+		? chat.duration
+		: next?.durationMinutes;
 	const projectedSeries =
 		series && upcomingDates.length > 1
 			? { ...series, count: upcomingDates.length }
@@ -101,12 +110,15 @@ export const getGroupWaitingRoomSchedule = (
 	const canExportSeries =
 		projectedSeries &&
 		next &&
-		scheduled.every(({ duration }) => duration === durationMinutes) &&
-		getGroupChatOccurrences(next.date, projectedSeries).every(
-			(date, index) => date.getTime() === upcomingDates[index].getTime()
+		upcomingDates.every(
+			(date) => date.durationMinutes === durationMinutes
+		) &&
+		getGroupChatOccurrences(next.start, projectedSeries).every(
+			(date, index) =>
+				date.getTime() === upcomingDates[index].start.getTime()
 		);
 	return {
-		plannedStart: chat?.active ? savedStart : (next?.date ?? null),
+		plannedStart: chat?.active ? savedStart : (next?.start ?? null),
 		upcomingDates,
 		durationMinutes,
 		series: canExportSeries ? projectedSeries : undefined

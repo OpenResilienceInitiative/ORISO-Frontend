@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import {
+	act,
 	cleanup,
 	fireEvent,
 	render,
@@ -226,6 +227,42 @@ describe('GroupEntryRoom', () => {
 			sessionState.item = original;
 		}
 	});
+
+	it.each([
+		[404, true],
+		[501, true],
+		[503, false],
+		[403, false]
+	] as const)(
+		'handles unavailable occurrence data (HTTP %s) without leaving the room',
+		async (status, legacy) => {
+			const original = sessionState.item;
+			const savedStart = new Date(Date.now() + 86_400_000).toISOString();
+			sessionState.item = {
+				...original,
+				startDateWithTime: savedStart,
+				chatInterval: 'WEEKLY',
+				repeatCount: 2
+			};
+			const load = Promise.withResolvers<never>();
+			vi.mocked(apiGetChatOccurrences).mockReturnValueOnce(load.promise);
+			try {
+				renderRoom();
+				const room = await screen.findByTestId('waiting-room');
+				expect(room.dataset.planned).toBeUndefined();
+				await act(async () => {
+					load.reject(new Response(null, { status }));
+					await load.promise.catch(() => {});
+				});
+				expect(room.dataset.planned).toBe(
+					legacy ? savedStart : undefined
+				);
+				expect(navigate).not.toHaveBeenCalled();
+			} finally {
+				sessionState.item = original;
+			}
+		}
+	);
 
 	it('hides the topic until the client has agreed to the privacy statement', async () => {
 		renderRoom(CLIENT);
