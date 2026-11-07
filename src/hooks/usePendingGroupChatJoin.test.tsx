@@ -225,7 +225,7 @@ describe('usePendingGroupChatJoin', () => {
 
 			await waitFor(() =>
 				expect(navigate).toHaveBeenCalledWith(
-					'/sessions/consultant/sessionView/session/42',
+					'/sessions/consultant/sessionView/chat/42',
 					{ replace: true }
 				)
 			);
@@ -264,7 +264,7 @@ describe('usePendingGroupChatJoin', () => {
 
 			await waitFor(() =>
 				expect(navigate).toHaveBeenCalledWith(
-					'/sessions/consultant/sessionView/session/42',
+					'/sessions/consultant/sessionView/chat/42',
 					{ replace: true }
 				)
 			);
@@ -279,7 +279,7 @@ describe('usePendingGroupChatJoin', () => {
 
 			await waitFor(() =>
 				expect(navigate).toHaveBeenCalledWith(
-					'/sessions/consultant/sessionView/session/42',
+					'/sessions/consultant/sessionView/chat/42',
 					{ replace: true }
 				)
 			);

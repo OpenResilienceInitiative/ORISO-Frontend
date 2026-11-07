@@ -10,7 +10,7 @@ export const isGroupChatId = (value: unknown): value is string | number => {
 /**
  * A group in the counsellor's own session view — her waiting room with
  * "Chat starten" and Chat-Info (`JoinGroupChatView`), not the client's entry
- * room (#1499). Same route the session list opens for a group without a room.
+ * room (#1499). The chat id stays distinct from one-to-one session ids.
  */
 export const consultantGroupChatPath = (chatId: string | number): string =>
 	getSessionNavigationPath({

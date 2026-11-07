@@ -245,7 +245,8 @@ export const SessionListItemComponent = ({
 		? isActive({
 				groupId: sessionItem?.matrixRoomId,
 				rid: activeSession.rid,
-				sessionId: sessionItem?.id
+				sessionId: sessionItem?.id,
+				chatId: activeSession.isGroup ? sessionItem?.id : undefined
 			})
 		: false;
 
