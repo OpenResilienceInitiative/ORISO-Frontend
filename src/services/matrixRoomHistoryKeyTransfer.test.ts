@@ -1652,6 +1652,29 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 				}
 			);
 
+			it('does not show a request that another device already decided', async () => {
+				const harness = buildHarness();
+				ownDevices(harness);
+				applyDeviceIsolationMode(harness.client as any, true);
+				const status = harness.crypto.getDeviceVerificationStatus;
+				const base = status.getMockImplementation()!;
+				status.mockImplementation(
+					async (user: string, device: string) => ({
+						...(await base(user, device)),
+						isVerified: () =>
+							device !== 'ASKER1' && device !== 'NEW3'
+					})
+				);
+				const service = new MatrixRoomHistoryKeyTransfer();
+				service.initialize(harness.client as any);
+				// The decision arrives before the request has finished loading.
+				harness.emitToDevice(decided(), fromOwn);
+				await settle();
+				harness.emitToDevice(request());
+				await settle();
+				expect(service.getPendingApprovals()).toHaveLength(0);
+			});
+
 			it('leaves a release that is already sending to finish', async () => {
 				const { harness, service } = await setup();
 				let release!: () => void;

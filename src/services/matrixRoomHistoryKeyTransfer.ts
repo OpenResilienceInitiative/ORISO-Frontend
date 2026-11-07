@@ -25,6 +25,7 @@ const MAX_PENDING_APPROVALS = 20;
 const MAX_PENDING_PER_ROOM = 5;
 const PENDING_APPROVAL_TTL_MS = 24 * 60 * 60 * 1000;
 const MAX_REASON_LENGTH = 500;
+const MAX_DECIDED_REQUESTS = 100;
 
 export const MATRIX_HISTORY_KEYS_IMPORTED_EVENT =
 	'oriso:matrix-history-keys-imported';
@@ -143,6 +144,15 @@ export class MatrixRoomHistoryKeyTransfer {
 	private readonly pendingReasons = new Map<string, string>();
 	private readonly lastReasonRequestAt = new Map<string, number>();
 	private readonly approvalsInFlight = new Set<string>();
+	/**
+	 * Decisions another device of this person announced, kept briefly: the
+	 * announcement can arrive while the request itself is still being checked,
+	 * and that request must not appear afterwards.
+	 */
+	private readonly decidedElsewhere = new Map<
+		string,
+		{ roomId: string; at: number }
+	>();
 	private readonly pendingApprovals = new Map<
 		string,
 		PendingHistoryRequest
@@ -184,6 +194,7 @@ export class MatrixRoomHistoryKeyTransfer {
 		this.pendingApprovals.clear();
 		this.scheduleExpiry();
 		this.approvalsInFlight.clear();
+		this.decidedElsewhere.clear();
 		this.lastReasonRequestAt.clear();
 		dropped.forEach((request) => this.announceResolved(request, 'dropped'));
 	}
@@ -352,6 +363,19 @@ export class MatrixRoomHistoryKeyTransfer {
 		}
 	}
 
+	private rememberDecidedElsewhere(requestId: string, roomId: string): void {
+		const now = Date.now();
+		for (const [id, entry] of this.decidedElsewhere)
+			if (now - entry.at > PENDING_APPROVAL_TTL_MS)
+				this.decidedElsewhere.delete(id);
+		while (this.decidedElsewhere.size >= MAX_DECIDED_REQUESTS) {
+			const oldest = this.decidedElsewhere.keys().next().value;
+			if (oldest === undefined) break;
+			this.decidedElsewhere.delete(oldest);
+		}
+		this.decidedElsewhere.set(requestId, { roomId, at: now });
+	}
+
 	private async handleRequestDecided(
 		event: MatrixEvent,
 		encryptionInfo?: {
@@ -390,10 +414,14 @@ export class MatrixRoomHistoryKeyTransfer {
 			return;
 		}
 		const request = this.pendingApprovals.get(content.request_id);
+		if (!request) {
+			// Not here yet: remember it, so the request cannot show up after.
+			this.rememberDecidedElsewhere(content.request_id, content.room_id);
+			return;
+		}
 		// Only a request this device holds for that room can be dropped; a
 		// release already sending here is left to finish.
 		if (
-			!request ||
 			request.roomId !== content.room_id ||
 			this.approvalsInFlight.has(content.request_id)
 		)
@@ -785,6 +813,13 @@ export class MatrixRoomHistoryKeyTransfer {
 								pending.requesterDeviceId
 						)
 							this.pendingApprovals.delete(id);
+					}
+					const decided = this.decidedElsewhere.get(
+						pending.requestId
+					);
+					if (decided && decided.roomId === pending.roomId) {
+						emitDiagnostic('request-decided-elsewhere');
+						return;
 					}
 					this.expirePendingApprovals();
 					const inRoom = Array.from(
