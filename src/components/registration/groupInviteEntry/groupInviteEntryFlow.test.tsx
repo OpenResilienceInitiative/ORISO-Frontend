@@ -261,6 +261,33 @@ describe('newcomer entry for a self-help group link', () => {
 		expect(lastStage().loginState).toEqual(INVITE_LOGIN_STATE);
 	});
 
+	it('keeps a signed multi-topic circle invite when signing in from the steps', () => {
+		renderAt('?gcid=19.q2Vx8mK4TzJ1bR7n&aid=19', {
+			agency: { ...agency, topicIds: [17, 18] }
+		});
+
+		expect(screen.getByTestId('step-body')).toBeTruthy();
+		expect(lastStage().showLoginLink).toBe(true);
+		expect(lastStage().loginParams).toBe('gcid=19.q2Vx8mK4TzJ1bR7n&aid=19');
+		expect(lastStage().loginState).toEqual(INVITE_LOGIN_STATE);
+	});
+
+	it('keeps the circle invite when an agency is missing', () => {
+		renderAt('?gcid=19.q2Vx8mK4TzJ1bR7n');
+
+		expect(screen.getByTestId('step-body')).toBeTruthy();
+		expect(lastStage().loginParams).toBe('gcid=19.q2Vx8mK4TzJ1bR7n');
+		expect(lastStage().loginState).toEqual(INVITE_LOGIN_STATE);
+	});
+
+	it('keeps the ordinary registration sign-in free of invite state', () => {
+		renderAt('?gcid=invalid');
+
+		expect(screen.getByTestId('step-body')).toBeTruthy();
+		expect(lastStage().loginParams).toBeUndefined();
+		expect(lastStage().loginState).toBeUndefined();
+	});
+
 	it('joining registers at the group agency and hands the link on to the entry room', async () => {
 		renderAt('?gcid=19&aid=19');
 

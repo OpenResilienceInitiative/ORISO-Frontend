@@ -106,6 +106,7 @@ import {
 	GroupInviteLoading
 } from './groupInviteEntry/GroupInviteLoadError';
 import {
+	getGroupInviteLoginProps,
 	getGroupJoin,
 	isGroupInviteRefusal,
 	resolveGroupInviteEntry
@@ -1003,6 +1004,7 @@ export const Registration = () => {
 				className="stageLayout--registration"
 				showLegalLinks={true}
 				showLoginLink={true}
+				{...getGroupInviteLoginProps(groupChatId, inviteAgencyId)}
 				stage={<Stage hasAnimation={isFirstVisit} />}
 				showRegistrationInfoDrawer={true}
 				mobileHero="bar"
