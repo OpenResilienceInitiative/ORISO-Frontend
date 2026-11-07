@@ -89,7 +89,8 @@ const mocks = vi.hoisted(() => {
 				};
 			}
 		} as any,
-		requestHistoryKeys: vi.fn(() => Promise.resolve(true))
+		requestHistoryKeys: vi.fn(() => Promise.resolve(true)),
+		recoveryStatus: 'ok' as string
 	};
 });
 
@@ -189,7 +190,8 @@ vi.mock(
 		return {
 			...actual,
 			matrixRoomHistoryKeyTransfer: {
-				requestKeys: mocks.requestHistoryKeys
+				requestKeys: mocks.requestHistoryKeys,
+				getPendingApprovals: () => []
 			}
 		};
 	}
@@ -236,10 +238,15 @@ vi.mock(
 
 vi.mock('./SessionItemComponent', () => ({
 	SessionItemComponent: (props: any) => {
-		if (
-			props.mainTimelineSupplement?.props?.sessionId ===
-			mocks.suspendedSessionId
-		) {
+		const supplement = props.mainTimelineSupplement;
+		const supplementChildren = React.Children.toArray(
+			supplement?.props?.children
+		) as any[];
+		const supplementSessionId =
+			supplement?.props?.sessionId ??
+			supplementChildren.find((child) => child?.props?.sessionId)?.props
+				?.sessionId;
+		if (supplementSessionId === mocks.suspendedSessionId) {
 			mocks.suspendedRenders++;
 			throw mocks.suspendedRender;
 		}
@@ -250,6 +257,21 @@ vi.mock('./SessionItemComponent', () => ({
 	}
 }));
 
+vi.mock('../../services/recoveryReminderState', async (importOriginal) => ({
+	...(await importOriginal<
+		typeof import('../../services/recoveryReminderState')
+	>()),
+	useRecoveryRuntimeStatus: () => mocks.recoveryStatus
+}));
+vi.mock('../historyRequest/HistoryAskCard', () => ({
+	HistoryAskCard: (props: { roomId: string; unreadable?: boolean }) => (
+		<div
+			data-testid="history-ask-card"
+			data-room={props.roomId}
+			data-unreadable={String(props.unreadable)}
+		/>
+	)
+}));
 vi.mock('./CaseHandoverGate', () => ({
 	CaseHandoverGate: () => <div data-testid="case-handover-gate" />
 }));
@@ -440,6 +462,87 @@ const emitLifecycle = (change: any) => {
 	});
 };
 
+describe('SessionStream history request card', () => {
+	beforeEach(() => {
+		mocks.recoveryStatus = 'needs-recovery-key';
+	});
+	afterEach(cleanup);
+
+	it('shows the ask card to an advice seeker in a one-to-one chat', () => {
+		renderSessionStream({ isGroup: false });
+		expect(
+			screen.getByTestId('history-ask-card').getAttribute('data-room')
+		).toBe(ROOM_ID);
+	});
+
+	it('shows history recovery alongside consent identified from event params', async () => {
+		mocks.getCaseHandoverRequestStatus.mockRejectedValue(
+			new Error('NO_MATCH')
+		);
+		renderSessionStream({
+			isGroup: false,
+			notificationFeed: [
+				{
+					id: '1482',
+					eventType: 'case.handover.consent.requested',
+					params: { sourceSessionId: 1, caseHandoverRequestId: 11 },
+					actionPath: '/sessions/user/view/session/1'
+				}
+			]
+		});
+		expect(screen.getByTestId('history-ask-card')).toBeTruthy();
+		expect(
+			await screen.findByTestId('case-handover-inline-consent')
+		).toBeTruthy();
+	});
+
+	it('marks the card readable when every loaded event can be read', () => {
+		renderSessionStream({ isGroup: false });
+		expect(
+			screen
+				.getByTestId('history-ask-card')
+				.getAttribute('data-unreadable')
+		).toBe('false');
+	});
+
+	it('marks the card unreadable when a loaded event could not be decrypted', async () => {
+		mocks.getMatrixRoomMessages.mockImplementation((roomId: string) =>
+			roomId === ROOM_ID ? [{ isDecryptionFailure: () => true }] : []
+		);
+		try {
+			renderSessionStream({ isGroup: false });
+			await waitFor(() =>
+				expect(
+					screen
+						.getByTestId('history-ask-card')
+						.getAttribute('data-unreadable')
+				).toBe('true')
+			);
+		} finally {
+			mocks.getMatrixRoomMessages.mockImplementation(() => []);
+		}
+	});
+
+	it('hides it in a group chat, where the reason would reach every member', () => {
+		renderSessionStream({ isGroup: true });
+		expect(screen.queryByTestId('history-ask-card')).toBeNull();
+	});
+
+	it('hides it from a counsellor, who cannot approve their own request', () => {
+		renderSessionStream({
+			isGroup: false,
+			userData: consultantUserData as any
+		});
+		expect(screen.queryByTestId('history-ask-card')).toBeNull();
+	});
+
+	it('hides it while the recovery key is not missing', () => {
+		mocks.recoveryStatus = 'ok';
+		renderSessionStream({ isGroup: false });
+		expect(screen.queryByTestId('history-ask-card')).toBeNull();
+	});
+});
+
 describe('SessionStream Matrix room lifecycle', () => {
 	beforeEach(() => {
 		vi.stubGlobal('fetch', async (input: RequestInfo | URL) => {
@@ -476,6 +579,7 @@ describe('SessionStream Matrix room lifecycle', () => {
 		mocks.receiptListeners.length = 0;
 		mocks.clientChangeListeners.length = 0;
 		mocks.sessionItemProps = null;
+		mocks.recoveryStatus = 'ok';
 		mocks.suspendedSessionId = null;
 		mocks.suspendedRender = null;
 		mocks.suspendedRenders = 0;

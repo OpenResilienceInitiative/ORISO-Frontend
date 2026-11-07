@@ -32,12 +32,13 @@ import {
 // is zero: a new German key now has to be translated in the same change that
 // introduces it. English still trails by 63 keys. Tigrinya misses the three
 // device-check keys that need a native-reviewed text (`knockWait.ready.description`,
-// `descriptionCheck`, `notApplied`): they show in German until Weblate has one.
+// `descriptionCheck`, `notApplied`) and the 18 history-request keys: that
+// safety copy shows in German until Weblate has a native review.
 const driftBudgets = {
 	en: { extraInLocale: 5, missingInLocale: 63 },
 	fr: { extraInLocale: 5, missingInLocale: 0 },
 	ru: { extraInLocale: 5, missingInLocale: 0 },
-	ti: { extraInLocale: 5, missingInLocale: 3 },
+	ti: { extraInLocale: 5, missingInLocale: 21 },
 	tr: { extraInLocale: 5, missingInLocale: 0 }
 } as const;
 
