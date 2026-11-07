@@ -3,6 +3,7 @@ import { useFrozenPhoneLayout } from '../../utils/embeddedComposerFullscreen';
 import { useConversationFeatureSettings } from '../../hooks/useConversationFeatureSettings';
 import { useDelayedSessionRefresh } from './useDelayedSessionRefresh';
 import { useChatHistoryPagination } from './useChatHistoryPagination';
+import { useThreadRouteHistory } from './useThreadRouteHistory';
 import * as React from 'react';
 import {
 	useCallback,
@@ -928,6 +929,13 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				: null,
 		[messages, activeThreadRootId]
 	);
+	const threadRouteHistory = useThreadRouteHistory({
+		scope: `${activeSession.item.id}:${resolvedMatrixRoomId}`,
+		rootId: isRejectedSession ? null : activeThreadRootId,
+		hasRoot: activeThreadRootMessage !== null,
+		historyReady: messages !== undefined,
+		loadEarlier: props.onLoadEarlierMessages
+	});
 	const knownMessageIdsRef = useRef<Set<string>>(new Set());
 	// Thread-panel-UX (#435): pure summary computation (unit-tested).
 	const threadSummariesRaw = useMemo(
@@ -2369,7 +2377,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 
 	// The panel the URL asks for, resolved against what exists. A thread
 	// whose root is not in the loaded history keeps the main chat open
-	// (analysis F3 — fetching the root is a follow-up).
+	// while its authorized history is loading.
 	const openPanel: 'supervision' | 'team' | 'thread' | null =
 		routeChannel?.kind === 'supervision'
 			? hasSupervisionSideRoom
@@ -3494,6 +3502,17 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 											</div>
 										</div>
 									</div>
+								</div>
+							)}
+							{threadRouteHistory && (
+								<div className="messageItem" role="status">
+									{translate(
+										threadRouteHistory === 'loading'
+											? 'notifications.center.preview.loadingOlder'
+											: threadRouteHistory === 'error'
+												? 'notifications.center.preview.loadOlderFailed'
+												: 'notifications.center.preview.eventUnavailable'
+									)}
 								</div>
 							)}
 							{!messages && props.mainTimelineSupplement}
