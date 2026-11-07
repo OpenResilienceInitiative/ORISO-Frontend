@@ -1670,8 +1670,24 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 				// The decision arrives before the request has finished loading.
 				harness.emitToDevice(decided(), fromOwn);
 				await settle();
-				harness.emitToDevice(request());
-				await settle();
+				const diagnostic = vi.fn();
+				window.addEventListener(
+					MATRIX_HISTORY_KEYS_DIAGNOSTIC_EVENT,
+					diagnostic
+				);
+				try {
+					harness.emitToDevice(request());
+					await vi.waitFor(() =>
+						expect(
+							diagnostic.mock.calls.map(([e]) => e.detail)
+						).toContainEqual({ stage: 'request-decided-elsewhere' })
+					);
+				} finally {
+					window.removeEventListener(
+						MATRIX_HISTORY_KEYS_DIAGNOSTIC_EVENT,
+						diagnostic
+					);
+				}
 				expect(service.getPendingApprovals()).toHaveLength(0);
 			});
 
@@ -1703,6 +1719,40 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 				);
 				// The replacement stays.
 				expect(service.getPendingApprovals()).toHaveLength(1);
+			});
+
+			it('does not let an already decided request replace a newer one from the same device', async () => {
+				const { harness, service } = await setup();
+				harness.emitToDevice(
+					decided({ request_id: 'req-old' }),
+					fromOwn
+				);
+				await settle();
+				(service as any).lastReasonRequestAt.clear();
+				harness.emitToDevice(request('req-old'));
+				await settle();
+				expect(
+					service.getPendingApprovals().map((r) => r.requestId)
+				).toEqual(['req-1']);
+			});
+
+			it('drops the card after a failed approval when another device decided meanwhile', async () => {
+				const { harness, service } = await setup();
+				let fail!: () => void;
+				harness.crypto.exportRoomKeys.mockImplementationOnce(
+					() =>
+						new Promise((_resolve, reject) => {
+							fail = () => reject(new Error('export failed'));
+						})
+				);
+				const approving = service.approveRequest('req-1');
+				await vi.waitFor(() => expect(fail).toBeTypeOf('function'));
+				harness.emitToDevice(decided({ outcome: 'declined' }), fromOwn);
+				await settle();
+				expect(service.getPendingApprovals()).toHaveLength(1);
+				fail();
+				await expect(approving).resolves.toBe(false);
+				expect(service.getPendingApprovals()).toHaveLength(0);
 			});
 
 			it('leaves a release that is already sending to finish', async () => {

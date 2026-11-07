@@ -295,8 +295,18 @@ export class MatrixRoomHistoryKeyTransfer {
 			return false;
 		} finally {
 			// A replaced client has its own in-flight set.
-			if (this.client === client)
+			if (this.client === client) {
 				this.approvalsInFlight.delete(requestId);
+				// Another device decided while this attempt ran and it did not
+				// end in a release: the card must not wait for a retry.
+				const decided = this.decidedElsewhere.get(requestId);
+				const left = this.pendingApprovals.get(requestId);
+				if (decided && left && decided.roomId === left.roomId) {
+					this.pendingApprovals.delete(requestId);
+					this.scheduleExpiry();
+					this.announceResolved(left, 'dropped');
+				}
+			}
 		}
 	}
 
@@ -424,13 +434,13 @@ export class MatrixRoomHistoryKeyTransfer {
 			this.rememberDecidedElsewhere(content.request_id, content.room_id);
 			return;
 		}
-		// Only a request this device holds for that room can be dropped; a
-		// release already sending here is left to finish.
-		if (
-			request.roomId !== content.room_id ||
-			this.approvalsInFlight.has(content.request_id)
-		)
+		if (request.roomId !== content.room_id) return;
+		// A release already sending here is left to finish. If it fails, the
+		// card would stay for a retry, so the decision is kept for that moment.
+		if (this.approvalsInFlight.has(content.request_id)) {
+			this.rememberDecidedElsewhere(content.request_id, content.room_id);
 			return;
+		}
 		this.pendingApprovals.delete(content.request_id);
 		this.scheduleExpiry();
 		this.announceResolved(request, 'dropped');
@@ -808,6 +818,13 @@ export class MatrixRoomHistoryKeyTransfer {
 						emitDiagnostic('request-id-collision');
 						return;
 					}
+					const decided = this.decidedElsewhere.get(
+						pending.requestId
+					);
+					if (decided && decided.roomId === pending.roomId) {
+						emitDiagnostic('request-decided-elsewhere');
+						return;
+					}
 					// One waiting request per requesting device: a newer one replaces
 					// the older, so a single device cannot fill the list.
 					for (const [id, other] of this.pendingApprovals) {
@@ -818,13 +835,6 @@ export class MatrixRoomHistoryKeyTransfer {
 								pending.requesterDeviceId
 						)
 							this.pendingApprovals.delete(id);
-					}
-					const decided = this.decidedElsewhere.get(
-						pending.requestId
-					);
-					if (decided && decided.roomId === pending.roomId) {
-						emitDiagnostic('request-decided-elsewhere');
-						return;
 					}
 					this.expirePendingApprovals();
 					const inRoom = Array.from(
