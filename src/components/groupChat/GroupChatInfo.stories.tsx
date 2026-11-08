@@ -152,15 +152,16 @@ const BodyOverlayHost = () => {
 };
 
 const WiredChatInfo = ({
+	members = MEMBERS,
 	layout,
 	inviteToken,
 	asAsker = false,
 	dialog = false,
 	joined = true,
 	banned = false,
-	chatInfo = 'ok',
-	members = MEMBERS
+	chatInfo = 'ok'
 }: {
+	members?: typeof MEMBERS;
 	layout: 'desktop' | 'mobile';
 	inviteToken?: string | null;
 	asAsker?: boolean;
@@ -171,7 +172,6 @@ const WiredChatInfo = ({
 	banned?: boolean;
 	/** How the ban-list request answers. */
 	chatInfo?: ChatInfoResponse;
-	members?: typeof MEMBERS;
 }) => {
 	const listItem = React.useMemo(() => {
 		const item = buildListItem(inviteToken);
