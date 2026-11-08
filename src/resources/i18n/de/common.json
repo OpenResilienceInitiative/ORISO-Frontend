@@ -519,6 +519,7 @@
 		"absent": {
 			"message": " ist abwesend"
 		},
+		"assignedLabel": "Ihre Beratungsperson",
 		"jobTitle": "Beraterin oder Berater"
 	},
 	"date": {

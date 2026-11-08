@@ -524,6 +524,7 @@
 		"absent": {
 			"message": " est absent"
 		},
+		"assignedLabel": "Votre conseiller ou conseillère",
 		"jobTitle": "Conseiller ou conseillère"
 	},
 	"date": {

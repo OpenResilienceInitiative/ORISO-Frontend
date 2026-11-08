@@ -1,18 +1,24 @@
 // @vitest-environment oriso-jsdom
 import * as React from 'react';
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { SessionHeaderComponent } from './SessionHeaderComponent';
 import { ActiveSessionContext, UserDataContext } from '../../globalState';
 import {
+	MOCK_ASKER_MATRIX_ID,
 	mockActiveSession1on1,
 	mockUserData
 } from '../message/MessageItemComponent.mocks';
 import { STATUS_ENQUIRY } from '../../globalState/interfaces/SessionsDataInterface';
 
+const { matrixClient } = vi.hoisted(() => ({ matrixClient: vi.fn() }));
+
 vi.mock('react-i18next', () => ({
-	useTranslation: () => ({ t: (key: string) => key })
+	useTranslation: () => ({
+		t: (key: string) =>
+			key === 'consultant.assignedLabel' ? 'Ihre Beratungsperson' : key
+	})
 }));
 
 vi.mock('../../globalState', async () => {
@@ -20,11 +26,13 @@ vi.mock('../../globalState', async () => {
 	return {
 		AUTHORITIES: {
 			ASKER_DEFAULT: 'AUTHORIZATION_USER_DEFAULT',
+			ANONYMOUS_DEFAULT: 'AUTHORIZATION_ANONYMOUS_DEFAULT',
 			CONSULTANT_DEFAULT: 'AUTHORIZATION_CONSULTANT_DEFAULT'
 		},
 		hasUserAuthority: (authority: string, userData: any) =>
 			Boolean(userData?.grantedAuthorities?.includes(authority)),
-		getContact: () => null,
+		getContact: (session: ReturnType<typeof mockActiveSession1on1>) =>
+			session.user ?? session.consultant ?? null,
 		useConsultingType: () => null,
 		useTopic: () => ({ name: 'Debt' }),
 		REMOVE_SESSIONS: 'REMOVE_SESSIONS',
@@ -42,7 +50,7 @@ vi.mock('../../globalState', async () => {
 });
 
 vi.mock('../../globalState/context/MatrixClientContext', () => ({
-	useMatrixClient: () => ({ matrixClientService: undefined })
+	useMatrixClient: () => ({ matrixClientService: matrixClient() })
 }));
 vi.mock('../../hooks/useAppConfig', () => ({ useAppConfig: () => ({}) }));
 vi.mock('../sessionMenu/SessionMenu', () => ({ SessionMenu: () => null }));
@@ -50,7 +58,10 @@ vi.mock('./ChatroomMainInteractionIcon', () => ({
 	ChatroomMainInteractionIcon: () => null
 }));
 
-afterEach(cleanup);
+afterEach(() => {
+	cleanup();
+	matrixClient.mockReset();
+});
 
 describe('SessionHeaderComponent', () => {
 	// #1845: a session without an agency id (0) rendered a stray "0" under the
@@ -157,4 +168,152 @@ it('shows the active live-session alias instead of an account alias or stale loc
 		sessionStorage.removeItem('anonymous-pseudonym-name-3363');
 		sessionStorage.removeItem('anonymous-pseudonym-name-3365');
 	}
+});
+
+describe('registered asker public counsellor identity', () => {
+	const login = 'counsellor_at_qa.invalid';
+	const consultantMatrixId = `@${login}:qa.invalid`;
+	const legacyName = 'matrix-counsellor@qa.invalid';
+	const assignedLabel = 'Ihre Beratungsperson';
+	const assignedAvatar = (name: string) =>
+		screen
+			.getAllByRole('img', { name })
+			.find((element) => element.dataset.userId === consultantMatrixId);
+	const userData = mockUserData({
+		userId: 'asker-1',
+		grantedAuthorities: ['AUTHORIZATION_USER_DEFAULT']
+	});
+	const renderSession = (
+		activeSession: ReturnType<typeof mockActiveSession1on1>
+	) =>
+		render(
+			<MemoryRouter>
+				<UserDataContext.Provider
+					value={{
+						userData,
+						setUserData: () => {},
+						reloadUserData: async () => userData
+					}}
+				>
+					<ActiveSessionContext.Provider value={{ activeSession }}>
+						<SessionHeaderComponent bannedUsers={[]} />
+					</ActiveSessionContext.Provider>
+				</UserDataContext.Provider>
+			</MemoryRouter>
+		);
+	const session = (displayName?: string, username = login) => {
+		const base = mockActiveSession1on1();
+		if (!base.item || !base.consultant) {
+			throw new Error('Expected an assigned counselling fixture');
+		}
+		return {
+			...base,
+			user: undefined,
+			item: {
+				...base.item,
+				consultantMatrixUserId: consultantMatrixId
+			},
+			consultant: { ...base.consultant, username, displayName }
+		};
+	};
+
+	it.each([
+		{ connected: false, internalMarker: false },
+		{ connected: true, internalMarker: false },
+		{ connected: true, internalMarker: true }
+	])(
+		'uses a safe title and avatar name (Matrix: $connected, internal marker: $internalMarker)',
+		({ connected, internalMarker }) => {
+			if (connected) {
+				matrixClient.mockReturnValue({
+					getClient: () => ({
+						getUserId: () => MOCK_ASKER_MATRIX_ID,
+						getRoom: () => ({
+							getJoinedMembers: () => [
+								{
+									userId: consultantMatrixId,
+									name: legacyName
+								},
+								{
+									userId: MOCK_ASKER_MATRIX_ID,
+									name: 'Asker alias'
+								}
+							]
+						})
+					})
+				});
+			}
+			const activeSession = session();
+			if (internalMarker) {
+				activeSession.item.supervision = {
+					supervisedByMe: false,
+					supervisorConsultantIds: [],
+					supervisorDisplayNames: [],
+					counsellorDisplayName: 'Private staff label'
+				};
+			}
+			renderSession(activeSession);
+
+			const avatar = assignedAvatar(assignedLabel);
+			expect(avatar).toBeDefined();
+			if (!avatar)
+				throw new Error('Assigned counsellor avatar is missing');
+			expect(
+				screen.getByRole('heading', { name: assignedLabel })
+			).toBeTruthy();
+			expect(avatar.getAttribute('data-user-id')).toBe(
+				consultantMatrixId
+			);
+			fireEvent.focus(avatar);
+			expect(screen.getByRole('tooltip').textContent).toBe(assignedLabel);
+			expect(screen.queryByRole('img', { name: legacyName })).toBeNull();
+			expect(screen.queryByText(login)).toBeNull();
+			expect(screen.queryByText('Private staff label')).toBeNull();
+			if (connected) {
+				expect(
+					screen
+						.getAllByRole('img', { name: 'Asker alias' })
+						.some(
+							(element) =>
+								element.dataset.userId === MOCK_ASKER_MATRIX_ID
+						)
+				).toBe(true);
+			}
+		}
+	);
+
+	it.each([
+		['Nora P.', login, 'Nora P.'],
+		[undefined, 'nora-p', 'nora-p'],
+		['counsellor@qa.invalid', 'nora-p', 'nora-p']
+	])(
+		'preserves a public name or chosen pseudonym (%s)',
+		(displayName, username, expected) => {
+			renderSession(session(displayName, username));
+
+			expect(
+				screen.getByRole('heading', { name: expected })
+			).toBeTruthy();
+			expect(assignedAvatar(expected)).toBeDefined();
+		}
+	);
+
+	it('keeps the enquiry-phase label when no counsellor is assigned', () => {
+		const enquiry = session();
+		renderSession({
+			...enquiry,
+			consultant: undefined,
+			item: {
+				...enquiry.item,
+				status: STATUS_ENQUIRY,
+				consultantMatrixUserId: undefined
+			}
+		});
+
+		expect(
+			screen.getByRole('heading', {
+				name: 'sessionList.user.consultantUnknown'
+			})
+		).toBeTruthy();
+	});
 });

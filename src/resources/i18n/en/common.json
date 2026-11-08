@@ -507,6 +507,7 @@
 		"absent": {
 			"message": " is absent"
 		},
+		"assignedLabel": "Your counsellor",
 		"jobTitle": "Consultant"
 	},
 	"date": {

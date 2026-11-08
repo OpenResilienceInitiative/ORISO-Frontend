@@ -525,6 +525,7 @@
 		"absent": {
 			"message": " отсутствует"
 		},
+		"assignedLabel": "Ваш консультант",
 		"jobTitle": "Консультант"
 	},
 	"date": {
