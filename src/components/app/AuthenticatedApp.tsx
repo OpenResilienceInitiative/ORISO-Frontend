@@ -10,6 +10,8 @@ import { loginPathForEmailPreferences } from '../../utils/emailPreferencesReturn
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { Routing } from './Routing';
 import { AccountSetupGate } from '../twoFactorAuth/AccountSetupGate';
+import { PasswordChangeConfirmation } from '../passwordReset/PasswordChangeConfirmation';
+import { PasswordChangeConfirmationContext } from '../passwordReset/PasswordChangeConfirmationContext';
 import {
 	isAccountSetupPending,
 	resolveAccountSetupStep
@@ -178,6 +180,25 @@ export const AuthenticatedApp = ({
 
 	const [appReady, setAppReady] = useState<boolean>(false);
 	const [loading, setLoading] = useState<boolean>(true);
+	const [passwordChangeStatus, setPasswordChangeStatus] = useState<
+		'hidden' | 'signing-out' | 'signed-out'
+	>('hidden');
+	const showPasswordChangeConfirmation = useCallback(
+		(loginPath: string) => {
+			if (
+				!mounted.current ||
+				getAppSessionScope()?.identity !== mountedSession?.identity
+			)
+				return;
+			setPasswordChangeStatus('signing-out');
+			void logout(false, loginPath, () => {
+				// Revalidation must not mistake this document's sign-out for a peer's.
+				mounted.current = false;
+				setPasswordChangeStatus('signed-out');
+			});
+		},
+		[mountedSession]
+	);
 	/* Every path that ends in `<Navigate to="/login">` below goes through
 	   here: the old session is torn down *before* the login form renders,
 	   so no provider above the router (notification poller, Matrix client)
@@ -479,38 +500,53 @@ export const AuthenticatedApp = ({
 		);
 	}
 
-	if (appReady && userData) {
-		// Account setup comes before the app, not on top of it: until the counsellor's
-		// own password and a second factor are settled, the only ways on are completing
-		// them or logging out. Replacing the routed app is what makes that true.
-		if (resolveAccountSetupStep(userData) !== null) {
-			return (
-				<AuthenticatedBuildIdentityBoundary>
+	if (appReady && (userData || passwordChangeStatus !== 'hidden')) {
+		let authenticatedContent: React.ReactNode = null;
+		if (userData && passwordChangeStatus !== 'signed-out') {
+			// Complete the counsellor's required account setup before showing routing.
+			if (resolveAccountSetupStep(userData) !== null) {
+				authenticatedContent = (
 					<AccountSetupGate onLogout={handleLogout} />
-				</AuthenticatedBuildIdentityBoundary>
-			);
+				);
+			} else if (content) {
+				authenticatedContent = content;
+			} else {
+				authenticatedContent = (
+					<>
+						<E2EEncryptionSupportBanner />
+						<KeyBackupRecoveryPrompt />
+						<RecoveryKeySaveReminder />
+						<PracticeLayer>
+							<Routing logout={handleLogout} />
+						</PracticeLayer>
+						<M3SnackbarHost />
+						{hasUserAuthority(
+							AUTHORITIES.CONSULTANT_DEFAULT,
+							userData
+						) && (
+							<JoinRequestCenter
+								transport={httpJoinRequestTransport}
+							/>
+						)}
+					</>
+				);
+			}
 		}
 
-		if (content)
-			return (
-				<AuthenticatedBuildIdentityBoundary>
-					{content}
-				</AuthenticatedBuildIdentityBoundary>
-			);
-
 		return (
-			<AuthenticatedBuildIdentityBoundary>
-				<E2EEncryptionSupportBanner />
-				<KeyBackupRecoveryPrompt />
-				<RecoveryKeySaveReminder />
-				<PracticeLayer>
-					<Routing logout={handleLogout} />
-				</PracticeLayer>
-				<M3SnackbarHost />
-				{hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) && (
-					<JoinRequestCenter transport={httpJoinRequestTransport} />
+			<PasswordChangeConfirmationContext.Provider
+				value={showPasswordChangeConfirmation}
+			>
+				{authenticatedContent !== null && (
+					<AuthenticatedBuildIdentityBoundary>
+						{authenticatedContent}
+					</AuthenticatedBuildIdentityBoundary>
 				)}
-			</AuthenticatedBuildIdentityBoundary>
+				{/* This confirmation survives the local sign-out that removes the form. */}
+				{passwordChangeStatus !== 'hidden' && (
+					<PasswordChangeConfirmation />
+				)}
+			</PasswordChangeConfirmationContext.Provider>
 		);
 	} else if (loading) {
 		return <Loading />;

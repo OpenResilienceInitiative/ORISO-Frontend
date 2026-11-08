@@ -71,7 +71,8 @@ it.each([false, true])(
 				})
 		);
 		addEventListener(EVENT_PRE_LOGOUT, draftFlush as TEventHandler);
-		const pendingLogout = logout(false);
+		const onLocalSessionEnded = vi.fn();
+		const pendingLogout = logout(false, undefined, onLocalSessionEnded);
 		expect(draftFlush).toHaveBeenCalledTimes(1);
 
 		const newToken = setSession('newer-app-session');
@@ -89,6 +90,7 @@ it.each([false, true])(
 		finishDraft(false);
 		await pendingLogout;
 		removeEventListener(EVENT_PRE_LOGOUT, draftFlush as TEventHandler);
+		expect(onLocalSessionEnded).not.toHaveBeenCalled();
 
 		expect(matrix.stopAndCleanup).toHaveBeenCalledTimes(
 			deliverPeerEvent ? 1 : 0
@@ -148,14 +150,22 @@ it('publishes the old session only when initiating logout has passed draft cance
 	const token = setSession('ordinary-app-session');
 	const cancel = (() => Promise.resolve(true)) as TEventHandler;
 	addEventListener(EVENT_PRE_LOGOUT, cancel);
+	const onLocalSessionEnded = vi.fn(() => {
+		expect(getValueFromCookie('keycloak')).toBeFalsy();
+		expect(localStorage.getItem(APP_SESSION_ENDED_KEY)).toContain(
+			'ordinary-app-session'
+		);
+	});
 
-	await logout(false);
+	await logout(false, undefined, onLocalSessionEnded);
+	expect(onLocalSessionEnded).not.toHaveBeenCalled();
 	expect(localStorage.getItem(APP_SESSION_ENDED_KEY)).toBeNull();
 	expect(getValueFromCookie('keycloak')).toBe(token);
 	expect(apiKeycloakLogout).not.toHaveBeenCalled();
 
 	removeEventListener(EVENT_PRE_LOGOUT, cancel);
-	await logout(false);
+	await logout(false, undefined, onLocalSessionEnded);
+	expect(onLocalSessionEnded).toHaveBeenCalledOnce();
 
 	expect(localStorage.getItem(APP_SESSION_ENDED_KEY)).toContain(
 		'ordinary-app-session'

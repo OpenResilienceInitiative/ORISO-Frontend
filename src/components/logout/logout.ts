@@ -99,7 +99,8 @@ const runBoundedLogoutRequest = <Value>(
 
 export const logout = async (
 	withRedirect: boolean = true,
-	redirectUrl?: string
+	redirectUrl?: string,
+	onLocalSessionEnded?: () => void
 ) => {
 	if (isRequestInProgress || peerSessionEnded) {
 		return null;
@@ -166,6 +167,7 @@ export const logout = async (
 	}
 	teardownLocalSession();
 	publishAppSessionEnd(sessionScope);
+	onLocalSessionEnded?.();
 
 	void Promise.allSettled(serverRequests).then(() => {
 		if (withRedirect) {
