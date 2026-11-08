@@ -21,6 +21,11 @@ import {
 	REFRESH_TOKEN_VALID_UNTIL_KEY,
 	removeTokenExpiryFromLocalStorage
 } from '../sessionCookie/accessSessionLocalStorage';
+import {
+	APP_SESSION_ENDED_KEY,
+	getAppSessionScope,
+	publishAppSessionEnd
+} from '../sessionCookie/observeAppSession';
 
 const mocks = vi.hoisted(() => ({
 	logout: vi.fn(),
@@ -173,8 +178,15 @@ const shell = (userData: UserDataInterface | null) => (
 describe('authenticated shell sign-out', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		setValueInCookie('keycloak', 'synthetic-access');
-		setValueInCookie('refreshToken', 'synthetic-refresh');
+		const claims = btoa(
+			JSON.stringify({
+				sid: 'synthetic-session',
+				iss: 'https://identity.example.test'
+			})
+		);
+		const token = `header.${claims}.signature`;
+		setValueInCookie('keycloak', token);
+		setValueInCookie('refreshToken', token);
 		localStorage.setItem(REFRESH_TOKEN_VALID_UNTIL_KEY, '1');
 	});
 
@@ -211,12 +223,25 @@ describe('authenticated shell sign-out', () => {
 		render(shell(profile));
 		expect(await screen.findByText('Private profile: true')).toBeTruthy();
 
+		const scope = getAppSessionScope();
 		act(() => {
-			removeAllCookies();
 			removeTokenExpiryFromLocalStorage();
 			window.dispatchEvent(
 				new StorageEvent('storage', {
 					key: REFRESH_TOKEN_VALID_UNTIL_KEY,
+					storageArea: localStorage
+				})
+			);
+		});
+		expect(screen.getByText('Private profile: true')).toBeTruthy();
+
+		// The peer's cookie view can still lag when the explicit signal arrives.
+		act(() => {
+			publishAppSessionEnd(scope);
+			window.dispatchEvent(
+				new StorageEvent('storage', {
+					key: APP_SESSION_ENDED_KEY,
+					newValue: scope?.identity,
 					storageArea: localStorage
 				})
 			);

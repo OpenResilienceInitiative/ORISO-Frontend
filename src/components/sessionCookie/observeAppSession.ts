@@ -5,28 +5,51 @@ import {
 } from './accessSessionLocalStorage';
 import { parseJwt } from '../../utils/parseJWT';
 
-const APP_EXPIRY_KEYS = new Set<string>([
-	ACCESS_TOKEN_VALID_UNTIL_KEY,
-	REFRESH_TOKEN_VALID_UNTIL_KEY
-]);
+export const APP_SESSION_ENDED_KEY = 'oriso.auth.session-ended';
+
+interface AppSessionScope {
+	identity: string;
+	stable: boolean;
+}
 
 /** A refresh may rotate both tokens while retaining the same Keycloak session. */
-export const getAppSessionScope = (): string | null => {
+export const getAppSessionScope = (): AppSessionScope | null => {
 	const refreshToken = getValueFromCookie('refreshToken');
 	const accessToken = getValueFromCookie('keycloak');
-	for (const token of [refreshToken, accessToken]) {
-		const claims = token ? parseJwt(token) : null;
-		if (typeof claims?.sid === 'string' && claims.sid) {
-			return JSON.stringify(['session', claims.iss, claims.sid]);
-		}
+	if (!refreshToken && !accessToken) return null;
+
+	const claims = [refreshToken, accessToken].map((token) =>
+		token ? parseJwt(token) : null
+	);
+	const session = claims.find(
+		(claim) => typeof claim?.sid === 'string' && claim.sid
+	);
+	if (session) {
+		return {
+			identity: JSON.stringify(['session', session.iss, session.sid]),
+			stable: true
+		};
 	}
-	for (const token of [accessToken, refreshToken]) {
-		const claims = token ? parseJwt(token) : null;
-		if (typeof claims?.sub === 'string' && claims.sub) {
-			return JSON.stringify(['account', claims.iss, claims.sub]);
-		}
+	const account = claims.find(
+		(claim) => typeof claim?.sub === 'string' && claim.sub
+	);
+	return {
+		identity: account
+			? JSON.stringify(['account', account.iss, account.sub])
+			: 'app-session-present',
+		stable: false
+	};
+};
+
+export const publishAppSessionEnd = (scope: AppSessionScope | null): void => {
+	if (!scope?.stable) return;
+	try {
+		// The initiating tab has completed its shared cleanup. The browser may
+		// still expose the previous cookies in another renderer.
+		window.localStorage.setItem(APP_SESSION_ENDED_KEY, scope.identity);
+	} catch {
+		// The initiating tab still finishes when Web Storage is unavailable.
 	}
-	return refreshToken || accessToken ? 'app-session-present' : null;
 };
 
 export const observeAppSession = (
@@ -36,17 +59,41 @@ export const observeAppSession = (
 	if (mountedScope === null) return () => {};
 
 	let ended = false;
+	const end = () => {
+		if (ended) return;
+		ended = true;
+		onSessionEnd();
+	};
+	const hasEndedMarker = () => {
+		try {
+			return (
+				mountedScope.stable &&
+				window.localStorage.getItem(APP_SESSION_ENDED_KEY) ===
+					mountedScope.identity
+			);
+		} catch {
+			return false;
+		}
+	};
 	const check = () => {
-		if (!ended && getAppSessionScope() !== mountedScope) {
-			ended = true;
-			onSessionEnd();
+		if (
+			hasEndedMarker() ||
+			getAppSessionScope()?.identity !== mountedScope.identity
+		) {
+			end();
 		}
 	};
 	const onStorage = (event: StorageEvent) => {
-		// App logout clears these keys after removing the shared cookies.
+		if (event.storageArea !== window.localStorage) return;
+		if (event.key === APP_SESSION_ENDED_KEY) {
+			if (mountedScope.stable && event.newValue === mountedScope.identity)
+				end();
+			return;
+		}
 		if (
-			event.storageArea === window.localStorage &&
-			(event.key === null || APP_EXPIRY_KEYS.has(event.key))
+			event.key === null ||
+			event.key === ACCESS_TOKEN_VALID_UNTIL_KEY ||
+			event.key === REFRESH_TOKEN_VALID_UNTIL_KEY
 		) {
 			check();
 		}

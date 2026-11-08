@@ -7,7 +7,12 @@ import {
 	it,
 	vi
 } from 'vite-plus/test';
-import { observeAppSession } from './observeAppSession';
+import {
+	APP_SESSION_ENDED_KEY,
+	getAppSessionScope,
+	observeAppSession,
+	publishAppSessionEnd
+} from './observeAppSession';
 import { getValueFromCookie, setValueInCookie } from './accessSessionCookie';
 import { REFRESH_TOKEN_VALID_UNTIL_KEY } from './accessSessionLocalStorage';
 
@@ -61,6 +66,49 @@ describe('observe the mounted App session', () => {
 		notifyStorage();
 
 		expect(endView).toHaveBeenCalledTimes(1);
+		unsubscribe();
+	});
+
+	it('ends the matching old view even when Chromium still exposes its cookie', () => {
+		setAppSession('ending-session', 1);
+		const scope = getAppSessionScope();
+		const endView = vi.fn();
+		const unsubscribe = observeAppSession(endView);
+		localStorage.removeItem(appExpiryKey);
+		notifyStorage();
+		expect(endView).not.toHaveBeenCalled();
+
+		publishAppSessionEnd(scope);
+		window.dispatchEvent(
+			new StorageEvent('storage', {
+				key: APP_SESSION_ENDED_KEY,
+				newValue: scope?.identity,
+				storageArea: localStorage
+			})
+		);
+
+		expect(endView).toHaveBeenCalledTimes(1);
+		unsubscribe();
+	});
+
+	it('ignores a queued signal for another App session', () => {
+		setAppSession('old-session', 1);
+		const oldScope = getAppSessionScope();
+		const currentToken = setAppSession('fresh-session', 1);
+		const endView = vi.fn();
+		const unsubscribe = observeAppSession(endView);
+
+		publishAppSessionEnd(oldScope);
+		window.dispatchEvent(
+			new StorageEvent('storage', {
+				key: APP_SESSION_ENDED_KEY,
+				newValue: oldScope?.identity,
+				storageArea: localStorage
+			})
+		);
+
+		expect(endView).not.toHaveBeenCalled();
+		expect(getValueFromCookie('keycloak')).toBe(currentToken);
 		unsubscribe();
 	});
 

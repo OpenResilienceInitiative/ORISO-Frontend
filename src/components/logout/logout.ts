@@ -12,6 +12,10 @@ import {
 } from '../sessionCookie/accessSessionCookie';
 import { sessionKindRegistry } from '../../utils/displayFilter/sessionKindRegistry';
 import { removeTokenExpiryFromLocalStorage } from '../sessionCookie/accessSessionLocalStorage';
+import {
+	getAppSessionScope,
+	publishAppSessionEnd
+} from '../sessionCookie/observeAppSession';
 import { appConfig } from '../../utils/appConfig';
 import { calcomLogout } from './calcomLogout';
 import {
@@ -104,6 +108,11 @@ export const logout = async (
 	// logout() again, and that re-entrant call must be a no-op rather than a
 	// second, redirecting sign-out racing this one.
 	isRequestInProgress = true;
+	const hasSession = Boolean(getValueFromCookie('keycloak'));
+	const sessionScope = getAppSessionScope();
+	const isCurrentSession = () =>
+		!peerSessionEnded &&
+		getAppSessionScope()?.identity === sessionScope?.identity;
 
 	// Practice mode's network guard blocks every write, among them the pre-logout
 	// draft flush and the Keycloak logout POST. Leave it first (#1622), the
@@ -112,15 +121,23 @@ export const logout = async (
 		await endPractice();
 	}
 	exitPracticeMode();
+	if (!isCurrentSession()) {
+		isRequestInProgress = false;
+		return null;
+	}
 
 	// With the session already torn down (auth guard, expired refresh token)
 	// there is nothing the handlers or the availability call could still do
 	// with the backend — they would only produce 401s.
-	const hasSession = Boolean(getValueFromCookie('keycloak'));
-
 	if (hasSession && (await runPreLogoutHandlers())) {
 		isRequestInProgress = false;
 		return;
+	}
+	// A sibling may have ended this session or signed in again while the
+	// draft handler was pending, before the StorageEvent reaches this tab.
+	if (!isCurrentSession()) {
+		isRequestInProgress = false;
+		return null;
 	}
 	clearLoginRecoveryPassword();
 	clearSecretStorageKeys();
@@ -148,6 +165,7 @@ export const logout = async (
 		}
 	}
 	teardownLocalSession();
+	publishAppSessionEnd(sessionScope);
 
 	void Promise.allSettled(serverRequests).then(() => {
 		if (withRedirect) {
