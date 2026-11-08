@@ -22,6 +22,10 @@ import {
 	registerDeviceSigningPassword
 } from './matrixInteractiveAuth';
 
+vi.mock('./draftAuthSession', () => ({
+	getDraftAuthSessionIdentity: () => 'synthetic-authenticated-session'
+}));
+
 vi.mock('./matrixRecoveryAccountData', async (original) => ({
 	...(await original<any>()),
 	serverBackedSecretStorage: (client: any) => client.secretStorage

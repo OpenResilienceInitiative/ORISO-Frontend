@@ -8,6 +8,7 @@ import {
 	type SecretStorageKeyDescriptionAesV1,
 	type ServerSideSecretStorage
 } from 'matrix-js-sdk/lib/secret-storage';
+import { getDraftAuthSessionIdentity } from './draftAuthSession';
 import { readRecoveryRoot } from './matrixRecoveryAccountData';
 
 export const DRAFT_KEY_SECRET = 'org.oriso.draft_key.v1';
@@ -32,6 +33,7 @@ type DraftSession = {
 	owner: object;
 	client: MatrixClient;
 	userId: string;
+	appIdentity: string;
 	cryptography: DraftCryptography | null;
 	keys: DraftKeys | null;
 	rootId: string | null;
@@ -50,8 +52,13 @@ const dropDraftKeys = (session: DraftSession | null): boolean => {
 	return wasReady;
 };
 
+const hasCurrentAppIdentity = (session: DraftSession): boolean =>
+	getDraftAuthSessionIdentity() === session.appIdentity;
+
 export const getDraftCryptography = (): DraftCryptography | null =>
-	active?.cryptography ?? null;
+	active?.cryptography && hasCurrentAppIdentity(active)
+		? active.cryptography
+		: null;
 
 export const subscribeDraftCryptography = (
 	listener: () => void
@@ -65,7 +72,16 @@ export const bindDraftCryptographyClient = (
 	client: MatrixClient,
 	userId: string
 ): void => {
-	if (active?.owner === owner && active.userId === userId) {
+	const appIdentity = getDraftAuthSessionIdentity();
+	if (!appIdentity) {
+		unbindDraftCryptographyClient(owner);
+		return;
+	}
+	if (
+		active?.owner === owner &&
+		active.userId === userId &&
+		active.appIdentity === appIdentity
+	) {
 		// Matrix token renewal replaces the SDK client in this same session.
 		active.client = client;
 		return;
@@ -75,6 +91,7 @@ export const bindDraftCryptographyClient = (
 		owner,
 		client,
 		userId,
+		appIdentity,
 		cryptography: null,
 		keys: null,
 		rootId: null
@@ -188,6 +205,7 @@ const makeCryptography = (session: DraftSession): DraftCryptography => {
 	const requireCurrent = (): DraftKeys => {
 		if (
 			active !== session ||
+			!hasCurrentAppIdentity(session) ||
 			session.cryptography !== cryptography ||
 			!session.keys
 		)
@@ -258,11 +276,15 @@ export const unlockDraftCryptography = async (
 	expectedRootId?: string
 ): Promise<void> => {
 	const session = active;
-	if (session?.client !== client) return;
+	if (session?.client !== client || !hasCurrentAppIdentity(session)) return;
 
 	const requireCurrent = () => {
 		signal.throwIfAborted();
-		if (active !== session || session.client !== client)
+		if (
+			active !== session ||
+			session.client !== client ||
+			!hasCurrentAppIdentity(session)
+		)
 			throw new Error('Draft recovery session changed');
 	};
 	const root = await readRecoveryRoot(client);

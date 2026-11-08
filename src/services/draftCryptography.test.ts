@@ -2,10 +2,14 @@ import { MatrixEvent, type MatrixClient } from 'matrix-js-sdk';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import * as draft from './draftCryptography';
 
-const { readRecoveryRoot } = vi.hoisted(() => ({
-	readRecoveryRoot: vi.fn()
+const { readRecoveryRoot, appSession } = vi.hoisted(() => ({
+	readRecoveryRoot: vi.fn(),
+	appSession: { identity: 'authenticated-session-a' }
 }));
 vi.mock('./matrixRecoveryAccountData', () => ({ readRecoveryRoot }));
+vi.mock('./draftAuthSession', () => ({
+	getDraftAuthSessionIdentity: () => appSession.identity
+}));
 
 const owner = {};
 const user = '@draft-author:example.org';
@@ -56,6 +60,7 @@ const createStorage = (initial?: string) => {
 
 afterEach(() => {
 	draft.unbindDraftCryptographyClient(owner);
+	appSession.identity = 'authenticated-session-a';
 	vi.clearAllMocks();
 });
 
@@ -134,6 +139,29 @@ describe('draft cryptography', () => {
 		await expect(different.open(scope, sealed)).rejects.toThrow();
 		draft.unbindDraftCryptographyClient(owner);
 		await expect(different.open(scope, sealed)).rejects.toThrow();
+	});
+
+	it('rejects the old key as soon as App authentication changes before Matrix rebinds', async () => {
+		const client = binding();
+		const previous = (await unlock(client))!;
+		const scope = await previous.opaqueScope('scope:old-app-session');
+		const pending = previous
+			.seal(scope, 'Private to the previous App session')
+			.then(
+				() => false,
+				() => true
+			);
+
+		appSession.identity = 'authenticated-session-b';
+		expect(draft.getDraftCryptography()).toBeNull();
+		expect(await pending).toBe(true);
+		await expect(
+			previous.opaqueScope('scope:old-app-session')
+		).rejects.toThrow();
+		await expect(unlock(client)).resolves.toBeNull();
+
+		binding();
+		expect(draft.getDraftCryptography()).toBeNull();
 	});
 
 	it('drops the live draft key if Matrix reports that the verified 4S root changed', async () => {
