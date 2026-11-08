@@ -223,7 +223,7 @@ function SlowDraftBackend({ children }: { children: React.ReactNode }) {
 							: null;
 				if (
 					request.method === 'GET' &&
-					url.pathname === draftPath &&
+					url.pathname === `${draftPath}/protected` &&
 					key === null
 				) {
 					const page = Number(url.searchParams.get('page'));

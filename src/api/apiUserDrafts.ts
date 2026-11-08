@@ -46,7 +46,8 @@ type DraftSession = {
 };
 
 const revisionPattern = /^[A-Za-z0-9_-]{43}$/;
-const legacyPageSize = 200;
+const protectedPageSize = 12;
+const maxFeedSize = 200;
 
 const isLogicalScope = (value: string): boolean =>
 	/^scope:[^|\s]+\|thread:[^|\s]+$/.test(value);
@@ -122,18 +123,48 @@ const readSingle = async (
 	}
 };
 
-const readPage = (
+const readPage = async (
 	session: DraftSession,
 	page: number,
-	perPage: number,
 	signal?: AbortSignal
-) =>
-	request<WireFeed>(
+): Promise<WireDraft[]> => {
+	const result = await request<WireFeed>(
 		session,
-		`?page=${page}&perPage=${perPage}`,
+		`/protected?page=${page}&perPage=${protectedPageSize}`,
 		FETCH_METHODS.GET,
 		signal
 	);
+	if (
+		result?.page !== page ||
+		result.perPage !== protectedPageSize ||
+		!Array.isArray(result.items) ||
+		result.items.length > protectedPageSize
+	) {
+		throw new Error('Invalid protected draft feed page');
+	}
+	return result.items;
+};
+
+const readFeed = async (
+	session: DraftSession,
+	page: number,
+	perPage: number
+): Promise<WireDraft[]> => {
+	const start = page * perPage;
+	const end = start + perPage;
+	const rows: WireDraft[] = [];
+	// Finish reading offsets before this client migrates rows and changes their order.
+	for (
+		let offset = Math.floor(start / protectedPageSize) * protectedPageSize;
+		offset < end;
+		offset += protectedPageSize
+	) {
+		const items = await readPage(session, offset / protectedPageSize);
+		rows.push(...items.slice(Math.max(0, start - offset), end - offset));
+		if (items.length < protectedPageSize) break;
+	}
+	return rows;
+};
 
 const safeActionPath = (value?: string | null): string | null => {
 	if (
@@ -218,7 +249,7 @@ const findLegacy = async (
 	signal?: AbortSignal
 ) => {
 	for (let page = 0; ; page++) {
-		const { items } = await readPage(session, page, legacyPageSize, signal);
+		const items = await readPage(session, page, signal);
 		for (const row of items) {
 			if (
 				legacyDraft(row) &&
@@ -230,7 +261,7 @@ const findLegacy = async (
 				return row;
 			}
 		}
-		if (items.length < legacyPageSize) return null;
+		if (items.length < protectedPageSize) return null;
 	}
 };
 
@@ -474,9 +505,18 @@ export const apiFetchUserDrafts = async (
 	}
 	const session = currentSession();
 	if (!session) return { items: [], page, perPage };
-	const raw = await readPage(session, page, perPage);
+	const size = Math.min(perPage, maxFeedSize);
+	if (
+		!Number.isSafeInteger(page) ||
+		page < 0 ||
+		!Number.isInteger(size) ||
+		size < 1
+	) {
+		throw new Error('Invalid draft feed range');
+	}
+	const rows = await readFeed(session, page, size);
 	const items = new Map<string, IUserDraftItem>();
-	for (const row of raw.items) {
+	for (const row of rows) {
 		const opened = legacyDraft(row)
 			? await convertLegacy(session, row)
 			: await openProtectedDraft(session, row);
@@ -492,7 +532,7 @@ export const apiFetchUserDrafts = async (
 		}
 	}
 	assertSession(session);
-	return { ...raw, items: [...items.values()] };
+	return { page, perPage: size, items: [...items.values()] };
 };
 
 export const apiGetUserDrafts = async (
