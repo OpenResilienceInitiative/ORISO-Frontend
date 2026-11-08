@@ -1,7 +1,7 @@
 import * as React from 'react';
-import { expect, waitFor, within } from 'storybook/test';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Route, Routes } from 'react-router-dom';
+import { Link, Route, Routes } from 'react-router-dom';
 import { UserDataContext } from '../../globalState';
 import { ConsultingTypesContext } from '../../globalState/provider/ConsultingTypesProvider';
 import { ModalProvider } from '../../globalState/provider/ModalProvider';
@@ -253,17 +253,35 @@ const legalDocuments = [
 	}
 ];
 
-const ProfileFooterStage = () => (
+const ProfileFooterStage = ({ withNavigation = false }) => (
 	<AuthenticatedBuildIdentityBoundary>
 		<LegalLinksProvider legalLinks={legalDocuments}>
 			<div className="app__wrapper" style={{ height: '100dvh' }}>
-				<div className="navigation__wrapper" aria-hidden="true" />
+				<nav
+					className="navigation__wrapper"
+					aria-hidden={!withNavigation}
+				>
+					{withNavigation && (
+						<Link to="/sessions/consultant/sessionView">
+							Gespräch
+						</Link>
+					)}
+				</nav>
 				<main className="contentWrapper">
-					<div className="contentWrapper__profile">
-						<Routes>
-							<Route path="/profile/*" element={<Profile />} />
-						</Routes>
-					</div>
+					<Routes>
+						<Route
+							path="/profile/*"
+							element={
+								<div className="contentWrapper__profile">
+									<Profile />
+								</div>
+							}
+						/>
+						<Route
+							path="/sessions/consultant/sessionView"
+							element={<h1>Gespräch</h1>}
+						/>
+					</Routes>
 				</main>
 			</div>
 		</LegalLinksProvider>
@@ -322,6 +340,8 @@ const verifyFooter =
 				);
 				await expect(link).toHaveAttribute('target', '_blank');
 				const rect = link.getBoundingClientRect();
+				await expect(rect.left).toBeGreaterThanOrEqual(0);
+				await expect(rect.right).toBeLessThanOrEqual(width);
 				const overlaps =
 					build.left < rect.right &&
 					build.right > rect.left &&
@@ -330,6 +350,7 @@ const verifyFooter =
 				await expect(overlaps).toBe(false);
 			}
 			await expect(footer).toContainElement(identity);
+			await expect(build.left).toBeGreaterThanOrEqual(0);
 			await expect(build.right).toBeLessThanOrEqual(width);
 		});
 	};
@@ -359,6 +380,32 @@ export const LegalFooterMobileFrench390: Story = {
 	...LegalFooterMobile390,
 	globals: { ...phone390, locale: 'fr' },
 	play: verifyFooter(390, 'fr')
+};
+
+export const LegalFooterReturnsIdentityToShell: Story = {
+	...LegalFooterDesktop1440,
+	render: () => <ProfileFooterStage withNavigation />,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const profileIdentity = await within(
+			legalFooter(canvasElement)
+		).findByTestId('build-identity');
+		await expect(profileIdentity).toBeVisible();
+		const label = profileIdentity.textContent ?? '';
+
+		await userEvent.click(canvas.getByRole('link', { name: 'Gespräch' }));
+		await expect(
+			await canvas.findByRole('heading', { name: 'Gespräch' })
+		).toBeVisible();
+		await waitFor(async () => {
+			const identities = canvas.getAllByTestId('build-identity');
+			await expect(identities).toHaveLength(1);
+			await expect(identities[0]).toHaveTextContent(label);
+			await expect(
+				identities[0].closest('.app__platformVersion')
+			).not.toBeNull();
+		});
+	}
 };
 
 export const LegalFooterWithoutIdentity: Story = {
