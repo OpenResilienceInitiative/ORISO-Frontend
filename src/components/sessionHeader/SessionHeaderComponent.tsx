@@ -124,10 +124,7 @@ import {
 } from './SupervisorConsultantPicker';
 import { useSupervisorConsultantDirectory } from './useSupervisorConsultantDirectory';
 import { resolveRoomHeaderDensity } from './roomHeaderDensity';
-import {
-	isRegisteredAskerOneOnOne,
-	resolveAssignedConsultantLabel
-} from '../session/assignedConsultantLabel';
+import { resolveAssignedConsultantLabel } from '../session/assignedConsultantLabel';
 export interface SessionHeaderProps {
 	consultantAbsent?: SessionConsultantInterface;
 	hasUserInitiatedStopOrLeaveRequest?: React.MutableRefObject<boolean>;
@@ -622,17 +619,12 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		(userData?.userRoles || []).includes('ANONYMOUS');
 	const isAnonymousAsker =
 		isAnonymousChat && isAskerUser && !isConsultantUser;
-	const isRegisteredAskerSession = isRegisteredAskerOneOnOne(
+	const assignedConsultantLabel = resolveAssignedConsultantLabel(
 		activeSession,
-		userData
+		userData,
+		translate
 	);
-	const assignedConsultantLabel =
-		isRegisteredAskerSession && activeSession.consultant
-			? resolveAssignedConsultantLabel(
-					activeSession.consultant,
-					translate('consultant.assignedLabel')
-				)
-			: undefined;
+	const isRegisteredAskerSession = assignedConsultantLabel !== undefined;
 	const showEndAnonymousChatButton =
 		isAnonymousAsker && activeSession.isSession && !isChatFinished;
 	const showConsultantEndAnonymousChatButton =
@@ -820,7 +812,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 						: contact?.username
 				],
 				consultant: activeSession.consultant,
-				consultantDisplayName: assignedConsultantLabel,
+				consultantDisplayName: assignedConsultantLabel ?? undefined,
 				consultantMatrixUserId:
 					activeSession.item?.consultantMatrixUserId,
 				self: {

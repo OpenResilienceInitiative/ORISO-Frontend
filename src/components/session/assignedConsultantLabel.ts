@@ -3,16 +3,13 @@ import {
 	hasUserAuthority,
 	type ExtendedSessionInterface
 } from '../../globalState';
-import type {
-	SessionConsultantInterface,
-	UserDataInterface
-} from '../../globalState/interfaces';
+import type { UserDataInterface } from '../../globalState/interfaces';
 import { isAnonymousMatrixUsername } from '../../utils/anonymousChatDisplayName';
 import { isEmailShapedLogin } from '../../utils/isEmailShapedLogin';
 import { isMatrixUserId } from '../../utils/messageMentions';
 import { getModality, Modality } from './getModality';
 
-export const isRegisteredAskerOneOnOne = (
+const isRegisteredAskerOneOnOne = (
 	session: ExtendedSessionInterface,
 	user: UserDataInterface
 ): boolean =>
@@ -26,10 +23,17 @@ export const isRegisteredAskerOneOnOne = (
 		(role) => role === 'ANONYMOUS' || role === 'CONSULTANT'
 	);
 
+/** Undefined means another viewer or modality. Null means no counsellor is assigned. */
 export const resolveAssignedConsultantLabel = (
-	consultant: SessionConsultantInterface,
-	fallback: string
-): string => {
+	session: ExtendedSessionInterface,
+	user: UserDataInterface,
+	translate: (key: string) => string
+): string | null | undefined => {
+	if (!isRegisteredAskerOneOnOne(session, user)) return undefined;
+
+	const consultant = session.consultant;
+	if (!consultant) return null;
+
 	for (const candidate of [consultant.displayName, consultant.username]) {
 		const value = candidate?.trim();
 		if (
@@ -42,5 +46,5 @@ export const resolveAssignedConsultantLabel = (
 			return value;
 		}
 	}
-	return fallback;
+	return translate('consultant.assignedLabel');
 };

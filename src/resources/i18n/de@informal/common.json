@@ -1,4 +1,7 @@
 {
+	"consultant": {
+		"assignedLabel": "Deine Beratungsperson"
+	},
 	"contactSheet": {
 		"missingEmail": "Hinterlege zuerst eine E-Mail-Adresse in deinem Profil.",
 		"failed": "Die E-Mail konnte nicht gesendet werden. Bitte versuche es erneut."
