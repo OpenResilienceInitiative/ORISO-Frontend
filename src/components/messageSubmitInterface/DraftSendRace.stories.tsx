@@ -229,10 +229,13 @@ function SlowDraftBackend({ children }: { children: React.ReactNode }) {
 					const page = Number(url.searchParams.get('page'));
 					const perPage = Number(url.searchParams.get('perPage'));
 					return Response.json({
-						items: [...drafts.values()].slice(
-							page * perPage,
-							(page + 1) * perPage
-						),
+						items:
+							url.searchParams.get('legacyOnly') === 'true'
+								? []
+								: [...drafts.values()].slice(
+										page * perPage,
+										(page + 1) * perPage
+									),
 						page,
 						perPage
 					});

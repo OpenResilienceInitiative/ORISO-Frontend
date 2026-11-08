@@ -47,6 +47,7 @@ type DraftSession = {
 
 const revisionPattern = /^[A-Za-z0-9_-]{43}$/;
 const protectedPageSize = 12;
+const legacyPageSize = 50;
 const maxFeedSize = 200;
 
 const isLogicalScope = (value: string): boolean =>
@@ -126,19 +127,24 @@ const readSingle = async (
 const readPage = async (
 	session: DraftSession,
 	page: number,
-	signal?: AbortSignal
+	{
+		legacyOnly = false,
+		signal
+	}: { legacyOnly?: boolean; signal?: AbortSignal } = {}
 ): Promise<WireDraft[]> => {
+	const size = legacyOnly ? legacyPageSize : protectedPageSize;
+	const filter = legacyOnly ? '&legacyOnly=true' : '';
 	const result = await request<WireFeed>(
 		session,
-		`/protected?page=${page}&perPage=${protectedPageSize}`,
+		`/protected?page=${page}&perPage=${size}${filter}`,
 		FETCH_METHODS.GET,
 		signal
 	);
 	if (
 		result?.page !== page ||
-		result.perPage !== protectedPageSize ||
+		result.perPage !== size ||
 		!Array.isArray(result.items) ||
-		result.items.length > protectedPageSize
+		result.items.length > size
 	) {
 		throw new Error('Invalid protected draft feed page');
 	}
@@ -249,7 +255,10 @@ const findLegacy = async (
 	signal?: AbortSignal
 ) => {
 	for (let page = 0; ; page++) {
-		const items = await readPage(session, page, signal);
+		const items = await readPage(session, page, {
+			legacyOnly: true,
+			signal
+		});
 		for (const row of items) {
 			if (
 				legacyDraft(row) &&
@@ -261,21 +270,17 @@ const findLegacy = async (
 				return row;
 			}
 		}
-		if (items.length < protectedPageSize) return null;
+		if (items.length < legacyPageSize) return null;
 	}
 };
 
-const withLegacyIndexMetadata = async (
+type LegacyIndex = Record<string, unknown>;
+
+const readLegacyIndex = async (
 	session: DraftSession,
-	row: WireDraft,
-	signal?: AbortSignal
-): Promise<DraftContent> => {
-	if (
-		row.scopeKey === REMOTE_DRAFT_INDEX_SCOPE ||
-		(row.actionPath && row.sourceSessionId != null)
-	) {
-		return content(row);
-	}
+	signal?: AbortSignal,
+	knownLegacyIndex?: WireDraft
+): Promise<LegacyIndex | null> => {
 	try {
 		const indexScope = await session.crypto.opaqueScope(
 			REMOTE_DRAFT_INDEX_SCOPE
@@ -283,42 +288,55 @@ const withLegacyIndexMetadata = async (
 		const sealedIndex = await readSingle(session, indexScope, signal);
 		const index = sealedIndex
 			? await openProtectedDraft(session, sealedIndex)
-			: await findLegacy(session, REMOTE_DRAFT_INDEX_SCOPE, signal);
-		if (!index?.text) return content(row);
-		const stored = JSON.parse(index.text);
-		const entry =
-			stored && Object.hasOwn(stored, row.scopeKey)
-				? stored[row.scopeKey]
-				: null;
-		if (!entry || typeof entry !== 'object') return content(row);
-		return content({
-			...row,
-			actionPath:
-				row.actionPath ??
-				(typeof entry.actionPath === 'string'
-					? entry.actionPath
-					: null),
-			title:
-				row.title ??
-				(typeof entry.title === 'string' ? entry.title : null),
-			sourceSessionId:
-				row.sourceSessionId ??
-				(Number.isSafeInteger(entry.sessionId)
-					? entry.sessionId
-					: null),
-			roomRef:
-				row.roomRef ??
-				(typeof entry.roomRef === 'string' ? entry.roomRef : null),
-			threadRootId:
-				row.threadRootId ??
-				(typeof entry.threadRootId === 'string'
-					? entry.threadRootId
-					: null)
-		});
+			: (knownLegacyIndex ??
+				(await findLegacy(session, REMOTE_DRAFT_INDEX_SCOPE, signal)));
+		const stored = index?.text ? JSON.parse(index.text) : null;
+		return stored && typeof stored === 'object' && !Array.isArray(stored)
+			? stored
+			: null;
 	} catch {
 		// A missing old index must not prevent access to the original draft body.
+		return null;
+	}
+};
+
+const withLegacyIndexMetadata = async (
+	row: WireDraft,
+	loadIndex: () => Promise<LegacyIndex | null>
+): Promise<DraftContent> => {
+	if (
+		row.scopeKey === REMOTE_DRAFT_INDEX_SCOPE ||
+		(row.actionPath && row.sourceSessionId != null)
+	) {
 		return content(row);
 	}
+	const stored = await loadIndex();
+	const value =
+		stored && Object.hasOwn(stored, row.scopeKey)
+			? stored[row.scopeKey]
+			: null;
+	if (!value || typeof value !== 'object') return content(row);
+	const entry = value as Record<string, unknown>;
+	return content({
+		...row,
+		actionPath:
+			row.actionPath ??
+			(typeof entry.actionPath === 'string' ? entry.actionPath : null),
+		title:
+			row.title ?? (typeof entry.title === 'string' ? entry.title : null),
+		sourceSessionId:
+			row.sourceSessionId ??
+			(typeof entry.sessionId === 'number' &&
+			Number.isSafeInteger(entry.sessionId)
+				? entry.sessionId
+				: null),
+		roomRef:
+			row.roomRef ??
+			(typeof entry.roomRef === 'string' ? entry.roomRef : null),
+		threadRootId:
+			row.threadRootId ??
+			(typeof entry.threadRootId === 'string' ? entry.threadRootId : null)
+	});
 };
 
 const hasValidLegacyRevision = (
@@ -362,12 +380,13 @@ const convertLegacyUnlocked = async (
 	session: DraftSession,
 	row: WireDraft,
 	opaqueScopeKey: string,
-	signal?: AbortSignal
+	signal?: AbortSignal,
+	loadIndex = () => readLegacyIndex(session, signal)
 ): Promise<IUserDraftItem | null> => {
 	const { scopeKey } = row;
 	const clear = {
 		scopeKey,
-		...(await withLegacyIndexMetadata(session, row, signal))
+		...(await withLegacyIndexMetadata(row, loadIndex))
 	};
 	const visible = {
 		...clear,
@@ -441,11 +460,12 @@ const convertLegacyUnlocked = async (
 const convertLegacy = async (
 	session: DraftSession,
 	row: WireDraft,
-	signal?: AbortSignal
+	signal?: AbortSignal,
+	loadIndex?: () => Promise<LegacyIndex | null>
 ) => {
 	const opaque = await session.crypto.opaqueScope(row.scopeKey);
 	return serialScope(session, opaque, () =>
-		convertLegacyUnlocked(session, row, opaque, signal)
+		convertLegacyUnlocked(session, row, opaque, signal, loadIndex)
 	);
 };
 
@@ -515,10 +535,16 @@ export const apiFetchUserDrafts = async (
 		throw new Error('Invalid draft feed range');
 	}
 	const rows = await readFeed(session, page, size);
+	const indexRow = rows.find(
+		(row) => row.scopeKey === REMOTE_DRAFT_INDEX_SCOPE && legacyDraft(row)
+	);
+	let index: Promise<LegacyIndex | null> | undefined;
+	const loadIndex = () =>
+		(index ??= readLegacyIndex(session, undefined, indexRow));
 	const items = new Map<string, IUserDraftItem>();
 	for (const row of rows) {
 		const opened = legacyDraft(row)
-			? await convertLegacy(session, row)
+			? await convertLegacy(session, row, undefined, loadIndex)
 			: await openProtectedDraft(session, row);
 		if (opened) {
 			const existing = items.get(opened.scopeKey);

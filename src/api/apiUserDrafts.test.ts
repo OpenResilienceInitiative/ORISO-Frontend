@@ -14,7 +14,10 @@ import {
 	apiUpsertUserDraft
 } from './apiUserDrafts';
 import { fetchData } from './fetchData';
-import { DRAFTS_UPDATED_EVENT } from '../services/draftStore';
+import {
+	DRAFTS_UPDATED_EVENT,
+	REMOTE_DRAFT_INDEX_SCOPE
+} from '../services/draftStore';
 
 const state = vi.hoisted(() => ({
 	token: 'current-authenticated-session',
@@ -91,7 +94,7 @@ afterEach(() => vi.restoreAllMocks());
 describe('authenticated protected drafts', () => {
 	it('sends only an opaque scope and authenticated ciphertext, and emits a content-free change', async () => {
 		network.mockImplementation(async ({ method }) =>
-			method === 'GET' ? { items: [], page: 0, perPage: 12 } : undefined
+			method === 'GET' ? { items: [], page: 0, perPage: 50 } : undefined
 		);
 		const dispatch = vi.spyOn(window, 'dispatchEvent');
 		await apiUpsertUserDraft(logical, clear);
@@ -155,7 +158,7 @@ describe('authenticated protected drafts', () => {
 			.mockResolvedValueOnce({
 				items: [rawLegacy],
 				page: 0,
-				perPage: 12
+				perPage: 50
 			})
 			.mockRejectedValueOnce(new Error('EMPTY'))
 			.mockResolvedValueOnce(undefined)
@@ -198,7 +201,7 @@ describe('authenticated protected drafts', () => {
 			.mockResolvedValueOnce({
 				items: [rawLegacy],
 				page: 0,
-				perPage: 12
+				perPage: 50
 			})
 			.mockRejectedValueOnce(new Error('EMPTY'))
 			.mockResolvedValueOnce(undefined)
@@ -215,7 +218,7 @@ describe('authenticated protected drafts', () => {
 			.mockResolvedValueOnce({
 				items: [rawLegacy],
 				page: 0,
-				perPage: 12
+				perPage: 50
 			})
 			.mockResolvedValueOnce(rawProtected);
 		state.crypto?.open.mockResolvedValue({
@@ -240,7 +243,7 @@ describe('authenticated protected drafts', () => {
 	});
 
 	it('keeps the protected draft when the legacy row changes during retirement', async () => {
-		const page = { items: [rawLegacy], page: 0, perPage: 12 };
+		const page = { items: [rawLegacy], page: 0, perPage: 50 };
 		network
 			.mockResolvedValueOnce(page)
 			.mockResolvedValueOnce(rawProtected)
@@ -292,13 +295,60 @@ describe('authenticated protected drafts', () => {
 		]);
 	});
 
+	it('loads missing navigation metadata from the legacy index once per feed', async () => {
+		const second = 'scope:!second:example.org|thread:main';
+		const raw = {
+			...rawLegacy,
+			revision: undefined,
+			actionPath: null,
+			sourceSessionId: null
+		};
+		const index = {
+			scopeKey: REMOTE_DRAFT_INDEX_SCOPE,
+			text: JSON.stringify({
+				[logical]: { sessionId: 8 },
+				[second]: { sessionId: 9 }
+			})
+		};
+		network.mockImplementation(async ({ url }) => {
+			if (url.includes('legacyOnly=true'))
+				return { items: [index], page: 0, perPage: 50 };
+			if (url.includes('/protected?page=')) {
+				return {
+					items: [raw, { ...raw, scopeKey: second }],
+					page: 0,
+					perPage: 12
+				};
+			}
+			throw new Error('EMPTY');
+		});
+		await expect(apiFetchUserDrafts()).resolves.toMatchObject({
+			items: [{ sourceSessionId: 8 }, { sourceSessionId: 9 }]
+		});
+		expect(
+			network.mock.calls.filter(([request]) =>
+				request.url.includes('legacyOnly=true')
+			)
+		).toHaveLength(1);
+	});
+
+	it('uses a legacy-only page when an exact protected draft is absent', async () => {
+		network
+			.mockRejectedValueOnce(new Error('EMPTY'))
+			.mockResolvedValueOnce({ items: [], page: 0, perPage: 50 });
+		await expect(apiGetUserDraft(logical)).rejects.toThrow('EMPTY');
+		expect(network.mock.calls[1][0].url).toBe(
+			'/service/users/drafts/protected?page=0&perPage=50&legacyOnly=true'
+		);
+	});
+
 	it('rejects untrusted migration row IDs before any mutation', async () => {
 		network
 			.mockRejectedValueOnce(new Error('EMPTY'))
 			.mockResolvedValueOnce({
 				items: [{ ...rawLegacy, id: '../../users/8' }],
 				page: 0,
-				perPage: 12
+				perPage: 50
 			})
 			.mockResolvedValueOnce(rawProtected);
 		await expect(apiGetUserDraft(logical)).resolves.toMatchObject(clear);
