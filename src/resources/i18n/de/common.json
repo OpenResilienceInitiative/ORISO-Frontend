@@ -2508,7 +2508,7 @@
 			},
 			"caseHandoverOfferReceived": {
 				"title": "Angebot zur Fallübergabe",
-				"text": "{{fromConsultantName}} möchte diese Beratung an Sie übergeben. Prüfen Sie die Anfrage, bevor Sie das Gespräch öffnen.",
+				"text": "{{fromConsultantName}} hat Ihnen die Übernahme dieser Beratung angeboten.",
 				"coAccess": {
 					"title": "Angebot für vorübergehenden Zugriff",
 					"text": "{{fromConsultantName}} bietet Ihnen vorübergehenden Zugriff auf diese Beratung an. Die bisherige Beratungsperson bleibt verantwortlich."

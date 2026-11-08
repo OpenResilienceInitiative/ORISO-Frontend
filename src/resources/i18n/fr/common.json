@@ -2487,7 +2487,7 @@
 			},
 			"caseHandoverOfferReceived": {
 				"title": "Proposition de transfert",
-				"text": "{{fromConsultantName}} souhaite vous transférer cette consultation. Examinez la demande avant d’ouvrir la conversation.",
+				"text": "{{fromConsultantName}} vous a envoyé une proposition de transfert de cette consultation.",
 				"coAccess": {
 					"title": "Proposition d’accès temporaire",
 					"text": "{{fromConsultantName}} vous propose un accès temporaire à cette consultation. La personne consultante actuelle reste responsable."

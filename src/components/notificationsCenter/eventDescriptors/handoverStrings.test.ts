@@ -21,7 +21,8 @@ beforeAll(async () => {
 		fallbackLng: { 'de@informal': ['de'], 'default': ['de'] },
 		resources: {
 			'de': { translation: de },
-			'de@informal': { translation: deInformal }
+			'de@informal': { translation: deInformal },
+			'en': { translation: en }
 		}
 	});
 });
@@ -59,21 +60,27 @@ const granted = (payload: Record<string, unknown> = {}) =>
 	});
 
 describe('handover timeline entries show real names (#1714)', () => {
-	it('names the offering counsellor instead of "a colleague"', () => {
+	it('names the offering counsellor in the historical received offer', () => {
 		expect(offer().text).toBe(
-			'Lisa Simpson möchte diese Beratung an Sie übergeben. Prüfen Sie die Anfrage, bevor Sie das Gespräch öffnen.'
+			'Lisa Simpson hat Ihnen die Übernahme dieser Beratung angeboten.'
 		);
 	});
 
 	it('falls back to a neutral colleague, never a raw placeholder', () => {
 		const { text } = offer({ initiatorName: undefined });
-		expect(text).toMatch(/^Eine Kolleg:in möchte/);
+		expect(text).toMatch(/^Eine Kolleg:in hat Ihnen/);
 		expect(text).not.toContain('{{');
 	});
 
-	it('uses the informal copy for de@informal', () => {
+	it('uses the historical informal copy for de@informal', () => {
 		expect(offer({}, 'de@informal').text).toBe(
-			'Lisa Simpson möchte diese Beratung an dich übergeben. Prüfe die Anfrage, bevor du das Gespräch öffnest.'
+			'Lisa Simpson hat dir die Übernahme dieser Beratung angeboten.'
+		);
+	});
+
+	it('uses historical wording for an English received offer', () => {
+		expect(offer({}, 'en').text).toBe(
+			'Lisa Simpson sent you an offer to take over this consultation.'
 		);
 	});
 });

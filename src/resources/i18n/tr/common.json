@@ -2487,7 +2487,7 @@
 			},
 			"caseHandoverOfferReceived": {
 				"title": "Vaka devri teklifi",
-				"text": "{{fromConsultantName}} bu danışmanlığı size devretmek istiyor. Görüşmeyi açmadan önce isteği inceleyin.",
+				"text": "{{fromConsultantName}} bu danışmanlığı devralmanız için size bir teklif gönderdi.",
 				"coAccess": {
 					"title": "Geçici erişim teklifi",
 					"text": "{{fromConsultantName}} size bu danışmanlığa geçici erişim teklif ediyor. Sorumluluk mevcut danışmanda kalır."

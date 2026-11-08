@@ -763,7 +763,7 @@
 				}
 			},
 			"caseHandoverOfferReceived": {
-				"text": "{{fromConsultantName}} möchte diese Beratung an dich übergeben. Prüfe die Anfrage, bevor du das Gespräch öffnest.",
+				"text": "{{fromConsultantName}} hat dir die Übernahme dieser Beratung angeboten.",
 				"coAccess": {
 					"text": "{{fromConsultantName}} bietet dir vorübergehenden Zugriff auf diese Beratung an. Die bisherige Beratungsperson bleibt verantwortlich."
 				}

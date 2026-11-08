@@ -2461,7 +2461,7 @@
 			},
 			"caseHandoverOfferReceived": {
 				"title": "ናይ ጉዳይ ምትሕልላፍ ሓሳብ",
-				"text": "{{fromConsultantName}} ነዚ ምኽሪ ናባኹም ከሕልፎ ይደሊ ኣሎ። ነቲ ዝርርብ ቅድሚ ምኽፋትኩም ነቲ ሕቶ ርኣይዎ።",
+				"text": "ካብ {{fromConsultantName}} ናይዚ ምኽሪ ምትሕልላፍ ቅድመ-ሓሳብ በጺሑኩም።",
 				"coAccess": {
 					"title": "ናይ ግዝያዊ ተበጻሕነት ሓሳብ",
 					"text": "{{fromConsultantName}} ናብዚ ምኽሪ ግዝያዊ ተበጻሕነት የቕርበልኩም ኣሎ። ሓላፍነት ምስቲ ሕጂ ዘሎ ኣማኻሪ ይተርፍ።"

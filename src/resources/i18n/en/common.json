@@ -2484,7 +2484,7 @@
 			},
 			"caseHandoverOfferReceived": {
 				"title": "Case handover offer",
-				"text": "{{fromConsultantName}} wants to hand this consultation over to you. Review the request before opening the conversation.",
+				"text": "{{fromConsultantName}} sent you an offer to take over this consultation.",
 				"coAccess": {
 					"title": "Temporary access offer",
 					"text": "{{fromConsultantName}} offers you temporary access to this consultation. The current counsellor stays responsible."
