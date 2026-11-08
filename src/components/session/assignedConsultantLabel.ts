@@ -1,10 +1,12 @@
 import {
 	AUTHORITIES,
 	hasUserAuthority,
-	type ExtendedSessionInterface,
-	type UserDataInterface
+	type ExtendedSessionInterface
 } from '../../globalState';
-import type { SessionConsultantInterface } from '../../globalState/interfaces';
+import type {
+	SessionConsultantInterface,
+	UserDataInterface
+} from '../../globalState/interfaces';
 import { isAnonymousMatrixUsername } from '../../utils/anonymousChatDisplayName';
 import { isEmailShapedLogin } from '../../utils/isEmailShapedLogin';
 import { isMatrixUserId } from '../../utils/messageMentions';
