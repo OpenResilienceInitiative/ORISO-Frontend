@@ -60,6 +60,7 @@ export const LOGOUT_REQUEST_TIMEOUT_MS = 5_000;
 export const PRE_LOGOUT_HANDLERS_TIMEOUT_MS = 5_000;
 
 let isRequestInProgress = false;
+let peerSessionEnded = false;
 
 const runPreLogoutHandlers = async (): Promise<boolean> => {
 	const controller = new AbortController();
@@ -96,7 +97,7 @@ export const logout = async (
 	withRedirect: boolean = true,
 	redirectUrl?: string
 ) => {
-	if (isRequestInProgress) {
+	if (isRequestInProgress || peerSessionEnded) {
 		return null;
 	}
 	// Claimed before the handlers run: a 401 inside a draft flush calls
@@ -159,6 +160,26 @@ export const logout = async (
 	});
 };
 
+const clearTabSessionRuntime = () => {
+	setMatrixClientServiceRef(null);
+	// User-scoped state must not survive in the next authenticated view.
+	sessionKindRegistry.reset();
+	appSnackbarStack.clear();
+};
+
+/** A peer tab owns the shared logout; release this document's runtime only. */
+export const teardownPeerLocalSession = (): void => {
+	if (peerSessionEnded) return;
+	peerSessionEnded = true;
+	exitPracticeMode();
+	try {
+		getMatrixClientService()?.stopAndCleanup();
+	} catch {
+		// The peer document is leaving even if its Matrix client fails to stop.
+	}
+	clearTabSessionRuntime();
+};
+
 /**
  * Ends the session in this tab, synchronously and idempotently: stops the
  * Matrix client and forgets it, drops every auth and Matrix token from
@@ -172,26 +193,18 @@ export const logout = async (
  * providers above the router drop their session-bound state.
  */
 export const teardownLocalSession = (): void => {
+	if (peerSessionEnded) return;
 	// The login form's requests are writes too (#1622). Immediate on purpose:
 	// the session is already gone, nothing practice can still write matters.
 	exitPracticeMode();
 	void getMatrixClientService()
 		?.logout()
 		.catch(() => {});
-	// Reset the module-level Matrix client registry so a stale, still
-	// authenticated client cannot survive sign-out (the React context state is
-	// reset separately in the logout flow / via the post-logout reload).
-	setMatrixClientServiceRef(null);
-	// #1377 "Ton": the session → kind map is user-scoped; the next user must
-	// not inherit mute/tone decisions from the previous one.
-	sessionKindRegistry.reset();
+	clearTabSessionRuntime();
 	// #1485: the live-chat preference, the shared lease acknowledgement and
 	// the loss record are session-bound; an auth or bootstrap failure that
 	// tears down without logout() must not hand them to the next counsellor.
 	clearLiveChatAvailabilityPreference();
-	// The app-wide snackbars outlive the host; a join request naming someone
-	// must not greet the next person who signs in (#1499).
-	appSnackbarStack.clear();
 	// Module stores that cannot be imported here (cycle via fetchData), e.g.
 	// the guest's temporary account (#1869), reset themselves on this.
 	void callEventListeners(EVENT_SESSION_TEARDOWN);

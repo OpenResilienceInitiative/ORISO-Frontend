@@ -42,7 +42,15 @@ import {
 	handleTokenRefresh,
 	isTokenRefreshUnavailableError
 } from '../auth/auth';
-import { logout, teardownLocalSession } from '../logout/logout';
+import {
+	logout,
+	teardownLocalSession,
+	teardownPeerLocalSession
+} from '../logout/logout';
+import {
+	getAppSessionScope,
+	observeAppSession
+} from '../sessionCookie/observeAppSession';
 import './authenticatedApp.styles';
 import './navigation.styles';
 import { requestPermissions } from '../../utils/notificationHelpers';
@@ -117,11 +125,14 @@ export const AuthenticatedApp = ({
 	// and the dialog would land over the setup gate. Unknown counts as pending here.
 	useNotificationPermission(!!userData && !isAccountSetupPending(userData));
 	const mounted = useRef(true);
+	const [mountedSession] = useState(getAppSessionScope);
+	const [peerExitPath, setPeerExitPath] = useState<string | null>(null);
 	const matrixBootstrap = useRef<{
 		controller: AbortController;
 		subject: string | null;
 	} | null>(null);
 	useEffect(() => {
+		mounted.current = true;
 		const onAuthSessionChange = () => {
 			const bootstrap = matrixBootstrap.current;
 			if (bootstrap && bootstrap.subject !== getCurrentAuthSubject()) {
@@ -140,6 +151,31 @@ export const AuthenticatedApp = ({
 		};
 	}, []);
 
+	useEffect(
+		() =>
+			observeAppSession(() => {
+				if (!mounted.current) return;
+				mounted.current = false;
+				setPeerExitPath(
+					loginPath ??
+						loginPathForEmailPreferences(
+							window.location.pathname + window.location.search
+						)
+				);
+				matrixBootstrap.current?.controller.abort();
+				displayFilterStore.detachClient();
+				teardownPeerLocalSession();
+				setMatrixClientService(null);
+				onLogout();
+			}, mountedSession),
+		[loginPath, mountedSession, onLogout, setMatrixClientService]
+	);
+
+	useEffect(() => {
+		// The previous authenticated tree has been unmounted before navigation.
+		if (peerExitPath) window.location.replace(peerExitPath);
+	}, [peerExitPath]);
+
 	const [appReady, setAppReady] = useState<boolean>(false);
 	const [loading, setLoading] = useState<boolean>(true);
 	/* Every path that ends in `<Navigate to="/login">` below goes through
@@ -148,6 +184,7 @@ export const AuthenticatedApp = ({
 	   keeps running on leftover cookies, and the next sign-in starts from a
 	   clean Matrix registry instead of inheriting the old device. */
 	const abandonSession = useCallback(() => {
+		if (!mounted.current) return;
 		matrixBootstrap.current?.controller.abort();
 		displayFilterStore.detachClient();
 		setMatrixClientService(null);
@@ -205,8 +242,10 @@ export const AuthenticatedApp = ({
 
 			handleTokenRefresh(false)
 				.then(() => {
+					if (!mounted.current) return;
 					Promise.all([reloadUserData(), apiGetConsultingTypes()])
 						.then(([userProfileData, consultingTypes]) => {
+							if (!mounted.current) return null;
 							if (
 								appConfig.blockConsultantAppLogin &&
 								hasUserAuthority(
@@ -230,6 +269,7 @@ export const AuthenticatedApp = ({
 							return userProfileData;
 						})
 						.then(async (userProfileData) => {
+							if (!userProfileData || !mounted.current) return;
 							const controller = new AbortController();
 							const subject = getCurrentAuthSubject();
 							matrixBootstrap.current = { controller, subject };
@@ -336,7 +376,7 @@ export const AuthenticatedApp = ({
 							markHandoverMilestone('chat');
 							markHandoverMilestone('liveEvents');
 							await entryScreens;
-							setAppReady(true);
+							if (mounted.current) setAppReady(true);
 						})
 						.catch((error) => {
 							console.error(
@@ -417,6 +457,8 @@ export const AuthenticatedApp = ({
 		}
 	}, [handoverEntered, appReady, groupJoinSettled]);
 
+	if (peerExitPath) return null;
+
 	// Post-registration: bridge the bootstrap load with the welcome animation,
 	// driven by appReady (the real "everything loaded" signal). Falls through to the
 	// usual branches on error (loading=false, appReady=false → redirect to login).
@@ -437,7 +479,7 @@ export const AuthenticatedApp = ({
 		);
 	}
 
-	if (appReady) {
+	if (appReady && userData) {
 		// Account setup comes before the app, not on top of it: until the counsellor's
 		// own password and a second factor are settled, the only ways on are completing
 		// them or logging out. Replacing the routed app is what makes that true.
