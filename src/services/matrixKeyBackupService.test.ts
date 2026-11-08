@@ -1,6 +1,12 @@
 import { describe, expect, it, vi, beforeEach } from 'vite-plus/test';
 import { encodeRecoveryKey } from 'matrix-js-sdk/lib/crypto-api';
 import {
+	bindDraftCryptographyClient,
+	DRAFT_KEY_SECRET,
+	getDraftCryptography,
+	unbindDraftCryptographyClient
+} from './draftCryptography';
+import {
 	getEncryptionStatus,
 	setUpRecovery,
 	recoverWithKey,
@@ -129,6 +135,90 @@ const buildClient = (crypto: unknown) => {
 
 describe('matrixKeyBackupService (#437)', () => {
 	beforeEach(() => clearSecretStorageKeys());
+
+	describe('draft key integration', () => {
+		it('creates the draft key during setup, then restores it on a fresh device', async () => {
+			const firstSession = {};
+			const nextSession = {};
+			const first = buildClient(buildCrypto());
+			const next = buildClient(buildCrypto());
+			let stored: string | undefined;
+			const storage = {
+				get: vi.fn(async (name: string) =>
+					name === DRAFT_KEY_SECRET
+						? stored
+						: 'synthetic-cross-signing-seed'
+				),
+				store: vi.fn(async (_name: string, value: string) => {
+					stored = value;
+				})
+			};
+			Object.assign(first.secretStorage, storage);
+			Object.assign(next.secretStorage, storage);
+
+			try {
+				bindDraftCryptographyClient(
+					firstSession,
+					first,
+					first.getUserId()
+				);
+				await expect(setUpRecovery(first)).resolves.toBe(
+					VALID_ENCODED_KEY
+				);
+				const initial = getDraftCryptography()!;
+				const scope = await initial.opaqueScope('scope:example');
+				const sealed = await initial.seal(scope, 'stored draft');
+				unbindDraftCryptographyClient(firstSession);
+
+				bindDraftCryptographyClient(
+					nextSession,
+					next,
+					next.getUserId()
+				);
+				await expect(
+					recoverWithKey(next, VALID_ENCODED_KEY)
+				).resolves.toEqual({
+					imported: 12,
+					total: 12
+				});
+				await expect(
+					getDraftCryptography()!.open(scope, sealed)
+				).resolves.toBe('stored draft');
+				expect(storage.store).toHaveBeenCalledTimes(1);
+			} finally {
+				unbindDraftCryptographyClient(firstSession);
+				unbindDraftCryptographyClient(nextSession);
+			}
+		});
+
+		it('keeps chat recovery available when the draft secret cannot be read', async () => {
+			const session = {};
+			const client = buildClient(buildCrypto());
+			client.secretStorage.get.mockImplementation(
+				async (name: string) => {
+					if (name === DRAFT_KEY_SECRET)
+						throw new Error('Draft key unavailable');
+					return 'synthetic-cross-signing-seed';
+				}
+			);
+			try {
+				bindDraftCryptographyClient(
+					session,
+					client,
+					client.getUserId()
+				);
+				await expect(
+					recoverWithKey(client, VALID_ENCODED_KEY)
+				).resolves.toEqual({
+					imported: 12,
+					total: 12
+				});
+				expect(getDraftCryptography()).toBeNull();
+			} finally {
+				unbindDraftCryptographyClient(session);
+			}
+		});
+	});
 
 	describe('getEncryptionStatus', () => {
 		it('maps the CryptoApi state into a status object', async () => {
