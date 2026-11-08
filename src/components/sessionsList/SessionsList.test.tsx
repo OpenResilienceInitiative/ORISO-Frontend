@@ -76,7 +76,7 @@ vi.mock('../../api/apiGetChatRoomById', () => ({
 	apiGetChatRoomById: vi.fn().mockResolvedValue({ sessions: [] })
 }));
 vi.mock('../../api/apiUserDrafts', () => ({
-	apiGetUserDrafts: vi.fn().mockResolvedValue({ items: [] })
+	apiFetchUserDrafts: vi.fn().mockResolvedValue({ items: [] })
 }));
 vi.mock('../../hooks/useWatcher', () => ({
 	useWatcher: () => [vi.fn(), vi.fn(), false]

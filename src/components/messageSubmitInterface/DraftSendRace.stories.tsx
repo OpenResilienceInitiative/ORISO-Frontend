@@ -2,64 +2,326 @@ import * as React from 'react';
 import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
+import { createClient, Method } from 'matrix-js-sdk';
+import { SECRET_STORAGE_ALGORITHM_V1_AES } from 'matrix-js-sdk/lib/secret-storage';
+import {
+	deleteCookieByName,
+	getValueFromCookie,
+	setValueInCookie
+} from '../sessionCookie/accessSessionCookie';
+import { getDraftAuthSessionIdentity } from '../../services/draftAuthSession';
+import {
+	bindDraftCryptographyClient,
+	getDraftCryptography,
+	subscribeDraftCryptography,
+	unbindDraftCryptographyClient,
+	unlockDraftCryptography
+} from '../../services/draftCryptography';
+import { serverBackedSecretStorage } from '../../services/matrixRecoveryAccountData';
 import { ActiveSessionContext } from '../../globalState';
 import { endpoints } from '../../resources/scripts/endpoints';
 import { TipTapComposer, TipTapComposerRef } from './TipTapComposer';
 import './TipTapComposer.styles.scss';
 import { useDraftMessage } from './useDraftMessage';
-import { hasDraftContent } from '../../services/draftStore';
+import {
+	hasDraftContent,
+	REMOTE_DRAFT_INDEX_SCOPE
+} from '../../services/draftStore';
 import { buildMockActiveSession } from './__storybook__/composerStoryDecorator';
 
-/** In-memory HTTP endpoint, with a PATCH that finishes after the send's DELETE. */
+const activeSession = buildMockActiveSession();
+const replyScope = `scope:${activeSession.item.id}|thread:main`;
+const nextReply = 'Next unsent reply stays here.';
+const draftPath = '/__storybook__/draft-send-race';
+const empty = (status = 204) => new Response(null, { status });
+const delay = (ms: number) =>
+	new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+type StoredDraft = {
+	id: number;
+	scopeKey: string;
+	text: string;
+	updatedAt: string;
+};
+
+const initDraftKeys = async (owner: object, signal: AbortSignal) => {
+	const userId = '@draft-race:storybook.invalid';
+	const rootId = 'draft-race-root';
+	const rootKey = crypto.getRandomValues(new Uint8Array(32));
+	const accountData = new Map<string, unknown>([
+		['m.secret_storage.default_key', { key: rootId }]
+	]);
+	const client = createClient({
+		baseUrl: 'https://storybook.invalid',
+		userId,
+		fetchFn: async () => {
+			throw new Error('No network in the 4S fixture');
+		}
+	});
+	client.setAccountData = client.setAccountDataRaw.bind(client);
+	client.http.authedRequest = async <T,>(
+		method: Method,
+		path: string,
+		_query,
+		body
+	) => {
+		const prefix = `/user/${encodeURIComponent(userId)}/account_data/`;
+		if (!path.startsWith(prefix))
+			throw new Error('Unexpected Matrix fixture path');
+		const name = decodeURIComponent(path.slice(prefix.length));
+		if (method === Method.Put) {
+			accountData.set(name, body);
+			return {} as T;
+		}
+		if (method === Method.Get && accountData.has(name))
+			return accountData.get(name) as T;
+		throw Object.assign(new Error('No fixture account data'), {
+			errcode: 'M_NOT_FOUND'
+		});
+	};
+	const storage = serverBackedSecretStorage(client, {
+		getSecretStorageKey: async () => [rootId, rootKey]
+	});
+	try {
+		await storage.addKey(
+			SECRET_STORAGE_ALGORITHM_V1_AES,
+			{ key: rootKey },
+			rootId
+		);
+		signal.throwIfAborted();
+		bindDraftCryptographyClient(owner, client, userId);
+		await unlockDraftCryptography(client, storage, rootKey, signal, rootId);
+		const cryptography = getDraftCryptography();
+		if (!cryptography)
+			throw new Error('The 4S draft fixture did not unlock');
+		return cryptography;
+	} finally {
+		rootKey.fill(0);
+	}
+};
+
+const installStoryFrameAccess = (scope: string) => {
+	if (window.parent === window) return () => {};
+	const child = window;
+	const childDocument = document;
+	const identity = getDraftAuthSessionIdentity();
+	const bridge = Symbol.for('oriso.draftCryptographyFrame');
+	type FrameAccess = {
+		get: typeof getDraftCryptography;
+		subscribe: typeof subscribeDraftCryptography;
+	};
+	const parent = child.parent as Window & {
+		[bridge]?: (source: Window, identity: string) => FrameAccess | null;
+	};
+	if (
+		parent.location.origin !== child.location.origin ||
+		!identity ||
+		parent[bridge]
+	) {
+		throw new Error('Draft story requires an isolated same-origin preview');
+	}
+	const previousUrl = child.location.href;
+	const preview = new URL(previousUrl);
+	preview.searchParams.set('embeddedNotifications', '1');
+	preview.searchParams.set('draftScopeKey', scope);
+	child.history.replaceState(child.history.state, '', preview);
+	// Storybook owns the preview iframe. Give only this synthetic document
+	// access to the real fixture keys; the production frame bridge is tested separately.
+	const resolve = (source: Window, caller: string) =>
+		source === child &&
+		caller === identity &&
+		source.document === childDocument
+			? {
+					get: getDraftCryptography,
+					subscribe: subscribeDraftCryptography
+				}
+			: null;
+	parent[bridge] = resolve;
+	return () => {
+		if (parent[bridge] === resolve) delete parent[bridge];
+		if (child.location.href === preview.href)
+			child.history.replaceState(child.history.state, '', previousUrl);
+	};
+};
+
+/** In-memory 4S account data and a deliberately slow encrypted draft endpoint. */
 function SlowDraftBackend({ children }: { children: React.ReactNode }) {
 	const [operations, setOperations] = useState<string[]>([]);
+	const [ready, setReady] = useState(false);
+	const [error, setError] = useState<unknown>(null);
 	useLayoutEffect(() => {
-		const previous = window.fetch;
+		if (
+			getValueFromCookie('keycloak') ||
+			getValueFromCookie('refreshToken')
+		) {
+			setError(
+				new Error(
+					'Draft story requires a preview without existing credentials'
+				)
+			);
+			return;
+		}
+		const authCookiePath = window.location.pathname;
+		const token = `fixture.${btoa(
+			JSON.stringify({
+				iss: 'https://storybook.invalid',
+				sub: 'draft-race',
+				sid: crypto.randomUUID()
+			})
+		)}.fixture`;
+		const authorization = `Bearer ${token}`;
+		const previousFetch = window.fetch;
 		const previousDraftUrl = endpoints.userDrafts;
-		endpoints.userDrafts = new URL(
-			previousDraftUrl,
-			window.location.origin
-		).href;
-		const drafts = new Map<string, unknown>();
+		const owner = {};
+		const controller = new AbortController();
+		const drafts = new Map<string, StoredDraft>();
+		let removeFrameAccess = () => {};
+		let nextId = 1;
+		const record = (operation: string) =>
+			setOperations((prior) => [...prior, operation]);
+
+		let handleDraft:
+			| ((request: Request, url: URL) => Promise<Response>)
+			| null = null;
 		window.fetch = async (input, init) => {
 			const request = new Request(input, init);
 			const url = new URL(request.url);
-			if (
-				!url.pathname.startsWith(
-					new URL(endpoints.userDrafts, window.location.origin)
-						.pathname
-				)
-			) {
-				return previous(input, init);
-			}
-			const key = url.searchParams.get('scopeKey') || '';
-			setOperations((previous) => [...previous, request.method]);
-			if (request.method === 'PATCH') {
-				const body = await request.json();
-				await new Promise((resolve) => setTimeout(resolve, 1800));
-				drafts.set(key, body);
-				setOperations((previous) => [...previous, 'PATCH completed']);
-				return new Response(null, { status: 204 });
-			}
-			if (request.method === 'DELETE') {
-				drafts.delete(key);
-				return new Response(null, { status: 204 });
-			}
-			await new Promise((resolve) => setTimeout(resolve, 500));
-			return drafts.has(key)
-				? new Response(JSON.stringify(drafts.get(key)), {
-						headers: { 'Content-Type': 'application/json' }
-					})
-				: new Response(null, { status: 204 });
+			const isFixture =
+				url.origin === window.location.origin &&
+				(url.pathname === draftPath ||
+					url.pathname === `${draftPath}/single` ||
+					url.pathname === `${draftPath}/protected`);
+			const hasFixtureAuth =
+				request.headers.get('Authorization') === authorization;
+			if (!isFixture)
+				return hasFixtureAuth ? empty(403) : previousFetch(input, init);
+			return hasFixtureAuth && handleDraft
+				? handleDraft(request, url)
+				: empty(401);
 		};
+
+		const install = async () => {
+			setValueInCookie('keycloak', token, authCookiePath);
+			const cryptography = await initDraftKeys(owner, controller.signal);
+			const reply = await cryptography.opaqueScope(replyScope);
+			removeFrameAccess = installStoryFrameAccess(reply);
+			const index = await cryptography.opaqueScope(
+				REMOTE_DRAFT_INDEX_SCOPE
+			);
+			controller.signal.throwIfAborted();
+			endpoints.userDrafts = new URL(
+				draftPath,
+				window.location.origin
+			).href;
+			handleDraft = async (request, url) => {
+				const key = url.searchParams.get('scopeKey');
+				const logicalScope =
+					key === reply
+						? replyScope
+						: key === index
+							? REMOTE_DRAFT_INDEX_SCOPE
+							: null;
+				if (
+					request.method === 'GET' &&
+					url.pathname === draftPath &&
+					key === null
+				) {
+					const page = Number(url.searchParams.get('page'));
+					const perPage = Number(url.searchParams.get('perPage'));
+					return Response.json({
+						items: [...drafts.values()].slice(
+							page * perPage,
+							(page + 1) * perPage
+						),
+						page,
+						perPage
+					});
+				}
+				if (!key || !logicalScope) {
+					record('Invalid draft scope');
+					return empty(400);
+				}
+				const label = key === reply ? '' : ' index';
+				if (
+					request.method === 'PATCH' &&
+					url.pathname === `${draftPath}/protected`
+				) {
+					const body = await request.json();
+					if (
+						Object.keys(body).length !== 1 ||
+						typeof body.text !== 'string'
+					) {
+						record('Invalid draft envelope');
+						return empty(400);
+					}
+					const clear = (await cryptography
+						.open(key, body.text)
+						.catch(() => null)) as {
+						scopeKey?: unknown;
+						text?: unknown;
+					} | null;
+					if (
+						!clear ||
+						typeof clear.text !== 'string' ||
+						clear.scopeKey !== logicalScope
+					) {
+						record('Invalid draft envelope');
+						return empty(400);
+					}
+					const patchLabel =
+						key === reply &&
+						clear.text.replace(/<[^>]*>/g, '') === nextReply
+							? ' next reply'
+							: label;
+					record(`PATCH${patchLabel} started`);
+					if (key === reply) await delay(1800);
+					if (controller.signal.aborted) return empty(409);
+					drafts.set(key, {
+						id: drafts.get(key)?.id ?? nextId++,
+						scopeKey: key,
+						text: body.text,
+						updatedAt: new Date().toISOString()
+					});
+					record(`PATCH${patchLabel} completed`);
+					return empty();
+				}
+				if (
+					request.method === 'DELETE' &&
+					url.pathname === `${draftPath}/protected`
+				) {
+					drafts.delete(key);
+					record(`DELETE${label}`);
+					return empty();
+				}
+				if (
+					request.method === 'GET' &&
+					url.pathname === `${draftPath}/single`
+				) {
+					await delay(500);
+					const row = drafts.get(key);
+					return row ? Response.json(row) : empty();
+				}
+				return empty(405);
+			};
+			setReady(true);
+		};
+		void install().catch((reason: unknown) => {
+			if (!controller.signal.aborted) setError(reason);
+		});
 		return () => {
-			window.fetch = previous;
+			controller.abort();
+			unbindDraftCryptographyClient(owner);
+			removeFrameAccess();
+			window.fetch = previousFetch;
 			endpoints.userDrafts = previousDraftUrl;
+			if (getValueFromCookie('keycloak') === token)
+				deleteCookieByName('keycloak', authCookiePath);
 		};
 	}, []);
+	if (error) throw error;
 	return (
 		<>
-			{children}
+			{ready && children}
 			<p style={{ padding: 32 }} aria-label="Draft request sequence">
 				Draft request sequence: {operations.join(' → ')}
 			</p>
@@ -132,7 +394,7 @@ const meta = {
 			<ActiveSessionContext.Provider
 				value={
 					{
-						activeSession: buildMockActiveSession(),
+						activeSession,
 						reloadActiveSession: () => {},
 						readActiveSession: () => {}
 					} as any
@@ -146,65 +408,67 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+const startSlowReply = async (canvasElement: HTMLElement, text: string) => {
+	const canvas = within(canvasElement);
+	const editor = await waitFor(() => {
+		const element =
+			canvasElement.querySelector<HTMLElement>('.ProseMirror');
+		if (!element) throw new Error('The 4S draft fixture is still loading');
+		return element;
+	});
+	const send = canvas.getByRole('button', { name: 'Send reply' });
+	const sequence = canvas.getByLabelText('Draft request sequence');
+	await userEvent.click(editor);
+	await userEvent.keyboard(text);
+	await waitFor(() => expect(sequence).toHaveTextContent('PATCH started'), {
+		timeout: 5000
+	});
+	await userEvent.click(send);
+	return { editor, send, sequence };
+};
+
 export const DelayedSaveAfterSend: Story = {
 	play: async ({ canvasElement }) => {
-		const canvas = within(canvasElement);
-		const editor =
-			canvasElement.querySelector<HTMLElement>('.ProseMirror')!;
-		await userEvent.click(editor);
-		await userEvent.keyboard('Practice reply sent successfully.');
-		await userEvent.click(
-			canvas.getByRole('button', { name: 'Send reply' })
+		const { editor, send, sequence } = await startSlowReply(
+			canvasElement,
+			'Practice reply sent successfully.'
 		);
-		await new Promise((resolve) => setTimeout(resolve, 1350));
-		await expect(
-			canvas.getByRole('button', { name: 'Send reply' })
-		).toBeDisabled();
-		// Wait beyond the production composer's 1200 ms request reset, when
-		// re-enabling the draft hook used to load the late PATCH back in.
+		await delay(1350);
+		await expect(send).toBeDisabled();
 		await waitFor(
 			() =>
-				expect(
-					canvas.getByLabelText('Draft request sequence').textContent
-				).toContain('PATCH completed'),
-			{ timeout: 5000 }
+				expect(sequence).toHaveTextContent('PATCH completed → DELETE'),
+			{
+				timeout: 5000
+			}
 		);
-		await new Promise((resolve) => setTimeout(resolve, 1600));
-		await waitFor(() => expect(editor.textContent?.trim()).toBe(''));
+		// The next read finishes after the delayed write has been removed.
+		await delay(1000);
+		await expect(editor.textContent?.trim()).toBe('');
 	}
 };
 
 export const NextReplyDuringSlowClear: Story = {
 	play: async ({ canvasElement }) => {
-		const canvas = within(canvasElement);
-		const editor =
-			canvasElement.querySelector<HTMLElement>('.ProseMirror')!;
-		await userEvent.click(editor);
-		await userEvent.keyboard('Reply that was sent.');
-		await userEvent.click(
-			canvas.getByRole('button', { name: 'Send reply' })
+		const { editor, send, sequence } = await startSlowReply(
+			canvasElement,
+			'Reply that was sent.'
 		);
 		await waitFor(() => expect(editor.textContent?.trim()).toBe(''));
 		await userEvent.click(editor);
-		await userEvent.keyboard('Next unsent reply stays here.');
-		await new Promise((resolve) => setTimeout(resolve, 1350));
-		await expect(
-			canvas.getByRole('button', { name: 'Send reply' })
-		).toBeDisabled();
+		await userEvent.keyboard(nextReply);
+		await delay(1350);
+		await expect(send).toBeDisabled();
 		await waitFor(
-			() => {
-				const sequence =
-					canvas.getByLabelText('Draft request sequence')
-						.textContent || '';
-				expect(sequence.match(/PATCH completed/g)?.length).toBe(2);
-			},
-			{ timeout: 6000 }
+			() =>
+				expect(sequence).toHaveTextContent(
+					'PATCH next reply completed'
+				),
+			{
+				timeout: 6500
+			}
 		);
-		await expect(editor.textContent?.trim()).toBe(
-			'Next unsent reply stays here.'
-		);
-		await expect(
-			canvas.getByRole('button', { name: 'Send reply' })
-		).toBeEnabled();
+		await expect(editor.textContent?.trim()).toBe(nextReply);
+		await expect(send).toBeEnabled();
 	}
 };

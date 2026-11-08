@@ -86,12 +86,9 @@ import {
 } from './useCaseHandoverSearch';
 import { useCaseHandoverReasons } from '../caseHandover/useCaseHandoverReasons';
 import { useSessionListViewState } from './SessionListViewStateContext';
-import { apiGetUserDrafts, IUserDraftItem } from '../../api/apiUserDrafts';
-import {
-	DRAFTS_UPDATED_EVENT,
-	hasDraftContent,
-	REMOTE_DRAFT_INDEX_SCOPE
-} from '../../services/draftStore';
+import type { IUserDraftItem } from '../../api/apiUserDrafts';
+import { useRemoteDrafts } from '../../hooks/useRemoteDrafts';
+import { toDraftResumePath } from '../../services/draftNavigation';
 import { canModerateGroupChat } from '../groupChat/groupChatHelpers';
 import {
 	FutureZone,
@@ -177,15 +174,6 @@ import {
 const MIN_VISIBLE_SESSION_ROWS = 10;
 
 const SESSIONS_DISPLAY_FILTER_DIALOG_ID = 'sessions-display-filter-dialog';
-
-const withDraftScopeParam = (path: string, draftScopeKey: string) => {
-	const [basePath, queryString = ''] = path.split('?');
-	const query = new URLSearchParams(queryString);
-	query.delete('embeddedNotifications');
-	query.set('draftScopeKey', draftScopeKey);
-	const finalQuery = query.toString();
-	return `${basePath}${finalQuery ? `?${finalQuery}` : ''}`;
-};
 
 const normalizeTimestamp = (value?: string | number | null): number => {
 	if (value === null || value === undefined || value === '') {
@@ -329,7 +317,6 @@ export const SessionsList = ({
 		useState<string | null>(null);
 	const [filteredOutNoticeDismissed, setFilteredOutNoticeDismissed] =
 		useState(false);
-	const [userDrafts, setUserDrafts] = useState<IUserDraftItem[]>([]);
 	const [caseHandoverBatchMode, setCaseHandoverBatchMode] = useState(false);
 	const [caseHandoverReviewOpen, setCaseHandoverReviewOpen] = useState(false);
 	const [caseHandoverWizardStep, setCaseHandoverWizardStep] = useState<
@@ -1318,18 +1305,7 @@ export const SessionsList = ({
 	const showMySessionToolbar =
 		type === SESSION_LIST_TYPES.MY_SESSION ||
 		type === SESSION_LIST_TYPES.ENQUIRY;
-	const visibleUserDrafts = React.useMemo(
-		() =>
-			userDrafts.filter(
-				(draft) =>
-					draft.scopeKey !== REMOTE_DRAFT_INDEX_SCOPE &&
-					// #976: zero-content rows persisted by older builds still sit
-					// in the backend. They can never be opened, so they must not
-					// keep the drafts badge lit either.
-					hasDraftContent(draft.text)
-			),
-		[userDrafts]
-	);
+	const visibleUserDrafts = useRemoteDrafts(showMySessionToolbar);
 	const caseHandoverSearch = useCaseHandoverSearch({
 		enabled: showConsultantToolbarActions,
 		query: sessionToolbarSearch,
@@ -1338,44 +1314,6 @@ export const SessionsList = ({
 		searchOpen: sessionToolbarSearchOpen
 	});
 	const sessionToolbarSelectedPeople = caseHandoverSearch.selectedPersonIds;
-	const loadUserDrafts = useCallback(async () => {
-		if (!showMySessionToolbar) {
-			setUserDrafts([]);
-			return;
-		}
-
-		const response = await apiGetUserDrafts(0, 200).catch(() => null);
-		setUserDrafts(response?.items || []);
-	}, [showMySessionToolbar]);
-
-	useEffect(() => {
-		if (!showMySessionToolbar) {
-			setUserDrafts([]);
-			return;
-		}
-
-		void loadUserDrafts();
-
-		const handleDraftsUpdated = () => {
-			void loadUserDrafts();
-		};
-		const intervalId = window.setInterval(loadUserDrafts, 60000);
-		window.addEventListener('focus', handleDraftsUpdated);
-		window.addEventListener(
-			DRAFTS_UPDATED_EVENT,
-			handleDraftsUpdated as EventListener
-		);
-
-		return () => {
-			window.clearInterval(intervalId);
-			window.removeEventListener('focus', handleDraftsUpdated);
-			window.removeEventListener(
-				DRAFTS_UPDATED_EVENT,
-				handleDraftsUpdated as EventListener
-			);
-		};
-	}, [loadUserDrafts, showMySessionToolbar]);
-
 	const caseHandoverReasons = useCaseHandoverReasons(caseHandoverBatchMode);
 	// A chosen reason that is no longer offered is dropped.
 	const { reasons: loadedReasons, loaded: reasonsLoaded } =
@@ -1389,10 +1327,8 @@ export const SessionsList = ({
 
 	const handleOpenDraft = useCallback(
 		(draft: IUserDraftItem) => {
-			if (!draft.actionPath) {
-				return;
-			}
-			navigate(withDraftScopeParam(draft.actionPath, draft.scopeKey));
+			const path = toDraftResumePath(draft);
+			if (path) navigate(path);
 		},
 		[navigate]
 	);
