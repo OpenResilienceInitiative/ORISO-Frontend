@@ -5,7 +5,7 @@
 import * as React from 'react';
 // Storybook's spy works in the browser too; the test runner's `vi` does not.
 import { fn } from 'storybook/test';
-import type { MatrixClient } from 'matrix-js-sdk';
+import { EventType, MatrixEvent, type MatrixClient } from 'matrix-js-sdk';
 import { MatrixClientContext } from '../../../globalState/context/MatrixClientContext';
 import { callManager } from '../../../services/CallManager';
 import type { MatrixClientService } from '../../../services/matrixClientService';
@@ -37,10 +37,26 @@ export const makeFakeMatrixClientService = (mode: GroupCallStoryMode) => {
 	const makeClient = () => {
 		const listeners = new Map<string, Set<MatrixListener>>();
 		const membership = mode === 'connecting' ? 'invite' : 'join';
+		const ownMemberEvent = new MatrixEvent({
+			type: EventType.RoomMember,
+			room_id: FAKE_ELEMENT_CALL_ROOM_ID,
+			sender: FAKE_CURRENT_USER_ID,
+			state_key: FAKE_CURRENT_USER_ID,
+			content: { membership }
+		});
 		const room = {
 			getMyMembership: () => membership,
 			getLiveTimeline: () => ({
-				getState: () => ({ getStateEvents: () => [] })
+				getState: () => ({
+					getStateEvents: (type: string, stateKey?: string) => {
+						const memberEvent = type === EventType.RoomMember;
+						if (stateKey === undefined)
+							return memberEvent ? [ownMemberEvent] : [];
+						return memberEvent && stateKey === FAKE_CURRENT_USER_ID
+							? ownMemberEvent
+							: null;
+					}
+				})
 			}),
 			/*
 			 * The identity record is only sent into an ENCRYPTED room — see

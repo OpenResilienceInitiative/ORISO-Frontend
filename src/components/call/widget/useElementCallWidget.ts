@@ -16,6 +16,8 @@ import {
 } from 'matrix-widget-api';
 import {
 	ClientEvent,
+	EventTimeline,
+	EventType,
 	MatrixClient,
 	MatrixEvent,
 	RoomEvent,
@@ -181,6 +183,68 @@ const releaseIframeDevices = (iframe: HTMLIFrameElement | null): void => {
 	}
 };
 
+export class CallRoomMembershipTimeoutError extends Error {
+	readonly name = 'CallRoomMembershipTimeoutError';
+}
+
+const waitForWidgetRoomMembership = (
+	client: MatrixClient,
+	roomId: string,
+	userId: string,
+	signal: AbortSignal
+): Promise<void> => {
+	const isReady = () => {
+		const room = client.getRoom(roomId);
+		if (room?.getMyMembership() !== 'join') return false;
+
+		// The widget receives this state event from OrisoWidgetDriver. The
+		// local Room can exist before its joined state is available to read.
+		return (
+			room
+				.getLiveTimeline()
+				.getState(EventTimeline.FORWARDS)
+				?.getStateEvents(EventType.RoomMember, userId)
+				?.getContent().membership === 'join'
+		);
+	};
+
+	if (signal.aborted) return Promise.reject(signal.reason);
+	if (isReady()) return Promise.resolve();
+
+	return new Promise((resolve, reject) => {
+		const cleanup = () => {
+			clearTimeout(timeout);
+			client.off(ClientEvent.Room, check);
+			client.off(RoomEvent.MyMembership, check);
+			client.off(RoomStateEvent.Events, check);
+			signal.removeEventListener('abort', abort);
+		};
+		const check = () => {
+			if (!isReady()) return;
+			cleanup();
+			resolve();
+		};
+		const abort = () => {
+			cleanup();
+			reject(signal.reason);
+		};
+		const timeout = setTimeout(() => {
+			cleanup();
+			reject(
+				new CallRoomMembershipTimeoutError(
+					'Matrix did not sync the call room membership.'
+				)
+			);
+		}, 20_000);
+
+		client.on(ClientEvent.Room, check);
+		client.on(RoomEvent.MyMembership, check);
+		client.on(RoomStateEvent.Events, check);
+		signal.addEventListener('abort', abort, { once: true });
+		check();
+	});
+};
+
 const sendKnockState = (api: ClientWidgetApi, state: OrisoKnockState) => {
 	void api.transport
 		.send(ORISO_WIDGET_ACTIONS.knockState, {
@@ -229,7 +293,8 @@ export const useElementCallWidget = (
 	// A widget client cannot join rooms. Gate iframe creation on the host's
 	// membership so Element Call never starts against an invited/unknown room.
 	useEffect(() => {
-		let cancelled = false;
+		const preparation = new AbortController();
+		const { signal } = preparation;
 		setUrl(null);
 		setReady(false);
 		setError(null);
@@ -261,13 +326,20 @@ export const useElementCallWidget = (
 				if (client.getRoom(roomId)?.getMyMembership() !== 'join') {
 					await client.joinRoom(roomId);
 				}
-				if (cancelled) return;
+				if (signal.aborted) return;
+				await waitForWidgetRoomMembership(
+					client,
+					roomId,
+					userId,
+					signal
+				);
+				if (signal.aborted) return;
 
 				const widgetId = await widgetIdForRoom(
 					roomId,
 					instanceNonceRef.current
 				);
-				if (cancelled) return;
+				if (signal.aborted) return;
 				elementCallUrl.hash = `?${new URLSearchParams({
 					widgetId,
 					parentUrl: window.location.origin,
@@ -312,14 +384,12 @@ export const useElementCallWidget = (
 
 				setUrl(elementCallUrl.toString());
 			} catch (err) {
-				if (!cancelled) setError(err as Error);
+				if (!signal.aborted) setError(err as Error);
 			}
 		};
 
 		void prepare();
-		return () => {
-			cancelled = true;
-		};
+		return () => preparation.abort();
 	}, [client, roomId, isVideo, skipLobby, callStartQuery]);
 
 	const attachIframe = useCallback(

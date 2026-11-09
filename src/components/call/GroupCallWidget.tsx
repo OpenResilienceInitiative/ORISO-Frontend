@@ -28,7 +28,10 @@ import {
 	NOTIFICATION_TYPE_WARNING,
 	NotificationsContext
 } from '../../globalState/provider/NotificationsProvider';
-import { useElementCallWidget } from './widget/useElementCallWidget';
+import {
+	CallRoomMembershipTimeoutError,
+	useElementCallWidget
+} from './widget/useElementCallWidget';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 import {
 	getAutoFitStageSize,
@@ -705,9 +708,13 @@ export const GroupCallWidget: React.FC = () => {
 		// Element Call iframe opens its own capture.
 		releaseWindowMediaStream('__preRequestedMediaStream');
 		if (widget.error) {
+			const message =
+				widget.error instanceof CallRoomMembershipTimeoutError
+					? t('groupChat.joinError.overlay.headline')
+					: widget.error.message;
 			alert(
 				t('calls.group.startFailed', {
-					message: widget.error.message
+					message
 				})
 			);
 			closeCallSurface();
