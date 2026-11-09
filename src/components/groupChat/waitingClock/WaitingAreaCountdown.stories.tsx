@@ -1,6 +1,6 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
-import { expect, userEvent } from 'storybook/test';
+import { expect, fireEvent, userEvent, waitFor } from 'storybook/test';
 import { WaitingAreaCountdown } from './WaitingAreaCountdown';
 import {
 	expectCaptionClear,
@@ -68,23 +68,61 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const expectFlipFocus: Story['play'] = async ({ canvas }) => {
-	const openName = 'Uhr umdrehen, Begrüßung und Netiquette lesen';
-	const open = await canvas.findByRole('button', { name: openName });
+const expectFlipFocus: Story['play'] = async ({ canvas, canvasElement }) => {
+	const findOpen = () =>
+		canvas.findByRole('button', {
+			name: 'Uhr umdrehen, Begrüßung und Netiquette lesen'
+		});
+	const findClose = () =>
+		canvas.findByRole('button', { name: 'Zurück zur Uhr' });
+	const open = await findOpen();
 	await expect(open).not.toHaveFocus();
 	open.focus();
 	await userEvent.keyboard(' ');
 
-	const close = await canvas.findByRole('button', { name: 'Zurück zur Uhr' });
+	const close = await findClose();
 	const focusedBack = close.ownerDocument.activeElement === close;
 	close.focus();
 	await userEvent.keyboard('{Enter}');
 
-	const reopened = await canvas.findByRole('button', { name: openName });
+	const reopened = await findOpen();
 	await expect({
 		focusedBack,
 		focusedFront: reopened.ownerDocument.activeElement === reopened
 	}).toEqual({ focusedBack: true, focusedFront: true });
+
+	// Dispatch clicks without keydown or pointer-down changing browser focus.
+	await fireEvent.click(reopened, { detail: 0 });
+	const syntheticClose = await findClose();
+	await expect(syntheticClose).toHaveFocus();
+	await fireEvent.click(syntheticClose, { detail: 0 });
+	const pointerOpen = await findOpen();
+	await expect(pointerOpen).toHaveFocus();
+
+	const sentinel = canvasElement.ownerDocument.createElement('button');
+	sentinel.type = 'button';
+	sentinel.textContent = 'Focus sentinel';
+	canvasElement.append(sentinel);
+	try {
+		sentinel.focus();
+		await expect(sentinel).toHaveFocus();
+		await fireEvent.click(pointerOpen, { detail: 1 });
+		const pointerClose = await findClose();
+		await expect(sentinel).toHaveFocus();
+		await fireEvent.click(pointerClose, { detail: 1 });
+		await findOpen();
+		await expect(sentinel).toHaveFocus();
+
+		const timer = canvas.getByRole('timer');
+		const timerLabel = timer.getAttribute('aria-label');
+		await waitFor(
+			() => expect(timer.getAttribute('aria-label')).not.toBe(timerLabel),
+			{ timeout: 2500 }
+		);
+		await expect(sentinel).toHaveFocus();
+	} finally {
+		sentinel.remove();
+	}
 };
 
 export const Future4a: Story = {
