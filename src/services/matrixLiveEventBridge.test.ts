@@ -8,6 +8,7 @@ import {
 	vi
 } from 'vite-plus/test';
 import { createRequire } from 'module';
+import { MatrixEvent } from 'matrix-js-sdk';
 import { MatrixRTCSession } from 'matrix-js-sdk/lib/matrixrtc/MatrixRTCSession';
 import { MatrixLiveEventBridge } from './matrixLiveEventBridge';
 
@@ -113,6 +114,7 @@ const makeEvent = (overrides: Record<string, any> = {}) => {
 		getContent: () => currentContent,
 		getSender: () => sender,
 		getTs: () => ts,
+		getLocalAge: () => Date.now() - ts,
 		getId: () => id,
 		on: (event: string, listener: Listener) => {
 			if (!listeners.has(event)) listeners.set(event, new Set());
@@ -327,6 +329,128 @@ describe('MatrixLiveEventBridge call-invite de-dupe & stale handling', () => {
 		membershipSpy.mockRestore();
 	});
 
+	it.each(['timeline', 'decryption'] as const)(
+		'ignores an explicitly expired one-to-one invite delivered through %s despite retained caller membership',
+		(delivery) => {
+			const callRoomId = '!retained-call:matrix.example.org';
+			const content = {
+				call_id: 'expired-one-to-one',
+				call_room_id: callRoomId,
+				is_element_call: true,
+				is_group_call: false,
+				lifetime: 60_000
+			};
+			const clearInvite = { type: 'org.oriso.call.invite', content };
+			const sentAt = Date.now();
+			const event = makeEvent(
+				delivery === 'timeline'
+					? { ...clearInvite, ts: sentAt }
+					: { type: 'm.room.encrypted', ts: sentAt }
+			);
+			const sourceRoom = {
+				...room,
+				getLiveTimeline: () => ({ getEvents: () => [event] })
+			};
+			Object.assign(client, {
+				getRoom: () => ({ roomId: callRoomId }),
+				isInitialSyncComplete: () => true
+			});
+			const membershipSpy = vi
+				.spyOn(MatrixRTCSession, 'sessionMembershipsForRoom')
+				.mockReturnValue([{ sender: OTHER_USER_ID } as any]);
+			vi.useFakeTimers();
+			try {
+				vi.setSystemTime(
+					sentAt + (delivery === 'timeline' ? 60_000 : 0)
+				);
+				client.emit('Room.timeline', event, sourceRoom, false, false, {
+					liveEvent: delivery === 'decryption'
+				});
+				if (delivery === 'decryption') {
+					vi.setSystemTime(sentAt + 60_000);
+					event.emitDecrypted(clearInvite);
+				}
+
+				expect(receiveCall).not.toHaveBeenCalled();
+			} finally {
+				membershipSpy.mockRestore();
+				vi.useRealTimers();
+			}
+		}
+	);
+
+	it.each([
+		{ serverAge: 2000, timestampOffset: -120_000, rings: true },
+		{ serverAge: 90_000, timestampOffset: 30_000, rings: false }
+	])(
+		'uses the homeserver age ($serverAge ms) to expire a one-to-one offer despite client clock skew',
+		({ serverAge, timestampOffset, rings }) => {
+			const callRoomId = '!retained-call:matrix.example.org';
+			const event = new MatrixEvent({
+				type: 'org.oriso.call.invite',
+				room_id: ROOM_ID,
+				sender: OTHER_USER_ID,
+				origin_server_ts: Date.now() + timestampOffset,
+				unsigned: { age: serverAge },
+				content: {
+					call_id: 'one-to-one',
+					call_room_id: callRoomId,
+					is_element_call: true,
+					lifetime: 60_000
+				}
+			});
+			Object.assign(client, { getRoom: () => ({ roomId: callRoomId }) });
+			const membershipSpy = vi
+				.spyOn(MatrixRTCSession, 'sessionMembershipsForRoom')
+				.mockReturnValue([{ sender: OTHER_USER_ID } as any]);
+			try {
+				client.emit('Room.timeline', event, room, false);
+				expect(receiveCall).toHaveBeenCalledTimes(rings ? 1 : 0);
+			} finally {
+				membershipSpy.mockRestore();
+			}
+		}
+	);
+
+	it('keeps a live offer eligible during delayed decryption despite client clock skew', async () => {
+		vi.useFakeTimers();
+		try {
+			const receivedAt = Date.now();
+			const invite = new MatrixEvent({
+				type: 'm.room.encrypted',
+				room_id: ROOM_ID,
+				sender: OTHER_USER_ID,
+				origin_server_ts: receivedAt - 120_000,
+				unsigned: { age: 2000 }
+			});
+			const sourceRoom = {
+				...room,
+				getLiveTimeline: () => ({ getEvents: () => [invite] })
+			};
+			Object.assign(client, { isInitialSyncComplete: () => true });
+			client.emit('Room.timeline', invite, sourceRoom, false, false, {
+				liveEvent: true
+			});
+			vi.setSystemTime(receivedAt + 15_000);
+			const clearEvent = {
+				type: 'org.oriso.call.invite',
+				content: {
+					call_id: 'delayed-one-to-one',
+					is_element_call: true,
+					lifetime: 60_000
+				}
+			};
+			const decryptEvent = vi.fn().mockResolvedValue({ clearEvent });
+			await invite.attemptDecryption({ decryptEvent } as Parameters<
+				MatrixEvent['attemptDecryption']
+			>[0]);
+
+			expect(receiveCall).toHaveBeenCalledOnce();
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
 	it('retries a stale Element Call invite after membership state finishes syncing', () => {
 		const callRoomId = '!late-membership:matrix.example.org';
 		const historicalInvite = makeEvent({
@@ -481,6 +605,76 @@ describe('MatrixLiveEventBridge call-invite de-dupe & stale handling', () => {
 		);
 		membershipSpy.mockRestore();
 	});
+
+	it.each([false, true])(
+		'skips an expired one-to-one invite during sync and recovers the next active invite (group=%s)',
+		(isGroupCall) => {
+			const callRoomId = '!eligible-call:matrix.example.org';
+			const expiredRoomId = '!retained-call:matrix.example.org';
+			const now = Date.now();
+			const makeInvite = (
+				callId: string,
+				roomId: string,
+				group: boolean,
+				sentAt: number,
+				lifetime: number
+			) =>
+				makeEvent({
+					type: 'org.oriso.call.invite',
+					content: {
+						call_id: callId,
+						call_room_id: roomId,
+						is_element_call: true,
+						is_group_call: group,
+						lifetime
+					},
+					ts: sentAt
+				});
+			const eligible = makeInvite(
+				'active',
+				callRoomId,
+				isGroupCall,
+				now - 50_000,
+				isGroupCall ? 30_000 : 60_000
+			);
+			const expired = makeInvite(
+				'expired',
+				expiredRoomId,
+				false,
+				now - 40_000,
+				30_000
+			);
+			Object.assign(client, {
+				getRooms: () => [
+					{
+						...room,
+						getLiveTimeline: () => ({
+							getEvents: () => [eligible, expired]
+						})
+					}
+				],
+				getRoom: (roomId: string) => ({ roomId })
+			});
+			const membershipSpy = vi
+				.spyOn(MatrixRTCSession, 'sessionMembershipsForRoom')
+				.mockReturnValue([{ sender: OTHER_USER_ID } as any]);
+			try {
+				client.emit('sync', 'PREPARED', null);
+
+				expect(receiveCall).toHaveBeenCalledExactlyOnceWith(
+					callRoomId,
+					true,
+					'active',
+					OTHER_USER_ID,
+					isGroupCall,
+					ROOM_ID,
+					true
+				);
+			} finally {
+				membershipSpy.mockRestore();
+			}
+		}
+	);
 
 	it('ignores our own call invites', () => {
 		emitInvite({
@@ -911,5 +1105,23 @@ describe('MatrixLiveEventBridge call-invite de-dupe & stale handling', () => {
 		expect(endCallIfMatching).toHaveBeenCalledTimes(1);
 		expect(endCallIfMatching).toHaveBeenCalledWith('c', room.roomId);
 		expect(endCall).not.toHaveBeenCalled();
+	});
+
+	it('handles a fresh matching hangup when the recipient clock is ahead', () => {
+		const hangup = new MatrixEvent({
+			type: 'org.oriso.call.hangup',
+			room_id: ROOM_ID,
+			sender: OTHER_USER_ID,
+			origin_server_ts: Date.now() - 120_000,
+			unsigned: { age: 1000 },
+			content: { call_id: 'fresh-call' }
+		});
+
+		client.emit('Room.timeline', hangup, room, false);
+
+		expect(endCallIfMatching).toHaveBeenCalledExactlyOnceWith(
+			'fresh-call',
+			ROOM_ID
+		);
 	});
 });

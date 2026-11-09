@@ -355,9 +355,9 @@ export class MatrixLiveEventBridge {
 				event.getSender() !== this.client.getUserId() &&
 				!this.processedCallInvites.has(content.call_id) &&
 				!this.deferredCallInvites.has(event) &&
-				this.hasActiveMatrixRtcMembership(callRoomId)
+				this.hasActiveMatrixRtcMembership(callRoomId) &&
+				this.handleCallInvite(event, room)
 			) {
-				this.handleCallInvite(event, room);
 				return true;
 			}
 		}
@@ -383,9 +383,7 @@ export class MatrixLiveEventBridge {
 				// Keep the existing metadata refresh, but also redispatch the clear
 				// event when a later decryption retry succeeds.
 				this.handleRoomMessage(event, room);
-				const ageSeconds = Math.floor(
-					(Date.now() - event.getTs()) / 1000
-				);
+				const ageSeconds = Math.floor(event.getLocalAge() / 1000);
 				this.waitForSuccessfulDecryption(
 					event,
 					room,
@@ -537,24 +535,35 @@ export class MatrixLiveEventBridge {
 	}
 
 	/**
-	 * Handle m.call.invite events (incoming calls).
+	 * Dispatch an incoming call and report whether it was delivered.
 	 */
 	private handleCallInvite(
 		event: MatrixEvent,
 		room: Room,
 		wasFreshAndLive = false
-	): void {
+	): boolean {
 		const sender = event.getSender();
 		const content = event.getContent();
 		const callId = content.call_id;
-		const eventTimestamp = event.getTs();
-		const now = Date.now();
-		const ageSeconds = Math.floor((now - eventTimestamp) / 1000);
+		const ageMs = event.getLocalAge();
+		const ageSeconds = Math.floor(ageMs / 1000);
 		const isOld = ageSeconds > CALL_INVITE_FRESHNESS_SECONDS;
 		const callRoomId = content.call_room_id || room.roomId;
 		const isGroupCall = content.is_group_call === true;
 		const isElementCall = isElementOrGroupCallInvite(content);
 		const isOrisoInvite = event.getType() === 'org.oriso.call.invite';
+		const { lifetime } = content;
+		// MatrixRTC membership can outlive the ringing window of a one-to-one offer.
+		if (
+			isOrisoInvite &&
+			isElementCall &&
+			!isGroupCall &&
+			typeof lifetime === 'number' &&
+			Number.isFinite(lifetime) &&
+			ageMs >= lifetime
+		) {
+			return false;
+		}
 		const hasActiveMatrixRtcMembership =
 			isElementCall && this.hasActiveMatrixRtcMembership(callRoomId);
 		const timeline =
@@ -568,21 +577,21 @@ export class MatrixLiveEventBridge {
 			timeline,
 			this.client?.getUserId()
 		);
-		if (isOrisoInvite && hasMatchingOrisoHangup(event, later)) return;
-		if (this.deferredCallInvites.has(event)) return;
+		if (isOrisoInvite && hasMatchingOrisoHangup(event, later)) return false;
+		if (this.deferredCallInvites.has(event)) return false;
 
-		const delayedDeadline =
+		const delayedTimeRemaining =
 			isOld && wasFreshAndLive
-				? this.delayedInviteDeadline(event, timeline, now)
+				? this.remainingDelayedInviteMs(event, timeline, ageMs)
 				: undefined;
 		// A later encrypted event from the caller or this account may be a hangup. Wait
 		// for its decryption rather than presenting an already ended call.
 		if (
-			delayedDeadline &&
+			delayedTimeRemaining &&
 			later.some((item) => item.getType() === 'm.room.encrypted')
 		) {
-			this.deferCallInvite(event, room, delayedDeadline - now);
-			return;
+			this.deferCallInvite(event, room, delayedTimeRemaining);
+			return false;
 		}
 		const isVideo = isElementCall
 			? content.is_video !== false
@@ -594,16 +603,12 @@ export class MatrixLiveEventBridge {
 		// console.log("📞 Call ID:", callId);
 		// console.log("👤 Sender:", sender);
 		// console.log("🏠 Room:", room.roomId);
-		// console.log("⏰ Event timestamp:", new Date(eventTimestamp).toISOString());
 		// console.log("⏱️  Age:", ageSeconds, "seconds old");
 		// console.log("═══════════════════════════════════════════════");
 
-		// Historical invites normally must not ring again. MatrixRTC is the
-		// exception: after a page reload the original invite is historical even
-		// though another participant is still publishing in the dedicated call
-		// room. The SDK's non-expired membership view is the authoritative active
-		// signal and avoids reviving calls whose invite merely remains in history.
-		if (isOld && !hasActiveMatrixRtcMembership && !delayedDeadline) {
+		// Active MatrixRTC membership can recover a historical invite that is
+		// still eligible to ring, even after the browser reloads.
+		if (isOld && !hasActiveMatrixRtcMembership && !delayedTimeRemaining) {
 			// console.log("🚫 IGNORING OLD CALL INVITE (from history, not a new call!)");
 			// console.log("═══════════════════════════════════════════════");
 			// A partially synced Element Call room can gain active MatrixRTC
@@ -613,14 +618,14 @@ export class MatrixLiveEventBridge {
 			if (!isElementCall) {
 				this.processedCallInvites.add(callId);
 			}
-			return;
+			return false;
 		}
 
 		// CRITICAL: Check if we've already processed this call invite (prevent duplicate!)
 		if (this.processedCallInvites.has(callId)) {
 			// console.log("🚫 DUPLICATE CALL INVITE (already processed)");
 			// console.log("═══════════════════════════════════════════════");
-			return;
+			return false;
 		}
 
 		// Don't notify for our own call initiations
@@ -631,7 +636,7 @@ export class MatrixLiveEventBridge {
 			// console.log("🚫 OWN CALL INVITE (not showing notification to myself)");
 			// console.log("═══════════════════════════════════════════════");
 			this.processedCallInvites.add(callId);
-			return;
+			return false;
 		}
 
 		if (isElementCall) {
@@ -658,7 +663,7 @@ export class MatrixLiveEventBridge {
 				room.roomId,
 				true
 			);
-			return;
+			return true;
 		}
 
 		// console.log("✅ VALID NEW INCOMING CALL (Matrix WebRTC)!");
@@ -681,12 +686,13 @@ export class MatrixLiveEventBridge {
 			false,
 			room.roomId
 		);
+		return true;
 	}
 
-	private delayedInviteDeadline(
+	private remainingDelayedInviteMs(
 		event: MatrixEvent,
 		timeline: MatrixEvent[],
-		now: number
+		ageMs: number
 	): number | undefined {
 		const { call_id: callId, lifetime } = event.getContent();
 		// The normal freshness filter still applies to history, including initial
@@ -700,10 +706,9 @@ export class MatrixLiveEventBridge {
 		) {
 			return;
 		}
-		const deadline =
-			event.getTs() +
-			Math.min(lifetime, MAX_LIVE_CALL_INVITE_LIFETIME_MS);
-		return now < deadline ? deadline : undefined;
+		const remaining =
+			Math.min(lifetime, MAX_LIVE_CALL_INVITE_LIFETIME_MS) - ageMs;
+		return remaining > 0 ? remaining : undefined;
 	}
 
 	private deferCallInvite(
@@ -757,9 +762,7 @@ export class MatrixLiveEventBridge {
 	 * Handle m.call.hangup events.
 	 */
 	private handleCallHangup(event: MatrixEvent, room: Room): void {
-		const eventTimestamp = event.getTs();
-		const now = Date.now();
-		const ageSeconds = Math.floor((now - eventTimestamp) / 1000);
+		const ageSeconds = Math.floor(event.getLocalAge() / 1000);
 
 		// console.log("═══════════════════════════════════════════════");
 		// console.log("📴 CALL HANGUP EVENT RECEIVED");
@@ -767,7 +770,6 @@ export class MatrixLiveEventBridge {
 		// console.log("📞 Call ID:", event.getContent().call_id);
 		// console.log("👤 Sender:", event.getSender());
 		// console.log("🏠 Room:", room.roomId);
-		// console.log("⏰ Event timestamp:", new Date(eventTimestamp).toISOString());
 		// console.log("⏱️  Age:", ageSeconds, "seconds old");
 		// console.log("═══════════════════════════════════════════════");
 
