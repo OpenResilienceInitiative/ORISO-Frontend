@@ -28,7 +28,11 @@ import {
 
 /** Default conversation list base when the consumer does not pass one. */
 const DEFAULT_SESSIONS_BASE_PATH = '/sessions/consultant/sessionView';
-export const TOPIC_DUPLICATE_STARTED_EVENT = 'topic_duplicate.started';
+const TOPIC_DUPLICATE_STARTED_EVENT = 'topic_duplicate.started';
+
+/** An invalid target for these events must not turn into a generic list link. */
+export const requiresExactActionPath = (eventType: string | null | undefined) =>
+	eventType === TOPIC_DUPLICATE_STARTED_EVENT;
 
 /** i18n key for a family's filter-chip / tag label. */
 export const familyLabelKey = (family: EventFamily): string =>

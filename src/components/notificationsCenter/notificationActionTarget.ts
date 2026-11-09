@@ -1,6 +1,6 @@
 import {
 	getEventDescriptor,
-	TOPIC_DUPLICATE_STARTED_EVENT
+	requiresExactActionPath
 } from './eventDescriptors';
 import { EventActionParams } from './eventDescriptors/types';
 
@@ -275,7 +275,7 @@ export const resolveNotificationActionPath = (
 	requestsBasePath?: string | null
 ): string | null => {
 	if (
-		item.eventType === TOPIC_DUPLICATE_STARTED_EVENT &&
+		requiresExactActionPath(item.eventType) &&
 		(item.sourceSessionId == null ||
 			String(item.sourceSessionId) !==
 				String(item.params?.sourceSessionId))

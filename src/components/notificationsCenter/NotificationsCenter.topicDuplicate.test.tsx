@@ -202,6 +202,18 @@ it('keeps the mobile Timeline open if the stored case references disagree', asyn
 	expect(apiGetSessionRoomsByRoomIds).not.toHaveBeenCalled();
 });
 
+it('keeps the default conversation list action for an ordinary event without a path', async () => {
+	await renderCenter({
+		...item,
+		eventType: 'legacy.system.event',
+		actionPath: undefined,
+		sourceSessionId: undefined,
+		params: {}
+	});
+	await userEvent.click(openChat());
+	expect(currentRoute()).toBe('/sessions/consultant/sessionView');
+});
+
 it.each([
 	`/sessions/user/view/${room}/43`,
 	`/sessions/user/view/!unrelated:example.invalid/${caseId}`,

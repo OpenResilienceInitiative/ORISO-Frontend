@@ -18,7 +18,7 @@ import { Menu, MenuItem } from '@mui/material';
 import {
 	getEventDescriptor,
 	getEventIcon,
-	TOPIC_DUPLICATE_STARTED_EVENT
+	requiresExactActionPath
 } from './eventDescriptors';
 import {
 	resolveEndedCallConversationPath,
@@ -604,18 +604,24 @@ export const NotificationsCenter = () => {
 			),
 		[getDefaultSessionsPath, getDefaultRequestsPath]
 	);
-	const canOpenSelected =
-		(!selectedLinksToStatusPage || selectedStatusPageUrl !== null) &&
-		(selectedNotification?.eventType !== TOPIC_DUPLICATE_STARTED_EVENT ||
-			Boolean(getNotificationActionPath(selectedNotification)));
+	const activityConversationPath = (
+		item: (typeof notificationFeed)[number]
+	) =>
+		getNotificationActionPath(item) ||
+		(requiresExactActionPath(item.eventType)
+			? null
+			: getDefaultSessionsPath());
+	const canOpenSelected = selectedLinksToStatusPage
+		? selectedStatusPageUrl !== null
+		: Boolean(
+				selectedNotification &&
+					activityConversationPath(selectedNotification)
+			);
 	const openActivityConversation = (
 		item: (typeof notificationFeed)[number]
 	) => {
-		const path = getNotificationActionPath(item);
+		const path = activityConversationPath(item);
 		if (path) navigate(path);
-		else if (item.eventType !== TOPIC_DUPLICATE_STARTED_EVENT) {
-			navigate(getDefaultSessionsPath());
-		}
 	};
 	const isGroupCallRoom = (roomRef: string) =>
 		Boolean(

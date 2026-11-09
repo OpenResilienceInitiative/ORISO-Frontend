@@ -19,7 +19,7 @@ export {
 	EVENT_DESCRIPTORS,
 	KNOWN_EVENT_TYPES,
 	FALLBACK_DESCRIPTOR,
-	TOPIC_DUPLICATE_STARTED_EVENT,
+	requiresExactActionPath,
 	getEventDescriptor,
 	isKnownEventType,
 	familyLabelKey
