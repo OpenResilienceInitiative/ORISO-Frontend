@@ -1,5 +1,8 @@
 import { logout, teardownLocalSession } from '../logout/logout';
-import { setValueInCookie } from '../sessionCookie/accessSessionCookie';
+import {
+	getValueFromCookie,
+	setValueInCookie
+} from '../sessionCookie/accessSessionCookie';
 import {
 	getTokenExpiryFromLocalStorage,
 	setTokenExpiryInLocalStorage
@@ -68,98 +71,146 @@ export const setTokens = (
 	}
 };
 
-const refreshTokens = (): Promise<void> => {
-	const currentTime = new Date().getTime();
-	const tokenExpiry = getTokenExpiryFromLocalStorage();
+// The active schedule owns its callbacks, including a refresh already in flight.
+let stopTokenTimers: (() => void) | undefined;
 
+const expireScheduledSession = () => {
+	stopTokenTimers?.();
+	if (!hasActiveAuthSession()) teardownLocalSession();
+	void logout(true, appConfig.urls.toLogin);
+};
+
+const refreshTokens = async (isCurrent: () => boolean): Promise<boolean> => {
+	const before = getTokenExpiryFromLocalStorage();
 	if (
-		tokenExpiry.refreshTokenValidUntilTime <=
-		currentTime - RENEW_BEFORE_EXPIRY_IN_MS
+		before.refreshTokenValidUntilTime <=
+		Date.now() - RENEW_BEFORE_EXPIRY_IN_MS
 	) {
-		logout(true, appConfig.urls.toLogin);
-		return Promise.resolve();
+		if (isCurrent()) expireScheduledSession();
+		return false;
 	}
 
-	return refreshKeycloakAccessToken().then((response) => {
-		setTokens(
-			response.access_token,
-			response.expires_in,
-			response.refresh_token,
-			response.refresh_expires_in
-		);
-	});
+	const refreshToken = getValueFromCookie('refreshToken');
+	const response = await refreshKeycloakAccessToken();
+	const current = getTokenExpiryFromLocalStorage();
+	// Local logout or another tab may have replaced the session while awaiting the grant.
+	if (
+		!isCurrent() ||
+		Date.now() >=
+			Math.max(
+				before.accessTokenValidUntilTime,
+				before.refreshTokenValidUntilTime
+			) ||
+		getValueFromCookie('refreshToken') !== refreshToken ||
+		current.accessTokenValidUntilTime !==
+			before.accessTokenValidUntilTime ||
+		current.refreshTokenValidUntilTime !== before.refreshTokenValidUntilTime
+	) {
+		return false;
+	}
+	setTokens(
+		response.access_token,
+		response.expires_in,
+		response.refresh_token,
+		response.refresh_expires_in
+	);
+	return true;
 };
 
-const startTimers = ({
-	accessTokenValidInMs,
-	refreshTokenValidInMs
-}: {
-	accessTokenValidInMs: number;
-	refreshTokenValidInMs: number;
-}) => {
-	const accessTokenRefreshIntervalInMs =
-		accessTokenValidInMs - RENEW_BEFORE_EXPIRY_IN_MS;
-
-	let refreshInterval;
-	// just a sanity check so that we don't accidentally register an endless loop
-	if (accessTokenRefreshIntervalInMs > 0) {
-		refreshInterval = window.setInterval(() => {
-			void refreshTokens().catch(() => undefined);
-		}, accessTokenRefreshIntervalInMs);
-	}
-
-	if (refreshTokenValidInMs > accessTokenValidInMs) {
-		// when refresh token is longer valid than access token we need to
-		// logout if the refresh token expires
-		window.setTimeout(() => {
-			if (refreshInterval) {
-				window.clearInterval(refreshInterval);
-			}
-
-			logout(true, appConfig.urls.toLogin);
-		}, refreshTokenValidInMs);
-	}
-};
-
-export const handleTokenRefresh = (redirect: boolean = true): Promise<void> => {
-	return new Promise((resolve, reject) => {
-		const currentTime = new Date().getTime();
-		const tokenExpiry = getTokenExpiryFromLocalStorage();
-		const accessTokenValidInMs =
-			tokenExpiry.accessTokenValidUntilTime - currentTime;
-
-		const refreshTokenValidInMs =
-			tokenExpiry.refreshTokenValidUntilTime - currentTime;
-
-		if (refreshTokenValidInMs <= 0 && accessTokenValidInMs <= 0) {
-			// Access and refresh token are gone. Tear the local session down
-			// *now*, before the caller renders the login form: `logout()`
-			// first awaits its pre-logout handlers, and in that window the
-			// leftover cookies kept the notification poller and the Matrix
-			// client alive next to the login form (dev, 2026-09-16).
-			teardownLocalSession();
-			void logout(redirect, appConfig.urls.toLogin);
-			reject();
-		} else if (accessTokenValidInMs <= 0) {
-			// access token no longer valid but refresh token still valid, refresh tokens
-			refreshTokens()
-				.then(() => {
-					startTimers({
-						accessTokenValidInMs,
-						refreshTokenValidInMs
-					});
-					resolve();
-				})
-				.catch((error) => {
-					reject(new TokenRefreshUnavailableError(error));
-				});
-		} else {
-			// access token and refresh token still valid, just start the timers
-			startTimers({
-				accessTokenValidInMs,
-				refreshTokenValidInMs
-			});
-			resolve();
+const startTimers = () => {
+	stopTokenTimers?.();
+	const now = Date.now();
+	const expiry = getTokenExpiryFromLocalStorage();
+	const refreshToken = getValueFromCookie('refreshToken');
+	const accessValidInMs = expiry.accessTokenValidUntilTime - now;
+	const refreshValidInMs = expiry.refreshTokenValidUntilTime - now;
+	const renewalDelay = accessValidInMs - RENEW_BEFORE_EXPIRY_IN_MS;
+	let refreshInterval: number | undefined;
+	let expirationTimeout: number | undefined;
+	let refreshing = false;
+	const stop = () => {
+		window.clearInterval(refreshInterval);
+		window.clearTimeout(expirationTimeout);
+		stopTokenTimers = undefined;
+	};
+	const isCurrent = () => stopTokenTimers === stop;
+	const matchesSnapshot = () => {
+		if (!isCurrent()) return false;
+		if (getValueFromCookie('refreshToken') !== refreshToken) {
+			stop();
+			return false;
 		}
-	});
+		const current = getTokenExpiryFromLocalStorage();
+		if (
+			current.accessTokenValidUntilTime !==
+				expiry.accessTokenValidUntilTime ||
+			current.refreshTokenValidUntilTime !==
+				expiry.refreshTokenValidUntilTime
+		) {
+			stop();
+			if (hasActiveAuthSession()) startTimers();
+			return false;
+		}
+		return true;
+	};
+	stopTokenTimers = stop;
+
+	if (renewalDelay > 0) {
+		refreshInterval = window.setInterval(() => {
+			if (refreshing || !matchesSnapshot()) return;
+			refreshing = true;
+			void refreshTokens(isCurrent)
+				.then((renewed) => {
+					if (renewed && isCurrent()) startTimers();
+					else matchesSnapshot();
+				})
+				.catch(() => undefined)
+				.finally(() => {
+					refreshing = false;
+				});
+		}, renewalDelay);
+	}
+
+	const hardExpiryDelay = Math.max(accessValidInMs, refreshValidInMs);
+	if (hardExpiryDelay > 0) {
+		expirationTimeout = window.setTimeout(() => {
+			if (matchesSnapshot()) expireScheduledSession();
+		}, hardExpiryDelay);
+	}
+
+	return { isCurrent, matchesSnapshot };
+};
+
+export const handleTokenRefresh = async (redirect = true): Promise<void> => {
+	stopTokenTimers?.();
+	const now = Date.now();
+	const expiry = getTokenExpiryFromLocalStorage();
+	const accessValid = expiry.accessTokenValidUntilTime > now;
+
+	if (!accessValid && expiry.refreshTokenValidUntilTime <= now) {
+		// Clear private state before the caller renders the login form.
+		teardownLocalSession();
+		void logout(redirect, appConfig.urls.toLogin);
+		return Promise.reject();
+	}
+
+	const { isCurrent, matchesSnapshot } = startTimers();
+	if (accessValid) return;
+
+	let renewed: boolean;
+	try {
+		renewed = await refreshTokens(isCurrent);
+	} catch (error) {
+		throw new TokenRefreshUnavailableError(error);
+	}
+	if (renewed && isCurrent()) {
+		startTimers();
+		return;
+	}
+	matchesSnapshot();
+	if (
+		getTokenExpiryFromLocalStorage().accessTokenValidUntilTime <= Date.now()
+	) {
+		throw new TokenRefreshUnavailableError();
+	}
 };
