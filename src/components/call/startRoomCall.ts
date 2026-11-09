@@ -18,6 +18,7 @@
  * Safari keeps the user gesture alive, and the stream is released again right
  * away because Element Call acquires its own.
  */
+import { callMediaErrorMessage } from '../../utils/callMediaErrorMessage';
 import { stopMediaStreamTracks } from '../../utils/callMediaStreamCleanup';
 import { isPracticeMode } from '../../practice';
 
@@ -61,21 +62,6 @@ export interface StartRoomCallOptions {
 const lazyCallManager = () =>
 	// eslint-disable-next-line @typescript-eslint/no-var-requires
 	require('../../services/CallManager').callManager;
-
-const mediaErrorMessage = (error: any): string => {
-	let message = 'Cannot access camera/microphone. ';
-	if (error?.name === 'NotAllowedError') {
-		message += 'Please grant permissions in your browser settings.';
-	} else if (error?.name === 'NotFoundError') {
-		message += 'No camera/microphone found on this device.';
-	} else if (error?.name === 'NotSupportedError') {
-		message +=
-			'Your browser does not support this feature. Please use HTTPS.';
-	} else {
-		message += error?.message || 'Unknown error.';
-	}
-	return message;
-};
 
 export const startRoomCall = async ({
 	roomId,
@@ -121,8 +107,12 @@ export const startRoomCall = async ({
 				audio: true
 			});
 			stopMediaStreamTracks(stream);
-		} catch (mediaError: any) {
-			notify(mediaErrorMessage(mediaError));
+		} catch (mediaError) {
+			notify(
+				callMediaErrorMessage(
+					mediaError instanceof Error ? mediaError : {}
+				)
+			);
 			return;
 		}
 
