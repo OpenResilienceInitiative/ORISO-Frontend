@@ -2101,7 +2101,7 @@ export const AnonymousGuestWithoutDisplayNameSeesTheAnchor: Story = {
 			expect(canvasElement.querySelector('.messageItem')).not.toBeNull();
 		});
 		await expect(canvasElement.textContent).not.toContain('Karina P');
-		await expect(canvasElement.textContent).toContain('karina p');
+		await expect(canvasElement.textContent).toContain('karina.p');
 	}
 };
 
@@ -2153,7 +2153,7 @@ export const InternalGroupColleagueName: Story = {
 			expect(canvasElement.querySelector('.messageItem')).not.toBeNull();
 		});
 		await expect(canvasElement.textContent).not.toContain('Angela K');
-		await expect(canvasElement.textContent).toContain('angela k');
+		await expect(canvasElement.textContent).toContain('angela.k');
 	}
 };
 

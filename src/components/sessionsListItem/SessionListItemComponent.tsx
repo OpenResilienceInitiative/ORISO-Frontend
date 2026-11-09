@@ -1075,10 +1075,9 @@ export const SessionListItemComponent = ({
 	let sessionTopic = '';
 
 	// Card title:
-	// - Consultant seen by an asker: humanize the technical username via the
-	//   same name pipeline the chat messages use, so a name like
-	//   `ruhiges_Yak_Kim_234` renders as `ruhiges Yak Kim` rather than the raw
-	//   Matrix identifier.
+	// - Consultant seen by an asker: the same name pipeline the chat messages
+	//   use — the display name, else the User-ID exactly as the bubble shows
+	//   it (#1494).
 	// - Asker seen by a consultant: the anonymous User-ID is the platform's
 	//   read-only identity anchor (#1209). Never humanize it — dropping
 	//   underscores and the trailing digit block produces a different name
