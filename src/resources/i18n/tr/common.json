@@ -31,7 +31,8 @@
 		"loading": "Katılımcılar yükleniyor …",
 		"crowd": "{{count}} katılımcı",
 		"unavailable": "Katılımcılar yüklenemedi.",
-		"empty": "Katılımcı yok."
+		"empty": "Katılımcı yok.",
+		"memberCount": "Sohbet üyesi: {{count}}"
 	},
 	"timelineSettings": {
 		"title": "Görüşme listesinde randevular",
@@ -6768,8 +6769,7 @@
 		},
 		"circles": {
 			"title": "Yaklaşan öz yardım grupları",
-			"participants": "{{count}} katılımcı",
-			"participants_one": "{{count}} katılımcı"
+			"assignedCounsellors": "Danışman ekibi: {{count}}"
 		}
 	},
 	"temporaryAccount": {

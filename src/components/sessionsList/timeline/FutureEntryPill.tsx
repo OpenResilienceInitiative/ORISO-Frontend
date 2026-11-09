@@ -76,7 +76,9 @@ export const FutureEntryPill = ({
 		: countdown.label;
 	const people =
 		entry.kind === 'group' && status === 'ready' ? members.length : 0;
-	const peopleLabel = t('groupCardParticipants.crowd', { count: people });
+	const peopleLabel = t('groupCardParticipants.memberCount', {
+		count: people
+	});
 	const Icon = MODALITY_ICON[entry.modality];
 
 	return (

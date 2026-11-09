@@ -31,7 +31,8 @@
 		"loading": "Загрузка участников …",
 		"crowd": "Участников: {{count}}",
 		"unavailable": "Не удалось загрузить участников.",
-		"empty": "Нет участников."
+		"empty": "Нет участников.",
+		"memberCount": "Участников чата: {{count}}"
 	},
 	"timelineSettings": {
 		"title": "Встречи в списке бесед",
@@ -6781,8 +6782,7 @@
 		},
 		"circles": {
 			"title": "Ближайшие группы самопомощи",
-			"participants": "Участников: {{count}}",
-			"participants_one": "{{count}} участник"
+			"assignedCounsellors": "Консультантов: {{count}}"
 		}
 	},
 	"temporaryAccount": {

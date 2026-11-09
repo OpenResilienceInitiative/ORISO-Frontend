@@ -31,7 +31,8 @@
 		"loading": "Teilnehmende werden geladen …",
 		"crowd": "{{count}} Teilnehmende",
 		"unavailable": "Teilnehmende konnten nicht geladen werden.",
-		"empty": "Keine Teilnehmenden."
+		"empty": "Keine Teilnehmenden.",
+		"memberCount": "Chatmitglieder: {{count}}"
 	},
 	"timelineSettings": {
 		"title": "Termine in der Gesprächsliste",
@@ -6758,8 +6759,7 @@
 		},
 		"circles": {
 			"title": "Nächste Gesprächskreise",
-			"participants": "{{count}} Teilnehmende",
-			"participants_one": "{{count}} Teilnehmende"
+			"assignedCounsellors": "Beratungsteam: {{count}}"
 		}
 	},
 	"temporaryAccount": {
