@@ -16,6 +16,11 @@
 
 import { rewriteLegacyChannelPath } from '../../../utils/channelRoute';
 import {
+	askerGroupChatPath,
+	consultantGroupChatPath,
+	isGroupChatId
+} from '../../groupChat/consultantGroupChatPath';
+import {
 	EventActionParams,
 	EventActionTarget,
 	EventDescriptor,
@@ -84,9 +89,26 @@ const knockCallTarget = (params: EventActionParams): EventActionTarget => ({
 	path: buildConversationPath(params)
 });
 
+const buildGroupChatPath = ({
+	seriesId,
+	sessionsBasePath
+}: EventActionParams): string | null => {
+	if (!isGroupChatId(seriesId)) return null;
+	return sessionsBasePath === '/sessions/user/view'
+		? askerGroupChatPath(seriesId)
+		: consultantGroupChatPath(seriesId);
+};
+
+const groupChatConversationTarget = (
+	params: EventActionParams
+): EventActionTarget => ({
+	kind: 'conversation',
+	path: buildGroupChatPath(params)
+});
+
 const groupChatJoinTarget = (params: EventActionParams): EventActionTarget => ({
 	kind: 'groupChatJoin',
-	path: buildConversationPath(params)
+	path: buildGroupChatPath(params)
 });
 
 const requestTarget = (params: EventActionParams): EventActionTarget => ({
@@ -443,7 +465,7 @@ const seeds: EventDescriptor[] = [
 		category: 'system',
 		icon: 'appointment',
 		i18nKey: 'groupChatReminder',
-		resolveActionTarget: conversationTarget
+		resolveActionTarget: groupChatConversationTarget
 	}),
 	descriptor('group_chat.opened', {
 		family: 'appointments',
@@ -457,7 +479,7 @@ const seeds: EventDescriptor[] = [
 		category: 'system',
 		icon: 'appointment',
 		i18nKey: 'groupChatCancelled',
-		resolveActionTarget: conversationTarget
+		resolveActionTarget: groupChatConversationTarget
 	}),
 
 	// ----- Platform operations (#876) -----

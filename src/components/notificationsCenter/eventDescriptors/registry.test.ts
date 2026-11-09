@@ -280,7 +280,7 @@ describe('WP-06 event-descriptor registry', () => {
 
 			expect(target).toEqual({
 				kind: 'groupChatJoin',
-				path: '/sessions/consultant/sessionView/session/42'
+				path: '/sessions/consultant/sessionView/chat/42'
 			});
 		});
 

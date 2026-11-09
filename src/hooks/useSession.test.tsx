@@ -54,6 +54,55 @@ describe('useSession', () => {
 		vi.clearAllMocks();
 	});
 
+	it.each(['FORBIDDEN', 'EMPTY'])(
+		'clears a typed group when the server returns %s without a fallback',
+		async (error) => {
+			const chat = { id: 41, conversationType: 'SELF_HELP' };
+			const result = { sessions: [{ chat }] } as Awaited<
+				ReturnType<typeof apiGetChatRoomById>
+			>;
+			const extended = { item: chat, isGroup: true } as ReturnType<
+				typeof buildExtendedSession
+			>;
+			vi.mocked(apiGetChatRoomById)
+				.mockResolvedValue(result)
+				.mockResolvedValueOnce(result)
+				.mockRejectedValueOnce(new Error(error));
+			vi.mocked(buildExtendedSession).mockReturnValue(extended);
+			const { result: loaded } = renderHook(() =>
+				useSession(null, undefined, 41)
+			);
+
+			await waitFor(() => expect(loaded.current.session).toBe(extended));
+			await act(async () => {
+				await loaded.current.reload();
+			});
+
+			expect(apiGetChatRoomById).toHaveBeenCalledTimes(2);
+			expect(apiGetSessionRoomBySessionId).not.toHaveBeenCalled();
+			expect(apiGetCaseHandoverCandidates).not.toHaveBeenCalled();
+			expect(loaded.current.session).toBeNull();
+			expect(loaded.current.ready).toBe(true);
+		}
+	);
+
+	it.each([{ session: { id: 41 } }, { chat: { id: 42 } }])(
+		'rejects an exact group lookup response with the wrong identity: %o',
+		async (row) => {
+			vi.mocked(apiGetChatRoomById).mockResolvedValue({
+				sessions: [row]
+			} as Awaited<ReturnType<typeof apiGetChatRoomById>>);
+			const { result } = renderHook(() =>
+				useSession(null, undefined, 41)
+			);
+
+			await waitFor(() => expect(result.current.ready).toBe(true));
+			expect(buildExtendedSession).not.toHaveBeenCalled();
+			expect(apiGetSessionRoomBySessionId).not.toHaveBeenCalled();
+			expect(result.current.session).toBeNull();
+		}
+	);
+
 	it('loads a valid zero-valued session id', async () => {
 		const rawSession = { session: { id: 0 } };
 		const extendedSession = { item: { id: 0 } };

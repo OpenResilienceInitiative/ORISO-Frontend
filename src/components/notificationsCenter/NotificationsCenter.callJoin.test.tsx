@@ -194,6 +194,26 @@ it('joins the existing call from a mobile Activity card without navigating away'
 	expect(createRoom).not.toHaveBeenCalled();
 });
 
+it('opens a persisted circle cancellation in the group namespace without joining a call', async () => {
+	await renderCenter(1400, {
+		...callItem,
+		id: 'cancelled-circle',
+		eventType: 'group_chat.cancelled',
+		sourceSessionId: 42,
+		actionPath: null,
+		params: { seriesId: 42, roomRef: call.roomRef }
+	});
+	await user.click(
+		screen.getAllByRole('button', { name: 'Open chat', exact: true })[0]
+	);
+	expect(screen.getByLabelText('Current route').textContent).toBe(
+		'/sessions/consultant/sessionView/chat/42'
+	);
+	expect(markRead).toHaveBeenCalledWith('cancelled-circle');
+	expect(apiCallState).not.toHaveBeenCalled();
+	expect(joinRoom).not.toHaveBeenCalled();
+});
+
 it.each(['callId', 'roomRef', 'callRoomId', 'callType'])(
 	'opens the conversation of a call card with missing %s instead of guessing a call or navigating to the root',
 	async (field) => {
