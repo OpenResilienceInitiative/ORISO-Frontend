@@ -33,8 +33,24 @@ import {
 
 const INFO_PATH = `/sessions/consultant/sessionView/${GROUP_STAGE_ROOM_ID}/${GROUP_STAGE_CHAT_ID}/groupChatInfo`;
 
-const buildListItem = (inviteToken: string | null = 'Ab3_x-Yz') => {
+const buildListItem = (
+	inviteToken: string | null = 'Ab3_x-Yz',
+	unscheduledDuration?: 'missing' | 'null'
+) => {
 	const item: ListItemInterface = buildGroupStageListItem(3600);
+	if (unscheduledDuration) {
+		Object.assign(item.chat as object, {
+			active: true,
+			assignedAgencies: [{ id: 1, name: 'Beratungsstelle Mitte' }],
+			conversationType: 'INTERNAL_GROUP',
+			duration: unscheduledDuration === 'null' ? null : undefined,
+			hintMessage: '',
+			startDate: '',
+			startTime: '',
+			topic: 'Interne Fallbesprechung'
+		});
+		return item;
+	}
 	Object.assign(item.chat as object, {
 		modality: 'TEXT',
 		inviteToken,
@@ -155,6 +171,7 @@ const WiredChatInfo = ({
 	dialog = false,
 	joined = true,
 	banned = false,
+	unscheduledDuration,
 	chatInfo = 'ok'
 }: {
 	layout: 'desktop' | 'mobile';
@@ -165,14 +182,15 @@ const WiredChatInfo = ({
 	joined?: boolean;
 	/** True: the viewer is on the group's ban list. */
 	banned?: boolean;
+	unscheduledDuration?: 'missing' | 'null';
 	/** How the ban-list request answers. */
 	chatInfo?: ChatInfoResponse;
 }) => {
 	const listItem = React.useMemo(() => {
-		const item = buildListItem(inviteToken);
+		const item = buildListItem(inviteToken, unscheduledDuration);
 		(item.chat as any).subscribed = joined;
 		return item;
-	}, [inviteToken, joined]);
+	}, [inviteToken, joined, unscheduledDuration]);
 	useBackendMocks(
 		listItem,
 		banned ? [groupStageAsker.userName] : [],
@@ -248,6 +266,9 @@ export const Wired1440: Story = {
 	render: () => <WiredChatInfo layout="desktop" />,
 	play: async ({ canvas }) => {
 		await canvas.findByText('ruhiges Yak Kim', {}, { timeout: 5000 });
+		await expect(
+			canvas.getByText('1 Stunde', { exact: true })
+		).toBeVisible();
 		// Moderator row has no menu; a participant's opens the ban action.
 		await expect(
 			canvas.queryByRole('button', {
@@ -268,6 +289,26 @@ export const Wired1440: Story = {
 			canvas.getByLabelText('Rolle für Berater Jonas Weber')
 		).toBeVisible();
 	}
+};
+
+export const UnscheduledInternalChat: Story = {
+	name: 'Unscheduled internal chat with null duration',
+	globals: desktop1440Globals,
+	render: () => <WiredChatInfo layout="desktop" unscheduledDuration="null" />,
+	play: async ({ canvas }) => {
+		const duration = await canvas.findByText('Dauer', { exact: true });
+		const row = duration.closest('li');
+		if (!row) throw new Error('The duration setting has no row.');
+		await expect(within(row).getByText('–', { exact: true })).toBeVisible();
+	}
+};
+
+export const UnscheduledInternalChatWithoutDuration: Story = {
+	...UnscheduledInternalChat,
+	name: 'Unscheduled internal chat with omitted duration',
+	render: () => (
+		<WiredChatInfo layout="desktop" unscheduledDuration="missing" />
+	)
 };
 
 /** "Bearbeiten" opens the settings form in edit mode. */
