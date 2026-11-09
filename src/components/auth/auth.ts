@@ -9,8 +9,10 @@ import {
 } from '../sessionCookie/accessSessionLocalStorage';
 import { refreshKeycloakAccessToken } from '../sessionCookie/refreshKeycloakAccessToken';
 import { appConfig } from '../../utils/appConfig';
+import { parseJwt } from '../../utils/parseJWT';
 
 export const RENEW_BEFORE_EXPIRY_IN_MS = 10 * 1000; // seconds
+const PEER_EXPIRY_READBACK_DELAY_MS = 100;
 
 export class TokenRefreshUnavailableError extends Error {
 	constructor(cause?: unknown) {
@@ -90,6 +92,7 @@ const refreshTokens = async (isCurrent: () => boolean): Promise<boolean> => {
 		return false;
 	}
 
+	const accessToken = getValueFromCookie('keycloak');
 	const refreshToken = getValueFromCookie('refreshToken');
 	const response = await refreshKeycloakAccessToken();
 	const current = getTokenExpiryFromLocalStorage();
@@ -101,6 +104,7 @@ const refreshTokens = async (isCurrent: () => boolean): Promise<boolean> => {
 				before.accessTokenValidUntilTime,
 				before.refreshTokenValidUntilTime
 			) ||
+		getValueFromCookie('keycloak') !== accessToken ||
 		getValueFromCookie('refreshToken') !== refreshToken ||
 		current.accessTokenValidUntilTime !==
 			before.accessTokenValidUntilTime ||
@@ -117,14 +121,36 @@ const refreshTokens = async (isCurrent: () => boolean): Promise<boolean> => {
 	return true;
 };
 
+// A refresh rotates the JWT, while a fresh login gets a different session ID.
+const tokenSessionScope = (token: string): string | null => {
+	const { iss, sid } = parseJwt(token) ?? {};
+	if (
+		typeof iss !== 'string' ||
+		!iss.trim() ||
+		typeof sid !== 'string' ||
+		!sid.trim()
+	) {
+		return null;
+	}
+	return JSON.stringify([iss, sid]);
+};
+
 const startTimers = () => {
 	stopTokenTimers?.();
 	const now = Date.now();
 	const expiry = getTokenExpiryFromLocalStorage();
+	const accessToken = getValueFromCookie('keycloak');
 	const refreshToken = getValueFromCookie('refreshToken');
 	const accessValidInMs = expiry.accessTokenValidUntilTime - now;
 	const refreshValidInMs = expiry.refreshTokenValidUntilTime - now;
 	const renewalDelay = accessValidInMs - RENEW_BEFORE_EXPIRY_IN_MS;
+	// A peer may leave enough time to refresh after the renewal lead time has passed.
+	const canRenewShortAccess =
+		accessValidInMs > 0 && refreshValidInMs > accessValidInMs;
+	const shortRenewalDelay = Math.max(
+		1000,
+		Math.min(RENEW_BEFORE_EXPIRY_IN_MS, refreshValidInMs / 2)
+	);
 	let refreshInterval: number | undefined;
 	let expirationTimeout: number | undefined;
 	let refreshing = false;
@@ -134,19 +160,62 @@ const startTimers = () => {
 		stopTokenTimers = undefined;
 	};
 	const isCurrent = () => stopTokenTimers === stop;
+	const matchesSession = (
+		scope: string,
+		currentAccess: string,
+		currentRefresh: string
+	) =>
+		(currentAccess === accessToken ||
+			tokenSessionScope(currentAccess) === scope) &&
+		(currentRefresh === refreshToken ||
+			tokenSessionScope(currentRefresh) === scope);
+	let awaitingPeerExpiry = false;
 	const matchesSnapshot = () => {
-		if (!isCurrent()) return false;
-		if (getValueFromCookie('refreshToken') !== refreshToken) {
+		if (!isCurrent() || awaitingPeerExpiry) return false;
+		const currentAccessToken = getValueFromCookie('keycloak');
+		const currentRefreshToken = getValueFromCookie('refreshToken');
+		const tokenChanged =
+			currentAccessToken !== accessToken ||
+			currentRefreshToken !== refreshToken;
+		const scope = tokenChanged ? tokenSessionScope(refreshToken) : null;
+		if (
+			tokenChanged &&
+			(!scope ||
+				!matchesSession(scope, currentAccessToken, currentRefreshToken))
+		) {
 			stop();
 			return false;
 		}
+
 		const current = getTokenExpiryFromLocalStorage();
-		if (
+		const expiryChanged =
 			current.accessTokenValidUntilTime !==
 				expiry.accessTokenValidUntilTime ||
 			current.refreshTokenValidUntilTime !==
-				expiry.refreshTokenValidUntilTime
-		) {
+				expiry.refreshTokenValidUntilTime;
+		if (scope && (!expiryChanged || !hasActiveAuthSession())) {
+			// The new credentials can become visible before their deadlines.
+			awaitingPeerExpiry = true;
+			window.clearInterval(refreshInterval);
+			window.clearTimeout(expirationTimeout);
+			expirationTimeout = window.setTimeout(() => {
+				if (!isCurrent()) return;
+				if (
+					!matchesSession(
+						scope,
+						getValueFromCookie('keycloak'),
+						getValueFromCookie('refreshToken')
+					)
+				) {
+					stop();
+					return;
+				}
+				if (hasActiveAuthSession()) startTimers();
+				else expireScheduledSession();
+			}, PEER_EXPIRY_READBACK_DELAY_MS);
+			return false;
+		}
+		if (expiryChanged) {
 			stop();
 			if (hasActiveAuthSession()) startTimers();
 			return false;
@@ -155,20 +224,23 @@ const startTimers = () => {
 	};
 	stopTokenTimers = stop;
 
-	if (renewalDelay > 0) {
-		refreshInterval = window.setInterval(() => {
-			if (refreshing || !matchesSnapshot()) return;
-			refreshing = true;
-			void refreshTokens(isCurrent)
-				.then((renewed) => {
-					if (renewed && isCurrent()) startTimers();
-					else matchesSnapshot();
-				})
-				.catch(() => undefined)
-				.finally(() => {
-					refreshing = false;
-				});
-		}, renewalDelay);
+	if (renewalDelay > 0 || canRenewShortAccess) {
+		refreshInterval = window.setInterval(
+			() => {
+				if (refreshing || !matchesSnapshot()) return;
+				refreshing = true;
+				void refreshTokens(isCurrent)
+					.then((renewed) => {
+						if (renewed && isCurrent()) startTimers();
+						else matchesSnapshot();
+					})
+					.catch(() => undefined)
+					.finally(() => {
+						refreshing = false;
+					});
+			},
+			renewalDelay > 0 ? renewalDelay : shortRenewalDelay
+		);
 	}
 
 	const hardExpiryDelay = Math.max(accessValidInMs, refreshValidInMs);

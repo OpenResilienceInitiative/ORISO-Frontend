@@ -52,6 +52,13 @@ vi.mock('../../utils/appConfig', () => ({
 	}
 }));
 
+const refreshJwt = (jti: string, sid = 'shared-session') => {
+	const payload = btoa(
+		JSON.stringify({ iss: 'https://issuer.test', sid, jti })
+	);
+	return `header.${payload}.signature`;
+};
+
 describe('auth helpers', () => {
 	it.each([
 		['/invite/token', true],
@@ -389,5 +396,126 @@ describe('auth helpers', () => {
 		expect(teardownLocalSession).toHaveBeenCalledOnce();
 		expect(logout).toHaveBeenCalledWith(true, '/login');
 		expect(refreshKeycloakAccessToken).not.toHaveBeenCalled();
+	});
+
+	it('adopts a peer renewal of the same session without writing its losing response', async () => {
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date('2026-06-29T00:00:00.000Z'));
+		vi.mocked(getValueFromCookie).mockReturnValue(refreshJwt('old'));
+		mockLiveExpiry(20_000, 40_000);
+		let completeRefresh: (() => void) | undefined;
+		vi.mocked(refreshKeycloakAccessToken)
+			.mockImplementationOnce(
+				() =>
+					new Promise((resolve) => {
+						completeRefresh = () =>
+							resolve({
+								data: {},
+								access_token: 'old-access',
+								expires_in: 300,
+								refresh_token: refreshJwt('losing-response'),
+								refresh_expires_in: 600
+							});
+					})
+			)
+			.mockRejectedValue(new Error('temporary failure'));
+
+		await handleTokenRefresh();
+		await vi.advanceTimersByTimeAsync(10_000);
+		vi.mocked(getValueFromCookie).mockReturnValue(refreshJwt('peer'));
+		mockLiveExpiry(50_000, 100_000);
+		completeRefresh?.();
+		await vi.advanceTimersByTimeAsync(30_000);
+
+		expect(setValueInCookie).not.toHaveBeenCalled();
+		expect(logout).not.toHaveBeenCalled();
+		expect(refreshKeycloakAccessToken).toHaveBeenCalledOnce();
+
+		await vi.advanceTimersByTimeAsync(10_000);
+		expect(refreshKeycloakAccessToken).toHaveBeenCalledTimes(2);
+		await vi.advanceTimersByTimeAsync(60_000);
+		expect(teardownLocalSession).toHaveBeenCalledOnce();
+	});
+
+	it('reads peer deadlines again when its access token arrives at the old deadline', async () => {
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date('2026-06-29T00:00:00.000Z'));
+		let accessToken = refreshJwt('old-access');
+		let refreshToken = refreshJwt('old-refresh');
+		vi.mocked(getValueFromCookie).mockImplementation((name) =>
+			name === 'keycloak' ? accessToken : refreshToken
+		);
+		mockLiveExpiry(9_000, 8_000);
+		vi.mocked(refreshKeycloakAccessToken).mockRejectedValue(
+			new Error('temporary failure')
+		);
+
+		await handleTokenRefresh();
+		await vi.advanceTimersByTimeAsync(8_999);
+		accessToken = refreshJwt('peer-access');
+		await vi.advanceTimersByTimeAsync(51);
+		expect(logout).not.toHaveBeenCalled();
+		refreshToken = refreshJwt('peer-refresh');
+		mockLiveExpiry(20_050, 40_050);
+
+		await vi.advanceTimersByTimeAsync(10_050);
+		expect(refreshKeycloakAccessToken).toHaveBeenCalledOnce();
+		expect(logout).not.toHaveBeenCalled();
+		await vi.advanceTimersByTimeAsync(30_000);
+		expect(teardownLocalSession).toHaveBeenCalledOnce();
+	});
+
+	it('discards a pending grant when the new session access token arrives first', async () => {
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date('2026-06-29T00:00:00.000Z'));
+		let accessToken = refreshJwt('old-access');
+		vi.mocked(getValueFromCookie).mockImplementation((name) =>
+			name === 'keycloak' ? accessToken : refreshJwt('old-refresh')
+		);
+		mockLiveExpiry(20_000, 40_000);
+		let completeRefresh: (() => void) | undefined;
+		vi.mocked(refreshKeycloakAccessToken).mockImplementationOnce(
+			() =>
+				new Promise((resolve) => {
+					completeRefresh = () =>
+						resolve({
+							data: {},
+							access_token: 'losing-access',
+							expires_in: 300,
+							refresh_token: 'losing-refresh',
+							refresh_expires_in: 600
+						});
+				})
+		);
+
+		await handleTokenRefresh();
+		await vi.advanceTimersByTimeAsync(10_000);
+		accessToken = refreshJwt('new-access', 'new-session');
+		completeRefresh?.();
+		await vi.advanceTimersByTimeAsync(30_000);
+
+		expect(setValueInCookie).not.toHaveBeenCalled();
+		expect(logout).not.toHaveBeenCalled();
+		expect(refreshKeycloakAccessToken).toHaveBeenCalledOnce();
+	});
+
+	it('still renews when the peer deadlines became visible before the tokens', async () => {
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date('2026-06-29T00:00:00.000Z'));
+		vi.mocked(getValueFromCookie).mockReturnValue(refreshJwt('old'));
+		mockLiveExpiry(20_000, 40_000);
+		vi.mocked(refreshKeycloakAccessToken).mockRejectedValue(
+			new Error('temporary failure')
+		);
+
+		await handleTokenRefresh();
+		await vi.advanceTimersByTimeAsync(9_999);
+		mockLiveExpiry(10_100, 30_100);
+		await vi.advanceTimersByTimeAsync(2);
+		vi.mocked(getValueFromCookie).mockReturnValue(refreshJwt('peer'));
+		await vi.advanceTimersByTimeAsync(12_000);
+
+		expect(refreshKeycloakAccessToken).toHaveBeenCalled();
+		expect(logout).not.toHaveBeenCalled();
 	});
 });
