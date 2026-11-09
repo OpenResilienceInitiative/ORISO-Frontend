@@ -7,7 +7,8 @@ import {
 	computePosition,
 	flip,
 	offset,
-	shift
+	shift,
+	size
 } from '@floating-ui/dom';
 import type { Placement } from '@floating-ui/dom';
 import type { Theme } from 'emoji-picker-react';
@@ -20,6 +21,9 @@ const EmojiPicker = lazyWithReload(() => import('emoji-picker-react'));
 
 /** Keep light chrome even when the OS prefers dark (avoids #835 dark clip). */
 const LIGHT_THEME = 'light' as Theme;
+
+const PICKER_WIDTH = 320;
+const PICKER_HEIGHT = 380;
 
 export interface EmojiPickerPopupProps {
 	direction: MenuDirection;
@@ -57,14 +61,44 @@ export const EmojiPickerPopup = ({
 		top: -9999,
 		left: -9999
 	});
+	const [box, setBox] = useState({
+		width: PICKER_WIDTH,
+		height: PICKER_HEIGHT
+	});
 
 	useEffect(() => {
 		const popupEl = popupRef.current;
 		if (!anchorEl || !popupEl) {
 			return;
 		}
+		// #1251: on a phone the room above the composer can be shorter than
+		// the picker (small screen, or the soft keyboard shrinking what is
+		// visible), and 320px plus padding is wider than a 320px screen.
+		// Shrink to the visible room instead of leaving it off-screen.
+		const fitVisibleRoom = size({
+			padding: 8,
+			apply: ({ availableWidth, availableHeight }) => {
+				const width = Math.max(
+					0,
+					Math.min(PICKER_WIDTH, Math.floor(availableWidth))
+				);
+				const height = Math.max(
+					0,
+					Math.min(PICKER_HEIGHT, Math.floor(availableHeight))
+				);
+				setBox((prev) =>
+					prev.width === width && prev.height === height
+						? prev
+						: { width, height }
+				);
+			}
+		});
 		return autoUpdate(anchorEl, popupEl, () => {
 			computePosition(anchorEl, popupEl, {
+				// The popup is `position: fixed`; measuring with the same
+				// strategy also makes floating-ui clip against the visual
+				// viewport, which is what shrinks under mobile Chrome's keyboard.
+				strategy: 'fixed',
 				// Match ToolbarMenu: docked/mobile open upward, fullscreen down.
 				placement:
 					placement ??
@@ -86,9 +120,10 @@ export const EmojiPickerPopup = ({
 									'top-end'
 								]
 							}),
-							shift({ padding: 8 })
+							shift({ padding: 8 }),
+							fitVisibleRoom
 						]
-					: [offset(8), shift({ padding: 8 })]
+					: [offset(8), shift({ padding: 8 }), fitVisibleRoom]
 			}).then(({ x, y }) => setPosition({ left: x, top: y }));
 		});
 	}, [anchorEl, direction, placement]);
@@ -134,14 +169,18 @@ export const EmojiPickerPopup = ({
 			data-testid="emoji-picker-popup"
 		>
 			<Suspense
-				fallback={<div className="emojiPickerPopup__loading">…</div>}
+				fallback={
+					<div className="emojiPickerPopup__loading" style={box}>
+						…
+					</div>
+				}
 			>
 				<EmojiPicker
 					onEmojiClick={(emojiData) => {
 						onPick(emojiData.emoji);
 					}}
-					width={320}
-					height={380}
+					width={box.width}
+					height={box.height}
 					lazyLoadEmojis
 					skinTonesDisabled={false}
 					searchPlaceHolder={t('form.select.search')}
