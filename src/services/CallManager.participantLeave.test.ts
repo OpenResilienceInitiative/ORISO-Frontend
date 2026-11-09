@@ -151,7 +151,9 @@ describe('Element Call participant leave', () => {
 				sendEvent,
 				sendMessage,
 				createRoom,
-				getCapabilities: vi.fn().mockResolvedValue({}),
+				getCapabilities: vi.fn().mockResolvedValue({
+					'm.room_versions': { default: '12' }
+				}),
 				getStateEvent,
 				getUserId: () => '@patty:oriso.example',
 				getDeviceId: () => 'PATTY',
@@ -209,7 +211,9 @@ describe('Element Call participant leave', () => {
 			sendEvent,
 			sendMessage: vi.fn().mockResolvedValue({ event_id: '$call-root' }),
 			createRoom,
-			getCapabilities: vi.fn().mockResolvedValue({}),
+			getCapabilities: vi
+				.fn()
+				.mockResolvedValue({ 'm.room_versions': { default: '12' } }),
 			getStateEvent,
 			getUserId: () => '@patty:oriso.example',
 			getRoom: () => null

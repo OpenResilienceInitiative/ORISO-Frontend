@@ -869,10 +869,9 @@ class CallManager {
 		// counselling call. Room ids are not secrets: they travel in the call
 		// invite event, in logs and in support tickets.
 		//
-		// `restricted` gives us the access rule we actually meant: whoever is a
-		// member of the counselling session may join its call, and nobody else.
-		// It needs room version 9+ (Synapse defaults to 10), so we fall back to
-		// invite-only below rather than let a call fail outright.
+		// `restricted` lets members of the counselling session join its call.
+		// A known standard room version of 9 or newer supports that policy.
+		// Older or unknown versions use the private invite-only policy.
 		const restrictedJoinRule = {
 			type: 'm.room.join_rules',
 			state_key: '',
@@ -989,8 +988,10 @@ class CallManager {
 			.getCapabilities()
 			.catch(() => undefined);
 		const roomVersion = capabilities?.['m.room_versions']?.default;
-		const inviteOnly =
-			roomVersion !== undefined && /^[1-8]$/.test(roomVersion);
+		const supportsRestrictedJoin = /^(9|[1-9][0-9]+)$/.test(
+			roomVersion ?? ''
+		);
+		const inviteOnly = !supportsRestrictedJoin;
 		// Select the join policy before creation. An error can arrive after
 		// Synapse stored a room but before it returned the room ID.
 		const result = await client.createRoom({

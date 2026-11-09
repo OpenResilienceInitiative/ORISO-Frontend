@@ -37,7 +37,9 @@ describe('outgoing call startup ownership', () => {
 			createRoom,
 			sendEvent,
 			sendMessage,
-			getCapabilities: vi.fn().mockResolvedValue({}),
+			getCapabilities: vi
+				.fn()
+				.mockResolvedValue({ 'm.room_versions': { default: '12' } }),
 			getStateEvent,
 			leave,
 			forget,
@@ -375,7 +377,9 @@ describe('outgoing call startup ownership', () => {
 			createRoom,
 			sendEvent,
 			sendMessage: vi.fn().mockResolvedValue({ event_id: '$root' }),
-			getCapabilities: vi.fn().mockResolvedValue({}),
+			getCapabilities: vi
+				.fn()
+				.mockResolvedValue({ 'm.room_versions': { default: '12' } }),
 			getStateEvent,
 			leave: otherLeave,
 			forget: otherForget,
@@ -490,7 +494,9 @@ describe('outgoing call startup ownership', () => {
 				createRoom,
 				sendEvent,
 				sendMessage: vi.fn().mockResolvedValue({ event_id: '$root' }),
-				getCapabilities: vi.fn().mockResolvedValue({}),
+				getCapabilities: vi.fn().mockResolvedValue({
+					'm.room_versions': { default: '12' }
+				}),
 				getStateEvent,
 				leave: otherLeave,
 				forget: otherForget,

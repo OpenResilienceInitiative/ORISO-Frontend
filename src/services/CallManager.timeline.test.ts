@@ -51,7 +51,9 @@ describe('call manager durable timeline', () => {
 			createRoom: vi
 				.fn()
 				.mockResolvedValue({ room_id: '!media:example' }),
-			getCapabilities: vi.fn().mockResolvedValue({}),
+			getCapabilities: vi
+				.fn()
+				.mockResolvedValue({ 'm.room_versions': { default: '12' } }),
 			getStateEvent: vi.fn().mockResolvedValue({ membership: 'invite' }),
 			sendEvent,
 			sendMessage
