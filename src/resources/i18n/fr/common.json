@@ -1889,7 +1889,8 @@
 				"confirmLabel": "Confirmer le nouveau mot de passe",
 				"submitLabel": "Enregistrer le mot de passe",
 				"success": "Votre mot de passe a été modifié avec succès. Vous pouvez maintenant vous connecter.",
-				"invalidToken": "Ce lien est invalide ou a expiré. Veuillez en demander un nouveau."
+				"invalidToken": "Ce lien est invalide ou a expiré. Veuillez en demander un nouveau.",
+				"requestNewLink": "Demander un nouveau lien"
 			}
 		},
 		"magicLink": {

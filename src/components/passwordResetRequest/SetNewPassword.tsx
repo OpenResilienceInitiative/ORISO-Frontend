@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useContext, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import { InputAdornment, IconButton } from '@mui/material';
 import { StageLayout } from '../stageLayout/StageLayout';
 import { Button, BUTTON_TYPES, ButtonItem } from '../button/Button';
@@ -47,6 +48,12 @@ export const SetNewPassword = () => {
 		label: translate('login.resetPassword.setNew.submitLabel'),
 		type: BUTTON_TYPES.PRIMARY
 	};
+
+	const requestNewLink = (
+		<Link to="/password-reset" className="button-as-link">
+			{translate('login.resetPassword.setNew.requestNewLink')}
+		</Link>
+	);
 
 	const validateNewPassword = (value: string) => {
 		const passwordStrength = strengthIndicator(value);
@@ -146,17 +153,7 @@ export const SetNewPassword = () => {
 								type="standard"
 							/>
 							<div className="loginForm__actions">
-								<button
-									onClick={() =>
-										window.open('/password-reset', '_self')
-									}
-									className="button-as-link"
-									type="button"
-								>
-									{translate(
-										'login.resetPassword.backToLogin'
-									)}
-								</button>
+								{requestNewLink}
 							</div>
 						</>
 					) : isSuccess ? (
@@ -313,11 +310,13 @@ export const SetNewPassword = () => {
 								/>
 							</div>
 							{errorMessage && (
-								<Text
-									text={errorMessage}
-									type="infoSmall"
-									className="loginForm__error"
-								/>
+								<div role="alert">
+									<Text
+										text={errorMessage}
+										type="infoSmall"
+										className="loginForm__error"
+									/>
+								</div>
 							)}
 							<div className="loginForm__actions">
 								<Button
@@ -325,6 +324,7 @@ export const SetNewPassword = () => {
 									buttonHandle={handleSubmit}
 									disabled={!isValid || isRequestInProgress}
 								/>
+								{errorMessage && requestNewLink}
 							</div>
 						</>
 					)}
