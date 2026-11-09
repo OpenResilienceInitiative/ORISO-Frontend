@@ -21,9 +21,14 @@ import {
 	EventDescriptor,
 	EventFamily
 } from './types';
+import {
+	parseTopicDuplicateRoomPath,
+	TOPIC_DUPLICATE_SEARCH
+} from '../../session/topicDuplicateRoomRoute';
 
 /** Default conversation list base when the consumer does not pass one. */
 const DEFAULT_SESSIONS_BASE_PATH = '/sessions/consultant/sessionView';
+export const TOPIC_DUPLICATE_STARTED_EVENT = 'topic_duplicate.started';
 
 /** i18n key for a family's filter-chip / tag label. */
 export const familyLabelKey = (family: EventFamily): string =>
@@ -71,6 +76,23 @@ const conversationTarget = (params: EventActionParams): EventActionTarget => ({
 		withQuerySessionInPath(buildConversationPath(params))
 	)
 });
+
+const topicDuplicateTarget = (params: EventActionParams): EventActionTarget => {
+	const match = parseTopicDuplicateRoomPath(params.actionPath ?? '');
+	if (
+		params.sessionsBasePath !== DEFAULT_SESSIONS_BASE_PATH ||
+		!match ||
+		String(match.caseId) !== String(params.sourceSessionId) ||
+		match.roomId !== params.roomRef ||
+		params.conversationType !== 'AGENCY_COUNSELLING'
+	) {
+		return { kind: 'conversation', path: null };
+	}
+	return {
+		kind: 'conversation',
+		path: `${DEFAULT_SESSIONS_BASE_PATH}/${match.roomSegment}/${match.caseId}${TOPIC_DUPLICATE_SEARCH}`
+	};
+};
 
 // FE#1952: the person is already waiting, so the knock goes into the call of
 // its conversation (`roomRef`), not only into the conversation.
@@ -235,6 +257,13 @@ const seeds: EventDescriptor[] = [
 		icon: 'rename',
 		i18nKey: 'counselorRenamed',
 		resolveActionTarget: conversationTarget
+	}),
+	descriptor(TOPIC_DUPLICATE_STARTED_EVENT, {
+		family: 'system',
+		category: 'system',
+		icon: 'system',
+		i18nKey: 'topicDuplicateStarted',
+		resolveActionTarget: topicDuplicateTarget
 	}),
 
 	// ----- Requests family (Slice 2 will persist "New client request") -----

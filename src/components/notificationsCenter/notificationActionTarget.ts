@@ -1,4 +1,7 @@
-import { getEventDescriptor } from './eventDescriptors';
+import {
+	getEventDescriptor,
+	TOPIC_DUPLICATE_STARTED_EVENT
+} from './eventDescriptors';
 import { EventActionParams } from './eventDescriptors/types';
 
 type Identifier = string | number | null;
@@ -271,6 +274,14 @@ export const resolveNotificationActionPath = (
 	// the bare sessions root.
 	requestsBasePath?: string | null
 ): string | null => {
+	if (
+		item.eventType === TOPIC_DUPLICATE_STARTED_EVENT &&
+		(item.sourceSessionId == null ||
+			String(item.sourceSessionId) !==
+				String(item.params?.sourceSessionId))
+	) {
+		return null;
+	}
 	const target = getEventDescriptor(item.eventType).resolveActionTarget({
 		...(item.params || {}),
 		actionPath: item.actionPath,

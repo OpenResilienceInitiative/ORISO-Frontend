@@ -2443,6 +2443,10 @@
 				"title": "Supervisor zugewiesen",
 				"text": "Diesem Fall wurde ein Supervisor zugewiesen."
 			},
+			"topicDuplicateStarted": {
+				"title": "Weitere Beratung zum selben Thema",
+				"text": "Zum selben Thema wurde eine weitere Beratung begonnen. Bitte klären Sie gemeinsam, welche Beratung weitergeführt wird."
+			},
 			"counselorRenamed": {
 				"title": "Berater:in umbenannt",
 				"text": "Der Anzeigename der Beratung hat sich geändert."

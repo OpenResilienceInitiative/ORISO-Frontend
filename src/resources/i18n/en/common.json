@@ -2419,6 +2419,10 @@
 				"title": "Supervisor assigned",
 				"text": "A supervisor was assigned to this case."
 			},
+			"topicDuplicateStarted": {
+				"title": "Another counselling session on the same topic",
+				"text": "Another counselling session has started on the same topic. Please agree together which session should continue."
+			},
 			"counselorRenamed": {
 				"title": "Counsellor renamed",
 				"text": "The counsellor's display name has changed."
