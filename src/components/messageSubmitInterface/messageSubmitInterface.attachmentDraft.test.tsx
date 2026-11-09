@@ -225,6 +225,7 @@ const clickSend = async () => {
 
 const draftText = () => screen.getByTestId('composer-draft').textContent;
 const sendMock = () => vi.mocked(apiSendMatrixAttachmentMessage);
+let nextSendButton: HTMLButtonElement | undefined;
 
 beforeEach(() => {
 	// Let Testing Library's asynchronous waits advance normally.
@@ -245,7 +246,11 @@ afterEach(async () => {
 		await act(async () => {
 			await vi.runOnlyPendingTimersAsync();
 		});
+		if (nextSendButton) {
+			expect(nextSendButton.disabled).toBe(false);
+		}
 	} finally {
+		nextSendButton = undefined;
 		vi.useRealTimers();
 		cleanup();
 	}
@@ -300,23 +305,27 @@ describe('picking a file keeps the draft', () => {
 });
 
 describe('sending', () => {
-	it('sends the draft as the caption of the one file event', async () => {
+	it('sends the draft as caption and unlocks the next send', async () => {
 		const { container } = render(<Composer />);
 		act(() => mocks.typeDraft(DRAFT));
 		const file = makeFile();
 		await pickFile(container, file);
+		vi.setTimerTickMode('manual');
 		await clickSend();
 
-		await waitFor(() => expect(sendMock()).toHaveBeenCalledOnce());
+		expect(sendMock()).toHaveBeenCalledOnce();
 		expect(sendMock().mock.calls[0][1]).toBe(file);
 		expect(sendMock().mock.calls[0][2]).toMatchObject({
 			caption: DRAFT
 		});
 		expect(apiSendMessage).not.toHaveBeenCalled();
-		await waitFor(() => expect(mocks.composerClear).toHaveBeenCalled());
-		await waitFor(() =>
-			expect(screen.queryByText('befund.pdf')).toBeNull()
-		);
+		expect(mocks.composerClear).toHaveBeenCalled();
+		expect(mocks.clearDraft).toHaveBeenCalledOnce();
+		expect(screen.queryByText('befund.pdf')).toBeNull();
+
+		act(() => mocks.typeDraft('Next reply'));
+		nextSendButton = screen.getByRole('button', SEND) as HTMLButtonElement;
+		expect(nextSendButton.disabled).toBe(true);
 	});
 
 	it('sends no caption without a draft', async () => {
