@@ -10,7 +10,7 @@ import {
 	waitFor
 } from '@testing-library/react';
 import { Provider as JotaiProvider } from 'jotai';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { Link, MemoryRouter, Route, Routes } from 'react-router-dom';
 import {
 	afterEach,
 	beforeEach,
@@ -60,20 +60,44 @@ vi.mock('../app/navigationHandler', () => ({
 
 const userData = { userId: 'recipient-1', userName: 'recipient' } as any;
 
-const renderAt = (path: string) =>
+const renderAt = (path: string, asker = false) =>
 	render(
 		<JotaiProvider>
-			<UserDataContext.Provider value={{ userData } as any}>
+			<UserDataContext.Provider
+				value={
+					{
+						userData: asker
+							? {
+									...userData,
+									grantedAuthorities: [
+										'AUTHORIZATION_USER_DEFAULT'
+									]
+								}
+							: userData
+					} as any
+				}
+			>
 				<SessionTypeContext.Provider
 					value={{
 						type: SESSION_LIST_TYPES.MY_SESSION,
-						path: '/sessions/consultant/sessionView'
+						path: asker
+							? '/sessions/user/view'
+							: '/sessions/consultant/sessionView'
 					}}
 				>
 					<MemoryRouter initialEntries={[path]}>
+						{asker && (
+							<Link to="/sessions/user/view/session/41?rejectedEnquiry=1">
+								Open rejected enquiry
+							</Link>
+						)}
 						<Routes>
 							<Route
 								path="/sessions/consultant/sessionView/session/:sessionId"
+								element={<SessionView />}
+							/>
+							<Route
+								path="/sessions/user/view/session/:sessionId"
 								element={<SessionView />}
 							/>
 							<Route
@@ -149,6 +173,7 @@ describe('SessionView case handover route boundary', () => {
 				undefined,
 				41,
 				undefined,
+				false,
 				false
 			)
 		);
@@ -162,10 +187,58 @@ describe('SessionView case handover route boundary', () => {
 				undefined,
 				41,
 				undefined,
+				false,
 				false
 			)
 		);
 		expect(apiGetCaseHandoverRequestStatus).not.toHaveBeenCalled();
+	});
+
+	it('requires the exact rejected session only on the marked asker detail route', () => {
+		renderAt('/sessions/user/view/session/41?rejectedEnquiry=1', true);
+
+		expect(useSession).toHaveBeenCalledWith(
+			undefined,
+			41,
+			undefined,
+			true,
+			true
+		);
+		expect(apiGetCaseHandoverRequestStatus).not.toHaveBeenCalled();
+	});
+
+	it('unmounts the prior conversation while the marked rejection loads at the same case route', async () => {
+		const priorSession = {
+			item: { id: 41, status: 2 },
+			isGroup: false
+		} as never;
+		const useSessionMount: typeof useSession = (
+			_room,
+			_id,
+			_chat,
+			_reconcile,
+			requireRejected
+		) => {
+			const [session] = React.useState(() =>
+				requireRejected ? null : priorSession
+			);
+			return {
+				session,
+				ready: session !== null,
+				reload: vi.fn(),
+				read: vi.fn()
+			};
+		};
+		vi.mocked(useSession).mockImplementation(useSessionMount);
+		renderAt('/sessions/user/view/session/41', true);
+		await screen.findByTestId('session-stream');
+
+		fireEvent.click(
+			screen.getByRole('link', { name: 'Open rejected enquiry' })
+		);
+
+		expect(screen.queryByTestId('session-stream')).toBeNull();
+		expect(screen.getByTestId('loading')).toBeTruthy();
 	});
 
 	it('loads a group by chat id without looking up a case with the same number', () => {
@@ -175,6 +248,7 @@ describe('SessionView case handover route boundary', () => {
 			undefined,
 			undefined,
 			41,
+			false,
 			false
 		);
 		expect(apiGetCaseHandoverRequestStatus).not.toHaveBeenCalled();

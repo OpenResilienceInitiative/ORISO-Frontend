@@ -36,6 +36,62 @@ describe('notification action targets', () => {
 		).toBe('/sessions/user/view/session/7');
 	});
 
+	it.each([
+		[
+			'/sessions/user/session/4711',
+			4711,
+			'/sessions/user/view/session/4711?rejectedEnquiry=1'
+		],
+		['/sessions/user/session/4711', 4712, null],
+		[
+			'/sessions/user/view/session/4711',
+			4711,
+			'/sessions/user/view/session/4711?rejectedEnquiry=1'
+		],
+		['/sessions/user/view/session/4711', 4712, null]
+	])(
+		'binds the stored rejection path %s to its source case %s',
+		(actionPath, sourceSessionId, expected) => {
+			expect(
+				resolveNotificationActionPath(
+					{
+						eventType: 'request.denied',
+						actionPath,
+						sourceSessionId,
+						params: parseEventActionParams('{}')
+					},
+					'/sessions/user/view',
+					'/sessions/user/view'
+				)
+			).toBe(expected);
+		}
+	);
+
+	it.each([
+		[
+			'/sessions/consultant/sessionPreview',
+			'/sessions/user/view',
+			'/sessions/consultant/sessionPreview'
+		],
+		[null, '/sessions/user/view', '/sessions/user/view'],
+		[null, null, null]
+	])(
+		'preserves a generic rejection action %s with list fallback %s',
+		(actionPath, requestsBasePath, expected) => {
+			expect(
+				resolveNotificationActionPath(
+					{
+						eventType: 'request.denied',
+						sourceSessionId: 4711,
+						actionPath
+					},
+					'/sessions/user/view',
+					requestsBasePath
+				)
+			).toBe(expected);
+		}
+	);
+
 	it('treats malformed params as absent instead of breaking the timeline', () => {
 		expect(parseEventActionParams('{not-json')).toEqual({});
 	});

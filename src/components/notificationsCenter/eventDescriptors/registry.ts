@@ -14,6 +14,7 @@
  * (ADR-AT-01 — the server record is text-free).
  */
 
+import { generatePath } from 'react-router-dom';
 import { rewriteLegacyChannelPath } from '../../../utils/channelRoute';
 import {
 	EventActionParams,
@@ -21,6 +22,10 @@ import {
 	EventDescriptor,
 	EventFamily
 } from './types';
+import {
+	ASKER_SESSION_DETAIL_PATH,
+	REJECTED_ENQUIRY_QUERY_PARAM
+} from '../../app/routePaths';
 
 /** Default conversation list base when the consumer does not pass one. */
 const DEFAULT_SESSIONS_BASE_PATH = '/sessions/consultant/sessionView';
@@ -93,6 +98,26 @@ const requestTarget = (params: EventActionParams): EventActionTarget => ({
 	kind: 'request',
 	path: params.actionPath || params.requestsBasePath || null
 });
+
+const requestDeniedTarget = (params: EventActionParams): EventActionTarget => {
+	// The rejection producer stores the asker path without its view segment.
+	const caseId = /^\/sessions\/user\/(?:view\/)?session\/(\d+)$/.exec(
+		params.actionPath ?? ''
+	)?.[1];
+	if (!caseId) return requestTarget(params);
+
+	const numericId = Number(caseId);
+	const exact =
+		Number.isSafeInteger(numericId) &&
+		numericId > 0 &&
+		caseId === String(params.sourceSessionId);
+	return {
+		kind: 'request',
+		path: exact
+			? `${generatePath(ASKER_SESSION_DETAIL_PATH, { sessionId: caseId })}?${REJECTED_ENQUIRY_QUERY_PARAM}=1`
+			: null
+	};
+};
 
 const draftTarget = (params: EventActionParams): EventActionTarget => ({
 	kind: 'draft',
@@ -245,15 +270,13 @@ const seeds: EventDescriptor[] = [
 		i18nKey: 'requestNew',
 		resolveActionTarget: requestTarget
 	}),
-	// Figma design review 2026-07-12 (Timeline History Pannel): seed the
-	// designed-but-not-yet-emitted types so the frontend is ready the moment a
-	// backend writer appears (Slice-0a philosophy — seed ALL designed types).
+	// A rejected enquiry retains its existing read-only case for the asker.
 	descriptor('request.denied', {
 		family: 'requests',
 		category: 'system',
 		icon: 'requestDenied',
 		i18nKey: 'requestDenied',
-		resolveActionTarget: requestTarget
+		resolveActionTarget: requestDeniedTarget
 	}),
 	// A client entering the live-chat waiting room originates from the
 	// request/enquiry view (WP-06 Tier 3 — descriptor seeded ahead of the

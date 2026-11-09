@@ -4,6 +4,7 @@ import {
 	apiGetSessionRoomsByRoomIds
 } from '../api/apiGetSessionRooms';
 import { buildExtendedSession, ExtendedSessionInterface } from '../globalState';
+import { STATUS_REJECTED } from '../globalState/interfaces';
 import { FETCH_ERRORS } from '../api';
 import { chatTransportService } from '../services/chatTransportService';
 import { isRoomUnread } from '../utils/sessionUnread';
@@ -17,7 +18,8 @@ export const useSession = (
 	rid: string | null,
 	sessionId?: number,
 	chatId?: number,
-	reconcilePendingEnquiry = false
+	reconcilePendingEnquiry = false,
+	requireRejectedEnquiry = false
 ): {
 	session: ExtendedSessionInterface;
 	/** Settles when the explicit session reload has finished. */
@@ -128,10 +130,24 @@ export const useSession = (
 				);
 			} else if (sessionId !== undefined && sessionId !== null) {
 				// console.log('🔍 useSession: Loading by sessionId:', sessionId);
-				promise = apiGetSessionRoomBySessionId(
+				const response = apiGetSessionRoomBySessionId(
 					sessionId,
 					controller.signal
 				);
+				promise = requireRejectedEnquiry
+					? response.then(({ sessions }) => {
+							// The numeric endpoint can return a group with the same ID.
+							const rejectedEnquiry = sessions.find(
+								({ session, chat }) =>
+									!chat &&
+									session?.id === sessionId &&
+									session?.status === STATUS_REJECTED
+							);
+							if (!rejectedEnquiry)
+								throw new Error(FETCH_ERRORS.EMPTY);
+							return { sessions: [rejectedEnquiry] };
+						})
+					: response;
 			}
 
 			return promise
@@ -158,6 +174,12 @@ export const useSession = (
 				})
 				.catch(async (e) => {
 					if (!isCurrent() || e.message === FETCH_ERRORS.ABORT) {
+						return;
+					}
+
+					if (requireRejectedEnquiry) {
+						setSession(null);
+						setReady(true);
 						return;
 					}
 
@@ -204,7 +226,13 @@ export const useSession = (
 					}
 				});
 		},
-		[rid, sessionId, chatId, loadCaseHandoverCandidateSession]
+		[
+			rid,
+			sessionId,
+			chatId,
+			loadCaseHandoverCandidateSession,
+			requireRejectedEnquiry
+		]
 	);
 
 	const reconcileEnquiry = Boolean(

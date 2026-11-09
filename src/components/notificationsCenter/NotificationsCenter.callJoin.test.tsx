@@ -96,14 +96,21 @@ afterEach(() => {
 	setMatrixClientServiceRef(null);
 });
 
-const Location = () => (
-	<output aria-label="Current route">{useLocation().pathname}</output>
-);
+const Location = () => {
+	const { pathname, search } = useLocation();
+	return (
+		<>
+			<output aria-label="Current route">{pathname}</output>
+			<output aria-label="Current query">{search}</output>
+		</>
+	);
+};
 const renderCenter = async (
 	width = 1400,
 	item = callItem,
 	sessions: unknown[] = [],
-	ready = true
+	ready = true,
+	role: 'asker' | 'consultant' = 'consultant'
 ) => {
 	const i18n = i18next.createInstance();
 	await i18n.init({
@@ -120,9 +127,11 @@ const renderCenter = async (
 						value={
 							{
 								userData: {
-									userId: 'consultant',
+									userId: role,
 									grantedAuthorities: [
-										'AUTHORIZATION_CONSULTANT_DEFAULT'
+										role === 'asker'
+											? 'AUTHORIZATION_USER_DEFAULT'
+											: 'AUTHORIZATION_CONSULTANT_DEFAULT'
 									]
 								}
 							} as never
@@ -479,3 +488,38 @@ it('ignores a second click on a call that is still joining instead of reporting 
 	expect(addNotification).not.toHaveBeenCalled();
 	join.mockRestore();
 });
+
+it.each([390, 1440])(
+	'opens a persisted rejection action in the exact asker case at %spx',
+	async (width) => {
+		const rejected: NotificationFeedItem = {
+			...callItem,
+			id: 'rejection-1',
+			eventType: 'request.denied',
+			sourceSessionId: 4711,
+			actionPath: '/sessions/user/session/4711',
+			params: {}
+		};
+		await renderCenter(width, rejected, [], true, 'asker');
+		await user.click(
+			screen.getByRole('button', { name: /Request declined/ })
+		);
+		if (width >= 1200) {
+			await user.click(
+				screen.getAllByRole('button', {
+					name: 'Open chat',
+					exact: true
+				})[0]
+			);
+		}
+		await waitFor(() =>
+			expect(screen.getByLabelText('Current route').textContent).toBe(
+				'/sessions/user/view/session/4711'
+			)
+		);
+		expect(screen.getByLabelText('Current query').textContent).toBe(
+			'?rejectedEnquiry=1'
+		);
+		expect(joinRoom).not.toHaveBeenCalled();
+	}
+);
