@@ -1,5 +1,6 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
+import { expect, userEvent } from 'storybook/test';
 import { WaitingAreaCountdown } from './WaitingAreaCountdown';
 import {
 	expectCaptionClear,
@@ -67,6 +68,25 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+const expectFlipFocus: Story['play'] = async ({ canvas }) => {
+	const openName = 'Uhr umdrehen, Begrüßung und Netiquette lesen';
+	const open = await canvas.findByRole('button', { name: openName });
+	await expect(open).not.toHaveFocus();
+	open.focus();
+	await userEvent.keyboard(' ');
+
+	const close = await canvas.findByRole('button', { name: 'Zurück zur Uhr' });
+	const focusedBack = close.ownerDocument.activeElement === close;
+	close.focus();
+	await userEvent.keyboard('{Enter}');
+
+	const reopened = await canvas.findByRole('button', { name: openName });
+	await expect({
+		focusedBack,
+		focusedFront: reopened.ownerDocument.activeElement === reopened
+	}).toEqual({ focusedBack: true, focusedFront: true });
+};
+
 export const Future4a: Story = {
 	args: {
 		plannedStart: new Date(
@@ -92,7 +112,8 @@ export const Future4a: Story = {
 				Zum Kalender hinzufügen
 			</button>
 		)
-	}
+	},
+	play: expectFlipFocus
 };
 
 export const Overdue4b: Story = {
@@ -219,7 +240,8 @@ export const ReducedMotion: Story = {
 		welcomeText: WELCOME,
 		rules: RULES,
 		reducedMotion: true
-	}
+	},
+	play: expectFlipFocus
 };
 
 /**
