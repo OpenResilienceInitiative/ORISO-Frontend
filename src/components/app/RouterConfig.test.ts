@@ -3,7 +3,9 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import * as React from 'react';
+import { matchRoutes } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vite-plus/test';
+import { toV7Paths } from '../../utils/routeHelpers';
 
 const Stub = () => React.createElement('div');
 // Distinct stubs so the profile-icon assertions below can tell the
@@ -228,6 +230,35 @@ describe('RouterConfigUser navigation', () => {
 });
 
 describe('RouterConfigConsultant chat info', () => {
+	it('routes a consultant group by chat ID independently of a case with the same number', () => {
+		const consultant = RouterConfigConsultant(settings);
+		const detailRoutes = consultant.detailRoutes.flatMap(
+			(route: Parameters<typeof toV7Paths>[0]) =>
+				toV7Paths(route).map((path) => ({ path }))
+		);
+		const base = '/sessions/consultant/sessionView';
+
+		expect(
+			matchRoutes(detailRoutes, `${base}/chat/41`)?.at(-1)?.params
+		).toEqual({
+			chatId: '41'
+		});
+		expect(
+			matchRoutes(detailRoutes, `${base}/session/41`)?.at(-1)?.params
+		).toEqual({ sessionId: '41' });
+		expect(
+			matchRoutes(detailRoutes, `${base}/room/41`)?.at(-1)?.params
+		).toEqual({
+			groupId: 'room',
+			sessionId: '41'
+		});
+		expect(
+			RouterConfigUser(settings, true).detailRoutes
+		).not.toContainEqual(
+			expect.objectContaining({ path: `${base}/chat/:chatId` })
+		);
+	});
+
 	it('provides a group info dialog route for participating askers', () => {
 		const config = RouterConfigUser(settings, true);
 		expect(config.dialogRoutes).toEqual(
