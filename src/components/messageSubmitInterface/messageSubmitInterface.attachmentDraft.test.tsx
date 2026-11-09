@@ -227,6 +227,11 @@ const draftText = () => screen.getByTestId('composer-draft').textContent;
 const sendMock = () => vi.mocked(apiSendMatrixAttachmentMessage);
 
 beforeEach(() => {
+	// Let Testing Library's asynchronous waits advance normally.
+	vi.useFakeTimers({
+		toFake: ['setTimeout', 'clearTimeout'],
+		shouldAdvanceTime: true
+	});
 	vi.clearAllMocks();
 	sendMock().mockResolvedValue(undefined);
 	Object.assign(URL, {
@@ -234,7 +239,17 @@ beforeEach(() => {
 		revokeObjectURL: vi.fn()
 	});
 });
-afterEach(cleanup);
+afterEach(async () => {
+	try {
+		// Finish the post-send pause and draft-clear continuation while mounted.
+		await act(async () => {
+			await vi.runOnlyPendingTimersAsync();
+		});
+	} finally {
+		vi.useRealTimers();
+		cleanup();
+	}
+});
 
 describe('picking a file keeps the draft', () => {
 	it('from the file picker', async () => {
