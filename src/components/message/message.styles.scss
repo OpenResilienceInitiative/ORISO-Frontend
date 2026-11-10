@@ -919,9 +919,12 @@ $message-avatar-overlap: -19px;
 
 			// ORISO-Frontend#2135: a blank line in the composer is sent as an
 			// empty paragraph. Without content it has no height, so the gap the
-			// sender typed vanished. Give it exactly one line.
+			// sender typed vanished. Give it exactly one line. `1lh` follows
+			// the computed line height, whatever unit the host uses; the
+			// first declaration is the fallback for browsers without `lh`.
 			&:empty {
 				min-height: var(--message-line-height, 20px);
+				min-height: 1lh;
 			}
 		}
 
