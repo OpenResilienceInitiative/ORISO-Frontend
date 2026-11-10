@@ -6456,6 +6456,13 @@
 			"label": "Anklopfen",
 			"on": "Gäste warten, bis Sie sie einlassen.",
 			"off": "Gäste kommen ohne Warten direkt in den Anruf."
+		},
+		"list": {
+			"running": "Läuft gerade",
+			"runningWithCount": "Läuft gerade — {{count}} im Gespräch"
+		},
+		"floating": {
+			"move": "Gespräch verschieben"
 		}
 	},
 	"form": {

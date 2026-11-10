@@ -6381,6 +6381,13 @@
 			"label": "Knock first",
 			"on": "Guests wait until you let them in.",
 			"off": "Guests enter the call directly, without waiting."
+		},
+		"list": {
+			"running": "In progress",
+			"runningWithCount": "In progress — {{count}} in the call"
+		},
+		"floating": {
+			"move": "Move the call"
 		}
 	},
 	"form": {

@@ -336,7 +336,7 @@ describe('GroupCallWidget Storybook harness', () => {
 			for (const name of [
 				'Close call',
 				'Minimize call',
-				'Open full screen'
+				'Enter full screen'
 			])
 				expect(view.queryByRole('button', { name })).toBeNull();
 			expect(
@@ -366,6 +366,63 @@ describe('GroupCallWidget Storybook harness', () => {
 					name: 'Back to the full call'
 				})
 			).toBeTruthy();
+		});
+
+		it('floats in the upper half on a phone, and goes back to full screen (S10)', async () => {
+			const width = window.innerWidth;
+			Object.defineProperty(window, 'innerWidth', {
+				configurable: true,
+				value: 375
+			});
+			try {
+				const { view } = await renderActiveCall();
+				const widgetRoot = () =>
+					view.container.querySelector('.group-call-widget');
+				await waitFor(() =>
+					expect(widgetRoot()?.className).toContain(
+						'group-call-widget--mobile'
+					)
+				);
+
+				const { api } = windowAction('toggle_fullscreen');
+				await waitFor(() =>
+					expect(widgetRoot()?.className).toContain(
+						'group-call-widget--floating'
+					)
+				);
+				expect(
+					view.getByRole('separator', { name: 'Move the call' })
+				).toBeTruthy();
+				act(() =>
+					api.on.mock.calls.find(
+						(call: unknown[]) => call[0] === 'ready'
+					)?.[1]?.(new CustomEvent('ready'))
+				);
+				await waitFor(() =>
+					expect(api.transport.send).toHaveBeenCalledWith(
+						'org.oriso.call.window_state',
+						{ fullscreen: false }
+					)
+				);
+
+				fireEvent.click(
+					view.getByRole('button', { name: 'Enter full screen' })
+				);
+				await waitFor(() =>
+					expect(widgetRoot()?.className).not.toContain(
+						'group-call-widget--floating'
+					)
+				);
+				expect(api.transport.send).toHaveBeenLastCalledWith(
+					'org.oriso.call.window_state',
+					{ fullscreen: true }
+				);
+			} finally {
+				Object.defineProperty(window, 'innerWidth', {
+					configurable: true,
+					value: width
+				});
+			}
 		});
 
 		it('takes the call into browser full screen when it asks', async () => {

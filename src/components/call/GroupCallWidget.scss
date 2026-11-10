@@ -517,3 +517,73 @@
 	.element-call-drag-handle {
 	display: none;
 }
+
+/*
+ * Call design S10 (5c): on a phone the call floats in the upper half and
+ * ORISO keeps running below it. The phone rules above pin the widget to the
+ * top and the stage to the whole screen; floating overrides both, with the
+ * position the grip set.
+ */
+.group-call-widget.group-call-widget--mobile.group-call-widget--floating {
+	top: var(--call-float-top, 0) !important;
+	border-radius: 0 0 16px 16px;
+	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.group-call-widget--floating .element-call-container {
+	width: 100vw;
+	height: 50vh;
+	height: 50dvh;
+	border-radius: 0 0 16px 16px;
+}
+
+.element-call-float-bar {
+	position: relative;
+	flex: none;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 32px;
+	background: #111;
+}
+
+.element-call-float-grip {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 96px;
+	height: 100%;
+	cursor: ns-resize;
+	touch-action: none;
+
+	span {
+		width: 40px;
+		height: 4px;
+		border-radius: 2px;
+		background: rgba(255, 255, 255, 0.55);
+	}
+
+	&:focus-visible {
+		outline: 2px solid #fff;
+		outline-offset: -2px;
+	}
+}
+
+.element-call-float-full {
+	position: absolute;
+	top: 2px;
+	right: 8px;
+	width: 28px;
+	height: 28px;
+	border: none;
+	border-radius: 50%;
+	background: rgba(255, 255, 255, 0.12);
+	color: #fff;
+	font-size: 14px;
+	cursor: pointer;
+
+	&:focus-visible {
+		outline: 2px solid #fff;
+		outline-offset: 1px;
+	}
+}

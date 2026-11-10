@@ -80,6 +80,15 @@ const GROUP_MIN = { width: 280, height: 180 };
  */
 const HANGUP_HANDSHAKE_MS = 1500;
 
+/*
+ * How far one arrow key moves a handle, in px.
+ *
+ * Enough to be worth a keypress and small enough to aim with; `Shift`
+ * takes bigger strides, as it does in every other resizable thing.
+ */
+const RESIZE_STEP = 16;
+const RESIZE_STEP_FAST = 64;
+
 /** How long "Link teilen" waits before asking the server a second time, in ms. */
 const INVITE_LINK_RETRY_MS = 1000;
 
@@ -262,6 +271,17 @@ export const GroupCallWidget: React.FC = () => {
 	const [isMinimized, setIsMinimized] = useState(false);
 	const [isFullscreen, setIsFullscreen] = useState(false);
 	/*
+	 * Call design S10 (5c): on a phone the call can float in the upper half
+	 * while ORISO keeps running below; `floatTop` is where its grip put it.
+	 * The call switches it with the same `toggle_fullscreen` it uses for
+	 * browser full screen on a desktop.
+	 */
+	const [isFloating, setIsFloating] = useState(false);
+	const [floatTop, setFloatTop] = useState(0);
+	const floatDragRef = useRef<{ startY: number; startTop: number } | null>(
+		null
+	);
+	/*
 	 * Call design S2: the call draws minimise and full screen in its own
 	 * header (`orisoHostChrome`), so the host's corner buttons no longer sit
 	 * on top of it. Kill-switch: `appConfig.calls.hostChrome === false`.
@@ -275,10 +295,12 @@ export const GroupCallWidget: React.FC = () => {
 		(command: OrisoWindowCommand) => windowCommandRef.current(command),
 		[]
 	);
-	// On a phone the call always fills the screen.
+	// On a phone the call fills the screen unless it floats (S10).
 	const windowState = useMemo(
-		() => ({ fullscreen: isMobileView || isFullscreen }),
-		[isMobileView, isFullscreen]
+		() => ({
+			fullscreen: isMobileView ? !isFloating : isFullscreen
+		}),
+		[isMobileView, isFloating, isFullscreen]
 	);
 
 	/*
@@ -848,7 +870,11 @@ export const GroupCallWidget: React.FC = () => {
 	// The dock's clock starts when the call surface opens; a new call resets it.
 	useEffect(() => {
 		setCallStartedAt(elementCallUrl ? Date.now() : null);
-		if (!elementCallUrl) setIsMinimized(false);
+		if (!elementCallUrl) {
+			setIsMinimized(false);
+			setIsFloating(false);
+			setFloatTop(0);
+		}
 	}, [elementCallUrl, callData?.callId]);
 
 	const handleAnswer = () => {
@@ -960,7 +986,49 @@ export const GroupCallWidget: React.FC = () => {
 	// Call design S2: the call's own header buttons, through the host's paths.
 	windowCommandRef.current = (command) => {
 		if (command === 'minimise') minimise();
+		else if (isMobileView) setIsFloating((floating) => !floating);
 		else handleToggleFullscreen();
+	};
+
+	/* Floating only exists on a phone; a wider window drops it. */
+	useEffect(() => {
+		if (!isMobileView) setIsFloating(false);
+	}, [isMobileView]);
+
+	/** Keeps the floating call on screen, its grip reachable. */
+	const clampFloatTop = (top: number) => {
+		const height =
+			containerRef.current?.offsetHeight ?? window.innerHeight / 2;
+		return Math.min(
+			Math.max(0, top),
+			Math.max(0, window.innerHeight - height)
+		);
+	};
+
+	const handleFloatGripPointerDown = (e: React.PointerEvent) => {
+		e.preventDefault();
+		e.stopPropagation();
+		(e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
+		floatDragRef.current = { startY: e.clientY, startTop: floatTop };
+	};
+
+	const handleFloatGripPointerMove = (e: React.PointerEvent) => {
+		const drag = floatDragRef.current;
+		if (!drag) return;
+		setFloatTop(clampFloatTop(drag.startTop + e.clientY - drag.startY));
+	};
+
+	const handleFloatGripPointerUp = () => {
+		floatDragRef.current = null;
+	};
+
+	const handleFloatGripKeyDown = (e: React.KeyboardEvent) => {
+		const step = e.shiftKey ? RESIZE_STEP_FAST : RESIZE_STEP;
+		const delta =
+			e.key === 'ArrowUp' ? -step : e.key === 'ArrowDown' ? step : 0;
+		if (!delta) return;
+		e.preventDefault();
+		setFloatTop((top) => clampFloatTop(top + delta));
 	};
 
 	// Dragging handlers (mouse + touch)
@@ -1026,15 +1094,6 @@ export const GroupCallWidget: React.FC = () => {
 			posY: position.y
 		};
 	};
-
-	/*
-	 * How far one arrow key moves a handle, in px.
-	 *
-	 * Enough to be worth a keypress and small enough to aim with; `Shift`
-	 * takes bigger strides, as it does in every other resizable thing.
-	 */
-	const RESIZE_STEP = 16;
-	const RESIZE_STEP_FAST = 64;
 
 	/*
 	 * The same resize, from the keyboard.
@@ -1166,6 +1225,7 @@ export const GroupCallWidget: React.FC = () => {
 	}
 
 	const isDocked = isMinimized && !!elementCallUrl;
+	const floating = isMobileView && isFloating && !!elementCallUrl;
 	// Until the call reports its devices, assume what it started with; the
 	// dock shows this and its toggles flip it.
 	const shownDevices = widget.devices ?? {
@@ -1219,13 +1279,18 @@ export const GroupCallWidget: React.FC = () => {
 				/>
 			)}
 			<div
-				className={`group-call-widget ${isDragging ? 'dragging' : ''} ${isResizing ? 'resizing' : ''} ${isMobileView ? 'group-call-widget--mobile' : ''} ${isDocked ? 'group-call-widget--docked' : ''} ${isFullscreen ? 'group-call-widget--fullscreen' : ''} ${hostChrome ? 'group-call-widget--host-chrome' : ''}`}
+				className={`group-call-widget ${isDragging ? 'dragging' : ''} ${isResizing ? 'resizing' : ''} ${isMobileView ? 'group-call-widget--mobile' : ''} ${isDocked ? 'group-call-widget--docked' : ''} ${isFullscreen ? 'group-call-widget--fullscreen' : ''} ${hostChrome ? 'group-call-widget--host-chrome' : ''} ${floating ? 'group-call-widget--floating' : ''}`}
 				aria-hidden={isDocked ? true : undefined}
-				style={{
-					left: `${position.x}px`,
-					top: `${position.y}px`,
-					...(isResizing ? { cursor: resizeCursor } : {})
-				}}
+				style={
+					{
+						left: `${position.x}px`,
+						top: `${position.y}px`,
+						...(isResizing ? { cursor: resizeCursor } : {}),
+						...(floating
+							? { '--call-float-top': `${floatTop}px` }
+							: {})
+					} as React.CSSProperties
+				}
 				onMouseDown={handleMouseDown}
 				onTouchStart={handleTouchStart}
 			>
@@ -1355,6 +1420,42 @@ export const GroupCallWidget: React.FC = () => {
 							allowFullScreen
 							title={t('calls.group.iframeTitle')}
 						/>
+						{floating && (
+							/*
+							 * S10 (5c): below the call, never over its header —
+							 * the grip moves it, the button takes it back to
+							 * the whole screen.
+							 */
+							<div className="element-call-float-bar">
+								<div
+									className="element-call-float-grip"
+									role="separator"
+									aria-orientation="horizontal"
+									aria-label={t('calls.floating.move')}
+									aria-valuenow={Math.round(floatTop)}
+									aria-valuemin={0}
+									tabIndex={0}
+									onPointerDown={handleFloatGripPointerDown}
+									onPointerMove={handleFloatGripPointerMove}
+									onPointerUp={handleFloatGripPointerUp}
+									onPointerCancel={handleFloatGripPointerUp}
+									onKeyDown={handleFloatGripKeyDown}
+								>
+									<span aria-hidden="true" />
+								</div>
+								<button
+									type="button"
+									className="element-call-float-full"
+									onClick={() => setIsFloating(false)}
+									aria-label={t(
+										'calls.group.enterFullScreen'
+									)}
+									title={t('calls.group.fullScreen')}
+								>
+									⤢
+								</button>
+							</div>
+						)}
 						{!isMobileView &&
 							!isFullscreen &&
 							RESIZE_EDGES.filter(

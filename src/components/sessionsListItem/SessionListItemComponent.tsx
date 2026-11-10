@@ -75,6 +75,8 @@ import { markdownToDraft } from 'markdown-draft-js';
 import { convertFromRaw } from 'draft-js';
 import './sessionsListItem.styles';
 import { SessionListItemVideoCall } from './SessionListItemVideoCall';
+import { SessionListItemRunningCall } from './SessionListItemRunningCall';
+import { useRunningCall } from './runningCall';
 import { SessionListItemAttachment } from './SessionListItemAttachment';
 import clsx from 'clsx';
 import {
@@ -219,6 +221,8 @@ const ConsultingKindIcon = ({
 		}
 	/>
 );
+
+const EMPTY_PREVIEW_EVENTS: readonly unknown[] = [];
 
 export const SessionListItemComponent = ({
 	defaultLanguage,
@@ -388,6 +392,11 @@ export const SessionListItemComponent = ({
 				userData?.userName
 			]),
 		[matrixPreviewEvents, userData?.userName]
+	);
+	// Call design S10: a running call shows on the list, not only in the chat.
+	const runningCall = useRunningCall(
+		caseHandoverContentLocked ? EMPTY_PREVIEW_EVENTS : matrixPreviewEvents,
+		matrixRoomId
 	);
 	const matrixSessionPreview = useMemo(
 		() => getLatestMatrixRoomPreview(visibleMatrixPreviewEvents),
@@ -1541,13 +1550,19 @@ export const SessionListItemComponent = ({
 							}
 							preview={
 								<>
-									<SessionListItemLastMessage
-										lastMessage={
-											displayLastMessage
-												? displayLastMessage
-												: defaultSubjectText
-										}
-									/>
+									{runningCall ? (
+										<SessionListItemRunningCall
+											call={runningCall}
+										/>
+									) : (
+										<SessionListItemLastMessage
+											lastMessage={
+												displayLastMessage
+													? displayLastMessage
+													: defaultSubjectText
+											}
+										/>
+									)}
 									{activeSession.item.attachment && (
 										<SessionListItemAttachment
 											attachment={
@@ -1857,7 +1872,12 @@ export const SessionListItemComponent = ({
 							    button is shown it takes the place of the last-message
 							    preview (the text sits "under" the button). Without a
 							    button the normal last message is shown. */}
-							{!canShowCaseHandoverAction && (
+							{!canShowCaseHandoverAction && runningCall && (
+								<SessionListItemRunningCall
+									call={runningCall}
+								/>
+							)}
+							{!canShowCaseHandoverAction && !runningCall && (
 								<SessionListItemLastMessage
 									lastMessage={
 										caseHandoverContentLocked
