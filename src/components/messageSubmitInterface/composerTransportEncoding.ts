@@ -87,7 +87,7 @@ const TRAILING_EMPTY_PARAGRAPHS = new RegExp(
 	'i'
 );
 
-export const trimEdgeEmptyParagraphs = (rawMessage: string): string =>
+const trimEdgeEmptyParagraphs = (rawMessage: string): string =>
 	rawMessage
 		.trim()
 		.replace(LEADING_EMPTY_PARAGRAPHS, '')

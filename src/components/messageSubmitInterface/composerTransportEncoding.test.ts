@@ -67,6 +67,12 @@ const TOOLBAR_OUTPUT: Array<{
 		expectRendered: /<blockquote>/
 	},
 	{
+		// #2135 battle test: `---` showed in the composer, vanished on send.
+		action: 'horizontalRule',
+		composerHtml: '<p style="text-align: left;">Oben</p><hr><p>Unten</p>',
+		expectRendered: /<hr \/>|<hr>/
+	},
+	{
 		action: 'codeBlock',
 		composerHtml: '<pre><code>Text</code></pre>',
 		expectRendered: /<pre><code>Text<\/code><\/pre>/
