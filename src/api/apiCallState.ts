@@ -1,4 +1,5 @@
 import {
+	consumeCallStateNotFound,
 	markCallStateNotFound,
 	type CallLifecycleMessage
 } from '../utils/callLifecycleMessage';
@@ -15,6 +16,8 @@ const timestamp = (value: unknown): value is number =>
 export async function apiCallState(
 	call: CallLifecycleMessage
 ): Promise<CallLifecycleMessage | null> {
+	// A 404 marker left by another read of this card (join lookup) must not leak into this one.
+	consumeCallStateNotFound(call);
 	let value: unknown;
 	try {
 		value = await fetchData({

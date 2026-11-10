@@ -133,6 +133,22 @@ describe('useCallTimelineState', () => {
 		expect(result.current.state).toBe('running');
 	});
 
+	it('a 404 mark left by another read does not count for the next response', async () => {
+		vi.useFakeTimers();
+		const initial = runningCall();
+		markCallStateNotFound(initial); // e.g. a join lookup got a 404 first
+		const loadState = vi.fn(async () => null); // polling answers are untrusted nulls
+		const { result } = renderHook(() =>
+			useCallTimelineState(initial, loadState)
+		);
+		await act(async () => {
+			await vi.advanceTimersByTimeAsync(
+				15000 * (UNKNOWN_STATE_LIMIT + 2)
+			);
+		});
+		expect(result.current.state).toBe('running');
+	});
+
 	it('permits a persisted missed call to progress to ended', async () => {
 		const initial = runningCall({ state: 'missed' });
 		const { result } = renderHook(() =>

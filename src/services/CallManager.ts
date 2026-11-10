@@ -103,6 +103,14 @@ class CallManager {
 	private listeners: Set<CallStateChangeListener> = new Set();
 
 	private constructor() {
+		// Sign-out must not leave a renewal running for the next account's session.
+		void import('../utils/eventHandler').then(
+			({ addEventListener, EVENT_SESSION_TEARDOWN }) =>
+				addEventListener(EVENT_SESSION_TEARDOWN, async (args) => {
+					this.stopObservation(false);
+					return args;
+				})
+		);
 		// console.log("═══════════════════════════════════════════════");
 		// console.log("📞 CallManager initialized (singleton)");
 		// console.log("═══════════════════════════════════════════════");

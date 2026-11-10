@@ -155,6 +155,8 @@ export function useCallTimelineState(
 				const value = await loadState(current);
 				if (!active) return;
 				if (!sameTimelineRevision(latest.current, current)) {
+					unknownAnswers = 0;
+					consumeCallStateNotFound(current);
 					// The timeline moved on while this was in flight, so the
 					// answer describes attendance that is already out of date.
 					// Leave `settled` false and ask again about what the card
