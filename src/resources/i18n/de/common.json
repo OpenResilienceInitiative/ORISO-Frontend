@@ -1911,7 +1911,8 @@
 				"confirmLabel": "Neues Passwort bestätigen",
 				"submitLabel": "Passwort speichern",
 				"success": "Ihr Passwort wurde erfolgreich geändert. Sie können sich nun anmelden.",
-				"invalidToken": "Dieser Link ist ungültig oder abgelaufen. Bitte fordern Sie einen neuen Link an."
+				"invalidToken": "Dieser Link ist ungültig oder abgelaufen. Bitte fordern Sie einen neuen Link an.",
+				"requestNewLink": "Neuen Link anfordern"
 			}
 		},
 		"magicLink": {

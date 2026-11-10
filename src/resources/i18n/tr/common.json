@@ -1890,7 +1890,8 @@
 				"confirmLabel": "Yeni şifreyi onaylayın",
 				"submitLabel": "Şifreyi kaydet",
 				"success": "Şifreniz başarıyla değiştirildi. Artık giriş yapabilirsiniz.",
-				"invalidToken": "Bu bağlantı geçersiz veya süresi dolmuş. Lütfen yeni bir bağlantı isteyin."
+				"invalidToken": "Bu bağlantı geçersiz veya süresi dolmuş. Lütfen yeni bir bağlantı isteyin.",
+				"requestNewLink": "Yeni bağlantı isteyin"
 			}
 		},
 		"magicLink": {

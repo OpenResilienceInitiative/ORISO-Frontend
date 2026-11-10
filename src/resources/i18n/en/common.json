@@ -1896,7 +1896,8 @@
 				"confirmLabel": "Confirm new password",
 				"submitLabel": "Save password",
 				"success": "Your password has been changed successfully. You can now log in.",
-				"invalidToken": "This link is invalid or has expired. Please request a new one."
+				"invalidToken": "This link is invalid or has expired. Please request a new one.",
+				"requestNewLink": "Request a new link"
 			}
 		},
 		"magicLink": {
