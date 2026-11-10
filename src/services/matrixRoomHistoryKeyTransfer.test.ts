@@ -1722,18 +1722,44 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 			});
 
 			it('does not let an already decided request replace a newer one from the same device', async () => {
-				const { harness, service } = await setup();
-				harness.emitToDevice(
-					decided({ request_id: 'req-old' }),
-					fromOwn
+				vi.useFakeTimers({ toFake: ['Date'] });
+				const diagnostic = vi.fn();
+				window.addEventListener(
+					MATRIX_HISTORY_KEYS_DIAGNOSTIC_EVENT,
+					diagnostic
 				);
-				await settle();
-				(service as any).lastReasonRequestAt.clear();
-				harness.emitToDevice(request('req-old'));
-				await settle();
-				expect(
-					service.getPendingApprovals().map((r) => r.requestId)
-				).toEqual(['req-1']);
+				try {
+					const { harness, service } = await setup();
+					harness.emitToDevice(
+						decided({ request_id: 'req-old' }),
+						fromOwn
+					);
+					await settle();
+					// Move past the 30 second limit for requests with a reason, so the
+					// late request is stopped by the decision and not by the limit.
+					vi.setSystemTime(Date.now() + 31_000);
+					diagnostic.mockClear();
+					harness.emitToDevice(request('req-old'));
+					await vi.waitFor(() =>
+						expect(
+							diagnostic.mock.calls.map(([e]) => e.detail)
+						).toContainEqual({ stage: 'request-decided-elsewhere' })
+					);
+					expect(
+						diagnostic.mock.calls.map(([e]) => e.detail)
+					).not.toContainEqual({
+						stage: 'request-handler-throttled'
+					});
+					expect(
+						service.getPendingApprovals().map((r) => r.requestId)
+					).toEqual(['req-1']);
+				} finally {
+					window.removeEventListener(
+						MATRIX_HISTORY_KEYS_DIAGNOSTIC_EVENT,
+						diagnostic
+					);
+					vi.useRealTimers();
+				}
 			});
 
 			it('drops the card after a failed approval when another device decided meanwhile', async () => {
