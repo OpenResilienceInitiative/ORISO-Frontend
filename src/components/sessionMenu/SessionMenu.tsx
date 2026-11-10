@@ -25,6 +25,7 @@ import {
 } from '../../globalState';
 import { STATUS_REJECTED } from '../../globalState/interfaces/SessionsDataInterface';
 import { startRoomCall } from '../call/startRoomCall';
+import { callRoomName } from '../call/callRoomName';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import { resolveCallFeatureGates } from '../call/callFeatureGates';
 import {
@@ -607,7 +608,9 @@ export const SessionMenu = (props: SessionMenuProps) => {
 			isVideo: isVideoActivated,
 			// Force 1:1 Matrix WebRTC for non-group sessions so audio calls are
 			// not misrouted to Element Call (which always enables video).
-			isGroup: activeSession.isGroup ? true : false
+			isGroup: activeSession.isGroup ? true : false,
+			// #2170: the call is called what the direct link was called.
+			roomName: callRoomName(activeSession.item)
 		});
 	};
 

@@ -86,6 +86,39 @@ describe('startRoomCall', () => {
 		expect(started[0][0]).not.toBe(CLIENT_ROOM);
 	});
 
+	/** #2170: the call is named at creation, by whoever starts it. */
+	it('hands the name of the call to the CallManager', async () => {
+		const startCall = vi.fn();
+		await startRoomCall({
+			roomId: CLIENT_ROOM,
+			isVideo: true,
+			isGroup: false,
+			roomName: 'Flyer Schule',
+			notify,
+			getCallManager: () => ({ startCall })
+		});
+		expect(startCall).toHaveBeenCalledWith(CLIENT_ROOM, true, false, {
+			roomName: 'Flyer Schule'
+		});
+	});
+
+	it('leaves the name to the CallManager when none is given', async () => {
+		const startCall = vi.fn();
+		await startRoomCall({
+			roomId: CLIENT_ROOM,
+			isVideo: true,
+			isGroup: false,
+			notify,
+			getCallManager: () => ({ startCall })
+		});
+		expect(startCall).toHaveBeenCalledWith(
+			CLIENT_ROOM,
+			true,
+			false,
+			undefined
+		);
+	});
+
 	it('carries the audio/video choice through', async () => {
 		await startRoomCall({
 			roomId: SIDE_ROOM,

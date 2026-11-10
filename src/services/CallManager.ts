@@ -18,6 +18,7 @@ import {
 import { releaseAllCallWarmupStreams } from '../utils/callMediaStreamCleanup';
 import { getMatrixRtcMembershipReaderUserId } from '../resources/scripts/runtimeConfig';
 import { callLifecycleTracker } from './callLifecycleTracker';
+import { callRoomName } from '../components/call/callRoomName';
 import type { SharedCallSeat } from '../api/apiJoinSharedCall';
 import type { CallLifecycleMessage } from '../utils/callLifecycleMessage';
 
@@ -409,11 +410,14 @@ class CallManager {
 	 * @param roomId - Matrix room ID
 	 * @param isVideo - Whether to enable video
 	 * @param forceIsGroup - Force this to be treated as a group call (for group chats)
+	 * @param options.roomName - What the call room is called, which is the
+	 *   call's title (#2170): the direct link it came through. "Anruf" without it.
 	 */
 	public startCall(
 		roomId: string,
 		isVideo: boolean,
-		forceIsGroup?: boolean
+		forceIsGroup?: boolean,
+		options?: { roomName?: string }
 	): void {
 		if (
 			this.pendingStart?.roomId === roomId &&
@@ -584,7 +588,11 @@ class CallManager {
 			// than re-using the session room. This matches the "direct" usage of
 			// a standalone Element Call deployment, where each call lives in its
 			// own Matrix room with appropriate power levels.
-			created = await this.createElementCallRoom(roomId, callId);
+			created = await this.createElementCallRoom(
+				roomId,
+				callId,
+				options?.roomName
+			);
 			elementCallRoomId = created.roomId;
 			// Room creation may finish after cancellation or a different call.
 			// Only the request that still owns startup can publish its invite.
@@ -838,7 +846,8 @@ class CallManager {
 	 */
 	private async createElementCallRoom(
 		sourceRoomId: string,
-		callId: string
+		callId: string,
+		roomName?: string
 	): Promise<{ roomId: string; createdBy: MatrixClient }> {
 		const matrixClientService = getMatrixClientService();
 		const client = matrixClientService?.getClient?.();
@@ -849,7 +858,9 @@ class CallManager {
 			);
 		}
 
-		const name = `Group call for ${sourceRoomId}`;
+		// #2170: the room name is the call's title, and it used to be
+		// `Group call for <session room id>`, a cryptic code on both screens.
+		const name = callRoomName({ directLinkName: roomName });
 
 		// console.log("🔧 Creating dedicated Element Call room for group call, source room:", sourceRoomId);
 
@@ -1001,9 +1012,8 @@ class CallManager {
 		 * this method threw before returning the id — so the caller's
 		 * `elementCallRoomId` stayed undefined and its own cleanup could not
 		 * run. Every retry then left another JOINED room behind, carrying the
-		 * plaintext call/source binding and a name that reads "Group call for
-		 * <session room>". The caller's cleanup only covers a start that was
-		 * superseded; this covers one that failed.
+		 * plaintext call/source binding. The caller's cleanup only covers a
+		 * start that was superseded; this covers one that failed.
 		 */
 		try {
 			if (joinRuleRejected) {
