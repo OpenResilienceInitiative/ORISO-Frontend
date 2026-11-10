@@ -921,7 +921,8 @@ export const NotificationsCenter = () => {
 					email={displayFilterEmail}
 					value={timelineFilter}
 					canReset={timelineOverride !== null}
-					readOnly={displayFilterReadOnly || !canEditDisplayFilter}
+					canWrite={canEditDisplayFilter}
+					readOnly={displayFilterReadOnly}
 					onChange={(next) => {
 						setTimelineOverride(next);
 						setActiveFamily(

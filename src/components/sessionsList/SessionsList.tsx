@@ -2999,7 +2999,8 @@ export const SessionsList = ({
 					browserMutedNotice={displayFilterBrowserMuted}
 					value={listDisplayFilter}
 					canReset={listDisplayOverride !== null}
-					readOnly={displayFilterReadOnly || !canEditDisplayFilter}
+					canWrite={canEditDisplayFilter}
+					readOnly={displayFilterReadOnly}
 					showAutoRead={type === SESSION_LIST_TYPES.MY_SESSION}
 					onChange={setListDisplayOverride}
 					onReset={resetListDisplayOverride}

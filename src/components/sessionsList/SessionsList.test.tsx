@@ -108,12 +108,14 @@ vi.mock('./SessionsListToolbar', () => ({
 		showSupervisionChip,
 		onChipToggle,
 		activeChip,
-		onSearchChange
+		onSearchChange,
+		displayFilter
 	}: {
 		showSupervisionChip: boolean;
 		onChipToggle: (chip: 'supervision') => void;
 		activeChip: string | null;
 		onSearchChange: (query: string) => void;
+		displayFilter?: { label: string; onOpen: () => void };
 	}) => (
 		<>
 			<output data-testid="active-chip">{activeChip ?? 'all'}</output>
@@ -124,6 +126,11 @@ vi.mock('./SessionsListToolbar', () => ({
 			{showSupervisionChip ? (
 				<button onClick={() => onChipToggle('supervision')}>
 					supervision-filter
+				</button>
+			) : null}
+			{displayFilter ? (
+				<button type="button" onClick={displayFilter.onOpen}>
+					{displayFilter.label}
 				</button>
 			) : null}
 		</>
@@ -290,6 +297,27 @@ const ListTree = ({
 );
 
 const renderList = () => render(<ListTree />);
+
+describe('SessionsList display filter before Matrix sync', () => {
+	afterEach(cleanup);
+
+	it.each([SESSION_LIST_TYPES.MY_SESSION, SESSION_LIST_TYPES.ENQUIRY])(
+		'locks edits in %s without showing an upgrade notice',
+		(type) => {
+			render(<ListTree type={type} />);
+			fireEvent.click(
+				screen.getByRole('button', {
+					name: 'notifications.displayFilter.button'
+				})
+			);
+			const view = screen.getAllByRole('radio')[0] as HTMLInputElement;
+			expect(view.disabled).toBe(true);
+			expect(
+				screen.queryByText('notifications.displayFilter.readOnlyHint')
+			).toBeNull();
+		}
+	);
+});
 
 describe('SessionsList case handover batch seam', () => {
 	afterEach(cleanup);
