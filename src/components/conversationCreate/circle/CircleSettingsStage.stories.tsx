@@ -2,8 +2,10 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import {
 	desktop1440Globals,
-	phone390Globals
+	phone390Globals,
+	tablet820Globals
 } from '../../message/messageStoryShell';
+import { AuthenticatedBuildIdentityBoundary } from '../../app/BuildIdentity';
 import { CircleSettingsStage, COLLEAGUES } from './circleSettingsStage';
 
 /**
@@ -195,6 +197,78 @@ export const EditorSingleLanguageTenant: Story = {
 	play: async ({ canvasElement }) => {
 		await expect(languageTabs(canvasElement)).toHaveLength(1);
 	}
+};
+
+export const EditBuildIdentityMobile: Story = {
+	name: 'Schedule editor build identity · 390',
+	globals: phone390Globals,
+	args: {
+		layout: 'mobile',
+		editChatId: 42,
+		prefill: {
+			startDate: '2026-11-14',
+			startTime: '16:00',
+			duration: 60,
+			repeatCount: 2,
+			interval: 'WEEKLY'
+		}
+	},
+	beforeEach: () => {
+		const runtimeWindow: Window & {
+			__ORISO_RUNTIME_CONFIG__?: Record<string, string | undefined>;
+		} = window;
+		const previous = runtimeWindow.__ORISO_RUNTIME_CONFIG__;
+		runtimeWindow.__ORISO_RUNTIME_CONFIG__ = {
+			...previous,
+			REACT_APP_PLATFORM_VERSION: 'v2.0.15'
+		};
+		return () => {
+			runtimeWindow.__ORISO_RUNTIME_CONFIG__ = previous;
+		};
+	},
+	render: (args) => (
+		<AuthenticatedBuildIdentityBoundary>
+			<CircleSettingsStage {...args} />
+		</AuthenticatedBuildIdentityBoundary>
+	),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const identity = canvas.getByTestId('build-identity');
+		const editor = canvasElement.querySelector('.circleSettings');
+		const controls = ['Text', 'DE'].map((name) =>
+			canvas.getByRole('button', { name, exact: true })
+		);
+		await expect(editor).toContainElement(identity);
+		await expect(
+			getComputedStyle(identity.parentElement!).position
+		).not.toBe('fixed');
+		for (const control of controls) {
+			control.scrollIntoView({ block: 'center' });
+			control.focus();
+			await userEvent.tab();
+			const row = control.closest('.splitButton')!;
+			const toggle = row.querySelector('.splitButton__trailing');
+			await expect(toggle).toHaveFocus();
+			await expect(rect(identity).top).toBeGreaterThanOrEqual(
+				rect(row).bottom
+			);
+		}
+		identity.scrollIntoView({ block: 'end' });
+		await expect(identity).toBeVisible();
+	}
+};
+
+export const EditBuildIdentityTablet: Story = {
+	...EditBuildIdentityMobile,
+	name: 'Schedule editor build identity · 820',
+	globals: tablet820Globals
+};
+
+export const EditBuildIdentityDesktop: Story = {
+	...EditBuildIdentityMobile,
+	name: 'Schedule editor build identity · 1440',
+	globals: desktop1440Globals,
+	args: { ...EditBuildIdentityMobile.args, layout: 'desktop' }
 };
 
 /*
