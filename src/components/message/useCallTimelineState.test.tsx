@@ -2,7 +2,10 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import type { CallLifecycleMessage } from '../../utils/callLifecycleMessage';
-import { useCallTimelineState } from './useCallTimelineState';
+import {
+	UNKNOWN_STATE_LIMIT,
+	useCallTimelineState
+} from './useCallTimelineState';
 
 const runningCall = (
 	overrides: Partial<CallLifecycleMessage> = {}
@@ -59,6 +62,33 @@ describe('useCallTimelineState', () => {
 			await vi.advanceTimersByTimeAsync(30000);
 		});
 		expect(loadState).toHaveBeenCalledTimes(3);
+	});
+
+	it('stops showing a running card the server keeps answering 404 for', async () => {
+		vi.useFakeTimers();
+		const initial = runningCall();
+		const loadState = vi.fn(async () => null);
+		const { result } = renderHook(() =>
+			useCallTimelineState(initial, loadState)
+		);
+
+		await act(async () => {
+			await vi.advanceTimersByTimeAsync(
+				15000 * (UNKNOWN_STATE_LIMIT - 2)
+			);
+		});
+		expect(result.current.state).toBe('running');
+
+		await act(async () => {
+			await vi.advanceTimersByTimeAsync(15000 * 2);
+		});
+		expect(result.current.state).toBe('ended');
+		expect(result.current.durationSeconds).toBeUndefined();
+		const calls = loadState.mock.calls.length;
+		await act(async () => {
+			await vi.advanceTimersByTimeAsync(60000);
+		});
+		expect(loadState).toHaveBeenCalledTimes(calls);
 	});
 
 	it('permits a persisted missed call to progress to ended', async () => {

@@ -5,6 +5,8 @@ import {
 } from '../../utils/callLifecycleMessage';
 
 const REFRESH_DELAY_MS = 15000;
+// Consecutive "server has no such call" answers before a running card stops claiming it runs.
+export const UNKNOWN_STATE_LIMIT = 4;
 
 const sameAttendance = (
 	a: CallLifecycleMessage['participants'] | undefined,
@@ -144,6 +146,7 @@ export function useCallTimelineState(
 		if (!loadState || hasAcceptedTerminal) return;
 		let active = true;
 		let timer: ReturnType<typeof setTimeout> | undefined;
+		let unknownAnswers = 0;
 		const refresh = async () => {
 			const current = latest.current;
 			let settled = false;
@@ -166,10 +169,34 @@ export function useCallTimelineState(
 					 * asking, because that one still has an ending to find.
 					 */
 					settled = current.state !== 'running';
+					/*
+					 * #2166: a RUNNING card the server keeps answering 404 for
+					 * is not known to run. Showing "Läuft" with a Join button
+					 * for a call nobody can confirm (the creator's terminal
+					 * write was interrupted and no record exists) is worse
+					 * than showing it as over. After a few consecutive
+					 * answers the card is settled as ended, without a
+					 * duration, since none is known.
+					 */
+					if (current.state === 'running') {
+						unknownAnswers += 1;
+						if (unknownAnswers >= UNKNOWN_STATE_LIMIT) {
+							setStored({
+								original: current,
+								value: {
+									...current,
+									state: 'ended',
+									durationSeconds: undefined
+								}
+							});
+							settled = true;
+						}
+					}
 				} else if (
 					hasSameCallLifecycleIdentity(value, current) &&
 					(current.state === 'running' || value.state !== 'running')
 				) {
+					unknownAnswers = 0;
 					setStored((previous) =>
 						previous &&
 						hasSameCallLifecycleIdentity(

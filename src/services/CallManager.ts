@@ -670,6 +670,14 @@ class CallManager {
 				this.currentCall.roomId,
 				isGroup
 			);
+			if (isGroup && this.stillOwnsStart(start)) {
+				this.startObservation(
+					roomId,
+					callId,
+					isVideo,
+					this.currentCall.roomId
+				);
+			}
 			if (!this.stillOwnsStart(start)) {
 				if (outgoingCall.isGroup) {
 					/*
@@ -1154,6 +1162,60 @@ class CallManager {
 	 * @param isVideo - Whether this is a video call
 	 * @param elementCallRoomId - The dedicated Element Call room that should be joined
 	 */
+	private observation: {
+		sourceRoomId: string;
+		callId: string;
+		timer: ReturnType<typeof setInterval>;
+	} | null = null;
+
+	/**
+	 * The creator registers an encrypted internal-group call for observation
+	 * only (#2166) and renews it while this browser is in the call. Failures
+	 * are deliberately ignored: the call must not depend on the registration.
+	 */
+	private startObservation(
+		sourceRoomId: string,
+		callId: string,
+		video: boolean,
+		callRoomId: string
+	): void {
+		this.stopObservation(false);
+		// Loaded on demand: this module stays free of browser-only API imports.
+		const register = () =>
+			void import('../api/apiCallObservation')
+				.then(({ apiRegisterCallObservation }) =>
+					apiRegisterCallObservation({
+						sourceRoomId,
+						callId,
+						callRoomId,
+						video
+					})
+				)
+				.catch(() => undefined);
+		register();
+		this.observation = {
+			sourceRoomId,
+			callId,
+			timer: setInterval(register, 4 * 60 * 1000)
+		};
+	}
+
+	private stopObservation(end: boolean): void {
+		const current = this.observation;
+		if (!current) return;
+		clearInterval(current.timer);
+		this.observation = null;
+		if (end)
+			void import('../api/apiCallObservation')
+				.then(({ apiEndCallObservation }) =>
+					apiEndCallObservation({
+						sourceRoomId: current.sourceRoomId,
+						callId: current.callId
+					})
+				)
+				.catch(() => undefined);
+	}
+
 	private async sendGroupCallInvite(
 		signallingRoomId: string,
 		callId: string,
@@ -1385,6 +1447,8 @@ class CallManager {
 			return;
 		}
 		this.currentCall = null;
+		// A group call outlives its creator: stop renewing, never announce an end for the room.
+		this.stopObservation(false);
 
 		// A MatrixRTC group call belongs to the room, not to the participant who
 		// originally invited everyone. Leaving it must clear only this browser's
@@ -1455,6 +1519,7 @@ class CallManager {
 				// leaves an attended call alone, and that one may be rejoined.
 				...(finalised ? { lifecycleFinalised: true } : {})
 			};
+			this.stopObservation(finalised);
 			releaseAllCallWarmupStreams();
 			this.promoteWaitingCall();
 			this.notifyListeners();
