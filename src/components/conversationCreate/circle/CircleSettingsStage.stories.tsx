@@ -235,8 +235,8 @@ export const EditBuildIdentityMobile: Story = {
 		const canvas = within(canvasElement);
 		const identity = canvas.getByTestId('build-identity');
 		const editor = canvasElement.querySelector('.circleSettings');
-		const controls = ['Text', 'DE'].map((name) =>
-			canvas.getByRole('button', { name, exact: true })
+		const controls = [/^Text$/, /^DE$/].map((name) =>
+			canvas.getByRole('button', { name })
 		);
 		await expect(editor).toContainElement(identity);
 		await expect(
