@@ -4540,6 +4540,12 @@
 				"directLinkVideo": "Videoanruf",
 				"directLinkAudio": "Audioanruf",
 				"directLinkChat": "Direktlink"
+			},
+			"waiting": {
+				"minutes": "wartet seit {{count}} Min.",
+				"hours": "wartet seit {{count}} Std.",
+				"weeks_one": "wartet seit {{count}} Woche",
+				"weeks_other": "wartet seit {{count}} Wochen"
 			}
 		},
 		"createChat": {

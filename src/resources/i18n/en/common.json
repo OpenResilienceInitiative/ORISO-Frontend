@@ -4486,6 +4486,12 @@
 				"directLinkVideo": "Video call",
 				"directLinkAudio": "Audio call",
 				"directLinkChat": "Direct link"
+			},
+			"waiting": {
+				"minutes": "waiting {{count}} min",
+				"hours": "waiting {{count}} h",
+				"weeks_one": "waiting {{count}} week",
+				"weeks_other": "waiting {{count}} weeks"
 			}
 		},
 		"createChat": {

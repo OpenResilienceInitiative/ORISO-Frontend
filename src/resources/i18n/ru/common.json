@@ -4641,6 +4641,14 @@
 				"directLinkVideo": "Видеозвонок",
 				"directLinkAudio": "Аудиозвонок",
 				"directLinkChat": "Прямая ссылка"
+			},
+			"waiting": {
+				"minutes": "ждёт {{count}} мин.",
+				"hours": "ждёт {{count}} ч",
+				"weeks_one": "ждёт {{count}} неделю",
+				"weeks_few": "ждёт {{count}} недели",
+				"weeks_many": "ждёт {{count}} недель",
+				"weeks_other": "ждёт {{count}} недели"
 			}
 		},
 		"supervision": {

@@ -4634,6 +4634,12 @@
 				"directLinkVideo": "Görüntülü arama",
 				"directLinkAudio": "Sesli arama",
 				"directLinkChat": "Doğrudan bağlantı"
+			},
+			"waiting": {
+				"minutes": "Bekleme: {{count}} dk.",
+				"hours": "Bekleme: {{count}} sa.",
+				"weeks_one": "Bekleme: {{count}} hafta",
+				"weeks_other": "Bekleme: {{count}} hafta"
 			}
 		},
 		"supervision": {
