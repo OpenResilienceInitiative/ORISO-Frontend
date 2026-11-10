@@ -32,7 +32,13 @@ vi.mock('../../api/apiCaseHandover', async (original) => ({
 	apiDecideCaseHandoverClientConsent: decide
 }));
 vi.mock('../../api/fetchData', () => ({
-	FETCH_ERRORS: { X_REASON: 'X-Reason' },
+	FETCH_ERRORS: {
+		ABORT: 'ABORT',
+		FORBIDDEN: 'FORBIDDEN',
+		NO_MATCH: 'NO_MATCH',
+		UNAUTHORIZED: 'UNAUTHORIZED',
+		X_REASON: 'X-Reason'
+	},
 	X_REASON: { CASE_OWNER_CHANGED: 'CASE_OWNER_CHANGED' }
 }));
 vi.mock('react-i18next', () => ({
@@ -54,6 +60,8 @@ const pending = status('PENDING_CLIENT_CONSENT');
 const terminal = status('CLIENT_CONSENT_DECLINED');
 const approve = 'caseHandover.consent.approve';
 const decline = 'caseHandover.consent.decline';
+const readError = 'caseHandover.offer.generic';
+const retryRead = 'caseHandover.offer.retry';
 const deferred = <T,>() => {
 	let resolve!: (value: T) => void;
 	const promise = new Promise<T>((complete) => {
@@ -101,7 +109,8 @@ describe('Timeline consent actions', () => {
 		status('FUTURE_STATUS'),
 		status('PENDING', 43),
 		status('PENDING', 42, 104),
-		{ ...pending, requestId: undefined }
+		{ ...pending, requestId: undefined },
+		{}
 	])(
 		'keeps unconfirmed or ineligible status $status historical',
 		async (response) => {
@@ -115,9 +124,56 @@ describe('Timeline consent actions', () => {
 				'caseHandover.consent.info.closed'
 			);
 			expect(Boolean(closed)).toBe(response === terminal);
+			expect(screen.queryByRole('alert')).toBeNull();
+			expect(
+				screen.queryByRole('button', { name: retryRead })
+			).toBeNull();
 			expect(decide).not.toHaveBeenCalled();
 		}
 	);
+
+	it.each(['FORBIDDEN', 'NO_MATCH', 'UNAUTHORIZED', 'ABORT'])(
+		'quietly withholds decisions when the status read returns %s',
+		async (error) => {
+			readStatus.mockRejectedValue(new Error(error));
+			setup();
+			await act(async () => {});
+			expect(screen.queryByRole('status')).toBeNull();
+			expect(screen.queryByRole('alert')).toBeNull();
+			expect(screen.queryByRole('button', { name: approve })).toBeNull();
+			expect(
+				screen.queryByRole('button', { name: retryRead })
+			).toBeNull();
+			expect(decide).not.toHaveBeenCalled();
+		}
+	);
+
+	it.each([
+		new TypeError('Failed to fetch'),
+		new Error('CATCH_ALL'),
+		new Error('TIMEOUT')
+	])('retries only the exact status read after %s', async (error) => {
+		const retry = deferred<CaseHandoverStatus>();
+		readStatus
+			.mockRejectedValueOnce(error)
+			.mockReturnValueOnce(retry.promise);
+		const { onConfirmed } = setup();
+		expect((await screen.findByRole('alert')).textContent).toBe(readError);
+		expect(screen.queryByRole('button', { name: approve })).toBeNull();
+		fireEvent.click(screen.getByRole('button', { name: retryRead }));
+		expect(screen.getByRole('status').textContent).toBe('app.wait');
+		expect(screen.queryByRole('button', { name: decline })).toBeNull();
+		expect(screen.queryByRole('button', { name: retryRead })).toBeNull();
+		await act(async () => retry.resolve(pending));
+		expect(screen.getByRole('button', { name: approve })).toBeTruthy();
+		expect(screen.queryByRole('alert')).toBeNull();
+		expect(readStatus.mock.calls).toEqual([
+			[103, 42],
+			[103, 42]
+		]);
+		expect(decide).not.toHaveBeenCalled();
+		expect(onConfirmed).not.toHaveBeenCalled();
+	});
 
 	it.each([
 		'PENDING',
@@ -184,7 +240,7 @@ describe('Timeline consent actions', () => {
 		expect(
 			screen.getByText('caseHandover.consent.info.closed')
 		).toBeTruthy();
-		expect(onConfirmed).not.toHaveBeenCalled();
+		expect(onConfirmed).toHaveBeenCalledTimes(1);
 		expect(decide).toHaveBeenCalledTimes(1);
 	});
 
@@ -204,6 +260,41 @@ describe('Timeline consent actions', () => {
 		).toBeNull();
 		expect(onConfirmed).not.toHaveBeenCalled();
 		expect(readStatus).toHaveBeenCalledTimes(2);
+	});
+
+	it('closes an owner-changed conflict without reading the status again', async () => {
+		readStatus.mockResolvedValue(pending);
+		decide.mockRejectedValue(
+			new Response(null, {
+				status: 409,
+				headers: { 'X-Reason': 'CASE_OWNER_CHANGED' }
+			})
+		);
+		const { onConfirmed } = setup();
+		fireEvent.click(await screen.findByRole('button', { name: approve }));
+		expect(
+			await screen.findByText('caseHandover.consent.info.closed')
+		).toBeTruthy();
+		expect(screen.queryByRole('button', { name: decline })).toBeNull();
+		expect(readStatus).toHaveBeenCalledExactlyOnceWith(103, 42);
+		expect(onConfirmed).toHaveBeenCalledTimes(1);
+	});
+
+	it('keeps a successful but still-open decision actionable without confirming settlement', async () => {
+		readStatus.mockResolvedValue(pending);
+		decide.mockResolvedValue(pending);
+		const { onConfirmed } = setup();
+		fireEvent.click(await screen.findByRole('button', { name: approve }));
+		expect((await screen.findByRole('alert')).textContent).toBe(
+			'caseHandover.error.failed'
+		);
+		expect(
+			screen.getByRole<HTMLButtonElement>('button', { name: decline })
+				.disabled
+		).toBe(false);
+		expect(screen.queryByRole('button', { name: retryRead })).toBeNull();
+		expect(readStatus).toHaveBeenCalledExactlyOnceWith(103, 42);
+		expect(onConfirmed).not.toHaveBeenCalled();
 	});
 
 	it('reconciles a rejected decision with the current terminal status', async () => {

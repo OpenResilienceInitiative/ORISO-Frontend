@@ -421,17 +421,21 @@ export const HistoricalConsentRequest: Story = {
 			expect(button).toBeVisible();
 			return button!;
 		});
-		await expect(
-			canvas.queryByRole('button', { name: 'Zugriff freigeben' })
-		).toBeNull();
-		await expect(
-			canvas.queryByRole('button', { name: 'Zugriff verweigern' })
-		).toBeNull();
+		const expectNoDecisionActions = async () => {
+			await expect(
+				canvas.queryByRole('button', { name: 'Zugriff freigeben' })
+			).toBeNull();
+			await expect(
+				canvas.queryByRole('button', { name: 'Zugriff verweigern' })
+			).toBeNull();
+		};
+		await expectNoDecisionActions();
 		await expect(
 			await canvas.findByText(
 				'Diese Anfrage ist abgeschlossen. Es steht keine weitere Entscheidung aus.'
 			)
 		).toBeVisible();
+		await expectNoDecisionActions();
 		await userEvent.click(open);
 		await expect(
 			canvas.getByTestId('consent-destination')
