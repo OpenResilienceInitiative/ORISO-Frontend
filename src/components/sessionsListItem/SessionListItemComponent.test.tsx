@@ -441,7 +441,7 @@ describe('SessionListItemComponent — group-chat Chat settings reachability (#1
 	});
 
 	it('test 1: group-chat owner sees the three-dot trigger and can open "Chat settings"', async () => {
-		renderItem(makeGroupSession());
+		renderItem(makeGroupSession({ repetitive: true }));
 
 		// The trigger button must be present in the group-chat early-return branch
 		const trigger = screen.getByRole('button', {
@@ -461,7 +461,7 @@ describe('SessionListItemComponent — group-chat Chat settings reachability (#1
 
 	it('test 2: clicking "Chat settings" navigates to the editGroupChat route with correct state', async () => {
 		const matrixRoomId = '!abc:matrix.example.org';
-		const session = makeGroupSession({ matrixRoomId });
+		const session = makeGroupSession({ matrixRoomId, repetitive: true });
 		renderItem(session);
 
 		// Open the flyout
@@ -499,7 +499,8 @@ describe('SessionListItemComponent — group-chat Chat settings reachability (#1
 
 	it('test 3: non-owner consultant sees NO three-dot trigger', () => {
 		const session = makeGroupSession({
-			consultantId: 'other-consultant-99'
+			consultantId: 'other-consultant-99',
+			repetitive: true
 		});
 		renderItem(session, makeUserData(OWNER_USER_ID));
 
@@ -510,13 +511,23 @@ describe('SessionListItemComponent — group-chat Chat settings reachability (#1
 	});
 
 	it('test 4: owner of a RUNNING group chat sees NO three-dot trigger', () => {
-		const session = makeGroupSession({ active: true });
+		const session = makeGroupSession({ active: true, repetitive: true });
 		renderItem(session);
 
 		const trigger = screen.queryByRole('button', {
 			name: 'groupChat.info.settings.headline'
 		});
 		expect(trigger).toBeNull();
+	});
+
+	it('hides the circle settings entry for an internal group owner', () => {
+		renderItem(makeGroupSession());
+
+		expect(
+			screen.queryByRole('button', {
+				name: 'groupChat.info.settings.headline'
+			})
+		).toBeNull();
 	});
 });
 
