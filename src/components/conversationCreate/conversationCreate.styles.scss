@@ -1265,8 +1265,10 @@ body.conversationCreate--active .navigation__wrapper {
    scrolls sideways and two round buttons underneath move it back and forth.
    --------------------------------------------------------------------------- */
 
-$cc-card-width: 340px;
-$cc-card-min-height: 560px;
+/* Figma 7633-34734: "Stacked card" is a fixed 360px wide, 480px tall, radius 28;
+   cards sit 32px apart; the round arrows are 128 x 96 with a 100px radius. */
+$cc-card-width: 360px;
+$cc-card-min-height: 480px;
 
 .formatCardCarousel {
 	display: flex;
@@ -1278,7 +1280,7 @@ $cc-card-min-height: 560px;
 		/* Stretch so every format ends up the same height whatever its copy. */
 		align-items: stretch;
 		display: flex;
-		gap: 24px;
+		gap: 32px;
 		overflow-x: auto;
 		overscroll-behavior-x: contain;
 		scroll-padding-inline: 4px;
@@ -1320,14 +1322,14 @@ $cc-card-min-height: 560px;
 		align-items: center;
 		background: $cc-secondary-container;
 		border: none;
-		border-radius: 28px;
+		border-radius: 100px;
 		color: $cc-on-primary;
 		cursor: pointer;
 		display: flex;
-		height: 56px;
+		height: 96px;
 		justify-content: center;
 		transition: opacity $cc-motion-duration $cc-motion-easing;
-		width: 72px;
+		width: 128px;
 
 		svg {
 			fill: currentcolor;
@@ -1354,5 +1356,24 @@ $cc-card-min-height: 560px;
 @media (prefers-reduced-motion: reduce) {
 	.formatCardCarousel__button {
 		transition: none;
+	}
+}
+
+/* Phone: less text above the cards, so the first card starts higher. The
+   explanatory paragraph is dropped (the card headers say the same) and the
+   panel title is set smaller so "Neue Unterhaltung erstellen" fits one line. */
+@media (width <= 480px) {
+	.conversationCreate__picker:has(.formatCardCarousel)
+		.conversationCreate__subtitle {
+		display: none;
+	}
+
+	.conversationCreate__panelTitle {
+		font-size: 15px;
+		padding-inline: 6px;
+	}
+
+	.conversationCreate__panelBadge {
+		width: 44px;
 	}
 }

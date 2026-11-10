@@ -89,11 +89,11 @@ describe('FormatCardCarousel', () => {
 	it('moves one card per click and disables the arrow at either end', () => {
 		const { container } = renderRow();
 		const scroller = getScroller(container);
-		// Cards are 340px wide with a 24px gap in the stylesheet; jsdom has no
+		// Cards are 360px wide with a 32px gap in the stylesheet; jsdom has no
 		// layout, so the first card reports its own width.
 		Object.defineProperty(scroller.firstElementChild!, 'offsetWidth', {
 			configurable: true,
-			value: 340
+			value: 360
 		});
 		const scrollBy = stubGeometry(scroller, {
 			scrollWidth: 1000,
@@ -113,7 +113,7 @@ describe('FormatCardCarousel', () => {
 			expect.objectContaining({ left: expect.any(Number) })
 		);
 		expect(scrollBy.mock.calls[0][0].left).toBeGreaterThan(0);
-		// One 340px step exceeds the 300px of travel: the row is at its end.
+		// One 360px step exceeds the 300px of travel: the row is at its end.
 		expect(next.disabled).toBe(true);
 		expect(previous.disabled).toBe(false);
 

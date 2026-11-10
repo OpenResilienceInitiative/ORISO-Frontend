@@ -713,9 +713,11 @@ export const FormatCardsScrollNarrow: Story = {
 export const FormatCardsScrollPhone: Story = {
 	name: 'Format cards — scroll row (phone, 390px)',
 	render: () => (
-		<MobileShell>
+		// Edge to edge, like the app on a phone: the panel's own 12px padding
+		// leaves 366px, enough for one 360px card.
+		<div style={{ background: '#fcf9f9', margin: '0 auto', maxWidth: 390 }}>
 			<FormatPicker compact={false} />
-		</MobileShell>
+		</div>
 	)
 };
 
