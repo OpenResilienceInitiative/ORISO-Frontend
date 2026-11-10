@@ -187,18 +187,55 @@ export const InfoGalleryTabletSelection: StoryObj = {
 		await userEvent.click(step(2));
 		await userEvent.tab();
 		await expect(step(3)).toHaveFocus();
+		let activationSettled = !('onscrollend' in track);
+		track.addEventListener(
+			'scrollend',
+			() => {
+				activationSettled = true;
+			},
+			{ once: true }
+		);
 		await userEvent.keyboard('{Enter}');
-		await waitFor(() => expect(track.scrollLeft).toBeCloseTo(end(), 0));
+		await waitFor(() => {
+			expect(track.scrollLeft).toBeCloseTo(end(), 0);
+			expect(activationSettled).toBe(true);
+		});
 		await expect(step(3)).toHaveAttribute('aria-current', 'true');
 		await expect(step(3)).toHaveFocus();
 
-		// A later real scroll need not be preceded by a wheel, touch or key
-		// event on this track, for example when using a scrollbar.
-		track.scrollTo({ left: 0, behavior: 'instant' });
-		await waitFor(() => {
-			expect(track.scrollLeft).toBe(0);
-			expect(step(1)).toHaveAttribute('aria-current', 'true');
-		});
+		const settledPosition = track.scrollLeft;
+		const keepingThirdVisible = Math.floor(
+			(width + cardCentre(thirdCard) - settledPosition) / 2
+		);
+		try {
+			// A width change can move the native snap position while keeping
+			// the chosen card visible. That move belongs to the resize.
+			track.style.width = `${keepingThirdVisible}px`;
+			await waitFor(() => {
+				expect(track.clientWidth).toBe(keepingThirdVisible);
+				expect(track.scrollLeft).not.toBe(settledPosition);
+			});
+			await new Promise<void>((resolve) =>
+				requestAnimationFrame(() =>
+					requestAnimationFrame(() => resolve())
+				)
+			);
+			await expect(cardCentre(thirdCard) - track.scrollLeft).toBeLessThan(
+				track.clientWidth
+			);
+			await expect(step(3)).toHaveAttribute('aria-current', 'true');
+
+			// A later real scroll can arrive without a wheel, touch or key
+			// event on this track, for example when using a scrollbar.
+			track.scrollTo({ left: 0, behavior: 'instant' });
+			await waitFor(() => {
+				expect(track.scrollLeft).toBe(0);
+				expect(step(1)).toHaveAttribute('aria-current', 'true');
+			});
+		} finally {
+			track.style.removeProperty('width');
+		}
+		await waitFor(() => expect(track.clientWidth).toBe(width));
 
 		await userEvent.click(step(2));
 		await expect(step(2)).toHaveAttribute('aria-current', 'true');

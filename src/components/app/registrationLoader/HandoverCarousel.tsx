@@ -163,7 +163,28 @@ export const HandoverCarousel = ({
 			);
 		};
 
+		const beginSettlement = () => {
+			settleDeadline = performance.now() + MAX_DOT_SCROLL_MS;
+			scheduleSettle();
+		};
+
+		let trackWidth = track.clientWidth;
+		const reconcileTrackWidth = () => {
+			const width = track.clientWidth;
+			if (width === trackWidth) return false;
+			trackWidth = width;
+			if (selectedCardIsVisible()) {
+				beginSettlement();
+			} else {
+				clearSettleTimer();
+				followScrollPosition();
+			}
+			return true;
+		};
+
 		const onScroll = () => {
+			// A resize can re-snap before or after the observer callback.
+			if (reconcileTrackWidth()) return;
 			// Protect explicit selection only while its movement is settling.
 			// The next independent scroll follows geometry regardless of input.
 			if (settleTimer !== undefined) {
@@ -189,8 +210,7 @@ export const HandoverCarousel = ({
 					card.offsetLeft - (track.clientWidth - card.offsetWidth) / 2
 				)
 			);
-			settleDeadline = performance.now() + MAX_DOT_SCROLL_MS;
-			scheduleSettle();
+			beginSettlement();
 			track.scrollTo({
 				left: target,
 				behavior: reducedMotion ? 'auto' : 'smooth'
@@ -204,17 +224,9 @@ export const HandoverCarousel = ({
 			}
 		};
 
-		let trackWidth = track.clientWidth;
 		const resizeObserver =
 			typeof ResizeObserver !== 'undefined'
-				? new ResizeObserver(() => {
-						const width = track.clientWidth;
-						if (width === trackWidth) return;
-						trackWidth = width;
-						if (selectedCardIsVisible()) return;
-						clearSettleTimer();
-						followScrollPosition();
-					})
+				? new ResizeObserver(reconcileTrackWidth)
 				: undefined;
 		resizeObserver?.observe(track);
 		track.addEventListener('scroll', onScroll, { passive: true });
