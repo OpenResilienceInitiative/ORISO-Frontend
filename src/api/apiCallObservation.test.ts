@@ -1,17 +1,17 @@
 // @vitest-environment oriso-jsdom
 import { describe, expect, it, vi } from 'vite-plus/test';
 
-const fetchData = vi.fn(async () => ({}));
-vi.mock('./fetchData', async (importOriginal) => ({
-	...(await importOriginal<typeof import('./fetchData')>()),
-	fetchData: (...args: unknown[]) => (fetchData as any)(...args)
-}));
-
 import { FETCH_ERRORS } from './fetchData';
 import {
 	apiEndCallObservation,
 	apiRegisterCallObservation
 } from './apiCallObservation';
+
+const fetchData = vi.fn(async () => ({}));
+vi.mock('./fetchData', async (importOriginal) => ({
+	...(await importOriginal<typeof import('./fetchData')>()),
+	fetchData: (...args: unknown[]) => (fetchData as any)(...args)
+}));
 
 describe('call observation api', () => {
 	it('does not treat a 204 as an error', async () => {

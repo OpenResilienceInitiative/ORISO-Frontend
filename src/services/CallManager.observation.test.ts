@@ -7,6 +7,13 @@ import {
 	vi
 } from 'vite-plus/test';
 
+import { callManager } from './CallManager';
+import { setMatrixClientServiceRef } from './matrixClientRegistry';
+import {
+	callEventListeners,
+	EVENT_SESSION_TEARDOWN
+} from '../utils/eventHandler';
+
 const { register, end } = vi.hoisted(() => ({
 	register: vi.fn(),
 	end: vi.fn()
@@ -15,13 +22,6 @@ vi.mock('../api/apiCallObservation', () => ({
 	apiRegisterCallObservation: register,
 	apiEndCallObservation: end
 }));
-
-import { callManager } from './CallManager';
-import { setMatrixClientServiceRef } from './matrixClientRegistry';
-import {
-	callEventListeners,
-	EVENT_SESSION_TEARDOWN
-} from '../utils/eventHandler';
 
 const SOURCE = '!group:oriso.example';
 const ROOM = '!call:oriso.example';
