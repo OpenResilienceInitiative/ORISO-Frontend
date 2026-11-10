@@ -38,7 +38,7 @@ const driftBudgets = {
 	en: { extraInLocale: 5, missingInLocale: 63 },
 	fr: { extraInLocale: 5, missingInLocale: 0 },
 	ru: { extraInLocale: 5, missingInLocale: 0 },
-	ti: { extraInLocale: 5, missingInLocale: 21 },
+	ti: { extraInLocale: 5, missingInLocale: 22 },
 	tr: { extraInLocale: 5, missingInLocale: 0 }
 } as const;
 

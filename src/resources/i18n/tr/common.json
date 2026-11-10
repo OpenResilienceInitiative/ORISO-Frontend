@@ -6699,6 +6699,9 @@
 		}
 	},
 	"directLink": {
+		"postcode": {
+			"helper": "Yalnızca istatistik içindir. Posta kodu ne danışmanlık merkezini ne de danışmanı belirler – bunu bağlantı belirler."
+		},
 		"card": {
 			"title": "Doğrudan bağlantı",
 			"subtitle": "Danışmanlık arayanlar için",

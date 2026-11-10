@@ -66,6 +66,11 @@ import {
 } from '../directLinkEntry/directLinkEntryFlow';
 import { DirectLinkCallEntry } from '../directLinkEntry/DirectLinkCallEntry';
 import { directLinkRegistration } from '../directLinkEntry/directLinkRegistration';
+import {
+	asksDirectLinkPostcode,
+	isDirectLinkPostcode
+} from '../directLinkEntry/directLinkPostcode';
+import { DirectLinkPostcodeField } from '../directLinkEntry/DirectLinkPostcodeField';
 
 /**
  * Landing page for invite links.
@@ -163,6 +168,7 @@ export const InviteLink = () => {
 	const [identity, setIdentity] = useState<Pseudonym | null>(null);
 	const [username, setUsername] = useState('');
 	const [password, setPassword] = useState('');
+	const [postcode, setPostcode] = useState('');
 	const registerThenLogin = useRegisterThenLogin();
 	/* The account exists and only the login after it failed (#1533). The
 	   identity stays on screen as it was — it is now the account's — and
@@ -171,6 +177,12 @@ export const InviteLink = () => {
 	const hidePasswordField = Boolean(
 		directLink?.context.temporaryAccount &&
 			directLink.context.hidePasswordField
+	);
+	/* #1795: a registered direct-link account enters a postcode (statistics
+	   only); a temporary one keeps the placeholder. After the account exists
+	   the step only retries the login. */
+	const askPostcode = Boolean(
+		directLink && !loginRetry && asksDirectLinkPostcode(directLink.context)
 	);
 	const hasRunRef = useRef(false);
 	/* Whether the page is still on screen. The lookups before a redeem can take
@@ -440,6 +452,7 @@ export const InviteLink = () => {
 
 	const handleContinue = useCallback(async () => {
 		if (!legacyRedeem || !username || !password) return;
+		if (askPostcode && !isDirectLinkPostcode(postcode)) return;
 		setStatus('registering');
 		try {
 			await registerThenLogin.submit(
@@ -449,7 +462,7 @@ export const InviteLink = () => {
 				(directLink && token
 					? directLinkRegistration(
 							directLink.context,
-							{ username, password },
+							{ username, password, postcode },
 							locale,
 							token
 						)
@@ -509,7 +522,9 @@ export const InviteLink = () => {
 		t,
 		registerThenLogin,
 		directLink,
-		token
+		token,
+		askPostcode,
+		postcode
 	]);
 
 	const diceLabel = t('anonymousChat.pseudonym.changeName');
@@ -682,6 +697,12 @@ export const InviteLink = () => {
 								}}
 							/>
 						)}
+						{askPostcode && (
+							<DirectLinkPostcodeField
+								value={postcode}
+								onChange={setPostcode}
+							/>
+						)}
 						{loginRetry && (
 							<Typography
 								role="status"
@@ -697,6 +718,9 @@ export const InviteLink = () => {
 							fullWidth
 							variant="contained"
 							onClick={handleContinue}
+							disabled={
+								askPostcode && !isDirectLinkPostcode(postcode)
+							}
 							sx={{
 								'mt': 3,
 								'textTransform': 'none',

@@ -122,6 +122,7 @@ const i18nMock = vi.hoisted(() => {
 		'inviteLink.paused': 'Dieser Link ist aktuell pausiert.',
 		'directLink.entry.haveAccount': 'Sie haben schon ein Konto? Anmelden',
 		'inviteLink.resume.retry': 'Erneut versuchen',
+		'registration.zipcode.label': 'Ihre Postleitzahl',
 		'registration.accountCreated.retry':
 			'Ihr Zugang wurde angelegt, aber die Anmeldung hat nicht geklappt. Bitte versuchen Sie es noch einmal.'
 	};
@@ -199,6 +200,11 @@ const renderInvite = () =>
 			</TenantContext.Provider>
 		</GlobalComponentContext.Provider>
 	);
+
+const typePostcode = (value: string) =>
+	fireEvent.change(screen.getByLabelText('Ihre Postleitzahl'), {
+		target: { value }
+	});
 
 const directContext = (chatType: string) => ({
 	tenantId: 1,
@@ -324,6 +330,7 @@ describe('InviteLink with a counsellor direct link (#1795)', () => {
 		renderInvite();
 
 		await screen.findByLabelText('User-ID');
+		typePostcode('10115');
 		const login = screen.getByRole('link', {
 			name: 'Sie haben schon ein Konto? Anmelden'
 		});
@@ -347,13 +354,55 @@ describe('InviteLink with a counsellor direct link (#1795)', () => {
 				mainTopicId: '11',
 				// ORISO-UserService#1486: the link and its temporary flag go along.
 				directLinkToken: 'token-123',
-				temporary: false
+				temporary: false,
+				postcode: '10115'
 			}),
 			false,
 			tenantValue.tenant,
 			expect.any(Function)
 		);
 		expect(redeemInviteLink).not.toHaveBeenCalled();
+	});
+
+	it('asks a registered chat guest for the postcode and waits for it (#1795)', async () => {
+		vi.mocked(apiGetInviteLinkContext).mockResolvedValueOnce(
+			directContext('CHAT') as any
+		);
+		renderInvite();
+		await screen.findByLabelText('User-ID');
+		const next = screen.getByRole('button', {
+			name: 'Weiter mit Auswahl'
+		}) as HTMLButtonElement;
+		expect(next.disabled).toBe(true);
+		typePostcode('1011');
+		expect(next.disabled).toBe(true);
+		typePostcode('10115');
+		expect(next.disabled).toBe(false);
+		expect(apiPostRegistration).not.toHaveBeenCalled();
+	});
+
+	it('does not ask a temporary chat guest, who keeps the placeholder (#1795)', async () => {
+		vi.mocked(apiGetInviteLinkContext).mockResolvedValueOnce({
+			...directContext('CHAT'),
+			temporaryAccount: true
+		} as any);
+		vi.mocked(apiStartDirectLinkConversation).mockResolvedValueOnce({
+			sessionId: 46,
+			medium: 'CHAT',
+			admission: 'DIRECT',
+			created: true
+		});
+		renderInvite();
+		await screen.findByLabelText('User-ID');
+		expect(screen.queryByLabelText('Ihre Postleitzahl')).toBeNull();
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Weiter mit Auswahl' })
+		);
+		await waitFor(() => expect(apiPostRegistration).toHaveBeenCalled());
+		expect(vi.mocked(apiPostRegistration).mock.calls[0][1]).toMatchObject({
+			postcode: '00000',
+			temporary: true
+		});
 	});
 
 	it('hides the password of a temporary chat guest when the platform says so', async () => {
@@ -403,6 +452,7 @@ describe('InviteLink with a counsellor direct link (#1795)', () => {
 		});
 		renderInvite();
 		await screen.findByLabelText('User-ID');
+		typePostcode('10115');
 		fireEvent.click(
 			screen.getByRole('button', { name: 'Weiter mit Auswahl' })
 		);
@@ -484,6 +534,7 @@ describe('InviteLink with a counsellor direct link (#1795)', () => {
 		renderInvite();
 
 		await screen.findByLabelText('User-ID');
+		typePostcode('10115');
 		fireEvent.click(
 			screen.getByRole('button', { name: 'Weiter mit Auswahl' })
 		);
@@ -505,6 +556,7 @@ describe('InviteLink with a counsellor direct link (#1795)', () => {
 		renderInvite();
 
 		await screen.findByLabelText('User-ID');
+		typePostcode('10115');
 		fireEvent.click(
 			screen.getByRole('button', { name: 'Weiter mit Auswahl' })
 		);
@@ -681,6 +733,7 @@ describe('InviteLink with a counsellor direct link (#1795)', () => {
 		renderInvite();
 
 		await screen.findByLabelText('User-ID');
+		typePostcode('10115');
 		fireEvent.click(
 			screen.getByRole('button', { name: 'Weiter mit Auswahl' })
 		);

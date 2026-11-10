@@ -6689,6 +6689,9 @@
 		}
 	},
 	"directLink": {
+		"postcode": {
+			"helper": "Nur für die Statistik. Die Postleitzahl bestimmt weder Beratungsstelle noch Beraterin – das legt der Link fest."
+		},
 		"card": {
 			"title": "Direktlink",
 			"subtitle": "Für Ratsuchende",

@@ -6614,6 +6614,9 @@
 		}
 	},
 	"directLink": {
+		"postcode": {
+			"helper": "For statistics only. The postcode does not choose the agency or the counsellor – the link decides that."
+		},
 		"card": {
 			"title": "Direct link",
 			"subtitle": "For people seeking advice",

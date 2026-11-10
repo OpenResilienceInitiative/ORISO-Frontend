@@ -19,6 +19,7 @@ import {
 	registrationScreenTitleSx
 } from '../../registration/registrationDesign/registrationDesign';
 import { CallEntryIdentity } from './CallEntryIdentity';
+import { isDirectLinkPostcode } from '../../directLinkEntry/directLinkPostcode';
 import {
 	useWaitingRoomConsent,
 	WaitingRoomConsentPanel
@@ -49,6 +50,8 @@ export interface CallEntryAccount {
 	username: string;
 	password: string;
 	identity: Pseudonym;
+	/** Only when the room asked for it (`askPostcode`, #1795). */
+	postcode?: string;
 }
 
 /** A level above this once means the microphone demonstrably hears. */
@@ -123,6 +126,11 @@ export interface CallEntryRoomProps {
 	 * accepts only a generated User-ID then (ORISO-UserService#1494).
 	 */
 	usernameEditable?: boolean;
+	/**
+	 * A registered direct-link account enters a postcode for statistics
+	 * (ORISO-Frontend#1795); the gate waits for five digits.
+	 */
+	askPostcode?: boolean;
 	/** An existing account only needs the device and consent checks. */
 	signedIn?: boolean;
 	loginLink?: React.ReactNode;
@@ -167,6 +175,7 @@ export const CallEntryRoom = ({
 	checkUsername,
 	hidePassword = false,
 	usernameEditable = true,
+	askPostcode = false,
 	signedIn = false,
 	loginLink
 }: CallEntryRoomProps) => {
@@ -181,6 +190,7 @@ export const CallEntryRoom = ({
 	const [password, setPassword] = useState(() =>
 		hidePassword && !initialPassword ? generatePassword() : initialPassword
 	);
+	const [postcode, setPostcode] = useState('');
 	const [micOn, setMicOn] = useState(initialMicOn);
 	const [cameraOn, setCameraOn] = useState(initialCameraOn);
 	const [speakerTest, setSpeakerTest] = useState(initialSpeakerTest);
@@ -259,7 +269,15 @@ export const CallEntryRoom = ({
 		{
 			done: allPasswordCriteriaPass(password),
 			missing: copy.missingPassword
-		}
+		},
+		...(askPostcode
+			? [
+					{
+						done: isDirectLinkPostcode(postcode),
+						missing: copy.missingPostcode
+					}
+				]
+			: [])
 	];
 	const conditions = [
 		...(signedIn ? [] : accountConditions),
@@ -362,6 +380,9 @@ export const CallEntryRoom = ({
 								usernameFeedback={usernameFeedback}
 								onUsernameBlur={() => setUsernameBlurred(true)}
 								usernameEditable={usernameEditable}
+								askPostcode={askPostcode}
+								postcode={postcode}
+								onPostcodeChange={setPostcode}
 							/>
 							{loginLink}
 						</Box>
@@ -482,7 +503,12 @@ export const CallEntryRoom = ({
 						}
 						beforeEnter={mayJoin}
 						onEnter={() =>
-							onJoin?.({ username, password, identity })
+							onJoin?.({
+								username,
+								password,
+								identity,
+								...(askPostcode ? { postcode } : {})
+							})
 						}
 						closing={closing ?? undefined}
 						label={copy.join[modality]}
