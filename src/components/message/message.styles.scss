@@ -916,6 +916,13 @@ $message-avatar-overlap: -19px;
 
 		p {
 			margin: 0;
+
+			// ORISO-Frontend#2135: a blank line in the composer is sent as an
+			// empty paragraph. Without content it has no height, so the gap the
+			// sender typed vanished. Give it exactly one line.
+			&:empty {
+				min-height: var(--message-line-height, 20px);
+			}
 		}
 
 		ul {
