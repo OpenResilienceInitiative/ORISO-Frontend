@@ -103,14 +103,10 @@ $cc-motion-easing: var(
 		padding-inline: 0;
 	}
 
-	&__cards {
-		/* Stretch so both formats end up the same height whatever their copy,
-		   centred in the panel (Figma 8482-30555). */
-		align-items: stretch;
-		display: flex;
-		flex-wrap: wrap;
-		gap: 33px;
-		justify-content: center;
+	/* The card row scrolls, so it takes the full width of the panel instead of
+	   the narrower inset the old wrapping layout needed. */
+	&__picker:has(.formatCardCarousel) {
+		padding-inline: 0;
 	}
 
 	&__cardText {
@@ -712,10 +708,6 @@ body.conversationCreate--active .navigation__wrapper {
 @media (width <= 900px) {
 	.conversationCreate {
 		padding: 8px 12px 24px;
-
-		&__cards {
-			flex-direction: column;
-		}
 	}
 
 	.formatCard {
@@ -1264,5 +1256,103 @@ body.conversationCreate--active .navigation__wrapper {
 			height: 20px;
 			width: 20px;
 		}
+	}
+}
+
+/* ---------------------------------------------------------------------------
+   Format card row (Figma "Create New Conversation", node 7633-34734).
+   Cards keep a fixed width and minimum height, tuned for a phone; the row
+   scrolls sideways and two round buttons underneath move it back and forth.
+   --------------------------------------------------------------------------- */
+
+$cc-card-width: 340px;
+$cc-card-min-height: 560px;
+
+.formatCardCarousel {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	min-width: 0;
+
+	&__scroller {
+		/* Stretch so every format ends up the same height whatever its copy. */
+		align-items: stretch;
+		display: flex;
+		gap: 24px;
+		overflow-x: auto;
+		overscroll-behavior-x: contain;
+		scroll-padding-inline: 4px;
+		scroll-snap-type: x mandatory;
+		scrollbar-width: none;
+
+		/* Room for card shadows and focus rings; the snap padding above keeps
+		   the first card at scroll position 0. */
+		padding: 4px;
+
+		&::-webkit-scrollbar {
+			display: none;
+		}
+
+		/* Centred while everything fits, scrolling from the start otherwise
+		   (`justify-content: center` would clip the first card). */
+		> :first-child {
+			margin-inline-start: auto;
+		}
+
+		> :last-child {
+			margin-inline-end: auto;
+		}
+
+		> * {
+			flex: 0 0 $cc-card-width;
+			min-height: $cc-card-min-height;
+			scroll-snap-align: start;
+			width: $cc-card-width;
+		}
+	}
+
+	&__controls {
+		display: flex;
+		justify-content: space-between;
+	}
+
+	&__button {
+		align-items: center;
+		background: $cc-secondary-container;
+		border: none;
+		border-radius: 28px;
+		color: $cc-on-primary;
+		cursor: pointer;
+		display: flex;
+		height: 56px;
+		justify-content: center;
+		transition: opacity $cc-motion-duration $cc-motion-easing;
+		width: 72px;
+
+		svg {
+			fill: currentcolor;
+			height: 24px;
+			width: 24px;
+		}
+
+		&:hover:not(:disabled) {
+			background: color-mix(in srgb, $cc-secondary-container 85%, black);
+		}
+
+		&:focus-visible {
+			outline: 3px solid $cc-primary;
+			outline-offset: 2px;
+		}
+
+		&:disabled {
+			cursor: default;
+			opacity: 0.38;
+		}
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.formatCardCarousel__button {
+		transition: none;
 	}
 }

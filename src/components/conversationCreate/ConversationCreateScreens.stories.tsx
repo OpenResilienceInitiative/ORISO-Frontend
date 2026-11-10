@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { expect, userEvent, within } from 'storybook/test';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { useRef, useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { useTranslation } from 'react-i18next';
@@ -17,6 +17,7 @@ import { SplitButton } from '../splitButton/SplitButton';
 import { BackPill } from './BackPill';
 import { CompactFormatRow } from './CompactFormatRow';
 import { FormatCard } from './FormatCard';
+import { FormatCardCarousel } from './FormatCardCarousel';
 import { PanelHeader } from './PanelHeader';
 import { RowMenu } from './RowMenu';
 import { ScreenIntro } from './ScreenIntro';
@@ -370,11 +371,11 @@ const FormatPicker = ({
 								/>
 							</div>
 						) : (
-							<div className="conversationCreate__cards">
+							<FormatCardCarousel>
 								<CircleCard menuOpen={menuOpen} />
 								<InternaCard preset="empty" />
 								{directLinkCard}
-							</div>
+							</FormatCardCarousel>
 						)}
 					</div>
 				</div>
@@ -652,6 +653,68 @@ export const FormatPickerMobile: Story = {
 	render: () => (
 		<MobileShell>
 			<FormatPicker compact />
+		</MobileShell>
+	)
+};
+
+/**
+ * The cards keep their size and the row scrolls: in a pane too narrow for all
+ * three, the round arrows below move the row one card at a time and are
+ * disabled at the ends (Figma 7633-34734).
+ */
+export const FormatCardsScrollNarrow: Story = {
+	name: 'Format cards — scroll row with arrow buttons (narrow pane)',
+	render: () => (
+		<div style={{ background: '#e9e6e6', padding: 16 }}>
+			<div
+				style={{
+					background: '#fcf9f9',
+					borderRadius: 32,
+					margin: '0 auto',
+					maxWidth: 720,
+					overflow: 'hidden'
+				}}
+			>
+				<FormatPicker compact={false} />
+			</div>
+		</div>
+	),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const previous = await canvas.findByRole('button', {
+			name: /Vorheriges Gesprächsformat|Previous conversation format|cardsPrevious/
+		});
+		const next = await canvas.findByRole('button', {
+			name: /Nächstes Gesprächsformat|Next conversation format|cardsNext/
+		});
+		await expect(previous).toBeDisabled();
+		await expect(next).toBeEnabled();
+		await userEvent.click(next);
+		await waitFor(() => expect(previous).toBeEnabled());
+		const scroller = canvasElement.querySelector(
+			'.formatCardCarousel__scroller'
+		) as HTMLElement;
+		await waitFor(() => expect(scroller.scrollLeft).toBeGreaterThan(0));
+		// Keyboard: the arrow is a real button, Enter moves the row back.
+		previous.focus();
+		await userEvent.keyboard('{Enter}');
+		await waitFor(() => expect(previous).toBeDisabled());
+		// No label in the cards is cut off.
+		const cut = Array.from(
+			canvasElement.querySelectorAll<HTMLElement>(
+				'.formatCard button, .formatCard [class*="__label"]'
+			)
+		).filter((el) => el.scrollWidth > el.clientWidth);
+		await expect(cut).toHaveLength(0);
+	}
+};
+
+/** Phone width: one card plus a peek of the next one, arrows underneath. */
+export const FormatCardsScrollPhone: Story = {
+	name: 'Format cards — scroll row (phone, 390px)',
+	render: () => (
+		<MobileShell>
+			<FormatPicker compact={false} />
 		</MobileShell>
 	)
 };
