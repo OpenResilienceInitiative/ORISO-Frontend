@@ -6794,5 +6794,80 @@
 			"title": "Wir konnten Ihr Konto nicht prüfen",
 			"text": "Ihre Nachricht ist noch nicht gesendet und bleibt im Eingabefeld. Bitte prüfen Sie Ihre Verbindung und senden Sie erneut."
 		}
+	},
+	"managePeople": {
+		"self": "(Sie)",
+		"loading": "Wird geladen …",
+		"working": "Wird ausgeführt …",
+		"retry": "Erneut versuchen",
+		"cancel": "Abbrechen",
+		"search": "Nach Namen suchen",
+		"noMatches": "Niemand passt zu dieser Suche.",
+		"otherPerson": "Andere Person wählen",
+		"since": "Seit {{date}}",
+		"role": {
+			"owner": "Besitzer:in",
+			"coModerator": "Co-Moderation"
+		},
+		"standing": {
+			"badge": "Fest zugewiesen",
+			"hint": "Vom Admin der Beratungsstelle festgelegt. Supervision bleibt immer an: Sie können die Person wechseln, aber nicht ersatzlos entfernen.",
+			"noReplacement": "Vom Admin der Beratungsstelle festgelegt. Gerade kann niemand sonst an dieser Beratungsstelle übernehmen."
+		},
+		"add": {
+			"action": "Hinzufügen",
+			"labelFor": "{{name}} hinzufügen",
+			"confirm": "{{name}} hinzufügen"
+		},
+		"remove": {
+			"action": "Entfernen",
+			"labelFor": "{{name}} entfernen",
+			"confirm": "Wirklich entfernen?"
+		},
+		"replace": {
+			"action": "Wechseln",
+			"labelFor": "{{name}} wechseln",
+			"title": "Wer soll {{name}} ablösen?",
+			"confirm": "Zu {{name}} wechseln",
+			"pick": "Auswählen",
+			"pickLabelFor": "{{name}} auswählen"
+		},
+		"error": {
+			"members": "Die Liste konnte nicht geladen werden.",
+			"candidates": "Die verfügbaren Personen konnten nicht geladen werden.",
+			"add": "Die Person konnte nicht hinzugefügt werden. Bitte versuchen Sie es erneut.",
+			"remove": "Die Person konnte nicht entfernt werden. Bitte versuchen Sie es erneut.",
+			"replace": "Der Wechsel hat nicht geklappt. Bitte versuchen Sie es erneut."
+		},
+		"supervision": {
+			"title": "Supervision verwalten",
+			"description": "Supervisor:innen lesen in diesem Fall mit und sprechen mit Ihnen im Supervisions-Chat.",
+			"membersTitle": "Aktuelle Supervision",
+			"emptyMembers": "Dieser Fall hat noch keine Supervisor:in.",
+			"addTitle": "Supervisor:in hinzufügen",
+			"emptyCandidates": "An dieser Beratungsstelle ist sonst niemand als Supervisor:in markiert. Das legt der Admin der Beratungsstelle fest.",
+			"reasonLabel": "Grund für die Supervision",
+			"reasonPlaceholder": "Warum soll diese Person den Fall supervidieren?",
+			"reasonMissing": "Bitte geben Sie einen Grund an."
+		},
+		"internalChat": {
+			"title": "Personen verwalten",
+			"description": "Alle in diesem internen Chat können Kolleg:innen dazuholen. Nur die Besitzer:in kann Personen entfernen.",
+			"membersTitle": "In diesem Chat",
+			"emptyMembers": "In diesem Chat ist noch niemand.",
+			"addTitle": "Kolleg:in hinzufügen",
+			"addNote": "Neue Personen sehen Nachrichten erst ab ihrem Beitritt, nicht die früheren.",
+			"emptyCandidates": "Es können keine weiteren Kolleg:innen zu diesem Chat hinzugefügt werden."
+		},
+		"groupChat": {
+			"title": "Personen verwalten",
+			"description": "Sehen Sie, wer diese Gruppe leitet, und teilen Sie den Link mit allen, die teilnehmen möchten.",
+			"membersTitle": "Moderation",
+			"emptyMembers": "Diese Gruppe hat noch keine Moderation.",
+			"addTitle": "Co-Moderation hinzufügen",
+			"emptyCandidates": "Es können keine weiteren Kolleg:innen zu dieser Gruppe hinzugefügt werden.",
+			"inviteTitle": "Personen einladen",
+			"inviteDescription": "Ratsuchende treten über diesen Link oder QR-Code bei."
+		}
 	}
 }

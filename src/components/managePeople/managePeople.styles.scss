@@ -1,0 +1,250 @@
+/* The one "manage people" dialog. Only `--m3-*` roles, so it follows every
+   tenant's scheme the same way the surrounding `M3Dialog` does. */
+
+.managePeople {
+	.m3Dialog__body {
+		text-align: left;
+	}
+
+	&__section {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+
+		& + & {
+			margin-top: 24px;
+		}
+	}
+
+	&__headingRow {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 8px;
+	}
+
+	&__heading {
+		margin: 0;
+		color: var(--m3-on-surface, #1b1b1c);
+		font-size: 16px;
+		font-weight: 500;
+		line-height: 24px;
+	}
+
+	&__note,
+	&__state,
+	&__personMeta {
+		margin: 0;
+		color: var(--m3-on-surface-variant, #444748);
+		font-size: 14px;
+		line-height: 20px;
+	}
+
+	&__personMeta {
+		font-size: 12px;
+		line-height: 16px;
+		overflow-wrap: anywhere;
+	}
+
+	&__list {
+		display: flex;
+		flex-direction: column;
+		margin: 0;
+		padding: 0;
+		border-radius: 16px;
+		background: var(--m3-surface-container-lowest, #fff);
+		list-style: none;
+
+		> li + li {
+			border-top: 1px solid var(--m3-outline-variant, #c4c7c8);
+		}
+	}
+
+	&__person {
+		display: flex;
+		align-items: flex-start;
+		padding: 12px 16px;
+		gap: 12px;
+	}
+
+	&__personText {
+		display: flex;
+		min-width: 0;
+		flex: 1;
+		flex-direction: column;
+		gap: 4px;
+	}
+
+	&__personName {
+		display: flex;
+		min-width: 0;
+		flex-wrap: wrap;
+		align-items: center;
+		color: var(--m3-on-surface, #1b1b1c);
+		font-size: 16px;
+		line-height: 24px;
+		gap: 4px 8px;
+		overflow-wrap: anywhere;
+		text-align: left;
+	}
+
+	&__badge {
+		display: inline-flex;
+		padding: 0 8px;
+		border-radius: 8px;
+		background: var(--m3-secondary-container, #dfe3eb);
+		color: var(--m3-on-secondary-container, #1b1b1c);
+		font-size: 12px;
+		font-weight: 500;
+		line-height: 20px;
+		white-space: nowrap;
+	}
+
+	&__personActions {
+		display: flex;
+		flex-shrink: 0;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: flex-end;
+		gap: 4px;
+	}
+
+	&__confirmText {
+		color: var(--m3-on-surface, #1b1b1c);
+		font-size: 14px;
+		line-height: 20px;
+	}
+
+	&__action {
+		display: inline-flex;
+		min-height: 40px;
+		align-items: center;
+		padding: 0 12px;
+		border: 0;
+		border-radius: 20px;
+		background: transparent;
+		color: var(--oriso-primary-text, var(--m3-primary));
+		cursor: pointer;
+		font-size: 14px;
+		font-weight: 500;
+		gap: 8px;
+		line-height: 20px;
+
+		&:hover:not(:disabled) {
+			background: color-mix(in srgb, currentColor 8%, transparent);
+		}
+
+		&:focus-visible {
+			outline: 2px solid currentColor;
+			outline-offset: 2px;
+		}
+
+		&:disabled {
+			color: color-mix(
+				in srgb,
+				var(--m3-on-surface, #1b1b1c) 38%,
+				transparent
+			);
+			cursor: default;
+		}
+
+		&--danger {
+			color: var(--m3-error, #ba1a1a);
+		}
+
+		&--primary {
+			padding: 0 24px;
+			background: var(--m3-primary);
+			color: var(--m3-on-primary, #fff);
+
+			&:hover:not(:disabled) {
+				background: color-mix(
+					in srgb,
+					var(--m3-primary) 92%,
+					var(--m3-on-primary, #fff)
+				);
+			}
+		}
+	}
+
+	&__candidate {
+		display: flex;
+		width: 100%;
+		align-items: center;
+		padding: 8px 16px;
+		border: 0;
+		background: transparent;
+		color: inherit;
+		cursor: pointer;
+		gap: 12px;
+		text-align: left;
+
+		&:hover:not(:disabled) {
+			background: color-mix(
+				in srgb,
+				var(--m3-on-surface, #1b1b1c) 8%,
+				transparent
+			);
+		}
+
+		&:focus-visible {
+			outline: 2px solid var(--m3-primary);
+			outline-offset: -2px;
+		}
+
+		&:disabled {
+			cursor: default;
+		}
+
+		.managePeople__personName {
+			flex: 1;
+		}
+	}
+
+	&__list > li:first-child &__candidate {
+		border-radius: 16px 16px 0 0;
+	}
+
+	&__list > li:last-child &__candidate {
+		border-radius: 0 0 16px 16px;
+	}
+
+	&__list > li:only-child &__candidate {
+		border-radius: 16px;
+	}
+
+	&__candidateAction {
+		flex-shrink: 0;
+		color: var(--oriso-primary-text, var(--m3-primary));
+		font-size: 14px;
+		font-weight: 500;
+		line-height: 20px;
+	}
+
+	&__chosen {
+		display: flex;
+		flex-direction: column;
+		padding-bottom: 16px;
+		border-radius: 16px;
+		background: var(--m3-surface-container-lowest, #fff);
+		gap: 12px;
+
+		.MuiFormControl-root {
+			width: auto;
+			margin: 0 16px;
+		}
+	}
+
+	&__chosenActions {
+		display: flex;
+		justify-content: flex-end;
+		padding: 0 16px;
+	}
+
+	&__error {
+		margin: 16px 0 0;
+		color: var(--m3-error, #ba1a1a);
+		font-size: 14px;
+		line-height: 20px;
+	}
+}

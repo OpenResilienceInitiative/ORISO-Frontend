@@ -6719,5 +6719,80 @@
 			"title": "We could not check your account",
 			"text": "Your message has not been sent yet and stays in the input field. Please check your connection and send it again."
 		}
+	},
+	"managePeople": {
+		"self": "(you)",
+		"loading": "Loading…",
+		"working": "Working…",
+		"retry": "Try again",
+		"cancel": "Cancel",
+		"search": "Search by name",
+		"noMatches": "Nobody matches this search.",
+		"otherPerson": "Choose someone else",
+		"since": "Since {{date}}",
+		"role": {
+			"owner": "Owner",
+			"coModerator": "Co-moderator"
+		},
+		"standing": {
+			"badge": "Permanently assigned",
+			"hint": "Set by the agency admin. Supervision stays on, so this person can be replaced but not simply removed.",
+			"noReplacement": "Set by the agency admin. Nobody else at this counselling centre can take over at the moment."
+		},
+		"add": {
+			"action": "Add",
+			"labelFor": "Add {{name}}",
+			"confirm": "Add {{name}}"
+		},
+		"remove": {
+			"action": "Remove",
+			"labelFor": "Remove {{name}}",
+			"confirm": "Really remove?"
+		},
+		"replace": {
+			"action": "Replace",
+			"labelFor": "Replace {{name}}",
+			"title": "Who should take over from {{name}}?",
+			"confirm": "Replace with {{name}}",
+			"pick": "Choose",
+			"pickLabelFor": "Choose {{name}}"
+		},
+		"error": {
+			"members": "The list could not be loaded.",
+			"candidates": "The available people could not be loaded.",
+			"add": "This person could not be added. Please try again.",
+			"remove": "This person could not be removed. Please try again.",
+			"replace": "The replacement did not work. Please try again."
+		},
+		"supervision": {
+			"title": "Manage supervision",
+			"description": "Supervisors read along in this case and talk to you in the supervision chat.",
+			"membersTitle": "Current supervision",
+			"emptyMembers": "This case has no supervisor yet.",
+			"addTitle": "Add a supervisor",
+			"emptyCandidates": "Nobody else at this counselling centre is marked as a supervisor. The agency admin decides who is.",
+			"reasonLabel": "Reason for supervision",
+			"reasonPlaceholder": "Why should this person supervise the case?",
+			"reasonMissing": "Please enter a reason."
+		},
+		"internalChat": {
+			"title": "Manage people",
+			"description": "Everyone in this internal chat can bring in colleagues. Only the owner can remove people.",
+			"membersTitle": "In this chat",
+			"emptyMembers": "Nobody is in this chat yet.",
+			"addTitle": "Add a colleague",
+			"addNote": "New people see messages from the moment they join, not the earlier ones.",
+			"emptyCandidates": "No other colleagues can be added to this chat."
+		},
+		"groupChat": {
+			"title": "Manage people",
+			"description": "See who runs this group, and share the link with people who want to join.",
+			"membersTitle": "Moderation",
+			"emptyMembers": "Nobody moderates this group yet.",
+			"addTitle": "Add a co-moderator",
+			"emptyCandidates": "No other colleagues can be added to this group.",
+			"inviteTitle": "Invite people",
+			"inviteDescription": "Advice seekers join through this link or QR code."
+		}
 	}
 }
