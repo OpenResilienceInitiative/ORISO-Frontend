@@ -1,6 +1,6 @@
 import { expectWaitingRoomLayout } from '../app/registrationLoader/waitingRoomLayoutContract';
 import * as React from 'react';
-import { expect, waitFor, within } from 'storybook/test';
+import { expect, fireEvent, userEvent, waitFor, within } from 'storybook/test';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Box } from '@mui/material';
 import { GroupInfoGallery } from './entryRoom/GroupInfoGallery';
@@ -13,7 +13,8 @@ import {
 } from '../../globalState/provider/LegalLinksProvider';
 import {
 	desktop1440Globals,
-	phone375Globals
+	phone375Globals,
+	tablet820Globals
 } from '../message/messageStoryShell';
 
 /**
@@ -135,6 +136,88 @@ export const InfoGalleryMobile: StoryObj = {
 			description: {
 				story: 'Auf 375 pt: dieselben Karten, aber hoch statt quadratisch — das Karussell schaltet selbst um. Die Karten reichen bis an die Ränder, damit sichtbar bleibt, dass es weitergeht.'
 			}
+		}
+	}
+};
+
+export const InfoGalleryTabletSelection: StoryObj = {
+	name: 'Tablet — visible card and current step agree',
+	globals: tablet820Globals,
+	render: () => (
+		<Box
+			sx={{
+				width: 'min(772px, 100%)',
+				height: '100vh',
+				mx: 'auto',
+				display: 'flex',
+				flexDirection: 'column'
+			}}
+		>
+			<GroupInfoGallery onBack={() => undefined} />
+		</Box>
+	),
+	play: async ({ canvasElement, canvas }) => {
+		await expectWaitingRoomLayout(canvasElement, {
+			frame: false,
+			cards: true
+		});
+		const track = canvas.getByRole('list');
+		const step = (position: number) =>
+			canvas.getByRole('button', {
+				name: `Zu Schritt ${position} von 3`
+			});
+		const end = () => track.scrollWidth - track.clientWidth;
+		await expect(track.clientWidth).toBe(772);
+		await expect(step(1)).toHaveAttribute('aria-current', 'true');
+		await userEvent.click(step(2));
+		await expect(step(2)).toHaveAttribute('aria-current', 'true');
+		await userEvent.click(canvas.getAllByRole('img')[0]);
+		await fireEvent.scroll(track);
+		await expect(step(2)).toHaveAttribute('aria-current', 'true');
+
+		step(3).focus();
+		await userEvent.keyboard('{Enter}');
+		await waitFor(() => expect(track.scrollLeft).toBeCloseTo(end(), 0));
+		await expect(step(3)).toHaveAttribute('aria-current', 'true');
+		await expect(step(3)).toHaveFocus();
+
+		// A synthetic wheel event does not scroll by default. Move the native
+		// track to exercise the following user scroll and its scroll listener.
+		await fireEvent.wheel(track, { deltaX: -400 });
+		track.scrollTo({ left: 0, behavior: 'instant' });
+		await waitFor(() =>
+			expect(step(1)).toHaveAttribute('aria-current', 'true')
+		);
+		await fireEvent.wheel(track, { deltaX: 400 });
+		track.scrollTo({ left: end(), behavior: 'instant' });
+		await waitFor(() =>
+			expect(step(3)).toHaveAttribute('aria-current', 'true')
+		);
+
+		await fireEvent.wheel(track, { deltaX: -400 });
+		track.scrollTo({ left: 0, behavior: 'instant' });
+		await waitFor(() =>
+			expect(step(1)).toHaveAttribute('aria-current', 'true')
+		);
+		await userEvent.click(step(2));
+		await expect(step(2)).toHaveAttribute('aria-current', 'true');
+		try {
+			track.style.width = '770px';
+			await waitFor(() => expect(track.clientWidth).toBe(770));
+			await new Promise<void>((resolve) =>
+				requestAnimationFrame(() =>
+					requestAnimationFrame(() => resolve())
+				)
+			);
+			await expect(step(2)).toHaveAttribute('aria-current', 'true');
+
+			track.style.width = '358px';
+			await waitFor(() => {
+				expect(track.clientWidth).toBe(358);
+				expect(step(1)).toHaveAttribute('aria-current', 'true');
+			});
+		} finally {
+			track.style.removeProperty('width');
 		}
 	}
 };

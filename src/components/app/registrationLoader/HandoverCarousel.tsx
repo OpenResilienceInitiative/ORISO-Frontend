@@ -77,6 +77,7 @@ export const HandoverCarousel = ({
 	const { t } = useTranslation();
 	const trackRef = useRef<HTMLDivElement>(null);
 	const [activeIndex, setActiveIndex] = useState(0);
+	const selectedByDot = useRef<number | null>(null);
 	const settledCount = useRef(0);
 
 	const noteSettled = useCallback(() => {
@@ -93,12 +94,19 @@ export const HandoverCarousel = ({
 		}
 
 		const onScroll = () => {
-			// Read the real card positions rather than an averaged card
-			// width: where several cards fit at once, the browser clamps
-			// scrollLeft well before the averaged target for the last card,
-			// and the dot then reported a step the user was not on.
+			// Programmatic smooth scrolling and snapping must not overwrite the
+			// selected dot when several cards fit in the same scroll position.
+			if (selectedByDot.current !== null) return;
 			const cards = Array.from(track.children) as HTMLElement[];
 			if (!cards.length) {
+				return;
+			}
+			if (track.scrollLeft <= 1) {
+				setActiveIndex(0);
+				return;
+			}
+			if (track.scrollLeft >= track.scrollWidth - track.clientWidth - 1) {
+				setActiveIndex(cards.length - 1);
 				return;
 			}
 			const centre = track.scrollLeft + track.clientWidth / 2;
@@ -115,9 +123,43 @@ export const HandoverCarousel = ({
 			setActiveIndex(nearest);
 		};
 
+		let trackWidth = track.clientWidth;
+		const resizeObserver =
+			typeof ResizeObserver !== 'undefined'
+				? new ResizeObserver(() => {
+						const width = track.clientWidth;
+						if (width === trackWidth) return;
+						trackWidth = width;
+
+						const selected = selectedByDot.current;
+						const card =
+							selected === null ? null : track.children[selected];
+						if (card) {
+							const trackLeft =
+								track.getBoundingClientRect().left;
+							const bounds = card.getBoundingClientRect();
+							const centre = bounds.left + bounds.width / 2;
+							if (
+								centre >= trackLeft &&
+								centre <= trackLeft + width
+							)
+								return;
+						}
+						selectedByDot.current = null;
+						onScroll();
+					})
+				: undefined;
+		resizeObserver?.observe(track);
 		track.addEventListener('scroll', onScroll, { passive: true });
-		return () => track.removeEventListener('scroll', onScroll);
+		return () => {
+			resizeObserver?.disconnect();
+			track.removeEventListener('scroll', onScroll);
+		};
 	}, []);
+
+	const resumeScrollTracking = () => {
+		selectedByDot.current = null;
+	};
 
 	const scrollTo = (index: number) => {
 		const track = trackRef.current;
@@ -125,6 +167,8 @@ export const HandoverCarousel = ({
 		if (!track || !card) {
 			return;
 		}
+		selectedByDot.current = index;
+		setActiveIndex(index);
 		const reducedMotion =
 			typeof window.matchMedia === 'function' &&
 			window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -152,6 +196,19 @@ export const HandoverCarousel = ({
 				ref={trackRef}
 				component="ul"
 				data-cy="handover-carousel"
+				onTouchMove={resumeScrollTracking}
+				onWheel={(event) => {
+					if (event.deltaX || event.shiftKey) resumeScrollTracking();
+				}}
+				onKeyDown={(event) => {
+					if (
+						['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(
+							event.key
+						)
+					) {
+						resumeScrollTracking();
+					}
+				}}
 				sx={{
 					'flex': 1,
 					'minHeight': 0,
