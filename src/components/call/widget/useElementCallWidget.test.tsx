@@ -1282,6 +1282,23 @@ describe('useElementCallWidget', () => {
 			).toBe(false);
 		});
 
+		it('passes the kind of conversation, not its size (S6b)', async () => {
+			const group = await mount({ callType: 'group' });
+			expect(
+				fragment(group.result.current.url!).get('orisoCallType')
+			).toBe('group');
+			group.unmount();
+			const single = await mount({ callType: 'single' });
+			expect(
+				fragment(single.result.current.url!).get('orisoCallType')
+			).toBe('single');
+			single.unmount();
+			const unknown = await mount({});
+			expect(
+				fragment(unknown.result.current.url!).has('orisoCallType')
+			).toBe(false);
+		});
+
 		it('runs minimise and toggle_fullscreen and answers {}', async () => {
 			const onWindowCommand = vi.fn();
 			const { api } = await mount({ hostChrome: true, onWindowCommand });

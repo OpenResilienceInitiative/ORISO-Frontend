@@ -338,6 +338,16 @@ describe('GroupCallWidget Storybook harness', () => {
 			).toBeTruthy();
 		});
 
+		it('tells the call a group conversation is a group (S6b)', async () => {
+			const { iframe } = await renderActiveCall();
+			// The seeded call is a group call.
+			expect(
+				new URLSearchParams(new URL(iframe.src).hash.slice(2)).get(
+					'orisoCallType'
+				)
+			).toBe('group');
+		});
+
 		it('minimises into the dock when the call asks', async () => {
 			const { view } = await renderActiveCall();
 			const { api, detail } = windowAction('minimise');

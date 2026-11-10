@@ -76,7 +76,17 @@ export interface ElementCallWidgetOptions {
 	 * the right state.
 	 */
 	windowState?: OrisoWindowState | null;
+	/**
+	 * Call design S6b (`orisoCallType`): the kind of conversation, which
+	 * picks the call's first view — `group` starts in the circle, `single`
+	 * in the one-to-one view — whatever the head count at the start.
+	 * Left off the URL when unknown.
+	 */
+	callType?: OrisoCallType | null;
 }
+
+/** `orisoCallType` values (call design LEDGER). */
+export type OrisoCallType = 'group' | 'single';
 
 /** `org.oriso.call.window` commands (call design LEDGER). */
 export type OrisoWindowCommand = 'minimise' | 'toggle_fullscreen';
@@ -308,7 +318,8 @@ export const useElementCallWidget = (
 		callStart = null,
 		hostChrome = false,
 		onWindowCommand,
-		windowState = null
+		windowState = null,
+		callType = null
 	}: ElementCallWidgetOptions
 ): ElementCallWidget => {
 	// By value: an equal choice in a new object must not rebuild the URL.
@@ -421,6 +432,8 @@ export const useElementCallWidget = (
 						: {}),
 					// Call design S2: the call owns the window buttons.
 					...(hostChrome ? { orisoHostChrome: '1' } : {}),
+					// Call design S6b: the conversation's kind, not its size.
+					...(callType ? { orisoCallType: callType } : {}),
 					intent: 'start_call',
 					callIntent: isVideo ? 'video' : 'audio',
 					// The pre-join choice (ElementCall#116): on/off and the
@@ -436,7 +449,15 @@ export const useElementCallWidget = (
 
 		void prepare();
 		return () => preparation.abort();
-	}, [client, roomId, isVideo, skipLobby, callStartQuery, hostChrome]);
+	}, [
+		client,
+		roomId,
+		isVideo,
+		skipLobby,
+		callStartQuery,
+		hostChrome,
+		callType
+	]);
 
 	const attachIframe = useCallback(
 		(iframe: HTMLIFrameElement | null) => {

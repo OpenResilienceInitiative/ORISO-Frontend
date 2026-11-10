@@ -290,7 +290,12 @@ export const GroupCallWidget: React.FC = () => {
 			callStart,
 			hostChrome,
 			onWindowCommand,
-			windowState
+			windowState,
+			// Call design S6b: a group conversation starts in the circle even
+			// with two people in it; a 1:1 session in the one-to-one view.
+			// `isGroup` is the conversation's kind as the caller decided it
+			// (group chat, or a supervision room with a second supervisor).
+			callType: callData ? (callData.isGroup ? 'group' : 'single') : null
 		}
 	);
 
