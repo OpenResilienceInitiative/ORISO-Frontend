@@ -698,7 +698,13 @@ export const SessionsList = ({
 			});
 		}
 
-		return getConsultantSessionList(0)
+		const request = getConsultantSessionList(0);
+		// The refresh now owns the list request. The request it replaced (the
+		// first page, a chip switch or "load more") may not clear the loading
+		// card any more, so this one must, or a skeleton stays below the rows
+		// as an empty "ghost chat" (#2136).
+		const controller = abortController.current;
+		return request
 			.then(({ sessions, total }) => {
 				dispatch({
 					type: SET_SESSIONS,
@@ -708,7 +714,15 @@ export const SessionsList = ({
 				setTotalItems(total);
 				setCurrentOffset(0);
 			})
-			.catch(() => {});
+			.catch(() => {})
+			.finally(() => {
+				if (
+					abortController.current === controller &&
+					!controller.signal.aborted
+				) {
+					setIsLoading(false);
+				}
+			});
 	}, [dispatch, getConsultantSessionList, type, userData]);
 
 	/*
