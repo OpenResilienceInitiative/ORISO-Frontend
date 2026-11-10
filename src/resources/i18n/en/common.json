@@ -2476,7 +2476,7 @@
 			},
 			"caseHandoverOfferSent": {
 				"title": "Case handover offer sent",
-				"text": "The offer is waiting for the colleague's answer. It can be withdrawn as long as the handover is not complete."
+				"text": "You offered to hand over the case to a colleague."
 			},
 			"caseHandoverOfferDeclined": {
 				"title": "Case handover offer declined",
@@ -2488,7 +2488,7 @@
 			},
 			"caseHandoverOfferReceived": {
 				"title": "Case handover offer",
-				"text": "{{fromConsultantName}} wants to hand this consultation over to you. Review the request before opening the conversation.",
+				"text": "{{fromConsultantName}} sent you an offer to take over this consultation.",
 				"coAccess": {
 					"title": "Temporary access offer",
 					"text": "{{fromConsultantName}} offers you temporary access to this consultation. The current counsellor stays responsible."

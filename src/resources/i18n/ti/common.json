@@ -2453,7 +2453,7 @@
 			},
 			"caseHandoverOfferSent": {
 				"title": "ቅድመ-ሓሳብ ምትሕልላፍ ጥንቅቕ ተላኢኹ",
-				"text": "እቲ ቅድመ-ሓሳብ ምላሽ እቲ መሳርሕቲ ይጽበ ኣሎ። እቲ ምርካብ ክሳብ ዘይተዛዘመ ክምለስ ይኽእል።"
+				"text": "እቲ ቅድመ-ሓሳብ ናብ መሳርሕቲ ተላኢኹ።"
 			},
 			"caseHandoverOfferDeclined": {
 				"title": "ቅድመ-ሓሳብ ምትሕልላፍ ተነጺጉ",
@@ -2465,7 +2465,7 @@
 			},
 			"caseHandoverOfferReceived": {
 				"title": "ናይ ጉዳይ ምትሕልላፍ ሓሳብ",
-				"text": "{{fromConsultantName}} ነዚ ምኽሪ ናባኹም ከሕልፎ ይደሊ ኣሎ። ነቲ ዝርርብ ቅድሚ ምኽፋትኩም ነቲ ሕቶ ርኣይዎ።",
+				"text": "ካብ {{fromConsultantName}} ናይዚ ምኽሪ ምትሕልላፍ ቅድመ-ሓሳብ በጺሑኩም።",
 				"coAccess": {
 					"title": "ናይ ግዝያዊ ተበጻሕነት ሓሳብ",
 					"text": "{{fromConsultantName}} ናብዚ ምኽሪ ግዝያዊ ተበጻሕነት የቕርበልኩም ኣሎ። ሓላፍነት ምስቲ ሕጂ ዘሎ ኣማኻሪ ይተርፍ።"
