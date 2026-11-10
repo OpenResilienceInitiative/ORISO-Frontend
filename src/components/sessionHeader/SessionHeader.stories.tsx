@@ -216,10 +216,12 @@ const buildSingleSession = (
 const buildGroupSession = ({
 	active = true,
 	assignedAgencies = [],
+	repetitive = false,
 	subscribed = true
 }: {
 	active?: boolean;
 	assignedAgencies?: { id: number; name: string }[];
+	repetitive?: boolean;
 	subscribed?: boolean;
 } = {}): ExtendedSessionInterface =>
 	buildExtendedSession(
@@ -247,7 +249,7 @@ const buildGroupSession = ({
 				messageDate: 1773822900,
 				messagesRead: true,
 				moderators: [],
-				repetitive: false,
+				repetitive,
 				startDate: '2026-03-18',
 				startTime: '10:00',
 				subscribed,
@@ -1269,6 +1271,7 @@ const groupMenuPreset = (active = true, subscribed = true) => ({
 	session: buildGroupSession({
 		active,
 		assignedAgencies: groupMenuAgency,
+		repetitive: true,
 		subscribed
 	}),
 	members: makeMembers(4)
