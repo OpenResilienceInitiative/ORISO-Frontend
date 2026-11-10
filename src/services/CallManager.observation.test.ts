@@ -101,6 +101,18 @@ describe('call observation across sign-out', () => {
 		expect(register).not.toHaveBeenCalled();
 	});
 
+	it('stops renewing once the tracked call has ended', async () => {
+		sendEvent.mockResolvedValue({ event_id: '$invite' });
+		callManager.startCall(SOURCE, true, true);
+		await vi.waitFor(() => expect(register).toHaveBeenCalledTimes(1));
+		const callId = callManager.getCurrentCall()!.callId;
+		const { callLifecycleTracker } = await import('./callLifecycleTracker');
+		callLifecycleTracker.finish(callId);
+		vi.useFakeTimers();
+		await vi.advanceTimersByTimeAsync(10 * 60 * 1000);
+		expect(register).toHaveBeenCalledTimes(1);
+	});
+
 	it('stops renewing after sign-out', async () => {
 		sendEvent.mockResolvedValue({ event_id: '$invite' });
 		callManager.startCall(SOURCE, true, true);

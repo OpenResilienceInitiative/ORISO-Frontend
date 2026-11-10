@@ -1218,7 +1218,12 @@ class CallManager {
 	): void {
 		this.stopObservation(false);
 		// Loaded on demand: this module stays free of browser-only API imports.
-		const register = () =>
+		const register = () => {
+			// The tracked call reached its end: stop renewing it.
+			if (callLifecycleTracker.hasEnded(callId)) {
+				this.stopObservation(false, callId);
+				return;
+			}
 			void import('../api/apiCallObservation')
 				.then(({ apiRegisterCallObservation }) =>
 					// A delayed import must not register a call that was already left.
@@ -1232,6 +1237,7 @@ class CallManager {
 							})
 				)
 				.catch(() => undefined);
+		};
 		register();
 		this.observation = {
 			sourceRoomId,
