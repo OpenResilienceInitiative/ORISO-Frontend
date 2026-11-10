@@ -1,6 +1,7 @@
 import * as React from 'react';
 import {
 	hasSameCallLifecycleIdentity,
+	wasCallStateNotFound,
 	type CallLifecycleMessage
 } from '../../utils/callLifecycleMessage';
 
@@ -178,7 +179,10 @@ export function useCallTimelineState(
 					 * answers the card is settled as ended, without a
 					 * duration, since none is known.
 					 */
-					if (current.state === 'running') {
+					if (
+						current.state === 'running' &&
+						wasCallStateNotFound(current)
+					) {
 						unknownAnswers += 1;
 						if (unknownAnswers >= UNKNOWN_STATE_LIMIT) {
 							setStored({
@@ -210,6 +214,7 @@ export function useCallTimelineState(
 					settled = value.state !== 'running';
 				}
 			} catch {
+				unknownAnswers = 0; // a failed read breaks the run of 404s
 				// Keep the durable room card when the authenticated read is unavailable.
 			}
 			if (active && !settled) {

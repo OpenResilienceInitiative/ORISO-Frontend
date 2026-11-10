@@ -1,4 +1,7 @@
-import type { CallLifecycleMessage } from '../utils/callLifecycleMessage';
+import {
+	markCallStateNotFound,
+	type CallLifecycleMessage
+} from '../utils/callLifecycleMessage';
 import { endpoints } from '../resources/scripts/endpoints';
 import { fetchData, FETCH_ERRORS, FETCH_METHODS } from './fetchData';
 import { getMatrixClientService } from '../services/matrixClientRegistry';
@@ -30,6 +33,7 @@ export async function apiCallState(
 		 * endpoint every fifteen seconds for as long as it was on screen.
 		 */
 		if (error instanceof Error && error.message === FETCH_ERRORS.NO_MATCH) {
+			markCallStateNotFound(call);
 			return null;
 		}
 		throw error;

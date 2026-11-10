@@ -326,3 +326,15 @@ export function collapseCallLifecycleMessages<T extends LifecycleTimelineItem>(
 	}
 	return output;
 }
+
+/*
+ * `apiCallState` answers `null` both for "the server has no such call" (404)
+ * and for a response it could not trust. Only the first is evidence that a
+ * running card is unknown (ORISO-Frontend#2166), so it is marked here.
+ */
+const notFoundAnswers = new WeakSet<CallLifecycleMessage>();
+export const markCallStateNotFound = (call: CallLifecycleMessage): void => {
+	notFoundAnswers.add(call);
+};
+export const wasCallStateNotFound = (call: CallLifecycleMessage): boolean =>
+	notFoundAnswers.has(call);

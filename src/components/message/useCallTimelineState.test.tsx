@@ -1,11 +1,14 @@
 // @vitest-environment oriso-jsdom
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
-import type { CallLifecycleMessage } from '../../utils/callLifecycleMessage';
 import {
 	UNKNOWN_STATE_LIMIT,
 	useCallTimelineState
 } from './useCallTimelineState';
+import {
+	markCallStateNotFound,
+	type CallLifecycleMessage
+} from '../../utils/callLifecycleMessage';
 
 const runningCall = (
 	overrides: Partial<CallLifecycleMessage> = {}
@@ -67,7 +70,10 @@ describe('useCallTimelineState', () => {
 	it('stops showing a running card the server keeps answering 404 for', async () => {
 		vi.useFakeTimers();
 		const initial = runningCall();
-		const loadState = vi.fn(async () => null);
+		const loadState = vi.fn(async (call: CallLifecycleMessage) => {
+			markCallStateNotFound(call);
+			return null;
+		});
 		const { result } = renderHook(() =>
 			useCallTimelineState(initial, loadState)
 		);
@@ -89,6 +95,21 @@ describe('useCallTimelineState', () => {
 			await vi.advanceTimersByTimeAsync(60000);
 		});
 		expect(loadState).toHaveBeenCalledTimes(calls);
+	});
+
+	it('does not settle a running card on untrusted (non-404) null answers', async () => {
+		vi.useFakeTimers();
+		const initial = runningCall();
+		const loadState = vi.fn(async () => null);
+		const { result } = renderHook(() =>
+			useCallTimelineState(initial, loadState)
+		);
+		await act(async () => {
+			await vi.advanceTimersByTimeAsync(
+				15000 * (UNKNOWN_STATE_LIMIT + 2)
+			);
+		});
+		expect(result.current.state).toBe('running');
 	});
 
 	it('permits a persisted missed call to progress to ended', async () => {
