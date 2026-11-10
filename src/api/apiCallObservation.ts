@@ -9,7 +9,6 @@ import { fetchData, FETCH_ERRORS, FETCH_METHODS } from './fetchData';
  * the call itself must not depend on it.
  */
 const handling = [
-	FETCH_ERRORS.EMPTY,
 	FETCH_ERRORS.BAD_REQUEST,
 	FETCH_ERRORS.FORBIDDEN,
 	FETCH_ERRORS.NO_MATCH,

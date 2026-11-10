@@ -670,12 +670,16 @@ class CallManager {
 				this.currentCall.roomId,
 				isGroup
 			);
-			if (isGroup && this.stillOwnsStart(start)) {
+			if (
+				isGroup &&
+				this.stillOwnsStart(start) &&
+				this.currentCall?.callId === callId
+			) {
 				this.startObservation(
 					roomId,
 					callId,
 					isVideo,
-					this.currentCall.roomId
+					outgoingCall.roomId
 				);
 			}
 			if (!this.stillOwnsStart(start)) {
@@ -1184,12 +1188,15 @@ class CallManager {
 		const register = () =>
 			void import('../api/apiCallObservation')
 				.then(({ apiRegisterCallObservation }) =>
-					apiRegisterCallObservation({
-						sourceRoomId,
-						callId,
-						callRoomId,
-						video
-					})
+					// A delayed import must not register a call that was already left.
+					this.observation?.callId !== callId
+						? undefined
+						: apiRegisterCallObservation({
+								sourceRoomId,
+								callId,
+								callRoomId,
+								video
+							})
 				)
 				.catch(() => undefined);
 		register();
@@ -1200,9 +1207,9 @@ class CallManager {
 		};
 	}
 
-	private stopObservation(end: boolean): void {
+	private stopObservation(end: boolean, onlyCallId?: string): void {
 		const current = this.observation;
-		if (!current) return;
+		if (!current || (onlyCallId && current.callId !== onlyCallId)) return;
 		clearInterval(current.timer);
 		this.observation = null;
 		if (end)
@@ -1447,8 +1454,6 @@ class CallManager {
 			return;
 		}
 		this.currentCall = null;
-		// A group call outlives its creator: stop renewing, never announce an end for the room.
-		this.stopObservation(false);
 
 		// A MatrixRTC group call belongs to the room, not to the participant who
 		// originally invited everyone. Leaving it must clear only this browser's
@@ -1463,7 +1468,13 @@ class CallManager {
 		// A group call outlives the person who started it — but only once
 		// somebody has actually arrived. Leaving one nobody ever joined ends
 		// it, rather than leaving a card that says "running" for good.
-		else callLifecycleTracker.finishIfUnattended(call.callId);
+		else {
+			// Announce an end only when nobody ever joined; otherwise just stop renewing.
+			const finalised = callLifecycleTracker.finishIfUnattended(
+				call.callId
+			);
+			this.stopObservation(finalised, call.callId);
+		}
 		if (notifyRemote && call.usesElementCall && !call.isGroup) {
 			this.sendElementCallHangup(call);
 		}
