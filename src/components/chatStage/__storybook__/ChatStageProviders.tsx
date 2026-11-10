@@ -113,12 +113,21 @@ export const seedStageMatrixRegistry = (unreadByRoom: Record<string, number>) =>
 export function ChatStageProviders({
 	activeSession = stageSession(),
 	sessions = stageListItems(),
+	extraEmptyDraftScopes = [],
 	children
 }: {
 	activeSession?: ExtendedSessionInterface;
 	sessions?: ListItemInterface[];
+	/** Further thread scopes a story opens (each reads its empty draft). */
+	extraEmptyDraftScopes?: readonly string[];
 	children: React.ReactNode;
 }) {
+	const emptyDraftScopes = React.useMemo(
+		() => [...stageEmptyDraftScopes, ...extraEmptyDraftScopes],
+		// The scopes are fixed per story.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[]
+	);
 	const matrixValue = React.useMemo(
 		() => ({
 			matrixClientService: buildStageMatrixClientService(),
@@ -178,9 +187,7 @@ export function ChatStageProviders({
 										<ComposerStoryDecorator
 											activeSession={activeSession}
 											roomMembers={stageRoomMembers}
-											emptyDraftScopes={
-												stageEmptyDraftScopes
-											}
+											emptyDraftScopes={emptyDraftScopes}
 										>
 											<MatrixClientContext.Provider
 												value={matrixValue}

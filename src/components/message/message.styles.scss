@@ -1003,11 +1003,13 @@ $message-avatar-overlap: -19px;
 		}
 
 		// Not inside an attachment card: its spans are its layout, and flattening
-		// them ran the file name and the status line together.
+		// them ran the file name and the status line together. The same holds
+		// for a reply quote, whose text clamps to two lines as a block.
 		span:not(
 			.messageItem__highlight,
 			.messageItem__messageTime,
-			.attachmentCard *
+			.attachmentCard *,
+			.messageItem__replyQuote *
 		) {
 			display: inline;
 		}
@@ -1683,6 +1685,34 @@ $message-avatar-overlap: -19px;
 		overflow: hidden;
 		color: inherit;
 		opacity: 0.85;
+	}
+
+	// Selection reply: the quote leads back to the marked passage.
+	&--jump {
+		width: 100%;
+		box-sizing: border-box;
+		border-top: 0;
+		border-right: 0;
+		border-bottom: 0;
+		font: inherit;
+		font-size: 12px;
+		text-align: left;
+		color: inherit;
+		cursor: pointer;
+		transition: background-color 150ms ease;
+
+		&:hover {
+			background: var(--m3-surface-container-high, rgba(0, 0, 0, 0.08));
+		}
+
+		&:focus-visible {
+			outline: 2px solid var(--m3-primary-outline, #930008);
+			outline-offset: 2px;
+		}
+	}
+
+	&--myMessage.messageItem__replyQuote--jump:hover {
+		background: rgba(255, 255, 255, 0.32);
 	}
 }
 

@@ -58,6 +58,8 @@ export interface MessageTimelineProps {
 		replyToEventId?: string | null
 	) => MessageItemProps['replyQuote'];
 	onReplyDirect?: (message: MessageItem) => void;
+	/** Selection reply: jump from a reply's quote back to the quoted passage. */
+	onJumpToReplyQuote?: (message: MessageItem) => void;
 	/** Own messages only — the timeline applies the ownership gate. */
 	onEditDirect?: (message: MessageItem) => void;
 	/** Own messages only — the timeline applies the ownership gate. */
@@ -96,6 +98,7 @@ export const MessageTimeline = ({
 	onOpenThread,
 	resolveReplyQuote,
 	onReplyDirect,
+	onJumpToReplyQuote,
 	onEditDirect,
 	onDeleteDirect,
 	reactionsFor,
@@ -169,6 +172,11 @@ export const MessageTimeline = ({
 							onReplyDirect={
 								onReplyDirect
 									? () => onReplyDirect(message)
+									: undefined
+							}
+							onJumpToReplyQuote={
+								onJumpToReplyQuote && message.replyToEventId
+									? () => onJumpToReplyQuote(message)
 									: undefined
 							}
 							onEditDirect={

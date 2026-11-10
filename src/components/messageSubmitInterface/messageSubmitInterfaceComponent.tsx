@@ -122,6 +122,11 @@ import {
 } from '../../api';
 import { ComposerContextBar } from './ComposerContextBar';
 import {
+	ComposerPendingQuotes,
+	CONTEXT_BAR_STEP_PX,
+	type ComposerPendingQuote
+} from './ComposerPendingQuotes';
+import {
 	MessageSubmitInfo,
 	MessageSubmitInfoInterface
 } from './MessageSubmitInfo';
@@ -314,6 +319,18 @@ export interface MessageSubmitInterfaceComponentProps {
 	replyTo?: { eventId: string; author: string; text: string } | null;
 	onCancelReply?: () => void;
 	/**
+	 * Selection reply: answers to marked passages collected for the next send.
+	 * Each one shows as its own numbered reply bar above the editor.
+	 */
+	pendingQuotes?: ComposerPendingQuote[];
+	onRemovePendingQuote?: (id: string) => void;
+	/**
+	 * Send the collected answers. With answers collected the send button is
+	 * ready even while the editor is empty; typed text still goes out the
+	 * usual way after them.
+	 */
+	onSendPendingQuotes?: () => void;
+	/**
 	 * Editing (m.replace, #435): when set, the composer prefills this
 	 * message's text and the next send edits it in place instead of sending
 	 * a new message.
@@ -505,6 +522,9 @@ export const MessageSubmitInterfaceComponent = ({
 	threadParentPreview,
 	replyTo,
 	onCancelReply,
+	pendingQuotes,
+	onRemovePendingQuote,
+	onSendPendingQuotes,
 	editingMessage,
 	onCancelEdit,
 	mobileUnreadCount = 0,
@@ -2297,6 +2317,16 @@ export const MessageSubmitInterfaceComponent = ({
 			stopVoiceRecording();
 			return null;
 		}
+		if (pendingQuotes?.length && onSendPendingQuotes) {
+			onSendPendingQuotes();
+			if (
+				!recordedVoiceRef.current &&
+				!attachmentSelected &&
+				!hasMessageContent(getTypedMarkdownMessage())
+			) {
+				return null;
+			}
+		}
 		if (
 			!recordedVoiceRef.current &&
 			getPlainTextFromComposerValue(getTypedMarkdownMessage()).length >
@@ -2339,10 +2369,14 @@ export const MessageSubmitInterfaceComponent = ({
 	}, [
 		activeSession.item.matrixRoomId,
 		activeSession.item.id,
+		attachmentSelected,
 		getTypedMarkdownMessage,
+		hasMessageContent,
 		navigate,
 		isRequestInProgress,
 		isVoiceRecording,
+		onSendPendingQuotes,
+		pendingQuotes,
 		allowDearchive,
 		isSessionArchived,
 		listPath,
@@ -4155,7 +4189,19 @@ export const MessageSubmitInterfaceComponent = ({
 	// Keep the existing 196/180px baseline, then grow with the rendered TipTap
 	// content up to fourteen lines. Beyond that the editor scrolls, while the
 	// drag handle can still explicitly make the composer taller.
-	const hasContextBar = Boolean(replyTo || editingMessage);
+	const hasPendingQuotes = Boolean(pendingQuotes?.length);
+	// Every bar beyond the first adds one 32px bar + 4px gap to the reserve.
+	const contextBarCount =
+		(pendingQuotes?.length || 0) +
+		(replyTo ? 1 : 0) +
+		(editingMessage ? 1 : 0);
+	const contextStackExtra =
+		hasPendingQuotes && contextBarCount > 1
+			? (contextBarCount - 1) * CONTEXT_BAR_STEP_PX
+			: 0;
+	const hasContextBar = Boolean(
+		replyTo || editingMessage || hasPendingQuotes
+	);
 	const flushContextBarReserve =
 		flushCorner && hasContextBar && !isMobileViewport
 			? FLUSH_CONTEXT_BAR_RESERVE
@@ -4385,7 +4431,7 @@ export const MessageSubmitInterfaceComponent = ({
 								'textarea__wrapper-send-message--ready',
 							(isComposerSelected || isVoiceRecording) &&
 								'textarea__wrapper-send-message--selected',
-							(replyTo || editingMessage) &&
+							hasContextBar &&
 								'textarea__wrapper-send-message--withContextBar',
 							isExpandedComposer &&
 								'textarea__wrapper-send-message--expanded',
@@ -4408,34 +4454,69 @@ export const MessageSubmitInterfaceComponent = ({
 						onBlur={handleComposerCardBlur}
 						onTransitionEnd={handleComposerShellTransitionEnd}
 						style={
-							!isExpandedComposer && composerCardHeight
+							(!isExpandedComposer && composerCardHeight) ||
+							contextStackExtra
 								? ({
-										'--composer-height': `${composerCardHeight}px`
+										...(!isExpandedComposer &&
+										composerCardHeight
+											? {
+													'--composer-height': `${composerCardHeight}px`
+												}
+											: {}),
+										...(contextStackExtra
+											? {
+													'--context-stack-extra': `${contextStackExtra}px`
+												}
+											: {})
 									} as React.CSSProperties)
 								: undefined
 						}
 					>
 						{/* Relations foundation (#435): what the next send refers to.
 						    Inside the card, between drag handle and editor. */}
-						{replyTo && (
-							<ComposerContextBar
-								kind="reply"
-								lead={replyTo.author}
-								quote={replyTo.text}
-								statusLabel={`${translate('message.reply.previewLabel')} ${replyTo.author}`}
-								cancelLabel={translate('message.reply.cancel')}
-								onCancel={onCancelReply}
-							/>
-						)}
-						{editingMessage && (
-							<ComposerContextBar
-								kind="edit"
-								lead={translate('message.edit.previewLabel')}
-								quote={editingMessage.text}
-								cancelLabel={translate('message.edit.cancel')}
-								onCancel={onCancelEdit}
-							/>
-						)}
+						{(() => {
+							const relationBars = (
+								<>
+									{replyTo && (
+										<ComposerContextBar
+											kind="reply"
+											lead={replyTo.author}
+											quote={replyTo.text}
+											statusLabel={`${translate('message.reply.previewLabel')} ${replyTo.author}`}
+											cancelLabel={translate(
+												'message.reply.cancel'
+											)}
+											onCancel={onCancelReply}
+										/>
+									)}
+									{editingMessage && (
+										<ComposerContextBar
+											kind="edit"
+											lead={translate(
+												'message.edit.previewLabel'
+											)}
+											quote={editingMessage.text}
+											cancelLabel={translate(
+												'message.edit.cancel'
+											)}
+											onCancel={onCancelEdit}
+										/>
+									)}
+								</>
+							);
+							// Selection reply: several bars stack in one
+							// column; a lone reply/edit bar keeps its place.
+							return hasPendingQuotes ? (
+								<ComposerPendingQuotes
+									quotes={pendingQuotes || []}
+									onRemove={onRemovePendingQuote}
+								>
+									{relationBars}
+								</ComposerPendingQuotes>
+							) : (
+								relationBars
+							);
+						})()}
 						{/* Frank (03.11.): on the phone the format tools rest in a
 						    grey box above the card, built like the reply bar. */}
 						{isMobileViewport && !isCompactActionStripOpen && (
@@ -5193,7 +5274,12 @@ export const MessageSubmitInterfaceComponent = ({
 								type="submit"
 								onSend={handleButtonClick}
 								state={deriveSendButtonState({
-									hasContent: canSendMessage,
+									hasContent:
+										canSendMessage ||
+										Boolean(
+											pendingQuotes?.length &&
+												onSendPendingQuotes
+										),
 									isSending: isRequestInProgress,
 									isDisabled:
 										!!uploadProgress || isVoiceRecording

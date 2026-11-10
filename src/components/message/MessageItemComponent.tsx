@@ -267,6 +267,12 @@ export interface MessageItem {
 	callLifecycle?: CallLifecycleMessage;
 	/** Relations foundation (#435): id of the replied-to event, if a reply. */
 	replyToEventId?: string | null;
+	/**
+	 * Selection reply: the passage of the replied-to message the sender
+	 * marked. When set, the in-bubble quote shows this passage instead of the
+	 * start of the whole message.
+	 */
+	replyExcerpt?: string | null;
 	/** MSC3440: thread root event id when the message is a thread reply. */
 	threadRootEventId?: string | null;
 	/** Editing (m.replace, #435): true when a later m.replace was applied. */
@@ -298,6 +304,11 @@ interface MessageItemComponentProps extends MessageItem {
 	replyToEventId?: string | null;
 	/** Resolved quote of the replied-to message (author + text), if known. */
 	replyQuote?: { author: string; text: string } | null;
+	/**
+	 * Selection reply: jump back to the quoted passage. When set, the
+	 * in-bubble quote is a button.
+	 */
+	onJumpToReplyQuote?: () => void;
 	/** Start a direct reply to THIS message (wires the composer). */
 	onReplyDirect?: () => void;
 	/** Start editing THIS message (wires the composer, own messages only). */
@@ -374,6 +385,8 @@ export const MessageItemComponent = ({
 	isEdited,
 	isTemporary,
 	replyQuote,
+	replyExcerpt,
+	onJumpToReplyQuote,
 	onReplyDirect,
 	onEditDirect,
 	onDeleteDirect,
@@ -2400,30 +2413,68 @@ export const MessageItemComponent = ({
 								)}
 							{/* Relations foundation (#435): quote of the replied-to
 							    message, rendered from the m.in_reply_to relation. */}
-							{replyToEventId && !isSystemNotification && (
-								<div
-									className={`messageItem__replyQuote ${
-										isMyMessage
-											? 'messageItem__replyQuote--myMessage'
-											: ''
-									}`}
-									aria-label={translate(
-										'message.reply.quoteLabel'
-									)}
-								>
-									<span className="messageItem__replyQuoteAuthor">
-										{replyQuote?.author ||
-											translate(
-												'message.reply.quoteUnknown'
+							{replyToEventId &&
+								!isSystemNotification &&
+								(() => {
+									const quoteText =
+										replyExcerpt || replyQuote?.text;
+									const quoteClassName = clsx(
+										'messageItem__replyQuote',
+										isMyMessage &&
+											'messageItem__replyQuote--myMessage',
+										onJumpToReplyQuote &&
+											'messageItem__replyQuote--jump'
+									);
+									const quoteBody = (
+										<>
+											<span className="messageItem__replyQuoteAuthor">
+												{replyQuote?.author ||
+													translate(
+														'message.reply.quoteUnknown'
+													)}
+											</span>
+											{quoteText && (
+												<span className="messageItem__replyQuoteText">
+													{replyExcerpt
+														? `„${quoteText}“`
+														: quoteText}
+												</span>
 											)}
-									</span>
-									{replyQuote?.text && (
-										<span className="messageItem__replyQuoteText">
-											{replyQuote.text}
-										</span>
-									)}
-								</div>
-							)}
+										</>
+									);
+									return onJumpToReplyQuote ? (
+										<button
+											type="button"
+											className={quoteClassName}
+											data-cy="reply-quote-jump"
+											aria-label={translate(
+												'message.reply.jumpToQuote',
+												{
+													author:
+														replyQuote?.author ||
+														translate(
+															'message.reply.quoteUnknown'
+														)
+												}
+											)}
+											onClick={(event) => {
+												event.stopPropagation();
+												onJumpToReplyQuote();
+											}}
+										>
+											{quoteBody}
+										</button>
+									) : (
+										<div
+											className={quoteClassName}
+											aria-label={translate(
+												'message.reply.quoteLabel'
+											)}
+										>
+											{quoteBody}
+										</div>
+									);
+								})()}
 							{!isSystemNotification &&
 								renderedMessageWithoutPrefix &&
 								!attachments &&
@@ -2614,6 +2665,7 @@ export const MessageItemComponent = ({
 														);
 													}}
 													type="button"
+													aria-expanded={isExpanded}
 												>
 													{isExpanded
 														? translate(

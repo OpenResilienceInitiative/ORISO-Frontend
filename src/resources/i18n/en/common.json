@@ -2201,7 +2201,27 @@
 			"previewLabel": "Replying to",
 			"cancel": "Discard reply",
 			"quoteLabel": "In reply to",
-			"quoteUnknown": "Earlier message"
+			"quoteUnknown": "Earlier message",
+			"jumpToQuote": "Jump to the quoted passage from {{author}}"
+		},
+		"selectionReply": {
+			"toolbar": "Actions for the marked passage",
+			"reply": "Reply",
+			"replyVoice": "Reply with a voice message",
+			"startThread": "Start thread",
+			"dialog": "Reply to the passage marked from {{author}}",
+			"cancel": "Cancel",
+			"inputLabel": "Reply to the marked passage",
+			"placeholder": "Write a reply …",
+			"placeholderWithVoice": "Add text if you like …",
+			"addToComposer": "Add to message",
+			"collect": "Add",
+			"sendNow": "Send now",
+			"keys": "↵ add to message · {{sendKey}} ↵ send now · Esc cancel",
+			"pendingLead": "{{number}} · {{author}}",
+			"pendingStatus": "Reply {{number}} to {{author}}, collected for the next message",
+			"remove": "Remove reply {{number}}",
+			"voiceDuration": "Voice message {{duration}}"
 		},
 		"thread": {
 			"unknownRoot": "Earlier message",
