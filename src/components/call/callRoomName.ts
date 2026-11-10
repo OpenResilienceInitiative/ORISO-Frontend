@@ -16,25 +16,56 @@
  */
 export const DEFAULT_CALL_ROOM_NAME = 'Anruf';
 
-/** The Matrix limit for a room name. A link name stops at 100. */
-const MAX_NAME_LENGTH = 255;
+/**
+ * A Matrix room name stays within 255 bytes. Counted in bytes, not characters,
+ * because that is the stricter reading: an emoji is 4 bytes. A link name stops
+ * at 100 characters, so this only bites on names made of wide characters.
+ */
+const MAX_NAME_BYTES = 255;
 
 /**
- * A name that is a Matrix room id, or the old `Group call for <room id>`, is
- * no title. It cannot come from a link name today; the guard keeps it that way.
+ * Catches a name that IS a Matrix room id, or the old `Group call for <room
+ * id>` (what this code used to produce). It does not search free text for a
+ * room id: a counsellor may write "Hilfe! Termin: Montag" as a link name, and
+ * that is a name, not a leak. A room id reaches the title only by being copied
+ * in whole, and that is the case this guards.
  */
 const LOOKS_LIKE_ROOM_ID = /^(?:Group call for )?!\S+:\S+$/u;
 
-export const callRoomName = (
+const encoder = new TextEncoder();
+
+/** Cut at a code point, never inside a surrogate pair. */
+const withinByteLimit = (text: string): string => {
+	let bytes = 0;
+	let kept = '';
+	for (const codePoint of text) {
+		bytes += encoder.encode(codePoint).length;
+		if (bytes > MAX_NAME_BYTES) {
+			break;
+		}
+		kept += codePoint;
+	}
+	return kept;
+};
+
+/**
+ * The name the direct link gave the conversation, or `undefined` when there
+ * is none worth using. The one place that decides what counts as a name.
+ */
+export const directLinkCallName = (
 	session?: { directLinkName?: string | null } | null
-): string => {
+): string | undefined => {
 	const name = session?.directLinkName;
 	if (typeof name !== 'string') {
-		return DEFAULT_CALL_ROOM_NAME;
+		return undefined;
 	}
 	const trimmed = name.trim();
 	if (!trimmed || LOOKS_LIKE_ROOM_ID.test(trimmed)) {
-		return DEFAULT_CALL_ROOM_NAME;
+		return undefined;
 	}
-	return trimmed.slice(0, MAX_NAME_LENGTH);
+	return withinByteLimit(trimmed);
 };
+
+export const callRoomName = (
+	session?: { directLinkName?: string | null } | null
+): string => directLinkCallName(session) ?? DEFAULT_CALL_ROOM_NAME;

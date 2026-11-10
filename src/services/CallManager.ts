@@ -419,6 +419,9 @@ class CallManager {
 		forceIsGroup?: boolean,
 		options?: { roomName?: string }
 	): void {
+		// The room name is not part of this comparison: every caller derives it
+		// from the same session, so a repeat start for one room carries the same
+		// name. Add it here if a caller can ever pass two names for one room.
 		if (
 			this.pendingStart?.roomId === roomId &&
 			this.pendingStart.isVideo === isVideo &&

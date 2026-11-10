@@ -102,7 +102,7 @@ import { isDirectLinkCallRoom } from '../directLinkEntry/directLinkEntryFlow';
 import { callManager } from '../../services/CallManager';
 import { startRoomCall } from '../call/startRoomCall';
 import { enterKnockCall } from './knockCallAction';
-import { callRoomName } from '../call/callRoomName';
+import { directLinkCallName } from '../call/callRoomName';
 import type { NotificationFeedItem } from '../../globalState/provider/NotificationsProvider';
 import {
 	formatAbsoluteTime,
@@ -678,14 +678,12 @@ export const NotificationsCenter = () => {
 			start: startRoomCall,
 			currentCall: () => callManager.getCurrentCall(),
 			// #2170: the call is called what the direct link was called.
-			roomNameFor: (roomId) => {
-				const session = sessions?.find(
-					(listItem) => listItem.session?.matrixRoomId === roomId
-				)?.session;
-				return session?.directLinkName
-					? callRoomName(session)
-					: undefined;
-			}
+			roomNameFor: (roomId) =>
+				directLinkCallName(
+					sessions?.find(
+						(listItem) => listItem.session?.matrixRoomId === roomId
+					)?.session
+				)
 		});
 		if (!entered && target.roomId) {
 			// In a call elsewhere: "Beitreten" opens the conversation only, so
