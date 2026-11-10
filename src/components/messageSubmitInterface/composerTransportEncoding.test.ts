@@ -239,6 +239,20 @@ describe('composer formatting survives the transport round trip', () => {
 			);
 		});
 
+		it('keeps a <br>-only paragraph between text through a round trip', () => {
+			const once = composerHtmlToTransportMarkup(
+				`<p>Eins</p>${brEmpty}<p>Zwei</p>`
+			);
+			const twice = composerHtmlToTransportMarkup(
+				transportMarkupToComposerHtml(once)
+			);
+
+			expect(once).toBe(
+				'<p>Eins</p>[[align:left]]<p><br></p>[[/align]]<p>Zwei</p>'
+			);
+			expect(twice).toBe(once);
+		});
+
 		it('leaves a message of only empty lines empty', () => {
 			expect(composerHtmlToTransportMarkup(`${empty}${brEmpty}`)).toBe(
 				''
