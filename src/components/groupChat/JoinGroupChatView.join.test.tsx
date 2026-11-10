@@ -289,6 +289,55 @@ describe('JoinGroupChatView — the embedded room hands its join request back', 
 		expect(apiPutGroupChat).not.toHaveBeenCalled();
 	});
 
+	it('holds the inline join while loading and blocks a confirmed ban without a join request', async () => {
+		const { apiGetGroupChatInfo } = await import('../../api');
+		const reply =
+			Promise.withResolvers<
+				Awaited<ReturnType<typeof apiGetGroupChatInfo>>
+			>();
+		vi.mocked(apiGetGroupChatInfo).mockReturnValueOnce(reply.promise);
+		render(
+			<UserDataContext.Provider
+				value={
+					{
+						userData: { ...state.userData, userId: 'asker-id' }
+					} as never
+				}
+			>
+				<ActiveSessionContext.Provider
+					value={
+						{
+							activeSession: {
+								item: {
+									...state.item,
+									matrixRoomId: '!room:oriso'
+								}
+							},
+							reloadActiveSession
+						} as never
+					}
+				>
+					<JoinGroupChatView />
+				</ActiveSessionContext.Provider>
+			</UserDataContext.Provider>
+		);
+		const join = screen.getByText('join');
+		expect(join.dataset.blocked).toBe('true');
+		fireEvent.click(join);
+		expect(apiPutGroupChat).not.toHaveBeenCalled();
+		await act(async () =>
+			reply.resolve({
+				active: true,
+				id: 15,
+				matrixRoomId: '!room:oriso',
+				callerBanState: 'BANNED'
+			} as Awaited<ReturnType<typeof apiGetGroupChatInfo>>)
+		);
+		expect(join.dataset.blocked).toBe('true');
+		fireEvent.click(join);
+		expect(apiPutGroupChat).not.toHaveBeenCalled();
+	});
+
 	// #1923: the server answers a banned member with a reason; join stays closed.
 	it('blocks joining again when the server says the person was removed', async () => {
 		vi.mocked(apiPutGroupChat).mockRejectedValue(
