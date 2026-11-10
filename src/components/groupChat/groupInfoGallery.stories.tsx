@@ -1,6 +1,6 @@
 import { expectWaitingRoomLayout } from '../app/registrationLoader/waitingRoomLayoutContract';
 import * as React from 'react';
-import { expect, fireEvent, userEvent, waitFor, within } from 'storybook/test';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Box } from '@mui/material';
 import { GroupInfoGallery } from './entryRoom/GroupInfoGallery';
@@ -167,43 +167,51 @@ export const InfoGalleryTabletSelection: StoryObj = {
 				name: `Zu Schritt ${position} von 3`
 			});
 		const end = () => track.scrollWidth - track.clientWidth;
-		await expect(track.clientWidth).toBe(772);
+		const cardCentre = (card: HTMLElement) =>
+			card.offsetLeft + card.offsetWidth / 2;
+		const [firstCard, secondCard, thirdCard] =
+			canvas.getAllByRole('listitem');
+		const width = track.clientWidth;
+		const secondCentre = cardCentre(secondCard);
+		await expect(width).toBeGreaterThan(secondCentre);
+		await expect(width).toBeLessThan(cardCentre(thirdCard));
+
 		await expect(step(1)).toHaveAttribute('aria-current', 'true');
 		await userEvent.click(step(2));
+		// The middle card is already visible at the left snap position.
+		await expect(track.scrollLeft).toBe(0);
 		await expect(step(2)).toHaveAttribute('aria-current', 'true');
 		await userEvent.click(canvas.getAllByRole('img')[0]);
-		await fireEvent.scroll(track);
 		await expect(step(2)).toHaveAttribute('aria-current', 'true');
 
-		step(3).focus();
+		await userEvent.click(step(2));
+		await userEvent.tab();
+		await expect(step(3)).toHaveFocus();
 		await userEvent.keyboard('{Enter}');
 		await waitFor(() => expect(track.scrollLeft).toBeCloseTo(end(), 0));
 		await expect(step(3)).toHaveAttribute('aria-current', 'true');
 		await expect(step(3)).toHaveFocus();
 
-		// A synthetic wheel event does not scroll by default. Move the native
-		// track to exercise the following user scroll and its scroll listener.
-		await fireEvent.wheel(track, { deltaX: -400 });
+		// A later real scroll need not be preceded by a wheel, touch or key
+		// event on this track, for example when using a scrollbar.
 		track.scrollTo({ left: 0, behavior: 'instant' });
-		await waitFor(() =>
-			expect(step(1)).toHaveAttribute('aria-current', 'true')
-		);
-		await fireEvent.wheel(track, { deltaX: 400 });
-		track.scrollTo({ left: end(), behavior: 'instant' });
-		await waitFor(() =>
-			expect(step(3)).toHaveAttribute('aria-current', 'true')
-		);
+		await waitFor(() => {
+			expect(track.scrollLeft).toBe(0);
+			expect(step(1)).toHaveAttribute('aria-current', 'true');
+		});
 
-		await fireEvent.wheel(track, { deltaX: -400 });
-		track.scrollTo({ left: 0, behavior: 'instant' });
-		await waitFor(() =>
-			expect(step(1)).toHaveAttribute('aria-current', 'true')
-		);
 		await userEvent.click(step(2));
 		await expect(step(2)).toHaveAttribute('aria-current', 'true');
+		const keepingSecondVisible = Math.floor((width + secondCentre) / 2);
+		const clippingSecond = Math.floor(
+			(cardCentre(firstCard) + secondCentre) / 2
+		);
 		try {
-			track.style.width = '770px';
-			await waitFor(() => expect(track.clientWidth).toBe(770));
+			// First shrink the track while it still contains card 2's centre.
+			track.style.width = `${keepingSecondVisible}px`;
+			await waitFor(() =>
+				expect(track.clientWidth).toBe(keepingSecondVisible)
+			);
 			await new Promise<void>((resolve) =>
 				requestAnimationFrame(() =>
 					requestAnimationFrame(() => resolve())
@@ -211,9 +219,10 @@ export const InfoGalleryTabletSelection: StoryObj = {
 			);
 			await expect(step(2)).toHaveAttribute('aria-current', 'true');
 
-			track.style.width = '358px';
+			// Narrow it past the selected card so the visible card owns the dot.
+			track.style.width = `${clippingSecond}px`;
 			await waitFor(() => {
-				expect(track.clientWidth).toBe(358);
+				expect(track.clientWidth).toBe(clippingSecond);
 				expect(step(1)).toHaveAttribute('aria-current', 'true');
 			});
 		} finally {

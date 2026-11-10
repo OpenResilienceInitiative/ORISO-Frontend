@@ -61,6 +61,8 @@ export interface HandoverCarouselProps {
  * Designentscheidung sein, das muss ich zehnmal testen").
  */
 const CARD_WIDTH = { xs: 300, sm: 372 };
+const SCROLL_IDLE_MS = 120;
+const MAX_DOT_SCROLL_MS = 800;
 
 /**
  * "So geht es weiter" — three cards the user swipes through while the app
@@ -77,7 +79,7 @@ export const HandoverCarousel = ({
 	const { t } = useTranslation();
 	const trackRef = useRef<HTMLDivElement>(null);
 	const [activeIndex, setActiveIndex] = useState(0);
-	const selectedByDot = useRef<number | null>(null);
+	const selectDotRef = useRef<((index: number) => void) | null>(null);
 	const settledCount = useRef(0);
 
 	const noteSettled = useCallback(() => {
@@ -93,10 +95,7 @@ export const HandoverCarousel = ({
 			return undefined;
 		}
 
-		const onScroll = () => {
-			// Programmatic smooth scrolling and snapping must not overwrite the
-			// selected dot when several cards fit in the same scroll position.
-			if (selectedByDot.current !== null) return;
+		const updateFromScrollPosition = () => {
 			const cards = Array.from(track.children) as HTMLElement[];
 			if (!cards.length) {
 				return;
@@ -123,6 +122,88 @@ export const HandoverCarousel = ({
 			setActiveIndex(nearest);
 		};
 
+		let selectedByDot: number | null = null;
+		let settleTimer: number | undefined;
+		let settleDeadline = 0;
+
+		const selectedCardIsVisible = () => {
+			const card =
+				selectedByDot === null ? null : track.children[selectedByDot];
+			if (!card) return false;
+			const trackLeft = track.getBoundingClientRect().left;
+			const bounds = card.getBoundingClientRect();
+			const centre = bounds.left + bounds.width / 2;
+			return (
+				centre >= trackLeft && centre <= trackLeft + track.clientWidth
+			);
+		};
+
+		const clearSettleTimer = () => {
+			window.clearTimeout(settleTimer);
+			settleTimer = undefined;
+		};
+
+		const followScrollPosition = () => {
+			selectedByDot = null;
+			updateFromScrollPosition();
+		};
+
+		const settleDotScroll = () => {
+			if (settleTimer === undefined) return;
+			clearSettleTimer();
+			if (!selectedCardIsVisible()) followScrollPosition();
+		};
+
+		const scheduleSettle = () => {
+			clearSettleTimer();
+			const remaining = Math.max(0, settleDeadline - performance.now());
+			settleTimer = window.setTimeout(
+				settleDotScroll,
+				Math.min(SCROLL_IDLE_MS, remaining)
+			);
+		};
+
+		const onScroll = () => {
+			// Protect explicit selection only while its movement is settling.
+			// The next independent scroll follows geometry regardless of input.
+			if (settleTimer !== undefined) {
+				scheduleSettle();
+				return;
+			}
+			followScrollPosition();
+		};
+
+		selectDotRef.current = (index) => {
+			const card = track.children[index] as HTMLElement | undefined;
+			if (!card) return;
+			selectedByDot = index;
+			setActiveIndex(index);
+			const reducedMotion = window.matchMedia?.(
+				'(prefers-reduced-motion: reduce)'
+			).matches;
+			const previousLeft = track.scrollLeft;
+			const target = Math.max(
+				0,
+				Math.min(
+					track.scrollWidth - track.clientWidth,
+					card.offsetLeft - (track.clientWidth - card.offsetWidth) / 2
+				)
+			);
+			settleDeadline = performance.now() + MAX_DOT_SCROLL_MS;
+			scheduleSettle();
+			track.scrollTo({
+				left: target,
+				behavior: reducedMotion ? 'auto' : 'smooth'
+			});
+			// An unchanged position does not generate a scrollend event.
+			if (
+				target === previousLeft ||
+				(reducedMotion && track.scrollLeft === previousLeft)
+			) {
+				settleDotScroll();
+			}
+		};
+
 		let trackWidth = track.clientWidth;
 		const resizeObserver =
 			typeof ResizeObserver !== 'undefined'
@@ -130,55 +211,22 @@ export const HandoverCarousel = ({
 						const width = track.clientWidth;
 						if (width === trackWidth) return;
 						trackWidth = width;
-
-						const selected = selectedByDot.current;
-						const card =
-							selected === null ? null : track.children[selected];
-						if (card) {
-							const trackLeft =
-								track.getBoundingClientRect().left;
-							const bounds = card.getBoundingClientRect();
-							const centre = bounds.left + bounds.width / 2;
-							if (
-								centre >= trackLeft &&
-								centre <= trackLeft + width
-							)
-								return;
-						}
-						selectedByDot.current = null;
-						onScroll();
+						if (selectedCardIsVisible()) return;
+						clearSettleTimer();
+						followScrollPosition();
 					})
 				: undefined;
 		resizeObserver?.observe(track);
 		track.addEventListener('scroll', onScroll, { passive: true });
+		track.addEventListener('scrollend', settleDotScroll);
 		return () => {
+			selectDotRef.current = null;
+			clearSettleTimer();
 			resizeObserver?.disconnect();
 			track.removeEventListener('scroll', onScroll);
+			track.removeEventListener('scrollend', settleDotScroll);
 		};
 	}, []);
-
-	const resumeScrollTracking = () => {
-		selectedByDot.current = null;
-	};
-
-	const scrollTo = (index: number) => {
-		const track = trackRef.current;
-		const card = track?.children[index] as HTMLElement | undefined;
-		if (!track || !card) {
-			return;
-		}
-		selectedByDot.current = index;
-		setActiveIndex(index);
-		const reducedMotion =
-			typeof window.matchMedia === 'function' &&
-			window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-		// Centre the card the dot stands for; `offsetLeft` alone would push
-		// the last card against the right edge where it cannot scroll.
-		track.scrollTo({
-			left: card.offsetLeft - (track.clientWidth - card.offsetWidth) / 2,
-			behavior: reducedMotion ? 'auto' : 'smooth'
-		});
-	};
 
 	return (
 		<Box
@@ -196,19 +244,6 @@ export const HandoverCarousel = ({
 				ref={trackRef}
 				component="ul"
 				data-cy="handover-carousel"
-				onTouchMove={resumeScrollTracking}
-				onWheel={(event) => {
-					if (event.deltaX || event.shiftKey) resumeScrollTracking();
-				}}
-				onKeyDown={(event) => {
-					if (
-						['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(
-							event.key
-						)
-					) {
-						resumeScrollTracking();
-					}
-				}}
 				sx={{
 					'flex': 1,
 					'minHeight': 0,
@@ -373,7 +408,7 @@ export const HandoverCarousel = ({
 				{steps.map((step, index) => (
 					<ButtonBase
 						key={step.key}
-						onClick={() => scrollTo(index)}
+						onClick={() => selectDotRef.current?.(index)}
 						aria-label={t('registration.handover.goToStep', {
 							position: index + 1,
 							total: steps.length
