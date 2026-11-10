@@ -673,7 +673,8 @@ class CallManager {
 			if (
 				isGroup &&
 				this.stillOwnsStart(start) &&
-				this.currentCall?.callId === callId
+				this.currentCall?.callId === callId &&
+				this.currentCall.state !== 'left'
 			) {
 				this.startObservation(
 					roomId,
@@ -701,9 +702,19 @@ class CallManager {
 					 * answered is still closed, which is what this check was
 					 * added for.
 					 */
-					callLifecycleTracker.finishIfUnattended(
+					const finalised = callLifecycleTracker.finishIfUnattended(
 						outgoingCall.callId
 					);
+					// An attended call carries on without us: keep it observable,
+					// unless a newer call already owns the observation.
+					if (!finalised && this.observation === null) {
+						this.startObservation(
+							roomId,
+							callId,
+							isVideo,
+							outgoingCall.roomId
+						);
+					}
 				} else {
 					// The invite can reach the server after local cancellation.
 					// Send its matching hangup after acknowledgement, never for
