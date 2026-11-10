@@ -11,7 +11,10 @@ import { WaitingAreaCountdown } from '../waitingClock/WaitingAreaCountdown';
 import { WaitingAreaRules } from '../WaitingAreaRules';
 import { GroupChatCalendarPopover } from '../GroupChatCalendarMenu';
 import { GroupInfoGallery } from './GroupInfoGallery';
-import { GroupUpcomingDates } from './GroupUpcomingDates';
+import {
+	GroupUpcomingDates,
+	type GroupUpcomingDate
+} from './GroupUpcomingDates';
 import { GroupCalendarActions } from './GroupCalendarActions';
 import { GroupHeading } from './GroupHeading';
 import { usePanelHistory } from './EntryRoomPanel';
@@ -55,7 +58,7 @@ export interface GroupWaitingRoomProps {
 	onJoin: () => ClosingSwapResult;
 	joinBusy?: boolean;
 	/** The group's next dates, soonest first — shown behind "Alle Termine". */
-	upcomingDates?: Date[];
+	upcomingDates?: (Date | GroupUpcomingDate)[];
 	/**
 	 * How the group repeats and how many dates are left from its start on:
 	 * the rhythm under the headline, the series export.
@@ -148,9 +151,14 @@ export const GroupWaitingRoom = ({
 		active || (plannedStart !== null && now >= plannedStart.getTime());
 	// An opened group runs its planned date even before the clock says so.
 	const runningMs = started ? plannedStart?.getTime() : undefined;
-	const datesAhead = (
-		upcomingDates ?? (plannedStart ? [plannedStart] : [])
-	).filter((date) => date.getTime() > now && date.getTime() !== runningMs);
+	const datesAhead = (upcomingDates ?? (plannedStart ? [plannedStart] : []))
+		.map((date) =>
+			date instanceof Date ? { start: date, durationMinutes } : date
+		)
+		.filter(
+			({ start }) =>
+				start.getTime() > now && start.getTime() !== runningMs
+		);
 	/* The series from the first date still ahead: the dates left behind,
 	   the running one among them, no longer count. */
 	const seriesAhead = series && {
@@ -319,7 +327,6 @@ export const GroupWaitingRoom = ({
 			<GroupUpcomingDates
 				onBack={backToRoom}
 				dates={datesAhead}
-				durationMinutes={durationMinutes}
 				eventId={eventId}
 				series={seriesAhead}
 			/>

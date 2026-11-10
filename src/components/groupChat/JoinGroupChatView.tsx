@@ -43,16 +43,12 @@ import {
 import { usePrefersReducedMotion } from '../../hooks/usePrefersReducedMotion';
 import { GroupChatCalendarMenu } from './GroupChatCalendarMenu';
 import { useGroupChatAuthorContent } from './useGroupChatAuthorContent';
-import { getGroupChatPlannedStart } from './groupChatDate';
 import { getGroupChatWaitingAreaVisibility } from './groupChatHelpers';
 import { GroupWaitingRoom } from './entryRoom/GroupWaitingRoom';
 import { CallPrejoinDialog } from '../call/prejoin/CallPrejoinDialog';
 import { shouldShowDeviceCheck } from '../call/prejoin/callPrejoin';
-import {
-	getGroupSeries,
-	getGroupUpcomingDates,
-	getGroupWaitingRoomTopic
-} from './entryRoom/groupWaitingRoomData';
+import { getGroupWaitingRoomTopic } from './entryRoom/groupWaitingRoomData';
+import { useGroupWaitingRoomSchedule } from './entryRoom/useGroupWaitingRoomSchedule';
 
 interface JoinGroupChatViewProps {
 	forceBannedOverlay?: boolean;
@@ -346,7 +342,8 @@ export const JoinGroupChatView = ({
 			activeSession.item.groupChatRulesTranslations
 	});
 	const groupChatRules = authorContent.rules;
-	const plannedStart = getGroupChatPlannedStart(activeSession.item);
+	const { plannedStart, upcomingDates, series, durationMinutes } =
+		useGroupWaitingRoomSchedule(activeSession.item);
 	const { showCountdown, showRules, showRulesHeadline } =
 		getGroupChatWaitingAreaVisibility(activeSession, plannedStart);
 	const [animationOff, setAnimationOff] = useState(false);
@@ -433,9 +430,9 @@ export const JoinGroupChatView = ({
 					agencyName={item.assignedAgencies?.[0]?.name}
 					agencyId={item.assignedAgencies?.[0]?.id}
 					plannedStart={plannedStart}
-					upcomingDates={getGroupUpcomingDates(item)}
-					series={getGroupSeries(item)}
-					durationMinutes={item.duration}
+					upcomingDates={upcomingDates}
+					series={series}
+					durationMinutes={durationMinutes}
 					eventId={item.id}
 					welcomeText={authorContent.hintMessage || undefined}
 					rules={groupChatRules}
@@ -538,7 +535,7 @@ export const JoinGroupChatView = ({
 						<div className="joinChat__actionsStart">
 							<GroupChatCalendarMenu
 								start={plannedStart}
-								durationMinutes={activeSession.item.duration}
+								durationMinutes={durationMinutes}
 								eventId={activeSession.item.id}
 							/>
 						</div>

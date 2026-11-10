@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useCallback, useContext, useEffect, useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { Box, Typography } from '@mui/material';
 import { Loading } from '../../app/Loading';
@@ -25,15 +25,11 @@ import {
 	UserDataContext
 } from '../../../globalState';
 import { getCounsellingDpaNotification } from '../../../utils/counsellingDpaNotification';
-import { getGroupChatPlannedStart } from '../groupChatDate';
 import { useGroupChatAuthorContent } from '../useGroupChatAuthorContent';
 import { getSessionNavigationPath } from '../../sessionsListItem/sessionsListItemHelpers';
 import { GroupWaitingRoom } from './GroupWaitingRoom';
-import {
-	getGroupSeries,
-	getGroupUpcomingDates,
-	getGroupWaitingRoomTopic
-} from './groupWaitingRoomData';
+import { getGroupWaitingRoomTopic } from './groupWaitingRoomData';
+import { useGroupWaitingRoomSchedule } from './useGroupWaitingRoomSchedule';
 import { translateWithFallback } from '../../../utils/translationFallback';
 import { registrationMd3 } from '../../registration/registrationDesign/registrationDesign';
 import {
@@ -201,13 +197,8 @@ const ClientGroupEntryRoom = () => {
 		groupChatRulesTranslations: item?.groupChatRulesTranslations
 	});
 
-	const upcomingDates = useMemo(() => getGroupUpcomingDates(item), [item]);
-	const series = useMemo(() => getGroupSeries(item), [item]);
-
-	const plannedStart = useMemo(
-		() => (item ? getGroupChatPlannedStart(item) : null),
-		[item]
-	);
+	const { plannedStart, upcomingDates, series, durationMinutes } =
+		useGroupWaitingRoomSchedule(item);
 
 	const handleJoin = useCallback(() => {
 		if (!item?.id || joinBusy || joinBlocked) {
@@ -290,7 +281,7 @@ const ClientGroupEntryRoom = () => {
 				plannedStart={plannedStart}
 				upcomingDates={upcomingDates}
 				series={series}
-				durationMinutes={item.duration}
+				durationMinutes={durationMinutes}
 				eventId={item.id}
 				welcomeText={authorContent.hintMessage || undefined}
 				rules={authorContent.rules}

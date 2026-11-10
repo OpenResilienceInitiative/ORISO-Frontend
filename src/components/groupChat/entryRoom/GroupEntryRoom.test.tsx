@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import {
+	act,
 	cleanup,
 	fireEvent,
 	render,
@@ -60,6 +61,9 @@ vi.mock('../../../api', () => ({
 vi.mock('../../../api/apiGetChatRoomById', () => ({
 	apiGetChatRoomById: vi.fn(() => Promise.resolve({ sessions: [] }))
 }));
+vi.mock('../../../api/apiGetChatOccurrences', () => ({
+	apiGetChatOccurrences: vi.fn()
+}));
 vi.mock('../useGroupChatAuthorContent', () => ({
 	useGroupChatAuthorContent: () => ({
 		hintMessage: 'Willkommen.',
@@ -81,9 +85,13 @@ vi.mock('./GroupWaitingRoom', () => ({
 		active: boolean;
 		joinBlocked?: boolean;
 		joinNotice?: string;
+		plannedStart: Date | null;
 		onJoin: () => unknown;
 	}) => (
-		<div data-testid="waiting-room">
+		<div
+			data-testid="waiting-room"
+			data-planned={props.plannedStart?.toISOString()}
+		>
 			{props.joinNotice && <p role="alert">{props.joinNotice}</p>}
 			<span>{props.topicName}</span>
 			<span>{props.agencyName}</span>
@@ -105,6 +113,9 @@ vi.mock('react-i18next', () => ({
 }));
 
 const { GroupEntryRoom } = await import('./GroupEntryRoom');
+const { apiGetChatOccurrences } = await import(
+	'../../../api/apiGetChatOccurrences'
+);
 const { apiPutGroupChat, apiGetAskerSessionList } = await import(
 	'../../../api'
 );
@@ -186,6 +197,72 @@ describe('GroupEntryRoom', () => {
 		expect(room.textContent).toContain('Trauerbegleitung');
 		expect(room.textContent).toContain('Caritas Berlin');
 	});
+
+	it('uses the next server occurrence when the first date was cancelled', async () => {
+		const original = sessionState.item;
+		const savedStart = new Date(Date.now() + 86_400_000).toISOString();
+		const nextStart = new Date(Date.now() + 8 * 86_400_000).toISOString();
+		sessionState.item = {
+			...sessionState.item,
+			startDateWithTime: savedStart,
+			chatInterval: 'WEEKLY',
+			repeatCount: 2
+		};
+		vi.mocked(apiGetChatOccurrences).mockResolvedValueOnce([
+			{
+				seriesId: 15,
+				occurrenceIndex: 1,
+				start: nextStart,
+				originalStart: nextStart,
+				duration: 90,
+				modality: 'TEXT'
+			}
+		]);
+
+		try {
+			renderRoom();
+			const room = await screen.findByTestId('waiting-room');
+			await waitFor(() => expect(room.dataset.planned).toBe(nextStart));
+		} finally {
+			sessionState.item = original;
+		}
+	});
+
+	it.each([
+		[404, true],
+		[501, true],
+		[503, false],
+		[403, false]
+	] as const)(
+		'handles unavailable occurrence data (HTTP %s) without leaving the room',
+		async (status, legacy) => {
+			const original = sessionState.item;
+			const savedStart = new Date(Date.now() + 86_400_000).toISOString();
+			sessionState.item = {
+				...original,
+				startDateWithTime: savedStart,
+				chatInterval: 'WEEKLY',
+				repeatCount: 2
+			};
+			const load = Promise.withResolvers<never>();
+			vi.mocked(apiGetChatOccurrences).mockReturnValueOnce(load.promise);
+			try {
+				renderRoom();
+				const room = await screen.findByTestId('waiting-room');
+				expect(room.dataset.planned).toBeUndefined();
+				await act(async () => {
+					load.reject(new Response(null, { status }));
+					await load.promise.catch(() => {});
+				});
+				expect(room.dataset.planned).toBe(
+					legacy ? savedStart : undefined
+				);
+				expect(navigate).not.toHaveBeenCalled();
+			} finally {
+				sessionState.item = original;
+			}
+		}
+	);
 
 	it('hides the topic until the client has agreed to the privacy statement', async () => {
 		renderRoom(CLIENT);
