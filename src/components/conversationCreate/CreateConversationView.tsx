@@ -885,9 +885,9 @@ const EditConversationRoute = ({
 	chatId: number;
 }) => {
 	const { userData } = useContext(UserDataContext);
-	// A room-scoped read cannot fall back to the same numeric ID of an
-	// individual conversation or a handover candidate.
-	const { session, ready } = useSession(roomId);
+	// The group lookup carries the current chat owner. Omitting the
+	// individual session ID also rules out its numeric and handover fallbacks.
+	const { session, ready } = useSession(roomId, undefined, chatId);
 	if (!ready) return <Loading />;
 	if (
 		!session?.isGroup ||

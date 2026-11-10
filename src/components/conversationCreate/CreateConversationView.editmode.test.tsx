@@ -276,7 +276,7 @@ describe('CreateConversationView edit mode (finding 1)', () => {
 
 		// The persisted topic is prefilled and shown on the topic row.
 		expect(await screen.findByText('Existing circle')).toBeTruthy();
-		expect(useSession).toHaveBeenLastCalledWith('group-1');
+		expect(useSession).toHaveBeenLastCalledWith('group-1', undefined, 77);
 
 		// Save routes to the update endpoint for the routed chat id (77), never
 		// to create (which is what the pre-fix route did, duplicating the chat).
@@ -442,6 +442,48 @@ describe('CreateConversationView edit mode (finding 1)', () => {
 	});
 
 	it.each([
+		['former owner', 'me', false],
+		['current owner', 'c-9', true]
+	])(
+		'uses the group projection for the %s after an ownership transfer',
+		async (_, viewer, mayEdit) => {
+			const transferredItem = {
+				...editSeriesItem,
+				participants: [
+					{ consultantId: 'me', role: 'CO_MODERATOR' },
+					{ consultantId: 'c-9', role: 'OWNER' }
+				]
+			};
+			vi.mocked(useSession).mockImplementation(
+				(_roomId, _sessionId, chatId) =>
+					chatId === 77
+						? sessionResult(transferredItem, 'c-9')
+						: sessionResult()
+			);
+
+			renderInUserContext(undefined, viewer);
+
+			if (mayEdit) {
+				expect(await screen.findByText('Existing circle')).toBeTruthy();
+				expect(
+					screen.getByRole('button', {
+						name: 'groupChat.circle.saveLabel'
+					})
+				).toBeTruthy();
+			} else {
+				expect(await screen.findByText('Normal group 77')).toBeTruthy();
+				expect(screen.queryByText('Existing circle')).toBeNull();
+				expect(apiGetTenantConsultantList).not.toHaveBeenCalled();
+			}
+			expect(useSession).toHaveBeenLastCalledWith(
+				'group-1',
+				undefined,
+				77
+			);
+		}
+	);
+
+	it.each([
 		[
 			'different room',
 			sessionResult({ ...editSeriesItem, matrixRoomId: 'other' })
@@ -480,7 +522,7 @@ describe('CreateConversationView edit mode (finding 1)', () => {
 		await waitFor(() => expect(useSession).toHaveBeenCalled());
 		expect(screen.queryByText('Existing circle')).toBeNull();
 		expect(apiGetTenantConsultantList).not.toHaveBeenCalled();
-		expect(useSession).toHaveBeenLastCalledWith('group-1');
+		expect(useSession).toHaveBeenLastCalledWith('group-1', undefined, 77);
 	});
 
 	it('never displays a stale prefill while a changed room is loading', async () => {
@@ -498,7 +540,7 @@ describe('CreateConversationView edit mode (finding 1)', () => {
 		await waitFor(() =>
 			expect(screen.queryByText('Existing circle')).toBeNull()
 		);
-		expect(useSession).toHaveBeenLastCalledWith('group-2');
+		expect(useSession).toHaveBeenLastCalledWith('group-2', undefined, 78);
 	});
 });
 

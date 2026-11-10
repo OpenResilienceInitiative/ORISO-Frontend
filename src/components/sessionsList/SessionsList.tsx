@@ -92,7 +92,10 @@ import {
 	hasDraftContent,
 	REMOTE_DRAFT_INDEX_SCOPE
 } from '../../services/draftStore';
-import { canModerateGroupChat } from '../groupChat/groupChatHelpers';
+import {
+	canEditGroupChatSettings,
+	canModerateGroupChat
+} from '../groupChat/groupChatHelpers';
 import {
 	FutureZone,
 	PULL_RELEASE_PX,
@@ -2550,7 +2553,11 @@ export const SessionsList = ({
 							session.item.matrixRoomId ||
 							session.rid ||
 							undefined,
-						canModerate: canModerateGroupChat(session, userData)
+						canModerate: canModerateGroupChat(session, userData),
+						canConfigure: canEditGroupChatSettings(
+							session,
+							userData
+						)
 					};
 				}),
 		// eslint-disable-next-line react-hooks/exhaustive-deps
