@@ -713,11 +713,27 @@ class CallManager {
 					 * answered is still closed, which is what this check was
 					 * added for.
 					 */
-					callLifecycleTracker.finishIfUnattended(
+					const finalised = callLifecycleTracker.finishIfUnattended(
 						outgoingCall.callId
 					);
-					// No observation is started for a superseded start: its
-					// ownership (account, lifecycle) can no longer be proven.
+					// An attended call carries on without us. Keep it observable
+					// only when it is provably still running, the same account
+					// is signed in, no sign-out happened, and no newer call
+					// already owns the observation.
+					if (
+						!finalised &&
+						callLifecycleTracker.isAttendedAndRunning(callId) &&
+						this.currentAccount() === start.startedBy &&
+						generation === this.sessionGeneration &&
+						this.observation === null
+					) {
+						this.startObservation(
+							roomId,
+							callId,
+							isVideo,
+							outgoingCall.roomId
+						);
+					}
 				} else {
 					// The invite can reach the server after local cancellation.
 					// Send its matching hangup after acknowledgement, never for

@@ -86,6 +86,21 @@ describe('call observation across sign-out', () => {
 		expect(register).not.toHaveBeenCalled();
 	});
 
+	it('does not observe a superseded start that nobody joined', async () => {
+		let acknowledge!: (value: unknown) => void;
+		sendEvent.mockReturnValue(
+			new Promise((resolve) => {
+				acknowledge = resolve;
+			})
+		);
+		callManager.startCall(SOURCE, true, true);
+		await vi.waitFor(() => expect(sendEvent).toHaveBeenCalled());
+		callManager.endCall(false); // supersedes the pending start
+		acknowledge({ event_id: '$late' });
+		await new Promise((resolve) => setTimeout(resolve, 20));
+		expect(register).not.toHaveBeenCalled();
+	});
+
 	it('stops renewing after sign-out', async () => {
 		sendEvent.mockResolvedValue({ event_id: '$invite' });
 		callManager.startCall(SOURCE, true, true);

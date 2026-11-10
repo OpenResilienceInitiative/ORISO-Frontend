@@ -389,6 +389,16 @@ class CallLifecycleTracker {
 	 * must still be rejoinable. "Did we finish it" separates those; "do we
 	 * still know it" does not.
 	 */
+	/** A call this client tracks that somebody joined and that has not ended. */
+	isAttendedAndRunning(callId: string): boolean {
+		const tracked = this.calls.get(callId);
+		return Boolean(
+			tracked &&
+				tracked.message.startedAt &&
+				tracked.message.state === 'running'
+		);
+	}
+
 	finishIfUnattended(callId: string): boolean {
 		const tracked = this.calls.get(callId);
 		if (!tracked || tracked.message.startedAt) return false;
