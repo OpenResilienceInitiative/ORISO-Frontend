@@ -213,6 +213,40 @@ describe('composer formatting survives the transport round trip', () => {
 	});
 
 	/**
+	 * #2135 — empty lines between paragraphs are shown, so empty lines at the
+	 * very start or end would show as a blank band inside the bubble. They are
+	 * dropped on send; the ones between paragraphs stay.
+	 */
+	describe('blank lines at the edges of a message (#2135)', () => {
+		const empty = '<p style="text-align: left;"></p>';
+		const brEmpty = '<p style="text-align: left;"><br></p>';
+
+		it('drops leading and trailing empty paragraphs', () => {
+			const markup = composerHtmlToTransportMarkup(
+				`${empty}${brEmpty}<p style="text-align: left;">Hallo</p>${empty}${brEmpty}`
+			);
+
+			expect(markup).toBe('[[align:left]]<p>Hallo</p>[[/align]]');
+		});
+
+		it('keeps empty paragraphs between text', () => {
+			const markup = composerHtmlToTransportMarkup(
+				`<p>Eins</p>${empty}${empty}<p>Zwei</p>${empty}`
+			);
+
+			expect(markup).toBe(
+				'<p>Eins</p>[[align:left]]<p></p>[[/align]][[align:left]]<p></p>[[/align]]<p>Zwei</p>'
+			);
+		});
+
+		it('leaves a message of only empty lines empty', () => {
+			expect(composerHtmlToTransportMarkup(`${empty}${brEmpty}`)).toBe(
+				''
+			);
+		});
+	});
+
+	/**
 	 * #1080 — `target="_blank"` without `rel="noopener"` hands the opened page a
 	 * live handle on the counselling tab. Forced by the sanitizer rather than
 	 * merely allowed through, so neither an old message nor a hostile body can

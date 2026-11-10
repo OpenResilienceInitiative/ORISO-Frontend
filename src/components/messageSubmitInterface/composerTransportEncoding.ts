@@ -72,8 +72,29 @@ export const encodeAlignmentForTransport = (rawMessage: string): string => {
 	);
 };
 
+/**
+ * An empty paragraph is a blank line the sender typed. Between paragraphs it
+ * is shown (#2135); at the very start or end of a message it would only show
+ * as a blank band inside the bubble, so those are dropped.
+ */
+const EMPTY_PARAGRAPH = String.raw`<p\b[^>]*>(?:\s|&nbsp;|<br\b[^>]*>)*<\/p>`;
+const LEADING_EMPTY_PARAGRAPHS = new RegExp(
+	String.raw`^(?:\s*${EMPTY_PARAGRAPH})+`,
+	'i'
+);
+const TRAILING_EMPTY_PARAGRAPHS = new RegExp(
+	String.raw`(?:${EMPTY_PARAGRAPH}\s*)+$`,
+	'i'
+);
+
+export const trimEdgeEmptyParagraphs = (rawMessage: string): string =>
+	rawMessage
+		.trim()
+		.replace(LEADING_EMPTY_PARAGRAPHS, '')
+		.replace(TRAILING_EMPTY_PARAGRAPHS, '');
+
 /** The full outbound encoding, in the order the send path applies it. */
 export const composerHtmlToTransportMarkup = (rawMessage: string): string =>
 	encodeAlignmentForTransport(
-		encodeHighlightColorsForTransport(rawMessage)
+		encodeHighlightColorsForTransport(trimEdgeEmptyParagraphs(rawMessage))
 	).trim();
