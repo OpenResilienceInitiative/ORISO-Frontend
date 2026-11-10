@@ -31,6 +31,7 @@ import { SessionHeaderComponent } from '../sessionHeader/SessionHeaderComponent'
 import { MessageTimeline } from '../session/MessageTimeline';
 import { MessageSubmitInterfaceComponent } from '../messageSubmitInterface/messageSubmitInterfaceComponent';
 import type { ComposerPendingQuote } from '../messageSubmitInterface/ComposerPendingQuotes';
+import type { PassageReply } from './PassageReplyBlocks';
 import { SidePanel } from '../chatStage/SidePanel';
 import { PanelHeader } from '../chatStage/PanelHeader';
 import { focusSessionChromeOnPointerDown } from '../session/focusSessionChrome';
@@ -139,18 +140,19 @@ const at = (hhmm: string) =>
 
 const nowTime = () => String(Date.now());
 
-/** A counsellor message that answers a passage. */
+/**
+ * A counsellor message that answers one or more marked passages, one block
+ * each, plus optional free text after them.
+ */
 const answerMessage = ({
 	id,
-	passage,
+	replies,
 	text,
-	voice,
 	time
 }: {
 	id: string;
-	passage: MarkedPassage;
+	replies: PassageReply[];
 	text: string;
-	voice: { src: string; durationSec: number } | null;
 	time: string;
 }): MessageItem => ({
 	_id: id,
@@ -164,26 +166,15 @@ const answerMessage = ({
 	displayName: COUNSELLOR_NAME,
 	username: 'mona.s@oriso.invalid',
 	userId: COUNSELLOR_MATRIX_ID,
-	replyToEventId: passage.eventId,
-	replyExcerpt: passage.text,
-	...(voice
-		? {
-				attachments: [
-					{
-						title: 'sprachnachricht.webm',
-						downloadUrl: voice.src,
-						mediaType: 'audio/webm',
-						size: 48,
-						hasCaption: Boolean(text)
-					} as never
-				],
-				file: {
-					_id: `${id}-voice`,
-					name: 'sprachnachricht.webm',
-					type: 'audio/webm'
-				} as never
-			}
-		: {})
+	passageReplies: replies
+});
+
+const replyOf = (answer: SelectionAnswer): PassageReply => ({
+	eventId: answer.passage.eventId,
+	author: answer.passage.author,
+	excerpt: answer.passage.text,
+	text: answer.text || undefined,
+	voice: answer.voice
 });
 
 /**
@@ -265,13 +256,15 @@ function SelectionReplyStage({
 			? [
 					answerMessage({
 						id: '$a1',
-						passage: {
-							eventId: '$m3',
-							author: CLIENT_NAME,
-							text: LETTERS_PASSAGE
-						},
+						replies: [
+							{
+								eventId: '$m3',
+								author: CLIENT_NAME,
+								excerpt: LETTERS_PASSAGE,
+								voice: sentVoice
+							}
+						],
 						text: '',
-						voice: sentVoice,
 						time: at('09:20')
 					})
 				]
@@ -373,17 +366,10 @@ function SelectionReplyStage({
 		};
 	}, [thread]);
 
+	// Sent from the answer field: it takes everything collected so far
+	// along, so the answers still leave as one message.
 	const sendAnswer = (answer: SelectionAnswer) => {
-		setMessages((rows) => [
-			...rows,
-			answerMessage({
-				id: `$a${rows.length + 1}`,
-				passage: answer.passage,
-				text: answer.text,
-				voice: answer.voice,
-				time: nowTime()
-			})
-		]);
+		sendReplies([...pending.map(collectedReply), replyOf(answer)], '');
 	};
 
 	const collectAnswer = (answer: SelectionAnswer) => {
@@ -404,37 +390,38 @@ function SelectionReplyStage({
 		]);
 	};
 
-	// The composer's send: every collected answer becomes its own message.
-	const sendCollected = () => {
-		if (!pending.length) {
-			return;
-		}
+	const collectedReply = (quote: ComposerPendingQuote): PassageReply => ({
+		eventId: quote.eventId,
+		author: quote.author,
+		excerpt: quote.excerpt,
+		text: quote.replyText,
+		voice: voiceTakes[quote.id] || null
+	});
+
+	const sendReplies = (replies: PassageReply[], text: string) => {
 		setMessages((rows) => [
 			...rows,
-			...pending.map((quote, index) =>
-				answerMessage({
-					id: `$a${rows.length + index + 1}`,
-					passage: {
-						eventId: quote.eventId,
-						author: quote.author,
-						text: quote.excerpt
-					},
-					text: quote.replyText || '',
-					voice: voiceTakes[quote.id] || null,
-					time: nowTime()
-				})
-			)
+			answerMessage({
+				id: `$a${rows.length + 1}`,
+				replies,
+				text,
+				time: nowTime()
+			})
 		]);
 		setPending([]);
 	};
 
-	const jumpBack = (message: MessageItem) => {
-		if (message.replyToEventId && contentRef.current) {
-			jumpToPassage(
-				contentRef.current,
-				message.replyToEventId,
-				message.replyExcerpt || ''
-			);
+	// The composer's send: all collected answers and the typed text leave
+	// as ONE message.
+	const sendCollected = (typedText: string) => {
+		if (pending.length) {
+			sendReplies(pending.map(collectedReply), typedText);
+		}
+	};
+
+	const jumpBack = (reply: PassageReply) => {
+		if (contentRef.current) {
+			jumpToPassage(contentRef.current, reply.eventId, reply.excerpt);
 		}
 	};
 
@@ -505,7 +492,7 @@ function SelectionReplyStage({
 											})
 										}
 										resolveReplyQuote={resolveReplyQuote}
-										onJumpToReplyQuote={jumpBack}
+										onJumpToPassage={jumpBack}
 										{...timelineHandlers}
 									/>
 								</SelectionReplyLayer>
@@ -855,14 +842,6 @@ const recordTake = async (field: HTMLElement) => {
 	await waitForElement(() => field.querySelector('audio'), 'voice review');
 };
 
-const sendFromField = async (field: HTMLElement) => {
-	const send = within(field).getByRole('button', {
-		name: 'Nachricht senden'
-	});
-	await waitFor(() => expect(send).toBeEnabled());
-	await userEvent.click(send);
-};
-
 const answerRows = (canvasElement: HTMLElement) =>
 	Array.from(
 		canvasElement.querySelectorAll<HTMLElement>(
@@ -870,9 +849,13 @@ const answerRows = (canvasElement: HTMLElement) =>
 		)
 	);
 
-/** 8 · Vier Antworten auf eine lange Nachricht: Zitate, Sprache, Text, gemischt. */
+/**
+ * 8 · Vier Stellen, eine Nachricht: four passages of one long message are
+ * marked and commented one after another (voice, text, voice, text) and
+ * leave together as ONE message.
+ */
 export const FourAnswersLongMessage: Story = {
-	name: '8 · Vier Antworten auf eine lange Nachricht',
+	name: '8 · Vier Stellen, eine Nachricht',
 	args: {
 		withSentAnswer: false,
 		withLongMessage: true,
@@ -881,101 +864,111 @@ export const FourAnswersLongMessage: Story = {
 	parameters: {
 		verification: {
 			// The composer re-reads its audience (who can see the message)
-			// when the timeline grows; with four sends in one play that
-			// effect lands outside act() twice. Browser behaviour, counted
-			// exactly so any further warning still fails.
+			// each time a passage joins it, outside act(): once per passage.
+			// Browser behaviour, counted exactly so any further warning
+			// still fails.
 			expectedErrors: [
-				...actWarnings({ MessageSubmitInterfaceComponent: 2 }),
+				...actWarnings({ MessageSubmitInterfaceComponent: 4 }),
 				// A lazily loaded piece of the sent answer mounts once.
 				...suspendedInAct(1)
 			]
 		}
 	},
 	play: async ({ canvasElement }) => {
-		await playFourAnswers(canvasElement);
+		await playFourPassages(canvasElement);
 	}
 };
 
-const playFourAnswers = async (canvasElement: HTMLElement) => {
-	// Let the stage settle first: the composer refreshes its audience
-	// 0.7 s and 1.8 s after it opens (messageSubmitInterfaceComponent).
-	await new Promise((resolve) => window.setTimeout(resolve, 2000));
-
-	// 1 · Four lines marked → voice note → sent at once.
-	let bar = await markPassage(
-		canvasElement,
-		LONG_MESSAGE_ID,
-		LONG_ANSWERS.debts
-	);
-	within(bar)
-		.getByRole('button', { name: 'Mit Sprachnachricht antworten' })
-		.click();
-	let field = await openAnswerField(canvasElement);
-	await recordTake(field);
-	await sendFromField(field);
-	await waitFor(() => expect(answerRows(canvasElement)).toHaveLength(1));
-
-	// 2 · A short passage → text → sent at once.
-	bar = await markPassage(canvasElement, LONG_MESSAGE_ID, LONG_ANSWERS.court);
+const pressAnswer = (bar: HTMLElement) =>
 	within(bar)
 		.getByRole('button', { name: /Antworten/ })
 		.click();
-	field = await openAnswerField(canvasElement);
-	await userEvent.type(
-		within(field).getByRole('textbox'),
-		LONG_ANSWERS.courtAnswer
-	);
-	await sendFromField(field);
-	await waitFor(() => expect(answerRows(canvasElement)).toHaveLength(2));
 
-	// 3 · Voice note collected "Zur Eingabe".
-	bar = await markPassage(
-		canvasElement,
-		LONG_MESSAGE_ID,
-		LONG_ANSWERS.sister
-	);
+const pressVoice = (bar: HTMLElement) =>
 	within(bar)
 		.getByRole('button', { name: 'Mit Sprachnachricht antworten' })
 		.click();
-	field = await openAnswerField(canvasElement);
-	await recordTake(field);
+
+const collectFromField = async (field: HTMLElement) => {
 	await userEvent.click(
 		field.querySelector<HTMLButtonElement>(
 			'[data-cy="selection-reply-collect"]'
 		)!
 	);
+};
 
-	// 4 · Text collected with Enter.
-	bar = await markPassage(canvasElement, LONG_MESSAGE_ID, LONG_ANSWERS.night);
-	within(bar)
-		.getByRole('button', { name: /Antworten/ })
-		.click();
+const collectedBars = (canvasElement: HTMLElement) =>
+	canvasElement.querySelectorAll(
+		'[data-cy="composer-pending-quotes"] .messageSubmit__contextBar'
+	);
+
+const playFourPassages = async (canvasElement: HTMLElement) => {
+	// Let the stage settle first: the composer refreshes its audience
+	// 0.7 s and 1.8 s after it opens (messageSubmitInterfaceComponent).
+	await new Promise((resolve) => window.setTimeout(resolve, 2000));
+
+	// 1 · Four lines (opens the shortened message) → voice note → "+".
+	let field = await markPassage(
+		canvasElement,
+		LONG_MESSAGE_ID,
+		LONG_ANSWERS.debts
+	).then(async (bar) => {
+		pressVoice(bar);
+		return openAnswerField(canvasElement);
+	});
+	await recordTake(field);
+	await collectFromField(field);
+	await waitFor(() => expect(collectedBars(canvasElement)).toHaveLength(1));
+
+	// 2 · A short passage → text → Enter.
+	pressAnswer(
+		await markPassage(canvasElement, LONG_MESSAGE_ID, LONG_ANSWERS.court)
+	);
+	field = await openAnswerField(canvasElement);
+	await userEvent.type(
+		within(field).getByRole('textbox'),
+		`${LONG_ANSWERS.courtAnswer}{Enter}`
+	);
+	await waitFor(() => expect(collectedBars(canvasElement)).toHaveLength(2));
+
+	// 3 · Voice note → "+".
+	pressVoice(
+		await markPassage(canvasElement, LONG_MESSAGE_ID, LONG_ANSWERS.sister)
+	);
+	field = await openAnswerField(canvasElement);
+	await recordTake(field);
+	await collectFromField(field);
+	await waitFor(() => expect(collectedBars(canvasElement)).toHaveLength(3));
+
+	// 4 · Text → Enter.
+	pressAnswer(
+		await markPassage(canvasElement, LONG_MESSAGE_ID, LONG_ANSWERS.night)
+	);
 	field = await openAnswerField(canvasElement);
 	await userEvent.type(
 		within(field).getByRole('textbox'),
 		`${LONG_ANSWERS.nightAnswer}{Enter}`
 	);
-	const stack = await waitForElement(
-		() =>
-			canvasElement.querySelector<HTMLElement>(
-				'[data-cy="composer-pending-quotes"]'
-			),
-		'collected answers'
-	);
-	await expect(
-		stack.querySelectorAll('.messageSubmit__contextBar')
-	).toHaveLength(2);
+	await waitFor(() => expect(collectedBars(canvasElement)).toHaveLength(4));
+	await expect(answerRows(canvasElement)).toHaveLength(0);
 
-	// The composer sends both collected answers, each its own message.
+	// One send: all four leave together.
 	const composerSend = canvasElement.querySelector<HTMLButtonElement>(
 		'.chatStage__mainPane .textarea__buttons button'
 	)!;
 	await waitFor(() => expect(composerSend).toBeEnabled());
 	await userEvent.click(composerSend);
-	await waitFor(() => expect(answerRows(canvasElement)).toHaveLength(4));
+	await waitFor(() => expect(answerRows(canvasElement)).toHaveLength(1));
+	await expect(collectedBars(canvasElement)).toHaveLength(0);
 
-	// Each answer quotes its passage and carries its voice note or text.
-	const rows = answerRows(canvasElement);
+	// The one message holds the four passages in order, each with its
+	// voice note or text.
+	const blocks = Array.from(
+		answerRows(canvasElement)[0].querySelectorAll<HTMLElement>(
+			'[data-cy="passage-reply"]'
+		)
+	);
+	await expect(blocks).toHaveLength(4);
 	const expected = [
 		{ passage: LONG_ANSWERS.debts, voice: true, text: '' },
 		{
@@ -990,34 +983,32 @@ const playFourAnswers = async (canvasElement: HTMLElement) => {
 			text: LONG_ANSWERS.nightAnswer
 		}
 	];
-	for (const [index, row] of rows.entries()) {
-		const quote = row.querySelector<HTMLElement>(
+	for (const [index, block] of blocks.entries()) {
+		const quote = block.querySelector<HTMLElement>(
 			'[data-cy="reply-quote-jump"]'
 		);
-		await expect(quote).toBeTruthy();
-		await expect(quote!.textContent).toContain(
+		await expect(quote?.textContent).toContain(
 			expected[index].passage.slice(0, 30)
 		);
-		await expect(Boolean(row.querySelector('audio'))).toBe(
+		await expect(Boolean(block.querySelector('audio'))).toBe(
 			expected[index].voice
 		);
 		if (expected[index].text) {
-			await expect(row.textContent).toContain(expected[index].text);
+			await expect(block.textContent).toContain(expected[index].text);
 		}
 	}
 
-	// Four marked lines stay a two-line quote in the answer.
-	const longQuote = rows[0].querySelector<HTMLElement>(
+	// Four marked lines stay a two-line quote.
+	const longQuote = blocks[0].querySelector<HTMLElement>(
 		'.messageItem__replyQuoteText'
 	)!;
 	await expect(longQuote.scrollHeight).toBeGreaterThan(
 		longQuote.clientHeight + 1
 	);
 
-	// Close the long message again, as after a reload: the quote must
-	// still find its four lines and open the message for them.
-	const longBubble = findMessageBubble(canvasElement, LONG_MESSAGE_ID)!;
-	longBubble
+	// Fold the long message again, as after a reload: the first quote
+	// still finds its four lines and opens the message for them.
+	findMessageBubble(canvasElement, LONG_MESSAGE_ID)!
 		.querySelector<HTMLButtonElement>(
 			'.messageItem__expandBtn[aria-expanded="true"]'
 		)
@@ -1030,9 +1021,9 @@ const playFourAnswers = async (canvasElement: HTMLElement) => {
 			)
 		).toBeNull()
 	);
-
-	// Clicking the first quote goes back to the four lines.
-	rows[0].querySelector<HTMLElement>('[data-cy="reply-quote-jump"]')!.click();
+	blocks[0]
+		.querySelector<HTMLElement>('[data-cy="reply-quote-jump"]')!
+		.click();
 	await waitFor(() =>
 		expect(
 			canvasElement.querySelector(
@@ -1040,12 +1031,54 @@ const playFourAnswers = async (canvasElement: HTMLElement) => {
 			)
 		).toBeTruthy()
 	);
-	const painted = (
-		CSS as unknown as {
-			highlights?: Map<string, Iterable<Range>>;
+	await waitFor(() =>
+		expect(
+			findPassageRange(
+				findMessageBubble(canvasElement, LONG_MESSAGE_ID)!,
+				LONG_ANSWERS.debts
+			)
+		).toBeTruthy()
+	);
+};
+
+/**
+ * 9 · Sofort senden nimmt Gesammeltes mit: with two answers already
+ * collected, Cmd/Ctrl + Enter in the answer field sends all three together
+ * as one message.
+ */
+export const SendNowTakesCollected: Story = {
+	name: '9 · Sofort senden nimmt Gesammeltes mit',
+	args: {
+		withSentAnswer: false,
+		pending: CollectedInComposer.args!.pending
+	},
+	parameters: {
+		verification: {
+			// Same composer audience refresh as in story 8.
+			expectedErrors: [
+				...actWarnings({ MessageSubmitInterfaceComponent: 2 })
+			]
 		}
-	).highlights?.get('oriso-selection-reply-jump');
-	if (painted) {
-		await expect([...painted][0].toString()).toContain('drei Mahnungen');
+	},
+	play: async ({ canvasElement }) => {
+		await new Promise((resolve) => window.setTimeout(resolve, 2000));
+		await waitFor(() =>
+			expect(collectedBars(canvasElement)).toHaveLength(2)
+		);
+		pressAnswer(await markPassage(canvasElement, '$m3', LETTERS_PASSAGE));
+		const field = await openAnswerField(canvasElement);
+		await userEvent.type(
+			within(field).getByRole('textbox'),
+			'Die Briefe sortieren wir am Donnerstag.{Meta>}{Enter}{/Meta}'
+		);
+		await waitFor(() => expect(answerRows(canvasElement)).toHaveLength(1));
+		await expect(collectedBars(canvasElement)).toHaveLength(0);
+		const blocks = answerRows(canvasElement)[0].querySelectorAll(
+			'[data-cy="passage-reply"]'
+		);
+		await expect(blocks).toHaveLength(3);
+		await expect(blocks[2].textContent).toContain(
+			'Die Briefe sortieren wir am Donnerstag.'
+		);
 	}
 };

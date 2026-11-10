@@ -160,6 +160,10 @@ import {
 	memberAvatarChoice
 } from '../../utils/sessionAvatarChoice';
 import { chosenAvatarOf, counsellorChoiceOf } from '../../utils/avatarChoice';
+import {
+	PassageReplyBlocks,
+	type PassageReply
+} from '../selectionReply/PassageReplyBlocks';
 
 // Slack-style long-press on the bubble opens the message action menu.
 const LONG_PRESS_MS = 500;
@@ -273,6 +277,11 @@ export interface MessageItem {
 	 * start of the whole message.
 	 */
 	replyExcerpt?: string | null;
+	/**
+	 * Selection reply: several marked passages answered in this one message,
+	 * each with its own comment (text or voice note).
+	 */
+	passageReplies?: PassageReply[] | null;
 	/** MSC3440: thread root event id when the message is a thread reply. */
 	threadRootEventId?: string | null;
 	/** Editing (m.replace, #435): true when a later m.replace was applied. */
@@ -309,6 +318,8 @@ interface MessageItemComponentProps extends MessageItem {
 	 * in-bubble quote is a button.
 	 */
 	onJumpToReplyQuote?: () => void;
+	/** Selection reply: back from one of `passageReplies` to its passage. */
+	onJumpToPassage?: (reply: PassageReply) => void;
 	/** Start a direct reply to THIS message (wires the composer). */
 	onReplyDirect?: () => void;
 	/** Start editing THIS message (wires the composer, own messages only). */
@@ -387,6 +398,8 @@ export const MessageItemComponent = ({
 	replyQuote,
 	replyExcerpt,
 	onJumpToReplyQuote,
+	onJumpToPassage,
+	passageReplies,
 	onReplyDirect,
 	onEditDirect,
 	onDeleteDirect,
@@ -2411,9 +2424,18 @@ export const MessageItemComponent = ({
 										{systemNotificationDescription}
 									</div>
 								)}
+							{Boolean(passageReplies?.length) &&
+								!isSystemNotification && (
+									<PassageReplyBlocks
+										replies={passageReplies!}
+										isMyMessage={isMyMessage}
+										onJump={onJumpToPassage}
+									/>
+								)}
 							{/* Relations foundation (#435): quote of the replied-to
 							    message, rendered from the m.in_reply_to relation. */}
 							{replyToEventId &&
+								!passageReplies?.length &&
 								!isSystemNotification &&
 								(() => {
 									const quoteText =

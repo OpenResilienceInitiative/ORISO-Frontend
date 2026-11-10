@@ -2,7 +2,7 @@ import * as React from 'react';
 import { forwardRef, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import MicIcon from '@mui/icons-material/Mic';
-import LibraryAddOutlinedIcon from '@mui/icons-material/LibraryAddOutlined';
+import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
 
 import { VoiceNoteRow } from '../voicePlayer/VoiceNoteRow';
@@ -201,13 +201,7 @@ export const SelectionReplyPopover = forwardRef<
 							onFocus={() => setHint('add')}
 							onBlur={() => setHint(null)}
 						>
-							<LibraryAddOutlinedIcon
-								fontSize="inherit"
-								aria-hidden
-							/>
-							<span>
-								{translate('message.selectionReply.collect')}
-							</span>
+							<AddIcon fontSize="inherit" aria-hidden />
 						</button>
 						{hint === 'add' && (
 							<span

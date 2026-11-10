@@ -1004,12 +1004,14 @@ $message-avatar-overlap: -19px;
 
 		// Not inside an attachment card: its spans are its layout, and flattening
 		// them ran the file name and the status line together. The same holds
-		// for a reply quote, whose text clamps to two lines as a block.
+		// for a reply quote, whose text clamps to two lines as a block, and
+		// for answered passages, which hold quotes and voice players.
 		span:not(
 			.messageItem__highlight,
 			.messageItem__messageTime,
 			.attachmentCard *,
-			.messageItem__replyQuote *
+			.messageItem__replyQuote *,
+			.messageItem__passageReplies *
 		) {
 			display: inline;
 		}
@@ -1986,4 +1988,30 @@ $message-avatar-overlap: -19px;
 			outline-offset: 1px;
 		}
 	}
+}
+
+// Selection reply (selectionReply/PassageReplyBlocks.tsx).
+// Several passages answered in one message: quote, then its comment.
+.messageItem__passageReplies {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	margin: 0 0 8px;
+	padding: 0;
+	list-style: none;
+}
+
+.messageItem__passageReply {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+
+	.messageItem__replyQuote {
+		margin-bottom: 0;
+	}
+}
+
+.messageItem__passageReplyText {
+	margin: 0;
+	white-space: pre-wrap;
 }

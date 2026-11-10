@@ -2216,7 +2216,6 @@
 			"placeholder": "Yanıt yazın …",
 			"placeholderWithVoice": "İsterseniz metin ekleyin …",
 			"addToComposer": "Mesaja ekle",
-			"collect": "Ekle",
 			"sendNow": "Hemen gönder",
 			"keys": "↵ mesaja ekle · {{sendKey}} ↵ hemen gönder · Esc iptal",
 			"pendingLead": "{{number}} · {{author}}",

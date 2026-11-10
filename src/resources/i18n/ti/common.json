@@ -2190,7 +2190,6 @@
 			"placeholder": "መልሲ ጸሓፍ …",
 			"placeholderWithVoice": "እንተደሊኻ ጽሑፍ ወስኽ …",
 			"addToComposer": "ናብ መልእኽቲ ወስኽ",
-			"collect": "ወስኽ",
 			"sendNow": "ሕጂ ስደድ",
 			"keys": "↵ ናብ መልእኽቲ ወስኽ · {{sendKey}} ↵ ሕጂ ስደድ · Esc ሰርዝ",
 			"pendingLead": "{{number}} · {{author}}",

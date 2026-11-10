@@ -99,9 +99,9 @@ $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 	background: var(--m3-surface-container-lowest, #fff);
 	border: 1px solid var(--m3-primary-fixed, #ffdad5);
 
-	// The composer card's shape (24 px), so the field reads as a small
-	// version of the message input.
-	border-radius: 24px;
+	// Round at the top left, where it points away from the passage; the
+	// other corners stay small.
+	border-radius: 24px 8px 8px;
 	box-shadow: $selection-reply-elevation;
 	color: var(--m3-on-surface, #1b1b1c);
 
@@ -250,30 +250,26 @@ $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 	display: inline-flex;
 }
 
-// "Zur Eingabe": the answer joins the stack of answers in the composer.
+// "+": the answer joins the one message being put together in the composer.
 .selectionReply__collect {
 	display: inline-flex;
 	align-items: center;
-	gap: 6px;
+	justify-content: center;
 	flex-shrink: 0;
+	width: 40px;
 	height: 40px;
-	padding: 0 14px 0 12px;
-	border: 0;
-	border-radius: 20px;
-	background: var(--m3-surface-container-high, #eae7e8);
+	padding: 0;
+	border: 1px solid var(--m3-outline-variant, #c4c7c7);
+	border-radius: 50%;
+	background: transparent;
 	color: var(--m3-on-surface, #1b1b1c);
-	font: inherit;
-	font-size: 14px;
-	line-height: 20px;
-	font-weight: 500;
-	white-space: nowrap;
 	cursor: pointer;
 	transition:
 		background-color 150ms ease,
 		color 150ms ease;
 
 	svg {
-		font-size: 18px;
+		font-size: 22px;
 	}
 
 	&:hover:not(:disabled),
@@ -305,8 +301,8 @@ $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 	row-gap: 4px;
 	padding: 8px 12px;
 	border-radius: 8px;
-	background: var(--m3-on-surface, #1b1b1c);
-	color: var(--m3-surface-container-lowest, #fff);
+	background: var(--m3-inverse-surface, #303031);
+	color: var(--m3-inverse-on-surface, #f2f0f0);
 	font-size: 12px;
 	line-height: 16px;
 	white-space: nowrap;
@@ -322,6 +318,14 @@ $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 .selectionReply__send {
 	display: inline-flex;
 	flex-shrink: 0;
+
+	// A plain round button here: the composer's corner shape belongs to
+	// the composer card.
+	.sendButton {
+		width: 40px;
+		height: 40px;
+		border-radius: 50%;
+	}
 }
 
 // The passage while it is being answered, and after a jump back to it.

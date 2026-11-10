@@ -2215,7 +2215,6 @@
 			"placeholder": "Write a reply …",
 			"placeholderWithVoice": "Add text if you like …",
 			"addToComposer": "Add to message",
-			"collect": "Add",
 			"sendNow": "Send now",
 			"keys": "↵ add to message · {{sendKey}} ↵ send now · Esc cancel",
 			"pendingLead": "{{number}} · {{author}}",

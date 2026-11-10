@@ -325,11 +325,12 @@ export interface MessageSubmitInterfaceComponentProps {
 	pendingQuotes?: ComposerPendingQuote[];
 	onRemovePendingQuote?: (id: string) => void;
 	/**
-	 * Send the collected answers. With answers collected the send button is
-	 * ready even while the editor is empty; typed text still goes out the
-	 * usual way after them.
+	 * Selection reply: the composer's send while answers are collected. All
+	 * collected passages and the typed text (markdown, '' when none) leave
+	 * as ONE message; the send button is ready even while the editor is
+	 * empty.
 	 */
-	onSendPendingQuotes?: () => void;
+	onSendPendingQuotes?: (typedText: string) => void;
 	/**
 	 * Editing (m.replace, #435): when set, the composer prefills this
 	 * message's text and the next send edits it in place instead of sending
@@ -2318,14 +2319,19 @@ export const MessageSubmitInterfaceComponent = ({
 			return null;
 		}
 		if (pendingQuotes?.length && onSendPendingQuotes) {
-			onSendPendingQuotes();
-			if (
-				!recordedVoiceRef.current &&
-				!attachmentSelected &&
-				!hasMessageContent(getTypedMarkdownMessage())
-			) {
+			if (!recordedVoiceRef.current && !attachmentSelected) {
+				// Selection reply: every collected passage and the typed text
+				// leave together, as one message.
+				const typed = getTypedMarkdownMessage();
+				onSendPendingQuotes(hasMessageContent(typed) ? typed : '');
+				setEditorState(EditorState.createEmpty());
+				setComposerText('');
+				composerRef.current?.clear();
+				void clearDraftMessage();
 				return null;
 			}
+			// A composer voice note or file still goes as its own message.
+			onSendPendingQuotes('');
 		}
 		if (
 			!recordedVoiceRef.current &&
@@ -2370,6 +2376,7 @@ export const MessageSubmitInterfaceComponent = ({
 		activeSession.item.matrixRoomId,
 		activeSession.item.id,
 		attachmentSelected,
+		clearDraftMessage,
 		getTypedMarkdownMessage,
 		hasMessageContent,
 		navigate,
