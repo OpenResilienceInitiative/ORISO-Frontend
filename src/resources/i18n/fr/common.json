@@ -525,6 +525,7 @@
 		"absent": {
 			"message": " est absent"
 		},
+		"assignedLabel": "Votre conseiller ou conseillère",
 		"jobTitle": "Conseiller ou conseillère"
 	},
 	"date": {
@@ -1058,6 +1059,7 @@
 			"subscribers": {
 				"empty": "pas de participants disponibles",
 				"headline": "Personnes participantes",
+				"protectedName": "Participant·e {{number}}",
 				"menuLabel": "Options pour {{name}}",
 				"role": {
 					"asker": "Personne en quête de conseil",

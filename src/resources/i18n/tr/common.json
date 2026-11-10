@@ -525,6 +525,7 @@
 		"absent": {
 			"message": " yok"
 		},
+		"assignedLabel": "Danışmanınız",
 		"jobTitle": "Danışman"
 	},
 	"date": {
@@ -1058,6 +1059,7 @@
 			"subscribers": {
 				"empty": "Mevcut katılımcı yok",
 				"headline": "Katılımcılar",
+				"protectedName": "Katılımcı {{number}}",
 				"menuLabel": "{{name}} için seçenekler",
 				"role": {
 					"asker": "Danışan",

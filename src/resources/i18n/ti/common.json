@@ -525,6 +525,7 @@
 		"absent": {
 			"message": " ዝበሃል የለን"
 		},
+		"assignedLabel": "ኣማኻሪኹም",
 		"jobTitle": "ኣማኻሪ ወይ ኣማኻሪ"
 	},
 	"date": {
@@ -1032,6 +1033,7 @@
 			"subscribers": {
 				"empty": "ተሳተፍቲ የለን",
 				"headline": "ተሳተፍቲ ምዃኖም ይፍለጥ",
+				"protectedName": "ተሳታፊ {{number}}",
 				"menuLabel": "ን{{name}} ዝኸውን ምርጫታት",
 				"role": {
 					"asker": "ምኽሪ ዝደሊ",

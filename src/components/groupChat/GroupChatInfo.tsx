@@ -41,7 +41,12 @@ import {
 	mobileDetailView,
 	desktopView
 } from '../app/navigationHandler';
-import { decodeUsername } from '../../utils/encryptionHelpers';
+import {
+	decodeUsername,
+	decodeUsernameSafely
+} from '../../utils/encryptionHelpers';
+import { isEmailShapedLogin } from '../../utils/isEmailShapedLogin';
+import { getModality, Modality } from '../session/getModality';
 import './groupChatInfo.styles';
 import { getCurrentMatrixUserId } from '../../utils/matrixSession';
 import { BanUserOverlay } from '../banUser/BanUser';
@@ -599,6 +604,19 @@ const GroupChatInfoContent = ({
 		/>
 	);
 
+const publicCircleParticipantName = (value?: string): string | undefined => {
+	const name = decodeUsernameSafely(value).trim();
+	if (
+		!name ||
+		isEmailShapedLogin(name) ||
+		/^@[^:\s]+:[^\s]+$/.test(name) ||
+		name.startsWith('enc.')
+	) {
+		return undefined;
+	}
+	return name;
+};
+
 /**
  * The M3 Chat-Info with the parts that need the active-session context:
  * room members from Matrix, bans, the QR code and the invite link.
@@ -673,14 +691,26 @@ export const GroupChatInfoM3Connected = ({
 			: undefined;
 	};
 
-	const participants: GroupChatInfoParticipant[] = users.map(
-		(subscriber) => ({
+	const protectNames = getModality(activeSession) === Modality.SELF_HELP;
+	const participantNumbers = new Map(
+		(protectNames ? users.map(({ _id }) => _id).sort() : []).map(
+			(id, index) => [id, index + 1]
+		)
+	);
+	const participants: GroupChatInfoParticipant[] = users.map((subscriber) => {
+		// The ban API and the ban list speak the login name.
+		const username = decodeUsernameSafely(subscriber.username);
+		const name = protectNames
+			? (publicCircleParticipantName(subscriber.displayName) ??
+				publicCircleParticipantName(subscriber.username) ??
+				translate('groupChat.info.subscribers.protectedName', {
+					number: participantNumbers.get(subscriber._id)
+				}))
+			: decodeUsername(subscriber.displayName || subscriber.username);
+		return {
 			id: subscriber._id,
-			// The ban API and the ban list speak the login name.
-			username: decodeUsername(subscriber.username),
-			name: subscriber.displayName
-				? decodeUsername(subscriber.displayName)
-				: decodeUsername(subscriber.username),
+			username,
+			name,
 			isModerator: moderators.includes(subscriber._id),
 			roleLabel: roleLabelOf(subscriber),
 			statusLabel:
@@ -688,8 +718,8 @@ export const GroupChatInfoM3Connected = ({
 				bannedUsers.includes(subscriber.username)
 					? translate('banUser.is.banned')
 					: undefined
-		})
-	);
+		};
+	});
 
 	const banSelected = () => {
 		if (!menu) {
@@ -722,7 +752,11 @@ export const GroupChatInfoM3Connected = ({
 					...current,
 					participant.username ?? participant.name
 				]);
-				onBanned(participant.username ?? participant.name);
+				onBanned(
+					protectNames
+						? participant.name
+						: (participant.username ?? participant.name)
+				);
 			})
 			// Say so instead of silently keeping the member.
 			.catch(() => onBanFailed());

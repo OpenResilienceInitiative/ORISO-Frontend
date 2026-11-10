@@ -52,6 +52,11 @@ it.each(Object.entries({ de, 'de@informal': deInformal, ...locales }))(
 		expect(catalogue.practice.cards.windowHint.trim()).not.toBe('');
 	}
 );
+it('uses the appropriate German form of address for the assigned counsellor fallback', () => {
+	expect(de.consultant.assignedLabel).toBe('Ihre Beratungsperson');
+	expect(deInformal.consultant?.assignedLabel).toBe('Deine Beratungsperson');
+});
+
 const passwordRecoveryStatuses = [
 	'pending',
 	'device-ready',

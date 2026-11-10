@@ -77,6 +77,7 @@ import { extractMentionedUserIds } from '../../utils/messageMentions';
 import { decodeUsernameSafely } from '../../utils/encryptionHelpers';
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import { getModality, Modality } from '../session/getModality';
+import { resolveAssignedConsultantLabel } from '../session/assignedConsultantLabel';
 import { STATUS_ENQUIRY } from '../../globalState/interfaces/SessionsDataInterface';
 import {
 	AUDIENCE_ALL,
@@ -2547,15 +2548,24 @@ export const MessageSubmitInterfaceComponent = ({
 	const getMessageSubmitInfo = useCallback((): MessageSubmitInfoInterface => {
 		let infoData;
 		if (activeInfo === INFO_TYPES.ABSENT) {
-			const contact = getContact(activeSession);
+			const consultantLabel = resolveAssignedConsultantLabel(
+				activeSession,
+				userData,
+				translate
+			);
+			const contact =
+				consultantLabel === undefined
+					? getContact(activeSession)
+					: null;
 			infoData = {
 				isInfo: true,
 				infoHeadline: `${
+					consultantLabel ||
 					contact?.displayName ||
 					contact?.username ||
 					translate('sessionList.user.consultantUnknown')
 				} ${translate('consultant.absent.message')} `,
-				infoMessage: activeSession.consultant.absenceMessage
+				infoMessage: activeSession.consultant?.absenceMessage
 			};
 		} else if (activeInfo === INFO_TYPES.ATTACHMENT_SIZE_ERROR) {
 			infoData = {
@@ -2640,7 +2650,7 @@ export const MessageSubmitInterfaceComponent = ({
 		}
 
 		return infoData;
-	}, [activeInfo, activeSession, translate]);
+	}, [activeInfo, activeSession, translate, userData]);
 
 	const handleBookingButton = useCallback(() => {
 		navigate('/booking/');
