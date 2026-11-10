@@ -1,4 +1,10 @@
 {
+	"askerInfo": {
+		"noPrivacyNotice": {
+			"title": "No privacy notice stored",
+			"text": "This counselling centre has not stored a privacy notice. The person may have consented knowing this. The centre is responsible for it. Only counsellors see this note."
+		}
+	},
 	"liveChatConversion": {
 		"title": "Keep your conversation",
 		"intro": "Create a password for this account. Your Live Chat stays with you.",

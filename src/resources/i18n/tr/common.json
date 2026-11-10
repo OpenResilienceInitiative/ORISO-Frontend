@@ -1,4 +1,10 @@
 {
+	"askerInfo": {
+		"noPrivacyNotice": {
+			"title": "Gizlilik bildirimi kayıtlı değil",
+			"text": "Bu danışma merkezi bir gizlilik bildirimi kaydetmemiştir. Kişi bunu bilerek onay vermiş olabilir. Bundan merkez sorumludur. Bu notu yalnızca danışmanlar görür."
+		}
+	},
 	"liveChatConversion": {
 		"title": "Görüşmenizi koruyun",
 		"intro": "Bu hesap için bir parola oluşturun. Canlı sohbetiniz korunur.",
