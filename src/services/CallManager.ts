@@ -1233,7 +1233,8 @@ class CallManager {
 			void import('../api/apiCallObservation')
 				.then(({ apiRegisterCallObservation }) =>
 					// A delayed import must not register a call that was already left.
-					this.observation?.callId !== callId
+					this.observation?.callId !== callId ||
+					this.currentAccount() !== account
 						? undefined
 						: apiRegisterCallObservation({
 								sourceRoomId,
