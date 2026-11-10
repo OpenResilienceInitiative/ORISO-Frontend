@@ -1218,7 +1218,13 @@ class CallManager {
 	): void {
 		this.stopObservation(false);
 		// Loaded on demand: this module stays free of browser-only API imports.
+		const account = this.currentAccount();
 		const register = () => {
+			// Another account is signed in now: never register this call as them.
+			if (this.currentAccount() !== account) {
+				this.stopObservation(false, callId);
+				return;
+			}
 			// The tracked call reached its end: stop renewing it.
 			if (callLifecycleTracker.hasEnded(callId)) {
 				this.stopObservation(false, callId);

@@ -29,9 +29,11 @@ const ROOM = '!call:oriso.example';
 describe('call observation across sign-out', () => {
 	const createRoom = vi.fn();
 	const sendEvent = vi.fn();
+	let userId = '@caller:oriso.example';
 
 	beforeEach(() => {
 		callManager.endCall(false);
+		userId = '@caller:oriso.example';
 		vi.resetAllMocks();
 		register.mockResolvedValue({});
 		end.mockResolvedValue({});
@@ -47,7 +49,7 @@ describe('call observation across sign-out', () => {
 			invite: vi.fn().mockResolvedValue(undefined),
 			leave: vi.fn().mockResolvedValue(undefined),
 			forget: vi.fn().mockResolvedValue(undefined),
-			getUserId: () => '@caller:oriso.example',
+			getUserId: () => userId,
 			getDeviceId: () => 'CALLER',
 			getRoom: () => null
 		};
@@ -114,6 +116,16 @@ describe('call observation across sign-out', () => {
 		callLifecycleTracker.finish(callId);
 		await vi.advanceTimersByTimeAsync(10 * 60 * 1000);
 		expect(register).toHaveBeenCalledTimes(2);
+	});
+
+	it('never renews a call as another account that signed in', async () => {
+		vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
+		sendEvent.mockResolvedValue({ event_id: '$invite' });
+		callManager.startCall(SOURCE, true, true);
+		await vi.waitFor(() => expect(register).toHaveBeenCalledTimes(1));
+		userId = '@second:oriso.example'; // a different account, no teardown seen
+		await vi.advanceTimersByTimeAsync(10 * 60 * 1000);
+		expect(register).toHaveBeenCalledTimes(1);
 	});
 
 	it('stops renewing after sign-out', async () => {
