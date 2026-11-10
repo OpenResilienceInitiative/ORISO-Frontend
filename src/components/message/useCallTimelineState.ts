@@ -1,7 +1,7 @@
 import * as React from 'react';
 import {
 	hasSameCallLifecycleIdentity,
-	wasCallStateNotFound,
+	consumeCallStateNotFound,
 	type CallLifecycleMessage
 } from '../../utils/callLifecycleMessage';
 
@@ -179,10 +179,11 @@ export function useCallTimelineState(
 					 * answers the card is settled as ended, without a
 					 * duration, since none is known.
 					 */
-					if (
-						current.state === 'running' &&
-						wasCallStateNotFound(current)
-					) {
+					// Each response is classified on its own: a non-404 breaks the run.
+					const notFound = consumeCallStateNotFound(current);
+					if (current.state === 'running' && !notFound)
+						unknownAnswers = 0;
+					if (current.state === 'running' && notFound) {
 						unknownAnswers += 1;
 						if (unknownAnswers >= UNKNOWN_STATE_LIMIT) {
 							setStored({

@@ -336,5 +336,6 @@ const notFoundAnswers = new WeakSet<CallLifecycleMessage>();
 export const markCallStateNotFound = (call: CallLifecycleMessage): void => {
 	notFoundAnswers.add(call);
 };
-export const wasCallStateNotFound = (call: CallLifecycleMessage): boolean =>
-	notFoundAnswers.has(call);
+/** Reads and clears the mark, so each response is classified on its own. */
+export const consumeCallStateNotFound = (call: CallLifecycleMessage): boolean =>
+	notFoundAnswers.delete(call);

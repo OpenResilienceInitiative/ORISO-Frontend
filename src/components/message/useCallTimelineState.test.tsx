@@ -112,6 +112,27 @@ describe('useCallTimelineState', () => {
 		expect(result.current.state).toBe('running');
 	});
 
+	it('resets the run when a non-404 null follows a 404', async () => {
+		vi.useFakeTimers();
+		const initial = runningCall();
+		const loadState = vi.fn(async () => null);
+		loadState.mockImplementationOnce(
+			async (call?: CallLifecycleMessage) => {
+				if (call) markCallStateNotFound(call);
+				return null;
+			}
+		);
+		const { result } = renderHook(() =>
+			useCallTimelineState(initial, loadState)
+		);
+		await act(async () => {
+			await vi.advanceTimersByTimeAsync(
+				15000 * (UNKNOWN_STATE_LIMIT + 2)
+			);
+		});
+		expect(result.current.state).toBe('running');
+	});
+
 	it('permits a persisted missed call to progress to ended', async () => {
 		const initial = runningCall({ state: 'missed' });
 		const { result } = renderHook(() =>
