@@ -86,6 +86,15 @@ const knockApi = vi.hoisted(() => ({
 	shareLink: vi.fn().mockResolvedValue(null)
 }));
 
+const shareLinkApi = vi.hoisted(() => ({
+	create: vi.fn().mockResolvedValue(null)
+}));
+
+vi.mock('../../../api/apiCallShareLink', async (importOriginal) => ({
+	...(await importOriginal<typeof import('../../../api/apiCallShareLink')>()),
+	apiCreateCallShareLink: shareLinkApi.create
+}));
+
 vi.mock('../../../api/apiCallKnocks', async (importOriginal) => ({
 	...(await importOriginal<typeof import('../../../api/apiCallKnocks')>()),
 	apiGetPendingCallKnocks: knockApi.pending
@@ -939,6 +948,105 @@ describe('what the host adds around the call', () => {
 		withUser(counsellor, makeFakeMatrixClientService('active'));
 		await waitFor(() => expect(knockApi.pending).toHaveBeenCalled());
 		expect(knockApi.shareLink).toHaveBeenCalled();
+	});
+
+	describe('call design: "Link teilen" in the call (S8)', () => {
+		const iframeUrl = async (view: ReturnType<typeof withUser>) =>
+			new URLSearchParams(
+				new URL(
+					await waitFor(() => {
+						const iframe = view.container.querySelector(
+							'.element-call-iframe'
+						) as HTMLIFrameElement | null;
+						expect(iframe).toBeTruthy();
+						return iframe!.src;
+					})
+				).hash.slice(2)
+			);
+
+		const inviteLink = async () => {
+			await waitFor(() =>
+				expect(widgetApiMocks.instances.length).toBeGreaterThan(0)
+			);
+			const api = widgetApiMocks.instances.at(-1)!;
+			const listener = api.on.mock.calls.find(
+				(call: unknown[]) =>
+					call[0] === 'action:org.oriso.call.invite_link'
+			)?.[1] as (event: CustomEvent) => void;
+			const detail = {
+				action: 'org.oriso.call.invite_link',
+				requestId: 'invite-1',
+				widgetId: 'widget',
+				data: {}
+			};
+			act(() =>
+				listener(
+					new CustomEvent('org.oriso.call.invite_link', {
+						cancelable: true,
+						detail
+					})
+				)
+			);
+			return { api, detail };
+		};
+
+		it('offers a counsellor the link and answers with the call´s link', async () => {
+			shareLinkApi.create.mockReset();
+			shareLinkApi.create.mockResolvedValue({
+				id: 7,
+				url: 'https://app.oriso.test/c/abc',
+				settings: { knock: true, temporaryAccount: true },
+				temporaryAccountAllowed: true
+			});
+			activeCall();
+			const view = withUser(
+				counsellor,
+				makeFakeMatrixClientService('active')
+			);
+			expect((await iframeUrl(view)).get('orisoInvite')).toBe('1');
+
+			const { api, detail } = await inviteLink();
+			await waitFor(() =>
+				expect(api.transport.reply).toHaveBeenCalledWith(detail, {
+					url: 'https://app.oriso.test/c/abc'
+				})
+			);
+			expect(shareLinkApi.create).toHaveBeenCalledWith({
+				sourceRoomId: FAKE_SIGNAL_ROOM_ID,
+				callId: FAKE_CALL_ID
+			});
+			// The corner share button would offer the same link twice.
+			expect(
+				view.container.querySelector('.element-call-share')
+			).toBeNull();
+		});
+
+		it('answers with an error when no link can be made', async () => {
+			shareLinkApi.create.mockReset();
+			shareLinkApi.create.mockResolvedValue(null);
+			activeCall();
+			withUser(counsellor, makeFakeMatrixClientService('active'));
+			const { api, detail } = await inviteLink();
+			await waitFor(
+				() =>
+					expect(api.transport.reply).toHaveBeenCalledWith(detail, {
+						error: expect.any(String)
+					}),
+				{ timeout: 3000 }
+			);
+		});
+
+		it('offers an advice seeker no link', async () => {
+			activeCall();
+			const view = withUser(
+				{
+					userId: '@anon:matrix.storybook.test',
+					grantedAuthorities: []
+				},
+				makeFakeMatrixClientService('active')
+			);
+			expect((await iframeUrl(view)).has('orisoInvite')).toBe(false);
+		});
 	});
 
 	it('asks for no knocks in a legacy call, which shows no widget', async () => {

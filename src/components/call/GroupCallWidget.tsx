@@ -17,6 +17,7 @@ import { ClientEvent, type Room, RoomStateEvent } from 'matrix-js-sdk';
 import { MatrixRTCSessionEvent } from 'matrix-js-sdk/lib/matrixrtc/MatrixRTCSession';
 import { callManager, CallData } from '../../services/CallManager';
 import { CallShareForCall } from './share/CallShareForCall';
+import { apiCreateCallShareLink } from '../../api/apiCallShareLink';
 import {
 	callStartFor,
 	deliverJoinMedia,
@@ -78,6 +79,9 @@ const GROUP_MIN = { width: 280, height: 180 };
  * enough that a wedged iframe is not something the user has to sit through.
  */
 const HANGUP_HANDSHAKE_MS = 1500;
+
+/** How long "Link teilen" waits before asking the server a second time, in ms. */
+const INVITE_LINK_RETRY_MS = 1000;
 
 /*
  * How long to wait between attempts to say who we are, in ms.
@@ -277,6 +281,26 @@ export const GroupCallWidget: React.FC = () => {
 		[isMobileView, isFullscreen]
 	);
 
+	/*
+	 * Call design S8: a counsellor hands out the call's link from the call's
+	 * own header ("Link teilen"). The link is the same one the share button
+	 * makes (UserService#1487): created on first use, reused after, with
+	 * "Anklopfen" on, so whoever opens it knocks and is let in here.
+	 */
+	const canInvite =
+		isConsultantUser && !!shareLinkCall && !callData?.sharedCallGuest;
+	const onInviteLink = useCallback(async (): Promise<string | null> => {
+		if (!shareLinkCall) return null;
+		const created = await apiCreateCallShareLink(shareLinkCall);
+		if (created) return created.url;
+		// Right after joining the server may not see this person in the call
+		// yet (404); one more try, as the share button does.
+		await new Promise((resolve) =>
+			setTimeout(resolve, INVITE_LINK_RETRY_MS)
+		);
+		return (await apiCreateCallShareLink(shareLinkCall))?.url ?? null;
+	}, [shareLinkCall]);
+
 	const widget = useElementCallWidget(
 		matrixClientService?.getClient() ?? null,
 		{
@@ -295,7 +319,9 @@ export const GroupCallWidget: React.FC = () => {
 			// with two people in it; a 1:1 session in the one-to-one view.
 			// `isGroup` is the conversation's kind as the caller decided it
 			// (group chat, or a supervision room with a second supervisor).
-			callType: callData ? (callData.isGroup ? 'group' : 'single') : null
+			callType: callData ? (callData.isGroup ? 'group' : 'single') : null,
+			invite: canInvite,
+			onInviteLink
 		}
 	);
 
@@ -1290,7 +1316,13 @@ export const GroupCallWidget: React.FC = () => {
 						{/* Host side: no widget capability needed (#1794). */}
 						{/* Element Call never sets CallData.state to connected; a
 						    ready widget is the joined call. */}
+						{/*
+						 * With host chrome and "Link teilen" in the call's
+						 * header (S8) this corner button would sit on that
+						 * header and offer the same link twice.
+						 */}
 						{isConsultantUser &&
+							!(hostChrome && canInvite) &&
 							widget.ready &&
 							callData?.signalRoomId && (
 								<div className="element-call-share">

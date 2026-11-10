@@ -83,6 +83,17 @@ export interface ElementCallWidgetOptions {
 	 * Left off the URL when unknown.
 	 */
 	callType?: OrisoCallType | null;
+	/**
+	 * Call design S8 (`orisoInvite=1`): this person may hand out a link to
+	 * the running call, so the call shows "Link teilen". Only together with
+	 * `onInviteLink`.
+	 */
+	invite?: boolean;
+	/**
+	 * `org.oriso.call.invite_link`: create or reuse the call's link. Resolves
+	 * with its URL, or `null` when the call cannot be shared right now.
+	 */
+	onInviteLink?: () => Promise<string | null>;
 }
 
 /** `orisoCallType` values (call design LEDGER). */
@@ -136,7 +147,9 @@ export const ORISO_WIDGET_ACTIONS = {
 	/** fromWidget `{ command }`, answered `{}` (call design S2). */
 	window: 'org.oriso.call.window',
 	/** toWidget `{ fullscreen }` (call design S2). */
-	windowState: 'org.oriso.call.window_state'
+	windowState: 'org.oriso.call.window_state',
+	/** fromWidget `{}`, answered `{ url }` or `{ error }` (call design S8). */
+	inviteLink: 'org.oriso.call.invite_link'
 } as const;
 
 export interface OrisoKnockState {
@@ -319,7 +332,9 @@ export const useElementCallWidget = (
 		hostChrome = false,
 		onWindowCommand,
 		windowState = null,
-		callType = null
+		callType = null,
+		invite = false,
+		onInviteLink
 	}: ElementCallWidgetOptions
 ): ElementCallWidget => {
 	// By value: an equal choice in a new object must not rebuild the URL.
@@ -344,6 +359,10 @@ export const useElementCallWidget = (
 	onSetKnockRef.current = onSetKnock;
 	const onWindowCommandRef = useRef(onWindowCommand);
 	onWindowCommandRef.current = onWindowCommand;
+	const onInviteLinkRef = useRef(onInviteLink);
+	onInviteLinkRef.current = onInviteLink;
+	// Without somebody to make the link, the call must not offer one.
+	const offersInvite = invite && !!onInviteLink;
 
 	// A widget client cannot join rooms. Gate iframe creation on the host's
 	// membership so Element Call never starts against an invited/unknown room.
@@ -434,6 +453,8 @@ export const useElementCallWidget = (
 					...(hostChrome ? { orisoHostChrome: '1' } : {}),
 					// Call design S6b: the conversation's kind, not its size.
 					...(callType ? { orisoCallType: callType } : {}),
+					// Call design S8: "Link teilen" in the call's header.
+					...(offersInvite ? { orisoInvite: '1' } : {}),
 					intent: 'start_call',
 					callIntent: isVideo ? 'video' : 'audio',
 					// The pre-join choice (ElementCall#116): on/off and the
@@ -456,7 +477,8 @@ export const useElementCallWidget = (
 		skipLobby,
 		callStartQuery,
 		hostChrome,
-		callType
+		callType,
+		offersInvite
 	]);
 
 	const attachIframe = useCallback(
@@ -652,6 +674,29 @@ export const useElementCallWidget = (
 					}
 					handler(command);
 					api.transport.reply(event.detail, {});
+				}
+			);
+
+			// Call design S8: the call's link, made or reused by the host. The
+			// person who opens it knocks and is let in as before.
+			api.on(
+				`action:${ORISO_WIDGET_ACTIONS.inviteLink}`,
+				(event: CustomEvent<IWidgetApiRequest>) => {
+					event.preventDefault();
+					const handler = onInviteLinkRef.current;
+					const fail = (error: string) =>
+						api.transport.reply(event.detail, { error });
+					if (!handler) {
+						fail('This call has no link to share');
+						return;
+					}
+					handler().then(
+						(url) =>
+							url
+								? api.transport.reply(event.detail, { url })
+								: fail('The link could not be created'),
+						() => fail('The link could not be created')
+					);
 				}
 			);
 

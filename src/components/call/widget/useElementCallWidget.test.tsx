@@ -1254,10 +1254,11 @@ describe('useElementCallWidget', () => {
 		const fragment = (url: string) =>
 			new URLSearchParams(new URL(url).hash.slice(2));
 
+		let requests = 0;
 		const request = (api: any, action: string, data: unknown) => {
 			const detail = {
 				action,
-				requestId: `${action}-1`,
+				requestId: `${action}-${++requests}`,
 				widgetId: 'widget',
 				data
 			};
@@ -1297,6 +1298,53 @@ describe('useElementCallWidget', () => {
 			expect(
 				fragment(unknown.result.current.url!).has('orisoCallType')
 			).toBe(false);
+		});
+
+		it('offers "Link teilen" only with somebody to make the link (S8)', async () => {
+			const withHandler = await mount({
+				invite: true,
+				onInviteLink: async () => 'https://app.oriso.test/c/1'
+			});
+			expect(
+				fragment(withHandler.result.current.url!).get('orisoInvite')
+			).toBe('1');
+			withHandler.unmount();
+			const without = await mount({ invite: true });
+			expect(
+				fragment(without.result.current.url!).has('orisoInvite')
+			).toBe(false);
+		});
+
+		it('answers invite_link with the url, or with an error string', async () => {
+			const onInviteLink = vi
+				.fn()
+				.mockResolvedValueOnce('https://app.oriso.test/c/1')
+				.mockResolvedValueOnce(null)
+				.mockRejectedValueOnce(new Error('CATCH_ALL'));
+			const { api } = await mount({ invite: true, onInviteLink });
+
+			const ok = request(api, 'org.oriso.call.invite_link', {});
+			expect(ok.event.defaultPrevented).toBe(true);
+			await waitFor(() =>
+				expect(api.transport.reply).toHaveBeenCalledWith(ok.detail, {
+					url: 'https://app.oriso.test/c/1'
+				})
+			);
+			const none = request(api, 'org.oriso.call.invite_link', {});
+			await waitFor(() =>
+				expect(api.transport.reply).toHaveBeenCalledWith(none.detail, {
+					error: expect.any(String)
+				})
+			);
+			const failed = request(api, 'org.oriso.call.invite_link', {});
+			await waitFor(() =>
+				expect(api.transport.reply).toHaveBeenCalledWith(
+					failed.detail,
+					{
+						error: expect.any(String)
+					}
+				)
+			);
 		});
 
 		it('runs minimise and toggle_fullscreen and answers {}', async () => {
