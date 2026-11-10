@@ -77,6 +77,10 @@ const renderAt = (path: string) =>
 								element={<SessionView />}
 							/>
 							<Route
+								path="/sessions/consultant/sessionView/chat/:chatId"
+								element={<SessionView />}
+							/>
+							<Route
 								path="/sessions/consultant/sessionView"
 								element={<div data-testid="session-list" />}
 							/>
@@ -160,6 +164,18 @@ describe('SessionView case handover route boundary', () => {
 				undefined,
 				false
 			)
+		);
+		expect(apiGetCaseHandoverRequestStatus).not.toHaveBeenCalled();
+	});
+
+	it('loads a group by chat id without looking up a case with the same number', () => {
+		renderAt('/sessions/consultant/sessionView/chat/41');
+
+		expect(useSession).toHaveBeenCalledWith(
+			undefined,
+			undefined,
+			41,
+			false
 		);
 		expect(apiGetCaseHandoverRequestStatus).not.toHaveBeenCalled();
 	});

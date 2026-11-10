@@ -31,7 +31,8 @@
 		"loading": "ተሳተፍቲ ይጽዓኑ ኣለዉ …",
 		"crowd": "{{count}} ተሳተፍቲ",
 		"unavailable": "ተሳተፍቲ ክጽዓኑ ኣይከኣሉን።",
-		"empty": "ተሳተፍቲ የለዉን።"
+		"empty": "ተሳተፍቲ የለዉን።",
+		"memberCount": "ኣባላት ዕላል፡ {{count}}"
 	},
 	"timelineSettings": {
 		"title": "ቆጸራታት ኣብ ዝርዝር ዘተታት",
@@ -1863,7 +1864,8 @@
 				"confirmLabel": "ሓድሽ ፓስዎርድ ኣረጋግጽ",
 				"submitLabel": "ፓስዎርድ ኣቐምጥ",
 				"success": "ፓስዎርድካ ብዓወት ተቐይሩ ኣሎ። ሕጂ ክትኣቱ ትኽእል ኢኻ።",
-				"invalidToken": "እዚ ሊንክ እዚ ጌጋ ወይ ጊዜኡ ኣኺሉ እዩ። በጃኻ ሓድሽ ሊንክ ሕተት።"
+				"invalidToken": "እዚ ሊንክ እዚ ጌጋ ወይ ጊዜኡ ኣኺሉ እዩ። በጃኻ ሓድሽ ሊንክ ሕተት።",
+				"requestNewLink": "ሓድሽ ሊንክ ሕተት"
 			}
 		},
 		"magicLink": {
@@ -2444,8 +2446,8 @@
 				}
 			},
 			"caseHandoverConsentDeclined": {
-				"title": "ናይ ጉዳይ ምትሕልላፍ ተነጺጉ",
-				"text": "ፍቓድ እቲ ተገልጋሊ ተነጺጉ። እቲ ትሕዝቶ ተዓጽዩ ይጸንሕ።"
+				"title": "ፍቓድ ኣይተዋህበን",
+				"text": "እቲ ምኽሪ ዝደሊ ሰብ ፍቓድ ኣይሃበን። ሕጂ ዘሎ ናይ ተበጻሕነት ኩነታት ኣብቲ ዝርርብ ክትርእዩ ትኽእሉ።"
 			},
 			"caseHandoverOfferSent": {
 				"title": "ቅድመ-ሓሳብ ምትሕልላፍ ጥንቅቕ ተላኢኹ",
@@ -6739,8 +6741,7 @@
 		},
 		"circles": {
 			"title": "ዝቕጽሉ ጉጅለታት ርእሰ-ሓገዝ",
-			"participants": "{{count}} ተሳተፍቲ",
-			"participants_one": "{{count}} ተሳታፊ"
+			"assignedCounsellors": "ጉጅለ ኣማኸርቲ፡ {{count}}"
 		}
 	},
 	"temporaryAccount": {

@@ -6,7 +6,7 @@ import { StageLayout } from '../../stageLayout/StageLayout';
 import { AccountData } from '../accountData/AccountData';
 import { RegistrationFooter } from '../../registrationFooter/RegistrationFooter';
 import type { RegistrationData } from '../../../globalState';
-import { INVITE_LOGIN_STATE } from './groupInviteEntryState';
+import { getGroupInviteLoginProps } from './groupInviteEntryState';
 import { RegistrationCompletionProvider } from '../consentCompletion/RegistrationCompletionContext';
 import { GroupHeading } from '../../groupChat/entryRoom/GroupHeading';
 
@@ -59,8 +59,7 @@ export const GroupInviteEntry = ({
 				showLegalLinks={true}
 				showLoginLink={true}
 				showRegistrationLink={false}
-				loginParams={new URLSearchParams({ gcid, aid }).toString()}
-				loginState={INVITE_LOGIN_STATE}
+				{...getGroupInviteLoginProps(gcid, aid)}
 				stage={stage}
 				mobileHero="bar"
 				headerStart={heading}

@@ -7,6 +7,8 @@ import {
 	it,
 	vi
 } from 'vite-plus/test';
+import i18n from 'i18next';
+import de from '../../resources/i18n/de/common.json';
 import { enterPracticeMode, exitPracticeMode } from '../../practice';
 import { startRoomCall } from './startRoomCall';
 
@@ -184,7 +186,13 @@ describe('startRoomCall', () => {
 		expect(notified).toHaveLength(1);
 	});
 
-	it('starts nothing when the permission is refused', async () => {
+	it('uses the current language and starts nothing when the permission is refused', async () => {
+		await i18n.init({
+			lng: 'de',
+			resources: {
+				de: { translation: { calls: { error: de.calls.error } } }
+			}
+		});
 		vi.stubGlobal('navigator', {
 			mediaDevices: {
 				getUserMedia: vi.fn(async () => {
@@ -201,7 +209,7 @@ describe('startRoomCall', () => {
 			getCallManager
 		});
 		expect(started).toEqual([]);
-		expect(notified[0]).toContain('browser settings');
+		expect(notified[0]).toContain(de.calls.error.grantPermissions);
 	});
 
 	it('offers the https redirect instead of failing silently on http', async () => {

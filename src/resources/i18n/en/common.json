@@ -31,7 +31,8 @@
 		"loading": "Loading participants …",
 		"crowd": "{{count}} participants",
 		"unavailable": "Participants could not be loaded.",
-		"empty": "No participants."
+		"empty": "No participants.",
+		"memberCount": "Chat members: {{count}}"
 	},
 	"timelineSettings": {
 		"title": "Appointments in the conversation list",
@@ -1895,7 +1896,8 @@
 				"confirmLabel": "Confirm new password",
 				"submitLabel": "Save password",
 				"success": "Your password has been changed successfully. You can now log in.",
-				"invalidToken": "This link is invalid or has expired. Please request a new one."
+				"invalidToken": "This link is invalid or has expired. Please request a new one.",
+				"requestNewLink": "Request a new link"
 			}
 		},
 		"magicLink": {
@@ -2467,8 +2469,8 @@
 				}
 			},
 			"caseHandoverConsentDeclined": {
-				"title": "Case handover declined",
-				"text": "Client consent was declined. Content visibility remains locked."
+				"title": "Consent declined",
+				"text": "The person seeking advice declined consent. You can check your current access in the conversation."
 			},
 			"caseHandoverOfferSent": {
 				"title": "Case handover offer sent",
@@ -6683,8 +6685,7 @@
 		},
 		"circles": {
 			"title": "Upcoming self-help circles",
-			"participants": "{{count}} participants",
-			"participants_one": "{{count}} participant"
+			"assignedCounsellors": "Counselling team: {{count}}"
 		}
 	},
 	"temporaryAccount": {

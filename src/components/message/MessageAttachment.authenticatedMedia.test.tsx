@@ -15,7 +15,14 @@
  * request instead.
  */
 import * as React from 'react';
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import {
+	cleanup,
+	fireEvent,
+	render,
+	screen,
+	waitFor,
+	within
+} from '@testing-library/react';
 import {
 	afterEach,
 	beforeEach,
@@ -28,21 +35,32 @@ import {
 import { MessageAttachment } from './MessageAttachment';
 import { NotificationsContext } from '../../globalState';
 import { setMatrixClientServiceRef } from '../../services/matrixClientRegistry';
+import { formatMatrixTimelineEvent } from '../../utils/matrixTimelineEventFormatter';
 
 const HOMESERVER = 'https://matrix.test';
 const MATRIX_TOKEN = 'matrix-access-token';
 const KEYCLOAK_TOKEN = 'keycloak-access-token';
 
-vi.mock('react-i18next', () => ({
-	useTranslation: () => ({ t: (key: string) => key })
-}));
+vi.mock('react-i18next', () => {
+	const labels: Record<string, string> = {
+		'attachments.type.label.pdf': 'PDF',
+		'attachments.type.label.mb': 'MB'
+	};
+	return {
+		useTranslation: () => ({
+			i18n: { language: 'de@informal' },
+			t: (key: string) => labels[key] ?? key
+		})
+	};
+});
 vi.mock('../../resources/scripts/endpoints', () => ({
 	apiUrl: 'https://api.test'
 }));
 vi.mock('../../services/mediaContentScanner', () => ({
 	isMediaContentScannerEnabled: () => false,
 	isMediaImageCheckEnabled: () => false,
-	downloadScannedEncryptedMedia: vi.fn()
+	downloadScannedEncryptedMedia: vi.fn(),
+	getScannedMediaDownloadPath: () => null
 }));
 vi.mock('../../utils/matrixEncryptedAttachment', () => ({
 	decryptMatrixAttachment: vi.fn(async () => new Uint8Array([1, 2, 3]).buffer)
@@ -76,18 +94,18 @@ const encryptedFile = {
 	v: 'v2'
 };
 
-const imageFile = { name: 'photo.png', type: 'image/png' } as never;
+const imageFile = { name: 'photo.png', type: 'image/png' };
 
 const fetchMock = vi.fn();
 
-const renderAttachment = (attachment: unknown) =>
+const renderAttachment = (attachment: unknown, file = imageFile) =>
 	render(
 		<NotificationsContext.Provider
 			value={{ addNotification: vi.fn() } as never}
 		>
 			<MessageAttachment
 				attachment={attachment as never}
-				file={imageFile}
+				file={file}
 				hasRenderedMessage
 				rid="room-1"
 				mediaCheckState="safe"
@@ -172,6 +190,44 @@ describe('encrypted attachment — the ciphertext fetch', () => {
 			fetchMock.mock.calls[0][1]?.headers?.Authorization;
 		expect(authorization).toBe(`Bearer ${MATRIX_TOKEN}`);
 		expect(authorization).not.toContain(KEYCLOAK_TOKEN);
+	});
+});
+
+describe('decrypted Matrix PDF size in the download card', () => {
+	it.each([
+		{ size: 703, label: 'PDF | 1 KB' },
+		{ size: 1_250_000, label: 'PDF | 1,3 MB' },
+		{ size: undefined, label: 'PDF' },
+		{ size: 0, label: 'PDF' }
+	])('renders $label for $size bytes', async ({ size, label }) => {
+		const file = { name: 'report.pdf', type: 'application/pdf' };
+		const message = formatMatrixTimelineEvent(
+			{
+				getType: () => 'm.room.message',
+				getClearContent: () => ({
+					msgtype: 'm.file',
+					body: file.name,
+					file: encryptedFile,
+					info: {
+						mimetype: file.type,
+						...(size === undefined ? {} : { size })
+					}
+				}),
+				getSender: () => '@asker:hs',
+				getId: () => '$attachment:hs',
+				getTs: () => 1700000000000
+			},
+			null,
+			'encrypted'
+		);
+
+		renderAttachment(message.attachments[0], file);
+		fireEvent.click(screen.getByRole('button'));
+
+		const download = await screen.findByRole('link', {
+			name: 'attachments.download.aria'
+		});
+		expect(within(download).getByText(label)).toBeTruthy();
 	});
 });
 

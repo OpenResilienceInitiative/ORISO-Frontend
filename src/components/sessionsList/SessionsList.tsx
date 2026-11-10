@@ -72,6 +72,8 @@ import {
 	DisplayFilterKindChip
 } from './SessionsListToolbar';
 import {
+	countUnreadSupervisedSessions,
+	countUnreadOtherSessions,
 	draftMatchesSession,
 	isAnonymousAskerSession,
 	isDirectLinkSession,
@@ -289,7 +291,11 @@ export const SessionsList = ({
 	const internalListRef = useRef<HTMLDivElement | null>(null);
 	const listRef = scrollContainerRef ?? internalListRef;
 
-	const { sessions, dispatch } = useContext(SessionsDataContext);
+	const {
+		sessions,
+		dispatch,
+		ready: sessionsReady
+	} = useContext(SessionsDataContext);
 	const { type, path: listPath } = useContext(SessionTypeContext);
 	const { setSessionListViewState } = useSessionListViewState();
 
@@ -309,6 +315,7 @@ export const SessionsList = ({
 	const [isLoading, setIsLoading] = useState(true);
 	const [currentOffset, setCurrentOffset] = useState(0);
 	const [totalItems, setTotalItems] = useState(0);
+	const hasMoreSessionPages = totalItems > currentOffset + SESSION_COUNT;
 	const [isReloadButtonVisible, setIsReloadButtonVisible] = useState(false);
 	const [isRequestInProgress, setIsRequestInProgress] = useState(false);
 	const abortController = useRef<AbortController>(null);
@@ -1790,9 +1797,21 @@ export const SessionsList = ({
 	// before the toolbar chip, so the chip refinement composes on top. The
 	// route-active row survives (dimmed) while its kind is hidden. All of it
 	// is memoised: unread/receipt events re-render this list often.
-	const canSupervise =
+	const isEligibleForSupervision =
 		showConsultantToolbarActions &&
 		hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData);
+	const canSupervise =
+		isEligibleForSupervision &&
+		sessionToolbarPairs.some(
+			({ raw, extended }) =>
+				classifySession(raw, extended, userData?.userId, true) ===
+				'supervision'
+		);
+	const showSupervisionChip =
+		canSupervise ||
+		(isEligibleForSupervision &&
+			type === SESSION_LIST_TYPES.MY_SESSION &&
+			hasMoreSessionPages);
 	const currentUserId = userData?.userId;
 	const displayFiltered = useMemo(
 		() =>
@@ -1945,7 +1964,7 @@ export const SessionsList = ({
 				case 'appointments':
 					return type === SESSION_LIST_TYPES.MY_SESSION;
 				case 'supervision':
-					return canSupervise;
+					return showSupervisionChip;
 				case 'directLinks':
 					return hasDirectLinkRow;
 				default:
@@ -1992,9 +2011,9 @@ export const SessionsList = ({
 			})
 		);
 	}, [
-		canSupervise,
 		hasDirectLinkRow,
 		rowsByKind,
+		showSupervisionChip,
 		showCreateGroupChatAction,
 		showGroupChip,
 		showInternalGroupChip,
@@ -2349,6 +2368,18 @@ export const SessionsList = ({
 		if (!sessionToolbarChip) {
 			return;
 		}
+		if (
+			sessionToolbarChip === 'supervision' &&
+			sessionsReady &&
+			!canSupervise &&
+			(!hasMoreSessionPages || type !== SESSION_LIST_TYPES.MY_SESSION) &&
+			!isLoading &&
+			!isRequestInProgress &&
+			!isReloadButtonVisible
+		) {
+			handleToolbarChipToggle(sessionToolbarChip);
+			return;
+		}
 		const activeKind =
 			displayFilterKinds.find(
 				(kind) => SESSION_KIND_CHIP[kind.id] === sessionToolbarChip
@@ -2365,6 +2396,12 @@ export const SessionsList = ({
 			handleToolbarChipToggle(sessionToolbarChip);
 		}
 	}, [
+		canSupervise,
+		hasMoreSessionPages,
+		isLoading,
+		isRequestInProgress,
+		isReloadButtonVisible,
+		sessionsReady,
 		displayFilterKinds,
 		handleToolbarChipToggle,
 		listDisplayFilter,
@@ -2412,19 +2449,24 @@ export const SessionsList = ({
 					);
 		const counts: Partial<Record<SessionToolbarChipFilter, number>> = {
 			unread: countUnreadSessions(unreadSource.map((p) => p.raw)),
-			drafts: visibleUserDrafts.length
+			drafts: visibleUserDrafts.length,
+			supervision: countUnreadSupervisedSessions(
+				unreadSource,
+				userData?.userId
+			)
 		};
 		Object.entries(unreadByKind).forEach(([kind, count]) => {
 			const chip = SESSION_KIND_CHIP[kind];
-			if (chip) {
+			if (chip && chip !== 'supervision') {
 				counts[chip] = (counts[chip] ?? 0) + count;
 			}
 		});
 		// Sonstiges bundles the kinds without their own pill (Frank 2026-09-16).
-		kindsUnderOther(listDisplayFilter, displayFilterKinds).forEach(
-			(kind) => {
-				counts.other = (counts.other ?? 0) + (unreadByKind[kind] ?? 0);
-			}
+		counts.other = countUnreadOtherSessions(
+			kindsUnderOther(listDisplayFilter, displayFilterKinds),
+			unreadByKind,
+			unreadSource,
+			userData?.userId
 		);
 		return counts;
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -2435,33 +2477,58 @@ export const SessionsList = ({
 		sessionToolbarPairs,
 		type,
 		unreadByKind,
+		userData?.userId,
 		visibleUserDrafts.length,
 		unreadVersion
 	]);
-	// A page can be entirely hidden (§5.2): keep paging until enough shows.
+	// Filters can hide a whole loaded page, leaving no scroll trigger.
 	useEffect(() => {
+		// Enquiries merge two feeds with their own paging contract. Keep their
+		// existing display-only paging. Only the Supervision chip adds a scan;
+		// ordinary text searches must not fetch the entire conversation history.
+		const ownConversations = type === SESSION_LIST_TYPES.MY_SESSION;
+		const pageSupervisionRows =
+			ownConversations &&
+			sessionToolbarChip === 'supervision' &&
+			!sessionToolbarSearch.trim();
+		const toolbarHidesRows =
+			pageSupervisionRows &&
+			sessionToolbarFilteredPairs.length < displayVisiblePairs.length;
+		const needsSupervisionPage =
+			ownConversations &&
+			sessionToolbarChip === 'supervision' &&
+			!canSupervise;
+		const visibleRows = pageSupervisionRows
+			? sessionToolbarFilteredPairs.length
+			: displayVisiblePairs.length;
 		if (
 			!showMySessionToolbar ||
-			displayFilterHiddenCount === 0 ||
-			displayVisiblePairs.length >= MIN_VISIBLE_SESSION_ROWS ||
+			(displayFilterHiddenCount === 0 &&
+				!toolbarHidesRows &&
+				!needsSupervisionPage) ||
+			visibleRows >= MIN_VISIBLE_SESSION_ROWS ||
 			isLoading ||
 			isRequestInProgress ||
 			isReloadButtonVisible ||
-			totalItems <= currentOffset + SESSION_COUNT
+			!hasMoreSessionPages
 		) {
 			return;
 		}
 		loadMoreSessions();
 	}, [
-		currentOffset,
+		canSupervise,
 		displayFilterHiddenCount,
 		displayVisiblePairs.length,
+		hasMoreSessionPages,
 		isLoading,
 		isReloadButtonVisible,
 		isRequestInProgress,
 		loadMoreSessions,
+		sessionToolbarChip,
+		sessionToolbarFilteredPairs.length,
+		sessionToolbarSearch,
 		showMySessionToolbar,
-		totalItems
+		type
 	]);
 	useEffect(() => {
 		setSessionListViewState(type, {
@@ -2481,9 +2548,6 @@ export const SessionsList = ({
 			})),
 		[userData]
 	);
-	const showSupervisionChip =
-		showConsultantToolbarActions &&
-		hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData);
 	const toolbarFilteredOutAll =
 		showMySessionToolbar &&
 		finalSessionsList.length > 0 &&

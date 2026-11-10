@@ -18,6 +18,20 @@ const INVITE_ENTRY_STEP_NAMES = [
 /** Router state of the entry's "Einloggen": show the form, do not bounce back. */
 export const INVITE_LOGIN_STATE = { inviteLogin: true } as const;
 
+export const getGroupInviteLoginProps = (
+	gcid?: string | null,
+	aid?: string | null
+) => {
+	const inviteId = gcid?.trim();
+	if (!inviteId || !parseGroupChatInviteId(inviteId)) return {};
+
+	const params = new URLSearchParams({ gcid: inviteId });
+	const agencyId = aid?.trim();
+	if (agencyId) params.set('aid', agencyId);
+
+	return { loginParams: params.toString(), loginState: INVITE_LOGIN_STATE };
+};
+
 export const isInviteLoginState = (state: unknown): boolean =>
 	Boolean(
 		state &&

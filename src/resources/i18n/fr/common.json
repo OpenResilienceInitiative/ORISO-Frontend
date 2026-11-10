@@ -31,7 +31,8 @@
 		"loading": "Chargement des participants …",
 		"crowd": "{{count}} personnes",
 		"unavailable": "Les participants n’ont pas pu être chargés.",
-		"empty": "Aucun participant."
+		"empty": "Aucun participant.",
+		"memberCount": "Membres du chat : {{count}}"
 	},
 	"timelineSettings": {
 		"title": "Rendez-vous dans la liste des conversations",
@@ -1889,7 +1890,8 @@
 				"confirmLabel": "Confirmer le nouveau mot de passe",
 				"submitLabel": "Enregistrer le mot de passe",
 				"success": "Votre mot de passe a été modifié avec succès. Vous pouvez maintenant vous connecter.",
-				"invalidToken": "Ce lien est invalide ou a expiré. Veuillez en demander un nouveau."
+				"invalidToken": "Ce lien est invalide ou a expiré. Veuillez en demander un nouveau.",
+				"requestNewLink": "Demander un nouveau lien"
 			}
 		},
 		"magicLink": {
@@ -2470,8 +2472,8 @@
 				}
 			},
 			"caseHandoverConsentDeclined": {
-				"title": "Transfert de dossier refusé",
-				"text": "Le consentement du·de la client·e a été refusé. Les contenus restent verrouillés."
+				"title": "Consentement refusé",
+				"text": "La personne conseillée a refusé de donner son accord. Vous pouvez vérifier votre accès actuel dans la conversation."
 			},
 			"caseHandoverOfferSent": {
 				"title": "Offre de transfert envoyée",
@@ -6768,8 +6770,7 @@
 		},
 		"circles": {
 			"title": "Prochains groupes d’entraide",
-			"participants": "{{count}} participant·e·s",
-			"participants_one": "{{count}} participant·e"
+			"assignedCounsellors": "Équipe de conseil : {{count}}"
 		}
 	},
 	"temporaryAccount": {

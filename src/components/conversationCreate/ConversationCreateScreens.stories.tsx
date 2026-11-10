@@ -236,21 +236,21 @@ const UPCOMING_CIRCLES: DashboardCircle[] = [
 		topic: 'Schulden',
 		when: 'Do., 30. Okt · 19:00',
 		medium: 'VIDEO',
-		participants: 6
+		assignedCounsellors: 6
 	},
 	{
 		id: 'c2',
 		topic: 'Trauer',
 		when: 'Mo., 3. Nov · 18:00',
 		medium: 'AUDIO',
-		participants: 4
+		assignedCounsellors: 4
 	},
 	{
 		id: 'c3',
 		topic: 'Sozialberatung',
 		when: 'Mi., 5. Nov · 17:30',
 		medium: 'CHAT',
-		participants: 8
+		assignedCounsellors: 8
 	}
 ];
 

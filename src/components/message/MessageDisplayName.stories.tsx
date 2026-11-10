@@ -135,7 +135,7 @@ export const ConsultantWithoutDisplayName: Story = {
 	},
 	play: async ({ canvasElement }) => {
 		await expect(canvasElement.textContent).not.toContain('Karina P');
-		await expect(canvasElement.textContent).toContain('karina p');
+		await expect(canvasElement.textContent).toContain('karina.p');
 	}
 };
 

@@ -31,7 +31,8 @@
 		"loading": "Teilnehmende werden geladen …",
 		"crowd": "{{count}} Teilnehmende",
 		"unavailable": "Teilnehmende konnten nicht geladen werden.",
-		"empty": "Keine Teilnehmenden."
+		"empty": "Keine Teilnehmenden.",
+		"memberCount": "Chatmitglieder: {{count}}"
 	},
 	"timelineSettings": {
 		"title": "Termine in der Gesprächsliste",
@@ -1910,7 +1911,8 @@
 				"confirmLabel": "Neues Passwort bestätigen",
 				"submitLabel": "Passwort speichern",
 				"success": "Ihr Passwort wurde erfolgreich geändert. Sie können sich nun anmelden.",
-				"invalidToken": "Dieser Link ist ungültig oder abgelaufen. Bitte fordern Sie einen neuen Link an."
+				"invalidToken": "Dieser Link ist ungültig oder abgelaufen. Bitte fordern Sie einen neuen Link an.",
+				"requestNewLink": "Neuen Link anfordern"
 			}
 		},
 		"magicLink": {
@@ -2491,8 +2493,8 @@
 				}
 			},
 			"caseHandoverConsentDeclined": {
-				"title": "Fallübergabe abgelehnt",
-				"text": "Die Klient:innen-Zustimmung wurde abgelehnt. Inhalte bleiben gesperrt."
+				"title": "Einwilligung abgelehnt",
+				"text": "Die ratsuchende Person hat die Einwilligung abgelehnt. Den aktuellen Zugriff sehen Sie im Gespräch."
 			},
 			"caseHandoverOfferSent": {
 				"title": "Übergabeangebot gesendet",
@@ -6758,8 +6760,7 @@
 		},
 		"circles": {
 			"title": "Nächste Gesprächskreise",
-			"participants": "{{count}} Teilnehmende",
-			"participants_one": "{{count}} Teilnehmende"
+			"assignedCounsellors": "Beratungsteam: {{count}}"
 		}
 	},
 	"temporaryAccount": {
