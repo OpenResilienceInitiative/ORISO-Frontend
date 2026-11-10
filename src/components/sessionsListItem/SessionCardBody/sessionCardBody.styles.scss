@@ -42,6 +42,11 @@
 		box-sizing: border-box;
 		height: var(--card-clip);
 		padding-top: var(--card-name-line);
+
+		// The clip box reaches 2px further left (margin out, padding in, text
+		// stays put) so the 2px ring of the first stacked avatar is not cut off.
+		margin-left: -2px;
+		padding-left: 2px;
 		overflow: hidden;
 	}
 

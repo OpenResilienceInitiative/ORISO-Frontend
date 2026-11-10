@@ -87,6 +87,9 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		.sessionsListItem__content {
 			background-color: $session-card-selected-bg !important;
 
+			// Selected card keeps the white gap between the avatars.
+			--participant-ring: var(--m3-surface-container-lowest, #fff);
+
 			// #597: 2px solid --m3-primary (overrides resting 1px border)
 			@include list-item-selected-border($important: true);
 			box-shadow: 0 1px 0 rgba(0, 0, 0, 0.02);
@@ -229,6 +232,9 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		padding: 0;
 		margin: 0;
 		background-color: $session-card-bg;
+
+		// Ring of stacked avatars = card colour while inactive (Frank, 10.11.2026).
+		--participant-ring: #{$session-card-bg};
 		border: 1px solid $session-light-border;
 		border-radius: 24px;
 		transition:
@@ -274,6 +280,7 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		&:not(.sessionsListItem--active, .sessionsListItem--menuOpen)
 			.sessionsListItem__content:hover {
 			background-color: var(--m3-surface, #fcf9f9);
+			--participant-ring: var(--m3-surface, #fcf9f9);
 
 			.sessionsListItem__topic {
 				background-color: $session-chip-hover-bg;
@@ -327,6 +334,12 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		&:first-child {
 			justify-content: space-between;
 			padding: 16px 16px 0;
+
+			// Reserve the 32px menu-button height (+16px top padding) so the
+			// tag row keeps its spacing to the avatar/title row even when no
+			// menu button renders (e.g. a Kreis the user may neither leave
+			// nor edit).
+			min-height: 48px;
 			color: var(--m3-on-surface-variant, $tertiary);
 			font-size: 12px;
 			line-height: 16px;
