@@ -6,7 +6,7 @@ import {
 	useCallTimelineState
 } from './useCallTimelineState';
 import {
-	markCallStateNotFound,
+	CALL_STATE_NOT_FOUND,
 	type CallLifecycleMessage
 } from '../../utils/callLifecycleMessage';
 
@@ -70,10 +70,7 @@ describe('useCallTimelineState', () => {
 	it('stops showing a running card the server keeps answering 404 for', async () => {
 		vi.useFakeTimers();
 		const initial = runningCall();
-		const loadState = vi.fn(async (call: CallLifecycleMessage) => {
-			markCallStateNotFound(call);
-			return null;
-		});
+		const loadState = vi.fn(async () => CALL_STATE_NOT_FOUND);
 		const { result } = renderHook(() =>
 			useCallTimelineState(initial, loadState)
 		);
@@ -112,39 +109,24 @@ describe('useCallTimelineState', () => {
 		expect(result.current.state).toBe('running');
 	});
 
-	it('resets the run when a non-404 null follows a 404', async () => {
+	it('an untrusted null between 404s breaks the run', async () => {
 		vi.useFakeTimers();
 		const initial = runningCall();
-		const loadState = vi.fn(async () => null);
-		loadState.mockImplementationOnce(
-			async (call?: CallLifecycleMessage) => {
-				if (call) markCallStateNotFound(call);
-				return null;
-			}
-		);
+		const answers: Array<
+			ReturnType<typeof runningCall> | null | typeof CALL_STATE_NOT_FOUND
+		> = [
+			CALL_STATE_NOT_FOUND,
+			CALL_STATE_NOT_FOUND,
+			null,
+			CALL_STATE_NOT_FOUND,
+			CALL_STATE_NOT_FOUND
+		];
+		const loadState = vi.fn(async () => answers.shift() ?? null);
 		const { result } = renderHook(() =>
 			useCallTimelineState(initial, loadState)
 		);
 		await act(async () => {
-			await vi.advanceTimersByTimeAsync(
-				15000 * (UNKNOWN_STATE_LIMIT + 2)
-			);
-		});
-		expect(result.current.state).toBe('running');
-	});
-
-	it('a 404 mark left by another read does not count for the next response', async () => {
-		vi.useFakeTimers();
-		const initial = runningCall();
-		markCallStateNotFound(initial); // e.g. a join lookup got a 404 first
-		const loadState = vi.fn(async () => null); // polling answers are untrusted nulls
-		const { result } = renderHook(() =>
-			useCallTimelineState(initial, loadState)
-		);
-		await act(async () => {
-			await vi.advanceTimersByTimeAsync(
-				15000 * (UNKNOWN_STATE_LIMIT + 2)
-			);
+			await vi.advanceTimersByTimeAsync(15000 * 8);
 		});
 		expect(result.current.state).toBe('running');
 	});

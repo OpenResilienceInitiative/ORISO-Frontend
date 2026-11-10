@@ -1,7 +1,7 @@
 import * as React from 'react';
 import {
 	hasSameCallLifecycleIdentity,
-	consumeCallStateNotFound,
+	CALL_STATE_NOT_FOUND,
 	type CallLifecycleMessage
 } from '../../utils/callLifecycleMessage';
 
@@ -50,7 +50,7 @@ const sameTimelineRevision = (
 
 type LoadCallState = (
 	call: CallLifecycleMessage
-) => Promise<CallLifecycleMessage | null>;
+) => Promise<CallLifecycleMessage | null | typeof CALL_STATE_NOT_FOUND>;
 
 /** Reconcile a durable room card with the authenticated lifecycle state. */
 export function useCallTimelineState(
@@ -152,11 +152,12 @@ export function useCallTimelineState(
 			const current = latest.current;
 			let settled = false;
 			try {
-				const value = await loadState(current);
+				const answer = await loadState(current);
+				const notFound = answer === CALL_STATE_NOT_FOUND;
+				const value = notFound ? null : answer;
 				if (!active) return;
 				if (!sameTimelineRevision(latest.current, current)) {
 					unknownAnswers = 0;
-					consumeCallStateNotFound(current);
 					// The timeline moved on while this was in flight, so the
 					// answer describes attendance that is already out of date.
 					// Leave `settled` false and ask again about what the card
@@ -182,7 +183,6 @@ export function useCallTimelineState(
 					 * duration, since none is known.
 					 */
 					// Each response is classified on its own: a non-404 breaks the run.
-					const notFound = consumeCallStateNotFound(current);
 					if (current.state === 'running' && !notFound)
 						unknownAnswers = 0;
 					if (current.state === 'running' && notFound) {

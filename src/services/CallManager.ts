@@ -107,6 +107,7 @@ class CallManager {
 		void import('../utils/eventHandler').then(
 			({ addEventListener, EVENT_SESSION_TEARDOWN }) =>
 				addEventListener(EVENT_SESSION_TEARDOWN, async (args) => {
+					this.sessionGeneration += 1;
 					this.stopObservation(false);
 					return args;
 				})
@@ -562,6 +563,7 @@ class CallManager {
 		}
 
 		const callId = `call_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+		const generation = this.sessionGeneration;
 		const start = {
 			callId,
 			roomId,
@@ -681,6 +683,7 @@ class CallManager {
 			if (
 				isGroup &&
 				this.stillOwnsStart(start) &&
+				generation === this.sessionGeneration &&
 				this.currentCall?.callId === callId &&
 				this.currentCall.state !== 'left'
 			) {
@@ -710,19 +713,11 @@ class CallManager {
 					 * answered is still closed, which is what this check was
 					 * added for.
 					 */
-					const finalised = callLifecycleTracker.finishIfUnattended(
+					callLifecycleTracker.finishIfUnattended(
 						outgoingCall.callId
 					);
-					// An attended call carries on without us: keep it observable,
-					// unless a newer call already owns the observation.
-					if (!finalised && this.observation === null) {
-						this.startObservation(
-							roomId,
-							callId,
-							isVideo,
-							outgoingCall.roomId
-						);
-					}
+					// No observation is started for a superseded start: its
+					// ownership (account, lifecycle) can no longer be proven.
 				} else {
 					// The invite can reach the server after local cancellation.
 					// Send its matching hangup after acknowledgement, never for
@@ -1185,6 +1180,9 @@ class CallManager {
 	 * @param isVideo - Whether this is a video call
 	 * @param elementCallRoomId - The dedicated Element Call room that should be joined
 	 */
+	// Bumped on session teardown: a start begun before it must not register after it.
+	private sessionGeneration = 0;
+
 	private observation: {
 		sourceRoomId: string;
 		callId: string;

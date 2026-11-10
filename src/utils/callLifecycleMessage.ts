@@ -327,15 +327,9 @@ export function collapseCallLifecycleMessages<T extends LifecycleTimelineItem>(
 	return output;
 }
 
-/*
- * `apiCallState` answers `null` both for "the server has no such call" (404)
- * and for a response it could not trust. Only the first is evidence that a
- * running card is unknown (ORISO-Frontend#2166), so it is marked here.
+/**
+ * What a state read answers when the server has no such call (404), as opposed
+ * to `null` for a response that could not be trusted. Returned per read, so
+ * overlapping reads can never share it (ORISO-Frontend#2166).
  */
-const notFoundAnswers = new WeakSet<CallLifecycleMessage>();
-export const markCallStateNotFound = (call: CallLifecycleMessage): void => {
-	notFoundAnswers.add(call);
-};
-/** Reads and clears the mark, so each response is classified on its own. */
-export const consumeCallStateNotFound = (call: CallLifecycleMessage): boolean =>
-	notFoundAnswers.delete(call);
+export const CALL_STATE_NOT_FOUND = Symbol('call-state-not-found');
