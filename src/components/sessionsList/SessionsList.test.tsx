@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import {
+	act,
 	cleanup,
 	fireEvent,
 	render,
@@ -18,20 +19,22 @@ import {
 	vi
 } from 'vite-plus/test';
 import {
+	AUTHORITIES,
 	ActiveSessionContext,
+	SessionsDataProvider,
 	SessionsDataContext,
 	SessionTypeContext,
 	TenantContext,
 	UserDataContext
 } from '../../globalState';
 import { STATUS_ENQUIRY } from '../../globalState/interfaces';
-import { apiGetConsultantSessionList } from '../../api';
 import {
 	SESSION_LIST_TYPES,
 	SESSION_TYPE_SESSION
 } from '../session/sessionHelpers';
 import { SessionListViewStateProvider } from './SessionListViewStateContext';
 import { SessionsList } from './SessionsList';
+import { apiGetConsultantSessionList, SESSION_COUNT } from '../../api';
 
 const batchState = vi.hoisted(() => ({
 	close: vi.fn(),
@@ -40,6 +43,12 @@ const batchState = vi.hoisted(() => ({
 	submit: vi.fn(),
 	submitting: false
 }));
+
+afterEach(() => {
+	batchState.outcome = null;
+	batchState.error = undefined;
+	batchState.submitting = false;
+});
 
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({
@@ -95,7 +104,30 @@ vi.mock('../../services/messageEventEmitter', () => ({
 	messageEventEmitter: { on: vi.fn(), off: vi.fn() }
 }));
 vi.mock('./SessionsListToolbar', () => ({
-	SessionsListToolbar: () => null,
+	SessionsListToolbar: ({
+		showSupervisionChip,
+		onChipToggle,
+		activeChip,
+		onSearchChange
+	}: {
+		showSupervisionChip: boolean;
+		onChipToggle: (chip: 'supervision') => void;
+		activeChip: string | null;
+		onSearchChange: (query: string) => void;
+	}) => (
+		<>
+			<output data-testid="active-chip">{activeChip ?? 'all'}</output>
+			<input
+				aria-label="case-search"
+				onChange={(event) => onSearchChange(event.target.value)}
+			/>
+			{showSupervisionChip ? (
+				<button onClick={() => onChipToggle('supervision')}>
+					supervision-filter
+				</button>
+			) : null}
+		</>
+	),
 	buildArchiveTabPath: () => '/archive',
 	buildCreateGroupChatPath: () => '/create'
 }));
@@ -129,23 +161,28 @@ const SessionRowId = () => {
 	return <span data-testid="session-row">{activeSession?.item?.id}</span>;
 };
 vi.mock('../sessionsListItem/SessionListItemComponent', () => ({
-	SessionListItemComponent: (props: any) => (
-		<div>
-			<SessionRowId />
-			<div data-testid={`selected-${props.index}`}>
-				{String(props.caseHandoverSelected)}
+	SessionListItemComponent: (props: any) => {
+		const { activeSession } = React.useContext(ActiveSessionContext);
+		return (
+			<div data-testid={`case-${activeSession?.item?.id}`}>
+				<div data-testid={`selected-${props.index}`}>
+					{String(props.caseHandoverSelected)}
+				</div>
+				<button onClick={props.onCaseHandoverBatchStart}>
+					start-batch
+				</button>
+				<button
+					onClick={() => props.onCaseHandoverSelect(props.index + 1)}
+				>
+					select-{props.index + 1}
+				</button>
+				<button onClick={props.onCaseHandoverBatchConfirm}>
+					review-batch
+				</button>
+				<SessionRowId />
 			</div>
-			<button onClick={props.onCaseHandoverBatchStart}>
-				start-batch
-			</button>
-			<button onClick={() => props.onCaseHandoverSelect(props.index + 1)}>
-				select-{props.index + 1}
-			</button>
-			<button onClick={props.onCaseHandoverBatchConfirm}>
-				review-batch
-			</button>
-		</div>
-	)
+		);
+	}
 }));
 
 const sessions = [1, 2].map((id) => ({
@@ -160,6 +197,22 @@ const sessions = [1, 2].map((id) => ({
 	user: { id: `u${id}` }
 })) as any;
 
+const TestSessionSource = ({
+	children,
+	fetched,
+	value
+}: React.PropsWithChildren<{
+	fetched: boolean;
+	value: React.ContextType<typeof SessionsDataContext>;
+}>) =>
+	fetched ? (
+		<SessionsDataProvider>{children}</SessionsDataProvider>
+	) : (
+		<SessionsDataContext.Provider value={value}>
+			{children}
+		</SessionsDataContext.Provider>
+	);
+
 const sessionListPaths = {
 	[SESSION_LIST_TYPES.MY_SESSION]: '/sessions/consultant/sessionView',
 	[SESSION_LIST_TYPES.ENQUIRY]: '/sessions/consultant/sessionPreview'
@@ -168,32 +221,58 @@ const sessionListPaths = {
 const ListTree = ({
 	rows = sessions,
 	type = SESSION_LIST_TYPES.MY_SESSION,
-	chip
+	chip,
+	supervisedByMe,
+	consultant = false,
+	initialPath,
+	ready = true,
+	fetched = false
 }: {
 	rows?: typeof sessions;
 	type?: SESSION_LIST_TYPES;
 	chip?: 'liveChat';
-}) => (
+	supervisedByMe?: boolean;
+	consultant?: boolean;
+	initialPath?: string;
+	ready?: boolean;
+	fetched?: boolean;
+} = {}) => (
 	<MemoryRouter
 		initialEntries={[
-			sessionListPaths[type] + (chip ? `?chip=${chip}` : '')
+			initialPath ??
+				sessionListPaths[type] + (chip ? `?chip=${chip}` : '')
 		]}
 	>
 		<TenantContext.Provider value={{ tenant: { settings: {} } } as any}>
 			<UserDataContext.Provider
 				value={
 					{
-						userData: { userId: 'c1', grantedAuthorities: [] }
+						userData: {
+							userId: 'c1',
+							grantedAuthorities: consultant
+								? [AUTHORITIES.CONSULTANT_DEFAULT]
+								: []
+						}
 					} as any
 				}
 			>
 				<SessionTypeContext.Provider
 					value={{ type, path: sessionListPaths[type] }}
 				>
-					<SessionsDataContext.Provider
+					<TestSessionSource
+						fetched={fetched}
 						value={{
-							sessions: rows,
-							ready: true,
+							sessions: rows.map((raw) => ({
+								...raw,
+								session: {
+									...raw.session,
+									...(supervisedByMe === undefined
+										? {}
+										: { supervision: { supervisedByMe } })
+								}
+							})),
+							ready,
+
 							dispatch: vi.fn()
 						}}
 					>
@@ -203,7 +282,7 @@ const ListTree = ({
 								sessionTypes={[SESSION_TYPE_SESSION] as any}
 							/>
 						</SessionListViewStateProvider>
-					</SessionsDataContext.Provider>
+					</TestSessionSource>
 				</SessionTypeContext.Provider>
 			</UserDataContext.Provider>
 		</TenantContext.Provider>
@@ -254,6 +333,259 @@ describe('SessionsList case handover batch seam', () => {
 		expect(screen.getAllByTestId('selected-0')[0].textContent).toBe(
 			'false'
 		);
+	});
+});
+
+describe('Supervision filter availability (#1306)', () => {
+	afterEach(cleanup);
+	it('does not offer supervision to a consultant with no assigned supervised case', async () => {
+		render(<ListTree consultant />);
+		await screen.findAllByText('start-batch');
+		expect(screen.queryByText('supervision-filter')).toBeNull();
+	});
+	it('offers supervision when the consultant has an explicitly supervised case', async () => {
+		render(<ListTree consultant supervisedByMe />);
+		expect(await screen.findByText('supervision-filter')).toBeTruthy();
+	});
+	it('clears a saved Supervision filter when the consultant has no supervised case', async () => {
+		render(
+			<ListTree
+				consultant
+				initialPath="/sessions/consultant/sessionView?chip=supervision"
+			/>
+		);
+		await waitFor(() =>
+			expect(screen.getByTestId('active-chip').textContent).toBe('all')
+		);
+	});
+	it('clears Supervision when the last assignment disappears', async () => {
+		const view = render(
+			<ListTree
+				consultant
+				supervisedByMe
+				initialPath="/sessions/consultant/sessionView?chip=supervision"
+			/>
+		);
+		await waitFor(() =>
+			expect(screen.getByTestId('active-chip').textContent).toBe(
+				'supervision'
+			)
+		);
+		view.rerender(
+			<ListTree
+				consultant
+				supervisedByMe={false}
+				initialPath="/sessions/consultant/sessionView?chip=supervision"
+			/>
+		);
+		await waitFor(() =>
+			expect(screen.getByTestId('active-chip').textContent).toBe('all')
+		);
+	});
+	it('preserves a bookmarked filter until the session source is ready', async () => {
+		const view = render(
+			<ListTree
+				consultant
+				ready={false}
+				initialPath="/sessions/consultant/sessionView?chip=supervision"
+			/>
+		);
+		expect(screen.getByTestId('active-chip').textContent).toBe(
+			'supervision'
+		);
+		view.rerender(
+			<ListTree
+				consultant
+				supervisedByMe
+				ready
+				initialPath="/sessions/consultant/sessionView?chip=supervision"
+			/>
+		);
+		expect(await screen.findByText('supervision-filter')).toBeTruthy();
+		expect(screen.getByTestId('active-chip').textContent).toBe(
+			'supervision'
+		);
+	});
+});
+
+describe('Supervision filter over fetched pages (#1306)', () => {
+	const getList = vi.mocked(apiGetConsultantSessionList);
+	const ordinary = (id: number) => ({
+		...sessions[0],
+		session: {
+			...sessions[0].session,
+			id,
+			matrixRoomId: `!paged-${id}:test`
+		},
+		user: { id: `u${id}` }
+	});
+	const page = (offset: number) =>
+		Array.from({ length: SESSION_COUNT }, (_, i) =>
+			ordinary(offset + i + 1)
+		);
+	beforeEach(() => {
+		getList.mockReset();
+		getList.mockResolvedValue({ sessions: [], total: 0 });
+		batchState.outcome = null;
+		batchState.error = undefined;
+		batchState.submitting = false;
+	});
+	afterEach(() => {
+		cleanup();
+		getList.mockResolvedValue({ sessions: [], total: 0 });
+	});
+	it('does not automatically scan remaining pages for an unmatched ordinary text search', async () => {
+		const total = SESSION_COUNT * 3;
+		getList.mockResolvedValue({ sessions: page(0), total });
+		render(<ListTree consultant fetched />);
+		expect(await screen.findByTestId('case-1')).toBeTruthy();
+		await act(async () => {
+			fireEvent.change(screen.getByLabelText('case-search'), {
+				target: { value: 'no-such-counselling-case' }
+			});
+		});
+		expect(screen.queryByTestId('case-1')).toBeNull();
+		expect(getList.mock.calls.map(([request]) => request.offset)).toEqual([
+			0
+		]);
+	});
+	it('lets the counsellor select Supervision before its first case is loaded', async () => {
+		const total = SESSION_COUNT + 1;
+		const supervised = {
+			...ordinary(total),
+			session: {
+				...ordinary(total).session,
+				supervision: { supervisedByMe: true }
+			}
+		};
+		getList.mockResolvedValueOnce({ sessions: page(0), total });
+		getList.mockResolvedValueOnce({ sessions: [supervised], total });
+		render(<ListTree consultant fetched />);
+		expect(await screen.findByTestId('case-1')).toBeTruthy();
+		fireEvent.click(
+			screen.getByRole('button', { name: 'supervision-filter' })
+		);
+		expect(await screen.findByTestId(`case-${total}`)).toBeTruthy();
+		expect(screen.getByTestId('active-chip').textContent).toBe(
+			'supervision'
+		);
+		expect(getList.mock.calls.map(([request]) => request.offset)).toEqual([
+			0,
+			SESSION_COUNT
+		]);
+	});
+	it('discovers an unmarked legacy case on a later page and retains the saved filter', async () => {
+		const total = SESSION_COUNT + 1;
+		const legacy = {
+			...ordinary(total),
+			consultant: { id: 'legacy-owner' }
+		};
+		getList.mockResolvedValueOnce({ sessions: page(0), total });
+		getList.mockResolvedValueOnce({ sessions: [legacy], total });
+		render(
+			<ListTree
+				consultant
+				fetched
+				initialPath="/sessions/consultant/sessionView?chip=supervision"
+			/>
+		);
+		expect(await screen.findByTestId(`case-${total}`)).toBeTruthy();
+		expect(screen.getByTestId('active-chip').textContent).toBe(
+			'supervision'
+		);
+		expect(screen.getByText('supervision-filter')).toBeTruthy();
+		expect(getList.mock.calls.map(([request]) => request.offset)).toEqual([
+			0,
+			SESSION_COUNT
+		]);
+	});
+	it('loads beyond two full ordinary pages without scrolling and retains the bookmarked filter until its assignment arrives', async () => {
+		const total = SESSION_COUNT * 2 + 1;
+		let finish!: (
+			value: Awaited<ReturnType<typeof apiGetConsultantSessionList>>
+		) => void;
+		getList.mockResolvedValueOnce({ sessions: page(0), total });
+		getList.mockResolvedValueOnce({ sessions: page(SESSION_COUNT), total });
+		getList.mockImplementationOnce(
+			() =>
+				new Promise((resolve) => {
+					finish = resolve;
+				})
+		);
+		render(
+			<ListTree
+				consultant
+				fetched
+				initialPath="/sessions/consultant/sessionView?chip=supervision"
+			/>
+		);
+		await waitFor(() => expect(getList).toHaveBeenCalledTimes(3));
+		expect(screen.getByTestId('active-chip').textContent).toBe(
+			'supervision'
+		);
+		const supervised = ordinary(total);
+		supervised.session.supervision = {
+			supervisedByMe: true,
+			supervisorConsultantIds: ['c1']
+		};
+		await act(async () => finish({ sessions: [supervised], total }));
+		expect(await screen.findByTestId(`case-${total}`)).toBeTruthy();
+		expect(screen.queryByTestId('case-1')).toBeNull();
+		expect(screen.getByTestId('active-chip').textContent).toBe(
+			'supervision'
+		);
+		expect(getList.mock.calls.map(([request]) => request.offset)).toEqual([
+			0,
+			SESSION_COUNT,
+			SESSION_COUNT * 2
+		]);
+	});
+	it('clears an unavailable bookmark only after all pages are exhausted', async () => {
+		const total = SESSION_COUNT + 1;
+		getList.mockResolvedValueOnce({ sessions: page(0), total });
+		getList.mockResolvedValueOnce({ sessions: [ordinary(total)], total });
+		render(
+			<ListTree
+				consultant
+				fetched
+				initialPath="/sessions/consultant/sessionView?chip=supervision"
+			/>
+		);
+		await waitFor(() => expect(getList).toHaveBeenCalledTimes(2));
+		await waitFor(() =>
+			expect(screen.getByTestId('active-chip').textContent).toBe('all')
+		);
+		expect(screen.getByTestId(`case-${total}`)).toBeTruthy();
+		expect(getList.mock.calls.map(([request]) => request.offset)).toEqual([
+			0,
+			SESSION_COUNT
+		]);
+	});
+	it('retains the bookmarked filter after a failed page and retries that offset', async () => {
+		const total = SESSION_COUNT + 1;
+		getList.mockResolvedValueOnce({ sessions: page(0), total });
+		getList.mockRejectedValueOnce(new Error('page unavailable'));
+		const supervised = ordinary(total);
+		supervised.session.supervision = { supervisedByMe: true };
+		getList.mockResolvedValueOnce({ sessions: [supervised], total });
+		render(
+			<ListTree
+				consultant
+				fetched
+				initialPath="/sessions/consultant/sessionView?chip=supervision"
+			/>
+		);
+		const retry = await screen.findByText('sessionList.reloadButton.label');
+		expect(screen.getByTestId('active-chip').textContent).toBe(
+			'supervision'
+		);
+		fireEvent.click(retry);
+		expect(await screen.findByTestId(`case-${total}`)).toBeTruthy();
+		expect(getList.mock.calls.map(([request]) => request.offset)).toEqual([
+			0,
+			SESSION_COUNT,
+			SESSION_COUNT
+		]);
 	});
 });
 
