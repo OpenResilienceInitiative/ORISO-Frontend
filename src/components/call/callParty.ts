@@ -1,4 +1,5 @@
 import type {
+	GroupChatItemInterface,
 	ListItemInterface,
 	SessionItemInterface
 } from '../../globalState/interfaces';
@@ -32,6 +33,9 @@ export type CallConversation = Pick<
 			'askerMatrixUserId' | 'consultantMatrixUserId'
 		>
 	>;
+	/** Set for a group chat; its members say who counsels (see callCounsellors). */
+	chat?: Partial<Pick<GroupChatItemInterface, 'active'>> &
+		Pick<GroupChatItemInterface, 'id'>;
 };
 
 /**

@@ -1402,5 +1402,39 @@ describe('useElementCallWidget', () => {
 			rerender({ hostChrome: true, windowState: { fullscreen: true } });
 			expect(sends()).toHaveLength(2);
 		});
+
+		it('tells the call its counsellors once ready and whenever the list changes', async () => {
+			const COUNSELLORS = 'org.oriso.call.counsellors';
+			const { api, rerender } = await mount({ counsellors: [] });
+			const sends = () =>
+				api.transport.send.mock.calls.filter(
+					(call: unknown[]) => call[0] === COUNSELLORS
+				);
+			expect(sends()).toHaveLength(0);
+
+			act(() => api.emit('ready', new CustomEvent('ready')));
+			expect(sends()).toEqual([[COUNSELLORS, { userIds: [] }]]);
+
+			rerender({ counsellors: ['@counsellor:example'] });
+			expect(sends().at(-1)).toEqual([
+				COUNSELLORS,
+				{ userIds: ['@counsellor:example'] }
+			]);
+
+			// The same people in a new array are not a change.
+			rerender({ counsellors: ['@counsellor:example'] });
+			expect(sends()).toHaveLength(2);
+		});
+
+		it('sends no counsellor list when the host gives none', async () => {
+			const { api } = await mount({});
+			act(() => api.emit('ready', new CustomEvent('ready')));
+			expect(
+				api.transport.send.mock.calls.some(
+					(call: unknown[]) =>
+						call[0] === 'org.oriso.call.counsellors'
+				)
+			).toBe(false);
+		});
 	});
 });

@@ -36,6 +36,7 @@ import {
 } from './widget/useElementCallWidget';
 import { appConfig } from '../../utils/appConfig';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
+import { useCallCounsellors } from './callCounsellors';
 import {
 	getAutoFitStageSize,
 	RESIZE_EDGES,
@@ -323,6 +324,14 @@ export const GroupCallWidget: React.FC = () => {
 		return (await apiCreateCallShareLink(shareLinkCall))?.url ?? null;
 	}, [shareLinkCall]);
 
+	/*
+	 * Call design S1: who may be labelled "Beratung" in the call. From the
+	 * userservice (the session's counsellor, a group chat's CONSULTANT
+	 * members), never from the call's identity records or power levels. A
+	 * shared-call guest has no conversation, so the list stays empty.
+	 */
+	const counsellors = useCallCounsellors(conversation);
+
 	const widget = useElementCallWidget(
 		matrixClientService?.getClient() ?? null,
 		{
@@ -343,7 +352,8 @@ export const GroupCallWidget: React.FC = () => {
 			// (group chat, or a supervision room with a second supervisor).
 			callType: callData ? (callData.isGroup ? 'group' : 'single') : null,
 			invite: canInvite,
-			onInviteLink
+			onInviteLink,
+			counsellors
 		}
 	);
 

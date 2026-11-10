@@ -94,6 +94,14 @@ export interface ElementCallWidgetOptions {
 	 * with its URL, or `null` when the call cannot be shared right now.
 	 */
 	onInviteLink?: () => Promise<string | null>;
+	/**
+	 * `org.oriso.call.counsellors`: the Matrix ids of the conversation's
+	 * counsellors, from the userservice. The call labels only these
+	 * "Beratung"; a role in a call identity record can be faked. Sent once
+	 * the call is ready and again whenever the list changes; `null` sends
+	 * nothing.
+	 */
+	counsellors?: readonly string[] | null;
 }
 
 /** `orisoCallType` values (call design LEDGER). */
@@ -149,7 +157,9 @@ export const ORISO_WIDGET_ACTIONS = {
 	/** toWidget `{ fullscreen }` (call design S2). */
 	windowState: 'org.oriso.call.window_state',
 	/** fromWidget `{}`, answered `{ url }` or `{ error }` (call design S8). */
-	inviteLink: 'org.oriso.call.invite_link'
+	inviteLink: 'org.oriso.call.invite_link',
+	/** toWidget `{ userIds }`, answered `{}` (call design S1). */
+	counsellors: 'org.oriso.call.counsellors'
 } as const;
 
 export interface OrisoKnockState {
@@ -307,6 +317,14 @@ const sendWindowState = (api: ClientWidgetApi, state: OrisoWindowState) => {
 		});
 };
 
+const sendCounsellors = (api: ClientWidgetApi, userIds: string[]) => {
+	void api.transport
+		.send(ORISO_WIDGET_ACTIONS.counsellors, { userIds })
+		.catch(() => {
+			/* an older call that labels nobody, or it went away */
+		});
+};
+
 const sendKnockState = (api: ClientWidgetApi, state: OrisoKnockState) => {
 	void api.transport
 		.send(ORISO_WIDGET_ACTIONS.knockState, {
@@ -334,7 +352,8 @@ export const useElementCallWidget = (
 		windowState = null,
 		callType = null,
 		invite = false,
-		onInviteLink
+		onInviteLink,
+		counsellors = null
 	}: ElementCallWidgetOptions
 ): ElementCallWidget => {
 	// By value: an equal choice in a new object must not rebuild the URL.
@@ -760,6 +779,14 @@ export const useElementCallWidget = (
 		if (!ready || !api || windowFullscreen === undefined) return;
 		sendWindowState(api, { fullscreen: windowFullscreen });
 	}, [ready, windowFullscreen]);
+
+	// By value: the same people in a new array are not a change.
+	const counsellorsKey = counsellors ? JSON.stringify(counsellors) : null;
+	useEffect(() => {
+		const api = apiRef.current;
+		if (!ready || !api || counsellorsKey === null) return;
+		sendCounsellors(api, JSON.parse(counsellorsKey) as string[]);
+	}, [ready, counsellorsKey]);
 
 	const hangup = useCallback(async (): Promise<void> => {
 		if (!apiRef.current) return;
