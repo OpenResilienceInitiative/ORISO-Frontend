@@ -29,6 +29,7 @@ import { TopicsDataInterface } from '../../../globalState/interfaces';
 import { getRegistrationTopicDisplay } from '../../registration/registrationDesign/registrationDesign';
 import { apiPutSessionConsent } from '../../../api/apiPutSessionConsent';
 import { ConsentCompletionPanel } from '../../registration/consentCompletion/ConsentCompletionPanel';
+import { usePrivacyNoticeGuard } from '../../registration/privacyNotice/usePrivacyNoticeGuard';
 import { DataProtectionConsentLabel } from '../../registration/accountData/DataProtectionConsentLabel';
 import { useRequestConsentGate } from './useRequestConsentGate';
 
@@ -150,6 +151,10 @@ export const NewRequestDialog = ({
 		topics.find((topic) => topic.id === selectedTopicId) ?? null;
 	const consentAgency = selectedAgency?.id ? selectedAgency : null;
 	const consent = useRequestConsentGate(consentAgency, selectedTopic);
+	const privacyNoticeGuard = usePrivacyNoticeGuard(
+		consentAgency?.id,
+		selectedTopic?.id
+	);
 
 	/* A changed centre, topic or postcode is a different request: the consent
 	   on offer belonged to the previous one, so it retracts. */
@@ -389,7 +394,12 @@ export const NewRequestDialog = ({
 								)}
 								checked={consent.accepted}
 								disabled={!consent.isResolved}
-								onChange={consent.toggle}
+								onChange={() =>
+									privacyNoticeGuard.guardToggle(
+										consent.toggle,
+										consent.accepted
+									)
+								}
 								inputRef={consentInputRef}
 								label={
 									<DataProtectionConsentLabel
@@ -401,6 +411,7 @@ export const NewRequestDialog = ({
 									/>
 								}
 							/>
+							{privacyNoticeGuard.dialog}
 							{consent.failure && (
 								<Alert severity="error">
 									{translate(

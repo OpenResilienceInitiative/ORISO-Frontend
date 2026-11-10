@@ -1180,6 +1180,11 @@
 		}
 	},
 	"registration": {
+		"dataProtection": {
+			"noNotice": {
+				"body": "Für diese Beratungsstelle ist keine Datenschutzerklärung hinterlegt. Die Beratungsstelle ist dafür verantwortlich. Du kannst trotzdem fortfahren, wenn du das bewusst möchtest."
+			}
+		},
 		"selectedLabel": "Ausgewählt",
 		"noneSelected": "Bitte wähle ein Thema, um fortzufahren.",
 		"topicInstruction": "Wähle ein Thema aus.",
