@@ -14,6 +14,16 @@ import {
 } from '../../../.storybook/notificationTimelineFixture';
 import type { NotificationFeedItem } from '../../globalState/provider/NotificationsProvider';
 import { installNotificationDraftFixture } from './notificationDraftFixture';
+import {
+	initDraftKeys,
+	installStoryFrameAccess
+} from '../../../.storybook/draftCryptographyFixture';
+import { unbindDraftCryptographyClient } from '../../services/draftCryptography';
+import {
+	deleteCookieByName,
+	getValueFromCookie,
+	setValueInCookie
+} from '../sessionCookie/accessSessionCookie';
 import { expectTimelineGroupEnd } from '../../../.storybook/notificationsCenterGroupAssertions';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import {
@@ -842,17 +852,57 @@ export const DraftAndChatEvents: Story = {
 			}
 		)
 	],
-	parameters: {
-		serverDrafts: [
-			{
-				scopeKey: 'scope:!room103:matrix.example|thread:main',
-				text: 'Opaque draft ciphertext',
+	beforeEach: async () => {
+		if (
+			getValueFromCookie('keycloak') ||
+			getValueFromCookie('refreshToken')
+		) {
+			throw new Error(
+				'Draft story requires a preview without existing credentials'
+			);
+		}
+		const cookiePath = window.location.pathname;
+		const token = `fixture.${btoa(
+			JSON.stringify({
+				iss: 'https://storybook.invalid',
+				sub: 'timeline-draft',
+				sid: crypto.randomUUID()
+			})
+		)}.fixture`;
+		const owner = {};
+		const controller = new AbortController();
+		let removeFrameAccess = () => {};
+		let removeDraftFeed = () => {};
+		const dispose = () => {
+			controller.abort();
+			removeDraftFeed();
+			removeFrameAccess();
+			unbindDraftCryptographyClient(owner);
+			if (getValueFromCookie('keycloak') === token)
+				deleteCookieByName('keycloak', cookiePath);
+		};
+		try {
+			setValueInCookie('keycloak', token, cookiePath);
+			const cryptography = await initDraftKeys(owner, controller.signal);
+			const scopeKey = 'scope:!room103:matrix.example|thread:main';
+			const opaqueScope = await cryptography.opaqueScope(scopeKey);
+			removeFrameAccess = installStoryFrameAccess(opaqueScope);
+			const text = await cryptography.seal(opaqueScope, {
+				scopeKey,
+				text: 'Private draft content',
 				actionPath: '/sessions/user/view/session/103',
 				sourceSessionId: 103,
-				roomRef: '!room103:matrix.example',
-				updatedAt: minutesAgo(15)
-			}
-		]
+				roomRef: '!room103:matrix.example'
+			});
+			removeDraftFeed = installNotificationDraftFixture(
+				[{ scopeKey: opaqueScope, text, updatedAt: minutesAgo(15) }],
+				`Bearer ${token}`
+			);
+			return dispose;
+		} catch (error) {
+			dispose();
+			throw error;
+		}
 	},
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
@@ -867,7 +917,9 @@ export const DraftAndChatEvents: Story = {
 		await expect(
 			canvas.getAllByText('Chat beendet').length
 		).toBeGreaterThan(0);
-		await expect(canvas.queryByText(/ciphertext/)).not.toBeInTheDocument();
+		await expect(
+			canvas.queryByText('Private draft content')
+		).not.toBeInTheDocument();
 	}
 };
 
