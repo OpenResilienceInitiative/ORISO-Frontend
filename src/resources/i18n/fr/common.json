@@ -1234,6 +1234,8 @@
 		"format": {
 			"panelTitle": "Créer une nouvelle conversation",
 			"panelMenu": "Plus d’options",
+			"cardsPrevious": "Format de conversation précédent",
+			"cardsNext": "Format de conversation suivant",
 			"back": "Retour",
 			"headerTitle": "Créer une nouvelle conversation",
 			"subtitle": "Nous proposons différents formats d'entretien spécialisés pour vous et les personnes en quête de conseils. La sélection est librement configurable par les organisations prestataires et votre service de consultation.",
