@@ -24,6 +24,8 @@ const TERMINAL_RETRY_DELAYS_MS = [1000, 2000, 4000] as const;
 /** Keeps room timeline metadata tied to actual MatrixRTC attendance. */
 class CallLifecycleTracker {
 	private readonly calls = new Map<string, TrackedCall>();
+	// Ids of calls this tracker finished; `calls` forgets them. Bounded, newest kept.
+	private readonly finishedCallIds = new Set<string>();
 
 	async begin(call: CallData): Promise<void> {
 		if (this.calls.has(call.callId)) return;
@@ -392,7 +394,10 @@ class CallLifecycleTracker {
 	/** A call this client tracks whose card has reached a terminal state. */
 	hasEnded(callId: string): boolean {
 		const tracked = this.calls.get(callId);
-		return Boolean(tracked && tracked.message.state !== 'running');
+		return (
+			this.finishedCallIds.has(callId) ||
+			Boolean(tracked && tracked.message.state !== 'running')
+		);
 	}
 
 	/** A call this client tracks that somebody joined and that has not ended. */
@@ -452,6 +457,12 @@ class CallLifecycleTracker {
 		 * for as long as the tab stayed open.
 		 */
 		this.calls.delete(callId);
+		this.finishedCallIds.add(callId);
+		if (this.finishedCallIds.size > 200) {
+			this.finishedCallIds.delete(
+				this.finishedCallIds.values().next().value!
+			);
+		}
 	}
 
 	/**

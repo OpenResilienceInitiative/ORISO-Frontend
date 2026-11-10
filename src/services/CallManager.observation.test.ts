@@ -101,23 +101,26 @@ describe('call observation across sign-out', () => {
 		expect(register).not.toHaveBeenCalled();
 	});
 
-	it('stops renewing once the tracked call has ended', async () => {
+	it('keeps renewing while the call runs and stops once it has ended', async () => {
+		// Fake only the interval, and before the call starts, so the real timer is advanced.
+		vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
 		sendEvent.mockResolvedValue({ event_id: '$invite' });
 		callManager.startCall(SOURCE, true, true);
 		await vi.waitFor(() => expect(register).toHaveBeenCalledTimes(1));
+		await vi.advanceTimersByTimeAsync(4 * 60 * 1000);
+		await vi.waitFor(() => expect(register).toHaveBeenCalledTimes(2));
 		const callId = callManager.getCurrentCall()!.callId;
 		const { callLifecycleTracker } = await import('./callLifecycleTracker');
 		callLifecycleTracker.finish(callId);
-		vi.useFakeTimers();
 		await vi.advanceTimersByTimeAsync(10 * 60 * 1000);
-		expect(register).toHaveBeenCalledTimes(1);
+		expect(register).toHaveBeenCalledTimes(2);
 	});
 
 	it('stops renewing after sign-out', async () => {
+		vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
 		sendEvent.mockResolvedValue({ event_id: '$invite' });
 		callManager.startCall(SOURCE, true, true);
 		await vi.waitFor(() => expect(register).toHaveBeenCalledTimes(1));
-		vi.useFakeTimers();
 		await callEventListeners(EVENT_SESSION_TEARDOWN);
 		await vi.advanceTimersByTimeAsync(10 * 60 * 1000);
 		expect(register).toHaveBeenCalledTimes(1);
