@@ -30,8 +30,10 @@ import {
 } from '../../globalState/provider/NotificationsProvider';
 import {
 	CallRoomMembershipTimeoutError,
+	type OrisoWindowCommand,
 	useElementCallWidget
 } from './widget/useElementCallWidget';
+import { appConfig } from '../../utils/appConfig';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 import {
 	getAutoFitStageSize,
@@ -251,6 +253,30 @@ export const GroupCallWidget: React.FC = () => {
 		[joinMediaIsVideo, joinMedia]
 	);
 
+	const [isMobileView, setIsMobileView] = useState(false);
+	/* Put aside into the dock; the iframe stays mounted, or the call drops. */
+	const [isMinimized, setIsMinimized] = useState(false);
+	const [isFullscreen, setIsFullscreen] = useState(false);
+	/*
+	 * Call design S2: the call draws minimise and full screen in its own
+	 * header (`orisoHostChrome`), so the host's corner buttons no longer sit
+	 * on top of it. Kill-switch: `appConfig.calls.hostChrome === false`.
+	 */
+	const hostChrome = appConfig?.calls?.hostChrome !== false;
+	// The handlers live further down; the widget keeps the latest one.
+	const windowCommandRef = useRef<(command: OrisoWindowCommand) => void>(
+		() => undefined
+	);
+	const onWindowCommand = useCallback(
+		(command: OrisoWindowCommand) => windowCommandRef.current(command),
+		[]
+	);
+	// On a phone the call always fills the screen.
+	const windowState = useMemo(
+		() => ({ fullscreen: isMobileView || isFullscreen }),
+		[isMobileView, isFullscreen]
+	);
+
 	const widget = useElementCallWidget(
 		matrixClientService?.getClient() ?? null,
 		{
@@ -261,7 +287,10 @@ export const GroupCallWidget: React.FC = () => {
 			onClose: closeCallSurface,
 			knockState,
 			onSetKnock: shareLinkKnock.setKnock,
-			callStart
+			callStart,
+			hostChrome,
+			onWindowCommand,
+			windowState
 		}
 	);
 
@@ -572,9 +601,6 @@ export const GroupCallWidget: React.FC = () => {
 		height: GROUP_DEFAULT_HEIGHT
 	});
 	const [position, setPosition] = useState({ x: 100, y: 100 });
-	const [isMobileView, setIsMobileView] = useState(false);
-	/* Put aside into the dock; the iframe stays mounted, or the call drops. */
-	const [isMinimized, setIsMinimized] = useState(false);
 	const [callStartedAt, setCallStartedAt] = useState<number | null>(null);
 	const dragRef = useRef<{
 		startX: number;
@@ -612,7 +638,6 @@ export const GroupCallWidget: React.FC = () => {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[widget.attachIframe]
 	);
-	const [isFullscreen, setIsFullscreen] = useState(false);
 
 	const getGroupBounds = () => ({
 		minWidth: GROUP_MIN.width,
@@ -896,6 +921,17 @@ export const GroupCallWidget: React.FC = () => {
 		container.requestFullscreen?.();
 	};
 
+	const minimise = () => {
+		if (document.fullscreenElement) void document.exitFullscreen?.();
+		setIsMinimized(true);
+	};
+
+	// Call design S2: the call's own header buttons, through the host's paths.
+	windowCommandRef.current = (command) => {
+		if (command === 'minimise') minimise();
+		else handleToggleFullscreen();
+	};
+
 	// Dragging handlers (mouse + touch)
 	const handleMouseDown = (e: React.MouseEvent) => {
 		if (isMobileView || isResizing) return;
@@ -1152,7 +1188,7 @@ export const GroupCallWidget: React.FC = () => {
 				/>
 			)}
 			<div
-				className={`group-call-widget ${isDragging ? 'dragging' : ''} ${isResizing ? 'resizing' : ''} ${isMobileView ? 'group-call-widget--mobile' : ''} ${isDocked ? 'group-call-widget--docked' : ''} ${isFullscreen ? 'group-call-widget--fullscreen' : ''}`}
+				className={`group-call-widget ${isDragging ? 'dragging' : ''} ${isResizing ? 'resizing' : ''} ${isMobileView ? 'group-call-widget--mobile' : ''} ${isDocked ? 'group-call-widget--docked' : ''} ${isFullscreen ? 'group-call-widget--fullscreen' : ''} ${hostChrome ? 'group-call-widget--host-chrome' : ''}`}
 				aria-hidden={isDocked ? true : undefined}
 				style={{
 					left: `${position.x}px`,
@@ -1177,59 +1213,74 @@ export const GroupCallWidget: React.FC = () => {
 						}
 					>
 						<div className="element-call-drag-handle" />
-						<button
-							className="element-call-close"
-							onClick={handleEndCall}
-							aria-label={t('calls.group.close')}
-						>
-							×
-						</button>
-						{!isMobileView && !isFullscreen && (
-							<button
-								type="button"
-								className="element-call-autofit"
-								onClick={(e) => {
-									e.stopPropagation();
-									applyAutoFit();
-								}}
-								aria-label={t('calls.group.autoFitAria')}
-								title={t('calls.group.autoFit')}
-							>
-								⛶
-							</button>
-						)}
-						{/* Into the dock (FE#1904); on a phone this replaces the small tile. */}
-						<button
-							type="button"
-							className="element-call-minimize"
-							onClick={(e) => {
-								e.stopPropagation();
-								if (document.fullscreenElement)
-									void document.exitFullscreen?.();
-								setIsMinimized(true);
-							}}
-							aria-label={t('calls.states.minimize')}
-							title={t('calls.states.minimize')}
-						>
-							–
-						</button>
-						{!isMobileView && (
-							<button
-								className="element-call-fullscreen"
-								onClick={handleToggleFullscreen}
-								aria-label={
-									isFullscreen
-										? t('calls.group.exitFullScreen')
-										: t('calls.group.enterFullScreen')
-								}
-								title={
-									isFullscreen
-										? t('calls.group.exitFullScreen')
-										: t('calls.group.fullScreen')
-								}
-							>
-								{isFullscreen ? '⤡' : '⤢'}
-							</button>
+						{/*
+						 * Call design S2: with host chrome the call shows
+						 * these in its own header; drawn here they covered it
+						 * (measured on dev: over the "Notizen" button).
+						 */}
+						{!hostChrome && (
+							<>
+								<button
+									className="element-call-close"
+									onClick={handleEndCall}
+									aria-label={t('calls.group.close')}
+								>
+									×
+								</button>
+								{!isMobileView && !isFullscreen && (
+									<button
+										type="button"
+										className="element-call-autofit"
+										onClick={(e) => {
+											e.stopPropagation();
+											applyAutoFit();
+										}}
+										aria-label={t(
+											'calls.group.autoFitAria'
+										)}
+										title={t('calls.group.autoFit')}
+									>
+										⛶
+									</button>
+								)}
+								{/* Into the dock (FE#1904); on a phone this replaces the small tile. */}
+								<button
+									type="button"
+									className="element-call-minimize"
+									onClick={(e) => {
+										e.stopPropagation();
+										minimise();
+									}}
+									aria-label={t('calls.states.minimize')}
+									title={t('calls.states.minimize')}
+								>
+									–
+								</button>
+								{!isMobileView && (
+									<button
+										className="element-call-fullscreen"
+										onClick={handleToggleFullscreen}
+										aria-label={
+											isFullscreen
+												? t(
+														'calls.group.exitFullScreen'
+													)
+												: t(
+														'calls.group.enterFullScreen'
+													)
+										}
+										title={
+											isFullscreen
+												? t(
+														'calls.group.exitFullScreen'
+													)
+												: t('calls.group.fullScreen')
+										}
+									>
+										{isFullscreen ? '⤡' : '⤢'}
+									</button>
+								)}
+							</>
 						)}
 						{/* Host side: no widget capability needed (#1794). */}
 						{/* Element Call never sets CallData.state to connected; a
@@ -1269,7 +1320,10 @@ export const GroupCallWidget: React.FC = () => {
 						/>
 						{!isMobileView &&
 							!isFullscreen &&
-							RESIZE_EDGES.map((edge) => (
+							RESIZE_EDGES.filter(
+								// The top edge is the drag band with host chrome.
+								(edge) => !hostChrome || edge !== 'n'
+							).map((edge) => (
 								<div
 									key={edge}
 									className={`call-resize-handle call-resize-handle--${edge}`}

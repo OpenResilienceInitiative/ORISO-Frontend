@@ -30,6 +30,7 @@ import { CALL_IDENTITY_EVENT_TYPE } from '../callIdentity';
 import { forgetPublishedIdentity } from '../publishCallIdentity';
 import { rememberJoinMedia } from '../prejoin/callPrejoin';
 import { NotificationsContext } from '../../../globalState/provider/NotificationsProvider';
+import { setAppConfig } from '../../../utils/appConfig';
 import {
 	FAKE_CALL_ID,
 	FAKE_CURRENT_USER_ID,
@@ -44,7 +45,11 @@ import {
 const widgetApiMocks = vi.hoisted(() => ({
 	instances: [] as Array<{
 		stop: ReturnType<typeof vi.fn>;
-		transport: { send: ReturnType<typeof vi.fn> };
+		on: ReturnType<typeof vi.fn>;
+		transport: {
+			send: ReturnType<typeof vi.fn>;
+			reply: ReturnType<typeof vi.fn>;
+		};
 	}>
 }));
 
@@ -129,11 +134,15 @@ describe('GroupCallWidget Storybook harness', () => {
 	beforeEach(() => {
 		widgetApiMocks.instances.length = 0;
 		resetCallManager();
+		// These cases drive the host's own corner buttons; the call design's
+		// host chrome (S2) hides them and is covered at the end of the file.
+		setAppConfig({ calls: { hostChrome: false } } as never);
 	});
 
 	afterEach(() => {
 		cleanup();
 		callManager.endCall(false);
+		setAppConfig(null as never);
 	});
 
 	it('leaves locally, tears down listeners and widget API, then clears retained metadata', async () => {
@@ -282,6 +291,75 @@ describe('GroupCallWidget Storybook harness', () => {
 				true
 			)
 		);
+
+	describe('call design: the window belongs to the call (S2)', () => {
+		beforeEach(() => setAppConfig(null as never));
+
+		const windowAction = (command: unknown) => {
+			const api = widgetApiMocks.instances.at(-1)!;
+			const listener = api.on.mock.calls.find(
+				(call: unknown[]) => call[0] === 'action:org.oriso.call.window'
+			)?.[1] as (event: CustomEvent) => void;
+			const detail = {
+				action: 'org.oriso.call.window',
+				requestId: 'window-1',
+				widgetId: 'widget',
+				data: { command }
+			};
+			act(() =>
+				listener(
+					new CustomEvent('org.oriso.call.window', {
+						cancelable: true,
+						detail
+					})
+				)
+			);
+			return { api, detail };
+		};
+
+		it('asks the call for its header buttons and draws none of its own over it', async () => {
+			const { view, iframe } = await renderActiveCall();
+			expect(
+				new URLSearchParams(new URL(iframe.src).hash.slice(2)).get(
+					'orisoHostChrome'
+				)
+			).toBe('1');
+			for (const name of [
+				'Close call',
+				'Minimize call',
+				'Open full screen'
+			])
+				expect(view.queryByRole('button', { name })).toBeNull();
+			expect(
+				view.container.querySelector('.element-call-autofit')
+			).toBeNull();
+			expect(
+				view.container.querySelector('.group-call-widget--host-chrome')
+			).toBeTruthy();
+		});
+
+		it('minimises into the dock when the call asks', async () => {
+			const { view } = await renderActiveCall();
+			const { api, detail } = windowAction('minimise');
+			expect(api.transport.reply).toHaveBeenCalledWith(detail, {});
+			expect(
+				await view.findByRole('button', {
+					name: 'Back to the full call'
+				})
+			).toBeTruthy();
+		});
+
+		it('takes the call into browser full screen when it asks', async () => {
+			const requestFullscreen = vi.fn().mockResolvedValue(undefined);
+			const { view } = await renderActiveCall();
+			const container = view.container.querySelector(
+				'.element-call-container'
+			) as HTMLElement & { requestFullscreen: () => Promise<void> };
+			container.requestFullscreen = requestFullscreen;
+			windowAction('toggle_fullscreen');
+			expect(requestFullscreen).toHaveBeenCalled();
+		});
+	});
 
 	it('keeps the second call ringing when the call closes itself during the hangup', async () => {
 		/*

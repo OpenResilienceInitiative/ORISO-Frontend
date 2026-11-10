@@ -62,6 +62,31 @@ export interface ElementCallWidgetOptions {
 	 * and a different URL navigates the running call.
 	 */
 	callStart?: ElementCallStart | null;
+	/**
+	 * Call design S2 (`orisoHostChrome=1`): the call draws minimise and full
+	 * screen in its own header, and the host shows no window buttons of its
+	 * own over it. The call asks for them with `org.oriso.call.window`.
+	 */
+	hostChrome?: boolean;
+	/** The call's header asked the host window to minimise or toggle full screen. */
+	onWindowCommand?: (command: OrisoWindowCommand) => void;
+	/**
+	 * What the host window is now, sent as `org.oriso.call.window_state` once
+	 * the call is ready and again on every change, so its header button shows
+	 * the right state.
+	 */
+	windowState?: OrisoWindowState | null;
+}
+
+/** `org.oriso.call.window` commands (call design LEDGER). */
+export type OrisoWindowCommand = 'minimise' | 'toggle_fullscreen';
+
+const isWindowCommand = (value: unknown): value is OrisoWindowCommand =>
+	value === 'minimise' || value === 'toggle_fullscreen';
+
+/** `org.oriso.call.window_state` payload (call design LEDGER). */
+export interface OrisoWindowState {
+	fullscreen: boolean;
 }
 
 /**
@@ -97,7 +122,11 @@ export const ORISO_WIDGET_ACTIONS = {
 	/** toWidget `{ waiting, knock }`; `knock: null` = no link, no switch. */
 	knockState: 'org.oriso.call.knock_state',
 	/** fromWidget `{ knock }`; always answered, with `error` when it did not land. */
-	setKnock: 'org.oriso.call.set_knock'
+	setKnock: 'org.oriso.call.set_knock',
+	/** fromWidget `{ command }`, answered `{}` (call design S2). */
+	window: 'org.oriso.call.window',
+	/** toWidget `{ fullscreen }` (call design S2). */
+	windowState: 'org.oriso.call.window_state'
 } as const;
 
 export interface OrisoKnockState {
@@ -245,6 +274,16 @@ const waitForWidgetRoomMembership = (
 	});
 };
 
+const sendWindowState = (api: ClientWidgetApi, state: OrisoWindowState) => {
+	void api.transport
+		.send(ORISO_WIDGET_ACTIONS.windowState, {
+			fullscreen: state.fullscreen
+		})
+		.catch(() => {
+			/* an older call without its own window buttons, or it went away */
+		});
+};
+
 const sendKnockState = (api: ClientWidgetApi, state: OrisoKnockState) => {
 	void api.transport
 		.send(ORISO_WIDGET_ACTIONS.knockState, {
@@ -266,7 +305,10 @@ export const useElementCallWidget = (
 		onAlwaysOnScreenChange,
 		knockState = null,
 		onSetKnock,
-		callStart = null
+		callStart = null,
+		hostChrome = false,
+		onWindowCommand,
+		windowState = null
 	}: ElementCallWidgetOptions
 ): ElementCallWidget => {
 	// By value: an equal choice in a new object must not rebuild the URL.
@@ -289,6 +331,8 @@ export const useElementCallWidget = (
 	knockStateRef.current = knockState;
 	const onSetKnockRef = useRef(onSetKnock);
 	onSetKnockRef.current = onSetKnock;
+	const onWindowCommandRef = useRef(onWindowCommand);
+	onWindowCommandRef.current = onWindowCommand;
 
 	// A widget client cannot join rooms. Gate iframe creation on the host's
 	// membership so Element Call never starts against an invited/unknown room.
@@ -375,6 +419,8 @@ export const useElementCallWidget = (
 					...(appConfig?.calls?.atmosphere
 						? { orisoAtmosphere: appConfig.calls.atmosphere }
 						: {}),
+					// Call design S2: the call owns the window buttons.
+					...(hostChrome ? { orisoHostChrome: '1' } : {}),
 					intent: 'start_call',
 					callIntent: isVideo ? 'video' : 'audio',
 					// The pre-join choice (ElementCall#116): on/off and the
@@ -390,7 +436,7 @@ export const useElementCallWidget = (
 
 		void prepare();
 		return () => preparation.abort();
-	}, [client, roomId, isVideo, skipLobby, callStartQuery]);
+	}, [client, roomId, isVideo, skipLobby, callStartQuery, hostChrome]);
 
 	const attachIframe = useCallback(
 		(iframe: HTMLIFrameElement | null) => {
@@ -569,6 +615,25 @@ export const useElementCallWidget = (
 				api.on(`action:${action}`, acknowledgeLifecycleAction);
 			}
 
+			// Call design S2: minimise and full screen from the call's header.
+			api.on(
+				`action:${ORISO_WIDGET_ACTIONS.window}`,
+				(event: CustomEvent<IWidgetApiRequest>) => {
+					event.preventDefault();
+					const command = (event.detail.data as { command?: unknown })
+						?.command;
+					const handler = onWindowCommandRef.current;
+					if (!isWindowCommand(command) || !handler) {
+						api.transport.reply(event.detail, {
+							error: { message: 'Unknown window command' }
+						});
+						return;
+					}
+					handler(command);
+					api.transport.reply(event.detail, {});
+				}
+			);
+
 			// "Anklopfen" belongs to the host's call link (ElementCall#109):
 			// change it there, answer either way, then tell the call the truth.
 			api.on(
@@ -622,6 +687,13 @@ export const useElementCallWidget = (
 			knock: knockSetting ?? null
 		});
 	}, [ready, knockWaiting, knockSetting]);
+
+	const windowFullscreen = windowState?.fullscreen;
+	useEffect(() => {
+		const api = apiRef.current;
+		if (!ready || !api || windowFullscreen === undefined) return;
+		sendWindowState(api, { fullscreen: windowFullscreen });
+	}, [ready, windowFullscreen]);
 
 	const hangup = useCallback(async (): Promise<void> => {
 		if (!apiRef.current) return;

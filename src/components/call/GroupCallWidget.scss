@@ -497,3 +497,23 @@
 		width: 90vw;
 	}
 }
+
+/*
+ * Call design S2: with host chrome the call's own header sits at the top of
+ * the iframe. The 28px drag strip used to lie over it and swallow clicks on
+ * its buttons, so it shrinks to a thin band on the top edge (where the
+ * north resize handle was) and leaves the header to the call.
+ */
+.group-call-widget--host-chrome .element-call-drag-handle {
+	height: 6px;
+	left: 16px;
+	right: 16px;
+	z-index: 7;
+}
+
+.group-call-widget--host-chrome.group-call-widget--mobile
+	.element-call-drag-handle,
+.group-call-widget--host-chrome.group-call-widget--fullscreen
+	.element-call-drag-handle {
+	display: none;
+}

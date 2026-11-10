@@ -1226,4 +1226,116 @@ describe('useElementCallWidget', () => {
 			});
 		});
 	});
+	describe('call design: the window belongs to the call (S2)', () => {
+		const WINDOW = 'org.oriso.call.window';
+		const WINDOW_STATE = 'org.oriso.call.window_state';
+
+		type Props = Parameters<typeof useElementCallWidget>[1];
+
+		const mount = async (initial: Partial<Props>) => {
+			const client = createClient();
+			const hook = renderHook(
+				(props: Partial<Props>) =>
+					useElementCallWidget(client, {
+						roomId: CALL_ROOM,
+						isVideo: true,
+						...props
+					}),
+				{ initialProps: initial }
+			);
+			await waitFor(() => expect(hook.result.current.url).not.toBeNull());
+			const iframe = document.createElement('iframe');
+			iframe.src = hook.result.current.url!;
+			act(() => hook.result.current.attachIframe(iframe));
+			const api = widgetApiMocks.apiInstances[0];
+			return { ...hook, api };
+		};
+
+		const fragment = (url: string) =>
+			new URLSearchParams(new URL(url).hash.slice(2));
+
+		const request = (api: any, action: string, data: unknown) => {
+			const detail = {
+				action,
+				requestId: `${action}-1`,
+				widgetId: 'widget',
+				data
+			};
+			const event = new CustomEvent(action, {
+				cancelable: true,
+				detail
+			});
+			act(() => api.emit(`action:${action}`, event));
+			return { detail, event };
+		};
+
+		it('asks the call for its own window buttons only when the host hides its own', async () => {
+			const on = await mount({ hostChrome: true });
+			expect(
+				fragment(on.result.current.url!).get('orisoHostChrome')
+			).toBe('1');
+			on.unmount();
+			widgetApiMocks.apiInstances.length = 0;
+			const off = await mount({});
+			expect(
+				fragment(off.result.current.url!).has('orisoHostChrome')
+			).toBe(false);
+		});
+
+		it('runs minimise and toggle_fullscreen and answers {}', async () => {
+			const onWindowCommand = vi.fn();
+			const { api } = await mount({ hostChrome: true, onWindowCommand });
+
+			const minimise = request(api, WINDOW, { command: 'minimise' });
+			expect(minimise.event.defaultPrevented).toBe(true);
+			expect(onWindowCommand).toHaveBeenLastCalledWith('minimise');
+			expect(api.transport.reply).toHaveBeenCalledWith(
+				minimise.detail,
+				{}
+			);
+
+			const toggle = request(api, WINDOW, {
+				command: 'toggle_fullscreen'
+			});
+			expect(onWindowCommand).toHaveBeenLastCalledWith(
+				'toggle_fullscreen'
+			);
+			expect(api.transport.reply).toHaveBeenCalledWith(toggle.detail, {});
+		});
+
+		it('refuses an unknown window command', async () => {
+			const onWindowCommand = vi.fn();
+			const { api } = await mount({ hostChrome: true, onWindowCommand });
+			const { detail } = request(api, WINDOW, { command: 'close' });
+			expect(onWindowCommand).not.toHaveBeenCalled();
+			expect(api.transport.reply).toHaveBeenCalledWith(detail, {
+				error: { message: expect.any(String) }
+			});
+		});
+
+		it('tells the call the window state once ready and on every change', async () => {
+			const { api, rerender } = await mount({
+				hostChrome: true,
+				windowState: { fullscreen: false }
+			});
+			const sends = () =>
+				api.transport.send.mock.calls.filter(
+					(call: unknown[]) => call[0] === WINDOW_STATE
+				);
+			expect(sends()).toHaveLength(0);
+
+			act(() => api.emit('ready', new CustomEvent('ready')));
+			expect(sends()).toEqual([[WINDOW_STATE, { fullscreen: false }]]);
+
+			rerender({ hostChrome: true, windowState: { fullscreen: true } });
+			expect(sends().at(-1)).toEqual([
+				WINDOW_STATE,
+				{ fullscreen: true }
+			]);
+
+			// The same state in a new object is not a change.
+			rerender({ hostChrome: true, windowState: { fullscreen: true } });
+			expect(sends()).toHaveLength(2);
+		});
+	});
 });
