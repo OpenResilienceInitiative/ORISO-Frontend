@@ -222,7 +222,7 @@ function RuntimeCard({
 	item: ListItemInterface;
 	userData?: any;
 	/** Which list the card sits in; enquiries carry no ⋮ menu. */
-	listType?: string;
+	listType?: SESSION_LIST_TYPES;
 	index?: number;
 	isBeforeActive?: boolean;
 	isAfterActive?: boolean;
@@ -318,7 +318,7 @@ type RuntimeSessionOptions = {
 	/** FE#1115: the advice seeker's unaccepted row; no consultant, so the avatar slot holds the magnet. */
 	asSearchingAsker?: boolean;
 	/** FE#2182: the list the card sits in (enquiries carry no ⋮ menu). */
-	listType?: string;
+	listType?: SESSION_LIST_TYPES;
 };
 
 const runtimeSessionItem = ({
