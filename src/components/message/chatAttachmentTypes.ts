@@ -17,6 +17,7 @@ export interface ChatAttachment {
 	type: 'image' | 'file';
 	description?: string;
 	mediaType?: string;
+	/** Original attachment size in bytes, when supplied by the sender. */
 	size?: number;
 	width?: number;
 	height?: number;

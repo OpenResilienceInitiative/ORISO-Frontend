@@ -4,7 +4,8 @@ import {
 	useEffect,
 	useMemo,
 	useRef,
-	useState
+	useState,
+	useSyncExternalStore
 } from 'react';
 import {
 	apiDeleteUserDraft,
@@ -16,6 +17,13 @@ import {
 import { decryptText, encryptText } from '../../utils/encryptionHelpers';
 import { apiPostError, ERROR_LEVEL_WARN } from '../../api/apiPostError';
 import { useE2EE } from '../../hooks/useE2EE';
+import { isOpaqueDraftScope } from '../../services/draftCryptography';
+import { getPracticeSnapshot } from '../../practice/practiceMode';
+import {
+	getDraftAuthSessionIdentity,
+	getDraftCryptographyForWindow,
+	subscribeDraftCryptographyForWindow
+} from '../../services/draftCryptographyWindow';
 import { E2EEContext, ActiveSessionContext } from '../../globalState';
 import { EditorState } from 'draft-js';
 import { EVENT_PRE_LOGOUT } from '../logout/logout';
@@ -29,6 +37,14 @@ import {
 } from '../../services/draftStore';
 
 const SAVE_DRAFT_TIMEOUT = 1500;
+type ActiveDraftCryptography = ReturnType<typeof getDraftCryptographyForWindow>;
+const noDraftCryptography = () => null;
+const draftSessionMatches = (
+	crypto: ActiveDraftCryptography,
+	identity: string | null
+): boolean =>
+	getDraftCryptographyForWindow() === crypto &&
+	getDraftAuthSessionIdentity() === identity;
 
 const deleteUserDraft = (scopeKey: string, signal?: AbortSignal) =>
 	signal
@@ -76,12 +92,28 @@ export const useDraftMessage = (
 ) => {
 	const { activeSession } = useContext(ActiveSessionContext);
 	const { isE2eeEnabled } = useContext(E2EEContext);
+	const draftCryptography = useSyncExternalStore(
+		subscribeDraftCryptographyForWindow,
+		getDraftCryptographyForWindow,
+		noDraftCryptography
+	);
+	const authIdentity = useSyncExternalStore(
+		subscribeDraftCryptographyForWindow,
+		getDraftAuthSessionIdentity,
+		noDraftCryptography
+	);
 
 	const draftSaveTimeout = useRef(null);
 	const loadVersionRef = useRef(0);
 	const clearVersionRef = useRef(0);
 	const pendingDraftWritesRef = useRef(new Set<Promise<unknown>>());
-	const lastDraftLoadRef = useRef<{ enabled: boolean; scope: string }>(null);
+	const lastDraftLoadRef = useRef<{
+		enabled: boolean;
+		scope: string;
+		crypto: ActiveDraftCryptography;
+		identity: string | null;
+		resolving: boolean;
+	}>(null);
 	const latestMessageRef = useRef<string>('');
 	const skipNextCleanupSaveRef = useRef(false);
 	/*
@@ -108,6 +140,7 @@ export const useDraftMessage = (
 	const { keyID, key, encrypted, ready } = useE2EE(activeSession.rid);
 
 	const [loaded, setLoaded] = useState(false);
+	const [loadedScope, setLoadedScope] = useState<string | null>(null);
 	const [messageRes, setMessageRes] = useState<IUserDraftItem>(null);
 	const [, setMessage] = useState(null);
 	const threadKey = options?.threadRootId || 'main';
@@ -117,7 +150,69 @@ export const useDraftMessage = (
 	const sessionScopeKey = activeSession?.item?.id
 		? `scope:${String(activeSession.item.id)}|thread:${threadKey}`
 		: null;
-	const forcedScopeKey = options?.forcedScopeKey?.trim() || null;
+
+	const requestedScopeKey = options?.forcedScopeKey?.trim() || null;
+	const hasOpaqueRequest =
+		requestedScopeKey !== null && isOpaqueDraftScope(requestedScopeKey);
+	const [resolvedScope, setResolvedScope] = useState<{
+		request: string;
+		crypto: ActiveDraftCryptography;
+		room: string | null;
+		session: string | null;
+		key: string | null;
+	} | null>(null);
+	const matchingResolution =
+		resolvedScope?.request === requestedScopeKey &&
+		resolvedScope.crypto === draftCryptography &&
+		resolvedScope.room === roomScopeKey &&
+		resolvedScope.session === sessionScopeKey;
+	useEffect(() => {
+		if (!hasOpaqueRequest || !requestedScopeKey || !draftCryptography)
+			return;
+		let cancelled = false;
+		const resolve = async () => {
+			let key: string | null = null;
+			try {
+				for (const candidate of [roomScopeKey, sessionScopeKey]) {
+					if (
+						candidate &&
+						(await draftCryptography.opaqueScope(candidate)) ===
+							requestedScopeKey
+					) {
+						key = candidate;
+						break;
+					}
+				}
+			} catch {
+				// Invalidated or unrecognized tokens cannot redirect a draft to a different chat.
+			}
+			if (!cancelled)
+				setResolvedScope({
+					request: requestedScopeKey,
+					crypto: draftCryptography,
+					room: roomScopeKey,
+					session: sessionScopeKey,
+					key
+				});
+		};
+		void resolve();
+		return () => {
+			cancelled = true;
+		};
+	}, [
+		hasOpaqueRequest,
+		requestedScopeKey,
+		draftCryptography,
+		roomScopeKey,
+		sessionScopeKey
+	]);
+	const forcedScopeKey = hasOpaqueRequest
+		? matchingResolution
+			? resolvedScope?.key
+			: null
+		: requestedScopeKey;
+	const resolvingOpaqueScope =
+		hasOpaqueRequest && draftCryptography !== null && !matchingResolution;
 	const scopeKeysToTry = useMemo(
 		() =>
 			Array.from(
@@ -135,10 +230,27 @@ export const useDraftMessage = (
 		roomScopeKey ||
 		sessionScopeKey ||
 		`scope:unknown|thread:${threadKey}`;
-	const canUseRemoteApi = scopeKeysToTry.length > 0;
+	const canUseRemoteApi = scopeKeysToTry.length > 0 && !resolvingOpaqueScope;
 	const draftScope = useMemo(
-		() => ({ remoteScopeKey, scopeKeys: scopeKeysToTry }),
-		[remoteScopeKey, scopeKeysToTry]
+		() => ({
+			remoteScopeKey,
+			scopeKeys: [
+				...new Set(
+					[remoteScopeKey, loadedScope].filter(
+						(key) => key && scopeKeysToTry.includes(key)
+					)
+				)
+			],
+			cryptography: draftCryptography,
+			authIdentity
+		}),
+		[
+			remoteScopeKey,
+			loadedScope,
+			scopeKeysToTry,
+			draftCryptography,
+			authIdentity
+		]
 	);
 
 	const setEditorWithDraftString = useCallback(
@@ -159,7 +271,12 @@ export const useDraftMessage = (
 			scopeKey: string = remoteScopeKey,
 			signal?: AbortSignal
 		) => {
-			if (!canUseRemoteApi || signal?.aborted) {
+			if (
+				getPracticeSnapshot().status !== 'active' ||
+				!canUseRemoteApi ||
+				signal?.aborted ||
+				!draftSessionMatches(draftCryptography, authIdentity)
+			) {
 				return;
 			}
 			try {
@@ -192,7 +309,10 @@ export const useDraftMessage = (
 					}
 				}
 
-				if (signal?.aborted) {
+				if (
+					signal?.aborted ||
+					!draftSessionMatches(draftCryptography, authIdentity)
+				) {
 					return;
 				}
 
@@ -230,6 +350,8 @@ export const useDraftMessage = (
 			activeSession?.item?.id,
 			activeSession?.rid,
 			canUseRemoteApi,
+			draftCryptography,
+			authIdentity,
 			options?.actionPath,
 			options?.roomRef,
 			options?.sessionId,
@@ -242,6 +364,8 @@ export const useDraftMessage = (
 	type DraftPersistContext = {
 		enabled: boolean;
 		canUseRemoteApi: boolean;
+		cryptography: ActiveDraftCryptography;
+		authIdentity: string | null;
 		loaded: boolean;
 		allowUnloaded: boolean;
 		remoteScopeKey: string;
@@ -266,7 +390,12 @@ export const useDraftMessage = (
 			ctx: DraftPersistContext,
 			signal?: AbortSignal
 		) => {
-			if (!ctx.enabled || !ctx.canUseRemoteApi || signal?.aborted) {
+			if (
+				!ctx.enabled ||
+				!ctx.canUseRemoteApi ||
+				signal?.aborted ||
+				!draftSessionMatches(ctx.cryptography, ctx.authIdentity)
+			) {
 				return;
 			}
 			if (!ctx.loaded && !ctx.allowUnloaded) {
@@ -298,7 +427,10 @@ export const useDraftMessage = (
 					});
 				}
 			}
-			if (signal?.aborted) {
+			if (
+				signal?.aborted ||
+				!draftSessionMatches(ctx.cryptography, ctx.authIdentity)
+			) {
 				return;
 			}
 
@@ -381,8 +513,10 @@ export const useDraftMessage = (
 		canUseRemoteApi,
 		loaded,
 		allowUnloaded: false,
+		cryptography: draftCryptography,
+		authIdentity,
 		remoteScopeKey,
-		scopeKeysToTry,
+		scopeKeysToTry: draftScope.scopeKeys,
 		loadVersion: loadVersionRef.current,
 		clearVersion: clearVersionRef.current,
 		hasRemoteDraft: false,
@@ -403,8 +537,10 @@ export const useDraftMessage = (
 			canUseRemoteApi,
 			loaded,
 			allowUnloaded: false,
+			cryptography: draftCryptography,
+			authIdentity,
 			remoteScopeKey,
-			scopeKeysToTry,
+			scopeKeysToTry: draftScope.scopeKeys,
 			loadVersion: loadVersionRef.current,
 			clearVersion: clearVersionRef.current,
 			hasRemoteDraft: hasRemoteDraftRef.current,
@@ -441,15 +577,37 @@ export const useDraftMessage = (
 	// Load the draft message from the api but do not show it because its encrypted
 	useEffect(() => {
 		const abortController = new AbortController();
+		const previous = lastDraftLoadRef.current;
+		const scopeIdentity = hasOpaqueRequest
+			? requestedScopeKey
+			: remoteScopeKey;
+		const identityChanged =
+			previous !== null && previous.identity !== authIdentity;
+		if (identityChanged) {
+			if (draftSaveTimeout.current)
+				clearTimeout(draftSaveTimeout.current);
+			draftSaveTimeout.current = null;
+			setEditorWithDraftString('');
+		}
 		const resumeTypedDraft =
 			enabled &&
-			lastDraftLoadRef.current?.enabled === false &&
-			lastDraftLoadRef.current?.scope === remoteScopeKey &&
+			!identityChanged &&
+			previous?.scope === scopeIdentity &&
+			(previous.enabled === false ||
+				(!previous.crypto && draftCryptography !== null) ||
+				(previous.resolving && !resolvingOpaqueScope)) &&
 			hasDraftContent(latestMessageRef.current);
-		lastDraftLoadRef.current = { enabled, scope: remoteScopeKey };
+		lastDraftLoadRef.current = {
+			enabled,
+			scope: scopeIdentity,
+			crypto: draftCryptography,
+			identity: authIdentity,
+			resolving: resolvingOpaqueScope
+		};
 		const currentLoadVersion = ++loadVersionRef.current;
 		setLoaded(false);
 		setMessageRes(null);
+		setLoadedScope(null);
 		hasRemoteDraftRef.current = false;
 		/*
 		 * #976: the scope changed, so whatever is still buffered belongs to the
@@ -475,7 +633,8 @@ export const useDraftMessage = (
 			setLoaded(true);
 			return () => {
 				abortController?.abort();
-				persistOutgoingDraftOnLeave();
+				if (draftSessionMatches(draftCryptography, authIdentity))
+					persistOutgoingDraftOnLeave();
 			};
 		}
 
@@ -491,6 +650,7 @@ export const useDraftMessage = (
 						remoteDraft?.text
 					) {
 						hasRemoteDraftRef.current = true;
+						setLoadedScope(scopeKey);
 						setMessageRes(remoteDraft);
 						return;
 					}
@@ -509,11 +669,17 @@ export const useDraftMessage = (
 
 		return () => {
 			abortController?.abort();
-			persistOutgoingDraftOnLeave();
+			if (draftSessionMatches(draftCryptography, authIdentity))
+				persistOutgoingDraftOnLeave();
 		};
 	}, [
 		enabled,
 		canUseRemoteApi,
+		draftCryptography,
+		authIdentity,
+		hasOpaqueRequest,
+		requestedScopeKey,
+		resolvingOpaqueScope,
 		remoteScopeKey,
 		scopeKeysToTry,
 		setEditorWithDraftString,
@@ -584,8 +750,10 @@ export const useDraftMessage = (
 					canUseRemoteApi,
 					loaded,
 					allowUnloaded: false,
+					cryptography: draftCryptography,
+					authIdentity,
 					remoteScopeKey,
-					scopeKeysToTry,
+					scopeKeysToTry: draftScope.scopeKeys,
 					loadVersion: loadVersionRef.current,
 					clearVersion: clearVersionRef.current,
 					hasRemoteDraft: hasRemoteDraftRef.current,
@@ -607,6 +775,8 @@ export const useDraftMessage = (
 			activeSession?.item?.id,
 			activeSession?.rid,
 			canUseRemoteApi,
+			draftCryptography,
+			authIdentity,
 			loaded,
 			encrypted,
 			isE2eeEnabled,
@@ -620,7 +790,7 @@ export const useDraftMessage = (
 			options?.title,
 			persistDraftMessage,
 			remoteScopeKey,
-			scopeKeysToTry
+			draftScope.scopeKeys
 		]
 	);
 
@@ -730,15 +900,22 @@ export const useDraftMessage = (
 			// A PATCH already on the wire can outlive the Matrix send. Delete
 			// after it settles so it cannot recreate the text we just sent.
 			await Promise.allSettled([...pendingDraftWritesRef.current]);
+			if (!draftSessionMatches(draftCryptography, authIdentity)) return;
 			await Promise.allSettled([
-				...scopeKeysToTry.map((scopeKey) =>
+				...draftScope.scopeKeys.map((scopeKey) =>
 					apiDeleteUserDraft(scopeKey)
 				),
 				updateRemoteDraftIndex('')
 			]);
 		}
 		setMessage('');
-	}, [canUseRemoteApi, scopeKeysToTry, updateRemoteDraftIndex]);
+	}, [
+		canUseRemoteApi,
+		draftCryptography,
+		authIdentity,
+		draftScope.scopeKeys,
+		updateRemoteDraftIndex
+	]);
 
 	/*
 	 * Review (Codex): a file with a caption can finish uploading after the
@@ -748,6 +925,8 @@ export const useDraftMessage = (
 	const retireDraftScope = useCallback(
 		async (scope: typeof draftScope) => {
 			await Promise.allSettled([...pendingDraftWritesRef.current]);
+			if (!draftSessionMatches(scope.cryptography, scope.authIdentity))
+				return;
 			await Promise.allSettled([
 				...scope.scopeKeys.map((scopeKey) =>
 					apiDeleteUserDraft(scopeKey)

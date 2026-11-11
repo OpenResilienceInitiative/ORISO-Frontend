@@ -51,11 +51,11 @@ type Story = StoryObj<typeof meta>;
 
 export const Ready: Story = {
 	name: 'Bereit: Dateityp, Name, Größe, Entfernen',
-	args: handlers(),
+	args: { ...handlers(), sizeBytes: 1_240_000 },
 	play: async ({ canvasElement, args }) => {
 		const canvas = within(canvasElement);
 		expect(canvas.getByText('befund-seite-2.pdf')).toBeTruthy();
-		expect(canvas.getByText('PDF · 1,3 MB')).toBeTruthy();
+		expect(canvas.getByText('PDF · 1,2 MB')).toBeTruthy();
 		expect(canvas.queryByRole('progressbar')).toBeNull();
 		expect(canvas.queryByRole('alert')).toBeNull();
 		await userEvent.click(
@@ -195,9 +195,10 @@ export const JustOverTheLimit: Story = {
 		status: { kind: 'failed', reason: 'tooLarge' }
 	},
 	play: async ({ canvasElement }) => {
-		// Never "This file is 10 MB. The limit is 10 MB."
-		expect(within(canvasElement).getByRole('alert').textContent).toContain(
-			'10,1 MB'
+		const canvas = within(canvasElement);
+		expect(canvas.getByText('PDF · 10,1 MB')).toBeVisible();
+		expect(canvas.getByRole('alert')).toHaveTextContent(
+			'Diese Datei ist 10,1 MB groß. Erlaubt sind höchstens 10 MB.'
 		);
 	}
 };

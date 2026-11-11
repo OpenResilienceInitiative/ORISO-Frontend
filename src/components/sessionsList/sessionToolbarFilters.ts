@@ -3,7 +3,7 @@ import { getDirectLinkMedium } from '../session/directLinkOrigin';
 import type { ListItemInterface } from '../../globalState/interfaces/SessionsDataInterface';
 import type { ExtendedSessionInterface } from '../../globalState/helpers/stateHelpers';
 import type { IUserDraftItem } from '../../api/apiUserDrafts';
-import { isChatItemUnread } from '../../utils/sessionUnread';
+import { isChatItemUnread, isRoomUnread } from '../../utils/sessionUnread';
 import {
 	getSupervisionListState,
 	hasSupervisionMarker
@@ -235,6 +235,41 @@ export const draftMatchesSession = (
 		candidateValues.has(identity)
 	);
 };
+
+/**
+ * Counts only unread private side rooms explicitly assigned to this viewer. The display
+ * filter owns which rows are eligible, so callers pass its unread source.
+ * Legacy ownership guesses and main-room unread state never contribute.
+ */
+export const countUnreadSupervisedSessions = (
+	pairs: ReadonlyArray<{
+		raw: ListItemInterface;
+		extended: ExtendedSessionInterface;
+	}>,
+	currentUserId?: string
+): number =>
+	pairs.filter(
+		({ extended }) =>
+			getSupervisionListState(extended, currentUserId) ===
+				'supervisedByMe' &&
+			isRoomUnread(extended.item?.supervision?.sideRoomId)
+	).length;
+
+/** Count unread kinds bundled into Other using the same supervision source as its pill. */
+export const countUnreadOtherSessions = (
+	kinds: ReadonlyArray<string>,
+	unreadByKind: Readonly<Record<string, number>>,
+	pairs: Parameters<typeof countUnreadSupervisedSessions>[0],
+	currentUserId?: string
+): number =>
+	kinds.reduce(
+		(total, kind) =>
+			total +
+			(kind === 'supervision'
+				? countUnreadSupervisedSessions(pairs, currentUserId)
+				: (unreadByKind[kind] ?? 0)),
+		0
+	);
 
 export function sessionMatchesToolbar(
 	raw: ListItemInterface,

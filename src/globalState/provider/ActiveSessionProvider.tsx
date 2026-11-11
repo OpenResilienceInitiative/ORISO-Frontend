@@ -8,6 +8,7 @@ type ActiveSessionContextProps = {
 	activeSession: ExtendedSessionInterface | null;
 	/** The reload's promise, when the provider has one to hand back. */
 	reloadActiveSession?: () => void | Promise<unknown>;
+	refreshActiveSession?: () => Promise<void>;
 	readActiveSession?: () => void;
 	avatarMembers?: UserService.Schemas.ChatMemberResponseDTO[];
 	agencyFeaturePolicy?: AgencyConversationPolicy;
@@ -20,6 +21,7 @@ export const ActiveSessionProvider: React.FC<ActiveSessionContextProps> = ({
 	children,
 	activeSession,
 	reloadActiveSession,
+	refreshActiveSession,
 	readActiveSession,
 	avatarMembers,
 	agencyFeaturePolicy
@@ -28,6 +30,7 @@ export const ActiveSessionProvider: React.FC<ActiveSessionContextProps> = ({
 		() => ({
 			activeSession,
 			reloadActiveSession,
+			refreshActiveSession,
 			readActiveSession,
 			avatarMembers,
 			agencyFeaturePolicy
@@ -35,6 +38,7 @@ export const ActiveSessionProvider: React.FC<ActiveSessionContextProps> = ({
 		[
 			activeSession,
 			reloadActiveSession,
+			refreshActiveSession,
 			readActiveSession,
 			avatarMembers,
 			agencyFeaturePolicy

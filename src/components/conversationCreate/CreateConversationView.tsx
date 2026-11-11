@@ -20,6 +20,7 @@ import {
 	mobileListView
 } from '../app/navigationHandler';
 import { UserDataContext, useTenant, useTenantState } from '../../globalState';
+import type { ExtendedSessionInterface } from '../../globalState/helpers/stateHelpers';
 import { useResponsive } from '../../hooks/useResponsive';
 import { Loading } from '../app/Loading';
 import { ReactComponent as CircleIcon } from '../../resources/img/icons/self-help-group.svg';
@@ -45,6 +46,11 @@ import {
 import { GroupChatSeriesFieldsValue } from '../groupChat/GroupChatSeriesFields';
 import { normalizeGroupChatLanguages } from '../groupChat/groupChatAuthorContent';
 import { useSession } from '../../hooks/useSession';
+import { canEditGroupChatSettings } from '../groupChat/groupChatHelpers';
+import {
+	consultantGroupChatPath,
+	isGroupChatId
+} from '../groupChat/consultantGroupChatPath';
 import { useCounsellorAgencyFormats } from '../../hooks/useCounsellorAgencyFormats';
 import {
 	AgencyFormatSource,
@@ -105,10 +111,13 @@ import './conversationCreate.styles.scss';
 interface CreateConversationFlowProps {
 	/** The counsellor's agencies with their effective group-chat settings. */
 	agencyFormats: AgencyFormatSource[];
+	/** The route passes an edit session only after checking its scope and owner. */
+	editSession?: ExtendedSessionInterface;
 }
 
 const CreateConversationFlow = ({
-	agencyFormats
+	agencyFormats,
+	editSession
 }: CreateConversationFlowProps) => {
 	const { t: translate, i18n } = useTranslation();
 	const navigate = useNavigate();
@@ -123,18 +132,8 @@ const CreateConversationFlow = ({
 		useInternalSubsetChatSubmit();
 	const recipientScope = resolveRecipientScope(tenantData);
 
-	// Edit mode is driven by the route params: the create route has none, the
-	// edit route (RouterConfig) carries /:groupId/:sessionId/editGroupChat.
-	const { groupId: editRoomId, sessionId: editSessionIdParam } = useParams<{
-		groupId: string;
-		sessionId: string;
-	}>();
-	const isEditMode = Boolean(editSessionIdParam);
-	const editChatId = editSessionIdParam ? Number(editSessionIdParam) : null;
-	const { session: editSession } = useSession(
-		isEditMode ? (editRoomId ?? null) : null,
-		editChatId ?? undefined
-	);
+	const editChatId = editSession?.item?.id ?? null;
+	const isEditMode = editChatId !== null;
 
 	const duplicateOccurrence = (
 		location.state as {
@@ -192,9 +191,6 @@ const CreateConversationFlow = ({
 	// updateChat rewrites all of them from the payload, so a schedule-only edit
 	// must resubmit the existing content verbatim.
 	const editPrefill = useMemo<CircleSettingsPrefill | undefined>(() => {
-		if (!isEditMode) {
-			return undefined;
-		}
 		const item = editSession?.item;
 		if (!item) {
 			return undefined;
@@ -224,7 +220,7 @@ const CreateConversationFlow = ({
 			// Invalid persisted start etc. — keep the form gated (no prefill).
 			return undefined;
 		}
-	}, [isEditMode, editSession, userData?.userId]);
+	}, [editSession, userData?.userId]);
 
 	const [step, setStep] = useState<CreateStep>(() =>
 		isEditMode
@@ -809,6 +805,10 @@ const CreateConversationFlow = ({
 		</div>
 	);
 
+	if (editChatId !== null && !editPrefill) {
+		return <Navigate to={consultantGroupChatPath(editChatId)} replace />;
+	}
+
 	return (
 		<div className="conversationCreate">
 			<PanelHeader
@@ -817,28 +817,22 @@ const CreateConversationFlow = ({
 				menuDisabled
 			/>
 			{step === 'circle' ? (
-				isEditMode && !editPrefill ? (
-					// Never render the settings form before the series has
-					// hydrated: an un-hydrated submit would wipe the chat.
-					<Loading />
-				) : (
-					<CircleSettingsView
-						agencyOptions={agencyOptionsFor('circle')}
-						selectedAgency={selectedAgency}
-						onAgencyChange={setSelectedAgency}
-						activeLanguages={activeLanguages}
-						translationAvailable={isGroupChatTranslationAvailable(
-							tenantData
-						)}
-						prefill={isEditMode ? editPrefill : circlePrefill}
-						topicOptions={
-							topicOptions.length ? topicOptions : undefined
-						}
-						editChatId={editChatId}
-						people={people}
-						compact={!fromL}
-					/>
-				)
+				<CircleSettingsView
+					agencyOptions={agencyOptionsFor('circle')}
+					selectedAgency={selectedAgency}
+					onAgencyChange={setSelectedAgency}
+					activeLanguages={activeLanguages}
+					translationAvailable={isGroupChatTranslationAvailable(
+						tenantData
+					)}
+					prefill={isEditMode ? editPrefill : circlePrefill}
+					topicOptions={
+						topicOptions.length ? topicOptions : undefined
+					}
+					editChatId={editChatId}
+					people={people}
+					compact={!fromL}
+				/>
 			) : step === 'directLink' ? (
 				<div
 					className={`conversationCreate__single${
@@ -880,7 +874,45 @@ const CreateConversationFlow = ({
 	);
 };
 
+const consultantConversationList = '/sessions/consultant/sessionView';
+
+const EditConversationRoute = ({
+	agencyFormats,
+	roomId,
+	chatId
+}: {
+	agencyFormats: AgencyFormatSource[];
+	roomId: string;
+	chatId: number;
+}) => {
+	const { userData } = useContext(UserDataContext);
+	// The group lookup carries the current chat owner. Omitting the
+	// individual session ID also rules out its numeric and handover fallbacks.
+	const { session, ready } = useSession(roomId, undefined, chatId);
+	if (!ready) return <Loading />;
+	if (
+		!session?.isGroup ||
+		session.item?.id !== chatId ||
+		session.item.matrixRoomId !== roomId
+	) {
+		return <Navigate to={consultantConversationList} replace />;
+	}
+	if (!canEditGroupChatSettings(session, userData)) {
+		return <Navigate to={consultantGroupChatPath(chatId)} replace />;
+	}
+	return (
+		<CreateConversationFlow
+			agencyFormats={agencyFormats}
+			editSession={session}
+		/>
+	);
+};
+
 export const CreateConversationView = () => {
+	const { groupId, sessionId } = useParams<{
+		groupId: string;
+		sessionId: string;
+	}>();
 	const { tenant: tenantData, isLoading } = useTenantState();
 	const { agencies: agencyFormats, isLoading: agencyFormatsLoading } =
 		useCounsellorAgencyFormats();
@@ -905,8 +937,21 @@ export const CreateConversationView = () => {
 		!availability.circle &&
 		getDirectLinkMedia(tenantData, agencyFormats).length === 0
 	) {
-		return <Navigate to="/sessions/consultant/sessionView" replace />;
+		return <Navigate to={consultantConversationList} replace />;
 	}
 
+	if (sessionId !== undefined) {
+		if (!groupId || !isGroupChatId(sessionId)) {
+			return <Navigate to={consultantConversationList} replace />;
+		}
+		return (
+			<EditConversationRoute
+				key={`${groupId}/${sessionId}`}
+				agencyFormats={agencyFormats}
+				roomId={groupId}
+				chatId={Number(sessionId)}
+			/>
+		);
+	}
 	return <CreateConversationFlow agencyFormats={agencyFormats} />;
 };
