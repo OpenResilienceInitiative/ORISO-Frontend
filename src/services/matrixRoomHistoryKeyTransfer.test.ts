@@ -4,6 +4,7 @@ import { ClientEvent } from 'matrix-js-sdk';
 import {
 	MATRIX_HISTORY_KEYS_DIAGNOSTIC_EVENT,
 	MATRIX_HISTORY_KEYS_IMPORTED_EVENT,
+	MATRIX_HISTORY_KEYS_REQUESTED_EVENT,
 	MATRIX_HISTORY_REQUEST_PENDING_EVENT,
 	MATRIX_HISTORY_REQUEST_RESOLVED_EVENT,
 	MatrixRoomHistoryKeyTransfer,
@@ -177,6 +178,44 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 		expect(harness.client.encryptAndSendToDevice).toHaveBeenCalledTimes(1);
 	});
 
+	it.each([
+		['automatic', undefined],
+		['reasoned', 'about my school']
+	])(
+		'reserves a room before concurrent %s requests look up devices',
+		async (_, reason) => {
+			const harness = buildHarness();
+			const service = new MatrixRoomHistoryKeyTransfer();
+			service.initialize(harness.client as any);
+
+			let releaseLookup = () => {};
+			const lookup = new Promise<void>((resolve) => {
+				releaseLookup = resolve;
+			});
+			const devices = new Map([
+				[PEER, new Map([['ASKER1', { deviceId: 'ASKER1' }]])]
+			]);
+			harness.crypto.getUserDeviceInfo.mockImplementation(async () => {
+				await lookup;
+				return devices;
+			});
+
+			const requests = Array.from({ length: 3 }, () =>
+				service.requestKeys(ROOM_ID, { reason })
+			);
+			await vi.waitFor(() =>
+				expect(harness.crypto.getUserDeviceInfo).toHaveBeenCalled()
+			);
+			releaseLookup();
+
+			expect(await Promise.all(requests)).toEqual([true, false, false]);
+			expect(harness.crypto.getUserDeviceInfo).toHaveBeenCalledTimes(1);
+			expect(harness.client.encryptAndSendToDevice).toHaveBeenCalledTimes(
+				1
+			);
+		}
+	);
+
 	it('lets a request with a reason follow the automatic one at once', async () => {
 		const harness = buildHarness();
 		const service = new MatrixRoomHistoryKeyTransfer();
@@ -191,6 +230,75 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 			await service.requestKeys(ROOM_ID, { reason: 'about my school' })
 		).toBe(false);
 		expect(harness.client.encryptAndSendToDevice).toHaveBeenCalledTimes(2);
+	});
+
+	it('keeps a reasoned request independent of an automatic device lookup', async () => {
+		const harness = buildHarness();
+		const service = new MatrixRoomHistoryKeyTransfer();
+		service.initialize(harness.client as any);
+
+		let releaseLookup = () => {};
+		const lookup = new Promise<void>((resolve) => {
+			releaseLookup = resolve;
+		});
+		harness.crypto.getUserDeviceInfo.mockImplementationOnce(async () => {
+			await lookup;
+			return new Map([
+				[PEER, new Map([['ASKER1', { deviceId: 'ASKER1' }]])]
+			]);
+		});
+		const automatic = service.requestKeys(ROOM_ID);
+		await vi.waitFor(() =>
+			expect(harness.crypto.getUserDeviceInfo).toHaveBeenCalled()
+		);
+		const reasoned = await service.requestKeys(ROOM_ID, {
+			reason: 'about my school'
+		});
+		releaseLookup();
+
+		expect(reasoned).toBe(true);
+		expect(await automatic).toBe(true);
+		expect(harness.client.encryptAndSendToDevice).toHaveBeenCalledTimes(2);
+	});
+
+	it('drops a stale send completion after detaching and reusing the client', async () => {
+		const harness = buildHarness();
+		const service = new MatrixRoomHistoryKeyTransfer();
+		service.initialize(harness.client as any);
+
+		let releaseSend = () => {};
+		harness.client.encryptAndSendToDevice.mockImplementationOnce(
+			() =>
+				new Promise<void>((resolve) => {
+					releaseSend = resolve;
+				})
+		);
+		const requested = vi.fn();
+		window.addEventListener(MATRIX_HISTORY_KEYS_REQUESTED_EVENT, requested);
+		try {
+			const stale = service.requestKeys(ROOM_ID);
+			await vi.waitFor(() =>
+				expect(
+					harness.client.encryptAndSendToDevice
+				).toHaveBeenCalledTimes(1)
+			);
+			service.detach();
+			service.initialize(harness.client as any);
+			const fresh = await service.requestKeys(ROOM_ID, {
+				reason: 'about my school'
+			});
+			releaseSend();
+
+			expect(fresh).toBe(true);
+			expect(await stale).toBe(false);
+			expect(requested).toHaveBeenCalledTimes(1);
+		} finally {
+			releaseSend();
+			window.removeEventListener(
+				MATRIX_HISTORY_KEYS_REQUESTED_EVENT,
+				requested
+			);
+		}
 	});
 
 	it('sends the written reason only to devices signed by their owner', async () => {

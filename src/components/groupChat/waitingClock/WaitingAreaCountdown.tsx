@@ -414,6 +414,12 @@ export const WaitingAreaCountdown = ({
 		: setUncontrolledAnimOff;
 	const [cardOpen, setCardOpen] = React.useState(false);
 	const [page, setPage] = React.useState(0);
+	const frontTrigger = React.useRef<HTMLElement | null>(null);
+	const closeButton = React.useRef<HTMLButtonElement>(null);
+	const moveFocusAfterFlip = React.useRef(false);
+	const setFrontTrigger = React.useCallback((node: HTMLElement | null) => {
+		frontTrigger.current = node;
+	}, []);
 	const [cardHover, setCardHover] = React.useState(false);
 	const [pop, setPop] = React.useState<
 		(ClockDigitsPop & { group: string }) | null
@@ -563,12 +569,22 @@ export const WaitingAreaCountdown = ({
 	const pageCount = pages.length;
 	const currentPage = pages[Math.min(page, Math.max(0, pageCount - 1))];
 
-	const openCard = () => {
+	const openCard = (moveFocus: boolean) => {
+		moveFocusAfterFlip.current = moveFocus;
 		setPage(0);
 		setCardOpen(true);
 	};
-	const closeCard = () => setCardOpen(false);
+	const closeCard = (event: React.MouseEvent<HTMLButtonElement>) => {
+		moveFocusAfterFlip.current = event.detail === 0;
+		setCardOpen(false);
+	};
 	const flipped = cardOpen && canFlip;
+
+	React.useLayoutEffect(() => {
+		if (!moveFocusAfterFlip.current) return;
+		moveFocusAfterFlip.current = false;
+		(cardOpen ? closeButton.current : frontTrigger.current)?.focus();
+	}, [cardOpen]);
 
 	const toggleLabel = tr('toggleLabel');
 	const toggle = (
@@ -843,6 +859,7 @@ export const WaitingAreaCountdown = ({
 					{currentPage.label}
 				</span>
 				<Button
+					ref={closeButton}
 					size="small"
 					startIcon={<CloseRoundedIcon />}
 					onClick={closeCard}
@@ -934,15 +951,16 @@ export const WaitingAreaCountdown = ({
 					}}
 				>
 					<div
+						ref={setFrontTrigger}
 						role="button"
 						tabIndex={flipped ? -1 : 0}
 						aria-pressed={flipped}
 						aria-label={tr('cardOpenAria')}
-						onClick={openCard}
+						onClick={(event) => openCard(event.detail === 0)}
 						onKeyDown={(event) => {
 							if (event.key === 'Enter' || event.key === ' ') {
 								event.preventDefault();
-								openCard();
+								openCard(true);
 							}
 						}}
 						onMouseEnter={() => setCardHover(true)}
@@ -1108,9 +1126,12 @@ export const WaitingAreaCountdown = ({
 							    what the still view is for. */}
 							{canFlip && (
 								<Button
+									ref={setFrontTrigger}
 									variant="text"
 									size="small"
-									onClick={openCard}
+									onClick={(event) =>
+										openCard(event.detail === 0)
+									}
 									className="waitingClock__stillOpen"
 								>
 									{tr('cardOpenAria')}

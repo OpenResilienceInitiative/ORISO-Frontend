@@ -19,12 +19,13 @@ import {
 	sealRecoveryKeyUnderPassword
 } from '../../services/passwordRecoveryEnrollment';
 import { PasswordEnvelopeStep } from './PasswordEnvelopeStep';
+import { PasswordChangeConfirmation } from './PasswordChangeConfirmation';
+import { PasswordChangeConfirmationContext } from './PasswordChangeConfirmationContext';
 import { sealRecoveryUnderFirstPassword } from '../../services/authenticatedChatRecovery';
 import * as React from 'react';
 import { useState, useContext, useRef } from 'react';
 import { InputField, InputFieldItem } from '../inputField/InputField';
 import { apiUpdatePassword, FETCH_ERRORS } from '../../api';
-import { Overlay, OVERLAY_FUNCTIONS, OverlayItem } from '../overlay/Overlay';
 import { Button, BUTTON_TYPES } from '../button/Button';
 import { logout } from '../logout/logout';
 import {
@@ -39,7 +40,6 @@ import {
 } from '../twoFactorAuth/accountSetupDialogChrome';
 import { ReactComponent as ShowPasswordIcon } from '../../resources/img/icons/eye.svg';
 import { ReactComponent as HidePasswordIcon } from '../../resources/img/icons/eye-closed.svg';
-import { CheckAnimation } from '../animatedIllustration/AnimatedIllustration';
 import './passwordReset.styles';
 import { Headline } from '../headline/Headline';
 import { Text } from '../text/Text';
@@ -179,6 +179,9 @@ export const PasswordReset = ({
 	);
 
 	const settings = useAppConfig();
+	const showPasswordChangeConfirmation = useContext(
+		PasswordChangeConfirmationContext
+	);
 
 	const [repairRequired, setRepairRequired] = useState(false);
 	const [oldPassword, setOldPassword] = useState('');
@@ -205,22 +208,6 @@ export const PasswordReset = ({
 	const changedPassword = useRef('');
 	const [envelopeRecoveryKey, setEnvelopeRecoveryKey] = useState('');
 	const [envelopeError, setEnvelopeError] = useState('');
-
-	const overlayItem: OverlayItem = {
-		svg: CheckAnimation,
-		headline: translate(
-			'profile.functions.password.reset.overlay.headline'
-		),
-		buttonSet: [
-			{
-				label: translate(
-					'profile.functions.password.reset.overlay.button.label'
-				),
-				function: OVERLAY_FUNCTIONS.CLOSE,
-				type: BUTTON_TYPES.AUTO_CLOSE
-			}
-		]
-	};
 
 	const getClassNames = (invalid, valid) => {
 		let classNames = ['passwordReset__input'];
@@ -523,9 +510,13 @@ export const PasswordReset = ({
 		changedPassword.current = '';
 		setEnvelopeStep(null);
 		setEnvelopeRecoveryKey('');
-		setOverlayActive(true);
 		setIsRequestInProgress(false);
-		logout(false, settings.urls.toLogin);
+		if (showPasswordChangeConfirmation) {
+			showPasswordChangeConfirmation(settings.urls.toLogin);
+		} else {
+			setOverlayActive(true);
+			void logout(false, settings.urls.toLogin);
+		}
 	};
 
 	/* A recovery key still parked on this device (e.g. from the silent setup)
@@ -568,10 +559,6 @@ export const PasswordReset = ({
 			);
 			setIsRequestInProgress(false);
 		});
-	};
-
-	const handleSuccess = () => {
-		window.location.href = settings.urls.toLogin;
 	};
 
 	if (envelopeStep) {
@@ -715,9 +702,7 @@ export const PasswordReset = ({
 					className="passwordReset__submit"
 					disabled={!isValid}
 				/>
-				{overlayActive ? (
-					<Overlay item={overlayItem} handleOverlay={handleSuccess} />
-				) : null}
+				{overlayActive && <PasswordChangeConfirmation />}
 			</div>
 		);
 	}
@@ -805,9 +790,7 @@ export const PasswordReset = ({
 					/>
 				</div>
 			</div>
-			{overlayActive ? (
-				<Overlay item={overlayItem} handleOverlay={handleSuccess} />
-			) : null}
+			{overlayActive && <PasswordChangeConfirmation />}
 		</div>
 	);
 };

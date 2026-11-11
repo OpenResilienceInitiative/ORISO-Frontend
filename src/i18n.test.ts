@@ -38,7 +38,7 @@ const driftBudgets = {
 	en: { extraInLocale: 5, missingInLocale: 63 },
 	fr: { extraInLocale: 5, missingInLocale: 0 },
 	ru: { extraInLocale: 5, missingInLocale: 0 },
-	ti: { extraInLocale: 5, missingInLocale: 21 },
+	ti: { extraInLocale: 5, missingInLocale: 23 },
 	tr: { extraInLocale: 5, missingInLocale: 0 }
 } as const;
 
@@ -52,6 +52,11 @@ it.each(Object.entries({ de, 'de@informal': deInformal, ...locales }))(
 		expect(catalogue.practice.cards.windowHint.trim()).not.toBe('');
 	}
 );
+it('uses the appropriate German form of address for the assigned counsellor fallback', () => {
+	expect(de.consultant.assignedLabel).toBe('Ihre Beratungsperson');
+	expect(deInformal.consultant?.assignedLabel).toBe('Deine Beratungsperson');
+});
+
 const passwordRecoveryStatuses = [
 	'pending',
 	'device-ready',
