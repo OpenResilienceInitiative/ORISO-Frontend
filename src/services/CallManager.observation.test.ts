@@ -51,6 +51,12 @@ describe('call observation across sign-out', () => {
 			invite: vi.fn().mockResolvedValue(undefined),
 			leave: vi.fn().mockResolvedValue(undefined),
 			forget: vi.fn().mockResolvedValue(undefined),
+			// Room creation now checks the default room version and verifies
+			// the membership reader was invited before the call can ring.
+			getCapabilities: vi.fn().mockResolvedValue({
+				'm.room_versions': { default: '12' }
+			}),
+			getStateEvent: vi.fn().mockResolvedValue({ membership: 'invite' }),
 			getUserId: () => userId,
 			getDeviceId: () => 'CALLER',
 			getRoom: () => null
