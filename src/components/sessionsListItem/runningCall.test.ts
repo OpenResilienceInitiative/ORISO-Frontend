@@ -1,11 +1,16 @@
 // @vitest-environment oriso-jsdom
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vite-plus/test';
 
 import {
 	buildCallLifecycleContent,
+	CALL_STATE_NOT_FOUND,
 	type CallLifecycleMessage
 } from '../../utils/callLifecycleMessage';
+import {
+	UNKNOWN_RECHECK_DELAY_MS,
+	UNKNOWN_STATE_LIMIT
+} from '../message/useCallTimelineState';
 import { runningCallOf, useRunningCall } from './runningCall';
 
 const ROOM = '!session:oriso.test';
@@ -98,5 +103,68 @@ describe('the running call of a conversation, for the list (S10)', () => {
 		);
 		await waitFor(() => expect(loadState).toHaveBeenCalled());
 		expect(result.current?.callId).toBe('call-1');
+	});
+
+	/*
+	 * #145/#2215 review: one nullable answer is not an ending. The list
+	 * reconciles exactly as the chat card does (useCallTimelineState).
+	 */
+	it('keeps a running call whose state the server does not know yet', async () => {
+		const events = [card(call())];
+		const loadState = vi.fn().mockResolvedValue(null);
+		const { result } = renderHook(() =>
+			useRunningCall(events, ROOM, loadState)
+		);
+		await waitFor(() => expect(loadState).toHaveBeenCalled());
+		expect(result.current?.callId).toBe('call-1');
+	});
+
+	it('brings a provisionally ended call back once the server knows it', async () => {
+		vi.useFakeTimers();
+		try {
+			const events = [card(call())];
+			const loadState = vi
+				.fn()
+				.mockResolvedValue(CALL_STATE_NOT_FOUND as never);
+			const { result } = renderHook(() =>
+				useRunningCall(events, ROOM, loadState)
+			);
+			for (let i = 0; i < UNKNOWN_STATE_LIMIT; i += 1) {
+				await act(async () => {
+					await vi.advanceTimersByTimeAsync(15_000);
+				});
+			}
+			expect(result.current).toBeNull();
+			loadState.mockResolvedValue(call());
+			await act(async () => {
+				await vi.advanceTimersByTimeAsync(UNKNOWN_RECHECK_DELAY_MS);
+			});
+			expect(result.current?.callId).toBe('call-1');
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
+	it('asks again while the call keeps running, and drops it when it ends', async () => {
+		vi.useFakeTimers();
+		try {
+			const events = [card(call())];
+			const loadState = vi.fn().mockResolvedValue(call());
+			const { result } = renderHook(() =>
+				useRunningCall(events, ROOM, loadState)
+			);
+			await act(async () => {
+				await vi.advanceTimersByTimeAsync(0);
+			});
+			expect(result.current?.callId).toBe('call-1');
+			loadState.mockResolvedValue(call({ state: 'ended' }));
+			await act(async () => {
+				await vi.advanceTimersByTimeAsync(15_000);
+			});
+			expect(loadState.mock.calls.length).toBeGreaterThan(1);
+			expect(result.current).toBeNull();
+		} finally {
+			vi.useRealTimers();
+		}
 	});
 });

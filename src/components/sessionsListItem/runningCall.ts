@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { formatMatrixTimelineEvent } from '../../utils/matrixTimelineEventFormatter';
 import {
 	applyCallLifecycleEdits,
@@ -6,6 +6,7 @@ import {
 	type CallLifecycleMessage
 } from '../../utils/callLifecycleMessage';
 import { apiCallState } from '../../api/apiCallState';
+import { useCallTimelineState } from '../message/useCallTimelineState';
 
 /**
  * Call design S10: the call running in this conversation, as its call card
@@ -38,13 +39,26 @@ export const runningCallOf = (
 
 type LoadCallState = typeof apiCallState;
 
+/** Stands in while there is no running card; never asked about. */
+const NO_CALL: CallLifecycleMessage = {
+	callId: '',
+	roomRef: '',
+	callRoomId: '',
+	state: 'ended',
+	callType: 'audio',
+	participants: []
+};
+
 /**
- * The running call, once the server agrees it is still running.
+ * The running call, while the server agrees it is still running.
  *
  * A card can say `running` long after the call ended — a browser that
- * crashed never writes the terminal revision — so the list asks the server
- * once per call, as the chat card does. A server that cannot be reached is
- * not an answer: the card's word stands until it can be asked.
+ * crashed never writes the terminal revision. The list reconciles it exactly
+ * as the chat card does (`useCallTimelineState`): it keeps asking while the
+ * call runs, a server that cannot be reached is not an answer, and a call
+ * the server does not know (yet) is only ended provisionally and comes back
+ * once the creator's registration lands. One shared rule, so the list and
+ * the chat cannot disagree.
  */
 export const useRunningCall = (
 	events: readonly unknown[],
@@ -55,25 +69,9 @@ export const useRunningCall = (
 		() => runningCallOf(events, roomId),
 		[events, roomId]
 	);
-	const [ended, setEnded] = useState<ReadonlySet<string>>(new Set());
-	const callId = candidate?.callId;
-
-	useEffect(() => {
-		if (!candidate || !callId) return undefined;
-		let active = true;
-		loadState(candidate).then(
-			(state) => {
-				if (!active || state?.state === 'running') return;
-				setEnded((previous) => new Set(previous).add(callId));
-			},
-			() => undefined
-		);
-		return () => {
-			active = false;
-		};
-		// Once per call: a new card revision (who is present) is not a new call.
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [callId, loadState]);
-
-	return candidate && !ended.has(candidate.callId) ? candidate : null;
+	const reconciled = useCallTimelineState(
+		candidate ?? NO_CALL,
+		candidate ? loadState : undefined
+	);
+	return candidate && reconciled.state === 'running' ? reconciled : null;
 };
