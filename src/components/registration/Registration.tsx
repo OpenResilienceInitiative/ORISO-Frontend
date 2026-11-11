@@ -752,9 +752,6 @@ export const Registration = () => {
 			)
 				? mergedData.email
 				: undefined,
-			displayName: groupJoin
-				? undefined
-				: mergedData.displayName?.trim() || undefined,
 			mainTopicId: selectedTopic?.id?.toString(),
 			topicId: selectedTopic?.id?.toString(),
 			topicIds: selectedTopic?.id ? [selectedTopic.id] : [],
