@@ -166,10 +166,10 @@ export const ConsultantAbsent: Story = {
 		<ComposerShell
 			userData={mockComposerAskerData}
 			activeSession={buildMockActiveSession({
+				user: undefined,
 				consultant: {
 					consultantId: 'consultant-storybook',
-					username: 'shaziaknew',
-					displayName: 'shazia ka',
+					username: 'counsellor_at_qa.invalid',
 					absent: true,
 					absenceMessage:
 						'I am out of office, please contact me later'
@@ -180,6 +180,8 @@ export const ConsultantAbsent: Story = {
 	),
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
+		await canvas.findByText(/^Ihre Beratungsperson\s+ist abwesend$/);
+		expect(canvas.queryByText(/counsellor_at_qa/)).toBeNull();
 		const banner = await canvas.findByText(
 			'I am out of office, please contact me later'
 		);
@@ -191,7 +193,9 @@ export const ConsultantAbsent: Story = {
 			expect(bannerBox.height).toBeGreaterThan(0);
 
 			const composer = canvasElement.querySelector('form.textarea');
-			expect(composer).not.toBeNull();
+			expect(
+				composer?.querySelector('[contenteditable="true"]')
+			).not.toBeNull();
 			const composerBox = (
 				composer as HTMLElement
 			).getBoundingClientRect();

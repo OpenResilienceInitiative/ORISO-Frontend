@@ -58,9 +58,9 @@ import {
 import { logout } from '../logout/logout';
 import { mobileListView } from '../app/navigationHandler';
 import {
+	canEditGroupChatSettings,
 	canModerateGroupChat,
-	getStoppedGroupChatRemovalIds,
-	isGroupChatOwner
+	getStoppedGroupChatRemovalIds
 } from '../groupChat/groupChatHelpers';
 import { ReactComponent as LeaveChatIcon } from '../../resources/img/icons/out.svg';
 import { ReactComponent as GroupChatInfoIcon } from '../../resources/img/icons/i.svg';
@@ -1378,8 +1378,8 @@ const SessionMenuFlyoutGroup = ({
 						/>
 					</div>
 				)}
-			{isGroupChatOwner(activeSession, userData) &&
-				!activeSession.item.active && (
+			{editGroupChatSettingsLink &&
+				canEditGroupChatSettings(activeSession, userData) && (
 					<Link
 						to={editGroupChatSettingsLink}
 						state={{

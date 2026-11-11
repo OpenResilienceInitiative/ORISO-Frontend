@@ -374,7 +374,14 @@
 		@include breakpoint($fromXLarge) {
 			// Share the content column's surface. A content-driven footer on
 			// the fixed stage can meet its heading at any content height.
-			padding-left: calc(40vw + #{$grid-base-three});
+			// Start the box at the column, never pad it there: a full-width
+			// footer with `pointer-events: auto` lies invisibly over the stage
+			// and swallows the clicks on its privacy and imprint links on every
+			// short step (#2138; the content wrapper did the same before).
+			// Guarded by the routed-registration story
+			// `LegalLinksStayClickableOnEveryStep`.
+			margin-left: 40vw;
+			padding-left: $grid-base-three;
 		}
 
 		@media screen and (width < #{$fromXLarge}) {

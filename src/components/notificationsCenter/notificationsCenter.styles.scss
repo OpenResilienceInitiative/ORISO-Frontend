@@ -703,8 +703,12 @@
 // stylelint-disable-next-line media-feature-range-notation
 @media (max-width: 1199px) {
 	.notificationsCenter {
+		// Keep the filter strip's intrinsic width inside the scroll container.
+		min-width: 0;
+
 		&__listColumn {
 			flex: 1;
+			min-width: 0;
 			width: auto;
 			padding: 16px;
 		}

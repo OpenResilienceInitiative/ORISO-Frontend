@@ -1,4 +1,5 @@
 import { getModality, Modality } from '../session/getModality';
+import type { ExtendedSessionInterface } from '../../globalState/helpers/stateHelpers';
 
 interface GroupChatAuthorizationSession {
 	consultant?: { id?: string };
@@ -35,6 +36,15 @@ export const isGroupChatOwner = (
 		return false;
 	}
 };
+
+export const canEditGroupChatSettings = (
+	activeSession: ExtendedSessionInterface,
+	userData?: GroupChatAuthorizationUser
+): boolean =>
+	activeSession.isGroup === true &&
+	activeSession.item?.active === false &&
+	getModality(activeSession) === Modality.SELF_HELP &&
+	isGroupChatOwner(activeSession, userData);
 
 export const canModerateGroupChat = (
 	activeSession: GroupChatAuthorizationSession,

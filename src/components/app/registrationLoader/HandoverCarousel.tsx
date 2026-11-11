@@ -62,6 +62,8 @@ export interface HandoverCarouselProps {
  * Designentscheidung sein, das muss ich zehnmal testen").
  */
 const CARD_WIDTH = { xs: 300, sm: 372 };
+const SCROLL_IDLE_MS = 120;
+const MAX_DOT_SCROLL_MS = 800;
 
 /**
  * Left edge of every card in the track's own scroll coordinates.
@@ -113,6 +115,7 @@ export const HandoverCarousel = ({
 	const { t } = useTranslation();
 	const trackRef = useRef<HTMLDivElement>(null);
 	const [activeIndex, setActiveIndex] = useState(0);
+	const selectDotRef = useRef<((index: number) => void) | null>(null);
 	const settledCount = useRef(0);
 
 	const noteSettled = useCallback(() => {
@@ -128,7 +131,7 @@ export const HandoverCarousel = ({
 			return undefined;
 		}
 
-		const onScroll = () => {
+		const updateFromScrollPosition = () => {
 			// Read the real card positions rather than an averaged card
 			// width: where several cards fit at once, the browser clamps
 			// scrollLeft well before the averaged target for the last card,
@@ -161,26 +164,122 @@ export const HandoverCarousel = ({
 			setActiveIndex(nearest);
 		};
 
+		let selectedByDot: number | null = null;
+		let settleTimer: number | undefined;
+		let settleDeadline = 0;
+
+		const selectedCardIsVisible = () => {
+			const card =
+				selectedByDot === null ? null : track.children[selectedByDot];
+			if (!card) return false;
+			const trackLeft = track.getBoundingClientRect().left;
+			const bounds = card.getBoundingClientRect();
+			const centre = bounds.left + bounds.width / 2;
+			return (
+				centre >= trackLeft && centre <= trackLeft + track.clientWidth
+			);
+		};
+
+		const clearSettleTimer = () => {
+			window.clearTimeout(settleTimer);
+			settleTimer = undefined;
+		};
+
+		const followScrollPosition = () => {
+			selectedByDot = null;
+			updateFromScrollPosition();
+		};
+
+		const settleDotScroll = () => {
+			if (settleTimer === undefined) return;
+			clearSettleTimer();
+			if (!selectedCardIsVisible()) followScrollPosition();
+		};
+
+		const scheduleSettle = () => {
+			clearSettleTimer();
+			const remaining = Math.max(0, settleDeadline - performance.now());
+			settleTimer = window.setTimeout(
+				settleDotScroll,
+				Math.min(SCROLL_IDLE_MS, remaining)
+			);
+		};
+
+		const beginSettlement = () => {
+			settleDeadline = performance.now() + MAX_DOT_SCROLL_MS;
+			scheduleSettle();
+		};
+
+		let trackWidth = track.clientWidth;
+		const reconcileTrackWidth = () => {
+			const width = track.clientWidth;
+			if (width === trackWidth) return false;
+			trackWidth = width;
+			if (selectedCardIsVisible()) {
+				beginSettlement();
+			} else {
+				clearSettleTimer();
+				followScrollPosition();
+			}
+			return true;
+		};
+
+		const onScroll = () => {
+			// A resize can re-snap before or after the observer callback.
+			if (reconcileTrackWidth()) return;
+			// Protect explicit selection only while its movement is settling.
+			// The next independent scroll follows geometry regardless of input.
+			if (settleTimer !== undefined) {
+				scheduleSettle();
+				return;
+			}
+			followScrollPosition();
+		};
+
+		selectDotRef.current = (index) => {
+			const card = track.children[index] as HTMLElement | undefined;
+			if (!card) return;
+			selectedByDot = index;
+			setActiveIndex(index);
+			const reducedMotion = window.matchMedia?.(
+				'(prefers-reduced-motion: reduce)'
+			).matches;
+			const previousLeft = track.scrollLeft;
+			// Centre the card the dot stands for; the first and the last
+			// card clamp to the track's ends (#2139: not `offsetLeft`).
+			const target = cardTargets(track)[index];
+			beginSettlement();
+			track.scrollTo({
+				left: target,
+				behavior: reducedMotion ? 'auto' : 'smooth'
+			});
+			// An unchanged position does not generate a scrollend event.
+			if (
+				target === previousLeft ||
+				(reducedMotion && track.scrollLeft === previousLeft)
+			) {
+				settleDotScroll();
+			}
+		};
+
+		const resizeObserver =
+			typeof ResizeObserver !== 'undefined'
+				? new ResizeObserver(reconcileTrackWidth)
+				: undefined;
+		resizeObserver?.observe(track);
 		track.addEventListener('scroll', onScroll, { passive: true });
-		return () => track.removeEventListener('scroll', onScroll);
+		track.addEventListener('scrollend', settleDotScroll);
+		return () => {
+			selectDotRef.current = null;
+			clearSettleTimer();
+			resizeObserver?.disconnect();
+			track.removeEventListener('scroll', onScroll);
+			track.removeEventListener('scrollend', settleDotScroll);
+		};
 	}, []);
 
-	const scrollTo = (index: number) => {
-		const track = trackRef.current;
-		const card = track?.children[index] as HTMLElement | undefined;
-		if (!track || !card) {
-			return;
-		}
-		const reducedMotion =
-			typeof window.matchMedia === 'function' &&
-			window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-		// Centre the card the dot stands for; the first and the last card
-		// clamp to the track's ends.
-		track.scrollTo({
-			left: cardTargets(track)[index],
-			behavior: reducedMotion ? 'auto' : 'smooth'
-		});
-	};
+	/** Scroll to card `index` and hold its dot while the scroll settles. */
+	const scrollToCard = (index: number) => selectDotRef.current?.(index);
 
 	/*
 	 * A mouse cannot swipe: without a trackpad the cards could not be moved at
@@ -231,7 +330,7 @@ export const HandoverCarousel = ({
 				nearest = index;
 			}
 		});
-		scrollTo(nearest);
+		scrollToCard(nearest);
 	};
 
 	return (
@@ -422,7 +521,7 @@ export const HandoverCarousel = ({
 				data-cy="handover-carousel-dots"
 				count={steps.length}
 				activeIndex={activeIndex}
-				onSelect={scrollTo}
+				onSelect={scrollToCard}
 				getLabel={(index, total) =>
 					t('registration.handover.goToStep', {
 						position: index + 1,

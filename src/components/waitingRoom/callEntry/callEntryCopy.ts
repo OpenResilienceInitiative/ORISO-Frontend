@@ -68,6 +68,7 @@ export const callEntryCopy = {
 	missing: 'Noch offen: ',
 	missingName: 'User-ID',
 	missingPassword: 'Passwort',
+	missingPostcode: 'Postleitzahl',
 	missingMicrophone: 'Mikrofon',
 	allSet: 'Alles bereit',
 	joining: 'Sie werden verbunden …',

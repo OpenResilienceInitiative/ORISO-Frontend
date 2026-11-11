@@ -62,3 +62,41 @@ describe('CallEntryIdentity', () => {
 		);
 	});
 });
+
+describe('the postcode in the call entry identity (ORISO-Frontend#1795)', () => {
+	afterEach(cleanup);
+
+	const renderPostcode = (askPostcode?: boolean) => {
+		const onPostcodeChange = vi.fn();
+		render(
+			<CallEntryIdentity
+				modality="video"
+				identity={identity as never}
+				onIdentityChange={() => undefined}
+				username="eule_mika_4821"
+				onUsernameChange={() => undefined}
+				password=""
+				onPasswordChange={() => undefined}
+				askPostcode={askPostcode}
+				postcode="10"
+				onPostcodeChange={onPostcodeChange}
+			/>
+		);
+		return { onPostcodeChange };
+	};
+
+	it('shows the field for a registered account and reports what is typed', () => {
+		const { onPostcodeChange } = renderPostcode(true);
+		fireEvent.change(screen.getByLabelText('registration.zipcode.label'), {
+			target: { value: '10115' }
+		});
+		expect(onPostcodeChange).toHaveBeenCalledWith('10115');
+	});
+
+	it('shows no field when the account is temporary', () => {
+		renderPostcode(false);
+		expect(
+			screen.queryByLabelText('registration.zipcode.label')
+		).toBeNull();
+	});
+});
