@@ -56,6 +56,7 @@ class ReleaseVerificationTest(unittest.TestCase):
             source = root / 'source'
             git('config', 'user.email', 'test@example.invalid', cwd=source)
             git('config', 'user.name', 'Test', cwd=source)
+            git('config', 'commit.gpgSign', 'false', cwd=source)
             (source / 'file').write_text('reviewed')
             git('add', 'file', cwd=source)
             git('commit', '-m', 'reviewed', cwd=source)
