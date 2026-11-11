@@ -325,7 +325,11 @@ export const TipTapComposer = forwardRef<
 						placeholder
 					}),
 					gateExtension(TaskList, formatGate),
-					TaskItem.configure({ nested: true }),
+					// TaskItem owns the `[ ] ` / `[x] ` markdown input rule, so it is gated too.
+					gateExtension(
+						TaskItem.configure({ nested: true }),
+						formatGate
+					),
 					createComposerFormatGateExtension(formatGate),
 					InsertionMarker,
 					...(mentionProvider
