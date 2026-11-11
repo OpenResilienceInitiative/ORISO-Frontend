@@ -1,5 +1,8 @@
 import { useConversationFeatureSettings } from '../../hooks/useConversationFeatureSettings';
-import { getSessionMenuAgency } from './sessionMenuAgency';
+import {
+	getSessionMenuAgency,
+	getSessionMenuLegalDepartment
+} from './sessionMenuAgency';
 import { createPortal } from 'react-dom';
 import { MenuBackdrop } from '../chatMenuDropdown/MenuBackdrop';
 import { useChatMenuPosition } from '../chatMenuDropdown/useChatMenuPosition';
@@ -520,6 +523,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 
 	const hasMatrixRoom = !!activeSession.item.matrixRoomId;
 	const menuAgency = getSessionMenuAgency(activeSession);
+	const legalDepartment = getSessionMenuLegalDepartment(activeSession);
 	const baseUrl = hasMatrixRoom
 		? `${listPath}/:groupId/:id/:subRoute?/:extraPath?${getSessionListTab()}`
 		: `${listPath}/session/:id/:subRoute?/:extraPath?${getSessionListTab()}`;
@@ -1248,6 +1252,11 @@ export const SessionMenu = (props: SessionMenuProps) => {
 					title={legalModal.title}
 					url={legalModal.url}
 					onClose={() => setLegalModal(null)}
+					/* ORISO-Admin#1490: the advice centre's published text, not
+					   the Träger template; tenant text when no department is known. */
+					{...(legalDepartment
+						? { scope: 'agency' as const, ...legalDepartment }
+						: {})}
 				/>
 			)}
 			{overlayActive && (
