@@ -30,12 +30,16 @@ const call = (
 });
 
 let ts = 1_000;
-const event = (content: Record<string, unknown>, id = `$e${ts}`) => {
+const event = (
+	content: Record<string, unknown>,
+	id = `$e${ts}`,
+	sender = COUNSELLOR
+) => {
 	const at = (ts += 1000);
 	return {
 		getType: () => 'm.room.message',
 		getContent: () => content,
-		getSender: () => COUNSELLOR,
+		getSender: () => sender,
 		getTs: () => at,
 		getId: () => id,
 		isRedacted: () => false
@@ -44,8 +48,8 @@ const event = (content: Record<string, unknown>, id = `$e${ts}`) => {
 
 const card = (message: CallLifecycleMessage, id?: string) =>
 	event(buildCallLifecycleContent(message), id);
-const edit = (message: CallLifecycleMessage, of: string) =>
-	event(buildCallLifecycleContent(message, of));
+const edit = (message: CallLifecycleMessage, of: string, sender?: string) =>
+	event(buildCallLifecycleContent(message, of), undefined, sender);
 const text = () => event({ msgtype: 'm.text', body: 'Hallo' });
 
 describe('the running call of a conversation, for the list (S10)', () => {
@@ -246,5 +250,49 @@ describe('the running call of a conversation, for the list (S10)', () => {
 		];
 		rerender();
 		expect(result.current).toBeNull();
+	});
+
+	it('ignores a forged ending of a retained call by somebody else', () => {
+		const loadState = vi.fn().mockRejectedValue(new Error('offline'));
+		let events: unknown[] = [card(call(), '$card')];
+		const { result, rerender } = renderHook(() =>
+			useRunningCall(events, ROOM, loadState)
+		);
+		expect(result.current?.callId).toBe('call-1');
+		events = [
+			text(),
+			edit(call({ state: 'ended' }), '$card', '@someone:oriso.test')
+		];
+		rerender();
+		expect(result.current?.callId).toBe('call-1');
+	});
+
+	it('brings a retained call back after a provisional end, outside the window', async () => {
+		vi.useFakeTimers();
+		try {
+			const loadState = vi
+				.fn()
+				.mockResolvedValue(CALL_STATE_NOT_FOUND as never);
+			let events: unknown[] = [card(call(), '$card')];
+			const { result, rerender } = renderHook(() =>
+				useRunningCall(events, ROOM, loadState)
+			);
+			events = [text()];
+			rerender();
+			for (let i = 0; i < UNKNOWN_STATE_LIMIT; i += 1) {
+				await act(async () => {
+					await vi.advanceTimersByTimeAsync(15_000);
+				});
+			}
+			expect(result.current).toBeNull();
+			rerender();
+			loadState.mockResolvedValue(call());
+			await act(async () => {
+				await vi.advanceTimersByTimeAsync(UNKNOWN_RECHECK_DELAY_MS);
+			});
+			expect(result.current?.callId).toBe('call-1');
+		} finally {
+			vi.useRealTimers();
+		}
 	});
 });

@@ -37,33 +37,34 @@ export const runningCallOf = (
 	return null;
 };
 
+type RawEvent = {
+	getClearContent?: () => Record<string, unknown> | null;
+	getContent?: () => Record<string, unknown> | null;
+};
+
 /**
- * The state the newest revision in `events` gives a call, read from the raw
- * content (an edit's `m.new_content` too). Needed for a card whose original
- * event has left the window: its edits can no longer be folded, but a
- * terminal one still says the call is over.
+ * The original card event of a call (not one of its edits), so the list can
+ * keep it once it scrolls out of the window and still fold the window's edits
+ * onto it — with the same ownership and identity checks as the chat.
  */
-export const latestCallStateIn = (
+export const originalCardEventOf = (
 	events: readonly unknown[],
 	callId: string,
 	roomId: string
-): CallLifecycleMessage['state'] | null => {
+): unknown | null => {
 	for (let index = events.length - 1; index >= 0; index -= 1) {
-		const event = events[index] as {
-			getClearContent?: () => Record<string, unknown> | null;
-			getContent?: () => Record<string, unknown> | null;
-		};
+		const event = events[index] as RawEvent;
 		const content =
 			event?.getClearContent?.() || event?.getContent?.() || {};
-		const body = (content['m.new_content'] ?? content) as Record<
-			string,
-			unknown
-		>;
-		const call = body?.['org.oriso.call'] as
-			| { call_id?: unknown; room_ref?: unknown; state?: unknown }
+		const relation = content['m.relates_to'] as
+			| { rel_type?: unknown }
+			| undefined;
+		if (relation?.rel_type === 'm.replace') continue;
+		const call = content['org.oriso.call'] as
+			| { call_id?: unknown; room_ref?: unknown }
 			| undefined;
 		if (call?.call_id === callId && call.room_ref === roomId)
-			return call.state as CallLifecycleMessage['state'];
+			return events[index];
 	}
 	return null;
 };
@@ -101,28 +102,36 @@ export const useRunningCall = (
 	roomId: string | null | undefined,
 	loadState: LoadCallState = apiCallStateRead
 ): CallLifecycleMessage | null => {
-	const found = useMemo(
-		() => runningCallOf(events, roomId),
-		[events, roomId]
-	);
 	/*
 	 * The list's events are only the last page of the room (the preview's
 	 * 50). In a busy call the card scrolls out of that window, and its later
-	 * edits cannot be folded without it. So a running call, once seen, is
-	 * retained for its room; the server reconciliation below (which keeps
-	 * asking while it runs) is what ends it, not the window.
+	 * edits cannot be folded without it. So the running call's ORIGINAL card
+	 * event is retained for its room and put in front of the window: edits in
+	 * the window are folded onto it by the shared pipeline, which accepts
+	 * only the card author's own, matching revisions. A forged "ended" from
+	 * somebody else is rejected there, as in the chat.
+	 *
+	 * Only a validated terminal revision (or another room) lets go of it.
+	 * Server answers never do: a provisionally ended call keeps its card, so
+	 * the reconciliation below can bring it back.
 	 */
-	const retained = useRef<CallLifecycleMessage | null>(null);
-	if (found) retained.current = found;
-	else if (
-		retained.current &&
-		(retained.current.roomRef !== roomId ||
-			// A terminal revision in the window ends it, server or not.
-			(latestCallStateIn(events, retained.current.callId, roomId) ??
-				'running') !== 'running')
-	)
-		retained.current = null;
-	const candidate = found ?? retained.current;
+	const retained = useRef<{ room: string; event: unknown } | null>(null);
+	const candidate = useMemo(() => {
+		if (!roomId) {
+			retained.current = null;
+			return null;
+		}
+		const kept =
+			retained.current?.room === roomId ? retained.current.event : null;
+		const timeline =
+			kept && !events.includes(kept) ? [kept, ...events] : events;
+		const found = runningCallOf(timeline, roomId);
+		const original = found
+			? originalCardEventOf(timeline, found.callId, roomId)
+			: null;
+		retained.current = original ? { room: roomId, event: original } : null;
+		return found;
+	}, [events, roomId]);
 	const [untrusted, setUntrusted] = useState<string | null>(null);
 	const checkedLoad = useCallback<LoadCallState>(
 		async (call) => {
@@ -136,9 +145,6 @@ export const useRunningCall = (
 		candidate ?? NO_CALL,
 		candidate ? checkedLoad : undefined
 	);
-	if (candidate && !found && reconciled.state !== 'running')
-		// Ended (or provisionally ended) and no longer in the window: let go.
-		retained.current = null;
 	return candidate &&
 		reconciled.state === 'running' &&
 		untrusted !== candidate.callId
