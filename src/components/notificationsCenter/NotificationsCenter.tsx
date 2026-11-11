@@ -65,7 +65,10 @@ import {
 } from '../../globalState';
 import { useResponsive } from '../../hooks/useResponsive';
 import { useTranslation } from 'react-i18next';
-import { apiDecideCaseHandoverClientConsent } from '../../api';
+import {
+	TimelineConsentActions,
+	type TimelineConsentDecisions
+} from './TimelineConsentActions';
 import { ResizableHandle } from '../sessionsList/ResizableHandle';
 import { SessionRailPill } from '../sessionsList/SessionRailPill';
 import { directLinkLabelKey } from '../session/directLinkOrigin';
@@ -267,10 +270,7 @@ export const NotificationsCenter = () => {
 		onPreviewChange: handlePreviewChange,
 		visiblePreview
 	} = useActivityPreviewHydration(notificationFeed);
-	const [caseHandoverConsentSubmitting, setCaseHandoverConsentSubmitting] =
-		useState(false);
-	const [caseHandoverConsentError, setCaseHandoverConsentError] =
-		useState('');
+	const pendingConsentDecisions = useRef<TimelineConsentDecisions>(new Map());
 	const [cardMenuAnchor, setCardMenuAnchor] = useState<HTMLElement | null>(
 		null
 	);
@@ -498,11 +498,6 @@ export const NotificationsCenter = () => {
 		markRead: markNotificationAsRead
 	});
 
-	// Clear any stale case-handover consent error when the selection changes.
-	useEffect(() => {
-		setCaseHandoverConsentError('');
-	}, [activeNotificationId]);
-
 	// Clear the active family filter when that family is no longer in the feed
 	// (no selection means "show everything" — there is no "All" chip).
 	useEffect(() => {
@@ -571,7 +566,10 @@ export const NotificationsCenter = () => {
 		[selectedNotification]
 	);
 	const canShowChatPreview = selectedNotificationCategory === 'message';
-	const canDecideCaseHandoverConsent =
+	const showConsentDetail =
+		!untilL &&
+		hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) &&
+		Boolean(userData?.userId) &&
 		selectedNotification?.eventType === 'case.handover.consent.requested' &&
 		selectedSessionNumericId !== null &&
 		selectedCaseHandoverRequestNumericId !== null;
@@ -752,34 +750,6 @@ export const NotificationsCenter = () => {
 				openNotification(nextItem, { browsing: true });
 			}
 		}
-	};
-
-	const handleCaseHandoverConsentDecision = (approved: boolean) => {
-		if (
-			!selectedNotification ||
-			selectedSessionNumericId === null ||
-			selectedCaseHandoverRequestNumericId === null
-		) {
-			setCaseHandoverConsentError(translate('caseHandover.error.failed'));
-			return;
-		}
-		setCaseHandoverConsentSubmitting(true);
-		setCaseHandoverConsentError('');
-		apiDecideCaseHandoverClientConsent(
-			selectedSessionNumericId,
-			selectedCaseHandoverRequestNumericId,
-			approved
-		)
-			.then(() => {
-				markNotificationAsRead(selectedNotification.id);
-				refreshNotificationFeed();
-			})
-			.catch(() => {
-				setCaseHandoverConsentError(
-					translate('caseHandover.error.failed')
-				);
-			})
-			.finally(() => setCaseHandoverConsentSubmitting(false));
 	};
 
 	const SelectedIcon = selectedDisplay
@@ -1349,52 +1319,29 @@ export const NotificationsCenter = () => {
 											i18n.language
 										)}
 							</p>
-							{selectedNotification?.eventType ===
-								'case.handover.consent.requested' && (
-								<div className="notificationsCenter__consentActions">
-									<button
-										type="button"
-										className="notificationsCenter__consentButton notificationsCenter__consentButton--approve"
-										onClick={() =>
-											handleCaseHandoverConsentDecision(
-												true
-											)
-										}
-										disabled={
-											!canDecideCaseHandoverConsent ||
-											caseHandoverConsentSubmitting
-										}
-									>
-										{translate(
-											'caseHandover.consent.approve'
-										)}
-									</button>
-									<button
-										type="button"
-										className="notificationsCenter__consentButton"
-										onClick={() =>
-											handleCaseHandoverConsentDecision(
-												false
-											)
-										}
-										disabled={
-											!canDecideCaseHandoverConsent ||
-											caseHandoverConsentSubmitting
-										}
-									>
-										{translate(
-											'caseHandover.consent.decline'
-										)}
-									</button>
-									{caseHandoverConsentError && (
-										<p
-											className="notificationsCenter__detailText"
-											role="alert"
-										>
-											{caseHandoverConsentError}
-										</p>
-									)}
-								</div>
+							{showConsentDetail && (
+								<TimelineConsentActions
+									key={JSON.stringify([
+										userData.userId,
+										selectedNotification.id,
+										selectedSessionNumericId,
+										selectedCaseHandoverRequestNumericId
+									])}
+									accountId={userData.userId}
+									sessionId={selectedSessionNumericId}
+									requestId={
+										selectedCaseHandoverRequestNumericId
+									}
+									pendingDecisions={
+										pendingConsentDecisions.current
+									}
+									onConfirmed={() => {
+										markNotificationAsRead(
+											selectedNotification.id
+										);
+										refreshNotificationFeed();
+									}}
+								/>
 							)}
 							<div className="notificationsCenter__detailActions">
 								{selectedLinksToStatusPage ? (
