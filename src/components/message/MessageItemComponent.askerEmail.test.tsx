@@ -5,6 +5,7 @@ import {
 	fireEvent,
 	render,
 	screen,
+	waitFor,
 	within
 } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
@@ -30,6 +31,33 @@ import {
 	mockUserData
 } from './MessageItemComponent.mocks';
 
+import { apiPutSessionData } from '../../api/apiPutSessionData';
+vi.mock('../../api/apiPutSessionData', () => ({
+	apiPutSessionData: vi.fn().mockResolvedValue(undefined)
+}));
+const reloadAliasSession = vi.fn();
+vi.mock('../overlay/Overlay', () => ({
+	OVERLAY_FUNCTIONS: { CLOSE: 'CLOSE' },
+	Overlay: ({
+		item,
+		handleOverlay
+	}: React.ComponentProps<typeof import('../overlay/Overlay').Overlay>) => (
+		<div>
+			{item.nestedComponent}
+			{item.buttonSet?.map((button) => (
+				<button
+					key={button.label}
+					type="button"
+					disabled={button.disabled}
+					onClick={() => handleOverlay(button.function)}
+				>
+					{button.label}
+				</button>
+			))}
+		</div>
+	)
+}));
+
 const preferenceApi = vi.hoisted(() => ({ get: vi.fn(), put: vi.fn() }));
 vi.mock('../../api/apiCaseHandover', async (original) => ({
 	...(await original<typeof import('../../api/apiCaseHandover')>()),
@@ -39,6 +67,7 @@ vi.mock('../../api/apiCaseHandover', async (original) => ({
 
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({
+		i18n: { language: 'de' },
 		t: (_key: string, fallback?: unknown) =>
 			typeof fallback === 'string' ? fallback : _key
 	})
@@ -104,7 +133,7 @@ const renderErstantwortMessage = (
 		agency,
 		timelineMessages,
 		ownEvent = false,
-		readOnly = false
+		previewMode
 	} = {} as {
 		raw?: string;
 		account?: Record<string, unknown>;
@@ -113,7 +142,7 @@ const renderErstantwortMessage = (
 		agency?: Record<string, unknown>;
 		timelineMessages?: MessageItem[];
 		ownEvent?: boolean;
-		readOnly?: boolean;
+		previewMode?: 'read' | 'interactive';
 	}
 ) =>
 	render(
@@ -148,7 +177,7 @@ const renderErstantwortMessage = (
 												...session
 											}
 										},
-										reloadActiveSession: () => {},
+										reloadActiveSession: reloadAliasSession,
 										readActiveSession: () => {}
 									} as any
 								}
@@ -176,7 +205,7 @@ const renderErstantwortMessage = (
 										handleDecryptionErrors={() => {}}
 										handleDecryptionSuccess={() => {}}
 										e2eeParams={mockE2eeParams() as any}
-										readOnly={readOnly}
+										previewMode={previewMode}
 									/>
 								)}
 							</ActiveSessionContext.Provider>
@@ -854,9 +883,22 @@ describe('read-only preview keeps the cards readable, without their controls', (
 		expect(node.closest('[aria-hidden="true"]')).toBeNull();
 	};
 
+	it('embedded in the Activity Timeline (#1824): text without actions or notification setup, even when writable', () => {
+		const result = renderErstantwortMessage(tenantWith(true), {
+			previewMode: 'interactive'
+		});
+		expectReadable(GREETING_BAUSTEIN_BODY);
+		expect(
+			screen.queryByRole('button', { name: 'E-Mail-Adresse angeben' })
+		).toBeNull();
+		expect(
+			result.container.querySelector('.notificationChoiceHost')
+		).toBeNull();
+	});
+
 	it('shows the Erstantwort text, but no action or notification-setup buttons', () => {
 		const result = renderErstantwortMessage(tenantWith(true), {
-			readOnly: true
+			previewMode: 'read'
 		});
 		expectReadable(GREETING_BAUSTEIN_BODY);
 		expectReadable(EMAIL_BAUSTEIN_BODY);
@@ -872,7 +914,7 @@ describe('read-only preview keeps the cards readable, without their controls', (
 
 	it('shows the case-handover notice text, but no settings button', () => {
 		const result = renderErstantwortMessage(tenantWith(true), {
-			readOnly: true,
+			previewMode: 'read',
 			account: { grantedAuthorities: [AUTHORITIES.ASKER_DEFAULT] },
 			session: { id: 73, status: 2 },
 			raw:
@@ -898,7 +940,7 @@ describe('read-only preview keeps the cards readable, without their controls', (
 
 	it('shows the acceptance notice text, but no settings button', () => {
 		const result = renderErstantwortMessage(tenantWith(true), {
-			readOnly: true,
+			previewMode: 'read',
 			account: { grantedAuthorities: [AUTHORITIES.ASKER_DEFAULT] },
 			session: { id: 73, status: 2 },
 			raw:
@@ -921,4 +963,42 @@ describe('read-only preview keeps the cards readable, without their controls', (
 		).toBeNull();
 		expect(result.container.querySelector('[inert]')).toBeNull();
 	});
+});
+
+it('carries the concrete session into display-name actions and refreshes it after saving', async () => {
+	reloadAliasSession.mockClear();
+	renderErstantwortMessage(tenantWith(true), {
+		raw:
+			'[SYSTEM_NOTIFICATION]' +
+			JSON.stringify({
+				type: 'FIRST_RESPONSE',
+				version: 1,
+				bausteine: [
+					{
+						id: 'displayName',
+						body: 'Choose a name',
+						action: {
+							kind: 'SET_DISPLAY_NAME',
+							label: 'Edit alias'
+						}
+					}
+				]
+			}),
+		account: { grantedAuthorities: [AUTHORITIES.ASKER_DEFAULT] },
+		session: { id: 51 }
+	});
+	fireEvent.click(screen.getByRole('button', { name: 'Edit alias' }));
+	fireEvent.change(
+		screen.getByRole('textbox', { name: 'profile.data.displayName' }),
+		{
+			target: { value: 'Alias for this session' }
+		}
+	);
+	fireEvent.click(screen.getByRole('button', { name: 'Übernehmen' }));
+	await waitFor(() =>
+		expect(apiPutSessionData).toHaveBeenCalledWith(51, {
+			displayName: 'Alias for this session'
+		})
+	);
+	await waitFor(() => expect(reloadAliasSession).toHaveBeenCalledOnce());
 });

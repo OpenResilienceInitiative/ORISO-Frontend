@@ -1,4 +1,5 @@
 import React from 'react';
+import escape from 'lodash/escape';
 import { ChatMenuDropdownItem } from '../chatMenuDropdown/ChatMenuDropdown';
 import { useTranslation } from 'react-i18next';
 import { apiPostBanUser } from '../../api/apiPostBanUser';
@@ -61,7 +62,7 @@ export const BanUserOverlay: React.FC<BanUserOverlayProps> = ({
 		const compositeText =
 			translate('banUser.ban.info.1') +
 			'<span>' +
-			userName +
+			escape(userName) +
 			'</span>' +
 			translate('banUser.ban.info.2');
 		return {

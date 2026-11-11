@@ -37,10 +37,12 @@ const mocks = vi.hoisted(() => ({
 	clearDraft: vi.fn().mockResolvedValue(undefined),
 	draftChange: vi.fn(),
 	draftEnabled: vi.fn(),
+	draftOptions: vi.fn(),
 	encryptRoom: vi.fn().mockResolvedValue(undefined),
 	translate: (key: string) => key,
 	composerClear: vi.fn(),
 	composerFocus: vi.fn(),
+	insertionMarker: vi.fn(),
 	typeDraft: (_text: string) => {},
 	matrixService: { getClient: () => null }
 }));
@@ -96,7 +98,8 @@ vi.mock('../../hooks/useTimeoutOverlay', () => ({
 	useTimeoutOverlay: () => ({ visible: false })
 }));
 vi.mock('./useDraftMessage', () => ({
-	useDraftMessage: (enabled: boolean) => {
+	useDraftMessage: (enabled: boolean, _load: unknown, options: unknown) => {
+		mocks.draftOptions(options);
 		mocks.draftEnabled(enabled);
 		return {
 			loaded: true,
@@ -117,7 +120,7 @@ vi.mock('./TipTapComposer', async () => {
 				clear: () => mocks.composerClear(),
 				runAction: () => {},
 				isActionActive: () => false,
-				setInsertionMarker: () => {},
+				setInsertionMarker: mocks.insertionMarker,
 				setText: () => {},
 				focus: () => mocks.composerFocus()
 			}));
@@ -554,6 +557,9 @@ describe('voice note review before sending (#1142)', () => {
 		});
 
 		expect(await screen.findByText('interview.mp3')).toBeTruthy();
+		await waitFor(() =>
+			expect(mocks.insertionMarker).toHaveBeenLastCalledWith(true)
+		);
 		expect(
 			screen.queryByRole('group', { name: 'voice.recording.preview' })
 		).toBeNull();
@@ -1119,3 +1125,20 @@ for (const state of ['loading', 'unavailable'] satisfies Array<
 		expect(document.querySelector('input[type="file"]')).toBeNull();
 	});
 }
+
+it('uses the side room for a thread draft opened from the timeline preview', () => {
+	render(
+		<Composer
+			targetRoomId="!team:example.org"
+			threadRootId="$root"
+			draftActionPath="/sessions/1"
+		/>
+	);
+	expect(mocks.draftOptions).toHaveBeenLastCalledWith(
+		expect.objectContaining({
+			threadRootId: '$root',
+			forcedScopeKey: 'scope:!team:example.org|thread:$root',
+			isolateScope: true
+		})
+	);
+});

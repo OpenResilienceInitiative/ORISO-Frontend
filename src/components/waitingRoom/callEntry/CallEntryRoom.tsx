@@ -19,6 +19,7 @@ import {
 	registrationScreenTitleSx
 } from '../../registration/registrationDesign/registrationDesign';
 import { CallEntryIdentity } from './CallEntryIdentity';
+import { isDirectLinkPostcodeMissing } from '../../directLinkEntry/directLinkPostcode';
 import {
 	useWaitingRoomConsent,
 	WaitingRoomConsentPanel
@@ -49,6 +50,8 @@ export interface CallEntryAccount {
 	username: string;
 	password: string;
 	identity: Pseudonym;
+	/** Only when the room asked for it (`askPostcode`, #1795). */
+	postcode?: string;
 }
 
 /** A level above this once means the microphone demonstrably hears. */
@@ -118,6 +121,19 @@ export interface CallEntryRoomProps {
 	 * but the field and its suggest button are not shown.
 	 */
 	hidePassword?: boolean;
+	/**
+	 * `false` when the Träger allows no typed names: the account creation
+	 * accepts only a generated User-ID then (ORISO-UserService#1494).
+	 */
+	usernameEditable?: boolean;
+	/**
+	 * A registered direct-link account enters a postcode for statistics
+	 * (ORISO-Frontend#1795); the gate waits for five digits.
+	 */
+	askPostcode?: boolean;
+	/** An existing account only needs the device and consent checks. */
+	signedIn?: boolean;
+	loginLink?: React.ReactNode;
 }
 
 /**
@@ -157,7 +173,11 @@ export const CallEntryRoom = ({
 	onBlockerAction,
 	playTone,
 	checkUsername,
-	hidePassword = false
+	hidePassword = false,
+	usernameEditable = true,
+	askPostcode = false,
+	signedIn = false,
+	loginLink
 }: CallEntryRoomProps) => {
 	const { i18n } = useTranslation();
 	const [identity, setIdentity] = useState<Pseudonym>(
@@ -170,6 +190,7 @@ export const CallEntryRoom = ({
 	const [password, setPassword] = useState(() =>
 		hidePassword && !initialPassword ? generatePassword() : initialPassword
 	);
+	const [postcode, setPostcode] = useState('');
 	const [micOn, setMicOn] = useState(initialMicOn);
 	const [cameraOn, setCameraOn] = useState(initialCameraOn);
 	const [speakerTest, setSpeakerTest] = useState(initialSpeakerTest);
@@ -202,6 +223,16 @@ export const CallEntryRoom = ({
 		onDeviceStateChange?.({ micOn, cameraOn, selection });
 	}, [onDeviceStateChange, micOn, cameraOn, selection]);
 
+	// Typing closed while the room is open: a typed User-ID would be refused
+	// at the end, and the field can no longer correct it.
+	const wasEditable = useRef(usernameEditable);
+	useEffect(() => {
+		if (wasEditable.current && !usernameEditable) {
+			setUsername(toRegistrationUsername(identity));
+		}
+		wasEditable.current = usernameEditable;
+	}, [usernameEditable, identity]);
+
 	const select = (kind: CallDeviceKind, id: string) => {
 		setSelection((current) => ({ ...current, [kind]: id }));
 		// A different microphone has not been heard yet.
@@ -215,7 +246,7 @@ export const CallEntryRoom = ({
 		REGISTRATION_DATA_VALIDATION.username.validation(username);
 	const availability = useUsernameAvailability(
 		username,
-		usernameValid,
+		usernameValid && !signedIn,
 		checkUsername
 	);
 	const [usernameBlurred, setUsernameBlurred] = useState(false);
@@ -227,7 +258,7 @@ export const CallEntryRoom = ({
 		availabilityCheckFailed: availability.failed
 	});
 
-	const conditions = [
+	const accountConditions = [
 		{
 			done:
 				usernameValid &&
@@ -239,6 +270,17 @@ export const CallEntryRoom = ({
 			done: allPasswordCriteriaPass(password),
 			missing: copy.missingPassword
 		},
+		...(askPostcode
+			? [
+					{
+						done: !isDirectLinkPostcodeMissing(true, postcode),
+						missing: copy.missingPostcode
+					}
+				]
+			: [])
+	];
+	const conditions = [
+		...(signedIn ? [] : accountConditions),
 		{ done: micHeard || !micOn, missing: copy.missingMicrophone }
 	];
 	const doneCount = conditions.filter((condition) => condition.done).length;
@@ -312,30 +354,39 @@ export const CallEntryRoom = ({
 						alignItems: 'start',
 						gridTemplateColumns: {
 							xs: 'minmax(0, 1fr)',
-							lg: 'minmax(0, 1.3fr) minmax(0, 1fr)'
+							lg: signedIn
+								? 'minmax(0, 1fr)'
+								: 'minmax(0, 1.3fr) minmax(0, 1fr)'
 						}
 					}}
 				>
 					{/* Identity first: a guest confirms who they are before
 					    anything else (Frank, 2026-10-16). First on the phone and
 					    for screen readers; the right column on a desktop. */}
-					<Box
-						data-testid="call-entry-identity-column"
-						sx={{ gridColumn: { lg: 2 }, gridRow: { lg: 1 } }}
-					>
-						<CallEntryIdentity
-							modality={modality}
-							identity={identity}
-							onIdentityChange={setIdentity}
-							username={username}
-							onUsernameChange={setUsername}
-							password={password}
-							onPasswordChange={setPassword}
-							hidePassword={hidePassword}
-							usernameFeedback={usernameFeedback}
-							onUsernameBlur={() => setUsernameBlurred(true)}
-						/>
-					</Box>
+					{!signedIn && (
+						<Box
+							data-testid="call-entry-identity-column"
+							sx={{ gridColumn: { lg: 2 }, gridRow: { lg: 1 } }}
+						>
+							<CallEntryIdentity
+								modality={modality}
+								identity={identity}
+								onIdentityChange={setIdentity}
+								username={username}
+								onUsernameChange={setUsername}
+								password={password}
+								onPasswordChange={setPassword}
+								hidePassword={hidePassword}
+								usernameFeedback={usernameFeedback}
+								onUsernameBlur={() => setUsernameBlurred(true)}
+								usernameEditable={usernameEditable}
+								askPostcode={askPostcode}
+								postcode={postcode}
+								onPostcodeChange={setPostcode}
+							/>
+							{loginLink}
+						</Box>
+					)}
 					{/* Picture or voice, then the devices right under it. */}
 					<Box
 						data-testid="call-entry-media-column"
@@ -452,7 +503,12 @@ export const CallEntryRoom = ({
 						}
 						beforeEnter={mayJoin}
 						onEnter={() =>
-							onJoin?.({ username, password, identity })
+							onJoin?.({
+								username,
+								password,
+								identity,
+								...(askPostcode ? { postcode } : {})
+							})
 						}
 						closing={closing ?? undefined}
 						label={copy.join[modality]}

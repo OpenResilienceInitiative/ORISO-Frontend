@@ -13,6 +13,9 @@ import { ConsultantListContext } from '../../globalState/provider/ConsultantList
 import { ServerSettingsContext } from '../../globalState/provider/ServerSettingsProvider';
 import type { UserDataInterface } from '../../globalState/interfaces';
 import { MessageItemComponent, type MessageItem } from './MessageItemComponent';
+import { SUPERVISOR_FEEDBACK_PREFIX } from './messageConstants';
+import { composerHtmlToTransportMarkup } from '../messageSubmitInterface/composerTransportEncoding';
+import { useSilentAudio } from '../voicePlayer/__storybook__/silentAudio';
 import { buildSupervisionTimeline } from '../session/sessionHelpers';
 import {
 	MOCK_ASKER_MATRIX_ID,
@@ -2099,7 +2102,7 @@ export const AnonymousGuestWithoutDisplayNameSeesTheAnchor: Story = {
 			expect(canvasElement.querySelector('.messageItem')).not.toBeNull();
 		});
 		await expect(canvasElement.textContent).not.toContain('Karina P');
-		await expect(canvasElement.textContent).toContain('karina p');
+		await expect(canvasElement.textContent).toContain('karina.p');
 	}
 };
 
@@ -2151,7 +2154,7 @@ export const InternalGroupColleagueName: Story = {
 			expect(canvasElement.querySelector('.messageItem')).not.toBeNull();
 		});
 		await expect(canvasElement.textContent).not.toContain('Angela K');
-		await expect(canvasElement.textContent).toContain('angela k');
+		await expect(canvasElement.textContent).toContain('angela.k');
 	}
 };
 
@@ -2532,4 +2535,232 @@ export const CoAccessPreferenceDefaultLongestTranslation: Story = {
 export const GrantedPreferenceDefaultRussianLabelStress: Story = {
 	...GrantedPreferenceDefaultMobile,
 	globals: { ...phone390Globals, locale: 'ru' }
+};
+
+const SUPERVISION_NOTE =
+	'Du hast das gut eingeordnet. Frag beim nächsten Mal direkt nach dem Mietvertrag, dann sparst du dir den Umweg.';
+
+/** Feedback aus der Supervision: ruhige Outline, Supervisions-Icon, Kennzeichnung neben der Zeit. */
+export const SupervisorFeedback: Story = {
+	name: 'Feedback aus der Supervision',
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData()
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: false,
+			userId: MOCK_ASKER_MATRIX_ID,
+			askerMatrixUserId: MOCK_ASKER_MATRIX_ID,
+			message: `${SUPERVISOR_FEEDBACK_PREFIX} ${SUPERVISION_NOTE}`
+		}),
+		...baseHandlers
+	},
+	play: async ({ canvasElement }) => {
+		const tag = canvasElement.querySelector(
+			'.messageItem__feedbackTag'
+		) as HTMLElement;
+		expect(tag?.textContent).toMatch(/Feedback/);
+		// On the time row, not above the text.
+		expect(tag.parentElement?.className).toContain('messageItem__timeRail');
+		expect(
+			canvasElement.querySelector('.messageItem__supervisionAvatar svg')
+		).toBeTruthy();
+	}
+};
+
+const VoiceNoteMessage = ({
+	seconds,
+	isMyMessage
+}: {
+	seconds: number;
+	isMyMessage: boolean;
+}) => {
+	const src = useSilentAudio(seconds);
+	const name = 'sprachnachricht.webm';
+	return (
+		<MessageItemComponent
+			{...(mockMessageItemComponentProps({
+				isMyMessage,
+				userId: MOCK_ASKER_MATRIX_ID,
+				askerMatrixUserId: MOCK_ASKER_MATRIX_ID,
+				message: ''
+			}) as React.ComponentProps<typeof MessageItemComponent>)}
+			{...baseHandlers}
+			attachments={[
+				{
+					title: name,
+					downloadUrl: src,
+					mediaType: 'audio/webm',
+					size: 48
+				} as never
+			]}
+			file={{ _id: 'voice', name, type: 'audio/webm' } as never}
+		/>
+	);
+};
+
+/** So sieht eine Sprachnachricht versendet im Chat aus, kurz und lang, ein- und ausgehend. */
+export const SentVoiceNotes: Story = {
+	name: 'Sprachnachricht, versendet',
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData()
+	},
+	render: () => (
+		<>
+			<VoiceNoteMessage seconds={6} isMyMessage />
+			<VoiceNoteMessage seconds={14} isMyMessage={false} />
+			<VoiceNoteMessage seconds={95} isMyMessage />
+		</>
+	)
+};
+
+const captionedFile = (isMyMessage: boolean, message: string) => {
+	const props = mockMessageItemComponentProps({
+		isMyMessage,
+		userId: MOCK_ASKER_MATRIX_ID,
+		askerMatrixUserId: MOCK_ASKER_MATRIX_ID,
+		message
+	}) as React.ComponentProps<typeof MessageItemComponent>;
+	return (
+		<MessageItemComponent
+			{...props}
+			{...baseHandlers}
+			attachments={[
+				{
+					title: 'befund.pdf',
+					downloadUrl: 'https://media.storybook.test/befund.pdf',
+					type: 'file',
+					mediaType: 'application/pdf',
+					size: 1_250_000,
+					hasCaption: message !== 'befund.pdf'
+				}
+			]}
+			file={{ name: 'befund.pdf', type: 'application/pdf' }}
+		/>
+	);
+};
+
+/** Was die Empfängerin sieht: eine Nachricht, erst die Datei, darunter der Text. */
+export const FileWithCaption: Story = {
+	name: 'Datei mit Beschriftung, und ohne',
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData()
+	},
+	render: () => (
+		<>
+			{captionedFile(false, 'Bitte Seite 2 lesen')}
+			{captionedFile(true, 'Das ist der **Befund** vom Montag')}
+			{captionedFile(false, 'befund.pdf')}
+		</>
+	),
+	play: async ({ canvasElement }) => {
+		const captions = canvasElement.querySelectorAll(
+			'.messageItem__attachmentCaption'
+		);
+		expect(captions).toHaveLength(2);
+		expect(captions[0].textContent).toBe('Bitte Seite 2 lesen');
+		// The same formatting a text message gets.
+		expect(captions[1].querySelector('strong')?.textContent).toBe('Befund');
+		// Without a caption the name is not repeated as text under the file.
+		expect(canvasElement.textContent).not.toContain('befund.pdfbefund.pdf');
+	}
+};
+
+/**
+ * #2135 battle test: everything the composer can format, sent through the real
+ * send path (`composerHtmlToTransportMarkup`) and shown as it arrives. The
+ * composer and the bubble share `_richTextContent.scss`, so this is also what
+ * the sender saw while writing. The table row lines are what a pasted table
+ * becomes (`flattenPastedTables`).
+ */
+const FORMATTED_COMPOSER_HTML = [
+	'<p style="text-align: left;">Alles, was das Eingabefeld formatiert:</p>',
+	'<h1>Überschrift eins</h1>',
+	'<h2>Überschrift zwei</h2>',
+	'<h3>Überschrift drei</h3>',
+	'<p>Text mit <strong>fett</strong>, <em>kursiv</em>, <u>unterstrichen</u>, <s>durchgestrichen</s> und <code>code</code>.</p>',
+	'<p></p>',
+	'<ol><li><p>Erster Punkt</p></li><li><p>Zweiter Punkt</p><ol><li><p>Unterpunkt</p></li></ol></li><li><p>Dritter Punkt</p></li></ol>',
+	'<ul><li><p>Aufzählung A</p></li><li><p>Aufzählung B</p></li></ul>',
+	'<ul data-type="taskList"><li data-checked="true" data-type="taskItem"><label><input type="checkbox" checked="checked"><span></span></label><div><p>Erledigte Aufgabe</p></div></li><li data-checked="false" data-type="taskItem"><label><input type="checkbox"><span></span></label><div><p>Offene Aufgabe</p></div></li></ul>',
+	'<p>Link: <a target="_blank" rel="noopener noreferrer nofollow" href="https://oriso.org">https://oriso.org</a></p>',
+	'<hr>',
+	'<p>Nach der Linie.</p>',
+	'<blockquote><p>Ein Zitat aus einer Mail</p></blockquote>',
+	'<p>Spalte A | Spalte B</p><p>1 | 2</p>',
+	'<p></p>'
+].join('');
+
+const verifyFormattedMessage = async ({
+	canvasElement
+}: {
+	canvasElement: HTMLElement;
+}) => {
+	const canvas = within(canvasElement);
+	const showMore = canvas.queryByRole('button', {
+		name: /^(Mehr anzeigen|Show more)$/
+	});
+	if (showMore) {
+		await userEvent.click(showMore);
+	}
+	const bubble = canvasElement.querySelector('.messageItem__message');
+	await waitFor(() => expect(bubble?.querySelector('hr')).not.toBeNull());
+	for (const tag of ['h1', 'h2', 'h3', 'ol ol', 'blockquote', 'code']) {
+		expect(bubble?.querySelector(tag)).not.toBeNull();
+	}
+	// The blank line between text keeps one line; the trailing one is dropped.
+	const emptyParagraphs = Array.from(
+		bubble?.querySelectorAll('p:empty') ?? []
+	);
+	expect(emptyParagraphs).toHaveLength(1);
+	expect(emptyParagraphs[0].getBoundingClientRect().height).toBeGreaterThan(
+		0
+	);
+	// A heading reads as a heading, not as a page title.
+	const h1Size = parseFloat(
+		getComputedStyle(bubble?.querySelector('h1') as Element).fontSize
+	);
+	expect(h1Size).toBeLessThanOrEqual(21);
+};
+
+export const FormattedIncoming: Story = {
+	name: 'Formatted message — incoming',
+	globals: desktop1440Globals,
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData()
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: false,
+			userId: MOCK_ASKER_MATRIX_ID,
+			askerMatrixUserId: MOCK_ASKER_MATRIX_ID,
+			message: composerHtmlToTransportMarkup(FORMATTED_COMPOSER_HTML)
+		}),
+		...baseHandlers
+	},
+	play: verifyFormattedMessage
+};
+
+export const FormattedOutgoing: Story = {
+	name: 'Formatted message — outgoing',
+	globals: desktop1440Globals,
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData()
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: true,
+			userId: MOCK_CONSULTANT_MATRIX_ID,
+			displayName: 'Karina P',
+			username: 'karina.p@oriso.invalid',
+			message: composerHtmlToTransportMarkup(FORMATTED_COMPOSER_HTML)
+		}),
+		...baseHandlers
+	},
+	play: verifyFormattedMessage
 };

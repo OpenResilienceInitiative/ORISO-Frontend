@@ -61,7 +61,8 @@ export interface OrisoPaletteResult {
 
 const HEX_PATTERN = /^#[0-9a-f]{6}$/;
 
-const normalizeHex = (value: string, label: string): string => {
+/** Trimmed, lower-case `#rrggbb`; `#rgb` is expanded. Throws on anything else. */
+export const normalizeHex = (value: string, label: string): string => {
 	const hex = value.trim().toLowerCase();
 	const withHash = hex.startsWith('#') ? hex : `#${hex}`;
 	// Expand #rgb shorthand for robustness.
@@ -417,6 +418,8 @@ export const computeOrisoPalette = (
 		'--m3-on-tertiary': tertiary.onRole,
 		'--m3-tertiary-container': tertiary.container,
 		'--m3-on-tertiary-container': tertiary.onContainer,
+		// Figma timeline selected-card body, fixed across schemes.
+		'--m3-on-tertiary-fixed': hex(slate.tone(10)),
 
 		'--m3-error': signal.error,
 		'--m3-on-error': signal.onError,

@@ -3,12 +3,15 @@
  * requests that wait for the advice seeker's yes raise one in-app pop-up card
  * per conversation and kind, the row's tone and at most one OS banner, all
  * from the one feed announcement path. Fixtures use the shapes UserService
- * emits. Ordinary messages get no pop-up.
+ * emits. Ordinary messages get a pop-up only when they mention the counsellor
+ * (ORISO-UserService#1510).
  *
  * @vitest-environment oriso-jsdom
  */
 
 import React, { useContext } from 'react';
+import { reportShownChannel } from '../../components/session/notificationActiveView';
+import { SessionChannel } from '../../utils/channelRoute';
 import {
 	cleanup,
 	fireEvent,
@@ -167,6 +170,24 @@ const message = (id: number, params: Record<string, unknown> = {}) =>
 		42
 	);
 
+const threadReply = (id: number, params: Record<string, unknown> = {}) =>
+	base(
+		id,
+		'thread.reply.new',
+		'message',
+		'/sessions/consultant/sessionView/!room42/42?threadRootId=%24root1',
+		{
+			roomRef: '!room42',
+			conversationType: 'AGENCY_COUNSELLING',
+			recipientRole: 'consultant',
+			senderName: 'Kollegin Weber',
+			threadRootId: '$root1',
+			mentioned: true,
+			...params
+		},
+		42
+	);
+
 const Probe = () => {
 	const context = useContext(NotificationsContext)!;
 	const notices = (context.notifications as unknown as Notice[]).filter(
@@ -228,6 +249,8 @@ const withTones = () => {
 	for (const kind of ['mention', 'handover', 'standard'] as const) {
 		config = setKindField(config, 'conversations', kind, 'sound', 'ton-1');
 	}
+	// A team-discussion mention is filed under Anfrage (FE#1211).
+	config = setKindField(config, 'requests', 'mention', 'sound', 'ton-1');
 	notificationSettingsStore.updateSettings({ notificationConfig: config });
 };
 
@@ -285,6 +308,7 @@ describe('NotificationsProvider mention + handover pop-up (FE#779)', () => {
 		vi.unstubAllGlobals();
 		notificationSettingsStore.resetForTests();
 		window.history.replaceState({}, '', '/');
+		reportShownChannel(null);
 	});
 
 	it('shows one team-discussion mention card with the sender and plays the mention tone once', async () => {
@@ -311,6 +335,71 @@ describe('NotificationsProvider mention + handover pop-up (FE#779)', () => {
 			'mention:42:1:Kollegin Weber'
 		);
 		expect(play).toHaveBeenCalledTimes(1);
+	});
+
+	it('shows a chat-mention card and plays the mention tone for a mention in an ordinary chat', async () => {
+		withTones();
+		await deliver([message(1, { mentioned: true })]);
+
+		await waitFor(() =>
+			expect(screen.getByTestId('notices').textContent).toBe(
+				'chatMention:42:1:Kollegin Weber'
+			)
+		);
+		expect(play).toHaveBeenCalledTimes(1);
+	});
+
+	it('announces the mention once when the row is marked after the plain row arrived', async () => {
+		withTones();
+		await deliver([message(1)]);
+		await waitFor(() => expect(play).toHaveBeenCalledTimes(1));
+		expect(screen.getByTestId('notices').textContent).toBe('');
+
+		// The Matrix listener wrote the row first; the mention marks it later.
+		apiGetEventNotifications.mockResolvedValue({
+			items: [message(1, { mentioned: true })],
+			unreadCount: 1
+		});
+		fireEvent.click(screen.getByText('refresh'));
+		await waitFor(() =>
+			expect(screen.getByTestId('notices').textContent).toBe(
+				'chatMention:42:1:Kollegin Weber'
+			)
+		);
+
+		// Another poll of the marked row announces nothing again.
+		fireEvent.click(screen.getByText('refresh'));
+		await waitFor(() =>
+			expect(apiGetEventNotifications).toHaveBeenCalledTimes(4)
+		);
+		expect(screen.getByTestId('notices').textContent).toBe(
+			'chatMention:42:1:Kollegin Weber'
+		);
+		// The family's sound gap keeps the two signals to one tone.
+		expect(play).toHaveBeenCalledTimes(1);
+	});
+
+	it('keeps a marked row silent when it was already there on mount', async () => {
+		withTones();
+		apiGetEventNotifications.mockResolvedValue({
+			items: [message(1, { mentioned: true })],
+			unreadCount: 1
+		});
+		render(
+			<NotificationsProvider>
+				<Probe />
+			</NotificationsProvider>
+		);
+		await waitFor(() =>
+			expect(screen.getByTestId('ids').textContent).toBe('1')
+		);
+		fireEvent.click(screen.getByText('refresh'));
+		await waitFor(() =>
+			expect(apiGetEventNotifications).toHaveBeenCalledTimes(2)
+		);
+
+		expect(screen.getByTestId('notices').textContent).toBe('');
+		expect(play).not.toHaveBeenCalled();
 	});
 
 	it('shows a handover card for an offered case, with the initiator', async () => {
@@ -347,10 +436,6 @@ describe('NotificationsProvider mention + handover pop-up (FE#779)', () => {
 		[
 			'a team-discussion post without a mention',
 			mention(1, { mentioned: false })
-		],
-		[
-			'a mention row of a normal chat message (no producer sets it yet)',
-			message(1, { mentioned: true })
 		],
 		['an ordinary counselling message', message(1)],
 		[
@@ -404,6 +489,23 @@ describe('NotificationsProvider mention + handover pop-up (FE#779)', () => {
 			}
 		}
 	);
+
+	it('sends the advice seeker to their own session route when the row has no link', async () => {
+		withTones();
+		await deliver([
+			{
+				...consent(1, { recipientRole: 'user' }),
+				actionPath: undefined
+			}
+		]);
+
+		expect(screen.getByTestId('notices').textContent).toBe(
+			'consent:42:1:null'
+		);
+		expect(screen.getByTestId('path').textContent).toBe(
+			'/sessions/user/view/session/42'
+		);
+	});
 
 	it.each([
 		[
@@ -472,6 +574,81 @@ describe('NotificationsProvider mention + handover pop-up (FE#779)', () => {
 		expect(play).toHaveBeenCalledTimes(1);
 	});
 
+	it.each<[string, string, SessionChannel | null]>([
+		['its parent chat', '', null],
+		[
+			'another thread',
+			'?channel=thread:%24other',
+			{ kind: 'thread', rootId: '$other' }
+		],
+		// The URL asks for it, but its root is not in the loaded history.
+		['the main chat instead of it', '?channel=thread:%24root1', null]
+	])(
+		'still announces a thread mention with %s on screen',
+		async (_label, search, shown) => {
+			withTones();
+			window.history.replaceState(
+				{},
+				'',
+				`/sessions/consultant/sessionView/!room42/42${search}`
+			);
+			reportShownChannel(shown);
+			await deliver([threadReply(1)]);
+
+			await waitFor(() =>
+				expect(screen.getByTestId('notices').textContent).toBe(
+					'chatMention:42:1:Kollegin Weber'
+				)
+			);
+			expect(play).toHaveBeenCalledTimes(1);
+		}
+	);
+
+	it('announces a main-chat mention while a side panel hides that chat on a phone', async () => {
+		withTones();
+		const width = window.innerWidth;
+		Object.defineProperty(window, 'innerWidth', {
+			configurable: true,
+			value: 390
+		});
+		try {
+			window.history.replaceState(
+				{},
+				'',
+				'/sessions/consultant/sessionView/!room42/42?channel=thread:%24other'
+			);
+			reportShownChannel({ kind: 'thread', rootId: '$other' });
+			await deliver([message(1, { mentioned: true })]);
+
+			await waitFor(() =>
+				expect(screen.getByTestId('notices').textContent).toBe(
+					'chatMention:42:1:Kollegin Weber'
+				)
+			);
+			expect(play).toHaveBeenCalledTimes(1);
+		} finally {
+			Object.defineProperty(window, 'innerWidth', {
+				configurable: true,
+				value: width
+			});
+		}
+	});
+
+	it('is completely silent while the mentioned thread itself is on screen', async () => {
+		withTones();
+		window.history.replaceState(
+			{},
+			'',
+			'/sessions/consultant/sessionView/!room42/42?channel=thread:%24root1'
+		);
+		reportShownChannel({ kind: 'thread', rootId: '$root1' });
+		await deliver([threadReply(1)]);
+
+		expect(screen.getByTestId('notices').textContent).toBe('');
+		expect(play).not.toHaveBeenCalled();
+		expect(banners).not.toHaveBeenCalled();
+	});
+
 	it('stays quiet while notifications are muted', async () => {
 		withTones();
 		notificationSettingsStore.updateSettings({ globalMute: true });
@@ -488,7 +665,7 @@ describe('NotificationsProvider mention + handover pop-up (FE#779)', () => {
 		notificationSettingsStore.updateSettings({
 			notificationConfig: setKindField(
 				config,
-				'conversations',
+				'requests',
 				'mention',
 				'banner',
 				'off'
@@ -514,7 +691,7 @@ describe('NotificationsProvider mention + handover pop-up (FE#779)', () => {
 			notificationConfig: setKindField(
 				notificationSettingsStore.getState().settings
 					.notificationConfig,
-				'conversations',
+				'requests',
 				'mention',
 				'sound',
 				'none'

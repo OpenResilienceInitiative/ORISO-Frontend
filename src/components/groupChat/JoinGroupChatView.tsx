@@ -10,6 +10,7 @@ import {
 	ActiveSessionContext
 } from '../../globalState';
 import { getCounsellingDpaNotification } from '../../utils/counsellingDpaNotification';
+import { useGroupCallerBan } from './useGroupCallerBan';
 import { mobileListView } from '../app/navigationHandler';
 import { SessionHeaderComponent } from '../sessionHeader/SessionHeaderComponent';
 import { SESSION_LIST_TAB } from '../session/sessionHelpers';
@@ -42,14 +43,12 @@ import {
 import { usePrefersReducedMotion } from '../../hooks/usePrefersReducedMotion';
 import { GroupChatCalendarMenu } from './GroupChatCalendarMenu';
 import { useGroupChatAuthorContent } from './useGroupChatAuthorContent';
-import { getGroupChatPlannedStart } from './groupChatDate';
 import { getGroupChatWaitingAreaVisibility } from './groupChatHelpers';
 import { GroupWaitingRoom } from './entryRoom/GroupWaitingRoom';
-import {
-	getGroupSeries,
-	getGroupUpcomingDates,
-	getGroupWaitingRoomTopic
-} from './entryRoom/groupWaitingRoomData';
+import { CallPrejoinDialog } from '../call/prejoin/CallPrejoinDialog';
+import { shouldShowDeviceCheck } from '../call/prejoin/callPrejoin';
+import { getGroupWaitingRoomTopic } from './entryRoom/groupWaitingRoomData';
+import { useGroupWaitingRoomSchedule } from './entryRoom/useGroupWaitingRoomSchedule';
 
 interface JoinGroupChatViewProps {
 	forceBannedOverlay?: boolean;
@@ -94,11 +93,25 @@ export const JoinGroupChatView = ({
 	const [overlayItem, setOverlayItem] = useState<OverlayItem>(null);
 	const [overlayActive, setOverlayActive] = useState(false);
 	const [redirectToSessionsList, setRedirectToSessionsList] = useState(false);
+	const [checkingDevices, setCheckingDevices] = useState(false);
 	const consultingType = useConsultingType(activeSession.item.consultingType);
 
 	const [isButtonDisabled, setIsButtonDisabled] = useState(false);
 	const [removedByServer, setRemovedByServer] = useState(false);
 	const [isRequestInProgress, setIsRequestInProgress] = useState(false);
+	const isAsker = hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData);
+	const callerBan = useGroupCallerBan({
+		askerId:
+			isAsker &&
+			!hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
+				? userData.userId
+				: undefined,
+		chatId: activeSession.item.id,
+		roomId: activeSession.item.matrixRoomId || activeSession.rid,
+		active: Boolean(activeSession.item.active)
+	});
+	const joinBlockedByBan =
+		removedByServer || callerBan === 'BANNED' || callerBan === 'PENDING';
 	const sessionListTab = useSearchParam<SESSION_LIST_TAB>('sessionListTab');
 	const getSessionListTab = () =>
 		`${sessionListTab ? `?sessionListTab=${sessionListTab}` : ''}`;
@@ -254,6 +267,7 @@ export const JoinGroupChatView = ({
 	   keeps the screen covered until it has settled and the session has been
 	   reloaded; `false` says the person stays (ORISO-Frontend#1737). */
 	const handleButtonClick = (): Promise<unknown> | false => {
+		if (joinBlockedByBan) return false;
 		if (bannedUsers.includes(userData.userName)) {
 			setOverlayItem(bannedUserOverlay);
 			setOverlayActive(true);
@@ -328,7 +342,8 @@ export const JoinGroupChatView = ({
 			activeSession.item.groupChatRulesTranslations
 	});
 	const groupChatRules = authorContent.rules;
-	const plannedStart = getGroupChatPlannedStart(activeSession.item);
+	const { plannedStart, upcomingDates, series, durationMinutes } =
+		useGroupWaitingRoomSchedule(activeSession.item);
 	const { showCountdown, showRules, showRulesHeadline } =
 		getGroupChatWaitingAreaVisibility(activeSession, plannedStart);
 	const [animationOff, setAnimationOff] = useState(false);
@@ -351,8 +366,24 @@ export const JoinGroupChatView = ({
 		return <Navigate to={listPath + getSessionListTab()} replace />;
 	}
 
+	/* #2016: a video circle's pre-lobby offers the call's device check as
+	   an option; the choice waits for the group's next call. */
+	const offerDeviceCheck = shouldShowDeviceCheck({
+		surface: 'circleLobby',
+		mediaSupported: Boolean(navigator.mediaDevices?.getUserMedia),
+		roomRef: activeSession.rid,
+		circleModality: activeSession.item.modality
+	});
 	const overlays = (
 		<>
+			{checkingDevices && activeSession.rid && (
+				<CallPrejoinDialog
+					modality="video"
+					purpose="check"
+					roomRef={activeSession.rid}
+					onClose={() => setCheckingDevices(false)}
+				/>
+			)}
 			{requestOverlayVisible && (
 				<Overlay item={requestOverlay} name={OVERLAY_REQUEST} />
 			)}
@@ -373,7 +404,6 @@ export const JoinGroupChatView = ({
 	   room in the app must look like the one behind the link). The moderator
 	   gets her own words and "Chat starten" (#1689). Internal team chats keep
 	   the plain view below: no clock, no rules (#979). */
-	const isAsker = hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData);
 	if (isAsker || showRules) {
 		const item = activeSession.item;
 		const topic =
@@ -400,19 +430,29 @@ export const JoinGroupChatView = ({
 					agencyName={item.assignedAgencies?.[0]?.name}
 					agencyId={item.assignedAgencies?.[0]?.id}
 					plannedStart={plannedStart}
-					upcomingDates={getGroupUpcomingDates(item)}
-					series={getGroupSeries(item)}
-					durationMinutes={item.duration}
+					upcomingDates={upcomingDates}
+					series={series}
+					durationMinutes={durationMinutes}
 					eventId={item.id}
 					welcomeText={authorContent.hintMessage || undefined}
 					rules={groupChatRules}
 					active={Boolean(item.active)}
 					joinBlocked={
-						removedByServer ||
+						joinBlockedByBan ||
 						bannedUsers.includes(userData.userName)
+					}
+					joinNotice={
+						callerBan === 'BANNED'
+							? translate('groupChat.removed.overlay.headline')
+							: undefined
 					}
 					onJoin={handleButtonClick}
 					joinBusy={isRequestInProgress}
+					onDeviceCheck={
+						offerDeviceCheck
+							? () => setCheckingDevices(true)
+							: undefined
+					}
 				/>
 				{overlays}
 			</div>
@@ -495,7 +535,7 @@ export const JoinGroupChatView = ({
 						<div className="joinChat__actionsStart">
 							<GroupChatCalendarMenu
 								start={plannedStart}
-								durationMinutes={activeSession.item.duration}
+								durationMinutes={durationMinutes}
 								eventId={activeSession.item.id}
 							/>
 						</div>

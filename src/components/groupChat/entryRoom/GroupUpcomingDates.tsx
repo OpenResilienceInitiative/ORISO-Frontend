@@ -12,12 +12,16 @@ import type { GroupChatRepeat, GroupChatSeries } from '../groupChatSeries';
 import { EntryRoomPanel } from './EntryRoomPanel';
 import { useIntlLocale } from './GroupRunningNow';
 
+export interface GroupUpcomingDate {
+	start: Date;
+	durationMinutes: number;
+}
+
 export interface GroupUpcomingDatesProps {
 	/** Back to the waiting room. Called once the slide-back has played. */
 	onBack: () => void;
 	/** The dates still ahead, soonest first. */
-	dates: Date[];
-	durationMinutes: number;
+	dates: GroupUpcomingDate[];
 	/** The chat id; the calendar event's UID adds the date to it. */
 	eventId: string | number;
 	/**
@@ -27,7 +31,7 @@ export interface GroupUpcomingDatesProps {
 	series?: GroupChatSeries;
 }
 
-type Open = { anchor: HTMLElement; date: Date; series: boolean };
+type Open = { anchor: HTMLElement; date: GroupUpcomingDate; series: boolean };
 
 /**
  * "Die nächsten Treffen" — the group's dates still ahead, each one for the
@@ -39,7 +43,6 @@ type Open = { anchor: HTMLElement; date: Date; series: boolean };
 export const GroupUpcomingDates = ({
 	onBack,
 	dates,
-	durationMinutes,
 	eventId,
 	series
 }: GroupUpcomingDatesProps) => {
@@ -72,14 +75,14 @@ export const GroupUpcomingDates = ({
 	const repeat = series?.repeat;
 	const canExportSeries = Boolean(series && series.count > 1 && dates.length);
 
-	const describe = (date: Date) => {
-		const end = new Date(date.getTime() + durationMinutes * 60e3);
-		const time = `${formats.time.format(date)} – ${formats.time.format(end)}`;
+	const describe = ({ start, durationMinutes }: GroupUpcomingDate) => {
+		const end = new Date(start.getTime() + durationMinutes * 60e3);
+		const time = `${formats.time.format(start)} – ${formats.time.format(end)}`;
 		return {
-			weekday: formats.weekday.format(date),
-			day: formats.day.format(date),
-			dayNumber: formats.dayNumber.format(date),
-			month: formats.month.format(date),
+			weekday: formats.weekday.format(start),
+			day: formats.day.format(start),
+			dayNumber: formats.dayNumber.format(start),
+			month: formats.month.format(start),
 			time
 		};
 	};
@@ -195,7 +198,7 @@ export const GroupUpcomingDates = ({
 					return (
 						<Box
 							component="li"
-							key={date.toISOString()}
+							key={date.start.toISOString()}
 							data-cy="group-upcoming-date"
 							data-next={next || undefined}
 						>
@@ -380,8 +383,8 @@ export const GroupUpcomingDates = ({
 				<GroupChatCalendarPopover
 					anchorEl={open.anchor}
 					onClose={() => setOpen(null)}
-					start={open.date}
-					durationMinutes={durationMinutes}
+					start={open.date.start}
+					durationMinutes={open.date.durationMinutes}
 					eventId={eventId}
 					series={open.series ? series : undefined}
 				/>

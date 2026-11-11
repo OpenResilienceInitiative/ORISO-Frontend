@@ -78,12 +78,17 @@ export const endpoints = {
 		'/service/conversations/consultants/availability/heartbeat',
 	consultantSessions:
 		userServiceOrigin + '/service/users/sessions/consultants?status=2&',
+	consultantDeletedAskerSessions:
+		userServiceOrigin +
+		'/service/users/sessions/consultants/deleted-askers',
 	/* Counsellor direct links (ORISO-UserService#1479). */
 	directLinks: userServiceOrigin + '/service/users/directlinks',
 	inviteLinksBase: userServiceOrigin + '/service/users/invitelinks/',
 	ownCallKnocks: userServiceOrigin + '/service/users/call-knocks/mine/',
 	/* A direct-link guest's own temporary account (ORISO-UserService#1486). */
 	temporaryAccount: userServiceOrigin + '/service/users/temporary-account',
+	liveChatConversion:
+		userServiceOrigin + '/service/users/live-chat-account/conversion',
 	consultantStatistics:
 		userServiceOrigin + '/service/users/statistics/consultant',
 	consultantsLanguages:
@@ -135,6 +140,8 @@ export const endpoints = {
 		userServiceOrigin + '/service/users/password-reset/confirm',
 	matrixAccessToken: userServiceOrigin + '/service/matrix/me/token',
 	matrixCallState: userServiceOrigin + '/service/matrix/calls/state',
+	matrixCallObservations:
+		userServiceOrigin + '/service/matrix/calls/observations',
 	matrixCallShareLinks:
 		userServiceOrigin + '/service/matrix/calls/share-links',
 	matrixSyncRegister: (sessionId: number) =>
@@ -154,6 +161,10 @@ export const endpoints = {
 	sendAliasMessage: userServiceOrigin + '/service/messages/aliasonly/new',
 	sendMessage: userServiceOrigin + '/service/messages/new',
 	sessionBase: userServiceOrigin + '/service/users/sessions',
+	sessionAppointments: (sessionId: number) =>
+		userServiceOrigin + `/service/users/sessions/${sessionId}/appointments`,
+	upcomingAppointments:
+		userServiceOrigin + '/service/users/appointments/upcoming',
 	sessionRooms: userServiceOrigin + '/service/users/sessions/room',
 	teamDiscussion: (sessionId: number) =>
 		userServiceOrigin +

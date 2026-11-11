@@ -345,7 +345,7 @@ export const OverviewWithCircles: Story = {
 		// Soonest first; the plain conversation in the list is no circle.
 		await expect(items).toHaveLength(2);
 		await expect(items[0]).toHaveTextContent('Trauer am Abend');
-		await expect(items[0]).toHaveTextContent('4 Teilnehmende');
+		await expect(items[0]).toHaveTextContent('Beratungsteam: 4');
 	}
 };
 

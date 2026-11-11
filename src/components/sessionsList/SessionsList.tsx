@@ -72,6 +72,8 @@ import {
 	DisplayFilterKindChip
 } from './SessionsListToolbar';
 import {
+	countUnreadSupervisedSessions,
+	countUnreadOtherSessions,
 	draftMatchesSession,
 	isAnonymousAskerSession,
 	isDirectLinkSession,
@@ -86,19 +88,36 @@ import {
 } from './useCaseHandoverSearch';
 import { useCaseHandoverReasons } from '../caseHandover/useCaseHandoverReasons';
 import { useSessionListViewState } from './SessionListViewStateContext';
-import { apiGetUserDrafts, IUserDraftItem } from '../../api/apiUserDrafts';
+import type { IUserDraftItem } from '../../api/apiUserDrafts';
+import { useRemoteDrafts } from '../../hooks/useRemoteDrafts';
+import { toDraftResumePath } from '../../services/draftNavigation';
 import {
-	DRAFTS_UPDATED_EVENT,
-	hasDraftContent,
-	REMOTE_DRAFT_INDEX_SCOPE
-} from '../../services/draftStore';
-import { FutureTimelinePanel } from './FutureTimelinePanel';
-import { canModerateGroupChat } from '../groupChat/groupChatHelpers';
-import { ChatOccurrence } from '../../api/apiGetChatOccurrences';
+	canEditGroupChatSettings,
+	canModerateGroupChat
+} from '../groupChat/groupChatHelpers';
+import {
+	FutureZone,
+	PULL_RELEASE_PX,
+	type FutureZoneHandle
+} from './timeline/FutureZone';
+import { AppointmentSplitButton } from './timeline/AppointmentSplitButton';
+import { useFutureEntries } from './timeline/useFutureEntries';
+import { useAppointmentActions } from './timeline/useAppointmentActions';
+import { AppointmentDateDialog } from './timeline/AppointmentDateDialog';
+import {
+	entriesForList,
+	formatEntryDate,
+	nextEntryBySession,
+	roomKey,
+	type FutureEntry,
+	type TimelineSession
+} from './timeline/timelineModel';
+import { useTimelineSettings } from '../../hooks/useTimelineSettings';
 import { refetchEnquiryListState } from './refetchEnquiryList';
 import { createRefreshThrottle, isRoomInSessions } from './liveListRefresh';
 import { countUnreadSessions } from '../../utils/sessionUnread';
 import { useUnreadVersion } from '../../hooks/useUnreadVersion';
+import { useActiveListItem } from '../../hooks/useActiveListItem';
 import { useSessionListRail } from './SessionListRailContext';
 import { useCaseHandoverBatch } from './useCaseHandoverBatch';
 import { getFormatChipVisibility } from './formatChipVisibility';
@@ -133,7 +152,6 @@ import {
 	applySessionsFilter,
 	classifyRequest,
 	classifySession,
-	isKindShown,
 	REQUEST_KIND_ORDER,
 	SESSION_KIND_CHIP,
 	PILL_ONLY_SESSION_KINDS,
@@ -141,26 +159,26 @@ import {
 	SessionKindId,
 	sessionPairId
 } from '../../utils/displayFilter/sessions';
-import { isChatItemUnread } from '../../utils/sessionUnread';
+import { isChatItemUnread, isRoomUnread } from '../../utils/sessionUnread';
 import {
 	SESSION_KIND_ICONS,
 	sessionKindLabel
 } from '../displayFilter/kindOptions';
 import { NOTIFICATION_SETTINGS_PATH } from '../profile/notificationSettingsPath';
+import {
+	apiGetDeletedAskerSessions,
+	type DeletedAskerSession
+} from '../../api/apiGetDeletedAskerSessions';
+import { DeletedAskerListItem } from './DeletedAskerListItem';
+import {
+	buildDeletedAskerRows,
+	placeDeletedAskerRows
+} from './deletedAskerRows';
 
 /** Keep paging while the display filter hides rows and fewer than this are visible (§5.2). */
 const MIN_VISIBLE_SESSION_ROWS = 10;
 
 const SESSIONS_DISPLAY_FILTER_DIALOG_ID = 'sessions-display-filter-dialog';
-
-const withDraftScopeParam = (path: string, draftScopeKey: string) => {
-	const [basePath, queryString = ''] = path.split('?');
-	const query = new URLSearchParams(queryString);
-	query.delete('embeddedNotifications');
-	query.set('draftScopeKey', draftScopeKey);
-	const finalQuery = query.toString();
-	return `${basePath}${finalQuery ? `?${finalQuery}` : ''}`;
-};
 
 const normalizeTimestamp = (value?: string | number | null): number => {
 	if (value === null || value === undefined || value === '') {
@@ -180,6 +198,15 @@ const normalizeTimestamp = (value?: string | number | null): number => {
 
 	const parsed = Date.parse(value);
 	return Number.isNaN(parsed) ? 0 : parsed;
+};
+
+const liveChatArrivalTime = (createDate?: string): number => {
+	if (!createDate) return Number.POSITIVE_INFINITY;
+	// Some API responses omit the UTC suffix on a server timestamp.
+	const withoutTimezone =
+		/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?$/.test(createDate);
+	const arrival = Date.parse(withoutTimezone ? `${createDate}Z` : createDate);
+	return Number.isFinite(arrival) ? arrival : Number.POSITIVE_INFINITY;
 };
 
 const formatDraftTime = (timestamp?: string | null) => {
@@ -245,6 +272,7 @@ export const SessionsList = ({
 
 	const { groupId: groupIdFromParam, sessionId: sessionIdFromParam } =
 		useParams<{ groupId: string; sessionId: string }>();
+	const { isActive } = useActiveListItem();
 	const navigate = useNavigate();
 	const location = useLocation();
 
@@ -254,7 +282,11 @@ export const SessionsList = ({
 	const internalListRef = useRef<HTMLDivElement | null>(null);
 	const listRef = scrollContainerRef ?? internalListRef;
 
-	const { sessions, dispatch } = useContext(SessionsDataContext);
+	const {
+		sessions,
+		dispatch,
+		ready: sessionsReady
+	} = useContext(SessionsDataContext);
 	const { type, path: listPath } = useContext(SessionTypeContext);
 	const { setSessionListViewState } = useSessionListViewState();
 
@@ -274,6 +306,7 @@ export const SessionsList = ({
 	const [isLoading, setIsLoading] = useState(true);
 	const [currentOffset, setCurrentOffset] = useState(0);
 	const [totalItems, setTotalItems] = useState(0);
+	const hasMoreSessionPages = totalItems > currentOffset + SESSION_COUNT;
 	const [isReloadButtonVisible, setIsReloadButtonVisible] = useState(false);
 	const [isRequestInProgress, setIsRequestInProgress] = useState(false);
 	const abortController = useRef<AbortController>(null);
@@ -294,7 +327,6 @@ export const SessionsList = ({
 		useState<string | null>(null);
 	const [filteredOutNoticeDismissed, setFilteredOutNoticeDismissed] =
 		useState(false);
-	const [userDrafts, setUserDrafts] = useState<IUserDraftItem[]>([]);
 	const [caseHandoverBatchMode, setCaseHandoverBatchMode] = useState(false);
 	const [caseHandoverReviewOpen, setCaseHandoverReviewOpen] = useState(false);
 	const [caseHandoverWizardStep, setCaseHandoverWizardStep] = useState<
@@ -413,12 +445,20 @@ export const SessionsList = ({
 			initialID?: string,
 			count?: number,
 			signal?: AbortSignal
-		): Promise<{ sessions: ListItemInterface[]; total: number }> => {
+		): Promise<{
+			sessions: ListItemInterface[];
+			total: number;
+			nextOffset: number;
+		}> => {
 			const pageSize = count ?? SESSION_COUNT;
 
 			const fetchPage = (
 				pageOffset: number
-			): Promise<{ sessions: ListItemInterface[]; total: number }> =>
+			): Promise<{
+				sessions: ListItemInterface[];
+				total: number;
+				nextOffset: number;
+			}> =>
 				apiGetConsultantSessionList({
 					type,
 					offset: pageOffset,
@@ -431,13 +471,22 @@ export const SessionsList = ({
 							getExtendedSession(initialID, sessions) ||
 							total <= pageOffset + pageSize
 						) {
-							return { sessions, total };
+							return {
+								sessions,
+								total,
+								nextOffset: pageOffset + pageSize
+							};
 						}
 
 						return fetchPage(pageOffset + pageSize).then(
-							({ sessions: moreSessions, total: nextTotal }) => ({
+							({
+								sessions: moreSessions,
+								total: nextTotal,
+								nextOffset
+							}) => ({
 								sessions: [...sessions, ...moreSessions],
-								total: nextTotal
+								total: nextTotal,
+								nextOffset
 							})
 						);
 					}
@@ -445,14 +494,22 @@ export const SessionsList = ({
 					if (
 						type !== SESSION_LIST_TYPES.ENQUIRY ||
 						sessions.length === 0 ||
-						total <= pageOffset + sessions.length
+						total <= pageOffset + pageSize
 					) {
-						return { sessions, total };
+						return {
+							sessions,
+							total,
+							nextOffset: pageOffset + pageSize
+						};
 					}
 
 					const chip = sessionToolbarChipRef.current;
 					if (chip !== 'nearby' && chip !== 'liveChat') {
-						return { sessions, total };
+						return {
+							sessions,
+							total,
+							nextOffset: pageOffset + pageSize
+						};
 					}
 
 					const anyMatch = sessions.some((raw) => {
@@ -462,16 +519,26 @@ export const SessionsList = ({
 						);
 						return chip === 'liveChat' ? isAnon : !isAnon;
 					});
-					const pagesFetched =
-						(pageOffset + sessions.length) / SESSION_COUNT;
-					if (anyMatch || pagesFetched >= 10) {
-						return { sessions, total };
+					if (
+						anyMatch ||
+						pageOffset + pageSize >= 10 * SESSION_COUNT
+					) {
+						return {
+							sessions,
+							total,
+							nextOffset: pageOffset + pageSize
+						};
 					}
 
-					return fetchPage(pageOffset + sessions.length).then(
-						({ sessions: moreSessions, total: nextTotal }) => ({
+					return fetchPage(pageOffset + pageSize).then(
+						({
+							sessions: moreSessions,
+							total: nextTotal,
+							nextOffset
+						}) => ({
 							sessions: [...sessions, ...moreSessions],
-							total: nextTotal
+							total: nextTotal,
+							nextOffset
 						})
 					);
 				});
@@ -502,7 +569,7 @@ export const SessionsList = ({
 				count,
 				controller.signal
 			)
-				.then(({ sessions, total }) => {
+				.then(({ sessions, total, nextOffset }) => {
 					// A superseded transport may still resolve after abort. Do not
 					// let its pagination state or rows reach the caller.
 					if (
@@ -511,9 +578,10 @@ export const SessionsList = ({
 					) {
 						throw new Error(FETCH_ERRORS.ABORT);
 					}
-					const pageSize = count ?? SESSION_COUNT;
-					const lastLoadedOffset =
-						offset + Math.max(0, sessions.length - pageSize);
+					const lastLoadedOffset = Math.max(
+						0,
+						nextOffset - SESSION_COUNT
+					);
 					setCurrentOffset(lastLoadedOffset);
 					setTotalItems(total);
 					return { sessions, total };
@@ -627,7 +695,13 @@ export const SessionsList = ({
 			});
 		}
 
-		return getConsultantSessionList(0)
+		const request = getConsultantSessionList(0);
+		// The refresh now owns the list request. The request it replaced (the
+		// first page, a chip switch or "load more") may not clear the loading
+		// card any more, so this one must, or a skeleton stays below the rows
+		// as an empty "ghost chat" (#2136).
+		const controller = abortController.current;
+		return request
 			.then(({ sessions, total }) => {
 				dispatch({
 					type: SET_SESSIONS,
@@ -637,7 +711,15 @@ export const SessionsList = ({
 				setTotalItems(total);
 				setCurrentOffset(0);
 			})
-			.catch(() => {});
+			.catch(() => {})
+			.finally(() => {
+				if (
+					abortController.current === controller &&
+					!controller.signal.aborted
+				) {
+					setIsLoading(false);
+				}
+			});
 	}, [dispatch, getConsultantSessionList, type, userData]);
 
 	/*
@@ -1247,18 +1329,7 @@ export const SessionsList = ({
 	const showMySessionToolbar =
 		type === SESSION_LIST_TYPES.MY_SESSION ||
 		type === SESSION_LIST_TYPES.ENQUIRY;
-	const visibleUserDrafts = React.useMemo(
-		() =>
-			userDrafts.filter(
-				(draft) =>
-					draft.scopeKey !== REMOTE_DRAFT_INDEX_SCOPE &&
-					// #976: zero-content rows persisted by older builds still sit
-					// in the backend. They can never be opened, so they must not
-					// keep the drafts badge lit either.
-					hasDraftContent(draft.text)
-			),
-		[userDrafts]
-	);
+	const visibleUserDrafts = useRemoteDrafts(showMySessionToolbar);
 	const caseHandoverSearch = useCaseHandoverSearch({
 		enabled: showConsultantToolbarActions,
 		query: sessionToolbarSearch,
@@ -1267,44 +1338,6 @@ export const SessionsList = ({
 		searchOpen: sessionToolbarSearchOpen
 	});
 	const sessionToolbarSelectedPeople = caseHandoverSearch.selectedPersonIds;
-	const loadUserDrafts = useCallback(async () => {
-		if (!showMySessionToolbar) {
-			setUserDrafts([]);
-			return;
-		}
-
-		const response = await apiGetUserDrafts(0, 200).catch(() => null);
-		setUserDrafts(response?.items || []);
-	}, [showMySessionToolbar]);
-
-	useEffect(() => {
-		if (!showMySessionToolbar) {
-			setUserDrafts([]);
-			return;
-		}
-
-		void loadUserDrafts();
-
-		const handleDraftsUpdated = () => {
-			void loadUserDrafts();
-		};
-		const intervalId = window.setInterval(loadUserDrafts, 60000);
-		window.addEventListener('focus', handleDraftsUpdated);
-		window.addEventListener(
-			DRAFTS_UPDATED_EVENT,
-			handleDraftsUpdated as EventListener
-		);
-
-		return () => {
-			window.clearInterval(intervalId);
-			window.removeEventListener('focus', handleDraftsUpdated);
-			window.removeEventListener(
-				DRAFTS_UPDATED_EVENT,
-				handleDraftsUpdated as EventListener
-			);
-		};
-	}, [loadUserDrafts, showMySessionToolbar]);
-
 	const caseHandoverReasons = useCaseHandoverReasons(caseHandoverBatchMode);
 	// A chosen reason that is no longer offered is dropped.
 	const { reasons: loadedReasons, loaded: reasonsLoaded } =
@@ -1318,10 +1351,8 @@ export const SessionsList = ({
 
 	const handleOpenDraft = useCallback(
 		(draft: IUserDraftItem) => {
-			if (!draft.actionPath) {
-				return;
-			}
-			navigate(withDraftScopeParam(draft.actionPath, draft.scopeKey));
+			const path = toDraftResumePath(draft);
+			if (path) navigate(path);
 		},
 		[navigate]
 	);
@@ -1708,18 +1739,32 @@ export const SessionsList = ({
 	);
 	const isSessionListItemActive = useCallback(
 		(session: ExtendedSessionInterface) =>
-			(session?.rid && session.rid === groupIdFromParam) ||
-			(session?.item?.id !== undefined &&
-				String(session.item.id) === String(sessionIdFromParam || '')),
-		[groupIdFromParam, sessionIdFromParam]
+			isActive({
+				groupId: session?.item?.matrixRoomId,
+				rid: session?.rid,
+				sessionId: session?.item?.id
+			}),
+		[isActive]
 	);
 	// #1377 §5.2/§5.3: the display filter runs after `filterSessions` and
 	// before the toolbar chip, so the chip refinement composes on top. The
 	// route-active row survives (dimmed) while its kind is hidden. All of it
 	// is memoised: unread/receipt events re-render this list often.
-	const canSupervise =
+	const isEligibleForSupervision =
 		showConsultantToolbarActions &&
 		hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData);
+	const canSupervise =
+		isEligibleForSupervision &&
+		sessionToolbarPairs.some(
+			({ raw, extended }) =>
+				classifySession(raw, extended, userData?.userId, true) ===
+				'supervision'
+		);
+	const showSupervisionChip =
+		canSupervise ||
+		(isEligibleForSupervision &&
+			type === SESSION_LIST_TYPES.MY_SESSION &&
+			hasMoreSessionPages);
 	const currentUserId = userData?.userId;
 	const displayFiltered = useMemo(
 		() =>
@@ -1871,10 +1916,8 @@ export const SessionsList = ({
 				case 'archive':
 				case 'appointments':
 					return type === SESSION_LIST_TYPES.MY_SESSION;
-				case 'futureTimeline':
-					return showGroupChip;
 				case 'supervision':
-					return canSupervise;
+					return showSupervisionChip;
 				case 'directLinks':
 					return hasDirectLinkRow;
 				default:
@@ -1905,7 +1948,6 @@ export const SessionsList = ({
 							: undefined,
 					icon: SESSION_KIND_ICONS[kind],
 					unreadCount: unreadByKind[kind] ?? 0,
-					showOnly: kind === 'futureTimeline',
 					modes: kind === 'liveChat',
 					pillOnly: PILL_ONLY_SESSION_KINDS.includes(
 						kind as SessionKindId
@@ -1922,9 +1964,9 @@ export const SessionsList = ({
 			})
 		);
 	}, [
-		canSupervise,
 		hasDirectLinkRow,
 		rowsByKind,
+		showSupervisionChip,
 		showCreateGroupChatAction,
 		showGroupChip,
 		showInternalGroupChip,
@@ -2000,13 +2042,35 @@ export const SessionsList = ({
 	);
 	// Sorted as pairs so the rendered row and the hidden-active lookup use
 	// the same id (`sessionPairId`), whatever `item` the extended row holds.
-	const sortedSessionPairs = useMemo(
-		() =>
-			[...sessionToolbarFilteredPairs].sort((left, right) =>
-				sortSessions(left.extended, right.extended)
-			),
-		[sessionToolbarFilteredPairs, sortSessions]
-	);
+	const sortedSessionPairs = useMemo(() => {
+		const sorted = [...sessionToolbarFilteredPairs].sort((left, right) =>
+			sortSessions(left.extended, right.extended)
+		);
+		if (type !== SESSION_LIST_TYPES.ENQUIRY) return sorted;
+
+		// Replace only the Live Chat slots in a mixed view. Mail keeps its
+		// existing order without a comparator that changes direction by pair.
+		const isLiveChatRequest = ({
+			raw,
+			extended
+		}: (typeof sorted)[number]) =>
+			extended.isEnquiry && classifyRequest(raw, extended) === 'liveChat';
+		const liveChats = sorted
+			.filter(isLiveChatRequest)
+			.sort((left, right) => {
+				const a = left.extended.item;
+				const b = right.extended.item;
+				const arrivalA = liveChatArrivalTime(a?.createDate);
+				const arrivalB = liveChatArrivalTime(b?.createDate);
+				return arrivalA === arrivalB
+					? (a?.id ?? 0) - (b?.id ?? 0)
+					: arrivalA - arrivalB;
+			});
+		let liveChatIndex = 0;
+		return sorted.map((pair) =>
+			isLiveChatRequest(pair) ? liveChats[liveChatIndex++] : pair
+		);
+	}, [sessionToolbarFilteredPairs, sortSessions, type]);
 	const sortedSessions = useMemo(
 		() => sortedSessionPairs.map(({ extended }) => extended),
 		[sortedSessionPairs]
@@ -2015,17 +2079,81 @@ export const SessionsList = ({
 		() => sortedSessionPairs.map(sessionPairId),
 		[sortedSessionPairs]
 	);
-	// The future panel is gated by its own show-only kind, never by the row
-	// filter (§5.2): its input is the toolbar-matched set BEFORE the display
-	// filter, so hiding "Circles" does not remove the panel.
-	const futureSourceSessions = useMemo(
-		() =>
-			sessionToolbarPairs
-				.filter(toolbarMatches)
-				.map(({ extended }) => extended)
-				.sort(sortSessions),
-		[sessionToolbarPairs, sortSessions, toolbarMatches]
-	);
+
+	/*
+	 * ORISO-Frontend#1159: a grey "Gelöschte:r Ratsuchende:r" row where a
+	 * deleted advice-seeker chat used to be. Only in the counsellor's unfiltered
+	 * list: a placeholder matches no chip, search, person, centre or topic.
+	 */
+	// Not in the rail: its pills are tabs, and a placeholder is no tab.
+	const showDeletedAskerRows =
+		showConsultantToolbarActions &&
+		!isRail &&
+		sessionListTab !== SESSION_LIST_TAB_ARCHIVE;
+	const [deletedAskerPlaceholders, setDeletedAskerPlaceholders] = useState<
+		DeletedAskerSession[]
+	>([]);
+	useEffect(() => {
+		if (!showDeletedAskerRows) {
+			setDeletedAskerPlaceholders([]);
+			return undefined;
+		}
+		const controller = new AbortController();
+		apiGetDeletedAskerSessions(controller.signal).then((placeholders) => {
+			if (!controller.signal.aborted) {
+				setDeletedAskerPlaceholders(placeholders);
+			}
+		});
+		return () => controller.abort();
+	}, [showDeletedAskerRows]);
+	const toolbarNarrowsList =
+		!!sessionToolbarChip ||
+		!!listSearchQuery ||
+		sessionToolbarSelectedPeople.length > 0 ||
+		!!sessionToolbarSelectedAgency ||
+		!!sessionToolbarSelectedTopic;
+	const deletedAskerPlacement = useMemo(() => {
+		if (!showDeletedAskerRows || toolbarNarrowsList) {
+			return { before: [], trailing: [] };
+		}
+		const markedForDeletion = (sessions ?? [])
+			.filter(
+				(raw: ListItemInterface) =>
+					!raw?.chat &&
+					raw?.user?.deleted &&
+					typeof raw?.session?.id === 'number'
+			)
+			.map((raw: ListItemInterface) => ({
+				sessionId: raw.session.id,
+				lastInteraction: getLastInteractionTimestamp(
+					buildExtendedSession(raw, groupIdFromParam)
+				)
+			}));
+		const shownSessionIds = new Set<number>(
+			sortedSessions
+				.filter((session) => !session.isGroup)
+				.map((session) => Number(session.item?.id))
+		);
+		return placeDeletedAskerRows(
+			sortedSessions.map(getLastInteractionTimestamp),
+			buildDeletedAskerRows(
+				deletedAskerPlaceholders,
+				markedForDeletion,
+				shownSessionIds
+			),
+			totalItems > currentOffset + SESSION_COUNT
+		);
+	}, [
+		currentOffset,
+		deletedAskerPlaceholders,
+		getLastInteractionTimestamp,
+		groupIdFromParam,
+		sessions,
+		showDeletedAskerRows,
+		sortedSessions,
+		toolbarNarrowsList,
+		totalItems
+	]);
 	const handleCaseHandoverSelect = useCallback((sessionId: number) => {
 		setCaseHandoverSelectedIds((current) =>
 			current.includes(sessionId)
@@ -2193,6 +2321,18 @@ export const SessionsList = ({
 		if (!sessionToolbarChip) {
 			return;
 		}
+		if (
+			sessionToolbarChip === 'supervision' &&
+			sessionsReady &&
+			!canSupervise &&
+			(!hasMoreSessionPages || type !== SESSION_LIST_TYPES.MY_SESSION) &&
+			!isLoading &&
+			!isRequestInProgress &&
+			!isReloadButtonVisible
+		) {
+			handleToolbarChipToggle(sessionToolbarChip);
+			return;
+		}
 		const activeKind =
 			displayFilterKinds.find(
 				(kind) => SESSION_KIND_CHIP[kind.id] === sessionToolbarChip
@@ -2209,6 +2349,12 @@ export const SessionsList = ({
 			handleToolbarChipToggle(sessionToolbarChip);
 		}
 	}, [
+		canSupervise,
+		hasMoreSessionPages,
+		isLoading,
+		isRequestInProgress,
+		isReloadButtonVisible,
+		sessionsReady,
 		displayFilterKinds,
 		handleToolbarChipToggle,
 		listDisplayFilter,
@@ -2256,19 +2402,24 @@ export const SessionsList = ({
 					);
 		const counts: Partial<Record<SessionToolbarChipFilter, number>> = {
 			unread: countUnreadSessions(unreadSource.map((p) => p.raw)),
-			drafts: visibleUserDrafts.length
+			drafts: visibleUserDrafts.length,
+			supervision: countUnreadSupervisedSessions(
+				unreadSource,
+				userData?.userId
+			)
 		};
 		Object.entries(unreadByKind).forEach(([kind, count]) => {
 			const chip = SESSION_KIND_CHIP[kind];
-			if (chip) {
+			if (chip && chip !== 'supervision') {
 				counts[chip] = (counts[chip] ?? 0) + count;
 			}
 		});
 		// Sonstiges bundles the kinds without their own pill (Frank 2026-09-16).
-		kindsUnderOther(listDisplayFilter, displayFilterKinds).forEach(
-			(kind) => {
-				counts.other = (counts.other ?? 0) + (unreadByKind[kind] ?? 0);
-			}
+		counts.other = countUnreadOtherSessions(
+			kindsUnderOther(listDisplayFilter, displayFilterKinds),
+			unreadByKind,
+			unreadSource,
+			userData?.userId
 		);
 		return counts;
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -2279,33 +2430,58 @@ export const SessionsList = ({
 		sessionToolbarPairs,
 		type,
 		unreadByKind,
+		userData?.userId,
 		visibleUserDrafts.length,
 		unreadVersion
 	]);
-	// A page can be entirely hidden (§5.2): keep paging until enough shows.
+	// Filters can hide a whole loaded page, leaving no scroll trigger.
 	useEffect(() => {
+		// Enquiries merge two feeds with their own paging contract. Keep their
+		// existing display-only paging. Only the Supervision chip adds a scan;
+		// ordinary text searches must not fetch the entire conversation history.
+		const ownConversations = type === SESSION_LIST_TYPES.MY_SESSION;
+		const pageSupervisionRows =
+			ownConversations &&
+			sessionToolbarChip === 'supervision' &&
+			!sessionToolbarSearch.trim();
+		const toolbarHidesRows =
+			pageSupervisionRows &&
+			sessionToolbarFilteredPairs.length < displayVisiblePairs.length;
+		const needsSupervisionPage =
+			ownConversations &&
+			sessionToolbarChip === 'supervision' &&
+			!canSupervise;
+		const visibleRows = pageSupervisionRows
+			? sessionToolbarFilteredPairs.length
+			: displayVisiblePairs.length;
 		if (
 			!showMySessionToolbar ||
-			displayFilterHiddenCount === 0 ||
-			displayVisiblePairs.length >= MIN_VISIBLE_SESSION_ROWS ||
+			(displayFilterHiddenCount === 0 &&
+				!toolbarHidesRows &&
+				!needsSupervisionPage) ||
+			visibleRows >= MIN_VISIBLE_SESSION_ROWS ||
 			isLoading ||
 			isRequestInProgress ||
 			isReloadButtonVisible ||
-			totalItems <= currentOffset + SESSION_COUNT
+			!hasMoreSessionPages
 		) {
 			return;
 		}
 		loadMoreSessions();
 	}, [
-		currentOffset,
+		canSupervise,
 		displayFilterHiddenCount,
 		displayVisiblePairs.length,
+		hasMoreSessionPages,
 		isLoading,
 		isReloadButtonVisible,
 		isRequestInProgress,
 		loadMoreSessions,
+		sessionToolbarChip,
+		sessionToolbarFilteredPairs.length,
+		sessionToolbarSearch,
 		showMySessionToolbar,
-		totalItems
+		type
 	]);
 	useEffect(() => {
 		setSessionListViewState(type, {
@@ -2325,9 +2501,6 @@ export const SessionsList = ({
 			})),
 		[userData]
 	);
-	const showSupervisionChip =
-		showConsultantToolbarActions &&
-		hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData);
 	const toolbarFilteredOutAll =
 		showMySessionToolbar &&
 		finalSessionsList.length > 0 &&
@@ -2359,43 +2532,268 @@ export const SessionsList = ({
 			sessionToolbarChip ||
 			sessionListTab === SESSION_LIST_TAB_ARCHIVE
 	);
-	const futureTimelineSeries = React.useMemo(
+	// ADR-021: the planned dates above "Jetzt". Every group series of the
+	// list is loaded once (the chips must not refetch); what shows follows
+	// the visible rows, so a filter applies to both sides of the handle.
+	const { settings: timelineSettings } = useTimelineSettings();
+	const isAskerList = hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData);
+	const timelineApplies =
+		type === SESSION_LIST_TYPES.MY_SESSION &&
+		sessionListTab !== SESSION_LIST_TAB_ARCHIVE;
+	// The ultra-thin rail has no zone, only the calendar mark on its pills.
+	const showTimeline = timelineApplies && !isRail;
+	const timelineSeries = React.useMemo<TimelineSession[]>(
 		() =>
-			futureSourceSessions
+			sessionToolbarPairs
+				.map(({ extended }) => extended)
 				.filter(
 					(session) =>
 						session.isGroup &&
 						session.item.repeatCount !== undefined
 				)
-				.map((session) => ({
-					id: session.item.id,
-					canModerate: canModerateGroupChat(session, userData),
-					topic:
+				.map((session) => {
+					const topic =
 						typeof session.item.topic === 'string'
 							? session.item.topic
-							: session.item.topic?.name || 'Group chat'
-				})),
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[futureSourceSessions, userData]
-	);
-	const handleDuplicateOccurrence = React.useCallback(
-		(occurrence: ChatOccurrence, topic: string) => {
-			navigate(buildCreateGroupChatPath(sessionListTab || undefined), {
-				state: {
-					duplicateOccurrence: {
+							: session.item.topic?.name || 'Group chat';
+					return {
+						sessionId: session.item.id,
+						title: topic,
+						kind: 'group' as const,
 						topic,
-						start: occurrence.start,
-						duration: occurrence.duration,
-						modality: occurrence.modality
-					}
-				}
+						lastActivity: 0,
+						lastMessage: '',
+						matrixRoomId:
+							session.item.matrixRoomId ||
+							session.rid ||
+							undefined,
+						canModerate: canModerateGroupChat(session, userData),
+						canConfigure: canEditGroupChatSettings(
+							session,
+							userData
+						)
+					};
+				}),
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[sessionToolbarPairs, userData]
+	);
+	const timelineConversations = React.useMemo<TimelineSession[]>(
+		() =>
+			sessionToolbarPairs
+				.map(({ extended }) => extended)
+				.filter((session) => !session.isGroup)
+				.map((session) => {
+					const topic =
+						typeof session.item.topic === 'string'
+							? session.item.topic
+							: session.item.topic?.name || '';
+					return {
+						sessionId: session.item.id,
+						title:
+							session.consultant?.displayName ||
+							session.user?.username ||
+							session.consultant?.username ||
+							topic,
+						kind: 'one-to-one' as const,
+						topic,
+						lastActivity: 0,
+						lastMessage: '',
+						matrixRoomId:
+							session.item.matrixRoomId ||
+							session.rid ||
+							undefined
+					};
+				}),
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[sessionToolbarPairs]
+	);
+	const { entries: futureEntries, markCancelled } = useFutureEntries({
+		series: timelineSeries,
+		conversations: timelineConversations,
+		enabled: timelineApplies
+	});
+	const [movingEntry, setMovingEntry] = useState<FutureEntry | null>(null);
+	const onAppointmentAction = useAppointmentActions({
+		onCancelled: markCancelled,
+		onMove: setMovingEntry
+	});
+	const visibleRooms = React.useMemo(
+		() =>
+			new Set(
+				sortedSessions.map((session) =>
+					roomKey(
+						session.isGroup ? 'group' : 'one-to-one',
+						session.item.id
+					)
+				)
+			),
+		[sortedSessions]
+	);
+	const hasAnyListFilter =
+		hasHidingFilter || sessionToolbarSearch.trim() !== '';
+	const zoneEntries = React.useMemo(
+		() => entriesForList(futureEntries, visibleRooms, hasAnyListFilter),
+		[futureEntries, visibleRooms, hasAnyListFilter]
+	);
+	// Every planned date counts for the clock, whatever the filter shows above.
+	const nextGroupAppointment = React.useMemo(
+		() =>
+			nextEntryBySession(
+				futureEntries.filter((entry) => entry.kind === 'group')
+			),
+		[futureEntries]
+	);
+	const nextConversationAppointment = React.useMemo(
+		() =>
+			nextEntryBySession(
+				futureEntries.filter((entry) => entry.kind === 'one-to-one')
+			),
+		[futureEntries]
+	);
+	const nextAppointmentOf = (session: ExtendedSessionInterface) =>
+		(session.isGroup
+			? nextGroupAppointment
+			: nextConversationAppointment
+		).get(session.item.id);
+	const upcomingLabelOf = (session: ExtendedSessionInterface) => {
+		const next = nextAppointmentOf(session);
+		return next
+			? translate('sessionList.timeline.nextAppointment', {
+					date: formatEntryDate(next.start)
+				})
+			: undefined;
+	};
+	const timelineRole = isAskerList ? 'asker' : 'counsellor';
+	const appointmentActionOf = (session: ExtendedSessionInterface) => {
+		const next = nextAppointmentOf(session);
+		return next
+			? ({
+					openRoom,
+					active
+				}: {
+					openRoom: () => void;
+					active: boolean;
+				}) => (
+					<AppointmentSplitButton
+						entry={next}
+						role={timelineRole}
+						active={active}
+						fullWidth
+						onOpen={openRoom}
+						onAction={onAppointmentAction}
+					/>
+				)
+			: undefined;
+	};
+	const singleTimeline =
+		showTimeline && timelineSettings.scrollModel === 'single';
+	const zoneRef = useRef<FutureZoneHandle>(null);
+	const pullRef = useRef(0);
+	const nowRef = useRef<HTMLDivElement>(null);
+	// Measured on screen: "Jetzt" sits inside the positioned zone.
+	const nowTopInList = () => {
+		const el = listRef.current as HTMLDivElement | null;
+		const marker = nowRef.current;
+		return el && marker
+			? marker.getBoundingClientRect().top -
+					el.getBoundingClientRect().top +
+					el.scrollTop
+			: 0;
+	};
+	const [nowOffscreen, setNowOffscreen] = useState<'above' | 'below' | null>(
+		null
+	);
+	// The clicked appointment stays marked until another room is opened.
+	const [selectedTwin, setSelectedTwin] = useState<FutureEntry | null>(null);
+	useEffect(() => {
+		setSelectedTwin((current) =>
+			current &&
+			String(current.sessionId) === String(sessionIdFromParam || '')
+				? current
+				: null
+		);
+	}, [sessionIdFromParam, groupIdFromParam]);
+	// Half / almost all of the list are stops: measured on the whole column,
+	// which does not shrink while the zone opens.
+	const innerWrapperRef = useRef<HTMLDivElement>(null);
+	const [timelineListHeight, setTimelineListHeight] = useState(520);
+	useEffect(() => {
+		const el = innerWrapperRef.current;
+		if (!el || !showTimeline || typeof ResizeObserver === 'undefined')
+			return undefined;
+		const observer = new ResizeObserver(() =>
+			setTimelineListHeight(Math.round(el.clientHeight * 0.8))
+		);
+		observer.observe(el);
+		return () => observer.disconnect();
+	}, [showTimeline]);
+
+	// Single timeline: a deliberate pull past the top releases the next stop.
+	const handleTimelineWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+		if (!singleTimeline) return;
+		const el = listRef.current as HTMLDivElement | null;
+		if (!el || el.scrollTop > 0 || e.deltaY >= 0) {
+			pullRef.current = 0;
+			return;
+		}
+		pullRef.current += -e.deltaY;
+		if (pullRef.current >= PULL_RELEASE_PX) {
+			pullRef.current = 0;
+			zoneRef.current?.stepOpen();
+		}
+	};
+	const handleTimelineScroll = () => {
+		handleListScroll();
+		if (!singleTimeline) return;
+		const el = listRef.current as HTMLDivElement | null;
+		const marker = nowRef.current;
+		if (!el || !marker) return;
+		const markerTop = nowTopInList();
+		if (el.scrollTop > markerTop + marker.offsetHeight)
+			setNowOffscreen('above');
+		else if (el.scrollTop + el.clientHeight < markerTop)
+			setNowOffscreen('below');
+		else setNowOffscreen(null);
+	};
+	const jumpToNow = () => {
+		const el = listRef.current as HTMLDivElement | null;
+		const marker = nowRef.current;
+		if (el && marker)
+			el.scrollTo({
+				top: nowTopInList() - 8,
+				behavior: 'smooth'
 			});
-		},
-		[navigate, sessionListTab]
+	};
+
+	const timelineZone = showTimeline && zoneEntries.length > 0 && (
+		<div
+			className="sessionsList__timeline"
+			data-cy="sessions-list-timeline"
+		>
+			<FutureZone
+				ref={zoneRef}
+				nowRef={nowRef}
+				entries={zoneEntries}
+				role={timelineRole}
+				listHeight={timelineListHeight}
+				initialReveal={timelineSettings.reveal}
+				memoryKey="sessionsList"
+				selectedKey={selectedTwin?.key}
+				onOpen={(entry) => {
+					setSelectedTwin(entry);
+					onAppointmentAction('open', entry);
+				}}
+				onAction={onAppointmentAction}
+				unreadOf={(entry) => isRoomUnread(entry.matrixRoomId)}
+				label={translate('sessionList.timeline.upcoming')}
+				nowLabel={translate('sessionList.timeline.now')}
+			/>
+		</div>
 	);
 
 	return (
 		<div
+			ref={innerWrapperRef}
 			className="sessionsList__innerWrapper"
 			data-tour-target={
 				type === SESSION_LIST_TYPES.ENQUIRY
@@ -2622,7 +3020,8 @@ export const SessionsList = ({
 					browserMutedNotice={displayFilterBrowserMuted}
 					value={listDisplayFilter}
 					canReset={listDisplayOverride !== null}
-					readOnly={displayFilterReadOnly || !canEditDisplayFilter}
+					canWrite={canEditDisplayFilter}
+					readOnly={displayFilterReadOnly}
 					showAutoRead={type === SESSION_LIST_TYPES.MY_SESSION}
 					onChange={setListDisplayOverride}
 					onReset={resetListDisplayOverride}
@@ -2633,17 +3032,7 @@ export const SessionsList = ({
 					labels={displayFilterLabels.dialogLabels}
 				/>
 			)}
-			{showMySessionToolbar &&
-				futureTimelineSeries.length > 0 &&
-				(type !== SESSION_LIST_TYPES.MY_SESSION ||
-					isKindShown(listDisplayFilter, 'futureTimeline')) && (
-					<FutureTimelinePanel
-						series={futureTimelineSeries}
-						consultantId={userData.userId}
-						includeAppointments={sessionToolbarChip === null}
-						onDuplicateOccurrence={handleDuplicateOccurrence}
-					/>
-				)}
+			{!singleTimeline && timelineZone}
 			{showCaseHandoverBatchUi &&
 				caseHandoverBatchMode &&
 				caseHandoverBatchSummary &&
@@ -2759,92 +3148,171 @@ export const SessionsList = ({
 					role={isRail ? 'tablist' : 'list'}
 					aria-orientation={isRail ? 'vertical' : undefined}
 					aria-label={translate('sessionList.view.headline')}
-					onScroll={handleListScroll}
+					onScroll={handleTimelineScroll}
+					onWheel={handleTimelineWheel}
 				>
+					{singleTimeline && timelineZone}
 					{(!isLoading || finalSessionsList.length > 0) &&
 						sortedSessions.map(
 							(
 								activeSession: ExtendedSessionInterface,
 								index
 							) => (
-								<ActiveSessionProvider
+								<React.Fragment
 									key={`${activeSession.isGroup ? 'chat' : 'session'}:${activeSession.item.id}`}
-									activeSession={activeSession}
 								>
-									<div
-										className={clsx(
-											hiddenActiveRowIds.has(
-												sortedSessionIds[index]
-											) && 'sessionsList__hiddenActiveRow'
-										)}
+									{deletedAskerPlacement.before[index]?.map(
+										(row) => (
+											<DeletedAskerListItem
+												key={row.key}
+												row={row}
+												locale={defaultLanguage}
+												translate={translate}
+											/>
+										)
+									)}
+									<ActiveSessionProvider
+										activeSession={activeSession}
 									>
-										{hiddenActiveRowIds.has(
-											sortedSessionIds[index]
-										) && (
-											// Announced like a status, without a
-											// status role inside the list (#1338).
-											<p
-												className="sessionsList__hiddenActiveRowHint"
-												aria-live="polite"
-												aria-atomic="true"
-											>
-												{translate(
-													'notifications.displayFilter.hiddenActiveRow'
-												)}
-											</p>
-										)}
-										<SessionListItemComponent
-											defaultLanguage={defaultLanguage}
-											itemRef={(el) =>
-												(ref_list_array.current[index] =
-													el)
-											}
-											handleKeyDownLisItemContent={(e) =>
-												handleKeyDownLisItemContent(
-													e,
-													index
-												)
-											}
-											index={index}
-											isBeforeActive={
-												!!sortedSessions[index + 1] &&
-												isSessionListItemActive(
-													sortedSessions[index + 1]
-												)
-											}
-											isAfterActive={
-												!!sortedSessions[index - 1] &&
-												isSessionListItemActive(
-													sortedSessions[index - 1]
-												)
-											}
-											caseHandoverBatchMode={
-												caseHandoverBatchMode
-											}
-											caseHandoverSelected={caseHandoverSelectedIds.includes(
-												activeSession.item.id
+										<div
+											className={clsx(
+												hiddenActiveRowIds.has(
+													sortedSessionIds[index]
+												) &&
+													'sessionsList__hiddenActiveRow'
 											)}
-											onCaseHandoverSelect={
-												handleCaseHandoverSelect
-											}
-											onCaseHandoverBatchStart={() => {
-												setCaseHandoverBatchMode(true);
-												setCaseHandoverReviewOpen(
-													false
-												);
-												setCaseHandoverBatchSummary('');
-											}}
-											onCaseHandoverBatchConfirm={
-												handleOpenCaseHandoverWizard
-											}
-											onCaseHandoverBatchClose={
-												handleCloseCaseHandoverBatch
-											}
-										/>
-									</div>
-								</ActiveSessionProvider>
+										>
+											{hiddenActiveRowIds.has(
+												sortedSessionIds[index]
+											) && (
+												// Announced like a status, without a
+												// status role inside the list (#1338).
+												<p
+													className="sessionsList__hiddenActiveRowHint"
+													aria-live="polite"
+													aria-atomic="true"
+												>
+													{translate(
+														'notifications.displayFilter.hiddenActiveRow'
+													)}
+												</p>
+											)}
+											<SessionListItemComponent
+												defaultLanguage={
+													defaultLanguage
+												}
+												itemRef={(el) =>
+													(ref_list_array.current[
+														index
+													] = el)
+												}
+												handleKeyDownLisItemContent={(
+													e
+												) =>
+													handleKeyDownLisItemContent(
+														e,
+														index
+													)
+												}
+												index={index}
+												isBeforeActive={
+													!!sortedSessions[
+														index + 1
+													] &&
+													isSessionListItemActive(
+														sortedSessions[
+															index + 1
+														]
+													)
+												}
+												isAfterActive={
+													!!sortedSessions[
+														index - 1
+													] &&
+													isSessionListItemActive(
+														sortedSessions[
+															index - 1
+														]
+													)
+												}
+												grouped={!isRail}
+												upcomingAppointment={upcomingLabelOf(
+													activeSession
+												)}
+												upcomingAppointmentModality={
+													nextAppointmentOf(
+														activeSession
+													)?.modality
+												}
+												appointmentAction={appointmentActionOf(
+													activeSession
+												)}
+												datePlacement={
+													timelineSettings.pastDate
+												}
+												isGroupStart={
+													index === 0 ||
+													isSessionListItemActive(
+														sortedSessions[
+															index - 1
+														]
+													)
+												}
+												isGroupEnd={
+													index ===
+														sortedSessions.length -
+															1 ||
+													isSessionListItemActive(
+														sortedSessions[
+															index + 1
+														]
+													)
+												}
+												caseHandoverBatchMode={
+													caseHandoverBatchMode
+												}
+												caseHandoverSelected={caseHandoverSelectedIds.includes(
+													activeSession.item.id
+												)}
+												onCaseHandoverSelect={
+													handleCaseHandoverSelect
+												}
+												onCaseHandoverBatchStart={() => {
+													setCaseHandoverBatchMode(
+														true
+													);
+													setCaseHandoverReviewOpen(
+														false
+													);
+													setCaseHandoverBatchSummary(
+														''
+													);
+												}}
+												onCaseHandoverBatchConfirm={
+													handleOpenCaseHandoverWizard
+												}
+												onCaseHandoverBatchClose={
+													handleCloseCaseHandoverBatch
+												}
+											/>
+										</div>
+									</ActiveSessionProvider>
+								</React.Fragment>
 							)
 						)}
+
+					{/* A failed page load leaves the page count unknown, so rows
+					    "older than everything" wait for a successful retry. */}
+					{!isLoading &&
+						!isReloadButtonVisible &&
+						deletedAskerPlacement.trailing.map((row) => (
+							<DeletedAskerListItem
+								key={row.key}
+								row={row}
+								locale={defaultLanguage}
+								translate={translate}
+							/>
+						))}
 
 					{!isLoading &&
 						sessionToolbarChip === 'drafts' &&
@@ -2878,6 +3346,17 @@ export const SessionsList = ({
 						</div>
 					)}
 				</div>
+				{singleTimeline && nowOffscreen && (
+					<button
+						type="button"
+						className={`tlp__pill tlp__pill--${nowOffscreen}`}
+						onClick={jumpToNow}
+						data-cy="timeline-now-pill"
+					>
+						{nowOffscreen === 'above' ? '↑ ' : '↓ '}
+						{translate('sessionList.timeline.now')}
+					</button>
+				)}
 			</div>
 
 			{!isLoading &&
@@ -2920,6 +3399,14 @@ export const SessionsList = ({
 						onCancel={handleCloseCaseHandoverBatch}
 					/>
 				)}
+			{movingEntry?.sessionId !== undefined && (
+				<AppointmentDateDialog
+					sessionId={movingEntry.sessionId}
+					matrixRoomId={movingEntry.matrixRoomId}
+					entry={movingEntry}
+					onClose={() => setMovingEntry(null)}
+				/>
+			)}
 		</div>
 	);
 };

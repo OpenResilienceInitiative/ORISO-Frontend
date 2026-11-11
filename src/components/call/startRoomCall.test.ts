@@ -7,6 +7,8 @@ import {
 	it,
 	vi
 } from 'vite-plus/test';
+import i18n from 'i18next';
+import de from '../../resources/i18n/de/common.json';
 import { enterPracticeMode, exitPracticeMode } from '../../practice';
 import { startRoomCall } from './startRoomCall';
 
@@ -84,6 +86,39 @@ describe('startRoomCall', () => {
 		expect(started[0][0]).not.toBe(CLIENT_ROOM);
 	});
 
+	/** #2170: the call is named at creation, by whoever starts it. */
+	it('hands the name of the call to the CallManager', async () => {
+		const startCall = vi.fn();
+		await startRoomCall({
+			roomId: CLIENT_ROOM,
+			isVideo: true,
+			isGroup: false,
+			roomName: 'Flyer Schule',
+			notify,
+			getCallManager: () => ({ startCall })
+		});
+		expect(startCall).toHaveBeenCalledWith(CLIENT_ROOM, true, false, {
+			roomName: 'Flyer Schule'
+		});
+	});
+
+	it('leaves the name to the CallManager when none is given', async () => {
+		const startCall = vi.fn();
+		await startRoomCall({
+			roomId: CLIENT_ROOM,
+			isVideo: true,
+			isGroup: false,
+			notify,
+			getCallManager: () => ({ startCall })
+		});
+		expect(startCall).toHaveBeenCalledWith(
+			CLIENT_ROOM,
+			true,
+			false,
+			undefined
+		);
+	});
+
 	it('carries the audio/video choice through', async () => {
 		await startRoomCall({
 			roomId: SIDE_ROOM,
@@ -130,6 +165,49 @@ describe('startRoomCall', () => {
 		expect(stopVideo).toHaveBeenCalledOnce();
 	});
 
+	it('leaves the camera alone when told to, and the call stays a video call', async () => {
+		await startRoomCall({
+			roomId: CLIENT_ROOM,
+			isVideo: true,
+			requestCamera: false,
+			notify,
+			getCallManager
+		});
+
+		expect(navigator.mediaDevices.getUserMedia).toHaveBeenCalledWith({
+			video: false,
+			audio: true
+		});
+		expect(started).toEqual([[CLIENT_ROOM, true, undefined]]);
+	});
+
+	it('asks for the camera of a video call when no preview choice is passed', async () => {
+		await startRoomCall({
+			roomId: SIDE_ROOM,
+			isVideo: true,
+			notify,
+			getCallManager
+		});
+		expect(navigator.mediaDevices.getUserMedia).toHaveBeenCalledWith({
+			video: true,
+			audio: true
+		});
+	});
+
+	it('never asks for a camera in a phone call', async () => {
+		await startRoomCall({
+			roomId: SIDE_ROOM,
+			isVideo: false,
+			requestCamera: true,
+			notify,
+			getCallManager
+		});
+		expect(navigator.mediaDevices.getUserMedia).toHaveBeenCalledWith({
+			video: false,
+			audio: true
+		});
+	});
+
 	it('says so and starts nothing when the room is unknown', async () => {
 		await startRoomCall({
 			roomId: null,
@@ -141,7 +219,13 @@ describe('startRoomCall', () => {
 		expect(notified).toHaveLength(1);
 	});
 
-	it('starts nothing when the permission is refused', async () => {
+	it('uses the current language and starts nothing when the permission is refused', async () => {
+		await i18n.init({
+			lng: 'de',
+			resources: {
+				de: { translation: { calls: { error: de.calls.error } } }
+			}
+		});
 		vi.stubGlobal('navigator', {
 			mediaDevices: {
 				getUserMedia: vi.fn(async () => {
@@ -158,7 +242,7 @@ describe('startRoomCall', () => {
 			getCallManager
 		});
 		expect(started).toEqual([]);
-		expect(notified[0]).toContain('browser settings');
+		expect(notified[0]).toContain(de.calls.error.grantPermissions);
 	});
 
 	it('offers the https redirect instead of failing silently on http', async () => {

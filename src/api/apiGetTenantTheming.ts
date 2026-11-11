@@ -15,6 +15,11 @@ const fetchTenant = (url: string): Promise<TenantDataInterface> =>
 		responseHandling: [FETCH_ERRORS.CATCH_ALL]
 	});
 
+export const apiGetPublicTenantById = (
+	tenantId: number
+): Promise<TenantDataInterface> =>
+	fetchTenant(`${endpoints.tenantServiceBase}/public/id/${tenantId}`);
+
 /* Both theming hooks resolve on load. They share the whole link
    resolution — agency, tenant and the fallback to the subdomain tenant — so
    one of them failing cannot overwrite the tenant the other one found. A
@@ -27,9 +32,7 @@ const getLinkTenant = (agencyId: number) => {
 		const pending = apiGetAgencyById(agencyId)
 			.then((agency) =>
 				agency?.tenantId && agency.tenantId > 0
-					? fetchTenant(
-							`${endpoints.tenantServiceBase}/public/id/${agency.tenantId}`
-						)
+					? apiGetPublicTenantById(agency.tenantId)
 					: null
 			)
 			.catch(() => null)
@@ -54,9 +57,7 @@ export const apiGetTenantTheming = async (
 	// Two readers that disagree would either loop or never refresh.
 	const tenantId = getAuthenticatedTenantId();
 	if (tenantId) {
-		return fetchTenant(
-			`${endpoints.tenantServiceBase}/public/id/${tenantId}`
-		);
+		return apiGetPublicTenantById(tenantId);
 	}
 
 	/* Before sign-in the shared link already says whose it is: a visitor

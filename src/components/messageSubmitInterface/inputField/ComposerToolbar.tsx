@@ -2,6 +2,7 @@ import clsx from 'clsx';
 import * as React from 'react';
 import type { TFunction } from 'i18next';
 import { useCallback, useRef, useState } from 'react';
+import CloseIcon from '@mui/icons-material/Close';
 import UndoIcon from '@mui/icons-material/Undo';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
@@ -37,11 +38,7 @@ import type { MenuDirection } from './menuDirection';
 import './composerToolbar.styles.scss';
 
 export type ComposerToolbarMenu =
-	| 'heading'
-	| 'list'
-	| 'highlight'
-	| 'overflow'
-	| null;
+	'heading' | 'list' | 'highlight' | 'overflow' | null;
 
 export interface ComposerToolbarProps {
 	/**
@@ -61,6 +58,12 @@ export interface ComposerToolbarProps {
 	/** Collapse back to the default action bar (Figma close X). */
 	onCollapse: () => void;
 	onExpandToggle: () => void;
+	/**
+	 * The grey format box above the phone composer (Frank, 03.11.): close X,
+	 * bold, italic, text style, list and the rest in the kebab. Navigation and
+	 * maximize stay in the action bar below it.
+	 */
+	inTray?: boolean;
 	translate: TFunction;
 }
 
@@ -116,6 +119,7 @@ export const ComposerToolbar = ({
 	isActionSelected,
 	onCollapse,
 	onExpandToggle,
+	inTray = false,
 	translate
 }: ComposerToolbarProps) => {
 	const [openMenu, setOpenMenu] = useState<ComposerToolbarMenu>(null);
@@ -197,6 +201,21 @@ export const ComposerToolbar = ({
 		),
 		onSelect: () => onAction(action)
 	}));
+
+	const undoRedoItems: ToolbarMenuItem[] = [
+		{
+			key: 'undo',
+			label: translate('message.submit.toolbar.undo'),
+			glyph: <UndoIcon fontSize="inherit" />,
+			onSelect: () => onAction('undo')
+		},
+		{
+			key: 'redo',
+			label: translate('message.submit.toolbar.redo'),
+			glyph: <RedoIcon fontSize="inherit" />,
+			onSelect: () => onAction('redo')
+		}
+	];
 
 	const overflowItems: ToolbarMenuItem[] = [
 		{
@@ -321,7 +340,10 @@ export const ComposerToolbar = ({
 
 	return (
 		<div
-			className="composerToolbar"
+			className={clsx(
+				'composerToolbar',
+				inTray && 'composerToolbar--tray'
+			)}
 			data-direction={direction}
 			ref={barRef}
 		>
@@ -364,22 +386,51 @@ export const ComposerToolbar = ({
 				label={translate('message.submit.toolbar.closeTools')}
 				onClick={onCollapse}
 			>
-				<DisabledByDefaultRoundedIcon fontSize="inherit" />
+				{inTray ? (
+					<CloseIcon fontSize="inherit" />
+				) : (
+					<DisabledByDefaultRoundedIcon fontSize="inherit" />
+				)}
 			</ToolbarButton>
 			<ToolbarDivider />
-			<ToolbarButton
-				label={translate('message.submit.toolbar.undo')}
-				onClick={() => onAction('undo')}
-			>
-				<UndoIcon fontSize="inherit" />
-			</ToolbarButton>
-			<ToolbarButton
-				label={translate('message.submit.toolbar.redo')}
-				onClick={() => onAction('redo')}
-			>
-				<RedoIcon fontSize="inherit" />
-			</ToolbarButton>
-			<ToolbarDivider />
+			{inTray ? (
+				<>
+					{isOffered('bold') && (
+						<ToolbarButton
+							label={translate('message.submit.toolbar.bold')}
+							onClick={() => onAction('bold')}
+							selected={isActionSelected('bold')}
+						>
+							<FormatBoldIcon fontSize="inherit" />
+						</ToolbarButton>
+					)}
+					{isOffered('italic') && (
+						<ToolbarButton
+							label={translate('message.submit.toolbar.italic')}
+							onClick={() => onAction('italic')}
+							selected={isActionSelected('italic')}
+						>
+							<FormatItalicIcon fontSize="inherit" />
+						</ToolbarButton>
+					)}
+				</>
+			) : (
+				<>
+					<ToolbarButton
+						label={translate('message.submit.toolbar.undo')}
+						onClick={() => onAction('undo')}
+					>
+						<UndoIcon fontSize="inherit" />
+					</ToolbarButton>
+					<ToolbarButton
+						label={translate('message.submit.toolbar.redo')}
+						onClick={() => onAction('redo')}
+					>
+						<RedoIcon fontSize="inherit" />
+					</ToolbarButton>
+					<ToolbarDivider />
+				</>
+			)}
 			{isOffered('heading1') &&
 				renderMenuAnchor(
 					'heading',
@@ -540,28 +591,38 @@ export const ComposerToolbar = ({
 				</>
 			)}
 			{isMobile &&
-				offeredOverflowItems.length > 0 &&
+				(inTray || offeredOverflowItems.length > 0) &&
 				renderMenuAnchor(
 					'overflow',
 					translate('message.submit.toolbar.more'),
 					<MoreVertIcon fontSize="inherit" />,
-					offeredOverflowItems,
+					inTray
+						? [
+								...undoRedoItems,
+								...offeredOverflowItems.filter(
+									({ key }) =>
+										key !== 'bold' && key !== 'italic'
+								)
+							]
+						: offeredOverflowItems,
 					false
 				)}
-			<ToolbarButton
-				label={translate(
-					isExpanded
-						? 'message.submit.toolbar.minimize'
-						: 'message.submit.toolbar.maximize'
-				)}
-				onClick={onExpandToggle}
-			>
-				{isExpanded ? (
-					<CloseFullscreenIcon fontSize="inherit" />
-				) : (
-					<OpenInFullIcon fontSize="inherit" />
-				)}
-			</ToolbarButton>
+			{!inTray && (
+				<ToolbarButton
+					label={translate(
+						isExpanded
+							? 'message.submit.toolbar.minimize'
+							: 'message.submit.toolbar.maximize'
+					)}
+					onClick={onExpandToggle}
+				>
+					{isExpanded ? (
+						<CloseFullscreenIcon fontSize="inherit" />
+					) : (
+						<OpenInFullIcon fontSize="inherit" />
+					)}
+				</ToolbarButton>
+			)}
 		</div>
 	);
 };

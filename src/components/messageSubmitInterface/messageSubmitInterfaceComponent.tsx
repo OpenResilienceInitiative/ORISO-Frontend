@@ -1,3 +1,4 @@
+import { reportComposerExpanded } from '../../utils/embeddedComposerFullscreen';
 import { useConversationFeatureSettings } from '../../hooks/useConversationFeatureSettings';
 import { getCounsellingDpaFailure } from '../../api/counsellingDpaFailure';
 import { resolveFeedbackMailIntent } from './feedbackMailIntent';
@@ -8,6 +9,7 @@ import {
 	useContext,
 	useEffect,
 	useLayoutEffect,
+	useId,
 	useMemo,
 	useRef,
 	useState
@@ -18,6 +20,8 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { SendButton } from './inputField/SendButton';
 import { hasMediaUploadFeature } from '../../utils/mediaUploadHelpers';
 import { usePracticeActive } from '../../practice';
+import { isPracticeDraftScope } from '../../practice/practiceDraftScopes';
+import { isOpaqueDraftScope } from '../../services/draftCryptography';
 import { getCurrentMatrixUserId } from '../../utils/matrixSession';
 import { isMatrixRoomEncrypted } from '../../utils/matrixRoomEncryption';
 import { apiGetSessionRoomBySessionId } from '../../api/apiGetSessionRooms';
@@ -41,7 +45,6 @@ import {
 	type SideRoomChannelKind
 } from '../../utils/channelRoute';
 import { EmojiPickerPopup } from './inputField/EmojiPickerPopup';
-import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 import { rememberEmoji } from '../../utils/recentEmojis';
 import { composerHtmlToTransportMarkup } from './composerTransportEncoding';
 import { RecipientSplitButton } from './inputField/RecipientSplitButton';
@@ -50,6 +53,7 @@ import { getMenuDirection } from './inputField/menuDirection';
 import {
 	calculateAutoComposerHeight,
 	clampComposerHeight as clampComposerHeightPure,
+	FLUSH_CONTEXT_BAR_RESERVE,
 	getEffectiveComposerHeight,
 	getComposerHeightBounds as getComposerHeightBoundsPure,
 	stepComposerHeight
@@ -60,6 +64,7 @@ import {
 	shouldShowAudienceSelector
 } from './audienceSelectorVisibility';
 import { useComposerDock } from './useComposerDock';
+import { useEditorResize } from './useEditorResize';
 import {
 	createEnquirySubmissionGuard,
 	dispatchAskerMessageTransport,
@@ -71,8 +76,10 @@ import { resolveAsideTargetRoomId, resolvePrimaryRoomId } from './asideRouting';
 import { reloadSessionAfterSendIfNeeded } from './sessionRefreshAfterSend';
 import { chatTransportService } from '../../services/chatTransportService';
 import { extractMentionedUserIds } from '../../utils/messageMentions';
+import { decodeUsernameSafely } from '../../utils/encryptionHelpers';
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import { getModality, Modality } from '../session/getModality';
+import { resolveAssignedConsultantLabel } from '../session/assignedConsultantLabel';
 import { STATUS_ENQUIRY } from '../../globalState/interfaces/SessionsDataInterface';
 import {
 	AUDIENCE_ALL,
@@ -89,6 +96,8 @@ import {
 	audienceOptionsReady,
 	audienceSelectionStorageKeyFor,
 	groupAudienceOptions,
+	resolveMentionCandidates,
+	roomMentionMemberIds,
 	type AudienceKind,
 	type AudienceOption
 } from './audienceOptions';
@@ -111,6 +120,7 @@ import {
 	apiSendMatrixAttachmentMessage,
 	apiSendMessage
 } from '../../api';
+import { ComposerContextBar } from './ComposerContextBar';
 import {
 	MessageSubmitInfo,
 	MessageSubmitInfoInterface
@@ -127,7 +137,6 @@ import {
 	resolveComposerMessageSnapshot,
 	shouldPreserveComposerAfterRetry
 } from './composerMessageSnapshot';
-import { ReactComponent as RemoveIcon } from '../../resources/img/icons/x.svg';
 import { ReactComponent as CalendarMonthIcon } from '../../resources/img/icons/calendar-month-navigation.svg';
 import './emojiPicker.styles';
 import './messageSubmitInterface.styles';
@@ -141,6 +150,7 @@ import {
 	buildVisibleToPrefix
 } from '../message/messageConstants';
 import { useE2EE } from '../../hooks/useE2EE';
+import { useLoadRoomMembers } from '../../hooks/useLoadRoomMembers';
 import {
 	apiPostError,
 	ERROR_LEVEL_ERROR,
@@ -157,9 +167,16 @@ import {
 	OVERLAY_E2EE,
 	OVERLAY_REQUEST
 } from '../../globalState/interfaces/AppConfig/OverlaysConfigInterface';
-import { getIconForAttachmentType } from '../message/messageHelpers';
-import { VoicePlayer } from '../voicePlayer/VoicePlayer';
-import { resolveAttachmentForSend } from './resolveAttachmentForSend';
+import { VoiceNoteRow } from '../voicePlayer/VoiceNoteRow';
+import {
+	AttachmentFailureReason,
+	attachmentFailureStatus,
+	classifyAttachmentSendError
+} from './attachmentSendFailure';
+import {
+	ComposerAttachmentCard,
+	deriveComposerAttachmentStatus
+} from './ComposerAttachmentCard';
 import { hasMatrixSessionId, resolveMatrixSessionId } from './matrixSessionId';
 import { TipTapComposer, TipTapComposerRef } from './TipTapComposer';
 import { useImagePreviewUrl } from './useImagePreviewUrl';
@@ -348,6 +365,17 @@ export interface MessageSubmitInterfaceComponentProps {
 		feedbackMailIntent?: boolean;
 	} | null;
 	onRetrySettled?: (requestId: string) => void;
+	/**
+	 * #1824: the conversation's own path, for a composer shown outside it
+	 * (the Activity Timeline preview) — the draft then resumes in the
+	 * conversation, not on the page the composer happened to be on.
+	 */
+	draftActionPath?: string | null;
+	/**
+	 * #1824: sending into an archived conversation re-opens it. The Timeline
+	 * preview must never do that (it leaves the Timeline), so it passes false.
+	 */
+	allowDearchive?: boolean;
 }
 
 /*
@@ -450,6 +478,8 @@ const AudienceModeratorIcon = () => (
 	</svg>
 );
 
+const VOICE_RECORDING_MIN_HEIGHT = 144;
+
 export const MessageSubmitInterfaceComponent = ({
 	className,
 	onSendButton,
@@ -488,7 +518,9 @@ export const MessageSubmitInterfaceComponent = ({
 	isOwnMessage,
 	onSendError,
 	retryRequest,
-	onRetrySettled
+	onRetrySettled,
+	draftActionPath: draftActionPathOverride = null,
+	allowDearchive = true
 }: MessageSubmitInterfaceComponentProps) => {
 	const { t: translate } = useTranslation();
 
@@ -569,6 +601,23 @@ export const MessageSubmitInterfaceComponent = ({
 		null
 	);
 	const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+	// The file send, from before its first byte until the message is out.
+	// `uploadProgress` cannot say this: it stays 0 while the token is fetched
+	// and the file encrypted.
+	const [isAttachmentSending, setIsAttachmentSending] = useState(false);
+	const isAttachmentSendingRef = useRef(false);
+	const markAttachmentSending = useCallback((sending: boolean) => {
+		isAttachmentSendingRef.current = sending;
+		setIsAttachmentSending(sending);
+	}, []);
+	// A send that failed. The file stays staged, so a retry can pick it up.
+	const [attachmentFailure, setAttachmentFailure] =
+		useState<AttachmentFailureReason | null>(null);
+	// A file refused before any upload. It is shown, but it is never sent.
+	const [attachmentRejection, setAttachmentRejection] = useState<{
+		file: File;
+		reason: Extract<AttachmentFailureReason, 'tooLarge' | 'format'>;
+	} | null>(null);
 	const [isRequestInProgress, setIsRequestInProgress] = useState(false);
 	const [attachmentUpload, setAttachmentUpload] =
 		useState<AttachmentUploadControl | null>(null);
@@ -615,6 +664,15 @@ export const MessageSubmitInterfaceComponent = ({
 		typeof window !== 'undefined' ? window.innerWidth <= 899 : false
 	);
 	const [isExpandedComposer, setIsExpandedComposer] = useState(false);
+	// Inside the Drafts center iframe the embedding page widens the frame.
+	const composerOwnerId = useId();
+	useEffect(() => {
+		reportComposerExpanded(composerOwnerId, isExpandedComposer);
+	}, [composerOwnerId, isExpandedComposer]);
+	useEffect(
+		() => () => reportComposerExpanded(composerOwnerId, false),
+		[composerOwnerId]
+	);
 	const [composerHeight, setComposerHeight] = useState<number | null>(null);
 	const [autoComposerHeight, setAutoComposerHeight] = useState<number | null>(
 		null
@@ -624,6 +682,16 @@ export const MessageSubmitInterfaceComponent = ({
 	// transition reads the old chrome and locks a mid-flight height into
 	// `--composer-height`; every ended height transition re-measures.
 	const [composerSettleTick, setComposerSettleTick] = useState(0);
+	const observeEditorContainer = useEditorResize(() =>
+		setComposerSettleTick((tick) => tick + 1)
+	);
+	const setTextareaInputRef = useCallback(
+		(node: HTMLDivElement | null) => {
+			textareaInputRef.current = node;
+			observeEditorContainer(node);
+		},
+		[observeEditorContainer]
+	);
 	const [isComposerResizing, setIsComposerResizing] = useState(false);
 	const [isComposerSelected, setIsComposerSelected] = useState(false);
 	const composerResizeStartRef = useRef<{
@@ -660,7 +728,14 @@ export const MessageSubmitInterfaceComponent = ({
 		Array<{ id: string; username: string }>
 	>([]);
 	const [agencyConsultantDirectory, setAgencyConsultantDirectory] = useState<
-		Map<string, { displayName: string; username: string }>
+		Map<
+			string,
+			{
+				displayName: string;
+				username: string;
+				matrixUserId?: string | null;
+			}
+		>
 	>(new Map());
 	/**
 	 * Why the mention directory looks the way it does (#993). Every failure
@@ -737,9 +812,8 @@ export const MessageSubmitInterfaceComponent = ({
 
 	const { visible: requestOverlayVisible, overlay: requestOverlay } =
 		useTimeoutOverlay(
-			// Disable the request overlay if upload is in progess because upload progress is shown in the ui already
-			isRequestInProgress &&
-				!(uploadProgress > 0 && uploadProgress < 100),
+			// A file send shows its own state on the card, the whole way.
+			isRequestInProgress && !isAttachmentSending,
 			null,
 			null,
 			null,
@@ -756,6 +830,16 @@ export const MessageSubmitInterfaceComponent = ({
 	}, [activeSession, activeSession.item.status, userData]);
 
 	const draftActionPath = useMemo(() => {
+		if (draftActionPathOverride) {
+			return buildSessionChannelPath(
+				draftActionPathOverride,
+				resolveComposerChannel({
+					threadRootId,
+					targetRoomId,
+					targetChannelKind
+				})
+			);
+		}
 		const params = new URLSearchParams(location.search);
 		params.delete('embeddedNotifications');
 		params.delete('draftScopeKey');
@@ -773,6 +857,7 @@ export const MessageSubmitInterfaceComponent = ({
 			})
 		);
 	}, [
+		draftActionPathOverride,
 		location.pathname,
 		location.search,
 		targetChannelKind,
@@ -816,18 +901,21 @@ export const MessageSubmitInterfaceComponent = ({
 		return contact?.displayName || contact?.username || topicName || null;
 	}, [activeSession, contact]);
 
+	const draftPractice = usePracticeActive();
 	const forcedDraftScopeKey = useMemo(() => {
-		const params = new URLSearchParams(location.search);
-		const allScopeKeys = params.getAll('draftScopeKey');
-		if (allScopeKeys.length) {
-			return allScopeKeys[allScopeKeys.length - 1];
+		// Both direct drafts and thread drafts belong to their target room.
+		// A stale deep link must not redirect a side-room draft to the case.
+		if (targetRoomId) {
+			return `scope:${targetRoomId}|thread:${threadRootId || 'main'}`;
 		}
-		// B2: the side room's composer keeps its own draft — scoped to the
-		// side room, never to the client room the main composer writes to.
-		return targetRoomId && !threadRootId
-			? `scope:${targetRoomId}|thread:main`
+		const params = new URLSearchParams(location.search);
+		const requested = params.getAll('draftScopeKey').at(-1);
+		return requested &&
+			(isOpaqueDraftScope(requested) ||
+				(draftPractice && isPracticeDraftScope(requested)))
+			? requested
 			: null;
-	}, [location.search, targetRoomId, threadRootId]);
+	}, [draftPractice, location.search, targetRoomId, threadRootId]);
 
 	const loadDraftIntoComposer = useCallback(
 		(loadedState: EditorState, rawDraft?: string) => {
@@ -895,7 +983,9 @@ export const MessageSubmitInterfaceComponent = ({
 	const {
 		onChange: onDraftMessageChange,
 		loaded: draftLoaded,
-		clearDraftMessage
+		clearDraftMessage,
+		draftScope,
+		retireDraftScope
 	} = useDraftMessage(
 		!isRequestInProgress && !isAnonymousEnquiryComposer,
 		loadDraftIntoComposer,
@@ -905,7 +995,9 @@ export const MessageSubmitInterfaceComponent = ({
 			sessionId: activeSession?.item?.id ?? null,
 			roomRef: activeSession?.rid ?? null,
 			title: draftTitle,
-			forcedScopeKey: forcedDraftScopeKey
+			forcedScopeKey: forcedDraftScopeKey,
+			// A side room's draft never mixes with the client room's (#1824).
+			isolateScope: Boolean(targetRoomId)
 		}
 	);
 
@@ -1005,18 +1097,6 @@ export const MessageSubmitInterfaceComponent = ({
 	}, [attachmentSelected]); // eslint-disable-line react-hooks/exhaustive-deps
 
 	useEffect(() => {
-		const uploadProgressBar = document.querySelector(
-			'.textarea__attachmentSelected__progress'
-		);
-		if (uploadProgressBar && uploadProgress > 0 && uploadProgress <= 100) {
-			uploadProgressBar.setAttribute(
-				'style',
-				`width: ${uploadProgress}%`
-			);
-		}
-	}, [uploadProgress]);
-
-	useEffect(() => {
 		if (hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)) {
 			return;
 		}
@@ -1036,6 +1116,8 @@ export const MessageSubmitInterfaceComponent = ({
 	const cleanupAttachment = useCallback(() => {
 		setUploadProgress(0);
 		setAttachmentSelected(null);
+		setAttachmentFailure(null);
+		setAttachmentRejection(null);
 		setAttachmentUpload(null);
 		setVoiceAttachmentDurationSec(0);
 		recordedVoiceRef.current = null;
@@ -1065,13 +1147,55 @@ export const MessageSubmitInterfaceComponent = ({
 		}
 	}, []);
 
-	const handleAttachmentUploadError = useCallback(
-		(infoType: string) => {
-			setActiveInfo(infoType);
+	const handleCardlessUploadError = useCallback(
+		(reason: AttachmentFailureReason) => {
+			// Discarding a take while it uploads is not an error to report.
+			if (reason !== 'cancelled') {
+				setActiveInfo(
+					reason === 'serverTooLarge'
+						? INFO_TYPES.ATTACHMENT_SIZE_ERROR
+						: reason === 'format'
+							? INFO_TYPES.ATTACHMENT_FORMAT_ERROR
+							: INFO_TYPES.ATTACHMENT_OTHER_ERROR
+				);
+			}
 			cleanupAttachment();
 			setTimeout(() => setIsRequestInProgress(false), 1200);
 		},
 		[cleanupAttachment]
+	);
+
+	/**
+	 * A failed send never takes anything away: the file stays on the card with
+	 * the reason and a retry, and the draft stays in the editor. A recorded
+	 * voice note has no such card and reports through the info banner. So does a
+	 * file whose chat the person has left: a retry would send it to the wrong one.
+	 */
+	const handleAttachmentSendFailure = useCallback(
+		(
+			error: unknown,
+			attachment: File,
+			cancelled: boolean,
+			withoutCard: boolean
+		) => {
+			const reason = classifyAttachmentSendError(error, cancelled);
+			setUploadProgress(0);
+			if (reason !== 'cancelled') {
+				// Reason and status only: never the file name or the caption.
+				apiPostError({
+					name: 'MatrixAttachmentSendError',
+					message: `Attachment send failed: ${reason}, status ${attachmentFailureStatus(error) ?? 'none'}, ${attachment.size} bytes`,
+					level: ERROR_LEVEL_WARN
+				}).then();
+			}
+			if (withoutCard) {
+				handleCardlessUploadError(reason);
+				return;
+			}
+			setAttachmentFailure(reason);
+			setIsRequestInProgress(false);
+		},
+		[handleCardlessUploadError]
 	);
 
 	const stopVoiceRecording = useCallback(
@@ -1118,10 +1242,27 @@ export const MessageSubmitInterfaceComponent = ({
 		if (mediaRecorderRef.current) {
 			stopVoiceRecording({ discard: true });
 		}
-		if (recordedVoiceRef.current) {
+		// The same goes for a chosen file, unless it is already on its way: that
+		// send keeps the room it started with.
+		if (!isAttachmentSendingRef.current) {
 			cleanupAttachment();
+			return;
 		}
-	}, [voiceDestinationKey, stopVoiceRecording, cleanupAttachment]);
+		// Its text belongs to the chat it started in, and the next chat replaces
+		// the editor only if it has a draft of its own. An edit brings its own
+		// text.
+		if (!editingMessage && !editingMessageId) {
+			setEditorState(EditorState.createEmpty());
+			setComposerText('');
+			composerRef.current?.clear();
+		}
+	}, [
+		voiceDestinationKey,
+		stopVoiceRecording,
+		cleanupAttachment,
+		editingMessage,
+		editingMessageId
+	]);
 
 	const scrollEditorToBottom = useCallback(() => {
 		const textInput: any = textareaInputRef.current;
@@ -1247,7 +1388,9 @@ export const MessageSubmitInterfaceComponent = ({
 		const textInput: any = textareaInputRef.current;
 		if (!textInput) return;
 		// Figma-locked composer uses fixed geometry; avoid runtime inline style overrides.
-		if (composerRef.current) {
+		// With an attachment the editor is not mounted at all, and these styles
+		// took the field's bottom edge away.
+		if (composerRef.current || attachmentSelected) {
 			return;
 		}
 
@@ -1670,15 +1813,25 @@ export const MessageSubmitInterfaceComponent = ({
 				return;
 			}
 
+			const hasTextContent = hasMessageContent(message);
+			// The composer stays mounted across chats, and a running send keeps
+			// going after the person has moved on. What it leaves behind must not
+			// touch the chat they are in now.
+			let leftChatDuringSend = false;
 			if (attachment) {
+				const isRecordedVoice =
+					recordedVoiceRef.current?.file === attachment;
 				// Matrix attachments stay on the SDK media path.
 				if (hasMatrixSessionId(matrixSessionId)) {
+					const abortController = new AbortController();
+					const sendDestination = voiceDestinationRef.current;
 					try {
 						if (!matrixRoomId) {
 							throw new Error('Matrix room ID is missing');
 						}
 
-						const abortController = new AbortController();
+						setAttachmentFailure(null);
+						markAttachmentSending(true);
 						setAttachmentUpload({
 							abort: () => abortController.abort()
 						});
@@ -1689,6 +1842,24 @@ export const MessageSubmitInterfaceComponent = ({
 							{
 								abortController,
 								uploadProgress: setUploadProgress,
+								// The draft goes out as the caption of this one
+								// event, so file and text arrive together or not
+								// at all. A recorded voice note carries no text.
+								...(hasTextContent
+									? {
+											caption: message,
+											mentionedUserIds:
+												extractMentionedUserIds(
+													composerRef.current?.getHTML()
+												)
+										}
+									: {}),
+								...(isRecordedVoice
+									? {}
+									: {
+											replyToEventId:
+												replyTo?.eventId || null
+										}),
 								threadRootId: threadRootId || null,
 								supervisorMessage: !!isSupervisor,
 								feedbackMailIntent: sentFeedbackMailIntent,
@@ -1700,31 +1871,32 @@ export const MessageSubmitInterfaceComponent = ({
 								teamDiscussion
 							}
 						);
-					} catch (error: any) {
-						const status =
-							error?.status ||
-							error?.httpStatus ||
-							error?.statusCode;
-						if (status === 413) {
-							handleAttachmentUploadError(
-								INFO_TYPES.ATTACHMENT_SIZE_ERROR
-							);
-						} else if (status === 415) {
-							handleAttachmentUploadError(
-								INFO_TYPES.ATTACHMENT_FORMAT_ERROR
-							);
-						} else {
-							handleAttachmentUploadError(
-								INFO_TYPES.ATTACHMENT_OTHER_ERROR
-							);
-						}
+					} catch (error: unknown) {
+						handleAttachmentSendFailure(
+							error,
+							attachment,
+							abortController.signal.aborted,
+							isRecordedVoice ||
+								voiceDestinationRef.current !== sendDestination
+						);
 						return;
+					} finally {
+						markAttachmentSending(false);
+						setAttachmentUpload(null);
+					}
+					leftChatDuringSend =
+						voiceDestinationRef.current !== sendDestination;
+					if (!isRecordedVoice && !leftChatDuringSend) {
+						onCancelReply && onCancelReply();
 					}
 				} else {
 					// Sessions without a Matrix room cannot receive
 					// attachments anymore; uploads go through Matrix media.
-					handleAttachmentUploadError(
-						INFO_TYPES.ATTACHMENT_OTHER_ERROR
+					handleAttachmentSendFailure(
+						new Error('Session has no Matrix room'),
+						attachment,
+						false,
+						isRecordedVoice
 					);
 					return;
 				}
@@ -1734,7 +1906,6 @@ export const MessageSubmitInterfaceComponent = ({
 			// Only send a separate text message if there's text and no attachment
 			// Retry requests carry the preserved original explicitly. Do not depend
 			// on the editor state having committed before deciding whether to send.
-			const hasTextContent = hasMessageContent(message);
 			const shouldSendTextMessage =
 				hasTextContent &&
 				(!attachment || !hasMatrixSessionId(matrixSessionId));
@@ -1827,22 +1998,30 @@ export const MessageSubmitInterfaceComponent = ({
 			} else {
 				// Matrix file upload already sent the message
 				onSendButton && onSendButton();
-				handleMessageSendSuccess(preserveComposerOnSuccess);
+				if (leftChatDuringSend && !preserveComposerOnSuccess) {
+					void retireDraftScope(draftScope);
+				}
+				handleMessageSendSuccess(
+					preserveComposerOnSuccess || leftChatDuringSend
+				);
 				cleanupAttachment();
 			}
 		},
 		[
 			activeSession,
 			cleanupAttachment,
+			draftScope,
 			encryptRoom,
 			hasMessageContent,
-			handleAttachmentUploadError,
+			handleAttachmentSendFailure,
 			handleMessageSendSuccess,
+			markAttachmentSending,
 			isSupervisor,
 			matrixClientService,
 			onSendButton,
 			onSendError,
 			resolvedChatSession,
+			retireDraftScope,
 			setE2EEState,
 			supervisionRoomId,
 			targetRoomId,
@@ -1872,15 +2051,16 @@ export const MessageSubmitInterfaceComponent = ({
 				feedbackMailIntent?: boolean;
 			}
 		) => {
-			const attachmentInput: any = attachmentInputRef.current;
-			const selectedFile = attachmentInput && attachmentInput.files[0];
-			const attachment = retryOfId
-				? null
-				: resolveAttachmentForSend(
-						preselectedFile,
-						selectedFile,
-						attachmentSelected
-					);
+			// A file refused on the card has to be dealt with first: sending the
+			// text alone next to it would read as if the file had gone too.
+			if (attachmentRejection && !retryOfId) {
+				return null;
+			}
+			// The card is the promise: exactly the file it shows goes out. Every
+			// way in (picker, drop, paste, recording) lands in this one state, so
+			// neither an older pick in the input nor a dropped file already
+			// removed from the card can slip in here.
+			const attachment = retryOfId ? null : attachmentSelected;
 
 			const composerMessageBeforeSend = getTypedMarkdownMessage();
 			const currentTypedMessage =
@@ -2073,6 +2253,7 @@ export const MessageSubmitInterfaceComponent = ({
 			retainsGroupAudience,
 			audienceSelectionStorageKey,
 			restoredAudienceKey,
+			attachmentRejection,
 			attachmentSelected,
 			feedbackMailIntent,
 			teamDiscussion,
@@ -2086,7 +2267,6 @@ export const MessageSubmitInterfaceComponent = ({
 			isSupervisor,
 			matrixClientService,
 			onLocalMessageEdit,
-			preselectedFile,
 			resolvedChatSession,
 			selectedAudienceValues,
 			sendEnquiry,
@@ -2125,6 +2305,10 @@ export const MessageSubmitInterfaceComponent = ({
 			return null;
 		}
 
+		if (isSessionArchived && !allowDearchive) {
+			// #1824: never re-open a conversation from outside it.
+			return null;
+		}
 		if (isSessionArchived) {
 			apiPutDearchive(activeSession.item.id)
 				.then(prepareAndSendMessage)
@@ -2159,6 +2343,7 @@ export const MessageSubmitInterfaceComponent = ({
 		navigate,
 		isRequestInProgress,
 		isVoiceRecording,
+		allowDearchive,
 		isSessionArchived,
 		listPath,
 		prepareAndSendMessage,
@@ -2212,104 +2397,97 @@ export const MessageSubmitInterfaceComponent = ({
 	]);
 
 	const handleAttachmentSelect = useCallback(() => {
+		if (isAttachmentSendingRef.current) {
+			return;
+		}
 		const attachmentInput: any = attachmentInputRef.current;
 		attachmentInput.click();
 	}, []);
 
-	const displayAttachmentToUpload = useCallback(
-		(attachment: File, options?: { keepDraft?: boolean }) => {
-			// #1142: the voice review always shows the file that will be
-			// sent. Any other file (upload, drop, paste) replaces the staged
-			// recording; the preview URL is revoked by its effect cleanup.
-			if (recordedVoiceRef.current?.file !== attachment) {
-				recordedVoiceRef.current = null;
-				setVoicePreviewUrl(null);
-				setVoiceAttachmentDurationSec(0);
-			}
-			setAttachmentSelected(attachment);
-			setActiveInfo('');
-			if (options?.keepDraft) {
+	const displayAttachmentToUpload = useCallback((attachment: File) => {
+		// #1142: the voice review always shows the file that will be
+		// sent. Any other file (upload, drop, paste) replaces the staged
+		// recording; the preview URL is revoked by its effect cleanup.
+		if (recordedVoiceRef.current?.file !== attachment) {
+			recordedVoiceRef.current = null;
+			setVoicePreviewUrl(null);
+			setVoiceAttachmentDurationSec(0);
+		}
+		setAttachmentSelected(attachment);
+		setAttachmentFailure(null);
+		setAttachmentRejection(null);
+		setActiveInfo('');
+		// The draft is left alone on purpose: it goes out as the file's caption.
+	}, []);
+
+	const isEditingMessageRef = useRef(false);
+	isEditingMessageRef.current = Boolean(editingMessage || editingMessageId);
+
+	/**
+	 * Every way a file gets into the composer ends here: picker, a drop or paste
+	 * into the editor, and a drop on the session area. So they all reach the same
+	 * card, with the same checks. These callbacks stay stable: the preselected
+	 * file's effect depends on them, and rerunning it would bring a file back
+	 * that was just removed.
+	 */
+	const stageAttachment = useCallback(
+		(attachment?: File | null) => {
+			// An edit replaces text and has no place for a file, and a running
+			// send keeps the file it started with.
+			if (
+				!attachment ||
+				isAttachmentSendingRef.current ||
+				isEditingMessageRef.current
+			) {
 				return;
 			}
-			// Clear any existing text in the input when attachment is selected
-			setEditorState(EditorState.createEmpty());
-			setComposerText('');
-			composerRef.current?.clear();
+			const rejection = !isSupportedAttachment(attachment)
+				? 'format'
+				: getAttachmentSizeMBForKB(attachment.size) >
+					  ATTACHMENT_MAX_SIZE_IN_MB
+					? 'tooLarge'
+					: null;
+			if (!rejection) {
+				displayAttachmentToUpload(attachment);
+				return;
+			}
+			// A recording under review has no room for the card. It stays, and
+			// the refusal goes to the info banner.
+			if (recordedVoiceRef.current) {
+				setActiveInfo(
+					rejection === 'format'
+						? INFO_TYPES.ATTACHMENT_FORMAT_ERROR
+						: INFO_TYPES.ATTACHMENT_SIZE_ERROR
+				);
+				return;
+			}
+			setAttachmentSelected(null);
+			setAttachmentFailure(null);
+			setAttachmentRejection({ file: attachment, reason: rejection });
+			setActiveInfo('');
 		},
-		[]
+		[displayAttachmentToUpload]
 	);
-
-	const handleLargeAttachments = useCallback(() => {
-		removeSelectedAttachment();
-		setActiveInfo(INFO_TYPES.ATTACHMENT_SIZE_ERROR);
-	}, [removeSelectedAttachment]);
-
-	const handleUnsupportedAttachments = useCallback(() => {
-		removeSelectedAttachment();
-		setActiveInfo(INFO_TYPES.ATTACHMENT_FORMAT_ERROR);
-	}, [removeSelectedAttachment]);
 
 	const handleAttachmentChange = useCallback(() => {
 		const attachmentInput: any = attachmentInputRef.current;
 		const attachment = attachmentInput.files[0];
-		if (!attachment || !isSupportedAttachment(attachment)) {
-			handleUnsupportedAttachments();
-			return;
-		}
-		const attachmentSizeMB = getAttachmentSizeMBForKB(attachment.size);
-		attachmentSizeMB > ATTACHMENT_MAX_SIZE_IN_MB
-			? handleLargeAttachments()
-			: displayAttachmentToUpload(attachment);
-	}, [
-		displayAttachmentToUpload,
-		handleLargeAttachments,
-		handleUnsupportedAttachments
-	]);
+		stageAttachment(attachment);
+		// The card holds the file now. Clearing the input lets the same file be
+		// picked again after removing it.
+		removeSelectedAttachment();
+	}, [removeSelectedAttachment, stageAttachment]);
 
 	/** Files dropped/pasted into the TipTap editor (WP-4): same single-attachment flow. */
 	const handleComposerFilesSelected = useCallback(
-		(files: File[]) => {
-			const attachment = files[0];
-			if (!attachment) {
-				return;
-			}
-			if (!isSupportedAttachment(attachment)) {
-				handleUnsupportedAttachments();
-				return;
-			}
-			const attachmentSizeMB = getAttachmentSizeMBForKB(attachment.size);
-			attachmentSizeMB > ATTACHMENT_MAX_SIZE_IN_MB
-				? handleLargeAttachments()
-				: displayAttachmentToUpload(attachment);
-		},
-		[
-			displayAttachmentToUpload,
-			handleLargeAttachments,
-			handleUnsupportedAttachments
-		]
+		(files: File[]) => stageAttachment(files[0]),
+		[stageAttachment]
 	);
-
-	const handlePreselectedAttachmentChange = useCallback(() => {
-		const attachment = preselectedFile;
-		if (!attachment || !isSupportedAttachment(attachment)) {
-			handleUnsupportedAttachments();
-			return;
-		}
-		const attachmentSizeMB = getAttachmentSizeMBForKB(attachment.size);
-		attachmentSizeMB > ATTACHMENT_MAX_SIZE_IN_MB
-			? handleLargeAttachments()
-			: displayAttachmentToUpload(attachment);
-	}, [
-		displayAttachmentToUpload,
-		handleLargeAttachments,
-		handleUnsupportedAttachments,
-		preselectedFile
-	]);
 
 	useEffect(() => {
 		if (!preselectedFile) return;
-		handlePreselectedAttachmentChange();
-	}, [handlePreselectedAttachmentChange, preselectedFile]);
+		stageAttachment(preselectedFile);
+	}, [preselectedFile, stageAttachment]);
 
 	useEffect(() => {
 		return () => {
@@ -2330,14 +2508,42 @@ export const MessageSubmitInterfaceComponent = ({
 	// a fresh URL instead of leaving the <img> on a revoked blob (broken thumb).
 	const attachmentPreviewUrl = useImagePreviewUrl(attachmentSelected);
 
+	// The file on the card: the staged one, or the one just refused.
+	const attachmentCardFile =
+		attachmentSelected ?? attachmentRejection?.file ?? null;
+	// The card sits on the editor's lower edge and its height depends on the
+	// state and on how far its text wraps, so the editor has to be told.
+	const attachmentCardRef = useRef<HTMLDivElement>(null);
+	const [attachmentCardHeight, setAttachmentCardHeight] = useState(0);
+	useLayoutEffect(() => {
+		const card = attachmentCardRef.current;
+		if (!card) {
+			setAttachmentCardHeight(0);
+			return;
+		}
+		const measure = () => setAttachmentCardHeight(card.offsetHeight);
+		measure();
+		if (typeof ResizeObserver === 'undefined') {
+			return;
+		}
+		const observer = new ResizeObserver(measure);
+		observer.observe(card);
+		return () => observer.disconnect();
+	}, [attachmentCardFile, voicePreviewUrl]);
+
 	const handleAttachmentRemoval = useCallback(() => {
-		if (uploadProgress && attachmentUpload) {
+		if (isAttachmentSendingRef.current && attachmentUpload) {
 			attachmentUpload.abort();
 			setTimeout(() => setIsRequestInProgress(false), 1200);
 		}
 		setActiveInfo('');
 		cleanupAttachment();
-	}, [attachmentUpload, cleanupAttachment, uploadProgress]);
+	}, [attachmentUpload, cleanupAttachment]);
+
+	// Ends in the `cancelled` failure: file and draft stay for another try.
+	const handleAttachmentCancel = useCallback(() => {
+		attachmentUpload?.abort();
+	}, [attachmentUpload]);
 
 	// #1142: after Discard the review card unmounts; hand focus back to the
 	// editor so a keyboard user is not dropped on <body>.
@@ -2349,15 +2555,24 @@ export const MessageSubmitInterfaceComponent = ({
 	const getMessageSubmitInfo = useCallback((): MessageSubmitInfoInterface => {
 		let infoData;
 		if (activeInfo === INFO_TYPES.ABSENT) {
-			const contact = getContact(activeSession);
+			const consultantLabel = resolveAssignedConsultantLabel(
+				activeSession,
+				userData,
+				translate
+			);
+			const contact =
+				consultantLabel === undefined
+					? getContact(activeSession)
+					: null;
 			infoData = {
 				isInfo: true,
 				infoHeadline: `${
+					consultantLabel ||
 					contact?.displayName ||
 					contact?.username ||
 					translate('sessionList.user.consultantUnknown')
 				} ${translate('consultant.absent.message')} `,
-				infoMessage: activeSession.consultant.absenceMessage
+				infoMessage: activeSession.consultant?.absenceMessage
 			};
 		} else if (activeInfo === INFO_TYPES.ATTACHMENT_SIZE_ERROR) {
 			infoData = {
@@ -2442,7 +2657,7 @@ export const MessageSubmitInterfaceComponent = ({
 		}
 
 		return infoData;
-	}, [activeInfo, activeSession, translate]);
+	}, [activeInfo, activeSession, translate, userData]);
 
 	const handleBookingButton = useCallback(() => {
 		navigate('/booking/');
@@ -2522,59 +2737,6 @@ export const MessageSubmitInterfaceComponent = ({
 		},
 		[deriveLabelFromUserId]
 	);
-
-	/**
-	 * Fuzzy id expansion, kept only for the @-mention provider below.
-	 *
-	 * The audience selector no longer uses it: it splits an id on
-	 * non-alphanumerics and keeps every token of four or more characters, so
-	 * `@consultant42:example.org` yields `example` — a token every account on the
-	 * homeserver shares. As an identity test that is worthless, which is why
-	 * recipient collection now runs on `audienceIdentityKeys` instead (#894).
-	 *
-	 * The mention provider still matches on these tokens, and inherits the same
-	 * weakness one level down: two counsellors who merely share a surname
-	 * collide, so a pill for `hans.meier` can resolve to `@anna.meier`'s Matrix
-	 * id and mark him as in-room. That belongs to the mention feature (#435)
-	 * rather than to the Send-to selector, so it is reported separately instead
-	 * of being changed here.
-	 */
-	const getComparableAudienceIds = useCallback((rawValue?: string | null) => {
-		const compact = (rawValue || '').trim().toLowerCase();
-		if (!compact) {
-			return new Set<string>();
-		}
-		const ids = new Set<string>();
-		const addVariants = (value: string) => {
-			const normalized = (value || '').trim().toLowerCase();
-			if (!normalized) {
-				return;
-			}
-			ids.add(normalized);
-			ids.add(normalized.replace(/\s+/g, ''));
-			ids.add(normalized.replace(/[^a-z0-9]/gi, ''));
-			normalized
-				.split(/[^a-z0-9]+/gi)
-				.filter(Boolean)
-				.filter((token) => token.length >= 4 && token !== 'enc')
-				.forEach((token) => ids.add(token));
-			const consultantTokenMatches =
-				normalized.match(/consultant\d+/gi) || [];
-			consultantTokenMatches.forEach((token) =>
-				ids.add(token.toLowerCase())
-			);
-		};
-		addVariants(compact);
-		const withoutAt = compact.startsWith('@') ? compact.slice(1) : compact;
-		const localPart = withoutAt.split(':')[0];
-		addVariants(withoutAt);
-		addVariants(localPart);
-		ids.add(`@${withoutAt}`);
-		if (localPart) {
-			ids.add(`@${localPart}`);
-		}
-		return ids;
-	}, []);
 
 	useEffect(() => {
 		setAudienceRefreshTick((prev) => prev + 1);
@@ -2675,7 +2837,11 @@ export const MessageSubmitInterfaceComponent = ({
 				}
 				const nextDirectory = new Map<
 					string,
-					{ displayName: string; username: string }
+					{
+						displayName: string;
+						username: string;
+						matrixUserId?: string | null;
+					}
 				>();
 				(Array.isArray(consultants) ? consultants : []).forEach(
 					(consultant) => {
@@ -2691,14 +2857,20 @@ export const MessageSubmitInterfaceComponent = ({
 						}`
 							.trim()
 							.replace(/\s+/g, ' ');
-						const username = `${consultant?.username || ''}`.trim();
+						// #1998: the list sends the stored, encoded name
+						// ("enc.…"); room members carry the plain one in their
+						// Matrix id, so only the decoded name can match them.
+						const username = decodeUsernameSafely(
+							`${consultant?.username || ''}`.trim()
+						);
 						nextDirectory.set(consultantId, {
 							displayName:
 								displayName ||
 								fallbackName ||
 								username ||
 								consultantId,
-							username
+							username,
+							matrixUserId: consultant?.matrixUserId
 						});
 					}
 				);
@@ -3444,7 +3616,7 @@ export const MessageSubmitInterfaceComponent = ({
 					setVoicePreviewUrl(URL.createObjectURL(blob));
 					setVoiceAttachmentDurationSec(elapsedSec);
 					// #1142: a recording never consumes what the user typed.
-					displayAttachmentToUpload(voiceFile, { keepDraft: true });
+					displayAttachmentToUpload(voiceFile);
 				}
 				cleanupVoiceRecorder();
 			};
@@ -3504,14 +3676,6 @@ export const MessageSubmitInterfaceComponent = ({
 		[translate]
 	);
 
-	const getAttachmentIcon = useCallback((type: string) => {
-		const Icon = getIconForAttachmentType(type);
-		if (Icon) {
-			return <Icon aria-hidden="true" focusable="false" />;
-		}
-		return null;
-	}, []);
-
 	const isVoiceAttachmentSelected =
 		!!attachmentSelected?.type?.startsWith('audio/');
 
@@ -3523,11 +3687,12 @@ export const MessageSubmitInterfaceComponent = ({
 	 * pending — through the mic-button blur, through the preview — until it is
 	 * sent or discarded.
 	 */
-	const isVoiceInsertionPending =
-		isVoiceRecording || isVoiceAttachmentSelected;
 	// #1142: Stop unmounts the button that had focus. Move focus to the
 	// review (announced by its group label) instead of dropping it on <body>.
 	const isVoiceReviewOpen = isVoiceAttachmentSelected && !!voicePreviewUrl;
+	// An audio file from the disk is a file with a card, not a recording.
+	const isVoiceInsertionPending =
+		isVoiceRecording || isVoiceAttachmentSelected;
 	useEffect(() => {
 		if (isVoiceReviewOpen) {
 			voiceReviewRef.current?.focus();
@@ -3536,11 +3701,6 @@ export const MessageSubmitInterfaceComponent = ({
 	useEffect(() => {
 		composerRef.current?.setInsertionMarker(isVoiceInsertionPending);
 	}, [isVoiceInsertionPending]);
-	const formatRecordingDuration = useCallback((totalSeconds: number) => {
-		const minutes = Math.floor(totalSeconds / 60);
-		const seconds = totalSeconds % 60;
-		return `${String(minutes)}:${String(seconds).padStart(2, '0')}`;
-	}, []);
 	const typedMessage = getTypedMarkdownMessage();
 	const typedMessageLength =
 		getPlainTextFromComposerValue(typedMessage).length;
@@ -3553,6 +3713,7 @@ export const MessageSubmitInterfaceComponent = ({
 			? translate('message.submit.characterCounter.warning')
 			: '';
 	const canSendMessage =
+		!attachmentRejection &&
 		(!!attachmentSelected || hasMessageContent(typedMessage)) &&
 		(!isMessageOverLimit ||
 			(isVoiceAttachmentSelected && !!voicePreviewUrl));
@@ -3648,17 +3809,16 @@ export const MessageSubmitInterfaceComponent = ({
 	]);
 
 	const handleUpload = useCallback((): boolean => {
-		if (!hasUploadFunctionality || !!uploadProgress || isVoiceRecording) {
+		if (
+			!hasUploadFunctionality ||
+			isAttachmentSendingRef.current ||
+			isVoiceRecording
+		) {
 			return false;
 		}
 		handleAttachmentSelect();
 		return true;
-	}, [
-		hasUploadFunctionality,
-		uploadProgress,
-		isVoiceRecording,
-		handleAttachmentSelect
-	]);
+	}, [hasUploadFunctionality, isVoiceRecording, handleAttachmentSelect]);
 
 	const handleOpenEmoji = useCallback((): boolean => {
 		if (isEmojiStripOpen) {
@@ -3846,46 +4006,38 @@ export const MessageSubmitInterfaceComponent = ({
 	const mentionDataRef = useRef({
 		directory: agencyConsultantDirectory,
 		directoryState: mentionDirectoryState,
-		inRoomValues: new Set<string>(),
-		matrixUserIdByComparableId: new Map<string, string>(),
+		readMemberIds: (): string[] => [],
+		reachOutsideRoom: false,
 		selfId: userData?.userId as string | undefined
 	});
+	// #1998: the team discussion has its own room. The audience above belongs
+	// to the enquiry's room and stays empty until the enquiry is accepted, so
+	// there every colleague read as "not in chat" and a mention went out
+	// without its Matrix id. The team room is read when the list opens: this
+	// component does not re-render while someone types, so a snapshot from
+	// the last render can predate the room's members.
+	const teamMentionRoomId = teamDiscussion ? targetRoomId : undefined;
+	useLoadRoomMembers(teamMentionRoomId);
+	const audienceMentionMemberIds = audienceOptions
+		.filter((option) => option.value !== AUDIENCE_ALL)
+		.map((option) => option.value);
 	mentionDataRef.current = {
 		directory: agencyConsultantDirectory,
 		directoryState: mentionDirectoryState,
-		inRoomValues: new Set(
-			audienceOptions
-				.filter((option) => option.value !== AUDIENCE_ALL)
-				.flatMap((option) => [
-					...Array.from(getComparableAudienceIds(option.value)),
-					...Array.from(getComparableAudienceIds(option.label))
-				])
-		),
 		// Intentional mentions (#435): audienceOptions already resolves room
 		// members to their real Matrix user id (option.value is member.userId
-		// for room members — see the audience-options effect above). Reusing
-		// that instead of a second room-member fetch keeps this a single
-		// source of truth, and only ever a *resolved* member id ends up here.
-		matrixUserIdByComparableId: new Map(
-			audienceOptions
-				.filter(
-					(option) =>
-						option.value !== AUDIENCE_ALL &&
-						/^@[^:@\s]+:.+$/.test(option.value)
-				)
-				.flatMap((option) =>
-					Array.from(
-						new Set([
-							...Array.from(
-								getComparableAudienceIds(option.value)
-							),
-							...Array.from(
-								getComparableAudienceIds(option.label)
-							)
-						])
-					).map((id): [string, string] => [id, option.value])
-				)
-		),
+		// for room members — see the audience-options effect above), so only
+		// a *resolved* member id ends up in a mention.
+		readMemberIds: () =>
+			teamMentionRoomId
+				? roomMentionMemberIds(
+						matrixClientService
+							?.getClient?.()
+							?.getRoom?.(teamMentionRoomId),
+						getCurrentMatrixUserId()
+					)
+				: audienceMentionMemberIds,
+		reachOutsideRoom: !!teamMentionRoomId,
 		selfId: userData?.userId
 	};
 
@@ -3899,27 +4051,17 @@ export const MessageSubmitInterfaceComponent = ({
 			unavailableLabel: translate('message.mention.unavailable'),
 			loadingLabel: translate('message.mention.loading'),
 			listLabel: translate('message.submit.toolbar.mention'),
+			getCheckLabel: (name: string) =>
+				translate('message.mention.check', { name }),
+			getCheckedLabel: (count: number) =>
+				translate('message.mention.checked', { value: count }),
 			getCandidates: () => {
-				const { directory, inRoomValues, matrixUserIdByComparableId } =
+				const { directory, readMemberIds, reachOutsideRoom } =
 					mentionDataRef.current;
-				return Array.from(directory.entries()).map(
-					([consultantId, info]) => {
-						const comparableIds = getComparableAudienceIds(
-							info.username
-						);
-						const matrixUserId = Array.from(comparableIds)
-							.map((id) => matrixUserIdByComparableId.get(id))
-							.find(Boolean);
-						return {
-							id: consultantId,
-							displayName: info.displayName,
-							username: info.username,
-							matrixUserId,
-							isInRoom: Array.from(comparableIds).some((id) =>
-								inRoomValues.has(id)
-							)
-						};
-					}
+				return resolveMentionCandidates(
+					directory,
+					readMemberIds(),
+					reachOutsideRoom
 				);
 			}
 		}),
@@ -3987,6 +4129,21 @@ export const MessageSubmitInterfaceComponent = ({
 		autoComposerHeight,
 		composerMinHeight
 	);
+	// While recording: one line of text above the voice row, on a phone too.
+	const composerCardHeight = isVoiceRecording
+		? Math.max(
+				effectiveComposerHeight || composerMinHeight,
+				VOICE_RECORDING_MIN_HEIGHT
+			)
+		: attachmentCardFile && attachmentCardHeight
+			? Math.min(
+					Math.max(
+						effectiveComposerHeight || composerMinHeight,
+						composerMinHeight + attachmentCardHeight
+					),
+					getComposerHeightBounds().maxHeight
+				)
+			: effectiveComposerHeight;
 
 	// A dragged height belongs to one conversation only. Keeping the component
 	// mounted while routing between sessions must not carry that geometry over.
@@ -3998,6 +4155,11 @@ export const MessageSubmitInterfaceComponent = ({
 	// Keep the existing 196/180px baseline, then grow with the rendered TipTap
 	// content up to fourteen lines. Beyond that the editor scrolls, while the
 	// drag handle can still explicitly make the composer taller.
+	const hasContextBar = Boolean(replyTo || editingMessage);
+	const flushContextBarReserve =
+		flushCorner && hasContextBar && !isMobileViewport
+			? FLUSH_CONTEXT_BAR_RESERVE
+			: 0;
 	useLayoutEffect(() => {
 		if (isExpandedComposer) {
 			return;
@@ -4020,7 +4182,8 @@ export const MessageSubmitInterfaceComponent = ({
 		);
 		const composerChromeHeight =
 			shell.getBoundingClientRect().height -
-			editor.getBoundingClientRect().height;
+			editor.getBoundingClientRect().height -
+			flushContextBarReserve;
 		const bounds = getComposerHeightBounds();
 		const nextHeight = calculateAutoComposerHeight({
 			contentHeight,
@@ -4028,13 +4191,17 @@ export const MessageSubmitInterfaceComponent = ({
 			composerChromeHeight,
 			bounds
 		});
-		setAutoComposerHeight(
-			nextHeight > bounds.minHeight ? nextHeight : null
+		const nextAutoHeight =
+			nextHeight > bounds.minHeight ? nextHeight : null;
+		setAutoComposerHeight((previous) =>
+			previous === nextAutoHeight ? previous : nextAutoHeight
 		);
 	}, [
-		attachmentSelected,
+		attachmentCardFile,
+		attachmentCardHeight,
 		composerSettleTick,
 		composerText,
+		flushContextBarReserve,
 		getComposerHeightBounds,
 		isExpandedComposer,
 		isMobileViewport
@@ -4169,7 +4336,13 @@ export const MessageSubmitInterfaceComponent = ({
 			)}
 			style={expandedComposerStyle}
 		>
-			{activeInfo && <MessageSubmitInfo {...getMessageSubmitInfo()} />}
+			{activeInfo && (
+				<MessageSubmitInfo
+					{...getMessageSubmitInfo()}
+					onClose={() => setActiveInfo(null)}
+					closeLabel={translate('app.close')}
+				/>
+			)}
 			{threadRootId && (
 				<div
 					className="messageSubmit__target"
@@ -4198,53 +4371,6 @@ export const MessageSubmitInterfaceComponent = ({
 			)}
 
 			<form className="textarea" onSubmit={handleFormSubmit}>
-				{/* Relations foundation (#435): cancelable reply-quote preview,
-				    docked inside the composer box above the input. */}
-				{replyTo && (
-					<div className="messageSubmit__replyPreview" role="status">
-						<div className="messageSubmit__replyPreviewContent">
-							<span className="messageSubmit__replyPreviewLabel">
-								{translate('message.reply.previewLabel')}{' '}
-								<strong>{replyTo.author}</strong>
-							</span>
-							<span className="messageSubmit__replyPreviewText">
-								{replyTo.text}
-							</span>
-						</div>
-						<button
-							type="button"
-							className="messageSubmit__replyPreviewCancel"
-							onClick={() => onCancelReply && onCancelReply()}
-							aria-label={translate('message.reply.cancel')}
-						>
-							×
-						</button>
-					</div>
-				)}
-				{/* Editing (m.replace, #435): cancelable edit-in-progress banner.
-				    Figma "Reply Bar_v2" (9354:206458 desktop / 18:6713 mobile):
-				    a full-width 32px bar — cancel glyph, emphasized lead, then
-				    the message itself on one ellipsized line. */}
-				{editingMessage && (
-					<div className="messageSubmit__editPreview" role="status">
-						<button
-							type="button"
-							className="messageSubmit__editPreviewCancel"
-							onClick={() => onCancelEdit && onCancelEdit()}
-							aria-label={translate('message.edit.cancel')}
-						>
-							<HighlightOffIcon fontSize="inherit" />
-						</button>
-						<span className="messageSubmit__editPreviewText">
-							<span className="messageSubmit__editPreviewLabel">
-								{translate('message.edit.previewLabel')}
-							</span>{' '}
-							<span className="messageSubmit__editPreviewQuote">
-								{editingMessage.text}
-							</span>
-						</span>
-					</div>
-				)}
 				<div
 					className={clsx(
 						'textarea__wrapper',
@@ -4257,8 +4383,10 @@ export const MessageSubmitInterfaceComponent = ({
 							'textarea__wrapper-send-message',
 							canSendMessage &&
 								'textarea__wrapper-send-message--ready',
-							isComposerSelected &&
+							(isComposerSelected || isVoiceRecording) &&
 								'textarea__wrapper-send-message--selected',
+							(replyTo || editingMessage) &&
+								'textarea__wrapper-send-message--withContextBar',
 							isExpandedComposer &&
 								'textarea__wrapper-send-message--expanded',
 							isComposerResizing &&
@@ -4280,13 +4408,55 @@ export const MessageSubmitInterfaceComponent = ({
 						onBlur={handleComposerCardBlur}
 						onTransitionEnd={handleComposerShellTransitionEnd}
 						style={
-							!isExpandedComposer && effectiveComposerHeight
+							!isExpandedComposer && composerCardHeight
 								? ({
-										'--composer-height': `${effectiveComposerHeight}px`
+										'--composer-height': `${composerCardHeight}px`
 									} as React.CSSProperties)
 								: undefined
 						}
 					>
+						{/* Relations foundation (#435): what the next send refers to.
+						    Inside the card, between drag handle and editor. */}
+						{replyTo && (
+							<ComposerContextBar
+								kind="reply"
+								lead={replyTo.author}
+								quote={replyTo.text}
+								statusLabel={`${translate('message.reply.previewLabel')} ${replyTo.author}`}
+								cancelLabel={translate('message.reply.cancel')}
+								onCancel={onCancelReply}
+							/>
+						)}
+						{editingMessage && (
+							<ComposerContextBar
+								kind="edit"
+								lead={translate('message.edit.previewLabel')}
+								quote={editingMessage.text}
+								cancelLabel={translate('message.edit.cancel')}
+								onCancel={onCancelEdit}
+							/>
+						)}
+						{/* Frank (03.11.): on the phone the format tools rest in a
+						    grey box above the card, built like the reply bar. */}
+						{isMobileViewport && !isCompactActionStripOpen && (
+							<div
+								className="messageSubmit__formatTray"
+								data-cy="composer-format-tray"
+								onMouseDown={handleToolbarMouseDown}
+							>
+								<ComposerToolbar
+									direction={composerMenuDirection}
+									isMobile
+									inTray
+									isExpanded={isExpandedComposer}
+									onAction={handleToolbarAction}
+									isActionSelected={isToolbarActionSelected}
+									onCollapse={openCompactActionStrip}
+									onExpandToggle={toggleExpandedComposer}
+									translate={translate}
+								/>
+							</div>
+						)}
 						{/* T6/T16: the drag pill belongs to every docked composer —
 						    main chat, supervision room and thread panel, on the
 						    phone too (the navigator row that carried it is gone). */}
@@ -4295,14 +4465,10 @@ export const MessageSubmitInterfaceComponent = ({
 								onPointerDown={handleComposerResizePointerDown}
 								onKeyDown={handleComposerResizeKeyDown}
 								touched={isComposerResizing}
-								// T31: phone — pill on the card's top edge; T40:
-								// the flush desktop field has no frame above the
-								// field either, so the pill sits on its edge too.
-								position={
-									isMobileViewport || flushCorner
-										? 'edge'
-										: 'inside'
-								}
+								// T31: the pill sits on the card's top edge at every
+								// width; Frank (03.11.): the desktop must not differ
+								// from the phone or from an open side panel (T40).
+								position="edge"
 								ariaLabel={translate(
 									'message.mobileNav.dragToExpand'
 								)}
@@ -4676,12 +4842,21 @@ export const MessageSubmitInterfaceComponent = ({
 							<div
 								className={clsx(
 									'textarea__input',
-									attachmentSelected &&
+									attachmentCardFile &&
 										'textarea__input--attachmentMode',
+									isVoiceRecording &&
+										'textarea__input--voiceRecording',
 									editingMessageId &&
 										'textarea__input--editing'
 								)}
-								ref={textareaInputRef}
+								ref={setTextareaInputRef}
+								style={
+									attachmentCardFile && attachmentCardHeight
+										? ({
+												'--composer-attachment-card-height': `${attachmentCardHeight}px`
+											} as React.CSSProperties)
+										: undefined
+								}
 								// Where the closing animation of a waiting room ends
 								// (ORISO-Frontend#1737).
 								data-closing-focal="message-field"
@@ -4734,104 +4909,78 @@ export const MessageSubmitInterfaceComponent = ({
 									}
 								}}
 							>
+								{hasUploadFunctionality && isVoiceRecording && (
+									<VoiceNoteRow
+										mode="recording"
+										durationSec={voiceRecordingDurationSec}
+										onStop={() => stopVoiceRecording()}
+										onDiscard={() =>
+											stopVoiceRecording({
+												discard: true
+											})
+										}
+										className="textarea__voiceNoteRow"
+									/>
+								)}
 								{attachmentSelected &&
 								isVoiceAttachmentSelected &&
 								voicePreviewUrl ? (
-									<div className="textarea__attachmentMode textarea__attachmentMode--voice">
-										<div
-											className="textarea__attachmentModeCard textarea__attachmentModeCard--voice"
-											role="group"
-											ref={voiceReviewRef}
-											tabIndex={-1}
-											aria-label={translate(
-												'voice.recording.preview'
-											)}
-										>
-											<div className="textarea__attachmentModeInfo">
-												{voicePreviewUrl && (
-													// #996: the same player the
-													// sent message uses, so what
-													// you check before sending
-													// looks like what the other
-													// side gets.
-													<VoicePlayer
-														src={voicePreviewUrl}
-														durationSec={
-															voiceAttachmentDurationSec ||
-															null
-														}
-														size="sm"
-														showMeta={false}
-													/>
-												)}
-											</div>
-											<button
-												type="button"
-												className="textarea__voicePreview__discard"
-												onClick={handleVoiceDiscard}
-												title={translate(
-													'voice.recording.discard'
-												)}
-												aria-label={translate(
-													'voice.recording.discard'
-												)}
-											>
-												<RemoveIcon
-													aria-hidden="true"
-													focusable="false"
-												/>
-											</button>
-										</div>
-									</div>
-								) : attachmentSelected ? (
-									<div className="textarea__attachmentMode">
-										<div className="textarea__attachmentModeCard">
-											{attachmentPreviewUrl ? (
-												<img
-													className="textarea__attachmentModeThumb"
-													src={attachmentPreviewUrl}
-													alt={
-														attachmentSelected.name
-													}
-												/>
-											) : (
-												<span className="textarea__attachmentModeIcon">
-													{getAttachmentIcon(
-														attachmentSelected.type
-													)}
-												</span>
-											)}
-											<div className="textarea__attachmentModeInfo">
-												<p className="textarea__attachmentModeName">
-													{attachmentSelected.name}
-												</p>
-												<span className="textarea__attachmentModeMeta">
-													{Math.max(
-														1,
-														Math.round(
-															attachmentSelected.size /
-																1024
-														)
-													)}{' '}
-													KB
-												</span>
-											</div>
-											<button
-												type="button"
-												className="textarea__attachmentModeRemove"
-												onClick={
-													handleAttachmentRemoval
-												}
-												aria-label={translate(
-													'app.remove'
-												)}
-											>
-												<RemoveIcon />
-											</button>
-										</div>
-									</div>
+									// #996: the same player the sent message uses, so what
+									// you check before sending looks like what the other
+									// side gets.
+									<VoiceNoteRow
+										ref={voiceReviewRef}
+										mode="review"
+										src={voicePreviewUrl}
+										durationSec={
+											voiceAttachmentDurationSec || null
+										}
+										onDiscard={handleVoiceDiscard}
+										className="textarea__voiceNoteRow"
+									/>
 								) : (
 									<>
+										{attachmentCardFile && (
+											<ComposerAttachmentCard
+												ref={attachmentCardRef}
+												className="textarea__attachmentCard"
+												fileName={
+													attachmentCardFile.name
+												}
+												mimeType={
+													attachmentCardFile.type
+												}
+												sizeBytes={
+													attachmentCardFile.size
+												}
+												previewUrl={
+													attachmentPreviewUrl
+												}
+												status={deriveComposerAttachmentStatus(
+													{
+														failure:
+															attachmentRejection?.reason ??
+															attachmentFailure,
+														isSending:
+															isAttachmentSending,
+														progress: uploadProgress
+													}
+												)}
+												hasCaption={hasMessageContent(
+													composerText
+												)}
+												onRemove={
+													handleAttachmentRemoval
+												}
+												onCancel={
+													handleAttachmentCancel
+												}
+												onRetry={handleButtonClick}
+												onChooseAnother={
+													handleAttachmentSelect
+												}
+											/>
+										)}
 										{editingMessageId && (
 											<div
 												className="textarea__editingBanner"
@@ -4860,7 +5009,8 @@ export const MessageSubmitInterfaceComponent = ({
 											className="textarea__figmaToolbar"
 											onMouseDown={handleToolbarMouseDown}
 										>
-											{isCompactActionStripOpen ? (
+											{isCompactActionStripOpen ||
+											isMobileViewport ? (
 												<span className="composerToolbar__menuAnchor composerToolbar__menuAnchor--bar">
 													<DefaultActionBar
 														showBack={
@@ -4879,7 +5029,18 @@ export const MessageSubmitInterfaceComponent = ({
 															unreadMobileBadgeCount
 														}
 														onOpenTools={
-															closeCompactActionStrip
+															isCompactActionStripOpen
+																? closeCompactActionStrip
+																: openCompactActionStrip
+														}
+														isToolsOpen={
+															!isCompactActionStripOpen
+														}
+														isMobile={
+															isMobileViewport
+														}
+														menuDirection={
+															composerMenuDirection
 														}
 														showMic={
 															hasUploadFunctionality &&
@@ -4910,7 +5071,8 @@ export const MessageSubmitInterfaceComponent = ({
 															handleMentionInsert
 														}
 														showAttachment={
-															hasUploadFunctionality
+															hasUploadFunctionality &&
+															!isEditingAnyMessage
 														}
 														onAttachmentClick={
 															handleAttachmentSelect
@@ -4988,7 +5150,10 @@ export const MessageSubmitInterfaceComponent = ({
 											onChange={handleComposerChange}
 											placeholder={placeholder}
 											showToolbar={false}
-											readOnly={!!uploadProgress}
+											readOnly={
+												isAttachmentSending ||
+												!!uploadProgress
+											}
 											maxLength={INPUT_MAX_LENGTH}
 											onFocusChange={
 												setIsComposerSelected
@@ -5022,49 +5187,6 @@ export const MessageSubmitInterfaceComponent = ({
 									</>
 								)}
 							</div>
-							{hasUploadFunctionality &&
-								(isVoiceRecording ? (
-									<span
-										className={clsx(
-											'textarea__attachmentSelect',
-											'textarea__attachmentSelect--recording'
-										)}
-									>
-										<span className="textarea__voiceRecordingBar">
-											<span className="textarea__voiceRecordingDot"></span>
-											<span className="textarea__voiceRecordingLabel">
-												{translate(
-													'voice.recording.active'
-												)}
-											</span>
-											<span className="textarea__voiceRecordButton__timer">
-												{formatRecordingDuration(
-													voiceRecordingDurationSec
-												)}
-											</span>
-											<button
-												type="button"
-												className="textarea__voiceActionButton textarea__voiceActionButton--cancel"
-												onClick={() =>
-													stopVoiceRecording({
-														discard: true
-													})
-												}
-											>
-												{translate('app.cancel')}
-											</button>
-											<button
-												type="button"
-												className="textarea__voiceActionButton textarea__voiceActionButton--stop"
-												onClick={() =>
-													stopVoiceRecording()
-												}
-											>
-												{translate('app.stop')}
-											</button>
-										</span>
-									</span>
-								) : null)}
 						</span>
 						<div className="textarea__buttons">
 							<SendButton

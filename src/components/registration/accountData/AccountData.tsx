@@ -73,7 +73,13 @@ import genDiceIcon from '../../../resources/img/registration-md3/icons/gen-dice.
 import { DataProtectionConsentLabel } from './DataProtectionConsentLabel';
 import { DataProtectionSnackbar } from './DataProtectionSnackbar';
 import { toRegistrationUsername } from './registrationUsername';
+import { AskerDisplayNameField } from '../../pseudonym/AskerDisplayNameField';
+import {
+	isAskerDisplayNameTypingAllowed,
+	isContextEmailCollectionAllowed
+} from '../../../utils/askerAccountPolicy';
 import { ConsentCompletionPanel } from '../consentCompletion/ConsentCompletionPanel';
+import { usePrivacyNoticeGuard } from '../privacyNotice/usePrivacyNoticeGuard';
 import { useRegistrationCompletion } from '../consentCompletion/RegistrationCompletionContext';
 
 export const AccountData: FC<{
@@ -89,6 +95,7 @@ export const AccountData: FC<{
 	 * them", so the shape can be judged in Storybook before it is wired.
 	 */
 	entry?: 'registration' | 'link';
+	conversationType?: 'AGENCY_COUNSELLING' | 'SELF_HELP';
 	/**
 	 * Link entry only: join without ever choosing — or seeing — a password.
 	 *
@@ -133,6 +140,7 @@ export const AccountData: FC<{
 }> = ({
 	onChange,
 	entry = 'registration',
+	conversationType = 'AGENCY_COUNSELLING',
 	temporary = false,
 	compact = false,
 	dataProtection = 'checkbox'
@@ -158,14 +166,37 @@ export const AccountData: FC<{
 	>(restoredDraft?.acceptedConsentBinding ?? null);
 	const [isRepeatPasswordVisible, setIsRepeatPasswordVisible] =
 		useState<boolean>(false);
-	const [username, setUsername] = useState<string>(
-		restoredDraft?.username ?? ''
+	const [generatedUsername, setGeneratedUsername] = useState(
+		() =>
+			restoredDraft?.generatedUsername ?? toRegistrationUsername(identity)
 	);
-	const currentUsername = useRef(username);
+	const [typedUsername, setUsername] = useState<string>(
+		restoredDraft?.username ?? generatedUsername
+	);
+	const currentUsername = useRef(typedUsername);
 	const { tenant } = useContext(TenantContext);
 	const legalLinks = useContext(LegalLinksContext);
-	const emailVisible = tenant?.settings?.emailVisible ?? false;
-	const emailRequired = tenant?.settings?.emailRequired ?? false;
+	const aliasEditable = isAskerDisplayNameTypingAllowed(
+		tenant?.settings,
+		conversationType
+	);
+	const username = aliasEditable ? typedUsername : generatedUsername;
+	const [displayName, setDisplayName] = useState(
+		restoredDraft?.displayName ?? ''
+	);
+	const [generatedDisplayName, setGeneratedDisplayName] = useState(
+		restoredDraft?.generatedDisplayName || identity.displayName
+	);
+	const effectiveDisplayName =
+		conversationType === 'AGENCY_COUNSELLING'
+			? (aliasEditable ? displayName : generatedDisplayName).trim()
+			: '';
+
+	const emailVisible =
+		isContextEmailCollectionAllowed(tenant?.settings, conversationType) &&
+		(tenant?.settings?.emailVisible ?? false);
+	const emailRequired =
+		emailVisible && (tenant?.settings?.emailRequired ?? false);
 	const [email, setEmail] = useState<string>(restoredDraft?.email ?? '');
 	const [emailWasBlurred, setEmailWasBlurred] = useState<boolean>(false);
 	/* The password was minted for a temporary join and never shown. The flag
@@ -180,7 +211,8 @@ export const AccountData: FC<{
 	// A confirmable email is 2FA's second channel — requiring it here is a
 	// frontend-only guard until the backend module (email confirmation,
 	// persisted preference) lands; see #260.
-	const effectiveEmailRequired = emailRequired || twoFactorAuthEnabled;
+	const effectiveEmailRequired =
+		emailVisible && (emailRequired || twoFactorAuthEnabled);
 	const [usernameWasBlurred, setUsernameWasBlurred] =
 		useState<boolean>(false);
 	const { setDisabledNextButton, registrationData } =
@@ -194,6 +226,13 @@ export const AccountData: FC<{
 	   there is something to consent to. Seeded from the same predicate the
 	   label uses, so the far more common unconfigured case — which issues no
 	   request at all — is never disabled, not even for one frame. */
+	/* A centre with no stored privacy notice gets a warning dialog before the
+	   box is ticked (ORISO-AgencyService#366). */
+	const {
+		guardToggle: guardPrivacyNoticeToggle,
+		dialog: privacyNoticeDialog
+	} = usePrivacyNoticeGuard(agency?.id, mainTopic?.id);
+
 	/* The complete input state the label's answer must match — derived during
 	   render, in the same one place the label derives it, so the two cannot
 	   drift and no input can be forgotten from the comparison. */
@@ -297,6 +336,7 @@ export const AccountData: FC<{
 		(nextIdentity: Pseudonym) => {
 			setIdentity(nextIdentity);
 			const nextUsername = toRegistrationUsername(nextIdentity);
+			setGeneratedUsername(nextUsername);
 			if (nextUsername !== currentUsername.current) {
 				currentUsername.current = nextUsername;
 				setUsername(nextUsername);
@@ -306,22 +346,14 @@ export const AccountData: FC<{
 		[resetUsernameAvailability]
 	);
 
-	useEffect(() => {
-		// Run once so first entry shows the same generated identity until the
-		// user intentionally changes it. When a draft was restored the user's
-		// previous identity/username must NOT be overwritten by a fresh one —
-		// the debounced availability effect below re-checks it anyway.
-		if (!restoredDraft) {
-			applyGeneratedUsername(identity);
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
-
 	/* Keep the draft current on every change so stepper navigation is lossless. */
 	useEffect(() => {
 		setAccountDataDraft({
+			displayName,
+			generatedDisplayName,
+			generatedUsername,
 			identity,
-			username,
+			username: typedUsername,
 			password,
 			repeatPassword,
 			acceptedConsentBinding,
@@ -330,8 +362,11 @@ export const AccountData: FC<{
 			passwordMinted
 		});
 	}, [
+		displayName,
+		generatedDisplayName,
+		generatedUsername,
 		identity,
-		username,
+		typedUsername,
 		password,
 		repeatPassword,
 		acceptedConsentBinding,
@@ -366,7 +401,8 @@ export const AccountData: FC<{
 		isUsernameLongEnough &&
 		isPasswordValid &&
 		password === repeatPassword &&
-		emailFeedback.isSatisfied;
+		emailFeedback.isSatisfied &&
+		effectiveDisplayName.length <= 255;
 
 	useEffect(() => {
 		if (
@@ -380,14 +416,18 @@ export const AccountData: FC<{
 			const trimmedEmail = email.trim();
 			setDisabledNextButton(false);
 			onChange({
+				displayName: effectiveDisplayName || undefined,
 				username,
 				password,
-				...(emailVisible && trimmedEmail ? { email: trimmedEmail } : {})
+				// Clear an address previously committed by this step, rather than
+				// leaving it in Registration's merged data when permission changes.
+				email: emailVisible && trimmedEmail ? trimmedEmail : undefined
 			});
 		} else {
 			setDisabledNextButton(true);
 		}
 	}, [
+		effectiveDisplayName,
 		username,
 		password,
 		repeatPassword,
@@ -431,7 +471,10 @@ export const AccountData: FC<{
 	} as const;
 
 	const suggestUsername = () =>
-		applyGeneratedUsername(regeneratePseudonym(identity, locale));
+		applyGeneratedUsername({
+			...regeneratePseudonym(identity, locale),
+			avatar: identity.avatar
+		});
 	const suggestAvatar = () =>
 		setIdentity((currentIdentity) => ({
 			...currentIdentity,
@@ -506,10 +549,14 @@ export const AccountData: FC<{
 						checked={dataProtectionChecked}
 						disabled={!isConsentSentenceResolved}
 						onChange={() =>
-							setAcceptedConsentBinding(
+							guardPrivacyNoticeToggle(
+								() =>
+									setAcceptedConsentBinding(
+										dataProtectionChecked
+											? null
+											: currentConsentBinding
+									),
 								dataProtectionChecked
-									? null
-									: currentConsentBinding
 							)
 						}
 						label={
@@ -544,6 +591,7 @@ export const AccountData: FC<{
 			dataProtectionChecked,
 			isConsentSentenceResolved,
 			currentConsentBinding,
+			guardPrivacyNoticeToggle,
 			agency,
 			mainTopic
 		]
@@ -552,6 +600,7 @@ export const AccountData: FC<{
 
 	return (
 		<Box sx={{ maxWidth: 540, width: '100%', mx: 'auto', ...surfaceSx }}>
+			{privacyNoticeDialog}
 			<Box
 				sx={{
 					display: 'flex',
@@ -675,6 +724,7 @@ export const AccountData: FC<{
 			<OrisoTextField
 				value={username}
 				onChange={(event) => {
+					if (!aliasEditable) return;
 					const normalizedVal = event.target.value
 						.toLowerCase()
 						.replace(/[^a-z0-9_-]/g, '');
@@ -689,7 +739,8 @@ export const AccountData: FC<{
 				fullWidth
 				autoComplete="username"
 				inputProps={{
-					'aria-label': t('registration.account.username.label')
+					'aria-label': t('registration.account.username.label'),
+					'readOnly': !aliasEditable
 				}}
 				InputProps={{
 					startAdornment: (
@@ -701,6 +752,55 @@ export const AccountData: FC<{
 					)
 				}}
 			/>
+			{conversationType === 'AGENCY_COUNSELLING' && (
+				<Box sx={{ mt: gap('20px') }}>
+					{aliasEditable && (
+						<Typography
+							component="p"
+							variant="body2"
+							sx={{ mb: 1 }}
+						>
+							{t('registration.account.displayName.optional')}
+						</Typography>
+					)}
+					<AskerDisplayNameField
+						value={
+							aliasEditable ? displayName : generatedDisplayName
+						}
+						onChange={setDisplayName}
+						editable={aliasEditable}
+					/>
+					<Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
+						<IdentitySuggestButton
+							icon={genDiceIcon}
+							label={t(
+								'registration.account.displayName.suggest'
+							)}
+							onClick={() => {
+								const next =
+									generatePseudonym(locale).displayName;
+								setGeneratedDisplayName(next);
+								setDisplayName(next);
+							}}
+						/>
+						{aliasEditable && (
+							<IdentitySuggestButton
+								icon={genUserIcon}
+								label={t(
+									'registration.account.displayName.useUsername'
+								)}
+								onClick={() => {
+									setDisplayName('');
+									setGeneratedDisplayName(
+										identity.displayName
+									);
+								}}
+							/>
+						)}
+					</Box>
+				</Box>
+			)}
+
 			{emailVisible && (
 				<OrisoTextField
 					value={email}

@@ -39,6 +39,11 @@ const mocks = vi.hoisted(() => {
 	env.REACT_APP_KEYCLOAK_REALM = 'oriso';
 
 	return {
+		draftIdentity: null as string | null,
+		draftCrypto: null as {
+			opaqueScope: (value: string) => Promise<string>;
+		} | null,
+		draftSubscribers: new Set<() => void>(),
 		apiDeleteUserDraft: vi.fn<DeleteDraftMock>(() => Promise.resolve()),
 		apiGetUserDraft: vi.fn<GetDraftMock>(() =>
 			Promise.reject({ message: 'EMPTY' })
@@ -70,6 +75,15 @@ vi.mock('../../api', () => ({
 			? mocks.apiUpsertUserDraft(scopeKey, payload, signal)
 			: mocks.apiUpsertUserDraft(scopeKey, payload),
 	FETCH_ERRORS: { EMPTY: 'EMPTY' }
+}));
+
+vi.mock('../../services/draftCryptographyWindow', () => ({
+	getDraftAuthSessionIdentity: () => mocks.draftIdentity,
+	getDraftCryptographyForWindow: () => mocks.draftCrypto,
+	subscribeDraftCryptographyForWindow: (listener: () => void) => {
+		mocks.draftSubscribers.add(listener);
+		return () => mocks.draftSubscribers.delete(listener);
+	}
 }));
 
 vi.mock('../../api/apiPostError', () => ({
@@ -139,6 +153,8 @@ describe('useDraftMessage', () => {
 		);
 		mocks.apiUpsertUserDraft.mockReset();
 		mocks.apiUpsertUserDraft.mockImplementation(() => Promise.resolve());
+		mocks.draftIdentity = null;
+		mocks.draftCrypto = null;
 		mocks.encryptText.mockReset();
 		mocks.encryptText.mockImplementation((text: string) =>
 			Promise.resolve(text)
@@ -218,6 +234,40 @@ describe('useDraftMessage', () => {
 		}
 	);
 
+	it('a side-room composer never loads or clears the main room’s draft (#1824)', async () => {
+		const side = 'scope:!side:matrix.test|thread:main';
+		mocks.apiGetUserDraft.mockImplementation(async (key) => {
+			if (key === side) throw new Error('EMPTY');
+			return { scopeKey: key, text: '<p>Main-room draft</p>' } as any;
+		});
+		const loadDraft = vi.fn();
+		const { result } = renderHook(
+			() =>
+				useDraftMessage(true, loadDraft, {
+					forcedScopeKey: side,
+					isolateScope: true
+				}),
+			{ wrapper }
+		);
+		await waitFor(() => expect(result.current.loaded).toBe(true));
+		expect(mocks.apiGetUserDraft.mock.calls.map(([key]) => key)).toEqual([
+			side
+		]);
+		expect(loadDraft).not.toHaveBeenCalledWith(
+			expect.anything(),
+			'<p>Main-room draft</p>'
+		);
+		await act(async () => {
+			await result.current.clearDraftMessage();
+		});
+		const deleted = mocks.apiDeleteUserDraft.mock.calls.map(([key]) => key);
+		expect(deleted).toContain(side);
+		// The main room's and the session's drafts stay (the shared draft
+		// index is bookkeeping, not a conversation's draft).
+		expect(deleted).not.toContain('scope:!room:matrix.test|thread:main');
+		expect(deleted).not.toContain('scope:42|thread:main');
+	});
+
 	it('does not resume a disabled buffer into a different conversation', async () => {
 		const loadDraft = vi.fn();
 		const { result, rerender } = renderHook(
@@ -293,6 +343,25 @@ describe('useDraftMessage', () => {
 		expect(mocks.apiDeleteUserDraft).toHaveBeenCalledWith(
 			'scope:session-42|thread:main'
 		);
+	});
+
+	it('retires the draft of a scope the composer has left', async () => {
+		const loadDraft = vi.fn();
+		const { result, rerender } = renderHook(
+			({ scope }) =>
+				useDraftMessage(true, loadDraft, { forcedScopeKey: scope }),
+			{ wrapper, initialProps: { scope: 'scope:room-a|thread:main' } }
+		);
+		const leftScope = result.current.draftScope;
+
+		rerender({ scope: 'scope:room-b|thread:main' });
+		await act(async () => {
+			await result.current.retireDraftScope(leftScope);
+		});
+
+		const deleted = mocks.apiDeleteUserDraft.mock.calls.map(([key]) => key);
+		expect(deleted).toContain('scope:room-a|thread:main');
+		expect(deleted).not.toContain('scope:room-b|thread:main');
 	});
 
 	// #976: a zero-content autosave used to upsert `text: ''`, which left a
@@ -870,5 +939,36 @@ describe('useDraftMessage', () => {
 		await listener?.handler(controller.signal);
 
 		expect(mocks.apiUpsertUserDraft).not.toHaveBeenCalled();
+	});
+
+	it('does not autosave text across two locked App accounts and a later unlock', async () => {
+		mocks.draftIdentity = 'account-a';
+		const loadDraft = vi.fn();
+		const { result } = renderHook(() => useDraftMessage(true, loadDraft), {
+			wrapper
+		});
+		await waitFor(() => expect(result.current.loaded).toBe(true));
+		vi.useFakeTimers();
+		act(() =>
+			result.current.onChange('<p>Only account A may keep this</p>')
+		);
+		await act(async () => {
+			mocks.draftIdentity = 'account-b';
+			mocks.draftSubscribers.forEach((listener) => listener());
+		});
+		expect(loadDraft).toHaveBeenCalledWith(expect.anything(), '');
+		await act(async () => {
+			mocks.draftCrypto = {
+				opaqueScope: async () => 'draft.v1.' + 'C'.repeat(43)
+			};
+			mocks.draftSubscribers.forEach((listener) => listener());
+			await vi.advanceTimersByTimeAsync(1800);
+		});
+		vi.useRealTimers();
+		expect(
+			mocks.apiUpsertUserDraft.mock.calls.some(([, value]) =>
+				value.text.includes('Only account A')
+			)
+		).toBe(false);
 	});
 });

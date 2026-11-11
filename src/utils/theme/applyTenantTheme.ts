@@ -10,7 +10,8 @@
 import {
 	OrisoSchemeName,
 	OrisoSeeds,
-	computeOrisoPalette
+	computeOrisoPalette,
+	normalizeHex
 } from './orisoScheme';
 import { THEME_APPLIED_EVENT } from './themeEvents';
 
@@ -27,7 +28,7 @@ export const ACTIVE_SCHEMES: Record<OrisoSchemeName, boolean> = {
 	inverted: false
 };
 
-interface TenantThemingSeedFields {
+export interface TenantThemingSeedFields {
 	primaryColor?: string | null;
 	secondaryColor?: string | null;
 	accent?: string | null;
@@ -131,49 +132,55 @@ const tryComputePalette = (
 	}
 };
 
+/** Reports why a stored seed was not used; the call asks without logging. */
+type SeedWarning = (...args: unknown[]) => void;
+
+interface ResolvedTenantPalette {
+	/** The seeds that actually went into the palette, normalised `#rrggbb`. */
+	seeds: OrisoSeeds;
+	tokens: Record<string, string>;
+}
+
 /**
- * Computes the palette from the stored seeds and injects it on the
- * given root element. Returns true when a palette was applied; false
- * keeps the prior static behaviour (no seed, or an invalid stored
- * value — logged, never thrown).
+ * The one place that decides which stored seeds the app paints with, so
+ * `applyTenantPalette` and everything that has to look the same (the video
+ * call, #2188) cannot disagree.
  *
  * Each seed is validated independently (#1256). An empty or invalid
  * accent/signal falls back for that field only; a valid sibling is
  * still applied. Only a missing or invalid primary discards the
  * tenant palette entirely.
  */
-export const applyTenantPalette = (
+const resolveTenantPalette = (
 	theming: TenantThemingSeedFields | null | undefined,
-	root: HTMLElement = document.documentElement
-): boolean => {
+	warn: SeedWarning
+): ResolvedTenantPalette | null => {
 	const seeds = readTenantSeeds(theming);
 	if (!seeds) {
-		return false;
+		return null;
 	}
 
 	const primaryResult = tryComputePalette(
 		{ primary: seeds.primary },
 		(error) => {
-			// eslint-disable-next-line no-console
-			console.warn(
+			warn(
 				'Tenant theming: stored seed is invalid, keeping the default palette.',
 				error
 			);
 		}
 	);
 	if (!primaryResult) {
-		return false;
+		return null;
 	}
 	if (primaryResult.tooPale) {
 		// #143: a near-achromatic seed (chroma < TOO_PALE_CHROMA, e.g.
 		// black or grey) cannot yield distinguishable role colours —
 		// hover/container/shadow tints all collapse into one family.
 		// Keep the compiled default palette instead of injecting it.
-		// eslint-disable-next-line no-console
-		console.warn(
+		warn(
 			`Tenant theming: seed ${seeds.primary} is too pale (chroma < 12), keeping the default palette.`
 		);
-		return false;
+		return null;
 	}
 
 	const resolved: OrisoSeeds = { primary: seeds.primary };
@@ -182,8 +189,7 @@ export const applyTenantPalette = (
 		const accentResult = tryComputePalette(
 			{ primary: seeds.primary, accent: seeds.accent },
 			(error) => {
-				// eslint-disable-next-line no-console
-				console.warn(
+				warn(
 					'Tenant theming: accent seed is invalid, falling back.',
 					error
 				);
@@ -198,8 +204,7 @@ export const applyTenantPalette = (
 		const signalResult = tryComputePalette(
 			{ primary: seeds.primary, signal: seeds.signal },
 			(error) => {
-				// eslint-disable-next-line no-console
-				console.warn(
+				warn(
 					'Tenant theming: signal seed is invalid, falling back.',
 					error
 				);
@@ -215,7 +220,57 @@ export const applyTenantPalette = (
 			? primaryResult
 			: computeOrisoPalette(resolved, 'light');
 
-	setPaletteTokens(root, tokens, true);
+	// Every seed above already went through the engine, so none of these throw.
+	return {
+		seeds: {
+			primary: normalizeHex(resolved.primary, 'primary'),
+			...(resolved.accent !== undefined && {
+				accent: normalizeHex(resolved.accent, 'accent')
+			}),
+			...(resolved.signal !== undefined && {
+				signal: normalizeHex(resolved.signal, 'signal')
+			})
+		},
+		tokens
+	};
+};
+
+/**
+ * The seeds the app applies for this theming, normalised to `#rrggbb`, or
+ * null when it keeps the compiled default palette (no or invalid or too pale
+ * primary). An invalid accent or signal is left out on its own.
+ *
+ * Silent: the app already logged the reason when it applied the palette.
+ * For the video call, which has to hand the Träger's brand to a separate
+ * origin and must never send what the app itself would not paint (#2188).
+ */
+export const resolveTenantSeeds = (
+	theming: TenantThemingSeedFields | null | undefined
+): OrisoSeeds | null => resolveTenantPalette(theming, () => {})?.seeds ?? null;
+
+/**
+ * Computes the palette from the stored seeds and injects it on the
+ * given root element. Returns true when a palette was applied; false
+ * keeps the prior static behaviour (no seed, or an invalid stored
+ * value — logged, never thrown).
+ *
+ * Which seeds count is decided by `resolveTenantPalette`: each is validated
+ * independently (#1256), and only a missing or invalid primary discards the
+ * tenant palette entirely.
+ */
+export const applyTenantPalette = (
+	theming: TenantThemingSeedFields | null | undefined,
+	root: HTMLElement = document.documentElement
+): boolean => {
+	const palette = resolveTenantPalette(theming, (...args) => {
+		// eslint-disable-next-line no-console
+		console.warn(...args);
+	});
+	if (!palette) {
+		return false;
+	}
+
+	setPaletteTokens(root, palette.tokens, true);
 	window.dispatchEvent(new CustomEvent(THEME_APPLIED_EVENT));
 	return true;
 };

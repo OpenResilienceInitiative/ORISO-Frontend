@@ -230,7 +230,13 @@ export const playNotificationSound = (
 			conversationType
 		}
 	).browser;
-	const kindConfig = settings.notificationConfig[area][kind];
+	// System notices have no row: the single system switch (checked by the
+	// suppression gate above) gates banner and tone, the tone is the one
+	// chosen next to that switch.
+	const kindConfig =
+		family === 'system'
+			? settings.systemTone
+			: settings.notificationConfig[area][kind];
 	const asset = soundAssetFor(override ?? kindConfig.sound);
 	const volume = kindConfig.volume;
 	if (!asset || !('Audio' in window)) {

@@ -2809,6 +2809,12 @@ declare namespace UserService {
 			 */
 			directLinkMedium?: 'CHAT' | 'AUDIO' | 'VIDEO';
 			/**
+			 * ORISO-Frontend#2170 - the name of the counsellor direct link (#1475) this conversation was opened through, as the link had it then; absent when there was none or for every other conversation. The call of the conversation is called that ("Anruf" without it). A snapshot: a later rename of the link does not change it. Additive - older clients can ignore it.
+			 * example:
+			 * Flyer Schule
+			 */
+			directLinkName?: string;
+			/**
 			 * true when Gate 2 applies to this session and no consent pointer is recorded, i.e. the client must show the consent gate instead of the composer. Internal rooms (no help-seeker) always report false. Additive - older clients can ignore it.
 			 * example:
 			 * false

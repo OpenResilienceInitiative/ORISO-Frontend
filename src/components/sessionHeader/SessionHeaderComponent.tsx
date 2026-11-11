@@ -22,6 +22,7 @@ import {
 import { apiAddSessionSupervisor } from '../../api/apiAddSessionSupervisor';
 import { apiRemoveSessionSupervisor } from '../../api/apiRemoveSessionSupervisor';
 import { apiSendMessage } from '../../api/apiSendMessage';
+import { ConversationAppointmentSlot } from '../sessionsList/timeline/ConversationAppointmentSlot';
 import {
 	NotificationsContext,
 	NOTIFICATION_TYPE_SUCCESS,
@@ -67,7 +68,8 @@ import { appConfig } from '../../utils/appConfig';
 import { isMatrixRoom } from '../../utils/matrixRoomUtils';
 import {
 	isAnonymousMatrixUsername,
-	resolveAnonymousChatDisplayName
+	resolveAnonymousChatDisplayName,
+	resolveAssignedAskerDisplayName
 } from '../../utils/anonymousChatDisplayName';
 import { ReactComponent as BackIcon } from '../../resources/img/icons/arrow-left.svg';
 import {
@@ -122,6 +124,7 @@ import {
 } from './SupervisorConsultantPicker';
 import { useSupervisorConsultantDirectory } from './useSupervisorConsultantDirectory';
 import { resolveRoomHeaderDensity } from './roomHeaderDensity';
+import { resolveAssignedConsultantLabel } from '../session/assignedConsultantLabel';
 export interface SessionHeaderProps {
 	consultantAbsent?: SessionConsultantInterface;
 	hasUserInitiatedStopOrLeaveRequest?: React.MutableRefObject<boolean>;
@@ -616,6 +619,12 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		(userData?.userRoles || []).includes('ANONYMOUS');
 	const isAnonymousAsker =
 		isAnonymousChat && isAskerUser && !isConsultantUser;
+	const assignedConsultantLabel = resolveAssignedConsultantLabel(
+		activeSession,
+		userData,
+		translate
+	);
+	const isRegisteredAskerSession = assignedConsultantLabel !== undefined;
 	const showEndAnonymousChatButton =
 		isAnonymousAsker && activeSession.isSession && !isChatFinished;
 	const showConsultantEndAnonymousChatButton =
@@ -636,6 +645,10 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 			return translate('temporaryAccount.deletedGuest');
 		}
 		if (isAnonymousAsker) {
+			const sessionAlias = resolveAssignedAskerDisplayName(
+				activeSession.user
+			);
+			if (sessionAlias) return sessionAlias;
 			let storedPseudonym: string | null = null;
 			try {
 				storedPseudonym =
@@ -645,13 +658,13 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 			} catch {
 				storedPseudonym = null;
 			}
-			const ownPseudonym = resolveAnonymousChatDisplayName(
-				{
-					username: userData?.userName,
-					displayName: userData?.displayName || storedPseudonym
-				},
-				userData?.displayName || storedPseudonym || undefined
-			);
+			const cachedAlias = resolveAssignedAskerDisplayName({
+				displayName: storedPseudonym || undefined
+			});
+			if (cachedAlias) return cachedAlias;
+			const ownPseudonym = resolveAnonymousChatDisplayName({
+				username: activeSession.user?.username || userData?.userName
+			});
 			if (ownPseudonym) {
 				return ownPseudonym;
 			}
@@ -669,6 +682,10 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 				resolveAnonymousChatDisplayName(activeSession.user) ||
 				resolveAnonymousChatDisplayName(contact)
 			);
+		}
+
+		if (isRegisteredAskerSession) {
+			return assignedConsultantLabel;
 		}
 
 		if (hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData)) {
@@ -690,12 +707,13 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 
 	const headerFallbackLabel = translate('sessionList.user.consultantUnknown');
 	const headerTitle = headerContactName || headerFallbackLabel;
-	const headerAvatarDisplayName =
-		headerContactName ||
-		contact?.displayName ||
-		(!isAnonymousMatrixUsername(contact?.username)
-			? contact?.username
-			: undefined);
+	const headerAvatarDisplayName = isRegisteredAskerSession
+		? assignedConsultantLabel
+		: headerContactName ||
+			contact?.displayName ||
+			(!isAnonymousMatrixUsername(contact?.username)
+				? contact?.username
+				: undefined);
 	/* T4 / FE#1193: the room's participants, latest activity first, live.
 	   Members and their last message come from the Matrix room. The
 	   subscription is scoped to the active room and "last activity" is kept
@@ -723,7 +741,9 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 			setRoomParticipants(
 				toStackParticipants(members, lastActivity, {
 					askerMatrixUserId,
-					askerDisplayName: headerContactName,
+					askerDisplayName: isRegisteredAskerSession
+						? undefined
+						: headerContactName,
 					isSystemUser: isSystemMatrixUser
 				})
 			);
@@ -767,7 +787,8 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		matrixClientService,
 		activeSession.rid,
 		askerMatrixUserId,
-		headerContactName
+		headerContactName,
+		isRegisteredAskerSession
 	]);
 
 	// ADR-002 silent membership: the room lists every counsellor of the
@@ -784,8 +805,14 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 				isGroup: activeSession.isGroup,
 				marker: supervisionMarker,
 				supervisors,
-				askerIds: [askerMatrixUserId, contact?.username],
+				askerIds: [
+					askerMatrixUserId,
+					isRegisteredAskerSession
+						? userData?.userName
+						: contact?.username
+				],
 				consultant: activeSession.consultant,
+				consultantDisplayName: assignedConsultantLabel ?? undefined,
 				consultantMatrixUserId:
 					activeSession.item?.consultantMatrixUserId,
 				self: {
@@ -801,11 +828,13 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		[
 			activeSession.isGroup,
 			activeSession.consultant,
+			assignedConsultantLabel,
 			activeSession.item?.consultantMatrixUserId,
 			supervisionMarker,
 			supervisors,
 			askerMatrixUserId,
 			contact?.username,
+			isRegisteredAskerSession,
 			userData,
 			matrixClientService
 		]
@@ -852,19 +881,22 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 	// Without Matrix members (enquiry, offline) the header still shows the
 	// contact: the asker as animal, a counsellor as their chosen avatar when
 	// they picked one (#1047), otherwise the same animal as before.
+	const avatarContact = isRegisteredAskerSession
+		? activeSession.consultant
+		: contact;
 	const headerParticipants: StackParticipant[] =
 		visibleRoomParticipants.length > 0
 			? visibleRoomParticipants
-			: contact
+			: avatarContact
 				? [
 						{
 							userId:
 								(isAskerUser
 									? activeSession.item?.consultantMatrixUserId
 									: askerMatrixUserId) ||
-								contact.username ||
+								avatarContact.username ||
 								'unknown',
-							username: contact.username || 'User',
+							username: avatarContact.username || 'User',
 							displayName:
 								headerAvatarDisplayName || headerFallbackLabel,
 							isAsker: !isAskerUser,
@@ -1303,6 +1335,17 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 					)}
 					{topic?.name && <SessionTopic name={topic.name} />}
 				</div>
+			)}
+			{activeSession.isSession && (isAskerUser || isConsultantUser) && (
+				<ConversationAppointmentSlot
+					canChange={
+						// Handover co-access may create too: the backend decides
+						// for a colleague who is not the assigned counsellor.
+						isConsultantUser &&
+						!isChatFinished &&
+						activeSession.item.status === STATUS_ACTIVE
+					}
+				/>
 			)}
 			{isAskerUser &&
 				!isConsultantUser &&

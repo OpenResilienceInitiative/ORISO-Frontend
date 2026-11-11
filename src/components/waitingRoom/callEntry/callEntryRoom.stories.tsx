@@ -253,6 +253,51 @@ export const VideoUserIdTooShort: Story = {
 	}
 };
 
+export const VideoUserIdGeneratedOnly: Story = {
+	name: 'Video · User-ID generated only',
+	globals: desktop1440Globals,
+	args: {
+		...ready,
+		modality: 'video',
+		initialUsername: 'not-a-suggestion',
+		usernameEditable: false
+	},
+	play: async ({ canvasElement, canvas }) => {
+		await expectWaitingRoomLayout(canvasElement);
+		// The Träger allows no typed names; the suggest buttons still work.
+		const field = canvasElement.querySelector<HTMLInputElement>(
+			'input[autocomplete="username"]'
+		);
+		await expect(field).toHaveAttribute('readonly');
+		const suggest = canvas.getByRole('button', { name: 'User-ID' });
+		await expect(suggest).toBeEnabled();
+		await userEvent.click(suggest);
+		await waitFor(() =>
+			expect(field?.value).toMatch(/^[a-z0-9_]+_[1-9][0-9]{3}$/)
+		);
+	}
+};
+
+export const VideoPostcodeForRegisteredLink: Story = {
+	name: 'Video · postcode for a registered direct link (#1795)',
+	globals: desktop1440Globals,
+	args: { ...ready, modality: 'video', askPostcode: true },
+	play: async ({ canvasElement, canvas }) => {
+		await expectWaitingRoomLayout(canvasElement);
+		// The gate waits for five digits; the field says what it is for.
+		await expectProgress(canvasElement, 75);
+		await expect(
+			canvas.getByText('Noch offen: Postleitzahl')
+		).toBeVisible();
+		const field = canvasElement.querySelector<HTMLInputElement>(
+			'input[autocomplete="postal-code"]'
+		);
+		await userEvent.type(field as HTMLInputElement, '10115');
+		await waitFor(() => expect(field?.value).toBe('10115'));
+		await expectProgress(canvasElement, 100);
+	}
+};
+
 export const VideoUserIdTaken: Story = {
 	name: 'Video · User-ID already taken',
 	globals: desktop1440Globals,
@@ -427,6 +472,33 @@ export const VideoJoinAsksConsent: Story = {
 		).toBeInTheDocument();
 		expect(args.onJoin).not.toHaveBeenCalled();
 
+		await userEvent.click(body.getByRole('checkbox'));
+		await userEvent.click(gate(canvasElement));
+		expect(args.onJoin).toHaveBeenCalledTimes(1);
+	}
+};
+
+export const SignedInSharedCallConsent: Story = {
+	name: 'Shared video call · signed in, consent before joining',
+	globals: phone390Globals,
+	args: {
+		...base,
+		modality: 'video',
+		signedIn: true,
+		initialMicOn: false,
+		initialCameraOn: false,
+		micLevel: 0,
+		onJoin: fn(),
+		closing: null
+	},
+	play: async ({ args, canvas, canvasElement }) => {
+		const body = within(canvasElement.ownerDocument.body);
+		await expectWaitingRoomLayout(canvasElement);
+		await gateOpens(canvasElement);
+		expect(canvas.queryByTestId('call-entry-identity-column')).toBeNull();
+		await userEvent.click(gate(canvasElement));
+		await waitFor(() => expect(consentPanel(canvasElement)).not.toBeNull());
+		expect(args.onJoin).not.toHaveBeenCalled();
 		await userEvent.click(body.getByRole('checkbox'));
 		await userEvent.click(gate(canvasElement));
 		expect(args.onJoin).toHaveBeenCalledTimes(1);
