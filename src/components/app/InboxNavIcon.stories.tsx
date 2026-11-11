@@ -1,5 +1,5 @@
 import * as React from 'react';
-import type { Meta, StoryObj } from '@storybook/react-vite';
+import type { Decorator, Meta, StoryObj } from '@storybook/react-vite';
 import { expect, within } from 'storybook/test';
 import { InboxNavIcon } from './InboxNavIcon';
 
@@ -144,24 +144,23 @@ const meta = {
 					'Presentational "Anfragen" nav icon. Counts in, state icon plus number circle out; nothing is fetched. Priority: overdue > more than nine (star) > two to nine (digit) > one (person) > all opened > empty. The circle is part of the SVG, so it scales with the 24px (phone) or 32px (desktop) slot. The exact count goes into the accessible name, also above nine.'
 			}
 		}
-	},
-	decorators: [
-		(Story) => (
-			<Slot size={32}>
-				<Story />
-			</Slot>
-		)
-	]
+	}
 } satisfies Meta<typeof InboxNavIcon>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const noDecorator = { decorators: [] as never[] };
+// Story-level decorators add to meta-level ones, so the 32px desktop slot is set per single-icon
+// story; the state matrix brings its own slots and needs the full canvas width.
+const desktopSlot: Decorator = (Story) => (
+	<Slot size={32}>
+		<Story />
+	</Slot>
+);
+const inDesktopSlot = { decorators: [desktopSlot] };
 
 /** Every state at phone (24px) and desktop (32px) slot size, outline and active. */
 export const AllStates: Story = {
-	...noDecorator,
 	render: () => <Matrix />,
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
@@ -174,26 +173,49 @@ export const AllStates: Story = {
 			).length
 		).toBe(2 * 4);
 		await expect(canvas.getAllByRole('img').length).toBe(CELLS.length * 4);
+		// The matrix uses the canvas width, not a 32px icon slot.
+		await expect(
+			(
+				canvasElement.firstElementChild as HTMLElement
+			).getBoundingClientRect().width
+		).toBeGreaterThan(200);
 	}
 };
 
-export const Empty: Story = { args: { totalCount: 0, unopenedCount: 0 } };
-export const AllOpened: Story = { args: { totalCount: 6, unopenedCount: 0 } };
-export const OneUnopened: Story = { args: { totalCount: 6, unopenedCount: 1 } };
-export const TwoUnopened: Story = { args: { totalCount: 6, unopenedCount: 2 } };
+export const Empty: Story = {
+	...inDesktopSlot,
+	args: { totalCount: 0, unopenedCount: 0 }
+};
+export const AllOpened: Story = {
+	...inDesktopSlot,
+	args: { totalCount: 6, unopenedCount: 0 }
+};
+export const OneUnopened: Story = {
+	...inDesktopSlot,
+	args: { totalCount: 6, unopenedCount: 1 }
+};
+export const TwoUnopened: Story = {
+	...inDesktopSlot,
+	args: { totalCount: 6, unopenedCount: 2 }
+};
 export const NineUnopened: Story = {
+	...inDesktopSlot,
 	args: { totalCount: 12, unopenedCount: 9 }
 };
 export const TenUnopenedStar: Story = {
+	...inDesktopSlot,
 	args: { totalCount: 12, unopenedCount: 10 }
 };
 export const OverdueNoneUnopened: Story = {
+	...inDesktopSlot,
 	args: { totalCount: 6, unopenedCount: 0, overdue: true }
 };
 export const OverdueWithUnopened: Story = {
+	...inDesktopSlot,
 	args: { totalCount: 12, unopenedCount: 3, overdue: true }
 };
 export const OverdueManyUnopened: Story = {
+	...inDesktopSlot,
 	args: { totalCount: 40, unopenedCount: 25, overdue: true }
 };
 
