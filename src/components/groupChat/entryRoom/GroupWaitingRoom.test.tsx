@@ -11,6 +11,7 @@ import {
 } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import type { GroupChatSeries } from '../groupChatSeries';
+import { getGroupWaitingRoomSchedule } from './groupWaitingRoomData';
 
 vi.mock('lottie-web', () => ({ default: {} }));
 const apiPatchUserData = vi.fn(() => Promise.resolve());
@@ -431,6 +432,62 @@ describe('GroupWaitingRoom – dates and calendar', () => {
 		) as HTMLElement;
 
 	afterEach(cleanup);
+
+	it('shows and exports each projected duration when the dates cannot form a series', () => {
+		const starts = WEEKLY.slice(0, 2);
+		const durations = [60, 90];
+		const schedule = getGroupWaitingRoomSchedule(
+			{
+				startDateWithTime: START.toISOString(),
+				chatInterval: 'WEEKLY',
+				repeatCount: 2,
+				duration: 60
+			},
+			starts.map((start, occurrenceIndex) => ({
+				seriesId: 15,
+				occurrenceIndex,
+				start: start.toISOString(),
+				originalStart: start.toISOString(),
+				duration: durations[occurrenceIndex],
+				modality: 'TEXT' as const
+			})),
+			NOW
+		);
+		render(
+			<GroupWaitingRoom
+				{...schedule}
+				eventId={15}
+				rules={[]}
+				active={false}
+				onJoin={vi.fn()}
+				nowMs={NOW}
+			/>
+		);
+		fireEvent.click(screen.getByTestId('group-entry-dates'));
+		expect(screen.queryByTestId('group-upcoming-series')).toBeNull();
+		const buttons = screen.getAllByTestId('group-upcoming-date-add');
+		const ends = starts.map(
+			(start, index) =>
+				new Date(start.getTime() + durations[index] * 60_000)
+		);
+		const format = new Intl.DateTimeFormat('de', {
+			hour: '2-digit',
+			minute: '2-digit'
+		});
+		buttons.forEach((button, index) =>
+			expect(button.textContent).toContain(
+				`${format.format(starts[index])} – ${format.format(ends[index])}`
+			)
+		);
+		fireEvent.click(buttons[1]);
+		const outlook = document.querySelector<HTMLAnchorElement>(
+			'a[href*="outlook.live.com"]'
+		);
+		expect(outlook).toBeTruthy();
+		expect(new URL(outlook.href).searchParams.get('enddt')).toBe(
+			ends[1].toISOString()
+		);
+	});
 
 	it('offers this date and the other dates above "Beitreten" before the start', () => {
 		renderDates();

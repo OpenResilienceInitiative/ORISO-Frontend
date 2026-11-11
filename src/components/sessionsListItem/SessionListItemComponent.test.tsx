@@ -33,6 +33,7 @@ const {
 	matrixPreviewMock,
 	roomUnreadCountMock,
 	groupMembersMock,
+	localeState,
 	apiPutArchiveMock
 } = vi.hoisted(() => ({
 	apiPutArchiveMock: vi.fn(),
@@ -41,11 +42,13 @@ const {
 		members: [] as any[]
 	})),
 	matrixPreviewMock: vi.fn(),
-	roomUnreadCountMock: vi.fn(() => 0)
+	localeState: { realEnglish: false },
+	roomUnreadCountMock: vi.fn<(roomId?: string) => number>(() => 0)
 }));
 
 afterEach(() => {
 	cleanup();
+	localeState.realEnglish = false;
 	matrixPreviewMock.mockReset();
 	groupMembersMock.mockReset();
 	groupMembersMock.mockReturnValue({ status: 'ready', members: [] });
@@ -85,6 +88,14 @@ vi.mock('../../hooks/useMatrixSessionPreview', () => ({
 	useMatrixSessionEvents: (roomId: string) => matrixPreviewMock(roomId) || []
 }));
 
+vi.mock('../../services/matrixClientRegistry', () => ({
+	getMatrixClientService: () => ({
+		getRoom: (roomId: string) => ({
+			getUnreadNotificationCount: () => roomUnreadCountMock(roomId)
+		})
+	})
+}));
+
 vi.mock('../../utils/sessionUnread', async (importOriginal) => ({
 	...(await importOriginal<any>()),
 	getRoomUnreadCount: roomUnreadCountMock
@@ -118,14 +129,28 @@ vi.mock('../../utils/tenantSettingsHelper', () => ({
 // ---------------------------------------------------------------------------
 // i18n
 // ---------------------------------------------------------------------------
-vi.mock('react-i18next', () => ({
-	useTranslation: () => ({
-		t: (k: string, opts?: any) =>
-			opts && typeof opts === 'object' && opts.name
-				? `${k}:${opts.name}`
-				: k
-	})
-}));
+vi.mock('react-i18next', async () => {
+	const catalogue = (await import('../../resources/i18n/en/common.json'))
+		.default;
+	return {
+		useTranslation: () => ({
+			t: (k: string, opts?: any) => {
+				if (localeState.realEnglish) {
+					const value = k
+						.split('.')
+						.reduce(
+							(current: any, key) => current?.[key],
+							catalogue
+						);
+					if (typeof value === 'string') return value;
+				}
+				return opts && typeof opts === 'object' && opts.name
+					? `${k}:${opts.name}`
+					: k;
+			}
+		})
+	};
+});
 
 // ---------------------------------------------------------------------------
 // Lottie — imported transitively through AnimatedIllustration; crashes in jsdom
@@ -193,7 +218,13 @@ vi.mock('../sessionHeader/ConsultantSearchLoader', () => ({
 	ConsultantSearchLoader: () => <span />
 }));
 vi.mock('../teamDiscussion/TeamDiscussionBadge', () => ({
-	TeamDiscussionBadge: () => <span />,
+	TeamDiscussionBadge: ({ onOpen }: { onOpen?: () => void }) => (
+		<button
+			data-testid="team-discussion-badge"
+			disabled={!onOpen}
+			onClick={onOpen}
+		/>
+	),
 	getCachedTeamDiscussion: () => Promise.resolve(null)
 }));
 vi.mock('./SessionListItemLastMessage', () => ({
@@ -441,7 +472,7 @@ describe('SessionListItemComponent — group-chat Chat settings reachability (#1
 	});
 
 	it('test 1: group-chat owner sees the three-dot trigger and can open "Chat settings"', async () => {
-		renderItem(makeGroupSession());
+		renderItem(makeGroupSession({ repetitive: true }));
 
 		// The trigger button must be present in the group-chat early-return branch
 		const trigger = screen.getByRole('button', {
@@ -461,7 +492,7 @@ describe('SessionListItemComponent — group-chat Chat settings reachability (#1
 
 	it('test 2: clicking "Chat settings" navigates to the editGroupChat route with correct state', async () => {
 		const matrixRoomId = '!abc:matrix.example.org';
-		const session = makeGroupSession({ matrixRoomId });
+		const session = makeGroupSession({ matrixRoomId, repetitive: true });
 		renderItem(session);
 
 		// Open the flyout
@@ -499,7 +530,8 @@ describe('SessionListItemComponent — group-chat Chat settings reachability (#1
 
 	it('test 3: non-owner consultant sees NO three-dot trigger', () => {
 		const session = makeGroupSession({
-			consultantId: 'other-consultant-99'
+			consultantId: 'other-consultant-99',
+			repetitive: true
 		});
 		renderItem(session, makeUserData(OWNER_USER_ID));
 
@@ -510,13 +542,23 @@ describe('SessionListItemComponent — group-chat Chat settings reachability (#1
 	});
 
 	it('test 4: owner of a RUNNING group chat sees NO three-dot trigger', () => {
-		const session = makeGroupSession({ active: true });
+		const session = makeGroupSession({ active: true, repetitive: true });
 		renderItem(session);
 
 		const trigger = screen.queryByRole('button', {
 			name: 'groupChat.info.settings.headline'
 		});
 		expect(trigger).toBeNull();
+	});
+
+	it('hides the circle settings entry for an internal group owner', () => {
+		renderItem(makeGroupSession());
+
+		expect(
+			screen.queryByRole('button', {
+				name: 'groupChat.info.settings.headline'
+			})
+		).toBeNull();
 	});
 });
 
@@ -531,6 +573,30 @@ describe('SessionListItemComponent — supervision list marker (ADR-008)', () =>
 		expect(await screen.findByTestId('case-handover-action')).toBeTruthy();
 		expect(screen.queryByTestId('supervision-badge')).toBeNull();
 	});
+
+	it.each([
+		{ mainUnread: 0, sideUnread: 2, supervisedByMe: true, unread: true },
+		{ mainUnread: 3, sideUnread: 0, supervisedByMe: true, unread: true },
+		{ mainUnread: 0, sideUnread: 0, supervisedByMe: true, unread: false },
+		{ mainUnread: 0, sideUnread: 2, supervisedByMe: false, unread: false }
+	])(
+		'expanded row unread state agrees with authorized rooms: %j',
+		({ mainUnread, sideUnread, supervisedByMe, unread }) => {
+			const sideRoomId = '!supervision:matrix.example.org';
+			roomUnreadCountMock.mockImplementation((roomId: string) =>
+				roomId === sideRoomId ? sideUnread : mainUnread
+			);
+			const { container } = renderItem(
+				makeSession({ supervision: { supervisedByMe, sideRoomId } }),
+				makeUserData(ME)
+			);
+			const row = container.querySelector('.sessionsListItem');
+			expect(row).not.toBeNull();
+			expect(row.classList.contains('sessionsListItem--read')).toBe(
+				!unread
+			);
+		}
+	);
 
 	it('supervisedByMe → supervision badge, no eye, no handover action', async () => {
 		renderItem(
@@ -588,6 +654,172 @@ describe('SessionListItemComponent — supervision list marker (ADR-008)', () =>
 		);
 		await nextTick();
 		expect(screen.queryByTestId('supervision-indicator')).toBeNull();
+	});
+
+	/*
+	 * #1306. The badge above is icon-only — the word "Supervision" lives in
+	 * `title`/`aria-label` — so before this the only VISIBLE word on a
+	 * supervisor's row was "Mail", and the row read as mail counselling to the
+	 * one person it is not. Measured on dev 14.09.2026, the row rendered
+	 * "Migration | 12042 | Heute | harry_braucht_rat_sep14 | Audionachricht |
+	 * Mail" while `supervision-badge` was present.
+	 */
+	it('supervisedByMe → the modality slot reads Supervision, not Mail', async () => {
+		renderItem(
+			makeSession({
+				supervision: {
+					supervisedByMe: true,
+					supervisorConsultantIds: [ME]
+				}
+			}),
+			makeUserData(ME)
+		);
+		await nextTick();
+		const modality = screen.getByTestId('supervision-modality');
+		expect(modality.textContent).toContain(
+			'sessionList.toolbar.chips.supervision'
+		);
+		// The consulting type is not shown twice and not shown at all here —
+		// it is one panel to the right, in the client chat the supervisor
+		// reads along with.
+		expect(
+			document.querySelector(
+				'.sessionsListItem__consultingTypeIcon--nearbyLabel'
+			)
+		).toBeNull();
+	});
+
+	it('uses the real short English modality label while retaining its explanatory tooltip', async () => {
+		localeState.realEnglish = true;
+		renderItem(
+			makeSession({
+				supervision: {
+					supervisedByMe: true,
+					supervisorConsultantIds: [ME]
+				}
+			}),
+			makeUserData(ME)
+		);
+		await nextTick();
+		const label = screen
+			.getByTestId('supervision-modality')
+			.querySelector(
+				'.sessionsListItem__consultingTypeIcon--supervisionLabel'
+			);
+		expect(label?.textContent).toBe('Supervision');
+		expect(label?.getAttribute('title')).toBe(
+			'Supervision – you read along in this chat'
+		);
+	});
+
+	it('shows one team discussion badge on a normal counsellor enquiry', async () => {
+		renderItem(
+			{ ...makeSession(), isEnquiry: true, isSession: false },
+			makeUserData()
+		);
+		await nextTick();
+		expect(screen.getAllByTestId('team-discussion-badge')).toHaveLength(1);
+		const badge = screen.getByTestId('team-discussion-badge');
+		expect(badge.hasAttribute('disabled')).toBe(false);
+		mockNavigate.mockClear();
+		fireEvent.click(badge);
+		expect(mockNavigate).toHaveBeenCalledWith(
+			expect.stringContaining('teamDiscussion=1')
+		);
+	});
+
+	it('keeps the existing team discussion badge on a supervised enquiry', async () => {
+		const session = {
+			...makeSession({
+				supervision: {
+					supervisedByMe: true,
+					supervisorConsultantIds: [ME]
+				}
+			}),
+			isEnquiry: true,
+			isSession: false
+		};
+		renderItem(session, makeUserData(ME));
+		await nextTick();
+		expect(screen.getAllByTestId('team-discussion-badge')).toHaveLength(1);
+		expect(
+			screen.getByTestId('team-discussion-badge').hasAttribute('disabled')
+		).toBe(true);
+	});
+
+	it('supervisedByMe → the icon travels with the word', async () => {
+		renderItem(
+			makeSession({
+				supervision: {
+					supervisedByMe: true,
+					supervisorConsultantIds: [ME]
+				}
+			}),
+			makeUserData(ME)
+		);
+		await nextTick();
+		// Frank, 14.09.2026: "Hauptsache, das Icon ist dabei."
+		expect(
+			screen.getByTestId('supervision-modality').querySelector('svg')
+		).toBeTruthy();
+	});
+
+	it('supervisedByMe → the full word stays reachable when the label truncates', async () => {
+		renderItem(
+			makeSession({
+				supervision: {
+					supervisedByMe: true,
+					supervisorConsultantIds: [ME]
+				}
+			}),
+			makeUserData(ME)
+		);
+		await nextTick();
+		// Truncation itself is CSS (`text-overflow: ellipsis`), which jsdom
+		// does not apply — what must not regress is the `title`, because it is
+		// the only way back to the full word once the label is cut.
+		const label = screen
+			.getByTestId('supervision-modality')
+			.querySelector(
+				'.sessionsListItem__consultingTypeIcon--supervisionLabel'
+			);
+		expect(label?.getAttribute('title')).toBe(
+			'sessionList.supervision.badge'
+		);
+	});
+
+	it('the OWNER of a supervised case keeps the consulting type', async () => {
+		renderItem(
+			makeSession({
+				consultantId: OWNER_USER_ID,
+				supervision: {
+					supervisedByMe: false,
+					supervisorConsultantIds: ['sup-1'],
+					supervisorDisplayNames: ['Sabine Supervisor']
+				}
+			}),
+			makeUserData(OWNER_USER_ID)
+		);
+		await nextTick();
+		// Only the supervisor's own row is relabelled. The owning consultant
+		// still needs to know this is mail counselling.
+		expect(screen.queryByTestId('supervision-modality')).toBeNull();
+		expect(
+			document.querySelector(
+				'.sessionsListItem__consultingTypeIcon--nearbyLabel'
+			)
+		).toBeTruthy();
+	});
+
+	it('a row with no supervision marker at all keeps the consulting type', async () => {
+		renderItem(makeSession(), makeUserData(ME));
+		await nextTick();
+		expect(screen.queryByTestId('supervision-modality')).toBeNull();
+		expect(
+			document.querySelector(
+				'.sessionsListItem__consultingTypeIcon--nearbyLabel'
+			)
+		).toBeTruthy();
 	});
 });
 

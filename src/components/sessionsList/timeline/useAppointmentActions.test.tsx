@@ -16,15 +16,20 @@ import {
 	UserDataContext
 } from '../../../globalState';
 import { useAppointmentActions } from './useAppointmentActions';
+import { onAppointmentsChanged } from './conversationAppointments';
 import type { FutureEntry } from './timelineModel';
 
-const { cancel, send, navigate } = vi.hoisted(() => ({
+const { cancel, skip, send, navigate } = vi.hoisted(() => ({
 	cancel: vi.fn(),
+	skip: vi.fn(),
 	send: vi.fn(),
 	navigate: vi.fn()
 }));
 vi.mock('../../../api/apiSessionAppointments', () => ({
 	apiCancelSessionAppointment: cancel
+}));
+vi.mock('../../../api/apiGetChatOccurrences', () => ({
+	apiSkipChatOccurrence: skip
 }));
 vi.mock('../../../api/apiSendMessage', () => ({ apiSendMessage: send }));
 vi.mock('react-router-dom', async (original) => ({
@@ -128,4 +133,81 @@ describe('useAppointmentActions for a 1:1 appointment', () => {
 		expect(onMove).toHaveBeenCalledWith(entry);
 		expect(navigate).not.toHaveBeenCalled();
 	});
+});
+
+describe('useAppointmentActions for a group appointment', () => {
+	const groupDate: FutureEntry = {
+		...entry,
+		key: 'occ-4-0',
+		kind: 'group',
+		booking: undefined,
+		occurrence: {
+			seriesId: 4,
+			originalStart: '2026-11-03T10:00:00',
+			duration: 60,
+			modality: 'TEXT'
+		},
+		canModerate: true,
+		canConfigure: false
+	};
+
+	beforeEach(() => {
+		skip.mockReset().mockResolvedValue({});
+		navigate.mockReset();
+	});
+	afterEach(cleanup);
+
+	it('does not open the editor for a co-moderator but can skip the occurrence', async () => {
+		const onCancelled = vi.fn();
+		const { run } = setup({ onCancelled });
+		run('configure', groupDate);
+		expect(navigate).not.toHaveBeenCalled();
+
+		run('cancel', groupDate);
+		await settle();
+		expect(skip).toHaveBeenCalledWith(4, '2026-11-03T10:00:00');
+		expect(onCancelled).toHaveBeenCalledWith(groupDate);
+	});
+
+	it('opens the editor when the group entry has configuration permission', () => {
+		const { run } = setup({});
+		run('configure', { ...groupDate, canConfigure: true });
+		expect(navigate).toHaveBeenCalledWith(
+			'/sessions/!room:x/4/editGroupChat',
+			{
+				state: { isEditMode: true, prevIsInfoPage: false }
+			}
+		);
+	});
+});
+
+it('refreshes appointment consumers when a single group occurrence is skipped', async () => {
+	skip.mockResolvedValue(undefined);
+	send.mockClear();
+	const onCancelled = vi.fn();
+	const changed = vi.fn();
+	const unsubscribe = onAppointmentsChanged(changed);
+	const group: FutureEntry = {
+		...entry,
+		kind: 'group',
+		booking: undefined,
+		occurrence: {
+			seriesId: 12,
+			originalStart: entry.start.toISOString(),
+			duration: 60,
+			modality: 'TEXT'
+		}
+	};
+	try {
+		const { run } = setup({ onCancelled });
+		run('cancel', group);
+		await settle();
+		expect(skip).toHaveBeenCalledWith(12, entry.start.toISOString());
+		expect(onCancelled).toHaveBeenCalledWith(group);
+		expect(changed).toHaveBeenCalledOnce();
+		expect(send).not.toHaveBeenCalled();
+	} finally {
+		unsubscribe();
+		cleanup();
+	}
 });

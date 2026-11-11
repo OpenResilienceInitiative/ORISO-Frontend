@@ -10,6 +10,11 @@ import {
 } from 'react-router-dom';
 import { Loading } from '../app/Loading';
 import {
+	parseTopicDuplicateRoomPath,
+	TOPIC_DUPLICATE_QUERY_PARAM,
+	TOPIC_DUPLICATE_SEARCH
+} from './topicDuplicateRoomRoute';
+import {
 	SessionTypeContext,
 	UserDataContext,
 	ActiveSessionProvider,
@@ -86,6 +91,23 @@ export const SessionView = () => {
 		requestId !== null &&
 		pathname.includes('/sessions/consultant/sessionView/session/');
 
+	if (new URLSearchParams(search).has(TOPIC_DUPLICATE_QUERY_PARAM)) {
+		const exactRoom = parseTopicDuplicateRoomPath(pathname);
+		if (
+			search !== TOPIC_DUPLICATE_SEARCH ||
+			chatId !== undefined ||
+			exactRoom?.rolePath !== 'consultant/sessionView' ||
+			exactRoom.roomId !== groupId ||
+			exactRoom.caseId !== parsedSessionId ||
+			!hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
+		) {
+			return <Navigate to="/notifications" replace />;
+		}
+		return (
+			<SessionViewBody key={`${userData.userId}:${pathname}${search}`} />
+		);
+	}
+
 	if (isStableConsultantSessionRoute) {
 		return (
 			<CaseHandoverOfferGate
@@ -117,7 +139,12 @@ const SessionViewBody = () => {
 		chatId: chatIdFromParam
 	} = useParams<{ groupId: string; sessionId: string; chatId: string }>();
 	const navigate = useNavigate();
-	const { pathname } = useLocation();
+	const { pathname, search } = useLocation();
+	const exactRoom =
+		search === TOPIC_DUPLICATE_SEARCH
+			? parseTopicDuplicateRoomPath(pathname)
+			: null;
+	const returnToTimeline = exactRoom !== null;
 
 	const { type, path: listPath } = useContext(SessionTypeContext);
 	const { userData } = useContext(UserDataContext);
@@ -132,9 +159,12 @@ const SessionViewBody = () => {
 		session: activeSession,
 		ready: activeSessionReady,
 		reload: reloadActiveSession,
+		refresh: refreshActiveSession,
 		read: readActiveSession
 	} = useSession(
-		groupIdFromParam,
+		exactRoom
+			? { roomId: exactRoom.roomId, caseId: exactRoom.caseId }
+			: groupIdFromParam,
 		sessionIdFromParam ? parseInt(sessionIdFromParam) : undefined,
 		positiveInteger(chatIdFromParam) ?? undefined,
 		(hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) ||
@@ -234,8 +264,12 @@ const SessionViewBody = () => {
 	useEffect(() => {
 		if (activeSessionReady && !activeSession) {
 			navigate(
-				listPath +
-					(sessionListTab ? `?sessionListTab=${sessionListTab}` : ''),
+				returnToTimeline
+					? '/notifications'
+					: listPath +
+							(sessionListTab
+								? `?sessionListTab=${sessionListTab}`
+								: ''),
 				{ replace: true }
 			);
 			return;
@@ -257,6 +291,7 @@ const SessionViewBody = () => {
 		sessionListTab,
 		type,
 		listPath,
+		returnToTimeline,
 		navigate
 	]);
 
@@ -324,6 +359,7 @@ const SessionViewBody = () => {
 			readActiveSession={readActiveSession}
 			avatarMembers={avatarMembers}
 			reloadActiveSession={reloadActiveSession}
+			refreshActiveSession={refreshActiveSession}
 		>
 			<SessionStream
 				readonly={readonly}

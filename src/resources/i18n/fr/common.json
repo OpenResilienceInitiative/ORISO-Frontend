@@ -1,4 +1,10 @@
 {
+	"askerInfo": {
+		"noPrivacyNotice": {
+			"title": "Aucune politique de confidentialité enregistrée",
+			"text": "Ce centre de conseil n'a enregistré aucune politique de confidentialité. La personne a peut-être donné son consentement en le sachant. Le centre en est responsable. Seuls les conseillers voient cette note."
+		}
+	},
 	"liveChatConversion": {
 		"title": "Conserver votre conversation",
 		"intro": "Créez un mot de passe pour ce compte. Votre conversation en direct sera conservée.",
@@ -525,6 +531,7 @@
 		"absent": {
 			"message": " est absent"
 		},
+		"assignedLabel": "Votre conseiller ou conseillère",
 		"jobTitle": "Conseiller ou conseillère"
 	},
 	"date": {
@@ -1058,6 +1065,7 @@
 			"subscribers": {
 				"empty": "pas de participants disponibles",
 				"headline": "Personnes participantes",
+				"protectedName": "Participant·e {{number}}",
 				"menuLabel": "Options pour {{name}}",
 				"role": {
 					"asker": "Personne en quête de conseil",
@@ -1890,7 +1898,8 @@
 				"confirmLabel": "Confirmer le nouveau mot de passe",
 				"submitLabel": "Enregistrer le mot de passe",
 				"success": "Votre mot de passe a été modifié avec succès. Vous pouvez maintenant vous connecter.",
-				"invalidToken": "Ce lien est invalide ou a expiré. Veuillez en demander un nouveau."
+				"invalidToken": "Ce lien est invalide ou a expiré. Veuillez en demander un nouveau.",
+				"requestNewLink": "Demander un nouveau lien"
 			}
 		},
 		"magicLink": {
@@ -2422,6 +2431,10 @@
 				"title": "Superviseur·e attribué·e",
 				"text": "Un·e superviseur·e a été attribué·e à ce dossier."
 			},
+			"topicDuplicateStarted": {
+				"title": "Un autre accompagnement sur le même thème",
+				"text": "Un autre accompagnement a commencé sur le même thème. Veuillez convenir ensemble de celui qui se poursuit."
+			},
 			"counselorRenamed": {
 				"title": "Conseiller·ère renommé·e",
 				"text": "Le nom affiché de la personne consultante a changé."
@@ -2476,7 +2489,7 @@
 			},
 			"caseHandoverOfferSent": {
 				"title": "Offre de transfert envoyée",
-				"text": "L'offre attend la réponse du collègue. Elle peut être retirée tant que la passation n'est pas terminée."
+				"text": "Vous avez proposé de transférer le dossier à une autre personne de votre équipe."
 			},
 			"caseHandoverOfferDeclined": {
 				"title": "Offre de transfert refusée",
@@ -2488,7 +2501,7 @@
 			},
 			"caseHandoverOfferReceived": {
 				"title": "Proposition de transfert",
-				"text": "{{fromConsultantName}} souhaite vous transférer cette consultation. Examinez la demande avant d’ouvrir la conversation.",
+				"text": "{{fromConsultantName}} vous a envoyé une proposition de transfert de cette consultation.",
 				"coAccess": {
 					"title": "Proposition d’accès temporaire",
 					"text": "{{fromConsultantName}} vous propose un accès temporaire à cette consultation. La personne consultante actuelle reste responsable."
@@ -3521,6 +3534,12 @@
 			}
 		},
 		"dataProtection": {
+			"noNotice": {
+				"title": "Aucune politique de confidentialité enregistrée",
+				"body": "Ce centre de conseil n'a enregistré aucune politique de confidentialité. Le centre en est responsable. Vous pouvez tout de même continuer si vous le souhaitez en connaissance de cause.",
+				"cancel": "Retour",
+				"continue": "Continuer quand même"
+			},
 			"cookieNotice": "Pour l'authentification et la navigation, ce site utilise des cookies.",
 			"machineTranslated": "Traduit automatiquement — la version originale ({{language}}) fait juridiquement foi.",
 			"unrenderable": "Le texte de consentement de ce centre de conseil ne peut pas être affiché pour le moment. Veuillez réessayer plus tard ou contacter le centre de conseil.",
@@ -6696,6 +6715,10 @@
 		}
 	},
 	"directLink": {
+		"postcode": {
+			"helper": "Uniquement à des fins statistiques. Le code postal ne détermine ni le service ni le conseiller – c’est le lien qui le fixe.",
+			"invalid": "Veuillez saisir votre code postal à cinq chiffres."
+		},
 		"card": {
 			"title": "Lien direct",
 			"subtitle": "Pour les personnes en recherche de conseil",

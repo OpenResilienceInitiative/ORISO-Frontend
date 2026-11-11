@@ -1,6 +1,10 @@
 import type { IUserDraftItem } from '../../api/apiUserDrafts';
 import type { NotificationFeedItem } from '../../globalState/provider/NotificationsProvider';
 import {
+	getDraftNavigationScope,
+	toDraftResumePath
+} from '../../services/draftNavigation';
+import {
 	hasDraftContent,
 	REMOTE_DRAFT_INDEX_SCOPE
 } from '../../services/draftStore';
@@ -32,29 +36,24 @@ export const toNonEmbeddedPath = (path?: string | null): string | null => {
 	return `${base}${query ? `?${query}` : ''}`;
 };
 
-const resumePath = (draft: IUserDraftItem): string => {
-	const { base, params } = splitWithoutEmbedded(
-		draft.actionPath || '/drafts'
-	);
-	params.set('draftScopeKey', draft.scopeKey);
-	return `${base}?${params}`;
-};
-
-// Metadata only: the draft text (ciphertext in E2EE rooms) and the contact
-// title stay out of the card, which renders from the i18n template.
+// Cards render metadata only. The logical scope and Matrix room stay in memory.
 export const draftsToFeedItems = (
 	drafts: IUserDraftItem[]
 ): NotificationFeedItem[] =>
-	drafts
-		.filter(
-			(draft) =>
-				draft.scopeKey !== REMOTE_DRAFT_INDEX_SCOPE &&
-				hasDraftContent(draft.text)
+	drafts.flatMap((draft) => {
+		if (
+			draft.scopeKey === REMOTE_DRAFT_INDEX_SCOPE ||
+			!hasDraftContent(draft.text)
 		)
-		.map((draft) => {
-			const at = draft.updatedAt || new Date(0).toISOString();
-			return {
-				id: `${DRAFT_ID_PREFIX}${draft.scopeKey}`,
+			return [];
+		const scope = getDraftNavigationScope(draft);
+		const actionPath = toDraftResumePath(draft, false, '/drafts');
+		if (!scope || !actionPath) return [];
+
+		const at = draft.updatedAt || new Date(0).toISOString();
+		return [
+			{
+				id: `${DRAFT_ID_PREFIX}${scope}`,
 				type: 'info',
 				eventType: 'draft.created',
 				category: 'system',
@@ -66,13 +65,11 @@ export const draftsToFeedItems = (
 					draft.sourceSessionId == null
 						? undefined
 						: String(draft.sourceSessionId),
-				actionPath: resumePath(draft),
-				params: {
-					forcedScopeKey: draft.scopeKey,
-					roomRef: draft.roomRef ?? null
-				}
-			};
-		});
+				actionPath,
+				params: { forcedScopeKey: scope }
+			}
+		];
+	});
 
 export const mergeDraftsIntoFeed = (
 	feed: NotificationFeedItem[],

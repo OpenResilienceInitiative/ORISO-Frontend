@@ -1,5 +1,9 @@
 import { withTimeout } from '../utils/promiseTimeout';
 import {
+	clearDraftCryptography,
+	unlockDraftCryptography
+} from './draftCryptography';
+import {
 	readRecoveryRoot,
 	serverBackedSecretStorage
 } from './matrixRecoveryAccountData';
@@ -7,7 +11,8 @@ import type { MatrixClient } from 'matrix-js-sdk';
 import {
 	SECRET_STORAGE_ALGORITHM_V1_AES,
 	type SecretStorageKeyDescription,
-	type SecretStorageKeyDescriptionAesV1
+	type SecretStorageKeyDescriptionAesV1,
+	type ServerSideSecretStorage
 } from 'matrix-js-sdk/lib/secret-storage';
 import {
 	decodeRecoveryKey,
@@ -175,6 +180,33 @@ export const validateRecoveryKey = async (
 	return [root[0], bytes];
 };
 
+const restoreDraftKey = async (
+	client: MatrixClient,
+	storage: ServerSideSecretStorage,
+	rootKey: Uint8Array,
+	expectedRootId?: string
+): Promise<void> => {
+	const controller = new AbortController();
+	try {
+		await withTimeout(
+			unlockDraftCryptography(
+				client,
+				storage,
+				rootKey,
+				controller.signal,
+				expectedRootId
+			),
+			5000,
+			'Draft recovery timed out'
+		);
+	} catch {
+		// Drafts remain locked. A secondary account-data failure must not
+		// turn a successful Matrix recovery into a failed recovery.
+	} finally {
+		controller.abort();
+	}
+};
+
 const getCryptoOrThrow = (client: MatrixClient) => {
 	const crypto = client.getCrypto();
 	if (!crypto) {
@@ -265,6 +297,13 @@ export const setUpRecovery = async (client: MatrixClient): Promise<string> => {
 					);
 				}
 			});
+			if (generated.privateKey) {
+				const storage = serverBackedSecretStorage(client, {
+					getSecretStorageKey: (keys, name) =>
+						secretStorageKeyCallback(client, keys, name)
+				});
+				await restoreDraftKey(client, storage, generated.privateKey);
+			}
 			return generated.encodedPrivateKey;
 		},
 		generated.privateKey
@@ -377,6 +416,7 @@ export const recoverWithKey = async (
 					'Existing cross-signing identity could not be imported'
 				);
 			await crypto.crossSignDevice(deviceId);
+			await restoreDraftKey(client, storage, privateKey, rootId);
 			return { imported: result.imported, total: result.total };
 		}
 	);
@@ -401,5 +441,6 @@ export const resetCryptoIdentity = async (
 	if (!client.clientRunning) {
 		throw new Error('Matrix client was replaced before the reset');
 	}
+	clearDraftCryptography(client);
 	await crypto.resetEncryption(authUploadDeviceSigningKeys);
 };

@@ -61,7 +61,8 @@ export interface OrisoPaletteResult {
 
 const HEX_PATTERN = /^#[0-9a-f]{6}$/;
 
-const normalizeHex = (value: string, label: string): string => {
+/** Trimmed, lower-case `#rrggbb`; `#rgb` is expanded. Throws on anything else. */
+export const normalizeHex = (value: string, label: string): string => {
 	const hex = value.trim().toLowerCase();
 	const withHash = hex.startsWith('#') ? hex : `#${hex}`;
 	// Expand #rgb shorthand for robustness.

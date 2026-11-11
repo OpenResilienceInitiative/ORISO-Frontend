@@ -1,4 +1,10 @@
 {
+	"askerInfo": {
+		"noPrivacyNotice": {
+			"title": "Gizlilik bildirimi kayıtlı değil",
+			"text": "Bu danışma merkezi bir gizlilik bildirimi kaydetmemiştir. Kişi bunu bilerek onay vermiş olabilir. Bundan merkez sorumludur. Bu notu yalnızca danışmanlar görür."
+		}
+	},
 	"liveChatConversion": {
 		"title": "Görüşmenizi koruyun",
 		"intro": "Bu hesap için bir parola oluşturun. Canlı sohbetiniz korunur.",
@@ -525,6 +531,7 @@
 		"absent": {
 			"message": " yok"
 		},
+		"assignedLabel": "Danışmanınız",
 		"jobTitle": "Danışman"
 	},
 	"date": {
@@ -1058,6 +1065,7 @@
 			"subscribers": {
 				"empty": "Mevcut katılımcı yok",
 				"headline": "Katılımcılar",
+				"protectedName": "Katılımcı {{number}}",
 				"menuLabel": "{{name}} için seçenekler",
 				"role": {
 					"asker": "Danışan",
@@ -1890,7 +1898,8 @@
 				"confirmLabel": "Yeni şifreyi onaylayın",
 				"submitLabel": "Şifreyi kaydet",
 				"success": "Şifreniz başarıyla değiştirildi. Artık giriş yapabilirsiniz.",
-				"invalidToken": "Bu bağlantı geçersiz veya süresi dolmuş. Lütfen yeni bir bağlantı isteyin."
+				"invalidToken": "Bu bağlantı geçersiz veya süresi dolmuş. Lütfen yeni bir bağlantı isteyin.",
+				"requestNewLink": "Yeni bağlantı isteyin"
 			}
 		},
 		"magicLink": {
@@ -2422,6 +2431,10 @@
 				"title": "Süpervizör atandı",
 				"text": "Bu vakaya bir süpervizör atandı."
 			},
+			"topicDuplicateStarted": {
+				"title": "Aynı konuda başka bir danışmanlık",
+				"text": "Aynı konuda başka bir danışmanlık başladı. Lütfen hangi danışmanlığın devam edeceğine birlikte karar verin."
+			},
 			"counselorRenamed": {
 				"title": "Danışmanın adı değişti",
 				"text": "Danışmanlığın görünen adı değişti."
@@ -2476,7 +2489,7 @@
 			},
 			"caseHandoverOfferSent": {
 				"title": "Devir teklifi gönderildi",
-				"text": "Teklif meslektaşın yanıtını bekliyor. Devir tamamlanmadığı sürece geri çekilebilir."
+				"text": "Vakayı devralması için bir meslektaşınıza teklif gönderdiniz."
 			},
 			"caseHandoverOfferDeclined": {
 				"title": "Devir teklifi reddedildi",
@@ -2488,7 +2501,7 @@
 			},
 			"caseHandoverOfferReceived": {
 				"title": "Vaka devri teklifi",
-				"text": "{{fromConsultantName}} bu danışmanlığı size devretmek istiyor. Görüşmeyi açmadan önce isteği inceleyin.",
+				"text": "{{fromConsultantName}} bu danışmanlığı devralmanız için size bir teklif gönderdi.",
 				"coAccess": {
 					"title": "Geçici erişim teklifi",
 					"text": "{{fromConsultantName}} size bu danışmanlığa geçici erişim teklif ediyor. Sorumluluk mevcut danışmanda kalır."
@@ -3521,6 +3534,12 @@
 			}
 		},
 		"dataProtection": {
+			"noNotice": {
+				"title": "Gizlilik bildirimi kayıtlı değil",
+				"body": "Bu danışma merkezi bir gizlilik bildirimi kaydetmemiştir. Bundan merkez sorumludur. Bilerek devam etmek isterseniz yine de devam edebilirsiniz.",
+				"cancel": "Geri dön",
+				"continue": "Yine de devam et"
+			},
 			"cookieNotice": "Bu web sitesi kimlik doğrulama ve gezinme için çerezler kullanmaktadır.",
 			"machineTranslated": "Makine çevirisi — hukuken bağlayıcı olan orijinal metindir ({{language}}).",
 			"unrenderable": "Bu danışma merkezinin onay metni şu anda görüntülenemiyor. Lütfen daha sonra tekrar deneyin veya danışma merkeziyle iletişime geçin.",
@@ -6696,6 +6715,10 @@
 		}
 	},
 	"directLink": {
+		"postcode": {
+			"helper": "Yalnızca istatistik içindir. Posta kodu ne danışmanlık merkezini ne de danışmanı belirler – bunu bağlantı belirler.",
+			"invalid": "Lütfen beş haneli posta kodunuzu girin."
+		},
 		"card": {
 			"title": "Doğrudan bağlantı",
 			"subtitle": "Danışmanlık arayanlar için",

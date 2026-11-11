@@ -79,6 +79,7 @@ import {
 	isContextEmailCollectionAllowed
 } from '../../../utils/askerAccountPolicy';
 import { ConsentCompletionPanel } from '../consentCompletion/ConsentCompletionPanel';
+import { usePrivacyNoticeGuard } from '../privacyNotice/usePrivacyNoticeGuard';
 import { useRegistrationCompletion } from '../consentCompletion/RegistrationCompletionContext';
 
 export const AccountData: FC<{
@@ -225,6 +226,13 @@ export const AccountData: FC<{
 	   there is something to consent to. Seeded from the same predicate the
 	   label uses, so the far more common unconfigured case — which issues no
 	   request at all — is never disabled, not even for one frame. */
+	/* A centre with no stored privacy notice gets a warning dialog before the
+	   box is ticked (ORISO-AgencyService#366). */
+	const {
+		guardToggle: guardPrivacyNoticeToggle,
+		dialog: privacyNoticeDialog
+	} = usePrivacyNoticeGuard(agency?.id, mainTopic?.id);
+
 	/* The complete input state the label's answer must match — derived during
 	   render, in the same one place the label derives it, so the two cannot
 	   drift and no input can be forgotten from the comparison. */
@@ -541,10 +549,14 @@ export const AccountData: FC<{
 						checked={dataProtectionChecked}
 						disabled={!isConsentSentenceResolved}
 						onChange={() =>
-							setAcceptedConsentBinding(
+							guardPrivacyNoticeToggle(
+								() =>
+									setAcceptedConsentBinding(
+										dataProtectionChecked
+											? null
+											: currentConsentBinding
+									),
 								dataProtectionChecked
-									? null
-									: currentConsentBinding
 							)
 						}
 						label={
@@ -579,6 +591,7 @@ export const AccountData: FC<{
 			dataProtectionChecked,
 			isConsentSentenceResolved,
 			currentConsentBinding,
+			guardPrivacyNoticeToggle,
 			agency,
 			mainTopic
 		]
@@ -587,6 +600,7 @@ export const AccountData: FC<{
 
 	return (
 		<Box sx={{ maxWidth: 540, width: '100%', mx: 'auto', ...surfaceSx }}>
+			{privacyNoticeDialog}
 			<Box
 				sx={{
 					display: 'flex',

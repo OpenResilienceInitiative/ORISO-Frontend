@@ -12,6 +12,7 @@ import { registrationSessionStorageKey } from '../../globalState/provider/Regist
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { Stage } from '../stage/stage';
 import { desktop1440Globals } from '../message/messageStoryShell';
+import { coveredLegalLinks } from '../stageLayout/stageLegalLinksContract';
 import {
 	APP_ORISO_FIGMA_URL,
 	ORISO_M3_FIGMA_URL
@@ -347,5 +348,94 @@ export const NextStepSlidesInAndTheFrameStays: Story = {
 		expect(doc.querySelector('[data-cy="registration-header"]')).toBe(
 			frame.header
 		);
+	}
+};
+
+/**
+ * ORISO-Frontend#2138 (also ORISO-Admin#1487): from the postcode step on, the
+ * privacy policy and imprint in the red stage could be seen but not clicked —
+ * the build identity footer of the content column lay over them. The first
+ * step hid the bug: its long topic list pushes that footer below the links.
+ * This walks the real routed flow on desktop and hit-tests every legal link on
+ * every step it reaches, then opens the imprint with a real click.
+ *
+ * The platform version is set as on every deployed environment: without it
+ * the identity footer is not rendered, and Storybook never showed the bug.
+ */
+export const LegalLinksStayClickableOnEveryStep: Story = {
+	beforeEach: () => {
+		const runtimeWindow: Window & {
+			__ORISO_RUNTIME_CONFIG__?: Record<string, string | undefined>;
+		} = window;
+		const previous = runtimeWindow.__ORISO_RUNTIME_CONFIG__;
+		runtimeWindow.__ORISO_RUNTIME_CONFIG__ = {
+			...previous,
+			REACT_APP_PLATFORM_VERSION: 'v2.0.15'
+		};
+		return () => {
+			runtimeWindow.__ORISO_RUNTIME_CONFIG__ = previous;
+		};
+	},
+	globals: desktop1440Globals,
+	render: () => (
+		<div style={{ height: '100vh' }}>
+			<RegistrationRuntimeStory />
+		</div>
+	),
+	play: async ({ canvasElement }) => {
+		const doc = canvasElement.ownerDocument;
+		const body = within(doc.body);
+		const currentStep = () =>
+			doc
+				.querySelector('[data-cy="registration-form"]')
+				?.getAttribute('data-cy-step');
+		const expectLegalLinksReachable = () =>
+			waitFor(() => expect(coveredLegalLinks(doc)).toEqual([]));
+
+		// Pick the first topic the way a visitor does: open a group, choose.
+		const group = await waitFor(() => {
+			const summary = doc.querySelector<HTMLElement>(
+				'.stageLayout__content .MuiAccordionSummary-root[aria-expanded="false"]'
+			);
+			expect(summary).not.toBeNull();
+			return summary!;
+		});
+		await expectLegalLinksReachable();
+		await userEvent.click(group);
+		const topic = await waitFor(() => {
+			// The radio input itself is hidden; its row takes the click.
+			const row = doc
+				.querySelector<HTMLElement>(
+					'[data-cy="topic-radio-group"] input[type="radio"]'
+				)
+				?.closest<HTMLElement>('label, .MuiListItemButton-root');
+			expect(row).toBeTruthy();
+			return row!;
+		});
+		await userEvent.click(topic);
+		await waitFor(() =>
+			expect(body.getByRole('button', { name: /Weiter/ })).toBeEnabled()
+		);
+		const firstStep = currentStep();
+		await userEvent.click(body.getByRole('button', { name: /Weiter/ }));
+		await waitFor(() => expect(currentStep()).not.toBe(firstStep));
+
+		// The short postcode step: here the footer used to cover the links.
+		await expectLegalLinksReachable();
+
+		const imprint = doc.querySelector<HTMLElement>(
+			'.stage__legalLinks button:last-of-type, .stage__legalLinks a:last-of-type'
+		);
+		expect(imprint).not.toBeNull();
+		const rect = imprint!.getBoundingClientRect();
+		// A real pointer click at the link's position, not a synthetic
+		// click on the element, so a covering box would take it instead.
+		const target = doc.elementFromPoint(
+			rect.left + rect.width / 2,
+			rect.top + rect.height / 2
+		) as HTMLElement;
+		await userEvent.click(target);
+		const dialog = await body.findByRole('dialog');
+		await waitFor(() => expect(dialog).toBeVisible());
 	}
 };

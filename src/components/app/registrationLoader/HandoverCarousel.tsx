@@ -1,8 +1,9 @@
 import * as React from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Box, ButtonBase, Typography } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { registrationMd3 } from '../../registration/registrationDesign/registrationDesign';
+import { CarouselDots } from '../../carouselDots/CarouselDots';
 import {
 	artworkFit,
 	processArtwork,
@@ -61,6 +62,43 @@ export interface HandoverCarouselProps {
  * Designentscheidung sein, das muss ich zehnmal testen").
  */
 const CARD_WIDTH = { xs: 300, sm: 372 };
+const SCROLL_IDLE_MS = 120;
+const MAX_DOT_SCROLL_MS = 800;
+
+/**
+ * Left edge of every card in the track's own scroll coordinates.
+ *
+ * Not `offsetLeft`: that counts from the nearest *positioned* ancestor, and
+ * the track is not one. On desktop that ancestor is the page column, 600 px
+ * and more to the left, so every card looked far right of where it was — the
+ * dot never left the first card and every dot jumped to the end (#2139).
+ */
+const cardLefts = (track: HTMLElement) => {
+	const origin = track.getBoundingClientRect().left - track.scrollLeft;
+	return (Array.from(track.children) as HTMLElement[]).map(
+		(card) => card.getBoundingClientRect().left - origin
+	);
+};
+
+/**
+ * The scrollLeft that centres card `index`, clamped to what the track can
+ * actually scroll to. Where two cards fit at once the first and the last card
+ * clamp to the track's ends, so comparing against these targets (not against
+ * card centres) keeps a released drag at the end it was left at.
+ */
+const cardTargets = (track: HTMLElement) => {
+	const max = Math.max(0, track.scrollWidth - track.clientWidth);
+	const cards = Array.from(track.children) as HTMLElement[];
+	return cardLefts(track).map((left, index) =>
+		Math.min(
+			max,
+			Math.max(
+				0,
+				left - (track.clientWidth - cards[index].offsetWidth) / 2
+			)
+		)
+	);
+};
 
 /**
  * "So geht es weiter" — three cards the user swipes through while the app
@@ -77,6 +115,7 @@ export const HandoverCarousel = ({
 	const { t } = useTranslation();
 	const trackRef = useRef<HTMLDivElement>(null);
 	const [activeIndex, setActiveIndex] = useState(0);
+	const selectDotRef = useRef<((index: number) => void) | null>(null);
 	const settledCount = useRef(0);
 
 	const noteSettled = useCallback(() => {
@@ -92,48 +131,206 @@ export const HandoverCarousel = ({
 			return undefined;
 		}
 
-		const onScroll = () => {
+		const updateFromScrollPosition = () => {
 			// Read the real card positions rather than an averaged card
 			// width: where several cards fit at once, the browser clamps
 			// scrollLeft well before the averaged target for the last card,
 			// and the dot then reported a step the user was not on.
-			const cards = Array.from(track.children) as HTMLElement[];
-			if (!cards.length) {
+			const lefts = cardLefts(track);
+			if (!lefts.length) {
 				return;
 			}
+			const cards = Array.from(track.children) as HTMLElement[];
 			const centre = track.scrollLeft + track.clientWidth / 2;
 			let nearest = 0;
 			let best = Infinity;
-			cards.forEach((card, index) => {
-				const cardCentre = card.offsetLeft + card.offsetWidth / 2;
+			lefts.forEach((left, index) => {
+				const cardCentre = left + cards[index].offsetWidth / 2;
 				const distance = Math.abs(cardCentre - centre);
 				if (distance < best) {
 					best = distance;
 					nearest = index;
 				}
 			});
+			// At either end the clamp decides, not the centre: the first and
+			// the last card are fully in view there (several fit at once on
+			// desktop, so the centre never reaches them).
+			const max = track.scrollWidth - track.clientWidth;
+			if (max > 0 && track.scrollLeft >= max - 1) {
+				nearest = cards.length - 1;
+			} else if (track.scrollLeft <= 1) {
+				nearest = 0;
+			}
 			setActiveIndex(nearest);
 		};
 
+		let selectedByDot: number | null = null;
+		let settleTimer: number | undefined;
+		let settleDeadline = 0;
+
+		const selectedCardIsVisible = () => {
+			const card =
+				selectedByDot === null ? null : track.children[selectedByDot];
+			if (!card) return false;
+			const trackLeft = track.getBoundingClientRect().left;
+			const bounds = card.getBoundingClientRect();
+			const centre = bounds.left + bounds.width / 2;
+			return (
+				centre >= trackLeft && centre <= trackLeft + track.clientWidth
+			);
+		};
+
+		const clearSettleTimer = () => {
+			window.clearTimeout(settleTimer);
+			settleTimer = undefined;
+		};
+
+		const followScrollPosition = () => {
+			selectedByDot = null;
+			updateFromScrollPosition();
+		};
+
+		const settleDotScroll = () => {
+			if (settleTimer === undefined) return;
+			clearSettleTimer();
+			if (!selectedCardIsVisible()) followScrollPosition();
+		};
+
+		const scheduleSettle = () => {
+			clearSettleTimer();
+			const remaining = Math.max(0, settleDeadline - performance.now());
+			settleTimer = window.setTimeout(
+				settleDotScroll,
+				Math.min(SCROLL_IDLE_MS, remaining)
+			);
+		};
+
+		const beginSettlement = () => {
+			settleDeadline = performance.now() + MAX_DOT_SCROLL_MS;
+			scheduleSettle();
+		};
+
+		let trackWidth = track.clientWidth;
+		const reconcileTrackWidth = () => {
+			const width = track.clientWidth;
+			if (width === trackWidth) return false;
+			trackWidth = width;
+			if (selectedCardIsVisible()) {
+				beginSettlement();
+			} else {
+				clearSettleTimer();
+				followScrollPosition();
+			}
+			return true;
+		};
+
+		const onScroll = () => {
+			// A resize can re-snap before or after the observer callback.
+			if (reconcileTrackWidth()) return;
+			// Protect explicit selection only while its movement is settling.
+			// The next independent scroll follows geometry regardless of input.
+			if (settleTimer !== undefined) {
+				scheduleSettle();
+				return;
+			}
+			followScrollPosition();
+		};
+
+		selectDotRef.current = (index) => {
+			const card = track.children[index] as HTMLElement | undefined;
+			if (!card) return;
+			selectedByDot = index;
+			setActiveIndex(index);
+			const reducedMotion = window.matchMedia?.(
+				'(prefers-reduced-motion: reduce)'
+			).matches;
+			const previousLeft = track.scrollLeft;
+			// Centre the card the dot stands for; the first and the last
+			// card clamp to the track's ends (#2139: not `offsetLeft`).
+			const target = cardTargets(track)[index];
+			beginSettlement();
+			track.scrollTo({
+				left: target,
+				behavior: reducedMotion ? 'auto' : 'smooth'
+			});
+			// An unchanged position does not generate a scrollend event.
+			if (
+				target === previousLeft ||
+				(reducedMotion && track.scrollLeft === previousLeft)
+			) {
+				settleDotScroll();
+			}
+		};
+
+		const resizeObserver =
+			typeof ResizeObserver !== 'undefined'
+				? new ResizeObserver(reconcileTrackWidth)
+				: undefined;
+		resizeObserver?.observe(track);
 		track.addEventListener('scroll', onScroll, { passive: true });
-		return () => track.removeEventListener('scroll', onScroll);
+		track.addEventListener('scrollend', settleDotScroll);
+		return () => {
+			selectDotRef.current = null;
+			clearSettleTimer();
+			resizeObserver?.disconnect();
+			track.removeEventListener('scroll', onScroll);
+			track.removeEventListener('scrollend', settleDotScroll);
+		};
 	}, []);
 
-	const scrollTo = (index: number) => {
+	/** Scroll to card `index` and hold its dot while the scroll settles. */
+	const scrollToCard = (index: number) => selectDotRef.current?.(index);
+
+	/*
+	 * A mouse cannot swipe: without a trackpad the cards could not be moved at
+	 * all, and the scrollbar is hidden. Dragging with the mouse scrolls the
+	 * track like a finger would; on release the nearest card snaps in.
+	 * Touch and pen keep the browser's own scrolling.
+	 */
+	const drag = useRef<{ x: number; left: number } | null>(null);
+	const onPointerDown = (event: React.PointerEvent<HTMLElement>) => {
 		const track = trackRef.current;
-		const card = track?.children[index] as HTMLElement | undefined;
-		if (!track || !card) {
+		if (
+			!track ||
+			event.pointerType !== 'mouse' ||
+			event.button !== 0 ||
+			track.scrollWidth <= track.clientWidth
+		) {
 			return;
 		}
-		const reducedMotion =
-			typeof window.matchMedia === 'function' &&
-			window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-		// Centre the card the dot stands for; `offsetLeft` alone would push
-		// the last card against the right edge where it cannot scroll.
-		track.scrollTo({
-			left: card.offsetLeft - (track.clientWidth - card.offsetWidth) / 2,
-			behavior: reducedMotion ? 'auto' : 'smooth'
+		drag.current = { x: event.clientX, left: track.scrollLeft };
+		track.setPointerCapture?.(event.pointerId);
+		track.dataset.dragging = 'true';
+	};
+	const onPointerMove = (event: React.PointerEvent<HTMLElement>) => {
+		const track = trackRef.current;
+		if (!track || !drag.current) {
+			return;
+		}
+		track.scrollLeft = drag.current.left - (event.clientX - drag.current.x);
+	};
+	const endDrag = (event: React.PointerEvent<HTMLElement>) => {
+		const track = trackRef.current;
+		if (!track || !drag.current) {
+			return;
+		}
+		drag.current = null;
+		track.releasePointerCapture?.(event.pointerId);
+		delete track.dataset.dragging;
+		// Snap is off while dragging; hand the position back to it. The
+		// nearest card is the one whose (clamped) scroll target is closest,
+		// so a drag released at either end stays there.
+		const targets = cardTargets(track);
+		let nearest = 0;
+		targets.forEach((target, index) => {
+			if (
+				Math.abs(target - track.scrollLeft) <
+				Math.abs(targets[nearest] - track.scrollLeft)
+			) {
+				nearest = index;
+			}
 		});
+		scrollToCard(nearest);
 	};
 
 	return (
@@ -152,6 +349,11 @@ export const HandoverCarousel = ({
 				ref={trackRef}
 				component="ul"
 				data-cy="handover-carousel"
+				onPointerDown={onPointerDown}
+				onPointerMove={onPointerMove}
+				onPointerUp={endDrag}
+				onPointerCancel={endDrag}
+				onDragStart={(event: React.DragEvent) => event.preventDefault()}
 				sx={{
 					'flex': 1,
 					'minHeight': 0,
@@ -169,7 +371,15 @@ export const HandoverCarousel = ({
 					'overflowY': 'hidden',
 					'scrollSnapType': 'x mandatory',
 					'scrollbarWidth': 'none',
-					'&::-webkit-scrollbar': { display: 'none' }
+					'&::-webkit-scrollbar': { display: 'none' },
+					'@media (hover: hover) and (pointer: fine)': {
+						cursor: 'grab'
+					},
+					'&[data-dragging]': {
+						cursor: 'grabbing',
+						scrollSnapType: 'none',
+						userSelect: 'none'
+					}
 				}}
 			>
 				{steps.map((step, index) => (
@@ -180,7 +390,11 @@ export const HandoverCarousel = ({
 						sx={{
 							flex: 'none',
 							width: CARD_WIDTH,
-							scrollSnapAlign: { xs: 'center', sm: 'start' },
+							// Centre on every width: the dots and a released
+							// drag centre their card (`cardTargets`), and a
+							// start snap would pull the middle card off to an
+							// end where two cards fit at once.
+							scrollSnapAlign: 'center',
 							display: 'flex',
 							flexDirection: 'column',
 							bgcolor: registrationMd3.surface,
@@ -303,47 +517,20 @@ export const HandoverCarousel = ({
 				))}
 			</Box>
 
-			<Box
+			<CarouselDots
 				data-cy="handover-carousel-dots"
-				sx={{
-					flex: 'none',
-					display: 'flex',
-					justifyContent: 'center',
-					gap: 0.875,
-					pt: { xs: 1.5, sm: 2 }
-				}}
-			>
-				{steps.map((step, index) => (
-					<ButtonBase
-						key={step.key}
-						onClick={() => scrollTo(index)}
-						aria-label={t('registration.handover.goToStep', {
-							position: index + 1,
-							total: steps.length
-						})}
-						aria-current={index === activeIndex}
-						sx={{
-							'width': index === activeIndex ? 22 : 6,
-							'height': 6,
-							'borderRadius': 3,
-							'bgcolor':
-								index === activeIndex
-									? registrationMd3.primary
-									: registrationMd3.outlineVariant,
-							'transition': 'width 200ms ease',
-							// A 6px dot needs the ring set off from it, or the
-							// keyboard user cannot see where they are.
-							'&.Mui-focusVisible': {
-								outline: `2px solid ${registrationMd3.focus}`,
-								outlineOffset: 4
-							},
-							'@media (prefers-reduced-motion: reduce)': {
-								transition: 'none'
-							}
-						}}
-					/>
-				))}
-			</Box>
+				count={steps.length}
+				activeIndex={activeIndex}
+				onSelect={scrollToCard}
+				getLabel={(index, total) =>
+					t('registration.handover.goToStep', {
+						position: index + 1,
+						total
+					})
+				}
+				// The 24 px targets add 9 px above the mark: same gap as before.
+				sx={{ flex: 'none', pt: { xs: 0.375, sm: 0.875 } }}
+			/>
 		</Box>
 	);
 };

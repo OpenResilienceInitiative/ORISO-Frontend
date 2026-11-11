@@ -18,12 +18,14 @@ export { isUndecryptedRoomEvent } from '../utils/matrixDecryptionFailure';
 
 const KEY_REQUEST_EVENT = 'org.oriso.room_history_key_request';
 const KEY_BUNDLE_EVENT = 'org.oriso.room_history_key_bundle';
+const REQUEST_DECIDED_EVENT = 'org.oriso.room_history_request_decided';
 const REQUEST_THROTTLE_MS = 30_000;
 const MAX_KEY_BUNDLE_COUNT = 5_000;
 const MAX_PENDING_APPROVALS = 20;
 const MAX_PENDING_PER_ROOM = 5;
 const PENDING_APPROVAL_TTL_MS = 24 * 60 * 60 * 1000;
 const MAX_REASON_LENGTH = 500;
+const MAX_DECIDED_REQUESTS = 100;
 
 export const MATRIX_HISTORY_KEYS_IMPORTED_EVENT =
 	'oriso:matrix-history-keys-imported';
@@ -65,6 +67,13 @@ type KeyRequest = {
 	requester_user_id: string;
 	requester_device_id: string;
 	reason?: string;
+};
+
+/** Tells a person's other devices that a waiting request was decided here. */
+type RequestDecided = {
+	room_id: string;
+	request_id: string;
+	outcome: 'approved' | 'declined';
 };
 
 type KeyBundle = {
@@ -129,12 +138,22 @@ export class MatrixRoomHistoryKeyTransfer {
 	private client: MatrixClient | null = null;
 	private readonly lastRequestAt = new Map<string, number>();
 	private readonly lastReasonedRequestAt = new Map<string, number>();
+	private readonly outgoingRequestsInFlight = new Map<string, symbol>();
 	private readonly lastHandledRequestAt = new Map<string, number>();
 	private readonly pendingRooms = new Set<string>();
 	/** Written reasons of requests queued before the client was ready. */
 	private readonly pendingReasons = new Map<string, string>();
 	private readonly lastReasonRequestAt = new Map<string, number>();
 	private readonly approvalsInFlight = new Set<string>();
+	/**
+	 * Decisions another device of this person announced, kept briefly: the
+	 * announcement can arrive while the request itself is still being checked,
+	 * and that request must not appear afterwards.
+	 */
+	private readonly decidedElsewhere = new Map<
+		string,
+		{ roomId: string; at: number }
+	>();
 	private readonly pendingApprovals = new Map<
 		string,
 		PendingHistoryRequest
@@ -171,11 +190,13 @@ export class MatrixRoomHistoryKeyTransfer {
 			this.onReceivedToDeviceMessage
 		);
 		this.client = null;
+		this.outgoingRequestsInFlight.clear();
 		// Tell open cards that these requests are gone, so none stays on screen.
 		const dropped = Array.from(this.pendingApprovals.values());
 		this.pendingApprovals.clear();
 		this.scheduleExpiry();
 		this.approvalsInFlight.clear();
+		this.decidedElsewhere.clear();
 		this.lastReasonRequestAt.clear();
 		dropped.forEach((request) => this.announceResolved(request, 'dropped'));
 	}
@@ -260,9 +281,15 @@ export class MatrixRoomHistoryKeyTransfer {
 				}
 			}
 			// A failed send keeps the request, so the person can try again.
-			if (sent && this.pendingApprovals.get(requestId) === request) {
-				this.pendingApprovals.delete(requestId);
-				this.announceResolved(request, 'approved');
+			if (sent) {
+				// A newer request from the same device may have replaced this one
+				// while the keys were sent: it stays, but the keys did go out for
+				// this one, so the other devices are told either way.
+				if (this.pendingApprovals.get(requestId) === request) {
+					this.pendingApprovals.delete(requestId);
+					this.announceResolved(request, 'approved');
+				}
+				void this.tellOwnDevices(client, request, 'approved');
 			}
 			return sent;
 		} catch (error) {
@@ -270,8 +297,18 @@ export class MatrixRoomHistoryKeyTransfer {
 			return false;
 		} finally {
 			// A replaced client has its own in-flight set.
-			if (this.client === client)
+			if (this.client === client) {
 				this.approvalsInFlight.delete(requestId);
+				// Another device decided while this attempt ran and it did not
+				// end in a release: the card must not wait for a retry.
+				const decided = this.decidedElsewhere.get(requestId);
+				const left = this.pendingApprovals.get(requestId);
+				if (decided && left && decided.roomId === left.roomId) {
+					this.pendingApprovals.delete(requestId);
+					this.scheduleExpiry();
+					this.announceResolved(left, 'dropped');
+				}
+			}
 		}
 	}
 
@@ -283,6 +320,132 @@ export class MatrixRoomHistoryKeyTransfer {
 		this.expirePendingApprovals();
 		if (!this.pendingApprovals.delete(requestId)) return;
 		this.announceResolved(request, 'declined');
+		if (this.client)
+			void this.tellOwnDevices(this.client, request, 'declined');
+	}
+
+	/**
+	 * A person with several devices sees the same waiting request on each. After
+	 * a decision here, the other devices drop their copy. The message carries
+	 * neither keys nor the written reason, and only devices signed by the owner
+	 * receive it.
+	 */
+	private async tellOwnDevices(
+		client: MatrixClient,
+		request: PendingHistoryRequest,
+		outcome: RequestDecided['outcome']
+	): Promise<void> {
+		try {
+			const crypto = client.getCrypto();
+			const userId = client.getUserId();
+			const deviceId = client.getDeviceId();
+			if (!crypto || !userId || !deviceId) return;
+			const own = await crypto.getUserDeviceInfo([userId], true);
+			const others = Array.from(own.get(userId)?.keys() || []).filter(
+				(id) => id !== deviceId
+			);
+			const targets = (
+				await Promise.all(
+					others.map(async (id) => {
+						try {
+							const status =
+								await crypto.getDeviceVerificationStatus(
+									userId,
+									id
+								);
+							return status?.signedByOwner === true
+								? { userId, deviceId: id }
+								: null;
+						} catch {
+							return null;
+						}
+					})
+				)
+			).filter((target): target is { userId: string; deviceId: string } =>
+				Boolean(target)
+			);
+			if (this.client !== client || targets.length === 0) return;
+			await client.encryptAndSendToDevice(
+				REQUEST_DECIDED_EVENT,
+				targets,
+				{
+					room_id: request.roomId,
+					request_id: request.requestId,
+					outcome
+				}
+			);
+		} catch {
+			// The other devices still drop the card when it expires.
+			emitDiagnostic('decision-broadcast-failed');
+		}
+	}
+
+	private rememberDecidedElsewhere(requestId: string, roomId: string): void {
+		const now = Date.now();
+		for (const [id, entry] of this.decidedElsewhere)
+			if (now - entry.at > PENDING_APPROVAL_TTL_MS)
+				this.decidedElsewhere.delete(id);
+		while (this.decidedElsewhere.size >= MAX_DECIDED_REQUESTS) {
+			const oldest = this.decidedElsewhere.keys().next().value;
+			if (oldest === undefined) break;
+			this.decidedElsewhere.delete(oldest);
+		}
+		this.decidedElsewhere.set(requestId, { roomId, at: now });
+	}
+
+	private async handleRequestDecided(
+		event: MatrixEvent,
+		encryptionInfo?: {
+			sender?: string;
+			senderDevice?: string;
+		} | null
+	): Promise<void> {
+		const client = this.client;
+		const crypto = client?.getCrypto();
+		const userId = client?.getUserId();
+		const deviceId = client?.getDeviceId();
+		const content = event.getContent() as Partial<RequestDecided>;
+		const senderDevice = encryptionInfo?.senderDevice;
+		if (
+			!client ||
+			!crypto ||
+			!userId ||
+			!deviceId ||
+			// Only an encrypted message from one of this person's own devices.
+			event.getSender() !== userId ||
+			encryptionInfo?.sender !== userId ||
+			!isNonEmptyString(senderDevice) ||
+			senderDevice === deviceId ||
+			!isNonEmptyString(content.room_id) ||
+			!isNonEmptyString(content.request_id) ||
+			(content.outcome !== 'approved' && content.outcome !== 'declined')
+		) {
+			emitDiagnostic('decision-invalid');
+			return;
+		}
+		const status = await crypto
+			.getDeviceVerificationStatus(userId, senderDevice)
+			.catch(() => null);
+		if (this.client !== client || status?.signedByOwner !== true) {
+			emitDiagnostic('decision-sender-untrusted');
+			return;
+		}
+		const request = this.pendingApprovals.get(content.request_id);
+		if (!request) {
+			// Not here yet: remember it, so the request cannot show up after.
+			this.rememberDecidedElsewhere(content.request_id, content.room_id);
+			return;
+		}
+		if (request.roomId !== content.room_id) return;
+		// A release already sending here is left to finish. If it fails, the
+		// card would stay for a retry, so the decision is kept for that moment.
+		if (this.approvalsInFlight.has(content.request_id)) {
+			this.rememberDecidedElsewhere(content.request_id, content.room_id);
+			return;
+		}
+		this.pendingApprovals.delete(content.request_id);
+		this.scheduleExpiry();
+		this.announceResolved(request, 'dropped');
 	}
 
 	private expiryTimer: ReturnType<typeof setTimeout> | null = null;
@@ -350,169 +513,190 @@ export class MatrixRoomHistoryKeyTransfer {
 			this.rememberReason(roomId, options.reason);
 			return false;
 		}
-		// Lazy sync can omit joined peers that have not sent a recent event.
-		// Keep the cached members usable if the membership lookup fails.
-		await room.loadMembersIfNeeded().catch(() => undefined);
-		if (this.client !== client) return false;
-		if (room.getMember(userId)?.membership !== 'join') {
-			emitDiagnostic('request-membership-rejected');
-			this.pendingRooms.add(roomId);
-			this.rememberReason(roomId, options.reason);
-			return false;
-		}
-
-		const now = Date.now();
-		const reasoned = !!normalizeReason(options.reason);
-		// A request with a written reason has its own window, so it replaces the
-		// automatic one that ran when the unreadable events were found. The
-		// counsellor's side uses the same 30 seconds: a person must not be
-		// prompted more often than that, and a retry is never accepted here
-		// only to be dropped there.
-		const throttleMs = REQUEST_THROTTLE_MS;
-		const lastAt = reasoned
-			? this.lastReasonedRequestAt.get(roomId) || 0
-			: this.lastRequestAt.get(roomId) || 0;
-		if (now - lastAt < throttleMs) {
+		const reason = normalizeReason(options.reason);
+		const reasoned = Boolean(reason);
+		const reservationKey = `${reasoned ? 'reasoned' : 'automatic'}:${roomId}`;
+		if (this.outgoingRequestsInFlight.has(reservationKey)) {
 			emitDiagnostic('request-throttled');
 			return false;
 		}
 
-		const otherUsers = room
-			.getJoinedMembers()
-			.map((member) => member.userId)
-			.filter((memberUserId) => memberUserId !== userId);
-		if (otherUsers.length === 0) {
-			emitDiagnostic('request-no-peer');
-			return false;
-		}
+		// Reserve before membership or device lookups can yield to another request.
+		const reservation = Symbol();
+		this.outgoingRequestsInFlight.set(reservationKey, reservation);
+		const ownsReservation = () =>
+			this.outgoingRequestsInFlight.get(reservationKey) === reservation;
+		const isCurrentRequest = () =>
+			this.client === client && ownsReservation();
+		try {
+			// Lazy sync can omit joined peers that have not sent a recent event.
+			// Keep the cached members usable if the membership lookup fails.
+			await room.loadMembersIfNeeded().catch(() => undefined);
+			if (!isCurrentRequest()) return false;
+			if (room.getMember(userId)?.membership !== 'join') {
+				emitDiagnostic('request-membership-rejected');
+				this.pendingRooms.add(roomId);
+				this.rememberReason(roomId, options.reason);
+				return false;
+			}
 
-		await refreshHistoryDeviceKeysBestEffort(crypto, otherUsers);
-		const deviceMap = await crypto.getUserDeviceInfo(otherUsers, true);
-		if (this.client !== client) return false;
-		const candidates = otherUsers.flatMap((memberUserId) =>
-			Array.from(deviceMap.get(memberUserId)?.values() || []).map(
-				(device) => ({
-					userId: memberUserId,
-					deviceId: device.deviceId
-				})
-			)
-		);
-		// The written reason describes the conversation. A device without the
-		// owner's cross-signing signature, such as a password-only sign-in, must
-		// not receive it: it cannot read the chat and cannot approve anything.
-		// `signedByOwner` is the right test here: `crossSigningVerified` would
-		// also need this device to have verified the counsellor's identity,
-		// which a freshly signed-in asker has not.
-		// A user whose identity changed since we first saw it, and was not
-		// verified again, may be someone who reset their cross-signing with a
-		// stolen password; nothing about the conversation goes to them.
-		const changedUsers = new Set<string>();
-		if (reasoned) {
-			await Promise.all(
-				otherUsers.map(async (memberUserId) => {
-					try {
-						const identity =
-							await crypto.getUserVerificationStatus(
-								memberUserId
-							);
-						if (
-							identity.needsUserApproval ||
-							(identity.wasCrossSigningVerified() &&
-								!identity.isCrossSigningVerified())
-						)
+			const now = Date.now();
+			// A request with a written reason has its own window, so it replaces the
+			// automatic one that ran when the unreadable events were found. The
+			// counsellor's side uses the same 30 seconds: a person must not be
+			// prompted more often than that, and a retry is never accepted here
+			// only to be dropped there.
+			const throttleMs = REQUEST_THROTTLE_MS;
+			const lastAt = reasoned
+				? this.lastReasonedRequestAt.get(roomId) || 0
+				: this.lastRequestAt.get(roomId) || 0;
+			if (now - lastAt < throttleMs) {
+				emitDiagnostic('request-throttled');
+				return false;
+			}
+
+			const otherUsers = room
+				.getJoinedMembers()
+				.map((member) => member.userId)
+				.filter((memberUserId) => memberUserId !== userId);
+			if (otherUsers.length === 0) {
+				emitDiagnostic('request-no-peer');
+				return false;
+			}
+
+			await refreshHistoryDeviceKeysBestEffort(crypto, otherUsers);
+			const deviceMap = await crypto.getUserDeviceInfo(otherUsers, true);
+			if (!isCurrentRequest()) return false;
+			const candidates = otherUsers.flatMap((memberUserId) =>
+				Array.from(deviceMap.get(memberUserId)?.values() || []).map(
+					(device) => ({
+						userId: memberUserId,
+						deviceId: device.deviceId
+					})
+				)
+			);
+			// The written reason describes the conversation. A device without the
+			// owner's cross-signing signature, such as a password-only sign-in, must
+			// not receive it: it cannot read the chat and cannot approve anything.
+			// `signedByOwner` is the right test here: `crossSigningVerified` would
+			// also need this device to have verified the counsellor's identity,
+			// which a freshly signed-in asker has not.
+			// A user whose identity changed since we first saw it, and was not
+			// verified again, may be someone who reset their cross-signing with a
+			// stolen password; nothing about the conversation goes to them.
+			const changedUsers = new Set<string>();
+			if (reasoned) {
+				await Promise.all(
+					otherUsers.map(async (memberUserId) => {
+						try {
+							const identity =
+								await crypto.getUserVerificationStatus(
+									memberUserId
+								);
+							if (
+								identity.needsUserApproval ||
+								(identity.wasCrossSigningVerified() &&
+									!identity.isCrossSigningVerified())
+							)
+								changedUsers.add(memberUserId);
+						} catch {
 							changedUsers.add(memberUserId);
-					} catch {
-						changedUsers.add(memberUserId);
+						}
+					})
+				);
+			}
+			const targets = reasoned
+				? (
+						await Promise.all(
+							candidates.map(async (target) => {
+								if (changedUsers.has(target.userId))
+									return null;
+								try {
+									const status =
+										await crypto.getDeviceVerificationStatus(
+											target.userId,
+											target.deviceId
+										);
+									return status?.signedByOwner === true
+										? target
+										: null;
+								} catch {
+									return null;
+								}
+							})
+						)
+					).filter(
+						(target): target is (typeof candidates)[number] =>
+							target !== null
+					)
+				: candidates;
+			if (!isCurrentRequest()) return false;
+			// The lookups above are asynchronous. The written reason describes the
+			// conversation, so re-check who is still in the room right before it
+			// leaves: someone removed in the meantime must not receive it.
+			const stillJoined = new Set(
+				room.getJoinedMembers().map((member) => member.userId)
+			);
+			const deliverable = reasoned
+				? targets.filter((target) => stillJoined.has(target.userId))
+				: targets;
+			if (deliverable.length === 0) {
+				emitDiagnostic('request-no-target-device');
+				return false;
+			}
+
+			const requestId =
+				typeof globalThis.crypto?.randomUUID === 'function'
+					? globalThis.crypto.randomUUID()
+					: `${deviceId}-${now}`;
+			this.lastRequestAt.set(roomId, now);
+			if (reasoned) this.lastReasonedRequestAt.set(roomId, now);
+			const requestContent = {
+				room_id: roomId,
+				request_id: requestId,
+				requester_user_id: userId,
+				requester_device_id: deviceId,
+				...(reason ? { reason } : {})
+			};
+			const deliveryResults = await Promise.allSettled(
+				deliverable.map((target) =>
+					client.encryptAndSendToDevice(
+						KEY_REQUEST_EVENT,
+						[target],
+						requestContent
+					)
+				)
+			);
+			if (!isCurrentRequest()) return false;
+			const deliveredTargetCount = deliveryResults.filter(
+				(result) => result.status === 'fulfilled'
+			).length;
+			if (deliveredTargetCount === 0) {
+				// Nothing arrived, so the person may retry at once.
+				const cooldown = reasoned
+					? this.lastReasonedRequestAt
+					: this.lastRequestAt;
+				if (cooldown.get(roomId) === now) cooldown.delete(roomId);
+				emitDiagnostic('request-delivery-failed');
+				return false;
+			}
+			window.dispatchEvent(
+				new CustomEvent(MATRIX_HISTORY_KEYS_REQUESTED_EVENT, {
+					detail: {
+						roomId,
+						targetCount: deliveredTargetCount,
+						attemptedTargetCount: deliverable.length
 					}
 				})
 			);
+			this.pendingRooms.delete(roomId);
+			this.pendingReasons.delete(roomId);
+			return true;
+		} finally {
+			if (ownsReservation()) {
+				this.outgoingRequestsInFlight.delete(reservationKey);
+			}
 		}
-		const targets = reasoned
-			? (
-					await Promise.all(
-						candidates.map(async (target) => {
-							if (changedUsers.has(target.userId)) return null;
-							try {
-								const status =
-									await crypto.getDeviceVerificationStatus(
-										target.userId,
-										target.deviceId
-									);
-								return status?.signedByOwner === true
-									? target
-									: null;
-							} catch {
-								return null;
-							}
-						})
-					)
-				).filter(
-					(target): target is (typeof candidates)[number] =>
-						target !== null
-				)
-			: candidates;
-		if (this.client !== client) return false;
-		// The lookups above are asynchronous. The written reason describes the
-		// conversation, so re-check who is still in the room right before it
-		// leaves: someone removed in the meantime must not receive it.
-		const stillJoined = new Set(
-			room.getJoinedMembers().map((member) => member.userId)
-		);
-		const deliverable = reasoned
-			? targets.filter((target) => stillJoined.has(target.userId))
-			: targets;
-		if (deliverable.length === 0) {
-			emitDiagnostic('request-no-target-device');
-			return false;
-		}
-
-		const requestId =
-			typeof globalThis.crypto?.randomUUID === 'function'
-				? globalThis.crypto.randomUUID()
-				: `${deviceId}-${now}`;
-		this.lastRequestAt.set(roomId, now);
-		if (reasoned) this.lastReasonedRequestAt.set(roomId, now);
-		const reason = normalizeReason(options.reason);
-		const requestContent = {
-			room_id: roomId,
-			request_id: requestId,
-			requester_user_id: userId,
-			requester_device_id: deviceId,
-			...(reason ? { reason } : {})
-		};
-		const deliveryResults = await Promise.allSettled(
-			deliverable.map((target) =>
-				client.encryptAndSendToDevice(
-					KEY_REQUEST_EVENT,
-					[target],
-					requestContent
-				)
-			)
-		);
-		const deliveredTargetCount = deliveryResults.filter(
-			(result) => result.status === 'fulfilled'
-		).length;
-		if (deliveredTargetCount === 0) {
-			// Nothing arrived, so the person may retry at once.
-			const cooldown = reasoned
-				? this.lastReasonedRequestAt
-				: this.lastRequestAt;
-			if (cooldown.get(roomId) === now) cooldown.delete(roomId);
-			emitDiagnostic('request-delivery-failed');
-			return false;
-		}
-		window.dispatchEvent(
-			new CustomEvent(MATRIX_HISTORY_KEYS_REQUESTED_EVENT, {
-				detail: {
-					roomId,
-					targetCount: deliveredTargetCount,
-					attemptedTargetCount: deliverable.length
-				}
-			})
-		);
-		this.pendingRooms.delete(roomId);
-		this.pendingReasons.delete(roomId);
-		return true;
 	}
 
 	private onReceivedToDeviceMessage = (payload: any): void => {
@@ -528,6 +712,11 @@ export class MatrixRoomHistoryKeyTransfer {
 			void this.handleKeyRequest(event).catch(() =>
 				emitDiagnostic('request-handler-failed')
 			);
+		} else if (event.getType() === REQUEST_DECIDED_EVENT) {
+			void this.handleRequestDecided(
+				event,
+				payload?.encryptionInfo
+			).catch(() => emitDiagnostic('decision-handler-failed'));
 		} else if (event.getType() === KEY_BUNDLE_EVENT) {
 			emitDiagnostic('received', { eventType: KEY_BUNDLE_EVENT });
 			void this.handleKeyBundle(event).catch(() =>
@@ -659,6 +848,13 @@ export class MatrixRoomHistoryKeyTransfer {
 					) {
 						// Another device must not overwrite this request.
 						emitDiagnostic('request-id-collision');
+						return;
+					}
+					const decided = this.decidedElsewhere.get(
+						pending.requestId
+					);
+					if (decided && decided.roomId === pending.roomId) {
+						emitDiagnostic('request-decided-elsewhere');
 						return;
 					}
 					// One waiting request per requesting device: a newer one replaces

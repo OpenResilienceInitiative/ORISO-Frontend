@@ -1,4 +1,6 @@
-import { getSessionNavigationPath } from '../sessionsListItem/sessionsListItemHelpers';
+export const CONSULTANT_GROUP_CHAT_ROUTE =
+	'/sessions/consultant/sessionView/chat/:chatId';
+export const ASKER_GROUP_CHAT_ROUTE = '/sessions/user/view/chat/:chatId';
 
 /** Only a chat id becomes a route: the value comes from the address bar. */
 export const isGroupChatId = (value: unknown): value is string | number => {
@@ -13,11 +15,8 @@ export const isGroupChatId = (value: unknown): value is string | number => {
  * room (#1499). The chat id stays distinct from one-to-one session ids.
  */
 export const consultantGroupChatPath = (chatId: string | number): string =>
-	getSessionNavigationPath({
-		listPath: '/sessions/consultant/sessionView',
-		sessionId: Number(chatId),
-		isGroup: true,
-		isAsker: false,
-		isEmptyEnquiry: false,
-		tabSuffix: ''
-	});
+	CONSULTANT_GROUP_CHAT_ROUTE.replace(':chatId', String(chatId));
+
+/** The registered participant's conversation route uses the same typed lookup. */
+export const askerGroupChatPath = (chatId: string | number): string =>
+	ASKER_GROUP_CHAT_ROUTE.replace(':chatId', String(chatId));
