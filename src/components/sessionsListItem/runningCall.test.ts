@@ -318,4 +318,25 @@ describe('the running call of a conversation, for the list (S10)', () => {
 		rerender();
 		expect(result.current?.callId).toBe('call-1');
 	});
+
+	it('keeps the latest attendance once card and edit left the window', () => {
+		const loadState = vi.fn().mockRejectedValue(new Error('offline'));
+		const four = [
+			{ userId: COUNSELLOR, displayName: 'Beratung' },
+			{ userId: '@a:oriso.test', displayName: 'Fuchs' },
+			{ userId: '@b:oriso.test', displayName: 'Igel' },
+			{ userId: '@c:oriso.test', displayName: 'Dachs' }
+		];
+		let events: unknown[] = [
+			card(call(), '$card'),
+			edit(call({ present: four }), '$card')
+		];
+		const { result, rerender } = renderHook(() =>
+			useRunningCall(events, ROOM, loadState)
+		);
+		expect(result.current?.present).toHaveLength(4);
+		events = [text()];
+		rerender();
+		expect(result.current?.present).toHaveLength(4);
+	});
 });

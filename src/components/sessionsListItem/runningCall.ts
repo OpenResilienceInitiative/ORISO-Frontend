@@ -61,6 +61,42 @@ const cardEventOf = (
 		(event) => (event as { getId?: () => string })?.getId?.() === cardId
 	) ?? null;
 
+/**
+ * The newest edit of a card by the card's own author: the revision the
+ * pipeline folds last, so the list keeps the current attendance when both
+ * the card and that edit have scrolled out of the window. Re-fed through the
+ * same pipeline, so its checks still apply.
+ */
+const latestOwnEditOf = (
+	events: readonly unknown[],
+	original: unknown,
+	cardId: string
+): unknown | null => {
+	const author = (original as { getSender?: () => string })?.getSender?.();
+	for (let index = events.length - 1; index >= 0; index -= 1) {
+		const event = events[index] as RawEventWithSender;
+		const content =
+			event?.getClearContent?.() || event?.getContent?.() || {};
+		const relation = content['m.relates_to'] as
+			| { rel_type?: unknown; event_id?: unknown }
+			| undefined;
+		if (
+			relation?.rel_type === 'm.replace' &&
+			relation.event_id === cardId &&
+			author !== undefined &&
+			event.getSender?.() === author
+		)
+			return events[index];
+	}
+	return null;
+};
+
+type RawEventWithSender = {
+	getClearContent?: () => Record<string, unknown> | null;
+	getContent?: () => Record<string, unknown> | null;
+	getSender?: () => string;
+};
+
 type LoadCallState = typeof apiCallStateRead;
 
 /** Stands in while there is no running card; never asked about. */
@@ -107,19 +143,34 @@ export const useRunningCall = (
 	 * Server answers never do: a provisionally ended call keeps its card, so
 	 * the reconciliation below can bring it back.
 	 */
-	const retained = useRef<{ room: string; event: unknown } | null>(null);
+	const retained = useRef<{
+		room: string;
+		event: unknown;
+		/** The card author's newest revision of it (who is present now). */
+		edit: unknown | null;
+	} | null>(null);
 	const candidate = useMemo(() => {
 		if (!roomId) {
 			retained.current = null;
 			return null;
 		}
 		const kept =
-			retained.current?.room === roomId ? retained.current.event : null;
-		const timeline =
-			kept && !events.includes(kept) ? [kept, ...events] : events;
+			retained.current?.room === roomId ? retained.current : null;
+		const front = kept
+			? [kept.event, kept.edit].filter(
+					(event) => event && !events.includes(event)
+				)
+			: [];
+		const timeline = front.length ? [...front, ...events] : events;
 		const found = runningCardOf(timeline, roomId);
 		const original = found ? cardEventOf(timeline, found.cardId) : null;
-		retained.current = original ? { room: roomId, event: original } : null;
+		retained.current = original
+			? {
+					room: roomId,
+					event: original,
+					edit: latestOwnEditOf(timeline, original, found!.cardId)
+				}
+			: null;
 		return found?.call ?? null;
 	}, [events, roomId]);
 	const [untrusted, setUntrusted] = useState<string | null>(null);
