@@ -23,6 +23,7 @@ import {
 import { releaseAllCallWarmupStreams } from '../utils/callMediaStreamCleanup';
 import { getMatrixRtcMembershipReaderUserId } from '../resources/scripts/runtimeConfig';
 import { callLifecycleTracker } from './callLifecycleTracker';
+import { callRoomName } from '../components/call/callRoomName';
 import type { SharedCallSeat } from '../api/apiJoinSharedCall';
 import type { CallLifecycleMessage } from '../utils/callLifecycleMessage';
 
@@ -432,12 +433,18 @@ class CallManager {
 	 * @param roomId - Matrix room ID
 	 * @param isVideo - Whether to enable video
 	 * @param forceIsGroup - Force this to be treated as a group call (for group chats)
+	 * @param options.roomName - What the call room is called, which is the
+	 *   call's title (#2170): the direct link it came through. "Anruf" without it.
 	 */
 	public startCall(
 		roomId: string,
 		isVideo: boolean,
-		forceIsGroup?: boolean
+		forceIsGroup?: boolean,
+		options?: { roomName?: string }
 	): void {
+		// The room name is not part of this comparison: every caller derives it
+		// from the same session, so a repeat start for one room carries the same
+		// name. Add it here if a caller can ever pass two names for one room.
 		if (
 			this.pendingStart?.roomId === roomId &&
 			this.pendingStart.isVideo === isVideo &&
@@ -608,7 +615,11 @@ class CallManager {
 			// than re-using the session room. This matches the "direct" usage of
 			// a standalone Element Call deployment, where each call lives in its
 			// own Matrix room with appropriate power levels.
-			created = await this.createElementCallRoom(roomId, callId);
+			created = await this.createElementCallRoom(
+				roomId,
+				callId,
+				options?.roomName
+			);
 			elementCallRoomId = created.roomId;
 			// Room creation may finish after cancellation or a different call.
 			// Only the request that still owns startup can publish its invite.
@@ -897,7 +908,8 @@ class CallManager {
 	 */
 	private async createElementCallRoom(
 		sourceRoomId: string,
-		callId: string
+		callId: string,
+		roomName?: string
 	): Promise<{ roomId: string; createdBy: MatrixClient }> {
 		const matrixClientService = getMatrixClientService();
 		const client = matrixClientService?.getClient?.();
@@ -919,7 +931,9 @@ class CallManager {
 			);
 		}
 
-		const name = `Group call for ${sourceRoomId}`;
+		// #2170: the room name is the call's title, and it used to be
+		// `Group call for <session room id>`, a cryptic code on both screens.
+		const name = callRoomName({ directLinkName: roomName });
 
 		// console.log("🔧 Creating dedicated Element Call room for group call, source room:", sourceRoomId);
 
@@ -1060,6 +1074,17 @@ class CallManager {
 				: [...baseOptions.initial_state, restrictedJoinRule]
 		} as any);
 
+		/*
+		 * Everything past creation takes the room with it when it fails.
+		 *
+		 * `inviteSessionMembers` throws if any invite failed, the membership
+		 * reader may be unconfigured, and its invite can reject. In each case
+		 * this method threw before returning the id — so the caller's
+		 * `elementCallRoomId` stayed undefined and its own cleanup could not
+		 * run. Every retry then left another JOINED room behind, carrying the
+		 * plaintext call/source binding. The caller's cleanup only covers a
+		 * start that was superseded; this covers one that failed.
+		 */
 		try {
 			// A successful createRoom response alone does not establish the
 			// reader's membership. Verify it before the caller can ring.

@@ -39,6 +39,12 @@ export interface StartRoomCallOptions {
 	 * `undefined` lets the CallManager count the room's members.
 	 */
 	isGroup?: boolean;
+	/**
+	 * #2170: what the call room is called, which is the call's title. Leave it
+	 * out and the CallManager calls it "Anruf". Resolve it with
+	 * `callRoomName(session)`.
+	 */
+	roomName?: string;
 	/** Injected so tests and stories never touch `window.alert`. */
 	notify?: (message: string) => void;
 	confirm?: (message: string) => boolean;
@@ -51,7 +57,8 @@ export interface StartRoomCallOptions {
 		startCall: (
 			roomId: string,
 			isVideo: boolean,
-			isGroup?: boolean
+			isGroup?: boolean,
+			options?: { roomName?: string }
 		) => void;
 	};
 }
@@ -68,6 +75,7 @@ export const startRoomCall = async ({
 	isVideo,
 	requestCamera = isVideo,
 	isGroup,
+	roomName,
 	notify = (message: string) => window.alert(message),
 	confirm = (message: string) => window.confirm(message),
 	getCallManager = lazyCallManager
@@ -116,7 +124,12 @@ export const startRoomCall = async ({
 			return;
 		}
 
-		getCallManager().startCall(roomId, isVideo, isGroup);
+		getCallManager().startCall(
+			roomId,
+			isVideo,
+			isGroup,
+			roomName ? { roomName } : undefined
+		);
 	} catch (error) {
 		notify(
 			`Call failed: ${error instanceof Error ? error.message : 'Unknown error'}`
