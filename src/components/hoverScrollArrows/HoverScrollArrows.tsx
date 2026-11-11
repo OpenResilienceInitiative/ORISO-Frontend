@@ -20,7 +20,11 @@ export interface HoverScrollArrowsProps {
 	 * position (e.g. carousel dots) hands in its own step so both agree.
 	 */
 	'onStep'?: (direction: ScrollDirection) => void;
-	/** How far from an edge the pointer reveals that edge's arrow, in px. */
+	/**
+	 * Minimum distance from an edge, in px, at which the pointer reveals that
+	 * edge's arrow. The zone grows to a third of a card, and to all of a card
+	 * the edge cuts off (see `edgeZoneWidth`).
+	 */
 	'edgeZone'?: number;
 	'data-cy'?: string;
 	'sx'?: SxProps<Theme>;
@@ -31,6 +35,8 @@ const EDGE_TOLERANCE = 1;
 const STRIP_WIDTH = 72;
 const BUTTON_SIZE = 40;
 const FADE = '180ms cubic-bezier(0.2, 0, 0, 1)';
+/** The arrow pops in softly: a short ease-out with a little overshoot. */
+const POP = '320ms cubic-bezier(0.34, 1.24, 0.44, 1)';
 
 const clamp = (value: number, max: number) => Math.min(max, Math.max(0, value));
 
@@ -101,6 +107,37 @@ export const scrollOneStep = (
 type Side = 'start' | 'end';
 
 /**
+ * How far into the track the pointer reveals one edge's arrow: a third of a
+ * card (Frank, 2026-11-11: "so ein Drittel der Card am Rand"), and all of a
+ * card the edge cuts off, so hovering anywhere on a half-hidden card works.
+ */
+export const edgeZoneWidth = (
+	track: HTMLElement | null,
+	wrapper: DOMRect,
+	side: Side,
+	minimum: number
+) => {
+	const cards = track ? (Array.from(track.children) as HTMLElement[]) : [];
+	let zone = minimum;
+	cards.forEach((card) => {
+		const bounds = card.getBoundingClientRect();
+		zone = Math.max(zone, bounds.width / 3);
+		const cutAtStart =
+			bounds.left < wrapper.left && bounds.right > wrapper.left;
+		const cutAtEnd =
+			bounds.right > wrapper.right && bounds.left < wrapper.right;
+		if (side === 'start' && cutAtStart) {
+			zone = Math.max(zone, bounds.right - wrapper.left);
+		}
+		if (side === 'end' && cutAtEnd) {
+			zone = Math.max(zone, wrapper.right - bounds.left);
+		}
+	});
+	// Never more than half the track: the middle stays free.
+	return Math.min(zone, wrapper.width / 2);
+};
+
+/**
  * Desktop arrows for anything that scrolls sideways (a carousel, a gallery).
  *
  * A mouse without a trackpad cannot scroll sideways, and dragging is not
@@ -153,15 +190,18 @@ export const HoverScrollArrows = ({
 			if (event.pointerType === 'touch') return;
 			const bounds = event.currentTarget.getBoundingClientRect();
 			const x = event.clientX - bounds.left;
+			const track = targetRef.current;
 			setNear(
-				x <= edgeZone
+				x <= edgeZoneWidth(track, bounds, 'start', edgeZone)
 					? 'start'
-					: x >= bounds.width - edgeZone
+					: x >=
+						  bounds.width -
+								edgeZoneWidth(track, bounds, 'end', edgeZone)
 						? 'end'
 						: null
 			);
 		},
-		[edgeZone]
+		[edgeZone, targetRef]
 	);
 
 	const step = (direction: ScrollDirection) => {
@@ -197,12 +237,22 @@ export const HoverScrollArrows = ({
 					'pointerEvents': 'none',
 					'zIndex': 1,
 					'opacity': 0,
-					'transition': `opacity ${FADE}`,
+					'transition': `opacity ${POP}`,
 					'&[data-near], &:focus-within': { opacity: 1 },
+					// The button grows in from slightly smaller and slightly
+					// outside, then settles.
+					'& button': {
+						transform: `translateX(${isStart ? -8 : 8}px) scale(0.8)`
+					},
+					'@media (prefers-reduced-motion: reduce)': {
+						'& button, &[data-near] button, &:focus-within button':
+							{ transform: 'none' }
+					},
 					// Hidden arrows let the pointer through, so a drag that
 					// starts at the edge still moves the cards.
 					'&[data-near] button, &:focus-within button': {
-						pointerEvents: 'auto'
+						pointerEvents: 'auto',
+						transform: 'none'
 					},
 					// The translucent strip: the surface colour fading out
 					// towards the cards, so the arrow reads on any motif.
@@ -233,7 +283,7 @@ export const HoverScrollArrows = ({
 						'color': orisoInputColors.primary,
 						'border': `1px solid ${orisoInputColors.outline}`,
 						'opacity': 0.8,
-						'transition': `opacity ${FADE}, background-color ${FADE}`,
+						'transition': `opacity ${FADE}, background-color ${FADE}, transform ${POP}`,
 						'&:hover': {
 							opacity: 1,
 							bgcolor: orisoInputColors.surfaceContainerHigh
