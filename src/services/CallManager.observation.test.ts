@@ -226,6 +226,41 @@ describe('call observation across sign-out', () => {
 		expect(end).not.toHaveBeenCalled();
 	});
 
+	it('ends a call only after a registration still in flight has landed', async () => {
+		let land!: (value: unknown) => void;
+		register.mockReturnValueOnce(
+			new Promise((resolve) => {
+				land = resolve;
+			})
+		);
+		sendEvent.mockResolvedValue({ event_id: '$invite' });
+		callManager.startCall(SOURCE, true, true);
+		await vi.waitFor(() => expect(register).toHaveBeenCalledTimes(1));
+		callManager.endCall(false); // nobody joined: ends the observation
+		await new Promise((resolve) => setTimeout(resolve, 20));
+		expect(end).not.toHaveBeenCalled();
+		land({});
+		await vi.waitFor(() => expect(end).toHaveBeenCalledTimes(1));
+	});
+
+	it('keeps renewing an attended call after its creator leaves, until it ends', async () => {
+		vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
+		sendEvent.mockResolvedValue({ event_id: '$invite' });
+		vi.spyOn(callLifecycleTracker, 'finishIfUnattended').mockReturnValue(
+			false
+		);
+		callManager.startCall(SOURCE, true, true);
+		await vi.waitFor(() => expect(register).toHaveBeenCalledTimes(1));
+		const callId = callManager.getCurrentCall()!.callId;
+		callManager.leaveCall(); // others are still in the call
+		await vi.advanceTimersByTimeAsync(4 * 60 * 1000);
+		await vi.waitFor(() => expect(register).toHaveBeenCalledTimes(2));
+		callLifecycleTracker.finish(callId); // the last participant left
+		await vi.advanceTimersByTimeAsync(10 * 60 * 1000);
+		expect(register).toHaveBeenCalledTimes(2);
+		expect(end).not.toHaveBeenCalled();
+	});
+
 	/** Holds the invite for SOURCE until the test acknowledges it. */
 	const holdInvite = () => {
 		let acknowledge!: (value: unknown) => void;

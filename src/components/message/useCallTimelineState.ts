@@ -155,6 +155,8 @@ export function useCallTimelineState(
 		let active = true;
 		let timer: ReturnType<typeof setTimeout> | undefined;
 		let unknownAnswers = 0;
+		// Shown as ended after repeated 404s: re-check slowly until a real answer.
+		let provisionallyEnded = false;
 		const refresh = async () => {
 			const current = latest.current;
 			let settled = false;
@@ -200,6 +202,7 @@ export function useCallTimelineState(
 					if (current.state === 'running' && notFound) {
 						unknownAnswers += 1;
 						if (unknownAnswers === UNKNOWN_STATE_LIMIT) {
+							provisionallyEnded = true;
 							setStored({
 								original: current,
 								value: {
@@ -216,6 +219,7 @@ export function useCallTimelineState(
 					(current.state === 'running' || value.state !== 'running')
 				) {
 					unknownAnswers = 0;
+					provisionallyEnded = false;
 					setStored((previous) =>
 						previous &&
 						hasSameCallLifecycleIdentity(
@@ -236,7 +240,7 @@ export function useCallTimelineState(
 			if (active && !settled) {
 				timer = setTimeout(
 					refresh,
-					unknownAnswers >= UNKNOWN_STATE_LIMIT
+					provisionallyEnded
 						? UNKNOWN_RECHECK_DELAY_MS
 						: REFRESH_DELAY_MS
 				);

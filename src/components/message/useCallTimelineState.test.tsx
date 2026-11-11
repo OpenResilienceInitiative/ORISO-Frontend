@@ -100,6 +100,47 @@ describe('useCallTimelineState', () => {
 		expect(loadState).toHaveBeenCalledTimes(calls + 1);
 	});
 
+	it('keeps a 404-ended card on the slow re-check after a failed or untrusted read', async () => {
+		vi.useFakeTimers();
+		const initial = runningCall();
+		const answers: unknown[] = [
+			...Array(UNKNOWN_STATE_LIMIT).fill(CALL_STATE_NOT_FOUND),
+			'offline',
+			null
+		];
+		const loadState = vi.fn(async () => {
+			const next = answers.length
+				? answers.shift()
+				: CALL_STATE_NOT_FOUND;
+			if (next === 'offline') throw new Error('offline');
+			return next as null | typeof CALL_STATE_NOT_FOUND;
+		});
+		const { result } = renderHook(() =>
+			useCallTimelineState(initial, loadState)
+		);
+		await act(async () => {
+			await vi.advanceTimersByTimeAsync(
+				15000 * (UNKNOWN_STATE_LIMIT - 1)
+			);
+		});
+		expect(result.current.state).toBe('ended');
+		const calls = loadState.mock.calls.length;
+		// Failed read, then an untrusted null: each one a minute apart.
+		await act(async () => {
+			await vi.advanceTimersByTimeAsync(UNKNOWN_RECHECK_DELAY_MS);
+		});
+		expect(loadState).toHaveBeenCalledTimes(calls + 1);
+		await act(async () => {
+			await vi.advanceTimersByTimeAsync(UNKNOWN_RECHECK_DELAY_MS);
+		});
+		expect(loadState).toHaveBeenCalledTimes(calls + 2);
+		await act(async () => {
+			await vi.advanceTimersByTimeAsync(15000);
+		});
+		expect(loadState).toHaveBeenCalledTimes(calls + 2);
+		expect(result.current.state).toBe('ended');
+	});
+
 	it('shows the call as running again once the server knows it after a 404 end', async () => {
 		vi.useFakeTimers();
 		const initial = runningCall();

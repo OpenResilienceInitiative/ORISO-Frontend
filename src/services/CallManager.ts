@@ -1200,6 +1200,8 @@ class CallManager {
 		callId: string;
 		timer: ReturnType<typeof setInterval>;
 		retry?: ReturnType<typeof setTimeout>;
+		/** Settles when the latest registration request has finished. */
+		registering: () => Promise<unknown>;
 	} | null = null;
 
 	/**
@@ -1219,6 +1221,7 @@ class CallManager {
 		const stillObserving = () =>
 			this.observation?.callId === callId &&
 			this.currentAccount() === account;
+		let inFlight: Promise<unknown> = Promise.resolve();
 		const register = (attempt = 0) => {
 			// Another account is signed in now: never register this call as them.
 			if (this.currentAccount() !== account) {
@@ -1230,8 +1233,8 @@ class CallManager {
 				this.stopObservation(false, callId);
 				return;
 			}
-			void import('../api/apiCallObservation')
-				.then(({ apiRegisterCallObservation }) =>
+			const request = import('../api/apiCallObservation').then(
+				({ apiRegisterCallObservation }) =>
 					// A delayed import must not register a call that was already left.
 					!stillObserving()
 						? undefined
@@ -1241,32 +1244,33 @@ class CallManager {
 								callRoomId,
 								video
 							})
-				)
-				.catch(() => {
-					/*
-					 * A failed registration is retried soon rather than at the
-					 * next renewal: until it lands the server answers 404, and
-					 * the call card settles as ended after a few of those
-					 * (UNKNOWN_STATE_LIMIT, about 45 s). Bounded, and never for
-					 * a call that is no longer observed.
-					 */
-					const delay = REGISTRATION_RETRY_DELAYS_MS[attempt];
-					const current = this.observation;
-					if (delay === undefined || !current || !stillObserving())
-						return;
-					clearTimeout(current.retry);
-					current.retry = setTimeout(() => {
-						if (this.observation === current)
-							current.retry = undefined;
-						if (stillObserving()) register(attempt + 1);
-					}, delay);
-				});
+			);
+			inFlight = request.catch(() => undefined);
+			void request.catch(() => {
+				/*
+				 * A failed registration is retried soon rather than at the
+				 * next renewal: until it lands the server answers 404, and
+				 * the call card settles as ended after a few of those
+				 * (UNKNOWN_STATE_LIMIT, about 45 s). Bounded, and never for
+				 * a call that is no longer observed.
+				 */
+				const delay = REGISTRATION_RETRY_DELAYS_MS[attempt];
+				const current = this.observation;
+				if (delay === undefined || !current || !stillObserving())
+					return;
+				clearTimeout(current.retry);
+				current.retry = setTimeout(() => {
+					if (this.observation === current) current.retry = undefined;
+					if (stillObserving()) register(attempt + 1);
+				}, delay);
+			});
 		};
 		register();
 		this.observation = {
 			sourceRoomId,
 			callId,
-			timer: setInterval(() => register(), 4 * 60 * 1000)
+			timer: setInterval(() => register(), 4 * 60 * 1000),
+			registering: () => inFlight
 		};
 	}
 
@@ -1276,8 +1280,13 @@ class CallManager {
 		clearInterval(current.timer);
 		clearTimeout(current.retry);
 		this.observation = null;
+		// After any registration still in flight: an end that reached the
+		// server first would find no row, and the late registration would
+		// then leave a live observation of a call that is over.
 		if (end)
-			void import('../api/apiCallObservation')
+			void current
+				.registering()
+				.then(() => import('../api/apiCallObservation'))
 				.then(({ apiEndCallObservation }) =>
 					apiEndCallObservation({
 						sourceRoomId: current.sourceRoomId,
@@ -1541,11 +1550,13 @@ class CallManager {
 		// somebody has actually arrived. Leaving one nobody ever joined ends
 		// it, rather than leaving a card that says "running" for good.
 		else {
-			// Announce an end only when nobody ever joined; otherwise just stop renewing.
+			// Announce an end only when nobody ever joined. An attended call
+			// runs on without us, so keep renewing its observation until the
+			// tracker sees its last participant go (renewal checks hasEnded).
 			const finalised = callLifecycleTracker.finishIfUnattended(
 				call.callId
 			);
-			this.stopObservation(finalised, call.callId);
+			if (finalised) this.stopObservation(true, call.callId);
 		}
 		if (notifyRemote && call.usesElementCall && !call.isGroup) {
 			this.sendElementCallHangup(call);
@@ -1592,9 +1603,9 @@ class CallManager {
 			 * in is untouched, because it belongs to the room rather than to
 			 * whoever invited everybody.
 			 */
-			const finalised = callLifecycleTracker.finishIfUnattended(
-				this.currentCall.callId
-			);
+			const leftCallId = this.currentCall.callId;
+			const finalised =
+				callLifecycleTracker.finishIfUnattended(leftCallId);
 			this.currentCall = {
 				...this.currentCall,
 				state: 'left',
@@ -1602,7 +1613,10 @@ class CallManager {
 				// leaves an attended call alone, and that one may be rejoined.
 				...(finalised ? { lifecycleFinalised: true } : {})
 			};
-			this.stopObservation(finalised);
+			// Only the creator may renew (UserService), so an attended call
+			// stays observed after the creator leaves, until the tracker sees
+			// the last participant go. Nobody joined: end it now.
+			if (finalised) this.stopObservation(true, leftCallId);
 			releaseAllCallWarmupStreams();
 			this.promoteWaitingCall();
 			this.notifyListeners();
