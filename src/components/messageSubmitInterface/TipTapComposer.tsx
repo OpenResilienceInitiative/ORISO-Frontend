@@ -38,6 +38,7 @@ import {
 	filesFromDataTransfer,
 	hasComposerFiles
 } from './composerFileDropPaste';
+import { flattenPastedTables } from './flattenPastedTables';
 import './TipTapComposer.styles.scss';
 
 const isMentionSuggestionOpen = (): boolean =>
@@ -293,6 +294,8 @@ export const TipTapComposer = forwardRef<
 					'aria-multiline': 'true',
 					'aria-label': editorAccessibleName
 				},
+				// No table node here: keep pasted tables readable (#2135).
+				transformPastedHTML: flattenPastedTables,
 				handleTextInput: (view, from, to, text) => {
 					const availableLength = getAvailableInputLength(
 						view,
