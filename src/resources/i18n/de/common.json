@@ -1,4 +1,10 @@
 {
+	"askerInfo": {
+		"noPrivacyNotice": {
+			"title": "Keine Datenschutzerklärung hinterlegt",
+			"text": "Diese Beratungsstelle hat keine Datenschutzerklärung hinterlegt. Die Person hat möglicherweise im Wissen darum zugestimmt. Die Beratungsstelle ist dafür verantwortlich. Dieser Hinweis ist nur für Beratende sichtbar."
+		}
+	},
 	"liveChatConversion": {
 		"title": "Gespräch behalten",
 		"intro": "Erstellen Sie ein Passwort für dieses Konto. Ihr Live-Chat bleibt erhalten.",
