@@ -2873,7 +2873,8 @@
 	},
 	"directLink": {
 		"postcode": {
-			"helper": "Nur für die Statistik. Die Postleitzahl bestimmt weder Beratungsstelle noch Berater:in – das legt der Link fest."
+			"helper": "Nur für die Statistik. Die Postleitzahl bestimmt weder Beratungsstelle noch Berater:in – das legt der Link fest.",
+			"invalid": "Bitte gib deine fünfstellige Postleitzahl ein."
 		},
 		"card": {
 			"headline": "Ein Link direkt zu dir",

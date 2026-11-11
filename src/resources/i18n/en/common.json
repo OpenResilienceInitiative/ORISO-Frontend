@@ -6615,7 +6615,8 @@
 	},
 	"directLink": {
 		"postcode": {
-			"helper": "For statistics only. The postcode does not choose the agency or the counsellor – the link decides that."
+			"helper": "For statistics only. The postcode does not choose the agency or the counsellor – the link decides that.",
+			"invalid": "Please enter your five-digit postcode."
 		},
 		"card": {
 			"title": "Direct link",

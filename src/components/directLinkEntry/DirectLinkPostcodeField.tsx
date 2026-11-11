@@ -26,6 +26,7 @@ export const DirectLinkPostcodeField = ({
 	const { t } = useTranslation();
 	const [blurred, setBlurred] = useState(false);
 	const id = useId();
+	const invalid = (blurred || showError) && !isDirectLinkPostcode(value);
 
 	return (
 		<OrisoTextField
@@ -40,8 +41,12 @@ export const DirectLinkPostcodeField = ({
 			}
 			onBlur={() => setBlurred(true)}
 			label={t('registration.zipcode.label')}
-			helperText={t('directLink.postcode.helper')}
-			error={(blurred || showError) && !isDirectLinkPostcode(value)}
+			helperText={
+				invalid
+					? `${t('directLink.postcode.invalid')} ${t('directLink.postcode.helper')}`
+					: t('directLink.postcode.helper')
+			}
+			error={invalid}
 			fullWidth
 			autoComplete="postal-code"
 			inputProps={{

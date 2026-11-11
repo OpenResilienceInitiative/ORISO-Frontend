@@ -6690,7 +6690,8 @@
 	},
 	"directLink": {
 		"postcode": {
-			"helper": "Nur für die Statistik. Die Postleitzahl bestimmt weder Beratungsstelle noch Beraterin – das legt der Link fest."
+			"helper": "Nur für die Statistik. Die Postleitzahl bestimmt weder Beratungsstelle noch Beraterin – das legt der Link fest.",
+			"invalid": "Bitte geben Sie Ihre fünfstellige Postleitzahl ein."
 		},
 		"card": {
 			"title": "Direktlink",

@@ -34,4 +34,15 @@ describe('DirectLinkPostcodeField (ORISO-Frontend#1795)', () => {
 		fireEvent.blur(input);
 		expect(input.getAttribute('aria-invalid')).toBe('true');
 	});
+
+	it('tells the person to enter five digits once the field is invalid', () => {
+		render(
+			<DirectLinkPostcodeField
+				value="101"
+				onChange={() => undefined}
+				showError
+			/>
+		);
+		expect(screen.getByText(/directLink\.postcode\.invalid/)).toBeTruthy();
+	});
 });

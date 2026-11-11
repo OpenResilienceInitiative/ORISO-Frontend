@@ -6700,7 +6700,8 @@
 	},
 	"directLink": {
 		"postcode": {
-			"helper": "Yalnızca istatistik içindir. Posta kodu ne danışmanlık merkezini ne de danışmanı belirler – bunu bağlantı belirler."
+			"helper": "Yalnızca istatistik içindir. Posta kodu ne danışmanlık merkezini ne de danışmanı belirler – bunu bağlantı belirler.",
+			"invalid": "Lütfen beş haneli posta kodunuzu girin."
 		},
 		"card": {
 			"title": "Doğrudan bağlantı",
