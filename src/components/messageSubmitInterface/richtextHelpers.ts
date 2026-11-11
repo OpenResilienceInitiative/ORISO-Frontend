@@ -148,6 +148,9 @@ export const sanitizeHtmlDefaultOptions = {
 		's',
 		'strike',
 		'img',
+		// The composer offers a horizontal rule (`---`); without this it showed
+		// while writing and vanished on send (#2135).
+		'hr',
 		// Task lists (#1079): without these the checkbox structure is stripped
 		// and a list the sender saw as ☑ / ☐ arrives as plain bullets. Both are
 		// forced inert by `transformTags` below.

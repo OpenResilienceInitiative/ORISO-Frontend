@@ -1,7 +1,10 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActiveSessionContext } from '../../globalState';
-import type { CallLifecycleMessage } from '../../utils/callLifecycleMessage';
+import type {
+	CALL_STATE_NOT_FOUND,
+	CallLifecycleMessage
+} from '../../utils/callLifecycleMessage';
 import { callPartyOf } from '../call/callParty';
 import { formatMessagePersonName } from './messageNameUtils';
 import { CallTimelineSystemMessage } from './CallTimelineSystemMessage';
@@ -31,7 +34,7 @@ export const CallTimelineMessage = ({
 	onJoin?: (hooks?: CallJoinHooks) => Promise<CallJoinResult>;
 	loadState?: (
 		call: CallLifecycleMessage
-	) => Promise<CallLifecycleMessage | null>;
+	) => Promise<CallLifecycleMessage | null | typeof CALL_STATE_NOT_FOUND>;
 	/**
 	 * Asked on "Beitreten": show the camera and microphone check first
 	 * (#2016, `shouldShowDeviceCheck`). Without it the card joins at once.

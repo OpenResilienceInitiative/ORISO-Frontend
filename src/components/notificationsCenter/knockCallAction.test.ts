@@ -34,6 +34,38 @@ describe('enterKnockCall (FE#1952)', () => {
 		});
 	});
 
+	/** #2170: the knock names only the room; the call is named after the link. */
+	it('names the call after the conversation it enters', () => {
+		const start = vi.fn().mockResolvedValue(undefined);
+		const roomNameFor = vi.fn(() => 'Flyer Schule');
+
+		enterKnockCall(knock(), {
+			start,
+			currentCall: () => null,
+			roomNameFor
+		});
+
+		expect(roomNameFor).toHaveBeenCalledWith('!direct:matrix.example');
+		expect(start).toHaveBeenCalledWith({
+			roomId: '!direct:matrix.example',
+			isVideo: true,
+			isGroup: false,
+			roomName: 'Flyer Schule'
+		});
+	});
+
+	it('leaves the call unnamed when the conversation is not known', () => {
+		const start = vi.fn().mockResolvedValue(undefined);
+
+		enterKnockCall(knock(), {
+			start,
+			currentCall: () => null,
+			roomNameFor: () => undefined
+		});
+
+		expect(start.mock.calls[0][0].roomName).toBeUndefined();
+	});
+
 	it('starts an audio call for an audio knock', () => {
 		const start = vi.fn().mockResolvedValue(undefined);
 
