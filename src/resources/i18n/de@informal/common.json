@@ -2319,7 +2319,9 @@
 			"mobileHeadline": "Hier ist Raum für dein Anliegen.",
 			"carrierLogoAlt": "Karte der Standorte von {{name}} anzeigen"
 		},
-		"stop": "Stopp"
+		"stop": "Stopp",
+		"scrollPrevious": "Zurückblättern",
+		"scrollNext": "Weiterblättern"
 	},
 	"login": {
 		"register": {

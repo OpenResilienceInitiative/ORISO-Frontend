@@ -135,7 +135,9 @@
 			"new": "New Look!"
 		},
 		"wait": "Please wait",
-		"logo": "Logo"
+		"logo": "Logo",
+		"scrollPrevious": "Previous",
+		"scrollNext": "Next"
 	},
 	"appointments": {
 		"copy": {

@@ -5,6 +5,11 @@ import { useTranslation } from 'react-i18next';
 import { registrationMd3 } from '../../registration/registrationDesign/registrationDesign';
 import { CarouselDots } from '../../carouselDots/CarouselDots';
 import {
+	HoverScrollArrows,
+	ScrollDirection,
+	stepTargetIndex
+} from '../../hoverScrollArrows/HoverScrollArrows';
+import {
 	artworkFit,
 	processArtwork,
 	RegistrationArtworkEntry
@@ -281,6 +286,18 @@ export const HandoverCarousel = ({
 	/** Scroll to card `index` and hold its dot while the scroll settles. */
 	const scrollToCard = (index: number) => selectDotRef.current?.(index);
 
+	/** The desktop arrows move one card, through the dots' own path. */
+	const stepCard = (direction: ScrollDirection) => {
+		const track = trackRef.current;
+		if (!track) return;
+		const index = stepTargetIndex(
+			cardTargets(track),
+			track.scrollLeft,
+			direction
+		);
+		if (index !== null) scrollToCard(index);
+	};
+
 	/*
 	 * A mouse cannot swipe: without a trackpad the cards could not be moved at
 	 * all, and the scrollbar is hidden. Dragging with the mouse scrolls the
@@ -345,177 +362,188 @@ export const HandoverCarousel = ({
 				flexDirection: 'column'
 			}}
 		>
-			<Box
-				ref={trackRef}
-				component="ul"
-				data-cy="handover-carousel"
-				onPointerDown={onPointerDown}
-				onPointerMove={onPointerMove}
-				onPointerUp={endDrag}
-				onPointerCancel={endDrag}
-				onDragStart={(event: React.DragEvent) => event.preventDefault()}
-				sx={{
-					'flex': 1,
-					'minHeight': 0,
-					'display': 'flex',
-					// Mobile: cards fill the available height, the motif grows
-					// with them (design 8c). Desktop: cards are content-height
-					// with a square motif (8d), so a tall window does not leave
-					// a dead white area under each card's text.
-					'alignItems': { xs: 'stretch', sm: 'flex-start' },
-					'gap': { xs: 1.5, sm: 2.5 },
-					'm': 0,
-					'p': 0,
-					'listStyle': 'none',
-					'overflowX': 'auto',
-					'overflowY': 'hidden',
-					'scrollSnapType': 'x mandatory',
-					'scrollbarWidth': 'none',
-					'&::-webkit-scrollbar': { display: 'none' },
-					'@media (hover: hover) and (pointer: fine)': {
-						cursor: 'grab'
-					},
-					'&[data-dragging]': {
-						cursor: 'grabbing',
-						scrollSnapType: 'none',
-						userSelect: 'none'
-					}
-				}}
+			<HoverScrollArrows
+				targetRef={trackRef}
+				onStep={stepCard}
+				data-cy="handover-carousel-arrows"
+				sx={{ flex: 1, minHeight: 0 }}
 			>
-				{steps.map((step, index) => (
-					<Box
-						key={step.key}
-						component="li"
-						data-cy={`handover-card-${step.key}`}
-						sx={{
-							flex: 'none',
-							width: CARD_WIDTH,
-							// Centre on every width: the dots and a released
-							// drag centre their card (`cardTargets`), and a
-							// start snap would pull the middle card off to an
-							// end where two cards fit at once.
-							scrollSnapAlign: 'center',
-							display: 'flex',
-							flexDirection: 'column',
-							bgcolor: registrationMd3.surface,
-							border: `1px solid ${registrationMd3.outlineVariant}`,
-							borderRadius: { xs: '18px', sm: '20px' },
-							overflow: 'hidden'
-						}}
-					>
+				<Box
+					ref={trackRef}
+					component="ul"
+					data-cy="handover-carousel"
+					onPointerDown={onPointerDown}
+					onPointerMove={onPointerMove}
+					onPointerUp={endDrag}
+					onPointerCancel={endDrag}
+					onDragStart={(event: React.DragEvent) =>
+						event.preventDefault()
+					}
+					sx={{
+						'flex': 1,
+						'minHeight': 0,
+						'display': 'flex',
+						// Mobile: cards fill the available height, the motif grows
+						// with them (design 8c). Desktop: cards are content-height
+						// with a square motif (8d), so a tall window does not leave
+						// a dead white area under each card's text.
+						'alignItems': { xs: 'stretch', sm: 'flex-start' },
+						'gap': { xs: 1.5, sm: 2.5 },
+						'm': 0,
+						'p': 0,
+						'listStyle': 'none',
+						'overflowX': 'auto',
+						'overflowY': 'hidden',
+						'scrollSnapType': 'x mandatory',
+						'scrollbarWidth': 'none',
+						'&::-webkit-scrollbar': { display: 'none' },
+						'@media (hover: hover) and (pointer: fine)': {
+							cursor: 'grab'
+						},
+						'&[data-dragging]': {
+							cursor: 'grabbing',
+							scrollSnapType: 'none',
+							userSelect: 'none'
+						}
+					}}
+				>
+					{steps.map((step, index) => (
 						<Box
-							sx={{
-								position: 'relative',
-								// Either way the box has a definite size before
-								// the image arrives, so a late motif never
-								// shifts the text the user is already reading.
-								flex: { xs: 1, sm: 'none' },
-								minHeight: { xs: 170, sm: 0 },
-								aspectRatio: { xs: 'auto', sm: '1 / 1' },
-								bgcolor: registrationMd3.surfaceContainer
-							}}
-						>
-							<Box
-								component="img"
-								src={step.artwork.src}
-								alt={
-									step.altKey || step.altFallback
-										? t(
-												step.altKey ??
-													`registration.handover.steps.${step.key}.alt`,
-												step.altFallback ?? ''
-											)
-										: ''
-								}
-								// Card 1 is what everyone sees; 2 and 3 are one
-								// swipe away and can wait for spare bandwidth.
-								loading={index === 0 ? 'eager' : 'lazy'}
-								fetchPriority={index === 0 ? 'high' : 'low'}
-								decoding="async"
-								onLoad={noteSettled}
-								onError={noteSettled}
-								sx={{
-									width: '100%',
-									height: '100%',
-									objectFit: artworkFit(step.artwork),
-									p: step.artwork.pending ? 5 : 0,
-									opacity: step.artwork.pending ? 0.45 : 1,
-									display: 'block'
-								}}
-							/>
-							<Box
-								component="span"
-								aria-hidden
-								sx={{
-									position: 'absolute',
-									left: { xs: 12, sm: 14 },
-									top: { xs: 12, sm: 14 },
-									width: { xs: 34, sm: 36 },
-									height: { xs: 34, sm: 36 },
-									borderRadius: '50%',
-									bgcolor: registrationMd3.primary,
-									color: registrationMd3.onPrimary,
-									fontSize: { xs: 16, sm: 17 },
-									fontWeight: 700,
-									display: 'flex',
-									alignItems: 'center',
-									justifyContent: 'center'
-								}}
-							>
-								{index + 1}
-							</Box>
-						</Box>
-						<Box
+							key={step.key}
+							component="li"
+							data-cy={`handover-card-${step.key}`}
 							sx={{
 								flex: 'none',
-								px: { xs: 2, sm: 2.5 },
-								pt: { xs: 1.75, sm: 2 },
-								pb: { xs: 2, sm: 2.5 }
+								width: CARD_WIDTH,
+								// Centre on every width: the dots and a released
+								// drag centre their card (`cardTargets`), and a
+								// start snap would pull the middle card off to an
+								// end where two cards fit at once.
+								scrollSnapAlign: 'center',
+								display: 'flex',
+								flexDirection: 'column',
+								bgcolor: registrationMd3.surface,
+								border: `1px solid ${registrationMd3.outlineVariant}`,
+								borderRadius: { xs: '18px', sm: '20px' },
+								overflow: 'hidden'
 							}}
 						>
-							<Typography
-								component="h2"
+							<Box
 								sx={{
-									fontSize: { xs: 17, sm: 18 },
-									fontWeight: 700,
-									lineHeight: { xs: '23px', sm: '24px' },
-									// Two title lines are reserved so every
-									// card is the same height regardless of
-									// how its headline wraps.
-									minHeight: { xs: '46px', sm: '48px' },
-									mb: 0.75,
-									color: registrationMd3.onSurface
+									position: 'relative',
+									// Either way the box has a definite size before
+									// the image arrives, so a late motif never
+									// shifts the text the user is already reading.
+									flex: { xs: 1, sm: 'none' },
+									minHeight: { xs: 170, sm: 0 },
+									aspectRatio: { xs: 'auto', sm: '1 / 1' },
+									bgcolor: registrationMd3.surfaceContainer
 								}}
 							>
-								{t(
-									step.titleKey ??
-										`registration.handover.steps.${step.key}.title`
-								)}
-							</Typography>
-							<Typography
+								<Box
+									component="img"
+									src={step.artwork.src}
+									alt={
+										step.altKey || step.altFallback
+											? t(
+													step.altKey ??
+														`registration.handover.steps.${step.key}.alt`,
+													step.altFallback ?? ''
+												)
+											: ''
+									}
+									// Card 1 is what everyone sees; 2 and 3 are one
+									// swipe away and can wait for spare bandwidth.
+									loading={index === 0 ? 'eager' : 'lazy'}
+									fetchPriority={index === 0 ? 'high' : 'low'}
+									decoding="async"
+									onLoad={noteSettled}
+									onError={noteSettled}
+									sx={{
+										width: '100%',
+										height: '100%',
+										objectFit: artworkFit(step.artwork),
+										p: step.artwork.pending ? 5 : 0,
+										opacity: step.artwork.pending
+											? 0.45
+											: 1,
+										display: 'block'
+									}}
+								/>
+								<Box
+									component="span"
+									aria-hidden
+									sx={{
+										position: 'absolute',
+										left: { xs: 12, sm: 14 },
+										top: { xs: 12, sm: 14 },
+										width: { xs: 34, sm: 36 },
+										height: { xs: 34, sm: 36 },
+										borderRadius: '50%',
+										bgcolor: registrationMd3.primary,
+										color: registrationMd3.onPrimary,
+										fontSize: { xs: 16, sm: 17 },
+										fontWeight: 700,
+										display: 'flex',
+										alignItems: 'center',
+										justifyContent: 'center'
+									}}
+								>
+									{index + 1}
+								</Box>
+							</Box>
+							<Box
 								sx={{
-									fontSize: { xs: 13, sm: 14 },
-									lineHeight: { xs: '19px', sm: '20px' },
-									color: registrationMd3.onSurfaceVariant,
-									// Design rule: at most three lines after
-									// the heading, and always the same box —
-									// shorter copy pads, longer copy clips.
-									minHeight: { xs: '57px', sm: '60px' },
-									display: '-webkit-box',
-									WebkitLineClamp: 3,
-									WebkitBoxOrient: 'vertical',
-									overflow: 'hidden'
+									flex: 'none',
+									px: { xs: 2, sm: 2.5 },
+									pt: { xs: 1.75, sm: 2 },
+									pb: { xs: 2, sm: 2.5 }
 								}}
 							>
-								{t(
-									step.textKey ??
-										`registration.handover.steps.${step.key}.text`
-								)}
-							</Typography>
+								<Typography
+									component="h2"
+									sx={{
+										fontSize: { xs: 17, sm: 18 },
+										fontWeight: 700,
+										lineHeight: { xs: '23px', sm: '24px' },
+										// Two title lines are reserved so every
+										// card is the same height regardless of
+										// how its headline wraps.
+										minHeight: { xs: '46px', sm: '48px' },
+										mb: 0.75,
+										color: registrationMd3.onSurface
+									}}
+								>
+									{t(
+										step.titleKey ??
+											`registration.handover.steps.${step.key}.title`
+									)}
+								</Typography>
+								<Typography
+									sx={{
+										fontSize: { xs: 13, sm: 14 },
+										lineHeight: { xs: '19px', sm: '20px' },
+										color: registrationMd3.onSurfaceVariant,
+										// Design rule: at most three lines after
+										// the heading, and always the same box —
+										// shorter copy pads, longer copy clips.
+										minHeight: { xs: '57px', sm: '60px' },
+										display: '-webkit-box',
+										WebkitLineClamp: 3,
+										WebkitBoxOrient: 'vertical',
+										overflow: 'hidden'
+									}}
+								>
+									{t(
+										step.textKey ??
+											`registration.handover.steps.${step.key}.text`
+									)}
+								</Typography>
+							</Box>
 						</Box>
-					</Box>
-				))}
-			</Box>
+					))}
+				</Box>
+			</HoverScrollArrows>
 
 			<CarouselDots
 				data-cy="handover-carousel-dots"

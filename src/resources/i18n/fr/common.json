@@ -138,7 +138,9 @@
 		"wait": "Veuillez attendre",
 		"info": "Information",
 		"or": "ou",
-		"logo": "Logo"
+		"logo": "Logo",
+		"scrollPrevious": "Précédent",
+		"scrollNext": "Suivant"
 	},
 	"appointments": {
 		"copy": {

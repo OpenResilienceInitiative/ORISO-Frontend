@@ -138,7 +138,9 @@
 		"wait": "Lütfen bekleyin",
 		"info": "Bilgi",
 		"or": "veya",
-		"logo": "Logo"
+		"logo": "Logo",
+		"scrollPrevious": "Önceki",
+		"scrollNext": "Sonraki"
 	},
 	"appointments": {
 		"copy": {
