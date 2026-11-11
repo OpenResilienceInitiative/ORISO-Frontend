@@ -30,7 +30,7 @@ export type CallConversation = Pick<
 	session?: Partial<
 		Pick<
 			SessionItemInterface,
-			'askerMatrixUserId' | 'consultantMatrixUserId'
+			'id' | 'askerMatrixUserId' | 'consultantMatrixUserId'
 		>
 	>;
 	/** Set for a group chat; its members say who counsels (see callCounsellors). */

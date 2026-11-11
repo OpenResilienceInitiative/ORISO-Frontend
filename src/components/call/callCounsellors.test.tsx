@@ -2,15 +2,33 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vite-plus/test';
 import { apiGetChatMembers } from '../../api/apiGetChatMembers';
+import { apiGetSessionSupervisors } from '../../api/apiGetSessionSupervisors';
 import { callCounsellorsOf, useCallCounsellors } from './callCounsellors';
 import type { CallConversation } from './callParty';
 
 vi.mock('../../api/apiGetChatMembers', () => ({ apiGetChatMembers: vi.fn() }));
+vi.mock('../../api/apiGetSessionSupervisors', () => ({
+	apiGetSessionSupervisors: vi.fn()
+}));
 
 const getMembers = vi.mocked(apiGetChatMembers);
+const getSupervisors = vi.mocked(apiGetSessionSupervisors);
+
+const supervisorRow = (
+	supervisorMatrixUserId: string | null | undefined
+): UserService.Schemas.SessionSupervisorResponseDTO => ({
+	id: 1,
+	sessionId: 42,
+	supervisorConsultantId: 'kc-supervisor',
+	supervisorUsername: 'supervisor',
+	supervisorMatrixUserId,
+	addedByConsultantId: 'kc-counsellor',
+	addedDate: '2026-11-11T10:00:00Z'
+});
 
 const session: CallConversation = {
 	session: {
+		id: 42,
 		askerMatrixUserId: '@asker:example',
 		consultantMatrixUserId: '@counsellor:example'
 	}
@@ -44,6 +62,28 @@ describe('callCounsellorsOf', () => {
 		]);
 	});
 
+	it("adds a session's supervisors, deduplicated and sorted (#144)", () => {
+		expect(
+			callCounsellorsOf(
+				session,
+				[],
+				[
+					supervisorRow('@bettina:example'),
+					supervisorRow('@counsellor:example'),
+					supervisorRow(null),
+					supervisorRow('not-a-matrix-id')
+				]
+			)
+		).toEqual(['@bettina:example', '@counsellor:example']);
+	});
+
+	it('ignores supervisor lists for a group chat', () => {
+		getMembers.mockResolvedValue({ members: [] });
+		expect(
+			callCounsellorsOf(group, [], [supervisorRow('@bettina:example')])
+		).toEqual([]);
+	});
+
 	it('is empty without a conversation (shared-call guest) or a counsellor', () => {
 		expect(callCounsellorsOf(null)).toEqual([]);
 		expect(callCounsellorsOf(undefined, members)).toEqual([]);
@@ -56,11 +96,35 @@ describe('callCounsellorsOf', () => {
 describe('useCallCounsellors', () => {
 	// No mockReset/mockClear here: under vite-plus they turn the rejection
 	// of the failure case into an unhandled one. Count calls per test instead.
-	it('reads the session counsellor without a request', () => {
+	it('reads the session counsellor at once, without a member request', () => {
+		getSupervisors.mockResolvedValue([]);
 		const before = getMembers.mock.calls.length;
 		const { result } = renderHook(() => useCallCounsellors(session));
 		expect(result.current).toEqual(['@counsellor:example']);
 		expect(getMembers.mock.calls.length).toBe(before);
+	});
+
+	it("adds the session's supervisors from the userservice (#144)", async () => {
+		getSupervisors.mockResolvedValue([supervisorRow('@bettina:example')]);
+		const { result } = renderHook(() => useCallCounsellors(session));
+		await waitFor(() =>
+			expect(result.current).toEqual([
+				'@bettina:example',
+				'@counsellor:example'
+			])
+		);
+		expect(getSupervisors).toHaveBeenCalledWith(42);
+	});
+
+	it('keeps the counsellor when the supervisor read is refused', async () => {
+		getSupervisors.mockImplementation(async () => {
+			throw new Error('403');
+		});
+		const { result } = renderHook(() => useCallCounsellors(session));
+		await act(async () => {
+			await new Promise((resolve) => setTimeout(resolve, 0));
+		});
+		expect(result.current).toEqual(['@counsellor:example']);
 	});
 
 	it("loads a group chat's members from the userservice", async () => {
@@ -86,6 +150,7 @@ describe('useCallCounsellors', () => {
 	});
 
 	it('returns the same array for the same people', async () => {
+		getSupervisors.mockResolvedValue([]);
 		const { result, rerender } = renderHook(
 			(conversation: CallConversation) =>
 				useCallCounsellors(conversation),
