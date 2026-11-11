@@ -68,7 +68,7 @@ import { DirectLinkCallEntry } from '../directLinkEntry/DirectLinkCallEntry';
 import { directLinkRegistration } from '../directLinkEntry/directLinkRegistration';
 import {
 	asksDirectLinkPostcode,
-	isDirectLinkPostcode
+	isDirectLinkPostcodeMissing
 } from '../directLinkEntry/directLinkPostcode';
 import { DirectLinkPostcodeField } from '../directLinkEntry/DirectLinkPostcodeField';
 
@@ -169,6 +169,7 @@ export const InviteLink = () => {
 	const [username, setUsername] = useState('');
 	const [password, setPassword] = useState('');
 	const [postcode, setPostcode] = useState('');
+	const [postcodeTried, setPostcodeTried] = useState(false);
 	const registerThenLogin = useRegisterThenLogin();
 	/* The account exists and only the login after it failed (#1533). The
 	   identity stays on screen as it was — it is now the account's — and
@@ -452,7 +453,10 @@ export const InviteLink = () => {
 
 	const handleContinue = useCallback(async () => {
 		if (!legacyRedeem || !username || !password) return;
-		if (askPostcode && !isDirectLinkPostcode(postcode)) return;
+		if (isDirectLinkPostcodeMissing(askPostcode, postcode)) {
+			setPostcodeTried(true);
+			return;
+		}
 		setStatus('registering');
 		try {
 			await registerThenLogin.submit(
@@ -701,6 +705,7 @@ export const InviteLink = () => {
 							<DirectLinkPostcodeField
 								value={postcode}
 								onChange={setPostcode}
+								showError={postcodeTried}
 							/>
 						)}
 						{loginRetry && (
@@ -718,9 +723,6 @@ export const InviteLink = () => {
 							fullWidth
 							variant="contained"
 							onClick={handleContinue}
-							disabled={
-								askPostcode && !isDirectLinkPostcode(postcode)
-							}
 							sx={{
 								'mt': 3,
 								'textTransform': 'none',

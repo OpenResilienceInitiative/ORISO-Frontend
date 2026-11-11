@@ -11,6 +11,10 @@ export const DIRECT_LINK_POSTCODE_LENGTH = 5;
 /** The backend's rule for a postcode: exactly five digits. */
 export const isDirectLinkPostcode = (value: string) => /^[0-9]{5}$/.test(value);
 
+/** True while a screen that asks for the postcode still lacks a valid one. */
+export const isDirectLinkPostcodeMissing = (asked: boolean, value: string) =>
+	asked && !isDirectLinkPostcode(value);
+
 /**
  * ORISO-Frontend#1795: a person who registers through a direct link enters
  * a postcode (kept for statistics, it routes nothing — the link fixes agency

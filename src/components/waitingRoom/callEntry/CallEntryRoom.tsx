@@ -19,7 +19,7 @@ import {
 	registrationScreenTitleSx
 } from '../../registration/registrationDesign/registrationDesign';
 import { CallEntryIdentity } from './CallEntryIdentity';
-import { isDirectLinkPostcode } from '../../directLinkEntry/directLinkPostcode';
+import { isDirectLinkPostcodeMissing } from '../../directLinkEntry/directLinkPostcode';
 import {
 	useWaitingRoomConsent,
 	WaitingRoomConsentPanel
@@ -273,7 +273,7 @@ export const CallEntryRoom = ({
 		...(askPostcode
 			? [
 					{
-						done: isDirectLinkPostcode(postcode),
+						done: !isDirectLinkPostcodeMissing(true, postcode),
 						missing: copy.missingPostcode
 					}
 				]

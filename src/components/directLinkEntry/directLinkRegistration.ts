@@ -3,7 +3,7 @@ import type { CallEntryAccount } from '../waitingRoom/callEntry/CallEntryRoom';
 import {
 	asksDirectLinkPostcode,
 	DIRECT_LINK_FALLBACK_POSTCODE,
-	isDirectLinkPostcode
+	isDirectLinkPostcodeMissing
 } from './directLinkPostcode';
 
 /**
@@ -24,8 +24,10 @@ export const directLinkRegistration = (
 	token: string
 ) => {
 	if (
-		asksDirectLinkPostcode(context) &&
-		!isDirectLinkPostcode(postcode ?? '')
+		isDirectLinkPostcodeMissing(
+			asksDirectLinkPostcode(context),
+			postcode ?? ''
+		)
 	) {
 		throw new Error('A registered direct-link account needs a postcode');
 	}

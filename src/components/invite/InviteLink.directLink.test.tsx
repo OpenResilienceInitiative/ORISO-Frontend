@@ -373,11 +373,15 @@ describe('InviteLink with a counsellor direct link (#1795)', () => {
 		const next = screen.getByRole('button', {
 			name: 'Weiter mit Auswahl'
 		}) as HTMLButtonElement;
-		expect(next.disabled).toBe(true);
 		typePostcode('1011');
-		expect(next.disabled).toBe(true);
-		typePostcode('10115');
-		expect(next.disabled).toBe(false);
+		fireEvent.click(next);
+		await waitFor(() =>
+			expect(
+				screen
+					.getByLabelText('Ihre Postleitzahl')
+					.getAttribute('aria-invalid')
+			).toBe('true')
+		);
 		expect(apiPostRegistration).not.toHaveBeenCalled();
 	});
 

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { OrisoTextField } from '../form/OrisoTextField';
 import {
@@ -10,6 +10,8 @@ import {
 export interface DirectLinkPostcodeFieldProps {
 	value: string;
 	onChange: (value: string) => void;
+	/** Show the error although the field was not left yet (a tried submit). */
+	showError?: boolean;
 }
 
 /**
@@ -18,13 +20,16 @@ export interface DirectLinkPostcodeFieldProps {
  */
 export const DirectLinkPostcodeField = ({
 	value,
-	onChange
+	onChange,
+	showError = false
 }: DirectLinkPostcodeFieldProps) => {
 	const { t } = useTranslation();
 	const [blurred, setBlurred] = useState(false);
+	const id = useId();
 
 	return (
 		<OrisoTextField
+			id={id}
 			value={value}
 			onChange={(event) =>
 				onChange(
@@ -36,7 +41,7 @@ export const DirectLinkPostcodeField = ({
 			onBlur={() => setBlurred(true)}
 			label={t('registration.zipcode.label')}
 			helperText={t('directLink.postcode.helper')}
-			error={blurred && !isDirectLinkPostcode(value)}
+			error={(blurred || showError) && !isDirectLinkPostcode(value)}
 			fullWidth
 			autoComplete="postal-code"
 			inputProps={{
