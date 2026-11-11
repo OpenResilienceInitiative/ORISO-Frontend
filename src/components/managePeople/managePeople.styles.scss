@@ -247,4 +247,16 @@
 		font-size: 14px;
 		line-height: 20px;
 	}
+
+	/* Live region stays in the DOM so screen readers hear the confirmation. */
+	&__success {
+		margin: 16px 0 0;
+		color: var(--m3-on-surface, #1b1b1c);
+		font-size: 14px;
+		line-height: 20px;
+
+		&:empty {
+			margin: 0;
+		}
+	}
 }

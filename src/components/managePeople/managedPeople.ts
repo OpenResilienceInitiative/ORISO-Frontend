@@ -18,6 +18,8 @@ export interface ManagedPerson {
 	id: string;
 	/** Name for colleagues, already resolved by the source. */
 	name: string;
+	/** Agency or counselling centre, when the source knows it. */
+	organisation?: string;
 	role: ManagedPersonRole;
 	/** ISO date the person joined, when the source knows it. */
 	since?: string;
@@ -33,6 +35,20 @@ export interface ManagedPerson {
 export interface PersonCandidate {
 	id: string;
 	name: string;
+	/** Agency or counselling centre, when the source knows it. */
+	organisation?: string;
+}
+
+/**
+ * The server said no (403/409): the person is no longer allowed here, for
+ * example because their organisation withdrew the permission while the list
+ * was open. Sources throw this so the dialog can say so instead of "try again".
+ */
+export class PersonChangeRefusedError extends Error {
+	constructor(message = 'refused') {
+		super(message);
+		this.name = 'PersonChangeRefusedError';
+	}
 }
 
 export interface ChangePersonInput {
@@ -92,7 +108,14 @@ export const selectableCandidates = (
 	);
 };
 
-export const matchesPersonSearch = (name: string, query: string): boolean => {
+/** Search by name or organisation, case-insensitive. */
+export const matchesPersonSearch = (
+	person: Pick<PersonCandidate, 'name' | 'organisation'>,
+	query: string
+): boolean => {
 	const search = query.trim().toLocaleLowerCase();
-	return !search || name.toLocaleLowerCase().includes(search);
+	if (!search) return true;
+	return [person.name, person.organisation].some((text) =>
+		text?.toLocaleLowerCase().includes(search)
+	);
 };

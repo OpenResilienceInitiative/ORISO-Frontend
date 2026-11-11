@@ -6831,7 +6831,7 @@
 		"working": "İşleniyor…",
 		"retry": "Tekrar dene",
 		"cancel": "Vazgeç",
-		"search": "Ada göre ara",
+		"search": "Ada veya kuruma göre ara",
 		"noMatches": "Bu aramayla eşleşen kimse yok.",
 		"otherPerson": "Başka birini seç",
 		"since": "{{date}} tarihinden beri",
@@ -6867,7 +6867,8 @@
 			"candidates": "Uygun kişiler yüklenemedi.",
 			"add": "Kişi eklenemedi. Lütfen tekrar deneyin.",
 			"remove": "Kişi çıkarılamadı. Lütfen tekrar deneyin.",
-			"replace": "Değişiklik yapılamadı. Lütfen tekrar deneyin."
+			"replace": "Değişiklik yapılamadı. Lütfen tekrar deneyin.",
+			"refused": "Bu kişi artık buraya eklenemez. Kurumu veya bu sohbet buna izin vermiyor. Liste güncellendi."
 		},
 		"supervision": {
 			"title": "Süpervizyonu yönet",
@@ -6878,7 +6879,8 @@
 			"emptyCandidates": "Bu merkezde başka kimse süpervizör olarak işaretli değil. Buna merkez yöneticisi karar verir.",
 			"reasonLabel": "Süpervizyon nedeni",
 			"reasonPlaceholder": "Bu kişi vakaya neden süpervizörlük yapmalı?",
-			"reasonMissing": "Lütfen bir neden girin."
+			"reasonMissing": "Lütfen bir neden girin.",
+			"added": "{{name}} artık bu vakanın süpervizörü."
 		},
 		"internalChat": {
 			"title": "Kişileri yönet",
@@ -6887,7 +6889,8 @@
 			"emptyMembers": "Bu sohbette henüz kimse yok.",
 			"addTitle": "Meslektaş ekle",
 			"addNote": "Yeni kişiler mesajları katıldıkları andan itibaren görür, öncekileri görmez.",
-			"emptyCandidates": "Bu sohbete başka meslektaş eklenemez."
+			"emptyCandidates": "Bu sohbete başka meslektaş eklenemez.",
+			"added": "{{name}} bu sohbete eklendi."
 		},
 		"groupChat": {
 			"title": "Kişileri yönet",
@@ -6897,7 +6900,8 @@
 			"addTitle": "Yardımcı moderatör ekle",
 			"emptyCandidates": "Bu gruba başka meslektaş eklenemez.",
 			"inviteTitle": "Kişileri davet et",
-			"inviteDescription": "Danışanlar bu bağlantı veya QR kod ile katılır."
+			"inviteDescription": "Danışanlar bu bağlantı veya QR kod ile katılır.",
+			"added": "{{name}} artık bu grubun ortak moderatörü."
 		}
 	}
 }

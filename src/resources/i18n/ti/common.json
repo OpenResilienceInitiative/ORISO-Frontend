@@ -6834,7 +6834,8 @@
 			"candidates": "ዝርከቡ ሰባት ክጽዓኑ ኣይከኣሉን።",
 			"add": "እቲ ሰብ ክውሰኽ ኣይከኣለን። በጃኹም እንደገና ፈትኑ።",
 			"remove": "እቲ ሰብ ክወጽእ ኣይከኣለን። በጃኹም እንደገና ፈትኑ።",
-			"replace": "ምቕያር ኣይተሳኽዐን። በጃኹም እንደገና ፈትኑ።"
+			"replace": "ምቕያር ኣይተሳኽዐን። በጃኹም እንደገና ፈትኑ።",
+			"refused": "This person can no longer be added here. Their organisation or this chat does not allow it. The list has been updated."
 		},
 		"supervision": {
 			"title": "ሱፐርቪዥን ኣመሓድር",
@@ -6845,7 +6846,8 @@
 			"emptyCandidates": "ኣብዚ ማእከል ካልእ ከም ሱፐርቫይዘር ዝተመልከተ የለን። እዚ ኣመሓዳሪ ማእከል ይውስኖ።",
 			"reasonLabel": "ምኽንያት ሱፐርቪዥን",
 			"reasonPlaceholder": "እዚ ሰብ ስለምንታይ እዚ ጉዳይ ይቆጻጸር?",
-			"reasonMissing": "በጃኹም ምኽንያት ኣእትዉ።"
+			"reasonMissing": "በጃኹም ምኽንያት ኣእትዉ።",
+			"added": "{{name}} now supervises this case."
 		},
 		"internalChat": {
 			"title": "ሰባት ኣመሓድር",
@@ -6854,7 +6856,8 @@
 			"emptyMembers": "ኣብዚ ቻት ገና ሰብ የለን።",
 			"addTitle": "መሳርሕቲ ወስኽ",
 			"addNote": "ሓደሽቲ ሰባት መልእኽትታት ካብ ዝተጸንበርሉ እዋን ጀሚሮም ይርእዩ፡ ነቶም ዝሓለፉ ኣይኮነን።",
-			"emptyCandidates": "ናብዚ ቻት ካልእ መሳርሕቲ ክውሰኽ ኣይከኣልን።"
+			"emptyCandidates": "ናብዚ ቻት ካልእ መሳርሕቲ ክውሰኽ ኣይከኣልን።",
+			"added": "{{name}} was added to this chat."
 		},
 		"groupChat": {
 			"title": "ሰባት ኣመሓድር",
@@ -6864,7 +6867,8 @@
 			"addTitle": "ተሓጋጋዚ ኣወሃሃዲ ወስኽ",
 			"emptyCandidates": "ናብዚ ጉጅለ ካልእ መሳርሕቲ ክውሰኽ ኣይከኣልን።",
 			"inviteTitle": "ሰባት ዓድም",
-			"inviteDescription": "ምኽሪ ዝደልዩ ሰባት ብዚ ሊንክ ወይ QR ኮድ ይጽንበሩ።"
+			"inviteDescription": "ምኽሪ ዝደልዩ ሰባት ብዚ ሊንክ ወይ QR ኮድ ይጽንበሩ።",
+			"added": "{{name}} now co-moderates this group."
 		}
 	}
 }

@@ -6746,7 +6746,7 @@
 		"working": "Working…",
 		"retry": "Try again",
 		"cancel": "Cancel",
-		"search": "Search by name",
+		"search": "Search by name or organisation",
 		"noMatches": "Nobody matches this search.",
 		"otherPerson": "Choose someone else",
 		"since": "Since {{date}}",
@@ -6782,7 +6782,8 @@
 			"candidates": "The available people could not be loaded.",
 			"add": "This person could not be added. Please try again.",
 			"remove": "This person could not be removed. Please try again.",
-			"replace": "The replacement did not work. Please try again."
+			"replace": "The replacement did not work. Please try again.",
+			"refused": "This person can no longer be added here. Their organisation or this chat does not allow it. The list has been updated."
 		},
 		"supervision": {
 			"title": "Manage supervision",
@@ -6793,7 +6794,8 @@
 			"emptyCandidates": "Nobody else at this counselling centre is marked as a supervisor. The agency admin decides who is.",
 			"reasonLabel": "Reason for supervision",
 			"reasonPlaceholder": "Why should this person supervise the case?",
-			"reasonMissing": "Please enter a reason."
+			"reasonMissing": "Please enter a reason.",
+			"added": "{{name}} now supervises this case."
 		},
 		"internalChat": {
 			"title": "Manage people",
@@ -6802,7 +6804,8 @@
 			"emptyMembers": "Nobody is in this chat yet.",
 			"addTitle": "Add a colleague",
 			"addNote": "New people see messages from the moment they join, not the earlier ones.",
-			"emptyCandidates": "No other colleagues can be added to this chat."
+			"emptyCandidates": "No other colleagues can be added to this chat.",
+			"added": "{{name}} was added to this chat."
 		},
 		"groupChat": {
 			"title": "Manage people",
@@ -6812,7 +6815,8 @@
 			"addTitle": "Add a co-moderator",
 			"emptyCandidates": "No other colleagues can be added to this group.",
 			"inviteTitle": "Invite people",
-			"inviteDescription": "Advice seekers join through this link or QR code."
+			"inviteDescription": "Advice seekers join through this link or QR code.",
+			"added": "{{name}} now co-moderates this group."
 		}
 	}
 }

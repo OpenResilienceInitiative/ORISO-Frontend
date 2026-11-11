@@ -19,10 +19,11 @@ import {
 } from '../message/messageStoryShell';
 import '../chatStage/chatStage.styles.scss';
 import { ManagePeopleDialog } from './ManagePeopleDialog';
-import type {
-	ManagedPeopleSource,
-	ManagedPerson,
-	PersonCandidate
+import {
+	PersonChangeRefusedError,
+	type ManagedPeopleSource,
+	type ManagedPerson,
+	type PersonCandidate
 } from './managedPeople';
 
 /**
@@ -41,14 +42,17 @@ const SELMA: ManagedPerson = {
 	canReplace: true
 };
 
+const SPRINGFIELD = 'Beratungsstelle Springfield';
+const SHELBYVILLE = 'Suchtberatung Shelbyville';
+
 const COLLEAGUES: PersonCandidate[] = [
-	{ id: 'patty', name: 'Patty Bouvier' },
-	{ id: 'herb', name: 'Herb Powell' },
-	{ id: 'maggie', name: 'Maggie Simpson' },
-	{ id: 'jacqueline', name: 'Jacqueline Bouvier' },
-	{ id: 'lisa', name: 'Lisa Simpson' },
-	{ id: 'spider', name: 'Spider Pig' },
-	{ id: 'waylon', name: 'Waylon Smithers' }
+	{ id: 'patty', name: 'Patty Bouvier', organisation: SPRINGFIELD },
+	{ id: 'herb', name: 'Herb Powell', organisation: SHELBYVILLE },
+	{ id: 'maggie', name: 'Maggie Simpson', organisation: SPRINGFIELD },
+	{ id: 'jacqueline', name: 'Jacqueline Bouvier', organisation: SPRINGFIELD },
+	{ id: 'lisa', name: 'Lisa Simpson', organisation: SHELBYVILLE },
+	{ id: 'spider', name: 'Spider Pig', organisation: SPRINGFIELD },
+	{ id: 'waylon', name: 'Waylon Smithers', organisation: SHELBYVILLE }
 ];
 
 interface MemorySourceOptions {
@@ -57,6 +61,8 @@ interface MemorySourceOptions {
 	candidates?: PersonCandidate[];
 	requiresReason?: boolean;
 	failCandidates?: boolean;
+	/** The server rejects the add: 'refused' = permission withdrawn (403). */
+	failAdd?: 'error' | 'refused';
 	canAdd?: boolean;
 	newPerson?: Partial<ManagedPerson>;
 }
@@ -67,15 +73,18 @@ const useMemorySource = ({
 	candidates = [],
 	requiresReason,
 	failCandidates,
+	failAdd,
 	canAdd = true,
 	newPerson
 }: MemorySourceOptions): ManagedPeopleSource =>
 	React.useMemo(() => {
 		let members = initialMembers;
+		let eligible = candidates;
 		const person = (candidate: PersonCandidate, reason?: string) =>
 			({
 				id: candidate.id,
 				name: candidate.name,
+				organisation: candidate.organisation,
 				role: 'participant',
 				reason,
 				since: '2026-11-04',
@@ -90,11 +99,19 @@ const useMemorySource = ({
 			loadCandidates: canAdd
 				? async () => {
 						if (failCandidates) throw new Error('403');
-						return candidates;
+						return eligible;
 					}
 				: undefined,
 			addPerson: canAdd
 				? async (candidate, { reason }) => {
+						if (failAdd === 'error') throw new Error('500');
+						if (failAdd === 'refused') {
+							// The organisation withdrew the permission meanwhile.
+							eligible = eligible.filter(
+								({ id }) => id !== candidate.id
+							);
+							throw new PersonChangeRefusedError();
+						}
 						members = [...members, person(candidate, reason)];
 					}
 				: undefined,
@@ -332,6 +349,7 @@ const INTERNAL_MEMBERS: ManagedPerson[] = [
 	{
 		id: 'marge',
 		name: 'Marge Simpson',
+		organisation: SPRINGFIELD,
 		role: 'owner',
 		isSelf: false,
 		canRemove: false,
@@ -340,6 +358,7 @@ const INTERNAL_MEMBERS: ManagedPerson[] = [
 	{
 		id: 'me',
 		name: 'Agnes Skinner',
+		organisation: SPRINGFIELD,
 		role: 'coModerator',
 		isSelf: true,
 		canRemove: false,
@@ -348,6 +367,7 @@ const INTERNAL_MEMBERS: ManagedPerson[] = [
 	{
 		id: 'herb',
 		name: 'Herb Powell',
+		organisation: SHELBYVILLE,
 		role: 'coModerator',
 		canRemove: false,
 		canReplace: false
@@ -385,7 +405,7 @@ export const InternalChatAsMember: Story = {
 				})
 			).toBeNull()
 		);
-		await canvas.findByText('Lisa Simpson');
+		await canvas.findByText('Lisa Simpson ist jetzt in diesem Chat.');
 	}
 };
 
@@ -454,5 +474,154 @@ export const PhoneSupervision: Story = {
 	play: async () => {
 		const canvas = dialogCanvas();
 		await canvas.findByText('Selma Bouvier');
+	}
+};
+
+const INTERNAL_CHAT: MemorySourceOptions = {
+	kind: 'internalChat',
+	members: INTERNAL_MEMBERS.slice(0, 2),
+	candidates: COLLEAGUES,
+	newPerson: { role: 'coModerator', canRemove: false }
+};
+
+/** Search matches the organisation as well as the name. */
+export const InternalChatSearchByOrganisation: Story = {
+	render: () => <GroupStageDialog options={INTERNAL_CHAT} />,
+	play: async () => {
+		const canvas = dialogCanvas();
+		await userEvent.type(
+			await canvas.findByRole('searchbox', {
+				name: 'Nach Name oder Organisation suchen'
+			}),
+			'Shelbyville'
+		);
+		await canvas.findByRole('button', { name: 'Herb Powell hinzufügen' });
+		await expect(
+			canvas.queryByRole('button', { name: 'Patty Bouvier hinzufügen' })
+		).toBeNull();
+	}
+};
+
+/** A search without a hit says so instead of showing an empty list. */
+export const InternalChatSearchNoMatch: Story = {
+	render: () => <GroupStageDialog options={INTERNAL_CHAT} />,
+	play: async () => {
+		const canvas = dialogCanvas();
+		await userEvent.type(
+			await canvas.findByRole('searchbox', { name: /suchen/ }),
+			'Flanders'
+		);
+		await canvas.findByText('Niemand passt zu dieser Suche.');
+	}
+};
+
+/** Nobody left who may join: the reason, not an empty box. */
+export const InternalChatNobodyToAdd: Story = {
+	render: () => (
+		<GroupStageDialog options={{ ...INTERNAL_CHAT, candidates: [] }} />
+	),
+	play: async () => {
+		const canvas = dialogCanvas();
+		await canvas.findByText(
+			'Es können keine weiteren Kolleg:innen zu diesem Chat hinzugefügt werden.'
+		);
+	}
+};
+
+/** The add fails on the server: the person stays selectable for another try. */
+export const InternalChatAddFailed: Story = {
+	render: () => (
+		<GroupStageDialog options={{ ...INTERNAL_CHAT, failAdd: 'error' }} />
+	),
+	play: async () => {
+		const canvas = dialogCanvas();
+		await userEvent.click(
+			await canvas.findByRole('button', {
+				name: 'Lisa Simpson hinzufügen'
+			})
+		);
+		await canvas.findByRole('alert');
+		await canvas.findByRole('button', { name: 'Lisa Simpson hinzufügen' });
+	}
+};
+
+/**
+ * The organisation withdrew the permission while the list was open: the
+ * dialog says so and the person disappears from the list.
+ */
+export const InternalChatAddRefused: Story = {
+	render: () => (
+		<GroupStageDialog options={{ ...INTERNAL_CHAT, failAdd: 'refused' }} />
+	),
+	play: async () => {
+		const canvas = dialogCanvas();
+		await userEvent.click(
+			await canvas.findByRole('button', {
+				name: 'Lisa Simpson hinzufügen'
+			})
+		);
+		await canvas.findByText(/kann hier nicht mehr hinzugefügt werden/);
+		await waitFor(() =>
+			expect(
+				canvas.queryByRole('button', {
+					name: 'Lisa Simpson hinzufügen'
+				})
+			).toBeNull()
+		);
+	}
+};
+
+/** English: invite a colleague and read the confirmation. */
+export const InternalChatEnglish: Story = {
+	globals: { ...desktop1440Globals, locale: 'en' },
+	render: () => <GroupStageDialog options={INTERNAL_CHAT} />,
+	play: async () => {
+		const canvas = dialogCanvas();
+		await canvas.findByRole('heading', { name: 'Add a colleague' });
+		await userEvent.click(
+			await canvas.findByRole('button', { name: 'Add Lisa Simpson' })
+		);
+		await canvas.findByText('Lisa Simpson was added to this chat.');
+	}
+};
+
+/** English: inviting a supervisor asks for the reason first. */
+export const SupervisionEnglish: Story = {
+	globals: { ...desktop1440Globals, locale: 'en' },
+	render: () => <SessionStageDialog options={SUPERVISION} />,
+	play: async () => {
+		const canvas = dialogCanvas();
+		await userEvent.click(
+			await canvas.findByRole('button', { name: 'Add Patty Bouvier' })
+		);
+		await canvas.findByRole('textbox', { name: /Reason for supervision/ });
+	}
+};
+
+/** Phone, internal chat: search, list and confirmation fit 390 px. */
+export const PhoneInternalChat: Story = {
+	globals: phone390Globals,
+	render: () => <GroupStageDialog options={INTERNAL_CHAT} phone />,
+	play: async () => {
+		const canvas = dialogCanvas();
+		await canvas.findByRole('searchbox', { name: /suchen/ });
+	}
+};
+
+/** Phone, English, after an invitation was refused. */
+export const PhoneInternalChatRefusedEnglish: Story = {
+	globals: { ...phone390Globals, locale: 'en' },
+	render: () => (
+		<GroupStageDialog
+			options={{ ...INTERNAL_CHAT, failAdd: 'refused' }}
+			phone
+		/>
+	),
+	play: async () => {
+		const canvas = dialogCanvas();
+		await userEvent.click(
+			await canvas.findByRole('button', { name: 'Add Lisa Simpson' })
+		);
+		await canvas.findByText(/can no longer be added here/);
 	}
 };

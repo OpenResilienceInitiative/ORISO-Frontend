@@ -13,6 +13,8 @@ import { ManagePeopleDialog } from './ManagePeopleDialog';
 import {
 	ManagedPeopleSource,
 	ManagedPerson,
+	matchesPersonSearch,
+	PersonChangeRefusedError,
 	readablePersonName,
 	selectableCandidates
 } from './managedPeople';
@@ -50,6 +52,16 @@ const show = (managed: ManagedPeopleSource) =>
 	render(
 		<ManagePeopleDialog open onClose={() => undefined} source={managed} />
 	);
+
+describe('matchesPersonSearch', () => {
+	it('matches the name or the organisation, ignoring case', () => {
+		const patty = { name: 'Patty Bouvier', organisation: 'Suchtberatung' };
+		expect(matchesPersonSearch(patty, 'patty')).toBe(true);
+		expect(matchesPersonSearch(patty, 'SUCHT')).toBe(true);
+		expect(matchesPersonSearch(patty, 'Flanders')).toBe(false);
+		expect(matchesPersonSearch({ name: 'Herb' }, '')).toBe(true);
+	});
+});
 
 describe('readablePersonName', () => {
 	it('never shows an encoded user name', () => {
@@ -241,6 +253,59 @@ describe('ManagePeopleDialog', () => {
 			screen.getByRole('button', {
 				name: 'managePeople.add.labelFor:Patty Bouvier'
 			})
+		).toBeTruthy();
+	});
+
+	it('says when the server refuses and reads the list again', async () => {
+		const loadCandidates = vi
+			.fn()
+			.mockResolvedValueOnce([{ id: 'patty', name: 'Patty Bouvier' }])
+			.mockResolvedValue([]);
+		const managed = source({
+			kind: 'internalChat',
+			loadCandidates,
+			addPerson: vi.fn().mockRejectedValue(new PersonChangeRefusedError())
+		});
+		show(managed);
+		fireEvent.click(
+			await screen.findByRole('button', {
+				name: 'managePeople.add.labelFor:Patty Bouvier'
+			})
+		);
+		await screen.findByText('managePeople.error.refused');
+		await waitFor(() => expect(loadCandidates).toHaveBeenCalledTimes(2));
+		expect(
+			screen.queryByRole('button', {
+				name: 'managePeople.add.labelFor:Patty Bouvier'
+			})
+		).toBeNull();
+	});
+
+	it('confirms who was added and shows their organisation', async () => {
+		show(
+			source({
+				kind: 'internalChat',
+				loadCandidates: vi.fn(async () => [
+					{
+						id: 'patty',
+						name: 'Patty Bouvier',
+						organisation: 'Beratungsstelle Springfield'
+					}
+				])
+			})
+		);
+		expect(
+			await screen.findByText('Beratungsstelle Springfield')
+		).toBeTruthy();
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'managePeople.add.labelFor:Patty Bouvier'
+			})
+		);
+		expect(
+			await screen.findByText(
+				'managePeople.internalChat.added:Patty Bouvier'
+			)
 		).toBeTruthy();
 	});
 

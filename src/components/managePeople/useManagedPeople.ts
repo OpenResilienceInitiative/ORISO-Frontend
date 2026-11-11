@@ -4,11 +4,13 @@ import {
 	ManagedPeopleSource,
 	ManagedPerson,
 	PersonCandidate,
+	PersonChangeRefusedError,
 	selectableCandidates
 } from './managedPeople';
 
 export type PeopleLoadState = 'loading' | 'ready' | 'error';
-export type PeopleActionError = 'add' | 'remove' | 'replace';
+export type PeopleActionKind = 'add' | 'remove' | 'replace';
+export type PeopleActionError = PeopleActionKind | 'refused';
 
 /**
  * All state of the dialog: loading, the one change under way and what failed.
@@ -30,6 +32,8 @@ export const useManagedPeople = (
 	const [actionError, setActionError] = useState<PeopleActionError | null>(
 		null
 	);
+	/** Who was just added, for the confirmation under the list. */
+	const [added, setAdded] = useState<PersonCandidate | null>(null);
 	const requestRef = useRef(0);
 
 	const reload = useCallback(async () => {
@@ -71,29 +75,42 @@ export const useManagedPeople = (
 
 	const runChange = async (
 		id: string,
-		kind: PeopleActionError,
+		kind: PeopleActionKind,
 		change: () => Promise<void>
 	): Promise<boolean> => {
 		setPendingId(id);
 		setActionError(null);
+		setAdded(null);
 		try {
 			await change();
 			await reload();
 			return true;
-		} catch {
-			setActionError(kind);
+		} catch (error) {
+			if (error instanceof PersonChangeRefusedError) {
+				setActionError('refused');
+				// The list may be stale: read who is still eligible.
+				await reload();
+			} else {
+				setActionError(kind);
+			}
 			return false;
 		} finally {
 			setPendingId(null);
 		}
 	};
 
-	const addPerson = (candidate: PersonCandidate, input: ChangePersonInput) =>
-		runChange(candidate.id, 'add', () =>
+	const addPerson = async (
+		candidate: PersonCandidate,
+		input: ChangePersonInput
+	) => {
+		const done = await runChange(candidate.id, 'add', () =>
 			source.addPerson
 				? source.addPerson(candidate, input)
 				: Promise.reject(new Error('add'))
 		);
+		if (done) setAdded(candidate);
+		return done;
+	};
 
 	const removePerson = (person: ManagedPerson) =>
 		runChange(person.id, 'remove', () =>
@@ -125,7 +142,11 @@ export const useManagedPeople = (
 		candidatesState,
 		pendingId,
 		actionError,
-		clearActionError: () => setActionError(null),
+		added,
+		clearActionError: () => {
+			setActionError(null);
+			setAdded(null);
+		},
 		reload,
 		addPerson,
 		removePerson,

@@ -73,8 +73,8 @@ export const ManagePeopleDialog = ({
 
 	const canAdd = Boolean(source.addPerson && source.loadCandidates);
 	const showPicker = canAdd || replacing !== null;
-	const visibleCandidates = people.candidates.filter(({ name }) =>
-		matchesPersonSearch(name, query)
+	const visibleCandidates = people.candidates.filter((candidate) =>
+		matchesPersonSearch(candidate, query)
 	);
 
 	const submit = async (candidate: PersonCandidate) => {
@@ -141,6 +141,11 @@ export const ManagePeopleDialog = ({
 								</span>
 							)}
 					</div>
+					{person.organisation && (
+						<div className="managePeople__personMeta">
+							{person.organisation}
+						</div>
+					)}
 					{since && (
 						<div className="managePeople__personMeta">
 							{shared('since', { date: since })}
@@ -280,6 +285,11 @@ export const ManagePeopleDialog = ({
 					<div className="managePeople__personName">
 						<span>{candidate.name}</span>
 					</div>
+					{candidate.organisation && (
+						<div className="managePeople__personMeta">
+							{candidate.organisation}
+						</div>
+					)}
 				</div>
 				<div className="managePeople__personActions">
 					<button
@@ -396,8 +406,15 @@ export const ManagePeopleDialog = ({
 										size={AVATAR_SIZE}
 										ring={false}
 									/>
-									<span className="managePeople__personName">
-										{candidate.name}
+									<span className="managePeople__personText">
+										<span className="managePeople__personName">
+											{candidate.name}
+										</span>
+										{candidate.organisation && (
+											<span className="managePeople__personMeta">
+												{candidate.organisation}
+											</span>
+										)}
 									</span>
 									<span className="managePeople__candidateAction">
 										{people.pendingId === candidate.id ? (
@@ -473,6 +490,10 @@ export const ManagePeopleDialog = ({
 					{shared(`error.${people.actionError}`)}
 				</p>
 			)}
+
+			<p role="status" className="managePeople__success">
+				{people.added && copy('added', { name: people.added.name })}
+			</p>
 
 			{inviteContent && (
 				<section className="managePeople__section">
