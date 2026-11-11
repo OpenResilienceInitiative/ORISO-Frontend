@@ -16,6 +16,7 @@ import {
 	UserDataContext
 } from '../../../globalState';
 import { useAppointmentActions } from './useAppointmentActions';
+import { onAppointmentsChanged } from './conversationAppointments';
 import type { FutureEntry } from './timelineModel';
 
 const { cancel, skip, send, navigate } = vi.hoisted(() => ({
@@ -178,4 +179,35 @@ describe('useAppointmentActions for a group appointment', () => {
 			}
 		);
 	});
+});
+
+it('refreshes appointment consumers when a single group occurrence is skipped', async () => {
+	skip.mockResolvedValue(undefined);
+	send.mockClear();
+	const onCancelled = vi.fn();
+	const changed = vi.fn();
+	const unsubscribe = onAppointmentsChanged(changed);
+	const group: FutureEntry = {
+		...entry,
+		kind: 'group',
+		booking: undefined,
+		occurrence: {
+			seriesId: 12,
+			originalStart: entry.start.toISOString(),
+			duration: 60,
+			modality: 'TEXT'
+		}
+	};
+	try {
+		const { run } = setup({ onCancelled });
+		run('cancel', group);
+		await settle();
+		expect(skip).toHaveBeenCalledWith(12, entry.start.toISOString());
+		expect(onCancelled).toHaveBeenCalledWith(group);
+		expect(changed).toHaveBeenCalledOnce();
+		expect(send).not.toHaveBeenCalled();
+	} finally {
+		unsubscribe();
+		cleanup();
+	}
 });

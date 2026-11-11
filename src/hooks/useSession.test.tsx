@@ -289,6 +289,31 @@ describe('pending registered enquiry reconciliation', () => {
 		expect(apiGetCaseHandoverCandidates).not.toHaveBeenCalled();
 	});
 
+	it('refreshes the owner without clearing the current session on a temporary failure', async () => {
+		const session = { id: 7, status: 2 };
+		vi.mocked(apiGetSessionRoomBySessionId)
+			.mockResolvedValueOnce({
+				sessions: [{ session, consultant: { id: 'cover' } }]
+			} as any)
+			.mockRejectedValueOnce(new Error('network unavailable'))
+			.mockResolvedValueOnce({
+				sessions: [{ session, consultant: { id: 'owner' } }]
+			} as any);
+
+		const { result } = renderHook(() => useSession(null, 7));
+		await act(async () => {});
+		const displayed = result.current.session;
+		expect(displayed.consultant.id).toBe('cover');
+
+		await act(async () => result.current.refresh());
+		expect(result.current.session).toBe(displayed);
+		expect(result.current.ready).toBe(true);
+		expect(apiGetCaseHandoverCandidates).not.toHaveBeenCalled();
+
+		await act(async () => result.current.refresh());
+		expect(result.current.session.consultant.id).toBe('owner');
+	});
+
 	it('ignores a late response from the previously opened conversation', async () => {
 		let finish!: (value: any) => void;
 		vi.mocked(apiGetSessionRoomBySessionId)

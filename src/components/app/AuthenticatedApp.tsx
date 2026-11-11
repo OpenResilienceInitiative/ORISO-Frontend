@@ -10,6 +10,8 @@ import { loginPathForEmailPreferences } from '../../utils/emailPreferencesReturn
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { Routing } from './Routing';
 import { AccountSetupGate } from '../twoFactorAuth/AccountSetupGate';
+import { PasswordChangeConfirmation } from '../passwordReset/PasswordChangeConfirmation';
+import { PasswordChangeConfirmationContext } from '../passwordReset/PasswordChangeConfirmationContext';
 import {
 	isAccountSetupPending,
 	resolveAccountSetupStep
@@ -42,7 +44,15 @@ import {
 	handleTokenRefresh,
 	isTokenRefreshUnavailableError
 } from '../auth/auth';
-import { logout, teardownLocalSession } from '../logout/logout';
+import {
+	logout,
+	teardownLocalSession,
+	teardownPeerLocalSession
+} from '../logout/logout';
+import {
+	getAppSessionScope,
+	observeAppSession
+} from '../sessionCookie/observeAppSession';
 import './authenticatedApp.styles';
 import './navigation.styles';
 import { requestPermissions } from '../../utils/notificationHelpers';
@@ -117,11 +127,14 @@ export const AuthenticatedApp = ({
 	// and the dialog would land over the setup gate. Unknown counts as pending here.
 	useNotificationPermission(!!userData && !isAccountSetupPending(userData));
 	const mounted = useRef(true);
+	const [mountedSession] = useState(getAppSessionScope);
+	const [peerExitPath, setPeerExitPath] = useState<string | null>(null);
 	const matrixBootstrap = useRef<{
 		controller: AbortController;
 		subject: string | null;
 	} | null>(null);
 	useEffect(() => {
+		mounted.current = true;
 		const onAuthSessionChange = () => {
 			const bootstrap = matrixBootstrap.current;
 			if (bootstrap && bootstrap.subject !== getCurrentAuthSubject()) {
@@ -140,14 +153,59 @@ export const AuthenticatedApp = ({
 		};
 	}, []);
 
+	useEffect(
+		() =>
+			observeAppSession(() => {
+				if (!mounted.current) return;
+				mounted.current = false;
+				setPeerExitPath(
+					loginPath ??
+						loginPathForEmailPreferences(
+							window.location.pathname + window.location.search
+						)
+				);
+				matrixBootstrap.current?.controller.abort();
+				displayFilterStore.detachClient();
+				teardownPeerLocalSession();
+				setMatrixClientService(null);
+				onLogout();
+			}, mountedSession),
+		[loginPath, mountedSession, onLogout, setMatrixClientService]
+	);
+
+	useEffect(() => {
+		// The previous authenticated tree has been unmounted before navigation.
+		if (peerExitPath) window.location.replace(peerExitPath);
+	}, [peerExitPath]);
+
 	const [appReady, setAppReady] = useState<boolean>(false);
 	const [loading, setLoading] = useState<boolean>(true);
+	const [passwordChangeStatus, setPasswordChangeStatus] = useState<
+		'hidden' | 'signing-out' | 'signed-out'
+	>('hidden');
+	const showPasswordChangeConfirmation = useCallback(
+		(loginPath: string) => {
+			if (
+				!mounted.current ||
+				getAppSessionScope()?.identity !== mountedSession?.identity
+			)
+				return;
+			setPasswordChangeStatus('signing-out');
+			void logout(false, loginPath, () => {
+				// Revalidation must not mistake this document's sign-out for a peer's.
+				mounted.current = false;
+				setPasswordChangeStatus('signed-out');
+			});
+		},
+		[mountedSession]
+	);
 	/* Every path that ends in `<Navigate to="/login">` below goes through
 	   here: the old session is torn down *before* the login form renders,
 	   so no provider above the router (notification poller, Matrix client)
 	   keeps running on leftover cookies, and the next sign-in starts from a
 	   clean Matrix registry instead of inheriting the old device. */
 	const abandonSession = useCallback(() => {
+		if (!mounted.current) return;
 		matrixBootstrap.current?.controller.abort();
 		displayFilterStore.detachClient();
 		setMatrixClientService(null);
@@ -205,8 +263,10 @@ export const AuthenticatedApp = ({
 
 			handleTokenRefresh(false)
 				.then(() => {
+					if (!mounted.current) return;
 					Promise.all([reloadUserData(), apiGetConsultingTypes()])
 						.then(([userProfileData, consultingTypes]) => {
+							if (!mounted.current) return null;
 							if (
 								appConfig.blockConsultantAppLogin &&
 								hasUserAuthority(
@@ -230,6 +290,7 @@ export const AuthenticatedApp = ({
 							return userProfileData;
 						})
 						.then(async (userProfileData) => {
+							if (!userProfileData || !mounted.current) return;
 							const controller = new AbortController();
 							const subject = getCurrentAuthSubject();
 							matrixBootstrap.current = { controller, subject };
@@ -336,7 +397,7 @@ export const AuthenticatedApp = ({
 							markHandoverMilestone('chat');
 							markHandoverMilestone('liveEvents');
 							await entryScreens;
-							setAppReady(true);
+							if (mounted.current) setAppReady(true);
 						})
 						.catch((error) => {
 							console.error(
@@ -417,6 +478,8 @@ export const AuthenticatedApp = ({
 		}
 	}, [handoverEntered, appReady, groupJoinSettled]);
 
+	if (peerExitPath) return null;
+
 	// Post-registration: bridge the bootstrap load with the welcome animation,
 	// driven by appReady (the real "everything loaded" signal). Falls through to the
 	// usual branches on error (loading=false, appReady=false → redirect to login).
@@ -437,38 +500,53 @@ export const AuthenticatedApp = ({
 		);
 	}
 
-	if (appReady) {
-		// Account setup comes before the app, not on top of it: until the counsellor's
-		// own password and a second factor are settled, the only ways on are completing
-		// them or logging out. Replacing the routed app is what makes that true.
-		if (resolveAccountSetupStep(userData) !== null) {
-			return (
-				<AuthenticatedBuildIdentityBoundary>
+	if (appReady && (userData || passwordChangeStatus !== 'hidden')) {
+		let authenticatedContent: React.ReactNode = null;
+		if (userData && passwordChangeStatus !== 'signed-out') {
+			// Complete the counsellor's required account setup before showing routing.
+			if (resolveAccountSetupStep(userData) !== null) {
+				authenticatedContent = (
 					<AccountSetupGate onLogout={handleLogout} />
-				</AuthenticatedBuildIdentityBoundary>
-			);
+				);
+			} else if (content) {
+				authenticatedContent = content;
+			} else {
+				authenticatedContent = (
+					<>
+						<E2EEncryptionSupportBanner />
+						<KeyBackupRecoveryPrompt />
+						<RecoveryKeySaveReminder />
+						<PracticeLayer>
+							<Routing logout={handleLogout} />
+						</PracticeLayer>
+						<M3SnackbarHost />
+						{hasUserAuthority(
+							AUTHORITIES.CONSULTANT_DEFAULT,
+							userData
+						) && (
+							<JoinRequestCenter
+								transport={httpJoinRequestTransport}
+							/>
+						)}
+					</>
+				);
+			}
 		}
 
-		if (content)
-			return (
-				<AuthenticatedBuildIdentityBoundary>
-					{content}
-				</AuthenticatedBuildIdentityBoundary>
-			);
-
 		return (
-			<AuthenticatedBuildIdentityBoundary>
-				<E2EEncryptionSupportBanner />
-				<KeyBackupRecoveryPrompt />
-				<RecoveryKeySaveReminder />
-				<PracticeLayer>
-					<Routing logout={handleLogout} />
-				</PracticeLayer>
-				<M3SnackbarHost />
-				{hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) && (
-					<JoinRequestCenter transport={httpJoinRequestTransport} />
+			<PasswordChangeConfirmationContext.Provider
+				value={showPasswordChangeConfirmation}
+			>
+				{authenticatedContent !== null && (
+					<AuthenticatedBuildIdentityBoundary>
+						{authenticatedContent}
+					</AuthenticatedBuildIdentityBoundary>
 				)}
-			</AuthenticatedBuildIdentityBoundary>
+				{/* This confirmation survives the local sign-out that removes the form. */}
+				{passwordChangeStatus !== 'hidden' && (
+					<PasswordChangeConfirmation />
+				)}
+			</PasswordChangeConfirmationContext.Provider>
 		);
 	} else if (loading) {
 		return <Loading />;

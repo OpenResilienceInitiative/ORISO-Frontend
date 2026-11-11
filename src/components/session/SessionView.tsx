@@ -132,6 +132,7 @@ const SessionViewBody = () => {
 		session: activeSession,
 		ready: activeSessionReady,
 		reload: reloadActiveSession,
+		refresh: refreshActiveSession,
 		read: readActiveSession
 	} = useSession(
 		groupIdFromParam,
@@ -324,6 +325,7 @@ const SessionViewBody = () => {
 			readActiveSession={readActiveSession}
 			avatarMembers={avatarMembers}
 			reloadActiveSession={reloadActiveSession}
+			refreshActiveSession={refreshActiveSession}
 		>
 			<SessionStream
 				readonly={readonly}

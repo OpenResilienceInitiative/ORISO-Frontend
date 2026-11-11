@@ -525,6 +525,7 @@
 		"absent": {
 			"message": " ዝበሃል የለን"
 		},
+		"assignedLabel": "ኣማኻሪኹም",
 		"jobTitle": "ኣማኻሪ ወይ ኣማኻሪ"
 	},
 	"date": {
@@ -1032,6 +1033,7 @@
 			"subscribers": {
 				"empty": "ተሳተፍቲ የለን",
 				"headline": "ተሳተፍቲ ምዃኖም ይፍለጥ",
+				"protectedName": "ተሳታፊ {{number}}",
 				"menuLabel": "ን{{name}} ዝኸውን ምርጫታት",
 				"role": {
 					"asker": "ምኽሪ ዝደሊ",
@@ -1864,7 +1866,8 @@
 				"confirmLabel": "ሓድሽ ፓስዎርድ ኣረጋግጽ",
 				"submitLabel": "ፓስዎርድ ኣቐምጥ",
 				"success": "ፓስዎርድካ ብዓወት ተቐይሩ ኣሎ። ሕጂ ክትኣቱ ትኽእል ኢኻ።",
-				"invalidToken": "እዚ ሊንክ እዚ ጌጋ ወይ ጊዜኡ ኣኺሉ እዩ። በጃኻ ሓድሽ ሊንክ ሕተት።"
+				"invalidToken": "እዚ ሊንክ እዚ ጌጋ ወይ ጊዜኡ ኣኺሉ እዩ። በጃኻ ሓድሽ ሊንክ ሕተት።",
+				"requestNewLink": "ሓድሽ ሊንክ ሕተት"
 			}
 		},
 		"magicLink": {
@@ -2450,7 +2453,7 @@
 			},
 			"caseHandoverOfferSent": {
 				"title": "ቅድመ-ሓሳብ ምትሕልላፍ ጥንቅቕ ተላኢኹ",
-				"text": "እቲ ቅድመ-ሓሳብ ምላሽ እቲ መሳርሕቲ ይጽበ ኣሎ። እቲ ምርካብ ክሳብ ዘይተዛዘመ ክምለስ ይኽእል።"
+				"text": "እቲ ቅድመ-ሓሳብ ናብ መሳርሕቲ ተላኢኹ።"
 			},
 			"caseHandoverOfferDeclined": {
 				"title": "ቅድመ-ሓሳብ ምትሕልላፍ ተነጺጉ",
@@ -2462,7 +2465,7 @@
 			},
 			"caseHandoverOfferReceived": {
 				"title": "ናይ ጉዳይ ምትሕልላፍ ሓሳብ",
-				"text": "{{fromConsultantName}} ነዚ ምኽሪ ናባኹም ከሕልፎ ይደሊ ኣሎ። ነቲ ዝርርብ ቅድሚ ምኽፋትኩም ነቲ ሕቶ ርኣይዎ።",
+				"text": "ካብ {{fromConsultantName}} ናይዚ ምኽሪ ምትሕልላፍ ቅድመ-ሓሳብ በጺሑኩም።",
 				"coAccess": {
 					"title": "ናይ ግዝያዊ ተበጻሕነት ሓሳብ",
 					"text": "{{fromConsultantName}} ናብዚ ምኽሪ ግዝያዊ ተበጻሕነት የቕርበልኩም ኣሎ። ሓላፍነት ምስቲ ሕጂ ዘሎ ኣማኻሪ ይተርፍ።"
