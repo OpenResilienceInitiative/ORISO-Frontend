@@ -109,14 +109,26 @@ describe('the running call of a conversation, for the list (S10)', () => {
 	 * #145/#2215 review: one nullable answer is not an ending. The list
 	 * reconciles exactly as the chat card does (useCallTimelineState).
 	 */
-	it('keeps a running call whose state the server does not know yet', async () => {
-		const events = [card(call())];
-		const loadState = vi.fn().mockResolvedValue(null);
-		const { result } = renderHook(() =>
-			useRunningCall(events, ROOM, loadState)
-		);
-		await waitFor(() => expect(loadState).toHaveBeenCalled());
-		expect(result.current?.callId).toBe('call-1');
+	it('hides the marker while the server answer is untrusted, and recovers', async () => {
+		vi.useFakeTimers();
+		try {
+			const events = [card(call())];
+			const loadState = vi.fn().mockResolvedValue(null);
+			const { result } = renderHook(() =>
+				useRunningCall(events, ROOM, loadState)
+			);
+			await act(async () => {
+				await vi.advanceTimersByTimeAsync(0);
+			});
+			expect(result.current).toBeNull();
+			loadState.mockResolvedValue(call());
+			await act(async () => {
+				await vi.advanceTimersByTimeAsync(15_000);
+			});
+			expect(result.current?.callId).toBe('call-1');
+		} finally {
+			vi.useRealTimers();
+		}
 	});
 
 	it('brings a provisionally ended call back once the server knows it', async () => {

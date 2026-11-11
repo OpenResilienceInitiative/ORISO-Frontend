@@ -158,7 +158,8 @@ vi.mock('react-i18next', async () => {
 // ---------------------------------------------------------------------------
 vi.mock('../../api/apiCallState', () => ({
 	// Never answers: the card's own word stands (see `useRunningCall`).
-	apiCallState: () => new Promise(() => undefined)
+	apiCallState: () => new Promise(() => undefined),
+	apiCallStateRead: () => new Promise(() => undefined)
 }));
 
 vi.mock('lottie-react', () => ({ default: () => null }));

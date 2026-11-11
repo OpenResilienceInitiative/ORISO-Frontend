@@ -1,11 +1,11 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { formatMatrixTimelineEvent } from '../../utils/matrixTimelineEventFormatter';
 import {
 	applyCallLifecycleEdits,
 	collapseCallLifecycleMessages,
 	type CallLifecycleMessage
 } from '../../utils/callLifecycleMessage';
-import { apiCallState } from '../../api/apiCallState';
+import { apiCallStateRead } from '../../api/apiCallState';
 import { useCallTimelineState } from '../message/useCallTimelineState';
 
 /**
@@ -37,7 +37,7 @@ export const runningCallOf = (
 	return null;
 };
 
-type LoadCallState = typeof apiCallState;
+type LoadCallState = typeof apiCallStateRead;
 
 /** Stands in while there is no running card; never asked about. */
 const NO_CALL: CallLifecycleMessage = {
@@ -59,19 +59,37 @@ const NO_CALL: CallLifecycleMessage = {
  * the server does not know (yet) is only ended provisionally and comes back
  * once the creator's registration lands. One shared rule, so the list and
  * the chat cannot disagree.
+ *
+ * `apiCallStateRead` by default, so a confirmed 404 is told apart from other
+ * answers. And the list fails closed where the card cannot: while the last
+ * answer was untrusted (`null`, it failed validation), the marker is off —
+ * a forged or unverifiable card must not advertise a call on the list.
  */
 export const useRunningCall = (
 	events: readonly unknown[],
 	roomId: string | null | undefined,
-	loadState: LoadCallState = apiCallState
+	loadState: LoadCallState = apiCallStateRead
 ): CallLifecycleMessage | null => {
 	const candidate = useMemo(
 		() => runningCallOf(events, roomId),
 		[events, roomId]
 	);
+	const [untrusted, setUntrusted] = useState<string | null>(null);
+	const checkedLoad = useCallback<LoadCallState>(
+		async (call) => {
+			const answer = await loadState(call);
+			setUntrusted(answer === null ? call.callId : null);
+			return answer;
+		},
+		[loadState]
+	);
 	const reconciled = useCallTimelineState(
 		candidate ?? NO_CALL,
-		candidate ? loadState : undefined
+		candidate ? checkedLoad : undefined
 	);
-	return candidate && reconciled.state === 'running' ? reconciled : null;
+	return candidate &&
+		reconciled.state === 'running' &&
+		untrusted !== candidate.callId
+		? reconciled
+		: null;
 };
