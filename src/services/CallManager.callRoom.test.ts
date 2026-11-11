@@ -26,6 +26,7 @@ const MEMBERSHIP_READER = '@matrixrtc-auth:oriso.example';
 type CreateRoomOptions = {
 	preset?: string;
 	visibility?: string;
+	invite?: string[];
 	initial_state?: { type: string; content: Record<string, unknown> }[];
 };
 
@@ -37,7 +38,13 @@ const stateContent = (
 
 const installClient = (client: Record<string, unknown>): void => {
 	setMatrixClientServiceRef({
-		getClient: () => client
+		getClient: () => ({
+			getCapabilities: vi
+				.fn()
+				.mockResolvedValue({ 'm.room_versions': { default: '12' } }),
+			getStateEvent: vi.fn().mockResolvedValue({ membership: 'invite' }),
+			...client
+		})
 	} as never);
 };
 
@@ -73,29 +80,47 @@ describe('createElementCallRoom', () => {
 		vi.unstubAllEnvs();
 	});
 
-	it('restricts the call to members of the counselling session', async () => {
-		const createRoom = vi.fn().mockResolvedValue({ room_id: CALL_ROOM });
-		const invite = vi.fn().mockResolvedValue(undefined);
-		installClient({
-			createRoom,
-			getUserId: () => OWN_USER,
-			getRoom: () => null,
-			invite
-		});
+	it.each(['9', '10', '12'])(
+		'restricts the call to members of the counselling session on room version %s',
+		async (version) => {
+			const createRoom = vi
+				.fn()
+				.mockResolvedValue({ room_id: CALL_ROOM });
+			const invite = vi.fn().mockResolvedValue(undefined);
+			const getStateEvent = vi
+				.fn()
+				.mockResolvedValue({ membership: 'invite' });
+			installClient({
+				createRoom,
+				getCapabilities: vi.fn().mockResolvedValue({
+					'm.room_versions': { default: version }
+				}),
+				getUserId: () => OWN_USER,
+				getRoom: () => null,
+				getStateEvent,
+				invite
+			});
 
-		await expect(createCallRoom()).resolves.toBe(CALL_ROOM);
+			await expect(createCallRoom()).resolves.toBe(CALL_ROOM);
 
-		const options = createRoom.mock.calls[0][0] as CreateRoomOptions;
-		// `public_chat` used to be used here, which sets `join_rule: public` —
-		// anyone who learned the room id could join a counselling call.
-		expect(options.preset).not.toBe('public_chat');
-		expect(options.visibility).toBe('private');
-		expect(stateContent(options, 'm.room.join_rules')).toEqual({
-			join_rule: 'restricted',
-			allow: [{ type: 'm.room_membership', room_id: SESSION_ROOM }]
-		});
-		expect(invite).toHaveBeenCalledWith(CALL_ROOM, MEMBERSHIP_READER);
-	});
+			const options = createRoom.mock.calls[0][0] as CreateRoomOptions;
+			// `public_chat` used to be used here, which sets `join_rule: public` —
+			// anyone who learned the room id could join a counselling call.
+			expect(options.preset).not.toBe('public_chat');
+			expect(options.visibility).toBe('private');
+			expect(stateContent(options, 'm.room.join_rules')).toEqual({
+				join_rule: 'restricted',
+				allow: [{ type: 'm.room_membership', room_id: SESSION_ROOM }]
+			});
+			expect(options.invite).toEqual([MEMBERSHIP_READER]);
+			expect(invite).not.toHaveBeenCalled();
+			expect(getStateEvent).toHaveBeenCalledWith(
+				CALL_ROOM,
+				'm.room.member',
+				MEMBERSHIP_READER
+			);
+		}
+	);
 
 	it('creates the call room encrypted, with history closed to non-members', async () => {
 		const createRoom = vi.fn().mockResolvedValue({ room_id: CALL_ROOM });
@@ -212,42 +237,105 @@ describe('createElementCallRoom', () => {
 		expect(JSON.stringify(levels)).not.toContain(OWN_USER);
 	});
 
-	it('falls back to invites — never to a public room — on an old homeserver', async () => {
-		const createRoom = vi
-			.fn()
-			.mockRejectedValueOnce(new Error('M_UNSUPPORTED_ROOM_VERSION'))
-			.mockResolvedValueOnce({ room_id: CALL_ROOM });
-		const invite = vi.fn().mockResolvedValue(undefined);
+	it.each([
+		[
+			'legacy version',
+			async () => ({ 'm.room_versions': { default: '8' } })
+		],
+		['missing version', async () => ({})],
+		[
+			'unknown version',
+			async () => ({ 'm.room_versions': { default: 'custom' } })
+		],
+		[
+			'capability error',
+			async () => {
+				throw new Error('capabilities unavailable');
+			}
+		]
+	])(
+		'chooses one private invite-only creation after %s',
+		async (_, getCapabilities) => {
+			const createRoom = vi
+				.fn()
+				.mockResolvedValue({ room_id: CALL_ROOM });
+			const invite = vi.fn().mockResolvedValue(undefined);
+			installClient({
+				createRoom,
+				getCapabilities,
+				invite,
+				getUserId: () => OWN_USER,
+				getJoinedRoomMembers: vi.fn().mockResolvedValue({
+					joined: {
+						[OWN_USER]: {},
+						[MEMBERSHIP_READER]: {},
+						'@asker:oriso.example': {}
+					}
+				})
+			});
+
+			await expect(createCallRoom()).resolves.toBe(CALL_ROOM);
+
+			expect(createRoom).toHaveBeenCalledTimes(1);
+			const fallback = createRoom.mock.calls[0][0] as CreateRoomOptions;
+			expect(fallback.preset).toBe('private_chat');
+			expect(stateContent(fallback, 'm.room.join_rules')).toBeUndefined();
+			expect(fallback.invite).toEqual([MEMBERSHIP_READER]);
+			expect(invite).toHaveBeenCalledExactlyOnceWith(
+				CALL_ROOM,
+				'@asker:oriso.example'
+			);
+		}
+	);
+
+	it.each([
+		Object.assign(new Error('reader invite rejected'), {
+			errcode: 'M_FORBIDDEN'
+		}),
+		new Error('connection lost during creation')
+	])('does not create another room after %s', async (error) => {
+		const createRoom = vi.fn().mockRejectedValue(error);
+		const getStateEvent = vi.fn();
+		installClient({ createRoom, getStateEvent });
+
+		await expect(createCallRoom()).rejects.toBe(error);
+		expect(createRoom).toHaveBeenCalledTimes(1);
+		expect(getStateEvent).not.toHaveBeenCalled();
+	});
+
+	it('accepts an initial reader invitation that was already joined', async () => {
 		installClient({
-			createRoom,
-			invite,
-			getUserId: () => OWN_USER,
-			getJoinedRoomMembers: vi.fn().mockResolvedValue({
-				joined: {
-					[OWN_USER]: {},
-					'@asker:oriso.example': {}
-				}
-			})
+			createRoom: vi.fn().mockResolvedValue({ room_id: CALL_ROOM }),
+			getStateEvent: vi.fn().mockResolvedValue({ membership: 'join' })
 		});
 
 		await expect(createCallRoom()).resolves.toBe(CALL_ROOM);
+	});
 
-		const fallback = createRoom.mock.calls[1][0] as CreateRoomOptions;
-		expect(fallback.preset).toBe('private_chat');
-		expect(stateContent(fallback, 'm.room.join_rules')).toBeUndefined();
-		// The asker is invited; we do not invite ourselves.
-		expect(invite).toHaveBeenCalledTimes(2);
-		expect(invite).toHaveBeenCalledWith(CALL_ROOM, '@asker:oriso.example');
-		expect(invite).toHaveBeenCalledWith(CALL_ROOM, MEMBERSHIP_READER);
+	it('leaves and forgets a created room without the reader', async () => {
+		const leave = vi.fn().mockResolvedValue(undefined);
+		const forget = vi.fn().mockResolvedValue(undefined);
+		installClient({
+			createRoom: vi.fn().mockResolvedValue({ room_id: CALL_ROOM }),
+			getStateEvent: vi.fn().mockResolvedValue({ membership: 'leave' }),
+			leave,
+			forget
+		});
+
+		await expect(createCallRoom()).rejects.toThrow(
+			'reader was not invited'
+		);
+		expect(leave).toHaveBeenCalledExactlyOnceWith(CALL_ROOM);
+		expect(forget).toHaveBeenCalledExactlyOnceWith(CALL_ROOM);
 	});
 
 	it('fails closed when a participant cannot be invited', async () => {
-		const createRoom = vi
-			.fn()
-			.mockRejectedValueOnce(new Error('nope'))
-			.mockResolvedValueOnce({ room_id: CALL_ROOM });
+		const createRoom = vi.fn().mockResolvedValue({ room_id: CALL_ROOM });
 		installClient({
 			createRoom,
+			getCapabilities: vi.fn().mockResolvedValue({
+				'm.room_versions': { default: '8' }
+			}),
 			invite: vi.fn().mockRejectedValue(new Error('M_FORBIDDEN')),
 			getUserId: () => OWN_USER,
 			getJoinedRoomMembers: vi.fn().mockResolvedValue({

@@ -862,6 +862,17 @@ class CallManager {
 			);
 		}
 
+		const membershipReaderUserId = getMatrixRtcMembershipReaderUserId();
+		if (
+			!membershipReaderUserId ||
+			!membershipReaderUserId.startsWith('@') ||
+			!membershipReaderUserId.includes(':')
+		) {
+			throw new Error(
+				'MatrixRTC membership reader user is not configured'
+			);
+		}
+
 		const name = `Group call for ${sourceRoomId}`;
 
 		// console.log("🔧 Creating dedicated Element Call room for group call, source room:", sourceRoomId);
@@ -871,10 +882,9 @@ class CallManager {
 		// counselling call. Room ids are not secrets: they travel in the call
 		// invite event, in logs and in support tickets.
 		//
-		// `restricted` gives us the access rule we actually meant: whoever is a
-		// member of the counselling session may join its call, and nobody else.
-		// It needs room version 9+ (Synapse defaults to 10), so we fall back to
-		// invite-only below rather than let a call fail outright.
+		// `restricted` lets members of the counselling session join its call.
+		// A known standard room version of 9 or newer supports that policy.
+		// Older or unknown versions use the private invite-only policy.
 		const restrictedJoinRule = {
 			type: 'm.room.join_rules',
 			state_key: '',
@@ -896,6 +906,9 @@ class CallManager {
 			// "members of the session room" by the join rule below.
 			preset: 'private_chat',
 			name,
+			// A standalone invite shares the reader's recipient rate limit
+			// across all calls. Synapse accounts for initial invites per room.
+			invite: [membershipReaderUserId],
 			initial_state: [
 				buildMatrixRoomEncryptionInitialState(),
 				{
@@ -984,60 +997,42 @@ class CallManager {
 			}
 		};
 
-		let result: { room_id: string };
-		let joinRuleRejected = false;
-		try {
-			result = await client.createRoom({
-				...baseOptions,
-				initial_state: [
-					...baseOptions.initial_state,
-					restrictedJoinRule
-				]
-			} as any);
-		} catch (err) {
-			// Homeserver too old for restricted joins, or the parent room is not
-			// a valid allow target. Stay closed rather than falling back to a
-			// public room, and invite the session members explicitly.
-			console.warn(
-				'[call] restricted join rule rejected, falling back to invite-only',
-				err
-			);
-			result = await client.createRoom(baseOptions as any);
-			joinRuleRejected = true;
-		}
+		const capabilities = await client
+			.getCapabilities()
+			.catch(() => undefined);
+		const roomVersion = capabilities?.['m.room_versions']?.default;
+		const supportsRestrictedJoin = /^(9|[1-9][0-9]+)$/.test(
+			roomVersion ?? ''
+		);
+		const inviteOnly = !supportsRestrictedJoin;
+		// Select the join policy before creation. An error can arrive after
+		// Synapse stored a room but before it returned the room ID.
+		const result = await client.createRoom({
+			...baseOptions,
+			initial_state: inviteOnly
+				? baseOptions.initial_state
+				: [...baseOptions.initial_state, restrictedJoinRule]
+		} as any);
 
-		/*
-		 * Everything past creation takes the room with it when it fails.
-		 *
-		 * `inviteSessionMembers` throws if any invite failed, the membership
-		 * reader may be unconfigured, and its invite can reject. In each case
-		 * this method threw before returning the id — so the caller's
-		 * `elementCallRoomId` stayed undefined and its own cleanup could not
-		 * run. Every retry then left another JOINED room behind, carrying the
-		 * plaintext call/source binding and a name that reads "Group call for
-		 * <session room>". The caller's cleanup only covers a start that was
-		 * superseded; this covers one that failed.
-		 */
 		try {
-			if (joinRuleRejected) {
+			// A successful createRoom response alone does not establish the
+			// reader's membership. Verify it before the caller can ring.
+			const { membership } = await client.getStateEvent(
+				result.room_id,
+				'm.room.member',
+				membershipReaderUserId
+			);
+			if (membership !== 'invite' && membership !== 'join') {
+				throw new Error('MatrixRTC membership reader was not invited');
+			}
+			if (inviteOnly) {
 				await this.inviteSessionMembers(
 					client,
 					sourceRoomId,
-					result.room_id
+					result.room_id,
+					membershipReaderUserId
 				);
 			}
-
-			const membershipReaderUserId = getMatrixRtcMembershipReaderUserId();
-			if (
-				!membershipReaderUserId ||
-				!membershipReaderUserId.startsWith('@') ||
-				!membershipReaderUserId.includes(':')
-			) {
-				throw new Error(
-					'MatrixRTC membership reader user is not configured'
-				);
-			}
-			await client.invite(result.room_id, membershipReaderUserId);
 		} catch (err) {
 			await this.discardElementCallRoom(result.room_id, client);
 			throw err;
@@ -1054,13 +1049,15 @@ class CallManager {
 	private async inviteSessionMembers(
 		client: MatrixClient,
 		sourceRoomId: string,
-		callRoomId: string
+		callRoomId: string,
+		membershipReaderUserId: string
 	): Promise<void> {
 		let failedInvites = 0;
 		const ownUserId = client.getUserId();
 		const { joined } = await client.getJoinedRoomMembers(sourceRoomId);
 		const members = Object.keys(joined).filter(
-			(userId) => userId !== ownUserId
+			(userId) =>
+				userId !== ownUserId && userId !== membershipReaderUserId
 		);
 
 		await Promise.all(
