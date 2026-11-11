@@ -35,6 +35,8 @@ import { UrlParamsProvider } from '../../globalState/provider/UrlParamsProvider'
 import { Notifications } from '../notifications/Notifications';
 import { CallProvider } from '../../globalState/provider/CallProvider';
 import { MatrixClientProvider } from '../../globalState/context/MatrixClientContext';
+import { LiveChatConversionPage } from '../liveChatConversion/LiveChatConversionPage';
+import { LiveChatConversionExpired } from '../liveChatConversion/LiveChatConversionExpired';
 import { FloatingCallWidget } from '../call/FloatingCallWidget';
 import { DirectLinkKnockGate } from '../directLinkEntry/DirectLinkKnockGate';
 import { GroupCallWidget } from '../call/GroupCallWidget';
@@ -236,6 +238,26 @@ const RouterWrapper = ({ extraRoutes }: RouterWrapperProps) => {
 								<Route
 									path={settings.urls.videoCall}
 									element={<VideoCall />}
+								/>
+
+								<Route
+									path="/live-chat/conversion-expired"
+									element={<LiveChatConversionExpired />}
+								/>
+								<Route
+									path="/live-chat/convert"
+									element={
+										<AuthenticatedApp
+											content={<LiveChatConversionPage />}
+											loginPath="/live-chat/conversion-expired"
+											onAppReady={() =>
+												setStartWebsocket(true)
+											}
+											onLogout={() =>
+												setStartWebsocket(false)
+											}
+										/>
+									}
 								/>
 
 								{/* Catch-all: the authenticated app owns its own

@@ -36,6 +36,7 @@ export const SessionCardBody = ({
 	const { bodyRef, trailingRef } = useReservedTrailingWidth();
 	const style = {
 		'--card-avatar': `${geometry.avatar}px`,
+		'--card-avatar-width': `${geometry.avatarWidth ?? geometry.avatar}px`,
 		'--card-gap': `${geometry.gap}px`,
 		'--card-name-line': `${geometry.nameLine}px`,
 		'--card-preview-line': `${geometry.previewLine}px`,

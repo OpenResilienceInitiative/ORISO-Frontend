@@ -1,13 +1,33 @@
+import { TenantContext } from '../../globalState/provider/TenantProvider';
+import { accountPolicyTenant } from '../../test/fixtures/askerAccountPolicyFixtures';
 // @vitest-environment oriso-jsdom
 import * as React from 'react';
 import { createInstance } from 'i18next';
 import { I18nextProvider } from 'react-i18next';
 import german from '../../resources/i18n/de/common.json';
 import { MemoryRouter } from 'react-router-dom';
-import { act, cleanup, render, screen } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
+import {
+	act,
+	cleanup,
+	render,
+	screen,
+	fireEvent,
+	waitFor
+} from '@testing-library/react';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import { UserDataContext } from '../../globalState';
 import { ErstantwortMessage } from './ErstantwortMessage';
+import { apiPutSessionData } from '../../api/apiPutSessionData';
+vi.mock('../../api/apiPutSessionData', () => ({
+	apiPutSessionData: vi.fn().mockResolvedValue(undefined)
+}));
 
 vi.mock('lottie-react', () => ({ default: () => null }));
 vi.mock('lottie-web', () => ({ default: {} }));
@@ -93,6 +113,7 @@ const renderMessage = (viewer: object = userData, rawMessage?: string) =>
 					}
 				>
 					<ErstantwortMessage
+						conversationType="AGENCY_COUNSELLING"
 						rawMessage={rawMessage}
 						trigger="AFTER_FIRST_MESSAGE"
 						skipAnimation
@@ -107,7 +128,7 @@ describe('ErstantwortMessage email action', () => {
 		renderMessage();
 
 		expect(
-			screen.queryByRole('heading', { name: 'E-Mail-Adresse angeben' })
+			screen.queryByRole('heading', { name: 'Zugang sichern' })
 		).toBeNull();
 
 		act(() => {
@@ -117,7 +138,7 @@ describe('ErstantwortMessage email action', () => {
 		});
 
 		expect(
-			screen.getByRole('heading', { name: 'E-Mail-Adresse angeben' })
+			screen.getByRole('heading', { name: 'Zugang sichern' })
 		).toBeTruthy();
 		expect(screen.getByRole('textbox')).toBeTruthy();
 	});
@@ -160,23 +181,34 @@ describe('ErstantwortMessage email action', () => {
 		expect(screen.queryByRole('button')).toBeNull();
 	});
 
-	it('opens the display-name overlay when Namen ändern is pressed', () => {
+	it('edits the actual session alias instead of issuing an ignored account patch', async () => {
 		render(
 			<I18nextProvider i18n={i18n}>
 				<MemoryRouter>
-					<UserDataContext.Provider
-						value={
-							{
-								userData,
-								reloadUserData: vi.fn()
-							} as React.ContextType<typeof UserDataContext>
-						}
+					<TenantContext.Provider
+						value={{
+							tenant: accountPolicyTenant(),
+							setTenant: vi.fn(),
+							updateTenantSettings: vi.fn()
+						}}
 					>
-						<ErstantwortMessage
-							trigger="AFTER_ENQUIRY_DISPATCHED"
-							skipAnimation
-						/>
-					</UserDataContext.Provider>
+						<UserDataContext.Provider
+							value={
+								{
+									userData,
+									reloadUserData: vi.fn()
+								} as React.ContextType<typeof UserDataContext>
+							}
+						>
+							<ErstantwortMessage
+								conversationType="AGENCY_COUNSELLING"
+								trigger="AFTER_ENQUIRY_DISPATCHED"
+								sessionId={51}
+								displayName="Sanftes Alpaka Kala"
+								skipAnimation
+							/>
+						</UserDataContext.Provider>
+					</TenantContext.Provider>
 				</MemoryRouter>
 			</I18nextProvider>
 		);
@@ -188,7 +220,27 @@ describe('ErstantwortMessage email action', () => {
 		expect(
 			screen.getByRole('button', { name: 'Namen neu würfeln' })
 		).toBeTruthy();
-		expect(screen.getByText('Sanftes Alpaka Kala')).toBeTruthy();
-		expect(screen.getByRole('button', { name: 'Übernehmen' })).toBeTruthy();
+		expect(
+			screen.getByRole<HTMLInputElement>('textbox', {
+				name: 'Anzeigename'
+			}).value
+		).toBe('Sanftes Alpaka Kala');
+		fireEvent.change(screen.getByRole('textbox', { name: 'Anzeigename' }), {
+			target: { value: 'Session only alias' }
+		});
+		fireEvent.click(screen.getByRole('button', { name: 'Übernehmen' }));
+		await waitFor(() =>
+			expect(apiPutSessionData).toHaveBeenCalledWith(51, {
+				displayName: 'Session only alias'
+			})
+		);
 	});
+});
+
+it('does not offer the email action when fresh account eligibility is denied', () => {
+	const denied = { ...userData, isAskerEmailCollectionAllowed: false };
+	renderMessage(denied);
+	expect(
+		screen.queryByRole('button', { name: 'E-Mail-Adresse angeben' })
+	).toBeNull();
 });

@@ -98,6 +98,26 @@ describe('isChatItemUnread', () => {
 		setMatrixClientServiceRef(null);
 	});
 
+	it.each([true, false, undefined])(
+		'counts a private side-room message only for an explicitly assigned supervisor (%s)',
+		(supervisedByMe) => {
+			setMatrixClientServiceRef({
+				getRoom: (roomId: string) => ({
+					getUnreadNotificationCount: () =>
+						roomId === '!side:hs' ? 2 : 0
+				})
+			} as any);
+			const session = {
+				matrixRoomId: '!main:hs',
+				supervision: { supervisedByMe, sideRoomId: '!side:hs' }
+			};
+			expect(isChatItemUnread(session)).toBe(supervisedByMe === true);
+			expect(countUnreadSessions([{ session }])).toBe(
+				supervisedByMe === true ? 1 : 0
+			);
+		}
+	);
+
 	it('derives unread from the Matrix room even when the DTO claims messagesRead', () => {
 		setMatrixClientServiceRef(
 			serviceWithRoom({ getUnreadNotificationCount: () => 1 })

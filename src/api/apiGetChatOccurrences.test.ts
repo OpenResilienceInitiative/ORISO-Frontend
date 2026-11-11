@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vite-plus/test';
 import { apiGetChatOccurrences } from './apiGetChatOccurrences';
-import { fetchData } from './fetchData';
+import { FETCH_ERRORS, fetchData } from './fetchData';
 
 vi.mock('../resources/scripts/endpoints', () => ({
 	endpoints: { chatSeriesBase: '/service/users/chat-series/' }
@@ -8,6 +8,7 @@ vi.mock('../resources/scripts/endpoints', () => ({
 
 vi.mock('./fetchData', () => ({
 	FETCH_METHODS: { GET: 'GET' },
+	FETCH_ERRORS: { CATCH_ALL_WITH_RESPONSE: 'CATCH_ALL_WITH_RESPONSE' },
 	FETCH_SUCCESS: {},
 	fetchData: vi.fn()
 }));
@@ -25,7 +26,8 @@ describe('apiGetChatOccurrences', () => {
 
 		expect(fetchData).toHaveBeenCalledWith({
 			url: '/service/users/chat-series/42/occurrences?from=2026-08-01T00%3A00%3A00%2B02%3A00&to=2026-11-01T00%3A00%3A00%2B01%3A00&limit=25',
-			method: 'GET'
+			method: 'GET',
+			responseHandling: [FETCH_ERRORS.CATCH_ALL_WITH_RESPONSE]
 		});
 	});
 });

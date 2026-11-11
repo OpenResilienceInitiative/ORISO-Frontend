@@ -2,8 +2,18 @@ import { resolveConversationAgencyId } from '../../utils/conversationFeatureSett
 import { useSessionAgencyPolicy } from '../../hooks/useSessionAgencyPolicy';
 import * as React from 'react';
 import { useCallback, useContext, useEffect, useState } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import {
+	Navigate,
+	useParams,
+	useNavigate,
+	useLocation
+} from 'react-router-dom';
 import { Loading } from '../app/Loading';
+import {
+	parseTopicDuplicateRoomPath,
+	TOPIC_DUPLICATE_QUERY_PARAM,
+	TOPIC_DUPLICATE_SEARCH
+} from './topicDuplicateRoomRoute';
 import {
 	SessionTypeContext,
 	UserDataContext,
@@ -45,7 +55,8 @@ const positiveInteger = (value: string | null | undefined): number | null => {
 };
 
 export const SessionView = () => {
-	const { groupId, sessionId } = useParams<{
+	const { chatId, groupId, sessionId } = useParams<{
+		chatId: string;
 		groupId: string;
 		sessionId: string;
 	}>();
@@ -66,6 +77,10 @@ export const SessionView = () => {
 		desktopView();
 	}, [fromL]);
 
+	if (chatId !== undefined && positiveInteger(chatId) === null) {
+		return <Navigate to={sessionType.path} replace />;
+	}
+
 	const parsedSessionId = positiveInteger(sessionId);
 	const requestId = positiveInteger(
 		new URLSearchParams(search).get('caseHandoverRequestId')
@@ -75,6 +90,23 @@ export const SessionView = () => {
 		parsedSessionId !== null &&
 		requestId !== null &&
 		pathname.includes('/sessions/consultant/sessionView/session/');
+
+	if (new URLSearchParams(search).has(TOPIC_DUPLICATE_QUERY_PARAM)) {
+		const exactRoom = parseTopicDuplicateRoomPath(pathname);
+		if (
+			search !== TOPIC_DUPLICATE_SEARCH ||
+			chatId !== undefined ||
+			exactRoom?.rolePath !== 'consultant/sessionView' ||
+			exactRoom.roomId !== groupId ||
+			exactRoom.caseId !== parsedSessionId ||
+			!hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
+		) {
+			return <Navigate to="/notifications" replace />;
+		}
+		return (
+			<SessionViewBody key={`${userData.userId}:${pathname}${search}`} />
+		);
+	}
 
 	if (isStableConsultantSessionRoute) {
 		return (
@@ -101,10 +133,18 @@ export const SessionView = () => {
 };
 
 const SessionViewBody = () => {
-	const { groupId: groupIdFromParam, sessionId: sessionIdFromParam } =
-		useParams<{ groupId: string; sessionId: string }>();
+	const {
+		groupId: groupIdFromParam,
+		sessionId: sessionIdFromParam,
+		chatId: chatIdFromParam
+	} = useParams<{ groupId: string; sessionId: string; chatId: string }>();
 	const navigate = useNavigate();
-	const { pathname } = useLocation();
+	const { pathname, search } = useLocation();
+	const exactRoom =
+		search === TOPIC_DUPLICATE_SEARCH
+			? parseTopicDuplicateRoomPath(pathname)
+			: null;
+	const returnToTimeline = exactRoom !== null;
 
 	const { type, path: listPath } = useContext(SessionTypeContext);
 	const { userData } = useContext(UserDataContext);
@@ -119,11 +159,14 @@ const SessionViewBody = () => {
 		session: activeSession,
 		ready: activeSessionReady,
 		reload: reloadActiveSession,
+		refresh: refreshActiveSession,
 		read: readActiveSession
 	} = useSession(
-		groupIdFromParam,
+		exactRoom
+			? { roomId: exactRoom.roomId, caseId: exactRoom.caseId }
+			: groupIdFromParam,
 		sessionIdFromParam ? parseInt(sessionIdFromParam) : undefined,
-		undefined,
+		positiveInteger(chatIdFromParam) ?? undefined,
 		(hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) ||
 			(userData?.userRoles || []).includes('USER')) &&
 			!(
@@ -221,8 +264,12 @@ const SessionViewBody = () => {
 	useEffect(() => {
 		if (activeSessionReady && !activeSession) {
 			navigate(
-				listPath +
-					(sessionListTab ? `?sessionListTab=${sessionListTab}` : ''),
+				returnToTimeline
+					? '/notifications'
+					: listPath +
+							(sessionListTab
+								? `?sessionListTab=${sessionListTab}`
+								: ''),
 				{ replace: true }
 			);
 			return;
@@ -244,6 +291,7 @@ const SessionViewBody = () => {
 		sessionListTab,
 		type,
 		listPath,
+		returnToTimeline,
 		navigate
 	]);
 
@@ -311,6 +359,7 @@ const SessionViewBody = () => {
 			readActiveSession={readActiveSession}
 			avatarMembers={avatarMembers}
 			reloadActiveSession={reloadActiveSession}
+			refreshActiveSession={refreshActiveSession}
 		>
 			<SessionStream
 				readonly={readonly}

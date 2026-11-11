@@ -38,6 +38,35 @@ describe('buildMatrixFileMessageContent', () => {
 		}
 	);
 
+	it('without a caption the body stays the file name', () => {
+		const file = new File(['x'], 'befund.pdf', {
+			type: 'application/pdf'
+		});
+
+		expect(
+			buildMatrixFileMessageContent(file, encryptedFile, null)
+		).toMatchObject({ body: 'befund.pdf', filename: 'befund.pdf' });
+	});
+
+	it('carries a caption in the body and keeps the name in filename (MSC2530)', () => {
+		const file = new File(['x'], 'befund.pdf', {
+			type: 'application/pdf'
+		});
+
+		const content = buildMatrixFileMessageContent(
+			file,
+			encryptedFile,
+			null,
+			{ caption: 'Bitte Seite 2 lesen', mentionedUserIds: ['@anna:hs'] }
+		);
+
+		expect(content).toMatchObject({
+			'body': 'Bitte Seite 2 lesen',
+			'filename': 'befund.pdf',
+			'm.mentions': { user_ids: ['@anna:hs'] }
+		});
+	});
+
 	it('keeps room attachments relation-free', () => {
 		const file = new File(['x'], 'photo.png', { type: 'image/png' });
 

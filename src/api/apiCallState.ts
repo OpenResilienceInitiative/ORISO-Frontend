@@ -1,4 +1,7 @@
-import type { CallLifecycleMessage } from '../utils/callLifecycleMessage';
+import {
+	CALL_STATE_NOT_FOUND,
+	type CallLifecycleMessage
+} from '../utils/callLifecycleMessage';
 import { endpoints } from '../resources/scripts/endpoints';
 import { fetchData, FETCH_ERRORS, FETCH_METHODS } from './fetchData';
 import { getMatrixClientService } from '../services/matrixClientRegistry';
@@ -9,9 +12,10 @@ const timestamp = (value: unknown): value is number =>
 	value >= 0 &&
 	value <= 8640000000000000;
 
-export async function apiCallState(
+/** Like `apiCallState`, but tells a confirmed 404 apart from an untrusted answer. */
+export async function apiCallStateRead(
 	call: CallLifecycleMessage
-): Promise<CallLifecycleMessage | null> {
+): Promise<CallLifecycleMessage | null | typeof CALL_STATE_NOT_FOUND> {
 	let value: unknown;
 	try {
 		value = await fetchData({
@@ -30,7 +34,7 @@ export async function apiCallState(
 		 * endpoint every fifteen seconds for as long as it was on screen.
 		 */
 		if (error instanceof Error && error.message === FETCH_ERRORS.NO_MATCH) {
-			return null;
+			return CALL_STATE_NOT_FOUND;
 		}
 		throw error;
 	}
@@ -186,4 +190,11 @@ export async function apiCallState(
 			: undefined,
 		durationSeconds: state === 'missed' ? undefined : data.durationSeconds
 	};
+}
+
+export async function apiCallState(
+	call: CallLifecycleMessage
+): Promise<CallLifecycleMessage | null> {
+	const read = await apiCallStateRead(call);
+	return read === CALL_STATE_NOT_FOUND ? null : read;
 }

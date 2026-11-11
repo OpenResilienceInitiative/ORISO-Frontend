@@ -2,6 +2,7 @@
 import * as React from 'react';
 import {
 	cleanup,
+	fireEvent,
 	render,
 	screen,
 	waitFor,
@@ -17,10 +18,15 @@ import {
 	vi
 } from 'vite-plus/test';
 import { apiGetChatMembers } from '../../api/apiGetChatMembers';
+import { apiPostBanUser } from '../../api/apiPostBanUser';
+import { ActiveSessionContext } from '../../globalState';
 import { GroupChatInfoM3Connected } from './GroupChatInfo';
 
 vi.mock('react-i18next', () => ({
-	useTranslation: () => ({ t: (key: string) => key })
+	useTranslation: () => ({
+		t: (key: string, values?: { name?: string; number?: number }) =>
+			[key, values?.name ?? values?.number].filter(Boolean).join(' ')
+	})
 }));
 
 vi.mock('../../globalState', async () => {
@@ -65,21 +71,25 @@ vi.mock('../../hooks/useMatrixRoomUsers', () => ({
 	})
 }));
 vi.mock('../../api/apiGetChatMembers', () => ({ apiGetChatMembers: vi.fn() }));
+vi.mock('../../api/apiPostBanUser', () => ({ apiPostBanUser: vi.fn() }));
 vi.mock('../../api', () => ({
 	apiGetGroupChatInfo: vi.fn(() => Promise.resolve({ bannedUsers: [] })),
 	apiPutGroupChat: vi.fn(),
 	GROUP_CHAT_API: {}
 }));
 
-const connectedUi = () => (
+const connectedUi = (
+	isCurrentUserModerator = false,
+	onBanned: (name: string) => void = () => {}
+) => (
 	<MemoryRouter>
 		<GroupChatInfoM3Connected
 			topic="Gruppe"
 			settings={[]}
-			isCurrentUserModerator={false}
+			isCurrentUserModerator={isCurrentUserModerator}
 			showInviteActions={false}
 			inviteLink={{ url: '', copyRegistrationLink: () => {} } as any}
-			onBanned={() => {}}
+			onBanned={onBanned}
 			onBanFailed={() => {}}
 			onShowQr={() => {}}
 		/>
@@ -163,5 +173,122 @@ describe('Chat-Info participant roles', () => {
 		expect(
 			rowOf('Clara').querySelector('[data-cy="participant-role"]')
 		).toBeNull();
+	});
+});
+
+const credentialOwner = 'legacy.owner_at_example.test';
+const credentialAsker = 'other.asker_at_example.org';
+const protectedLabel = 'groupChat.info.subscribers.protectedName';
+const protectedRoster = [
+	{
+		_id: '@a-owner:hs',
+		username: credentialOwner,
+		displayName: credentialOwner
+	},
+	{
+		_id: '@b-asker:hs',
+		username: credentialAsker,
+		displayName: credentialAsker
+	}
+];
+
+const renderCircle = (
+	item: { conversationType?: string; repeatCount?: number },
+	moderator = false,
+	onBanned = vi.fn()
+) => {
+	const value = {
+		activeSession: {
+			isGroup: true,
+			item: { id: 7, active: false, ...item }
+		}
+	} as React.ContextType<typeof ActiveSessionContext>;
+	return render(
+		<ActiveSessionContext.Provider value={value}>
+			{connectedUi(moderator, onBanned)}
+		</ActiveSessionContext.Provider>
+	);
+};
+
+describe('self-help Chat-Info participant names', () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+		room.joined = [...protectedRoster];
+	});
+	afterEach(() => {
+		room.joined = [];
+		cleanup();
+	});
+
+	it.each([
+		['explicit self-help modality', { conversationType: 'SELF_HELP' }],
+		['legacy recurring group', { repeatCount: 2 }]
+	])(
+		'does not show either credential profile name for %s',
+		(_label, item) => {
+			renderCircle(item);
+
+			expect(screen.queryByText(credentialOwner)).toBeNull();
+			expect(screen.queryByText(credentialAsker)).toBeNull();
+			expect(screen.getByText(`${protectedLabel} 1`)).toBeTruthy();
+			expect(screen.getByText(`${protectedLabel} 3`)).toBeTruthy();
+		}
+	);
+
+	it('keeps the safe explicit label and falls back to a safe existing alias', () => {
+		room.joined = [
+			{
+				_id: '@first:hs',
+				username: credentialOwner,
+				displayName: 'Sanftes Alpaka'
+			},
+			{
+				_id: '@second:hs',
+				username: 'ruhiges_yak',
+				displayName: 'other.asker@example.org'
+			},
+			{ _id: '@third:hs', username: 'anon_123' },
+			{ _id: '@fourth:hs', username: 'another.asker@example.test' }
+		];
+		renderCircle({ conversationType: 'SELF_HELP' });
+
+		expect(screen.getByText('Sanftes Alpaka')).toBeTruthy();
+		expect(screen.getByText('ruhiges_yak')).toBeTruthy();
+		expect(screen.getByText('anon_123')).toBeTruthy();
+		expect(screen.queryByText('other.asker@example.org')).toBeNull();
+		expect(screen.queryByText('another.asker@example.test')).toBeNull();
+	});
+
+	it('keeps the moderation target while using the safe label in the controls and result', async () => {
+		const onBanned = vi.fn();
+		vi.mocked(apiPostBanUser).mockResolvedValue(undefined);
+		renderCircle({ conversationType: 'SELF_HELP' }, true, onBanned);
+
+		const targetName = `${protectedLabel} 3`;
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: `groupChat.info.subscribers.menuLabel ${targetName}`
+			})
+		);
+		fireEvent.click(
+			await screen.findByRole('menuitem', { name: 'banUser.ban.trigger' })
+		);
+		expect(
+			screen.getByRole('dialog', {
+				name: `banUser.confirm.title ${targetName}`
+			})
+		).toBeTruthy();
+		fireEvent.click(screen.getByTestId('ban-user-confirm-submit'));
+
+		await waitFor(() => expect(onBanned).toHaveBeenCalledWith(targetName));
+		expect(apiPostBanUser).toHaveBeenCalledWith({
+			chatId: 7,
+			matrixUserId: '@b-asker:hs'
+		});
+	});
+
+	it('preserves the independent internal group labels', () => {
+		renderCircle({ conversationType: 'INTERNAL_GROUP' });
+		expect(screen.getByText(credentialOwner)).toBeTruthy();
 	});
 });

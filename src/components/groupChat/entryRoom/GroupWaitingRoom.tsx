@@ -3,6 +3,7 @@ import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { Box, Button, Typography, useMediaQuery } from '@mui/material';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import CalendarMonthRoundedIcon from '@mui/icons-material/CalendarMonthRounded';
+import VideocamRoundedIcon from '@mui/icons-material/VideocamRounded';
 import { useTranslation } from 'react-i18next';
 import { Switch } from '../../Switch';
 import { WaitingRoomBar } from '../../waitingRoom/WaitingRoomBar';
@@ -10,7 +11,10 @@ import { WaitingAreaCountdown } from '../waitingClock/WaitingAreaCountdown';
 import { WaitingAreaRules } from '../WaitingAreaRules';
 import { GroupChatCalendarPopover } from '../GroupChatCalendarMenu';
 import { GroupInfoGallery } from './GroupInfoGallery';
-import { GroupUpcomingDates } from './GroupUpcomingDates';
+import {
+	GroupUpcomingDates,
+	type GroupUpcomingDate
+} from './GroupUpcomingDates';
 import { GroupCalendarActions } from './GroupCalendarActions';
 import { GroupHeading } from './GroupHeading';
 import { usePanelHistory } from './EntryRoomPanel';
@@ -54,7 +58,7 @@ export interface GroupWaitingRoomProps {
 	onJoin: () => ClosingSwapResult;
 	joinBusy?: boolean;
 	/** The group's next dates, soonest first — shown behind "Alle Termine". */
-	upcomingDates?: Date[];
+	upcomingDates?: (Date | GroupUpcomingDate)[];
 	/**
 	 * How the group repeats and how many dates are left from its start on:
 	 * the rhythm under the headline, the series export.
@@ -86,6 +90,12 @@ export interface GroupWaitingRoomProps {
 	 * the documents with their contract, not here.
 	 */
 	askConsent?: boolean;
+	/**
+	 * Offers the camera and microphone check (#2016) in the quiet row, as an
+	 * option beside "Mehr erfahren". The caller shows the check; without it
+	 * there is no button.
+	 */
+	onDeviceCheck?: () => void;
 }
 
 /**
@@ -120,7 +130,8 @@ export const GroupWaitingRoom = ({
 	joinNotice,
 	audience = 'participant',
 	primaryLabel,
-	askConsent = true
+	askConsent = true,
+	onDeviceCheck
 }: GroupWaitingRoomProps) => {
 	const { t } = useTranslation();
 	const tr = useCallback(
@@ -140,9 +151,14 @@ export const GroupWaitingRoom = ({
 		active || (plannedStart !== null && now >= plannedStart.getTime());
 	// An opened group runs its planned date even before the clock says so.
 	const runningMs = started ? plannedStart?.getTime() : undefined;
-	const datesAhead = (
-		upcomingDates ?? (plannedStart ? [plannedStart] : [])
-	).filter((date) => date.getTime() > now && date.getTime() !== runningMs);
+	const datesAhead = (upcomingDates ?? (plannedStart ? [plannedStart] : []))
+		.map((date) =>
+			date instanceof Date ? { start: date, durationMinutes } : date
+		)
+		.filter(
+			({ start }) =>
+				start.getTime() > now && start.getTime() !== runningMs
+		);
 	/* The series from the first date still ahead: the dates left behind,
 	   the running one among them, no longer count. */
 	const seriesAhead = series && {
@@ -311,7 +327,6 @@ export const GroupWaitingRoom = ({
 			<GroupUpcomingDates
 				onBack={backToRoom}
 				dates={datesAhead}
-				durationMinutes={durationMinutes}
 				eventId={eventId}
 				series={seriesAhead}
 			/>
@@ -511,6 +526,18 @@ export const GroupWaitingRoom = ({
 							}
 						}}
 					>
+						{onDeviceCheck && (
+							<Button
+								variant="outlined"
+								size="small"
+								startIcon={<VideocamRoundedIcon />}
+								sx={moreButtonSx}
+								onClick={onDeviceCheck}
+								data-testid="group-entry-devices"
+							>
+								{tr('devices', 'Kamera & Mikrofon')}
+							</Button>
+						)}
 						<Button
 							variant="outlined"
 							size="small"

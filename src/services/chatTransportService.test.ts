@@ -801,6 +801,19 @@ describe('chatTransportService sendTextMessage (Matrix-only transport)', () => {
 describe('chatTransportService team attachment notifications', () => {
 	afterEach(() => setMatrixClientServiceRef(null));
 
+	it('rejects a file send without a Matrix service and sends no notification', async () => {
+		setMatrixClientServiceRef(null);
+		const notify = vi.fn();
+		await expect(
+			chatTransportService.sendFileMessage(
+				ROOM_ID,
+				new File(['x'], 'note.txt'),
+				{ postMessageEventNotification: notify }
+			)
+		).rejects.toThrow('Matrix client not initialized');
+		expect(notify).not.toHaveBeenCalled();
+	});
+
 	it('marks an attachment sent in the team room as teamDiscussion', async () => {
 		const postNotification = vi.fn(() => Promise.resolve({}));
 		setMatrixClientServiceRef({
@@ -876,24 +889,26 @@ describe('chatTransportService markRoomAsRead', () => {
 		};
 		setClientWithRoom(room);
 
-		await chatTransportService.markRoomAsRead(ROOM_ID);
+		await expect(
+			chatTransportService.markRoomAsRead(ROOM_ID)
+		).resolves.toBe(true);
 
 		expect(sendReadReceipt).toHaveBeenCalledTimes(1);
 		expect(sendReadReceipt).toHaveBeenCalledWith(latestEvent);
 	});
 
-	it('is a safe no-op (no throw) when the Matrix client is missing', async () => {
+	it('is a safe no-op (false, no throw) when the Matrix client is missing', async () => {
 		setMatrixClientServiceRef(null);
 		await expect(
 			chatTransportService.markRoomAsRead(ROOM_ID)
-		).resolves.toBeUndefined();
+		).resolves.toBe(false);
 	});
 
 	it('is a safe no-op when the room is unknown', async () => {
 		setClientWithRoom(null);
 		await expect(
 			chatTransportService.markRoomAsRead(ROOM_ID)
-		).resolves.toBeUndefined();
+		).resolves.toBe(false);
 	});
 
 	it('is a safe no-op when the room has no events', async () => {
@@ -906,11 +921,11 @@ describe('chatTransportService markRoomAsRead', () => {
 
 		await expect(
 			chatTransportService.markRoomAsRead(ROOM_ID)
-		).resolves.toBeUndefined();
+		).resolves.toBe(false);
 		expect(sendReadReceipt).not.toHaveBeenCalled();
 	});
 
-	it('swallows a failing read-receipt send (no throw)', async () => {
+	it('reports false for a failing read-receipt send (no throw)', async () => {
 		const room = {
 			getLiveTimeline: () => ({
 				getEvents: () => [{ id: 'latest' }]
@@ -921,7 +936,7 @@ describe('chatTransportService markRoomAsRead', () => {
 
 		await expect(
 			chatTransportService.markRoomAsRead(ROOM_ID)
-		).resolves.toBeUndefined();
+		).resolves.toBe(false);
 	});
 });
 

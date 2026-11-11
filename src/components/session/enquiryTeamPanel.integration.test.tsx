@@ -24,6 +24,7 @@ import { SessionStream } from './SessionStream';
 // measure Vite's first compilation of this large module.
 import '../messageSubmitInterface/messageSubmitInterfaceComponent';
 import { SESSION_LIST_TYPES } from './sessionHelpers';
+import { getShownChannel } from './notificationActiveView';
 import { ModalProvider } from '../../globalState/provider/ModalProvider';
 import {
 	ActiveSessionContext,
@@ -50,6 +51,7 @@ import {
 } from '../sessionCookie/accessSessionCookie';
 import { setTenantSettings } from '../../utils/tenantSettingsHelper';
 
+const activeViewPatch = vi.hoisted(() => vi.fn(async () => undefined));
 const boundary = vi.hoisted(() => {
 	Object.defineProperty(HTMLCanvasElement.prototype, 'getContext', {
 		configurable: true,
@@ -123,13 +125,16 @@ vi.mock('../../api/apiGetSessionRooms', () => ({
 		boundary.sessionRoom(...args),
 	apiGetSessionRoomsByRoomIds: async () => ({ sessions: [] })
 }));
+vi.mock('../../api/apiSessionAppointments', () => ({
+	apiGetSessionAppointments: async () => []
+}));
 vi.mock('../../api/apiGetAgencyConsultantList', () => ({
 	apiGetAgencyConsultantList: async () => [],
 	fetchAgencyConsultantList: async () => [],
 	apiGetTenantConsultantList: async () => []
 }));
 vi.mock('../../api/apiPatchNotificationActiveView', () => ({
-	apiPatchNotificationActiveView: async () => undefined
+	apiPatchNotificationActiveView: activeViewPatch
 }));
 vi.mock('../../api/apiMatrixSyncRegister', () => ({
 	apiRegisterMatrixRoomForSync: async () => undefined
@@ -313,6 +318,10 @@ function openEnquiry(
 		reloadedStatus?: number;
 		teamChannel?: boolean;
 		threadChannel?: boolean;
+		askerAlias?: string;
+		consultantUsername?: string;
+		threadRootId?: string;
+		width?: number;
 		supervisionChannel?: boolean;
 		id?: number;
 		registrationType?: string;
@@ -333,13 +342,17 @@ function openEnquiry(
 		isEmptyEnquiry: status === 0,
 		isNonEmptyEnquiry: status === 1,
 		isRejected: status === 5,
-		user: { username: 'Ratsuchende', userId: 'asker' },
-		...(options.assigned
+		user: {
+			username: 'Ratsuchende',
+			userId: 'asker',
+			displayName: options.askerAlias
+		},
+		...(options.assigned || options.consultantUsername
 			? {
 					consultant: {
-						id: 'colleague',
-						consultantId: 'colleague',
-						username: 'colleague'
+						id: options.consultantUsername ?? 'colleague',
+						consultantId: options.consultantUsername ?? 'colleague',
+						username: options.consultantUsername ?? 'colleague'
 					}
 				}
 			: {}),
@@ -480,7 +493,7 @@ function openEnquiry(
 							: options.supervisionChannel
 								? '?channel=supervision'
 								: options.threadChannel
-									? '?channel=thread:%24original'
+									? `?channel=thread:${encodeURIComponent(options.threadRootId ?? '$original')}`
 									: '')
 				]}
 			>
@@ -529,6 +542,58 @@ it('opens the enquiry with its complete original text and the shared team panel 
 		view.container.querySelector('.sidePanel')?.textContent
 	).not.toContain('notifications.center.preview.empty');
 }, 20000);
+
+it.each([
+	['a phone', 390, true],
+	['a desktop', 1440, undefined]
+])(
+	'tells the server whether the panel hides the main chat on %s',
+	async (_label, width, mainChatHidden) => {
+		vi.spyOn(document, 'hasFocus').mockReturnValue(true);
+		openEnquiry(SESSION_LIST_TYPES.ENQUIRY, { teamChannel: true, width });
+		await waitFor(
+			() =>
+				expect(activeViewPatch).toHaveBeenLastCalledWith(
+					expect.objectContaining({ active: true, mainChatHidden })
+				),
+			{ timeout: 15000 }
+		);
+	}
+);
+
+it('reports a thread the card really shows, and not one only the URL asks for', async () => {
+	vi.spyOn(document, 'hasFocus').mockReturnValue(true);
+	const view = openEnquiry(SESSION_LIST_TYPES.ENQUIRY, {
+		threadChannel: true
+	});
+	await waitFor(
+		() =>
+			expect(getShownChannel()).toEqual({
+				kind: 'thread',
+				rootId: '$original'
+			}),
+		{ timeout: 15000 }
+	);
+	expect(activeViewPatch).toHaveBeenLastCalledWith(
+		expect.objectContaining({ active: true, threadRootId: '$original' })
+	);
+	view.unmount();
+	expect(getShownChannel()).toBeNull();
+
+	activeViewPatch.mockClear();
+	openEnquiry(SESSION_LIST_TYPES.ENQUIRY, {
+		threadChannel: true,
+		threadRootId: '$not-loaded'
+	});
+	await waitFor(
+		() =>
+			expect(activeViewPatch).toHaveBeenLastCalledWith(
+				expect.objectContaining({ active: true, threadRootId: null })
+			),
+		{ timeout: 15000 }
+	);
+	expect(getShownChannel()).toBeNull();
+}, 30000);
 
 it('shows the complete enquiry text when opened outside the enquiry list', async () => {
 	const view = openEnquiry(SESSION_LIST_TYPES.MY_SESSION);
@@ -870,10 +935,12 @@ it('tells the counsellor when a colleague took the enquiry they have open', asyn
 			name: 'session.anonymous.takenByOtherConsultant.button.label'
 		})
 	);
-	await waitFor(() =>
-		expect(view.getByTestId('route').textContent).toBe(
-			'/sessions/consultant/sessionPreview'
-		)
+	await waitFor(
+		() =>
+			expect(view.getByTestId('route').textContent).toBe(
+				'/sessions/consultant/sessionPreview'
+			),
+		{ timeout: 10000 }
 	);
 }, 20000);
 
@@ -1441,4 +1508,64 @@ it.each([
 		expect(boundary.rejectEnquiry.mock.calls[0][0]).toBe(4711);
 		await waitFor(() => expect(boundary.reload).toHaveBeenCalledTimes(1));
 	}
+);
+
+it.each([false, true])(
+	'keeps a former consultant distinct from the session asker in the actual %s thread timeline',
+	async (threadChannel) => {
+		boundary.rooms.set(
+			MAIN,
+			room(MAIN, [
+				new MatrixEvent({
+					event_id: '$original',
+					room_id: MAIN,
+					sender: '@asker:test',
+					type: 'm.room.message',
+					origin_server_ts: 1000,
+					content: { msgtype: 'm.text', body: TEXT }
+				}),
+				new MatrixEvent({
+					event_id: '$former',
+					room_id: MAIN,
+					sender: '@former:test',
+					type: 'm.room.message',
+					origin_server_ts: 2000,
+					content: {
+						msgtype: 'm.text',
+						body: 'Former consultant advice',
+						...(threadChannel
+							? {
+									'm.relates_to': {
+										rel_type: 'm.thread',
+										event_id: '$original'
+									}
+								}
+							: {})
+					}
+				})
+			])
+		);
+		const view = openEnquiry(SESSION_LIST_TYPES.MY_SESSION, {
+			status: 2,
+			threadChannel,
+			askerAlias: 'Chosen session alias',
+			consultantUsername: 'consultant'
+		});
+		const pane = threadChannel
+			? '.chatStage__panel'
+			: '.chatStage__mainPane';
+		await waitFor(() => {
+			const surface = view.container.querySelector(pane);
+			expect(surface).not.toBeNull();
+			const former = Array.from(
+				surface!.querySelectorAll('.messageItem')
+			).find((row) =>
+				row.textContent?.includes('Former consultant advice')
+			);
+			expect(former).toBeTruthy();
+			expect(former!.textContent).not.toContain('Chosen session alias');
+			expect(surface!.textContent).toContain('Chosen session alias');
+		});
+	},
+	20000
 );

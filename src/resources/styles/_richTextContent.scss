@@ -1,0 +1,149 @@
+// Formatted message text — one definition for the composer AND the bubble.
+// The sender formats in the TipTap composer; the reader sees the same HTML in
+// `.messageItem__message`. Both used to carry their own rules (or none, so
+// browser defaults applied), and they drifted: a heading was 36 px in the
+// bubble, list items got 12 px gaps the composer never showed, and a
+// horizontal rule had no style at all (ORISO-Frontend#2135 battle test).
+// Include this mixin on the element that holds the formatted HTML. Only
+// layout and typography of the content live here; colours that depend on
+// the bubble direction stay with the bubble.
+
+@mixin rich-text-content {
+	p {
+		margin: 0;
+
+		// A blank line in the composer is an empty paragraph. Without content
+		// it has no height, so the gap the sender typed vanished (#2135).
+		// `1lh` follows the computed line height whatever unit is used; the
+		// first declaration is the fallback for browsers without `lh`.
+		&:empty {
+			min-height: var(--message-line-height, 20px);
+			min-height: 1lh;
+		}
+	}
+
+	// Sized for a chat bubble on the 14 px text scale, not for a page.
+	h1,
+	h2,
+	h3,
+	h4 {
+		margin: 8px 0 4px;
+		font-weight: 600;
+		line-height: 1.3;
+
+		&:first-child {
+			margin-top: 0;
+		}
+	}
+
+	h1 {
+		font-size: 1.43em; // 20 px
+	}
+
+	h2 {
+		font-size: 1.29em; // 18 px
+	}
+
+	h3 {
+		font-size: 1.14em; // 16 px
+	}
+
+	h4 {
+		font-size: 1em;
+	}
+
+	// Lists sit as tight as the lines around them; nested lists add indent,
+	// not vertical space.
+	ul,
+	ol {
+		margin: 4px 0;
+		padding-left: 1.5em;
+
+		ul,
+		ol {
+			margin: 0;
+		}
+	}
+
+	li {
+		margin: 0;
+	}
+
+	// #1079: a task list is a checklist — no bullet, box on the line of its
+	// text.
+	ul[data-type='taskList'] {
+		list-style: none;
+		padding-left: 0;
+
+		li {
+			display: flex;
+			align-items: flex-start;
+			gap: 8px;
+		}
+
+		li > div {
+			flex: 1 1 auto;
+			min-width: 0;
+		}
+
+		// The composer lives inside `.textarea`, whose floating form label
+		// (`.textarea label`: absolute, offset, white) also matched this
+		// checkbox label and laid the box over the item text.
+		label {
+			position: static;
+			width: auto;
+			background: none;
+			display: inline-flex;
+			align-items: center;
+			flex: 0 0 auto;
+
+			// Aligns the box with the first line of a wrapping item.
+			height: var(--message-line-height, 20px);
+			height: 1lh;
+		}
+
+		input[type='checkbox'] {
+			margin: 0;
+		}
+	}
+
+	blockquote {
+		margin: 8px 0;
+		padding: 4px 0 4px 10px;
+		border-left: 3px solid var(--m3-primary-container, #cc1e1c);
+		border-radius: 0 6px 6px 0;
+		background: rgba(204, 30, 28, 0.06);
+		background: color-mix(
+			in srgb,
+			var(--m3-primary, #a5000a) 6%,
+			transparent
+		);
+	}
+
+	hr {
+		margin: 8px 0;
+		border: none;
+		border-top: 1px solid var(--m3-outline-variant, #c4c7c5);
+	}
+
+	code {
+		padding: 0 3px;
+		border-radius: 3px;
+		background: rgba(0, 0, 0, 0.06);
+		font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+		font-size: 0.9em;
+	}
+
+	pre {
+		margin: 8px 0;
+		padding: 8px;
+		border-radius: 6px;
+		background: rgba(0, 0, 0, 0.06);
+		white-space: pre-wrap;
+
+		code {
+			padding: 0;
+			background: none;
+		}
+	}
+}

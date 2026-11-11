@@ -12,6 +12,10 @@ import {
 } from '../sessionCookie/accessSessionCookie';
 import { sessionKindRegistry } from '../../utils/displayFilter/sessionKindRegistry';
 import { removeTokenExpiryFromLocalStorage } from '../sessionCookie/accessSessionLocalStorage';
+import {
+	getAppSessionScope,
+	publishAppSessionEnd
+} from '../sessionCookie/observeAppSession';
 import { appConfig } from '../../utils/appConfig';
 import { calcomLogout } from './calcomLogout';
 import {
@@ -60,6 +64,7 @@ export const LOGOUT_REQUEST_TIMEOUT_MS = 5_000;
 export const PRE_LOGOUT_HANDLERS_TIMEOUT_MS = 5_000;
 
 let isRequestInProgress = false;
+let peerSessionEnded = false;
 
 const runPreLogoutHandlers = async (): Promise<boolean> => {
 	const controller = new AbortController();
@@ -94,15 +99,21 @@ const runBoundedLogoutRequest = <Value>(
 
 export const logout = async (
 	withRedirect: boolean = true,
-	redirectUrl?: string
+	redirectUrl?: string,
+	onLocalSessionEnded?: () => void
 ) => {
-	if (isRequestInProgress) {
+	if (isRequestInProgress || peerSessionEnded) {
 		return null;
 	}
 	// Claimed before the handlers run: a 401 inside a draft flush calls
 	// logout() again, and that re-entrant call must be a no-op rather than a
 	// second, redirecting sign-out racing this one.
 	isRequestInProgress = true;
+	const hasSession = Boolean(getValueFromCookie('keycloak'));
+	const sessionScope = getAppSessionScope();
+	const isCurrentSession = () =>
+		!peerSessionEnded &&
+		getAppSessionScope()?.identity === sessionScope?.identity;
 
 	// Practice mode's network guard blocks every write, among them the pre-logout
 	// draft flush and the Keycloak logout POST. Leave it first (#1622), the
@@ -111,15 +122,23 @@ export const logout = async (
 		await endPractice();
 	}
 	exitPracticeMode();
+	if (!isCurrentSession()) {
+		isRequestInProgress = false;
+		return null;
+	}
 
 	// With the session already torn down (auth guard, expired refresh token)
 	// there is nothing the handlers or the availability call could still do
 	// with the backend — they would only produce 401s.
-	const hasSession = Boolean(getValueFromCookie('keycloak'));
-
 	if (hasSession && (await runPreLogoutHandlers())) {
 		isRequestInProgress = false;
 		return;
+	}
+	// A sibling may have ended this session or signed in again while the
+	// draft handler was pending, before the StorageEvent reaches this tab.
+	if (!isCurrentSession()) {
+		isRequestInProgress = false;
+		return null;
 	}
 	clearLoginRecoveryPassword();
 	clearSecretStorageKeys();
@@ -147,6 +166,8 @@ export const logout = async (
 		}
 	}
 	teardownLocalSession();
+	publishAppSessionEnd(sessionScope);
+	onLocalSessionEnded?.();
 
 	void Promise.allSettled(serverRequests).then(() => {
 		if (withRedirect) {
@@ -157,6 +178,26 @@ export const logout = async (
 		// over in place), so the next sign-out must not be swallowed.
 		isRequestInProgress = false;
 	});
+};
+
+const clearTabSessionRuntime = () => {
+	setMatrixClientServiceRef(null);
+	// User-scoped state must not survive in the next authenticated view.
+	sessionKindRegistry.reset();
+	appSnackbarStack.clear();
+};
+
+/** A peer tab owns the shared logout; release this document's runtime only. */
+export const teardownPeerLocalSession = (): void => {
+	if (peerSessionEnded) return;
+	peerSessionEnded = true;
+	exitPracticeMode();
+	try {
+		getMatrixClientService()?.stopAndCleanup();
+	} catch {
+		// The peer document is leaving even if its Matrix client fails to stop.
+	}
+	clearTabSessionRuntime();
 };
 
 /**
@@ -172,26 +213,18 @@ export const logout = async (
  * providers above the router drop their session-bound state.
  */
 export const teardownLocalSession = (): void => {
+	if (peerSessionEnded) return;
 	// The login form's requests are writes too (#1622). Immediate on purpose:
 	// the session is already gone, nothing practice can still write matters.
 	exitPracticeMode();
 	void getMatrixClientService()
 		?.logout()
 		.catch(() => {});
-	// Reset the module-level Matrix client registry so a stale, still
-	// authenticated client cannot survive sign-out (the React context state is
-	// reset separately in the logout flow / via the post-logout reload).
-	setMatrixClientServiceRef(null);
-	// #1377 "Ton": the session → kind map is user-scoped; the next user must
-	// not inherit mute/tone decisions from the previous one.
-	sessionKindRegistry.reset();
+	clearTabSessionRuntime();
 	// #1485: the live-chat preference, the shared lease acknowledgement and
 	// the loss record are session-bound; an auth or bootstrap failure that
 	// tears down without logout() must not hand them to the next counsellor.
 	clearLiveChatAvailabilityPreference();
-	// The app-wide snackbars outlive the host; a join request naming someone
-	// must not greet the next person who signs in (#1499).
-	appSnackbarStack.clear();
 	// Module stores that cannot be imported here (cycle via fetchData), e.g.
 	// the guest's temporary account (#1869), reset themselves on this.
 	void callEventListeners(EVENT_SESSION_TEARDOWN);

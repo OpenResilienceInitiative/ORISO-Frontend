@@ -77,6 +77,7 @@ const mocks = vi.hoisted(() => {
 		suspendedRender: null as Promise<unknown> | null,
 		suspendedRenders: 0,
 		clientChangeListeners: [] as ((client: unknown) => void)[],
+		matrixServicePublished: true,
 		matrixClientService: {
 			getClient: () => null,
 			onClientChange: (listener: (client: unknown) => void) => {
@@ -88,7 +89,8 @@ const mocks = vi.hoisted(() => {
 				};
 			}
 		} as any,
-		requestHistoryKeys: vi.fn(() => Promise.resolve(true))
+		requestHistoryKeys: vi.fn(() => Promise.resolve(true)),
+		recoveryStatus: 'ok' as string
 	};
 });
 
@@ -145,6 +147,7 @@ vi.mock('../../services/chatTransportService', () => ({
 				_roomId: string,
 				listener: (event: any, room: any, toStart: boolean) => void
 			) => {
+				if (!mocks.matrixServicePublished) return null;
 				mocks.timelineListeners.push(listener);
 				return () => {
 					const index = mocks.timelineListeners.indexOf(listener);
@@ -153,6 +156,7 @@ vi.mock('../../services/chatTransportService', () => ({
 			}
 		),
 		onMatrixRedaction: vi.fn((_roomId: string, listener: () => void) => {
+			if (!mocks.matrixServicePublished) return null;
 			mocks.redactionListeners.push(listener);
 			return () => {
 				const index = mocks.redactionListeners.indexOf(listener);
@@ -168,6 +172,7 @@ vi.mock('../../services/chatTransportService', () => ({
 		}),
 		onMatrixRoomLifecycle: vi.fn(
 			(_roomId: string, listener: (change: any) => void) => {
+				if (!mocks.matrixServicePublished) return null;
 				mocks.lifecycleListeners.push(listener);
 				return mocks.detachLifecycle;
 			}
@@ -185,7 +190,8 @@ vi.mock(
 		return {
 			...actual,
 			matrixRoomHistoryKeyTransfer: {
-				requestKeys: mocks.requestHistoryKeys
+				requestKeys: mocks.requestHistoryKeys,
+				getPendingApprovals: () => []
 			}
 		};
 	}
@@ -223,17 +229,24 @@ vi.mock(
 			typeof import('../../globalState/context/MatrixClientContext')
 		>()),
 		useMatrixClient: () => ({
-			matrixClientService: mocks.matrixClientService
+			matrixClientService: mocks.matrixServicePublished
+				? mocks.matrixClientService
+				: null
 		})
 	})
 );
 
 vi.mock('./SessionItemComponent', () => ({
 	SessionItemComponent: (props: any) => {
-		if (
-			props.mainTimelineSupplement?.props?.sessionId ===
-			mocks.suspendedSessionId
-		) {
+		const supplement = props.mainTimelineSupplement;
+		const supplementChildren = React.Children.toArray(
+			supplement?.props?.children
+		) as any[];
+		const supplementSessionId =
+			supplement?.props?.sessionId ??
+			supplementChildren.find((child) => child?.props?.sessionId)?.props
+				?.sessionId;
+		if (supplementSessionId === mocks.suspendedSessionId) {
 			mocks.suspendedRenders++;
 			throw mocks.suspendedRender;
 		}
@@ -244,6 +257,21 @@ vi.mock('./SessionItemComponent', () => ({
 	}
 }));
 
+vi.mock('../../services/recoveryReminderState', async (importOriginal) => ({
+	...(await importOriginal<
+		typeof import('../../services/recoveryReminderState')
+	>()),
+	useRecoveryRuntimeStatus: () => mocks.recoveryStatus
+}));
+vi.mock('../historyRequest/HistoryAskCard', () => ({
+	HistoryAskCard: (props: { roomId: string; unreadable?: boolean }) => (
+		<div
+			data-testid="history-ask-card"
+			data-room={props.roomId}
+			data-unreadable={String(props.unreadable)}
+		/>
+	)
+}));
 vi.mock('./CaseHandoverGate', () => ({
 	CaseHandoverGate: () => <div data-testid="case-handover-gate" />
 }));
@@ -434,6 +462,87 @@ const emitLifecycle = (change: any) => {
 	});
 };
 
+describe('SessionStream history request card', () => {
+	beforeEach(() => {
+		mocks.recoveryStatus = 'needs-recovery-key';
+	});
+	afterEach(cleanup);
+
+	it('shows the ask card to an advice seeker in a one-to-one chat', () => {
+		renderSessionStream({ isGroup: false });
+		expect(
+			screen.getByTestId('history-ask-card').getAttribute('data-room')
+		).toBe(ROOM_ID);
+	});
+
+	it('shows history recovery alongside consent identified from event params', async () => {
+		mocks.getCaseHandoverRequestStatus.mockRejectedValue(
+			new Error('NO_MATCH')
+		);
+		renderSessionStream({
+			isGroup: false,
+			notificationFeed: [
+				{
+					id: '1482',
+					eventType: 'case.handover.consent.requested',
+					params: { sourceSessionId: 1, caseHandoverRequestId: 11 },
+					actionPath: '/sessions/user/view/session/1'
+				}
+			]
+		});
+		expect(screen.getByTestId('history-ask-card')).toBeTruthy();
+		expect(
+			await screen.findByTestId('case-handover-inline-consent')
+		).toBeTruthy();
+	});
+
+	it('marks the card readable when every loaded event can be read', () => {
+		renderSessionStream({ isGroup: false });
+		expect(
+			screen
+				.getByTestId('history-ask-card')
+				.getAttribute('data-unreadable')
+		).toBe('false');
+	});
+
+	it('marks the card unreadable when a loaded event could not be decrypted', async () => {
+		mocks.getMatrixRoomMessages.mockImplementation((roomId: string) =>
+			roomId === ROOM_ID ? [{ isDecryptionFailure: () => true }] : []
+		);
+		try {
+			renderSessionStream({ isGroup: false });
+			await waitFor(() =>
+				expect(
+					screen
+						.getByTestId('history-ask-card')
+						.getAttribute('data-unreadable')
+				).toBe('true')
+			);
+		} finally {
+			mocks.getMatrixRoomMessages.mockImplementation(() => []);
+		}
+	});
+
+	it('hides it in a group chat, where the reason would reach every member', () => {
+		renderSessionStream({ isGroup: true });
+		expect(screen.queryByTestId('history-ask-card')).toBeNull();
+	});
+
+	it('hides it from a counsellor, who cannot approve their own request', () => {
+		renderSessionStream({
+			isGroup: false,
+			userData: consultantUserData as any
+		});
+		expect(screen.queryByTestId('history-ask-card')).toBeNull();
+	});
+
+	it('hides it while the recovery key is not missing', () => {
+		mocks.recoveryStatus = 'ok';
+		renderSessionStream({ isGroup: false });
+		expect(screen.queryByTestId('history-ask-card')).toBeNull();
+	});
+});
+
 describe('SessionStream Matrix room lifecycle', () => {
 	beforeEach(() => {
 		vi.stubGlobal('fetch', async (input: RequestInfo | URL) => {
@@ -470,6 +579,7 @@ describe('SessionStream Matrix room lifecycle', () => {
 		mocks.receiptListeners.length = 0;
 		mocks.clientChangeListeners.length = 0;
 		mocks.sessionItemProps = null;
+		mocks.recoveryStatus = 'ok';
 		mocks.suspendedSessionId = null;
 		mocks.suspendedRender = null;
 		mocks.suspendedRenders = 0;
@@ -529,6 +639,23 @@ describe('SessionStream Matrix room lifecycle', () => {
 			})
 		).toBeTruthy();
 		expect(apiDecideCaseHandoverClientConsent).not.toHaveBeenCalled();
+	});
+
+	it('shows the consent card for an event that names its request and session in params (#1888)', async () => {
+		renderSessionStream({
+			isGroup: false,
+			notificationFeed: [
+				{
+					id: '1482',
+					eventType: 'case.handover.consent.requested',
+					params: { sourceSessionId: 1, caseHandoverRequestId: 11 },
+					actionPath: '/sessions/user/view/session/1'
+				}
+			]
+		});
+		expect(
+			await screen.findByTestId('case-handover-inline-consent')
+		).toBeTruthy();
 	});
 
 	it('lets the asker decide pending case-handover consent inside the conversation', async () => {
@@ -1395,6 +1522,61 @@ describe('SessionStream Matrix room lifecycle', () => {
 				'groupChat.removed.overlay.headline'
 			);
 		});
+	});
+
+	it('hydrates a mounted live chat when the first Matrix service arrives after the listener timeout', async () => {
+		const options = {
+			isGroup: false,
+			notificationFeed: [],
+			activeSession: {
+				rid: ROOM_ID,
+				isGroup: false,
+				isSession: true,
+				item: {
+					id: 1,
+					matrixRoomId: ROOM_ID,
+					active: true,
+					status: 2,
+					conversationType: 'LIVE_CHAT'
+				}
+			}
+		};
+		const existingMessage = {
+			getType: () => 'm.room.message',
+			getSender: () => '@counsellor:example.org',
+			getId: () => '$during-throttle',
+			getTs: () => 1000,
+			getContent: () => ({ msgtype: 'm.text', body: 'First reply' }),
+			isRedacted: () => false
+		};
+		vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
+		mocks.matrixServicePublished = false;
+		try {
+			const view = renderSessionStream(options);
+			await act(async () => {
+				await vi.advanceTimersByTimeAsync(11_000);
+			});
+			expect(mocks.timelineListeners).toHaveLength(0);
+			expect(mocks.lifecycleListeners).toHaveLength(0);
+
+			// Initialization already happened before the provider exposed the
+			// service, so no later client-change notification will wake us.
+			mocks.getMatrixRoomMessages.mockImplementation(() => [
+				existingMessage
+			]);
+			mocks.matrixServicePublished = true;
+			view.rerender(sessionStreamElement(options));
+
+			expect(mocks.timelineListeners).toHaveLength(1);
+			expect(mocks.lifecycleListeners).toHaveLength(1);
+			expect(mocks.sessionItemProps?.messages).toEqual([
+				expect.objectContaining({ message: 'First reply' })
+			]);
+		} finally {
+			mocks.getMatrixRoomMessages.mockImplementation(() => []);
+			mocks.matrixServicePublished = true;
+			vi.useRealTimers();
+		}
 	});
 
 	it('re-attaches room listeners after a token refresh swaps the Matrix client', async () => {

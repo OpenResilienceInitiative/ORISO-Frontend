@@ -4,14 +4,29 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { NotificationsCenter } from './NotificationsCenter';
 import { KNOWN_EVENT_TYPES } from './eventDescriptors';
 import { APP_ORISO_FIGMA_URL } from '../storybookDesignLinks';
+import { AUTHORITIES, SessionsDataContext } from '../../globalState';
+import { useLocation } from 'react-router-dom';
+import type { CaseHandoverStatus } from '../../api/apiCaseHandover';
 import {
-	NotificationsContext,
-	SessionsDataContext,
-	UserDataContext,
-	AUTHORITIES
-} from '../../globalState';
+	minutesAgo,
+	feedItem,
+	noop,
+	consultantUserData,
+	withTimelineData
+} from '../../../.storybook/notificationTimelineFixture';
 import type { NotificationFeedItem } from '../../globalState/provider/NotificationsProvider';
 import { installNotificationDraftFixture } from './notificationDraftFixture';
+import {
+	initDraftKeys,
+	installStoryFrameAccess
+} from '../../../.storybook/draftCryptographyFixture';
+import { unbindDraftCryptographyClient } from '../../services/draftCryptography';
+import {
+	deleteCookieByName,
+	getValueFromCookie,
+	setValueInCookie
+} from '../sessionCookie/accessSessionCookie';
+import { expectTimelineGroupEnd } from '../../../.storybook/notificationsCenterGroupAssertions';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import {
 	DEFAULT_DISPLAY_FILTERS,
@@ -31,24 +46,6 @@ import type { ListItemInterface } from '../../globalState/interfaces/SessionsDat
  * without live app data (ADR-AT-01: strings render client-side from the
  * event-descriptor registry; title/text here are only legacy fallbacks).
  */
-const minutesAgo = (min: number) =>
-	new Date(Date.now() - min * 60 * 1000).toISOString();
-
-const feedItem = (
-	overrides: Partial<NotificationFeedItem> & {
-		id: string;
-		eventType: string;
-		createdAt: string;
-	}
-): NotificationFeedItem => ({
-	type: 'info',
-	title: '',
-	text: '',
-	readAt: null,
-	category: 'system',
-	...overrides
-});
-
 const mockFeed: NotificationFeedItem[] = [
 	feedItem({
 		id: '1',
@@ -170,51 +167,6 @@ const mockFeed: NotificationFeedItem[] = [
 	})
 ];
 
-const noop = () => {};
-
-const notificationsValue = (feed: NotificationFeedItem[]) => ({
-	notifications: [],
-	notificationFeed: feed,
-	unreadNotificationCount: feed.filter((item) => !item.readAt).length,
-	serverUnreadTotal: feed.filter(
-		(item) => !item.readAt && !item.id.startsWith('local-')
-	).length,
-	serverUnreadTotalExcludesHidden: false,
-	hasUnreadNotifications: feed.some((item) => !item.readAt),
-	timelineDisplayFilter: { kinds: {}, autoReadHidden: false },
-	visibleUnreadCount: feed.filter((item) => !item.readAt).length,
-	hiddenUnreadInLoadedPages: 0,
-	markNotificationsReadConfirmed: async () => {},
-	setNotifications: noop,
-	hasNotification: () => false,
-	addNotification: noop,
-	addEventNotification: noop,
-	refreshNotificationFeed: noop,
-	loadOlderNotifications: async () => {},
-	hasOlderNotifications: false,
-	isLoadingOlderNotifications: false,
-	olderNotificationsError: false,
-	removeNotification: noop,
-	markNotificationAsRead: noop,
-	markAllNotificationsAsRead: noop,
-	clearNotificationFeed: noop
-});
-
-const consultantUserData = {
-	userId: 'sb-consultant',
-	userName: 'Storybook Consultant',
-	grantedAuthorities: [AUTHORITIES.CONSULTANT_DEFAULT],
-	isWalkThroughEnabled: false,
-	twoFactorAuth: {
-		isEnabled: false,
-		isActive: false,
-		isShown: false,
-		isToBeActivated: false,
-		secret: '',
-		qrCode: ''
-	}
-} as any;
-
 /**
  * #1377 slice 3: the display filter comes from the account-data store. The
  * story attaches a synced fake client holding `parameters.displayFilters`
@@ -232,24 +184,6 @@ const customisedDisplayFilters = withSectionOverride(
 		autoReadHidden: true
 	}
 );
-
-const withTimelineData =
-	(feed: NotificationFeedItem[], userData: any = consultantUserData) =>
-	(Story: React.ComponentType) => (
-		<UserDataContext.Provider
-			value={{
-				userData,
-				setUserData: noop,
-				reloadUserData: async () => null as any
-			}}
-		>
-			<NotificationsContext.Provider value={notificationsValue(feed)}>
-				<div style={{ height: '90vh', display: 'flex' }}>
-					<Story />
-				</div>
-			</NotificationsContext.Provider>
-		</UserDataContext.Provider>
-	);
 
 const meta = {
 	title: 'Organisms/NotificationsCenter',
@@ -316,6 +250,22 @@ const firstResponseSession: ListItemInterface = {
 export const StructuredFirstResponse: Story = {
 	beforeEach: () => {
 		const originalService = getMatrixClientService();
+		const originalFetch = globalThis.fetch;
+		const candidatesUrl =
+			'https://api.storybook.test/service/users/case-handover/candidates?query=1117&offset=0&count=15&archived=false';
+		// The selected preview also resolves the session. This story exercises
+		// the activity card's Matrix message, not a handover candidate.
+		globalThis.fetch = (input, init) => {
+			const url = input instanceof Request ? input.url : String(input);
+			const method =
+				init?.method ??
+				(input instanceof Request ? input.method : 'GET');
+			return url === candidatesUrl && method === 'GET'
+				? Promise.resolve(Response.json({ sessions: [] }))
+				: originalFetch(input, init);
+		};
+
+		const restoreDrafts = installNotificationDraftFixture([]);
 		const event = new MatrixEvent({
 			event_id: firstResponseEventId,
 			room_id: firstResponseRoomId,
@@ -341,7 +291,11 @@ export const StructuredFirstResponse: Story = {
 				off: noop
 			})
 		} as any);
-		return () => setMatrixClientServiceRef(originalService);
+		return () => {
+			restoreDrafts();
+			globalThis.fetch = originalFetch;
+			setMatrixClientServiceRef(originalService);
+		};
 	},
 	decorators: [
 		withTimelineData([
@@ -389,17 +343,139 @@ export const StructuredFirstResponse: Story = {
 	}
 };
 
-/** Client (asker) view — includes the two-button case-handover consent card. */
-export const ClientView: Story = {
-	decorators: [
-		withTimelineData(mockFeed, {
-			...consultantUserData,
-			userId: 'sb-client',
-			userName: 'Storybook Client',
-			grantedAuthorities: []
-		})
-	]
+const clientUserData = {
+	...consultantUserData,
+	userId: 'sb-client',
+	userName: 'Storybook Client',
+	grantedAuthorities: [AUTHORITIES.ASKER_DEFAULT]
 };
+const consentEvent = mockFeed.find((item) => item.id === '5')!;
+const consentRequestPath = '/service/users/sessions/103/case-handover/42';
+
+const installConsentStatus = (status: CaseHandoverStatus['status']) => {
+	const originalFetch = globalThis.fetch;
+	const consentFetch: typeof fetch = (input, init) => {
+		const request = input instanceof Request ? input : undefined;
+		const url = new URL(
+			request?.url ?? String(input),
+			window.location.href
+		);
+		const method = init?.method ?? request?.method ?? 'GET';
+		if (url.pathname !== consentRequestPath || method !== 'GET') {
+			return originalFetch(input, init);
+		}
+		return Promise.resolve(
+			new Response(
+				JSON.stringify({
+					requestId: 42,
+					sessionId: 103,
+					status,
+					canViewContent: status === 'GRANTED_PENDING_CLIENT_OPTOUT',
+					clientConsent:
+						status === 'GRANTED_PENDING_CLIENT_OPTOUT'
+							? 'OPT_OUT'
+							: 'OPT_IN',
+					clientConsentRequired:
+						status !== 'GRANTED_PENDING_CLIENT_OPTOUT'
+				}),
+				{ status: 200, headers: { 'Content-Type': 'application/json' } }
+			)
+		);
+	};
+	globalThis.fetch = consentFetch;
+	// The draft fixture only answers while it owns the outer fetch guard.
+	const restoreDrafts = installNotificationDraftFixture([]);
+	return () => {
+		restoreDrafts();
+		if (globalThis.fetch === consentFetch) globalThis.fetch = originalFetch;
+	};
+};
+
+const ConsentRouteProbe = () => {
+	const { pathname, search } = useLocation();
+	return (
+		<span hidden data-testid="consent-destination">
+			{pathname}
+			{search}
+		</span>
+	);
+};
+
+/** Client (asker) view with an actionable consent request. */
+export const ClientView: Story = {
+	decorators: [withTimelineData(mockFeed, clientUserData)],
+	beforeEach: () => installConsentStatus('PENDING_CLIENT_CONSENT')
+};
+
+export const HistoricalConsentRequest: Story = {
+	globals: { viewport: { value: 'desktop1440' } },
+	decorators: [
+		withTimelineData(
+			[{ ...consentEvent, readAt: minutesAgo(125) }],
+			clientUserData
+		)
+	],
+	beforeEach: () => installConsentStatus('CLIENT_CONSENT_DECLINED'),
+	render: () => (
+		<>
+			<NotificationsCenter />
+			<ConsentRouteProbe />
+		</>
+	),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const open = await waitFor(() => {
+			const button = canvasElement.querySelector<HTMLButtonElement>(
+				'.notificationsCenter__detailActions .notificationsCenter__openButton'
+			);
+			expect(button).toBeVisible();
+			return button!;
+		});
+		const expectNoDecisionActions = async () => {
+			await expect(
+				canvas.queryByRole('button', { name: 'Zugriff freigeben' })
+			).toBeNull();
+			await expect(
+				canvas.queryByRole('button', { name: 'Zugriff verweigern' })
+			).toBeNull();
+		};
+		await expectNoDecisionActions();
+		await expect(
+			await canvas.findByText(
+				'Diese Anfrage ist abgeschlossen. Es steht keine weitere Entscheidung aus.'
+			)
+		).toBeVisible();
+		await expectNoDecisionActions();
+		await userEvent.click(open);
+		await expect(
+			canvas.getByTestId('consent-destination')
+		).toHaveTextContent(consentEvent.actionPath!);
+	}
+};
+
+const actionableConsentStory = (
+	status: CaseHandoverStatus['status']
+): Story => ({
+	globals: { viewport: { value: 'desktop1440' } },
+	decorators: [withTimelineData([consentEvent], clientUserData)],
+	beforeEach: () => installConsentStatus(status),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await expect(
+			await canvas.findByRole('button', { name: 'Zugriff freigeben' })
+		).toBeEnabled();
+		await expect(
+			canvas.getByRole('button', { name: 'Zugriff verweigern' })
+		).toBeEnabled();
+	}
+});
+
+export const PendingOptInConsent = actionableConsentStory(
+	'PENDING_CLIENT_CONSENT'
+);
+export const RevocableOptOutConsent = actionableConsentStory(
+	'GRANTED_PENDING_CLIENT_OPTOUT'
+);
 
 /**
  * #1377 slice 3: a customised display filter — drafts hidden (no card, no
@@ -485,6 +561,259 @@ export const AllEventTypes: Story = {
 			)
 		)
 	]
+};
+
+/** User-approved library choices, rendered through the real row and detail CSS. */
+export const ApprovedEventIcons: Story = {
+	decorators: [
+		withTimelineData([
+			feedItem({
+				id: 'approved-thread',
+				eventType: 'thread.reply.new',
+				createdAt: minutesAgo(2)
+			}),
+			feedItem({
+				id: 'approved-message',
+				eventType: 'message.new',
+				createdAt: minutesAgo(3)
+			}),
+			feedItem({
+				id: 'approved-appointment',
+				eventType: 'appointment.scheduled',
+				createdAt: minutesAgo(4)
+			})
+		])
+	],
+	globals: { viewport: { value: 'desktop1440' }, scheme: 'light' },
+	parameters: {
+		design: {
+			type: 'figma',
+			url: 'https://www.figma.com/design/L2mOFNSGdxPPx1XA4HFAog/App.Oriso?node-id=7574-39299'
+		},
+		docs: {
+			description: {
+				story: 'Approved library icons and Figma timeline states: neutral grouped entries, white selected card, primary icon circle and neutral timestamp. Small text on gray uses the darker on-surface-variant token for readable contrast. Thread, outline messages and calendar retain the approved shapes and contrasting check. Request filters retain their existing selected Full / unselected Outline variants. Missing variants are later design work; the account-deletion assignment remains open.'
+			}
+		}
+	},
+	play: async ({ canvasElement }) => {
+		const rowIcon = (id: string) =>
+			canvasElement.querySelector<SVGSVGElement>(
+				`[data-notification-id="approved-${id}"] .notificationsCenter__cardIcon svg`
+			);
+		await waitFor(() => expect(rowIcon('appointment')).toBeVisible());
+		const expectGroupEnd = () =>
+			expectTimelineGroupEnd(
+				canvasElement,
+				'approved-message',
+				'approved-appointment'
+			);
+		await expectGroupEnd();
+		expect(
+			within(canvasElement).queryByText(
+				/Ende des Aktivitätsverlaufs|End of activity history/
+			)
+		).not.toBeInTheDocument();
+
+		// The browser renders the actual assets; unit SVG stubs cannot prove shape or paint.
+		expect(
+			rowIcon('thread')?.querySelector('path')?.getAttribute('d')
+		).toContain('M15 21V18H11V8');
+		expect(
+			rowIcon('message')?.querySelector('path')?.getAttribute('d')
+		).toContain('M7.09737 14.6816');
+		const expectContrastingCheck = (icon: SVGSVGElement | null) => {
+			expect(icon).toBeVisible();
+			const badge = icon?.querySelector('circle');
+			const check = icon?.querySelector('path:last-child');
+			expect(badge).not.toBeNull();
+			expect(check).not.toBeNull();
+			if (!badge || !check)
+				throw new Error('Calendar badge and check must render');
+			const probe = document.createElement('span');
+			probe.style.color = 'var(--m3-on-primary, #ffffff)';
+			icon?.parentElement?.appendChild(probe);
+			try {
+				expect(getComputedStyle(check).fill).toBe(
+					getComputedStyle(probe).color
+				);
+				expect(getComputedStyle(check).fill).not.toBe(
+					getComputedStyle(badge).fill
+				);
+			} finally {
+				probe.remove();
+			}
+		};
+		expectContrastingCheck(rowIcon('appointment'));
+		const threadCard = canvasElement.querySelector<HTMLButtonElement>(
+			'[data-notification-id="approved-thread"] .notificationsCenter__card'
+		);
+		if (!threadCard) throw new Error('Thread reply card must render');
+		const messageCard = canvasElement.querySelector<HTMLButtonElement>(
+			'[data-notification-id="approved-message"] .notificationsCenter__card'
+		);
+		if (!messageCard) throw new Error('Message card must render');
+		const expectColor = (
+			element: Element | null,
+			property:
+				| 'color'
+				| 'backgroundColor'
+				| 'borderColor'
+				| 'borderLeftColor',
+			token: string
+		) => {
+			if (!element) throw new Error('Timeline color target must render');
+			const probe = document.createElement('span');
+			probe.style.color = `var(${token})`;
+			element.appendChild(probe);
+			try {
+				expect(getComputedStyle(element)[property]).toBe(
+					getComputedStyle(probe).color
+				);
+			} finally {
+				probe.remove();
+			}
+		};
+		expectColor(
+			messageCard,
+			'backgroundColor',
+			'--m3-surface-container-high'
+		);
+		expectColor(
+			messageCard.querySelector('.notificationsCenter__cardIcon'),
+			'backgroundColor',
+			'--m3-surface-container-lowest'
+		);
+		expectColor(
+			messageCard.querySelector('.notificationsCenter__cardIcon'),
+			'borderColor',
+			'--m3-outline-variant'
+		);
+		expectColor(
+			messageCard.querySelector('.notificationsCenter__cardTitle'),
+			'color',
+			'--m3-secondary'
+		);
+		expectColor(
+			messageCard.querySelector('.notificationsCenter__cardTime'),
+			'color',
+			'--m3-on-surface-variant'
+		);
+		expectColor(
+			messageCard.querySelector('.notificationsCenter__cardConnector'),
+			'borderLeftColor',
+			'--m3-tertiary-container'
+		);
+		// Phones/tablets route directly to the conversation instead of selecting a detail.
+		if (window.innerWidth < 1200) return;
+		await userEvent.click(threadCard);
+		await waitFor(() =>
+			expect(threadCard).toHaveClass('notificationsCenter__card--active')
+		);
+		expectColor(
+			threadCard,
+			'backgroundColor',
+			'--m3-surface-container-lowest'
+		);
+		expectColor(threadCard, 'borderColor', '--m3-primary');
+		expectColor(
+			threadCard.querySelector('.notificationsCenter__cardIcon'),
+			'backgroundColor',
+			'--m3-primary'
+		);
+		expectColor(
+			threadCard.querySelector('.notificationsCenter__cardIcon'),
+			'color',
+			'--m3-on-primary'
+		);
+		expectColor(
+			threadCard.querySelector('.notificationsCenter__cardTitle'),
+			'color',
+			'--m3-on-primary-fixed'
+		);
+		expectColor(
+			threadCard.querySelector('.notificationsCenter__cardText'),
+			'color',
+			'--m3-on-tertiary-fixed'
+		);
+		expectColor(
+			threadCard.querySelector('.notificationsCenter__cardTime'),
+			'color',
+			'--m3-secondary-container'
+		);
+		expectColor(
+			threadCard.querySelector('.notificationsCenter__cardConnector'),
+			'borderLeftColor',
+			'--m3-primary'
+		);
+		expectColor(
+			canvasElement.querySelector(
+				'[data-notification-id="approved-thread"] .notificationsCenter__cardMenuButton'
+			),
+			'borderColor',
+			'--m3-on-primary-container'
+		);
+		await userEvent.hover(threadCard);
+		expectColor(
+			threadCard,
+			'backgroundColor',
+			'--m3-surface-container-lowest'
+		);
+		const card = canvasElement.querySelector<HTMLButtonElement>(
+			'[data-notification-id="approved-appointment"] .notificationsCenter__card'
+		);
+		if (!card) throw new Error('Scheduled appointment card must render');
+		await userEvent.click(card);
+		await waitFor(() =>
+			expect(card).toHaveClass('notificationsCenter__card--active')
+		);
+		expectContrastingCheck(rowIcon('appointment'));
+		await waitFor(() =>
+			expectContrastingCheck(
+				canvasElement.querySelector(
+					'.notificationsCenter__detailIcon svg'
+				)
+			)
+		);
+		// Leave the user-reported thread reply selected in the interactive preview.
+		await userEvent.click(threadCard);
+		const search = within(canvasElement).getByPlaceholderText(
+			/Aktivität durchsuchen|Search activity/
+		);
+		await userEvent.type(
+			search,
+			messageCard
+				.querySelector('.notificationsCenter__cardTitle')
+				?.textContent?.trim() || ''
+		);
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelectorAll('.notificationsCenter__listRow')
+			).toHaveLength(1)
+		);
+		const single = canvasElement.querySelector(
+			'.notificationsCenter__card'
+		);
+		if (!single) throw new Error('Filtered timeline card must render');
+		await waitFor(() =>
+			expect(
+				parseFloat(getComputedStyle(single).borderBottomLeftRadius)
+			).toBeGreaterThan(0)
+		);
+		await userEvent.clear(search);
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelectorAll('.notificationsCenter__listRow')
+			).toHaveLength(3)
+		);
+		const restoredThread = canvasElement.querySelector<HTMLButtonElement>(
+			'[data-notification-id="approved-thread"] .notificationsCenter__card'
+		);
+		if (!restoredThread)
+			throw new Error('Thread card must return after clearing search');
+		await userEvent.click(restoredThread);
+		await expectGroupEnd();
+	}
 };
 
 /**
@@ -647,17 +976,57 @@ export const DraftAndChatEvents: Story = {
 			}
 		)
 	],
-	parameters: {
-		serverDrafts: [
-			{
-				scopeKey: 'scope:!room103:matrix.example|thread:main',
-				text: 'Opaque draft ciphertext',
+	beforeEach: async () => {
+		if (
+			getValueFromCookie('keycloak') ||
+			getValueFromCookie('refreshToken')
+		) {
+			throw new Error(
+				'Draft story requires a preview without existing credentials'
+			);
+		}
+		const cookiePath = window.location.pathname;
+		const token = `fixture.${btoa(
+			JSON.stringify({
+				iss: 'https://storybook.invalid',
+				sub: 'timeline-draft',
+				sid: crypto.randomUUID()
+			})
+		)}.fixture`;
+		const owner = {};
+		const controller = new AbortController();
+		let removeFrameAccess = () => {};
+		let removeDraftFeed = () => {};
+		const dispose = () => {
+			controller.abort();
+			removeDraftFeed();
+			removeFrameAccess();
+			unbindDraftCryptographyClient(owner);
+			if (getValueFromCookie('keycloak') === token)
+				deleteCookieByName('keycloak', cookiePath);
+		};
+		try {
+			setValueInCookie('keycloak', token, cookiePath);
+			const cryptography = await initDraftKeys(owner, controller.signal);
+			const scopeKey = 'scope:!room103:matrix.example|thread:main';
+			const opaqueScope = await cryptography.opaqueScope(scopeKey);
+			removeFrameAccess = installStoryFrameAccess(opaqueScope);
+			const text = await cryptography.seal(opaqueScope, {
+				scopeKey,
+				text: 'Private draft content',
 				actionPath: '/sessions/user/view/session/103',
 				sourceSessionId: 103,
-				roomRef: '!room103:matrix.example',
-				updatedAt: minutesAgo(15)
-			}
-		]
+				roomRef: '!room103:matrix.example'
+			});
+			removeDraftFeed = installNotificationDraftFixture(
+				[{ scopeKey: opaqueScope, text, updatedAt: minutesAgo(15) }],
+				`Bearer ${token}`
+			);
+			return dispose;
+		} catch (error) {
+			dispose();
+			throw error;
+		}
 	},
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
@@ -672,7 +1041,9 @@ export const DraftAndChatEvents: Story = {
 		await expect(
 			canvas.getAllByText('Chat beendet').length
 		).toBeGreaterThan(0);
-		await expect(canvas.queryByText(/ciphertext/)).not.toBeInTheDocument();
+		await expect(
+			canvas.queryByText('Private draft content')
+		).not.toBeInTheDocument();
 	}
 };
 
@@ -748,6 +1119,63 @@ export const HandoverEventGlyphs: Story = {
 				);
 			});
 		}
+	}
+};
+
+const groupedPagingFeed = Array.from({ length: 10 }, (_, index) =>
+	feedItem({
+		id: `group-${index}`,
+		eventType: 'message.new',
+		createdAt: minutesAgo(index + 1)
+	})
+);
+const loadGroupedHistory = fn(async () => {});
+
+/** The real pagination controls follow the final row without breaking its rounded edge. */
+export const GroupWithMoreActivity: Story = {
+	decorators: [
+		withTimelineData(groupedPagingFeed, consultantUserData, {
+			hasOlderNotifications: true,
+			loadOlderNotifications: loadGroupedHistory
+		})
+	],
+	globals: { viewport: { value: 'desktop1440' } },
+	beforeEach: () => {
+		loadGroupedHistory.mockClear();
+	},
+	play: async ({ canvasElement }) => {
+		await expectTimelineGroupEnd(canvasElement, 'group-8', 'group-9');
+		await userEvent.click(
+			within(canvasElement).getByRole('button', {
+				name: /Ältere Aktivitäten laden|Load older activity/
+			})
+		);
+		await expect(loadGroupedHistory).toHaveBeenCalledOnce();
+		await expectTimelineGroupEnd(canvasElement, 'group-8', 'group-9');
+	}
+};
+
+export const GroupWithHistoryError: Story = {
+	decorators: [
+		withTimelineData(groupedPagingFeed, consultantUserData, {
+			olderNotificationsError: true,
+			loadOlderNotifications: loadGroupedHistory
+		})
+	],
+	globals: { viewport: { value: 'desktop1440' } },
+	beforeEach: () => {
+		loadGroupedHistory.mockClear();
+	},
+	play: async ({ canvasElement }) => {
+		await expectTimelineGroupEnd(canvasElement, 'group-8', 'group-9');
+		expect(within(canvasElement).getByRole('alert')).toBeVisible();
+		await userEvent.click(
+			within(canvasElement).getByRole('button', {
+				name: /Erneut versuchen|Try again/
+			})
+		);
+		await expect(loadGroupedHistory).toHaveBeenCalledOnce();
+		await expectTimelineGroupEnd(canvasElement, 'group-8', 'group-9');
 	}
 };
 

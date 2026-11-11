@@ -16,14 +16,28 @@
 
 import { rewriteLegacyChannelPath } from '../../../utils/channelRoute';
 import {
+	askerGroupChatPath,
+	consultantGroupChatPath,
+	isGroupChatId
+} from '../../groupChat/consultantGroupChatPath';
+import {
 	EventActionParams,
 	EventActionTarget,
 	EventDescriptor,
 	EventFamily
 } from './types';
+import {
+	parseTopicDuplicateRoomPath,
+	TOPIC_DUPLICATE_SEARCH
+} from '../../session/topicDuplicateRoomRoute';
 
 /** Default conversation list base when the consumer does not pass one. */
 const DEFAULT_SESSIONS_BASE_PATH = '/sessions/consultant/sessionView';
+const TOPIC_DUPLICATE_STARTED_EVENT = 'topic_duplicate.started';
+
+/** An invalid target for these events must not turn into a generic list link. */
+export const requiresExactActionPath = (eventType: string | null | undefined) =>
+	eventType === TOPIC_DUPLICATE_STARTED_EVENT;
 
 /** i18n key for a family's filter-chip / tag label. */
 export const familyLabelKey = (family: EventFamily): string =>
@@ -46,13 +60,48 @@ const buildConversationPath = (params: EventActionParams): string | null => {
 	return null;
 };
 
+const QUERY_SESSION_LIST =
+	/^(\/sessions\/[^/]+\/(?:sessionPreview|sessionView))\/?$/;
+
+// UserService's team-discussion link names the session only in its query
+// (`…/sessionPreview?sessionId=42&teamDiscussion=1`). That list route renders
+// no conversation, so the id moves into the path, the rest of the query stays.
+const withQuerySessionInPath = (path: string | null): string | null => {
+	if (!path) return path;
+	const url = new URL(path, 'http://oriso.invalid');
+	const list = QUERY_SESSION_LIST.exec(url.pathname);
+	const sessionId = url.searchParams.get('sessionId');
+	if (!list || !sessionId) return path;
+	url.searchParams.delete('sessionId');
+	return `${list[1]}/session/${encodeURIComponent(sessionId)}${url.search}${url.hash}`;
+};
+
 // B2 / T24: server action paths may still carry the legacy `threadRootId`
 // (UserService B2 pending) — the frontend contract is `?channel=thread:<id>`,
 // rewritten once here at the boundary.
 const conversationTarget = (params: EventActionParams): EventActionTarget => ({
 	kind: 'conversation',
-	path: rewriteLegacyChannelPath(buildConversationPath(params))
+	path: rewriteLegacyChannelPath(
+		withQuerySessionInPath(buildConversationPath(params))
+	)
 });
+
+const topicDuplicateTarget = (params: EventActionParams): EventActionTarget => {
+	const match = parseTopicDuplicateRoomPath(params.actionPath ?? '');
+	if (
+		params.sessionsBasePath !== DEFAULT_SESSIONS_BASE_PATH ||
+		!match ||
+		String(match.caseId) !== String(params.sourceSessionId) ||
+		match.roomId !== params.roomRef ||
+		params.conversationType !== 'AGENCY_COUNSELLING'
+	) {
+		return { kind: 'conversation', path: null };
+	}
+	return {
+		kind: 'conversation',
+		path: `${DEFAULT_SESSIONS_BASE_PATH}/${match.roomSegment}/${match.caseId}${TOPIC_DUPLICATE_SEARCH}`
+	};
+};
 
 // FE#1952: the person is already waiting, so the knock goes into the call of
 // its conversation (`roomRef`), not only into the conversation.
@@ -66,9 +115,26 @@ const knockCallTarget = (params: EventActionParams): EventActionTarget => ({
 	path: buildConversationPath(params)
 });
 
+const buildGroupChatPath = ({
+	seriesId,
+	sessionsBasePath
+}: EventActionParams): string | null => {
+	if (!isGroupChatId(seriesId)) return null;
+	return sessionsBasePath === '/sessions/user/view'
+		? askerGroupChatPath(seriesId)
+		: consultantGroupChatPath(seriesId);
+};
+
+const groupChatConversationTarget = (
+	params: EventActionParams
+): EventActionTarget => ({
+	kind: 'conversation',
+	path: buildGroupChatPath(params)
+});
+
 const groupChatJoinTarget = (params: EventActionParams): EventActionTarget => ({
 	kind: 'groupChatJoin',
-	path: buildConversationPath(params)
+	path: buildGroupChatPath(params)
 });
 
 const requestTarget = (params: EventActionParams): EventActionTarget => ({
@@ -217,6 +283,13 @@ const seeds: EventDescriptor[] = [
 		icon: 'rename',
 		i18nKey: 'counselorRenamed',
 		resolveActionTarget: conversationTarget
+	}),
+	descriptor(TOPIC_DUPLICATE_STARTED_EVENT, {
+		family: 'system',
+		category: 'system',
+		icon: 'system',
+		i18nKey: 'topicDuplicateStarted',
+		resolveActionTarget: topicDuplicateTarget
 	}),
 
 	// ----- Requests family (Slice 2 will persist "New client request") -----
@@ -425,7 +498,7 @@ const seeds: EventDescriptor[] = [
 		category: 'system',
 		icon: 'appointment',
 		i18nKey: 'groupChatReminder',
-		resolveActionTarget: conversationTarget
+		resolveActionTarget: groupChatConversationTarget
 	}),
 	descriptor('group_chat.opened', {
 		family: 'appointments',
@@ -439,7 +512,7 @@ const seeds: EventDescriptor[] = [
 		category: 'system',
 		icon: 'appointment',
 		i18nKey: 'groupChatCancelled',
-		resolveActionTarget: conversationTarget
+		resolveActionTarget: groupChatConversationTarget
 	}),
 
 	// ----- Platform operations (#876) -----
@@ -451,6 +524,15 @@ const seeds: EventDescriptor[] = [
 		icon: 'system',
 		i18nKey: 'serviceNoticePlanned',
 		resolveActionTarget: statusPageTarget
+	}),
+	// #1159: an advice seeker's chat was deleted. Nothing is left to open, so
+	// the row informs and has no action.
+	descriptor('session.asker_deleted', {
+		family: 'system',
+		category: 'system',
+		icon: 'system',
+		i18nKey: 'sessionAskerDeleted',
+		resolveActionTarget: () => ({ kind: 'none' })
 	})
 ];
 

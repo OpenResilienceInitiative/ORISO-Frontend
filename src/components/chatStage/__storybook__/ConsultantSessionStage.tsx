@@ -20,6 +20,7 @@ import { SessionHeaderComponent } from '../../sessionHeader/SessionHeaderCompone
 import { MessageTimeline } from '../../session/MessageTimeline';
 import {
 	isComposerBusy,
+	BOTTOM_TOLERANCE_PX,
 	isTimelineAtBottom,
 	shouldFollowNewMessage
 } from '../../messageSubmitInterface/timelineFollow';
@@ -309,6 +310,7 @@ function MainChat({
 	const phoneHeader = onBack !== undefined;
 	const { t } = useTranslation();
 	const paneRef = useRef<HTMLDivElement | null>(null);
+	const [initialScrollReady, setInitialScrollReady] = useState(false);
 	const fabOffset = useDockedComposerOffset(paneRef);
 	const composing = useComposerFocus(paneRef);
 	// The app opens a conversation at its newest message.
@@ -324,8 +326,32 @@ function MainChat({
 		};
 		toBottom();
 		// Rows animate in and the editor mounts late; settle, then scroll again.
-		const timer = window.setTimeout(toBottom, MOUNT_SETTLE_MS);
+		const timer = window.setTimeout(() => {
+			toBottom();
+			setInitialScrollReady(true);
+		}, MOUNT_SETTLE_MS);
 		return () => window.clearTimeout(timer);
+	}, []);
+	// Like the app: a bar appearing in the header (the 1:1 appointment) shrinks
+	// the timeline without a scroll event; a reader at the end stays there.
+	useEffect(() => {
+		const content =
+			paneRef.current?.querySelector<HTMLElement>('.session__content');
+		if (!content) {
+			return undefined;
+		}
+		let previousHeight = content.clientHeight;
+		const observer = new ResizeObserver(() => {
+			const shrunkBy = previousHeight - content.clientHeight;
+			previousHeight = content.clientHeight;
+			const gap =
+				content.scrollHeight - content.scrollTop - content.clientHeight;
+			if (shrunkBy > 0 && gap - shrunkBy <= BOTTOM_TOLERANCE_PX) {
+				content.scrollTop = content.scrollHeight;
+			}
+		});
+		observer.observe(content);
+		return () => observer.disconnect();
 	}, []);
 
 	const [arrived, setArrived] = useState<ReturnType<typeof mainChatMessages>>(
@@ -392,7 +418,12 @@ function MainChat({
 	);
 
 	return (
-		<div className="chatStage__mainPane" ref={paneRef} data-cy="stage-main">
+		<div
+			className="chatStage__mainPane"
+			ref={paneRef}
+			data-cy="stage-main"
+			data-scroll-ready={initialScrollReady}
+		>
 			{arrivals && arrivals.length > 0 && (
 				<button
 					type="button"

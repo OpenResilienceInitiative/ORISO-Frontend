@@ -82,6 +82,12 @@ export interface SessionItemInterface {
 	 * it through `session/directLinkOrigin.ts`, never directly.
 	 */
 	directLinkMedium?: 'CHAT' | 'AUDIO' | 'VIDEO';
+	/**
+	 * #2170: the name of that direct link (`SessionDTO.directLinkName`); absent
+	 * when it had none. The call of the conversation is called that, see
+	 * `components/call/callRoomName.ts`.
+	 */
+	directLinkName?: string;
 	agencyId: number;
 	askerMatrixUserId: string;
 	/** Matrix id of the assigned consultant (SessionDTO); absent on group chats. */
@@ -126,8 +132,9 @@ export interface SessionItemInterface {
 	 */
 	isTopicDuplicate?: boolean;
 	/**
-	 * ADR-008 supervision marker. `undefined` on backends that predate the
-	 * field — consumers fall back to heuristics, never to "not supervised".
+	 * ADR-008 supervision marker. Supported backends provide it for assigned
+	 * supervisors; consumers treat an undefined marker as not supervised.
+	 * Ownership alone never implies supervision.
 	 */
 	supervision?: UserService.Schemas.SessionSupervisionDTO;
 }
@@ -184,6 +191,8 @@ export interface GroupChatItemInterface {
 }
 
 export interface SessionUserInterface {
+	/** Read-only SessionMapper tombstone; retained session aliases may still exist. */
+	deleted?: boolean;
 	avatarId?: string | null;
 	username: string;
 	displayName?: string;

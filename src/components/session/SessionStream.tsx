@@ -54,6 +54,7 @@ import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 import { getModality, Modality } from './getModality';
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
 import { useTeamDiscussionChannel } from '../../hooks/useTeamDiscussionChannel';
+import { useMatrixTyping } from './useMatrixTyping';
 import {
 	chatTransportService,
 	MatrixRoomLifecycleChange
@@ -66,6 +67,10 @@ import {
 	isCaseHandoverPending
 } from './caseHandoverHelpers';
 import { normalizeServerTimestamp } from '../notificationsCenter/timelineTime';
+import {
+	activityEventCaseHandoverRequestId,
+	activityEventSessionId
+} from '../notificationsCenter/activityEvent';
 import {
 	MATRIX_HISTORY_KEYS_IMPORTED_EVENT,
 	isUndecryptedRoomEvent,
@@ -80,6 +85,9 @@ import { formatToHHMM } from '../../utils/dateHelpers';
 import { usePracticeSupervisorsRevision } from '../../practice';
 import { isPracticeRoomId } from '../../practice/practiceIds';
 import { useCaseHandoverStatusRefresh } from './useCaseHandoverStatusRefresh';
+import { HistoryAskCard } from '../historyRequest/HistoryAskCard';
+import { useRecoveryRuntimeStatus } from '../../services/recoveryReminderState';
+import { HistoryRequestApprovals } from '../historyRequest/HistoryRequestApprovals';
 
 const EMPTY_MESSAGES: MessageItem[] = [];
 /** Browsers fire a longer setTimeout immediately. */
@@ -93,20 +101,6 @@ const requestHistoryKeys = (roomId: string) => {
 	}
 };
 
-const caseHandoverRequestIdFromPath = (actionPath?: string): number | null => {
-	if (!actionPath?.includes('?')) {
-		return null;
-	}
-	const value = new URLSearchParams(actionPath.split('?')[1]).get(
-		'caseHandoverRequestId'
-	);
-	if (!value || !/^\d+$/.test(value)) {
-		return null;
-	}
-	const requestId = Number(value);
-	return Number.isSafeInteger(requestId) ? requestId : null;
-};
-
 interface SessionStreamProps {
 	readonly: boolean;
 	checkMutedUserForThisSession: () => void;
@@ -118,8 +112,6 @@ export const SessionStream = ({
 	checkMutedUserForThisSession,
 	bannedUsers
 }: SessionStreamProps) => {
-	const MATRIX_TYPING_TIMEOUT_MS = 3200;
-	const MATRIX_TYPING_TRIGGER_MS = 1000;
 	const MATRIX_TYPING_STALE_MS = 3600;
 	const { t: translate } = useTranslation();
 	const navigate = useNavigate();
@@ -137,7 +129,7 @@ export const SessionStream = ({
 		channelParam === 'team' || teamDiscussionParam === '1';
 
 	// Migrate legacy notification links to the canonical channel route. The
-	// old standalone TeamDiscussionPanel no longer owns a second timeline.
+	// team room opens as the side-panel channel, like supervision.
 	useEffect(() => {
 		if (teamDiscussionParam !== '1') return;
 		const params = new URLSearchParams(location.search);
@@ -162,6 +154,10 @@ export const SessionStream = ({
 	// instance got removeAllListeners(), so every effect holding room
 	// listeners depends on this generation to re-attach to the new client.
 	const [matrixClientGeneration, setMatrixClientGeneration] = useState(0);
+	// The room whose main timeline holds events this device cannot read.
+	const [unreadableRoomId, setUnreadableRoomId] = useState<string | null>(
+		null
+	);
 	const initialTimelineHydrationKeyRef = useRef('');
 	const [messagesItem, setMessagesItem] = useState(null);
 	// WP-B2 (ADR-008): the supervision side room is its own timeline. It is
@@ -230,7 +226,7 @@ export const SessionStream = ({
 				) {
 					return false;
 				}
-				return String(item.sourceSessionId) === String(sessionId);
+				return activityEventSessionId(item) === sessionId;
 			}) || null
 		);
 	}, [
@@ -256,10 +252,10 @@ export const SessionStream = ({
 
 	const pendingCaseHandoverRequestId = useMemo(
 		() =>
-			caseHandoverRequestIdFromPath(
-				pendingCaseHandoverConsent?.actionPath
-			),
-		[pendingCaseHandoverConsent?.actionPath]
+			pendingCaseHandoverConsent
+				? activityEventCaseHandoverRequestId(pendingCaseHandoverConsent)
+				: null,
+		[pendingCaseHandoverConsent]
 	);
 
 	// A late decision or fallback belongs only to the committed card that started it.
@@ -334,8 +330,6 @@ export const SessionStream = ({
 			? teamMessageState.messages
 			: EMPTY_MESSAGES;
 	const [matrixTypingUsers, setMatrixTypingUsers] = useState<string[]>([]);
-	const matrixTypingTimeoutRef = useRef<number | null>(null);
-	const matrixTypingLastTriggerRef = useRef(0);
 	const matrixTypingActivityRef = useRef<Map<string, number>>(new Map());
 	const resolvedChatSession = useMemo(
 		() => chatTransportService.resolveSession(activeSession),
@@ -343,65 +337,16 @@ export const SessionStream = ({
 	);
 	const isMatrixSession = resolvedChatSession.isMatrixSession;
 	const matrixRoomId = resolvedChatSession.matrixRoomId || '';
-	const clearMatrixTypingTimeout = useCallback(() => {
-		if (matrixTypingTimeoutRef.current) {
-			window.clearTimeout(matrixTypingTimeoutRef.current);
-			matrixTypingTimeoutRef.current = null;
-		}
-	}, []);
-	const sendMatrixTyping = useCallback(
-		(typing: boolean, targetRoomId = matrixRoomId) => {
-			if (!isMatrixSession || !targetRoomId) {
-				return;
-			}
-			chatTransportService
-				.sendTyping(targetRoomId, typing)
-				.catch(() => {});
-		},
-		[isMatrixSession, matrixRoomId]
+	const isConsultant = hasUserAuthority(
+		AUTHORITIES.CONSULTANT_DEFAULT,
+		userData
 	);
-	const handleSessionTyping = useCallback(
-		(isCleared: boolean, targetRoomId = matrixRoomId) => {
-			if (!isMatrixSession || !targetRoomId) {
-				return;
-			}
-			clearMatrixTypingTimeout();
-
-			const cancelTyping = () => {
-				sendMatrixTyping(false, targetRoomId);
-				matrixTypingTimeoutRef.current = null;
-				matrixTypingLastTriggerRef.current = 0;
-			};
-
-			const now = Date.now();
-			if (!isCleared) {
-				if (
-					matrixTypingLastTriggerRef.current +
-						MATRIX_TYPING_TRIGGER_MS <
-					now
-				) {
-					sendMatrixTyping(true, targetRoomId);
-					matrixTypingLastTriggerRef.current = now;
-				}
-				matrixTypingTimeoutRef.current = window.setTimeout(
-					cancelTyping,
-					MATRIX_TYPING_TIMEOUT_MS
-				);
-			} else {
-				matrixTypingTimeoutRef.current = window.setTimeout(
-					cancelTyping,
-					250
-				);
-			}
-		},
-		[
-			clearMatrixTypingTimeout,
-			isMatrixSession,
-			matrixRoomId,
-			sendMatrixTyping,
-			MATRIX_TYPING_TIMEOUT_MS,
-			MATRIX_TYPING_TRIGGER_MS
-		]
+	const recoveryStatus = useRecoveryRuntimeStatus(
+		matrixClientService?.getClient()?.getUserId() ?? ''
+	);
+	// The chat's typing rule, shared with the Activity Timeline preview (#1824).
+	const handleSessionTyping = useMatrixTyping(
+		isMatrixSession ? matrixRoomId : null
 	);
 
 	const caseHandoverGateNeeded = useMemo(
@@ -521,6 +466,12 @@ export const SessionStream = ({
 					: [];
 				// The Teamberatung room, same treatment (FE#514 / ADR-016).
 				const teamEvents = teamRoomId ? loadRoomEvents(teamRoomId) : [];
+				setUnreadableRoomId(
+					resolvedMatrixRoomId &&
+						(clientEvents as any[]).some(isUndecryptedRoomEvent)
+						? resolvedMatrixRoomId
+						: null
+				);
 				if (mayRequestHistoryKeys) {
 					[
 						[resolvedMatrixRoomId, clientEvents],
@@ -1023,13 +974,15 @@ export const SessionStream = ({
 			detachTimelineListeners.forEach((detach) => detach());
 		};
 		// matrixRoomId is derived from resolvedChatSession (already a dep).
-		// matrixClientGeneration re-attaches after a token-refresh client swap.
+		// The first service can arrive after polling ends. Client generation
+		// also re-attaches listeners when token refresh replaces the SDK client.
 	}, [
 		resolvedChatSession,
 		supervisionRoomId,
 		teamRoomId,
 		fetchSessionMessages,
 		matrixRoomId,
+		matrixClientService,
 		matrixClientGeneration,
 		mayRequestHistoryKeys
 	]);
@@ -1154,11 +1107,12 @@ export const SessionStream = ({
 			}
 			detachLifecycleListener?.();
 		};
-		// matrixClientGeneration re-attaches after a token-refresh client swap.
+		// Re-attach on the first service publication and on SDK client swaps.
 	}, [
 		isMatrixSession,
 		matrixRoomId,
 		handleMatrixRoomLifecycle,
+		matrixClientService,
 		matrixClientGeneration
 	]);
 
@@ -1338,14 +1292,6 @@ export const SessionStream = ({
 		fetchSessionMessages,
 		matrixClientService
 	]);
-
-	useEffect(
-		() => () => {
-			clearMatrixTypingTimeout();
-			sendMatrixTyping(false);
-		},
-		[clearMatrixTypingTimeout, sendMatrixTyping]
-	);
 
 	useEffect(() => {
 		if (subscribed.current) {
@@ -1646,55 +1592,83 @@ export const SessionStream = ({
 			)}
 			<SessionItemComponent
 				mainTimelineSupplement={
-					displayedConsent &&
-					caseHandoverRequestIdFromPath(
-						displayedConsent.actionPath
-					) !== null && (
-						<CaseHandoverConversation
-							sessionId={activeSession.item.id}
-							conversationType={notificationConversationType(
-								activeSession
+					<>
+						{displayedConsent &&
+							activityEventCaseHandoverRequestId(
+								displayedConsent
+							) !== null && (
+								<CaseHandoverConversation
+									sessionId={activeSession.item.id}
+									conversationType={notificationConversationType(
+										activeSession
+									)}
+									key={String(activeSession.item?.id)}
+									status={
+										displayedConsent.id ===
+										confirmedConsent?.notification.id
+											? confirmedConsent.status.status
+											: undefined
+									}
+									auditOutcome={
+										displayedConsent.id ===
+										confirmedConsent?.notification.id
+											? confirmedConsent.status
+													.auditOutcome
+											: undefined
+									}
+									consentGranted={
+										displayedConsent.params
+											?.clientConsent === 'OPT_OUT'
+									}
+									mode={
+										displayedConsentMode === 'NONE' ||
+										displayedConsentMode === 'OPT_OUT'
+											? displayedConsentMode
+											: 'OPT_IN'
+									}
+									isSubmitting={caseHandoverConsentSubmitting}
+									error={caseHandoverConsentError}
+									timestamp={formatToHHMM(
+										String(
+											new Date(
+												displayedConsent.createdAt
+											).getTime()
+										)
+									)}
+									onApprove={() =>
+										handleCaseHandoverConsentDecision(true)
+									}
+									onDecline={() =>
+										handleCaseHandoverConsentDecision(false)
+									}
+								/>
 							)}
-							key={String(activeSession.item?.id)}
-							status={
-								displayedConsent.id ===
-								confirmedConsent?.notification.id
-									? confirmedConsent.status.status
-									: undefined
-							}
-							auditOutcome={
-								displayedConsent.id ===
-								confirmedConsent?.notification.id
-									? confirmedConsent.status.auditOutcome
-									: undefined
-							}
-							consentGranted={
-								displayedConsent.params?.clientConsent ===
-								'OPT_OUT'
-							}
-							mode={
-								displayedConsentMode === 'NONE' ||
-								displayedConsentMode === 'OPT_OUT'
-									? displayedConsentMode
-									: 'OPT_IN'
-							}
-							isSubmitting={caseHandoverConsentSubmitting}
-							error={caseHandoverConsentError}
-							timestamp={formatToHHMM(
-								String(
-									new Date(
-										displayedConsent.createdAt
-									).getTime()
-								)
+						{(recoveryStatus === 'needs-recovery-key' ||
+							unreadableRoomId ===
+								resolvedChatSession.matrixRoomId) &&
+							hasUserAuthority(
+								AUTHORITIES.ASKER_DEFAULT,
+								userData
+							) &&
+							!activeSession.isGroup &&
+							mayRequestHistoryKeys &&
+							!!resolvedChatSession.matrixRoomId && (
+								<HistoryAskCard
+									key={resolvedChatSession.matrixRoomId}
+									roomId={resolvedChatSession.matrixRoomId}
+									unreadable={
+										unreadableRoomId ===
+										resolvedChatSession.matrixRoomId
+									}
+								/>
 							)}
-							onApprove={() =>
-								handleCaseHandoverConsentDecision(true)
-							}
-							onDecline={() =>
-								handleCaseHandoverConsentDecision(false)
-							}
-						/>
-					)
+						{isConsultant && (
+							<HistoryRequestApprovals
+								key={resolvedChatSession.matrixRoomId}
+								roomId={resolvedChatSession.matrixRoomId}
+							/>
+						)}
+					</>
 				}
 				mainTimelineSupplementTime={
 					displayedConsent

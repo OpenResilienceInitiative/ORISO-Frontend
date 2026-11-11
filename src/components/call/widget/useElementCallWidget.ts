@@ -16,6 +16,8 @@ import {
 } from 'matrix-widget-api';
 import {
 	ClientEvent,
+	EventTimeline,
+	EventType,
 	MatrixClient,
 	MatrixEvent,
 	RoomEvent,
@@ -23,11 +25,14 @@ import {
 } from 'matrix-js-sdk';
 
 import { OrisoWidgetDriver } from './OrisoWidgetDriver';
+import { callBrandParams } from './callBrand';
 import {
 	ALLOWED_RECEIVE_ROOM_EVENT_TYPES,
 	ALLOWED_RECEIVE_STATE_EVENT_TYPES,
 	ALLOWED_TO_DEVICE_EVENT_TYPES
 } from './orisoWidgetCapabilities';
+import { useTenant } from '../../../globalState/provider/TenantProvider';
+import { endpoints } from '../../../resources/scripts/endpoints';
 import { getElementCallBaseUrl } from '../../../resources/scripts/runtimeConfig';
 import { appConfig } from '../../../utils/appConfig';
 
@@ -53,7 +58,42 @@ export interface ElementCallWidgetOptions {
 	 * setting; a rejection tells the call to flip back.
 	 */
 	onSetKnock?: (knock: boolean) => Promise<boolean>;
+	/**
+	 * How the call starts, from the pre-join check (ElementCall#116). On the
+	 * widget URL, so it holds before the call creates any track. Keep it the
+	 * same for the whole call: the URL is rebuilt from it on a token refresh,
+	 * and a different URL navigates the running call.
+	 */
+	callStart?: ElementCallStart | null;
 }
+
+/**
+ * Element Call's start parameters for the pre-join choice
+ * (ORISO-ElementCall#116, `docs/url-params.md` there). Left out, the call
+ * starts as `callIntent` implies, on the browser's default devices.
+ */
+export interface ElementCallStart {
+	/** `audioEnabled`: microphone on or off. */
+	audioEnabled?: boolean;
+	/** `videoEnabled`: camera on or off; `false` never captures the camera. */
+	videoEnabled?: boolean;
+	/** `audioInput`: the microphone, by label. Unknown: default + notice. */
+	audioInput?: string;
+	/** `videoInput`: the camera, by label. Two alike: the first. */
+	videoInput?: string;
+}
+
+/** The start parameters as URL entries, in a stable order. */
+const callStartParams = (start: ElementCallStart | null | undefined) => {
+	const params: Record<string, string> = {};
+	if (start?.audioEnabled !== undefined)
+		params.audioEnabled = String(start.audioEnabled);
+	if (start?.videoEnabled !== undefined)
+		params.videoEnabled = String(start.videoEnabled);
+	if (start?.audioInput) params.audioInput = start.audioInput;
+	if (start?.videoInput) params.videoInput = start.videoInput;
+	return params;
+};
 
 /** ORISO's own widget actions, as the fork names them (ORISO-ElementCall#109, `src/widget.ts`). */
 export const ORISO_WIDGET_ACTIONS = {
@@ -88,7 +128,9 @@ export interface ElementCallWidget {
 	/** Microphone and camera as the call last reported them; `null` before. */
 	devices: CallDeviceState | null;
 	/** Asks the call to switch the microphone or camera (`io.element.device_mute`). */
-	setDevices: (change: Partial<CallDeviceState>) => Promise<void>;
+	setDevices: (
+		change: Partial<CallDeviceState>
+	) => Promise<CallDeviceState | null>;
 }
 
 /** The call's own report of its devices, as Element Call sends it. */
@@ -144,6 +186,68 @@ const releaseIframeDevices = (iframe: HTMLIFrameElement | null): void => {
 	}
 };
 
+export class CallRoomMembershipTimeoutError extends Error {
+	readonly name = 'CallRoomMembershipTimeoutError';
+}
+
+const waitForWidgetRoomMembership = (
+	client: MatrixClient,
+	roomId: string,
+	userId: string,
+	signal: AbortSignal
+): Promise<void> => {
+	const isReady = () => {
+		const room = client.getRoom(roomId);
+		if (room?.getMyMembership() !== 'join') return false;
+
+		// The widget receives this state event from OrisoWidgetDriver. The
+		// local Room can exist before its joined state is available to read.
+		return (
+			room
+				.getLiveTimeline()
+				.getState(EventTimeline.FORWARDS)
+				?.getStateEvents(EventType.RoomMember, userId)
+				?.getContent().membership === 'join'
+		);
+	};
+
+	if (signal.aborted) return Promise.reject(signal.reason);
+	if (isReady()) return Promise.resolve();
+
+	return new Promise((resolve, reject) => {
+		const cleanup = () => {
+			clearTimeout(timeout);
+			client.off(ClientEvent.Room, check);
+			client.off(RoomEvent.MyMembership, check);
+			client.off(RoomStateEvent.Events, check);
+			signal.removeEventListener('abort', abort);
+		};
+		const check = () => {
+			if (!isReady()) return;
+			cleanup();
+			resolve();
+		};
+		const abort = () => {
+			cleanup();
+			reject(signal.reason);
+		};
+		const timeout = setTimeout(() => {
+			cleanup();
+			reject(
+				new CallRoomMembershipTimeoutError(
+					'Matrix did not sync the call room membership.'
+				)
+			);
+		}, 20_000);
+
+		client.on(ClientEvent.Room, check);
+		client.on(RoomEvent.MyMembership, check);
+		client.on(RoomStateEvent.Events, check);
+		signal.addEventListener('abort', abort, { once: true });
+		check();
+	});
+};
+
 const sendKnockState = (api: ClientWidgetApi, state: OrisoKnockState) => {
 	void api.transport
 		.send(ORISO_WIDGET_ACTIONS.knockState, {
@@ -164,9 +268,14 @@ export const useElementCallWidget = (
 		onClose,
 		onAlwaysOnScreenChange,
 		knockState = null,
-		onSetKnock
+		onSetKnock,
+		callStart = null
 	}: ElementCallWidgetOptions
 ): ElementCallWidget => {
+	// By value: an equal choice in a new object must not rebuild the URL.
+	const callStartQuery = new URLSearchParams(
+		callStartParams(callStart)
+	).toString();
 	const [error, setError] = useState<Error | null>(null);
 	const [url, setUrl] = useState<string | null>(null);
 	const [ready, setReady] = useState(false);
@@ -183,16 +292,43 @@ export const useElementCallWidget = (
 	knockStateRef.current = knockState;
 	const onSetKnockRef = useRef(onSetKnock);
 	onSetKnockRef.current = onSetKnock;
+	// The Träger's brand is read when the URL is built, not watched: a tenant
+	// that resolves again or changes later must not rebuild the address of a
+	// running call (the effect below blanks the URL and would navigate it).
+	const tenant = useTenant();
+	const tenantRef = useRef(tenant);
+	tenantRef.current = tenant;
+	// Frozen per call room: a token refresh hands the effect below a new
+	// client and rebuilds the URL, and a brand read afresh then (the tenant
+	// resolved meanwhile, or its colours changed) would navigate the call.
+	const brandRef = useRef<{
+		roomId: string;
+		params: Record<string, string>;
+	} | null>(null);
 
 	// A widget client cannot join rooms. Gate iframe creation on the host's
 	// membership so Element Call never starts against an invited/unknown room.
 	useEffect(() => {
-		let cancelled = false;
+		const preparation = new AbortController();
+		const { signal } = preparation;
 		setUrl(null);
 		setReady(false);
 		setError(null);
 
 		if (!client || !roomId) return undefined;
+
+		const brandFor = (room: string) => {
+			if (brandRef.current?.roomId !== room) {
+				brandRef.current = {
+					roomId: room,
+					params: callBrandParams(
+						tenantRef.current,
+						endpoints.tenantServiceBase
+					)
+				};
+			}
+			return brandRef.current.params;
+		};
 
 		const prepare = async () => {
 			try {
@@ -219,13 +355,20 @@ export const useElementCallWidget = (
 				if (client.getRoom(roomId)?.getMyMembership() !== 'join') {
 					await client.joinRoom(roomId);
 				}
-				if (cancelled) return;
+				if (signal.aborted) return;
+				await waitForWidgetRoomMembership(
+					client,
+					roomId,
+					userId,
+					signal
+				);
+				if (signal.aborted) return;
 
 				const widgetId = await widgetIdForRoom(
 					roomId,
 					instanceNonceRef.current
 				);
-				if (cancelled) return;
+				if (signal.aborted) return;
 				elementCallUrl.hash = `?${new URLSearchParams({
 					widgetId,
 					parentUrl: window.location.origin,
@@ -262,20 +405,25 @@ export const useElementCallWidget = (
 						? { orisoAtmosphere: appConfig.calls.atmosphere }
 						: {}),
 					intent: 'start_call',
-					callIntent: isVideo ? 'video' : 'audio'
+					callIntent: isVideo ? 'video' : 'audio',
+					// The pre-join choice (ElementCall#116): on/off and the
+					// devices by label, read before any track exists.
+					...Object.fromEntries(new URLSearchParams(callStartQuery)),
+					// The Träger's colours and logo (#2188), appended so every
+					// parameter above keeps its place. Left off the address
+					// where the Träger has set nothing the call may use.
+					...brandFor(roomId)
 				}).toString()}`;
 
 				setUrl(elementCallUrl.toString());
 			} catch (err) {
-				if (!cancelled) setError(err as Error);
+				if (!signal.aborted) setError(err as Error);
 			}
 		};
 
 		void prepare();
-		return () => {
-			cancelled = true;
-		};
-	}, [client, roomId, isVideo, skipLobby]);
+		return () => preparation.abort();
+	}, [client, roomId, isVideo, skipLobby, callStartQuery]);
 
 	const attachIframe = useCallback(
 		(iframe: HTMLIFrameElement | null) => {
@@ -514,14 +662,17 @@ export const useElementCallWidget = (
 	}, []);
 
 	const setDevices = useCallback(
-		async (change: Partial<CallDeviceState>): Promise<void> => {
+		async (
+			change: Partial<CallDeviceState>
+		): Promise<CallDeviceState | null> => {
 			const api = apiRef.current;
-			if (!api) return;
+			if (!api) return null;
 			const reply = await api.transport.send('io.element.device_mute', {
 				...change
 			});
 			const reported = deviceStateOf(reply);
 			if (reported && apiRef.current === api) setDeviceState(reported);
+			return reported;
 		},
 		[]
 	);

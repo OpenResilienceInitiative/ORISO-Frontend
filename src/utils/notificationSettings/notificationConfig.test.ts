@@ -3,7 +3,9 @@ import { soundAssetFor } from './soundPlayback';
 import {
 	AREA_KINDS,
 	areaForFamily,
+	areaKindForEvent,
 	NEVER_NOTIFY_FAMILIES,
+	NOTIFICATION_AREAS,
 	clampVolume,
 	DEFAULT_NOTIFICATION_CONFIG,
 	DISABLED_AREAS,
@@ -14,9 +16,22 @@ import {
 } from './notificationConfig';
 
 describe('notificationConfig', () => {
-	it('defaults: sounds off, email on for new/standard and off for mention', () => {
+	it('defaults: short tone for event kinds that need attention (#1211)', () => {
+		for (const area of NOTIFICATION_AREAS) {
+			const a = DEFAULT_NOTIFICATION_CONFIG[area];
+			// FE#1435: only the Anfragen tab's "Neue Anfrage" rings with ton-1.
+			expect(a.new.sound).toBe(area === 'requests' ? 'ton-1' : 'ton-2');
+			expect(a.mention.sound).toBe('ton-2');
+			expect(a.handover.sound).toBe('ton-2');
+			expect(a.appointment.sound).toBe('ton-2');
+			// low priority stays silent, calls keep ringing
+			expect(a.standard.sound).toBe('none');
+			expect(a.call.sound).toBe('ring');
+		}
+	});
+
+	it('defaults: email on for new/standard and off for mention', () => {
 		const r = DEFAULT_NOTIFICATION_CONFIG.requests;
-		expect(r.new.sound).toBe('none');
 		expect(r.new.email).toBe(true);
 		expect(r.standard.email).toBe(true);
 		expect(r.mention.email).toBe(false);
@@ -47,9 +62,16 @@ describe('notificationConfig', () => {
 		expect(parsed.conversations.mention.banner).toBe('persistent');
 	});
 
+	it('parse keeps an explicit stored "none" over the new default', () => {
+		const parsed = parseNotificationConfig({
+			requests: { new: { sound: 'none' } }
+		});
+		expect(parsed.requests.new.sound).toBe('none');
+	});
+
 	it('parse tolerates garbage', () => {
 		const parsed = parseNotificationConfig({ requests: { new: 42 } });
-		expect(parsed.requests.new.sound).toBe('none');
+		expect(parsed.requests.new.sound).toBe('ton-1');
 		expect(parsed.requests.new.email).toBe(true);
 	});
 
@@ -59,14 +81,14 @@ describe('notificationConfig', () => {
 			'requests',
 			'new',
 			'sound',
-			'ton-2'
+			'ton-5'
 		);
-		expect(next.requests.new.sound).toBe('ton-2');
+		expect(next.requests.new.sound).toBe('ton-5');
 		expect(next.requests.new.email).toBe(
 			DEFAULT_NOTIFICATION_CONFIG.requests.new.email
 		);
 		// original untouched
-		expect(DEFAULT_NOTIFICATION_CONFIG.requests.new.sound).toBe('none');
+		expect(DEFAULT_NOTIFICATION_CONFIG.requests.new.sound).toBe('ton-1');
 	});
 
 	it('setKindField toggles email independently per area', () => {
@@ -109,10 +131,65 @@ describe('notificationConfig', () => {
 		);
 		expect(kindForEvent('messages', 'message.new', true)).toBe('mention');
 		expect(kindForEvent('requests', 'request.new', false)).toBe('new');
-		expect(kindForEvent('requests', 'team.discussion.new', false)).toBe(
-			'new'
-		);
 		expect(kindForEvent('messages', 'message.new', false)).toBe('standard');
+	});
+
+	it('files the Team-Besprechung under Anfrage: own row, mentions on the Anfrage mention row', () => {
+		expect(
+			areaKindForEvent('messages', 'team.discussion.new', false)
+		).toEqual({ area: 'requests', kind: 'teamDiscussion' });
+		expect(
+			areaKindForEvent('messages', 'team.discussion.new', true)
+		).toEqual({ area: 'requests', kind: 'mention' });
+		// Ordinary-chat mentions keep the Gespräche row.
+		expect(areaKindForEvent('messages', 'message.new', true)).toEqual({
+			area: 'conversations',
+			kind: 'mention'
+		});
+		expect(AREA_KINDS.requests).toEqual([
+			'new',
+			'teamDiscussion',
+			'standard',
+			'mention'
+		]);
+		// Nothing feeds Gespräche → "Neue Anfrage" any more, so it is gone.
+		expect(AREA_KINDS.conversations).not.toContain('new');
+	});
+
+	it('defaults the Team-Besprechung row to the short tone the old row had', () => {
+		const row = DEFAULT_NOTIFICATION_CONFIG.requests.teamDiscussion;
+		expect(row.sound).toBe('ton-2');
+		expect(row.banner).toBe('temporary');
+		expect(row.email).toBe(true);
+	});
+
+	it('carries a saved choice of the old Gespräche "Neue Anfrage" row over to the Team-Besprechung row, once', () => {
+		const old = {
+			sound: 'ton-9',
+			banner: 'persistent',
+			email: false,
+			volume: 1
+		};
+		const migrated = parseNotificationConfig({
+			conversations: { new: old }
+		});
+		expect(migrated.requests.teamDiscussion).toEqual(old);
+		// Only the requests tab; the other tabs keep their defaults.
+		expect(migrated.conversations.teamDiscussion).toEqual(
+			DEFAULT_NOTIFICATION_CONFIG.conversations.teamDiscussion
+		);
+		// The new row's own saved value wins from then on.
+		const own = { sound: 'none', banner: 'off', email: true, volume: 0.25 };
+		expect(
+			parseNotificationConfig({
+				conversations: { new: old },
+				requests: { teamDiscussion: own }
+			}).requests.teamDiscussion
+		).toEqual(own);
+		// Nothing saved → defaults.
+		expect(parseNotificationConfig({}).requests.teamDiscussion).toEqual(
+			DEFAULT_NOTIFICATION_CONFIG.requests.teamDiscussion
+		);
 	});
 
 	it('drafts never notify; defaults keep calls ringing with banners on', () => {

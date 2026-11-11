@@ -18,18 +18,33 @@
  * Safari keeps the user gesture alive, and the stream is released again right
  * away because Element Call acquires its own.
  */
+import { callMediaErrorMessage } from '../../utils/callMediaErrorMessage';
 import { stopMediaStreamTracks } from '../../utils/callMediaStreamCleanup';
 import { isPracticeMode } from '../../practice';
 
 export interface StartRoomCallOptions {
 	/** Matrix room the call belongs to (client room, group room or side room). */
 	roomId: string | null | undefined;
+	/** The call's modality: what the CallManager is asked to start. */
 	isVideo: boolean;
+	/**
+	 * Whether the permission request before the call includes the camera.
+	 * Defaults to `isVideo`. A device check that left the camera off (or
+	 * found none) passes `false`, so a video call opens no camera the person
+	 * switched off and does not fail for want of one (#2016).
+	 */
+	requestCamera?: boolean;
 	/**
 	 * `true` forces the MatrixRTC group path, `false` forces 1:1,
 	 * `undefined` lets the CallManager count the room's members.
 	 */
 	isGroup?: boolean;
+	/**
+	 * #2170: what the call room is called, which is the call's title. Leave it
+	 * out and the CallManager calls it "Anruf". Resolve it with
+	 * `callRoomName(session)`.
+	 */
+	roomName?: string;
 	/** Injected so tests and stories never touch `window.alert`. */
 	notify?: (message: string) => void;
 	confirm?: (message: string) => boolean;
@@ -42,7 +57,8 @@ export interface StartRoomCallOptions {
 		startCall: (
 			roomId: string,
 			isVideo: boolean,
-			isGroup?: boolean
+			isGroup?: boolean,
+			options?: { roomName?: string }
 		) => void;
 	};
 }
@@ -54,25 +70,12 @@ const lazyCallManager = () =>
 	// eslint-disable-next-line @typescript-eslint/no-var-requires
 	require('../../services/CallManager').callManager;
 
-const mediaErrorMessage = (error: any): string => {
-	let message = 'Cannot access camera/microphone. ';
-	if (error?.name === 'NotAllowedError') {
-		message += 'Please grant permissions in your browser settings.';
-	} else if (error?.name === 'NotFoundError') {
-		message += 'No camera/microphone found on this device.';
-	} else if (error?.name === 'NotSupportedError') {
-		message +=
-			'Your browser does not support this feature. Please use HTTPS.';
-	} else {
-		message += error?.message || 'Unknown error.';
-	}
-	return message;
-};
-
 export const startRoomCall = async ({
 	roomId,
 	isVideo,
+	requestCamera = isVideo,
 	isGroup,
+	roomName,
 	notify = (message: string) => window.alert(message),
 	confirm = (message: string) => window.confirm(message),
 	getCallManager = lazyCallManager
@@ -108,16 +111,25 @@ export const startRoomCall = async ({
 		// the outgoing call runs through Element Call, which opens its own.
 		try {
 			const stream = await navigator.mediaDevices.getUserMedia({
-				video: isVideo,
+				video: isVideo && requestCamera,
 				audio: true
 			});
 			stopMediaStreamTracks(stream);
-		} catch (mediaError: any) {
-			notify(mediaErrorMessage(mediaError));
+		} catch (mediaError) {
+			notify(
+				callMediaErrorMessage(
+					mediaError instanceof Error ? mediaError : {}
+				)
+			);
 			return;
 		}
 
-		getCallManager().startCall(roomId, isVideo, isGroup);
+		getCallManager().startCall(
+			roomId,
+			isVideo,
+			isGroup,
+			roomName ? { roomName } : undefined
+		);
 	} catch (error) {
 		notify(
 			`Call failed: ${error instanceof Error ? error.message : 'Unknown error'}`

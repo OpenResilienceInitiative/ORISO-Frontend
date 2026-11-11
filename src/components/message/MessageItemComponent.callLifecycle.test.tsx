@@ -13,6 +13,7 @@ import { STATUS_ARCHIVED } from '../../globalState/interfaces';
 
 const callManagerSpies = vi.hoisted(() => ({
 	joinExistingCall: vi.fn(async () => 'joined' as const),
+	hasActiveCall: vi.fn(() => false),
 	startCall: vi.fn()
 }));
 
@@ -20,7 +21,8 @@ vi.mock('../../services/CallManager', () => ({
 	callManager: callManagerSpies
 }));
 vi.mock('../../api/apiCallState', () => ({
-	apiCallState: vi.fn(() => new Promise(() => {}))
+	apiCallState: vi.fn(() => new Promise(() => {})),
+	apiCallStateRead: vi.fn(() => new Promise(() => {}))
 }));
 vi.mock('lottie-react', () => ({ default: () => null }));
 vi.mock('lottie-web', () => ({ default: { loadAnimation: () => ({}) } }));
@@ -54,7 +56,10 @@ HTMLCanvasElement.prototype.getContext = (() => ({
 afterEach(() => {
 	cleanup();
 	callManagerSpies.joinExistingCall.mockClear();
+	callManagerSpies.hasActiveCall.mockReset();
+	callManagerSpies.hasActiveCall.mockReturnValue(false);
 	callManagerSpies.startCall.mockClear();
+	Reflect.deleteProperty(navigator, 'mediaDevices');
 });
 
 describe('the durable call action in an actual message row', () => {
@@ -104,6 +109,43 @@ describe('the durable call action in an actual message row', () => {
 			expect(callManagerSpies.startCall).not.toHaveBeenCalled();
 		}
 	);
+
+	it('opens no device check while this browser is in a call (#2016)', async () => {
+		/*
+		 * The preview would fight the running call for the camera, and the
+		 * join could only answer "already in it" or "busy" anyway.
+		 */
+		Object.defineProperty(navigator, 'mediaDevices', {
+			configurable: true,
+			value: { getUserMedia: vi.fn() }
+		});
+		callManagerSpies.hasActiveCall.mockReturnValue(true);
+		const activeSession = mockActiveSession1on1();
+
+		render(
+			<MessageContextShell activeSession={activeSession}>
+				<MessageItemComponent
+					{...mockMessageItemComponentProps({
+						rid: activeSession.rid,
+						callLifecycle: {
+							callId: 'another-call',
+							roomRef: activeSession.rid,
+							callRoomId: '!media-room:oriso.invalid',
+							callType: 'video' as const,
+							state: 'running' as const,
+							participants: []
+						}
+					})}
+				/>
+			</MessageContextShell>
+		);
+
+		fireEvent.click(screen.getByRole('button'));
+
+		expect(screen.queryByTestId('knock-wait-join')).toBeNull();
+		expect(navigator.mediaDevices.getUserMedia).not.toHaveBeenCalled();
+		expect(callManagerSpies.joinExistingCall).toHaveBeenCalledTimes(1);
+	});
 
 	it('rejoins a group call recorded in a 1:1 session as a group call', async () => {
 		/*
@@ -181,5 +223,30 @@ describe('the durable call action in an actual message row', () => {
 		expect(screen.queryByRole('button')).toBeNull();
 		expect(callManagerSpies.joinExistingCall).not.toHaveBeenCalled();
 		expect(callManagerSpies.startCall).not.toHaveBeenCalled();
+	});
+
+	it('offers no call join in the embedded Activity Timeline preview (#1824)', () => {
+		const activeSession = mockActiveSession1on1();
+		render(
+			<MessageContextShell activeSession={activeSession}>
+				<MessageItemComponent
+					{...mockMessageItemComponentProps({
+						rid: activeSession.rid,
+						callLifecycle: {
+							callId: 'embedded-call',
+							roomRef: activeSession.rid,
+							callRoomId: '!embedded-media:oriso.invalid',
+							callType: 'video',
+							state: 'running',
+							participants: []
+						}
+					})}
+					previewMode="interactive"
+				/>
+			</MessageContextShell>
+		);
+
+		expect(screen.queryByRole('button')).toBeNull();
+		expect(callManagerSpies.joinExistingCall).not.toHaveBeenCalled();
 	});
 });

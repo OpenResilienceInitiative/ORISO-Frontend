@@ -75,6 +75,18 @@ describe('WP-06 list-item selection controller', () => {
 	});
 
 	describe('isListItemActive', () => {
+		it.each(['/sessions/consultant/sessionView', '/sessions/user/view'])(
+			'selects only the group with a colliding numeric id at %s',
+			(base) => {
+				const selection = deriveActiveSelection(`${base}/chat/42`);
+
+				expect(isListItemActive(selection, { chatId: 42 })).toBe(true);
+				expect(isListItemActive(selection, { sessionId: 42 })).toBe(
+					false
+				);
+			}
+		);
+
 		it('matches by sessionId, normalising number vs string', () => {
 			const selection = deriveActiveSelection(
 				'/sessions/consultant/sessionView/session/123'

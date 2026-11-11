@@ -17,8 +17,7 @@ import {
 } from '../../components/notificationsCenter/eventDescriptors/registry';
 import type { EventFamily } from '../../components/notificationsCenter/eventDescriptors/types';
 import {
-	areaForFamily,
-	kindForEvent,
+	areaKindForEvent,
 	type NotificationArea,
 	type NotificationKind
 } from './notificationConfig';
@@ -191,14 +190,14 @@ export const resolveEventChannelContract = (
 	const descriptor = getEventDescriptor(eventType);
 	const family = options.family ?? descriptor.family ?? 'system';
 	const role = recipientRole === 'user' ? 'asker' : recipientRole;
-	const kind = kindForEvent(
+	const { area, kind } = areaKindForEvent(
 		family,
 		eventType || '',
 		options.mentioned === true
 	);
 	const browser = {
 		family,
-		area: areaForFamily(family),
+		area,
 		// FE#1470: a counsellor's live-chat messages have their own row.
 		kind:
 			kind === 'standard' &&

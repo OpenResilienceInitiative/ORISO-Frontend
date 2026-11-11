@@ -1,6 +1,9 @@
+import { isAskerDisplayNameTypingAllowed } from '../../utils/askerAccountPolicy';
+import { useFrozenPhoneLayout } from '../../utils/embeddedComposerFullscreen';
 import { useConversationFeatureSettings } from '../../hooks/useConversationFeatureSettings';
 import { useDelayedSessionRefresh } from './useDelayedSessionRefresh';
 import { useChatHistoryPagination } from './useChatHistoryPagination';
+import { useThreadRouteHistory } from './useThreadRouteHistory';
 import * as React from 'react';
 import {
 	useCallback,
@@ -24,7 +27,7 @@ import {
 	isMyMessage,
 	SESSION_LIST_TYPES
 } from './sessionHelpers';
-import { getModality, Modality } from './getModality';
+import { getModality, getModalityIfKnown, Modality } from './getModality';
 import {
 	isComposerBusy,
 	isTimelineAtBottom,
@@ -42,6 +45,7 @@ import { MessageItem } from '../message/MessageItemComponent';
 import { MessageTimeline } from './MessageTimeline';
 import { useThreadFocusReturn } from './useThreadFocusReturn';
 import { useMatrixDecryptionFailures } from '../../hooks/useMatrixDecryptionFailures';
+import { useMatrixRoomUsers } from '../../hooks/useMatrixRoomUsers';
 import {
 	FailedSend,
 	FailedSendTimelineEntry
@@ -173,11 +177,7 @@ import { apiPostError, TError } from '../../api/apiPostError';
 import { useE2EE } from '../../hooks/useE2EE';
 import { MessageSubmitInterfaceSkeleton } from '../messageSubmitInterface/messageSubmitInterfaceSkeleton';
 import { MessageSubmitErrorBoundary } from '../messageSubmitInterface/MessageSubmitErrorBoundary';
-import {
-	buildEditContext,
-	buildReplyQuoteContext,
-	buildReplyQuotePreview
-} from './replyQuote';
+import { buildReplyQuotePreview } from './replyQuote';
 import { EncryptionBanner } from './EncryptionBanner';
 import {
 	apiGetSessionSupervisors,
@@ -188,7 +188,10 @@ import {
 	type SupervisionRoomLookup
 } from './supervisionRoomLookup';
 import { apiPatchNotificationActiveView } from '../../api/apiPatchNotificationActiveView';
-import { isNotificationActiveViewRoute } from './notificationActiveView';
+import {
+	isNotificationActiveViewRoute,
+	reportShownChannel
+} from './notificationActiveView';
 import { apiRegisterMatrixRoomForSync } from '../../api/apiMatrixSyncRegister';
 import { apiPatchUserData } from '../../api/apiPatchUserData';
 import { apiPutSessionData } from '../../api/apiPutSessionData';
@@ -202,6 +205,7 @@ import { parseMessagePrefixes } from '../message/messageConstants';
 import { decodeUsername } from '../../utils/encryptionHelpers';
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
 import { PseudonymCard } from '../pseudonym/PseudonymCard';
+import { readConfirmedEntryName } from '../anonymousChat/entryRoom/entryRoomIdentity';
 import { PseudonymActionBar } from '../pseudonym/PseudonymActionBar';
 import { PrivacyMessageCard } from '../pseudonym/PrivacyMessageCard';
 import { WaitingQueueActionBar } from '../pseudonym/WaitingQueueActionBar';
@@ -242,6 +246,11 @@ import { ReactComponent as CloseIcon } from '../../resources/img/icons/close.svg
 import { canRenderClientComposer } from './clientComposerPolicy';
 import { isCaseHandoverCoAccess } from './caseHandoverHelpers';
 import { CaseHandoverReadOnlyNotice } from './CaseHandoverReadOnlyNotice';
+import {
+	conversationActionsResetKey,
+	useConversationActions
+} from './useConversationActions';
+import { anonymousGateKeys } from './anonymousGateStorage';
 import type { CaseHandoverStatus } from '../../api/apiCaseHandover';
 import type { TeamDiscussionStatus } from '../../api/apiTeamDiscussion';
 import {
@@ -301,6 +310,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 
 	const { activeSession, reloadActiveSession } =
 		useContext(ActiveSessionContext);
+	const nameEditable = isAskerDisplayNameTypingAllowed(
+		tenantData?.settings,
+		getModalityIfKnown(activeSession)
+	);
 	const { userData, setUserData } = useContext(UserDataContext);
 	const { addEventNotification } = useContext(NotificationsContext);
 	const { type, path: listPath } = useContext(SessionTypeContext);
@@ -323,6 +336,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const supervisionRoomId = roomIdForActiveSession(
 		supervisionRoomLookup,
 		activeSession.item.id
+	);
+	// Hydrate and observe the side room independently of message arrivals.
+	const { users: supervisionRoomUsers } = useMatrixRoomUsers(
+		supervisionRoomId ?? null
 	);
 	// WP-B2: the supervisor rows from the same call — identities for the
 	// participant stacks (`buildVisibleParticipantRules`) and, as usernames,
@@ -357,7 +374,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		try {
 			return (
 				sessionStorage.getItem(
-					`anonymous-inquiry-consent-${activeSession.item.id}`
+					anonymousGateKeys(activeSession.item.id).consent
 				) === '1'
 			);
 		} catch {
@@ -368,14 +385,39 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		try {
 			return (
 				sessionStorage.getItem(
-					`anonymous-pseudonym-${activeSession.item.id}`
+					anonymousGateKeys(activeSession.item.id).pseudonym
 				) === '1'
 			);
 		} catch {
 			return false;
 		}
 	});
-	const [pseudonymSaving, setPseudonymSaving] = useState(false);
+	const aliasView = useRef({
+		active: true,
+		sessionId: activeSession.item.id,
+		generation: 0
+	});
+	// Returning to the same session starts a new view lifetime (A → B → A).
+	if (aliasView.current.sessionId !== activeSession.item.id) {
+		aliasView.current.sessionId = activeSession.item.id;
+		aliasView.current.generation += 1;
+	}
+	useEffect(() => {
+		const view = aliasView.current;
+		view.active = true;
+		return () => {
+			view.active = false;
+		};
+	}, []);
+	const savingAliasRequest = useRef<{
+		sessionId: number;
+		generation: number;
+	} | null>(null);
+	const [pendingAliasRequest, setPendingAliasRequest] =
+		useState<typeof savingAliasRequest.current>(null);
+	const pseudonymSaving =
+		pendingAliasRequest?.sessionId === activeSession.item.id &&
+		pendingAliasRequest?.generation === aliasView.current.generation;
 	const [queuePeopleAhead, setQueuePeopleAhead] = useState<number | null>(
 		null
 	);
@@ -426,7 +468,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			try {
 				return (
 					sessionStorage.getItem(
-						`anonymous-waiting-dismissed-${activeSession.item.id}`
+						anonymousGateKeys(activeSession.item.id)
+							.waitingDismissed
 					) === '1'
 				);
 			} catch {
@@ -438,7 +481,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		(value: boolean) => {
 			setWaitingGateDismissedState(value);
 			try {
-				const key = `anonymous-waiting-dismissed-${activeSession.item.id}`;
+				const key = anonymousGateKeys(
+					activeSession.item.id
+				).waitingDismissed;
 				if (value) {
 					sessionStorage.setItem(key, '1');
 				} else {
@@ -453,8 +498,36 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const [currentPseudonym, setCurrentPseudonym] = useState<Pseudonym>(() =>
 		generatePseudonym(locale)
 	);
+	const [customPseudonymName, setCustomPseudonymName] = useState<{
+		sessionId: number;
+		value: string;
+	} | null>(null);
+	const selectedPseudonym = useMemo(
+		() =>
+			nameEditable &&
+			customPseudonymName?.sessionId === activeSession.item.id
+				? {
+						...currentPseudonym,
+						displayName: customPseudonymName.value
+					}
+				: currentPseudonym,
+		[
+			nameEditable,
+			customPseudonymName,
+			activeSession.item.id,
+			currentPseudonym
+		]
+	);
+	const confirmedPseudonymName = pseudonymConfirmed
+		? (activeSession.user?.displayName ??
+			readConfirmedEntryName(activeSession.item.id))
+		: null;
 	const handleRegeneratePseudonym = useCallback(() => {
-		setCurrentPseudonym((prev) => regeneratePseudonym(prev, locale));
+		setCustomPseudonymName(null);
+		setCurrentPseudonym((prev) => ({
+			...regeneratePseudonym(prev, locale),
+			avatar: prev.avatar
+		}));
 	}, [locale]);
 	const [robotSequenceVisibleCount, setRobotSequenceVisibleCount] =
 		useState(0);
@@ -509,7 +582,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		dataPrivacyConfirmation: userData?.dataPrivacyConfirmation
 	});
 	const anonymousInquiryConsentStorageKey = useMemo(
-		() => `anonymous-inquiry-consent-${activeSession.item.id}`,
+		() => anonymousGateKeys(activeSession.item.id).consent,
 		[activeSession.item.id]
 	);
 	const robotSequenceStorageKey = useMemo(
@@ -517,7 +590,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		[activeSession.item.id]
 	);
 	const pseudonymStorageKey = useMemo(
-		() => `anonymous-pseudonym-${activeSession.item.id}`,
+		() => anonymousGateKeys(activeSession.item.id).pseudonym,
 		[activeSession.item.id]
 	);
 	const requiresPseudonymConfirmation =
@@ -784,35 +857,24 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			),
 		[reactionEvents, ownMatrixUserId]
 	);
-	const handleReact = useCallback(
-		(messageId: string, key: string) => {
-			if (isRejectedSession || !resolvedMatrixRoomId) {
-				return;
-			}
-			chatTransportService
-				.sendReaction({
-					matrixRoomId: resolvedMatrixRoomId,
-					targetEventId: messageId,
-					key
-				})
-				.catch(() => undefined);
-		},
-		[resolvedMatrixRoomId, isRejectedSession]
-	);
-	const handleUnreact = useCallback(
-		(reactionEventId: string) => {
-			if (isRejectedSession || !resolvedMatrixRoomId) {
-				return;
-			}
-			chatTransportService
-				.removeReaction({
-					matrixRoomId: resolvedMatrixRoomId,
-					reactionEventId
-				})
-				.catch(() => undefined);
-		},
-		[resolvedMatrixRoomId, isRejectedSession]
-	);
+	// #1824 S1: the room's message actions, shared with the Activity Timeline
+	// preview. A reply or edit context never survives a conversation switch.
+	// A rejected session takes no reactions or deletions: without a room the
+	// actions do nothing.
+	const {
+		handleReact,
+		handleUnreact,
+		handleDeleteDirect,
+		replyTo,
+		handleReplyDirect,
+		handleCancelReply,
+		editingMessage,
+		handleEditDirect,
+		handleCancelEdit
+	} = useConversationActions({
+		roomId: isRejectedSession ? null : resolvedMatrixRoomId,
+		resetKey: conversationActionsResetKey(activeSession)
+	});
 	const [initialScrollCompleted, setInitialScrollCompleted] = useState(false);
 	const scrollContainerRef = React.useRef<HTMLDivElement>(null);
 	const loadEarlierMessages = useChatHistoryPagination(
@@ -867,6 +929,13 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				: null,
 		[messages, activeThreadRootId]
 	);
+	const threadRouteHistory = useThreadRouteHistory({
+		scope: `${activeSession.item.id}:${resolvedMatrixRoomId}`,
+		rootId: isRejectedSession ? null : activeThreadRootId,
+		hasRoot: activeThreadRootMessage !== null,
+		historyReady: messages !== undefined,
+		loadEarlier: props.onLoadEarlierMessages
+	});
 	const knownMessageIdsRef = useRef<Set<string>>(new Set());
 	// Thread-panel-UX (#435): pure summary computation (unit-tested).
 	const threadSummariesRaw = useMemo(
@@ -1191,22 +1260,33 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	 * The login User-ID is left unchanged so room membership and keys stay intact.
 	 */
 	const handleConfirmPseudonym = useCallback(() => {
-		if (pseudonymSaving) return;
-		setPseudonymSaving(true);
-		apiPutSessionData(activeSession.item.id, {
-			displayName: currentPseudonym.displayName
-		})
-			.then(() =>
-				apiPatchUserData({ displayName: currentPseudonym.displayName })
-			)
-			.then(() => apiGetUserData().then((fresh) => setUserData(fresh)))
+		const alias = selectedPseudonym.displayName.trim();
+		const sessionId = activeSession.item.id;
+		if (
+			(savingAliasRequest.current?.generation ===
+				aliasView.current.generation &&
+				savingAliasRequest.current?.sessionId === sessionId) ||
+			!alias ||
+			alias.length > 255
+		)
+			return;
+		const request = { sessionId, generation: aliasView.current.generation };
+		savingAliasRequest.current = request;
+		setPendingAliasRequest(request);
+		const isCurrentView = () =>
+			aliasView.current.active &&
+			aliasView.current.sessionId === sessionId &&
+			aliasView.current.generation === request.generation;
+		apiPutSessionData(sessionId, { displayName: alias })
+			.then(() => (isCurrentView() ? reloadActiveSession?.() : undefined))
 			.then(() => {
+				if (!isCurrentView()) return;
 				setPseudonymConfirmed(true);
 				try {
 					sessionStorage.setItem(pseudonymStorageKey, '1');
 					sessionStorage.setItem(
-						`anonymous-pseudonym-name-${activeSession.item.id}`,
-						currentPseudonym.displayName
+						`anonymous-pseudonym-name-${sessionId}`,
+						alias
 					);
 				} catch {
 					/* ignore storage errors */
@@ -1215,13 +1295,16 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			.catch(() => {
 				/* keep card visible on failure so user can retry */
 			})
-			.finally(() => setPseudonymSaving(false));
+			.finally(() => {
+				if (savingAliasRequest.current !== request) return;
+				savingAliasRequest.current = null;
+				if (aliasView.current.active) setPendingAliasRequest(null);
+			});
 	}, [
 		activeSession.item.id,
-		currentPseudonym,
-		pseudonymSaving,
-		pseudonymStorageKey,
-		setUserData
+		selectedPseudonym,
+		reloadActiveSession,
+		pseudonymStorageKey
 	]);
 
 	/**
@@ -1848,6 +1931,25 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		observer.observe(dock);
 		return () => observer.disconnect();
 	}, [activeSession?.rid]); // eslint-disable-line
+	// A bar appearing above the timeline (the header's appointment) shrinks it
+	// without any scroll event: a reader at the newest message stays there.
+	useEffect(() => {
+		const container = scrollContainerRef.current;
+		if (!container || typeof ResizeObserver === 'undefined') {
+			return undefined;
+		}
+		let previousHeight = container.clientHeight;
+		const observer = new ResizeObserver(() => {
+			const height = container.clientHeight;
+			const shrank = height < previousHeight;
+			previousHeight = height;
+			if (shrank && isScrolledToBottomRef.current) {
+				container.scrollTop = container.scrollHeight;
+			}
+		});
+		observer.observe(container);
+		return () => observer.disconnect();
+	}, [activeSession?.rid]); // eslint-disable-line
 
 	const handleScrollToBottomButtonClick = () => {
 		const scrollContainer = scrollContainerRef.current;
@@ -2271,11 +2373,11 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	// ONE breakpoint source for the phone layout (checklist 5): the app's
 	// `fromL` (900 px) = `STAGE_LAYOUT.DESKTOP_MIN_WIDTH`.
 	const { fromL } = useResponsive();
-	const isPhoneLayout = !fromL;
+	const isPhoneLayout = useFrozenPhoneLayout(!fromL);
 
 	// The panel the URL asks for, resolved against what exists. A thread
 	// whose root is not in the loaded history keeps the main chat open
-	// (analysis F3 — fetching the root is a follow-up).
+	// while its authorized history is loading.
 	const openPanel: 'supervision' | 'team' | 'thread' | null =
 		routeChannel?.kind === 'supervision'
 			? hasSupervisionSideRoom
@@ -2301,8 +2403,18 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const reportChatStagePanel = useReportChatStagePanel();
 	useEffect(() => {
 		reportChatStagePanel(openPanel);
-		return () => reportChatStagePanel(null);
-	}, [openPanel, reportChatStagePanel]);
+		reportShownChannel(
+			openPanel === 'thread' && activeThreadRootId
+				? { kind: 'thread', rootId: activeThreadRootId }
+				: openPanel === 'supervision' || openPanel === 'team'
+					? { kind: openPanel }
+					: null
+		);
+		return () => {
+			reportChatStagePanel(null);
+			reportShownChannel(null);
+		};
+	}, [activeThreadRootId, openPanel, reportChatStagePanel]);
 
 	// `?at=<eventId>` (review D-6): once the bubble is in the DOM — main
 	// chat or the open pane — scroll it into view and consume the param
@@ -2727,7 +2839,12 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const supervisionParticipants = useMemo(
 		() => stackParticipantsOf(supervisionRoomId, 'supervision'),
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[stackParticipantsOf, supervisionRoomId, supervisionMessages]
+		[
+			stackParticipantsOf,
+			supervisionRoomId,
+			supervisionMessages,
+			supervisionRoomUsers
+		]
 	);
 	// Teamberatung: the room's own members ARE the team — the `team` rule
 	// shows them all and drops only the advice seeker, who is never invited
@@ -2901,29 +3018,6 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		[messages]
 	);
 
-	// Relations foundation (#435): direct-reply context for the composer.
-	const [replyTo, setReplyTo] = useState<{
-		eventId: string;
-		author: string;
-		text: string;
-	} | null>(null);
-
-	const handleReplyDirect = useCallback((message: MessageItem) => {
-		setReplyTo(buildReplyQuoteContext(message));
-	}, []);
-
-	const handleCancelReply = useCallback(() => setReplyTo(null), []);
-
-	// Editing (m.replace, #435): edit-in-progress context for the composer.
-	const [editingMessage, setEditingMessage] = useState<{
-		eventId: string;
-		text: string;
-	} | null>(null);
-
-	const handleEditDirect = useCallback((message: MessageItem) => {
-		setEditingMessage(buildEditContext(message));
-	}, []);
-
 	// Delete = Matrix redaction of the event in ITS room. The timeline only
 	// offers it on the viewer's own messages; the main chat and the
 	// Teamberatung panel share this one path.
@@ -2941,23 +3035,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		},
 		[isRejectedSession]
 	);
-	const handleDeleteDirect = useCallback(
-		(message: MessageItem) =>
-			redactMessageInRoom(resolvedMatrixRoomId, message),
-		[redactMessageInRoom, resolvedMatrixRoomId]
-	);
 	const handleDeleteTeamMessage = useCallback(
 		(message: MessageItem) => redactMessageInRoom(teamRoomId, message),
 		[redactMessageInRoom, teamRoomId]
 	);
-
-	const handleCancelEdit = useCallback(() => setEditingMessage(null), []);
-
-	// A reply or edit context never survives a conversation switch.
-	useEffect(() => {
-		setReplyTo(null);
-		setEditingMessage(null);
-	}, [activeSession?.rid]);
 
 	// Resolve the quote of a replied-to message from the loaded timeline; a
 	// reply whose target is outside the loaded window degrades to a generic
@@ -2998,6 +3079,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		apiRegisterMatrixRoomForSync(sessionId);
 	}, [activeSession.item?.id, activeSession.isGroup]);
 
+	// Phone: a side panel fills the screen instead of the main chat.
+	const mainChatHidden = isPhoneLayout && openPanel !== null;
+	const shownThreadRootId =
+		openPanel === 'thread' ? activeThreadRootId : null;
 	useEffect(() => {
 		if (isAskerUser && !isConsultantUser) {
 			return;
@@ -3029,8 +3114,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				document.visibilityState === 'visible' && document.hasFocus();
 			apiPatchNotificationActiveView({
 				roomId,
-				threadRootId: active ? activeThreadRootId : null,
-				active
+				threadRootId: active ? shownThreadRootId : null,
+				active,
+				mainChatHidden: (active && mainChatHidden) || undefined
 			}).catch(() => undefined);
 		};
 
@@ -3058,11 +3144,12 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	}, [
 		activeSession.rid,
 		activeSession.item?.matrixRoomId,
-		activeThreadRootId,
 		isAskerUser,
 		isConsultantUser,
 		location.pathname,
-		location.search
+		location.search,
+		mainChatHidden,
+		shownThreadRootId
 	]);
 
 	// Track the decryption success because we have a short timing issue when
@@ -3271,7 +3358,24 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					{shouldShowPseudonymGate && (
 						<div className="session__pseudonymGate">
 							<PseudonymCard
-								pseudonym={currentPseudonym}
+								pseudonym={
+									confirmedPseudonymName
+										? {
+												...selectedPseudonym,
+												displayName:
+													confirmedPseudonymName
+											}
+										: selectedPseudonym
+								}
+								editable={nameEditable && !pseudonymConfirmed}
+								disabled={pseudonymSaving || pseudonymConfirmed}
+								onNameChange={(value) => {
+									if (nameEditable)
+										setCustomPseudonymName({
+											sessionId: activeSession.item.id,
+											value
+										});
+								}}
 								skipTyping={pseudonymConfirmed}
 							/>
 							{pseudonymConfirmed && <PrivacyMessageCard />}
@@ -3359,7 +3463,17 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 															event.preventDefault();
 															event.stopPropagation();
 															navigate(
-																'/registration'
+																isAnonymousAskerExperience
+																	? '/live-chat/convert'
+																	: '/registration',
+																{
+																	state: {
+																		topicId:
+																			activeSession
+																				.item
+																				.mainTopicId
+																	}
+																}
 															);
 														}}
 													>
@@ -3390,6 +3504,17 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 									</div>
 								</div>
 							)}
+							{threadRouteHistory && (
+								<div className="messageItem" role="status">
+									{translate(
+										threadRouteHistory === 'loading'
+											? 'notifications.center.preview.loadingOlder'
+											: threadRouteHistory === 'error'
+												? 'notifications.center.preview.loadOlderFailed'
+												: 'notifications.center.preview.eventUnavailable'
+									)}
+								</div>
+							)}
 							{!messages && props.mainTimelineSupplement}
 							{/* MATRIX MIGRATION: For Matrix sessions (no rid), skip E2EE ready check */}
 							{messages && (ready || !activeSession.rid) && (
@@ -3406,16 +3531,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 											'sessionList.user.consultantUnknown'
 										)
 									}
-									askerMatrixUserIdFor={(message) =>
-										!activeSession.rid &&
-										message.userId &&
-										!message.userId.includes(
-											activeSession.consultant
-												?.username || ''
-										)
-											? message.userId
-											: activeSession.item
-													.askerMatrixUserId
+									askerMatrixUserIdFor={() =>
+										activeSession.item.askerMatrixUserId
 									}
 									isOnlyEnquiry={isOnlyEnquiry}
 									hideSystemMessages={
@@ -3622,7 +3739,29 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							onRegenerate={handleRegeneratePseudonym}
 							onConfirm={handleConfirmPseudonym}
 							disabled={pseudonymSaving}
+							confirmDisabled={
+								!selectedPseudonym.displayName.trim()
+							}
 						/>
+					</div>
+				)}
+
+				{isAnonymousAskerExperience && sessionStatusNum === 3 && (
+					<div className="session__pseudonymActionBarSlot">
+						<MuiButton
+							variant="contained"
+							onClick={() =>
+								navigate('/live-chat/convert', {
+									state: {
+										topicId: activeSession.item.mainTopicId
+									}
+								})
+							}
+						>
+							{translate(
+								'anonymousChat.noAvailability.startMailCounseling'
+							)}
+						</MuiButton>
 					</div>
 				)}
 
@@ -4022,7 +4161,13 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					<MuiButton
 						fullWidth
 						variant="contained"
-						onClick={() => navigate('/registration')}
+						onClick={() =>
+							navigate('/live-chat/convert', {
+								state: {
+									topicId: activeSession.item.mainTopicId
+								}
+							})
+						}
 						sx={{
 							mb: '8px',
 							borderRadius: '999px',
@@ -4106,12 +4251,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			onBack={closeChannel}
 		/>
 	) : undefined;
-	const askerMatrixUserIdFor = (message: MessageItem) =>
-		!activeSession.rid &&
-		message.userId &&
-		!message.userId.includes(activeSession.consultant?.username || '')
-			? message.userId
-			: activeSession.item.askerMatrixUserId;
+	// Assignment can change; a former consultant is never proof of asker identity.
+	const askerMatrixUserIdFor = () => activeSession.item.askerMatrixUserId;
 	const e2eeParams = { key, keyID, encrypted, subscriptionKeyLost };
 	const panelComposerFlush = desktopPanelOpen ? 'bottom-right' : undefined;
 

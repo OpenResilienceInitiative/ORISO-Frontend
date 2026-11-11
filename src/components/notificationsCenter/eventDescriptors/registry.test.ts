@@ -85,6 +85,7 @@ const EXPECTED_TARGET_KIND: Record<string, string> = {
 	'supervisor.removed': 'conversation',
 	'supervisor.assigned': 'conversation',
 	'counselor.renamed': 'conversation',
+	'topic_duplicate.started': 'conversation',
 	'request.new': 'request',
 	'draft.created': 'draft',
 	'handover.requested': 'conversation',
@@ -116,7 +117,9 @@ const EXPECTED_TARGET_KIND: Record<string, string> = {
 	'appointment.cancelled': 'conversation',
 	'appointment.briefing': 'conversation',
 	// #876: a planned maintenance notice links out to the public status page.
-	'service.notice.planned': 'statusPage'
+	'service.notice.planned': 'statusPage',
+	// #1159: the deleted chat cannot be opened any more.
+	'session.asker_deleted': 'none'
 };
 
 // Resolve a dotted i18n key against a loaded common.json object.
@@ -138,8 +141,8 @@ describe('WP-06 event-descriptor registry', () => {
 		// + 8 handover + 5 call (incl. the FE#1952 direct-link knock)
 		// + 3 group-chat lifecycle + 4 appointments
 		// + team discussion + first response + conversation finished
-		// + planned service notice (#876) + offer sent/declined/withdrawn = 39.
-		expect(KNOWN_EVENT_TYPES.length).toBe(39);
+		// + service notice, three offer events, deleted advice seeker and topic duplicate = 41.
+		expect(KNOWN_EVENT_TYPES.length).toBe(41);
 		[
 			'request.new',
 			'request.denied',
@@ -241,6 +244,20 @@ describe('WP-06 event-descriptor registry', () => {
 			});
 		});
 
+		it("moves the team-discussion link's query session id into the path", () => {
+			const target = getEventDescriptor(
+				'team.discussion.new'
+			).resolveActionTarget({
+				actionPath:
+					'/sessions/consultant/sessionPreview?sessionId=42&teamDiscussion=1&roomId=!team42'
+			});
+			// The bare list route renders SessionViewEmpty, not the discussion.
+			expect(target).toEqual({
+				kind: 'conversation',
+				path: '/sessions/consultant/sessionPreview/session/42?teamDiscussion=1&roomId=%21team42'
+			});
+		});
+
 		it('builds a conversation path from sourceSessionId + base when no actionPath', () => {
 			const target = getEventDescriptor(
 				'message.new'
@@ -264,7 +281,7 @@ describe('WP-06 event-descriptor registry', () => {
 
 			expect(target).toEqual({
 				kind: 'groupChatJoin',
-				path: '/sessions/consultant/sessionView/session/42'
+				path: '/sessions/consultant/sessionView/chat/42'
 			});
 		});
 

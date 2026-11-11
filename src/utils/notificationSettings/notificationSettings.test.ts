@@ -48,6 +48,70 @@ describe('WP-06 Slice 6a — notification settings model', () => {
 		expect((parsed as any).futureTopLevel).toBeUndefined();
 	});
 
+	describe('system notice tone', () => {
+		it('defaults to ton-2 at medium volume', () => {
+			expect(DEFAULT_NOTIFICATION_SETTINGS.systemTone).toEqual({
+				sound: 'ton-2',
+				volume: 0.5
+			});
+		});
+
+		it('falls back to the default when nothing (valid) is stored', () => {
+			// Settings written before the picker existed carry no value.
+			expect(parseNotificationSettings({}).systemTone).toEqual({
+				sound: 'ton-2',
+				volume: 0.5
+			});
+			expect(
+				parseNotificationSettings({
+					systemTone: { sound: 7, volume: 'loud' }
+				}).systemTone
+			).toEqual({ sound: 'ton-2', volume: 0.5 });
+			expect(
+				parseNotificationSettings({ systemTone: 'ton-9' }).systemTone
+			).toEqual({ sound: 'ton-2', volume: 0.5 });
+		});
+
+		it('is the default for a revision-1 config, next to the revision-2 upgrade', () => {
+			const parsed = parseNotificationSettings({
+				notificationConfigRevision: 1,
+				families: { system: true }
+			});
+			expect(parsed.systemTone).toEqual({ sound: 'ton-2', volume: 0.5 });
+			expect(parsed.notificationConfigRevision).toBe(
+				DEFAULT_NOTIFICATION_SETTINGS.notificationConfigRevision
+			);
+		});
+
+		it('keeps a stored choice and clamps the volume', () => {
+			expect(
+				parseNotificationSettings({
+					systemTone: { sound: 'ton-9', volume: 0.25 }
+				}).systemTone
+			).toEqual({ sound: 'ton-9', volume: 0.25 });
+			expect(
+				parseNotificationSettings({
+					systemTone: { sound: 'none', volume: 7 }
+				}).systemTone
+			).toEqual({ sound: 'none', volume: 1 });
+		});
+
+		it('merges a partial update and leaves the other field alone', () => {
+			const merged = mergeNotificationSettings(
+				DEFAULT_NOTIFICATION_SETTINGS,
+				{ systemTone: { volume: 0.75 } }
+			);
+			expect(merged.systemTone).toEqual({ sound: 'ton-2', volume: 0.75 });
+			const other = mergeNotificationSettings(merged, {
+				systemTone: { sound: 'ton-5' }
+			});
+			expect(other.systemTone).toEqual({ sound: 'ton-5', volume: 0.75 });
+			expect(DEFAULT_NOTIFICATION_SETTINGS.systemTone.sound).toBe(
+				'ton-2'
+			);
+		});
+	});
+
 	it('merges deep-partial updates immutably', () => {
 		const merged = mergeNotificationSettings(
 			DEFAULT_NOTIFICATION_SETTINGS,
@@ -106,6 +170,10 @@ describe('WP-06 Slice 6a — notification settings model', () => {
 // --- Store transport against a mock Matrix client -------------------------
 
 type Handler = (event: any) => void;
+
+/** Lets the write that attachClient starts for a fresh account finish. */
+const settleSeedWrite = () =>
+	new Promise<void>((resolve) => setTimeout(resolve, 0));
 
 const makeMockClient = (deviceId = 'DEVICE_A') => {
 	const accountData = new Map<string, any>();
@@ -176,9 +244,10 @@ describe('WP-06 Slice 6a — notification settings store', () => {
 		);
 	});
 
-	it('updateSettings persists to account data and notifies subscribers', () => {
+	it('updateSettings persists to account data and notifies subscribers', async () => {
 		const client = makeMockClient();
 		notificationSettingsStore.attachClient(client as any);
+		await settleSeedWrite();
 		const listener = vi.fn();
 		notificationSettingsStore.subscribe(listener);
 		notificationSettingsStore.updateSettings({ globalMute: true });
@@ -187,6 +256,62 @@ describe('WP-06 Slice 6a — notification settings store', () => {
 			NOTIFICATION_SETTINGS_EVENT_TYPE,
 			expect.objectContaining({ globalMute: true })
 		);
+	});
+
+	it('never lets an older settings write finish after a newer one', async () => {
+		const client = makeMockClient();
+		notificationSettingsStore.attachClient(client as any);
+		await settleSeedWrite();
+		client.setAccountData.mockClear();
+		const finishers: Array<() => void> = [];
+		client.setAccountData.mockImplementation(
+			(_type: string, _content: any) =>
+				new Promise<void>((resolve) => finishers.push(resolve))
+		);
+
+		notificationSettingsStore.updateSettings({ globalMute: true });
+		notificationSettingsStore.updateSettings({ globalMute: false });
+		// Only one write runs at a time.
+		expect(client.setAccountData).toHaveBeenCalledTimes(1);
+		finishers[0]();
+		await vi.waitFor(() =>
+			expect(client.setAccountData).toHaveBeenCalledTimes(2)
+		);
+		expect(client.setAccountData).toHaveBeenLastCalledWith(
+			NOTIFICATION_SETTINGS_EVENT_TYPE,
+			expect.objectContaining({ globalMute: false })
+		);
+		finishers[1]();
+	});
+
+	it('keeps a queued change when the echo of an earlier write arrives', async () => {
+		const client = makeMockClient();
+		notificationSettingsStore.attachClient(client as any);
+		await settleSeedWrite();
+		client.setAccountData.mockClear();
+		const finishers: Array<() => void> = [];
+		client.setAccountData.mockImplementation(
+			(_type: string, _content: any) =>
+				new Promise<void>((resolve) => finishers.push(resolve))
+		);
+
+		notificationSettingsStore.updateSettings({ globalMute: true });
+		notificationSettingsStore.updateSettings({ globalMute: false });
+		const first = client.setAccountData.mock.calls[0][1];
+		// Matrix echoes the first write before the second one is sent.
+		client.emitAccountData(NOTIFICATION_SETTINGS_EVENT_TYPE, first);
+		expect(notificationSettingsStore.getState().settings.globalMute).toBe(
+			false
+		);
+		finishers[0]();
+		await vi.waitFor(() =>
+			expect(client.setAccountData).toHaveBeenCalledTimes(2)
+		);
+		expect(client.setAccountData).toHaveBeenLastCalledWith(
+			NOTIFICATION_SETTINGS_EVENT_TYPE,
+			expect.objectContaining({ globalMute: false })
+		);
+		finishers[1]();
 	});
 
 	it('device silence writes ONLY the device-scoped event type', () => {
@@ -470,5 +595,39 @@ describe('global do-not-disturb', () => {
 				now
 			)
 		).toBe(false);
+	});
+});
+
+describe('tones the dialog no longer offers (FE#1211)', () => {
+	it.each(['chime', 'ding', 'soft'])(
+		'%s becomes the short default tone, keeping its volume',
+		(sound) => {
+			const parsed = parseNotificationSettings({
+				notificationConfig: {
+					conversations: { standard: { sound, volume: 0.75 } }
+				},
+				systemTone: { sound, volume: 0.25 }
+			});
+
+			expect(parsed.notificationConfig.conversations.standard).toEqual(
+				expect.objectContaining({ sound: 'ton-2', volume: 0.75 })
+			);
+			expect(parsed.systemTone).toEqual({
+				sound: 'ton-2',
+				volume: 0.25
+			});
+		}
+	);
+
+	it.each(['none', 'default', 'ring', 'ton-7'])('%s stays', (sound) => {
+		const parsed = parseNotificationSettings({
+			notificationConfig: { conversations: { standard: { sound } } },
+			systemTone: { sound }
+		});
+
+		expect(parsed.notificationConfig.conversations.standard.sound).toBe(
+			sound
+		);
+		expect(parsed.systemTone.sound).toBe(sound);
 	});
 });

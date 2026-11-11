@@ -1,12 +1,15 @@
 import * as React from 'react';
-import { expect, within } from 'storybook/test';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Route, Routes } from 'react-router-dom';
+import { Link, Route, Routes } from 'react-router-dom';
 import { UserDataContext } from '../../globalState';
 import { ConsultingTypesContext } from '../../globalState/provider/ConsultingTypesProvider';
 import { ModalProvider } from '../../globalState/provider/ModalProvider';
 import { SessionsDataContext } from '../../globalState/provider/SessionsDataProvider';
+import { LegalLinksProvider } from '../../globalState/provider/LegalLinksProvider';
+import { AuthenticatedBuildIdentityBoundary } from '../app/BuildIdentity';
 import { Profile } from './Profile';
+import '../app/authenticatedApp.styles.scss';
 
 /**
  * #878 Phase 1: the wired settings tab. The real `Profile` page renders the
@@ -234,5 +237,186 @@ export const ConsultantMobile390Keyboard: Story = {
 	globals: phone390,
 	parameters: {
 		router: { initialPath: '/profile/einstellungen/tastatur' }
+	}
+};
+
+const legalDocuments = [
+	{
+		url: '/datenschutz',
+		label: 'login.legal.infoText.dataprotection',
+		registration: true
+	},
+	{
+		url: '/impressum',
+		label: 'login.legal.infoText.impressum',
+		registration: true
+	}
+];
+
+const ProfileFooterStage = ({ withNavigation = false }) => (
+	<AuthenticatedBuildIdentityBoundary>
+		<LegalLinksProvider legalLinks={legalDocuments}>
+			<div className="app__wrapper" style={{ height: '100dvh' }}>
+				<nav
+					className="navigation__wrapper"
+					aria-hidden={!withNavigation}
+				>
+					{withNavigation && (
+						<Link to="/sessions/consultant/sessionView">
+							Gespräch
+						</Link>
+					)}
+				</nav>
+				<main className="contentWrapper">
+					<Routes>
+						<Route
+							path="/profile/*"
+							element={
+								<div className="contentWrapper__profile">
+									<Profile />
+								</div>
+							}
+						/>
+						<Route
+							path="/sessions/consultant/sessionView"
+							element={<h1>Gespräch</h1>}
+						/>
+					</Routes>
+				</main>
+			</div>
+		</LegalLinksProvider>
+	</AuthenticatedBuildIdentityBoundary>
+);
+
+const withPlatformVersion = (version: string) => () => {
+	const runtimeWindow: Window & {
+		__ORISO_RUNTIME_CONFIG__?: Record<string, string | undefined>;
+	} = window;
+	const previous = runtimeWindow.__ORISO_RUNTIME_CONFIG__;
+	runtimeWindow.__ORISO_RUNTIME_CONFIG__ = {
+		...previous,
+		REACT_APP_PLATFORM_VERSION: version,
+		VITE_PLATFORM_VERSION: undefined
+	};
+	return () => {
+		runtimeWindow.__ORISO_RUNTIME_CONFIG__ = previous;
+	};
+};
+
+const legalFooter = (canvasElement: HTMLElement) => {
+	const footer = canvasElement.querySelector<HTMLElement>('.profile__footer');
+	if (!footer) throw new Error('Profile legal footer is missing');
+	return footer;
+};
+
+const footerLabels = {
+	de: ['Datenschutzerklärung', 'Impressum'],
+	en: ['Privacy policy', 'Imprint'],
+	fr: ['Déclaration de confidentialité', 'Mentions légales']
+};
+
+const verifyFooter =
+	(width: number, locale: keyof typeof footerLabels = 'de'): Story['play'] =>
+	async ({ canvasElement }) => {
+		const footer = legalFooter(canvasElement);
+		footer.scrollIntoView({ block: 'end' });
+		await waitFor(async () => {
+			await expect(window.innerWidth).toBe(width);
+			const identities =
+				within(canvasElement).getAllByTestId('build-identity');
+			await expect(identities).toHaveLength(1);
+			const identity = identities[0];
+			await expect(identity).toBeVisible();
+			const build = identity.getBoundingClientRect();
+			const links = within(footer).getAllByRole('link');
+			await expect(links).toHaveLength(2);
+			for (const [index, link] of links.entries()) {
+				await expect(link).toHaveAccessibleName(
+					footerLabels[locale][index]
+				);
+				await expect(link).toHaveAttribute(
+					'href',
+					`${window.location.origin}${legalDocuments[index].url}`
+				);
+				await expect(link).toHaveAttribute('target', '_blank');
+				const rect = link.getBoundingClientRect();
+				await expect(rect.left).toBeGreaterThanOrEqual(0);
+				await expect(rect.right).toBeLessThanOrEqual(width);
+				const overlaps =
+					build.left < rect.right &&
+					build.right > rect.left &&
+					build.top < rect.bottom &&
+					build.bottom > rect.top;
+				await expect(overlaps).toBe(false);
+			}
+			await expect(footer).toContainElement(identity);
+			await expect(build.left).toBeGreaterThanOrEqual(0);
+			await expect(build.right).toBeLessThanOrEqual(width);
+		});
+	};
+
+export const LegalFooterDesktop1440: Story = {
+	decorators: [withStage(consultant)],
+	globals: desktop1440,
+	parameters: { router: { initialPath: '/profile/einstellungen/email' } },
+	beforeEach: withPlatformVersion('v2.0.15'),
+	render: () => <ProfileFooterStage />,
+	play: verifyFooter(1440)
+};
+
+export const LegalFooterTablet820: Story = {
+	...LegalFooterDesktop1440,
+	globals: { viewport: { value: 'tablet820' }, locale: 'en' },
+	play: verifyFooter(820, 'en')
+};
+
+export const LegalFooterMobile390: Story = {
+	...LegalFooterDesktop1440,
+	globals: phone390,
+	play: verifyFooter(390)
+};
+
+export const LegalFooterMobileFrench390: Story = {
+	...LegalFooterMobile390,
+	globals: { ...phone390, locale: 'fr' },
+	play: verifyFooter(390, 'fr')
+};
+
+export const LegalFooterReturnsIdentityToShell: Story = {
+	...LegalFooterDesktop1440,
+	render: () => <ProfileFooterStage withNavigation />,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const profileIdentity = await within(
+			legalFooter(canvasElement)
+		).findByTestId('build-identity');
+		await expect(profileIdentity).toBeVisible();
+		const label = profileIdentity.textContent ?? '';
+
+		await userEvent.click(canvas.getByRole('link', { name: 'Gespräch' }));
+		await expect(
+			await canvas.findByRole('heading', { name: 'Gespräch' })
+		).toBeVisible();
+		await waitFor(async () => {
+			const identities = canvas.getAllByTestId('build-identity');
+			await expect(identities).toHaveLength(1);
+			await expect(identities[0]).toHaveTextContent(label);
+			await expect(
+				identities[0].closest('.app__platformVersion')
+			).not.toBeNull();
+		});
+	}
+};
+
+export const LegalFooterWithoutIdentity: Story = {
+	...LegalFooterMobile390,
+	beforeEach: withPlatformVersion(''),
+	play: async ({ canvasElement }) => {
+		const footer = legalFooter(canvasElement);
+		await expect(within(footer).getAllByRole('link')).toHaveLength(2);
+		await expect(
+			within(canvasElement).queryByTestId('build-identity')
+		).toBeNull();
+		await expect(footer.children).toHaveLength(3);
 	}
 };

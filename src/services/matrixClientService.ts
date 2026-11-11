@@ -1,5 +1,10 @@
 import { clearSecretStorageKeys } from './matrixKeyBackupService';
-import { MatrixClient, Room, MatrixEvent } from 'matrix-js-sdk';
+import {
+	bindDraftCryptographyClient,
+	handleDraftRecoveryAccountData,
+	unbindDraftCryptographyClient
+} from './draftCryptography';
+import { ClientEvent, MatrixClient, Room, MatrixEvent } from 'matrix-js-sdk';
 import {
 	MatrixLoginData,
 	clearPersistedMatrixDeviceId,
@@ -9,6 +14,10 @@ import {
 } from '../components/sessionCookie/getMatrixAccessToken';
 import { matrixCallService } from './matrixCallService';
 import { buildMatrixCryptoStorePrefix } from './matrixCrypto';
+import {
+	canSubmitRustKeysQuery,
+	submitRustKeysQuery
+} from './matrixRustKeysQuery';
 import { applyDeviceIsolationMode } from './matrixDeviceIsolation';
 import { matrixDecryptionRetry } from './matrixDecryptionRetry';
 import { appConfig } from '../utils/appConfig';
@@ -27,6 +36,7 @@ import {
 } from '../utils/messageRelations';
 
 import { getImageDimensions } from '../utils/imageDimensions';
+import { buildMentionsContent } from '../utils/messageMentions';
 
 const TOKEN_REFRESH_BUFFER_MS = 2 * 60 * 1000;
 const isPreparedSyncState = (state: string | null): boolean =>
@@ -47,9 +57,35 @@ type RefreshableRustCrypto = {
 	};
 };
 
-export interface MatrixFileMessageOptions extends MessageRelationOptions {
+export interface MatrixFileContentOptions extends MessageRelationOptions {
+	/**
+	 * The text that goes with the file (MSC2530): `body` carries it and
+	 * `filename` keeps the name. Clients without caption support show the
+	 * text as the file's name, nothing is lost.
+	 */
+	caption?: string;
+	/** Intentional mentions in the caption (m.mentions). */
+	mentionedUserIds?: string[];
+}
+
+export interface MatrixFileMessageOptions extends MatrixFileContentOptions {
 	abortController?: AbortController;
 	uploadProgress?: (percentUpload: number) => void;
+}
+
+/**
+ * The Matrix token could not be fetched or refreshed, so the upload never
+ * started. `fetchData` hands over a bare "CATCH_ALL" for any status, so without
+ * this name a token 503 reads like any other unexplained failure.
+ */
+export class MatrixTokenUnavailableError extends Error {
+	public readonly cause: unknown;
+
+	constructor(cause: unknown) {
+		super('Matrix token unavailable');
+		this.name = 'MatrixTokenUnavailableError';
+		this.cause = cause;
+	}
 }
 
 const getMatrixFileMessageType = (file: File): string => {
@@ -70,10 +106,11 @@ export const buildMatrixFileMessageContent = (
 	file: File,
 	encryptedFile: Awaited<ReturnType<typeof encryptMatrixAttachment>>['file'],
 	dimensions?: { w: number; h: number } | null,
-	options?: MessageRelationOptions
+	options?: MatrixFileContentOptions
 ): Record<string, unknown> => ({
 	...buildMessageRelationContent(options),
-	body: file.name,
+	...(options?.caption ? buildMentionsContent(options.mentionedUserIds) : {}),
+	body: options?.caption || file.name,
 	filename: file.name,
 	msgtype: getMatrixFileMessageType(file),
 	file: encryptedFile,
@@ -162,9 +199,15 @@ export class MatrixClientService {
 	public async initializeClient(loginData: MatrixLoginData): Promise<void> {
 		this.stopCurrentClient();
 		this.loginData = loginData;
-		this.client = createMatrixClient(loginData, (...messages) => {
-			this.handleMatrixSdkError(loginData.deviceId, messages);
-		});
+		try {
+			this.client = createMatrixClient(loginData, (...messages) => {
+				this.handleMatrixSdkError(loginData.deviceId, messages);
+			});
+		} catch (error) {
+			unbindDraftCryptographyClient(this);
+			throw error;
+		}
+		bindDraftCryptographyClient(this, this.client, loginData.userId);
 		this.syncState = null;
 		this.initializedServicesClient = null;
 		this.notifySyncStateListeners();
@@ -208,6 +251,9 @@ export class MatrixClientService {
 		// Before startClient: the first device-list query of the initial sync
 		// must already re-decrypt what the SDK refused for an unknown sender.
 		matrixDecryptionRetry.initialize(client);
+		client.on(ClientEvent.AccountData, (event) =>
+			handleDraftRecoveryAccountData(client, event)
+		);
 
 		(client as any).on(
 			'sync',
@@ -233,6 +279,11 @@ export class MatrixClientService {
 		});
 
 		// console.log("✅ Matrix client starting with real-time sync...");
+	}
+
+	/** Authentication subject that established this exact Matrix client. */
+	public getAuthenticatedSubject(): string | null {
+		return this.loginData?.authenticatedSubject ?? null;
 	}
 
 	// Get current client
@@ -521,14 +572,11 @@ export class MatrixClientService {
 				| RefreshableRustCrypto
 				| undefined;
 			const olmMachine = crypto?.olmMachine;
-			const makeOutgoingRequest =
-				crypto?.outgoingRequestProcessor?.makeOutgoingRequest;
 			if (
 				!room ||
 				typeof room.getEncryptionTargetMembers !== 'function' ||
 				typeof olmMachine?.trackedUsers !== 'function' ||
-				typeof olmMachine.queryKeysForUsers !== 'function' ||
-				typeof makeOutgoingRequest !== 'function'
+				!canSubmitRustKeysQuery(crypto)
 			) {
 				return false;
 			}
@@ -552,12 +600,7 @@ export class MatrixClientService {
 				return false;
 			}
 
-			const request = olmMachine.queryKeysForUsers(queryUsers);
-			await makeOutgoingRequest.call(
-				crypto.outgoingRequestProcessor,
-				request
-			);
-			return true;
+			return submitRustKeysQuery(crypto, queryUsers);
 		})();
 
 		roomRefreshes.set(roomId, refresh);
@@ -602,27 +645,7 @@ export class MatrixClientService {
 					? client.sendMessage(roomId, content, txnId)
 					: client.sendMessage(roomId, content));
 			} catch (error) {
-				// matrix-js-sdk keeps a rejected send as a NOT_SENT local echo.
-				// The ORISO timeline owns failed-message presentation and retry,
-				// so retaining the SDK echo as well would reveal two copies after
-				// the user successfully retries with a fresh transaction.
-				const room = client.getRoom(roomId);
-				const errorEvent = (error as { event?: MatrixEvent })?.event;
-				const failedLocalEcho = txnId
-					? errorEvent?.getTxnId?.() === txnId
-						? errorEvent
-						: room?.timeline?.find(
-								(event) => event.getTxnId?.() === txnId
-							)
-					: undefined;
-				if (failedLocalEcho) {
-					try {
-						client.cancelPendingEvent(failedLocalEcho);
-					} catch {
-						// Preserve the original transport error. A status race must not
-						// turn failed-send recovery into a second exception.
-					}
-				}
+				this.dropFailedLocalEcho(client, roomId, txnId, error);
 				throw error;
 			}
 		};
@@ -719,7 +742,17 @@ export class MatrixClientService {
 		file: File,
 		options: MatrixFileMessageOptions = {}
 	): Promise<any> {
-		await this.ensureFreshToken();
+		const withTokenFailureNamed = (refresh: Promise<void>) =>
+			refresh.catch((error: unknown) => {
+				throw new MatrixTokenUnavailableError(error);
+			});
+		// A cancel has to stop the send at every step that is still ours: once
+		// the event is on its way it cannot be taken back.
+		const stopIfCancelled = () =>
+			options.abortController?.signal.throwIfAborted();
+
+		await withTokenFailureNamed(this.ensureFreshToken());
+		stopIfCancelled();
 
 		// Token or stale-device recovery can replace this.client between awaits.
 		// Each attempt pins one client so the device-key refresh, the upload and
@@ -735,7 +768,20 @@ export class MatrixClientService {
 				file,
 				options
 			);
-			return client.sendMessage(roomId, content as any);
+			stopIfCancelled();
+			// Every real matrix-js-sdk client provides makeTxnId(). The guard
+			// keeps minimal test doubles compatible.
+			const txnId = client.makeTxnId?.();
+			try {
+				return await (txnId
+					? client.sendMessage(roomId, content as any, txnId)
+					: client.sendMessage(roomId, content as any));
+			} catch (error) {
+				// Same as text: the composer offers the retry, so the SDK's
+				// NOT_SENT echo would show a second copy after it succeeds.
+				this.dropFailedLocalEcho(client, roomId, txnId, error);
+				throw error;
+			}
 		};
 
 		try {
@@ -745,7 +791,8 @@ export class MatrixClientService {
 				throw error;
 			}
 
-			await this.refreshMatrixToken();
+			await withTokenFailureNamed(this.refreshMatrixToken());
+			stopIfCancelled();
 			return sendWithCurrentClient();
 		}
 	}
@@ -909,6 +956,7 @@ export class MatrixClientService {
 	/** Stops sync, removes listeners, and tears down bridge/call services (no Matrix logout API). */
 	public stopAndCleanup(): void {
 		const hadClient = this.client !== null;
+		unbindDraftCryptographyClient(this);
 		this.teardownClient();
 		if (hadClient) {
 			this.notifyClientChangeListeners();
@@ -937,6 +985,35 @@ export class MatrixClientService {
 
 	public hasActiveClient(): boolean {
 		return this.client !== null;
+	}
+
+	/**
+	 * matrix-js-sdk keeps a rejected send as a NOT_SENT local echo. The ORISO
+	 * timeline owns failed-message presentation and retry, so retaining the SDK
+	 * echo as well would reveal two copies after the user successfully retries
+	 * with a fresh transaction.
+	 */
+	private dropFailedLocalEcho(
+		client: MatrixClient,
+		roomId: string,
+		txnId: string | undefined,
+		error: unknown
+	): void {
+		const room = client.getRoom(roomId);
+		const errorEvent = (error as { event?: MatrixEvent })?.event;
+		const failedLocalEcho = txnId
+			? errorEvent?.getTxnId?.() === txnId
+				? errorEvent
+				: room?.timeline?.find((event) => event.getTxnId?.() === txnId)
+			: undefined;
+		if (failedLocalEcho) {
+			try {
+				client.cancelPendingEvent(failedLocalEcho);
+			} catch {
+				// Preserve the original transport error. A status race must not
+				// turn failed-send recovery into a second exception.
+			}
+		}
 	}
 
 	private async uploadFileMessageContent(

@@ -13,7 +13,14 @@ import {
 } from '../../../services/recoveryReminderState';
 import { logout } from '../../logout/logout';
 import * as React from 'react';
-import { useCallback, useContext, useEffect, useRef, useState } from 'react';
+import {
+	useCallback,
+	useContext,
+	useEffect,
+	useRef,
+	useState,
+	useSyncExternalStore
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import type { MatrixClient } from 'matrix-js-sdk';
 import { Headline } from '../../headline/Headline';
@@ -22,6 +29,11 @@ import { Button, BUTTON_TYPES } from '../../button/Button';
 import { InputField, InputFieldItem } from '../../inputField/InputField';
 import { OrisoTextField } from '../../form/OrisoTextField';
 import { getMatrixClientService } from '../../../services/matrixClientRegistry';
+import {
+	getDraftAuthSessionIdentity,
+	getDraftCryptographyForWindow,
+	subscribeDraftCryptographyForWindow
+} from '../../../services/draftCryptographyWindow';
 import {
 	EncryptionSetupStatus,
 	getEncryptionStatus,
@@ -118,6 +130,16 @@ export const EncryptionSettingsPanel = ({
 		confirmLoginPassword.length > 0 &&
 		loginPassword !== confirmLoginPassword;
 	const passwordStatus = useRecoveryRuntimeStatus(userId ?? '');
+	const draftOwner = useSyncExternalStore(
+		subscribeDraftCryptographyForWindow,
+		getDraftAuthSessionIdentity,
+		() => null
+	);
+	const draftCryptography = useSyncExternalStore(
+		subscribeDraftCryptographyForWindow,
+		getDraftCryptographyForWindow,
+		() => null
+	);
 	const canOfferPasswordRecovery = ![
 		'idle',
 		'pending',
@@ -346,6 +368,23 @@ export const EncryptionSettingsPanel = ({
 		label: t('profile.encryption.recover.inputLabel'),
 		content: recoveryInput
 	};
+
+	const recoverControls = (
+		<>
+			<InputField
+				item={recoveryInputItem}
+				inputHandle={(event) => setRecoveryInput(event.target.value)}
+			/>
+			<Button
+				item={{
+					label: t('profile.encryption.recover.cta'),
+					type: BUTTON_TYPES.PRIMARY
+				}}
+				disabled={busy || !recoveryInput.trim()}
+				buttonHandle={onRecover}
+			/>
+		</>
+	);
 
 	const renderHeader = () =>
 		showHeading && (
@@ -630,6 +669,12 @@ export const EncryptionSettingsPanel = ({
 							/>
 						</div>
 					)}
+					{/* A previously ready Matrix device may still need 4S after a document reload. */}
+					{draftOwner &&
+						!draftCryptography &&
+						!offerStaleEnvelopeRepair &&
+						!offerExistingKeyEnrollment &&
+						recoverControls}
 					{recoveredCount !== null && (
 						<Text
 							text={t('profile.encryption.recover.success', {
@@ -683,24 +728,7 @@ export const EncryptionSettingsPanel = ({
 					</div>
 					{/* The repair above takes the recovery key too, and
 					    re-seals it under the current password as well. */}
-					{!offerStaleEnvelopeRepair && (
-						<>
-							<InputField
-								item={recoveryInputItem}
-								inputHandle={(event) =>
-									setRecoveryInput(event.target.value)
-								}
-							/>
-							<Button
-								item={{
-									label: t('profile.encryption.recover.cta'),
-									type: BUTTON_TYPES.PRIMARY,
-									disabled: busy || !recoveryInput.trim()
-								}}
-								buttonHandle={onRecover}
-							/>
-						</>
-					)}
+					{!offerStaleEnvelopeRepair && recoverControls}
 					<hr />
 					<Text
 						text={t('profile.encryption.reset.explainer')}
