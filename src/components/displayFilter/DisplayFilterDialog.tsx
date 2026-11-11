@@ -107,7 +107,9 @@ export interface DisplayFilterDialogProps {
 	onReset: () => void;
 	/** Sections without auto-read (Anfragen, spec §5.3) hide the switch. */
 	showAutoRead?: boolean;
-	/** Store in read-only mode (spec §7 version rule): controls disabled, hint shown. */
+	/** Store is ready to accept edits. A pending initial sync also locks controls. */
+	canWrite?: boolean;
+	/** Newer account data (spec §7 version rule): controls disabled, upgrade hint shown. */
 	readOnly?: boolean;
 	onOpenProfile?: () => void;
 	labels: DisplayFilterDialogLabels;
@@ -167,6 +169,7 @@ export const DisplayFilterDialog = ({
 	onChange,
 	onReset,
 	showAutoRead = true,
+	canWrite = true,
 	readOnly = false,
 	onOpenProfile,
 	labels,
@@ -179,6 +182,7 @@ export const DisplayFilterDialog = ({
 	browserUnavailableReason,
 	browserMutedNotice
 }: DisplayFilterDialogProps) => {
+	const controlsDisabled = !canWrite || readOnly;
 	// Show-only kinds (the future timeline panel) have no row in the sound
 	// mode table; they keep a plain switch so the panel stays toggleable.
 	const panelKinds = columns.show
@@ -281,7 +285,7 @@ export const DisplayFilterDialog = ({
 					kinds={mainKinds}
 					value={value}
 					onChange={onChange}
-					readOnly={readOnly}
+					readOnly={controlsDisabled}
 					labels={labels}
 					idPrefix={dialogId}
 					columns={columns}
@@ -312,7 +316,7 @@ export const DisplayFilterDialog = ({
 						kinds={quickKinds}
 						value={value}
 						onChange={onChange}
-						readOnly={readOnly}
+						readOnly={controlsDisabled}
 						labels={labels}
 						idPrefix={`${dialogId}-quick`}
 						columns={columns}
@@ -355,7 +359,7 @@ export const DisplayFilterDialog = ({
 									name={`${dialogId}-view`}
 									value={view}
 									checked={presentation.view === view}
-									disabled={readOnly}
+									disabled={controlsDisabled}
 									onChange={() => setView(view)}
 									data-cy={`display-filter-view-${view}`}
 								/>
@@ -388,7 +392,7 @@ export const DisplayFilterDialog = ({
 					</div>
 					<Switch
 						checked={presentation.autoSort}
-						disabled={readOnly}
+						disabled={controlsDisabled}
 						aria-labelledby={`${dialogId}-autosort`}
 						aria-describedby={`${dialogId}-autosort-desc`}
 						data-cy="display-filter-autosort"
@@ -413,7 +417,7 @@ export const DisplayFilterDialog = ({
 						</div>
 						<Switch
 							checked={resolveKindSetting(value, kind.id).show}
-							disabled={readOnly}
+							disabled={controlsDisabled}
 							aria-labelledby={`${dialogId}-panel-${kind.id}`}
 							data-cy={`display-filter-panel-${kind.id}`}
 							onChange={(checked) =>
@@ -445,7 +449,7 @@ export const DisplayFilterDialog = ({
 						</div>
 						<Switch
 							checked={value.autoReadHidden}
-							disabled={readOnly}
+							disabled={controlsDisabled}
 							aria-labelledby={`${dialogId}-autoread`}
 							aria-describedby={`${dialogId}-autoread-desc`}
 							data-cy="display-filter-autoread"
@@ -467,7 +471,7 @@ export const DisplayFilterDialog = ({
 								type="button"
 								className="displayFilterDialog__profileLink"
 								onClick={onReset}
-								disabled={readOnly}
+								disabled={controlsDisabled}
 								data-cy="display-filter-reset"
 								data-testid="display-filter-reset"
 							>

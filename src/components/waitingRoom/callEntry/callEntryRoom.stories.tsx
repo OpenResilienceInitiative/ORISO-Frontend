@@ -278,6 +278,26 @@ export const VideoUserIdGeneratedOnly: Story = {
 	}
 };
 
+export const VideoPostcodeForRegisteredLink: Story = {
+	name: 'Video · postcode for a registered direct link (#1795)',
+	globals: desktop1440Globals,
+	args: { ...ready, modality: 'video', askPostcode: true },
+	play: async ({ canvasElement, canvas }) => {
+		await expectWaitingRoomLayout(canvasElement);
+		// The gate waits for five digits; the field says what it is for.
+		await expectProgress(canvasElement, 75);
+		await expect(
+			canvas.getByText('Noch offen: Postleitzahl')
+		).toBeVisible();
+		const field = canvasElement.querySelector<HTMLInputElement>(
+			'input[autocomplete="postal-code"]'
+		);
+		await userEvent.type(field as HTMLInputElement, '10115');
+		await waitFor(() => expect(field?.value).toBe('10115'));
+		await expectProgress(canvasElement, 100);
+	}
+};
+
 export const VideoUserIdTaken: Story = {
 	name: 'Video · User-ID already taken',
 	globals: desktop1440Globals,
