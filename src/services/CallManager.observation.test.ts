@@ -8,6 +8,7 @@ import {
 } from 'vite-plus/test';
 
 import { callManager } from './CallManager';
+import { callLifecycleTracker } from './callLifecycleTracker';
 import { setMatrixClientServiceRef } from './matrixClientRegistry';
 import {
 	callEventListeners,
@@ -24,6 +25,7 @@ vi.mock('../api/apiCallObservation', () => ({
 }));
 
 const SOURCE = '!group:oriso.example';
+const OTHER_SOURCE = '!other-group:oriso.example';
 const ROOM = '!call:oriso.example';
 
 describe('call observation across sign-out', () => {
@@ -56,8 +58,12 @@ describe('call observation across sign-out', () => {
 		setMatrixClientServiceRef({ getClient: () => client } as never);
 	});
 
-	afterEach(() => {
+	afterEach(async () => {
 		callManager.endCall(false);
+		// A superseded call's observation outlives endCall; clear it so it
+		// cannot block the next test's fallback.
+		await callEventListeners(EVENT_SESSION_TEARDOWN);
+		vi.restoreAllMocks();
 		vi.useRealTimers();
 		vi.unstubAllEnvs();
 	});
@@ -112,7 +118,6 @@ describe('call observation across sign-out', () => {
 		await vi.advanceTimersByTimeAsync(4 * 60 * 1000);
 		await vi.waitFor(() => expect(register).toHaveBeenCalledTimes(2));
 		const callId = callManager.getCurrentCall()!.callId;
-		const { callLifecycleTracker } = await import('./callLifecycleTracker');
 		callLifecycleTracker.finish(callId);
 		await vi.advanceTimersByTimeAsync(10 * 60 * 1000);
 		expect(register).toHaveBeenCalledTimes(2);
@@ -136,5 +141,93 @@ describe('call observation across sign-out', () => {
 		await callEventListeners(EVENT_SESSION_TEARDOWN);
 		await vi.advanceTimersByTimeAsync(10 * 60 * 1000);
 		expect(register).toHaveBeenCalledTimes(1);
+	});
+	/** Holds the invite for SOURCE until the test acknowledges it. */
+	const holdInvite = () => {
+		let acknowledge!: (value: unknown) => void;
+		const held = new Promise((resolve) => {
+			acknowledge = resolve;
+		});
+		sendEvent.mockImplementation((roomId: string) =>
+			roomId === SOURCE ? held : Promise.resolve({ event_id: '$invite' })
+		);
+		return (value: unknown) => acknowledge(value);
+	};
+
+	/** The tracker reports the superseded call as joined and still running. */
+	const treatAsAttended = () => {
+		vi.spyOn(callLifecycleTracker, 'finishIfUnattended').mockReturnValue(
+			false
+		);
+		vi.spyOn(callLifecycleTracker, 'isAttendedAndRunning').mockReturnValue(
+			true
+		);
+	};
+
+	it('never registers the old call after sign-out and a second account signing in', async () => {
+		vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
+		const acknowledge = holdInvite();
+		callManager.startCall(SOURCE, true, true);
+		await vi.waitFor(() => expect(sendEvent).toHaveBeenCalled());
+		await callEventListeners(EVENT_SESSION_TEARDOWN);
+		userId = '@second:oriso.example';
+		acknowledge({ event_id: '$late' });
+		await new Promise((resolve) => setTimeout(resolve, 20));
+		await vi.advanceTimersByTimeAsync(10 * 60 * 1000);
+		expect(register).not.toHaveBeenCalled();
+	});
+
+	it('keeps an attended call observable when its start was superseded', async () => {
+		const acknowledge = holdInvite();
+		treatAsAttended();
+		callManager.startCall(SOURCE, true, true);
+		await vi.waitFor(() => expect(sendEvent).toHaveBeenCalled());
+		callManager.endCall(false); // supersedes the pending start
+		acknowledge({ event_id: '$late' });
+		await vi.waitFor(() => expect(register).toHaveBeenCalledTimes(1));
+		expect(register.mock.calls[0][0]).toMatchObject({
+			sourceRoomId: SOURCE,
+			callRoomId: ROOM
+		});
+	});
+
+	it('does not observe a superseded attended call once another account is signed in', async () => {
+		const acknowledge = holdInvite();
+		treatAsAttended();
+		callManager.startCall(SOURCE, true, true);
+		await vi.waitFor(() => expect(sendEvent).toHaveBeenCalled());
+		callManager.endCall(false);
+		userId = '@second:oriso.example'; // no teardown seen
+		acknowledge({ event_id: '$late' });
+		await new Promise((resolve) => setTimeout(resolve, 20));
+		expect(register).not.toHaveBeenCalled();
+	});
+
+	it('does not observe a superseded attended call after sign-out, even for the same account', async () => {
+		const acknowledge = holdInvite();
+		treatAsAttended();
+		callManager.startCall(SOURCE, true, true);
+		await vi.waitFor(() => expect(sendEvent).toHaveBeenCalled());
+		callManager.endCall(false);
+		await callEventListeners(EVENT_SESSION_TEARDOWN); // same account signs back in
+		acknowledge({ event_id: '$late' });
+		await new Promise((resolve) => setTimeout(resolve, 20));
+		expect(register).not.toHaveBeenCalled();
+	});
+
+	it('does not take over the observation a newer call already owns', async () => {
+		const acknowledge = holdInvite();
+		treatAsAttended();
+		callManager.startCall(SOURCE, true, true);
+		await vi.waitFor(() => expect(sendEvent).toHaveBeenCalled());
+		// A second start in another room supersedes the first and is observed.
+		callManager.startCall(OTHER_SOURCE, true, true);
+		await vi.waitFor(() => expect(register).toHaveBeenCalledTimes(1));
+		acknowledge({ event_id: '$late' });
+		await new Promise((resolve) => setTimeout(resolve, 20));
+		expect(register).toHaveBeenCalledTimes(1);
+		expect(register.mock.calls[0][0]).toMatchObject({
+			sourceRoomId: OTHER_SOURCE
+		});
 	});
 });
