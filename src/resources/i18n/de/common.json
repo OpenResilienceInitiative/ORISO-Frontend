@@ -3758,7 +3758,6 @@
 				"note": "Bis dahin schreiben Sie ganz normal, und Ihre Nachrichten bleiben für die anderen erhalten. Sie selbst können danach nicht mehr in dieses Gespräch zurück."
 			},
 			"displayName": {
-				"matchesPassword": "Ihr Passwort darf nicht im Anzeigenamen stehen.",
 				"optional": "Anzeigename (optional). Ohne Angabe wird Ihre User-ID angezeigt.",
 				"suggest": "Würfeln",
 				"useUsername": "User-ID nutzen"

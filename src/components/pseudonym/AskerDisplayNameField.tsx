@@ -7,7 +7,6 @@ export interface AskerDisplayNameFieldProps {
 	onChange: (value: string) => void;
 	editable: boolean;
 	disabled?: boolean;
-	errorText?: string;
 }
 
 /**
@@ -19,8 +18,7 @@ export const AskerDisplayNameField = ({
 	value,
 	onChange,
 	editable,
-	disabled = false,
-	errorText
+	disabled = false
 }: AskerDisplayNameFieldProps) => {
 	const { t } = useTranslation();
 	return (
@@ -28,8 +26,6 @@ export const AskerDisplayNameField = ({
 			name="displayName"
 			value={value}
 			placeholder={t('profile.data.displayName')}
-			helperText={errorText}
-			error={Boolean(errorText)}
 			fullWidth
 			disabled={disabled}
 			onChange={(event) => {

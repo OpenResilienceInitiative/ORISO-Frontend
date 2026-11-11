@@ -56,11 +56,3 @@ export const GeneratedOnly: Story = {
 	}
 };
 export const Saving: Story = { args: { disabled: true } };
-export const WithError: Story = {
-	args: { errorText: 'Your password must not be part of your display name.' },
-	play: async ({ canvasElement }) => {
-		await expect(
-			within(canvasElement).getByRole('textbox')
-		).toHaveAttribute('aria-invalid', 'true');
-	}
-};
