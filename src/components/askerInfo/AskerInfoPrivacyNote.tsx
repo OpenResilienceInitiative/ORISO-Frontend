@@ -32,7 +32,9 @@ export const AskerInfoPrivacyNote = () => {
 		userData
 	);
 	const item = activeSession?.item;
-	const topicId = (item?.topic as { id?: number } | undefined)?.id;
+	// The topic object may be absent while the session still names its topic.
+	const topicId =
+		(item?.topic as { id?: number } | undefined)?.id ?? item?.mainTopicId;
 	const enabled = isConsultant && !activeSession?.isGroup && !!topicId;
 
 	const { data } = useDepartmentLegal(item?.agencyId, topicId, { enabled });

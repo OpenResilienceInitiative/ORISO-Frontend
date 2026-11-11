@@ -32,11 +32,13 @@ const legal = (content: string | null) => ({
 const renderNote = ({
 	authority = AUTHORITIES.CONSULTANT_DEFAULT,
 	isGroup = false,
-	topic = { id: 14 } as { id: number } | null
+	topic = { id: 14 } as { id: number } | null,
+	mainTopicId
 }: {
 	authority?: string;
 	isGroup?: boolean;
 	topic?: { id: number } | null;
+	mainTopicId?: number;
 } = {}) =>
 	render(
 		<UserDataContext.Provider
@@ -47,7 +49,7 @@ const renderNote = ({
 					{
 						activeSession: {
 							isGroup,
-							item: { id: 41, agencyId: 3, topic }
+							item: { id: 41, agencyId: 3, topic, mainTopicId }
 						}
 					} as any
 				}
@@ -68,6 +70,15 @@ describe('AskerInfoPrivacyNote', () => {
 			await screen.findByText('askerInfo.noPrivacyNotice.title')
 		).toBeTruthy();
 		expect(getCachedDepartmentLegal).toHaveBeenCalledWith(3, 14);
+	});
+
+	it('falls back to mainTopicId when the topic object is absent', async () => {
+		vi.mocked(getCachedDepartmentLegal).mockResolvedValue(legal(null));
+		renderNote({ topic: null, mainTopicId: 22 });
+		expect(
+			await screen.findByText('askerInfo.noPrivacyNotice.title')
+		).toBeTruthy();
+		expect(getCachedDepartmentLegal).toHaveBeenCalledWith(3, 22);
 	});
 
 	it('stays silent when a privacy notice is stored', async () => {
