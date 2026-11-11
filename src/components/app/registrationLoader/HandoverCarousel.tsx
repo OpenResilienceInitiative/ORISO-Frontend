@@ -291,7 +291,11 @@ export const HandoverCarousel = ({
 						sx={{
 							flex: 'none',
 							width: CARD_WIDTH,
-							scrollSnapAlign: { xs: 'center', sm: 'start' },
+							// Centre on every width: the dots and a released
+							// drag centre their card (`cardTargets`), and a
+							// start snap would pull the middle card off to an
+							// end where two cards fit at once.
+							scrollSnapAlign: 'center',
 							display: 'flex',
 							flexDirection: 'column',
 							bgcolor: registrationMd3.surface,

@@ -210,6 +210,13 @@ export const ReadyDotsFollowTheCards: StoryObj = {
 		await userEvent.click(dots()[0]);
 		await waitFor(() => expect(track.scrollLeft).toBe(0));
 
+		// The middle dot centres the middle card, and it stays there once
+		// the browser's own snapping has settled.
+		await userEvent.click(dots()[1]);
+		await waitFor(() => expect(activeDot()).toBe(1));
+		await new Promise((resolve) => setTimeout(resolve, 600));
+		expect(activeDot()).toBe(1);
+
 		// The last dot goes to the end again.
 		await userEvent.click(dots()[last]);
 		await waitFor(() => {
