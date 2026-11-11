@@ -436,6 +436,20 @@ export const ManagePeopleDialog = ({
 		);
 	};
 
+	// Above the list, so the result of a click is seen without scrolling.
+	const feedback = (
+		<>
+			{people.actionError && (
+				<p role="alert" className="managePeople__error">
+					{shared(`error.${people.actionError}`)}
+				</p>
+			)}
+			<p role="status" className="managePeople__success">
+				{people.added && copy('added', { name: people.added.name })}
+			</p>
+		</>
+	);
+
 	return (
 		<M3Dialog
 			open={open}
@@ -481,19 +495,14 @@ export const ManagePeopleDialog = ({
 					{i18n.exists(`managePeople.${source.kind}.addNote`) && (
 						<p className="managePeople__note">{copy('addNote')}</p>
 					)}
+					{feedback}
 					{chosen ? renderChosen(chosen) : renderCandidates()}
 				</section>
 			)}
 
-			{people.actionError && (
-				<p role="alert" className="managePeople__error">
-					{shared(`error.${people.actionError}`)}
-				</p>
+			{!showPicker && (
+				<div className="managePeople__section">{feedback}</div>
 			)}
-
-			<p role="status" className="managePeople__success">
-				{people.added && copy('added', { name: people.added.name })}
-			</p>
 
 			{inviteContent && (
 				<section className="managePeople__section">
