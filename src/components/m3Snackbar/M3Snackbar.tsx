@@ -1,5 +1,11 @@
 import * as React from 'react';
-import { ReactNode, useEffect, useId, useSyncExternalStore } from 'react';
+import {
+	ReactNode,
+	useEffect,
+	useId,
+	useRef,
+	useSyncExternalStore
+} from 'react';
 import { Alert, Box, Button, IconButton, Snackbar } from '@mui/material';
 import type { SnackbarOrigin, SxProps, Theme } from '@mui/material';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
@@ -258,10 +264,45 @@ export const M3Snackbar = ({
 		() => false
 	);
 	const shown = open && !(yieldToOthers && othersOpen);
+	const actionRef = useRef<HTMLButtonElement>(null);
+	// The action of a yielding notice usually opens the dialog it then yields to. While the
+	// notice is away its button is unmounted, so the dialog's focus restore has no target
+	// on close and focus would fall to <body>. Remember it and hand focus back on return.
+	const returnFocusToAction = useRef(false);
+	useEffect(() => {
+		if (!shown || !returnFocusToAction.current) return undefined;
+		let frame = 0;
+		const deadline = Date.now() + 1000;
+		const restore = () => {
+			const active = document.activeElement;
+			const lost =
+				!active || active === document.body || !active.isConnected;
+			const insideDialog = !!active?.closest?.(
+				'[role="dialog"], .MuiModal-root'
+			);
+			if (lost && actionRef.current) {
+				returnFocusToAction.current = false;
+				actionRef.current.focus();
+				return;
+			}
+			if ((!lost && !insideDialog) || Date.now() > deadline) {
+				// Somebody else already took focus (or the dialog stays): leave it alone.
+				returnFocusToAction.current = false;
+				return;
+			}
+			frame = requestAnimationFrame(restore);
+		};
+		frame = requestAnimationFrame(restore);
+		return () => cancelAnimationFrame(frame);
+	}, [shown]);
 	const actionButton = action && (
 		<Button
+			ref={actionRef}
 			variant="text"
-			onClick={action.onClick}
+			onClick={(event) => {
+				if (yieldToOthers) returnFocusToAction.current = true;
+				action.onClick?.(event);
+			}}
 			data-testid={action.testId ?? `${testId}-action`}
 			sx={m3SnackbarActionSx}
 		>

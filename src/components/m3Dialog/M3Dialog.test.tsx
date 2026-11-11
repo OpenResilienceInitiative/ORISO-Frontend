@@ -34,6 +34,48 @@ describe('M3Dialog', () => {
 		expect(await screen.findByTestId('standing')).toBeTruthy();
 	});
 
+	it('hands keyboard focus back to the notice action after the dialog it opened closes', async () => {
+		const Screen = () => {
+			const [open, setOpen] = React.useState(false);
+			return (
+				<>
+					<M3Snackbar
+						message="Standing"
+						testId="standing"
+						yieldToOthers
+						action={{
+							label: 'Enter key',
+							onClick: () => setOpen(true)
+						}}
+					/>
+					<M3Dialog
+						open={open}
+						title="Recovery key"
+						closeLabel="Close"
+						onClose={() => setOpen(false)}
+					/>
+				</>
+			);
+		};
+		render(<Screen />);
+		const action = screen.getByRole('button', { name: 'Enter key' });
+		action.focus();
+		fireEvent.click(action);
+
+		await screen.findByRole('dialog');
+		await waitFor(() =>
+			expect(screen.queryByTestId('standing')).toBeNull()
+		);
+
+		fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' });
+
+		await waitFor(() =>
+			expect(document.activeElement).toBe(
+				screen.getByRole('button', { name: 'Enter key' })
+			)
+		);
+	});
+
 	it('renders the house anatomy: hero icon, title, description, body', () => {
 		render(
 			<M3Dialog
