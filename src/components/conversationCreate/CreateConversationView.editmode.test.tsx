@@ -1,5 +1,6 @@
 // @vitest-environment oriso-jsdom
 import * as React from 'react';
+import { Link, MemoryRouter, Route, Routes } from 'react-router-dom';
 import {
 	cleanup,
 	fireEvent,
@@ -25,6 +26,7 @@ import { loadInternalChatColleagues } from './internal/loadInternalChatColleague
 import { useSession } from '../../hooks/useSession';
 import { UserDataContext, SessionsDataContext } from '../../globalState';
 import { CreateConversationView } from './CreateConversationView';
+import { CREATE_CHAT_PATH } from '../app/routePaths';
 import { conversationAgency } from '../../test/fixtures/conversationPolicyFixtures';
 import { resetCounsellorAgencyFormatsForTests } from '../../hooks/useCounsellorAgencyFormats';
 
@@ -174,22 +176,15 @@ vi.mock('../../resources/img/icons/close.svg', () => ({
 	default: () => null
 }));
 
-// Route params are controllable per test: edit route carries
-// /:groupId/:sessionId, the create route carries none.
-const routerState = vi.hoisted(() => ({
-	params: { groupId: 'group-1', sessionId: '77' } as Record<string, string>
-}));
-vi.mock('react-router-dom', async () => {
-	const actual = await vi.importActual<any>('react-router-dom');
-	return {
-		...actual,
-		useNavigate: () => vi.fn(),
-		useLocation: () => ({ state: null }),
-		useParams: () => routerState.params
-	};
-});
+const listPath = '/sessions/consultant/sessionView';
+const editorPath = `${listPath}/group-1/77/editGroupChat`;
+const nextEditorPath = `${listPath}/group-2/78/editGroupChat`;
+let entryPath = editorPath;
 
 const editSeriesItem = {
+	id: 77,
+	matrixRoomId: 'group-1',
+	active: false,
 	topic: 'Existing circle',
 	duration: 60,
 	startDate: '2026-08-01',
@@ -208,15 +203,51 @@ const editSeriesItem = {
 	assignedAgencies: [{ id: 5 }]
 };
 
+const sessionResult = (
+	item = editSeriesItem,
+	consultantId = 'me',
+	isGroup = true
+): ReturnType<typeof useSession> => ({
+	session: { isGroup, item, consultant: { id: consultantId } } as any,
+	reload: vi.fn(),
+	read: vi.fn(),
+	ready: true
+});
+
 const renderInUserContext = (
-	agencies: { id: number; name: string }[] = [{ id: 5, name: 'Agency Five' }]
+	agencies: { id: number; name: string }[] = [{ id: 5, name: 'Agency Five' }],
+	userId = 'me'
 ) =>
 	render(
-		<UserDataContext.Provider
-			value={{ userData: { userId: 'me', agencies } }}
-		>
+		<UserDataContext.Provider value={{ userData: { userId, agencies } }}>
 			<SessionsDataContext.Provider value={{ dispatch: vi.fn() }}>
-				<CreateConversationView />
+				<MemoryRouter initialEntries={[entryPath]}>
+					<Routes>
+						<Route
+							path={`${listPath}/:groupId/:sessionId/editGroupChat`}
+							element={
+								<>
+									<Link to={nextEditorPath}>
+										Next editor route
+									</Link>
+									<CreateConversationView />
+								</>
+							}
+						/>
+						<Route
+							path={CREATE_CHAT_PATH}
+							element={<CreateConversationView />}
+						/>
+						<Route
+							path={`${listPath}/chat/77`}
+							element={<p>Normal group 77</p>}
+						/>
+						<Route
+							path={listPath}
+							element={<p>Own conversations</p>}
+						/>
+					</Routes>
+				</MemoryRouter>
 			</SessionsDataContext.Provider>
 		</UserDataContext.Provider>
 	);
@@ -229,16 +260,11 @@ describe('CreateConversationView edit mode (finding 1)', () => {
 	});
 
 	beforeEach(() => {
-		routerState.params = { groupId: 'group-1', sessionId: '77' };
+		entryPath = editorPath;
 	});
 
 	it('prefills the existing series and updates instead of creating', async () => {
-		vi.mocked(useSession).mockReturnValue({
-			session: { item: editSeriesItem } as any,
-			reload: vi.fn(),
-			read: vi.fn(),
-			ready: true
-		});
+		vi.mocked(useSession).mockReturnValue(sessionResult());
 		vi.mocked(apiUpdateGroupChat).mockResolvedValue({
 			matrixRoomId: '!room:matrix.example'
 		});
@@ -250,6 +276,7 @@ describe('CreateConversationView edit mode (finding 1)', () => {
 
 		// The persisted topic is prefilled and shown on the topic row.
 		expect(await screen.findByText('Existing circle')).toBeTruthy();
+		expect(useSession).toHaveBeenLastCalledWith('group-1', undefined, 77);
 
 		// Save routes to the update endpoint for the routed chat id (77), never
 		// to create (which is what the pre-fix route did, duplicating the chat).
@@ -280,13 +307,8 @@ describe('CreateConversationView edit mode (finding 1)', () => {
 		chatInterval: null
 	};
 
-	const saveUnchanged = async (item: Record<string, unknown>) => {
-		vi.mocked(useSession).mockReturnValue({
-			session: { item } as any,
-			reload: vi.fn(),
-			read: vi.fn(),
-			ready: true
-		});
+	const saveUnchanged = async (item: typeof editSeriesItem) => {
+		vi.mocked(useSession).mockReturnValue(sessionResult(item));
 		vi.mocked(apiUpdateGroupChat).mockResolvedValue({
 			matrixRoomId: '!room:matrix.example'
 		});
@@ -358,12 +380,7 @@ describe('CreateConversationView edit mode (finding 1)', () => {
 	});
 
 	it('lets the owner add a co-moderator while editing a circle', async () => {
-		vi.mocked(useSession).mockReturnValue({
-			session: { item: editSeriesItem } as any,
-			reload: vi.fn(),
-			read: vi.fn(),
-			ready: true
-		});
+		vi.mocked(useSession).mockReturnValue(sessionResult());
 		vi.mocked(apiGetTenantConsultantList).mockResolvedValue([
 			{
 				consultantId: 'c-2',
@@ -405,21 +422,125 @@ describe('CreateConversationView edit mode (finding 1)', () => {
 		).toBeNull();
 	});
 
-	it('shows a loading state until the series has hydrated', () => {
+	it.each([
+		['co-moderator', 'c-9', editSeriesItem],
+		['active owner', 'me', { ...editSeriesItem, active: true }],
+		[
+			'internal group owner',
+			'me',
+			{ ...editSeriesItem, conversationType: 'INTERNAL_GROUP' }
+		]
+	])('returns the %s to the exact normal group', async (_, userId, item) => {
+		vi.mocked(useSession).mockReturnValue(sessionResult(item));
+
+		renderInUserContext(undefined, userId);
+
+		expect(await screen.findByText('Normal group 77')).toBeTruthy();
+		expect(screen.queryByText('Existing circle')).toBeNull();
+		expect(apiGetTenantConsultantList).not.toHaveBeenCalled();
+		expect(apiUpdateGroupChat).not.toHaveBeenCalled();
+	});
+
+	it.each([
+		['former owner', 'me', false],
+		['current owner', 'c-9', true]
+	])(
+		'uses the group projection for the %s after an ownership transfer',
+		async (_, viewer, mayEdit) => {
+			const transferredItem = {
+				...editSeriesItem,
+				participants: [
+					{ consultantId: 'me', role: 'CO_MODERATOR' },
+					{ consultantId: 'c-9', role: 'OWNER' }
+				]
+			};
+			vi.mocked(useSession).mockImplementation(
+				(_roomId, _sessionId, chatId) =>
+					chatId === 77
+						? sessionResult(transferredItem, 'c-9')
+						: sessionResult()
+			);
+
+			renderInUserContext(undefined, viewer);
+
+			if (mayEdit) {
+				expect(await screen.findByText('Existing circle')).toBeTruthy();
+				expect(
+					screen.getByRole('button', {
+						name: 'groupChat.circle.saveLabel'
+					})
+				).toBeTruthy();
+			} else {
+				expect(await screen.findByText('Normal group 77')).toBeTruthy();
+				expect(screen.queryByText('Existing circle')).toBeNull();
+				expect(apiGetTenantConsultantList).not.toHaveBeenCalled();
+			}
+			expect(useSession).toHaveBeenLastCalledWith(
+				'group-1',
+				undefined,
+				77
+			);
+		}
+	);
+
+	it.each([
+		[
+			'different room',
+			sessionResult({ ...editSeriesItem, matrixRoomId: 'other' })
+		],
+		['different group', sessionResult({ ...editSeriesItem, id: 78 })],
+		['individual conversation', sessionResult(editSeriesItem, 'me', false)],
+		['failed', { ...sessionResult(), session: null }]
+	])('returns a %s lookup to the safe list', async (_, result) => {
+		vi.mocked(useSession).mockReturnValue(result);
+
+		renderInUserContext();
+
+		expect(await screen.findByText('Own conversations')).toBeTruthy();
+		expect(screen.queryByText('Existing circle')).toBeNull();
+		expect(apiGetTenantConsultantList).not.toHaveBeenCalled();
+	});
+
+	it('never requests the group when the route id is invalid', async () => {
+		entryPath = `${listPath}/group-1/77invalid/editGroupChat`;
+		vi.mocked(useSession).mockReturnValue(sessionResult());
+
+		renderInUserContext();
+
+		expect(await screen.findByText('Own conversations')).toBeTruthy();
+		expect(useSession).not.toHaveBeenCalled();
+	});
+
+	it('waits for authoritative room hydration before mounting the editor', async () => {
 		vi.mocked(useSession).mockReturnValue({
-			session: null as any,
-			reload: vi.fn(),
-			read: vi.fn(),
+			...sessionResult(),
 			ready: false
 		});
 
 		renderInUserContext();
 
-		// No settings form (no save button) before hydration: an un-hydrated
-		// submit would wipe the series.
-		expect(
-			screen.queryByRole('button', { name: 'groupChat.circle.saveLabel' })
-		).toBeNull();
+		await waitFor(() => expect(useSession).toHaveBeenCalled());
+		expect(screen.queryByText('Existing circle')).toBeNull();
+		expect(apiGetTenantConsultantList).not.toHaveBeenCalled();
+		expect(useSession).toHaveBeenLastCalledWith('group-1', undefined, 77);
+	});
+
+	it('never displays a stale prefill while a changed room is loading', async () => {
+		vi.mocked(useSession).mockImplementation((roomId) => ({
+			...sessionResult(),
+			ready: roomId === 'group-1'
+		}));
+
+		renderInUserContext();
+		expect(await screen.findByText('Existing circle')).toBeTruthy();
+		fireEvent.click(
+			screen.getByRole('link', { name: 'Next editor route' })
+		);
+
+		await waitFor(() =>
+			expect(screen.queryByText('Existing circle')).toBeNull()
+		);
+		expect(useSession).toHaveBeenLastCalledWith('group-2', undefined, 78);
 	});
 });
 
@@ -432,7 +553,7 @@ describe('CreateConversationView internal card (finding 2)', () => {
 
 	beforeEach(() => {
 		// Create route: no edit params.
-		routerState.params = {};
+		entryPath = CREATE_CHAT_PATH;
 		vi.mocked(useSession).mockReturnValue({
 			session: null as any,
 			reload: vi.fn(),

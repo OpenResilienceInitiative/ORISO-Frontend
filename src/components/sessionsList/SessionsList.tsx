@@ -91,7 +91,10 @@ import { useSessionListViewState } from './SessionListViewStateContext';
 import type { IUserDraftItem } from '../../api/apiUserDrafts';
 import { useRemoteDrafts } from '../../hooks/useRemoteDrafts';
 import { toDraftResumePath } from '../../services/draftNavigation';
-import { canModerateGroupChat } from '../groupChat/groupChatHelpers';
+import {
+	canEditGroupChatSettings,
+	canModerateGroupChat
+} from '../groupChat/groupChatHelpers';
 import {
 	FutureZone,
 	PULL_RELEASE_PX,
@@ -2550,7 +2553,11 @@ export const SessionsList = ({
 							session.item.matrixRoomId ||
 							session.rid ||
 							undefined,
-						canModerate: canModerateGroupChat(session, userData)
+						canModerate: canModerateGroupChat(session, userData),
+						canConfigure: canEditGroupChatSettings(
+							session,
+							userData
+						)
 					};
 				}),
 		// eslint-disable-next-line react-hooks/exhaustive-deps

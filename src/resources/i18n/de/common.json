@@ -2446,6 +2446,10 @@
 				"title": "Supervisor zugewiesen",
 				"text": "Diesem Fall wurde ein Supervisor zugewiesen."
 			},
+			"topicDuplicateStarted": {
+				"title": "Weitere Beratung zum selben Thema",
+				"text": "Zum selben Thema wurde eine weitere Beratung begonnen. Bitte klären Sie gemeinsam, welche Beratung weitergeführt wird."
+			},
 			"counselorRenamed": {
 				"title": "Berater:in umbenannt",
 				"text": "Der Anzeigename der Beratung hat sich geändert."
@@ -6689,6 +6693,10 @@
 		}
 	},
 	"directLink": {
+		"postcode": {
+			"helper": "Nur für die Statistik. Die Postleitzahl bestimmt weder Beratungsstelle noch Beraterin – das legt der Link fest.",
+			"invalid": "Bitte geben Sie Ihre fünfstellige Postleitzahl ein."
+		},
 		"card": {
 			"title": "Direktlink",
 			"subtitle": "Für Ratsuchende",

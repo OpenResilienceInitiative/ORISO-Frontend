@@ -2425,6 +2425,10 @@
 				"title": "Superviseur·e attribué·e",
 				"text": "Un·e superviseur·e a été attribué·e à ce dossier."
 			},
+			"topicDuplicateStarted": {
+				"title": "Un autre accompagnement sur le même thème",
+				"text": "Un autre accompagnement a commencé sur le même thème. Veuillez convenir ensemble de celui qui se poursuit."
+			},
 			"counselorRenamed": {
 				"title": "Conseiller·ère renommé·e",
 				"text": "Le nom affiché de la personne consultante a changé."
@@ -6699,6 +6703,10 @@
 		}
 	},
 	"directLink": {
+		"postcode": {
+			"helper": "Uniquement à des fins statistiques. Le code postal ne détermine ni le service ni le conseiller – c’est le lien qui le fixe.",
+			"invalid": "Veuillez saisir votre code postal à cinq chiffres."
+		},
 		"card": {
 			"title": "Lien direct",
 			"subtitle": "Pour les personnes en recherche de conseil",
