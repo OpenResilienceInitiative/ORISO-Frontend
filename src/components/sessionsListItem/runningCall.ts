@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { formatMatrixTimelineEvent } from '../../utils/matrixTimelineEventFormatter';
 import {
 	applyCallLifecycleEdits,
@@ -70,10 +70,22 @@ export const useRunningCall = (
 	roomId: string | null | undefined,
 	loadState: LoadCallState = apiCallStateRead
 ): CallLifecycleMessage | null => {
-	const candidate = useMemo(
+	const found = useMemo(
 		() => runningCallOf(events, roomId),
 		[events, roomId]
 	);
+	/*
+	 * The list's events are only the last page of the room (the preview's
+	 * 50). In a busy call the card scrolls out of that window, and its later
+	 * edits cannot be folded without it. So a running call, once seen, is
+	 * retained for its room; the server reconciliation below (which keeps
+	 * asking while it runs) is what ends it, not the window.
+	 */
+	const retained = useRef<CallLifecycleMessage | null>(null);
+	if (found) retained.current = found;
+	else if (retained.current && retained.current.roomRef !== roomId)
+		retained.current = null;
+	const candidate = found ?? retained.current;
 	const [untrusted, setUntrusted] = useState<string | null>(null);
 	const checkedLoad = useCallback<LoadCallState>(
 		async (call) => {
@@ -87,6 +99,9 @@ export const useRunningCall = (
 		candidate ?? NO_CALL,
 		candidate ? checkedLoad : undefined
 	);
+	if (candidate && !found && reconciled.state !== 'running')
+		// Ended (or provisionally ended) and no longer in the window: let go.
+		retained.current = null;
 	return candidate &&
 		reconciled.state === 'running' &&
 		untrusted !== candidate.callId

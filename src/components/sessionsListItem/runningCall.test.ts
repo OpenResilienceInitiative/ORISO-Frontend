@@ -179,4 +179,36 @@ describe('the running call of a conversation, for the list (S10)', () => {
 			vi.useRealTimers();
 		}
 	});
+
+	it('keeps a running call whose card scrolled out of the preview window', async () => {
+		vi.useFakeTimers();
+		try {
+			const loadState = vi.fn().mockResolvedValue(call());
+			let events: unknown[] = [card(call())];
+			const { result, rerender } = renderHook(() =>
+				useRunningCall(events, ROOM, loadState)
+			);
+			await act(async () => {
+				await vi.advanceTimersByTimeAsync(0);
+			});
+			expect(result.current?.callId).toBe('call-1');
+			// 50 newer chat events push the card out of the list's window.
+			events = Array.from({ length: 50 }, () => ({
+				type: 'm.room.message',
+				content: { body: 'hi', msgtype: 'm.text' }
+			}));
+			rerender();
+			expect(result.current?.callId).toBe('call-1');
+			// The server reconciliation still ends it.
+			loadState.mockResolvedValue(call({ state: 'ended' }));
+			await act(async () => {
+				await vi.advanceTimersByTimeAsync(15_000);
+			});
+			expect(result.current).toBeNull();
+			rerender();
+			expect(result.current).toBeNull();
+		} finally {
+			vi.useRealTimers();
+		}
+	});
 });
