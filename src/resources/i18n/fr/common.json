@@ -3528,6 +3528,12 @@
 			}
 		},
 		"dataProtection": {
+			"noNotice": {
+				"title": "Aucune politique de confidentialité enregistrée",
+				"body": "Ce centre de conseil n'a enregistré aucune politique de confidentialité. Le centre en est responsable. Vous pouvez tout de même continuer si vous le souhaitez en connaissance de cause.",
+				"cancel": "Retour",
+				"continue": "Continuer quand même"
+			},
 			"cookieNotice": "Pour l'authentification et la navigation, ce site utilise des cookies.",
 			"machineTranslated": "Traduit automatiquement — la version originale ({{language}}) fait juridiquement foi.",
 			"unrenderable": "Le texte de consentement de ce centre de conseil ne peut pas être affiché pour le moment. Veuillez réessayer plus tard ou contacter le centre de conseil.",
