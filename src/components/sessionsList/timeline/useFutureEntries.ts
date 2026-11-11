@@ -46,6 +46,11 @@ export const useFutureEntries = ({
 	const [cancelled, setCancelled] = useState<Set<string>>(new Set());
 	// List polling rebuilds equal arrays: load again only when the series change.
 	const seriesKey = series.map((s) => s.sessionId).join(',');
+	// Permissions can change while the series stay the same (owner moved,
+	// moderator added): rebuild the entries, but do not load again.
+	const seriesPermissionKey = series
+		.map((s) => `${s.sessionId}:${s.canModerate}:${s.canConfigure}`)
+		.join(',');
 	const conversationsKey = conversations
 		.map((c) => `${c.sessionId}:${c.title}:${c.matrixRoomId}`)
 		.join(',');
@@ -100,7 +105,14 @@ export const useFutureEntries = ({
 				sessions: [...series, ...conversations]
 			}).filter((entry) => !cancelled.has(entry.key)),
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[occurrences, appointments, seriesKey, conversationsKey, cancelled]
+		[
+			occurrences,
+			appointments,
+			seriesKey,
+			seriesPermissionKey,
+			conversationsKey,
+			cancelled
+		]
 	);
 
 	const markCancelled = useCallback(
