@@ -295,4 +295,27 @@ describe('the running call of a conversation, for the list (S10)', () => {
 			vi.useRealTimers();
 		}
 	});
+
+	it('never retains a later card with the same call id from somebody else', () => {
+		const loadState = vi.fn().mockRejectedValue(new Error('offline'));
+		let events: unknown[] = [
+			card(call(), '$card'),
+			event(
+				buildCallLifecycleContent(call()),
+				'$forged',
+				'@someone:oriso.test'
+			)
+		];
+		const { result, rerender } = renderHook(() =>
+			useRunningCall(events, ROOM, loadState)
+		);
+		expect(result.current?.callId).toBe('call-1');
+		// Both cards scroll out; the forger then "ends" their own card.
+		events = [
+			text(),
+			edit(call({ state: 'ended' }), '$forged', '@someone:oriso.test')
+		];
+		rerender();
+		expect(result.current?.callId).toBe('call-1');
+	});
 });

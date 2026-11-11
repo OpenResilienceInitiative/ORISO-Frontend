@@ -24,7 +24,17 @@ import { useCallTimelineState } from '../message/useCallTimelineState';
 export const runningCallOf = (
 	events: readonly unknown[],
 	roomId: string | null | undefined
-): CallLifecycleMessage | null => {
+): CallLifecycleMessage | null => runningCardOf(events, roomId)?.call ?? null;
+
+/**
+ * The running call and the id of the card the pipeline accepted for it (the
+ * root event whose author's revisions were folded), so the list can retain
+ * exactly that event.
+ */
+export const runningCardOf = (
+	events: readonly unknown[],
+	roomId: string | null | undefined
+): { call: CallLifecycleMessage; cardId: string } | null => {
 	if (!roomId || events.length === 0) return null;
 	const items = events
 		.map((event) => formatMatrixTimelineEvent(event, null, ''))
@@ -32,42 +42,24 @@ export const runningCallOf = (
 	const cards = collapseCallLifecycleMessages(applyCallLifecycleEdits(items));
 	for (let index = cards.length - 1; index >= 0; index -= 1) {
 		const call = cards[index].callLifecycle;
-		if (call?.state === 'running' && call.roomRef === roomId) return call;
+		if (call?.state === 'running' && call.roomRef === roomId)
+			return { call, cardId: cards[index]._id };
 	}
 	return null;
-};
-
-type RawEvent = {
-	getClearContent?: () => Record<string, unknown> | null;
-	getContent?: () => Record<string, unknown> | null;
 };
 
 /**
- * The original card event of a call (not one of its edits), so the list can
- * keep it once it scrolls out of the window and still fold the window's edits
- * onto it — with the same ownership and identity checks as the chat.
+ * The event of the card the pipeline accepted (`runningCardOf`), matched by
+ * its id, so a later card with the same call id from somebody else can never
+ * become the one the list keeps.
  */
-export const originalCardEventOf = (
+const cardEventOf = (
 	events: readonly unknown[],
-	callId: string,
-	roomId: string
-): unknown | null => {
-	for (let index = events.length - 1; index >= 0; index -= 1) {
-		const event = events[index] as RawEvent;
-		const content =
-			event?.getClearContent?.() || event?.getContent?.() || {};
-		const relation = content['m.relates_to'] as
-			| { rel_type?: unknown }
-			| undefined;
-		if (relation?.rel_type === 'm.replace') continue;
-		const call = content['org.oriso.call'] as
-			| { call_id?: unknown; room_ref?: unknown }
-			| undefined;
-		if (call?.call_id === callId && call.room_ref === roomId)
-			return events[index];
-	}
-	return null;
-};
+	cardId: string
+): unknown | null =>
+	events.find(
+		(event) => (event as { getId?: () => string })?.getId?.() === cardId
+	) ?? null;
 
 type LoadCallState = typeof apiCallStateRead;
 
@@ -125,12 +117,10 @@ export const useRunningCall = (
 			retained.current?.room === roomId ? retained.current.event : null;
 		const timeline =
 			kept && !events.includes(kept) ? [kept, ...events] : events;
-		const found = runningCallOf(timeline, roomId);
-		const original = found
-			? originalCardEventOf(timeline, found.callId, roomId)
-			: null;
+		const found = runningCardOf(timeline, roomId);
+		const original = found ? cardEventOf(timeline, found.cardId) : null;
 		retained.current = original ? { room: roomId, event: original } : null;
-		return found;
+		return found?.call ?? null;
 	}, [events, roomId]);
 	const [untrusted, setUntrusted] = useState<string | null>(null);
 	const checkedLoad = useCallback<LoadCallState>(
