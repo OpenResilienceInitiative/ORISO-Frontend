@@ -601,6 +601,32 @@ describe('useElementCallWidget', () => {
 			rerender();
 			expect(result.current.url).toBe(first);
 		});
+
+		it('keeps the brand it started with through a client refresh', async () => {
+			// A token refresh rebuilds the address with a new client. The call
+			// started before the tenant resolved; adding the brand now would
+			// change the iframe's src and navigate the running call.
+			let current: unknown = null;
+			const { result, rerender } = renderHook(
+				({ c }: { c: ReturnType<typeof createClient> }) =>
+					useElementCallWidget(c, {
+						roomId: CALL_ROOM,
+						isVideo: true
+					}),
+				{
+					initialProps: { c: createClient() },
+					wrapper: wrapperFor(() => current)
+				}
+			);
+			await waitFor(() => expect(result.current.url).not.toBeNull());
+			const first = result.current.url;
+			expect(fragmentOf(first!).has('orisoPrimary')).toBe(false);
+
+			current = tenantWith({ primaryColor: '#0a7a3c', logo: 'x' });
+			rerender({ c: createClient() });
+			await waitFor(() => expect(result.current.url).not.toBeNull());
+			expect(result.current.url).toBe(first);
+		});
 	});
 
 	it('fails closed when the host cannot join the call room', async () => {

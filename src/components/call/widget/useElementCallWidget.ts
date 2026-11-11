@@ -298,6 +298,13 @@ export const useElementCallWidget = (
 	const tenant = useTenant();
 	const tenantRef = useRef(tenant);
 	tenantRef.current = tenant;
+	// Frozen per call room: a token refresh hands the effect below a new
+	// client and rebuilds the URL, and a brand read afresh then (the tenant
+	// resolved meanwhile, or its colours changed) would navigate the call.
+	const brandRef = useRef<{
+		roomId: string;
+		params: Record<string, string>;
+	} | null>(null);
 
 	// A widget client cannot join rooms. Gate iframe creation on the host's
 	// membership so Element Call never starts against an invited/unknown room.
@@ -309,6 +316,19 @@ export const useElementCallWidget = (
 		setError(null);
 
 		if (!client || !roomId) return undefined;
+
+		const brandFor = (room: string) => {
+			if (brandRef.current?.roomId !== room) {
+				brandRef.current = {
+					roomId: room,
+					params: callBrandParams(
+						tenantRef.current,
+						endpoints.tenantServiceBase
+					)
+				};
+			}
+			return brandRef.current.params;
+		};
 
 		const prepare = async () => {
 			try {
@@ -392,10 +412,7 @@ export const useElementCallWidget = (
 					// The Träger's colours and logo (#2188), appended so every
 					// parameter above keeps its place. Left off the address
 					// where the Träger has set nothing the call may use.
-					...callBrandParams(
-						tenantRef.current,
-						endpoints.tenantServiceBase
-					)
+					...brandFor(roomId)
 				}).toString()}`;
 
 				setUrl(elementCallUrl.toString());
