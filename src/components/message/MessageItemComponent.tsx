@@ -20,6 +20,7 @@ import { useMenuEffects } from '../../features/menu-effects/useMenuEffects';
 import * as React from 'react';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import sanitizeHtml from 'sanitize-html';
+import { nameTaskListCheckboxes } from './nameTaskListCheckboxes';
 import { PrettyDate } from '../../utils/dateHelpers';
 import { getMatrixClientLogger } from '../../utils/matrixLogging';
 import {
@@ -48,7 +49,7 @@ import type { CallLifecycleMessage } from '../../utils/callLifecycleMessage';
 import { shouldShowDeviceCheck } from '../call/prejoin/callPrejoin';
 import type { CallJoinHooks } from '../directLinkEntry/callMessageKnock';
 import { CallTimelineMessage } from './CallTimelineMessage';
-import { apiCallState } from '../../api/apiCallState';
+import { apiCallStateRead } from '../../api/apiCallState';
 import { callManager } from '../../services/CallManager';
 import {
 	callCardMayKnock,
@@ -1150,11 +1151,13 @@ export const MessageItemComponent = ({
 			)
 		);
 		const hasRichHtml =
-			/<(p|h[1-6]|strong|em|u|mark|span|blockquote|ul|ol|li|a|br|img|sup|sub|code|pre)\b/i.test(
+			/<(p|h[1-6]|strong|em|u|mark|span|blockquote|ul|ol|li|a|br|hr|img|sup|sub|code|pre)\b/i.test(
 				preparedMessage
 			);
 		if (hasRichHtml) {
-			return sanitizeHtml(preparedMessage, sanitizeHtmlDefaultOptions);
+			return nameTaskListCheckboxes(
+				sanitizeHtml(preparedMessage, sanitizeHtmlDefaultOptions)
+			);
 		}
 
 		try {
@@ -2781,7 +2784,7 @@ export const MessageItemComponent = ({
 				{getMessageDate()}
 				<CallTimelineMessage
 					call={callLifecycle}
-					loadState={apiCallState}
+					loadState={apiCallStateRead}
 					/* #2016: camera and microphone first, as guests get. */
 					deviceCheck={() =>
 						shouldShowDeviceCheck({

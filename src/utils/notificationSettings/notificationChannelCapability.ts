@@ -287,6 +287,12 @@ export const EVENT_CASES: ReadonlyArray<EventCase> = [
 		source: `${ES}.createCounselorRenamedNotification`
 	},
 	{
+		eventType: 'topic_duplicate.started',
+		recipients: CONSULTANT,
+		emitted: true,
+		source: `${ES}.createTopicDuplicateStartedNotification`
+	},
+	{
 		eventType: 'service.notice.planned',
 		recipients: CONSULTANT,
 		emitted: true,

@@ -15,7 +15,11 @@ import OpenInFullIcon from '@mui/icons-material/OpenInFull';
 import { ReactComponent as OpenInNewIcon } from '../../resources/img/icons/open-in-new-tab.svg';
 import MarkChatUnreadOutlinedIcon from '@mui/icons-material/MarkChatUnreadOutlined';
 import { Menu, MenuItem } from '@mui/material';
-import { getEventDescriptor, getEventIcon } from './eventDescriptors';
+import {
+	getEventDescriptor,
+	getEventIcon,
+	requiresExactActionPath
+} from './eventDescriptors';
 import {
 	resolveEndedCallConversationPath,
 	resolveNotificationActionPath,
@@ -65,7 +69,10 @@ import {
 } from '../../globalState';
 import { useResponsive } from '../../hooks/useResponsive';
 import { useTranslation } from 'react-i18next';
-import { apiDecideCaseHandoverClientConsent } from '../../api';
+import {
+	TimelineConsentActions,
+	type TimelineConsentDecisions
+} from './TimelineConsentActions';
 import { ResizableHandle } from '../sessionsList/ResizableHandle';
 import { SessionRailPill } from '../sessionsList/SessionRailPill';
 import { directLinkLabelKey } from '../session/directLinkOrigin';
@@ -102,7 +109,7 @@ import { isDirectLinkCallRoom } from '../directLinkEntry/directLinkEntryFlow';
 import { callManager } from '../../services/CallManager';
 import { startRoomCall } from '../call/startRoomCall';
 import { enterKnockCall } from './knockCallAction';
-import { callRoomName } from '../call/callRoomName';
+import { directLinkCallName } from '../call/callRoomName';
 import type { NotificationFeedItem } from '../../globalState/provider/NotificationsProvider';
 import {
 	formatAbsoluteTime,
@@ -268,10 +275,7 @@ export const NotificationsCenter = () => {
 		onPreviewChange: handlePreviewChange,
 		visiblePreview
 	} = useActivityPreviewHydration(notificationFeed);
-	const [caseHandoverConsentSubmitting, setCaseHandoverConsentSubmitting] =
-		useState(false);
-	const [caseHandoverConsentError, setCaseHandoverConsentError] =
-		useState('');
+	const pendingConsentDecisions = useRef<TimelineConsentDecisions>(new Map());
 	const [cardMenuAnchor, setCardMenuAnchor] = useState<HTMLElement | null>(
 		null
 	);
@@ -499,11 +503,6 @@ export const NotificationsCenter = () => {
 		markRead: markNotificationAsRead
 	});
 
-	// Clear any stale case-handover consent error when the selection changes.
-	useEffect(() => {
-		setCaseHandoverConsentError('');
-	}, [activeNotificationId]);
-
 	// Clear the active family filter when that family is no longer in the feed
 	// (no selection means "show everything" — there is no "All" chip).
 	useEffect(() => {
@@ -555,8 +554,6 @@ export const NotificationsCenter = () => {
 					? 'notifications.center.join'
 					: 'notifications.center.open'
 			);
-	const canOpenSelected =
-		!selectedLinksToStatusPage || selectedStatusPageUrl !== null;
 	const selectedSessionNumericId = useMemo(
 		() =>
 			selectedNotification
@@ -572,7 +569,10 @@ export const NotificationsCenter = () => {
 		[selectedNotification]
 	);
 	const canShowChatPreview = selectedNotificationCategory === 'message';
-	const canDecideCaseHandoverConsent =
+	const showConsentDetail =
+		!untilL &&
+		hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) &&
+		Boolean(userData?.userId) &&
 		selectedNotification?.eventType === 'case.handover.consent.requested' &&
 		selectedSessionNumericId !== null &&
 		selectedCaseHandoverRequestNumericId !== null;
@@ -603,6 +603,25 @@ export const NotificationsCenter = () => {
 			),
 		[getDefaultSessionsPath, getDefaultRequestsPath]
 	);
+	const activityConversationPath = (
+		item: (typeof notificationFeed)[number]
+	) =>
+		getNotificationActionPath(item) ||
+		(requiresExactActionPath(item.eventType)
+			? null
+			: getDefaultSessionsPath());
+	const canOpenSelected = selectedLinksToStatusPage
+		? selectedStatusPageUrl !== null
+		: Boolean(
+				selectedNotification &&
+					activityConversationPath(selectedNotification)
+			);
+	const openActivityConversation = (
+		item: (typeof notificationFeed)[number]
+	) => {
+		const path = activityConversationPath(item);
+		if (path) navigate(path);
+	};
 	const isGroupCallRoom = (roomRef: string) =>
 		Boolean(
 			sessions?.some(
@@ -678,14 +697,12 @@ export const NotificationsCenter = () => {
 			start: startRoomCall,
 			currentCall: () => callManager.getCurrentCall(),
 			// #2170: the call is called what the direct link was called.
-			roomNameFor: (roomId) => {
-				const session = sessions?.find(
-					(listItem) => listItem.session?.matrixRoomId === roomId
-				)?.session;
-				return session?.directLinkName
-					? callRoomName(session)
-					: undefined;
-			}
+			roomNameFor: (roomId) =>
+				directLinkCallName(
+					sessions?.find(
+						(listItem) => listItem.session?.matrixRoomId === roomId
+					)?.session
+				)
 		});
 		if (!entered && target.roomId) {
 			// In a call elsewhere: "Beitreten" opens the conversation only, so
@@ -719,12 +736,7 @@ export const NotificationsCenter = () => {
 		}
 		if (untilL) {
 			if (joinCall(item)) return;
-			const directPath = getNotificationActionPath(item);
-			if (directPath) {
-				navigate(directPath);
-				return;
-			}
-			navigate(getDefaultSessionsPath());
+			openActivityConversation(item);
 			return;
 		}
 		selectNotification(item.id);
@@ -745,12 +757,7 @@ export const NotificationsCenter = () => {
 		}
 		if (openKnock(selectedNotification)) return;
 		if (joinCall(selectedNotification)) return;
-		const directPath = getNotificationActionPath(selectedNotification);
-		if (directPath) {
-			navigate(directPath);
-			return;
-		}
-		navigate(getDefaultSessionsPath());
+		openActivityConversation(selectedNotification);
 	};
 
 	const handleNextNotification = () => {
@@ -762,34 +769,6 @@ export const NotificationsCenter = () => {
 				openNotification(nextItem, { browsing: true });
 			}
 		}
-	};
-
-	const handleCaseHandoverConsentDecision = (approved: boolean) => {
-		if (
-			!selectedNotification ||
-			selectedSessionNumericId === null ||
-			selectedCaseHandoverRequestNumericId === null
-		) {
-			setCaseHandoverConsentError(translate('caseHandover.error.failed'));
-			return;
-		}
-		setCaseHandoverConsentSubmitting(true);
-		setCaseHandoverConsentError('');
-		apiDecideCaseHandoverClientConsent(
-			selectedSessionNumericId,
-			selectedCaseHandoverRequestNumericId,
-			approved
-		)
-			.then(() => {
-				markNotificationAsRead(selectedNotification.id);
-				refreshNotificationFeed();
-			})
-			.catch(() => {
-				setCaseHandoverConsentError(
-					translate('caseHandover.error.failed')
-				);
-			})
-			.finally(() => setCaseHandoverConsentSubmitting(false));
 	};
 
 	const SelectedIcon = selectedDisplay
@@ -1359,52 +1338,29 @@ export const NotificationsCenter = () => {
 											i18n.language
 										)}
 							</p>
-							{selectedNotification?.eventType ===
-								'case.handover.consent.requested' && (
-								<div className="notificationsCenter__consentActions">
-									<button
-										type="button"
-										className="notificationsCenter__consentButton notificationsCenter__consentButton--approve"
-										onClick={() =>
-											handleCaseHandoverConsentDecision(
-												true
-											)
-										}
-										disabled={
-											!canDecideCaseHandoverConsent ||
-											caseHandoverConsentSubmitting
-										}
-									>
-										{translate(
-											'caseHandover.consent.approve'
-										)}
-									</button>
-									<button
-										type="button"
-										className="notificationsCenter__consentButton"
-										onClick={() =>
-											handleCaseHandoverConsentDecision(
-												false
-											)
-										}
-										disabled={
-											!canDecideCaseHandoverConsent ||
-											caseHandoverConsentSubmitting
-										}
-									>
-										{translate(
-											'caseHandover.consent.decline'
-										)}
-									</button>
-									{caseHandoverConsentError && (
-										<p
-											className="notificationsCenter__detailText"
-											role="alert"
-										>
-											{caseHandoverConsentError}
-										</p>
-									)}
-								</div>
+							{showConsentDetail && (
+								<TimelineConsentActions
+									key={JSON.stringify([
+										userData.userId,
+										selectedNotification.id,
+										selectedSessionNumericId,
+										selectedCaseHandoverRequestNumericId
+									])}
+									accountId={userData.userId}
+									sessionId={selectedSessionNumericId}
+									requestId={
+										selectedCaseHandoverRequestNumericId
+									}
+									pendingDecisions={
+										pendingConsentDecisions.current
+									}
+									onConfirmed={() => {
+										markNotificationAsRead(
+											selectedNotification.id
+										);
+										refreshNotificationFeed();
+									}}
+								/>
 							)}
 							<div className="notificationsCenter__detailActions">
 								{selectedLinksToStatusPage ? (
@@ -1430,7 +1386,7 @@ export const NotificationsCenter = () => {
 											</span>
 										</a>
 									)
-								) : (
+								) : canOpenSelected ? (
 									<button
 										type="button"
 										className="notificationsCenter__openButton"
@@ -1439,7 +1395,7 @@ export const NotificationsCenter = () => {
 										<OpenInFullIcon />
 										{selectedOpenLabel}
 									</button>
-								)}
+								) : null}
 								<button
 									type="button"
 									className="notificationsCenter__nextButton"

@@ -1810,9 +1810,10 @@ export const GroupChatRow: Story = {
 		await expect(
 			part(row, '.sessionsListItem__consultingTypeIcon--team')
 		).toBeTruthy();
+		// The team icon does not make this row a scheduled circle.
 		await expect(
 			row.querySelector('.sessionsListItem__menuIcon')
-		).not.toBeNull();
+		).toBeNull();
 	}
 };
 
@@ -2044,6 +2045,9 @@ export const GuidedSelfHelpGroup: Story = {
 	play: async ({ canvasElement }) => {
 		const [row] = await settledRows(canvasElement);
 		await expectGroupRow(row, 'Montagsrunde', 3, 'Montagsrunde');
+		await expect(
+			row.querySelector('.sessionsListItem__menuIcon')
+		).not.toBeNull();
 		await expect(
 			part(row, '.sessionsListItem__consultingTypeIcon--selfHelpLabel')
 				.textContent

@@ -99,7 +99,7 @@ import {
 } from './chatroomSettingsMenu';
 import { SessionListItemMenu } from './SessionListItemMenu';
 import DeleteSession from '../session/DeleteSession';
-import { isGroupChatOwner } from '../groupChat/groupChatHelpers';
+import { canEditGroupChatSettings } from '../groupChat/groupChatHelpers';
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
 import { ALIAS_MESSAGE_TYPES } from '../../api/apiSendAliasMessage';
 import { useTranslation } from 'react-i18next';
@@ -625,8 +625,9 @@ export const SessionListItemComponent = ({
 		isAgencyCounselling,
 		teamDiscussionFeatureEnabled: featureTeamDiscussionEnabled,
 		hasExistingTeamDiscussion,
-		isGroupChatOwner:
-			!!activeSession && isGroupChatOwner(activeSession, userData),
+		canEditGroupChatSettings:
+			!!activeSession &&
+			canEditGroupChatSettings(activeSession, userData),
 		isGroupChatActive: !!activeSession?.item?.active,
 		hasMatrixRoom: !!activeSession?.item?.matrixRoomId,
 		isGroupChatSubscribed: !!activeSession?.item?.subscribed

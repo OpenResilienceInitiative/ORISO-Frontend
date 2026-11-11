@@ -12,6 +12,10 @@ import { Profile } from '../profile/Profile';
 import { SessionViewEmpty } from '../session/SessionViewEmpty';
 import { CreateConversationView } from '../conversationCreate/CreateConversationView';
 import { GroupChatInfo } from '../groupChat/GroupChatInfo';
+import {
+	ASKER_GROUP_CHAT_ROUTE,
+	CONSULTANT_GROUP_CHAT_ROUTE
+} from '../groupChat/consultantGroupChatPath';
 import { AUTHORITIES, hasUserAuthority } from '../../globalState';
 import { AppConfigInterface } from '../../globalState/interfaces';
 import { ReactComponent as OverviewIconOutline } from '../../resources/img/icons/overview_outline.svg';
@@ -228,6 +232,11 @@ export const RouterConfigUser = (
 				component: SessionView,
 				type: SESSION_LIST_TYPES.MY_SESSION
 			},
+			{
+				path: ASKER_GROUP_CHAT_ROUTE,
+				component: SessionView,
+				type: SESSION_LIST_TYPES.MY_SESSION
+			},
 			// Sessions addressed by their Matrix group id
 			{
 				path: '/sessions/user/view/:groupId/:sessionId',
@@ -376,7 +385,7 @@ export const RouterConfigConsultant = (settings: AppConfigInterface): any => {
 				type: SESSION_LIST_TYPES.MY_SESSION
 			},
 			{
-				path: '/sessions/consultant/sessionView/chat/:chatId',
+				path: CONSULTANT_GROUP_CHAT_ROUTE,
 				component: SessionView,
 				type: SESSION_LIST_TYPES.MY_SESSION
 			},

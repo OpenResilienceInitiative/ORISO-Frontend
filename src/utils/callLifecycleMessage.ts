@@ -326,3 +326,10 @@ export function collapseCallLifecycleMessages<T extends LifecycleTimelineItem>(
 	}
 	return output;
 }
+
+/**
+ * What a state read answers when the server has no such call (404), as opposed
+ * to `null` for a response that could not be trusted. Returned per read, so
+ * overlapping reads can never share it (ORISO-Frontend#2166).
+ */
+export const CALL_STATE_NOT_FOUND = Symbol('call-state-not-found');
