@@ -369,6 +369,32 @@ describe('live presence', () => {
 		await settled();
 		expect(lastPayload().state).toBe('running');
 	});
+
+	it('keeps a call running after its creator leaves while somebody remains, and ends it with the last one (#2166)', async () => {
+		session.memberships = [{ sender: ACTOR }, { sender: '@alex:example' }];
+		await callLifecycleTracker.begin(call);
+		emit();
+		await settled();
+		// The creator leaves; Alex is still in the call.
+		expect(callLifecycleTracker.finishIfUnattended(call.callId)).toBe(
+			false
+		);
+		session.memberships = [{ sender: '@alex:example' }];
+		emit();
+		await settled();
+		expect(lastPayload().state).toBe('running');
+		expect(callLifecycleTracker.isAttendedAndRunning(call.callId)).toBe(
+			true
+		);
+		expect(callLifecycleTracker.hasEnded(call.callId)).toBe(false);
+
+		// The last participant leaves.
+		session.memberships = [];
+		emit();
+		await settled();
+		expect(lastPayload().state).toBe('ended');
+		expect(callLifecycleTracker.hasEnded(call.callId)).toBe(true);
+	});
 });
 
 describe('a call that outlives the Matrix client it started on', () => {

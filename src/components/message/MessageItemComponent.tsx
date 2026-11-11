@@ -49,7 +49,7 @@ import type { CallLifecycleMessage } from '../../utils/callLifecycleMessage';
 import { shouldShowDeviceCheck } from '../call/prejoin/callPrejoin';
 import type { CallJoinHooks } from '../directLinkEntry/callMessageKnock';
 import { CallTimelineMessage } from './CallTimelineMessage';
-import { apiCallState } from '../../api/apiCallState';
+import { apiCallStateRead } from '../../api/apiCallState';
 import { callManager } from '../../services/CallManager';
 import {
 	callCardMayKnock,
@@ -2784,7 +2784,7 @@ export const MessageItemComponent = ({
 				{getMessageDate()}
 				<CallTimelineMessage
 					call={callLifecycle}
-					loadState={apiCallState}
+					loadState={apiCallStateRead}
 					/* #2016: camera and microphone first, as guests get. */
 					deviceCheck={() =>
 						shouldShowDeviceCheck({
