@@ -744,8 +744,14 @@ export const Registration = () => {
 			);
 			return;
 		}
+		/* Registration asks for no display name (#2210, ADR-018: it is offered
+		   in the chat). A draft restored from an older version can still carry
+		   one, possibly a password typed into the wrong field (#2073), so it is
+		   dropped here rather than sent unseen. */
+		const { displayName: _restoredDisplayName, ...submittable } =
+			mergedData;
 		const data = {
-			...mergedData,
+			...submittable,
 			email: isContextEmailCollectionAllowed(
 				tenant?.settings,
 				groupJoin ? 'SELF_HELP' : 'AGENCY_COUNSELLING'
