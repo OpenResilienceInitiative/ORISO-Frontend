@@ -2425,6 +2425,10 @@
 				"title": "Süpervizör atandı",
 				"text": "Bu vakaya bir süpervizör atandı."
 			},
+			"topicDuplicateStarted": {
+				"title": "Aynı konuda başka bir danışmanlık",
+				"text": "Aynı konuda başka bir danışmanlık başladı. Lütfen hangi danışmanlığın devam edeceğine birlikte karar verin."
+			},
 			"counselorRenamed": {
 				"title": "Danışmanın adı değişti",
 				"text": "Danışmanlığın görünen adı değişti."

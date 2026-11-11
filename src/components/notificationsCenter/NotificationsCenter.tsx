@@ -15,7 +15,11 @@ import OpenInFullIcon from '@mui/icons-material/OpenInFull';
 import { ReactComponent as OpenInNewIcon } from '../../resources/img/icons/open-in-new-tab.svg';
 import MarkChatUnreadOutlinedIcon from '@mui/icons-material/MarkChatUnreadOutlined';
 import { Menu, MenuItem } from '@mui/material';
-import { getEventDescriptor, getEventIcon } from './eventDescriptors';
+import {
+	getEventDescriptor,
+	getEventIcon,
+	requiresExactActionPath
+} from './eventDescriptors';
 import {
 	resolveEndedCallConversationPath,
 	resolveNotificationActionPath,
@@ -549,8 +553,6 @@ export const NotificationsCenter = () => {
 					? 'notifications.center.join'
 					: 'notifications.center.open'
 			);
-	const canOpenSelected =
-		!selectedLinksToStatusPage || selectedStatusPageUrl !== null;
 	const selectedSessionNumericId = useMemo(
 		() =>
 			selectedNotification
@@ -600,6 +602,25 @@ export const NotificationsCenter = () => {
 			),
 		[getDefaultSessionsPath, getDefaultRequestsPath]
 	);
+	const activityConversationPath = (
+		item: (typeof notificationFeed)[number]
+	) =>
+		getNotificationActionPath(item) ||
+		(requiresExactActionPath(item.eventType)
+			? null
+			: getDefaultSessionsPath());
+	const canOpenSelected = selectedLinksToStatusPage
+		? selectedStatusPageUrl !== null
+		: Boolean(
+				selectedNotification &&
+					activityConversationPath(selectedNotification)
+			);
+	const openActivityConversation = (
+		item: (typeof notificationFeed)[number]
+	) => {
+		const path = activityConversationPath(item);
+		if (path) navigate(path);
+	};
 	const isGroupCallRoom = (roomRef: string) =>
 		Boolean(
 			sessions?.some(
@@ -707,12 +728,7 @@ export const NotificationsCenter = () => {
 		}
 		if (untilL) {
 			if (joinCall(item)) return;
-			const directPath = getNotificationActionPath(item);
-			if (directPath) {
-				navigate(directPath);
-				return;
-			}
-			navigate(getDefaultSessionsPath());
+			openActivityConversation(item);
 			return;
 		}
 		selectNotification(item.id);
@@ -733,12 +749,7 @@ export const NotificationsCenter = () => {
 		}
 		if (openKnock(selectedNotification)) return;
 		if (joinCall(selectedNotification)) return;
-		const directPath = getNotificationActionPath(selectedNotification);
-		if (directPath) {
-			navigate(directPath);
-			return;
-		}
-		navigate(getDefaultSessionsPath());
+		openActivityConversation(selectedNotification);
 	};
 
 	const handleNextNotification = () => {
@@ -1367,7 +1378,7 @@ export const NotificationsCenter = () => {
 											</span>
 										</a>
 									)
-								) : (
+								) : canOpenSelected ? (
 									<button
 										type="button"
 										className="notificationsCenter__openButton"
@@ -1376,7 +1387,7 @@ export const NotificationsCenter = () => {
 										<OpenInFullIcon />
 										{selectedOpenLabel}
 									</button>
-								)}
+								) : null}
 								<button
 									type="button"
 									className="notificationsCenter__nextButton"
