@@ -142,6 +142,90 @@ describe('call observation across sign-out', () => {
 		await vi.advanceTimersByTimeAsync(10 * 60 * 1000);
 		expect(register).toHaveBeenCalledTimes(1);
 	});
+	it('retries a failed registration soon, not only at the next renewal', async () => {
+		vi.useFakeTimers({
+			toFake: [
+				'setInterval',
+				'clearInterval',
+				'setTimeout',
+				'clearTimeout'
+			]
+		});
+		register.mockRejectedValueOnce(new Error('503'));
+		sendEvent.mockResolvedValue({ event_id: '$invite' });
+		callManager.startCall(SOURCE, true, true);
+		await vi.advanceTimersByTimeAsync(100);
+		expect(register).toHaveBeenCalledTimes(1);
+		await vi.advanceTimersByTimeAsync(5000);
+		expect(register).toHaveBeenCalledTimes(2);
+		// The retry succeeded: nothing more until the renewal.
+		await vi.advanceTimersByTimeAsync(60 * 1000);
+		expect(register).toHaveBeenCalledTimes(2);
+	});
+
+	it('gives up retrying after two attempts and never retries a left call', async () => {
+		vi.useFakeTimers({
+			toFake: [
+				'setInterval',
+				'clearInterval',
+				'setTimeout',
+				'clearTimeout'
+			]
+		});
+		register.mockRejectedValue(new Error('503'));
+		sendEvent.mockResolvedValue({ event_id: '$invite' });
+		callManager.startCall(SOURCE, true, true);
+		await vi.advanceTimersByTimeAsync(100);
+		await vi.advanceTimersByTimeAsync(5000 + 15000 + 1000);
+		expect(register).toHaveBeenCalledTimes(3);
+		await vi.advanceTimersByTimeAsync(60 * 1000);
+		expect(register).toHaveBeenCalledTimes(3);
+
+		register.mockClear();
+		callManager.startCall(OTHER_SOURCE, true, true);
+		await vi.advanceTimersByTimeAsync(100);
+		expect(register).toHaveBeenCalledTimes(1);
+		callManager.endCall(false);
+		await vi.advanceTimersByTimeAsync(30 * 1000);
+		expect(register).toHaveBeenCalledTimes(1);
+	});
+
+	it('ends the observation on the server when a call nobody joined is ended', async () => {
+		sendEvent.mockResolvedValue({ event_id: '$invite' });
+		callManager.startCall(SOURCE, true, true);
+		await vi.waitFor(() => expect(register).toHaveBeenCalledTimes(1));
+		const callId = callManager.getCurrentCall()!.callId;
+		callManager.endCall(false);
+		await vi.waitFor(() => expect(end).toHaveBeenCalledTimes(1));
+		expect(end).toHaveBeenCalledWith({ sourceRoomId: SOURCE, callId });
+	});
+
+	it('ends the observation on the server when a call nobody joined is left', async () => {
+		sendEvent.mockResolvedValue({ event_id: '$invite' });
+		callManager.startCall(SOURCE, true, true);
+		await vi.waitFor(() => expect(register).toHaveBeenCalledTimes(1));
+		const callId = callManager.getCurrentCall()!.callId;
+		callManager.leaveCall();
+		await vi.waitFor(() => expect(end).toHaveBeenCalledTimes(1));
+		expect(end).toHaveBeenCalledWith({ sourceRoomId: SOURCE, callId });
+	});
+
+	it('never ends the observation of an attended call, by ending or leaving', async () => {
+		sendEvent.mockResolvedValue({ event_id: '$invite' });
+		vi.spyOn(callLifecycleTracker, 'finishIfUnattended').mockReturnValue(
+			false
+		);
+		callManager.startCall(SOURCE, true, true);
+		await vi.waitFor(() => expect(register).toHaveBeenCalledTimes(1));
+		callManager.leaveCall();
+		await new Promise((resolve) => setTimeout(resolve, 20));
+		callManager.startCall(OTHER_SOURCE, true, true);
+		await vi.waitFor(() => expect(register).toHaveBeenCalledTimes(2));
+		callManager.endCall(false);
+		await new Promise((resolve) => setTimeout(resolve, 20));
+		expect(end).not.toHaveBeenCalled();
+	});
+
 	/** Holds the invite for SOURCE until the test acknowledges it. */
 	const holdInvite = () => {
 		let acknowledge!: (value: unknown) => void;

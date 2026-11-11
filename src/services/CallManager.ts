@@ -76,6 +76,10 @@ export interface CallData {
 
 type CallStateChangeListener = (callData: CallData | null) => void;
 
+// #2166: retries of a failed observation registration, well inside the ~45 s
+// after which a call card the server does not know settles as ended.
+const REGISTRATION_RETRY_DELAYS_MS: readonly number[] = [5000, 15000];
+
 class CallManager {
 	private static instance: CallManager;
 	private currentCall: CallData | null = null;
@@ -1188,14 +1192,6 @@ class CallManager {
 		}
 	}
 
-	/**
-	 * Send m.call.invite event to Matrix room for group calls
-	 *
-	 * @param signallingRoomId - The existing session/chat room where the invite should appear
-	 * @param callId - Logical call identifier
-	 * @param isVideo - Whether this is a video call
-	 * @param elementCallRoomId - The dedicated Element Call room that should be joined
-	 */
 	// Bumped on session teardown: a start begun before it must not register after it.
 	private sessionGeneration = 0;
 
@@ -1203,6 +1199,7 @@ class CallManager {
 		sourceRoomId: string;
 		callId: string;
 		timer: ReturnType<typeof setInterval>;
+		retry?: ReturnType<typeof setTimeout>;
 	} | null = null;
 
 	/**
@@ -1219,7 +1216,10 @@ class CallManager {
 		this.stopObservation(false);
 		// Loaded on demand: this module stays free of browser-only API imports.
 		const account = this.currentAccount();
-		const register = () => {
+		const stillObserving = () =>
+			this.observation?.callId === callId &&
+			this.currentAccount() === account;
+		const register = (attempt = 0) => {
 			// Another account is signed in now: never register this call as them.
 			if (this.currentAccount() !== account) {
 				this.stopObservation(false, callId);
@@ -1233,8 +1233,7 @@ class CallManager {
 			void import('../api/apiCallObservation')
 				.then(({ apiRegisterCallObservation }) =>
 					// A delayed import must not register a call that was already left.
-					this.observation?.callId !== callId ||
-					this.currentAccount() !== account
+					!stillObserving()
 						? undefined
 						: apiRegisterCallObservation({
 								sourceRoomId,
@@ -1243,13 +1242,31 @@ class CallManager {
 								video
 							})
 				)
-				.catch(() => undefined);
+				.catch(() => {
+					/*
+					 * A failed registration is retried soon rather than at the
+					 * next renewal: until it lands the server answers 404, and
+					 * the call card settles as ended after a few of those
+					 * (UNKNOWN_STATE_LIMIT, about 45 s). Bounded, and never for
+					 * a call that is no longer observed.
+					 */
+					const delay = REGISTRATION_RETRY_DELAYS_MS[attempt];
+					const current = this.observation;
+					if (delay === undefined || !current || !stillObserving())
+						return;
+					clearTimeout(current.retry);
+					current.retry = setTimeout(() => {
+						if (this.observation === current)
+							current.retry = undefined;
+						if (stillObserving()) register(attempt + 1);
+					}, delay);
+				});
 		};
 		register();
 		this.observation = {
 			sourceRoomId,
 			callId,
-			timer: setInterval(register, 4 * 60 * 1000)
+			timer: setInterval(() => register(), 4 * 60 * 1000)
 		};
 	}
 
@@ -1257,6 +1274,7 @@ class CallManager {
 		const current = this.observation;
 		if (!current || (onlyCallId && current.callId !== onlyCallId)) return;
 		clearInterval(current.timer);
+		clearTimeout(current.retry);
 		this.observation = null;
 		if (end)
 			void import('../api/apiCallObservation')
@@ -1269,6 +1287,14 @@ class CallManager {
 				.catch(() => undefined);
 	}
 
+	/**
+	 * Send m.call.invite event to Matrix room for group calls
+	 *
+	 * @param signallingRoomId - The existing session/chat room where the invite should appear
+	 * @param callId - Logical call identifier
+	 * @param isVideo - Whether this is a video call
+	 * @param elementCallRoomId - The dedicated Element Call room that should be joined
+	 */
 	private async sendGroupCallInvite(
 		signallingRoomId: string,
 		callId: string,
