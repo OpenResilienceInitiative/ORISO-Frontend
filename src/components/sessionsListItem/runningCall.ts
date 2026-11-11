@@ -37,6 +37,37 @@ export const runningCallOf = (
 	return null;
 };
 
+/**
+ * The state the newest revision in `events` gives a call, read from the raw
+ * content (an edit's `m.new_content` too). Needed for a card whose original
+ * event has left the window: its edits can no longer be folded, but a
+ * terminal one still says the call is over.
+ */
+export const latestCallStateIn = (
+	events: readonly unknown[],
+	callId: string,
+	roomId: string
+): CallLifecycleMessage['state'] | null => {
+	for (let index = events.length - 1; index >= 0; index -= 1) {
+		const event = events[index] as {
+			getClearContent?: () => Record<string, unknown> | null;
+			getContent?: () => Record<string, unknown> | null;
+		};
+		const content =
+			event?.getClearContent?.() || event?.getContent?.() || {};
+		const body = (content['m.new_content'] ?? content) as Record<
+			string,
+			unknown
+		>;
+		const call = body?.['org.oriso.call'] as
+			| { call_id?: unknown; room_ref?: unknown; state?: unknown }
+			| undefined;
+		if (call?.call_id === callId && call.room_ref === roomId)
+			return call.state as CallLifecycleMessage['state'];
+	}
+	return null;
+};
+
 type LoadCallState = typeof apiCallStateRead;
 
 /** Stands in while there is no running card; never asked about. */
@@ -83,7 +114,13 @@ export const useRunningCall = (
 	 */
 	const retained = useRef<CallLifecycleMessage | null>(null);
 	if (found) retained.current = found;
-	else if (retained.current && retained.current.roomRef !== roomId)
+	else if (
+		retained.current &&
+		(retained.current.roomRef !== roomId ||
+			// A terminal revision in the window ends it, server or not.
+			(latestCallStateIn(events, retained.current.callId, roomId) ??
+				'running') !== 'running')
+	)
 		retained.current = null;
 	const candidate = found ?? retained.current;
 	const [untrusted, setUntrusted] = useState<string | null>(null);

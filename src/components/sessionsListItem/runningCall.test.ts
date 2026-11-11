@@ -211,4 +211,40 @@ describe('the running call of a conversation, for the list (S10)', () => {
 			vi.useRealTimers();
 		}
 	});
+
+	it('drops a retained call when a terminal edit arrives, without the server', async () => {
+		vi.useFakeTimers();
+		try {
+			const loadState = vi.fn().mockRejectedValue(new Error('offline'));
+			let events: unknown[] = [card(call(), '$card')];
+			const { result, rerender } = renderHook(() =>
+				useRunningCall(events, ROOM, loadState)
+			);
+			await act(async () => {
+				await vi.advanceTimersByTimeAsync(0);
+			});
+			expect(result.current?.callId).toBe('call-1');
+			// The original card is out of the window; only its edit is in.
+			events = [text(), edit(call({ state: 'ended' }), '$card')];
+			rerender();
+			expect(result.current).toBeNull();
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
+	it('drops a retained call when its card in the window turns terminal', () => {
+		const loadState = vi.fn().mockRejectedValue(new Error('offline'));
+		let events: unknown[] = [card(call(), '$card')];
+		const { result, rerender } = renderHook(() =>
+			useRunningCall(events, ROOM, loadState)
+		);
+		expect(result.current?.callId).toBe('call-1');
+		events = [
+			card(call(), '$card'),
+			edit(call({ state: 'ended' }), '$card')
+		];
+		rerender();
+		expect(result.current).toBeNull();
+	});
 });

@@ -1393,11 +1393,11 @@ export const GroupCallWidget: React.FC = () => {
 						    ready widget is the joined call. */}
 						{/*
 						 * With host chrome and "Link teilen" in the call's
-						 * header (S8) this corner button would sit on that
-						 * header and offer the same link twice.
+						 * header (S8) this corner button would offer the same
+						 * link twice — except where the link may create a
+						 * temporary account: that switch exists only here.
 						 */}
 						{isConsultantUser &&
-							!(hostChrome && canInvite) &&
 							widget.ready &&
 							callData?.signalRoomId && (
 								<div className="element-call-share">
@@ -1406,6 +1406,9 @@ export const GroupCallWidget: React.FC = () => {
 										callId={callData.callId}
 										layout={
 											isMobileView ? 'phone' : 'desktop'
+										}
+										onlyForTemporaryAccounts={
+											hostChrome && canInvite
 										}
 									/>
 								</div>
