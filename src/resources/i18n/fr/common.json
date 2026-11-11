@@ -2243,7 +2243,16 @@
 				"nav": "Conversation",
 				"small": "Nouvelles"
 			},
-			"directLinks": "Mes liens directs"
+			"directLinks": "Mes liens directs",
+			"inboxState": {
+				"empty": "Aucune demande",
+				"allOpened": "Toutes les demandes ont été ouvertes",
+				"unopened": "{{count}} demandes non ouvertes",
+				"unopened_one": "{{count}} demande non ouverte",
+				"overdue": "Demandes en retard",
+				"overdueUnopened": "Demandes en retard, {{count}} demandes non ouvertes",
+				"overdueUnopened_one": "Demandes en retard, {{count}} demande non ouverte"
+			}
 		},
 		"activity": "Chronologie",
 		"language": "Langue",
