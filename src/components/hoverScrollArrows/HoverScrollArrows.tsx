@@ -107,9 +107,10 @@ export const scrollOneStep = (
 type Side = 'start' | 'end';
 
 /**
- * How far into the track the pointer reveals one edge's arrow: a third of a
- * card (Frank, 2026-11-11: "so ein Drittel der Card am Rand"), and all of a
- * card the edge cuts off, so hovering anywhere on a half-hidden card works.
+ * How far into the track the pointer reveals one edge's arrow: the outer
+ * third of the card standing at that edge (Frank, 2026-11-11: "so ein
+ * Drittel der Card am Rand"), or all of it where the edge cuts it off.
+ * Never less than `minimum`, never more than half the track.
  */
 export const edgeZoneWidth = (
 	track: HTMLElement | null,
@@ -117,24 +118,31 @@ export const edgeZoneWidth = (
 	side: Side,
 	minimum: number
 ) => {
-	const cards = track ? (Array.from(track.children) as HTMLElement[]) : [];
+	const visible = (track ? (Array.from(track.children) as HTMLElement[]) : [])
+		.map((card) => card.getBoundingClientRect())
+		.filter(
+			(card) =>
+				card.width > 0 &&
+				card.left < wrapper.right - EDGE_TOLERANCE &&
+				card.right > wrapper.left + EDGE_TOLERANCE
+		);
 	let zone = minimum;
-	cards.forEach((card) => {
-		const bounds = card.getBoundingClientRect();
-		zone = Math.max(zone, bounds.width / 3);
-		const cutAtStart =
-			bounds.left < wrapper.left && bounds.right > wrapper.left;
-		const cutAtEnd =
-			bounds.right > wrapper.right && bounds.left < wrapper.right;
-		if (side === 'start' && cutAtStart) {
-			zone = Math.max(zone, bounds.right - wrapper.left);
+	if (visible.length) {
+		if (side === 'start') {
+			const card = visible[0];
+			zone =
+				card.left < wrapper.left - EDGE_TOLERANCE
+					? card.right - wrapper.left
+					: card.left + card.width / 3 - wrapper.left;
+		} else {
+			const card = visible[visible.length - 1];
+			zone =
+				card.right > wrapper.right + EDGE_TOLERANCE
+					? wrapper.right - card.left
+					: wrapper.right - (card.right - card.width / 3);
 		}
-		if (side === 'end' && cutAtEnd) {
-			zone = Math.max(zone, wrapper.right - bounds.left);
-		}
-	});
-	// Never more than half the track: the middle stays free.
-	return Math.min(zone, wrapper.width / 2);
+	}
+	return Math.min(Math.max(zone, minimum), wrapper.width / 2);
 };
 
 /**
@@ -238,19 +246,19 @@ export const HoverScrollArrows = ({
 					'zIndex': 1,
 					'opacity': 0,
 					'transition': `opacity ${POP}`,
-					'&[data-near], &:focus-within': { opacity: 1 },
+					'&[data-near], &:has(.Mui-focusVisible)': { opacity: 1 },
 					// The button grows in from slightly smaller and slightly
 					// outside, then settles.
 					'& button': {
 						transform: `translateX(${isStart ? -8 : 8}px) scale(0.8)`
 					},
 					'@media (prefers-reduced-motion: reduce)': {
-						'& button, &[data-near] button, &:focus-within button':
+						'& button, &[data-near] button, &:has(.Mui-focusVisible) button':
 							{ transform: 'none' }
 					},
 					// Hidden arrows let the pointer through, so a drag that
 					// starts at the edge still moves the cards.
-					'&[data-near] button, &:focus-within button': {
+					'&[data-near] button, &:has(.Mui-focusVisible) button': {
 						pointerEvents: 'auto',
 						transform: 'none'
 					},
