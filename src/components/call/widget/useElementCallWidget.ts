@@ -25,11 +25,14 @@ import {
 } from 'matrix-js-sdk';
 
 import { OrisoWidgetDriver } from './OrisoWidgetDriver';
+import { callBrandParams } from './callBrand';
 import {
 	ALLOWED_RECEIVE_ROOM_EVENT_TYPES,
 	ALLOWED_RECEIVE_STATE_EVENT_TYPES,
 	ALLOWED_TO_DEVICE_EVENT_TYPES
 } from './orisoWidgetCapabilities';
+import { useTenant } from '../../../globalState/provider/TenantProvider';
+import { endpoints } from '../../../resources/scripts/endpoints';
 import { getElementCallBaseUrl } from '../../../resources/scripts/runtimeConfig';
 import { appConfig } from '../../../utils/appConfig';
 
@@ -289,6 +292,19 @@ export const useElementCallWidget = (
 	knockStateRef.current = knockState;
 	const onSetKnockRef = useRef(onSetKnock);
 	onSetKnockRef.current = onSetKnock;
+	// The Träger's brand is read when the URL is built, not watched: a tenant
+	// that resolves again or changes later must not rebuild the address of a
+	// running call (the effect below blanks the URL and would navigate it).
+	const tenant = useTenant();
+	const tenantRef = useRef(tenant);
+	tenantRef.current = tenant;
+	// Frozen per call room: a token refresh hands the effect below a new
+	// client and rebuilds the URL, and a brand read afresh then (the tenant
+	// resolved meanwhile, or its colours changed) would navigate the call.
+	const brandRef = useRef<{
+		roomId: string;
+		params: Record<string, string>;
+	} | null>(null);
 
 	// A widget client cannot join rooms. Gate iframe creation on the host's
 	// membership so Element Call never starts against an invited/unknown room.
@@ -300,6 +316,19 @@ export const useElementCallWidget = (
 		setError(null);
 
 		if (!client || !roomId) return undefined;
+
+		const brandFor = (room: string) => {
+			if (brandRef.current?.roomId !== room) {
+				brandRef.current = {
+					roomId: room,
+					params: callBrandParams(
+						tenantRef.current,
+						endpoints.tenantServiceBase
+					)
+				};
+			}
+			return brandRef.current.params;
+		};
 
 		const prepare = async () => {
 			try {
@@ -379,7 +408,11 @@ export const useElementCallWidget = (
 					callIntent: isVideo ? 'video' : 'audio',
 					// The pre-join choice (ElementCall#116): on/off and the
 					// devices by label, read before any track exists.
-					...Object.fromEntries(new URLSearchParams(callStartQuery))
+					...Object.fromEntries(new URLSearchParams(callStartQuery)),
+					// The Träger's colours and logo (#2188), appended so every
+					// parameter above keeps its place. Left off the address
+					// where the Träger has set nothing the call may use.
+					...brandFor(roomId)
 				}).toString()}`;
 
 				setUrl(elementCallUrl.toString());

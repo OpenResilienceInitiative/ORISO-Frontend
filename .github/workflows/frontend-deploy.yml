@@ -19,7 +19,15 @@ run-name: Deploy Frontend to ${{ github.event.inputs.environment }}
 #
 # Optional in both: DEPLOY_SSH_USER (default root), DEPLOY_SSH_PORT (default
 # 22) and DEPLOY_SSH_FINGERPRINT (the server's SHA256 host key fingerprint;
-# when set, the runner refuses to talk to any other host).
+# when set, the runner refuses to talk to any other host). Use the server's
+# ECDSA host key fingerprint (/etc/ssh/ssh_host_ecdsa_key.pub), not the
+# ED25519 one: with appleboy/ssh-action only the ECDSA fingerprint matched; the
+# ED25519 one fails with "host key fingerprint mismatch".
+#
+# Each server has its own script folder, because the scripts differ in which
+# image tag they roll out:
+#   dev      /root/deploy-script         deploys the :dev image
+#   pre-dev  /root/predev-deploy-script  deploys the :pre-dev image
 
 on:
     workflow_dispatch:
@@ -82,11 +90,14 @@ jobs:
                   fingerprint: ${{ secrets.DEPLOY_SSH_FINGERPRINT }}
                   # The action's default is 10m; a frontend rollout can take longer.
                   command_timeout: 25m
-                  # Both servers keep their scripts in /root/deploy-script; the
-                  # frontend script is called deploy-frontend-dev.sh on both.
+                  # The frontend script is called deploy-frontend-dev.sh in both
+                  # folders, but the one in /root/deploy-script rolls out :dev
+                  # even on the Pre-Dev server. Pre-Dev has its own folder
+                  # whose script rolls out :pre-dev.
                   script: |
                       set -euo pipefail
-                      cd /root/deploy-script
+                      cd ${{ github.event.inputs.environment == 'pre-dev' && '/root/predev-deploy-script' || '/root/deploy-script' }}
+                      pwd
                       bash ./deploy-frontend-dev.sh
 
                       # Proof of what is running now, so the run log answers

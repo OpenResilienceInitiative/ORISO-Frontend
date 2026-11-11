@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useLayoutEffect, useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Box, Typography } from '@mui/material';
-import { expect, waitFor } from 'storybook/test';
+import { expect, userEvent, waitFor } from 'storybook/test';
 import { Stage } from '../../stage/stage';
 import { GlobalComponentContext } from '../../../globalState/provider/GlobalComponentContext';
 import { LegalLinksContext } from '../../../globalState/provider/LegalLinksProvider';
@@ -132,6 +132,99 @@ export const Ready: StoryObj = {
 		await expect(
 			await canvas.findByRole('button', { name: /Anfrage schreiben/i })
 		).toBeEnabled();
+	}
+};
+
+/**
+ * ORISO-Frontend#2139: on desktop the dots under "So geht es weiter" stayed
+ * on the first card while the cards moved, and every dot jumped to the end,
+ * so the visitor could not get back. The carousel measured its cards from the
+ * page column instead of from its own track (`offsetLeft` of an unpositioned
+ * track), which only matches where the column starts at x = 0 (phones).
+ * This drives the real room at 1440 px: scroll, click a dot, drag with the
+ * mouse — the active dot follows every time.
+ */
+export const ReadyDotsFollowTheCards: StoryObj = {
+	name: '4b — Punkte folgen den Karten (Desktop)',
+	globals: desktop1440Globals,
+	render: () => <Waiting finished={HANDOVER_MILESTONES.length} />,
+	play: async ({ canvasElement }) => {
+		await expectWaitingRoomLayout(canvasElement, { cards: true });
+		const doc = canvasElement.ownerDocument;
+		const track = await waitFor(() => {
+			const el = doc.querySelector<HTMLElement>(
+				'[data-cy="handover-carousel"]'
+			);
+			expect(el).not.toBeNull();
+			expect(el!.scrollWidth).toBeGreaterThan(el!.clientWidth);
+			return el!;
+		});
+		const dots = () =>
+			Array.from(
+				doc.querySelectorAll<HTMLElement>(
+					'[data-cy="handover-carousel-dots"] button'
+				)
+			);
+		const activeDot = () =>
+			dots().findIndex(
+				(dot) => dot.getAttribute('aria-current') === 'true'
+			);
+		const last = dots().length - 1;
+
+		// Scrolled to the end: the last dot is the active one.
+		track.scrollTo({ left: track.scrollWidth, behavior: 'auto' });
+		await waitFor(() => expect(activeDot()).toBe(last));
+
+		// The first dot brings the first card back.
+		await userEvent.click(dots()[0]);
+		await waitFor(() => {
+			expect(track.scrollLeft).toBe(0);
+			expect(activeDot()).toBe(0);
+		});
+
+		// Dragging with the mouse moves the cards (no trackpad needed) and
+		// the nearest card snaps in; the dots follow.
+		const rect = track.getBoundingClientRect();
+		const y = rect.top + rect.height / 2;
+		const startX = rect.left + rect.width - 40;
+		await userEvent.pointer([
+			{
+				keys: '[MouseLeft>]',
+				target: track,
+				coords: { clientX: startX, clientY: y }
+			},
+			{ target: track, coords: { clientX: startX - 200, clientY: y } },
+			{ target: track, coords: { clientX: startX - 500, clientY: y } },
+			{
+				keys: '[/MouseLeft]',
+				target: track,
+				coords: { clientX: startX - 500, clientY: y }
+			}
+		]);
+		await waitFor(() => {
+			expect(track.scrollLeft).toBe(
+				track.scrollWidth - track.clientWidth
+			);
+			expect(activeDot()).toBe(last);
+		});
+		await userEvent.click(dots()[0]);
+		await waitFor(() => expect(track.scrollLeft).toBe(0));
+
+		// The middle dot centres the middle card, and it stays there once
+		// the browser's own snapping has settled.
+		await userEvent.click(dots()[1]);
+		await waitFor(() => expect(activeDot()).toBe(1));
+		await new Promise((resolve) => setTimeout(resolve, 600));
+		expect(activeDot()).toBe(1);
+
+		// The last dot goes to the end again.
+		await userEvent.click(dots()[last]);
+		await waitFor(() => {
+			expect(track.scrollLeft).toBe(
+				track.scrollWidth - track.clientWidth
+			);
+			expect(activeDot()).toBe(last);
+		});
 	}
 };
 

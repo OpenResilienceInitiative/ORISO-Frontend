@@ -20,7 +20,8 @@ const sessions: TimelineSession[] = [
 		kind: 'group',
 		topic: 'Familie',
 		lastActivity: 1,
-		lastMessage: ''
+		lastMessage: '',
+		canConfigure: true
 	},
 	{
 		sessionId: 2,
@@ -87,6 +88,7 @@ describe('future entries', () => {
 		expect(onSite.modality).toBe('location');
 		expect(group.title).toBe('Elternrunde');
 		expect(group.modality).toBe('video');
+		expect(group.canConfigure).toBe(true);
 	});
 
 	it('shows an entry without a room only when no filter is on', () => {
@@ -139,9 +141,14 @@ describe('entry date', () => {
 
 describe('entry menu', () => {
 	const keys = (kind: 'group' | 'one-to-one', role: 'counsellor' | 'asker') =>
-		entryMenu({ kind, canDuplicate: kind === 'group' }, role).map(
-			(i) => `${i.key}${i.disabled ? '*' : ''}`
-		);
+		entryMenu(
+			{
+				kind,
+				canDuplicate: kind === 'group',
+				canConfigure: kind === 'group'
+			},
+			role
+		).map((i) => `${i.key}${i.disabled ? '*' : ''}`);
 
 	it('counsellor, group', () => {
 		expect(keys('group', 'counsellor')).toEqual([
@@ -151,6 +158,20 @@ describe('entry menu', () => {
 			'configure',
 			'reminder*'
 		]);
+	});
+
+	it('allows date cancellation but withholds group configuration for a co-moderator', () => {
+		const items = entryMenu(
+			{
+				kind: 'group',
+				canModerate: true,
+				canDuplicate: true,
+				canConfigure: false
+			},
+			'counsellor'
+		);
+		expect(items.find(({ key }) => key === 'cancel')?.disabled).toBe(false);
+		expect(items.some(({ key }) => key === 'configure')).toBe(false);
 	});
 
 	it('counsellor, 1:1 reschedules instead of editing', () => {

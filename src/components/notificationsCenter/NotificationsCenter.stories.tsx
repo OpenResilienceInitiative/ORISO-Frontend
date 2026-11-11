@@ -4,7 +4,9 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { NotificationsCenter } from './NotificationsCenter';
 import { KNOWN_EVENT_TYPES } from './eventDescriptors';
 import { APP_ORISO_FIGMA_URL } from '../storybookDesignLinks';
-import { SessionsDataContext } from '../../globalState';
+import { AUTHORITIES, SessionsDataContext } from '../../globalState';
+import { useLocation } from 'react-router-dom';
+import type { CaseHandoverStatus } from '../../api/apiCaseHandover';
 import {
 	minutesAgo,
 	feedItem,
@@ -341,17 +343,139 @@ export const StructuredFirstResponse: Story = {
 	}
 };
 
-/** Client (asker) view — includes the two-button case-handover consent card. */
-export const ClientView: Story = {
-	decorators: [
-		withTimelineData(mockFeed, {
-			...consultantUserData,
-			userId: 'sb-client',
-			userName: 'Storybook Client',
-			grantedAuthorities: []
-		})
-	]
+const clientUserData = {
+	...consultantUserData,
+	userId: 'sb-client',
+	userName: 'Storybook Client',
+	grantedAuthorities: [AUTHORITIES.ASKER_DEFAULT]
 };
+const consentEvent = mockFeed.find((item) => item.id === '5')!;
+const consentRequestPath = '/service/users/sessions/103/case-handover/42';
+
+const installConsentStatus = (status: CaseHandoverStatus['status']) => {
+	const originalFetch = globalThis.fetch;
+	const consentFetch: typeof fetch = (input, init) => {
+		const request = input instanceof Request ? input : undefined;
+		const url = new URL(
+			request?.url ?? String(input),
+			window.location.href
+		);
+		const method = init?.method ?? request?.method ?? 'GET';
+		if (url.pathname !== consentRequestPath || method !== 'GET') {
+			return originalFetch(input, init);
+		}
+		return Promise.resolve(
+			new Response(
+				JSON.stringify({
+					requestId: 42,
+					sessionId: 103,
+					status,
+					canViewContent: status === 'GRANTED_PENDING_CLIENT_OPTOUT',
+					clientConsent:
+						status === 'GRANTED_PENDING_CLIENT_OPTOUT'
+							? 'OPT_OUT'
+							: 'OPT_IN',
+					clientConsentRequired:
+						status !== 'GRANTED_PENDING_CLIENT_OPTOUT'
+				}),
+				{ status: 200, headers: { 'Content-Type': 'application/json' } }
+			)
+		);
+	};
+	globalThis.fetch = consentFetch;
+	// The draft fixture only answers while it owns the outer fetch guard.
+	const restoreDrafts = installNotificationDraftFixture([]);
+	return () => {
+		restoreDrafts();
+		if (globalThis.fetch === consentFetch) globalThis.fetch = originalFetch;
+	};
+};
+
+const ConsentRouteProbe = () => {
+	const { pathname, search } = useLocation();
+	return (
+		<span hidden data-testid="consent-destination">
+			{pathname}
+			{search}
+		</span>
+	);
+};
+
+/** Client (asker) view with an actionable consent request. */
+export const ClientView: Story = {
+	decorators: [withTimelineData(mockFeed, clientUserData)],
+	beforeEach: () => installConsentStatus('PENDING_CLIENT_CONSENT')
+};
+
+export const HistoricalConsentRequest: Story = {
+	globals: { viewport: { value: 'desktop1440' } },
+	decorators: [
+		withTimelineData(
+			[{ ...consentEvent, readAt: minutesAgo(125) }],
+			clientUserData
+		)
+	],
+	beforeEach: () => installConsentStatus('CLIENT_CONSENT_DECLINED'),
+	render: () => (
+		<>
+			<NotificationsCenter />
+			<ConsentRouteProbe />
+		</>
+	),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const open = await waitFor(() => {
+			const button = canvasElement.querySelector<HTMLButtonElement>(
+				'.notificationsCenter__detailActions .notificationsCenter__openButton'
+			);
+			expect(button).toBeVisible();
+			return button!;
+		});
+		const expectNoDecisionActions = async () => {
+			await expect(
+				canvas.queryByRole('button', { name: 'Zugriff freigeben' })
+			).toBeNull();
+			await expect(
+				canvas.queryByRole('button', { name: 'Zugriff verweigern' })
+			).toBeNull();
+		};
+		await expectNoDecisionActions();
+		await expect(
+			await canvas.findByText(
+				'Diese Anfrage ist abgeschlossen. Es steht keine weitere Entscheidung aus.'
+			)
+		).toBeVisible();
+		await expectNoDecisionActions();
+		await userEvent.click(open);
+		await expect(
+			canvas.getByTestId('consent-destination')
+		).toHaveTextContent(consentEvent.actionPath!);
+	}
+};
+
+const actionableConsentStory = (
+	status: CaseHandoverStatus['status']
+): Story => ({
+	globals: { viewport: { value: 'desktop1440' } },
+	decorators: [withTimelineData([consentEvent], clientUserData)],
+	beforeEach: () => installConsentStatus(status),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await expect(
+			await canvas.findByRole('button', { name: 'Zugriff freigeben' })
+		).toBeEnabled();
+		await expect(
+			canvas.getByRole('button', { name: 'Zugriff verweigern' })
+		).toBeEnabled();
+	}
+});
+
+export const PendingOptInConsent = actionableConsentStory(
+	'PENDING_CLIENT_CONSENT'
+);
+export const RevocableOptOutConsent = actionableConsentStory(
+	'GRANTED_PENDING_CLIENT_OPTOUT'
+);
 
 /**
  * #1377 slice 3: a customised display filter — drafts hidden (no card, no

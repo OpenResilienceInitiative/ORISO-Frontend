@@ -1183,6 +1183,11 @@
 		}
 	},
 	"registration": {
+		"dataProtection": {
+			"noNotice": {
+				"body": "Für diese Beratungsstelle ist keine Datenschutzerklärung hinterlegt. Die Beratungsstelle ist dafür verantwortlich. Du kannst trotzdem fortfahren, wenn du das bewusst möchtest."
+			}
+		},
 		"selectedLabel": "Ausgewählt",
 		"noneSelected": "Bitte wähle ein Thema, um fortzufahren.",
 		"topicInstruction": "Wähle ein Thema aus.",
@@ -2872,6 +2877,10 @@
 		}
 	},
 	"directLink": {
+		"postcode": {
+			"helper": "Nur für die Statistik. Die Postleitzahl bestimmt weder Beratungsstelle noch Berater:in – das legt der Link fest.",
+			"invalid": "Bitte gib deine fünfstellige Postleitzahl ein."
+		},
 		"card": {
 			"headline": "Ein Link direkt zu dir",
 			"text": "Wer den Link öffnet, landet ohne Umweg bei dir – im Chat, im Audio- oder im Videoanruf.",

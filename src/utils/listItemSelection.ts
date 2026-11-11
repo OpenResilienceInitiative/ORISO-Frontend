@@ -17,6 +17,10 @@
  */
 
 import { matchPath } from 'react-router-dom';
+import {
+	ASKER_GROUP_CHAT_ROUTE,
+	CONSULTANT_GROUP_CHAT_ROUTE
+} from '../components/groupChat/consultantGroupChatPath';
 
 /** The active conversation/request identity derived from the current route. */
 export interface ActiveListSelection {
@@ -69,10 +73,11 @@ export const deriveActiveSelection = (
 	if (!pathname) {
 		return EMPTY_SELECTION;
 	}
-	const group = matchPath(
-		{ path: '/sessions/consultant/sessionView/chat/:chatId', end: false },
-		pathname
-	);
+	const group =
+		matchPath(
+			{ path: CONSULTANT_GROUP_CHAT_ROUTE, end: false },
+			pathname
+		) ?? matchPath({ path: ASKER_GROUP_CHAT_ROUTE, end: false }, pathname);
 	if (group?.params.chatId) {
 		return { ...EMPTY_SELECTION, chatId: group.params.chatId };
 	}

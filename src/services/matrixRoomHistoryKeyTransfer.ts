@@ -18,12 +18,14 @@ export { isUndecryptedRoomEvent } from '../utils/matrixDecryptionFailure';
 
 const KEY_REQUEST_EVENT = 'org.oriso.room_history_key_request';
 const KEY_BUNDLE_EVENT = 'org.oriso.room_history_key_bundle';
+const REQUEST_DECIDED_EVENT = 'org.oriso.room_history_request_decided';
 const REQUEST_THROTTLE_MS = 30_000;
 const MAX_KEY_BUNDLE_COUNT = 5_000;
 const MAX_PENDING_APPROVALS = 20;
 const MAX_PENDING_PER_ROOM = 5;
 const PENDING_APPROVAL_TTL_MS = 24 * 60 * 60 * 1000;
 const MAX_REASON_LENGTH = 500;
+const MAX_DECIDED_REQUESTS = 100;
 
 export const MATRIX_HISTORY_KEYS_IMPORTED_EVENT =
 	'oriso:matrix-history-keys-imported';
@@ -65,6 +67,13 @@ type KeyRequest = {
 	requester_user_id: string;
 	requester_device_id: string;
 	reason?: string;
+};
+
+/** Tells a person's other devices that a waiting request was decided here. */
+type RequestDecided = {
+	room_id: string;
+	request_id: string;
+	outcome: 'approved' | 'declined';
 };
 
 type KeyBundle = {
@@ -136,6 +145,15 @@ export class MatrixRoomHistoryKeyTransfer {
 	private readonly pendingReasons = new Map<string, string>();
 	private readonly lastReasonRequestAt = new Map<string, number>();
 	private readonly approvalsInFlight = new Set<string>();
+	/**
+	 * Decisions another device of this person announced, kept briefly: the
+	 * announcement can arrive while the request itself is still being checked,
+	 * and that request must not appear afterwards.
+	 */
+	private readonly decidedElsewhere = new Map<
+		string,
+		{ roomId: string; at: number }
+	>();
 	private readonly pendingApprovals = new Map<
 		string,
 		PendingHistoryRequest
@@ -178,6 +196,7 @@ export class MatrixRoomHistoryKeyTransfer {
 		this.pendingApprovals.clear();
 		this.scheduleExpiry();
 		this.approvalsInFlight.clear();
+		this.decidedElsewhere.clear();
 		this.lastReasonRequestAt.clear();
 		dropped.forEach((request) => this.announceResolved(request, 'dropped'));
 	}
@@ -262,9 +281,15 @@ export class MatrixRoomHistoryKeyTransfer {
 				}
 			}
 			// A failed send keeps the request, so the person can try again.
-			if (sent && this.pendingApprovals.get(requestId) === request) {
-				this.pendingApprovals.delete(requestId);
-				this.announceResolved(request, 'approved');
+			if (sent) {
+				// A newer request from the same device may have replaced this one
+				// while the keys were sent: it stays, but the keys did go out for
+				// this one, so the other devices are told either way.
+				if (this.pendingApprovals.get(requestId) === request) {
+					this.pendingApprovals.delete(requestId);
+					this.announceResolved(request, 'approved');
+				}
+				void this.tellOwnDevices(client, request, 'approved');
 			}
 			return sent;
 		} catch (error) {
@@ -272,8 +297,18 @@ export class MatrixRoomHistoryKeyTransfer {
 			return false;
 		} finally {
 			// A replaced client has its own in-flight set.
-			if (this.client === client)
+			if (this.client === client) {
 				this.approvalsInFlight.delete(requestId);
+				// Another device decided while this attempt ran and it did not
+				// end in a release: the card must not wait for a retry.
+				const decided = this.decidedElsewhere.get(requestId);
+				const left = this.pendingApprovals.get(requestId);
+				if (decided && left && decided.roomId === left.roomId) {
+					this.pendingApprovals.delete(requestId);
+					this.scheduleExpiry();
+					this.announceResolved(left, 'dropped');
+				}
+			}
 		}
 	}
 
@@ -285,6 +320,132 @@ export class MatrixRoomHistoryKeyTransfer {
 		this.expirePendingApprovals();
 		if (!this.pendingApprovals.delete(requestId)) return;
 		this.announceResolved(request, 'declined');
+		if (this.client)
+			void this.tellOwnDevices(this.client, request, 'declined');
+	}
+
+	/**
+	 * A person with several devices sees the same waiting request on each. After
+	 * a decision here, the other devices drop their copy. The message carries
+	 * neither keys nor the written reason, and only devices signed by the owner
+	 * receive it.
+	 */
+	private async tellOwnDevices(
+		client: MatrixClient,
+		request: PendingHistoryRequest,
+		outcome: RequestDecided['outcome']
+	): Promise<void> {
+		try {
+			const crypto = client.getCrypto();
+			const userId = client.getUserId();
+			const deviceId = client.getDeviceId();
+			if (!crypto || !userId || !deviceId) return;
+			const own = await crypto.getUserDeviceInfo([userId], true);
+			const others = Array.from(own.get(userId)?.keys() || []).filter(
+				(id) => id !== deviceId
+			);
+			const targets = (
+				await Promise.all(
+					others.map(async (id) => {
+						try {
+							const status =
+								await crypto.getDeviceVerificationStatus(
+									userId,
+									id
+								);
+							return status?.signedByOwner === true
+								? { userId, deviceId: id }
+								: null;
+						} catch {
+							return null;
+						}
+					})
+				)
+			).filter((target): target is { userId: string; deviceId: string } =>
+				Boolean(target)
+			);
+			if (this.client !== client || targets.length === 0) return;
+			await client.encryptAndSendToDevice(
+				REQUEST_DECIDED_EVENT,
+				targets,
+				{
+					room_id: request.roomId,
+					request_id: request.requestId,
+					outcome
+				}
+			);
+		} catch {
+			// The other devices still drop the card when it expires.
+			emitDiagnostic('decision-broadcast-failed');
+		}
+	}
+
+	private rememberDecidedElsewhere(requestId: string, roomId: string): void {
+		const now = Date.now();
+		for (const [id, entry] of this.decidedElsewhere)
+			if (now - entry.at > PENDING_APPROVAL_TTL_MS)
+				this.decidedElsewhere.delete(id);
+		while (this.decidedElsewhere.size >= MAX_DECIDED_REQUESTS) {
+			const oldest = this.decidedElsewhere.keys().next().value;
+			if (oldest === undefined) break;
+			this.decidedElsewhere.delete(oldest);
+		}
+		this.decidedElsewhere.set(requestId, { roomId, at: now });
+	}
+
+	private async handleRequestDecided(
+		event: MatrixEvent,
+		encryptionInfo?: {
+			sender?: string;
+			senderDevice?: string;
+		} | null
+	): Promise<void> {
+		const client = this.client;
+		const crypto = client?.getCrypto();
+		const userId = client?.getUserId();
+		const deviceId = client?.getDeviceId();
+		const content = event.getContent() as Partial<RequestDecided>;
+		const senderDevice = encryptionInfo?.senderDevice;
+		if (
+			!client ||
+			!crypto ||
+			!userId ||
+			!deviceId ||
+			// Only an encrypted message from one of this person's own devices.
+			event.getSender() !== userId ||
+			encryptionInfo?.sender !== userId ||
+			!isNonEmptyString(senderDevice) ||
+			senderDevice === deviceId ||
+			!isNonEmptyString(content.room_id) ||
+			!isNonEmptyString(content.request_id) ||
+			(content.outcome !== 'approved' && content.outcome !== 'declined')
+		) {
+			emitDiagnostic('decision-invalid');
+			return;
+		}
+		const status = await crypto
+			.getDeviceVerificationStatus(userId, senderDevice)
+			.catch(() => null);
+		if (this.client !== client || status?.signedByOwner !== true) {
+			emitDiagnostic('decision-sender-untrusted');
+			return;
+		}
+		const request = this.pendingApprovals.get(content.request_id);
+		if (!request) {
+			// Not here yet: remember it, so the request cannot show up after.
+			this.rememberDecidedElsewhere(content.request_id, content.room_id);
+			return;
+		}
+		if (request.roomId !== content.room_id) return;
+		// A release already sending here is left to finish. If it fails, the
+		// card would stay for a retry, so the decision is kept for that moment.
+		if (this.approvalsInFlight.has(content.request_id)) {
+			this.rememberDecidedElsewhere(content.request_id, content.room_id);
+			return;
+		}
+		this.pendingApprovals.delete(content.request_id);
+		this.scheduleExpiry();
+		this.announceResolved(request, 'dropped');
 	}
 
 	private expiryTimer: ReturnType<typeof setTimeout> | null = null;
@@ -551,6 +712,11 @@ export class MatrixRoomHistoryKeyTransfer {
 			void this.handleKeyRequest(event).catch(() =>
 				emitDiagnostic('request-handler-failed')
 			);
+		} else if (event.getType() === REQUEST_DECIDED_EVENT) {
+			void this.handleRequestDecided(
+				event,
+				payload?.encryptionInfo
+			).catch(() => emitDiagnostic('decision-handler-failed'));
 		} else if (event.getType() === KEY_BUNDLE_EVENT) {
 			emitDiagnostic('received', { eventType: KEY_BUNDLE_EVENT });
 			void this.handleKeyBundle(event).catch(() =>
@@ -682,6 +848,13 @@ export class MatrixRoomHistoryKeyTransfer {
 					) {
 						// Another device must not overwrite this request.
 						emitDiagnostic('request-id-collision');
+						return;
+					}
+					const decided = this.decidedElsewhere.get(
+						pending.requestId
+					);
+					if (decided && decided.roomId === pending.roomId) {
+						emitDiagnostic('request-decided-elsewhere');
 						return;
 					}
 					// One waiting request per requesting device: a newer one replaces

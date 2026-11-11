@@ -13,7 +13,8 @@ import {
 	applyTenantPalette,
 	computeOrisoSchemes,
 	isThemePreviewRoute,
-	readTenantSeeds
+	readTenantSeeds,
+	resolveTenantSeeds
 } from './applyTenantTheme';
 
 const freshRoot = () => {
@@ -397,5 +398,133 @@ describe('URL preview mode (Theme Builder iframe, security-constrained)', () => 
 		const root = document.createElement('div');
 		expect(applyPreviewFromLocation('?foo=bar', root)).toBe(false);
 		expect(root.style.length).toBe(0);
+	});
+});
+
+/**
+ * The seeds the app really applies, for anything that has to look like the
+ * app without owning a second copy of the guard (the video call, #2188).
+ */
+describe('resolveTenantSeeds (shared with the call, #2188)', () => {
+	it('returns the validated seeds, normalised to #rrggbb', () => {
+		expect(
+			resolveTenantSeeds({
+				primaryColor: '#0A7A3C',
+				accent: ' 646D78 ',
+				signal: '#B1005E'
+			})
+		).toEqual({
+			primary: '#0a7a3c',
+			accent: '#646d78',
+			signal: '#b1005e'
+		});
+	});
+
+	it('expands #rgb shorthand like the engine does', () => {
+		expect(resolveTenantSeeds({ primaryColor: '#f00' })).toEqual({
+			primary: '#ff0000'
+		});
+	});
+
+	it('leaves out an accent or signal that is absent or blank', () => {
+		const seeds = resolveTenantSeeds({
+			primaryColor: '#0a7a3c',
+			accent: '',
+			signal: '   '
+		});
+		expect(seeds).toEqual({ primary: '#0a7a3c' });
+		expect(seeds).not.toHaveProperty('accent');
+		expect(seeds).not.toHaveProperty('signal');
+	});
+
+	it.each([
+		['no theming at all', undefined],
+		['theming without a primary', {}],
+		['a blank primary', { primaryColor: '  ' }],
+		['an invalid primary', { primaryColor: 'not-a-hex' }],
+		['a too pale primary (black)', { primaryColor: '#000000' }],
+		['a too pale primary (grey)', { primaryColor: '#888888' }]
+	] as const)('discards the whole palette for %s', (_label, theming) => {
+		expect(resolveTenantSeeds(theming)).toBeNull();
+	});
+
+	it('drops an invalid accent on its own and keeps the rest', () => {
+		expect(
+			resolveTenantSeeds({
+				primaryColor: '#0a7a3c',
+				accent: 'nope',
+				signal: '#b1005e'
+			})
+		).toEqual({ primary: '#0a7a3c', signal: '#b1005e' });
+	});
+
+	it('drops an invalid signal on its own and keeps the rest', () => {
+		expect(
+			resolveTenantSeeds({
+				primaryColor: '#0a7a3c',
+				accent: '#646d78',
+				signal: '#12345'
+			})
+		).toEqual({ primary: '#0a7a3c', accent: '#646d78' });
+	});
+
+	it('does not log: the app already warned when it applied the palette', () => {
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+		resolveTenantSeeds({ primaryColor: 'not-a-hex' });
+		resolveTenantSeeds({ primaryColor: '#000000' });
+		resolveTenantSeeds({ primaryColor: '#0a7a3c', accent: 'nope' });
+		expect(warn).not.toHaveBeenCalled();
+	});
+
+	/*
+	 * The point of sharing: whatever the app paints, the call is told. Every
+	 * case below goes through BOTH functions; a palette is applied exactly
+	 * when seeds come back, and it is the palette those seeds produce.
+	 */
+	describe('agrees with applyTenantPalette', () => {
+		it.each([
+			['a plain brand', { primaryColor: '#0a7a3c' }],
+			[
+				'all three seeds',
+				{
+					primaryColor: '#0a7a3c',
+					accent: '#646d78',
+					signal: '#b1005e'
+				}
+			],
+			['upper case without a hash', { primaryColor: 'A5000A' }],
+			['shorthand', { primaryColor: '#f00' }],
+			['an invalid accent', { primaryColor: '#0a7a3c', accent: 'nope' }],
+			['an invalid signal', { primaryColor: '#0a7a3c', signal: 'nope' }],
+			[
+				'blank siblings',
+				{ primaryColor: '#0a7a3c', accent: '', signal: ' ' }
+			],
+			['no theming', undefined],
+			[
+				'an invalid primary',
+				{ primaryColor: 'not-a-hex', accent: '#646d78' }
+			],
+			[
+				'a too pale primary',
+				{ primaryColor: '#000000', accent: '#646d78' }
+			]
+		] as const)('%s', (_label, theming) => {
+			vi.spyOn(console, 'warn').mockImplementation(() => {});
+			const root = freshRoot();
+			const applied = applyTenantPalette(theming, root);
+			const seeds = resolveTenantSeeds(theming);
+
+			expect(seeds !== null).toBe(applied);
+			if (!seeds) {
+				expect(root.style.length).toBe(0);
+				return;
+			}
+			const { tokens } = computeOrisoPalette(seeds, 'light');
+			Object.entries(tokens).forEach(([name, value]) =>
+				expect(root.style.getPropertyValue(name)).toBe(value)
+			);
+			expect(root.style.length).toBe(Object.keys(tokens).length);
+		});
 	});
 });

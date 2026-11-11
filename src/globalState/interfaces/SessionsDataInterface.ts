@@ -82,6 +82,12 @@ export interface SessionItemInterface {
 	 * it through `session/directLinkOrigin.ts`, never directly.
 	 */
 	directLinkMedium?: 'CHAT' | 'AUDIO' | 'VIDEO';
+	/**
+	 * #2170: the name of that direct link (`SessionDTO.directLinkName`); absent
+	 * when it had none. The call of the conversation is called that, see
+	 * `components/call/callRoomName.ts`.
+	 */
+	directLinkName?: string;
 	agencyId: number;
 	askerMatrixUserId: string;
 	/** Matrix id of the assigned consultant (SessionDTO); absent on group chats. */

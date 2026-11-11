@@ -7,21 +7,47 @@ import {
 } from './notificationActionTarget';
 
 describe('notification action targets', () => {
-	it('opens a group-chat lifecycle event at its stable Series conversation', () => {
+	it.each([
+		'group_chat.reminder',
+		'group_chat.opened',
+		'group_chat.cancelled'
+	])('opens %s at the typed group destination for each role', (eventType) => {
 		const params = parseEventActionParams(
 			'{"seriesId":42,"occurrenceIndex":3,"roomRef":"!room:matrix.example"}'
 		);
+		const item = {
+			eventType,
+			params,
+			sourceSessionId: 42,
+			actionPath: null
+		};
 
 		expect(
 			resolveNotificationActionPath(
-				{
-					eventType: 'group_chat.opened',
-					params
-				},
+				item,
 				'/sessions/consultant/sessionView'
 			)
-		).toBe('/sessions/consultant/sessionView/session/42');
+		).toBe('/sessions/consultant/sessionView/chat/42');
+		expect(resolveNotificationActionPath(item, '/sessions/user/view')).toBe(
+			'/sessions/user/view/chat/42'
+		);
 	});
+
+	it.each([undefined, 0, -1, '1e3', '9007199254740993', '../session/42'])(
+		'does not use a same-number case for an invalid group series ID %s',
+		(seriesId) => {
+			expect(
+				resolveNotificationActionPath(
+					{
+						eventType: 'group_chat.reminder',
+						sourceSessionId: 42,
+						params: { seriesId }
+					},
+					'/sessions/user/view'
+				)
+			).toBeNull();
+		}
+	);
 
 	it('keeps a direct action path authoritative', () => {
 		expect(

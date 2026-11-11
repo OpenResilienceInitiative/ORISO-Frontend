@@ -85,6 +85,7 @@ const EXPECTED_TARGET_KIND: Record<string, string> = {
 	'supervisor.removed': 'conversation',
 	'supervisor.assigned': 'conversation',
 	'counselor.renamed': 'conversation',
+	'topic_duplicate.started': 'conversation',
 	'request.new': 'request',
 	'draft.created': 'draft',
 	'handover.requested': 'conversation',
@@ -140,8 +141,8 @@ describe('WP-06 event-descriptor registry', () => {
 		// + 8 handover + 5 call (incl. the FE#1952 direct-link knock)
 		// + 3 group-chat lifecycle + 4 appointments
 		// + team discussion + first response + conversation finished
-		// + service notice, three offer events and deleted advice seeker = 40.
-		expect(KNOWN_EVENT_TYPES.length).toBe(40);
+		// + service notice, three offer events, deleted advice seeker and topic duplicate = 41.
+		expect(KNOWN_EVENT_TYPES.length).toBe(41);
 		[
 			'request.new',
 			'request.denied',
@@ -280,7 +281,7 @@ describe('WP-06 event-descriptor registry', () => {
 
 			expect(target).toEqual({
 				kind: 'groupChatJoin',
-				path: '/sessions/consultant/sessionView/session/42'
+				path: '/sessions/consultant/sessionView/chat/42'
 			});
 		});
 

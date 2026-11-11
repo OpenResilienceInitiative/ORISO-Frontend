@@ -1,4 +1,6 @@
 import type { NotificationFeedItem } from '../../globalState/provider/NotificationsProvider';
+import type { ListItemIdentity } from '../../utils/listItemSelection';
+import { isGroupChatId } from '../groupChat/consultantGroupChatPath';
 import { getEventDescriptor, isKnownEventType } from './eventDescriptors';
 import { renderEventStrings } from './eventDescriptors/renderEventStrings';
 import { toInterpolationValues } from './notificationActionTarget';
@@ -104,23 +106,30 @@ const pathQuery = (path?: string | null): URLSearchParams =>
 	new URLSearchParams(String(path || '').split('?')[1] || '');
 
 /**
- * The id the conversation route carries for this event, so a route-active
- * conversation can find its card: the session, else the series id a series
- * card opens as `/session/<seriesId>` (registry.ts), else the trailing id of
- * the stored path. Selection only: never look a session up by it.
+ * Identity of the event's destination for route-derived selection. Circle
+ * lifecycle cards use the chat namespace even when the producer also writes
+ * its Series ID into sourceSessionId.
  */
-export const activityEventRouteSessionId = (
+export const activityEventRouteIdentity = (
 	row: ActivityEventRow
-): string | null => {
+): ListItemIdentity => {
+	const seriesId = row?.params?.seriesId;
+	if (
+		row?.eventType === 'group_chat.reminder' ||
+		row?.eventType === 'group_chat.opened' ||
+		row?.eventType === 'group_chat.cancelled'
+	) {
+		return { chatId: isGroupChatId(seriesId) ? String(seriesId) : null };
+	}
 	const sessionId = activityEventSessionId(row);
 	if (sessionId !== null) {
-		return String(sessionId);
+		return { sessionId: String(sessionId) };
 	}
-	if (row?.params?.seriesId != null && row.params.seriesId !== '') {
-		return String(row.params.seriesId);
+	if (seriesId != null && seriesId !== '') {
+		return { sessionId: String(seriesId) };
 	}
 	const match = String(row?.actionPath || '').match(/\/(\d+)(?:\?|$)/);
-	return match?.[1] || null;
+	return { sessionId: match?.[1] || null };
 };
 
 const sentRequestId = (row: ActivityEventRow): unknown => {

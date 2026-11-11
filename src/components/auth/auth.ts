@@ -1,13 +1,18 @@
 import { logout, teardownLocalSession } from '../logout/logout';
-import { setValueInCookie } from '../sessionCookie/accessSessionCookie';
+import {
+	getValueFromCookie,
+	setValueInCookie
+} from '../sessionCookie/accessSessionCookie';
 import {
 	getTokenExpiryFromLocalStorage,
 	setTokenExpiryInLocalStorage
 } from '../sessionCookie/accessSessionLocalStorage';
 import { refreshKeycloakAccessToken } from '../sessionCookie/refreshKeycloakAccessToken';
 import { appConfig } from '../../utils/appConfig';
+import { parseJwt } from '../../utils/parseJWT';
 
 export const RENEW_BEFORE_EXPIRY_IN_MS = 10 * 1000; // seconds
+const PEER_EXPIRY_READBACK_DELAY_MS = 100;
 
 export class TokenRefreshUnavailableError extends Error {
 	constructor(cause?: unknown) {
@@ -68,98 +73,216 @@ export const setTokens = (
 	}
 };
 
-const refreshTokens = (): Promise<void> => {
-	const currentTime = new Date().getTime();
-	const tokenExpiry = getTokenExpiryFromLocalStorage();
+// The active schedule owns its callbacks, including a refresh already in flight.
+let stopTokenTimers: (() => void) | undefined;
 
+const expireScheduledSession = () => {
+	stopTokenTimers?.();
+	if (!hasActiveAuthSession()) teardownLocalSession();
+	void logout(true, appConfig.urls.toLogin);
+};
+
+const refreshTokens = async (isCurrent: () => boolean): Promise<boolean> => {
+	const before = getTokenExpiryFromLocalStorage();
 	if (
-		tokenExpiry.refreshTokenValidUntilTime <=
-		currentTime - RENEW_BEFORE_EXPIRY_IN_MS
+		before.refreshTokenValidUntilTime <=
+		Date.now() - RENEW_BEFORE_EXPIRY_IN_MS
 	) {
-		logout(true, appConfig.urls.toLogin);
-		return Promise.resolve();
+		if (isCurrent()) expireScheduledSession();
+		return false;
 	}
 
-	return refreshKeycloakAccessToken().then((response) => {
-		setTokens(
-			response.access_token,
-			response.expires_in,
-			response.refresh_token,
-			response.refresh_expires_in
-		);
-	});
+	const accessToken = getValueFromCookie('keycloak');
+	const refreshToken = getValueFromCookie('refreshToken');
+	const response = await refreshKeycloakAccessToken();
+	const current = getTokenExpiryFromLocalStorage();
+	// Local logout or another tab may have replaced the session while awaiting the grant.
+	if (
+		!isCurrent() ||
+		Date.now() >=
+			Math.max(
+				before.accessTokenValidUntilTime,
+				before.refreshTokenValidUntilTime
+			) ||
+		getValueFromCookie('keycloak') !== accessToken ||
+		getValueFromCookie('refreshToken') !== refreshToken ||
+		current.accessTokenValidUntilTime !==
+			before.accessTokenValidUntilTime ||
+		current.refreshTokenValidUntilTime !== before.refreshTokenValidUntilTime
+	) {
+		return false;
+	}
+	setTokens(
+		response.access_token,
+		response.expires_in,
+		response.refresh_token,
+		response.refresh_expires_in
+	);
+	return true;
 };
 
-const startTimers = ({
-	accessTokenValidInMs,
-	refreshTokenValidInMs
-}: {
-	accessTokenValidInMs: number;
-	refreshTokenValidInMs: number;
-}) => {
-	const accessTokenRefreshIntervalInMs =
-		accessTokenValidInMs - RENEW_BEFORE_EXPIRY_IN_MS;
-
-	let refreshInterval;
-	// just a sanity check so that we don't accidentally register an endless loop
-	if (accessTokenRefreshIntervalInMs > 0) {
-		refreshInterval = window.setInterval(() => {
-			void refreshTokens().catch(() => undefined);
-		}, accessTokenRefreshIntervalInMs);
+// A refresh rotates the JWT, while a fresh login gets a different session ID.
+const tokenSessionScope = (token: string): string | null => {
+	const { iss, sid } = parseJwt(token) ?? {};
+	if (
+		typeof iss !== 'string' ||
+		!iss.trim() ||
+		typeof sid !== 'string' ||
+		!sid.trim()
+	) {
+		return null;
 	}
-
-	if (refreshTokenValidInMs > accessTokenValidInMs) {
-		// when refresh token is longer valid than access token we need to
-		// logout if the refresh token expires
-		window.setTimeout(() => {
-			if (refreshInterval) {
-				window.clearInterval(refreshInterval);
-			}
-
-			logout(true, appConfig.urls.toLogin);
-		}, refreshTokenValidInMs);
-	}
+	return JSON.stringify([iss, sid]);
 };
 
-export const handleTokenRefresh = (redirect: boolean = true): Promise<void> => {
-	return new Promise((resolve, reject) => {
-		const currentTime = new Date().getTime();
-		const tokenExpiry = getTokenExpiryFromLocalStorage();
-		const accessTokenValidInMs =
-			tokenExpiry.accessTokenValidUntilTime - currentTime;
-
-		const refreshTokenValidInMs =
-			tokenExpiry.refreshTokenValidUntilTime - currentTime;
-
-		if (refreshTokenValidInMs <= 0 && accessTokenValidInMs <= 0) {
-			// Access and refresh token are gone. Tear the local session down
-			// *now*, before the caller renders the login form: `logout()`
-			// first awaits its pre-logout handlers, and in that window the
-			// leftover cookies kept the notification poller and the Matrix
-			// client alive next to the login form (dev, 2026-09-16).
-			teardownLocalSession();
-			void logout(redirect, appConfig.urls.toLogin);
-			reject();
-		} else if (accessTokenValidInMs <= 0) {
-			// access token no longer valid but refresh token still valid, refresh tokens
-			refreshTokens()
-				.then(() => {
-					startTimers({
-						accessTokenValidInMs,
-						refreshTokenValidInMs
-					});
-					resolve();
-				})
-				.catch((error) => {
-					reject(new TokenRefreshUnavailableError(error));
-				});
-		} else {
-			// access token and refresh token still valid, just start the timers
-			startTimers({
-				accessTokenValidInMs,
-				refreshTokenValidInMs
-			});
-			resolve();
+const startTimers = () => {
+	stopTokenTimers?.();
+	const now = Date.now();
+	const expiry = getTokenExpiryFromLocalStorage();
+	const accessToken = getValueFromCookie('keycloak');
+	const refreshToken = getValueFromCookie('refreshToken');
+	const accessValidInMs = expiry.accessTokenValidUntilTime - now;
+	const refreshValidInMs = expiry.refreshTokenValidUntilTime - now;
+	const renewalDelay = accessValidInMs - RENEW_BEFORE_EXPIRY_IN_MS;
+	// A peer may leave enough time to refresh after the renewal lead time has passed.
+	const canRenewShortAccess =
+		accessValidInMs > 0 && refreshValidInMs > accessValidInMs;
+	const shortRenewalDelay = Math.max(
+		1000,
+		Math.min(RENEW_BEFORE_EXPIRY_IN_MS, refreshValidInMs / 2)
+	);
+	let refreshInterval: number | undefined;
+	let expirationTimeout: number | undefined;
+	let refreshing = false;
+	const stop = () => {
+		window.clearInterval(refreshInterval);
+		window.clearTimeout(expirationTimeout);
+		stopTokenTimers = undefined;
+	};
+	const isCurrent = () => stopTokenTimers === stop;
+	const matchesSession = (
+		scope: string,
+		currentAccess: string,
+		currentRefresh: string
+	) =>
+		(currentAccess === accessToken ||
+			tokenSessionScope(currentAccess) === scope) &&
+		(currentRefresh === refreshToken ||
+			tokenSessionScope(currentRefresh) === scope);
+	let awaitingPeerExpiry = false;
+	const matchesSnapshot = () => {
+		if (!isCurrent() || awaitingPeerExpiry) return false;
+		const currentAccessToken = getValueFromCookie('keycloak');
+		const currentRefreshToken = getValueFromCookie('refreshToken');
+		const tokenChanged =
+			currentAccessToken !== accessToken ||
+			currentRefreshToken !== refreshToken;
+		const scope = tokenChanged ? tokenSessionScope(refreshToken) : null;
+		if (
+			tokenChanged &&
+			(!scope ||
+				!matchesSession(scope, currentAccessToken, currentRefreshToken))
+		) {
+			stop();
+			return false;
 		}
-	});
+
+		const current = getTokenExpiryFromLocalStorage();
+		const expiryChanged =
+			current.accessTokenValidUntilTime !==
+				expiry.accessTokenValidUntilTime ||
+			current.refreshTokenValidUntilTime !==
+				expiry.refreshTokenValidUntilTime;
+		if (scope && (!expiryChanged || !hasActiveAuthSession())) {
+			// The new credentials can become visible before their deadlines.
+			awaitingPeerExpiry = true;
+			window.clearInterval(refreshInterval);
+			window.clearTimeout(expirationTimeout);
+			expirationTimeout = window.setTimeout(() => {
+				if (!isCurrent()) return;
+				if (
+					!matchesSession(
+						scope,
+						getValueFromCookie('keycloak'),
+						getValueFromCookie('refreshToken')
+					)
+				) {
+					stop();
+					return;
+				}
+				if (hasActiveAuthSession()) startTimers();
+				else expireScheduledSession();
+			}, PEER_EXPIRY_READBACK_DELAY_MS);
+			return false;
+		}
+		if (expiryChanged) {
+			stop();
+			if (hasActiveAuthSession()) startTimers();
+			return false;
+		}
+		return true;
+	};
+	stopTokenTimers = stop;
+
+	if (renewalDelay > 0 || canRenewShortAccess) {
+		refreshInterval = window.setInterval(
+			() => {
+				if (refreshing || !matchesSnapshot()) return;
+				refreshing = true;
+				void refreshTokens(isCurrent)
+					.then((renewed) => {
+						if (renewed && isCurrent()) startTimers();
+						else matchesSnapshot();
+					})
+					.catch(() => undefined)
+					.finally(() => {
+						refreshing = false;
+					});
+			},
+			renewalDelay > 0 ? renewalDelay : shortRenewalDelay
+		);
+	}
+
+	const hardExpiryDelay = Math.max(accessValidInMs, refreshValidInMs);
+	if (hardExpiryDelay > 0) {
+		expirationTimeout = window.setTimeout(() => {
+			if (matchesSnapshot()) expireScheduledSession();
+		}, hardExpiryDelay);
+	}
+
+	return { isCurrent, matchesSnapshot };
+};
+
+export const handleTokenRefresh = async (redirect = true): Promise<void> => {
+	stopTokenTimers?.();
+	const now = Date.now();
+	const expiry = getTokenExpiryFromLocalStorage();
+	const accessValid = expiry.accessTokenValidUntilTime > now;
+
+	if (!accessValid && expiry.refreshTokenValidUntilTime <= now) {
+		// Clear private state before the caller renders the login form.
+		teardownLocalSession();
+		void logout(redirect, appConfig.urls.toLogin);
+		return Promise.reject();
+	}
+
+	const { isCurrent, matchesSnapshot } = startTimers();
+	if (accessValid) return;
+
+	let renewed: boolean;
+	try {
+		renewed = await refreshTokens(isCurrent);
+	} catch (error) {
+		throw new TokenRefreshUnavailableError(error);
+	}
+	if (renewed && isCurrent()) {
+		startTimers();
+		return;
+	}
+	matchesSnapshot();
+	if (
+		getTokenExpiryFromLocalStorage().accessTokenValidUntilTime <= Date.now()
+	) {
+		throw new TokenRefreshUnavailableError();
+	}
 };

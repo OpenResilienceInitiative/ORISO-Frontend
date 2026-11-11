@@ -3,20 +3,40 @@ import {
 	apiGetSessionRoomBySessionId,
 	apiGetSessionRoomsByRoomIds
 } from '../api/apiGetSessionRooms';
+import {
+	REGISTRATION_TYPE_REGISTERED,
+	type ListItemInterface
+} from '../globalState/interfaces';
 import { buildExtendedSession, ExtendedSessionInterface } from '../globalState';
 import { FETCH_ERRORS } from '../api';
 import { chatTransportService } from '../services/chatTransportService';
 import { isRoomUnread } from '../utils/sessionUnread';
 import { apiGetChatRoomById } from '../api/apiGetChatRoomById';
 import { apiGetCaseHandoverCandidates } from '../api/apiCaseHandover';
-import { getModality, Modality } from '../components/session/getModality';
+import {
+	getModality,
+	getModalityIfKnown,
+	Modality
+} from '../components/session/getModality';
 import { useForegroundRefresh } from './useForegroundRefresh';
 import { messageEventEmitter } from '../services/messageEventEmitter';
+import type { ExactCounsellingRoom } from '../components/session/topicDuplicateRoomRoute';
+
+const isRegisteredAgencyCounselling = (entry: ListItemInterface): boolean => {
+	const session = entry.session;
+	return (
+		session?.registrationType === REGISTRATION_TYPE_REGISTERED &&
+		// SessionMapper leaves modality null for some legacy rows but sends the team flag.
+		(session.conversationType != null ||
+			('isTeamSession' in session && session.isTeamSession === false)) &&
+		getModalityIfKnown(entry) === Modality.AGENCY_COUNSELLING
+	);
+};
 
 export const useSession = (
-	rid: string | null,
-	sessionId?: number,
-	chatId?: number,
+	room: string | ExactCounsellingRoom | null,
+	requestedSessionId?: number,
+	requestedChatId?: number,
 	reconcilePendingEnquiry = false
 ): {
 	session: ExtendedSessionInterface;
@@ -27,6 +47,12 @@ export const useSession = (
 	read: () => void;
 	ready: boolean;
 } => {
+	const exactCaseId = typeof room === 'object' ? room?.caseId : undefined;
+	const rid = typeof room === 'object' ? (room?.roomId ?? null) : room;
+	// A room-bound counselling action must never resolve through a numeric ID.
+	const sessionId =
+		exactCaseId === undefined ? requestedSessionId : undefined;
+	const chatId = exactCaseId === undefined ? requestedChatId : undefined;
 	const [ready, setReady] = useState(false);
 	const [session, setSession] = useState<ExtendedSessionInterface>(null);
 	const repetitiveId = useRef(null);
@@ -98,6 +124,7 @@ export const useSession = (
 			const request = { controller, pending: false };
 			inFlight.current = request;
 			let promise;
+			const isExactChat = chatId !== undefined && chatId !== null;
 
 			if (
 				!rid &&
@@ -108,7 +135,7 @@ export const useSession = (
 				return;
 			}
 
-			if (chatId !== undefined && chatId !== null) {
+			if (isExactChat) {
 				// console.log('🔍 useSession: Loading by chatId:', chatId);
 				promise = apiGetChatRoomById(chatId, controller.signal);
 			} else if (rid) {
@@ -136,10 +163,35 @@ export const useSession = (
 				);
 			}
 
+			if (exactCaseId !== undefined) {
+				promise = promise
+					.catch(() => ({ sessions: [] }))
+					.then((response) => {
+						const sessions = response?.sessions;
+						const entry =
+							Array.isArray(sessions) && sessions.length === 1
+								? sessions[0]
+								: null;
+						if (
+							entry &&
+							!entry.chat &&
+							entry.session?.id === exactCaseId &&
+							entry.session.matrixRoomId === rid &&
+							isRegisteredAgencyCounselling(entry)
+						) {
+							return response;
+						}
+						if (isCurrent()) setSession(null);
+						return { sessions: [] };
+					});
+			}
+
 			return promise
 				.then(async ({ sessions: [activeSession] }) => {
 					if (!isCurrent()) return;
-					if (activeSession) {
+					if (isExactChat && activeSession?.chat?.id !== chatId) {
+						setSession(null);
+					} else if (activeSession) {
 						const extendedSession = buildExtendedSession(
 							activeSession,
 							rid
@@ -171,7 +223,7 @@ export const useSession = (
 						return;
 					}
 
-					if (repetitiveId.current) {
+					if (!isExactChat && repetitiveId.current) {
 						return apiGetChatRoomById(repetitiveId.current).then(
 							({ sessions: [session] }) => {
 								if (!isCurrent()) return;
@@ -182,6 +234,7 @@ export const useSession = (
 						);
 					}
 					if (
+						!isExactChat &&
 						sessionId !== undefined &&
 						sessionId !== null &&
 						(await loadCaseHandoverCandidateSession(
@@ -206,7 +259,7 @@ export const useSession = (
 					}
 				});
 		},
-		[rid, sessionId, chatId, loadCaseHandoverCandidateSession]
+		[rid, sessionId, chatId, loadCaseHandoverCandidateSession, exactCaseId]
 	);
 
 	const reconcileEnquiry = Boolean(

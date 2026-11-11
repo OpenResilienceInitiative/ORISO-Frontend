@@ -21,7 +21,8 @@ vi.mock('../../services/CallManager', () => ({
 	callManager: callManagerSpies
 }));
 vi.mock('../../api/apiCallState', () => ({
-	apiCallState: vi.fn(() => new Promise(() => {}))
+	apiCallState: vi.fn(() => new Promise(() => {})),
+	apiCallStateRead: vi.fn(() => new Promise(() => {}))
 }));
 vi.mock('lottie-react', () => ({ default: () => null }));
 vi.mock('lottie-web', () => ({ default: { loadAnimation: () => ({}) } }));

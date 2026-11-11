@@ -59,6 +59,8 @@ export const RequestPasswordResetFormView = ({
 						'login.resetPassword.request.usernameLabel'
 					)}
 					error={!!errorMessage}
+					helperText={errorMessage || undefined}
+					FormHelperTextProps={{ role: 'alert' }}
 					fullWidth
 					autoComplete="username"
 					autoFocus
@@ -79,13 +81,6 @@ export const RequestPasswordResetFormView = ({
 					sx={{ mb: '20px' }}
 				/>
 			</div>
-			{errorMessage && (
-				<Text
-					text={errorMessage}
-					type="infoSmall"
-					className="loginForm__error"
-				/>
-			)}
 			<div className="loginForm__actions">
 				<Button
 					item={submitButton}

@@ -1,8 +1,15 @@
 // @vitest-environment oriso-jsdom
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
-import type { CallLifecycleMessage } from '../../utils/callLifecycleMessage';
-import { useCallTimelineState } from './useCallTimelineState';
+import {
+	UNKNOWN_RECHECK_DELAY_MS,
+	UNKNOWN_STATE_LIMIT,
+	useCallTimelineState
+} from './useCallTimelineState';
+import {
+	CALL_STATE_NOT_FOUND,
+	type CallLifecycleMessage
+} from '../../utils/callLifecycleMessage';
 
 const runningCall = (
 	overrides: Partial<CallLifecycleMessage> = {}
@@ -59,6 +66,141 @@ describe('useCallTimelineState', () => {
 			await vi.advanceTimersByTimeAsync(30000);
 		});
 		expect(loadState).toHaveBeenCalledTimes(3);
+	});
+
+	it('stops showing a running card the server keeps answering 404 for', async () => {
+		vi.useFakeTimers();
+		const initial = runningCall();
+		const loadState = vi.fn(async () => CALL_STATE_NOT_FOUND);
+		const { result } = renderHook(() =>
+			useCallTimelineState(initial, loadState)
+		);
+
+		await act(async () => {
+			await vi.advanceTimersByTimeAsync(
+				15000 * (UNKNOWN_STATE_LIMIT - 2)
+			);
+		});
+		expect(result.current.state).toBe('running');
+
+		await act(async () => {
+			await vi.advanceTimersByTimeAsync(15000 * 2);
+		});
+		expect(result.current.state).toBe('ended');
+		expect(result.current.durationSeconds).toBeUndefined();
+		// The end is provisional: it keeps asking, but only once a minute.
+		const calls = loadState.mock.calls.length;
+		await act(async () => {
+			await vi.advanceTimersByTimeAsync(15000);
+		});
+		expect(loadState).toHaveBeenCalledTimes(calls);
+		await act(async () => {
+			await vi.advanceTimersByTimeAsync(UNKNOWN_RECHECK_DELAY_MS);
+		});
+		expect(loadState).toHaveBeenCalledTimes(calls + 1);
+	});
+
+	it('keeps a 404-ended card on the slow re-check after a failed or untrusted read', async () => {
+		vi.useFakeTimers();
+		const initial = runningCall();
+		const answers: unknown[] = [
+			...Array(UNKNOWN_STATE_LIMIT).fill(CALL_STATE_NOT_FOUND),
+			'offline',
+			null
+		];
+		const loadState = vi.fn(async () => {
+			const next = answers.length
+				? answers.shift()
+				: CALL_STATE_NOT_FOUND;
+			if (next === 'offline') throw new Error('offline');
+			return next as null | typeof CALL_STATE_NOT_FOUND;
+		});
+		const { result } = renderHook(() =>
+			useCallTimelineState(initial, loadState)
+		);
+		await act(async () => {
+			await vi.advanceTimersByTimeAsync(
+				15000 * (UNKNOWN_STATE_LIMIT - 1)
+			);
+		});
+		expect(result.current.state).toBe('ended');
+		const calls = loadState.mock.calls.length;
+		// Failed read, then an untrusted null: each one a minute apart.
+		await act(async () => {
+			await vi.advanceTimersByTimeAsync(UNKNOWN_RECHECK_DELAY_MS);
+		});
+		expect(loadState).toHaveBeenCalledTimes(calls + 1);
+		await act(async () => {
+			await vi.advanceTimersByTimeAsync(UNKNOWN_RECHECK_DELAY_MS);
+		});
+		expect(loadState).toHaveBeenCalledTimes(calls + 2);
+		await act(async () => {
+			await vi.advanceTimersByTimeAsync(15000);
+		});
+		expect(loadState).toHaveBeenCalledTimes(calls + 2);
+		expect(result.current.state).toBe('ended');
+	});
+
+	it('shows the call as running again once the server knows it after a 404 end', async () => {
+		vi.useFakeTimers();
+		const initial = runningCall();
+		let known = false;
+		const loadState = vi.fn(async () =>
+			known
+				? { ...initial, startedAt: '2026-11-11T06:00:00Z' }
+				: CALL_STATE_NOT_FOUND
+		);
+		const { result } = renderHook(() =>
+			useCallTimelineState(initial, loadState)
+		);
+		await act(async () => {
+			await vi.advanceTimersByTimeAsync(15000 * UNKNOWN_STATE_LIMIT);
+		});
+		expect(result.current.state).toBe('ended');
+
+		known = true; // a later registration landed
+		await act(async () => {
+			await vi.advanceTimersByTimeAsync(UNKNOWN_RECHECK_DELAY_MS);
+		});
+		expect(result.current.state).toBe('running');
+		expect(result.current.startedAt).toBe('2026-11-11T06:00:00Z');
+	});
+
+	it('does not settle a running card on untrusted (non-404) null answers', async () => {
+		vi.useFakeTimers();
+		const initial = runningCall();
+		const loadState = vi.fn(async () => null);
+		const { result } = renderHook(() =>
+			useCallTimelineState(initial, loadState)
+		);
+		await act(async () => {
+			await vi.advanceTimersByTimeAsync(
+				15000 * (UNKNOWN_STATE_LIMIT + 2)
+			);
+		});
+		expect(result.current.state).toBe('running');
+	});
+
+	it('an untrusted null between 404s breaks the run', async () => {
+		vi.useFakeTimers();
+		const initial = runningCall();
+		const answers: Array<
+			ReturnType<typeof runningCall> | null | typeof CALL_STATE_NOT_FOUND
+		> = [
+			CALL_STATE_NOT_FOUND,
+			CALL_STATE_NOT_FOUND,
+			null,
+			CALL_STATE_NOT_FOUND,
+			CALL_STATE_NOT_FOUND
+		];
+		const loadState = vi.fn(async () => answers.shift() ?? null);
+		const { result } = renderHook(() =>
+			useCallTimelineState(initial, loadState)
+		);
+		await act(async () => {
+			await vi.advanceTimersByTimeAsync(15000 * 8);
+		});
+		expect(result.current.state).toBe('running');
 	});
 
 	it('permits a persisted missed call to progress to ended', async () => {

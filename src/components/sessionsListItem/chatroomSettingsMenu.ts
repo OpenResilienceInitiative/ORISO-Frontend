@@ -26,8 +26,8 @@ export interface ChatroomSettingsMenuInput {
 	isAgencyCounselling: boolean;
 	teamDiscussionFeatureEnabled: boolean;
 	hasExistingTeamDiscussion: boolean;
-	/** Group-chat owner per `groupChatHelpers.isGroupChatOwner`. */
-	isGroupChatOwner: boolean;
+	/** Eligibility for the same editor the header menu opens. */
+	canEditGroupChatSettings: boolean;
 	/** The group chat is currently running (`session.item.active`). */
 	isGroupChatActive: boolean;
 	/** A materialized Matrix room exists, so the settings route is reachable. */
@@ -57,7 +57,7 @@ export const getChatroomSettingsMenuVisibility = ({
 	isAgencyCounselling,
 	teamDiscussionFeatureEnabled,
 	hasExistingTeamDiscussion,
-	isGroupChatOwner,
+	canEditGroupChatSettings,
 	isGroupChatActive,
 	hasMatrixRoom,
 	isGroupChatSubscribed
@@ -90,18 +90,9 @@ export const getChatroomSettingsMenuVisibility = ({
 			hasExistingDiscussion: hasExistingTeamDiscussion
 		});
 
-	// #1189 — the header menu's conditions for its edit entry
-	// (SessionMenu.tsx:1007-1008, inside the `isGroup` block at :822): the owner
-	// may change topic, schedule and moderators only while the room is not
-	// running. `hasMatrixRoom` is stricter on purpose — the header still renders
-	// its entry with an empty `to` when no room exists (SessionMenu.tsx:316-322),
-	// which navigates nowhere; there is no route to reach without a room id.
+	// #1189: both the row and header open the same room-scoped editor.
 	const showChatSettings =
-		!isAsker &&
-		isGroup &&
-		isGroupChatOwner &&
-		!isGroupChatActive &&
-		hasMatrixRoom;
+		!isAsker && isGroup && canEditGroupChatSettings && hasMatrixRoom;
 
 	// #1923: counsellors keep leaving from the chat header, where the
 	// moderator count is known and a sole moderator cannot leave.

@@ -230,6 +230,23 @@ describe('RouterConfigUser navigation', () => {
 });
 
 describe('RouterConfigConsultant chat info', () => {
+	it('routes an asker group by chat ID independently of a case with the same number', () => {
+		const details = RouterConfigUser(settings, true).detailRoutes.flatMap(
+			(route: Parameters<typeof toV7Paths>[0]) =>
+				toV7Paths(route).map((path) => ({ path }))
+		);
+		const base = '/sessions/user/view';
+
+		expect(matchRoutes(details, `${base}/chat/41`)?.at(-1)?.params).toEqual(
+			{
+				chatId: '41'
+			}
+		);
+		expect(
+			matchRoutes(details, `${base}/session/41`)?.at(-1)?.params
+		).toEqual({ sessionId: '41' });
+	});
+
 	it('routes a consultant group by chat ID independently of a case with the same number', () => {
 		const consultant = RouterConfigConsultant(settings);
 		const detailRoutes = consultant.detailRoutes.flatMap(

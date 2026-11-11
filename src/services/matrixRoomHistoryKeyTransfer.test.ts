@@ -86,13 +86,14 @@ const buildHarness = () => {
 		crypto,
 		room,
 		memberships,
-		emitToDevice: (event: any) =>
+		emitToDevice: (event: any, encryptionInfo?: object | null) =>
 			toDeviceHandler?.({
 				message: {
 					type: event.getType(),
 					sender: event.getSender(),
 					content: event.getContent()
-				}
+				},
+				...(encryptionInfo === undefined ? {} : { encryptionInfo })
 			})
 	};
 };
@@ -1631,6 +1632,353 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 				[{ userId: PEER, deviceId: 'ASKER1' }],
 				expect.objectContaining({ reason: 'It was about my school' })
 			);
+		});
+
+		describe("decision shared across a person's own devices", () => {
+			const DECIDED = 'org.oriso.room_history_request_decided';
+			const ownDevices = (harness: ReturnType<typeof buildHarness>) => {
+				harness.crypto.getUserDeviceInfo.mockImplementation(
+					async (users: string[]) =>
+						new Map(
+							users.map((user) => [
+								user,
+								user === ME
+									? new Map([
+											['NEW1', { deviceId: 'NEW1' }],
+											['NEW2', { deviceId: 'NEW2' }],
+											['NEW3', { deviceId: 'NEW3' }]
+										])
+									: new Map([
+											['ASKER1', { deviceId: 'ASKER1' }]
+										])
+							])
+						)
+				);
+				harness.crypto.getDeviceVerificationStatus.mockImplementation(
+					async (_user: string, deviceId: string) => ({
+						isVerified: () => false,
+						// NEW3 is a password-only sign-in of the same account.
+						signedByOwner:
+							deviceId !== 'ASKER1' && deviceId !== 'NEW3',
+						crossSigningVerified: deviceId !== 'ASKER1'
+					})
+				);
+			};
+			const request = (id = 'req-1', room = ROOM_ID) =>
+				event('org.oriso.room_history_key_request', PEER, {
+					room_id: room,
+					request_id: id,
+					requester_user_id: PEER,
+					requester_device_id: 'ASKER1',
+					reason: 'It was about my school'
+				});
+			const decided = (content: object = {}, sender = ME) =>
+				event(DECIDED, sender, {
+					room_id: ROOM_ID,
+					request_id: 'req-1',
+					outcome: 'approved',
+					...content
+				});
+			const fromOwn = { sender: ME, senderDevice: 'NEW2' };
+			const setup = async () => {
+				const harness = buildHarness();
+				ownDevices(harness);
+				applyDeviceIsolationMode(harness.client as any, true);
+				// The requesting device never counts as verified.
+				const status = harness.crypto.getDeviceVerificationStatus;
+				const base = status.getMockImplementation()!;
+				status.mockImplementation(
+					async (user: string, device: string) => ({
+						...(await base(user, device)),
+						isVerified: () =>
+							device !== 'ASKER1' && device !== 'NEW3'
+					})
+				);
+				const service = new MatrixRoomHistoryKeyTransfer();
+				service.initialize(harness.client as any);
+				harness.emitToDevice(request());
+				await vi.waitFor(() =>
+					expect(service.getPendingApprovals()).toHaveLength(1)
+				);
+				return { harness, service };
+			};
+			const settle = () =>
+				new Promise((resolve) => setTimeout(resolve, 20));
+
+			it('tells only the other devices signed by the owner, without keys or reason', async () => {
+				const { harness, service } = await setup();
+				harness.client.encryptAndSendToDevice.mockClear();
+				service.declineRequest('req-1');
+				await vi.waitFor(() =>
+					expect(
+						harness.client.encryptAndSendToDevice
+					).toHaveBeenCalledTimes(1)
+				);
+				expect(
+					harness.client.encryptAndSendToDevice
+				).toHaveBeenCalledWith(
+					DECIDED,
+					[{ userId: ME, deviceId: 'NEW2' }],
+					{
+						room_id: ROOM_ID,
+						request_id: 'req-1',
+						outcome: 'declined'
+					}
+				);
+			});
+
+			it('tells the other devices after an approval, and not after a failed one', async () => {
+				const { harness, service } = await setup();
+				harness.crypto.exportRoomKeys.mockResolvedValueOnce([]);
+				harness.client.encryptAndSendToDevice.mockClear();
+				await expect(service.approveRequest('req-1')).resolves.toBe(
+					false
+				);
+				await settle();
+				expect(
+					harness.client.encryptAndSendToDevice
+				).not.toHaveBeenCalled();
+
+				await expect(service.approveRequest('req-1')).resolves.toBe(
+					true
+				);
+				await vi.waitFor(() =>
+					expect(
+						harness.client.encryptAndSendToDevice
+					).toHaveBeenCalledWith(
+						DECIDED,
+						[{ userId: ME, deviceId: 'NEW2' }],
+						{
+							room_id: ROOM_ID,
+							request_id: 'req-1',
+							outcome: 'approved'
+						}
+					)
+				);
+			});
+
+			it('drops the card when another device of the same person decided', async () => {
+				const { harness, service } = await setup();
+				const resolved = vi.fn();
+				window.addEventListener(
+					MATRIX_HISTORY_REQUEST_RESOLVED_EVENT,
+					resolved
+				);
+				harness.client.encryptAndSendToDevice.mockClear();
+				harness.emitToDevice(decided(), fromOwn);
+				await vi.waitFor(() =>
+					expect(service.getPendingApprovals()).toHaveLength(0)
+				);
+				window.removeEventListener(
+					MATRIX_HISTORY_REQUEST_RESOLVED_EVENT,
+					resolved
+				);
+				expect(resolved).toHaveBeenCalledTimes(1);
+				expect(
+					(resolved.mock.calls[0][0] as CustomEvent).detail
+				).toEqual({
+					roomId: ROOM_ID,
+					requestId: 'req-1',
+					outcome: 'dropped'
+				});
+				// Dropping a card never answers, so no message loops back.
+				await settle();
+				expect(
+					harness.client.encryptAndSendToDevice
+				).not.toHaveBeenCalled();
+			});
+
+			it.each([
+				['unencrypted', decided(), undefined],
+				[
+					'from another account',
+					decided({}, PEER),
+					{ sender: PEER, senderDevice: 'NEW2' }
+				],
+				[
+					'from this very device',
+					decided(),
+					{ sender: ME, senderDevice: 'NEW1' }
+				],
+				[
+					'from a device the owner did not sign',
+					decided(),
+					{ sender: ME, senderDevice: 'NEW3' }
+				],
+				[
+					'for another room',
+					decided({ room_id: '!other:matrix' }),
+					fromOwn
+				],
+				[
+					'for an unknown request',
+					decided({ request_id: 'nope' }),
+					fromOwn
+				],
+				[
+					'with an unknown outcome',
+					decided({ outcome: 'maybe' }),
+					fromOwn
+				],
+				['without a request id', decided({ request_id: '' }), fromOwn]
+			])(
+				'keeps the card for a message that is %s',
+				async (_name, message, info) => {
+					const { harness, service } = await setup();
+					harness.emitToDevice(message, info as any);
+					await settle();
+					expect(service.getPendingApprovals()).toHaveLength(1);
+				}
+			);
+
+			it('does not show a request that another device already decided', async () => {
+				const harness = buildHarness();
+				ownDevices(harness);
+				applyDeviceIsolationMode(harness.client as any, true);
+				const status = harness.crypto.getDeviceVerificationStatus;
+				const base = status.getMockImplementation()!;
+				status.mockImplementation(
+					async (user: string, device: string) => ({
+						...(await base(user, device)),
+						isVerified: () =>
+							device !== 'ASKER1' && device !== 'NEW3'
+					})
+				);
+				const service = new MatrixRoomHistoryKeyTransfer();
+				service.initialize(harness.client as any);
+				// The decision arrives before the request has finished loading.
+				harness.emitToDevice(decided(), fromOwn);
+				await settle();
+				const diagnostic = vi.fn();
+				window.addEventListener(
+					MATRIX_HISTORY_KEYS_DIAGNOSTIC_EVENT,
+					diagnostic
+				);
+				try {
+					harness.emitToDevice(request());
+					await vi.waitFor(() =>
+						expect(
+							diagnostic.mock.calls.map(([e]) => e.detail)
+						).toContainEqual({ stage: 'request-decided-elsewhere' })
+					);
+				} finally {
+					window.removeEventListener(
+						MATRIX_HISTORY_KEYS_DIAGNOSTIC_EVENT,
+						diagnostic
+					);
+				}
+				expect(service.getPendingApprovals()).toHaveLength(0);
+			});
+
+			it('still tells the other devices when a newer request replaced the approved one', async () => {
+				const { harness, service } = await setup();
+				harness.client.encryptAndSendToDevice.mockClear();
+				// While the keys are on their way, the same device asks again.
+				harness.client.encryptAndSendToDevice.mockImplementationOnce(
+					async () => {
+						(service as any).pendingApprovals.set('req-1', {
+							...(service as any).pendingApprovals.get('req-1')
+						});
+					}
+				);
+				await expect(service.approveRequest('req-1')).resolves.toBe(
+					true
+				);
+				await vi.waitFor(() =>
+					expect(
+						harness.client.encryptAndSendToDevice
+					).toHaveBeenCalledWith(
+						DECIDED,
+						[{ userId: ME, deviceId: 'NEW2' }],
+						expect.objectContaining({
+							request_id: 'req-1',
+							outcome: 'approved'
+						})
+					)
+				);
+				// The replacement stays.
+				expect(service.getPendingApprovals()).toHaveLength(1);
+			});
+
+			it('does not let an already decided request replace a newer one from the same device', async () => {
+				vi.useFakeTimers({ toFake: ['Date'] });
+				const diagnostic = vi.fn();
+				window.addEventListener(
+					MATRIX_HISTORY_KEYS_DIAGNOSTIC_EVENT,
+					diagnostic
+				);
+				try {
+					const { harness, service } = await setup();
+					harness.emitToDevice(
+						decided({ request_id: 'req-old' }),
+						fromOwn
+					);
+					await settle();
+					// Move past the 30 second limit for requests with a reason, so the
+					// late request is stopped by the decision and not by the limit.
+					vi.setSystemTime(Date.now() + 31_000);
+					diagnostic.mockClear();
+					harness.emitToDevice(request('req-old'));
+					await vi.waitFor(() =>
+						expect(
+							diagnostic.mock.calls.map(([e]) => e.detail)
+						).toContainEqual({ stage: 'request-decided-elsewhere' })
+					);
+					expect(
+						diagnostic.mock.calls.map(([e]) => e.detail)
+					).not.toContainEqual({
+						stage: 'request-handler-throttled'
+					});
+					expect(
+						service.getPendingApprovals().map((r) => r.requestId)
+					).toEqual(['req-1']);
+				} finally {
+					window.removeEventListener(
+						MATRIX_HISTORY_KEYS_DIAGNOSTIC_EVENT,
+						diagnostic
+					);
+					vi.useRealTimers();
+				}
+			});
+
+			it('drops the card after a failed approval when another device decided meanwhile', async () => {
+				const { harness, service } = await setup();
+				let fail!: () => void;
+				harness.crypto.exportRoomKeys.mockImplementationOnce(
+					() =>
+						new Promise((_resolve, reject) => {
+							fail = () => reject(new Error('export failed'));
+						})
+				);
+				const approving = service.approveRequest('req-1');
+				await vi.waitFor(() => expect(fail).toBeTypeOf('function'));
+				harness.emitToDevice(decided({ outcome: 'declined' }), fromOwn);
+				await settle();
+				expect(service.getPendingApprovals()).toHaveLength(1);
+				fail();
+				await expect(approving).resolves.toBe(false);
+				expect(service.getPendingApprovals()).toHaveLength(0);
+			});
+
+			it('leaves a release that is already sending to finish', async () => {
+				const { harness, service } = await setup();
+				let release!: () => void;
+				harness.crypto.exportRoomKeys.mockImplementationOnce(
+					() =>
+						new Promise((resolve) => {
+							release = () =>
+								resolve([
+									{ room_id: ROOM_ID, session_id: 'wanted' }
+								]);
+						})
+				);
+				const approving = service.approveRequest('req-1');
+				await vi.waitFor(() => expect(release).toBeTypeOf('function'));
+				harness.emitToDevice(decided({ outcome: 'declined' }), fromOwn);
+				await settle();
+				release();
+				await expect(approving).resolves.toBe(true);
+			});
 		});
 	});
 });

@@ -273,3 +273,20 @@ it('treats "no such call" as an answer and everything else as a failed question'
 		'NO_MATCH'
 	);
 });
+
+it('answers a 404 with the distinct not-found result and an untrusted body with null', async () => {
+	const { apiCallStateRead } = await import('./apiCallState');
+	const { CALL_STATE_NOT_FOUND } = await import(
+		'../utils/callLifecycleMessage'
+	);
+	fetchDataMock.mockRejectedValueOnce(new Error('NO_MATCH'));
+	const call = {
+		callId: 'c',
+		roomRef: '!r',
+		callRoomId: '!m',
+		callType: 'video'
+	} as never;
+	expect(await apiCallStateRead(call)).toBe(CALL_STATE_NOT_FOUND);
+	fetchDataMock.mockResolvedValueOnce({ callId: 'other' });
+	expect(await apiCallStateRead(call)).toBeNull();
+});

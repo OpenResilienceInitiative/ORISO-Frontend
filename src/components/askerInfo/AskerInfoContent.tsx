@@ -15,6 +15,7 @@ import '../profile/profile.styles';
 import './askerInfo.styles';
 import { AskerInfoTools } from './AskerInfoTools';
 import { Box } from '../box/Box';
+import { AskerInfoPrivacyNote } from './AskerInfoPrivacyNote';
 
 export const AskerInfoContent = () => {
 	const { tenant } = useContext(TenantContext);
@@ -55,6 +56,7 @@ export const AskerInfoContent = () => {
 
 	return (
 		<>
+			<AskerInfoPrivacyNote />
 			<Box>
 				<AskerInfoData />
 			</Box>

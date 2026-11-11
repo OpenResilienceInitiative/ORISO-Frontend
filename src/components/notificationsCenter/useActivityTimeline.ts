@@ -5,7 +5,7 @@ import {
 	pickActiveItemKey
 } from '../../utils/listItemSelection';
 import {
-	activityEventRouteSessionId,
+	activityEventRouteIdentity,
 	isMessageActivityEvent
 } from './activityEvent';
 import { getNextNotificationId } from './notificationQueue';
@@ -79,7 +79,7 @@ export const useActivityTimeline = ({
 			pickActiveItemKey(
 				feed,
 				routeSelection,
-				(item) => ({ sessionId: activityEventRouteSessionId(item) }),
+				activityEventRouteIdentity,
 				(item) => item.id,
 				inPageId
 			),

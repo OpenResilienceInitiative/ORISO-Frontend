@@ -91,7 +91,10 @@ import { useSessionListViewState } from './SessionListViewStateContext';
 import type { IUserDraftItem } from '../../api/apiUserDrafts';
 import { useRemoteDrafts } from '../../hooks/useRemoteDrafts';
 import { toDraftResumePath } from '../../services/draftNavigation';
-import { canModerateGroupChat } from '../groupChat/groupChatHelpers';
+import {
+	canEditGroupChatSettings,
+	canModerateGroupChat
+} from '../groupChat/groupChatHelpers';
 import {
 	FutureZone,
 	PULL_RELEASE_PX,
@@ -692,7 +695,13 @@ export const SessionsList = ({
 			});
 		}
 
-		return getConsultantSessionList(0)
+		const request = getConsultantSessionList(0);
+		// The refresh now owns the list request. The request it replaced (the
+		// first page, a chip switch or "load more") may not clear the loading
+		// card any more, so this one must, or a skeleton stays below the rows
+		// as an empty "ghost chat" (#2136).
+		const controller = abortController.current;
+		return request
 			.then(({ sessions, total }) => {
 				dispatch({
 					type: SET_SESSIONS,
@@ -702,7 +711,15 @@ export const SessionsList = ({
 				setTotalItems(total);
 				setCurrentOffset(0);
 			})
-			.catch(() => {});
+			.catch(() => {})
+			.finally(() => {
+				if (
+					abortController.current === controller &&
+					!controller.signal.aborted
+				) {
+					setIsLoading(false);
+				}
+			});
 	}, [dispatch, getConsultantSessionList, type, userData]);
 
 	/*
@@ -2550,7 +2567,11 @@ export const SessionsList = ({
 							session.item.matrixRoomId ||
 							session.rid ||
 							undefined,
-						canModerate: canModerateGroupChat(session, userData)
+						canModerate: canModerateGroupChat(session, userData),
+						canConfigure: canEditGroupChatSettings(
+							session,
+							userData
+						)
 					};
 				}),
 		// eslint-disable-next-line react-hooks/exhaustive-deps

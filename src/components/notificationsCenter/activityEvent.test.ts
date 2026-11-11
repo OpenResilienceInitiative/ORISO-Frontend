@@ -5,7 +5,7 @@ import {
 	activityEventConversation,
 	activityEventNamesCaseHandoverRequest,
 	activityEventRoomId,
-	activityEventRouteSessionId,
+	activityEventRouteIdentity,
 	activityEventSessionId,
 	describeActivityEvent,
 	isMessageActivityEvent
@@ -189,31 +189,39 @@ describe('activityEvent (#1824: one place for an activity event’s facts)', () 
 		).toBe(8);
 	});
 
-	describe('route session (#1888: what the conversation route carries)', () => {
+	describe('route identity (#1888: what the conversation route carries)', () => {
 		it('is the session when there is one', () => {
 			expect(
-				activityEventRouteSessionId(
+				activityEventRouteIdentity(
 					row({ sourceSessionId: 7, params: { seriesId: 99 } })
 				)
-			).toBe('7');
+			).toEqual({ sessionId: '7' });
 		});
 
-		it('is the series id a series card navigates to', () => {
+		it('uses the chat namespace for the series of a circle lifecycle card', () => {
 			expect(
-				activityEventRouteSessionId(row({ params: { seriesId: 99 } }))
-			).toBe('99');
+				activityEventRouteIdentity(
+					row({
+						eventType: 'group_chat.cancelled',
+						sourceSessionId: 99,
+						params: { seriesId: 99 }
+					})
+				)
+			).toEqual({ chatId: '99' });
 		});
 
 		it('falls back to the trailing id of the stored path', () => {
 			expect(
-				activityEventRouteSessionId(
+				activityEventRouteIdentity(
 					row({
 						actionPath:
 							'/sessions/consultant/sessionView/!r:x/13?channel=team'
 					})
 				)
-			).toBe('13');
-			expect(activityEventRouteSessionId(row())).toBeNull();
+			).toEqual({ sessionId: '13' });
+			expect(activityEventRouteIdentity(row())).toEqual({
+				sessionId: null
+			});
 		});
 	});
 

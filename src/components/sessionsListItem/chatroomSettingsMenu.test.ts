@@ -25,7 +25,7 @@ const consultantSession = (
 	isAgencyCounselling: true,
 	teamDiscussionFeatureEnabled: true,
 	hasExistingTeamDiscussion: false,
-	isGroupChatOwner: false,
+	canEditGroupChatSettings: false,
 	isGroupChatActive: false,
 	hasMatrixRoom: true,
 	isGroupChatSubscribed: false,
@@ -41,7 +41,7 @@ const ownedGroupChat = (
 	consultantSession({
 		isSession: false,
 		isGroup: true,
-		isGroupChatOwner: true,
+		canEditGroupChatSettings: true,
 		isAgencyCounselling: false,
 		...overrides
 	});
@@ -221,7 +221,10 @@ describe('getChatroomSettingsMenuVisibility', () => {
 		it('is withheld while the group chat is running', () => {
 			expect(
 				getChatroomSettingsMenuVisibility(
-					ownedGroupChat({ isGroupChatActive: true })
+					ownedGroupChat({
+						isGroupChatActive: true,
+						canEditGroupChatSettings: false
+					})
 				).showChatSettings
 			).toBe(false);
 		});
@@ -229,7 +232,7 @@ describe('getChatroomSettingsMenuVisibility', () => {
 		it('is withheld from a consultant who does not own the group chat', () => {
 			expect(
 				getChatroomSettingsMenuVisibility(
-					ownedGroupChat({ isGroupChatOwner: false })
+					ownedGroupChat({ canEditGroupChatSettings: false })
 				).showChatSettings
 			).toBe(false);
 		});
@@ -255,7 +258,7 @@ describe('getChatroomSettingsMenuVisibility', () => {
 		it('is withheld on a one-to-one session, which has no group settings', () => {
 			expect(
 				getChatroomSettingsMenuVisibility(
-					consultantSession({ isGroupChatOwner: true })
+					consultantSession({ canEditGroupChatSettings: true })
 				).showChatSettings
 			).toBe(false);
 		});

@@ -24,7 +24,8 @@ export const mockSessions: TimelineSession[] = [
 		kind: 'group',
 		topic: 'Familie',
 		lastActivity: 6,
-		lastMessage: 'Danke für die offene Runde gestern.'
+		lastMessage: 'Danke für die offene Runde gestern.',
+		canConfigure: true
 	},
 	{
 		sessionId: 4401,
@@ -40,7 +41,8 @@ export const mockSessions: TimelineSession[] = [
 		kind: 'group',
 		topic: 'Sucht',
 		lastActivity: 4,
-		lastMessage: 'Wer kann beim nächsten Mal moderieren?'
+		lastMessage: 'Wer kann beim nächsten Mal moderieren?',
+		canConfigure: true
 	},
 	{
 		sessionId: 4402,

@@ -1,6 +1,5 @@
 $icon-size: 24px;
 $icon-size-small: 24px;
-$message-lineheight: 21px;
 
 // T37/D1: the chat text size is ONE switch — the custom properties live in
 // `resources/styles/mui-variables-mapping.scss` (`--message-font-size`,
@@ -806,43 +805,17 @@ $message-avatar-overlap: -19px;
 		}
 	}
 
-	// #1079: a received task list keeps its checkboxes, so it needs the layout
-	// a checklist implies — no bullet next to the box, and the box on the same
-	// line as its text. The input is rendered `disabled` by the sanitizer: this
-	// is the sender's list, the reader only reads it.
-	&__message ul[data-type='taskList'] {
-		list-style: none;
-		padding-left: 0;
-		margin: 0;
-
-		li {
-			display: flex;
-			align-items: flex-start;
-			gap: 8px;
-		}
-
-		label {
-			display: inline-flex;
-			align-items: center;
-
-			// Aligns the box with the first line of a wrapping item.
-			height: $message-lineheight;
-			flex: 0 0 auto;
-		}
-
-		input[type='checkbox'] {
-			margin: 0;
-
-			// Reads as state, not as a control the reader may operate.
-			cursor: default;
-		}
-
-		p {
-			margin: 0;
-		}
+	// #1079: the received task list's input is rendered `disabled` by the
+	// sanitizer — this is the sender's list, the reader only reads it.
+	&__message ul[data-type='taskList'] input[type='checkbox'] {
+		cursor: default;
 	}
 
 	&__message {
+		// Headings, lists, task lists, quotes, rules, code and blank lines look
+		// exactly as they did in the composer (`_richTextContent.scss`).
+		@include rich-text-content;
+
 		color: var(--m3-on-surface, #1d1b20);
 		font-size: var(--message-font-size, 14px);
 		line-height: var(--message-line-height, 20px);
@@ -914,35 +887,16 @@ $message-avatar-overlap: -19px;
 			margin-top: $grid-base;
 		}
 
-		p {
-			margin: 0;
-		}
-
-		ul {
-			margin: 0;
-			line-height: 0;
+		// The bubble keeps typed whitespace (`pre-wrap`), but older messages
+		// from the markdown path put line breaks between list tags; inside a
+		// list those must not render as blank lines.
+		ul,
+		ol {
+			white-space: normal;
 		}
 
 		li {
-			line-height: var(--message-line-height, 20px);
-			margin-top: 12px;
-
-			&:first-of-type {
-				margin-top: 0;
-			}
-		}
-
-		blockquote {
-			margin: 8px 0;
-			padding: 4px 0 4px 10px;
-			border-left: 3px solid var(--m3-primary-container, #cc1e1c); // incoming + default quote color
-			background: rgba(204, 30, 28, 0.06);
-			background: color-mix(
-				in srgb,
-				var(--m3-primary, #a5000a) 6%,
-				transparent
-			);
-			border-radius: 0 6px 6px 0;
+			white-space: pre-wrap;
 		}
 
 		.messageItem__attachmentCaption {

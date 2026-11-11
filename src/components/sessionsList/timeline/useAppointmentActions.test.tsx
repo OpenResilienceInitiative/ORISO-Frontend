@@ -135,6 +135,52 @@ describe('useAppointmentActions for a 1:1 appointment', () => {
 	});
 });
 
+describe('useAppointmentActions for a group appointment', () => {
+	const groupDate: FutureEntry = {
+		...entry,
+		key: 'occ-4-0',
+		kind: 'group',
+		booking: undefined,
+		occurrence: {
+			seriesId: 4,
+			originalStart: '2026-11-03T10:00:00',
+			duration: 60,
+			modality: 'TEXT'
+		},
+		canModerate: true,
+		canConfigure: false
+	};
+
+	beforeEach(() => {
+		skip.mockReset().mockResolvedValue({});
+		navigate.mockReset();
+	});
+	afterEach(cleanup);
+
+	it('does not open the editor for a co-moderator but can skip the occurrence', async () => {
+		const onCancelled = vi.fn();
+		const { run } = setup({ onCancelled });
+		run('configure', groupDate);
+		expect(navigate).not.toHaveBeenCalled();
+
+		run('cancel', groupDate);
+		await settle();
+		expect(skip).toHaveBeenCalledWith(4, '2026-11-03T10:00:00');
+		expect(onCancelled).toHaveBeenCalledWith(groupDate);
+	});
+
+	it('opens the editor when the group entry has configuration permission', () => {
+		const { run } = setup({});
+		run('configure', { ...groupDate, canConfigure: true });
+		expect(navigate).toHaveBeenCalledWith(
+			'/sessions/!room:x/4/editGroupChat',
+			{
+				state: { isEditMode: true, prevIsInfoPage: false }
+			}
+		);
+	});
+});
+
 it('refreshes appointment consumers when a single group occurrence is skipped', async () => {
 	skip.mockResolvedValue(undefined);
 	send.mockClear();

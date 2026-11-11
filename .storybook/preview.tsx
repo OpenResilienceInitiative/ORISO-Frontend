@@ -459,10 +459,19 @@ const storybookApiResponse = (url: URL, method: string): Response | null => {
 		return storybookJsonResponse(storybookTopics);
 	}
 
-	// A centre with no legal text of its own: the client shows its catalogue
-	// consent sentence. A story about authored or missing text sets its own.
+	// A centre with a stored privacy text but no consent sentence of its own: the
+	// client shows its catalogue consent sentence. Ticking the consent box then
+	// raises no "no privacy notice stored" warning (ORISO-AgencyService#366). A
+	// story about authored or missing text sets its own.
 	if (/^\/service\/agencies\/\d+\/topics\/\d+\/legal$/.test(url.pathname)) {
-		return storybookJsonResponse({ dpp: null, imprint: null });
+		return storybookJsonResponse({
+			dpp: {
+				content:
+					'{"de":"<p>Datenschutzerklärung der Beratungsstelle</p>"}',
+				consentText: null
+			},
+			imprint: null
+		});
 	}
 
 	// Every username a story types is free; a taken name is the story's own fixture.
