@@ -41,6 +41,7 @@ vi.mock('../../resources/scripts/endpoints', () => ({
 }));
 vi.mock('../../services/mediaContentScanner', () => ({
 	isMediaContentScannerEnabled: () => false,
+	isMediaImageCheckEnabled: () => false,
 	downloadScannedEncryptedMedia: vi.fn()
 }));
 vi.mock('../../utils/matrixEncryptedAttachment', () => ({

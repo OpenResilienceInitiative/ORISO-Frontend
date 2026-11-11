@@ -216,6 +216,8 @@ export interface NotificationConfigViewProps {
 	onPreview: (soundId: SoundId, volume: number) => void;
 	/** False when the settings screen has no email panel for this user. */
 	showEmailLink?: boolean;
+	/** Only a counsellor's live-chat messages use the Live-Chat row (FE#1470). */
+	showLiveChatRow?: boolean;
 }
 
 export const NotificationConfigView = ({
@@ -225,7 +227,8 @@ export const NotificationConfigView = ({
 	onAreaChange,
 	onChange,
 	onPreview,
-	showEmailLink = true
+	showEmailLink = true,
+	showLiveChatRow = false
 }: NotificationConfigViewProps) => {
 	const { t } = useTranslation();
 	return (
@@ -274,16 +277,18 @@ export const NotificationConfigView = ({
 			</div>
 
 			<div className="notifConfig__rows">
-				{AREA_KINDS[activeArea].map((kind) => (
-					<KindRow
-						key={kind}
-						area={activeArea}
-						kind={kind}
-						value={config[activeArea][kind]}
-						onChange={onChange}
-						onPreview={onPreview}
-					/>
-				))}
+				{AREA_KINDS[activeArea]
+					.filter((kind) => showLiveChatRow || kind !== 'liveChat')
+					.map((kind) => (
+						<KindRow
+							key={kind}
+							area={activeArea}
+							kind={kind}
+							value={config[activeArea][kind]}
+							onChange={onChange}
+							onPreview={onPreview}
+						/>
+					))}
 			</div>
 
 			{/* Feature-signal dummy (FE#590): alarm-clock mode micro-survey.
@@ -346,6 +351,7 @@ interface NotificationConfigDialogProps {
 	onClose: () => void;
 	/** False when the settings screen has no email panel for this user. */
 	showEmailLink?: boolean;
+	showLiveChatRow?: boolean;
 }
 
 export const NotificationConfigDialog = ({
@@ -353,7 +359,8 @@ export const NotificationConfigDialog = ({
 	config,
 	onConfirm,
 	onClose,
-	showEmailLink = true
+	showEmailLink = true,
+	showLiveChatRow = false
 }: NotificationConfigDialogProps) => {
 	const { t } = useTranslation();
 	const navigate = useNavigate();
@@ -449,6 +456,7 @@ export const NotificationConfigDialog = ({
 					onChange={handleChange}
 					onPreview={handlePreview}
 					showEmailLink={showEmailLink}
+					showLiveChatRow={showLiveChatRow}
 				/>
 			</M3Dialog>
 			<M3Dialog

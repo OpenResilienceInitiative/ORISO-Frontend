@@ -1,6 +1,6 @@
 // @vitest-environment oriso-jsdom
 import React from 'react';
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { MessageSubmitInfo } from './MessageSubmitInfo';
 
@@ -9,9 +9,6 @@ vi.mock('react-i18next', () => ({
 }));
 vi.mock('../../resources/img/icons/i.svg', () => ({
 	ReactComponent: (p: any) => <svg data-testid="info-icon" {...p} />
-}));
-vi.mock('../../resources/img/icons/exclamation-mark.svg', () => ({
-	ReactComponent: (p: any) => <svg data-testid="error-icon" {...p} />
 }));
 
 describe('MessageSubmitInfo (#1210: composer notice as an M3 info card)', () => {
@@ -37,17 +34,24 @@ describe('MessageSubmitInfo (#1210: composer notice as an M3 info card)', () => 
 		).toBe('true');
 	});
 
-	it('renders an error notice as an alert card', () => {
+	it('renders an error notice as a dismissable error snackbar', () => {
+		const onClose = vi.fn();
 		render(
 			<MessageSubmitInfo
 				isInfo={false}
 				infoHeadline="Upload failed"
 				infoMessage={<>Try again</>}
+				onClose={onClose}
+				closeLabel="Close"
 			/>
 		);
-		const card = screen.getByRole('alert');
-		expect(card.className).toContain('messageSubmitInfoWrapper--error');
-		expect(screen.getByTestId('error-icon')).toBeTruthy();
+		const snackbar = screen.getByRole('alert');
+		expect(snackbar.textContent).toContain('Upload failed');
+		expect(snackbar.textContent).toContain('Try again');
+		// Not the old magenta card any more.
+		expect(document.querySelector('.messageSubmitInfoWrapper')).toBeNull();
+		fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+		expect(onClose).toHaveBeenCalledTimes(1);
 	});
 
 	it('renders the message alone when there is no headline', () => {

@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vite-plus/test';
 import {
+	apiGetConsultantEnquiryCount,
 	apiGetConsultantSessionList,
 	SESSION_COUNT,
 	TIMEOUT
@@ -28,6 +29,52 @@ vi.mock('./fetchData', () => ({
 }));
 
 describe('apiGetConsultantSessionList', () => {
+	it('retains further pages when the anonymous feed is longer', async () => {
+		vi.mocked(fetchData).mockImplementation((async ({ url }: any) =>
+			url.includes('/anonymous')
+				? {
+						sessions: [{ session: { id: 2 } }],
+						total: 31,
+						offset: 0,
+						count: 15
+					}
+				: {
+						sessions: [{ session: { id: 1 } }],
+						total: 1,
+						offset: 0,
+						count: 15
+					}) as any);
+		const result = await apiGetConsultantSessionList({
+			type: SESSION_LIST_TYPES.ENQUIRY
+		});
+		expect(result.total).toBeGreaterThan(15);
+	});
+
+	it('uses a shared requested offset for both feeds even when their pages overlap', async () => {
+		vi.mocked(fetchData).mockReset();
+		vi.mocked(fetchData).mockImplementation((async ({ url }: any) =>
+			url.includes('/anonymous')
+				? {
+						sessions: [
+							{ session: { id: 7 } },
+							{ session: { id: 8 } }
+						],
+						total: 33
+					}
+				: { sessions: [{ session: { id: 7 } }], total: 16 }) as any);
+		const result = await apiGetConsultantSessionList({
+			type: SESSION_LIST_TYPES.ENQUIRY,
+			offset: 15,
+			count: 15
+		});
+		expect(result.sessions.map((row) => row.session.id)).toEqual([7, 8]);
+		expect(result.total).toBe(33);
+		expect(
+			vi
+				.mocked(fetchData)
+				.mock.calls.every(([arg]) => arg.url.includes('offset=15'))
+		).toBe(true);
+	});
 	it('loads both registered and anonymous enquiries for the enquiry tab', async () => {
 		vi.mocked(fetchData).mockImplementation((async ({ url }: any) =>
 			url.includes('/anonymous')
@@ -159,5 +206,56 @@ describe('apiGetConsultantSessionList', () => {
 			responseHandling: ['EMPTY'],
 			timeout: TIMEOUT
 		});
+	});
+});
+
+describe('apiGetConsultantEnquiryCount (FE#1435)', () => {
+	const base =
+		'https://api.oriso-dev.site/service/conversations/consultants/enquiries/';
+
+	it('adds up the totals of both enquiry feeds, asking each for one row only', async () => {
+		vi.mocked(fetchData).mockReset();
+		vi.mocked(fetchData).mockImplementation((async ({ url }: any) =>
+			url.includes('/anonymous')
+				? { sessions: [{}], total: 2, count: 1, offset: 0 }
+				: { sessions: [{}], total: 3, count: 1, offset: 0 }) as any);
+
+		await expect(apiGetConsultantEnquiryCount()).resolves.toBe(5);
+
+		const urls = vi.mocked(fetchData).mock.calls.map(([a]: any) => a.url);
+		expect(urls.sort()).toEqual([
+			`${base}anonymous?count=1&filter=all&offset=0`,
+			`${base}registered?count=1&filter=all&offset=0`
+		]);
+	});
+
+	it('counts an empty feed (204) as zero', async () => {
+		vi.mocked(fetchData).mockReset();
+		vi.mocked(fetchData).mockImplementation((async ({ url }: any) => {
+			if (url.includes('/anonymous')) throw new Error('EMPTY');
+			return { sessions: [{}], total: 4 };
+		}) as any);
+		await expect(apiGetConsultantEnquiryCount()).resolves.toBe(4);
+
+		vi.mocked(fetchData).mockRejectedValue(new Error('EMPTY'));
+		await expect(apiGetConsultantEnquiryCount()).resolves.toBe(0);
+	});
+
+	it('fails when the registered feed fails, so the last known count stays', async () => {
+		vi.mocked(fetchData).mockReset();
+		vi.mocked(fetchData).mockImplementation((async ({ url }: any) => {
+			if (url.includes('/registered')) throw new Error('500');
+			return { sessions: [], total: 1 };
+		}) as any);
+		await expect(apiGetConsultantEnquiryCount()).rejects.toThrow('500');
+	});
+
+	it('treats a failing live-chat feed as zero, like the list does', async () => {
+		vi.mocked(fetchData).mockReset();
+		vi.mocked(fetchData).mockImplementation((async ({ url }: any) => {
+			if (url.includes('/anonymous')) throw new Error('500');
+			return { sessions: [{}], total: 2 };
+		}) as any);
+		await expect(apiGetConsultantEnquiryCount()).resolves.toBe(2);
 	});
 });

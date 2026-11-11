@@ -12,7 +12,10 @@ import type {
 	ChatAttachment,
 	ChatFile
 } from '../components/message/chatAttachmentTypes';
-import { isUndecryptedRoomEvent } from './matrixDecryptionFailure';
+import {
+	isMissingKeyDecryptionFailure,
+	isUndecryptedRoomEvent
+} from './matrixDecryptionFailure';
 
 /**
  * Where an attachment's bytes come from.
@@ -84,11 +87,16 @@ export const formatMatrixTimelineEvent = (
 	// The legacy Element quote-fallback in the body would duplicate the quote
 	// we render from the relation, so it is stripped for reply events.
 	const replyToEventId = getReplyToEventId(content);
+	const body = typeof content?.body === 'string' ? content.body : '';
+	const formattedBody =
+		typeof content?.formatted_body === 'string'
+			? content.formatted_body
+			: '';
 	const rawTextContent = isUndecryptedEvent
 		? encryptedFallbackText
 		: content?.msgtype === 'm.text'
-			? content?.formatted_body || content?.body || ''
-			: content?.body || '';
+			? formattedBody || body
+			: body;
 	const textMessageContent = replyToEventId
 		? stripReplyFallback(rawTextContent)
 		: rawTextContent;
@@ -105,6 +113,11 @@ export const formatMatrixTimelineEvent = (
 	};
 	if (replyToEventId) {
 		baseMessage.replyToEventId = replyToEventId;
+	}
+	if (isUndecryptedEvent && isMissingKeyDecryptionFailure(event)) {
+		// #1827: lets the timeline show an honest "not on this device" notice
+		// instead of the generic encrypted-message text.
+		baseMessage.undecryptableReason = 'missing-key';
 	}
 	const callLifecycle = parseCallLifecycleMessage(content);
 	if (callLifecycle) {
@@ -137,8 +150,13 @@ export const formatMatrixTimelineEvent = (
 	if (mediaUrl && content?.msgtype !== 'm.text') {
 		const mediaRoute = getMatrixMediaRoute(mediaUrl);
 		const isEncryptedMedia = Boolean(content?.file?.url);
+		// MSC2530: a `filename` other than `body` makes `body` the caption.
+		const filename =
+			typeof content.filename === 'string' ? content.filename : '';
+		const fileName = filename || body;
+		const hasCaption = Boolean(body && filename && body !== filename);
 		const attachment: ChatAttachment = {
-			title: content.body,
+			title: fileName,
 			downloadUrl: mediaRoute.downloadUrl,
 			type: content.msgtype === 'm.image' ? 'image' : 'file',
 			mediaType: content.info?.mimetype,
@@ -165,8 +183,11 @@ export const formatMatrixTimelineEvent = (
 		if (content.info?.['org.oriso.media_check_state'] === 'blocked') {
 			attachment.mediaCheckState = 'blocked';
 		}
+		if (hasCaption) {
+			attachment.hasCaption = true;
+		}
 		baseMessage.file = {
-			name: content.body,
+			name: fileName,
 			type: content.info?.mimetype || 'application/octet-stream'
 		} satisfies ChatFile;
 		if (isEncryptedMedia) {

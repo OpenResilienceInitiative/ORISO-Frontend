@@ -1,3 +1,7 @@
+import { apiGetPublicTenantById } from '../../../api/apiGetTenantTheming';
+import type { TenantDataInterface } from '../../../globalState/interfaces';
+import { useTenant } from '../../../globalState/provider/TenantProvider';
+import { isAskerDisplayNameTypingAllowed } from '../../../utils/askerAccountPolicy';
 import * as React from 'react';
 import {
 	useCallback,
@@ -59,6 +63,7 @@ export interface LiveChatEntryRoomProps {
 	invite?: {
 		/** Unknown while the page still reads the link; the room keeps looking. */
 		topicId?: number;
+		tenantId?: number | null;
 		consultingTypeId?: number;
 		/** Redeems the link, sets its tokens, and returns the new session. */
 		redeem: () => Promise<number>;
@@ -187,6 +192,33 @@ const LiveChatEntryRoomContent = ({
 	const navigate = useNavigate();
 	const localeContext = useContext(LocaleContext);
 	const locale = localeContext?.locale ?? 'de';
+	const tenant = useTenant();
+	const inviteTenantId = invite?.tenantId;
+	const [inviteTenant, setInviteTenant] =
+		useState<TenantDataInterface | null>(null);
+	useEffect(() => {
+		if (!inviteTenantId || inviteTenantId === tenant?.id) return;
+		let current = true;
+		void apiGetPublicTenantById(inviteTenantId)
+			.then((resolved) => {
+				if (current && resolved?.id === inviteTenantId)
+					setInviteTenant(resolved);
+			})
+			.catch(() => undefined);
+		return () => {
+			current = false;
+		};
+	}, [inviteTenantId, tenant?.id]);
+	const nameSettings =
+		!invite || inviteTenantId === tenant?.id
+			? tenant?.settings
+			: inviteTenant?.id === inviteTenantId
+				? inviteTenant?.settings
+				: undefined;
+	const nameEditable = isAskerDisplayNameTypingAllowed(
+		nameSettings,
+		'LIVE_CHAT'
+	);
 	const legalLinks = useContext(LegalLinksContext);
 	const tr = useCallback(
 		(key: string, fallback: string) =>
@@ -217,6 +249,13 @@ const LiveChatEntryRoomContent = ({
 		rollGuestNames(locale)
 	);
 	const [selectedIndex, setSelectedIndex] = useState(0);
+	const [customDisplayName, setCustomDisplayName] = useState<string | null>(
+		null
+	);
+	const selectedName =
+		nameEditable && customDisplayName !== null
+			? customDisplayName
+			: (names[selectedIndex]?.userId ?? '');
 	const [busy, setBusy] = useState(false);
 	const [ahead, setAhead] = useState<number | null>(null);
 	const [available, setAvailable] = useState<number | null>(null);
@@ -344,12 +383,13 @@ const LiveChatEntryRoomContent = ({
 		}
 	};
 
-	/* A → B: the name goes to the session and the account; the old pseudonym
-	   card did exactly this (SessionItemComponent handleConfirmPseudonym). */
+	/* A → B: persist the session alias; account PATCH only preserves locale.
+	   Asker displayName on account PATCH is not a supported persistence path. */
 	const handleContinue = useCallback(async () => {
 		if (busy) return;
 		const chosen = names[selectedIndex];
-		if (!chosen) return;
+		const alias = selectedName.trim();
+		if (!chosen || !alias || alias.length > 255) return;
 		setBusy(true);
 		setContinueFailed(false);
 		try {
@@ -403,17 +443,18 @@ const LiveChatEntryRoomContent = ({
 			/* One name, everywhere: the counsellor's queue shows the same
 			   string the guest just picked. */
 			await apiPutSessionData(id, {
-				displayName: chosen.userId
+				displayName: alias
 			});
+			if (cancelled.current) return;
 			/* The redeem creates the account without a language, so the server
 			   stores German; keep the one the guest is reading, or the app
 			   switches to German when it boots after the gate. The server only
 			   takes ISO codes: 'de@informal' would fail the whole PATCH. */
 			await apiPatchUserData({
-				displayName: chosen.userId,
 				preferredLanguage: normalizePreferredLanguage(locale)
 			});
-			rememberConfirmedEntryName(id, chosen.userId);
+			if (cancelled.current) return;
+			rememberConfirmedEntryName(id, alias);
 			if (!cancelled.current) setStage('waiting');
 		} catch (error) {
 			/* Without this the door swallowed the failure: the stage stayed on
@@ -423,7 +464,7 @@ const LiveChatEntryRoomContent = ({
 		} finally {
 			if (!cancelled.current) setBusy(false);
 		}
-	}, [busy, names, selectedIndex, sessionId, invite, locale]); // eslint-disable-line react-hooks/exhaustive-deps
+	}, [busy, names, selectedIndex, selectedName, sessionId, invite, locale]); // eslint-disable-line react-hooks/exhaustive-deps
 
 	/* Before any session: who is live for this topic, on the public endpoint
 	   that needs no account. An answered zero needs a second look, because the
@@ -694,12 +735,19 @@ const LiveChatEntryRoomContent = ({
 						selectedIndex={selectedIndex}
 						busy={busy}
 						failed={continueFailed}
-						onSelect={setSelectedIndex}
+						displayName={selectedName}
+						editable={nameEditable}
+						onDisplayNameChange={setCustomDisplayName}
+						onSelect={(index) => {
+							setSelectedIndex(index);
+							setCustomDisplayName(null);
+						}}
 						onReroll={() => {
 							/* A new set, and the first of it taken: the way on
 						   must never need a second click. */
 							setNames(rollGuestNames(locale));
 							setSelectedIndex(0);
+							setCustomDisplayName(null);
 						}}
 						onContinue={() => {
 							void handleContinue();

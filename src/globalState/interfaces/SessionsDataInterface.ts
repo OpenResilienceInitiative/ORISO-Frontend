@@ -76,6 +76,12 @@ export interface SessionItemInterface {
 		| 'LIVE_CHAT'
 		| 'INTERNAL_GROUP'
 		| 'SELF_HELP';
+	/**
+	 * FE#1952: medium of the counsellor direct link this conversation was
+	 * opened through (`SessionDTO.directLinkMedium`); absent otherwise. Read
+	 * it through `session/directLinkOrigin.ts`, never directly.
+	 */
+	directLinkMedium?: 'CHAT' | 'AUDIO' | 'VIDEO';
 	agencyId: number;
 	askerMatrixUserId: string;
 	/** Matrix id of the assigned consultant (SessionDTO); absent on group chats. */
@@ -178,6 +184,8 @@ export interface GroupChatItemInterface {
 }
 
 export interface SessionUserInterface {
+	/** Read-only SessionMapper tombstone; retained session aliases may still exist. */
+	deleted?: boolean;
 	avatarId?: string | null;
 	username: string;
 	displayName?: string;

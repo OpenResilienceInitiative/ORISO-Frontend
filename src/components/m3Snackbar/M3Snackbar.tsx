@@ -3,6 +3,7 @@ import { ReactNode, useEffect, useId, useSyncExternalStore } from 'react';
 import { Alert, Box, Button, IconButton, Snackbar } from '@mui/material';
 import type { SnackbarOrigin, SxProps, Theme } from '@mui/material';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { COMPOSER_BOTTOM_CLEARANCE } from './composerClearance';
 
 /**
@@ -132,6 +133,13 @@ export interface M3SnackbarProps {
 	 * so the two can never drift apart.
 	 */
 	placement?: 'floating' | 'inline';
+	/**
+	 * `'error'` is the same dark surface with an error glyph in front of the
+	 * message. The design system draws no error snackbar, and the literal
+	 * error-container role is a loud magenta that belongs to no other surface
+	 * here, so the difference is carried by the glyph and not by a red fill.
+	 */
+	tone?: 'neutral' | 'error';
 	/** Floating only. Defaults to open — an unmounted snackbar is the closed one. */
 	open?: boolean;
 	/** Floating only. `null` (default) keeps it until it is dismissed. */
@@ -220,8 +228,8 @@ export const M3_SNACKBAR_ELEVATION = elevation3;
  *
  * **Structure comes from MUI** — `Snackbar` for the fixed placement and the
  * grow/fade transition, `Alert` for the message/action/close anatomy and its
- * live-region semantics. The icon is switched off (`icon={false}`): M3
- * snackbars carry no severity glyph, and this one is not an error surface.
+ * live-region semantics. The icon is off (`icon={false}`) unless `tone="error"`
+ * asks for it: M3 snackbars carry no severity glyph of their own.
  */
 export const M3Snackbar = ({
 	message,
@@ -230,6 +238,7 @@ export const M3Snackbar = ({
 	onClose,
 	closeLabel,
 	placement = 'floating',
+	tone = 'neutral',
 	open = true,
 	autoHideDuration = null,
 	anchorOrigin = { vertical: 'bottom', horizontal: 'center' },
@@ -308,7 +317,16 @@ export const M3Snackbar = ({
 
 	const surface = (
 		<Alert
-			icon={false}
+			icon={
+				tone === 'error' ? (
+					<ErrorOutlineRoundedIcon
+						aria-hidden="true"
+						sx={{ fontSize: 20, color: m3SnackbarColors.action }}
+					/>
+				) : (
+					false
+				)
+			}
 			role={role}
 			action={alertAction}
 			data-testid={testId}

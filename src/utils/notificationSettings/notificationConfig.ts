@@ -23,6 +23,7 @@ export const DISABLED_AREAS: ReadonlyArray<NotificationArea> = [];
 export const NOTIFICATION_KINDS = [
 	'new',
 	'standard',
+	'liveChat',
 	'mention',
 	'handover',
 	'call',
@@ -36,7 +37,7 @@ export const AREA_KINDS: Record<
 	ReadonlyArray<NotificationKind>
 > = {
 	requests: ['new', 'standard', 'mention'],
-	conversations: ['new', 'standard', 'mention', 'handover'],
+	conversations: ['new', 'standard', 'liveChat', 'mention', 'handover'],
 	timeCritical: ['call', 'appointment']
 };
 
@@ -84,6 +85,9 @@ const kind = (partial: Partial<KindConfig> = {}): KindConfig => ({
 const areaDefaults = (): Record<NotificationKind, KindConfig> => ({
 	new: kind(),
 	standard: kind(),
+	// A live-chat seeker is waiting right now, so this row rings out of the
+	// box (FE#1470). Only a counsellor's live-chat messages land here.
+	liveChat: kind({ sound: 'ton-1', email: false }),
 	mention: kind({ email: false }),
 	handover: kind(),
 	// Calls keep ringing out of the box — the dedicated ring tone.
@@ -92,7 +96,12 @@ const areaDefaults = (): Record<NotificationKind, KindConfig> => ({
 });
 
 export const DEFAULT_NOTIFICATION_CONFIG: NotificationConfig = {
-	requests: areaDefaults(),
+	requests: {
+		...areaDefaults(),
+		// A new enquiry waits for someone to take it, so its row rings out
+		// of the box (FE#1435). Only the Anfragen tab's "Neue Anfrage" row.
+		new: kind({ sound: 'ton-1' })
+	},
 	conversations: areaDefaults(),
 	timeCritical: areaDefaults()
 };

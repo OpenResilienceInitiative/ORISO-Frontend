@@ -433,6 +433,33 @@ export const VideoJoinAsksConsent: Story = {
 	}
 };
 
+export const SignedInSharedCallConsent: Story = {
+	name: 'Shared video call · signed in, consent before joining',
+	globals: phone390Globals,
+	args: {
+		...base,
+		modality: 'video',
+		signedIn: true,
+		initialMicOn: false,
+		initialCameraOn: false,
+		micLevel: 0,
+		onJoin: fn(),
+		closing: null
+	},
+	play: async ({ args, canvas, canvasElement }) => {
+		const body = within(canvasElement.ownerDocument.body);
+		await expectWaitingRoomLayout(canvasElement);
+		await gateOpens(canvasElement);
+		expect(canvas.queryByTestId('call-entry-identity-column')).toBeNull();
+		await userEvent.click(gate(canvasElement));
+		await waitFor(() => expect(consentPanel(canvasElement)).not.toBeNull());
+		expect(args.onJoin).not.toHaveBeenCalled();
+		await userEvent.click(body.getByRole('checkbox'));
+		await userEvent.click(gate(canvasElement));
+		expect(args.onJoin).toHaveBeenCalledTimes(1);
+	}
+};
+
 export const VideoConsentDeclined: Story = {
 	name: 'Video · the round X closes the consent',
 	globals: desktop1440Globals,

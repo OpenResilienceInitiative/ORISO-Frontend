@@ -243,6 +243,76 @@ describe('useElementCallWidget', () => {
 		).toBe(false);
 	});
 
+	describe('starting with the pre-join choice (ElementCall#116)', () => {
+		const fragmentOf = (url: string) =>
+			new URLSearchParams(new URL(url).hash.slice(2));
+
+		it('puts the on/off choice and the device labels on the widget URL', async () => {
+			const client = createClient();
+			const { result } = renderHook(() =>
+				useElementCallWidget(client, {
+					roomId: CALL_ROOM,
+					isVideo: true,
+					callStart: {
+						audioEnabled: true,
+						videoEnabled: false,
+						audioInput: 'Jabra Evolve2 Headset',
+						videoInput: 'Logitech C920 & Co'
+					}
+				})
+			);
+			await waitFor(() => expect(result.current.url).not.toBeNull());
+
+			const fragment = fragmentOf(result.current.url!);
+			expect(fragment.get('audioEnabled')).toBe('true');
+			expect(fragment.get('videoEnabled')).toBe('false');
+			expect(fragment.get('audioInput')).toBe('Jabra Evolve2 Headset');
+			expect(fragment.get('videoInput')).toBe('Logitech C920 & Co');
+		});
+
+		it('leaves them off the URL without a check', async () => {
+			const client = createClient();
+			const { result } = renderHook(() =>
+				useElementCallWidget(client, {
+					roomId: CALL_ROOM,
+					isVideo: true
+				})
+			);
+			await waitFor(() => expect(result.current.url).not.toBeNull());
+
+			const fragment = fragmentOf(result.current.url!);
+			for (const name of [
+				'audioEnabled',
+				'videoEnabled',
+				'audioInput',
+				'videoInput'
+			])
+				expect(fragment.has(name)).toBe(false);
+		});
+
+		it('does not rebuild the URL for an equal choice in a new object', async () => {
+			// A rebuilt URL with any difference navigates the running call.
+			const client = createClient();
+			const { result, rerender } = renderHook(
+				({ start }) =>
+					useElementCallWidget(client, {
+						roomId: CALL_ROOM,
+						isVideo: true,
+						callStart: start
+					}),
+				{
+					initialProps: {
+						start: { audioEnabled: false, videoEnabled: false }
+					}
+				}
+			);
+			await waitFor(() => expect(result.current.url).not.toBeNull());
+			const first = result.current.url;
+			rerender({ start: { audioEnabled: false, videoEnabled: false } });
+			expect(result.current.url).toBe(first);
+		});
+	});
+
 	it('fails closed when the host cannot join the call room', async () => {
 		const joinRoom = vi.fn().mockRejectedValue(new Error('join denied'));
 		const client = createClient({ membership: 'invite', joinRoom });

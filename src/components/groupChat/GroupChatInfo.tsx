@@ -9,7 +9,9 @@ import {
 	hasUserAuthority,
 	useTenant,
 	ActiveSessionContext,
-	ActiveSessionProvider
+	ActiveSessionProvider,
+	SessionsDataContext,
+	REMOVE_SESSIONS
 } from '../../globalState';
 import { isUserModerator, SESSION_LIST_TAB } from '../session/sessionHelpers';
 import { ButtonItem, BUTTON_TYPES } from '../button/Button';
@@ -22,6 +24,7 @@ import {
 import { apiPostBanUser } from '../../api/apiPostBanUser';
 import {
 	canModerateGroupChat,
+	getStoppedGroupChatRemovalIds,
 	isGroupChatOwner,
 	isV2GroupChatSession
 } from './groupChatHelpers';
@@ -66,6 +69,10 @@ import { GroupChatCalendarMenu } from './GroupChatCalendarMenu';
 import { GroupChatRoleManager } from './GroupChatRoleManager';
 import { getGroupChatPlannedStart } from './groupChatDate';
 import { getGroupChatRepeatLabel } from './groupChatRepeatLabel';
+import {
+	participantRole,
+	useGroupChatMemberRoles
+} from './groupChatMemberRoles';
 
 export const GroupChatInfo = ({ dialog = false }: { dialog?: boolean }) => {
 	const settings = useAppConfig();
@@ -83,6 +90,7 @@ export const GroupChatInfo = ({ dialog = false }: { dialog?: boolean }) => {
 	};
 
 	const { userData } = useContext(UserDataContext);
+	const { dispatch: sessionsDispatch } = useContext(SessionsDataContext);
 	const { path: listPath } = useContext(SessionTypeContext);
 
 	const [overlayItem, setOverlayItem] = useState<OverlayItem>(null);
@@ -166,6 +174,11 @@ export const GroupChatInfo = ({ dialog = false }: { dialog?: boolean }) => {
 		setIsV2GroupChat(isV2GroupChatSession(activeSession));
 	}, [activeSession, navigate, listPath, ready, sessionListTab]);
 
+	const showGroupChatError = () => {
+		setOverlayItem(groupChatErrorOverlayItem);
+		setOverlayActive(true);
+	};
+
 	const handleStopGroupChatButton = () => {
 		setOverlayItem(stopGroupChatSecurityOverlayItem);
 		setOverlayActive(true);
@@ -183,6 +196,15 @@ export const GroupChatInfo = ({ dialog = false }: { dialog?: boolean }) => {
 		} else if (buttonFunction === OVERLAY_FUNCTIONS.STOP_GROUP_CHAT) {
 			apiPutGroupChat(activeSession.item.id, GROUP_CHAT_API.STOP)
 				.then(() => {
+					const removedIds = getStoppedGroupChatRemovalIds(
+						activeSession.item
+					);
+					if (removedIds) {
+						sessionsDispatch({
+							type: REMOVE_SESSIONS,
+							ids: removedIds
+						});
+					}
 					setOverlayItem(stopGroupChatSuccessOverlayItem);
 				})
 				.catch(() => {
@@ -435,6 +457,7 @@ export const GroupChatInfo = ({ dialog = false }: { dialog?: boolean }) => {
 						scheduleOnly={scheduleOnly}
 						embedded={dialog}
 						onBanned={setBannedOverlayName}
+						onBanFailed={showGroupChatError}
 						onShowQr={() => setQrOpen(true)}
 						topic={topic}
 						scheduleSummary={scheduleSummary}
@@ -569,6 +592,7 @@ const GroupChatInfoContent = ({
 	showInviteActions,
 	inviteLink,
 	onBanned,
+	onBanFailed,
 	onShowQr,
 	...props
 }: GroupChatInfoContentProps) =>
@@ -581,6 +605,7 @@ const GroupChatInfoContent = ({
 			showInviteActions={showInviteActions}
 			inviteLink={inviteLink}
 			onBanned={onBanned}
+			onBanFailed={onBanFailed}
 			onShowQr={onShowQr}
 		/>
 	);
@@ -589,11 +614,12 @@ const GroupChatInfoContent = ({
  * The M3 Chat-Info with the parts that need the active-session context:
  * room members from Matrix, bans, the QR code and the invite link.
  */
-const GroupChatInfoM3Connected = ({
+export const GroupChatInfoM3Connected = ({
 	isCurrentUserModerator,
 	showInviteActions,
 	inviteLink: { url, copyRegistrationLink },
 	onBanned,
+	onBanFailed,
 	onShowQr,
 	...props
 }: Omit<
@@ -609,6 +635,7 @@ const GroupChatInfoM3Connected = ({
 	showInviteActions: boolean;
 	inviteLink: ReturnType<typeof useGroupChatInviteLink>;
 	onBanned: (name: string) => void;
+	onBanFailed: () => void;
 	onShowQr: () => void;
 }) => {
 	const { t: translate } = useTranslation();
@@ -616,6 +643,12 @@ const GroupChatInfoM3Connected = ({
 	const matrixRoomUsersContext = useMatrixRoomUsers();
 	const users = matrixRoomUsersContext?.users || [];
 	const moderators = matrixRoomUsersContext?.moderators || [];
+	// Everyone sees everyone's role (#107); unknown roles show no badge. The
+	// server lists members of a running chat only.
+	const memberRoles = useGroupChatMemberRoles(
+		activeSession.item.active ? activeSession.item.id : undefined,
+		users.map((user) => user._id).join(',')
+	);
 	const [bannedUsers, setBannedUsers] = useState<string[]>([]);
 	const [menu, setMenu] = useState<{
 		anchor: HTMLElement;
@@ -628,15 +661,28 @@ const GroupChatInfoM3Connected = ({
 	} | null>(null);
 	useEffect(() => {
 		if (activeSession.item.active) {
-			apiGetGroupChatInfo(activeSession.item.id).then((response) => {
-				setBannedUsers(
-					response.bannedUsers
-						? response.bannedUsers.map(decodeUsername)
-						: []
-				);
-			});
+			// The ban list is a nicety: a failed read must not break the page.
+			apiGetGroupChatInfo(activeSession.item.id)
+				.then((response) => {
+					setBannedUsers(
+						response.bannedUsers
+							? response.bannedUsers.map(decodeUsername)
+							: []
+					);
+				})
+				.catch(() => {});
 		}
 	}, [activeSession.item.active, activeSession.item.id]);
+
+	const roleLabelOf = (subscriber: (typeof users)[number]) => {
+		const role = participantRole(
+			memberRoles.get(subscriber._id),
+			subscriber.powerLevel
+		);
+		return role
+			? translate(`groupChat.info.subscribers.role.${role}`)
+			: undefined;
+	};
 
 	const participants: GroupChatInfoParticipant[] = users.map(
 		(subscriber) => ({
@@ -647,6 +693,7 @@ const GroupChatInfoM3Connected = ({
 				? decodeUsername(subscriber.displayName)
 				: decodeUsername(subscriber.username),
 			isModerator: moderators.includes(subscriber._id),
+			roleLabel: roleLabelOf(subscriber),
 			statusLabel:
 				isCurrentUserModerator &&
 				bannedUsers.includes(subscriber.username)
@@ -680,13 +727,16 @@ const GroupChatInfoM3Connected = ({
 		apiPostBanUser({
 			matrixUserId: participant.id,
 			chatId: activeSession.item.id
-		}).then(() => {
-			setBannedUsers((current) => [
-				...current,
-				participant.username ?? participant.name
-			]);
-			onBanned(participant.username ?? participant.name);
-		});
+		})
+			.then(() => {
+				setBannedUsers((current) => [
+					...current,
+					participant.username ?? participant.name
+				]);
+				onBanned(participant.username ?? participant.name);
+			})
+			// Say so instead of silently keeping the member.
+			.catch(() => onBanFailed());
 	};
 
 	return (

@@ -1,6 +1,7 @@
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import type { GlobalTypes } from 'storybook/internal/types';
 import type { StoryObj } from '@storybook/react-vite';
+import { USERNAME_AVAILABILITY_DEBOUNCE_MS } from '../src/components/registration/accountData/useUsernameAvailability';
 
 /** Manual is the default; a reviewer can explicitly opt into scripted demos. */
 export const entryFormDemoGlobalTypes: GlobalTypes = {
@@ -21,6 +22,15 @@ export const entryFormDemoGlobalTypes: GlobalTypes = {
 
 export const entryFormDemoEnabled = (globals: Record<string, unknown>) =>
 	globals.entryFormDemo === 'automatic';
+
+/** The panel opens only after the username check, which first waits out its
+    debounce: a busy CI runner needs more than the default second. */
+export const findConsentPanel = (surface: ReturnType<typeof within>) =>
+	surface.findByRole(
+		'region',
+		{ name: 'Datenschutz' },
+		{ timeout: USERNAME_AVAILABILITY_DEBOUNCE_MS + 2000 }
+	);
 
 /** Verify the real browser motion, including the height reserved by the footer. */
 export const verifyConsentOpening = async (panel: HTMLElement) => {
@@ -80,9 +90,7 @@ export const accountConsentPlay =
 				surface.getByRole('button', { name: /Alle 3/ })
 			);
 		}
-		const panel = await surface.findByRole('region', {
-			name: 'Datenschutz'
-		});
+		const panel = await findConsentPanel(surface);
 		await verifyConsentOpening(panel);
 		const checkbox = within(panel).getByRole('checkbox');
 		expect(within(panel).queryByRole('heading')).not.toBeInTheDocument();

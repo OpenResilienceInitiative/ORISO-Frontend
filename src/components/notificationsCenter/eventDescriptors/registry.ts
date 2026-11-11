@@ -46,12 +46,42 @@ const buildConversationPath = (params: EventActionParams): string | null => {
 	return null;
 };
 
+const QUERY_SESSION_LIST =
+	/^(\/sessions\/[^/]+\/(?:sessionPreview|sessionView))\/?$/;
+
+// UserService's team-discussion link names the session only in its query
+// (`…/sessionPreview?sessionId=42&teamDiscussion=1`). That list route renders
+// no conversation, so the id moves into the path, the rest of the query stays.
+const withQuerySessionInPath = (path: string | null): string | null => {
+	if (!path) return path;
+	const url = new URL(path, 'http://oriso.invalid');
+	const list = QUERY_SESSION_LIST.exec(url.pathname);
+	const sessionId = url.searchParams.get('sessionId');
+	if (!list || !sessionId) return path;
+	url.searchParams.delete('sessionId');
+	return `${list[1]}/session/${encodeURIComponent(sessionId)}${url.search}${url.hash}`;
+};
+
 // B2 / T24: server action paths may still carry the legacy `threadRootId`
 // (UserService B2 pending) — the frontend contract is `?channel=thread:<id>`,
 // rewritten once here at the boundary.
 const conversationTarget = (params: EventActionParams): EventActionTarget => ({
 	kind: 'conversation',
-	path: rewriteLegacyChannelPath(buildConversationPath(params))
+	path: rewriteLegacyChannelPath(
+		withQuerySessionInPath(buildConversationPath(params))
+	)
+});
+
+// FE#1952: the person is already waiting, so the knock goes into the call of
+// its conversation (`roomRef`), not only into the conversation.
+const knockCallTarget = (params: EventActionParams): EventActionTarget => ({
+	kind: 'callRoom',
+	roomId:
+		typeof params.roomRef === 'string' && params.roomRef.trim()
+			? params.roomRef
+			: null,
+	isVideo: params.medium === 'VIDEO',
+	path: buildConversationPath(params)
 });
 
 const groupChatJoinTarget = (params: EventActionParams): EventActionTarget => ({
@@ -309,6 +339,30 @@ const seeds: EventDescriptor[] = [
 		i18nKey: 'caseHandoverOfferReceived',
 		resolveActionTarget: conversationTarget
 	}),
+	// The offering counsellor's side of an offer: sent, declined, withdrawn
+	// (the recipient also gets "withdrawn"). Staff-only: the advice seeker is
+	// never told about a colleague-to-colleague offer.
+	descriptor('case.handover.offer.sent', {
+		family: 'handover',
+		category: 'system',
+		icon: 'handover',
+		i18nKey: 'caseHandoverOfferSent',
+		resolveActionTarget: conversationTarget
+	}),
+	descriptor('case.handover.offer.declined', {
+		family: 'handover',
+		category: 'system',
+		icon: 'handoverDenied',
+		i18nKey: 'caseHandoverOfferDeclined',
+		resolveActionTarget: conversationTarget
+	}),
+	descriptor('case.handover.offer.withdrawn', {
+		family: 'handover',
+		category: 'system',
+		icon: 'handoverDenied',
+		i18nKey: 'caseHandoverOfferWithdrawn',
+		resolveActionTarget: conversationTarget
+	}),
 
 	// ----- Calls family (Slice 5) -----
 	// Live, joinable call -> Join overlay (does not navigate).
@@ -340,6 +394,17 @@ const seeds: EventDescriptor[] = [
 		icon: 'callInvited',
 		i18nKey: 'callInvited',
 		resolveActionTarget: conversationTarget
+	}),
+
+	// FE#1952: someone knocks on the counsellor's direct-link call. One click
+	// takes the counsellor into the call of that conversation, where the knock
+	// notice lets the person in (Frank, 2026-10-30).
+	descriptor('call.knock.requested', {
+		family: 'calls',
+		category: 'system',
+		icon: 'callStarted',
+		i18nKey: 'callKnockRequested',
+		resolveActionTarget: knockCallTarget
 	}),
 
 	// ----- Appointments family (Figma 2026-07-12; writers still deferred) -----
@@ -404,6 +469,15 @@ const seeds: EventDescriptor[] = [
 		icon: 'system',
 		i18nKey: 'serviceNoticePlanned',
 		resolveActionTarget: statusPageTarget
+	}),
+	// #1159: an advice seeker's chat was deleted. Nothing is left to open, so
+	// the row informs and has no action.
+	descriptor('session.asker_deleted', {
+		family: 'system',
+		category: 'system',
+		icon: 'system',
+		i18nKey: 'sessionAskerDeleted',
+		resolveActionTarget: () => ({ kind: 'none' })
 	})
 ];
 

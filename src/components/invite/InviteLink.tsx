@@ -17,6 +17,7 @@ import {
 } from '@mui/material';
 import {
 	isRedeemInviteLinkSessionResponse,
+	isPausedInvite,
 	redeemInviteLink,
 	RedeemInviteLinkLegacyResponse
 } from '../../api/apiRedeemInviteLink';
@@ -58,6 +59,7 @@ import { isInactiveDirectLinkError } from '../../api/apiDirectLinks';
 import type { InviteLinkContext } from '../../api/apiGetInviteLinkContext';
 import type { DirectLinkMedium } from '../conversationCreate/directLink/directLink';
 import {
+	directLinkCallsAllowed,
 	directLinkMediumOf,
 	loginPathForDirectLink,
 	openDirectLinkConversation
@@ -98,6 +100,11 @@ const inviteErrorText = (
 	error: unknown,
 	translate: (key: string) => string
 ) => {
+	/* ORISO-UserService#1563: a link switched off while the page was open
+	   answers 410 on the registration too, not only on the context lookup. */
+	if (isInactiveDirectLinkError(error)) {
+		return translate('directLink.entry.inactive');
+	}
 	const failure = getCounsellingDpaFailure(error);
 	if (failure) {
 		return translate(
@@ -127,6 +134,7 @@ export const InviteLink = () => {
 		| 'identity'
 		| 'registering'
 		| 'error'
+		| 'paused'
 		| 'room'
 		| 'invite'
 		| 'staff'
@@ -138,10 +146,12 @@ export const InviteLink = () => {
 	const [directLink, setDirectLink] = useState<{
 		context: InviteLinkContext;
 		medium: DirectLinkMedium;
+		signedIn?: boolean;
 	} | null>(null);
 	/* A live-chat link the room opens before it is redeemed. */
 	const [liveTopic, setLiveTopic] = useState<{
 		topicId: number;
+		tenantId: number | null;
 		consultingTypeId?: number;
 	} | null>(null);
 	const [roomSessionId, setRoomSessionId] = useState<number | null>(null);
@@ -186,20 +196,22 @@ export const InviteLink = () => {
 		if (hasRunRef.current) return;
 		hasRunRef.current = true;
 
-		/* A counsellor signed in in this browser must not be turned into a guest.
-		   Redeeming writes the guest's tokens where hers are; her next heartbeat
-		   then goes out as the guest, is refused, and she silently drops out of
-		   the live count while her switch still reads live (Dev, 2026-09-21). */
-		/* Only a session that is still alive: the invite route runs outside the
-		   app that tears an expired one down, and a stale cookie signs nobody
-		   out, so it must not lock anyone out either. */
-		if (holdsCounsellorSession()) {
-			setStatus('staff');
-			return;
-		}
-
 		(async () => {
 			try {
+				// The public context can report a paused link without creating an
+				// account or showing an existing waiting room or staff notice.
+				const context = await apiGetInviteLinkContext(token).catch(
+					async (error) => {
+						if (await isPausedInvite(error)) throw error;
+						return null;
+					}
+				);
+				if (!mountedRef.current) return;
+				if (holdsCounsellorSession()) {
+					setStatus('staff');
+					return;
+				}
+
 				/* A reload must not cost a second place in the queue. Redeem
 				   mints a fresh anonymous account and a fresh queue entry
 				   every time it is called — right for a second guest, wrong
@@ -209,8 +221,7 @@ export const InviteLink = () => {
 				const reusableSessionId =
 					await resolveReusableInviteSession(token);
 				if (reusableSessionId !== null) {
-					/* The lookup can take a moment; a counsellor who signed in
-					   meanwhile gets the lock, not a guest room under her login. */
+					if (!mountedRef.current) return;
 					if (holdsCounsellorSession()) {
 						setStatus('staff');
 						return;
@@ -220,22 +231,26 @@ export const InviteLink = () => {
 					return;
 				}
 
-				/* Who is live is asked before anything is created: the room
-				   gets the link's topic, offers names only if somebody is
-				   there, and redeems once a name is chosen. The context is
-				   public and redeems nothing. Without it — a link kind that
-				   has none, or a failed lookup — the page redeems on arrival
-				   as before, rather than leave the guest at a dead door. */
-				let inactive = false;
-				const context = await apiGetInviteLinkContext(token).catch(
-					(error) => {
-						inactive = isInactiveDirectLinkError(error);
-						return null;
+				if (context?.linkKind === 'CALL') {
+					if (!mountedRef.current) return;
+					if (holdsCounsellorSession()) {
+						setStatus('staff');
+						return;
 					}
-				);
-				if (inactive) {
-					setStatus('error');
-					setErrorMessage(t('directLink.entry.inactive'));
+					if (
+						context.chatType !== 'AUDIO' &&
+						context.chatType !== 'VIDEO'
+					) {
+						setStatus('error');
+						setErrorMessage(t('directLink.entry.inactive'));
+						return;
+					}
+					setDirectLink({
+						context,
+						medium: context.chatType,
+						signedIn: hasActiveAuthSession()
+					});
+					setStatus('directCall');
 					return;
 				}
 				const directMedium = directLinkMediumOf(context);
@@ -252,7 +267,32 @@ export const InviteLink = () => {
 						await openDirectLinkConversation(token);
 						return;
 					}
+					/* A person without a session, at an audio or video link of a
+					   counselling without calls: say so now instead of at
+					   "Beitreten" (#2012). A signed-in asker and a counsellor keep
+					   their flow above; the server decides for them. */
 					if (directMedium !== 'CHAT') {
+						const callsAllowed =
+							await directLinkCallsAllowed(context);
+						if (!mountedRef.current) return;
+						/* Someone may have signed in in another tab meanwhile; the
+						   call entry would register a guest over that session. */
+						if (holdsCounsellorSession()) {
+							setStatus('staff');
+							return;
+						}
+						if (hasActiveAuthSession()) {
+							setStatus('directOpening');
+							await openDirectLinkConversation(token);
+							return;
+						}
+						if (!callsAllowed) {
+							setStatus('error');
+							setErrorMessage(
+								t('directLink.entry.callsDisabled')
+							);
+							return;
+						}
 						setStatus('directCall');
 						return;
 					}
@@ -275,6 +315,7 @@ export const InviteLink = () => {
 				) {
 					setLiveTopic({
 						topicId: context.topicId,
+						tenantId: context.tenantId,
 						consultingTypeId: context.consultingTypeId ?? undefined
 					});
 					setStatus('invite');
@@ -328,15 +369,15 @@ export const InviteLink = () => {
 				setPassword(minted.password);
 				setStatus('identity');
 			} catch (err: unknown) {
+				if (await isPausedInvite(err)) {
+					if (mountedRef.current) setStatus('paused');
+					return;
+				}
 				const failure = getCounsellingDpaFailure(err);
 				setDpaFailure(failure);
 				setResumeFailed(err instanceof InviteSessionResumeError);
 				setStatus('error');
-				setErrorMessage(
-					isInactiveDirectLinkError(err)
-						? t('directLink.entry.inactive')
-						: inviteErrorText(err, t)
-				);
+				setErrorMessage(inviteErrorText(err, t));
 			}
 		})();
 	}, [token, locale, resumeAttempt, t]);
@@ -356,6 +397,10 @@ export const InviteLink = () => {
 				throw new Error('Invite link did not open a live-chat session');
 			}
 		} catch (err) {
+			if (await isPausedInvite(err)) {
+				if (mountedRef.current) setStatus('paused');
+				throw err;
+			}
 			const failure = getCounsellingDpaFailure(err);
 			setDpaFailure(failure);
 			/* The link itself failed — consumed, withdrawn, or unreachable. Retrying
@@ -434,7 +479,17 @@ export const InviteLink = () => {
 			}
 			redirectToApp(undefined, { navigate });
 		} catch (err: unknown) {
-			if (registerThenLogin.accountCreated()) {
+			if (await isPausedInvite(err)) {
+				if (mountedRef.current) setStatus('paused');
+				return;
+			}
+			/* The account exists, so a failed login is retried on the identity
+			   step — but not when the link was switched off meanwhile (410):
+			   no retry can open it, and the person is told so (#2012). */
+			if (
+				registerThenLogin.accountCreated() &&
+				!isInactiveDirectLinkError(err)
+			) {
 				setLoginRetry(true);
 				setStatus('identity');
 				return;
@@ -459,14 +514,12 @@ export const InviteLink = () => {
 
 	const diceLabel = t('anonymousChat.pseudonym.changeName');
 
-	/* While it looks, and for a live-chat link after that, the room itself is
-	   on screen — the same element throughout, so on a desktop the stage stays
-	   and only the column changes. */
-	if (status === 'loading' || status === 'invite') {
+	if (status === 'invite') {
 		return (
 			<LiveChatEntryRoom
 				invite={{
 					topicId: liveTopic?.topicId,
+					tenantId: liveTopic?.tenantId,
 					consultingTypeId: liveTopic?.consultingTypeId,
 					redeem: redeemForRoom
 				}}
@@ -475,7 +528,7 @@ export const InviteLink = () => {
 		);
 	}
 
-	if (status === 'directOpening') {
+	if (status === 'loading' || status === 'directOpening') {
 		return <Loading />;
 	}
 
@@ -485,6 +538,7 @@ export const InviteLink = () => {
 				token={token}
 				context={directLink.context}
 				modality={directLink.medium === 'VIDEO' ? 'video' : 'audio'}
+				signedIn={directLink.signedIn}
 			/>
 		);
 	}
@@ -505,6 +559,15 @@ export const InviteLink = () => {
 			showRegistrationLink={false}
 		>
 			<Box sx={{ maxWidth: 480, mx: 'auto', my: '40px', px: 2 }}>
+				{status === 'paused' && (
+					<Typography
+						component="h1"
+						role="alert"
+						sx={registrationScreenTitleSx}
+					>
+						{t('inviteLink.paused')}
+					</Typography>
+				)}
 				{status === 'staff' && (
 					<Box role="alert" data-cy="invite-staff-session">
 						<Typography

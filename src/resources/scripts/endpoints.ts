@@ -78,6 +78,9 @@ export const endpoints = {
 		'/service/conversations/consultants/availability/heartbeat',
 	consultantSessions:
 		userServiceOrigin + '/service/users/sessions/consultants?status=2&',
+	consultantDeletedAskerSessions:
+		userServiceOrigin +
+		'/service/users/sessions/consultants/deleted-askers',
 	/* Counsellor direct links (ORISO-UserService#1479). */
 	directLinks: userServiceOrigin + '/service/users/directlinks',
 	inviteLinksBase: userServiceOrigin + '/service/users/invitelinks/',
@@ -112,6 +115,9 @@ export const endpoints = {
 	groupChatBase: userServiceOrigin + '/service/users/chat/',
 	internalSubsetChat:
 		userServiceOrigin + '/service/users/chat/internal-subset',
+	agencyAdminContacts: (agencyId: number) =>
+		userServiceOrigin +
+		`/service/users/agencies/${agencyId}/admin-contacts`,
 	chatSeriesBase: userServiceOrigin + '/service/users/chat-series/',
 	callKnocks: userServiceOrigin + '/service/users/call-knocks',
 	keycloakAccessToken:
@@ -151,6 +157,10 @@ export const endpoints = {
 	sendAliasMessage: userServiceOrigin + '/service/messages/aliasonly/new',
 	sendMessage: userServiceOrigin + '/service/messages/new',
 	sessionBase: userServiceOrigin + '/service/users/sessions',
+	sessionAppointments: (sessionId: number) =>
+		userServiceOrigin + `/service/users/sessions/${sessionId}/appointments`,
+	upcomingAppointments:
+		userServiceOrigin + '/service/users/appointments/upcoming',
 	sessionRooms: userServiceOrigin + '/service/users/sessions/room',
 	teamDiscussion: (sessionId: number) =>
 		userServiceOrigin +
