@@ -2,7 +2,6 @@
 import { describe, expect, it, vi } from 'vite-plus/test';
 
 import { FETCH_ERRORS } from './fetchData';
-import { endpoints } from '../resources/scripts/endpoints';
 import {
 	apiEndCallObservation,
 	apiRegisterCallObservation
@@ -26,9 +25,14 @@ describe('call observation api', () => {
 		await apiEndCallObservation({ sourceRoomId: '!s', callId: 'c' });
 		expect(fetchData).toHaveBeenCalledTimes(2);
 		const [[registered], [ended]] = fetchData.mock.calls as any[];
-		expect(registered.url).toBe(endpoints.matrixCallObservations);
+		// Literal paths: a change to the endpoint table must fail here too.
+		expect(
+			registered.url.endsWith('/service/matrix/calls/observations')
+		).toBe(true);
 		expect(JSON.parse(registered.bodyData)).toEqual(call);
-		expect(ended.url).toBe(`${endpoints.matrixCallObservations}/end`);
+		expect(
+			ended.url.endsWith('/service/matrix/calls/observations/end')
+		).toBe(true);
 		expect(JSON.parse(ended.bodyData)).toEqual({
 			sourceRoomId: '!s',
 			callId: 'c'

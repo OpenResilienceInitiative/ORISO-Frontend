@@ -8,6 +8,8 @@ import {
 const REFRESH_DELAY_MS = 15000;
 // Consecutive "server has no such call" answers before a running card stops claiming it runs.
 export const UNKNOWN_STATE_LIMIT = 4;
+// After that, how often such a card asks whether the call is known after all.
+export const UNKNOWN_RECHECK_DELAY_MS = 60000;
 
 const sameAttendance = (
 	a: CallLifecycleMessage['participants'] | undefined,
@@ -60,12 +62,17 @@ export function useCallTimelineState(
 	const [stored, setStored] = React.useState<{
 		original: CallLifecycleMessage;
 		value: CallLifecycleMessage;
+		/** #2166: ended only because the server kept answering 404; may revive. */
+		provisional?: boolean;
 	} | null>(null);
 	const sameCardAsStored = Boolean(
 		stored && hasSameCallLifecycleIdentity(stored.original, initialCall)
 	);
 	const hasAcceptedTerminal = Boolean(
-		sameCardAsStored && stored && stored.value.state !== 'running'
+		sameCardAsStored &&
+			stored &&
+			stored.value.state !== 'running' &&
+			!stored.provisional
 	);
 	/*
 	 * Which of the two answers the card shows.
@@ -179,24 +186,29 @@ export function useCallTimelineState(
 					 * for a call nobody can confirm (the creator's terminal
 					 * write was interrupted and no record exists) is worse
 					 * than showing it as over. After a few consecutive
-					 * answers the card is settled as ended, without a
+					 * answers the card is shown as ended, without a
 					 * duration, since none is known.
+					 *
+					 * That end is provisional (Frank, 2026-11-11): the
+					 * creator's registration may only have failed for a while.
+					 * The card keeps asking, more slowly, and comes back as
+					 * running once the server knows the call.
 					 */
 					// Each response is classified on its own: a non-404 breaks the run.
 					if (current.state === 'running' && !notFound)
 						unknownAnswers = 0;
 					if (current.state === 'running' && notFound) {
 						unknownAnswers += 1;
-						if (unknownAnswers >= UNKNOWN_STATE_LIMIT) {
+						if (unknownAnswers === UNKNOWN_STATE_LIMIT) {
 							setStored({
 								original: current,
 								value: {
 									...current,
 									state: 'ended',
 									durationSeconds: undefined
-								}
+								},
+								provisional: true
 							});
-							settled = true;
 						}
 					}
 				} else if (
@@ -210,7 +222,8 @@ export function useCallTimelineState(
 							previous.original,
 							current
 						) &&
-						previous.value.state !== 'running'
+						previous.value.state !== 'running' &&
+						!previous.provisional
 							? previous
 							: { original: current, value }
 					);
@@ -221,7 +234,12 @@ export function useCallTimelineState(
 				// Keep the durable room card when the authenticated read is unavailable.
 			}
 			if (active && !settled) {
-				timer = setTimeout(refresh, REFRESH_DELAY_MS);
+				timer = setTimeout(
+					refresh,
+					unknownAnswers >= UNKNOWN_STATE_LIMIT
+						? UNKNOWN_RECHECK_DELAY_MS
+						: REFRESH_DELAY_MS
+				);
 			}
 		};
 		void refresh();

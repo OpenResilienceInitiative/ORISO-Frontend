@@ -2,6 +2,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import {
+	UNKNOWN_RECHECK_DELAY_MS,
 	UNKNOWN_STATE_LIMIT,
 	useCallTimelineState
 } from './useCallTimelineState';
@@ -87,11 +88,41 @@ describe('useCallTimelineState', () => {
 		});
 		expect(result.current.state).toBe('ended');
 		expect(result.current.durationSeconds).toBeUndefined();
+		// The end is provisional: it keeps asking, but only once a minute.
 		const calls = loadState.mock.calls.length;
 		await act(async () => {
-			await vi.advanceTimersByTimeAsync(60000);
+			await vi.advanceTimersByTimeAsync(15000);
 		});
 		expect(loadState).toHaveBeenCalledTimes(calls);
+		await act(async () => {
+			await vi.advanceTimersByTimeAsync(UNKNOWN_RECHECK_DELAY_MS);
+		});
+		expect(loadState).toHaveBeenCalledTimes(calls + 1);
+	});
+
+	it('shows the call as running again once the server knows it after a 404 end', async () => {
+		vi.useFakeTimers();
+		const initial = runningCall();
+		let known = false;
+		const loadState = vi.fn(async () =>
+			known
+				? { ...initial, startedAt: '2026-11-11T06:00:00Z' }
+				: CALL_STATE_NOT_FOUND
+		);
+		const { result } = renderHook(() =>
+			useCallTimelineState(initial, loadState)
+		);
+		await act(async () => {
+			await vi.advanceTimersByTimeAsync(15000 * UNKNOWN_STATE_LIMIT);
+		});
+		expect(result.current.state).toBe('ended');
+
+		known = true; // a later registration landed
+		await act(async () => {
+			await vi.advanceTimersByTimeAsync(UNKNOWN_RECHECK_DELAY_MS);
+		});
+		expect(result.current.state).toBe('running');
+		expect(result.current.startedAt).toBe('2026-11-11T06:00:00Z');
 	});
 
 	it('does not settle a running card on untrusted (non-404) null answers', async () => {
