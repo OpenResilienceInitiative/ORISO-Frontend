@@ -38,7 +38,11 @@ import type { MenuDirection } from './menuDirection';
 import './composerToolbar.styles.scss';
 
 export type ComposerToolbarMenu =
-	'heading' | 'list' | 'highlight' | 'overflow' | null;
+	| 'heading'
+	| 'list'
+	| 'highlight'
+	| 'overflow'
+	| null;
 
 export interface ComposerToolbarProps {
 	/**
