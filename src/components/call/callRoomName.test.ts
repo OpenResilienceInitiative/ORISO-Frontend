@@ -88,6 +88,13 @@ describe('callRoomName', () => {
 			'Hilfe! Termin: Montag'
 		);
 	});
+
+	it('only drops a name that IS a room id, not one that contains something shaped like it', () => {
+		// An unanchored `!\S+:\S+` would match here; the whole-name guard must not.
+		expect(callRoomName({ directLinkName: 'Flyer !Schule:Montag' })).toBe(
+			'Flyer !Schule:Montag'
+		);
+	});
 });
 
 describe('directLinkCallName', () => {
