@@ -15,7 +15,10 @@ import {
 	apiGetChatOccurrences,
 	type ChatOccurrence
 } from '../../../api/apiGetChatOccurrences';
-import { canModerateGroupChat } from '../../groupChat/groupChatHelpers';
+import {
+	canEditGroupChatSettings,
+	canModerateGroupChat
+} from '../../groupChat/groupChatHelpers';
 import { toSeriesApiTimestamp } from '../futureTimelineTime';
 import { RoomNextAppointment } from './AppointmentSplitButton';
 import { FUTURE_MONTHS } from './useFutureEntries';
@@ -32,17 +35,17 @@ export const RoomNextAppointmentSlot = () => {
 			? activeSession.item.id
 			: undefined;
 
+	const roomTopic = activeSession?.item?.topic;
+	const topic =
+		typeof roomTopic === 'string' ? roomTopic : roomTopic?.name || '';
+
 	useEffect(() => {
 		setEntry(undefined);
-		if (seriesId === undefined || !activeSession) return undefined;
+		if (seriesId === undefined) return undefined;
 		let active = true;
 		const from = new Date();
 		const to = new Date(from);
 		to.setMonth(to.getMonth() + FUTURE_MONTHS);
-		const topic =
-			typeof activeSession.item.topic === 'string'
-				? activeSession.item.topic
-				: activeSession.item.topic?.name || '';
 		apiGetChatOccurrences(
 			seriesId,
 			toSeriesApiTimestamp(from),
@@ -65,15 +68,7 @@ export const RoomNextAppointmentSlot = () => {
 								kind: 'group',
 								topic,
 								lastActivity: 0,
-								lastMessage: '',
-								matrixRoomId:
-									activeSession.item.matrixRoomId ||
-									activeSession.rid ||
-									undefined,
-								canModerate: canModerateGroupChat(
-									activeSession,
-									userData
-								)
+								lastMessage: ''
 							}
 						]
 					})[0]
@@ -82,15 +77,35 @@ export const RoomNextAppointmentSlot = () => {
 		return () => {
 			active = false;
 		};
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [seriesId, reload]);
+	}, [seriesId, topic, reload]);
+
+	// A permission or current-room change must apply even while the same
+	// occurrence is still displayed from the previous fetch.
+	const canModerate =
+		!!activeSession && canModerateGroupChat(activeSession, userData);
+	const currentEntry =
+		entry && activeSession && entry.sessionId === seriesId
+			? {
+					...entry,
+					matrixRoomId:
+						activeSession.item.matrixRoomId ||
+						activeSession.rid ||
+						undefined,
+					canModerate,
+					canDuplicate: canModerate,
+					canConfigure: canEditGroupChatSettings(
+						activeSession,
+						userData
+					)
+				}
+			: undefined;
 
 	const onCancelled = useCallback(() => setReload((n) => n + 1), []);
 	const onAction = useAppointmentActions({ onCancelled });
 
 	return (
 		<RoomNextAppointment
-			entry={entry}
+			entry={currentEntry}
 			role={
 				hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData)
 					? 'asker'

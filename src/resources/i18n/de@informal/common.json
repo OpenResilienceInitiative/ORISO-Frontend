@@ -1,4 +1,7 @@
 {
+	"consultant": {
+		"assignedLabel": "Deine Beratungsperson"
+	},
 	"contactSheet": {
 		"missingEmail": "Hinterlege zuerst eine E-Mail-Adresse in deinem Profil.",
 		"failed": "Die E-Mail konnte nicht gesendet werden. Bitte versuche es erneut."
@@ -763,7 +766,7 @@
 				}
 			},
 			"caseHandoverOfferReceived": {
-				"text": "{{fromConsultantName}} möchte diese Beratung an dich übergeben. Prüfe die Anfrage, bevor du das Gespräch öffnest.",
+				"text": "{{fromConsultantName}} hat dir die Übernahme dieser Beratung angeboten.",
 				"coAccess": {
 					"text": "{{fromConsultantName}} bietet dir vorübergehenden Zugriff auf diese Beratung an. Die bisherige Beratungsperson bleibt verantwortlich."
 				}
@@ -2869,6 +2872,10 @@
 		}
 	},
 	"directLink": {
+		"postcode": {
+			"helper": "Nur für die Statistik. Die Postleitzahl bestimmt weder Beratungsstelle noch Berater:in – das legt der Link fest.",
+			"invalid": "Bitte gib deine fünfstellige Postleitzahl ein."
+		},
 		"card": {
 			"headline": "Ein Link direkt zu dir",
 			"text": "Wer den Link öffnet, landet ohne Umweg bei dir – im Chat, im Audio- oder im Videoanruf.",

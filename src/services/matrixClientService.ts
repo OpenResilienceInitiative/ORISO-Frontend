@@ -1,5 +1,10 @@
 import { clearSecretStorageKeys } from './matrixKeyBackupService';
-import { MatrixClient, Room, MatrixEvent } from 'matrix-js-sdk';
+import {
+	bindDraftCryptographyClient,
+	handleDraftRecoveryAccountData,
+	unbindDraftCryptographyClient
+} from './draftCryptography';
+import { ClientEvent, MatrixClient, Room, MatrixEvent } from 'matrix-js-sdk';
 import {
 	MatrixLoginData,
 	clearPersistedMatrixDeviceId,
@@ -194,9 +199,15 @@ export class MatrixClientService {
 	public async initializeClient(loginData: MatrixLoginData): Promise<void> {
 		this.stopCurrentClient();
 		this.loginData = loginData;
-		this.client = createMatrixClient(loginData, (...messages) => {
-			this.handleMatrixSdkError(loginData.deviceId, messages);
-		});
+		try {
+			this.client = createMatrixClient(loginData, (...messages) => {
+				this.handleMatrixSdkError(loginData.deviceId, messages);
+			});
+		} catch (error) {
+			unbindDraftCryptographyClient(this);
+			throw error;
+		}
+		bindDraftCryptographyClient(this, this.client, loginData.userId);
 		this.syncState = null;
 		this.initializedServicesClient = null;
 		this.notifySyncStateListeners();
@@ -240,6 +251,9 @@ export class MatrixClientService {
 		// Before startClient: the first device-list query of the initial sync
 		// must already re-decrypt what the SDK refused for an unknown sender.
 		matrixDecryptionRetry.initialize(client);
+		client.on(ClientEvent.AccountData, (event) =>
+			handleDraftRecoveryAccountData(client, event)
+		);
 
 		(client as any).on(
 			'sync',
@@ -942,6 +956,7 @@ export class MatrixClientService {
 	/** Stops sync, removes listeners, and tears down bridge/call services (no Matrix logout API). */
 	public stopAndCleanup(): void {
 		const hadClient = this.client !== null;
+		unbindDraftCryptographyClient(this);
 		this.teardownClient();
 		if (hadClient) {
 			this.notifyClientChangeListeners();

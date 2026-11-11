@@ -308,7 +308,7 @@ export const DisplayFilterProfileSection = () => {
 				type="standard"
 				className="tertiary"
 			/>
-			{readOnly && (
+			{timeline.readOnly && (
 				<p className="displayFilterDialog__readOnly" role="status">
 					{timelineLabels.dialogLabels.readOnlyHint}
 				</p>

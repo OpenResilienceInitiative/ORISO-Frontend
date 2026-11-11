@@ -1,7 +1,7 @@
 import * as React from 'react';
 import {
 	ATTACHMENT_TRANSLATE_FOR_TYPE,
-	getAttachmentSizeMBForKB
+	formatAttachmentSize
 } from '../messageSubmitInterface/attachmentHelpers';
 import { useTranslation } from 'react-i18next';
 import { apiUrl } from '../../resources/scripts/endpoints';
@@ -65,7 +65,7 @@ const DECRYPTION_ERROR = 'decryption_error';
 const DECRYPTION_FINISHED = 'decryption_finished';
 
 export const MessageAttachment = (props: MessageAttachmentProps) => {
-	const { t: translate } = useTranslation();
+	const { t: translate, i18n } = useTranslation();
 	const { addNotification } = React.useContext(NotificationsContext);
 	const matrixEncryptedFile = props.attachment.encryptedFile;
 	const isMatrixEncryptedAttachment = Boolean(matrixEncryptedFile);
@@ -393,15 +393,15 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 		</span>
 	);
 
-	/** Type and size line, e.g. "PDF | 1.20 MB". */
+	const sizeBytes = props.attachment.size;
+	const locale = (i18n?.language || i18n?.resolvedLanguage)?.split('@')[0];
 	const fileMeta = (
 		<>
 			{translate(ATTACHMENT_TRANSLATE_FOR_TYPE[props.file.type])}
-			{props.attachment.size
-				? ` | ${(
-						getAttachmentSizeMBForKB(props.attachment.size * 1000) /
-						1000
-					).toFixed(2)}${translate('attachments.type.label.mb')}`
+			{typeof sizeBytes === 'number' &&
+			sizeBytes > 0 &&
+			Number.isFinite(sizeBytes)
+				? ` | ${formatAttachmentSize(sizeBytes, locale)}`
 				: null}
 		</>
 	);

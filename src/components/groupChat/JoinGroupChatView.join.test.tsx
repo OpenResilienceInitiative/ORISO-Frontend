@@ -59,6 +59,9 @@ vi.mock('../../api', () => ({
 	},
 	GROUP_CHAT_API: { JOIN: '/join', START: '/start' }
 }));
+vi.mock('../../api/apiGetChatOccurrences', () => ({
+	apiGetChatOccurrences: vi.fn()
+}));
 vi.mock('../../hooks/useWatcher', () => ({
 	useWatcher: () => [vi.fn(), vi.fn(), false]
 }));
@@ -116,7 +119,6 @@ vi.mock('./waitingClock/WaitingAreaCountdown', () => ({
 vi.mock('./GroupChatCalendarMenu', () => ({
 	GroupChatCalendarMenu: () => null
 }));
-vi.mock('./groupChatDate', () => ({ getGroupChatPlannedStart: () => null }));
 vi.mock('./groupChatHelpers', () => ({
 	getGroupChatWaitingAreaVisibility: () => ({
 		showCountdown: false,
@@ -134,11 +136,6 @@ vi.mock('../../resources/img/icons/i.svg', () => ({
 vi.mock('../../resources/img/illustrations/x.svg', () => ({
 	ReactComponent: () => null
 }));
-vi.mock('./entryRoom/groupWaitingRoomData', () => ({
-	getGroupSeries: () => undefined,
-	getGroupUpcomingDates: () => [],
-	getGroupWaitingRoomTopic: () => 'topic'
-}));
 
 /* What the room's onJoin hands back, as the closing animation sees it. */
 const joinResult = vi.hoisted(() => ({ value: undefined as unknown }));
@@ -146,9 +143,11 @@ vi.mock('./entryRoom/GroupWaitingRoom', () => ({
 	GroupWaitingRoom: (props: {
 		onJoin: () => unknown;
 		joinBlocked: boolean;
+		plannedStart: Date | null;
 	}) => (
 		<button
 			data-blocked={String(Boolean(props.joinBlocked))}
+			data-planned={props.plannedStart?.toISOString()}
 			onClick={() => {
 				joinResult.value = props.onJoin();
 			}}
@@ -160,6 +159,12 @@ vi.mock('./entryRoom/GroupWaitingRoom', () => ({
 
 const { JoinGroupChatView } = await import('./JoinGroupChatView');
 const { apiPutGroupChat } = await import('../../api');
+const { apiGetChatOccurrences } = await import(
+	'../../api/apiGetChatOccurrences'
+);
+const { notifyAppointmentsChanged } = await import(
+	'../sessionsList/timeline/conversationAppointments'
+);
 const { UserDataContext, ActiveSessionContext } = await import(
 	'../../globalState'
 );
@@ -175,6 +180,47 @@ describe('JoinGroupChatView — the embedded room hands its join request back', 
 		gateProps.value = undefined;
 	});
 	afterEach(cleanup);
+
+	it('refreshes the waiting date when its original occurrence is cancelled', async () => {
+		const start = new Date(Date.now() + 86_400_000).toISOString();
+		const next = new Date(Date.now() + 8 * 86_400_000).toISOString();
+		const item = {
+			...state.item,
+			active: false,
+			startDateWithTime: start,
+			chatInterval: 'WEEKLY',
+			repeatCount: 2
+		};
+		const occurrence = (value: string, occurrenceIndex: number) => ({
+			seriesId: 15,
+			occurrenceIndex,
+			start: value,
+			originalStart: value,
+			duration: 60,
+			modality: 'TEXT' as const
+		});
+		vi.mocked(apiGetChatOccurrences)
+			.mockResolvedValueOnce([occurrence(start, 0), occurrence(next, 1)])
+			.mockResolvedValueOnce([occurrence(next, 1)])
+			.mockRejectedValueOnce(new Error('offline'));
+		render(
+			<ActiveSessionContext.Provider
+				value={
+					{ activeSession: { item }, reloadActiveSession } as never
+				}
+			>
+				<JoinGroupChatView />
+			</ActiveSessionContext.Provider>
+		);
+		const waiting = screen.getByText('join');
+		await waitFor(() => expect(waiting.dataset.planned).toBe(start));
+		act(notifyAppointmentsChanged);
+		await waitFor(() => expect(waiting.dataset.planned).toBe(next));
+		// A later known schedule edit must not bring an obsolete date back offline.
+		await act(async () => notifyAppointmentsChanged());
+		expect(apiGetChatOccurrences).toHaveBeenCalledTimes(3);
+		expect(waiting.dataset.planned).toBeUndefined();
+	});
 
 	it('holds the closing animation until the join request is done and the session has been reloaded', async () => {
 		let settleRequest: () => void = () => undefined;
@@ -286,6 +332,55 @@ describe('JoinGroupChatView — the embedded room hands its join request back', 
 		fireEvent.click(screen.getByText('join'));
 
 		expect(joinResult.value).toBe(false);
+		expect(apiPutGroupChat).not.toHaveBeenCalled();
+	});
+
+	it('holds the inline join while loading and blocks a confirmed ban without a join request', async () => {
+		const { apiGetGroupChatInfo } = await import('../../api');
+		const reply =
+			Promise.withResolvers<
+				Awaited<ReturnType<typeof apiGetGroupChatInfo>>
+			>();
+		vi.mocked(apiGetGroupChatInfo).mockReturnValueOnce(reply.promise);
+		render(
+			<UserDataContext.Provider
+				value={
+					{
+						userData: { ...state.userData, userId: 'asker-id' }
+					} as never
+				}
+			>
+				<ActiveSessionContext.Provider
+					value={
+						{
+							activeSession: {
+								item: {
+									...state.item,
+									matrixRoomId: '!room:oriso'
+								}
+							},
+							reloadActiveSession
+						} as never
+					}
+				>
+					<JoinGroupChatView />
+				</ActiveSessionContext.Provider>
+			</UserDataContext.Provider>
+		);
+		const join = screen.getByText('join');
+		expect(join.dataset.blocked).toBe('true');
+		fireEvent.click(join);
+		expect(apiPutGroupChat).not.toHaveBeenCalled();
+		await act(async () =>
+			reply.resolve({
+				active: true,
+				id: 15,
+				matrixRoomId: '!room:oriso',
+				callerBanState: 'BANNED'
+			} as Awaited<ReturnType<typeof apiGetGroupChatInfo>>)
+		);
+		expect(join.dataset.blocked).toBe('true');
+		fireEvent.click(join);
 		expect(apiPutGroupChat).not.toHaveBeenCalled();
 	});
 

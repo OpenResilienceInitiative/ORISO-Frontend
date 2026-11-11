@@ -60,6 +60,11 @@ import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider
 import { useAppConfig } from '../../hooks/useAppConfig';
 import useIsFirstVisit from '../../utils/useIsFirstVisit';
 import LegalLinks from '../legalLinks/LegalLinks';
+import { useBuildIdentityOwner } from '../app/BuildIdentity';
+import {
+	getBuildCommit,
+	getPlatformVersion
+} from '../../resources/scripts/runtimeConfig';
 
 export const Profile = () => {
 	const settings = useAppConfig();
@@ -68,6 +73,8 @@ export const Profile = () => {
 	const location = useLocation();
 	const { fromL } = useResponsive();
 	const isFirstVisit = useIsFirstVisit();
+	const identityOwner = useBuildIdentityOwner();
+	const showBuildIdentity = Boolean(getPlatformVersion() || getBuildCommit());
 
 	const legalLinks = useContext(LegalLinksContext);
 	const { userData } = useContext(UserDataContext);
@@ -609,6 +616,12 @@ export const Profile = () => {
 							</a>
 						)}
 					</LegalLinks>
+					{identityOwner && showBuildIdentity && (
+						<div
+							className="profile__footer__identity"
+							ref={identityOwner.setStageTarget}
+						/>
+					)}
 				</div>
 			</div>
 		</div>

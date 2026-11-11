@@ -8,7 +8,12 @@
 
 import i18n from 'i18next';
 import { MatrixCall } from 'matrix-js-sdk/lib/webrtc/call';
-import type { MatrixClient } from 'matrix-js-sdk';
+import {
+	EventStatus,
+	MatrixError,
+	safeGetRetryAfterMs,
+	type MatrixClient
+} from 'matrix-js-sdk';
 import { getMatrixClientService } from './matrixClientRegistry';
 import {
 	assertMatrixRoomEncrypted,
@@ -75,6 +80,11 @@ export interface CallData {
 }
 
 type CallStateChangeListener = (callData: CallData | null) => void;
+
+const CALL_INVITE_EVENT = 'org.oriso.call.invite';
+const CALL_INVITE_LIFETIME_MS = 60_000;
+const CALL_INVITE_RETRY_WINDOW_MS = 10_000;
+const CALL_INVITE_FALLBACK_DELAYS_MS = [2_000, 4_000];
 
 // #2166: retries of a failed observation registration, well inside the ~45 s
 // after which a call card the server does not know settles as ended.
@@ -677,12 +687,9 @@ class CallManager {
 					);
 				return;
 			}
-			await this.sendGroupCallInvite(
-				roomId,
-				callId,
-				isVideo,
-				this.currentCall.roomId,
-				isGroup
+			const invitingClient = await this.sendGroupCallInvite(
+				start,
+				outgoingCall
 			);
 			if (
 				isGroup &&
@@ -740,11 +747,17 @@ class CallManager {
 					}
 				} else {
 					// The invite can reach the server after local cancellation.
-					// Send its matching hangup after acknowledgement, never for
-					// a newer call.
-					this.sendElementCallHangup(outgoingCall);
+					// End that same invite without borrowing a replacement account.
+					this.sendElementCallHangup(
+						outgoingCall,
+						'user_hangup',
+						this.currentAccount() === start.startedBy
+							? undefined
+							: invitingClient
+					);
 					callLifecycleTracker.finish(outgoingCall.callId);
 				}
+				if (this.pendingStart === start) this.endCall(false);
 				return;
 			}
 
@@ -895,6 +908,17 @@ class CallManager {
 			);
 		}
 
+		const membershipReaderUserId = getMatrixRtcMembershipReaderUserId();
+		if (
+			!membershipReaderUserId ||
+			!membershipReaderUserId.startsWith('@') ||
+			!membershipReaderUserId.includes(':')
+		) {
+			throw new Error(
+				'MatrixRTC membership reader user is not configured'
+			);
+		}
+
 		const name = `Group call for ${sourceRoomId}`;
 
 		// console.log("🔧 Creating dedicated Element Call room for group call, source room:", sourceRoomId);
@@ -904,10 +928,9 @@ class CallManager {
 		// counselling call. Room ids are not secrets: they travel in the call
 		// invite event, in logs and in support tickets.
 		//
-		// `restricted` gives us the access rule we actually meant: whoever is a
-		// member of the counselling session may join its call, and nobody else.
-		// It needs room version 9+ (Synapse defaults to 10), so we fall back to
-		// invite-only below rather than let a call fail outright.
+		// `restricted` lets members of the counselling session join its call.
+		// A known standard room version of 9 or newer supports that policy.
+		// Older or unknown versions use the private invite-only policy.
 		const restrictedJoinRule = {
 			type: 'm.room.join_rules',
 			state_key: '',
@@ -929,6 +952,9 @@ class CallManager {
 			// "members of the session room" by the join rule below.
 			preset: 'private_chat',
 			name,
+			// A standalone invite shares the reader's recipient rate limit
+			// across all calls. Synapse accounts for initial invites per room.
+			invite: [membershipReaderUserId],
 			initial_state: [
 				buildMatrixRoomEncryptionInitialState(),
 				{
@@ -1017,60 +1043,42 @@ class CallManager {
 			}
 		};
 
-		let result: { room_id: string };
-		let joinRuleRejected = false;
-		try {
-			result = await client.createRoom({
-				...baseOptions,
-				initial_state: [
-					...baseOptions.initial_state,
-					restrictedJoinRule
-				]
-			} as any);
-		} catch (err) {
-			// Homeserver too old for restricted joins, or the parent room is not
-			// a valid allow target. Stay closed rather than falling back to a
-			// public room, and invite the session members explicitly.
-			console.warn(
-				'[call] restricted join rule rejected, falling back to invite-only',
-				err
-			);
-			result = await client.createRoom(baseOptions as any);
-			joinRuleRejected = true;
-		}
+		const capabilities = await client
+			.getCapabilities()
+			.catch(() => undefined);
+		const roomVersion = capabilities?.['m.room_versions']?.default;
+		const supportsRestrictedJoin = /^(9|[1-9][0-9]+)$/.test(
+			roomVersion ?? ''
+		);
+		const inviteOnly = !supportsRestrictedJoin;
+		// Select the join policy before creation. An error can arrive after
+		// Synapse stored a room but before it returned the room ID.
+		const result = await client.createRoom({
+			...baseOptions,
+			initial_state: inviteOnly
+				? baseOptions.initial_state
+				: [...baseOptions.initial_state, restrictedJoinRule]
+		} as any);
 
-		/*
-		 * Everything past creation takes the room with it when it fails.
-		 *
-		 * `inviteSessionMembers` throws if any invite failed, the membership
-		 * reader may be unconfigured, and its invite can reject. In each case
-		 * this method threw before returning the id — so the caller's
-		 * `elementCallRoomId` stayed undefined and its own cleanup could not
-		 * run. Every retry then left another JOINED room behind, carrying the
-		 * plaintext call/source binding and a name that reads "Group call for
-		 * <session room>". The caller's cleanup only covers a start that was
-		 * superseded; this covers one that failed.
-		 */
 		try {
-			if (joinRuleRejected) {
+			// A successful createRoom response alone does not establish the
+			// reader's membership. Verify it before the caller can ring.
+			const { membership } = await client.getStateEvent(
+				result.room_id,
+				'm.room.member',
+				membershipReaderUserId
+			);
+			if (membership !== 'invite' && membership !== 'join') {
+				throw new Error('MatrixRTC membership reader was not invited');
+			}
+			if (inviteOnly) {
 				await this.inviteSessionMembers(
 					client,
 					sourceRoomId,
-					result.room_id
+					result.room_id,
+					membershipReaderUserId
 				);
 			}
-
-			const membershipReaderUserId = getMatrixRtcMembershipReaderUserId();
-			if (
-				!membershipReaderUserId ||
-				!membershipReaderUserId.startsWith('@') ||
-				!membershipReaderUserId.includes(':')
-			) {
-				throw new Error(
-					'MatrixRTC membership reader user is not configured'
-				);
-			}
-			await client.invite(result.room_id, membershipReaderUserId);
 		} catch (err) {
 			await this.discardElementCallRoom(result.room_id, client);
 			throw err;
@@ -1087,13 +1095,15 @@ class CallManager {
 	private async inviteSessionMembers(
 		client: MatrixClient,
 		sourceRoomId: string,
-		callRoomId: string
+		callRoomId: string,
+		membershipReaderUserId: string
 	): Promise<void> {
 		let failedInvites = 0;
 		const ownUserId = client.getUserId();
 		const { joined } = await client.getJoinedRoomMembers(sourceRoomId);
 		const members = Object.keys(joined).filter(
-			(userId) => userId !== ownUserId
+			(userId) =>
+				userId !== ownUserId && userId !== membershipReaderUserId
 		);
 
 		await Promise.all(
@@ -1296,41 +1306,103 @@ class CallManager {
 				.catch(() => undefined);
 	}
 
-	/**
-	 * Send m.call.invite event to Matrix room for group calls
-	 *
-	 * @param signallingRoomId - The existing session/chat room where the invite should appear
-	 * @param callId - Logical call identifier
-	 * @param isVideo - Whether this is a video call
-	 * @param elementCallRoomId - The dedicated Element Call room that should be joined
-	 */
+	/** Send the Element Call invite in the original conversation room. */
 	private async sendGroupCallInvite(
-		signallingRoomId: string,
-		callId: string,
-		isVideo: boolean,
-		elementCallRoomId?: string,
-		isGroupCall: boolean = false
-	): Promise<void> {
+		start: NonNullable<CallManager['pendingStart']>,
+		call: CallData
+	): Promise<MatrixClient> {
 		const client = getMatrixClientService()?.getClient?.();
 		if (!client) {
 			throw new Error('Matrix client not available to send call invite');
 		}
-		await client.sendEvent(
-			signallingRoomId,
-			'org.oriso.call.invite' as any,
-			{
-				call_id: callId,
+		const retryUntil = Date.now() + CALL_INVITE_RETRY_WINDOW_MS;
+		try {
+			await client.sendEvent(start.roomId, CALL_INVITE_EVENT as any, {
+				call_id: start.callId,
 				version: '1',
-				lifetime: 60000, // 60 seconds
-				invitee: undefined, // Group call - no specific invitee
+				lifetime: CALL_INVITE_LIFETIME_MS,
+				invitee: undefined,
 				party_id: client.getDeviceId?.() || 'unknown',
-				is_group_call: isGroupCall, // Custom field to indicate group session
-				is_element_call: true, // Custom field to use Element Call/LiveKit media
-				is_video: isVideo,
-				// Custom: tell receivers which Matrix room Element Call should use.
-				call_room_id: elementCallRoomId
+				is_group_call: call.isGroup,
+				is_element_call: true,
+				is_video: start.isVideo,
+				call_room_id: call.roomId
+			});
+		} catch (error) {
+			if (!(error instanceof MatrixError) || !error.isRateLimitError()) {
+				throw error;
 			}
-		);
+			await this.retryThrottledCallInvite(
+				client,
+				start,
+				call,
+				error,
+				retryUntil
+			);
+		}
+		return client;
+	}
+
+	private async retryThrottledCallInvite(
+		client: MatrixClient,
+		start: NonNullable<CallManager['pendingStart']>,
+		call: CallData,
+		error: MatrixError,
+		retryUntil: number
+	): Promise<void> {
+		const event = error.event;
+		if (
+			event?.status !== EventStatus.NOT_SENT ||
+			event.getType() !== CALL_INVITE_EVENT ||
+			event.getRoomId() !== start.roomId ||
+			event.getContent().call_id !== start.callId ||
+			event.getContent().call_room_id !== call.roomId
+		) {
+			throw error;
+		}
+
+		// The SDK retains the encrypted local echo, including its transaction
+		// ID. A second sendEvent would enqueue a different ring.
+		const room = client.getRoom(start.roomId);
+		const canRetry = () =>
+			this.stillOwnsStart(start) &&
+			getMatrixClientService()?.getClient?.() === client &&
+			event.status === EventStatus.NOT_SENT;
+		let failure: unknown = error;
+		try {
+			if (!room || !event.isEncrypted() || !event.getTxnId())
+				throw failure;
+			for (const fallback of CALL_INVITE_FALLBACK_DELAYS_MS) {
+				if (
+					!(failure instanceof MatrixError) ||
+					!failure.isRateLimitError()
+				)
+					break;
+				const delay = Math.max(
+					1_000,
+					safeGetRetryAfterMs(failure, fallback)
+				);
+				if (Date.now() + delay >= retryUntil || !canRetry()) break;
+				await new Promise((resolve) => setTimeout(resolve, delay));
+				if (Date.now() >= retryUntil || !canRetry()) break;
+				try {
+					await client.resendEvent(event, room);
+					return;
+				} catch (retryError) {
+					failure = retryError;
+				}
+			}
+			throw failure;
+		} catch (terminalError) {
+			if (event.status === EventStatus.NOT_SENT) {
+				try {
+					client.cancelPendingEvent(event);
+				} catch {
+					// Preserve the send error if the SDK already removed the echo.
+				}
+			}
+			throw terminalError;
+		}
 	}
 
 	/**
@@ -1661,11 +1733,12 @@ class CallManager {
 
 	private sendElementCallHangup(
 		callData: CallData,
-		reason: 'user_hangup' | 'user_rejected' = 'user_hangup'
+		reason: 'user_hangup' | 'user_rejected' = 'user_hangup',
+		sendingClient?: MatrixClient
 	): void {
 		try {
-			const matrixClientService = getMatrixClientService();
-			const client = matrixClientService?.getClient?.();
+			const client =
+				sendingClient ?? getMatrixClientService()?.getClient?.();
 			if (!client) return;
 
 			// Custom ORISO event type — not in matrix-js-sdk typings

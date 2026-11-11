@@ -126,7 +126,9 @@ export const ComposerAttachmentCard = React.forwardRef<
 		status.kind === 'uploading' ? Math.round(status.percent) : null;
 	const showThumb = Boolean(previewUrl) && !failed;
 	const typeLabel = fileTypeLabel(fileName);
-	const sizeLabel = formatAttachmentSize(sizeBytes, locale);
+	const sizeLabel = formatAttachmentSize(sizeBytes, locale, {
+		roundUp: failure === 'tooLarge'
+	});
 
 	return (
 		<div
@@ -251,11 +253,7 @@ export const ComposerAttachmentCard = React.forwardRef<
 							`attachments.composer.error.${failure}`,
 							failure === 'tooLarge'
 								? {
-										size: formatAttachmentSize(
-											sizeBytes,
-											locale,
-											{ roundUp: true }
-										),
+										size: sizeLabel,
 										limit: ATTACHMENT_MAX_SIZE_IN_MB
 									}
 								: undefined

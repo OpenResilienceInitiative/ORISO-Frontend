@@ -39,6 +39,11 @@ const mocks = vi.hoisted(() => {
 	env.REACT_APP_KEYCLOAK_REALM = 'oriso';
 
 	return {
+		draftIdentity: null as string | null,
+		draftCrypto: null as {
+			opaqueScope: (value: string) => Promise<string>;
+		} | null,
+		draftSubscribers: new Set<() => void>(),
 		apiDeleteUserDraft: vi.fn<DeleteDraftMock>(() => Promise.resolve()),
 		apiGetUserDraft: vi.fn<GetDraftMock>(() =>
 			Promise.reject({ message: 'EMPTY' })
@@ -70,6 +75,15 @@ vi.mock('../../api', () => ({
 			? mocks.apiUpsertUserDraft(scopeKey, payload, signal)
 			: mocks.apiUpsertUserDraft(scopeKey, payload),
 	FETCH_ERRORS: { EMPTY: 'EMPTY' }
+}));
+
+vi.mock('../../services/draftCryptographyWindow', () => ({
+	getDraftAuthSessionIdentity: () => mocks.draftIdentity,
+	getDraftCryptographyForWindow: () => mocks.draftCrypto,
+	subscribeDraftCryptographyForWindow: (listener: () => void) => {
+		mocks.draftSubscribers.add(listener);
+		return () => mocks.draftSubscribers.delete(listener);
+	}
 }));
 
 vi.mock('../../api/apiPostError', () => ({
@@ -139,6 +153,8 @@ describe('useDraftMessage', () => {
 		);
 		mocks.apiUpsertUserDraft.mockReset();
 		mocks.apiUpsertUserDraft.mockImplementation(() => Promise.resolve());
+		mocks.draftIdentity = null;
+		mocks.draftCrypto = null;
 		mocks.encryptText.mockReset();
 		mocks.encryptText.mockImplementation((text: string) =>
 			Promise.resolve(text)
@@ -923,5 +939,36 @@ describe('useDraftMessage', () => {
 		await listener?.handler(controller.signal);
 
 		expect(mocks.apiUpsertUserDraft).not.toHaveBeenCalled();
+	});
+
+	it('does not autosave text across two locked App accounts and a later unlock', async () => {
+		mocks.draftIdentity = 'account-a';
+		const loadDraft = vi.fn();
+		const { result } = renderHook(() => useDraftMessage(true, loadDraft), {
+			wrapper
+		});
+		await waitFor(() => expect(result.current.loaded).toBe(true));
+		vi.useFakeTimers();
+		act(() =>
+			result.current.onChange('<p>Only account A may keep this</p>')
+		);
+		await act(async () => {
+			mocks.draftIdentity = 'account-b';
+			mocks.draftSubscribers.forEach((listener) => listener());
+		});
+		expect(loadDraft).toHaveBeenCalledWith(expect.anything(), '');
+		await act(async () => {
+			mocks.draftCrypto = {
+				opaqueScope: async () => 'draft.v1.' + 'C'.repeat(43)
+			};
+			mocks.draftSubscribers.forEach((listener) => listener());
+			await vi.advanceTimersByTimeAsync(1800);
+		});
+		vi.useRealTimers();
+		expect(
+			mocks.apiUpsertUserDraft.mock.calls.some(([, value]) =>
+				value.text.includes('Only account A')
+			)
+		).toBe(false);
 	});
 });

@@ -40,6 +40,12 @@ const setUpRecovery = vi.hoisted(() =>
 	vi.fn().mockResolvedValue('test-recovery-key')
 );
 const getEncryptionStatus = vi.hoisted(() => vi.fn());
+const draftOwner = vi.hoisted(() => ({ value: null as string | null }));
+vi.mock('../../../services/draftCryptographyWindow', () => ({
+	getDraftAuthSessionIdentity: () => draftOwner.value,
+	getDraftCryptographyForWindow: () => null,
+	subscribeDraftCryptographyForWindow: () => () => {}
+}));
 const enrollAfterRecovery = vi.hoisted(() => vi.fn());
 const hasEvidence = vi.hoisted(() => vi.fn(async () => true));
 const resealWithPrevious = vi.hoisted(() => vi.fn(async () => undefined));
@@ -119,7 +125,31 @@ const UNAVAILABLE_TEXT =
 	'Die Verschlüsselungseinstellungen sind gerade nicht verfügbar. Bitte laden Sie die Seite neu.';
 
 describe('EncryptionSettingsPanel', () => {
-	afterEach(cleanup);
+	afterEach(() => {
+		draftOwner.value = null;
+		cleanup();
+	});
+
+	it('offers the existing recovery controls if the device is ready but protected drafts are locked', () => {
+		draftOwner.value = 'signed-in-owner';
+		render(
+			<EncryptionSettingsPanel
+				clientOverride={{} as MatrixClient}
+				initialStatusOverride={healthy}
+				showHeading={false}
+			/>
+		);
+		expect(
+			screen.getByRole('textbox', { name: 'Ersatzschlüssel' })
+		).toBeTruthy();
+		expect(
+			(
+				screen.getByRole('button', {
+					name: 'Verlauf wiederherstellen'
+				}) as HTMLButtonElement
+			).disabled
+		).toBe(true);
+	});
 
 	it('keeps typed recovery input when its surrounding group rerenders', () => {
 		const client = {} as MatrixClient;

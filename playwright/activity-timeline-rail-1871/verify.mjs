@@ -127,6 +127,50 @@ try {
 			await expect(
 				page.locator('.notificationsCenter__detail')
 			).toBeHidden();
+			await expect
+				.poll(() =>
+					page.locator('.notificationsCenter').evaluate((root) => {
+						const elements = [
+							root,
+							...root.querySelectorAll(
+								'.notificationsCenter__listColumn, .notificationsCenter__card, .notificationsCenter__cardTime'
+							)
+						];
+						return Math.max(
+							...elements.map((element) => {
+								const { left, right } =
+									element.getBoundingClientRect();
+								return Math.max(
+									-left,
+									right - document.documentElement.clientWidth
+								);
+							})
+						);
+					})
+				)
+				.toBeLessThanOrEqual(1);
+			if (width === 390) {
+				const chips = page.locator(
+					'.notificationsCenter__toolbar .sessionsListToolbar__chipsScroll'
+				);
+				await expect
+					.poll(() =>
+						chips.evaluate((strip) => {
+							const start = strip.scrollLeft;
+							strip.scrollTo({
+								left: strip.scrollWidth,
+								behavior: 'instant'
+							});
+							const distance = strip.scrollLeft;
+							strip.scrollTo({
+								left: start,
+								behavior: 'instant'
+							});
+							return distance;
+						})
+					)
+					.toBeGreaterThan(0);
+			}
 		}
 		await expect.poll(saved).toBe('80');
 		await settled();
