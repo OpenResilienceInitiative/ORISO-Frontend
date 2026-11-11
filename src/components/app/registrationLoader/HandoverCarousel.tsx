@@ -79,6 +79,26 @@ const cardLefts = (track: HTMLElement) => {
 };
 
 /**
+ * The scrollLeft that centres card `index`, clamped to what the track can
+ * actually scroll to. Where two cards fit at once the first and the last card
+ * clamp to the track's ends, so comparing against these targets (not against
+ * card centres) keeps a released drag at the end it was left at.
+ */
+const cardTargets = (track: HTMLElement) => {
+	const max = Math.max(0, track.scrollWidth - track.clientWidth);
+	const cards = Array.from(track.children) as HTMLElement[];
+	return cardLefts(track).map((left, index) =>
+		Math.min(
+			max,
+			Math.max(
+				0,
+				left - (track.clientWidth - cards[index].offsetWidth) / 2
+			)
+		)
+	);
+};
+
+/**
  * "So geht es weiter" — three cards the user swipes through while the app
  * finishes loading behind the gate button.
  *
@@ -154,12 +174,10 @@ export const HandoverCarousel = ({
 		const reducedMotion =
 			typeof window.matchMedia === 'function' &&
 			window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-		// Centre the card the dot stands for; the browser clamps the first
-		// and the last card to the track's ends.
+		// Centre the card the dot stands for; the first and the last card
+		// clamp to the track's ends.
 		track.scrollTo({
-			left:
-				cardLefts(track)[index] -
-				(track.clientWidth - card.offsetWidth) / 2,
+			left: cardTargets(track)[index],
 			behavior: reducedMotion ? 'auto' : 'smooth'
 		});
 	};
@@ -200,17 +218,16 @@ export const HandoverCarousel = ({
 		drag.current = null;
 		track.releasePointerCapture?.(event.pointerId);
 		delete track.dataset.dragging;
-		// Snap is off while dragging; hand the position back to it.
-		const lefts = cardLefts(track);
-		const centre = track.scrollLeft + track.clientWidth / 2;
-		const cards = Array.from(track.children) as HTMLElement[];
+		// Snap is off while dragging; hand the position back to it. The
+		// nearest card is the one whose (clamped) scroll target is closest,
+		// so a drag released at either end stays there.
+		const targets = cardTargets(track);
 		let nearest = 0;
-		lefts.forEach((left, index) => {
-			const here = Math.abs(left + cards[index].offsetWidth / 2 - centre);
-			const best = Math.abs(
-				lefts[nearest] + cards[nearest].offsetWidth / 2 - centre
-			);
-			if (here < best) {
+		targets.forEach((target, index) => {
+			if (
+				Math.abs(target - track.scrollLeft) <
+				Math.abs(targets[nearest] - track.scrollLeft)
+			) {
 				nearest = index;
 			}
 		});

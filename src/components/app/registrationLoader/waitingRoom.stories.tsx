@@ -149,6 +149,7 @@ export const ReadyDotsFollowTheCards: StoryObj = {
 	globals: desktop1440Globals,
 	render: () => <Waiting finished={HANDOVER_MILESTONES.length} />,
 	play: async ({ canvasElement }) => {
+		await expectWaitingRoomLayout(canvasElement, { cards: true });
 		const doc = canvasElement.ownerDocument;
 		const track = await waitFor(() => {
 			const el = doc.querySelector<HTMLElement>(
