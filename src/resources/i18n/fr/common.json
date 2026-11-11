@@ -6703,6 +6703,10 @@
 		}
 	},
 	"directLink": {
+		"postcode": {
+			"helper": "Uniquement à des fins statistiques. Le code postal ne détermine ni le service ni le conseiller – c’est le lien qui le fixe.",
+			"invalid": "Veuillez saisir votre code postal à cinq chiffres."
+		},
 		"card": {
 			"title": "Lien direct",
 			"subtitle": "Pour les personnes en recherche de conseil",
