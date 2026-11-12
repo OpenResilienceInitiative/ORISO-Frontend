@@ -14,7 +14,8 @@
 				"deadline": "ናይ መወዳእታ ዕለት",
 				"reminder": "መዘኻኸሪ"
 			}
-		}
+		},
+		"badge": "ሓድሽ: {{count}}"
 	},
 	"askerInfo": {
 		"noPrivacyNotice": {

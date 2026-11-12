@@ -45,3 +45,10 @@ export const addonLinkPath = (
 	}
 	return null;
 };
+
+/** The badge as shown, or null when there is none. */
+export const badgeText = (badge: number | undefined): string | null => {
+	const count = Math.floor(Number(badge) || 0);
+	if (count <= 0) return null;
+	return count > 99 ? '99+' : String(count);
+};

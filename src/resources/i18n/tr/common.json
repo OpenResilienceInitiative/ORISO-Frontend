@@ -14,7 +14,8 @@
 				"deadline": "Son tarih",
 				"reminder": "Hatırlatma"
 			}
-		}
+		},
+		"badge": "Yenilikler: {{count}}"
 	},
 	"askerInfo": {
 		"noPrivacyNotice": {

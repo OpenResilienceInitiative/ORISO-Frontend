@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useSyncExternalStore } from 'react';
 import { AddonApp, AddonSlot, AvailableAddon } from './addonTypes';
-import { apiGetAddonRegistry } from './addonRegistryApi';
+import { AddonRegistryContext, apiGetAddonRegistry } from './addonRegistryApi';
 import { localizedText } from './addonLink';
 
 export interface AddonAppInSlot {
@@ -14,12 +14,21 @@ export interface AddonRegistryState {
 }
 
 const EMPTY: AddonRegistryState = { addons: [], loaded: false };
-let registry: AddonRegistryState = EMPTY;
-const listeners = new Set<() => void>();
+const GLOBAL_KEY = '';
+const NO_CASE_KEY = 'no-case';
+export const REGISTRY_REFRESH_DEBOUNCE_MS = 1000;
 
-const setRegistry = (next: AddonRegistryState) => {
-	registry = next;
-	listeners.forEach((listener) => listener());
+const registries = new Map<string, AddonRegistryState>();
+const inFlight = new Map<string, Promise<AvailableAddon[]>>();
+const listeners = new Set<() => void>();
+let generation = 0;
+let refreshTimer: ReturnType<typeof setTimeout> | undefined;
+
+const notify = () => listeners.forEach((listener) => listener());
+
+const setRegistry = (key: string, next: AddonRegistryState) => {
+	registries.set(key, next);
+	notify();
 };
 
 const subscribe = (listener: () => void) => {
@@ -27,33 +36,121 @@ const subscribe = (listener: () => void) => {
 	return () => listeners.delete(listener);
 };
 
-export const resetAddonRegistryForTests = () => setRegistry(EMPTY);
+const contextKey = ({ agencyId, sessionId }: AddonRegistryContext) =>
+	`${agencyId ?? ''}/${sessionId ?? ''}`;
+
+// Header button, side panel and profile tiles of one case share one request.
+const fetchRegistry = (key: string, context?: AddonRegistryContext) => {
+	const requestKey = `${key}#${generation}`;
+	let request = inFlight.get(requestKey);
+	if (!request) {
+		request = apiGetAddonRegistry(context).finally(() =>
+			inFlight.delete(requestKey)
+		);
+		inFlight.set(requestKey, request);
+	}
+	return request;
+};
+
+export const resetAddonRegistryForTests = () => {
+	registries.clear();
+	inFlight.clear();
+	clearTimeout(refreshTimer);
+	generation = 0;
+	notify();
+};
+
+/** Loads every registry again, debounced: after an add-on notification and on window focus. */
+export const refreshAddonRegistries = () => {
+	clearTimeout(refreshTimer);
+	refreshTimer = setTimeout(() => {
+		generation += 1;
+		notify();
+	}, REGISTRY_REFRESH_DEBOUNCE_MS);
+};
+
+const useGeneration = () =>
+	useSyncExternalStore(
+		subscribe,
+		() => generation,
+		() => 0
+	);
+
+const useRegistryState = (key: string): AddonRegistryState =>
+	useSyncExternalStore(
+		subscribe,
+		() => registries.get(key) ?? EMPTY,
+		() => EMPTY
+	);
 
 /** Loads the registry for the logged-in user; mounted once, in the app shell's routing. */
 export const useAddonRegistryLoader = (userId: string | undefined) => {
+	const currentGeneration = useGeneration();
+
 	useEffect(() => {
-		setRegistry(EMPTY);
+		registries.clear();
+		notify();
+	}, [userId]);
+
+	useEffect(() => {
+		if (!userId) {
+			return undefined;
+		}
+		window.addEventListener('focus', refreshAddonRegistries);
+		return () =>
+			window.removeEventListener('focus', refreshAddonRegistries);
+	}, [userId]);
+
+	useEffect(() => {
 		if (!userId) {
 			return undefined;
 		}
 		let cancelled = false;
-		apiGetAddonRegistry().then((addons) => {
+		fetchRegistry(GLOBAL_KEY).then((addons) => {
 			if (!cancelled) {
-				setRegistry({ addons, loaded: true });
+				setRegistry(GLOBAL_KEY, { addons, loaded: true });
 			}
 		});
 		return () => {
 			cancelled = true;
 		};
-	}, [userId]);
+	}, [userId, currentGeneration]);
 };
 
+/** The registry without context: navigation and places outside a case. */
 export const useAddonRegistry = (): AddonRegistryState =>
-	useSyncExternalStore(
-		subscribe,
-		() => registry,
-		() => EMPTY
-	);
+	useRegistryState(GLOBAL_KEY);
+
+/**
+ * The registry for one open case; empty until it is loaded, so nothing shows that the case
+ * does not allow. Waits for the registry without context, which tells that a user is logged in.
+ */
+export const useCaseAddonRegistry = (
+	context: AddonRegistryContext
+): AddonRegistryState => {
+	const currentGeneration = useGeneration();
+	const { loaded: globalLoaded } = useAddonRegistry();
+	const key = globalLoaded && context.sessionId ? contextKey(context) : null;
+	const state = useRegistryState(key ?? NO_CASE_KEY);
+
+	useEffect(() => {
+		if (!key) {
+			return undefined;
+		}
+		let cancelled = false;
+		fetchRegistry(key, context).then((addons) => {
+			if (!cancelled) {
+				setRegistry(key, { addons, loaded: true });
+			}
+		});
+		return () => {
+			cancelled = true;
+		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [key, currentGeneration]);
+
+	return key ? state : EMPTY;
+};
 
 export const appsInSlot = (
 	addons: AvailableAddon[],
@@ -65,8 +162,11 @@ export const appsInSlot = (
 			.map((app) => ({ addon, app }))
 	);
 
-export const useAddonApps = (slot: AddonSlot): AddonAppInSlot[] => {
-	const { addons } = useAddonRegistry();
+export const useCaseAddonApps = (
+	slot: AddonSlot,
+	context: AddonRegistryContext
+): AddonAppInSlot[] => {
+	const { addons } = useCaseAddonRegistry(context);
 	return useMemo(() => appsInSlot(addons, slot), [addons, slot]);
 };
 

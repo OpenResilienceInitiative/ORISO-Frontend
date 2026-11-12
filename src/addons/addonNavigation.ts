@@ -20,6 +20,7 @@ export const addonNavigationItems = (
 			iconFilled: ToolsIconFilled,
 			navSlot: 'row' as const,
 			title,
-			titleKeys: { large: title }
+			titleKeys: { large: title },
+			badge: app.badge
 		};
 	});

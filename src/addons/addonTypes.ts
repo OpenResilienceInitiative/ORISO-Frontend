@@ -2,6 +2,9 @@
 
 export const ADDON_CONTRACT = 'oriso-addon/v1';
 
+export const AGENCY_HEADER = 'X-Oriso-Agency-Id';
+export const SESSION_HEADER = 'X-Oriso-Session-Id';
+
 export type AddonSlot =
 	| 'asker.navigation'
 	| 'consultant.navigation'
@@ -13,6 +16,8 @@ export interface AddonApp {
 	id: string;
 	title: Record<string, string>;
 	slots: AddonSlot[];
+	/** Reported by dynamic apps (contract section 4); 0 or absent means none. */
+	badge?: number;
 }
 
 /** One entry of `GET /service/addons/registry`, already filtered for the caller. */

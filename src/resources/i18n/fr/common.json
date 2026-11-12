@@ -14,7 +14,8 @@
 				"deadline": "Échéance",
 				"reminder": "Rappel"
 			}
-		}
+		},
+		"badge": "Nouveautés : {{count}}"
 	},
 	"askerInfo": {
 		"noPrivacyNotice": {

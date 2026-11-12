@@ -117,3 +117,21 @@
 		white-space: nowrap;
 	}
 }
+
+.addonBadge {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 18px;
+	height: 18px;
+	margin-left: 6px;
+	padding: 0 5px;
+	box-sizing: border-box;
+	border-radius: 9px;
+	background: var(--m3-error, #b1005e);
+	color: var(--m3-on-error, #ffffff);
+	font-size: 11px;
+	font-weight: 600;
+	line-height: 18px;
+	vertical-align: middle;
+}

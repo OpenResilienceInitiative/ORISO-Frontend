@@ -2,8 +2,9 @@ import { useMemo } from 'react';
 import {
 	AddonAppInSlot,
 	findAddonApp,
-	useAddonRegistry
+	useCaseAddonRegistry
 } from './addonRegistry';
+import { AddonRegistryContext } from './addonRegistryApi';
 
 /** `?addon=<add-on>/<app>` opens an add-on app as the side panel of the case view. */
 export const ADDON_PANEL_PARAM = 'addon';
@@ -32,9 +33,12 @@ export const withAddonPanel = (
 	return next ? `?${next}` : '';
 };
 
-/** The add-on app the URL opens in the case view, if it is available there. */
-export const useOpenAddonPanel = (search: string): AddonAppInSlot | null => {
-	const { addons } = useAddonRegistry();
+/** The add-on app the URL opens in the case view, if this case's registry has it. */
+export const useOpenAddonPanel = (
+	search: string,
+	context: AddonRegistryContext
+): AddonAppInSlot | null => {
+	const { addons } = useCaseAddonRegistry(context);
 	return useMemo(() => {
 		const panel = parseAddonPanel(search);
 		const found =

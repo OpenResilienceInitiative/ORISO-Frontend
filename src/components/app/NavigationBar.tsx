@@ -419,23 +419,33 @@ export const NavigationBar = ({
 								const isActive =
 									location.pathname.indexOf(item.to) !== -1;
 								const isHovered = hoveredNavItem === item.to;
-								const unreadCount = Number(
-									pathsToShowUnreadMessageNotification[
-										item.to
-									] || 0
+								const addonBadge = Math.max(
+									0,
+									Number(item.badge) || 0
 								);
+								const unreadCount =
+									addonBadge ||
+									Number(
+										pathsToShowUnreadMessageNotification[
+											item.to
+										] || 0
+									);
 								const showUnreadNav =
-									Object.keys(
+									addonBadge > 0 ||
+									(Object.keys(
 										pathsToShowUnreadMessageNotification
-									).includes(item.to) && unreadCount > 0;
+									).includes(item.to) &&
+										unreadCount > 0);
 								const label =
 									item.title ??
 									translate(item.titleKeys.large);
 								const unreadLabel = showUnreadNav
 									? translate(
-											item.to === ENQUIRY_LIST_PATH
-												? 'sessionList.rail.openEnquiries'
-												: 'sessionList.rail.unreadCount',
+											addonBadge > 0
+												? 'addons.badge'
+												: item.to === ENQUIRY_LIST_PATH
+													? 'sessionList.rail.openEnquiries'
+													: 'sessionList.rail.unreadCount',
 											{
 												count: unreadCount
 											}

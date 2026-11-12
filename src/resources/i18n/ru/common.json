@@ -14,7 +14,8 @@
 				"deadline": "Срок",
 				"reminder": "Напоминание"
 			}
-		}
+		},
+		"badge": "Новое: {{count}}"
 	},
 	"askerInfo": {
 		"noPrivacyNotice": {

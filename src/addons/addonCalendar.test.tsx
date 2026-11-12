@@ -146,6 +146,23 @@ describe('useAddonCalendarEntries', () => {
 
 	const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 
+	it('asks for at most 92 days', async () => {
+		vi.mocked(apiGetAddonRegistry).mockResolvedValue([tools]);
+		renderHook(() => {
+			useAddonRegistryLoader('u1');
+			return useAddonCalendarEntries({ enabled: true, monthsAhead: 12 });
+		});
+		await waitFor(() => expect(vi.mocked(fetchData)).toHaveBeenCalled());
+		const query = new URLSearchParams(
+			vi.mocked(fetchData).mock.calls[0][0].url.split('?')[1]
+		);
+		const days =
+			(Date.parse(query.get('to') ?? '') -
+				Date.parse(query.get('from') ?? '')) /
+			(24 * 60 * 60 * 1000);
+		expect(days).toBe(92);
+	});
+
 	it('does not call the AddonService without add-ons', async () => {
 		vi.mocked(apiGetAddonRegistry).mockResolvedValue([]);
 		renderHook(() => useCalendar(true));

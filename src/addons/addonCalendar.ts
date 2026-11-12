@@ -25,6 +25,8 @@ const KINDS: readonly AddonCalendarKind[] = [
 	'reminder'
 ];
 const DAY_MS = 24 * 60 * 60 * 1000;
+/** The AddonService rejects longer ranges. */
+export const MAX_RANGE_DAYS = 92;
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
 	!!value && typeof value === 'object' && !Array.isArray(value);
@@ -137,7 +139,8 @@ export const useAddonCalendarEntries = ({
 		const from = new Date();
 		const to = new Date(from);
 		to.setMonth(to.getMonth() + monthsAhead);
-		apiGetAddonCalendar(from, to).then(
+		const latest = new Date(from.getTime() + MAX_RANGE_DAYS * DAY_MS);
+		apiGetAddonCalendar(from, to < latest ? to : latest).then(
 			(loaded) => current && setEntries(loaded)
 		);
 		return () => {

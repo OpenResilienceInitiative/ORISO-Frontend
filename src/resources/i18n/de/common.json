@@ -14,7 +14,8 @@
 				"deadline": "Frist",
 				"reminder": "Erinnerung"
 			}
-		}
+		},
+		"badge": "Neuigkeiten: {{count}}"
 	},
 	"askerInfo": {
 		"noPrivacyNotice": {

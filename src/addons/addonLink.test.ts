@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { addonLinkPath, localizedText } from './addonLink';
+import { addonLinkPath, badgeText, localizedText } from './addonLink';
 
 const tools = { addon: 'digisucht-tools', appId: 'goals' };
 
@@ -60,5 +60,16 @@ describe('localizedText', () => {
 		expect(localizedText(texts, 'fr')).toBe('Ziele');
 		expect(localizedText({ en: 'Goals' }, 'fr')).toBe('Goals');
 		expect(localizedText(undefined, 'de')).toBeUndefined();
+	});
+});
+
+describe('badgeText', () => {
+	it('shows positive counts and caps them at 99+', () => {
+		expect(badgeText(undefined)).toBeNull();
+		expect(badgeText(0)).toBeNull();
+		expect(badgeText(-2)).toBeNull();
+		expect(badgeText(7)).toBe('7');
+		expect(badgeText(99)).toBe('99');
+		expect(badgeText(100)).toBe('99+');
 	});
 });

@@ -10,14 +10,13 @@ import { apiUrl } from '../resources/scripts/endpoints';
 import { getValueFromCookie } from '../components/sessionCookie/accessSessionCookie';
 import {
 	ADDON_CONTRACT,
+	AGENCY_HEADER,
+	SESSION_HEADER,
 	AddonApp,
 	AddonHostProps,
 	AddonSlot,
 	AvailableAddon
 } from './addonTypes';
-
-export const AGENCY_HEADER = 'X-Oriso-Agency-Id';
-export const SESSION_HEADER = 'X-Oriso-Session-Id';
 
 export interface AddonPlacement {
 	agencyId?: number;

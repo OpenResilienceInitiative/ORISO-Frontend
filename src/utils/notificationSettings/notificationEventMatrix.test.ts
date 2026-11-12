@@ -131,7 +131,7 @@ const EXPECTED_ROW: Record<
 	'topic_duplicate.started': { consultant: 'conversations/standard' },
 	'service.notice.planned': { consultant: 'conversations/standard' },
 	'session.asker_deleted': { consultant: 'conversations/standard' },
-	ADDON_NOTIFICATION: {
+	'ADDON_NOTIFICATION': {
 		consultant: 'conversations/standard',
 		asker: 'conversations/standard'
 	},
