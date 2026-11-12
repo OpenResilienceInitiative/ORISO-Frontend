@@ -248,15 +248,6 @@ vi.mock('./SessionListItemVideoCall', () => ({
 vi.mock('./CaseHandoverActionButton', () => ({
 	CaseHandoverActionButton: () => <span data-testid="case-handover-action" />
 }));
-vi.mock('../session/DeleteSession', () => ({
-	default: ({
-		children
-	}: {
-		children: (fn: () => void) => React.ReactNode;
-	}) => {
-		return <>{children(vi.fn())}</>;
-	}
-}));
 vi.mock('../overlay/Overlay', () => ({
 	Overlay: ({
 		item,

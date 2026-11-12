@@ -1989,7 +1989,6 @@
 			"src/components/passwordResetRequest/PasswordResetSentView.tsx",
 			"src/components/profile/AskerAboutMeData.tsx",
 			"src/components/profile/DeleteAccount.tsx",
-			"src/components/session/DeleteSession.tsx",
 			"src/components/session/SessionStream.tsx",
 			"src/components/sessionMenu/sessionMenuHelpers.ts"
 		],
@@ -4823,7 +4822,6 @@
 			"src/components/profile/AskerAboutMeData.tsx",
 			"src/components/profile/NewRequestDialog/NewRequestDialog.tsx",
 			"src/components/session/AcceptAssign.tsx",
-			"src/components/session/DeleteSession.tsx",
 			"src/components/session/session.styles.scss",
 			"src/components/sessionMenu/SessionMenu.tsx",
 			"src/components/sessionMenu/sessionMenuHelpers.ts",
