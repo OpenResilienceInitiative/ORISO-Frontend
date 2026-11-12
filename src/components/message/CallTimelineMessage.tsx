@@ -24,7 +24,9 @@ export const CallTimelineMessage = ({
 	call: initialCall,
 	onJoin,
 	loadState,
-	deviceCheck
+	deviceCheck,
+	autoJoin,
+	onAutoJoined
 }: {
 	call: CallLifecycleMessage;
 	/**
@@ -40,6 +42,14 @@ export const CallTimelineMessage = ({
 	 * (#2016, `shouldShowDeviceCheck`). Without it the card joins at once.
 	 */
 	deviceCheck?: () => boolean;
+	/**
+	 * #2237: asked once while the call runs. `true` (the person was just let
+	 * in from the group's waiting room) joins at once, without a click and
+	 * without the device check, which they already passed while waiting.
+	 */
+	autoJoin?: () => boolean;
+	/** The automatic join went through: the mark behind `autoJoin` is used up. */
+	onAutoJoined?: () => void;
 }) => {
 	const call = useCallTimelineState(initialCall, loadState);
 	const { t, i18n } = useTranslation();
@@ -71,6 +81,18 @@ export const CallTimelineMessage = ({
 		if (deviceCheck?.()) setChecking(true);
 		else void join();
 	};
+	const autoJoinAsked = React.useRef(false);
+	React.useEffect(() => {
+		if (call.state !== 'running' || !onJoin || !autoJoin) return;
+		if (autoJoinAsked.current) return;
+		autoJoinAsked.current = true;
+		if (autoJoin()) {
+			void join().then((result) => {
+				if (result === 'joined') onAutoJoined?.();
+			});
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- once, when the call runs
+	}, [call.state]);
 	// Live presence only means anything while the call is running.
 	const live = call.state === 'running' ? call.present : undefined;
 	// Nobody answered a missed call: its only participant is the caller, who

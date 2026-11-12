@@ -1494,6 +1494,9 @@
 			"overlay": {
 				"headline": "Bu gruptan çıkarıldınız."
 			}
+		},
+		"waitingAdmission": {
+			"waiting": "Kaydınız alındı. Grup yöneticisi sizi içeri aldığında sohbet ve arama kendiliğinden açılır."
 		}
 	},
 	"help": {

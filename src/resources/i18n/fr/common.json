@@ -1494,6 +1494,9 @@
 			"overlay": {
 				"headline": "Vous avez été retiré(e) de ce groupe."
 			}
+		},
+		"waitingAdmission": {
+			"waiting": "Vous êtes inscrit·e. Dès que l'animateur·rice vous fait entrer, le chat et l'appel s'ouvrent automatiquement."
 		}
 	},
 	"help": {

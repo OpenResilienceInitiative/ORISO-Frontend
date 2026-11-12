@@ -464,6 +464,9 @@
 			"overlay": {
 				"headline": "Du wurdest aus dieser Gruppe entfernt."
 			}
+		},
+		"waitingAdmission": {
+			"waiting": "Du bist angemeldet. Sobald die Gruppenleitung dich hereinlässt, öffnen sich Chat und Anruf von selbst."
 		}
 	},
 	"help": {

@@ -1489,6 +1489,9 @@
 			"overlay": {
 				"headline": "Sie wurden aus dieser Gruppe entfernt."
 			}
+		},
+		"waitingAdmission": {
+			"waiting": "Sie sind angemeldet. Sobald die Gruppenleitung Sie hereinlässt, öffnen sich Chat und Anruf von selbst."
 		}
 	},
 	"help": {

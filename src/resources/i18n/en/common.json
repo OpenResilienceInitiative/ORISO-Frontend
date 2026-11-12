@@ -1471,6 +1471,9 @@
 			"overlay": {
 				"headline": "You were removed from this group."
 			}
+		},
+		"waitingAdmission": {
+			"waiting": "You are signed in. As soon as the group leader lets you in, the chat and the call open by themselves."
 		}
 	},
 	"help": {

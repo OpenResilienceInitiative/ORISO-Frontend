@@ -882,3 +882,84 @@ it('says so on the card when the call after admission cannot be joined (#2016)',
 		await screen.findByText('videoCall.timeline.joinFailed')
 	).toBeTruthy();
 });
+
+/* #2237: let in from the group's waiting room, the person goes straight into
+   the running call: the card joins without a click, once. */
+it('joins a running call by itself when the waiting room let the person in', async () => {
+	const call: CallLifecycleMessage = {
+		callId: 'admitted-call',
+		roomRef: '!group:example',
+		callRoomId: '!media:example',
+		callType: 'video',
+		state: 'running',
+		participants: []
+	};
+	const onJoin = vi.fn(async () => 'joined' as const);
+	const autoJoin = vi.fn(() => true);
+	const onAutoJoined = vi.fn();
+	const { rerender } = render(
+		<CallTimelineMessage
+			call={call}
+			onJoin={onJoin}
+			autoJoin={autoJoin}
+			onAutoJoined={onAutoJoined}
+		/>
+	);
+	await waitFor(() => expect(onAutoJoined).toHaveBeenCalledTimes(1));
+	rerender(
+		<CallTimelineMessage call={call} onJoin={onJoin} autoJoin={autoJoin} />
+	);
+	await act(async () => undefined);
+	expect(onJoin).toHaveBeenCalledTimes(1);
+	expect(autoJoin).toHaveBeenCalledTimes(1);
+});
+
+it('keeps the mark when the automatic join did not go through', async () => {
+	const call: CallLifecycleMessage = {
+		callId: 'stale-call',
+		roomRef: '!group:example',
+		callRoomId: '!media:example',
+		callType: 'video',
+		state: 'running',
+		participants: []
+	};
+	const onJoin = vi.fn(async () => 'unavailable' as const);
+	const onAutoJoined = vi.fn();
+	render(
+		<CallTimelineMessage
+			call={call}
+			onJoin={onJoin}
+			autoJoin={() => true}
+			onAutoJoined={onAutoJoined}
+		/>
+	);
+	await waitFor(() => expect(onJoin).toHaveBeenCalledTimes(1));
+	await act(async () => undefined);
+	expect(onAutoJoined).not.toHaveBeenCalled();
+});
+
+it('leaves an ended call and an unmarked one alone', async () => {
+	const ended: CallLifecycleMessage = {
+		callId: 'ended-call',
+		roomRef: '!group:example',
+		callRoomId: '!media:example',
+		callType: 'video',
+		state: 'ended',
+		participants: []
+	};
+	const onJoin = vi.fn(async () => 'joined' as const);
+	const autoJoin = vi.fn(() => true);
+	render(
+		<CallTimelineMessage call={ended} onJoin={onJoin} autoJoin={autoJoin} />
+	);
+	render(
+		<CallTimelineMessage
+			call={{ ...ended, callId: 'other', state: 'running' }}
+			onJoin={onJoin}
+			autoJoin={() => false}
+		/>
+	);
+	await act(async () => undefined);
+	expect(autoJoin).not.toHaveBeenCalled();
+	expect(onJoin).not.toHaveBeenCalled();
+});
