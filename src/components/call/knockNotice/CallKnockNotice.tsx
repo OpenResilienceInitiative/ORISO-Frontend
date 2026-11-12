@@ -6,10 +6,6 @@ import type { SxProps, Theme } from '@mui/material';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { useTranslation } from 'react-i18next';
-import {
-	M3_SNACKBAR_ELEVATION,
-	m3SnackbarColors
-} from '../../m3Snackbar/M3Snackbar';
 import { clampPage, KnockingPerson } from './callKnockModel';
 import type { CallKnockBusy } from './useCallKnocks';
 import { UserAvatar } from '../../message/UserAvatar';
@@ -56,13 +52,32 @@ const waitedMs = (requestedAt: string | undefined, now: number) => {
 	return Number.isNaN(at) ? null : Math.max(0, now - at);
 };
 
+/*
+ * A light card in the app's own palette (Frank, 2026-11-12: the dark
+ * snackbar look did not fit the design). `--m3-*` are the tenant palette;
+ * the literals are the light-scheme defaults.
+ */
+const knockColors = {
+	surface: 'var(--m3-surface-container-lowest, #ffffff)',
+	onSurface: 'var(--m3-on-surface, #1b1b1c)',
+	onSurfaceVariant: 'var(--m3-on-surface-variant, #444748)',
+	outline: 'var(--m3-outline-variant, #c4c7c8)',
+	action: 'var(--m3-primary, #a5000a)',
+	onAction: 'var(--m3-on-primary, #ffffff)',
+	hover: 'rgba(165, 0, 10, 0.08)'
+} as const;
+
+/* M3 elevation level 3: the card floats over the call video. */
+const KNOCK_ELEVATION =
+	'0 4px 8px 3px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0, 0, 0, 0.3)';
+
 const focusRing = (color: string) => ({
 	outline: `2px solid ${color}`,
 	outlineOffset: 2
 });
 
 const textAction: SxProps<Theme> = {
-	'color': m3SnackbarColors.action,
+	'color': knockColors.action,
 	'textTransform': 'none',
 	'fontSize': 14,
 	'fontWeight': 500,
@@ -73,30 +88,30 @@ const textAction: SxProps<Theme> = {
 	'px': 1.5,
 	'borderRadius': '20px',
 	'whiteSpace': 'nowrap',
-	'&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.08)' },
-	'&:focus-visible': focusRing(m3SnackbarColors.action),
+	'&:hover': { backgroundColor: knockColors.hover },
+	'&:focus-visible': focusRing(knockColors.action),
 	'&[aria-disabled="true"]': { opacity: 0.38, cursor: 'default' }
 };
 
 /* The one filled action, as in the self-help knock snackbar (#1499). */
 const filledAction: SxProps<Theme> = {
 	...textAction,
-	'backgroundColor': m3SnackbarColors.action,
-	'color': m3SnackbarColors.surface,
+	'backgroundColor': knockColors.action,
+	'color': knockColors.onAction,
 	'px': 2,
 	'&:hover': {
-		backgroundColor: m3SnackbarColors.action,
+		backgroundColor: knockColors.action,
 		boxShadow: '0 1px 2px rgba(0, 0, 0, 0.3)'
 	},
-	'&:focus-visible': focusRing(m3SnackbarColors.onSurface)
+	'&:focus-visible': focusRing(knockColors.action)
 };
 
 const pagerButton: SxProps<Theme> = {
-	'color': m3SnackbarColors.onSurface,
+	'color': knockColors.onSurface,
 	'width': 40,
 	'height': 40,
-	'&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.08)' },
-	'&:focus-visible': focusRing(m3SnackbarColors.action)
+	'&:hover': { backgroundColor: knockColors.hover },
+	'&:focus-visible': focusRing(knockColors.action)
 };
 
 const placementSx: Record<CallKnockPlacement, SxProps<Theme>> = {
@@ -222,10 +237,11 @@ export const CallKnockNotice = ({
 			onTouchStart={(event) => event.stopPropagation()}
 			sx={{
 				...placementSx[placement],
-				backgroundColor: m3SnackbarColors.surface,
-				color: m3SnackbarColors.onSurface,
+				backgroundColor: knockColors.surface,
+				color: knockColors.onSurface,
 				borderRadius: '12px',
-				boxShadow: M3_SNACKBAR_ELEVATION,
+				border: `1px solid ${knockColors.outline}`,
+				boxShadow: KNOCK_ELEVATION,
 				boxSizing: 'border-box',
 				pt: 1.5,
 				pb: 1,
@@ -236,7 +252,7 @@ export const CallKnockNotice = ({
 				id={regionId}
 				component="h2"
 				sx={{
-					color: 'inherit',
+					color: knockColors.onSurfaceVariant,
 					fontSize: 12,
 					fontWeight: 500,
 					lineHeight: '16px',
@@ -292,7 +308,7 @@ export const CallKnockNotice = ({
 						component="p"
 						data-testid="call-knock-waiting"
 						sx={{
-							color: 'inherit',
+							color: knockColors.onSurfaceVariant,
 							fontSize: 14,
 							lineHeight: '20px',
 							letterSpacing: '0.25px',
