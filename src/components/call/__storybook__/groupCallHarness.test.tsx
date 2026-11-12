@@ -30,6 +30,7 @@ import { CALL_IDENTITY_EVENT_TYPE } from '../callIdentity';
 import { forgetPublishedIdentity } from '../publishCallIdentity';
 import { rememberJoinMedia } from '../prejoin/callPrejoin';
 import { NotificationsContext } from '../../../globalState/provider/NotificationsProvider';
+import { setAppConfig } from '../../../utils/appConfig';
 import {
 	FAKE_CALL_ID,
 	FAKE_CURRENT_USER_ID,
@@ -44,7 +45,11 @@ import {
 const widgetApiMocks = vi.hoisted(() => ({
 	instances: [] as Array<{
 		stop: ReturnType<typeof vi.fn>;
-		transport: { send: ReturnType<typeof vi.fn> };
+		on: ReturnType<typeof vi.fn>;
+		transport: {
+			send: ReturnType<typeof vi.fn>;
+			reply: ReturnType<typeof vi.fn>;
+		};
 	}>
 }));
 
@@ -79,6 +84,15 @@ vi.mock('matrix-widget-api', async (importOriginal) => {
 const knockApi = vi.hoisted(() => ({
 	pending: vi.fn().mockResolvedValue([]),
 	shareLink: vi.fn().mockResolvedValue(null)
+}));
+
+const shareLinkApi = vi.hoisted(() => ({
+	create: vi.fn().mockResolvedValue(null)
+}));
+
+vi.mock('../../../api/apiCallShareLink', async (importOriginal) => ({
+	...(await importOriginal<typeof import('../../../api/apiCallShareLink')>()),
+	apiCreateCallShareLink: shareLinkApi.create
 }));
 
 vi.mock('../../../api/apiCallKnocks', async (importOriginal) => ({
@@ -129,11 +143,15 @@ describe('GroupCallWidget Storybook harness', () => {
 	beforeEach(() => {
 		widgetApiMocks.instances.length = 0;
 		resetCallManager();
+		// These cases drive the host's own corner buttons; the call design's
+		// host chrome (S2) hides them and is covered at the end of the file.
+		setAppConfig({ calls: { hostChrome: false } } as never);
 	});
 
 	afterEach(() => {
 		cleanup();
 		callManager.endCall(false);
+		setAppConfig(null as never);
 	});
 
 	it('leaves locally, tears down listeners and widget API, then clears retained metadata', async () => {
@@ -282,6 +300,142 @@ describe('GroupCallWidget Storybook harness', () => {
 				true
 			)
 		);
+
+	describe('call design: the window belongs to the call (S2)', () => {
+		beforeEach(() => setAppConfig(null as never));
+
+		const windowAction = (command: unknown) => {
+			const api = widgetApiMocks.instances.at(-1)!;
+			const listener = api.on.mock.calls.find(
+				(call: unknown[]) => call[0] === 'action:org.oriso.call.window'
+			)?.[1] as (event: CustomEvent) => void;
+			const detail = {
+				action: 'org.oriso.call.window',
+				requestId: 'window-1',
+				widgetId: 'widget',
+				data: { command }
+			};
+			act(() =>
+				listener(
+					new CustomEvent('org.oriso.call.window', {
+						cancelable: true,
+						detail
+					})
+				)
+			);
+			return { api, detail };
+		};
+
+		it('asks the call for its header buttons and draws none of its own over it', async () => {
+			const { view, iframe } = await renderActiveCall();
+			expect(
+				new URLSearchParams(new URL(iframe.src).hash.slice(2)).get(
+					'orisoHostChrome'
+				)
+			).toBe('1');
+			for (const name of [
+				'Close call',
+				'Minimize call',
+				'Enter full screen'
+			])
+				expect(view.queryByRole('button', { name })).toBeNull();
+			expect(
+				view.container.querySelector('.element-call-autofit')
+			).toBeNull();
+			expect(
+				view.container.querySelector('.group-call-widget--host-chrome')
+			).toBeTruthy();
+		});
+
+		it('tells the call a group conversation is a group (S6b)', async () => {
+			const { iframe } = await renderActiveCall();
+			// The seeded call is a group call.
+			expect(
+				new URLSearchParams(new URL(iframe.src).hash.slice(2)).get(
+					'orisoCallType'
+				)
+			).toBe('group');
+		});
+
+		it('minimises into the dock when the call asks', async () => {
+			const { view } = await renderActiveCall();
+			const { api, detail } = windowAction('minimise');
+			expect(api.transport.reply).toHaveBeenCalledWith(detail, {});
+			expect(
+				await view.findByRole('button', {
+					name: 'Back to the full call'
+				})
+			).toBeTruthy();
+		});
+
+		it('floats in the upper half on a phone, and goes back to full screen (S10)', async () => {
+			const width = window.innerWidth;
+			Object.defineProperty(window, 'innerWidth', {
+				configurable: true,
+				value: 375
+			});
+			try {
+				const { view } = await renderActiveCall();
+				const widgetRoot = () =>
+					view.container.querySelector('.group-call-widget');
+				await waitFor(() =>
+					expect(widgetRoot()?.className).toContain(
+						'group-call-widget--mobile'
+					)
+				);
+
+				const { api } = windowAction('toggle_fullscreen');
+				await waitFor(() =>
+					expect(widgetRoot()?.className).toContain(
+						'group-call-widget--floating'
+					)
+				);
+				expect(
+					view.getByRole('separator', { name: 'Move the call' })
+				).toBeTruthy();
+				act(() =>
+					api.on.mock.calls.find(
+						(call: unknown[]) => call[0] === 'ready'
+					)?.[1]?.(new CustomEvent('ready'))
+				);
+				await waitFor(() =>
+					expect(api.transport.send).toHaveBeenCalledWith(
+						'org.oriso.call.window_state',
+						{ fullscreen: false }
+					)
+				);
+
+				fireEvent.click(
+					view.getByRole('button', { name: 'Enter full screen' })
+				);
+				await waitFor(() =>
+					expect(widgetRoot()?.className).not.toContain(
+						'group-call-widget--floating'
+					)
+				);
+				expect(api.transport.send).toHaveBeenLastCalledWith(
+					'org.oriso.call.window_state',
+					{ fullscreen: true }
+				);
+			} finally {
+				Object.defineProperty(window, 'innerWidth', {
+					configurable: true,
+					value: width
+				});
+			}
+		});
+
+		it('takes the call into browser full screen when it asks', async () => {
+			const requestFullscreen = vi.fn().mockResolvedValue(undefined);
+			const { view } = await renderActiveCall();
+			const container = view.container.querySelector(
+				'.element-call-container'
+			) as HTMLElement & { requestFullscreen: () => Promise<void> };
+			container.requestFullscreen = requestFullscreen;
+			windowAction('toggle_fullscreen');
+			expect(requestFullscreen).toHaveBeenCalled();
+		});
+	});
 
 	it('keeps the second call ringing when the call closes itself during the hangup', async () => {
 		/*
@@ -851,6 +1005,105 @@ describe('what the host adds around the call', () => {
 		withUser(counsellor, makeFakeMatrixClientService('active'));
 		await waitFor(() => expect(knockApi.pending).toHaveBeenCalled());
 		expect(knockApi.shareLink).toHaveBeenCalled();
+	});
+
+	describe('call design: "Link teilen" in the call (S8)', () => {
+		const iframeUrl = async (view: ReturnType<typeof withUser>) =>
+			new URLSearchParams(
+				new URL(
+					await waitFor(() => {
+						const iframe = view.container.querySelector(
+							'.element-call-iframe'
+						) as HTMLIFrameElement | null;
+						expect(iframe).toBeTruthy();
+						return iframe!.src;
+					})
+				).hash.slice(2)
+			);
+
+		const inviteLink = async () => {
+			await waitFor(() =>
+				expect(widgetApiMocks.instances.length).toBeGreaterThan(0)
+			);
+			const api = widgetApiMocks.instances.at(-1)!;
+			const listener = api.on.mock.calls.find(
+				(call: unknown[]) =>
+					call[0] === 'action:org.oriso.call.invite_link'
+			)?.[1] as (event: CustomEvent) => void;
+			const detail = {
+				action: 'org.oriso.call.invite_link',
+				requestId: 'invite-1',
+				widgetId: 'widget',
+				data: {}
+			};
+			act(() =>
+				listener(
+					new CustomEvent('org.oriso.call.invite_link', {
+						cancelable: true,
+						detail
+					})
+				)
+			);
+			return { api, detail };
+		};
+
+		it('offers a counsellor the link and answers with the call´s link', async () => {
+			shareLinkApi.create.mockReset();
+			shareLinkApi.create.mockResolvedValue({
+				id: 7,
+				url: 'https://app.oriso.test/c/abc',
+				settings: { knock: true, temporaryAccount: true },
+				temporaryAccountAllowed: true
+			});
+			activeCall();
+			const view = withUser(
+				counsellor,
+				makeFakeMatrixClientService('active')
+			);
+			expect((await iframeUrl(view)).get('orisoInvite')).toBe('1');
+
+			const { api, detail } = await inviteLink();
+			await waitFor(() =>
+				expect(api.transport.reply).toHaveBeenCalledWith(detail, {
+					url: 'https://app.oriso.test/c/abc'
+				})
+			);
+			expect(shareLinkApi.create).toHaveBeenCalledWith({
+				sourceRoomId: FAKE_SIGNAL_ROOM_ID,
+				callId: FAKE_CALL_ID
+			});
+			// The corner share button would offer the same link twice.
+			expect(
+				view.container.querySelector('.element-call-share')
+			).toBeNull();
+		});
+
+		it('answers with an error when no link can be made', async () => {
+			shareLinkApi.create.mockReset();
+			shareLinkApi.create.mockResolvedValue(null);
+			activeCall();
+			withUser(counsellor, makeFakeMatrixClientService('active'));
+			const { api, detail } = await inviteLink();
+			await waitFor(
+				() =>
+					expect(api.transport.reply).toHaveBeenCalledWith(detail, {
+						error: expect.any(String)
+					}),
+				{ timeout: 3000 }
+			);
+		});
+
+		it('offers an advice seeker no link', async () => {
+			activeCall();
+			const view = withUser(
+				{
+					userId: '@anon:matrix.storybook.test',
+					grantedAuthorities: []
+				},
+				makeFakeMatrixClientService('active')
+			);
+			expect((await iframeUrl(view)).has('orisoInvite')).toBe(false);
+		});
 	});
 
 	it('asks for no knocks in a legacy call, which shows no widget', async () => {

@@ -281,3 +281,41 @@ it('opens inside the fullscreen call and closes when fullscreen changes', async 
 		fullscreen.remove();
 	}
 });
+
+/*
+ * #2215 review: with host chrome the call's header hands out the link, but
+ * the temporary-account switch exists only here, so the panel stays where
+ * the link may create one.
+ */
+it('stays reachable beside the header link when temporary accounts are allowed', async () => {
+	render(
+		<CallShareForCall
+			sourceRoomId="!r:x"
+			callId="c1"
+			layout="phone"
+			onlyForTemporaryAccounts
+		/>
+	);
+	expect(
+		await screen.findByRole('button', { name: 'calls.share.open' })
+	).toBeTruthy();
+});
+
+it('stays out of the way of the header link when no temporary account is possible', async () => {
+	vi.mocked(apiCreateCallShareLink).mockResolvedValue({
+		...link,
+		temporaryAccountAllowed: false
+	});
+	render(
+		<CallShareForCall
+			sourceRoomId="!r:x"
+			callId="c1"
+			layout="phone"
+			onlyForTemporaryAccounts
+		/>
+	);
+	await vi.waitFor(() => expect(apiCreateCallShareLink).toHaveBeenCalled());
+	expect(
+		screen.queryByRole('button', { name: 'calls.share.open' })
+	).toBeNull();
+});

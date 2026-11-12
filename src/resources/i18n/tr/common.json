@@ -6482,6 +6482,13 @@
 			"label": "Önce kapıyı çal",
 			"on": "Misafirler siz içeri alana kadar bekler.",
 			"off": "Misafirler beklemeden doğrudan aramaya katılır."
+		},
+		"list": {
+			"running": "Şu anda sürüyor",
+			"runningWithCount": "Şu anda sürüyor — görüşmede {{count}} kişi"
+		},
+		"floating": {
+			"move": "Görüşmeyi taşı"
 		}
 	},
 	"form": {

@@ -2,6 +2,7 @@ import i18n from 'i18next';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { APP_ORISO_FIGMA_URL } from '../storybookDesignLinks';
+import { appConfig, setAppConfig } from '../../utils/appConfig';
 import {
 	GroupCallStoryHarness,
 	type GroupCallStoryMode
@@ -13,10 +14,25 @@ import './GroupCallWidget.scss';
  * Renders the real `GroupCallWidget` with Storybook-only CallManager seeding
  * and a fake Matrix client — no Matrix, LiveKit, Keycloak, or backend calls.
  */
+/**
+ * These stories drive the host's own corner buttons. The call design's host
+ * chrome (S2, on by default) hands them to the call; `HostChromeActiveCall`
+ * below covers that side.
+ */
+const withHostChrome = (hostChrome: boolean) => () => {
+	const previous = appConfig;
+	setAppConfig({
+		...(previous ?? {}),
+		calls: { ...(previous?.calls ?? {}), hostChrome }
+	} as typeof appConfig);
+	return () => setAppConfig(previous);
+};
+
 const meta = {
 	title: 'Components/Call/GroupCallWidget',
 	component: GroupCallStoryHarness,
 	tags: ['autodocs'],
+	beforeEach: withHostChrome(false),
 	parameters: {
 		layout: 'fullscreen',
 		design: {
@@ -223,5 +239,32 @@ export const SecondCallDeclined: Story = {
 		expect(
 			canvasElement.querySelector('.element-call-iframe')
 		).toBeTruthy();
+	}
+};
+
+/**
+ * Call design S2: the call owns the window buttons (`orisoHostChrome=1`), so
+ * the host draws no corner buttons of its own over the iframe.
+ */
+export const HostChromeActiveCall: Story = {
+	args: { mode: 'active' },
+	beforeEach: withHostChrome(true),
+	play: async ({ canvasElement }) => {
+		await waitFor(
+			() => {
+				const iframe = canvasElement.querySelector(
+					'.element-call-iframe'
+				) as HTMLIFrameElement | null;
+				expect(iframe).toBeTruthy();
+				const iframeUrl = new URL(iframe?.getAttribute('src') || '');
+				expect(iframeUrl.hash).toContain('orisoHostChrome=1');
+				expect(
+					canvasElement.querySelector(
+						'button.element-call-fullscreen'
+					)
+				).toBeNull();
+			},
+			{ timeout: 5000 }
+		);
 	}
 };

@@ -264,6 +264,16 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		: 'loading';
 	const isLoadingSupervisors = supervisorLoadState === 'loading';
 	const [isSupervisorModalOpen, setIsSupervisorModalOpen] = useState(false);
+	// FE#1960: "Termin anlegen" is a ⋮ menu entry; the appointment slot
+	// below the header owns the dialog and hands its opener up while
+	// creating is possible.
+	const [openCreateAppointment, setOpenCreateAppointment] = useState<
+		(() => void) | undefined
+	>(undefined);
+	const handleCreateAppointmentChange = useCallback(
+		(open?: () => void) => setOpenCreateAppointment(() => open),
+		[]
+	);
 	const [supervisionReason, setSupervisionReason] = useState<string>('');
 	const [supervisionReasonError, setSupervisionReasonError] = useState(false);
 	const [isAddingSupervisor, setIsAddingSupervisor] = useState(false);
@@ -1270,6 +1280,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 						props.hasUserInitiatedStopOrLeaveRequest
 					}
 					callsInMenu={callsInMenu}
+					onCreateAppointment={openCreateAppointment}
 					isAskerInfoAvailable={isAskerInfoAvailable()}
 					bannedUsers={props.bannedUsers}
 					isSupervisor={isSupervisor}
@@ -1338,6 +1349,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 			)}
 			{activeSession.isSession && (isAskerUser || isConsultantUser) && (
 				<ConversationAppointmentSlot
+					onCreateChange={handleCreateAppointmentChange}
 					canChange={
 						// Handover co-access may create too: the backend decides
 						// for a colleague who is not the assigned counsellor.
