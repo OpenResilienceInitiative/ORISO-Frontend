@@ -767,12 +767,10 @@ export const NotificationsCenter = () => {
 			return;
 		}
 		if (untilL) {
-			if (browsing) {
-				openConversationOnly(item);
-				return;
-			}
-			if (joinCall(item)) return;
-			openActivityConversation(item);
+			// #2226 (Frank, 2026-11-12): a tap on a phone opens the
+			// conversation, like selecting the card on a desktop; it never
+			// starts a call. Joining happens in the conversation itself.
+			openConversationOnly(item);
 			return;
 		}
 		selectNotification(item.id);

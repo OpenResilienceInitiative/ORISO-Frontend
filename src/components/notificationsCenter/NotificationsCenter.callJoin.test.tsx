@@ -288,17 +288,18 @@ it('#2226: a call card without a room keeps its detail view', async () => {
 	).toBeTruthy();
 });
 
-it('joins the existing call from a mobile Activity card without navigating away', async () => {
+it('#2226: a tap on a mobile call card opens the conversation and never joins', async () => {
 	await renderCenter(390);
 	await user.click(
 		screen.getByRole('button', { name: /Call ongoing A call is ongoing/ })
 	);
 	await waitFor(() =>
-		expect(joinRoom).toHaveBeenCalledWith('!media:example')
+		expect(screen.getByLabelText('Current route').textContent).toBe(
+			'/sessions/consultant/sessionView/session/42'
+		)
 	);
-	expect(screen.getByLabelText('Current route').textContent).toBe(
-		'/notifications'
-	);
+	expect(joinRoom).not.toHaveBeenCalled();
+	expect(callManager.getCurrentCall()).toBeFalsy();
 	expect(markRead).toHaveBeenCalledWith('call-1');
 	expect(sendEvent).not.toHaveBeenCalled();
 	expect(createRoom).not.toHaveBeenCalled();
