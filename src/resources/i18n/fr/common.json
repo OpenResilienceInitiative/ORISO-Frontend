@@ -3345,6 +3345,13 @@
 				"cancel": "Annuler",
 				"error": "La réinitialisation a échoué. Veuillez réessayer."
 			}
+		},
+		"askerDisplayName": {
+			"description": "Votre nom peut être différent dans chaque conversation de conseil. Votre conseillère ou votre conseiller voit, dans la conversation concernée, le nom indiqué ici.",
+			"conversation": "Conseil",
+			"usernameShown": "Pas de nom d'affichage – votre nom d'utilisateur est visible",
+			"edit": "Modifier le nom d'affichage pour {{name}}",
+			"inputLabel": "Nom d'affichage pour {{name}}"
 		}
 	},
 	"qrCode": {

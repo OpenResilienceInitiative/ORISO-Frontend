@@ -3345,6 +3345,13 @@
 				"cancel": "İptal",
 				"error": "Sıfırlama başarısız oldu. Lütfen tekrar deneyin."
 			}
+		},
+		"askerDisplayName": {
+			"description": "Adınız her danışmanlıkta farklı olabilir. Danışmanınız ilgili danışmanlıkta burada yazan adı görür.",
+			"conversation": "Danışmanlık",
+			"usernameShown": "Görünen ad yok – kullanıcı adınız görünür",
+			"edit": "{{name}} için görünen adı değiştir",
+			"inputLabel": "{{name}} için görünen ad"
 		}
 	},
 	"qrCode": {

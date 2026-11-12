@@ -1167,6 +1167,10 @@
 				"cancel": "Abbrechen",
 				"error": "Das Zurücksetzen ist fehlgeschlagen. Bitte versuche es erneut."
 			}
+		},
+		"askerDisplayName": {
+			"description": "Dein Name kann in jeder Beratung anders sein. Deine Beraterin oder dein Berater sieht in der jeweiligen Beratung den Namen, der hier steht.",
+			"usernameShown": "Kein Anzeigename – sichtbar ist dein Benutzername"
 		}
 	},
 	"qrCode": {

@@ -32,6 +32,9 @@ vi.mock('../twoFactorAuth/TwoFactorAuth', () => ({
 vi.mock('./DisplayNameSettings', () => ({
 	DisplayNameSettings: () => <button>Display name</button>
 }));
+vi.mock('./AskerDisplayNameSettings', () => ({
+	AskerDisplayNameSettings: () => <button>Asker display names</button>
+}));
 vi.mock('./DeleteAccount', () => ({
 	DeleteAccount: () => <button>Delete account</button>
 }));
@@ -98,6 +101,11 @@ describe('Security and privacy groups', () => {
 		expect(
 			within(privacy).queryByRole('button', { name: 'Delete account' })
 		).toBeNull();
+		expect(
+			within(privacy).queryByRole('button', {
+				name: 'Asker display names'
+			})
+		).toBeNull();
 	});
 
 	it('keeps account deletion in asker privacy without exposing the consultant editor', () => {
@@ -105,6 +113,10 @@ describe('Security and privacy groups', () => {
 		const privacy = screen.getByRole('region', {
 			name: 'profile.securityPrivacy.privacy.title'
 		});
+		// #2175: askers see and edit their per-conversation display names.
+		expect(
+			within(privacy).getByRole('button', { name: 'Asker display names' })
+		).toBeTruthy();
 		expect(
 			within(privacy).getByRole('button', { name: 'Delete account' })
 		).toBeTruthy();

@@ -36,3 +36,68 @@
 		white-space: normal;
 	}
 }
+
+// #2175: an asker's display name per conversation.
+.askerDisplayNameSettings {
+	&__username {
+		display: flex;
+		gap: $grid-base-two;
+		margin: $grid-base-two 0;
+
+		dt {
+			font-weight: $font-weight-medium;
+		}
+
+		dd {
+			margin: 0;
+			overflow-wrap: anywhere;
+		}
+	}
+
+	&__list {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+
+		li {
+			display: flex;
+			flex-wrap: wrap;
+			align-items: center;
+			justify-content: space-between;
+			gap: $grid-base;
+			padding: $grid-base 0;
+			border-top: 1px solid var(--m3-outline-variant, $form-input-border);
+		}
+	}
+
+	&__topic {
+		display: flex;
+		flex-direction: column;
+		font-weight: $font-weight-medium;
+	}
+
+	&__agency {
+		font-weight: normal;
+	}
+
+	&__name,
+	&__edit {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: $grid-base;
+		overflow-wrap: anywhere;
+	}
+
+	&__name {
+		flex-wrap: nowrap;
+
+		> :first-child {
+			min-width: 0;
+		}
+
+		button {
+			flex-shrink: 0;
+		}
+	}
+}
