@@ -6741,7 +6741,11 @@
 			"temporary": "Temporäres Konto",
 			"temporaryHint": "Das Konto wird nach dem Gespräch gelöscht.",
 			"create": "Link erstellen",
-			"createFailed": "Der Link konnte nicht erstellt werden. Bitte versuchen Sie es erneut."
+			"createFailed": "Der Link konnte nicht erstellt werden. Bitte versuchen Sie es erneut.",
+			"name": "Name (optional)",
+			"nameHint": "Z. B. „Termin Frau M.“ – so finden Sie den Link in Ihrer Übersicht wieder.",
+			"scheduledAt": "Datum und Uhrzeit (optional)",
+			"scheduledAtHint": "Nur zur Orientierung – der Link funktioniert auch davor und danach."
 		},
 		"medium": {
 			"chat": "Chat",
@@ -6789,7 +6793,9 @@
 			"topic": "Thema",
 			"mediumFixed": "Art des Kontakts lässt sich nicht ändern",
 			"temporaryHint": "Gilt nur für Personen, die den Link neu öffnen.",
-			"failed": "Die Änderung konnte nicht gespeichert werden. Bitte versuchen Sie es erneut."
+			"failed": "Die Änderung konnte nicht gespeichert werden. Bitte versuchen Sie es erneut.",
+			"scheduledAt": "Datum und Uhrzeit",
+			"clearScheduledAt": "Entfernen"
 		}
 	},
 	"dashboard": {

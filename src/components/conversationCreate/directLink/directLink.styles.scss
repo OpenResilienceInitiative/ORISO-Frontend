@@ -64,6 +64,13 @@
 		justify-content: space-between;
 	}
 
+	/* #2142: optional name and date/time, once the medium is chosen. */
+	&__details {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+	}
+
 	&__temporaryText {
 		color: var(--m3-on-surface, #1b1b1c);
 		display: flex;
@@ -321,6 +328,13 @@
 		hyphens: auto;
 		line-height: 24px;
 		overflow-wrap: break-word;
+	}
+
+	/* #2142: the date and time the counsellor noted. */
+	&__time {
+		color: var(--m3-on-surface, #1a1c1e);
+		font-size: 14px;
+		line-height: 20px;
 	}
 
 	&__meta {

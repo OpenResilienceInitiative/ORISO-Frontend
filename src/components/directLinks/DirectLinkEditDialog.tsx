@@ -6,12 +6,19 @@ import { M3Dialog } from '../m3Dialog/M3Dialog';
 import { OrisoTextField } from '../form/OrisoTextField';
 import { OrisoSelect, OrisoSelectOption } from '../form/OrisoSelect';
 import { Switch } from '../Switch';
-import { DirectLink } from '../conversationCreate/directLink/directLink';
+import {
+	DirectLink,
+	DIRECT_LINK_NAME_MAX
+} from '../conversationCreate/directLink/directLink';
+import {
+	toLocalInputValue,
+	toScheduledAt
+} from '../conversationCreate/directLink/directLinkSchedule';
 import { DirectLinkMediumIcon } from '../conversationCreate/directLink/DirectLinkMediumIcon';
 import { DirectLinkUpdate } from '../../api/apiDirectLinks';
 import './myDirectLinksPage.styles.scss';
 
-export const DIRECT_LINK_NAME_MAX = 100;
+export { DIRECT_LINK_NAME_MAX };
 
 interface DirectLinkEditDialogProps {
 	link: DirectLink | null;
@@ -25,7 +32,8 @@ interface DirectLinkEditDialogProps {
 }
 
 /**
- * #1894: edit name, topic and the temporary switch of a direct link.
+ * #1894: edit name, topic and the temporary switch of a direct link;
+ * #2142: and its optional, informational date and time.
  * The medium is fixed after creation (UserService#1479), so it only shows.
  */
 export const DirectLinkEditDialog = ({
@@ -42,12 +50,14 @@ export const DirectLinkEditDialog = ({
 	const [name, setName] = useState('');
 	const [topicId, setTopicId] = useState('');
 	const [temporary, setTemporary] = useState(false);
+	const [scheduledLocal, setScheduledLocal] = useState('');
 
 	useEffect(() => {
 		if (!link) return;
 		setName(link.name);
 		setTopicId(link.topicId != null ? String(link.topicId) : '');
 		setTemporary(link.temporary);
+		setScheduledLocal(toLocalInputValue(link.scheduledAt));
 	}, [link]);
 
 	if (!link) return null;
@@ -58,6 +68,12 @@ export const DirectLinkEditDialog = ({
 	if (topicId && topicId !== String(link.topicId ?? ''))
 		update.topicId = Number(topicId);
 	if (temporary !== link.temporary) update.temporary = temporary;
+	// #2142: an emptied field removes the date; an unchanged one sends nothing.
+	if (scheduledLocal !== toLocalInputValue(link.scheduledAt)) {
+		const scheduledAt = toScheduledAt(scheduledLocal);
+		if (scheduledAt) update.scheduledAt = scheduledAt;
+		else if (link.scheduledAt) update.clearScheduledAt = true;
+	}
 	const changed = Object.keys(update).length > 0;
 	const valid = trimmed.length > 0 && trimmed.length <= DIRECT_LINK_NAME_MAX;
 
@@ -107,6 +123,29 @@ export const DirectLinkEditDialog = ({
 					inputProps={{ maxLength: DIRECT_LINK_NAME_MAX }}
 					fullWidth
 				/>
+				<div className="directLinkEditDialog__scheduledRow">
+					<OrisoTextField
+						id={`${id}-scheduled`}
+						type="datetime-local"
+						label={t('directLink.edit.scheduledAt')}
+						value={scheduledLocal}
+						onChange={(event) =>
+							setScheduledLocal(event.target.value)
+						}
+						helperText={t('directLink.card.scheduledAtHint')}
+						InputLabelProps={{ shrink: true }}
+						fullWidth
+					/>
+					{scheduledLocal && (
+						<button
+							type="button"
+							className="directLinkEditDialog__clear"
+							onClick={() => setScheduledLocal('')}
+						>
+							{t('directLink.edit.clearScheduledAt')}
+						</button>
+					)}
+				</div>
 				{topics.length > 1 && (
 					<OrisoSelect
 						id={`${id}-topic`}
