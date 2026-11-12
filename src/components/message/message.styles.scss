@@ -1983,12 +1983,8 @@ $message-avatar-overlap: -19px;
 .passageBlur {
 	padding: 0 2px;
 	border-radius: 4px;
-	// A tint of the text colour works on grey, pink and dark bubbles alike.
-	background: color-mix(
-		in srgb,
-		var(--m3-on-surface, #1b1b1c) 14%,
-		transparent
-	);
+	// Darker than every bubble (grey, pink) in light and dark scheme.
+	background: var(--m3-outline-variant, #c4c7c8);
 	color: transparent;
 	text-shadow: 0 0 6px var(--m3-on-surface, #1b1b1c);
 	user-select: none;
