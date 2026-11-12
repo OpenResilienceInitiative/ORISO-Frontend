@@ -1,4 +1,12 @@
 {
+	"addons": {
+		"loadError": "Bu eklenti yüklenemedi.",
+		"notAvailable": "Bu eklenti kullanılamıyor.",
+		"panel": {
+			"region": "Yan panel: {{title}}",
+			"close": "Kapat"
+		}
+	},
 	"askerInfo": {
 		"noPrivacyNotice": {
 			"title": "Gizlilik bildirimi kayıtlı değil",

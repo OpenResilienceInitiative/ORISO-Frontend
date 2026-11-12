@@ -1,4 +1,12 @@
 {
+	"addons": {
+		"loadError": "እዚ ተወሳኺ ክጽዓን ኣይከኣለን።",
+		"notAvailable": "እዚ ተወሳኺ ኣይርከብን።",
+		"panel": {
+			"region": "ናይ ጎኒ ፓነል: {{title}}",
+			"close": "ዕጾ"
+		}
+	},
 	"askerInfo": {
 		"noPrivacyNotice": {
 			"title": "ናይ ምስጢር ሓበሬታ መምርሒ ኣይተቐመጠን",

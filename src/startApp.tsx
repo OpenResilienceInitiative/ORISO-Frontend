@@ -23,6 +23,7 @@ import { initMeterProvider } from './utils/observability/meterProvider';
 import { initWebVitals } from './utils/observability/webVitals';
 import { initUtdTracking } from './utils/observability/utdTracker';
 import { lazyWithReload } from './utils/chunkLoadRecovery';
+import { installAddonShared } from './addons/addonShared';
 
 // OBS-P8 (ORISO-Helm#62): browser-side Real User Monitoring. Register the
 // MeterProvider before anything else gets a chance to call
@@ -76,6 +77,9 @@ const AppThemeProvider = ({ children }: { children: React.ReactNode }) => {
 purgeLegacyDraftStorage();
 // Parked recovery keys the login password protects expire after a week.
 purgeParkedRecoveryKeys('expired');
+
+// Add-ons render with this React instead of bundling their own (ADR-032).
+installAddonShared();
 
 // React 19 uses createRoot API
 syncLocalTenantCookie();

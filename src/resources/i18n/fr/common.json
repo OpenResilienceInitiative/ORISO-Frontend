@@ -1,4 +1,12 @@
 {
+	"addons": {
+		"loadError": "Ce module complémentaire n'a pas pu être chargé.",
+		"notAvailable": "Ce module complémentaire n'est pas disponible.",
+		"panel": {
+			"region": "Panneau latéral : {{title}}",
+			"close": "Fermer"
+		}
+	},
 	"askerInfo": {
 		"noPrivacyNotice": {
 			"title": "Aucune politique de confidentialité enregistrée",

@@ -22,6 +22,13 @@ import { useAskerHasAssignedConsultant } from '../../containers/bookings/hooks/u
 import { TermsAndConditions } from '../termsandconditions/TermsAndConditions';
 import NotFound from '../notFound/NotFound';
 import { SessionsZone } from './SessionsZone';
+import { LocaleContext } from '../../globalState';
+import {
+	useAddonRegistry,
+	useAddonRegistryLoader
+} from '../../addons/addonRegistry';
+import { addonNavigationItems } from '../../addons/addonNavigation';
+import { AddonPage } from '../../addons/AddonPage';
 import { toV7Paths } from '../../utils/routeHelpers';
 
 interface RoutingProps {
@@ -34,13 +41,33 @@ export const Routing = (props: RoutingProps) => {
 	const { userData } = useContext(UserDataContext);
 	const { consultingTypes } = useContext(ConsultingTypesContext);
 	const hasAssignedConsultant = useAskerHasAssignedConsultant();
+	const { locale } = useContext(LocaleContext);
+	useAddonRegistryLoader(userData?.userId);
+	const addonRegistry = useAddonRegistry();
 
 	const routerConfig = useMemo(() => {
-		if (hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)) {
-			return RouterConfigConsultant(settings);
-		}
-		return RouterConfigUser(settings, hasAssignedConsultant);
-	}, [userData, settings, hasAssignedConsultant]);
+		const consultant = hasUserAuthority(
+			AUTHORITIES.CONSULTANT_DEFAULT,
+			userData
+		);
+		const base = consultant
+			? RouterConfigConsultant(settings)
+			: RouterConfigUser(settings, hasAssignedConsultant);
+		const addonItems = addonNavigationItems(
+			addonRegistry.addons,
+			consultant ? 'consultant.navigation' : 'asker.navigation',
+			locale
+		);
+		return addonItems.length === 0
+			? base
+			: { ...base, navigation: [...base.navigation, ...addonItems] };
+	}, [
+		userData,
+		settings,
+		hasAssignedConsultant,
+		addonRegistry.addons,
+		locale
+	]);
 
 	const isConsultant = hasUserAuthority(
 		AUTHORITIES.CONSULTANT_DEFAULT,
@@ -184,6 +211,15 @@ export const Routing = (props: RoutingProps) => {
 						/>
 					))
 				)}
+
+				<Route
+					path="addons/:addonName/:appId"
+					element={
+						<div className="contentWrapper__addon">
+							<AddonPage />
+						</div>
+					}
+				/>
 
 				{/* Temporary route for 404 page testing */}
 				<Route path="404" element={<NotFound />} />

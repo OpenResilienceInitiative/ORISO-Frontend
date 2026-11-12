@@ -1,4 +1,12 @@
 {
+	"addons": {
+		"loadError": "Diese Erweiterung konnte nicht geladen werden.",
+		"notAvailable": "Diese Erweiterung ist nicht verfügbar.",
+		"panel": {
+			"region": "Seitenbereich: {{title}}",
+			"close": "Schließen"
+		}
+	},
 	"askerInfo": {
 		"noPrivacyNotice": {
 			"title": "Keine Datenschutzerklärung hinterlegt",
