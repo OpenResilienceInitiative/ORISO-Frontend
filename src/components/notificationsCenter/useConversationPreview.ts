@@ -12,6 +12,9 @@ import {
 } from '../../globalState/helpers/stateHelpers';
 import type { NotificationFeedItem } from '../../globalState/provider/NotificationsProvider';
 import { useSession } from '../../hooks/useSession';
+import { resolveFeaturesForAgencyPolicy } from '../../hooks/useConversationFeatureSettings';
+import { useSessionAgencyPolicy } from '../../hooks/useSessionAgencyPolicy';
+import { resolveConversationAgencyId } from '../../utils/conversationFeatureSettings';
 import { useTeamDiscussionChannel } from '../../hooks/useTeamDiscussionChannel';
 import { chatTransportService } from '../../services/chatTransportService';
 import { decodeUsername } from '../../utils/encryptionHelpers';
@@ -132,7 +135,18 @@ export const useConversationPreview = (
 	);
 	const sessionId = session?.item?.id as number | undefined;
 	const isConsultant = userData ? isConsultantUser(userData) : undefined;
-	const tenant = getTenantSettings() || {};
+	// Same effective platform -> Traeger -> agency result the opened chat uses.
+	const agencyId = resolveConversationAgencyId(session?.item);
+	const { policy: agencyPolicy } = useSessionAgencyPolicy(
+		roomId ?? undefined,
+		agencyId
+	);
+	const tenant = resolveFeaturesForAgencyPolicy(
+		getTenantSettings() || {},
+		agencyPolicy,
+		agencyId,
+		agencyPolicy?.tenantId
+	);
 
 	// The chat learns the side room and the viewer's supervisor role from the
 	// same request (ADR-008).

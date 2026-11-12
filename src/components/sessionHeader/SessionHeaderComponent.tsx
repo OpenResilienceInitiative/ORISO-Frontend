@@ -102,6 +102,7 @@ import { useTopic } from '../../globalState';
 import { Button, ButtonItem, BUTTON_TYPES } from '../button/Button';
 import { OrisoTextarea } from '../form/OrisoTextarea';
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
+import { useConversationFeatureSettings } from '../../hooks/useConversationFeatureSettings';
 import { SYSTEM_NOTIFICATION_PREFIX } from '../message/messageConstants';
 import { messageEventEmitter } from '../../services/messageEventEmitter';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
@@ -199,7 +200,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		featureSupervisionEnabled = true,
 		featureSupervisionAnonymousChatsEnabled = true,
 		featureSupervisionOneOnOneChatsEnabled = true
-	} = getTenantSettings();
+	} = useConversationFeatureSettings(getTenantSettings());
 
 	const contact = getContact(activeSession);
 	const userSessionData = contact?.sessionData;

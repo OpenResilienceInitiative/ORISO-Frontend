@@ -532,8 +532,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const [robotSequenceVisibleCount, setRobotSequenceVisibleCount] =
 		useState(0);
 
-	// Threads feature toggle (tenant-level). Master switch disables for all chat types.
-	// When enabled, per-chat-type switches decide if threads are available in 1-on-1 vs group chats.
+	// Threads/supervision toggles: effective platform -> Traeger -> agency result.
+	// Master switch disables for all chat types; per-chat-type switches refine it.
+	const conversationFeatures =
+		useConversationFeatureSettings(getTenantSettings());
 	const {
 		featureSupervisionEnabled = true,
 		featureSupervisionAnonymousChatsEnabled = true,
@@ -543,7 +545,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		featureThreadsGroupChatsEnabled = true,
 		featureThreadsOneOnOneEnabled = true,
 		featureThreadsSupervisionChatsEnabled = true
-	} = getTenantSettings();
+	} = conversationFeatures;
 	const contact = getContact(activeSession);
 	const isAnonymousChat = getModality(activeSession) === Modality.LIVE_CHAT;
 	const chatType: 'anonymous' | 'oneOnOne' | 'group' | 'supervision' =
@@ -2859,8 +2861,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	// (`call/callFeatureGates.ts`) — only the room differs: the call goes to
 	// the SIDE room, so its Element Call room is created from
 	// `supervisionRoomId` and admits exactly that room's members.
-	const supervisionFeatures =
-		useConversationFeatureSettings(getTenantSettings());
+	const supervisionFeatures = conversationFeatures;
 	const supervisionCallGates =
 		resolveSupervisionCallFeatureGates(supervisionFeatures);
 	// Role/session eligibility is separate from the feature-policy helper.
