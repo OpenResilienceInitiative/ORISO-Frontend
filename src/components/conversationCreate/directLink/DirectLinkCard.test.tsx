@@ -114,4 +114,30 @@ describe('DirectLinkCard', () => {
 			temporary: false
 		});
 	});
+
+	/* CodeRabbit on #2234: a half-typed date reads as '' with badInput. */
+	it('does not create the link while the date/time is incomplete', () => {
+		const onCreate = vi.fn();
+		render(
+			<DirectLinkCard
+				topics={[{ value: '4', label: 'Sucht' }]}
+				onCreate={onCreate}
+			/>
+		);
+		fireEvent.click(
+			screen.getByRole('button', { name: 'directLink.medium.video' })
+		);
+		const input = screen.getByLabelText(
+			'directLink.card.scheduledAt'
+		) as HTMLInputElement;
+		Object.defineProperty(input, 'validity', {
+			configurable: true,
+			value: { badInput: true, valid: false }
+		});
+		fireEvent.click(create());
+		expect(onCreate).not.toHaveBeenCalled();
+		expect(
+			screen.getByText('directLink.card.scheduledAtIncomplete')
+		).toBeTruthy();
+	});
 });

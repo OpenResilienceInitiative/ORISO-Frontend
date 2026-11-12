@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import { M3Dialog } from '../m3Dialog/M3Dialog';
@@ -51,6 +51,10 @@ export const DirectLinkEditDialog = ({
 	const [topicId, setTopicId] = useState('');
 	const [temporary, setTemporary] = useState(false);
 	const [scheduledLocal, setScheduledLocal] = useState('');
+	/* A half-typed datetime-local reads as '' with `validity.badInput`;
+	   that must not count as removing the date. */
+	const scheduledRef = useRef<HTMLInputElement | null>(null);
+	const [scheduledIncomplete, setScheduledIncomplete] = useState(false);
 
 	useEffect(() => {
 		if (!link) return;
@@ -58,6 +62,7 @@ export const DirectLinkEditDialog = ({
 		setTopicId(link.topicId != null ? String(link.topicId) : '');
 		setTemporary(link.temporary);
 		setScheduledLocal(toLocalInputValue(link.scheduledAt));
+		setScheduledIncomplete(false);
 	}, [link]);
 
 	if (!link) return null;
@@ -75,7 +80,10 @@ export const DirectLinkEditDialog = ({
 		else if (link.scheduledAt) update.clearScheduledAt = true;
 	}
 	const changed = Object.keys(update).length > 0;
-	const valid = trimmed.length > 0 && trimmed.length <= DIRECT_LINK_NAME_MAX;
+	const valid =
+		trimmed.length > 0 &&
+		trimmed.length <= DIRECT_LINK_NAME_MAX &&
+		!scheduledIncomplete;
 
 	return (
 		<M3Dialog
@@ -92,7 +100,13 @@ export const DirectLinkEditDialog = ({
 				{ label: t('directLink.edit.cancel'), onClick: onClose },
 				{
 					label: t('directLink.edit.save'),
-					onClick: () => onSave(link, update),
+					onClick: () => {
+						if (scheduledRef.current?.validity?.badInput) {
+							setScheduledIncomplete(true);
+							return;
+						}
+						onSave(link, update);
+					},
 					primary: true,
 					disabled: !changed || !valid || saving,
 					testId: 'direct-link-edit-save'
@@ -129,10 +143,19 @@ export const DirectLinkEditDialog = ({
 						type="datetime-local"
 						label={t('directLink.edit.scheduledAt')}
 						value={scheduledLocal}
-						onChange={(event) =>
-							setScheduledLocal(event.target.value)
-						}
-						helperText={t('directLink.card.scheduledAtHint')}
+						inputRef={scheduledRef}
+						onChange={(event) => {
+							setScheduledLocal(event.target.value);
+							setScheduledIncomplete(
+								Boolean(event.target.validity?.badInput)
+							);
+						}}
+						error={scheduledIncomplete}
+						helperText={t(
+							scheduledIncomplete
+								? 'directLink.card.scheduledAtIncomplete'
+								: 'directLink.card.scheduledAtHint'
+						)}
 						InputLabelProps={{ shrink: true }}
 						fullWidth
 					/>
@@ -140,7 +163,10 @@ export const DirectLinkEditDialog = ({
 						<button
 							type="button"
 							className="directLinkEditDialog__clear"
-							onClick={() => setScheduledLocal('')}
+							onClick={() => {
+								setScheduledLocal('');
+								setScheduledIncomplete(false);
+							}}
 						>
 							{t('directLink.edit.clearScheduledAt')}
 						</button>

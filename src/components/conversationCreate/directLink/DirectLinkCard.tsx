@@ -80,6 +80,10 @@ export const DirectLinkCard = ({
 	const [temporary, setTemporary] = useState(false);
 	const [name, setName] = useState('');
 	const [scheduledLocal, setScheduledLocal] = useState('');
+	/* A half-typed datetime-local reads as '' with `validity.badInput`;
+	   it must not silently create the link without its date. */
+	const scheduledRef = useRef<HTMLInputElement | null>(null);
+	const [scheduledIncomplete, setScheduledIncomplete] = useState(false);
 
 	const chooseMedium = (next: DirectLinkMedium) => {
 		setMedium(next);
@@ -230,10 +234,19 @@ export const DirectLinkCard = ({
 							type="datetime-local"
 							label={t('directLink.card.scheduledAt')}
 							value={scheduledLocal}
-							onChange={(event) =>
-								setScheduledLocal(event.target.value)
-							}
-							helperText={t('directLink.card.scheduledAtHint')}
+							inputRef={scheduledRef}
+							onChange={(event) => {
+								setScheduledLocal(event.target.value);
+								setScheduledIncomplete(
+									Boolean(event.target.validity?.badInput)
+								);
+							}}
+							error={scheduledIncomplete}
+							helperText={t(
+								scheduledIncomplete
+									? 'directLink.card.scheduledAtIncomplete'
+									: 'directLink.card.scheduledAtHint'
+							)}
 							InputLabelProps={{ shrink: true }}
 							size="small"
 							fullWidth
@@ -249,6 +262,11 @@ export const DirectLinkCard = ({
 					aria-busy={isSubmitting || undefined}
 					onClick={() => {
 						if (!medium) return;
+						if (scheduledRef.current?.validity?.badInput) {
+							setScheduledIncomplete(true);
+							scheduledRef.current.focus();
+							return;
+						}
 						const trimmed = name.trim();
 						const scheduledAt = toScheduledAt(scheduledLocal);
 						onCreate({

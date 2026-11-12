@@ -267,6 +267,37 @@ describe('My direct links (#1894)', () => {
 		);
 	});
 
+	it('keeps the date when the edited date/time is incomplete', async () => {
+		vi.mocked(apiGetOwnDirectLinks).mockResolvedValue([
+			{
+				...flyer,
+				scheduledAt: new Date(2026, 10, 20, 14, 30).toISOString()
+			}
+		]);
+		renderPage();
+		await screen.findByText('Flyer Schule');
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'directLink.list.edit:Flyer Schule'
+			})
+		);
+		const dialog = await screen.findByTestId('direct-link-edit-dialog');
+		const input = within(dialog).getByLabelText(
+			'directLink.edit.scheduledAt'
+		) as HTMLInputElement;
+		Object.defineProperty(input, 'validity', {
+			configurable: true,
+			value: { badInput: true, valid: false }
+		});
+		fireEvent.change(input, { target: { value: '' } });
+		fireEvent.click(within(dialog).getByTestId('direct-link-edit-save'));
+
+		expect(apiUpdateDirectLink).not.toHaveBeenCalled();
+		expect(
+			within(dialog).getByText('directLink.card.scheduledAtIncomplete')
+		).toBeTruthy();
+	});
+
 	it('changes the temporary switch for new people only', async () => {
 		vi.mocked(apiUpdateDirectLink).mockResolvedValue({
 			...flyer,

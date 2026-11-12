@@ -6745,7 +6745,8 @@
 			"name": "Name (optional)",
 			"nameHint": "Z. B. „Termin Frau M.“ – so finden Sie den Link in Ihrer Übersicht wieder.",
 			"scheduledAt": "Datum und Uhrzeit (optional)",
-			"scheduledAtHint": "Nur zur Orientierung – der Link funktioniert auch davor und danach."
+			"scheduledAtHint": "Nur zur Orientierung – der Link funktioniert auch davor und danach.",
+			"scheduledAtIncomplete": "Bitte Datum und Uhrzeit vollständig eingeben oder das Feld leeren."
 		},
 		"medium": {
 			"chat": "Chat",
