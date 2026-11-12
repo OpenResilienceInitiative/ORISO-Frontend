@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { ReactComponent as StackVerticalIcon } from '../../resources/img/icons/stack-vertical.svg';
 import { ReactComponent as DeliverySentIcon } from '../../resources/img/icons/delivery-sent.svg';
-import { ReactComponent as InfoIcon } from '../../resources/img/icons/i.svg';
+import { ICON_INFO, SystemMessageIcon } from './SystemMessage';
 import './message.styles.scss';
 
 export interface ChatSystemMessageCardProps {
@@ -17,10 +17,10 @@ export interface ChatSystemMessageCardProps {
 /**
  * Reuses the ordinary incoming-message anatomy for a system entry.
  *
- * The avatar is the info glyph, not the Carimat robot: this card is written
- * by the platform (a call started or ended), not by the chatbot, and the
- * robot made it read as a scripted bot message (#2237, checkpoint 4). The
- * info glyph is the one `SystemMessage` already uses for system notices.
+ * The avatar is the system-notice info icon from `SystemMessage` (Storybook:
+ * Chat/System messages/General notices), not the Carimat robot: this card is
+ * written by the platform (a call started or ended), not by the chatbot
+ * (#2237, checkpoint 4). Same component, so same glyph, size and colour.
  */
 export const ChatSystemMessageCard = ({
 	title,
@@ -44,12 +44,7 @@ export const ChatSystemMessageCard = ({
 							className="messageItem__avatar messageItem__avatar--system"
 							data-testid="chat-system-message-avatar"
 						>
-							<span
-								className="messageItem__systemAvatarIcon"
-								aria-hidden
-							>
-								<InfoIcon focusable="false" />
-							</span>
+							<SystemMessageIcon icon={ICON_INFO} />
 						</div>
 						{onOpenMenu ? (
 							<button

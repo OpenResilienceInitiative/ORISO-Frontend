@@ -9,7 +9,7 @@ import {
 	waitFor
 } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vite-plus/test';
-import { CallTimelineMessage } from './CallTimelineMessage';
+import { CallTimelineMessage, formatCallDuration } from './CallTimelineMessage';
 import {
 	claimKnock,
 	isKnockClaimed,
@@ -44,12 +44,17 @@ const ui = vi.hoisted(() => ({ language: '' }));
 
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({
-		t: (key: string, values?: { start?: string; name?: string }) =>
+		t: (
+			key: string,
+			values?: { start?: string; name?: string; duration?: string }
+		) =>
 			values?.start
 				? `${key}: ${values.start}`
 				: values?.name
 					? `${key}: ${values.name}`
-					: key,
+					: values?.duration
+						? `${key}: ${values.duration}`
+						: key,
 		i18n: ui
 	})
 }));
@@ -224,9 +229,67 @@ it('does not describe an invitation timestamp as the call start', () => {
 	expect(
 		screen.queryByText(/message\.callLifecycle\.description\.ended:/)
 	).toBeNull();
+	// Only the description falls back to the label; the title is the call
+	// type (and topic), no longer the state a second time (#2237).
 	expect(screen.getAllByText('videoCall.timeline.video.ended')).toHaveLength(
-		2
+		1
 	);
+	expect(screen.getByText('message.callLifecycle.type.video')).toBeTruthy();
+});
+
+it('titles the card with the call type and the conversation topic (#2237)', () => {
+	const call: CallLifecycleMessage = {
+		callId: 'topic-call',
+		roomRef: '!source:example',
+		callRoomId: '!media:example',
+		callType: 'audio',
+		state: 'ended',
+		participants: []
+	};
+	render(
+		<ActiveSessionContext.Provider
+			value={
+				{
+					activeSession: { item: { topic: { name: 'Schulden' } } }
+				} as never
+			}
+		>
+			<CallTimelineMessage call={call} />
+		</ActiveSessionContext.Provider>
+	);
+	expect(
+		screen.getByText('message.callLifecycle.type.audio · Schulden')
+	).toBeTruthy();
+});
+
+it('counts a running call up every second from its start (#2237)', () => {
+	vi.useFakeTimers();
+	vi.setSystemTime(new Date('2026-11-12T22:00:00.000Z'));
+	try {
+		const call: CallLifecycleMessage = {
+			callId: 'live-call',
+			roomRef: '!source:example',
+			callRoomId: '!media:example',
+			callType: 'video',
+			state: 'running',
+			startedAt: '2026-11-12T21:55:58.000Z',
+			participants: []
+		};
+		render(<CallTimelineMessage call={call} />);
+		const timer = screen.getByRole('timer');
+		expect(timer.textContent).toContain('04:02');
+		act(() => {
+			vi.advanceTimersByTime(3000);
+		});
+		expect(timer.textContent).toContain('04:05');
+	} finally {
+		vi.useRealTimers();
+	}
+});
+
+it('formats call durations from one hour on with hours', () => {
+	expect(formatCallDuration(65)).toBe('01:05');
+	expect(formatCallDuration(3725)).toBe('1:02:05');
 });
 
 it('says who is in the call now, not who has ever been', () => {

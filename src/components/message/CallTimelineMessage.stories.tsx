@@ -2,10 +2,15 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { CallTimelineMessage } from './CallTimelineMessage';
 import {
-	withMessageShell,
+	withMessageContexts,
 	type MessageStoryParameters
 } from './messageStoryShell';
+import { mockActiveSessionGroup } from './MessageItemComponent.mocks';
 import './message.styles.scss';
+
+/** A running call that started 4:12 ago, so the live timer has something to show. */
+const startedMinutesAgo = () =>
+	new Date(Date.now() - (4 * 60 + 12) * 1000).toISOString();
 
 const meta = {
 	title: 'Components/Chat/CallTimelineMessage',
@@ -13,7 +18,8 @@ const meta = {
 	tags: ['autodocs'],
 	decorators: [
 		(Story, context) =>
-			withMessageShell(Story, {
+			// With a session, so the title can name the conversation's topic.
+			withMessageContexts(Story, {
 				parameters: context.parameters as MessageStoryParameters
 			})
 	],
@@ -24,6 +30,7 @@ const meta = {
 			callRoomId: '!media:example',
 			state: 'ended',
 			callType: 'video',
+			startedAt: '2026-11-12T21:40:00.000Z',
 			durationSeconds: 125,
 			participants: [
 				{ userId: '@alex:example', displayName: 'Alex Test' },
@@ -104,6 +111,7 @@ export const Running: Story = {
 		call: {
 			...meta.args.call,
 			state: 'running',
+			startedAt: startedMinutesAgo(),
 			durationSeconds: undefined
 		}
 	},
@@ -136,15 +144,19 @@ export const AudioRunning: Story = {
 
 /**
  * Frank's Dev screenshot (#2237, checkpoint 4): a running group call. The
- * card carries the info glyph of a system message, not the Carimat robot,
- * and the people in the call are 40px faces without the heavy ring.
+ * card carries the SystemMessage info icon, not the Carimat robot; the title
+ * names the call type and the conversation's topic; a live timer shows how
+ * long the call has been running; the people in the call are 40px faces
+ * without the heavy ring, named in a tooltip on hover.
  */
 export const RunningGroupCall: Story = {
+	parameters: { activeSession: mockActiveSessionGroup() },
 	args: {
 		onJoin: fn(async () => 'joined' as const),
 		call: {
 			...meta.args.call,
 			state: 'running',
+			startedAt: startedMinutesAgo(),
 			durationSeconds: undefined,
 			present: [
 				{ userId: '@alex:example', displayName: 'Alex Test' },
@@ -161,9 +173,22 @@ export const RunningGroupCall: Story = {
 				})
 			).toBeVisible()
 		);
+		// The system-notice icon from SystemMessage, not a look-alike.
 		await expect(
-			canvasElement.querySelector('.messageItem__avatar--system svg')
+			canvasElement.querySelector(
+				'.messageItem__avatar--system svg.systemMessage__icon'
+			)
 		).not.toBeNull();
+		// Title: call type and topic, not the state twice.
+		await expect(
+			canvas.getByText(/(Videoanruf|Video call) · Interner Gruppenchat/)
+		).toBeVisible();
+		// A running call counts up.
+		const timer = canvas.getByRole('timer');
+		const first = timer.textContent;
+		await waitFor(() => expect(timer.textContent).not.toBe(first), {
+			timeout: 2500
+		});
 		await expect(
 			canvasElement.querySelector('.messageItem__botAvatarIcon')
 		).toBeNull();

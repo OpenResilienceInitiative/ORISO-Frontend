@@ -152,7 +152,22 @@ export const CallTimelineSystemMessage = ({
 							color: colors.onSurface
 						}}
 					>
-						{running ? statusLabel : durationLabel || statusLabel}
+						{/*
+						 * The call's length, not its state again (#2237): the
+						 * state already sits under the title. While the call
+						 * runs the caller ticks this every second, so it is a
+						 * `timer` — implicitly not live, or the surrounding
+						 * status region would read it out once a second.
+						 */}
+						<Box
+							component="span"
+							role={
+								running && durationLabel ? 'timer' : undefined
+							}
+							data-cy="call-timeline-duration"
+						>
+							{durationLabel || statusLabel}
+						</Box>
 					</Typography>
 				</Stack>
 

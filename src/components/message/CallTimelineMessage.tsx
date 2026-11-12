@@ -19,6 +19,29 @@ import type {
 const joinFailedFor = (result: CallJoinResult) =>
 	result !== 'joined' && result !== 'cancelled';
 
+/** mm:ss, and h:mm:ss from one hour on. */
+export const formatCallDuration = (totalSeconds: number) => {
+	const hours = Math.floor(totalSeconds / 3600);
+	const minutes = Math.floor((totalSeconds % 3600) / 60);
+	const secs = Math.floor(totalSeconds % 60);
+	const pad = (value: number) => value.toString().padStart(2, '0');
+	return hours > 0
+		? `${hours}:${pad(minutes)}:${pad(secs)}`
+		: `${pad(minutes)}:${pad(secs)}`;
+};
+
+/** The current time, re-read every second while `active`. */
+const useSecondClock = (active: boolean) => {
+	const [now, setNow] = React.useState(() => Date.now());
+	React.useEffect(() => {
+		if (!active) return;
+		setNow(Date.now());
+		const timer = window.setInterval(() => setNow(Date.now()), 1000);
+		return () => window.clearInterval(timer);
+	}, [active]);
+	return now;
+};
+
 /** A durable room notice, independent of the current browser's call window. */
 export const CallTimelineMessage = ({
 	call: initialCall,
@@ -157,6 +180,19 @@ export const CallTimelineMessage = ({
 	);
 	const label = t(`videoCall.timeline.${call.callType}.${call.state}`);
 	const callLabel = t(`message.callLifecycle.type.${call.callType}`);
+	/*
+	 * Which conversation the call belongs to (#2237): the conversation's topic,
+	 * as the session list and the group info name it. The title used to repeat
+	 * the state ("Videoanruf läuft" over "Läuft").
+	 */
+	const rawTopic = activeSession?.item?.topic as
+		| string
+		| { name?: string }
+		| undefined;
+	const topic = (
+		typeof rawTopic === 'string' ? rawTopic : rawTopic?.name
+	)?.trim();
+	const headline = topic ? `${callLabel} · ${topic}` : callLabel;
 	const statusLabel = t(`message.callLifecycle.state.${call.state}`);
 	const startedAt = call.startedAt;
 	const formattedStart = startedAt
@@ -173,22 +209,27 @@ export const CallTimelineMessage = ({
 				name: actorName
 			})}`
 		: baseDescription;
-	const seconds = call.durationSeconds;
-	const duration =
-		seconds === undefined
-			? null
-			: `${Math.floor(seconds / 60)
-					.toString()
-					.padStart(2, '0')}:${Math.floor(seconds % 60)
-					.toString()
-					.padStart(2, '0')}`;
+	/*
+	 * A running call counts up from its start, every second (#2237), so the
+	 * card answers "how long has this been going on" without arithmetic.
+	 */
+	const runningSince =
+		call.state === 'running' && startedAt
+			? new Date(startedAt).getTime()
+			: undefined;
+	const now = useSecondClock(runningSince !== undefined);
+	const seconds =
+		runningSince !== undefined && !Number.isNaN(runningSince)
+			? Math.max(0, Math.floor((now - runningSince) / 1000))
+			: call.durationSeconds;
+	const duration = seconds === undefined ? null : formatCallDuration(seconds);
 	return (
 		<>
 			<CallTimelineSystemMessage
 				state={call.state}
 				callType={call.callType}
 				callLabel={callLabel}
-				headline={label}
+				headline={headline}
 				statusLabel={statusLabel}
 				description={description}
 				durationLabel={
