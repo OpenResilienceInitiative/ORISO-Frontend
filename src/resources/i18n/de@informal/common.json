@@ -405,8 +405,7 @@
 			},
 			"rules": {
 				"subline": "Einmal kurz lesen – dann bist du dabei."
-			},
-			"waitingForAdmission": "Angemeldet"
+			}
 		},
 		"info": {
 			"gallery": {
