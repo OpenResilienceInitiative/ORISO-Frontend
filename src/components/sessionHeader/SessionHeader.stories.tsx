@@ -1574,11 +1574,22 @@ export const NextAppointmentGroupCoModerator: Story = {
  * "Termin anlegen" is a row of the ⋮ menu.
  * ------------------------------------------------------------------ */
 
+// Relative to now: the slot only shows upcoming appointments, so a fixed
+// calendar date makes this story fail once that date has passed.
+const storyAppointmentStart = (() => {
+	const start = new Date();
+	start.setDate(start.getDate() + 1);
+	start.setHours(16, 0, 0, 0);
+	return start;
+})();
+
 const storyAppointment = {
 	id: '6f1c1a70-0000-4000-8000-000000000001',
 	sessionId: 4401,
-	startTime: new Date('2026-11-12T16:00:00').toISOString(),
-	endTime: new Date('2026-11-12T17:00:00').toISOString(),
+	startTime: storyAppointmentStart.toISOString(),
+	endTime: new Date(
+		storyAppointmentStart.getTime() + 60 * 60 * 1000
+	).toISOString(),
 	status: 'SCHEDULED',
 	counterpart: { username: 'ruhiges_yak_kim' }
 };
