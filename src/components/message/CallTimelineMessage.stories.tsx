@@ -134,6 +134,44 @@ export const AudioRunning: Story = {
 	}
 };
 
+/**
+ * Frank's Dev screenshot (#2237, checkpoint 4): a running group call. The
+ * card carries the info glyph of a system message, not the Carimat robot,
+ * and the people in the call are 40px faces without the heavy ring.
+ */
+export const RunningGroupCall: Story = {
+	args: {
+		onJoin: fn(async () => 'joined' as const),
+		call: {
+			...meta.args.call,
+			state: 'running',
+			durationSeconds: undefined,
+			present: [
+				{ userId: '@alex:example', displayName: 'Alex Test' },
+				{ userId: '@sam:example', displayName: 'Sam Test' },
+				{ userId: '@kim:example', displayName: 'Kim Test' }
+			]
+		}
+	},
+	play: async ({ canvas, canvasElement }) => {
+		await waitFor(() =>
+			expect(
+				canvas.getByRole('status', {
+					name: /Videoanruf: Läuft|Video call: In progress/
+				})
+			).toBeVisible()
+		);
+		await expect(
+			canvasElement.querySelector('.messageItem__avatar--system svg')
+		).not.toBeNull();
+		await expect(
+			canvasElement.querySelector('.messageItem__botAvatarIcon')
+		).toBeNull();
+		const face = canvas.getByRole('img', { name: /Kim Test/ });
+		await expect(face.getBoundingClientRect().width).toBe(40);
+	}
+};
+
 export const ReloadedEndedCall: Story = {
 	args: {
 		call: {

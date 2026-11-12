@@ -35,6 +35,9 @@ export interface CallTimelineSystemMessageProps {
 	onAction?: () => void;
 }
 
+/** Participant faces on the call card (#2237): large enough to recognise. */
+export const PARTICIPANT_AVATAR_SIZE = 40;
+
 const colors = {
 	primary: 'var(--m3-primary, #ba1a1a)',
 	onPrimary: 'var(--m3-on-primary, #ffffff)',
@@ -169,23 +172,32 @@ export const CallTimelineSystemMessage = ({
 						>
 							{participantsLabel} · {participants.length}
 						</Typography>
+						{/*
+						 * Readable at a glance (#2237, checkpoint 4): 40px faces
+						 * side by side. The white ring and grey outline the
+						 * shared avatar adds by default shrank the face to 24px
+						 * inside a 32px footprint and drew a heavy circle round
+						 * it, so both are off here; without a ring the faces
+						 * must not overlap, hence the gap instead of -8px.
+						 */}
 						<Box
 							sx={{
 								display: 'flex',
 								alignItems: 'center',
+								flexWrap: 'wrap',
+								justifyContent: 'flex-end',
+								gap: 0.5,
 								pl: 1
 							}}
 						>
-							{participants.map((participant, index) => (
-								<Box
+							{participants.map((participant) => (
+								<UserAvatar
 									key={participant.userId}
-									sx={{
-										ml: index === 0 ? 0 : '-8px',
-										zIndex: 20 - index
-									}}
-								>
-									<UserAvatar {...participant} size="32px" />
-								</Box>
+									{...participant}
+									size={PARTICIPANT_AVATAR_SIZE}
+									ring={false}
+									outline={false}
+								/>
 							))}
 						</Box>
 					</Stack>

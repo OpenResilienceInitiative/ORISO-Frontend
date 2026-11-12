@@ -71,6 +71,42 @@ describe('CallTimelineSystemMessage', () => {
 		expect(screen.getByRole('img', { name: 'Calm Wolf' })).toBeTruthy();
 	});
 
+	it('reads as a system message: info glyph avatar, large ringless faces (#2237)', () => {
+		const view = render(
+			<CallTimelineSystemMessage
+				state="running"
+				callType="video"
+				callLabel="Video call"
+				headline="Video call in progress"
+				statusLabel="In progress"
+				description="The call is active."
+				participantsLabel="In the call"
+				participants={[
+					{
+						userId: '@yak:example',
+						username: 'Gentle Yak',
+						displayName: 'Gentle Yak'
+					}
+				]}
+			/>
+		);
+
+		const systemAvatar = screen.getByTestId('chat-system-message-avatar');
+		expect(systemAvatar.className).toContain('messageItem__avatar--system');
+		expect(systemAvatar.className).not.toContain(
+			'messageItem__avatar--bot'
+		);
+		expect(
+			view.container.querySelector('.messageItem__botAvatarIcon')
+		).toBeNull();
+
+		const face = screen.getByRole('img', { name: 'Gentle Yak' });
+		expect(face.style.width).toBe('40px');
+		expect(face.style.height).toBe('40px');
+		// No white ring around the face.
+		expect(face.style.boxShadow).toBe('none');
+	});
+
 	it('keeps the selected M3 action letter spacing', () => {
 		render(
 			<CallTimelineSystemMessage

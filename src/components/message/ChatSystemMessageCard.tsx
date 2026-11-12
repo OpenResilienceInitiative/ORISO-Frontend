@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { ReactComponent as StackVerticalIcon } from '../../resources/img/icons/stack-vertical.svg';
 import { ReactComponent as DeliverySentIcon } from '../../resources/img/icons/delivery-sent.svg';
-import { CarimatRobotIcon } from '../pseudonym/PrivacyMessageCard';
+import { ReactComponent as InfoIcon } from '../../resources/img/icons/i.svg';
 import './message.styles.scss';
 
 export interface ChatSystemMessageCardProps {
@@ -14,7 +14,14 @@ export interface ChatSystemMessageCardProps {
 	dataCy?: string;
 }
 
-/** Reuses the ordinary incoming-message anatomy for a Carimat system entry. */
+/**
+ * Reuses the ordinary incoming-message anatomy for a system entry.
+ *
+ * The avatar is the info glyph, not the Carimat robot: this card is written
+ * by the platform (a call started or ended), not by the chatbot, and the
+ * robot made it read as a scripted bot message (#2237, checkpoint 4). The
+ * info glyph is the one `SystemMessage` already uses for system notices.
+ */
 export const ChatSystemMessageCard = ({
 	title,
 	subtitle,
@@ -33,12 +40,15 @@ export const ChatSystemMessageCard = ({
 			<div className="messageItem__messageWrap messageItem__messageWrap--left">
 				<div className="messageItem__sideColumn messageItem__sideColumn--left">
 					<div className="messageItem__sideColumnGroup messageItem__sideColumnGroup--left">
-						<div className="messageItem__avatar messageItem__avatar--bot">
+						<div
+							className="messageItem__avatar messageItem__avatar--system"
+							data-testid="chat-system-message-avatar"
+						>
 							<span
-								className="messageItem__botAvatarIcon"
+								className="messageItem__systemAvatarIcon"
 								aria-hidden
 							>
-								<CarimatRobotIcon />
+								<InfoIcon focusable="false" />
 							</span>
 						</div>
 						{onOpenMenu ? (

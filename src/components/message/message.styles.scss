@@ -769,6 +769,27 @@ $message-avatar-overlap: -19px;
 		}
 	}
 
+	// Info glyph for a platform system entry (call started/ended, #2237).
+	// Same 60px white avatar frame as the Carimat robot so the timeline's
+	// left column stays aligned; the glyph fills most of the inner circle.
+	&__systemAvatarIcon {
+		width: 40px;
+		height: 40px;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		flex-shrink: 0;
+
+		svg {
+			width: 100%;
+			height: 100%;
+		}
+
+		* {
+			fill: var(--m3-on-surface-variant, #444748);
+		}
+	}
+
 	&__content {
 		flex: 1;
 		min-width: 0;
