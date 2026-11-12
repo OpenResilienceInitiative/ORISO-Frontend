@@ -56,6 +56,8 @@ export interface TimelineSession {
 	matrixRoomId?: string;
 	/** False when the viewer may not change this group's dates. */
 	canModerate?: boolean;
+	/** The viewer may open the owner-only group settings editor. */
+	canConfigure?: boolean;
 }
 
 export interface FutureEntry {
@@ -73,6 +75,8 @@ export interface FutureEntry {
 	canDuplicate: boolean;
 	/** False: the viewer may not change this group date (menu shows only what is open to all). */
 	canModerate?: boolean;
+	/** The viewer may open the owner-only group settings editor. */
+	canConfigure?: boolean;
 	matrixRoomId?: string;
 	/** What the menu actions need from the source record. */
 	occurrence?: {
@@ -150,6 +154,7 @@ export const buildFutureEntries = ({
 			modality: MODALITY_BY_OCCURRENCE[o.modality],
 			canDuplicate: session?.canModerate !== false,
 			canModerate: session?.canModerate,
+			canConfigure: session?.canConfigure,
 			matrixRoomId: session?.matrixRoomId,
 			occurrence: {
 				seriesId: o.seriesId,
@@ -336,7 +341,10 @@ const COMING_SOON = '(kommt bald)';
 
 /** The entry's menu, per role and kind (ADR-021 table). */
 export const entryMenu = (
-	entry: Pick<FutureEntry, 'kind' | 'canDuplicate' | 'canModerate'>,
+	entry: Pick<
+		FutureEntry,
+		'kind' | 'canDuplicate' | 'canModerate' | 'canConfigure'
+	>,
 	role: TimelineRole
 ): EntryMenuItem[] => {
 	const isGroup = entry.kind === 'group';
@@ -403,7 +411,7 @@ export const entryMenu = (
 			disabled: false
 		});
 	}
-	if (isGroup) {
+	if (isGroup && entry.canConfigure === true) {
 		items.push({
 			key: 'configure',
 			title: 'Gruppe konfigurieren',

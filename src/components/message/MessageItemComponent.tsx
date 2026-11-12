@@ -20,6 +20,7 @@ import { useMenuEffects } from '../../features/menu-effects/useMenuEffects';
 import * as React from 'react';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import sanitizeHtml from 'sanitize-html';
+import { nameTaskListCheckboxes } from './nameTaskListCheckboxes';
 import { PrettyDate } from '../../utils/dateHelpers';
 import { getMatrixClientLogger } from '../../utils/matrixLogging';
 import {
@@ -48,7 +49,7 @@ import type { CallLifecycleMessage } from '../../utils/callLifecycleMessage';
 import { shouldShowDeviceCheck } from '../call/prejoin/callPrejoin';
 import type { CallJoinHooks } from '../directLinkEntry/callMessageKnock';
 import { CallTimelineMessage } from './CallTimelineMessage';
-import { apiCallState } from '../../api/apiCallState';
+import { apiCallStateRead } from '../../api/apiCallState';
 import { callManager } from '../../services/CallManager';
 import {
 	callCardMayKnock,
@@ -91,6 +92,7 @@ import { Overlay, OVERLAY_FUNCTIONS, OverlayItem } from '../overlay/Overlay';
 import { ReactComponent as XIllustration } from '../../resources/img/illustrations/x.svg';
 import { BUTTON_TYPES } from '../button/Button';
 import { getCurrentMatrixUserId } from '../../utils/matrixSession';
+import { useChatMessageDisplayConfig } from './chatMessageConfig';
 import { VideoChatDetails, VideoChatDetailsAlias } from './VideoChatDetails';
 import { MessageAvatar } from './MessageAvatar';
 import { ReactComponent as SupervisionGlyph } from '../../resources/img/icons/supervision_nocirc_400_24px.svg';
@@ -577,8 +579,11 @@ export const MessageItemComponent = ({
 		string | null | undefined
 	>(() => initialDecryptedBody(isE2eeEnabled, message));
 
-	// Character limit for collapsing messages
-	const MESSAGE_CHAR_LIMIT = 300;
+	// Character limit for collapsing messages; 0 from the platform setting means
+	// never, which no text length can exceed.
+	const { collapseThreshold, widthStyle: messageWidthStyle } =
+		useChatMessageDisplayConfig();
+	const MESSAGE_CHAR_LIMIT = collapseThreshold || Infinity;
 
 	// Reset expanded state only when message ID changes (not when message content changes)
 	useEffect(() => {
@@ -1150,11 +1155,13 @@ export const MessageItemComponent = ({
 			)
 		);
 		const hasRichHtml =
-			/<(p|h[1-6]|strong|em|u|mark|span|blockquote|ul|ol|li|a|br|img|sup|sub|code|pre)\b/i.test(
+			/<(p|h[1-6]|strong|em|u|mark|span|blockquote|ul|ol|li|a|br|hr|img|sup|sub|code|pre)\b/i.test(
 				preparedMessage
 			);
 		if (hasRichHtml) {
-			return sanitizeHtml(preparedMessage, sanitizeHtmlDefaultOptions);
+			return nameTaskListCheckboxes(
+				sanitizeHtml(preparedMessage, sanitizeHtmlDefaultOptions)
+			);
 		}
 
 		try {
@@ -2781,7 +2788,7 @@ export const MessageItemComponent = ({
 				{getMessageDate()}
 				<CallTimelineMessage
 					call={callLifecycle}
-					loadState={apiCallState}
+					loadState={apiCallStateRead}
 					/* #2016: camera and microphone first, as guests get. */
 					deviceCheck={() =>
 						shouldShowDeviceCheck({
@@ -2950,6 +2957,7 @@ export const MessageItemComponent = ({
 			// Anchor for `?at=<eventId>` (channelRoute.ts): the card scrolls
 			// this bubble into view after the history has loaded.
 			data-message-id={_id}
+			style={messageWidthStyle}
 			className={`messageItem ${isSystemNotification ? 'carimatMessageFrame' : ''} ${
 				isMyMessage ? 'messageItem--right' : ''
 			} ${isFullWidthMessage ? 'messageItem--full' : ''} ${

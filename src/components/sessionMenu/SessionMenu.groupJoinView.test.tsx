@@ -70,7 +70,7 @@ const counsellor = {
 	grantedAuthorities: [AUTHORITIES.CONSULTANT_DEFAULT]
 };
 
-const renderMenu = (isJoinGroupChatView: boolean) =>
+const renderMenu = (isJoinGroupChatView: boolean, session = groupSession) =>
 	render(
 		<MemoryRouter>
 			<SessionTypeContext.Provider
@@ -87,7 +87,7 @@ const renderMenu = (isJoinGroupChatView: boolean) =>
 					<ActiveSessionContext.Provider
 						value={
 							{
-								activeSession: groupSession,
+								activeSession: session,
 								reloadActiveSession: vi.fn()
 							} as any
 						}
@@ -141,5 +141,34 @@ describe('SessionMenu group actions in the join view (#1499)', () => {
 
 		expect(menuText()).not.toContain('chatFlyout.leaveGroupChat');
 		expect(menuText()).not.toContain('chatFlyout.stopGroupChat');
+	});
+
+	it('links the owner of an inactive legacy recurring circle to settings', () => {
+		const legacyCircle = {
+			...groupSession,
+			consultant: { id: 'counsellor' },
+			item: { ...groupSession.item, active: false, repetitive: true }
+		};
+		const { getByText } = renderMenu(true, legacyCircle);
+		const href = getByText('chatFlyout.editGroupChat')
+			.closest('a')
+			?.getAttribute('href');
+		expect(decodeURIComponent(href ?? '')).toBe(
+			'/sessions/consultant/sessionView/!group:m.test/19/editGroupChat'
+		);
+	});
+
+	it('withholds the circle settings link from the owner of an internal group', () => {
+		const internalGroup = {
+			...groupSession,
+			consultant: { id: 'counsellor' },
+			item: {
+				...groupSession.item,
+				active: false,
+				conversationType: 'INTERNAL_GROUP'
+			}
+		};
+		renderMenu(true, internalGroup);
+		expect(menuText()).not.toContain('chatFlyout.editGroupChat');
 	});
 });

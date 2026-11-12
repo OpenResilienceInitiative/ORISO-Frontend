@@ -20,7 +20,8 @@ import {
 import {
 	desktop1440Globals,
 	phone375Globals,
-	phone390Globals
+	phone390Globals,
+	tablet820Globals
 } from '../message/messageStoryShell';
 
 /**
@@ -32,6 +33,7 @@ import {
  */
 
 const INFO_PATH = `/sessions/consultant/sessionView/${GROUP_STAGE_ROOM_ID}/${GROUP_STAGE_CHAT_ID}/groupChatInfo`;
+const ASKER_INFO_PATH = `/sessions/user/view/${GROUP_STAGE_ROOM_ID}/${GROUP_STAGE_CHAT_ID}/groupChatInfo`;
 
 const buildListItem = (
 	inviteToken: string | null = 'Ab3_x-Yz',
@@ -90,7 +92,8 @@ const banRequests: string[] = [];
 const useBackendMocks = (
 	listItem: ListItemInterface,
 	bannedUsers: string[] = [],
-	chatInfo: ChatInfoResponse = 'ok'
+	chatInfo: ChatInfoResponse = 'ok',
+	members = MEMBERS
 ) => {
 	const installed = React.useRef<(() => void) | null>(null);
 	if (!installed.current) {
@@ -99,7 +102,7 @@ const useBackendMocks = (
 		const originalLoad = service.loadMatrixRoomMembers;
 		const originalOn = service.onMatrixRoomMembers;
 		// The moderator list uses Matrix ids, as the real room does.
-		(listItem.chat as any).moderators = [MEMBERS[0].userId];
+		(listItem.chat as any).moderators = [members[0].userId];
 		banRequests.length = 0;
 		globalThis.fetch = async (input, init) => {
 			const url =
@@ -135,7 +138,7 @@ const useBackendMocks = (
 			}
 			return originalFetch(input, init);
 		};
-		service.loadMatrixRoomMembers = async () => MEMBERS;
+		service.loadMatrixRoomMembers = async () => members;
 		service.onMatrixRoomMembers = () => () => undefined;
 		installed.current = () => {
 			globalThis.fetch = originalFetch;
@@ -163,6 +166,7 @@ const BodyOverlayHost = () => {
 };
 
 const WiredChatInfo = ({
+	members = MEMBERS,
 	layout,
 	inviteToken,
 	asAsker = false,
@@ -172,6 +176,7 @@ const WiredChatInfo = ({
 	unscheduledDuration,
 	chatInfo = 'ok'
 }: {
+	members?: typeof MEMBERS;
 	layout: 'desktop' | 'mobile';
 	inviteToken?: string | null;
 	asAsker?: boolean;
@@ -192,7 +197,17 @@ const WiredChatInfo = ({
 	useBackendMocks(
 		listItem,
 		banned ? [groupStageAsker.userName] : [],
-		chatInfo
+		chatInfo,
+		members
+	);
+	const info = dialog ? (
+		<ModalProvider>
+			<p>Chat</p>
+			<GroupChatInfo dialog />
+			<BodyOverlayHost />
+		</ModalProvider>
+	) : (
+		<GroupChatInfo />
 	);
 	return (
 		<TenantContext.Provider
@@ -214,17 +229,11 @@ const WiredChatInfo = ({
 				<Routes>
 					<Route
 						path="/sessions/consultant/sessionView/:groupId/:sessionId/groupChatInfo"
-						element={
-							dialog ? (
-								<ModalProvider>
-									<p>Chat</p>
-									<GroupChatInfo dialog />
-									<BodyOverlayHost />
-								</ModalProvider>
-							) : (
-								<GroupChatInfo />
-							)
-						}
+						element={info}
+					/>
+					<Route
+						path="/sessions/user/view/:groupId/:sessionId/groupChatInfo"
+						element={info}
 					/>
 					<Route
 						path="/sessions/consultant/sessionView/:groupId/:sessionId/editGroupChat"
@@ -838,4 +847,102 @@ export const DialogBanConfirm390: Story = {
 	globals: phone390Globals,
 	render: () => <WiredChatInfo layout="mobile" dialog />,
 	play: banAsksFirst
+};
+
+const protectedMembers = [
+	{
+		userId: '@legacy.owner_at_example.test:example.org',
+		name: 'legacy.owner_at_example.test'
+	},
+	{
+		userId: '@other.asker_at_example.org:example.org',
+		name: 'other.asker_at_example.org'
+	},
+	MEMBERS[1]
+];
+
+const protectsParticipantNames: Story['play'] = async () => {
+	const dialog = await findOpenDialog();
+	await expect(
+		await dialog.findByText('Teilnehmende Person 1')
+	).toBeVisible();
+	await expect(
+		await dialog.findByText('Teilnehmende Person 2')
+	).toBeVisible();
+	await expect(await dialog.findByText('sanftes Alpaka Mika')).toBeVisible();
+	await expect(dialog.queryByText(protectedMembers[0].name)).toBeNull();
+	await expect(dialog.queryByText(protectedMembers[1].name)).toBeNull();
+	await expect(
+		dialog.queryByRole('button', { name: /Einladungs-Link kopieren/ })
+	).toBeNull();
+};
+
+const ProtectedNames = ({ layout }: { layout: 'desktop' | 'mobile' }) => (
+	<WiredChatInfo layout={layout} dialog asAsker members={protectedMembers} />
+);
+
+export const ProtectedNames1440: Story = {
+	name: 'Participant Chat-Info protects login-shaped labels · 1440',
+	globals: desktop1440Globals,
+	parameters: { router: { initialPath: ASKER_INFO_PATH } },
+	render: () => <ProtectedNames layout="desktop" />,
+	play: protectsParticipantNames
+};
+
+export const ProtectedNames820: Story = {
+	...ProtectedNames1440,
+	name: 'Participant Chat-Info protects login-shaped labels · 820',
+	globals: tablet820Globals,
+	render: () => <ProtectedNames layout="mobile" />
+};
+
+export const ProtectedNames390: Story = {
+	...ProtectedNames820,
+	name: 'Participant Chat-Info protects login-shaped labels · 390',
+	globals: phone390Globals
+};
+
+const aliasWithMarkup = 'Ruhiges <b>Yak</b>';
+
+export const DialogBanEscapesExplicitAlias: Story = {
+	name: 'Moderator ban success renders the chosen alias as text',
+	globals: desktop1366Globals,
+	render: () => (
+		<WiredChatInfo
+			layout="desktop"
+			dialog
+			members={[
+				MEMBERS[0],
+				{
+					userId: '@participant-yak:example.org',
+					name: aliasWithMarkup
+				}
+			]}
+		/>
+	),
+	play: async () => {
+		const page = within(document.body);
+		const info = await findOpenDialog();
+		await userEvent.click(
+			await info.findByRole('button', {
+				name: `Optionen für ${aliasWithMarkup}`
+			})
+		);
+		await userEvent.click(
+			await page.findByRole('menuitem', {
+				name: i18n.t('banUser.ban.trigger').trim()
+			})
+		);
+		const confirm = await page.findByRole('dialog', {
+			name: i18n.t('banUser.confirm.title', { name: aliasWithMarkup })
+		});
+		await userEvent.click(
+			within(confirm).getByTestId('ban-user-confirm-submit')
+		);
+		await waitFor(() => expect(banRequests).toHaveLength(1));
+		await expect(banRequests[0]).toContain('participant-yak');
+		const success = await page.findByRole('heading', { name: /Sie haben/ });
+		await expect(success).toHaveTextContent(aliasWithMarkup);
+		await expect(success.querySelector('b')).toBeNull();
+	}
 };

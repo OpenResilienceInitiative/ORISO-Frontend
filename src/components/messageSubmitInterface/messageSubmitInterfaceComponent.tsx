@@ -20,6 +20,8 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { SendButton } from './inputField/SendButton';
 import { hasMediaUploadFeature } from '../../utils/mediaUploadHelpers';
 import { usePracticeActive } from '../../practice';
+import { isPracticeDraftScope } from '../../practice/practiceDraftScopes';
+import { isOpaqueDraftScope } from '../../services/draftCryptography';
 import { getCurrentMatrixUserId } from '../../utils/matrixSession';
 import { isMatrixRoomEncrypted } from '../../utils/matrixRoomEncryption';
 import { apiGetSessionRoomBySessionId } from '../../api/apiGetSessionRooms';
@@ -77,6 +79,7 @@ import { extractMentionedUserIds } from '../../utils/messageMentions';
 import { decodeUsernameSafely } from '../../utils/encryptionHelpers';
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import { getModality, Modality } from '../session/getModality';
+import { resolveAssignedConsultantLabel } from '../session/assignedConsultantLabel';
 import { STATUS_ENQUIRY } from '../../globalState/interfaces/SessionsDataInterface';
 import {
 	AUDIENCE_ALL,
@@ -898,6 +901,7 @@ export const MessageSubmitInterfaceComponent = ({
 		return contact?.displayName || contact?.username || topicName || null;
 	}, [activeSession, contact]);
 
+	const draftPractice = usePracticeActive();
 	const forcedDraftScopeKey = useMemo(() => {
 		// Both direct drafts and thread drafts belong to their target room.
 		// A stale deep link must not redirect a side-room draft to the case.
@@ -905,9 +909,13 @@ export const MessageSubmitInterfaceComponent = ({
 			return `scope:${targetRoomId}|thread:${threadRootId || 'main'}`;
 		}
 		const params = new URLSearchParams(location.search);
-		const allScopeKeys = params.getAll('draftScopeKey');
-		return allScopeKeys.at(-1) ?? null;
-	}, [location.search, targetRoomId, threadRootId]);
+		const requested = params.getAll('draftScopeKey').at(-1);
+		return requested &&
+			(isOpaqueDraftScope(requested) ||
+				(draftPractice && isPracticeDraftScope(requested)))
+			? requested
+			: null;
+	}, [draftPractice, location.search, targetRoomId, threadRootId]);
 
 	const loadDraftIntoComposer = useCallback(
 		(loadedState: EditorState, rawDraft?: string) => {
@@ -2547,15 +2555,24 @@ export const MessageSubmitInterfaceComponent = ({
 	const getMessageSubmitInfo = useCallback((): MessageSubmitInfoInterface => {
 		let infoData;
 		if (activeInfo === INFO_TYPES.ABSENT) {
-			const contact = getContact(activeSession);
+			const consultantLabel = resolveAssignedConsultantLabel(
+				activeSession,
+				userData,
+				translate
+			);
+			const contact =
+				consultantLabel === undefined
+					? getContact(activeSession)
+					: null;
 			infoData = {
 				isInfo: true,
 				infoHeadline: `${
+					consultantLabel ||
 					contact?.displayName ||
 					contact?.username ||
 					translate('sessionList.user.consultantUnknown')
 				} ${translate('consultant.absent.message')} `,
-				infoMessage: activeSession.consultant.absenceMessage
+				infoMessage: activeSession.consultant?.absenceMessage
 			};
 		} else if (activeInfo === INFO_TYPES.ATTACHMENT_SIZE_ERROR) {
 			infoData = {
@@ -2640,7 +2657,7 @@ export const MessageSubmitInterfaceComponent = ({
 		}
 
 		return infoData;
-	}, [activeInfo, activeSession, translate]);
+	}, [activeInfo, activeSession, translate, userData]);
 
 	const handleBookingButton = useCallback(() => {
 		navigate('/booking/');

@@ -60,7 +60,10 @@ export const useAppointmentActions = ({
 							occurrence.seriesId,
 							occurrence.originalStart
 						).then(
-							() => onCancelled?.(entry),
+							() => {
+								onCancelled?.(entry);
+								notifyAppointmentsChanged();
+							},
 							() => onError?.()
 						);
 					} else if (
@@ -121,7 +124,12 @@ export const useAppointmentActions = ({
 					}
 					return;
 				case 'configure':
-					if (entry.matrixRoomId && entry.sessionId !== undefined) {
+					if (
+						entry.kind === 'group' &&
+						entry.canConfigure === true &&
+						entry.matrixRoomId &&
+						entry.sessionId !== undefined
+					) {
 						navigate(
 							`${listPath}/${entry.matrixRoomId}/${entry.sessionId}/editGroupChat${tabQuery}`,
 							{

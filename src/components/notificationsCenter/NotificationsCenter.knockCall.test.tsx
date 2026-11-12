@@ -152,6 +152,31 @@ it('starts the video call of the conversation from the desktop "Join" action and
 	expect(apiCallState).not.toHaveBeenCalled();
 });
 
+/** #2170: the call is called what the direct link was called, not "Group call for <room id>". */
+it('names the call after the direct link of the conversation it enters', async () => {
+	await renderCenter(1400, knockItem, [
+		{
+			session: {
+				id: 500,
+				matrixRoomId: '!direct:matrix.example',
+				directLinkMedium: 'VIDEO',
+				directLinkName: 'Flyer Schule'
+			}
+		}
+	]);
+	await user.click(
+		screen.getAllByRole('button', { name: 'Join', exact: true })[0]
+	);
+
+	await waitFor(() => expect(startRoomCall).toHaveBeenCalledTimes(1));
+	expect(startRoomCall).toHaveBeenCalledWith({
+		roomId: '!direct:matrix.example',
+		isVideo: true,
+		isGroup: false,
+		roomName: 'Flyer Schule'
+	});
+});
+
 it('names the action "Join", never "Open chat": the click goes into the call', async () => {
 	await renderCenter();
 	expect(

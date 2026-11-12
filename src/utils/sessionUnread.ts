@@ -55,11 +55,22 @@ export const getRoomUnreadCount = (matrixRoomId?: string | null): number => {
 /**
  * Unread state for a session/chat list item (SessionItemInterface or
  * GroupChatItemInterface). Joins on `matrixRoomId`; deliberately ignores the
- * item's `messagesRead` flag, which the backend hard-codes to `true`.
+ * item's `messagesRead` flag, which the backend hard-codes to `true`. An
+ * assigned supervisor also sees unread activity from their private side room,
+ * so cards, filters and aggregate counters use the same unread state.
  */
-export const isChatItemUnread = (
-	chatItem?: { matrixRoomId?: string | null } | null
-): boolean => isRoomUnread(chatItem?.matrixRoomId);
+type UnreadChatItem = {
+	matrixRoomId?: string | null;
+	supervision?: {
+		supervisedByMe?: boolean;
+		sideRoomId?: string | null;
+	} | null;
+};
+
+export const isChatItemUnread = (chatItem?: UnreadChatItem | null): boolean =>
+	isRoomUnread(chatItem?.matrixRoomId) ||
+	(chatItem?.supervision?.supervisedByMe === true &&
+		isRoomUnread(chatItem.supervision.sideRoomId));
 
 /**
  * Number of unread entries in a session list (1:1 sessions and group chats).
@@ -67,8 +78,8 @@ export const isChatItemUnread = (
  */
 export const countUnreadSessions = (
 	sessions: Array<{
-		session?: { matrixRoomId?: string | null } | null;
-		chat?: { matrixRoomId?: string | null } | null;
+		session?: UnreadChatItem | null;
+		chat?: UnreadChatItem | null;
 	} | null>
 ): number =>
 	sessions.filter((entry) => isChatItemUnread(entry?.chat ?? entry?.session))

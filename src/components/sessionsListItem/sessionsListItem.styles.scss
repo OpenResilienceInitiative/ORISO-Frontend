@@ -141,6 +141,10 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 			color: var(--m3-on-surface-variant, #444748) !important;
 		}
 
+		.sessionsListItem__consultingTypeIcon--supervisionLabel {
+			color: var(--m3-primary, $primary);
+		}
+
 		// The master icons are grey already; the black-to-red filter above belongs
 		// to the older modality glyphs. FE#1952: like Mail, a direct link keeps the
 		// primary colour when active; the glyph is an svg, so the override must
@@ -936,14 +940,54 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 			height: 38px;
 		}
 
+		&--supervision,
+		&--liveChat,
+		&--nearby,
+		&--internal,
+		&--selfHelp {
+			margin-right: 0;
+			padding-right: 12px;
+			gap: 8px;
+		}
+
+		&--supervision,
+		&--liveChat,
+		&--internal,
+		&--selfHelp {
+			height: 38px;
+		}
+
+		/* #1306: the supervisor's row reads "Supervision" where the
+		   consulting type would be. Same shape as --liveChat (icon + word,
+		   kept inside the card), with one difference: the label TRUNCATES.
+		   "Supervision" fits, but a longer translation must not push the
+		   date out of the card — the description stays on `title`. */
+		&--supervision {
+			min-width: 0;
+			align-items: center;
+
+			svg {
+				width: $icon-size-small;
+				height: $icon-size-small;
+				flex-shrink: 0;
+
+				* {
+					fill: var(--m3-secondary, $secondary);
+				}
+			}
+		}
+
+		&--supervisionLabel {
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+			max-width: 11ch;
+		}
+
 		&--liveChat {
 			/* Stay inside the card — the base rule pushes the icon 12px
 			   past its grid cell, which would clip the wider "Live Chat"
 			   label under the __content overflow: hidden. */
-			margin-right: 0;
-			padding-right: 12px;
-			gap: 8px;
-			height: 38px;
 			white-space: nowrap;
 
 			/* Undo the parent .sessionsListItem__consultingTypeIcon svg
@@ -970,9 +1014,6 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		}
 
 		&--nearby {
-			margin-right: 0;
-			padding-right: 12px;
-			gap: 8px;
 			white-space: nowrap;
 
 			// Centre icon and word on each other; the base rule's `end` hangs them
@@ -1038,10 +1079,6 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 
 		&--internal,
 		&--selfHelp {
-			margin-right: 0;
-			padding-right: 12px;
-			gap: 8px;
-			height: 38px;
 			white-space: nowrap;
 			align-items: center;
 		}
@@ -1609,4 +1646,20 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 			margin: 0;
 		}
 	}
+}
+
+/* Call design S10 (5c): a running call, seen from the list. */
+.sessionsListItem__runningCall {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	font-weight: 600;
+	color: var(--m3-primary, #a5000a);
+}
+
+.sessionsListItem__runningCallIcon {
+	flex: none;
+	width: 14px;
+	height: 14px;
+	fill: currentcolor;
 }

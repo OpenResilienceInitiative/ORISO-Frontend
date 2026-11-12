@@ -1,4 +1,10 @@
 {
+	"askerInfo": {
+		"noPrivacyNotice": {
+			"title": "Keine Datenschutzerklärung hinterlegt",
+			"text": "Diese Beratungsstelle hat keine Datenschutzerklärung hinterlegt. Die Person hat möglicherweise im Wissen darum zugestimmt. Die Beratungsstelle ist dafür verantwortlich. Dieser Hinweis ist nur für Beratende sichtbar."
+		}
+	},
 	"liveChatConversion": {
 		"title": "Gespräch behalten",
 		"intro": "Erstellen Sie ein Passwort für dieses Konto. Ihr Live-Chat bleibt erhalten.",
@@ -520,6 +526,7 @@
 		"absent": {
 			"message": " ist abwesend"
 		},
+		"assignedLabel": "Ihre Beratungsperson",
 		"jobTitle": "Beraterin oder Berater"
 	},
 	"date": {
@@ -1146,6 +1153,7 @@
 			"subscribers": {
 				"empty": "keine Teilnehmenden vorhanden",
 				"headline": "Teilnehmende",
+				"protectedName": "Teilnehmende Person {{number}}",
 				"menuLabel": "Optionen für {{name}}",
 				"role": {
 					"asker": "Ratsuchende:r",
@@ -1911,7 +1919,8 @@
 				"confirmLabel": "Neues Passwort bestätigen",
 				"submitLabel": "Passwort speichern",
 				"success": "Ihr Passwort wurde erfolgreich geändert. Sie können sich nun anmelden.",
-				"invalidToken": "Dieser Link ist ungültig oder abgelaufen. Bitte fordern Sie einen neuen Link an."
+				"invalidToken": "Dieser Link ist ungültig oder abgelaufen. Bitte fordern Sie einen neuen Link an.",
+				"requestNewLink": "Neuen Link anfordern"
 			}
 		},
 		"magicLink": {
@@ -2443,6 +2452,10 @@
 				"title": "Supervisor zugewiesen",
 				"text": "Diesem Fall wurde ein Supervisor zugewiesen."
 			},
+			"topicDuplicateStarted": {
+				"title": "Weitere Beratung zum selben Thema",
+				"text": "Zum selben Thema wurde eine weitere Beratung begonnen. Bitte klären Sie gemeinsam, welche Beratung weitergeführt wird."
+			},
 			"counselorRenamed": {
 				"title": "Berater:in umbenannt",
 				"text": "Der Anzeigename der Beratung hat sich geändert."
@@ -2497,7 +2510,7 @@
 			},
 			"caseHandoverOfferSent": {
 				"title": "Übergabeangebot gesendet",
-				"text": "Das Angebot wartet auf die Antwort der Kolleg:in. Solange die Übergabe nicht abgeschlossen ist, kann es zurückgezogen werden."
+				"text": "Das Angebot zur Fallübergabe wurde an eine andere Beratungsperson gesendet."
 			},
 			"caseHandoverOfferDeclined": {
 				"title": "Übergabeangebot abgelehnt",
@@ -2509,7 +2522,7 @@
 			},
 			"caseHandoverOfferReceived": {
 				"title": "Angebot zur Fallübergabe",
-				"text": "{{fromConsultantName}} möchte diese Beratung an Sie übergeben. Prüfen Sie die Anfrage, bevor Sie das Gespräch öffnen.",
+				"text": "{{fromConsultantName}} hat Ihnen die Übernahme dieser Beratung angeboten.",
 				"coAccess": {
 					"title": "Angebot für vorübergehenden Zugriff",
 					"text": "{{fromConsultantName}} bietet Ihnen vorübergehenden Zugriff auf diese Beratung an. Die bisherige Beratungsperson bleibt verantwortlich."
@@ -3542,6 +3555,12 @@
 			}
 		},
 		"dataProtection": {
+			"noNotice": {
+				"title": "Keine Datenschutzerklärung hinterlegt",
+				"body": "Für diese Beratungsstelle ist keine Datenschutzerklärung hinterlegt. Die Beratungsstelle ist dafür verantwortlich. Sie können trotzdem fortfahren, wenn Sie das bewusst möchten.",
+				"cancel": "Zurück",
+				"continue": "Trotzdem fortfahren"
+			},
 			"cookieNotice": "Für Authentifizierung und Navigation verwendet diese Webseite Cookies.",
 			"machineTranslated": "Maschinell übersetzt — rechtlich verbindlich ist die Originalfassung ({{language}}).",
 			"unrenderable": "Der Einwilligungstext dieser Beratungsstelle kann derzeit nicht angezeigt werden. Bitte versuchen Sie es später erneut oder wenden Sie sich an die Beratungsstelle.",
@@ -6453,6 +6472,13 @@
 			"label": "Anklopfen",
 			"on": "Gäste warten, bis Sie sie einlassen.",
 			"off": "Gäste kommen ohne Warten direkt in den Anruf."
+		},
+		"list": {
+			"running": "Läuft gerade",
+			"runningWithCount": "Läuft gerade — {{count}} im Gespräch"
+		},
+		"floating": {
+			"move": "Gespräch verschieben"
 		}
 	},
 	"form": {
@@ -6686,6 +6712,10 @@
 		}
 	},
 	"directLink": {
+		"postcode": {
+			"helper": "Nur für die Statistik. Die Postleitzahl bestimmt weder Beratungsstelle noch Beraterin – das legt der Link fest.",
+			"invalid": "Bitte geben Sie Ihre fünfstellige Postleitzahl ein."
+		},
 		"card": {
 			"title": "Direktlink",
 			"subtitle": "Für Ratsuchende",
