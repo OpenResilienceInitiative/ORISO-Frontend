@@ -98,6 +98,55 @@ describe('passageBlurFromRange + applyPassageBlursToHtml', () => {
 		expect(out.querySelector('.passageBlur__srLabel')).toBeNull();
 	});
 
+	it('handles overlapping blurs without throwing', () => {
+		const out = render(
+			applyPassageBlursToHtml(
+				'<p>0123456789</p>',
+				[
+					{ id: 'a', start: 2, length: 5 },
+					{ id: 'b', start: 4, length: 5 }
+				],
+				{ label: LABEL, removeLabel: 'Schwärzung aufheben' }
+			)
+		);
+		expect(out.textContent).toHaveLength(10);
+		expect(out.textContent!.startsWith('01')).toBe(true);
+		expect(out.textContent!.endsWith('9')).toBe(true);
+		const ids = [...out.querySelectorAll('.passageBlur')].map((span) =>
+			span.getAttribute('data-passage-blur-id')
+		);
+		expect(ids).toEqual(['a', 'b']);
+	});
+
+	it('keeps the UTF-16 length when the passage holds an emoji', () => {
+		expect(scramblePassage('ok 👍 da', 'seed')).toHaveLength(
+			'ok 👍 da'.length
+		);
+		const html = '<p>Hallo 👍 Anna, bis bald</p>';
+		const out = applyPassageBlursToHtml(
+			html,
+			[{ id: 'b1', start: 6, length: 7 }],
+			{ label: LABEL, removeLabel: 'x' }
+		);
+		expect(collectText(render(out)).text).toMatch(/, bis bald$/);
+		expect(collectText(render(out)).text.length).toBe(
+			collectText(render(html)).text.length
+		);
+	});
+
+	it('disarms a link whose text is blurred', () => {
+		const out = render(
+			applyPassageBlursToHtml(
+				'<p>Ruf an: <a href="tel:+491701234567" target="_blank">0170 1234567</a></p>',
+				[{ id: 'b1', start: 8, length: 12 }],
+				{ label: LABEL }
+			)
+		);
+		const link = out.querySelector('a')!;
+		expect(link.hasAttribute('href')).toBe(false);
+		expect(out.innerHTML).not.toContain('1234567');
+	});
+
 	it('skips a blur that no longer fits an edited message', () => {
 		const out = applyPassageBlursToHtml(
 			'<p>kurz</p>',

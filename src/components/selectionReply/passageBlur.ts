@@ -77,15 +77,16 @@ export const scramblePassage = (text: string, seed: string): string => {
 		state ^= state << 5;
 		return (state >>> 0) / 4294967296;
 	};
-	return Array.from(text)
-		.map((char) =>
-			/\s/.test(char)
-				? char
-				: SCRAMBLE_ALPHABET[
-						Math.floor(next() * SCRAMBLE_ALPHABET.length)
-					]
-		)
-		.join('');
+	// One salad character per UTF-16 code unit: an emoji (two units) becomes
+	// two characters, so the text length and every later offset stay put.
+	let salad = '';
+	for (let index = 0; index < text.length; index++) {
+		const unit = text[index];
+		salad += /\s/.test(unit)
+			? unit
+			: SCRAMBLE_ALPHABET[Math.floor(next() * SCRAMBLE_ALPHABET.length)];
+	}
+	return salad;
 };
 
 export interface ApplyPassageBlursOptions {
@@ -103,19 +104,43 @@ export interface ApplyPassageBlursOptions {
 /** Text-node pieces one blur covers: node, first and last offset. */
 type Piece = { node: Text; from: number; to: number; blur: PassageBlur };
 
-const piecesOf = (map: Mapped[], blur: PassageBlur): Piece[] => {
+/**
+ * Splits the blurs into text-node pieces that never overlap. Where two blurs
+ * cover the same character, the one that starts first owns it; the other
+ * keeps the rest of its range, so either can still be removed on its own.
+ */
+const piecesOf = (map: Mapped[], blurs: PassageBlur[]): Piece[] => {
+	const owner: (PassageBlur | undefined)[] = new Array(map.length);
+	[...blurs]
+		.sort((a, b) => a.start - b.start)
+		.forEach((blur) => {
+			for (
+				let index = blur.start;
+				index < blur.start + blur.length;
+				index++
+			) {
+				owner[index] ??= blur;
+			}
+		});
 	const pieces: Piece[] = [];
-	for (
-		let index = Math.max(0, blur.start);
-		index < Math.min(map.length, blur.start + blur.length);
-		index++
-	) {
+	let last: Piece | undefined;
+	for (let index = 0; index < map.length; index++) {
+		const blur = owner[index];
+		if (!blur) {
+			last = undefined;
+			continue;
+		}
 		const { node, offset } = map[index];
-		const last = pieces[pieces.length - 1];
-		if (last && last.node === node) {
+		if (
+			last &&
+			last.node === node &&
+			last.blur === blur &&
+			last.to === offset - 1
+		) {
 			last.to = offset;
 		} else {
-			pieces.push({ node, from: offset, to: offset, blur });
+			last = { node, from: offset, to: offset, blur };
+			pieces.push(last);
 		}
 	}
 	return pieces;
@@ -141,14 +166,15 @@ export const applyPassageBlursToHtml = (
 	root.appendChild(template.content);
 	const { map } = collectText(root);
 
-	const pieces = blurs
-		.filter(
+	const pieces = piecesOf(
+		map,
+		blurs.filter(
 			(blur) =>
 				blur.length > 0 &&
 				blur.start >= 0 &&
 				blur.start + blur.length <= map.length
 		)
-		.flatMap((blur) => piecesOf(map, blur));
+	);
 	const firstPieceOf = new Set<Piece>();
 	const seen = new Set<string>();
 	pieces.forEach((piece) => {
@@ -188,6 +214,13 @@ export const applyPassageBlursToHtml = (
 				span.setAttribute('aria-hidden', 'true');
 			}
 			middle.replaceWith(span);
+			// A blurred link must not lead anywhere: its target is the
+			// hidden text (a phone number, an e-mail address).
+			const link = span.closest('a');
+			if (link) {
+				link.removeAttribute('href');
+				link.removeAttribute('target');
+			}
 			if (!removeLabel && firstPieceOf.has(piece)) {
 				const srLabel = document.createElement('span');
 				srLabel.className = 'passageBlur__srLabel';
