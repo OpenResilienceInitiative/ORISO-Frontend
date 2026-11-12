@@ -1574,11 +1574,15 @@ export const NextAppointmentGroupCoModerator: Story = {
  * "Termin anlegen" is a row of the ⋮ menu.
  * ------------------------------------------------------------------ */
 
+/* Relative to now: a fixed date stops being "upcoming" once it passes and
+   turns this story red for every PR. */
+const HOUR_MS = 60 * 60 * 1000;
+const storyAppointmentStart = Date.now() + 2 * HOUR_MS;
 const storyAppointment = {
 	id: '6f1c1a70-0000-4000-8000-000000000001',
 	sessionId: 4401,
-	startTime: new Date('2026-11-12T16:00:00').toISOString(),
-	endTime: new Date('2026-11-12T17:00:00').toISOString(),
+	startTime: new Date(storyAppointmentStart).toISOString(),
+	endTime: new Date(storyAppointmentStart + HOUR_MS).toISOString(),
 	status: 'SCHEDULED',
 	counterpart: { username: 'ruhiges_yak_kim' }
 };
