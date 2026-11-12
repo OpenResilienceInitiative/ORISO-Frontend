@@ -270,8 +270,8 @@ it('#2226: the preview link to open the conversation never joins the call', asyn
 	expect(joinRoom).not.toHaveBeenCalled();
 	expect(callManager.getCurrentCall()).toBeFalsy();
 	await waitFor(() =>
-		expect(screen.getByLabelText('Current route').textContent).not.toBe(
-			'/notifications'
+		expect(screen.getByLabelText('Current route').textContent).toBe(
+			'/sessions/consultant/sessionView/session/42'
 		)
 	);
 });

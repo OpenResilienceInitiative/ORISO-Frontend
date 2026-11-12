@@ -740,6 +740,17 @@ export const NotificationsCenter = () => {
 		return true;
 	};
 
+	// #2226: open the conversation an entry belongs to without joining. A
+	// join-kind call card has no path of its own, so it resolves its
+	// conversation like an ended call does instead of the list root.
+	const openConversationOnly = (item: NotificationFeedItem) => {
+		if (isJoinCallEntry(item)) {
+			openConversation(item, translate('videoCall.timeline.joinFailed'));
+			return;
+		}
+		openActivityConversation(item);
+	};
+
 	const openNotification = (
 		item: (typeof notificationFeed)[number],
 		// "Next notification" browses: it never starts a call (camera,
@@ -756,7 +767,11 @@ export const NotificationsCenter = () => {
 			return;
 		}
 		if (untilL) {
-			if (!browsing && joinCall(item)) return;
+			if (browsing) {
+				openConversationOnly(item);
+				return;
+			}
+			if (joinCall(item)) return;
 			openActivityConversation(item);
 			return;
 		}
@@ -789,7 +804,7 @@ export const NotificationsCenter = () => {
 		if (nextUnreadId) {
 			selectNotification(nextUnreadId);
 		}
-		openActivityConversation(selectedNotification);
+		openConversationOnly(selectedNotification);
 	};
 
 	const handleNextNotification = () => {
