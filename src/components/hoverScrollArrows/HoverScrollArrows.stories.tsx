@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useLayoutEffect, useRef } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Box, Typography } from '@mui/material';
-import { expect, waitFor } from 'storybook/test';
+import { expect, userEvent, waitFor } from 'storybook/test';
 import { HoverScrollArrows } from './HoverScrollArrows';
 import { orisoInputColors } from '../form/orisoInputDesign';
 import {
@@ -160,5 +160,25 @@ export const ClickMovesOneCard: StoryObj = {
 	render: () => <Row />,
 	play: async ({ canvasElement }) => {
 		await expectArrowStepsOneCard(canvasElement, 'demo-track');
+	}
+};
+
+export const KeyboardKeepsFocus: StoryObj = {
+	name: '7 — Tastatur: am Anfang wandert der Fokus zum rechten Pfeil',
+	render: () => <Row startAt={1} />,
+	play: async ({ canvasElement }) => {
+		const previous = await waitFor(() => {
+			const button = arrow(canvasElement, 'previous');
+			expect(button).not.toBeNull();
+			return button as HTMLElement;
+		});
+		previous.focus();
+		await userEvent.keyboard('{Enter}');
+		// "Zurück" reached the start and disappears; the keyboard user lands
+		// on the remaining arrow instead of losing their place.
+		await waitFor(() => {
+			expect(arrow(canvasElement, 'previous')).toBeNull();
+			expect(arrow(canvasElement, 'next')).toHaveFocus();
+		});
 	}
 };

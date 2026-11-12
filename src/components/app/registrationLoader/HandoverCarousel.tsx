@@ -365,6 +365,7 @@ export const HandoverCarousel = ({
 			<HoverScrollArrows
 				targetRef={trackRef}
 				onStep={stepCard}
+				targets={cardTargets}
 				data-cy="handover-carousel-arrows"
 				sx={{ flex: 1, minHeight: 0 }}
 			>

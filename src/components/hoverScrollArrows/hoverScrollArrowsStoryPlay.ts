@@ -5,6 +5,8 @@
  * app (stories are not), so it does not import `storybook/test`.
  */
 
+import { snapTargets } from './HoverScrollArrows';
+
 type Side = 'start' | 'end';
 
 const find = (doc: Document, dataCy: string) =>
@@ -57,6 +59,30 @@ export const revealHoverArrow = async (
 			`the ${side} arrow did not appear on hover`
 		)
 	);
+	// `data-near` alone is not what the visitor sees. Wait until the strip
+	// has really faded in under the desktop media rule, and until the
+	// browser's own hit-testing lands on the arrow at its centre, i.e. a
+	// click there reaches the button and not the card under it.
+	const button = find(
+		doc,
+		`${dataCy}-${side === 'end' ? 'next' : 'previous'}`
+	);
+	assert(button, `no ${side} arrow button`);
+	await waitUntil(() => {
+		const strip = find(doc, `${dataCy}-${side}`)!;
+		const style = doc.defaultView!.getComputedStyle(strip);
+		assert(style.display !== 'none', `the ${side} arrow is hidden`);
+		assert(style.opacity === '1', `the ${side} arrow has not faded in`);
+		const box = button!.getBoundingClientRect();
+		const hit = doc.elementFromPoint(
+			box.left + box.width / 2,
+			box.top + box.height / 2
+		);
+		assert(
+			hit && button!.contains(hit),
+			`the ${side} arrow is not reachable with the pointer`
+		);
+	});
 };
 
 /**
@@ -86,20 +112,16 @@ export const expectArrowStepsOneCard = async (
 	});
 
 	await revealHoverArrow(canvasElement, 'end', dataCy);
-	const second = track.children[1] as HTMLElement;
+	const [, secondTarget] = snapTargets(track);
 	find(doc, `${dataCy}-next`)!.click();
 
-	// Card 2 is now the card in the middle of the track (or, where cards
-	// snap to their start, at the track's left edge) …
+	// The track settles on card 2's own snap position: exactly one step,
+	// so a jump past card 2 fails here …
 	await waitUntil(() => {
-		const trackRect = track.getBoundingClientRect();
-		const centre = trackRect.left + trackRect.width / 2;
-		const card = second.getBoundingClientRect();
 		assert(track.scrollLeft > 0, 'the track did not move');
 		assert(
-			(card.left <= centre && card.right >= centre) ||
-				Math.abs(card.left - trackRect.left) <= 1,
-			'card 2 is not the card in view'
+			Math.abs(track.scrollLeft - secondTarget) <= 1,
+			`the track stopped at ${track.scrollLeft}, not at card 2 (${secondTarget})`
 		);
 	});
 	// … and there is a way back.

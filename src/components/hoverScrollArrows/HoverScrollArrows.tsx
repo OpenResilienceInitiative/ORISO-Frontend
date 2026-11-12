@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Box, ButtonBase, SxProps, Theme } from '@mui/material';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
@@ -20,6 +20,12 @@ export interface HoverScrollArrowsProps {
 	 * position (e.g. carousel dots) hands in its own step so both agree.
 	 */
 	'onStep'?: (direction: ScrollDirection) => void;
+	/**
+	 * The scrollLeft positions one step can land on. Default: `snapTargets`.
+	 * An owner with its own `onStep` hands in the targets that step uses, so
+	 * an arrow exists exactly when its step can move.
+	 */
+	'targets'?: (track: HTMLElement) => number[];
 	/**
 	 * Minimum distance from an edge, in px, at which the pointer reveals that
 	 * edge's arrow. The zone grows to a third of a card, and to all of a card
@@ -161,6 +167,7 @@ export const HoverScrollArrows = ({
 	targetRef,
 	children,
 	onStep,
+	targets = snapTargets,
 	edgeZone = 120,
 	'data-cy': dataCy = 'hover-scroll-arrows',
 	sx
@@ -169,14 +176,38 @@ export const HoverScrollArrows = ({
 	const [canPrev, setCanPrev] = useState(false);
 	const [canNext, setCanNext] = useState(false);
 	const [near, setNear] = useState<Side | null>(null);
+	const wrapperRef = useRef<HTMLDivElement>(null);
+	const previousRef = useRef<HTMLButtonElement>(null);
+	const nextRef = useRef<HTMLButtonElement>(null);
 
 	useEffect(() => {
 		const track = targetRef.current;
 		if (!track) return undefined;
 		const update = () => {
-			const max = track.scrollWidth - track.clientWidth;
-			setCanPrev(track.scrollLeft > EDGE_TOLERANCE);
-			setCanNext(track.scrollLeft < max - EDGE_TOLERANCE);
+			// An arrow exists only while its step has somewhere to go, so it
+			// never sits there doing nothing (e.g. a centred card wider than
+			// the track overflows without a further target).
+			const positions = targets(track);
+			const prev =
+				stepTargetIndex(positions, track.scrollLeft, -1) !== null;
+			const next =
+				stepTargetIndex(positions, track.scrollLeft, 1) !== null;
+			// The arrow about to disappear may hold keyboard focus (the step
+			// that reached the end). Hand focus on before it unmounts, so a
+			// keyboard user keeps their place.
+			const active = track.ownerDocument.activeElement;
+			const losing =
+				(!prev && active === previousRef.current) ||
+				(!next && active === nextRef.current);
+			if (losing) {
+				const other =
+					active === previousRef.current
+						? next && nextRef.current
+						: prev && previousRef.current;
+				(other || wrapperRef.current)?.focus({ preventScroll: true });
+			}
+			setCanPrev(prev);
+			setCanNext(next);
 		};
 		update();
 		const resizeObserver =
@@ -189,7 +220,7 @@ export const HoverScrollArrows = ({
 			resizeObserver?.disconnect();
 			track.removeEventListener('scroll', update);
 		};
-	}, [targetRef]);
+	}, [targetRef, targets]);
 
 	// Pointer position rather than `:hover` on the strips: the strips let
 	// the pointer through, so cards under them stay draggable and clickable.
@@ -276,6 +307,7 @@ export const HoverScrollArrows = ({
 				}}
 			>
 				<ButtonBase
+					ref={isStart ? previousRef : nextRef}
 					aria-label={t(
 						isStart ? 'app.scrollPrevious' : 'app.scrollNext'
 					)}
@@ -311,6 +343,9 @@ export const HoverScrollArrows = ({
 
 	return (
 		<Box
+			ref={wrapperRef}
+			// Focus lands here only when the last arrow it was on goes away.
+			tabIndex={-1}
 			data-cy={dataCy}
 			onPointerMove={onPointerMove}
 			onPointerLeave={() => setNear(null)}
@@ -321,7 +356,8 @@ export const HoverScrollArrows = ({
 					position: 'relative',
 					display: 'flex',
 					flexDirection: 'column',
-					minWidth: 0
+					minWidth: 0,
+					outline: 'none'
 				},
 				...(Array.isArray(sx) ? sx : [sx])
 			]}
