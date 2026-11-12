@@ -1666,3 +1666,19 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		}
 	}
 }
+
+/* Call design S10 (5c): a running call, seen from the list. */
+.sessionsListItem__runningCall {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	font-weight: 600;
+	color: var(--m3-primary, #a5000a);
+}
+
+.sessionsListItem__runningCallIcon {
+	flex: none;
+	width: 14px;
+	height: 14px;
+	fill: currentcolor;
+}

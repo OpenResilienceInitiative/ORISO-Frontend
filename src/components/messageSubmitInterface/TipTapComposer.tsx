@@ -7,7 +7,7 @@ import React, {
 	useRef
 } from 'react';
 import { EditorContent, useEditor } from '@tiptap/react';
-import { Mark } from '@tiptap/core';
+import { Mark, type AnyExtension } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
 import Link from '@tiptap/extension-link';
@@ -24,6 +24,16 @@ import {
 	InsertionMarker,
 	insertionMarkerKey
 } from './inputField/extensions/insertionMarker';
+import {
+	createComposerFormatGateExtension,
+	FORMAT_OF_ACTION,
+	gateExtension,
+	type ComposerFormatGate
+} from './inputField/extensions/composerFormatGate';
+import {
+	useChatComposerDisabledFormats,
+	type ChatComposerFormat
+} from '../message/chatMessageConfig';
 import {
 	FormatBold,
 	FormatListBulleted,
@@ -185,6 +195,36 @@ const Subscript = Mark.create({
 	}
 });
 
+/**
+ * StarterKit with every format extension behind the platform switches. The
+ * extensions stay registered whatever the switches say: see composerFormatGate.
+ */
+const createGatedStarterKit = (gate: ComposerFormatGate) =>
+	StarterKit.configure({ link: false, underline: false }).extend({
+		addExtensions() {
+			const { parent } = this as unknown as {
+				parent: () => AnyExtension[];
+			};
+			return parent().map((extension) => gateExtension(extension, gate));
+		}
+	});
+
+/** Autolink and link-on-paste both ask `shouldAutoLink`, at the moment they fire. */
+const createGatedLink = (gate: ComposerFormatGate) =>
+	Link.extend({
+		addOptions() {
+			const options = this.parent?.();
+			return {
+				...options,
+				shouldAutoLink: (url: string) =>
+					gate.isEnabled('link') && options.shouldAutoLink(url)
+			};
+		}
+	}).configure({
+		openOnClick: false,
+		autolink: true
+	});
+
 export const TipTapComposer = forwardRef<
 	TipTapComposerRef,
 	TipTapComposerProps
@@ -252,30 +292,45 @@ export const TipTapComposer = forwardRef<
 		const onFilesSelectedRef = useRef(onFilesSelected);
 		onFilesSelectedRef.current = onFilesSelected;
 
+		/* Read at the moment a shortcut or rule fires, so the editor never has to
+		   be rebuilt and its content never has to be reloaded when this changes. */
+		const disabledFormats = useChatComposerDisabledFormats();
+		const disabledFormatsRef = useRef(disabledFormats);
+		disabledFormatsRef.current = disabledFormats;
+		const formatGate = useRef<ComposerFormatGate>({
+			isEnabled: (format: ChatComposerFormat) =>
+				!disabledFormatsRef.current.has(format)
+		}).current;
+
 		const editor = useEditor({
 			extensions: useMemo(
 				() => [
 					// StarterKit v3 bundles Link + Underline; disable them here so the
 					// explicitly-configured standalone extensions below are the only ones
 					// (avoids "Duplicate extension names found: ['link', 'underline']").
-					StarterKit.configure({ link: false, underline: false }),
-					Underline,
-					Superscript,
-					Subscript,
+					createGatedStarterKit(formatGate),
+					gateExtension(Underline, formatGate),
+					gateExtension(Superscript, formatGate),
+					gateExtension(Subscript, formatGate),
 					TextAlign.configure({
 						types: ['heading', 'paragraph'],
 						defaultAlignment: 'left'
 					}),
-					Highlight.configure({ multicolor: true }),
-					Link.configure({
-						openOnClick: false,
-						autolink: true
-					}),
+					gateExtension(
+						Highlight.configure({ multicolor: true }),
+						formatGate
+					),
+					gateExtension(createGatedLink(formatGate), formatGate),
 					Placeholder.configure({
 						placeholder
 					}),
-					TaskList,
-					TaskItem.configure({ nested: true }),
+					gateExtension(TaskList, formatGate),
+					// TaskItem owns the `[ ] ` / `[x] ` markdown input rule, so it is gated too.
+					gateExtension(
+						TaskItem.configure({ nested: true }),
+						formatGate
+					),
+					createComposerFormatGateExtension(formatGate),
 					InsertionMarker,
 					...(mentionProvider
 						? [createMentionExtension(mentionProvider)]
@@ -562,6 +617,15 @@ export const TipTapComposer = forwardRef<
 				const anchorMeta = payload.anchorId
 					? ` [anchor:${payload.anchorId}]`
 					: '';
+				if (!formatGate.isEnabled('highlight')) {
+					editor
+						.chain()
+						.focus()
+						.insertContent(payload.text)
+						.insertContent(anchorMeta)
+						.run();
+					return;
+				}
 				editor
 					.chain()
 					.focus()
@@ -579,6 +643,10 @@ export const TipTapComposer = forwardRef<
 			},
 			runAction: (action: string) => {
 				if (!isEditorReady(editor)) {
+					return;
+				}
+				const format = FORMAT_OF_ACTION[action];
+				if (format && !formatGate.isEnabled(format)) {
 					return;
 				}
 
@@ -877,60 +945,82 @@ export const TipTapComposer = forwardRef<
 						>
 							<Redo fontSize="small" />
 						</button>
-						<button
-							type="button"
-							onClick={() =>
-								editor.chain().focus().toggleBold().run()
-							}
-							className={
-								editor.isActive('bold') ? 'is-active' : ''
-							}
-							aria-label={t('message.submit.toolbar.bold')}
-						>
-							<FormatBold fontSize="small" />
-						</button>
-						<button
-							type="button"
-							onClick={() =>
-								editor.chain().focus().toggleBulletList().run()
-							}
-							className={
-								editor.isActive('bulletList') ? 'is-active' : ''
-							}
-							aria-label={t('message.submit.toolbar.bulletList')}
-						>
-							<FormatListBulleted fontSize="small" />
-						</button>
-						<button
-							type="button"
-							onClick={() =>
-								editor.chain().focus().toggleOrderedList().run()
-							}
-							className={
-								editor.isActive('orderedList')
-									? 'is-active'
-									: ''
-							}
-							aria-label={t('message.submit.toolbar.orderedList')}
-						>
-							<FilterList fontSize="small" />
-						</button>
-						<button
-							type="button"
-							onClick={() =>
-								editor
-									.chain()
-									.focus()
-									.toggleLink({ href: '#' })
-									.run()
-							}
-							className={
-								editor.isActive('link') ? 'is-active' : ''
-							}
-							aria-label={t('message.submit.toolbar.link')}
-						>
-							<ChevronRight fontSize="small" />
-						</button>
+						{formatGate.isEnabled('bold') && (
+							<button
+								type="button"
+								onClick={() =>
+									editor.chain().focus().toggleBold().run()
+								}
+								className={
+									editor.isActive('bold') ? 'is-active' : ''
+								}
+								aria-label={t('message.submit.toolbar.bold')}
+							>
+								<FormatBold fontSize="small" />
+							</button>
+						)}
+						{formatGate.isEnabled('bulletList') && (
+							<button
+								type="button"
+								onClick={() =>
+									editor
+										.chain()
+										.focus()
+										.toggleBulletList()
+										.run()
+								}
+								className={
+									editor.isActive('bulletList')
+										? 'is-active'
+										: ''
+								}
+								aria-label={t(
+									'message.submit.toolbar.bulletList'
+								)}
+							>
+								<FormatListBulleted fontSize="small" />
+							</button>
+						)}
+						{formatGate.isEnabled('orderedList') && (
+							<button
+								type="button"
+								onClick={() =>
+									editor
+										.chain()
+										.focus()
+										.toggleOrderedList()
+										.run()
+								}
+								className={
+									editor.isActive('orderedList')
+										? 'is-active'
+										: ''
+								}
+								aria-label={t(
+									'message.submit.toolbar.orderedList'
+								)}
+							>
+								<FilterList fontSize="small" />
+							</button>
+						)}
+						{formatGate.isEnabled('link') && (
+							<button
+								type="button"
+								onClick={() =>
+									editor
+										.chain()
+										.focus()
+										.toggleLink({ href: '#' })
+										.run()
+								}
+								className={
+									editor.isActive('link') ? 'is-active' : ''
+								}
+								aria-label={t('message.submit.toolbar.link')}
+							>
+								<ChevronRight fontSize="small" />
+							</button>
+						)}
 					</div>
 				)}
 				<EditorContent
