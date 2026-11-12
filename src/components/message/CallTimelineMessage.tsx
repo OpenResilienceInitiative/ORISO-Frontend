@@ -210,6 +210,26 @@ export const CallTimelineMessage = ({
 			})}`
 		: baseDescription;
 	/*
+	 * A missed call has no length to show, so its card shows when it rang
+	 * (#2237): the time alone today, with the date on any other day. The
+	 * invitation is the right moment here — nobody answered, so it is when
+	 * the phone rang, not a claimed start.
+	 */
+	const rangAt =
+		call.state === 'missed' ? (startedAt ?? call.invitedAt) : undefined;
+	const timeLabel = React.useMemo(() => {
+		if (!rangAt) return undefined;
+		const at = new Date(rangAt);
+		if (Number.isNaN(at.getTime())) return undefined;
+		const today = new Date().toDateString() === at.toDateString();
+		return new Intl.DateTimeFormat(
+			uiLanguage,
+			today
+				? { timeStyle: 'short' }
+				: { dateStyle: 'medium', timeStyle: 'short' }
+		).format(at);
+	}, [rangAt, uiLanguage]);
+	/*
 	 * A running call counts up from its start, every second (#2237), so the
 	 * card answers "how long has this been going on" without arithmetic.
 	 */
@@ -232,6 +252,7 @@ export const CallTimelineMessage = ({
 				headline={headline}
 				statusLabel={statusLabel}
 				description={description}
+				timeLabel={timeLabel}
 				durationLabel={
 					duration === null
 						? undefined

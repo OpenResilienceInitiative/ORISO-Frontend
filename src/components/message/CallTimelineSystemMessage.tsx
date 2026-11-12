@@ -28,6 +28,11 @@ export interface CallTimelineSystemMessageProps {
 	statusLabel: string;
 	description: string;
 	durationLabel?: string;
+	/**
+	 * When a missed call rang, shown large in place of the state, which the
+	 * title already carries (#2237).
+	 */
+	timeLabel?: string;
 	participants?: readonly CallTimelineParticipant[];
 	participantsLabel?: string;
 	actionLabel?: string;
@@ -74,6 +79,7 @@ export const CallTimelineSystemMessage = ({
 	statusLabel,
 	description,
 	durationLabel,
+	timeLabel,
 	participants = [],
 	participantsLabel,
 	actionLabel,
@@ -166,7 +172,7 @@ export const CallTimelineSystemMessage = ({
 							}
 							data-cy="call-timeline-duration"
 						>
-							{durationLabel || statusLabel}
+							{timeLabel || durationLabel || statusLabel}
 						</Box>
 					</Typography>
 				</Stack>

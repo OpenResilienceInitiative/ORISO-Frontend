@@ -287,6 +287,31 @@ it('counts a running call up every second from its start (#2237)', () => {
 	}
 });
 
+it('shows when a missed call rang instead of repeating "missed" (#2237)', () => {
+	vi.useFakeTimers();
+	vi.setSystemTime(new Date('2026-11-13T15:00:00.000Z'));
+	try {
+		ui.language = 'de';
+		const call: CallLifecycleMessage = {
+			callId: 'missed-call',
+			roomRef: '!source:example',
+			callRoomId: '!media:example',
+			callType: 'video',
+			state: 'missed',
+			invitedAt: '2026-11-13T09:40:00.000Z',
+			participants: []
+		};
+		render(<CallTimelineMessage call={call} />);
+		const shown = screen.getByText(/\d{2}:40/, {
+			selector: '[data-cy="call-timeline-duration"]'
+		});
+		expect(shown.textContent).not.toContain('2026');
+	} finally {
+		ui.language = '';
+		vi.useRealTimers();
+	}
+});
+
 it('formats call durations from one hour on with hours', () => {
 	expect(formatCallDuration(65)).toBe('01:05');
 	expect(formatCallDuration(3725)).toBe('1:02:05');
