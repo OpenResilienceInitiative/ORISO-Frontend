@@ -304,6 +304,12 @@ export const EVENT_CASES: ReadonlyArray<EventCase> = [
 		emitted: true,
 		source: 'DeletedAskerSessionService.recordDeletionAfterCommit'
 	},
+	{
+		eventType: 'ADDON_NOTIFICATION',
+		recipients: BOTH,
+		emitted: true,
+		source: 'AddonNotification (oriso-addon/v1)'
+	},
 	// Drafts never notify on any channel
 	{
 		eventType: 'draft.created',

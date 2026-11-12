@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useSyncExternalStore } from 'react';
 import { AddonApp, AddonSlot, AvailableAddon } from './addonTypes';
 import { apiGetAddonRegistry } from './addonRegistryApi';
+import { localizedText } from './addonLink';
 
 export interface AddonAppInSlot {
 	addon: AvailableAddon;
@@ -80,13 +81,5 @@ export const findAddonApp = (
 };
 
 /** The title in the user's language, falling back to German and then to any title. */
-export const appTitle = (app: AddonApp, locale: string): string => {
-	const language = locale.split(/[@-]/)[0];
-	return (
-		app.title[locale] ??
-		app.title[language] ??
-		app.title.de ??
-		Object.values(app.title)[0] ??
-		app.id
-	);
-};
+export const appTitle = (app: AddonApp, locale: string): string =>
+	localizedText(app.title, locale) ?? app.id;

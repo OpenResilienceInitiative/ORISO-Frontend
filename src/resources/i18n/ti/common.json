@@ -5,6 +5,15 @@
 		"panel": {
 			"region": "ናይ ጎኒ ፓነል: {{title}}",
 			"close": "ዕጾ"
+		},
+		"calendar": {
+			"source": "ካብ መወሰኺ «{{title}}»",
+			"allDay": "ምሉእ መዓልቲ",
+			"kind": {
+				"appointment": "ቆጸራ",
+				"deadline": "ናይ መወዳእታ ዕለት",
+				"reminder": "መዘኻኸሪ"
+			}
 		}
 	},
 	"askerInfo": {
@@ -2615,6 +2624,10 @@
 			"sessionAskerDeleted": {
 				"title": "ዝተሰረዘ ደላዪ ምኽሪ",
 				"text": "ምስ ደላዪ ምኽሪ ዝነበረ ቻት ተሰሪዙ። ውልቃዊ ሓበሬታን መልእኽትታትን ድሕሪ ሕጂ ኣይርከቡን።"
+			},
+			"addonNotification": {
+				"title": "ሓድሽ መልእኽቲ ካብ መወሰኺ",
+				"text": "መወሰኺ ሓድሽ መልእኽቲ ኣለዎ።"
 			}
 		},
 		"error": "ወዲቑ",

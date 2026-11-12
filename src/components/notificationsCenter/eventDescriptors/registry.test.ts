@@ -70,6 +70,7 @@ const KNOWN_ICON_IDS: EventIconId[] = [
 	'appointmentBriefing',
 	'waitingRoom',
 	'teamDiscussion',
+	'addon',
 	'system'
 ];
 
@@ -118,6 +119,7 @@ const EXPECTED_TARGET_KIND: Record<string, string> = {
 	'appointment.briefing': 'conversation',
 	// #876: a planned maintenance notice links out to the public status page.
 	'service.notice.planned': 'statusPage',
+	'ADDON_NOTIFICATION': 'addon',
 	// #1159: the deleted chat cannot be opened any more.
 	'session.asker_deleted': 'none'
 };
@@ -141,8 +143,9 @@ describe('WP-06 event-descriptor registry', () => {
 		// + 8 handover + 5 call (incl. the FE#1952 direct-link knock)
 		// + 3 group-chat lifecycle + 4 appointments
 		// + team discussion + first response + conversation finished
-		// + service notice, three offer events, deleted advice seeker and topic duplicate = 41.
-		expect(KNOWN_EVENT_TYPES.length).toBe(41);
+		// + service notice, three offer events, deleted advice seeker,
+		// topic duplicate and add-on notification = 42.
+		expect(KNOWN_EVENT_TYPES.length).toBe(42);
 		[
 			'request.new',
 			'request.denied',
@@ -410,6 +413,71 @@ describe('WP-06 event-descriptor registry', () => {
 			// template is empty, so the server-provided text is used.
 			expect(title).toBe('Activity');
 			expect(text).toBe('Server body');
+		});
+	});
+
+	describe('ADDON_NOTIFICATION (oriso-addon/v1)', () => {
+		const descriptor = getEventDescriptor('ADDON_NOTIFICATION');
+		const translate = (key: string) => {
+			const value = resolveI18nKey(enCommon, key);
+			return typeof value === 'string' ? value : key;
+		};
+
+		it('is a system event with the add-on icon', () => {
+			expect(descriptor).not.toBe(FALLBACK_DESCRIPTOR);
+			expect(descriptor.family).toBe('system');
+			expect(descriptor.icon).toBe('addon');
+		});
+
+		it.each([
+			['asker.navigation', null, '/addons/digisucht-tools/goals'],
+			['consultant.navigation', 42, '/addons/digisucht-tools/goals'],
+			[
+				'consultant.session',
+				42,
+				'/sessions/consultant/sessionView/session/42?addon=digisucht-tools%2Fgoals'
+			],
+			[
+				'consultant.asker-profile',
+				42,
+				'/sessions/consultant/sessionView/session/42'
+			]
+		])('opens the %s target', (slot, sessionId, path) => {
+			expect(
+				descriptor.resolveActionTarget({
+					addon: 'digisucht-tools',
+					appId: 'goals',
+					slot,
+					sourceSessionId: sessionId,
+					sessionsBasePath: '/sessions/consultant/sessionView'
+				})
+			).toEqual({ kind: 'addon', path });
+		});
+
+		it('renders the add-on text instead of a template', () => {
+			expect(
+				renderEventStrings(descriptor, translate, {
+					interpolation: {
+						addonTitle: 'Neues Tool <b>freigegeben</b>',
+						addonText: 'Ihre Beraterin hat „Ziele“ freigegeben.'
+					}
+				})
+			).toEqual({
+				title: 'Neues Tool <b>freigegeben</b>',
+				text: 'Ihre Beraterin hat „Ziele“ freigegeben.'
+			});
+		});
+
+		it('falls back to the server text, then to the generic wording', () => {
+			expect(
+				renderEventStrings(descriptor, translate, {
+					fallbackTitle: 'Server title'
+				})
+			).toEqual({ title: 'Server title', text: '' });
+			expect(renderEventStrings(descriptor, translate)).toEqual({
+				title: 'New add-on notice',
+				text: 'An add-on has a new notice.'
+			});
 		});
 	});
 });

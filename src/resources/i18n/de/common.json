@@ -5,6 +5,15 @@
 		"panel": {
 			"region": "Seitenbereich: {{title}}",
 			"close": "Schließen"
+		},
+		"calendar": {
+			"source": "Aus der Erweiterung „{{title}}“",
+			"allDay": "Ganztägig",
+			"kind": {
+				"appointment": "Termin",
+				"deadline": "Frist",
+				"reminder": "Erinnerung"
+			}
 		}
 	},
 	"askerInfo": {
@@ -2662,6 +2671,10 @@
 			"sessionAskerDeleted": {
 				"title": "Gelöschte:r Ratsuchende:r",
 				"text": "Ein Chat mit einer ratsuchenden Person wurde gelöscht. Persönliche Daten und Nachrichten sind nicht mehr verfügbar."
+			},
+			"addonNotification": {
+				"title": "Neue Mitteilung einer Erweiterung",
+				"text": "Eine Erweiterung hat eine neue Mitteilung."
 			}
 		},
 		"error": "Fehlgeschlagen",

@@ -98,10 +98,13 @@ import {
 import {
 	FutureZone,
 	PULL_RELEASE_PX,
+	type FutureZoneExtraRow,
 	type FutureZoneHandle
 } from './timeline/FutureZone';
 import { AppointmentSplitButton } from './timeline/AppointmentSplitButton';
-import { useFutureEntries } from './timeline/useFutureEntries';
+import { FUTURE_MONTHS, useFutureEntries } from './timeline/useFutureEntries';
+import { useAddonCalendarEntries } from '../../addons/addonCalendar';
+import { AddonCalendarPill } from '../../addons/AddonCalendarPill';
 import { useAppointmentActions } from './timeline/useAppointmentActions';
 import { AppointmentDateDialog } from './timeline/AppointmentDateDialog';
 import {
@@ -2635,6 +2638,34 @@ export const SessionsList = ({
 		() => entriesForList(futureEntries, visibleRooms, hasAnyListFilter),
 		[futureEntries, visibleRooms, hasAnyListFilter]
 	);
+	const addonCalendarEntries = useAddonCalendarEntries({
+		enabled: showTimeline,
+		monthsAhead: FUTURE_MONTHS
+	});
+	// Add-on dates belong to no room, so a list filter hides them like
+	// unmapped appointments.
+	const addonZoneRows = React.useMemo<FutureZoneExtraRow[]>(
+		() =>
+			hasAnyListFilter
+				? []
+				: addonCalendarEntries.map((entry) => ({
+						key: `addon:${entry.addon}:${entry.id}`,
+						start: entry.start,
+						end: entry.end,
+						render: (now: Date) => (
+							<AddonCalendarPill
+								entry={entry}
+								now={now}
+								sessionsBasePath={
+									isAskerList
+										? '/sessions/user/view'
+										: '/sessions/consultant/sessionView'
+								}
+							/>
+						)
+					})),
+		[addonCalendarEntries, hasAnyListFilter, isAskerList]
+	);
 	// Every planned date counts for the clock, whatever the filter shows above.
 	const nextGroupAppointment = React.useMemo(
 		() =>
@@ -2765,31 +2796,33 @@ export const SessionsList = ({
 			});
 	};
 
-	const timelineZone = showTimeline && zoneEntries.length > 0 && (
-		<div
-			className="sessionsList__timeline"
-			data-cy="sessions-list-timeline"
-		>
-			<FutureZone
-				ref={zoneRef}
-				nowRef={nowRef}
-				entries={zoneEntries}
-				role={timelineRole}
-				listHeight={timelineListHeight}
-				initialReveal={timelineSettings.reveal}
-				memoryKey="sessionsList"
-				selectedKey={selectedTwin?.key}
-				onOpen={(entry) => {
-					setSelectedTwin(entry);
-					onAppointmentAction('open', entry);
-				}}
-				onAction={onAppointmentAction}
-				unreadOf={(entry) => isRoomUnread(entry.matrixRoomId)}
-				label={translate('sessionList.timeline.upcoming')}
-				nowLabel={translate('sessionList.timeline.now')}
-			/>
-		</div>
-	);
+	const timelineZone = showTimeline &&
+		zoneEntries.length + addonZoneRows.length > 0 && (
+			<div
+				className="sessionsList__timeline"
+				data-cy="sessions-list-timeline"
+			>
+				<FutureZone
+					ref={zoneRef}
+					nowRef={nowRef}
+					entries={zoneEntries}
+					extraRows={addonZoneRows}
+					role={timelineRole}
+					listHeight={timelineListHeight}
+					initialReveal={timelineSettings.reveal}
+					memoryKey="sessionsList"
+					selectedKey={selectedTwin?.key}
+					onOpen={(entry) => {
+						setSelectedTwin(entry);
+						onAppointmentAction('open', entry);
+					}}
+					onAction={onAppointmentAction}
+					unreadOf={(entry) => isRoomUnread(entry.matrixRoomId)}
+					label={translate('sessionList.timeline.upcoming')}
+					nowLabel={translate('sessionList.timeline.now')}
+				/>
+			</div>
+		);
 
 	return (
 		<div

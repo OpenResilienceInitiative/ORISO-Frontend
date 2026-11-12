@@ -249,9 +249,55 @@ describe('shared params contract (#846)', () => {
 				'maintenanceEnd',
 				'statusUrl',
 				// FE#1952: which call a direct-link knock is for (AUDIO / VIDEO).
-				'medium'
+				'medium',
+				// ADDON_NOTIFICATION payload (oriso-addon/v1).
+				'addon',
+				'appId',
+				'slot',
+				'important',
+				'title',
+				'text'
 			].sort()
 		);
+	});
+
+	it('reads an add-on notification payload in the user language', () => {
+		const params = parseEventActionParams({
+			addon: 'digisucht-tools',
+			appId: 'goals',
+			slot: 'consultant.session',
+			sessionId: 42,
+			important: true,
+			title: { de: 'Neues Tool', en: 'New tool', fr: 42 },
+			text: { de: 'Freigegeben.' }
+		});
+		expect(params).toMatchObject({
+			addon: 'digisucht-tools',
+			appId: 'goals',
+			slot: 'consultant.session',
+			sourceSessionId: 42,
+			important: true,
+			addonTitle: { de: 'Neues Tool', en: 'New tool' },
+			addonText: { de: 'Freigegeben.' }
+		});
+		expect(toInterpolationValues(params, 'en')).toMatchObject({
+			addonTitle: 'New tool',
+			addonText: 'Freigegeben.'
+		});
+		expect(
+			resolveNotificationActionPath(
+				{ eventType: 'ADDON_NOTIFICATION', params },
+				'/sessions/consultant/sessionView'
+			)
+		).toBe(
+			'/sessions/consultant/sessionView/session/42?addon=digisucht-tools%2Fgoals'
+		);
+	});
+
+	it('ignores plain-string titles of other events', () => {
+		const params = parseEventActionParams({ title: 'x', text: 'y' });
+		expect(params.addonTitle).toBeUndefined();
+		expect(params.addonText).toBeUndefined();
 	});
 });
 

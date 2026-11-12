@@ -43,9 +43,22 @@ export interface FutureZoneHandle {
 	stepOpen: () => void;
 }
 
+/** A row from another source (an add-on), placed by time between the entries. */
+export interface FutureZoneExtraRow {
+	key: string;
+	start: Date;
+	end?: Date;
+	render: (now: Date) => React.ReactNode;
+}
+
+type ZoneRow =
+	| { key: string; start: Date; entry: FutureEntry }
+	| { key: string; start: Date; extra: FutureZoneExtraRow };
+
 export interface FutureZoneProps {
 	/** Next appointment first (as `buildFutureEntries` returns them). */
 	entries: FutureEntry[];
+	extraRows?: FutureZoneExtraRow[];
 	role: TimelineRole;
 	/** Height of the list below the handle: half / almost all of it are stops. */
 	listHeight: number;
@@ -84,6 +97,7 @@ export const FutureZone = forwardRef<FutureZoneHandle, FutureZoneProps>(
 	(
 		{
 			entries,
+			extraRows,
 			role,
 			listHeight,
 			selectedKey,
@@ -128,9 +142,30 @@ export const FutureZone = forwardRef<FutureZoneHandle, FutureZoneProps>(
 		);
 
 		// Furthest appointment first: the next one sits right above "Jetzt".
-		const shownEntries = useMemo(
-			() => entries.filter((entry) => !hasEnded(entry, now)).reverse(),
-			[entries, now]
+		const shownEntries = useMemo<ZoneRow[]>(
+			() =>
+				[
+					...entries.map((entry) => ({
+						key: entry.key,
+						start: entry.start,
+						entry
+					})),
+					...(extraRows ?? []).map((extra) => ({
+						key: extra.key,
+						start: extra.start,
+						extra
+					}))
+				]
+					.filter(
+						(row) =>
+							!hasEnded(
+								'entry' in row ? row.entry : row.extra,
+								now
+							)
+					)
+					.sort((a, b) => a.start.getTime() - b.start.getTime())
+					.reverse(),
+			[entries, extraRows, now]
 		);
 
 		// Snap stops come from the real pills' height, not from a constant.
@@ -227,21 +262,25 @@ export const FutureZone = forwardRef<FutureZoneHandle, FutureZoneProps>(
 						role="list"
 						aria-label={label}
 					>
-						{shownEntries.map((entry) => (
+						{shownEntries.map((row) => (
 							<div
-								key={entry.key}
+								key={row.key}
 								className="tlp__row"
 								role="listitem"
 							>
-								<FutureEntryPill
-									entry={entry}
-									role={role}
-									now={now}
-									selected={entry.key === selectedKey}
-									unread={unreadOf?.(entry)}
-									onOpen={onOpen}
-									onAction={onAction}
-								/>
+								{'entry' in row ? (
+									<FutureEntryPill
+										entry={row.entry}
+										role={role}
+										now={now}
+										selected={row.key === selectedKey}
+										unread={unreadOf?.(row.entry)}
+										onOpen={onOpen}
+										onAction={onAction}
+									/>
+								) : (
+									row.extra.render(now)
+								)}
 							</div>
 						))}
 					</div>

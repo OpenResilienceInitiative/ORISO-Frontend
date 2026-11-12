@@ -66,6 +66,7 @@ export type EventIconId =
 	| 'appointmentBriefing'
 	| 'waitingRoom'
 	| 'teamDiscussion'
+	| 'addon'
 	| 'system';
 
 /**
@@ -148,6 +149,14 @@ export interface EventActionParams {
 	maintenanceEnd?: string | null;
 	/** #876 public status page; only http(s) survives parsing. */
 	statusUrl?: string | null;
+	/** ADDON_NOTIFICATION: the add-on, its app and the slot a click opens. */
+	addon?: string | null;
+	appId?: string | null;
+	slot?: string | null;
+	important?: boolean | null;
+	/** ADDON_NOTIFICATION: plain-text title and text per locale, written by the add-on. */
+	addonTitle?: Record<string, string> | null;
+	addonText?: Record<string, string> | null;
 }
 
 /**
@@ -175,6 +184,7 @@ export type EventActionTarget =
 	  }
 	// #876: opens the public status page in a new tab; never an in-app route.
 	| { kind: 'statusPage'; url: string | null }
+	| { kind: 'addon'; path: string | null }
 	| { kind: 'none' };
 
 /**

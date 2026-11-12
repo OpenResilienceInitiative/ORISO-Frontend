@@ -30,6 +30,7 @@ export const endpoints = {
 	agenciesByTenant: agencyServiceOrigin + '/service/agencies/by-tenant',
 	additionalEnquiry: userServiceOrigin + '/service/users/askers/session/new',
 	addonRegistry: apiUrl + '/service/addons/registry',
+	addonCalendar: apiUrl + '/service/addons/calendar',
 	appointmentBase: apiUrl + '/service/appointments/sessions',
 	appointmentBaseNew: (sessionId: number) =>
 		apiUrl + `/service/appointments/sessions/${sessionId}/enquiry/new`,

@@ -2,9 +2,9 @@ import { ReactComponent as ToolsIconOutline } from '../resources/img/icons/tools
 import { ReactComponent as ToolsIconFilled } from '../resources/img/icons/tools_filled.svg';
 import { AddonSlot, AvailableAddon } from './addonTypes';
 import { appsInSlot, appTitle } from './addonRegistry';
+import { addonAppPath } from './addonLink';
 
-export const addonAppPath = (addonName: string, appId: string) =>
-	`/addons/${encodeURIComponent(addonName)}/${encodeURIComponent(appId)}`;
+export { addonAppPath };
 
 /** Navigation entries for the add-on apps of a navigation slot, in the shape RouterConfig uses. */
 export const addonNavigationItems = (

@@ -92,3 +92,28 @@
 		}
 	}
 }
+
+.addonCalendarEntry {
+	border-style: dashed;
+	border-color: var(--m3-outline, #747878);
+	background: var(--m3-surface-container-low, #f6f3f3);
+
+	&[aria-disabled='true'] {
+		cursor: default;
+	}
+
+	&__source {
+		flex: none;
+		max-width: 40%;
+		overflow: hidden;
+		padding: 2px 8px;
+		border-radius: 8px;
+		background: var(--m3-secondary-container, #e3e2e6);
+		color: var(--m3-on-secondary-container, #1b1b1c);
+		font-size: 11px;
+		font-weight: 500;
+		line-height: 16px;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+}

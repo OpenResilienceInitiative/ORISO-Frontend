@@ -1,3 +1,4 @@
+import { localizedText } from '../../addons/addonLink';
 import {
 	getEventDescriptor,
 	requiresExactActionPath
@@ -67,7 +68,14 @@ export const EVENT_PARAM_KEYS = [
 	'maintenanceEnd',
 	'statusUrl',
 	// FE#1952: which call a direct-link knock is for (call.knock.requested).
-	'medium'
+	'medium',
+	// ADDON_NOTIFICATION (oriso-addon/v1 contract, section 1).
+	'addon',
+	'appId',
+	'slot',
+	'important',
+	'title',
+	'text'
 ] as const;
 
 const ISO_DATE = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
@@ -98,6 +106,19 @@ const webUrl = (value: unknown): string | undefined => {
 	} catch {
 		return undefined;
 	}
+};
+
+const localizedTexts = (value: unknown): Record<string, string> | undefined => {
+	if (!value || typeof value !== 'object' || Array.isArray(value)) {
+		return undefined;
+	}
+	const texts = Object.fromEntries(
+		Object.entries(value as Record<string, unknown>).filter(
+			(entry): entry is [string, string] =>
+				typeof entry[1] === 'string' && entry[1].trim() !== ''
+		)
+	);
+	return Object.keys(texts).length ? texts : undefined;
 };
 
 /** Parse only the known, non-content fields accepted by action-target resolvers. */
@@ -191,6 +212,19 @@ export const parseEventActionParams = (raw: unknown): EventActionParams => {
 	if (maintenanceEnd) params.maintenanceEnd = maintenanceEnd;
 	const statusUrl = webUrl(source.statusUrl);
 	if (statusUrl) params.statusUrl = statusUrl;
+	const addon = asNullableString(source.addon);
+	if (addon) params.addon = addon;
+	const appId = asNullableString(source.appId);
+	if (appId) params.appId = appId;
+	const slot = asNullableString(source.slot);
+	if (slot) params.slot = slot;
+	if (typeof source.important === 'boolean') {
+		params.important = source.important;
+	}
+	const addonTitle = localizedTexts(source.title);
+	if (addonTitle) params.addonTitle = addonTitle;
+	const addonText = localizedTexts(source.text);
+	if (addonText) params.addonText = addonText;
 	return params;
 };
 
@@ -243,6 +277,10 @@ export const toInterpolationValues = (
 		: '';
 	values.maintenanceStart ??= '';
 	values.maintenanceEnd ??= '';
+	const addonTitle = localizedText(params?.addonTitle, language);
+	if (addonTitle) values.addonTitle = addonTitle;
+	const addonText = localizedText(params?.addonText, language);
+	if (addonText) values.addonText = addonText;
 	return values;
 };
 
@@ -294,6 +332,7 @@ export const resolveNotificationActionPath = (
 		target.kind === 'groupChatJoin' ||
 		target.kind === 'request' ||
 		target.kind === 'draft' ||
+		target.kind === 'addon' ||
 		// FE#1952: where a knock lands once its call is started (or cannot be).
 		target.kind === 'callRoom'
 		? target.path
