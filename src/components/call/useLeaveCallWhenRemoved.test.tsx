@@ -98,6 +98,31 @@ describe('useLeaveCallWhenRemoved', () => {
 
 		expect(unsubscribe).toHaveBeenCalled();
 	});
+
+	it('watches the new Matrix client after a token refresh replaced the old one', () => {
+		const onRemoved = vi.fn();
+		const { rerender } = renderHook(
+			({ generation }) =>
+				useLeaveCallWhenRemoved(
+					'!circle:oriso',
+					true,
+					onRemoved,
+					generation
+				),
+			{ initialProps: { generation: 0 } }
+		);
+
+		rerender({ generation: 1 });
+
+		expect(unsubscribe).toHaveBeenCalledTimes(1);
+		expect(subscribe).toHaveBeenCalledTimes(2);
+		emit({
+			type: 'myMembership',
+			membership: 'ban',
+			prevMembership: 'join'
+		});
+		expect(onRemoved).toHaveBeenCalledWith('ban');
+	});
 });
 
 describe('groupConversationRoomOf', () => {

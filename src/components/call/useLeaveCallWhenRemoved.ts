@@ -23,13 +23,17 @@ export const groupConversationRoomOf = (
  * but did not touch a call already running, so the removed person could
  * stay in it. Their own app sees the ban on its Matrix sync and leaves.
  *
+ * `clientGeneration` changes when the Matrix client is replaced (token
+ * refresh); the old client's listeners go with it, so the watch re-attaches.
+ *
  * A stopped conversation (tombstone) is not handled here: stopping a
  * Gesprächskreis ends its call through the call lifecycle itself.
  */
 export const useLeaveCallWhenRemoved = (
 	conversationRoomId: string | null | undefined,
 	isInGroupCall: boolean,
-	onRemoved: (reason: CallRemoval) => void
+	onRemoved: (reason: CallRemoval) => void,
+	clientGeneration = 0
 ): void => {
 	const onRemovedRef = useRef(onRemoved);
 	onRemovedRef.current = onRemoved;
@@ -49,5 +53,5 @@ export const useLeaveCallWhenRemoved = (
 			}
 		);
 		return (): void => stop?.();
-	}, [conversationRoomId, isInGroupCall]);
+	}, [conversationRoomId, isInGroupCall, clientGeneration]);
 };

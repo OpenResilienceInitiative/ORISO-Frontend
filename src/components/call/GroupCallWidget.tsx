@@ -998,7 +998,8 @@ export const GroupCallWidget: React.FC = () => {
 				timeout: 10_000
 			});
 			handleEndCall();
-		}
+		},
+		clientGeneration
 	);
 
 	const handleToggleFullscreen = () => {
