@@ -1108,6 +1108,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 				isJoinGroupChatView={props.isJoinGroupChatView}
 				bannedUsers={props.bannedUsers}
 				hideTopic={props.hideGroupTopic}
+				hideBackButton={props.hideBackButton}
 			/>
 		);
 	}
