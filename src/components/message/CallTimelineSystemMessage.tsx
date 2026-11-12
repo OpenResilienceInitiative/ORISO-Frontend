@@ -1,8 +1,9 @@
 import * as React from 'react';
 import PhoneDisabledRoundedIcon from '@mui/icons-material/PhoneDisabledRounded';
-import { Box, Button, Stack, Typography } from '@mui/material';
+import { Box, Button, Stack, Tooltip, Typography } from '@mui/material';
 import { ChatSystemMessageCard } from './ChatSystemMessageCard';
 import { UserAvatar } from './UserAvatar';
+import { formatMessagePersonName } from './messageNameUtils';
 import type { AvatarChoice } from '../../utils/avatarChoice';
 import { ReactComponent as CallOnIcon } from '../../resources/img/icons/call-on.svg';
 import { ReactComponent as CameraOnIcon } from '../../resources/img/icons/camera-on.svg';
@@ -46,6 +47,22 @@ const colors = {
 	surfaceContainer: 'var(--m3-surface-container, #f0edee)',
 	onSurface: 'var(--m3-on-surface, #1a1c1e)',
 	onSurfaceVariant: 'var(--m3-on-surface-variant, #444748)'
+} as const;
+
+/** Same dark tooltip as the room header's participant row. */
+const participantTooltipSx = {
+	'backgroundColor': 'var(--m3-inverse-surface, #313030)',
+	'color': 'var(--m3-inverse-on-surface, #f4f0ef)',
+	'borderRadius': '4px',
+	'padding': '4px 8px',
+	'fontSize': 12,
+	'fontWeight': 500,
+	'lineHeight': '16px',
+	'letterSpacing': '0.5px',
+	// 6px above the face, as in the header row (MUI default is 14px).
+	'.MuiTooltip-popper[data-popper-placement*="top"] &': {
+		marginBottom: '6px'
+	}
 } as const;
 
 /** Call-specific content inside the existing Carimat system-message card. */
@@ -190,15 +207,67 @@ export const CallTimelineSystemMessage = ({
 								pl: 1
 							}}
 						>
-							{participants.map((participant) => (
-								<UserAvatar
-									key={participant.userId}
-									{...participant}
-									size={PARTICIPANT_AVATAR_SIZE}
-									ring={false}
-									outline={false}
-								/>
-							))}
+							{participants.map((participant) => {
+								const face = (
+									<UserAvatar
+										{...participant}
+										size={PARTICIPANT_AVATAR_SIZE}
+										ring={false}
+										outline={false}
+									/>
+								);
+								/*
+								 * The person's name on hover and keyboard focus,
+								 * in the dark tooltip the room header's avatar row
+								 * uses (#2237). Only a real name: an id-only
+								 * participant gets no tooltip, as on the card.
+								 */
+								const name = formatMessagePersonName(
+									participant.avatarDisplayName ??
+										participant.displayName,
+									participant.username
+								);
+								if (!name)
+									return (
+										<React.Fragment
+											key={participant.userId}
+										>
+											{face}
+										</React.Fragment>
+									);
+								return (
+									<Tooltip
+										key={participant.userId}
+										title={name}
+										placement="top"
+										describeChild
+										slotProps={{
+											tooltip: {
+												'sx': participantTooltipSx,
+												// @ts-expect-error data-* attributes pass through
+												'data-cy':
+													'call-participant-tooltip'
+											}
+										}}
+									>
+										<Box
+											component="span"
+											tabIndex={0}
+											data-cy="call-participant"
+											sx={{
+												'display': 'inline-flex',
+												'borderRadius': '50%',
+												'&:focus-visible': {
+													outline: `2px solid ${colors.primary}`,
+													outlineOffset: 2
+												}
+											}}
+										>
+											{face}
+										</Box>
+									</Tooltip>
+								);
+							})}
 						</Box>
 					</Stack>
 				)}

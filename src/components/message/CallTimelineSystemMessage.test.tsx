@@ -1,7 +1,13 @@
 // @vitest-environment oriso-jsdom
 import * as React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import {
+	cleanup,
+	fireEvent,
+	render,
+	screen,
+	waitFor
+} from '@testing-library/react';
 import { CallTimelineSystemMessage } from './CallTimelineSystemMessage';
 
 vi.mock('react-i18next', () => ({
@@ -105,6 +111,46 @@ describe('CallTimelineSystemMessage', () => {
 		expect(face.style.height).toBe('40px');
 		// No white ring around the face.
 		expect(face.style.boxShadow).toBe('none');
+	});
+
+	it('names each participant in a tooltip on hover and focus (#2237)', async () => {
+		render(
+			<CallTimelineSystemMessage
+				state="running"
+				callType="video"
+				callLabel="Video call"
+				headline="Video call in progress"
+				statusLabel="In progress"
+				description="The call is active."
+				participantsLabel="In the call"
+				participants={[
+					{
+						userId: '@yak:example',
+						username: 'Gentle Yak',
+						displayName: 'Gentle Yak'
+					},
+					{
+						// As CallTimelineMessage passes an id-only participant.
+						userId: '@raw:example',
+						username: undefined as unknown as string,
+						displayName: undefined as unknown as string
+					}
+				]}
+			/>
+		);
+
+		const faces = screen.getAllByTestId('user-avatar');
+		expect(faces).toHaveLength(2);
+		const trigger = faces[0].parentElement as HTMLElement;
+		expect(trigger.tabIndex).toBe(0);
+		fireEvent.mouseOver(trigger);
+		await waitFor(() =>
+			expect(screen.getByRole('tooltip').textContent).toBe('Gentle Yak')
+		);
+		// No name, no tooltip trigger: an id is never shown as a name.
+		expect(faces[1].parentElement?.getAttribute('data-cy')).not.toBe(
+			'call-participant'
+		);
 	});
 
 	it('keeps the selected M3 action letter spacing', () => {

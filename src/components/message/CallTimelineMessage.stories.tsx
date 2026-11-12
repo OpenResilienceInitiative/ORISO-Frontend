@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, fn, userEvent, waitFor } from 'storybook/test';
+import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { CallTimelineMessage } from './CallTimelineMessage';
 import {
 	withMessageShell,
@@ -168,7 +168,18 @@ export const RunningGroupCall: Story = {
 			canvasElement.querySelector('.messageItem__botAvatarIcon')
 		).toBeNull();
 		const face = canvas.getByRole('img', { name: /Kim Test/ });
-		await expect(face.getBoundingClientRect().width).toBe(40);
+		// Measured once the card's entry animation has settled.
+		await waitFor(() =>
+			expect(Math.round(face.getBoundingClientRect().width)).toBe(40)
+		);
+		// Hovering a face names the person in the dark tooltip.
+		await userEvent.hover(face);
+		await waitFor(() =>
+			expect(
+				within(canvasElement.ownerDocument.body).getByRole('tooltip')
+			).toHaveTextContent('Kim Test')
+		);
+		await userEvent.unhover(face);
 	}
 };
 
