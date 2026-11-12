@@ -64,6 +64,27 @@ describe('useActivityTimeline (#1888: the Timeline’s selection, in one place)'
 			});
 			expect(result.current.selectedId).toBe('b');
 		});
+
+		it('keeps an activity card in the same ID namespace as the active route', () => {
+			const group = card('group', {
+				eventType: 'group_chat.reminder',
+				sourceSessionId: 42,
+				params: { seriesId: 42 }
+			});
+			const session = card('session', { sourceSessionId: 42 });
+			const { result, rerender, initialProps } = setup({
+				feed: [group, session],
+				routeSelection: { groupId: null, sessionId: '42' }
+			});
+			expect(result.current.selectedId).toBe('session');
+
+			rerender({
+				...initialProps,
+				feed: [session, group],
+				routeSelection: { groupId: null, sessionId: null, chatId: '42' }
+			});
+			expect(result.current.selectedId).toBe('group');
+		});
 	});
 
 	describe('#845: displayed means read', () => {

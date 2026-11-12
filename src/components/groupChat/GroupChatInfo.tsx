@@ -23,9 +23,9 @@ import {
 } from '../../api';
 import { apiPostBanUser } from '../../api/apiPostBanUser';
 import {
+	canEditGroupChatSettings,
 	canModerateGroupChat,
 	getStoppedGroupChatRemovalIds,
-	isGroupChatOwner,
 	isV2GroupChatSession
 } from './groupChatHelpers';
 import { getGroupChatDate } from '../session/sessionDateHelpers';
@@ -274,7 +274,10 @@ export const GroupChatInfo = ({ dialog = false }: { dialog?: boolean }) => {
 			matrixUserId: getCurrentMatrixUserId()
 		});
 	const showInviteActions =
-		!!featureGroupChatV2Enabled && isV2GroupChat && isCurrentUserModerator;
+		!!featureGroupChatV2Enabled &&
+		isV2GroupChat &&
+		isCurrentUserModerator &&
+		getModality(activeSession) === Modality.SELF_HELP;
 	const durationOption = durationSelectOptionsSet.find(
 		({ value }) => Number(value) === activeSession.item.duration
 	);
@@ -509,8 +512,7 @@ export const GroupChatInfo = ({ dialog = false }: { dialog?: boolean }) => {
 						}
 						settings={m3Settings}
 						onEdit={
-							isGroupChatOwner(activeSession, userData) &&
-							!activeSession.item.active
+							canEditGroupChatSettings(activeSession, userData)
 								? () =>
 										navigate(editPath, {
 											state: {

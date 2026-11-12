@@ -216,10 +216,12 @@ const buildSingleSession = (
 const buildGroupSession = ({
 	active = true,
 	assignedAgencies = [],
+	repetitive = false,
 	subscribed = true
 }: {
 	active?: boolean;
 	assignedAgencies?: { id: number; name: string }[];
+	repetitive?: boolean;
 	subscribed?: boolean;
 } = {}): ExtendedSessionInterface =>
 	buildExtendedSession(
@@ -247,7 +249,7 @@ const buildGroupSession = ({
 				messageDate: 1773822900,
 				messagesRead: true,
 				moderators: [],
-				repetitive: false,
+				repetitive,
 				startDate: '2026-03-18',
 				startTime: '10:00',
 				subscribed,
@@ -1269,6 +1271,7 @@ const groupMenuPreset = (active = true, subscribed = true) => ({
 	session: buildGroupSession({
 		active,
 		assignedAgencies: groupMenuAgency,
+		repetitive: true,
 		subscribed
 	}),
 	members: makeMembers(4)
@@ -1480,7 +1483,8 @@ const nextGroupDate: FutureEntry = {
 	topic: 'Familienberatung',
 	start: new Date('2026-11-04T18:00:00'),
 	modality: 'chat',
-	canDuplicate: true
+	canDuplicate: true,
+	canConfigure: true
 };
 
 const withNextAppointment = (header: React.ReactNode, entry: FutureEntry) => (
@@ -1493,7 +1497,7 @@ const withNextAppointment = (header: React.ReactNode, entry: FutureEntry) => (
 );
 
 const expectAppointmentMenu =
-	(label: string, items: string[]) =>
+	(label: string, items: string[], hiddenItems: string[] = []) =>
 	async ({ canvasElement }: { canvasElement: HTMLElement }) => {
 		const bar = await waitFor(() => {
 			// The header's own slot may render a bar too: this is the prototype's.
@@ -1517,6 +1521,8 @@ const expectAppointmentMenu =
 		});
 		for (const item of items)
 			await expect(within(menu).getByText(item)).toBeVisible();
+		for (const item of hiddenItems)
+			await expect(within(menu).queryByText(item)).toBeNull();
 		await userEvent.keyboard('{Escape}');
 	};
 
@@ -1545,4 +1551,115 @@ export const NextAppointmentGroup: Story = {
 		'Als Einzeltermin duplizieren',
 		'Gruppe konfigurieren'
 	])
+};
+
+export const NextAppointmentGroupCoModerator: Story = {
+	name: 'Next appointment below the header — co-moderator',
+	render: () =>
+		withNextAppointment(renderGroupHeader(mockGroupSessionSmall()), {
+			...nextGroupDate,
+			canModerate: true,
+			canConfigure: false
+		}),
+	play: expectAppointmentMenu(
+		'Mi 4. Nov 18:00',
+		['Termin absagen', 'Als Einzeltermin duplizieren'],
+		['Gruppe konfigurieren']
+	)
+};
+
+/* ------------------------------------------------------------------ *
+ * FE#1960: the real 1:1 header with its real appointment slot. The row
+ * under the header shows only an existing appointment (ADR-021 §5);
+ * "Termin anlegen" is a row of the ⋮ menu.
+ * ------------------------------------------------------------------ */
+
+const storyAppointment = {
+	id: '6f1c1a70-0000-4000-8000-000000000001',
+	sessionId: 4401,
+	startTime: new Date('2026-11-12T16:00:00').toISOString(),
+	endTime: new Date('2026-11-12T17:00:00').toISOString(),
+	status: 'SCHEDULED',
+	counterpart: { username: 'ruhiges_yak_kim' }
+};
+
+const installAppointmentFetch = (items: unknown[]) => {
+	const previous = window.fetch;
+	window.fetch = async (input, init) => {
+		const url =
+			typeof input === 'string'
+				? input
+				: input instanceof URL
+					? input.href
+					: input.url;
+		if (/\/sessions\/4401\/appointments$/.test(url.split('?')[0]))
+			return jsonResponse(items);
+		return previous(input, init);
+	};
+	return () => {
+		window.fetch = previous;
+	};
+};
+
+const HeaderWithAppointments = ({ items }: { items: unknown[] }) => {
+	// Installed during render: the slot fetches from a child effect.
+	const [restore] = React.useState(() => installAppointmentFetch(items));
+	React.useEffect(() => restore, [restore]);
+	return renderSessionHeader(mockActiveConversation());
+};
+
+const openMenuAndFindCreate = async (canvasElement: HTMLElement) => {
+	const trigger = await waitFor(() => {
+		const found = Array.from(
+			canvasElement.querySelectorAll<HTMLButtonElement>(
+				'button.sessionMenu__icon'
+			)
+		).find((button) => button.getClientRects().length > 0);
+		expect(found).toBeDefined();
+		return found!;
+	});
+	await userEvent.click(trigger);
+	const row = await waitFor(() => {
+		const found = document.querySelector<HTMLElement>(
+			'[data-cy="session-menu-create-appointment"]'
+		);
+		expect(found).not.toBeNull();
+		return found!;
+	});
+	return row;
+};
+
+/** No appointment: the header looks as before #2011; ⋮ offers "Termin anlegen". */
+export const OneToOneAppointmentCreateInMenu: Story = {
+	name: '1:1 appointment — none yet, create in ⋮ menu (FE#1960)',
+	render: () => <HeaderWithAppointments items={[]} />,
+	play: async ({ canvasElement }) => {
+		const row = await openMenuAndFindCreate(canvasElement);
+		// The menu fades in: wait for it rather than read it mid-transition.
+		await waitFor(() => expect(row).toBeVisible());
+		await expect(
+			canvasElement.querySelector('[data-cy="room-next-appointment"]')
+		).toBeNull();
+		await expect(
+			canvasElement.querySelector(
+				'[data-cy="create-conversation-appointment"]'
+			)
+		).toBeNull();
+	}
+};
+
+/** One appointment: the row shows only that appointment, no create button. */
+export const OneToOneAppointmentUpcoming: Story = {
+	name: '1:1 appointment — upcoming, no create button beside it (FE#1960)',
+	render: () => <HeaderWithAppointments items={[storyAppointment]} />,
+	play: async ({ canvasElement }) => {
+		const bar = await waitFor(() => {
+			const found = canvasElement.querySelector(
+				'[data-cy="room-next-appointment"]'
+			);
+			expect(found).not.toBeNull();
+			return found!;
+		});
+		await expect(bar.querySelectorAll('.splitButton')).toHaveLength(1);
+	}
 };

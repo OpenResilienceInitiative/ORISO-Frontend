@@ -19,6 +19,7 @@ import {
 } from 'vite-plus/test';
 
 import { useElementCallWidget } from './useElementCallWidget';
+import { TenantContext } from '../../../globalState/provider/TenantProvider';
 import { setAppConfig } from '../../../utils/appConfig';
 
 const widgetApiMocks = vi.hoisted(() => ({
@@ -80,6 +81,12 @@ vi.mock('matrix-widget-api', async (importOriginal) => {
 
 vi.mock('../../../resources/scripts/runtimeConfig', () => ({
 	getElementCallBaseUrl: () => 'https://call.oriso.example'
+}));
+
+// The hook reads the tenant service address for the brand's logo route; the
+// real module would need every origin helper of the mocked runtime config.
+vi.mock('../../../resources/scripts/endpoints', () => ({
+	endpoints: { tenantServiceBase: 'https://app.oriso.example/service/tenant' }
 }));
 
 const CALL_ROOM = '!call:oriso.example';
@@ -405,6 +412,219 @@ describe('useElementCallWidget', () => {
 			await waitFor(() => expect(result.current.url).not.toBeNull());
 			const first = result.current.url;
 			rerender({ start: { audioEnabled: false, videoEnabled: false } });
+			expect(result.current.url).toBe(first);
+		});
+	});
+
+	describe('handing the Traeger brand to the call (#2188)', () => {
+		const LOGO_ROUTE =
+			'https://app.oriso.example/service/tenant/public/branding/14/logo';
+
+		const tenantWith = (theming: Record<string, unknown>, id = 14) =>
+			({ id, theming }) as never;
+
+		const wrapperFor =
+			(read: () => unknown) =>
+			({ children }: { children: React.ReactNode }) => (
+				<TenantContext.Provider
+					value={{
+						tenant: read() as never,
+						setTenant: vi.fn(),
+						updateTenantSettings: vi.fn()
+					}}
+				>
+					{children}
+				</TenantContext.Provider>
+			);
+
+		const fragmentOf = (url: string) =>
+			new URLSearchParams(new URL(url).hash.slice(2));
+
+		const urlFor = async (tenant: unknown) => {
+			const client = createClient();
+			const { result } = renderHook(
+				() =>
+					useElementCallWidget(client, {
+						roomId: CALL_ROOM,
+						isVideo: true
+					}),
+				tenant === undefined
+					? undefined
+					: { wrapper: wrapperFor(() => tenant) }
+			);
+			await waitFor(() => expect(result.current.url).not.toBeNull());
+			return result.current.url!;
+		};
+
+		it('writes the colours and the logo route into the address', async () => {
+			const fragment = fragmentOf(
+				await urlFor(
+					tenantWith({
+						primaryColor: '#0A7A3C',
+						accent: '#646d78',
+						signal: '#b1005e',
+						logo: 'data:image/png;base64,AAAA'
+					})
+				)
+			);
+
+			expect(fragment.get('orisoPrimary')).toBe('0a7a3c');
+			expect(fragment.get('orisoAccent')).toBe('646d78');
+			expect(fragment.get('orisoSignal')).toBe('b1005e');
+			expect(fragment.get('orisoLogo')).toBe(LOGO_ROUTE);
+		});
+
+		it('sends nothing for a Traeger that set no colours and no logo', async () => {
+			const fragment = fragmentOf(
+				await urlFor(tenantWith({ primaryColor: '', logo: '' }))
+			);
+
+			for (const name of [
+				'orisoPrimary',
+				'orisoAccent',
+				'orisoSignal',
+				'orisoLogo'
+			])
+				expect(fragment.has(name)).toBe(false);
+		});
+
+		it('sends nothing while no tenant is resolved, and outside a tenant context', async () => {
+			for (const tenant of [undefined, null]) {
+				const fragment = fragmentOf(await urlFor(tenant));
+				expect(
+					[...fragment.keys()].filter((name) =>
+						/^orisoPrimary|orisoAccent|orisoSignal|orisoLogo$/.test(
+							name
+						)
+					)
+				).toEqual([]);
+			}
+		});
+
+		it('sends no colour for a pale primary, as the app keeps its default palette', async () => {
+			vi.spyOn(console, 'warn').mockImplementation(() => {});
+			const fragment = fragmentOf(
+				await urlFor(
+					tenantWith({
+						primaryColor: '#888888',
+						accent: '#646d78',
+						signal: '#b1005e',
+						logo: 'x'
+					})
+				)
+			);
+
+			for (const name of ['orisoPrimary', 'orisoAccent', 'orisoSignal'])
+				expect(fragment.has(name)).toBe(false);
+			expect(fragment.get('orisoLogo')).toBe(LOGO_ROUTE);
+		});
+
+		it('leaves the logo off for a Traeger without one, the colours stay', async () => {
+			const fragment = fragmentOf(
+				await urlFor(
+					tenantWith({ primaryColor: '#0a7a3c', logo: null })
+				)
+			);
+
+			expect(fragment.get('orisoPrimary')).toBe('0a7a3c');
+			expect(fragment.has('orisoLogo')).toBe(false);
+		});
+
+		it('leaves every existing parameter exactly as it was, in the same order', async () => {
+			setAppConfig({ calls: { atmosphere: 'nebel' } } as never);
+			const without = fragmentOf(await urlFor(undefined));
+			const withBrand = fragmentOf(
+				await urlFor(
+					tenantWith({
+						primaryColor: '#0a7a3c',
+						accent: '#646d78',
+						signal: '#b1005e',
+						logo: 'x'
+					})
+				)
+			);
+
+			const brandNames = [
+				'orisoPrimary',
+				'orisoAccent',
+				'orisoSignal',
+				'orisoLogo'
+			];
+			const existing = (fragment: URLSearchParams) =>
+				[...fragment.entries()].filter(
+					// The widget id carries a per-mount nonce.
+					([name]) =>
+						!brandNames.includes(name) && name !== 'widgetId'
+				);
+
+			expect(existing(withBrand)).toEqual(existing(without));
+			expect(existing(withBrand).map(([name]) => name)).toEqual(
+				expect.arrayContaining([
+					'header',
+					'orisoDesign',
+					'theme',
+					'orisoAtmosphere',
+					'callIntent'
+				])
+			);
+			expect(withBrand.get('header')).toBe('none');
+		});
+
+		it('does not rebuild the address when the tenant refreshes or changes mid-call', async () => {
+			// The brand is handed over at the start. A rebuilt address with any
+			// difference would navigate the running call.
+			const client = createClient();
+			let current: unknown = tenantWith({
+				primaryColor: '#0a7a3c',
+				logo: 'x'
+			});
+			const wrapper = wrapperFor(() => current);
+			const { result, rerender } = renderHook(
+				() =>
+					useElementCallWidget(client, {
+						roomId: CALL_ROOM,
+						isVideo: true
+					}),
+				{ wrapper }
+			);
+			await waitFor(() => expect(result.current.url).not.toBeNull());
+			const first = result.current.url;
+			expect(fragmentOf(first!).get('orisoPrimary')).toBe('0a7a3c');
+
+			// The same Traeger resolved again (a locale change does that) ...
+			current = tenantWith({ primaryColor: '#0a7a3c', logo: 'x' });
+			rerender();
+			expect(result.current.url).toBe(first);
+
+			// ... and even another one: the running call keeps its own.
+			current = tenantWith({ primaryColor: '#a5000a' }, 15);
+			rerender();
+			expect(result.current.url).toBe(first);
+		});
+
+		it('keeps the brand it started with through a client refresh', async () => {
+			// A token refresh rebuilds the address with a new client. The call
+			// started before the tenant resolved; adding the brand now would
+			// change the iframe's src and navigate the running call.
+			let current: unknown = null;
+			const { result, rerender } = renderHook(
+				({ c }: { c: ReturnType<typeof createClient> }) =>
+					useElementCallWidget(c, {
+						roomId: CALL_ROOM,
+						isVideo: true
+					}),
+				{
+					initialProps: { c: createClient() },
+					wrapper: wrapperFor(() => current)
+				}
+			);
+			await waitFor(() => expect(result.current.url).not.toBeNull());
+			const first = result.current.url;
+			expect(fragmentOf(first!).has('orisoPrimary')).toBe(false);
+
+			current = tenantWith({ primaryColor: '#0a7a3c', logo: 'x' });
+			rerender({ c: createClient() });
+			await waitFor(() => expect(result.current.url).not.toBeNull());
 			expect(result.current.url).toBe(first);
 		});
 	});
@@ -1224,6 +1444,217 @@ describe('useElementCallWidget', () => {
 			expect(api.transport.reply).toHaveBeenCalledWith(request, {
 				error: { message: expect.any(String) }
 			});
+		});
+	});
+	describe('call design: the window belongs to the call (S2)', () => {
+		const WINDOW = 'org.oriso.call.window';
+		const WINDOW_STATE = 'org.oriso.call.window_state';
+
+		type Props = Parameters<typeof useElementCallWidget>[1];
+
+		const mount = async (initial: Partial<Props>) => {
+			const client = createClient();
+			const hook = renderHook(
+				(props: Partial<Props>) =>
+					useElementCallWidget(client, {
+						roomId: CALL_ROOM,
+						isVideo: true,
+						...props
+					}),
+				{ initialProps: initial }
+			);
+			await waitFor(() => expect(hook.result.current.url).not.toBeNull());
+			const iframe = document.createElement('iframe');
+			iframe.src = hook.result.current.url!;
+			act(() => hook.result.current.attachIframe(iframe));
+			const api = widgetApiMocks.apiInstances[0];
+			return { ...hook, api };
+		};
+
+		const fragment = (url: string) =>
+			new URLSearchParams(new URL(url).hash.slice(2));
+
+		let requests = 0;
+		const request = (api: any, action: string, data: unknown) => {
+			const detail = {
+				action,
+				requestId: `${action}-${++requests}`,
+				widgetId: 'widget',
+				data
+			};
+			const event = new CustomEvent(action, {
+				cancelable: true,
+				detail
+			});
+			act(() => api.emit(`action:${action}`, event));
+			return { detail, event };
+		};
+
+		it('asks the call for its own window buttons only when the host hides its own', async () => {
+			const on = await mount({ hostChrome: true });
+			expect(
+				fragment(on.result.current.url!).get('orisoHostChrome')
+			).toBe('1');
+			on.unmount();
+			widgetApiMocks.apiInstances.length = 0;
+			const off = await mount({});
+			expect(
+				fragment(off.result.current.url!).has('orisoHostChrome')
+			).toBe(false);
+		});
+
+		it('passes the kind of conversation, not its size (S6b)', async () => {
+			const group = await mount({ callType: 'group' });
+			expect(
+				fragment(group.result.current.url!).get('orisoCallType')
+			).toBe('group');
+			group.unmount();
+			const single = await mount({ callType: 'single' });
+			expect(
+				fragment(single.result.current.url!).get('orisoCallType')
+			).toBe('single');
+			single.unmount();
+			const unknown = await mount({});
+			expect(
+				fragment(unknown.result.current.url!).has('orisoCallType')
+			).toBe(false);
+		});
+
+		it('offers "Link teilen" only with somebody to make the link (S8)', async () => {
+			const withHandler = await mount({
+				invite: true,
+				onInviteLink: async () => 'https://app.oriso.test/c/1'
+			});
+			expect(
+				fragment(withHandler.result.current.url!).get('orisoInvite')
+			).toBe('1');
+			withHandler.unmount();
+			const without = await mount({ invite: true });
+			expect(
+				fragment(without.result.current.url!).has('orisoInvite')
+			).toBe(false);
+		});
+
+		it('answers invite_link with the url, or with an error string', async () => {
+			const onInviteLink = vi
+				.fn()
+				.mockResolvedValueOnce('https://app.oriso.test/c/1')
+				.mockResolvedValueOnce(null)
+				.mockRejectedValueOnce(new Error('CATCH_ALL'));
+			const { api } = await mount({ invite: true, onInviteLink });
+
+			const ok = request(api, 'org.oriso.call.invite_link', {});
+			expect(ok.event.defaultPrevented).toBe(true);
+			await waitFor(() =>
+				expect(api.transport.reply).toHaveBeenCalledWith(ok.detail, {
+					url: 'https://app.oriso.test/c/1'
+				})
+			);
+			const none = request(api, 'org.oriso.call.invite_link', {});
+			await waitFor(() =>
+				expect(api.transport.reply).toHaveBeenCalledWith(none.detail, {
+					error: expect.any(String)
+				})
+			);
+			const failed = request(api, 'org.oriso.call.invite_link', {});
+			await waitFor(() =>
+				expect(api.transport.reply).toHaveBeenCalledWith(
+					failed.detail,
+					{
+						error: expect.any(String)
+					}
+				)
+			);
+		});
+
+		it('runs minimise and toggle_fullscreen and answers {}', async () => {
+			const onWindowCommand = vi.fn();
+			const { api } = await mount({ hostChrome: true, onWindowCommand });
+
+			const minimise = request(api, WINDOW, { command: 'minimise' });
+			expect(minimise.event.defaultPrevented).toBe(true);
+			expect(onWindowCommand).toHaveBeenLastCalledWith('minimise');
+			expect(api.transport.reply).toHaveBeenCalledWith(
+				minimise.detail,
+				{}
+			);
+
+			const toggle = request(api, WINDOW, {
+				command: 'toggle_fullscreen'
+			});
+			expect(onWindowCommand).toHaveBeenLastCalledWith(
+				'toggle_fullscreen'
+			);
+			expect(api.transport.reply).toHaveBeenCalledWith(toggle.detail, {});
+		});
+
+		it('refuses an unknown window command', async () => {
+			const onWindowCommand = vi.fn();
+			const { api } = await mount({ hostChrome: true, onWindowCommand });
+			const { detail } = request(api, WINDOW, { command: 'close' });
+			expect(onWindowCommand).not.toHaveBeenCalled();
+			expect(api.transport.reply).toHaveBeenCalledWith(detail, {
+				error: { message: expect.any(String) }
+			});
+		});
+
+		it('tells the call the window state once ready and on every change', async () => {
+			const { api, rerender } = await mount({
+				hostChrome: true,
+				windowState: { fullscreen: false }
+			});
+			const sends = () =>
+				api.transport.send.mock.calls.filter(
+					(call: unknown[]) => call[0] === WINDOW_STATE
+				);
+			expect(sends()).toHaveLength(0);
+
+			act(() => api.emit('ready', new CustomEvent('ready')));
+			expect(sends()).toEqual([[WINDOW_STATE, { fullscreen: false }]]);
+
+			rerender({ hostChrome: true, windowState: { fullscreen: true } });
+			expect(sends().at(-1)).toEqual([
+				WINDOW_STATE,
+				{ fullscreen: true }
+			]);
+
+			// The same state in a new object is not a change.
+			rerender({ hostChrome: true, windowState: { fullscreen: true } });
+			expect(sends()).toHaveLength(2);
+		});
+
+		it('tells the call its counsellors once ready and whenever the list changes', async () => {
+			const COUNSELLORS = 'org.oriso.call.counsellors';
+			const { api, rerender } = await mount({ counsellors: [] });
+			const sends = () =>
+				api.transport.send.mock.calls.filter(
+					(call: unknown[]) => call[0] === COUNSELLORS
+				);
+			expect(sends()).toHaveLength(0);
+
+			act(() => api.emit('ready', new CustomEvent('ready')));
+			expect(sends()).toEqual([[COUNSELLORS, { userIds: [] }]]);
+
+			rerender({ counsellors: ['@counsellor:example'] });
+			expect(sends().at(-1)).toEqual([
+				COUNSELLORS,
+				{ userIds: ['@counsellor:example'] }
+			]);
+
+			// The same people in a new array are not a change.
+			rerender({ counsellors: ['@counsellor:example'] });
+			expect(sends()).toHaveLength(2);
+		});
+
+		it('sends no counsellor list when the host gives none', async () => {
+			const { api } = await mount({});
+			act(() => api.emit('ready', new CustomEvent('ready')));
+			expect(
+				api.transport.send.mock.calls.some(
+					(call: unknown[]) =>
+						call[0] === 'org.oriso.call.counsellors'
+				)
+			).toBe(false);
 		});
 	});
 });

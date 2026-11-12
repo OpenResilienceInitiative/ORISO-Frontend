@@ -28,6 +28,7 @@ import { STATUS_ACTIVE } from '../../globalState/interfaces';
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import { SessionListItemComponent } from './SessionListItemComponent';
 import { SessionListRailProvider } from '../sessionsList/SessionListRailContext';
+import { buildCallLifecycleContent } from '../../utils/callLifecycleMessage';
 
 const {
 	matrixPreviewMock,
@@ -155,6 +156,12 @@ vi.mock('react-i18next', async () => {
 // ---------------------------------------------------------------------------
 // Lottie — imported transitively through AnimatedIllustration; crashes in jsdom
 // ---------------------------------------------------------------------------
+vi.mock('../../api/apiCallState', () => ({
+	// Never answers: the card's own word stands (see `useRunningCall`).
+	apiCallState: () => new Promise(() => undefined),
+	apiCallStateRead: () => new Promise(() => undefined)
+}));
+
 vi.mock('lottie-react', () => ({ default: () => null }));
 vi.mock('lottie-web', () => ({ default: {} }));
 
@@ -472,7 +479,7 @@ describe('SessionListItemComponent — group-chat Chat settings reachability (#1
 	});
 
 	it('test 1: group-chat owner sees the three-dot trigger and can open "Chat settings"', async () => {
-		renderItem(makeGroupSession());
+		renderItem(makeGroupSession({ repetitive: true }));
 
 		// The trigger button must be present in the group-chat early-return branch
 		const trigger = screen.getByRole('button', {
@@ -492,7 +499,7 @@ describe('SessionListItemComponent — group-chat Chat settings reachability (#1
 
 	it('test 2: clicking "Chat settings" navigates to the editGroupChat route with correct state', async () => {
 		const matrixRoomId = '!abc:matrix.example.org';
-		const session = makeGroupSession({ matrixRoomId });
+		const session = makeGroupSession({ matrixRoomId, repetitive: true });
 		renderItem(session);
 
 		// Open the flyout
@@ -530,7 +537,8 @@ describe('SessionListItemComponent — group-chat Chat settings reachability (#1
 
 	it('test 3: non-owner consultant sees NO three-dot trigger', () => {
 		const session = makeGroupSession({
-			consultantId: 'other-consultant-99'
+			consultantId: 'other-consultant-99',
+			repetitive: true
 		});
 		renderItem(session, makeUserData(OWNER_USER_ID));
 
@@ -541,13 +549,23 @@ describe('SessionListItemComponent — group-chat Chat settings reachability (#1
 	});
 
 	it('test 4: owner of a RUNNING group chat sees NO three-dot trigger', () => {
-		const session = makeGroupSession({ active: true });
+		const session = makeGroupSession({ active: true, repetitive: true });
 		renderItem(session);
 
 		const trigger = screen.queryByRole('button', {
 			name: 'groupChat.info.settings.headline'
 		});
 		expect(trigger).toBeNull();
+	});
+
+	it('hides the circle settings entry for an internal group owner', () => {
+		renderItem(makeGroupSession());
+
+		expect(
+			screen.queryByRole('button', {
+				name: 'groupChat.info.settings.headline'
+			})
+		).toBeNull();
 	});
 });
 
@@ -1154,5 +1172,46 @@ describe('SessionListItemComponent — list-card archive', () => {
 		);
 		fireEvent.click(screen.getByText('close-overlay'));
 		expect(sessionsDispatch).not.toHaveBeenCalled();
+	});
+});
+
+describe('SessionListItemComponent — a running call on the list (call design S10)', () => {
+	const ROOM = '!session:matrix.example.org';
+	const lifecycleEvent = (state: 'running' | 'ended') => ({
+		getType: () => 'm.room.message',
+		getContent: () =>
+			buildCallLifecycleContent({
+				callId: 'call-1',
+				roomRef: ROOM,
+				callRoomId: '!call:matrix.example.org',
+				state,
+				callType: 'video',
+				participants: [{ userId: '@b:x', displayName: 'Beratung' }],
+				present: [
+					{ userId: '@b:x', displayName: 'Beratung' },
+					{ userId: '@a:x', displayName: 'Fuchs' }
+				]
+			}),
+		getSender: () => '@b:x',
+		getTs: () => 1700000000000,
+		getId: () => '$card',
+		isRedacted: () => false
+	});
+
+	it('shows the running call instead of the last message', () => {
+		matrixPreviewMock.mockImplementation((roomId: string) =>
+			roomId === ROOM ? [lifecycleEvent('running')] : []
+		);
+		renderItem(makeSession());
+		const line = screen.getByTestId('session-list-running-call');
+		expect(line.textContent).toContain('calls.list.runningWithCount');
+	});
+
+	it('shows nothing of a call that ended', () => {
+		matrixPreviewMock.mockImplementation((roomId: string) =>
+			roomId === ROOM ? [lifecycleEvent('ended')] : []
+		);
+		renderItem(makeSession());
+		expect(screen.queryByTestId('session-list-running-call')).toBeNull();
 	});
 });

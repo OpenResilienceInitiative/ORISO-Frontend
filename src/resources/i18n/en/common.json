@@ -1,4 +1,10 @@
 {
+	"askerInfo": {
+		"noPrivacyNotice": {
+			"title": "No privacy notice stored",
+			"text": "This counselling centre has not stored a privacy notice. The person may have consented knowing this. The centre is responsible for it. Only counsellors see this note."
+		}
+	},
 	"liveChatConversion": {
 		"title": "Keep your conversation",
 		"intro": "Create a password for this account. Your Live Chat stays with you.",
@@ -2441,6 +2447,10 @@
 				"title": "Supervisor assigned",
 				"text": "A supervisor was assigned to this case."
 			},
+			"topicDuplicateStarted": {
+				"title": "Another counselling session on the same topic",
+				"text": "Another counselling session has started on the same topic. Please agree together which session should continue."
+			},
 			"counselorRenamed": {
 				"title": "Counsellor renamed",
 				"text": "The counsellor's display name has changed."
@@ -3512,6 +3522,12 @@
 			}
 		},
 		"dataProtection": {
+			"noNotice": {
+				"title": "No privacy notice stored",
+				"body": "This counselling centre has not stored a privacy notice. The centre is responsible for it. You can still continue if you choose to do so knowingly.",
+				"cancel": "Go back",
+				"continue": "Continue anyway"
+			},
 			"cookieNotice": "For authentication and navigation, this website uses cookies.",
 			"machineTranslated": "Machine-translated — the original version ({{language}}) is the legally binding one.",
 			"unrenderable": "The consent text of this counselling centre cannot be displayed at the moment. Please try again later or contact the counselling centre.",
@@ -4505,6 +4521,12 @@
 				"directLinkVideo": "Video call",
 				"directLinkAudio": "Audio call",
 				"directLinkChat": "Direct link"
+			},
+			"waiting": {
+				"minutes": "waiting {{count}} min",
+				"hours": "waiting {{count}} h",
+				"weeks_one": "waiting {{count}} week",
+				"weeks_other": "waiting {{count}} weeks"
 			}
 		},
 		"createChat": {
@@ -6400,6 +6422,13 @@
 			"label": "Knock first",
 			"on": "Guests wait until you let them in.",
 			"off": "Guests enter the call directly, without waiting."
+		},
+		"list": {
+			"running": "In progress",
+			"runningWithCount": "In progress — {{count}} in the call"
+		},
+		"floating": {
+			"move": "Move the call"
 		}
 	},
 	"form": {
@@ -6633,6 +6662,10 @@
 		}
 	},
 	"directLink": {
+		"postcode": {
+			"helper": "For statistics only. The postcode does not choose the agency or the counsellor – the link decides that.",
+			"invalid": "Please enter your five-digit postcode."
+		},
 		"card": {
 			"title": "Direct link",
 			"subtitle": "For people seeking advice",
