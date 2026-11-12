@@ -1577,8 +1577,9 @@ export const NextAppointmentGroupCoModerator: Story = {
 const storyAppointment = {
 	id: '6f1c1a70-0000-4000-8000-000000000001',
 	sessionId: 4401,
-	startTime: new Date('2026-11-12T16:00:00').toISOString(),
-	endTime: new Date('2026-11-12T17:00:00').toISOString(),
+	// Relative to now: a fixed date turns "upcoming" into "past" once it passes.
+	startTime: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+	endTime: new Date(Date.now() + 25 * 60 * 60 * 1000).toISOString(),
 	status: 'SCHEDULED',
 	counterpart: { username: 'ruhiges_yak_kim' }
 };
