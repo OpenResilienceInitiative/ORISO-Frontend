@@ -141,11 +141,16 @@ export const AskerDisplayNameSettings = () => {
 								<span className="askerDisplayNameSettings__edit">
 									<input
 										type="text"
+										name="displayName"
 										className="input"
 										value={draft}
 										maxLength={255}
+										// Same password-manager opt-out as AskerDisplayNameField:
+										// a credential must never land in the alias (#2073).
 										autoComplete="off"
 										data-1p-ignore="true"
+										data-bwignore="true"
+										data-form-type="other"
 										data-lpignore="true"
 										aria-label={translate(
 											'profile.askerDisplayName.inputLabel',

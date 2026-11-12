@@ -136,6 +136,27 @@ describe('AskerDisplayNameSettings (#2175)', () => {
 		expect(api.put).toHaveBeenCalledTimes(1);
 	});
 
+	it('keeps password managers out of the name input (#2073)', async () => {
+		render(view());
+		const item = await row('Eltern und Familie');
+		fireEvent.click(
+			within(item).getByRole('button', {
+				name: 'profile.askerDisplayName.edit:Eltern und Familie'
+			})
+		);
+		const input = within(item).getByRole('textbox');
+		expect(input.getAttribute('name')).toBe('displayName');
+		expect(input.getAttribute('autocomplete')).toBe('off');
+		for (const attribute of [
+			'data-1p-ignore',
+			'data-bwignore',
+			'data-lpignore'
+		]) {
+			expect(input.getAttribute(attribute)).toBe('true');
+		}
+		expect(input.getAttribute('data-form-type')).toBe('other');
+	});
+
 	it('does not save an empty name', async () => {
 		render(view());
 		const item = await row('Schulden');
