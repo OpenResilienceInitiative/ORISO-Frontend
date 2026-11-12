@@ -2237,6 +2237,15 @@
 		},
 		"consultant": {
 			"enquiries": "Requests",
+			"inboxState": {
+				"empty": "No requests",
+				"allOpened": "All requests opened",
+				"unopened": "{{count}} unopened requests",
+				"unopened_one": "{{count}} unopened request",
+				"overdue": "Overdue requests",
+				"overdueUnopened": "Overdue requests, {{count}} unopened requests",
+				"overdueUnopened_one": "Overdue requests, {{count}} unopened request"
+			},
 			"sessions": {
 				"large": "My consultations",
 				"nav": "Chats",
@@ -4502,6 +4511,12 @@
 				"directLinkVideo": "Video call",
 				"directLinkAudio": "Audio call",
 				"directLinkChat": "Direct link"
+			},
+			"waiting": {
+				"minutes": "waiting {{count}} min",
+				"hours": "waiting {{count}} h",
+				"weeks_one": "waiting {{count}} week",
+				"weeks_other": "waiting {{count}} weeks"
 			}
 		},
 		"createChat": {

@@ -2243,7 +2243,16 @@
 				"nav": "Conversation",
 				"small": "Nouvelles"
 			},
-			"directLinks": "Mes liens directs"
+			"directLinks": "Mes liens directs",
+			"inboxState": {
+				"empty": "Aucune demande",
+				"allOpened": "Toutes les demandes ont été ouvertes",
+				"unopened": "{{count}} demandes non ouvertes",
+				"unopened_one": "{{count}} demande non ouverte",
+				"overdue": "Demandes en retard",
+				"overdueUnopened": "Demandes en retard, {{count}} demandes non ouvertes",
+				"overdueUnopened_one": "Demandes en retard, {{count}} demande non ouverte"
+			}
 		},
 		"activity": "Chronologie",
 		"language": "Langue",
@@ -4650,6 +4659,12 @@
 				"directLinkVideo": "Appel vidéo",
 				"directLinkAudio": "Appel audio",
 				"directLinkChat": "Lien direct"
+			},
+			"waiting": {
+				"minutes": "en attente depuis {{count}} min",
+				"hours": "en attente depuis {{count}} h",
+				"weeks_one": "en attente depuis {{count}} semaine",
+				"weeks_other": "en attente depuis {{count}} semaines"
 			}
 		},
 		"supervision": {

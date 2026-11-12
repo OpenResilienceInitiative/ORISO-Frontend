@@ -2243,7 +2243,16 @@
 				"nav": "Sohbetler",
 				"small": "Haberler"
 			},
-			"directLinks": "Doğrudan bağlantılarım"
+			"directLinks": "Doğrudan bağlantılarım",
+			"inboxState": {
+				"empty": "Talep yok",
+				"allOpened": "Tüm talepler açıldı",
+				"unopened": "{{count}} açılmamış talep",
+				"unopened_one": "{{count}} açılmamış talep",
+				"overdue": "Süresi geçmiş talepler",
+				"overdueUnopened": "Süresi geçmiş talepler, {{count}} açılmamış talep",
+				"overdueUnopened_one": "Süresi geçmiş talepler, {{count}} açılmamış talep"
+			}
 		},
 		"activity": "Zaman çizelgesi",
 		"language": "Dil",
@@ -4650,6 +4659,12 @@
 				"directLinkVideo": "Görüntülü arama",
 				"directLinkAudio": "Sesli arama",
 				"directLinkChat": "Doğrudan bağlantı"
+			},
+			"waiting": {
+				"minutes": "Bekleme: {{count}} dk.",
+				"hours": "Bekleme: {{count}} sa.",
+				"weeks_one": "Bekleme: {{count}} hafta",
+				"weeks_other": "Bekleme: {{count}} hafta"
 			}
 		},
 		"supervision": {
