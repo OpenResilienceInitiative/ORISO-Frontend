@@ -8,7 +8,7 @@ import {
 } from './passageBlur';
 import { collectText, findPassageRange } from './passageRange';
 
-const LABEL = 'Unkenntlich gemachte Stelle';
+const LABEL = 'Geschwärzte Stelle';
 
 const render = (html: string) => {
 	const root = document.createElement('div');
@@ -89,7 +89,7 @@ describe('passageBlurFromRange + applyPassageBlursToHtml', () => {
 		const out = render(
 			applyPassageBlursToHtml(html, [blurOf()], {
 				label: LABEL,
-				removeLabel: 'Unkenntlichmachung aufheben'
+				removeLabel: 'Schwärzung aufheben'
 			})
 		);
 		const first = out.querySelector('.passageBlur')!;

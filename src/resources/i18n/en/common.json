@@ -2220,7 +2220,7 @@
 			"toolbar": "Actions for the marked passage",
 			"reply": "Reply",
 			"replyVoice": "Reply with a voice message",
-			"startThread": "Start thread",
+			"startThread": "Thread",
 			"dialog": "Reply to the passage marked from {{author}}",
 			"cancel": "Cancel",
 			"inputLabel": "Reply to the marked passage",

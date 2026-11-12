@@ -1,6 +1,6 @@
 /**
  * Blur a passage (moderators). Mark text in a message → the selection bar
- * offers "Unkenntlich machen" next to reply and thread. The passage turns
+ * offers "Schwärzen" next to reply, voice and thread. The passage turns
  * into blurred random characters for everyone; the real words are no longer
  * in the page. A moderator clicks the blurred passage → "Wieder lesbar
  * machen". Built from the real organisms: MessageTimeline,
@@ -39,6 +39,12 @@ import '../chatStage/chatStage.styles.scss';
 import './selectionReply.styles.scss';
 
 const noop = () => {};
+/** Storybook has no microphone; the bar only needs one to show the button. */
+const storyRecorder = {
+	start: noop,
+	stop: async () => ({ src: '', durationSec: 1 }),
+	cancel: noop
+};
 const timelineHandlers = {
 	handleDecryptionErrors: noop,
 	handleDecryptionSuccess: noop,
@@ -178,6 +184,7 @@ function PassageBlurStage({
 									onAddToComposer={noop}
 									onSendNow={noop}
 									onStartThread={noop}
+									recorder={storyRecorder}
 									onBlurPassage={
 										moderator
 											? (_passage, position) => {
@@ -246,7 +253,7 @@ const meta = {
 		docs: {
 			description: {
 				component:
-					'Stellen unkenntlich machen (nur Moderation: Beratende im Einzelchat, Moderierende im Gruppenchat). Text markieren → Leiste „Antworten · Sprachnachricht · Thread starten · Unkenntlich machen“. Die Stelle wird für alle zu verwischtem Zahlensalat: die echten Wörter stehen nicht mehr in der Seite. Moderierende klicken die Stelle an → „Wieder lesbar machen“. Gespeichert wird nur die Position, nie der Text. Noch offen: wo die Unkenntlichmachung gespeichert wird, damit alle sie sehen.'
+					'Stellen schwärzen (nur Moderation: Beratende im Einzelchat, Moderierende im Gruppenchat). Text markieren → Leiste mit Symbolen „Antworten · Sprachnachricht · Thread | Schwärzen“; der Name steht beim Hovern oder Fokussieren darüber. Die Stelle wird für alle zu verwischtem Zahlensalat: die echten Wörter stehen nicht mehr in der Seite. Moderierende klicken die Stelle an → „Schwärzung aufheben“. Gespeichert wird nur die Position, nie der Text (Matrix-Ereignis neben der Nachricht, entschieden am 12.11.2026).'
 			}
 		}
 	}
@@ -260,7 +267,7 @@ const TOOLBAR = {
 	en: 'Actions for the marked passage'
 };
 const BLUR_BAR = {
-	de: 'Aktionen für die unkenntlich gemachte Stelle',
+	de: 'Aktionen für die geschwärzte Stelle',
 	en: 'Actions for the blurred passage'
 };
 const WAIT = { timeout: 3000 };
@@ -277,14 +284,14 @@ const bubbleText = (canvasElement: HTMLElement) =>
 		`[data-message-id="${SENSITIVE_ID}"] .messageItem__message`
 	)?.textContent || '';
 
-/** Zum Durchklicken: markieren, unkenntlich machen, wieder lesbar machen. */
+/** Zum Durchklicken: markieren, schwärzen, Schwärzung aufheben. */
 export const Experience: Story = {
-	name: 'Erlebnis — markieren, unkenntlich machen, aufheben'
+	name: 'Erlebnis — markieren, schwärzen, aufheben'
 };
 
-/** 1 · Text markiert: „Unkenntlich machen“ steht als letzte Aktion in der Leiste. */
+/** 1 · Text markiert: Symbole Antworten · Sprachnachricht · Thread · Schwärzen; der Name erscheint beim Hovern. */
 export const MenuWithBlur: Story = {
-	name: '1 · Leiste mit „Unkenntlich machen“',
+	name: '1 · Leiste mit „Schwärzen“',
 	args: { markPassage: SENSITIVE_PASSAGE },
 	play: async ({ canvasElement }) => {
 		const bar = await within(canvasElement).findByRole(
@@ -294,7 +301,7 @@ export const MenuWithBlur: Story = {
 		);
 		const buttons = within(bar).getAllByRole('button');
 		await expect(buttons[buttons.length - 1]).toHaveAccessibleName(
-			'Unkenntlich machen'
+			'Schwärzen'
 		);
 		await expect(
 			bar.querySelector('.selectionReply__blurIcon')
@@ -302,9 +309,9 @@ export const MenuWithBlur: Story = {
 	}
 };
 
-/** 2 · Unkenntlich gemacht: so sehen es alle. Die Wörter sind nicht mehr in der Seite. */
+/** 2 · Geschwärzt: so sehen es alle. Die Wörter sind nicht mehr in der Seite. */
 export const BlurredForEveryone: Story = {
-	name: '2 · Unkenntlich gemachte Stelle — so sehen es alle',
+	name: '2 · Geschwärzte Stelle — so sehen es alle',
 	args: { moderator: false, blurred: [SENSITIVE_PASSAGE] },
 	play: async ({ canvasElement }) => {
 		await waitFor(
@@ -323,7 +330,7 @@ export const BlurredForEveryone: Story = {
 		// Readers get one label instead of the salad; no remove action.
 		await expect(
 			canvasElement.querySelector('.passageBlur__srLabel')
-		).toHaveTextContent('Unkenntlich gemachte Stelle');
+		).toHaveTextContent('Geschwärzte Stelle');
 		await expect(
 			canvasElement.querySelector('.passageBlur--removable')
 		).toBeNull();
@@ -349,7 +356,7 @@ export const TwoPassages: Story = {
 
 /** 4 · Moderation: Stelle anklicken → „Wieder lesbar machen“. */
 export const ModeratorRemoves: Story = {
-	name: '4 · Moderation hebt die Unkenntlichmachung auf',
+	name: '4 · Moderation hebt die Schwärzung auf',
 	args: { blurred: [SENSITIVE_PASSAGE], openRemoveBar: true },
 	play: async ({ canvasElement }) => {
 		const bar = await within(canvasElement).findByRole(
@@ -358,17 +365,17 @@ export const ModeratorRemoves: Story = {
 			WAIT
 		);
 		await expect(bar).toHaveTextContent(
-			`Unkenntlich gemacht von ${COUNSELLOR_NAME}`
+			`Geschwärzt von ${COUNSELLOR_NAME}`
 		);
 		await expect(
-			within(bar).getByRole('button', { name: 'Wieder lesbar machen' })
+			within(bar).getByRole('button', { name: 'Schwärzung aufheben' })
 		).toBeVisible();
 	}
 };
 
-/** Der ganze Weg als Test: Leiste → unkenntlich → anklicken → wieder lesbar. */
+/** Der ganze Weg als Test: Leiste → schwärzen → anklicken → aufheben. */
 export const FullFlow: Story = {
-	name: '5 · Ablauf: unkenntlich machen und wieder aufheben',
+	name: '5 · Ablauf: schwärzen und wieder aufheben',
 	args: { markPassage: SENSITIVE_PASSAGE },
 	play: async ({ canvasElement }) => {
 		const bar = await within(canvasElement).findByRole(
@@ -377,7 +384,7 @@ export const FullFlow: Story = {
 			WAIT
 		);
 		await userEvent.click(
-			within(bar).getByRole('button', { name: 'Unkenntlich machen' })
+			within(bar).getByRole('button', { name: 'Schwärzen' })
 		);
 		await waitFor(
 			() =>
@@ -397,7 +404,7 @@ export const FullFlow: Story = {
 		);
 		await userEvent.click(
 			within(removeBar).getByRole('button', {
-				name: 'Wieder lesbar machen'
+				name: 'Schwärzung aufheben'
 			})
 		);
 		await waitFor(() =>
@@ -412,7 +419,7 @@ export const FullFlow: Story = {
 /* ── 390 px, dark, English ──────────────────────────────────────────── */
 
 export const PhoneMenu: Story = {
-	name: 'Telefon 390 — Leiste (nur Symbol)',
+	name: 'Telefon 390 — Leiste',
 	args: { markPassage: SENSITIVE_PASSAGE },
 	globals: phone390Globals,
 	play: async ({ canvasElement }) => {
@@ -422,7 +429,7 @@ export const PhoneMenu: Story = {
 			WAIT
 		);
 		const blur = within(bar).getByRole('button', {
-			name: 'Unkenntlich machen'
+			name: 'Schwärzen'
 		});
 		const box = bar.getBoundingClientRect();
 		await expect(box.left).toBeGreaterThanOrEqual(0);
@@ -434,7 +441,7 @@ export const PhoneMenu: Story = {
 };
 
 export const PhoneBlurred: Story = {
-	name: 'Telefon 390 — unkenntlich gemachte Stelle',
+	name: 'Telefon 390 — geschwärzte Stelle',
 	args: { moderator: false, blurred: [SENSITIVE_PASSAGE] },
 	globals: phone390Globals
 };
@@ -464,7 +471,7 @@ export const DarkMenu: Story = {
 };
 
 export const DarkBlurred: Story = {
-	name: 'Dunkel — unkenntlich gemachte Stelle',
+	name: 'Dunkel — geschwärzte Stelle',
 	args: { moderator: false, blurred: [SENSITIVE_PASSAGE, SECOND_PASSAGE] },
 	globals: { scheme: 'dark' }
 };

@@ -590,7 +590,7 @@ const meta = {
 		docs: {
 			description: {
 				component:
-					'Markieren und gezielt antworten. Text in einer Nachricht markieren → Leiste „Antworten · Sprachnachricht · Thread starten“. Das Antwort-Feld zeigt die markierte Stelle; Enter legt die Antwort als eigene, nummerierte Antwort-Leiste in die Eingabe, Cmd/Strg + Enter sendet sofort. Sprachnachrichten werden nicht transkribiert. Die gesendete Antwort zitiert die Stelle; ein Klick auf das Zitat springt zurück und lässt die Stelle kurz aufleuchten. Gebaut aus den echten Organismen: MessageTimeline, Composer (ComposerContextBar), VoiceNoteRow, SendButton, SidePanel.'
+					'Markieren und gezielt antworten. Text in einer Nachricht markieren → Leiste mit Symbolen „Antworten · Sprachnachricht · Thread“ (Name beim Hovern). Das Antwort-Feld zeigt die markierte Stelle; Enter legt die Antwort als eigene, nummerierte Antwort-Leiste in die Eingabe, Cmd/Strg + Enter sendet sofort. Sprachnachrichten werden nicht transkribiert. Die gesendete Antwort zitiert die Stelle; ein Klick auf das Zitat springt zurück und lässt die Stelle kurz aufleuchten. Gebaut aus den echten Organismen: MessageTimeline, Composer (ComposerContextBar), VoiceNoteRow, SendButton, SidePanel.'
 			}
 		}
 	}
@@ -625,8 +625,8 @@ export const Toolbar: Story = {
 		);
 		const buttons = within(bar).getAllByRole('button');
 		await expect(buttons[0]).toHaveTextContent('Antworten');
-		await expect(buttons[buttons.length - 1]).toHaveTextContent(
-			'Thread starten'
+		await expect(buttons[buttons.length - 1]).toHaveAccessibleName(
+			'Thread'
 		);
 	}
 };

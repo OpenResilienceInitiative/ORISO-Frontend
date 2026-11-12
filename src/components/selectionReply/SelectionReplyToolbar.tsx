@@ -12,7 +12,7 @@ export interface SelectionReplyToolbarProps {
 	style?: React.CSSProperties;
 	/** Show the voice-note button (hidden where voice notes are off). */
 	showVoice?: boolean;
-	/** Show "Start thread" (hidden where threads are off). */
+	/** Show "Thread" (hidden where threads are off). */
 	showThread?: boolean;
 	onReply: () => void;
 	onReplyWithVoice: () => void;
@@ -25,9 +25,43 @@ export interface SelectionReplyToolbarProps {
 }
 
 /**
- * The small bar over a marked passage: reply, reply by voice note, and —
- * start a thread on that passage and, for moderators, blur it. Same white
- * card, radius and shadow as the message action menu.
+ * One icon button of the bar. The label is its accessible name and shows as
+ * a small tip on hover and keyboard focus, on desktop and phone alike.
+ */
+const ToolbarAction = ({
+	label,
+	icon,
+	onClick,
+	dataCy
+}: {
+	label: string;
+	icon: React.ReactNode;
+	onClick: () => void;
+	dataCy?: string;
+}) => (
+	<button
+		type="button"
+		className="selectionReply__toolbarButton selectionReply__toolbarButton--icon"
+		onClick={onClick}
+		aria-label={label}
+		data-cy={dataCy}
+	>
+		{icon}
+		<span className="selectionReply__toolbarTip" aria-hidden>
+			{label}
+		</span>
+	</button>
+);
+
+const Divider = () => (
+	<span className="selectionReply__toolbarDivider" aria-hidden />
+);
+
+/**
+ * The small bar over a marked passage: reply, reply by voice note, start a
+ * thread on that passage and, for moderators, blur it. Icons only; each
+ * label appears as a tip. Same white card, radius and shadow as the message
+ * action menu.
  */
 export const SelectionReplyToolbar = forwardRef<
 	HTMLDivElement,
@@ -46,8 +80,6 @@ export const SelectionReplyToolbar = forwardRef<
 		ref
 	) => {
 		const { t: translate } = useTranslation();
-		const voiceLabel = translate('message.selectionReply.replyVoice');
-		const blurLabel = translate('message.selectionReply.blur');
 
 		return (
 			<div
@@ -60,80 +92,44 @@ export const SelectionReplyToolbar = forwardRef<
 				// Keep the native selection while a button is pressed.
 				onMouseDown={(event) => event.preventDefault()}
 			>
-				<button
-					type="button"
-					className="selectionReply__toolbarButton"
+				<ToolbarAction
+					label={translate('message.selectionReply.reply')}
+					icon={<ReplyArrowIcon />}
 					onClick={onReply}
-				>
-					<ReplyArrowIcon />
-					<span>{translate('message.selectionReply.reply')}</span>
-				</button>
+				/>
 				{showVoice && (
-					<>
-						<span
-							className="selectionReply__toolbarDivider"
-							aria-hidden
-						/>
-						<button
-							type="button"
-							className="selectionReply__toolbarButton selectionReply__toolbarButton--icon"
-							onClick={onReplyWithVoice}
-							aria-label={voiceLabel}
-							title={voiceLabel}
-						>
-							<MicIcon fontSize="inherit" aria-hidden />
-						</button>
-					</>
+					<ToolbarAction
+						label={translate('message.selectionReply.replyVoice')}
+						icon={<MicIcon fontSize="inherit" aria-hidden />}
+						onClick={onReplyWithVoice}
+					/>
 				)}
 				{showThread && (
-					<>
-						<span
-							className="selectionReply__toolbarDivider"
-							aria-hidden
-						/>
-						<button
-							type="button"
-							className="selectionReply__toolbarButton"
-							onClick={onStartThread}
-						>
+					<ToolbarAction
+						label={translate('message.selectionReply.startThread')}
+						icon={
 							<ThreadEntryIcon
 								aria-hidden
 								className="selectionReply__threadIcon"
 							/>
-							<span>
-								{translate(
-									'message.selectionReply.startThread'
-								)}
-							</span>
-						</button>
-					</>
+						}
+						onClick={onStartThread}
+					/>
 				)}
 				{onBlur && (
 					<>
-						<span
-							className="selectionReply__toolbarDivider"
-							aria-hidden
-						/>
-						<button
-							type="button"
-							className="selectionReply__toolbarButton"
-							data-cy="selection-blur"
+						<Divider />
+						<ToolbarAction
+							label={translate('message.selectionReply.blur')}
+							icon={
+								<BlurIcon
+									aria-hidden
+									className="selectionReply__blurIcon"
+								/>
+							}
 							onClick={onBlur}
-							aria-label={blurLabel}
-							title={blurLabel}
-						>
-							<BlurIcon
-								aria-hidden
-								className="selectionReply__blurIcon"
-							/>
-							{/* On a phone the bar keeps only the icon. */}
-							<span
-								aria-hidden
-								className="selectionReply__wideLabel"
-							>
-								{blurLabel}
-							</span>
-						</button>
+							dataCy="selection-blur"
+						/>
 					</>
 				)}
 			</div>
