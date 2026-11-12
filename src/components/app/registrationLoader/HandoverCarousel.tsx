@@ -64,6 +64,8 @@ export interface HandoverCarouselProps {
 const CARD_WIDTH = { xs: 300, sm: 372 };
 const SCROLL_IDLE_MS = 120;
 const MAX_DOT_SCROLL_MS = 800;
+/** Mouse movement below this is a click on a card, not a drag of the track. */
+const DRAG_THRESHOLD_PX = 4;
 
 /**
  * Left edge of every card in the track's own scroll coordinates.
@@ -287,7 +289,9 @@ export const HandoverCarousel = ({
 	 * track like a finger would; on release the nearest card snaps in.
 	 * Touch and pen keep the browser's own scrolling.
 	 */
-	const drag = useRef<{ x: number; left: number } | null>(null);
+	const drag = useRef<{ x: number; left: number; moving: boolean } | null>(
+		null
+	);
 	const onPointerDown = (event: React.PointerEvent<HTMLElement>) => {
 		const track = trackRef.current;
 		if (
@@ -298,23 +302,43 @@ export const HandoverCarousel = ({
 		) {
 			return;
 		}
-		drag.current = { x: event.clientX, left: track.scrollLeft };
-		track.setPointerCapture?.(event.pointerId);
-		track.dataset.dragging = 'true';
+		// Not a drag yet: a click on a card must not take over the track.
+		drag.current = {
+			x: event.clientX,
+			left: track.scrollLeft,
+			moving: false
+		};
 	};
 	const onPointerMove = (event: React.PointerEvent<HTMLElement>) => {
 		const track = trackRef.current;
 		if (!track || !drag.current) {
 			return;
 		}
-		track.scrollLeft = drag.current.left - (event.clientX - drag.current.x);
+		const distance = event.clientX - drag.current.x;
+		if (!drag.current.moving) {
+			if (Math.abs(distance) < DRAG_THRESHOLD_PX) {
+				return;
+			}
+			// The press became a drag: take the track over from here on.
+			drag.current.moving = true;
+			track.setPointerCapture?.(event.pointerId);
+			track.dataset.dragging = 'true';
+		}
+		track.scrollLeft = drag.current.left - distance;
 	};
 	const endDrag = (event: React.PointerEvent<HTMLElement>) => {
 		const track = trackRef.current;
 		if (!track || !drag.current) {
 			return;
 		}
+		const { moving } = drag.current;
 		drag.current = null;
+		// A click is not a drag. Snapping here would re-pick the card from
+		// the current position and cancel a dot selection whose smooth
+		// scroll is still under way (ORISO-Admin#1506).
+		if (!moving) {
+			return;
+		}
 		track.releasePointerCapture?.(event.pointerId);
 		delete track.dataset.dragging;
 		// Snap is off while dragging; hand the position back to it. The
