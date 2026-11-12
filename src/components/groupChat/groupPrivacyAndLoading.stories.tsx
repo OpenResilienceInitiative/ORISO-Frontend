@@ -387,6 +387,70 @@ export const WaitingRoomAfterConsentShowsTopic1440: Story = {
 	}
 };
 
+/* #2237 (Frank, 2026-11-12): in a video group the person agrees while
+   waiting, even before the start. Then the bar says they are signed in and
+   waits: the moderator's "Reinlassen" in the call opens chat and call. */
+export const WaitingForAdmission1440: Story = {
+	name: '1c · Video group — agreed, waiting to be let in (#2237) · 1440',
+	globals: desktop1440Globals,
+	render: () => (
+		<StageProviders>
+			<GroupWaitingRoom
+				topicName="Trauerbegleitung"
+				agencyName="Caritas Berlin, Selbsthilfegruppe Trauer"
+				agencyId={null}
+				plannedStart={new Date(NOW + 10 * 60e3)}
+				eventId={20}
+				welcomeText="Schön, dass Sie da sind."
+				rules={['Was hier gesagt wird, bleibt hier.']}
+				active={false}
+				openBeforeStart
+				admissionWaiting="Sobald die Gruppenleitung Sie hereinlässt, öffnen sich Chat und Anruf von selbst."
+				onJoin={() => undefined}
+				nowMs={NOW}
+			/>
+		</StageProviders>
+	),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await canvas.findByText(/Sobald die Gruppenleitung Sie hereinlässt/);
+		await expect(
+			canvasElement.querySelector('[data-testid="group-entry-join"]')
+		).toBeDisabled();
+	}
+};
+
+/* #2237: before agreeing, a video group's "Beitreten" is open ahead of the
+   start, so the person can agree and wait. */
+export const VideoGroupOpenBeforeStart1440: Story = {
+	name: '1c · Video group — "Beitreten" open before the start (#2237) · 1440',
+	globals: desktop1440Globals,
+	render: () => (
+		<StageProviders>
+			<GroupWaitingRoom
+				topicName="Trauerbegleitung"
+				agencyName="Caritas Berlin, Selbsthilfegruppe Trauer"
+				agencyId={null}
+				plannedStart={new Date(NOW + 10 * 60e3)}
+				eventId={20}
+				welcomeText="Schön, dass Sie da sind."
+				rules={['Was hier gesagt wird, bleibt hier.']}
+				active={false}
+				openBeforeStart
+				onJoin={() => undefined}
+				nowMs={NOW}
+			/>
+		</StageProviders>
+	),
+	play: async ({ canvasElement }) => {
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector('[data-testid="group-entry-join"]')
+			).toBeEnabled()
+		);
+	}
+};
+
 /* While the group loads, the room already stands with its bar and a gate
    that waits without a fill: nothing grows in once the data is there. */
 export const EntryRoomLoading1440: Story = {

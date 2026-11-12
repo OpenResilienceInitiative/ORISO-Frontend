@@ -1363,7 +1363,8 @@
 				"headline": "How we treat each other",
 				"subline": "Read it once – then you are in."
 			},
-			"devices": "Camera & microphone"
+			"devices": "Camera & microphone",
+			"waitingForAdmission": "Signed in"
 		},
 		"shareDialog": {
 			"title_text": "Circle created",
@@ -1473,7 +1474,7 @@
 			}
 		},
 		"waitingAdmission": {
-			"waiting": "You are signed in. As soon as the group leader lets you in, the chat and the call open by themselves."
+			"waiting": "As soon as the group leader lets you in, the chat and the call open by themselves."
 		}
 	},
 	"help": {

@@ -1381,7 +1381,8 @@
 				"headline": "So gehen wir miteinander um",
 				"subline": "Einmal kurz lesen – dann sind Sie dabei."
 			},
-			"devices": "Kamera & Mikrofon"
+			"devices": "Kamera & Mikrofon",
+			"waitingForAdmission": "Angemeldet"
 		},
 		"shareDialog": {
 			"title_text": "Gesprächskreis angelegt",
@@ -1491,7 +1492,7 @@
 			}
 		},
 		"waitingAdmission": {
-			"waiting": "Sie sind angemeldet. Sobald die Gruppenleitung Sie hereinlässt, öffnen sich Chat und Anruf von selbst."
+			"waiting": "Sobald die Gruppenleitung Sie hereinlässt, öffnen sich Chat und Anruf von selbst."
 		}
 	},
 	"help": {

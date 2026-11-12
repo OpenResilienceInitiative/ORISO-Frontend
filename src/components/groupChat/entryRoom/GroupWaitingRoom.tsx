@@ -304,7 +304,9 @@ export const GroupWaitingRoom = ({
 			}
 		);
 	const joinAction = {
-		label: joinLabel,
+		label: admissionWaiting
+			? tr('waitingForAdmission', 'Angemeldet')
+			: joinLabel,
 		onClick: askConsent ? () => setAsking(true) : onJoin,
 		disabled:
 			(!open && !moderator) ||

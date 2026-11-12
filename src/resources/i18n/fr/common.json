@@ -1386,7 +1386,8 @@
 				"headline": "Comment nous nous comportons les uns envers les autres",
 				"subline": "Lisez-les une fois – et vous êtes des nôtres."
 			},
-			"devices": "Caméra et micro"
+			"devices": "Caméra et micro",
+			"waitingForAdmission": "Inscrit·e"
 		},
 		"shareDialog": {
 			"title_text": "Cercle créé",
@@ -1496,7 +1497,7 @@
 			}
 		},
 		"waitingAdmission": {
-			"waiting": "Vous êtes inscrit·e. Dès que l'animateur·rice vous fait entrer, le chat et l'appel s'ouvrent automatiquement."
+			"waiting": "Dès que l'animateur·rice vous fait entrer, le chat et l'appel s'ouvrent automatiquement."
 		}
 	},
 	"help": {
