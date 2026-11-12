@@ -14,7 +14,6 @@ import {
 	REMOVE_SESSIONS
 } from '../../globalState';
 import { isUserModerator, SESSION_LIST_TAB } from '../session/sessionHelpers';
-import { getModality, Modality } from '../session/getModality';
 import { ButtonItem, BUTTON_TYPES } from '../button/Button';
 import { OVERLAY_FUNCTIONS, Overlay, OverlayItem } from '../overlay/Overlay';
 import {
