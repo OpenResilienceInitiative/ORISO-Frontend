@@ -1,7 +1,12 @@
 import * as React from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import {
+	getBuildCommit,
+	getPlatformVersion
+} from '../../../resources/scripts/runtimeConfig';
 import { ReactComponent as CircleIcon } from '../../../resources/img/icons/self-help-group.svg';
+import { useBuildIdentityOwner } from '../../app/BuildIdentity';
 import { TopicIcon } from '../TopicIcon';
 import { OrisoSelect } from '../../form/OrisoSelect';
 import { GroupChatSeriesFieldsValue } from '../../groupChat/GroupChatSeriesFields';
@@ -116,6 +121,7 @@ export const CircleSettingsView = ({
 	compact = false
 }: CircleSettingsViewProps) => {
 	const { t: translate } = useTranslation();
+	const identityOwner = useBuildIdentityOwner();
 	const { submit, leave, isSubmitting, hasError, clearError } =
 		useCreateChatSubmit();
 	/*
@@ -127,6 +133,8 @@ export const CircleSettingsView = ({
 		details: GroupChatShareDetails;
 	} | null>(null);
 	const isEditMode = editChatId != null;
+	const showBuildIdentity =
+		isEditMode && Boolean(getPlatformVersion() || getBuildCommit());
 	const storedDefaults = useMemo(
 		() => loadCircleDefaults(selectedAgency),
 		[selectedAgency]
@@ -536,6 +544,9 @@ export const CircleSettingsView = ({
 					</button>
 				</div>
 			</div>
+			{identityOwner && showBuildIdentity && (
+				<div ref={identityOwner.setStageTarget} />
+			)}
 			{created && (
 				<GroupChatShareDialog
 					open
