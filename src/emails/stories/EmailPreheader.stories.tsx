@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Meta, StoryObj } from '@storybook/react';
+import { Meta, StoryObj } from '@storybook/react-vite';
 import { EmailInboxLine } from '../preview/EmailInboxLine';
 import { EMAIL_IDS, EMAIL_LOCALES, EMAIL_LOCALE_LABELS } from '../index';
 

@@ -1,5 +1,5 @@
 import { createElement, useEffect, useRef } from 'react';
-import { Meta, StoryObj } from '@storybook/react';
+import { Meta, StoryObj } from '@storybook/react-vite';
 import { Route, Routes } from 'react-router-dom';
 import { TopicsContext } from '../../globalState/provider/TopicsProvider';
 import { AskerInfo } from './AskerInfo';

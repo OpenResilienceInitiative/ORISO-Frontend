@@ -1,5 +1,5 @@
 import * as React from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, waitFor } from 'storybook/test';
 import { AVATAR_SIZE_OPTIONS } from '../pseudonym/avatarSizes';
 import { UserAvatar } from './UserAvatar';

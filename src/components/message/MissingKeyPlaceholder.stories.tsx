@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { expect, within } from 'storybook/test';
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { MissingKeyPlaceholder } from './MissingKeyPlaceholder';
 import {

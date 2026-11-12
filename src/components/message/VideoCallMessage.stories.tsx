@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { VideoCallMessage } from './VideoCallMessage';
 import { MOCK_CONSULTANT_MATRIX_ID } from './MessageItemComponent.mocks';

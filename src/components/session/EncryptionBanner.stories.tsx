@@ -1,5 +1,5 @@
 import * as React from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { EncryptionBanner } from './EncryptionBanner';
 import { I18nextProvider } from 'react-i18next';
 import i18n from 'i18next';
@@ -11,7 +11,8 @@ i18n.init({
 	resources: {
 		en: {
 			translation: {
-				'e2ee.hint': 'Your messages are encrypted end-to-end. That means no one outside this chat can read the messages. Not even the online consulting platform.'
+				'e2ee.hint':
+					'Your messages are encrypted end-to-end. That means no one outside this chat can read the messages. Not even the online consulting platform.'
 			}
 		}
 	}
@@ -33,7 +34,8 @@ const meta: Meta<typeof EncryptionBanner> = {
 	parameters: {
 		docs: {
 			description: {
-				component: 'Element-style encryption status banner displayed at the top of chat sessions. Shows users that their conversation is end-to-end encrypted.'
+				component:
+					'Element-style encryption status banner displayed at the top of chat sessions. Shows users that their conversation is end-to-end encrypted.'
 			}
 		}
 	}
@@ -55,7 +57,13 @@ export const WideContainer: Story = {
 	decorators: [
 		(Story) => (
 			<I18nextProvider i18n={i18n}>
-				<div style={{ padding: '20px', backgroundColor: '#ffffff', width: '1200px' }}>
+				<div
+					style={{
+						padding: '20px',
+						backgroundColor: '#ffffff',
+						width: '1200px'
+					}}
+				>
 					<Story />
 				</div>
 			</I18nextProvider>
@@ -70,7 +78,13 @@ export const NarrowContainer: Story = {
 	decorators: [
 		(Story) => (
 			<I18nextProvider i18n={i18n}>
-				<div style={{ padding: '20px', backgroundColor: '#ffffff', width: '400px' }}>
+				<div
+					style={{
+						padding: '20px',
+						backgroundColor: '#ffffff',
+						width: '400px'
+					}}
+				>
 					<Story />
 				</div>
 			</I18nextProvider>
@@ -92,4 +106,3 @@ export const DarkBackground: Story = {
 		)
 	]
 };
-

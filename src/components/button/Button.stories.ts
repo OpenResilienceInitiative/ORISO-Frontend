@@ -1,4 +1,4 @@
-import { Meta, StoryObj } from '@storybook/react';
+import { Meta, StoryObj } from '@storybook/react-vite';
 import { Button, BUTTON_TYPES } from './Button';
 
 const meta = {
@@ -8,7 +8,8 @@ const meta = {
 	parameters: {
 		docs: {
 			description: {
-				component: 'Button component for user interactions. Supports multiple button types including primary, secondary, tertiary, and link styles.'
+				component:
+					'Button component for user interactions. Supports multiple button types including primary, secondary, tertiary, and link styles.'
 			}
 		}
 	}

@@ -1,6 +1,6 @@
 import { verifyEmailLogoVariants } from '../../../.storybook/emailLogoAssertions';
 import * as React from 'react';
-import { Meta, StoryObj } from '@storybook/react';
+import { Meta, StoryObj } from '@storybook/react-vite';
 import { buildEmail } from '../index';
 import { EmailPreview } from '../preview/EmailPreview';
 import { emailLogoFixtures, emailLogoFixtureBrand } from './emailLogoFixtures';

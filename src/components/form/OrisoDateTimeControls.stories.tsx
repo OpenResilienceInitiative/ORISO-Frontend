@@ -1,5 +1,5 @@
 import * as React from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import dayjs, { Dayjs } from 'dayjs';
 import { Box, Stack, Typography } from '@mui/material';
 import { OrisoCalendar } from './OrisoCalendar';
