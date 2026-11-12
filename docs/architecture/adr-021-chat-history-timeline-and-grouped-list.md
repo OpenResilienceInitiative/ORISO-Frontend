@@ -94,6 +94,9 @@ conversation is open once focus moves to the editor.
   with no filter or search (§8).
 - The group header shows the series' next date. 1:1 headers stay empty until a
   booking carries its session id.
+- FE#1960 (product owner, 2026-11-10): the 1:1 header shows only an existing
+  next appointment. "Termin anlegen" is a row of the conversation's ⋮ menu, not
+  a button under the header; without an appointment the header stays empty.
 - The opening survives a chat switch (module memory) and starts from the
   "show on upcoming appointments" setting after a reload.
 - Not in the narrow rail and not in the archive tab.

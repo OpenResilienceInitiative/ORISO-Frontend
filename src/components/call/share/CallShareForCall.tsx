@@ -20,6 +20,12 @@ export interface CallShareForCallProps {
 	sourceRoomId: string;
 	callId: string;
 	layout: CallShareProps['layout'];
+	/**
+	 * Only when the link can create a temporary account: the call's own
+	 * header hands out the link ("Link teilen", host chrome), but that
+	 * account switch exists only here (call design S8, #2215 review).
+	 */
+	onlyForTemporaryAccounts?: boolean;
 }
 
 /**
@@ -30,7 +36,8 @@ export interface CallShareForCallProps {
 export const CallShareForCall = ({
 	sourceRoomId,
 	callId,
-	layout
+	layout,
+	onlyForTemporaryAccounts = false
 }: CallShareForCallProps) => {
 	const [link, setLink] = useState<CallShareLink | null>(null);
 	const [settings, setSettings] = useState<CallShareSettings | null>(null);
@@ -72,6 +79,7 @@ export const CallShareForCall = ({
 	}, [sourceRoomId, callId]);
 
 	if (!link || !settings) return null;
+	if (onlyForTemporaryAccounts && !link.temporaryAccountAllowed) return null;
 
 	// One PATCH at a time, so an older change can never land after a newer one.
 	// A change replaced before it was sent is skipped: the newer one carries both

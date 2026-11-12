@@ -319,7 +319,7 @@ export const WaveRevealReducedMotionPhone = reducedMotionStory(
  */
 const OLD_DOCUMENT_COLOUR = 'rgb(0, 80, 160)';
 
-const OLD_DOCUMENT = `<!doctype html><html lang="de"><head><meta charset="utf-8"><title>Warteraum</title><style>:root{--m3-primary:#0050a0}html,body{margin:0;height:100%;background:#fcf9f9;color:#1b1b1c;font:16px system-ui,sans-serif}main{padding:24px}</style></head><body><main>Warteraum (altes Dokument)</main></body></html>`;
+const OLD_DOCUMENT = `<!doctype html><html lang="de"><head><meta charset="utf-8"><title>Warteraum</title><style>:root{--m3-primary:#0050a0}html,body{margin:0;height:100%;background:#fcf9f9;color:#1b1b1c;font:16px system-ui,sans-serif}main{padding:24px}</style></head><body><main data-closing-handover-source>Warteraum (altes Dokument)</main></body></html>`;
 
 /* The new document has no palette: only a cover that was handed over is blue. */
 const newDocument = (showsField: boolean) =>
@@ -368,6 +368,8 @@ const HandoverRoom = ({ showsField }: { showsField: boolean }) => {
 					oldWindow.location.href = url;
 				})
 		});
+		// Contract stories can finish the real source cover before navigation.
+		iframe.dispatchEvent(new Event('handover-cover-start'));
 	};
 	return (
 		<Box sx={{ p: 2, display: 'grid', gap: 2 }}>

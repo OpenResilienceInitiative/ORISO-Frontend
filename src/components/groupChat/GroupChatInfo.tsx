@@ -274,7 +274,10 @@ export const GroupChatInfo = ({ dialog = false }: { dialog?: boolean }) => {
 			matrixUserId: getCurrentMatrixUserId()
 		});
 	const showInviteActions =
-		!!featureGroupChatV2Enabled && isV2GroupChat && isCurrentUserModerator;
+		!!featureGroupChatV2Enabled &&
+		isV2GroupChat &&
+		isCurrentUserModerator &&
+		getModality(activeSession) === Modality.SELF_HELP;
 	const durationOption = durationSelectOptionsSet.find(
 		({ value }) => Number(value) === activeSession.item.duration
 	);

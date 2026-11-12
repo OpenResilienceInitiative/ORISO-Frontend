@@ -1567,3 +1567,99 @@ export const NextAppointmentGroupCoModerator: Story = {
 		['Gruppe konfigurieren']
 	)
 };
+
+/* ------------------------------------------------------------------ *
+ * FE#1960: the real 1:1 header with its real appointment slot. The row
+ * under the header shows only an existing appointment (ADR-021 §5);
+ * "Termin anlegen" is a row of the ⋮ menu.
+ * ------------------------------------------------------------------ */
+
+const storyAppointment = {
+	id: '6f1c1a70-0000-4000-8000-000000000001',
+	sessionId: 4401,
+	startTime: new Date('2026-11-12T16:00:00').toISOString(),
+	endTime: new Date('2026-11-12T17:00:00').toISOString(),
+	status: 'SCHEDULED',
+	counterpart: { username: 'ruhiges_yak_kim' }
+};
+
+const installAppointmentFetch = (items: unknown[]) => {
+	const previous = window.fetch;
+	window.fetch = async (input, init) => {
+		const url =
+			typeof input === 'string'
+				? input
+				: input instanceof URL
+					? input.href
+					: input.url;
+		if (/\/sessions\/4401\/appointments$/.test(url.split('?')[0]))
+			return jsonResponse(items);
+		return previous(input, init);
+	};
+	return () => {
+		window.fetch = previous;
+	};
+};
+
+const HeaderWithAppointments = ({ items }: { items: unknown[] }) => {
+	// Installed during render: the slot fetches from a child effect.
+	const [restore] = React.useState(() => installAppointmentFetch(items));
+	React.useEffect(() => restore, [restore]);
+	return renderSessionHeader(mockActiveConversation());
+};
+
+const openMenuAndFindCreate = async (canvasElement: HTMLElement) => {
+	const trigger = await waitFor(() => {
+		const found = Array.from(
+			canvasElement.querySelectorAll<HTMLButtonElement>(
+				'button.sessionMenu__icon'
+			)
+		).find((button) => button.getClientRects().length > 0);
+		expect(found).toBeDefined();
+		return found!;
+	});
+	await userEvent.click(trigger);
+	const row = await waitFor(() => {
+		const found = document.querySelector<HTMLElement>(
+			'[data-cy="session-menu-create-appointment"]'
+		);
+		expect(found).not.toBeNull();
+		return found!;
+	});
+	return row;
+};
+
+/** No appointment: the header looks as before #2011; ⋮ offers "Termin anlegen". */
+export const OneToOneAppointmentCreateInMenu: Story = {
+	name: '1:1 appointment — none yet, create in ⋮ menu (FE#1960)',
+	render: () => <HeaderWithAppointments items={[]} />,
+	play: async ({ canvasElement }) => {
+		const row = await openMenuAndFindCreate(canvasElement);
+		// The menu fades in: wait for it rather than read it mid-transition.
+		await waitFor(() => expect(row).toBeVisible());
+		await expect(
+			canvasElement.querySelector('[data-cy="room-next-appointment"]')
+		).toBeNull();
+		await expect(
+			canvasElement.querySelector(
+				'[data-cy="create-conversation-appointment"]'
+			)
+		).toBeNull();
+	}
+};
+
+/** One appointment: the row shows only that appointment, no create button. */
+export const OneToOneAppointmentUpcoming: Story = {
+	name: '1:1 appointment — upcoming, no create button beside it (FE#1960)',
+	render: () => <HeaderWithAppointments items={[storyAppointment]} />,
+	play: async ({ canvasElement }) => {
+		const bar = await waitFor(() => {
+			const found = canvasElement.querySelector(
+				'[data-cy="room-next-appointment"]'
+			);
+			expect(found).not.toBeNull();
+			return found!;
+		});
+		await expect(bar.querySelectorAll('.splitButton')).toHaveLength(1);
+	}
+};
