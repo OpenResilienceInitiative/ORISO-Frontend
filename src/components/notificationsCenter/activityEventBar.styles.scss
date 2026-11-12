@@ -1,5 +1,7 @@
 // #2226: compact bar above the conversation preview of a call or appointment
 // entry. Tokens only, so the dark scheme follows (withOrisoScheme).
+@import './timelinePillAction';
+
 .activityEventBar {
 	display: flex;
 	align-items: center;
@@ -53,37 +55,13 @@
 	}
 
 	&__action {
-		display: inline-flex;
 		flex-shrink: 0;
-		align-items: center;
-		gap: 8px;
-		min-height: 40px;
-		padding: 0 20px;
-		border: none;
-		border-radius: 999px;
-		background: var(--m3-primary, #a5000a);
-		color: var(--m3-on-primary, #ffffff);
-		font-size: 14px;
-		font-weight: 600;
-		cursor: pointer;
+
+		@include timeline-pill-action(40px, 0 20px, 14px, 8px);
 
 		svg {
 			width: 16px;
 			height: 16px;
-			fill: currentcolor;
-		}
-
-		&:hover {
-			background: color-mix(
-				in srgb,
-				var(--m3-primary, #a5000a) 88%,
-				#000
-			);
-		}
-
-		&:focus-visible {
-			outline: 2px solid var(--m3-primary, #a5000a);
-			outline-offset: 2px;
 		}
 	}
 }

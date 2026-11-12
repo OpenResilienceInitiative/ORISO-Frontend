@@ -164,6 +164,36 @@ type JoinOutcome = Awaited<ReturnType<typeof callManager.joinExistingCall>>;
 const joinsOnOpen = (eventType?: string | null): boolean =>
 	eventType === 'group_chat.opened' || eventType === 'call.knock.requested';
 
+const isJoinCallEntry = (item: NotificationFeedItem): boolean =>
+	getEventDescriptor(item.eventType).resolveActionTarget(item.params || {})
+		.kind === 'join';
+
+/**
+ * #2226: whether pressing the entry's action really joins its call. The
+ * click (joinNotificationCall) and the label ("Beitreten" vs "Chat öffnen")
+ * use this one guard, so the label never promises the wrong thing.
+ */
+const canJoinNotificationCall = (
+	item: NotificationFeedItem,
+	topologyReady: boolean
+): boolean => {
+	const params = item.params || {};
+	return (
+		isJoinCallEntry(item) &&
+		typeof params.callId === 'string' &&
+		Boolean(params.callId.trim()) &&
+		typeof params.roomRef === 'string' &&
+		Boolean(params.roomRef.trim()) &&
+		typeof params.callRoomId === 'string' &&
+		Boolean(params.callRoomId.trim()) &&
+		(params.callType === 'audio' || params.callType === 'video') &&
+		// An empty session list would store a group call as one-to-one.
+		topologyReady &&
+		// FE#1893: a direct-link call knocks from its card in the conversation.
+		!isDirectLinkCallRoom(params.roomRef)
+	);
+};
+
 /**
  * Call cards join their existing authorized binding. A card that cannot join
  * here (incomplete, or group topology not loaded yet) opens its conversation.
@@ -177,25 +207,10 @@ const joinNotificationCall = (
 	onStart: (callId: string) => void
 ): boolean => {
 	const params = item.params || {};
-	if (
-		getEventDescriptor(item.eventType).resolveActionTarget(params).kind !==
-		'join'
-	) {
+	if (!isJoinCallEntry(item)) {
 		return false;
 	}
-	if (
-		typeof params.callId !== 'string' ||
-		!params.callId.trim() ||
-		typeof params.roomRef !== 'string' ||
-		!params.roomRef.trim() ||
-		typeof params.callRoomId !== 'string' ||
-		!params.callRoomId.trim() ||
-		(params.callType !== 'audio' && params.callType !== 'video') ||
-		// An empty session list would store a group call as one-to-one.
-		!topologyReady ||
-		// FE#1893: a direct-link call knocks from its card in the conversation.
-		isDirectLinkCallRoom(params.roomRef)
-	) {
+	if (!canJoinNotificationCall(item, topologyReady)) {
 		onCannotJoin();
 		return true;
 	}
@@ -549,11 +564,15 @@ export const NotificationsCenter = () => {
 		() => resolveStatusPageAction(selectedNotification),
 		[selectedNotification]
 	);
+	// #2226: "Beitreten" exactly when the action joins a call.
+	const joinsFromAction = (item: NotificationFeedItem) =>
+		joinsOnOpen(item.eventType) ||
+		canJoinNotificationCall(item, Boolean(sessionsContext?.ready));
 	const selectedOpenLabel = selectedLinksToStatusPage
 		? translate('notifications.center.openStatusPage')
 		: selectedNotification?.actionLabel ||
 			translate(
-				joinsOnOpen(selectedNotification?.eventType)
+				selectedNotification && joinsFromAction(selectedNotification)
 					? 'notifications.center.join'
 					: 'notifications.center.open'
 			);
@@ -737,7 +756,7 @@ export const NotificationsCenter = () => {
 			return;
 		}
 		if (untilL) {
-			if (joinCall(item)) return;
+			if (!browsing && joinCall(item)) return;
 			openActivityConversation(item);
 			return;
 		}
@@ -759,6 +778,17 @@ export const NotificationsCenter = () => {
 		}
 		if (openKnock(selectedNotification)) return;
 		if (joinCall(selectedNotification)) return;
+		openActivityConversation(selectedNotification);
+	};
+
+	// #2226: "Open the conversation to reply" in the preview opens the chat
+	// only. It never knocks or joins; the event bar's button does that.
+	const handleOpenConversation = () => {
+		if (!selectedNotification) return;
+		markNotificationAsRead(selectedNotification.id);
+		if (nextUnreadId) {
+			selectNotification(nextUnreadId);
+		}
 		openActivityConversation(selectedNotification);
 	};
 
@@ -1121,8 +1151,8 @@ export const NotificationsCenter = () => {
 													? `${selectedOpenLabel} ${translate('notifications.center.opensInNewTab')}`
 													: item.actionLabel ||
 														translate(
-															joinsOnOpen(
-																item.eventType
+															joinsFromAction(
+																item
 															)
 																? 'notifications.center.join'
 																: 'notifications.center.open'
@@ -1326,7 +1356,7 @@ export const NotificationsCenter = () => {
 								onConversationRead={
 									conversation.onConversationRead
 								}
-								onOpenConversation={handleOpenAction}
+								onOpenConversation={handleOpenConversation}
 							/>
 						</>
 					) : (
