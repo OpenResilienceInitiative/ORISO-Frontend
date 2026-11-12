@@ -81,6 +81,25 @@ export const activityEventCategory = (
 export const isMessageActivityEvent = (row: ActivityEventRow): boolean =>
 	activityEventCategory(row) === 'message';
 
+/** #2226: event families whose entry belongs to a conversation's call or meeting. */
+const CONVERSATION_EVENT_FAMILIES = new Set(['calls', 'appointments']);
+
+/**
+ * #2226 (Frank, 2026-11-12, replaces rule 3 of #1824): a call or appointment
+ * entry shows the conversation it belongs to, like a message entry. Only an
+ * entry that names its room can: without one there is no conversation to show
+ * and the entry keeps its detail view. Showing never joins the call.
+ */
+export const showsConversationPreview = (row: ActivityEventRow): boolean => {
+	if (isMessageActivityEvent(row)) return true;
+	if (!isKnownEventType(row?.eventType)) return false;
+	return (
+		CONVERSATION_EVENT_FAMILIES.has(
+			getEventDescriptor(row.eventType).family
+		) && activityEventRoomId(row) !== null
+	);
+};
+
 // Backend ids are positive integers written as digits; anything else is
 // unusable rather than coerced ('1e3', ' 7', '1.5').
 const toPositiveId = (value: unknown): number | null => {

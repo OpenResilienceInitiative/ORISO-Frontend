@@ -1,6 +1,13 @@
 // @vitest-environment jsdom
 import React from 'react';
-import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
+import {
+	act,
+	cleanup,
+	render,
+	screen,
+	waitFor,
+	within
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { MemoryRouter, useLocation } from 'react-router-dom';
@@ -24,6 +31,13 @@ import type { NotificationFeedItem } from '../../globalState/provider/Notificati
 vi.mock('lottie-react', () => ({ default: () => null }));
 vi.mock('../../api/apiCallState', () => ({ apiCallState: vi.fn() }));
 vi.mock('../../api/apiUserDrafts', () => ({ apiFetchUserDrafts: vi.fn() }));
+// #2226: call cards now show their conversation; this file tests joining,
+// so the preview is a stub that records which room it was asked to show.
+vi.mock('./ConversationPreview', () => ({
+	ConversationPreview: ({ roomId }: { roomId: string | null }) => (
+		<section aria-label="Conversation preview" data-room={roomId ?? ''} />
+	)
+}));
 
 const call = {
 	callId: 'existing-call',
@@ -53,6 +67,7 @@ const callItem: NotificationFeedItem = {
 const joinRoom = vi.fn();
 const sendEvent = vi.fn();
 const createRoom = vi.fn();
+const sendReadReceipt = vi.fn();
 const markRead = vi.fn();
 const addNotification = vi.fn();
 const sourceRoom = { getMyMembership: () => 'join' };
@@ -67,6 +82,11 @@ const client = {
 	joinRoom,
 	sendEvent,
 	createRoom,
+	sendReadReceipt,
+	// #2226: the conversation preview of a call card listens for room changes.
+	on: vi.fn(),
+	off: vi.fn(),
+	removeListener: vi.fn(),
 	matrixRTC: {
 		getRoomSession: () => ({ memberships: [{ sender: '@other:example' }] })
 	}
@@ -190,6 +210,56 @@ it('joins the existing call from the desktop Activity action after fresh authori
 	expect(markRead).toHaveBeenCalledWith('call-1');
 	expect(sendEvent).not.toHaveBeenCalled();
 	expect(createRoom).not.toHaveBeenCalled();
+});
+
+it('#2226: shows the conversation of a call card under a title, time and action bar, without joining or reading it', async () => {
+	await renderCenter();
+	const bar = await waitFor(() => {
+		const found = document.querySelector<HTMLElement>(
+			'[data-cy="activity-event-bar"]'
+		);
+		expect(found).not.toBeNull();
+		return found!;
+	});
+	expect(
+		within(bar).getByRole('heading', {
+			name: en.notifications.events.callStarted.title
+		})
+	).toBeTruthy();
+	expect(
+		within(bar).getByRole('button', { name: 'Open chat', exact: true })
+	).toBeTruthy();
+	expect(
+		screen.getByRole('region', { name: 'Conversation preview' }).dataset
+			.room
+	).toBe('!source:example');
+	// The old detail view with "Next notification" is behind "Show details".
+	expect(
+		screen.queryByRole('button', { name: en.notifications.center.next })
+	).toBeNull();
+	// Selecting only shows: no call, no Matrix read receipt.
+	expect(joinRoom).not.toHaveBeenCalled();
+	expect(callManager.getCurrentCall()).toBeFalsy();
+	expect(sendReadReceipt).not.toHaveBeenCalled();
+	await user.click(
+		within(bar).getByRole('button', { name: 'Open chat', exact: true })
+	);
+	await waitFor(() =>
+		expect(joinRoom).toHaveBeenCalledWith('!media:example')
+	);
+	expect(sendReadReceipt).not.toHaveBeenCalled();
+});
+
+it('#2226: a call card without a room keeps its detail view', async () => {
+	await renderCenter(1400, {
+		...callItem,
+		id: 'call-no-room',
+		params: { ...callItem.params, roomRef: undefined }
+	});
+	expect(document.querySelector('[data-cy="activity-event-bar"]')).toBeNull();
+	expect(
+		screen.getByRole('button', { name: en.notifications.center.next })
+	).toBeTruthy();
 });
 
 it('joins the existing call from a mobile Activity card without navigating away', async () => {

@@ -1186,6 +1186,20 @@ export const GroupWithHistoryError: Story = {
  * `NotificationsCenter.knockCall.test.tsx`).
  */
 export const KnockOnDirectLink: Story = {
+	// #2226: the knock card shows its conversation, which resolves the
+	// session like the chat does; no handover candidates in this story.
+	beforeEach: () => {
+		const originalFetch = globalThis.fetch;
+		globalThis.fetch = (input, init) => {
+			const url = input instanceof Request ? input.url : String(input);
+			return url.includes('/service/users/case-handover/candidates?')
+				? Promise.resolve(Response.json({ sessions: [] }))
+				: originalFetch(input, init);
+		};
+		return () => {
+			globalThis.fetch = originalFetch;
+		};
+	},
 	decorators: [
 		withTimelineData([
 			feedItem({

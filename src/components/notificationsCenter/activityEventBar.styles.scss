@@ -1,0 +1,89 @@
+// #2226: compact bar above the conversation preview of a call or appointment
+// entry. Tokens only, so the dark scheme follows (withOrisoScheme).
+.activityEventBar {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	flex-shrink: 0;
+	min-width: 0;
+	padding: 12px 16px 12px 20px;
+	border-bottom: 1px solid var(--m3-outline-variant, #c4c7c5);
+	background: var(--m3-surface, #ffffff);
+	color: var(--m3-on-surface, #1b1b1c);
+
+	&__icon {
+		display: inline-flex;
+		flex-shrink: 0;
+		color: var(--m3-on-surface-variant, #444748);
+
+		svg {
+			width: 24px;
+			height: 24px;
+			fill: currentcolor;
+		}
+
+		// Registry glyphs ship their own fill; follow the text colour.
+		svg path {
+			fill: currentcolor;
+		}
+	}
+
+	&__text {
+		flex: 1;
+		min-width: 0;
+	}
+
+	&__title {
+		margin: 0;
+		display: -webkit-box;
+		overflow: hidden;
+		font-size: 16px;
+		font-weight: 600;
+		line-height: 22px;
+		-webkit-box-orient: vertical;
+		-webkit-line-clamp: 2;
+		overflow-wrap: anywhere;
+	}
+
+	&__time {
+		margin: 0;
+		font-size: 13px;
+		line-height: 18px;
+		color: var(--m3-on-surface-variant, #4c555f);
+	}
+
+	&__action {
+		display: inline-flex;
+		flex-shrink: 0;
+		align-items: center;
+		gap: 8px;
+		min-height: 40px;
+		padding: 0 20px;
+		border: none;
+		border-radius: 999px;
+		background: var(--m3-primary, #a5000a);
+		color: var(--m3-on-primary, #ffffff);
+		font-size: 14px;
+		font-weight: 600;
+		cursor: pointer;
+
+		svg {
+			width: 16px;
+			height: 16px;
+			fill: currentcolor;
+		}
+
+		&:hover {
+			background: color-mix(
+				in srgb,
+				var(--m3-primary, #a5000a) 88%,
+				#000
+			);
+		}
+
+		&:focus-visible {
+			outline: 2px solid var(--m3-primary, #a5000a);
+			outline-offset: 2px;
+		}
+	}
+}

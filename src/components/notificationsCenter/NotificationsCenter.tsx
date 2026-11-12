@@ -93,9 +93,11 @@ import { ReactComponent as AudioMessageIcon } from '../../resources/img/icons/no
 import { ReactComponent as VideoMessageIcon } from '../../resources/img/icons/video-call.svg';
 import type { MatrixActivityPreviewKind } from '../../utils/matrixActivityPreview';
 import { ConversationPreview } from './ConversationPreview';
+import { ActivityEventBar } from './ActivityEventBar';
 import {
 	activityEventCaseHandoverRequestId,
-	activityEventCategory,
+	isMessageActivityEvent,
+	showsConversationPreview,
 	activityEventSessionId,
 	describeActivityEvent
 } from './activityEvent';
@@ -520,12 +522,13 @@ export const NotificationsCenter = () => {
 	// menu (useActivityTimeline). E2EE note: the preview is the user's own
 	// session view rendered in the same client — decryption stays client-side
 	// (same boundary as ADR-AT-01).
-	const selectedNotificationCategory = useMemo(
-		() =>
-			selectedNotification
-				? activityEventCategory(selectedNotification)
-				: 'system',
-		[selectedNotification]
+	// #2226: call and appointment cards that name their room show their
+	// conversation too, under a compact bar with the Join action.
+	const canShowChatPreview = Boolean(
+		selectedNotification && showsConversationPreview(selectedNotification)
+	);
+	const showEventBar = Boolean(
+		selectedNotification && !isMessageActivityEvent(selectedNotification)
 	);
 
 	const selectedDisplay = useMemo(
@@ -568,7 +571,6 @@ export const NotificationsCenter = () => {
 				: null,
 		[selectedNotification]
 	);
-	const canShowChatPreview = selectedNotificationCategory === 'message';
 	const showConsentDetail =
 		!untilL &&
 		hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) &&
@@ -1285,24 +1287,48 @@ export const NotificationsCenter = () => {
 							{translate('notifications.center.emptyDetail')}
 						</div>
 					) : showEmbeddedChat ? (
-						<ConversationPreview
-							roomId={conversation.roomId}
-							threadRootId={conversation.preview?.threadRootId}
-							access={conversation.preview ?? undefined}
-							openedThreadRootId={conversation.openedThreadRootId}
-							onShownThreadChange={
-								conversation.setOpenedThreadRootId
-							}
-							conversationPath={
-								selectedNotification
-									? getNotificationActionPath(
-											selectedNotification
-										)
-									: null
-							}
-							onConversationRead={conversation.onConversationRead}
-							onOpenConversation={handleOpenAction}
-						/>
+						<>
+							{showEventBar && (
+								<ActivityEventBar
+									icon={SelectedIcon}
+									title={selectedDisplay?.title ?? ''}
+									time={formatAbsoluteTime(
+										selectedNotification.createdAt,
+										i18n.language
+									)}
+									actionLabel={
+										canOpenSelected
+											? selectedOpenLabel
+											: null
+									}
+									onAction={handleOpenAction}
+								/>
+							)}
+							<ConversationPreview
+								roomId={conversation.roomId}
+								threadRootId={
+									conversation.preview?.threadRootId
+								}
+								access={conversation.preview ?? undefined}
+								openedThreadRootId={
+									conversation.openedThreadRootId
+								}
+								onShownThreadChange={
+									conversation.setOpenedThreadRootId
+								}
+								conversationPath={
+									selectedNotification
+										? getNotificationActionPath(
+												selectedNotification
+											)
+										: null
+								}
+								onConversationRead={
+									conversation.onConversationRead
+								}
+								onOpenConversation={handleOpenAction}
+							/>
+						</>
 					) : (
 						<div className="notificationsCenter__detailBody">
 							<div className="notificationsCenter__detailHeader">

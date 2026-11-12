@@ -90,6 +90,15 @@
 		padding: 0;
 		background: transparent;
 
+		// #2226: the search pill sits on the same gutter as in Conversations
+		// (6 px on phones, 12 px from large), not on the card column's
+		// 16 / 20 px padding.
+		margin: 0 -14px 0 -10px;
+
+		@include breakpoint($fromLarge) {
+			margin: 0 -8px 0 -4px;
+		}
+
 		.sessionsListToolbar__search {
 			margin-bottom: 8px;
 			max-width: none;
