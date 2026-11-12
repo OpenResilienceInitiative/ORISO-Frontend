@@ -1,3 +1,26 @@
+/*
+ * The host's call controls (corner buttons, the phone's floating bar) share
+ * one look and one focus ring. Set once here so the floating bar cannot drift
+ * from the corner buttons when the call theme changes.
+ */
+.group-call-widget {
+	--call-control-bg: rgba(0, 0, 0, 0.6);
+	--call-control-bg-hover: rgba(0, 0, 0, 0.8);
+	--call-control-fg: #fff;
+	--call-control-bar-bg: #111;
+	--call-control-handle: rgba(255, 255, 255, 0.55);
+	--call-control-subtle-bg: rgba(255, 255, 255, 0.12);
+	--call-control-focus: var(--call-control-fg);
+	--call-control-size: 32px;
+}
+
+@mixin call-control-focus($offset: 1px) {
+	&:focus-visible {
+		outline: 2px solid var(--call-control-focus);
+		outline-offset: $offset;
+	}
+}
+
 .call-modal-backdrop {
 	position: fixed;
 	inset: 0;
@@ -84,12 +107,12 @@
 	position: absolute;
 	top: 10px;
 	right: 10px;
-	width: 32px;
-	height: 32px;
+	width: var(--call-control-size);
+	height: var(--call-control-size);
 	border-radius: 50%;
 	border: none;
-	background: rgba(0, 0, 0, 0.6);
-	color: #fff;
+	background: var(--call-control-bg);
+	color: var(--call-control-fg);
 	font-size: 20px;
 	cursor: pointer;
 	z-index: 5;
@@ -98,20 +121,22 @@
 	justify-content: center;
 
 	&:hover {
-		background: rgba(0, 0, 0, 0.8);
+		background: var(--call-control-bg-hover);
 	}
+
+	@include call-control-focus;
 }
 
 .element-call-fullscreen {
 	position: absolute;
 	top: 10px;
 	right: 50px;
-	width: 32px;
-	height: 32px;
+	width: var(--call-control-size);
+	height: var(--call-control-size);
 	border-radius: 50%;
 	border: none;
-	background: rgba(0, 0, 0, 0.6);
-	color: #fff;
+	background: var(--call-control-bg);
+	color: var(--call-control-fg);
 	font-size: 16px;
 	cursor: pointer;
 	z-index: 5;
@@ -120,20 +145,22 @@
 	justify-content: center;
 
 	&:hover {
-		background: rgba(0, 0, 0, 0.8);
+		background: var(--call-control-bg-hover);
 	}
+
+	@include call-control-focus;
 }
 
 .element-call-minimize {
 	position: absolute;
 	top: 10px;
 	right: 90px;
-	width: 32px;
-	height: 32px;
+	width: var(--call-control-size);
+	height: var(--call-control-size);
 	border-radius: 50%;
 	border: none;
-	background: rgba(0, 0, 0, 0.6);
-	color: #fff;
+	background: var(--call-control-bg);
+	color: var(--call-control-fg);
 	font-size: 18px;
 	cursor: pointer;
 	z-index: 5;
@@ -142,8 +169,10 @@
 	justify-content: center;
 
 	&:hover {
-		background: rgba(0, 0, 0, 0.8);
+		background: var(--call-control-bg-hover);
 	}
+
+	@include call-control-focus;
 }
 
 /* Beside the close button on a phone, and left of auto-fit on desktop. */
@@ -163,12 +192,12 @@
 	position: absolute;
 	top: 10px;
 	right: 90px;
-	width: 32px;
-	height: 32px;
+	width: var(--call-control-size);
+	height: var(--call-control-size);
 	border-radius: 50%;
 	border: none;
-	background: rgba(0, 0, 0, 0.6);
-	color: #fff;
+	background: var(--call-control-bg);
+	color: var(--call-control-fg);
 	font-size: 14px;
 	cursor: pointer;
 	z-index: 5;
@@ -177,8 +206,10 @@
 	justify-content: center;
 
 	&:hover {
-		background: rgba(0, 0, 0, 0.8);
+		background: var(--call-control-bg-hover);
 	}
+
+	@include call-control-focus;
 }
 
 .element-call-container .call-resize-handle {
@@ -496,4 +527,92 @@
 	.connecting-popup {
 		width: 90vw;
 	}
+}
+
+/*
+ * Call design S2: with host chrome the call's own header sits at the top of
+ * the iframe. The 28px drag strip used to lie over it and swallow clicks on
+ * its buttons, so it shrinks to a thin band on the top edge (where the
+ * north resize handle was) and leaves the header to the call.
+ */
+.group-call-widget--host-chrome .element-call-drag-handle {
+	height: 6px;
+	left: 16px;
+	right: 16px;
+	z-index: 7;
+}
+
+.group-call-widget--host-chrome.group-call-widget--mobile
+	.element-call-drag-handle,
+.group-call-widget--host-chrome.group-call-widget--fullscreen
+	.element-call-drag-handle {
+	display: none;
+}
+
+/*
+ * Call design S10 (5c): on a phone the call floats in the upper half and
+ * ORISO keeps running below it. The phone rules above pin the widget to the
+ * top and the stage to the whole screen; floating overrides both, with the
+ * position the grip set.
+ */
+.group-call-widget.group-call-widget--mobile.group-call-widget--floating {
+	top: var(--call-float-top, 0) !important;
+	border-radius: 0 0 16px 16px;
+	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.group-call-widget--floating .element-call-container {
+	width: 100vw;
+	height: 50vh;
+	height: 50dvh;
+	border-radius: 0 0 16px 16px;
+}
+
+.element-call-float-bar {
+	position: relative;
+	flex: none;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: var(--call-control-size);
+	background: var(--call-control-bar-bg);
+}
+
+.element-call-float-grip {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 96px;
+	height: 100%;
+	cursor: ns-resize;
+	touch-action: none;
+
+	span {
+		width: 40px;
+		height: 4px;
+		border-radius: 2px;
+		background: var(--call-control-handle);
+	}
+
+	@include call-control-focus(-2px);
+}
+
+.element-call-float-full {
+	position: absolute;
+	top: 2px;
+	right: 8px;
+	width: 28px;
+	height: 28px;
+	border: none;
+	border-radius: 50%;
+	background: var(--call-control-subtle-bg);
+	color: var(--call-control-fg);
+	font-size: 14px;
+	cursor: pointer;
+
+	&:hover {
+		background: var(--call-control-bg-hover);
+	}
+
+	@include call-control-focus;
 }
