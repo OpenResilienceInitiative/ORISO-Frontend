@@ -1,6 +1,7 @@
 import { isAskerDisplayNameTypingAllowed } from '../../utils/askerAccountPolicy';
 import { useFrozenPhoneLayout } from '../../utils/embeddedComposerFullscreen';
 import { useConversationFeatureSettings } from '../../hooks/useConversationFeatureSettings';
+import { isSupervisionEnabledForChat } from '../../utils/conversationFeatureSettings';
 import { useDelayedSessionRefresh } from './useDelayedSessionRefresh';
 import { useChatHistoryPagination } from './useChatHistoryPagination';
 import { useThreadRouteHistory } from './useThreadRouteHistory';
@@ -537,9 +538,6 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const conversationFeatures =
 		useConversationFeatureSettings(getTenantSettings());
 	const {
-		featureSupervisionEnabled = true,
-		featureSupervisionAnonymousChatsEnabled = true,
-		featureSupervisionOneOnOneChatsEnabled = true,
 		featureThreadsEnabled = true,
 		featureThreadsAnonymousChatsEnabled = true,
 		featureThreadsGroupChatsEnabled = true,
@@ -818,11 +816,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				: chatType === 'supervision'
 					? featureThreadsSupervisionChatsEnabled !== false
 					: featureThreadsOneOnOneEnabled !== false);
-	const isSupervisionEnabledForCurrentChat =
-		featureSupervisionEnabled !== false &&
-		(isAnonymousChat
-			? featureSupervisionAnonymousChatsEnabled !== false
-			: featureSupervisionOneOnOneChatsEnabled !== false);
+	const isSupervisionEnabledForCurrentChat = isSupervisionEnabledForChat(
+		conversationFeatures,
+		isAnonymousChat
+	);
 
 	// WP-B2 safety net: the client-facing timeline never carries side-room
 	// items, whatever SessionStream handed over.

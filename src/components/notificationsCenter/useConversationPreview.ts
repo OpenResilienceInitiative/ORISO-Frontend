@@ -14,7 +14,10 @@ import type { NotificationFeedItem } from '../../globalState/provider/Notificati
 import { useSession } from '../../hooks/useSession';
 import { resolveFeaturesForAgencyPolicy } from '../../hooks/useConversationFeatureSettings';
 import { useSessionAgencyPolicy } from '../../hooks/useSessionAgencyPolicy';
-import { resolveConversationAgencyId } from '../../utils/conversationFeatureSettings';
+import {
+	isSupervisionEnabledForChat,
+	resolveConversationAgencyId
+} from '../../utils/conversationFeatureSettings';
 import { useTeamDiscussionChannel } from '../../hooks/useTeamDiscussionChannel';
 import { chatTransportService } from '../../services/chatTransportService';
 import { decodeUsername } from '../../utils/encryptionHelpers';
@@ -152,8 +155,14 @@ export const useConversationPreview = (
 	// same request (ADR-008).
 	const counselling =
 		Boolean(isConsultant) && Boolean(session) && !session?.isGroup;
+	// Same per-chat-type restriction as the opened chat (master + anonymous/1:1).
 	const supervisionLookup =
-		counselling && tenant.featureSupervisionEnabled !== false;
+		counselling &&
+		isSupervisionEnabledForChat(
+			tenant,
+			Boolean(session) &&
+				getModality(session as any) === Modality.LIVE_CHAT
+		);
 	const supervisors = useSessionLookup(
 		supervisionLookup ? sessionId : undefined,
 		supervisionLookup ? apiGetSessionSupervisors : null

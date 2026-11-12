@@ -185,6 +185,34 @@ describe('useConversationPreview (#1824)', () => {
 		expect(fakes.apiGetSessionSupervisors).not.toHaveBeenCalled();
 	});
 
+	it('skips the supervision lookup in a 1:1 chat when 1:1 supervision is off (#363)', async () => {
+		fakes.useSession.mockReturnValue({
+			session: session({ item: { agencyId: 7 } }),
+			ready: true
+		});
+		fakes.agencyPolicy = {
+			agencyId: 7,
+			state: 'ready',
+			settings: {
+				permissionPolicies: {
+					featureSupervisionEnabled: {
+						value: true,
+						mode: 'SUGGESTED',
+						inherited: true
+					},
+					featureSupervisionOneOnOneChatsEnabled: {
+						value: false,
+						mode: 'ENFORCED',
+						inherited: true
+					}
+				}
+			}
+		};
+		render(row({ params: { roomRef: SIDE, sourceSessionId: 13 } }));
+		await new Promise((resolve) => setTimeout(resolve, 20));
+		expect(fakes.apiGetSessionSupervisors).not.toHaveBeenCalled();
+	});
+
 	it('resolves the team room, writable only while OPEN, never creating it', async () => {
 		fakes.useTeamDiscussionChannel.mockReturnValue({
 			discussion: { matrixRoomId: TEAM, status: 'OPEN' },
