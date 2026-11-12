@@ -91,6 +91,7 @@ import DeleteSession from '../session/DeleteSession';
 import { Text } from '../text/Text';
 import { useSearchParam } from '../../hooks/useSearchParams';
 import { useTranslation } from 'react-i18next';
+import EventOutlinedIcon from '@mui/icons-material/EventOutlined';
 import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider';
 import { useMatrixRoomUsers } from '../../hooks/useMatrixRoomUsers';
 import LegalLinks from '../legalLinks/LegalLinks';
@@ -139,6 +140,11 @@ export interface SessionMenuProps {
 	 * Off by default — B2 sets it from the viewport (`untilL`).
 	 */
 	callsInMenu?: boolean;
+	/**
+	 * FE#1960: opens the 1:1 appointment dialog. Set only while the
+	 * counsellor may create one here and the backend can store it.
+	 */
+	onCreateAppointment?: () => void;
 }
 
 // #1262 — backend advice-request APIs are not ready (US#1034). Keep the owner-only item visible but inert.
@@ -804,6 +810,25 @@ export const SessionMenu = (props: SessionMenuProps) => {
 										)}
 									</>
 								)}
+
+							{props.onCreateAppointment && (
+								<button
+									type="button"
+									className="sessionMenu__item chatMenuDropdown__item"
+									onClick={() => {
+										closeMenu();
+										props.onCreateAppointment?.();
+									}}
+									data-cy="session-menu-create-appointment"
+								>
+									<SessionMenuItemContent
+										icon={<EventOutlinedIcon />}
+										title={translate(
+											'sessionList.timeline.appointment.create'
+										)}
+									/>
+								</button>
+							)}
 
 							{props.isAskerInfoAvailable && (
 								<Link

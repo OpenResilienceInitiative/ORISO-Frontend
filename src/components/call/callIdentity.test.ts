@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import {
+	animalNameOf,
 	CALL_IDENTITY_EVENT_TYPE,
 	ownCallIdentity,
 	sameCallIdentity
@@ -33,7 +34,9 @@ describe('what the call is told', () => {
 			kind: 'animal',
 			file: derived.file,
 			bg: derived.bg,
-			ink: derived.iconColor
+			ink: derived.iconColor,
+			name: animalNameOf(derived.file),
+			role: 'asker'
 		});
 	});
 
@@ -61,7 +64,9 @@ describe('what the call is told', () => {
 			kind: 'motif',
 			file: 'owl.svg',
 			bg: '#a5000a',
-			ink: '#ffffff'
+			ink: '#ffffff',
+			name: 'Beratung',
+			role: 'counsellor'
 		});
 	});
 
@@ -78,7 +83,8 @@ describe('what the call is told', () => {
 			bg: '#a5000a',
 			ink: '#ffffff',
 			initials: 'SP',
-			name: 'Susanne Pfeiffer'
+			name: 'Susanne Pfeiffer',
+			role: 'counsellor'
 		});
 	});
 

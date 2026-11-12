@@ -6482,6 +6482,13 @@
 			"label": "Frapper avant d’entrer",
 			"on": "Les invités attendent que vous les fassiez entrer.",
 			"off": "Les invités rejoignent l’appel directement, sans attendre."
+		},
+		"list": {
+			"running": "En cours",
+			"runningWithCount": "En cours — {{count}} dans l’appel"
+		},
+		"floating": {
+			"move": "Déplacer l’appel"
 		}
 	},
 	"form": {

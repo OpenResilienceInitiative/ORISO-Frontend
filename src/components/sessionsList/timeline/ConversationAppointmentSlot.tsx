@@ -1,13 +1,13 @@
 /**
  * A 1:1 conversation's next appointment below its header (FE#1960), with the
- * same menu as its twin in the list, and the counsellor's way to create one.
- * A backend without the endpoint shows nothing here, not even the create
- * button: there would be nowhere to store the appointment.
+ * same menu as its twin in the list (ADR-021 §5). Without an appointment the
+ * header stays as it was: creating one is a ⋮ menu entry, which this slot
+ * offers through `onCreateChange` and answers with its date dialog.
+ * A backend without the endpoint offers nothing: there would be nowhere to
+ * store the appointment.
  */
 import * as React from 'react';
-import { useContext, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import EventOutlinedIcon from '@mui/icons-material/EventOutlined';
+import { useCallback, useContext, useEffect, useState } from 'react';
 import {
 	ActiveSessionContext,
 	AUTHORITIES,
@@ -18,7 +18,6 @@ import {
 	apiGetSessionAppointments,
 	type SessionAppointment
 } from '../../../api/apiSessionAppointments';
-import { SplitButton } from '../../splitButton/SplitButton';
 import { AppointmentDateDialog } from './AppointmentDateDialog';
 import { RoomNextAppointment } from './AppointmentSplitButton';
 import {
@@ -30,12 +29,17 @@ import { buildFutureEntries, type FutureEntry } from './timelineModel';
 import { useAppointmentActions } from './useAppointmentActions';
 
 export const ConversationAppointmentSlot = ({
-	canChange
+	canChange,
+	onCreateChange
 }: {
 	/** Counsellor of this open conversation: may create and move. */
 	canChange: boolean;
+	/**
+	 * Receives the opener of the create dialog while creating is possible,
+	 * and `undefined` otherwise. The header hands it to its ⋮ menu.
+	 */
+	onCreateChange?: (open?: () => void) => void;
 }) => {
-	const { t } = useTranslation();
 	const { activeSession } = useContext(ActiveSessionContext);
 	const { userData } = useContext(UserDataContext);
 	const sessionId = activeSession?.item.id;
@@ -65,6 +69,14 @@ export const ConversationAppointmentSlot = ({
 	const onAction = useAppointmentActions({
 		onMove: (entry) => setDialog({ entry })
 	});
+	const canCreate =
+		canChange && sessionId !== undefined && Array.isArray(appointments);
+	const openCreate = useCallback(() => setDialog({}), []);
+	useEffect(() => {
+		if (!onCreateChange) return undefined;
+		onCreateChange(canCreate ? openCreate : undefined);
+		return () => onCreateChange(undefined);
+	}, [canCreate, onCreateChange, openCreate]);
 	if (sessionId === undefined || !Array.isArray(appointments)) return null;
 
 	const next = upcomingAppointments(appointments, new Date())[0];
@@ -99,18 +111,6 @@ export const ConversationAppointmentSlot = ({
 						: 'counsellor'
 				}
 				onAction={onAction}
-				action={
-					canChange ? (
-						<SplitButton
-							size="compact"
-							variant="outlined"
-							icon={<EventOutlinedIcon />}
-							label={t('sessionList.timeline.appointment.create')}
-							mainDataCy="create-conversation-appointment"
-							onClick={() => setDialog({})}
-						/>
-					) : undefined
-				}
 			/>
 			{dialog && (
 				<AppointmentDateDialog

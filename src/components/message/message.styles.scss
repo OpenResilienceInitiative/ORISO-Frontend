@@ -201,8 +201,13 @@ $message-avatar-overlap: -19px;
 
 		// Figma 7539-29191: 41px breathing room on the opposite side (the
 		// 60px avatar column minus 19px overlap gives the same 41px on the
-		// avatar side). Desktop cap = wide bubble 770px + avatar column.
-		max-width: min(calc(100% - 41px), 834px);
+		// avatar side). Desktop cap = wide bubble + avatar column. The wide
+		// bubble is 770px unless the platform set another width (Admin ->
+		// Einstellungen -> Chat-Nachrichten).
+		max-width: min(
+			calc(100% - 41px),
+			calc(var(--message-item-max-width-desktop, 770px) + 64px)
+		);
 		position: relative;
 
 		&--left,
@@ -846,10 +851,10 @@ $message-avatar-overlap: -19px;
 		// stay readable; texts beyond ~4 lines widen to 770px. Mobile keeps
 		// the fluid width from the wrap.
 		@media (width >= 900px) {
-			max-width: 460px;
+			max-width: min(460px, var(--message-item-max-width-desktop, 770px));
 
 			&--wide {
-				max-width: 770px;
+				max-width: var(--message-item-max-width-desktop, 770px);
 			}
 		}
 
