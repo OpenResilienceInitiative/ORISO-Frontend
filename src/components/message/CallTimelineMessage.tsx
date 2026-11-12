@@ -290,8 +290,11 @@ export const CallTimelineMessage = ({
 				participants={shown.map((participant) => {
 					const party = partyOf(participant.userId);
 					if (party) return { ...participant, ...party.avatar };
-					// In a group, the public display name, as for the
-					// caller above — never the Matrix login (#2237 tooltip).
+					// In a group, the public display name first, by the
+					// caller line's rule above. Without one, the Matrix
+					// profile name stays as the fallback, as for the caller
+					// (tested); hiding it in both places needs a product
+					// decision (#2237).
 					const named =
 						groupMemberName(participant.userId) ??
 						(participant.displayName === participant.userId
