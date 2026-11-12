@@ -126,6 +126,7 @@ import {
 import { useSupervisorConsultantDirectory } from './useSupervisorConsultantDirectory';
 import { resolveRoomHeaderDensity } from './roomHeaderDensity';
 import { resolveAssignedConsultantLabel } from '../session/assignedConsultantLabel';
+import { AddonSessionActions } from '../../addons/AddonSessionActions';
 export interface SessionHeaderProps {
 	consultantAbsent?: SessionConsultantInterface;
 	hasUserInitiatedStopOrLeaveRequest?: React.MutableRefObject<boolean>;
@@ -1231,6 +1232,9 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 						)
 					) : null}
 				</div>
+				{hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) &&
+					!activeSession.isGroup &&
+					!activeSession.isEnquiry && <AddonSessionActions />}
 				{/* Anonymous end/delete actions live in SessionMenu on all breakpoints. */}
 				{/* Supervisor Management Button replaced by the "+" overlay on
 				    the avatar stack above. Keeping the render behind a hard
