@@ -18,10 +18,33 @@ concurrency:
     cancel-in-progress: false
 
 jobs:
+    # The real call views from ORISO-ElementCall for the "Call / Views" story
+    # (#2233). Its own job on purpose: building them runs another
+    # repository's install scripts, which must never share a job with the
+    # registry token. A failure here must not stop the publish; the story
+    # then says the pages are missing.
+    call-harness:
+        name: build the Element Call view pages
+        runs-on: ubuntu-latest
+        timeout-minutes: 20
+        continue-on-error: true
+        permissions:
+            contents: read
+        steps:
+            - uses: actions/checkout@v6
+              with:
+                  persist-credentials: false
+            - uses: ./.github/actions/call-harness
+              with:
+                  ref: ${{ github.ref_name }}
+
     publish:
         name: lint, type-check, build and publish Storybook image
         runs-on: ubuntu-latest
         timeout-minutes: 60
+        needs: call-harness
+        # Publish whatever happened to the call view pages.
+        if: ${{ !cancelled() }}
 
         permissions:
             contents: read
@@ -48,14 +71,12 @@ jobs:
             - name: Build Storybook static output
               run: npm run build-storybook
 
-            # The real call views from ORISO-ElementCall for the "Call/Views" story
-            # (#2233). A failure here must not stop the Storybook publish: the story
-            # then says the pages are missing.
             - name: Add the Element Call view pages
               continue-on-error: true
-              uses: ./.github/actions/call-harness
+              uses: actions/download-artifact@v4
               with:
-                  ref: ${{ github.ref_name }}
+                  name: call-harness
+                  path: storybook-static/call-harness
 
             - name: Publish Storybook Docker image
               uses: ./.github/actions/docker-build-push
