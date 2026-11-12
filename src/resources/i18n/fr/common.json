@@ -6751,7 +6751,12 @@
 			"temporary": "Compte temporaire",
 			"temporaryHint": "Le compte est supprimé après l’entretien.",
 			"create": "Créer le lien",
-			"createFailed": "Le lien n'a pas pu être créé. Veuillez réessayer."
+			"createFailed": "Le lien n'a pas pu être créé. Veuillez réessayer.",
+			"name": "Nom (facultatif)",
+			"nameHint": "Par ex. « Rendez-vous Mme M. » – pour retrouver le lien dans votre aperçu.",
+			"scheduledAt": "Date et heure (facultatif)",
+			"scheduledAtHint": "À titre indicatif – le lien fonctionne aussi avant et après.",
+			"scheduledAtIncomplete": "Veuillez saisir la date et l’heure complètes, ou vider le champ."
 		},
 		"medium": {
 			"chat": "Chat",
@@ -6799,7 +6804,9 @@
 			"topic": "Thème",
 			"mediumFixed": "Le type de contact ne peut pas être modifié",
 			"temporaryHint": "S’applique uniquement aux personnes qui ouvrent le lien à partir de maintenant.",
-			"failed": "La modification n’a pas pu être enregistrée. Veuillez réessayer."
+			"failed": "La modification n’a pas pu être enregistrée. Veuillez réessayer.",
+			"scheduledAt": "Date et heure",
+			"clearScheduledAt": "Supprimer"
 		}
 	},
 	"dashboard": {
