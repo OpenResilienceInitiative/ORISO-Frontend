@@ -147,14 +147,16 @@ export const CallTimelineMessage = ({
 	 * Matrix profile name (the login, e.g. "blinky2") would be shown. The
 	 * group's member list carries the public display name (OBP 2.1 #32).
 	 */
-	const member = activeSession?.isGroup
-		? sessionContext?.avatarMembers?.find(
-				(entry) => entry._id === call.actorUserId
-			)
-		: undefined;
-	const memberName = member?.displayName?.trim()
-		? formatMessagePersonName(member.displayName, member.username)
-		: undefined;
+	const groupMemberName = (userId: string | undefined) => {
+		if (!activeSession?.isGroup || !userId) return undefined;
+		const member = sessionContext?.avatarMembers?.find(
+			(entry) => entry._id === userId
+		);
+		return member?.displayName?.trim()
+			? formatMessagePersonName(member.displayName, member.username)
+			: undefined;
+	};
+	const memberName = groupMemberName(call.actorUserId);
 	const actorName =
 		partyOf(call.actorUserId)?.name ??
 		memberName ??
@@ -288,10 +290,13 @@ export const CallTimelineMessage = ({
 				participants={shown.map((participant) => {
 					const party = partyOf(participant.userId);
 					if (party) return { ...participant, ...party.avatar };
+					// In a group, the public display name, as for the
+					// caller above — never the Matrix login (#2237 tooltip).
 					const named =
-						participant.displayName === participant.userId
+						groupMemberName(participant.userId) ??
+						(participant.displayName === participant.userId
 							? undefined
-							: participant.displayName;
+							: participant.displayName);
 					return {
 						...participant,
 						displayName: named,

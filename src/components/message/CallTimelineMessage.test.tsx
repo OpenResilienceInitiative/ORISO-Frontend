@@ -288,6 +288,9 @@ it('counts a running call up every second from its start (#2237)', () => {
 });
 
 it('shows when a missed call rang instead of repeating "missed" (#2237)', () => {
+	// The shown time follows the local zone; pin one with a whole-hour offset.
+	const runnerZone = process.env.TZ;
+	process.env.TZ = 'Europe/Berlin';
 	vi.useFakeTimers();
 	vi.setSystemTime(new Date('2026-11-13T15:00:00.000Z'));
 	try {
@@ -309,6 +312,8 @@ it('shows when a missed call rang instead of repeating "missed" (#2237)', () => 
 	} finally {
 		ui.language = '';
 		vi.useRealTimers();
+		if (runnerZone === undefined) delete process.env.TZ;
+		else process.env.TZ = runnerZone;
 	}
 });
 
@@ -641,6 +646,42 @@ it('names the caller in an internal group chat by the member display name, not t
 
 	expect(screen.getByText(/startedBy: Blinky Zwei/)).toBeTruthy();
 	expect(screen.queryByText(/blinky2/)).toBeNull();
+});
+
+it('names group-call participants by the member display name, not the login (#2237)', () => {
+	const call: CallLifecycleMessage = {
+		callId: 'running-group-call',
+		roomRef: '!group:example',
+		callRoomId: '!media:example',
+		callType: 'video',
+		state: 'running',
+		participants: [{ userId: '@blinky2:example', displayName: 'blinky2' }]
+	};
+	const activeSession = {
+		isGroup: true,
+		item: { moderators: [] }
+	} as unknown as ExtendedSessionInterface;
+	render(
+		<ActiveSessionContext.Provider
+			value={{
+				activeSession,
+				avatarMembers: [
+					{
+						_id: '@blinky2:example',
+						username: 'blinky2',
+						displayName: 'Blinky Zwei'
+					}
+				]
+			}}
+		>
+			<CallTimelineMessage call={call} />
+		</ActiveSessionContext.Provider>
+	);
+	const names = screen
+		.getAllByRole('img')
+		.map((avatar) => avatar.getAttribute('aria-label'));
+	expect(names).toContain('Blinky Zwei');
+	expect(names.join(' ')).not.toMatch(/blinky2/);
 });
 
 it('falls back to the profile name of a group-call caller when no display name is known', () => {
