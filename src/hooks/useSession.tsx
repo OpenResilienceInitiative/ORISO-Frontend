@@ -124,6 +124,7 @@ export const useSession = (
 			const request = { controller, pending: false };
 			inFlight.current = request;
 			let promise;
+			const isExactChat = chatId !== undefined && chatId !== null;
 
 			if (
 				!rid &&
@@ -134,7 +135,7 @@ export const useSession = (
 				return;
 			}
 
-			if (chatId !== undefined && chatId !== null) {
+			if (isExactChat) {
 				// console.log('🔍 useSession: Loading by chatId:', chatId);
 				promise = apiGetChatRoomById(chatId, controller.signal);
 			} else if (rid) {
@@ -188,7 +189,9 @@ export const useSession = (
 			return promise
 				.then(async ({ sessions: [activeSession] }) => {
 					if (!isCurrent()) return;
-					if (activeSession) {
+					if (isExactChat && activeSession?.chat?.id !== chatId) {
+						setSession(null);
+					} else if (activeSession) {
 						const extendedSession = buildExtendedSession(
 							activeSession,
 							rid
@@ -220,7 +223,7 @@ export const useSession = (
 						return;
 					}
 
-					if (repetitiveId.current) {
+					if (!isExactChat && repetitiveId.current) {
 						return apiGetChatRoomById(repetitiveId.current).then(
 							({ sessions: [session] }) => {
 								if (!isCurrent()) return;
@@ -231,6 +234,7 @@ export const useSession = (
 						);
 					}
 					if (
+						!isExactChat &&
 						sessionId !== undefined &&
 						sessionId !== null &&
 						(await loadCaseHandoverCandidateSession(

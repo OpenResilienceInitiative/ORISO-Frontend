@@ -1,4 +1,10 @@
 {
+	"askerInfo": {
+		"noPrivacyNotice": {
+			"title": "Aucune politique de confidentialité enregistrée",
+			"text": "Ce centre de conseil n'a enregistré aucune politique de confidentialité. La personne a peut-être donné son consentement en le sachant. Le centre en est responsable. Seuls les conseillers voient cette note."
+		}
+	},
 	"liveChatConversion": {
 		"title": "Conserver votre conversation",
 		"intro": "Créez un mot de passe pour ce compte. Votre conversation en direct sera conservée.",
@@ -6478,6 +6484,13 @@
 			"label": "Frapper avant d’entrer",
 			"on": "Les invités attendent que vous les fassiez entrer.",
 			"off": "Les invités rejoignent l’appel directement, sans attendre."
+		},
+		"list": {
+			"running": "En cours",
+			"runningWithCount": "En cours — {{count}} dans l’appel"
+		},
+		"floating": {
+			"move": "Déplacer l’appel"
 		}
 	},
 	"form": {

@@ -11,7 +11,11 @@ import {
 } from '../../../globalState';
 import { ConversationAppointmentSlot } from './ConversationAppointmentSlot';
 
-/** The next 1:1 appointment below the conversation header (FE#1960). */
+/**
+ * The next 1:1 appointment below the conversation header (FE#1960).
+ * "Termin anlegen" is a row of the header's ⋮ menu; the stand-in button
+ * below plays that row and appears only while the slot offers an opener.
+ */
 const inDays = (days: number, hour: number) => {
 	const date = new Date();
 	date.setDate(date.getDate() + days);
@@ -56,6 +60,11 @@ const Slot = ({
 }) => {
 	const [restore] = useState(() => installFetch(route));
 	React.useEffect(() => restore, [restore]);
+	const [openCreate, setOpenCreate] = useState<() => void>();
+	const onCreateChange = React.useCallback(
+		(open?: () => void) => setOpenCreate(() => open),
+		[]
+	);
 	return (
 		<>
 			<NotificationsContext.Provider
@@ -93,7 +102,17 @@ const Slot = ({
 						>
 							<ConversationAppointmentSlot
 								canChange={canChange}
+								onCreateChange={onCreateChange}
 							/>
+							{openCreate && (
+								<button
+									type="button"
+									data-cy="story-menu-create-appointment"
+									onClick={openCreate}
+								>
+									⋮ Termin anlegen
+								</button>
+							)}
 						</ActiveSessionContext.Provider>
 					</UserDataContext.Provider>
 				</SessionTypeContext.Provider>
@@ -113,11 +132,20 @@ export const CounsellorWithAppointment: Story = {
 	args: { route: { get: [appointment] }, role: 'consultant', canChange: true }
 };
 
+/** No appointment: no row under the header; creating is offered to the menu. */
 export const CounsellorNoAppointment: Story = {
 	args: { route: { get: [] }, role: 'consultant', canChange: true },
 	play: async ({ canvasElement }) => {
-		const button = await within(canvasElement).findByRole('button');
-		await expect(button).toBeVisible();
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector(
+					'[data-cy="story-menu-create-appointment"]'
+				)
+			).not.toBeNull()
+		);
+		await expect(
+			canvasElement.querySelector('[data-cy="room-next-appointment"]')
+		).toBeNull();
 	}
 };
 
@@ -137,7 +165,11 @@ export const BackendWithoutEndpoint: Story = {
 export const CreateDialog: Story = {
 	args: { route: { get: [] }, role: 'consultant', canChange: true },
 	play: async ({ canvasElement }) => {
-		await userEvent.click(await within(canvasElement).findByRole('button'));
+		await userEvent.click(
+			await within(canvasElement).findByRole('button', {
+				name: '⋮ Termin anlegen'
+			})
+		);
 		await expect(
 			await within(document.body).findByTestId('appointment-date-dialog')
 		).toBeInTheDocument();

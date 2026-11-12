@@ -1,4 +1,10 @@
 {
+	"askerInfo": {
+		"noPrivacyNotice": {
+			"title": "Gizlilik bildirimi kayıtlı değil",
+			"text": "Bu danışma merkezi bir gizlilik bildirimi kaydetmemiştir. Kişi bunu bilerek onay vermiş olabilir. Bundan merkez sorumludur. Bu notu yalnızca danışmanlar görür."
+		}
+	},
 	"liveChatConversion": {
 		"title": "Görüşmenizi koruyun",
 		"intro": "Bu hesap için bir parola oluşturun. Canlı sohbetiniz korunur.",
@@ -6478,6 +6484,13 @@
 			"label": "Önce kapıyı çal",
 			"on": "Misafirler siz içeri alana kadar bekler.",
 			"off": "Misafirler beklemeden doğrudan aramaya katılır."
+		},
+		"list": {
+			"running": "Şu anda sürüyor",
+			"runningWithCount": "Şu anda sürüyor — görüşmede {{count}} kişi"
+		},
+		"floating": {
+			"move": "Görüşmeyi taşı"
 		}
 	},
 	"form": {

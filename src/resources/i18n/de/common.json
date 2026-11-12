@@ -1,4 +1,10 @@
 {
+	"askerInfo": {
+		"noPrivacyNotice": {
+			"title": "Keine Datenschutzerklärung hinterlegt",
+			"text": "Diese Beratungsstelle hat keine Datenschutzerklärung hinterlegt. Die Person hat möglicherweise im Wissen darum zugestimmt. Die Beratungsstelle ist dafür verantwortlich. Dieser Hinweis ist nur für Beratende sichtbar."
+		}
+	},
 	"liveChatConversion": {
 		"title": "Gespräch behalten",
 		"intro": "Erstellen Sie ein Passwort für dieses Konto. Ihr Live-Chat bleibt erhalten.",
@@ -6468,6 +6474,13 @@
 			"label": "Anklopfen",
 			"on": "Gäste warten, bis Sie sie einlassen.",
 			"off": "Gäste kommen ohne Warten direkt in den Anruf."
+		},
+		"list": {
+			"running": "Läuft gerade",
+			"runningWithCount": "Läuft gerade — {{count}} im Gespräch"
+		},
+		"floating": {
+			"move": "Gespräch verschieben"
 		}
 	},
 	"form": {

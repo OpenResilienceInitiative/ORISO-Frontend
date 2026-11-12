@@ -30,4 +30,10 @@ export interface AppSettingsInterface {
 	documentationEnabled?: boolean;
 	/** Fallback support e-mail (platform admin, global settings); shown when a centre has no chat-reachable admin (#1915). */
 	supportEmail?: string;
+	/** Platform-wide: formats the chat composer does not offer, comma-separated. Never affects rendering. */
+	chatComposerDisabledFormats?: string;
+	/** Platform-wide: widest chat message on desktop, in pixels. Missing means 770. */
+	chatMessageMaxWidthDesktop?: string;
+	/** Platform-wide: characters above which a message collapses; "0" = never. Missing means 300. */
+	chatMessageCollapseThreshold?: string;
 }

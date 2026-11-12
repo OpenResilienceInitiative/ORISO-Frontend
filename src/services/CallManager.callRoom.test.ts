@@ -48,7 +48,10 @@ const installClient = (client: Record<string, unknown>): void => {
 	} as never);
 };
 
-const createCallRoom = async (sourceRoomId = SESSION_ROOM): Promise<string> =>
+const createCallRoom = async (
+	sourceRoomId = SESSION_ROOM,
+	roomName?: string
+): Promise<string> =>
 	/*
 	 * The method hands back the client it created the room with, so that the
 	 * cleanup path can leave and forget through THAT account rather than
@@ -60,10 +63,11 @@ const createCallRoom = async (sourceRoomId = SESSION_ROOM): Promise<string> =>
 			callManager as unknown as {
 				createElementCallRoom: (
 					roomId: string,
-					callId: string
+					callId: string,
+					roomName?: string
 				) => Promise<{ roomId: string }>;
 			}
-		).createElementCallRoom(sourceRoomId, 'test-call')
+		).createElementCallRoom(sourceRoomId, 'test-call', roomName)
 	).roomId;
 
 describe('createElementCallRoom', () => {
@@ -121,6 +125,40 @@ describe('createElementCallRoom', () => {
 			);
 		}
 	);
+
+	describe('room name (#2170)', () => {
+		const roomNameOf = async (roomName?: string): Promise<unknown> => {
+			const createRoom = vi
+				.fn()
+				.mockResolvedValue({ room_id: CALL_ROOM });
+			installClient({
+				createRoom,
+				getUserId: () => OWN_USER,
+				getRoom: () => null,
+				invite: vi.fn()
+			});
+			await createCallRoom(SESSION_ROOM, roomName);
+			return (createRoom.mock.calls[0][0] as { name?: string }).name;
+		};
+
+		it('names the room after the direct link it was started from', async () => {
+			await expect(roomNameOf('Flyer Schule')).resolves.toBe(
+				'Flyer Schule'
+			);
+		});
+
+		it('calls the room "Anruf" when nothing names it', async () => {
+			await expect(roomNameOf()).resolves.toBe('Anruf');
+		});
+
+		it('never puts the session room id into the room name', async () => {
+			for (const name of [undefined, '', '   ', SESSION_ROOM]) {
+				const roomName = await roomNameOf(name);
+				expect(String(roomName)).not.toContain(SESSION_ROOM);
+				expect(String(roomName)).not.toMatch(/Group call/i);
+			}
+		});
+	});
 
 	it('creates the call room encrypted, with history closed to non-members', async () => {
 		const createRoom = vi.fn().mockResolvedValue({ room_id: CALL_ROOM });
