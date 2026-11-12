@@ -466,7 +466,8 @@
 			}
 		},
 		"waitingAdmission": {
-			"waiting": "Sobald die Gruppenleitung dich hereinlässt, öffnen sich Chat und Anruf von selbst."
+			"waiting": "Sobald die Gruppenleitung dich hereinlässt, öffnen sich Chat und Anruf von selbst.",
+			"openSoon": "Die Sitzung läuft. Die Gruppenleitung weiß, dass du wartest, und lässt dich gleich herein."
 		}
 	},
 	"help": {

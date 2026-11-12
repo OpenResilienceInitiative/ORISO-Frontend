@@ -1492,7 +1492,8 @@
 			}
 		},
 		"waitingAdmission": {
-			"waiting": "Sobald die Gruppenleitung Sie hereinlässt, öffnen sich Chat und Anruf von selbst."
+			"waiting": "Sobald die Gruppenleitung Sie hereinlässt, öffnen sich Chat und Anruf von selbst.",
+			"openSoon": "Die Sitzung läuft. Die Gruppenleitung weiß, dass Sie warten, und lässt Sie gleich herein."
 		}
 	},
 	"help": {
@@ -6478,6 +6479,10 @@
 			"region": "Wartende Personen",
 			"someone": "Eine Person",
 			"wantsIn": "möchte in den Anruf",
+			"waitingFor_one": "wartet seit 1 Min.",
+			"waitingFor_other": "wartet seit {{count}} Min.",
+			"waitingFor": "wartet seit {{count}} Min.",
+			"justArrived": "ist gerade angekommen",
 			"admit": "Einlassen",
 			"decline": "Ablehnen",
 			"admitAll": "Alle einlassen",

@@ -106,6 +106,11 @@ export interface GroupWaitingRoomProps {
 	 * place of "Beitreten"; the moderator's click does the rest.
 	 */
 	admissionWaiting?: string;
+	/**
+	 * After a minute of waiting in a running group (#2237): the bar shows
+	 * this note in place of the greyed-out button.
+	 */
+	admissionSoon?: string;
 }
 
 /**
@@ -143,7 +148,8 @@ export const GroupWaitingRoom = ({
 	askConsent = true,
 	onDeviceCheck,
 	openBeforeStart = false,
-	admissionWaiting
+	admissionWaiting,
+	admissionSoon
 }: GroupWaitingRoomProps) => {
 	const { t } = useTranslation();
 	const tr = useCallback(
@@ -646,8 +652,25 @@ export const GroupWaitingRoom = ({
 					(Boolean(calendarRow) && !inlineCalendar) ||
 					Boolean(joinNotice)
 				}
-				primary={joinAction}
+				primary={admissionSoon ? undefined : joinAction}
 			>
+				{admissionSoon && (
+					<Typography
+						role="status"
+						data-testid="group-entry-admission-soon"
+						sx={{
+							fontSize: 16,
+							lineHeight: '24px',
+							letterSpacing: '0.5px',
+							color: 'text.primary',
+							textAlign: 'center',
+							py: 1.5,
+							px: 2
+						}}
+					>
+						{admissionSoon}
+					</Typography>
+				)}
 				{joinNotice && <JoinRefusalNotice message={joinNotice} />}
 				{calendarRow}
 			</WaitingRoomBar>

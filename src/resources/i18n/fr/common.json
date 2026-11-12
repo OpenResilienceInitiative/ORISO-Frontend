@@ -1497,7 +1497,8 @@
 			}
 		},
 		"waitingAdmission": {
-			"waiting": "Dès que l'animateur·rice vous fait entrer, le chat et l'appel s'ouvrent automatiquement."
+			"waiting": "Dès que l'animateur·rice vous fait entrer, le chat et l'appel s'ouvrent automatiquement.",
+			"openSoon": "La séance est en cours. L’animateur sait que vous attendez et vous fera entrer sous peu."
 		}
 	},
 	"help": {
@@ -6488,6 +6489,10 @@
 			"region": "Personnes en attente",
 			"someone": "Une personne",
 			"wantsIn": "souhaite rejoindre l’appel",
+			"waitingFor_one": "attend depuis 1 min",
+			"waitingFor_other": "attend depuis {{count}} min",
+			"waitingFor": "attend depuis {{count}} min",
+			"justArrived": "vient d’arriver",
 			"admit": "Laisser entrer",
 			"decline": "Refuser",
 			"admitAll": "Laisser entrer tout le monde",

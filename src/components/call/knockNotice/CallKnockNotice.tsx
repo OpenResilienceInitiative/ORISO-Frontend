@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
+import { keyframes } from '@emotion/react';
 import { Box, Button, IconButton, Typography } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
@@ -11,6 +12,10 @@ import {
 } from '../../m3Snackbar/M3Snackbar';
 import { clampPage, KnockingPerson } from './callKnockModel';
 import type { CallKnockBusy } from './useCallKnocks';
+import { UserAvatar } from '../../message/UserAvatar';
+import { chosenAvatarOf } from '../../../utils/avatarChoice';
+import { usePrefersReducedMotion } from '../../../hooks/usePrefersReducedMotion';
+import { playKnockTone } from '../../../utils/knockTone';
 
 export type CallKnockPlacement = 'overlay' | 'docked';
 
@@ -26,7 +31,30 @@ export interface CallKnockNoticeProps {
 	onAdmit: (knockId: number) => void;
 	onDecline: (knockId: number) => void;
 	onAdmitAll: () => void;
+	/** Fixed clock (Storybook, tests); otherwise the notice ticks itself. */
+	nowMs?: number;
+	/** After a minute of waiting, once per person: a soft knock (#2237). */
+	onNudge?: () => void;
 }
+
+/** Waited this long, the host is reminded once (Frank, 2026-11-12). */
+export const KNOCK_NUDGE_AFTER_MS = 60_000;
+
+const wiggle = keyframes`
+	0%, 100% { transform: rotate(0deg); }
+	15% { transform: rotate(-6deg); }
+	30% { transform: rotate(5deg); }
+	45% { transform: rotate(-4deg); }
+	60% { transform: rotate(3deg); }
+	75% { transform: rotate(-1deg); }
+`;
+
+/** Whole minutes since `requestedAt`; `null` without a time. Never negative. */
+const waitedMs = (requestedAt: string | undefined, now: number) => {
+	if (!requestedAt) return null;
+	const at = Date.parse(requestedAt);
+	return Number.isNaN(at) ? null : Math.max(0, now - at);
+};
 
 const focusRing = (color: string) => ({
 	outline: `2px solid ${color}`,
@@ -112,9 +140,24 @@ export const CallKnockNotice = ({
 	busy = null,
 	onAdmit,
 	onDecline,
-	onAdmitAll
+	onAdmitAll,
+	nowMs,
+	onNudge = playKnockTone
 }: CallKnockNoticeProps) => {
 	const { t } = useTranslation();
+	const reducedMotion = usePrefersReducedMotion();
+	const [tick, setTick] = useState(() => Date.now());
+	const waiting = people.length > 0;
+	useEffect(() => {
+		if (nowMs !== undefined || !waiting) return undefined;
+		setTick(Date.now());
+		const timer = window.setInterval(() => setTick(Date.now()), 5_000);
+		return () => window.clearInterval(timer);
+	}, [nowMs, waiting]);
+	const now = nowMs ?? tick;
+	const nudged = useRef(new Set<number>());
+	const nudgeRef = useRef(onNudge);
+	nudgeRef.current = onNudge;
 	const nameId = useId();
 	const regionId = useId();
 	// Follows the person, not the position: the list may change under her.
@@ -136,9 +179,29 @@ export const CallKnockNotice = ({
 			setSelected({ id: shownId, index: page });
 	}, [shownId, page, selected]);
 
+	/* Anybody waiting a minute reminds the host once: a soft knock (#2237). */
+	const dueIds = people
+		.filter(
+			(p) => (waitedMs(p.requestedAt, now) ?? 0) >= KNOCK_NUDGE_AFTER_MS
+		)
+		.map((p) => p.id)
+		.join(',');
+	useEffect(() => {
+		if (!dueIds) return;
+		const fresh = dueIds
+			.split(',')
+			.map(Number)
+			.filter((id) => !nudged.current.has(id));
+		if (fresh.length === 0) return;
+		fresh.forEach((id) => nudged.current.add(id));
+		nudgeRef.current();
+	}, [dueIds]);
+
 	if (count === 0) return null;
 
 	const current = people[page];
+	const waited = waitedMs(current.requestedAt, now);
+	const due = waited !== null && waited >= KNOCK_NUDGE_AFTER_MS;
 	const several = count > 1;
 	const isBusy = busy !== null;
 	const guard = (action: () => void, blocked: boolean) => () => {
@@ -195,8 +258,19 @@ export const CallKnockNotice = ({
 				)}
 			</Typography>
 			<Box
-				sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}
+				sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mt: 1 }}
 			>
+				{/* The picture the person chose, as in the chat (#2237). */}
+				<Box data-testid="call-knock-avatar" sx={{ flexShrink: 0 }}>
+					<UserAvatar
+						username={current.name ?? ''}
+						displayName={current.name ?? undefined}
+						userId={current.name ?? String(current.id)}
+						size={40}
+						outline={false}
+						choice={chosenAvatarOf({ avatarId: current.avatarId })}
+					/>
+				</Box>
 				<Box aria-live="polite" sx={{ minWidth: 0, flex: 1 }}>
 					<Typography
 						id={nameId}
@@ -216,6 +290,7 @@ export const CallKnockNotice = ({
 					</Typography>
 					<Typography
 						component="p"
+						data-testid="call-knock-waiting"
 						sx={{
 							color: 'inherit',
 							fontSize: 14,
@@ -224,7 +299,13 @@ export const CallKnockNotice = ({
 							m: 0
 						}}
 					>
-						{t('calls.knock.wantsIn')}
+						{waited === null
+							? t('calls.knock.wantsIn')
+							: waited < KNOCK_NUDGE_AFTER_MS
+								? t('calls.knock.justArrived')
+								: t('calls.knock.waitingFor', {
+										count: Math.floor(waited / 60_000)
+									})}
 					</Typography>
 				</Box>
 				{several && (
@@ -286,7 +367,15 @@ export const CallKnockNotice = ({
 						onClick={guard(() => onAdmit(current.id), isBusy)}
 						aria-describedby={nameId}
 						aria-disabled={isBusy || undefined}
-						sx={filledAction}
+						sx={
+							due && !reducedMotion
+								? {
+										...filledAction,
+										animation: `${wiggle} 0.7s ease-in-out 0s 3`
+									}
+								: filledAction
+						}
+						data-nudge={due && !reducedMotion ? 'true' : undefined}
 						data-testid="call-knock-admit"
 					>
 						{t('calls.knock.admit')}

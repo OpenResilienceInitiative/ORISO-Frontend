@@ -73,6 +73,8 @@ export interface CallKnock {
 	medium: DirectLinkMedium;
 	requestedAt: string;
 	decidedAt?: string | null;
+	/** The avatar the person picked (#2237). */
+	avatarId?: string | null;
 }
 
 /* Every call names the statuses it expects: without a `responseHandling`

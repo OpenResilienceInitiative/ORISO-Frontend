@@ -51,6 +51,7 @@ import { getGroupWaitingRoomTopic } from './entryRoom/groupWaitingRoomData';
 import { useGroupWaitingRoomSchedule } from './entryRoom/useGroupWaitingRoomSchedule';
 import { useGroupWaitingAdmission } from './waitingAdmission/useGroupWaitingAdmission';
 import { markCallAutoJoin } from './waitingAdmission/callAutoJoin';
+import { useAfterDelay } from './waitingAdmission/useAfterDelay';
 import { askCallDevicesWhileWaiting } from './waitingAdmission/askCallDevices';
 
 interface JoinGroupChatViewProps {
@@ -336,6 +337,10 @@ export const JoinGroupChatView = ({
 			void handleButtonClick();
 		}
 	});
+	const waitedAMinute = useAfterDelay(
+		callGroup && waitingForAdmission && Boolean(activeSession.item.active),
+		60_000
+	);
 	const handleRoomJoin = (): Promise<unknown> | false => {
 		if (!callGroup) return handleButtonClick();
 		if (joinBlockedByBan) return false;
@@ -484,6 +489,11 @@ export const JoinGroupChatView = ({
 					admissionWaiting={
 						callGroup && waitingForAdmission
 							? translate('groupChat.waitingAdmission.waiting')
+							: undefined
+					}
+					admissionSoon={
+						waitedAMinute
+							? translate('groupChat.waitingAdmission.openSoon')
 							: undefined
 					}
 					onDeviceCheck={

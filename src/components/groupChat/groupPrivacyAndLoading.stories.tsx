@@ -420,6 +420,40 @@ export const WaitingForAdmission1440: Story = {
 	}
 };
 
+/* #2237 (Frank, 2026-11-12): after a minute of waiting in a running group,
+   the greyed-out button gives way to "the session is running, you will be
+   let in shortly". */
+export const WaitingOverAMinute1440: Story = {
+	name: '1c · Video group — running, waited a minute (#2237) · 1440',
+	globals: desktop1440Globals,
+	render: () => (
+		<StageProviders>
+			<GroupWaitingRoom
+				topicName="Trauerbegleitung"
+				agencyName="Caritas Berlin, Selbsthilfegruppe Trauer"
+				agencyId={null}
+				plannedStart={new Date(NOW - 5 * 60e3)}
+				eventId={20}
+				welcomeText="Schön, dass Sie da sind."
+				rules={['Was hier gesagt wird, bleibt hier.']}
+				active
+				openBeforeStart
+				admissionWaiting="Sobald die Gruppenleitung Sie hereinlässt, öffnen sich Chat und Anruf von selbst."
+				admissionSoon="Die Sitzung läuft. Die Gruppenleitung weiß, dass Sie warten, und lässt Sie gleich herein."
+				onJoin={() => undefined}
+				nowMs={NOW}
+			/>
+		</StageProviders>
+	),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await canvas.findByTestId('group-entry-admission-soon');
+		await expect(
+			canvasElement.querySelector('[data-testid="group-entry-join"]')
+		).toBeNull();
+	}
+};
+
 /* #2237: before agreeing, a video group's "Beitreten" is open ahead of the
    start, so the person can agree and wait. */
 export const VideoGroupOpenBeforeStart1440: Story = {
