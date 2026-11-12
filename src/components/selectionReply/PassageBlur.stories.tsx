@@ -6,8 +6,8 @@
  * machen". Built from the real organisms: MessageTimeline,
  * SelectionReplyLayer and its bar, in the real chat card.
  *
- * Storybook only so far: where the blur is stored (so every participant sees
- * it) is still open, see the PR.
+ * Storybook only so far: the blur will be a Matrix annotation event next to
+ * the message (decided 12 Nov 2026), wired once the quote reply is live.
  */
 import * as React from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -396,6 +396,22 @@ export const FullFlow: Story = {
 
 		// Keyboard: the blurred passage is a button for moderators.
 		await expect(pieces[0]).toHaveAttribute('role', 'button');
+		// Hover must not unblur it: the global [role=button]:hover colour
+		// once painted the salad sharp and red. Play events cannot enter
+		// :hover, so a rule like it is forced on: the fill must stay clear.
+		const hoverColour = document.createElement('style');
+		hoverColour.textContent =
+			'.passageBlur[role="button"] { color: #a31816 !important; }';
+		document.head.appendChild(hoverColour);
+		try {
+			await expect(
+				getComputedStyle(pieces[0]).getPropertyValue(
+					'-webkit-text-fill-color'
+				)
+			).toBe('rgba(0, 0, 0, 0)');
+		} finally {
+			hoverColour.remove();
+		}
 		await userEvent.click(pieces[0]);
 		const removeBar = await within(canvasElement).findByRole(
 			'toolbar',

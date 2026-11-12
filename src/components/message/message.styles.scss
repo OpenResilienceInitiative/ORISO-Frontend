@@ -1983,9 +1983,14 @@ $message-avatar-overlap: -19px;
 .passageBlur {
 	padding: 0 2px;
 	border-radius: 4px;
+
 	// Darker than every bubble (grey, pink) in light and dark scheme.
 	background: var(--m3-outline-variant, #c4c7c8);
 	color: transparent;
+
+	// Fill wins over every `color` rule: the global `[role='button']:hover`
+	// once painted the salad sharp and red, and the blur seemed gone.
+	-webkit-text-fill-color: transparent;
 	text-shadow: 0 0 6px var(--m3-on-surface, #1b1b1c);
 	user-select: none;
 	-webkit-user-select: none;

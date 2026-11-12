@@ -1456,19 +1456,6 @@
 		"usage": "app-used"
 	},
 	{
-		"id": "ui-icon:blur:filled",
-		"family": "blur",
-		"state": "filled",
-		"role": "selected",
-		"kind": "ui-icon",
-		"size": null,
-		"fileName": "blur_filled.svg",
-		"sourcePath": "src/resources/img/icons/blur_filled.svg",
-		"exportNames": [],
-		"usageFiles": [],
-		"usage": "catalogued-only"
-	},
-	{
 		"id": "ui-icon:breath-level-emojis:base",
 		"family": "breath-level-emojis",
 		"state": "base",
