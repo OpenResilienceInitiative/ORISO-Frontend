@@ -385,3 +385,33 @@ $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 		transition: none;
 	}
 }
+
+/* Blur (moderators): the entry in the bar and the bar on a blurred passage. */
+.selectionReply__blurIcon {
+	flex: none;
+	width: 18px;
+	height: 18px;
+
+	path {
+		fill: currentColor;
+	}
+}
+
+.selectionReply__wideLabel {
+	display: inline-flex;
+	align-items: center;
+}
+
+.selectionReply__blurredBy {
+	padding: 0 8px 0 12px;
+	color: var(--m3-on-surface-variant, #444748);
+	font-size: 12px;
+	line-height: 16px;
+	white-space: nowrap;
+}
+
+@media (max-width: 599px) {
+	.selectionReply__wideLabel {
+		display: none;
+	}
+}

@@ -2233,6 +2233,12 @@
 			"jumpToQuote": "Zur zitierten Stelle von {{author}} springen"
 		},
 		"selectionReply": {
+			"blur": "Unkenntlich machen",
+			"blurredLabel": "Unkenntlich gemachte Stelle",
+			"blurredBy": "Unkenntlich gemacht von {{name}}",
+			"removeBlur": "Wieder lesbar machen",
+			"removeBlurLabel": "Unkenntlich gemachte Stelle – wieder lesbar machen",
+			"blurBar": "Aktionen für die unkenntlich gemachte Stelle",
 			"toolbar": "Aktionen für die markierte Stelle",
 			"reply": "Antworten",
 			"replyVoice": "Mit Sprachnachricht antworten",

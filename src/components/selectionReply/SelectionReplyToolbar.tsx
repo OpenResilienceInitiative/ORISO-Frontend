@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import MicIcon from '@mui/icons-material/Mic';
 
 import { ReactComponent as ThreadEntryIcon } from '../../resources/img/icons/fab-menu-thread.svg';
+import { ReactComponent as BlurIcon } from '../../resources/img/icons/blur_400.svg';
 import { ReplyArrowIcon } from './ReplyArrowIcon';
 
 export interface SelectionReplyToolbarProps {
@@ -16,12 +17,17 @@ export interface SelectionReplyToolbarProps {
 	onReply: () => void;
 	onReplyWithVoice: () => void;
 	onStartThread: () => void;
+	/**
+	 * Moderators only: "Blur" hides the passage for everyone. Without a
+	 * handler the entry is not shown.
+	 */
+	onBlur?: () => void;
 }
 
 /**
  * The small bar over a marked passage: reply, reply by voice note, and —
- * as the last option — start a thread on that passage. Same white card,
- * radius and shadow as the message action menu.
+ * start a thread on that passage and, for moderators, blur it. Same white
+ * card, radius and shadow as the message action menu.
  */
 export const SelectionReplyToolbar = forwardRef<
 	HTMLDivElement,
@@ -34,12 +40,14 @@ export const SelectionReplyToolbar = forwardRef<
 			showThread = true,
 			onReply,
 			onReplyWithVoice,
-			onStartThread
+			onStartThread,
+			onBlur
 		},
 		ref
 	) => {
 		const { t: translate } = useTranslation();
 		const voiceLabel = translate('message.selectionReply.replyVoice');
+		const blurLabel = translate('message.selectionReply.blur');
 
 		return (
 			<div
@@ -96,6 +104,34 @@ export const SelectionReplyToolbar = forwardRef<
 								{translate(
 									'message.selectionReply.startThread'
 								)}
+							</span>
+						</button>
+					</>
+				)}
+				{onBlur && (
+					<>
+						<span
+							className="selectionReply__toolbarDivider"
+							aria-hidden
+						/>
+						<button
+							type="button"
+							className="selectionReply__toolbarButton"
+							data-cy="selection-blur"
+							onClick={onBlur}
+							aria-label={blurLabel}
+							title={blurLabel}
+						>
+							<BlurIcon
+								aria-hidden
+								className="selectionReply__blurIcon"
+							/>
+							{/* On a phone the bar keeps only the icon. */}
+							<span
+								aria-hidden
+								className="selectionReply__wideLabel"
+							>
+								{blurLabel}
 							</span>
 						</button>
 					</>

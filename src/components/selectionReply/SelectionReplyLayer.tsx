@@ -8,6 +8,8 @@ import {
 } from 'react';
 
 import { SelectionReplyToolbar } from './SelectionReplyToolbar';
+import { PassageBlurBar } from './PassageBlurBar';
+import { passageBlurFromRange, type PassageBlur } from './passageBlur';
 import {
 	SelectionReplyPopover,
 	type SelectionReplyVoice
@@ -15,10 +17,12 @@ import {
 import {
 	anchorFor,
 	useMessageSelection,
+	type PassageAnchor,
 	type MarkedPassage,
 	type MessageSelection
 } from './useMessageSelection';
 import {
+	findMessageBubble,
 	ACTIVE_HIGHLIGHT,
 	livePassageRange,
 	paintLivePassage
@@ -52,6 +56,21 @@ export interface SelectionReplyLayerProps {
 	/** Last toolbar option: open a thread on the marked passage. */
 	onStartThread?: (passage: MarkedPassage) => void;
 	recorder?: SelectionVoiceRecorder;
+	/**
+	 * Moderators only: "Blur" in the toolbar hides the marked passage for
+	 * everyone. Receives the passage's position, never its text.
+	 */
+	onBlurPassage?: (
+		passage: MarkedPassage,
+		blur: Pick<PassageBlur, 'start' | 'length'>
+	) => void;
+	/**
+	 * Moderators only: clicking a blurred passage offers "Remove blur".
+	 * Messages must render their blurs removable (`removeLabel`).
+	 */
+	onRemoveBlur?: (eventId: string, blurId: string) => void;
+	/** Who blurred a passage, for the moderator's bar. */
+	blurredByFor?: (eventId: string, blurId: string) => string | undefined;
 	enabled?: boolean;
 	className?: string;
 	/** Story hook: open with this selection already made. */
@@ -59,7 +78,15 @@ export interface SelectionReplyLayerProps {
 	initialMode?: 'toolbar' | 'popover';
 	/** Story hook: the answer field opens in this voice state. */
 	initialVoice?: SelectionReplyVoice;
+	/** Story hook: open with the bar of this blurred passage. */
+	initialBlurTarget?: { eventId: string; blurId: string } | null;
 }
+
+type BlurTarget = {
+	eventId: string;
+	blurId: string;
+	anchor: PassageAnchor;
+};
 
 type Mode = 'none' | 'toolbar' | 'popover';
 
@@ -84,14 +111,23 @@ export const SelectionReplyLayer = ({
 	onSendNow,
 	onStartThread,
 	recorder,
+	onBlurPassage,
+	onRemoveBlur,
+	blurredByFor,
 	enabled = true,
 	className,
 	initialSelection = null,
 	initialMode,
-	initialVoice
+	initialVoice,
+	initialBlurTarget = null
 }: SelectionReplyLayerProps) => {
 	const layerRef = useRef<HTMLDivElement | null>(null);
 	const toolbarRef = useRef<HTMLDivElement | null>(null);
+	const blurBarRef = useRef<HTMLDivElement | null>(null);
+	const [blurTarget, setBlurTarget] = useState<BlurTarget | null>(null);
+	// Half the bar's real width, so a wider bar (with "Blur") stays inside.
+	const [toolbarHalf, setToolbarHalf] = useState(160);
+	const [blurBarHalf, setBlurBarHalf] = useState(140);
 	const popoverRef = useRef<HTMLDivElement | null>(null);
 	const timerRef = useRef<number | null>(null);
 	const [mode, setMode] = useState<Mode>(
@@ -328,6 +364,127 @@ export const SelectionReplyLayer = ({
 		}
 	};
 
+	const blurPassage = () => {
+		const layer = layerRef.current;
+		if (!active || !layer || !onBlurPassage) {
+			return;
+		}
+		const bubble = findMessageBubble(layer, active.passage.eventId);
+		// The kept range dies when the bubble re-renders; find it again.
+		const range =
+			livePassageRange(layer, active.passage, active.range) ||
+			active.range;
+		const position = bubble && passageBlurFromRange(bubble, range);
+		if (position) {
+			onBlurPassage(active.passage, position);
+		}
+		window.getSelection()?.removeAllRanges();
+		reset();
+	};
+
+	const openBlurBar = useCallback((span: HTMLElement) => {
+		const layer = layerRef.current;
+		const eventId =
+			span.closest<HTMLElement>('[data-message-id]')?.dataset.messageId;
+		const blurId = span.dataset.passageBlurId;
+		if (!layer || !eventId || !blurId) {
+			return;
+		}
+		// Several pieces of one blur: anchor on all of them.
+		const pieces = Array.from(
+			layer.querySelectorAll<HTMLElement>(
+				`[data-message-id="${CSS.escape(eventId)}"] [data-passage-blur-id="${CSS.escape(blurId)}"]`
+			)
+		);
+		const rects = (pieces.length ? pieces : [span]).map((piece) =>
+			piece.getBoundingClientRect()
+		);
+		const box = new DOMRect(
+			Math.min(...rects.map((rect) => rect.left)),
+			Math.min(...rects.map((rect) => rect.top)),
+			Math.max(...rects.map((rect) => rect.right)) -
+				Math.min(...rects.map((rect) => rect.left)),
+			Math.max(...rects.map((rect) => rect.bottom)) -
+				Math.min(...rects.map((rect) => rect.top))
+		);
+		setBlurTarget({ eventId, blurId, anchor: anchorFor(box, layer) });
+	}, []);
+
+	// Story hook: open on a blurred passage once the rows have settled.
+	useEffect(() => {
+		if (!initialBlurTarget) {
+			return undefined;
+		}
+		const timer = window.setTimeout(() => {
+			const span = layerRef.current?.querySelector<HTMLElement>(
+				`[data-message-id="${CSS.escape(initialBlurTarget.eventId)}"] [data-passage-blur-id="${CSS.escape(initialBlurTarget.blurId)}"]`
+			);
+			if (span) {
+				span.scrollIntoView({ block: 'center' });
+				openBlurBar(span);
+			}
+		}, 1000);
+		return () => window.clearTimeout(timer);
+	}, [initialBlurTarget, openBlurBar]);
+
+	// The moderator's bar closes on a pointer down elsewhere, Esc or scroll.
+	useEffect(() => {
+		if (!blurTarget) {
+			return undefined;
+		}
+		const layer = layerRef.current;
+		const close = () => setBlurTarget(null);
+		const onPointerDown = (event: PointerEvent) => {
+			const target = event.target as Element;
+			if (
+				blurBarRef.current?.contains(target) ||
+				target.closest?.('.passageBlur--removable')
+			) {
+				return;
+			}
+			close();
+		};
+		const onKeyDown = (event: KeyboardEvent) => {
+			if (event.key === 'Escape') close();
+		};
+		document.addEventListener('pointerdown', onPointerDown, true);
+		document.addEventListener('keydown', onKeyDown);
+		layer?.addEventListener('scroll', close, true);
+		return () => {
+			document.removeEventListener('pointerdown', onPointerDown, true);
+			document.removeEventListener('keydown', onKeyDown);
+			layer?.removeEventListener('scroll', close, true);
+		};
+	}, [blurTarget]);
+
+	const blurSpanOf = (target: EventTarget | null) =>
+		onRemoveBlur && target instanceof Element
+			? target.closest<HTMLElement>('.passageBlur--removable')
+			: null;
+
+	const onLayerClick = (event: React.MouseEvent) => {
+		const span = blurSpanOf(event.target);
+		if (span) {
+			event.preventDefault();
+			openBlurBar(span);
+		}
+	};
+
+	const onLayerKeyDown = (event: React.KeyboardEvent) => {
+		const span = blurSpanOf(event.target);
+		if (span && (event.key === 'Enter' || event.key === ' ')) {
+			event.preventDefault();
+			openBlurBar(span);
+		}
+	};
+
+	const removeBlur = () => {
+		if (blurTarget && onRemoveBlur) {
+			onRemoveBlur(blurTarget.eventId, blurTarget.blurId);
+		}
+		setBlurTarget(null);
+	};
+
 	const startThread = () => {
 		if (active && onStartThread) {
 			onStartThread(active.passage);
@@ -335,6 +492,20 @@ export const SelectionReplyLayer = ({
 			reset();
 		}
 	};
+
+	useLayoutEffect(() => {
+		const width = blurBarRef.current?.offsetWidth;
+		if (blurTarget && width) {
+			setBlurBarHalf(Math.ceil(width / 2));
+		}
+	}, [blurTarget]);
+
+	useLayoutEffect(() => {
+		const width = toolbarRef.current?.offsetWidth;
+		if (mode === 'toolbar' && width) {
+			setToolbarHalf(Math.ceil(width / 2));
+		}
+	}, [mode, active]);
 
 	const anchor = active?.anchor;
 	// Above the passage when it fits in the visible band, else below it.
@@ -357,6 +528,8 @@ export const SelectionReplyLayer = ({
 			ref={layerRef}
 			className={['selectionReply', className].filter(Boolean).join(' ')}
 			data-cy="selection-reply-layer"
+			onClick={onLayerClick}
+			onKeyDown={onLayerKeyDown}
 		>
 			{children}
 			{anchor && mode === 'toolbar' && (
@@ -366,8 +539,8 @@ export const SelectionReplyLayer = ({
 						top: toolbarTop,
 						left: clamp(
 							anchor.centerX,
-							EDGE + 160,
-							anchor.layerWidth - EDGE - 160
+							EDGE + toolbarHalf,
+							anchor.layerWidth - EDGE - toolbarHalf
 						)
 					}}
 					showVoice={Boolean(recorder)}
@@ -375,6 +548,33 @@ export const SelectionReplyLayer = ({
 					onReply={() => openPopover(false)}
 					onReplyWithVoice={() => openPopover(true)}
 					onStartThread={startThread}
+					onBlur={onBlurPassage ? blurPassage : undefined}
+				/>
+			)}
+			{blurTarget && onRemoveBlur && (
+				<PassageBlurBar
+					ref={blurBarRef}
+					style={{
+						top:
+							blurTarget.anchor.top -
+								TOOLBAR_HEIGHT -
+								TOOLBAR_GAP <
+							blurTarget.anchor.visibleTop
+								? blurTarget.anchor.bottom + TOOLBAR_GAP
+								: blurTarget.anchor.top -
+									TOOLBAR_HEIGHT -
+									TOOLBAR_GAP,
+						left: clamp(
+							blurTarget.anchor.centerX,
+							EDGE + blurBarHalf,
+							blurTarget.anchor.layerWidth - EDGE - blurBarHalf
+						)
+					}}
+					blurredBy={blurredByFor?.(
+						blurTarget.eventId,
+						blurTarget.blurId
+					)}
+					onRemove={removeBlur}
 				/>
 			)}
 			{anchor && active && mode === 'popover' && (

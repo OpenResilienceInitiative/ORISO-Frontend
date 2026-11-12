@@ -1974,3 +1974,45 @@ $message-avatar-overlap: -19px;
 	margin: 0;
 	white-space: pre-wrap;
 }
+
+/*
+ * A passage a moderator blurred. The characters are random already
+ * (Zahlensalat); the blurred glyphs on a crisp tinted pill make the hiding
+ * obvious at a glance. Only the glyphs blur, so a focus ring stays sharp.
+ */
+.passageBlur {
+	padding: 0 2px;
+	border-radius: 4px;
+	// A tint of the text colour works on grey, pink and dark bubbles alike.
+	background: color-mix(
+		in srgb,
+		var(--m3-on-surface, #1b1b1c) 14%,
+		transparent
+	);
+	color: transparent;
+	text-shadow: 0 0 6px var(--m3-on-surface, #1b1b1c);
+	user-select: none;
+	-webkit-user-select: none;
+}
+
+.passageBlur--removable {
+	cursor: pointer;
+
+	&:hover {
+		box-shadow: inset 0 0 0 1px var(--m3-outline, #747878);
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--m3-primary, #415f91);
+		outline-offset: 2px;
+	}
+}
+
+.passageBlur__srLabel {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
+}

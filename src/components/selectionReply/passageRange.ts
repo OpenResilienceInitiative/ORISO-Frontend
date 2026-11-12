@@ -8,15 +8,22 @@
  * message's own text.
  */
 
+// A blurred passage is aria-hidden but still counts: its scrambled text has
+// the same shape as the original, so offsets stay stable. Its screen-reader
+// label does not count.
 const SKIP_SELECTOR =
-	'.messageItem__replyQuote, button, [aria-hidden="true"], .messageItem__metaData, .messageItem__timeRail, .messageItem__reactions';
+	'.messageItem__replyQuote, button, [aria-hidden="true"]:not(.passageBlur), .passageBlur__srLabel, .messageItem__metaData, .messageItem__timeRail, .messageItem__reactions';
 
 export const normalizePassage = (text: string): string =>
 	text.replace(/\s+/g, ' ').trim();
 
-type Mapped = { node: Text; offset: number };
+export type Mapped = { node: Text; offset: number };
 
-const collectText = (root: Element): { text: string; map: Mapped[] } => {
+/**
+ * The bubble's own text with whitespace collapsed, plus where each character
+ * sits in the DOM.
+ */
+export const collectText = (root: Element): { text: string; map: Mapped[] } => {
 	const map: Mapped[] = [];
 	let text = '';
 	let lastWasSpace = true;

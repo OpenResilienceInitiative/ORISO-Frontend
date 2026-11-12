@@ -2212,6 +2212,12 @@
 			"jumpToQuote": "Aller au passage cité de {{author}}"
 		},
 		"selectionReply": {
+			"blur": "Flouter",
+			"blurredLabel": "Passage flouté",
+			"blurredBy": "Flouté par {{name}}",
+			"removeBlur": "Retirer le flou",
+			"removeBlurLabel": "Passage flouté – retirer le flou",
+			"blurBar": "Actions pour le passage flouté",
 			"toolbar": "Actions pour le passage marqué",
 			"reply": "Répondre",
 			"replyVoice": "Répondre par message vocal",

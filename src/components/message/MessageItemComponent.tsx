@@ -166,6 +166,10 @@ import {
 	PassageReplyBlocks,
 	type PassageReply
 } from '../selectionReply/PassageReplyBlocks';
+import {
+	applyPassageBlursToHtml,
+	type PassageBlur
+} from '../selectionReply/passageBlur';
 
 // Slack-style long-press on the bubble opens the message action menu.
 const LONG_PRESS_MS = 500;
@@ -284,6 +288,11 @@ export interface MessageItem {
 	 * each with its own comment (text or voice note).
 	 */
 	passageReplies?: PassageReply[] | null;
+	/**
+	 * Passages a moderator blurred: shown as blurred random characters for
+	 * everyone. Positions only, never the hidden text.
+	 */
+	passageBlurs?: PassageBlur[] | null;
 	/** MSC3440: thread root event id when the message is a thread reply. */
 	threadRootEventId?: string | null;
 	/** Editing (m.replace, #435): true when a later m.replace was applied. */
@@ -322,6 +331,8 @@ interface MessageItemComponentProps extends MessageItem {
 	onJumpToReplyQuote?: () => void;
 	/** Selection reply: back from one of `passageReplies` to its passage. */
 	onJumpToPassage?: (reply: PassageReply) => void;
+	/** Moderators: blurred passages are buttons that offer "Remove blur". */
+	canRemovePassageBlur?: boolean;
 	/** Start a direct reply to THIS message (wires the composer). */
 	onReplyDirect?: () => void;
 	/** Start editing THIS message (wires the composer, own messages only). */
@@ -402,6 +413,8 @@ export const MessageItemComponent = ({
 	onJumpToReplyQuote,
 	onJumpToPassage,
 	passageReplies,
+	passageBlurs,
+	canRemovePassageBlur,
 	onReplyDirect,
 	onEditDirect,
 	onDeleteDirect,
@@ -1359,7 +1372,16 @@ export const MessageItemComponent = ({
 					advisor: parsedMessage.systemNotificationUsername
 				})
 			: parsedMessage.systemNotificationDescription;
-	const renderedMessageWithoutPrefix = renderedMessage;
+	const renderedMessageWithoutPrefix =
+		renderedMessage && passageBlurs?.length
+			? applyPassageBlursToHtml(renderedMessage, passageBlurs, {
+					label: translate('message.selectionReply.blurredLabel'),
+					removeLabel: canRemovePassageBlur
+						? translate('message.selectionReply.removeBlurLabel')
+						: undefined,
+					seed: _id
+				})
+			: renderedMessage;
 
 	const hasRenderedMessage =
 		renderedMessageWithoutPrefix && renderedMessageWithoutPrefix.length > 0;

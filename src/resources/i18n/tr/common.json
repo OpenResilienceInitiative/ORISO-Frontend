@@ -2212,6 +2212,12 @@
 			"jumpToQuote": "{{author}} adlı kişinin alıntılanan bölümüne git"
 		},
 		"selectionReply": {
+			"blur": "Bulanıklaştır",
+			"blurredLabel": "Bulanıklaştırılmış bölüm",
+			"blurredBy": "{{name}} tarafından bulanıklaştırıldı",
+			"removeBlur": "Bulanıklığı kaldır",
+			"removeBlurLabel": "Bulanıklaştırılmış bölüm – bulanıklığı kaldır",
+			"blurBar": "Bulanıklaştırılmış bölüm için işlemler",
 			"toolbar": "İşaretlenen bölüm için işlemler",
 			"reply": "Yanıtla",
 			"replyVoice": "Sesli mesajla yanıtla",
