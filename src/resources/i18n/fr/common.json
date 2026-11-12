@@ -4650,6 +4650,12 @@
 				"directLinkVideo": "Appel vidéo",
 				"directLinkAudio": "Appel audio",
 				"directLinkChat": "Lien direct"
+			},
+			"waiting": {
+				"minutes": "en attente depuis {{count}} min",
+				"hours": "en attente depuis {{count}} h",
+				"weeks_one": "en attente depuis {{count}} semaine",
+				"weeks_other": "en attente depuis {{count}} semaines"
 			}
 		},
 		"supervision": {
