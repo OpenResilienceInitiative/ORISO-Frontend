@@ -118,44 +118,32 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const OptionalAlias: Story = {
+/** #2210: registration asks for no display name — that is offered in the chat (ADR-018). */
+export const NoDisplayNameAtRegistration: Story = {
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
-		const alias = canvas.getByLabelText(i18n.t('profile.data.displayName'));
-		const login = canvas.getByLabelText(
-			i18n.t('registration.account.username.label')
-		);
-		const before = login.getAttribute('value');
-		await expect(alias).toHaveValue('');
-		await userEvent.type(alias, 'My chosen name');
-		await expect(alias).toHaveValue('My chosen name');
-		await expect(login).toHaveValue(before);
+		await expect(
+			canvas.queryByLabelText(i18n.t('profile.data.displayName'))
+		).not.toBeInTheDocument();
+		await expect(
+			canvas.queryByRole('button', {
+				name: i18n.t('registration.account.displayName.suggest')
+			})
+		).not.toBeInTheDocument();
+		await expect(
+			canvas.getByLabelText(i18n.t('registration.account.username.label'))
+		).toBeVisible();
 	}
 };
-export const GeneratedOnlyAlias: Story = {
+export const GeneratedOnlyLogin: Story = {
 	args: { editable: false },
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
-		const alias = canvas.getByLabelText(i18n.t('profile.data.displayName'));
-		const login = canvas.getByLabelText(
-			i18n.t('registration.account.username.label')
-		);
-		const initialAlias = (alias as HTMLInputElement).value;
-		await expect(alias).toHaveAttribute('readonly');
-		await expect(login).toHaveAttribute('readonly');
-		await expect(alias).not.toHaveValue('');
-		await userEvent.type(alias, 'Cannot type');
-		await expect(alias).toHaveValue(initialAlias);
-		await userEvent.click(
-			canvas.getByRole('button', {
-				name: i18n.t('registration.account.displayName.suggest')
-			})
-		);
-		await expect(alias).not.toHaveValue('');
 		await expect(
-			canvas.queryByRole('button', {
-				name: i18n.t('registration.account.displayName.useUsername')
-			})
+			canvas.getByLabelText(i18n.t('registration.account.username.label'))
+		).toHaveAttribute('readonly');
+		await expect(
+			canvas.queryByLabelText(i18n.t('profile.data.displayName'))
 		).not.toBeInTheDocument();
 	}
 };
