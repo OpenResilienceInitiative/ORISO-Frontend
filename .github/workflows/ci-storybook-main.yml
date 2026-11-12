@@ -48,6 +48,15 @@ jobs:
             - name: Build Storybook static output
               run: npm run build-storybook
 
+            # The real call views from ORISO-ElementCall for the "Call/Views" story
+            # (#2233). A failure here must not stop the Storybook publish: the story
+            # then says the pages are missing.
+            - name: Add the Element Call view pages
+              continue-on-error: true
+              uses: ./.github/actions/call-harness
+              with:
+                  ref: ${{ github.ref_name }}
+
             - name: Publish Storybook Docker image
               uses: ./.github/actions/docker-build-push
               with:

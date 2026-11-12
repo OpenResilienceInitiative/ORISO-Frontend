@@ -82,6 +82,15 @@ jobs:
               if: ${{ steps.disposition.outputs.mode == 'publish' }}
               run: npm run build-storybook
 
+            # Same as ci-storybook-main.yml: the real call views for "Call/Views" (#2233),
+            # built from the released Element Call.
+            - name: Add the Element Call view pages
+              if: ${{ steps.disposition.outputs.mode == 'publish' }}
+              continue-on-error: true
+              uses: ./.github/actions/call-harness
+              with:
+                  ref: main
+
             - name: Set up QEMU
               if: ${{ steps.disposition.outputs.mode == 'publish' }}
               uses: docker/setup-qemu-action@v4

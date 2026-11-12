@@ -1,0 +1,47 @@
+name: Build Element Call view pages into Storybook
+description: >
+    Builds the ORISO-ElementCall proof pages (`yarn build:harness`) and copies
+    them to storybook-static/call-harness, where the "Call/Views" story embeds
+    them (ORISO-Frontend#2233). The call views live in the fork; Storybook shows
+    the real ones instead of a redrawn copy.
+
+inputs:
+    ref:
+        description: ORISO-ElementCall branch or tag to build from
+        required: false
+        default: dev
+    storybook_dir:
+        description: The Storybook static output to copy the pages into
+        required: false
+        default: storybook-static
+
+runs:
+    using: composite
+    steps:
+        - name: Check out ORISO-ElementCall
+          uses: actions/checkout@v6
+          with:
+              repository: OpenResilienceInitiative/ORISO-ElementCall
+              ref: ${{ inputs.ref }}
+              path: _call-harness-src
+              persist-credentials: false
+
+        - name: Set up Node for Element Call
+          uses: actions/setup-node@v6
+          with:
+              node-version-file: _call-harness-src/.node-version
+
+        - name: Build the call view pages
+          shell: bash
+          working-directory: _call-harness-src
+          run: |
+              corepack enable
+              yarn install --immutable
+              yarn build:harness
+
+        - name: Copy into the Storybook output
+          shell: bash
+          run: |
+              rm -rf "${{ inputs.storybook_dir }}/call-harness"
+              cp -R _call-harness-src/dist-harness "${{ inputs.storybook_dir }}/call-harness"
+              rm -rf _call-harness-src
