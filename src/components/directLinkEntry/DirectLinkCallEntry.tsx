@@ -22,6 +22,7 @@ import { isInactiveDirectLinkError } from '../../api/apiDirectLinks';
 import { useRegisterThenLogin } from '../registration/useRegisterThenLogin';
 import { openDirectLinkConversation } from './directLinkEntryFlow';
 import { directLinkRegistration } from './directLinkRegistration';
+import { asksDirectLinkPostcode } from './directLinkPostcode';
 import { apiGetConsentText } from '../../api/apiGetConsentText';
 import { useConsentSentences } from '../waitingRoom/useConsentSentences';
 import { useConsentContext } from '../waitingRoom/useConsentContext';
@@ -36,6 +37,7 @@ import { loginPathForDirectLink } from '../../utils/directLinkReturn';
 import { SharedCallGuest } from './SharedCallGuest';
 import { EntryRoomShell } from '../anonymousChat/entryRoom/EntryRoomShell';
 import { hasActiveAuthSession } from '../auth/auth';
+import { isAskerDisplayNameTypingAllowed } from '../../utils/askerAccountPolicy';
 
 const AuthenticatedApp = lazyWithReload(loadAuthenticatedApp);
 
@@ -247,6 +249,11 @@ const DirectLinkCallEntryForm = ({
 			onJoin={handleJoin}
 			hidePassword={Boolean(
 				context.temporaryAccount && context.hidePasswordField
+			)}
+			askPostcode={!signedIn && asksDirectLinkPostcode(context)}
+			usernameEditable={isAskerDisplayNameTypingAllowed(
+				tenant?.settings,
+				'AGENCY_COUNSELLING'
 			)}
 		/>
 	);

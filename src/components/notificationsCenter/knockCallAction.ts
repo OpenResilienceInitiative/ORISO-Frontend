@@ -12,6 +12,12 @@ export interface KnockCallDeps {
 	/** The conversation call button's own start path (`startRoomCall`). */
 	start: (options: StartRoomCallOptions) => Promise<void> | void;
 	currentCall: () => CurrentCallView;
+	/**
+	 * #2170: what the call is called, by conversation room. The knock names
+	 * only the room, so the caller looks the conversation up. Without it the
+	 * CallManager calls the call "Anruf".
+	 */
+	roomNameFor?: (roomId: string) => string | undefined;
 }
 
 /**
@@ -31,7 +37,7 @@ export interface KnockCallDeps {
  */
 export const enterKnockCall = (
 	target: EventActionTarget,
-	{ start, currentCall }: KnockCallDeps
+	{ start, currentCall, roomNameFor }: KnockCallDeps
 ): boolean => {
 	if (target.kind !== 'callRoom' || !target.roomId) return false;
 	const current = currentCall();
@@ -41,7 +47,8 @@ export const enterKnockCall = (
 	void start({
 		roomId: target.roomId,
 		isVideo: target.isVideo,
-		isGroup: false
+		isGroup: false,
+		roomName: roomNameFor?.(target.roomId)
 	});
 	return true;
 };

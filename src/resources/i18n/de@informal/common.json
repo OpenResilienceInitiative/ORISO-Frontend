@@ -1,4 +1,7 @@
 {
+	"consultant": {
+		"assignedLabel": "Deine Beratungsperson"
+	},
 	"contactSheet": {
 		"missingEmail": "Hinterlege zuerst eine E-Mail-Adresse in deinem Profil.",
 		"failed": "Die E-Mail konnte nicht gesendet werden. Bitte versuche es erneut."
@@ -148,6 +151,22 @@
 		},
 		"successOverlay": {
 			"headline": "Du hast den Chat erfolgreich gelöscht."
+		}
+	},
+	"historyRequest": {
+		"ask": {
+			"intro": "Du hast dich auf einem neuen Gerät angemeldet, deshalb sind deine früheren Nachrichten in diesem Gespräch gesperrt. Du kannst deine Beratung bitten, sie freizugeben.",
+			"waiting": "Anfrage gesendet. Deine Beratung muss sie bestätigen; danach erscheinen die Nachrichten hier. Passiert nichts, sende die Anfrage erneut.",
+			"done": "Deine früheren Nachrichten sind wieder lesbar.",
+			"failed": "Die Anfrage konnte nicht gesendet werden. Bitte versuche es erneut.",
+			"dialog": {
+				"description": "Deine Beratung sieht, was du schreibst, und entscheidet, ob dieses Gespräch für dich freigegeben wird."
+			}
+		},
+		"card": {
+			"origin": "Angefragt von {{user}} auf einem neuen Gerät ({{device}}), {{time}}. Das Gerät ist noch nicht verifiziert – gib nur frei, wenn du diese Anfrage erwartest.",
+			"failed": "Die Schlüssel konnten nicht gesendet werden. Bitte versuche es noch einmal.",
+			"needsCrossSigning": "Dieses Gerät ist noch nicht verifiziert und kann deshalb keine Schlüssel freigeben. Bitte verifiziere dieses Gerät zuerst und versuche es dann erneut."
 		}
 	},
 	"e2ee": {
@@ -693,7 +712,15 @@
 			"markRead": "Als gelesen markieren",
 			"waitingSince": "Wartet seit {{time}} Uhr ({{date}})",
 			"preview": {
-				"unavailable": "Die Chat-Vorschau ist noch nicht verfügbar — öffne den Chat, um mitzulesen."
+				"unavailable": "Die Chat-Vorschau ist noch nicht verfügbar — öffne den Chat, um mitzulesen.",
+				"sendFailed": "Senden fehlgeschlagen. Dein Text bleibt erhalten.",
+				"archivedOpenToReply": "Diese Unterhaltung ist archiviert. Öffne die Unterhaltung, um zu antworten.",
+				"notJoined": "Nur lesen, bis dein Beitritt bestätigt und der Raum geladen ist.",
+				"supervisorNoComposer": "Als Supervisor:in kannst du hier reagieren, aber nicht schreiben.",
+				"curtained": "Dieser Fall ist für dich gerade nicht einsehbar.",
+				"enquiryOpenToAccept": "Diese Anfrage ist noch nicht angenommen. Öffne die Unterhaltung, um sie anzunehmen.",
+				"consentOpenToContinue": "Bitte bestätige zuerst im Chat, wie es weitergeht. Öffne dazu die Unterhaltung.",
+				"actionFailed": "Das hat nicht geklappt. Bitte versuche es erneut."
 			}
 		},
 		"events": {
@@ -739,7 +766,7 @@
 				}
 			},
 			"caseHandoverOfferReceived": {
-				"text": "{{fromConsultantName}} möchte diese Beratung an dich übergeben. Prüfe die Anfrage, bevor du das Gespräch öffnest.",
+				"text": "{{fromConsultantName}} hat dir die Übernahme dieser Beratung angeboten.",
 				"coAccess": {
 					"text": "{{fromConsultantName}} bietet dir vorübergehenden Zugriff auf diese Beratung an. Die bisherige Beratungsperson bleibt verantwortlich."
 				}
@@ -1156,6 +1183,11 @@
 		}
 	},
 	"registration": {
+		"dataProtection": {
+			"noNotice": {
+				"body": "Für diese Beratungsstelle ist keine Datenschutzerklärung hinterlegt. Die Beratungsstelle ist dafür verantwortlich. Du kannst trotzdem fortfahren, wenn du das bewusst möchtest."
+			}
+		},
 		"selectedLabel": "Ausgewählt",
 		"noneSelected": "Bitte wähle ein Thema, um fortzufahren.",
 		"topicInstruction": "Wähle ein Thema aus.",
@@ -2846,6 +2878,10 @@
 		}
 	},
 	"directLink": {
+		"postcode": {
+			"helper": "Nur für die Statistik. Die Postleitzahl bestimmt weder Beratungsstelle noch Berater:in – das legt der Link fest.",
+			"invalid": "Bitte gib deine fünfstellige Postleitzahl ein."
+		},
 		"card": {
 			"headline": "Ein Link direkt zu dir",
 			"text": "Wer den Link öffnet, landet ohne Umweg bei dir – im Chat, im Audio- oder im Videoanruf.",

@@ -16,6 +16,8 @@ import {
 } from 'matrix-widget-api';
 import {
 	ClientEvent,
+	EventTimeline,
+	EventType,
 	MatrixClient,
 	MatrixEvent,
 	RoomEvent,
@@ -23,11 +25,14 @@ import {
 } from 'matrix-js-sdk';
 
 import { OrisoWidgetDriver } from './OrisoWidgetDriver';
+import { callBrandParams } from './callBrand';
 import {
 	ALLOWED_RECEIVE_ROOM_EVENT_TYPES,
 	ALLOWED_RECEIVE_STATE_EVENT_TYPES,
 	ALLOWED_TO_DEVICE_EVENT_TYPES
 } from './orisoWidgetCapabilities';
+import { useTenant } from '../../../globalState/provider/TenantProvider';
+import { endpoints } from '../../../resources/scripts/endpoints';
 import { getElementCallBaseUrl } from '../../../resources/scripts/runtimeConfig';
 import { appConfig } from '../../../utils/appConfig';
 
@@ -181,6 +186,68 @@ const releaseIframeDevices = (iframe: HTMLIFrameElement | null): void => {
 	}
 };
 
+export class CallRoomMembershipTimeoutError extends Error {
+	readonly name = 'CallRoomMembershipTimeoutError';
+}
+
+const waitForWidgetRoomMembership = (
+	client: MatrixClient,
+	roomId: string,
+	userId: string,
+	signal: AbortSignal
+): Promise<void> => {
+	const isReady = () => {
+		const room = client.getRoom(roomId);
+		if (room?.getMyMembership() !== 'join') return false;
+
+		// The widget receives this state event from OrisoWidgetDriver. The
+		// local Room can exist before its joined state is available to read.
+		return (
+			room
+				.getLiveTimeline()
+				.getState(EventTimeline.FORWARDS)
+				?.getStateEvents(EventType.RoomMember, userId)
+				?.getContent().membership === 'join'
+		);
+	};
+
+	if (signal.aborted) return Promise.reject(signal.reason);
+	if (isReady()) return Promise.resolve();
+
+	return new Promise((resolve, reject) => {
+		const cleanup = () => {
+			clearTimeout(timeout);
+			client.off(ClientEvent.Room, check);
+			client.off(RoomEvent.MyMembership, check);
+			client.off(RoomStateEvent.Events, check);
+			signal.removeEventListener('abort', abort);
+		};
+		const check = () => {
+			if (!isReady()) return;
+			cleanup();
+			resolve();
+		};
+		const abort = () => {
+			cleanup();
+			reject(signal.reason);
+		};
+		const timeout = setTimeout(() => {
+			cleanup();
+			reject(
+				new CallRoomMembershipTimeoutError(
+					'Matrix did not sync the call room membership.'
+				)
+			);
+		}, 20_000);
+
+		client.on(ClientEvent.Room, check);
+		client.on(RoomEvent.MyMembership, check);
+		client.on(RoomStateEvent.Events, check);
+		signal.addEventListener('abort', abort, { once: true });
+		check();
+	});
+};
+
 const sendKnockState = (api: ClientWidgetApi, state: OrisoKnockState) => {
 	void api.transport
 		.send(ORISO_WIDGET_ACTIONS.knockState, {
@@ -225,16 +292,43 @@ export const useElementCallWidget = (
 	knockStateRef.current = knockState;
 	const onSetKnockRef = useRef(onSetKnock);
 	onSetKnockRef.current = onSetKnock;
+	// The Träger's brand is read when the URL is built, not watched: a tenant
+	// that resolves again or changes later must not rebuild the address of a
+	// running call (the effect below blanks the URL and would navigate it).
+	const tenant = useTenant();
+	const tenantRef = useRef(tenant);
+	tenantRef.current = tenant;
+	// Frozen per call room: a token refresh hands the effect below a new
+	// client and rebuilds the URL, and a brand read afresh then (the tenant
+	// resolved meanwhile, or its colours changed) would navigate the call.
+	const brandRef = useRef<{
+		roomId: string;
+		params: Record<string, string>;
+	} | null>(null);
 
 	// A widget client cannot join rooms. Gate iframe creation on the host's
 	// membership so Element Call never starts against an invited/unknown room.
 	useEffect(() => {
-		let cancelled = false;
+		const preparation = new AbortController();
+		const { signal } = preparation;
 		setUrl(null);
 		setReady(false);
 		setError(null);
 
 		if (!client || !roomId) return undefined;
+
+		const brandFor = (room: string) => {
+			if (brandRef.current?.roomId !== room) {
+				brandRef.current = {
+					roomId: room,
+					params: callBrandParams(
+						tenantRef.current,
+						endpoints.tenantServiceBase
+					)
+				};
+			}
+			return brandRef.current.params;
+		};
 
 		const prepare = async () => {
 			try {
@@ -261,13 +355,20 @@ export const useElementCallWidget = (
 				if (client.getRoom(roomId)?.getMyMembership() !== 'join') {
 					await client.joinRoom(roomId);
 				}
-				if (cancelled) return;
+				if (signal.aborted) return;
+				await waitForWidgetRoomMembership(
+					client,
+					roomId,
+					userId,
+					signal
+				);
+				if (signal.aborted) return;
 
 				const widgetId = await widgetIdForRoom(
 					roomId,
 					instanceNonceRef.current
 				);
-				if (cancelled) return;
+				if (signal.aborted) return;
 				elementCallUrl.hash = `?${new URLSearchParams({
 					widgetId,
 					parentUrl: window.location.origin,
@@ -307,19 +408,21 @@ export const useElementCallWidget = (
 					callIntent: isVideo ? 'video' : 'audio',
 					// The pre-join choice (ElementCall#116): on/off and the
 					// devices by label, read before any track exists.
-					...Object.fromEntries(new URLSearchParams(callStartQuery))
+					...Object.fromEntries(new URLSearchParams(callStartQuery)),
+					// The Träger's colours and logo (#2188), appended so every
+					// parameter above keeps its place. Left off the address
+					// where the Träger has set nothing the call may use.
+					...brandFor(roomId)
 				}).toString()}`;
 
 				setUrl(elementCallUrl.toString());
 			} catch (err) {
-				if (!cancelled) setError(err as Error);
+				if (!signal.aborted) setError(err as Error);
 			}
 		};
 
 		void prepare();
-		return () => {
-			cancelled = true;
-		};
+		return () => preparation.abort();
 	}, [client, roomId, isVideo, skipLobby, callStartQuery]);
 
 	const attachIframe = useCallback(

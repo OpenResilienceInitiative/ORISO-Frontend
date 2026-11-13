@@ -28,13 +28,13 @@ const storedBefore = (
 });
 
 describe('new-enquiry tone default (FE#1435)', () => {
-	it('rings the "Neue Anfrage" row by default, and only that row', () => {
+	it('rings the "Neue Anfrage" row with its own tone; other tabs keep the #1211 short tone', () => {
 		expect(DEFAULT_NOTIFICATION_CONFIG.requests.new.sound).toBe('ton-1');
 		expect(DEFAULT_NOTIFICATION_CONFIG.requests.standard.sound).toBe(
 			'none'
 		);
 		expect(DEFAULT_NOTIFICATION_CONFIG.conversations.new.sound).toBe(
-			'none'
+			'ton-2'
 		);
 		expect(DEFAULT_NOTIFICATION_SETTINGS.notificationConfigRevision).toBe(
 			NOTIFICATION_SETTINGS_REVISION

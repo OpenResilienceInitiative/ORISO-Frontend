@@ -1,12 +1,25 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { apiGetCaseHandoverStatus, CaseHandoverStatus } from '../../api';
 import { CASE_HANDOVER_RESOLUTION_EVENTS } from '../caseHandover/caseHandoverEvents';
+import {
+	ActivityEventRow,
+	activityEventSessionId
+} from '../notificationsCenter/activityEvent';
 
-type CaseHandoverNotification = {
+type CaseHandoverNotification = Pick<
+	ActivityEventRow,
+	'sourceSessionId' | 'params'
+> & {
 	id: string;
 	eventType: string;
-	sourceSessionId?: string | number;
 };
+
+const resolvesSession = (
+	item: CaseHandoverNotification,
+	sessionId: number
+): boolean =>
+	CASE_HANDOVER_RESOLUTION_EVENTS.has(item.eventType) &&
+	activityEventSessionId(item) === sessionId;
 
 type UseCaseHandoverStatusRefreshOptions = {
 	enabled: boolean;
@@ -56,8 +69,7 @@ export const useCaseHandoverStatusRefresh = ({
 
 		const notification = notifications?.find(
 			(item) =>
-				CASE_HANDOVER_RESOLUTION_EVENTS.has(item.eventType) &&
-				String(item.sourceSessionId) === String(sessionId) &&
+				resolvesSession(item, sessionId) &&
 				!handledEventIdsRef.current.has(item.id) &&
 				!attemptedEventIdsRef.current.has(item.id)
 		);
@@ -105,8 +117,7 @@ export const useCaseHandoverStatusRefresh = ({
 		const retryOnFocus = () => {
 			const failedNotification = notifications?.find(
 				(item) =>
-					CASE_HANDOVER_RESOLUTION_EVENTS.has(item.eventType) &&
-					String(item.sourceSessionId) === String(sessionId) &&
+					resolvesSession(item, sessionId) &&
 					failedEventIdsRef.current.has(item.id)
 			);
 			if (!failedNotification) {

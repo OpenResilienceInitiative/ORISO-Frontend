@@ -57,12 +57,14 @@ const renderNotice = ({
 	raw,
 	senderId,
 	viewer,
-	consultantMatrixUserId = MOCK_CONSULTANT_MATRIX_ID
+	consultantMatrixUserId = MOCK_CONSULTANT_MATRIX_ID,
+	previewMode
 }: {
 	raw: string;
 	senderId: string;
 	viewer: 'asker' | 'consultant';
 	consultantMatrixUserId?: string;
+	previewMode?: 'read' | 'interactive';
 }) =>
 	render(
 		<MemoryRouter>
@@ -118,6 +120,7 @@ const renderNotice = ({
 										messageTime: '1',
 										t: null
 									})}
+									previewMode={previewMode}
 									handleDecryptionErrors={() => {}}
 									handleDecryptionSuccess={() => {}}
 									e2eeParams={mockE2eeParams() as any}
@@ -154,6 +157,26 @@ describe('MessageItemComponent — further counselling notices (FE#1876)', () =>
 		// Never the raw JSON payload.
 		expect(document.body.textContent).not.toContain('topicId');
 	});
+
+	it.each(['interactive', 'read'] as const)(
+		'shows the card without its button in the Activity Timeline (%s preview), which must not leave the Timeline (#1824)',
+		(previewMode) => {
+			renderNotice({
+				raw: recommendation,
+				senderId: MOCK_CONSULTANT_MATRIX_ID,
+				viewer: 'asker',
+				previewMode
+			});
+			expect(
+				screen.getByText('furtherCounselling.card.title')
+			).toBeTruthy();
+			expect(
+				screen.queryByRole('button', {
+					name: 'furtherCounselling.card.findAgency'
+				})
+			).toBeNull();
+		}
+	);
 
 	it('shows the counsellor the same card without the button', () => {
 		renderNotice({

@@ -10,6 +10,7 @@ import {
 	vi
 } from 'vite-plus/test';
 import { apiPostRegistration } from '../../api/apiPostRegistration';
+import { TenantContext } from '../../globalState';
 import type { InviteLinkContext } from '../../api/apiGetInviteLinkContext';
 import type { CallEntryRoomProps } from '../waitingRoom/callEntry/CallEntryRoom';
 import { DirectLinkCallEntry } from './DirectLinkCallEntry';
@@ -44,9 +45,13 @@ vi.mock('../waitingRoom/callEntry/CallEntryRoom', () => ({
 		onJoin,
 		signedIn,
 		hidePassword,
-		consent
+		consent,
+		usernameEditable,
+		askPostcode
 	}: CallEntryRoomProps) => (
 		<>
+			<div>{askPostcode ? 'asks postcode' : 'no postcode'}</div>
+			<div>{usernameEditable ? 'typed names' : 'generated names'}</div>
 			<div>
 				{signedIn
 					? 'existing account'
@@ -60,6 +65,7 @@ vi.mock('../waitingRoom/callEntry/CallEntryRoom', () => ({
 					onJoin?.({
 						username: 'test-guest',
 						password: 'secret-123',
+						postcode: '10115',
 						identity: {
 							displayName: 'Test Guest',
 							animalLabel: 'owl',
@@ -107,6 +113,45 @@ const call: InviteLinkContext = {
 	temporaryAccount: true,
 	hidePasswordField: true
 };
+
+const renderWithSettings = (settings: Record<string, boolean>) =>
+	render(
+		<TenantContext.Provider
+			value={
+				{ tenant: { settings }, setTenant: () => undefined } as never
+			}
+		>
+			<DirectLinkCallEntry
+				token="shared-token"
+				context={call}
+				modality="video"
+			/>
+		</TenantContext.Provider>
+	);
+
+describe('the User-ID of a call guest', () => {
+	afterEach(cleanup);
+
+	it('can be typed where the counselling name rule allows it', async () => {
+		renderWithSettings({});
+		await screen.findByText('typed names');
+	});
+
+	it.each([
+		'featureDisplayNameEditable',
+		'featureDisplayNameEditableAgencyCounsellingEnabled'
+	])('is generated only when %s is off', async (setting) => {
+		renderWithSettings({ [setting]: false });
+		await screen.findByText('generated names');
+	});
+
+	it('follows the counselling rule, not the live chat one', async () => {
+		renderWithSettings({
+			featureDisplayNameEditableLiveChatEnabled: false
+		});
+		await screen.findByText('typed names');
+	});
+});
 
 describe('entry before a shared call', () => {
 	beforeEach(() => {
@@ -181,5 +226,80 @@ describe('entry before a shared call', () => {
 			'/login?returnTo=%2Finvite%2Fshared-token'
 		);
 		expect(screen.queryByText('temporary account')).toBeNull();
+	});
+});
+
+describe('the postcode of a call guest (ORISO-Frontend#1795)', () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+		vi.mocked(apiPostRegistration).mockResolvedValue(undefined);
+	});
+	afterEach(cleanup);
+
+	it('is not asked of a temporary account, which keeps the placeholder', async () => {
+		render(
+			<DirectLinkCallEntry
+				token="shared-token"
+				context={call}
+				modality="video"
+				deps={{ open: vi.fn() }}
+			/>
+		);
+		await screen.findByText('no postcode');
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Agree and enter' })
+		);
+		await screen.findByText('call-only entry');
+		expect(apiPostRegistration).toHaveBeenCalledWith(
+			expect.any(String),
+			expect.objectContaining({ postcode: '00000' }),
+			false,
+			undefined,
+			expect.any(Function)
+		);
+	});
+
+	it('is asked of a registered account and sent along', async () => {
+		render(
+			<DirectLinkCallEntry
+				token="direct-token"
+				context={{
+					...call,
+					linkKind: undefined,
+					temporaryAccount: false,
+					hidePasswordField: false
+				}}
+				modality="video"
+				deps={{ open: vi.fn() }}
+			/>
+		);
+		await screen.findByText('asks postcode');
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Agree and enter' })
+		);
+		await vi.waitFor(() =>
+			expect(apiPostRegistration).toHaveBeenCalledWith(
+				expect.any(String),
+				expect.objectContaining({
+					postcode: '10115',
+					temporary: false
+				}),
+				false,
+				undefined,
+				expect.any(Function)
+			)
+		);
+	});
+
+	it('is not asked of a signed-in person', async () => {
+		render(
+			<DirectLinkCallEntry
+				token="direct-token"
+				context={{ ...call, temporaryAccount: false }}
+				modality="video"
+				signedIn
+			/>
+		);
+		await screen.findByText('no postcode');
 	});
 });

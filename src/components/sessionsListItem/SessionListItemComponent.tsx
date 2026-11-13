@@ -23,7 +23,8 @@ import { isMatrixRoomIdHeuristic } from '../../utils/matrixRoomUtils';
 import { getCurrentMatrixUserId } from '../../utils/matrixSession';
 import {
 	getRoomUnreadCount,
-	isChatItemUnread
+	isChatItemUnread,
+	isRoomUnread
 } from '../../utils/sessionUnread';
 import { useUnreadVersion } from '../../hooks/useUnreadVersion';
 import { resolveAnonymousChatDisplayName } from '../../utils/anonymousChatDisplayName';
@@ -96,7 +97,7 @@ import {
 } from './chatroomSettingsMenu';
 import { SessionListItemMenu } from './SessionListItemMenu';
 import DeleteSession from '../session/DeleteSession';
-import { isGroupChatOwner } from '../groupChat/groupChatHelpers';
+import { canEditGroupChatSettings } from '../groupChat/groupChatHelpers';
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
 import { ALIAS_MESSAGE_TYPES } from '../../api/apiSendAliasMessage';
 import { useTranslation } from 'react-i18next';
@@ -273,11 +274,7 @@ export const SessionListItemComponent = ({
 	// `messagesRead` (hard-coded true by the backend). `unreadVersion` bumps
 	// on notification-count/receipt changes so the styling stays live.
 	const unreadVersion = useUnreadVersion();
-	const isItemUnread = useMemo(
-		() => isChatItemUnread(sessionItem),
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[sessionItem, unreadVersion]
-	);
+
 	const { dispatch: sessionsDispatch } = useContext(SessionsDataContext);
 	const legalLinks = useContext(LegalLinksContext);
 
@@ -332,7 +329,8 @@ export const SessionListItemComponent = ({
 		? isActive({
 				groupId: sessionItem?.matrixRoomId,
 				rid: activeSession.rid,
-				sessionId: sessionItem?.id
+				sessionId: sessionItem?.id,
+				chatId: activeSession.isGroup ? sessionItem?.id : undefined
 			})
 		: false;
 
@@ -581,6 +579,15 @@ export const SessionListItemComponent = ({
 		userData?.userId
 	);
 	const isSupervisedByMe = supervisionState === 'supervisedByMe';
+	const isItemUnread = useMemo(
+		() =>
+			isChatItemUnread(sessionItem) ||
+			(isSupervisedByMe &&
+				isRoomUnread(sessionItem?.supervision?.sideRoomId)),
+		// Matrix receipt updates must refresh the expanded row as well as the rail.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[sessionItem, isSupervisedByMe, unreadVersion]
+	);
 	const showSilentMemberEye = isSupervisorView && !isSupervisedByMe;
 	const supervisorNames =
 		!isAsker &&
@@ -609,8 +616,9 @@ export const SessionListItemComponent = ({
 		isAgencyCounselling,
 		teamDiscussionFeatureEnabled: featureTeamDiscussionEnabled,
 		hasExistingTeamDiscussion,
-		isGroupChatOwner:
-			!!activeSession && isGroupChatOwner(activeSession, userData),
+		canEditGroupChatSettings:
+			!!activeSession &&
+			canEditGroupChatSettings(activeSession, userData),
 		isGroupChatActive: !!activeSession?.item?.active,
 		hasMatrixRoom: !!activeSession?.item?.matrixRoomId,
 		isGroupChatSubscribed: !!activeSession?.item?.subscribed
@@ -1075,10 +1083,9 @@ export const SessionListItemComponent = ({
 	let sessionTopic = '';
 
 	// Card title:
-	// - Consultant seen by an asker: humanize the technical username via the
-	//   same name pipeline the chat messages use, so a name like
-	//   `ruhiges_Yak_Kim_234` renders as `ruhiges Yak Kim` rather than the raw
-	//   Matrix identifier.
+	// - Consultant seen by an asker: the same name pipeline the chat messages
+	//   use — the display name, else the User-ID exactly as the bubble shows
+	//   it (#1494).
 	// - Asker seen by a consultant: the anonymous User-ID is the platform's
 	//   read-only identity anchor (#1209). Never humanize it — dropping
 	//   underscores and the trailing digit block produces a different name
@@ -2004,7 +2011,29 @@ export const SessionListItemComponent = ({
 							{/* Consulting-type modality icon (Mail / Live Chat / Interna
 						    / Gesprächskreis) — always shown, including alongside the
 						    case-handover action button (Figma node 115). */}
-							{
+							{isSupervisedByMe ? (
+								<div
+									className="sessionsListItem__consultingTypeIcon sessionsListItem__consultingTypeIcon--supervision"
+									data-testid="supervision-modality"
+								>
+									<SupervisionIcon
+										aria-hidden="true"
+										focusable="false"
+									/>
+									<span
+										className="sessionsListItem__consultingTypeIcon--supervisionLabel"
+										title={translate(
+											'sessionList.supervision.badge',
+											'Supervision'
+										)}
+									>
+										{translate(
+											'sessionList.toolbar.chips.supervision',
+											'Supervision'
+										)}
+									</span>
+								</div>
+							) : (
 								<>
 									{modality === Modality.LIVE_CHAT && (
 										<div
@@ -2096,24 +2125,6 @@ export const SessionListItemComponent = ({
 											</span>
 										</div>
 									)}
-									{/* FE#514: team-only discussion exists on this
-								    enquiry (consultants only, ADR-016). */}
-									{!isAsker &&
-										activeSession.isEnquiry &&
-										modality ===
-											Modality.AGENCY_COUNSELLING &&
-										activeSession.item?.id && (
-											<TeamDiscussionBadge
-												sessionId={
-													activeSession.item.id
-												}
-												onOpen={
-													chatroomSettingsMenu.showRequestHelp
-														? handleRequestHelp
-														: undefined
-												}
-											/>
-										)}
 									{modality === Modality.SELF_HELP && (
 										<div
 											className={clsx(
@@ -2133,7 +2144,23 @@ export const SessionListItemComponent = ({
 										</div>
 									)}
 								</>
-							}
+							)}
+							{/* FE#514: team-only discussion exists on this
+								    enquiry (consultants only, ADR-016). */}
+							{!isAsker &&
+								activeSession.isEnquiry &&
+								modality === Modality.AGENCY_COUNSELLING &&
+								activeSession.item?.id && (
+									<TeamDiscussionBadge
+										sessionId={activeSession.item.id}
+										onOpen={
+											!isSupervisedByMe &&
+											chatroomSettingsMenu.showRequestHelp
+												? handleRequestHelp
+												: undefined
+										}
+									/>
+								)}
 						</>
 					}
 				/>

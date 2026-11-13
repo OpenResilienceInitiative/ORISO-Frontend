@@ -13,7 +13,7 @@ export interface DashboardCircle {
 	/** Already formatted for display, e.g. "Do., 30. Okt · 19:00". */
 	when: string;
 	medium: DirectLink['medium'];
-	participants: number;
+	assignedCounsellors: number;
 }
 
 /** The counsellor's own figures from `apiGetConsultantStatistics` for the period. */
@@ -171,9 +171,9 @@ export const CounsellorDashboard = ({
 											<span className="counsellorDashboard__circleMeta">
 												{circle.when} ·{' '}
 												{t(
-													'dashboard.circles.participants',
+													'dashboard.circles.assignedCounsellors',
 													{
-														count: circle.participants
+														count: circle.assignedCounsellors
 													}
 												)}
 											</span>

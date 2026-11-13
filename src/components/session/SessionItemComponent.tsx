@@ -3,6 +3,7 @@ import { useFrozenPhoneLayout } from '../../utils/embeddedComposerFullscreen';
 import { useConversationFeatureSettings } from '../../hooks/useConversationFeatureSettings';
 import { useDelayedSessionRefresh } from './useDelayedSessionRefresh';
 import { useChatHistoryPagination } from './useChatHistoryPagination';
+import { useThreadRouteHistory } from './useThreadRouteHistory';
 import * as React from 'react';
 import {
 	useCallback,
@@ -176,11 +177,7 @@ import { apiPostError, TError } from '../../api/apiPostError';
 import { useE2EE } from '../../hooks/useE2EE';
 import { MessageSubmitInterfaceSkeleton } from '../messageSubmitInterface/messageSubmitInterfaceSkeleton';
 import { MessageSubmitErrorBoundary } from '../messageSubmitInterface/MessageSubmitErrorBoundary';
-import {
-	buildEditContext,
-	buildReplyQuoteContext,
-	buildReplyQuotePreview
-} from './replyQuote';
+import { buildReplyQuotePreview } from './replyQuote';
 import { EncryptionBanner } from './EncryptionBanner';
 import {
 	apiGetSessionSupervisors,
@@ -249,6 +246,11 @@ import { ReactComponent as CloseIcon } from '../../resources/img/icons/close.svg
 import { canRenderClientComposer } from './clientComposerPolicy';
 import { isCaseHandoverCoAccess } from './caseHandoverHelpers';
 import { CaseHandoverReadOnlyNotice } from './CaseHandoverReadOnlyNotice';
+import {
+	conversationActionsResetKey,
+	useConversationActions
+} from './useConversationActions';
+import { anonymousGateKeys } from './anonymousGateStorage';
 import type { CaseHandoverStatus } from '../../api/apiCaseHandover';
 import type { TeamDiscussionStatus } from '../../api/apiTeamDiscussion';
 import {
@@ -372,7 +374,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		try {
 			return (
 				sessionStorage.getItem(
-					`anonymous-inquiry-consent-${activeSession.item.id}`
+					anonymousGateKeys(activeSession.item.id).consent
 				) === '1'
 			);
 		} catch {
@@ -383,7 +385,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		try {
 			return (
 				sessionStorage.getItem(
-					`anonymous-pseudonym-${activeSession.item.id}`
+					anonymousGateKeys(activeSession.item.id).pseudonym
 				) === '1'
 			);
 		} catch {
@@ -466,7 +468,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			try {
 				return (
 					sessionStorage.getItem(
-						`anonymous-waiting-dismissed-${activeSession.item.id}`
+						anonymousGateKeys(activeSession.item.id)
+							.waitingDismissed
 					) === '1'
 				);
 			} catch {
@@ -478,7 +481,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		(value: boolean) => {
 			setWaitingGateDismissedState(value);
 			try {
-				const key = `anonymous-waiting-dismissed-${activeSession.item.id}`;
+				const key = anonymousGateKeys(
+					activeSession.item.id
+				).waitingDismissed;
 				if (value) {
 					sessionStorage.setItem(key, '1');
 				} else {
@@ -577,7 +582,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		dataPrivacyConfirmation: userData?.dataPrivacyConfirmation
 	});
 	const anonymousInquiryConsentStorageKey = useMemo(
-		() => `anonymous-inquiry-consent-${activeSession.item.id}`,
+		() => anonymousGateKeys(activeSession.item.id).consent,
 		[activeSession.item.id]
 	);
 	const robotSequenceStorageKey = useMemo(
@@ -585,7 +590,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		[activeSession.item.id]
 	);
 	const pseudonymStorageKey = useMemo(
-		() => `anonymous-pseudonym-${activeSession.item.id}`,
+		() => anonymousGateKeys(activeSession.item.id).pseudonym,
 		[activeSession.item.id]
 	);
 	const requiresPseudonymConfirmation =
@@ -852,35 +857,24 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			),
 		[reactionEvents, ownMatrixUserId]
 	);
-	const handleReact = useCallback(
-		(messageId: string, key: string) => {
-			if (isRejectedSession || !resolvedMatrixRoomId) {
-				return;
-			}
-			chatTransportService
-				.sendReaction({
-					matrixRoomId: resolvedMatrixRoomId,
-					targetEventId: messageId,
-					key
-				})
-				.catch(() => undefined);
-		},
-		[resolvedMatrixRoomId, isRejectedSession]
-	);
-	const handleUnreact = useCallback(
-		(reactionEventId: string) => {
-			if (isRejectedSession || !resolvedMatrixRoomId) {
-				return;
-			}
-			chatTransportService
-				.removeReaction({
-					matrixRoomId: resolvedMatrixRoomId,
-					reactionEventId
-				})
-				.catch(() => undefined);
-		},
-		[resolvedMatrixRoomId, isRejectedSession]
-	);
+	// #1824 S1: the room's message actions, shared with the Activity Timeline
+	// preview. A reply or edit context never survives a conversation switch.
+	// A rejected session takes no reactions or deletions: without a room the
+	// actions do nothing.
+	const {
+		handleReact,
+		handleUnreact,
+		handleDeleteDirect,
+		replyTo,
+		handleReplyDirect,
+		handleCancelReply,
+		editingMessage,
+		handleEditDirect,
+		handleCancelEdit
+	} = useConversationActions({
+		roomId: isRejectedSession ? null : resolvedMatrixRoomId,
+		resetKey: conversationActionsResetKey(activeSession)
+	});
 	const [initialScrollCompleted, setInitialScrollCompleted] = useState(false);
 	const scrollContainerRef = React.useRef<HTMLDivElement>(null);
 	const loadEarlierMessages = useChatHistoryPagination(
@@ -935,6 +929,13 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				: null,
 		[messages, activeThreadRootId]
 	);
+	const threadRouteHistory = useThreadRouteHistory({
+		scope: `${activeSession.item.id}:${resolvedMatrixRoomId}`,
+		rootId: isRejectedSession ? null : activeThreadRootId,
+		hasRoot: activeThreadRootMessage !== null,
+		historyReady: messages !== undefined,
+		loadEarlier: props.onLoadEarlierMessages
+	});
 	const knownMessageIdsRef = useRef<Set<string>>(new Set());
 	// Thread-panel-UX (#435): pure summary computation (unit-tested).
 	const threadSummariesRaw = useMemo(
@@ -2376,7 +2377,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 
 	// The panel the URL asks for, resolved against what exists. A thread
 	// whose root is not in the loaded history keeps the main chat open
-	// (analysis F3 — fetching the root is a follow-up).
+	// while its authorized history is loading.
 	const openPanel: 'supervision' | 'team' | 'thread' | null =
 		routeChannel?.kind === 'supervision'
 			? hasSupervisionSideRoom
@@ -3017,29 +3018,6 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		[messages]
 	);
 
-	// Relations foundation (#435): direct-reply context for the composer.
-	const [replyTo, setReplyTo] = useState<{
-		eventId: string;
-		author: string;
-		text: string;
-	} | null>(null);
-
-	const handleReplyDirect = useCallback((message: MessageItem) => {
-		setReplyTo(buildReplyQuoteContext(message));
-	}, []);
-
-	const handleCancelReply = useCallback(() => setReplyTo(null), []);
-
-	// Editing (m.replace, #435): edit-in-progress context for the composer.
-	const [editingMessage, setEditingMessage] = useState<{
-		eventId: string;
-		text: string;
-	} | null>(null);
-
-	const handleEditDirect = useCallback((message: MessageItem) => {
-		setEditingMessage(buildEditContext(message));
-	}, []);
-
 	// Delete = Matrix redaction of the event in ITS room. The timeline only
 	// offers it on the viewer's own messages; the main chat and the
 	// Teamberatung panel share this one path.
@@ -3057,23 +3035,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		},
 		[isRejectedSession]
 	);
-	const handleDeleteDirect = useCallback(
-		(message: MessageItem) =>
-			redactMessageInRoom(resolvedMatrixRoomId, message),
-		[redactMessageInRoom, resolvedMatrixRoomId]
-	);
 	const handleDeleteTeamMessage = useCallback(
 		(message: MessageItem) => redactMessageInRoom(teamRoomId, message),
 		[redactMessageInRoom, teamRoomId]
 	);
-
-	const handleCancelEdit = useCallback(() => setEditingMessage(null), []);
-
-	// A reply or edit context never survives a conversation switch.
-	useEffect(() => {
-		setReplyTo(null);
-		setEditingMessage(null);
-	}, [activeSession?.rid]);
 
 	// Resolve the quote of a replied-to message from the loaded timeline; a
 	// reply whose target is outside the loaded window degrades to a generic
@@ -3498,7 +3463,17 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 															event.preventDefault();
 															event.stopPropagation();
 															navigate(
-																'/registration'
+																isAnonymousAskerExperience
+																	? '/live-chat/convert'
+																	: '/registration',
+																{
+																	state: {
+																		topicId:
+																			activeSession
+																				.item
+																				.mainTopicId
+																	}
+																}
 															);
 														}}
 													>
@@ -3527,6 +3502,17 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 											</div>
 										</div>
 									</div>
+								</div>
+							)}
+							{threadRouteHistory && (
+								<div className="messageItem" role="status">
+									{translate(
+										threadRouteHistory === 'loading'
+											? 'notifications.center.preview.loadingOlder'
+											: threadRouteHistory === 'error'
+												? 'notifications.center.preview.loadOlderFailed'
+												: 'notifications.center.preview.eventUnavailable'
+									)}
 								</div>
 							)}
 							{!messages && props.mainTimelineSupplement}
@@ -3757,6 +3743,25 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 								!selectedPseudonym.displayName.trim()
 							}
 						/>
+					</div>
+				)}
+
+				{isAnonymousAskerExperience && sessionStatusNum === 3 && (
+					<div className="session__pseudonymActionBarSlot">
+						<MuiButton
+							variant="contained"
+							onClick={() =>
+								navigate('/live-chat/convert', {
+									state: {
+										topicId: activeSession.item.mainTopicId
+									}
+								})
+							}
+						>
+							{translate(
+								'anonymousChat.noAvailability.startMailCounseling'
+							)}
+						</MuiButton>
 					</div>
 				)}
 
@@ -4156,7 +4161,13 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					<MuiButton
 						fullWidth
 						variant="contained"
-						onClick={() => navigate('/registration')}
+						onClick={() =>
+							navigate('/live-chat/convert', {
+								state: {
+									topicId: activeSession.item.mainTopicId
+								}
+							})
+						}
 						sx={{
 							mb: '8px',
 							borderRadius: '999px',

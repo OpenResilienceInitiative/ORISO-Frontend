@@ -2,7 +2,12 @@
 
 import React from 'react';
 import { act, render, renderHook, waitFor } from '@testing-library/react';
-import type { MatrixClient } from 'matrix-js-sdk';
+import {
+	EventType,
+	RoomEvent,
+	RoomStateEvent,
+	type MatrixClient
+} from 'matrix-js-sdk';
 import { webcrypto } from 'node:crypto';
 import {
 	afterEach,
@@ -14,6 +19,7 @@ import {
 } from 'vite-plus/test';
 
 import { useElementCallWidget } from './useElementCallWidget';
+import { TenantContext } from '../../../globalState/provider/TenantProvider';
 import { setAppConfig } from '../../../utils/appConfig';
 
 const widgetApiMocks = vi.hoisted(() => ({
@@ -77,6 +83,12 @@ vi.mock('../../../resources/scripts/runtimeConfig', () => ({
 	getElementCallBaseUrl: () => 'https://call.oriso.example'
 }));
 
+// The hook reads the tenant service address for the brand's logo route; the
+// real module would need every origin helper of the mocked runtime config.
+vi.mock('../../../resources/scripts/endpoints', () => ({
+	endpoints: { tenantServiceBase: 'https://app.oriso.example/service/tenant' }
+}));
+
 const CALL_ROOM = '!call:oriso.example';
 
 type TestMatrixClient = MatrixClient & {
@@ -85,9 +97,11 @@ type TestMatrixClient = MatrixClient & {
 
 const createClient = ({
 	membership = 'join',
+	getWidgetMembership = () => membership,
 	joinRoom = vi.fn().mockResolvedValue(undefined)
 }: {
 	membership?: string;
+	getWidgetMembership?: () => string;
 	joinRoom?: ReturnType<typeof vi.fn>;
 } = {}): TestMatrixClient => {
 	const listeners = new Map<string, Set<(...args: unknown[]) => void>>();
@@ -101,7 +115,15 @@ const createClient = ({
 			getMyMembership: () => membership,
 			getLiveTimeline: () => ({
 				getState: () => ({
-					getStateEvents: () => []
+					getStateEvents: (type: string, stateKey?: string) =>
+						type === EventType.RoomMember &&
+						stateKey === '@user:oriso.example'
+							? {
+									getContent: () => ({
+										membership: getWidgetMembership()
+									})
+								}
+							: []
 				})
 			})
 		}),
@@ -132,6 +154,7 @@ describe('useElementCallWidget', () => {
 	});
 
 	afterEach(() => {
+		vi.restoreAllMocks();
 		vi.unstubAllGlobals();
 		setAppConfig(null as never);
 	});
@@ -144,7 +167,15 @@ describe('useElementCallWidget', () => {
 					finishJoin = resolve;
 				})
 		);
-		const client = createClient({ membership: 'invite', joinRoom });
+		let stateMembership = 'invite';
+		const client = createClient({
+			membership: 'invite',
+			getWidgetMembership: () => stateMembership,
+			joinRoom
+		});
+		const originalRoom = client.getRoom(CALL_ROOM);
+		const hostMembership = vi.fn().mockReturnValue('invite');
+		if (originalRoom) originalRoom.getMyMembership = hostMembership;
 
 		const { result } = renderHook(() =>
 			useElementCallWidget(client, {
@@ -156,7 +187,26 @@ describe('useElementCallWidget', () => {
 		expect(joinRoom).toHaveBeenCalledWith(CALL_ROOM);
 		expect(result.current.url).toBeNull();
 
-		act(() => finishJoin?.());
+		const digest = vi.spyOn(globalThis.crypto.subtle, 'digest');
+		await act(async () => finishJoin?.());
+		expect(digest).not.toHaveBeenCalled();
+		expect(result.current.url).toBeNull();
+
+		act(() => {
+			hostMembership.mockReturnValue('join');
+			client.emitTest(RoomEvent.MyMembership, originalRoom, 'join');
+		});
+		expect(digest).not.toHaveBeenCalled();
+		expect(result.current.url).toBeNull();
+
+		act(() => {
+			stateMembership = 'join';
+			client.emitTest(
+				RoomStateEvent.Events,
+				{ getType: () => EventType.RoomMember },
+				{ roomId: CALL_ROOM }
+			);
+		});
 		await waitFor(() => expect(result.current.url).not.toBeNull());
 
 		const url = new URL(result.current.url!);
@@ -179,6 +229,59 @@ describe('useElementCallWidget', () => {
 		expect(fragment.has('enableE2EE')).toBe(false);
 		// ADR-018 default: host asks Element Call for per-participant media E2EE.
 		expect(fragment.get('perParticipantE2EE')).toBe('true');
+	});
+
+	it('stops waiting for unsynced membership when the call is closed', async () => {
+		const client = createClient({ membership: 'invite' });
+		const { unmount, result } = renderHook(() =>
+			useElementCallWidget(client, { roomId: CALL_ROOM, isVideo: false })
+		);
+
+		await waitFor(() =>
+			expect(client.on).toHaveBeenCalledWith(
+				RoomStateEvent.Events,
+				expect.any(Function)
+			)
+		);
+		expect(result.current.url).toBeNull();
+		unmount();
+
+		expect(client.off).toHaveBeenCalledWith(
+			RoomStateEvent.Events,
+			expect.any(Function)
+		);
+		expect(client.off).toHaveBeenCalledWith(
+			RoomEvent.MyMembership,
+			expect.any(Function)
+		);
+	});
+
+	it('reports a membership timeout and stops listening without mounting the widget', async () => {
+		vi.useFakeTimers();
+		try {
+			const client = createClient({
+				getWidgetMembership: () => 'invite'
+			});
+			const { result } = renderHook(() =>
+				useElementCallWidget(client, {
+					roomId: CALL_ROOM,
+					isVideo: false
+				})
+			);
+
+			await act(() => vi.advanceTimersByTimeAsync(20_000));
+
+			expect(result.current.error?.name).toBe(
+				'CallRoomMembershipTimeoutError'
+			);
+			expect(result.current.url).toBeNull();
+			expect(client.off).toHaveBeenCalledWith(
+				RoomStateEvent.Events,
+				expect.any(Function)
+			);
+		} finally {
+			vi.useRealTimers();
+		}
 	});
 
 	it('omits media E2EE when the environment kill-switch is false', async () => {
@@ -313,6 +416,219 @@ describe('useElementCallWidget', () => {
 		});
 	});
 
+	describe('handing the Traeger brand to the call (#2188)', () => {
+		const LOGO_ROUTE =
+			'https://app.oriso.example/service/tenant/public/branding/14/logo';
+
+		const tenantWith = (theming: Record<string, unknown>, id = 14) =>
+			({ id, theming }) as never;
+
+		const wrapperFor =
+			(read: () => unknown) =>
+			({ children }: { children: React.ReactNode }) => (
+				<TenantContext.Provider
+					value={{
+						tenant: read() as never,
+						setTenant: vi.fn(),
+						updateTenantSettings: vi.fn()
+					}}
+				>
+					{children}
+				</TenantContext.Provider>
+			);
+
+		const fragmentOf = (url: string) =>
+			new URLSearchParams(new URL(url).hash.slice(2));
+
+		const urlFor = async (tenant: unknown) => {
+			const client = createClient();
+			const { result } = renderHook(
+				() =>
+					useElementCallWidget(client, {
+						roomId: CALL_ROOM,
+						isVideo: true
+					}),
+				tenant === undefined
+					? undefined
+					: { wrapper: wrapperFor(() => tenant) }
+			);
+			await waitFor(() => expect(result.current.url).not.toBeNull());
+			return result.current.url!;
+		};
+
+		it('writes the colours and the logo route into the address', async () => {
+			const fragment = fragmentOf(
+				await urlFor(
+					tenantWith({
+						primaryColor: '#0A7A3C',
+						accent: '#646d78',
+						signal: '#b1005e',
+						logo: 'data:image/png;base64,AAAA'
+					})
+				)
+			);
+
+			expect(fragment.get('orisoPrimary')).toBe('0a7a3c');
+			expect(fragment.get('orisoAccent')).toBe('646d78');
+			expect(fragment.get('orisoSignal')).toBe('b1005e');
+			expect(fragment.get('orisoLogo')).toBe(LOGO_ROUTE);
+		});
+
+		it('sends nothing for a Traeger that set no colours and no logo', async () => {
+			const fragment = fragmentOf(
+				await urlFor(tenantWith({ primaryColor: '', logo: '' }))
+			);
+
+			for (const name of [
+				'orisoPrimary',
+				'orisoAccent',
+				'orisoSignal',
+				'orisoLogo'
+			])
+				expect(fragment.has(name)).toBe(false);
+		});
+
+		it('sends nothing while no tenant is resolved, and outside a tenant context', async () => {
+			for (const tenant of [undefined, null]) {
+				const fragment = fragmentOf(await urlFor(tenant));
+				expect(
+					[...fragment.keys()].filter((name) =>
+						/^orisoPrimary|orisoAccent|orisoSignal|orisoLogo$/.test(
+							name
+						)
+					)
+				).toEqual([]);
+			}
+		});
+
+		it('sends no colour for a pale primary, as the app keeps its default palette', async () => {
+			vi.spyOn(console, 'warn').mockImplementation(() => {});
+			const fragment = fragmentOf(
+				await urlFor(
+					tenantWith({
+						primaryColor: '#888888',
+						accent: '#646d78',
+						signal: '#b1005e',
+						logo: 'x'
+					})
+				)
+			);
+
+			for (const name of ['orisoPrimary', 'orisoAccent', 'orisoSignal'])
+				expect(fragment.has(name)).toBe(false);
+			expect(fragment.get('orisoLogo')).toBe(LOGO_ROUTE);
+		});
+
+		it('leaves the logo off for a Traeger without one, the colours stay', async () => {
+			const fragment = fragmentOf(
+				await urlFor(
+					tenantWith({ primaryColor: '#0a7a3c', logo: null })
+				)
+			);
+
+			expect(fragment.get('orisoPrimary')).toBe('0a7a3c');
+			expect(fragment.has('orisoLogo')).toBe(false);
+		});
+
+		it('leaves every existing parameter exactly as it was, in the same order', async () => {
+			setAppConfig({ calls: { atmosphere: 'nebel' } } as never);
+			const without = fragmentOf(await urlFor(undefined));
+			const withBrand = fragmentOf(
+				await urlFor(
+					tenantWith({
+						primaryColor: '#0a7a3c',
+						accent: '#646d78',
+						signal: '#b1005e',
+						logo: 'x'
+					})
+				)
+			);
+
+			const brandNames = [
+				'orisoPrimary',
+				'orisoAccent',
+				'orisoSignal',
+				'orisoLogo'
+			];
+			const existing = (fragment: URLSearchParams) =>
+				[...fragment.entries()].filter(
+					// The widget id carries a per-mount nonce.
+					([name]) =>
+						!brandNames.includes(name) && name !== 'widgetId'
+				);
+
+			expect(existing(withBrand)).toEqual(existing(without));
+			expect(existing(withBrand).map(([name]) => name)).toEqual(
+				expect.arrayContaining([
+					'header',
+					'orisoDesign',
+					'theme',
+					'orisoAtmosphere',
+					'callIntent'
+				])
+			);
+			expect(withBrand.get('header')).toBe('none');
+		});
+
+		it('does not rebuild the address when the tenant refreshes or changes mid-call', async () => {
+			// The brand is handed over at the start. A rebuilt address with any
+			// difference would navigate the running call.
+			const client = createClient();
+			let current: unknown = tenantWith({
+				primaryColor: '#0a7a3c',
+				logo: 'x'
+			});
+			const wrapper = wrapperFor(() => current);
+			const { result, rerender } = renderHook(
+				() =>
+					useElementCallWidget(client, {
+						roomId: CALL_ROOM,
+						isVideo: true
+					}),
+				{ wrapper }
+			);
+			await waitFor(() => expect(result.current.url).not.toBeNull());
+			const first = result.current.url;
+			expect(fragmentOf(first!).get('orisoPrimary')).toBe('0a7a3c');
+
+			// The same Traeger resolved again (a locale change does that) ...
+			current = tenantWith({ primaryColor: '#0a7a3c', logo: 'x' });
+			rerender();
+			expect(result.current.url).toBe(first);
+
+			// ... and even another one: the running call keeps its own.
+			current = tenantWith({ primaryColor: '#a5000a' }, 15);
+			rerender();
+			expect(result.current.url).toBe(first);
+		});
+
+		it('keeps the brand it started with through a client refresh', async () => {
+			// A token refresh rebuilds the address with a new client. The call
+			// started before the tenant resolved; adding the brand now would
+			// change the iframe's src and navigate the running call.
+			let current: unknown = null;
+			const { result, rerender } = renderHook(
+				({ c }: { c: ReturnType<typeof createClient> }) =>
+					useElementCallWidget(c, {
+						roomId: CALL_ROOM,
+						isVideo: true
+					}),
+				{
+					initialProps: { c: createClient() },
+					wrapper: wrapperFor(() => current)
+				}
+			);
+			await waitFor(() => expect(result.current.url).not.toBeNull());
+			const first = result.current.url;
+			expect(fragmentOf(first!).has('orisoPrimary')).toBe(false);
+
+			current = tenantWith({ primaryColor: '#0a7a3c', logo: 'x' });
+			rerender({ c: createClient() });
+			await waitFor(() => expect(result.current.url).not.toBeNull());
+			expect(result.current.url).toBe(first);
+		});
+	});
+
 	it('fails closed when the host cannot join the call room', async () => {
 		const joinRoom = vi.fn().mockRejectedValue(new Error('join denied'));
 		const client = createClient({ membership: 'invite', joinRoom });
@@ -332,14 +648,16 @@ describe('useElementCallWidget', () => {
 	});
 
 	it('uses a different opaque widget id for each mounted call surface', async () => {
+		const firstClient = createClient();
+		const secondClient = createClient();
 		const first = renderHook(() =>
-			useElementCallWidget(createClient(), {
+			useElementCallWidget(firstClient, {
 				roomId: CALL_ROOM,
 				isVideo: true
 			})
 		);
 		const second = renderHook(() =>
-			useElementCallWidget(createClient(), {
+			useElementCallWidget(secondClient, {
 				roomId: CALL_ROOM,
 				isVideo: true
 			})

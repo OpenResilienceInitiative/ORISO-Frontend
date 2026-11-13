@@ -1,9 +1,44 @@
 {
+	"askerInfo": {
+		"noPrivacyNotice": {
+			"title": "Keine Datenschutzerklärung hinterlegt",
+			"text": "Diese Beratungsstelle hat keine Datenschutzerklärung hinterlegt. Die Person hat möglicherweise im Wissen darum zugestimmt. Die Beratungsstelle ist dafür verantwortlich. Dieser Hinweis ist nur für Beratende sichtbar."
+		}
+	},
+	"liveChatConversion": {
+		"title": "Gespräch behalten",
+		"intro": "Erstellen Sie ein Passwort für dieses Konto. Ihr Live-Chat bleibt erhalten.",
+		"keyHelp": "Bewahren Sie diesen Wiederherstellungsschlüssel sicher auf. Sie benötigen ihn und Ihr Passwort, um das Gespräch auf einem neuen Gerät zu lesen.",
+		"keySaved": "Ich habe meinen Wiederherstellungsschlüssel gespeichert",
+		"password": "Passwort",
+		"passwordHelp": "Mindestens 16 Zeichen",
+		"repeat": "Passwort wiederholen",
+		"submit": "Mein Konto erstellen",
+		"readyTitle": "Ihr Konto ist bereit",
+		"loginName": "Ihr Anmeldename:",
+		"readyHelp": "Ihr Live-Chat bleibt in diesem Konto. Sie können jetzt eine schriftliche Anfrage starten.",
+		"startRequest": "Schriftliche Anfrage starten",
+		"saveError": "Das Konto konnte nicht gespeichert werden. Versuchen Sie es mit demselben Passwort erneut.",
+		"statusError": "Der Kontostatus ist nicht verfügbar. Laden Sie die Seite erneut.",
+		"unavailable": "Dieses Konto kann nicht umgewandelt werden. Bitte wenden Sie sich an Ihre Beratungsfachkraft.",
+		"recoveryIntro": "Bereiten Sie zuerst den Wiederherstellungsschlüssel für Ihr bestehendes Gespräch vor. So bleiben Ihre Nachrichten auf einem neuen Gerät lesbar.",
+		"pending": "Ein vorheriger Versuch ist noch offen. Verwenden Sie dasselbe Passwort, um ihn abzuschließen.",
+		"recoveryError": "Der Wiederherstellungsschlüssel ist noch nicht verfügbar. Versuchen Sie es erneut oder geben Sie Ihren zuvor gespeicherten Schlüssel ein.",
+		"existingKey": "Zuvor gespeicherter Wiederherstellungsschlüssel (falls benötigt)",
+		"prepare": "Wiederherstellungsschlüssel vorbereiten",
+		"accountChanged": "Das angemeldete Konto hat sich geändert. Laden Sie die Seite für eine sichere Fortsetzung neu.",
+		"expiredTitle": "Diese Live-Chat-Sitzung ist abgelaufen",
+		"expiredHelp": "Wenn Sie bereits ein Passwort erstellt haben, melden Sie sich damit an. Andernfalls kann dieses Gespräch hier nicht mehr übernommen werden; eine neue Registrierung beginnt ein separates Gespräch.",
+		"signInAgain": "Melden Sie sich mit diesem Anmeldenamen und Ihrem neuen Passwort erneut an.",
+		"newRegistration": "Neue Registrierung beginnen",
+		"ownAccountHelp": "Sie können von diesem Konto aus eine schriftliche Anfrage starten."
+	},
 	"groupCardParticipants": {
 		"loading": "Teilnehmende werden geladen …",
 		"crowd": "{{count}} Teilnehmende",
 		"unavailable": "Teilnehmende konnten nicht geladen werden.",
-		"empty": "Keine Teilnehmenden."
+		"empty": "Keine Teilnehmenden.",
+		"memberCount": "Chatmitglieder: {{count}}"
 	},
 	"timelineSettings": {
 		"title": "Termine in der Gesprächsliste",
@@ -491,6 +526,7 @@
 		"absent": {
 			"message": " ist abwesend"
 		},
+		"assignedLabel": "Ihre Beratungsperson",
 		"jobTitle": "Beraterin oder Berater"
 	},
 	"date": {
@@ -612,6 +648,32 @@
 		"successOverlay": {
 			"button": "Ok",
 			"headline": "Sie haben den Chat erfolgreich gelöscht."
+		}
+	},
+	"historyRequest": {
+		"ask": {
+			"title": "Frühere Nachrichten sind hier nicht lesbar",
+			"intro": "Sie haben sich auf einem neuen Gerät angemeldet, deshalb sind Ihre früheren Nachrichten in diesem Gespräch gesperrt. Sie können Ihre Beratung bitten, sie freizugeben.",
+			"button": "Frühere Nachrichten anfragen",
+			"waiting": "Anfrage gesendet. Ihre Beratung muss sie bestätigen; danach erscheinen die Nachrichten hier. Passiert nichts, senden Sie die Anfrage erneut.",
+			"done": "Ihre früheren Nachrichten sind wieder lesbar.",
+			"failed": "Die Anfrage konnte nicht gesendet werden. Bitte versuchen Sie es erneut.",
+			"dialog": {
+				"title": "Frühere Nachrichten anfragen",
+				"description": "Ihre Beratung sieht, was Sie schreiben, und entscheidet, ob dieses Gespräch für Sie freigegeben wird.",
+				"label": "Worum ging es in diesem Gespräch?",
+				"cancel": "Abbrechen",
+				"send": "Anfrage senden"
+			}
+		},
+		"card": {
+			"title": "Anfrage, dieses Gespräch wieder lesen zu können",
+			"intro": "Die Person in diesem Gespräch hat sich auf einem neuen Gerät angemeldet und kann die früheren Nachrichten nicht lesen. Die Person hat geschrieben:",
+			"approve": "Gespräch freigeben",
+			"decline": "Ablehnen",
+			"origin": "Angefragt von {{user}} auf einem neuen Gerät ({{device}}), {{time}}. Das Gerät ist noch nicht verifiziert – geben Sie nur frei, wenn Sie diese Anfrage erwarten.",
+			"failed": "Die Schlüssel konnten nicht gesendet werden. Bitte versuchen Sie es noch einmal.",
+			"needsCrossSigning": "Dieses Gerät ist noch nicht verifiziert und kann deshalb keine Schlüssel freigeben. Bitte verifizieren Sie dieses Gerät zuerst und versuchen Sie es dann erneut."
 		}
 	},
 	"e2ee": {
@@ -1091,6 +1153,7 @@
 			"subscribers": {
 				"empty": "keine Teilnehmenden vorhanden",
 				"headline": "Teilnehmende",
+				"protectedName": "Teilnehmende Person {{number}}",
 				"menuLabel": "Optionen für {{name}}",
 				"role": {
 					"asker": "Ratsuchende:r",
@@ -1856,7 +1919,8 @@
 				"confirmLabel": "Neues Passwort bestätigen",
 				"submitLabel": "Passwort speichern",
 				"success": "Ihr Passwort wurde erfolgreich geändert. Sie können sich nun anmelden.",
-				"invalidToken": "Dieser Link ist ungültig oder abgelaufen. Bitte fordern Sie einen neuen Link an."
+				"invalidToken": "Dieser Link ist ungültig oder abgelaufen. Bitte fordern Sie einen neuen Link an.",
+				"requestNewLink": "Neuen Link anfordern"
 			}
 		},
 		"magicLink": {
@@ -2388,6 +2452,10 @@
 				"title": "Supervisor zugewiesen",
 				"text": "Diesem Fall wurde ein Supervisor zugewiesen."
 			},
+			"topicDuplicateStarted": {
+				"title": "Weitere Beratung zum selben Thema",
+				"text": "Zum selben Thema wurde eine weitere Beratung begonnen. Bitte klären Sie gemeinsam, welche Beratung weitergeführt wird."
+			},
 			"counselorRenamed": {
 				"title": "Berater:in umbenannt",
 				"text": "Der Anzeigename der Beratung hat sich geändert."
@@ -2437,12 +2505,12 @@
 				}
 			},
 			"caseHandoverConsentDeclined": {
-				"title": "Fallübergabe abgelehnt",
-				"text": "Die Klient:innen-Zustimmung wurde abgelehnt. Inhalte bleiben gesperrt."
+				"title": "Einwilligung abgelehnt",
+				"text": "Die ratsuchende Person hat die Einwilligung abgelehnt. Den aktuellen Zugriff sehen Sie im Gespräch."
 			},
 			"caseHandoverOfferSent": {
 				"title": "Übergabeangebot gesendet",
-				"text": "Das Angebot wartet auf die Antwort der Kolleg:in. Solange die Übergabe nicht abgeschlossen ist, kann es zurückgezogen werden."
+				"text": "Das Angebot zur Fallübergabe wurde an eine andere Beratungsperson gesendet."
 			},
 			"caseHandoverOfferDeclined": {
 				"title": "Übergabeangebot abgelehnt",
@@ -2454,7 +2522,7 @@
 			},
 			"caseHandoverOfferReceived": {
 				"title": "Angebot zur Fallübergabe",
-				"text": "{{fromConsultantName}} möchte diese Beratung an Sie übergeben. Prüfen Sie die Anfrage, bevor Sie das Gespräch öffnen.",
+				"text": "{{fromConsultantName}} hat Ihnen die Übernahme dieser Beratung angeboten.",
 				"coAccess": {
 					"title": "Angebot für vorübergehenden Zugriff",
 					"text": "{{fromConsultantName}} bietet Ihnen vorübergehenden Zugriff auf diese Beratung an. Die bisherige Beratungsperson bleibt verantwortlich."
@@ -2595,7 +2663,21 @@
 				"loadingOlder": "Ältere Nachrichten werden geladen …",
 				"loadOlderFailed": "Ältere Nachrichten konnten nicht geladen werden.",
 				"retryLoadOlder": "Erneut versuchen",
-				"historyStart": "Beginn des Gesprächs"
+				"historyStart": "Beginn des Gesprächs",
+				"markRead": "Unterhaltung als gelesen markieren",
+				"openToReply": "Zum Antworten die Unterhaltung öffnen",
+				"sendFailed": "Senden fehlgeschlagen. Ihr Text bleibt erhalten.",
+				"composerPlaceholder": "Antwort schreiben …",
+				"markedRead": "Als gelesen markiert",
+				"archivedOpenToReply": "Diese Unterhaltung ist archiviert. Öffnen Sie die Unterhaltung, um zu antworten.",
+				"notJoined": "Nur lesen, bis Ihr Beitritt bestätigt und der Raum geladen ist.",
+				"supervisorNoComposer": "Als Supervisor:in können Sie hier reagieren, aber nicht schreiben.",
+				"teamClosed": "Die Teamberatung ist geschlossen.",
+				"curtained": "Dieser Fall ist für Sie gerade nicht einsehbar.",
+				"backToConversation": "Zurück zur Unterhaltung",
+				"enquiryOpenToAccept": "Diese Anfrage ist noch nicht angenommen. Öffnen Sie die Unterhaltung, um sie anzunehmen.",
+				"consentOpenToContinue": "Bitte bestätigen Sie zuerst im Chat, wie es weitergeht. Öffnen Sie dazu die Unterhaltung.",
+				"actionFailed": "Das hat nicht geklappt. Bitte versuchen Sie es erneut."
 			},
 			"loadOlder": "Ältere Aktivitäten laden",
 			"loadingOlder": "Ältere Aktivitäten werden geladen…",
@@ -3032,6 +3114,7 @@
 				},
 				"kind": {
 					"new": "Neue Anfrage",
+					"teamDiscussion": "Team-Besprechung",
 					"standard": "Standard-Benachrichtigung",
 					"liveChat": "Live-Chat-Nachricht",
 					"mention": "@ Erwähnung",
@@ -3042,7 +3125,11 @@
 				"play": "Ton vorhören",
 				"volumeUp": "Lauter",
 				"volumeDown": "Leiser",
+				"unavailable": {
+					"notSentYet": "Diese Benachrichtigung ist noch nicht verfügbar."
+				},
 				"showBanner": "Banner anzeigen",
+				"systemTone": "Ton für Systemmeldungen",
 				"ringTone": "Klingelton",
 				"wecker": {
 					"title": "Wecker-Modus (geplant)",
@@ -3468,6 +3555,12 @@
 			}
 		},
 		"dataProtection": {
+			"noNotice": {
+				"title": "Keine Datenschutzerklärung hinterlegt",
+				"body": "Für diese Beratungsstelle ist keine Datenschutzerklärung hinterlegt. Die Beratungsstelle ist dafür verantwortlich. Sie können trotzdem fortfahren, wenn Sie das bewusst möchten.",
+				"cancel": "Zurück",
+				"continue": "Trotzdem fortfahren"
+			},
 			"cookieNotice": "Für Authentifizierung und Navigation verwendet diese Webseite Cookies.",
 			"machineTranslated": "Maschinell übersetzt — rechtlich verbindlich ist die Originalfassung ({{language}}).",
 			"unrenderable": "Der Einwilligungstext dieser Beratungsstelle kann derzeit nicht angezeigt werden. Bitte versuchen Sie es später erneut oder wenden Sie sich an die Beratungsstelle.",
@@ -6612,6 +6705,10 @@
 		}
 	},
 	"directLink": {
+		"postcode": {
+			"helper": "Nur für die Statistik. Die Postleitzahl bestimmt weder Beratungsstelle noch Beraterin – das legt der Link fest.",
+			"invalid": "Bitte geben Sie Ihre fünfstellige Postleitzahl ein."
+		},
 		"card": {
 			"title": "Direktlink",
 			"subtitle": "Für Ratsuchende",
@@ -6685,8 +6782,7 @@
 		},
 		"circles": {
 			"title": "Nächste Gesprächskreise",
-			"participants": "{{count}} Teilnehmende",
-			"participants_one": "{{count}} Teilnehmende"
+			"assignedCounsellors": "Beratungsteam: {{count}}"
 		}
 	},
 	"temporaryAccount": {

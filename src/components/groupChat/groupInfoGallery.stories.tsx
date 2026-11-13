@@ -1,6 +1,6 @@
 import { expectWaitingRoomLayout } from '../app/registrationLoader/waitingRoomLayoutContract';
 import * as React from 'react';
-import { expect, waitFor, within } from 'storybook/test';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Box } from '@mui/material';
 import { GroupInfoGallery } from './entryRoom/GroupInfoGallery';
@@ -13,7 +13,8 @@ import {
 } from '../../globalState/provider/LegalLinksProvider';
 import {
 	desktop1440Globals,
-	phone375Globals
+	phone375Globals,
+	tablet820Globals
 } from '../message/messageStoryShell';
 
 /**
@@ -135,6 +136,134 @@ export const InfoGalleryMobile: StoryObj = {
 			description: {
 				story: 'Auf 375 pt: dieselben Karten, aber hoch statt quadratisch — das Karussell schaltet selbst um. Die Karten reichen bis an die Ränder, damit sichtbar bleibt, dass es weitergeht.'
 			}
+		}
+	}
+};
+
+export const InfoGalleryTabletSelection: StoryObj = {
+	name: 'Tablet — visible card and current step agree',
+	globals: tablet820Globals,
+	render: () => (
+		<Box
+			sx={{
+				width: 'min(772px, 100%)',
+				height: '100vh',
+				mx: 'auto',
+				display: 'flex',
+				flexDirection: 'column'
+			}}
+		>
+			<GroupInfoGallery onBack={() => undefined} />
+		</Box>
+	),
+	play: async ({ canvasElement, canvas }) => {
+		await expectWaitingRoomLayout(canvasElement, {
+			frame: false,
+			cards: true
+		});
+		const track = canvas.getByRole('list');
+		const step = (position: number) =>
+			canvas.getByRole('button', {
+				name: `Zu Schritt ${position} von 3`
+			});
+		const end = () => track.scrollWidth - track.clientWidth;
+		const cardCentre = (card: HTMLElement) =>
+			card.offsetLeft + card.offsetWidth / 2;
+		const [firstCard, secondCard, thirdCard] =
+			canvas.getAllByRole('listitem');
+		const width = track.clientWidth;
+		const secondCentre = cardCentre(secondCard);
+		await expect(width).toBeGreaterThan(secondCentre);
+		await expect(width).toBeLessThan(cardCentre(thirdCard));
+
+		await expect(step(1)).toHaveAttribute('aria-current', 'true');
+		await userEvent.click(step(2));
+		// The middle card is already visible at the left snap position.
+		await expect(track.scrollLeft).toBe(0);
+		await expect(step(2)).toHaveAttribute('aria-current', 'true');
+		await userEvent.click(canvas.getAllByRole('img')[0]);
+		await expect(step(2)).toHaveAttribute('aria-current', 'true');
+
+		await userEvent.click(step(2));
+		await userEvent.tab();
+		await expect(step(3)).toHaveFocus();
+		let activationSettled = !('onscrollend' in track);
+		track.addEventListener(
+			'scrollend',
+			() => {
+				activationSettled = true;
+			},
+			{ once: true }
+		);
+		await userEvent.keyboard('{Enter}');
+		await waitFor(() => {
+			expect(track.scrollLeft).toBeCloseTo(end(), 0);
+			expect(activationSettled).toBe(true);
+		});
+		await expect(step(3)).toHaveAttribute('aria-current', 'true');
+		await expect(step(3)).toHaveFocus();
+
+		const settledPosition = track.scrollLeft;
+		const keepingThirdVisible = Math.floor(
+			(width + cardCentre(thirdCard) - settledPosition) / 2
+		);
+		try {
+			// A width change can move the native snap position while keeping
+			// the chosen card visible. That move belongs to the resize.
+			track.style.width = `${keepingThirdVisible}px`;
+			await waitFor(() => {
+				expect(track.clientWidth).toBe(keepingThirdVisible);
+				expect(track.scrollLeft).not.toBe(settledPosition);
+			});
+			await new Promise<void>((resolve) =>
+				requestAnimationFrame(() =>
+					requestAnimationFrame(() => resolve())
+				)
+			);
+			await expect(cardCentre(thirdCard) - track.scrollLeft).toBeLessThan(
+				track.clientWidth
+			);
+			await expect(step(3)).toHaveAttribute('aria-current', 'true');
+
+			// A later real scroll can arrive without a wheel, touch or key
+			// event on this track, for example when using a scrollbar.
+			track.scrollTo({ left: 0, behavior: 'instant' });
+			await waitFor(() => {
+				expect(track.scrollLeft).toBe(0);
+				expect(step(1)).toHaveAttribute('aria-current', 'true');
+			});
+		} finally {
+			track.style.removeProperty('width');
+		}
+		await waitFor(() => expect(track.clientWidth).toBe(width));
+
+		await userEvent.click(step(2));
+		await expect(step(2)).toHaveAttribute('aria-current', 'true');
+		const keepingSecondVisible = Math.floor((width + secondCentre) / 2);
+		const clippingSecond = Math.floor(
+			(cardCentre(firstCard) + secondCentre) / 2
+		);
+		try {
+			// First shrink the track while it still contains card 2's centre.
+			track.style.width = `${keepingSecondVisible}px`;
+			await waitFor(() =>
+				expect(track.clientWidth).toBe(keepingSecondVisible)
+			);
+			await new Promise<void>((resolve) =>
+				requestAnimationFrame(() =>
+					requestAnimationFrame(() => resolve())
+				)
+			);
+			await expect(step(2)).toHaveAttribute('aria-current', 'true');
+
+			// Narrow it past the selected card so the visible card owns the dot.
+			track.style.width = `${clippingSecond}px`;
+			await waitFor(() => {
+				expect(track.clientWidth).toBe(clippingSecond);
+				expect(step(1)).toHaveAttribute('aria-current', 'true');
+			});
+		} finally {
+			track.style.removeProperty('width');
 		}
 	}
 };

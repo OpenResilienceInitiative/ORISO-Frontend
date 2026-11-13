@@ -20,6 +20,7 @@ import { useMenuEffects } from '../../features/menu-effects/useMenuEffects';
 import * as React from 'react';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import sanitizeHtml from 'sanitize-html';
+import { nameTaskListCheckboxes } from './nameTaskListCheckboxes';
 import { PrettyDate } from '../../utils/dateHelpers';
 import { getMatrixClientLogger } from '../../utils/matrixLogging';
 import {
@@ -48,7 +49,7 @@ import type { CallLifecycleMessage } from '../../utils/callLifecycleMessage';
 import { shouldShowDeviceCheck } from '../call/prejoin/callPrejoin';
 import type { CallJoinHooks } from '../directLinkEntry/callMessageKnock';
 import { CallTimelineMessage } from './CallTimelineMessage';
-import { apiCallState } from '../../api/apiCallState';
+import { apiCallStateRead } from '../../api/apiCallState';
 import { callManager } from '../../services/CallManager';
 import {
 	callCardMayKnock,
@@ -326,11 +327,17 @@ interface MessageItemComponentProps extends MessageItem {
 	handleDecryptionSuccess: (id: string) => void;
 	e2eeParams: e2eeParams & { subscriptionKeyLost: boolean };
 	/**
-	 * #420: the Activity Timeline preview shows the real row, but nothing in
-	 * it may write — no action menu, no reacting, no joining a call, no
-	 * consent or notification setup. Reading stays (text, links, files).
+	 * The row is shown in the Activity Timeline preview, outside its
+	 * conversation (#420 / #1824). Undefined in the chat.
+	 * - `read`: nothing in the row may write — no action menu, no reacting,
+	 *   no joining a call, no consent or notification setup. Reading stays.
+	 * - `interactive`: the message actions whose handlers are wired (reply,
+	 *   edit, delete, react, open thread) work as in the chat, but nothing
+	 *   that leaves the Timeline is offered — no call join, no consent or
+	 *   notification setup, no Erstantwort actions, no menu entry without a
+	 *   handler here.
 	 */
-	readOnly?: boolean;
+	previewMode?: 'read' | 'interactive';
 }
 
 export const MessageItemComponent = ({
@@ -376,9 +383,13 @@ export const MessageItemComponent = ({
 	onUnreact,
 	sendFailed,
 	encryptionBroke,
-	readOnly = false
+	previewMode
 }: MessageItemComponentProps) => {
 	const { t: translate } = useTranslation();
+	const inPreview = previewMode !== undefined;
+	const readOnly = previewMode === 'read';
+	// Nothing in the preview may lead out of the Timeline (#1824).
+	const blocksLeavingActions = inPreview;
 	const {
 		activeSession,
 		reloadActiveSession,
@@ -1140,11 +1151,13 @@ export const MessageItemComponent = ({
 			)
 		);
 		const hasRichHtml =
-			/<(p|h[1-6]|strong|em|u|mark|span|blockquote|ul|ol|li|a|br|img|sup|sub|code|pre)\b/i.test(
+			/<(p|h[1-6]|strong|em|u|mark|span|blockquote|ul|ol|li|a|br|hr|img|sup|sub|code|pre)\b/i.test(
 				preparedMessage
 			);
 		if (hasRichHtml) {
-			return sanitizeHtml(preparedMessage, sanitizeHtmlDefaultOptions);
+			return nameTaskListCheckboxes(
+				sanitizeHtml(preparedMessage, sanitizeHtmlDefaultOptions)
+			);
 		}
 
 		try {
@@ -1440,11 +1453,15 @@ export const MessageItemComponent = ({
 						}
 					]
 				: []),
-			{
-				key: 'reply-thread',
-				label: translate('message.menu.replyThread'),
-				icon: <MenuReplyThreadIcon />
-			},
+			...(!inPreview || onOpenThread
+				? [
+						{
+							key: 'reply-thread',
+							label: translate('message.menu.replyThread'),
+							icon: <MenuReplyThreadIcon />
+						}
+					]
+				: []),
 			// Editing (m.replace, #435): own messages only, where a handler
 			// is wired (main timeline; not the thread panel).
 			...(onEditDirect
@@ -1456,16 +1473,21 @@ export const MessageItemComponent = ({
 						}
 					]
 				: []),
-			{
-				key: 'mark-text',
-				label: translate('message.menu.markText'),
-				icon: <MenuMarkTextIcon />
-			},
-			{
-				key: 'forward',
-				label: translate('message.menu.forward'),
-				icon: <MenuForwardIcon />
-			},
+			// #1824: no handlers outside the conversation.
+			...(inPreview
+				? []
+				: [
+						{
+							key: 'mark-text',
+							label: translate('message.menu.markText'),
+							icon: <MenuMarkTextIcon />
+						},
+						{
+							key: 'forward',
+							label: translate('message.menu.forward'),
+							icon: <MenuForwardIcon />
+						}
+					]),
 			// Delete (#827): Matrix redact handler + allow-deleting + not archived.
 			...(canDeleteMessage
 				? [
@@ -1477,8 +1499,21 @@ export const MessageItemComponent = ({
 					]
 				: [])
 		],
-		[translate, onReplyDirect, onEditDirect, canDeleteMessage]
+		[
+			translate,
+			onReplyDirect,
+			onEditDirect,
+			canDeleteMessage,
+			inPreview,
+			onOpenThread
+		]
 	);
+
+	// #1824: the menu also carries the quick reactions, so a row whose only
+	// action is reacting (a supervisor in the preview) still gets it; a row
+	// with nothing to do shows no menu button and no long-press.
+	const hasMenuActions =
+		!readOnly && (actionMenuItems.length > 0 || Boolean(onReact));
 
 	const handleActionMenuItemClick = useCallback(
 		(actionKey: string) => {
@@ -2254,7 +2289,7 @@ export const MessageItemComponent = ({
 									? 'messageItem__message messageItem__message--myMessage'
 									: 'messageItem__message'
 							} ${isSystemNotification ? 'messageItem__message--systemNotification' : ''} ${isWideMessage ? 'messageItem__message--wide' : ''}`}
-							{...(readOnly
+							{...(!hasMenuActions
 								? {}
 								: {
 										onPointerDown: handleBubblePointerDown,
@@ -2284,9 +2319,9 @@ export const MessageItemComponent = ({
 												sessionId={
 													activeSession.item.id
 												}
-												readOnly={readOnly}
+												readOnly={blocksLeavingActions}
 												onSetupNotifications={
-													!readOnly &&
+													!blocksLeavingActions &&
 													(grantNotificationPolicy.emailAllowed ||
 														grantNotificationPolicy.browserAllowed)
 														? () =>
@@ -2311,9 +2346,9 @@ export const MessageItemComponent = ({
 												sessionId={
 													activeSession.item.id
 												}
-												readOnly={readOnly}
+												readOnly={blocksLeavingActions}
 												onSetupNotifications={
-													!readOnly &&
+													!blocksLeavingActions &&
 													(grantNotificationPolicy.emailAllowed ||
 														grantNotificationPolicy.browserAllowed)
 														? () =>
@@ -2345,7 +2380,10 @@ export const MessageItemComponent = ({
 									<FurtherCounsellingNoticeBody
 										notice={furtherCounsellingNotice}
 										viewerIsAsker={
+											// The button opens a new enquiry, which leaves the
+											// Timeline: never offered in a preview (#1824).
 											!readOnly &&
+											!blocksLeavingActions &&
 											hasUserAuthority(
 												AUTHORITIES.ASKER_DEFAULT,
 												userData
@@ -2746,7 +2784,7 @@ export const MessageItemComponent = ({
 				{getMessageDate()}
 				<CallTimelineMessage
 					call={callLifecycle}
-					loadState={apiCallState}
+					loadState={apiCallStateRead}
 					/* #2016: camera and microphone first, as guests get. */
 					deviceCheck={() =>
 						shouldShowDeviceCheck({
@@ -2758,7 +2796,7 @@ export const MessageItemComponent = ({
 						})
 					}
 					onJoin={
-						readOnly ||
+						blocksLeavingActions ||
 						isUserBanned ||
 						activeSession?.item?.status === STATUS_ARCHIVED
 							? undefined
@@ -2809,7 +2847,7 @@ export const MessageItemComponent = ({
 			>
 				{getMessageDate()}
 				<ErstantwortMessage
-					readOnly={readOnly}
+					readOnly={blocksLeavingActions}
 					rawMessage={decryptedMessage}
 					messageId={_id}
 					conversationType={erstantwortModality}
@@ -2963,7 +3001,7 @@ export const MessageItemComponent = ({
 										/>
 									)}
 								</div>
-								{!readOnly && (
+								{hasMenuActions && (
 									<button
 										type="button"
 										className="messageItem__kebabButton messageItem__kebabButton--left"
@@ -3017,7 +3055,7 @@ export const MessageItemComponent = ({
 					isSystemNotification && (
 						<CarimatAvatar
 							menu={
-								!readOnly && (
+								hasMenuActions && (
 									<button
 										type="button"
 										className="messageItem__kebabButton messageItem__kebabButton--left"
@@ -3071,7 +3109,7 @@ export const MessageItemComponent = ({
 								</button>
 							)}
 							<div className="messageItem__sideColumnGroup messageItem__sideColumnGroup--right">
-								{!readOnly && (
+								{hasMenuActions && (
 									<button
 										type="button"
 										className="messageItem__kebabButton messageItem__kebabButton--right"
@@ -3155,10 +3193,10 @@ export const MessageItemComponent = ({
 					{renderMode === 'main' &&
 						threadsEnabled &&
 						!alias?.messageType &&
-						(onOpenThread || readOnly) &&
+						(onOpenThread || inPreview) &&
 						threadSummary &&
 						threadSummary.replyCount > 0 &&
-						(readOnly ? (
+						(!onOpenThread || readOnly ? (
 							// #420: the preview shows that a thread exists,
 							// without opening it.
 							<div

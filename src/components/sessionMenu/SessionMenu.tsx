@@ -1,5 +1,8 @@
 import { useConversationFeatureSettings } from '../../hooks/useConversationFeatureSettings';
-import { getSessionMenuAgency } from './sessionMenuAgency';
+import {
+	getSessionMenuAgency,
+	getSessionMenuLegalDepartment
+} from './sessionMenuAgency';
 import { createPortal } from 'react-dom';
 import { MenuBackdrop } from '../chatMenuDropdown/MenuBackdrop';
 import { useChatMenuPosition } from '../chatMenuDropdown/useChatMenuPosition';
@@ -25,6 +28,7 @@ import {
 } from '../../globalState';
 import { STATUS_REJECTED } from '../../globalState/interfaces/SessionsDataInterface';
 import { startRoomCall } from '../call/startRoomCall';
+import { callRoomName } from '../call/callRoomName';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import { resolveCallFeatureGates } from '../call/callFeatureGates';
 import {
@@ -58,9 +62,9 @@ import {
 import { logout } from '../logout/logout';
 import { mobileListView } from '../app/navigationHandler';
 import {
+	canEditGroupChatSettings,
 	canModerateGroupChat,
-	getStoppedGroupChatRemovalIds,
-	isGroupChatOwner
+	getStoppedGroupChatRemovalIds
 } from '../groupChat/groupChatHelpers';
 import { ReactComponent as LeaveChatIcon } from '../../resources/img/icons/out.svg';
 import { ReactComponent as GroupChatInfoIcon } from '../../resources/img/icons/i.svg';
@@ -75,6 +79,7 @@ import { ReactComponent as ProfileIcon } from '../../resources/img/icons/profil_
 import { ReactComponent as MenuVideoCallIcon } from '../../resources/img/icons/modality-video.svg';
 import { ReactComponent as MenuAudioCallIcon } from '../../resources/img/icons/timeline-add-call.svg';
 import { NotificationConfigDialog } from '../profile/NotificationSettings/NotificationConfigDialog';
+import { notificationRoleFor } from '../profile/NotificationSettings/notificationRole';
 import { useNotificationSettings } from '../../hooks/useNotificationSettings';
 import { LegalLinkMenuIcon } from '../legalLinks/LegalLinkMenuIcon';
 import { getLegalLinkKind } from '../legalLinks/useLegalLinkContent';
@@ -205,6 +210,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 	const { settings: notifSettings, updateSettings: updateNotifSettings } =
 		useNotificationSettings();
 	const appConfig = useAppConfig();
+	const notificationRole = notificationRoleFor(userData);
 	// Never link to an e-mail panel the Admin permissions hide (#1979). Read
 	// the merged tenant context, like the Settings panel itself: the
 	// per-session refresh is a raw partial answer and could disagree.
@@ -212,7 +218,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 	const hasEmailSettings = hasEmailSettingsPanel(
 		appConfig,
 		tenant?.settings,
-		!!hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
+		notificationRole === 'consultant'
 	);
 	const [overlayActive, setOverlayActive] = useState(false);
 	const [legalModal, setLegalModal] = useState<{
@@ -518,6 +524,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 
 	const hasMatrixRoom = !!activeSession.item.matrixRoomId;
 	const menuAgency = getSessionMenuAgency(activeSession);
+	const legalDepartment = getSessionMenuLegalDepartment(activeSession);
 	const baseUrl = hasMatrixRoom
 		? `${listPath}/:groupId/:id/:subRoute?/:extraPath?${getSessionListTab()}`
 		: `${listPath}/session/:id/:subRoute?/:extraPath?${getSessionListTab()}`;
@@ -605,7 +612,9 @@ export const SessionMenu = (props: SessionMenuProps) => {
 			isVideo: isVideoActivated,
 			// Force 1:1 Matrix WebRTC for non-group sessions so audio calls are
 			// not misrouted to Element Call (which always enables video).
-			isGroup: activeSession.isGroup ? true : false
+			isGroup: activeSession.isGroup ? true : false,
+			// #2170: the call is called what the direct link was called.
+			roomName: callRoomName(activeSession.item)
 		});
 	};
 
@@ -1246,6 +1255,11 @@ export const SessionMenu = (props: SessionMenuProps) => {
 					title={legalModal.title}
 					url={legalModal.url}
 					onClose={() => setLegalModal(null)}
+					/* ORISO-Admin#1490: the advice centre's published text, not
+					   the Träger template; tenant text when no department is known. */
+					{...(legalDepartment
+						? { scope: 'agency' as const, ...legalDepartment }
+						: {})}
 				/>
 			)}
 			{overlayActive && (
@@ -1277,9 +1291,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 				}}
 				onClose={() => setNotifConfigOpen(false)}
 				showEmailLink={hasEmailSettings}
-				showLiveChatRow={
-					!!hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
-				}
+				role={notificationRole}
 			/>
 		</div>
 	);
@@ -1378,8 +1390,8 @@ const SessionMenuFlyoutGroup = ({
 						/>
 					</div>
 				)}
-			{isGroupChatOwner(activeSession, userData) &&
-				!activeSession.item.active && (
+			{editGroupChatSettingsLink &&
+				canEditGroupChatSettings(activeSession, userData) && (
 					<Link
 						to={editGroupChatSettingsLink}
 						state={{

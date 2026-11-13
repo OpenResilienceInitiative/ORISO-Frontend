@@ -39,6 +39,7 @@ import { LiveChatAccess } from './LiveChatAccess';
 import { LiveChatWaitingRoom } from './LiveChatWaitingRoom';
 import { LiveChatClosed } from './LiveChatClosed';
 import { LiveChatChecking } from './LiveChatChecking';
+import { mailTarget } from '../../liveChatConversion/mailTarget';
 import { EntryRoomView } from './EntryRoomView';
 import {
 	readConfirmedEntryName,
@@ -666,7 +667,13 @@ const LiveChatEntryRoomContent = ({
 		});
 	}, [sessionId]);
 
-	const goToMail = useCallback(() => navigate('/registration'), [navigate]);
+	const goToMail = useCallback(() => {
+		if (sessionId === null) navigate(mailTarget(null));
+		else
+			navigate(mailTarget(sessionId), {
+				state: { topicId: department?.topicId ?? invite?.topicId }
+			});
+	}, [navigate, sessionId, department?.topicId, invite?.topicId]);
 
 	const nobodyLive = isNobodyLiveConfirmed(
 		available,

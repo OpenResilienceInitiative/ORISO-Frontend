@@ -258,3 +258,48 @@ it('does not restore a finished conversation when an older live refresh resolves
 	expect(dispatch).toHaveBeenCalledTimes(1);
 	expect(dispatch.mock.calls[0][0].sessions).toEqual([]);
 });
+
+/*
+ * #2136: on a counsellor's "Gespräch" list a live refresh (a Matrix message
+ * from a room the list does not hold yet) replaces the first page request
+ * while it is still loading. The replaced request may no longer touch the
+ * loading state, so the refresh has to clear it; otherwise a skeleton card
+ * stays below the real rows as an empty "ghost chat" until the next reload.
+ */
+it.each(['abort', 'late-success', 'late-failure'])(
+	'clears the loading card when a live refresh replaces the first counsellor page (%s)',
+	async (settlement) => {
+		getList.mockReset();
+		getList.mockResolvedValue({ sessions: [], total: 0 });
+		let finish!: (value: { sessions: []; total: number }) => void;
+		let fail!: (error: Error) => void;
+		getList.mockReturnValueOnce(
+			new Promise((resolve, reject) => {
+				finish = resolve;
+				fail = reject;
+			})
+		);
+		const view = renderEnquiries(vi.fn(), SESSION_LIST_TYPES.MY_SESSION);
+		await waitFor(() => expect(getList).toHaveBeenCalledTimes(1));
+		expect(view.container.querySelector('.skeleton')).not.toBeNull();
+		let finishRefresh!: (value: { sessions: []; total: number }) => void;
+		getList.mockReturnValueOnce(
+			new Promise((resolve) => {
+				finishRefresh = resolve;
+			})
+		);
+
+		act(() => messageEventEmitter.emit({ roomId: '!unknown:oriso' }));
+		await waitFor(() => expect(getList).toHaveBeenCalledTimes(2));
+		await act(async () => {
+			if (settlement === 'late-success')
+				finish({ sessions: [], total: 999 });
+			else
+				fail(new Error(settlement === 'abort' ? 'ABORT' : 'CATCH_ALL'));
+		});
+		expect(view.container.querySelector('.skeleton')).not.toBeNull();
+
+		await act(async () => finishRefresh({ sessions: [], total: 0 }));
+		expect(view.container.querySelector('.skeleton')).toBeNull();
+	}
+);

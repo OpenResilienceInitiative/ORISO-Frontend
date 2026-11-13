@@ -301,7 +301,7 @@ export const runtimeGroupChat = ({
  * stories pin both visual states.
  */
 export const seedMatrixRoom = (
-	unreadCount: number,
+	unreadCount: number | Readonly<Record<string, number>>,
 	count = 3,
 	delayed = false,
 	failed = false
@@ -338,7 +338,10 @@ export const seedMatrixRoom = (
 					? Promise.reject(new Error('Membership unavailable'))
 					: hydration,
 			getJoinedMembers: () => members,
-			getUnreadNotificationCount: () => unreadCount
+			getUnreadNotificationCount: () =>
+				typeof unreadCount === 'number'
+					? unreadCount
+					: (unreadCount[roomId] ?? 0)
 		};
 	}
 	const removeListener = (name: string, listener: (...args: any[]) => void) =>

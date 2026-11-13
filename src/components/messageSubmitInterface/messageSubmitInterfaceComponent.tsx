@@ -20,6 +20,8 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { SendButton } from './inputField/SendButton';
 import { hasMediaUploadFeature } from '../../utils/mediaUploadHelpers';
 import { usePracticeActive } from '../../practice';
+import { isPracticeDraftScope } from '../../practice/practiceDraftScopes';
+import { isOpaqueDraftScope } from '../../services/draftCryptography';
 import { getCurrentMatrixUserId } from '../../utils/matrixSession';
 import { isMatrixRoomEncrypted } from '../../utils/matrixRoomEncryption';
 import { apiGetSessionRoomBySessionId } from '../../api/apiGetSessionRooms';
@@ -62,6 +64,7 @@ import {
 	shouldShowAudienceSelector
 } from './audienceSelectorVisibility';
 import { useComposerDock } from './useComposerDock';
+import { useEditorResize } from './useEditorResize';
 import {
 	createEnquirySubmissionGuard,
 	dispatchAskerMessageTransport,
@@ -73,8 +76,10 @@ import { resolveAsideTargetRoomId, resolvePrimaryRoomId } from './asideRouting';
 import { reloadSessionAfterSendIfNeeded } from './sessionRefreshAfterSend';
 import { chatTransportService } from '../../services/chatTransportService';
 import { extractMentionedUserIds } from '../../utils/messageMentions';
+import { decodeUsernameSafely } from '../../utils/encryptionHelpers';
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import { getModality, Modality } from '../session/getModality';
+import { resolveAssignedConsultantLabel } from '../session/assignedConsultantLabel';
 import { STATUS_ENQUIRY } from '../../globalState/interfaces/SessionsDataInterface';
 import {
 	AUDIENCE_ALL,
@@ -91,6 +96,8 @@ import {
 	audienceOptionsReady,
 	audienceSelectionStorageKeyFor,
 	groupAudienceOptions,
+	resolveMentionCandidates,
+	roomMentionMemberIds,
 	type AudienceKind,
 	type AudienceOption
 } from './audienceOptions';
@@ -143,6 +150,7 @@ import {
 	buildVisibleToPrefix
 } from '../message/messageConstants';
 import { useE2EE } from '../../hooks/useE2EE';
+import { useLoadRoomMembers } from '../../hooks/useLoadRoomMembers';
 import {
 	apiPostError,
 	ERROR_LEVEL_ERROR,
@@ -357,6 +365,17 @@ export interface MessageSubmitInterfaceComponentProps {
 		feedbackMailIntent?: boolean;
 	} | null;
 	onRetrySettled?: (requestId: string) => void;
+	/**
+	 * #1824: the conversation's own path, for a composer shown outside it
+	 * (the Activity Timeline preview) — the draft then resumes in the
+	 * conversation, not on the page the composer happened to be on.
+	 */
+	draftActionPath?: string | null;
+	/**
+	 * #1824: sending into an archived conversation re-opens it. The Timeline
+	 * preview must never do that (it leaves the Timeline), so it passes false.
+	 */
+	allowDearchive?: boolean;
 }
 
 /*
@@ -499,7 +518,9 @@ export const MessageSubmitInterfaceComponent = ({
 	isOwnMessage,
 	onSendError,
 	retryRequest,
-	onRetrySettled
+	onRetrySettled,
+	draftActionPath: draftActionPathOverride = null,
+	allowDearchive = true
 }: MessageSubmitInterfaceComponentProps) => {
 	const { t: translate } = useTranslation();
 
@@ -661,6 +682,16 @@ export const MessageSubmitInterfaceComponent = ({
 	// transition reads the old chrome and locks a mid-flight height into
 	// `--composer-height`; every ended height transition re-measures.
 	const [composerSettleTick, setComposerSettleTick] = useState(0);
+	const observeEditorContainer = useEditorResize(() =>
+		setComposerSettleTick((tick) => tick + 1)
+	);
+	const setTextareaInputRef = useCallback(
+		(node: HTMLDivElement | null) => {
+			textareaInputRef.current = node;
+			observeEditorContainer(node);
+		},
+		[observeEditorContainer]
+	);
 	const [isComposerResizing, setIsComposerResizing] = useState(false);
 	const [isComposerSelected, setIsComposerSelected] = useState(false);
 	const composerResizeStartRef = useRef<{
@@ -697,7 +728,14 @@ export const MessageSubmitInterfaceComponent = ({
 		Array<{ id: string; username: string }>
 	>([]);
 	const [agencyConsultantDirectory, setAgencyConsultantDirectory] = useState<
-		Map<string, { displayName: string; username: string }>
+		Map<
+			string,
+			{
+				displayName: string;
+				username: string;
+				matrixUserId?: string | null;
+			}
+		>
 	>(new Map());
 	/**
 	 * Why the mention directory looks the way it does (#993). Every failure
@@ -792,6 +830,16 @@ export const MessageSubmitInterfaceComponent = ({
 	}, [activeSession, activeSession.item.status, userData]);
 
 	const draftActionPath = useMemo(() => {
+		if (draftActionPathOverride) {
+			return buildSessionChannelPath(
+				draftActionPathOverride,
+				resolveComposerChannel({
+					threadRootId,
+					targetRoomId,
+					targetChannelKind
+				})
+			);
+		}
 		const params = new URLSearchParams(location.search);
 		params.delete('embeddedNotifications');
 		params.delete('draftScopeKey');
@@ -809,6 +857,7 @@ export const MessageSubmitInterfaceComponent = ({
 			})
 		);
 	}, [
+		draftActionPathOverride,
 		location.pathname,
 		location.search,
 		targetChannelKind,
@@ -852,18 +901,21 @@ export const MessageSubmitInterfaceComponent = ({
 		return contact?.displayName || contact?.username || topicName || null;
 	}, [activeSession, contact]);
 
+	const draftPractice = usePracticeActive();
 	const forcedDraftScopeKey = useMemo(() => {
-		const params = new URLSearchParams(location.search);
-		const allScopeKeys = params.getAll('draftScopeKey');
-		if (allScopeKeys.length) {
-			return allScopeKeys[allScopeKeys.length - 1];
+		// Both direct drafts and thread drafts belong to their target room.
+		// A stale deep link must not redirect a side-room draft to the case.
+		if (targetRoomId) {
+			return `scope:${targetRoomId}|thread:${threadRootId || 'main'}`;
 		}
-		// B2: the side room's composer keeps its own draft — scoped to the
-		// side room, never to the client room the main composer writes to.
-		return targetRoomId && !threadRootId
-			? `scope:${targetRoomId}|thread:main`
+		const params = new URLSearchParams(location.search);
+		const requested = params.getAll('draftScopeKey').at(-1);
+		return requested &&
+			(isOpaqueDraftScope(requested) ||
+				(draftPractice && isPracticeDraftScope(requested)))
+			? requested
 			: null;
-	}, [location.search, targetRoomId, threadRootId]);
+	}, [draftPractice, location.search, targetRoomId, threadRootId]);
 
 	const loadDraftIntoComposer = useCallback(
 		(loadedState: EditorState, rawDraft?: string) => {
@@ -943,7 +995,9 @@ export const MessageSubmitInterfaceComponent = ({
 			sessionId: activeSession?.item?.id ?? null,
 			roomRef: activeSession?.rid ?? null,
 			title: draftTitle,
-			forcedScopeKey: forcedDraftScopeKey
+			forcedScopeKey: forcedDraftScopeKey,
+			// A side room's draft never mixes with the client room's (#1824).
+			isolateScope: Boolean(targetRoomId)
 		}
 	);
 
@@ -2251,6 +2305,10 @@ export const MessageSubmitInterfaceComponent = ({
 			return null;
 		}
 
+		if (isSessionArchived && !allowDearchive) {
+			// #1824: never re-open a conversation from outside it.
+			return null;
+		}
 		if (isSessionArchived) {
 			apiPutDearchive(activeSession.item.id)
 				.then(prepareAndSendMessage)
@@ -2285,6 +2343,7 @@ export const MessageSubmitInterfaceComponent = ({
 		navigate,
 		isRequestInProgress,
 		isVoiceRecording,
+		allowDearchive,
 		isSessionArchived,
 		listPath,
 		prepareAndSendMessage,
@@ -2496,15 +2555,24 @@ export const MessageSubmitInterfaceComponent = ({
 	const getMessageSubmitInfo = useCallback((): MessageSubmitInfoInterface => {
 		let infoData;
 		if (activeInfo === INFO_TYPES.ABSENT) {
-			const contact = getContact(activeSession);
+			const consultantLabel = resolveAssignedConsultantLabel(
+				activeSession,
+				userData,
+				translate
+			);
+			const contact =
+				consultantLabel === undefined
+					? getContact(activeSession)
+					: null;
 			infoData = {
 				isInfo: true,
 				infoHeadline: `${
+					consultantLabel ||
 					contact?.displayName ||
 					contact?.username ||
 					translate('sessionList.user.consultantUnknown')
 				} ${translate('consultant.absent.message')} `,
-				infoMessage: activeSession.consultant.absenceMessage
+				infoMessage: activeSession.consultant?.absenceMessage
 			};
 		} else if (activeInfo === INFO_TYPES.ATTACHMENT_SIZE_ERROR) {
 			infoData = {
@@ -2589,7 +2657,7 @@ export const MessageSubmitInterfaceComponent = ({
 		}
 
 		return infoData;
-	}, [activeInfo, activeSession, translate]);
+	}, [activeInfo, activeSession, translate, userData]);
 
 	const handleBookingButton = useCallback(() => {
 		navigate('/booking/');
@@ -2669,59 +2737,6 @@ export const MessageSubmitInterfaceComponent = ({
 		},
 		[deriveLabelFromUserId]
 	);
-
-	/**
-	 * Fuzzy id expansion, kept only for the @-mention provider below.
-	 *
-	 * The audience selector no longer uses it: it splits an id on
-	 * non-alphanumerics and keeps every token of four or more characters, so
-	 * `@consultant42:example.org` yields `example` — a token every account on the
-	 * homeserver shares. As an identity test that is worthless, which is why
-	 * recipient collection now runs on `audienceIdentityKeys` instead (#894).
-	 *
-	 * The mention provider still matches on these tokens, and inherits the same
-	 * weakness one level down: two counsellors who merely share a surname
-	 * collide, so a pill for `hans.meier` can resolve to `@anna.meier`'s Matrix
-	 * id and mark him as in-room. That belongs to the mention feature (#435)
-	 * rather than to the Send-to selector, so it is reported separately instead
-	 * of being changed here.
-	 */
-	const getComparableAudienceIds = useCallback((rawValue?: string | null) => {
-		const compact = (rawValue || '').trim().toLowerCase();
-		if (!compact) {
-			return new Set<string>();
-		}
-		const ids = new Set<string>();
-		const addVariants = (value: string) => {
-			const normalized = (value || '').trim().toLowerCase();
-			if (!normalized) {
-				return;
-			}
-			ids.add(normalized);
-			ids.add(normalized.replace(/\s+/g, ''));
-			ids.add(normalized.replace(/[^a-z0-9]/gi, ''));
-			normalized
-				.split(/[^a-z0-9]+/gi)
-				.filter(Boolean)
-				.filter((token) => token.length >= 4 && token !== 'enc')
-				.forEach((token) => ids.add(token));
-			const consultantTokenMatches =
-				normalized.match(/consultant\d+/gi) || [];
-			consultantTokenMatches.forEach((token) =>
-				ids.add(token.toLowerCase())
-			);
-		};
-		addVariants(compact);
-		const withoutAt = compact.startsWith('@') ? compact.slice(1) : compact;
-		const localPart = withoutAt.split(':')[0];
-		addVariants(withoutAt);
-		addVariants(localPart);
-		ids.add(`@${withoutAt}`);
-		if (localPart) {
-			ids.add(`@${localPart}`);
-		}
-		return ids;
-	}, []);
 
 	useEffect(() => {
 		setAudienceRefreshTick((prev) => prev + 1);
@@ -2822,7 +2837,11 @@ export const MessageSubmitInterfaceComponent = ({
 				}
 				const nextDirectory = new Map<
 					string,
-					{ displayName: string; username: string }
+					{
+						displayName: string;
+						username: string;
+						matrixUserId?: string | null;
+					}
 				>();
 				(Array.isArray(consultants) ? consultants : []).forEach(
 					(consultant) => {
@@ -2838,14 +2857,20 @@ export const MessageSubmitInterfaceComponent = ({
 						}`
 							.trim()
 							.replace(/\s+/g, ' ');
-						const username = `${consultant?.username || ''}`.trim();
+						// #1998: the list sends the stored, encoded name
+						// ("enc.…"); room members carry the plain one in their
+						// Matrix id, so only the decoded name can match them.
+						const username = decodeUsernameSafely(
+							`${consultant?.username || ''}`.trim()
+						);
 						nextDirectory.set(consultantId, {
 							displayName:
 								displayName ||
 								fallbackName ||
 								username ||
 								consultantId,
-							username
+							username,
+							matrixUserId: consultant?.matrixUserId
 						});
 					}
 				);
@@ -3981,46 +4006,38 @@ export const MessageSubmitInterfaceComponent = ({
 	const mentionDataRef = useRef({
 		directory: agencyConsultantDirectory,
 		directoryState: mentionDirectoryState,
-		inRoomValues: new Set<string>(),
-		matrixUserIdByComparableId: new Map<string, string>(),
+		readMemberIds: (): string[] => [],
+		reachOutsideRoom: false,
 		selfId: userData?.userId as string | undefined
 	});
+	// #1998: the team discussion has its own room. The audience above belongs
+	// to the enquiry's room and stays empty until the enquiry is accepted, so
+	// there every colleague read as "not in chat" and a mention went out
+	// without its Matrix id. The team room is read when the list opens: this
+	// component does not re-render while someone types, so a snapshot from
+	// the last render can predate the room's members.
+	const teamMentionRoomId = teamDiscussion ? targetRoomId : undefined;
+	useLoadRoomMembers(teamMentionRoomId);
+	const audienceMentionMemberIds = audienceOptions
+		.filter((option) => option.value !== AUDIENCE_ALL)
+		.map((option) => option.value);
 	mentionDataRef.current = {
 		directory: agencyConsultantDirectory,
 		directoryState: mentionDirectoryState,
-		inRoomValues: new Set(
-			audienceOptions
-				.filter((option) => option.value !== AUDIENCE_ALL)
-				.flatMap((option) => [
-					...Array.from(getComparableAudienceIds(option.value)),
-					...Array.from(getComparableAudienceIds(option.label))
-				])
-		),
 		// Intentional mentions (#435): audienceOptions already resolves room
 		// members to their real Matrix user id (option.value is member.userId
-		// for room members — see the audience-options effect above). Reusing
-		// that instead of a second room-member fetch keeps this a single
-		// source of truth, and only ever a *resolved* member id ends up here.
-		matrixUserIdByComparableId: new Map(
-			audienceOptions
-				.filter(
-					(option) =>
-						option.value !== AUDIENCE_ALL &&
-						/^@[^:@\s]+:.+$/.test(option.value)
-				)
-				.flatMap((option) =>
-					Array.from(
-						new Set([
-							...Array.from(
-								getComparableAudienceIds(option.value)
-							),
-							...Array.from(
-								getComparableAudienceIds(option.label)
-							)
-						])
-					).map((id): [string, string] => [id, option.value])
-				)
-		),
+		// for room members — see the audience-options effect above), so only
+		// a *resolved* member id ends up in a mention.
+		readMemberIds: () =>
+			teamMentionRoomId
+				? roomMentionMemberIds(
+						matrixClientService
+							?.getClient?.()
+							?.getRoom?.(teamMentionRoomId),
+						getCurrentMatrixUserId()
+					)
+				: audienceMentionMemberIds,
+		reachOutsideRoom: !!teamMentionRoomId,
 		selfId: userData?.userId
 	};
 
@@ -4039,26 +4056,12 @@ export const MessageSubmitInterfaceComponent = ({
 			getCheckedLabel: (count: number) =>
 				translate('message.mention.checked', { value: count }),
 			getCandidates: () => {
-				const { directory, inRoomValues, matrixUserIdByComparableId } =
+				const { directory, readMemberIds, reachOutsideRoom } =
 					mentionDataRef.current;
-				return Array.from(directory.entries()).map(
-					([consultantId, info]) => {
-						const comparableIds = getComparableAudienceIds(
-							info.username
-						);
-						const matrixUserId = Array.from(comparableIds)
-							.map((id) => matrixUserIdByComparableId.get(id))
-							.find(Boolean);
-						return {
-							id: consultantId,
-							displayName: info.displayName,
-							username: info.username,
-							matrixUserId,
-							isInRoom: Array.from(comparableIds).some((id) =>
-								inRoomValues.has(id)
-							)
-						};
-					}
+				return resolveMentionCandidates(
+					directory,
+					readMemberIds(),
+					reachOutsideRoom
 				);
 			}
 		}),
@@ -4188,8 +4191,10 @@ export const MessageSubmitInterfaceComponent = ({
 			composerChromeHeight,
 			bounds
 		});
-		setAutoComposerHeight(
-			nextHeight > bounds.minHeight ? nextHeight : null
+		const nextAutoHeight =
+			nextHeight > bounds.minHeight ? nextHeight : null;
+		setAutoComposerHeight((previous) =>
+			previous === nextAutoHeight ? previous : nextAutoHeight
 		);
 	}, [
 		attachmentCardFile,
@@ -4844,7 +4849,7 @@ export const MessageSubmitInterfaceComponent = ({
 									editingMessageId &&
 										'textarea__input--editing'
 								)}
-								ref={textareaInputRef}
+								ref={setTextareaInputRef}
 								style={
 									attachmentCardFile && attachmentCardHeight
 										? ({

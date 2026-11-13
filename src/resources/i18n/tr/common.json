@@ -1,9 +1,44 @@
 {
+	"askerInfo": {
+		"noPrivacyNotice": {
+			"title": "Gizlilik bildirimi kayıtlı değil",
+			"text": "Bu danışma merkezi bir gizlilik bildirimi kaydetmemiştir. Kişi bunu bilerek onay vermiş olabilir. Bundan merkez sorumludur. Bu notu yalnızca danışmanlar görür."
+		}
+	},
+	"liveChatConversion": {
+		"title": "Görüşmenizi koruyun",
+		"intro": "Bu hesap için bir parola oluşturun. Canlı sohbetiniz korunur.",
+		"keyHelp": "Bu kurtarma anahtarını güvenli bir yerde saklayın. Bu görüşmeyi yeni bir cihazda okumak için anahtara ve parolanıza ihtiyacınız olacak.",
+		"keySaved": "Kurtarma anahtarımı kaydettim",
+		"password": "Parola",
+		"passwordHelp": "En az 16 karakter",
+		"repeat": "Parolayı tekrarlayın",
+		"submit": "Hesabımı oluştur",
+		"readyTitle": "Hesabınız hazır",
+		"loginName": "Giriş adınız:",
+		"readyHelp": "Canlı sohbetiniz bu hesapta kalır. Artık yazılı bir başvuru başlatabilirsiniz.",
+		"startRequest": "Yazılı başvuru başlat",
+		"saveError": "Hesap kaydedilemedi. Lütfen aynı parolayla tekrar deneyin.",
+		"statusError": "Hesap durumu kullanılamıyor. Tekrar denemek için sayfayı yenileyin.",
+		"unavailable": "Bu hesap dönüştürülemiyor. Lütfen danışmanınızla iletişime geçin.",
+		"recoveryIntro": "Önce mevcut görüşmenizin kurtarma anahtarını hazırlayın. Böylece mesajlarınıza yeni bir cihazdan erişebilirsiniz.",
+		"pending": "Önceki bir deneme tamamlanmadı. Tamamlamak için aynı parolayı kullanın.",
+		"recoveryError": "Kurtarma anahtarı henüz kullanılamıyor. Tekrar deneyin veya daha önce kaydettiğiniz anahtarı girin.",
+		"existingKey": "Daha önce kaydedilen kurtarma anahtarı (gerekirse)",
+		"prepare": "Kurtarma anahtarını hazırla",
+		"accountChanged": "Giriş yapılan hesap değişti. Güvenle devam etmek için sayfayı yenileyin.",
+		"expiredTitle": "Bu canlı sohbet oturumunun süresi doldu",
+		"expiredHelp": "Daha önce bir parola oluşturduysanız onunla giriş yapın. Aksi takdirde bu görüşme burada artık aktarılamaz; yeni kayıt ayrı bir görüşme başlatır.",
+		"signInAgain": "Bu giriş adı ve yeni parolanızla tekrar giriş yapın.",
+		"newRegistration": "Yeni kayıt başlat",
+		"ownAccountHelp": "Bu hesaptan yazılı bir başvuru başlatabilirsiniz."
+	},
 	"groupCardParticipants": {
 		"loading": "Katılımcılar yükleniyor …",
 		"crowd": "{{count}} katılımcı",
 		"unavailable": "Katılımcılar yüklenemedi.",
-		"empty": "Katılımcı yok."
+		"empty": "Katılımcı yok.",
+		"memberCount": "Sohbet üyesi: {{count}}"
 	},
 	"timelineSettings": {
 		"title": "Görüşme listesinde randevular",
@@ -496,6 +531,7 @@
 		"absent": {
 			"message": " yok"
 		},
+		"assignedLabel": "Danışmanınız",
 		"jobTitle": "Danışman"
 	},
 	"date": {
@@ -617,6 +653,32 @@
 		"successOverlay": {
 			"button": "tamam",
 			"headline": "Sohbeti başarıyla sildiniz."
+		}
+	},
+	"historyRequest": {
+		"card": {
+			"title": "Bu görüşmeyi yeniden okuma isteği",
+			"intro": "Bu görüşmedeki kişi yeni bir cihazdan giriş yaptı ve önceki mesajları okuyamıyor. Şunu yazdı:",
+			"approve": "Görüşmeyi aç",
+			"decline": "Reddet",
+			"failed": "Anahtarlar gönderilemedi. Lütfen tekrar deneyin.",
+			"needsCrossSigning": "Bu cihaz henüz doğrulanmadı, bu yüzden anahtarları paylaşamaz. Önce bu cihazı doğrulayın, sonra tekrar deneyin.",
+			"origin": "{{user}} yeni bir cihazdan ({{device}}), {{time}} istedi. Bu cihaz henüz doğrulanmadı: yalnızca bu isteği bekliyorsanız açın."
+		},
+		"ask": {
+			"title": "Önceki mesajlar burada okunamıyor",
+			"intro": "Yeni bir cihazdan giriş yaptınız, bu yüzden bu görüşmedeki önceki mesajlarınız kilitli. Danışmanınızdan bunları açmasını isteyebilirsiniz.",
+			"button": "Önceki mesajları iste",
+			"waiting": "İstek gönderildi. Danışmanınızın onaylaması gerekiyor; ardından mesajlar burada görünür. Hiçbir şey olmazsa isteği yeniden gönderin.",
+			"done": "Önceki mesajlarınız yeniden okunabilir.",
+			"failed": "İstek gönderilemedi. Lütfen tekrar deneyin.",
+			"dialog": {
+				"title": "Önceki mesajları iste",
+				"description": "Danışmanınız yazdıklarınızı görür ve bu görüşmeyi açıp açmayacağına karar verir.",
+				"label": "Bu görüşmede ne vardı?",
+				"cancel": "İptal",
+				"send": "İsteği gönder"
+			}
 		}
 	},
 	"e2ee": {
@@ -1003,6 +1065,7 @@
 			"subscribers": {
 				"empty": "Mevcut katılımcı yok",
 				"headline": "Katılımcılar",
+				"protectedName": "Katılımcı {{number}}",
 				"menuLabel": "{{name}} için seçenekler",
 				"role": {
 					"asker": "Danışan",
@@ -1835,7 +1898,8 @@
 				"confirmLabel": "Yeni şifreyi onaylayın",
 				"submitLabel": "Şifreyi kaydet",
 				"success": "Şifreniz başarıyla değiştirildi. Artık giriş yapabilirsiniz.",
-				"invalidToken": "Bu bağlantı geçersiz veya süresi dolmuş. Lütfen yeni bir bağlantı isteyin."
+				"invalidToken": "Bu bağlantı geçersiz veya süresi dolmuş. Lütfen yeni bir bağlantı isteyin.",
+				"requestNewLink": "Yeni bağlantı isteyin"
 			}
 		},
 		"magicLink": {
@@ -2367,6 +2431,10 @@
 				"title": "Süpervizör atandı",
 				"text": "Bu vakaya bir süpervizör atandı."
 			},
+			"topicDuplicateStarted": {
+				"title": "Aynı konuda başka bir danışmanlık",
+				"text": "Aynı konuda başka bir danışmanlık başladı. Lütfen hangi danışmanlığın devam edeceğine birlikte karar verin."
+			},
 			"counselorRenamed": {
 				"title": "Danışmanın adı değişti",
 				"text": "Danışmanlığın görünen adı değişti."
@@ -2416,12 +2484,12 @@
 				}
 			},
 			"caseHandoverConsentDeclined": {
-				"title": "Vaka devri reddedildi",
-				"text": "Danışan onayı reddedildi. İçerikler kilitli kalır."
+				"title": "Onay verilmedi",
+				"text": "Danışan onay vermedi. Mevcut erişim durumunu görüşmede görebilirsiniz."
 			},
 			"caseHandoverOfferSent": {
 				"title": "Devir teklifi gönderildi",
-				"text": "Teklif meslektaşın yanıtını bekliyor. Devir tamamlanmadığı sürece geri çekilebilir."
+				"text": "Vakayı devralması için bir meslektaşınıza teklif gönderdiniz."
 			},
 			"caseHandoverOfferDeclined": {
 				"title": "Devir teklifi reddedildi",
@@ -2433,7 +2501,7 @@
 			},
 			"caseHandoverOfferReceived": {
 				"title": "Vaka devri teklifi",
-				"text": "{{fromConsultantName}} bu danışmanlığı size devretmek istiyor. Görüşmeyi açmadan önce isteği inceleyin.",
+				"text": "{{fromConsultantName}} bu danışmanlığı devralmanız için size bir teklif gönderdi.",
 				"coAccess": {
 					"title": "Geçici erişim teklifi",
 					"text": "{{fromConsultantName}} size bu danışmanlığa geçici erişim teklif ediyor. Sorumluluk mevcut danışmanda kalır."
@@ -2574,7 +2642,21 @@
 				"loadingOlder": "Daha eski mesajlar yükleniyor …",
 				"loadOlderFailed": "Daha eski mesajlar yüklenemedi.",
 				"retryLoadOlder": "Tekrar dene",
-				"historyStart": "Sohbetin başlangıcı"
+				"historyStart": "Sohbetin başlangıcı",
+				"markRead": "Görüşmeyi okundu olarak işaretle",
+				"openToReply": "Yanıtlamak için görüşmeyi açın",
+				"sendFailed": "Gönderilemedi. Metniniz korundu.",
+				"composerPlaceholder": "Yanıt yaz …",
+				"markedRead": "Okundu olarak işaretlendi",
+				"archivedOpenToReply": "Bu görüşme arşivlendi. Yanıtlamak için görüşmeyi açın.",
+				"notJoined": "Katılımınız onaylanana ve oda yüklenene kadar salt okunur.",
+				"supervisorNoComposer": "Süpervizör olarak burada tepki verebilirsiniz ama yazamazsınız.",
+				"teamClosed": "Ekip görüşmesi kapandı.",
+				"curtained": "Bu vaka şu anda sizin için görünür değil.",
+				"backToConversation": "Görüşmeye dön",
+				"enquiryOpenToAccept": "Bu talep henüz kabul edilmedi. Kabul etmek için görüşmeyi açın.",
+				"consentOpenToContinue": "Lütfen önce sohbette nasıl devam edileceğini onaylayın. Bunun için görüşmeyi açın.",
+				"actionFailed": "Bu işe yaramadı. Lütfen tekrar deneyin."
 			},
 			"loadOlder": "Eski etkinlikleri yükle",
 			"loadingOlder": "Eski etkinlikler yükleniyor…",
@@ -2980,6 +3062,7 @@
 				},
 				"kind": {
 					"new": "Yeni talep",
+					"teamDiscussion": "Ekip görüşmesi",
 					"standard": "Standart bildirim",
 					"liveChat": "Canlı sohbet mesajı",
 					"mention": "@ Bahsetme",
@@ -2990,7 +3073,11 @@
 				"play": "Sesi dinle",
 				"volumeUp": "Daha yüksek",
 				"volumeDown": "Daha kısık",
+				"unavailable": {
+					"notSentYet": "Bu bildirim henüz kullanılabilir değil."
+				},
 				"showBanner": "Banner göster",
+				"systemTone": "Sistem bildirimleri sesi",
 				"ringTone": "Zil sesi",
 				"wecker": {
 					"title": "Çalar saat modu (planlanıyor)",
@@ -3447,6 +3534,12 @@
 			}
 		},
 		"dataProtection": {
+			"noNotice": {
+				"title": "Gizlilik bildirimi kayıtlı değil",
+				"body": "Bu danışma merkezi bir gizlilik bildirimi kaydetmemiştir. Bundan merkez sorumludur. Bilerek devam etmek isterseniz yine de devam edebilirsiniz.",
+				"cancel": "Geri dön",
+				"continue": "Yine de devam et"
+			},
 			"cookieNotice": "Bu web sitesi kimlik doğrulama ve gezinme için çerezler kullanmaktadır.",
 			"machineTranslated": "Makine çevirisi — hukuken bağlayıcı olan orijinal metindir ({{language}}).",
 			"unrenderable": "Bu danışma merkezinin onay metni şu anda görüntülenemiyor. Lütfen daha sonra tekrar deneyin veya danışma merkeziyle iletişime geçin.",
@@ -6622,6 +6715,10 @@
 		}
 	},
 	"directLink": {
+		"postcode": {
+			"helper": "Yalnızca istatistik içindir. Posta kodu ne danışmanlık merkezini ne de danışmanı belirler – bunu bağlantı belirler.",
+			"invalid": "Lütfen beş haneli posta kodunuzu girin."
+		},
 		"card": {
 			"title": "Doğrudan bağlantı",
 			"subtitle": "Danışmanlık arayanlar için",
@@ -6695,8 +6792,7 @@
 		},
 		"circles": {
 			"title": "Yaklaşan öz yardım grupları",
-			"participants": "{{count}} katılımcı",
-			"participants_one": "{{count}} katılımcı"
+			"assignedCounsellors": "Danışman ekibi: {{count}}"
 		}
 	},
 	"temporaryAccount": {

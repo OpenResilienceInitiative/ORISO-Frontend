@@ -1,9 +1,44 @@
 {
+	"askerInfo": {
+		"noPrivacyNotice": {
+			"title": "Aucune politique de confidentialité enregistrée",
+			"text": "Ce centre de conseil n'a enregistré aucune politique de confidentialité. La personne a peut-être donné son consentement en le sachant. Le centre en est responsable. Seuls les conseillers voient cette note."
+		}
+	},
+	"liveChatConversion": {
+		"title": "Conserver votre conversation",
+		"intro": "Créez un mot de passe pour ce compte. Votre conversation en direct sera conservée.",
+		"keyHelp": "Conservez cette clé de récupération en lieu sûr. Vous en aurez besoin, ainsi que de votre mot de passe, pour lire cette conversation sur un nouvel appareil.",
+		"keySaved": "J'ai enregistré ma clé de récupération",
+		"password": "Mot de passe",
+		"passwordHelp": "Au moins 16 caractères",
+		"repeat": "Répéter le mot de passe",
+		"submit": "Créer mon compte",
+		"readyTitle": "Votre compte est prêt",
+		"loginName": "Votre nom d'utilisateur :",
+		"readyHelp": "Votre conversation en direct reste dans ce compte. Vous pouvez maintenant envoyer une demande écrite.",
+		"startRequest": "Commencer une demande écrite",
+		"saveError": "Le compte n'a pas pu être enregistré. Réessayez avec le même mot de passe.",
+		"statusError": "Le statut du compte est indisponible. Rechargez la page pour réessayer.",
+		"unavailable": "Ce compte ne peut pas être converti. Contactez votre conseiller ou conseillère.",
+		"recoveryIntro": "Préparez d'abord la clé de récupération de votre conversation actuelle. Vos messages resteront ainsi accessibles sur un nouvel appareil.",
+		"pending": "Une tentative précédente est en attente. Utilisez le même mot de passe pour la terminer.",
+		"recoveryError": "La clé de récupération n'est pas encore disponible. Réessayez ou saisissez la clé enregistrée précédemment.",
+		"existingKey": "Clé de récupération enregistrée précédemment (si nécessaire)",
+		"prepare": "Préparer la clé de récupération",
+		"accountChanged": "Le compte connecté a changé. Rechargez la page pour continuer en toute sécurité.",
+		"expiredTitle": "Cette session de chat en direct a expiré",
+		"expiredHelp": "Si vous avez déjà créé un mot de passe, connectez-vous avec celui-ci. Sinon, cette conversation ne peut plus être transférée ici ; une nouvelle inscription commence une conversation distincte.",
+		"signInAgain": "Reconnectez-vous avec ce nom d’utilisateur et votre nouveau mot de passe.",
+		"newRegistration": "Commencer une nouvelle inscription",
+		"ownAccountHelp": "Vous pouvez envoyer une demande écrite depuis ce compte."
+	},
 	"groupCardParticipants": {
 		"loading": "Chargement des participants …",
 		"crowd": "{{count}} personnes",
 		"unavailable": "Les participants n’ont pas pu être chargés.",
-		"empty": "Aucun participant."
+		"empty": "Aucun participant.",
+		"memberCount": "Membres du chat : {{count}}"
 	},
 	"timelineSettings": {
 		"title": "Rendez-vous dans la liste des conversations",
@@ -496,6 +531,7 @@
 		"absent": {
 			"message": " est absent"
 		},
+		"assignedLabel": "Votre conseiller ou conseillère",
 		"jobTitle": "Conseiller ou conseillère"
 	},
 	"date": {
@@ -617,6 +653,32 @@
 		"successOverlay": {
 			"button": "OK",
 			"headline": "Vous avez supprimé le chat avec succès."
+		}
+	},
+	"historyRequest": {
+		"card": {
+			"title": "Demande de relire cette conversation",
+			"intro": "La personne de cette conversation s'est connectée sur un nouvel appareil et ne peut pas lire les messages précédents. Elle a écrit :",
+			"approve": "Débloquer la conversation",
+			"decline": "Refuser",
+			"failed": "Les clés n'ont pas pu être envoyées. Veuillez réessayer.",
+			"needsCrossSigning": "Cet appareil n'est pas encore vérifié et ne peut donc pas libérer de clés. Vérifiez d'abord cet appareil, puis réessayez.",
+			"origin": "Demandé par {{user}} sur un nouvel appareil ({{device}}), {{time}}. Cet appareil n'est pas encore vérifié : ne débloquez que si vous attendez cette demande."
+		},
+		"ask": {
+			"title": "Les anciens messages ne sont pas lisibles ici",
+			"intro": "Vous vous êtes connecté·e sur un nouvel appareil, vos anciens messages de cette conversation sont donc verrouillés. Vous pouvez demander à votre conseiller de les débloquer.",
+			"button": "Demander les anciens messages",
+			"waiting": "Demande envoyée. Votre conseiller doit la confirmer ; les messages apparaîtront ensuite ici. Si rien ne se passe, envoyez la demande à nouveau.",
+			"done": "Vos anciens messages sont de nouveau lisibles.",
+			"failed": "La demande n'a pas pu être envoyée. Veuillez réessayer.",
+			"dialog": {
+				"title": "Demander les anciens messages",
+				"description": "Votre conseiller verra ce que vous écrivez et décidera de débloquer ou non cette conversation.",
+				"label": "De quoi parlait cette conversation ?",
+				"cancel": "Annuler",
+				"send": "Envoyer la demande"
+			}
 		}
 	},
 	"e2ee": {
@@ -1003,6 +1065,7 @@
 			"subscribers": {
 				"empty": "pas de participants disponibles",
 				"headline": "Personnes participantes",
+				"protectedName": "Participant·e {{number}}",
 				"menuLabel": "Options pour {{name}}",
 				"role": {
 					"asker": "Personne en quête de conseil",
@@ -1835,7 +1898,8 @@
 				"confirmLabel": "Confirmer le nouveau mot de passe",
 				"submitLabel": "Enregistrer le mot de passe",
 				"success": "Votre mot de passe a été modifié avec succès. Vous pouvez maintenant vous connecter.",
-				"invalidToken": "Ce lien est invalide ou a expiré. Veuillez en demander un nouveau."
+				"invalidToken": "Ce lien est invalide ou a expiré. Veuillez en demander un nouveau.",
+				"requestNewLink": "Demander un nouveau lien"
 			}
 		},
 		"magicLink": {
@@ -2367,6 +2431,10 @@
 				"title": "Superviseur·e attribué·e",
 				"text": "Un·e superviseur·e a été attribué·e à ce dossier."
 			},
+			"topicDuplicateStarted": {
+				"title": "Un autre accompagnement sur le même thème",
+				"text": "Un autre accompagnement a commencé sur le même thème. Veuillez convenir ensemble de celui qui se poursuit."
+			},
 			"counselorRenamed": {
 				"title": "Conseiller·ère renommé·e",
 				"text": "Le nom affiché de la personne consultante a changé."
@@ -2416,12 +2484,12 @@
 				}
 			},
 			"caseHandoverConsentDeclined": {
-				"title": "Transfert de dossier refusé",
-				"text": "Le consentement du·de la client·e a été refusé. Les contenus restent verrouillés."
+				"title": "Consentement refusé",
+				"text": "La personne conseillée a refusé de donner son accord. Vous pouvez vérifier votre accès actuel dans la conversation."
 			},
 			"caseHandoverOfferSent": {
 				"title": "Offre de transfert envoyée",
-				"text": "L'offre attend la réponse du collègue. Elle peut être retirée tant que la passation n'est pas terminée."
+				"text": "Vous avez proposé de transférer le dossier à une autre personne de votre équipe."
 			},
 			"caseHandoverOfferDeclined": {
 				"title": "Offre de transfert refusée",
@@ -2433,7 +2501,7 @@
 			},
 			"caseHandoverOfferReceived": {
 				"title": "Proposition de transfert",
-				"text": "{{fromConsultantName}} souhaite vous transférer cette consultation. Examinez la demande avant d’ouvrir la conversation.",
+				"text": "{{fromConsultantName}} vous a envoyé une proposition de transfert de cette consultation.",
 				"coAccess": {
 					"title": "Proposition d’accès temporaire",
 					"text": "{{fromConsultantName}} vous propose un accès temporaire à cette consultation. La personne consultante actuelle reste responsable."
@@ -2574,7 +2642,21 @@
 				"loadingOlder": "Chargement des messages plus anciens …",
 				"loadOlderFailed": "Les messages plus anciens n’ont pas pu être chargés.",
 				"retryLoadOlder": "Réessayer",
-				"historyStart": "Début de la conversation"
+				"historyStart": "Début de la conversation",
+				"markRead": "Marquer la conversation comme lue",
+				"openToReply": "Ouvrez la conversation pour répondre",
+				"sendFailed": "Échec de l’envoi. Votre texte est conservé.",
+				"composerPlaceholder": "Écrire une réponse …",
+				"markedRead": "Marquée comme lue",
+				"archivedOpenToReply": "Cette conversation est archivée. Ouvrez la conversation pour répondre.",
+				"notJoined": "Lecture seule jusqu’à la confirmation de votre adhésion et le chargement du salon.",
+				"supervisorNoComposer": "En tant que superviseur·e, vous pouvez réagir ici, mais pas écrire.",
+				"teamClosed": "La discussion d’équipe est close.",
+				"curtained": "Ce dossier ne vous est pas visible pour le moment.",
+				"backToConversation": "Retour à la conversation",
+				"enquiryOpenToAccept": "Cette demande n’a pas encore été acceptée. Ouvrez la conversation pour l’accepter.",
+				"consentOpenToContinue": "Veuillez d’abord confirmer la suite dans le chat. Ouvrez la conversation pour cela.",
+				"actionFailed": "Cela n’a pas fonctionné. Veuillez réessayer."
 			},
 			"loadOlder": "Charger les activités précédentes",
 			"loadingOlder": "Chargement des activités précédentes…",
@@ -2980,6 +3062,7 @@
 				},
 				"kind": {
 					"new": "Nouvelle demande",
+					"teamDiscussion": "Discussion d'équipe",
 					"standard": "Notification standard",
 					"liveChat": "Message du chat en direct",
 					"mention": "Mention @",
@@ -2990,7 +3073,11 @@
 				"play": "Écouter le son",
 				"volumeUp": "Plus fort",
 				"volumeDown": "Moins fort",
+				"unavailable": {
+					"notSentYet": "Cette notification n'est pas encore disponible."
+				},
 				"showBanner": "Afficher la bannière",
+				"systemTone": "Son des notifications système",
 				"ringTone": "Sonnerie",
 				"wecker": {
 					"title": "Mode réveil (prévu)",
@@ -3447,6 +3534,12 @@
 			}
 		},
 		"dataProtection": {
+			"noNotice": {
+				"title": "Aucune politique de confidentialité enregistrée",
+				"body": "Ce centre de conseil n'a enregistré aucune politique de confidentialité. Le centre en est responsable. Vous pouvez tout de même continuer si vous le souhaitez en connaissance de cause.",
+				"cancel": "Retour",
+				"continue": "Continuer quand même"
+			},
 			"cookieNotice": "Pour l'authentification et la navigation, ce site utilise des cookies.",
 			"machineTranslated": "Traduit automatiquement — la version originale ({{language}}) fait juridiquement foi.",
 			"unrenderable": "Le texte de consentement de ce centre de conseil ne peut pas être affiché pour le moment. Veuillez réessayer plus tard ou contacter le centre de conseil.",
@@ -6622,6 +6715,10 @@
 		}
 	},
 	"directLink": {
+		"postcode": {
+			"helper": "Uniquement à des fins statistiques. Le code postal ne détermine ni le service ni le conseiller – c’est le lien qui le fixe.",
+			"invalid": "Veuillez saisir votre code postal à cinq chiffres."
+		},
 		"card": {
 			"title": "Lien direct",
 			"subtitle": "Pour les personnes en recherche de conseil",
@@ -6695,8 +6792,7 @@
 		},
 		"circles": {
 			"title": "Prochains groupes d’entraide",
-			"participants": "{{count}} participant·e·s",
-			"participants_one": "{{count}} participant·e"
+			"assignedCounsellors": "Équipe de conseil : {{count}}"
 		}
 	},
 	"temporaryAccount": {

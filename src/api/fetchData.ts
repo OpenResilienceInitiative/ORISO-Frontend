@@ -112,6 +112,7 @@ interface FetchDataProps {
 	timeout?: number;
 	signal?: AbortSignal;
 	recoverOnPublicAuthRoute?: boolean;
+	referrerPolicy?: ReferrerPolicy;
 	/**
 	 * Set only by the anonymous retry below. A second 401 is the end of the
 	 * road: it rejects, and it does not log anyone out or leave the page.
@@ -131,6 +132,7 @@ export const fetchData = ({
 	timeout,
 	signal,
 	recoverOnPublicAuthRoute = true,
+	referrerPolicy,
 	isStaleAuthRetry = false
 }: FetchDataProps): Promise<any> =>
 	new Promise((resolve, reject) => {
@@ -157,6 +159,7 @@ export const fetchData = ({
 				timeout,
 				signal,
 				recoverOnPublicAuthRoute: false,
+				referrerPolicy,
 				isStaleAuthRetry: true
 			});
 
@@ -215,6 +218,7 @@ export const fetchData = ({
 			method: method,
 			headers: cleanHeaders,
 			credentials: 'include',
+			referrerPolicy,
 			body: bodyData,
 			signal: controller.signal
 		});

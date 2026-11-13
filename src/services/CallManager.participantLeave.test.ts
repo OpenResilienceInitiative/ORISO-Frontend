@@ -127,7 +127,9 @@ describe('Element Call participant leave', () => {
 		 * room — no invitation, no tracker, nothing to ring — which is the
 		 * same "call that can never ring" the flag was added to prevent.
 		 */
-		const invite = vi.fn().mockResolvedValue(undefined);
+		const getStateEvent = vi
+			.fn()
+			.mockResolvedValue({ membership: 'invite' });
 		const sendMessage = vi.fn().mockResolvedValue({ event_id: '$root' });
 		/*
 		 * This double has no encryption state, so the startup path gets as far
@@ -149,7 +151,10 @@ describe('Element Call participant leave', () => {
 				sendEvent,
 				sendMessage,
 				createRoom,
-				invite,
+				getCapabilities: vi.fn().mockResolvedValue({
+					'm.room_versions': { default: '12' }
+				}),
+				getStateEvent,
 				getUserId: () => '@patty:oriso.example',
 				getDeviceId: () => 'PATTY',
 				getRoom: (id: string) => (id === CALL_ROOM ? {} : null),
@@ -192,7 +197,9 @@ describe('Element Call participant leave', () => {
 	});
 
 	it('replaces left metadata when starting a group call in a different room', async () => {
-		const invite = vi.fn().mockResolvedValue(undefined);
+		const getStateEvent = vi
+			.fn()
+			.mockResolvedValue({ membership: 'invite' });
 		createRoom.mockResolvedValue({
 			room_id: '!replacement-call:oriso.example'
 		});
@@ -204,7 +211,10 @@ describe('Element Call participant leave', () => {
 			sendEvent,
 			sendMessage: vi.fn().mockResolvedValue({ event_id: '$call-root' }),
 			createRoom,
-			invite,
+			getCapabilities: vi
+				.fn()
+				.mockResolvedValue({ 'm.room_versions': { default: '12' } }),
+			getStateEvent,
 			getUserId: () => '@patty:oriso.example',
 			getRoom: () => null
 		};

@@ -1,9 +1,44 @@
 {
+	"askerInfo": {
+		"noPrivacyNotice": {
+			"title": "No privacy notice stored",
+			"text": "This counselling centre has not stored a privacy notice. The person may have consented knowing this. The centre is responsible for it. Only counsellors see this note."
+		}
+	},
+	"liveChatConversion": {
+		"title": "Keep your conversation",
+		"intro": "Create a password for this account. Your Live Chat stays with you.",
+		"keyHelp": "Save this recovery key somewhere safe. You need it and your password to read this conversation on a new device.",
+		"keySaved": "I have saved my recovery key",
+		"password": "Password",
+		"passwordHelp": "At least 16 characters",
+		"repeat": "Repeat password",
+		"submit": "Create my account",
+		"readyTitle": "Your account is ready",
+		"loginName": "Your login name:",
+		"readyHelp": "Your Live Chat stays in this account. You can now start a written request.",
+		"startRequest": "Start a written request",
+		"saveError": "The account could not be saved. Please retry with the same password.",
+		"statusError": "Account status is unavailable. Reload to try again.",
+		"unavailable": "This account cannot be converted. Please contact your counsellor.",
+		"recoveryIntro": "First prepare the recovery key for your existing conversation. This keeps your messages accessible on a new device.",
+		"pending": "A previous attempt is pending. Use the same password to finish it.",
+		"recoveryError": "The recovery key is not available yet. Retry, or enter the key you saved previously.",
+		"existingKey": "Previously saved recovery key (if needed)",
+		"prepare": "Prepare recovery key",
+		"accountChanged": "The signed-in account changed. Reload to continue safely.",
+		"expiredTitle": "This Live Chat session has expired",
+		"expiredHelp": "If you already created a password, sign in with it. Otherwise this conversation can no longer be converted here; a new registration starts a separate conversation.",
+		"signInAgain": "Sign in again with this login name and your new password.",
+		"newRegistration": "Start a new registration",
+		"ownAccountHelp": "You can start a written request from this account."
+	},
 	"groupCardParticipants": {
 		"loading": "Loading participants …",
 		"crowd": "{{count}} participants",
 		"unavailable": "Participants could not be loaded.",
-		"empty": "No participants."
+		"empty": "No participants.",
+		"memberCount": "Chat members: {{count}}"
 	},
 	"timelineSettings": {
 		"title": "Appointments in the conversation list",
@@ -479,6 +514,7 @@
 		"absent": {
 			"message": " is absent"
 		},
+		"assignedLabel": "Your counsellor",
 		"jobTitle": "Consultant"
 	},
 	"date": {
@@ -600,6 +636,32 @@
 		"successOverlay": {
 			"button": "ok",
 			"headline": "You have deleted the chat successfully."
+		}
+	},
+	"historyRequest": {
+		"ask": {
+			"title": "Earlier messages are not readable here",
+			"intro": "You signed in on a new device, so your earlier messages in this conversation are locked. You can ask your counsellor to unlock them.",
+			"button": "Ask to read earlier messages",
+			"waiting": "Request sent. Your counsellor has to approve it; the messages appear here afterwards. If nothing happens, send the request again.",
+			"done": "Your earlier messages are readable again.",
+			"failed": "The request could not be sent. Please try again.",
+			"dialog": {
+				"title": "Ask to read earlier messages",
+				"description": "Your counsellor will see what you write and will decide whether to unlock this conversation for you.",
+				"label": "What was in this conversation?",
+				"cancel": "Cancel",
+				"send": "Send request"
+			}
+		},
+		"card": {
+			"title": "Request to read this conversation again",
+			"intro": "The person in this conversation signed in on a new device and cannot read the earlier messages. They wrote:",
+			"approve": "Release conversation",
+			"decline": "Decline",
+			"origin": "Asked by {{user}} on a new device ({{device}}), {{time}}. This device is not verified yet, so release only if you expect this request.",
+			"failed": "The keys could not be sent. Please try again.",
+			"needsCrossSigning": "This device is not verified yet, so it cannot release keys. Verify this device first, then try again."
 		}
 	},
 	"e2ee": {
@@ -1077,6 +1139,7 @@
 			"subscribers": {
 				"empty": "no participants available",
 				"headline": "Participants",
+				"protectedName": "Participant {{number}}",
 				"menuLabel": "Options for {{name}}",
 				"role": {
 					"asker": "Advice seeker",
@@ -1841,7 +1904,8 @@
 				"confirmLabel": "Confirm new password",
 				"submitLabel": "Save password",
 				"success": "Your password has been changed successfully. You can now log in.",
-				"invalidToken": "This link is invalid or has expired. Please request a new one."
+				"invalidToken": "This link is invalid or has expired. Please request a new one.",
+				"requestNewLink": "Request a new link"
 			}
 		},
 		"magicLink": {
@@ -2364,6 +2428,10 @@
 				"title": "Supervisor assigned",
 				"text": "A supervisor was assigned to this case."
 			},
+			"topicDuplicateStarted": {
+				"title": "Another counselling session on the same topic",
+				"text": "Another counselling session has started on the same topic. Please agree together which session should continue."
+			},
 			"counselorRenamed": {
 				"title": "Counsellor renamed",
 				"text": "The counsellor's display name has changed."
@@ -2413,12 +2481,12 @@
 				}
 			},
 			"caseHandoverConsentDeclined": {
-				"title": "Case handover declined",
-				"text": "Client consent was declined. Content visibility remains locked."
+				"title": "Consent declined",
+				"text": "The person seeking advice declined consent. You can check your current access in the conversation."
 			},
 			"caseHandoverOfferSent": {
 				"title": "Case handover offer sent",
-				"text": "The offer is waiting for the colleague's answer. It can be withdrawn as long as the handover is not complete."
+				"text": "You offered to hand over the case to a colleague."
 			},
 			"caseHandoverOfferDeclined": {
 				"title": "Case handover offer declined",
@@ -2430,7 +2498,7 @@
 			},
 			"caseHandoverOfferReceived": {
 				"title": "Case handover offer",
-				"text": "{{fromConsultantName}} wants to hand this consultation over to you. Review the request before opening the conversation.",
+				"text": "{{fromConsultantName}} sent you an offer to take over this consultation.",
 				"coAccess": {
 					"title": "Temporary access offer",
 					"text": "{{fromConsultantName}} offers you temporary access to this consultation. The current counsellor stays responsible."
@@ -2571,7 +2639,21 @@
 				"loadingOlder": "Loading older messages …",
 				"loadOlderFailed": "Older messages could not be loaded.",
 				"retryLoadOlder": "Try again",
-				"historyStart": "Start of the conversation"
+				"historyStart": "Start of the conversation",
+				"markRead": "Mark conversation as read",
+				"openToReply": "Open the conversation to reply",
+				"sendFailed": "Sending failed. Your text is kept.",
+				"composerPlaceholder": "Write a reply …",
+				"markedRead": "Marked as read",
+				"archivedOpenToReply": "This conversation is archived. Open the conversation to reply.",
+				"notJoined": "Read only until your join is confirmed and the room has loaded.",
+				"supervisorNoComposer": "As supervisor you can react here, but not write.",
+				"teamClosed": "The team discussion is closed.",
+				"curtained": "This case is not visible to you right now.",
+				"backToConversation": "Back to the conversation",
+				"enquiryOpenToAccept": "This enquiry has not been accepted yet. Open the conversation to accept it.",
+				"consentOpenToContinue": "Please confirm how to continue in the chat first. Open the conversation to do so.",
+				"actionFailed": "That did not work. Please try again."
 			},
 			"loadOlder": "Load older activity",
 			"loadingOlder": "Loading older activity…",
@@ -2994,6 +3076,7 @@
 				},
 				"kind": {
 					"new": "New request",
+					"teamDiscussion": "Team discussion",
 					"standard": "Standard notification",
 					"liveChat": "Live chat message",
 					"mention": "@ Mention",
@@ -3004,7 +3087,11 @@
 				"play": "Preview sound",
 				"volumeUp": "Louder",
 				"volumeDown": "Quieter",
+				"unavailable": {
+					"notSentYet": "This notification is not available yet."
+				},
 				"showBanner": "Show banner",
+				"systemTone": "Tone for system notices",
 				"ringTone": "Ring tone",
 				"wecker": {
 					"title": "Alarm-clock mode (planned)",
@@ -3416,6 +3503,12 @@
 			}
 		},
 		"dataProtection": {
+			"noNotice": {
+				"title": "No privacy notice stored",
+				"body": "This counselling centre has not stored a privacy notice. The centre is responsible for it. You can still continue if you choose to do so knowingly.",
+				"cancel": "Go back",
+				"continue": "Continue anyway"
+			},
 			"cookieNotice": "For authentication and navigation, this website uses cookies.",
 			"machineTranslated": "Machine-translated — the original version ({{language}}) is the legally binding one.",
 			"unrenderable": "The consent text of this counselling centre cannot be displayed at the moment. Please try again later or contact the counselling centre.",
@@ -6537,6 +6630,10 @@
 		}
 	},
 	"directLink": {
+		"postcode": {
+			"helper": "For statistics only. The postcode does not choose the agency or the counsellor – the link decides that.",
+			"invalid": "Please enter your five-digit postcode."
+		},
 		"card": {
 			"title": "Direct link",
 			"subtitle": "For people seeking advice",
@@ -6610,8 +6707,7 @@
 		},
 		"circles": {
 			"title": "Upcoming self-help circles",
-			"participants": "{{count}} participants",
-			"participants_one": "{{count}} participant"
+			"assignedCounsellors": "Counselling team: {{count}}"
 		}
 	},
 	"temporaryAccount": {

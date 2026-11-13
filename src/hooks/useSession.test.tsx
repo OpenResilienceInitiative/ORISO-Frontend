@@ -54,6 +54,55 @@ describe('useSession', () => {
 		vi.clearAllMocks();
 	});
 
+	it.each(['FORBIDDEN', 'EMPTY'])(
+		'clears a typed group when the server returns %s without a fallback',
+		async (error) => {
+			const chat = { id: 41, conversationType: 'SELF_HELP' };
+			const result = { sessions: [{ chat }] } as Awaited<
+				ReturnType<typeof apiGetChatRoomById>
+			>;
+			const extended = { item: chat, isGroup: true } as ReturnType<
+				typeof buildExtendedSession
+			>;
+			vi.mocked(apiGetChatRoomById)
+				.mockResolvedValue(result)
+				.mockResolvedValueOnce(result)
+				.mockRejectedValueOnce(new Error(error));
+			vi.mocked(buildExtendedSession).mockReturnValue(extended);
+			const { result: loaded } = renderHook(() =>
+				useSession(null, undefined, 41)
+			);
+
+			await waitFor(() => expect(loaded.current.session).toBe(extended));
+			await act(async () => {
+				await loaded.current.reload();
+			});
+
+			expect(apiGetChatRoomById).toHaveBeenCalledTimes(2);
+			expect(apiGetSessionRoomBySessionId).not.toHaveBeenCalled();
+			expect(apiGetCaseHandoverCandidates).not.toHaveBeenCalled();
+			expect(loaded.current.session).toBeNull();
+			expect(loaded.current.ready).toBe(true);
+		}
+	);
+
+	it.each([{ session: { id: 41 } }, { chat: { id: 42 } }])(
+		'rejects an exact group lookup response with the wrong identity: %o',
+		async (row) => {
+			vi.mocked(apiGetChatRoomById).mockResolvedValue({
+				sessions: [row]
+			} as Awaited<ReturnType<typeof apiGetChatRoomById>>);
+			const { result } = renderHook(() =>
+				useSession(null, undefined, 41)
+			);
+
+			await waitFor(() => expect(result.current.ready).toBe(true));
+			expect(buildExtendedSession).not.toHaveBeenCalled();
+			expect(apiGetSessionRoomBySessionId).not.toHaveBeenCalled();
+			expect(result.current.session).toBeNull();
+		}
+	);
+
 	it('loads a valid zero-valued session id', async () => {
 		const rawSession = { session: { id: 0 } };
 		const extendedSession = { item: { id: 0 } };
@@ -73,6 +122,170 @@ describe('useSession', () => {
 		expect(apiGetSessionRoomsByRoomIds).not.toHaveBeenCalled();
 		expect(apiGetChatRoomById).not.toHaveBeenCalled();
 		expect(apiGetCaseHandoverCandidates).not.toHaveBeenCalled();
+	});
+
+	describe('exact room-bound counselling action', () => {
+		const roomId = '!old:matrix.example';
+		const caseId = 42;
+		const exact = {
+			consultant: { id: 'different-assignee' },
+			session: {
+				id: caseId,
+				matrixRoomId: roomId,
+				registrationType: 'REGISTERED',
+				conversationType: 'AGENCY_COUNSELLING'
+			}
+		};
+		const expectNoFallback = () => {
+			expect(apiGetSessionRoomBySessionId).not.toHaveBeenCalled();
+			expect(apiGetChatRoomById).not.toHaveBeenCalled();
+			expect(apiGetCaseHandoverCandidates).not.toHaveBeenCalled();
+		};
+
+		it('uses a single authorized room lookup and keeps the exact case after reassignment', async () => {
+			vi.mocked(apiGetSessionRoomsByRoomIds).mockResolvedValue({
+				sessions: [exact]
+			} as any);
+			vi.mocked(buildExtendedSession).mockReturnValue({
+				item: exact.session
+			} as any);
+			const { result } = renderHook(() => useSession({ roomId, caseId }));
+			await waitFor(() => expect(result.current.ready).toBe(true));
+			expect(apiGetSessionRoomsByRoomIds).toHaveBeenCalledExactlyOnceWith(
+				[roomId],
+				expect.any(AbortSignal)
+			);
+			expect(result.current.session?.item).toBe(exact.session);
+			expectNoFallback();
+		});
+
+		it('recognizes the deployed legacy registered, non-team session shape', async () => {
+			const legacy = {
+				...exact,
+				session: {
+					...exact.session,
+					conversationType: null,
+					isTeamSession: false,
+					postcode: 10551
+				}
+			};
+			vi.mocked(apiGetSessionRoomsByRoomIds).mockResolvedValue({
+				sessions: [legacy]
+			} as any);
+			vi.mocked(buildExtendedSession).mockReturnValue({
+				item: legacy.session
+			} as any);
+			const { result } = renderHook(() => useSession({ roomId, caseId }));
+			await waitFor(() => expect(result.current.ready).toBe(true));
+			expect(result.current.session?.item).toBe(legacy.session);
+			expectNoFallback();
+		});
+
+		it.each([
+			{ name: 'empty room response', sessions: [] },
+			{
+				name: 'group with the same case number',
+				sessions: [{ chat: { id: caseId, matrixRoomId: roomId } }]
+			},
+			{
+				name: 'wrong case',
+				sessions: [{ session: { ...exact.session, id: 43 } }]
+			},
+			{
+				name: 'wrong room',
+				sessions: [
+					{
+						session: {
+							...exact.session,
+							matrixRoomId: '!other:matrix.example'
+						}
+					}
+				]
+			},
+			{
+				name: 'unknown modality',
+				sessions: [
+					{ session: { ...exact.session, conversationType: null } }
+				]
+			},
+			{
+				name: 'legacy team case',
+				sessions: [
+					{
+						session: {
+							...exact.session,
+							conversationType: null,
+							isTeamSession: true
+						}
+					}
+				]
+			},
+			{
+				name: 'legacy anonymous case',
+				sessions: [
+					{
+						session: {
+							...exact.session,
+							conversationType: null,
+							isTeamSession: false,
+							registrationType: 'ANONYMOUS'
+						}
+					}
+				]
+			},
+			{
+				name: 'contradictory explicit agency and anonymous case',
+				sessions: [
+					{
+						session: {
+							...exact.session,
+							registrationType: 'ANONYMOUS'
+						}
+					}
+				]
+			},
+			{
+				name: 'live chat',
+				sessions: [
+					{
+						session: {
+							...exact.session,
+							conversationType: 'LIVE_CHAT'
+						}
+					}
+				]
+			},
+			{ name: 'ambiguous rows', sessions: [exact, exact] }
+		])(
+			'rejects $name without numeric or handover fallback',
+			async ({ sessions }) => {
+				vi.mocked(apiGetSessionRoomsByRoomIds).mockResolvedValue({
+					sessions
+				} as any);
+				const { result } = renderHook(() =>
+					useSession({ roomId, caseId }, caseId)
+				);
+				await waitFor(() => expect(result.current.ready).toBe(true));
+				expect(result.current.session).toBeNull();
+				expect(buildExtendedSession).not.toHaveBeenCalled();
+				expectNoFallback();
+			}
+		);
+
+		it.each(['EMPTY', 'FORBIDDEN'])(
+			'stops on room lookup %s',
+			async (error) => {
+				vi.mocked(apiGetSessionRoomsByRoomIds).mockRejectedValue(
+					new Error(error)
+				);
+				const { result } = renderHook(() =>
+					useSession({ roomId, caseId }, caseId)
+				);
+				await waitFor(() => expect(result.current.ready).toBe(true));
+				expect(result.current.session).toBeNull();
+				expectNoFallback();
+			}
+		);
 	});
 
 	it('loads a routed group chat by room id when both route params exist', async () => {
@@ -287,6 +500,31 @@ describe('pending registered enquiry reconciliation', () => {
 		expect(result.current.session).toBe(displayed);
 		expect(result.current.ready).toBe(true);
 		expect(apiGetCaseHandoverCandidates).not.toHaveBeenCalled();
+	});
+
+	it('refreshes the owner without clearing the current session on a temporary failure', async () => {
+		const session = { id: 7, status: 2 };
+		vi.mocked(apiGetSessionRoomBySessionId)
+			.mockResolvedValueOnce({
+				sessions: [{ session, consultant: { id: 'cover' } }]
+			} as any)
+			.mockRejectedValueOnce(new Error('network unavailable'))
+			.mockResolvedValueOnce({
+				sessions: [{ session, consultant: { id: 'owner' } }]
+			} as any);
+
+		const { result } = renderHook(() => useSession(null, 7));
+		await act(async () => {});
+		const displayed = result.current.session;
+		expect(displayed.consultant.id).toBe('cover');
+
+		await act(async () => result.current.refresh());
+		expect(result.current.session).toBe(displayed);
+		expect(result.current.ready).toBe(true);
+		expect(apiGetCaseHandoverCandidates).not.toHaveBeenCalled();
+
+		await act(async () => result.current.refresh());
+		expect(result.current.session.consultant.id).toBe('owner');
 	});
 
 	it('ignores a late response from the previously opened conversation', async () => {
