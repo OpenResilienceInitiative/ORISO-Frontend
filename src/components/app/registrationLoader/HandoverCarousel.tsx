@@ -314,9 +314,15 @@ export const HandoverCarousel = ({
 		if (!track || !drag.current) {
 			return;
 		}
+		const startLeft = drag.current.left;
 		drag.current = null;
 		track.releasePointerCapture?.(event.pointerId);
 		delete track.dataset.dragging;
+		// A click (e.g. on a card image) did not move the track: keep the
+		// card the user chose instead of re-selecting the nearest one.
+		if (track.scrollLeft === startLeft) {
+			return;
+		}
 		// Snap is off while dragging; hand the position back to it. The
 		// nearest card is the one whose (clamped) scroll target is closest,
 		// so a drag released at either end stays there.

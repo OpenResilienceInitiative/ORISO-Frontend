@@ -56,13 +56,15 @@ const renderWithGeometry = () => {
 	});
 	const scrollTo = vi.fn();
 	track.scrollTo = scrollTo as unknown as typeof track.scrollTo;
-	const release = (at: number) => {
-		scrollLeft = at;
+	/** Press, drag the track from `from` to `at`, release. */
+	const release = (at: number, from = at === 0 ? max : 0) => {
+		scrollLeft = from;
 		fireEvent(track, mousePointer('pointerdown'));
+		scrollLeft = at;
 		fireEvent(track, mousePointer('pointerup'));
 		return scrollTo.mock.calls.at(-1)?.[0]?.left;
 	};
-	return { release, max };
+	return { release, max, scrollTo };
 };
 
 describe('HandoverCarousel mouse drag snap', () => {
@@ -81,5 +83,14 @@ describe('HandoverCarousel mouse drag snap', () => {
 	it('snaps to the middle card when released near it', () => {
 		const { release } = renderWithGeometry();
 		expect(release(190)).toBe(CARD + GAP - (TRACK - CARD) / 2);
+	});
+
+	it('a click without dragging keeps the chosen card where it is', () => {
+		// e.g. clicking a card image after choosing the middle dot: the
+		// track did not move, so nothing is re-selected or re-snapped.
+		const { release, scrollTo } = renderWithGeometry();
+		expect(release(0, 0)).toBeUndefined();
+		expect(release(190, 190)).toBeUndefined();
+		expect(scrollTo).not.toHaveBeenCalled();
 	});
 });
