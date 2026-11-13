@@ -14,10 +14,15 @@ const GAP = 20;
 const TRACK = 784; // roughly two cards: the case where the ends clamp
 
 /** jsdom has no PointerEvent: a plain event carrying the mouse fields. */
-const mousePointer = (type: string, clientX = 400) => {
+const mousePointer = (
+	type: string,
+	clientX = 400,
+	buttons = type === 'pointerup' ? 0 : 1
+) => {
 	const event = new MouseEvent(type, {
 		bubbles: true,
 		button: 0,
+		buttons,
 		clientX
 	});
 	Object.defineProperty(event, 'pointerType', { value: 'mouse' });
@@ -56,14 +61,14 @@ const renderWithGeometry = () => {
 	});
 	const scrollTo = vi.fn();
 	track.scrollTo = scrollTo as unknown as typeof track.scrollTo;
-	/** Press at the start, drag the track to `at` (via a detour, so even a
-	 *  drag back to 0 really moves), release; returns the snap target. */
+	/** Press at the start, cross the drag threshold, drag the track to
+	 *  `at`, release; returns the snap target. */
 	const release = (at: number) => {
 		scrollLeft = 0;
 		fireEvent(track, mousePointer('pointerdown', 400));
-		fireEvent(track, mousePointer('pointermove', 400 - at - 20));
-		fireEvent(track, mousePointer('pointermove', 400 - at));
-		fireEvent(track, mousePointer('pointerup', 400 - at));
+		fireEvent(track, mousePointer('pointermove', 395));
+		fireEvent(track, mousePointer('pointermove', 395 - at));
+		fireEvent(track, mousePointer('pointerup', 395 - at));
 		return scrollTo.mock.calls.at(-1)?.[0]?.left;
 	};
 	/** Press and release without moving: a click on a card. */
@@ -74,7 +79,18 @@ const renderWithGeometry = () => {
 		fireEvent(track, mousePointer('pointerup', 402));
 		return { scrollTo, track, scrollLeft: () => scrollLeft };
 	};
-	return { release, click, max };
+	const setScrollLeft = (value: number) => {
+		scrollLeft = value;
+	};
+	return {
+		release,
+		click,
+		max,
+		track,
+		scrollTo,
+		scrollLeft: () => scrollLeft,
+		setScrollLeft
+	};
 };
 
 describe('HandoverCarousel mouse drag snap', () => {
@@ -104,5 +120,32 @@ describe('HandoverCarousel mouse drag snap', () => {
 		expect(scrollTo).not.toHaveBeenCalled();
 		expect(scrollLeft()).toBe(40);
 		expect(track.dataset.dragging).toBeUndefined();
+	});
+
+	// Review on ORISO-Frontend#2222: before the threshold the track has no
+	// pointer capture, so a release outside the track never reaches it.
+	it('drops a pending press whose button was released outside the track', () => {
+		const { track, scrollTo, scrollLeft } = renderWithGeometry();
+		fireEvent(track, mousePointer('pointerdown', 400));
+		fireEvent(track, mousePointer('pointermove', 402));
+		// Back over the track with no button held.
+		fireEvent(track, mousePointer('pointermove', 300, 0));
+		expect(scrollLeft()).toBe(0);
+		expect(track.dataset.dragging).toBeUndefined();
+		fireEvent(track, mousePointer('pointerup', 300));
+		expect(scrollTo).not.toHaveBeenCalled();
+	});
+
+	// Review on ORISO-Frontend#2222: a dot's smooth scroll can move the track
+	// between the press and the start of the drag.
+	it('starts a drag from where the track is when the drag begins', () => {
+		const { track, scrollLeft, setScrollLeft } = renderWithGeometry();
+		setScrollLeft(40);
+		fireEvent(track, mousePointer('pointerdown', 400));
+		setScrollLeft(200);
+		fireEvent(track, mousePointer('pointermove', 395));
+		expect(scrollLeft()).toBe(200);
+		fireEvent(track, mousePointer('pointermove', 380));
+		expect(scrollLeft()).toBe(215);
 	});
 });

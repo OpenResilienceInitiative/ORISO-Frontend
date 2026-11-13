@@ -303,9 +303,10 @@ export const HandoverCarousel = ({
 			return;
 		}
 		// Not a drag yet: a click on a card must not take over the track.
+		// `left` is set when the drag actually begins.
 		drag.current = {
 			x: event.clientX,
-			left: track.scrollLeft,
+			left: 0,
 			moving: false
 		};
 	};
@@ -314,17 +315,28 @@ export const HandoverCarousel = ({
 		if (!track || !drag.current) {
 			return;
 		}
-		const distance = event.clientX - drag.current.x;
 		if (!drag.current.moving) {
-			if (Math.abs(distance) < DRAG_THRESHOLD_PX) {
+			// Without capture a release outside the track never reaches it:
+			// a press whose button is no longer held is over.
+			if ((event.buttons & 1) === 0) {
+				drag.current = null;
 				return;
 			}
-			// The press became a drag: take the track over from here on.
-			drag.current.moving = true;
+			if (Math.abs(event.clientX - drag.current.x) < DRAG_THRESHOLD_PX) {
+				return;
+			}
+			// The press became a drag: take the track over from here on, from
+			// where it is now (a dot's smooth scroll may have moved it since
+			// the press).
+			drag.current = {
+				x: event.clientX,
+				left: track.scrollLeft,
+				moving: true
+			};
 			track.setPointerCapture?.(event.pointerId);
 			track.dataset.dragging = 'true';
 		}
-		track.scrollLeft = drag.current.left - distance;
+		track.scrollLeft = drag.current.left - (event.clientX - drag.current.x);
 	};
 	const endDrag = (event: React.PointerEvent<HTMLElement>) => {
 		const track = trackRef.current;
