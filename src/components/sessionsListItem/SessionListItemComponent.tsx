@@ -98,7 +98,6 @@ import {
 	withTeamDiscussionParam
 } from './chatroomSettingsMenu';
 import { SessionListItemMenu } from './SessionListItemMenu';
-import DeleteSession from '../session/DeleteSession';
 import { canEditGroupChatSettings } from '../groupChat/groupChatHelpers';
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
 import { ALIAS_MESSAGE_TYPES } from '../../api/apiSendAliasMessage';
@@ -300,11 +299,6 @@ export const SessionListItemComponent = ({
 	);
 	const menuIconRef = React.useRef<HTMLButtonElement>(null);
 	const dropdownRef = React.useRef<HTMLDivElement>(null);
-	// FE#781: the delete confirmation must outlive the menu. `DeleteSession` is
-	// therefore mounted at the component root, not inside the flyout — clicking
-	// the confirm overlay counts as an outside click and closes the flyout, so
-	// anything rendered inside it would unmount mid-confirmation.
-	const openDeleteConfirmRef = React.useRef<(() => void) | null>(null);
 	const dropdownId = `session-list-item-menu-${sessionItem?.id ?? 'inactive'}`;
 	const dropdownLabel = translate('groupChat.info.settings.headline');
 	const [overlayItem, setOverlayItem] = useState(null);
@@ -638,7 +632,6 @@ export const SessionListItemComponent = ({
 	const hasChatroomSettingsActions =
 		chatroomSettingsMenu.showArchive ||
 		chatroomSettingsMenu.showDearchive ||
-		chatroomSettingsMenu.showDelete ||
 		chatroomSettingsMenu.showRequestHelp ||
 		chatroomSettingsMenu.showChatSettings;
 
@@ -963,27 +956,6 @@ export const SessionListItemComponent = ({
 		setFlyoutOpen(false);
 		setOverlayItem(leaveGroupChatSecurityOverlayItem);
 		setOverlayActive(true);
-	};
-
-	// Closes the menu first, then opens the confirmation that lives outside it.
-	const handleDeleteSession = () => {
-		setFlyoutOpen(false);
-		openDeleteConfirmRef.current?.();
-	};
-
-	// FE#781: mirrors the header menu's post-delete behaviour (SessionMenu's
-	// onSuccessDeleteSession) — the deleted chat leaves the list and the user
-	// lands back on the list instead of a dangling detail route.
-	const handleDeleteSessionSuccess = () => {
-		setFlyoutOpen(false);
-		sessionsDispatch({
-			type: REMOVE_SESSIONS,
-			ids: activeSession.item.matrixRoomId
-				? [activeSession.item.matrixRoomId]
-				: [activeSession.item.id]
-		});
-		mobileListView();
-		navigate(listPath + getSessionListTab());
 	};
 
 	// FE#781 / ADR-016: reuses SessionStream's `teamDiscussion=1` contract so
@@ -1476,11 +1448,10 @@ export const SessionListItemComponent = ({
 								 * Only `showChatSettings` can be true here: the other
 								 * flags need `isSession`, which `buildExtendedSession`
 								 * never sets alongside `isGroup`. That invariant is
-								 * load-bearing — Overlay, LegalLinkModal and
-								 * DeleteSession all live in the main return below, so
-								 * an archive or delete entry surfacing on a group row
-								 * would fire with no confirmation behind it (the
-								 * delete ref would simply be null). Widen the helper
+								 * load-bearing — Overlay and LegalLinkModal live in
+								 * the main return below, so an archive entry surfacing
+								 * on a group row would fire with no confirmation
+								 * behind it. Widen the helper
 								 * for group chats only together with those.
 								 */}
 								{(hasChatroomSettingsActions ||
@@ -1504,7 +1475,6 @@ export const SessionListItemComponent = ({
 										onChatSettings={handleChatSettings}
 										onArchive={handleArchiveSession}
 										onDearchive={handleDearchiveSession}
-										onDelete={handleDeleteSession}
 										onRequestHelp={handleRequestHelp}
 										onLeaveGroup={handleLeaveGroup}
 										legalLinks={legalLinks}
@@ -1758,7 +1728,6 @@ export const SessionListItemComponent = ({
 								onChatSettings={handleChatSettings}
 								onArchive={handleArchiveSession}
 								onDearchive={handleDearchiveSession}
-								onDelete={handleDeleteSession}
 								onRequestHelp={handleRequestHelp}
 								legalLinks={legalLinks}
 								agencyId={activeSession?.agency?.id}
@@ -2236,20 +2205,6 @@ export const SessionListItemComponent = ({
 					url={legalModal.url}
 					onClose={() => setLegalModal(null)}
 				/>
-			)}
-			{/* FE#781: mounted outside the flyout so the confirmation overlay
-			    survives the menu closing. Renders nothing itself — it only
-			    hands the menu item its opener. */}
-			{chatroomSettingsMenu.showDelete && (
-				<DeleteSession
-					chatId={activeSession.item.id}
-					onSuccess={handleDeleteSessionSuccess}
-				>
-					{(openConfirm) => {
-						openDeleteConfirmRef.current = openConfirm;
-						return null;
-					}}
-				</DeleteSession>
 			)}
 		</div>
 	);
