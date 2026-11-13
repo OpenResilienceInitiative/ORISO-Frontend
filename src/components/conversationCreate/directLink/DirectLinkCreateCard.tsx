@@ -57,7 +57,9 @@ export const DirectLinkCreateCard = ({
 	const handleCreate = async ({
 		topic,
 		medium,
-		temporary
+		temporary,
+		name,
+		scheduledAt
 	}: DirectLinkDraft) => {
 		const topicId = Number(topic);
 		if (!Number.isFinite(topicId) || submitting) return;
@@ -65,15 +67,16 @@ export const DirectLinkCreateCard = ({
 		setFailed(false);
 		try {
 			const agencyId = agencyForTopic(agencies, topicId);
-			const label = topics.find(
-				(option) => option.value === topic
-			)?.label;
+			// #2142: the typed name wins; without one the link is named after its topic.
+			const label =
+				name || topics.find((option) => option.value === topic)?.label;
 			setShared(
 				await create({
 					medium,
 					topicId,
 					temporary,
 					...(label ? { name: label } : {}),
+					...(scheduledAt ? { scheduledAt } : {}),
 					...(agencyId !== undefined ? { agencyId } : {})
 				})
 			);

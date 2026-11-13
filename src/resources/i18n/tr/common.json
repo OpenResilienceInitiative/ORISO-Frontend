@@ -6767,7 +6767,12 @@
 			"temporary": "Geçici hesap",
 			"temporaryHint": "Hesap görüşmeden sonra silinir.",
 			"create": "Bağlantı oluştur",
-			"createFailed": "Bağlantı oluşturulamadı. Lütfen tekrar deneyin."
+			"createFailed": "Bağlantı oluşturulamadı. Lütfen tekrar deneyin.",
+			"name": "Ad (isteğe bağlı)",
+			"nameHint": "Örn. \"M. Hanım ile randevu\" – bağlantıyı genel bakışınızda bulmanız için.",
+			"scheduledAt": "Tarih ve saat (isteğe bağlı)",
+			"scheduledAtHint": "Yalnızca yön bulmak için – bağlantı öncesinde ve sonrasında da çalışır.",
+			"scheduledAtIncomplete": "Lütfen tarih ve saati eksiksiz girin veya alanı boşaltın."
 		},
 		"medium": {
 			"chat": "Sohbet",
@@ -6815,7 +6820,9 @@
 			"topic": "Konu",
 			"mediumFixed": "İletişim türü değiştirilemez",
 			"temporaryHint": "Yalnızca bağlantıyı bundan sonra açan kişiler için geçerlidir.",
-			"failed": "Değişiklik kaydedilemedi. Lütfen tekrar deneyin."
+			"failed": "Değişiklik kaydedilemedi. Lütfen tekrar deneyin.",
+			"scheduledAt": "Tarih ve saat",
+			"clearScheduledAt": "Kaldır"
 		}
 	},
 	"dashboard": {
