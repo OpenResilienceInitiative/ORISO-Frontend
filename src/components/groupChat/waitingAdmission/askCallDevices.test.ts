@@ -30,7 +30,8 @@ describe('askCallDevicesWhileWaiting (#2237)', () => {
 	});
 
 	it('asks nothing for a text group and survives a refusal', async () => {
-		const text = devices(Promise.reject(new Error('no')));
+		// Never settles: a text group must not ask, so nothing would catch a rejection.
+		const text = devices(new Promise(() => undefined));
 		askCallDevicesWhileWaiting('TEXT', text);
 		expect(text.getUserMedia).not.toHaveBeenCalled();
 		const refused = devices(Promise.reject(new Error('NotAllowedError')));
