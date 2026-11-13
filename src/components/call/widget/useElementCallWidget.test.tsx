@@ -629,6 +629,168 @@ describe('useElementCallWidget', () => {
 		});
 	});
 
+	describe('telling the call its language, kind and topic (FE#2233)', () => {
+		const fragmentOf = (url: string) =>
+			new URLSearchParams(new URL(url).hash.slice(2));
+
+		type HostProps = {
+			c: ReturnType<typeof createClient>;
+			roomId: string | null;
+			language?: string | null;
+			callType?: 'single' | 'circle' | 'group' | null;
+			callTopic?: string | null;
+			hostContextPending?: boolean;
+		};
+
+		const mount = (initialProps: HostProps) =>
+			renderHook(
+				({ c, roomId, ...rest }: HostProps) =>
+					useElementCallWidget(c, { roomId, isVideo: true, ...rest }),
+				{ initialProps }
+			);
+
+		it('writes the app language, the kind and the topic into the address', async () => {
+			const { result } = mount({
+				c: createClient(),
+				roomId: CALL_ROOM,
+				language: 'de@informal',
+				callType: 'single',
+				callTopic: 'Schulden'
+			});
+			await waitFor(() => expect(result.current.url).not.toBeNull());
+			const fragment = fragmentOf(result.current.url!);
+			expect(fragment.get('lang')).toBe('de@informal');
+			expect(fragment.get('orisoCallType')).toBe('single');
+			expect(fragment.get('orisoTopic')).toBe('Schulden');
+		});
+
+		it('passes circle for a Gesprächskreis', async () => {
+			const { result } = mount({
+				c: createClient(),
+				roomId: CALL_ROOM,
+				callType: 'circle'
+			});
+			await waitFor(() => expect(result.current.url).not.toBeNull());
+			expect(fragmentOf(result.current.url!).get('orisoCallType')).toBe(
+				'circle'
+			);
+		});
+
+		it('leaves language and topic off the address when unknown', async () => {
+			const { result } = mount({
+				c: createClient(),
+				roomId: CALL_ROOM,
+				callType: 'single',
+				callTopic: null
+			});
+			await waitFor(() => expect(result.current.url).not.toBeNull());
+			const fragment = fragmentOf(result.current.url!);
+			expect(fragment.has('lang')).toBe(false);
+			expect(fragment.has('orisoTopic')).toBe(false);
+		});
+
+		it('builds no address while the conversation is still being looked up', async () => {
+			const client = createClient();
+			const { result, rerender } = mount({
+				c: client,
+				roomId: CALL_ROOM,
+				callType: 'group',
+				hostContextPending: true
+			});
+			// The join and membership wait run meanwhile; only the address waits.
+			await waitFor(() => expect(client.getRoom).toHaveBeenCalled());
+			await act(async () => {
+				await new Promise((resolve) => setTimeout(resolve, 20));
+			});
+			expect(result.current.url).toBeNull();
+
+			rerender({
+				c: client,
+				roomId: CALL_ROOM,
+				callType: 'circle',
+				callTopic: null,
+				hostContextPending: false
+			});
+			await waitFor(() => expect(result.current.url).not.toBeNull());
+			expect(fragmentOf(result.current.url!).get('orisoCallType')).toBe(
+				'circle'
+			);
+		});
+
+		it('does not rebuild the address when the language, kind or topic change mid-call', async () => {
+			// A different address would navigate the running call.
+			const client = createClient();
+			const { result, rerender } = mount({
+				c: client,
+				roomId: CALL_ROOM,
+				language: 'de',
+				callType: 'single',
+				callTopic: 'Schulden'
+			});
+			await waitFor(() => expect(result.current.url).not.toBeNull());
+			const first = result.current.url;
+
+			rerender({
+				c: client,
+				roomId: CALL_ROOM,
+				language: 'en',
+				callType: 'group',
+				callTopic: 'Debt'
+			});
+			expect(result.current.url).toBe(first);
+		});
+
+		it('keeps what it started with through a client refresh', async () => {
+			const { result, rerender } = mount({
+				c: createClient(),
+				roomId: CALL_ROOM,
+				language: 'de',
+				callType: 'single',
+				callTopic: 'Schulden'
+			});
+			await waitFor(() => expect(result.current.url).not.toBeNull());
+			const first = result.current.url;
+
+			rerender({
+				c: createClient(),
+				roomId: CALL_ROOM,
+				language: 'en',
+				callType: 'single',
+				callTopic: 'Debt'
+			});
+			await waitFor(() => expect(result.current.url).not.toBeNull());
+			expect(result.current.url).toBe(first);
+		});
+
+		it('takes the current values for the next call, even in the same room', async () => {
+			const client = createClient();
+			const { result, rerender } = mount({
+				c: client,
+				roomId: CALL_ROOM,
+				language: 'de',
+				callType: 'single',
+				callTopic: 'Schulden'
+			});
+			await waitFor(() => expect(result.current.url).not.toBeNull());
+
+			// The call ended: no room.
+			rerender({ c: client, roomId: null, language: 'en' });
+			expect(result.current.url).toBeNull();
+
+			rerender({
+				c: client,
+				roomId: CALL_ROOM,
+				language: 'en',
+				callType: 'single',
+				callTopic: 'Debt'
+			});
+			await waitFor(() => expect(result.current.url).not.toBeNull());
+			const fragment = fragmentOf(result.current.url!);
+			expect(fragment.get('lang')).toBe('en');
+			expect(fragment.get('orisoTopic')).toBe('Debt');
+		});
+	});
+
 	it('fails closed when the host cannot join the call room', async () => {
 		const joinRoom = vi.fn().mockRejectedValue(new Error('join denied'));
 		const client = createClient({ membership: 'invite', joinRoom });
