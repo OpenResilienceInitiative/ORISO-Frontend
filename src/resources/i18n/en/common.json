@@ -2262,6 +2262,15 @@
 		},
 		"consultant": {
 			"enquiries": "Requests",
+			"inboxState": {
+				"empty": "No requests",
+				"allOpened": "All requests opened",
+				"unopened": "{{count}} unopened requests",
+				"unopened_one": "{{count}} unopened request",
+				"overdue": "Overdue requests",
+				"overdueUnopened": "Overdue requests, {{count}} unopened requests",
+				"overdueUnopened_one": "Overdue requests, {{count}} unopened request"
+			},
 			"sessions": {
 				"large": "My consultations",
 				"nav": "Chats",
