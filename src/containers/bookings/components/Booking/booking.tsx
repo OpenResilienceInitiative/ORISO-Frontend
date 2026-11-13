@@ -3,7 +3,6 @@ import { useContext, useEffect, useState } from 'react';
 import { UserDataContext } from '../../../../globalState';
 import {
 	ListItemInterface,
-	STATUS_EMPTY,
 	UserDataInterface
 } from '../../../../globalState/interfaces';
 import {
@@ -13,7 +12,12 @@ import {
 } from '../../../../api';
 import Cal from '../Calcom/Cal';
 import { useAppConfig } from '../../../../hooks/useAppConfig';
-import { getValueFromCookie } from '../../../../components/sessionCookie/accessSessionCookie';
+import { useSearchParam } from '../../../../hooks/useSearchParams';
+import {
+	BOOKING_SESSION_PARAM,
+	bookingMetadata,
+	pickBookingSession
+} from './bookingSession';
 
 export const getUserEmail = (userData: UserDataInterface) => {
 	return userData.email
@@ -26,11 +30,13 @@ export const Booking = () => {
 	const [session, setSession] = useState<ListItemInterface>();
 	const [appointmentLink, setAppointmentLink] = useState<string | null>(null);
 	const settings = useAppConfig();
+	const sessionId = useSearchParam<string | null>(BOOKING_SESSION_PARAM);
 
 	useEffect(() => {
 		apiGetAskerSessionList().then(({ sessions }) => {
-			const session = sessions.find((s) => !!s.agency);
+			const session = pickBookingSession(sessions, sessionId);
 			setSession(session);
+			if (!session) return;
 			const consultant = session?.consultant;
 			const agencyId = session?.agency?.id;
 			if (consultant) {
@@ -44,7 +50,7 @@ export const Booking = () => {
 				});
 			}
 		});
-	}, [userData]);
+	}, [userData, sessionId]);
 
 	if (!session) return null;
 
@@ -55,15 +61,10 @@ export const Booking = () => {
 					calLink={appointmentLink}
 					calOrigin={settings.calcomUrl}
 					config={{
-						'name': userData.userName,
-						'email': getUserEmail(userData),
-						'theme': 'light',
-						'metadata[user]': userData.userId,
-						'metadata[isInitialAppointment]':
-							!session.consultant ||
-							session.session.status === STATUS_EMPTY,
-						'metadata[sessionId]': session.session.id,
-						'metadata[userToken]': getValueFromCookie('keycloak')
+						name: userData.userName,
+						email: getUserEmail(userData),
+						theme: 'light',
+						...bookingMetadata(userData, session)
 					}}
 					embedJsUrl={`${settings.calcomUrl}/embed/embed.js`}
 				/>
