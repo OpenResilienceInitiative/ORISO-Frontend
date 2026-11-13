@@ -64,6 +64,12 @@ export interface HandoverCarouselProps {
 const CARD_WIDTH = { xs: 300, sm: 372 };
 const SCROLL_IDLE_MS = 120;
 const MAX_DOT_SCROLL_MS = 800;
+/**
+ * How far the mouse must travel before a press on the track becomes a drag.
+ * Below it the press is a click: it neither moves the track nor changes the
+ * chosen card, so clicking a card keeps the step picked with the dots.
+ */
+const DRAG_START_PX = 4;
 
 /**
  * Left edge of every card in the track's own scroll coordinates.
@@ -287,7 +293,12 @@ export const HandoverCarousel = ({
 	 * track like a finger would; on release the nearest card snaps in.
 	 * Touch and pen keep the browser's own scrolling.
 	 */
-	const drag = useRef<{ x: number; left: number } | null>(null);
+	const drag = useRef<{
+		x: number;
+		left: number;
+		pointerId: number;
+		started: boolean;
+	} | null>(null);
 	const onPointerDown = (event: React.PointerEvent<HTMLElement>) => {
 		const track = trackRef.current;
 		if (
@@ -298,23 +309,44 @@ export const HandoverCarousel = ({
 		) {
 			return;
 		}
-		drag.current = { x: event.clientX, left: track.scrollLeft };
-		track.setPointerCapture?.(event.pointerId);
-		track.dataset.dragging = 'true';
+		// Only remember the press. Snap stays on and the pointer is not
+		// captured until the mouse actually moves (DRAG_START_PX).
+		drag.current = {
+			x: event.clientX,
+			left: track.scrollLeft,
+			pointerId: event.pointerId,
+			started: false
+		};
 	};
 	const onPointerMove = (event: React.PointerEvent<HTMLElement>) => {
 		const track = trackRef.current;
-		if (!track || !drag.current) {
+		const current = drag.current;
+		if (!track || !current) {
 			return;
 		}
-		track.scrollLeft = drag.current.left - (event.clientX - drag.current.x);
+		const distance = event.clientX - current.x;
+		if (!current.started) {
+			if (Math.abs(distance) < DRAG_START_PX) {
+				return;
+			}
+			current.started = true;
+			track.setPointerCapture?.(current.pointerId);
+			track.dataset.dragging = 'true';
+		}
+		track.scrollLeft = current.left - distance;
 	};
 	const endDrag = (event: React.PointerEvent<HTMLElement>) => {
 		const track = trackRef.current;
-		if (!track || !drag.current) {
+		const current = drag.current;
+		if (!track || !current) {
 			return;
 		}
 		drag.current = null;
+		// A press that never moved is a click: leave the track and the
+		// chosen card exactly as they are.
+		if (!current.started) {
+			return;
+		}
 		track.releasePointerCapture?.(event.pointerId);
 		delete track.dataset.dragging;
 		// Snap is off while dragging; hand the position back to it. The

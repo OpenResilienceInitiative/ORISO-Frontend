@@ -14,11 +14,11 @@ const GAP = 20;
 const TRACK = 784; // roughly two cards: the case where the ends clamp
 
 /** jsdom has no PointerEvent: a plain event carrying the mouse fields. */
-const mousePointer = (type: string) => {
+const mousePointer = (type: string, clientX = 400) => {
 	const event = new MouseEvent(type, {
 		bubbles: true,
 		button: 0,
-		clientX: 400
+		clientX
 	});
 	Object.defineProperty(event, 'pointerType', { value: 'mouse' });
 	Object.defineProperty(event, 'pointerId', { value: 1 });
@@ -56,13 +56,24 @@ const renderWithGeometry = () => {
 	});
 	const scrollTo = vi.fn();
 	track.scrollTo = scrollTo as unknown as typeof track.scrollTo;
+	/** A real mouse drag: press, move the track to `at`, release. */
 	const release = (at: number) => {
-		scrollLeft = at;
-		fireEvent(track, mousePointer('pointerdown'));
-		fireEvent(track, mousePointer('pointerup'));
+		const start = at >= 50 ? 0 : 100;
+		scrollLeft = start;
+		fireEvent(track, mousePointer('pointerdown', 400));
+		fireEvent(track, mousePointer('pointermove', 400 - (at - start)));
+		fireEvent(track, mousePointer('pointerup', 400 - (at - start)));
 		return scrollTo.mock.calls.at(-1)?.[0]?.left;
 	};
-	return { release, max };
+	/** A click: press and release without moving the mouse. */
+	const click = (at: number, jitter = 0) => {
+		scrollLeft = at;
+		fireEvent(track, mousePointer('pointerdown', 400));
+		fireEvent(track, mousePointer('pointermove', 400 + jitter));
+		fireEvent(track, mousePointer('pointerup', 400 + jitter));
+		return { left: scrollLeft, scrollTo, track };
+	};
+	return { release, click, max };
 };
 
 describe('HandoverCarousel mouse drag snap', () => {
@@ -81,5 +92,13 @@ describe('HandoverCarousel mouse drag snap', () => {
 	it('snaps to the middle card when released near it', () => {
 		const { release } = renderWithGeometry();
 		expect(release(190)).toBe(CARD + GAP - (TRACK - CARD) / 2);
+	});
+
+	it('treats a press without movement as a click: no drag, no snap, no new card', () => {
+		const { click } = renderWithGeometry();
+		const { left, scrollTo, track } = click(0, 2);
+		expect(left).toBe(0);
+		expect(scrollTo).not.toHaveBeenCalled();
+		expect(track.dataset.dragging).toBeUndefined();
 	});
 });
