@@ -3333,6 +3333,13 @@
 				"cancel": "ሰርዝ",
 				"error": "እቲ ዳግም ምትካል ኣይተዓወተን። በጃኹም ደጊምኩም ፈትኑ።"
 			}
+		},
+		"askerDisplayName": {
+			"description": "ስምካ ኣብ ነፍሲ ወከፍ ምኽሪ ፍሉይ ክኸውን ይኽእል። ኣማኻሪኻ ኣብቲ ዝምልከቶ ምኽሪ ኣብዚ ዘሎ ስም ይርኢ።",
+			"conversation": "ምኽሪ",
+			"usernameShown": "ዝርአ ስም የለን – ስም ተጠቃሚኻ ይርአ",
+			"edit": "ን{{name}} ዝርአ ስም ቀይር",
+			"inputLabel": "ን{{name}} ዝርአ ስም"
 		}
 	},
 	"qrCode": {

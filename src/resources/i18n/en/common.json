@@ -3342,6 +3342,13 @@
 				"cancel": "Cancel",
 				"error": "Reset failed. Please try again."
 			}
+		},
+		"askerDisplayName": {
+			"description": "Your name can differ in each counselling conversation. Your counsellor sees the name shown here for that conversation.",
+			"conversation": "Counselling",
+			"usernameShown": "No display name – your username is shown",
+			"edit": "Change display name for {{name}}",
+			"inputLabel": "Display name for {{name}}"
 		}
 	},
 	"qrCode": {
