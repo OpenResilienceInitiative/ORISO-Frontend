@@ -47,7 +47,9 @@ const harnessUrl = (base: string, args: CallViewArgs): string => {
 	if (args.situation === 'oneOnOne') {
 		query.set('header', '1');
 		query.set('speaking', args.speaking === 0 ? 'first' : 'second');
-		if (args.notes) query.set('notes', 'docked');
+		// A phone has no room beside the stage: the card opens as a sheet,
+		// as it does in the call.
+		if (args.notes) query.set('notes', args.phone ? 'sheet' : 'docked');
 		return `${base}/harness/einzelCall.html?${query.toString()}`;
 	}
 	query.set('n', String(args.participants));
@@ -93,9 +95,11 @@ const CallView: React.FC<CallViewArgs> = (args) => {
 				The call view pages are not part of this Storybook build. CI
 				adds them from ORISO-ElementCall; locally, run{' '}
 				<code>yarn build:harness</code> there and copy{' '}
-				<code>dist-harness</code> to{' '}
-				<code>storybook-static/call-harness</code>, or set{' '}
-				<code>STORYBOOK_CALL_HARNESS_URL</code>.
+				<code>dist-harness</code> to <code>public/call-harness</code>{' '}
+				for <code>npm run storybook</code>, or to{' '}
+				<code>storybook-static/call-harness</code> for a built
+				Storybook. Or set <code>STORYBOOK_CALL_HARNESS_URL</code> to a
+				running harness.
 			</p>
 		);
 	}
@@ -146,7 +150,8 @@ const meta: Meta<CallViewArgs> = {
 		view: {
 			control: 'inline-radio',
 			options: ['kreis', 'hain', 'felder', 'kacheln'],
-			description: 'Kreis, Hain, Felder, Kacheln (group stage only)',
+			description:
+				'Kreis, Hain, Felder, Kacheln (group stage only). Until ORISO-ElementCall#150 is in the built pages, a video group has no Kreis and shows the Hain instead.',
 			if: { arg: 'situation', eq: 'group' }
 		},
 		callType: {
