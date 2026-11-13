@@ -1363,7 +1363,8 @@
 				"headline": "How we treat each other",
 				"subline": "Read it once – then you are in."
 			},
-			"devices": "Camera & microphone"
+			"devices": "Camera & microphone",
+			"waitingForAdmission": "Signed in"
 		},
 		"shareDialog": {
 			"title_text": "Circle created",
@@ -1471,6 +1472,10 @@
 			"overlay": {
 				"headline": "You were removed from this group."
 			}
+		},
+		"waitingAdmission": {
+			"waiting": "As soon as the group leader lets you in, the chat and the call open by themselves.",
+			"openSoon": "The session is running. The host knows you are waiting and will let you in shortly."
 		}
 	},
 	"help": {
@@ -3337,6 +3342,13 @@
 				"cancel": "Cancel",
 				"error": "Reset failed. Please try again."
 			}
+		},
+		"askerDisplayName": {
+			"description": "Your name can differ in each counselling conversation. Your counsellor sees the name shown here for that conversation.",
+			"conversation": "Counselling",
+			"usernameShown": "No display name – your username is shown",
+			"edit": "Change display name for {{name}}",
+			"inputLabel": "Display name for {{name}}"
 		}
 	},
 	"qrCode": {
@@ -6399,6 +6411,10 @@
 			"region": "People waiting",
 			"someone": "Someone",
 			"wantsIn": "wants to join the call",
+			"waitingFor_one": "waiting for 1 min",
+			"waitingFor_other": "waiting for {{count}} min",
+			"waitingFor": "waiting for {{count}} min",
+			"justArrived": "just arrived",
 			"admit": "Let in",
 			"decline": "Decline",
 			"admitAll": "Let everyone in",
@@ -6666,7 +6682,12 @@
 			"temporary": "Temporary account",
 			"temporaryHint": "The account is deleted after the conversation.",
 			"create": "Create link",
-			"createFailed": "The link could not be created. Please try again."
+			"createFailed": "The link could not be created. Please try again.",
+			"name": "Name (optional)",
+			"nameHint": "E.g. \"Appointment Ms M.\" – helps you find the link in your overview.",
+			"scheduledAt": "Date and time (optional)",
+			"scheduledAtHint": "For orientation only – the link also works before and after.",
+			"scheduledAtIncomplete": "Please enter the full date and time, or clear the field."
 		},
 		"medium": {
 			"chat": "Chat",
@@ -6714,7 +6735,9 @@
 			"topic": "Topic",
 			"mediumFixed": "The type of contact cannot be changed",
 			"temporaryHint": "Applies only to people who open the link from now on.",
-			"failed": "The change could not be saved. Please try again."
+			"failed": "The change could not be saved. Please try again.",
+			"scheduledAt": "Date and time",
+			"clearScheduledAt": "Remove"
 		}
 	},
 	"dashboard": {

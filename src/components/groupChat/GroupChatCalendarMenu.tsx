@@ -201,9 +201,18 @@ export const GroupChatCalendarPopover = ({
 						<Box
 							key={provider}
 							sx={{
-								display: 'flex',
-								alignItems: 'center',
-								gap: 0.5
+								'display': 'flex',
+								'alignItems': 'center',
+								'gap': 0.5,
+								/* The shared menu row is full width and never
+								   shrinks; beside the copy button it must, or
+								   the copy button is pushed out of the menu
+								   (Frank, 2026-11-12: icons cut off). */
+								'& > .chatMenuDropdown__item': {
+									flex: '1 1 auto',
+									minWidth: 0,
+									width: 'auto'
+								}
 							}}
 						>
 							<ChatMenuDropdownItem

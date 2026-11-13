@@ -154,7 +154,9 @@ export const useCallKnocks = ({
 			knocks.map((k) => ({
 				id: k.id,
 				name: knockerName(k),
-				medium: k.medium
+				medium: k.medium,
+				requestedAt: k.requestedAt,
+				avatarId: k.avatarId ?? null
 			})),
 		[knocks]
 	);

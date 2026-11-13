@@ -10,7 +10,6 @@ import { createPortal } from 'react-dom';
 import type { TFunction } from 'i18next';
 import { MenuVerticalIcon } from '../../resources/img/icons';
 import { ReactComponent as ArchiveIcon } from '../../resources/img/icons/inbox.svg';
-import { ReactComponent as TrashIcon } from '../../resources/img/icons/trash.svg';
 import { ReactComponent as HelpIcon } from '../../resources/img/icons/i.svg';
 import { ReactComponent as EditGroupChatIcon } from '../../resources/img/icons/gear.svg';
 import { ReactComponent as LeaveChatIcon } from '../../resources/img/icons/out.svg';
@@ -37,7 +36,6 @@ export interface SessionListItemMenuProps {
 	onChatSettings: () => void;
 	onArchive: () => void;
 	onDearchive: () => void;
-	onDelete: () => void;
 	onRequestHelp: () => void;
 	onLeaveGroup?: () => void;
 	legalLinks: TProvidedLegalLink[];
@@ -67,7 +65,6 @@ export const SessionListItemMenu = ({
 	onChatSettings,
 	onArchive,
 	onDearchive,
-	onDelete,
 	onRequestHelp,
 	onLeaveGroup,
 	legalLinks,
@@ -312,30 +309,6 @@ export const SessionListItemMenu = ({
 												<p className="sessionsListItem__dropdownOptionDescription">
 													{translate(
 														'chatFlyout.dearchiveDescription'
-													)}
-												</p>
-											</div>
-										</button>
-									)}
-									{visibility.showDelete && (
-										<button
-											onClick={onDelete}
-											className="sessionsListItem__dropdownOption"
-											type="button"
-											data-cy="session-list-menu-delete"
-										>
-											<TrashIcon className="sessionsListItem__dropdownOptionIcon" />
-											<div className="sessionsListItem__dropdownOptionCenter">
-												<div className="sessionsListItem__dropdownOptionTitleRow">
-													<span className="sessionsListItem__dropdownOptionTitle">
-														{translate(
-															'chatFlyout.remove'
-														)}
-													</span>
-												</div>
-												<p className="sessionsListItem__dropdownOptionDescription">
-													{translate(
-														'chatFlyout.removeDescription'
 													)}
 												</p>
 											</div>

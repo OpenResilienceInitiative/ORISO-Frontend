@@ -1381,7 +1381,8 @@
 				"headline": "So gehen wir miteinander um",
 				"subline": "Einmal kurz lesen – dann sind Sie dabei."
 			},
-			"devices": "Kamera & Mikrofon"
+			"devices": "Kamera & Mikrofon",
+			"waitingForAdmission": "Angemeldet"
 		},
 		"shareDialog": {
 			"title_text": "Gesprächskreis angelegt",
@@ -1489,6 +1490,10 @@
 			"overlay": {
 				"headline": "Sie wurden aus dieser Gruppe entfernt."
 			}
+		},
+		"waitingAdmission": {
+			"waiting": "Sobald die Gruppenleitung Sie hereinlässt, öffnen sich Chat und Anruf von selbst.",
+			"openSoon": "Die Sitzung läuft. Die Gruppenleitung weiß, dass Sie warten, und lässt Sie gleich herein."
 		}
 	},
 	"help": {
@@ -3375,6 +3380,13 @@
 				"cancel": "Abbrechen",
 				"error": "Das Zurücksetzen ist fehlgeschlagen. Bitte versuchen Sie es erneut."
 			}
+		},
+		"askerDisplayName": {
+			"description": "Ihr Name kann in jeder Beratung anders sein. Ihre Beraterin oder Ihr Berater sieht in der jeweiligen Beratung den Namen, der hier steht.",
+			"conversation": "Beratung",
+			"usernameShown": "Kein Anzeigename – sichtbar ist Ihr Benutzername",
+			"edit": "Anzeigenamen für {{name}} ändern",
+			"inputLabel": "Anzeigename für {{name}}"
 		}
 	},
 	"qrCode": {
@@ -6474,6 +6486,10 @@
 			"region": "Wartende Personen",
 			"someone": "Eine Person",
 			"wantsIn": "möchte in den Anruf",
+			"waitingFor_one": "wartet seit 1 Min.",
+			"waitingFor_other": "wartet seit {{count}} Min.",
+			"waitingFor": "wartet seit {{count}} Min.",
+			"justArrived": "ist gerade angekommen",
 			"admit": "Einlassen",
 			"decline": "Ablehnen",
 			"admitAll": "Alle einlassen",
@@ -6741,7 +6757,12 @@
 			"temporary": "Temporäres Konto",
 			"temporaryHint": "Das Konto wird nach dem Gespräch gelöscht.",
 			"create": "Link erstellen",
-			"createFailed": "Der Link konnte nicht erstellt werden. Bitte versuchen Sie es erneut."
+			"createFailed": "Der Link konnte nicht erstellt werden. Bitte versuchen Sie es erneut.",
+			"name": "Name (optional)",
+			"nameHint": "Z. B. „Termin Frau M.“ – so finden Sie den Link in Ihrer Übersicht wieder.",
+			"scheduledAt": "Datum und Uhrzeit (optional)",
+			"scheduledAtHint": "Nur zur Orientierung – der Link funktioniert auch davor und danach.",
+			"scheduledAtIncomplete": "Bitte Datum und Uhrzeit vollständig eingeben oder das Feld leeren."
 		},
 		"medium": {
 			"chat": "Chat",
@@ -6789,7 +6810,9 @@
 			"topic": "Thema",
 			"mediumFixed": "Art des Kontakts lässt sich nicht ändern",
 			"temporaryHint": "Gilt nur für Personen, die den Link neu öffnen.",
-			"failed": "Die Änderung konnte nicht gespeichert werden. Bitte versuchen Sie es erneut."
+			"failed": "Die Änderung konnte nicht gespeichert werden. Bitte versuchen Sie es erneut.",
+			"scheduledAt": "Datum und Uhrzeit",
+			"clearScheduledAt": "Entfernen"
 		}
 	},
 	"dashboard": {

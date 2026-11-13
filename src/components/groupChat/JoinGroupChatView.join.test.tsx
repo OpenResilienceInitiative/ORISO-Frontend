@@ -139,15 +139,35 @@ vi.mock('../../resources/img/illustrations/x.svg', () => ({
 
 /* What the room's onJoin hands back, as the closing animation sees it. */
 const joinResult = vi.hoisted(() => ({ value: undefined as unknown }));
+/* #2237: what the waiting hook was told, and its "let in" for the test. */
+const admission = vi.hoisted(() => ({
+	options: undefined as
+		| { chatId: number; enabled: boolean; onAdmitted: () => void }
+		| undefined
+}));
+vi.mock('./waitingAdmission/useGroupWaitingAdmission', () => ({
+	useGroupWaitingAdmission: (options: {
+		chatId: number;
+		enabled: boolean;
+		onAdmitted: () => void;
+	}) => {
+		admission.options = options;
+		return { phase: options.enabled ? 'waiting' : 'idle' };
+	}
+}));
 vi.mock('./entryRoom/GroupWaitingRoom', () => ({
 	GroupWaitingRoom: (props: {
 		onJoin: () => unknown;
 		joinBlocked: boolean;
 		plannedStart: Date | null;
+		openBeforeStart?: boolean;
+		admissionWaiting?: string;
 	}) => (
 		<button
 			data-blocked={String(Boolean(props.joinBlocked))}
 			data-planned={props.plannedStart?.toISOString()}
+			data-open-before-start={String(Boolean(props.openBeforeStart))}
+			data-waiting={props.admissionWaiting ?? ''}
 			onClick={() => {
 				joinResult.value = props.onJoin();
 			}}
@@ -178,8 +198,75 @@ describe('JoinGroupChatView — the embedded room hands its join request back', 
 			grantedAuthorities: ['AUTHORIZATION_USER_DEFAULT']
 		};
 		gateProps.value = undefined;
+		admission.options = undefined;
+		window.sessionStorage.clear();
 	});
 	afterEach(cleanup);
+
+	/* #2237 (Frank, 2026-11-12): in an audio or video group the person agrees
+	   while waiting and the moderator's "Reinlassen" in the call is the only
+	   click: then the chat opens and the call joins by itself. */
+	describe("a call group lets the waiting person in on the moderator's click", () => {
+		const videoGroup = { ...state.item, active: false, modality: 'VIDEO' };
+		const renderIn = (item: Record<string, unknown>) =>
+			render(
+				<ActiveSessionContext.Provider
+					value={
+						{
+							activeSession: { item },
+							reloadActiveSession
+						} as never
+					}
+				>
+					<JoinGroupChatView />
+				</ActiveSessionContext.Provider>
+			);
+
+		it('opens the waiting room for consent before the group starts', () => {
+			renderIn(videoGroup);
+			expect(screen.getByText('join').dataset.openBeforeStart).toBe(
+				'true'
+			);
+			expect(admission.options?.enabled).toBe(false);
+		});
+
+		it('waits instead of joining once the person agreed', async () => {
+			renderIn(videoGroup);
+			fireEvent.click(screen.getByText('join'));
+			expect(joinResult.value).toBe(false);
+			expect(apiPutGroupChat).not.toHaveBeenCalled();
+			await waitFor(() => expect(admission.options?.enabled).toBe(true));
+			expect(admission.options?.chatId).toBe(15);
+			expect(screen.getByText('join').dataset.waiting).toBe(
+				'groupChat.waitingAdmission.waiting'
+			);
+		});
+
+		it('joins the group and marks its call once the moderator lets the person in', async () => {
+			vi.mocked(apiPutGroupChat).mockResolvedValue(undefined as never);
+			renderIn({ ...videoGroup, active: true });
+			fireEvent.click(screen.getByText('join'));
+			await waitFor(() => expect(admission.options?.enabled).toBe(true));
+			await act(async () => admission.options?.onAdmitted());
+			expect(apiPutGroupChat).toHaveBeenCalledWith(15, '/join');
+			expect(reloadActiveSession).toHaveBeenCalled();
+			const { shouldAutoJoinCall } = await import(
+				'./waitingAdmission/callAutoJoin'
+			);
+			expect(shouldAutoJoinCall(15)).toBe(true);
+		});
+
+		it('keeps a text group as it was: agree and join', () => {
+			vi.mocked(apiPutGroupChat).mockResolvedValue(undefined as never);
+			renderIn({ ...state.item, modality: 'TEXT' });
+			expect(screen.getByText('join').dataset.openBeforeStart).toBe(
+				'false'
+			);
+			fireEvent.click(screen.getByText('join'));
+			expect(apiPutGroupChat).toHaveBeenCalledWith(15, '/join');
+			expect(admission.options?.enabled).toBe(false);
+		});
+	});
 
 	it('refreshes the waiting date when its original occurrence is cancelled', async () => {
 		const start = new Date(Date.now() + 86_400_000).toISOString();
