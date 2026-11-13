@@ -86,7 +86,13 @@ export const SelectionReplyPopover = forwardRef<
 				onClose();
 				return;
 			}
-			if (event.key !== 'Enter' || event.shiftKey) {
+			// Enter shortcuts belong to the answer field only: on a button
+			// (send, close, stop, voice player) Enter must keep activating it.
+			if (
+				event.key !== 'Enter' ||
+				event.shiftKey ||
+				event.target !== inputRef.current
+			) {
 				return;
 			}
 			event.preventDefault();

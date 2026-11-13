@@ -17,29 +17,70 @@ const SKIP_SELECTOR =
 export const normalizePassage = (text: string): string =>
 	text.replace(/\s+/g, ' ').trim();
 
-export type Mapped = { node: Text; offset: number };
+/**
+ * One character of the collected text. `virtual` marks the space a line break
+ * (`<br>`, a new paragraph) stands for: it has no character in the DOM and
+ * points at the first character after the break.
+ */
+export type Mapped = { node: Text; offset: number; virtual?: true };
+
+// Elements that start a new rendered line.
+const BLOCK_SELECTOR =
+	'p, div, li, ul, ol, blockquote, pre, h1, h2, h3, h4, h5, h6, table, tr, td, th';
 
 /**
  * The bubble's own text with whitespace collapsed, plus where each character
- * sits in the DOM.
+ * sits in the DOM. A line break counts as one space, as in the selection's
+ * text, so a passage across paragraphs is found again.
  */
 export const collectText = (root: Element): { text: string; map: Mapped[] } => {
 	const map: Mapped[] = [];
 	let text = '';
 	let lastWasSpace = true;
+	let pendingBreak = false;
+	let lastBlock: Element | null | undefined;
 	const walker = root.ownerDocument.createTreeWalker(
 		root,
-		NodeFilter.SHOW_TEXT,
+		NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT,
 		{
-			acceptNode: (node) =>
-				node.parentElement?.closest(SKIP_SELECTOR)
+			acceptNode: (node) => {
+				if (node.nodeType === Node.ELEMENT_NODE) {
+					const element = node as Element;
+					if (element.closest(SKIP_SELECTOR)) {
+						return NodeFilter.FILTER_REJECT;
+					}
+					return element.tagName === 'BR'
+						? NodeFilter.FILTER_ACCEPT
+						: NodeFilter.FILTER_SKIP;
+				}
+				return node.parentElement?.closest(SKIP_SELECTOR)
 					? NodeFilter.FILTER_REJECT
-					: NodeFilter.FILTER_ACCEPT
+					: NodeFilter.FILTER_ACCEPT;
+			}
 		}
 	);
-	let current = walker.nextNode() as Text | null;
-	while (current) {
+	let next = walker.nextNode();
+	while (next) {
+		if (next.nodeType === Node.ELEMENT_NODE) {
+			pendingBreak = true;
+			next = walker.nextNode();
+			continue;
+		}
+		const current = next as Text;
+		const block = current.parentElement?.closest(BLOCK_SELECTOR) ?? null;
+		if (lastBlock !== undefined && block !== lastBlock) {
+			pendingBreak = true;
+		}
+		lastBlock = block;
 		const value = current.data;
+		if (pendingBreak && !lastWasSpace && value.trim()) {
+			text += ' ';
+			map.push({ node: current, offset: 0, virtual: true });
+			lastWasSpace = true;
+		}
+		if (value.trim()) {
+			pendingBreak = false;
+		}
 		for (let offset = 0; offset < value.length; offset++) {
 			const isSpace = /\s/.test(value[offset]);
 			if (isSpace && lastWasSpace) {
@@ -49,7 +90,7 @@ export const collectText = (root: Element): { text: string; map: Mapped[] } => {
 			map.push({ node: current, offset });
 			lastWasSpace = isSpace;
 		}
-		current = walker.nextNode() as Text | null;
+		next = walker.nextNode();
 	}
 	return { text, map };
 };

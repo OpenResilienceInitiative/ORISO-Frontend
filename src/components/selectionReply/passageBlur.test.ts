@@ -147,6 +147,35 @@ describe('passageBlurFromRange + applyPassageBlursToHtml', () => {
 		expect(out.innerHTML).not.toContain('1234567');
 	});
 
+	it('finds a passage across paragraphs and line breaks', () => {
+		const html = '<p>Erste Zeile</p><p>zweite Zeile<br>dritte</p>';
+		const root = render(html);
+		expect(collectText(root).text).toBe('Erste Zeile zweite Zeile dritte');
+		const range = findPassageRange(root, 'Zeile zweite Zeile dritte')!;
+		expect(range.toString()).toBe('Zeilezweite Zeiledritte');
+		const blur = { id: 'b1', ...passageBlurFromRange(root, range)! };
+		expect(blur).toEqual({ id: 'b1', start: 6, length: 25 });
+		const out = render(
+			applyPassageBlursToHtml(html, [blur], { label: LABEL })
+		);
+		expect(out.textContent).toContain('Erste');
+		expect(out.textContent).not.toContain('zweite');
+		expect(out.querySelectorAll('p')).toHaveLength(2);
+		expect(out.querySelector('br')).not.toBeNull();
+	});
+
+	it('drops who a blurred @mention names', () => {
+		const html =
+			'<p>Frag <span class="mention" data-type="mention" data-id="u1" data-label="Anna" data-mention-username="anna_b" data-mention-matrix-id="@anna:oriso">@Anna</span> bitte</p>';
+		const out = applyPassageBlursToHtml(
+			html,
+			[{ id: 'b1', start: 5, length: 5 }],
+			{ label: LABEL }
+		);
+		expect(out).not.toMatch(/anna|Anna/);
+		expect(out).toContain('class="mention"');
+	});
+
 	it('skips a blur that no longer fits an edited message', () => {
 		const out = applyPassageBlursToHtml(
 			'<p>kurz</p>',

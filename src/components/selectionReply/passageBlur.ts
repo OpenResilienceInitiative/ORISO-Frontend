@@ -40,7 +40,8 @@ export const passageBlurFromRange = (
 	let start = -1;
 	let end = -1;
 	map.forEach((entry, index) => {
-		if (inRange(entry)) {
+		// A line break's space has no DOM character; it only counts inside.
+		if (!entry.virtual && inRange(entry)) {
 			if (start < 0) start = index;
 			end = index;
 		}
@@ -101,6 +102,24 @@ export interface ApplyPassageBlursOptions {
 	seed?: string;
 }
 
+const MENTION_ATTRIBUTES = ['data-id', 'data-label', 'title'];
+
+/** Removes who a mention pill names; other elements are left alone. */
+const stripMention = (element: Element) => {
+	const mentionAttributes = element
+		.getAttributeNames()
+		.filter((name) => name.startsWith('data-mention'));
+	if (
+		!mentionAttributes.length &&
+		element.getAttribute('data-type') !== 'mention'
+	) {
+		return;
+	}
+	[...mentionAttributes, ...MENTION_ATTRIBUTES].forEach((name) =>
+		element.removeAttribute(name)
+	);
+};
+
 /** Text-node pieces one blur covers: node, first and last offset. */
 type Piece = { node: Text; from: number; to: number; blur: PassageBlur };
 
@@ -126,7 +145,8 @@ const piecesOf = (map: Mapped[], blurs: PassageBlur[]): Piece[] => {
 	let last: Piece | undefined;
 	for (let index = 0; index < map.length; index++) {
 		const blur = owner[index];
-		if (!blur) {
+		// A line break's space has no DOM character to replace.
+		if (!blur || map[index].virtual) {
 			last = undefined;
 			continue;
 		}
@@ -220,6 +240,15 @@ export const applyPassageBlursToHtml = (
 			if (link) {
 				link.removeAttribute('href');
 				link.removeAttribute('target');
+			}
+			// A blurred @mention must not keep the person in its attributes
+			// (data-mention-username, data-mention-matrix-id, data-label).
+			for (
+				let element = span.parentElement;
+				element && element !== root;
+				element = element.parentElement
+			) {
+				stripMention(element);
 			}
 			if (!removeLabel && firstPieceOf.has(piece)) {
 				const srLabel = document.createElement('span');
