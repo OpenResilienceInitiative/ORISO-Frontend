@@ -170,8 +170,18 @@ export const InfoGalleryTabletSelection: StoryObj = {
 				name: `Zu Schritt ${position} von 3`
 			});
 		const end = () => track.scrollWidth - track.clientWidth;
-		const cardCentre = (card: HTMLElement) =>
-			card.offsetLeft + card.offsetWidth / 2;
+		/* In the track's scroll coordinates, from bounding boxes: the track
+		   and its cards are not positioned, so `offsetLeft` would count from
+		   another origin (#2139). */
+		const cardCentre = (card: HTMLElement) => {
+			const box = card.getBoundingClientRect();
+			return (
+				box.left -
+				track.getBoundingClientRect().left +
+				track.scrollLeft +
+				box.width / 2
+			);
+		};
 		const [firstCard, secondCard, thirdCard] =
 			canvas.getAllByRole('listitem');
 		const width = track.clientWidth;
@@ -181,11 +191,16 @@ export const InfoGalleryTabletSelection: StoryObj = {
 
 		await expect(step(1)).toHaveAttribute('aria-current', 'true');
 		await userEvent.click(step(2));
-		// The middle card is centred and fully in view.
+		// The middle card scrolls to the centre of the track, fully in view.
 		await waitFor(() => {
-			const left = secondCard.offsetLeft - track.scrollLeft;
+			const trackBox = track.getBoundingClientRect();
+			const cardBox = secondCard.getBoundingClientRect();
+			const left = cardBox.left - trackBox.left;
 			expect(left).toBeGreaterThanOrEqual(0);
-			expect(left + secondCard.offsetWidth).toBeLessThanOrEqual(width);
+			expect(left + cardBox.width).toBeLessThanOrEqual(width);
+			expect(
+				Math.abs(left + cardBox.width / 2 - trackBox.width / 2)
+			).toBeLessThan(2);
 		});
 		await expect(step(2)).toHaveAttribute('aria-current', 'true');
 		await userEvent.click(canvas.getAllByRole('img')[0]);

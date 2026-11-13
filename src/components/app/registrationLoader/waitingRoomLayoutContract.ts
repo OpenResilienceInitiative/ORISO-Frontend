@@ -1,4 +1,8 @@
-import { expectedCardWidthRange } from './handoverCardSize';
+import {
+	expectedCardWidthRange,
+	expectedSmCardWidthPx,
+	rootFontPx
+} from './handoverCardSize';
 
 /** The stage splits the page from this width on (MUI `lg`). */
 const STAGE_SPLIT_PX = 1200;
@@ -9,8 +13,6 @@ const STAGE_SPLIT_PX = 1200;
  * clamp(), never a fixed px size), see `handoverCardSize`.
  */
 const CARD_SM_PX = 520;
-/** On a screen this wide the cards must be larger than the live chat's 372 px. */
-const WIDE_PX = 2000;
 
 export interface WaitingRoomLayoutOptions {
 	/**
@@ -86,9 +88,21 @@ const checkCards = (
 	if (width < min - 1 || width > max + 1) {
 		return `card is ${Math.round(width)}px wide, expected ${Math.round(min)}–${Math.round(max)}px`;
 	}
-	if (viewport >= WIDE_PX && width <= 372) {
-		// The bug of the fixed size: a 2560 px screen showed 372 px cards.
-		return `card stays ${Math.round(width)}px on a ${viewport}px screen; it must grow`;
+	if (viewport >= CARD_SM_PX) {
+		// The fluid formula, recomputed: three across the carousel block and
+		// ending above the bar. A fixed size (the 372 px bug: half a 2560 px
+		// column empty, cut off at 150 % zoom) misses it on most windows.
+		const container = cards[0].parentElement?.parentElement;
+		if (container) {
+			const expected = expectedSmCardWidthPx(
+				container.clientWidth,
+				doc.defaultView!.innerHeight,
+				rootFontPx(doc)
+			);
+			if (Math.abs(width - expected) > 2) {
+				return `card is ${Math.round(width)}px wide, the fluid size here is ${Math.round(expected)}px`;
+			}
+		}
 	}
 	return null;
 };

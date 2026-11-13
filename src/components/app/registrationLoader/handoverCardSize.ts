@@ -74,6 +74,31 @@ export const fluid = (designPx: number, maxRem?: number) => {
 /** Plain rem for a design value given in px (phones, below `sm`). */
 export const rem = (designPx: number) => `${+(designPx / 16).toFixed(4)}rem`;
 
+/**
+ * The width `cardWidth.sm` resolves to, in px — the same formula, for the
+ * layout contract. `containerPx` is the carousel block's width (its `cqi`),
+ * `viewportHeightPx` the window height (`dvh`).
+ */
+export const expectedSmCardWidthPx = (
+	containerPx: number,
+	viewportHeightPx: number,
+	rootFontPx = 16
+) => {
+	const r = rootFontPx;
+	const threeAcrossPx = (containerPx - 2 * CARD_GAP_SM_REM * r) / 3;
+	const fitsHeightPx = Math.min(
+		(viewportHeightPx - RESERVED_HEIGHT_REM * r) / HEIGHT_PER_WIDTH,
+		viewportHeightPx - (RESERVED_HEIGHT_REM + TEXT_BLOCK_FLOOR_REM) * r
+	);
+	return Math.min(
+		CARD_WIDTH_SM_MAX_REM * r,
+		Math.max(
+			CARD_WIDTH_SM_MIN_REM * r,
+			Math.min(threeAcrossPx, fitsHeightPx)
+		)
+	);
+};
+
 /** Root font size in px, for the layout contract that measures in px. */
 const rootPx = (doc: Document) =>
 	parseFloat(getComputedStyle(doc.documentElement).fontSize) || 16;
@@ -82,6 +107,8 @@ const rootPx = (doc: Document) =>
  * The width range a card may have in a window, in px — what the contract
  * checks. Below `sm` the card is exactly the phone width.
  */
+export const rootFontPx = (doc: Document) => rootPx(doc);
+
 export const expectedCardWidthRange = (
 	doc: Document,
 	viewportWidth: number,

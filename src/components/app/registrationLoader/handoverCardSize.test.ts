@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vite-plus/test';
 import {
 	cardWidth,
 	expectedCardWidthRange,
+	expectedSmCardWidthPx,
 	fluid,
 	rem
 } from './handoverCardSize';
@@ -33,5 +34,18 @@ describe('handoverCardSize', () => {
 			min: 192,
 			max: 720
 		});
+	});
+
+	it('resolves the sm width like the browser: width, height, floor, cap', () => {
+		// 2560×1440: three across a 1456 px block.
+		expect(expectedSmCardWidthPx(1456, 1440)).toBeCloseTo(472, 0);
+		// 2560×900: the height bound wins, the card stays below 372 px.
+		expect(expectedSmCardWidthPx(1456, 900)).toBeCloseTo(357.14, 1);
+		// 1920 at 150 % zoom (1280×720 CSS px): the height bound, 200 px.
+		expect(expectedSmCardWidthPx(1112, 720)).toBe(200);
+		// Shorter still: the 12rem floor.
+		expect(expectedSmCardWidthPx(1112, 640)).toBe(192);
+		// 3840×2160: three across would be 728 px; the 45rem cap holds it.
+		expect(expectedSmCardWidthPx(2224, 2160)).toBe(720);
 	});
 });
