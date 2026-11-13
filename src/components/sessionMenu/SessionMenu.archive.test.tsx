@@ -170,6 +170,21 @@ const clickArchive = () => {
 const bodyText = () => document.body.textContent ?? '';
 
 describe('SessionMenu archive', () => {
+	it('offers the counsellor archive but no delete (ORISO-Admin#1518)', () => {
+		// Delete hard-deleted the chat for the advice seeker as well.
+		render(<Menu />);
+
+		const entries = Array.from(
+			document.querySelectorAll('.sessionMenu__item')
+		).map((el) => el.textContent ?? '');
+		expect(entries.some((t) => t.includes('chatFlyout.archive'))).toBe(
+			true
+		);
+		expect(entries.some((t) => t.includes('chatFlyout.remove'))).toBe(
+			false
+		);
+	});
+
 	it('shows an error and keeps the chat when the server refuses', async () => {
 		vi.mocked(apiPutArchive).mockRejectedValue(new Error('500'));
 		render(<Menu />);

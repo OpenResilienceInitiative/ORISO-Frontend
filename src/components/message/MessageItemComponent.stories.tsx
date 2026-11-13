@@ -577,9 +577,12 @@ export const EndedCall: Story = {
 	},
 	play: async ({ canvas, canvasElement }) => {
 		await waitForMessageEnterAnimation(canvasElement);
+		// #2237: the title is the call type (and topic); the state sits
+		// once, below it.
 		await expect(
-			canvas.getByText(/Videoanruf beendet|Video call ended/)
+			canvas.getByText(/^(Videoanruf|Video call)( · .+)?$/)
 		).toBeVisible();
+		await expect(canvas.getByText(/^(Beendet|Ended)$/)).toBeVisible();
 		const attendance = within(
 			canvas.getByRole('group', { name: /Teilgenommen|Attended/ })
 		);

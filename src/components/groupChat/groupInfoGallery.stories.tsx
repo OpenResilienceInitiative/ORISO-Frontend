@@ -179,10 +179,19 @@ export const InfoGalleryTabletSelection: StoryObj = {
 
 		await expect(step(1)).toHaveAttribute('aria-current', 'true');
 		await userEvent.click(step(2));
-		// The middle card is already visible at the left snap position.
-		await expect(track.scrollLeft).toBe(0);
 		await expect(step(2)).toHaveAttribute('aria-current', 'true');
+		// A click on a card while the dot's smooth scroll may still be under
+		// way is a click, not a drag: it must not re-pick the card from a
+		// half-way position (ORISO-Admin#1506).
 		await userEvent.click(canvas.getAllByRole('img')[0]);
+		await expect(step(2)).toHaveAttribute('aria-current', 'true');
+		// The dot centres the middle card once its scroll has settled.
+		await waitFor(() =>
+			expect(track.scrollLeft).toBeCloseTo(
+				Math.min(end(), Math.max(0, secondCentre - width / 2)),
+				0
+			)
+		);
 		await expect(step(2)).toHaveAttribute('aria-current', 'true');
 
 		await userEvent.click(step(2));
