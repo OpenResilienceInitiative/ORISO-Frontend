@@ -56,6 +56,12 @@ export interface ConversationPreviewModel {
 	session: ReturnType<typeof useSession>['session'] | null;
 	roomKind: PreviewRoomKind | null;
 	capabilities: PreviewCapabilities;
+	/**
+	 * #2226: every lookup has answered and the preview still hides the
+	 * conversation (not joined, group not started, curtained). A call or
+	 * appointment entry then keeps its detail view instead of a blank notice.
+	 */
+	hidesContentSettled: boolean;
 	composerTarget: PreviewComposerTarget;
 	/** For the co-access notice (its end date). */
 	caseHandoverStatus: CaseHandoverStatus | null;
@@ -307,12 +313,19 @@ export const useConversationPreview = (
 		groupJoinBlocked
 	});
 
+	const settled =
+		Boolean(session?.item) &&
+		isConsultant !== undefined &&
+		caseHandover !== 'loading' &&
+		!stillLoading;
+
 	return {
 		roomId,
 		threadRootId: conversation.threadRootId,
 		session: session ?? null,
 		roomKind,
 		capabilities,
+		hidesContentSettled: settled && capabilities.contentHidden,
 		composerTarget:
 			roomKind === 'supervision'
 				? {

@@ -830,6 +830,14 @@ export const NotificationsCenter = () => {
 		unreadOnly,
 		markRead: markNotificationAsRead
 	});
+	// #2226 (review): a call or appointment entry whose conversation the
+	// preview would hide (room not joined, group not started, curtained)
+	// keeps its detail view — the entry's text and "Next notification" —
+	// instead of a blank read-only notice. Message entries keep the notice.
+	const callEntryPreviewHidden = Boolean(
+		showEventBar && conversation.preview?.hidesContentSettled
+	);
+	const showConversationPane = showEmbeddedChat && !callEntryPreviewHidden;
 
 	if (notificationFeed.length === 0) {
 		return (
@@ -1271,7 +1279,7 @@ export const NotificationsCenter = () => {
 							{selectedOpenLabel}
 						</MenuItem>
 					)}
-					{canShowChatPreview && (
+					{canShowChatPreview && !callEntryPreviewHidden && (
 						<MenuItem
 							onClick={() => {
 								toggleConversation();
@@ -1320,7 +1328,7 @@ export const NotificationsCenter = () => {
 			<div className="notificationsCenter__detail">
 				<div
 					className={`notificationsCenter__detailCard ${
-						showEmbeddedChat
+						showConversationPane
 							? 'notificationsCenter__detailCard--embedded'
 							: ''
 					}`}
@@ -1329,7 +1337,7 @@ export const NotificationsCenter = () => {
 						<div className="notificationsCenter__emptyDetail">
 							{translate('notifications.center.emptyDetail')}
 						</div>
-					) : showEmbeddedChat ? (
+					) : showConversationPane ? (
 						<>
 							{showEventBar && (
 								<ActivityEventBar

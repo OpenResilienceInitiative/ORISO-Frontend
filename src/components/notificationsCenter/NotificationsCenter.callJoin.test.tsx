@@ -49,6 +49,23 @@ vi.mock('./ConversationPreview', () => ({
 	)
 }));
 
+// #2226 review: lets a test answer as the preview model would once its
+// lookups are done; null keeps the real hook.
+let settledPreview: Record<string, unknown> | null = null;
+vi.mock('./useConversationPreview', async (importOriginal) => {
+	const actual =
+		await importOriginal<typeof import('./useConversationPreview')>();
+	return {
+		...actual,
+		useConversationPreview: (
+			...args: Parameters<typeof actual.useConversationPreview>
+		) => {
+			const real = actual.useConversationPreview(...args);
+			return settledPreview && args[0] ? settledPreview : real;
+		}
+	};
+});
+
 const call = {
 	callId: 'existing-call',
 	roomRef: '!source:example',
@@ -111,6 +128,7 @@ beforeEach(async () => {
 	vi.clearAllMocks();
 	mediaJoined = false;
 	sourceMembership = 'join';
+	settledPreview = null;
 	joinRoom.mockImplementation(async () => {
 		mediaJoined = true;
 		return mediaRoom;
@@ -287,6 +305,39 @@ it('#2226: a call card whose room this app has not joined keeps its detail view'
 		screen.getByRole('button', { name: en.notifications.center.next })
 	).toBeTruthy();
 	expect(joinRoom).not.toHaveBeenCalled();
+});
+
+it('#2226: a call card whose preview would hide the conversation (group not started) keeps its detail view', async () => {
+	settledPreview = {
+		roomId: call.roomRef,
+		threadRootId: null,
+		session: null,
+		roomKind: 'main',
+		capabilities: {
+			composer: false,
+			react: false,
+			manageOwn: false,
+			threadReply: false,
+			readOnlyReason: 'notJoined',
+			contentHidden: true
+		},
+		hidesContentSettled: true,
+		composerTarget: {},
+		caseHandoverStatus: null,
+		senderDisplayName: null
+	};
+	await renderCenter();
+	expect(
+		await screen.findByRole('button', {
+			name: en.notifications.center.next
+		})
+	).toBeTruthy();
+	expect(document.querySelector('[data-cy="activity-event-bar"]')).toBeNull();
+	expect(
+		screen.queryByRole('region', { name: 'Conversation preview' })
+	).toBeNull();
+	expect(joinRoom).not.toHaveBeenCalled();
+	expect(sendReadReceipt).not.toHaveBeenCalled();
 });
 
 it('#2226: a call card without a room keeps its detail view', async () => {
