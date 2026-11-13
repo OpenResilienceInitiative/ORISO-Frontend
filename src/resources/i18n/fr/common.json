@@ -1386,7 +1386,8 @@
 				"headline": "Comment nous nous comportons les uns envers les autres",
 				"subline": "Lisez-les une fois – et vous êtes des nôtres."
 			},
-			"devices": "Caméra et micro"
+			"devices": "Caméra et micro",
+			"waitingForAdmission": "Inscrit·e"
 		},
 		"shareDialog": {
 			"title_text": "Cercle créé",
@@ -1494,6 +1495,10 @@
 			"overlay": {
 				"headline": "Vous avez été retiré(e) de ce groupe."
 			}
+		},
+		"waitingAdmission": {
+			"waiting": "Dès que l'animateur·rice vous fait entrer, le chat et l'appel s'ouvrent automatiquement.",
+			"openSoon": "La séance est en cours. L’animateur sait que vous attendez et vous fera entrer sous peu."
 		}
 	},
 	"help": {
@@ -6484,6 +6489,10 @@
 			"region": "Personnes en attente",
 			"someone": "Une personne",
 			"wantsIn": "souhaite rejoindre l’appel",
+			"waitingFor_one": "attend depuis 1 min",
+			"waitingFor_other": "attend depuis {{count}} min",
+			"waitingFor": "attend depuis {{count}} min",
+			"justArrived": "vient d’arriver",
 			"admit": "Laisser entrer",
 			"decline": "Refuser",
 			"admitAll": "Laisser entrer tout le monde",

@@ -1386,7 +1386,8 @@
 				"headline": "Birbirimize nasıl davranırız",
 				"subline": "Bir kez okuyun – sonra siz de aramızdasınız."
 			},
-			"devices": "Kamera ve mikrofon"
+			"devices": "Kamera ve mikrofon",
+			"waitingForAdmission": "Kayıt alındı"
 		},
 		"shareDialog": {
 			"title_text": "Çember oluşturuldu",
@@ -1494,6 +1495,10 @@
 			"overlay": {
 				"headline": "Bu gruptan çıkarıldınız."
 			}
+		},
+		"waitingAdmission": {
+			"waiting": "Grup yöneticisi sizi içeri aldığında sohbet ve arama kendiliğinden açılır.",
+			"openSoon": "Oturum devam ediyor. Grup yöneticisi beklediğinizi biliyor ve sizi birazdan içeri alacak."
 		}
 	},
 	"help": {
@@ -6484,6 +6489,10 @@
 			"region": "Bekleyen kişiler",
 			"someone": "Biri",
 			"wantsIn": "görüşmeye katılmak istiyor",
+			"waitingFor_one": "1 dk'dır bekliyor",
+			"waitingFor_other": "{{count}} dk'dır bekliyor",
+			"waitingFor": "{{count}} dk'dır bekliyor",
+			"justArrived": "az önce geldi",
 			"admit": "İçeri al",
 			"decline": "Reddet",
 			"admitAll": "Herkesi içeri al",

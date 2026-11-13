@@ -1363,7 +1363,8 @@
 				"headline": "How we treat each other",
 				"subline": "Read it once – then you are in."
 			},
-			"devices": "Camera & microphone"
+			"devices": "Camera & microphone",
+			"waitingForAdmission": "Signed in"
 		},
 		"shareDialog": {
 			"title_text": "Circle created",
@@ -1471,6 +1472,10 @@
 			"overlay": {
 				"headline": "You were removed from this group."
 			}
+		},
+		"waitingAdmission": {
+			"waiting": "As soon as the group leader lets you in, the chat and the call open by themselves.",
+			"openSoon": "The session is running. The host knows you are waiting and will let you in shortly."
 		}
 	},
 	"help": {
@@ -6399,6 +6404,10 @@
 			"region": "People waiting",
 			"someone": "Someone",
 			"wantsIn": "wants to join the call",
+			"waitingFor_one": "waiting for 1 min",
+			"waitingFor_other": "waiting for {{count}} min",
+			"waitingFor": "waiting for {{count}} min",
+			"justArrived": "just arrived",
 			"admit": "Let in",
 			"decline": "Decline",
 			"admitAll": "Let everyone in",
