@@ -16,6 +16,7 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { bookingPathFor } from '../../containers/bookings/components/Booking/bookingSession';
 
 import { SendButton } from './inputField/SendButton';
 import { hasMediaUploadFeature } from '../../utils/mediaUploadHelpers';
@@ -2660,8 +2661,8 @@ export const MessageSubmitInterfaceComponent = ({
 	}, [activeInfo, activeSession, translate, userData]);
 
 	const handleBookingButton = useCallback(() => {
-		navigate('/booking/');
-	}, [navigate]);
+		navigate(bookingPathFor(activeSession?.item?.id));
+	}, [navigate, activeSession?.item?.id]);
 
 	const isSelfHelpGroup = getModality(activeSession) === Modality.SELF_HELP;
 	// Practice: no uploads and no voice (one gate for buttons, input, paste, shortcuts).
