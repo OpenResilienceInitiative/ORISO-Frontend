@@ -23,7 +23,7 @@ import {
 	SessionTypeContext,
 	UserDataContext
 } from '../../globalState';
-import { apiSendMatrixAttachmentMessage } from '../../api';
+import { apiPutDearchive, apiSendMatrixAttachmentMessage } from '../../api';
 
 const mocks = vi.hoisted(() => ({
 	clearDraft: vi.fn().mockResolvedValue(undefined),
@@ -301,5 +301,64 @@ describe('sending queued passage quotes (PR #2232 review)', () => {
 		await clickSend();
 		expect(onSendPendingQuotes).not.toHaveBeenCalled();
 		expect(screen.getByText(/marked passage/)).toBeTruthy();
+	});
+
+	const archived = {
+		...session,
+		item: { ...session.item, status: 4 as unknown as string }
+	};
+
+	it('keeps quotes and draft in an archived chat that may not be re-opened', async () => {
+		const onSendPendingQuotes = vi.fn();
+		render(
+			<Composer
+				activeSession={archived}
+				allowDearchive={false}
+				pendingQuotes={QUOTES}
+				onSendPendingQuotes={onSendPendingQuotes}
+			/>
+		);
+		act(() => mocks.typeDraft(DRAFT));
+		await clickSend();
+		expect(onSendPendingQuotes).not.toHaveBeenCalled();
+		expect(vi.mocked(apiPutDearchive)).not.toHaveBeenCalled();
+		expect(mocks.clearDraft).not.toHaveBeenCalled();
+		expect(draftText()).toBe(DRAFT);
+	});
+
+	it('re-opens an archived chat before the quotes go out', async () => {
+		const order: string[] = [];
+		vi.mocked(apiPutDearchive).mockImplementation(async () => {
+			order.push('dearchive');
+		});
+		const onSendPendingQuotes = vi.fn(() => order.push('quotes'));
+		render(
+			<Composer
+				activeSession={archived}
+				pendingQuotes={QUOTES}
+				onSendPendingQuotes={onSendPendingQuotes}
+			/>
+		);
+		act(() => mocks.typeDraft(DRAFT));
+		await clickSend();
+		expect(order).toEqual(['dearchive', 'quotes']);
+		expect(onSendPendingQuotes).toHaveBeenCalledWith(DRAFT);
+		expect(mocks.clearDraft).toHaveBeenCalled();
+	});
+
+	it('keeps the draft when re-opening the archived chat fails', async () => {
+		vi.mocked(apiPutDearchive).mockRejectedValueOnce(new Error('403'));
+		const onSendPendingQuotes = vi.fn();
+		render(
+			<Composer
+				activeSession={archived}
+				pendingQuotes={QUOTES}
+				onSendPendingQuotes={onSendPendingQuotes}
+			/>
+		);
+		act(() => mocks.typeDraft(DRAFT));
+		await clickSend();
+		expect(onSendPendingQuotes).not.toHaveBeenCalled();
+		expect(draftText()).toBe(DRAFT);
 	});
 });

@@ -2331,31 +2331,55 @@ export const MessageSubmitInterfaceComponent = ({
 		) {
 			return null;
 		}
+		if (isSessionArchived && !allowDearchive) {
+			// #1824: never re-open a conversation from outside it. Collected
+			// quotes wait behind the same gate as every other send.
+			return null;
+		}
 		// An active edit goes out as the edit; the queued quotes wait.
 		const isEditing = Boolean(editingMessage || editingMessageId);
-		if (pendingQuotes?.length && onSendPendingQuotes && !isEditing) {
-			if (!recordedVoiceRef.current && !attachmentSelected) {
-				// Selection reply: every collected passage and the typed text
-				// leave together, as one message.
-				const typed = getTypedMarkdownMessage();
-				onSendPendingQuotes(hasMessageContent(typed) ? typed : '');
+		const sendsQuotes = Boolean(
+			pendingQuotes?.length && onSendPendingQuotes && !isEditing
+		);
+		if (sendsQuotes && !recordedVoiceRef.current && !attachmentSelected) {
+			// Selection reply: every collected passage and the typed text
+			// leave together, as one message.
+			const typed = getTypedMarkdownMessage();
+			const text = hasMessageContent(typed) ? typed : '';
+			const sendQuotes = () => {
+				onSendPendingQuotes!(text);
 				setEditorState(EditorState.createEmpty());
 				setComposerText('');
 				composerRef.current?.clear();
 				void clearDraftMessage();
-				return null;
+			};
+			if (isSessionArchived) {
+				// Re-open first; the draft stays if that fails.
+				apiPutDearchive(activeSession.item.id)
+					.then(() => {
+						sendQuotes();
+						reloadActiveSession();
+					})
+					.catch(() => {});
+			} else {
+				sendQuotes();
 			}
-			// A composer voice note or file still goes as its own message.
-			onSendPendingQuotes('');
-		}
-
-		if (isSessionArchived && !allowDearchive) {
-			// #1824: never re-open a conversation from outside it.
 			return null;
 		}
+		// A composer voice note or file still goes as its own message,
+		// right after the collected quotes.
+		const sendQuotesAlone = () => {
+			if (sendsQuotes) {
+				onSendPendingQuotes!('');
+			}
+		};
+
 		if (isSessionArchived) {
 			apiPutDearchive(activeSession.item.id)
-				.then(prepareAndSendMessage)
+				.then(() => {
+					sendQuotesAlone();
+					return prepareAndSendMessage();
+				})
 				.then(() => {
 					reloadActiveSession();
 					if (
@@ -2378,6 +2402,7 @@ export const MessageSubmitInterfaceComponent = ({
 					// console.error(error);
 				});
 		} else {
+			sendQuotesAlone();
 			prepareAndSendMessage().then();
 		}
 	}, [
