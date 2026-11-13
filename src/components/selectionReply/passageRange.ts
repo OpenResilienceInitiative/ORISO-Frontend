@@ -4,15 +4,15 @@
  * The selection's `toString()` and the bubble's text nodes disagree on
  * whitespace (line breaks, `<br>`, collapsed spaces), so both sides are
  * compared with runs of whitespace collapsed to one space. The in-bubble
- * quote of an earlier reply is skipped: a passage always belongs to the
- * message's own text.
+ * quote of an earlier reply and the passage replies above the body are
+ * skipped: a passage always belongs to the message's own text.
  */
 
 // A blurred passage is aria-hidden but still counts: its scrambled text has
 // the same shape as the original, so offsets stay stable. Its screen-reader
 // label does not count.
 const SKIP_SELECTOR =
-	'.messageItem__replyQuote, button, [aria-hidden="true"]:not(.passageBlur), .passageBlur__srLabel, .messageItem__metaData, .messageItem__timeRail, .messageItem__reactions';
+	'.messageItem__replyQuote, .messageItem__passageReplies, button, [aria-hidden="true"]:not(.passageBlur), .passageBlur__srLabel, .messageItem__metaData, .messageItem__timeRail, .messageItem__reactions';
 
 export const normalizePassage = (text: string): string =>
 	text.replace(/\s+/g, ' ').trim();

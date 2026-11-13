@@ -100,16 +100,23 @@ function PassageBlurStage({
 	height = '100vh'
 }: StageProps) {
 	const contentRef = useRef<HTMLDivElement | null>(null);
-	const [blurs, setBlurs] = useState<PassageBlur[]>(() =>
-		blurred.map((passage, index) =>
-			blurOver(SENSITIVE_MESSAGE, passage, `blur-${index + 1}`)
-		)
+	// Blurs per message, like the annotations collected per event id.
+	const [blursById, setBlursById] = useState<Record<string, PassageBlur[]>>(
+		() => ({
+			[SENSITIVE_ID]: blurred.map((passage, index) =>
+				blurOver(SENSITIVE_MESSAGE, passage, `blur-${index + 1}`)
+			)
+		})
 	);
+	const blurs = blursById[SENSITIVE_ID] ?? [];
 	const [preset, setPreset] = useState<MessageSelection | null>(null);
 	const messages: MessageItem[] = [
 		...mainChatMessages(),
-		{ ...sensitiveMessage(), passageBlurs: blurs }
-	];
+		sensitiveMessage()
+	].map((message) => ({
+		...message,
+		passageBlurs: blursById[message._id] ?? null
+	}));
 
 	const authorFor = useCallback(
 		(eventId: string) =>
@@ -187,28 +194,36 @@ function PassageBlurStage({
 									recorder={storyRecorder}
 									onBlurPassage={
 										moderator
-											? (_passage, position) => {
+											? (passage, position) => {
 													setPreset(null);
-													setBlurs((rows) => [
+													setBlursById((rows) => ({
 														...rows,
-														{
-															id: `blur-${Date.now()}`,
-															...position
-														}
-													]);
+														[passage.eventId]: [
+															...(rows[
+																passage.eventId
+															] ?? []),
+															{
+																id: `blur-${Date.now()}`,
+																...position
+															}
+														]
+													}));
 												}
 											: undefined
 									}
 									onRemoveBlur={
 										moderator
-											? (_eventId, blurId) =>
-													setBlurs((rows) =>
-														rows.filter(
+											? (eventId, blurId) =>
+													setBlursById((rows) => ({
+														...rows,
+														[eventId]: (
+															rows[eventId] ?? []
+														).filter(
 															(row) =>
 																row.id !==
 																blurId
 														)
-													)
+													}))
 											: undefined
 									}
 									blurredByFor={() => COUNSELLOR_NAME}

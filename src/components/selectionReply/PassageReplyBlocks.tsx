@@ -66,10 +66,12 @@ export const PassageReplyBlocks = ({
 								type="button"
 								className={quoteClassName}
 								data-cy="reply-quote-jump"
-								aria-label={translate(
+								// The passage itself tells several quotes of
+								// one author apart for screen-reader users.
+								aria-label={`${translate(
 									'message.reply.jumpToQuote',
 									{ author: reply.author }
-								)}
+								)}: „${reply.excerpt}“`}
 								onClick={(event) => {
 									event.stopPropagation();
 									onJump(reply);

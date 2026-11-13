@@ -2319,7 +2319,21 @@ export const MessageSubmitInterfaceComponent = ({
 			stopVoiceRecording();
 			return null;
 		}
-		if (pendingQuotes?.length && onSendPendingQuotes) {
+		// The same guards as every other send: a refused file on the card
+		// blocks it, and so does text past the length limit.
+		if (attachmentRejection) {
+			return null;
+		}
+		if (
+			!recordedVoiceRef.current &&
+			getPlainTextFromComposerValue(getTypedMarkdownMessage()).length >
+				INPUT_MAX_LENGTH
+		) {
+			return null;
+		}
+		// An active edit goes out as the edit; the queued quotes wait.
+		const isEditing = Boolean(editingMessage || editingMessageId);
+		if (pendingQuotes?.length && onSendPendingQuotes && !isEditing) {
 			if (!recordedVoiceRef.current && !attachmentSelected) {
 				// Selection reply: every collected passage and the typed text
 				// leave together, as one message.
@@ -2333,13 +2347,6 @@ export const MessageSubmitInterfaceComponent = ({
 			}
 			// A composer voice note or file still goes as its own message.
 			onSendPendingQuotes('');
-		}
-		if (
-			!recordedVoiceRef.current &&
-			getPlainTextFromComposerValue(getTypedMarkdownMessage()).length >
-				INPUT_MAX_LENGTH
-		) {
-			return null;
 		}
 
 		if (isSessionArchived && !allowDearchive) {
@@ -2376,8 +2383,11 @@ export const MessageSubmitInterfaceComponent = ({
 	}, [
 		activeSession.item.matrixRoomId,
 		activeSession.item.id,
+		attachmentRejection,
 		attachmentSelected,
 		clearDraftMessage,
+		editingMessage,
+		editingMessageId,
 		getTypedMarkdownMessage,
 		hasMessageContent,
 		navigate,
@@ -4424,7 +4434,19 @@ export const MessageSubmitInterfaceComponent = ({
 				</div>
 			)}
 
-			<form className="textarea" onSubmit={handleFormSubmit}>
+			<form
+				className="textarea"
+				onSubmit={handleFormSubmit}
+				// On the phone the stacked bars rest above the card, so the
+				// form (not only the card) needs the stack's extra height.
+				style={
+					contextStackExtra
+						? ({
+								'--context-stack-extra': `${contextStackExtra}px`
+							} as React.CSSProperties)
+						: undefined
+				}
+			>
 				<div
 					className={clsx(
 						'textarea__wrapper',
@@ -4462,20 +4484,9 @@ export const MessageSubmitInterfaceComponent = ({
 						onBlur={handleComposerCardBlur}
 						onTransitionEnd={handleComposerShellTransitionEnd}
 						style={
-							(!isExpandedComposer && composerCardHeight) ||
-							contextStackExtra
+							!isExpandedComposer && composerCardHeight
 								? ({
-										...(!isExpandedComposer &&
-										composerCardHeight
-											? {
-													'--composer-height': `${composerCardHeight}px`
-												}
-											: {}),
-										...(contextStackExtra
-											? {
-													'--context-stack-extra': `${contextStackExtra}px`
-												}
-											: {})
+										'--composer-height': `${composerCardHeight}px`
 									} as React.CSSProperties)
 								: undefined
 						}
@@ -5286,7 +5297,10 @@ export const MessageSubmitInterfaceComponent = ({
 										canSendMessage ||
 										Boolean(
 											pendingQuotes?.length &&
-												onSendPendingQuotes
+												onSendPendingQuotes &&
+												!isEditingAnyMessage &&
+												!attachmentRejection &&
+												!isMessageOverLimit
 										),
 									isSending: isRequestInProgress,
 									isDisabled:

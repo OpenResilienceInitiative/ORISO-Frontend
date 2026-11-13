@@ -21,6 +21,8 @@ export interface SelectionReplyPopoverProps {
 	draft: string;
 	onDraftChange: (value: string) => void;
 	voice: SelectionReplyVoice;
+	/** The microphone could not start or the take could not be saved. */
+	voiceError?: boolean;
 	/** Hide the microphone where voice notes are off. */
 	showVoice?: boolean;
 	onStartVoice: () => void;
@@ -56,6 +58,7 @@ export const SelectionReplyPopover = forwardRef<
 			draft,
 			onDraftChange,
 			voice,
+			voiceError = false,
 			showVoice = true,
 			onStartVoice,
 			onStopVoice,
@@ -91,7 +94,10 @@ export const SelectionReplyPopover = forwardRef<
 			if (
 				event.key !== 'Enter' ||
 				event.shiftKey ||
-				event.target !== inputRef.current
+				event.target !== inputRef.current ||
+				// Enter that confirms an input-method composition (IME) is
+				// part of typing, not a reply action.
+				event.nativeEvent.isComposing
 			) {
 				return;
 			}
@@ -143,6 +149,12 @@ export const SelectionReplyPopover = forwardRef<
 					</button>
 				</div>
 
+				{voiceError && (
+					<p role="alert" className="selectionReply__voiceError">
+						{translate('voice.recording.error.headline')}.{' '}
+						{translate('voice.recording.error.message')}
+					</p>
+				)}
 				{voice.mode === 'recording' && (
 					<VoiceNoteRow
 						mode="recording"

@@ -120,6 +120,34 @@ const stripMention = (element: Element) => {
 	);
 };
 
+/**
+ * A task-list checkbox carries its task's text as `aria-label`
+ * (nameTaskListCheckboxes). When that text is blurred, the label is rebuilt
+ * from what is shown, with the blurred part read as `label`.
+ */
+const nameBlurredTasks = (root: Element, label: string) => {
+	root.querySelectorAll('ul[data-type="taskList"] > li').forEach((item) => {
+		const checkbox = item.querySelector(':scope > label > input');
+		const task = item.querySelector(':scope > div');
+		if (!checkbox || !task?.querySelector('.passageBlur')) {
+			return;
+		}
+		const shown = task.cloneNode(true) as Element;
+		shown
+			.querySelectorAll('.passageBlur__srLabel')
+			.forEach((node) => node.remove());
+		shown
+			.querySelectorAll('.passageBlur')
+			.forEach((node) => node.replaceWith(` ${label} `));
+		const text = (shown.textContent ?? '').replace(/\s+/g, ' ').trim();
+		if (text) {
+			checkbox.setAttribute('aria-label', text);
+		} else {
+			checkbox.removeAttribute('aria-label');
+		}
+	});
+};
+
 /** Text-node pieces one blur covers: node, first and last offset. */
 type Piece = { node: Text; from: number; to: number; blur: PassageBlur };
 
@@ -258,5 +286,6 @@ export const applyPassageBlursToHtml = (
 			}
 		});
 
+	nameBlurredTasks(root, label);
 	return root.innerHTML;
 };

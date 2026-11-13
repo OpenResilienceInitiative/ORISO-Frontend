@@ -5,6 +5,20 @@
 
 $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 
+// The menu-row hover and focus of every control in the bar and the field.
+@mixin selection-reply-control-states {
+	&:hover:not(:disabled),
+	&:focus-visible {
+		background-color: var(--oriso-menu-hover-surface, #e7effc);
+		color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
+		outline: none;
+	}
+
+	&:focus-visible {
+		box-shadow: 0 0 0 2px var(--m3-primary-outline, #930008);
+	}
+}
+
 .selectionReply {
 	position: relative;
 	display: flex;
@@ -67,16 +81,7 @@ $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 		transform: translate(-50%, 0);
 	}
 
-	&:hover,
-	&:focus-visible {
-		background-color: var(--oriso-menu-hover-surface, #e7effc);
-		color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
-		outline: none;
-	}
-
-	&:focus-visible {
-		box-shadow: 0 0 0 2px var(--m3-primary-outline, #930008);
-	}
+	@include selection-reply-control-states;
 }
 
 .selectionReply__toolbarTip {
@@ -141,6 +146,13 @@ $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 
 // The passage, quoted the way the composer's reply bar quotes a message
 // (Figma "Reply Bar_v2"): grey surface, medium lead, regular text.
+.selectionReply__voiceError {
+	margin: 0 0 8px;
+	font-size: 13px;
+	line-height: 18px;
+	color: var(--m3-error, #ba1a1a);
+}
+
 .selectionReply__quote {
 	display: flex;
 	align-items: flex-start;
@@ -257,16 +269,7 @@ $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 	cursor: pointer;
 	transition: background-color 150ms ease;
 
-	&:hover:not(:disabled),
-	&:focus-visible {
-		background-color: var(--oriso-menu-hover-surface, #e7effc);
-		color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
-		outline: none;
-	}
-
-	&:focus-visible {
-		box-shadow: 0 0 0 2px var(--m3-primary-outline, #930008);
-	}
+	@include selection-reply-control-states;
 
 	&:disabled {
 		opacity: 0.38;
@@ -301,16 +304,7 @@ $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 		font-size: 22px;
 	}
 
-	&:hover:not(:disabled),
-	&:focus-visible {
-		background-color: var(--oriso-menu-hover-surface, #e7effc);
-		color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
-		outline: none;
-	}
-
-	&:focus-visible {
-		box-shadow: 0 0 0 2px var(--m3-primary-outline, #930008);
-	}
+	@include selection-reply-control-states;
 
 	&:disabled {
 		opacity: 0.38;
@@ -440,7 +434,7 @@ $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 	white-space: nowrap;
 }
 
-@media (max-width: 599px) {
+@media (width <= 599px) {
 	.selectionReply__wideLabel {
 		display: none;
 	}

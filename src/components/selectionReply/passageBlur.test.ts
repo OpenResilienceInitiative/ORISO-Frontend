@@ -176,6 +176,29 @@ describe('passageBlurFromRange + applyPassageBlursToHtml', () => {
 		expect(out).toContain('class="mention"');
 	});
 
+	it('renames a task checkbox whose task text is blurred', () => {
+		const html =
+			'<ul data-type="taskList"><li><label><input type="checkbox" aria-label="Anna Berger anrufen"></label><div><p>Anna Berger anrufen</p></div></li></ul>';
+		const out = render(
+			applyPassageBlursToHtml(
+				html,
+				[{ id: 'b1', start: 0, length: 11 }],
+				{ label: LABEL }
+			)
+		);
+		expect(out.innerHTML).not.toContain('Anna');
+		expect(out.querySelector('input')!.getAttribute('aria-label')).toBe(
+			`${LABEL} anrufen`
+		);
+	});
+
+	it('does not count the passage replies above the body', () => {
+		const bubble = render(
+			'<ol class="messageItem__passageReplies"><li class="messageItem__passageReply"><p class="messageItem__passageReplyText">Antwort</p></li></ol><span><p>Text</p></span>'
+		);
+		expect(collectText(bubble).text).toBe('Text');
+	});
+
 	it('skips a blur that no longer fits an edited message', () => {
 		const out = applyPassageBlursToHtml(
 			'<p>kurz</p>',

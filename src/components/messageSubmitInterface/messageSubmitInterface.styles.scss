@@ -2092,9 +2092,11 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 	}
 }
 
+// `--context-stack-extra` (set on the form) adds every stacked bar beyond
+// the first, so queued quotes plus a reply/edit bar stay inside the reserve.
 @media screen and (width <= 899px) {
 	.textarea:has(.messageSubmit__contextBar) {
-		padding-top: 54px;
+		padding-top: calc(54px + var(--context-stack-extra, 0px));
 	}
 
 	.textarea:has(.messageSubmit__formatTray) {
@@ -2102,7 +2104,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 	}
 
 	.textarea:has(.messageSubmit__contextBar):has(.messageSubmit__formatTray) {
-		padding-top: 108px;
+		padding-top: calc(108px + var(--context-stack-extra, 0px));
 	}
 }
 
@@ -2122,8 +2124,9 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
-.messageSubmit__contextBar ~ .messageSubmit__formatTray {
-	bottom: calc(100% + 44px);
+.messageSubmit__contextBar ~ .messageSubmit__formatTray,
+.messageSubmit__contextStack ~ .messageSubmit__formatTray {
+	bottom: calc(100% + 44px + var(--context-stack-extra, 0px));
 }
 
 // Maximised, there is no room above the card and the card clips its children,

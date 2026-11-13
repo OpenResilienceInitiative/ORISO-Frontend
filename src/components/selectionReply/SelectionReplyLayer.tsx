@@ -138,6 +138,13 @@ export const SelectionReplyLayer = ({
 		initialVoice || { mode: 'idle' }
 	);
 	const [startWithVoice, setStartWithVoice] = useState(false);
+	const [voiceError, setVoiceError] = useState(false);
+	// Each start/stop/discard/close bumps this; a recorder call that finishes
+	// after a newer one (or after the reply closed) is ignored.
+	const voiceOpRef = useRef(0);
+	const startPendingRef = useRef(false);
+	const voiceModeRef = useRef(voice.mode);
+	voiceModeRef.current = voice.mode;
 	const [popoverHeight, setPopoverHeight] = useState(160);
 	const { selection, setSelection, clear } = useMessageSelection(layerRef, {
 		enabled: enabled && mode !== 'popover',
@@ -171,17 +178,25 @@ export const SelectionReplyLayer = ({
 		}
 	};
 
-	const reset = useCallback(() => {
+	/** Ends any recording, also one whose start has not finished yet. */
+	const abandonVoice = useCallback(() => {
+		voiceOpRef.current += 1;
 		stopTimer();
-		if (voice.mode === 'recording') {
+		if (voiceModeRef.current === 'recording' || startPendingRef.current) {
 			recorder?.cancel();
 		}
+		startPendingRef.current = false;
+	}, [recorder]);
+
+	const reset = useCallback(() => {
+		abandonVoice();
 		setMode('none');
 		setDraft('');
 		setVoice({ mode: 'idle' });
+		setVoiceError(false);
 		setStartWithVoice(false);
 		clear();
-	}, [clear, recorder, voice.mode]);
+	}, [clear, abandonVoice]);
 
 	// Keep the passage painted while answering. A selection handed in
 	// (no native selection behind it) is painted under the bar as well.
@@ -241,10 +256,12 @@ export const SelectionReplyLayer = ({
 				anchor: anchorFor(range.getBoundingClientRect(), layer)
 			});
 		};
-		layer.addEventListener('scroll', onScroll, true);
+		// Captured on the document: the timeline may scroll in the layer or
+		// in an ancestor (anchorFor measures against scrollParentOf(layer)).
+		document.addEventListener('scroll', onScroll, true);
 		window.addEventListener('resize', onScroll);
 		return () => {
-			layer.removeEventListener('scroll', onScroll, true);
+			document.removeEventListener('scroll', onScroll, true);
 			window.removeEventListener('resize', onScroll);
 		};
 	}, [mode, active, clear, setSelection, initialSelection]);
@@ -274,7 +291,10 @@ export const SelectionReplyLayer = ({
 			document.removeEventListener('pointerdown', onPointerDown, true);
 	}, [mode, draft, voice.mode, reset]);
 
-	useEffect(() => () => stopTimer(), []);
+	// Leaving the chat ends a recording, also one still starting.
+	const abandonVoiceRef = useRef(abandonVoice);
+	abandonVoiceRef.current = abandonVoice;
+	useEffect(() => () => abandonVoiceRef.current(), []);
 
 	// The field grows with a voice note; measure it to place it.
 	useLayoutEffect(() => {
@@ -296,7 +316,26 @@ export const SelectionReplyLayer = ({
 		if (!recorder) {
 			return;
 		}
-		await recorder.start();
+		voiceOpRef.current += 1;
+		const op = voiceOpRef.current;
+		setVoiceError(false);
+		startPendingRef.current = true;
+		try {
+			await recorder.start();
+		} catch {
+			if (op === voiceOpRef.current) {
+				startPendingRef.current = false;
+				setVoice({ mode: 'idle' });
+				setVoiceError(true);
+			}
+			return;
+		}
+		if (op !== voiceOpRef.current) {
+			// Closed or discarded while the microphone was starting.
+			recorder.cancel();
+			return;
+		}
+		startPendingRef.current = false;
 		setVoice({ mode: 'recording', durationSec: 0 });
 		stopTimer();
 		timerRef.current = window.setInterval(() => {
@@ -316,17 +355,30 @@ export const SelectionReplyLayer = ({
 			return;
 		}
 		stopTimer();
-		const take = await recorder.stop();
-		setVoice({ mode: 'review', ...take });
+		voiceOpRef.current += 1;
+		const op = voiceOpRef.current;
+		let take: { src: string; durationSec: number };
+		try {
+			take = await recorder.stop();
+		} catch {
+			if (op === voiceOpRef.current) {
+				recorder.cancel();
+				setVoice({ mode: 'idle' });
+				setVoiceError(true);
+			}
+			return;
+		}
+		// A take that arrives after a discard or close stays discarded.
+		if (op === voiceOpRef.current) {
+			setVoice({ mode: 'review', ...take });
+		}
 	}, [recorder]);
 
 	const discardVoice = useCallback(() => {
-		stopTimer();
-		if (voice.mode === 'recording') {
-			recorder?.cancel();
-		}
+		abandonVoice();
 		setVoice({ mode: 'idle' });
-	}, [recorder, voice.mode]);
+		setVoiceError(false);
+	}, [abandonVoice]);
 
 	const openPopover = (withVoice: boolean) => {
 		setMode('popover');
@@ -432,7 +484,6 @@ export const SelectionReplyLayer = ({
 		if (!blurTarget) {
 			return undefined;
 		}
-		const layer = layerRef.current;
 		const close = () => setBlurTarget(null);
 		const onPointerDown = (event: PointerEvent) => {
 			const target = event.target as Element;
@@ -449,11 +500,12 @@ export const SelectionReplyLayer = ({
 		};
 		document.addEventListener('pointerdown', onPointerDown, true);
 		document.addEventListener('keydown', onKeyDown);
-		layer?.addEventListener('scroll', close, true);
+		// Captured on the document, like the selection bar's scroll above.
+		document.addEventListener('scroll', close, true);
 		return () => {
 			document.removeEventListener('pointerdown', onPointerDown, true);
 			document.removeEventListener('keydown', onKeyDown);
-			layer?.removeEventListener('scroll', close, true);
+			document.removeEventListener('scroll', close, true);
 		};
 	}, [blurTarget]);
 
@@ -592,6 +644,7 @@ export const SelectionReplyLayer = ({
 					draft={draft}
 					onDraftChange={setDraft}
 					voice={voice}
+					voiceError={voiceError}
 					showVoice={Boolean(recorder)}
 					onStartVoice={() => void startVoice()}
 					onStopVoice={() => void stopVoice()}

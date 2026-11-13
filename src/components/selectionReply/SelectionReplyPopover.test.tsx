@@ -54,6 +54,21 @@ describe('SelectionReplyPopover keyboard', () => {
 		expect(onSendNow).not.toHaveBeenCalled();
 	});
 
+	it('Enter that confirms an IME composition is not a reply action', () => {
+		const { onAddToComposer, onSendNow } = renderPopover();
+		const input = screen.getByLabelText(
+			'message.selectionReply.inputLabel'
+		);
+		fireEvent.keyDown(input, { key: 'Enter', isComposing: true });
+		fireEvent.keyDown(input, {
+			key: 'Enter',
+			metaKey: true,
+			isComposing: true
+		});
+		expect(onAddToComposer).not.toHaveBeenCalled();
+		expect(onSendNow).not.toHaveBeenCalled();
+	});
+
 	it('Escape closes from anywhere in the dialog', () => {
 		const { onClose } = renderPopover();
 		fireEvent.keyDown(
