@@ -87,7 +87,6 @@ import '../sessionHeader/sessionHeader.styles';
 import './sessionMenu.styles';
 import { Button, BUTTON_TYPES, ButtonItem } from '../button/Button';
 import { ReactComponent as CalendarMonthPlusIcon } from '../../resources/img/icons/calendar-plus.svg';
-import DeleteSession from '../session/DeleteSession';
 import { Text } from '../text/Text';
 import { useSearchParam } from '../../hooks/useSearchParams';
 import { bookingPathFor } from '../../containers/bookings/components/Booking/bookingSession';
@@ -515,10 +514,6 @@ export const SessionMenu = (props: SessionMenuProps) => {
 			navigate('/profile/hilfe/videoCall');
 		}
 	};
-
-	const onSuccessDeleteSession = useCallback(() => {
-		setRedirectToSessionsList(true);
-	}, []);
 
 	//TODO:
 	//enquiries: only RS profil
@@ -1162,53 +1157,8 @@ export const SessionMenu = (props: SessionMenuProps) => {
 									</>
 								)}
 
-							{hasUserAuthority(
-								AUTHORITIES.CONSULTANT_DEFAULT,
-								userData
-							) &&
-								type !== SESSION_LIST_TYPES.ENQUIRY &&
-								!isRejectedCase &&
-								activeSession.isSession &&
-								!props.isSupervisor && (
-									<DeleteSession
-										chatId={activeSession.item.id}
-										onSuccess={onSuccessDeleteSession}
-									>
-										{(onClick) => (
-											<div
-												onClick={() => {
-													closeMenu();
-													menuTriggerRef.current?.focus();
-													onClick();
-												}}
-												role="button"
-												tabIndex={0}
-												onKeyDown={(event) => {
-													if (
-														event.key === 'Enter' ||
-														event.key === ' '
-													) {
-														event.preventDefault();
-														event.currentTarget.click();
-													}
-												}}
-												className="sessionMenu__item chatMenuDropdown__item"
-											>
-												<SessionMenuItemContent
-													icon={
-														<TrashIcon data-icon-id="ui-icon:trash:base" />
-													}
-													title={translate(
-														'chatFlyout.remove'
-													)}
-													description={translate(
-														'chatFlyout.removeDescription'
-													)}
-												/>
-											</div>
-										)}
-									</DeleteSession>
-								)}
+							{/* No delete: it removed the chat for the advice seeker too
+							    (ORISO-Admin#1518). Counsellors archive instead. */}
 
 							{activeSession.isGroup && (
 								<SessionMenuFlyoutGroup

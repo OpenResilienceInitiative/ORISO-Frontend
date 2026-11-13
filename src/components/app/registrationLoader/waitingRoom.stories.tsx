@@ -196,6 +196,9 @@ export const ReadyDotsFollowTheCards: StoryObj = {
 				target: track,
 				coords: { clientX: startX, clientY: y }
 			},
+			// The drag takes over from its first move past the threshold
+			// (#2222), so a small first step lets the whole way count.
+			{ target: track, coords: { clientX: startX - 10, clientY: y } },
 			{ target: track, coords: { clientX: startX - 200, clientY: y } },
 			{ target: track, coords: { clientX: startX - 500, clientY: y } },
 			{

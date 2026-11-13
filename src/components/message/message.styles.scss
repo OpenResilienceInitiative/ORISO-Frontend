@@ -769,6 +769,14 @@ $message-avatar-overlap: -19px;
 		}
 	}
 
+	// The system-notice icon (`SystemMessageIcon`) as the avatar of a
+	// platform entry (#2237): its own size and colour, centred in the shared
+	// avatar frame instead of the inline offset it has beside a subject.
+	&__avatar--system .systemMessage__icon {
+		margin: 0;
+		padding: 0;
+	}
+
 	&__content {
 		flex: 1;
 		min-width: 0;

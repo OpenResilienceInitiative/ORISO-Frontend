@@ -6682,7 +6682,12 @@
 			"temporary": "Temporary account",
 			"temporaryHint": "The account is deleted after the conversation.",
 			"create": "Create link",
-			"createFailed": "The link could not be created. Please try again."
+			"createFailed": "The link could not be created. Please try again.",
+			"name": "Name (optional)",
+			"nameHint": "E.g. \"Appointment Ms M.\" – helps you find the link in your overview.",
+			"scheduledAt": "Date and time (optional)",
+			"scheduledAtHint": "For orientation only – the link also works before and after.",
+			"scheduledAtIncomplete": "Please enter the full date and time, or clear the field."
 		},
 		"medium": {
 			"chat": "Chat",
@@ -6730,7 +6735,9 @@
 			"topic": "Topic",
 			"mediumFixed": "The type of contact cannot be changed",
 			"temporaryHint": "Applies only to people who open the link from now on.",
-			"failed": "The change could not be saved. Please try again."
+			"failed": "The change could not be saved. Please try again.",
+			"scheduledAt": "Date and time",
+			"clearScheduledAt": "Remove"
 		}
 	},
 	"dashboard": {

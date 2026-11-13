@@ -48,13 +48,20 @@ interface GroupChatHeaderProps {
 	 * someone who has not yet agreed (#1499). Hidden, not dimmed.
 	 */
 	hideTopic?: boolean;
+	/**
+	 * D7 (Frank, 05.09.2026): on the phone the composer's action bar leads
+	 * with the back arrow (T16), so the header renders no second one — the
+	 * same rule as the 1:1 header in `SessionHeaderComponent`.
+	 */
+	hideBackButton?: boolean;
 }
 
 export const GroupChatHeader = ({
 	hasUserInitiatedStopOrLeaveRequest,
 	isJoinGroupChatView,
 	bannedUsers,
-	hideTopic = false
+	hideTopic = false,
+	hideBackButton = false
 }: GroupChatHeaderProps) => {
 	const { t } = useTranslation(['common', 'consultingTypes', 'agencies']);
 	const { activeSession } = useContext(ActiveSessionContext);
@@ -330,14 +337,16 @@ export const GroupChatHeader = ({
 	return (
 		<div className="sessionInfo">
 			<div className="sessionInfo__headerWrapper">
-				<Link
-					to={listPath + sessionTabPath}
-					onClick={mobileListView}
-					className="sessionInfo__backButton"
-					aria-label={t('app.back')}
-				>
-					<BackIcon />
-				</Link>
+				{!hideBackButton && (
+					<Link
+						to={listPath + sessionTabPath}
+						onClick={mobileListView}
+						className="sessionInfo__backButton"
+						aria-label={t('app.back')}
+					>
+						<BackIcon />
+					</Link>
+				)}
 				<div className="sessionInfo__username sessionInfo__username--deactivate sessionInfo__username--groupChat">
 					<div className="sessionInfo__titleRow" ref={titleRowRef}>
 						<div className="sessionInfo__memberStack">

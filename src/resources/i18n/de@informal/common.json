@@ -2892,7 +2892,9 @@
 		"card": {
 			"headline": "Ein Link direkt zu dir",
 			"text": "Wer den Link öffnet, landet ohne Umweg bei dir – im Chat, im Audio- oder im Videoanruf.",
-			"createFailed": "Der Link konnte nicht erstellt werden. Bitte versuche es erneut."
+			"createFailed": "Der Link konnte nicht erstellt werden. Bitte versuche es erneut.",
+			"nameHint": "Z. B. „Termin Frau M.“ – so findest du den Link in deiner Übersicht wieder.",
+			"scheduledAtIncomplete": "Bitte gib Datum und Uhrzeit vollständig ein oder leere das Feld."
 		},
 		"share": {
 			"title": "Dein Direktlink ist bereit",
