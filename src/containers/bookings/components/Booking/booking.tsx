@@ -33,7 +33,13 @@ export const Booking = () => {
 	const sessionId = useSearchParam<string | null>(BOOKING_SESSION_PARAM);
 
 	useEffect(() => {
+		// A newer conversation (sessionId) or user supersedes this run: its
+		// late responses must not overwrite the current booking (#2010).
+		let cancelled = false;
+		setSession(undefined);
+		setAppointmentLink(null);
 		apiGetAskerSessionList().then(({ sessions }) => {
+			if (cancelled) return;
 			const session = pickBookingSession(sessions, sessionId);
 			setSession(session);
 			if (!session) return;
@@ -42,14 +48,17 @@ export const Booking = () => {
 			if (consultant) {
 				const consultantId = consultant?.consultantId || consultant?.id;
 				getCounselorAppointmentLink(consultantId).then((response) => {
-					setAppointmentLink(response.slug);
+					if (!cancelled) setAppointmentLink(response.slug);
 				});
 			} else {
 				getTeamAppointmentLink(agencyId).then((response) => {
-					setAppointmentLink(`team/${response.slug}`);
+					if (!cancelled) setAppointmentLink(`team/${response.slug}`);
 				});
 			}
 		});
+		return () => {
+			cancelled = true;
+		};
 	}, [userData, sessionId]);
 
 	if (!session) return null;
