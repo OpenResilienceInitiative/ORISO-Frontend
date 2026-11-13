@@ -140,7 +140,10 @@ const registrationData = {
 	password: 'Sicher!Genug-2026'
 };
 
-const renderAccountStep = (urlParams?: Record<string, unknown>) => {
+const renderAccountStep = (
+	urlParams?: Record<string, unknown>,
+	data: Record<string, unknown> = registrationData
+) => {
 	const screen = (
 		<AppConfigContext.Provider value={{} as any}>
 			<GlobalComponentContext.Provider
@@ -157,7 +160,7 @@ const renderAccountStep = (urlParams?: Record<string, unknown>) => {
 										disabledNextButton: false,
 										setDisabledNextButton: () => undefined,
 										updateRegistrationData: () => undefined,
-										registrationData,
+										registrationData: data,
 										availableSteps,
 										registrationConsultingType: null
 									} as any
@@ -429,5 +432,28 @@ describe('registration — the login button while the account is created', () =>
 		expect(layouts[0].contains(form()), 'the form’s page is gone').toBe(
 			false
 		);
+	});
+});
+
+describe('registration — no display name is sent (#2210)', () => {
+	it('drops a display name restored from an older registration draft', async () => {
+		/* An interrupted sign-up saved by the version that still had the field
+		   comes back from sessionStorage with `displayName` in it. It must not
+		   reach the server: nothing on screen shows it any more, and it may be
+		   a password typed into the wrong field (#2073). */
+		renderAccountStep(undefined, {
+			...registrationData,
+			displayName: 'Sicher!Genug-2026'
+		});
+
+		fireEvent.click(registerButton());
+		await waitFor(() => expect(pendingRegistration).toHaveBeenCalled());
+
+		const [, sent] = pendingRegistration.mock.calls[0] as [
+			unknown,
+			Record<string, unknown>
+		];
+		expect(sent).not.toHaveProperty('displayName');
+		expect(sent.username).toBe('blaue-wolke');
 	});
 });
