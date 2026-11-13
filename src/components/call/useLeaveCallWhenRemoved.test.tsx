@@ -18,12 +18,14 @@ import {
 vi.mock('../../services/chatTransportService', () => ({
 	chatTransportService: {
 		onMatrixRoomLifecycle: vi.fn(),
-		getMyMatrixRoomMembership: vi.fn()
+		getMyMatrixRoomMembership: vi.fn(),
+		onMatrixInitialSync: vi.fn()
 	}
 }));
 
 const subscribe = vi.mocked(chatTransportService.onMatrixRoomLifecycle);
 const membership = vi.mocked(chatTransportService.getMyMatrixRoomMembership);
+const onSynced = vi.mocked(chatTransportService.onMatrixInitialSync);
 let emit: (change: MatrixRoomLifecycleChange) => void = () => {};
 const unsubscribe = vi.fn();
 
@@ -31,6 +33,7 @@ beforeEach(() => {
 	subscribe.mockReset();
 	membership.mockReset();
 	membership.mockReturnValue('join');
+	onSynced.mockReset();
 	unsubscribe.mockReset();
 	subscribe.mockImplementation((_roomId, listener) => {
 		emit = listener;
@@ -142,6 +145,28 @@ describe('useLeaveCallWhenRemoved — removal before the watch started', () => {
 
 		expect(membership).toHaveBeenCalledWith('!circle:oriso');
 		expect(onRemoved).toHaveBeenCalledWith('ban');
+	});
+
+	it('checks again once a refreshed client has finished its first sync', () => {
+		membership.mockReturnValue(null);
+		let synced = (): void => {};
+		const stopWaiting = vi.fn();
+		onSynced.mockImplementation((callback) => {
+			synced = callback;
+			return stopWaiting;
+		});
+		const onRemoved = vi.fn();
+		const { unmount } = renderHook(() =>
+			useLeaveCallWhenRemoved('!circle:oriso', true, onRemoved, 1)
+		);
+		expect(onRemoved).not.toHaveBeenCalled();
+
+		membership.mockReturnValue('leave');
+		synced();
+
+		expect(onRemoved).toHaveBeenCalledWith('leave');
+		unmount();
+		expect(stopWaiting).toHaveBeenCalled();
 	});
 
 	it('stays in the call while still a member', () => {

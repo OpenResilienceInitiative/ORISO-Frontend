@@ -53,12 +53,26 @@ export const useLeaveCallWhenRemoved = (
 			}
 		);
 		// The lifecycle stream reports changes only. A removal that landed
-		// before this watch attached (e.g. on a refreshed client) is read here.
-		const current =
-			chatTransportService.getMyMatrixRoomMembership(conversationRoomId);
-		if (current === 'ban' || current === 'leave') {
-			onRemovedRef.current(current);
-		}
-		return (): void => stop?.();
+		// before this watch attached (e.g. on a refreshed client) is read
+		// here, or once the refreshed client has finished its first sync.
+		const checkCurrent = (): boolean => {
+			const current =
+				chatTransportService.getMyMatrixRoomMembership(
+					conversationRoomId
+				);
+			if (current === 'ban' || current === 'leave') {
+				onRemovedRef.current(current);
+			}
+			return current !== null;
+		};
+		const stopWaiting = checkCurrent()
+			? undefined
+			: chatTransportService.onMatrixInitialSync(() => {
+					checkCurrent();
+				});
+		return (): void => {
+			stop?.();
+			stopWaiting?.();
+		};
 	}, [conversationRoomId, isInGroupCall, clientGeneration]);
 };

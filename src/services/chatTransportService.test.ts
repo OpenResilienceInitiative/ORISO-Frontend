@@ -1269,3 +1269,64 @@ describe('explicit feedback metadata after successful Matrix delivery', () => {
 		expect(localStorage.length).toBe(0);
 	});
 });
+
+// ORISO-Admin#1518 follow-up: a person removed from a Gesprächskreis must leave
+// its running call even when the removal reached a freshly refreshed Matrix
+// client, whose first sync omits rooms the user was banned from.
+describe('getMyMatrixRoomMembership / onMatrixInitialSync', () => {
+	afterEach(() => setMatrixClientServiceRef(null));
+
+	const clientWith = (
+		rooms: Record<string, string>,
+		synced: boolean
+	): Record<string, unknown> & { emitSync: (state: string) => void } => {
+		const listeners = new Set<(state: string) => void>();
+		return {
+			getRoom: (id: string) =>
+				id in rooms ? { getMyMembership: () => rooms[id] } : null,
+			isInitialSyncComplete: () => synced,
+			on: (_event: string, fn: (state: string) => void) =>
+				listeners.add(fn),
+			off: (_event: string, fn: (state: string) => void) =>
+				listeners.delete(fn),
+			emitSync: (state: string) => listeners.forEach((fn) => fn(state))
+		};
+	};
+
+	it('reports the membership of a known room', () => {
+		const client = clientWith({ [ROOM_ID]: 'ban' }, true);
+		setMatrixClientServiceRef({ getClient: () => client } as any);
+		expect(chatTransportService.getMyMatrixRoomMembership(ROOM_ID)).toBe(
+			'ban'
+		);
+	});
+
+	it('treats a room missing from a completed sync as left', () => {
+		const client = clientWith({}, true);
+		setMatrixClientServiceRef({ getClient: () => client } as any);
+		expect(chatTransportService.getMyMatrixRoomMembership(ROOM_ID)).toBe(
+			'leave'
+		);
+	});
+
+	it('does not know yet before the first sync', () => {
+		const client = clientWith({}, false);
+		setMatrixClientServiceRef({ getClient: () => client } as any);
+		expect(
+			chatTransportService.getMyMatrixRoomMembership(ROOM_ID)
+		).toBeNull();
+	});
+
+	it('calls back once when the first sync completes', () => {
+		const client = clientWith({}, false);
+		setMatrixClientServiceRef({ getClient: () => client } as any);
+		const synced = vi.fn();
+		chatTransportService.onMatrixInitialSync(synced);
+
+		client.emitSync('SYNCING');
+		expect(synced).not.toHaveBeenCalled();
+		client.emitSync('PREPARED');
+		client.emitSync('PREPARED');
+		expect(synced).toHaveBeenCalledTimes(1);
+	});
+});

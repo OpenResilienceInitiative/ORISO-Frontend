@@ -1,5 +1,5 @@
 import { feedbackMailIntentQueue } from './feedbackMailIntentQueue';
-import { Direction, MatrixEvent, Room } from 'matrix-js-sdk';
+import { ClientEvent, Direction, MatrixEvent, Room } from 'matrix-js-sdk';
 import { loadEarlierMatrixRoomHistory } from './matrixRoomHistory';
 import {
 	apiPostMessageEventNotification,
@@ -596,14 +596,36 @@ class ChatTransportService {
 
 	/**
 	 * This user's current membership in a Matrix room on the current client
-	 * (`join`, `leave`, `ban`, ...), or null when the client or room is not
-	 * known yet. Complements onMatrixRoomLifecycle, which reports changes only.
+	 * (`join`, `leave`, `ban`, ...). Complements onMatrixRoomLifecycle, which
+	 * reports changes only.
+	 *
+	 * A room absent after the client's first sync counts as `leave`: the sync
+	 * filter does not include left rooms, so a room the user was banned from
+	 * before a client refresh never appears on the new client. Before that
+	 * first sync the answer is unknown (null); see onMatrixInitialSync.
 	 */
 	public getMyMatrixRoomMembership(matrixRoomId: string): string | null {
-		const room = getMatrixClientService()
-			?.getClient?.()
-			?.getRoom?.(matrixRoomId);
-		return room?.getMyMembership?.() ?? null;
+		const client = getMatrixClientService()?.getClient?.();
+		if (!client) return null;
+		const room = client.getRoom?.(matrixRoomId);
+		if (room) return room.getMyMembership?.() ?? null;
+		return client.isInitialSyncComplete?.() ? 'leave' : null;
+	}
+
+	/**
+	 * Calls back once the current Matrix client has finished its first sync.
+	 * Returns a function that stops waiting.
+	 */
+	public onMatrixInitialSync(callback: () => void): () => void {
+		const client = getMatrixClientService()?.getClient?.();
+		if (!client) return () => {};
+		const handleSync = (state: string): void => {
+			if (state !== 'PREPARED') return;
+			client.off(ClientEvent.Sync, handleSync);
+			callback();
+		};
+		client.on(ClientEvent.Sync, handleSync);
+		return () => client.off(ClientEvent.Sync, handleSync);
 	}
 
 	/**
