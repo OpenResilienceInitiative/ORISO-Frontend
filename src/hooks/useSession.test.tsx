@@ -311,6 +311,51 @@ describe('useSession', () => {
 		expect(result.current.session).toBe(extendedSession);
 	});
 
+	it.each([
+		{ session: { id: 4711, status: 5 } },
+		{ chat: { id: 4711, active: true } },
+		{ session: { id: 4711, status: 5 }, chat: { id: 4711, active: true } },
+		{ session: { id: 4712, status: 5 } },
+		{ session: { id: 4711, status: 2 } },
+		undefined
+	])('accepts only the exact rejected 1:1 response: %j', async (entry) => {
+		const extended = { item: { id: 4711, status: 5 } };
+		vi.mocked(apiGetSessionRoomBySessionId).mockResolvedValue({
+			sessions: entry ? [entry] : []
+		} as never);
+		vi.mocked(buildExtendedSession).mockReturnValue(extended as never);
+		vi.mocked(apiGetCaseHandoverCandidates).mockResolvedValue({
+			sessions: []
+		});
+
+		const { result } = renderHook(() =>
+			useSession(null, 4711, undefined, false, true)
+		);
+
+		await waitFor(() => expect(result.current.ready).toBe(true));
+		const exact =
+			!entry?.chat &&
+			entry?.session?.id === 4711 &&
+			entry.session.status === 5;
+		expect(result.current.session).toBe(exact ? extended : null);
+		expect(apiGetCaseHandoverCandidates).not.toHaveBeenCalled();
+		expect(apiGetChatRoomById).not.toHaveBeenCalled();
+	});
+
+	it('does not attempt another room lookup when rejected enquiry access fails', async () => {
+		vi.mocked(apiGetSessionRoomBySessionId).mockRejectedValueOnce(
+			new Error('FORBIDDEN')
+		);
+		const { result } = renderHook(() =>
+			useSession(null, 4711, undefined, false, true)
+		);
+
+		await waitFor(() => expect(result.current.ready).toBe(true));
+		expect(result.current.session).toBeNull();
+		expect(apiGetCaseHandoverCandidates).not.toHaveBeenCalled();
+		expect(apiGetChatRoomById).not.toHaveBeenCalled();
+	});
+
 	it('loads a valid zero-valued chat id', async () => {
 		const rawSession = { chat: { id: 0 } };
 		const extendedSession = { item: rawSession.chat, isGroup: true };

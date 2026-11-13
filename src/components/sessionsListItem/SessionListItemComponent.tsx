@@ -139,6 +139,7 @@ import {
 	toPreviewKindText
 } from './matrixRoomPreview';
 import { SessionCardBody } from './SessionCardBody/SessionCardBody';
+import { getEnquiryWaitingTime, useMinuteClock } from './enquiryWaitingTime';
 import {
 	isCaseHandoverAccessControlled,
 	isCaseHandoverCandidate,
@@ -778,6 +779,11 @@ export const SessionListItemComponent = ({
 			document.removeEventListener('keydown', handleMenuDocumentKeyDown);
 		};
 	}, [flyoutOpen]);
+
+	// FE#2183: an open enquiry tells the counsellor how long the person has
+	// waited instead of the date; the clock only ticks for those cards.
+	const showsWaitingTime = !isAsker && !!activeSession?.isEnquiry;
+	const now = useMinuteClock(showsWaitingTime);
 
 	if (!activeSession) {
 		return null;
@@ -1607,10 +1613,32 @@ export const SessionListItemComponent = ({
 		!autoSelectPostcode &&
 		!isAnonymousChat &&
 		Boolean(postcodeLabel);
-	const cardDate = prettyPrintDate(
-		activeSession.item.messageDate,
-		activeSession.item.createDate
-	);
+	const waitingTime = showsWaitingTime
+		? getEnquiryWaitingTime(
+				convertISO8601ToMSSinceEpoch(activeSession.item.createDate),
+				now
+			)
+		: null;
+	const cardDate = waitingTime
+		? translate(`sessionList.item.waiting.${waitingTime.unit}`, {
+				count: waitingTime.count
+			})
+		: prettyPrintDate(
+				activeSession.item.messageDate,
+				activeSession.item.createDate
+			);
+	// FE#2182: nothing written yet → the body centres the name on the avatar.
+	const hasCardPreview =
+		canShowCaseHandoverAction ||
+		caseHandoverContentLocked ||
+		(!activeSession.isEmptyEnquiry &&
+			Boolean(
+				displayLastMessage ||
+					activeSession.item.lastMessageType ||
+					matrixPreviewLine?.glyphs?.length
+			)) ||
+		!!activeSession.item.attachment ||
+		!!activeSession.item.videoCallMessageDTO;
 
 	return (
 		<div
@@ -1702,7 +1730,13 @@ export const SessionListItemComponent = ({
 					</div>
 					<div className="sessionsListItem__rowRight">
 						{datePlacement === 'corner' && (
-							<div className="sessionsListItem__date">
+							<div
+								className={clsx(
+									'sessionsListItem__date',
+									waitingTime &&
+										'sessionsListItem__date--waiting'
+								)}
+							>
 								{cardDate}
 							</div>
 						)}
@@ -1868,73 +1902,77 @@ export const SessionListItemComponent = ({
 						</div>
 					}
 					preview={
-						<>
-							{/* Figma nodes 115/1139/312: when the case-handover action
+						hasCardPreview ? (
+							<>
+								{/* Figma nodes 115/1139/312: when the case-handover action
 							    button is shown it takes the place of the last-message
 							    preview (the text sits "under" the button). Without a
 							    button the normal last message is shown. */}
-							{!canShowCaseHandoverAction && runningCall && (
-								<SessionListItemRunningCall
-									call={runningCall}
-								/>
-							)}
-							{!canShowCaseHandoverAction && !runningCall && (
-								<SessionListItemLastMessage
-									lastMessage={
-										caseHandoverContentLocked
-											? translate(
-													'caseHandover.list.hiddenPreview'
-												)
-											: displayLastMessage
-									}
-									glyphs={
-										caseHandoverContentLocked
-											? undefined
-											: matrixPreviewLine?.glyphs
-									}
-									lastMessageType={
-										caseHandoverContentLocked
-											? null
-											: getPreviewLastMessageType(
-													isMatrixBackedSession,
-													activeSession.item
-														.lastMessageType
-												)
-									}
-									language={language}
-									showLanguage={
-										language &&
-										activeSession.isEnquiry &&
-										!activeSession.isEmptyEnquiry
-									}
-									showSpan={activeSession.isEmptyEnquiry}
-								/>
-							)}
-							{!caseHandoverContentLocked &&
-								activeSession.item.attachment && (
-									<SessionListItemAttachment
-										attachment={
-											activeSession.item.attachment
-										}
+								{!canShowCaseHandoverAction && runningCall && (
+									<SessionListItemRunningCall
+										call={runningCall}
 									/>
 								)}
-							{!caseHandoverContentLocked &&
-								activeSession.item.videoCallMessageDTO && (
-									<SessionListItemVideoCall
-										videoCallMessage={
-											activeSession.item
-												.videoCallMessageDTO
+								{!canShowCaseHandoverAction && !runningCall && (
+									<SessionListItemLastMessage
+										lastMessage={
+											caseHandoverContentLocked
+												? translate(
+														'caseHandover.list.hiddenPreview'
+													)
+												: displayLastMessage
 										}
-										listItemUsername={
-											activeSession.user?.username ||
-											activeSession.consultant?.username
+										glyphs={
+											caseHandoverContentLocked
+												? undefined
+												: matrixPreviewLine?.glyphs
 										}
-										listItemAskerRcId={
-											activeSession.item.askerMatrixUserId
+										lastMessageType={
+											caseHandoverContentLocked
+												? null
+												: getPreviewLastMessageType(
+														isMatrixBackedSession,
+														activeSession.item
+															.lastMessageType
+													)
 										}
+										language={language}
+										showLanguage={
+											language &&
+											activeSession.isEnquiry &&
+											!activeSession.isEmptyEnquiry
+										}
+										showSpan={activeSession.isEmptyEnquiry}
 									/>
 								)}
-						</>
+								{!caseHandoverContentLocked &&
+									activeSession.item.attachment && (
+										<SessionListItemAttachment
+											attachment={
+												activeSession.item.attachment
+											}
+										/>
+									)}
+								{!caseHandoverContentLocked &&
+									activeSession.item.videoCallMessageDTO && (
+										<SessionListItemVideoCall
+											videoCallMessage={
+												activeSession.item
+													.videoCallMessageDTO
+											}
+											listItemUsername={
+												activeSession.user?.username ||
+												activeSession.consultant
+													?.username
+											}
+											listItemAskerRcId={
+												activeSession.item
+													.askerMatrixUserId
+											}
+										/>
+									)}
+							</>
+						) : undefined
 					}
 					action={
 						canShowCaseHandoverAction ? (

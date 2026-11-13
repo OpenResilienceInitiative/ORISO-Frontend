@@ -2217,7 +2217,16 @@
 				"nav": "ዝርርባት",
 				"small": "ዜና"
 			},
-			"directLinks": "ናይ ቀጥታ መላግቦታተይ"
+			"directLinks": "ናይ ቀጥታ መላግቦታተይ",
+			"inboxState": {
+				"empty": "ሕቶታት የለን",
+				"allOpened": "ኩሎም ሕቶታት ተኸፊቶም",
+				"unopened": "{{count}} ዘይተኸፍቱ ሕቶታት",
+				"unopened_one": "{{count}} ዘይተኸፍተ ሕቶ",
+				"overdue": "ግዚኦም ዝሓለፎም ሕቶታት",
+				"overdueUnopened": "ግዚኦም ዝሓለፎም ሕቶታት፣ {{count}} ዘይተኸፍቱ ሕቶታት",
+				"overdueUnopened_one": "ግዚኦም ዝሓለፎም ሕቶታት፣ {{count}} ዘይተኸፍተ ሕቶ"
+			}
 		},
 		"activity": "ናይ ግዜ መስመር",
 		"language": "ቋንቋ",
@@ -4624,6 +4633,12 @@
 				"directLinkVideo": "ናይ ቪድዮ ጻውዒት",
 				"directLinkAudio": "ናይ ድምጺ ጻውዒት",
 				"directLinkChat": "ቀጥታዊ ሊንክ"
+			},
+			"waiting": {
+				"minutes": "ን{{count}} ደቒቕ ይጽበ ኣሎ",
+				"hours": "ን{{count}} ሰዓት ይጽበ ኣሎ",
+				"weeks_one": "ን{{count}} ሰሙን ይጽበ ኣሎ",
+				"weeks_other": "ን{{count}} ሰሙናት ይጽበ ኣሎ"
 			}
 		},
 		"supervision": {
