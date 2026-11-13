@@ -3241,7 +3241,12 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 								props.hasUserInitiatedStopOrLeaveRequest
 							}
 							bannedUsers={props.bannedUsers}
-							hideBackButton={isPhoneLayout}
+							// D7: the composer carries the phone's back arrow. The
+							// group privacy gate renders no composer, so its header
+							// keeps the arrow there.
+							hideBackButton={
+								isPhoneLayout && !shouldShowGroupConsentGate
+							}
 							callsInMenu={isPhoneLayout}
 							hideGroupTopic={shouldShowGroupConsentGate}
 						/>
