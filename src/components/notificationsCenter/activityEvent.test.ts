@@ -313,6 +313,7 @@ describe('activityEvent (#1824: one place for an activity event’s facts)', () 
 describe('#2226 showsConversationPreview', () => {
 	const row = (eventType: string, params: Record<string, unknown> = {}) =>
 		({ eventType, category: 'system', params }) as any;
+	const joined = () => true;
 
 	it('shows the conversation for call and appointment entries that name their room', () => {
 		for (const eventType of [
@@ -325,9 +326,33 @@ describe('#2226 showsConversationPreview', () => {
 			'appointment.scheduled'
 		]) {
 			expect(
-				showsConversationPreview(row(eventType, { roomRef: '!room:x' }))
+				showsConversationPreview(
+					row(eventType, { roomRef: '!room:x' }),
+					joined
+				)
 			).toBe(true);
 		}
+	});
+
+	it('keeps the detail view when this app has not joined the named room', () => {
+		const asked: string[] = [];
+		const notJoined = (roomId: string) => {
+			asked.push(roomId);
+			return false;
+		};
+		expect(
+			showsConversationPreview(
+				row('group_chat.opened', { roomRef: '!room:x' }),
+				notJoined
+			)
+		).toBe(false);
+		expect(asked).toEqual(['!room:x']);
+		// Default check: no Matrix client means no joined room.
+		expect(
+			showsConversationPreview(
+				row('call.started', { roomRef: '!room:x' })
+			)
+		).toBe(false);
 	});
 
 	it('keeps the detail view when the entry names no room', () => {
@@ -346,7 +371,10 @@ describe('#2226 showsConversationPreview', () => {
 			} as any)
 		).toBe(true);
 		expect(
-			showsConversationPreview(row('request.new', { roomRef: '!room:x' }))
+			showsConversationPreview(
+				row('request.new', { roomRef: '!room:x' }),
+				joined
+			)
 		).toBe(false);
 	});
 });

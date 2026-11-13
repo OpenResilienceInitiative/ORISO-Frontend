@@ -80,7 +80,9 @@ const createRoom = vi.fn();
 const sendReadReceipt = vi.fn();
 const markRead = vi.fn();
 const addNotification = vi.fn();
-const sourceRoom = { getMyMembership: () => 'join' };
+// #2226 review: the counsellor's membership of the call card's own room.
+let sourceMembership = 'join';
+const sourceRoom = { getMyMembership: () => sourceMembership };
 const mediaRoom = {
 	getMyMembership: () => 'join',
 	hasEncryptionStateEvent: () => true
@@ -108,6 +110,7 @@ beforeEach(async () => {
 	callManager.endCall(false);
 	vi.clearAllMocks();
 	mediaJoined = false;
+	sourceMembership = 'join';
 	joinRoom.mockImplementation(async () => {
 		mediaJoined = true;
 		return mediaRoom;
@@ -274,6 +277,16 @@ it('#2226: the preview link to open the conversation never joins the call', asyn
 			'/sessions/consultant/sessionView/session/42'
 		)
 	);
+});
+
+it('#2226: a call card whose room this app has not joined keeps its detail view', async () => {
+	sourceMembership = 'invite';
+	await renderCenter();
+	expect(document.querySelector('[data-cy="activity-event-bar"]')).toBeNull();
+	expect(
+		screen.getByRole('button', { name: en.notifications.center.next })
+	).toBeTruthy();
+	expect(joinRoom).not.toHaveBeenCalled();
 });
 
 it('#2226: a call card without a room keeps its detail view', async () => {
