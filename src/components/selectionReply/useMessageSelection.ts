@@ -46,8 +46,11 @@ export interface MessageSelection {
 }
 
 const MIN_PASSAGE_LENGTH = 2;
+// The answers shown above a bubble (passage replies) are not part of its
+// text mapping, so a passage marked there could not be blurred or found
+// again: they are no place to mark a passage.
 const QUOTE_OR_CONTROL =
-	'.messageItem__replyQuote, button, input, textarea, [contenteditable="true"]';
+	'.messageItem__replyQuote, .messageItem__passageReplies, button, input, textarea, [contenteditable="true"]';
 
 export const anchorFor = (rect: DOMRect, layer: HTMLElement): PassageAnchor => {
 	const box = layer.getBoundingClientRect();
@@ -72,7 +75,7 @@ export const anchorFor = (rect: DOMRect, layer: HTMLElement): PassageAnchor => {
  * Reads what the user marked inside a message bubble of the timeline under
  * `layerRef`. Only a selection that starts and ends in the text of ONE
  * message counts; a selection across messages, in the composer, or in a
- * reply's own quote is ignored.
+ * reply's own quote or in the answers above a bubble is ignored.
  */
 export const useMessageSelection = (
 	layerRef: RefObject<HTMLElement | null>,
