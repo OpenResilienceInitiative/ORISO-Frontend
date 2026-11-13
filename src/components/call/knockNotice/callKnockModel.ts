@@ -17,6 +17,8 @@ export interface CallKnock {
 	medium: CallKnockMedium;
 	requestedAt: string;
 	decidedAt?: string | null;
+	/** The avatar the person picked (animal id), as in the chat. #2237 */
+	avatarId?: string | null;
 }
 
 /**
@@ -64,6 +66,10 @@ export interface KnockingPerson {
 	/** `null` when the server sent no name. */
 	name: string | null;
 	medium: CallKnockMedium;
+	/** When the person started waiting; the notice says for how long (#2237). */
+	requestedAt?: string;
+	/** The avatar the person picked, so the host sees the same picture as in the chat. */
+	avatarId?: string | null;
 }
 
 /** The knocks a fresh list adds to the ones already known: those ring. */

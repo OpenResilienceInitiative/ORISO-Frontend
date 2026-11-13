@@ -18,6 +18,7 @@ import {
 	EncryptionSettingsPanelProps
 } from './EncryptionSettings';
 import { DisplayNameSettings } from './DisplayNameSettings';
+import { AskerDisplayNameSettings } from './AskerDisplayNameSettings';
 import { DeleteAccount } from './DeleteAccount';
 import { ProfileCard } from './ProfileCard';
 import './securityPrivacySettings.styles';
@@ -86,6 +87,11 @@ export const SecurityPrivacySettings = ({
 					{consultant && (
 						<ProfileCard icon={PersonOutlineIcon}>
 							<DisplayNameSettings />
+						</ProfileCard>
+					)}
+					{asker && (
+						<ProfileCard icon={PersonOutlineIcon}>
+							<AskerDisplayNameSettings />
 						</ProfileCard>
 					)}
 					{asker && (

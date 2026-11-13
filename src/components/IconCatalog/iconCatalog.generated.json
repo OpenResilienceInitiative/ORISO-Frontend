@@ -2120,7 +2120,6 @@
 			"src/components/passwordResetRequest/PasswordResetSentView.tsx",
 			"src/components/profile/AskerAboutMeData.tsx",
 			"src/components/profile/DeleteAccount.tsx",
-			"src/components/session/DeleteSession.tsx",
 			"src/components/session/SessionStream.tsx",
 			"src/components/sessionMenu/sessionMenuHelpers.ts"
 		],
@@ -3821,6 +3820,7 @@
 			"src/components/editableData/EditableData.tsx",
 			"src/components/message/MessageItemComponent.tsx",
 			"src/components/notificationsCenter/eventDescriptors/icons.tsx",
+			"src/components/profile/AskerDisplayNameSettings.tsx",
 			"src/components/profile/ConsultantInformation.tsx",
 			"src/components/profile/ConsultantPrivateData.tsx",
 			"src/components/profile/DisplayNameSettings.tsx",
@@ -4771,7 +4771,6 @@
 			"src/components/editableData/EditableData.tsx",
 			"src/components/message/MessageItemComponent.tsx",
 			"src/components/sessionMenu/SessionMenu.tsx",
-			"src/components/sessionsListItem/SessionListItemMenu.tsx",
 			"src/resources/img/icons.ts"
 		],
 		"usage": "app-used"
@@ -5014,6 +5013,7 @@
 		"sourcePath": "src/resources/img/icons/x.svg",
 		"exportNames": ["CrossMarkIcon", "RemoveIcon", "StopGroupChatIcon"],
 		"usageFiles": [
+			"src/components/app/inboxNavIconPaths.ts",
 			"src/components/call/callIdentity.ts",
 			"src/components/chatStage/ChannelMenu.tsx",
 			"src/components/chatStage/ChannelSwitcherFab.tsx",
@@ -5032,7 +5032,6 @@
 			"src/components/profile/AskerAboutMeData.tsx",
 			"src/components/profile/NewRequestDialog/NewRequestDialog.tsx",
 			"src/components/session/AcceptAssign.tsx",
-			"src/components/session/DeleteSession.tsx",
 			"src/components/session/EnquiryTakenNotice.tsx",
 			"src/components/session/session.styles.scss",
 			"src/components/session/SessionStream.tsx",

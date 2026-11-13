@@ -799,6 +799,63 @@ export const GroupChatLarge: Story = {
  * group's topic is left out of the header, not dimmed, until the client has
  * agreed. The avatars stay.
  */
+/**
+ * D7 on the phone, group chat: the composer's action bar leads with the back
+ * arrow, so the room header shows none — the same rule as the 1:1 header.
+ * Rendered through `SessionHeaderComponent`, exactly as `SessionItemComponent`
+ * mounts it on the phone (`hideBackButton`).
+ */
+const renderGroupHeaderThroughSessionHeader = (hideBackButton: boolean) => {
+	const preset = mockGroupSessionSmall();
+	return (
+		<StoryProviders
+			session={preset.session}
+			members={preset.members}
+			userData={storyUserData}
+		>
+			<LegalLinksProvider legalLinks={config.legalLinks}>
+				<SessionHeaderComponent
+					bannedUsers={[]}
+					hideBackButton={hideBackButton}
+					callsInMenu={hideBackButton}
+				/>
+			</LegalLinksProvider>
+		</StoryProviders>
+	);
+};
+
+export const GroupChatPhoneComposerCarriesBack: Story = {
+	name: 'Group header on the phone — no back arrow, the composer has it (D7)',
+	globals: phone390Globals,
+	render: () => renderGroupHeaderThroughSessionHeader(true),
+	play: async ({ canvasElement }) => {
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector(
+					'[data-cy="group-header-participants"]'
+				)
+			).not.toBeNull()
+		);
+		await expect(
+			canvasElement.querySelector('.sessionInfo__backButton')
+		).toBeNull();
+	}
+};
+
+/** Control: without a composer (privacy gate) the header keeps its arrow. */
+export const GroupChatPhoneWithoutComposerKeepsBack: Story = {
+	name: 'Group header on the phone without a composer — back arrow stays',
+	globals: phone390Globals,
+	render: () => renderGroupHeaderThroughSessionHeader(false),
+	play: async ({ canvasElement }) => {
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector('.sessionInfo__backButton')
+			).not.toBeNull()
+		);
+	}
+};
+
 export const GroupChatBeforeConsentHidesTopic: Story = {
 	render: () => renderGroupHeader(mockGroupSessionSmall(), true),
 	play: async ({ canvasElement }) => {
