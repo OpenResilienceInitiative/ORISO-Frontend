@@ -90,6 +90,7 @@ import { ReactComponent as CalendarMonthPlusIcon } from '../../resources/img/ico
 import DeleteSession from '../session/DeleteSession';
 import { Text } from '../text/Text';
 import { useSearchParam } from '../../hooks/useSearchParams';
+import { bookingPathFor } from '../../containers/bookings/components/Booking/bookingSession';
 import { useTranslation } from 'react-i18next';
 import EventOutlinedIcon from '@mui/icons-material/EventOutlined';
 import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider';
@@ -336,7 +337,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 	}, [activeSession, userData]);
 
 	const handleBookingButton = () => {
-		navigate('/booking/');
+		navigate(bookingPathFor(activeSession?.item?.id));
 	};
 
 	const handleStopGroupChat = () => {

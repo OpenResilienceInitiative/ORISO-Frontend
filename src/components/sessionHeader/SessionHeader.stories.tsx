@@ -1631,13 +1631,19 @@ export const NextAppointmentGroupCoModerator: Story = {
  * "Termin anlegen" is a row of the ⋮ menu.
  * ------------------------------------------------------------------ */
 
-const storyAppointment = {
-	id: '6f1c1a70-0000-4000-8000-000000000001',
-	sessionId: 4401,
-	startTime: new Date('2026-11-12T16:00:00').toISOString(),
-	endTime: new Date('2026-11-12T17:00:00').toISOString(),
-	status: 'SCHEDULED',
-	counterpart: { username: 'ruhiges_yak_kim' }
+/* Built at render time, relative to now: a fixed date stops being
+   "upcoming" once it passes and turns this story red for every PR. */
+const HOUR_MS = 60 * 60 * 1000;
+const makeStoryAppointment = () => {
+	const start = Date.now() + 2 * HOUR_MS;
+	return {
+		id: '6f1c1a70-0000-4000-8000-000000000001',
+		sessionId: 4401,
+		startTime: new Date(start).toISOString(),
+		endTime: new Date(start + HOUR_MS).toISOString(),
+		status: 'SCHEDULED',
+		counterpart: { username: 'ruhiges_yak_kim' }
+	};
 };
 
 const installAppointmentFetch = (items: unknown[]) => {
@@ -1708,7 +1714,7 @@ export const OneToOneAppointmentCreateInMenu: Story = {
 /** One appointment: the row shows only that appointment, no create button. */
 export const OneToOneAppointmentUpcoming: Story = {
 	name: '1:1 appointment — upcoming, no create button beside it (FE#1960)',
-	render: () => <HeaderWithAppointments items={[storyAppointment]} />,
+	render: () => <HeaderWithAppointments items={[makeStoryAppointment()]} />,
 	play: async ({ canvasElement }) => {
 		const bar = await waitFor(() => {
 			const found = canvasElement.querySelector(
