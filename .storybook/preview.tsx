@@ -1026,6 +1026,11 @@ const preview: Preview = {
 					styles: { width: '1366px', height: '768px' },
 					type: 'desktop'
 				},
+				desktop1280x720: {
+					name: 'Desktop 1920 at 150 % zoom (1280×720 CSS px)',
+					styles: { width: '1280px', height: '720px' },
+					type: 'desktop'
+				},
 				desktop1440: {
 					name: 'Desktop 1440',
 					styles: { width: '1440px', height: '900px' },
@@ -1034,6 +1039,16 @@ const preview: Preview = {
 				desktop1920: {
 					name: 'Desktop 1920 (full HD)',
 					styles: { width: '1920px', height: '1080px' },
+					type: 'desktop'
+				},
+				desktop2560: {
+					name: 'Desktop 2560 (QHD, 1440p)',
+					styles: { width: '2560px', height: '1440px' },
+					type: 'desktop'
+				},
+				desktop3840: {
+					name: 'Desktop 3840 (4K UHD)',
+					styles: { width: '3840px', height: '2160px' },
 					type: 'desktop'
 				}
 			}

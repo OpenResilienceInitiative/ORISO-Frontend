@@ -4,6 +4,7 @@ import { Box, Typography } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { registrationMd3 } from '../../registration/registrationDesign/registrationDesign';
 import { CarouselDots } from '../../carouselDots/CarouselDots';
+import { cardWidth, fluid, rem } from './handoverCardSize';
 import {
 	artworkFit,
 	processArtwork,
@@ -55,13 +56,13 @@ export interface HandoverCarouselProps {
 	steps?: HandoverStep[];
 }
 
-/**
+/*
  * One card size for every waiting room — the live-chat waiting room's, which
  * the design was judged on. A room used to pass its own width, so each new one
  * had to be told to match (Frank, 2026-10-15: "das kann nicht eine
- * Designentscheidung sein, das muss ich zehnmal testen").
+ * Designentscheidung sein, das muss ich zehnmal testen"). The size is fluid
+ * (rem + clamp), see `handoverCardSize`.
  */
-const CARD_WIDTH = { xs: 300, sm: 372 };
 const SCROLL_IDLE_MS = 120;
 const MAX_DOT_SCROLL_MS = 800;
 
@@ -115,6 +116,9 @@ export const HandoverCarousel = ({
 	const { t } = useTranslation();
 	const trackRef = useRef<HTMLDivElement>(null);
 	const [activeIndex, setActiveIndex] = useState(0);
+	/* All cards in view at once (the usual case from `sm` up, where the
+	   cards size themselves to fit): nothing to scroll, so no dots. */
+	const [allInView, setAllInView] = useState(false);
 	const selectDotRef = useRef<((index: number) => void) | null>(null);
 	const settledCount = useRef(0);
 
@@ -210,8 +214,13 @@ export const HandoverCarousel = ({
 			scheduleSettle();
 		};
 
+		const noteAllInView = () =>
+			setAllInView(track.scrollWidth <= track.clientWidth + 1);
+		noteAllInView();
+
 		let trackWidth = track.clientWidth;
 		const reconcileTrackWidth = () => {
+			noteAllInView();
 			const width = track.clientWidth;
 			if (width === trackWidth) return false;
 			trackWidth = width;
@@ -342,7 +351,9 @@ export const HandoverCarousel = ({
 				flex: { xs: 1, sm: 'none' },
 				minHeight: 0,
 				display: 'flex',
-				flexDirection: 'column'
+				flexDirection: 'column',
+				// The card width counts in this block's width (`cqi`).
+				containerType: 'inline-size'
 			}}
 		>
 			<Box
@@ -363,7 +374,7 @@ export const HandoverCarousel = ({
 					// with a square motif (8d), so a tall window does not leave
 					// a dead white area under each card's text.
 					'alignItems': { xs: 'stretch', sm: 'flex-start' },
-					'gap': { xs: 1.5, sm: 2.5 },
+					'gap': { xs: rem(12), sm: rem(20) },
 					'm': 0,
 					'p': 0,
 					'listStyle': 'none',
@@ -389,7 +400,9 @@ export const HandoverCarousel = ({
 						data-cy={`handover-card-${step.key}`}
 						sx={{
 							flex: 'none',
-							width: CARD_WIDTH,
+							width: cardWidth,
+							// The card's text and badge grow with it (`cqi`).
+							containerType: 'inline-size',
 							// Centre on every width: the dots and a released
 							// drag centre their card (`cardTargets`), and a
 							// start snap would pull the middle card off to an
@@ -399,7 +412,7 @@ export const HandoverCarousel = ({
 							flexDirection: 'column',
 							bgcolor: registrationMd3.surface,
 							border: `1px solid ${registrationMd3.outlineVariant}`,
-							borderRadius: { xs: '18px', sm: '20px' },
+							borderRadius: { xs: rem(18), sm: rem(20) },
 							overflow: 'hidden'
 						}}
 					>
@@ -410,7 +423,7 @@ export const HandoverCarousel = ({
 								// the image arrives, so a late motif never
 								// shifts the text the user is already reading.
 								flex: { xs: 1, sm: 'none' },
-								minHeight: { xs: 170, sm: 0 },
+								minHeight: { xs: rem(170), sm: 0 },
 								aspectRatio: { xs: 'auto', sm: '1 / 1' },
 								bgcolor: registrationMd3.surfaceContainer
 							}}
@@ -438,7 +451,7 @@ export const HandoverCarousel = ({
 									width: '100%',
 									height: '100%',
 									objectFit: artworkFit(step.artwork),
-									p: step.artwork.pending ? 5 : 0,
+									p: step.artwork.pending ? rem(40) : 0,
 									opacity: step.artwork.pending ? 0.45 : 1,
 									display: 'block'
 								}}
@@ -448,14 +461,14 @@ export const HandoverCarousel = ({
 								aria-hidden
 								sx={{
 									position: 'absolute',
-									left: { xs: 12, sm: 14 },
-									top: { xs: 12, sm: 14 },
-									width: { xs: 34, sm: 36 },
-									height: { xs: 34, sm: 36 },
+									left: { xs: rem(12), sm: fluid(14) },
+									top: { xs: rem(12), sm: fluid(14) },
+									width: { xs: rem(34), sm: fluid(36) },
+									height: { xs: rem(34), sm: fluid(36) },
 									borderRadius: '50%',
 									bgcolor: registrationMd3.primary,
 									color: registrationMd3.onPrimary,
-									fontSize: { xs: 16, sm: 17 },
+									fontSize: { xs: rem(16), sm: fluid(17) },
 									fontWeight: 700,
 									display: 'flex',
 									alignItems: 'center',
@@ -468,22 +481,22 @@ export const HandoverCarousel = ({
 						<Box
 							sx={{
 								flex: 'none',
-								px: { xs: 2, sm: 2.5 },
-								pt: { xs: 1.75, sm: 2 },
-								pb: { xs: 2, sm: 2.5 }
+								px: { xs: rem(16), sm: fluid(20) },
+								pt: { xs: rem(14), sm: fluid(16) },
+								pb: { xs: rem(16), sm: fluid(20) }
 							}}
 						>
 							<Typography
 								component="h2"
 								sx={{
-									fontSize: { xs: 17, sm: 18 },
+									fontSize: { xs: rem(17), sm: fluid(18) },
 									fontWeight: 700,
-									lineHeight: { xs: '23px', sm: '24px' },
+									lineHeight: { xs: 23 / 17, sm: 24 / 18 },
 									// Two title lines are reserved so every
 									// card is the same height regardless of
 									// how its headline wraps.
-									minHeight: { xs: '46px', sm: '48px' },
-									mb: 0.75,
+									minHeight: '2lh',
+									mb: '0.33em',
 									color: registrationMd3.onSurface
 								}}
 							>
@@ -494,13 +507,13 @@ export const HandoverCarousel = ({
 							</Typography>
 							<Typography
 								sx={{
-									fontSize: { xs: 13, sm: 14 },
-									lineHeight: { xs: '19px', sm: '20px' },
+									fontSize: { xs: rem(13), sm: fluid(14) },
+									lineHeight: { xs: 19 / 13, sm: 20 / 14 },
 									color: registrationMd3.onSurfaceVariant,
 									// Design rule: at most three lines after
 									// the heading, and always the same box —
 									// shorter copy pads, longer copy clips.
-									minHeight: { xs: '57px', sm: '60px' },
+									minHeight: '3lh',
 									display: '-webkit-box',
 									WebkitLineClamp: 3,
 									WebkitBoxOrient: 'vertical',
@@ -517,20 +530,22 @@ export const HandoverCarousel = ({
 				))}
 			</Box>
 
-			<CarouselDots
-				data-cy="handover-carousel-dots"
-				count={steps.length}
-				activeIndex={activeIndex}
-				onSelect={scrollToCard}
-				getLabel={(index, total) =>
-					t('registration.handover.goToStep', {
-						position: index + 1,
-						total
-					})
-				}
-				// The 24 px targets add 9 px above the mark: same gap as before.
-				sx={{ flex: 'none', pt: { xs: 0.375, sm: 0.875 } }}
-			/>
+			{!allInView && (
+				<CarouselDots
+					data-cy="handover-carousel-dots"
+					count={steps.length}
+					activeIndex={activeIndex}
+					onSelect={scrollToCard}
+					getLabel={(index, total) =>
+						t('registration.handover.goToStep', {
+							position: index + 1,
+							total
+						})
+					}
+					// The 24 px targets add 9 px above the mark: same gap as before.
+					sx={{ flex: 'none', pt: { xs: rem(3), sm: rem(7) } }}
+				/>
+			)}
 		</Box>
 	);
 };

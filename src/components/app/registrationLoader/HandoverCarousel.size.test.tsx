@@ -24,8 +24,10 @@ describe('HandoverCarousel card size', () => {
 		const css = [...document.querySelectorAll('style')]
 			.map((node) => node.textContent)
 			.join('');
-		// The card's emotion class carries both breakpoint widths.
-		expect(css).toContain('width:300px');
-		expect(css).toContain('width:372px');
+		// The card's emotion class carries both breakpoint widths, in rem and
+		// clamp() — never a fixed px width (Frank, 2026-11-13).
+		expect(css).toContain('width:18.75rem');
+		expect(css).toMatch(/width:clamp\(12rem,/);
+		expect(css).not.toMatch(/width:(300|372)px/);
 	});
 });

@@ -145,8 +145,11 @@ export const Ready: StoryObj = {
  * mouse — the active dot follows every time.
  */
 export const ReadyDotsFollowTheCards: StoryObj = {
-	name: '4b — Punkte folgen den Karten (Desktop)',
-	globals: desktop1440Globals,
+	/* Since the cards size themselves to fit (2026-11-13), all three stand
+	   side by side from `sm` up and there is nothing to scroll there; the
+	   carousel and its dots live on the phone. */
+	name: '4b — Punkte folgen den Karten (Handy, Maus)',
+	globals: phone390Globals,
 	render: () => <Waiting finished={HANDOVER_MILESTONES.length} />,
 	play: async ({ canvasElement }) => {
 		await expectWaitingRoomLayout(canvasElement, { cards: true });
@@ -337,5 +340,79 @@ export const ReadyBluePrimary: StoryObj = {
 			cards: true,
 			stageNotRed: true
 		});
+	}
+};
+
+/**
+ * Large screens: the cards grow with the window instead of staying 372 px
+ * in the left half of the white column with an empty lower half (seen on
+ * ORISO Staging on a 2560 px screen, 2026-11-13). The contract fails when a
+ * card keeps its laptop size here; this story also checks that all three
+ * cards stand side by side, fully above the bar.
+ */
+const expectCardsUseTheRoom = async (canvasElement: HTMLElement) => {
+	await expectWaitingRoomLayout(canvasElement, { cards: true });
+	const doc = canvasElement.ownerDocument;
+	const cards = [
+		...doc.querySelectorAll<HTMLElement>('[data-cy^="handover-card-"]')
+	].map((card) => card.getBoundingClientRect());
+	const track = doc
+		.querySelector<HTMLElement>('[data-cy="handover-carousel"]')!
+		.getBoundingClientRect();
+	const bar = doc
+		.querySelector<HTMLElement>('[data-cy="registration-footer"]')!
+		.getBoundingClientRect();
+	expect(cards).toHaveLength(3);
+	// All three visible in the track, none cut off at its right edge.
+	expect(cards[2].right).toBeLessThanOrEqual(track.right + 1);
+	// They end above the bar: nothing to scroll to see a whole card.
+	expect(cards[0].bottom).toBeLessThan(bar.top);
+	// Nothing to scroll sideways either, so no dots.
+	expect(doc.querySelector('[data-cy="handover-carousel-dots"]')).toBeNull();
+	return { cards, track };
+};
+
+/** Wide screens: the cards also fill the column's width, not half of it. */
+const expectCardsFillTheWidth = async (canvasElement: HTMLElement) => {
+	const { cards, track } = await expectCardsUseTheRoom(canvasElement);
+	const used = cards[2].right - cards[0].left;
+	expect(used / track.width).toBeGreaterThan(0.9);
+};
+
+export const ReadyQhd2560: StoryObj = {
+	name: '4 — Alles geladen (großer Bildschirm 2560)',
+	globals: { viewport: { value: 'desktop2560' } },
+	render: () => <Waiting finished={HANDOVER_MILESTONES.length} />,
+	play: async ({ canvasElement }) => {
+		await expectCardsFillTheWidth(canvasElement);
+	}
+};
+
+export const Ready4k3840: StoryObj = {
+	name: '4 — Alles geladen (4K-Bildschirm 3840)',
+	globals: { viewport: { value: 'desktop3840' } },
+	render: () => <Waiting finished={HANDOVER_MILESTONES.length} />,
+	play: async ({ canvasElement }) => {
+		await expectCardsFillTheWidth(canvasElement);
+	}
+};
+
+/** A 1366×768 laptop: the cards shrink so all three fit above the bar. */
+export const ReadyLaptop1366: StoryObj = {
+	name: '4 — Alles geladen (Laptop 1366×768)',
+	globals: { viewport: { value: 'desktop1366' } },
+	render: () => <Waiting finished={HANDOVER_MILESTONES.length} />,
+	play: async ({ canvasElement }) => {
+		await expectCardsUseTheRoom(canvasElement);
+	}
+};
+
+/** 1920×1080 at 150 % browser zoom: the same, with less room still. */
+export const ReadyZoom150: StoryObj = {
+	name: '4 — Alles geladen (1920 bei 150 % Zoom)',
+	globals: { viewport: { value: 'desktop1280x720' } },
+	render: () => <Waiting finished={HANDOVER_MILESTONES.length} />,
+	play: async ({ canvasElement }) => {
+		await expectCardsUseTheRoom(canvasElement);
 	}
 };

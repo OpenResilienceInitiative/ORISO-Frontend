@@ -1,12 +1,16 @@
+import { expectedCardWidthRange } from './handoverCardSize';
+
 /** The stage splits the page from this width on (MUI `lg`). */
 const STAGE_SPLIT_PX = 1200;
 /**
- * One card size in every room, the live chat's (#1735; Frank, 2026-10-16:
- * "proportions must come from live chat"). From the theme's `sm` (520 px) up
- * 372 px, below it 300 px.
+ * One card size in every room (#1735). Below the theme's `sm` (520 px)
+ * 18.75rem; from `sm` up fluid between 12rem and 45rem so the three cards fit
+ * the visible area at every screen size and zoom (Frank, 2026-11-13: rem and
+ * clamp(), never a fixed px size), see `handoverCardSize`.
  */
-const CARD_WIDTH = { xs: 300, sm: 372 };
 const CARD_SM_PX = 520;
+/** On a screen this wide the cards must be larger than the live chat's 372 px. */
+const WIDE_PX = 2000;
 
 export interface WaitingRoomLayoutOptions {
 	/**
@@ -71,14 +75,22 @@ const checkCards = (
 	if (!cards.length) {
 		return options.cards ? 'the card carousel is missing' : null;
 	}
-	const viewport = canvasElement.ownerDocument.defaultView!.innerWidth;
-	const expected = viewport >= CARD_SM_PX ? CARD_WIDTH.sm : CARD_WIDTH.xs;
-	const wrong = cards.find(
-		(card) => Math.round(card.getBoundingClientRect().width) !== expected
-	);
-	return wrong
-		? `card is ${Math.round(wrong.getBoundingClientRect().width)}px wide, expected ${expected}px`
-		: null;
+	const doc = canvasElement.ownerDocument;
+	const viewport = doc.defaultView!.innerWidth;
+	const { min, max } = expectedCardWidthRange(doc, viewport, CARD_SM_PX);
+	const widths = cards.map((card) => card.getBoundingClientRect().width);
+	if (widths.some((w) => Math.abs(w - widths[0]) > 1)) {
+		return `cards differ in width: ${widths.map(Math.round).join(', ')}px`;
+	}
+	const width = widths[0];
+	if (width < min - 1 || width > max + 1) {
+		return `card is ${Math.round(width)}px wide, expected ${Math.round(min)}–${Math.round(max)}px`;
+	}
+	if (viewport >= WIDE_PX && width <= 372) {
+		// The bug of the fixed size: a 2560 px screen showed 372 px cards.
+		return `card stays ${Math.round(width)}px on a ${viewport}px screen; it must grow`;
+	}
+	return null;
 };
 
 const checkStageColour = (canvasElement: HTMLElement): string | null => {

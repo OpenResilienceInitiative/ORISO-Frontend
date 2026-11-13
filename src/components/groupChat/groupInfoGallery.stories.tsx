@@ -146,7 +146,10 @@ export const InfoGalleryTabletSelection: StoryObj = {
 	render: () => (
 		<Box
 			sx={{
-				width: 'min(772px, 100%)',
+				/* Narrow enough that the fluid cards (2026-11-13: they shrink to
+				   fit three across) reach their 12rem floor and the third card
+				   is cut off, so the dots have something to scroll. */
+				width: 'min(500px, 100%)',
 				height: '100vh',
 				mx: 'auto',
 				display: 'flex',
@@ -178,8 +181,12 @@ export const InfoGalleryTabletSelection: StoryObj = {
 
 		await expect(step(1)).toHaveAttribute('aria-current', 'true');
 		await userEvent.click(step(2));
-		// The middle card is already visible at the left snap position.
-		await expect(track.scrollLeft).toBe(0);
+		// The middle card is centred and fully in view.
+		await waitFor(() => {
+			const left = secondCard.offsetLeft - track.scrollLeft;
+			expect(left).toBeGreaterThanOrEqual(0);
+			expect(left + secondCard.offsetWidth).toBeLessThanOrEqual(width);
+		});
 		await expect(step(2)).toHaveAttribute('aria-current', 'true');
 		await userEvent.click(canvas.getAllByRole('img')[0]);
 		await expect(step(2)).toHaveAttribute('aria-current', 'true');
