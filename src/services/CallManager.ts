@@ -702,8 +702,13 @@ class CallManager {
 				start,
 				outgoingCall
 			);
+			/*
+			 * Every call, not only groups (#2237). A 1:1 session's invite is
+			 * encrypted as well, so without this registration the server
+			 * never learns the call exists and answers the call card's
+			 * "Beitreten" with a 404 — for everybody, the caller included.
+			 */
 			if (
-				isGroup &&
 				this.stillOwnsStart(start) &&
 				generation === this.sessionGeneration &&
 				this.currentCall?.callId === callId &&
@@ -1642,7 +1647,13 @@ class CallManager {
 			const client = getMatrixClientService()?.getClient?.();
 			if (client?.getUserId() === call.sharedCallGuest)
 				void this.leaveCallRoomAfterRefusedJoin(client, call.roomId);
-		} else if (!call.isGroup) callLifecycleTracker.finish(call.callId);
+		} else if (!call.isGroup) {
+			callLifecycleTracker.finish(call.callId);
+			// A 1:1 call ends with either side hanging up: close the
+			// server's observation now instead of letting its lease
+			// report "running" for another ten minutes (#2237).
+			this.stopObservation(true, call.callId);
+		}
 		// A group call outlives the person who started it — but only once
 		// somebody has actually arrived. Leaving one nobody ever joined ends
 		// it, rather than leaving a card that says "running" for good.

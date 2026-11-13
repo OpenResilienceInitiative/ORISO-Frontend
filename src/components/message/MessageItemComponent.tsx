@@ -55,6 +55,10 @@ import {
 	callCardMayKnock,
 	joinOrKnock
 } from '../directLinkEntry/callMessageKnock';
+import {
+	shouldAutoJoinCall,
+	takeCallAutoJoin
+} from '../groupChat/waitingAdmission/callAutoJoin';
 import { ErstantwortMessage } from '../erstantwort/ErstantwortMessage';
 import { ErstantwortSequence } from '../erstantwort/ErstantwortSequence';
 import { isErstantwortMessage } from '../erstantwort/erstantwortPayload';
@@ -2789,6 +2793,11 @@ export const MessageItemComponent = ({
 				<CallTimelineMessage
 					call={callLifecycle}
 					loadState={apiCallStateRead}
+					/* #2237: let in from the group's waiting room: straight in. */
+					autoJoin={() => shouldAutoJoinCall(activeSession?.item?.id)}
+					onAutoJoined={() =>
+						takeCallAutoJoin(activeSession?.item?.id)
+					}
 					/* #2016: camera and microphone first, as guests get. */
 					deviceCheck={() =>
 						shouldShowDeviceCheck({

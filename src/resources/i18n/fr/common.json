@@ -1388,7 +1388,8 @@
 				"headline": "Comment nous nous comportons les uns envers les autres",
 				"subline": "Lisez-les une fois – et vous êtes des nôtres."
 			},
-			"devices": "Caméra et micro"
+			"devices": "Caméra et micro",
+			"waitingForAdmission": "Inscrit·e"
 		},
 		"shareDialog": {
 			"title_text": "Cercle créé",
@@ -1496,6 +1497,10 @@
 			"overlay": {
 				"headline": "Vous avez été retiré(e) de ce groupe."
 			}
+		},
+		"waitingAdmission": {
+			"waiting": "Dès que l'animateur·rice vous fait entrer, le chat et l'appel s'ouvrent automatiquement.",
+			"openSoon": "La séance est en cours. L’animateur sait que vous attendez et vous fera entrer sous peu."
 		}
 	},
 	"help": {
@@ -2245,7 +2250,16 @@
 				"nav": "Conversation",
 				"small": "Nouvelles"
 			},
-			"directLinks": "Mes liens directs"
+			"directLinks": "Mes liens directs",
+			"inboxState": {
+				"empty": "Aucune demande",
+				"allOpened": "Toutes les demandes ont été ouvertes",
+				"unopened": "{{count}} demandes non ouvertes",
+				"unopened_one": "{{count}} demande non ouverte",
+				"overdue": "Demandes en retard",
+				"overdueUnopened": "Demandes en retard, {{count}} demandes non ouvertes",
+				"overdueUnopened_one": "Demandes en retard, {{count}} demande non ouverte"
+			}
 		},
 		"activity": "Chronologie",
 		"language": "Langue",
@@ -3347,6 +3361,13 @@
 				"cancel": "Annuler",
 				"error": "La réinitialisation a échoué. Veuillez réessayer."
 			}
+		},
+		"askerDisplayName": {
+			"description": "Votre nom peut être différent dans chaque conversation de conseil. Votre conseillère ou votre conseiller voit, dans la conversation concernée, le nom indiqué ici.",
+			"conversation": "Conseil",
+			"usernameShown": "Pas de nom d'affichage – votre nom d'utilisateur est visible",
+			"edit": "Modifier le nom d'affichage pour {{name}}",
+			"inputLabel": "Nom d'affichage pour {{name}}"
 		}
 	},
 	"qrCode": {
@@ -4652,6 +4673,12 @@
 				"directLinkVideo": "Appel vidéo",
 				"directLinkAudio": "Appel audio",
 				"directLinkChat": "Lien direct"
+			},
+			"waiting": {
+				"minutes": "en attente depuis {{count}} min",
+				"hours": "en attente depuis {{count}} h",
+				"weeks_one": "en attente depuis {{count}} semaine",
+				"weeks_other": "en attente depuis {{count}} semaines"
 			}
 		},
 		"supervision": {
@@ -6471,6 +6498,10 @@
 			"region": "Personnes en attente",
 			"someone": "Une personne",
 			"wantsIn": "souhaite rejoindre l’appel",
+			"waitingFor_one": "attend depuis 1 min",
+			"waitingFor_other": "attend depuis {{count}} min",
+			"waitingFor": "attend depuis {{count}} min",
+			"justArrived": "vient d’arriver",
 			"admit": "Laisser entrer",
 			"decline": "Refuser",
 			"admitAll": "Laisser entrer tout le monde",
@@ -6738,7 +6769,12 @@
 			"temporary": "Compte temporaire",
 			"temporaryHint": "Le compte est supprimé après l’entretien.",
 			"create": "Créer le lien",
-			"createFailed": "Le lien n'a pas pu être créé. Veuillez réessayer."
+			"createFailed": "Le lien n'a pas pu être créé. Veuillez réessayer.",
+			"name": "Nom (facultatif)",
+			"nameHint": "Par ex. « Rendez-vous Mme M. » – pour retrouver le lien dans votre aperçu.",
+			"scheduledAt": "Date et heure (facultatif)",
+			"scheduledAtHint": "À titre indicatif – le lien fonctionne aussi avant et après.",
+			"scheduledAtIncomplete": "Veuillez saisir la date et l’heure complètes, ou vider le champ."
 		},
 		"medium": {
 			"chat": "Chat",
@@ -6786,7 +6822,9 @@
 			"topic": "Thème",
 			"mediumFixed": "Le type de contact ne peut pas être modifié",
 			"temporaryHint": "S’applique uniquement aux personnes qui ouvrent le lien à partir de maintenant.",
-			"failed": "La modification n’a pas pu être enregistrée. Veuillez réessayer."
+			"failed": "La modification n’a pas pu être enregistrée. Veuillez réessayer.",
+			"scheduledAt": "Date et heure",
+			"clearScheduledAt": "Supprimer"
 		}
 	},
 	"dashboard": {

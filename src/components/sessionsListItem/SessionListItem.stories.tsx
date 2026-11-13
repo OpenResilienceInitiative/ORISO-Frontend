@@ -18,7 +18,7 @@ import {
 	TopicsContext,
 	UserDataContext
 } from '../../globalState';
-import { STATUS_EMPTY } from '../../globalState/interfaces';
+import { STATUS_EMPTY, STATUS_ENQUIRY } from '../../globalState/interfaces';
 import type {
 	ConsultingTypeInterface,
 	GroupChatItemInterface,
@@ -216,10 +216,13 @@ function RuntimeCard({
 	isAfterActive = false,
 	grouped = false,
 	isGroupStart = true,
-	isGroupEnd = true
+	isGroupEnd = true,
+	listType = SESSION_LIST_TYPES.MY_SESSION
 }: {
 	item: ListItemInterface;
 	userData?: any;
+	/** Which list the card sits in; enquiries carry no ⋮ menu. */
+	listType?: SESSION_LIST_TYPES;
 	index?: number;
 	isBeforeActive?: boolean;
 	isAfterActive?: boolean;
@@ -239,8 +242,11 @@ function RuntimeCard({
 		>
 			<SessionTypeContext.Provider
 				value={{
-					type: SESSION_LIST_TYPES.MY_SESSION,
-					path: '/sessions/consultant/sessionView'
+					type: listType,
+					path:
+						listType === SESSION_LIST_TYPES.ENQUIRY
+							? '/sessions/consultant/sessionPreview'
+							: '/sessions/consultant/sessionView'
 				}}
 			>
 				<ConsultingTypesContext.Provider
@@ -311,6 +317,8 @@ type RuntimeSessionOptions = {
 	viewerId?: string;
 	/** FE#1115: the advice seeker's unaccepted row; no consultant, so the avatar slot holds the magnet. */
 	asSearchingAsker?: boolean;
+	/** FE#2182: the list the card sits in (enquiries carry no ⋮ menu). */
+	listType?: SESSION_LIST_TYPES;
 };
 
 const runtimeSessionItem = ({
@@ -355,6 +363,7 @@ function RuntimeSessionListItem(options: RuntimeSessionOptions = {}) {
 			<RuntimeCard
 				item={runtimeSessionItem(options)}
 				userData={runtimeViewer(options)}
+				listType={options.listType}
 			/>
 		</div>
 	);
@@ -2018,6 +2027,89 @@ export const LiveChat: Story = {
 			part(mark, '.sessionsListItem__consultingTypeIcon--liveChatLabel')
 				.textContent
 		).toBe('Live Chat');
+	}
+};
+
+/** FE#2182/#2183: a live-chat guest who has written nothing yet, waiting 12 minutes. */
+const waitingLiveChatGuest = (): RuntimeSessionOptions => ({
+	lastMessage: '',
+	listType: SESSION_LIST_TYPES.ENQUIRY,
+	sessionOverrides: {
+		registrationType: 'ANONYMOUS' as any,
+		status: STATUS_ENQUIRY,
+		lastMessageType: null as any,
+		messageDate: 0,
+		// Half a minute of slack, so a slow render still reads 12.
+		createDate: new Date(Date.now() - 12.5 * 60 * 1000).toISOString()
+	}
+});
+
+/**
+ * Checks the "name only" card: no ⋮ menu, the top row still as high as the
+ * menu pill, the name centred on the avatar, the Live Chat mark centred on
+ * its label, and the waiting time in the date's place.
+ */
+const expectNameOnlyCard = async (canvasElement: HTMLElement) => {
+	const [row] = await settledRows(canvasElement);
+	await expect(row.querySelector('.sessionsListItem__menuIcon')).toBeNull();
+	await expect(
+		part(row, '.sessionsListItem__rowRight').getBoundingClientRect().height
+	).toBeGreaterThanOrEqual(32);
+	await expect(part(row, '.sessionCard')).toHaveClass(
+		'sessionCard--nameOnly'
+	);
+	const centre = (rect: DOMRect) => rect.top + rect.height / 2;
+	const name = part(row, '.sessionCard__name').getBoundingClientRect();
+	const avatar = part(row, '.sessionCard__avatar').getBoundingClientRect();
+	await expect(Math.abs(centre(name) - centre(avatar))).toBeLessThanOrEqual(
+		1
+	);
+	const mark = part(row, '.sessionsListItem__consultingTypeIcon--liveChat');
+	const glyph = mark.querySelector('svg')!.getBoundingClientRect();
+	const label = part(
+		mark,
+		'.sessionsListItem__consultingTypeIcon--liveChatLabel'
+	).getBoundingClientRect();
+	await expect(Math.abs(centre(glyph) - centre(label))).toBeLessThanOrEqual(
+		1
+	);
+	await expect(part(row, '.sessionsListItem__date').textContent).toBe(
+		'wartet seit 12 Min.'
+	);
+	return row;
+};
+
+/** FE#2182: Anfragen → Live chat, not selected — name only, centred on the avatar. */
+export const NameOnlyLiveChatEnquiry: Story = {
+	name: 'Anfrage, nur Name — nicht ausgewählt (FE#2182)',
+	parameters: {
+		router: { initialPath: '/sessions/consultant/sessionPreview' }
+	},
+	render: () => {
+		seedMatrixRoom(0);
+		return <RuntimeSessionListItem {...waitingLiveChatGuest()} />;
+	},
+	play: async ({ canvasElement }) => {
+		const row = await expectNameOnlyCard(canvasElement);
+		await expect(row).not.toHaveClass('sessionsListItem--active');
+	}
+};
+
+/** FE#2182: the same card selected — the ring changes nothing in the spacing. */
+export const NameOnlyLiveChatEnquirySelected: Story = {
+	name: 'Anfrage, nur Name — ausgewählt (FE#2182)',
+	parameters: {
+		router: {
+			initialPath: '/sessions/consultant/sessionPreview/session/4401'
+		}
+	},
+	render: () => {
+		seedMatrixRoom(0);
+		return <RuntimeSessionListItem {...waitingLiveChatGuest()} />;
+	},
+	play: async ({ canvasElement }) => {
+		const row = await expectNameOnlyCard(canvasElement);
+		await expect(row).toHaveClass('sessionsListItem--active');
 	}
 };
 
