@@ -595,6 +595,18 @@ class ChatTransportService {
 	}
 
 	/**
+	 * This user's current membership in a Matrix room on the current client
+	 * (`join`, `leave`, `ban`, ...), or null when the client or room is not
+	 * known yet. Complements onMatrixRoomLifecycle, which reports changes only.
+	 */
+	public getMyMatrixRoomMembership(matrixRoomId: string): string | null {
+		const room = getMatrixClientService()
+			?.getClient?.()
+			?.getRoom?.(matrixRoomId);
+		return room?.getMyMembership?.() ?? null;
+	}
+
+	/**
 	 * Watch room-lifecycle signals that end the user's participation in a
 	 * room: own-membership changes to leave/ban (kick, ban or a room purge
 	 * via the Synapse admin API) and m.room.tombstone state events (room

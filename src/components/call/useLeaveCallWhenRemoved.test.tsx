@@ -16,15 +16,21 @@ import {
 } from './useLeaveCallWhenRemoved';
 
 vi.mock('../../services/chatTransportService', () => ({
-	chatTransportService: { onMatrixRoomLifecycle: vi.fn() }
+	chatTransportService: {
+		onMatrixRoomLifecycle: vi.fn(),
+		getMyMatrixRoomMembership: vi.fn()
+	}
 }));
 
 const subscribe = vi.mocked(chatTransportService.onMatrixRoomLifecycle);
+const membership = vi.mocked(chatTransportService.getMyMatrixRoomMembership);
 let emit: (change: MatrixRoomLifecycleChange) => void = () => {};
 const unsubscribe = vi.fn();
 
 beforeEach(() => {
 	subscribe.mockReset();
+	membership.mockReset();
+	membership.mockReturnValue('join');
 	unsubscribe.mockReset();
 	subscribe.mockImplementation((_roomId, listener) => {
 		emit = listener;
@@ -122,6 +128,28 @@ describe('useLeaveCallWhenRemoved', () => {
 			prevMembership: 'join'
 		});
 		expect(onRemoved).toHaveBeenCalledWith('ban');
+	});
+});
+
+describe('useLeaveCallWhenRemoved — removal before the watch started', () => {
+	it('leaves when the room already shows the ban, e.g. after a client refresh', () => {
+		membership.mockReturnValue('ban');
+		const onRemoved = vi.fn();
+
+		renderHook(() =>
+			useLeaveCallWhenRemoved('!circle:oriso', true, onRemoved, 1)
+		);
+
+		expect(membership).toHaveBeenCalledWith('!circle:oriso');
+		expect(onRemoved).toHaveBeenCalledWith('ban');
+	});
+
+	it('stays in the call while still a member', () => {
+		const onRemoved = vi.fn();
+		renderHook(() =>
+			useLeaveCallWhenRemoved('!circle:oriso', true, onRemoved)
+		);
+		expect(onRemoved).not.toHaveBeenCalled();
 	});
 });
 
