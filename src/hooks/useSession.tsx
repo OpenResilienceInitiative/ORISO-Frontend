@@ -5,6 +5,7 @@ import {
 } from '../api/apiGetSessionRooms';
 import {
 	REGISTRATION_TYPE_REGISTERED,
+	STATUS_REJECTED,
 	type ListItemInterface
 } from '../globalState/interfaces';
 import { buildExtendedSession, ExtendedSessionInterface } from '../globalState';
@@ -37,7 +38,8 @@ export const useSession = (
 	room: string | ExactCounsellingRoom | null,
 	requestedSessionId?: number,
 	requestedChatId?: number,
-	reconcilePendingEnquiry = false
+	reconcilePendingEnquiry = false,
+	requireRejectedEnquiry = false
 ): {
 	session: ExtendedSessionInterface;
 	/** Settles when the explicit session reload has finished. */
@@ -157,10 +159,24 @@ export const useSession = (
 				);
 			} else if (sessionId !== undefined && sessionId !== null) {
 				// console.log('🔍 useSession: Loading by sessionId:', sessionId);
-				promise = apiGetSessionRoomBySessionId(
+				const response = apiGetSessionRoomBySessionId(
 					sessionId,
 					controller.signal
 				);
+				promise = requireRejectedEnquiry
+					? response.then(({ sessions }) => {
+							// The numeric endpoint can return a group with the same ID.
+							const rejectedEnquiry = sessions.find(
+								({ session, chat }) =>
+									!chat &&
+									session?.id === sessionId &&
+									session?.status === STATUS_REJECTED
+							);
+							if (!rejectedEnquiry)
+								throw new Error(FETCH_ERRORS.EMPTY);
+							return { sessions: [rejectedEnquiry] };
+						})
+					: response;
 			}
 
 			if (exactCaseId !== undefined) {
@@ -215,6 +231,12 @@ export const useSession = (
 						return;
 					}
 
+					if (requireRejectedEnquiry) {
+						setSession(null);
+						setReady(true);
+						return;
+					}
+
 					if (background) {
 						// A temporary outage must not erase the visible conversation.
 						if (e.message === FETCH_ERRORS.FORBIDDEN) {
@@ -259,7 +281,14 @@ export const useSession = (
 					}
 				});
 		},
-		[rid, sessionId, chatId, loadCaseHandoverCandidateSession, exactCaseId]
+		[
+			rid,
+			sessionId,
+			chatId,
+			loadCaseHandoverCandidateSession,
+			requireRejectedEnquiry,
+			exactCaseId
+		]
 	);
 
 	const reconcileEnquiry = Boolean(

@@ -2248,7 +2248,16 @@
 				"nav": "Чаты",
 				"small": "Новости"
 			},
-			"directLinks": "Мои прямые ссылки"
+			"directLinks": "Мои прямые ссылки",
+			"inboxState": {
+				"empty": "Нет запросов",
+				"allOpened": "Все запросы открыты",
+				"unopened": "Неоткрытых запросов: {{count}}",
+				"unopened_one": "Неоткрытых запросов: {{count}}",
+				"overdue": "Просроченные запросы",
+				"overdueUnopened": "Просроченные запросы, неоткрытых: {{count}}",
+				"overdueUnopened_one": "Просроченные запросы, неоткрытых: {{count}}"
+			}
 		},
 		"activity": "Хронология",
 		"language": "Язык",
@@ -4657,6 +4666,14 @@
 				"directLinkVideo": "Видеозвонок",
 				"directLinkAudio": "Аудиозвонок",
 				"directLinkChat": "Прямая ссылка"
+			},
+			"waiting": {
+				"minutes": "ждёт {{count}} мин.",
+				"hours": "ждёт {{count}} ч",
+				"weeks_one": "ждёт {{count}} неделю",
+				"weeks_few": "ждёт {{count}} недели",
+				"weeks_many": "ждёт {{count}} недель",
+				"weeks_other": "ждёт {{count}} недели"
 			}
 		},
 		"supervision": {
