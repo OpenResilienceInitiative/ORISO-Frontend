@@ -26,6 +26,10 @@ import {
 } from './prejoin/callPrejoin';
 import { useJoinMediaForCall } from './prejoin/useJoinMediaForCall';
 import {
+	groupConversationRoomOf,
+	useLeaveCallWhenRemoved
+} from './useLeaveCallWhenRemoved';
+import {
 	NOTIFICATION_TYPE_WARNING,
 	NotificationsContext
 } from '../../globalState/provider/NotificationsProvider';
@@ -975,6 +979,28 @@ export const GroupCallWidget: React.FC = () => {
 			if (!current || current.callId === endingCallId) closeCallSurface();
 		})();
 	};
+
+	/*
+	 * Removed from the Gesprächskreis by a moderator while its call runs
+	 * (ORISO-Admin#1518 follow-up): the ban stops new call tokens but not a
+	 * running call, so this app leaves it itself, through the same hangup
+	 * handshake as the end button, and says why.
+	 */
+	useLeaveCallWhenRemoved(
+		groupConversationRoomOf(callData),
+		callState === 'connecting' || callState === 'in_call',
+		() => {
+			notifications?.addNotification({
+				notificationType: NOTIFICATION_TYPE_WARNING,
+				title: t('groupChat.removed.overlay.headline'),
+				text: '',
+				closeable: true,
+				timeout: 10_000
+			});
+			handleEndCall();
+		},
+		clientGeneration
+	);
 
 	const handleToggleFullscreen = () => {
 		const container = containerRef.current;
