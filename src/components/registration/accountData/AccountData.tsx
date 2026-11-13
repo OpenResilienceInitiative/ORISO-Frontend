@@ -73,7 +73,6 @@ import genDiceIcon from '../../../resources/img/registration-md3/icons/gen-dice.
 import { DataProtectionConsentLabel } from './DataProtectionConsentLabel';
 import { DataProtectionSnackbar } from './DataProtectionSnackbar';
 import { toRegistrationUsername } from './registrationUsername';
-import { AskerDisplayNameField } from '../../pseudonym/AskerDisplayNameField';
 import {
 	isAskerDisplayNameTypingAllowed,
 	isContextEmailCollectionAllowed
@@ -181,16 +180,6 @@ export const AccountData: FC<{
 		conversationType
 	);
 	const username = aliasEditable ? typedUsername : generatedUsername;
-	const [displayName, setDisplayName] = useState(
-		restoredDraft?.displayName ?? ''
-	);
-	const [generatedDisplayName, setGeneratedDisplayName] = useState(
-		restoredDraft?.generatedDisplayName || identity.displayName
-	);
-	const effectiveDisplayName =
-		conversationType === 'AGENCY_COUNSELLING'
-			? (aliasEditable ? displayName : generatedDisplayName).trim()
-			: '';
 
 	const emailVisible =
 		isContextEmailCollectionAllowed(tenant?.settings, conversationType) &&
@@ -349,8 +338,6 @@ export const AccountData: FC<{
 	/* Keep the draft current on every change so stepper navigation is lossless. */
 	useEffect(() => {
 		setAccountDataDraft({
-			displayName,
-			generatedDisplayName,
 			generatedUsername,
 			identity,
 			username: typedUsername,
@@ -362,8 +349,6 @@ export const AccountData: FC<{
 			passwordMinted
 		});
 	}, [
-		displayName,
-		generatedDisplayName,
 		generatedUsername,
 		identity,
 		typedUsername,
@@ -401,8 +386,7 @@ export const AccountData: FC<{
 		isUsernameLongEnough &&
 		isPasswordValid &&
 		password === repeatPassword &&
-		emailFeedback.isSatisfied &&
-		effectiveDisplayName.length <= 255;
+		emailFeedback.isSatisfied;
 
 	useEffect(() => {
 		if (
@@ -416,7 +400,6 @@ export const AccountData: FC<{
 			const trimmedEmail = email.trim();
 			setDisabledNextButton(false);
 			onChange({
-				displayName: effectiveDisplayName || undefined,
 				username,
 				password,
 				// Clear an address previously committed by this step, rather than
@@ -427,7 +410,6 @@ export const AccountData: FC<{
 			setDisabledNextButton(true);
 		}
 	}, [
-		effectiveDisplayName,
 		username,
 		password,
 		repeatPassword,
@@ -752,55 +734,6 @@ export const AccountData: FC<{
 					)
 				}}
 			/>
-			{conversationType === 'AGENCY_COUNSELLING' && (
-				<Box sx={{ mt: gap('20px') }}>
-					{aliasEditable && (
-						<Typography
-							component="p"
-							variant="body2"
-							sx={{ mb: 1 }}
-						>
-							{t('registration.account.displayName.optional')}
-						</Typography>
-					)}
-					<AskerDisplayNameField
-						value={
-							aliasEditable ? displayName : generatedDisplayName
-						}
-						onChange={setDisplayName}
-						editable={aliasEditable}
-					/>
-					<Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
-						<IdentitySuggestButton
-							icon={genDiceIcon}
-							label={t(
-								'registration.account.displayName.suggest'
-							)}
-							onClick={() => {
-								const next =
-									generatePseudonym(locale).displayName;
-								setGeneratedDisplayName(next);
-								setDisplayName(next);
-							}}
-						/>
-						{aliasEditable && (
-							<IdentitySuggestButton
-								icon={genUserIcon}
-								label={t(
-									'registration.account.displayName.useUsername'
-								)}
-								onClick={() => {
-									setDisplayName('');
-									setGeneratedDisplayName(
-										identity.displayName
-									);
-								}}
-							/>
-						)}
-					</Box>
-				</Box>
-			)}
-
 			{emailVisible && (
 				<OrisoTextField
 					value={email}

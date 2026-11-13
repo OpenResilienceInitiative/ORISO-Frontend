@@ -36,7 +36,7 @@ import { ReactComponent as NavCounsellorRequestIconFilled } from '../../resource
 import { ReactComponent as NavDirectLinksIcon } from '../../resources/img/icons/navigation/schedule_400.svg';
 import { ReactComponent as NavDirectLinksIconFilled } from '../../resources/img/icons/navigation/schedule_filled.svg';
 import { MyDirectLinksPage } from '../directLinks/MyDirectLinksPanel';
-import { CREATE_CHAT_PATH } from './routePaths';
+import { ASKER_SESSION_DETAIL_PATH, CREATE_CHAT_PATH } from './routePaths';
 import {
 	NavChatsIcon,
 	NavChatsIconHover,
@@ -228,7 +228,7 @@ export const RouterConfigUser = (
 			},
 			// Sessions that have no group id yet (enquiry not started)
 			{
-				path: '/sessions/user/view/session/:sessionId',
+				path: ASKER_SESSION_DETAIL_PATH,
 				component: SessionView,
 				type: SESSION_LIST_TYPES.MY_SESSION
 			},
