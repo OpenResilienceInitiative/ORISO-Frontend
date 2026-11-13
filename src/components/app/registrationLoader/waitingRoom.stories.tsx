@@ -20,6 +20,10 @@ import {
 	useHandoverProgress
 } from './handoverProgress';
 import { expectWaitingRoomLayout } from './waitingRoomLayoutContract';
+import {
+	expectArrowStepsOneCard,
+	revealHoverArrow
+} from '../../hoverScrollArrows/hoverScrollArrowsStoryPlay';
 
 /**
  * The one waiting room between "Registrieren" and the message field (#1219).
@@ -417,5 +421,47 @@ export const ReadyZoom150: StoryObj = {
 	render: () => <Waiting finished={HANDOVER_MILESTONES.length} />,
 	play: async ({ canvasElement }) => {
 		await expectCardsUseTheRoom(canvasElement);
+	}
+};
+
+/**
+ * Hover arrows (Frank, 2026-11-11): with a mouse and no trackpad the cards
+ * could not be moved to the right. Hover near the right edge of the cards:
+ * a strip with a round arrow fades in, a click moves one card, and then the
+ * same appears on the left edge. Phones and tablets never show them.
+ *
+ * Shown in a 390 px window with a mouse: from `sm` up the fluid cards fit
+ * side by side (2026-11-13), so there is nothing to scroll and no arrow.
+ */
+export const ReadyHoverArrows: StoryObj = {
+	name: '4c — Pfeile beim Darüberfahren (schmales Fenster, Maus)',
+	globals: phone390Globals,
+	render: () => <Waiting finished={HANDOVER_MILESTONES.length} />,
+	play: async ({ canvasElement }) => {
+		await expectWaitingRoomLayout(canvasElement, { cards: true });
+		await expectArrowStepsOneCard(
+			canvasElement,
+			'handover-carousel',
+			'handover-carousel-arrows'
+		);
+		await revealHoverArrow(
+			canvasElement,
+			'start',
+			'handover-carousel-arrows'
+		);
+	}
+};
+
+export const GroupInvitationHoverArrows: StoryObj = {
+	name: 'Gruppen-Einladung: Pfeile beim Darüberfahren',
+	globals: phone390Globals,
+	render: () => <GroupJoin />,
+	play: async ({ canvasElement }) => {
+		await expectWaitingRoomLayout(canvasElement);
+		await revealHoverArrow(
+			canvasElement,
+			'end',
+			'handover-carousel-arrows'
+		);
 	}
 };

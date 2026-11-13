@@ -16,6 +16,7 @@ import {
 	phone375Globals,
 	tablet820Globals
 } from '../message/messageStoryShell';
+import { revealHoverArrow } from '../hoverScrollArrows/hoverScrollArrowsStoryPlay';
 
 /**
  * The explainer behind "Mehr erfahren" in the self-help waiting room
@@ -324,5 +325,25 @@ export const InfoGalleryLaptop: StoryObj = {
 				story: 'Nur die drei Karten (Frank, 19.10.: die Termine liefen in die Karten). Die Termine stehen jetzt hinter „Alle Termine“ in der Leiste; „Zurück zum Countdown“ ist ein sichtbarer Knopf.'
 			}
 		}
+	}
+};
+
+/* Hover arrows (2026-11-11): hover the right edge of the cards with a mouse.
+   In a narrow window: from `sm` up the fluid cards fit side by side
+   (2026-11-13), so there is nothing to scroll and no arrow. */
+export const InfoGalleryDesktopHoverArrows: StoryObj = {
+	name: '1b — Info-Galerie: Pfeile beim Darüberfahren (schmales Fenster, Maus)',
+	globals: phone375Globals,
+	render: () => <Screen />,
+	play: async ({ canvasElement }) => {
+		await expectWaitingRoomLayout(canvasElement, {
+			frame: false,
+			cards: true
+		});
+		await revealHoverArrow(
+			canvasElement,
+			'end',
+			'handover-carousel-arrows'
+		);
 	}
 };
