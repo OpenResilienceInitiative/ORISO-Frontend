@@ -1323,10 +1323,35 @@ describe('getMyMatrixRoomMembership / onMatrixInitialSync', () => {
 		const synced = vi.fn();
 		chatTransportService.onMatrixInitialSync(synced);
 
-		client.emitSync('SYNCING');
+		client.emitSync('RECONNECTING');
 		expect(synced).not.toHaveBeenCalled();
 		client.emitSync('PREPARED');
 		client.emitSync('PREPARED');
 		expect(synced).toHaveBeenCalledTimes(1);
+	});
+
+	it('also calls back when sync recovers from an error straight to SYNCING', () => {
+		const client = clientWith({}, false);
+		setMatrixClientServiceRef({ getClient: () => client } as any);
+		const synced = vi.fn(() => true);
+		chatTransportService.onMatrixInitialSync(synced);
+
+		client.emitSync('ERROR');
+		expect(synced).not.toHaveBeenCalled();
+		client.emitSync('SYNCING');
+		client.emitSync('SYNCING');
+		expect(synced).toHaveBeenCalledTimes(1);
+	});
+
+	it('keeps waiting while the callback cannot decide yet', () => {
+		const client = clientWith({}, false);
+		setMatrixClientServiceRef({ getClient: () => client } as any);
+		const synced = vi.fn().mockReturnValueOnce(false).mockReturnValue(true);
+		chatTransportService.onMatrixInitialSync(synced);
+
+		client.emitSync('PREPARED');
+		client.emitSync('SYNCING');
+		client.emitSync('SYNCING');
+		expect(synced).toHaveBeenCalledTimes(2);
 	});
 });

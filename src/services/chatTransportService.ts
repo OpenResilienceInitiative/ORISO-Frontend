@@ -613,16 +613,19 @@ class ChatTransportService {
 	}
 
 	/**
-	 * Calls back once the current Matrix client has finished its first sync.
-	 * Returns a function that stops waiting.
+	 * Calls back when the current Matrix client has a usable sync: PREPARED
+	 * after the first sync, or SYNCING (also what the SDK emits when it
+	 * recovers from ERROR). Keeps calling back on later syncs while the
+	 * callback returns false; stops once it returns anything else. Returns a
+	 * function that stops waiting.
 	 */
-	public onMatrixInitialSync(callback: () => void): () => void {
+	public onMatrixInitialSync(callback: () => boolean | void): () => void {
 		const client = getMatrixClientService()?.getClient?.();
 		if (!client) return () => {};
 		const handleSync = (state: string): void => {
-			if (state !== 'PREPARED') return;
+			if (state !== 'PREPARED' && state !== 'SYNCING') return;
+			if (callback() === false) return;
 			client.off(ClientEvent.Sync, handleSync);
-			callback();
 		};
 		client.on(ClientEvent.Sync, handleSync);
 		return () => client.off(ClientEvent.Sync, handleSync);

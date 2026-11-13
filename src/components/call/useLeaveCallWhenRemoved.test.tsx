@@ -149,7 +149,7 @@ describe('useLeaveCallWhenRemoved — removal before the watch started', () => {
 
 	it('checks again once a refreshed client has finished its first sync', () => {
 		membership.mockReturnValue(null);
-		let synced = (): void => {};
+		let synced = (): boolean | void => undefined;
 		const stopWaiting = vi.fn();
 		onSynced.mockImplementation((callback) => {
 			synced = callback;

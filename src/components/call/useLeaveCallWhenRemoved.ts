@@ -67,9 +67,7 @@ export const useLeaveCallWhenRemoved = (
 		};
 		const stopWaiting = checkCurrent()
 			? undefined
-			: chatTransportService.onMatrixInitialSync(() => {
-					checkCurrent();
-				});
+			: chatTransportService.onMatrixInitialSync(checkCurrent);
 		return (): void => {
 			stop?.();
 			stopWaiting?.();
