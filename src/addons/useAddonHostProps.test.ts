@@ -1,6 +1,10 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { addonApiCall, readThemeTokens } from './useAddonHostProps';
+import {
+	addonApiCall,
+	addonNotice,
+	readThemeTokens
+} from './useAddonHostProps';
 
 describe('addonApiCall', () => {
 	afterEach(() => vi.unstubAllGlobals());
@@ -50,5 +54,49 @@ describe('readThemeTokens', () => {
 		root.style.setProperty('--m3-primary', '#009fe3');
 		root.style.setProperty('--other', 'x');
 		expect(readThemeTokens(root)).toEqual({ '--m3-primary': '#009fe3' });
+	});
+});
+
+describe('addonNotice', () => {
+	it('maps an add-on message onto a host notification', () => {
+		expect(
+			addonNotice({
+				type: 'success',
+				text: 'Gespeichert',
+				title: 'Ziele'
+			})
+		).toEqual({
+			notificationType: 'success',
+			title: 'Ziele',
+			text: 'Gespeichert',
+			closeable: true,
+			timeout: 4000,
+			announce: 'status'
+		});
+	});
+
+	it('keeps errors longer and announces them at once', () => {
+		expect(addonNotice({ type: 'error', text: 'Fehler' })).toMatchObject({
+			notificationType: 'error',
+			title: '',
+			timeout: 8000,
+			announce: 'alert'
+		});
+	});
+
+	it('treats unknown types as info and only takes plain text', () => {
+		const notice = addonNotice({
+			type: 'shout' as never,
+			text: 'x'.repeat(400),
+			title: { html: '<b>' } as never
+		});
+		expect(notice?.notificationType).toBe('info');
+		expect(notice?.text).toHaveLength(300);
+		expect(notice?.title).toBe('');
+	});
+
+	it('ignores a message without text', () => {
+		expect(addonNotice({ type: 'info', text: '' })).toBeNull();
+		expect(addonNotice(undefined as never)).toBeNull();
 	});
 });

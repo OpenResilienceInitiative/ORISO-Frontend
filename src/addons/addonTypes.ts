@@ -37,6 +37,16 @@ export interface AddonRegistryResponse {
 	addons: AvailableAddon[];
 }
 
+/**
+ * A short on-screen message for the person using the add-on, shown with the host's own
+ * notifications. Plain text only; the add-on translates it (it knows `locale` and `informal`).
+ */
+export interface AddonNotice {
+	type: 'success' | 'info' | 'warning' | 'error';
+	text: string;
+	title?: string;
+}
+
 /** What every lifecycle function of an add-on bundle receives. */
 export interface AddonHostProps {
 	contract: typeof ADDON_CONTRACT;
@@ -57,6 +67,8 @@ export interface AddonHostProps {
 	/** Calls the add-on's own API with the user's login. */
 	api: (path: string, init?: RequestInit) => Promise<Response>;
 	navigate: (to: string) => void;
+	/** Shows a short message through the host's notifications. */
+	notify: (notice: AddonNotice) => void;
 }
 
 /**

@@ -6,6 +6,14 @@ import {
 	TenantContext,
 	UserDataContext
 } from '../globalState';
+import {
+	NotificationDefaultType,
+	NotificationsContext,
+	NOTIFICATION_TYPE_ERROR,
+	NOTIFICATION_TYPE_INFO,
+	NOTIFICATION_TYPE_SUCCESS,
+	NOTIFICATION_TYPE_WARNING
+} from '../globalState/provider/NotificationsProvider';
 import { apiUrl } from '../resources/scripts/endpoints';
 import { getValueFromCookie } from '../components/sessionCookie/accessSessionCookie';
 import {
@@ -14,6 +22,7 @@ import {
 	SESSION_HEADER,
 	AddonApp,
 	AddonHostProps,
+	AddonNotice,
 	AddonSlot,
 	AvailableAddon
 } from './addonTypes';
@@ -65,6 +74,44 @@ export const addonApiCall = (
 	};
 };
 
+const NOTICE_TYPES = {
+	success: NOTIFICATION_TYPE_SUCCESS,
+	info: NOTIFICATION_TYPE_INFO,
+	warning: NOTIFICATION_TYPE_WARNING,
+	error: NOTIFICATION_TYPE_ERROR
+} as const;
+
+/** Longest text an add-on can show; longer text is cut, so a notice stays a notice. */
+const NOTICE_MAX_LENGTH = 300;
+
+const plainText = (value: unknown) =>
+	typeof value === 'string' ? value.slice(0, NOTICE_MAX_LENGTH) : '';
+
+/**
+ * Turns an add-on's `notify` call into a host notification. Unknown types become `info`; title
+ * and text are plain strings (React renders them as text, never as HTML). Errors and warnings
+ * stay longer and are announced to screen readers at once.
+ */
+export const addonNotice = (
+	notice: AddonNotice
+): NotificationDefaultType | null => {
+	const text = plainText(notice?.text);
+	if (!text) {
+		return null;
+	}
+	const type = NOTICE_TYPES[notice.type] ?? NOTIFICATION_TYPE_INFO;
+	const urgent =
+		type === NOTIFICATION_TYPE_ERROR || type === NOTIFICATION_TYPE_WARNING;
+	return {
+		notificationType: type,
+		title: plainText(notice.title),
+		text,
+		closeable: true,
+		timeout: urgent ? 8000 : 4000,
+		announce: urgent ? 'alert' : 'status'
+	};
+};
+
 export const useAddonHostProps = (
 	addon: AvailableAddon,
 	app: AddonApp,
@@ -77,6 +124,16 @@ export const useAddonHostProps = (
 	const { informal } = useContext(InformalContext) ?? {};
 	const navigate = useNavigate();
 	const goTo = useCallback((to: string) => navigate(to), [navigate]);
+	const { addNotification } = useContext(NotificationsContext) ?? {};
+	const notify = useCallback(
+		(notice: AddonNotice) => {
+			const notification = addonNotice(notice);
+			if (notification && addNotification) {
+				addNotification(notification);
+			}
+		},
+		[addNotification]
+	);
 	const { agencyId, sessionId, askerId } = placement;
 
 	return useMemo(
@@ -98,7 +155,8 @@ export const useAddonHostProps = (
 			sessionId,
 			askerId,
 			api: addonApiCall(addon, { agencyId, sessionId }),
-			navigate: goTo
+			navigate: goTo,
+			notify
 		}),
 		[
 			addon,
@@ -111,7 +169,8 @@ export const useAddonHostProps = (
 			agencyId,
 			sessionId,
 			askerId,
-			goTo
+			goTo,
+			notify
 		]
 	);
 };
