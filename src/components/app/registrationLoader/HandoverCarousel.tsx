@@ -324,6 +324,12 @@ export const HandoverCarousel = ({
 		if (!track || !current) {
 			return;
 		}
+		if (!current.started && (event.buttons & 1) === 0) {
+			// Released outside the track before it became a drag: the
+			// track never saw the pointerup, so drop the press here.
+			drag.current = null;
+			return;
+		}
 		const distance = event.clientX - current.x;
 		if (!current.started) {
 			if (Math.abs(distance) < DRAG_START_PX) {

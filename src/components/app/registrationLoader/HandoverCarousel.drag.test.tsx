@@ -14,10 +14,11 @@ const GAP = 20;
 const TRACK = 784; // roughly two cards: the case where the ends clamp
 
 /** jsdom has no PointerEvent: a plain event carrying the mouse fields. */
-const mousePointer = (type: string, clientX = 400) => {
+const mousePointer = (type: string, clientX = 400, buttons = 1) => {
 	const event = new MouseEvent(type, {
 		bubbles: true,
 		button: 0,
+		buttons,
 		clientX
 	});
 	Object.defineProperty(event, 'pointerType', { value: 'mouse' });
@@ -73,7 +74,14 @@ const renderWithGeometry = () => {
 		fireEvent(track, mousePointer('pointerup', 400 + jitter));
 		return { left: scrollLeft, scrollTo, track };
 	};
-	return { release, click, max };
+	/** Press, release outside the track, come back with no button held. */
+	const releaseOutside = () => {
+		scrollLeft = 0;
+		fireEvent(track, mousePointer('pointerdown', 400));
+		fireEvent(track, mousePointer('pointermove', 300, 0));
+		return { left: scrollLeft, scrollTo, track };
+	};
+	return { release, click, releaseOutside, max };
 };
 
 describe('HandoverCarousel mouse drag snap', () => {
@@ -97,6 +105,14 @@ describe('HandoverCarousel mouse drag snap', () => {
 	it('treats a press without movement as a click: no drag, no snap, no new card', () => {
 		const { click } = renderWithGeometry();
 		const { left, scrollTo, track } = click(0, 2);
+		expect(left).toBe(0);
+		expect(scrollTo).not.toHaveBeenCalled();
+		expect(track.dataset.dragging).toBeUndefined();
+	});
+
+	it('drops a press released outside the track instead of dragging later', () => {
+		const { releaseOutside } = renderWithGeometry();
+		const { left, scrollTo, track } = releaseOutside();
 		expect(left).toBe(0);
 		expect(scrollTo).not.toHaveBeenCalled();
 		expect(track.dataset.dragging).toBeUndefined();
