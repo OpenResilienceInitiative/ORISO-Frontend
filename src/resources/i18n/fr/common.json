@@ -7175,10 +7175,11 @@
 			"weekday": "{{day}} {{time}}"
 		},
 		"workingHours": {
-			"break": "Pause déjeuner",
-			"breakFrom": "Pause déjeuner de",
-			"breakInvalid": "La pause déjeuner doit se terminer après son début.",
-			"breakTo": "Pause déjeuner jusqu'à",
+			"breakOn": "{{day}} : pause",
+			"break": "Pause",
+			"breakFrom": "{{day}} : pause de",
+			"breakInvalid": "Une pause doit se situer dans les heures de travail et se terminer après son début.",
+			"breakTo": "{{day}} : pause jusqu’à",
 			"change": "Modifier",
 			"cleared": "Horaires supprimés.",
 			"description": "En dehors de ces horaires, votre calendrier est grisé. Les rendez-vous restent possibles.",

@@ -1,6 +1,7 @@
 /**
  * "Arbeitszeit festlegen" (ADR-032, UserService#1649, contract v1.2): hours
- * per weekday, a lunch break (on by default, stored as two windows a day)
+ * per weekday, each with its own pause (Frank, prototype v15; on by default,
+ * stored as the gap between the day's two windows)
  * and "Feiertage frei" with the Bundesland whose public holidays are days
  * off. Outside the hours the calendar is shaded and the free-time search
  * does not look; booking ignores them.
@@ -17,13 +18,12 @@ import {
 	type HolidayRegion
 } from './calendarHolidays';
 import {
-	breakOf,
 	dialogWorkingHours,
 	exceedsWindowLimit,
 	groupWorkingHours,
+	invalidPauses,
 	invalidRows,
-	isBreakValid,
-	type DayBreak,
+	type DayPause,
 	workingHoursToRows,
 	type WorkingDayRow,
 	type WorkingHours,
@@ -85,15 +85,15 @@ export const WorkingHoursDialog = ({
 	const [rows, setRows] = useState<WorkingDayRow[]>(() =>
 		workingHoursToRows(hours)
 	);
-	const [dayBreak, setDayBreak] = useState<DayBreak>(() => breakOf(hours));
 	const [holidays, setHolidays] = useState(!!holidayRegion);
 	const [region, setRegion] = useState<HolidayRegion | ''>(
 		holidayRegion ?? ''
 	);
 	const invalid = invalidRows(rows);
-	const breakInvalid = !isBreakValid(dayBreak);
+	const wrongPauses = invalidPauses(rows);
+	const breakInvalid = wrongPauses.length > 0;
 	const regionMissing = holidays && !region;
-	const next = dialogWorkingHours(hours, rows, dayBreak);
+	const next = dialogWorkingHours(hours, rows);
 	// Over UserService's limit: refuse it here, before the dialog closes
 	// (review 4575297370).
 	const tooMany = exceedsWindowLimit(next);
@@ -116,6 +116,14 @@ export const WorkingHoursDialog = ({
 	const update = (weekday: number, patch: Partial<WorkingDayRow>) =>
 		setRows((all) =>
 			all.map((r) => (r.weekday === weekday ? { ...r, ...patch } : r))
+		);
+	const updatePause = (weekday: number, patch: Partial<DayPause>) =>
+		setRows((all) =>
+			all.map((r) =>
+				r.weekday === weekday
+					? { ...r, pause: { ...r.pause, ...patch } }
+					: r
+			)
 		);
 
 	return (
@@ -151,116 +159,134 @@ export const WorkingHoursDialog = ({
 				{rows.map((row) => {
 					const name = dayName(row.weekday);
 					const wrong = invalid.includes(row.weekday);
+					const pauseWrong = wrongPauses.includes(row.weekday);
+					const pauseOn = row.enabled && row.pause.enabled;
 					return (
-						<div
-							key={row.weekday}
-							className={`calendarHours__row${row.enabled ? '' : ' calendarHours__row--off'}`}
-							data-cy={`calendar-hours-${row.weekday}`}
-						>
-							<Switch
-								checked={row.enabled}
-								onChange={(enabled) =>
-									update(row.weekday, { enabled })
-								}
-								aria-label={name}
-								showIcon={false}
-							/>
-							<span className="calendarHours__day">{name}</span>
-							<label className="calendarHours__time">
-								<span className="sr-only">
-									{t('calendar.workingHours.from', {
-										day: name
-									})}
-								</span>
-								<input
-									type="time"
-									step={900}
-									value={row.start}
-									disabled={!row.enabled}
-									aria-invalid={wrong || undefined}
-									onChange={(e) =>
-										update(row.weekday, {
-											start: e.target.value
-										})
+						<React.Fragment key={row.weekday}>
+							<div
+								className={`calendarHours__row${row.enabled ? '' : ' calendarHours__row--off'}`}
+								data-cy={`calendar-hours-${row.weekday}`}
+							>
+								<Switch
+									checked={row.enabled}
+									onChange={(enabled) =>
+										update(row.weekday, { enabled })
 									}
+									aria-label={name}
+									showIcon={false}
 								/>
-							</label>
-							<span aria-hidden="true">–</span>
-							<label className="calendarHours__time">
-								<span className="sr-only">
-									{t('calendar.workingHours.to', {
-										day: name
-									})}
+								<span className="calendarHours__day">
+									{name}
 								</span>
-								<input
-									type="time"
-									step={900}
-									value={row.end}
-									disabled={!row.enabled}
-									aria-invalid={wrong || undefined}
-									onChange={(e) =>
-										update(row.weekday, {
-											end: e.target.value
-										})
-									}
-								/>
-							</label>
-						</div>
+								<label className="calendarHours__time">
+									<span className="sr-only">
+										{t('calendar.workingHours.from', {
+											day: name
+										})}
+									</span>
+									<input
+										type="time"
+										step={900}
+										value={row.start}
+										disabled={!row.enabled}
+										aria-invalid={wrong || undefined}
+										onChange={(e) =>
+											update(row.weekday, {
+												start: e.target.value
+											})
+										}
+									/>
+								</label>
+								<span aria-hidden="true">–</span>
+								<label className="calendarHours__time">
+									<span className="sr-only">
+										{t('calendar.workingHours.to', {
+											day: name
+										})}
+									</span>
+									<input
+										type="time"
+										step={900}
+										value={row.end}
+										disabled={!row.enabled}
+										aria-invalid={wrong || undefined}
+										onChange={(e) =>
+											update(row.weekday, {
+												end: e.target.value
+											})
+										}
+									/>
+								</label>
+							</div>
+							{/* Each day its own pause, or none (Frank, prototype v15). */}
+							<div
+								className={`calendarHours__row calendarHours__row--pause${pauseOn ? '' : ' calendarHours__row--off'}`}
+								data-cy={`calendar-hours-pause-${row.weekday}`}
+							>
+								<label className="calendarHours__pauseOn">
+									<input
+										type="checkbox"
+										checked={row.pause.enabled}
+										disabled={!row.enabled}
+										aria-label={t(
+											'calendar.workingHours.breakOn',
+											{
+												day: name
+											}
+										)}
+										onChange={(e) =>
+											updatePause(row.weekday, {
+												enabled: e.target.checked
+											})
+										}
+									/>
+									<span aria-hidden="true">
+										{t('calendar.workingHours.break')}
+									</span>
+								</label>
+								<label className="calendarHours__time">
+									<span className="sr-only">
+										{t('calendar.workingHours.breakFrom', {
+											day: name
+										})}
+									</span>
+									<input
+										type="time"
+										step={900}
+										value={row.pause.start}
+										disabled={!pauseOn}
+										aria-invalid={pauseWrong || undefined}
+										onChange={(e) =>
+											updatePause(row.weekday, {
+												start: e.target.value
+											})
+										}
+									/>
+								</label>
+								<span aria-hidden="true">–</span>
+								<label className="calendarHours__time">
+									<span className="sr-only">
+										{t('calendar.workingHours.breakTo', {
+											day: name
+										})}
+									</span>
+									<input
+										type="time"
+										step={900}
+										value={row.pause.end}
+										disabled={!pauseOn}
+										aria-invalid={pauseWrong || undefined}
+										onChange={(e) =>
+											updatePause(row.weekday, {
+												end: e.target.value
+											})
+										}
+									/>
+								</label>
+							</div>
+						</React.Fragment>
 					);
 				})}
-				<div
-					className={`calendarHours__row calendarHours__row--break${dayBreak.enabled ? '' : ' calendarHours__row--off'}`}
-					data-cy="calendar-hours-break"
-				>
-					<Switch
-						checked={dayBreak.enabled}
-						onChange={(enabled) =>
-							setDayBreak((b) => ({ ...b, enabled }))
-						}
-						aria-label={t('calendar.workingHours.break')}
-						showIcon={false}
-					/>
-					<span className="calendarHours__day">
-						{t('calendar.workingHours.break')}
-					</span>
-					<label className="calendarHours__time">
-						<span className="sr-only">
-							{t('calendar.workingHours.breakFrom')}
-						</span>
-						<input
-							type="time"
-							step={900}
-							value={dayBreak.start}
-							disabled={!dayBreak.enabled}
-							aria-invalid={breakInvalid || undefined}
-							onChange={(e) =>
-								setDayBreak((b) => ({
-									...b,
-									start: e.target.value
-								}))
-							}
-						/>
-					</label>
-					<span aria-hidden="true">–</span>
-					<label className="calendarHours__time">
-						<span className="sr-only">
-							{t('calendar.workingHours.breakTo')}
-						</span>
-						<input
-							type="time"
-							step={900}
-							value={dayBreak.end}
-							disabled={!dayBreak.enabled}
-							aria-invalid={breakInvalid || undefined}
-							onChange={(e) =>
-								setDayBreak((b) => ({
-									...b,
-									end: e.target.value
-								}))
-							}
-						/>
-					</label>
-				</div>
 				<div
 					className="calendarHours__row calendarHours__row--holidays"
 					data-cy="calendar-hours-holidays"

@@ -7175,10 +7175,11 @@
 			"weekday": "{{day}} {{time}}"
 		},
 		"workingHours": {
-			"break": "Öğle arası",
-			"breakFrom": "Öğle arası başlangıcı",
-			"breakInvalid": "Öğle arası başladıktan sonra bitmelidir.",
-			"breakTo": "Öğle arası bitişi",
+			"breakOn": "{{day}}: mola",
+			"break": "Mola",
+			"breakFrom": "{{day}}: mola başlangıcı",
+			"breakInvalid": "Mola çalışma saatleri içinde olmalı ve başladıktan sonra bitmelidir.",
+			"breakTo": "{{day}}: mola bitişi",
 			"change": "Değiştir",
 			"cleared": "Çalışma saatleri kaldırıldı.",
 			"description": "Bu saatlerin dışında takviminiz gölgeli görünür. Randevu yine de mümkündür.",

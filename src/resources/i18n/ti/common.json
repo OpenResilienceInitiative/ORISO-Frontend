@@ -7142,10 +7142,11 @@
 			"weekday": "{{day}} {{time}}"
 		},
 		"workingHours": {
-			"break": "ናይ ምሳሕ ዕረፍቲ",
-			"breakFrom": "ናይ ምሳሕ ዕረፍቲ ካብ",
-			"breakInvalid": "ናይ ምሳሕ ዕረፍቲ ድሕሪ መጀመርታኡ ክውዳእ ኣለዎ።",
-			"breakTo": "ናይ ምሳሕ ዕረፍቲ ክሳብ",
+			"breakOn": "{{day}}: ዕረፍቲ",
+			"break": "ዕረፍቲ",
+			"breakFrom": "{{day}}: ዕረፍቲ ካብ",
+			"breakInvalid": "ዕረፍቲ ኣብ ውሽጢ ግዜ ስራሕ ክኸውንን ድሕሪ መጀመርታኡ ክውዳእን ኣለዎ።",
+			"breakTo": "{{day}}: ዕረፍቲ ክሳብ",
 			"change": "ቀይር",
 			"cleared": "ናይ ስራሕ ሰዓታት ተኣልዩ።",
 			"description": "ካብዘን ሰዓታት ወጻኢ ካላንዳርኩም ጸላሎት ኣለዎ። ቆጸራ ግን ይከኣል እዩ።",

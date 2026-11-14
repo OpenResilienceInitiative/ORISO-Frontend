@@ -362,23 +362,46 @@ export const isWithinWorkingHours = (
 	);
 };
 
-/** One row of the working-hours dialog. */
-export interface WorkingDayRow {
-	weekday: number;
+/**
+ * A pause inside one working day (Frank, prototype v15: "Pause", per
+ * weekday). UserService has no pause of its own: it is the gap between the
+ * day's two windows.
+ */
+export interface DayPause {
 	enabled: boolean;
 	start: string;
 	end: string;
 }
 
+/** On by default, 12:00–13:00, for a day that has none yet. */
+export const DEFAULT_PAUSE: DayPause = {
+	enabled: true,
+	start: '12:00',
+	end: '13:00'
+};
+
+/** One row of the working-hours dialog: one weekday with its pause. */
+export interface WorkingDayRow {
+	weekday: number;
+	enabled: boolean;
+	start: string;
+	end: string;
+	pause: DayPause;
+}
+
 /**
- * The dialog edits one window per weekday. Should UserService ever hold two
- * on one day, the row spans from the first start to the last end.
+ * One row per weekday, Monday first. Two windows on a day are its hours
+ * with the gap as its pause; more than two span from the first start to
+ * the last end (the dialog keeps such a day as stored unless it is
+ * edited). Before any hours are set, every day comes with the default
+ * pause.
  */
 export const workingHoursToRows = (hours: WorkingHours): WorkingDayRow[] => {
 	const template = hours[0] ?? {
 		start: FALLBACK_DAY.start,
 		end: FALLBACK_DAY.end
 	};
+	const none = { ...DEFAULT_PAUSE, enabled: hours.length === 0 };
 	return WEEKDAYS_MONDAY_FIRST.map((weekday) => {
 		const day = windowsOn(hours, weekday);
 		if (day.length === 0)
@@ -386,7 +409,8 @@ export const workingHoursToRows = (hours: WorkingHours): WorkingDayRow[] => {
 				weekday,
 				enabled: false,
 				start: template.start,
-				end: template.end
+				end: template.end,
+				pause: none
 			};
 		return {
 			weekday,
@@ -396,95 +420,36 @@ export const workingHoursToRows = (hours: WorkingHours): WorkingDayRow[] => {
 				(latest, w) =>
 					minutesOf(w.end) > minutesOf(latest) ? w.end : latest,
 				day[0].end
-			)
+			),
+			pause:
+				day.length >= 2
+					? { enabled: true, start: day[0].end, end: day[1].start }
+					: { ...DEFAULT_PAUSE, enabled: false }
 		};
 	});
 };
 
-/**
- * A break inside every working day, e.g. lunch (Frank, 2026-11-14): on by
- * default, 12:00–13:00. UserService has no break of its own; a day with a
- * break is stored as two windows.
- */
-export interface DayBreak {
-	enabled: boolean;
-	start: string;
-	end: string;
-}
+/** A pause that is off, or ends after it starts inside the working time. */
+export const isPauseValid = ({ start, end, pause }: WorkingDayRow) =>
+	!pause.enabled ||
+	(isTime(pause.start) &&
+		isTime(pause.end) &&
+		minutesOf(pause.start) > minutesOf(start) &&
+		minutesOf(pause.end) > minutesOf(pause.start) &&
+		minutesOf(pause.end) < minutesOf(end));
 
-export const DEFAULT_BREAK: DayBreak = {
-	enabled: true,
-	start: '12:00',
-	end: '13:00'
+/** One row as windows: its hours, split by its pause. */
+const rowWindows = (row: WorkingDayRow): WorkingHoursWindow[] => {
+	const { weekday, start, end, pause } = row;
+	if (!pause.enabled || !isPauseValid(row)) return [{ weekday, start, end }];
+	return [
+		{ weekday, start, end: pause.start },
+		{ weekday, start: pause.end, end }
+	];
 };
 
-/**
- * The break the stored windows show: every day that spans it is split by
- * the same gap. A day that ends before the break or starts after it (Friday
- * 08:00–12:00) does not count against it. With no hours set yet, the
- * default break.
- */
-export const breakOf = (hours: WorkingHours): DayBreak => {
-	if (hours.length === 0) return DEFAULT_BREAK;
-	const off = { ...DEFAULT_BREAK, enabled: false };
-	const days = WEEKDAYS_MONDAY_FIRST.map((weekday) =>
-		windowsOn(hours, weekday)
-	).filter((day) => day.length > 0);
-	let gap: { start: string; end: string } | undefined;
-	for (const day of days) {
-		if (day.length > 2) return off;
-		if (day.length !== 2) continue;
-		const next = { start: day[0].end, end: day[1].start };
-		if (gap && (gap.start !== next.start || gap.end !== next.end))
-			return off;
-		gap = next;
-	}
-	if (!gap) return off;
-	const { start, end } = gap;
-	// A single window across the gap would be split on the next save.
-	const spansGap = days.some(
-		(day) =>
-			day.length === 1 &&
-			minutesOf(day[0].start) < minutesOf(start) &&
-			minutesOf(day[0].end) > minutesOf(end)
-	);
-	return spansGap ? off : { enabled: true, start, end };
-};
-
-export const isBreakValid = (b: DayBreak) =>
-	!b.enabled ||
-	(isTime(b.start) && isTime(b.end) && minutesOf(b.end) > minutesOf(b.start));
-
-/**
- * One row without the break: the part of the day outside it. 08:00–18:00
- * becomes two windows, 08:00–13:00 ends at 12:00, 12:00–18:00 starts at
- * 13:00. A day entirely inside the break stays as entered.
- */
-const withoutBreak = (
-	{ weekday, start, end }: WorkingDayRow,
-	dayBreak?: DayBreak
-): WorkingHoursWindow[] => {
-	if (!dayBreak?.enabled || !isBreakValid(dayBreak))
-		return [{ weekday, start, end }];
-	const from = minutesOf(start);
-	const to = minutesOf(end);
-	const breakFrom = minutesOf(dayBreak.start);
-	const breakTo = minutesOf(dayBreak.end);
-	if (to <= breakFrom || from >= breakTo) return [{ weekday, start, end }];
-	const parts: WorkingHoursWindow[] = [];
-	if (from < breakFrom) parts.push({ weekday, start, end: dayBreak.start });
-	if (to > breakTo) parts.push({ weekday, start: dayBreak.end, end });
-	return parts.length > 0 ? parts : [{ weekday, start, end }];
-};
-
-/**
- * The rows that are switched on and complete, as windows; the break is cut
- * out of every day it touches.
- */
-export const rowsToWorkingHours = (
-	rows: WorkingDayRow[],
-	dayBreak?: DayBreak
-): WorkingHours =>
+/** The rows that are switched on and complete, as windows. */
+export const rowsToWorkingHours = (rows: WorkingDayRow[]): WorkingHours =>
 	rows
 		.filter(
 			(r) =>
@@ -493,40 +458,38 @@ export const rowsToWorkingHours = (
 				isTime(r.end) &&
 				minutesOf(r.end) > minutesOf(r.start)
 		)
-		.flatMap((row) => withoutBreak(row, dayBreak))
+		.flatMap(rowWindows)
 		.sort(byWeekdayAndStart);
+
+const samePause = (a: DayPause, b: DayPause) =>
+	a.enabled === b.enabled &&
+	(!a.enabled || (a.start === b.start && a.end === b.end));
 
 const sameRow = (a: WorkingDayRow, b?: WorkingDayRow) =>
 	!!b &&
 	a.enabled === b.enabled &&
 	a.start === b.start &&
-	a.end === b.end;
-
-const sameBreak = (a: DayBreak, b: DayBreak) =>
-	a.enabled === b.enabled && a.start === b.start && a.end === b.end;
+	a.end === b.end &&
+	samePause(a.pause, b.pause);
 
 /**
- * What the dialog saves: the rows it can show, but every day the user left
- * alone keeps its stored windows — a day-specific break or a third window
- * the shared break cannot express stays as it was. A changed break applies
- * to every day.
+ * What the dialog saves: every day the user left alone keeps its stored
+ * windows (a third window the row cannot show stays as it was); an edited
+ * day is its hours split by its own pause.
  */
 export const dialogWorkingHours = (
 	stored: WorkingHours,
-	rows: WorkingDayRow[],
-	dayBreak: DayBreak
+	rows: WorkingDayRow[]
 ): WorkingHours => {
 	const initialRows = workingHoursToRows(stored);
-	const breakKept = sameBreak(dayBreak, breakOf(stored));
 	return rows
 		.flatMap((row) =>
-			breakKept &&
 			sameRow(
 				row,
 				initialRows.find((r) => r.weekday === row.weekday)
 			)
 				? windowsOn(stored, row.weekday)
-				: rowsToWorkingHours([row], dayBreak)
+				: rowsToWorkingHours([row])
 		)
 		.sort(byWeekdayAndStart);
 };
@@ -542,6 +505,10 @@ export const invalidRows = (rows: WorkingDayRow[]) =>
 					minutesOf(r.end) <= minutesOf(r.start))
 		)
 		.map((r) => r.weekday);
+
+/** Weekdays that are on with a pause outside their hours or reversed. */
+export const invalidPauses = (rows: WorkingDayRow[]) =>
+	rows.filter((r) => r.enabled && !isPauseValid(r)).map((r) => r.weekday);
 
 /** Days with the same hours, for the one-line summary "Mo–Fr 08:00–18:00". */
 export interface WorkingHoursGroup {

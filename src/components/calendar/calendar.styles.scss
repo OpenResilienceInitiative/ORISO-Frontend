@@ -1973,9 +1973,27 @@
 }
 
 // Lunch break and holidays sit under the days, set apart by a line.
-.calendarHours__row--break {
-	padding-top: 10px;
-	border-top: 1px solid var(--m3-outline-variant, #c4c7c8);
+// The pause of the day above: its own checkbox and times, indented under
+// the day (Frank, prototype v15).
+.calendarHours__row--pause {
+	grid-template-columns: 1fr auto auto auto;
+	margin-top: -6px;
+	padding-left: 52px;
+	color: var(--m3-on-surface-variant, #444748);
+	font-size: 13px;
+}
+
+.calendarHours__pauseOn {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+
+	input {
+		width: 16px;
+		height: 16px;
+		margin: 0;
+		accent-color: var(--m3-primary, #a5000a);
+	}
 }
 
 .calendarHours__row--holidays {

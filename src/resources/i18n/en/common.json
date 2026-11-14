@@ -7090,10 +7090,11 @@
 			"weekday": "{{day}} {{time}}"
 		},
 		"workingHours": {
-			"break": "Lunch break",
-			"breakFrom": "Lunch break from",
-			"breakInvalid": "The lunch break has to end after it starts.",
-			"breakTo": "Lunch break until",
+			"breakOn": "{{day}}: break",
+			"break": "Break",
+			"breakFrom": "{{day}}: break from",
+			"breakInvalid": "A break has to lie within the working hours and end after it starts.",
+			"breakTo": "{{day}}: break until",
 			"change": "Change",
 			"cleared": "Working hours removed.",
 			"description": "Outside these hours your calendar is shaded. Appointments are still possible.",

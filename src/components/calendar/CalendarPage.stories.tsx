@@ -1304,21 +1304,24 @@ export const WorkingHoursPiece: StoryObj = {
 		const dialog = within(
 			await body().findByTestId('calendar-working-hours-dialog')
 		);
-		// Seven days, the lunch break and the public holidays.
-		await expect(dialog.getAllByRole('switch')).toHaveLength(9);
+		// Seven days and the public holidays; each day has its own pause.
+		await expect(dialog.getAllByRole('switch')).toHaveLength(8);
 		const saturday = document.querySelector<HTMLElement>(
 			'[data-cy="calendar-hours-6"] input[role="switch"]'
 		)!;
 		await expect((saturday as HTMLInputElement).checked).toBe(false);
-		// Stored as two windows a day, read back as one day and a break.
+		// Stored as two windows a day, read back as one day and its pause.
 		await expect(
 			document.querySelectorAll<HTMLInputElement>(
 				'[data-cy="calendar-hours-1"] input[type="time"]'
 			)[1].value
 		).toBe('18:00');
 		await expect(
-			dialog.getByRole('switch', { name: 'Mittagspause' })
+			dialog.getByRole('checkbox', { name: 'Montag: Pause' })
 		).toBeChecked();
+		await expect(
+			dialog.getByRole('checkbox', { name: 'Samstag: Pause' })
+		).toBeDisabled();
 		await expect(
 			dialog.getByRole('switch', { name: 'Feiertage frei' })
 		).toBeChecked();

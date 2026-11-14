@@ -53,3 +53,13 @@ describe('calendar blocker notices', () => {
 		}
 	);
 });
+
+describe('calendar wording: "Pause", never "Mittagspause" (Frank, prototype v15)', () => {
+	it('calls the break of a working day "Pause" in German', () => {
+		const calendar = (de as { calendar: Record<string, unknown> }).calendar;
+		expect(
+			(calendar.workingHours as Record<string, string>).break
+		).toBe('Pause');
+		expect(JSON.stringify(calendar)).not.toMatch(/Mittagspause/);
+	});
+});

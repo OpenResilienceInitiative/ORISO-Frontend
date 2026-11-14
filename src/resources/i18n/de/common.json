@@ -7165,10 +7165,11 @@
 			"weekday": "{{day}} {{time}}"
 		},
 		"workingHours": {
-			"break": "Mittagspause",
-			"breakFrom": "Mittagspause von",
-			"breakInvalid": "Die Mittagspause muss nach ihrem Beginn enden.",
-			"breakTo": "Mittagspause bis",
+			"breakOn": "{{day}}: Pause",
+			"break": "Pause",
+			"breakFrom": "{{day}}: Pause von",
+			"breakInvalid": "Eine Pause muss in der Arbeitszeit liegen und nach ihrem Beginn enden.",
+			"breakTo": "{{day}}: Pause bis",
 			"change": "Ändern",
 			"cleared": "Arbeitszeit entfernt.",
 			"description": "Außerhalb dieser Zeiten ist Ihr Kalender schattiert. Termine bleiben trotzdem möglich.",

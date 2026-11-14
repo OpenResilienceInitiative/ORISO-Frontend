@@ -1,8 +1,7 @@
 import { describe, expect, it } from 'vite-plus/test';
 import {
-	DEFAULT_BREAK,
+	DEFAULT_PAUSE,
 	MAX_WORKING_HOURS_WINDOWS,
-	breakOf,
 	clampEdge,
 	dialogWorkingHours,
 	exceedsWindowLimit,
@@ -12,7 +11,8 @@ import {
 	exceptionWindowsToApi,
 	groupWorkingHours,
 	invalidRows,
-	isBreakValid,
+	invalidPauses,
+	isPauseValid,
 	isWithinWorkingHours,
 	moveEdge,
 	normalizeWindows,
@@ -110,7 +110,8 @@ describe('calendarWorkingHours', () => {
 			weekday: 6,
 			enabled: false,
 			start: '08:00',
-			end: '18:00'
+			end: '18:00',
+			pause: { enabled: false, start: '12:00', end: '13:00' }
 		});
 	});
 
@@ -123,7 +124,8 @@ describe('calendarWorkingHours', () => {
 			weekday: 2,
 			enabled: true,
 			start: '08:00',
-			end: '17:30'
+			end: '17:30',
+			pause: { enabled: true, start: '12:00', end: '13:00' }
 		});
 	});
 
@@ -154,7 +156,7 @@ describe('calendarWorkingHours', () => {
 	});
 });
 
-describe('lunch break', () => {
+describe('a pause per weekday (Frank, prototype v15)', () => {
 	const week = (from: string, to: string, gap?: [string, string]) =>
 		[1, 2, 3, 4, 5].flatMap((weekday) =>
 			gap
@@ -164,82 +166,70 @@ describe('lunch break', () => {
 					]
 				: [{ weekday, start: from, end: to }]
 		);
+	const pauses = (hours: WorkingHours) =>
+		workingHoursToRows(hours).map((r) => r.pause);
 
-	it('is on at 12:00–13:00 before any hours are set', () => {
-		expect(breakOf([])).toEqual(DEFAULT_BREAK);
+	it('comes on at 12:00–13:00 for every day before any hours are set', () => {
+		expect(pauses([])).toEqual(Array(7).fill(DEFAULT_PAUSE));
 	});
 
-	it('reads a break that splits every working day the same way', () => {
-		expect(breakOf(week('08:00', '17:00', ['12:30', '13:15']))).toEqual({
-			enabled: true,
-			start: '12:30',
-			end: '13:15'
-		});
-		expect(breakOf(week('08:00', '17:00')).enabled).toBe(false);
-		const uneven = week('08:00', '17:00', ['12:00', '13:00']);
-		uneven[1] = { weekday: 1, start: '13:30', end: '17:00' };
-		expect(breakOf(uneven).enabled).toBe(false);
-	});
-
-	it('splits only the days that span the break', () => {
-		const rows = workingHoursToRows([
-			{ weekday: 1, start: '08:00', end: '17:00' },
-			{ weekday: 5, start: '08:00', end: '12:00' }
-		]);
-		expect(rowsToWorkingHours(rows, DEFAULT_BREAK)).toEqual([
-			{ weekday: 1, start: '08:00', end: '12:00' },
-			{ weekday: 1, start: '13:00', end: '17:00' },
-			{ weekday: 5, start: '08:00', end: '12:00' }
-		]);
-		expect(
-			rowsToWorkingHours(rows, { ...DEFAULT_BREAK, enabled: false })
-		).toHaveLength(2);
-	});
-
-	// Review 4574733784: Friday ending before lunch must not switch it off.
-	it('keeps the break when a short day ends before it', () => {
+	it('reads each day its own pause from the gap between its two windows', () => {
 		const stored: WorkingHours = [
 			{ weekday: 1, start: '08:00', end: '12:00' },
 			{ weekday: 1, start: '13:00', end: '18:00' },
+			{ weekday: 2, start: '08:00', end: '12:30' },
+			{ weekday: 2, start: '13:15', end: '17:00' },
 			{ weekday: 5, start: '08:00', end: '12:00' }
 		];
-		expect(breakOf(stored)).toEqual({
-			enabled: true,
-			start: '12:00',
-			end: '13:00'
-		});
-		// Re-saving without edits keeps Monday's lunch break.
-		expect(
-			rowsToWorkingHours(workingHoursToRows(stored), breakOf(stored))
-		).toEqual(stored);
-		// A day that starts after the break does not count against it either.
-		expect(
-			breakOf([...stored, { weekday: 3, start: '13:30', end: '17:00' }])
-				.enabled
-		).toBe(true);
-		// One window across the gap would be split on save: no common break.
-		expect(
-			breakOf([...stored, { weekday: 2, start: '08:00', end: '18:00' }])
-				.enabled
-		).toBe(false);
+		const [mon, tue, , , fri] = pauses(stored);
+		expect(mon).toEqual({ enabled: true, start: '12:00', end: '13:00' });
+		expect(tue).toEqual({ enabled: true, start: '12:30', end: '13:15' });
+		expect(fri.enabled).toBe(false);
 	});
 
-	it('cuts the break out of a day that meets it (review 4574775736)', () => {
-		const rows = workingHoursToRows([
-			{ weekday: 1, start: '08:00', end: '13:00' },
-			{ weekday: 2, start: '12:00', end: '18:00' },
-			{ weekday: 3, start: '12:00', end: '13:00' }
-		]);
-		expect(rowsToWorkingHours(rows, DEFAULT_BREAK)).toEqual([
+	it("cuts only that day's pause out of that day", () => {
+		const rows = workingHoursToRows(week('08:00', '17:00'));
+		rows[0] = {
+			...rows[0],
+			pause: { enabled: true, start: '12:00', end: '12:45' }
+		};
+		rows[3] = {
+			...rows[3],
+			pause: { enabled: true, start: '13:00', end: '14:00' }
+		};
+		expect(
+			rowsToWorkingHours(rows).filter((w) =>
+				[1, 2, 4].includes(w.weekday)
+			)
+		).toEqual([
 			{ weekday: 1, start: '08:00', end: '12:00' },
-			{ weekday: 2, start: '13:00', end: '18:00' },
-			// Entirely inside the break: kept as entered, not dropped.
-			{ weekday: 3, start: '12:00', end: '13:00' }
+			{ weekday: 1, start: '12:45', end: '17:00' },
+			{ weekday: 2, start: '08:00', end: '17:00' },
+			{ weekday: 4, start: '08:00', end: '13:00' },
+			{ weekday: 4, start: '14:00', end: '17:00' }
 		]);
+	});
+
+	it('wants a pause inside the working time that ends after it starts', () => {
+		const [row] = workingHoursToRows(week('08:00', '17:00'));
+		const at = (start: string, end: string) => ({
+			...row,
+			pause: { enabled: true, start, end }
+		});
+		expect(isPauseValid(at('12:00', '13:00'))).toBe(true);
+		expect(isPauseValid(at('13:00', '12:00'))).toBe(false);
+		expect(isPauseValid(at('07:30', '08:30'))).toBe(false);
+		expect(isPauseValid(at('16:30', '17:30'))).toBe(false);
+		expect(
+			isPauseValid({
+				...row,
+				pause: { ...DEFAULT_PAUSE, enabled: false }
+			})
+		).toBe(true);
+		expect(invalidPauses([at('13:00', '12:00'), row])).toEqual([1]);
 	});
 
 	it('keeps the stored windows of days the dialog did not change (review 4574775742)', () => {
-		// Tuesday has its own break, so the dialog shows no shared one.
 		const stored: WorkingHours = [
 			{ weekday: 1, start: '08:00', end: '12:00' },
 			{ weekday: 1, start: '13:00', end: '18:00' },
@@ -251,45 +241,52 @@ describe('lunch break', () => {
 			{ weekday: 4, start: '14:00', end: '18:00' }
 		];
 		const rows = workingHoursToRows(stored);
-		const dayBreak = breakOf(stored);
-		expect(dayBreak.enabled).toBe(false);
-		expect(dialogWorkingHours(stored, rows, dayBreak)).toEqual(stored);
+		expect(dialogWorkingHours(stored, rows)).toEqual(stored);
 		// Changing Wednesday leaves the other days as they were.
 		const edited = rows.map((r) =>
 			r.weekday === 3
-				? { ...r, enabled: true, start: '09:00', end: '17:00' }
+				? {
+						...r,
+						enabled: true,
+						start: '09:00',
+						end: '17:00',
+						pause: { ...DEFAULT_PAUSE, enabled: false }
+					}
 				: r
 		);
-		expect(dialogWorkingHours(stored, edited, dayBreak)).toEqual([
+		expect(dialogWorkingHours(stored, edited)).toEqual([
 			...stored.slice(0, 4),
 			{ weekday: 3, start: '09:00', end: '17:00' },
 			...stored.slice(4)
 		]);
 	});
 
-	it('applies a changed break to every day', () => {
+	it('changes the pause of one day only', () => {
 		const stored = week('08:00', '18:00', ['12:00', '13:00']);
-		const rows = workingHoursToRows(stored);
-		expect(
-			dialogWorkingHours(stored, rows, {
-				enabled: true,
-				start: '12:30',
-				end: '13:30'
-			}).filter((w) => w.weekday === 1)
-		).toEqual([
-			{ weekday: 1, start: '08:00', end: '12:30' },
-			{ weekday: 1, start: '13:30', end: '18:00' }
+		const rows = workingHoursToRows(stored).map((r) =>
+			r.weekday === 2
+				? {
+						...r,
+						pause: { enabled: true, start: '12:30', end: '13:30' }
+					}
+				: r
+		);
+		const saved = dialogWorkingHours(stored, rows);
+		expect(saved.filter((w) => w.weekday === 2)).toEqual([
+			{ weekday: 2, start: '08:00', end: '12:30' },
+			{ weekday: 2, start: '13:30', end: '18:00' }
+		]);
+		expect(saved.filter((w) => w.weekday === 1)).toEqual([
+			{ weekday: 1, start: '08:00', end: '12:00' },
+			{ weekday: 1, start: '13:00', end: '18:00' }
 		]);
 	});
 
-	it('round-trips a week with a break through the dialog rows', () => {
+	it('round-trips a week with pauses through the dialog rows', () => {
 		const stored = week('08:00', '18:00', ['12:00', '13:00']);
-		expect(
-			rowsToWorkingHours(workingHoursToRows(stored), breakOf(stored))
-		).toEqual(stored.sort((a, b) => a.weekday - b.weekday));
-		expect(
-			isBreakValid({ enabled: true, start: '13:00', end: '12:00' })
-		).toBe(false);
+		expect(rowsToWorkingHours(workingHoursToRows(stored))).toEqual(
+			stored.sort((a, b) => a.weekday - b.weekday)
+		);
 	});
 });
 
@@ -332,8 +329,9 @@ describe('calendarWorkingHours — working plan', () => {
 			windows: [{ weekday: 1, start: '08:00', end: '18:00' }],
 			holidayRegion: 'SN'
 		});
-		expect(workingPlanFromApi({ windows: [], holidayRegion: 'XX' as never }))
-			.toEqual({ hours: [], exceptions: {}, holidayRegion: null });
+		expect(
+			workingPlanFromApi({ windows: [], holidayRegion: 'XX' as never })
+		).toEqual({ hours: [], exceptions: {}, holidayRegion: null });
 		expect(workingPlanToApi({ hours: [] })).toEqual({
 			windows: [],
 			holidayRegion: null
@@ -347,9 +345,9 @@ describe('calendarWorkingHours — working plan', () => {
 			end: `${h}:30`
 		}));
 		expect(normalizeWindows(five)).toHaveLength(4);
-		expect(exceptionWindowsToApi([{ start: '18:00', end: '08:00' }])).toEqual(
-			[]
-		);
+		expect(
+			exceptionWindowsToApi([{ start: '18:00', end: '08:00' }])
+		).toEqual([]);
 	});
 
 	it('takes the exception first, then the holiday, then the week', () => {
