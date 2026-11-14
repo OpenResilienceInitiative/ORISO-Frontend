@@ -1,9 +1,10 @@
 // Counsellor calendar (ADR-032, FE#1050), round 2 after Frank's prototype
 // (2026-11-14). ORISO M3 tokens for surfaces, text and the primary action.
-// One colour per kind (video, phone, on-site, chat, group, blocked time):
-// the icon is tinted with it, colleague entries and proposals carry it as a
-// 4px stripe on the left. M3 has no role for these, so they are calendar
-// custom properties.
+// Kinds (video, phone, on-site, chat, group, blocked time) are told apart by
+// their icon only: every kind has the same neutral grey (Frank, prototype
+// v15). The icon is tinted with it, colleague entries and proposals carry
+// it as a 4px stripe on the left. The per-kind properties stay, so a kind
+// could get its own colour again in one place.
 
 // --- Kind colours, for the grid, the menus and the peek cards ---
 .calendarPage,
@@ -14,12 +15,13 @@
 .calendarPeekTooltip,
 .calendarMenu__kind,
 .chatMenuDropdown {
-	--cal-kind-video: #2f5c9e;
-	--cal-kind-phone: #2c7a55;
-	--cal-kind-onsite: #9a5b00;
-	--cal-kind-chat: #6a4c9c;
-	--cal-kind-group: #00707a;
-	--cal-kind-blocker: var(--m3-secondary, #5f6365);
+	--cal-kind-neutral: var(--m3-on-surface-variant, #444748);
+	--cal-kind-video: var(--cal-kind-neutral);
+	--cal-kind-phone: var(--cal-kind-neutral);
+	--cal-kind-onsite: var(--cal-kind-neutral);
+	--cal-kind-chat: var(--cal-kind-neutral);
+	--cal-kind-group: var(--cal-kind-neutral);
+	--cal-kind-blocker: var(--cal-kind-neutral);
 }
 
 // Defaults before the kind modifiers: both have the same specificity, so

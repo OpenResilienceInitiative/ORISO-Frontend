@@ -56,3 +56,33 @@ describe('calendar kind colours (review 4574775682)', () => {
 		defaults.forEach((at) => expect(at).toBeLessThan(kind));
 	});
 });
+
+describe('calendar kind colours are neutral (Frank, prototype v15)', () => {
+	/** The value a custom property gets in the rule that defines the kinds. */
+	const kindValues = () => {
+		const block = Array.from(css.matchAll(/([^{}]+)\{([^{}]*)\}/g)).find(
+			([, , body]) => /--cal-kind-video\s*:/.test(body)
+		);
+		expect(block).toBeDefined();
+		const body = block![2];
+		const value = (name: string): string => {
+			const raw = new RegExp(`--cal-kind-${name}\\s*:\\s*([^;]+);`)
+				.exec(body)?.[1]
+				.trim();
+			expect(raw).toBeDefined();
+			// Follow var(--cal-kind-…) to the value it names.
+			const ref = /^var\(--cal-kind-([a-z]+)\)$/.exec(raw!);
+			return ref ? value(ref[1]) : raw!;
+		};
+		return ['video', 'phone', 'onsite', 'chat', 'group', 'blocker'].map(
+			value
+		);
+	};
+
+	it('gives every kind the same grey, so only the icon tells them apart', () => {
+		const values = kindValues();
+		expect(new Set(values).size).toBe(1);
+		expect(values[0]).toContain('#444748');
+	});
+});
+
