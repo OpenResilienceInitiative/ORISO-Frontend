@@ -2084,7 +2084,9 @@ export const MessageSubmitInterfaceComponent = ({
 				mentionedUserIds: string[];
 				targetRoomId?: string | null;
 				feedbackMailIntent?: boolean;
-			}
+			},
+			/** Leave the composer as it is after the send (it moved on). */
+			keepComposer = false
 		) => {
 			// A file refused on the card has to be dealt with first: sending the
 			// text alone next to it would read as if the file had gone too.
@@ -2108,6 +2110,7 @@ export const MessageSubmitInterfaceComponent = ({
 				!retryOfId && attachment && recordedVoice?.file === attachment
 			);
 			const preserveComposerOnSuccess =
+				keepComposer ||
 				(isRecordedVoiceSend &&
 					hasMessageContent(currentTypedMessage)) ||
 				Boolean(
@@ -2403,12 +2406,26 @@ export const MessageSubmitInterfaceComponent = ({
 		};
 
 		if (isSessionArchived) {
+			// What goes out is what was typed here when send was pressed: the
+			// person may type on, or open another chat, while this one
+			// re-opens, and that text must neither become this file's caption
+			// nor be cleared by it.
+			const typedAtPress = getTypedMarkdownMessage();
+			const sentFromSessionId = activeSession.item.id;
 			// Hold further presses while the chat re-opens; the send itself
 			// then takes over with isRequestInProgress (prepareAndSendMessage).
 			holdWhileDearchiving(apiPutDearchive(activeSession.item.id))
 				.then(() => {
 					sendQuotesAlone();
-					return prepareAndSendMessage();
+					const movedOn =
+						shownSessionIdRef.current !== sentFromSessionId ||
+						getTypedMarkdownMessage() !== typedAtPress;
+					return prepareAndSendMessage(
+						typedAtPress,
+						undefined,
+						undefined,
+						movedOn
+					);
 				})
 				.then(() => {
 					reloadActiveSession();
@@ -2417,6 +2434,13 @@ export const MessageSubmitInterfaceComponent = ({
 					) {
 						// Short timeout to wait for RC events finished
 						setTimeout(() => {
+							// Someone who opened another chat meanwhile
+							// stays there.
+							if (
+								shownSessionIdRef.current !== sentFromSessionId
+							) {
+								return;
+							}
 							if (window.innerWidth >= 900) {
 								navigate(
 									`${listPath}/${activeSession.item.matrixRoomId}/${activeSession.item.id}`

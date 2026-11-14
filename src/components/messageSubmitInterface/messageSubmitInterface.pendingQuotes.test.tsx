@@ -457,6 +457,33 @@ describe('sending queued passage quotes (PR #2232 review)', () => {
 		expect(draftText()).toBe(DRAFT);
 	});
 
+	it('sends a file with the caption typed in its own chat when another chat opens while it re-opens', async () => {
+		const finish = pendingDearchive();
+		const view = render(<Composer activeSession={archived} />);
+		const file = makeFile();
+		await pickFile(view.container, file);
+		act(() => mocks.typeDraft(DRAFT));
+		await clickSend();
+		const nextChat = {
+			...session,
+			item: {
+				...session.item,
+				id: 361,
+				matrixRoomId: '!next:example.org'
+			}
+		};
+		view.rerender(<Composer activeSession={nextChat} />);
+		act(() => mocks.typeDraft('Text for the other chat'));
+		await finish();
+		await act(async () => {});
+		expect(sendMock()).toHaveBeenCalledTimes(1);
+		expect(sendMock().mock.calls[0][0]).toBe('!case:example.org');
+		expect(sendMock().mock.calls[0][1]).toBe(file);
+		expect(sendMock().mock.calls[0][2]).toMatchObject({ caption: DRAFT });
+		expect(mocks.composerClear).not.toHaveBeenCalled();
+		expect(draftText()).toBe('Text for the other chat');
+	});
+
 	it('keeps saving the draft while the chat re-opens', async () => {
 		const finish = pendingDearchive();
 		render(
