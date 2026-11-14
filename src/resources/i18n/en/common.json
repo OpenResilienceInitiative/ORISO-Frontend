@@ -6813,6 +6813,7 @@
 		}
 	},
 	"calendar": {
+		"conversationsFailedAsker": "Your conversations could not be loaded, so an appointment cannot take you to its chat.",
 		"create": "New appointment",
 		"today": "Today",
 		"previous": "Previous",
