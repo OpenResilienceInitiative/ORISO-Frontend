@@ -342,12 +342,6 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		&:first-child {
 			justify-content: space-between;
 			padding: 16px 16px 0;
-
-			// Reserve the 32px menu-button height (+16px top padding) so the
-			// tag row keeps its spacing to the avatar/title row even when no
-			// menu button renders (e.g. a Kreis the user may neither leave
-			// nor edit).
-			min-height: 48px;
 			color: var(--m3-on-surface-variant, $tertiary);
 			font-size: 12px;
 			line-height: 16px;
