@@ -14,6 +14,7 @@ import * as React from 'react';
 import { useId, useState } from 'react';
 import dayjs, { type Dayjs } from 'dayjs';
 import { useTranslation } from 'react-i18next';
+import { ToggleButton, ToggleButtonGroup } from '@mui/material';
 import { OrisoDatePicker } from '../form/OrisoDatePicker';
 import { OrisoTimePicker } from '../form/OrisoTimePicker';
 import { M3Dialog } from '../m3Dialog/M3Dialog';
@@ -269,28 +270,31 @@ export const InvitationDialog = ({
 							>
 								{t(`${KEYS}.access.label`)}
 							</span>
-							{/* Toggle buttons with the look of the medium choice in "Chat erstellen". */}
-							<div
-								role="group"
+							<ToggleButtonGroup
+								exclusive
+								fullWidth
+								size="small"
+								color="primary"
 								aria-labelledby={`${id}-access`}
-								className="directLinkCard__media"
+								value={access}
+								onChange={(
+									_event,
+									value: InvitationAccess | null
+								) => {
+									/* Exclusive and required: a second click keeps it. */
+									if (value) setAccess(value);
+								}}
 							>
 								{INVITATION_ACCESS.map((value) => (
-									<button
+									<ToggleButton
 										key={value}
-										type="button"
-										aria-pressed={access === value}
-										className={`directLinkCard__medium${
-											access === value
-												? ' directLinkCard__medium--selected'
-												: ''
-										}`}
-										onClick={() => setAccess(value)}
+										value={value}
+										sx={{ textTransform: 'none' }}
 									>
 										{t(`${KEYS}.access.${value}`)}
-									</button>
+									</ToggleButton>
 								))}
-							</div>
+							</ToggleButtonGroup>
 						</div>
 						{switchRow(
 							'knock',

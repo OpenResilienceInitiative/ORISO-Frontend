@@ -6,7 +6,7 @@
 import * as React from 'react';
 import { useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { IconButton, Menu, MenuItem } from '@mui/material';
+import { Button, IconButton, Menu, MenuItem } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -62,19 +62,20 @@ export const ValidityStepper = ({
 				>
 					<RemoveIcon aria-hidden />
 				</IconButton>
-				<button
+				<Button
 					ref={fieldRef}
-					type="button"
+					variant="outlined"
+					color="inherit"
 					className="validityStepper__field"
 					aria-haspopup="listbox"
 					aria-expanded={open}
 					aria-labelledby={`${id}-label ${id}-value`}
 					disabled={disabled}
 					onClick={() => setOpen(true)}
+					endIcon={<ExpandMoreIcon aria-hidden fontSize="small" />}
 				>
 					<span id={`${id}-value`}>{label(value)}</span>
-					<ExpandMoreIcon aria-hidden fontSize="small" />
-				</button>
+				</Button>
 				<IconButton
 					className="validityStepper__step"
 					aria-label={t(`${KEYS}.more`)}
