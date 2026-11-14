@@ -177,8 +177,7 @@ describe('CalendarPage — deleting or moving the pause (Frank, prototype v16)',
 		const onDeleteDayException = vi.fn(() => Promise.resolve());
 		page({ onSaveDayException, onDeleteDayException });
 		fireEvent.keyDown(await grip('pauseStart'), { key: 'Delete' });
-		const menu = await findCy('calendar-menu-pause');
-		expect(menu.textContent).toContain(
+		expect((await findCy('calendar-menu-pause')).textContent).toContain(
 			'calendar.grip.pauseTitle {"start":"12:00","end":"13:00"}'
 		);
 		await act(async () => {
@@ -201,8 +200,7 @@ describe('CalendarPage — deleting or moving the pause (Frank, prototype v16)',
 		page({ onSaveWorkingHours });
 		// Pulled onto the pause end at 13:00: the pause would start there.
 		fireEvent.keyDown(await grip('pauseStart'), { key: 'Backspace' });
-		const move = await findCy('calendar-pause-move');
-		expect(move.textContent).toContain(
+		expect((await findCy('calendar-pause-move')).textContent).toContain(
 			'calendar.grip.pauseMove {"start":"13:00","end":"14:00"}'
 		);
 		fireEvent.click(await findCy('calendar-pause-scope-week'));
