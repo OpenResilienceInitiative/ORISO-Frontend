@@ -1,5 +1,5 @@
 import * as React from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { ICON_CALL_OFF, ICON_INFO, SystemMessage } from './SystemMessage';
 import {

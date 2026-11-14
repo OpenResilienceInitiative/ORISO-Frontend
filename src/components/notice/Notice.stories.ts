@@ -1,4 +1,4 @@
-import { Meta, StoryObj } from '@storybook/react';
+import { Meta, StoryObj } from '@storybook/react-vite';
 import { Notice } from './Notice';
 import {
 	NOTICE_TYPE_INFO,
@@ -14,7 +14,8 @@ const meta = {
 	parameters: {
 		docs: {
 			description: {
-				component: 'Notice component for displaying informational messages with different types.'
+				component:
+					'Notice component for displaying informational messages with different types.'
 			}
 		}
 	}

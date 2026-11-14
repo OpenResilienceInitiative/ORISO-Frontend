@@ -1,4 +1,4 @@
-import { Meta, StoryObj } from '@storybook/react';
+import { Meta, StoryObj } from '@storybook/react-vite';
 import { EmailFragment, emailFragmentArgTypes } from '../preview/EmailFragment';
 import { emailCallToAction } from '../kit/emailMolecules';
 import { emailSampleBrand } from '../kit/emailTokens';

@@ -259,13 +259,13 @@ describe('durable verification inventory', () => {
 				arch: process.arch
 			},
 			toolchain: {
-				vitePlus: '1.3.0',
-				vitest: '5.0.5',
-				storybook: '10.6.3',
+				vitePlus: '1.6.0',
+				vitest: '5.1.0',
+				storybook: '10.6.7',
 				vite: {
 					package: '@voidzero-dev/vite-plus-core',
-					packageVersion: '1.3.0',
-					runtimeVersion: '8.3.4'
+					packageVersion: '1.6.0',
+					runtimeVersion: '8.3.7'
 				}
 			},
 			invocation: { command: expect.any(Array), projects: ['storybook'] }
