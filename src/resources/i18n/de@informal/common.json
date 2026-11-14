@@ -2977,6 +2977,9 @@
 		},
 		"workingHours": {
 			"description": "Außerhalb dieser Zeiten ist dein Kalender schattiert. Termine bleiben trotzdem möglich."
+		},
+		"holidays": {
+			"chooseHint": "Bitte wähle ein Bundesland."
 		}
 	}
 }
