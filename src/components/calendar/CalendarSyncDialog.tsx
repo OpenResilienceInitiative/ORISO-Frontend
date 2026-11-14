@@ -16,10 +16,13 @@ export interface CalendarFeed {
 	lastFetchedAt?: string;
 }
 
+/**
+ * The busy-time import. The private address never comes back from
+ * UserService, only its host, so the field starts empty and replaces it.
+ */
 export interface CalendarImport {
-	url?: string;
+	host?: string;
 	lastSyncedAt?: string;
-	busyCount?: number;
 	failed?: boolean;
 }
 
@@ -50,7 +53,7 @@ export const CalendarSyncDialog = ({
 	const format = useRangeFormat();
 	const [copied, setCopied] = useState(false);
 	const [confirmReset, setConfirmReset] = useState(false);
-	const [importUrl, setImportUrl] = useState(busyImport.url ?? '');
+	const [importUrl, setImportUrl] = useState('');
 
 	if (confirmReset)
 		return (
@@ -176,11 +179,17 @@ export const CalendarSyncDialog = ({
 					helperText={
 						busyImport.failed
 							? t('calendar.syncDialog.importError')
-							: busyImport.url && busyImport.lastSyncedAt
-								? t('calendar.syncDialog.importStatus', {
-										count: busyImport.busyCount ?? 0,
-										date: format(busyImport.lastSyncedAt)
-									})
+							: busyImport.host !== undefined
+								? busyImport.lastSyncedAt
+									? t('calendar.syncDialog.importStatus', {
+											host: busyImport.host,
+											date: format(
+												busyImport.lastSyncedAt
+											)
+										})
+									: t('calendar.syncDialog.importConnected', {
+											host: busyImport.host
+										})
 								: undefined
 					}
 					fullWidth
@@ -198,9 +207,12 @@ export const CalendarSyncDialog = ({
 								importUrl.trim()
 							),
 							testingAttribute: 'calendar-import-save',
-							onClick: () => onSaveImport(importUrl.trim())
+							onClick: () => {
+								onSaveImport(importUrl.trim());
+								setImportUrl('');
+							}
 						},
-						...(busyImport.url
+						...(busyImport.host !== undefined
 							? [
 									{
 										id: 'remove',

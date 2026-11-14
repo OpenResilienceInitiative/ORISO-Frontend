@@ -126,7 +126,11 @@ export const BlockerDialog = ({
 								start: r.start,
 								end: r.end,
 								allDay,
-								note: note || undefined
+								note: note || undefined,
+								repeat:
+									weekdays.length && until
+										? { weekdays, until: until.toDate() }
+										: undefined
 							}))
 						)
 				}

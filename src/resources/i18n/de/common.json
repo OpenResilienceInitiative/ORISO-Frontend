@@ -6991,8 +6991,9 @@
 			"importField": "ICS-Adresse",
 			"importSave": "Übernehmen",
 			"importRemove": "Entfernen",
-			"importStatus": "{{count}} belegte Zeiten, zuletzt abgeglichen {{date}}",
-			"importError": "Die Adresse konnte nicht gelesen werden. Bitte prüfen Sie den Link."
+			"importStatus": "Verbunden mit {{host}}, zuletzt abgeglichen {{date}}",
+			"importError": "Die Adresse konnte nicht gelesen werden. Bitte prüfen Sie den Link.",
+			"importConnected": "Verbunden mit {{host}}. Der erste Abgleich läuft."
 		},
 		"filterLabel": "Anzeigen",
 		"facets": {
@@ -7020,6 +7021,8 @@
 			"conflicts_other": "Überschneidet sich mit {{count}} Terminen.",
 			"created_one": "Sperrzeit eingetragen: {{date}}",
 			"created_other": "{{count}} Sperrzeiten eingetragen"
-		}
+		},
+		"saveFailed": "Das hat nicht geklappt. Bitte versuchen Sie es noch einmal.",
+		"blockerRemoved": "Sperrzeit entfernt."
 	}
 }

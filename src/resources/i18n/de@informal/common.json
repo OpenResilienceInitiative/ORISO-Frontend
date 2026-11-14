@@ -2957,6 +2957,7 @@
 			"preview": "So erscheint ein Termin in deinem Kalender",
 			"importText": "Füge die private ICS-Adresse deines Outlook- oder Google-Kalenders ein. ORISO übernimmt nur, wann du belegt bist – keine Titel und keine Teilnehmenden.",
 			"importError": "Die Adresse konnte nicht gelesen werden. Bitte prüfe den Link."
-		}
+		},
+		"saveFailed": "Das hat nicht geklappt. Bitte versuch es noch einmal."
 	}
 }

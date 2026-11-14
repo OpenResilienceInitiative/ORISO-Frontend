@@ -192,6 +192,22 @@
 
 // --- Page: the "Meine Termine" section ---
 
+/* The route's slot in the app (Routing.tsx): the page fills the content
+   column like a session stage card, with the same outer gap. */
+.contentWrapper__calendar {
+	flex: 1;
+	min-width: 0;
+	min-height: 0;
+	height: 100%;
+	box-sizing: border-box;
+	padding: 12px 12px 12px 0;
+	overflow: auto;
+
+	@media (max-width: 899px) {
+		padding: 0;
+	}
+}
+
 .calendarPage {
 	display: flex;
 	flex-direction: column;

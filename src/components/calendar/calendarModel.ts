@@ -47,6 +47,11 @@ export interface CalendarEntry {
 	sessionId?: number;
 	/** On-site appointments: address of the counselling centre. */
 	address?: string;
+	/**
+	 * UserService's verdict on whether this entry may be dragged. Absent in
+	 * sample data, where the role and the owner decide.
+	 */
+	movable?: boolean;
 }
 
 /** The location values UserService already stores (ADR-032 §2a). */
@@ -218,6 +223,7 @@ export const isMovable = (
 	ownerId: string,
 	role: CalendarRole
 ) =>
+	entry.movable !== false &&
 	role === 'consultant' &&
 	entry.ownerId === ownerId &&
 	(entry.type === 'appointment' || entry.type === 'blocker');

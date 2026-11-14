@@ -3,9 +3,10 @@
  * as the counsellor calendar of ADR-032 and FE#1050. It replaces the old
  * cal.com booking list once Frank has accepted it in Storybook.
  *
- * Purely presentational: entries, colleagues, feed and import come in as
- * props, every change goes out as a callback. The container that talks to
- * UserService is written after the acceptance (spec FE#2249).
+ * Presentational: entries, colleagues, feed and import come in as props,
+ * every change goes out as a callback. A callback may return a promise; a
+ * rejected one shows the failure notice instead of the success notice.
+ * `CalendarPageWired` connects it to UserService.
  */
 import * as React from 'react';
 import { useMemo, useState } from 'react';
@@ -67,11 +68,19 @@ export interface CalendarPageProps {
 	compact?: boolean;
 	initialView?: CalendarViewName;
 	now?: Date;
-	onCreate?: (drafts: AppointmentDraft[]) => void;
-	/** Returns the previous times so the snackbar can undo. */
-	onMove?: (entry: CalendarEntry, start: Date, end: Date) => void;
-	onCancelAppointment?: (entry: CalendarEntry) => void;
-	onRemoveBlocker?: (entry: CalendarEntry) => void;
+	onCreate?: (drafts: AppointmentDraft[]) => void | Promise<unknown>;
+	/** The snackbar offers to undo by moving it back. */
+	onMove?: (
+		entry: CalendarEntry,
+		start: Date,
+		end: Date
+	) => void | Promise<unknown>;
+	onCancelAppointment?: (entry: CalendarEntry) => void | Promise<unknown>;
+	onRemoveBlocker?: (entry: CalendarEntry) => void | Promise<unknown>;
+	/** The visible range changed: load entries for it. */
+	onRangeChange?: (start: Date, end: Date) => void;
+	/** Colleagues whose calendars are switched on. */
+	onShownColleaguesChange?: (ids: string[]) => void;
 	onStart?: (entry: CalendarEntry) => void;
 	onCopyFeed?: (url: string) => void;
 	onResetFeed?: () => void;
@@ -117,7 +126,9 @@ export const CalendarPage = ({
 	onResetFeed,
 	onSaveImport,
 	onRemoveImport,
-	onRetry
+	onRetry,
+	onRangeChange,
+	onShownColleaguesChange
 }: CalendarPageProps) => {
 	const { t } = useTranslation();
 	const label = useEntryLabel();
@@ -157,6 +168,19 @@ export const CalendarPage = ({
 	const toggle = <T,>(list: T[], item: T) =>
 		list.includes(item) ? list.filter((x) => x !== item) : [...list, item];
 
+	/** Success notice once the change is stored, the failure notice if not. */
+	const run = (
+		result: void | Promise<unknown> | undefined,
+		success: Notice
+	) => {
+		if (result && typeof (result as Promise<unknown>).then === 'function')
+			(result as Promise<unknown>).then(
+				() => setNotice(success),
+				() => setNotice({ message: t('calendar.saveFailed') })
+			);
+		else setNotice(success);
+	};
+
 	const choose = (choice: SlotChoice) => {
 		if (!slot) return;
 		const range = slot.range;
@@ -169,10 +193,10 @@ export const CalendarPage = ({
 	};
 
 	const create = (drafts: AppointmentDraft[]) => {
-		onCreate?.(drafts);
+		const result = onCreate?.(drafts);
 		setDialog(null);
 		const first = drafts[0];
-		setNotice({
+		run(result, {
 			message:
 				first.type === 'blocker'
 					? t('calendar.blocker.created', {
@@ -186,8 +210,7 @@ export const CalendarPage = ({
 	};
 
 	const move = (entry: CalendarEntry, start: Date, end: Date) => {
-		onMove?.(entry, start, end);
-		setNotice({
+		run(onMove?.(entry, start, end), {
 			message: t(
 				entry.type === 'blocker'
 					? 'calendar.blockerMoved'
@@ -308,11 +331,14 @@ export const CalendarPage = ({
 									<input
 										type="checkbox"
 										checked={shownColleagues.includes(c.id)}
-										onChange={() =>
-											setShownColleagues((all) =>
-												toggle(all, c.id)
-											)
-										}
+										onChange={() => {
+											const next = toggle(
+												shownColleagues,
+												c.id
+											);
+											setShownColleagues(next);
+											onShownColleaguesChange?.(next);
+										}}
 										data-cy={`calendar-colleague-${c.id}`}
 									/>
 									<span>
@@ -372,6 +398,7 @@ export const CalendarPage = ({
 				onSelectRange={(range, anchor) => setSlot({ range, anchor })}
 				onEntryClick={(entry) => setDialog({ type: 'details', entry })}
 				onEntryMove={move}
+				onRangeChange={onRangeChange}
 				toolbarEnd={
 					<>
 						{filters}
@@ -445,12 +472,15 @@ export const CalendarPage = ({
 					}}
 					onCancelAppointment={(entry) => {
 						setDialog(null);
-						onCancelAppointment?.(entry);
-						setNotice({ message: t('calendar.cancelled') });
+						run(onCancelAppointment?.(entry), {
+							message: t('calendar.cancelled')
+						});
 					}}
 					onRemoveBlocker={(entry) => {
 						setDialog(null);
-						onRemoveBlocker?.(entry);
+						run(onRemoveBlocker?.(entry), {
+							message: t('calendar.blockerRemoved')
+						});
 					}}
 					onClose={() => setDialog(null)}
 				/>
