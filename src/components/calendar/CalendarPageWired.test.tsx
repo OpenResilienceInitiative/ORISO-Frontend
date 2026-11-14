@@ -46,6 +46,8 @@ vi.mock('../../api/apiCalendar', () => ({
 	apiGetCalendarColleagues: vi.fn(),
 	apiGetColleagueCalendarEntries: vi.fn(),
 	apiGetCalendarSync: vi.fn(),
+	apiGetCalendarWorkingHours: vi.fn(),
+	apiSetCalendarWorkingHours: vi.fn(),
 	apiCreateCalendarBlocker: vi.fn(),
 	apiMoveCalendarBlocker: vi.fn(),
 	apiDeleteCalendarBlocker: vi.fn(),
@@ -115,6 +117,12 @@ beforeEach(() => {
 	api.apiGetCalendarSync.mockResolvedValue({
 		feedUrl: 'https://app.test/service/users/calendar/feed/f/s.ics',
 		importConfigured: false
+	});
+	api.apiGetCalendarWorkingHours.mockResolvedValue({
+		windows: [
+			{ weekday: 2, start: '08:00', end: '16:00' },
+			{ weekday: 1, start: '08:00', end: '18:00' }
+		]
 	});
 });
 
@@ -200,6 +208,73 @@ describe('CalendarPageWired', () => {
 				matrixRoomId: '!room:oriso'
 			})
 		);
+	});
+
+	it('loads the working hours sorted and saves them through UserService', async () => {
+		render(<CalendarPageWired />);
+		await waitFor(() =>
+			expect(props.workingHours).toEqual([
+				{ weekday: 1, start: '08:00', end: '18:00' },
+				{ weekday: 2, start: '08:00', end: '16:00' }
+			])
+		);
+		api.apiSetCalendarWorkingHours.mockResolvedValue({
+			windows: [{ weekday: 5, start: '09:00', end: '13:00' }]
+		});
+		await act(() =>
+			props.onSaveWorkingHours?.([
+				{ weekday: 5, start: '09:00', end: '13:00' },
+				{ weekday: 6, start: '18:00', end: '09:00' }
+			])
+		);
+		// A window that ends before it starts never reaches the backend.
+		expect(api.apiSetCalendarWorkingHours).toHaveBeenCalledWith({
+			windows: [{ weekday: 5, start: '09:00', end: '13:00' }]
+		});
+		await waitFor(() =>
+			expect(props.workingHours).toEqual([
+				{ weekday: 5, start: '09:00', end: '13:00' }
+			])
+		);
+	});
+
+	it('shades nothing when the working hours cannot load and rejects a failed save', async () => {
+		api.apiGetCalendarWorkingHours.mockRejectedValue(new Error('404'));
+		api.apiSetCalendarWorkingHours.mockRejectedValue(new Error('500'));
+		render(<CalendarPageWired />);
+		await showWeek();
+		await waitFor(() => expect(props.state).toBe('ready'));
+		expect(props.workingHours).toBeUndefined();
+		await expect(
+			props.onSaveWorkingHours?.([
+				{ weekday: 1, start: '08:00', end: '18:00' }
+			])
+		).rejects.toThrow('500');
+	});
+
+	it('returns the created blocked times so the page can undo them', async () => {
+		api.apiCreateCalendarBlocker.mockResolvedValue([
+			{
+				...OWN,
+				id: 'b9',
+				type: 'BLOCKER',
+				kind: null,
+				sessionId: null,
+				title: null
+			} as never
+		]);
+		render(<CalendarPageWired />);
+		await showWeek();
+		const created = await props.onCreate?.([
+			{
+				type: 'blocker',
+				start: new Date(2026, 10, 18, 12),
+				end: new Date(2026, 10, 18, 13)
+			}
+		]);
+		expect(created).toEqual([
+			expect.objectContaining({ id: 'b9', type: 'blocker' })
+		]);
 	});
 
 	it('creates a blocked-time series with one request', async () => {
@@ -307,6 +382,12 @@ describe('CalendarPageWired', () => {
 		expect(props.feed).toBeUndefined();
 		expect(api.apiGetCalendarColleagues).not.toHaveBeenCalled();
 		expect(api.apiGetCalendarSync).not.toHaveBeenCalled();
+		expect(api.apiGetCalendarWorkingHours).not.toHaveBeenCalled();
+		expect(props.workingHours).toBeUndefined();
+		expect(props.onSaveWorkingHours).toBeUndefined();
+		// Proposals have no backend yet: never wired.
+		expect(props.onProposeMove).toBeUndefined();
+		expect(props.proposals).toBeUndefined();
 	});
 
 	it('sends a webcal import address as https and keeps only the host', async () => {

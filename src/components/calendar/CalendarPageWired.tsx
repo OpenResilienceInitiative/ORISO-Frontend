@@ -7,8 +7,11 @@
  * - 1:1 appointments go through the conversation's appointment API and leave
  *   the same notice in the conversation as the timeline does, so the advice
  *   seeker learns about it.
- * - Blocked times, the subscription link and the busy-time import use the
- *   calendar API.
+ * - Blocked times, the subscription link, the busy-time import and the
+ *   counsellor's working hours (shaded outside, offered as free hours) use
+ *   the calendar API.
+ * - Proposals to move a colleague's appointment have no backend yet, so the
+ *   page gets no proposal props here (Storybook shows them).
  */
 import * as React from 'react';
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
@@ -25,11 +28,13 @@ import {
 	apiGetCalendarColleagues,
 	apiGetCalendarEntries,
 	apiGetCalendarSync,
+	apiGetCalendarWorkingHours,
 	apiGetColleagueCalendarEntries,
 	apiMoveCalendarBlocker,
 	apiRemoveCalendarImport,
 	apiResetCalendarFeed,
 	apiSaveCalendarImport,
+	apiSetCalendarWorkingHours,
 	type CalendarSyncDTO
 } from '../../api/apiCalendar';
 import {
@@ -65,6 +70,11 @@ import {
 	type CalendarVisibility,
 	type Colleague
 } from './calendarModel';
+import {
+	workingHoursFromApi,
+	workingHoursToApi,
+	type WorkingHours
+} from './calendarWorkingHours';
 
 /** How many own conversations the create dialog offers. */
 const CONVERSATION_LOOKUP_COUNT = 100;
@@ -107,6 +117,7 @@ export const CalendarPageWired = () => {
 		useState<CalendarVisibility>(DEFAULT_VISIBILITY);
 	const [conversations, setConversations] = useState<ConversationRef[]>([]);
 	const [sync, setSync] = useState<CalendarSyncDTO>();
+	const [workingHours, setWorkingHours] = useState<WorkingHours>();
 
 	const range = useRef<{ from: Date; to: Date } | undefined>(undefined);
 	const shown = useRef<string[]>([]);
@@ -181,6 +192,12 @@ export const CalendarPageWired = () => {
 				(dto) => !cancelled && setSync(dto),
 				() => undefined
 			);
+			// Without an answer the calendar shades nothing, as with none set.
+			apiGetCalendarWorkingHours().then(
+				(dto) =>
+					!cancelled && setWorkingHours(workingHoursFromApi(dto)),
+				() => undefined
+			);
 			apiGetConsultantSessionList({
 				type: SESSION_LIST_TYPES.MY_SESSION,
 				count: CONVERSATION_LOOKUP_COUNT
@@ -227,9 +244,12 @@ export const CalendarPageWired = () => {
 	const create = async (drafts: AppointmentDraft[]) => {
 		const first = drafts[0];
 		if (first.type === 'blocker') {
-			await apiCreateCalendarBlocker(blockerToApi(drafts));
+			const created = await apiCreateCalendarBlocker(
+				blockerToApi(drafts)
+			);
 			afterChange();
-			return;
+			// The page offers "undo" on exactly these.
+			return (created ?? []).map(entryFromApi);
 		}
 		if (first.sessionId === undefined) throw new Error('conversation');
 		await apiCreateSessionAppointment(first.sessionId, {
@@ -298,6 +318,13 @@ export const CalendarPageWired = () => {
 		);
 	};
 
+	const saveWorkingHours = async (hours: WorkingHours) => {
+		const saved = await apiSetCalendarWorkingHours(
+			workingHoursToApi(hours)
+		);
+		setWorkingHours(workingHoursFromApi(saved));
+	};
+
 	const showColleagues = (ids: string[]) => {
 		const added = ids.filter((id) => !shown.current.includes(id));
 		shown.current = ids;
@@ -319,6 +346,7 @@ export const CalendarPageWired = () => {
 			feed={sync ? feedFromApi(sync) : undefined}
 			busyImport={sync ? importFromApi(sync) : {}}
 			compact={untilM}
+			workingHours={consultant ? workingHours : undefined}
 			onRangeChange={changeRange}
 			onShownColleaguesChange={showColleagues}
 			onRetry={() => {
@@ -329,6 +357,7 @@ export const CalendarPageWired = () => {
 			onMove={consultant ? move : undefined}
 			onCancelAppointment={consultant ? cancel : undefined}
 			onRemoveBlocker={consultant ? removeBlocker : undefined}
+			onSaveWorkingHours={consultant ? saveWorkingHours : undefined}
 			onStart={start}
 			onCopyFeed={(url) => navigator.clipboard?.writeText(url)}
 			onResetFeed={() =>
