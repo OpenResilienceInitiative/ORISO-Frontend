@@ -44,14 +44,16 @@ import {
 } from './CalendarWorkGrip';
 import type { PublicHoliday } from './calendarHolidays';
 import { CalendarEntryPeek, initialsOf } from './CalendarEntryPeek';
-import type { CalendarHighlight, MenuAnchor } from './CalendarView';
+import {
+	gridMinutes,
+	type CalendarHighlight,
+	type MenuAnchor
+} from './CalendarView';
 import { useEntryLabel } from './useEntryLabel';
 import { calendarLocale } from './calendarLocale';
 
-/** Shown hours, the same as the time grid's. */
-const FIRST_HOUR = 7;
-const LAST_HOUR = 21;
-const HOUR_PX = 48;
+/** Height of an hour, unless the page zooms. */
+export const SPLIT_HOUR_PX = 48;
 const AXIS_PX = 52;
 /** Frank: a column never gets narrower than this. */
 export const SPLIT_COLUMN_MIN_PX = 210;
@@ -96,9 +98,6 @@ const atClock = (day: Date, minutes: number) => {
 	date.setHours(0, minutes, 0, 0);
 	return date;
 };
-const toPx = (minutes: number) => ((minutes - FIRST_HOUR * 60) / 60) * HOUR_PX;
-const clampMinutes = (m: number) =>
-	Math.min(LAST_HOUR * 60, Math.max(FIRST_HOUR * 60, m));
 
 /**
  * Where a step of the side arrows can land. One day: each colleague
@@ -186,6 +185,8 @@ export interface CalendarSplitViewProps {
 		mode: 'list' | 'move'
 	) => void;
 	onProposalOpen?: (proposal: MoveProposal, anchor: MenuAnchor) => void;
+	/** Height of an hour in px (the page's zoom). */
+	hourPx?: number;
 }
 
 /** One day of the grid, with what it shows. */
@@ -200,19 +201,21 @@ interface SplitDay {
 }
 
 /** One's own body column, for dragging a grip. */
-const measureBody = (grip: HTMLElement): GripGeometry | null => {
-	const body = grip.closest<HTMLElement>('.calendarSplit__body');
-	if (!body) return null;
-	const rect = body.getBoundingClientRect();
-	return {
-		top: rect.top,
-		left: rect.left,
-		width: rect.width,
-		height: rect.height,
-		firstMinute: FIRST_HOUR * 60,
-		lastMinute: LAST_HOUR * 60
+const measureBody =
+	(firstMinute: number, lastMinute: number) =>
+	(grip: HTMLElement): GripGeometry | null => {
+		const body = grip.closest<HTMLElement>('.calendarSplit__body');
+		if (!body) return null;
+		const rect = body.getBoundingClientRect();
+		return {
+			top: rect.top,
+			left: rect.left,
+			width: rect.width,
+			height: rect.height,
+			firstMinute,
+			lastMinute
+		};
 	};
-};
 
 export const CalendarSplitView = ({
 	day: dayInput,
@@ -230,9 +233,22 @@ export const CalendarSplitView = ({
 	muted = [],
 	onSelectRange,
 	onEntryOpen,
-	onProposalOpen
+	onProposalOpen,
+	hourPx = SPLIT_HOUR_PX
 }: CalendarSplitViewProps) => {
 	const { t, i18n } = useTranslation();
+	// The same hours as the time grid: no entry falls outside them.
+	const { firstMinute, lastMinute } = useMemo(
+		() => gridMinutes(entries, workingPlan),
+		[entries, workingPlan]
+	);
+	const toPx = (minutes: number) => ((minutes - firstMinute) / 60) * hourPx;
+	const clampMinutes = (m: number) =>
+		Math.min(lastMinute, Math.max(firstMinute, m));
+	const measure = useMemo(
+		() => measureBody(firstMinute, lastMinute),
+		[firstMinute, lastMinute]
+	);
 	const label = useEntryLabel();
 	const locale = calendarLocale(i18n.language);
 	const first = useMemo(() => startOfDay(dayInput), [dayInput]);
@@ -287,8 +303,11 @@ export const CalendarSplitView = ({
 				const plan = workingPlan ?? { hours: [] };
 				const offHours = offRangesOf(day, plan)
 					.map((r) => ({
-						from: clampMinutes(r.from),
-						to: clampMinutes(r.to),
+						from: Math.min(
+							lastMinute,
+							Math.max(firstMinute, r.from)
+						),
+						to: Math.min(lastMinute, Math.max(firstMinute, r.to)),
 						kind: r.kind
 					}))
 					.filter((r) => r.to > r.from);
@@ -318,7 +337,9 @@ export const CalendarSplitView = ({
 			ownerId,
 			colleagues,
 			workingPlan,
-			now
+			now,
+			firstMinute,
+			lastMinute
 		]
 	);
 	const overlaps = (d: SplitDay, e: { start: string; end: string }) =>
@@ -341,7 +362,9 @@ export const CalendarSplitView = ({
 
 	// Start the day at 08:00, like the time grid.
 	useEffect(() => {
-		scrollRef.current?.scrollTo({ top: HOUR_PX });
+		scrollRef.current?.scrollTo({ top: Math.max(0, toPx(8 * 60)) });
+		// Only on mount; zooming keeps its own place.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
 	const step = (direction: ScrollDirection) => {
@@ -377,7 +400,7 @@ export const CalendarSplitView = ({
 	const minuteAt = (event: React.PointerEvent<HTMLElement>) => {
 		const bounds = event.currentTarget.getBoundingClientRect();
 		const minutes =
-			FIRST_HOUR * 60 + ((event.clientY - bounds.top) / HOUR_PX) * 60;
+			firstMinute + ((event.clientY - bounds.top) / hourPx) * 60;
 		return clampMinutes(Math.floor(minutes / SNAP_MINUTES) * SNAP_MINUTES);
 	};
 
@@ -517,9 +540,10 @@ export const CalendarSplitView = ({
 		);
 	};
 
+	const firstHour = firstMinute / 60;
 	const hours = Array.from(
-		{ length: LAST_HOUR - FIRST_HOUR },
-		(_, i) => FIRST_HOUR + i
+		{ length: (lastMinute - firstMinute) / 60 },
+		(_, i) => firstHour + i
 	);
 	const hourFormat = new Intl.DateTimeFormat(locale, {
 		hour: '2-digit',
@@ -539,8 +563,7 @@ export const CalendarSplitView = ({
 		return (['start', 'end'] as const).map((edge) => {
 			const time = edge === 'start' ? edges.start : edges.end;
 			const minutes = minutesOf(time);
-			if (minutes < FIRST_HOUR * 60 || minutes > LAST_HOUR * 60)
-				return null;
+			if (minutes < firstMinute || minutes > lastMinute) return null;
 			return (
 				<CalendarWorkGrip
 					key={edge}
@@ -549,7 +572,7 @@ export const CalendarSplitView = ({
 					time={time}
 					windows={edges.windows}
 					exception={edges.exception}
-					measure={measureBody}
+					measure={measure}
 					onChange={onEdgeChange}
 					style={{ top: toPx(minutes) }}
 				/>
@@ -657,7 +680,7 @@ export const CalendarSplitView = ({
 								<span
 									key={h}
 									className="calendarSplit__hour"
-									style={{ top: (h - FIRST_HOUR) * HOUR_PX }}
+									style={{ top: (h - firstHour) * hourPx }}
 								>
 									{hourFormat.format(atClock(day, h * 60))}
 								</span>
@@ -666,14 +689,14 @@ export const CalendarSplitView = ({
 					)}
 					<div
 						className="calendarSplit__body"
-						style={{ height: (LAST_HOUR - FIRST_HOUR) * HOUR_PX }}
+						style={{ height: toPx(lastMinute) }}
 						{...(own ? ownBodyEvents(day) : {})}
 					>
 						{hours.map((h) => (
 							<span
 								key={h}
 								className="calendarSplit__line"
-								style={{ top: (h - FIRST_HOUR) * HOUR_PX }}
+								style={{ top: (h - firstHour) * hourPx }}
 							/>
 						))}
 						{d.offHours.map((o) => (
@@ -727,14 +750,14 @@ export const CalendarSplitView = ({
 												selection.to - selection.from
 											) /
 												60) *
-												HOUR_PX +
-											(HOUR_PX * SNAP_MINUTES) / 60
+												hourPx +
+											(hourPx * SNAP_MINUTES) / 60
 									}}
 								/>
 							)}
 						{isToday &&
-							nowMinutes >= FIRST_HOUR * 60 &&
-							nowMinutes <= LAST_HOUR * 60 && (
+							nowMinutes >= firstMinute &&
+							nowMinutes <= lastMinute && (
 								<span
 									className="calendarSplit__now"
 									style={{ top: toPx(nowMinutes) }}

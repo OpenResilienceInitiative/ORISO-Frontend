@@ -160,6 +160,13 @@ export const CalendarPageWired = () => {
 	/** Owners: the latest weekly save, the latest save per date. */
 	const weeklyOp = useRef(0);
 	const exceptionOps = useRef<Record<string, number>>({});
+	/**
+	 * The operation each confirmed part came from: an older answer that
+	 * arrives late must not replace a newer confirmed one (review
+	 * 4575297349).
+	 */
+	const weeklyConfirmedOp = useRef(0);
+	const exceptionConfirmedOps = useRef<Record<string, number>>({});
 	/** Edits since mount; the first read only applies when there are none. */
 	const planEdits = useRef(0);
 
@@ -443,11 +450,14 @@ export const CalendarPageWired = () => {
 				workingPlanToApi(next)
 			);
 			const stored = workingPlanFromApi(saved);
-			confirmed.current = {
-				...confirmed.current,
-				hours: stored.hours,
-				holidayRegion: stored.holidayRegion
-			};
+			if (generation > weeklyConfirmedOp.current) {
+				weeklyConfirmedOp.current = generation;
+				confirmed.current = {
+					...confirmed.current,
+					hours: stored.hours,
+					holidayRegion: stored.holidayRegion
+				};
+			}
 			if (!latest()) return;
 			// Only the weekly fields: the answer's exceptions are a snapshot
 			// that a day save running alongside may already have replaced.
@@ -477,8 +487,14 @@ export const CalendarPageWired = () => {
 			return { hours: [], ...current, exceptions };
 		});
 
-	/** What UserService last confirmed for `date`. */
-	const confirmException = (date: string, windows?: TimeWindow[]) => {
+	/** What UserService confirmed for `date` in operation `generation`. */
+	const confirmException = (
+		date: string,
+		generation: number,
+		windows?: TimeWindow[]
+	) => {
+		if (generation <= (exceptionConfirmedOps.current[date] ?? 0)) return;
+		exceptionConfirmedOps.current[date] = generation;
 		const exceptions = { ...confirmed.current?.exceptions };
 		if (windows) exceptions[date] = windows;
 		else delete exceptions[date];
@@ -490,11 +506,14 @@ export const CalendarPageWired = () => {
 		const generation = (exceptionOps.current[date] ?? 0) + 1;
 		exceptionOps.current[date] = generation;
 		planEdits.current += 1;
-		return () => exceptionOps.current[date] === generation;
+		return {
+			generation,
+			latest: () => exceptionOps.current[date] === generation
+		};
 	};
 
 	const saveDayException = async (date: string, windows: TimeWindow[]) => {
-		const latest = ownDate(date);
+		const { generation, latest } = ownDate(date);
 		const shown = normalizeWindows(windows);
 		setException(date, shown);
 		try {
@@ -504,7 +523,7 @@ export const CalendarPageWired = () => {
 			);
 			const stored =
 				dayExceptionsFromApi(saved ? [saved] : [])[date] ?? shown;
-			confirmException(date, stored);
+			confirmException(date, generation, stored);
 			if (latest()) setException(date, stored);
 		} catch (error) {
 			if (latest())
@@ -514,11 +533,11 @@ export const CalendarPageWired = () => {
 	};
 
 	const deleteDayException = async (date: string) => {
-		const latest = ownDate(date);
+		const { generation, latest } = ownDate(date);
 		setException(date, undefined);
 		try {
 			await apiDeleteWorkingDayException(date);
-			confirmException(date, undefined);
+			confirmException(date, generation, undefined);
 		} catch (error) {
 			if (latest())
 				setException(date, confirmed.current?.exceptions?.[date]);

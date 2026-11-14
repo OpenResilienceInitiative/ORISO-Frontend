@@ -213,3 +213,50 @@ describe('CalendarSplitView — heads of equal height (review 4574775727)', () =
 		expect(heads.map((h) => h.style.minHeight)).toEqual(['96px', '96px']);
 	});
 });
+
+describe('CalendarSplitView — entries outside 07:00–21:00 (review 4575253322)', () => {
+	it('widens the axis, so an early colleague entry and a late own one show', () => {
+		const early: CalendarEntry = {
+			id: 'early',
+			type: 'appointment',
+			kind: 'phone',
+			start: new Date(2026, 10, 16, 5, 30).toISOString(),
+			end: new Date(2026, 10, 16, 6, 30).toISOString(),
+			ownerId: 'kaya'
+		};
+		const late: CalendarEntry = {
+			id: 'late',
+			type: 'appointment',
+			kind: 'video',
+			start: new Date(2026, 10, 16, 22).toISOString(),
+			end: new Date(2026, 10, 16, 23).toISOString(),
+			ownerId: 'me'
+		};
+		const { container } = render(
+			<CalendarSplitView
+				day={MONDAY}
+				role="consultant"
+				ownerId="me"
+				colleagues={[
+					{
+						id: 'kaya',
+						displayName: 'A. Kaya',
+						agencyName: 'Nord',
+						relation: 'sameAgency'
+					}
+				]}
+				entries={[early, late]}
+				now={new Date(2026, 10, 16, 9)}
+				workingPlan={HOURS}
+			/>
+		);
+		const top = (id: string) =>
+			container.querySelector<HTMLElement>(
+				`[data-cy="calendar-split-entry-${id}"]`
+			)?.style.top;
+		// The axis starts at 05:00 and runs to 23:00, 48 px an hour.
+		expect(top('early')).toBe('24px');
+		expect(top('late')).toBe(`${17 * 48}px`);
+	});
+});
+

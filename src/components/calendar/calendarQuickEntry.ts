@@ -14,6 +14,11 @@ export interface QuickEntry {
 	end?: Date;
 	sessionId?: number;
 	/**
+	 * The line names several conversations ("eule" fits two): no
+	 * conversation is meant until the user picks one.
+	 */
+	ambiguous?: boolean;
+	/**
 	 * The line named an end ("14-15:30"). Without one, `end` is only the
 	 * default length and must not replace a chosen duration.
 	 */
@@ -187,6 +192,7 @@ export const parseQuickEntry = (
 					return words.some((w) => name.includes(w));
 				});
 	if (candidates.length === 1) out.sessionId = candidates[0].sessionId;
+	else if (candidates.length > 1) out.ambiguous = true;
 	return out;
 };
 

@@ -146,6 +146,15 @@ export type CalendarLoadState = 'loading' | 'ready' | 'error';
  */
 export type ChangeResult = void | boolean | Promise<unknown>;
 
+/**
+ * Several change results as one: resolves to `false` when any refuses
+ * (`false`, or a promise of `false`), rejects when any fails.
+ */
+export const allStored = (
+	results: (ChangeResult | undefined)[]
+): Promise<boolean> =>
+	Promise.all(results).then((values) => !values.includes(false));
+
 export interface CalendarPageProps {
 	role: CalendarRole;
 	ownerId: string;
@@ -612,15 +621,13 @@ export const CalendarPage = ({
 							})
 					: t('calendar.created', { date: when }),
 			// Undo removes every created blocker; it fails as a whole when
-			// one removal fails (review 4574779925).
+			// one removal fails or is refused (reviews 4574779925,
+			// 4575297339).
 			undo:
 				first.type === 'blocker' &&
 				onRemoveBlocker &&
 				createdEntries.length > 0
-					? () =>
-							Promise.all(
-								createdEntries.map((e) => onRemoveBlocker(e))
-							)
+					? () => allStored(createdEntries.map(onRemoveBlocker))
 					: undefined
 		};
 	};
@@ -631,9 +638,7 @@ export const CalendarPage = ({
 	 * with everything typed. One creation at a time, so a second save while
 	 * the first runs creates nothing (reviews 4575214168, 4575297363).
 	 */
-	const create = (
-		drafts: AppointmentDraft[]
-	): boolean | Promise<boolean> => {
+	const create = (drafts: AppointmentDraft[]): boolean | Promise<boolean> => {
 		if (creating.current) return false;
 		const outcome = run(onCreate?.(drafts), createNotice(drafts));
 		if (outcome === true) setDialog(null);
@@ -818,11 +823,15 @@ export const CalendarPage = ({
 					weekdays: t(`calendar.grip.weekdays.${weekday}`),
 					time: change.to
 				}),
-				undo: () => {
-					onSaveWorkingHours?.(previousHours, holidayRegion);
-					if (previousException)
-						onSaveDayException?.(date, previousException);
-				}
+				// Both restorations go through Undo's failure notice
+				// (review 4575253325).
+				undo: () =>
+					allStored([
+						onSaveWorkingHours?.(previousHours, holidayRegion),
+						previousException
+							? onSaveDayException?.(date, previousException)
+							: undefined
+					])
 			});
 		}
 		refocusGrip(change);
@@ -1432,131 +1441,131 @@ export const CalendarPage = ({
 	// but keeps it mounted, so the chosen view and date survive the retry
 	// (review 4575159303).
 	const body: React.ReactNode = (
-			<>
-				{consultant && conversationsFailed && (
-					<div
-						className="calendarPage__banner"
-						role="alert"
-						data-testid="calendar-conversations-failed"
-					>
-						<span>{t('calendar.conversationsFailed')}</span>
-						<button
-							type="button"
-							className="calendarPage__retry"
-							onClick={onRetryConversations}
-						>
-							{t('calendar.error.retry')}
-						</button>
-					</div>
-				)}
-				<CalendarPager
-					onPage={page}
-					enabled={!compact && !splitOverflows}
-					dragging={dragging}
+		<>
+			{consultant && conversationsFailed && (
+				<div
+					className="calendarPage__banner"
+					role="alert"
+					data-testid="calendar-conversations-failed"
 				>
-					{split ? (
-						<CalendarSplitView
-							day={anchorDate}
-							days={splitDays}
-							role={role}
-							ownerId={ownerId}
-							colleagues={shown}
-							entries={visible}
-							busyEntries={busyEntries}
-							now={now}
-							workingPlan={workingPlan}
-							onEdgeChange={gripsOn ? onEdgeChange : undefined}
-							proposals={pending}
-							highlight={highlight}
-							muted={muted}
-							onSelectRange={(range, anchor) =>
-								setMenu({ type: 'slot', range, anchor })
-							}
-							onEntryOpen={openEntry}
-							onProposalOpen={(proposal, anchor) => {
-								const found = pending.find(
-									(p) => p.proposal.id === proposal.id
-								);
-								if (found)
-									setMenu({
-										type: 'proposal',
-										proposal,
-										entry: found.entry,
-										anchor
-									});
-							}}
-						/>
-					) : (
-						<CalendarView
-							controller={controller}
-							view={view}
-							role={role}
-							ownerId={ownerId}
-							entries={visible}
-							colleagues={colleagueById}
-							compact={compact}
-							now={fixedNow}
-							initialDate={anchorDate}
-							workingPlan={workingPlan}
-							onEdgeChange={gripsOn ? onEdgeChange : undefined}
-							proposals={pending}
-							highlight={highlight}
-							muted={muted}
-							onSelectRange={(range, anchor) =>
-								setMenu({ type: 'slot', range, anchor })
-							}
-							onSelectDays={(start, days, anchor) =>
-								setMenu({ type: 'month', start, days, anchor })
-							}
-							onEntryOpen={openEntry}
-							onProposalOpen={(proposal, anchor) => {
-								const found = pending.find(
-									(p) => p.proposal.id === proposal.id
-								);
-								if (found)
-									setMenu({
-										type: 'proposal',
-										proposal,
-										entry: found.entry,
-										anchor
-									});
-							}}
-							onEntryMove={move}
-							onDatesSet={datesSet}
-							onDragChange={setDragging}
-						/>
-					)}
-				</CalendarPager>
-				{state === 'loading' && (
-					<div
-						className="calendarPage__status calendarPage__status--overlay"
-						aria-busy="true"
-						data-testid="calendar-loading"
+					<span>{t('calendar.conversationsFailed')}</span>
+					<button
+						type="button"
+						className="calendarPage__retry"
+						onClick={onRetryConversations}
 					>
-						<CircularProgress
-							size={32}
-							aria-label={t('calendar.loading')}
-						/>
-					</div>
+						{t('calendar.error.retry')}
+					</button>
+				</div>
+			)}
+			<CalendarPager
+				onPage={page}
+				enabled={!compact && !splitOverflows}
+				dragging={dragging}
+			>
+				{split ? (
+					<CalendarSplitView
+						day={anchorDate}
+						days={splitDays}
+						role={role}
+						ownerId={ownerId}
+						colleagues={shown}
+						entries={visible}
+						busyEntries={busyEntries}
+						now={now}
+						workingPlan={workingPlan}
+						onEdgeChange={gripsOn ? onEdgeChange : undefined}
+						proposals={pending}
+						highlight={highlight}
+						muted={muted}
+						onSelectRange={(range, anchor) =>
+							setMenu({ type: 'slot', range, anchor })
+						}
+						onEntryOpen={openEntry}
+						onProposalOpen={(proposal, anchor) => {
+							const found = pending.find(
+								(p) => p.proposal.id === proposal.id
+							);
+							if (found)
+								setMenu({
+									type: 'proposal',
+									proposal,
+									entry: found.entry,
+									anchor
+								});
+						}}
+					/>
+				) : (
+					<CalendarView
+						controller={controller}
+						view={view}
+						role={role}
+						ownerId={ownerId}
+						entries={visible}
+						colleagues={colleagueById}
+						compact={compact}
+						now={fixedNow}
+						initialDate={anchorDate}
+						workingPlan={workingPlan}
+						onEdgeChange={gripsOn ? onEdgeChange : undefined}
+						proposals={pending}
+						highlight={highlight}
+						muted={muted}
+						onSelectRange={(range, anchor) =>
+							setMenu({ type: 'slot', range, anchor })
+						}
+						onSelectDays={(start, days, anchor) =>
+							setMenu({ type: 'month', start, days, anchor })
+						}
+						onEntryOpen={openEntry}
+						onProposalOpen={(proposal, anchor) => {
+							const found = pending.find(
+								(p) => p.proposal.id === proposal.id
+							);
+							if (found)
+								setMenu({
+									type: 'proposal',
+									proposal,
+									entry: found.entry,
+									anchor
+								});
+						}}
+						onEntryMove={move}
+						onDatesSet={datesSet}
+						onDragChange={setDragging}
+					/>
 				)}
-				{state === 'error' && (
-					<div
-						className="calendarPage__status calendarPage__status--overlay calendarPage__status--error"
-						role="alert"
-						data-testid="calendar-error"
+			</CalendarPager>
+			{state === 'loading' && (
+				<div
+					className="calendarPage__status calendarPage__status--overlay"
+					aria-busy="true"
+					data-testid="calendar-loading"
+				>
+					<CircularProgress
+						size={32}
+						aria-label={t('calendar.loading')}
+					/>
+				</div>
+			)}
+			{state === 'error' && (
+				<div
+					className="calendarPage__status calendarPage__status--overlay calendarPage__status--error"
+					role="alert"
+					data-testid="calendar-error"
+				>
+					<p>{t('calendar.error.title')}</p>
+					<button
+						type="button"
+						className="calendarPage__retry"
+						onClick={onRetry}
 					>
-						<p>{t('calendar.error.title')}</p>
-						<button
-							type="button"
-							className="calendarPage__retry"
-							onClick={onRetry}
-						>
-							{t('calendar.error.retry')}
-						</button>
-					</div>
-				)}
-			</>
-		);
+						{t('calendar.error.retry')}
+					</button>
+				</div>
+			)}
+		</>
+	);
 
 	// The left column on a wide screen, the bottom sheet on a phone.
 	const sheetCovers = compact && !fullscreen && sheet === 'full';

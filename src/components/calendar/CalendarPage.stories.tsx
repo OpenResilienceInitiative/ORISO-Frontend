@@ -807,10 +807,11 @@ export const PhoneQuickEntry: Story = {
 		await expect(
 			sheet.querySelector('[data-cy="calendar-kinds-button"]')
 		).toBeTruthy();
-		// Quick entry stays folded in the sheet until asked for.
-		await expect(
-			canvasElement.querySelector('[data-cy="calendar-quick"]')
-		).toBeNull();
+		// Quick entry stays folded in the sheet until asked for; folded, it
+		// stays mounted (hidden), so a draft survives.
+		const quickPanel = () =>
+			canvasElement.querySelector<HTMLElement>('#calendar-quick-panel');
+		await expect(quickPanel()?.hidden).toBe(true);
 		await findCy('calendar-quick-toggle');
 		const quickToggle = cyEl('calendar-quick-toggle');
 		await expect(quickToggle.getAttribute('aria-expanded')).toBe('false');
@@ -833,11 +834,7 @@ export const PhoneQuickEntry: Story = {
 		await expect(
 			await body().findByText(/Sperrzeit eingetragen/)
 		).toBeTruthy();
-		await waitFor(() =>
-			expect(
-				canvasElement.querySelector('[data-cy="calendar-quick"]')
-			).toBeNull()
-		);
+		await waitFor(() => expect(quickPanel()?.hidden).toBe(true));
 		await expect(quickToggle.getAttribute('aria-expanded')).toBe('false');
 	}
 };

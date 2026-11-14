@@ -633,8 +633,10 @@ export const QuickEntry = ({
 		setText(value);
 		const typed = parseQuickEntry(value, { now, conversations, kind });
 		// A conversation the line names replaces an earlier pick; a line
-		// that names none keeps it.
+		// that names none keeps it; a name that fits several drops it, so
+		// "who" blocks saving until one is chosen (review 4575297354).
 		if (typed.sessionId !== undefined) setSessionId(typed.sessionId);
+		else if (typed.ambiguous) setSessionId(undefined);
 		// The line prefills what it names; the fields stay what is saved.
 		const prefill = fieldsFromEntry(typed);
 		if (Object.keys(prefill).length > 0)
@@ -652,9 +654,24 @@ export const QuickEntry = ({
 		setFields({ duration: DEFAULT_QUICK_DURATION });
 	};
 
+	// One creation at a time; a draft changed while it ran stays (reviews
+	// 4575297363, 4575297365).
+	const [saving, setSaving] = useState(false);
+	const draftKey = JSON.stringify([text, kind, sessionId, fields]);
+	const latestDraft = useRef(draftKey);
+	latestDraft.current = draftKey;
+
 	const submit = () => {
-		if (gaps.length > 0 || !entry.start || !entry.end || !effectiveKind)
+		if (
+			saving ||
+			gaps.length > 0 ||
+			!entry.start ||
+			!entry.end ||
+			!effectiveKind
+		)
 			return;
+		const submitted = draftKey;
+		setSaving(true);
 		const result = onCreate([
 			effectiveKind === 'blocker'
 				? { type: 'blocker', start: entry.start, end: entry.end }
@@ -669,9 +686,11 @@ export const QuickEntry = ({
 		// The draft goes only once the entry exists; a failure keeps it.
 		Promise.resolve(result).then(
 			(created) => {
-				if (created !== false) reset();
+				setSaving(false);
+				if (created !== false && latestDraft.current === submitted)
+					reset();
 			},
-			() => undefined
+			() => setSaving(false)
 		);
 	};
 
@@ -894,7 +913,7 @@ export const QuickEntry = ({
 					<button
 						type="submit"
 						className="calendarQuick__save"
-						disabled={gaps.length > 0 || !touched}
+						disabled={saving || gaps.length > 0 || !touched}
 						data-cy="calendar-quick-save"
 					>
 						{t('calendar.quick.save')}

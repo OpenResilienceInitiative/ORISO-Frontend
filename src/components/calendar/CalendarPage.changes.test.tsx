@@ -11,10 +11,11 @@ import {
 	cleanup,
 	fireEvent,
 	render,
-	screen
+	screen,
+	waitFor
 } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
-import { CalendarPage } from './CalendarPage';
+import { allStored, CalendarPage } from './CalendarPage';
 import type { CalendarEntry } from './calendarModel';
 
 vi.mock('react-i18next', () => ({
@@ -206,7 +207,9 @@ describe('CalendarPage — creating (review 4575214168)', () => {
 	it('keeps the dialog open when the host refuses', () => {
 		page({ onCreate: () => false });
 		openDialog();
-		act(() => dialog.save?.(DRAFT));
+		act(() => {
+			dialog.save?.(DRAFT);
+		});
 		expect(screen.getByTestId('appointment-dialog')).toBeTruthy();
 	});
 
@@ -220,12 +223,18 @@ describe('CalendarPage — creating (review 4575214168)', () => {
 		);
 		page({ onCreate });
 		openDialog();
-		act(() => dialog.save?.(DRAFT));
-		act(() => dialog.save?.(DRAFT));
+		act(() => {
+			dialog.save?.(DRAFT);
+		});
+		act(() => {
+			dialog.save?.(DRAFT);
+		});
 		expect(onCreate).toHaveBeenCalledTimes(1);
 		expect(screen.getByTestId('appointment-dialog')).toBeTruthy();
 		await act(async () => store());
-		expect(screen.queryByTestId('appointment-dialog')).toBeNull();
+		await waitFor(() =>
+			expect(screen.queryByTestId('appointment-dialog')).toBeNull()
+		);
 	});
 });
 
@@ -237,13 +246,28 @@ describe('CalendarPage — undo refused at once (review 4575297344)', () => {
 			.mockReturnValueOnce(false);
 		page({ onMove });
 		await moveTo();
-		act(() => {
-			fireEvent.click(
-				document.querySelector(
-					'[data-testid="calendar-undo"]'
-				) as HTMLElement
-			);
-		});
-		expect(screen.getByText('calendar.saveFailed')).toBeTruthy();
+		fireEvent.click(await screen.findByTestId('calendar-undo'));
+		expect(await screen.findByText('calendar.saveFailed')).toBeTruthy();
+	});
+});
+
+describe('allStored — Undo of several changes (reviews 4575297339, 4575253325)', () => {
+	it('reports a refused removal among several as not undone', async () => {
+		expect(
+			await allStored([Promise.resolve(), false, Promise.resolve(true)])
+		).toBe(false);
+		expect(await allStored([Promise.resolve(false), undefined])).toBe(false);
+	});
+
+	it('rejects when one restoration fails, so Undo says so', async () => {
+		await expect(
+			allStored([Promise.resolve(), Promise.reject(new Error('500'))])
+		).rejects.toThrow('500');
+	});
+
+	it('is stored when every part is', async () => {
+		expect(await allStored([Promise.resolve(), undefined, true])).toBe(
+			true
+		);
 	});
 });

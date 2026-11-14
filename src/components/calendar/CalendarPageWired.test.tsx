@@ -518,6 +518,77 @@ describe('CalendarPageWired', () => {
 			});
 		});
 
+		it('rolls a failed weekly save back to the newest stored hours, not a late older answer (review 4575297349)', async () => {
+			await loaded();
+			const a = pending();
+			const hoursA = [{ weekday: 1, start: '07:00', end: '16:00' }];
+			const hoursB = [{ weekday: 1, start: '09:00', end: '17:00' }];
+			const hoursC = [{ weekday: 1, start: '10:00', end: '18:00' }];
+			api.apiSetCalendarWorkingHours
+				.mockReturnValueOnce(a.promise as never)
+				.mockResolvedValueOnce({
+					windows: hoursB,
+					holidayRegion: null,
+					exceptions: []
+				} as never)
+				.mockRejectedValueOnce(new Error('500'));
+			let saveA: Promise<void> | undefined;
+			act(() => {
+				saveA = props.onSaveWorkingHours?.(hoursA, null);
+			});
+			await act(() => props.onSaveWorkingHours?.(hoursB, null));
+			// A was stored before B but answers after it.
+			await act(async () => {
+				a.settle().resolve({
+					windows: hoursA,
+					holidayRegion: null,
+					exceptions: []
+				});
+				await saveA;
+			});
+			await act(async () => {
+				await expect(
+					props.onSaveWorkingHours?.(hoursC, null)
+				).rejects.toThrow('500');
+			});
+			expect(props.workingHours).toEqual(hoursB);
+		});
+
+		it('rolls a failed day save back to the newest stored day, not a late older answer (review 4575297349)', async () => {
+			await loaded();
+			const a = pending();
+			api.apiPutWorkingDayException.mockReturnValueOnce(
+				a.promise as never
+			);
+			let saveA: Promise<void> | undefined;
+			act(() => {
+				saveA = props.onSaveDayException?.('2026-11-18', [
+					{ start: '09:00', end: '16:00' }
+				]);
+			});
+			await saveDay('2026-11-18', '11:00');
+			await act(async () => {
+				a.settle().resolve({
+					date: '2026-11-18',
+					windows: [{ start: '09:00', end: '16:00' }]
+				});
+				await saveA;
+			});
+			api.apiPutWorkingDayException.mockRejectedValueOnce(
+				new Error('500')
+			);
+			await act(async () => {
+				await expect(
+					props.onSaveDayException?.('2026-11-18', [
+						{ start: '12:00', end: '16:00' }
+					])
+				).rejects.toThrow('500');
+			});
+			expect(props.dayExceptions).toEqual({
+				'2026-11-18': [{ start: '11:00', end: '16:00' }]
+			});
+		});
+
 		it('lets an older failure of a day not undo its newer save (review 4574981875)', async () => {
 			await loaded();
 			const older = pending();

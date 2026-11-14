@@ -19,13 +19,15 @@ import {
 import {
 	breakOf,
 	dialogWorkingHours,
+	exceedsWindowLimit,
 	groupWorkingHours,
 	invalidRows,
 	isBreakValid,
 	type DayBreak,
 	workingHoursToRows,
 	type WorkingDayRow,
-	type WorkingHours
+	type WorkingHours,
+	MAX_WORKING_HOURS_WINDOWS
 } from './calendarWorkingHours';
 import { calendarLocale } from './calendarLocale';
 
@@ -91,6 +93,10 @@ export const WorkingHoursDialog = ({
 	const invalid = invalidRows(rows);
 	const breakInvalid = !isBreakValid(dayBreak);
 	const regionMissing = holidays && !region;
+	const next = dialogWorkingHours(hours, rows, dayBreak);
+	// Over UserService's limit: refuse it here, before the dialog closes
+	// (review 4575297370).
+	const tooMany = exceedsWindowLimit(next);
 	const upcoming =
 		holidays && region ? nextHoliday(now ?? new Date(), region) : undefined;
 	const locale = calendarLocale(i18n.language);
@@ -127,12 +133,12 @@ export const WorkingHoursDialog = ({
 					label: t('calendar.workingHours.save'),
 					primary: true,
 					disabled:
-						invalid.length > 0 || breakInvalid || regionMissing,
+						invalid.length > 0 ||
+						breakInvalid ||
+						regionMissing ||
+						tooMany,
 					onClick: () =>
-						onSave(
-							dialogWorkingHours(hours, rows, dayBreak),
-							holidays && region ? region : null
-						),
+						onSave(next, holidays && region ? region : null),
 					testId: 'calendar-working-hours-save'
 				}
 			]}
@@ -317,6 +323,13 @@ export const WorkingHoursDialog = ({
 				{breakInvalid && (
 					<p className="calendarDialog__error" role="alert">
 						{t('calendar.workingHours.breakInvalid')}
+					</p>
+				)}
+				{tooMany && (
+					<p className="calendarDialog__error" role="alert">
+						{t('calendar.workingHours.tooMany', {
+							max: MAX_WORKING_HOURS_WINDOWS
+						})}
 					</p>
 				)}
 			</div>

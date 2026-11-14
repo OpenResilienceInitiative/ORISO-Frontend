@@ -97,6 +97,80 @@ describe('QuickEntry — conversation named in the line (review 4574779936)', ()
 	});
 });
 
+describe('QuickEntry — a name that fits several conversations (review 4575297354)', () => {
+	it('drops the earlier pick, so it cannot be saved for the wrong person', async () => {
+		const onCreate = vi.fn(() => Promise.resolve());
+		render(
+			<QuickEntry
+				ownerId="me"
+				now={NOW}
+				entries={[]}
+				conversations={[
+					...CONVERSATIONS,
+					{ sessionId: 4403, username: 'kluge_eule' }
+				]}
+				workingHours={[]}
+				onCreate={onCreate}
+			/>
+		);
+		fireEvent.change(input(), {
+			target: { value: 'morgen 10 video mutige_eule' }
+		});
+		fireEvent.change(input(), {
+			target: { value: 'morgen 10 video eule' }
+		});
+		await submit();
+		expect(onCreate).not.toHaveBeenCalled();
+		// "Still missing: who" (the stub translation shows the key).
+		expect(
+			document.querySelector('#calendar-quick-status')?.textContent
+		).toBe('calendar.quick.missing');
+	});
+});
+
+describe('QuickEntry — while creating (reviews 4575297363, 4575297365)', () => {
+	const deferred = () => {
+		let resolve: () => void = () => undefined;
+		const promise = new Promise<void>((r) => {
+			resolve = r;
+		});
+		return { promise, resolve };
+	};
+	const save = () =>
+		document.querySelector<HTMLButtonElement>(
+			'[data-cy="calendar-quick-save"]'
+		) as HTMLButtonElement;
+
+	it('creates once and keeps Save off until the request settles', async () => {
+		const running = deferred();
+		const onCreate = vi.fn(() => running.promise);
+		open(onCreate);
+		fireEvent.change(input(), {
+			target: { value: 'morgen 14 Uhr Video ruhiges' }
+		});
+		await submit();
+		await submit();
+		expect(onCreate).toHaveBeenCalledTimes(1);
+		expect(save().disabled).toBe(true);
+		await act(async () => running.resolve());
+		expect(input().value).toBe('');
+	});
+
+	it('keeps a line typed while the earlier one was being created', async () => {
+		const running = deferred();
+		open(() => running.promise);
+		fireEvent.change(input(), {
+			target: { value: 'morgen 14 Uhr Video ruhiges' }
+		});
+		await submit();
+		fireEvent.change(input(), {
+			target: { value: 'morgen 16 Uhr Video mutige' }
+		});
+		await act(async () => running.resolve());
+		expect(input().value).toBe('morgen 16 Uhr Video mutige');
+	});
+});
+
 describe('CalendarSidebar — folding quick entry on the phone (review 4574981879)', () => {
 	const sidebar = (quickOpen: boolean) => (
 		<CalendarSidebar

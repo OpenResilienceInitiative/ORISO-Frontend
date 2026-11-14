@@ -185,6 +185,23 @@ const planBounds = (plan?: WorkingPlan) => {
 };
 /** "HH:MM:00" as minutes since midnight; "24:00:00" is 1440. */
 const slotMinutes = (slot: string) => minutesOf(slot.slice(0, 5));
+
+/**
+ * The minutes the time grids show, for the time grid and "Nebeneinander"
+ * alike: the usual day widened to the working plan and to every entry, so
+ * nothing falls outside (review 4575253322).
+ */
+export const gridMinutes = (
+	entries: Pick<CalendarEntry, 'start' | 'end'>[],
+	plan?: WorkingPlan
+) => {
+	const bounds = planBounds(plan);
+	const hours = visibleHours(entries, bounds.from, bounds.to);
+	return {
+		firstMinute: slotMinutes(hours.min),
+		lastMinute: slotMinutes(hours.max)
+	};
+};
 const TIME_GRID_VIEWS: GridViewName[] = [
 	'day',
 	'threeDays',
