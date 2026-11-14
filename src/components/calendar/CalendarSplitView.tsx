@@ -449,11 +449,15 @@ export const CalendarSplitView = ({
 						const selected = new Date(selection.day);
 						const start = atClock(selected, a);
 						const end = atClock(selected, b);
+						setSelection(null);
+						// Local times the spring clock change skips move
+						// forward by the gap (as in hasEmptyOccurrence); a
+						// selection left without length offers nothing.
+						if (end.getTime() <= start.getTime()) return;
 						onSelectRange?.(
 							{ start, end },
 							{ x: event.clientX, y: event.clientY }
 						);
-						setSelection(null);
 					},
 					onPointerCancel: () => setSelection(null)
 				}

@@ -130,7 +130,12 @@ describe('CalendarSplitView — clock time on a daylight-saving day (reviews 457
 		const labels = Array.from(
 			container.querySelectorAll('.calendarSplit__hour')
 		).map((h) => h.textContent);
-		expect(labels.slice(0, 4)).toEqual(['07:00', '08:00', '09:00', '10:00']);
+		expect(labels.slice(0, 4)).toEqual([
+			'07:00',
+			'08:00',
+			'09:00',
+			'10:00'
+		]);
 	});
 
 	it('selects 10:00 when the 10:00 line is dragged', () => {
@@ -162,6 +167,64 @@ describe('CalendarSplitView — clock time on a daylight-saving day (reviews 457
 	});
 });
 
+describe('CalendarSplitView — the hour the spring clock change skips (review 4575941074)', () => {
+	const runnerZone = process.env.TZ;
+	beforeAll(() => {
+		process.env.TZ = 'Europe/Berlin';
+	});
+	afterAll(() => {
+		if (runnerZone === undefined) delete process.env.TZ;
+		else process.env.TZ = runnerZone;
+	});
+
+	it('opens no menu for a click at 02:30 on 28 March 2027, but does at 04:00', () => {
+		const day = new Date(2027, 2, 28);
+		// An entry at 01:00 widens the axis to start at 01:00.
+		const early: CalendarEntry = {
+			id: 'early',
+			type: 'appointment',
+			kind: 'phone',
+			start: new Date(2027, 2, 28, 1).toISOString(),
+			end: new Date(2027, 2, 28, 1, 30).toISOString(),
+			ownerId: 'me'
+		};
+		const onSelectRange = vi.fn();
+		const { container } = render(
+			<CalendarSplitView
+				day={day}
+				role="consultant"
+				ownerId="me"
+				colleagues={[]}
+				entries={[early]}
+				now={new Date(2027, 2, 27, 7)}
+				onSelectRange={onSelectRange}
+			/>
+		);
+		const body = container.querySelector(
+			'.calendarSplit__column--own .calendarSplit__body'
+		) as HTMLElement;
+		body.getBoundingClientRect = () =>
+			({ top: 0, left: 0, width: 200, height: 1104 }) as DOMRect;
+		const labels = Array.from(
+			container.querySelectorAll('.calendarSplit__hour')
+		).map((h) => h.textContent);
+		expect(labels[0]).toBe('01:00');
+		// 02:30 is 1.5 hours below 01:00, 48 px an hour.
+		fireEvent.pointerDown(body, { button: 0, clientY: 72 });
+		fireEvent.pointerUp(body, { clientY: 72 });
+		expect(onSelectRange).not.toHaveBeenCalled();
+		// 04:00, after the gap, still opens the menu with an hour.
+		fireEvent.pointerDown(body, { button: 0, clientY: 144 });
+		fireEvent.pointerUp(body, { clientY: 144 });
+		expect(onSelectRange).toHaveBeenCalledTimes(1);
+		const [range] = onSelectRange.mock.calls[0];
+		expect([range.start.getHours(), range.start.getMinutes()]).toEqual([
+			4, 0
+		]);
+		expect(range.end.getTime() - range.start.getTime()).toBe(3600000);
+	});
+});
+
 describe('CalendarSplitView — heads of equal height (review 4574775727)', () => {
 	const allDay = (id: string, ownerId: string): CalendarEntry => ({
 		id,
@@ -177,7 +240,11 @@ describe('CalendarSplitView — heads of equal height (review 4574775727)', () =
 	);
 	afterAll(() => {
 		if (original)
-			Object.defineProperty(HTMLElement.prototype, 'offsetHeight', original);
+			Object.defineProperty(
+				HTMLElement.prototype,
+				'offsetHeight',
+				original
+			);
 	});
 
 	it('starts every timed body at the offset of the tallest head', () => {
@@ -259,7 +326,6 @@ describe('CalendarSplitView — entries outside 07:00–21:00 (review 4575253322
 		expect(top('late')).toBe(`${17 * 48}px`);
 	});
 });
-
 
 describe('CalendarSplitView — a colleague whose calendar did not load (review 4575917303)', () => {
 	const KAYA = { id: 'kaya', displayName: 'A. Kaya' };
