@@ -30,6 +30,7 @@ import {
 } from '../app/navigationStoryHelpers';
 import { config } from '../../resources/scripts/config';
 import { SessionsListToolbar } from '../sessionsList/SessionsListToolbar';
+import { productionToolbarProps } from '../sessionsList/__storybook__/productionToolbarProps';
 import type { SessionToolbarChipFilter } from '../sessionsList/sessionToolbarFilters';
 import { SessionListItemComponent } from '../sessionsListItem/SessionListItemComponent';
 import '../app/authenticatedApp.styles.scss';
@@ -374,6 +375,8 @@ const StageList = () => {
 					showConsultantActions
 					showCreateGroupChatAction
 					showSupervisionChip={false}
+					showGroupChip
+					{...productionToolbarProps}
 					createGroupChatPath="/sessions/consultant/sessionView/createGroupChat"
 					archiveTabPath="/sessions/consultant/sessionView?sessionListTab=archive"
 					archiveTabActive={false}

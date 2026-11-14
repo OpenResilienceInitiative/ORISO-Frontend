@@ -18,6 +18,8 @@ import { ResizableHandle } from '../../sessionsList/ResizableHandle';
 import { SessionListItemComponent } from '../../sessionsListItem/SessionListItemComponent';
 import { SessionHeaderComponent } from '../../sessionHeader/SessionHeaderComponent';
 import { MessageTimeline } from '../../session/MessageTimeline';
+import { EncryptionBanner } from '../../session/EncryptionBanner';
+import { productionToolbarProps } from '../../sessionsList/__storybook__/productionToolbarProps';
 import {
 	isComposerBusy,
 	BOTTOM_TOLERANCE_PX,
@@ -242,6 +244,7 @@ function ListColumn({ width, rail }: { width: number; rail: boolean }) {
 					showConsultantActions
 					showCreateGroupChatAction
 					showSupervisionChip
+					{...productionToolbarProps}
 					createGroupChatPath="/sessions/consultant/sessionView/createGroupChat"
 					archiveTabPath="/sessions/consultant/sessionView?sessionListTab=archive"
 					archiveTabActive={false}
@@ -454,6 +457,10 @@ function MainChat({
 				/>
 			</div>
 			<div className="session__content" id="session-scroll-container">
+				{/* Same frame as `SessionItemComponent`: E2EE banner first. */}
+				<div className="session__gameChromeFadeTarget">
+					<EncryptionBanner />
+				</div>
 				<MessageTimeline
 					messages={messages}
 					renderMode="main"
