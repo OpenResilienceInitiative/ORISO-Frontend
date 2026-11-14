@@ -15,6 +15,7 @@
  */
 
 import { generatePath } from 'react-router-dom';
+import { DIRECT_INVITATION_RENEWAL_REQUESTED } from './directInvitationEvents';
 import { rewriteLegacyChannelPath } from '../../../utils/channelRoute';
 import {
 	askerGroupChatPath,
@@ -483,6 +484,16 @@ const seeds: EventDescriptor[] = [
 		icon: 'callStarted',
 		i18nKey: 'callKnockRequested',
 		resolveActionTarget: knockCallTarget
+	}),
+
+	// FE#2252: someone asks for a new link after a Direkteinladung expired;
+	// the card opens the conversation, the pop-up offers "Neuen Link senden".
+	descriptor(DIRECT_INVITATION_RENEWAL_REQUESTED, {
+		family: 'appointments',
+		category: 'system',
+		icon: 'appointmentRequested',
+		i18nKey: 'directInvitationRenewalRequested',
+		resolveActionTarget: conversationTarget
 	}),
 
 	// ----- Appointments family (Figma 2026-07-12; writers still deferred) -----

@@ -107,7 +107,9 @@ const PageStory = ({
 										...item,
 										...update,
 										topicId: update.topicId ?? item.topicId,
-										topic: topic?.label ?? item.topic
+										topic: topic?.label ?? item.topic,
+										// The edit sends appointment times; the story keeps the shown one.
+										appointment: item.appointment
 									}
 								: item
 						)

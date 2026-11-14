@@ -2275,7 +2275,7 @@
 				"nav": "Sohbetler",
 				"small": "Haberler"
 			},
-			"directLinks": "Doğrudan bağlantılarım",
+			"directLinks": "Randevular ve doğrudan davetler",
 			"inboxState": {
 				"empty": "Talep yok",
 				"allOpened": "Tüm talepler açıldı",
@@ -2589,11 +2589,11 @@
 				"text": "Biri aramanıza katılmak istiyor. İçeri almak için aramaya katılın.",
 				"video": {
 					"title": "Biri kapıyı çalıyor – görüntülü arama",
-					"text": "Biri doğrudan bağlantınız üzerinden görüntülü aramanıza katılmak istiyor. İçeri almak için aramaya katılın."
+					"text": "Biri doğrudan davetiniz üzerinden görüntülü aramanıza katılmak istiyor. İçeri almak için aramaya katılın."
 				},
 				"audio": {
 					"title": "Biri kapıyı çalıyor – sesli arama",
-					"text": "Biri doğrudan bağlantınız üzerinden sesli aramanıza katılmak istiyor. İçeri almak için aramaya katılın."
+					"text": "Biri doğrudan davetiniz üzerinden sesli aramanıza katılmak istiyor. İçeri almak için aramaya katılın."
 				}
 			},
 			"appointmentRequested": {
@@ -2631,6 +2631,10 @@
 			"sessionAskerDeleted": {
 				"title": "Silinmiş danışan",
 				"text": "Bir danışanla yapılan sohbet silindi. Kişisel veriler ve mesajlar artık mevcut değil."
+			},
+			"directInvitationRenewalRequested": {
+				"title": "Neuer Link angefragt",
+				"text": "Eine Person möchte einen neuen Link zu Ihrem Termin."
 			}
 		},
 		"error": "Başarısız",
@@ -4670,7 +4674,7 @@
 				"unread": "Okunmamış",
 				"drafts": "Taslaklar",
 				"nearby": "Mail",
-				"directLinks": "Doğrudan bağlantılar",
+				"directLinks": "Doğrudan davetler",
 				"other": "Diğer",
 				"create": "Oluştur",
 				"group": "Filtreler",
@@ -4697,7 +4701,7 @@
 				"team": "Ekip danışmanlığı",
 				"directLinkVideo": "Görüntülü arama",
 				"directLinkAudio": "Sesli arama",
-				"directLinkChat": "Doğrudan bağlantı"
+				"directLinkChat": "Doğrudan davet"
 			},
 			"waiting": {
 				"minutes": "Bekleme: {{count}} dk.",
@@ -6785,7 +6789,7 @@
 			"invalid": "Lütfen beş haneli posta kodunuzu girin."
 		},
 		"card": {
-			"title": "Doğrudan bağlantı",
+			"title": "Doğrudan davet",
 			"subtitle": "Danışmanlık arayanlar için",
 			"headline": "Doğrudan size ulaşan bir bağlantı",
 			"text": "Bağlantıyı açan kişi size doğrudan ulaşır – sohbette, sesli veya görüntülü aramada.",
@@ -6809,16 +6813,18 @@
 		"temporary": "Geçici",
 		"copy": "Bağlantıyı kopyala",
 		"share": {
-			"title": "Doğrudan bağlantınız hazır",
+			"title": "Doğrudan davetiniz hazır",
 			"description": "Bağlantıyı veya QR kodunu paylaşın. Her kişi sizinle kendi görüşmesini alır.",
+			"descriptionAppointment": "Bağlantıyı veya QR kodunu paylaşın. Açan herkes randevu için sizinle tek bir ortak görüşmede buluşur.",
+			"descriptionJoin": "Bağlantıyı veya QR kodunu paylaşın. Açan kişi bu görüşmeye katılır.",
 			"copied": "Kopyalandı",
 			"share": "Paylaş",
-			"qrAlt": "Doğrudan bağlantının QR kodu",
+			"qrAlt": "Doğrudan davetin QR kodu",
 			"done": "Tamam",
-			"linkLabel": "Doğrudan bağlantı"
+			"linkLabel": "Doğrudan davet"
 		},
 		"list": {
-			"title": "Doğrudan bağlantılarım",
+			"title": "Doğrudan davetlerim",
 			"qr": "QR kodunu göster",
 			"active": "{{name}} etkin",
 			"edit": "{{name}} düzenle"
@@ -6830,16 +6836,17 @@
 			"joinFailed": "Bu işe yaramadı. Lütfen tekrar deneyin."
 		},
 		"page": {
-			"loadFailed": "Doğrudan bağlantılarınız yüklenemedi.",
-			"create": "“Sohbet oluştur” bölümünde yeni doğrudan bağlantı oluştur",
-			"emptyHeadline": "Henüz doğrudan bağlantı yok",
-			"emptyText": "Doğrudan bağlantıyı “Sohbet oluştur” bölümünde oluşturursunuz. Ardından burada görünür.",
-			"loading": "Doğrudan bağlantılar yükleniyor",
+			"loadFailed": "Doğrudan davetleriniz yüklenemedi.",
+			"create": "“Sohbet oluştur” bölümünde yeni doğrudan davet oluştur",
+			"emptyHeadline": "Henüz doğrudan davet yok",
+			"emptyText": "Doğrudan daveti “Sohbet oluştur” bölümünde oluşturursunuz. Ardından burada görünür.",
+			"loading": "Doğrudan davetler yükleniyor",
 			"retry": "Tekrar dene",
-			"toggleFailed": "Bağlantı açılıp kapatılamadı. Lütfen tekrar deneyin."
+			"toggleFailed": "Bağlantı açılıp kapatılamadı. Lütfen tekrar deneyin.",
+			"toggleFailedTitle": "Nicht umgeschaltet"
 		},
 		"edit": {
-			"title": "Doğrudan bağlantıyı düzenle",
+			"title": "Doğrudan daveti düzenle",
 			"cancel": "İptal",
 			"save": "Kaydet",
 			"name": "Ad",
@@ -6895,6 +6902,107 @@
 		"lookupFailed": {
 			"title": "Hesabınız kontrol edilemedi",
 			"text": "Mesajınız henüz gönderilmedi ve yazı alanında duruyor. Lütfen bağlantınızı kontrol edip yeniden gönderin."
+		}
+	},
+	"directInvitation": {
+		"dialog": {
+			"createTitle": "Direkteinladung erstellen",
+			"editTitle": "Direkteinladung bearbeiten",
+			"description": "Wer den Link öffnet, kommt direkt zu Ihnen. Ein Termin ist optional.",
+			"createAction": "Erstellen",
+			"saveAction": "Speichern",
+			"withAppointment": "Mit Termin",
+			"withAppointmentHint": "Alle, die den Link öffnen, treffen sich in einem gemeinsamen Gespräch.",
+			"withoutAppointmentHint": "Ohne Termin bekommt jede Person ein eigenes Gespräch. Der Link gilt, bis Sie ihn löschen.",
+			"inviteOthers": "Weitere Personen per Link einladen",
+			"inviteOthersHint": "Zum Beispiel eine Dolmetscherin. Eingeladene sehen nur Nachrichten ab ihrem Beitritt.",
+			"validity": {
+				"label": "Gültig nach Terminende",
+				"hint": "Danach verlieren Gäste den Zugang, und das Gespräch wird archiviert.",
+				"end": "Bis zum Ende des Termins",
+				"minutes_one": "{{count}} Minute",
+				"minutes_other": "{{count}} Minuten",
+				"hours_one": "{{count}} Stunde",
+				"hours_other": "{{count}} Stunden",
+				"less": "Kürzer",
+				"more": "Länger"
+			},
+			"access": {
+				"label": "Wer darf hinein?",
+				"guests": "Nur Gäste",
+				"accounts": "Nur mit Konto",
+				"both": "Beides"
+			},
+			"knock": "Anklopfen",
+			"knockHint": "Sie lassen jede Person selbst herein. Das lässt sich im Anruf ändern."
+		},
+		"overview": {
+			"title": "Termine & Direkteinladungen",
+			"upcoming": "Anstehende Termine",
+			"withoutAppointment": "Direkteinladungen ohne Termin",
+			"today": "Heute",
+			"tomorrow": "Morgen",
+			"time": "{{start}}–{{end}} Uhr",
+			"validUntil": "Link gültig bis {{date}}",
+			"knockOn": "Mit Anklopfen",
+			"knockOff": "Direkt hinein",
+			"oneToOne": "1:1-Gespräch mit {{name}}",
+			"copy": "Link zu {{name}} kopieren",
+			"copied": "Kopiert",
+			"qr": "QR-Code zu {{name}} zeigen",
+			"edit": "{{name}} bearbeiten",
+			"copyFailed": "Der Link konnte nicht kopiert werden.",
+			"emptyHeadline": "Noch keine Termine und Direkteinladungen",
+			"emptyText": "Erstellen Sie eine Direkteinladung – mit oder ohne Termin. Sie erscheint danach hier.",
+			"create": "Direkteinladung erstellen",
+			"noUpcoming": "Keine anstehenden Termine. Geben Sie einer Direkteinladung ein Datum, oder legen Sie in einem Gespräch über ⋮ einen Termin an.",
+			"noLinks": "Keine Direkteinladungen ohne Termin.",
+			"appointmentName": "Termin",
+			"copyFailedTitle": "Nicht kopiert",
+			"expired": "Abgelaufene Einladungen",
+			"sendNewLink": "Neuen Link senden für {{name}}"
+		},
+		"entry": {
+			"beforeStart": {
+				"title": "Ihr Termin",
+				"with": "mit {{name}}",
+				"time": "{{start}}–{{end}} Uhr",
+				"waitingRoom": "Der Warteraum öffnet um {{time}} Uhr, 15 Minuten vor Beginn.",
+				"chatNow": "Schreiben können Sie schon jetzt.",
+				"openChat": "Zum Chat"
+			},
+			"expired": {
+				"title": "Link abgelaufen",
+				"text": "Dieser Link gilt nicht mehr. Fragen Sie einen neuen an – Ihre Beratungsperson wird benachrichtigt.",
+				"request": "Neuen Link anfragen",
+				"sent": "Anfrage gesendet. Sie bekommen einen neuen Link, sobald Ihre Beratungsperson ihn schickt.",
+				"failed": "Die Anfrage hat nicht geklappt. Bitte versuchen Sie es erneut.",
+				"failedTitle": "Anfrage nicht gesendet",
+				"signedOut": "Dieser Link gilt nicht mehr. Einen neuen Link können Sie anfragen, wenn Sie angemeldet sind. Ohne Anmeldung wenden Sie sich bitte direkt an Ihre Beratungsperson.",
+				"signIn": "Anmelden und neuen Link anfragen"
+			},
+			"access": {
+				"guestsOnly": "Dieser Link ist nur für Gäste. Bitte öffnen Sie ihn in einem Fenster, in dem Sie nicht angemeldet sind.",
+				"accountsOnly": "Für diesen Link brauchen Sie ein Konto. Bitte melden Sie sich an oder registrieren Sie sich."
+			},
+			"roomNotEncrypted": "Diese Einladung kann gerade nicht genutzt werden, weil das Gespräch nicht verschlüsselt ist. Bitte wenden Sie sich an die Beraterin oder den Berater.",
+			"roomUnavailable": "Die Unterhaltung ist gerade nicht erreichbar. Bitte versuchen Sie es in einem Moment erneut."
+		},
+		"notice": {
+			"title": "Neuer Link angefragt",
+			"text": "{{name}} möchte einen neuen Link für „{{invitation}}“.",
+			"someone": "Eine Person",
+			"send": "Neuen Link senden",
+			"failed": "Der neue Link konnte nicht erstellt werden. Bitte versuchen Sie es erneut.",
+			"failedTitle": "Neuer Link nicht erstellt"
+		},
+		"conversation": {
+			"sendNewLink": "Neuen Link senden"
+		},
+		"renewed": {
+			"title": "Neuer Link",
+			"text": "Hier ist der neue Link zum Termin:",
+			"validUntil": "Der neue Link zum Termin gilt bis {{date}}:"
 		}
 	}
 }

@@ -85,6 +85,7 @@ import {
 	consultantRenamedNoticeText,
 	SYSTEM_NOTIFICATION_CONSULTANT_RENAMED
 } from './consultantRenamedNotice';
+import { directInvitationRenewedNoticeText } from './directInvitationRenewedNotice';
 import { ERROR_LEVEL_WARN, TError } from '../../api/apiPostError';
 import { ReactComponent as DeletedIcon } from '../../resources/img/icons/deleted.svg';
 import { ReactComponent as AgencyIcon } from '../../resources/img/icons/chat-agency-house-heart.svg';
@@ -429,7 +430,7 @@ export const MessageItemComponent = ({
 	encryptionBroke,
 	previewMode
 }: MessageItemComponentProps) => {
-	const { t: translate } = useTranslation();
+	const { t: translate, i18n } = useTranslation();
 	const inPreview = previewMode !== undefined;
 	const readOnly = previewMode === 'read';
 	// Nothing in the preview may lead out of the Timeline (#1824).
@@ -1341,11 +1342,48 @@ export const MessageItemComponent = ({
 	const isRejectedConsultantRenamedEvent =
 		parsedMessage.systemNotificationType ===
 			SYSTEM_NOTIFICATION_CONSULTANT_RENAMED && !consultantRenamedText;
+	/* #2252: the "new link" notice carries the link and its end only; it is
+	   worded here and drawn as a notice card with the link. */
+	const parsedRenewedNotice =
+		parsedMessage.systemNotificationDirectInvitationRenewed;
+	/* The backend posts it as the conversation's counsellor; from anyone
+	   else it would be a system-styled card with a foreign link. */
+	const isUntrustedRenewedNotice =
+		Boolean(parsedRenewedNotice) &&
+		!isTrustedRecommendationSender({
+			senderId: userId,
+			consultantMatrixUserId: activeSession?.item?.consultantMatrixUserId
+		});
+	const renewedNotice = isUntrustedRenewedNotice
+		? undefined
+		: parsedRenewedNotice;
+	const renewedText = renewedNotice
+		? directInvitationRenewedNoticeText(
+				renewedNotice,
+				translate,
+				i18n?.language || 'de'
+			)
+		: null;
+	const renewedBody =
+		renewedNotice && renewedText ? (
+			<>
+				{renewedText.description}{' '}
+				<a
+					href={renewedNotice.url}
+					target="_blank"
+					rel="noopener noreferrer"
+				>
+					{renewedNotice.url}
+				</a>
+			</>
+		) : null;
 	const systemNotificationTitle =
+		renewedText?.title ||
 		consultantRenamedText?.title ||
 		parsedMessage.systemNotificationTitle ||
 		translate('message.systemNotificationTitle');
 	const systemNotificationDescription =
+		renewedText?.description ||
 		consultantRenamedText?.description ||
 		parsedMessage.systemNotificationDescription ||
 		parsedMessage.cleanedMessage;
@@ -2417,7 +2455,8 @@ export const MessageItemComponent = ({
 										) : (
 											systemNotificationBody && (
 												<p className="messageItem__systemNotificationDescription">
-													{systemNotificationBody}
+													{renewedBody ??
+														systemNotificationBody}
 												</p>
 											)
 										)}
@@ -2454,7 +2493,8 @@ export const MessageItemComponent = ({
 								!isFurtherCounsellingNotice &&
 								systemNotificationDescription && (
 									<div className="messageItem__systemNotificationDescription">
-										{systemNotificationDescription}
+										{renewedBody ??
+											systemNotificationDescription}
 									</div>
 								)}
 							{Boolean(passageReplies?.length) &&
@@ -3010,7 +3050,11 @@ export const MessageItemComponent = ({
 		);
 	}
 
-	if (isUntrustedRecommendation || isRejectedConsultantRenamedEvent) {
+	if (
+		isUntrustedRecommendation ||
+		isRejectedConsultantRenamedEvent ||
+		isUntrustedRenewedNotice
+	) {
 		return null;
 	}
 

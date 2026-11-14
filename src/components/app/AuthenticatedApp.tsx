@@ -66,8 +66,7 @@ import { E2EEncryptionSupportBanner } from '../E2EEncryptionSupportBanner/E2EEnc
 import { KeyBackupRecoveryPrompt } from '../E2EEncryptionSupportBanner/KeyBackupRecoveryPrompt';
 import { M3SnackbarHost } from '../m3Snackbar/M3SnackbarHost';
 import { PracticeLayer } from '../../practice/PracticeLayer';
-import { JoinRequestCenter } from '../groupChat/joinRequest/JoinRequestCenter';
-import { httpJoinRequestTransport } from '../groupChat/joinRequest/httpJoinRequestTransport';
+import { ConsultantRequestCenters } from './ConsultantRequestCenters';
 import {
 	getCurrentAuthSubject,
 	getMatrixAccessToken,
@@ -523,11 +522,7 @@ export const AuthenticatedApp = ({
 						{hasUserAuthority(
 							AUTHORITIES.CONSULTANT_DEFAULT,
 							userData
-						) && (
-							<JoinRequestCenter
-								transport={httpJoinRequestTransport}
-							/>
-						)}
+						) && <ConsultantRequestCenters />}
 					</>
 				);
 			}

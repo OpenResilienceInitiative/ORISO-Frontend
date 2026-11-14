@@ -1,39 +1,32 @@
 /**
- * Create or move a 1:1 appointment inside its conversation (FE#1960). The
- * same date and time controls as group date creation, in the house dialog.
+ * Create or move a 1:1 appointment inside its conversation (FE#1960). Since
+ * #2252 it renders the shared invitation/appointment dialog
+ * (`InvitationDialog`, variant `appointment`); this wrapper owns the API
+ * call, the reload signal and the notice in the conversation.
  */
 import * as React from 'react';
 import { useState } from 'react';
-import dayjs, { type Dayjs } from 'dayjs';
 import { useTranslation } from 'react-i18next';
 import {
 	apiCreateSessionAppointment,
 	apiMoveSessionAppointment
 } from '../../../api/apiSessionAppointments';
 import { FETCH_ERRORS } from '../../../api/fetchData';
-import { OrisoDatePicker } from '../../form/OrisoDatePicker';
-import { OrisoTimePicker } from '../../form/OrisoTimePicker';
-import { M3Dialog } from '../../m3Dialog/M3Dialog';
 import {
-	appointmentSlotError,
+	apiCreateSessionDirectInvitation,
+	notifyDirectLinksChanged
+} from '../../../api/apiDirectLinks';
+import type { DirectLink } from '../../conversationCreate/directLink/directLink';
+import { DirectLinkShareDialog } from '../../conversationCreate/directLink/DirectLinkShareDialog';
+import { directInvitationSettings } from '../../directInvitation/directInvitationSettings';
+import { InvitationDialog } from '../../directInvitation/InvitationDialog';
+import type { InvitationDialogValue } from '../../directInvitation/invitationModel';
+import {
 	notifyAppointmentsChanged,
 	toAppointmentSlot
 } from './conversationAppointments';
 import type { FutureEntry } from './timelineModel';
 import { useAppointmentNotice } from './useAppointmentNotice';
-
-const DEFAULT_HOUR = 10;
-const DEFAULT_MINUTES = 60;
-
-const at = (day: Dayjs | null, time: Dayjs | null) =>
-	day && time
-		? day
-				.hour(time.hour())
-				.minute(time.minute())
-				.second(0)
-				.millisecond(0)
-				.toDate()
-		: null;
 
 export interface AppointmentDateDialogProps {
 	sessionId: number;
@@ -41,63 +34,79 @@ export interface AppointmentDateDialogProps {
 	/** Set: move this appointment. Absent: create a new one. */
 	entry?: FutureEntry;
 	onClose: () => void;
+	/**
+	 * #2252: offer "Weitere Personen per Link einladen" when creating
+	 * ("Direkteinladung erlauben" allows it). Moving never does.
+	 */
+	allowGuestInvite?: boolean;
+	/** Phones: the dialogs fill the screen. */
+	fullScreen?: boolean;
 }
+
+/* A conflict (finished conversation, cancelled appointment) reads the same
+   whether fetchData names it or hands the response back. */
+const isConflict = (cause: unknown) =>
+	(cause as Error)?.message === FETCH_ERRORS.CONFLICT ||
+	(cause as Response)?.status === 409;
 
 export const AppointmentDateDialog = ({
 	sessionId,
 	matrixRoomId,
 	entry,
-	onClose
+	onClose,
+	allowGuestInvite = false,
+	fullScreen = false
 }: AppointmentDateDialogProps) => {
 	const { t } = useTranslation();
 	const sendNotice = useAppointmentNotice();
-	const initialStart = entry
-		? dayjs(entry.start)
-		: dayjs().add(1, 'day').hour(DEFAULT_HOUR).minute(0);
-	const [day, setDay] = useState<Dayjs | null>(initialStart);
-	const [startTime, setStartTime] = useState<Dayjs | null>(initialStart);
-	const [endTime, setEndTime] = useState<Dayjs | null>(
-		entry?.end
-			? dayjs(entry.end)
-			: initialStart.add(DEFAULT_MINUTES, 'minute')
-	);
 	const [saving, setSaving] = useState(false);
 	const [error, setError] = useState<string>();
 	const appointmentId = entry?.booking?.appointmentId;
 	const isMove = appointmentId !== undefined;
+	/* #2252: the invitation link, shown once the appointment exists. */
+	const [shared, setShared] = useState<DirectLink>();
 
-	const save = async () => {
-		const start = at(day, startTime);
-		const end = at(day, endTime);
-		const slotError = appointmentSlotError({ start, end }, new Date());
-		if (slotError || !start || !end) {
-			setError(
-				t(`sessionList.timeline.appointment.dialog.error.${slotError}`)
-			);
-			return;
-		}
+	const save = async (value: InvitationDialogValue) => {
+		const { appointment } = value;
+		if (!appointment) return;
+		const { start, end } = appointment;
+		const withInvite = !isMove && allowGuestInvite && value.link !== null;
 		setSaving(true);
 		setError(undefined);
 		const slot = toAppointmentSlot(start, end);
+		let invitation: DirectLink | undefined;
 		try {
-			await (isMove
-				? apiMoveSessionAppointment(sessionId, appointmentId, slot)
-				: apiCreateSessionAppointment(sessionId, slot));
+			if (withInvite) {
+				/* One call: the backend creates the appointment and binds the
+				   invitation to it, so a refusal leaves no appointment behind. */
+				invitation = await apiCreateSessionDirectInvitation(
+					sessionId,
+					directInvitationSettings(value)
+				);
+			} else {
+				await (isMove
+					? apiMoveSessionAppointment(sessionId, appointmentId, slot)
+					: apiCreateSessionAppointment(sessionId, slot));
+			}
 		} catch (cause) {
 			setSaving(false);
 			setError(
 				t(
 					`sessionList.timeline.appointment.dialog.error.${
-						(cause as Error)?.message === FETCH_ERRORS.CONFLICT
-							? 'conflict'
-							: 'failed'
+						isConflict(cause) ? 'conflict' : 'failed'
 					}`
 				)
 			);
 			return;
 		}
 		notifyAppointmentsChanged();
-		onClose();
+		if (invitation) {
+			notifyDirectLinksChanged();
+			setSaving(false);
+			setShared(invitation);
+		} else {
+			onClose();
+		}
 		await sendNotice({
 			kind: isMove ? 'moved' : 'created',
 			start,
@@ -107,63 +116,28 @@ export const AppointmentDateDialog = ({
 		});
 	};
 
+	if (shared) {
+		return (
+			<DirectLinkShareDialog
+				open
+				link={shared}
+				fullScreen={fullScreen}
+				onClose={onClose}
+			/>
+		);
+	}
+
 	return (
-		<M3Dialog
-			open
-			data-testid="appointment-date-dialog"
-			title={t(
-				`sessionList.timeline.appointment.dialog.${isMove ? 'moveTitle' : 'createTitle'}`
-			)}
-			description={t(
-				'sessionList.timeline.appointment.dialog.description'
-			)}
-			width={400}
+		<InvitationDialog
+			variant="appointment"
+			mode={isMove ? 'edit' : 'create'}
+			initial={entry ? { start: entry.start, end: entry.end } : undefined}
+			allowGuestInvite={!isMove && allowGuestInvite}
+			onSubmit={save}
 			onClose={onClose}
-			closeLabel={t('app.close')}
-			actions={[
-				{ label: t('app.cancel'), onClick: onClose },
-				{
-					label: t(
-						`sessionList.timeline.appointment.dialog.${isMove ? 'moveAction' : 'createAction'}`
-					),
-					onClick: save,
-					primary: true,
-					disabled: saving
-				}
-			]}
-		>
-			<div className="appointmentDateDialog">
-				<OrisoDatePicker
-					label={t('sessionList.timeline.appointment.dialog.date')}
-					value={day}
-					onChange={setDay}
-					minDate={dayjs().startOf('day')}
-					weekStart={1}
-				/>
-				<div className="appointmentDateDialog__times">
-					<OrisoTimePicker
-						label={t(
-							'sessionList.timeline.appointment.dialog.start'
-						)}
-						ampm={false}
-						value={startTime}
-						onChange={setStartTime}
-						cancelLabel={t('app.cancel')}
-					/>
-					<OrisoTimePicker
-						label={t('sessionList.timeline.appointment.dialog.end')}
-						ampm={false}
-						value={endTime}
-						onChange={setEndTime}
-						cancelLabel={t('app.cancel')}
-					/>
-				</div>
-				{error && (
-					<p className="appointmentDateDialog__error" role="alert">
-						{error}
-					</p>
-				)}
-			</div>
-		</M3Dialog>
+			saving={saving}
+			error={error}
+			fullScreen={fullScreen}
+		/>
 	);
 };

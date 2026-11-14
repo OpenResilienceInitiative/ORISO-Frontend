@@ -2283,7 +2283,7 @@
 				"nav": "Chats",
 				"small": "Messages"
 			},
-			"directLinks": "My direct links"
+			"directLinks": "Appointments & direct invitations"
 		},
 		"activity": "Timeline",
 		"language": "Language",
@@ -2586,11 +2586,11 @@
 				"text": "Someone wants to join your call. Join the call to let them in.",
 				"video": {
 					"title": "Someone is knocking – video call",
-					"text": "Someone wants to join your video call through your direct link. Join the call to let them in."
+					"text": "Someone wants to join your video call through your direct invitation. Join the call to let them in."
 				},
 				"audio": {
 					"title": "Someone is knocking – audio call",
-					"text": "Someone wants to join your audio call through your direct link. Join the call to let them in."
+					"text": "Someone wants to join your audio call through your direct invitation. Join the call to let them in."
 				}
 			},
 			"appointmentRequested": {
@@ -2628,6 +2628,10 @@
 			"sessionAskerDeleted": {
 				"title": "Deleted advice seeker",
 				"text": "A chat with an advice seeker was deleted. Personal data and messages are no longer available."
+			},
+			"directInvitationRenewalRequested": {
+				"title": "New link requested",
+				"text": "Someone asks for a new link to your appointment."
 			}
 		},
 		"error": "failed",
@@ -4549,7 +4553,7 @@
 				"team": "Team counselling",
 				"directLinkVideo": "Video call",
 				"directLinkAudio": "Audio call",
-				"directLinkChat": "Direct link"
+				"directLinkChat": "Direct invitation"
 			},
 			"waiting": {
 				"minutes": "waiting {{count}} min",
@@ -4653,7 +4657,7 @@
 				"unread": "Unread",
 				"drafts": "Drafts",
 				"nearby": "Mail",
-				"directLinks": "Direct links",
+				"directLinks": "Direct invitations",
 				"other": "More",
 				"create": "Create",
 				"group": "Filters",
@@ -6700,7 +6704,7 @@
 			"invalid": "Please enter your five-digit postcode."
 		},
 		"card": {
-			"title": "Direct link",
+			"title": "Direct invitation",
 			"subtitle": "For people seeking advice",
 			"headline": "A link straight to you",
 			"text": "Whoever opens the link reaches you directly – in a chat, an audio call or a video call.",
@@ -6724,16 +6728,18 @@
 		"temporary": "Temporary",
 		"copy": "Copy link",
 		"share": {
-			"title": "Your direct link is ready",
+			"title": "Your direct invitation is ready",
 			"description": "Share the link or the QR code. Every person gets their own conversation with you.",
+			"descriptionAppointment": "Share the link or the QR code. Everyone who opens it meets you in one shared conversation for the appointment.",
+			"descriptionJoin": "Share the link or the QR code. Whoever opens it joins this conversation.",
 			"copied": "Copied",
 			"share": "Share",
-			"qrAlt": "QR code for the direct link",
+			"qrAlt": "QR code for the direct invitation",
 			"done": "Done",
-			"linkLabel": "Direct link"
+			"linkLabel": "Direct invitation"
 		},
 		"list": {
-			"title": "My direct links",
+			"title": "My direct invitations",
 			"qr": "Show QR code",
 			"active": "{{name}} active",
 			"edit": "Edit {{name}}"
@@ -6745,16 +6751,17 @@
 			"joinFailed": "That did not work. Please try again."
 		},
 		"page": {
-			"loadFailed": "Your direct links could not be loaded.",
-			"create": "Create a new direct link in “Create chat”",
-			"emptyHeadline": "There are no direct links yet",
-			"emptyText": "You create a direct link in “Create chat”. It then appears here.",
-			"loading": "Loading direct links",
+			"loadFailed": "Your direct invitations could not be loaded.",
+			"create": "Create a new direct invitation in “Create chat”",
+			"emptyHeadline": "There are no direct invitations yet",
+			"emptyText": "You create a direct invitation in “Create chat”. It then appears here.",
+			"loading": "Loading direct invitations",
 			"retry": "Try again",
-			"toggleFailed": "The link could not be switched. Please try again."
+			"toggleFailed": "The link could not be switched. Please try again.",
+			"toggleFailedTitle": "Not switched"
 		},
 		"edit": {
-			"title": "Edit direct link",
+			"title": "Edit direct invitation",
 			"cancel": "Cancel",
 			"save": "Save",
 			"name": "Name",
@@ -6810,6 +6817,107 @@
 		"lookupFailed": {
 			"title": "We could not check your account",
 			"text": "Your message has not been sent yet and stays in the input field. Please check your connection and send it again."
+		}
+	},
+	"directInvitation": {
+		"dialog": {
+			"createTitle": "Create direct invitation",
+			"editTitle": "Edit direct invitation",
+			"description": "Whoever opens the link comes straight to you. An appointment is optional.",
+			"createAction": "Create",
+			"saveAction": "Save",
+			"withAppointment": "With appointment",
+			"withAppointmentHint": "Everyone who opens the link meets in one shared conversation.",
+			"withoutAppointmentHint": "Without an appointment, each person gets their own conversation. The link works until you delete it.",
+			"inviteOthers": "Invite more people by link",
+			"inviteOthersHint": "For example an interpreter. Invited people only see messages written after they joined.",
+			"validity": {
+				"label": "Valid after the appointment ends",
+				"hint": "After that, guests lose access and the conversation is archived.",
+				"end": "Until the appointment ends",
+				"minutes_one": "{{count}} minute",
+				"minutes_other": "{{count}} minutes",
+				"hours_one": "{{count}} hour",
+				"hours_other": "{{count}} hours",
+				"less": "Shorter",
+				"more": "Longer"
+			},
+			"access": {
+				"label": "Who may enter?",
+				"guests": "Guests only",
+				"accounts": "Accounts only",
+				"both": "Both"
+			},
+			"knock": "Knock first",
+			"knockHint": "You let each person in yourself. You can change this during the call."
+		},
+		"overview": {
+			"title": "Appointments & direct invitations",
+			"upcoming": "Upcoming appointments",
+			"withoutAppointment": "Direct invitations without appointment",
+			"today": "Today",
+			"tomorrow": "Tomorrow",
+			"time": "{{start}}–{{end}}",
+			"validUntil": "Link valid until {{date}}",
+			"knockOn": "Knock first",
+			"knockOff": "Enter directly",
+			"oneToOne": "1:1 conversation with {{name}}",
+			"copy": "Copy link for {{name}}",
+			"copied": "Copied",
+			"qr": "Show QR code for {{name}}",
+			"edit": "Edit {{name}}",
+			"copyFailed": "The link could not be copied.",
+			"emptyHeadline": "No appointments or direct invitations yet",
+			"emptyText": "Create a direct invitation, with or without an appointment. It then appears here.",
+			"create": "Create direct invitation",
+			"noUpcoming": "No upcoming appointments. Give a direct invitation a date, or add an appointment in a conversation via ⋮.",
+			"noLinks": "No direct invitations without appointment.",
+			"appointmentName": "Appointment",
+			"copyFailedTitle": "Not copied",
+			"expired": "Expired invitations",
+			"sendNewLink": "Send a new link for {{name}}"
+		},
+		"entry": {
+			"beforeStart": {
+				"title": "Your appointment",
+				"with": "with {{name}}",
+				"time": "{{start}}–{{end}}",
+				"waitingRoom": "The waiting room opens at {{time}}, 15 minutes before the start.",
+				"chatNow": "You can already write now.",
+				"openChat": "Open chat"
+			},
+			"expired": {
+				"title": "Link expired",
+				"text": "This link is no longer valid. Request a new one; your counsellor will be notified.",
+				"request": "Request a new link",
+				"sent": "Request sent. You will get a new link as soon as your counsellor sends it.",
+				"failed": "The request did not go through. Please try again.",
+				"failedTitle": "Request not sent",
+				"signedOut": "This link is no longer valid. You can request a new link once you are signed in. Without signing in, please contact your counsellor directly.",
+				"signIn": "Sign in to request a new link"
+			},
+			"access": {
+				"guestsOnly": "This link is for guests only. Please open it in a window where you are not signed in.",
+				"accountsOnly": "You need an account for this link. Please sign in or register."
+			},
+			"roomNotEncrypted": "This invitation cannot be used right now because the conversation is not encrypted. Please contact your counsellor.",
+			"roomUnavailable": "The conversation cannot be reached right now. Please try again in a moment."
+		},
+		"notice": {
+			"title": "New link requested",
+			"text": "{{name}} would like a new link for “{{invitation}}”.",
+			"someone": "Someone",
+			"send": "Send new link",
+			"failed": "The new link could not be created. Please try again.",
+			"failedTitle": "New link not created"
+		},
+		"conversation": {
+			"sendNewLink": "Send new link"
+		},
+		"renewed": {
+			"title": "New link",
+			"text": "Here is the new link to the appointment:",
+			"validUntil": "The new link to the appointment works until {{date}}:"
 		}
 	}
 }

@@ -78,7 +78,7 @@ describe('knock on a direct-link call (FE#1952)', () => {
 	it('names the video call', () => {
 		expect(render('VIDEO')).toEqual({
 			title: 'Jemand klopft an – Videoanruf',
-			text: 'Eine Person möchte über Ihren Direktlink in Ihren Videoanruf. Treten Sie dem Anruf bei, um sie einzulassen.'
+			text: 'Eine Person möchte über Ihre Direkteinladung in Ihren Videoanruf. Treten Sie dem Anruf bei, um sie einzulassen.'
 		});
 	});
 
@@ -96,7 +96,7 @@ describe('knock on a direct-link call (FE#1952)', () => {
 
 	it('speaks informally for de@informal', () => {
 		expect(render('VIDEO', 'de@informal').text).toBe(
-			'Eine Person möchte über deinen Direktlink in deinen Videoanruf. Tritt dem Anruf bei, um sie einzulassen.'
+			'Eine Person möchte über deine Direkteinladung in deinen Videoanruf. Tritt dem Anruf bei, um sie einzulassen.'
 		);
 	});
 

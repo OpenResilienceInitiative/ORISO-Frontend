@@ -2249,7 +2249,7 @@
 				"nav": "ዝርርባት",
 				"small": "ዜና"
 			},
-			"directLinks": "ናይ ቀጥታ መላግቦታተይ",
+			"directLinks": "Termine & Direkteinladungen",
 			"inboxState": {
 				"empty": "ሕቶታት የለን",
 				"allOpened": "ኩሎም ሕቶታት ተኸፊቶም",
@@ -2605,6 +2605,10 @@
 			"sessionAskerDeleted": {
 				"title": "ዝተሰረዘ ደላዪ ምኽሪ",
 				"text": "ምስ ደላዪ ምኽሪ ዝነበረ ቻት ተሰሪዙ። ውልቃዊ ሓበሬታን መልእኽትታትን ድሕሪ ሕጂ ኣይርከቡን።"
+			},
+			"directInvitationRenewalRequested": {
+				"title": "Neuer Link angefragt",
+				"text": "Eine Person möchte einen neuen Link zu Ihrem Termin."
 			}
 		},
 		"error": "ወዲቑ",
@@ -6778,6 +6782,8 @@
 		"share": {
 			"title": "ቀጥታዊ ሊንክካ ድሉው እዩ",
 			"description": "ሊንክ ወይ QR ኮድ ኣካፍል። ነፍሲ ወከፍ ሰብ ናይ ባዕሉ ዝርርብ ምሳኻ ይረክብ።",
+			"descriptionAppointment": "ሊንክ ወይ QR ኮድ ኣካፍል። ዝኸፈቶ ኩሉ ሰብ ምሳኻ ኣብ ሓደ ሓባራዊ ዝርርብ ንቆጸራ ይራኸብ።",
+			"descriptionJoin": "ሊንክ ወይ QR ኮድ ኣካፍል። ዝኸፈቶ ሰብ ናብዚ ዝርርብ ይጽንበር።",
 			"copied": "ተቐዲሑ",
 			"share": "ኣካፍል",
 			"qrAlt": "QR ኮድ ናይ ቀጥታዊ ሊንክ",
@@ -6803,7 +6809,8 @@
 			"emptyText": "ናይ ቀጥታ መላግቦ ኣብ „ቻት ፍጠር“ ትፈጥሩ። ድሕሪኡ ኣብዚ ይርአ።",
 			"loading": "ናይ ቀጥታ መላግቦታት ይጽዓኑ ኣለዉ",
 			"retry": "እንደገና ፈትን",
-			"toggleFailed": "እቲ መላግቦ ክቕየር ኣይከኣለን። በጃኹም እንደገና ፈትኑ።"
+			"toggleFailed": "እቲ መላግቦ ክቕየር ኣይከኣለን። በጃኹም እንደገና ፈትኑ።",
+			"toggleFailedTitle": "Nicht umgeschaltet"
 		},
 		"edit": {
 			"title": "ናይ ቀጥታ መላግቦ ኣመዓራሪ",
@@ -6862,6 +6869,107 @@
 		"lookupFailed": {
 			"title": "ሕሳብኩም ክንምርምር ኣይከኣልናን",
 			"text": "መልእኽትኹም ገና ኣይተላእከን፣ ኣብ መእተዊ ቦታ ይጸንሕ። በጃኹም ርክብኩም ፈትሹ፣ ከም ሓድሽ ድማ ስደድዎ።"
+		}
+	},
+	"directInvitation": {
+		"dialog": {
+			"createTitle": "Direkteinladung erstellen",
+			"editTitle": "Direkteinladung bearbeiten",
+			"description": "Wer den Link öffnet, kommt direkt zu Ihnen. Ein Termin ist optional.",
+			"createAction": "Erstellen",
+			"saveAction": "Speichern",
+			"withAppointment": "Mit Termin",
+			"withAppointmentHint": "Alle, die den Link öffnen, treffen sich in einem gemeinsamen Gespräch.",
+			"withoutAppointmentHint": "Ohne Termin bekommt jede Person ein eigenes Gespräch. Der Link gilt, bis Sie ihn löschen.",
+			"inviteOthers": "Weitere Personen per Link einladen",
+			"inviteOthersHint": "Zum Beispiel eine Dolmetscherin. Eingeladene sehen nur Nachrichten ab ihrem Beitritt.",
+			"validity": {
+				"label": "Gültig nach Terminende",
+				"hint": "Danach verlieren Gäste den Zugang, und das Gespräch wird archiviert.",
+				"end": "Bis zum Ende des Termins",
+				"minutes_one": "{{count}} Minute",
+				"minutes_other": "{{count}} Minuten",
+				"hours_one": "{{count}} Stunde",
+				"hours_other": "{{count}} Stunden",
+				"less": "Kürzer",
+				"more": "Länger"
+			},
+			"access": {
+				"label": "Wer darf hinein?",
+				"guests": "Nur Gäste",
+				"accounts": "Nur mit Konto",
+				"both": "Beides"
+			},
+			"knock": "Anklopfen",
+			"knockHint": "Sie lassen jede Person selbst herein. Das lässt sich im Anruf ändern."
+		},
+		"overview": {
+			"title": "Termine & Direkteinladungen",
+			"upcoming": "Anstehende Termine",
+			"withoutAppointment": "Direkteinladungen ohne Termin",
+			"today": "Heute",
+			"tomorrow": "Morgen",
+			"time": "{{start}}–{{end}} Uhr",
+			"validUntil": "Link gültig bis {{date}}",
+			"knockOn": "Mit Anklopfen",
+			"knockOff": "Direkt hinein",
+			"oneToOne": "1:1-Gespräch mit {{name}}",
+			"copy": "Link zu {{name}} kopieren",
+			"copied": "Kopiert",
+			"qr": "QR-Code zu {{name}} zeigen",
+			"edit": "{{name}} bearbeiten",
+			"copyFailed": "Der Link konnte nicht kopiert werden.",
+			"emptyHeadline": "Noch keine Termine und Direkteinladungen",
+			"emptyText": "Erstellen Sie eine Direkteinladung – mit oder ohne Termin. Sie erscheint danach hier.",
+			"create": "Direkteinladung erstellen",
+			"noUpcoming": "Keine anstehenden Termine. Geben Sie einer Direkteinladung ein Datum, oder legen Sie in einem Gespräch über ⋮ einen Termin an.",
+			"noLinks": "Keine Direkteinladungen ohne Termin.",
+			"appointmentName": "Termin",
+			"copyFailedTitle": "Nicht kopiert",
+			"expired": "Abgelaufene Einladungen",
+			"sendNewLink": "Neuen Link senden für {{name}}"
+		},
+		"entry": {
+			"beforeStart": {
+				"title": "Ihr Termin",
+				"with": "mit {{name}}",
+				"time": "{{start}}–{{end}} Uhr",
+				"waitingRoom": "Der Warteraum öffnet um {{time}} Uhr, 15 Minuten vor Beginn.",
+				"chatNow": "Schreiben können Sie schon jetzt.",
+				"openChat": "Zum Chat"
+			},
+			"expired": {
+				"title": "Link abgelaufen",
+				"text": "Dieser Link gilt nicht mehr. Fragen Sie einen neuen an – Ihre Beratungsperson wird benachrichtigt.",
+				"request": "Neuen Link anfragen",
+				"sent": "Anfrage gesendet. Sie bekommen einen neuen Link, sobald Ihre Beratungsperson ihn schickt.",
+				"failed": "Die Anfrage hat nicht geklappt. Bitte versuchen Sie es erneut.",
+				"failedTitle": "Anfrage nicht gesendet",
+				"signedOut": "Dieser Link gilt nicht mehr. Einen neuen Link können Sie anfragen, wenn Sie angemeldet sind. Ohne Anmeldung wenden Sie sich bitte direkt an Ihre Beratungsperson.",
+				"signIn": "Anmelden und neuen Link anfragen"
+			},
+			"access": {
+				"guestsOnly": "Dieser Link ist nur für Gäste. Bitte öffnen Sie ihn in einem Fenster, in dem Sie nicht angemeldet sind.",
+				"accountsOnly": "Für diesen Link brauchen Sie ein Konto. Bitte melden Sie sich an oder registrieren Sie sich."
+			},
+			"roomNotEncrypted": "Diese Einladung kann gerade nicht genutzt werden, weil das Gespräch nicht verschlüsselt ist. Bitte wenden Sie sich an die Beraterin oder den Berater.",
+			"roomUnavailable": "Die Unterhaltung ist gerade nicht erreichbar. Bitte versuchen Sie es in einem Moment erneut."
+		},
+		"notice": {
+			"title": "Neuer Link angefragt",
+			"text": "{{name}} möchte einen neuen Link für „{{invitation}}“.",
+			"someone": "Eine Person",
+			"send": "Neuen Link senden",
+			"failed": "Der neue Link konnte nicht erstellt werden. Bitte versuchen Sie es erneut.",
+			"failedTitle": "Neuer Link nicht erstellt"
+		},
+		"conversation": {
+			"sendNewLink": "Neuen Link senden"
+		},
+		"renewed": {
+			"title": "Neuer Link",
+			"text": "Hier ist der neue Link zum Termin:",
+			"validUntil": "Der neue Link zum Termin gilt bis {{date}}:"
 		}
 	}
 }

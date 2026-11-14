@@ -20,10 +20,14 @@ import {
 import { UserDataContext } from '../../globalState';
 import {
 	apiGetOwnDirectLinks,
+	apiRenewDirectInvitation,
 	apiUpdateDirectLink,
 	notifyDirectLinksChanged
 } from '../../api/apiDirectLinks';
+import { M3SnackbarHost } from '../m3Snackbar/M3SnackbarHost';
+import { appSnackbarStack } from '../m3Snackbar/snackbarStack';
 import { apiGetTenantAgenciesTopics } from '../../api/apiGetTenantAgenciesTopics';
+import { apiGetUpcomingAppointments } from '../../api/apiSessionAppointments';
 import { DirectLink } from '../conversationCreate/directLink/directLink';
 import { CREATE_CHAT_PATH, MyDirectLinksPage } from './MyDirectLinksPanel';
 
@@ -46,7 +50,22 @@ vi.mock('qrcode', () => ({
 vi.mock('../../api/apiDirectLinks', async (importOriginal) => ({
 	...(await importOriginal<typeof import('../../api/apiDirectLinks')>()),
 	apiGetOwnDirectLinks: vi.fn(),
-	apiUpdateDirectLink: vi.fn()
+	apiUpdateDirectLink: vi.fn(),
+	apiRenewDirectInvitation: vi.fn()
+}));
+/* The dial and calendar have their own tests: here they only show a value. */
+vi.mock('../form/OrisoDatePicker', () => ({
+	OrisoDatePicker: ({ label }: { label: string }) => (
+		<input aria-label={label} readOnly />
+	)
+}));
+vi.mock('../form/OrisoTimePicker', () => ({
+	OrisoTimePicker: ({ label }: { label: string }) => (
+		<input aria-label={label} readOnly />
+	)
+}));
+vi.mock('../../api/apiSessionAppointments', () => ({
+	apiGetUpcomingAppointments: vi.fn()
 }));
 vi.mock('../../api/apiGetTenantAgenciesTopics', () => ({
 	apiGetTenantAgenciesTopics: vi.fn()
@@ -70,11 +89,13 @@ const renderPage = () =>
 			value={{ userData: { agencies: [] }, setUserData: vi.fn() } as any}
 		>
 			<MyDirectLinksPage />
+			<M3SnackbarHost />
 		</UserDataContext.Provider>
 	);
 
 beforeEach(() => {
 	vi.mocked(apiGetOwnDirectLinks).mockResolvedValue([flyer]);
+	vi.mocked(apiGetUpcomingAppointments).mockResolvedValue([]);
 	vi.mocked(apiGetTenantAgenciesTopics).mockResolvedValue([
 		{ id: 3, name: 'Schulden' },
 		{ id: 4, name: 'Sucht' }
@@ -84,6 +105,7 @@ beforeEach(() => {
 afterEach(() => {
 	cleanup();
 	vi.clearAllMocks();
+	appSnackbarStack.clear();
 });
 
 describe('My direct links (#1894)', () => {
@@ -91,16 +113,19 @@ describe('My direct links (#1894)', () => {
 		vi.mocked(apiGetOwnDirectLinks).mockResolvedValue([]);
 		renderPage();
 
-		expect(await screen.findByTestId('direct-links-empty')).toBeTruthy();
-		expect(screen.getByText('directLink.page.emptyHeadline')).toBeTruthy();
-		fireEvent.click(screen.getByTestId('direct-links-create'));
+		/* #2252: the page is "Termine & Direkteinladungen" now. */
+		expect(await screen.findByTestId('invitations-empty')).toBeTruthy();
+		expect(
+			screen.getByText('directInvitation.overview.emptyHeadline')
+		).toBeTruthy();
+		fireEvent.click(screen.getByTestId('invitations-create'));
 		expect(navigate).toHaveBeenCalledWith(CREATE_CHAT_PATH);
 	});
 
 	it('shows a link that "Create chat" announces straight away', async () => {
 		vi.mocked(apiGetOwnDirectLinks).mockResolvedValueOnce([]);
 		renderPage();
-		await screen.findByTestId('direct-links-empty');
+		await screen.findByTestId('invitations-empty');
 
 		vi.mocked(apiGetOwnDirectLinks).mockResolvedValueOnce([flyer]);
 		act(() => notifyDirectLinksChanged());
@@ -161,9 +186,14 @@ describe('My direct links (#1894)', () => {
 
 		fireEvent.click(within(tile).getByRole('switch'));
 
+		/* #2252: a titled pop-up, not a box in the page. */
+		const text = await screen.findByText('directLink.page.toggleFailed');
 		expect(
-			await screen.findByText('directLink.page.toggleFailed')
+			screen.getByText('directLink.page.toggleFailedTitle')
 		).toBeTruthy();
+		expect(screen.getByTestId('my-direct-links-page').contains(text)).toBe(
+			false
+		);
 		expect(tile.className).not.toContain('directLinkTile--off');
 	});
 
@@ -373,6 +403,166 @@ describe('My direct links (#1894)', () => {
 		);
 
 		expect(await screen.findByText('Flyer Schule')).toBeTruthy();
+	});
+});
+
+describe('Termine & Direkteinladungen (#2252)', () => {
+	const inTwoDays = (hour: number) => {
+		const date = new Date();
+		date.setDate(date.getDate() + 2);
+		date.setHours(hour, 0, 0, 0);
+		return date.toISOString();
+	};
+	const meeting: DirectLink = {
+		...flyer,
+		id: '9',
+		name: 'Termin Frau M.',
+		url: 'https://app.example/invite/t9',
+		appointment: { id: 'a-9', start: inTwoDays(10), end: inTwoDays(11) },
+		validityMinutes: 1440,
+		access: 'guests',
+		knock: false
+	};
+
+	it('lists an invitation with a date under the upcoming appointments, not as a tile', async () => {
+		vi.mocked(apiGetOwnDirectLinks).mockResolvedValue([flyer, meeting]);
+		renderPage();
+
+		const row = await screen.findByTestId('upcoming-invitation');
+		expect(within(row).getByText('Termin Frau M.')).toBeTruthy();
+		expect(
+			within(row).getByText('directInvitation.dialog.access.guests')
+		).toBeTruthy();
+		expect(screen.getByText('Flyer Schule').closest('li')).not.toBe(row);
+		expect(screen.getAllByTestId('upcoming-invitation')).toHaveLength(1);
+	});
+
+	it('lists an expired invitation with "Neuen Link senden", which renews it', async () => {
+		const past = (hour: number) => {
+			const date = new Date();
+			date.setDate(date.getDate() - 3);
+			date.setHours(hour, 0, 0, 0);
+			return date.toISOString();
+		};
+		const expired: DirectLink = {
+			...meeting,
+			appointment: { id: 'a-9', start: past(10), end: past(11) },
+			expired: true
+		};
+		vi.mocked(apiGetOwnDirectLinks).mockResolvedValue([expired]);
+		vi.mocked(apiRenewDirectInvitation).mockResolvedValue({
+			...meeting,
+			url: 'https://app.example/invite/new'
+		});
+		renderPage();
+
+		const row = await screen.findByTestId('expired-invitation');
+		expect(within(row).getByText('Termin Frau M.')).toBeTruthy();
+		fireEvent.click(
+			within(row).getByRole('button', {
+				name: 'directInvitation.overview.sendNewLink:Termin Frau M.'
+			})
+		);
+
+		expect(
+			await screen.findByTestId('direct-link-share-dialog')
+		).toBeTruthy();
+		expect(apiRenewDirectInvitation).toHaveBeenCalledWith('9');
+	});
+
+	it('adds the 1:1 appointments, once each, with the person they are with', async () => {
+		vi.mocked(apiGetOwnDirectLinks).mockResolvedValue([meeting]);
+		vi.mocked(apiGetUpcomingAppointments).mockResolvedValue([
+			{
+				id: 'a-9',
+				sessionId: 5,
+				startTime: inTwoDays(10),
+				endTime: inTwoDays(11),
+				status: 'SCHEDULED'
+			},
+			{
+				id: 'a-2',
+				sessionId: 6,
+				startTime: inTwoDays(15),
+				endTime: inTwoDays(16),
+				status: 'SCHEDULED',
+				counterpart: { displayName: 'Ali' }
+			}
+		]);
+		renderPage();
+
+		await waitFor(() =>
+			expect(screen.getAllByTestId('upcoming-invitation')).toHaveLength(2)
+		);
+		expect(
+			screen.getByText('directInvitation.overview.oneToOne:Ali')
+		).toBeTruthy();
+	});
+
+	it('still shows the invitations when the 1:1 appointments cannot be read', async () => {
+		vi.mocked(apiGetOwnDirectLinks).mockResolvedValue([meeting]);
+		vi.mocked(apiGetUpcomingAppointments).mockRejectedValue(new Error('x'));
+		renderPage();
+
+		expect(await screen.findByTestId('upcoming-invitation')).toBeTruthy();
+	});
+
+	it('edits an appointment invitation in the shared dialog and saves its settings', async () => {
+		vi.mocked(apiGetOwnDirectLinks).mockResolvedValue([meeting]);
+		vi.mocked(apiUpdateDirectLink).mockResolvedValue({
+			...meeting,
+			knock: true
+		});
+		renderPage();
+		const row = await screen.findByTestId('upcoming-invitation');
+
+		fireEvent.click(
+			within(row).getByRole('button', {
+				name: 'directInvitation.overview.edit:Termin Frau M.'
+			})
+		);
+		const dialog = await screen.findByTestId('invitation-dialog');
+		fireEvent.click(
+			within(dialog).getByRole('switch', {
+				name: 'directInvitation.dialog.knock'
+			})
+		);
+		fireEvent.click(
+			within(dialog).getByRole('button', {
+				name: 'directInvitation.dialog.saveAction'
+			})
+		);
+
+		await waitFor(() =>
+			expect(apiUpdateDirectLink).toHaveBeenCalledWith('9', {
+				appointment: {
+					startTime: meeting.appointment!.start,
+					endTime: meeting.appointment!.end
+				},
+				validityAfterEndMinutes: 1440,
+				accessMode: 'GUESTS_ONLY',
+				knock: true
+			})
+		);
+		await waitFor(() =>
+			expect(screen.queryByTestId('invitation-dialog')).toBeNull()
+		);
+	});
+
+	it('opens the QR code of an appointment invitation', async () => {
+		vi.mocked(apiGetOwnDirectLinks).mockResolvedValue([meeting]);
+		renderPage();
+		const row = await screen.findByTestId('upcoming-invitation');
+
+		fireEvent.click(
+			within(row).getByRole('button', {
+				name: 'directInvitation.overview.qr:Termin Frau M.'
+			})
+		);
+
+		expect(
+			await screen.findByTestId('direct-link-share-dialog')
+		).toBeTruthy();
 	});
 });
 

@@ -31,6 +31,8 @@ interface MyDirectLinksProps {
 	headerAction?: React.ReactNode;
 	/** #1894: shown instead of the grid while there are no links. */
 	emptyState?: React.ReactNode;
+	/** #2252: the overview names this section "without appointment". */
+	title?: string;
 }
 
 /**
@@ -45,7 +47,8 @@ export const MyDirectLinks = ({
 	onCopy = (url) => copyTextToClipboard(url),
 	onEdit,
 	headerAction,
-	emptyState
+	emptyState,
+	title
 }: MyDirectLinksProps) => {
 	const { t, i18n } = useTranslation();
 	const [copiedId, setCopiedId] = useState<string>();
@@ -76,7 +79,7 @@ export const MyDirectLinks = ({
 			<header className="myDirectLinks__header">
 				<ClockIcon aria-hidden className="myDirectLinks__headerIcon" />
 				<h2 id="myDirectLinksTitle" className="myDirectLinks__title">
-					{t('directLink.list.title')}
+					{title ?? t('directLink.list.title')}
 				</h2>
 				{headerAction && (
 					<div className="myDirectLinks__headerAction">

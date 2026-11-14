@@ -66,6 +66,20 @@ const chooseTopic = async (canvasElement: HTMLElement, topic: string) => {
 	await userEvent.click(await body.findByRole('option', { name: topic }));
 };
 
+/**
+ * #2252: "Link erstellen" opens the shared Direkteinladung dialog; its
+ * defaults (no date, guests and accounts, knock) create the link.
+ */
+const confirmInvitationDialog = async (canvasElement: HTMLElement) => {
+	const dialog = await within(canvasElement.ownerDocument.body).findByTestId(
+		'invitation-dialog'
+	);
+	await userEvent.click(
+		within(dialog).getByRole('button', { name: 'Erstellen' })
+	);
+	return dialog;
+};
+
 export const CreateAndShare: Story = {
 	name: 'Create chat · create a video link, then share it',
 	globals: desktop1440Globals,
@@ -83,25 +97,29 @@ export const CreateAndShare: Story = {
 		await userEvent.click(
 			canvas.getByRole('button', { name: 'Link erstellen' })
 		);
+		await confirmInvitationDialog(canvasElement);
 
 		const share = await body.findByTestId('direct-link-share-dialog');
 		await expect(
-			within(share).getByRole('textbox', { name: 'Direktlink' })
+			within(share).getByRole('textbox', { name: 'Direkteinladung' })
 		).toHaveValue('https://app.oriso.org/invite/tok100');
 		await expect(
 			await within(share).findByRole('img', {
-				name: 'QR-Code zum Direktlink'
+				name: 'QR-Code zur Direkteinladung'
 			})
 		).toBeInTheDocument();
 		const create = directLinkMock().requests.find(
 			(request) => request.method === 'POST'
 		);
-		// One Beratungsstelle: no agency id; calls default to a temporary account.
+		// One Beratungsstelle: no agency id. Guests may come in by default,
+		// so the link makes a temporary account.
 		await expect(create?.body).toEqual({
 			medium: 'VIDEO',
 			topicId: 4,
 			temporary: true,
-			name: 'Schulden'
+			name: 'Schulden',
+			accessMode: 'BOTH',
+			knock: true
 		});
 		await userEvent.click(
 			within(share).getByRole('button', { name: 'Fertig' })
@@ -128,6 +146,7 @@ export const CreateForOneOfTwoAgencies: Story = {
 		await userEvent.click(
 			canvas.getByRole('button', { name: 'Link erstellen' })
 		);
+		await confirmInvitationDialog(canvasElement);
 		await waitFor(() =>
 			expect(
 				directLinkMock().requests.find(
@@ -136,8 +155,10 @@ export const CreateForOneOfTwoAgencies: Story = {
 			).toEqual({
 				medium: 'CHAT',
 				topicId: 5,
-				temporary: false,
+				temporary: true,
 				name: 'Sozialberatung',
+				accessMode: 'BOTH',
+				knock: true,
 				agencyId: 91
 			})
 		);
@@ -179,9 +200,11 @@ export const CreateFails: Story = {
 		await userEvent.click(
 			canvas.getByRole('button', { name: 'Link erstellen' })
 		);
-		await expect(await canvas.findByRole('alert')).toHaveTextContent(
-			'Der Link konnte nicht erstellt werden.'
-		);
+		// The dialog stays open and says so.
+		const dialog = await confirmInvitationDialog(canvasElement);
+		await expect(
+			await within(dialog).findByRole('alert')
+		).toHaveTextContent('Der Link konnte nicht erstellt werden.');
 		await expect(
 			canvasElement.ownerDocument.querySelector(
 				'[data-testid="direct-link-share-dialog"]'

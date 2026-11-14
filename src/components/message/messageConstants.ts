@@ -6,6 +6,10 @@ import {
 	ConsultantRenamedNotice,
 	parseConsultantRenamedNotice
 } from './consultantRenamedNotice';
+import {
+	DirectInvitationRenewedNotice,
+	parseDirectInvitationRenewedNotice
+} from './directInvitationRenewedNotice';
 
 export const SUPERVISOR_FEEDBACK_PREFIX = '[SUPERVISOR_FEEDBACK]';
 export const SYSTEM_NOTIFICATION_PREFIX = '[SYSTEM_NOTIFICATION]';
@@ -128,6 +132,8 @@ export const parseMessagePrefixes = (message?: string | null) => {
 				null as FurtherCounsellingNotice | null,
 			systemNotificationConsultantRenamed:
 				null as ConsultantRenamedNotice | null,
+			systemNotificationDirectInvitationRenewed:
+				null as DirectInvitationRenewedNotice | null,
 			visibleToUserIds: [] as string[]
 		};
 	}
@@ -147,6 +153,8 @@ export const parseMessagePrefixes = (message?: string | null) => {
 	let systemNotificationFurtherCounselling: FurtherCounsellingNotice | null =
 		null;
 	let systemNotificationConsultantRenamed: ConsultantRenamedNotice | null =
+		null;
+	let systemNotificationDirectInvitationRenewed: DirectInvitationRenewedNotice | null =
 		null;
 	let visibleToUserIds: string[] = [];
 
@@ -233,6 +241,8 @@ export const parseMessagePrefixes = (message?: string | null) => {
 				parseFurtherCounsellingNotice(parsed);
 			systemNotificationConsultantRenamed =
 				parseConsultantRenamedNotice(parsed);
+			systemNotificationDirectInvitationRenewed =
+				parseDirectInvitationRenewedNotice(parsed);
 			if (
 				systemNotificationType ===
 				SYSTEM_NOTIFICATION_CASE_HANDOVER_GRANTED
@@ -250,7 +260,11 @@ export const parseMessagePrefixes = (message?: string | null) => {
 			systemNotificationDescription = lines.slice(1).join(' ');
 		}
 		cleanedMessage =
-			systemNotificationDescription || systemNotificationTitle || payload;
+			systemNotificationDescription ||
+			systemNotificationTitle ||
+			// #2252: a "new link" notice previews as its link, never as JSON.
+			systemNotificationDirectInvitationRenewed?.url ||
+			payload;
 	}
 
 	return {
@@ -268,6 +282,7 @@ export const parseMessagePrefixes = (message?: string | null) => {
 		systemNotificationAcceptance,
 		systemNotificationFurtherCounselling,
 		systemNotificationConsultantRenamed,
+		systemNotificationDirectInvitationRenewed,
 		visibleToUserIds
 	};
 };

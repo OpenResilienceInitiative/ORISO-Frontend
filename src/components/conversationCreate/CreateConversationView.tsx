@@ -65,7 +65,10 @@ import {
 import { filterTopicsForAgencies, getAgencyTopicIds } from './agencyTopics';
 import LinkOutlinedIcon from '@mui/icons-material/LinkOutlined';
 import { FORMAT_ARTWORK } from '../../resources/img/formats';
-import { DirectLinkCreateCard } from './directLink/DirectLinkCreateCard';
+import {
+	DirectLinkCreateCard,
+	useDirectInvitationSetup
+} from './directLink/DirectLinkCreateCard';
 import { DirectLinkShareDialog } from './directLink/DirectLinkShareDialog';
 import { DirectLink } from './directLink/directLink';
 import { getDirectLinkMedia } from './directLink/directLinkAvailability';
@@ -558,9 +561,18 @@ const CreateConversationFlow = ({
 			})),
 		[agencies]
 	);
+	/* #2252: the Direkteinladung dialog lives here, beside the share
+	   dialog, so a layout switch that remounts the card keeps it open. */
+	const directInvitationSetup = useDirectInvitationSetup({
+		topics: directLinkTopics,
+		agencies: directLinkAgencies,
+		compact: !fromL,
+		onCreated: setCreatedDirectLink
+	});
 	const renderDirectLinkCard = () => (
 		<DirectLinkCreateCard
 			onCreated={setCreatedDirectLink}
+			onDraft={directInvitationSetup.start}
 			topics={directLinkTopics}
 			agencies={directLinkAgencies}
 			media={directLinkMedia}
@@ -851,6 +863,7 @@ const CreateConversationFlow = ({
 			) : (
 				renderPicker()
 			)}
+			{directInvitationSetup.dialog}
 			{createdDirectLink && (
 				<DirectLinkShareDialog
 					open
