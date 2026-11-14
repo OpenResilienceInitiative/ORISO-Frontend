@@ -66,6 +66,29 @@ $menu-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 		margin: 0 0 8px;
 	}
 
+	// Label above a group of items ("Termin"), Body Small strong, grey.
+	&__groupLabel {
+		margin: 0;
+		padding: 10px 8px 4px;
+		font-size: 12px;
+		font-weight: 600;
+		line-height: 16px;
+		color: var(--m3-on-surface-variant, #444748);
+	}
+
+	// A short explanatory line inside the card.
+	&__note {
+		margin: 0;
+		padding: 6px 8px 8px;
+		font-size: 12px;
+		line-height: 17px;
+		color: var(--m3-on-surface-variant, #444748);
+
+		&--warning {
+			color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
+		}
+	}
+
 	&__section {
 		display: flex;
 		flex-direction: column;
@@ -221,7 +244,7 @@ $menu-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 
 	// Phones (Frank, 28 Oct): bigger touch zones, more air, rounder corners.
 	// Desktop keeps the compact size and its screen space.
-	@media (max-width: 599px) {
+	@media (width <= 599px) {
 		width: 280px;
 		padding: 12px;
 		border-radius: 20px;

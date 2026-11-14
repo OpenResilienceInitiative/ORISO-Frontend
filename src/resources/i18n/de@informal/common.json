@@ -2934,5 +2934,52 @@
 			"title": "Wir konnten dein Konto nicht prüfen",
 			"text": "Deine Nachricht ist noch nicht gesendet und bleibt im Eingabefeld. Bitte prüfe deine Verbindung und sende sie erneut."
 		}
+	},
+	"calendar": {
+		"scopeHint": {
+			"AGENCY": "Du siehst die Kalender deiner Beratungsstelle. Das legt dein Träger fest.",
+			"TENANT": "Du siehst die Kalender aller Beratungsstellen deines Trägers. Das legt dein Träger fest.",
+			"PLATFORM": "Du siehst die Kalender aller Beratenden der Plattform. Das legt dein Träger fest."
+		},
+		"dialog": {
+			"note": "Notiz (nur für dich sichtbar)",
+			"description": "Wähle Tag, Uhrzeit, Art und die Beratung, zu der der Termin gehört."
+		},
+		"details": {
+			"busyHint": "Aus deinem eigenen Kalender übernommen. ORISO kennt nur die Zeit.",
+			"colleagueHint": "Von Kolleg:innen siehst du nur Zeit und Art."
+		},
+		"syncDialog": {
+			"description": "Deine ORISO-Termine in Outlook, Google oder Apple Kalender – und belegte Zeiten von dort zurück.",
+			"feedTitle": "In deinem Kalender abonnieren",
+			"feedText": "Füge diesen Link in deinem Kalender als Abonnement hinzu. Er zeigt nur „ORISO-Termin“ und die Uhrzeit, keine Namen.",
+			"resetText": "Der alte Link funktioniert sofort nicht mehr. Abonniere danach den neuen Link in deinem Kalender.",
+			"preview": "So erscheint ein Termin in deinem Kalender",
+			"importText": "Füge die private ICS-Adresse deines Outlook- oder Google-Kalenders ein. ORISO übernimmt nur, wann du belegt bist – keine Titel und keine Teilnehmenden.",
+			"importError": "Die Adresse konnte nicht gelesen werden. Bitte prüfe den Link."
+		},
+		"saveFailed": "Das hat nicht geklappt. Bitte versuch es noch einmal.",
+		"proposal": {
+			"title": "Dein Vorschlag für „{{title}}“"
+		},
+		"quick": {
+			"hint": "Tippe Tag und Uhrzeit, wähle die Art."
+		},
+		"settings": {
+			"switcherHint": "Wird für dich gespeichert."
+		},
+		"slotMenu": {
+			"outsideHours": "Außerhalb deiner Arbeitszeit."
+		},
+		"split": {
+			"empty": "Blende Kalender von Kolleg:innen ein, um deinen Tag daneben zu sehen.",
+			"label": "Dein Tag neben Kolleg:innen"
+		},
+		"workingHours": {
+			"description": "Außerhalb dieser Zeiten ist dein Kalender schattiert. Termine bleiben trotzdem möglich."
+		},
+		"holidays": {
+			"chooseHint": "Bitte wähle ein Bundesland."
+		}
 	}
 }

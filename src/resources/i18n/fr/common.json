@@ -6896,5 +6896,383 @@
 			"title": "Nous n'avons pas pu vérifier votre compte",
 			"text": "Votre message n'a pas encore été envoyé et reste dans le champ de saisie. Vérifiez votre connexion et envoyez-le à nouveau."
 		}
+	},
+	"calendar": {
+		"create": "Créer un rendez-vous",
+		"today": "Aujourd’hui",
+		"previous": "Précédent",
+		"next": "Suivant",
+		"viewSwitch": "Affichage",
+		"views": {
+			"day": "Jour",
+			"week": "Semaine",
+			"month": "Mois",
+			"list": "Liste",
+			"threeDays": "3 jours",
+			"workWeek": "Semaine de travail",
+			"split": "Côte à côte"
+		},
+		"upcoming": "À venir",
+		"upcomingEmpty": "Aucun rendez-vous à venir",
+		"calendars": "Calendriers",
+		"myCalendar": "Mon calendrier",
+		"scopeHint": {
+			"AGENCY": "Vous voyez les calendriers de votre service de consultation. C’est votre organisme qui le définit.",
+			"TENANT": "Vous voyez les calendriers de tous les services de consultation de votre organisme. C’est votre organisme qui le définit.",
+			"PLATFORM": "Vous voyez les calendriers de l’ensemble des conseiller·ères de la plateforme. C’est votre organisme qui le définit."
+		},
+		"colleaguesEmpty": "Aucun calendrier de collègue visible.",
+		"sync": "Synchronisation du calendrier",
+		"kinds": {
+			"video": "Vidéo",
+			"phone": "Téléphone",
+			"onsite": "Sur place",
+			"chat": "Chat"
+		},
+		"types": {
+			"group": "Rendez-vous de groupe",
+			"blocker": "Plage bloquée",
+			"busy": "Occupé",
+			"colleague": "Occupé"
+		},
+		"noEvents": "Aucun rendez-vous sur cette période",
+		"loading": "Chargement des rendez-vous",
+		"error": {
+			"title": "Les rendez-vous n’ont pas pu être chargés.",
+			"retry": "Réessayer"
+		},
+		"dialog": {
+			"createTitle": "Nouvelle entrée",
+			"description": "Choisissez le jour, l’heure, le type et la consultation à laquelle le rendez-vous se rattache.",
+			"conversation": "Consultation",
+			"kind": "Type",
+			"date": "Date du rendez-vous",
+			"start": "Début",
+			"end": "Fin",
+			"note": "Note (visible uniquement par vous)",
+			"save": "Créer",
+			"saveAnyway": "Créer quand même",
+			"conflict": "En conflit avec : {{list}}",
+			"error": {
+				"incomplete": "Veuillez choisir une date et une heure.",
+				"past": "L’entrée doit se situer dans le futur.",
+				"order": "La fin doit être postérieure au début.",
+				"conversation": "Veuillez choisir la consultation à laquelle le rendez-vous se rattache."
+			}
+		},
+		"details": {
+			"start": {
+				"video": "Démarrer un appel vidéo",
+				"phone": "Démarrer l’appel",
+				"chat": "Ouvrir le chat"
+			},
+			"join": {
+				"video": "Rejoindre l’appel vidéo",
+				"phone": "Rejoindre l’appel",
+				"chat": "Ouvrir le chat"
+			},
+			"move": "Déplacer",
+			"cancel": "Annuler le rendez-vous",
+			"remove": "Supprimer la plage bloquée",
+			"address": "Adresse",
+			"colleague": "Calendrier de {{name}}",
+			"busyHint": "Repris de votre propre calendrier. ORISO ne connaît que l’horaire.",
+			"colleagueHint": "Pour vos collègues, vous ne voyez que l’horaire et le type."
+		},
+		"moved": "Déplacé au {{date}}. La personne en quête de conseils est prévenue.",
+		"blockerMoved": "Plage bloquée déplacée au {{date}}.",
+		"cancelled": "Rendez-vous annulé. La personne en quête de conseils est prévenue.",
+		"created": "Rendez-vous créé : {{date}}",
+		"undo": "Revenir en arrière",
+		"syncDialog": {
+			"title": "Synchronisation du calendrier",
+			"description": "Vos rendez-vous ORISO dans Outlook, Google Agenda ou Calendrier d’Apple – et, en retour, vos créneaux occupés.",
+			"feedTitle": "S’abonner dans votre calendrier",
+			"feedText": "Ajoutez ce lien à votre calendrier en tant qu’abonnement. Il n’affiche que « ORISO-Termin » et l’heure, aucun nom.",
+			"copy": "Copier le lien",
+			"copied": "Lien copié",
+			"lastFetched": "Dernière récupération : {{date}}",
+			"neverFetched": "Pas encore récupéré",
+			"reset": "Réinitialiser le lien",
+			"resetTitle": "Réinitialiser le lien ?",
+			"resetText": "L’ancien lien cesse immédiatement de fonctionner. Abonnez-vous ensuite au nouveau lien dans votre calendrier.",
+			"resetAction": "Réinitialiser",
+			"preview": "Voici comment un rendez-vous apparaît dans votre calendrier",
+			"refreshHint": "Outlook et Google ne mettent à jour les abonnements que toutes les quelques heures. ORISO fait foi.",
+			"importTitle": "Reprendre les créneaux occupés",
+			"importText": "Collez l’adresse ICS privée de votre calendrier Outlook ou Google. ORISO ne reprend que les moments où vous êtes occupé·e – ni titres, ni participant·es.",
+			"importField": "Adresse ICS",
+			"importSave": "Reprendre",
+			"importRemove": "Supprimer",
+			"importStatus": "Connecté à {{host}}, dernière synchronisation {{date}}",
+			"importError": "L’adresse n’a pas pu être lue. Veuillez vérifier le lien.",
+			"importConnected": "Connecté à {{host}}. La première synchronisation est en cours."
+		},
+		"filterLabel": "Afficher",
+		"facets": {
+			"video": "Vidéo",
+			"phone": "Téléphone",
+			"onsite": "Sur place",
+			"chat": "Chat",
+			"group": "Rendez-vous de groupe",
+			"blocker": "Plages bloquées"
+		},
+		"slotMenu": {
+			"label": "Ajouter",
+			"as": "Saisir comme",
+			"blockerNow": "saisi immédiatement",
+			"outsideHours": "En dehors de vos horaires de travail."
+		},
+		"blocker": {
+			"menuItem": "Plage bloquée",
+			"title": "Bloquer une plage horaire",
+			"description": "Aucun rendez-vous n’est attribué pendant cette période. Vos collègues ne voient que « Plage bloquée ».",
+			"allDay": "Toute la journée",
+			"repeat": "Répéter le",
+			"until": "Jusqu’au (inclus)",
+			"save": "Bloquer",
+			"tooMany": "Trop de répétitions : {{max}} plages bloquées au maximum à la fois. Choisissez un dernier jour plus proche.",
+			"count": "{{count}} plages bloquées seront ajoutées.",
+			"count_one": "{{count}} plage bloquée sera ajoutée.",
+			"conflicts": "En conflit avec {{count}} rendez-vous.",
+			"conflicts_one": "En conflit avec {{count}} rendez-vous.",
+			"created": "{{count}} plages bloquées ajoutées",
+			"created_one": "{{count}} plage bloquée ajoutée",
+			"createdSingle": "Plage bloquée ajoutée : {{date}}"
+		},
+		"saveFailed": "Cela n’a pas fonctionné. Veuillez réessayer.",
+		"blockerRemoved": "Plage bloquée supprimée.",
+		"allDay": "toute la journée",
+		"entryMenu": {
+			"back": "Retour",
+			"cancel": "Annuler le rendez-vous",
+			"chat": "Aller au chat",
+			"conflicts": "Chevauche une autre entrée.",
+			"date": "Jour",
+			"from": "De",
+			"groupHint": "Rendez-vous du groupe. Modifiez-le dans le groupe.",
+			"invalid": "La fin est avant le début.",
+			"join": "Rejoindre",
+			"label": "Actions pour {{title}}",
+			"move": "Déplacer …",
+			"propose": "Proposer un autre horaire …",
+			"proposeHint": "{{name}} doit confirmer. D’ici là, le rendez-vous reste en place.",
+			"remove": "Supprimer",
+			"saveMove": "Déplacer",
+			"sendProposal": "Envoyer la proposition",
+			"to": "À"
+		},
+		"fullscreen": "Plein écran",
+		"fullscreenExit": "Quitter le plein écran (Échap)",
+		"jump": {
+			"label": "Aller à un jour",
+			"today": "Aujourd’hui",
+			"tomorrow": "Demain",
+			"nextMonday": "Lundi prochain",
+			"inTwoWeeks": "Dans deux semaines",
+			"date": "Jour choisi",
+			"go": "Afficher"
+		},
+		"kindsMenu": {
+			"label": "Que montrer",
+			"hint": "Les types désélectionnés sont masqués dans le calendrier et dans la liste.",
+			"all": "Tout afficher",
+			"customised": "Certains types sont masqués."
+		},
+		"monthMenu": {
+			"label": "Saisir pour ce jour",
+			"allDay": "Toute la journée",
+			"allDays": "Les {{days}} jours, toute la journée",
+			"withTime": "Avec horaire …",
+			"appointment": "Saisir un rendez-vous …",
+			"appointmentHint": "ouvre le jour ; y faire glisser l’horaire",
+			"range": "{{from}} – {{to}} ({{days}} jours)"
+		},
+		"peek": {
+			"hint": "Un clic ouvre les actions"
+		},
+		"people": {
+			"bar": "Personnes dans le calendrier",
+			"hint": "Survoler met en évidence, un clic masque",
+			"label": "Afficher des calendriers",
+			"me": "Moi",
+			"more": "Autres …"
+		},
+		"proposal": {
+			"label": "Déplacement",
+			"waiting": "en attente de confirmation",
+			"waitingFor": "en attente de {{name}}",
+			"title": "Votre proposition pour « {{title}} »",
+			"hint": "En attente de {{name}}. D’ici là, le rendez-vous reste en place.",
+			"withdraw": "Retirer",
+			"sent": "Proposition envoyée : {{date}}. {{name}} doit confirmer.",
+			"withdrawn": "Proposition retirée.",
+			"open": "Demandes en attente",
+			"proposed": "Proposé : {{date}}"
+		},
+		"quick": {
+			"close": "Fermer la saisie rapide",
+			"date": "Jour",
+			"duration": "Durée",
+			"freeHalf": "Prochaine demi-heure libre",
+			"freeHours": "Prochaine heure libre",
+			"gaps": {
+				"when": "jour et heure",
+				"kind": "type",
+				"who": "échange"
+			},
+			"halfHour": "30 minutes",
+			"hint": "Saisissez le jour et l’heure, choisissez le type.",
+			"hour": "1 heure",
+			"kind": "Type",
+			"minutes": "{{count}} minutes",
+			"missing": "Il manque : {{list}}",
+			"more": "Plus de détails …",
+			"placeholder": "p. ex. 14 h",
+			"save": "Ajouter",
+			"slot": "Durée du créneau libre",
+			"time": "Début",
+			"title": "Saisie rapide",
+			"who": "Avec qui"
+		},
+		"search": {
+			"placeholder": "Rechercher des rendez-vous",
+			"clear": "Effacer la recherche",
+			"empty": "Aucun résultat.",
+			"results": "Résultats de recherche"
+		},
+		"settings": {
+			"label": "Paramètres du calendrier",
+			"workingHours": "Horaires de travail",
+			"switcher": "Choisir la vue",
+			"switcherMenu": "sous forme de menu",
+			"switcherDigits": "sous forme de boutons",
+			"switcherHint": "Enregistré pour vous.",
+			"sync": "Connecter Outlook ou Google"
+		},
+		"side": {
+			"label": "Rendez-vous : recherche et listes"
+		},
+		"split": {
+			"empty": "Affichez les calendriers de collègues pour voir votre journée à côté.",
+			"free": "tous libres",
+			"label": "Votre journée à côté des collègues",
+			"oneDay": "1 jour",
+			"range": "Jours côte à côte",
+			"threeDays": "3 jours"
+		},
+		"viewMenu": "Vue : {{view}}",
+		"when": {
+			"running": "en cours",
+			"inMinutes": "dans {{count}} min",
+			"today": "aujourd’hui {{time}}",
+			"tomorrow": "demain {{time}}",
+			"weekday": "{{day}} {{time}}"
+		},
+		"workingHours": {
+			"break": "Pause déjeuner",
+			"breakFrom": "Pause déjeuner de",
+			"breakInvalid": "La pause déjeuner doit se terminer après son début.",
+			"breakTo": "Pause déjeuner jusqu'à",
+			"change": "Modifier",
+			"cleared": "Horaires supprimés.",
+			"description": "En dehors de ces horaires, votre calendrier est grisé. Les rendez-vous restent possibles.",
+			"from": "Début le {{day}}",
+			"holidays": "Jours fériés libres",
+			"holidaysHint": "Les jours fériés sont grisés comme des jours de repos.",
+			"invalid": "Pour un jour, la fin est avant le début.",
+			"none": "Aucun horaire défini",
+			"save": "Enregistrer",
+			"saved": "Horaires enregistrés : {{hours}}.",
+			"set": "Définir",
+			"summary": "Horaires {{hours}}",
+			"title": "Définir les horaires de travail",
+			"to": "Fin le {{day}}",
+			"tooMany": "Les horaires comptent au plus {{max}} plages par semaine ; cette modification n’a pas été enregistrée."
+		},
+		"grip": {
+			"always": "Toujours {{weekdays}}",
+			"alwaysHint": "comme règle dans les horaires de travail",
+			"end": "Fin du travail",
+			"forget": "Oublier le choix retenu",
+			"forgotten": "Le glissement des horaires redemandera.",
+			"ghostEnd": "Fin {{time}}",
+			"ghostStart": "Début {{time}}",
+			"instead": "au lieu de {{time}} · {{date}}",
+			"label": "Déplacer {{what}} le {{date}}, actuellement {{time}}. Les flèches changent de 15 minutes.",
+			"menuLabel": "Modifier : {{what}}",
+			"onlyThisDay": "Seulement ce jour-là",
+			"remember": "Retenir mon choix",
+			"rememberHint": "Ne plus demander ; réinitialiser via ⋮ en haut à droite",
+			"rememberedDay": "Glisser les horaires : « Seulement ce jour-là » est retenu",
+			"rememberedWeek": "Glisser les horaires : « Toujours » est retenu",
+			"savedDay": "{{what}} le {{date}} : {{time}}. Valable ce jour seulement.",
+			"savedWeek": "{{what}} {{weekdays}} : {{time}}. Valable chaque semaine désormais.",
+			"start": "Début du travail",
+			"title": "{{what}} {{time}} · glisser pour modifier",
+			"titleException": "{{what}} {{time}} (ce jour seulement) · glisser pour modifier",
+			"weekdays": {
+				"0": "le dimanche",
+				"1": "le lundi",
+				"2": "le mardi",
+				"3": "le mercredi",
+				"4": "le jeudi",
+				"5": "le vendredi",
+				"6": "le samedi"
+			}
+		},
+		"holidays": {
+			"choose": "Choisir un Land",
+			"chooseHint": "Veuillez choisir un Land.",
+			"label": "Jour férié : {{name}}",
+			"names": {
+				"allSaints": "Toussaint",
+				"ascension": "Ascension",
+				"assumption": "Assomption",
+				"boxingDay": "Lendemain de Noël",
+				"childrensDay": "Journée mondiale de l’enfance",
+				"christmasDay": "Noël",
+				"corpusChristi": "Fête-Dieu",
+				"easterMonday": "Lundi de Pâques",
+				"easterSunday": "Dimanche de Pâques",
+				"epiphany": "Épiphanie",
+				"goodFriday": "Vendredi saint",
+				"labourDay": "Fête du Travail",
+				"newYear": "Jour de l’An",
+				"reformationDay": "Jour de la Réforme",
+				"repentanceDay": "Jour de pénitence et de prière",
+				"unityDay": "Jour de l’Unité allemande",
+				"whitMonday": "Lundi de Pentecôte",
+				"whitSunday": "Dimanche de Pentecôte",
+				"womensDay": "Journée internationale des femmes"
+			},
+			"next": "Prochain jour férié : {{name}}, {{date}}",
+			"region": "Land (État fédéré)",
+			"regions": {
+				"BB": "Brandebourg",
+				"BE": "Berlin",
+				"BW": "Bade-Wurtemberg",
+				"BY": "Bavière",
+				"HB": "Brême",
+				"HE": "Hesse",
+				"HH": "Hambourg",
+				"MV": "Mecklembourg-Poméranie-Occidentale",
+				"NI": "Basse-Saxe",
+				"NW": "Rhénanie-du-Nord-Westphalie",
+				"RP": "Rhénanie-Palatinat",
+				"SH": "Schleswig-Holstein",
+				"SL": "Sarre",
+				"SN": "Saxe",
+				"ST": "Saxe-Anhalt",
+				"TH": "Thuringe"
+			}
+		},
+		"sheet": {
+			"full": "Replier la liste",
+			"half": "Ouvrir la liste en entier",
+			"keys": "Entrée change la hauteur ; les flèches ouvrent ou replient la liste. On peut aussi glisser.",
+			"open": "Ouvrir la liste"
+		},
+		"conversationsFailed": "Les conversations n’ont pas pu être chargées : les rendez-vous ne peuvent pas y être associés."
 	}
 }

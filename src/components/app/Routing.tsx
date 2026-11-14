@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { useContext, useMemo } from 'react';
+import { Suspense, useContext, useMemo } from 'react';
+import { Loading } from './Loading';
 import { Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { RouterConfigUser, RouterConfigConsultant } from './RouterConfig';
 import { AbsenceHandler } from './AbsenceHandler';
@@ -18,7 +19,7 @@ import { PracticeBanner } from '../../practice/PracticeBanner';
 import { PracticeSurface } from '../../practice/PracticeSurface';
 import { TwoFactorNag } from '../twoFactorAuth/TwoFactorNag';
 import { useAppConfig } from '../../hooks/useAppConfig';
-import { useAskerHasAssignedConsultant } from '../../containers/bookings/hooks/useAskerHasAssignedConsultant';
+import { useAskerHasAssignedConsultant } from '../../hooks/useAskerHasAssignedConsultant';
 import { TermsAndConditions } from '../termsandconditions/TermsAndConditions';
 import NotFound from '../notFound/NotFound';
 import { SessionsZone } from './SessionsZone';
@@ -159,10 +160,12 @@ export const Routing = (props: RoutingProps) => {
 							key={`booking-${path}`}
 							path={rel(path)}
 							element={
-								<div className="contentWrapper__booking">
-									<route.component
-										type={route.type || null}
-									/>
+								<div className="contentWrapper__calendar">
+									<Suspense fallback={<Loading />}>
+										<route.component
+											type={route.type || null}
+										/>
+									</Suspense>
 								</div>
 							}
 						/>

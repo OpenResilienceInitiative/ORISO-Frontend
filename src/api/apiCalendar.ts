@@ -1,0 +1,278 @@
+/**
+ * The counsellor calendar of ADR-032 (UserService `api/calendar.yaml`).
+ * Appointments themselves are created, moved and cancelled through the
+ * conversation's own API (`apiSessionAppointments`); this file reads the
+ * calendar and owns blocked times, colleagues and the calendar sync.
+ */
+import { endpoints } from '../resources/scripts/endpoints';
+import {
+	FETCH_ERRORS,
+	FETCH_METHODS,
+	FETCH_SUCCESS,
+	fetchData
+} from './fetchData';
+
+export type CalendarEntryTypeDTO = 'APPOINTMENT' | 'GROUP' | 'BLOCKER' | 'BUSY';
+export type AppointmentKindDTO = 'ONSITE' | 'VIDEO' | 'PHONE' | 'CHAT';
+
+export interface CalendarEntryDTO {
+	id: string;
+	type: CalendarEntryTypeDTO;
+	/** UTC instants. */
+	start: string;
+	end: string;
+	ownerId: string;
+	kind?: AppointmentKindDTO | null;
+	title?: string | null;
+	sessionId?: number | null;
+	seriesId?: string | null;
+	movable?: boolean;
+}
+
+export interface CalendarColleagueDTO {
+	id: string;
+	displayName: string;
+	agencyName?: string | null;
+	relation: 'SAME_AGENCY' | 'SAME_TENANT' | 'OTHER_TENANT';
+}
+
+export interface CalendarColleaguesDTO {
+	visibilityScope: 'AGENCY' | 'TENANT' | 'PLATFORM';
+	showAskerUsernames: boolean;
+	colleagues: CalendarColleagueDTO[];
+}
+
+export interface BlockerCreateDTO {
+	start: string;
+	end: string;
+	allDay?: boolean;
+	note?: string;
+	/** Weekdays in JavaScript numbering (0 = Sunday); `until` as YYYY-MM-DD. */
+	repeat?: { weekdays: number[]; until: string };
+}
+
+/**
+ * One weekly window of working time (UserService#1649): local wall-clock
+ * time in the platform's zone, weekday 0 = Sunday .. 6 = Saturday.
+ */
+export interface CalendarWorkingHoursWindowDTO {
+	weekday: number;
+	/** HH:mm */
+	start: string;
+	/** HH:mm, after start */
+	end: string;
+}
+
+/** A window of one date (contract v1.2): a weekly window without weekday. */
+export interface CalendarWorkingTimeWindowDTO {
+	/** HH:mm */
+	start: string;
+	/** HH:mm, after start */
+	end: string;
+}
+
+/**
+ * The working windows of one local date (Europe/Berlin), replacing the
+ * weekly rule there. Empty `windows` = the whole day off.
+ */
+export interface CalendarWorkingDayExceptionDTO {
+	/** YYYY-MM-DD */
+	date: string;
+	windows: CalendarWorkingTimeWindowDTO[];
+}
+
+/** Bundesland whose public holidays count as days off (contract v1.2). */
+export type CalendarHolidayRegionDTO =
+	| 'BW'
+	| 'BY'
+	| 'BE'
+	| 'BB'
+	| 'HB'
+	| 'HH'
+	| 'HE'
+	| 'MV'
+	| 'NI'
+	| 'NW'
+	| 'RP'
+	| 'SL'
+	| 'SN'
+	| 'ST'
+	| 'SH'
+	| 'TH';
+
+/** All windows of the caller; an empty list means "none set". */
+export interface CalendarWorkingHoursDTO {
+	windows: CalendarWorkingHoursWindowDTO[];
+	/** Absent or null = holidays are not days off. PUT always sends it. */
+	holidayRegion?: CalendarHolidayRegionDTO | null;
+	/**
+	 * Read-only: day exceptions from 62 days back, by date. Ignored on PUT;
+	 * change them through `apiPutWorkingDayException`.
+	 */
+	exceptions?: CalendarWorkingDayExceptionDTO[];
+}
+
+export interface CalendarSyncDTO {
+	feedUrl: string;
+	feedLastFetchedAt?: string | null;
+	importConfigured: boolean;
+	/** Only the host: the private address itself never comes back. */
+	importHost?: string | null;
+	importLastSyncAt?: string | null;
+	importError?: string | null;
+}
+
+// A backend without the calendar must not send the app to the error page:
+// every failure rejects for the caller, only a 401 keeps the session logic.
+const READ_HANDLING = [FETCH_ERRORS.CATCH_ALL_EXCEPT_UNAUTHORIZED];
+const WRITE_HANDLING = [
+	FETCH_SUCCESS.CONTENT,
+	FETCH_ERRORS.CONFLICT,
+	FETCH_ERRORS.CATCH_ALL_EXCEPT_UNAUTHORIZED
+];
+
+const base = () => endpoints.calendarBase;
+const range = (from: Date, to: Date) =>
+	`from=${encodeURIComponent(from.toISOString())}&to=${encodeURIComponent(to.toISOString())}`;
+
+export const apiGetCalendarEntries = (
+	from: Date,
+	to: Date,
+	signal?: AbortSignal
+): Promise<CalendarEntryDTO[]> =>
+	fetchData({
+		url: `${base()}/entries?${range(from, to)}`,
+		method: FETCH_METHODS.GET,
+		responseHandling: READ_HANDLING,
+		...(signal && { signal })
+	});
+
+export const apiGetCalendarColleagues = (): Promise<CalendarColleaguesDTO> =>
+	fetchData({
+		url: `${base()}/colleagues`,
+		method: FETCH_METHODS.GET,
+		responseHandling: READ_HANDLING
+	});
+
+export const apiGetColleagueCalendarEntries = (
+	consultantId: string,
+	from: Date,
+	to: Date,
+	signal?: AbortSignal
+): Promise<CalendarEntryDTO[]> =>
+	fetchData({
+		url: `${base()}/colleagues/${encodeURIComponent(consultantId)}/entries?${range(from, to)}`,
+		method: FETCH_METHODS.GET,
+		responseHandling: READ_HANDLING,
+		...(signal && { signal })
+	});
+
+export const apiCreateCalendarBlocker = (
+	blocker: BlockerCreateDTO
+): Promise<CalendarEntryDTO[]> =>
+	fetchData({
+		url: `${base()}/blockers`,
+		method: FETCH_METHODS.POST,
+		bodyData: JSON.stringify(blocker),
+		responseHandling: WRITE_HANDLING
+	});
+
+export const apiMoveCalendarBlocker = (
+	id: string,
+	slot: { start: string; end: string }
+): Promise<CalendarEntryDTO> =>
+	fetchData({
+		url: `${base()}/blockers/${encodeURIComponent(id)}`,
+		method: FETCH_METHODS.PUT,
+		bodyData: JSON.stringify(slot),
+		responseHandling: WRITE_HANDLING
+	});
+
+export const apiDeleteCalendarBlocker = (id: string): Promise<void> =>
+	fetchData({
+		url: `${base()}/blockers/${encodeURIComponent(id)}`,
+		method: FETCH_METHODS.DELETE,
+		responseHandling: [FETCH_ERRORS.CATCH_ALL_EXCEPT_UNAUTHORIZED]
+	});
+
+export const apiGetCalendarSync = (): Promise<CalendarSyncDTO> =>
+	fetchData({
+		url: `${base()}/sync`,
+		method: FETCH_METHODS.GET,
+		responseHandling: READ_HANDLING
+	});
+
+export const apiResetCalendarFeed = (): Promise<CalendarSyncDTO> =>
+	fetchData({
+		url: `${base()}/sync/feed/reset`,
+		method: FETCH_METHODS.POST,
+		responseHandling: WRITE_HANDLING
+	});
+
+export const apiSaveCalendarImport = (
+	icsUrl: string
+): Promise<CalendarSyncDTO> =>
+	fetchData({
+		url: `${base()}/sync/import`,
+		method: FETCH_METHODS.PUT,
+		bodyData: JSON.stringify({ icsUrl }),
+		responseHandling: WRITE_HANDLING
+	});
+
+export const apiRemoveCalendarImport = (): Promise<CalendarSyncDTO> =>
+	fetchData({
+		url: `${base()}/sync/import`,
+		method: FETCH_METHODS.DELETE,
+		responseHandling: WRITE_HANDLING
+	});
+
+export const apiGetCalendarWorkingHours =
+	(): Promise<CalendarWorkingHoursDTO> =>
+		fetchData({
+			url: `${base()}/working-hours`,
+			method: FETCH_METHODS.GET,
+			responseHandling: READ_HANDLING
+		});
+
+/**
+ * Replaces every window and the holiday region; an empty list removes the
+ * working hours. `exceptions` are not sent (the server ignores them).
+ */
+export const apiSetCalendarWorkingHours = (
+	hours: Omit<CalendarWorkingHoursDTO, 'exceptions'>
+): Promise<CalendarWorkingHoursDTO> =>
+	fetchData({
+		url: `${base()}/working-hours`,
+		method: FETCH_METHODS.PUT,
+		bodyData: JSON.stringify({
+			windows: hours.windows,
+			holidayRegion: hours.holidayRegion ?? null
+		}),
+		responseHandling: WRITE_HANDLING
+	});
+
+const exceptionUrl = (date: string) =>
+	`${base()}/working-hours/exceptions/${encodeURIComponent(date)}`;
+
+/**
+ * Creates or replaces the exception of one date ("Nur an diesem Tag");
+ * empty `windows` takes the whole day off.
+ */
+export const apiPutWorkingDayException = (
+	date: string,
+	windows: CalendarWorkingTimeWindowDTO[]
+): Promise<CalendarWorkingDayExceptionDTO> =>
+	fetchData({
+		url: exceptionUrl(date),
+		method: FETCH_METHODS.PUT,
+		bodyData: JSON.stringify({ windows }),
+		responseHandling: WRITE_HANDLING
+	});
+
+/** The date falls back to the weekly rule (204, also when none existed). */
+export const apiDeleteWorkingDayException = (date: string): Promise<void> =>
+	fetchData({
+		url: exceptionUrl(date),
+		method: FETCH_METHODS.DELETE,
+		responseHandling: [FETCH_ERRORS.CATCH_ALL_EXCEPT_UNAUTHORIZED]
+	});

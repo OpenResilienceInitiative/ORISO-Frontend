@@ -17,7 +17,6 @@ import {
 	publishAppSessionEnd
 } from '../sessionCookie/observeAppSession';
 import { appConfig } from '../../utils/appConfig';
-import { calcomLogout } from './calcomLogout';
 import {
 	callEventListeners,
 	EVENT_SESSION_TEARDOWN
@@ -143,8 +142,7 @@ export const logout = async (
 	clearLoginRecoveryPassword();
 	clearSecretStorageKeys();
 	clearRecoveryRuntimeState();
-	const { featureAppointmentsEnabled, featureToolsEnabled } =
-		getTenantSettings();
+	const { featureToolsEnabled } = getTenantSettings();
 
 	const serverRequests: Promise<unknown>[] = [];
 	if (hasSession) {
@@ -154,11 +152,6 @@ export const logout = async (
 			),
 			runBoundedLogoutRequest((signal) => apiKeycloakLogout(signal))
 		);
-		if (featureAppointmentsEnabled) {
-			serverRequests.push(
-				runBoundedLogoutRequest((signal) => calcomLogout(signal))
-			);
-		}
 		if (featureToolsEnabled) {
 			serverRequests.push(
 				runBoundedLogoutRequest((signal) => budibaseLogout(signal))

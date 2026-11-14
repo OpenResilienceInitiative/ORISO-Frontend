@@ -6811,5 +6811,383 @@
 			"title": "We could not check your account",
 			"text": "Your message has not been sent yet and stays in the input field. Please check your connection and send it again."
 		}
+	},
+	"calendar": {
+		"create": "New appointment",
+		"today": "Today",
+		"previous": "Previous",
+		"next": "Next",
+		"viewSwitch": "View",
+		"views": {
+			"day": "Day",
+			"week": "Week",
+			"month": "Month",
+			"list": "List",
+			"threeDays": "3 days",
+			"workWeek": "Work week",
+			"split": "Side by side"
+		},
+		"upcoming": "Up next",
+		"upcomingEmpty": "No upcoming appointments",
+		"calendars": "Calendars",
+		"myCalendar": "My calendar",
+		"scopeHint": {
+			"AGENCY": "You see the calendars of your counselling centre. Your organisation sets this.",
+			"TENANT": "You see the calendars of all counselling centres of your organisation. Your organisation sets this.",
+			"PLATFORM": "You see the calendars of all counsellors on the platform. Your organisation sets this."
+		},
+		"colleaguesEmpty": "No colleague calendars visible.",
+		"sync": "Calendar sync",
+		"kinds": {
+			"video": "Video",
+			"phone": "Phone",
+			"onsite": "On site",
+			"chat": "Chat"
+		},
+		"types": {
+			"group": "Group date",
+			"blocker": "Blocked",
+			"busy": "Busy",
+			"colleague": "Busy"
+		},
+		"noEvents": "No appointments in this period",
+		"loading": "Loading appointments",
+		"error": {
+			"title": "The appointments could not be loaded.",
+			"retry": "Try again"
+		},
+		"dialog": {
+			"createTitle": "New entry",
+			"description": "Choose the day, time, kind and the conversation the appointment belongs to.",
+			"conversation": "Conversation",
+			"kind": "Kind",
+			"date": "Date",
+			"start": "Start",
+			"end": "End",
+			"note": "Note (only you see it)",
+			"save": "Create",
+			"saveAnyway": "Create anyway",
+			"conflict": "Overlaps with: {{list}}",
+			"error": {
+				"incomplete": "Please choose a date and time.",
+				"past": "The entry must be in the future.",
+				"order": "The end must be after the start.",
+				"conversation": "Please choose the conversation this appointment belongs to."
+			}
+		},
+		"details": {
+			"start": {
+				"video": "Start video call",
+				"phone": "Start call",
+				"chat": "Open chat"
+			},
+			"join": {
+				"video": "Join video call",
+				"phone": "Go to call",
+				"chat": "Open chat"
+			},
+			"move": "Move",
+			"cancel": "Cancel appointment",
+			"remove": "Remove block",
+			"address": "Address",
+			"colleague": "Calendar of {{name}}",
+			"busyHint": "Taken from your own calendar. ORISO only knows the time.",
+			"colleagueHint": "Of colleagues you only see time and kind."
+		},
+		"moved": "Moved to {{date}}. The advice seeker is notified.",
+		"blockerMoved": "Block moved to {{date}}.",
+		"cancelled": "Appointment cancelled. The advice seeker is notified.",
+		"created": "Appointment created: {{date}}",
+		"undo": "Undo",
+		"syncDialog": {
+			"title": "Calendar sync",
+			"description": "Your ORISO appointments in Outlook, Google or Apple Calendar – and busy times back from there.",
+			"feedTitle": "Subscribe in your calendar",
+			"feedText": "Add this link to your calendar as a subscription. It only shows “ORISO-Termin” and the time, no names.",
+			"copy": "Copy link",
+			"copied": "Link copied",
+			"lastFetched": "Last fetched: {{date}}",
+			"neverFetched": "Not fetched yet",
+			"reset": "Reset link",
+			"resetTitle": "Reset the link?",
+			"resetText": "The old link stops working at once. Subscribe to the new link in your calendar afterwards.",
+			"resetAction": "Reset",
+			"preview": "How an appointment appears in your calendar",
+			"refreshHint": "Outlook and Google refresh subscriptions only every few hours. ORISO is the live source.",
+			"importTitle": "Take over busy times",
+			"importText": "Paste the private ICS address of your Outlook or Google calendar. ORISO only takes over when you are busy – no titles and no attendees.",
+			"importField": "ICS address",
+			"importSave": "Take over",
+			"importRemove": "Remove",
+			"importStatus": "Connected to {{host}}, last synced {{date}}",
+			"importError": "The address could not be read. Please check the link.",
+			"importConnected": "Connected to {{host}}. The first sync is running."
+		},
+		"filterLabel": "Show",
+		"facets": {
+			"video": "Video",
+			"phone": "Phone",
+			"onsite": "On site",
+			"chat": "Chat",
+			"group": "Group dates",
+			"blocker": "Blocked times"
+		},
+		"slotMenu": {
+			"label": "Add",
+			"as": "Add as",
+			"blockerNow": "added at once",
+			"outsideHours": "Outside your working hours."
+		},
+		"blocker": {
+			"menuItem": "Blocked time",
+			"title": "Block time",
+			"description": "No appointments are given in this time. Colleagues only see “Blocked”.",
+			"allDay": "All day",
+			"repeat": "Repeat on",
+			"until": "Up to and including",
+			"save": "Block",
+			"tooMany": "Too many repetitions: at most {{max}} blocked times at once. Please choose an earlier last day.",
+			"count": "{{count}} blocked times will be added.",
+			"count_one": "{{count}} blocked time will be added.",
+			"conflicts": "Overlaps with {{count}} appointments.",
+			"conflicts_one": "Overlaps with {{count}} appointment.",
+			"created": "{{count}} blocked times added",
+			"created_one": "{{count}} blocked time added",
+			"createdSingle": "Time blocked: {{date}}"
+		},
+		"saveFailed": "That did not work. Please try again.",
+		"blockerRemoved": "Blocked time removed.",
+		"allDay": "all day",
+		"entryMenu": {
+			"back": "Back",
+			"cancel": "Cancel appointment",
+			"chat": "Go to chat",
+			"conflicts": "Overlaps with another entry.",
+			"date": "Day",
+			"from": "From",
+			"groupHint": "A group date. Change it in the group.",
+			"invalid": "The end is before the start.",
+			"join": "Join",
+			"label": "Actions for {{title}}",
+			"move": "Move …",
+			"propose": "Propose a new time …",
+			"proposeHint": "{{name}} has to confirm. Until then the appointment stays where it is.",
+			"remove": "Remove",
+			"saveMove": "Move",
+			"sendProposal": "Send proposal",
+			"to": "To"
+		},
+		"fullscreen": "Full screen",
+		"fullscreenExit": "Exit full screen (Esc)",
+		"jump": {
+			"label": "Go to a day",
+			"today": "Today",
+			"tomorrow": "Tomorrow",
+			"nextMonday": "Next Monday",
+			"inTwoWeeks": "In two weeks",
+			"date": "Date",
+			"go": "Show"
+		},
+		"kindsMenu": {
+			"label": "What to show",
+			"hint": "Kinds you switch off are hidden in the calendar and in the list.",
+			"all": "Show everything",
+			"customised": "Some kinds are hidden."
+		},
+		"monthMenu": {
+			"label": "Enter for this day",
+			"allDay": "All day",
+			"allDays": "All {{days}} days, all day",
+			"withTime": "With a time …",
+			"appointment": "Add appointment …",
+			"appointmentHint": "opens the day; drag the time there",
+			"range": "{{from}} – {{to}} ({{days}} days)"
+		},
+		"peek": {
+			"hint": "Click opens the actions"
+		},
+		"people": {
+			"bar": "People in the calendar",
+			"hint": "Pointing highlights, a click hides",
+			"label": "Show calendars",
+			"me": "Me",
+			"more": "More …"
+		},
+		"proposal": {
+			"label": "Move",
+			"waiting": "awaiting confirmation",
+			"waitingFor": "waiting for {{name}}",
+			"title": "Your proposal for “{{title}}”",
+			"hint": "Waiting for {{name}}. Until then the appointment stays where it is.",
+			"withdraw": "Withdraw",
+			"sent": "Proposal sent: {{date}}. {{name}} has to confirm.",
+			"withdrawn": "Proposal withdrawn.",
+			"open": "Open requests",
+			"proposed": "Proposed: {{date}}"
+		},
+		"quick": {
+			"close": "Close quick entry",
+			"date": "Date",
+			"duration": "Duration",
+			"freeHalf": "Next free half hour",
+			"freeHours": "Next free hour",
+			"gaps": {
+				"when": "day and time",
+				"kind": "kind",
+				"who": "conversation"
+			},
+			"halfHour": "30 min",
+			"hint": "Type a day and time, pick the kind.",
+			"hour": "1 h",
+			"kind": "Kind",
+			"minutes": "{{count}} min",
+			"missing": "Still missing: {{list}}",
+			"more": "More details …",
+			"placeholder": "e.g. Thu 2pm video",
+			"save": "Add",
+			"slot": "Length of the free time",
+			"time": "Start",
+			"title": "Quick entry",
+			"who": "With whom"
+		},
+		"search": {
+			"placeholder": "Search appointments",
+			"clear": "Clear search",
+			"empty": "Nothing found.",
+			"results": "Search results"
+		},
+		"settings": {
+			"label": "Calendar settings",
+			"workingHours": "Working hours",
+			"switcher": "Choose the view",
+			"switcherMenu": "as a menu",
+			"switcherDigits": "as buttons",
+			"switcherHint": "Saved for you.",
+			"sync": "Connect Outlook or Google"
+		},
+		"side": {
+			"label": "Appointments: search and lists"
+		},
+		"split": {
+			"empty": "Show colleagues' calendars to see your day next to theirs.",
+			"free": "all free",
+			"label": "Your day next to colleagues",
+			"oneDay": "1 day",
+			"range": "Days side by side",
+			"threeDays": "3 days"
+		},
+		"viewMenu": "View: {{view}}",
+		"when": {
+			"running": "now",
+			"inMinutes": "in {{count}} min",
+			"today": "today {{time}}",
+			"tomorrow": "tomorrow {{time}}",
+			"weekday": "{{day}} {{time}}"
+		},
+		"workingHours": {
+			"break": "Lunch break",
+			"breakFrom": "Lunch break from",
+			"breakInvalid": "The lunch break has to end after it starts.",
+			"breakTo": "Lunch break until",
+			"change": "Change",
+			"cleared": "Working hours removed.",
+			"description": "Outside these hours your calendar is shaded. Appointments are still possible.",
+			"from": "Start on {{day}}",
+			"holidays": "Public holidays off",
+			"holidaysHint": "Public holidays are shaded like days off.",
+			"invalid": "On one day the end is before the start.",
+			"none": "No working hours set",
+			"save": "Save",
+			"saved": "Working hours saved: {{hours}}.",
+			"set": "Set",
+			"summary": "Working hours {{hours}}",
+			"title": "Set working hours",
+			"to": "End on {{day}}",
+			"tooMany": "Working hours hold at most {{max}} time windows a week; this change was not saved."
+		},
+		"grip": {
+			"always": "Always {{weekdays}}",
+			"alwaysHint": "as a rule in the working hours",
+			"end": "End of work",
+			"forget": "Forget the remembered choice",
+			"forgotten": "Dragging the working hours asks again.",
+			"ghostEnd": "End {{time}}",
+			"ghostStart": "Start {{time}}",
+			"instead": "instead of {{time}} · {{date}}",
+			"label": "Move {{what}} on {{date}}, now {{time}}. Arrow keys change it by 15 minutes.",
+			"menuLabel": "Change {{what}}",
+			"onlyThisDay": "Only on this day",
+			"remember": "Remember my choice",
+			"rememberHint": "Do not ask again; reset with ⋮ at the top right",
+			"rememberedDay": "Dragging working hours: “Only on this day” is remembered",
+			"rememberedWeek": "Dragging working hours: “Always” is remembered",
+			"savedDay": "{{what}} on {{date}}: {{time}}. Applies to this day only.",
+			"savedWeek": "{{what}} {{weekdays}}: {{time}}. Applies every week from now on.",
+			"start": "Start of work",
+			"title": "{{what}} {{time}} · drag to change",
+			"titleException": "{{what}} {{time}} (this day only) · drag to change",
+			"weekdays": {
+				"0": "on Sundays",
+				"1": "on Mondays",
+				"2": "on Tuesdays",
+				"3": "on Wednesdays",
+				"4": "on Thursdays",
+				"5": "on Fridays",
+				"6": "on Saturdays"
+			}
+		},
+		"holidays": {
+			"choose": "Choose a federal state",
+			"chooseHint": "Please choose a federal state.",
+			"label": "Public holiday: {{name}}",
+			"names": {
+				"allSaints": "All Saints' Day",
+				"ascension": "Ascension Day",
+				"assumption": "Assumption Day",
+				"boxingDay": "Boxing Day",
+				"childrensDay": "World Children's Day",
+				"christmasDay": "Christmas Day",
+				"corpusChristi": "Corpus Christi",
+				"easterMonday": "Easter Monday",
+				"easterSunday": "Easter Sunday",
+				"epiphany": "Epiphany",
+				"goodFriday": "Good Friday",
+				"labourDay": "Labour Day",
+				"newYear": "New Year's Day",
+				"reformationDay": "Reformation Day",
+				"repentanceDay": "Day of Repentance and Prayer",
+				"unityDay": "German Unity Day",
+				"whitMonday": "Whit Monday",
+				"whitSunday": "Whit Sunday",
+				"womensDay": "International Women's Day"
+			},
+			"next": "Next public holiday: {{name}}, {{date}}",
+			"region": "Federal state",
+			"regions": {
+				"BB": "Brandenburg",
+				"BE": "Berlin",
+				"BW": "Baden-Württemberg",
+				"BY": "Bavaria",
+				"HB": "Bremen",
+				"HE": "Hessen",
+				"HH": "Hamburg",
+				"MV": "Mecklenburg-Western Pomerania",
+				"NI": "Lower Saxony",
+				"NW": "North Rhine-Westphalia",
+				"RP": "Rhineland-Palatinate",
+				"SH": "Schleswig-Holstein",
+				"SL": "Saarland",
+				"SN": "Saxony",
+				"ST": "Saxony-Anhalt",
+				"TH": "Thuringia"
+			}
+		},
+		"sheet": {
+			"full": "Fold the list down",
+			"half": "Pull the list all the way up",
+			"keys": "Enter changes the height; the arrow keys pull the list up or down. Dragging works too.",
+			"open": "Pull up the list"
+		},
+		"conversationsFailed": "The conversations could not be loaded, so appointments cannot be linked to one."
 	}
 }

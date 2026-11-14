@@ -32,21 +32,6 @@ vi.mock('../conversationCreate/CreateConversationView', () => ({
 vi.mock('../groupChat/GroupChatInfo', () => ({ GroupChatInfo: Stub }));
 vi.mock('../tools/ToolsList', () => ({ ToolsList: Stub }));
 vi.mock('../../containers/overview/overview', () => ({ OverviewPage: Stub }));
-vi.mock('../../containers/bookings/components/Booking/booking', () => ({
-	Booking: Stub
-}));
-vi.mock(
-	'../../containers/bookings/components/BookingCancellation/bookingCancellation',
-	() => ({ BookingCancellation: Stub })
-);
-vi.mock(
-	'../../containers/bookings/components/BookingEvents/bookingEvents',
-	() => ({ BookingEvents: Stub })
-);
-vi.mock(
-	'../../containers/bookings/components/BookingReschedule/bookingReschedule',
-	() => ({ BookingReschedule: Stub })
-);
 vi.mock('../notificationsCenter/NotificationsCenter', () => ({
 	NotificationsCenter: Stub
 }));
