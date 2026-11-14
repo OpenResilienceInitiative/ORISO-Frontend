@@ -28,8 +28,10 @@ import {
 	type MoveProposal
 } from './calendarActions';
 import type { CalendarViewName, ViewSwitcherStyle } from './calendarViews';
-import type { WorkingHours } from './calendarWorkingHours';
+import type { DayExceptions, WorkingHours } from './calendarWorkingHours';
+import type { HolidayRegion } from './calendarHolidays';
 import type { SplitDays } from './CalendarSplitView';
+import type { SheetStop } from './CalendarSheet';
 import {
 	ASKER_ENTRIES,
 	COLLEAGUE_ENTRIES,
@@ -64,6 +66,9 @@ const Harness = ({
 	proposals: initialProposals = [],
 	withProposals = true,
 	workingHours: initialHours = STORY_WORKING_HOURS,
+	holidayRegion: initialRegion = null,
+	dayExceptions: initialExceptions = {},
+	initialSheet,
 	splitDays,
 	shell = true
 }: {
@@ -80,6 +85,9 @@ const Harness = ({
 	proposals?: MoveProposal[];
 	withProposals?: boolean;
 	workingHours?: WorkingHours;
+	holidayRegion?: HolidayRegion | null;
+	dayExceptions?: DayExceptions;
+	initialSheet?: SheetStop;
 	splitDays?: SplitDays;
 	shell?: boolean;
 }) => {
@@ -90,6 +98,9 @@ const Harness = ({
 		empty ? [] : role === 'asker' ? ASKER_ENTRIES : OWN_ENTRIES
 	);
 	const [hours, setHours] = useState<WorkingHours>(initialHours);
+	const [region, setRegion] = useState<HolidayRegion | null>(initialRegion);
+	const [exceptions, setExceptions] =
+		useState<DayExceptions>(initialExceptions);
 	const [proposals, setProposals] =
 		useState<MoveProposal[]>(initialProposals);
 	const [feedToken, setFeedToken] = useState(0);
@@ -134,6 +145,8 @@ const Harness = ({
 			visibility={visibility}
 			conversations={CONVERSATIONS}
 			workingHours={hours}
+			holidayRegion={region}
+			dayExceptions={exceptions}
 			feed={{
 				url: feedToken
 					? FEED_URL.replace('9f3c', `r${feedToken}e`)
@@ -144,6 +157,7 @@ const Harness = ({
 			}}
 			busyImport={busyImport}
 			compact={compact}
+			initialSheet={initialSheet}
 			initialView={initialView}
 			initialShownColleagues={shownColleagues}
 			initialFullscreen={fullscreen}
@@ -170,7 +184,20 @@ const Harness = ({
 			onRemoveBlocker={(entry) =>
 				setOwn((all) => all.filter((e) => e.id !== entry.id))
 			}
-			onSaveWorkingHours={setHours}
+			onSaveWorkingHours={(next, nextRegion) => {
+				setHours(next);
+				setRegion(nextRegion);
+			}}
+			onSaveDayException={(date, windows) =>
+				setExceptions((all) => ({ ...all, [date]: windows }))
+			}
+			onDeleteDayException={(date) =>
+				setExceptions((all) => {
+					const rest = { ...all };
+					delete rest[date];
+					return rest;
+				})
+			}
 			proposals={proposals}
 			onProposeMove={
 				withProposals
@@ -271,6 +298,10 @@ const findCy = (cy: string) =>
 		expect(el).toBeTruthy();
 		return el!;
 	});
+
+/** The element `findCy` waited for, as a plain lookup. */
+const cyEl = (cy: string) =>
+	document.body.querySelector<HTMLElement>(`[data-cy="${cy}"]`)!;
 
 export const WorkWeek: Story = {
 	name: 'Counsellor — work week (default)',
@@ -741,7 +772,7 @@ export const PhoneQuickEntry: Story = {
 	play: async ({ canvasElement }) => {
 		const stage =
 			canvasElement.querySelector<HTMLElement>('.calendarStage')!;
-		// Row 2 under the header: the kind chips with "Was anzeigen".
+		// Row 2 under the header: the kind chips, nothing after them.
 		const kinds = await waitFor(() => {
 			const el = stage.querySelector<HTMLElement>(
 				'.calendarStage__kinds'
@@ -753,21 +784,30 @@ export const PhoneQuickEntry: Story = {
 			stage.querySelector('.calendarStage__header')!.nextElementSibling
 		).toBe(kinds);
 		await expect(await findCy('calendar-filter-video')).toBeTruthy();
-		await expect(await findCy('calendar-kinds-button')).toBeTruthy();
-		// Quick entry stays folded behind the "+" right of Heute.
+		await expect(
+			kinds.querySelector('[data-cy="calendar-kinds-button"]')
+		).toBeNull();
+		// "Was anzeigen" sits in the search field of the sheet, as in
+		// "Gespräche".
+		await findCy('calendar-sheet');
+		const sheet = cyEl('calendar-sheet');
+		await expect(
+			sheet.querySelector('[data-cy="calendar-kinds-button"]')
+		).toBeTruthy();
+		// Quick entry stays folded in the sheet until asked for.
 		await expect(
 			canvasElement.querySelector('[data-cy="calendar-quick"]')
 		).toBeNull();
 		await findCy('calendar-quick-toggle');
-		const quickToggle = canvasElement.querySelector<HTMLElement>(
-			'[data-cy="calendar-quick-toggle"]'
-		)!;
+		const quickToggle = cyEl('calendar-quick-toggle');
 		await expect(quickToggle.getAttribute('aria-expanded')).toBe('false');
 		await userEvent.click(quickToggle);
 		await expect(quickToggle.getAttribute('aria-expanded')).toBe('true');
 		await expect(quickToggle.getAttribute('aria-label')).toBe(
 			'Schnell eintragen schließen'
 		);
+		// Room for the form: the sheet opens all the way.
+		await waitFor(() => expect(sheet.dataset.stop).toBe('full'));
 		const input = await findCy('calendar-quick-input');
 		await waitFor(() => expect(document.activeElement).toBe(input));
 		await userEvent.type(input, 'Do 14 Uhr');
@@ -788,6 +828,55 @@ export const PhoneQuickEntry: Story = {
 		await expect(quickToggle.getAttribute('aria-expanded')).toBe('false');
 	}
 };
+
+const sheetStory = (stop: 'peek' | 'half' | 'full', label: string) => ({
+	name: `Counsellor — phone 390 px, sheet ${stop}`,
+	globals: phone390Globals,
+	args: { compact: true, initialSheet: stop },
+	play: async ({ canvasElement }: { canvasElement: HTMLElement }) => {
+		await findCy('calendar-sheet');
+		const sheet = cyEl('calendar-sheet');
+		await expect(sheet.dataset.stop).toBe(stop);
+		await findCy('calendar-sheet-grab');
+		const grab = cyEl('calendar-sheet-grab');
+		await expect(grab.getAttribute('aria-label')).toBe(label);
+		const page = canvasElement.querySelector<HTMLElement>(
+			'[data-testid="calendar-page"]'
+		)!;
+		const share = { peek: 0, half: 0.46, full: 0.88 }[stop];
+		await waitFor(() =>
+			expect(
+				Math.abs(
+					sheet.getBoundingClientRect().height -
+						(stop === 'peek' ? 64 : page.clientHeight * share)
+				)
+			).toBeLessThan(2)
+		);
+	}
+});
+
+export const PhoneSheetPeek: Story = sheetStory('peek', 'Liste aufziehen');
+
+export const PhoneSheetHalf: Story = {
+	...sheetStory('half', 'Liste ganz aufziehen'),
+	play: async (context) => {
+		await sheetStory('half', 'Liste ganz aufziehen').play(context);
+		// Enter cycles the stops, the arrows move them.
+		await findCy('calendar-sheet-grab');
+		const grab = cyEl('calendar-sheet-grab');
+		grab.focus();
+		await userEvent.keyboard('{ArrowDown}');
+		await waitFor(() =>
+			expect(cyEl('calendar-sheet').dataset.stop).toBe('peek')
+		);
+		await userEvent.keyboard('{Enter}');
+		await waitFor(() =>
+			expect(cyEl('calendar-sheet').dataset.stop).toBe('half')
+		);
+	}
+};
+
+export const PhoneSheetFull: Story = sheetStory('full', 'Liste einklappen');
 
 export const PhoneSplit: Story = {
 	name: 'Counsellor — phone 390 px, side by side',
@@ -952,6 +1041,234 @@ export const LoadFailed: Story = {
 	args: { state: 'error' }
 };
 
+// --- Working hours on the grid: grips, holidays, day exceptions ---
+
+const forgetEdgeChoice = () => {
+	try {
+		window.localStorage.removeItem(`oriso.calendar.edgeChoice.${ME}`);
+	} catch {
+		// Storage blocked: nothing remembered either.
+	}
+};
+
+const gripOf = (cy: string) => findCy(`calendar-grip-${cy}`);
+
+export const Grips: Story = {
+	name: 'Working hours — grips on the own calendar',
+	beforeEach: forgetEdgeChoice,
+	play: async ({ canvasElement }) => {
+		await canvasOf(canvasElement).findByTestId('calendar-view');
+		// One grip at the start and one at the end of each working day.
+		const start = await gripOf('2026-11-17-start');
+		await expect(start.getAttribute('aria-label')).toMatch(
+			/^Arbeitsbeginn am Di\., 17\.11\. verschieben, jetzt 08:00\./
+		);
+		await expect(await gripOf('2026-11-17-end')).toBeTruthy();
+		// No grips on the free weekend.
+		await expect(
+			canvasElement.querySelector('[data-grip="2026-11-21-start"]')
+		).toBeNull();
+		// Dragging shows the new time in quarter hours.
+		const end = await gripOf('2026-11-16-end');
+		const box = end.getBoundingClientRect();
+		const y = box.top + box.height / 2;
+		fireEvent.pointerDown(end, {
+			clientX: box.left + 4,
+			clientY: y,
+			button: 0,
+			pointerId: 7,
+			isPrimary: true
+		});
+		const column = end.closest<HTMLElement>('[role="cell"][data-date]')!;
+		const hourPx = column.getBoundingClientRect().height / 14;
+		fireEvent.pointerMove(end, {
+			clientY: y + hourPx * 1.05,
+			pointerId: 7
+		});
+		await findCy('calendar-grip-ghost');
+		const ghost = cyEl('calendar-grip-ghost');
+		await waitFor(() => expect(ghost.textContent).toBe('Ende 19:00'));
+		fireEvent.pointerUp(end, {
+			clientX: box.left + 4,
+			clientY: y + hourPx * 1.05,
+			pointerId: 7
+		});
+		const menu = within(await findCy('calendar-menu-edge'));
+		await expect(menu.getByText('Arbeitsende 19:00')).toBeTruthy();
+		await userEvent.keyboard('{Escape}');
+	}
+};
+
+export const GripMenu: Story = {
+	name: 'Working hours — grip moved, "Nur an diesem Tag" or "Immer"',
+	beforeEach: forgetEdgeChoice,
+	play: async ({ canvasElement }) => {
+		await canvasOf(canvasElement).findByTestId('calendar-view');
+		const start = await gripOf('2026-11-17-start');
+		start.focus();
+		// The arrow keys move the grip by a quarter hour.
+		await userEvent.keyboard('{ArrowUp}');
+		const menu = within(await findCy('calendar-menu-edge'));
+		await expect(menu.getByText('Arbeitsbeginn 07:45')).toBeTruthy();
+		await expect(menu.getByText('statt 08:00 · Di., 17.11.')).toBeTruthy();
+		await expect(
+			menu.getByRole('menuitem', { name: /Nur an diesem Tag/ })
+		).toBeTruthy();
+		await expect(
+			menu.getByRole('menuitem', { name: /Immer dienstags/ })
+		).toBeTruthy();
+		await expect(
+			menu.getByRole('menuitemcheckbox', { name: /Auswahl merken/ })
+		).not.toBeChecked();
+	}
+};
+
+export const GripOnlyThisDay: Story = {
+	name: 'Working hours — "Nur an diesem Tag" makes a day exception',
+	beforeEach: forgetEdgeChoice,
+	play: async ({ canvasElement }) => {
+		await canvasOf(canvasElement).findByTestId('calendar-view');
+		(await gripOf('2026-11-17-start')).focus();
+		await userEvent.keyboard('{ArrowDown}');
+		const menu = within(await findCy('calendar-menu-edge'));
+		await userEvent.click(
+			menu.getByRole('menuitem', { name: /Nur an diesem Tag/ })
+		);
+		await expect(
+			await body().findByText(
+				'Arbeitsbeginn am Di., 17.11.: 08:15. Gilt nur für diesen Tag.'
+			)
+		).toBeTruthy();
+		// The day keeps its own hours; its grips turn primary.
+		await waitFor(async () =>
+			expect(
+				(await gripOf('2026-11-17-start')).classList.contains(
+					'calendarGrip--exception'
+				)
+			).toBe(true)
+		);
+		await expect(
+			(await gripOf('2026-11-18-start')).classList.contains(
+				'calendarGrip--exception'
+			)
+		).toBe(false);
+	}
+};
+
+export const GripRemembered: Story = {
+	name: 'Working hours — "Immer" remembered, forgotten via ⋮',
+	beforeEach: forgetEdgeChoice,
+	play: async ({ canvasElement }) => {
+		const canvas = canvasOf(canvasElement);
+		await canvas.findByTestId('calendar-view');
+		(await gripOf('2026-11-17-end')).focus();
+		await userEvent.keyboard('{ArrowUp}');
+		const menu = within(await findCy('calendar-menu-edge'));
+		const remember = menu.getByRole('menuitemcheckbox', {
+			name: /Auswahl merken/
+		});
+		await userEvent.click(remember);
+		await expect(remember).toBeChecked();
+		await userEvent.click(
+			menu.getByRole('menuitem', { name: /Immer dienstags/ })
+		);
+		await expect(
+			await body().findByText(
+				'Arbeitsende dienstags: 17:45. Gilt ab jetzt jede Woche.'
+			)
+		).toBeTruthy();
+		// Next time no question: the remembered choice applies at once.
+		await waitFor(() =>
+			expect(
+				document.querySelector('[data-cy="calendar-menu-edge"]')
+			).toBeNull()
+		);
+		(await gripOf('2026-11-18-end')).focus();
+		await userEvent.keyboard('{ArrowUp}');
+		await expect(
+			await body().findByText(
+				'Arbeitsende mittwochs: 17:45. Gilt ab jetzt jede Woche.'
+			)
+		).toBeTruthy();
+		await expect(
+			document.querySelector('[data-cy="calendar-menu-edge"]')
+		).toBeNull();
+		await userEvent.click(
+			await canvas.findByRole('button', {
+				name: 'Kalender-Einstellungen'
+			})
+		);
+		const settings = within(await body().findByRole('menu'));
+		await userEvent.click(
+			settings.getByRole('menuitem', {
+				name: /Gemerkte Auswahl vergessen/
+			})
+		);
+		await expect(
+			await body().findByText(
+				'Beim Ziehen der Arbeitszeit wird wieder gefragt.'
+			)
+		).toBeTruthy();
+	}
+};
+
+export const HolidayWorkWeek: Story = {
+	name: 'Working hours — public holiday in the work week (Sachsen)',
+	args: { holidayRegion: 'SN' },
+	play: async ({ canvasElement }) => {
+		const canvas = canvasOf(canvasElement);
+		await canvas.findByTestId('calendar-view');
+		// Buß- und Bettag: one label in the all-day row, the day is off.
+		await expect(
+			await canvas.findByText('Feiertag: Buß- und Bettag')
+		).toBeTruthy();
+		await expect(
+			canvas.getAllByText('Feiertag: Buß- und Bettag')
+		).toHaveLength(1);
+		await expect(
+			canvasElement.querySelector('[data-grip="2026-11-18-start"]')
+		).toBeNull();
+		await expect(await gripOf('2026-11-19-start')).toBeTruthy();
+	}
+};
+
+export const DayException: Story = {
+	name: 'Working hours — one day with its own hours',
+	args: {
+		dayExceptions: { '2026-11-19': [{ start: '10:00', end: '15:00' }] }
+	},
+	play: async ({ canvasElement }) => {
+		await canvasOf(canvasElement).findByTestId('calendar-view');
+		const start = await gripOf('2026-11-19-start');
+		await expect(start.classList).toContain('calendarGrip--exception');
+		await expect(start.getAttribute('title')).toBe(
+			'Arbeitsbeginn 10:00 (nur dieser Tag) · ziehen zum Ändern'
+		);
+		await expect(
+			(await gripOf('2026-11-19-end')).getAttribute('aria-label')
+		).toContain('jetzt 15:00');
+	}
+};
+
+export const SplitGrips: Story = {
+	name: 'Working hours — grips in the own column side by side',
+	beforeEach: forgetEdgeChoice,
+	args: { initialView: 'split', shownColleagues: ['kaya'] },
+	play: async ({ canvasElement }) => {
+		await canvasOf(canvasElement).findByTestId('calendar-split-view');
+		const own = canvasElement.querySelector<HTMLElement>(
+			'.calendarSplit__column--own'
+		)!;
+		await waitFor(() =>
+			expect(own.querySelectorAll('.calendarGrip').length).toBe(2)
+		);
+		// Colleagues' columns carry none.
+		await expect(
+			canvasElement.querySelectorAll('.calendarGrip').length
+		).toBe(2);
+	}
+};
+
 // --- Single pieces ---
 
 export const WorkingHoursPiece: StoryObj = {
@@ -960,7 +1277,8 @@ export const WorkingHoursPiece: StoryObj = {
 		<WorkingHoursDialog
 			open
 			hours={STORY_WORKING_HOURS}
-			holidayRegion="NRW"
+			holidayRegion="NW"
+			now={STORY_NOW}
 			onSave={() => undefined}
 			onClose={() => undefined}
 		/>
@@ -969,7 +1287,7 @@ export const WorkingHoursPiece: StoryObj = {
 		const dialog = within(
 			await body().findByTestId('calendar-working-hours-dialog')
 		);
-		// Seven days, the lunch break and the holidays of the region.
+		// Seven days, the lunch break and the public holidays.
 		await expect(dialog.getAllByRole('switch')).toHaveLength(9);
 		const saturday = document.querySelector<HTMLElement>(
 			'[data-cy="calendar-hours-6"] input[role="switch"]'
@@ -984,7 +1302,22 @@ export const WorkingHoursPiece: StoryObj = {
 		await expect(
 			dialog.getByRole('switch', { name: 'Mittagspause' })
 		).toBeChecked();
-		await expect(dialog.getByText('Feiertage frei (NRW)')).toBeTruthy();
+		await expect(
+			dialog.getByRole('switch', { name: 'Feiertage frei' })
+		).toBeChecked();
+		const region = dialog.getByRole('combobox', { name: 'Bundesland' });
+		await expect((region as HTMLSelectElement).value).toBe('NW');
+		await expect(
+			dialog.getByText(
+				'Nächster Feiertag: 1. Weihnachtstag, Fr., 25.12.2026'
+			)
+		).toBeTruthy();
+		await userEvent.selectOptions(region, 'SN');
+		await expect(
+			dialog.getByText(
+				'Nächster Feiertag: Buß- und Bettag, Mi., 18.11.2026'
+			)
+		).toBeTruthy();
 	}
 };
 
