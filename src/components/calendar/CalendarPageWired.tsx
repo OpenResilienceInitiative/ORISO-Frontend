@@ -193,7 +193,8 @@ export const CalendarPageWired = () => {
 						count: CONVERSATION_LOOKUP_COUNT,
 						offset
 					})
-				: apiGetAskerSessionList();
+				: // Strict: a failure shows the retry instead of no rooms.
+					apiGetAskerSessionList({ strict: true });
 		const from = (offset: number, found: ConversationRef[]): Promise<void> =>
 			page(offset).then((list) => {
 				if (!latest()) return undefined;

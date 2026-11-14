@@ -446,6 +446,12 @@
 	);
 }
 
+// Loading failed: the grid stays mounted under the notice, so the chosen
+// view survives the retry, but is covered (review 4575159303).
+.calendarPage__status--error {
+	background: var(--m3-surface-container-lowest, #ffffff);
+}
+
 // The conversation lookup failed: say so above the grid, with a retry.
 .calendarPage__banner {
 	display: flex;

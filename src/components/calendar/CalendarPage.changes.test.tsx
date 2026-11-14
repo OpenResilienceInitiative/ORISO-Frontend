@@ -31,10 +31,26 @@ const grid: {
 		end: Date
 	) => unknown;
 } = {};
-vi.mock('./CalendarView', () => ({
-	CalendarView: (props: typeof grid) => {
-		grid.onEntryMove = props.onEntryMove;
-		return <div data-testid="calendar-view" />;
+const mounts = vi.hoisted(() => ({ count: 0 }));
+vi.mock('./CalendarView', async () => {
+	const { useEffect } = await import('react');
+	return {
+		CalendarView: (props: typeof grid) => {
+			grid.onEntryMove = props.onEntryMove;
+			useEffect(() => {
+				mounts.count += 1;
+			}, []);
+			return <div data-testid="calendar-view" />;
+		}
+	};
+});
+
+/* The dialog stub hands out its save, so a test can save twice. */
+const dialog: { save?: (draft: unknown) => void } = {};
+vi.mock('./AppointmentDialog', () => ({
+	AppointmentDialog: (props: { onSave: (draft: unknown) => void }) => {
+		dialog.save = props.onSave;
+		return <div data-testid="appointment-dialog" />;
 	}
 }));
 
@@ -140,5 +156,94 @@ describe('CalendarPage — loading and lookups', () => {
 		expect(banner.textContent).toContain('calendar.conversationsFailed');
 		fireEvent.click(screen.getByText('calendar.error.retry'));
 		expect(onRetryConversations).toHaveBeenCalledTimes(1);
+	});
+});
+
+describe('CalendarPage — a failed load (review 4575159303)', () => {
+	it('keeps the grid mounted through the failure, so the chosen view survives the retry', () => {
+		mounts.count = 0;
+		const { rerender } = page({ state: 'ready' });
+		const at = (state: 'ready' | 'error') => (
+			<CalendarPage
+				role="consultant"
+				ownerId="me"
+				now={new Date(2026, 10, 16, 9)}
+				entries={[ENTRY]}
+				state={state}
+			/>
+		);
+		rerender(at('error'));
+		expect(screen.getByRole('alert').textContent).toContain(
+			'calendar.error.title'
+		);
+		rerender(at('ready'));
+		expect(screen.getByTestId('calendar-view')).toBeTruthy();
+		expect(mounts.count).toBe(1);
+	});
+});
+
+describe('CalendarPage — creating (review 4575214168)', () => {
+	const DRAFT = {
+		type: 'appointment',
+		kind: 'video',
+		start: new Date(2026, 10, 17, 10),
+		end: new Date(2026, 10, 17, 11),
+		sessionId: 1
+	};
+	const openDialog = () =>
+		fireEvent.click(
+			document.querySelector('[data-cy="calendar-create"]') as HTMLElement
+		);
+
+	it('keeps the dialog open when saving fails', async () => {
+		page({ onCreate: () => Promise.reject(new Error('500')) });
+		openDialog();
+		await act(async () => dialog.save?.(DRAFT));
+		expect(screen.getByTestId('appointment-dialog')).toBeTruthy();
+		expect(screen.getByText('calendar.saveFailed')).toBeTruthy();
+	});
+
+	it('keeps the dialog open when the host refuses', () => {
+		page({ onCreate: () => false });
+		openDialog();
+		act(() => dialog.save?.(DRAFT));
+		expect(screen.getByTestId('appointment-dialog')).toBeTruthy();
+	});
+
+	it('creates once while saving and closes once it is stored', async () => {
+		let store: () => void = () => undefined;
+		const onCreate = vi.fn(
+			() =>
+				new Promise<void>((resolve) => {
+					store = resolve;
+				})
+		);
+		page({ onCreate });
+		openDialog();
+		act(() => dialog.save?.(DRAFT));
+		act(() => dialog.save?.(DRAFT));
+		expect(onCreate).toHaveBeenCalledTimes(1);
+		expect(screen.getByTestId('appointment-dialog')).toBeTruthy();
+		await act(async () => store());
+		expect(screen.queryByTestId('appointment-dialog')).toBeNull();
+	});
+});
+
+describe('CalendarPage — undo refused at once (review 4575297344)', () => {
+	it('shows the failure notice when undo returns false', async () => {
+		const onMove = vi
+			.fn()
+			.mockResolvedValueOnce(undefined)
+			.mockReturnValueOnce(false);
+		page({ onMove });
+		await moveTo();
+		act(() => {
+			fireEvent.click(
+				document.querySelector(
+					'[data-testid="calendar-undo"]'
+				) as HTMLElement
+			);
+		});
+		expect(screen.getByText('calendar.saveFailed')).toBeTruthy();
 	});
 });

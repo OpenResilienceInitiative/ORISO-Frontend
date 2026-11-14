@@ -79,6 +79,24 @@ describe('CalendarSyncDialog — busy-time import', () => {
 		expect(screen.queryByRole('alert')).toBeNull();
 	});
 
+	it('keeps an address typed while the save was running', async () => {
+		let store: () => void = () => undefined;
+		const onSaveImport = vi.fn(
+			() =>
+				new Promise<void>((resolve) => {
+					store = resolve;
+				})
+		);
+		open({ onSaveImport });
+		fireEvent.change(field(), { target: { value: URL } });
+		fireEvent.click(button('calendar-import-save'));
+		const next = 'https://calendar.example.org/b.ics';
+		fireEvent.change(field(), { target: { value: next } });
+		await act(async () => store());
+		expect(onSaveImport).toHaveBeenCalledWith(URL);
+		expect(field().value).toBe(next);
+	});
+
 	it('says so when removing the import fails', async () => {
 		open({ onRemoveImport: () => Promise.reject(new Error('500')) });
 		await act(async () => {
