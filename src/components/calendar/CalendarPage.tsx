@@ -1480,51 +1480,54 @@ export const CalendarPage = ({
 
 	const body: React.ReactNode = (
 		<>
-			{unloaded.length > 0 && (
-				<div
-					className="calendarPage__banner"
-					role="alert"
-					data-testid="calendar-colleagues-failed"
-				>
-					<span>
-						{t('calendar.colleagueFailed', {
-							names: unloaded.map((c) => c.displayName).join(', ')
-						})}
-					</span>
-					{onRetryColleagues && (
-						<button
-							type="button"
-							className="calendarPage__retry"
-							onClick={onRetryColleagues}
-						>
-							{t('calendar.error.retry')}
-						</button>
-					)}
-				</div>
-			)}
-			{consultant && conversationsFailed && (
-				<div
-					className="calendarPage__banner"
-					role="alert"
-					data-testid="calendar-conversations-failed"
-				>
-					<span>{t('calendar.conversationsFailed')}</span>
-					<button
-						type="button"
-						className="calendarPage__retry"
-						onClick={onRetryConversations}
-					>
-						{t('calendar.error.retry')}
-					</button>
-				</div>
-			)}
-			{/* Covered by the error: out of reach for the keyboard and
-			    screen readers as well, but mounted (review 4575868941). */}
+			{/* Covered by the error, banners included: out of reach for the
+			    keyboard and screen readers as well, but mounted (reviews
+			    4575868941, 4575941073). The retry sits outside. */}
 			<div
 				className="calendarPage__covered"
 				inert={state === 'error' || undefined}
 				data-testid="calendar-covered"
 			>
+				{unloaded.length > 0 && (
+					<div
+						className="calendarPage__banner"
+						role="alert"
+						data-testid="calendar-colleagues-failed"
+					>
+						<span>
+							{t('calendar.colleagueFailed', {
+								names: unloaded
+									.map((c) => c.displayName)
+									.join(', ')
+							})}
+						</span>
+						{onRetryColleagues && (
+							<button
+								type="button"
+								className="calendarPage__retry"
+								onClick={onRetryColleagues}
+							>
+								{t('calendar.error.retry')}
+							</button>
+						)}
+					</div>
+				)}
+				{consultant && conversationsFailed && (
+					<div
+						className="calendarPage__banner"
+						role="alert"
+						data-testid="calendar-conversations-failed"
+					>
+						<span>{t('calendar.conversationsFailed')}</span>
+						<button
+							type="button"
+							className="calendarPage__retry"
+							onClick={onRetryConversations}
+						>
+							{t('calendar.error.retry')}
+						</button>
+					</div>
+				)}
 				<CalendarPager
 					onPage={page}
 					enabled={!compact && !splitOverflows}

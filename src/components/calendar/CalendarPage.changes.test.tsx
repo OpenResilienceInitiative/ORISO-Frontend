@@ -30,9 +30,12 @@ const grid: {
 	onEntryMove?: (entry: CalendarEntry, start: Date, end: Date) => unknown;
 } = {};
 const mounts = vi.hoisted(() => ({ count: 0 }));
-vi.mock('./CalendarView', async () => {
+vi.mock('./CalendarView', async (importOriginal) => {
 	const { useEffect } = await import('react');
+	// The split view reuses the grid's helpers; only the grid is a stub.
+	const actual = await importOriginal<typeof import('./CalendarView')>();
 	return {
+		...actual,
 		CalendarView: (props: typeof grid) => {
 			grid.onEntryMove = props.onEntryMove;
 			useEffect(() => {
@@ -57,6 +60,10 @@ vi.mock('./AppointmentDialog', () => ({
 }));
 
 afterEach(cleanup);
+
+// jsdom has no element scrolling (the split view scrolls to the morning).
+if (!HTMLElement.prototype.scrollTo)
+	HTMLElement.prototype.scrollTo = () => undefined;
 
 const ENTRY: CalendarEntry = {
 	id: 'a1',
@@ -297,6 +304,28 @@ describe('CalendarPage — the grid under a failed load (review 4575868941)', ()
 		const retry = screen.getByRole('button', {
 			name: 'calendar.error.retry'
 		});
+		expect(covered.contains(retry)).toBe(false);
+	});
+
+	it('covers the split view and the banners as well (review 4575941073)', () => {
+		page({
+			state: 'error',
+			initialView: 'split',
+			conversationsFailed: true,
+			onRetryConversations: vi.fn()
+		});
+		const covered = screen.getByTestId('calendar-covered');
+		expect(covered.hasAttribute('inert')).toBe(true);
+		expect(covered.querySelector('.calendarSplit')).not.toBeNull();
+		expect(
+			covered.contains(
+				screen.getByTestId('calendar-conversations-failed')
+			)
+		).toBe(true);
+		const retry = within(screen.getByTestId('calendar-error')).getByRole(
+			'button',
+			{ name: 'calendar.error.retry' }
+		);
 		expect(covered.contains(retry)).toBe(false);
 	});
 
