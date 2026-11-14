@@ -67,7 +67,10 @@ export const EVENT_PARAM_KEYS = [
 	'maintenanceEnd',
 	'statusUrl',
 	// FE#1952: which call a direct-link knock is for (call.knock.requested).
-	'medium'
+	'medium',
+	// FE#2252: the invitation a "Neuen Link anfragen" is about
+	// (direct_invitation.renewal_requested), for "Neuen Link senden".
+	'linkId'
 ] as const;
 
 const ISO_DATE = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
@@ -135,6 +138,12 @@ export const parseEventActionParams = (raw: unknown): EventActionParams => {
 	params.forcedScopeKey = asNullableString(source.forcedScopeKey);
 	params.threadRootId = asNullableString(source.threadRootId);
 	params.callRoomId = asNullableString(source.callRoomId);
+	if (
+		typeof source.linkId === 'number' ||
+		typeof source.linkId === 'string'
+	) {
+		params.linkId = source.linkId;
+	}
 	if (source.medium === 'AUDIO' || source.medium === 'VIDEO') {
 		params.medium = source.medium;
 	}

@@ -2258,7 +2258,7 @@
 				"nav": "Chats",
 				"small": "Messages"
 			},
-			"directLinks": "My direct invitations"
+			"directLinks": "Appointments & direct invitations"
 		},
 		"activity": "Timeline",
 		"language": "Language",
@@ -2603,6 +2603,10 @@
 			"sessionAskerDeleted": {
 				"title": "Deleted advice seeker",
 				"text": "A chat with an advice seeker was deleted. Personal data and messages are no longer available."
+			},
+			"directInvitationRenewalRequested": {
+				"title": "New link requested",
+				"text": "Someone asks for a new link to your appointment."
 			}
 		},
 		"error": "failed",
@@ -6839,7 +6843,8 @@
 			"emptyText": "Create a direct invitation, with or without an appointment. It then appears here.",
 			"create": "Create direct invitation",
 			"noUpcoming": "No upcoming appointments. Give a direct invitation a date, or add an appointment in a conversation via ⋮.",
-			"noLinks": "No direct invitations without appointment."
+			"noLinks": "No direct invitations without appointment.",
+			"appointmentName": "Appointment"
 		},
 		"entry": {
 			"beforeStart": {
@@ -6857,13 +6862,18 @@
 				"request": "Request a new link",
 				"sent": "Request sent. You will get a new link as soon as your counsellor sends it.",
 				"failed": "The request did not go through. Please try again."
+			},
+			"access": {
+				"guestsOnly": "This link is for guests only. Please open it in a window where you are not signed in.",
+				"accountsOnly": "You need an account for this link. Please sign in or register."
 			}
 		},
 		"notice": {
 			"title": "New link requested",
 			"text": "{{name}} would like a new link for “{{invitation}}”.",
 			"someone": "Someone",
-			"send": "Send new link"
+			"send": "Send new link",
+			"failed": "The new link could not be created. Please try again."
 		}
 	}
 }

@@ -249,7 +249,8 @@ describe('shared params contract (#846)', () => {
 				'maintenanceEnd',
 				'statusUrl',
 				// FE#1952: which call a direct-link knock is for (AUDIO / VIDEO).
-				'medium'
+				'medium',
+				'linkId'
 			].sort()
 		);
 	});

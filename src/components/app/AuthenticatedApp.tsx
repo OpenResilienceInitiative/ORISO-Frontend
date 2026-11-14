@@ -67,6 +67,7 @@ import { KeyBackupRecoveryPrompt } from '../E2EEncryptionSupportBanner/KeyBackup
 import { M3SnackbarHost } from '../m3Snackbar/M3SnackbarHost';
 import { PracticeLayer } from '../../practice/PracticeLayer';
 import { JoinRequestCenter } from '../groupChat/joinRequest/JoinRequestCenter';
+import { NewLinkRequestCenter } from '../directInvitation/NewLinkRequestCenter';
 import { httpJoinRequestTransport } from '../groupChat/joinRequest/httpJoinRequestTransport';
 import {
 	getCurrentAuthSubject,
@@ -524,9 +525,12 @@ export const AuthenticatedApp = ({
 							AUTHORITIES.CONSULTANT_DEFAULT,
 							userData
 						) && (
-							<JoinRequestCenter
-								transport={httpJoinRequestTransport}
-							/>
+							<>
+								<JoinRequestCenter
+									transport={httpJoinRequestTransport}
+								/>
+								<NewLinkRequestCenter />
+							</>
 						)}
 					</>
 				);

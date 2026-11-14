@@ -6,6 +6,9 @@ import { DirectLinkShareDialog } from './DirectLinkShareDialog';
 import { DirectLink, DirectLinkMedium } from './directLink';
 import { agencyForTopic } from './directLinkAvailability';
 import { useDirectLinks } from './useDirectLinks';
+import { InvitationDialog } from '../../directInvitation/InvitationDialog';
+import type { InvitationDialogValue } from '../../directInvitation/invitationModel';
+import { directInvitationSettings } from '../../directInvitation/directInvitationSettings';
 
 export interface DirectLinkCreateCardProps {
 	/** The counsellor's topics, `value` = topic id. */
@@ -51,18 +54,16 @@ export const DirectLinkCreateCard = ({
 	const [submitting, setSubmitting] = useState(false);
 	const [failed, setFailed] = useState(false);
 	const [ownShared, setOwnShared] = useState<DirectLink>();
+	/* #2252: the card's choice waits for the dialog's appointment and settings. */
+	const [draft, setDraft] = useState<DirectLinkDraft>();
 	const shared = onCreated ? undefined : ownShared;
 	const setShared = onCreated ?? setOwnShared;
 
-	const handleCreate = async ({
-		topic,
-		medium,
-		temporary,
-		name,
-		scheduledAt
-	}: DirectLinkDraft) => {
+	const handleCreate = async (value: InvitationDialogValue) => {
+		if (!draft || submitting) return;
+		const { topic, medium, name } = draft;
 		const topicId = Number(topic);
-		if (!Number.isFinite(topicId) || submitting) return;
+		if (!Number.isFinite(topicId)) return;
 		setSubmitting(true);
 		setFailed(false);
 		try {
@@ -70,16 +71,17 @@ export const DirectLinkCreateCard = ({
 			// #2142: the typed name wins; without one the link is named after its topic.
 			const label =
 				name || topics.find((option) => option.value === topic)?.label;
-			setShared(
-				await create({
-					medium,
-					topicId,
-					temporary,
-					...(label ? { name: label } : {}),
-					...(scheduledAt ? { scheduledAt } : {}),
-					...(agencyId !== undefined ? { agencyId } : {})
-				})
-			);
+			const settings = directInvitationSettings(value);
+			const created = await create({
+				medium,
+				topicId,
+				temporary: settings.accessMode !== 'ACCOUNTS_ONLY',
+				...(label ? { name: label } : {}),
+				...settings,
+				...(agencyId !== undefined ? { agencyId } : {})
+			});
+			setDraft(undefined);
+			setShared(created);
 		} catch {
 			setFailed(true);
 		} finally {
@@ -93,14 +95,31 @@ export const DirectLinkCreateCard = ({
 				className={className}
 				topics={topics}
 				media={media}
-				onCreate={handleCreate}
+				onCreate={(next) => {
+					setFailed(false);
+					setDraft(next);
+				}}
 				isSubmitting={submitting}
 				topicsLoadFailed={topicsLoadFailed}
 				onRetryTopics={onRetryTopics}
-				errorMessage={
-					failed ? t('directLink.card.createFailed') : undefined
-				}
+				settingsInDialog
 			/>
+			{draft && (
+				<InvitationDialog
+					variant="invitation"
+					fullScreen={compact}
+					saving={submitting}
+					error={
+						failed ? t('directLink.card.createFailed') : undefined
+					}
+					onSubmit={handleCreate}
+					onClose={() => {
+						if (submitting) return;
+						setDraft(undefined);
+						setFailed(false);
+					}}
+				/>
+			)}
 			{shared && (
 				<DirectLinkShareDialog
 					open

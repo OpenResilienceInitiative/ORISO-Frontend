@@ -2250,7 +2250,7 @@
 				"nav": "Conversation",
 				"small": "Nouvelles"
 			},
-			"directLinks": "Mes invitations directes",
+			"directLinks": "Rendez-vous et invitations directes",
 			"inboxState": {
 				"empty": "Aucune demande",
 				"allOpened": "Toutes les demandes ont été ouvertes",
@@ -2606,6 +2606,10 @@
 			"sessionAskerDeleted": {
 				"title": "Personne en quête de conseil supprimée",
 				"text": "Un chat avec une personne en quête de conseil a été supprimé. Les données personnelles et les messages ne sont plus disponibles."
+			},
+			"directInvitationRenewalRequested": {
+				"title": "Neuer Link angefragt",
+				"text": "Eine Person möchte einen neuen Link zu Ihrem Termin."
 			}
 		},
 		"error": "Échec",
@@ -6924,7 +6928,8 @@
 			"emptyText": "Erstellen Sie eine Direkteinladung – mit oder ohne Termin. Sie erscheint danach hier.",
 			"create": "Direkteinladung erstellen",
 			"noUpcoming": "Keine anstehenden Termine. Geben Sie einer Direkteinladung ein Datum, oder legen Sie in einem Gespräch über ⋮ einen Termin an.",
-			"noLinks": "Keine Direkteinladungen ohne Termin."
+			"noLinks": "Keine Direkteinladungen ohne Termin.",
+			"appointmentName": "Termin"
 		},
 		"entry": {
 			"beforeStart": {
@@ -6942,13 +6947,18 @@
 				"request": "Neuen Link anfragen",
 				"sent": "Anfrage gesendet. Sie bekommen einen neuen Link, sobald Ihre Beratungsperson ihn schickt.",
 				"failed": "Die Anfrage hat nicht geklappt. Bitte versuchen Sie es erneut."
+			},
+			"access": {
+				"guestsOnly": "Dieser Link ist nur für Gäste. Bitte öffnen Sie ihn in einem Fenster, in dem Sie nicht angemeldet sind.",
+				"accountsOnly": "Für diesen Link brauchen Sie ein Konto. Bitte melden Sie sich an oder registrieren Sie sich."
 			}
 		},
 		"notice": {
 			"title": "Neuer Link angefragt",
 			"text": "{{name}} möchte einen neuen Link für „{{invitation}}“.",
 			"someone": "Eine Person",
-			"send": "Neuen Link senden"
+			"send": "Neuen Link senden",
+			"failed": "Der neue Link konnte nicht erstellt werden. Bitte versuchen Sie es erneut."
 		}
 	}
 }

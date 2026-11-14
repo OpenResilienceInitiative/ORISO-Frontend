@@ -101,6 +101,8 @@ export interface EventActionParams {
 	isVideo?: boolean | null;
 	/** FE#1952: which call a direct-link knock is for. */
 	medium?: 'AUDIO' | 'VIDEO' | null;
+	/** FE#2252: the Direkteinladung a "Neuen Link anfragen" is about. */
+	linkId?: string | number;
 	/** Sender label (metadata only, ADR-AT-01 — never message content). */
 	senderName?: string | null;
 	/** Sender display name for i18n interpolation ({{senderDisplayName}}). */

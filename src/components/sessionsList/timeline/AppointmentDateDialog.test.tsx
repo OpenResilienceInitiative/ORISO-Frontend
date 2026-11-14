@@ -31,6 +31,14 @@ vi.mock('../../../api/apiSessionAppointments', () => ({
 	apiCreateSessionAppointment: create,
 	apiMoveSessionAppointment: move
 }));
+const { invite } = vi.hoisted(() => ({ invite: vi.fn() }));
+vi.mock('../../../api/apiDirectLinks', async (importOriginal) => ({
+	...(await importOriginal<typeof import('../../../api/apiDirectLinks')>()),
+	apiCreateSessionDirectInvitation: invite
+}));
+vi.mock('qrcode', () => ({
+	default: { toDataURL: () => Promise.resolve('data:image/png;base64,') }
+}));
 vi.mock('./useAppointmentNotice', () => ({
 	useAppointmentNotice: () => notice
 }));
@@ -216,5 +224,94 @@ describe('AppointmentDateDialog', () => {
 		expect(onClose).toHaveBeenCalledTimes(1);
 		expect(create).not.toHaveBeenCalled();
 		expect(notice).not.toHaveBeenCalled();
+	});
+
+	/* #2252: ⋮ "Termin anlegen" with "Weitere Personen per Link einladen". */
+	describe('inviting more people by link', () => {
+		const link = {
+			id: '12',
+			name: 'Termin',
+			topic: '',
+			medium: 'VIDEO',
+			temporary: true,
+			active: true,
+			url: 'https://app.example/invite/t12',
+			joinsExistingSession: true
+		};
+		const openWithInvite = () =>
+			render(
+				<AppointmentDateDialog
+					sessionId={4401}
+					matrixRoomId="!room:x"
+					onClose={onClose}
+					allowGuestInvite
+				/>
+			);
+		const inviteSwitch = () =>
+			screen.getByRole('switch', {
+				name: 'directInvitation.dialog.inviteOthers'
+			});
+
+		it('creates the appointment with its invitation in one call, then shows the link', async () => {
+			invite.mockResolvedValue(link);
+			const changed = vi.fn();
+			const stop = onAppointmentsChanged(changed);
+			openWithInvite();
+			setField('date', '2026-11-05');
+			setTime('start', 14);
+			setTime('end', 15);
+			fireEvent.click(inviteSwitch());
+			await clickButton(`${KEYS}.createAction`);
+			stop();
+
+			expect(invite).toHaveBeenCalledWith(4401, {
+				appointment: {
+					startTime: local(5, 14),
+					endTime: local(5, 15)
+				},
+				validityAfterEndMinutes: 1440,
+				accessMode: 'BOTH',
+				knock: true
+			});
+			expect(create).not.toHaveBeenCalled();
+			expect(changed).toHaveBeenCalledTimes(1);
+			expect(notice).toHaveBeenCalledWith(
+				expect.objectContaining({ kind: 'created', sessionId: 4401 })
+			);
+			expect(
+				await screen.findByTestId('direct-link-share-dialog')
+			).toBeTruthy();
+			expect(onClose).not.toHaveBeenCalled();
+		});
+
+		it('stays open with a message when the invitation is refused', async () => {
+			invite.mockRejectedValue(new Response(null, { status: 409 }));
+			openWithInvite();
+			fireEvent.click(inviteSwitch());
+			await clickButton(`${KEYS}.createAction`);
+
+			expect(screen.getByRole('alert').textContent).toBe(
+				`${KEYS}.error.conflict`
+			);
+			expect(notice).not.toHaveBeenCalled();
+			expect(onClose).not.toHaveBeenCalled();
+		});
+
+		it('keeps the plain appointment when nobody else is invited', async () => {
+			openWithInvite();
+			await clickButton(`${KEYS}.createAction`);
+
+			expect(create).toHaveBeenCalled();
+			expect(invite).not.toHaveBeenCalled();
+		});
+
+		it('does not offer the invitation without permission', () => {
+			open();
+			expect(
+				screen.queryByRole('switch', {
+					name: 'directInvitation.dialog.inviteOthers'
+				})
+			).toBeNull();
+		});
 	});
 });

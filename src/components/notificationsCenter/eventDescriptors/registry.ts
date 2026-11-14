@@ -485,6 +485,16 @@ const seeds: EventDescriptor[] = [
 		resolveActionTarget: knockCallTarget
 	}),
 
+	// FE#2252: someone asks for a new link after a Direkteinladung expired;
+	// the card opens the conversation, the pop-up offers "Neuen Link senden".
+	descriptor('direct_invitation.renewal_requested', {
+		family: 'appointments',
+		category: 'system',
+		icon: 'appointmentRequested',
+		i18nKey: 'directInvitationRenewalRequested',
+		resolveActionTarget: conversationTarget
+	}),
+
 	// ----- Appointments family (Figma 2026-07-12; writers still deferred) -----
 	descriptor('appointment.requested', {
 		family: 'appointments',
