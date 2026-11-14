@@ -185,12 +185,19 @@ describe('"Neuen Link anfragen" (#2252)', () => {
 		);
 	});
 
-	/* fetchData treats 202 as a failure and hands the response back. */
-	it('counts the 202 Accepted as success', async () => {
+	/* The backend answers 204; a 202 or a 503 means nothing was stored. */
+	it('passes a 503 on instead of reporting success', async () => {
+		vi.mocked(fetchData).mockRejectedValue(reply(503));
+		await expect(apiRequestDirectInvitationRenewal('tok')).rejects.toEqual(
+			expect.objectContaining({ status: 503 })
+		);
+	});
+
+	it('does not count a 202 as success', async () => {
 		vi.mocked(fetchData).mockRejectedValue(reply(202));
-		await expect(
-			apiRequestDirectInvitationRenewal('tok')
-		).resolves.toBeUndefined();
+		await expect(apiRequestDirectInvitationRenewal('tok')).rejects.toEqual(
+			expect.objectContaining({ status: 202 })
+		);
 	});
 
 	it('passes a refusal on', async () => {

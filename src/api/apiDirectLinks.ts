@@ -339,7 +339,7 @@ export const apiRenewDirectInvitation = async (
 ): Promise<DirectLink> =>
 	readable(
 		await fetchData({
-			url: `${endpoints.directLink(linkId)}/renewal`,
+			url: endpoints.directLinkRenewal(linkId),
 			method: FETCH_METHODS.POST,
 			bodyData: JSON.stringify(
 				validityAfterEndMinutes === undefined
@@ -375,17 +375,12 @@ export const apiCreateSessionDirectInvitation = async (
 export const apiRequestDirectInvitationRenewal = async (
 	token: string
 ): Promise<void> => {
-	try {
-		await fetchData({
-			url: `${endpoints.inviteLinksBase}${encodeURIComponent(token)}/renewal-requests`,
-			method: FETCH_METHODS.POST,
-			responseHandling: handled
-		});
-	} catch (error) {
-		// fetchData hands a 202 Accepted back as a failed response.
-		if ((error as Response)?.status === 202) return;
-		throw error;
-	}
+	// 204 on success; every other answer (404, 409, 503) is passed on.
+	await fetchData({
+		url: endpoints.inviteLinkRenewalRequests(token),
+		method: FETCH_METHODS.POST,
+		responseHandling: handled
+	});
 };
 
 /**

@@ -105,6 +105,14 @@ export const endpoints = {
 	directLink: (linkId: string) =>
 		userServiceOrigin +
 		`/service/users/directlinks/${encodeURIComponent(linkId)}`,
+	/** #2252 "Neuen Link senden": a new token for the same appointment. */
+	directLinkRenewal: (linkId: string) =>
+		userServiceOrigin +
+		`/service/users/directlinks/${encodeURIComponent(linkId)}/renewal`,
+	/** #2252 "Neuen Link anfragen": a person asks the counsellor. */
+	inviteLinkRenewalRequests: (token: string) =>
+		userServiceOrigin +
+		`/service/users/invitelinks/${encodeURIComponent(token)}/renewal-requests`,
 	userDrafts: userServiceOrigin + '/service/users/drafts',
 	tutorialProgress: userServiceOrigin + '/service/users/tutorials/progress',
 	email: userServiceOrigin + '/service/users/email',

@@ -2956,12 +2956,14 @@
 			"expired": {
 				"text": "Dieser Link gilt nicht mehr. Frag einen neuen an – deine Beratungsperson wird benachrichtigt.",
 				"sent": "Anfrage gesendet. Du bekommst einen neuen Link, sobald deine Beratungsperson ihn schickt.",
-				"failed": "Die Anfrage hat nicht geklappt. Bitte versuch es erneut."
+				"failed": "Die Anfrage hat nicht geklappt. Bitte versuch es erneut.",
+				"signedOut": "Dieser Link gilt nicht mehr. Einen neuen Link kannst du anfragen, wenn du angemeldet bist. Ohne Anmeldung wende dich bitte direkt an deine Beratungsperson."
 			},
 			"access": {
 				"guestsOnly": "Dieser Link ist nur für Gäste. Bitte öffne ihn in einem Fenster, in dem du nicht angemeldet bist.",
 				"accountsOnly": "Für diesen Link brauchst du ein Konto. Bitte melde dich an oder registriere dich."
-			}
+			},
+			"roomUnavailable": "Die Unterhaltung ist gerade nicht erreichbar. Bitte versuch es gleich noch einmal."
 		},
 		"notice": {
 			"failed": "Der neue Link konnte nicht erstellt werden. Bitte versuche es erneut."

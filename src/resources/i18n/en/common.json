@@ -6730,7 +6730,8 @@
 			"emptyText": "You create a direct invitation in “Create chat”. It then appears here.",
 			"loading": "Loading direct invitations",
 			"retry": "Try again",
-			"toggleFailed": "The link could not be switched. Please try again."
+			"toggleFailed": "The link could not be switched. Please try again.",
+			"toggleFailedTitle": "Not switched"
 		},
 		"edit": {
 			"title": "Edit direct invitation",
@@ -6844,7 +6845,10 @@
 			"create": "Create direct invitation",
 			"noUpcoming": "No upcoming appointments. Give a direct invitation a date, or add an appointment in a conversation via ⋮.",
 			"noLinks": "No direct invitations without appointment.",
-			"appointmentName": "Appointment"
+			"appointmentName": "Appointment",
+			"copyFailedTitle": "Not copied",
+			"expired": "Expired invitations",
+			"sendNewLink": "Send a new link for {{name}}"
 		},
 		"entry": {
 			"beforeStart": {
@@ -6853,7 +6857,6 @@
 				"time": "{{start}}–{{end}}",
 				"waitingRoom": "The waiting room opens at {{time}}, 15 minutes before the start.",
 				"chatNow": "You can already write now.",
-				"addToCalendar": "Add to calendar",
 				"openChat": "Open chat"
 			},
 			"expired": {
@@ -6861,19 +6864,32 @@
 				"text": "This link is no longer valid. Request a new one; your counsellor will be notified.",
 				"request": "Request a new link",
 				"sent": "Request sent. You will get a new link as soon as your counsellor sends it.",
-				"failed": "The request did not go through. Please try again."
+				"failed": "The request did not go through. Please try again.",
+				"failedTitle": "Request not sent",
+				"signedOut": "This link is no longer valid. You can request a new link once you are signed in. Without signing in, please contact your counsellor directly.",
+				"signIn": "Sign in to request a new link"
 			},
 			"access": {
 				"guestsOnly": "This link is for guests only. Please open it in a window where you are not signed in.",
 				"accountsOnly": "You need an account for this link. Please sign in or register."
-			}
+			},
+			"roomUnavailable": "The conversation cannot be reached right now. Please try again in a moment."
 		},
 		"notice": {
 			"title": "New link requested",
 			"text": "{{name}} would like a new link for “{{invitation}}”.",
 			"someone": "Someone",
 			"send": "Send new link",
-			"failed": "The new link could not be created. Please try again."
+			"failed": "The new link could not be created. Please try again.",
+			"failedTitle": "New link not created"
+		},
+		"conversation": {
+			"sendNewLink": "Send new link"
+		},
+		"renewed": {
+			"title": "New link",
+			"text": "Here is the new link to the appointment:",
+			"validUntil": "The new link to the appointment works until {{date}}:"
 		}
 	}
 }
