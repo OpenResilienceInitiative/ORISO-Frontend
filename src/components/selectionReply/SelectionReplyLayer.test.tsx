@@ -226,6 +226,29 @@ describe('SelectionReplyLayer focus on leaving the answer', () => {
 		expect(document.activeElement).toBe(bubble());
 	});
 
+	it('a voice reply from the bar keeps focus in the dialog, then on Stop', async () => {
+		const start = deferred<void>();
+		const recorder = {
+			start: vi.fn(() => start.promise),
+			stop: vi.fn(),
+			cancel: vi.fn()
+		};
+		renderLayer(recorder);
+		startVoiceFromToolbar();
+		const dialog = document.querySelector(
+			'[data-cy="selection-reply-popover"]'
+		)!;
+		expect(dialog.contains(document.activeElement)).toBe(true);
+		// The text field is not focused: no phone keyboard over the take.
+		expect(document.activeElement).not.toBe(field());
+		await act(async () => start.resolve());
+		expect(document.activeElement).toBe(screen.getByLabelText('app.stop'));
+		fireEvent.keyDown(document.activeElement!, { key: 'Escape' });
+		expect(
+			document.querySelector('[data-cy="selection-reply-popover"]')
+		).toBeNull();
+	});
+
 	it('collecting an answer hands focus to the composer', () => {
 		const focusComposer = vi.fn();
 		renderLayer(idleRecorder(), { focusComposer });

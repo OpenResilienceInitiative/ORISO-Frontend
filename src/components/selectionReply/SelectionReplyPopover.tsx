@@ -72,6 +72,15 @@ export const SelectionReplyPopover = forwardRef<
 	) => {
 		const { t: translate } = useTranslation();
 		const inputRef = useRef<HTMLInputElement | null>(null);
+		const rootRef = useRef<HTMLDivElement | null>(null);
+		const setRoot = (element: HTMLDivElement | null) => {
+			rootRef.current = element;
+			if (typeof ref === 'function') {
+				ref(element);
+			} else if (ref) {
+				ref.current = element;
+			}
+		};
 		const [hint, setHint] = useState<'add' | 'send' | null>(null);
 		const sendKey = isMacLike() ? '⌘' : 'Strg';
 		const hasAnswer = Boolean(draft.trim()) || voice.mode === 'review';
@@ -80,8 +89,28 @@ export const SelectionReplyPopover = forwardRef<
 		useEffect(() => {
 			if (autoFocus) {
 				inputRef.current?.focus({ preventScroll: true });
+			} else {
+				// Opened for a voice reply: the bar that had focus is gone.
+				// Keep focus in the dialog (so Escape still closes it)
+				// without opening the phone keyboard on the text field.
+				rootRef.current?.focus({ preventScroll: true });
 			}
 		}, [autoFocus]);
+
+		// Once recording runs, Stop is the control that matters.
+		useEffect(() => {
+			const root = rootRef.current;
+			if (voice.mode !== 'recording' || !root) {
+				return;
+			}
+			const active = document.activeElement;
+			if (active && active !== document.body && !root.contains(active)) {
+				return;
+			}
+			root.querySelector<HTMLButtonElement>(
+				'.voicePlayer__toggle'
+			)?.focus({ preventScroll: true });
+		}, [voice.mode]);
 
 		const handleKeyDown = (event: React.KeyboardEvent) => {
 			if (event.key === 'Escape') {
@@ -118,8 +147,9 @@ export const SelectionReplyPopover = forwardRef<
 
 		return (
 			<div
-				ref={ref}
+				ref={setRoot}
 				role="dialog"
+				tabIndex={-1}
 				aria-label={translate('message.selectionReply.dialog', {
 					author: passage.author
 				})}

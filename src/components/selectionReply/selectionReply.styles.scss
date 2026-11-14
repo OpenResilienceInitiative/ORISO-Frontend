@@ -121,6 +121,12 @@ $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 
 .selectionReply__popover {
+	// Focus lands on the dialog itself only to keep it reachable (voice
+	// reply); its controls carry the visible rings.
+	&:focus {
+		outline: none;
+	}
+
 	position: absolute;
 	z-index: 31;
 	display: flex;
