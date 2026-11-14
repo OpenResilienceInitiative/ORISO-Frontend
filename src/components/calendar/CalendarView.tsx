@@ -66,6 +66,11 @@ import {
 	type CalendarViewName
 } from './calendarViews';
 import { useEntryLabel, useRangeFormat } from './useEntryLabel';
+import {
+	colleagueBands,
+	foldsIntoBand,
+	type ColleagueBand
+} from './calendarBands';
 import { CalendarEntryPeek, initialsOf } from './CalendarEntryPeek';
 import { fullCalendarLocale } from './calendarLocale';
 import './calendar.styles.scss';
@@ -103,6 +108,13 @@ export interface CalendarViewProps {
 	entries: CalendarEntry[];
 	/** Colleagues by id, for names, initials and the tooltip. */
 	colleagues?: Record<string, Colleague>;
+	/**
+	 * Shown colleagues whose calendars loaded: in the time grid their
+	 * timed entries fold into "k von n belegt" bands.
+	 */
+	bandPeople?: Colleague[];
+	/** Shown colleagues whose calendars did not load: no "all busy". */
+	unavailable?: Colleague[];
 	compact?: boolean;
 	/** Fixed "now" for Storybook and tests. */
 	now?: Date;
@@ -159,6 +171,8 @@ interface EventProps {
 	off?: { kind: 'off' | 'break' };
 	/** Background, all-day: the public holiday of that date. */
 	holiday?: PublicHoliday;
+	/** Background: colleagues busy in this stretch. */
+	band?: ColleagueBand;
 }
 
 /** The usual working day the time grid shows, before any widening. */
@@ -177,7 +191,10 @@ const planBounds = (plan?: WorkingPlan) => {
 	];
 	return windows.reduce(
 		(bounds, w) => ({
-			from: Math.min(bounds.from, Math.floor(minutesOf(w.start) / 60) * 60),
+			from: Math.min(
+				bounds.from,
+				Math.floor(minutesOf(w.start) / 60) * 60
+			),
 			to: Math.max(bounds.to, Math.ceil(minutesOf(w.end) / 60) * 60)
 		}),
 		{ from: DAY_FROM, to: DAY_TO }
@@ -237,18 +254,18 @@ const dayOfKey = (key: string) => {
 const measureColumn =
 	(firstMinute: number, lastMinute: number) =>
 	(grip: HTMLElement): GripGeometry | null => {
-	const column = grip.closest<HTMLElement>('[role="cell"][data-date]');
-	if (!column) return null;
-	const rect = column.getBoundingClientRect();
-	return {
-		top: rect.top,
-		left: rect.left,
-		width: rect.width,
-		height: rect.height,
-		firstMinute,
-		lastMinute
+		const column = grip.closest<HTMLElement>('[role="cell"][data-date]');
+		if (!column) return null;
+		const rect = column.getBoundingClientRect();
+		return {
+			top: rect.top,
+			left: rect.left,
+			width: rect.width,
+			height: rect.height,
+			firstMinute,
+			lastMinute
+		};
 	};
-};
 
 /**
  * FullCalendar reads an all-day end as an exclusive date. UserService may
@@ -314,6 +331,10 @@ const useFontsReady = () => {
 const propsOf = (info: { event: { extendedProps: unknown } }) =>
 	info.event.extendedProps as EventProps;
 
+const NO_PEOPLE: Colleague[] = [];
+const bandKey = (band: ColleagueBand) =>
+	`${band.start.getTime()}-${band.end.getTime()}`;
+
 const DAY_MS = 86_400_000;
 
 export const CalendarView = ({
@@ -323,6 +344,8 @@ export const CalendarView = ({
 	ownerId,
 	entries,
 	colleagues = {},
+	bandPeople = NO_PEOPLE,
+	unavailable = NO_PEOPLE,
 	compact = false,
 	now,
 	initialDate,
@@ -346,11 +369,15 @@ export const CalendarView = ({
 	const consultant = role === 'consultant';
 	const gridRef = useRef<HTMLDivElement>(null);
 	const fontsReady = useFontsReady();
-	const [peek, setPeek] = useState<{
-		el: HTMLElement;
-		entry: CalendarEntry;
-		proposal?: MoveProposal;
-	} | null>(null);
+	const [peek, setPeek] = useState<
+		| {
+				el: HTMLElement;
+				entry: CalendarEntry;
+				proposal?: MoveProposal;
+		  }
+		| { el: HTMLElement; band: ColleagueBand }
+		| null
+	>(null);
 
 	// The days FullCalendar shows, for the off-time of each date.
 	const [shownRange, setShownRange] = useState<{
@@ -358,6 +385,35 @@ export const CalendarView = ({
 		end: Date;
 	} | null>(null);
 	const timeGrid = TIME_GRID_VIEWS.includes(view);
+
+	// Colleagues fold into bands in the time grid; month and list keep
+	// single entries.
+	const people = useMemo(() => bandPeople.map((c) => c.id), [bandPeople]);
+	const banded = timeGrid && people.length > 0;
+	const bands = useMemo(
+		() => (banded ? colleagueBands(entries, people) : []),
+		[banded, entries, people]
+	);
+	const gridEntries = useMemo(
+		() =>
+			banded
+				? entries.filter((entry) => !foldsIntoBand(entry, people))
+				: entries,
+		[banded, entries, people]
+	);
+	const bandLabel = (band: ColleagueBand) =>
+		people.length === 1
+			? t('calendar.bandOne', {
+					name: colleagues[band.busy[0]]?.displayName ?? ''
+				})
+			: t('calendar.bandSome', {
+					busy: band.busy.length,
+					total: people.length
+				});
+	// "All busy" only when every shown calendar is known.
+	const allBusy = (band: ColleagueBand) =>
+		band.busy.length === people.length && unavailable.length === 0;
+
 	const offEvents = useMemo<EventInput[]>(() => {
 		if (!workingPlan || !shownRange) return [];
 		const out: EventInput[] = [];
@@ -456,7 +512,7 @@ export const CalendarView = ({
 
 	const events = useMemo<EventInput[]>(
 		() => [
-			...entries.map((entry) => ({
+			...gridEntries.map((entry) => ({
 				id: entry.id,
 				start: entry.start,
 				end: entry.allDay ? allDayEnd(entry.end) : entry.end,
@@ -474,9 +530,16 @@ export const CalendarView = ({
 				allDay: !!entry.allDay,
 				extendedProps: { entry, proposal }
 			})),
-			...offEvents
+			...offEvents,
+			...bands.map((band) => ({
+				id: `band-${bandKey(band)}`,
+				start: band.start,
+				end: band.end,
+				display: 'background',
+				extendedProps: { band }
+			}))
 		],
-		[entries, proposals, ownerId, role, label, t, offEvents]
+		[gridEntries, proposals, ownerId, role, label, t, offEvents, bands]
 	);
 
 	const eventClass = useCallback(
@@ -580,7 +643,11 @@ export const CalendarView = ({
 	};
 
 	const backgroundClass = (info: EventDisplayInfo) => {
-		const { off } = propsOf(info);
+		const { off, band } = propsOf(info);
+		if (band)
+			return allBusy(band)
+				? 'calendarView__band calendarView__band--all'
+				: 'calendarView__band';
 		if (off)
 			return off.kind === 'break'
 				? 'calendarView__offHours calendarView__offHours--break'
@@ -588,12 +655,28 @@ export const CalendarView = ({
 		return '';
 	};
 
-	const backgroundContent = (info: EventDisplayInfo) =>
-		propsOf(info).off?.kind === 'break' ? (
+	const backgroundContent = (info: EventDisplayInfo) => {
+		const { off, band } = propsOf(info);
+		if (band)
+			// Fills the band, so hovering or tapping anywhere on it explains
+			// who is busy and who is free.
+			return (
+				<span
+					className="calendarView__bandFill"
+					data-band={bandKey(band)}
+					data-cy="calendar-band"
+				>
+					<span className="calendarView__bandLabel">
+						{bandLabel(band)}
+					</span>
+				</span>
+			);
+		return off?.kind === 'break' ? (
 			<span className="calendarView__breakLabel">
 				{t('calendar.workingHours.break')}
 			</span>
 		) : null;
+	};
 
 	// The entry's own element knows which entry it shows, so hover, focus
 	// and the tooltip need no lookup through FullCalendar.
@@ -628,6 +711,13 @@ export const CalendarView = ({
 	// Colleague entries and proposals explain themselves on hover and on
 	// keyboard focus, at once (Frank: tooltips show immediately).
 	const findPeek = (target: EventTarget | null) => {
+		const bandEl = (target as HTMLElement | null)?.closest?.<HTMLElement>(
+			'[data-band]'
+		);
+		if (bandEl) {
+			const band = bands.find((b) => bandKey(b) === bandEl.dataset.band);
+			return band ? { el: bandEl, band } : null;
+		}
 		const el = (target as HTMLElement | null)?.closest?.<HTMLElement>(
 			'[data-entry-id]'
 		);
@@ -641,6 +731,30 @@ export const CalendarView = ({
 		if (!entry || entry.ownerId === ownerId) return null;
 		return { el, entry };
 	};
+	// FullCalendar lays its column frame over background events, so the
+	// pointer finds a band by position, not by the element on top.
+	const bandAt = (x: number, y: number) => {
+		const el = document
+			.elementsFromPoint?.(x, y)
+			.find((node) => (node as HTMLElement).dataset?.band) as
+			| HTMLElement
+			| undefined;
+		const band = el && bands.find((b) => bandKey(b) === el.dataset.band);
+		return el && band ? { el, band } : null;
+	};
+	const followBand = (event: React.MouseEvent) => {
+		const byTarget = findPeek(event.target);
+		const next =
+			bandAt(event.clientX, event.clientY) ??
+			(byTarget && 'band' in byTarget ? byTarget : null);
+		if (next)
+			setPeek((current) => (current?.el === next.el ? current : next));
+		else
+			setPeek((current) =>
+				current && 'band' in current ? null : current
+			);
+	};
+
 	const showPeek = (event: React.SyntheticEvent) => {
 		const next = findPeek(event.target);
 		setPeek((current) =>
@@ -707,7 +821,10 @@ export const CalendarView = ({
 		onSelectRange?.({ start: info.start, end: info.end }, anchor);
 	};
 
-	const peekColleague = peek ? colleagues[peek.entry.ownerId] : undefined;
+	const peekColleague =
+		peek && 'entry' in peek ? colleagues[peek.entry.ownerId] : undefined;
+	const names = (list: Colleague[]) =>
+		list.map((c) => c.displayName).join(', ');
 
 	return (
 		<div
@@ -716,6 +833,14 @@ export const CalendarView = ({
 			data-testid="calendar-view"
 			onMouseOver={showPeek}
 			onMouseLeave={() => setPeek(null)}
+			onMouseMove={bands.length > 0 ? followBand : undefined}
+			// A tap on a band explains it, as hovering does.
+			onClick={(event) => {
+				const next =
+					bandAt(event.clientX, event.clientY) ??
+					findPeek(event.target);
+				if (next && 'band' in next) setPeek(next);
+			}}
 			onFocus={showPeek}
 			onBlur={() => setPeek(null)}
 		>
@@ -794,7 +919,11 @@ export const CalendarView = ({
 									measure={measure}
 									onChange={onEdgeChange}
 									style={{
-										top: gripTop(time, firstMinute, lastMinute)
+										top: gripTop(
+											time,
+											firstMinute,
+											lastMinute
+										)
 									}}
 								/>
 							);
@@ -811,7 +940,50 @@ export const CalendarView = ({
 				className="calendarPeekPopper"
 			>
 				{/* Popper's root already is the `role="tooltip"`. */}
-				{peek && (
+				{peek && 'band' in peek && (
+					<div
+						className="calendarPeek calendarPeek--band"
+						data-cy="calendar-band-peek"
+					>
+						<strong className="calendarPeek__when">
+							{format(peek.band.start, peek.band.end)}
+						</strong>
+						<span>
+							{t('calendar.bandBusy', {
+								names: names(
+									bandPeople.filter((c) =>
+										peek.band.busy.includes(c.id)
+									)
+								)
+							})}
+						</span>
+						{bandPeople.some(
+							(c) => !peek.band.busy.includes(c.id)
+						) && (
+							<span>
+								{t('calendar.bandFree', {
+									names: names(
+										bandPeople.filter(
+											(c) =>
+												!peek.band.busy.includes(c.id)
+										)
+									)
+								})}
+							</span>
+						)}
+						{unavailable.length > 0 && (
+							<span>
+								{t('calendar.bandUnknown', {
+									names: names(unavailable)
+								})}
+							</span>
+						)}
+						<span className="calendarPeek__hint">
+							{t('calendar.bandHint')}
+						</span>
+					</div>
+				)}
+				{peek && 'entry' in peek && (
 					<CalendarEntryPeek
 						entry={peek.entry}
 						colleague={peekColleague}

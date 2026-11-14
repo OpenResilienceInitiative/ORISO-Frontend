@@ -1574,6 +1574,10 @@ export const CalendarPage = ({
 							ownerId={ownerId}
 							entries={visible}
 							colleagues={colleagueById}
+							bandPeople={shown.filter(
+								(c) => !failedColleagues.includes(c.id)
+							)}
+							unavailable={unloaded}
 							compact={compact}
 							now={fixedNow}
 							initialDate={anchorDate}

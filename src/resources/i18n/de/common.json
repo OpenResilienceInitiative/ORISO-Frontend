@@ -6888,6 +6888,12 @@
 		}
 	},
 	"calendar": {
+		"bandHint": "Einzelne Termine zeigt „Nebeneinander“.",
+		"bandUnknown": "Nicht geladen: {{names}}",
+		"bandFree": "Frei: {{names}}",
+		"bandBusy": "Belegt: {{names}}",
+		"bandSome": "{{busy}} von {{total}} belegt",
+		"bandOne": "{{name}} belegt",
 		"colleagueFailedShort": "nicht geladen",
 		"colleagueFailed": "Der Kalender von {{names}} konnte nicht geladen werden; ob alle frei sind, lässt sich so nicht sagen.",
 		"upcomingChat": "Zum Chat mit {{name}}",

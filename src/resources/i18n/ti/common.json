@@ -6865,6 +6865,12 @@
 		}
 	},
 	"calendar": {
+		"bandHint": "ነፍሲ ወከፍ ቆጸራ „ጎን ንጎን“ የርኢ።",
+		"bandUnknown": "ኣይተጻዕነን: {{names}}",
+		"bandFree": "ነጻ: {{names}}",
+		"bandBusy": "ተታሒዞም: {{names}}",
+		"bandSome": "ካብ {{total}} {{busy}} ተታሒዞም",
+		"bandOne": "{{name}} ተታሒዙ",
 		"colleagueFailedShort": "ኣይተጻዕነን",
 		"colleagueFailed": "ካላንደር {{names}} ክጽዓን ኣይከኣለን፣ ስለዚ ኩሉ መዓስ ነጻ ምዃኑ ክንገር ኣይከኣልን።",
 		"upcomingChat": "ናብ ዕላል ምስ {{name}} ኪድ",

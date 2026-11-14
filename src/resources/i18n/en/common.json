@@ -6813,6 +6813,12 @@
 		}
 	},
 	"calendar": {
+		"bandHint": "“Side by side” shows single entries.",
+		"bandUnknown": "Not loaded: {{names}}",
+		"bandFree": "Free: {{names}}",
+		"bandBusy": "Busy: {{names}}",
+		"bandSome": "{{busy}} of {{total}} busy",
+		"bandOne": "{{name}} busy",
 		"colleagueFailedShort": "not loaded",
 		"colleagueFailed": "The calendar of {{names}} could not be loaded, so it cannot be said when everyone is free.",
 		"upcomingChat": "Go to the chat with {{name}}",

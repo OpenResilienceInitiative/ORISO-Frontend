@@ -6898,6 +6898,12 @@
 		}
 	},
 	"calendar": {
+		"bandHint": "Tek tek randevuları „Yan yana“ görünümü gösterir.",
+		"bandUnknown": "Yüklenmedi: {{names}}",
+		"bandFree": "Boş: {{names}}",
+		"bandBusy": "Dolu: {{names}}",
+		"bandSome": "{{total}} kişiden {{busy}} dolu",
+		"bandOne": "{{name}} dolu",
 		"colleagueFailedShort": "yüklenmedi",
 		"colleagueFailed": "{{names}} takvimi yüklenemedi; bu yüzden herkesin ne zaman boş olduğu söylenemiyor.",
 		"upcomingChat": "{{name}} ile sohbete git",

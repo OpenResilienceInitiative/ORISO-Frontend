@@ -6915,6 +6915,12 @@
 		}
 	},
 	"calendar": {
+		"bandHint": "Отдельные записи показывает режим «Рядом».",
+		"bandUnknown": "Не загружено: {{names}}",
+		"bandFree": "Свободны: {{names}}",
+		"bandBusy": "Заняты: {{names}}",
+		"bandSome": "Занято {{busy}} из {{total}}",
+		"bandOne": "{{name}}: занято",
 		"colleagueFailedShort": "не загружен",
 		"colleagueFailed": "Не удалось загрузить календарь: {{names}}. Поэтому нельзя сказать, когда все свободны.",
 		"upcomingChat": "Перейти в чат с {{name}}",

@@ -6898,6 +6898,12 @@
 		}
 	},
 	"calendar": {
+		"bandHint": "« Côte à côte » montre chaque rendez-vous.",
+		"bandUnknown": "Non chargé : {{names}}",
+		"bandFree": "Libres : {{names}}",
+		"bandBusy": "Occupé·es : {{names}}",
+		"bandSome": "{{busy}} sur {{total}} occupé·es",
+		"bandOne": "{{name}} occupé·e",
 		"colleagueFailedShort": "non chargé",
 		"colleagueFailed": "Le calendrier de {{names}} n’a pas pu être chargé : impossible de dire quand tout le monde est libre.",
 		"upcomingChat": "Aller à la discussion avec {{name}}",

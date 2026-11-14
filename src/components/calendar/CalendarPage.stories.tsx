@@ -377,7 +377,7 @@ export const List: Story = {
 };
 
 export const ColleaguesShown: Story = {
-	name: 'Colleagues shown (people bar, stripes, tooltip)',
+	name: 'Colleagues shown (people bar, bands in the time grid)',
 	args: { shownColleagues: ['kaya', 'demir'] },
 	play: async ({ canvasElement }) => {
 		const canvas = canvasOf(canvasElement);
@@ -385,6 +385,39 @@ export const ColleaguesShown: Story = {
 			await canvas.findByRole('group', { name: 'Personen im Kalender' })
 		);
 		await expect(bar.getByText('A. Kaya')).toBeTruthy();
+		// Their timed entries fold into "k von n belegt" bands.
+		const band = await waitFor(() => {
+			const el = canvasElement.querySelector<HTMLElement>(
+				'[data-cy="calendar-band"]'
+			);
+			expect(el).toBeTruthy();
+			return el!;
+		});
+		await expect(band.textContent).toMatch(/von 2 belegt/);
+		await expect(
+			canvasElement.querySelector('[data-entry-id="k1"]')
+		).toBeNull();
+		// Hovering a band says who is busy and who is free.
+		await userEvent.hover(band);
+		const tip = await waitFor(() => {
+			const peek = body()
+				.getAllByRole('tooltip')
+				.find((el) => el.textContent?.includes('Belegt:'));
+			expect(peek).toBeTruthy();
+			return peek!;
+		});
+		await expect(tip.textContent).toContain('Frei:');
+	}
+};
+
+export const ColleaguesMonth: Story = {
+	name: 'Colleagues shown — month keeps single entries',
+	args: { initialView: 'month', shownColleagues: ['kaya', 'demir'] },
+	play: async ({ canvasElement }) => {
+		const canvas = canvasOf(canvasElement);
+		const bar = within(
+			await canvas.findByRole('group', { name: 'Personen im Kalender' })
+		);
 		const entry = await entryEl(canvasElement, 'k1');
 		await expect(entry.className).toContain('calEntry--colleague');
 		// Hovering a colleague's entry shows who, where and what at once.
@@ -584,7 +617,9 @@ export const WithdrawProposal: Story = {
 
 export const ProposeMove: Story = {
 	name: 'Move proposal — propose for a colleague',
-	args: { shownColleagues: ['kaya'] },
+	// The time grid folds colleagues into bands; side by side shows each
+	// entry in its own column.
+	args: { initialView: 'split', shownColleagues: ['kaya'] },
 	play: async ({ canvasElement }) => {
 		await userEvent.click(await entryEl(canvasElement, 'k1'));
 		const menu = within(await findCy('calendar-menu-entry'));
@@ -997,8 +1032,9 @@ export const TeamCounsellingCentre: Story = {
 				return el!;
 			})
 		);
+		// One colleague shown: the time grid names her on the band.
 		await expect(
-			(await canvas.findAllByText(/A\. Kaya · /)).length
+			(await canvas.findAllByText('A. Kaya belegt')).length
 		).toBeGreaterThan(0);
 		// Brandt works at another counselling centre: not offered.
 		await userEvent.click(
