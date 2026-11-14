@@ -6886,5 +6886,142 @@
 			"title": "Wir konnten Ihr Konto nicht prüfen",
 			"text": "Ihre Nachricht ist noch nicht gesendet und bleibt im Eingabefeld. Bitte prüfen Sie Ihre Verbindung und senden Sie erneut."
 		}
+	},
+	"calendar": {
+		"create": "Termin anlegen",
+		"today": "Heute",
+		"previous": "Zurück",
+		"next": "Weiter",
+		"viewSwitch": "Ansicht",
+		"views": {
+			"day": "Tag",
+			"week": "Woche",
+			"month": "Monat",
+			"list": "Liste"
+		},
+		"upcoming": "Als Nächstes",
+		"upcomingEmpty": "Keine anstehenden Termine",
+		"calendars": "Kalender",
+		"myCalendar": "Mein Kalender",
+		"scopeHint": {
+			"AGENCY": "Sie sehen die Kalender Ihrer Beratungsstelle. Das legt Ihr Träger fest.",
+			"TENANT": "Sie sehen die Kalender aller Beratungsstellen Ihres Trägers. Das legt Ihr Träger fest.",
+			"PLATFORM": "Sie sehen die Kalender aller Beratenden der Plattform. Das legt Ihr Träger fest."
+		},
+		"colleaguesEmpty": "Keine Kalender von Kolleg:innen sichtbar.",
+		"sync": "Kalender-Abgleich",
+		"kinds": {
+			"video": "Video",
+			"phone": "Telefon",
+			"onsite": "Vor Ort",
+			"chat": "Chat"
+		},
+		"types": {
+			"group": "Gruppentermin",
+			"blocker": "Sperrzeit",
+			"busy": "Belegt",
+			"colleague": "Belegt"
+		},
+		"noEvents": "Keine Termine in diesem Zeitraum",
+		"loading": "Termine werden geladen",
+		"error": {
+			"title": "Die Termine konnten nicht geladen werden.",
+			"retry": "Erneut versuchen"
+		},
+		"dialog": {
+			"createTitle": "Neuer Eintrag",
+			"description": "Wählen Sie Tag, Uhrzeit, Art und die Beratung, zu der der Termin gehört.",
+			"conversation": "Beratung",
+			"kind": "Art",
+			"date": "Datum",
+			"start": "Beginn",
+			"end": "Ende",
+			"note": "Notiz (nur für Sie sichtbar)",
+			"save": "Anlegen",
+			"saveAnyway": "Trotzdem anlegen",
+			"conflict": "Überschneidet sich mit: {{list}}",
+			"error": {
+				"incomplete": "Bitte Datum und Uhrzeit wählen.",
+				"past": "Der Eintrag muss in der Zukunft liegen.",
+				"order": "Das Ende muss nach dem Beginn liegen.",
+				"conversation": "Bitte die Beratung wählen, zu der der Termin gehört."
+			}
+		},
+		"details": {
+			"start": {
+				"video": "Video-Call starten",
+				"phone": "Anruf starten",
+				"chat": "Chat öffnen"
+			},
+			"join": {
+				"video": "Video-Call beitreten",
+				"phone": "Zum Anruf",
+				"chat": "Chat öffnen"
+			},
+			"move": "Verschieben",
+			"cancel": "Absagen",
+			"remove": "Blockierung entfernen",
+			"address": "Adresse",
+			"colleague": "Kalender von {{name}}",
+			"busyHint": "Aus Ihrem eigenen Kalender übernommen. ORISO kennt nur die Zeit.",
+			"colleagueHint": "Von Kolleg:innen sehen Sie nur Zeit und Art."
+		},
+		"moved": "Verschoben auf {{date}}. Die ratsuchende Person wird benachrichtigt.",
+		"blockerMoved": "Blockierung verschoben auf {{date}}.",
+		"cancelled": "Termin abgesagt. Die ratsuchende Person wird benachrichtigt.",
+		"created": "Termin angelegt: {{date}}",
+		"undo": "Rückgängig",
+		"syncDialog": {
+			"title": "Kalender-Abgleich",
+			"description": "Ihre ORISO-Termine in Outlook, Google oder Apple Kalender – und belegte Zeiten von dort zurück.",
+			"feedTitle": "In Ihrem Kalender abonnieren",
+			"feedText": "Fügen Sie diesen Link in Ihrem Kalender als Abonnement hinzu. Er zeigt nur „ORISO-Termin“ und die Uhrzeit, keine Namen.",
+			"copy": "Link kopieren",
+			"copied": "Link kopiert",
+			"lastFetched": "Zuletzt abgerufen: {{date}}",
+			"neverFetched": "Noch nicht abgerufen",
+			"reset": "Link zurücksetzen",
+			"resetTitle": "Link zurücksetzen?",
+			"resetText": "Der alte Link funktioniert sofort nicht mehr. Abonnieren Sie danach den neuen Link in Ihrem Kalender.",
+			"resetAction": "Zurücksetzen",
+			"preview": "So erscheint ein Termin in Ihrem Kalender",
+			"refreshHint": "Outlook und Google aktualisieren Abonnements nur alle paar Stunden. Maßgeblich ist ORISO.",
+			"importTitle": "Belegte Zeiten übernehmen",
+			"importText": "Fügen Sie die private ICS-Adresse Ihres Outlook- oder Google-Kalenders ein. ORISO übernimmt nur, wann Sie belegt sind – keine Titel und keine Teilnehmenden.",
+			"importField": "ICS-Adresse",
+			"importSave": "Übernehmen",
+			"importRemove": "Entfernen",
+			"importStatus": "{{count}} belegte Zeiten, zuletzt abgeglichen {{date}}",
+			"importError": "Die Adresse konnte nicht gelesen werden. Bitte prüfen Sie den Link."
+		},
+		"filterLabel": "Anzeigen",
+		"facets": {
+			"video": "Video",
+			"phone": "Telefon",
+			"onsite": "Vor Ort",
+			"chat": "Chat",
+			"group": "Gruppentermine",
+			"blocker": "Sperrzeiten"
+		},
+		"slotMenu": {
+			"label": "Eintragen"
+		},
+		"blocker": {
+			"menuItem": "Sperrzeit",
+			"title": "Sperrzeit eintragen",
+			"description": "In dieser Zeit werden keine Termine vergeben. Kolleg:innen sehen nur „Sperrzeit“.",
+			"allDay": "Ganztägig",
+			"repeat": "Wiederholen an",
+			"until": "Bis einschließlich",
+			"save": "Eintragen",
+			"tooMany": "Zu viele Wiederholungen: höchstens {{max}} Sperrzeiten auf einmal. Bitte einen früheren letzten Tag wählen.",
+			"count": "{{count}} Sperrzeiten werden eingetragen.",
+			"count_one": "{{count}} Sperrzeit wird eingetragen.",
+			"conflicts": "Überschneidet sich mit {{count}} Terminen.",
+			"conflicts_one": "Überschneidet sich mit {{count}} Termin.",
+			"created": "{{count}} Sperrzeiten eingetragen",
+			"created_one": "{{count}} Sperrzeit eingetragen",
+			"createdSingle": "Sperrzeit eingetragen: {{date}}"
+		}
 	}
 }
