@@ -8,6 +8,8 @@ import type { SessionToolbarChipFilter } from '../sessionsList/sessionToolbarFil
 import { SessionListItemComponent } from '../sessionsListItem/SessionListItemComponent';
 import { SessionHeaderComponent } from '../sessionHeader/SessionHeaderComponent';
 import { MessageTimeline } from '../session/MessageTimeline';
+import { EncryptionBanner } from '../session/EncryptionBanner';
+import { productionToolbarProps } from '../sessionsList/__storybook__/productionToolbarProps';
 import type { MessageItem } from '../message/MessageItemComponent';
 import { mockE2eeParams } from '../message/MessageItemComponent.mocks';
 import { ComposerStoryDecorator } from '../messageSubmitInterface/__storybook__/composerStoryDecorator';
@@ -95,7 +97,8 @@ const labelFallbacks: Record<string, string> = {
 	'sessionList.toolbar.chips.liveChat': 'Live Chat',
 	'sessionList.toolbar.chips.internalGroup': 'Interner Gruppenchat',
 	'sessionList.toolbar.chips.supervision': 'Supervision',
-	'sessionList.toolbar.chips.groups': 'Gesprächskreis'
+	'sessionList.toolbar.chips.groups': 'Gesprächskreis',
+	'sessionList.toolbar.chips.other': 'Weitere'
 };
 
 const translate = (key: string) => labelFallbacks[key] || key;
@@ -1018,6 +1021,9 @@ function SessionListPanel({
 						showCreateGroupChatAction
 						showSupervisionChip
 						showLiveChatChip
+						showGroupChip
+						showInternalGroupChip
+						{...productionToolbarProps}
 						createGroupChatPath="/sessions/consultant/sessionView/createGroupChat"
 						archiveTabPath="/sessions/consultant/sessionView?sessionListTab=archive"
 						archiveTabActive={false}
@@ -1211,16 +1217,23 @@ function ChatPanel() {
 						/>
 					</div>
 					<div className="session__content" aria-label="Chatverlauf">
-						<MessageTimeline
-							messages={chatMessages}
-							clientName="Sanftes Alpaka Kala"
-							isMyMessage={(userId) =>
-								userId === consultantMatrixId
-							}
-							handleDecryptionErrors={noop}
-							handleDecryptionSuccess={noop}
-							e2eeParams={mockE2eeParams()}
-						/>
+						{/* Same frame as `SessionItemComponent`: E2EE banner first,
+						    then the timeline inside `.message-holder`. */}
+						<div className="session__gameChromeFadeTarget">
+							<EncryptionBanner />
+						</div>
+						<div className="message-holder">
+							<MessageTimeline
+								messages={chatMessages}
+								clientName="Sanftes Alpaka Kala"
+								isMyMessage={(userId) =>
+									userId === consultantMatrixId
+								}
+								handleDecryptionErrors={noop}
+								handleDecryptionSuccess={noop}
+								e2eeParams={mockE2eeParams()}
+							/>
+						</div>
 					</div>
 					<MessageSubmitInterfaceComponent
 						className="session__submit-interface"

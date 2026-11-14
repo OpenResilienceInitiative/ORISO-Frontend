@@ -30,6 +30,7 @@ import {
 } from '../app/navigationStoryHelpers';
 import { config } from '../../resources/scripts/config';
 import { SessionsListToolbar } from '../sessionsList/SessionsListToolbar';
+import { productionToolbarProps } from '../sessionsList/__storybook__/productionToolbarProps';
 import type { SessionToolbarChipFilter } from '../sessionsList/sessionToolbarFilters';
 import { SessionListItemComponent } from '../sessionsListItem/SessionListItemComponent';
 import '../app/authenticatedApp.styles.scss';
@@ -220,7 +221,8 @@ const listTranslations: Record<string, string> = {
 	'sessionList.toolbar.chips.liveChat': 'Live Chat',
 	'sessionList.toolbar.chips.internalGroup': 'Interner Gruppenchat',
 	'sessionList.toolbar.chips.supervision': 'Supervision',
-	'sessionList.toolbar.chips.groups': 'Gesprächskreis'
+	'sessionList.toolbar.chips.groups': 'Gesprächskreis',
+	'sessionList.toolbar.chips.other': 'Weitere'
 };
 const translateList = (key: string) => listTranslations[key] || key;
 
@@ -374,6 +376,8 @@ const StageList = () => {
 					showConsultantActions
 					showCreateGroupChatAction
 					showSupervisionChip={false}
+					showGroupChip
+					{...productionToolbarProps}
 					createGroupChatPath="/sessions/consultant/sessionView/createGroupChat"
 					archiveTabPath="/sessions/consultant/sessionView?sessionListTab=archive"
 					archiveTabActive={false}
