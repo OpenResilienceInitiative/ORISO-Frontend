@@ -18,4 +18,9 @@ describe('calendar stylesheet', () => {
 			(stylesheet.match(/@include calendar-focus-ring/g) ?? []).length
 		).toBeGreaterThan(0);
 	});
+
+	it('takes its breakpoints from the shared mixin, not raw media queries', () => {
+		expect(stylesheet).toMatch(/@include breakpoint\(\$fromMedium\)/);
+		expect(stylesheet).not.toMatch(/@media[^{]*\d+px/);
+	});
 });
