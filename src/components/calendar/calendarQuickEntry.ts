@@ -177,3 +177,73 @@ export const quickEntryGaps = (entry: QuickEntry): QuickEntryGap[] => {
 		gaps.push('who');
 	return gaps;
 };
+
+/* ------------------------------------------------------------------ */
+/* Explicit fields (Frank, 2026-11-14): typing may prefill them, but     */
+/* date, start and duration are what gets saved.                         */
+/* ------------------------------------------------------------------ */
+
+export const QUICK_DURATIONS = [30, 45, 60, 90] as const;
+export type QuickDuration = (typeof QUICK_DURATIONS)[number];
+export const DEFAULT_QUICK_DURATION: QuickDuration = 60;
+
+export interface QuickFields {
+	/** YYYY-MM-DD */
+	date: string;
+	/** HH:mm */
+	time: string;
+	duration: QuickDuration;
+}
+
+const pad2 = (n: number) => String(n).padStart(2, '0');
+
+export const dateField = (d: Date) =>
+	`${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+
+export const timeField = (d: Date) =>
+	`${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+
+/** The duration choice closest to `minutes`. */
+export const nearestDuration = (minutes: number): QuickDuration =>
+	QUICK_DURATIONS.reduce((best, d) =>
+		Math.abs(d - minutes) < Math.abs(best - minutes) ? d : best
+	);
+
+/**
+ * What a typed line prefills: only the parts it names. "Do 14 Uhr" sets
+ * date and start; "14-15:30" also the duration.
+ */
+export const fieldsFromEntry = (entry: QuickEntry): Partial<QuickFields> => {
+	if (!entry.start) return {};
+	const out: Partial<QuickFields> = {
+		date: dateField(entry.start),
+		time: timeField(entry.start)
+	};
+	if (entry.end && entry.end > entry.start)
+		out.duration = nearestDuration(
+			(entry.end.getTime() - entry.start.getTime()) / 60_000
+		);
+	return out;
+};
+
+/** Start and end from the fields; nothing when date or start is missing. */
+export const rangeFromFields = ({
+	date,
+	time,
+	duration
+}: Partial<QuickFields>): { start: Date; end: Date } | undefined => {
+	const d = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date ?? '');
+	const t = /^(\d{2}):(\d{2})$/.exec(time ?? '');
+	if (!d || !t) return undefined;
+	const start = new Date(
+		Number(d[1]),
+		Number(d[2]) - 1,
+		Number(d[3]),
+		Number(t[1]),
+		Number(t[2])
+	);
+	const end = new Date(
+		start.getTime() + (duration ?? DEFAULT_QUICK_DURATION) * 60_000
+	);
+	return { start, end };
+};

@@ -158,8 +158,55 @@ export const workingHoursToRows = (hours: WorkingHours): WorkingDayRow[] => {
 	});
 };
 
-/** The rows that are switched on and complete, as windows. */
-export const rowsToWorkingHours = (rows: WorkingDayRow[]): WorkingHours =>
+/**
+ * A break inside every working day, e.g. lunch (Frank, 2026-11-14): on by
+ * default, 12:00–13:00. UserService has no break of its own; a day with a
+ * break is stored as two windows.
+ */
+export interface DayBreak {
+	enabled: boolean;
+	start: string;
+	end: string;
+}
+
+export const DEFAULT_BREAK: DayBreak = {
+	enabled: true,
+	start: '12:00',
+	end: '13:00'
+};
+
+/**
+ * The break the stored windows show: every working day split by the same
+ * gap. With no hours set yet, the default break.
+ */
+export const breakOf = (hours: WorkingHours): DayBreak => {
+	if (hours.length === 0) return DEFAULT_BREAK;
+	const off = { ...DEFAULT_BREAK, enabled: false };
+	let gap: { start: string; end: string } | undefined;
+	for (const weekday of WEEKDAYS_MONDAY_FIRST) {
+		const day = windowsOn(hours, weekday);
+		if (day.length === 0) continue;
+		if (day.length !== 2) return off;
+		const next = { start: day[0].end, end: day[1].start };
+		if (gap && (gap.start !== next.start || gap.end !== next.end))
+			return off;
+		gap = next;
+	}
+	return gap ? { enabled: true, ...gap } : off;
+};
+
+export const isBreakValid = (b: DayBreak) =>
+	!b.enabled ||
+	(isTime(b.start) && isTime(b.end) && minutesOf(b.end) > minutesOf(b.start));
+
+/**
+ * The rows that are switched on and complete, as windows; a day that spans
+ * the break becomes two.
+ */
+export const rowsToWorkingHours = (
+	rows: WorkingDayRow[],
+	dayBreak?: DayBreak
+): WorkingHours =>
 	rows
 		.filter(
 			(r) =>
@@ -168,7 +215,17 @@ export const rowsToWorkingHours = (rows: WorkingDayRow[]): WorkingHours =>
 				isTime(r.end) &&
 				minutesOf(r.end) > minutesOf(r.start)
 		)
-		.map(({ weekday, start, end }) => ({ weekday, start, end }))
+		.flatMap(({ weekday, start, end }) =>
+			dayBreak?.enabled &&
+			isBreakValid(dayBreak) &&
+			minutesOf(start) < minutesOf(dayBreak.start) &&
+			minutesOf(end) > minutesOf(dayBreak.end)
+				? [
+						{ weekday, start, end: dayBreak.start },
+						{ weekday, start: dayBreak.end, end }
+					]
+				: [{ weekday, start, end }]
+		)
 		.sort(byWeekdayAndStart);
 
 /** Weekdays whose row is on but ends before it starts. */

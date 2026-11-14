@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vite-plus/test';
-import { parseQuickEntry, quickEntryGaps } from './calendarQuickEntry';
+import {
+	fieldsFromEntry,
+	nearestDuration,
+	parseQuickEntry,
+	quickEntryGaps,
+	rangeFromFields
+} from './calendarQuickEntry';
 
 // Monday 16 November 2026, 09:50.
 const now = new Date(2026, 10, 16, 9, 50);
@@ -70,5 +76,38 @@ describe('quickEntryGaps', () => {
 				end: at(17, 10)
 			})
 		).toEqual([]);
+	});
+});
+
+describe('quick entry fields', () => {
+	it('prefills only what the line names', () => {
+		expect(fieldsFromEntry({})).toEqual({});
+		expect(fieldsFromEntry({ start: at(19, 14), end: at(19, 15) })).toEqual(
+			{ date: '2026-11-19', time: '14:00', duration: 60 }
+		);
+		// 14:00–15:20 is closest to 90 minutes.
+		expect(
+			fieldsFromEntry({ start: at(19, 14), end: at(19, 15, 20) }).duration
+		).toBe(90);
+		expect(fieldsFromEntry({ start: at(19, 14) })).toEqual({
+			date: '2026-11-19',
+			time: '14:00'
+		});
+	});
+
+	it('saves from the fields, with the chosen duration', () => {
+		expect(
+			rangeFromFields({ date: '2026-11-19', time: '14:00', duration: 45 })
+		).toEqual({ start: at(19, 14), end: at(19, 14, 45) });
+		expect(
+			rangeFromFields({ date: '2026-11-19', time: '' })
+		).toBeUndefined();
+		expect(rangeFromFields({ time: '14:00' })).toBeUndefined();
+	});
+
+	it('rounds a typed length to the nearest choice', () => {
+		expect(nearestDuration(20)).toBe(30);
+		expect(nearestDuration(50)).toBe(45);
+		expect(nearestDuration(120)).toBe(90);
 	});
 });
