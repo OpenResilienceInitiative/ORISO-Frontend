@@ -7143,6 +7143,7 @@
 			"sync": "Mit Outlook oder Google verbinden"
 		},
 		"side": {
+			"resize": "Liste breiter oder schmaler ziehen; Doppelklick klappt sie ein oder aus, Pfeil hoch und runter scrollt sie",
 			"label": "Termine: Suche und Listen"
 		},
 		"split": {

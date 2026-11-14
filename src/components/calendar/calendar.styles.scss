@@ -710,6 +710,74 @@
 	flex: none;
 }
 
+// The column sized like "Gespräche" (Frank, prototype v15): 420 px to begin
+// with, the pink grip centred on it (it stays put while the list scrolls),
+// rail 80 / compact 220 / 397–500. The page gap is the pane gap, so the grip
+// sits in its middle.
+.calendarSide__frame {
+	--pane-gap: 12px;
+
+	position: relative;
+	display: flex;
+	flex: none;
+	min-height: 0;
+
+	> .calendarSide {
+		width: 100%;
+	}
+}
+
+// Rail: who and when per appointment, the display filter on top.
+.calendarSide--rail {
+	align-items: center;
+	padding: 16px 8px;
+
+	.calendarSide__title,
+	.calendarSide__muted,
+	.calendarSide__rowIcon,
+	.calendarSide__rowName,
+	.calendarSide__rowText,
+	.calendarSide__rowTime {
+		display: none;
+	}
+
+	.calendarSide__section,
+	.calendarSide__list {
+		align-items: center;
+	}
+
+	.calendarSide__row {
+		flex-direction: column;
+		gap: 3px;
+		width: 56px;
+		padding: 5px 0;
+		border-radius: 16px;
+	}
+
+	.calendarSide__quickRow {
+		justify-content: center;
+	}
+}
+
+.calendarSide__railAvatar {
+	display: grid;
+	place-items: center;
+	width: 32px;
+	height: 32px;
+	border-radius: 50%;
+	background: var(--m3-surface-container-high, #ebe8e8);
+	color: var(--m3-on-surface, #1b1b1c);
+	font-size: 12px;
+	font-weight: 600;
+}
+
+.calendarSide__railClock {
+	color: var(--m3-on-surface-variant, #444748);
+	font-size: 11px;
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+}
+
 .calendarSide__chips {
 	flex: none;
 }

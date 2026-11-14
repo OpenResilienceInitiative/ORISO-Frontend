@@ -6,6 +6,8 @@
  * then the defaults apply and nothing breaks.
  */
 import type { ViewSwitcherStyle } from './calendarViews';
+import { SESSIONS_LIST_RESIZE } from '../sessionsList/sessionsListResize.constants';
+import { snapSessionsListWidth } from '../sessionsList/resizableHandleMath';
 
 const key = (ownerId: string, name: string) =>
 	`oriso.calendar.${name}.${ownerId || 'anonymous'}`;
@@ -102,3 +104,37 @@ export const writeEdgeChoice = (ownerId: string, choice: EdgeChoice | null) =>
 	choice
 		? write(key(ownerId, 'edgeChoice'), choice)
 		: remove(key(ownerId, 'edgeChoice'));
+
+/* ------------------------------------------------------------------ */
+/* The left column, sized like "Gespräche" (Frank, prototype v15): the  */
+/* icon rail, the compact list or 397–500 px, 420 px to begin with.     */
+/* ------------------------------------------------------------------ */
+
+/** The icon rail: avatar and start time per appointment. */
+export const LIST_RAIL_WIDTH = 80;
+export const DEFAULT_LIST_WIDTH = 420;
+
+export type CalendarListMode = 'rail' | 'compact' | 'full';
+
+/** The same snaps as the "Gespräche" column: 80, 220 or 397–500. */
+export const snapListWidth = (width: number) =>
+	snapSessionsListWidth(
+		width,
+		LIST_RAIL_WIDTH,
+		SESSIONS_LIST_RESIZE.EXPANDED_MAX_WIDTH
+	);
+
+export const listModeOf = (width: number): CalendarListMode =>
+	width < SESSIONS_LIST_RESIZE.ICON_ONLY_THRESHOLD
+		? 'rail'
+		: width < SESSIONS_LIST_RESIZE.EXPANDED_MIN_WIDTH
+			? 'compact'
+			: 'full';
+
+export const readListWidth = (ownerId: string): number => {
+	const stored = Number(read(key(ownerId, 'listWidth')));
+	return stored > 0 ? snapListWidth(stored) : DEFAULT_LIST_WIDTH;
+};
+
+export const writeListWidth = (ownerId: string, width: number) =>
+	write(key(ownerId, 'listWidth'), String(width));

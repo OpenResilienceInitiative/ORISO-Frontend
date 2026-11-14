@@ -52,7 +52,9 @@ import {
 } from './calendarQuickEntry';
 import { useShortTime } from './calendarShortTime';
 import type { WorkingHours, WorkingPlan } from './calendarWorkingHours';
-import { CalendarEntryPeek } from './CalendarEntryPeek';
+import { CalendarEntryPeek, initialsOf } from './CalendarEntryPeek';
+import { calendarLocale } from './calendarLocale';
+import type { CalendarListMode } from './calendarPreferences';
 import { useEntryLabel, useRangeFormat } from './useEntryLabel';
 
 const QUICK_KINDS: QuickKind[] = [
@@ -119,6 +121,18 @@ export interface CalendarSidebarProps {
 	/** Sheet: quick entry is unfolded. */
 	quickOpen?: boolean;
 	onQuickToggle?: () => void;
+	/**
+	 * How wide the column is (Frank, prototype v15): `compact` leaves out
+	 * quick entry and the working hours, `rail` shows avatar and start
+	 * time per appointment.
+	 */
+	mode?: CalendarListMode;
+	/** The scrolling column, for the grip's Up and Down keys. */
+	scrollRef?: React.Ref<HTMLElement>;
+	/** "+" in the narrow column: open it wide with quick entry ready. */
+	onWiden?: () => void;
+	/** Counts up to focus the quick entry line. */
+	quickFocus?: number;
 }
 
 export const CalendarSidebar = ({
@@ -147,10 +161,24 @@ export const CalendarSidebar = ({
 	onWorkingHours,
 	variant = 'column',
 	quickOpen = false,
-	onQuickToggle
+	onQuickToggle,
+	mode = 'full',
+	scrollRef,
+	onWiden,
+	quickFocus
 }: CalendarSidebarProps) => {
 	const sheet = variant === 'sheet';
-	const { t } = useTranslation();
+	const rail = !sheet && mode === 'rail';
+	const narrow = !sheet && mode !== 'full';
+	const { t, i18n } = useTranslation();
+	const clock = useMemo(
+		() =>
+			new Intl.DateTimeFormat(calendarLocale(i18n.language), {
+				hour: '2-digit',
+				minute: '2-digit'
+			}),
+		[i18n.language]
+	);
 	const label = useEntryLabel();
 	const format = useRangeFormat();
 	const shortTime = useShortTime();
@@ -201,41 +229,61 @@ export const CalendarSidebar = ({
 		entry: CalendarEntry;
 	} | null>(null);
 
+	const kindsButton = (
+		<span ref={kindsAnchor} className="calendarSide__kindsAnchor">
+			<DisplayFilterButton
+				label={t('calendar.kindsMenu.label')}
+				customised={hiddenFacets.length > 0}
+				customisedLabel={t('calendar.kindsMenu.customised')}
+				open={kindsMenuOpen}
+				onClick={() =>
+					kindsAnchor.current && onOpenKinds(kindsAnchor.current)
+				}
+				compact
+				data-cy="calendar-kinds-button"
+			/>
+		</span>
+	);
+	/** The rail: who (initials) and when (start time), nothing else. */
+	const railFace = (who: string, start: Date | string) => (
+		<>
+			<span className="calendarSide__railAvatar" aria-hidden="true">
+				{initialsOf(who)}
+			</span>
+			<span className="calendarSide__railClock" aria-hidden="true">
+				{clock.format(new Date(start))}
+			</span>
+		</>
+	);
+
 	return (
 		<aside
-			className={`calendarSide${sheet ? ' calendarSide--sheet' : ''}`}
+			ref={scrollRef}
+			className={[
+				'calendarSide',
+				sheet && 'calendarSide--sheet',
+				narrow && `calendarSide--${mode}`
+			]
+				.filter(Boolean)
+				.join(' ')}
 			aria-label={sheet ? undefined : t('calendar.side.label')}
 			data-cy="calendar-side"
 		>
 			{/* As in "Gespräche": the display filter sits at the left of the
-			    search field (Frank, 2026-11-14). */}
-			<ListSearchField
-				leading={
-					<span
-						ref={kindsAnchor}
-						className="calendarSide__kindsAnchor"
-					>
-						<DisplayFilterButton
-							label={t('calendar.kindsMenu.label')}
-							customised={hiddenFacets.length > 0}
-							customisedLabel={t('calendar.kindsMenu.customised')}
-							open={kindsMenuOpen}
-							onClick={() =>
-								kindsAnchor.current &&
-								onOpenKinds(kindsAnchor.current)
-							}
-							compact
-							data-cy="calendar-kinds-button"
-						/>
-					</span>
-				}
-				value={query}
-				onChange={setQuery}
-				placeholder={t('calendar.search.placeholder')}
-				clearLabel={t('calendar.search.clear')}
-				className="calendarSide__search"
-			/>
-			{query.trim() && (
+			    search field (Frank, 2026-11-14); the rail keeps only it. */}
+			{rail ? (
+				kindsButton
+			) : (
+				<ListSearchField
+					leading={kindsButton}
+					value={query}
+					onChange={setQuery}
+					placeholder={t('calendar.search.placeholder')}
+					clearLabel={t('calendar.search.clear')}
+					className="calendarSide__search"
+				/>
+			)}
+			{!rail && query.trim() && (
 				<section
 					className="calendarSide__section"
 					aria-label={t('calendar.search.results')}
@@ -280,7 +328,7 @@ export const CalendarSidebar = ({
 				</section>
 			)}
 
-			{!sheet && (
+			{!sheet && !rail && (
 				<CalendarKindChips
 					ownerId={ownerId}
 					now={now}
@@ -308,6 +356,13 @@ export const CalendarSidebar = ({
 								<button
 									type="button"
 									className={`calendarSide__row calendarSide__row--proposal calendarSide__row--k-${facetOf(entry)}`}
+									aria-label={
+										rail
+											? `${t('calendar.proposal.title', {
+													title: label(entry, true)
+												})}, ${format(proposal.start, proposal.end)}`
+											: undefined
+									}
 									onClick={(e) =>
 										onOpenProposal?.(
 											proposal,
@@ -316,6 +371,11 @@ export const CalendarSidebar = ({
 										)
 									}
 								>
+									{rail &&
+										railFace(
+											label(entry, true),
+											proposal.start
+										)}
 									<span className="calendarSide__rowIcon">
 										<CalendarEntryGlyph
 											entry={entry}
@@ -342,7 +402,7 @@ export const CalendarSidebar = ({
 										</span>
 									</span>
 								</button>
-								{onWithdrawProposal && (
+								{onWithdrawProposal && !rail && (
 									<button
 										type="button"
 										className="calendarSide__textButton"
@@ -398,8 +458,18 @@ export const CalendarSidebar = ({
 										setPeek(null);
 										onOpenEntry(entry, e.currentTarget);
 									}}
+									aria-label={
+										rail
+											? `${label(entry)}, ${shortTime(
+													new Date(entry.start),
+													now,
+													new Date(entry.end)
+												)}`
+											: undefined
+									}
 									data-cy={`calendar-upcoming-${entry.id}`}
 								>
+									{rail && railFace(label(entry), entry.start)}
 									<span className="calendarSide__rowIcon">
 										<CalendarEntryGlyph entry={entry} />
 									</span>
@@ -415,6 +485,7 @@ export const CalendarSidebar = ({
 									</span>
 								</button>
 								{onOpenChat &&
+									!rail &&
 									entry.type === 'appointment' &&
 									entry.sessionId !== undefined && (
 										<button
@@ -474,12 +545,29 @@ export const CalendarSidebar = ({
 					</button>
 				</div>
 			)}
-			{/* Folded on the phone it stays mounted, so the draft survives. */}
+			{consultant && onCreate && narrow && onWiden && (
+				<div className="calendarSide__quickRow">
+					<span className="calendarSide__title">
+						{t('calendar.quick.title')}
+					</span>
+					<button
+						type="button"
+						className="calendarSide__quickToggle"
+						aria-label={t('calendar.quick.title')}
+						onClick={onWiden}
+						data-cy="calendar-quick-widen"
+					>
+						<AddIcon fontSize="small" />
+					</button>
+				</div>
+			)}
+			{/* Folded on the phone or in the narrow column it stays mounted,
+			    so the draft survives. */}
 			{consultant && onCreate && (
 				<div
 					id="calendar-quick-panel"
 					className="calendarSide__quick"
-					hidden={sheet && !quickOpen}
+					hidden={(sheet && !quickOpen) || narrow}
 				>
 					<QuickEntry
 						ownerId={ownerId}
@@ -490,12 +578,13 @@ export const CalendarSidebar = ({
 						onCreate={onCreate}
 						onMoreDetails={onMoreDetails}
 						autoFocus={sheet && quickOpen}
+						focusSignal={quickFocus}
 						hideTitle={sheet}
 					/>
 				</div>
 			)}
 
-			{consultant && onWorkingHours && (
+			{consultant && onWorkingHours && !narrow && (
 				<button
 					type="button"
 					className="calendarSide__hours"
@@ -611,6 +700,8 @@ interface QuickEntryProps {
 	autoFocus?: boolean;
 	/** The folding row above already names it (phone sheet). */
 	hideTitle?: boolean;
+	/** Focus the line each time this counts up. */
+	focusSignal?: number;
 }
 
 /**
@@ -626,7 +717,8 @@ export const QuickEntry = ({
 	onCreate,
 	onMoreDetails,
 	autoFocus = false,
-	hideTitle = false
+	hideTitle = false,
+	focusSignal
 }: QuickEntryProps) => {
 	const { t } = useTranslation();
 	const format = useRangeFormat();
@@ -635,6 +727,9 @@ export const QuickEntry = ({
 	useEffect(() => {
 		if (autoFocus) inputRef.current?.focus();
 	}, [autoFocus]);
+	useEffect(() => {
+		if (focusSignal) inputRef.current?.focus();
+	}, [focusSignal]);
 	const [text, setText] = useState('');
 	const [kind, setKind] = useState<QuickKind | undefined>();
 	const [sessionId, setSessionId] = useState<number | undefined>();

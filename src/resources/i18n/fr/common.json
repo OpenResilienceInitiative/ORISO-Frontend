@@ -7153,6 +7153,7 @@
 			"sync": "Connecter Outlook ou Google"
 		},
 		"side": {
+			"resize": "Faire glisser pour élargir ou réduire la liste ; double-clic pour la replier ou la déplier, flèches haut et bas pour la faire défiler",
 			"label": "Rendez-vous : recherche et listes"
 		},
 		"split": {

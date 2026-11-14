@@ -84,8 +84,15 @@ import {
 	recentPills,
 	rememberColleague,
 	writeRecentColleagues,
-	writeSwitcherStyle
+	writeSwitcherStyle,
+	DEFAULT_LIST_WIDTH,
+	LIST_RAIL_WIDTH,
+	listModeOf,
+	readListWidth,
+	writeListWidth
 } from './calendarPreferences';
+import { ResizableHandle } from '../sessionsList/ResizableHandle';
+import { SESSIONS_LIST_RESIZE } from '../sessionsList/sessionsListResize.constants';
 import {
 	CalendarView,
 	type CalendarHighlight,
@@ -381,6 +388,20 @@ export const CalendarPage = ({
 	const [anchorDate, setAnchorDate] = useState(() => startOfDay(now));
 	const [splitDays, setSplitDays] = useState<SplitDays>(initialSplitDays);
 	const [fullscreen, setFullscreen] = useState(initialFullscreen);
+	// The left column, sized like "Gespräche" and remembered per person
+	// (Frank, prototype v15).
+	const [listWidth, setListWidthState] = useState(() =>
+		readListWidth(ownerId)
+	);
+	const setListWidth = (width: number) => {
+		setListWidthState(width);
+		writeListWidth(ownerId, width);
+	};
+	const listMode = listModeOf(listWidth);
+	const sideScroll = useRef<HTMLDivElement>(null);
+	/** Counts up when "+" in the narrow column asks for the quick entry. */
+	const [quickFocus, setQuickFocus] = useState(0);
+
 	const [switcherStyle, setSwitcherStyle] = useState<ViewSwitcherStyle>(() =>
 		readSwitcherStyle(ownerId, initialSwitcherStyle)
 	);
@@ -1621,7 +1642,35 @@ export const CalendarPage = ({
 				.join(' ')}
 			data-testid="calendar-page"
 		>
-			{!compact && !fullscreen && <CalendarSidebar {...sideProps} />}
+			{!compact && !fullscreen && (
+				<div
+					className={`calendarSide__frame calendarSide__frame--${listMode}`}
+					style={{ width: listWidth }}
+					data-cy="calendar-side-frame"
+				>
+					<CalendarSidebar
+						{...sideProps}
+						mode={listMode}
+						scrollRef={sideScroll}
+						quickFocus={quickFocus}
+						onWiden={() => {
+							setListWidth(DEFAULT_LIST_WIDTH);
+							setQuickFocus((n) => n + 1);
+						}}
+					/>
+					{/* The pink grip of "Gespräche": centred on the column, so
+					    it stays put while the list scrolls. */}
+					<ResizableHandle
+						currentWidth={listWidth}
+						onResize={setListWidth}
+						scrollTargetRef={sideScroll}
+						minWidth={LIST_RAIL_WIDTH}
+						maxWidth={SESSIONS_LIST_RESIZE.EXPANDED_MAX_WIDTH}
+						ariaLabel={t('calendar.side.resize')}
+						data-cy="calendar-side-resize"
+					/>
+				</div>
+			)}
 			<section
 				ref={stageRef}
 				className="calendarStage"

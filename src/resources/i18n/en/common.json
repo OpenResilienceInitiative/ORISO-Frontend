@@ -7068,6 +7068,7 @@
 			"sync": "Connect Outlook or Google"
 		},
 		"side": {
+			"resize": "Drag to make the list wider or narrower; double-click folds it in or out, Up and Down scroll it",
 			"label": "Appointments: search and lists"
 		},
 		"split": {
