@@ -144,7 +144,9 @@
 		"wait": "በጃኹም ተጸበዩ።",
 		"info": "ሓበሬታ",
 		"or": "ወይ",
-		"logo": "Logo"
+		"logo": "Logo",
+		"scrollPrevious": "ዝሓለፈ",
+		"scrollNext": "ዝቕጽል"
 	},
 	"appointments": {
 		"copy": {
