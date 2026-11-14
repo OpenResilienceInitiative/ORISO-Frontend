@@ -431,12 +431,10 @@ export const SelectionReplyLayer = ({
 	// Leaving the answer field unmounts it; focus must not fall to the
 	// page. It goes back to the marked message, a stable place in the
 	// conversation for keyboard and screen-reader users.
-	const focusSourceMessage = () => {
+	const focusMessage = useCallback((eventId: string | undefined) => {
 		const layer = layerRef.current;
 		const bubble =
-			active && layer
-				? findMessageBubble(layer, active.passage.eventId)
-				: null;
+			eventId && layer ? findMessageBubble(layer, eventId) : null;
 		if (!bubble) {
 			return;
 		}
@@ -444,7 +442,9 @@ export const SelectionReplyLayer = ({
 			bubble.setAttribute('tabindex', '-1');
 		}
 		bubble.focus({ preventScroll: true });
-	};
+	}, []);
+
+	const focusSourceMessage = () => focusMessage(active?.passage.eventId);
 
 	const closeAnswer = () => {
 		focusSourceMessage();
@@ -582,7 +582,22 @@ export const SelectionReplyLayer = ({
 			close();
 		};
 		const onKeyDown = (event: KeyboardEvent) => {
-			if (event.key === 'Escape') close();
+			if (event.key !== 'Escape') {
+				return;
+			}
+			// Leaving from inside the bar: back to the blurred passage it
+			// opened on, so the keyboard keeps its place.
+			if (blurBarRef.current?.contains(document.activeElement)) {
+				const span = layerRef.current?.querySelector<HTMLElement>(
+					`[data-message-id="${CSS.escape(blurEventId)}"] [data-passage-blur-id="${CSS.escape(blurId)}"]`
+				);
+				if (span) {
+					span.focus({ preventScroll: true });
+				} else {
+					focusMessage(blurEventId);
+				}
+			}
+			close();
 		};
 		document.addEventListener('pointerdown', onPointerDown, true);
 		document.addEventListener('keydown', onKeyDown);
@@ -595,7 +610,7 @@ export const SelectionReplyLayer = ({
 			document.removeEventListener('scroll', follow, true);
 			window.removeEventListener('resize', follow);
 		};
-	}, [blurEventId, blurId, measureBlur]);
+	}, [blurEventId, blurId, measureBlur, focusMessage]);
 
 	const blurSpanOf = (target: EventTarget | null) =>
 		onRemoveBlur && target instanceof Element
@@ -620,6 +635,8 @@ export const SelectionReplyLayer = ({
 
 	const removeBlur = () => {
 		if (blurTarget && onRemoveBlur) {
+			// The blurred passage goes with the blur: focus its message.
+			focusMessage(blurTarget.eventId);
 			onRemoveBlur(blurTarget.eventId, blurTarget.blurId);
 		}
 		setBlurTarget(null);

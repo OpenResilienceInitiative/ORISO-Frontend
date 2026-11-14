@@ -327,6 +327,8 @@ describe('SelectionReplyLayer moderator blur bar on scroll', () => {
 								className="passageBlur passageBlur--removable"
 								data-passage-blur-id="b1"
 								data-testid="blurred"
+								role="button"
+								tabIndex={0}
 							>
 								xxxx xxxxxx
 							</span>
@@ -354,6 +356,36 @@ describe('SelectionReplyLayer moderator blur bar on scroll', () => {
 			document.dispatchEvent(new Event('scroll'));
 		});
 		expect(blurBar()).not.toBeNull();
+	});
+
+	it('Remove blur moves focus to the message, not the page', () => {
+		renderBlurred();
+		placeBlurred(100);
+		fireEvent.click(screen.getByTestId('blurred'));
+		const remove = document.querySelector<HTMLButtonElement>(
+			'[data-cy="passage-blur-remove"]'
+		)!;
+		remove.focus();
+		fireEvent.click(remove);
+		expect(blurBar()).toBeNull();
+		expect(document.activeElement).toBe(
+			document.querySelector(
+				'[data-message-id="$1"] .messageItem__message'
+			)
+		);
+	});
+
+	it('Escape from the bar returns focus to the blurred passage', () => {
+		renderBlurred();
+		placeBlurred(100);
+		fireEvent.click(screen.getByTestId('blurred'));
+		const remove = document.querySelector<HTMLButtonElement>(
+			'[data-cy="passage-blur-remove"]'
+		)!;
+		remove.focus();
+		fireEvent.keyDown(remove, { key: 'Escape' });
+		expect(blurBar()).toBeNull();
+		expect(document.activeElement).toBe(screen.getByTestId('blurred'));
 	});
 
 	it('closes once a scroll moves its passage out of view', () => {
