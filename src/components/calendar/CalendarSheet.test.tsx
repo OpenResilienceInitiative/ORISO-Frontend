@@ -150,3 +150,26 @@ describe('CalendarSheet — grab handle', () => {
 		expect(onStop).toHaveBeenCalledWith('half');
 	});
 });
+
+describe('CalendarSheet — lowered content (review 4574981862)', () => {
+	const sheet = (stop: 'peek' | 'half' | 'full') => (
+		<CalendarSheet stop={stop} onStop={() => undefined} label="Liste">
+			<button type="button">Eintrag</button>
+		</CalendarSheet>
+	);
+	const content = () =>
+		screen.getByText('Eintrag').closest('.calendarSheet__content');
+
+	it('takes no focus while only the grab shows, and does once open', () => {
+		const { rerender } = render(sheet('peek'));
+		expect(content()?.hasAttribute('inert')).toBe(true);
+		const grab = document.querySelector(
+			'[data-cy="calendar-sheet-grab"]'
+		) as HTMLElement;
+		expect(grab.closest('[inert]')).toBeNull();
+		rerender(sheet('half'));
+		expect(content()?.hasAttribute('inert')).toBe(false);
+		rerender(sheet('full'));
+		expect(content()?.hasAttribute('inert')).toBe(false);
+	});
+});

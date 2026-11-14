@@ -18,11 +18,11 @@ import {
 } from './calendarHolidays';
 import {
 	breakOf,
+	dialogWorkingHours,
 	groupWorkingHours,
 	invalidRows,
 	isBreakValid,
 	type DayBreak,
-	rowsToWorkingHours,
 	workingHoursToRows,
 	type WorkingDayRow,
 	type WorkingHours
@@ -128,7 +128,7 @@ export const WorkingHoursDialog = ({
 					disabled: invalid.length > 0 || breakInvalid || regionMissing,
 					onClick: () =>
 						onSave(
-							rowsToWorkingHours(rows, dayBreak),
+							dialogWorkingHours(hours, rows, dayBreak),
 							holidays && region ? region : null
 						),
 					testId: 'calendar-working-hours-save'

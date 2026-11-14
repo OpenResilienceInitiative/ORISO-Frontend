@@ -7126,7 +7126,7 @@
 			"minutes": "{{count}} minutes",
 			"missing": "Il manque : {{list}}",
 			"more": "Plus de détails …",
-			"placeholder": "p. ex. jeu 14 h vidéo",
+			"placeholder": "p. ex. 14 h",
 			"save": "Ajouter",
 			"slot": "Durée du créneau libre",
 			"time": "Début",
@@ -7185,7 +7185,8 @@
 			"set": "Définir",
 			"summary": "Horaires {{hours}}",
 			"title": "Définir les horaires de travail",
-			"to": "Fin le {{day}}"
+			"to": "Fin le {{day}}",
+			"tooMany": "Les horaires comptent au plus {{max}} plages par semaine ; cette modification n’a pas été enregistrée."
 		},
 		"grip": {
 			"always": "Toujours {{weekdays}}",

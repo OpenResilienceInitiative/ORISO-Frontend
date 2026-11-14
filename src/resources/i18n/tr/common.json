@@ -7126,7 +7126,7 @@
 			"minutes": "{{count}} dk.",
 			"missing": "Eksik: {{list}}",
 			"more": "Daha fazla bilgi …",
-			"placeholder": "örn. Per 14:00 video",
+			"placeholder": "örn. 14:00 video",
 			"save": "Ekle",
 			"slot": "Boş zamanın uzunluğu",
 			"time": "Başlangıç",
@@ -7185,7 +7185,8 @@
 			"set": "Belirle",
 			"summary": "Çalışma saatleri {{hours}}",
 			"title": "Çalışma saatlerini belirle",
-			"to": "{{day}} bitiş"
+			"to": "{{day}} bitiş",
+			"tooMany": "Çalışma saatleri haftada en fazla {{max}} zaman aralığı içerir; bu değişiklik kaydedilmedi."
 		},
 		"grip": {
 			"always": "Her zaman {{weekdays}}",

@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vite-plus/test';
 import {
 	DEFAULT_BREAK,
+	MAX_WORKING_HOURS_WINDOWS,
 	breakOf,
 	clampEdge,
+	dialogWorkingHours,
+	exceedsWindowLimit,
 	dayEdgesOf,
 	dayExceptionsFromApi,
 	effectiveDay,
@@ -69,6 +72,18 @@ describe('calendarWorkingHours', () => {
 			]
 		});
 		expect(workingHoursToApi([])).toEqual({ windows: [] });
+	});
+
+	it('refuses more windows than UserService takes instead of cutting a day (review 5906218044)', () => {
+		const full: WorkingHours = [0, 1, 2, 3, 4, 5, 6].flatMap((weekday) => [
+			{ weekday, start: '08:00', end: '12:00' },
+			{ weekday, start: '13:00', end: '18:00' }
+		]);
+		expect(full).toHaveLength(MAX_WORKING_HOURS_WINDOWS);
+		expect(exceedsWindowLimit(full)).toBe(false);
+		const over = [...full, { weekday: 0, start: '19:00', end: '20:00' }];
+		expect(exceedsWindowLimit(over)).toBe(true);
+		expect(() => workingHoursToApi(over)).toThrow(RangeError);
 	});
 
 	it('knows whether a range lies inside the hours', () => {
@@ -207,6 +222,64 @@ describe('lunch break', () => {
 			breakOf([...stored, { weekday: 2, start: '08:00', end: '18:00' }])
 				.enabled
 		).toBe(false);
+	});
+
+	it('cuts the break out of a day that meets it (review 4574775736)', () => {
+		const rows = workingHoursToRows([
+			{ weekday: 1, start: '08:00', end: '13:00' },
+			{ weekday: 2, start: '12:00', end: '18:00' },
+			{ weekday: 3, start: '12:00', end: '13:00' }
+		]);
+		expect(rowsToWorkingHours(rows, DEFAULT_BREAK)).toEqual([
+			{ weekday: 1, start: '08:00', end: '12:00' },
+			{ weekday: 2, start: '13:00', end: '18:00' },
+			// Entirely inside the break: kept as entered, not dropped.
+			{ weekday: 3, start: '12:00', end: '13:00' }
+		]);
+	});
+
+	it('keeps the stored windows of days the dialog did not change (review 4574775742)', () => {
+		// Tuesday has its own break, so the dialog shows no shared one.
+		const stored: WorkingHours = [
+			{ weekday: 1, start: '08:00', end: '12:00' },
+			{ weekday: 1, start: '13:00', end: '18:00' },
+			{ weekday: 2, start: '08:00', end: '12:30' },
+			{ weekday: 2, start: '13:30', end: '18:00' },
+			// Three windows: more than one row can show.
+			{ weekday: 4, start: '08:00', end: '10:00' },
+			{ weekday: 4, start: '11:00', end: '12:00' },
+			{ weekday: 4, start: '14:00', end: '18:00' }
+		];
+		const rows = workingHoursToRows(stored);
+		const dayBreak = breakOf(stored);
+		expect(dayBreak.enabled).toBe(false);
+		expect(dialogWorkingHours(stored, rows, dayBreak)).toEqual(stored);
+		// Changing Wednesday leaves the other days as they were.
+		const edited = rows.map((r) =>
+			r.weekday === 3
+				? { ...r, enabled: true, start: '09:00', end: '17:00' }
+				: r
+		);
+		expect(dialogWorkingHours(stored, edited, dayBreak)).toEqual([
+			...stored.slice(0, 4),
+			{ weekday: 3, start: '09:00', end: '17:00' },
+			...stored.slice(4)
+		]);
+	});
+
+	it('applies a changed break to every day', () => {
+		const stored = week('08:00', '18:00', ['12:00', '13:00']);
+		const rows = workingHoursToRows(stored);
+		expect(
+			dialogWorkingHours(stored, rows, {
+				enabled: true,
+				start: '12:30',
+				end: '13:30'
+			}).filter((w) => w.weekday === 1)
+		).toEqual([
+			{ weekday: 1, start: '08:00', end: '12:30' },
+			{ weekday: 1, start: '13:30', end: '18:00' }
+		]);
 	});
 
 	it('round-trips a week with a break through the dialog rows', () => {

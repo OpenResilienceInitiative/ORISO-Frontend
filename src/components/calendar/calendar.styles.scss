@@ -22,6 +22,19 @@
 	--cal-kind-blocker: var(--m3-secondary, #5f6365);
 }
 
+// Defaults before the kind modifiers: both have the same specificity, so
+// the later rule wins and the modifier has to come last.
+.calEntry,
+.calendarPeek,
+.calendarSide__row {
+	--cal-kind: var(--cal-kind-video);
+}
+
+.calendarQuick__kind,
+.calendarQuick__person {
+	--cal-kind: var(--m3-on-surface-variant, #444748);
+}
+
 @each $kind in video, phone, onsite, chat, group, blocker {
 	.calEntry--k-#{$kind},
 	.calendarPeek--k-#{$kind},
@@ -246,8 +259,6 @@
 // --- One entry ---
 
 .calEntry {
-	--cal-kind: var(--cal-kind-video);
-
 	border: 1px solid transparent !important;
 	border-radius: 8px !important;
 	background: var(--m3-surface-container-highest, #dcdfe3) !important;
@@ -441,8 +452,6 @@
 }
 
 .calendarPeek {
-	--cal-kind: var(--cal-kind-video);
-
 	display: flex;
 	flex-direction: column;
 	gap: 4px;
@@ -739,8 +748,6 @@
 
 // A compact row: tinted kind icon, name, short time.
 .calendarSide__row {
-	--cal-kind: var(--cal-kind-video);
-
 	display: flex;
 	align-items: center;
 	gap: 8px;
@@ -906,8 +913,6 @@
 
 .calendarQuick__kind,
 .calendarQuick__person {
-	--cal-kind: var(--m3-on-surface-variant, #444748);
-
 	display: inline-flex;
 	align-items: center;
 	gap: 4px;
@@ -1244,6 +1249,12 @@
 	@media (prefers-reduced-motion: reduce) {
 		transition: none;
 	}
+}
+
+// Holds the sheet's content without a box of its own: the sheet's flex
+// layout stays as it was; only `inert` hangs on it.
+.calendarSheet__content {
+	display: contents;
 }
 
 .calendarSheet__scrim {

@@ -13,6 +13,11 @@ export interface QuickEntry {
 	start?: Date;
 	end?: Date;
 	sessionId?: number;
+	/**
+	 * The line named an end ("14-15:30"). Without one, `end` is only the
+	 * default length and must not replace a chosen duration.
+	 */
+	endGiven?: boolean;
 }
 
 /** What still has to be given before the entry can be saved. */
@@ -133,17 +138,27 @@ export const parseQuickEntry = (
 	const base = day ?? today;
 	const range = take(text.match(RANGE));
 	const single = range ? null : take(text.match(SINGLE));
+	// "9:90" is no time: Date would quietly turn it into 10:30.
 	if (range) {
 		const startHour = hour24(Number(range[1]), range[3] ?? range[6]);
 		const endHour = hour24(Number(range[4]), range[6]);
-		if (startHour < 24 && endHour < 24) {
-			out.start = at(base, startHour, Number(range[2] ?? 0));
-			out.end = at(base, endHour, Number(range[5] ?? 0));
+		const startMinute = Number(range[2] ?? 0);
+		const endMinute = Number(range[5] ?? 0);
+		if (
+			startHour < 24 &&
+			endHour < 24 &&
+			startMinute < 60 &&
+			endMinute < 60
+		) {
+			out.start = at(base, startHour, startMinute);
+			out.end = at(base, endHour, endMinute);
+			out.endGiven = true;
 		}
 	} else if (single) {
 		const hour = hour24(Number(single[1]), single[3]);
-		if (hour < 24) {
-			out.start = at(base, hour, Number(single[2] ?? 0));
+		const minute = Number(single[2] ?? 0);
+		if (hour < 24 && minute < 60) {
+			out.start = at(base, hour, minute);
 			out.end = new Date(
 				out.start.getTime() + (out.kind === 'chat' ? 30 : 60) * 60_000
 			);
@@ -159,11 +174,19 @@ export const parseQuickEntry = (
 		.toLowerCase()
 		.split(/[\s,]+/)
 		.filter((w) => w.length >= 3);
-	const conversation = conversations.find((c) => {
-		const name = c.username.toLowerCase();
-		return words.some((w) => name.startsWith(w) || name.includes(w));
-	});
-	if (conversation) out.sessionId = conversation.sessionId;
+	// An exact username wins; a partial name counts only when it fits one
+	// conversation ("eule" is not "mutige_eule" when "eule" exists).
+	const exact = conversations.filter((c) =>
+		words.includes(c.username.toLowerCase())
+	);
+	const candidates =
+		exact.length > 0
+			? exact
+			: conversations.filter((c) => {
+					const name = c.username.toLowerCase();
+					return words.some((w) => name.includes(w));
+				});
+	if (candidates.length === 1) out.sessionId = candidates[0].sessionId;
 	return out;
 };
 
@@ -211,7 +234,8 @@ export const nearestDuration = (minutes: number): QuickDuration =>
 
 /**
  * What a typed line prefills: only the parts it names. "Do 14 Uhr" sets
- * date and start; "14-15:30" also the duration.
+ * date and start and keeps the chosen duration; "14-15:30" also the
+ * duration.
  */
 export const fieldsFromEntry = (entry: QuickEntry): Partial<QuickFields> => {
 	if (!entry.start) return {};
@@ -219,7 +243,7 @@ export const fieldsFromEntry = (entry: QuickEntry): Partial<QuickFields> => {
 		date: dateField(entry.start),
 		time: timeField(entry.start)
 	};
-	if (entry.end && entry.end > entry.start)
+	if (entry.endGiven && entry.end && entry.end > entry.start)
 		out.duration = nearestDuration(
 			(entry.end.getTime() - entry.start.getTime()) / 60_000
 		);

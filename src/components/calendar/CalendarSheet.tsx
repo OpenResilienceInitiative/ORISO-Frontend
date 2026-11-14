@@ -208,7 +208,14 @@ export const CalendarSheet = ({
 			<span id={`${id}-keys`} className="sr-only">
 				{t('calendar.sheet.keys')}
 			</span>
-			{children}
+			{/* Lowered, only the grab shows: what it hides takes no focus
+			    until the sheet opens (review 4574981862). */}
+			<div
+				className="calendarSheet__content"
+				inert={stop === 'peek' && dragHeight === null}
+			>
+				{children}
+			</div>
 		</section>
 	);
 };

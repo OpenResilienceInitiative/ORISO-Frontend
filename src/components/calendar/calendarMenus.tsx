@@ -208,12 +208,24 @@ const pad = (n: number) => String(n).padStart(2, '0');
 const dateValue = (d: Date) =>
 	`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 const timeValue = (d: Date) => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
-const combine = (date: string, time: string) => {
+/** `date` + `days` at `time`, on the local clock. */
+const combine = (date: string, time: string, days = 0) => {
 	const [y, m, d] = date.split('-').map(Number);
 	const [h, min] = time.split(':').map(Number);
 	if ([y, m, d, h, min].some((n) => Number.isNaN(n))) return null;
-	return new Date(y, m - 1, d, h, min);
+	return new Date(y, m - 1, d + days, h, min);
 };
+/** Calendar days from the day of `start` to the day of `end`. */
+const daysApart = (start: Date, end: Date) =>
+	Math.round(
+		(new Date(end.getFullYear(), end.getMonth(), end.getDate()).getTime() -
+			new Date(
+				start.getFullYear(),
+				start.getMonth(),
+				start.getDate()
+			).getTime()) /
+			86_400_000
+	);
 
 export interface MoveFormProps {
 	entry: CalendarEntry;
@@ -243,8 +255,11 @@ export const MoveForm = ({
 	const [date, setDate] = useState(dateValue(start));
 	const [from, setFrom] = useState(timeValue(start));
 	const [to, setTo] = useState(timeValue(end));
+	// The end keeps its distance in days, so an entry over midnight or
+	// over several days moves as a whole.
+	const endDays = daysApart(start, end);
 	const nextStart = combine(date, from);
-	const nextEnd = combine(date, to);
+	const nextEnd = combine(date, to, endDays);
 	const invalid = !nextStart || !nextEnd || nextEnd <= nextStart;
 	const conflicts = useMemo(
 		() =>

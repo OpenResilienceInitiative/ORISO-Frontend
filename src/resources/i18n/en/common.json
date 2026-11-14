@@ -7100,7 +7100,8 @@
 			"set": "Set",
 			"summary": "Working hours {{hours}}",
 			"title": "Set working hours",
-			"to": "End on {{day}}"
+			"to": "End on {{day}}",
+			"tooMany": "Working hours hold at most {{max}} time windows a week; this change was not saved."
 		},
 		"grip": {
 			"always": "Always {{weekdays}}",

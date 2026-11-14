@@ -152,6 +152,15 @@ export const CalendarPageWired = () => {
 	const [conversations, setConversations] = useState<ConversationRef[]>([]);
 	const [sync, setSync] = useState<CalendarSyncDTO>();
 	const [plan, setPlan] = useState<WorkingPlan>();
+	/** The saved schedule has loaded: until then it cannot be edited. */
+	const [planLoaded, setPlanLoaded] = useState(false);
+	/** The plan as UserService last confirmed it; failures go back to it. */
+	const confirmed = useRef<WorkingPlan | undefined>(undefined);
+	/** Owners: the latest weekly save, the latest save per date. */
+	const weeklyOp = useRef(0);
+	const exceptionOps = useRef<Record<string, number>>({});
+	/** Edits since mount; the first read only applies when there are none. */
+	const planEdits = useRef(0);
 
 	const range = useRef<{ from: Date; to: Date } | undefined>(undefined);
 	const shown = useRef<string[]>([]);
@@ -238,9 +247,19 @@ export const CalendarPageWired = () => {
 				(dto) => !cancelled && setSync(dto),
 				() => undefined
 			);
-			// Without an answer the calendar shades nothing, as with none set.
+			// Without an answer the calendar shades nothing, as with none set,
+			// and the schedule stays closed for editing: saving it would
+			// write a default over the stored one (review 4574779938). A read
+			// that answers after an edit changes nothing (review 4574779933).
+			const edits = planEdits.current;
 			apiGetCalendarWorkingHours().then(
-				(dto) => !cancelled && setPlan(workingPlanFromApi(dto)),
+				(dto) => {
+					if (cancelled) return;
+					const loaded = workingPlanFromApi(dto);
+					confirmed.current = loaded;
+					if (planEdits.current === edits) setPlan(loaded);
+					setPlanLoaded(true);
+				},
 				() => undefined
 			);
 			apiGetConsultantSessionList({
@@ -366,30 +385,47 @@ export const CalendarPageWired = () => {
 
 	// Working hours, holiday region and day exceptions show the change at
 	// once; a failed save puts the stored state back and rejects, so the
-	// page says it did not work.
+	// page says it did not work. Each part has its own owner: the weekly
+	// fields belong to the latest weekly save, each date's exception to
+	// the latest save of that date. An older answer or failure changes
+	// nothing a newer operation has written (reviews 4574981869,
+	// 4574981870, 4574981875).
 	const saveWorkingHours = async (
 		hours: WorkingHours,
 		holidayRegion: HolidayRegion | null
 	) => {
-		const before = plan;
+		const generation = ++weeklyOp.current;
+		planEdits.current += 1;
+		const latest = () => generation === weeklyOp.current;
 		const next: WorkingPlan = { ...plan, hours, holidayRegion };
-		setPlan(next);
+		setPlan((current) => ({ ...current, hours, holidayRegion }));
 		try {
 			const saved = await apiSetCalendarWorkingHours(
 				workingPlanToApi(next)
 			);
 			const stored = workingPlanFromApi(saved);
+			confirmed.current = {
+				...confirmed.current,
+				hours: stored.hours,
+				holidayRegion: stored.holidayRegion
+			};
+			if (!latest()) return;
+			// Only the weekly fields: the answer's exceptions are a snapshot
+			// that a day save running alongside may already have replaced.
 			setPlan((current) => ({
 				...current,
 				hours: stored.hours,
-				holidayRegion: stored.holidayRegion,
-				// The answer may carry the exceptions; else keep ours.
-				exceptions: saved?.exceptions
-					? stored.exceptions
-					: current?.exceptions
+				holidayRegion: stored.holidayRegion
 			}));
+			setPlanLoaded(true);
 		} catch (error) {
-			setPlan((current) => (current === next ? before : current));
+			// Back to what UserService last confirmed.
+			if (latest())
+				setPlan((current) => ({
+					...current,
+					hours: confirmed.current?.hours ?? [],
+					holidayRegion: confirmed.current?.holidayRegion ?? null
+				}));
 			throw error;
 		}
 	};
@@ -402,29 +438,51 @@ export const CalendarPageWired = () => {
 			return { hours: [], ...current, exceptions };
 		});
 
+	/** What UserService last confirmed for `date`. */
+	const confirmException = (date: string, windows?: TimeWindow[]) => {
+		const exceptions = { ...confirmed.current?.exceptions };
+		if (windows) exceptions[date] = windows;
+		else delete exceptions[date];
+		confirmed.current = { hours: [], ...confirmed.current, exceptions };
+	};
+
+	/** A new operation on `date`; `latest()` says whether it still owns it. */
+	const ownDate = (date: string) => {
+		const generation = (exceptionOps.current[date] ?? 0) + 1;
+		exceptionOps.current[date] = generation;
+		planEdits.current += 1;
+		return () => exceptionOps.current[date] === generation;
+	};
+
 	const saveDayException = async (date: string, windows: TimeWindow[]) => {
-		const before = plan?.exceptions?.[date];
-		setException(date, normalizeWindows(windows));
+		const latest = ownDate(date);
+		const shown = normalizeWindows(windows);
+		setException(date, shown);
 		try {
 			const saved = await apiPutWorkingDayException(
 				date,
 				exceptionWindowsToApi(windows)
 			);
-			const stored = dayExceptionsFromApi(saved ? [saved] : [])[date];
-			if (stored) setException(date, stored);
+			const stored =
+				dayExceptionsFromApi(saved ? [saved] : [])[date] ?? shown;
+			confirmException(date, stored);
+			if (latest()) setException(date, stored);
 		} catch (error) {
-			setException(date, before);
+			if (latest())
+				setException(date, confirmed.current?.exceptions?.[date]);
 			throw error;
 		}
 	};
 
 	const deleteDayException = async (date: string) => {
-		const before = plan?.exceptions?.[date];
+		const latest = ownDate(date);
 		setException(date, undefined);
 		try {
 			await apiDeleteWorkingDayException(date);
+			confirmException(date, undefined);
 		} catch (error) {
-			setException(date, before);
+			if (latest())
+				setException(date, confirmed.current?.exceptions?.[date]);
 			throw error;
 		}
 	};
@@ -454,6 +512,7 @@ export const CalendarPageWired = () => {
 			busyImport={sync ? importFromApi(sync) : {}}
 			compact={untilM}
 			workingHours={consultant ? plan?.hours : undefined}
+			workingHoursLoaded={consultant && planLoaded}
 			dayExceptions={consultant ? plan?.exceptions : undefined}
 			holidayRegion={consultant ? (plan?.holidayRegion ?? null) : null}
 			onRangeChange={changeRange}

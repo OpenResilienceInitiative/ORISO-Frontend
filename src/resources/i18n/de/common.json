@@ -7175,7 +7175,8 @@
 			"set": "Festlegen",
 			"summary": "Arbeitszeit {{hours}}",
 			"title": "Arbeitszeit festlegen",
-			"to": "Ende am {{day}}"
+			"to": "Ende am {{day}}",
+			"tooMany": "Die Arbeitszeit hat höchstens {{max}} Zeitfenster pro Woche; diese Änderung ist nicht gespeichert."
 		},
 		"grip": {
 			"always": "Immer {{weekdays}}",

@@ -27,8 +27,11 @@ export const REPEAT_MS = 900;
 const EDGE_PX = 72;
 /** Horizontal wheel distance that counts as one swipe. */
 const SWIPE_PX = 60;
-/** One swipe pages once, however long the trackpad keeps scrolling. */
-const SWIPE_COOLDOWN_MS = 650;
+/**
+ * One swipe pages once, however long the trackpad keeps scrolling: the
+ * swipe ends only after this long without a horizontal wheel event.
+ */
+export const SWIPE_IDLE_MS = 200;
 
 export interface CalendarPagerProps {
 	'onPage': (direction: ScrollDirection) => void;
@@ -58,27 +61,29 @@ export const CalendarPager = ({
 		const el = ref.current;
 		if (!el || !enabled) return undefined;
 		let sum = 0;
-		let blockedUntil = 0;
-		let reset: number | undefined;
+		// Set once the swipe paged; cleared when the wheel goes quiet.
+		let paged = false;
+		let idle: number | undefined;
 		const onWheel = (event: WheelEvent) => {
 			if (Math.abs(event.deltaX) <= Math.abs(event.deltaY)) return;
 			event.preventDefault();
-			window.clearTimeout(reset);
-			reset = window.setTimeout(() => {
+			window.clearTimeout(idle);
+			idle = window.setTimeout(() => {
 				sum = 0;
-			}, 200);
-			if (Date.now() < blockedUntil) return;
+				paged = false;
+			}, SWIPE_IDLE_MS);
+			if (paged) return;
 			sum += event.deltaX;
 			if (Math.abs(sum) >= SWIPE_PX) {
 				page.current(sum > 0 ? 1 : -1);
 				sum = 0;
-				blockedUntil = Date.now() + SWIPE_COOLDOWN_MS;
+				paged = true;
 			}
 		};
 		el.addEventListener('wheel', onWheel, { passive: false });
 		return () => {
 			el.removeEventListener('wheel', onWheel);
-			window.clearTimeout(reset);
+			window.clearTimeout(idle);
 		};
 	}, [enabled]);
 
@@ -101,8 +106,15 @@ export const CalendarPager = ({
 		const onMove = (event: PointerEvent | MouseEvent) => {
 			const bounds = ref.current?.getBoundingClientRect();
 			if (!bounds) return;
-			const next: ScrollDirection | 0 =
-				event.clientX <= bounds.left + EDGE_PX
+			// Over the sidebar or below the grid is no edge of the calendar.
+			const inside =
+				event.clientX >= bounds.left &&
+				event.clientX <= bounds.right &&
+				event.clientY >= bounds.top &&
+				event.clientY <= bounds.bottom;
+			const next: ScrollDirection | 0 = !inside
+				? 0
+				: event.clientX <= bounds.left + EDGE_PX
 					? -1
 					: event.clientX >= bounds.right - EDGE_PX
 						? 1

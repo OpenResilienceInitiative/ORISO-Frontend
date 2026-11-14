@@ -59,7 +59,9 @@ import {
 } from './calendarViews';
 import {
 	effectiveDay,
+	exceedsWindowLimit,
 	isWithinWorkingHours,
+	MAX_WORKING_HOURS_WINDOWS,
 	moveEdge,
 	sameWindows,
 	windowsOn,
@@ -150,6 +152,12 @@ export interface CalendarPageProps {
 	busyImport?: CalendarImport;
 	/** Weekly working hours; empty = none set, nothing shaded. */
 	workingHours?: WorkingHours;
+	/**
+	 * The saved schedule has loaded. Until then (or when loading failed)
+	 * neither the dialog nor the grips edit it, so an unloaded schedule is
+	 * never saved as an empty one (review 4574779938).
+	 */
+	workingHoursLoaded?: boolean;
 	/** Single dates with their own hours ("Nur an diesem Tag"). */
 	dayExceptions?: DayExceptions;
 	/** Bundesland whose public holidays are days off; null = none. */
@@ -300,6 +308,7 @@ export const CalendarPage = ({
 	feed,
 	busyImport = {},
 	workingHours = [],
+	workingHoursLoaded = true,
 	dayExceptions,
 	holidayRegion = null,
 	compact = false,
@@ -656,7 +665,8 @@ export const CalendarPage = ({
 	};
 
 	// --- Working-hours grips (own calendar) ---
-	const gripsOn = consultant && !!onSaveWorkingHours && !!onSaveDayException;
+	const editHours = workingHoursLoaded && !!onSaveWorkingHours;
+	const gripsOn = consultant && editHours && !!onSaveDayException;
 	const gripDate = (day: Date) =>
 		new Intl.DateTimeFormat(
 			i18n.language?.startsWith('en') ? 'en-GB' : 'de-DE',
@@ -710,11 +720,19 @@ export const CalendarPage = ({
 				change.to
 			);
 			const previousHours = workingHours;
+			const nextHours = withWeekdayWindows(workingHours, weekday, weekly);
+			// Over UserService's limit: refuse it, never drop another day.
+			if (exceedsWindowLimit(nextHours)) {
+				setNotice({
+					message: t('calendar.workingHours.tooMany', {
+						max: MAX_WORKING_HOURS_WINDOWS
+					})
+				});
+				refocusGrip(change);
+				return;
+			}
 			const saves: (void | Promise<unknown> | undefined)[] = [
-				onSaveWorkingHours?.(
-					withWeekdayWindows(workingHours, weekday, weekly),
-					holidayRegion
-				)
+				onSaveWorkingHours?.(nextHours, holidayRegion)
 			];
 			if (previousException)
 				saves.push(
@@ -949,7 +967,7 @@ export const CalendarPage = ({
 				onForgetEdge={forgetEdge}
 				switcherStyle={switcherStyle}
 				onWorkingHours={
-					onSaveWorkingHours
+					editHours
 						? () => {
 								setMenu(null);
 								setDialog({ type: 'workingHours' });
@@ -1474,7 +1492,7 @@ export const CalendarPage = ({
 		shownColleagues,
 		onCreate: onCreate ? create : undefined,
 		onMoreDetails: moreDetails,
-		onWorkingHours: onSaveWorkingHours
+		onWorkingHours: editHours
 			? () => setDialog({ type: 'workingHours' })
 			: undefined
 	};
@@ -1582,7 +1600,7 @@ export const CalendarPage = ({
 					onClose={() => setDialog(null)}
 				/>
 			)}
-			{dialog?.type === 'workingHours' && (
+			{dialog?.type === 'workingHours' && editHours && (
 				<WorkingHoursDialog
 					open
 					hours={workingHours}

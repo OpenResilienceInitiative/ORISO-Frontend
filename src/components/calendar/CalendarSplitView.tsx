@@ -18,7 +18,7 @@
  * own; it reads the same entries, classes and callbacks as `CalendarView`.
  */
 import * as React from 'react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Tooltip } from '@mui/material';
 import {
@@ -73,8 +73,28 @@ const addDays = (date: Date, days: number) => {
 };
 const dateKey = (date: Date) =>
 	`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-const minutesSince = (day: Date, date: Date) =>
-	Math.round((date.getTime() - day.getTime()) / 60_000);
+/**
+ * Where `date` falls on the clock of `day`, in minutes: below 0 before
+ * that day, 24 · 60 or more after it. Wall-clock time, not elapsed time,
+ * so 08:30 sits at 08:30 on a 23- or 25-hour day too.
+ */
+const clockMinutes = (day: Date, date: Date) => {
+	const days = Math.round(
+		(startOfDay(date).getTime() - day.getTime()) / 86_400_000
+	);
+	return (
+		days * 24 * 60 +
+		date.getHours() * 60 +
+		date.getMinutes() +
+		Math.round(date.getSeconds() / 60)
+	);
+};
+/** The local time `minutes` past the start of `day`. */
+const atClock = (day: Date, minutes: number) => {
+	const date = new Date(day);
+	date.setHours(0, minutes, 0, 0);
+	return date;
+};
 const toPx = (minutes: number) => ((minutes - FIRST_HOUR * 60) / 60) * HOUR_PX;
 const clampMinutes = (m: number) =>
 	Math.min(LAST_HOUR * 60, Math.max(FIRST_HOUR * 60, m));
@@ -226,6 +246,34 @@ export const CalendarSplitView = ({
 	const clickTimer = useRef<number | undefined>(undefined);
 	useEffect(() => () => window.clearTimeout(clickTimer.current), []);
 
+	// All-day entries make a column's head taller. Every head takes the
+	// height of the tallest, so the timed bodies start at the same offset
+	// and 10:00 is level across columns (review 4574775727).
+	const evenHeads = useRef(() => {
+		const track = scrollRef.current;
+		if (!track) return;
+		const heads = Array.from(
+			track.querySelectorAll<HTMLElement>('.calendarSplit__head')
+		);
+		heads.forEach((head) => {
+			head.style.minHeight = '';
+		});
+		const tallest = Math.max(0, ...heads.map((head) => head.offsetHeight));
+		if (tallest > 0)
+			heads.forEach((head) => {
+				head.style.minHeight = `${tallest}px`;
+			});
+	});
+	useLayoutEffect(() => evenHeads.current());
+	useEffect(() => {
+		const track = scrollRef.current;
+		if (!track || typeof ResizeObserver === 'undefined') return undefined;
+		// Narrower columns wrap their heads onto more lines.
+		const observer = new ResizeObserver(() => evenHeads.current());
+		observer.observe(track);
+		return () => observer.disconnect();
+	}, []);
+
 	const people: SplitPerson[] = [
 		{ id: ownerId },
 		...colleagues.map((c) => ({ id: c.id, colleague: c }))
@@ -349,8 +397,9 @@ export const CalendarSplitView = ({
 						let b = Math.max(selection.from, selection.to);
 						if (b - a < SNAP_MINUTES) b = a + 60;
 						else b += SNAP_MINUTES;
-						const start = new Date(selection.day + a * 60_000);
-						const end = new Date(selection.day + b * 60_000);
+						const selected = new Date(selection.day);
+						const start = atClock(selected, a);
+						const end = atClock(selected, b);
 						onSelectRange?.(
 							{ start, end },
 							{ x: event.clientX, y: event.clientY }
@@ -371,13 +420,13 @@ export const CalendarSplitView = ({
 		const from = clampMinutes(
 			Math.max(
 				0,
-				minutesSince(day, new Date(proposal?.start ?? entry.start))
+				clockMinutes(day, new Date(proposal?.start ?? entry.start))
 			)
 		);
 		const to = clampMinutes(
 			Math.min(
 				24 * 60,
-				minutesSince(day, new Date(proposal?.end ?? entry.end))
+				clockMinutes(day, new Date(proposal?.end ?? entry.end))
 			)
 		);
 		if (to <= from) return null;
@@ -503,7 +552,7 @@ export const CalendarSplitView = ({
 		const own = index === 0;
 		const sticky = own && !grouped;
 		const isToday = today === day.getTime();
-		const nowMinutes = minutesSince(day, now);
+		const nowMinutes = clockMinutes(day, now);
 		const mine = d.entries.filter((e) => e.ownerId === person.id);
 		const timed = mine.filter((e) => !e.allDay);
 		const allDay = mine.filter((e) => e.allDay);
@@ -597,9 +646,7 @@ export const CalendarSplitView = ({
 									className="calendarSplit__hour"
 									style={{ top: (h - FIRST_HOUR) * HOUR_PX }}
 								>
-									{hourFormat.format(
-										new Date(day.getTime() + h * 3_600_000)
-									)}
+									{hourFormat.format(atClock(day, h * 60))}
 								</span>
 							))}
 						</div>
@@ -629,9 +676,9 @@ export const CalendarSplitView = ({
 						{own && onEdgeChange && edgeGrips(d)}
 						{d.free.map((f) => {
 							const from = clampMinutes(
-								minutesSince(day, f.start)
+								clockMinutes(day, f.start)
 							);
-							const to = clampMinutes(minutesSince(day, f.end));
+							const to = clampMinutes(clockMinutes(day, f.end));
 							if (to <= from) return null;
 							return (
 								<span

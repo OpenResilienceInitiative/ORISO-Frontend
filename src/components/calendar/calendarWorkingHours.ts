@@ -73,15 +73,29 @@ export const workingHoursFromApi = (
 		.map(({ weekday, start, end }) => ({ weekday, start, end }))
 		.sort(byWeekdayAndStart);
 
+/** More windows than UserService accepts: the change must be refused. */
+export const exceedsWindowLimit = (hours: WorkingHours) =>
+	hours.filter(validWindow).length > MAX_WORKING_HOURS_WINDOWS;
+
+/**
+ * The request body. Never cut to the limit — that would drop another
+ * weekday's hours unseen; callers refuse such a change with a message
+ * ({@link exceedsWindowLimit}), and this throws as the last guard.
+ */
 export const workingHoursToApi = (
 	hours: WorkingHours
-): CalendarWorkingHoursDTO => ({
-	windows: [...hours]
-		.filter(validWindow)
-		.sort(byWeekdayAndStart)
-		.slice(0, MAX_WORKING_HOURS_WINDOWS)
-		.map(({ weekday, start, end }) => ({ weekday, start, end }))
-});
+): CalendarWorkingHoursDTO => {
+	if (exceedsWindowLimit(hours))
+		throw new RangeError(
+			`At most ${MAX_WORKING_HOURS_WINDOWS} working-hours windows`
+		);
+	return {
+		windows: [...hours]
+			.filter(validWindow)
+			.sort(byWeekdayAndStart)
+			.map(({ weekday, start, end }) => ({ weekday, start, end }))
+	};
+};
 
 const hm = (date: Date) => date.getHours() * 60 + date.getMinutes();
 
@@ -442,8 +456,30 @@ export const isBreakValid = (b: DayBreak) =>
 	(isTime(b.start) && isTime(b.end) && minutesOf(b.end) > minutesOf(b.start));
 
 /**
- * The rows that are switched on and complete, as windows; a day that spans
- * the break becomes two.
+ * One row without the break: the part of the day outside it. 08:00–18:00
+ * becomes two windows, 08:00–13:00 ends at 12:00, 12:00–18:00 starts at
+ * 13:00. A day entirely inside the break stays as entered.
+ */
+const withoutBreak = (
+	{ weekday, start, end }: WorkingDayRow,
+	dayBreak?: DayBreak
+): WorkingHoursWindow[] => {
+	if (!dayBreak?.enabled || !isBreakValid(dayBreak))
+		return [{ weekday, start, end }];
+	const from = minutesOf(start);
+	const to = minutesOf(end);
+	const breakFrom = minutesOf(dayBreak.start);
+	const breakTo = minutesOf(dayBreak.end);
+	if (to <= breakFrom || from >= breakTo) return [{ weekday, start, end }];
+	const parts: WorkingHoursWindow[] = [];
+	if (from < breakFrom) parts.push({ weekday, start, end: dayBreak.start });
+	if (to > breakTo) parts.push({ weekday, start: dayBreak.end, end });
+	return parts.length > 0 ? parts : [{ weekday, start, end }];
+};
+
+/**
+ * The rows that are switched on and complete, as windows; the break is cut
+ * out of every day it touches.
  */
 export const rowsToWorkingHours = (
 	rows: WorkingDayRow[],
@@ -457,18 +493,43 @@ export const rowsToWorkingHours = (
 				isTime(r.end) &&
 				minutesOf(r.end) > minutesOf(r.start)
 		)
-		.flatMap(({ weekday, start, end }) =>
-			dayBreak?.enabled &&
-			isBreakValid(dayBreak) &&
-			minutesOf(start) < minutesOf(dayBreak.start) &&
-			minutesOf(end) > minutesOf(dayBreak.end)
-				? [
-						{ weekday, start, end: dayBreak.start },
-						{ weekday, start: dayBreak.end, end }
-					]
-				: [{ weekday, start, end }]
+		.flatMap((row) => withoutBreak(row, dayBreak))
+		.sort(byWeekdayAndStart);
+
+const sameRow = (a: WorkingDayRow, b?: WorkingDayRow) =>
+	!!b &&
+	a.enabled === b.enabled &&
+	a.start === b.start &&
+	a.end === b.end;
+
+const sameBreak = (a: DayBreak, b: DayBreak) =>
+	a.enabled === b.enabled && a.start === b.start && a.end === b.end;
+
+/**
+ * What the dialog saves: the rows it can show, but every day the user left
+ * alone keeps its stored windows — a day-specific break or a third window
+ * the shared break cannot express stays as it was. A changed break applies
+ * to every day.
+ */
+export const dialogWorkingHours = (
+	stored: WorkingHours,
+	rows: WorkingDayRow[],
+	dayBreak: DayBreak
+): WorkingHours => {
+	const initialRows = workingHoursToRows(stored);
+	const breakKept = sameBreak(dayBreak, breakOf(stored));
+	return rows
+		.flatMap((row) =>
+			breakKept &&
+			sameRow(
+				row,
+				initialRows.find((r) => r.weekday === row.weekday)
+			)
+				? windowsOn(stored, row.weekday)
+				: rowsToWorkingHours([row], dayBreak)
 		)
 		.sort(byWeekdayAndStart);
+};
 
 /** Weekdays whose row is on but ends before it starts. */
 export const invalidRows = (rows: WorkingDayRow[]) =>

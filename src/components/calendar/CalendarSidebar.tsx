@@ -58,6 +58,9 @@ const QUICK_KINDS: QuickKind[] = [
 const MAX_UPCOMING = 5;
 const MAX_SEARCH_RESULTS = 8;
 
+/** What creating from the quick entry reports (see `onCreate`). */
+export type QuickCreateResult = void | boolean | Promise<unknown>;
+
 export interface CalendarSidebarProps {
 	ownerId: string;
 	consultant: boolean;
@@ -86,7 +89,11 @@ export interface CalendarSidebarProps {
 	onOpenEntry: (entry: CalendarEntry, anchor: HTMLElement) => void;
 	/** Colleagues shown: search finds their entries too. */
 	shownColleagues: string[];
-	onCreate?: (drafts: AppointmentDraft[]) => void;
+	/**
+	 * `false`, or a promise that rejects or resolves to `false`, means it
+	 * was not created: the quick entry keeps its draft.
+	 */
+	onCreate?: (drafts: AppointmentDraft[]) => QuickCreateResult;
 	/** "Mehr Angaben …": the full dialog with what the line already says. */
 	onMoreDetails?: (draft: {
 		kind?: QuickKind;
@@ -432,8 +439,13 @@ export const CalendarSidebar = ({
 					</button>
 				</div>
 			)}
-			{consultant && onCreate && (!sheet || quickOpen) && (
-				<div id="calendar-quick-panel" className="calendarSide__quick">
+			{/* Folded on the phone it stays mounted, so the draft survives. */}
+			{consultant && onCreate && (
+				<div
+					id="calendar-quick-panel"
+					className="calendarSide__quick"
+					hidden={sheet && !quickOpen}
+				>
 					<QuickEntry
 						ownerId={ownerId}
 						now={now}
@@ -442,7 +454,7 @@ export const CalendarSidebar = ({
 						workingHours={workingHours}
 						onCreate={onCreate}
 						onMoreDetails={onMoreDetails}
-						autoFocus={sheet}
+						autoFocus={sheet && quickOpen}
 						hideTitle={sheet}
 					/>
 				</div>
@@ -503,8 +515,11 @@ export const CalendarKindChips = ({
 }: CalendarKindChipsProps) => {
 	const { t } = useTranslation();
 	const own = entries.filter((e) => e.ownerId === ownerId);
-	const presentFacets = CALENDAR_FACETS.filter((facet) =>
-		own.some((e) => facetOf(e) === facet)
+	// A selected kind stays on offer after its entries are gone, so the
+	// filter can always be cleared (reviews 4574504546, 4574493851).
+	const presentFacets = CALENDAR_FACETS.filter(
+		(facet) =>
+			onlyFacets.includes(facet) || own.some((e) => facetOf(e) === facet)
 	);
 	const futureCount = (facet: CalendarEntryFacet) =>
 		own.filter(
@@ -520,7 +535,10 @@ export const CalendarKindChips = ({
 			trailing={trailing}
 		>
 			{presentFacets
-				.filter((facet) => !hiddenFacets.includes(facet))
+				.filter(
+					(facet) =>
+						!hiddenFacets.includes(facet) || onlyFacets.includes(facet)
+				)
 				.map((facet) => (
 					<span
 						key={facet}
@@ -552,7 +570,7 @@ interface QuickEntryProps {
 	entries: CalendarEntry[];
 	conversations: CalendarConversation[];
 	workingHours: WorkingHours | WorkingPlan;
-	onCreate: (drafts: AppointmentDraft[]) => void;
+	onCreate: (drafts: AppointmentDraft[]) => QuickCreateResult;
 	onMoreDetails?: CalendarSidebarProps['onMoreDetails'];
 	/** Focus the line when shown (the phone folds it open on demand). */
 	autoFocus?: boolean;
@@ -613,10 +631,12 @@ export const QuickEntry = ({
 	);
 	const type = (value: string) => {
 		setText(value);
+		const typed = parseQuickEntry(value, { now, conversations, kind });
+		// A conversation the line names replaces an earlier pick; a line
+		// that names none keeps it.
+		if (typed.sessionId !== undefined) setSessionId(typed.sessionId);
 		// The line prefills what it names; the fields stay what is saved.
-		const prefill = fieldsFromEntry(
-			parseQuickEntry(value, { now, conversations, kind })
-		);
+		const prefill = fieldsFromEntry(typed);
 		if (Object.keys(prefill).length > 0)
 			setFields((current) => ({ ...current, ...prefill }));
 	};
@@ -635,7 +655,7 @@ export const QuickEntry = ({
 	const submit = () => {
 		if (gaps.length > 0 || !entry.start || !entry.end || !effectiveKind)
 			return;
-		onCreate([
+		const result = onCreate([
 			effectiveKind === 'blocker'
 				? { type: 'blocker', start: entry.start, end: entry.end }
 				: {
@@ -646,7 +666,13 @@ export const QuickEntry = ({
 						sessionId: entry.sessionId
 					}
 		]);
-		reset();
+		// The draft goes only once the entry exists; a failure keeps it.
+		Promise.resolve(result).then(
+			(created) => {
+				if (created !== false) reset();
+			},
+			() => undefined
+		);
 	};
 
 	let status: string;
