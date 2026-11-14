@@ -7203,6 +7203,10 @@
 			"tooMany": "Çalışma saatleri haftada en fazla {{max}} zaman aralığı içerir; bu değişiklik kaydedilmedi."
 		},
 		"grip": {
+			"ghostPauseEnd": "Mola {{time}} saatine kadar",
+			"ghostPauseStart": "Mola {{time}} itibarıyla",
+			"pauseEnd": "Mola bitişi",
+			"pauseStart": "Mola başlangıcı",
 			"always": "Her zaman {{weekdays}}",
 			"alwaysHint": "çalışma saatlerinde kural olarak",
 			"end": "İş bitişi",

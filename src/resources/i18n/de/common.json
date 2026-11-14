@@ -7193,6 +7193,10 @@
 			"tooMany": "Die Arbeitszeit hat höchstens {{max}} Zeitfenster pro Woche; diese Änderung ist nicht gespeichert."
 		},
 		"grip": {
+			"ghostPauseEnd": "Pause bis {{time}}",
+			"ghostPauseStart": "Pause ab {{time}}",
+			"pauseEnd": "Pausenende",
+			"pauseStart": "Pausenbeginn",
 			"always": "Immer {{weekdays}}",
 			"alwaysHint": "als Regel in der Arbeitszeit",
 			"end": "Arbeitsende",

@@ -49,6 +49,7 @@ import { CalendarEntryGlyph, facetOf } from './CalendarEntryGlyph';
 import type { MoveProposal } from './calendarActions';
 import {
 	dayEdgesOf,
+	gripEdges,
 	effectiveDay,
 	minutesOf,
 	offRangesOf,
@@ -905,9 +906,7 @@ export const CalendarView = ({
 					const edges = dayEdgesOf(day, workingPlan);
 					if (!edges) return null;
 					return createPortal(
-						(['start', 'end'] as const).map((edge) => {
-							const time =
-								edge === 'start' ? edges.start : edges.end;
+						gripEdges(edges).map(({ edge, time }) => {
 							return (
 								<CalendarWorkGrip
 									key={edge}

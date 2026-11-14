@@ -1312,13 +1312,19 @@ export const SplitGrips: Story = {
 		const own = canvasElement.querySelector<HTMLElement>(
 			'.calendarSplit__column--own'
 		)!;
+		// Start and end, and both ends of the pause (12:00–13:00).
 		await waitFor(() =>
-			expect(own.querySelectorAll('.calendarGrip').length).toBe(2)
+			expect(own.querySelectorAll('.calendarGrip').length).toBe(4)
 		);
+		await expect(
+			own.querySelectorAll(
+				'.calendarGrip--pauseStart, .calendarGrip--pauseEnd'
+			).length
+		).toBe(2);
 		// Colleagues' columns carry none.
 		await expect(
 			canvasElement.querySelectorAll('.calendarGrip').length
-		).toBe(2);
+		).toBe(4);
 	}
 };
 

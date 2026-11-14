@@ -7203,6 +7203,10 @@
 			"tooMany": "Les horaires comptent au plus {{max}} plages par semaine ; cette modification n’a pas été enregistrée."
 		},
 		"grip": {
+			"ghostPauseEnd": "Pause jusqu’à {{time}}",
+			"ghostPauseStart": "Pause dès {{time}}",
+			"pauseEnd": "Fin de la pause",
+			"pauseStart": "Début de la pause",
 			"always": "Toujours {{weekdays}}",
 			"alwaysHint": "comme règle dans les horaires de travail",
 			"end": "Fin du travail",

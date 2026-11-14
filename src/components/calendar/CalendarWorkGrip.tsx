@@ -16,14 +16,22 @@ import { useTranslation } from 'react-i18next';
 import {
 	EDGE_STEP_MINUTES,
 	clampEdge,
+	edgeLabelKey,
 	minutesOf,
 	timeOfMinutes,
-	type TimeWindow
+	type TimeWindow,
+	type WorkEdge
 } from './calendarWorkingHours';
 import { dateKeyOf } from './calendarHolidays';
 import { calendarLocale } from './calendarLocale';
 
-export type WorkEdge = 'start' | 'end';
+export type { WorkEdge };
+const GHOST_KEY: Record<WorkEdge, string> = {
+	start: 'calendar.grip.ghostStart',
+	end: 'calendar.grip.ghostEnd',
+	pauseStart: 'calendar.grip.ghostPauseStart',
+	pauseEnd: 'calendar.grip.ghostPauseEnd'
+};
 
 /** A grip was let go (or moved by key) at a new time. */
 export interface EdgeChange {
@@ -52,7 +60,10 @@ export interface CalendarWorkGripProps {
 	day: Date;
 	/** HH:mm the edge is at now. */
 	time: string;
-	/** The day's working windows, to keep at least an hour of work. */
+	/**
+	 * The day's working windows, to keep at least an hour of work and the
+	 * pause inside the working time.
+	 */
 	windows: TimeWindow[];
 	/** The date has its own hours ("Nur an diesem Tag"): primary colour. */
 	exception?: boolean;
@@ -181,9 +192,7 @@ export const CalendarWorkGrip = ({
 		day: 'numeric',
 		month: 'numeric'
 	}).format(day);
-	const what = t(
-		edge === 'start' ? 'calendar.grip.start' : 'calendar.grip.end'
-	);
+	const what = t(edgeLabelKey(edge));
 	const ghostTime = drag ? timeOfMinutes(drag.minutes) : '';
 	const ghostTop = drag
 		? drag.geometry.top +
@@ -232,12 +241,7 @@ export const CalendarWorkGrip = ({
 							className="calendarGrip__ghostLabel"
 							aria-hidden="true"
 						>
-							{t(
-								edge === 'start'
-									? 'calendar.grip.ghostStart'
-									: 'calendar.grip.ghostEnd',
-								{ time: ghostTime }
-							)}
+							{t(GHOST_KEY[edge], { time: ghostTime })}
 						</span>
 					</div>,
 					document.body

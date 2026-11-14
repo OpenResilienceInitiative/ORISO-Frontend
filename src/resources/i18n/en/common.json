@@ -7118,6 +7118,10 @@
 			"tooMany": "Working hours hold at most {{max}} time windows a week; this change was not saved."
 		},
 		"grip": {
+			"ghostPauseEnd": "Break until {{time}}",
+			"ghostPauseStart": "Break from {{time}}",
+			"pauseEnd": "End of the break",
+			"pauseStart": "Start of the break",
 			"always": "Always {{weekdays}}",
 			"alwaysHint": "as a rule in the working hours",
 			"end": "End of work",

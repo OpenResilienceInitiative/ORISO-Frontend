@@ -3,6 +3,7 @@ import {
 	DEFAULT_PAUSE,
 	MAX_WORKING_HOURS_WINDOWS,
 	clampEdge,
+	gripEdges,
 	dialogWorkingHours,
 	exceedsWindowLimit,
 	dayEdgesOf,
@@ -463,5 +464,43 @@ describe('calendarWorkingHours — working plan', () => {
 		expect(isWithinWorkingHours(at(16, 12), at(16, 13), plan)).toBe(true);
 		expect(isWithinWorkingHours(at(18, 9), at(18, 10), plan)).toBe(false);
 		expect(isWithinWorkingHours(at(17, 9), at(17, 10), plan)).toBe(true);
+	});
+});
+
+describe('pause grips (Frank, prototype v15)', () => {
+	const DAY = [
+		{ start: '08:00', end: '12:00' },
+		{ start: '13:00', end: '16:00' }
+	];
+
+	it('gives a day with two windows grips at both ends of its pause', () => {
+		const edges = dayEdgesOf(new Date(2026, 10, 16), [
+			{ weekday: 1, ...DAY[0] },
+			{ weekday: 1, ...DAY[1] }
+		]);
+		expect(edges && gripEdges(edges)).toEqual([
+			{ edge: 'start', time: '08:00' },
+			{ edge: 'pauseStart', time: '12:00' },
+			{ edge: 'pauseEnd', time: '13:00' },
+			{ edge: 'end', time: '16:00' }
+		]);
+	});
+
+	it('keeps the pause a quarter hour long and inside the working time', () => {
+		expect(clampEdge(DAY, 'pauseStart', 13 * 60)).toBe(12 * 60 + 45);
+		expect(clampEdge(DAY, 'pauseStart', 7 * 60)).toBe(8 * 60 + 15);
+		expect(clampEdge(DAY, 'pauseEnd', 12 * 60)).toBe(12 * 60 + 15);
+		expect(clampEdge(DAY, 'pauseEnd', 17 * 60)).toBe(15 * 60 + 45);
+	});
+
+	it('moves only the pause', () => {
+		expect(moveEdge(DAY, 'pauseStart', '11:30')).toEqual([
+			{ start: '08:00', end: '11:30' },
+			{ start: '13:00', end: '16:00' }
+		]);
+		expect(moveEdge(DAY, 'pauseEnd', '13:30')).toEqual([
+			{ start: '08:00', end: '12:00' },
+			{ start: '13:30', end: '16:00' }
+		]);
 	});
 });

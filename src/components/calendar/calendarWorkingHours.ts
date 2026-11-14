@@ -266,6 +266,25 @@ export const offRangesOf = (day: Date, input: WorkingHours | WorkingPlan) => {
 	return out;
 };
 
+/**
+ * The grips of a working day: where work starts and ends and, on a day
+ * with two windows, where the pause starts and ends.
+ */
+export type WorkEdge = 'start' | 'end' | 'pauseStart' | 'pauseEnd';
+
+/** "Arbeitsbeginn", "Arbeitsende", "Pausenbeginn", "Pausenende". */
+export const edgeLabelKey = (edge: WorkEdge) => `calendar.grip.${edge}`;
+
+export const isPauseEdge = (edge: WorkEdge) =>
+	edge === 'pauseStart' || edge === 'pauseEnd';
+
+/** The day's pause: the gap between its two windows. */
+export const pauseOf = (windows: TimeWindow[]) =>
+	windows.length === 2 &&
+	minutesOf(windows[1].start) > minutesOf(windows[0].end)
+		? { start: windows[0].end, end: windows[1].start }
+		: null;
+
 /** Where the grips of a working day sit; none on a day off. */
 export const dayEdgesOf = (day: Date, input: WorkingHours | WorkingPlan) => {
 	const { windows, source } = effectiveDay(day, input);
@@ -273,14 +292,45 @@ export const dayEdgesOf = (day: Date, input: WorkingHours | WorkingPlan) => {
 	return {
 		start: windows[0].start,
 		end: windows[windows.length - 1].end,
+		pause: pauseOf(windows),
 		exception: source === 'exception',
 		windows
 	};
 };
 
-/** Grips move in quarter hours; a working day keeps at least an hour. */
+/** Every grip of the day with its time: start, the pause, end. */
+export const gripEdges = (edges: {
+	start: string;
+	end: string;
+	pause: { start: string; end: string } | null;
+}): { edge: WorkEdge; time: string }[] => [
+	{ edge: 'start', time: edges.start },
+	...(edges.pause
+		? [
+				{ edge: 'pauseStart' as const, time: edges.pause.start },
+				{ edge: 'pauseEnd' as const, time: edges.pause.end }
+			]
+		: []),
+	{ edge: 'end', time: edges.end }
+];
+
+/** The time a grip of the day stands at, if the day has that grip. */
+export const edgeTime = (windows: TimeWindow[], edge: WorkEdge) => {
+	if (windows.length === 0) return null;
+	if (edge === 'start') return windows[0].start;
+	if (edge === 'end') return windows[windows.length - 1].end;
+	const pause = pauseOf(windows);
+	if (!pause) return null;
+	return edge === 'pauseStart' ? pause.start : pause.end;
+};
+
+/**
+ * Grips move in quarter hours; a working day keeps at least an hour, a
+ * pause at least a quarter hour, inside the working time.
+ */
 export const EDGE_STEP_MINUTES = 15;
 export const MIN_WORKING_MINUTES = 60;
+export const MIN_PAUSE_MINUTES = 15;
 const LAST_EDGE = DAY_MINUTES - EDGE_STEP_MINUTES;
 
 export const timeOfMinutes = (minutes: number) =>
@@ -292,11 +342,27 @@ export const timeOfMinutes = (minutes: number) =>
  */
 export const clampEdge = (
 	windows: TimeWindow[],
-	edge: 'start' | 'end',
+	edge: WorkEdge,
 	minutes: number
 ) => {
-	const snapped =
-		Math.round(minutes / EDGE_STEP_MINUTES) * EDGE_STEP_MINUTES;
+	const snapped = Math.round(minutes / EDGE_STEP_MINUTES) * EDGE_STEP_MINUTES;
+	if (isPauseEdge(edge)) {
+		const pause = pauseOf(windows);
+		if (!pause) return snapped;
+		const dayStart = minutesOf(windows[0].start);
+		const dayEnd = minutesOf(windows[1].end);
+		const [low, high] =
+			edge === 'pauseStart'
+				? [
+						dayStart + EDGE_STEP_MINUTES,
+						minutesOf(pause.end) - MIN_PAUSE_MINUTES
+					]
+				: [
+						minutesOf(pause.start) + MIN_PAUSE_MINUTES,
+						dayEnd - EDGE_STEP_MINUTES
+					];
+		return Math.max(low, Math.min(high, snapped));
+	}
 	if (edge === 'start') {
 		const latest =
 			minutesOf(windows[windows.length - 1].end) - MIN_WORKING_MINUTES;
@@ -312,12 +378,18 @@ export const clampEdge = (
  */
 export const moveEdge = (
 	windows: TimeWindow[],
-	edge: 'start' | 'end',
+	edge: WorkEdge,
 	time: string
 ): TimeWindow[] => {
 	if (windows.length === 0) return [];
 	const at = clampEdge(windows, edge, minutesOf(time));
 	const t = timeOfMinutes(at);
+	if (isPauseEdge(edge)) {
+		if (!pauseOf(windows)) return windows;
+		return edge === 'pauseStart'
+			? [{ ...windows[0], end: t }, windows[1]]
+			: [windows[0], { ...windows[1], start: t }];
+	}
 	if (edge === 'start') {
 		const kept = windows.filter((w) => minutesOf(w.end) > at);
 		return kept.map((w, i) => (i === 0 ? { ...w, start: t } : w));

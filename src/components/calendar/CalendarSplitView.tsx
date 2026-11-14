@@ -32,6 +32,7 @@ import type { MoveProposal } from './calendarActions';
 import { freeForEveryone } from './calendarFreeTime';
 import {
 	dayEdgesOf,
+	gripEdges,
 	effectiveDay,
 	minutesOf,
 	offRangesOf,
@@ -580,8 +581,7 @@ export const CalendarSplitView = ({
 	const edgeGrips = (d: SplitDay) => {
 		const edges = workingPlan ? dayEdgesOf(d.day, workingPlan) : null;
 		if (!edges || !onEdgeChange) return null;
-		return (['start', 'end'] as const).map((edge) => {
-			const time = edge === 'start' ? edges.start : edges.end;
+		return gripEdges(edges).map(({ edge, time }) => {
 			const minutes = minutesOf(time);
 			if (minutes < firstMinute || minutes > lastMinute) return null;
 			return (

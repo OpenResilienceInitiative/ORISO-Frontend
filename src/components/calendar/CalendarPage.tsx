@@ -63,6 +63,9 @@ import {
 	isWithinWorkingHours,
 	MAX_WORKING_HOURS_WINDOWS,
 	moveEdge,
+	edgeLabelKey,
+	isPauseEdge,
+	pauseOf,
 	sameWindows,
 	windowsOn,
 	withWeekdayWindows,
@@ -805,11 +808,7 @@ export const CalendarPage = ({
 		const current = effectiveDay(change.day, workingPlan);
 		const moved = moveEdge(current.windows, change.edge, change.to);
 		const previousException = dayExceptions?.[date];
-		const what = t(
-			change.edge === 'start'
-				? 'calendar.grip.start'
-				: 'calendar.grip.end'
-		);
+		const what = t(edgeLabelKey(change.edge));
 		if (choice === 'day') {
 			run(onSaveDayException?.(date, moved), {
 				message: t('calendar.grip.savedDay', {
@@ -825,8 +824,12 @@ export const CalendarPage = ({
 		} else {
 			const weekday = change.day.getDay();
 			const base = windowsOn(workingHours, weekday);
+			// A pause moved for every week needs a week with a pause; the
+			// day's own windows stand in when the week has none.
 			const weekly = moveEdge(
-				base.length > 0 ? base : current.windows,
+				base.length > 0 && (!isPauseEdge(change.edge) || pauseOf(base))
+					? base
+					: current.windows,
 				change.edge,
 				change.to
 			);
@@ -1047,11 +1050,7 @@ export const CalendarPage = ({
 	} else if (menu?.type === 'edge') {
 		const { change } = menu;
 		menuLabel = t('calendar.grip.menuLabel', {
-			what: t(
-				change.edge === 'start'
-					? 'calendar.grip.start'
-					: 'calendar.grip.end'
-			)
+			what: t(edgeLabelKey(change.edge))
 		});
 		menuWidth = 300;
 		menuContent = (

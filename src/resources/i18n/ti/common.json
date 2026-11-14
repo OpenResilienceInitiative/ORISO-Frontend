@@ -7170,6 +7170,10 @@
 			"tooMany": "ናይ ስራሕ ሰዓታት ኣብ ሰሙን ልዕሊ {{max}} ግዜታት ክሕዝ ኣይክእልን፣ እዚ ለውጢ ኣይተዓቀበን።"
 		},
 		"grip": {
+			"ghostPauseEnd": "ዕረፍቲ ክሳብ {{time}}",
+			"ghostPauseStart": "ዕረፍቲ ካብ {{time}}",
+			"pauseEnd": "መወዳእታ ዕረፍቲ",
+			"pauseStart": "መጀመርታ ዕረፍቲ",
 			"always": "ኩሉ ግዜ {{weekdays}}",
 			"alwaysHint": "ከም ሕጊ ኣብ ሰዓታት ስራሕ",
 			"end": "መወዳእታ ስራሕ",

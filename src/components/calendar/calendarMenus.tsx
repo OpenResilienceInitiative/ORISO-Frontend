@@ -54,6 +54,7 @@ import {
 import { useEntryLabel, useRangeFormat } from './useEntryLabel';
 import type { EdgeChoice } from './calendarPreferences';
 import { calendarLocale } from './calendarLocale';
+import { edgeLabelKey, type WorkEdge } from './calendarWorkingHours';
 
 /** What a free range becomes: an appointment kind or a blocker. */
 export type SlotChoice = AppointmentKind | 'blocker';
@@ -654,7 +655,7 @@ export const SettingsMenuContent = ({
 /* ------------------------------------------------------------------ */
 
 export interface EdgeMenuContentProps {
-	edge: 'start' | 'end';
+	edge: WorkEdge;
 	day: Date;
 	/** HH:mm before and after. */
 	from: string;
@@ -691,9 +692,7 @@ export const EdgeMenuContent = ({
 		month: 'long',
 		year: 'numeric'
 	}).format(day);
-	const what = t(
-		edge === 'start' ? 'calendar.grip.start' : 'calendar.grip.end'
-	);
+	const what = t(edgeLabelKey(edge));
 	return (
 		<>
 			<ChatMenuDropdownHeader
