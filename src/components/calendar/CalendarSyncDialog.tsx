@@ -82,6 +82,13 @@ export const CalendarSyncDialog = ({
 		});
 	};
 
+	/**
+	 * Empties the field once the action is stored, unless the user typed a
+	 * new address meanwhile: that one was never sent.
+	 */
+	const clearIfUnchanged = (sent: string) => () =>
+		setImportUrl((current) => (current === sent ? '' : current));
+
 	if (confirmReset)
 		return (
 			<M3Dialog
@@ -238,8 +245,9 @@ export const CalendarSyncDialog = ({
 							// The private address stays until it is stored, so a
 							// failed save can be corrected and sent again.
 							onClick: () =>
-								act(onSaveImport(importUrl.trim()), () =>
-									setImportUrl('')
+								act(
+									onSaveImport(importUrl.trim()),
+									clearIfUnchanged(importUrl)
 								)
 						},
 						...(busyImport.host !== undefined
@@ -254,8 +262,9 @@ export const CalendarSyncDialog = ({
 										testingAttribute:
 											'calendar-import-remove',
 										onClick: () =>
-											act(onRemoveImport(), () =>
-												setImportUrl('')
+											act(
+												onRemoveImport(),
+												clearIfUnchanged(importUrl)
 											)
 									}
 								]

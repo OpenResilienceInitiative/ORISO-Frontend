@@ -36,9 +36,9 @@ import '@fullcalendar/react/skeleton.css';
 import '@fullcalendar/react/themes/classic/theme.css';
 import './fullCalendarGuards';
 import {
+	createMoveGuard,
 	isMovable,
 	isSoon,
-	settleMove,
 	visibleHours,
 	type CalendarEntry,
 	type CalendarRole,
@@ -434,6 +434,8 @@ export const CalendarView = ({
 		() => measureColumn(firstMinute, lastMinute),
 		[firstMinute, lastMinute]
 	);
+	// One move per entry until it is stored or put back.
+	const [guardMove] = useState(createMoveGuard);
 
 	const events = useMemo<EventInput[]>(
 		() => [
@@ -747,8 +749,10 @@ export const CalendarView = ({
 							info.revert();
 							return;
 						}
-						settleMove(
-							onEntryMove?.(entry, info.event.start, info.event.end),
+						const { start, end } = info.event;
+						guardMove(
+							entry.id,
+							() => onEntryMove?.(entry, start, end),
 							info.revert
 						);
 					}}

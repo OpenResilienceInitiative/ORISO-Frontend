@@ -319,7 +319,9 @@ export const isWholeDays = (range: { start: Date; end: Date }) =>
  * chosen weekday, starting with the first day, never more than `limit`
  * (default {@link MAX_BLOCKER_OCCURRENCES}). Each end is built from its own
  * local date and the first range's end clock time, so a range keeps its
- * clock times on a 23- or 25-hour day.
+ * clock times on a 23- or 25-hour day. A clock time the spring change skips
+ * moves forward an hour, so such an occurrence can come out empty or
+ * reversed: check the series with {@link hasEmptyOccurrence} before saving.
  */
 export const expandBlocker = (
 	first: { start: Date; end: Date },
@@ -353,6 +355,10 @@ export const expandBlocker = (
 	return out;
 };
 
+/** True when a range of the series ends at or before its own start. */
+export const hasEmptyOccurrence = (ranges: { start: Date; end: Date }[]) =>
+	ranges.some((range) => range.end.getTime() <= range.start.getTime());
+
 /** Why a draft cannot be saved yet, or undefined when it can. */
 export const draftError = (
 	draft: Partial<AppointmentDraft>,
@@ -372,16 +378,43 @@ export const draftError = (
  */
 export type MoveResult = void | boolean | Promise<unknown>;
 
+const isPending = (result: MoveResult): result is Promise<unknown> =>
+	!!result && typeof (result as Promise<unknown>).then === 'function';
+
 /** Puts a dragged entry back when its move was refused or failed. */
 export const settleMove = (result: MoveResult, revert: () => void) => {
 	if (result === false) revert();
-	else if (result && typeof (result as Promise<unknown>).then === 'function')
-		(result as Promise<unknown>).then(
+	else if (isPending(result))
+		result.then(
 			(stored) => {
 				if (stored === false) revert();
 			},
 			() => revert()
 		);
+};
+
+/**
+ * One move per entry at a time: a drag of an entry whose earlier move is
+ * still being stored goes straight back, so the earlier move's late failure
+ * can never undo a later, accepted position.
+ */
+export const createMoveGuard = () => {
+	const pending = new Set<string>();
+	return (id: string, move: () => MoveResult, revert: () => void) => {
+		if (pending.has(id)) {
+			revert();
+			return;
+		}
+		const result = move();
+		if (isPending(result)) {
+			pending.add(id);
+			const release = () => {
+				pending.delete(id);
+			};
+			result.then(release, release);
+		}
+		settleMove(result, revert);
+	};
 };
 
 const clockTime = (minutes: number) =>
@@ -410,10 +443,13 @@ export const visibleHours = (
 			return;
 		}
 		const startMinutes = start.getHours() * 60 + start.getMinutes();
+		// Seconds count, so an end at 21:00:30 still widens to 22:00.
 		const endMinutes =
 			daySpan(start, end) > 0
 				? 24 * 60
-				: end.getHours() * 60 + end.getMinutes();
+				: end.getHours() * 60 +
+					end.getMinutes() +
+					(end.getSeconds() * 1000 + end.getMilliseconds()) / 60_000;
 		min = Math.min(min, Math.floor(startMinutes / 60) * 60);
 		max = Math.max(max, Math.ceil(endMinutes / 60) * 60);
 	});

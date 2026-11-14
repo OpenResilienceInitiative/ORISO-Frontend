@@ -7032,6 +7032,7 @@
 			"until": "Jusqu’au (inclus)",
 			"save": "Bloquer",
 			"tooMany": "Trop de répétitions : {{max}} plages bloquées au maximum à la fois. Choisissez un dernier jour plus proche.",
+			"clockGap": "Une répétition tombe pendant le changement d’heure. Choisissez une autre heure.",
 			"count": "{{count}} plages bloquées seront ajoutées.",
 			"count_one": "{{count}} plage bloquée sera ajoutée.",
 			"conflicts": "En conflit avec {{count}} rendez-vous.",

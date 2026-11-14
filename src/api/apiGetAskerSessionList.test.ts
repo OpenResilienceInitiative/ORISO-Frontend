@@ -67,4 +67,18 @@ describe('apiGetAskerSessionList', () => {
 		});
 		expect(fetchData).toHaveBeenCalledTimes(1);
 	});
+
+	it('rejects a failed request in strict mode, so the caller can offer a retry', async () => {
+		vi.mocked(fetchData).mockRejectedValueOnce(new Error('503'));
+
+		await expect(
+			apiGetAskerSessionList({ strict: true })
+		).rejects.toThrow('503');
+	});
+
+	it('still resolves a failure to an empty list by default', async () => {
+		vi.mocked(fetchData).mockRejectedValueOnce(new Error('503'));
+
+		expect(await apiGetAskerSessionList()).toEqual({ sessions: [] });
+	});
 });

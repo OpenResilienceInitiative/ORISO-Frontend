@@ -392,6 +392,7 @@ export const CalendarPage = ({
 	const [hiddenFacets, setHiddenFacets] = useState<CalendarEntryFacet[]>([]);
 	const [menu, setMenu] = useState<Menu>(null);
 	const [dialog, setDialog] = useState<Dialog>(null);
+	const creating = useRef(false);
 	const [notice, setNotice] = useState<Notice | null>(null);
 	const [dragging, setDragging] = useState(false);
 	/** Phone: quick entry folds open in the sheet on demand. */
@@ -624,10 +625,25 @@ export const CalendarPage = ({
 		};
 	};
 
-	/** Resolves to whether the entries exist, so quick entry can keep its draft. */
-	const create = (drafts: AppointmentDraft[]) => {
-		setDialog(null);
-		return run(onCreate?.(drafts), createNotice(drafts));
+	/**
+	 * Resolves to whether the entries exist, so quick entry can keep its
+	 * draft. A dialog closes only then: a refusal or failure keeps it open
+	 * with everything typed. One creation at a time, so a second save while
+	 * the first runs creates nothing (reviews 4575214168, 4575297363).
+	 */
+	const create = (
+		drafts: AppointmentDraft[]
+	): boolean | Promise<boolean> => {
+		if (creating.current) return false;
+		const outcome = run(onCreate?.(drafts), createNotice(drafts));
+		if (outcome === true) setDialog(null);
+		if (typeof outcome === 'boolean') return outcome;
+		creating.current = true;
+		return outcome.then((stored) => {
+			creating.current = false;
+			if (stored) setDialog(null);
+			return stored;
+		});
 	};
 
 	/** "Mehr Angaben …" in quick entry: the full dialog, prefilled. */
@@ -689,7 +705,11 @@ export const CalendarPage = ({
 	const undo = (current: Notice) => {
 		setNotice(null);
 		const result = current.undo?.();
-		if (result === false) return;
+		// Refused at once: the change stays, so say so (review 4575297344).
+		if (result === false) {
+			setNotice({ message: t('calendar.saveFailed') });
+			return;
+		}
 		if (result && typeof (result as Promise<unknown>).then === 'function')
 			(result as Promise<unknown>).then(
 				(value) => {
@@ -1408,23 +1428,10 @@ export const CalendarPage = ({
 
 	// While loading, the grid stays mounted under a spinner: it is what
 	// reports the first visible range, and with it starts the loading
-	// (reviews 4574733779, 4574779921, 4574493856).
-	let body: React.ReactNode;
-	if (state === 'error')
-		body = (
-			<div className="calendarPage__status" role="alert">
-				<p>{t('calendar.error.title')}</p>
-				<button
-					type="button"
-					className="calendarPage__retry"
-					onClick={onRetry}
-				>
-					{t('calendar.error.retry')}
-				</button>
-			</div>
-		);
-	else
-		body = (
+	// (reviews 4574733779, 4574779921, 4574493856). A failed load covers it
+	// but keeps it mounted, so the chosen view and date survive the retry
+	// (review 4575159303).
+	const body: React.ReactNode = (
 			<>
 				{consultant && conversationsFailed && (
 					<div
@@ -1530,6 +1537,22 @@ export const CalendarPage = ({
 							size={32}
 							aria-label={t('calendar.loading')}
 						/>
+					</div>
+				)}
+				{state === 'error' && (
+					<div
+						className="calendarPage__status calendarPage__status--overlay calendarPage__status--error"
+						role="alert"
+						data-testid="calendar-error"
+					>
+						<p>{t('calendar.error.title')}</p>
+						<button
+							type="button"
+							className="calendarPage__retry"
+							onClick={onRetry}
+						>
+							{t('calendar.error.retry')}
+						</button>
 					</div>
 				)}
 			</>

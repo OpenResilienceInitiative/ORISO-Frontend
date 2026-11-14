@@ -12,6 +12,7 @@ import {
 import * as calendarApi from '../../api/apiCalendar';
 import * as appointmentApi from '../../api/apiSessionAppointments';
 import * as sessionListApi from '../../api/apiGetConsultantSessionList';
+import * as askerListApi from '../../api/apiGetAskerSessionList';
 import type { CalendarPageProps } from './CalendarPage';
 import { CalendarPageWired } from './CalendarPageWired';
 
@@ -83,6 +84,7 @@ vi.mock('../../api/apiGetAskerSessionList', () => ({
 const api = vi.mocked(calendarApi);
 const appointments = vi.mocked(appointmentApi);
 const sessionList = vi.mocked(sessionListApi);
+const askerList = vi.mocked(askerListApi);
 
 const OWN = {
 	id: 'a1',
@@ -824,6 +826,20 @@ describe('CalendarPageWired', () => {
 		await act(async () => props.onRetryConversations?.());
 		await waitFor(() => expect(props.conversationsFailed).toBe(false));
 		await waitFor(() => expect(props.conversations).toHaveLength(1));
+	});
+
+	it('shows a failed asker lookup with the retry, not as no conversations', async () => {
+		consultant = false;
+		// The shared helper hides failures as an empty list unless asked
+		// strictly (review 4575159306).
+		askerList.apiGetAskerSessionList.mockImplementationOnce(((options?: {
+			strict?: boolean;
+		}) =>
+			options?.strict
+				? Promise.reject(new Error('503'))
+				: Promise.resolve({ sessions: [] })) as never);
+		render(<CalendarPageWired />);
+		await waitFor(() => expect(props.conversationsFailed).toBe(true));
 	});
 
 	it('reloads the entries after the import is removed (review 4574938517)', async () => {

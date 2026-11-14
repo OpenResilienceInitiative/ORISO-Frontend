@@ -7032,6 +7032,7 @@
 			"until": "Bitiş tarihi (dahil)",
 			"save": "Ekle",
 			"tooMany": "Çok fazla tekrar: tek seferde en fazla {{max}} kapalı zaman. Lütfen daha erken bir son gün seçin.",
+			"clockGap": "Bir tekrar saat değişikliğine denk geliyor. Lütfen başka bir saat seçin.",
 			"count": "{{count}} kapalı zaman eklenecek.",
 			"count_one": "{{count}} kapalı zaman eklenecek.",
 			"conflicts": "{{count}} randevuyla çakışıyor.",

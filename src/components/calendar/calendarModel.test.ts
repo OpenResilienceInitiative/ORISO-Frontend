@@ -1,9 +1,11 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vite-plus/test';
 import {
 	colleaguesInScope,
+	createMoveGuard,
 	daySpan,
 	draftError,
 	expandBlocker,
+	hasEmptyOccurrence,
 	isWholeDays,
 	MAX_BLOCKER_OCCURRENCES,
 	findConflicts,
@@ -286,6 +288,19 @@ describe('expandBlocker across a daylight-saving change (Europe/Berlin)', () => 
 		expect(clock(second.end)).toBe('28. 6:00');
 	});
 
+	it('flags a repeat whose clock time the spring change skips', () => {
+		// 02:30 does not exist on 28 March 2027 and becomes 03:30.
+		const ranges = expandBlocker(
+			{
+				start: new Date(2027, 2, 21, 2, 30),
+				end: new Date(2027, 2, 21, 3, 0)
+			},
+			{ weekdays: [0], until: new Date(2027, 2, 28) }
+		);
+		expect(hasEmptyOccurrence(ranges)).toBe(true);
+		expect(hasEmptyOccurrence(ranges.slice(0, 1))).toBe(false);
+	});
+
 	it('counts local days, not 24-hour blocks', () => {
 		expect(
 			daySpan(new Date(2027, 2, 27, 12), new Date(2027, 2, 29, 0, 30))
@@ -393,6 +408,41 @@ describe('settleMove', () => {
 	});
 });
 
+describe('createMoveGuard', () => {
+	it('puts a second drag back while the first move of that entry is stored', async () => {
+		const guard = createMoveGuard();
+		let fail: (reason: Error) => void = () => undefined;
+		const first = vi.fn(
+			() =>
+				new Promise((_, reject) => {
+					fail = reject;
+				})
+		);
+		const second = vi.fn(() => Promise.resolve(true));
+		const revertFirst = vi.fn();
+		const revertSecond = vi.fn();
+		guard('e1', first, revertFirst);
+		guard('e1', second, revertSecond);
+		expect(second).not.toHaveBeenCalled();
+		expect(revertSecond).toHaveBeenCalledTimes(1);
+		fail(new Error('500'));
+		await Promise.resolve();
+		await Promise.resolve();
+		expect(revertFirst).toHaveBeenCalledTimes(1);
+		// Settled: the entry can move again.
+		guard('e1', second, revertSecond);
+		expect(second).toHaveBeenCalledTimes(1);
+	});
+
+	it('lets other entries move meanwhile', () => {
+		const guard = createMoveGuard();
+		const other = vi.fn(() => true);
+		guard('e1', () => new Promise(() => undefined), vi.fn());
+		guard('e2', other, vi.fn());
+		expect(other).toHaveBeenCalledTimes(1);
+	});
+});
+
 describe('visibleHours', () => {
 	const at = (day: number, hour: number, minute = 0) =>
 		new Date(2026, 10, day, hour, minute).toISOString();
@@ -411,6 +461,16 @@ describe('visibleHours', () => {
 				{ start: at(17, 21, 30), end: at(17, 22, 15) }
 			])
 		).toEqual({ min: '06:00:00', max: '23:00:00' });
+	});
+
+	it('widens for an entry that ends seconds after the last hour', () => {
+		const start = new Date(2026, 10, 16, 21, 0, 0);
+		const end = new Date(2026, 10, 16, 21, 0, 30);
+		expect(
+			visibleHours([
+				{ start: start.toISOString(), end: end.toISOString() }
+			]).max
+		).toBe('22:00:00');
 	});
 
 	it('shows up to midnight for an entry that ends at midnight', () => {

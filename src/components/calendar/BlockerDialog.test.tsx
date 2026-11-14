@@ -7,7 +7,15 @@ import {
 	screen,
 	within
 } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
+import {
+	afterAll,
+	afterEach,
+	beforeAll,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import dayjs, { type Dayjs } from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import { BlockerDialog } from './BlockerDialog';
@@ -108,6 +116,22 @@ describe('BlockerDialog — date span of the selection', () => {
 		expect(onSave.mock.calls[0][0][0].end).toEqual(new Date(2026, 10, 17, 0));
 	});
 
+	it('blocks only the day of a 23:00–midnight slot when made all-day', () => {
+		const onSave = vi.fn();
+		open(
+			{ start: new Date(2026, 10, 16, 23), end: new Date(2026, 10, 17, 0) },
+			onSave
+		);
+		fireEvent.click(
+			screen.getByRole('switch', { name: 'calendar.blocker.allDay' })
+		);
+		fireEvent.click(save());
+		const [[drafts]] = onSave.mock.calls;
+		expect(drafts).toHaveLength(1);
+		expect(drafts[0].start).toEqual(new Date(2026, 10, 16));
+		expect(drafts[0].end).toEqual(new Date(2026, 10, 16, 23, 59, 59, 999));
+	});
+
 	it('turns a month selection of whole days into an all-day blocker', () => {
 		const onSave = vi.fn();
 		// Two days in the month view: 16 and 17 November, end exclusive.
@@ -174,5 +198,41 @@ describe('BlockerDialog — today and language', () => {
 			screen.getByRole('group', { name: 'calendar.blocker.repeat' })
 		).getAllByRole('button');
 		expect(chips[0].textContent).toBe('lun.');
+	});
+});
+
+describe('BlockerDialog — a repeat the spring clock change skips (Europe/Berlin)', () => {
+	const runnerZone = process.env.TZ;
+	beforeAll(() => {
+		process.env.TZ = 'Europe/Berlin';
+	});
+	afterAll(() => {
+		if (runnerZone === undefined) delete process.env.TZ;
+		else process.env.TZ = runnerZone;
+	});
+
+	it('refuses the series instead of saving a reversed range', () => {
+		const onSave = vi.fn();
+		// Sundays 21 and 28 March 2027; 02:30 does not exist on the 28th.
+		open(
+			{
+				start: new Date(2027, 2, 21, 2, 30),
+				end: new Date(2027, 2, 21, 3, 0)
+			},
+			onSave
+		);
+		fireEvent.click(
+			within(screen.getByRole('group', { name: 'calendar.blocker.repeat' }))
+				.getAllByRole('button')[6]
+		);
+		fireEvent.change(screen.getByLabelText('calendar.blocker.until'), {
+			target: { value: '2027-03-28' }
+		});
+		expect(save().hasAttribute('disabled')).toBe(true);
+		expect(screen.getByRole('status').textContent).toContain(
+			'calendar.blocker.clockGap'
+		);
+		fireEvent.click(save());
+		expect(onSave).not.toHaveBeenCalled();
 	});
 });
