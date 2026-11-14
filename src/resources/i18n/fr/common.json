@@ -6790,6 +6790,8 @@
 		"share": {
 			"title": "Votre invitation directe est prête",
 			"description": "Partagez le lien ou le code QR. Chaque personne obtient son propre entretien avec vous.",
+			"descriptionAppointment": "Partagez le lien ou le code QR. Toutes les personnes qui l’ouvrent vous retrouvent dans un même entretien pour le rendez-vous.",
+			"descriptionJoin": "Partagez le lien ou le code QR. La personne qui l’ouvre rejoint cet entretien.",
 			"copied": "Copié",
 			"share": "Partager",
 			"qrAlt": "Code QR de l’invitation directe",

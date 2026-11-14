@@ -1305,8 +1305,19 @@ export const MessageItemComponent = ({
 			SYSTEM_NOTIFICATION_CONSULTANT_RENAMED && !consultantRenamedText;
 	/* #2252: the "new link" notice carries the link and its end only; it is
 	   worded here and drawn as a notice card with the link. */
-	const renewedNotice =
+	const parsedRenewedNotice =
 		parsedMessage.systemNotificationDirectInvitationRenewed;
+	/* The backend posts it as the conversation's counsellor; from anyone
+	   else it would be a system-styled card with a foreign link. */
+	const isUntrustedRenewedNotice =
+		Boolean(parsedRenewedNotice) &&
+		!isTrustedRecommendationSender({
+			senderId: userId,
+			consultantMatrixUserId: activeSession?.item?.consultantMatrixUserId
+		});
+	const renewedNotice = isUntrustedRenewedNotice
+		? undefined
+		: parsedRenewedNotice;
 	const renewedText = renewedNotice
 		? directInvitationRenewedNoticeText(
 				renewedNotice,
@@ -2943,7 +2954,11 @@ export const MessageItemComponent = ({
 		);
 	}
 
-	if (isUntrustedRecommendation || isRejectedConsultantRenamedEvent) {
+	if (
+		isUntrustedRecommendation ||
+		isRejectedConsultantRenamedEvent ||
+		isUntrustedRenewedNotice
+	) {
 		return null;
 	}
 

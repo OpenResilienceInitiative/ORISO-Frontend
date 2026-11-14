@@ -21,6 +21,23 @@ import {
 import { useResponsive } from '../../hooks/useResponsive';
 import { invitationErrorEntry } from './invitationErrorSnackbar';
 
+/*
+ * Each renewal issues a new token and expires the one before, so a second
+ * click (or the header and the request pop-up at once) must not start a
+ * second one: every caller shares the running renewal of that invitation.
+ */
+const running = new Map<string, Promise<DirectLink>>();
+
+const renewOnce = (linkId: string): Promise<DirectLink> => {
+	const pending = running.get(linkId);
+	if (pending) return pending;
+	const started = apiRenewDirectInvitation(linkId).finally(() => {
+		running.delete(linkId);
+	});
+	running.set(linkId, started);
+	return started;
+};
+
 export const useSendNewLink = (stack: SnackbarStack = appSnackbarStack) => {
 	const { t } = useTranslation();
 	const { fromL } = useResponsive();
@@ -32,7 +49,7 @@ export const useSendNewLink = (stack: SnackbarStack = appSnackbarStack) => {
 		async (linkId: string): Promise<boolean> => {
 			setPending(linkId);
 			try {
-				const link = await apiRenewDirectInvitation(linkId);
+				const link = await renewOnce(linkId);
 				notifyDirectLinksChanged();
 				setRenewed(link);
 				return true;

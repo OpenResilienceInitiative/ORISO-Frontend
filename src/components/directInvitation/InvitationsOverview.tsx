@@ -261,7 +261,8 @@ export const InvitationsOverview = ({
 	onCopy = (url) => copyTextToClipboard(url)
 }: InvitationsOverviewProps) => {
 	const { t, i18n } = useTranslation();
-	const locale = i18n?.language || 'de';
+	/* 'de@informal' → 'de': Intl needs a BCP-47 tag. */
+	const locale = (i18n?.language || 'de').split('@')[0];
 	const [copiedId, setCopiedId] = useState<string>();
 
 	useEffect(() => {

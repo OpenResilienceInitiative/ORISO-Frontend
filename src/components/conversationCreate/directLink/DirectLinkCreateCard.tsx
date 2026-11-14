@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DirectLinkCard, DirectLinkDraft } from './DirectLinkCard';
 import { DirectLinkShareDialog } from './DirectLinkShareDialog';
@@ -31,33 +31,43 @@ export interface DirectLinkCreateCardProps {
 	 * a dialog inside it would vanish with it.
 	 */
 	onCreated?: (link: DirectLink) => void;
+	/**
+	 * #2252: hands the card's choice to the caller's
+	 * `useDirectInvitationSetup`, which shows the Direkteinladung dialog
+	 * outside the card, for the same reason as `onCreated`.
+	 */
+	onDraft?: (draft: DirectLinkDraft) => void;
+}
+
+export interface DirectInvitationSetupOptions {
+	topics: { value: string; label: string }[];
+	agencies: { id: number; topicIds?: number[] | null }[];
+	/** Phones: the dialog fills the screen. */
+	compact?: boolean;
+	onCreated: (link: DirectLink) => void;
 }
 
 /**
- * #1795 wired: the "Direktlink" card creates the link in the backend
- * (ORISO-UserService#1479), then the share dialog shows the real link and
- * QR code. "Fertig" hands back to the caller, which opens "Gespräche".
+ * #2252: the card's choice (topic, medium, name) waits for the
+ * Direkteinladung dialog's appointment and settings, then creates the link.
+ * Kept by whoever outlives a layout switch, which renders `dialog`.
  */
-export const DirectLinkCreateCard = ({
+export const useDirectInvitationSetup = ({
 	topics,
 	agencies,
-	media,
-	onDone,
 	compact = false,
-	className,
-	topicsLoadFailed,
-	onRetryTopics,
 	onCreated
-}: DirectLinkCreateCardProps) => {
+}: DirectInvitationSetupOptions) => {
 	const { t } = useTranslation();
 	const { create } = useDirectLinks({ load: false });
 	const [submitting, setSubmitting] = useState(false);
 	const [failed, setFailed] = useState(false);
-	const [ownShared, setOwnShared] = useState<DirectLink>();
-	/* #2252: the card's choice waits for the dialog's appointment and settings. */
 	const [draft, setDraft] = useState<DirectLinkDraft>();
-	const shared = onCreated ? undefined : ownShared;
-	const setShared = onCreated ?? setOwnShared;
+
+	const start = useCallback((next: DirectLinkDraft) => {
+		setFailed(false);
+		setDraft(next);
+	}, []);
 
 	const handleCreate = async (value: InvitationDialogValue) => {
 		if (!draft || submitting) return;
@@ -81,7 +91,7 @@ export const DirectLinkCreateCard = ({
 				...(agencyId !== undefined ? { agencyId } : {})
 			});
 			setDraft(undefined);
-			setShared(created);
+			onCreated(created);
 		} catch {
 			setFailed(true);
 		} finally {
@@ -89,44 +99,70 @@ export const DirectLinkCreateCard = ({
 		}
 	};
 
+	const dialog = draft ? (
+		<InvitationDialog
+			variant="invitation"
+			fullScreen={compact}
+			saving={submitting}
+			error={failed ? t('directLink.card.createFailed') : undefined}
+			onSubmit={handleCreate}
+			onClose={() => {
+				if (submitting) return;
+				setDraft(undefined);
+				setFailed(false);
+			}}
+		/>
+	) : null;
+
+	return { start, submitting, dialog };
+};
+
+/**
+ * #1795 wired: the "Direktlink" card creates the link in the backend
+ * (ORISO-UserService#1479), then the share dialog shows the real link and
+ * QR code. "Fertig" hands back to the caller, which opens "Gespräche".
+ */
+export const DirectLinkCreateCard = ({
+	topics,
+	agencies,
+	media,
+	onDone,
+	compact = false,
+	className,
+	topicsLoadFailed,
+	onRetryTopics,
+	onCreated,
+	onDraft
+}: DirectLinkCreateCardProps) => {
+	const [ownShared, setOwnShared] = useState<DirectLink>();
+	const shared = onCreated ? undefined : ownShared;
+	const ownSetup = useDirectInvitationSetup({
+		topics,
+		agencies,
+		compact,
+		onCreated: onCreated ?? setOwnShared
+	});
+
 	return (
 		<>
 			<DirectLinkCard
 				className={className}
 				topics={topics}
 				media={media}
-				onCreate={(next) => {
-					setFailed(false);
-					setDraft(next);
-				}}
-				isSubmitting={submitting}
+				onCreate={onDraft ?? ownSetup.start}
+				isSubmitting={!onDraft && ownSetup.submitting}
 				topicsLoadFailed={topicsLoadFailed}
 				onRetryTopics={onRetryTopics}
 				settingsInDialog
 			/>
-			{draft && (
-				<InvitationDialog
-					variant="invitation"
-					fullScreen={compact}
-					saving={submitting}
-					error={
-						failed ? t('directLink.card.createFailed') : undefined
-					}
-					onSubmit={handleCreate}
-					onClose={() => {
-						if (submitting) return;
-						setDraft(undefined);
-						setFailed(false);
-					}}
-				/>
-			)}
+			{!onDraft && ownSetup.dialog}
 			{shared && (
 				<DirectLinkShareDialog
 					open
 					link={shared}
 					fullScreen={compact}
 					onClose={() => {
-						setShared(undefined);
+						setOwnShared(undefined);
 						onDone();
 					}}
 				/>

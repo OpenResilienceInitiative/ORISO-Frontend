@@ -144,4 +144,24 @@ describe('MessageItemComponent — new Direkteinladung link (#2252)', () => {
 			);
 		}
 	);
+
+	it.each([
+		['another member', MOCK_ASKER_MATRIX_ID, MOCK_CONSULTANT_MATRIX_ID],
+		['an unknown counsellor', MOCK_CONSULTANT_MATRIX_ID, '']
+	])(
+		'draws nothing for a notice posted by %s',
+		(_name, senderId, consultantMatrixUserId) => {
+			renderNotice({
+				raw: renewed,
+				senderId,
+				viewer: 'consultant',
+				consultantMatrixUserId
+			});
+			expect(
+				screen.queryByText('directInvitation.renewed.title')
+			).toBeNull();
+			expect(screen.queryByRole('link')).toBeNull();
+			expect(document.body.textContent).not.toContain('linkId');
+		}
+	);
 });

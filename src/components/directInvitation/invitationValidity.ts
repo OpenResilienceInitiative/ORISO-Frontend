@@ -49,6 +49,8 @@ export interface ValidityParts {
 /** What the field says: i18n picks the words from unit and count. */
 export const validityParts = (minutes: number): ValidityParts => {
 	if (minutes <= 0) return { unit: 'end', count: 0 };
-	if (minutes < HOUR) return { unit: 'minutes', count: minutes };
-	return { unit: 'hours', count: Math.round(minutes / HOUR) };
+	/* A stored value off the hour grid (e.g. 90) is shown exactly. */
+	if (minutes < HOUR || minutes % HOUR !== 0)
+		return { unit: 'minutes', count: minutes };
+	return { unit: 'hours', count: minutes / HOUR };
 };

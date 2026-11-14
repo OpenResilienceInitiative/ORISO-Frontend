@@ -49,7 +49,10 @@ describe('invitation validity after the appointment ends (#2252)', () => {
 		[0, { unit: 'end', count: 0 }],
 		[30, { unit: 'minutes', count: 30 }],
 		[60, { unit: 'hours', count: 1 }],
-		[1440, { unit: 'hours', count: 24 }]
+		[1440, { unit: 'hours', count: 24 }],
+		// A stored off-grid value is shown exactly, never rounded to hours.
+		[90, { unit: 'minutes', count: 90 }],
+		[150, { unit: 'minutes', count: 150 }]
 	] as const)('describes %i minutes for the label', (minutes, parts) => {
 		expect(validityParts(minutes)).toEqual(parts);
 	});

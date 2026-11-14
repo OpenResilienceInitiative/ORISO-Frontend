@@ -170,4 +170,61 @@ describe('NewLinkRequestCenter', () => {
 			)
 		).toBeTruthy();
 	});
+	it('shows an invitation the links do not know once, unnamed, and reads only once', async () => {
+		renderCenter([request('1', 40)]);
+		expect(
+			await screen.findByText('directInvitation.notice.text')
+		).toBeTruthy();
+		await act(async () => undefined);
+		expect(apiGetOwnDirectLinks).toHaveBeenCalledTimes(1);
+	});
+
+	it('keeps the pop-up for another try when the new link cannot be made', async () => {
+		vi.mocked(apiRenewDirectInvitation).mockRejectedValueOnce(
+			new Error('x')
+		);
+		renderCenter([request('1', 9)]);
+		fireEvent.click(
+			await screen.findByRole('button', {
+				name: 'directInvitation.notice.send'
+			})
+		);
+		await screen.findAllByText('directInvitation.notice.failed');
+		fireEvent.click(
+			screen.getByRole('button', { name: 'directInvitation.notice.send' })
+		);
+		expect(
+			await screen.findByTestId('direct-link-share-dialog')
+		).toBeTruthy();
+		expect(apiRenewDirectInvitation).toHaveBeenCalledTimes(2);
+	});
+
+	it('shows a later request for an invitation whose earlier one was answered', async () => {
+		const { rerender, stack } = renderCenter([request('1', 9)]);
+		await screen.findByText('directInvitation.notice.text:Termin Frau M.');
+		const show = (feed: unknown[]) =>
+			rerender(
+				<NotificationsContext.Provider
+					value={
+						{
+							notificationFeed: feed,
+							markNotificationAsRead
+						} as any
+					}
+				>
+					<NewLinkRequestCenter stack={stack} />
+					<M3SnackbarHost stack={stack} />
+				</NotificationsContext.Provider>
+			);
+		act(() => stack.dismiss('new-link-request-9'));
+		show([request('1', 9, '2026-11-14T10:01:00Z' as any)]);
+		await act(async () => undefined);
+		expect(screen.queryByTestId('new-link-request')).toBeNull();
+		show([request('1', 9, '2026-11-14T10:01:00Z' as any), request('4', 9)]);
+		expect(
+			await screen.findByText(
+				'directInvitation.notice.text:Termin Frau M.'
+			)
+		).toBeTruthy();
+	});
 });

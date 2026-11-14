@@ -111,7 +111,8 @@ export const InvitationBeforeStart = ({
 	onOpenChat
 }: InvitationBeforeStartProps) => {
 	const { t, i18n } = useTranslation();
-	const locale = i18n?.language || 'de';
+	/* 'de@informal' → 'de': Intl needs a BCP-47 tag. */
+	const locale = (i18n?.language || 'de').split('@')[0];
 	const opens = t(`${KEYS}.beforeStart.waitingRoom`, {
 		time: time(callOpensAt, locale)
 	});

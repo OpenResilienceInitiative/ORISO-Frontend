@@ -206,7 +206,10 @@ export const InvitationDialog = ({
 			]}
 		>
 			<div className="invitationDialog">
+				{/* Editing keeps the appointment: the backend cannot drop
+				    one from an invitation, only move it. */}
 				{isInvitation &&
+					mode !== 'edit' &&
 					switchRow(
 						'withAppointment',
 						withAppointment,

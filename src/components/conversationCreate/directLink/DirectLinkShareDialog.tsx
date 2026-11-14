@@ -61,7 +61,15 @@ export const DirectLinkShareDialog = ({
 			closeLabel={t('app.close')}
 			icon={<LinkOutlinedIcon />}
 			title={t('directLink.share.title')}
-			description={t('directLink.share.description')}
+			description={t(
+				/* #2252: an invitation into a 1:1 joins that conversation; one
+				   with an appointment meets in one shared conversation. */
+				link.joinsExistingSession
+					? 'directLink.share.descriptionJoin'
+					: link.appointment
+						? 'directLink.share.descriptionAppointment'
+						: 'directLink.share.description'
+			)}
 			className="directLinkShareDialog"
 			data-testid="direct-link-share-dialog"
 			actions={[

@@ -6705,6 +6705,8 @@
 		"share": {
 			"title": "Your direct invitation is ready",
 			"description": "Share the link or the QR code. Every person gets their own conversation with you.",
+			"descriptionAppointment": "Share the link or the QR code. Everyone who opens it meets you in one shared conversation for the appointment.",
+			"descriptionJoin": "Share the link or the QR code. Whoever opens it joins this conversation.",
 			"copied": "Copied",
 			"share": "Share",
 			"qrAlt": "QR code for the direct invitation",

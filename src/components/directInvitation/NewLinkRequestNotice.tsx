@@ -64,7 +64,10 @@ export const NewLinkRequestSnackbar = ({
 export const newLinkRequestEntry = (
 	request: NewLinkRequest,
 	t: TFunction,
-	onSendNewLink: (request: NewLinkRequest) => void
+	/** `false` (or a promise of it): the link was not made, keep the pop-up. */
+	onSendNewLink: (
+		request: NewLinkRequest
+	) => boolean | void | Promise<boolean | void>
 ): SnackbarStackEntryInput => ({
 	id: `new-link-request-${request.invitationId}`,
 	announcement: t(`${KEYS}.title`),
@@ -73,9 +76,10 @@ export const newLinkRequestEntry = (
 		<NewLinkRequestSnackbar
 			{...request}
 			t={t}
-			onSendNewLink={() => {
-				onSendNewLink(request);
-				dismiss();
+			onSendNewLink={async () => {
+				/* Gone only once the new link exists; after a failure the
+				   counsellor can try again from here. */
+				if ((await onSendNewLink(request)) !== false) dismiss();
 			}}
 			onClose={dismiss}
 		/>

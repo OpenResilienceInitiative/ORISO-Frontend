@@ -298,6 +298,52 @@ describe('CreateConversationView - created direct link on a phone', () => {
 		);
 	});
 
+	it('keeps the Direkteinladung dialog open when the window shrinks to phone width', async () => {
+		const view = renderCreateFlow();
+		fireEvent.click(
+			await screen.findByRole('button', {
+				name: 'directLink.medium.video'
+			})
+		);
+		fireEvent.click(
+			screen.getByRole('button', { name: /directLink.card.create/ })
+		);
+		await screen.findByTestId('invitation-dialog');
+
+		viewport.fromL = false;
+		view.rerender(
+			<MemoryRouter>
+				<UserDataContext.Provider
+					value={{
+						userData: {
+							userId: 'me',
+							agencies: [{ id: 5, name: 'Agency Five' }]
+						}
+					}}
+				>
+					<SessionsDataContext.Provider value={{ dispatch: vi.fn() }}>
+						<CreateConversationView />
+					</SessionsDataContext.Provider>
+				</UserDataContext.Provider>
+			</MemoryRouter>
+		);
+
+		await waitFor(() =>
+			expect(screen.getByTestId('invitation-dialog')).toBeTruthy()
+		);
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'directInvitation.dialog.createAction'
+			})
+		);
+		expect(
+			await screen.findByTestId('direct-link-share-dialog')
+		).toBeTruthy();
+		expect(apiCreateDirectLink).toHaveBeenCalledWith(
+			expect.objectContaining({ medium: 'VIDEO', topicId: 4 })
+		);
+	});
+
 	it('shows the link when created on a phone from the start', async () => {
 		viewport.fromL = false;
 		renderCreateFlow();

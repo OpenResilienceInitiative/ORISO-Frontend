@@ -304,6 +304,21 @@ describe('InviteLink with a Direkteinladung (#2252)', () => {
 		expect(await screen.findByLabelText('User-ID')).toBeTruthy();
 	});
 
+	it('lets a signed-out person into the chat of a call invitation before the call opens, without the device check', async () => {
+		vi.mocked(apiGetInviteLinkContext).mockResolvedValue(
+			appointmentContext('VIDEO', 20)
+		);
+		renderInvite();
+		fireEvent.click(
+			await screen.findByRole('button', {
+				name: /directInvitation.entry.beforeStart.openChat/
+			})
+		);
+
+		expect(await screen.findByLabelText('User-ID')).toBeTruthy();
+		expect(screen.queryByTestId('direct-link-call-entry')).toBeNull();
+	});
+
 	it('opens the waiting room from 15 minutes before the start', async () => {
 		vi.mocked(apiGetInviteLinkContext).mockResolvedValueOnce(
 			appointmentContext('VIDEO', 10)

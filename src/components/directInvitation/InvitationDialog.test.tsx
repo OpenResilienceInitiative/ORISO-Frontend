@@ -149,6 +149,29 @@ describe('InvitationDialog (#2252)', () => {
 			expect(onSubmit).not.toHaveBeenCalled();
 		});
 
+		it('keeps the appointment of an invitation being edited', async () => {
+			open({
+				mode: 'edit',
+				initial: {
+					start: local(5, 14),
+					end: local(5, 15),
+					withAppointment: true
+				}
+			});
+			/* The backend cannot drop an appointment from an invitation. */
+			expect(
+				screen.queryByRole('switch', {
+					name: `${KEYS}.withAppointment`
+				})
+			).toBeNull();
+			await click(`${KEYS}.saveAction`);
+			expect(onSubmit).toHaveBeenCalledWith(
+				expect.objectContaining({
+					appointment: { start: local(5, 14), end: local(5, 15) }
+				})
+			);
+		});
+
 		it('refuses an empty time once a date is wanted', async () => {
 			open();
 			toggle(`${KEYS}.withAppointment`);

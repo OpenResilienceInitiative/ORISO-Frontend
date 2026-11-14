@@ -2901,7 +2901,9 @@
 		},
 		"share": {
 			"title": "Deine Direkteinladung ist bereit",
-			"description": "Teile Link oder QR-Code. Jede Person bekommt ein eigenes Gespräch mit dir."
+			"description": "Teile Link oder QR-Code. Jede Person bekommt ein eigenes Gespräch mit dir.",
+			"descriptionAppointment": "Teile Link oder QR-Code. Alle, die ihn öffnen, treffen sich mit dir in einem gemeinsamen Gespräch zum Termin.",
+			"descriptionJoin": "Teile Link oder QR-Code. Wer ihn öffnet, kommt in dieses Gespräch dazu."
 		},
 		"entry": {
 			"haveAccount": "Du hast schon ein Konto? Anmelden",

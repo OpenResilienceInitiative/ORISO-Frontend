@@ -57,32 +57,50 @@ export const NewLinkRequestCenter = ({
 	}, [feed]);
 
 	/* The pop-up names the invitation; its name lives with the links. An
-	   invitation made after the last read is read again. */
+	   invitation made after the last read is read again, once: `settled`
+	   holds every invitation a finished read (or a failed one) has covered,
+	   so one the links do not know is shown without a name. */
+	const [settled, setSettled] = useState<ReadonlySet<string>>(new Set());
 	const unknown = useMemo(
 		() =>
-			names !== undefined &&
 			[...open.keys()].some(
-				(linkId) => !shown.current.has(linkId) && !(linkId in names)
+				(linkId) =>
+					!shown.current.has(linkId) &&
+					!(names && linkId in names) &&
+					!settled.has(linkId)
 			),
-		[names, open]
+		[names, open, settled]
 	);
 	useEffect(() => {
-		if (open.size === 0 || (names && !unknown)) return;
+		if (!unknown) return;
 		let active = true;
+		const asked = [...open.keys()];
+		const finish = (next?: Record<string, string>) => {
+			if (!active) return;
+			setNames((known) => next ?? known ?? {});
+			setSettled((before) => new Set([...before, ...asked]));
+		};
 		apiGetOwnDirectLinks().then(
 			(links) =>
-				active &&
-				setNames(
+				finish(
 					Object.fromEntries(
 						links.map((link) => [link.id, link.name])
 					)
 				),
-			() => active && setNames((known) => known ?? {})
+			() => finish()
 		);
 		return () => {
 			active = false;
 		};
-	}, [names, open.size, unknown]);
+	}, [open, unknown]);
+
+	/* An answered invitation (its requests read) may pop up again for a
+	   later request. */
+	useEffect(() => {
+		shown.current.forEach((linkId) => {
+			if (!open.has(linkId)) shown.current.delete(linkId);
+		});
+	}, [open]);
 
 	const openRef = useRef(open);
 	openRef.current = open;
@@ -90,17 +108,19 @@ export const NewLinkRequestCenter = ({
 	useEffect(() => {
 		if (!names) return;
 		const send = async ({ invitationId }: NewLinkRequest) => {
-			if (await renew(invitationId)) {
+			const made = await renew(invitationId);
+			if (made) {
 				(openRef.current.get(invitationId) ?? []).forEach((id) =>
 					markRead?.(id)
 				);
 			}
+			return made;
 		};
 		open.forEach((_ids, linkId) => {
 			if (shown.current.has(linkId)) return;
-			/* Wait for a read that knows this invitation; a failed read
+			/* Wait for a read that covers this invitation; a failed read
 			   shows it without a name rather than not at all. */
-			if (!(linkId in names) && unknown) return;
+			if (!(linkId in names) && !settled.has(linkId)) return;
 			shown.current.add(linkId);
 			stack.enqueue(
 				newLinkRequestEntry(
@@ -113,7 +133,7 @@ export const NewLinkRequestCenter = ({
 				)
 			);
 		});
-	}, [markRead, names, open, renew, stack, t, unknown]);
+	}, [markRead, names, open, renew, settled, stack, t]);
 
 	return dialog;
 };

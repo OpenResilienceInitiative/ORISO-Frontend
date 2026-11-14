@@ -44,12 +44,14 @@ export const directInvitationRenewedNoticeText = (
 	locale: string
 ): { title: string; description: string } => {
 	const expires = notice.expiresAt ? new Date(notice.expiresAt) : null;
+	/* i18next's 'de@informal' is no BCP-47 tag; Intl would throw. */
+	const dateLocale = locale.split('@')[0] || 'de';
 	return {
 		title: translate('directInvitation.renewed.title'),
 		description:
 			expires && Number.isFinite(expires.getTime())
 				? translate('directInvitation.renewed.validUntil', {
-						date: expires.toLocaleString(locale, {
+						date: expires.toLocaleString(dateLocale, {
 							weekday: 'short',
 							day: 'numeric',
 							month: 'short',

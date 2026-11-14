@@ -99,8 +99,14 @@ export interface DayGroup<T> {
 const startOfDay = (date: Date) =>
 	new Date(date.getFullYear(), date.getMonth(), date.getDate());
 
-/** Not yet ended, nearest first, one group per local day. */
-export const groupUpcomingByDay = <T extends InvitationSlot>(
+/**
+ * Not yet ended (or, for an invitation, its link still works after the
+ * end: share, QR and edit stay reachable until `expiresAt`), nearest
+ * first, one group per local day.
+ */
+export const groupUpcomingByDay = <
+	T extends InvitationSlot & { expiresAt?: Date }
+>(
 	items: readonly T[],
 	now: Date
 ): DayGroup<T>[] => {
@@ -110,7 +116,11 @@ export const groupUpcomingByDay = <T extends InvitationSlot>(
 	).getTime();
 	const groups = new Map<number, DayGroup<T>>();
 	[...items]
-		.filter((item) => item.end.getTime() > now.getTime())
+		.filter(
+			(item) =>
+				Math.max(item.end.getTime(), item.expiresAt?.getTime() ?? 0) >
+				now.getTime()
+		)
 		.sort((a, b) => a.start.getTime() - b.start.getTime())
 		.forEach((item) => {
 			const day = startOfDay(item.start);
@@ -118,7 +128,7 @@ export const groupUpcomingByDay = <T extends InvitationSlot>(
 			const group = groups.get(key) ?? {
 				day,
 				relative:
-					key <= today
+					key === today
 						? 'today'
 						: key === tomorrow
 							? 'tomorrow'

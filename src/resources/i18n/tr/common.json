@@ -6790,6 +6790,8 @@
 		"share": {
 			"title": "Doğrudan davetiniz hazır",
 			"description": "Bağlantıyı veya QR kodunu paylaşın. Her kişi sizinle kendi görüşmesini alır.",
+			"descriptionAppointment": "Bağlantıyı veya QR kodunu paylaşın. Açan herkes randevu için sizinle tek bir ortak görüşmede buluşur.",
+			"descriptionJoin": "Bağlantıyı veya QR kodunu paylaşın. Açan kişi bu görüşmeye katılır.",
 			"copied": "Kopyalandı",
 			"share": "Paylaş",
 			"qrAlt": "Doğrudan davetin QR kodu",

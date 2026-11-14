@@ -88,4 +88,34 @@ describe('upcoming appointments by day (#2252 overview)', () => {
 		]);
 		expect(groups[2].day).toEqual(new Date(2026, 10, 25));
 	});
+
+	it('keeps an ended invitation while its link still works', () => {
+		const ended = {
+			...item('ended', 20, 9),
+			expiresAt: new Date(2026, 10, 21, 10)
+		};
+		const gone = {
+			...item('gone', 20, 8),
+			expiresAt: new Date(2026, 10, 20, 11)
+		};
+		const groups = groupUpcomingByDay([ended, gone], now);
+		expect(groups.map((g) => g.items.map((i) => i.id))).toEqual([
+			['ended']
+		]);
+	});
+
+	it('keeps the start date heading for one that began yesterday and still runs', () => {
+		const overnight = {
+			id: 'overnight',
+			start: new Date(2026, 10, 19, 23, 30),
+			end: new Date(2026, 10, 20, 1, 0)
+		};
+		const groups = groupUpcomingByDay(
+			[overnight],
+			new Date(2026, 10, 20, 0, 30)
+		);
+		expect(groups.map((g) => [g.relative, g.day])).toEqual([
+			[null, new Date(2026, 10, 19)]
+		]);
+	});
 });

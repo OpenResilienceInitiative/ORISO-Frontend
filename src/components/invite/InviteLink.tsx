@@ -224,6 +224,9 @@ export const InviteLink = () => {
 		useState<NewLinkRequestState>('idle');
 	/* #2252: the person chose the chat before the call opens, or the time came. */
 	const pastBeforeStartRef = useRef(false);
+	/* #2252: "Zum Chat" before a call opens: the chat, never the call's
+	   device check, for a person without a session. */
+	const chatFirstRef = useRef(false);
 	/* #1795: a counsellor's direct link. Chat guests use the identity step
 	   below; call guests the call entry; signed-in people go straight in. */
 	const [directLink, setDirectLink] = useState<{
@@ -379,7 +382,7 @@ export const InviteLink = () => {
 					   counselling without calls: say so now instead of at
 					   "Beitreten" (#2012). A signed-in asker and a counsellor keep
 					   their flow above; the server decides for them. */
-					if (directMedium !== 'CHAT') {
+					if (directMedium !== 'CHAT' && !chatFirstRef.current) {
 						const callsAllowed =
 							await directLinkCallsAllowed(context);
 						if (!mountedRef.current) return;
@@ -649,6 +652,11 @@ export const InviteLink = () => {
 		setStatus('loading');
 		setResumeAttempt((attempt) => attempt + 1);
 	}, []);
+	/* The chat works before the call (decision 10): no device check. */
+	const continueToChat = useCallback(() => {
+		chatFirstRef.current = true;
+		continuePastBeforeStart();
+	}, [continuePastBeforeStart]);
 
 	/* #2252: only a person already in the conversation may ask. A person
 	   with an account signs in first and comes back to this page; a guest
@@ -714,6 +722,7 @@ export const InviteLink = () => {
 				context={directLink.context}
 				token={token}
 				onContinue={continuePastBeforeStart}
+				onOpenChat={continueToChat}
 			/>
 		);
 	}
@@ -972,11 +981,15 @@ export const InviteLink = () => {
 const InvitationBeforeStartPage = ({
 	context,
 	token,
-	onContinue
+	onContinue,
+	onOpenChat
 }: {
 	context: InviteLinkContext;
 	token: string;
+	/** The waiting room opened: on to the call (or the chat). */
 	onContinue: () => void;
+	/** The person chose the chat before the call opens. */
+	onOpenChat: () => void;
 }) => {
 	const { t } = useTranslation();
 	const start = new Date(context.appointmentStartTime ?? NaN);
@@ -1010,7 +1023,7 @@ const InvitationBeforeStartPage = ({
 					uid: `direct-invitation-${token}`
 				})
 			}
-			onOpenChat={onContinue}
+			onOpenChat={onOpenChat}
 		/>
 	);
 };

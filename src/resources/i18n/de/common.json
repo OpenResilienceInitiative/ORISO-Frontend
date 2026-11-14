@@ -6780,6 +6780,8 @@
 		"share": {
 			"title": "Ihre Direkteinladung ist bereit",
 			"description": "Teilen Sie Link oder QR-Code. Jede Person bekommt ein eigenes Gespräch mit Ihnen.",
+			"descriptionAppointment": "Teilen Sie Link oder QR-Code. Alle, die ihn öffnen, treffen sich mit Ihnen in einem gemeinsamen Gespräch zum Termin.",
+			"descriptionJoin": "Teilen Sie Link oder QR-Code. Wer ihn öffnet, kommt in dieses Gespräch dazu.",
 			"copied": "Kopiert",
 			"share": "Teilen",
 			"qrAlt": "QR-Code zur Direkteinladung",
