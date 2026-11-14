@@ -52,9 +52,10 @@ import {
 } from './CalendarView';
 import { useEntryLabel } from './useEntryLabel';
 import { calendarLocale } from './calendarLocale';
+import { SPLIT_SLOT_PX } from './calendarZoom';
 
 /** Height of an hour, unless the page zooms. */
-export const SPLIT_HOUR_PX = 48;
+export const SPLIT_HOUR_PX = SPLIT_SLOT_PX * 2;
 const AXIS_PX = 52;
 /** Frank: a column never gets narrower than this. */
 export const SPLIT_COLUMN_MIN_PX = 210;

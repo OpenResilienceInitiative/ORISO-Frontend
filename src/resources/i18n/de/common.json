@@ -6888,6 +6888,9 @@
 		}
 	},
 	"calendar": {
+		"zoomOut": "Herauszoomen",
+		"zoomIn": "Hineinzoomen",
+		"zoomLabel": "Zoom",
 		"bandHint": "Einzelne Termine zeigt „Nebeneinander“.",
 		"bandUnknown": "Nicht geladen: {{names}}",
 		"bandFree": "Frei: {{names}}",

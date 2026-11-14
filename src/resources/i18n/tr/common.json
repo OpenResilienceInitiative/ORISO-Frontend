@@ -6898,6 +6898,9 @@
 		}
 	},
 	"calendar": {
+		"zoomOut": "Uzaklaştır",
+		"zoomIn": "Yakınlaştır",
+		"zoomLabel": "Yakınlaştırma",
 		"bandHint": "Tek tek randevuları „Yan yana“ görünümü gösterir.",
 		"bandUnknown": "Yüklenmedi: {{names}}",
 		"bandFree": "Boş: {{names}}",

@@ -439,6 +439,99 @@ export const ColleaguesMonth: Story = {
 	}
 };
 
+/** Half-hour rows of the time grid (lanes and labels share the height). */
+const slotRows = (root: HTMLElement) => [
+	...root.querySelectorAll<HTMLElement>(
+		'[data-testid="calendar-view"] [data-time]'
+	)
+];
+/** Which half hour (from the first) sits at `clientY`. */
+const halfHourAt = (root: HTMLElement, clientY: number) => {
+	const first = slotRows(root)[0].getBoundingClientRect();
+	return (clientY - first.top) / first.height;
+};
+/** A trackpad pinch as Chrome reports it: a wheel with Ctrl. */
+const pinch = (target: Element, deltaY: number, clientY: number) =>
+	target.dispatchEvent(
+		new WheelEvent('wheel', {
+			deltaY,
+			ctrlKey: true,
+			clientY,
+			bubbles: true,
+			cancelable: true
+		})
+	);
+
+export const Zoom: Story = {
+	name: 'Zoom — − and + in the date bar, pinch around the pointer',
+	play: async ({ canvasElement }) => {
+		const canvas = canvasOf(canvasElement);
+		await canvas.findByTestId('calendar-view');
+		const height = () =>
+			slotRows(canvasElement)[0].getBoundingClientRect().height;
+		// Starts at today's height.
+		await waitFor(() => expect(height()).toBe(25));
+		const zoomIn = canvas.getByRole('button', { name: 'Hineinzoomen' });
+		const zoomOut = canvas.getByRole('button', { name: 'Herauszoomen' });
+		await userEvent.click(zoomIn);
+		await waitFor(() => expect(height()).toBe(30));
+		await userEvent.click(zoomIn);
+		await waitFor(() => expect(height()).toBe(40));
+		// Pinching keeps the time under the fingers where it is.
+		const view = canvas.getByTestId('calendar-view');
+		const box = view.getBoundingClientRect();
+		const y = box.top + box.height * 0.75;
+		const before = halfHourAt(canvasElement, y);
+		pinch(view, -20, y);
+		await waitFor(() => expect(height()).toBeGreaterThan(40));
+		await new Promise((done) => requestAnimationFrame(() => done(null)));
+		await new Promise((done) => requestAnimationFrame(() => done(null)));
+		await expect(
+			Math.abs(halfHourAt(canvasElement, y) - before)
+		).toBeLessThan(0.05);
+		// Far out the labels no longer hold the rows up; − stops at 18.
+		for (let i = 0; i < 8 && !(zoomOut as HTMLButtonElement).disabled; i++)
+			await userEvent.click(zoomOut);
+		await waitFor(() => expect(height()).toBe(18));
+		await expect(zoomOut).toBeDisabled();
+		await expect(zoomIn).toBeEnabled();
+	}
+};
+
+export const ZoomSplit: Story = {
+	name: 'Zoom — side by side shares the height',
+	args: { initialView: 'split', shownColleagues: ['kaya', 'demir'] },
+	play: async ({ canvasElement }) => {
+		const canvas = canvasOf(canvasElement);
+		await canvas.findByTestId('calendar-split-view');
+		const hour = () => {
+			const lines = canvasElement.querySelectorAll<HTMLElement>(
+				'.calendarSplit__line'
+			);
+			return (
+				lines[1].getBoundingClientRect().top -
+				lines[0].getBoundingClientRect().top
+			);
+		};
+		await expect(hour()).toBe(48);
+		await userEvent.click(
+			canvas.getByRole('button', { name: 'Hineinzoomen' })
+		);
+		await waitFor(() => expect(hour()).toBe(60));
+		// A pinch on the columns keeps the time under the pointer.
+		const body = canvasElement.querySelector<HTMLElement>(
+			'.calendarSplit__body'
+		)!;
+		const y = body.getBoundingClientRect().top + 300;
+		const at = () => (y - body.getBoundingClientRect().top) / (hour() / 2);
+		const before = at();
+		pinch(body, 30, y);
+		await waitFor(() => expect(hour()).toBeLessThan(60));
+		await new Promise((done) => requestAnimationFrame(() => done(null)));
+		await expect(Math.abs(at() - before)).toBeLessThan(0.05);
+	}
+};
+
 export const SplitView: Story = {
 	name: 'Side by side — two colleagues',
 	args: { initialView: 'split', shownColleagues: ['kaya', 'demir'] },

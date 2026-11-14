@@ -74,6 +74,7 @@ import {
 } from './calendarBands';
 import { CalendarEntryPeek, initialsOf } from './CalendarEntryPeek';
 import { fullCalendarLocale } from './calendarLocale';
+import { GRID_SLOT_PX } from './calendarZoom';
 import './calendar.styles.scss';
 
 export type GridViewName = Exclude<CalendarViewName, 'split'>;
@@ -131,6 +132,8 @@ export interface CalendarViewProps {
 		change: EdgeChange,
 		anchor: { x: number; y: number }
 	) => void;
+	/** Height of half an hour in the time grid (the zoom), in pixels. */
+	slotPx?: number;
 	/** Pending move proposals, drawn dashed at the proposed time. */
 	proposals?: { proposal: MoveProposal; entry: CalendarEntry }[];
 	highlight?: CalendarHighlight | null;
@@ -361,7 +364,8 @@ export const CalendarView = ({
 	onProposalOpen,
 	onEntryMove,
 	onDatesSet,
-	onDragChange
+	onDragChange,
+	slotPx = GRID_SLOT_PX
 }: CalendarViewProps) => {
 	const { t, i18n } = useTranslation();
 	const label = useEntryLabel();
@@ -863,6 +867,10 @@ export const CalendarView = ({
 					allDayText={t('calendar.allDay')}
 					slotMinTime={hours.min}
 					slotMaxTime={hours.max}
+					// The zoom sets the height; the hour labels must not hold
+					// it up (they are taller than the closest-out steps).
+					slotMinHeight={slotPx}
+					slotHeaderInnerClass="calendarView__slotLabel"
 					scrollTime="08:00:00"
 					dayMaxEvents={3}
 					backgroundEventClass={backgroundClass}

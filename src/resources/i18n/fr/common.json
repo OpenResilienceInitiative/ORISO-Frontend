@@ -6898,6 +6898,9 @@
 		}
 	},
 	"calendar": {
+		"zoomOut": "Zoom arrière",
+		"zoomIn": "Zoom avant",
+		"zoomLabel": "Zoom",
 		"bandHint": "« Côte à côte » montre chaque rendez-vous.",
 		"bandUnknown": "Non chargé : {{names}}",
 		"bandFree": "Libres : {{names}}",

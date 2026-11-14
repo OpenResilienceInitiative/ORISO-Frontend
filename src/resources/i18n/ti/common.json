@@ -6865,6 +6865,9 @@
 		}
 	},
 	"calendar": {
+		"zoomOut": "ኣንእስ",
+		"zoomIn": "ኣጕልሕ",
+		"zoomLabel": "ምጕላሕ",
 		"bandHint": "ነፍሲ ወከፍ ቆጸራ „ጎን ንጎን“ የርኢ።",
 		"bandUnknown": "ኣይተጻዕነን: {{names}}",
 		"bandFree": "ነጻ: {{names}}",

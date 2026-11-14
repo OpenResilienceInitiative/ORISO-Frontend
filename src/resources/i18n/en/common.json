@@ -6813,6 +6813,9 @@
 		}
 	},
 	"calendar": {
+		"zoomOut": "Zoom out",
+		"zoomIn": "Zoom in",
+		"zoomLabel": "Zoom",
 		"bandHint": "“Side by side” shows single entries.",
 		"bandUnknown": "Not loaded: {{names}}",
 		"bandFree": "Free: {{names}}",

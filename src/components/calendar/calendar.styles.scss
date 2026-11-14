@@ -302,6 +302,15 @@
 	min-height: 28px;
 }
 
+// The zoom sets the height of half an hour (slotMinHeight). FullCalendar
+// keeps a row at least as tall as its label, which is taller than the
+// closest-out steps; a 1px label box lets the text run into the unlabelled
+// half hour below and leaves the height to the zoom.
+.calendarView__slotLabel {
+	height: 1px;
+	overflow: visible;
+}
+
 // --- One entry ---
 
 .calEntry {
@@ -1607,6 +1616,35 @@
 	.calendarPage--compact & {
 		font-size: 15px;
 	}
+}
+
+// − and + at the right end of the date bar: the zoom of the time grid.
+.calendarStage__zoom {
+	margin-left: auto;
+
+	.calendarStage__segmented + & {
+		margin-left: 0;
+	}
+
+	.calendarStage__navButton {
+		min-width: 36px;
+
+		&:disabled {
+			opacity: 0.38;
+			cursor: default;
+			background: transparent;
+		}
+
+		& + .calendarStage__navButton,
+		.calendarStage__zoomTip + .calendarStage__zoomTip & {
+			border-left: 1px solid var(--m3-outline-variant, #c4c7c8);
+		}
+	}
+}
+
+.calendarStage__zoomTip {
+	display: inline-flex;
+	height: 100%;
 }
 
 // "1 Tag | 3 Tage" next to the range title in "Nebeneinander".

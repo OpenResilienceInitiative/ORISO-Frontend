@@ -29,6 +29,7 @@ import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import FullscreenIcon from '@mui/icons-material/Fullscreen';
 import FullscreenExitIcon from '@mui/icons-material/FullscreenExit';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import RemoveIcon from '@mui/icons-material/Remove';
 import CalendarMonthOutlinedIcon from '@mui/icons-material/CalendarMonthOutlined';
 import ViewAgendaOutlinedIcon from '@mui/icons-material/ViewAgendaOutlined';
 import ViewWeekOutlinedIcon from '@mui/icons-material/ViewWeekOutlined';
@@ -112,6 +113,14 @@ import {
 	type SplitDays
 } from './CalendarSplitView';
 import { CalendarPager } from './CalendarPager';
+import {
+	GRID_SLOT_PX,
+	SPLIT_SLOT_PX,
+	ZOOM_MAX,
+	ZOOM_MIN,
+	useCalendarZoom,
+	zoomStep
+} from './calendarZoom';
 import {
 	CalendarKindChips,
 	CalendarSidebar,
@@ -597,6 +606,19 @@ export const CalendarPage = ({
 		setAnchorDate(day);
 		if (!split) controller.gotoDate(day);
 	};
+
+	// --- Zoom: one half-hour height for the time grid and "Nebeneinander";
+	// until it is changed, each keeps today's height. ---
+	const timeGridShown = split || (view !== 'month' && view !== 'list');
+	const [zoom, setZoom] = useState<number | null>(null);
+	const slotPx = zoom ?? (split ? SPLIT_SLOT_PX : GRID_SLOT_PX);
+	// The element, not a ref: the calendar may mount after the page.
+	const [zoomRoot, setZoomRoot] = useState<HTMLDivElement | null>(null);
+	const zoomTo = useCalendarZoom(zoomRoot, {
+		enabled: timeGridShown,
+		slotPx,
+		onZoom: setZoom
+	});
 
 	useEffect(() => {
 		if (!split) return;
@@ -1463,6 +1485,49 @@ export const CalendarPage = ({
 					))}
 				</div>
 			)}
+			{timeGridShown && (
+				<div
+					className="calendarStage__nav calendarStage__zoom"
+					role="group"
+					aria-label={t('calendar.zoomLabel')}
+					data-cy="calendar-zoom"
+				>
+					{(
+						[
+							[-1, 'calendar.zoomOut', <RemoveIcon key="out" />],
+							[1, 'calendar.zoomIn', <AddIcon key="in" />]
+						] as const
+					).map(([direction, key, icon]) => {
+						const atBound =
+							direction < 0
+								? slotPx <= ZOOM_MIN
+								: slotPx >= ZOOM_MAX;
+						return (
+							<QuickTip key={key} title={t(key)}>
+								{/* A disabled button gets no hover: the tip sits on the span. */}
+								<span className="calendarStage__zoomTip">
+									<button
+										type="button"
+										className="calendarStage__navButton"
+										aria-label={t(key)}
+										disabled={atBound}
+										onClick={() =>
+											zoomTo(zoomStep(slotPx, direction))
+										}
+										data-cy={
+											direction < 0
+												? 'calendar-zoom-out'
+												: 'calendar-zoom-in'
+										}
+									>
+										{icon}
+									</button>
+								</span>
+							</QuickTip>
+						);
+					})}
+				</div>
+			)}
 		</div>
 	);
 
@@ -1601,6 +1666,7 @@ export const CalendarPage = ({
 			    keyboard and screen readers as well, but mounted (reviews
 			    4575868941, 4575941073). The retry sits outside. */}
 			<div
+				ref={setZoomRoot}
 				className="calendarPage__covered"
 				inert={state === 'error' || undefined}
 				data-testid="calendar-covered"
@@ -1663,6 +1729,7 @@ export const CalendarPage = ({
 							now={now}
 							workingPlan={workingPlan}
 							onEdgeChange={gripsOn ? onEdgeChange : undefined}
+							hourPx={slotPx * 2}
 							proposals={pending}
 							highlight={highlight}
 							muted={muted}
@@ -1700,6 +1767,7 @@ export const CalendarPage = ({
 							initialDate={anchorDate}
 							workingPlan={workingPlan}
 							onEdgeChange={gripsOn ? onEdgeChange : undefined}
+							slotPx={slotPx}
 							proposals={pending}
 							highlight={highlight}
 							muted={muted}
