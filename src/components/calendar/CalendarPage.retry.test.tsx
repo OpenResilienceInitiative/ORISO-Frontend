@@ -69,8 +69,7 @@ vi.mock('../form/OrisoSelect', () => ({
 
 afterEach(cleanup);
 
-const field = (name: string) =>
-	screen.getByLabelText<HTMLInputElement>(name);
+const field = (name: string) => screen.getByLabelText<HTMLInputElement>(name);
 
 describe('CalendarPage — saving an appointment again after a failure', () => {
 	it('keeps the entered values when saving fails and saves the same appointment on retry', async () => {
@@ -89,7 +88,7 @@ describe('CalendarPage — saving an appointment again after a failure', () => {
 			/>
 		);
 		fireEvent.click(
-			document.querySelector('[data-cy="calendar-create"]') as HTMLElement
+			screen.getByRole('button', { name: 'calendar.create' })
 		);
 		fireEvent.change(field('calendar.dialog.conversation'), {
 			target: { value: '4402' }
@@ -102,7 +101,9 @@ describe('CalendarPage — saving an appointment again after a failure', () => {
 		});
 		const save = () =>
 			act(async () => {
-				fireEvent.click(screen.getByTestId('calendar-appointment-save'));
+				fireEvent.click(
+					screen.getByRole('button', { name: 'calendar.dialog.save' })
+				);
 			});
 
 		await save();
@@ -124,7 +125,7 @@ describe('CalendarPage — saving an appointment again after a failure', () => {
 			end: new Date(2026, 10, 17, 15, 30)
 		});
 		expect(
-			screen.queryByTestId('calendar-appointment-save')
+			screen.queryByRole('button', { name: 'calendar.dialog.save' })
 		).toBeNull();
 	});
 });
