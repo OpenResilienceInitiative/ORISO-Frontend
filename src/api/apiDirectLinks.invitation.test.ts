@@ -8,6 +8,7 @@ import {
 	apiRequestDirectInvitationRenewal,
 	directInvitationAccessError,
 	isExpiredDirectLinkError,
+	isRoomNotEncryptedError,
 	isInactiveDirectLinkError,
 	toAccessMode,
 	toDirectLink
@@ -232,5 +233,15 @@ describe('the answers of an expired or restricted link (#2252)', () => {
 		).toBe('accounts');
 		expect(await directInvitationAccessError(reply(403, {}))).toBeNull();
 		expect(await directInvitationAccessError(reply(500, {}))).toBeNull();
+	});
+
+	it('recognises a 1:1 without encryption', async () => {
+		expect(
+			await isRoomNotEncryptedError(
+				reply(409, { reason: 'DIRECT_INVITATION_ROOM_NOT_ENCRYPTED' })
+			)
+		).toBe(true);
+		expect(await isRoomNotEncryptedError(reply(409, {}))).toBe(false);
+		expect(await isRoomNotEncryptedError(new Error('x'))).toBe(false);
 	});
 });

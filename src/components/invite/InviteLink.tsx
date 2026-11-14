@@ -58,6 +58,7 @@ import type { Pseudonym } from '../../utils/anonName/engine';
 import {
 	apiRequestDirectInvitationRenewal,
 	directInvitationAccessError,
+	isRoomNotEncryptedError,
 	isExpiredDirectLinkError,
 	isInactiveDirectLinkError
 } from '../../api/apiDirectLinks';
@@ -172,8 +173,8 @@ const statusOf = (error: unknown) =>
 
 /**
  * #2252: the text of a refusal the invitation itself gives: a 403 that names
- * the only way in, or a conversation Matrix could not reach (502/503), which
- * the person may simply try again.
+ * the only way in, a 1:1 that is not encrypted (409), or a conversation
+ * Matrix could not reach (502/503), which the person may simply try again.
  */
 const accessErrorText = async (
 	error: unknown,
@@ -184,6 +185,8 @@ const accessErrorText = async (
 		return translate('directInvitation.entry.access.guestsOnly');
 	if (only === 'accounts')
 		return translate('directInvitation.entry.access.accountsOnly');
+	if (await isRoomNotEncryptedError(error))
+		return translate('directInvitation.entry.roomNotEncrypted');
 	const status = statusOf(error);
 	if (status === 502 || status === 503)
 		return translate('directInvitation.entry.roomUnavailable');

@@ -182,6 +182,16 @@ export const isExpiredDirectLinkError = async (
 	(error as Response)?.status === 410 &&
 	(await reasonOf(error)) === 'DIRECT_LINK_EXPIRED';
 
+/**
+ * #2252: 409 `DIRECT_INVITATION_ROOM_NOT_ENCRYPTED`, an invitation from a 1:1
+ * whose room is not encrypted, so earlier messages would not stay private.
+ */
+export const isRoomNotEncryptedError = async (
+	error: unknown
+): Promise<boolean> =>
+	(error as Response)?.status === 409 &&
+	(await reasonOf(error)) === 'DIRECT_INVITATION_ROOM_NOT_ENCRYPTED';
+
 /** #2252: the only way in a 403 leaves open, else `null`. */
 export const directInvitationAccessError = async (
 	error: unknown

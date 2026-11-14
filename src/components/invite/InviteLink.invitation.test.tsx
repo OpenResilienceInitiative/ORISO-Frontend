@@ -121,6 +121,8 @@ const i18nMock = vi.hoisted(() => {
 		'directLink.entry.haveAccount': 'Sie haben schon ein Konto? Anmelden',
 		'inviteLink.resume.retry': 'Erneut versuchen',
 		'registration.zipcode.label': 'Ihre Postleitzahl',
+		'directInvitation.entry.roomNotEncrypted':
+			'directInvitation.entry.roomNotEncrypted',
 		'directInvitation.entry.access.guestsOnly':
 			'Dieser Link ist nur für Gäste.',
 		'directInvitation.entry.access.accountsOnly':
@@ -369,6 +371,26 @@ describe('InviteLink with a Direkteinladung (#2252)', () => {
 
 		expect(
 			await screen.findByText('directInvitation.entry.roomUnavailable')
+		).toBeTruthy();
+	});
+
+	it('says a 1:1 without encryption takes nobody by link', async () => {
+		vi.mocked(hasActiveAuthSession).mockReturnValue(true);
+		vi.mocked(apiGetInviteLinkContext).mockResolvedValueOnce(
+			directContext('CHAT') as any
+		);
+		vi.mocked(apiStartDirectLinkConversation).mockRejectedValueOnce(
+			new Response(
+				JSON.stringify({
+					reason: 'DIRECT_INVITATION_ROOM_NOT_ENCRYPTED'
+				}),
+				{ status: 409 }
+			)
+		);
+		renderInvite();
+
+		expect(
+			await screen.findByText('directInvitation.entry.roomNotEncrypted')
 		).toBeTruthy();
 	});
 

@@ -2963,6 +2963,7 @@
 				"guestsOnly": "Dieser Link ist nur für Gäste. Bitte öffne ihn in einem Fenster, in dem du nicht angemeldet bist.",
 				"accountsOnly": "Für diesen Link brauchst du ein Konto. Bitte melde dich an oder registriere dich."
 			},
+			"roomNotEncrypted": "Diese Einladung kann gerade nicht genutzt werden, weil das Gespräch nicht verschlüsselt ist. Bitte wende dich an die Beraterin oder den Berater.",
 			"roomUnavailable": "Die Unterhaltung ist gerade nicht erreichbar. Bitte versuch es gleich noch einmal."
 		},
 		"notice": {
