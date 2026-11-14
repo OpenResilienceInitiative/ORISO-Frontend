@@ -21,6 +21,10 @@ import timeGridPlugin from '@fullcalendar/react/timegrid';
 import listPlugin from '@fullcalendar/react/list';
 import interactionPlugin from '@fullcalendar/react/interaction';
 import deLocale from '@fullcalendar/react/locales/de';
+import enGbLocale from '@fullcalendar/react/locales/en-gb';
+import frLocale from '@fullcalendar/react/locales/fr';
+import ruLocale from '@fullcalendar/react/locales/ru';
+import trLocale from '@fullcalendar/react/locales/tr';
 import { IconButton } from '@mui/material';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
@@ -30,11 +34,15 @@ import { ButtonGroup } from '../buttonGroup/ButtonGroup';
 import {
 	isMovable,
 	isSoon,
+	settleMove,
+	visibleHours,
 	type CalendarEntry,
-	type CalendarRole
+	type CalendarRole,
+	type MoveResult
 } from './calendarModel';
 import { CalendarEntryGlyph } from './CalendarEntryGlyph';
 import { useEntryLabel } from './useEntryLabel';
+import { fullCalendarLocale } from './calendarLocale';
 import './calendar.styles.scss';
 
 export type CalendarViewName = 'day' | 'week' | 'month' | 'list';
@@ -47,7 +55,7 @@ const PLUGINS = [
 	listPlugin,
 	interactionPlugin
 ];
-const LOCALES = [deLocale];
+const LOCALES = [deLocale, enGbLocale, frLocale, ruLocale, trLocale];
 
 const FC_VIEW: Record<CalendarViewName, string> = {
 	day: 'timeGridDay',
@@ -74,8 +82,11 @@ export interface CalendarViewProps {
 		anchor: { x: number; y: number }
 	) => void;
 	onEntryClick?: (entry: CalendarEntry) => void;
-	/** An own entry was dragged. Return false to put it back. */
-	onEntryMove?: (entry: CalendarEntry, start: Date, end: Date) => void;
+	/**
+	 * An own entry was dragged. Return false, or a promise that rejects or
+	 * resolves to false, to put it back.
+	 */
+	onEntryMove?: (entry: CalendarEntry, start: Date, end: Date) => MoveResult;
 	/** Extra controls on the right of the toolbar (filters, sync …). */
 	toolbarEnd?: React.ReactNode;
 }
@@ -105,6 +116,9 @@ export const CalendarView = ({
 	const controller = useCalendarController();
 	const nowDate = now ?? new Date();
 	const consultant = role === 'consultant';
+
+	// The usual working day, widened so no entry falls outside the grid.
+	const hours = useMemo(() => visibleHours(entries), [entries]);
 
 	const events = useMemo<EventInput[]>(
 		() =>
@@ -240,7 +254,7 @@ export const CalendarView = ({
 					controller={controller}
 					plugins={PLUGINS}
 					locales={LOCALES}
-					locale={i18n.language?.startsWith('de') ? 'de' : 'en'}
+					locale={fullCalendarLocale(i18n.language)}
 					initialView={FC_VIEW[view]}
 					initialDate={now}
 					now={now}
@@ -249,8 +263,8 @@ export const CalendarView = ({
 					firstDay={1}
 					nowIndicator
 					allDaySlot={false}
-					slotMinTime="07:00:00"
-					slotMaxTime="21:00:00"
+					slotMinTime={hours.min}
+					slotMaxTime={hours.max}
 					scrollTime="08:00:00"
 					dayMaxEvents={3}
 					selectable={consultant}
@@ -282,7 +296,10 @@ export const CalendarView = ({
 							info.revert();
 							return;
 						}
-						onEntryMove?.(entry, info.event.start, info.event.end);
+						settleMove(
+							onEntryMove?.(entry, info.event.start, info.event.end),
+							info.revert
+						);
 					}}
 				/>
 			</div>

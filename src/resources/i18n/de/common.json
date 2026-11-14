@@ -7014,12 +7014,14 @@
 			"repeat": "Wiederholen an",
 			"until": "Bis einschließlich",
 			"save": "Eintragen",
+			"tooMany": "Zu viele Wiederholungen: höchstens {{max}} Sperrzeiten auf einmal. Bitte einen früheren letzten Tag wählen.",
 			"count": "{{count}} Sperrzeiten werden eingetragen.",
 			"count_one": "{{count}} Sperrzeit wird eingetragen.",
 			"conflicts": "Überschneidet sich mit {{count}} Terminen.",
 			"conflicts_one": "Überschneidet sich mit {{count}} Termin.",
 			"created": "{{count}} Sperrzeiten eingetragen",
-			"created_one": "Sperrzeit eingetragen: {{date}}"
+			"created_one": "{{count}} Sperrzeit eingetragen",
+			"createdSingle": "Sperrzeit eingetragen: {{date}}"
 		}
 	}
 }

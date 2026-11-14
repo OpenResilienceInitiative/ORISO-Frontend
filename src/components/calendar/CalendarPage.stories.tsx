@@ -28,21 +28,7 @@ import {
 } from './calendarStoryData';
 import type { CalendarViewName } from './CalendarView';
 
-/**
- * Stand-in for the later UserService container: keeps the entries in local
- * state, so every click works, and applies the Träger's visibility the way
- * UserService will (only colleagues in scope, redacted entries).
- */
-const Harness = ({
-	role = 'consultant',
-	scope = 'AGENCY',
-	showUsernames = false,
-	state = 'ready',
-	empty = false,
-	compact = false,
-	initialView,
-	shell = true
-}: {
+interface HarnessProps {
 	role?: CalendarRole;
 	scope?: CalendarVisibilityScope;
 	showUsernames?: boolean;
@@ -51,7 +37,23 @@ const Harness = ({
 	compact?: boolean;
 	initialView?: CalendarViewName;
 	shell?: boolean;
-}) => {
+}
+
+/**
+ * Stand-in for the later UserService container: keeps the entries in local
+ * state, so every click works, and applies the Träger's visibility the way
+ * UserService will (only colleagues in scope, redacted entries).
+ */
+const Scenario = ({
+	role = 'consultant',
+	scope = 'AGENCY',
+	showUsernames = false,
+	state = 'ready',
+	empty = false,
+	compact = false,
+	initialView,
+	shell = true
+}: HarnessProps) => {
 	const visibility = { scope, showUsernames };
 	const colleagues =
 		role === 'consultant' ? colleaguesInScope(COLLEAGUES, scope) : [];
@@ -162,6 +164,17 @@ const Harness = ({
 		</div>
 	);
 };
+
+/**
+ * A changed `role` or `empty` control starts a new scenario: the local
+ * entries are seeded once per scenario, edits stay inside it.
+ */
+const Harness = (props: HarnessProps) => (
+	<Scenario
+		key={`${props.role ?? 'consultant'}|${props.empty ? 'empty' : 'filled'}`}
+		{...props}
+	/>
+);
 
 const meta: Meta<typeof Harness> = {
 	title: 'Templates/Calendar/Meine Termine',

@@ -7024,12 +7024,14 @@
 			"repeat": "Şu günlerde tekrarla",
 			"until": "Bitiş tarihi (dahil)",
 			"save": "Ekle",
+			"tooMany": "Çok fazla tekrar: tek seferde en fazla {{max}} kapalı zaman. Lütfen daha erken bir son gün seçin.",
 			"count": "{{count}} kapalı zaman eklenecek.",
 			"count_one": "{{count}} kapalı zaman eklenecek.",
 			"conflicts": "{{count}} randevuyla çakışıyor.",
 			"conflicts_one": "{{count}} randevuyla çakışıyor.",
 			"created": "{{count}} kapalı zaman eklendi",
-			"created_one": "Kapalı zaman eklendi: {{date}}"
+			"created_one": "{{count}} kapalı zaman eklendi",
+			"createdSingle": "Kapalı zaman eklendi: {{date}}"
 		}
 	}
 }

@@ -257,32 +257,64 @@ export interface BlockerRepeat {
 /** Upper bound so a typo in "until" cannot create years of blockers. */
 export const MAX_BLOCKER_OCCURRENCES = 120;
 
+/** Local calendar days from the date of `start` to the date of `end`. */
+export const daySpan = (start: Date, end: Date) => {
+	const from = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+	const to = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+	// A local day has 23, 24 or 25 hours; rounding absorbs the DST hour.
+	return Math.round((to.getTime() - from.getTime()) / 86_400_000);
+};
+
+const isLocalMidnight = (date: Date) =>
+	date.getHours() === 0 &&
+	date.getMinutes() === 0 &&
+	date.getSeconds() === 0 &&
+	date.getMilliseconds() === 0;
+
+/**
+ * A selection of whole days, as the month view reports it: both ends at
+ * local midnight, the end exclusive.
+ */
+export const isWholeDays = (range: { start: Date; end: Date }) =>
+	range.end.getTime() > range.start.getTime() &&
+	isLocalMidnight(range.start) &&
+	isLocalMidnight(range.end);
+
 /**
  * The single time ranges of a blocker series: same clock time on every
- * chosen weekday, starting with the first day, never more than
- * {@link MAX_BLOCKER_OCCURRENCES}.
+ * chosen weekday, starting with the first day, never more than `limit`
+ * (default {@link MAX_BLOCKER_OCCURRENCES}). Each end is built from its own
+ * local date and the first range's end clock time, so a range keeps its
+ * clock times on a 23- or 25-hour day.
  */
 export const expandBlocker = (
 	first: { start: Date; end: Date },
-	repeat?: BlockerRepeat
+	repeat?: BlockerRepeat,
+	limit = MAX_BLOCKER_OCCURRENCES
 ): { start: Date; end: Date }[] => {
 	if (!repeat || repeat.weekdays.length === 0) return [first];
-	const duration = first.end.getTime() - first.start.getTime();
+	const span = daySpan(first.start, first.end);
+	// Local date plus the first range's clock time, for day `offset`.
+	const at = (clock: Date, offset: number) =>
+		new Date(
+			first.start.getFullYear(),
+			first.start.getMonth(),
+			first.start.getDate() + offset,
+			clock.getHours(),
+			clock.getMinutes(),
+			clock.getSeconds(),
+			clock.getMilliseconds()
+		);
 	const last = new Date(repeat.until);
 	last.setHours(23, 59, 59, 999);
 	const out: { start: Date; end: Date }[] = [];
-	const day = new Date(first.start);
-	while (
-		day.getTime() <= last.getTime() &&
-		out.length < MAX_BLOCKER_OCCURRENCES
-	) {
-		if (repeat.weekdays.includes(day.getDay())) {
-			out.push({
-				start: new Date(day),
-				end: new Date(day.getTime() + duration)
-			});
-		}
-		day.setDate(day.getDate() + 1);
+	let offset = 0;
+	let start = at(first.start, offset);
+	while (start.getTime() <= last.getTime() && out.length < limit) {
+		if (repeat.weekdays.includes(start.getDay()))
+			out.push({ start, end: at(first.end, offset + span) });
+		offset += 1;
+		start = at(first.start, offset);
 	}
 	return out;
 };
@@ -298,4 +330,56 @@ export const draftError = (
 	if (draft.type === 'appointment' && draft.sessionId === undefined)
 		return 'conversation';
 	return undefined;
+};
+
+/**
+ * What an entry move reports: `false`, a rejected promise or a promise of
+ * `false` mean it was not stored and the entry goes back.
+ */
+export type MoveResult = void | boolean | Promise<unknown>;
+
+/** Puts a dragged entry back when its move was refused or failed. */
+export const settleMove = (result: MoveResult, revert: () => void) => {
+	if (result === false) revert();
+	else if (result && typeof (result as Promise<unknown>).then === 'function')
+		(result as Promise<unknown>).then(
+			(stored) => {
+				if (stored === false) revert();
+			},
+			() => revert()
+		);
+};
+
+const clockTime = (minutes: number) =>
+	`${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}:00`;
+
+/**
+ * The hours the day and week grid show: 07:00–21:00, widened to the full
+ * hour around any entry outside them. An entry over midnight shows the
+ * whole day. FullCalendar never shows an entry outside these hours.
+ */
+export const visibleHours = (
+	entries: Pick<CalendarEntry, 'start' | 'end'>[],
+	from = 7 * 60,
+	to = 21 * 60
+) => {
+	let min = from;
+	let max = to;
+	entries.forEach((entry) => {
+		const start = new Date(entry.start);
+		const end = new Date(entry.end);
+		if (daySpan(start, new Date(end.getTime() - 1)) > 0) {
+			min = 0;
+			max = 24 * 60;
+			return;
+		}
+		const startMinutes = start.getHours() * 60 + start.getMinutes();
+		const endMinutes =
+			daySpan(start, end) > 0
+				? 24 * 60
+				: end.getHours() * 60 + end.getMinutes();
+		min = Math.min(min, Math.floor(startMinutes / 60) * 60);
+		max = Math.max(max, Math.ceil(endMinutes / 60) * 60);
+	});
+	return { min: clockTime(min), max: clockTime(max) };
 };

@@ -15,21 +15,26 @@ import { OrisoTextField } from '../form/OrisoTextField';
 import { FilterChip } from '../displayFilter/FilterChip';
 import { Switch } from '../Switch';
 import {
+	daySpan,
 	expandBlocker,
 	findConflicts,
+	isWholeDays,
+	MAX_BLOCKER_OCCURRENCES,
 	type AppointmentDraft,
 	type CalendarEntry
 } from './calendarModel';
 import { FacetIcon } from './CalendarEntryGlyph';
 import { useDayLabels } from './useEntryLabel';
+import { calendarLocale } from './calendarLocale';
 
 /** Monday first, JavaScript weekday numbers. */
 const WEEKDAYS = [1, 2, 3, 4, 5, 6, 0];
 
+/** A cleared time field gives no range, never midnight. */
 const join = (day: Dayjs, time: Dayjs | null) =>
 	time
 		? day.hour(time.hour()).minute(time.minute()).second(0).millisecond(0)
-		: day;
+		: null;
 
 export interface BlockerDialogProps {
 	open: boolean;
@@ -55,44 +60,65 @@ export const BlockerDialog = ({
 }: BlockerDialogProps) => {
 	const dayLabels = useDayLabels();
 	const { t, i18n } = useTranslation();
+	// A month selection covers whole days (exclusive midnight end); a timed
+	// slot may end on a later day. Both keep their date span.
+	const wholeDays = !!slot && isWholeDays(slot);
 	const first = slot
 		? dayjs(slot.start)
 		: dayjs(now).add(1, 'day').hour(8).minute(0);
+	const span = slot
+		? daySpan(slot.start, slot.end) - (wholeDays ? 1 : 0)
+		: 0;
 	const [day, setDay] = useState<Dayjs | null>(first.startOf('day'));
-	const [start, setStart] = useState<Dayjs | null>(first);
-	const [end, setEnd] = useState<Dayjs | null>(
-		slot ? dayjs(slot.end) : first.add(4, 'hour')
+	const [start, setStart] = useState<Dayjs | null>(
+		wholeDays ? first.hour(8) : first
 	);
-	const [allDay, setAllDay] = useState(false);
+	const [end, setEnd] = useState<Dayjs | null>(
+		wholeDays
+			? first.hour(12)
+			: slot
+				? dayjs(slot.end)
+				: first.add(4, 'hour')
+	);
+	const [allDay, setAllDay] = useState(wholeDays);
 	const [weekdays, setWeekdays] = useState<number[]>([]);
 	const [until, setUntil] = useState<Dayjs | null>(first.add(4, 'week'));
 	const [note, setNote] = useState('');
 
 	const weekdayName = (weekday: number) =>
-		new Intl.DateTimeFormat(
-			i18n.language?.startsWith('en') ? 'en-GB' : 'de-DE',
-			{
-				weekday: 'short'
-			}
-		).format(new Date(2026, 10, 15 + weekday));
+		new Intl.DateTimeFormat(calendarLocale(i18n.language), {
+			weekday: 'short'
+		}).format(new Date(2026, 10, 15 + weekday));
 
-	const ranges = useMemo(() => {
+	// One more than the bound, so a series the bound would cut is noticed.
+	const expanded = useMemo(() => {
 		if (!day) return [];
+		const lastDay = day.add(span, 'day');
 		const s = allDay ? day.startOf('day') : join(day, start);
-		const e = allDay ? day.endOf('day') : join(day, end);
-		if (!e.isAfter(s)) return [];
+		const e = allDay ? lastDay.endOf('day') : join(lastDay, end);
+		if (!s || !e || !e.isAfter(s)) return [];
+		// Chosen weekdays without a last day are not a single blocker.
+		if (weekdays.length && !until) return [];
 		return expandBlocker(
 			{ start: s.toDate(), end: e.toDate() },
 			weekdays.length && until
 				? { weekdays, until: until.toDate() }
-				: undefined
+				: undefined,
+			MAX_BLOCKER_OCCURRENCES + 1
 		);
-	}, [day, start, end, allDay, weekdays, until]);
+	}, [day, span, start, end, allDay, weekdays, until]);
+	const tooMany = expanded.length > MAX_BLOCKER_OCCURRENCES;
+	const ranges = tooMany ? [] : expanded;
 
 	const conflicts = ranges.flatMap((r) =>
 		findConflicts(r, entries, ownerId).filter((e) => e.type !== 'blocker')
 	);
-	const invalid = ranges.length === 0 || ranges[0].start < now;
+	// A whole day counts by its date, so today stays possible after 00:00.
+	const invalid =
+		ranges.length === 0 ||
+		(allDay
+			? ranges[0].end.getTime() <= now.getTime()
+			: ranges[0].start.getTime() < now.getTime());
 
 	const toggleWeekday = (weekday: number) =>
 		setWeekdays((all) =>
@@ -205,7 +231,13 @@ export const BlockerDialog = ({
 						fullWidth
 					/>
 					<p className="calendarDialog__summary" role="status">
-						{t('calendar.blocker.count', { count: ranges.length })}
+						{tooMany
+							? t('calendar.blocker.tooMany', {
+									max: MAX_BLOCKER_OCCURRENCES
+								})
+							: t('calendar.blocker.count', {
+									count: ranges.length
+								})}
 						{conflicts.length > 0 &&
 							` ${t('calendar.blocker.conflicts', { count: conflicts.length })}`}
 					</p>

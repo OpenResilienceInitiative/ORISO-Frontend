@@ -47,6 +47,7 @@ import {
 	type CalendarImport
 } from './CalendarSyncDialog';
 import { useEntryLabel, useRangeFormat } from './useEntryLabel';
+import { useLiveNow } from './useLiveNow';
 import '../sessionsList/sessionsList.styles.scss';
 import './calendar.styles.scss';
 
@@ -68,8 +69,11 @@ export interface CalendarPageProps {
 	initialView?: CalendarViewName;
 	now?: Date;
 	onCreate?: (drafts: AppointmentDraft[]) => void;
-	/** Returns the previous times so the snackbar can undo. */
-	onMove?: (entry: CalendarEntry, start: Date, end: Date) => void;
+	/**
+	 * The snackbar offers to undo by moving it back. `false` refuses the
+	 * move and puts the entry back.
+	 */
+	onMove?: (entry: CalendarEntry, start: Date, end: Date) => void | boolean;
 	onCancelAppointment?: (entry: CalendarEntry) => void;
 	onRemoveBlocker?: (entry: CalendarEntry) => void;
 	onStart?: (entry: CalendarEntry) => void;
@@ -122,7 +126,7 @@ export const CalendarPage = ({
 	const { t } = useTranslation();
 	const label = useEntryLabel();
 	const format = useRangeFormat();
-	const now = useMemo(() => fixedNow ?? new Date(), [fixedNow]);
+	const now = useLiveNow(fixedNow);
 	const consultant = role === 'consultant';
 	// Like the session list chips: none selected shows everything, selected
 	// chips narrow the calendar to those kinds.
@@ -149,8 +153,12 @@ export const CalendarPage = ({
 			),
 		[entries, ownerId, shownColleagues, onlyFacets]
 	);
-	const presentFacets = CALENDAR_FACETS.filter((facet) =>
-		entries.some((e) => e.ownerId === ownerId && facetOf(e) === facet)
+	// A selected facet stays on offer after its entries are gone, so the
+	// filter can always be cleared.
+	const presentFacets = CALENDAR_FACETS.filter(
+		(facet) =>
+			onlyFacets.includes(facet) ||
+			entries.some((e) => e.ownerId === ownerId && facetOf(e) === facet)
 	);
 	const upcoming = upcomingEntries(entries, ownerId, now);
 
@@ -173,12 +181,18 @@ export const CalendarPage = ({
 		setDialog(null);
 		const first = drafts[0];
 		setNotice({
+			// One blocker names its date; a series its count (Russian "one"
+			// also covers 21, 31 …, so a series never uses the single text).
 			message:
 				first.type === 'blocker'
-					? t('calendar.blocker.created', {
-							count: drafts.length,
-							date: format(first.start, first.end)
-						})
+					? drafts.length === 1
+						? t('calendar.blocker.createdSingle', {
+								date: format(first.start, first.end)
+							})
+						: t('calendar.blocker.created', {
+								count: drafts.length,
+								date: format(first.start, first.end)
+							})
 					: t('calendar.created', {
 							date: format(first.start, first.end)
 						})
@@ -186,7 +200,7 @@ export const CalendarPage = ({
 	};
 
 	const move = (entry: CalendarEntry, start: Date, end: Date) => {
-		onMove?.(entry, start, end);
+		if (onMove?.(entry, start, end) === false) return false;
 		setNotice({
 			message: t(
 				entry.type === 'blocker'
@@ -205,6 +219,7 @@ export const CalendarPage = ({
 					new Date(entry.end)
 				)
 		});
+		return true;
 	};
 
 	const addButton = consultant && (
@@ -231,7 +246,7 @@ export const CalendarPage = ({
 		</IconButton>
 	);
 
-	const filters = presentFacets.length > 1 && (
+	const filters = (presentFacets.length > 1 || onlyFacets.length > 0) && (
 		<FilterChipRow
 			label={t('calendar.filterLabel')}
 			className="calendarPage__filters"

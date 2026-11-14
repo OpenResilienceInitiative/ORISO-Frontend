@@ -2,6 +2,13 @@
 // surfaces, red only for the primary action and the appointment that is about
 // to start. Kinds differ by icon, not by colour (Frank, 2026-11-14).
 
+// The one focus ring of every calendar control and list item; only the
+// offset differs where a control sits flush against its neighbours.
+@mixin calendar-focus-ring($offset: 2px) {
+	outline: 2px solid var(--m3-primary, #a5000a);
+	outline-offset: $offset;
+}
+
 // --- FullCalendar classic theme, palette mapped to the ORISO scheme ---
 .calendarView {
 	--fc-classic-button: var(--m3-surface-container-highest, #dcdfe3);
@@ -77,8 +84,7 @@
 	}
 
 	&:focus-visible {
-		outline: 2px solid var(--m3-primary, #a5000a);
-		outline-offset: 2px;
+		@include calendar-focus-ring(2px);
 	}
 }
 
@@ -115,8 +121,7 @@
 	overflow: hidden;
 
 	&:focus-visible {
-		outline: 2px solid var(--m3-primary, #a5000a);
-		outline-offset: 1px;
+		@include calendar-focus-ring(1px);
 	}
 
 	// The next appointment, from 15 minutes before its start.
@@ -250,8 +255,7 @@
 	}
 
 	&:focus-visible {
-		outline: 2px solid var(--m3-primary, #a5000a);
-		outline-offset: 2px;
+		@include calendar-focus-ring(2px);
 	}
 }
 
@@ -337,8 +341,7 @@
 	}
 
 	&:focus-visible {
-		outline: 2px solid var(--m3-primary, #a5000a);
-		outline-offset: 1px;
+		@include calendar-focus-ring(1px);
 	}
 
 	&--soon,
