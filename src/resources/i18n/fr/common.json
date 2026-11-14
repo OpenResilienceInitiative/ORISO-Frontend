@@ -6896,5 +6896,140 @@
 			"title": "Nous n'avons pas pu vérifier votre compte",
 			"text": "Votre message n'a pas encore été envoyé et reste dans le champ de saisie. Vérifiez votre connexion et envoyez-le à nouveau."
 		}
+	},
+	"calendar": {
+		"create": "Créer un rendez-vous",
+		"today": "Aujourd’hui",
+		"previous": "Précédent",
+		"next": "Suivant",
+		"viewSwitch": "Affichage",
+		"views": {
+			"day": "Jour",
+			"week": "Semaine",
+			"month": "Mois",
+			"list": "Liste"
+		},
+		"upcoming": "À venir",
+		"upcomingEmpty": "Aucun rendez-vous à venir",
+		"calendars": "Calendriers",
+		"myCalendar": "Mon calendrier",
+		"scopeHint": {
+			"AGENCY": "Vous voyez les calendriers de votre service de consultation. C’est votre organisme qui le définit.",
+			"TENANT": "Vous voyez les calendriers de tous les services de consultation de votre organisme. C’est votre organisme qui le définit.",
+			"PLATFORM": "Vous voyez les calendriers de l’ensemble des conseiller·ères de la plateforme. C’est votre organisme qui le définit."
+		},
+		"colleaguesEmpty": "Aucun calendrier de collègue visible.",
+		"sync": "Synchronisation du calendrier",
+		"kinds": {
+			"video": "Vidéo",
+			"phone": "Téléphone",
+			"onsite": "Sur place",
+			"chat": "Chat"
+		},
+		"types": {
+			"group": "Rendez-vous de groupe",
+			"blocker": "Plage bloquée",
+			"busy": "Occupé",
+			"colleague": "Occupé"
+		},
+		"noEvents": "Aucun rendez-vous sur cette période",
+		"loading": "Chargement des rendez-vous",
+		"error": {
+			"title": "Les rendez-vous n’ont pas pu être chargés.",
+			"retry": "Réessayer"
+		},
+		"dialog": {
+			"createTitle": "Nouvelle entrée",
+			"description": "Choisissez le jour, l’heure, le type et la consultation à laquelle le rendez-vous se rattache.",
+			"conversation": "Consultation",
+			"kind": "Type",
+			"date": "Date du rendez-vous",
+			"start": "Début",
+			"end": "Fin",
+			"note": "Note (visible uniquement par vous)",
+			"save": "Créer",
+			"saveAnyway": "Créer quand même",
+			"conflict": "En conflit avec : {{list}}",
+			"error": {
+				"incomplete": "Veuillez choisir une date et une heure.",
+				"past": "L’entrée doit se situer dans le futur.",
+				"order": "La fin doit être postérieure au début.",
+				"conversation": "Veuillez choisir la consultation à laquelle le rendez-vous se rattache."
+			}
+		},
+		"details": {
+			"start": {
+				"video": "Démarrer un appel vidéo",
+				"phone": "Démarrer l’appel",
+				"chat": "Ouvrir le chat"
+			},
+			"join": {
+				"video": "Rejoindre l’appel vidéo",
+				"phone": "Rejoindre l’appel",
+				"chat": "Ouvrir le chat"
+			},
+			"move": "Déplacer",
+			"cancel": "Annuler le rendez-vous",
+			"remove": "Supprimer la plage bloquée",
+			"address": "Adresse",
+			"colleague": "Calendrier de {{name}}",
+			"busyHint": "Repris de votre propre calendrier. ORISO ne connaît que l’horaire.",
+			"colleagueHint": "Pour vos collègues, vous ne voyez que l’horaire et le type."
+		},
+		"moved": "Déplacé au {{date}}. La personne en quête de conseils est prévenue.",
+		"blockerMoved": "Plage bloquée déplacée au {{date}}.",
+		"cancelled": "Rendez-vous annulé. La personne en quête de conseils est prévenue.",
+		"created": "Rendez-vous créé : {{date}}",
+		"undo": "Revenir en arrière",
+		"syncDialog": {
+			"title": "Synchronisation du calendrier",
+			"description": "Vos rendez-vous ORISO dans Outlook, Google Agenda ou Calendrier d’Apple – et, en retour, vos créneaux occupés.",
+			"feedTitle": "S’abonner dans votre calendrier",
+			"feedText": "Ajoutez ce lien à votre calendrier en tant qu’abonnement. Il n’affiche que « ORISO-Termin » et l’heure, aucun nom.",
+			"copy": "Copier le lien",
+			"copied": "Lien copié",
+			"lastFetched": "Dernière récupération : {{date}}",
+			"neverFetched": "Pas encore récupéré",
+			"reset": "Réinitialiser le lien",
+			"resetTitle": "Réinitialiser le lien ?",
+			"resetText": "L’ancien lien cesse immédiatement de fonctionner. Abonnez-vous ensuite au nouveau lien dans votre calendrier.",
+			"resetAction": "Réinitialiser",
+			"preview": "Voici comment un rendez-vous apparaît dans votre calendrier",
+			"refreshHint": "Outlook et Google ne mettent à jour les abonnements que toutes les quelques heures. ORISO fait foi.",
+			"importTitle": "Reprendre les créneaux occupés",
+			"importText": "Collez l’adresse ICS privée de votre calendrier Outlook ou Google. ORISO ne reprend que les moments où vous êtes occupé·e – ni titres, ni participant·es.",
+			"importField": "Adresse ICS",
+			"importSave": "Reprendre",
+			"importRemove": "Supprimer",
+			"importStatus": "{{count}} créneaux occupés, dernière synchronisation {{date}}",
+			"importError": "L’adresse n’a pas pu être lue. Veuillez vérifier le lien."
+		},
+		"filterLabel": "Afficher",
+		"facets": {
+			"video": "Vidéo",
+			"phone": "Téléphone",
+			"onsite": "Sur place",
+			"chat": "Chat",
+			"group": "Rendez-vous de groupe",
+			"blocker": "Plages bloquées"
+		},
+		"slotMenu": {
+			"label": "Ajouter"
+		},
+		"blocker": {
+			"menuItem": "Plage bloquée",
+			"title": "Bloquer une plage horaire",
+			"description": "Aucun rendez-vous n’est attribué pendant cette période. Vos collègues ne voient que « Plage bloquée ».",
+			"allDay": "Toute la journée",
+			"repeat": "Répéter le",
+			"until": "Jusqu’au (inclus)",
+			"save": "Bloquer",
+			"count": "{{count}} plages bloquées seront ajoutées.",
+			"count_one": "{{count}} plage bloquée sera ajoutée.",
+			"conflicts": "En conflit avec {{count}} rendez-vous.",
+			"conflicts_one": "En conflit avec {{count}} rendez-vous.",
+			"created": "{{count}} plages bloquées ajoutées",
+			"created_one": "Plage bloquée ajoutée : {{date}}"
+		}
 	}
 }
