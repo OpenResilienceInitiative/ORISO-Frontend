@@ -3,6 +3,10 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ReactComponent as ArrowLeftIcon } from '../../resources/img/icons/arrow-left.svg';
 import { ReactComponent as ArrowRightIcon } from '../../resources/img/icons/arrow-right.svg';
+import {
+	ScrollDirection,
+	scrollOneStep
+} from '../hoverScrollArrows/HoverScrollArrows';
 
 /**
  * Horizontally scrolling row of format cards with a round "previous" and
@@ -12,6 +16,11 @@ import { ReactComponent as ArrowRightIcon } from '../../resources/img/icons/arro
  * `conversationCreate.styles.scss`), so a narrow column scrolls instead of
  * squeezing the cards until their buttons truncate. The buttons only appear
  * while there is something to scroll, and are disabled at either end.
+ *
+ * Unlike `HoverScrollArrows` (desktop-only overlay that appears on hover),
+ * these are the always-visible pill buttons Figma draws under the row, so
+ * they work on touch screens too. Both share `scrollOneStep`, which moves
+ * the row to the next snap position.
  */
 
 /** Sub-pixel scroll positions must not leave a button enabled at the end. */
@@ -73,21 +82,11 @@ export const FormatCardCarousel = ({
 		return () => observer.disconnect();
 	}, [measure, children]);
 
-	const scrollByCard = (direction: -1 | 1) => {
+	const scrollByCard = (direction: ScrollDirection) => {
 		const scroller = scrollerRef.current;
-		if (!scroller) {
-			return;
+		if (scroller) {
+			scrollOneStep(scroller, direction);
 		}
-		const firstCard = scroller.firstElementChild as HTMLElement | null;
-		const gap = parseFloat(getComputedStyle(scroller).columnGap) || 0;
-		const step = (firstCard?.offsetWidth ?? scroller.clientWidth) + gap;
-		const reduceMotion =
-			typeof window.matchMedia === 'function' &&
-			window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-		scroller.scrollBy({
-			left: direction * step,
-			behavior: reduceMotion ? 'auto' : 'smooth'
-		});
 	};
 
 	return (

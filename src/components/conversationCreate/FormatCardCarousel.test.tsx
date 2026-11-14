@@ -10,9 +10,13 @@ vi.mock('react-i18next', () => ({
 
 afterEach(cleanup);
 
+/** Card width plus the 32px gap, as in the stylesheet. */
+const CARD_STEP = 392;
+
 /**
- * jsdom does no layout: scroll geometry is given to the row by hand, and the
- * browser's own `scrollBy` is replaced by one that moves `scrollLeft`.
+ * jsdom does no layout: scroll geometry is given to the row by hand, each
+ * card reports where it sits for the current `scrollLeft`, and the browser's
+ * own `scrollTo` is replaced by one that moves `scrollLeft`.
  */
 const stubGeometry = (
 	scroller: HTMLElement,
@@ -31,15 +35,27 @@ const stubGeometry = (
 		value: clientWidth
 	});
 	scroller.scrollLeft = scrollLeft;
-	const scrollBy = vi.fn(({ left }: { left: number }) => {
-		scroller.scrollLeft += left;
+	scroller.getBoundingClientRect = () =>
+		({ left: 0, right: clientWidth, width: clientWidth }) as DOMRect;
+	(Array.from(scroller.children) as HTMLElement[]).forEach((card, index) => {
+		Object.defineProperty(card, 'offsetWidth', {
+			configurable: true,
+			value: 360
+		});
+		card.getBoundingClientRect = () => {
+			const left = index * CARD_STEP - scroller.scrollLeft;
+			return { left, right: left + 360, width: 360 } as DOMRect;
+		};
+	});
+	const scrollTo = vi.fn(({ left }: { left: number }) => {
+		scroller.scrollLeft = left;
 		fireEvent.scroll(scroller);
 	});
-	Object.defineProperty(scroller, 'scrollBy', {
+	Object.defineProperty(scroller, 'scrollTo', {
 		configurable: true,
-		value: scrollBy
+		value: scrollTo
 	});
-	return scrollBy;
+	return scrollTo;
 };
 
 const renderRow = () =>
@@ -89,13 +105,7 @@ describe('FormatCardCarousel', () => {
 	it('moves one card per click and disables the arrow at either end', () => {
 		const { container } = renderRow();
 		const scroller = getScroller(container);
-		// Cards are 360px wide with a 32px gap in the stylesheet; jsdom has no
-		// layout, so the first card reports its own width.
-		Object.defineProperty(scroller.firstElementChild!, 'offsetWidth', {
-			configurable: true,
-			value: 360
-		});
-		const scrollBy = stubGeometry(scroller, {
+		const scrollTo = stubGeometry(scroller, {
 			scrollWidth: 1000,
 			clientWidth: 700
 		});
@@ -109,16 +119,14 @@ describe('FormatCardCarousel', () => {
 		}) as HTMLButtonElement;
 
 		fireEvent.click(next);
-		expect(scrollBy).toHaveBeenCalledWith(
-			expect.objectContaining({ left: expect.any(Number) })
-		);
-		expect(scrollBy.mock.calls[0][0].left).toBeGreaterThan(0);
-		// One 360px step exceeds the 300px of travel: the row is at its end.
+		// The next snap position (392px) lies past the 300px of travel, so
+		// the row goes to its end.
+		expect(scrollTo.mock.calls[0][0].left).toBe(300);
 		expect(next.disabled).toBe(true);
 		expect(previous.disabled).toBe(false);
 
 		fireEvent.click(previous);
-		expect(scrollBy.mock.calls[1][0].left).toBeLessThan(0);
+		expect(scrollTo.mock.calls[1][0].left).toBe(0);
 		expect(previous.disabled).toBe(true);
 		expect(next.disabled).toBe(false);
 	});
