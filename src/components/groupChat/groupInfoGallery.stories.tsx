@@ -147,7 +147,10 @@ export const InfoGalleryTabletSelection: StoryObj = {
 	render: () => (
 		<Box
 			sx={{
-				width: 'min(772px, 100%)',
+				/* Narrow enough that the fluid cards (2026-11-13: they shrink to
+				   fit three across) reach their 12rem floor and the third card
+				   is cut off, so the dots have something to scroll. */
+				width: 'min(500px, 100%)',
 				height: '100vh',
 				mx: 'auto',
 				display: 'flex',
@@ -168,8 +171,18 @@ export const InfoGalleryTabletSelection: StoryObj = {
 				name: `Zu Schritt ${position} von 3`
 			});
 		const end = () => track.scrollWidth - track.clientWidth;
-		const cardCentre = (card: HTMLElement) =>
-			card.offsetLeft + card.offsetWidth / 2;
+		/* In the track's scroll coordinates, from bounding boxes: the track
+		   and its cards are not positioned, so `offsetLeft` would count from
+		   another origin (#2139). */
+		const cardCentre = (card: HTMLElement) => {
+			const box = card.getBoundingClientRect();
+			return (
+				box.left -
+				track.getBoundingClientRect().left +
+				track.scrollLeft +
+				box.width / 2
+			);
+		};
 		const [firstCard, secondCard, thirdCard] =
 			canvas.getAllByRole('listitem');
 		const width = track.clientWidth;
@@ -315,10 +328,12 @@ export const InfoGalleryLaptop: StoryObj = {
 	}
 };
 
-/* Hover arrows (2026-11-11): hover the right edge of the cards on desktop. */
+/* Hover arrows (2026-11-11): hover the right edge of the cards with a mouse.
+   In a narrow window: from `sm` up the fluid cards fit side by side
+   (2026-11-13), so there is nothing to scroll and no arrow. */
 export const InfoGalleryDesktopHoverArrows: StoryObj = {
-	name: '1b — Info-Galerie: Pfeile beim Darüberfahren (Desktop, Maus)',
-	globals: desktop1440Globals,
+	name: '1b — Info-Galerie: Pfeile beim Darüberfahren (schmales Fenster, Maus)',
+	globals: phone375Globals,
 	render: () => <Screen />,
 	play: async ({ canvasElement }) => {
 		await expectWaitingRoomLayout(canvasElement, {
