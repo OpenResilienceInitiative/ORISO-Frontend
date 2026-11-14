@@ -59,7 +59,6 @@ vi.mock('../../utils/tenantSettingsHelper', () => ({
 	})
 }));
 vi.mock('../budibase/budibaseLogout', () => ({ budibaseLogout: vi.fn() }));
-vi.mock('../logout/calcomLogout', () => ({ calcomLogout: vi.fn() }));
 vi.mock('../../services/matrixKeyBackupService', () => ({
 	clearSecretStorageKeys: vi.fn()
 }));
