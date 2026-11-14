@@ -2383,7 +2383,11 @@ export const MessageSubmitInterfaceComponent = ({
 		};
 
 		if (isSessionArchived) {
+			// Hold further presses while the chat re-opens; the send itself
+			// then takes the flag over (prepareAndSendMessage).
+			setIsRequestInProgress(true);
 			apiPutDearchive(activeSession.item.id)
+				.finally(() => setIsRequestInProgress(false))
 				.then(() => {
 					sendQuotesAlone();
 					return prepareAndSendMessage();

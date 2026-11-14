@@ -75,6 +75,12 @@ describe('useMessageSelection', () => {
 		});
 	});
 
+	it('remembers where in the message the passage starts', async () => {
+		render(<Timeline />);
+		await selectTextOf('body');
+		expect(latest?.passage.start).toBe(0);
+	});
+
 	it('drops the passage when the marking grows into another message', async () => {
 		render(<Timeline />);
 		await selectTextOf('body');

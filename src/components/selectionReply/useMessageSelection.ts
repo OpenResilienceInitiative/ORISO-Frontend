@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, type RefObject } from 'react';
 
 import { normalizePassage } from './passageRange';
+import { passageBlurFromRange } from './passageBlur';
 
 /** A passage someone marked in one message of the timeline. */
 export interface MarkedPassage {
@@ -9,6 +10,11 @@ export interface MarkedPassage {
 	author: string;
 	/** The marked text, whitespace collapsed. */
 	text: string;
+	/**
+	 * Where the passage starts in the message's collapsed text, so a text
+	 * that repeats is found again where it was marked.
+	 */
+	start?: number | null;
 }
 
 /** Where the passage sits, in px relative to the selection layer. */
@@ -129,7 +135,12 @@ export const useMessageSelection = (
 			return null;
 		}
 		return {
-			passage: { eventId, author: authorFor(eventId), text },
+			passage: {
+				eventId,
+				author: authorFor(eventId),
+				text,
+				start: passageBlurFromRange(bubble, range)?.start ?? null
+			},
 			anchor: anchorFor(range.getBoundingClientRect(), layer),
 			range: range.cloneRange()
 		};

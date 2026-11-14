@@ -95,19 +95,35 @@ export const collectText = (root: Element): { text: string; map: Mapped[] } => {
 	return { text, map };
 };
 
-/** The DOM range of `passage` inside `root`, or null when it is not there. */
+/**
+ * The DOM range of `passage` inside `root`, or null when it is not there.
+ * When the text repeats, `near` (where the marked passage started, in the
+ * collapsed text) picks the occurrence that was marked.
+ */
 export const findPassageRange = (
 	root: Element,
-	passage: string
+	passage: string,
+	near?: number | null
 ): Range | null => {
 	const wanted = normalizePassage(passage);
 	if (!wanted) {
 		return null;
 	}
 	const { text, map } = collectText(root);
-	const start = text.indexOf(wanted);
+	let start = text.indexOf(wanted);
 	if (start < 0) {
 		return null;
+	}
+	if (typeof near === 'number') {
+		for (
+			let next = text.indexOf(wanted, start + 1);
+			next >= 0;
+			next = text.indexOf(wanted, next + 1)
+		) {
+			if (Math.abs(next - near) < Math.abs(start - near)) {
+				start = next;
+			}
+		}
 	}
 	const first = map[start];
 	const last = map[start + wanted.length - 1];
@@ -168,7 +184,7 @@ export const paintPassage = (name: string, range: Range | null) => {
  */
 export const livePassageRange = (
 	scope: ParentNode,
-	passage: { eventId: string; text: string },
+	passage: { eventId: string; text: string; start?: number | null },
 	range: Range | null
 ): Range | null => {
 	if (
@@ -180,7 +196,23 @@ export const livePassageRange = (
 		return range;
 	}
 	const bubble = findMessageBubble(scope, passage.eventId);
-	return bubble ? findPassageRange(bubble, passage.text) : null;
+	return bubble
+		? findPassageRange(bubble, passage.text, passage.start)
+		: null;
+};
+
+/** The nearest ancestor that scrolls vertically, or null for the page. */
+const scrollParentOf = (element: Element): HTMLElement | null => {
+	for (let node = element.parentElement; node; node = node.parentElement) {
+		const { overflowY } = window.getComputedStyle(node);
+		if (
+			/(auto|scroll|overlay)/.test(overflowY) &&
+			node.scrollHeight > node.clientHeight
+		) {
+			return node;
+		}
+	}
+	return null;
 };
 
 /**
@@ -233,7 +265,9 @@ export const JUMP_HOLD_MS = 2400;
 export const jumpToPassage = (
 	scope: ParentNode,
 	eventId: string,
-	passage: string
+	passage: string,
+	/** Where the passage started in its message, to tell repeats apart. */
+	near?: number | null
 ): (() => void) => {
 	const bubble = findMessageBubble(scope, eventId);
 	if (!bubble) {
@@ -243,15 +277,25 @@ export const jumpToPassage = (
 		typeof window.matchMedia === 'function' &&
 		window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 	const behavior: ScrollBehavior = reduceMotion ? 'auto' : 'smooth';
-	// Center the passage itself: in a long message the bubble's middle can
-	// be far from it.
-	const scrollTo = (target: Range | null) => {
-		const node = target?.startContainer;
-		const element =
-			node instanceof Element ? node : (node?.parentElement ?? bubble);
-		element.scrollIntoView({ behavior, block: 'center' });
+	// Center the passage itself, by its own geometry: in a long message,
+	// even within one long paragraph, the bubble's middle can be far off.
+	const scrollTo = (target: Range) => {
+		const rect = target.getBoundingClientRect?.();
+		if (!rect) {
+			bubble.scrollIntoView({ behavior, block: 'center' });
+			return;
+		}
+		const scroller = scrollParentOf(bubble);
+		const view = scroller
+			? scroller.getBoundingClientRect()
+			: { top: 0, height: window.innerHeight };
+		const delta = rect.top + rect.height / 2 - (view.top + view.height / 2);
+		(scroller ?? window).scrollBy({ top: delta, behavior });
 	};
-	bubble.scrollIntoView({ behavior, block: 'center' });
+	const range = findPassageRange(bubble, passage, near);
+	if (!range) {
+		bubble.scrollIntoView({ behavior, block: 'center' });
+	}
 	// Focus lands on the bubble itself, not its full-width row: the ring
 	// follows the bubble's shape (selectionReply.styles.scss).
 	if (!bubble.hasAttribute('tabindex')) {
@@ -267,14 +311,13 @@ export const jumpToPassage = (
 	// part, open the message and paint once React has rendered the full text.
 	let clearPaint: () => void = () => {};
 	let frame = 0;
-	const range = findPassageRange(bubble, passage);
 	const expand = bubble.querySelector<HTMLButtonElement>(
 		'.messageItem__expandBtn[aria-expanded="false"]'
 	);
 	if (!range && expand) {
 		expand.click();
 		frame = window.requestAnimationFrame(() => {
-			const opened = findPassageRange(bubble, passage);
+			const opened = findPassageRange(bubble, passage, near);
 			if (opened) {
 				scrollTo(opened);
 			}

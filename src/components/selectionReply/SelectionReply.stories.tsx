@@ -173,6 +173,7 @@ const replyOf = (answer: SelectionAnswer): PassageReply => ({
 	eventId: answer.passage.eventId,
 	author: answer.passage.author,
 	excerpt: answer.passage.text,
+	start: answer.passage.start,
 	text: answer.text || undefined,
 	voice: answer.voice
 });
@@ -397,6 +398,7 @@ function SelectionReplyStage({
 				eventId: answer.passage.eventId,
 				author: answer.passage.author,
 				excerpt: answer.passage.text,
+				excerptStart: answer.passage.start,
 				replyText: answer.text || undefined,
 				voiceDurationSec: answer.voice?.durationSec ?? null
 			}
@@ -407,6 +409,7 @@ function SelectionReplyStage({
 		eventId: quote.eventId,
 		author: quote.author,
 		excerpt: quote.excerpt,
+		start: quote.excerptStart,
 		text: quote.replyText,
 		voice: voiceTakes[quote.id] || null
 	});
@@ -434,7 +437,12 @@ function SelectionReplyStage({
 
 	const jumpBack = (reply: PassageReply) => {
 		if (contentRef.current) {
-			jumpToPassage(contentRef.current, reply.eventId, reply.excerpt);
+			jumpToPassage(
+				contentRef.current,
+				reply.eventId,
+				reply.excerpt,
+				reply.start
+			);
 		}
 	};
 

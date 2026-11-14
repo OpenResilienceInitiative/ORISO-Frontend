@@ -16,6 +16,8 @@ export interface ComposerPendingQuote {
 	author: string;
 	/** The passage the sender marked, plain text. */
 	excerpt: string;
+	/** Where the passage started in its message (repeated text). */
+	excerptStart?: number | null;
 	/** Text answer written in the selection popover, if any. */
 	replyText?: string;
 	/** Length of the voice answer recorded in the popover, if any. */

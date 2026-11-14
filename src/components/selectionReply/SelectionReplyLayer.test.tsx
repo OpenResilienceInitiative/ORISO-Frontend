@@ -57,7 +57,11 @@ const renderLayer = (recorder: {
 			initialSelection={selection()}
 			initialMode="toolbar"
 		>
-			<p>Ich wohne in Freiburg.</p>
+			<div data-message-id="$1">
+				<div className="messageItem__message">
+					<p data-testid="body">Ich wohne in Freiburg.</p>
+				</div>
+			</div>
 		</SelectionReplyLayer>
 	);
 
@@ -99,6 +103,49 @@ describe('SelectionReplyLayer voice recording', () => {
 		await act(async () => start.resolve());
 		expect(recorder.start).toHaveBeenCalledTimes(1);
 		expect(recorder.cancel).not.toHaveBeenCalled();
+	});
+
+	it('a start from a closed reply does not cancel the next take', async () => {
+		const first = deferred<void>();
+		const events: string[] = [];
+		const recorder = {
+			start: vi.fn(() => {
+				events.push('start');
+				return recorder.start.mock.calls.length === 1
+					? first.promise
+					: Promise.resolve();
+			}),
+			stop: vi.fn(),
+			cancel: vi.fn(() => events.push('cancel'))
+		};
+		renderLayer(recorder);
+		startVoiceFromToolbar();
+		fireEvent.click(screen.getByLabelText('message.selectionReply.cancel'));
+		// Mark the passage again and start a new take.
+		const text = screen.getByTestId('body').firstChild!;
+		const range = document.createRange();
+		range.setStart(text, 0);
+		range.setEnd(text, 9);
+		window.getSelection()!.removeAllRanges();
+		window.getSelection()!.addRange(range);
+		vi.useFakeTimers();
+		await act(async () => {
+			screen
+				.getByTestId('body')
+				.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+			vi.runAllTimers();
+		});
+		vi.useRealTimers();
+		startVoiceFromToolbar();
+		await act(async () => first.resolve());
+		await act(async () => {
+			await new Promise((done) => setTimeout(done, 0));
+		});
+		expect(events.lastIndexOf('cancel')).toBeLessThan(
+			events.lastIndexOf('start')
+		);
+		expect(recorder.start).toHaveBeenCalledTimes(2);
+		expect(screen.getByLabelText('app.stop')).toBeTruthy();
 	});
 
 	it('a microphone that fails to start shows an error, the field stays usable', async () => {

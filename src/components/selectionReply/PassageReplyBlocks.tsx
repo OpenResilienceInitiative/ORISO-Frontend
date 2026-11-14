@@ -14,6 +14,8 @@ export interface PassageReply {
 	author: string;
 	/** The marked text, as it stood in that message. */
 	excerpt: string;
+	/** Where the excerpt started in that message (repeated text). */
+	start?: number | null;
 	text?: string;
 	voice?: { src: string; durationSec: number } | null;
 }

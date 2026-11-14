@@ -383,6 +383,25 @@ describe('sending queued passage quotes (PR #2232 review)', () => {
 		expect(onSendPendingQuotes).toHaveBeenCalledTimes(1);
 	});
 
+	it('sends the quotes once when a file goes out and send is pressed twice while re-opening', async () => {
+		const finish = pendingDearchive();
+		const onSendPendingQuotes = vi.fn();
+		const { container } = render(
+			<Composer
+				activeSession={archived}
+				pendingQuotes={QUOTES}
+				onSendPendingQuotes={onSendPendingQuotes}
+			/>
+		);
+		await pickFile(container, makeFile());
+		await clickSend();
+		await clickSend();
+		await finish();
+		expect(vi.mocked(apiPutDearchive)).toHaveBeenCalledTimes(1);
+		expect(onSendPendingQuotes).toHaveBeenCalledTimes(1);
+		expect(onSendPendingQuotes).toHaveBeenCalledWith('');
+	});
+
 	it('keeps text typed while the chat re-opens', async () => {
 		const finish = pendingDearchive();
 		const onSendPendingQuotes = vi.fn();

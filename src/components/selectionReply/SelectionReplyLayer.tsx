@@ -143,6 +143,10 @@ export const SelectionReplyLayer = ({
 	// after a newer one (or after the reply closed) is ignored.
 	const voiceOpRef = useRef(0);
 	const startPendingRef = useRef(false);
+	// The last start's whole run, clean-up included. A start from a reply
+	// that was closed meanwhile still cancels the recorder when it settles,
+	// so the next take waits for that instead of being cancelled by it.
+	const startSettlingRef = useRef<Promise<void> | null>(null);
 	const voiceModeRef = useRef(voice.mode);
 	voiceModeRef.current = voice.mode;
 	const [popoverHeight, setPopoverHeight] = useState(160);
@@ -321,19 +325,39 @@ export const SelectionReplyLayer = ({
 		const op = voiceOpRef.current;
 		setVoiceError(false);
 		startPendingRef.current = true;
-		try {
-			await recorder.start();
-		} catch {
-			if (op === voiceOpRef.current) {
-				startPendingRef.current = false;
-				setVoice({ mode: 'idle' });
-				setVoiceError(true);
+		const previous = startSettlingRef.current;
+		const run = (async () => {
+			if (previous) {
+				await previous;
+				if (op !== voiceOpRef.current) {
+					// Closed again while the earlier start settled.
+					return false;
+				}
 			}
-			return;
-		}
-		if (op !== voiceOpRef.current) {
-			// Closed or discarded while the microphone was starting.
-			recorder.cancel();
+			try {
+				await recorder.start();
+			} catch {
+				if (op === voiceOpRef.current) {
+					startPendingRef.current = false;
+					setVoice({ mode: 'idle' });
+					setVoiceError(true);
+				}
+				return false;
+			}
+			if (op !== voiceOpRef.current) {
+				// Closed or discarded while the microphone was starting.
+				recorder.cancel();
+				return false;
+			}
+			return true;
+		})();
+		const settling = run.then(() => {
+			if (startSettlingRef.current === settling) {
+				startSettlingRef.current = null;
+			}
+		});
+		startSettlingRef.current = settling;
+		if (!(await run)) {
 			return;
 		}
 		startPendingRef.current = false;
