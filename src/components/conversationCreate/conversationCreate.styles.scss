@@ -1360,11 +1360,12 @@ $cc-card-min-height: 480px;
 }
 
 /* Phone: less text above the cards, so the first card starts higher. The
-   explanatory paragraph is dropped (the card headers say the same) and the
-   panel title is set smaller so "Neue Unterhaltung erstellen" fits one line. */
+   explanatory paragraph is dropped (the card and row headers say the same)
+   and the panel title is set smaller so "Neue Unterhaltung erstellen" fits
+   one line. Any picker: below 900px the app renders the compact rows, not
+   the carousel, so a rule tied to the carousel would never match here. */
 @media (width <= 480px) {
-	.conversationCreate__picker:has(.formatCardCarousel)
-		.conversationCreate__subtitle {
+	.conversationCreate__picker .conversationCreate__subtitle {
 		display: none;
 	}
 

@@ -47,6 +47,15 @@ const POP = '320ms cubic-bezier(0.34, 1.24, 0.44, 1)';
 const clamp = (value: number, max: number) => Math.min(max, Math.max(0, value));
 
 /**
+ * A computed `scroll-padding` value in px. A percentage stays a percentage in
+ * the computed style and resolves against the scrollport's width.
+ */
+const scrollPaddingPx = (value: string, track: HTMLElement) =>
+	value.trim().endsWith('%')
+		? ((parseFloat(value) || 0) / 100) * track.clientWidth
+		: parseFloat(value) || 0;
+
+/**
  * The scrollLeft at which each child of `track` snaps in, honouring the
  * child's own `scroll-snap-align` (start, center or end), the track's
  * `scroll-padding` (the snap edge sits that far inside the track), and
@@ -56,8 +65,8 @@ export const snapTargets = (track: HTMLElement) => {
 	const max = Math.max(0, track.scrollWidth - track.clientWidth);
 	const origin = track.getBoundingClientRect().left - track.scrollLeft;
 	const trackStyle = window.getComputedStyle(track);
-	const padStart = parseFloat(trackStyle.scrollPaddingLeft) || 0;
-	const padEnd = parseFloat(trackStyle.scrollPaddingRight) || 0;
+	const padStart = scrollPaddingPx(trackStyle.scrollPaddingLeft, track);
+	const padEnd = scrollPaddingPx(trackStyle.scrollPaddingRight, track);
 	const snapport = track.clientWidth - padStart - padEnd;
 	return (Array.from(track.children) as HTMLElement[]).map((child) => {
 		const bounds = child.getBoundingClientRect();

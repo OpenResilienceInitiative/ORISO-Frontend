@@ -40,4 +40,21 @@ describe('snapTargets', () => {
 			0, 392, 452
 		]);
 	});
+
+	it('resolves percentage scroll-padding against the track width', () => {
+		// 10% of the 700px scrollport is 70px. The first card clamps to 0 and
+		// the last one to the scroll maximum (1152 - 700).
+		expect(snapTargets(makeTrack({ scrollPaddingLeft: '10%' }))).toEqual([
+			0, 326, 452
+		]);
+	});
+
+	it('resolves percentage end padding for end-aligned cards', () => {
+		const track = makeTrack({ scrollPaddingRight: '10%' });
+		Array.from(track.children).forEach((card) => {
+			(card as HTMLElement).style.scrollSnapAlign = 'end';
+		});
+		// left + width + 70 - 700: 4 + 360 + 70 - 700 < 0, 396 + 430 - 700.
+		expect(snapTargets(track)).toEqual([0, 126, 452]);
+	});
 });

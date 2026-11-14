@@ -650,11 +650,24 @@ export const FormatPickerDesktopTopicMenu: Story = {
 };
 
 export const FormatPickerMobile: Story = {
+	globals: { viewport: { value: 'phone390' } },
 	render: () => (
 		<MobileShell>
 			<FormatPicker compact />
 		</MobileShell>
-	)
+	),
+	play: async ({ canvasElement }) => {
+		// Phone: the rows render (as in the app below 900px) and the intro
+		// paragraph above them is dropped; the rows' own subtitles say it.
+		const subtitle = await waitFor(() => {
+			const found = canvasElement.querySelector<HTMLElement>(
+				'.conversationCreate__picker--compact .conversationCreate__subtitle'
+			);
+			expect(found).toBeTruthy();
+			return found!;
+		});
+		await expect(getComputedStyle(subtitle).display).toBe('none');
+	}
 };
 
 /**
