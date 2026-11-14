@@ -249,6 +249,40 @@ describe('SelectionReplyLayer focus on leaving the answer', () => {
 		).toBeNull();
 	});
 
+	it('focus stays in the dialog after Stop and after Discard', async () => {
+		const stop = deferred<{ src: string; durationSec: number }>();
+		const recorder = {
+			start: vi.fn(async () => {}),
+			stop: vi.fn(() => stop.promise),
+			cancel: vi.fn()
+		};
+		renderLayer(recorder);
+		startVoiceFromToolbar();
+		await act(async () => {});
+		const stopButton = screen.getByLabelText('app.stop');
+		stopButton.focus();
+		fireEvent.click(stopButton);
+		await act(async () =>
+			stop.resolve({ src: 'blob:take', durationSec: 3 })
+		);
+		// Like the composer: the take under review takes focus.
+		expect(document.activeElement).toBe(
+			document.querySelector('.voiceNoteRow[role="group"]')
+		);
+		const discard = document.querySelector<HTMLButtonElement>(
+			'.voiceNoteRow__discard'
+		)!;
+		discard.focus();
+		fireEvent.click(discard);
+		expect(document.activeElement).toBe(
+			screen.getByLabelText('message.selectionReply.replyVoice')
+		);
+		fireEvent.keyDown(document.activeElement!, { key: 'Escape' });
+		expect(
+			document.querySelector('[data-cy="selection-reply-popover"]')
+		).toBeNull();
+	});
+
 	it('collecting an answer hands focus to the composer', () => {
 		const focusComposer = vi.fn();
 		renderLayer(idleRecorder(), { focusComposer });

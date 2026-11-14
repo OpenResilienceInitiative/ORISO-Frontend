@@ -97,19 +97,40 @@ export const SelectionReplyPopover = forwardRef<
 			}
 		}, [autoFocus]);
 
-		// Once recording runs, Stop is the control that matters.
+		// Each voice step unmounts the control that had focus (the mic,
+		// Stop, Discard). Hand focus to what replaces it, as the composer
+		// does: Stop while recording, the take under review, the mic again
+		// after a discard. Never steal focus from outside the dialog.
+		const lastVoiceModeRef = useRef<SelectionReplyVoice['mode'] | null>(
+			null
+		);
 		useEffect(() => {
+			const previous = lastVoiceModeRef.current;
+			lastVoiceModeRef.current = voice.mode;
 			const root = rootRef.current;
-			if (voice.mode !== 'recording' || !root) {
+			if (!root || previous === voice.mode) {
+				return;
+			}
+			// On first render only a running take needs it (autoFocus
+			// covers the rest).
+			if (previous === null && voice.mode !== 'recording') {
 				return;
 			}
 			const active = document.activeElement;
 			if (active && active !== document.body && !root.contains(active)) {
 				return;
 			}
-			root.querySelector<HTMLButtonElement>(
-				'.voicePlayer__toggle'
-			)?.focus({ preventScroll: true });
+			const target =
+				voice.mode === 'recording'
+					? root.querySelector<HTMLElement>('.voicePlayer__toggle')
+					: voice.mode === 'review'
+						? root.querySelector<HTMLElement>(
+								'.voiceNoteRow[role="group"]'
+							)
+						: root.querySelector<HTMLElement>(
+								'.selectionReply__iconButton'
+							);
+			(target ?? root).focus({ preventScroll: true });
 		}, [voice.mode]);
 
 		const handleKeyDown = (event: React.KeyboardEvent) => {
