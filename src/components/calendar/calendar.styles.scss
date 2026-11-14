@@ -121,10 +121,12 @@
 // Colleagues in the time grid: one grey band per stretch, "k von n
 // belegt"; darker when every shown colleague is busy. Own entries stay on
 // top, and dragging across a band still selects free time for oneself.
+// The grey is the neutral outline role, see-through so the off hours
+// still show; an on-* role may not be a background (m3Sweep).
 .calendarView__band {
 	background: color-mix(
 		in srgb,
-		var(--m3-on-surface, #1b1b1c) 8%,
+		var(--m3-outline, #747878) 13%,
 		transparent
 	) !important;
 	opacity: 1 !important;
@@ -132,7 +134,7 @@
 	&--all {
 		background: color-mix(
 			in srgb,
-			var(--m3-on-surface, #1b1b1c) 16%,
+			var(--m3-outline, #747878) 26%,
 			transparent
 		) !important;
 	}
@@ -912,11 +914,7 @@
 	cursor: pointer;
 
 	&:hover {
-		background: color-mix(
-			in srgb,
-			var(--m3-on-surface, #1a1c1e) 8%,
-			transparent
-		);
+		background: var(--oriso-menu-hover-surface, rgba(27, 27, 28, 0.08));
 	}
 
 	&:focus-visible {
