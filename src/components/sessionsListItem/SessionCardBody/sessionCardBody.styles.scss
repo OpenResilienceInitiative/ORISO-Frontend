@@ -46,12 +46,14 @@
 		-webkit-box-orient: vertical;
 		-webkit-line-clamp: var(--card-preview-lines);
 		box-sizing: border-box;
-		height: var(--card-clip);
-		padding-top: var(--card-name-line);
 
-		// The clip box reaches 2px further left (margin out, padding in, text
-		// stays put) so the 2px ring of the first stacked avatar is not cut off.
+		// The clip box reaches 2px further left and up (margin out, padding in,
+		// text stays put) so the 2px ring of the first stacked avatar is not cut
+		// off. The extra 2px of height keeps the bottom edge where it was.
+		height: calc(var(--card-clip) + 2px);
+		margin-top: -2px;
 		margin-left: -2px;
+		padding-top: calc(var(--card-name-line) + 2px);
 		padding-left: 2px;
 		overflow: hidden;
 	}

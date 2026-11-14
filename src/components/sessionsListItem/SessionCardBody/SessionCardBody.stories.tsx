@@ -112,6 +112,16 @@ const expectPreviewsFollowGeometry = async (
 		const avatar = card
 			.querySelector<HTMLElement>('.sessionCard__avatar')!
 			.getBoundingClientRect();
+		// The clip box leaves room for a 2px avatar ring above and to the left.
+		const clip = card
+			.querySelector<HTMLElement>('.sessionCard__flow')!
+			.getBoundingClientRect();
+		await expect(Math.round(avatar.top - clip.top)).toBeGreaterThanOrEqual(
+			2
+		);
+		await expect(
+			Math.round(avatar.left - clip.left)
+		).toBeGreaterThanOrEqual(2);
 		const lefts = previewLines(card);
 		await expect(lefts.length).toBeGreaterThan(0);
 		await expect(lefts.length).toBeLessThanOrEqual(geometry.previewLines);

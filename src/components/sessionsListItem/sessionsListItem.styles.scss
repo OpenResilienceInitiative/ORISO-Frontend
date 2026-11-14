@@ -288,6 +288,7 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		&:not(.sessionsListItem--active, .sessionsListItem--menuOpen)
 			.sessionsListItem__content:hover {
 			background-color: var(--m3-surface, #fcf9f9);
+
 			--participant-ring: var(--m3-surface, #fcf9f9);
 
 			.sessionsListItem__topic {
@@ -1183,8 +1184,9 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 			height: 56px;
 		}
 
+		// 48px + the 2px the clip box reaches up for the avatar ring.
 		&--kindInRow .sessionCard__flow {
-			height: 48px;
+			height: 50px;
 		}
 
 		&--kindInRow .sessionCard__trailing {
