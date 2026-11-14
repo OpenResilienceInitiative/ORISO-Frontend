@@ -76,6 +76,14 @@ describe('apiGetAskerSessionList', () => {
 		).rejects.toThrow('503');
 	});
 
+	it('reads "no content" in strict mode as an asker without sessions, not a failure', async () => {
+		vi.mocked(fetchData).mockRejectedValueOnce(new Error('EMPTY'));
+
+		expect(await apiGetAskerSessionList({ strict: true })).toEqual({
+			sessions: []
+		});
+	});
+
 	it('still resolves a failure to an empty list by default', async () => {
 		vi.mocked(fetchData).mockRejectedValueOnce(new Error('503'));
 

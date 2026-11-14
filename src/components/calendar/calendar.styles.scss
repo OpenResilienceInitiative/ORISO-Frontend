@@ -301,6 +301,11 @@
 	min-width: 0;
 }
 
+// Only there to make the grid inert under the error; no box of its own.
+.calendarPage__covered {
+	display: contents;
+}
+
 .calendarPage__section {
 	display: flex;
 	flex-direction: column;

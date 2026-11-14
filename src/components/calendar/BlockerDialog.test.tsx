@@ -19,7 +19,11 @@ import {
 import dayjs, { type Dayjs } from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import { BlockerDialog } from './BlockerDialog';
-import { MAX_BLOCKER_OCCURRENCES, type AppointmentDraft } from './calendarModel';
+import {
+	MAX_BLOCKER_OCCURRENCES,
+	type AppointmentDraft,
+	type CalendarEntry
+} from './calendarModel';
 
 dayjs.extend(customParseFormat);
 
@@ -234,5 +238,74 @@ describe('BlockerDialog — a repeat the spring clock change skips (Europe/Berli
 		);
 		fireEvent.click(save());
 		expect(onSave).not.toHaveBeenCalled();
+	});
+
+	it('saves an occurrence that keeps a length after the gap, moved forward by it', () => {
+		const onSave = vi.fn();
+		// 02:30–04:00 on Sunday 28 March 2027 becomes 03:30–04:00.
+		open(
+			{
+				start: new Date(2027, 2, 21, 2, 30),
+				end: new Date(2027, 2, 21, 4, 0)
+			},
+			onSave
+		);
+		fireEvent.click(
+			within(screen.getByRole('group', { name: 'calendar.blocker.repeat' }))
+				.getAllByRole('button')[6]
+		);
+		fireEvent.change(screen.getByLabelText('calendar.blocker.until'), {
+			target: { value: '2027-03-28' }
+		});
+		expect(save().hasAttribute('disabled')).toBe(false);
+		fireEvent.click(save());
+		const [[drafts]] = onSave.mock.calls;
+		expect(
+			drafts.map((d: AppointmentDraft) => [
+				d.start.toISOString(),
+				d.end.toISOString()
+			])
+		).toEqual([
+			['2027-03-21T01:30:00.000Z', '2027-03-21T03:00:00.000Z'],
+			// 03:30 and 04:00 summer time.
+			['2027-03-28T01:30:00.000Z', '2027-03-28T02:00:00.000Z']
+		]);
+	});
+
+	it('looks for conflicts only in ranges that exist', () => {
+		// The reversed 03:30–03:00 on the 28th would "overlap" this.
+		const early: CalendarEntry = {
+			id: 'e1',
+			type: 'appointment',
+			kind: 'video',
+			title: 'mutige_eule',
+			start: new Date(2027, 2, 28, 1, 30).toISOString(),
+			end: new Date(2027, 2, 28, 4, 0).toISOString(),
+			ownerId: 'me'
+		};
+		render(
+			<BlockerDialog
+				open
+				slot={{
+					start: new Date(2027, 2, 21, 2, 30),
+					end: new Date(2027, 2, 21, 3, 0)
+				}}
+				entries={[early]}
+				ownerId="me"
+				now={NOW}
+				onSave={() => undefined}
+				onClose={() => undefined}
+			/>
+		);
+		fireEvent.click(
+			within(screen.getByRole('group', { name: 'calendar.blocker.repeat' }))
+				.getAllByRole('button')[6]
+		);
+		fireEvent.change(screen.getByLabelText('calendar.blocker.until'), {
+			target: { value: '2027-03-28' }
+		});
+		expect(screen.getByRole('status').textContent).not.toContain(
+			'calendar.blocker.conflicts'
+		);
 	});
 });
