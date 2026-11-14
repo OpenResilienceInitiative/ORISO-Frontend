@@ -535,6 +535,19 @@ describe('sending queued passage quotes (PR #2232 review)', () => {
 		expect(screen.getByText('zweite.pdf')).toBeTruthy();
 	});
 
+	it('keeps a refused file on the next chat’s card when the first chat’s file is sent', async () => {
+		const finish = pendingDearchive();
+		const view = render(<Composer activeSession={archived} />);
+		await pickFile(view.container, makeFile('erste.pdf'));
+		await clickSend();
+		switchToNextChat(view);
+		await pickFile(view.container, makeFile('gross.pdf', 10_000_001));
+		await finish();
+		await act(async () => {});
+		expect(sendMock()).toHaveBeenCalledTimes(1);
+		expect(screen.getByText('gross.pdf')).toBeTruthy();
+	});
+
 	it('keeps saving the draft while the chat re-opens', async () => {
 		const finish = pendingDearchive();
 		render(

@@ -1168,10 +1168,13 @@ export const MessageSubmitInterfaceComponent = ({
 	// meanwhile, maybe in another chat, stays.
 	const attachmentSelectedRef = useRef<File | null>(null);
 	attachmentSelectedRef.current = attachmentSelected;
+	// A refused file shows on the card too, without being selected.
+	const attachmentRejectionRef = useRef(attachmentRejection);
+	attachmentRejectionRef.current = attachmentRejection;
 	const cleanupSentAttachment = useCallback(
 		(sent: File | null) => {
 			const staged = attachmentSelectedRef.current;
-			if (staged && staged !== sent) {
+			if ((staged && staged !== sent) || attachmentRejectionRef.current) {
 				return;
 			}
 			cleanupAttachment();
