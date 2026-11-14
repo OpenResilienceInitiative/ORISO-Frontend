@@ -1369,9 +1369,18 @@ export const NotificationsCenter = () => {
 								}
 								conversationPath={
 									selectedNotification
-										? getNotificationActionPath(
+										? // #2226: a joinable call has no open
+											// path; its drafts belong to the
+											// conversation, not to Activity.
+											(getNotificationActionPath(
 												selectedNotification
-											)
+											) ??
+											toNonEmbeddedPath(
+												resolveEndedCallConversationPath(
+													selectedNotification,
+													getDefaultSessionsPath()
+												)
+											))
 										: null
 								}
 								onConversationRead={

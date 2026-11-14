@@ -340,7 +340,10 @@ export const useConversationPreview = (
 		Boolean(session?.item) &&
 		isConsultant !== undefined &&
 		caseHandover !== 'loading' &&
-		!stillLoading;
+		// A finished lookup settles even when it failed (value null);
+		// `stillLoading` stays fail-closed for the capabilities above.
+		!(supervisionLookup && !supervisors) &&
+		(!session?.isGroup || groupInfo !== null);
 
 	return {
 		roomId,

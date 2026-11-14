@@ -36,12 +36,18 @@ vi.mock('../../api/apiUserDrafts', () => ({ apiFetchUserDrafts: vi.fn() }));
 vi.mock('./ConversationPreview', () => ({
 	ConversationPreview: ({
 		roomId,
+		conversationPath,
 		onOpenConversation
 	}: {
 		roomId: string | null;
+		conversationPath?: string | null;
 		onOpenConversation?: () => void;
 	}) => (
-		<section aria-label="Conversation preview" data-room={roomId ?? ''}>
+		<section
+			aria-label="Conversation preview"
+			data-room={roomId ?? ''}
+			data-path={conversationPath ?? ''}
+		>
 			<button type="button" onClick={onOpenConversation}>
 				Open the conversation to reply
 			</button>
@@ -273,6 +279,11 @@ it('#2226: shows the conversation of a call card under a title, time and action 
 		screen.getByRole('region', { name: 'Conversation preview' }).dataset
 			.room
 	).toBe('!source:example');
+	// Drafts written in the preview belong to the conversation, not Activity.
+	expect(
+		screen.getByRole('region', { name: 'Conversation preview' }).dataset
+			.path
+	).toBe('/sessions/consultant/sessionView/session/42');
 	// The old detail view with "Next notification" is behind "Show details".
 	expect(
 		screen.queryByRole('button', { name: en.notifications.center.next })
