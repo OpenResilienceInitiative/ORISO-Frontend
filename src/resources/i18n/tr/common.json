@@ -7001,8 +7001,9 @@
 			"importField": "ICS adresi",
 			"importSave": "Aktar",
 			"importRemove": "Kaldır",
-			"importStatus": "{{count}} meşgul zaman, son eşitleme {{date}}",
-			"importError": "Adres okunamadı. Lütfen bağlantıyı kontrol edin."
+			"importStatus": "{{host}} ile bağlantılı, son eşitleme {{date}}",
+			"importError": "Adres okunamadı. Lütfen bağlantıyı kontrol edin.",
+			"importConnected": "{{host}} ile bağlantı kuruldu. İlk eşitleme yapılıyor."
 		},
 		"filterLabel": "Göster",
 		"facets": {
@@ -7030,6 +7031,8 @@
 			"conflicts_one": "{{count}} randevuyla çakışıyor.",
 			"created": "{{count}} kapalı zaman eklendi",
 			"created_one": "Kapalı zaman eklendi: {{date}}"
-		}
+		},
+		"saveFailed": "Bu işe yaramadı. Lütfen tekrar deneyin.",
+		"blockerRemoved": "Kapalı zaman kaldırıldı."
 	}
 }

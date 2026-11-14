@@ -7001,8 +7001,9 @@
 			"importField": "Adresse ICS",
 			"importSave": "Reprendre",
 			"importRemove": "Supprimer",
-			"importStatus": "{{count}} créneaux occupés, dernière synchronisation {{date}}",
-			"importError": "L’adresse n’a pas pu être lue. Veuillez vérifier le lien."
+			"importStatus": "Connecté à {{host}}, dernière synchronisation {{date}}",
+			"importError": "L’adresse n’a pas pu être lue. Veuillez vérifier le lien.",
+			"importConnected": "Connecté à {{host}}. La première synchronisation est en cours."
 		},
 		"filterLabel": "Afficher",
 		"facets": {
@@ -7030,6 +7031,8 @@
 			"conflicts_one": "En conflit avec {{count}} rendez-vous.",
 			"created": "{{count}} plages bloquées ajoutées",
 			"created_one": "Plage bloquée ajoutée : {{date}}"
-		}
+		},
+		"saveFailed": "Cela n’a pas fonctionné. Veuillez réessayer.",
+		"blockerRemoved": "Plage bloquée supprimée."
 	}
 }

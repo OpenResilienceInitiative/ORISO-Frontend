@@ -6968,8 +6968,9 @@
 			"importField": "ICS ኣድራሻ",
 			"importSave": "ኣምጽእ",
 			"importRemove": "ኣወግድ",
-			"importStatus": "{{count}} ዝተታሕዙ ግዜያት፡ ናይ መወዳእታ ምውህሃድ {{date}}",
-			"importError": "እቲ ኣድራሻ ክንበብ ኣይከኣለን። በጃኹም ነቲ ሊንክ ኣረጋግጹ።"
+			"importStatus": "ምስ {{host}} ተኣሳሲሩ፡ ናይ መወዳእታ ምውህሃድ {{date}}",
+			"importError": "እቲ ኣድራሻ ክንበብ ኣይከኣለን። በጃኹም ነቲ ሊንክ ኣረጋግጹ።",
+			"importConnected": "ምስ {{host}} ተኣሳሲሩ። እቲ ቀዳማይ ምውህሃድ ይካየድ ኣሎ።"
 		},
 		"filterLabel": "ኣርኢ",
 		"facets": {
@@ -6997,6 +6998,8 @@
 			"conflicts_one": "ምስ {{count}} ቆጸራ ይጋጮ።",
 			"created": "{{count}} ዝተዓጽዉ ግዜያት ተመዝጊቦም",
 			"created_one": "ዝተዓጽወ ግዜ ተመዝጊቡ፦ {{date}}"
-		}
+		},
+		"saveFailed": "ኣይሰለጠን። በጃኹም ደጊምኩም ፈትኑ።",
+		"blockerRemoved": "ዝተዓጽወ ግዜ ተኣልዩ።"
 	}
 }
