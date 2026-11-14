@@ -40,13 +40,12 @@ const buildHarness = () => {
 	]);
 	// Members a direct invitation brought into an existing 1:1: the backend
 	// writes one org.oriso.direct_invitation_member state event per person.
-	const linkInvited = new Set<string>();
+	const linkInvited = new Map<string, object>();
 	const room = {
 		currentState: {
 			getStateEvents: vi.fn((type: string, stateKey: string) =>
-				type === 'org.oriso.direct_invitation_member' &&
-				linkInvited.has(stateKey)
-					? { getContent: () => ({ link_id: 7, since: 1 }) }
+				type === 'org.oriso.direct_invitation_member'
+					? (linkInvited.get(stateKey) ?? null)
 					: null
 			)
 		},
@@ -147,6 +146,17 @@ const buildHarness = () => {
 			})
 	};
 };
+
+/** The state event the UserService's technical admin writes for a link-invited person. */
+const marker = (
+	content: object = { link_id: 7, since: 1 },
+	options: { sender?: string; redacted?: boolean } = {}
+) => ({
+	getType: () => 'org.oriso.direct_invitation_member',
+	getSender: () => options.sender ?? '@matrixadm:matrix',
+	getContent: () => content,
+	isRedacted: () => Boolean(options.redacted)
+});
 
 const event = (type: string, sender: string, content: object) => ({
 	getType: () => type,
@@ -612,7 +622,7 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 
 		it('never receives room keys for messages from before the join', async () => {
 			const harness = buildHarness();
-			harness.linkInvited.add(PEER);
+			harness.linkInvited.set(PEER, marker());
 			const stages = diagnostics();
 			const service = new MatrixRoomHistoryKeyTransfer();
 			service.initialize(harness.client as any);
@@ -636,10 +646,46 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 			expect(service.getPendingApprovals(ROOM_ID)).toEqual([]);
 		});
 
+		const requestFromPeer = () =>
+			event('org.oriso.room_history_key_request', PEER, {
+				room_id: ROOM_ID,
+				request_id: 'request-1',
+				requester_user_id: PEER,
+				requester_device_id: 'ASKER1'
+			});
+
+		it.each([
+			['empty content', marker({})],
+			['redacted content', marker({}, { redacted: true })],
+			[
+				'a lifting claim from a room member, not the backend',
+				marker({ revoked: true }, { sender: PEER })
+			],
+			[
+				'a lifting claim from any sender at all',
+				marker({ revoked: true })
+			]
+		])('still counts a mark with %s', async (_label, mark) => {
+			const harness = buildHarness();
+			harness.linkInvited.set(PEER, mark);
+			const stages = diagnostics();
+			const service = new MatrixRoomHistoryKeyTransfer();
+			service.initialize(harness.client as any);
+			harness.emitToDevice(requestFromPeer());
+			await vi.waitFor(() =>
+				expect(stages).toContain('request-link-invited-rejected')
+			);
+
+			expect(harness.crypto.exportRoomKeys).not.toHaveBeenCalled();
+			expect(
+				harness.client.encryptAndSendToDevice
+			).not.toHaveBeenCalled();
+		});
+
 		it('still hands the history to a late-joining counsellor in the same room', async () => {
 			const harness = buildHarness();
 			harness.memberships.set(GUEST, member(GUEST));
-			harness.linkInvited.add(GUEST);
+			harness.linkInvited.set(GUEST, marker());
 			const service = new MatrixRoomHistoryKeyTransfer();
 			service.initialize(harness.client as any);
 			harness.emitToDevice(
@@ -688,7 +734,7 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 			await vi.waitFor(() =>
 				expect(service.getPendingApprovals(ROOM_ID)).toHaveLength(1)
 			);
-			harness.linkInvited.add(PEER);
+			harness.linkInvited.set(PEER, marker());
 
 			expect(await service.approveRequest('waiting')).toBe(false);
 			expect(harness.crypto.exportRoomKeys).not.toHaveBeenCalled();
@@ -700,7 +746,7 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 
 		it('does not ask other members for earlier keys', async () => {
 			const harness = buildHarness();
-			harness.linkInvited.add(ME);
+			harness.linkInvited.set(ME, marker());
 			const service = new MatrixRoomHistoryKeyTransfer();
 			service.initialize(harness.client as any);
 
@@ -712,7 +758,7 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 
 		it('does not import earlier keys an outdated client sends anyway', async () => {
 			const harness = buildHarness();
-			harness.linkInvited.add(ME);
+			harness.linkInvited.set(ME, marker());
 			const stages = diagnostics();
 			const service = new MatrixRoomHistoryKeyTransfer();
 			service.initialize(harness.client as any);
