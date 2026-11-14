@@ -90,10 +90,14 @@ export interface CalendarPageProps {
 	onShownColleaguesChange?: (ids: string[]) => void;
 	onStart?: (entry: CalendarEntry) => void;
 	onCopyFeed?: (url: string) => void;
-	onResetFeed?: () => void;
-	onSaveImport?: (url: string) => void;
-	onRemoveImport?: () => void;
+	/** Sync actions; a rejected promise keeps the dialog's input and says so. */
+	onResetFeed?: () => void | Promise<unknown>;
+	onSaveImport?: (url: string) => void | Promise<unknown>;
+	onRemoveImport?: () => void | Promise<unknown>;
 	onRetry?: () => void;
+	/** The conversation lookup failed: appointments cannot name one. */
+	conversationsFailed?: boolean;
+	onRetryConversations?: () => void;
 }
 
 type Dialog =
@@ -108,7 +112,8 @@ type Dialog =
 
 interface Notice {
 	message: string;
-	undo?: () => void;
+	/** Settles once undone; the failure notice shows if it does not. */
+	undo?: () => ChangeResult;
 }
 
 export const CalendarPage = ({
@@ -134,6 +139,8 @@ export const CalendarPage = ({
 	onSaveImport,
 	onRemoveImport,
 	onRetry,
+	conversationsFailed = false,
+	onRetryConversations,
 	onRangeChange,
 	onShownColleaguesChange
 }: CalendarPageProps) => {
@@ -258,6 +265,21 @@ export const CalendarPage = ({
 					new Date(entry.end)
 				)
 		});
+	};
+
+	/** Undo through the same path: a failed undo shows the failure notice. */
+	const undo = (current: Notice) => {
+		setNotice(null);
+		const result = current.undo?.();
+		if (result === false) return;
+		if (result && typeof (result as Promise<unknown>).then === 'function')
+			(result as Promise<unknown>).then(
+				(value) => {
+					if (value === false)
+						setNotice({ message: t('calendar.saveFailed') });
+				},
+				() => setNotice({ message: t('calendar.saveFailed') })
+			);
 	};
 
 	const addButton = consultant && (
@@ -392,17 +414,11 @@ export const CalendarPage = ({
 		</aside>
 	);
 
+	// While loading, the calendar stays mounted under the spinner: it
+	// reports the first visible range, and with it starts the loading
+	// (review 4574493856).
 	let body: React.ReactNode;
-	if (state === 'loading')
-		body = (
-			<div className="calendarPage__status" aria-busy="true">
-				<CircularProgress
-					size={32}
-					aria-label={t('calendar.loading')}
-				/>
-			</div>
-		);
-	else if (state === 'error')
+	if (state === 'error')
 		body = (
 			<div className="calendarPage__status" role="alert">
 				<p>{t('calendar.error.title')}</p>
@@ -417,25 +433,59 @@ export const CalendarPage = ({
 		);
 	else
 		body = (
-			<CalendarView
-				role={role}
-				ownerId={ownerId}
-				entries={visible}
-				colleagueNames={colleagueNames}
-				compact={compact}
-				initialView={initialView}
-				now={fixedNow}
-				onSelectRange={(range, anchor) => setSlot({ range, anchor })}
-				onEntryClick={(entry) => setDialog({ type: 'details', entry })}
-				onEntryMove={move}
-				onRangeChange={onRangeChange}
-				toolbarEnd={
-					<>
-						{filters}
-						{syncButton}
-					</>
-				}
-			/>
+			<>
+				{consultant && conversationsFailed && (
+					<div
+						className="calendarPage__banner"
+						role="alert"
+						data-testid="calendar-conversations-failed"
+					>
+						<span>{t('calendar.conversationsFailed')}</span>
+						<button
+							type="button"
+							className="calendarPage__retry"
+							onClick={onRetryConversations}
+						>
+							{t('calendar.error.retry')}
+						</button>
+					</div>
+				)}
+				<CalendarView
+					role={role}
+					ownerId={ownerId}
+					entries={visible}
+					colleagueNames={colleagueNames}
+					compact={compact}
+					initialView={initialView}
+					now={fixedNow}
+					onSelectRange={(range, anchor) =>
+						setSlot({ range, anchor })
+					}
+					onEntryClick={(entry) =>
+						setDialog({ type: 'details', entry })
+					}
+					onEntryMove={move}
+					onRangeChange={onRangeChange}
+					toolbarEnd={
+						<>
+							{filters}
+							{syncButton}
+						</>
+					}
+				/>
+				{state === 'loading' && (
+					<div
+						className="calendarPage__status calendarPage__status--overlay"
+						aria-busy="true"
+						data-testid="calendar-loading"
+					>
+						<CircularProgress
+							size={32}
+							aria-label={t('calendar.loading')}
+						/>
+					</div>
+				)}
+			</>
 		);
 
 	return (
@@ -536,10 +586,7 @@ export const CalendarPage = ({
 							? {
 									label: t('calendar.undo'),
 									testId: 'calendar-undo',
-									onClick: () => {
-										notice.undo?.();
-										setNotice(null);
-									}
+									onClick: () => undo(notice)
 								}
 							: undefined
 					}

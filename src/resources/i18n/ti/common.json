@@ -7002,6 +7002,7 @@
 			"createdSingle": "ዝተዓጽወ ግዜ ተመዝጊቡ፦ {{date}}"
 		},
 		"saveFailed": "ኣይሰለጠን። በጃኹም ደጊምኩም ፈትኑ።",
-		"blockerRemoved": "ዝተዓጽወ ግዜ ተኣልዩ።"
+		"blockerRemoved": "ዝተዓጽወ ግዜ ተኣልዩ።",
+		"conversationsFailed": "ዝርርባት ክጽዓኑ ኣይከኣሉን፣ ስለዚ ቆጸራታት ምስ ዝርርብ ክተኣሳሰሩ ኣይክእሉን።"
 	}
 }

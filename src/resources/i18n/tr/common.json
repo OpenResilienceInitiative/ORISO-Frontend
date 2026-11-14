@@ -7035,6 +7035,7 @@
 			"createdSingle": "Kapalı zaman eklendi: {{date}}"
 		},
 		"saveFailed": "Bu işe yaramadı. Lütfen tekrar deneyin.",
-		"blockerRemoved": "Kapalı zaman kaldırıldı."
+		"blockerRemoved": "Kapalı zaman kaldırıldı.",
+		"conversationsFailed": "Görüşmeler yüklenemedi; randevular bir görüşmeye bağlanamıyor."
 	}
 }

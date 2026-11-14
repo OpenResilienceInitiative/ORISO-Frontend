@@ -7035,6 +7035,7 @@
 			"createdSingle": "Plage bloquée ajoutée : {{date}}"
 		},
 		"saveFailed": "Cela n’a pas fonctionné. Veuillez réessayer.",
-		"blockerRemoved": "Plage bloquée supprimée."
+		"blockerRemoved": "Plage bloquée supprimée.",
+		"conversationsFailed": "Les conversations n’ont pas pu être chargées : les rendez-vous ne peuvent pas y être associés."
 	}
 }

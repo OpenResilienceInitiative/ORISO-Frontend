@@ -7025,6 +7025,7 @@
 			"createdSingle": "Sperrzeit eingetragen: {{date}}"
 		},
 		"saveFailed": "Das hat nicht geklappt. Bitte versuchen Sie es noch einmal.",
-		"blockerRemoved": "Sperrzeit entfernt."
+		"blockerRemoved": "Sperrzeit entfernt.",
+		"conversationsFailed": "Die Gespräche konnten nicht geladen werden, Termine lassen sich so keinem Gespräch zuordnen."
 	}
 }

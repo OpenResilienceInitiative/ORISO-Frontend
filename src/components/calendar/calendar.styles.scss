@@ -296,6 +296,7 @@
 }
 
 .calendarPage__main {
+	position: relative;
 	flex: 1;
 	min-width: 0;
 }
@@ -429,6 +430,34 @@
 	height: 100%;
 	min-height: 320px;
 	color: var(--m3-on-surface-variant, #444748);
+}
+
+// Loading: the grid stays mounted under the spinner (it reports the range).
+.calendarPage__status--overlay {
+	position: absolute;
+	z-index: 6;
+	inset: 0;
+	height: auto;
+	min-height: 0;
+	background: color-mix(
+		in srgb,
+		var(--m3-surface-container-lowest, #ffffff) 72%,
+		transparent
+	);
+}
+
+// The conversation lookup failed: say so above the grid, with a retry.
+.calendarPage__banner {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px 16px;
+	margin-bottom: 12px;
+	padding: 8px 12px 8px 16px;
+	border-radius: 12px;
+	background: var(--m3-error-container, #ffdad6);
+	color: var(--m3-on-error-container, #410002);
 }
 
 .calendarPage__retry {
