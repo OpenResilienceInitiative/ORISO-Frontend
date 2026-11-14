@@ -484,6 +484,57 @@ describe('sending queued passage quotes (PR #2232 review)', () => {
 		expect(draftText()).toBe('Text for the other chat');
 	});
 
+	const switchToNextChat = (view: ReturnType<typeof render>) =>
+		view.rerender(
+			<Composer
+				activeSession={{
+					...session,
+					item: {
+						...session.item,
+						id: 361,
+						matrixRoomId: '!next:example.org'
+					}
+				}}
+			/>
+		);
+
+	it('mentions only who was mentioned in the chat the file goes to', async () => {
+		const finish = pendingDearchive();
+		const view = render(<Composer activeSession={archived} />);
+		await pickFile(view.container, makeFile());
+		act(() =>
+			mocks.typeDraft(
+				'<p>Hallo <span data-mention-matrix-id="@anna:oriso.test">@Anna</span></p>'
+			)
+		);
+		await clickSend();
+		switchToNextChat(view);
+		act(() =>
+			mocks.typeDraft(
+				'<p>Frage an <span data-mention-matrix-id="@ben:oriso.test">@Ben</span></p>'
+			)
+		);
+		await finish();
+		await act(async () => {});
+		expect(sendMock().mock.calls[0][2]).toMatchObject({
+			mentionedUserIds: ['@anna:oriso.test']
+		});
+	});
+
+	it('keeps a file staged in the next chat when the first chat’s file is sent', async () => {
+		const finish = pendingDearchive();
+		const view = render(<Composer activeSession={archived} />);
+		const first = makeFile('erste.pdf');
+		await pickFile(view.container, first);
+		await clickSend();
+		switchToNextChat(view);
+		await pickFile(view.container, makeFile('zweite.pdf'));
+		await finish();
+		await act(async () => {});
+		expect(sendMock().mock.calls[0][1]).toBe(first);
+		expect(screen.getByText('zweite.pdf')).toBeTruthy();
+	});
+
 	it('keeps saving the draft while the chat re-opens', async () => {
 		const finish = pendingDearchive();
 		render(

@@ -1163,6 +1163,22 @@ export const MessageSubmitInterfaceComponent = ({
 		removeSelectedAttachment();
 	}, [removeSelectedAttachment, voicePreviewUrl]);
 
+	// The card's file right now. A send that settles late clears the card
+	// only if it still shows what that send took (or nothing): a file staged
+	// meanwhile, maybe in another chat, stays.
+	const attachmentSelectedRef = useRef<File | null>(null);
+	attachmentSelectedRef.current = attachmentSelected;
+	const cleanupSentAttachment = useCallback(
+		(sent: File | null) => {
+			const staged = attachmentSelectedRef.current;
+			if (staged && staged !== sent) {
+				return;
+			}
+			cleanupAttachment();
+		},
+		[cleanupAttachment]
+	);
+
 	const cleanupVoiceRecorder = useCallback(() => {
 		if (voiceRecordingTimerRef.current) {
 			window.clearInterval(voiceRecordingTimerRef.current);
@@ -1885,7 +1901,8 @@ export const MessageSubmitInterfaceComponent = ({
 											caption: message,
 											mentionedUserIds:
 												extractMentionedUserIds(
-													composerRef.current?.getHTML()
+													rawMessage ??
+														composerRef.current?.getHTML()
 												)
 										}
 									: {}),
@@ -1951,7 +1968,11 @@ export const MessageSubmitInterfaceComponent = ({
 				// before it is cleared by handleMessageSendSuccess.
 				const mentionedUserIds = retryOfId
 					? retryMentionedUserIds || []
-					: extractMentionedUserIds(composerRef.current?.getHTML());
+					: // The text that is sent, not the composer: it may show
+						// another chat by now (archived chat re-opening).
+						extractMentionedUserIds(
+							rawMessage ?? composerRef.current?.getHTML()
+						);
 				await apiSendMessage(
 					message,
 					sendToRoomWithId,
@@ -1980,7 +2001,7 @@ export const MessageSubmitInterfaceComponent = ({
 						// A retried text send owns no attachment: it must not
 						// drop a voice take that is under review.
 						if (!retryOfId) {
-							cleanupAttachment();
+							cleanupSentAttachment(attachment);
 						}
 						// Reply context is consumed by the send (#435).
 						if (!retryOfId) {
@@ -2039,12 +2060,12 @@ export const MessageSubmitInterfaceComponent = ({
 				handleMessageSendSuccess(
 					preserveComposerOnSuccess || leftChatDuringSend
 				);
-				cleanupAttachment();
+				cleanupSentAttachment(attachment);
 			}
 		},
 		[
 			activeSession,
-			cleanupAttachment,
+			cleanupSentAttachment,
 			draftScope,
 			encryptRoom,
 			hasMessageContent,
