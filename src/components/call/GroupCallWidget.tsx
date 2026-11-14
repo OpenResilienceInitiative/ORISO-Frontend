@@ -17,6 +17,7 @@ import { ClientEvent, type Room, RoomStateEvent } from 'matrix-js-sdk';
 import { MatrixRTCSessionEvent } from 'matrix-js-sdk/lib/matrixrtc/MatrixRTCSession';
 import { callManager, CallData } from '../../services/CallManager';
 import { CallShareForCall } from './share/CallShareForCall';
+import { apiCreateCallShareLink } from '../../api/apiCallShareLink';
 import {
 	callStartFor,
 	deliverJoinMedia,
@@ -25,14 +26,21 @@ import {
 } from './prejoin/callPrejoin';
 import { useJoinMediaForCall } from './prejoin/useJoinMediaForCall';
 import {
+	groupConversationRoomOf,
+	useLeaveCallWhenRemoved
+} from './useLeaveCallWhenRemoved';
+import {
 	NOTIFICATION_TYPE_WARNING,
 	NotificationsContext
 } from '../../globalState/provider/NotificationsProvider';
 import {
 	CallRoomMembershipTimeoutError,
+	type OrisoWindowCommand,
 	useElementCallWidget
 } from './widget/useElementCallWidget';
+import { appConfig } from '../../utils/appConfig';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
+import { useCallCounsellors } from './callCounsellors';
 import {
 	getAutoFitStageSize,
 	RESIZE_EDGES,
@@ -60,6 +68,8 @@ import { callKnockScopeOf } from './knockNotice/callKnockModel';
 import { useCallKnocks } from './knockNotice/useCallKnocks';
 import { useCallShareLinkKnock } from './knockNotice/useCallShareLinkKnock';
 import { type CallConversation, callPartyOf, counterpartOf } from './callParty';
+import { callConversationParamsOf } from './callHostContext';
+import { TopicsContext } from '../../globalState/provider/TopicsProvider';
 import { IncomingCallCard } from './states/IncomingCallCard';
 import { DockedCall } from './states/DockedCall';
 import './GroupCallWidget.scss';
@@ -76,6 +86,18 @@ const GROUP_MIN = { width: 280, height: 180 };
  * enough that a wedged iframe is not something the user has to sit through.
  */
 const HANGUP_HANDSHAKE_MS = 1500;
+
+/*
+ * How far one arrow key moves a handle, in px.
+ *
+ * Enough to be worth a keypress and small enough to aim with; `Shift`
+ * takes bigger strides, as it does in every other resizable thing.
+ */
+const RESIZE_STEP = 16;
+const RESIZE_STEP_FAST = 64;
+
+/** How long "Link teilen" waits before asking the server a second time, in ms. */
+const INVITE_LINK_RETRY_MS = 1000;
 
 /*
  * How long to wait between attempts to say who we are, in ms.
@@ -101,6 +123,16 @@ const HANGUP_HANDSHAKE_MS = 1500;
 const IDENTITY_RETRY_DELAYS_MS = [1000, 2000, 4000] as const;
 const IDENTITY_RETRY_CEILING_MS = 8000;
 
+/*
+ * FE#2233: how long the call's address waits for its conversation, whose
+ * kind (`orisoCallType`) and topic (`orisoTopic`) go on it. The room is
+ * joined meanwhile. The lookup is one userservice request, already settled
+ * for an incoming call (it starts when the call rings); a slow or failing
+ * userservice must not keep anybody out of the call, so after this the call
+ * starts without them — `single`/`group` from the call itself.
+ */
+const CALL_CONVERSATION_WAIT_MS = 2000;
+
 /** Looks up the conversation a call belongs to; returns the effect cleanup. */
 const conversationOf = (
 	roomId: string,
@@ -111,13 +143,18 @@ const conversationOf = (
 		.then(({ sessions }) => {
 			if (!controller.signal.aborted) found(sessions?.[0] ?? null);
 		})
-		.catch(() => undefined);
+		.catch(() => {
+			// Settled without a conversation: nothing to wait for any more.
+			if (!controller.signal.aborted) found(null);
+		});
 	return () => controller.abort();
 };
 
 export const GroupCallWidget: React.FC = () => {
-	const { t } = useTranslation();
+	const { t, i18n } = useTranslation();
 	const { matrixClientService } = useMatrixClient();
+	// Outside the app's providers (Storybook) there is no topic catalogue.
+	const topics = useContext(TopicsContext)?.topics;
 	// `null` until a provider is above us; the widget renders in places that
 	// do not guarantee one.
 	const userData = useContext(UserDataContext)?.userData;
@@ -127,6 +164,10 @@ export const GroupCallWidget: React.FC = () => {
 	const [conversation, setConversation] = useState<CallConversation | null>(
 		null
 	);
+	/* The conversation room whose lookup has answered, or given up (FE#2233). */
+	const [conversationSettledFor, setConversationSettledFor] = useState<
+		string | null
+	>(null);
 	const [waitingCall, setWaitingCall] = useState<CallData | null>(null);
 	const [waitingConversation, setWaitingConversation] =
 		useState<CallConversation | null>(null);
@@ -176,6 +217,13 @@ export const GroupCallWidget: React.FC = () => {
 	const callRoomId = callData
 		? (callData.elementCallRoomId ?? callData.roomId)
 		: null;
+	/*
+	 * The conversation the call belongs to is looked up by its signal room.
+	 * A shared-call guest has none.
+	 */
+	const conversationRoomId = callData?.sharedCallGuest
+		? undefined
+		: callData?.signalRoomId || callData?.roomId;
 	const shouldPrepareWidget =
 		!!callData &&
 		callState !== 'left' &&
@@ -251,6 +299,89 @@ export const GroupCallWidget: React.FC = () => {
 		[joinMediaIsVideo, joinMedia]
 	);
 
+	const [isMobileView, setIsMobileView] = useState(false);
+	/* Put aside into the dock; the iframe stays mounted, or the call drops. */
+	const [isMinimized, setIsMinimized] = useState(false);
+	const [isFullscreen, setIsFullscreen] = useState(false);
+	/*
+	 * Call design S10 (5c): on a phone the call can float in the upper half
+	 * while ORISO keeps running below; `floatTop` is where its grip put it.
+	 * The call switches it with the same `toggle_fullscreen` it uses for
+	 * browser full screen on a desktop.
+	 */
+	const [isFloating, setIsFloating] = useState(false);
+	const [floatTop, setFloatTop] = useState(0);
+	const floatDragRef = useRef<{ startY: number; startTop: number } | null>(
+		null
+	);
+	/*
+	 * Call design S2: the call draws minimise and full screen in its own
+	 * header (`orisoHostChrome`), so the host's corner buttons no longer sit
+	 * on top of it. Kill-switch: `appConfig.calls.hostChrome === false`.
+	 */
+	const hostChrome = appConfig?.calls?.hostChrome !== false;
+	// The handlers live further down; the widget keeps the latest one.
+	const windowCommandRef = useRef<(command: OrisoWindowCommand) => void>(
+		() => undefined
+	);
+	const onWindowCommand = useCallback(
+		(command: OrisoWindowCommand) => windowCommandRef.current(command),
+		[]
+	);
+	// On a phone the call fills the screen unless it floats (S10).
+	const windowState = useMemo(
+		() => ({
+			fullscreen: isMobileView ? !isFloating : isFullscreen
+		}),
+		[isMobileView, isFloating, isFullscreen]
+	);
+
+	/*
+	 * Call design S8: a counsellor hands out the call's link from the call's
+	 * own header ("Link teilen"). The link is the same one the share button
+	 * makes (UserService#1487): created on first use, reused after, with
+	 * "Anklopfen" on, so whoever opens it knocks and is let in here.
+	 */
+	const canInvite =
+		isConsultantUser && !!shareLinkCall && !callData?.sharedCallGuest;
+	const onInviteLink = useCallback(async (): Promise<string | null> => {
+		if (!shareLinkCall) return null;
+		const created = await apiCreateCallShareLink(shareLinkCall);
+		if (created) return created.url;
+		// Right after joining the server may not see this person in the call
+		// yet (404); one more try, as the share button does.
+		await new Promise((resolve) =>
+			setTimeout(resolve, INVITE_LINK_RETRY_MS)
+		);
+		return (await apiCreateCallShareLink(shareLinkCall))?.url ?? null;
+	}, [shareLinkCall]);
+
+	/*
+	 * Call design S1: who may be labelled "Beratung" in the call. From the
+	 * userservice (the session's counsellor, a group chat's CONSULTANT
+	 * members), never from the call's identity records or power levels. A
+	 * shared-call guest has no conversation, so the list stays empty.
+	 */
+	const counsellors = useCallCounsellors(conversation);
+
+	/*
+	 * FE#2233: what the call is told about its conversation — its kind
+	 * (Gesprächskreis → circle, other groups → group, 1:1 → single) and, for
+	 * a 1:1 call, its topic — and the app's language. The address is built
+	 * once the lookup has answered (or given up), and the widget keeps what
+	 * it was built with for the whole call.
+	 */
+	const conversationParams = callData
+		? callConversationParamsOf(
+				!!callData.isGroup,
+				conversation,
+				topics,
+				i18n?.language
+			)
+		: null;
+	const hostContextPending =
+		!!conversationRoomId && conversationSettledFor !== conversationRoomId;
+
 	const widget = useElementCallWidget(
 		matrixClientService?.getClient() ?? null,
 		{
@@ -261,7 +392,22 @@ export const GroupCallWidget: React.FC = () => {
 			onClose: closeCallSurface,
 			knockState,
 			onSetKnock: shareLinkKnock.setKnock,
-			callStart
+			callStart,
+			hostChrome,
+			onWindowCommand,
+			windowState,
+			// Call design S6b: a group conversation starts in a group view even
+			// with two people in it; a 1:1 session in the one-to-one view.
+			// `isGroup` is the conversation's kind as the caller decided it
+			// (group chat, or a supervision room with a second supervisor);
+			// the modality tells a Gesprächskreis (`circle`) from the rest.
+			callType: conversationParams?.callType ?? null,
+			callTopic: conversationParams?.topic ?? null,
+			language: i18n?.language ?? null,
+			hostContextPending,
+			invite: canInvite,
+			onInviteLink,
+			counsellors
 		}
 	);
 
@@ -572,9 +718,6 @@ export const GroupCallWidget: React.FC = () => {
 		height: GROUP_DEFAULT_HEIGHT
 	});
 	const [position, setPosition] = useState({ x: 100, y: 100 });
-	const [isMobileView, setIsMobileView] = useState(false);
-	/* Put aside into the dock; the iframe stays mounted, or the call drops. */
-	const [isMinimized, setIsMinimized] = useState(false);
 	const [callStartedAt, setCallStartedAt] = useState<number | null>(null);
 	const dragRef = useRef<{
 		startX: number;
@@ -612,7 +755,6 @@ export const GroupCallWidget: React.FC = () => {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[widget.attachIframe]
 	);
-	const [isFullscreen, setIsFullscreen] = useState(false);
 
 	const getGroupBounds = () => ({
 		minWidth: GROUP_MIN.width,
@@ -737,16 +879,32 @@ export const GroupCallWidget: React.FC = () => {
 	 * Who is ringing, and whom the call is with, looked up in the
 	 * conversation the call belongs to, so the card and the dock show names
 	 * and avatars from the session list instead of a fixed "G" (#780).
-	 * Unknown callers keep the generic line.
+	 * Unknown callers keep the generic line. The same answer gives the call
+	 * its kind and topic (FE#2233), so the call's address waits for it.
 	 */
-	const conversationRoomId = callData?.sharedCallGuest
-		? undefined
-		: callData?.signalRoomId || callData?.roomId;
 	const waitingRoomId = waitingCall?.signalRoomId || waitingCall?.roomId;
 	useEffect(() => {
 		setConversation(null);
-		if (!conversationRoomId) return;
-		return conversationOf(conversationRoomId, setConversation);
+		if (!conversationRoomId) {
+			// Between calls: the next call in this room waits for its lookup.
+			setConversationSettledFor(null);
+			return;
+		}
+		let settled = false;
+		const settle = () => {
+			if (settled) return;
+			settled = true;
+			setConversationSettledFor(conversationRoomId);
+		};
+		const giveUp = setTimeout(settle, CALL_CONVERSATION_WAIT_MS);
+		const stop = conversationOf(conversationRoomId, (found) => {
+			setConversation(found);
+			settle();
+		});
+		return () => {
+			clearTimeout(giveUp);
+			stop();
+		};
 	}, [conversationRoomId]);
 	useEffect(() => {
 		setWaitingConversation(null);
@@ -792,7 +950,11 @@ export const GroupCallWidget: React.FC = () => {
 	// The dock's clock starts when the call surface opens; a new call resets it.
 	useEffect(() => {
 		setCallStartedAt(elementCallUrl ? Date.now() : null);
-		if (!elementCallUrl) setIsMinimized(false);
+		if (!elementCallUrl) {
+			setIsMinimized(false);
+			setIsFloating(false);
+			setFloatTop(0);
+		}
 	}, [elementCallUrl, callData?.callId]);
 
 	const handleAnswer = () => {
@@ -884,6 +1046,28 @@ export const GroupCallWidget: React.FC = () => {
 		})();
 	};
 
+	/*
+	 * Removed from the Gesprächskreis by a moderator while its call runs
+	 * (ORISO-Admin#1518 follow-up): the ban stops new call tokens but not a
+	 * running call, so this app leaves it itself, through the same hangup
+	 * handshake as the end button, and says why.
+	 */
+	useLeaveCallWhenRemoved(
+		groupConversationRoomOf(callData),
+		callState === 'connecting' || callState === 'in_call',
+		() => {
+			notifications?.addNotification({
+				notificationType: NOTIFICATION_TYPE_WARNING,
+				title: t('groupChat.removed.overlay.headline'),
+				text: '',
+				closeable: true,
+				timeout: 10_000
+			});
+			handleEndCall();
+		},
+		clientGeneration
+	);
+
 	const handleToggleFullscreen = () => {
 		const container = containerRef.current;
 		if (!container) return;
@@ -894,6 +1078,59 @@ export const GroupCallWidget: React.FC = () => {
 		}
 
 		container.requestFullscreen?.();
+	};
+
+	const minimise = () => {
+		if (document.fullscreenElement) void document.exitFullscreen?.();
+		setIsMinimized(true);
+	};
+
+	// Call design S2: the call's own header buttons, through the host's paths.
+	windowCommandRef.current = (command) => {
+		if (command === 'minimise') minimise();
+		else if (isMobileView) setIsFloating((floating) => !floating);
+		else handleToggleFullscreen();
+	};
+
+	/* Floating only exists on a phone; a wider window drops it. */
+	useEffect(() => {
+		if (!isMobileView) setIsFloating(false);
+	}, [isMobileView]);
+
+	/** Keeps the floating call on screen, its grip reachable. */
+	const clampFloatTop = (top: number) => {
+		const height =
+			containerRef.current?.offsetHeight ?? window.innerHeight / 2;
+		return Math.min(
+			Math.max(0, top),
+			Math.max(0, window.innerHeight - height)
+		);
+	};
+
+	const handleFloatGripPointerDown = (e: React.PointerEvent) => {
+		e.preventDefault();
+		e.stopPropagation();
+		(e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
+		floatDragRef.current = { startY: e.clientY, startTop: floatTop };
+	};
+
+	const handleFloatGripPointerMove = (e: React.PointerEvent) => {
+		const drag = floatDragRef.current;
+		if (!drag) return;
+		setFloatTop(clampFloatTop(drag.startTop + e.clientY - drag.startY));
+	};
+
+	const handleFloatGripPointerUp = () => {
+		floatDragRef.current = null;
+	};
+
+	const handleFloatGripKeyDown = (e: React.KeyboardEvent) => {
+		const step = e.shiftKey ? RESIZE_STEP_FAST : RESIZE_STEP;
+		const delta =
+			e.key === 'ArrowUp' ? -step : e.key === 'ArrowDown' ? step : 0;
+		if (!delta) return;
+		e.preventDefault();
+		setFloatTop((top) => clampFloatTop(top + delta));
 	};
 
 	// Dragging handlers (mouse + touch)
@@ -959,15 +1196,6 @@ export const GroupCallWidget: React.FC = () => {
 			posY: position.y
 		};
 	};
-
-	/*
-	 * How far one arrow key moves a handle, in px.
-	 *
-	 * Enough to be worth a keypress and small enough to aim with; `Shift`
-	 * takes bigger strides, as it does in every other resizable thing.
-	 */
-	const RESIZE_STEP = 16;
-	const RESIZE_STEP_FAST = 64;
 
 	/*
 	 * The same resize, from the keyboard.
@@ -1099,6 +1327,7 @@ export const GroupCallWidget: React.FC = () => {
 	}
 
 	const isDocked = isMinimized && !!elementCallUrl;
+	const floating = isMobileView && isFloating && !!elementCallUrl;
 	// Until the call reports its devices, assume what it started with; the
 	// dock shows this and its toggles flip it.
 	const shownDevices = widget.devices ?? {
@@ -1152,13 +1381,18 @@ export const GroupCallWidget: React.FC = () => {
 				/>
 			)}
 			<div
-				className={`group-call-widget ${isDragging ? 'dragging' : ''} ${isResizing ? 'resizing' : ''} ${isMobileView ? 'group-call-widget--mobile' : ''} ${isDocked ? 'group-call-widget--docked' : ''} ${isFullscreen ? 'group-call-widget--fullscreen' : ''}`}
+				className={`group-call-widget ${isDragging ? 'dragging' : ''} ${isResizing ? 'resizing' : ''} ${isMobileView ? 'group-call-widget--mobile' : ''} ${isDocked ? 'group-call-widget--docked' : ''} ${isFullscreen ? 'group-call-widget--fullscreen' : ''} ${hostChrome ? 'group-call-widget--host-chrome' : ''} ${floating ? 'group-call-widget--floating' : ''}`}
 				aria-hidden={isDocked ? true : undefined}
-				style={{
-					left: `${position.x}px`,
-					top: `${position.y}px`,
-					...(isResizing ? { cursor: resizeCursor } : {})
-				}}
+				style={
+					{
+						left: `${position.x}px`,
+						top: `${position.y}px`,
+						...(isResizing ? { cursor: resizeCursor } : {}),
+						...(floating
+							? { '--call-float-top': `${floatTop}px` }
+							: {})
+					} as React.CSSProperties
+				}
 				onMouseDown={handleMouseDown}
 				onTouchStart={handleTouchStart}
 			>
@@ -1177,63 +1411,84 @@ export const GroupCallWidget: React.FC = () => {
 						}
 					>
 						<div className="element-call-drag-handle" />
-						<button
-							className="element-call-close"
-							onClick={handleEndCall}
-							aria-label={t('calls.group.close')}
-						>
-							×
-						</button>
-						{!isMobileView && !isFullscreen && (
-							<button
-								type="button"
-								className="element-call-autofit"
-								onClick={(e) => {
-									e.stopPropagation();
-									applyAutoFit();
-								}}
-								aria-label={t('calls.group.autoFitAria')}
-								title={t('calls.group.autoFit')}
-							>
-								⛶
-							</button>
-						)}
-						{/* Into the dock (FE#1904); on a phone this replaces the small tile. */}
-						<button
-							type="button"
-							className="element-call-minimize"
-							onClick={(e) => {
-								e.stopPropagation();
-								if (document.fullscreenElement)
-									void document.exitFullscreen?.();
-								setIsMinimized(true);
-							}}
-							aria-label={t('calls.states.minimize')}
-							title={t('calls.states.minimize')}
-						>
-							–
-						</button>
-						{!isMobileView && (
-							<button
-								className="element-call-fullscreen"
-								onClick={handleToggleFullscreen}
-								aria-label={
-									isFullscreen
-										? t('calls.group.exitFullScreen')
-										: t('calls.group.enterFullScreen')
-								}
-								title={
-									isFullscreen
-										? t('calls.group.exitFullScreen')
-										: t('calls.group.fullScreen')
-								}
-							>
-								{isFullscreen ? '⤡' : '⤢'}
-							</button>
+						{/*
+						 * Call design S2: with host chrome the call shows
+						 * these in its own header; drawn here they covered it
+						 * (measured on dev: over the "Notizen" button).
+						 */}
+						{!hostChrome && (
+							<>
+								<button
+									className="element-call-close"
+									onClick={handleEndCall}
+									aria-label={t('calls.group.close')}
+								>
+									×
+								</button>
+								{!isMobileView && !isFullscreen && (
+									<button
+										type="button"
+										className="element-call-autofit"
+										onClick={(e) => {
+											e.stopPropagation();
+											applyAutoFit();
+										}}
+										aria-label={t(
+											'calls.group.autoFitAria'
+										)}
+										title={t('calls.group.autoFit')}
+									>
+										⛶
+									</button>
+								)}
+								{/* Into the dock (FE#1904); on a phone this replaces the small tile. */}
+								<button
+									type="button"
+									className="element-call-minimize"
+									onClick={(e) => {
+										e.stopPropagation();
+										minimise();
+									}}
+									aria-label={t('calls.states.minimize')}
+									title={t('calls.states.minimize')}
+								>
+									–
+								</button>
+								{!isMobileView && (
+									<button
+										className="element-call-fullscreen"
+										onClick={handleToggleFullscreen}
+										aria-label={
+											isFullscreen
+												? t(
+														'calls.group.exitFullScreen'
+													)
+												: t(
+														'calls.group.enterFullScreen'
+													)
+										}
+										title={
+											isFullscreen
+												? t(
+														'calls.group.exitFullScreen'
+													)
+												: t('calls.group.fullScreen')
+										}
+									>
+										{isFullscreen ? '⤡' : '⤢'}
+									</button>
+								)}
+							</>
 						)}
 						{/* Host side: no widget capability needed (#1794). */}
 						{/* Element Call never sets CallData.state to connected; a
 						    ready widget is the joined call. */}
+						{/*
+						 * With host chrome and "Link teilen" in the call's
+						 * header (S8) this corner button would offer the same
+						 * link twice — except where the link may create a
+						 * temporary account: that switch exists only here.
+						 */}
 						{isConsultantUser &&
 							widget.ready &&
 							callData?.signalRoomId && (
@@ -1243,6 +1498,9 @@ export const GroupCallWidget: React.FC = () => {
 										callId={callData.callId}
 										layout={
 											isMobileView ? 'phone' : 'desktop'
+										}
+										onlyForTemporaryAccounts={
+											hostChrome && canInvite
 										}
 									/>
 								</div>
@@ -1267,9 +1525,48 @@ export const GroupCallWidget: React.FC = () => {
 							allowFullScreen
 							title={t('calls.group.iframeTitle')}
 						/>
+						{floating && (
+							/*
+							 * S10 (5c): below the call, never over its header —
+							 * the grip moves it, the button takes it back to
+							 * the whole screen.
+							 */
+							<div className="element-call-float-bar">
+								<div
+									className="element-call-float-grip"
+									role="separator"
+									aria-orientation="horizontal"
+									aria-label={t('calls.floating.move')}
+									aria-valuenow={Math.round(floatTop)}
+									aria-valuemin={0}
+									tabIndex={0}
+									onPointerDown={handleFloatGripPointerDown}
+									onPointerMove={handleFloatGripPointerMove}
+									onPointerUp={handleFloatGripPointerUp}
+									onPointerCancel={handleFloatGripPointerUp}
+									onKeyDown={handleFloatGripKeyDown}
+								>
+									<span aria-hidden="true" />
+								</div>
+								<button
+									type="button"
+									className="element-call-float-full"
+									onClick={() => setIsFloating(false)}
+									aria-label={t(
+										'calls.group.enterFullScreen'
+									)}
+									title={t('calls.group.fullScreen')}
+								>
+									⤢
+								</button>
+							</div>
+						)}
 						{!isMobileView &&
 							!isFullscreen &&
-							RESIZE_EDGES.map((edge) => (
+							RESIZE_EDGES.filter(
+								// The top edge is the drag band with host chrome.
+								(edge) => !hostChrome || edge !== 'n'
+							).map((edge) => (
 								<div
 									key={edge}
 									className={`call-resize-handle call-resize-handle--${edge}`}

@@ -1,5 +1,5 @@
 import { feedbackMailIntentQueue } from './feedbackMailIntentQueue';
-import { Direction, MatrixEvent, Room } from 'matrix-js-sdk';
+import { ClientEvent, Direction, MatrixEvent, Room } from 'matrix-js-sdk';
 import { loadEarlierMatrixRoomHistory } from './matrixRoomHistory';
 import {
 	apiPostMessageEventNotification,
@@ -592,6 +592,43 @@ class ChatTransportService {
 				clearPendingDecryption
 			);
 		};
+	}
+
+	/**
+	 * This user's current membership in a Matrix room on the current client
+	 * (`join`, `leave`, `ban`, ...). Complements onMatrixRoomLifecycle, which
+	 * reports changes only.
+	 *
+	 * A room absent after the client's first sync counts as `leave`: the sync
+	 * filter does not include left rooms, so a room the user was banned from
+	 * before a client refresh never appears on the new client. Before that
+	 * first sync the answer is unknown (null); see onMatrixInitialSync.
+	 */
+	public getMyMatrixRoomMembership(matrixRoomId: string): string | null {
+		const client = getMatrixClientService()?.getClient?.();
+		if (!client) return null;
+		const room = client.getRoom?.(matrixRoomId);
+		if (room) return room.getMyMembership?.() ?? null;
+		return client.isInitialSyncComplete?.() ? 'leave' : null;
+	}
+
+	/**
+	 * Calls back when the current Matrix client has a usable sync: PREPARED
+	 * after the first sync, or SYNCING (also what the SDK emits when it
+	 * recovers from ERROR). Keeps calling back on later syncs while the
+	 * callback returns false; stops once it returns anything else. Returns a
+	 * function that stops waiting.
+	 */
+	public onMatrixInitialSync(callback: () => boolean | void): () => void {
+		const client = getMatrixClientService()?.getClient?.();
+		if (!client) return () => {};
+		const handleSync = (state: string): void => {
+			if (state !== 'PREPARED' && state !== 'SYNCING') return;
+			if (callback() === false) return;
+			client.off(ClientEvent.Sync, handleSync);
+		};
+		client.on(ClientEvent.Sync, handleSync);
+		return () => client.off(ClientEvent.Sync, handleSync);
 	}
 
 	/**

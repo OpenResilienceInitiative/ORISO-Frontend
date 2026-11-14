@@ -464,6 +464,10 @@
 			"overlay": {
 				"headline": "Du wurdest aus dieser Gruppe entfernt."
 			}
+		},
+		"waitingAdmission": {
+			"waiting": "Sobald die Gruppenleitung dich hereinlässt, öffnen sich Chat und Anruf von selbst.",
+			"openSoon": "Die Sitzung läuft. Die Gruppenleitung weiß, dass du wartest, und lässt dich gleich herein."
 		}
 	},
 	"help": {
@@ -1167,6 +1171,10 @@
 				"cancel": "Abbrechen",
 				"error": "Das Zurücksetzen ist fehlgeschlagen. Bitte versuche es erneut."
 			}
+		},
+		"askerDisplayName": {
+			"description": "Dein Name kann in jeder Beratung anders sein. Deine Beraterin oder dein Berater sieht in der jeweiligen Beratung den Namen, der hier steht.",
+			"usernameShown": "Kein Anzeigename – sichtbar ist dein Benutzername"
 		}
 	},
 	"qrCode": {
@@ -2884,7 +2892,9 @@
 		"card": {
 			"headline": "Ein Link direkt zu dir",
 			"text": "Wer den Link öffnet, landet ohne Umweg bei dir – im Chat, im Audio- oder im Videoanruf.",
-			"createFailed": "Der Link konnte nicht erstellt werden. Bitte versuche es erneut."
+			"createFailed": "Der Link konnte nicht erstellt werden. Bitte versuche es erneut.",
+			"nameHint": "Z. B. „Termin Frau M.“ – so findest du den Link in deiner Übersicht wieder.",
+			"scheduledAtIncomplete": "Bitte gib Datum und Uhrzeit vollständig ein oder leere das Feld."
 		},
 		"share": {
 			"title": "Dein Direktlink ist bereit",

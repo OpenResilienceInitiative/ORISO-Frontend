@@ -799,6 +799,63 @@ export const GroupChatLarge: Story = {
  * group's topic is left out of the header, not dimmed, until the client has
  * agreed. The avatars stay.
  */
+/**
+ * D7 on the phone, group chat: the composer's action bar leads with the back
+ * arrow, so the room header shows none — the same rule as the 1:1 header.
+ * Rendered through `SessionHeaderComponent`, exactly as `SessionItemComponent`
+ * mounts it on the phone (`hideBackButton`).
+ */
+const renderGroupHeaderThroughSessionHeader = (hideBackButton: boolean) => {
+	const preset = mockGroupSessionSmall();
+	return (
+		<StoryProviders
+			session={preset.session}
+			members={preset.members}
+			userData={storyUserData}
+		>
+			<LegalLinksProvider legalLinks={config.legalLinks}>
+				<SessionHeaderComponent
+					bannedUsers={[]}
+					hideBackButton={hideBackButton}
+					callsInMenu={hideBackButton}
+				/>
+			</LegalLinksProvider>
+		</StoryProviders>
+	);
+};
+
+export const GroupChatPhoneComposerCarriesBack: Story = {
+	name: 'Group header on the phone — no back arrow, the composer has it (D7)',
+	globals: phone390Globals,
+	render: () => renderGroupHeaderThroughSessionHeader(true),
+	play: async ({ canvasElement }) => {
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector(
+					'[data-cy="group-header-participants"]'
+				)
+			).not.toBeNull()
+		);
+		await expect(
+			canvasElement.querySelector('.sessionInfo__backButton')
+		).toBeNull();
+	}
+};
+
+/** Control: without a composer (privacy gate) the header keeps its arrow. */
+export const GroupChatPhoneWithoutComposerKeepsBack: Story = {
+	name: 'Group header on the phone without a composer — back arrow stays',
+	globals: phone390Globals,
+	render: () => renderGroupHeaderThroughSessionHeader(false),
+	play: async ({ canvasElement }) => {
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector('.sessionInfo__backButton')
+			).not.toBeNull()
+		);
+	}
+};
+
 export const GroupChatBeforeConsentHidesTopic: Story = {
 	render: () => renderGroupHeader(mockGroupSessionSmall(), true),
 	play: async ({ canvasElement }) => {
@@ -1566,4 +1623,106 @@ export const NextAppointmentGroupCoModerator: Story = {
 		['Termin absagen', 'Als Einzeltermin duplizieren'],
 		['Gruppe konfigurieren']
 	)
+};
+
+/* ------------------------------------------------------------------ *
+ * FE#1960: the real 1:1 header with its real appointment slot. The row
+ * under the header shows only an existing appointment (ADR-021 §5);
+ * "Termin anlegen" is a row of the ⋮ menu.
+ * ------------------------------------------------------------------ */
+
+/* Built at render time, relative to now: a fixed date stops being
+   "upcoming" once it passes and turns this story red for every PR. */
+const HOUR_MS = 60 * 60 * 1000;
+const makeStoryAppointment = () => {
+	const start = Date.now() + 2 * HOUR_MS;
+	return {
+		id: '6f1c1a70-0000-4000-8000-000000000001',
+		sessionId: 4401,
+		startTime: new Date(start).toISOString(),
+		endTime: new Date(start + HOUR_MS).toISOString(),
+		status: 'SCHEDULED',
+		counterpart: { username: 'ruhiges_yak_kim' }
+	};
+};
+
+const installAppointmentFetch = (items: unknown[]) => {
+	const previous = window.fetch;
+	window.fetch = async (input, init) => {
+		const url =
+			typeof input === 'string'
+				? input
+				: input instanceof URL
+					? input.href
+					: input.url;
+		if (/\/sessions\/4401\/appointments$/.test(url.split('?')[0]))
+			return jsonResponse(items);
+		return previous(input, init);
+	};
+	return () => {
+		window.fetch = previous;
+	};
+};
+
+const HeaderWithAppointments = ({ items }: { items: unknown[] }) => {
+	// Installed during render: the slot fetches from a child effect.
+	const [restore] = React.useState(() => installAppointmentFetch(items));
+	React.useEffect(() => restore, [restore]);
+	return renderSessionHeader(mockActiveConversation());
+};
+
+const openMenuAndFindCreate = async (canvasElement: HTMLElement) => {
+	const trigger = await waitFor(() => {
+		const found = Array.from(
+			canvasElement.querySelectorAll<HTMLButtonElement>(
+				'button.sessionMenu__icon'
+			)
+		).find((button) => button.getClientRects().length > 0);
+		expect(found).toBeDefined();
+		return found!;
+	});
+	await userEvent.click(trigger);
+	const row = await waitFor(() => {
+		const found = document.querySelector<HTMLElement>(
+			'[data-cy="session-menu-create-appointment"]'
+		);
+		expect(found).not.toBeNull();
+		return found!;
+	});
+	return row;
+};
+
+/** No appointment: the header looks as before #2011; ⋮ offers "Termin anlegen". */
+export const OneToOneAppointmentCreateInMenu: Story = {
+	name: '1:1 appointment — none yet, create in ⋮ menu (FE#1960)',
+	render: () => <HeaderWithAppointments items={[]} />,
+	play: async ({ canvasElement }) => {
+		const row = await openMenuAndFindCreate(canvasElement);
+		// The menu fades in: wait for it rather than read it mid-transition.
+		await waitFor(() => expect(row).toBeVisible());
+		await expect(
+			canvasElement.querySelector('[data-cy="room-next-appointment"]')
+		).toBeNull();
+		await expect(
+			canvasElement.querySelector(
+				'[data-cy="create-conversation-appointment"]'
+			)
+		).toBeNull();
+	}
+};
+
+/** One appointment: the row shows only that appointment, no create button. */
+export const OneToOneAppointmentUpcoming: Story = {
+	name: '1:1 appointment — upcoming, no create button beside it (FE#1960)',
+	render: () => <HeaderWithAppointments items={[makeStoryAppointment()]} />,
+	play: async ({ canvasElement }) => {
+		const bar = await waitFor(() => {
+			const found = canvasElement.querySelector(
+				'[data-cy="room-next-appointment"]'
+			);
+			expect(found).not.toBeNull();
+			return found!;
+		});
+		await expect(bar.querySelectorAll('.splitButton')).toHaveLength(1);
+	}
 };

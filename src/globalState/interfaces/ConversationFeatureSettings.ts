@@ -1,4 +1,9 @@
-/** Only conversation capabilities may be resolved at an agency leaf. */
+/**
+ * Single registry of conversation capabilities resolved platform -> Traeger -> agency.
+ * Every conversation feature the app reads must be listed here and read through
+ * useConversationFeatureSettings / resolveConversationFeatureSettings, never from raw
+ * getTenantSettings() (enforced by conversationFeatureRegistry.test.ts).
+ */
 export const CONVERSATION_FEATURE_KEYS = [
 	'featureCallsEnabled',
 	'featureAudioCallsEnabled',
@@ -28,7 +33,17 @@ export const CONVERSATION_FEATURE_KEYS = [
 	'featureMediaInlineDisplaySupervisionChatsEnabled',
 	'featureGroupChatV2Enabled',
 	'featureInternalGroupChatEnabled',
-	'featureSelfHelpGroupsEnabled'
+	'featureSelfHelpGroupsEnabled',
+	'featureAnonymousChatEnabled',
+	'featureSupervisionEnabled',
+	'featureSupervisionAnonymousChatsEnabled',
+	'featureSupervisionOneOnOneChatsEnabled',
+	'featureThreadsEnabled',
+	'featureThreadsAnonymousChatsEnabled',
+	'featureThreadsGroupChatsEnabled',
+	// Irregular wire name (no "Chats"); matches TenantService/AgencyService policy key.
+	'featureThreadsOneOnOneEnabled',
+	'featureThreadsSupervisionChatsEnabled'
 ] as const;
 export type ConversationFeatureKey = (typeof CONVERSATION_FEATURE_KEYS)[number];
 export type ConversationFeatureSettings = Partial<

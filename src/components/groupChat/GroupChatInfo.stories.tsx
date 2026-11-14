@@ -40,19 +40,6 @@ const buildListItem = (
 	unscheduledDuration?: 'missing' | 'null'
 ) => {
 	const item: ListItemInterface = buildGroupStageListItem(3600);
-	if (unscheduledDuration) {
-		Object.assign(item.chat as object, {
-			active: true,
-			assignedAgencies: [{ id: 1, name: 'Beratungsstelle Mitte' }],
-			conversationType: 'INTERNAL_GROUP',
-			duration: unscheduledDuration === 'null' ? null : undefined,
-			hintMessage: '',
-			startDate: '',
-			startTime: '',
-			topic: 'Interne Fallbesprechung'
-		});
-		return item;
-	}
 	Object.assign(item.chat as object, {
 		modality: 'TEXT',
 		inviteToken,
@@ -70,6 +57,17 @@ const buildListItem = (
 		],
 		assignedAgencies: [{ id: 1, name: 'Beratungsstelle Mitte' }]
 	});
+	if (unscheduledDuration) {
+		Object.assign(item.chat as object, {
+			active: true,
+			conversationType: 'INTERNAL_GROUP',
+			duration: unscheduledDuration === 'null' ? null : undefined,
+			hintMessage: '',
+			startDate: '',
+			startTime: '',
+			topic: 'Interne Fallbesprechung'
+		});
+	}
 	return item;
 };
 
@@ -309,14 +307,26 @@ export const UnscheduledInternalChat: Story = {
 		const row = duration.closest('li');
 		if (!row) throw new Error('The duration setting has no row.');
 		await expect(within(row).getByText('–', { exact: true })).toBeVisible();
+		await expect(
+			canvas.getByRole('button', {
+				name: 'Aus der Gruppe entfernen Berater Jonas Weber'
+			})
+		).toBeEnabled();
+		await expect(
+			canvas.queryByRole('button', { name: /QR-Code anzeigen/ })
+		).toBeNull();
+		await expect(
+			canvas.queryByRole('button', { name: /Einladungs-Link kopieren/ })
+		).toBeNull();
 	}
 };
 
 export const UnscheduledInternalChatWithoutDuration: Story = {
 	...UnscheduledInternalChat,
 	name: 'Unscheduled internal chat with omitted duration',
+	globals: phone390Globals,
 	render: () => (
-		<WiredChatInfo layout="desktop" unscheduledDuration="missing" />
+		<WiredChatInfo layout="mobile" unscheduledDuration="missing" />
 	)
 };
 

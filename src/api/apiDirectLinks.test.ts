@@ -61,6 +61,16 @@ describe('toDirectLink', () => {
 		expect(toDirectLink({ ...dto, name: undefined }).name).toBe('Schulden');
 	});
 
+	it('carries the date and time the counsellor noted (#2142)', () => {
+		expect(
+			toDirectLink({ ...dto, scheduledAt: '2026-11-20T13:30:00Z' })
+				.scheduledAt
+		).toBe('2026-11-20T13:30:00Z');
+		expect(toDirectLink({ ...dto, scheduledAt: null })).not.toHaveProperty(
+			'scheduledAt'
+		);
+	});
+
 	it('drops entries with an unknown medium', () => {
 		expect(toDirectLink({ ...dto, medium: 'FAX' })).toBeNull();
 	});

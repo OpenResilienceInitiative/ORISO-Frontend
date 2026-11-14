@@ -144,7 +144,9 @@
 		"wait": "በጃኹም ተጸበዩ።",
 		"info": "ሓበሬታ",
 		"or": "ወይ",
-		"logo": "Logo"
+		"logo": "Logo",
+		"scrollPrevious": "ዝሓለፈ",
+		"scrollNext": "ዝቕጽል"
 	},
 	"appointments": {
 		"copy": {
@@ -1362,7 +1364,8 @@
 				"headline": "ከመይ ንሓድሕድና ንተሓላለ",
 				"subline": "ሓንሳብ ኣንብብዎ – ድሕሪኡ ምሳና ኢኹም።"
 			},
-			"devices": "ካሜራን ማይክሮፎንን"
+			"devices": "ካሜራን ማይክሮፎንን",
+			"waitingForAdmission": "ተመዝጊብኩም"
 		},
 		"shareDialog": {
 			"title_text": "ክቢ ተፈጢሩ",
@@ -1470,6 +1473,10 @@
 			"overlay": {
 				"headline": "ካብዚ ጉጅለ ተኣሊኹም ኢኹም።"
 			}
+		},
+		"waitingAdmission": {
+			"waiting": "መራሒ ጉጅለ ምስ ኣእተወኩም፡ ቻትን ጻውዒትን ባዕሎም ይኽፈቱ።",
+			"openSoon": "እቲ ርክብ ይቕጽል ኣሎ። መራሒ ጉጅለ ከም እትጽበ ይፈልጥ እዩ፣ ቀልጢፉ ከእትወካ እዩ።"
 		}
 	},
 	"help": {
@@ -2219,7 +2226,16 @@
 				"nav": "ዝርርባት",
 				"small": "ዜና"
 			},
-			"directLinks": "ናይ ቀጥታ መላግቦታተይ"
+			"directLinks": "ናይ ቀጥታ መላግቦታተይ",
+			"inboxState": {
+				"empty": "ሕቶታት የለን",
+				"allOpened": "ኩሎም ሕቶታት ተኸፊቶም",
+				"unopened": "{{count}} ዘይተኸፍቱ ሕቶታት",
+				"unopened_one": "{{count}} ዘይተኸፍተ ሕቶ",
+				"overdue": "ግዚኦም ዝሓለፎም ሕቶታት",
+				"overdueUnopened": "ግዚኦም ዝሓለፎም ሕቶታት፣ {{count}} ዘይተኸፍቱ ሕቶታት",
+				"overdueUnopened_one": "ግዚኦም ዝሓለፎም ሕቶታት፣ {{count}} ዘይተኸፍተ ሕቶ"
+			}
 		},
 		"activity": "ናይ ግዜ መስመር",
 		"language": "ቋንቋ",
@@ -3321,6 +3337,13 @@
 				"cancel": "ሰርዝ",
 				"error": "እቲ ዳግም ምትካል ኣይተዓወተን። በጃኹም ደጊምኩም ፈትኑ።"
 			}
+		},
+		"askerDisplayName": {
+			"description": "ስምካ ኣብ ነፍሲ ወከፍ ምኽሪ ፍሉይ ክኸውን ይኽእል። ኣማኻሪኻ ኣብቲ ዝምልከቶ ምኽሪ ኣብዚ ዘሎ ስም ይርኢ።",
+			"conversation": "ምኽሪ",
+			"usernameShown": "ዝርአ ስም የለን – ስም ተጠቃሚኻ ይርአ",
+			"edit": "ን{{name}} ዝርአ ስም ቀይር",
+			"inputLabel": "ን{{name}} ዝርአ ስም"
 		}
 	},
 	"qrCode": {
@@ -4626,6 +4649,12 @@
 				"directLinkVideo": "ናይ ቪድዮ ጻውዒት",
 				"directLinkAudio": "ናይ ድምጺ ጻውዒት",
 				"directLinkChat": "ቀጥታዊ ሊንክ"
+			},
+			"waiting": {
+				"minutes": "ን{{count}} ደቒቕ ይጽበ ኣሎ",
+				"hours": "ን{{count}} ሰዓት ይጽበ ኣሎ",
+				"weeks_one": "ን{{count}} ሰሙን ይጽበ ኣሎ",
+				"weeks_other": "ን{{count}} ሰሙናት ይጽበ ኣሎ"
 			}
 		},
 		"supervision": {
@@ -6445,6 +6474,10 @@
 			"region": "ዝጽበዩ ዘለዉ ሰባት",
 			"someone": "ሓደ ሰብ",
 			"wantsIn": "ናብቲ ጻውዒት ክጽንበር ይደሊ",
+			"waitingFor_one": "ን1 ደቒቕ ይጽበ ኣሎ",
+			"waitingFor_other": "ን{{count}} ደቓይቕ ይጽበ ኣሎ",
+			"waitingFor": "ን{{count}} ደቓይቕ ይጽበ ኣሎ",
+			"justArrived": "ሕጂ በጺሑ",
 			"admit": "ኣእቱ",
 			"decline": "ኣይትቐበል",
 			"admitAll": "ንኹሎም ኣእቱ",
@@ -6458,6 +6491,13 @@
 			"label": "ቅድም ኳሕኳሕ",
 			"on": "ጋሻ ክሳብ ተእትዎም ይጸበዩ።",
 			"off": "ጋሻ ከይተጸበዩ ብቐጥታ ናብ ጻውዒት ይኣትዉ።"
+		},
+		"list": {
+			"running": "ሕጂ ይካየድ ኣሎ",
+			"runningWithCount": "ሕጂ ይካየድ ኣሎ — {{count}} ኣብ ጻውዒት"
+		},
+		"floating": {
+			"move": "ጻውዒት ኣግዕዝ"
 		}
 	},
 	"form": {
@@ -6698,7 +6738,12 @@
 			"temporary": "ግዝያዊ ሕሳብ",
 			"temporaryHint": "እቲ ሕሳብ ድሕሪ ዝርርብ ይድምሰስ።",
 			"create": "ሊንክ ፍጠር",
-			"createFailed": "እቲ ሊንክ ክፍጠር ኣይከኣለን። በጃኻ እንደገና ፈትን።"
+			"createFailed": "እቲ ሊንክ ክፍጠር ኣይከኣለን። በጃኻ እንደገና ፈትን።",
+			"name": "ስም (ኣማራጺ)",
+			"nameHint": "ንኣብነት «ቆጸራ ወ/ሮ ም.» – ነቲ ሊንክ ኣብ ሓፈሻዊ ትርኢትኩም ንኽትረኽብዎ።",
+			"scheduledAt": "ዕለትን ሰዓትን (ኣማራጺ)",
+			"scheduledAtHint": "ንምምልካት ጥራይ – እቲ ሊንክ ቅድሚኡን ድሕሪኡን ይሰርሕ።",
+			"scheduledAtIncomplete": "በጃኹም ዕለትን ሰዓትን ምሉእ ኣእትዉ ወይ ነቲ ቦታ ኣጽርይዎ።"
 		},
 		"medium": {
 			"chat": "ቻት",
@@ -6746,7 +6791,9 @@
 			"topic": "ኣርእስቲ",
 			"mediumFixed": "ዓይነት ርክብ ክቕየር ኣይክእልን",
 			"temporaryHint": "ነቶም ካብ ሕጂ ንደሓር ነቲ መላግቦ ዝኸፍቱ ሰባት ጥራይ ይምልከት።",
-			"failed": "እቲ ለውጢ ክዕቀብ ኣይከኣለን። በጃኹም እንደገና ፈትኑ።"
+			"failed": "እቲ ለውጢ ክዕቀብ ኣይከኣለን። በጃኹም እንደገና ፈትኑ።",
+			"scheduledAt": "ዕለትን ሰዓትን",
+			"clearScheduledAt": "ኣልግስ"
 		}
 	},
 	"dashboard": {

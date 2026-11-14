@@ -13,9 +13,12 @@ import { FORMAT_ARTWORK } from '../../../resources/img/formats';
 import {
 	defaultTemporary,
 	DIRECT_LINK_MEDIA,
+	DIRECT_LINK_NAME_MAX,
 	DirectLinkMedium
 } from './directLink';
 import { DirectLinkMediumIcon } from './DirectLinkMediumIcon';
+import { OrisoTextField } from '../../form/OrisoTextField';
+import { toScheduledAt } from './directLinkSchedule';
 import './directLink.styles.scss';
 
 /** Short segment labels; the full name is the accessible name. */
@@ -29,6 +32,10 @@ export interface DirectLinkDraft {
 	topic: string;
 	medium: DirectLinkMedium;
 	temporary: boolean;
+	/** #2142: optional; without it the link is named after its topic. */
+	name?: string;
+	/** #2142: optional, informational date and time (ISO instant). */
+	scheduledAt?: string;
 }
 
 interface DirectLinkCardProps {
@@ -71,6 +78,12 @@ export const DirectLinkCard = ({
 	const [topicMenuOpen, setTopicMenuOpen] = useState(false);
 	const [medium, setMedium] = useState<DirectLinkMedium>();
 	const [temporary, setTemporary] = useState(false);
+	const [name, setName] = useState('');
+	const [scheduledLocal, setScheduledLocal] = useState('');
+	/* A half-typed datetime-local reads as '' with `validity.badInput`;
+	   it must not silently create the link without its date. */
+	const scheduledRef = useRef<HTMLInputElement | null>(null);
+	const [scheduledIncomplete, setScheduledIncomplete] = useState(false);
 
 	const chooseMedium = (next: DirectLinkMedium) => {
 		setMedium(next);
@@ -202,6 +215,44 @@ export const DirectLinkCard = ({
 						/>
 					</div>
 				)}
+				{medium && (
+					<div className="directLinkCard__details">
+						<OrisoTextField
+							id={`${id}-name`}
+							label={t('directLink.card.name')}
+							placeholder={topicLabel}
+							value={name}
+							onChange={(event) => setName(event.target.value)}
+							helperText={t('directLink.card.nameHint')}
+							inputProps={{ maxLength: DIRECT_LINK_NAME_MAX }}
+							InputLabelProps={{ shrink: true }}
+							size="small"
+							fullWidth
+						/>
+						<OrisoTextField
+							id={`${id}-scheduled`}
+							type="datetime-local"
+							label={t('directLink.card.scheduledAt')}
+							value={scheduledLocal}
+							inputRef={scheduledRef}
+							onChange={(event) => {
+								setScheduledLocal(event.target.value);
+								setScheduledIncomplete(
+									Boolean(event.target.validity?.badInput)
+								);
+							}}
+							error={scheduledIncomplete}
+							helperText={t(
+								scheduledIncomplete
+									? 'directLink.card.scheduledAtIncomplete'
+									: 'directLink.card.scheduledAtHint'
+							)}
+							InputLabelProps={{ shrink: true }}
+							size="small"
+							fullWidth
+						/>
+					</div>
+				)}
 				<button
 					type="button"
 					className={`directLinkCard__create${
@@ -209,9 +260,23 @@ export const DirectLinkCard = ({
 					}`}
 					disabled={!ready}
 					aria-busy={isSubmitting || undefined}
-					onClick={() =>
-						medium && onCreate({ topic, medium, temporary })
-					}
+					onClick={() => {
+						if (!medium) return;
+						if (scheduledRef.current?.validity?.badInput) {
+							setScheduledIncomplete(true);
+							scheduledRef.current.focus();
+							return;
+						}
+						const trimmed = name.trim();
+						const scheduledAt = toScheduledAt(scheduledLocal);
+						onCreate({
+							topic,
+							medium,
+							temporary,
+							...(trimmed ? { name: trimmed } : {}),
+							...(scheduledAt ? { scheduledAt } : {})
+						});
+					}}
 				>
 					<AddCircleIcon aria-hidden />
 					{t('directLink.card.create')}

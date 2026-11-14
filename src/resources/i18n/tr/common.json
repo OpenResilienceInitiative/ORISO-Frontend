@@ -144,7 +144,9 @@
 		"wait": "Lütfen bekleyin",
 		"info": "Bilgi",
 		"or": "veya",
-		"logo": "Logo"
+		"logo": "Logo",
+		"scrollPrevious": "Önceki",
+		"scrollNext": "Sonraki"
 	},
 	"appointments": {
 		"copy": {
@@ -1388,7 +1390,8 @@
 				"headline": "Birbirimize nasıl davranırız",
 				"subline": "Bir kez okuyun – sonra siz de aramızdasınız."
 			},
-			"devices": "Kamera ve mikrofon"
+			"devices": "Kamera ve mikrofon",
+			"waitingForAdmission": "Kayıt alındı"
 		},
 		"shareDialog": {
 			"title_text": "Çember oluşturuldu",
@@ -1496,6 +1499,10 @@
 			"overlay": {
 				"headline": "Bu gruptan çıkarıldınız."
 			}
+		},
+		"waitingAdmission": {
+			"waiting": "Grup yöneticisi sizi içeri aldığında sohbet ve arama kendiliğinden açılır.",
+			"openSoon": "Oturum devam ediyor. Grup yöneticisi beklediğinizi biliyor ve sizi birazdan içeri alacak."
 		}
 	},
 	"help": {
@@ -2245,7 +2252,16 @@
 				"nav": "Sohbetler",
 				"small": "Haberler"
 			},
-			"directLinks": "Doğrudan bağlantılarım"
+			"directLinks": "Doğrudan bağlantılarım",
+			"inboxState": {
+				"empty": "Talep yok",
+				"allOpened": "Tüm talepler açıldı",
+				"unopened": "{{count}} açılmamış talep",
+				"unopened_one": "{{count}} açılmamış talep",
+				"overdue": "Süresi geçmiş talepler",
+				"overdueUnopened": "Süresi geçmiş talepler, {{count}} açılmamış talep",
+				"overdueUnopened_one": "Süresi geçmiş talepler, {{count}} açılmamış talep"
+			}
 		},
 		"activity": "Zaman çizelgesi",
 		"language": "Dil",
@@ -3347,6 +3363,13 @@
 				"cancel": "İptal",
 				"error": "Sıfırlama başarısız oldu. Lütfen tekrar deneyin."
 			}
+		},
+		"askerDisplayName": {
+			"description": "Adınız her danışmanlıkta farklı olabilir. Danışmanınız ilgili danışmanlıkta burada yazan adı görür.",
+			"conversation": "Danışmanlık",
+			"usernameShown": "Görünen ad yok – kullanıcı adınız görünür",
+			"edit": "{{name}} için görünen adı değiştir",
+			"inputLabel": "{{name}} için görünen ad"
 		}
 	},
 	"qrCode": {
@@ -4652,6 +4675,12 @@
 				"directLinkVideo": "Görüntülü arama",
 				"directLinkAudio": "Sesli arama",
 				"directLinkChat": "Doğrudan bağlantı"
+			},
+			"waiting": {
+				"minutes": "Bekleme: {{count}} dk.",
+				"hours": "Bekleme: {{count}} sa.",
+				"weeks_one": "Bekleme: {{count}} hafta",
+				"weeks_other": "Bekleme: {{count}} hafta"
 			}
 		},
 		"supervision": {
@@ -6471,6 +6500,10 @@
 			"region": "Bekleyen kişiler",
 			"someone": "Biri",
 			"wantsIn": "görüşmeye katılmak istiyor",
+			"waitingFor_one": "1 dk'dır bekliyor",
+			"waitingFor_other": "{{count}} dk'dır bekliyor",
+			"waitingFor": "{{count}} dk'dır bekliyor",
+			"justArrived": "az önce geldi",
 			"admit": "İçeri al",
 			"decline": "Reddet",
 			"admitAll": "Herkesi içeri al",
@@ -6484,6 +6517,13 @@
 			"label": "Önce kapıyı çal",
 			"on": "Misafirler siz içeri alana kadar bekler.",
 			"off": "Misafirler beklemeden doğrudan aramaya katılır."
+		},
+		"list": {
+			"running": "Şu anda sürüyor",
+			"runningWithCount": "Şu anda sürüyor — görüşmede {{count}} kişi"
+		},
+		"floating": {
+			"move": "Görüşmeyi taşı"
 		}
 	},
 	"form": {
@@ -6731,7 +6771,12 @@
 			"temporary": "Geçici hesap",
 			"temporaryHint": "Hesap görüşmeden sonra silinir.",
 			"create": "Bağlantı oluştur",
-			"createFailed": "Bağlantı oluşturulamadı. Lütfen tekrar deneyin."
+			"createFailed": "Bağlantı oluşturulamadı. Lütfen tekrar deneyin.",
+			"name": "Ad (isteğe bağlı)",
+			"nameHint": "Örn. \"M. Hanım ile randevu\" – bağlantıyı genel bakışınızda bulmanız için.",
+			"scheduledAt": "Tarih ve saat (isteğe bağlı)",
+			"scheduledAtHint": "Yalnızca yön bulmak için – bağlantı öncesinde ve sonrasında da çalışır.",
+			"scheduledAtIncomplete": "Lütfen tarih ve saati eksiksiz girin veya alanı boşaltın."
 		},
 		"medium": {
 			"chat": "Sohbet",
@@ -6779,7 +6824,9 @@
 			"topic": "Konu",
 			"mediumFixed": "İletişim türü değiştirilemez",
 			"temporaryHint": "Yalnızca bağlantıyı bundan sonra açan kişiler için geçerlidir.",
-			"failed": "Değişiklik kaydedilemedi. Lütfen tekrar deneyin."
+			"failed": "Değişiklik kaydedilemedi. Lütfen tekrar deneyin.",
+			"scheduledAt": "Tarih ve saat",
+			"clearScheduledAt": "Kaldır"
 		}
 	},
 	"dashboard": {
