@@ -132,11 +132,18 @@ import {
 } from './CalendarSyncDialog';
 import { useEntryLabel, useRangeFormat } from './useEntryLabel';
 import type { QuickKind } from './calendarQuickEntry';
+import { useLiveNow } from './useLiveNow';
 import '../sessionsList/sessionsList.styles.scss';
 import './calendar.styles.scss';
 
 export type { CalendarViewName } from './calendarViews';
 export type CalendarLoadState = 'loading' | 'ready' | 'error';
+
+/**
+ * What a change callback returns: nothing or `true` when it is done,
+ * `false` when it refuses, or a promise that settles once it is stored.
+ */
+export type ChangeResult = void | boolean | Promise<unknown>;
 
 export interface CalendarPageProps {
 	role: CalendarRole;
@@ -177,15 +184,15 @@ export interface CalendarPageProps {
 	 * Resolving with the created entries lets the notice undo a blocker
 	 * that was entered at once.
 	 */
-	onCreate?: (drafts: AppointmentDraft[]) => void | Promise<unknown>;
-	/** The snackbar offers to undo by moving it back. */
-	onMove?: (
-		entry: CalendarEntry,
-		start: Date,
-		end: Date
-	) => void | Promise<unknown>;
-	onCancelAppointment?: (entry: CalendarEntry) => void | Promise<unknown>;
-	onRemoveBlocker?: (entry: CalendarEntry) => void | Promise<unknown>;
+	onCreate?: (drafts: AppointmentDraft[]) => ChangeResult;
+	/**
+	 * The snackbar offers to undo by moving it back. `false`, or a promise
+	 * that rejects or resolves to `false`, refuses the move and puts the
+	 * entry back.
+	 */
+	onMove?: (entry: CalendarEntry, start: Date, end: Date) => ChangeResult;
+	onCancelAppointment?: (entry: CalendarEntry) => ChangeResult;
+	onRemoveBlocker?: (entry: CalendarEntry) => ChangeResult;
 	/** Weekly hours and the holiday region are stored together. */
 	onSaveWorkingHours?: (
 		hours: WorkingHours,
@@ -216,10 +223,14 @@ export interface CalendarPageProps {
 	/** "Zum Chat": open the conversation an appointment belongs to. */
 	onOpenChat?: (entry: CalendarEntry) => void;
 	onCopyFeed?: (url: string) => void;
-	onResetFeed?: () => void;
-	onSaveImport?: (url: string) => void;
-	onRemoveImport?: () => void;
+	/** Sync actions; a rejected promise keeps the dialog's input and says so. */
+	onResetFeed?: () => void | Promise<unknown>;
+	onSaveImport?: (url: string) => void | Promise<unknown>;
+	onRemoveImport?: () => void | Promise<unknown>;
 	onRetry?: () => void;
+	/** The conversation lookup failed: appointments cannot name one. */
+	conversationsFailed?: boolean;
+	onRetryConversations?: () => void;
 }
 
 type Dialog =
@@ -262,7 +273,8 @@ type Menu =
 
 interface Notice {
 	message: string;
-	undo?: () => void;
+	/** Settles once undone; the failure notice shows if it does not. */
+	undo?: () => ChangeResult;
 }
 
 const AXIS_PX = 52;
@@ -337,6 +349,8 @@ export const CalendarPage = ({
 	onSaveImport,
 	onRemoveImport,
 	onRetry,
+	conversationsFailed = false,
+	onRetryConversations,
 	onRangeChange,
 	onShownColleaguesChange
 }: CalendarPageProps) => {
@@ -344,7 +358,7 @@ export const CalendarPage = ({
 	const label = useEntryLabel();
 	const format = useRangeFormat();
 	const summarise = useWorkingHoursSummary();
-	const now = useMemo(() => fixedNow ?? new Date(), [fixedNow]);
+	const now = useLiveNow(fixedNow);
 	const consultant = role === 'consultant';
 	const views = compact ? COMPACT_VIEWS : DESKTOP_VIEWS;
 	const controller = useCalendarController();
@@ -483,18 +497,29 @@ export const CalendarPage = ({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
-	/** Success notice once the change is stored, the failure notice if not. */
+	/**
+	 * Success notice once the change is stored, the failure notice if it
+	 * fails. Says whether it went through: `false` for a refusal or a
+	 * failure, so a moved entry goes back and quick entry keeps its draft.
+	 */
 	const run = (
-		result: void | Promise<unknown> | undefined,
+		result: ChangeResult | undefined,
 		success: Notice | ((value: unknown) => Notice)
-	) => {
-		const done = (value: unknown) =>
+	): boolean | Promise<boolean> => {
+		const done = (value: unknown) => {
 			setNotice(typeof success === 'function' ? success(value) : success);
+			return true;
+		};
+		if (result === false) return false;
 		if (result && typeof (result as Promise<unknown>).then === 'function')
-			(result as Promise<unknown>).then(done, () =>
-				setNotice({ message: t('calendar.saveFailed') })
+			return (result as Promise<unknown>).then(
+				(value) => (value === false ? false : done(value)),
+				() => {
+					setNotice({ message: t('calendar.saveFailed') });
+					return false;
+				}
 			);
-		else done(undefined);
+		return done(undefined);
 	};
 
 	// --- Navigation ---
@@ -573,25 +598,35 @@ export const CalendarPage = ({
 			? `${format(first.start).split(',')[0]}, ${t('calendar.allDay')}`
 			: format(first.start, first.end);
 		return {
+			// One blocker names its date; a series its count (Russian "one"
+			// also covers 21, 31 …, so a series never uses the single text).
 			message:
 				first.type === 'blocker'
-					? t('calendar.blocker.created', {
-							count: drafts.length,
-							date: when
-						})
+					? drafts.length === 1
+						? t('calendar.blocker.createdSingle', { date: when })
+						: t('calendar.blocker.created', {
+								count: drafts.length,
+								date: when
+							})
 					: t('calendar.created', { date: when }),
+			// Undo removes every created blocker; it fails as a whole when
+			// one removal fails (review 4574779925).
 			undo:
 				first.type === 'blocker' &&
 				onRemoveBlocker &&
 				createdEntries.length > 0
-					? () => createdEntries.forEach((e) => onRemoveBlocker(e))
+					? () =>
+							Promise.all(
+								createdEntries.map((e) => onRemoveBlocker(e))
+							)
 					: undefined
 		};
 	};
 
+	/** Resolves to whether the entries exist, so quick entry can keep its draft. */
 	const create = (drafts: AppointmentDraft[]) => {
 		setDialog(null);
-		run(onCreate?.(drafts), createNotice(drafts));
+		return run(onCreate?.(drafts), createNotice(drafts));
 	};
 
 	/** "Mehr Angaben …" in quick entry: the full dialog, prefilled. */
@@ -629,7 +664,7 @@ export const CalendarPage = ({
 	};
 
 	const move = (entry: CalendarEntry, start: Date, end: Date) => {
-		run(onMove?.(entry, start, end), {
+		return run(onMove?.(entry, start, end), {
 			message: t(
 				entry.type === 'blocker'
 					? 'calendar.blockerMoved'
@@ -647,6 +682,21 @@ export const CalendarPage = ({
 					new Date(entry.end)
 				)
 		});
+	};
+
+	/** Undo through the same path: a failed undo shows the failure notice. */
+	const undo = (current: Notice) => {
+		setNotice(null);
+		const result = current.undo?.();
+		if (result === false) return;
+		if (result && typeof (result as Promise<unknown>).then === 'function')
+			(result as Promise<unknown>).then(
+				(value) => {
+					if (value === false)
+						setNotice({ message: t('calendar.saveFailed') });
+				},
+				() => setNotice({ message: t('calendar.saveFailed') })
+			);
 	};
 
 	const propose = (entry: CalendarEntry, start: Date, end: Date) =>
@@ -1356,7 +1406,7 @@ export const CalendarPage = ({
 
 	// While loading, the grid stays mounted under a spinner: it is what
 	// reports the first visible range, and with it starts the loading
-	// (reviews 4574733779, 4574779921).
+	// (reviews 4574733779, 4574779921, 4574493856).
 	let body: React.ReactNode;
 	if (state === 'error')
 		body = (
@@ -1374,6 +1424,22 @@ export const CalendarPage = ({
 	else
 		body = (
 			<>
+				{consultant && conversationsFailed && (
+					<div
+						className="calendarPage__banner"
+						role="alert"
+						data-testid="calendar-conversations-failed"
+					>
+						<span>{t('calendar.conversationsFailed')}</span>
+						<button
+							type="button"
+							className="calendarPage__retry"
+							onClick={onRetryConversations}
+						>
+							{t('calendar.error.retry')}
+						</button>
+					</div>
+				)}
 				<CalendarPager
 					onPage={page}
 					enabled={!compact && !splitOverflows}
@@ -1551,8 +1617,12 @@ export const CalendarPage = ({
 						onCreate={
 							onCreate
 								? (drafts) => {
-										setQuickOpen(false);
-										create(drafts);
+										// Folds once the entry exists; a failure keeps the line open.
+										const result = create(drafts);
+										void Promise.resolve(result).then(
+											(ok) => ok && setQuickOpen(false)
+										);
+										return result;
 									}
 								: undefined
 						}
@@ -1642,10 +1712,7 @@ export const CalendarPage = ({
 							? {
 									label: t('calendar.undo'),
 									testId: 'calendar-undo',
-									onClick: () => {
-										notice.undo?.();
-										setNotice(null);
-									}
+									onClick: () => undo(notice)
 								}
 							: undefined
 					}

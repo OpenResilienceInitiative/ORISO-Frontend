@@ -11,6 +11,7 @@ import {
 } from 'vite-plus/test';
 import * as calendarApi from '../../api/apiCalendar';
 import * as appointmentApi from '../../api/apiSessionAppointments';
+import * as sessionListApi from '../../api/apiGetConsultantSessionList';
 import type { CalendarPageProps } from './CalendarPage';
 import { CalendarPageWired } from './CalendarPageWired';
 
@@ -81,6 +82,7 @@ vi.mock('../../api/apiGetAskerSessionList', () => ({
 
 const api = vi.mocked(calendarApi);
 const appointments = vi.mocked(appointmentApi);
+const sessionList = vi.mocked(sessionListApi);
 
 const OWN = {
 	id: 'a1',
@@ -560,6 +562,121 @@ describe('CalendarPageWired', () => {
 				host: 'p01.icloud.com',
 				failed: false
 			})
+		);
+	});
+
+	it('keeps the newer colleague entries when an older request answers last (reviews 4574504558, 4574938514)', async () => {
+		const answers: ((list: unknown[]) => void)[] = [];
+		api.apiGetColleagueCalendarEntries.mockImplementation(
+			() =>
+				new Promise((resolve) => {
+					answers.push(resolve as (list: unknown[]) => void);
+				}) as never
+		);
+		render(<CalendarPageWired />);
+		await showWeek();
+		await act(() => props.onShownColleaguesChange?.(['kaya']));
+		// Paging far away starts a second request for the same colleague.
+		await act(() =>
+			props.onRangeChange?.(new Date(2026, 11, 14), new Date(2026, 11, 21))
+		);
+		expect(answers).toHaveLength(2);
+		await act(async () =>
+			answers[1]([{ ...OWN, id: 'dec', ownerId: 'kaya', sessionId: null }])
+		);
+		await act(async () =>
+			answers[0]([{ ...OWN, id: 'nov', ownerId: 'kaya', sessionId: null }])
+		);
+		expect(props.entries.map((e) => e.id)).toContain('dec');
+		expect(props.entries.map((e) => e.id)).not.toContain('nov');
+	});
+
+	it('ignores an older colleague failure after a newer answer', async () => {
+		const settle: { ok: (l: unknown[]) => void; fail: (e: Error) => void }[] =
+			[];
+		api.apiGetColleagueCalendarEntries.mockImplementation(
+			() =>
+				new Promise((ok, fail) => {
+					settle.push({
+						ok: ok as (l: unknown[]) => void,
+						fail
+					});
+				}) as never
+		);
+		render(<CalendarPageWired />);
+		await showWeek();
+		await act(() => props.onShownColleaguesChange?.(['kaya']));
+		await act(() =>
+			props.onRangeChange?.(new Date(2026, 11, 14), new Date(2026, 11, 21))
+		);
+		await act(async () =>
+			settle[1].ok([{ ...OWN, id: 'dec', ownerId: 'kaya', sessionId: null }])
+		);
+		await act(async () => settle[0].fail(new Error('403')));
+		expect(props.entries.map((e) => e.id)).toContain('dec');
+	});
+
+	it('loads every page of conversations (review 4574779934)', async () => {
+		const session = (id: number) => ({
+			session: { id, matrixRoomId: `!r${id}:oriso` },
+			user: { username: `u${id}` }
+		});
+		const page = ({ offset = 0 }) =>
+			Promise.resolve({
+				count: 100,
+				offset,
+				total: 150,
+				sessions: Array.from(
+					{ length: offset === 0 ? 100 : 50 },
+					(_, i) => session(offset + i + 1)
+				)
+			}) as never;
+		sessionList.apiGetConsultantSessionList
+			.mockImplementationOnce(page)
+			.mockImplementationOnce(page);
+		render(<CalendarPageWired />);
+		await waitFor(() => expect(props.conversations).toHaveLength(150));
+		expect(
+			sessionList.apiGetConsultantSessionList.mock.calls.map(
+				([args]) => args.offset
+			)
+		).toEqual([0, 100]);
+	});
+
+	it('shows a failed conversation lookup and retries it (review 4574493869)', async () => {
+		sessionList.apiGetConsultantSessionList.mockRejectedValueOnce(
+			new Error('500')
+		);
+		render(<CalendarPageWired />);
+		await waitFor(() => expect(props.conversationsFailed).toBe(true));
+		await act(async () => props.onRetryConversations?.());
+		await waitFor(() => expect(props.conversationsFailed).toBe(false));
+		await waitFor(() => expect(props.conversations).toHaveLength(1));
+	});
+
+	it('reloads the entries after the import is removed (review 4574938517)', async () => {
+		api.apiRemoveCalendarImport.mockResolvedValue({
+			feedUrl: 'https://app.test/f.ics',
+			importConfigured: false
+		});
+		render(<CalendarPageWired />);
+		await showWeek();
+		await waitFor(() => expect(props.state).toBe('ready'));
+		expect(api.apiGetCalendarEntries).toHaveBeenCalledTimes(1);
+		await act(async () => props.onRemoveImport?.());
+		expect(api.apiGetCalendarEntries).toHaveBeenCalledTimes(2);
+	});
+
+	it('rejects failed sync actions so the dialog can say so (review 4574504562)', async () => {
+		api.apiResetCalendarFeed.mockRejectedValue(new Error('500'));
+		api.apiRemoveCalendarImport.mockRejectedValue(new Error('500'));
+		api.apiSaveCalendarImport.mockRejectedValue(new Error('400'));
+		render(<CalendarPageWired />);
+		await showWeek();
+		await expect(props.onResetFeed?.()).rejects.toThrow('500');
+		await expect(props.onRemoveImport?.()).rejects.toThrow('500');
+		await expect(props.onSaveImport?.('https://x.test/a.ics')).rejects.toThrow(
+			'400'
 		);
 	});
 });

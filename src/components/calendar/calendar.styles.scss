@@ -46,6 +46,13 @@
 	}
 }
 
+// The one focus ring of every calendar control and list item; only the
+// offset differs where a control sits flush against its neighbours.
+@mixin calendar-focus-ring($offset: 2px) {
+	outline: 2px solid var(--m3-primary, #a5000a);
+	outline-offset: $offset;
+}
+
 // --- FullCalendar classic theme, palette mapped to the ORISO scheme ---
 .calendarView {
 	--fc-classic-button: var(--m3-surface-container-highest, #dcdfe3);
@@ -200,8 +207,7 @@
 	}
 
 	&:focus-visible {
-		outline: 2px solid var(--m3-primary, #a5000a);
-		outline-offset: 0;
+		@include calendar-focus-ring(0);
 	}
 
 	// This date has its own hours: filled, not only tinted.
@@ -268,8 +274,7 @@
 	transition: opacity 120ms ease-out;
 
 	&:focus-visible {
-		outline: 2px solid var(--m3-primary, #a5000a);
-		outline-offset: 1px;
+		@include calendar-focus-ring(1px);
 	}
 
 	// The next appointment, from 15 minutes before its start.
@@ -595,8 +600,7 @@
 		font-size: 14px;
 
 		&:focus-visible {
-			outline: 2px solid var(--m3-primary, #a5000a);
-			outline-offset: 0;
+			@include calendar-focus-ring(0);
 		}
 	}
 }
@@ -624,7 +628,7 @@
 	}
 
 	&:focus-visible {
-		outline: 2px solid var(--m3-primary, #a5000a);
+		@include calendar-focus-ring(0);
 	}
 
 	&--primary {
@@ -769,8 +773,7 @@
 	}
 
 	&:focus-visible {
-		outline: 2px solid var(--m3-primary, #a5000a);
-		outline-offset: 1px;
+		@include calendar-focus-ring(1px);
 	}
 
 	&--proposal {
@@ -846,7 +849,7 @@
 	}
 
 	&:focus-visible {
-		outline: 2px solid var(--m3-primary, #a5000a);
+		@include calendar-focus-ring(0);
 	}
 }
 
@@ -867,7 +870,7 @@
 	cursor: pointer;
 
 	&:focus-visible {
-		outline: 2px solid var(--m3-primary, #a5000a);
+		@include calendar-focus-ring(0);
 	}
 }
 
@@ -898,8 +901,7 @@
 	font-size: 14px;
 
 	&:focus-visible {
-		outline: 2px solid var(--m3-primary, #a5000a);
-		outline-offset: 0;
+		@include calendar-focus-ring(0);
 	}
 }
 
@@ -942,7 +944,7 @@
 	}
 
 	&:focus-visible {
-		outline: 2px solid var(--m3-primary, #a5000a);
+		@include calendar-focus-ring(0);
 	}
 }
 
@@ -1006,7 +1008,7 @@
 	}
 
 	&:focus-visible {
-		outline: 2px solid var(--m3-primary, #a5000a);
+		@include calendar-focus-ring(0);
 	}
 }
 
@@ -1047,7 +1049,7 @@
 	}
 
 	&:focus-visible {
-		outline: 2px solid var(--m3-primary, #a5000a);
+		@include calendar-focus-ring(0);
 	}
 }
 
@@ -1082,8 +1084,7 @@
 	}
 
 	&:focus-visible {
-		outline: 2px solid var(--m3-primary, #a5000a);
-		outline-offset: 2px;
+		@include calendar-focus-ring(2px);
 	}
 }
 
@@ -1132,7 +1133,7 @@
 	}
 
 	&:focus-visible {
-		outline: 2px solid var(--m3-primary, #a5000a);
+		@include calendar-focus-ring(0);
 		border-radius: 12px;
 	}
 }
@@ -1173,8 +1174,7 @@
 	}
 
 	&:focus-visible {
-		outline: 2px solid var(--m3-primary, #a5000a);
-		outline-offset: 2px;
+		@include calendar-focus-ring(2px);
 	}
 
 	&[aria-pressed='true'] {
@@ -1291,8 +1291,7 @@
 	}
 
 	&:focus-visible {
-		outline: 2px solid var(--m3-primary, #a5000a);
-		outline-offset: -4px;
+		@include calendar-focus-ring(-4px);
 		border-radius: 24px 24px 0 0;
 	}
 }
@@ -1336,8 +1335,7 @@
 	}
 
 	&:focus-visible {
-		outline: 2px solid var(--m3-primary, #a5000a);
-		outline-offset: 2px;
+		@include calendar-focus-ring(2px);
 	}
 
 	@media (prefers-reduced-motion: reduce) {
@@ -1384,8 +1382,7 @@
 	}
 
 	&:focus-visible {
-		outline: 2px solid var(--m3-primary, #a5000a);
-		outline-offset: 2px;
+		@include calendar-focus-ring(2px);
 	}
 }
 
@@ -1423,7 +1420,7 @@
 	}
 
 	&:focus-visible {
-		outline: 2px solid var(--m3-primary, #a5000a);
+		@include calendar-focus-ring(0);
 	}
 }
 
@@ -1464,8 +1461,7 @@
 	}
 
 	&:focus-visible {
-		outline: 2px solid var(--m3-primary, #a5000a);
-		outline-offset: -2px;
+		@include calendar-focus-ring(-2px);
 	}
 }
 
@@ -1523,7 +1519,7 @@
 	}
 
 	&:focus-visible {
-		outline: 2px solid var(--m3-primary, #a5000a);
+		@include calendar-focus-ring(0);
 	}
 }
 
@@ -1592,7 +1588,7 @@
 	}
 
 	&:focus-visible {
-		outline: 2px solid var(--m3-primary, #a5000a);
+		@include calendar-focus-ring(0);
 	}
 }
 
@@ -1933,8 +1929,7 @@
 	}
 
 	&:focus-visible {
-		outline: 2px solid var(--m3-primary, #a5000a);
-		outline-offset: 0;
+		@include calendar-focus-ring(0);
 	}
 }
 
@@ -1961,6 +1956,20 @@
 		var(--m3-surface-container-lowest, #ffffff) 72%,
 		transparent
 	);
+}
+
+// The conversation lookup failed: say so above the grid, with a retry.
+.calendarPage__banner {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px 16px;
+	margin-bottom: 12px;
+	padding: 8px 12px 8px 16px;
+	border-radius: 12px;
+	background: var(--m3-error-container, #ffdad6);
+	color: var(--m3-on-error-container, #410002);
 }
 
 .calendarPage__retry {

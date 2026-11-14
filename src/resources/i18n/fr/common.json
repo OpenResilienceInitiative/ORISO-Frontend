@@ -7031,12 +7031,14 @@
 			"repeat": "Répéter le",
 			"until": "Jusqu’au (inclus)",
 			"save": "Bloquer",
+			"tooMany": "Trop de répétitions : {{max}} plages bloquées au maximum à la fois. Choisissez un dernier jour plus proche.",
 			"count": "{{count}} plages bloquées seront ajoutées.",
 			"count_one": "{{count}} plage bloquée sera ajoutée.",
 			"conflicts": "En conflit avec {{count}} rendez-vous.",
 			"conflicts_one": "En conflit avec {{count}} rendez-vous.",
 			"created": "{{count}} plages bloquées ajoutées",
-			"created_one": "Plage bloquée ajoutée : {{date}}"
+			"created_one": "{{count}} plage bloquée ajoutée",
+			"createdSingle": "Plage bloquée ajoutée : {{date}}"
 		},
 		"saveFailed": "Cela n’a pas fonctionné. Veuillez réessayer.",
 		"blockerRemoved": "Plage bloquée supprimée.",
@@ -7270,6 +7272,7 @@
 			"half": "Ouvrir la liste en entier",
 			"keys": "Entrée change la hauteur ; les flèches ouvrent ou replient la liste. On peut aussi glisser.",
 			"open": "Ouvrir la liste"
-		}
+		},
+		"conversationsFailed": "Les conversations n’ont pas pu être chargées : les rendez-vous ne peuvent pas y être associés."
 	}
 }

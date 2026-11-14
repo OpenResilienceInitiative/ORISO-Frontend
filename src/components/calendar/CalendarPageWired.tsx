@@ -88,7 +88,7 @@ import {
 } from './calendarWorkingHours';
 import type { HolidayRegion } from './calendarHolidays';
 
-/** How many own conversations the create dialog offers. */
+/** Page size of the conversation lookup; every page is loaded. */
 const CONVERSATION_LOOKUP_COUNT = 100;
 
 /**
@@ -150,6 +150,7 @@ export const CalendarPageWired = () => {
 	const [visibility, setVisibility] =
 		useState<CalendarVisibility>(DEFAULT_VISIBILITY);
 	const [conversations, setConversations] = useState<ConversationRef[]>([]);
+	const [conversationsFailed, setConversationsFailed] = useState(false);
 	const [sync, setSync] = useState<CalendarSyncDTO>();
 	const [plan, setPlan] = useState<WorkingPlan>();
 	/** The saved schedule has loaded: until then it cannot be edited. */
@@ -165,22 +166,32 @@ export const CalendarPageWired = () => {
 	const range = useRef<{ from: Date; to: Date } | undefined>(undefined);
 	const shown = useRef<string[]>([]);
 	const request = useRef(0);
+	// Per colleague: only the latest request may write their entries.
+	const colleagueRequest = useRef<Record<string, number>>({});
+	const conversationRequest = useRef(0);
 
 	const loadColleague = useCallback((id: string) => {
 		const window = range.current;
 		if (!window) return Promise.resolve();
+		const generation = (colleagueRequest.current[id] ?? 0) + 1;
+		colleagueRequest.current[id] = generation;
+		const latest = () => colleagueRequest.current[id] === generation;
 		return apiGetColleagueCalendarEntries(id, window.from, window.to).then(
-			(list) =>
+			(list) => {
+				if (!latest()) return;
 				setColleagueEntries((all) => ({
 					...all,
 					[id]: list.map(entryFromApi)
-				})),
+				}));
+			},
 			// A colleague who left the Träger's reach: show nothing for them.
-			() =>
+			() => {
+				if (!latest()) return;
 				setColleagueEntries((all) => ({
 					...all,
 					[id]: []
-				}))
+				}));
+			}
 		);
 	}, []);
 
@@ -232,6 +243,49 @@ export const CalendarPageWired = () => {
 
 	useEffect(() => onAppointmentsChanged(load), [load]);
 
+	/**
+	 * The conversations appointments belong to: every page of the
+	 * counsellor's sessions (the first page shows at once), so an
+	 * appointment always finds its room. A failure is shown with a retry.
+	 */
+	const loadConversations = useCallback(() => {
+		const generation = ++conversationRequest.current;
+		const latest = () => generation === conversationRequest.current;
+		setConversationsFailed(false);
+		const page = (offset: number) =>
+			consultant
+				? apiGetConsultantSessionList({
+						type: SESSION_LIST_TYPES.MY_SESSION,
+						count: CONVERSATION_LOOKUP_COUNT,
+						offset
+					})
+				: apiGetAskerSessionList();
+		const from = (offset: number, found: ConversationRef[]): Promise<void> =>
+			page(offset).then((list) => {
+				if (!latest()) return undefined;
+				const sessions = list?.sessions ?? [];
+				const all = [...found, ...toConversations(sessions)];
+				setConversations(all);
+				const received = offset + sessions.length;
+				return consultant &&
+					sessions.length > 0 &&
+					received < (list?.total ?? 0)
+					? from(received, all)
+					: undefined;
+			});
+		from(0, []).catch(() => {
+			if (latest()) setConversationsFailed(true);
+		});
+	}, [consultant]);
+
+	useEffect(() => {
+		loadConversations();
+		return () => {
+			// Unmounted: later pages and failures are dropped.
+			conversationRequest.current += 1;
+		};
+	}, [loadConversations]);
+
 	useEffect(() => {
 		let cancelled = false;
 		if (consultant) {
@@ -260,22 +314,6 @@ export const CalendarPageWired = () => {
 					if (planEdits.current === edits) setPlan(loaded);
 					setPlanLoaded(true);
 				},
-				() => undefined
-			);
-			apiGetConsultantSessionList({
-				type: SESSION_LIST_TYPES.MY_SESSION,
-				count: CONVERSATION_LOOKUP_COUNT
-			}).then(
-				(list) =>
-					!cancelled &&
-					setConversations(toConversations(list?.sessions)),
-				() => undefined
-			);
-		} else {
-			apiGetAskerSessionList().then(
-				(list) =>
-					!cancelled &&
-					setConversations(toConversations(list?.sessions)),
 				() => undefined
 			);
 		}
@@ -489,8 +527,23 @@ export const CalendarPageWired = () => {
 
 	const showColleagues = (ids: string[]) => {
 		const added = ids.filter((id) => !shown.current.includes(id));
+		// A colleague switched off: a request still running for them is stale.
+		shown.current
+			.filter((id) => !ids.includes(id))
+			.forEach((id) => {
+				colleagueRequest.current[id] =
+					(colleagueRequest.current[id] ?? 0) + 1;
+			});
 		shown.current = ids;
 		added.forEach((id) => loadColleague(id));
+	};
+
+	/**
+	 * A changed import changes the busy entries: reload the loaded window,
+	 * so removed busy times stop counting as busy.
+	 */
+	const reloadEntries = () => {
+		if (range.current) load();
 	};
 
 	// CalendarPage shows only the colleagues switched on.
@@ -517,9 +570,12 @@ export const CalendarPageWired = () => {
 			holidayRegion={consultant ? (plan?.holidayRegion ?? null) : null}
 			onRangeChange={changeRange}
 			onShownColleaguesChange={showColleagues}
+			conversationsFailed={conversationsFailed}
+			onRetryConversations={loadConversations}
 			onRetry={() => {
 				setState('loading');
 				load();
+				if (conversationsFailed) loadConversations();
 			}}
 			onCreate={consultant ? create : undefined}
 			onMove={consultant ? move : undefined}
@@ -531,22 +587,29 @@ export const CalendarPageWired = () => {
 			onStart={start}
 			onOpenChat={start}
 			onCopyFeed={(url) => navigator.clipboard?.writeText(url)}
-			onResetFeed={() =>
-				apiResetCalendarFeed().then(setSync, () => undefined)
-			}
+			// Each sync action rejects on failure, so the dialog can say so.
+			onResetFeed={() => apiResetCalendarFeed().then(setSync)}
 			onSaveImport={(url) =>
 				apiSaveCalendarImport(normalizeImportUrl(url)).then(
-					setSync,
-					() =>
+					(dto) => {
+						setSync(dto);
+						reloadEntries();
+					},
+					(error) => {
 						setSync((current) =>
 							current
 								? { ...current, importError: 'INVALID_URL' }
 								: current
-						)
+						);
+						throw error;
+					}
 				)
 			}
 			onRemoveImport={() =>
-				apiRemoveCalendarImport().then(setSync, () => undefined)
+				apiRemoveCalendarImport().then((dto) => {
+					setSync(dto);
+					reloadEntries();
+				})
 			}
 		/>
 	);

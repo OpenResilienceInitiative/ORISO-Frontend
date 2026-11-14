@@ -28,15 +28,22 @@ import listPlugin from '@fullcalendar/react/list';
 import interactionPlugin from '@fullcalendar/react/interaction';
 import deLocale from '@fullcalendar/react/locales/de';
 import { Popper } from '@mui/material';
+import enGbLocale from '@fullcalendar/react/locales/en-gb';
+import frLocale from '@fullcalendar/react/locales/fr';
+import ruLocale from '@fullcalendar/react/locales/ru';
+import trLocale from '@fullcalendar/react/locales/tr';
 import '@fullcalendar/react/skeleton.css';
 import '@fullcalendar/react/themes/classic/theme.css';
 import './fullCalendarGuards';
 import {
 	isMovable,
 	isSoon,
+	settleMove,
+	visibleHours,
 	type CalendarEntry,
 	type CalendarRole,
-	type Colleague
+	type Colleague,
+	type MoveResult
 } from './calendarModel';
 import { CalendarEntryGlyph, facetOf } from './CalendarEntryGlyph';
 import type { MoveProposal } from './calendarActions';
@@ -60,6 +67,7 @@ import {
 } from './calendarViews';
 import { useEntryLabel, useRangeFormat } from './useEntryLabel';
 import { CalendarEntryPeek, initialsOf } from './CalendarEntryPeek';
+import { fullCalendarLocale } from './calendarLocale';
 import './calendar.styles.scss';
 
 export type GridViewName = Exclude<CalendarViewName, 'split'>;
@@ -72,7 +80,7 @@ const PLUGINS = [
 	listPlugin,
 	interactionPlugin
 ];
-const LOCALES = [deLocale];
+const LOCALES = [deLocale, enGbLocale, frLocale, ruLocale, trLocale];
 
 /** A click waits this long for a second one before it opens the menu. */
 const DOUBLE_CLICK_MS = 230;
@@ -133,8 +141,11 @@ export interface CalendarViewProps {
 		mode: 'list' | 'move'
 	) => void;
 	onProposalOpen?: (proposal: MoveProposal, anchor: MenuAnchor) => void;
-	/** An own entry was dragged to a new time. */
-	onEntryMove?: (entry: CalendarEntry, start: Date, end: Date) => void;
+	/**
+	 * An own entry was dragged to a new time. Return false, or a promise
+	 * that rejects or resolves to false, to put it back.
+	 */
+	onEntryMove?: (entry: CalendarEntry, start: Date, end: Date) => MoveResult;
 	/** The visible range changed (first render, paging, view switch). */
 	onDatesSet?: (title: string, start: Date, end: Date) => void;
 	/** An entry is being dragged: the page pages at the edges. */
@@ -150,11 +161,30 @@ interface EventProps {
 	holiday?: PublicHoliday;
 }
 
-/** Shown hours of the time grid; the grips measure against them. */
-const SLOT_MIN = '07:00:00';
-const SLOT_MAX = '21:00:00';
-const FIRST_MINUTE = 7 * 60;
-const LAST_MINUTE = 21 * 60;
+/** The usual working day the time grid shows, before any widening. */
+const DAY_FROM = 7 * 60;
+const DAY_TO = 21 * 60;
+
+/**
+ * Earliest start and latest end of the working plan, on the full hour:
+ * the grid widens to them, so a grip always sits at its own time and
+ * never at a cut-off edge of the grid (review 4574981882).
+ */
+const planBounds = (plan?: WorkingPlan) => {
+	const windows = [
+		...(plan?.hours ?? []),
+		...Object.values(plan?.exceptions ?? {}).flat()
+	];
+	return windows.reduce(
+		(bounds, w) => ({
+			from: Math.min(bounds.from, Math.floor(minutesOf(w.start) / 60) * 60),
+			to: Math.max(bounds.to, Math.ceil(minutesOf(w.end) / 60) * 60)
+		}),
+		{ from: DAY_FROM, to: DAY_TO }
+	);
+};
+/** "HH:MM:00" as minutes since midnight; "24:00:00" is 1440. */
+const slotMinutes = (slot: string) => minutesOf(slot.slice(0, 5));
 const TIME_GRID_VIEWS: GridViewName[] = [
 	'day',
 	'threeDays',
@@ -177,8 +207,8 @@ const atMinutes = (day: Date, minutes: number) =>
 	);
 
 /** Where a grip at HH:mm sits in its day column. */
-const gripTop = (time: string) =>
-	`${(Math.min(LAST_MINUTE, Math.max(FIRST_MINUTE, minutesOf(time))) - FIRST_MINUTE) / ((LAST_MINUTE - FIRST_MINUTE) / 100)}%`;
+const gripTop = (time: string, first: number, last: number) =>
+	`${(Math.min(last, Math.max(first, minutesOf(time))) - first) / ((last - first) / 100)}%`;
 
 /** YYYY-MM-DD as the local midnight. */
 const dayOfKey = (key: string) => {
@@ -187,7 +217,9 @@ const dayOfKey = (key: string) => {
 };
 
 /** The day column a grip sits in (FullCalendar's time-grid cell). */
-const measureColumn = (grip: HTMLElement): GripGeometry | null => {
+const measureColumn =
+	(firstMinute: number, lastMinute: number) =>
+	(grip: HTMLElement): GripGeometry | null => {
 	const column = grip.closest<HTMLElement>('[role="cell"][data-date]');
 	if (!column) return null;
 	const rect = column.getBoundingClientRect();
@@ -196,8 +228,8 @@ const measureColumn = (grip: HTMLElement): GripGeometry | null => {
 		left: rect.left,
 		width: rect.width,
 		height: rect.height,
-		firstMinute: FIRST_MINUTE,
-		lastMinute: LAST_MINUTE
+		firstMinute,
+		lastMinute
 	};
 };
 
@@ -389,6 +421,19 @@ export const CalendarView = ({
 			observer.disconnect();
 		};
 	}, [gripsShown, shownRange, view, fontsReady]);
+
+	// The usual working day, widened so no entry and no grip falls outside
+	// the grid.
+	const hours = useMemo(() => {
+		const bounds = planBounds(workingPlan);
+		return visibleHours(entries, bounds.from, bounds.to);
+	}, [entries, workingPlan]);
+	const firstMinute = slotMinutes(hours.min);
+	const lastMinute = slotMinutes(hours.max);
+	const measure = useMemo(
+		() => measureColumn(firstMinute, lastMinute),
+		[firstMinute, lastMinute]
+	);
 
 	const events = useMemo<EventInput[]>(
 		() => [
@@ -660,7 +705,7 @@ export const CalendarView = ({
 					controller={controller}
 					plugins={PLUGINS}
 					locales={LOCALES}
-					locale={i18n.language?.startsWith('de') ? 'de' : 'en'}
+					locale={fullCalendarLocale(i18n.language)}
 					views={FC_CUSTOM_VIEWS}
 					initialView={FC_VIEW[view]}
 					initialDate={initialDate ?? now}
@@ -671,8 +716,8 @@ export const CalendarView = ({
 					nowIndicator
 					allDaySlot
 					allDayText={t('calendar.allDay')}
-					slotMinTime={SLOT_MIN}
-					slotMaxTime={SLOT_MAX}
+					slotMinTime={hours.min}
+					slotMaxTime={hours.max}
 					scrollTime="08:00:00"
 					dayMaxEvents={3}
 					backgroundEventClass={backgroundClass}
@@ -702,7 +747,10 @@ export const CalendarView = ({
 							info.revert();
 							return;
 						}
-						onEntryMove?.(entry, info.event.start, info.event.end);
+						settleMove(
+							onEntryMove?.(entry, info.event.start, info.event.end),
+							info.revert
+						);
 					}}
 				/>
 			)}
@@ -722,9 +770,11 @@ export const CalendarView = ({
 									time={time}
 									windows={edges.windows}
 									exception={edges.exception}
-									measure={measureColumn}
+									measure={measure}
 									onChange={onEdgeChange}
-									style={{ top: gripTop(time) }}
+									style={{
+										top: gripTop(time, firstMinute, lastMinute)
+									}}
 								/>
 							);
 						}),

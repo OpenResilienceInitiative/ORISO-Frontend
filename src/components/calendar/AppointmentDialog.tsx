@@ -15,8 +15,10 @@ import { OrisoSelect } from '../form/OrisoSelect';
 import { ButtonGroup } from '../buttonGroup/ButtonGroup';
 import {
 	APPOINTMENT_KINDS,
+	daySpan,
 	draftError,
 	findConflicts,
+	isWholeDays,
 	type AppointmentDraft,
 	type AppointmentKind,
 	type CalendarConversation,
@@ -61,13 +63,21 @@ export const AppointmentDialog = ({
 	const { t } = useTranslation();
 	const format = useRangeFormat();
 	const label = useEntryLabel();
-	const initial = slot
-		? dayjs(slot.start)
-		: dayjs(now).add(1, 'day').hour(10).minute(0);
+	// A month selection covers whole days: an appointment still needs its
+	// times, so the dialog asks for them. A timed slot keeps its end date
+	// (23:00 to midnight, or over night).
+	const timedSlot = slot && !isWholeDays(slot) ? slot : undefined;
+	const timed = !!timedSlot;
+	const initial = timedSlot
+		? dayjs(timedSlot.start)
+		: (slot ? dayjs(slot.start) : dayjs(now).add(1, 'day'))
+				.hour(10)
+				.minute(0);
+	const span = timedSlot ? daySpan(timedSlot.start, timedSlot.end) : 0;
 	const [day, setDay] = useState<Dayjs | null>(initial);
 	const [start, setStart] = useState<Dayjs | null>(initial);
 	const [end, setEnd] = useState<Dayjs | null>(
-		slot ? dayjs(slot.end) : initial.add(1, 'hour')
+		timedSlot ? dayjs(timedSlot.end) : initial.add(1, 'hour')
 	);
 	const [kind, setKind] = useState<AppointmentKind>(slot?.kind ?? 'video');
 	const [sessionId, setSessionId] = useState<string>(
@@ -78,7 +88,7 @@ export const AppointmentDialog = ({
 	const draft: Partial<AppointmentDraft> = {
 		type: 'appointment',
 		start: join(day, start)?.toDate(),
-		end: join(day, end)?.toDate(),
+		end: join(day ? day.add(span, 'day') : null, end)?.toDate(),
 		kind,
 		sessionId: sessionId === '' ? undefined : Number(sessionId)
 	};
@@ -110,8 +120,8 @@ export const AppointmentDialog = ({
 			data-testid="calendar-appointment-dialog"
 			title={t('calendar.create')}
 			description={
-				slot
-					? format(slot.start, slot.end)
+				timedSlot
+					? format(timedSlot.start, timedSlot.end)
 					: t('calendar.dialog.description')
 			}
 			icon={slot ? <FacetIcon facet={slot.kind} /> : undefined}
@@ -160,24 +170,26 @@ export const AppointmentDialog = ({
 						error={showError && error === 'conversation'}
 						fullWidth
 					/>
+					{!timed && (
+						<div className="calendarDialog__times">
+							<OrisoTimePicker
+								label={t('calendar.dialog.start')}
+								ampm={false}
+								value={start}
+								onChange={setStart}
+								cancelLabel={t('app.cancel')}
+							/>
+							<OrisoTimePicker
+								label={t('calendar.dialog.end')}
+								ampm={false}
+								value={end}
+								onChange={setEnd}
+								cancelLabel={t('app.cancel')}
+							/>
+						</div>
+					)}
 					{!slot && (
 						<>
-							<div className="calendarDialog__times">
-								<OrisoTimePicker
-									label={t('calendar.dialog.start')}
-									ampm={false}
-									value={start}
-									onChange={setStart}
-									cancelLabel={t('app.cancel')}
-								/>
-								<OrisoTimePicker
-									label={t('calendar.dialog.end')}
-									ampm={false}
-									value={end}
-									onChange={setEnd}
-									cancelLabel={t('app.cancel')}
-								/>
-							</div>
 							<div
 								className="calendarDialog__group"
 								role="group"
