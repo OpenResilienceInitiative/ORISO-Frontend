@@ -6,31 +6,21 @@
  * renews the invitation (the backend also posts the link into the
  * conversation), marks the requests read and shows the new link.
  */
-import * as React from 'react';
 import { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { NotificationsContext } from '../../globalState';
 import type { NotificationFeedItem } from '../../globalState/provider/NotificationsProvider';
-import {
-	apiGetOwnDirectLinks,
-	apiRenewDirectInvitation,
-	notifyDirectLinksChanged
-} from '../../api/apiDirectLinks';
-import type { DirectLink } from '../conversationCreate/directLink/directLink';
-import { DirectLinkShareDialog } from '../conversationCreate/directLink/DirectLinkShareDialog';
-import { M3Snackbar } from '../m3Snackbar/M3Snackbar';
+import { apiGetOwnDirectLinks } from '../../api/apiDirectLinks';
 import {
 	appSnackbarStack,
 	type SnackbarStack
 } from '../m3Snackbar/snackbarStack';
-import { useResponsive } from '../../hooks/useResponsive';
+import { DIRECT_INVITATION_RENEWAL_REQUESTED } from '../notificationsCenter/eventDescriptors/directInvitationEvents';
 import {
 	newLinkRequestEntry,
 	type NewLinkRequest
 } from './NewLinkRequestNotice';
-
-export const DIRECT_INVITATION_RENEWAL_REQUESTED =
-	'direct_invitation.renewal_requested';
+import { useSendNewLink } from './useSendNewLink';
 
 const linkIdOf = (item: NotificationFeedItem): string | null => {
 	const value = (item.params as Record<string, unknown> | undefined)?.linkId;
@@ -46,12 +36,11 @@ export const NewLinkRequestCenter = ({
 	stack?: SnackbarStack;
 }) => {
 	const { t } = useTranslation();
-	const { fromL } = useResponsive();
 	const notifications = useContext(NotificationsContext);
 	const feed = notifications?.notificationFeed;
 	const markRead = notifications?.markNotificationAsRead;
 	const [names, setNames] = useState<Record<string, string>>();
-	const [renewed, setRenewed] = useState<DirectLink>();
+	const { send: renew, dialog } = useSendNewLink(stack);
 	const shown = useRef(new Set<string>());
 
 	/* Unread requests by invitation; older rows of the same one go along. */
@@ -67,19 +56,33 @@ export const NewLinkRequestCenter = ({
 		return byLink;
 	}, [feed]);
 
-	/* The pop-up names the invitation; its name lives with the links. */
+	/* The pop-up names the invitation; its name lives with the links. An
+	   invitation made after the last read is read again. */
+	const unknown = useMemo(
+		() =>
+			names !== undefined &&
+			[...open.keys()].some(
+				(linkId) => !shown.current.has(linkId) && !(linkId in names)
+			),
+		[names, open]
+	);
 	useEffect(() => {
-		if (open.size === 0 || names) return;
+		if (open.size === 0 || (names && !unknown)) return;
+		let active = true;
 		apiGetOwnDirectLinks().then(
 			(links) =>
+				active &&
 				setNames(
 					Object.fromEntries(
 						links.map((link) => [link.id, link.name])
 					)
 				),
-			() => setNames({})
+			() => active && setNames((known) => known ?? {})
 		);
-	}, [names, open.size]);
+		return () => {
+			active = false;
+		};
+	}, [names, open.size, unknown]);
 
 	const openRef = useRef(open);
 	openRef.current = open;
@@ -87,32 +90,17 @@ export const NewLinkRequestCenter = ({
 	useEffect(() => {
 		if (!names) return;
 		const send = async ({ invitationId }: NewLinkRequest) => {
-			try {
-				const link = await apiRenewDirectInvitation(invitationId);
+			if (await renew(invitationId)) {
 				(openRef.current.get(invitationId) ?? []).forEach((id) =>
 					markRead?.(id)
 				);
-				notifyDirectLinksChanged();
-				setRenewed(link);
-			} catch {
-				stack.enqueue({
-					id: `new-link-failed-${invitationId}`,
-					announcement: t('directInvitation.notice.failed'),
-					dismissible: true,
-					render: ({ dismiss }) => (
-						<M3Snackbar
-							placement="inline"
-							role="alert"
-							message={t('directInvitation.notice.failed')}
-							onClose={dismiss}
-							closeLabel={t('app.close')}
-						/>
-					)
-				});
 			}
 		};
 		open.forEach((_ids, linkId) => {
 			if (shown.current.has(linkId)) return;
+			/* Wait for a read that knows this invitation; a failed read
+			   shows it without a name rather than not at all. */
+			if (!(linkId in names) && unknown) return;
 			shown.current.add(linkId);
 			stack.enqueue(
 				newLinkRequestEntry(
@@ -125,14 +113,7 @@ export const NewLinkRequestCenter = ({
 				)
 			);
 		});
-	}, [markRead, names, open, stack, t]);
+	}, [markRead, names, open, renew, stack, t, unknown]);
 
-	return renewed ? (
-		<DirectLinkShareDialog
-			open
-			link={renewed}
-			fullScreen={!fromL}
-			onClose={() => setRenewed(undefined)}
-		/>
-	) : null;
+	return dialog;
 };

@@ -20,9 +20,12 @@ import {
 import { UserDataContext } from '../../globalState';
 import {
 	apiGetOwnDirectLinks,
+	apiRenewDirectInvitation,
 	apiUpdateDirectLink,
 	notifyDirectLinksChanged
 } from '../../api/apiDirectLinks';
+import { M3SnackbarHost } from '../m3Snackbar/M3SnackbarHost';
+import { appSnackbarStack } from '../m3Snackbar/snackbarStack';
 import { apiGetTenantAgenciesTopics } from '../../api/apiGetTenantAgenciesTopics';
 import { apiGetUpcomingAppointments } from '../../api/apiSessionAppointments';
 import { DirectLink } from '../conversationCreate/directLink/directLink';
@@ -47,7 +50,8 @@ vi.mock('qrcode', () => ({
 vi.mock('../../api/apiDirectLinks', async (importOriginal) => ({
 	...(await importOriginal<typeof import('../../api/apiDirectLinks')>()),
 	apiGetOwnDirectLinks: vi.fn(),
-	apiUpdateDirectLink: vi.fn()
+	apiUpdateDirectLink: vi.fn(),
+	apiRenewDirectInvitation: vi.fn()
 }));
 /* The dial and calendar have their own tests: here they only show a value. */
 vi.mock('../form/OrisoDatePicker', () => ({
@@ -85,6 +89,7 @@ const renderPage = () =>
 			value={{ userData: { agencies: [] }, setUserData: vi.fn() } as any}
 		>
 			<MyDirectLinksPage />
+			<M3SnackbarHost />
 		</UserDataContext.Provider>
 	);
 
@@ -100,6 +105,7 @@ beforeEach(() => {
 afterEach(() => {
 	cleanup();
 	vi.clearAllMocks();
+	appSnackbarStack.clear();
 });
 
 describe('My direct links (#1894)', () => {
@@ -180,9 +186,14 @@ describe('My direct links (#1894)', () => {
 
 		fireEvent.click(within(tile).getByRole('switch'));
 
+		/* #2252: a titled pop-up, not a box in the page. */
+		const text = await screen.findByText('directLink.page.toggleFailed');
 		expect(
-			await screen.findByText('directLink.page.toggleFailed')
+			screen.getByText('directLink.page.toggleFailedTitle')
 		).toBeTruthy();
+		expect(screen.getByTestId('my-direct-links-page').contains(text)).toBe(
+			false
+		);
 		expect(tile.className).not.toContain('directLinkTile--off');
 	});
 
@@ -424,6 +435,39 @@ describe('Termine & Direkteinladungen (#2252)', () => {
 		).toBeTruthy();
 		expect(screen.getByText('Flyer Schule').closest('li')).not.toBe(row);
 		expect(screen.getAllByTestId('upcoming-invitation')).toHaveLength(1);
+	});
+
+	it('lists an expired invitation with "Neuen Link senden", which renews it', async () => {
+		const past = (hour: number) => {
+			const date = new Date();
+			date.setDate(date.getDate() - 3);
+			date.setHours(hour, 0, 0, 0);
+			return date.toISOString();
+		};
+		const expired: DirectLink = {
+			...meeting,
+			appointment: { id: 'a-9', start: past(10), end: past(11) },
+			expired: true
+		};
+		vi.mocked(apiGetOwnDirectLinks).mockResolvedValue([expired]);
+		vi.mocked(apiRenewDirectInvitation).mockResolvedValue({
+			...meeting,
+			url: 'https://app.example/invite/new'
+		});
+		renderPage();
+
+		const row = await screen.findByTestId('expired-invitation');
+		expect(within(row).getByText('Termin Frau M.')).toBeTruthy();
+		fireEvent.click(
+			within(row).getByRole('button', {
+				name: 'directInvitation.overview.sendNewLink:Termin Frau M.'
+			})
+		);
+
+		expect(
+			await screen.findByTestId('direct-link-share-dialog')
+		).toBeTruthy();
+		expect(apiRenewDirectInvitation).toHaveBeenCalledWith('9');
 	});
 
 	it('adds the 1:1 appointments, once each, with the person they are with', async () => {

@@ -141,6 +141,33 @@ describe('NewLinkRequestCenter', () => {
 			(await screen.findAllByText('directInvitation.notice.failed'))
 				.length
 		).toBeGreaterThan(0);
+		/* Every pop-up has a title. */
+		expect(
+			screen.getByText('directInvitation.notice.failedTitle')
+		).toBeTruthy();
 		expect(markNotificationAsRead).not.toHaveBeenCalled();
+	});
+
+	it('reads the names again for an invitation made after the first read', async () => {
+		const later = { ...meeting, id: '12', name: 'Termin Herr K.' };
+		const { rerender, stack } = renderCenter([request('1', 9)]);
+		await screen.findByText('directInvitation.notice.text:Termin Frau M.');
+		vi.mocked(apiGetOwnDirectLinks).mockResolvedValue([meeting, later]);
+		const value = {
+			notificationFeed: [request('1', 9), request('2', 12)],
+			markNotificationAsRead
+		} as any;
+		rerender(
+			<NotificationsContext.Provider value={value}>
+				<NewLinkRequestCenter stack={stack} />
+				<M3SnackbarHost stack={stack} />
+			</NotificationsContext.Provider>
+		);
+
+		expect(
+			await screen.findByText(
+				'directInvitation.notice.text:Termin Herr K.'
+			)
+		).toBeTruthy();
 	});
 });

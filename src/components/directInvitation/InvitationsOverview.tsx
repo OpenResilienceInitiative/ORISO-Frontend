@@ -2,8 +2,9 @@
  * "Termine & Direkteinladungen" (#2252, decision 13): one page, two sections.
  * Upcoming appointments by date, each with link, QR, access and knock; below
  * them the invitations without appointment as today's tiles. Designed states
- * for nothing at all and for a single section with content.
- * Presentational: data and actions come from the caller (checkpoint 4).
+ * for nothing at all and for a single section with content. Expired
+ * invitations stand in a section of their own with "Neuen Link senden".
+ * Presentational: data and actions come from the caller.
  */
 import * as React from 'react';
 import { useEffect, useState } from 'react';
@@ -14,7 +15,8 @@ import ContentCopyOutlinedIcon from '@mui/icons-material/ContentCopyOutlined';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import EventOutlinedIcon from '@mui/icons-material/EventOutlined';
 import QrCode2OutlinedIcon from '@mui/icons-material/QrCode2Outlined';
-import { CircularProgress } from '@mui/material';
+import AddLinkOutlinedIcon from '@mui/icons-material/AddLinkOutlined';
+import { Button, CircularProgress, IconButton } from '@mui/material';
 import { ReactComponent as WaitingIllustration } from '../../resources/img/illustrations/chat-waiting.svg';
 import { copyTextToClipboard } from '../../utils/clipboardHelpers';
 import { MyDirectLinks } from '../conversationCreate/directLink/MyDirectLinks';
@@ -24,6 +26,11 @@ import type {
 	DirectLinkMedium
 } from '../conversationCreate/directLink/directLink';
 import type { DirectLinksLoadState } from '../directLinks/useMyDirectLinks';
+import {
+	appSnackbarStack,
+	type SnackbarStack
+} from '../m3Snackbar/snackbarStack';
+import { invitationErrorEntry } from './invitationErrorSnackbar';
 import {
 	groupUpcomingByDay,
 	type InvitationAccess,
@@ -53,6 +60,13 @@ export interface UpcomingInvitation extends InvitationSlot {
 export interface InvitationsOverviewProps {
 	state: DirectLinksLoadState;
 	appointments: UpcomingInvitation[];
+	/** Invitations whose validity ran out, for "Neuen Link senden". */
+	expired?: UpcomingInvitation[];
+	onSendNewLink?: (invitation: UpcomingInvitation) => void;
+	/** The invitation whose new link is being made. */
+	sendingId?: string;
+	/** Defaults to the app-wide stack; stories pass their own. */
+	stack?: SnackbarStack;
 	/** Invitations without appointment: today's tiles. */
 	links: DirectLink[];
 	/** Defaults to the current time; stories pin it. */
@@ -71,15 +85,15 @@ export interface InvitationsOverviewProps {
 const CreateButton = ({ onCreate }: { onCreate: () => void }) => {
 	const { t } = useTranslation();
 	return (
-		<button
-			type="button"
-			className="invitationsOverview__create"
+		<Button
+			variant="contained"
+			startIcon={<AddIcon aria-hidden />}
 			onClick={onCreate}
 			data-testid="invitations-create"
+			sx={{ textTransform: 'none' }}
 		>
-			<AddIcon aria-hidden />
 			{t(`${KEYS}.create`)}
-		</button>
+		</Button>
 	);
 };
 
@@ -92,22 +106,37 @@ const AppointmentRow = ({
 	copied,
 	onCopy,
 	onShowQr,
-	onEdit
+	onEdit,
+	onSendNewLink,
+	sending = false,
+	withDate = false,
+	testId = 'upcoming-invitation'
 }: {
 	item: UpcomingInvitation;
 	locale: string;
-	copied: boolean;
-	onCopy: () => void;
-	onShowQr: () => void;
+	copied?: boolean;
+	onCopy?: () => void;
+	onShowQr?: () => void;
 	onEdit?: () => void;
+	/** An expired invitation: its one action. */
+	onSendNewLink?: () => void;
+	sending?: boolean;
+	/** Outside the day groups the row names its day. */
+	withDate?: boolean;
+	testId?: string;
 }) => {
 	const { t } = useTranslation();
 	return (
-		<li className="invitationRow" data-testid="upcoming-invitation">
+		<li className="invitationRow" data-testid={testId}>
 			<time
 				className="invitationRow__time"
 				dateTime={item.start.toISOString()}
 			>
+				{withDate &&
+					`${item.start.toLocaleDateString(locale, {
+						day: 'numeric',
+						month: 'short'
+					})}, `}
 				{t(`${KEYS}.time`, {
 					start: time(item.start, locale),
 					end: time(item.end, locale)
@@ -156,11 +185,24 @@ const AppointmentRow = ({
 				)}
 			</div>
 			<div className="invitationRow__actions">
-				{item.url && (
+				{onSendNewLink && (
+					<Button
+						variant="outlined"
+						size="small"
+						startIcon={<AddLinkOutlinedIcon aria-hidden />}
+						aria-label={t(`${KEYS}.sendNewLink`, {
+							name: item.name
+						})}
+						disabled={sending}
+						onClick={onSendNewLink}
+						sx={{ textTransform: 'none' }}
+					>
+						{t('directInvitation.notice.send')}
+					</Button>
+				)}
+				{item.url && onCopy && onShowQr && (
 					<>
-						<button
-							type="button"
-							className="myDirectLinks__iconButton"
+						<IconButton
 							aria-label={t(`${KEYS}.copy`, { name: item.name })}
 							title={t('directLink.copy')}
 							onClick={onCopy}
@@ -170,28 +212,24 @@ const AppointmentRow = ({
 							) : (
 								<ContentCopyOutlinedIcon aria-hidden />
 							)}
-						</button>
-						<button
-							type="button"
-							className="myDirectLinks__iconButton"
+						</IconButton>
+						<IconButton
 							aria-label={t(`${KEYS}.qr`, { name: item.name })}
 							title={t('directLink.list.qr')}
 							onClick={onShowQr}
 						>
 							<QrCode2OutlinedIcon aria-hidden />
-						</button>
+						</IconButton>
 					</>
 				)}
 				{onEdit && (
-					<button
-						type="button"
-						className="myDirectLinks__iconButton"
+					<IconButton
 						aria-label={t(`${KEYS}.edit`, { name: item.name })}
 						title={t(`${KEYS}.edit`, { name: item.name })}
 						onClick={onEdit}
 					>
 						<EditOutlinedIcon aria-hidden />
-					</button>
+					</IconButton>
 				)}
 			</div>
 		</li>
@@ -206,6 +244,10 @@ const SectionEmpty = ({ text }: { text: string }) => (
 export const InvitationsOverview = ({
 	state,
 	appointments,
+	expired = [],
+	onSendNewLink,
+	sendingId,
+	stack = appSnackbarStack,
 	links,
 	now = new Date(),
 	onCreate,
@@ -221,7 +263,6 @@ export const InvitationsOverview = ({
 	const { t, i18n } = useTranslation();
 	const locale = i18n?.language || 'de';
 	const [copiedId, setCopiedId] = useState<string>();
-	const [copyFailed, setCopyFailed] = useState(false);
 
 	useEffect(() => {
 		if (!copiedId) return undefined;
@@ -233,7 +274,8 @@ export const InvitationsOverview = ({
 	}, [copiedId]);
 
 	const groups = groupUpcomingByDay(appointments, now);
-	const nothing = groups.length === 0 && links.length === 0;
+	const nothing =
+		groups.length === 0 && links.length === 0 && expired.length === 0;
 
 	const header = (
 		<header className="invitationsOverview__header">
@@ -264,13 +306,13 @@ export const InvitationsOverview = ({
 				{header}
 				<div className="invitationsOverview__status" role="alert">
 					<p>{t('directLink.page.loadFailed')}</p>
-					<button
-						type="button"
-						className="invitationsOverview__retry"
+					<Button
+						variant="outlined"
 						onClick={onRetry}
+						sx={{ textTransform: 'none' }}
 					>
 						{t('directLink.page.retry')}
-					</button>
+					</Button>
 				</div>
 			</div>
 		);
@@ -304,11 +346,17 @@ export const InvitationsOverview = ({
 		if (!item.url) return;
 		try {
 			await onCopy(item.url);
-			setCopyFailed(false);
 			setCopiedId(item.id);
 		} catch {
 			setCopiedId(undefined);
-			setCopyFailed(true);
+			stack.enqueue(
+				invitationErrorEntry({
+					id: 'invitation-copy-failed',
+					title: t(`${KEYS}.copyFailedTitle`),
+					text: t(`${KEYS}.copyFailed`),
+					t
+				})
+			);
 		}
 	};
 
@@ -331,11 +379,6 @@ export const InvitationsOverview = ({
 						{t(`${KEYS}.upcoming`)}
 					</h2>
 				</header>
-				{copyFailed && (
-					<p role="alert" className="directLinkCopyError">
-						{t(`${KEYS}.copyFailed`)}
-					</p>
-				)}
 				{groups.length === 0 ? (
 					<SectionEmpty text={t(`${KEYS}.noUpcoming`)} />
 				) : (
@@ -380,6 +423,42 @@ export const InvitationsOverview = ({
 					))
 				)}
 			</section>
+			{expired.length > 0 && (
+				<section
+					className="invitationsOverview__section"
+					aria-labelledby="invitationsExpiredTitle"
+				>
+					<header className="myDirectLinks__header">
+						<AddLinkOutlinedIcon
+							aria-hidden
+							className="myDirectLinks__headerIcon"
+						/>
+						<h2
+							id="invitationsExpiredTitle"
+							className="myDirectLinks__title"
+						>
+							{t(`${KEYS}.expired`)}
+						</h2>
+					</header>
+					<ul className="invitationsOverview__rows">
+						{expired.map((item) => (
+							<AppointmentRow
+								key={item.id}
+								item={item}
+								locale={locale}
+								withDate
+								testId="expired-invitation"
+								sending={sendingId === item.id}
+								onSendNewLink={
+									onSendNewLink
+										? () => onSendNewLink(item)
+										: undefined
+								}
+							/>
+						))}
+					</ul>
+				</section>
+			)}
 			<div className="invitationsOverview__section">
 				<MyDirectLinks
 					title={t(`${KEYS}.withoutAppointment`)}

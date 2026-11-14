@@ -1,6 +1,6 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
-import { expect, fn, within } from 'storybook/test';
+import { expect, fn, userEvent, within } from 'storybook/test';
 import type { DirectLink } from '../conversationCreate/directLink/directLink';
 import {
 	desktop1440Globals,
@@ -46,6 +46,20 @@ const APPOINTMENTS: UpcomingInvitation[] = [
 		medium: 'AUDIO',
 		access: 'guests',
 		knock: false
+	}
+];
+
+/* #2252: validity ran out; the counsellor sends a new link from here. */
+const EXPIRED: UpcomingInvitation[] = [
+	{
+		id: 'e1',
+		name: 'Termin Frau S.',
+		start: at(18, 9),
+		end: at(18, 10),
+		expiresAt: at(19, 10),
+		medium: 'VIDEO',
+		access: 'both',
+		knock: true
 	}
 ];
 
@@ -98,7 +112,8 @@ const meta = {
 		onToggle: fn(),
 		onShowQr: fn(),
 		onEdit: fn(),
-		onCopy: fn()
+		onCopy: fn(),
+		onSendNewLink: fn()
 	},
 	render: (args) => (
 		<div style={{ height: '100vh' }}>
@@ -135,6 +150,27 @@ export const FullDark: Story = {
 export const FullEnglish: Story = {
 	name: 'Full · en · 390',
 	globals: { ...phone390Globals, locale: 'en' }
+};
+
+/** An expired invitation, with "Neuen Link senden". */
+export const WithExpired: Story = {
+	name: 'With expired invitation · 1440',
+	globals: desktop1440Globals,
+	args: { expired: EXPIRED },
+	play: async ({ args }) => {
+		await userEvent.click(
+			body().getByRole('button', {
+				name: 'Neuen Link senden für Termin Frau S.'
+			})
+		);
+		await expect(args.onSendNewLink).toHaveBeenCalled();
+	}
+};
+
+export const WithExpiredPhone: Story = {
+	name: 'With expired invitation · 390',
+	globals: phone390Globals,
+	args: { expired: EXPIRED }
 };
 
 /** One appointment and no other invitation: each section still reads finished. */

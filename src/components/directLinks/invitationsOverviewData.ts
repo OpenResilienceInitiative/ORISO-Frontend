@@ -2,7 +2,8 @@
  * #2252 "Termine & Direkteinladungen": the counsellor's direct links and
  * 1:1 appointments as the overview's two sections. An invitation with an
  * appointment is listed by its date; a 1:1 appointment that already has an
- * invitation appears once, with the invitation's link.
+ * invitation appears once, with the invitation's link. An expired invitation
+ * is listed on its own, for "Neuen Link senden".
  */
 import type { SessionAppointment } from '../../api/apiSessionAppointments';
 import type { DirectLink } from '../conversationCreate/directLink/directLink';
@@ -31,9 +32,16 @@ export const overviewSections = (
 	links: readonly DirectLink[],
 	sessionAppointments: readonly SessionAppointment[],
 	appointmentName: string
-): { appointments: UpcomingInvitation[]; links: DirectLink[] } => {
-	const withDate = links.filter((link) => link.appointment);
-	const bound = new Set(withDate.map((link) => link.appointment!.id));
+): {
+	appointments: UpcomingInvitation[];
+	expired: UpcomingInvitation[];
+	links: DirectLink[];
+} => {
+	const withDate = links.filter((link) => link.appointment && !link.expired);
+	const expired = links.filter((link) => link.appointment && link.expired);
+	const bound = new Set(
+		[...withDate, ...expired].map((link) => link.appointment!.id)
+	);
 	const oneToOne = sessionAppointments
 		.filter(
 			(appointment) =>
@@ -59,6 +67,9 @@ export const overviewSections = (
 				.filter((row): row is UpcomingInvitation => row !== null),
 			...oneToOne
 		],
+		expired: expired
+			.map(invitationRow)
+			.filter((row): row is UpcomingInvitation => row !== null),
 		links: links.filter((link) => !link.appointment)
 	};
 };

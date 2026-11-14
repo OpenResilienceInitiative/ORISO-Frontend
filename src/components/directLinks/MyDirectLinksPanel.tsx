@@ -22,6 +22,9 @@ import { InvitationDialog } from '../directInvitation/InvitationDialog';
 import type { InvitationDialogValue } from '../directInvitation/invitationModel';
 import { directInvitationSettings } from '../directInvitation/directInvitationSettings';
 import { overviewSections } from './invitationsOverviewData';
+import { useSendNewLink } from '../directInvitation/useSendNewLink';
+import { invitationErrorEntry } from '../directInvitation/invitationErrorSnackbar';
+import { appSnackbarStack } from '../m3Snackbar/snackbarStack';
 import { filterTopicsForAgencies } from '../conversationCreate/agencyTopics';
 import { DirectLink } from '../conversationCreate/directLink/directLink';
 import { DirectLinkShareDialog } from '../conversationCreate/directLink/DirectLinkShareDialog';
@@ -78,6 +81,20 @@ export const MyDirectLinksPanel = ({
 	const [saveFailed, setSaveFailed] = useState(false);
 	const [topics, setTopics] = useState<TenantAgenciesTopicsInterface[]>([]);
 	const sessionAppointments = useUpcomingAppointments(overview);
+	/* #2252, decision 7: "Neuen Link senden" for an expired invitation. */
+	const newLink = useSendNewLink();
+	/* A failed switch is a titled pop-up, not a box in the page. */
+	useEffect(() => {
+		if (!overview || !toggleFailed) return;
+		appSnackbarStack.enqueue(
+			invitationErrorEntry({
+				id: 'direct-link-toggle-failed',
+				title: t('directLink.page.toggleFailedTitle'),
+				text: t('directLink.page.toggleFailed'),
+				t
+			})
+		);
+	}, [overview, t, toggleFailed]);
 	/* #2252: an invitation with a date is edited in the shared dialog. */
 	const [editingInvitation, setEditingInvitation] =
 		useState<DirectLink | null>(null);
@@ -154,6 +171,9 @@ export const MyDirectLinksPanel = ({
 					<InvitationsOverview
 						state={state}
 						appointments={sections.appointments}
+						expired={sections.expired}
+						onSendNewLink={(item) => void newLink.send(item.id)}
+						sendingId={newLink.pending}
 						links={sections.links}
 						onCreate={() => navigate(CREATE_CHAT_PATH)}
 						onRetry={reload}
@@ -170,11 +190,7 @@ export const MyDirectLinksPanel = ({
 						onShowQr={setQrLink}
 						onEdit={setEditing}
 					/>
-					{toggleFailed && (
-						<p role="alert" className="myDirectLinksPage__error">
-							{t('directLink.page.toggleFailed')}
-						</p>
-					)}
+					{newLink.dialog}
 				</>
 			) : (
 				<MyDirectLinksView
