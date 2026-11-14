@@ -1,7 +1,6 @@
 /**
  * Direkteinladung (#2252): the values the shared invitation/appointment
- * dialog hands back, and the time rules of the entry page. Presentational
- * model only; the API mapping is checkpoint 4.
+ * dialog hands back, and the time rules of the entry page.
  */
 import { DEFAULT_VALIDITY_MINUTES } from './invitationValidity';
 
@@ -50,20 +49,18 @@ export const DEFAULT_LINK_SETTINGS: Readonly<{
 	knock: true
 };
 
-/** The call waiting room opens this long before the start (decision 10). */
-export const WAITING_ROOM_LEAD_MINUTES = 15;
+/** A time as the server sends it, or already read. */
+type ServerTime = string | Date | null | undefined;
 
-const MINUTE = 60_000;
-
-export const waitingRoomOpensAt = (start: Date): Date =>
-	new Date(start.getTime() - WAITING_ROOM_LEAD_MINUTES * MINUTE);
-
-/** The end plus the validity: when guests lose access. */
-export const invitationExpiresAt = (end: Date, validityMinutes: number): Date =>
-	new Date(end.getTime() + validityMinutes * MINUTE);
+const read = (value: ServerTime): number | null => {
+	if (value == null) return null;
+	const ms = value instanceof Date ? value.getTime() : Date.parse(value);
+	return Number.isFinite(ms) ? ms : null;
+};
 
 /**
- * What the entry page shows (decisions 7 and 10):
+ * What the entry page shows (decisions 7 and 10), from the server's own
+ * times (`callOpensAt` = start − 15 min, `expiresAt` = end + validity):
  * - `beforeStart`: date and "In Kalender eintragen", no call yet;
  * - `open`: waiting room / call;
  * - `expired`: "Link abgelaufen" with "Neuen Link anfragen".
@@ -72,14 +69,24 @@ export type InvitationEntryPhase = 'beforeStart' | 'open' | 'expired';
 
 export const invitationEntryPhase = (
 	now: Date,
-	slot: InvitationSlot | null,
-	expiresAt: Date | null
+	times: { callOpensAt?: ServerTime; expiresAt?: ServerTime }
 ): InvitationEntryPhase => {
-	if (expiresAt && now.getTime() >= expiresAt.getTime()) return 'expired';
-	if (slot && now.getTime() < waitingRoomOpensAt(slot.start).getTime())
-		return 'beforeStart';
+	const expires = read(times.expiresAt);
+	if (expires !== null && now.getTime() >= expires) return 'expired';
+	const opens = read(times.callOpensAt);
+	if (opens !== null && now.getTime() < opens) return 'beforeStart';
 	return 'open';
 };
+
+/** The longest delay `setTimeout` honours; a longer one fires at once. */
+export const MAX_TIMER_MS = 2 ** 31 - 1;
+
+/**
+ * How long a timer for `at` may wait now. Capped, so the caller re-arms it
+ * after the cap for a time more than about 24.8 days away.
+ */
+export const timerDelay = (at: Date, now: Date = new Date()): number =>
+	Math.min(MAX_TIMER_MS, Math.max(0, at.getTime() - now.getTime()));
 
 export interface DayGroup<T> {
 	/** Local midnight of the day. */

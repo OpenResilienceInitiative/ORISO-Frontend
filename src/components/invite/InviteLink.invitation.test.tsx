@@ -275,9 +275,11 @@ describe('InviteLink with a Direkteinladung (#2252)', () => {
 			await screen.findByTestId('invitation-before-start')
 		).toBeTruthy();
 		expect(screen.queryByTestId('direct-link-call-entry')).toBeNull();
+		/* The one waiting-room frame, not a hand-built stage page. */
+		expect(document.querySelector('[data-cy="entry-room"]')).toBeTruthy();
 		fireEvent.click(
 			screen.getByRole('button', {
-				name: /directInvitation.entry.beforeStart.addToCalendar/
+				name: 'groupChat.calendar.addThis'
 			})
 		);
 		expect(ics.download).toHaveBeenCalledWith(
@@ -293,7 +295,7 @@ describe('InviteLink with a Direkteinladung (#2252)', () => {
 		renderInvite();
 		fireEvent.click(
 			await screen.findByRole('button', {
-				name: 'directInvitation.entry.beforeStart.openChat'
+				name: /directInvitation.entry.beforeStart.openChat/
 			})
 		);
 
@@ -333,6 +335,41 @@ describe('InviteLink with a Direkteinladung (#2252)', () => {
 		} finally {
 			vi.useRealTimers();
 		}
+	});
+
+	it('stays on the date page for an appointment more than 25 days ahead', async () => {
+		vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] });
+		try {
+			vi.mocked(apiGetInviteLinkContext).mockResolvedValue(
+				appointmentContext('VIDEO', 40 * 24 * 60)
+			);
+			renderInvite();
+			await vi.waitFor(() =>
+				expect(
+					screen.getByTestId('invitation-before-start')
+				).toBeTruthy()
+			);
+			await vi.advanceTimersByTimeAsync(60_000);
+			expect(screen.getByTestId('invitation-before-start')).toBeTruthy();
+			expect(screen.queryByTestId('direct-link-call-entry')).toBeNull();
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
+	it('says the conversation could not be reached, so the person tries again', async () => {
+		vi.mocked(hasActiveAuthSession).mockReturnValue(true);
+		vi.mocked(apiGetInviteLinkContext).mockResolvedValueOnce(
+			directContext('CHAT') as any
+		);
+		vi.mocked(apiStartDirectLinkConversation).mockRejectedValueOnce(
+			new Response(null, { status: 502 })
+		);
+		renderInvite();
+
+		expect(
+			await screen.findByText('directInvitation.entry.roomUnavailable')
+		).toBeTruthy();
 	});
 
 	it('offers no account sign-in on a guests-only invitation', async () => {
@@ -414,7 +451,7 @@ describe('InviteLink with a Direkteinladung (#2252)', () => {
 		expect(redeemInviteLink).not.toHaveBeenCalled();
 		fireEvent.click(
 			screen.getByRole('button', {
-				name: 'directInvitation.entry.expired.request'
+				name: /directInvitation.entry.expired.request/
 			})
 		);
 
@@ -437,13 +474,21 @@ describe('InviteLink with a Direkteinladung (#2252)', () => {
 		renderInvite();
 		fireEvent.click(
 			await screen.findByRole('button', {
-				name: 'directInvitation.entry.expired.request'
+				name: /directInvitation.entry.expired.request/
 			})
 		);
 
+		/* A pop-up with a title and a close control, not a box in the page. */
+		const title = await screen.findByText(
+			'directInvitation.entry.expired.failedTitle'
+		);
+		expect(screen.getByTestId('invitation-expired').contains(title)).toBe(
+			false
+		);
 		expect(
-			await screen.findByText('directInvitation.entry.expired.failed')
+			screen.getByText('directInvitation.entry.expired.failed')
 		).toBeTruthy();
+		expect(screen.getByRole('button', { name: 'app.close' })).toBeTruthy();
 	});
 
 	it('sends a signed-out person to sign in first, then back to the link', async () => {
@@ -458,9 +503,15 @@ describe('InviteLink with a Direkteinladung (#2252)', () => {
 		});
 		try {
 			renderInvite();
+			/* A guest without a sign-in cannot ask; the page says so. */
+			expect(
+				await screen.findByText(
+					'directInvitation.entry.expired.signedOut'
+				)
+			).toBeTruthy();
 			fireEvent.click(
 				await screen.findByRole('button', {
-					name: 'directInvitation.entry.expired.request'
+					name: /directInvitation.entry.expired.signIn/
 				})
 			);
 			expect(assign).toHaveBeenCalledWith(

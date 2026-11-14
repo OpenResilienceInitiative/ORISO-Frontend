@@ -15,26 +15,17 @@ import {
 	type NewLinkRequestState
 } from './InvitationEntryStates';
 import { newLinkRequestEntry } from './NewLinkRequestNotice';
+import { invitationErrorEntry } from './invitationErrorSnackbar';
+import { expectWaitingRoomLayout } from '../app/registrationLoader/waitingRoomLayoutContract';
 
 const SLOT = {
 	start: new Date(2026, 10, 20, 14, 0),
 	end: new Date(2026, 10, 20, 15, 0)
 };
 
-const body = () => within(document.body);
+const CALL_OPENS_AT = new Date(2026, 10, 20, 13, 45);
 
-const Page = ({ children }: { children: React.ReactNode }) => (
-	<div
-		style={{
-			minHeight: '100vh',
-			background: 'var(--m3-surface-container-lowest)',
-			display: 'flex',
-			alignItems: 'center'
-		}}
-	>
-		{children}
-	</div>
-);
+const body = () => within(document.body);
 
 const meta = {
 	title: 'DirectInvitation/Entry states',
@@ -43,7 +34,7 @@ const meta = {
 		docs: {
 			description: {
 				component:
-					'#2252: the invite page outside the call. Before the waiting room opens (15 minutes before the start): the date, "In Kalender eintragen" (.ics) and the chat, which works at once. After the validity ends: "Link abgelaufen" with "Neuen Link anfragen"; the counsellor then gets a pop-up with "Neuen Link senden".'
+					'#2252: the invite page outside the call, in the one waiting-room frame (EntryRoomShell, shared bar). Before the waiting room opens (the server\'s callOpensAt, 15 minutes before the start): the date, "Termin eintragen" (.ics, the group room\'s calendar pill) and the chat, which works at once. After the validity ends: "Link abgelaufen" with "Neuen Link anfragen" (signed in) or the sign-in (signed out); a failure is a pop-up. The counsellor gets a pop-up with "Neuen Link senden".'
 			}
 		}
 	}
@@ -53,32 +44,33 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 const BeforeStart = () => (
-	<Page>
-		<InvitationBeforeStart
-			slot={SLOT}
-			counsellorName="Anna Berg"
-			onAddToCalendar={fn()}
-			onOpenChat={fn()}
-		/>
-	</Page>
+	<InvitationBeforeStart
+		slot={SLOT}
+		callOpensAt={CALL_OPENS_AT}
+		counsellorName="Anna Berg"
+		onAddToCalendar={fn()}
+		onOpenChat={fn()}
+	/>
 );
 
 export const BeforeStartDesktop: Story = {
 	name: 'Before start · 1440',
 	globals: desktop1440Globals,
 	render: () => <BeforeStart />,
-	play: async () => {
-		await expect(
-			body().getByRole('button', { name: 'In Kalender eintragen' })
-		).toBeVisible();
-		await expect(body().getByText(/13:45 Uhr/)).toBeVisible();
+	play: async ({ canvasElement }) => {
+		await expectWaitingRoomLayout(canvasElement);
+		await expect(body().getByTestId('group-entry-calendar')).toBeVisible();
+		await expect(body().getAllByText(/13:45 Uhr/)[0]).toBeVisible();
 	}
 };
 
 export const BeforeStartPhone: Story = {
 	name: 'Before start · 390',
 	globals: phone390Globals,
-	render: () => <BeforeStart />
+	render: () => <BeforeStart />,
+	play: async ({ canvasElement }) => {
+		await expectWaitingRoomLayout(canvasElement);
+	}
 };
 
 export const BeforeStartPhoneDark: Story = {
@@ -93,15 +85,41 @@ export const BeforeStartEnglish: Story = {
 	render: () => <BeforeStart />
 };
 
-const Expired = ({ initial = 'idle' }: { initial?: NewLinkRequestState }) => {
-	const [state, setState] = useState<NewLinkRequestState>(initial);
+const Expired = ({
+	signedIn = true,
+	fails = false
+}: {
+	signedIn?: boolean;
+	fails?: boolean;
+}) => {
+	const { t } = useTranslation();
+	const [state, setState] = useState<NewLinkRequestState>('idle');
+	const stack = useMemo(() => createSnackbarStack(), []);
 	return (
-		<Page>
+		<>
 			<InvitationExpired
 				requestState={state}
-				onRequestNewLink={() => setState('sent')}
+				signedIn={signedIn}
+				onSignIn={fn()}
+				onRequestNewLink={() => {
+					if (!fails) {
+						setState('sent');
+						return;
+					}
+					stack.enqueue(
+						invitationErrorEntry({
+							id: 'direct-invitation-request-failed',
+							title: t(
+								'directInvitation.entry.expired.failedTitle'
+							),
+							text: t('directInvitation.entry.expired.failed'),
+							t
+						})
+					);
+				}}
 			/>
-		</Page>
+			<M3SnackbarHost stack={stack} />
+		</>
 	);
 };
 
@@ -111,10 +129,10 @@ export const ExpiredDesktop: Story = {
 	render: () => <Expired />,
 	play: async () => {
 		await userEvent.click(
-			body().getByRole('button', { name: 'Neuen Link anfragen' })
+			body().getByRole('button', { name: /Neuen Link anfragen/ })
 		);
-		await expect(body().getByRole('status')).toHaveTextContent(
-			/Anfrage gesendet/
+		await waitFor(() =>
+			expect(body().getByText(/Anfrage gesendet/)).toBeVisible()
 		);
 	}
 };
@@ -140,7 +158,21 @@ export const ExpiredEnglish: Story = {
 export const ExpiredRequestFailed: Story = {
 	name: 'Expired · request failed · 390',
 	globals: phone390Globals,
-	render: () => <Expired initial="failed" />
+	render: () => <Expired fails />,
+	play: async () => {
+		await userEvent.click(
+			body().getByRole('button', { name: /Neuen Link anfragen/ })
+		);
+		await waitFor(() =>
+			expect(body().getByText('Anfrage nicht gesendet')).toBeVisible()
+		);
+	}
+};
+
+export const ExpiredSignedOut: Story = {
+	name: 'Expired · signed out · 390',
+	globals: phone390Globals,
+	render: () => <Expired signedIn={false} />
 };
 
 /** The counsellor's side: a pop-up on the snackbar stack, never a box in the page. */

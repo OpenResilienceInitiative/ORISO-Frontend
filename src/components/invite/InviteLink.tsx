@@ -67,6 +67,13 @@ import {
 	InvitationExpired,
 	type NewLinkRequestState
 } from '../directInvitation/InvitationEntryStates';
+import {
+	invitationEntryPhase,
+	timerDelay
+} from '../directInvitation/invitationModel';
+import { invitationErrorEntry } from '../directInvitation/invitationErrorSnackbar';
+import { appSnackbarStack } from '../m3Snackbar/snackbarStack';
+import { M3SnackbarHost } from '../m3Snackbar/M3SnackbarHost';
 import type { InviteLinkContext } from '../../api/apiGetInviteLinkContext';
 import type { DirectLinkMedium } from '../conversationCreate/directLink/directLink';
 import {
@@ -153,19 +160,21 @@ const withAccessMode = (context: InviteLinkContext): InviteLinkContext => {
 	}
 };
 
-/** #2252: the waiting room is not open yet (start − 15 min). */
-const callOpensLater = (context: InviteLinkContext | null) => {
-	const time = (value?: string | null) => (value ? Date.parse(value) : NaN);
-	const opens = time(context?.callOpensAt);
-	return (
-		Number.isFinite(opens) &&
-		Number.isFinite(time(context?.appointmentStartTime)) &&
-		Number.isFinite(time(context?.appointmentEndTime)) &&
-		Date.now() < opens
-	);
-};
+/** #2252: the waiting room is not open yet (the server's `callOpensAt`). */
+const callOpensLater = (context: InviteLinkContext | null) =>
+	Boolean(context?.appointmentStartTime && context?.appointmentEndTime) &&
+	invitationEntryPhase(new Date(), {
+		callOpensAt: context?.callOpensAt
+	}) === 'beforeStart';
 
-/** #2252: the text of a 403 that names the only way in. */
+const statusOf = (error: unknown) =>
+	error instanceof Response ? error.status : undefined;
+
+/**
+ * #2252: the text of a refusal the invitation itself gives: a 403 that names
+ * the only way in, or a conversation Matrix could not reach (502/503), which
+ * the person may simply try again.
+ */
 const accessErrorText = async (
 	error: unknown,
 	translate: (key: string) => string
@@ -175,6 +184,9 @@ const accessErrorText = async (
 		return translate('directInvitation.entry.access.guestsOnly');
 	if (only === 'accounts')
 		return translate('directInvitation.entry.access.accountsOnly');
+	const status = statusOf(error);
+	if (status === 502 || status === 503)
+		return translate('directInvitation.entry.roomUnavailable');
 	return null;
 };
 
@@ -635,22 +647,32 @@ export const InviteLink = () => {
 		setResumeAttempt((attempt) => attempt + 1);
 	}, []);
 
-	/* #2252: only a person already in the conversation may ask, so a
-	   signed-out person signs in first and comes back to this page. */
+	/* #2252: only a person already in the conversation may ask. A person
+	   with an account signs in first and comes back to this page; a guest
+	   whose temporary account is not signed in here cannot ask (the page
+	   says so). */
+	const signInForNewLink = useCallback(() => {
+		if (token) window.location.assign(loginPathForDirectLink(token));
+	}, [token]);
 	const requestNewLink = useCallback(async () => {
 		if (!token) return;
-		if (!hasActiveAuthSession()) {
-			window.location.assign(loginPathForDirectLink(token));
-			return;
-		}
 		setNewLinkRequest('sending');
 		try {
 			await apiRequestDirectInvitationRenewal(token);
 			if (mountedRef.current) setNewLinkRequest('sent');
 		} catch {
-			if (mountedRef.current) setNewLinkRequest('failed');
+			if (!mountedRef.current) return;
+			setNewLinkRequest('idle');
+			appSnackbarStack.enqueue(
+				invitationErrorEntry({
+					id: 'direct-invitation-request-failed',
+					title: t('directInvitation.entry.expired.failedTitle'),
+					text: t('directInvitation.entry.expired.failed'),
+					t
+				})
+			);
 		}
-	}, [token]);
+	}, [t, token]);
 
 	const diceLabel = t('anonymousChat.pseudonym.changeName');
 
@@ -685,32 +707,26 @@ export const InviteLink = () => {
 
 	if (status === 'beforeStart' && directLink && token) {
 		return (
-			<StageLayout
-				stage={<Stage hasAnimation={false} isReady={true} />}
-				showLegalLinks
-				showRegistrationLink={false}
-			>
-				<InvitationBeforeStartPage
-					context={directLink.context}
-					token={token}
-					onContinue={continuePastBeforeStart}
-				/>
-			</StageLayout>
+			<InvitationBeforeStartPage
+				context={directLink.context}
+				token={token}
+				onContinue={continuePastBeforeStart}
+			/>
 		);
 	}
 
 	if (status === 'expired' && token) {
 		return (
-			<StageLayout
-				stage={<Stage hasAnimation={false} isReady={true} />}
-				showLegalLinks
-				showRegistrationLink={false}
-			>
+			<>
 				<InvitationExpired
 					requestState={newLinkRequest}
+					signedIn={hasActiveAuthSession()}
 					onRequestNewLink={requestNewLink}
+					onSignIn={signInForNewLink}
 				/>
-			</StageLayout>
+				{/* The public page has no app shell: its pop-ups need a host. */}
+				<M3SnackbarHost />
+			</>
 		);
 	}
 
@@ -962,27 +978,36 @@ const InvitationBeforeStartPage = ({
 	const { t } = useTranslation();
 	const start = new Date(context.appointmentStartTime ?? NaN);
 	const end = new Date(context.appointmentEndTime ?? NaN);
+	const opensAtMs = Date.parse(context.callOpensAt ?? '');
 	const isCall = context.chatType === 'AUDIO' || context.chatType === 'VIDEO';
 	useEffect(() => {
-		if (!isCall || !context.callOpensAt) return undefined;
-		const wait = Math.max(0, Date.parse(context.callOpensAt) - Date.now());
-		const timer = window.setTimeout(onContinue, wait);
+		if (!isCall || !Number.isFinite(opensAtMs)) return undefined;
+		const opens = new Date(opensAtMs);
+		let timer: number;
+		/* setTimeout fires at once beyond ~24.8 days: wait in capped steps. */
+		const arm = () => {
+			if (Date.now() >= opensAtMs) {
+				onContinue();
+				return;
+			}
+			timer = window.setTimeout(arm, timerDelay(opens));
+		};
+		timer = window.setTimeout(arm, timerDelay(opens));
 		return () => window.clearTimeout(timer);
-	}, [context.callOpensAt, isCall, onContinue]);
+	}, [opensAtMs, isCall, onContinue]);
 	return (
-		<Box sx={{ maxWidth: 480, mx: 'auto', my: '40px', px: 2 }}>
-			<InvitationBeforeStart
-				slot={{ start, end }}
-				onAddToCalendar={() =>
-					downloadInvitationIcs({
-						title: t('directInvitation.entry.beforeStart.title'),
-						slot: { start, end },
-						url: `${window.location.origin}/invite/${token}`,
-						uid: `direct-invitation-${token}`
-					})
-				}
-				onOpenChat={onContinue}
-			/>
-		</Box>
+		<InvitationBeforeStart
+			slot={{ start, end }}
+			callOpensAt={new Date(opensAtMs)}
+			onAddToCalendar={() =>
+				downloadInvitationIcs({
+					title: t('directInvitation.entry.beforeStart.title'),
+					slot: { start, end },
+					url: `${window.location.origin}/invite/${token}`,
+					uid: `direct-invitation-${token}`
+				})
+			}
+			onOpenChat={onContinue}
+		/>
 	);
 };

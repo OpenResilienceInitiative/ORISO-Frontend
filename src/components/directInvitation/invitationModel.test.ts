@@ -2,35 +2,61 @@ import { describe, expect, it } from 'vite-plus/test';
 import {
 	groupUpcomingByDay,
 	invitationEntryPhase,
-	invitationExpiresAt,
-	waitingRoomOpensAt
+	MAX_TIMER_MS,
+	timerDelay
 } from './invitationModel';
 
 const at = (hour: number, minute = 0) => new Date(2026, 10, 20, hour, minute);
-const slot = { start: at(14), end: at(15) };
 
 describe('Direkteinladung entry timing (#2252)', () => {
-	it('opens the waiting room 15 minutes before the start', () => {
-		expect(waitingRoomOpensAt(slot.start)).toEqual(at(13, 45));
-	});
-
-	it('expires at the end plus the validity', () => {
-		expect(invitationExpiresAt(slot.end, 0)).toEqual(at(15));
-		expect(invitationExpiresAt(slot.end, 90)).toEqual(at(16, 30));
-	});
+	/* The server's own times: the waiting room opens at callOpensAt. */
+	const times = { callOpensAt: at(13, 45), expiresAt: at(16) };
 
 	it.each([
 		['20 minutes before the start', at(13, 40), 'beforeStart'],
-		['15 minutes before the start', at(13, 45), 'open'],
+		['when the waiting room opens', at(13, 45), 'open'],
 		['during the appointment', at(14, 30), 'open'],
 		['after the end, still valid', at(15, 30), 'open'],
 		['at the expiry', at(16), 'expired']
 	] as const)('%s → %s', (_name, now, phase) => {
-		expect(invitationEntryPhase(now, slot, at(16))).toBe(phase);
+		expect(invitationEntryPhase(now, times)).toBe(phase);
 	});
 
 	it('keeps an invitation without appointment open until it is deleted', () => {
-		expect(invitationEntryPhase(at(3), null, null)).toBe('open');
+		expect(invitationEntryPhase(at(3), {})).toBe('open');
+	});
+
+	it('reads ISO strings as the server sends them', () => {
+		expect(
+			invitationEntryPhase(at(13), {
+				callOpensAt: at(13, 45).toISOString(),
+				expiresAt: null
+			})
+		).toBe('beforeStart');
+	});
+
+	it('ignores a time it cannot read', () => {
+		expect(invitationEntryPhase(at(13), { callOpensAt: 'nonsense' })).toBe(
+			'open'
+		);
+	});
+});
+
+describe('a timer for a far-away time (#2252)', () => {
+	it('waits the time left', () => {
+		expect(timerDelay(at(14), at(13, 59))).toBe(60_000);
+	});
+
+	it('never waits a negative time', () => {
+		expect(timerDelay(at(13), at(14))).toBe(0);
+	});
+
+	/* setTimeout fires at once above 2^31-1 ms (about 24.8 days). */
+	it('caps the wait so an appointment months ahead does not fire at once', () => {
+		const now = new Date(2026, 0, 1);
+		const far = new Date(2026, 5, 1);
+		expect(timerDelay(far, now)).toBe(MAX_TIMER_MS);
+		expect(MAX_TIMER_MS).toBe(2 ** 31 - 1);
 	});
 });
 
