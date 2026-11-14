@@ -72,6 +72,35 @@ describe('jumpToPassage', () => {
 	});
 });
 
+describe('jumpToPassage with repeated text', () => {
+	it('opens a shortened message when the marked occurrence is hidden', () => {
+		const scope = timeline(
+			'<p>Anna ruft an.</p><button class="messageItem__expandBtn" aria-expanded="false">mehr</button>'
+		);
+		const bubble = scope.querySelector('.messageItem__message')!;
+		const expand = vi.fn(() =>
+			bubble.insertAdjacentHTML(
+				'beforeend',
+				'<p>Später ruft Anna nochmal an.</p>'
+			)
+		);
+		scope.querySelector('button')!.addEventListener('click', expand);
+		// "Anna ruft an. mehr Später ruft Anna …": the second Anna.
+		jumpToPassage(scope, '$1', 'Anna', 31)();
+		expect(expand).toHaveBeenCalledTimes(1);
+	});
+
+	it('does not open the message when the marked occurrence is shown', () => {
+		const scope = timeline(
+			'<p>Anna ruft an.</p><button class="messageItem__expandBtn" aria-expanded="false">mehr</button>'
+		);
+		const expand = vi.fn();
+		scope.querySelector('button')!.addEventListener('click', expand);
+		jumpToPassage(scope, '$1', 'Anna', 0)();
+		expect(expand).not.toHaveBeenCalled();
+	});
+});
+
 describe('findPassageRange', () => {
 	it('finds the occurrence that was marked when the text repeats', () => {
 		const root = document.createElement('div');

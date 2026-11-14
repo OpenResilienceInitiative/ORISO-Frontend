@@ -641,6 +641,19 @@ export const MessageSubmitInterfaceComponent = ({
 		reason: Extract<AttachmentFailureReason, 'tooLarge' | 'format'>;
 	} | null>(null);
 	const [isRequestInProgress, setIsRequestInProgress] = useState(false);
+	// An archived chat re-opening before a send. Its own flag: unlike
+	// isRequestInProgress it must not pause draft saving, since the user
+	// can keep typing (or switch chats) meanwhile.
+	const [isDearchiving, setIsDearchiving] = useState(false);
+	const dearchivingRef = useRef(false);
+	const holdWhileDearchiving = (pending: Promise<unknown>) => {
+		dearchivingRef.current = true;
+		setIsDearchiving(true);
+		return pending.finally(() => {
+			dearchivingRef.current = false;
+			setIsDearchiving(false);
+		});
+	};
 	const [attachmentUpload, setAttachmentUpload] =
 		useState<AttachmentUploadControl | null>(null);
 	const [editorState, setEditorState] = useState(EditorState.createEmpty());
@@ -2311,7 +2324,7 @@ export const MessageSubmitInterfaceComponent = ({
 	shownSessionIdRef.current = activeSession.item.id;
 
 	const handleButtonClick = useCallback(() => {
-		if (uploadProgress || isRequestInProgress) {
+		if (uploadProgress || isRequestInProgress || dearchivingRef.current) {
 			return null;
 		}
 		if (retentionGate.gate(() => handleButtonClickRef.current())) {
@@ -2370,14 +2383,12 @@ export const MessageSubmitInterfaceComponent = ({
 			if (isSessionArchived) {
 				// Re-open first; the draft stays if that fails. A second
 				// press while it runs must not send the quotes twice.
-				setIsRequestInProgress(true);
-				apiPutDearchive(activeSession.item.id)
+				holdWhileDearchiving(apiPutDearchive(activeSession.item.id))
 					.then(() => {
 						sendQuotes();
 						reloadActiveSession();
 					})
-					.catch(() => {})
-					.finally(() => setIsRequestInProgress(false));
+					.catch(() => {});
 			} else {
 				sendQuotes();
 			}
@@ -2393,10 +2404,8 @@ export const MessageSubmitInterfaceComponent = ({
 
 		if (isSessionArchived) {
 			// Hold further presses while the chat re-opens; the send itself
-			// then takes the flag over (prepareAndSendMessage).
-			setIsRequestInProgress(true);
-			apiPutDearchive(activeSession.item.id)
-				.finally(() => setIsRequestInProgress(false))
+			// then takes over with isRequestInProgress (prepareAndSendMessage).
+			holdWhileDearchiving(apiPutDearchive(activeSession.item.id))
 				.then(() => {
 					sendQuotesAlone();
 					return prepareAndSendMessage();
@@ -5317,7 +5326,8 @@ export const MessageSubmitInterfaceComponent = ({
 											onSubmitShortcut={() => {
 												if (
 													!uploadProgress &&
-													!isRequestInProgress
+													!isRequestInProgress &&
+													!dearchivingRef.current
 												) {
 													handleButtonClick();
 												}
@@ -5348,7 +5358,8 @@ export const MessageSubmitInterfaceComponent = ({
 												!attachmentRejection &&
 												!isMessageOverLimit
 										),
-									isSending: isRequestInProgress,
+									isSending:
+										isRequestInProgress || isDearchiving,
 									isDisabled:
 										!!uploadProgress || isVoiceRecording
 								})}

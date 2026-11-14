@@ -35,7 +35,8 @@ const mocks = vi.hoisted(() => ({
 	composerClear: vi.fn(),
 	typeDraft: (_text: string) => {},
 	dropFiles: (_files: File[]) => {},
-	matrixService: { getClient: () => null }
+	matrixService: { getClient: () => null },
+	draftEnabled: true
 }));
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({
@@ -91,7 +92,8 @@ vi.mock('../../hooks/useTimeoutOverlay', () => ({
 	useTimeoutOverlay: () => ({ visible: false })
 }));
 vi.mock('./useDraftMessage', () => ({
-	useDraftMessage: (_enabled: boolean, _load: unknown, options: any) => ({
+	useDraftMessage: (enabled: boolean, _load: unknown, options: any) => ({
+		...((mocks.draftEnabled = enabled), {}),
 		loaded: true,
 		onChange: mocks.draftChange,
 		clearDraftMessage: mocks.clearDraft,
@@ -453,6 +455,23 @@ describe('sending queued passage quotes (PR #2232 review)', () => {
 		expect(mocks.composerClear).not.toHaveBeenCalled();
 		expect(mocks.clearDraft).not.toHaveBeenCalled();
 		expect(draftText()).toBe(DRAFT);
+	});
+
+	it('keeps saving the draft while the chat re-opens', async () => {
+		const finish = pendingDearchive();
+		render(
+			<Composer
+				activeSession={archived}
+				pendingQuotes={QUOTES}
+				onSendPendingQuotes={vi.fn()}
+			/>
+		);
+		act(() => mocks.typeDraft(DRAFT));
+		await clickSend();
+		// Text typed now must reach the draft store, also when the user
+		// switches chats before the re-open settles.
+		expect(mocks.draftEnabled).toBe(true);
+		await finish();
 	});
 
 	it('keeps the draft when re-opening the archived chat fails', async () => {

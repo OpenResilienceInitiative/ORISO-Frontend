@@ -104,7 +104,14 @@ export const findPassageRange = (
 	root: Element,
 	passage: string,
 	near?: number | null
-): Range | null => {
+): Range | null => locatePassage(root, passage, near)?.range ?? null;
+
+/** Like findPassageRange, plus where the match starts in collapsed text. */
+const locatePassage = (
+	root: Element,
+	passage: string,
+	near?: number | null
+): { range: Range; start: number } | null => {
 	const wanted = normalizePassage(passage);
 	if (!wanted) {
 		return null;
@@ -130,7 +137,7 @@ export const findPassageRange = (
 	const range = root.ownerDocument.createRange();
 	range.setStart(first.node, first.offset);
 	range.setEnd(last.node, last.offset + 1);
-	return range;
+	return { range, start };
 };
 
 /** The bubble that holds the text of message `eventId` inside `scope`. */
@@ -292,7 +299,16 @@ export const jumpToPassage = (
 		const delta = rect.top + rect.height / 2 - (view.top + view.height / 2);
 		(scroller ?? window).scrollBy({ top: delta, behavior });
 	};
-	const range = findPassageRange(bubble, passage, near);
+	const expand = bubble.querySelector<HTMLButtonElement>(
+		'.messageItem__expandBtn[aria-expanded="false"]'
+	);
+	const found = locatePassage(bubble, passage, near);
+	// A shortened message may show another copy of a repeated text while
+	// the marked one is hidden: then open it rather than take the copy.
+	const range =
+		found && (!expand || typeof near !== 'number' || found.start === near)
+			? found.range
+			: null;
 	if (!range) {
 		bubble.scrollIntoView({ behavior, block: 'center' });
 	}
@@ -311,9 +327,6 @@ export const jumpToPassage = (
 	// part, open the message and paint once React has rendered the full text.
 	let clearPaint: () => void = () => {};
 	let frame = 0;
-	const expand = bubble.querySelector<HTMLButtonElement>(
-		'.messageItem__expandBtn[aria-expanded="false"]'
-	);
 	if (!range && expand) {
 		expand.click();
 		frame = window.requestAnimationFrame(() => {
