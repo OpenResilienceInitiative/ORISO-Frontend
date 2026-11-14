@@ -7015,6 +7015,7 @@
 			"until": "Bis einschließlich",
 			"save": "Eintragen",
 			"tooMany": "Zu viele Wiederholungen: höchstens {{max}} Sperrzeiten auf einmal. Bitte einen früheren letzten Tag wählen.",
+			"clockGap": "Eine Wiederholung fällt in die Zeitumstellung. Bitte eine andere Uhrzeit wählen.",
 			"count": "{{count}} Sperrzeiten werden eingetragen.",
 			"count_one": "{{count}} Sperrzeit wird eingetragen.",
 			"conflicts": "Überschneidet sich mit {{count}} Terminen.",

@@ -18,6 +18,7 @@ import {
 	daySpan,
 	expandBlocker,
 	findConflicts,
+	hasEmptyOccurrence,
 	isWholeDays,
 	MAX_BLOCKER_OCCURRENCES,
 	type AppointmentDraft,
@@ -69,6 +70,11 @@ export const BlockerDialog = ({
 	const span = slot
 		? daySpan(slot.start, slot.end) - (wholeDays ? 1 : 0)
 		: 0;
+	// Whole days end on the day of the last included instant, so a slot
+	// 23:00–00:00 blocks one day, not two.
+	const allDaySpan = slot
+		? daySpan(slot.start, new Date(slot.end.getTime() - 1))
+		: 0;
 	const [day, setDay] = useState<Dayjs | null>(first.startOf('day'));
 	const [start, setStart] = useState<Dayjs | null>(
 		wholeDays ? first.hour(8) : first
@@ -93,7 +99,7 @@ export const BlockerDialog = ({
 	// One more than the bound, so a series the bound would cut is noticed.
 	const expanded = useMemo(() => {
 		if (!day) return [];
-		const lastDay = day.add(span, 'day');
+		const lastDay = day.add(allDay ? allDaySpan : span, 'day');
 		const s = allDay ? day.startOf('day') : join(day, start);
 		const e = allDay ? lastDay.endOf('day') : join(lastDay, end);
 		if (!s || !e || !e.isAfter(s)) return [];
@@ -106,9 +112,11 @@ export const BlockerDialog = ({
 				: undefined,
 			MAX_BLOCKER_OCCURRENCES + 1
 		);
-	}, [day, span, start, end, allDay, weekdays, until]);
+	}, [day, span, allDaySpan, start, end, allDay, weekdays, until]);
 	const tooMany = expanded.length > MAX_BLOCKER_OCCURRENCES;
 	const ranges = tooMany ? [] : expanded;
+	// A repeat whose clock time the spring change skips; never saved.
+	const clockGap = hasEmptyOccurrence(ranges);
 
 	const conflicts = ranges.flatMap((r) =>
 		findConflicts(r, entries, ownerId).filter((e) => e.type !== 'blocker')
@@ -116,6 +124,7 @@ export const BlockerDialog = ({
 	// A whole day counts by its date, so today stays possible after 00:00.
 	const invalid =
 		ranges.length === 0 ||
+		clockGap ||
 		(allDay
 			? ranges[0].end.getTime() <= now.getTime()
 			: ranges[0].start.getTime() < now.getTime());
@@ -235,9 +244,11 @@ export const BlockerDialog = ({
 							? t('calendar.blocker.tooMany', {
 									max: MAX_BLOCKER_OCCURRENCES
 								})
-							: t('calendar.blocker.count', {
-									count: ranges.length
-								})}
+							: clockGap
+								? t('calendar.blocker.clockGap')
+								: t('calendar.blocker.count', {
+										count: ranges.length
+									})}
 						{conflicts.length > 0 &&
 							` ${t('calendar.blocker.conflicts', { count: conflicts.length })}`}
 					</p>

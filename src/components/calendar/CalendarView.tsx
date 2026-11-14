@@ -32,9 +32,9 @@ import '@fullcalendar/react/skeleton.css';
 import '@fullcalendar/react/themes/classic/theme.css';
 import { ButtonGroup } from '../buttonGroup/ButtonGroup';
 import {
+	createMoveGuard,
 	isMovable,
 	isSoon,
-	settleMove,
 	visibleHours,
 	type CalendarEntry,
 	type CalendarRole,
@@ -119,6 +119,8 @@ export const CalendarView = ({
 
 	// The usual working day, widened so no entry falls outside the grid.
 	const hours = useMemo(() => visibleHours(entries), [entries]);
+	// One move per entry until it is stored or put back.
+	const [guardMove] = useState(createMoveGuard);
 
 	const events = useMemo<EventInput[]>(
 		() =>
@@ -296,8 +298,10 @@ export const CalendarView = ({
 							info.revert();
 							return;
 						}
-						settleMove(
-							onEntryMove?.(entry, info.event.start, info.event.end),
+						const { start, end } = info.event;
+						guardMove(
+							entry.id,
+							() => onEntryMove?.(entry, start, end),
 							info.revert
 						);
 					}}
