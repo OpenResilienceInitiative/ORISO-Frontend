@@ -256,6 +256,48 @@ describe('sending queued passage quotes (PR #2232 review)', () => {
 		expect(onSendPendingQuotes).toHaveBeenCalledWith(DRAFT);
 	});
 
+	it('sends every collected passage and the typed text as one message, then clears', async () => {
+		const collected = [
+			...QUOTES,
+			{
+				id: 'q2',
+				eventId: '$ev2',
+				author: 'Client',
+				excerpt: 'second passage',
+				voiceDurationSec: 4
+			},
+			{
+				id: 'q3',
+				eventId: '$ev3',
+				author: 'Client',
+				excerpt: 'third passage',
+				replyText: 'We sort the letters on Thursday.'
+			}
+		];
+		const onSendPendingQuotes = vi.fn();
+		render(
+			<Composer
+				pendingQuotes={collected}
+				onSendPendingQuotes={onSendPendingQuotes}
+			/>
+		);
+		for (const excerpt of [
+			'marked passage',
+			'second passage',
+			'third passage'
+		]) {
+			expect(screen.getByText(new RegExp(excerpt))).toBeTruthy();
+		}
+		act(() => mocks.typeDraft(DRAFT));
+		await clickSend();
+		// One call: the owner of the collected list sends them all at once.
+		expect(onSendPendingQuotes).toHaveBeenCalledTimes(1);
+		expect(onSendPendingQuotes).toHaveBeenCalledWith(DRAFT);
+		expect(sendMock()).not.toHaveBeenCalled();
+		expect(mocks.composerClear).toHaveBeenCalled();
+		expect(mocks.clearDraft).toHaveBeenCalled();
+	});
+
 	it('does not send quotes past the length limit, and keeps the draft', async () => {
 		const onSendPendingQuotes = vi.fn();
 		render(

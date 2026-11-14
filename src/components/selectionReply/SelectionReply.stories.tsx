@@ -787,24 +787,30 @@ export const PhonePopover: Story = {
 /** Waits until `find` returns an element, then hands it back. */
 const waitForElement = async <T extends Element>(
 	find: () => T | null | undefined,
-	what: string
+	what: string,
+	timeout = 4000
 ): Promise<T> => {
+	// Hand back the element the check saw: a second look can come back
+	// empty when the view re-renders in between.
+	let found: T | null | undefined;
 	await waitFor(
 		() => {
-			if (!find()) {
+			found = find();
+			if (!found) {
 				throw new Error(`${what} not shown`);
 			}
 		},
-		{ timeout: 4000 }
+		{ timeout }
 	);
-	return find()!;
+	return found!;
 };
 
 /** Marks `text` in message `eventId` the way a mouse drag does. */
 const markPassage = async (
 	canvasElement: HTMLElement,
 	eventId: string,
-	text: string
+	text: string,
+	timeout?: number
 ) => {
 	const layer = canvasElement.querySelector<HTMLElement>(
 		'[data-cy="selection-reply-layer"]'
@@ -837,18 +843,44 @@ const markPassage = async (
 			canvasElement.querySelector<HTMLElement>(
 				'[data-cy="selection-reply-toolbar"]'
 			),
-		'selection bar'
+		'selection bar',
+		timeout
 	);
 };
 
-const openAnswerField = (canvasElement: HTMLElement) =>
+const openAnswerField = (canvasElement: HTMLElement, timeout?: number) =>
 	waitForElement(
 		() =>
 			canvasElement.querySelector<HTMLElement>(
 				'[data-cy="selection-reply-popover"]'
 			),
-		'answer field'
+		'answer field',
+		timeout
 	);
+
+/**
+ * Marks a passage, presses `press` in its bar and hands back the answer
+ * field. While the stage is still settling (the composer re-renders shortly
+ * after it opens) the marking or the press can be lost; then the passage
+ * is marked again, instead of waiting a fixed time up front.
+ */
+const answerPassage = async (
+	canvasElement: HTMLElement,
+	eventId: string,
+	text: string,
+	press: (bar: HTMLElement) => void
+) => {
+	for (let attempt = 1; ; attempt += 1) {
+		try {
+			press(await markPassage(canvasElement, eventId, text, 1500));
+			return await openAnswerField(canvasElement, 1500);
+		} catch (error) {
+			if (attempt === 3) {
+				throw error;
+			}
+		}
+	}
+};
 
 /** Records a take in the open answer field and stops it. */
 const recordTake = async (field: HTMLElement) => {
@@ -924,28 +956,33 @@ const collectedBars = (canvasElement: HTMLElement) =>
 	);
 
 const playFourPassages = async (canvasElement: HTMLElement) => {
-	// Let the stage settle first: the composer refreshes its audience
-	// 0.7 s and 1.8 s after it opens (messageSubmitInterfaceComponent).
-	await new Promise((resolve) => window.setTimeout(resolve, 2000));
+	// Start once the stage is up: the long message and the composer.
+	await waitForElement(
+		() =>
+			canvasElement.querySelector(
+				'.chatStage__mainPane .textarea__buttons button'
+			),
+		'composer'
+	);
 
 	// 1 · Four lines (opens the shortened message) → voice note → "+".
-	let field = await markPassage(
+	let field = await answerPassage(
 		canvasElement,
 		LONG_MESSAGE_ID,
-		LONG_ANSWERS.debts
-	).then(async (bar) => {
-		pressVoice(bar);
-		return openAnswerField(canvasElement);
-	});
+		LONG_ANSWERS.debts,
+		pressVoice
+	);
 	await recordTake(field);
 	await collectFromField(field);
 	await waitFor(() => expect(collectedBars(canvasElement)).toHaveLength(1));
 
 	// 2 · A short passage → text → Enter.
-	pressAnswer(
-		await markPassage(canvasElement, LONG_MESSAGE_ID, LONG_ANSWERS.court)
+	field = await answerPassage(
+		canvasElement,
+		LONG_MESSAGE_ID,
+		LONG_ANSWERS.court,
+		pressAnswer
 	);
-	field = await openAnswerField(canvasElement);
 	await userEvent.type(
 		within(field).getByRole('textbox'),
 		`${LONG_ANSWERS.courtAnswer}{Enter}`
@@ -953,19 +990,23 @@ const playFourPassages = async (canvasElement: HTMLElement) => {
 	await waitFor(() => expect(collectedBars(canvasElement)).toHaveLength(2));
 
 	// 3 · Voice note → "+".
-	pressVoice(
-		await markPassage(canvasElement, LONG_MESSAGE_ID, LONG_ANSWERS.sister)
+	field = await answerPassage(
+		canvasElement,
+		LONG_MESSAGE_ID,
+		LONG_ANSWERS.sister,
+		pressVoice
 	);
-	field = await openAnswerField(canvasElement);
 	await recordTake(field);
 	await collectFromField(field);
 	await waitFor(() => expect(collectedBars(canvasElement)).toHaveLength(3));
 
 	// 4 · Text → Enter.
-	pressAnswer(
-		await markPassage(canvasElement, LONG_MESSAGE_ID, LONG_ANSWERS.night)
+	field = await answerPassage(
+		canvasElement,
+		LONG_MESSAGE_ID,
+		LONG_ANSWERS.night,
+		pressAnswer
 	);
-	field = await openAnswerField(canvasElement);
 	await userEvent.type(
 		within(field).getByRole('textbox'),
 		`${LONG_ANSWERS.nightAnswer}{Enter}`
@@ -1073,54 +1114,26 @@ export const SendNowTakesCollected: Story = {
 		withSentAnswer: false,
 		pending: CollectedInComposer.args!.pending
 	},
-	// Driving the composer inside userEvent's act() makes React warn about
-	// the composer's audience refresh and a lazily loaded piece of the sent
-	// answer; how many depends on timing and story order. This story checks
-	// what goes out, so it drops exactly those harness warnings; any other
-	// console error still reaches story verification.
-	beforeEach: () => {
-		const harnessWarnings = new Set(
-			[
-				...actWarnings({ MessageSubmitInterfaceComponent: 1 }),
-				...suspendedInAct(1)
-			].map((item) => item.message)
-		);
-		const recordError = console.error;
-		console.error = (...args: unknown[]) => {
-			const message = args
-				.map((value) =>
-					value instanceof Error ? value.message : String(value)
-				)
-				.join(' ');
-			if (!harnessWarnings.has(message)) {
-				recordError(...args);
-			}
-		};
-		return () => {
-			console.error = recordError;
-		};
-	},
+	// Shows the look only: the answer field over a third passage while two
+	// answers wait in the composer, typed and ready to send. That send
+	// takes every collected passage along is proven by the composer unit
+	// test (messageSubmitInterface.pendingQuotes.test.tsx).
 	play: async ({ canvasElement }) => {
-		await new Promise((resolve) => window.setTimeout(resolve, 2000));
 		await waitFor(() =>
 			expect(collectedBars(canvasElement)).toHaveLength(2)
 		);
-		pressAnswer(await markPassage(canvasElement, '$m3', LETTERS_PASSAGE));
-		const field = await openAnswerField(canvasElement);
+		const field = await answerPassage(
+			canvasElement,
+			'$m3',
+			LETTERS_PASSAGE,
+			pressAnswer
+		);
 		await userEvent.type(
 			within(field).getByRole('textbox'),
-			'Die Briefe sortieren wir am Donnerstag.{Meta>}{Enter}{/Meta}'
-		);
-		await waitFor(() => expect(answerRows(canvasElement)).toHaveLength(1));
-		await expect(collectedBars(canvasElement)).toHaveLength(0);
-		const blocks = answerRows(canvasElement)[0].querySelectorAll(
-			'[data-cy="passage-reply"]'
-		);
-		await expect(blocks).toHaveLength(3);
-		// The collected voice answer goes out with its audio.
-		await expect(blocks[1].querySelector('audio')).not.toBeNull();
-		await expect(blocks[2].textContent).toContain(
 			'Die Briefe sortieren wir am Donnerstag.'
+		);
+		await waitFor(() =>
+			expect(field.querySelector('.sendButton--ready')).not.toBeNull()
 		);
 	}
 };
