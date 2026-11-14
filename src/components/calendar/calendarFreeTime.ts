@@ -1,15 +1,20 @@
 /**
- * Free time in the counsellor calendar: the green pills under quick entry
+ * Free time in the counsellor calendar: the pills under quick entry
  * ("Nächste freie Stunde") and the time everyone is free in the side-by-side
- * view. Pure, so the unit tests pin the rules.
+ * view. Day exceptions and public holidays count. Pure, so the unit tests
+ * pin the rules.
  */
 import type { CalendarEntry } from './calendarModel';
 import {
 	FALLBACK_DAY,
+	effectiveDay,
 	minutesOf,
-	windowsOn,
-	type WorkingHours
+	type WorkingHours,
+	type WorkingPlan
 } from './calendarWorkingHours';
+
+/** The weekly list, or the full plan with exceptions and holidays. */
+type Hours = WorkingHours | WorkingPlan;
 
 export interface TimeRange {
 	start: Date;
@@ -37,13 +42,15 @@ const roundUp = (date: Date, minutes: number) =>
 	new Date(Math.ceil(date.getTime() / (minutes * MINUTE)) * minutes * MINUTE);
 
 /**
- * The windows to search on a day: its working hours, or 08:00–18:00 when
+ * The windows to search on a day: its working hours (a day exception
+ * first, a public holiday of the region has none), or 08:00–18:00 when
  * none are set at all. A day without hours while others have them is free
  * of work, so it has no window.
  */
-export const searchWindows = (day: Date, hours: WorkingHours): TimeRange[] => {
+export const searchWindows = (day: Date, hours: Hours): TimeRange[] => {
+	const effective = effectiveDay(day, hours);
 	const windows =
-		hours.length === 0 ? [FALLBACK_DAY] : windowsOn(hours, day.getDay());
+		effective.source === 'none' ? [FALLBACK_DAY] : effective.windows;
 	return windows.map((w) => ({
 		start: atTime(day, w.start),
 		end: atTime(day, w.end)
@@ -63,7 +70,7 @@ export const freeGaps = ({
 }: {
 	busy: TimeRange[];
 	day: Date;
-	hours: WorkingHours;
+	hours: Hours;
 	now: Date;
 	minMinutes?: number;
 }): TimeRange[] => {
@@ -110,7 +117,7 @@ export const nextFreeHours = ({
 }: {
 	entries: CalendarEntry[];
 	ownerId: string;
-	hours: WorkingHours;
+	hours: Hours;
 	now: Date;
 	count?: number;
 	days?: number;
@@ -147,6 +154,6 @@ export const freeForEveryone = ({
 	entries: CalendarEntry[];
 	people: string[];
 	day: Date;
-	hours: WorkingHours;
+	hours: Hours;
 	now: Date;
 }): TimeRange[] => freeGaps({ busy: busyOf(entries, people), day, hours, now });

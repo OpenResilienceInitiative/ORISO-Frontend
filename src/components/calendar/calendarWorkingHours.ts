@@ -1,16 +1,26 @@
 /**
- * Working hours of the counsellor calendar (UserService#1649): weekly
- * windows of local wall-clock time. Outside them the calendar is shaded,
- * so evenings and weekends need no blockers of their own (Frank's
+ * Working hours of the counsellor calendar (UserService#1649, contract
+ * v1.2): weekly windows of local wall-clock time, single dates moved by
+ * hand and the public holidays of a Bundesland. Outside them the calendar
+ * is shaded, so evenings and weekends need no blockers of their own (Frank's
  * prototype, 2026-11-14). Display only — booking ignores them.
  *
  * Pure functions, so the dialog, FullCalendar and the free-time search
  * read one rule set.
  */
 import type {
+	CalendarWorkingDayExceptionDTO,
 	CalendarWorkingHoursDTO,
-	CalendarWorkingHoursWindowDTO
+	CalendarWorkingHoursWindowDTO,
+	CalendarWorkingTimeWindowDTO
 } from '../../api/apiCalendar';
+import {
+	dateKeyOf,
+	holidayOn,
+	isHolidayRegion,
+	type HolidayRegion,
+	type PublicHoliday
+} from './calendarHolidays';
 
 /** Weekday in JavaScript numbering: 0 = Sunday .. 6 = Saturday. */
 export interface WorkingHoursWindow {
@@ -73,19 +83,6 @@ export const workingHoursToApi = (
 		.map(({ weekday, start, end }) => ({ weekday, start, end }))
 });
 
-/**
- * FullCalendar `businessHours`: one block per window, `false` when none is
- * set (then nothing is shaded).
- */
-export const businessHoursOf = (hours: WorkingHours) =>
-	hours.length === 0
-		? false
-		: hours.map((w) => ({
-				daysOfWeek: [w.weekday],
-				startTime: w.start,
-				endTime: w.end
-			}));
-
 const hm = (date: Date) => date.getHours() * 60 + date.getMinutes();
 
 const sameDay = (a: Date, b: Date) =>
@@ -93,31 +90,263 @@ const sameDay = (a: Date, b: Date) =>
 	a.getMonth() === b.getMonth() &&
 	a.getDate() === b.getDate();
 
+/** The windows of one weekday, earliest first. */
+export const windowsOn = (hours: WorkingHours, weekday: number) =>
+	hours.filter((w) => w.weekday === weekday).sort(byWeekdayAndStart);
+
+/* ------------------------------------------------------------------ */
+/* One date: day exceptions and public holidays (contract v1.2)         */
+/* ------------------------------------------------------------------ */
+
+/** A window of one date: a weekly window without weekday. */
+export interface TimeWindow {
+	/** HH:mm */
+	start: string;
+	/** HH:mm */
+	end: string;
+}
+
+/** Day exceptions by local date (YYYY-MM-DD); an empty list = day off. */
+export type DayExceptions = Record<string, TimeWindow[]>;
+
 /**
- * Whether a range lies inside one window of its day. Without working hours
- * everything counts as inside, so nothing warns.
+ * Everything that decides the working time of a date: the weekly windows,
+ * the days moved by hand ("Nur an diesem Tag") and the Bundesland whose
+ * public holidays are days off.
+ */
+export interface WorkingPlan {
+	hours: WorkingHours;
+	exceptions?: DayExceptions;
+	holidayRegion?: HolidayRegion | null;
+}
+
+/** UserService accepts at most this many windows on one date. */
+export const MAX_EXCEPTION_WINDOWS = 4;
+
+/** The plain weekly list still works wherever a plan is read. */
+export const planOf = (input: WorkingHours | WorkingPlan): WorkingPlan =>
+	Array.isArray(input) ? { hours: input } : input;
+
+/** Sorted by start, valid, without overlaps, at most four. */
+export const normalizeWindows = (windows: TimeWindow[]): TimeWindow[] => {
+	const sorted = windows
+		.filter(
+			(w) =>
+				isTime(w.start) &&
+				isTime(w.end) &&
+				minutesOf(w.end) > minutesOf(w.start)
+		)
+		.map(({ start, end }) => ({ start, end }))
+		.sort((a, b) => minutesOf(a.start) - minutesOf(b.start));
+	const out: TimeWindow[] = [];
+	for (const w of sorted) {
+		const last = out[out.length - 1];
+		if (last && minutesOf(w.start) < minutesOf(last.end)) continue;
+		out.push(w);
+	}
+	return out.slice(0, MAX_EXCEPTION_WINDOWS);
+};
+
+const DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+export const dayExceptionsFromApi = (
+	list?: CalendarWorkingDayExceptionDTO[] | null
+): DayExceptions =>
+	Object.fromEntries(
+		(list ?? [])
+			.filter((e) => typeof e?.date === 'string' && DATE.test(e.date))
+			.map((e) => [e.date, normalizeWindows(e.windows ?? [])])
+	);
+
+/** UserService's answer as one plan; an unknown region counts as none. */
+export const workingPlanFromApi = (
+	dto?: Partial<CalendarWorkingHoursDTO> | null
+): WorkingPlan => ({
+	hours: workingHoursFromApi(dto),
+	exceptions: dayExceptionsFromApi(dto?.exceptions),
+	holidayRegion: isHolidayRegion(dto?.holidayRegion)
+		? dto!.holidayRegion
+		: null
+});
+
+/** PUT always sends windows and the region (absent = holidays off). */
+export const workingPlanToApi = (
+	plan: WorkingPlan
+): Omit<CalendarWorkingHoursDTO, 'exceptions'> => ({
+	...workingHoursToApi(plan.hours),
+	holidayRegion: plan.holidayRegion ?? null
+});
+
+export const exceptionWindowsToApi = (
+	windows: TimeWindow[]
+): CalendarWorkingTimeWindowDTO[] =>
+	normalizeWindows(windows).map(({ start, end }) => ({ start, end }));
+
+/** Where a date's working time comes from. */
+export type EffectiveSource = 'exception' | 'holiday' | 'weekly' | 'none';
+
+export interface EffectiveDay {
+	/** Empty = the whole day off (or, for `none`, nothing set at all). */
+	windows: TimeWindow[];
+	source: EffectiveSource;
+	/** The public holiday of that date, when a region is set. */
+	holiday?: PublicHoliday;
+}
+
+/**
+ * The working time of one date: its exception if there is one, else a
+ * public holiday of the region (the day off), else the weekly windows.
+ * `none` means no working hours are set at all: nothing is shaded.
+ */
+export const effectiveDay = (
+	date: Date,
+	input: WorkingHours | WorkingPlan
+): EffectiveDay => {
+	const plan = planOf(input);
+	const holiday = holidayOn(date, plan.holidayRegion);
+	const exception = plan.exceptions?.[dateKeyOf(date)];
+	if (exception) return { windows: exception, source: 'exception', holiday };
+	if (holiday) return { windows: [], source: 'holiday', holiday };
+	if (plan.hours.length === 0) return { windows: [], source: 'none' };
+	return {
+		windows: windowsOn(plan.hours, date.getDay()).map(({ start, end }) => ({
+			start,
+			end
+		})),
+		source: 'weekly'
+	};
+};
+
+/** Shaded time of one day, as minutes since midnight. */
+export interface OffRange {
+	from: number;
+	to: number;
+	/** `break` between two windows (e.g. lunch), else before/after/all day. */
+	kind: 'off' | 'break';
+	/**
+	 * This range borders where work starts (`start`, the morning) or ends
+	 * (`end`, the evening): the grips sit there.
+	 */
+	edge?: 'start' | 'end';
+}
+
+const DAY_MINUTES = 24 * 60;
+
+/** The day minus its working windows; nothing when no hours are set. */
+export const offRangesOf = (day: Date, input: WorkingHours | WorkingPlan) => {
+	const { windows, source } = effectiveDay(day, input);
+	if (source === 'none') return [];
+	if (windows.length === 0)
+		return [{ from: 0, to: DAY_MINUTES, kind: 'off' as const }];
+	const out: OffRange[] = [];
+	const first = minutesOf(windows[0].start);
+	if (first > 0) out.push({ from: 0, to: first, kind: 'off', edge: 'start' });
+	for (let i = 1; i < windows.length; i++) {
+		const from = minutesOf(windows[i - 1].end);
+		const to = minutesOf(windows[i].start);
+		if (to > from) out.push({ from, to, kind: 'break' });
+	}
+	const last = minutesOf(windows[windows.length - 1].end);
+	if (last < DAY_MINUTES)
+		out.push({ from: last, to: DAY_MINUTES, kind: 'off', edge: 'end' });
+	return out;
+};
+
+/** Where the grips of a working day sit; none on a day off. */
+export const dayEdgesOf = (day: Date, input: WorkingHours | WorkingPlan) => {
+	const { windows, source } = effectiveDay(day, input);
+	if (windows.length === 0) return null;
+	return {
+		start: windows[0].start,
+		end: windows[windows.length - 1].end,
+		exception: source === 'exception',
+		windows
+	};
+};
+
+/** Grips move in quarter hours; a working day keeps at least an hour. */
+export const EDGE_STEP_MINUTES = 15;
+export const MIN_WORKING_MINUTES = 60;
+const LAST_EDGE = DAY_MINUTES - EDGE_STEP_MINUTES;
+
+export const timeOfMinutes = (minutes: number) =>
+	`${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
+
+/**
+ * Where an edge may go: snapped to the quarter hour, inside the day and at
+ * least an hour away from the other edge.
+ */
+export const clampEdge = (
+	windows: TimeWindow[],
+	edge: 'start' | 'end',
+	minutes: number
+) => {
+	const snapped =
+		Math.round(minutes / EDGE_STEP_MINUTES) * EDGE_STEP_MINUTES;
+	if (edge === 'start') {
+		const latest =
+			minutesOf(windows[windows.length - 1].end) - MIN_WORKING_MINUTES;
+		return Math.max(0, Math.min(snapped, latest, LAST_EDGE));
+	}
+	const earliest = minutesOf(windows[0].start) + MIN_WORKING_MINUTES;
+	return Math.min(LAST_EDGE, Math.max(snapped, earliest, 0));
+};
+
+/**
+ * The windows with work starting (or ending) at `time`. A break inside the
+ * day stays; windows the new edge passes drop out.
+ */
+export const moveEdge = (
+	windows: TimeWindow[],
+	edge: 'start' | 'end',
+	time: string
+): TimeWindow[] => {
+	if (windows.length === 0) return [];
+	const at = clampEdge(windows, edge, minutesOf(time));
+	const t = timeOfMinutes(at);
+	if (edge === 'start') {
+		const kept = windows.filter((w) => minutesOf(w.end) > at);
+		return kept.map((w, i) => (i === 0 ? { ...w, start: t } : w));
+	}
+	const kept = windows.filter((w) => minutesOf(w.start) < at);
+	return kept.map((w, i) => (i === kept.length - 1 ? { ...w, end: t } : w));
+};
+
+/** The weekly hours with one weekday's windows replaced. */
+export const withWeekdayWindows = (
+	hours: WorkingHours,
+	weekday: number,
+	windows: TimeWindow[]
+): WorkingHours =>
+	[
+		...hours.filter((w) => w.weekday !== weekday),
+		...windows.map(({ start, end }) => ({ weekday, start, end }))
+	].sort(byWeekdayAndStart);
+
+export const sameWindows = (a: TimeWindow[], b: TimeWindow[]) =>
+	a.length === b.length &&
+	a.every((w, i) => w.start === b[i].start && w.end === b[i].end);
+
+/**
+ * Whether a range lies inside one window of its day (exceptions and
+ * holidays count). Without working hours everything counts as inside, so
+ * nothing warns.
  */
 export const isWithinWorkingHours = (
 	start: Date,
 	end: Date,
-	hours: WorkingHours
+	hours: WorkingHours | WorkingPlan
 ) => {
-	if (hours.length === 0) return true;
+	const day = effectiveDay(start, hours);
+	if (day.source === 'none') return true;
 	const last = new Date(end.getTime() - 1);
 	if (!sameDay(start, last)) return false;
 	const from = hm(start);
 	const to = hm(last) + 1;
-	return hours.some(
-		(w) =>
-			w.weekday === start.getDay() &&
-			minutesOf(w.start) <= from &&
-			minutesOf(w.end) >= to
+	return day.windows.some(
+		(w) => minutesOf(w.start) <= from && minutesOf(w.end) >= to
 	);
 };
-
-/** The windows of one weekday, earliest first. */
-export const windowsOn = (hours: WorkingHours, weekday: number) =>
-	hours.filter((w) => w.weekday === weekday).sort(byWeekdayAndStart);
 
 /** One row of the working-hours dialog. */
 export interface WorkingDayRow {
@@ -176,23 +405,36 @@ export const DEFAULT_BREAK: DayBreak = {
 };
 
 /**
- * The break the stored windows show: every working day split by the same
- * gap. With no hours set yet, the default break.
+ * The break the stored windows show: every day that spans it is split by
+ * the same gap. A day that ends before the break or starts after it (Friday
+ * 08:00–12:00) does not count against it. With no hours set yet, the
+ * default break.
  */
 export const breakOf = (hours: WorkingHours): DayBreak => {
 	if (hours.length === 0) return DEFAULT_BREAK;
 	const off = { ...DEFAULT_BREAK, enabled: false };
+	const days = WEEKDAYS_MONDAY_FIRST.map((weekday) =>
+		windowsOn(hours, weekday)
+	).filter((day) => day.length > 0);
 	let gap: { start: string; end: string } | undefined;
-	for (const weekday of WEEKDAYS_MONDAY_FIRST) {
-		const day = windowsOn(hours, weekday);
-		if (day.length === 0) continue;
-		if (day.length !== 2) return off;
+	for (const day of days) {
+		if (day.length > 2) return off;
+		if (day.length !== 2) continue;
 		const next = { start: day[0].end, end: day[1].start };
 		if (gap && (gap.start !== next.start || gap.end !== next.end))
 			return off;
 		gap = next;
 	}
-	return gap ? { enabled: true, ...gap } : off;
+	if (!gap) return off;
+	const { start, end } = gap;
+	// A single window across the gap would be split on the next save.
+	const spansGap = days.some(
+		(day) =>
+			day.length === 1 &&
+			minutesOf(day[0].start) < minutesOf(start) &&
+			minutesOf(day[0].end) > minutesOf(end)
+	);
+	return spansGap ? off : { enabled: true, start, end };
 };
 
 export const isBreakValid = (b: DayBreak) =>

@@ -115,4 +115,41 @@ describe('calendarFreeTime', () => {
 			{ start: at(16, 13), end: at(16, 18) }
 		]);
 	});
+
+	it('skips public holidays of the region and follows day exceptions', () => {
+		// Monday 16th: only 14:00–16:00 that day; Wednesday 18th is Buß- und
+		// Bettag in Saxony.
+		const plan = {
+			hours: MON_FRI,
+			holidayRegion: 'SN' as const,
+			exceptions: { '2026-11-16': [{ start: '14:00', end: '16:00' }] }
+		};
+		expect(
+			nextFreeHours({
+				entries: [],
+				ownerId: 'me',
+				hours: plan,
+				now: at(16, 7)
+			})
+		).toEqual([at(16, 14), at(17, 8), at(19, 8)]);
+		// Without the region the Wednesday counts again.
+		expect(
+			nextFreeHours({
+				entries: [],
+				ownerId: 'me',
+				hours: { ...plan, holidayRegion: null },
+				now: at(16, 7)
+			})
+		).toEqual([at(16, 14), at(17, 8), at(18, 8)]);
+		// "alle frei" on an exception day that is off altogether: nothing.
+		expect(
+			freeForEveryone({
+				entries: [],
+				people: ['me'],
+				day: at(17, 0),
+				hours: { ...plan, exceptions: { '2026-11-17': [] } },
+				now: at(16, 7)
+			})
+		).toEqual([]);
+	});
 });

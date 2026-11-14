@@ -1,8 +1,9 @@
 /**
  * Per-person conveniences of the calendar, kept in this browser only: how
- * the view switch looks and which colleagues' calendars were shown last.
- * Storage can be missing or blocked (private window); then the defaults
- * apply and nothing breaks.
+ * the view switch looks, which colleagues' calendars were shown last and
+ * the remembered answer to "Nur an diesem Tag | Immer …" after dragging a
+ * working-hours grip. Storage can be missing or blocked (private window);
+ * then the defaults apply and nothing breaks.
  */
 import type { ViewSwitcherStyle } from './calendarViews';
 
@@ -22,6 +23,14 @@ const write = (k: string, value: string) => {
 		window.localStorage.setItem(k, value);
 	} catch {
 		// Storage blocked: the choice lasts until the page reloads.
+	}
+};
+
+const remove = (k: string) => {
+	try {
+		window.localStorage.removeItem(k);
+	} catch {
+		// Storage blocked: nothing was stored either.
 	}
 };
 
@@ -75,3 +84,21 @@ export const recentPills = (
 /** `id` was just shown: it moves to the front. */
 export const rememberColleague = (recent: string[], id: string) =>
 	[id, ...recent.filter((x) => x !== id)].slice(0, MAX_RECENT_COLLEAGUES);
+
+/**
+ * A moved working-hours grip applies to that date only (`day`) or to the
+ * weekday from now on (`week`).
+ */
+export type EdgeChoice = 'day' | 'week';
+
+/** The remembered answer ("Auswahl merken"), or null: ask every time. */
+export const readEdgeChoice = (ownerId: string): EdgeChoice | null => {
+	const value = read(key(ownerId, 'edgeChoice'));
+	return value === 'day' || value === 'week' ? value : null;
+};
+
+/** null forgets it ("Gemerkte Auswahl vergessen"). */
+export const writeEdgeChoice = (ownerId: string, choice: EdgeChoice | null) =>
+	choice
+		? write(key(ownerId, 'edgeChoice'), choice)
+		: remove(key(ownerId, 'edgeChoice'));
