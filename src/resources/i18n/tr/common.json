@@ -6898,6 +6898,7 @@
 		}
 	},
 	"calendar": {
+		"upcomingChat": "{{name}} ile sohbete git",
 		"create": "Randevu oluştur",
 		"today": "Bugün",
 		"previous": "Önceki",

@@ -6865,6 +6865,7 @@
 		}
 	},
 	"calendar": {
+		"upcomingChat": "ናብ ዕላል ምስ {{name}} ኪድ",
 		"create": "ቆጸራ ፍጠር",
 		"today": "ሎሚ",
 		"previous": "ዝሓለፈ",

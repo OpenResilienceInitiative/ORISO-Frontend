@@ -6813,6 +6813,7 @@
 		}
 	},
 	"calendar": {
+		"upcomingChat": "Go to the chat with {{name}}",
 		"create": "New appointment",
 		"today": "Today",
 		"previous": "Previous",

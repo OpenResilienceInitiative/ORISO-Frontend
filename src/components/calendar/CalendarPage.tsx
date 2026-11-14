@@ -1589,6 +1589,7 @@ export const CalendarPage = ({
 			setMenu({ type: 'proposal', proposal, entry, anchor }),
 		onWithdrawProposal: onWithdrawProposal ? withdraw : undefined,
 		onOpenEntry: (entry, anchor) => openEntry(entry, anchor),
+		onOpenChat,
 		shownColleagues,
 		onCreate: onCreate ? create : undefined,
 		onMoreDetails: moreDetails,

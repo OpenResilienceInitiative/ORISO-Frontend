@@ -10,6 +10,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Popper } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
+import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 import { ListSearchField } from '../listSearchField/ListSearchField';
 import { FilterChipRow } from '../displayFilter/FilterChipRow';
 import { FilterChip } from '../displayFilter/FilterChip';
@@ -87,6 +88,11 @@ export interface CalendarSidebarProps {
 	) => void;
 	onWithdrawProposal?: (proposal: MoveProposal) => void;
 	onOpenEntry: (entry: CalendarEntry, anchor: HTMLElement) => void;
+	/**
+	 * "Zum Chat mit …" beside an upcoming appointment that has a
+	 * conversation (Frank, prototype v15); without it there is no button.
+	 */
+	onOpenChat?: (entry: CalendarEntry) => void;
 	/** Colleagues shown: search finds their entries too. */
 	shownColleagues: string[];
 	/**
@@ -128,6 +134,7 @@ export const CalendarSidebar = ({
 	onOpenProposal,
 	onWithdrawProposal,
 	onOpenEntry,
+	onOpenChat,
 	shownColleagues,
 	onCreate,
 	onMoreDetails,
@@ -361,7 +368,10 @@ export const CalendarSidebar = ({
 						data-cy="calendar-upcoming"
 					>
 						{upcoming.map((entry) => (
-							<li key={entry.id}>
+							<li
+								key={entry.id}
+								className="calendarSide__upcoming"
+							>
 								<button
 									type="button"
 									className={`calendarSide__row calendarSide__row--k-${facetOf(entry)}`}
@@ -398,6 +408,25 @@ export const CalendarSidebar = ({
 										)}
 									</span>
 								</button>
+								{onOpenChat &&
+									entry.type === 'appointment' &&
+									entry.sessionId !== undefined && (
+										<button
+											type="button"
+											className="calendarSide__chat"
+											aria-label={t(
+												'calendar.upcomingChat',
+												{ name: label(entry) }
+											)}
+											title={t('calendar.upcomingChat', {
+												name: label(entry)
+											})}
+											onClick={() => onOpenChat(entry)}
+											data-cy={`calendar-upcoming-chat-${entry.id}`}
+										>
+											<ChatBubbleOutlineIcon fontSize="small" />
+										</button>
+									)}
 							</li>
 						))}
 					</ul>

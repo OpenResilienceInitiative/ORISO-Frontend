@@ -6915,6 +6915,7 @@
 		}
 	},
 	"calendar": {
+		"upcomingChat": "Перейти в чат с {{name}}",
 		"create": "Создать встречу",
 		"today": "Сегодня",
 		"previous": "Назад",

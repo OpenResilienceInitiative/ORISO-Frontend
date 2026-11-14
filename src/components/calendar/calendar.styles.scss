@@ -752,6 +752,40 @@
 	list-style: none;
 }
 
+// "Als Nächstes": the row opens the entry's actions, the speech bubble
+// beside it goes straight to the conversation.
+.calendarSide__upcoming {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+}
+
+.calendarSide__chat {
+	display: inline-grid;
+	flex: none;
+	place-items: center;
+	width: 36px;
+	height: 36px;
+	padding: 0;
+	border: 0;
+	border-radius: 50%;
+	background: transparent;
+	color: var(--m3-on-surface-variant, #444748);
+	cursor: pointer;
+
+	&:hover {
+		background: color-mix(
+			in srgb,
+			var(--m3-on-surface, #1a1c1e) 8%,
+			transparent
+		);
+	}
+
+	&:focus-visible {
+		@include calendar-focus-ring;
+	}
+}
+
 // A compact row: tinted kind icon, name, short time.
 .calendarSide__row {
 	display: flex;
