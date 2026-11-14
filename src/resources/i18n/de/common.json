@@ -7015,12 +7015,12 @@
 			"repeat": "Wiederholen an",
 			"until": "Bis einschließlich",
 			"save": "Eintragen",
+			"count": "{{count}} Sperrzeiten werden eingetragen.",
 			"count_one": "{{count}} Sperrzeit wird eingetragen.",
-			"count_other": "{{count}} Sperrzeiten werden eingetragen.",
+			"conflicts": "Überschneidet sich mit {{count}} Terminen.",
 			"conflicts_one": "Überschneidet sich mit {{count}} Termin.",
-			"conflicts_other": "Überschneidet sich mit {{count}} Terminen.",
-			"created_one": "Sperrzeit eingetragen: {{date}}",
-			"created_other": "{{count}} Sperrzeiten eingetragen"
+			"created": "{{count}} Sperrzeiten eingetragen",
+			"created_one": "Sperrzeit eingetragen: {{date}}"
 		},
 		"saveFailed": "Das hat nicht geklappt. Bitte versuchen Sie es noch einmal.",
 		"blockerRemoved": "Sperrzeit entfernt."

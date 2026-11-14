@@ -6863,5 +6863,143 @@
 			"title": "ሕሳብኩም ክንምርምር ኣይከኣልናን",
 			"text": "መልእኽትኹም ገና ኣይተላእከን፣ ኣብ መእተዊ ቦታ ይጸንሕ። በጃኹም ርክብኩም ፈትሹ፣ ከም ሓድሽ ድማ ስደድዎ።"
 		}
+	},
+	"calendar": {
+		"create": "ቆጸራ ፍጠር",
+		"today": "ሎሚ",
+		"previous": "ዝሓለፈ",
+		"next": "ዝቕጽል",
+		"viewSwitch": "ኣረኣእያ",
+		"views": {
+			"day": "መዓልቲ",
+			"week": "ሰሙን",
+			"month": "ወርሒ",
+			"list": "ዝርዝር"
+		},
+		"upcoming": "ዝመጽኡ ቆጸራታት",
+		"upcomingEmpty": "ዝመጽእ ቆጸራ የለን",
+		"calendars": "ካላንዳራት",
+		"myCalendar": "ናተይ ካላንዳር",
+		"scopeHint": {
+			"AGENCY": "ካላንዳራት ማእከል ምኽርኩም ትርእዩ ኣለኹም። እዚ ትካልኩም እዩ ዝውስኖ።",
+			"TENANT": "ካላንዳራት ኩሎም ማእከላት ምኽሪ ትካልኩም ትርእዩ ኣለኹም። እዚ ትካልኩም እዩ ዝውስኖ።",
+			"PLATFORM": "ካላንዳራት ኩሎም ኣማኸርቲ ናይቲ መድረኽ ትርእዩ ኣለኹም። እዚ ትካልኩም እዩ ዝውስኖ።"
+		},
+		"colleaguesEmpty": "ዝርአ ካላንዳር መሳርሕቲ የለን።",
+		"sync": "ምውህሃድ ካላንዳር",
+		"kinds": {
+			"video": "ቪድዮ",
+			"phone": "ተሌፎን",
+			"onsite": "ብኣካል",
+			"chat": "ቻት"
+		},
+		"types": {
+			"group": "ናይ ጉጅለ ቆጸራ",
+			"blocker": "ዝተዓጽወ ግዜ",
+			"busy": "ተታሒዙ",
+			"colleague": "ተታሒዙ"
+		},
+		"noEvents": "ኣብዚ ግዜ እዚ ቆጸራ የለን",
+		"loading": "ቆጸራታት ይጽዓኑ ኣለዉ",
+		"error": {
+			"title": "ቆጸራታት ክጽዓኑ ኣይከኣሉን።",
+			"retry": "ደጊምኩም ፈትኑ"
+		},
+		"dialog": {
+			"createTitle": "ሓድሽ ምዝገባ",
+			"description": "መዓልቲ፡ ሰዓት፡ ዓይነትን እቲ ቆጸራ ዝምልከቶ ምኽርን ምረጹ።",
+			"conversation": "ምኽሪ",
+			"kind": "ዓይነት",
+			"date": "ዕለት",
+			"start": "መጀመሪ",
+			"end": "መወዳእታ",
+			"note": "መዘኻኸሪ (ንዓኹም ጥራይ ዝርአ)",
+			"save": "ፍጠር",
+			"saveAnyway": "ብዝኾነ ፍጠር",
+			"conflict": "ምስዚ ይጋጮ፦ {{list}}",
+			"error": {
+				"incomplete": "በጃኹም ዕለትን ሰዓትን ምረጹ።",
+				"past": "እቲ ምዝገባ ኣብ መጻኢ ክኸውን ኣለዎ።",
+				"order": "እቲ መወዳእታ ድሕሪ እቲ መጀመሪ ክኸውን ኣለዎ።",
+				"conversation": "በጃኹም እቲ ቆጸራ ዝምልከቶ ምኽሪ ምረጹ።"
+			}
+		},
+		"details": {
+			"start": {
+				"video": "ቪድዮ ጻውዒት ጀምር",
+				"phone": "ጻውዒት ጀምር",
+				"chat": "ቻት ክፈት"
+			},
+			"join": {
+				"video": "ናብ ቪድዮ ጻውዒት ተጸምበር",
+				"phone": "ናብ ጻውዒት ኪድ",
+				"chat": "ቻት ክፈት"
+			},
+			"move": "ግዜ ቀይር",
+			"cancel": "ቆጸራ ሰርዝ",
+			"remove": "ዝተዓጽወ ግዜ ኣልግስ",
+			"address": "ኣድራሻ",
+			"colleague": "ካላንዳር {{name}}",
+			"busyHint": "ካብ ናይ ባዕልኹም ካላንዳር ዝተወስደ። ORISO ነቲ ግዜ ጥራይ እዩ ዝፈልጦ።",
+			"colleagueHint": "ካብ መሳርሕትኹም ግዜን ዓይነትን ጥራይ ትርእዩ።"
+		},
+		"moved": "ናብ {{date}} ተቐይሩ። እቲ ምኽሪ ዝደሊ ሰብ ክሕበር እዩ።",
+		"blockerMoved": "ዝተዓጽወ ግዜ ናብ {{date}} ተቐይሩ።",
+		"cancelled": "ቆጸራ ተሰሪዙ። እቲ ምኽሪ ዝደሊ ሰብ ክሕበር እዩ።",
+		"created": "ቆጸራ ተፈጢሩ፦ {{date}}",
+		"undo": "ንድሕሪት መልስ",
+		"syncDialog": {
+			"title": "ምውህሃድ ካላንዳር",
+			"description": "ቆጸራታት ORISO ኣብ Outlook፡ Google ወይ Apple ካላንዳር – ካብኡ ድማ ዝተታሕዙ ግዜያት ናብ ORISO።",
+			"feedTitle": "ኣብ ካላንዳርኩም ምዝገባ ግበሩ",
+			"feedText": "ነዚ ሊንክ ኣብ ካላንዳርኩም ከም ምዝገባ ወስኹዎ። “ORISO-Termin”ን ሰዓትን ጥራይ የርኢ፡ ስም ኣየርእን።",
+			"copy": "ሊንክ ቅዳሕ",
+			"copied": "ሊንክ ተቐዲሑ",
+			"lastFetched": "ናይ መወዳእታ ምውሳድ፦ {{date}}",
+			"neverFetched": "ገና ኣይተወስደን",
+			"reset": "ሊንክ ዳግም ኣቐምጥ",
+			"resetTitle": "ሊንክ ዳግም ይቐመጥ?",
+			"resetText": "እቲ ኣረጊት ሊንክ ብቕጽበት ምስራሕ የቋርጽ። ድሕሪኡ ነቲ ሓድሽ ሊንክ ኣብ ካላንዳርኩም ተመዝገቡሉ።",
+			"resetAction": "ዳግም ኣቐምጥ",
+			"preview": "ቆጸራ ኣብ ካላንዳርኩም ከምዚ ይርአ",
+			"refreshHint": "Outlookን Googleን ምዝገባታት ኣብ ገለ ሰዓታት ሓንሳብ ጥራይ የሐድሱ። ወሳኒ ORISO እዩ።",
+			"importTitle": "ዝተታሕዙ ግዜያት ኣምጽእ",
+			"importText": "ናይ Outlook ወይ Google ካላንዳርኩም ብሕታዊ ICS ኣድራሻ ኣእትዉ። ORISO መዓስ ከም ዝተታሕዝኩም ጥራይ እዩ ዝወስድ – ኣርእስትን ተሳተፍትን ኣይወስድን።",
+			"importField": "ICS ኣድራሻ",
+			"importSave": "ኣምጽእ",
+			"importRemove": "ኣወግድ",
+			"importStatus": "ምስ {{host}} ተኣሳሲሩ፡ ናይ መወዳእታ ምውህሃድ {{date}}",
+			"importError": "እቲ ኣድራሻ ክንበብ ኣይከኣለን። በጃኹም ነቲ ሊንክ ኣረጋግጹ።",
+			"importConnected": "ምስ {{host}} ተኣሳሲሩ። እቲ ቀዳማይ ምውህሃድ ይካየድ ኣሎ።"
+		},
+		"filterLabel": "ኣርኢ",
+		"facets": {
+			"video": "ቪድዮ",
+			"phone": "ተሌፎን",
+			"onsite": "ብኣካል",
+			"chat": "ቻት",
+			"group": "ናይ ጉጅለ ቆጸራታት",
+			"blocker": "ዝተዓጽዉ ግዜያት"
+		},
+		"slotMenu": {
+			"label": "ወስኽ"
+		},
+		"blocker": {
+			"menuItem": "ዝተዓጽወ ግዜ",
+			"title": "ግዜ ዕጸው",
+			"description": "ኣብዚ ግዜ እዚ ቆጸራ ኣይውሃብን። መሳርሕቲ “ዝተዓጽወ ግዜ” ጥራይ እዮም ዝርእዩ።",
+			"allDay": "ምሉእ መዓልቲ",
+			"repeat": "ኣብዘን መዓልትታት ድገም",
+			"until": "ክሳብ (ሓዊሱ)",
+			"save": "ዕጸው",
+			"count": "{{count}} ዝተዓጽዉ ግዜያት ክምዝገቡ እዮም።",
+			"count_one": "{{count}} ዝተዓጽወ ግዜ ክምዝገብ እዩ።",
+			"conflicts": "ምስ {{count}} ቆጸራታት ይጋጮ።",
+			"conflicts_one": "ምስ {{count}} ቆጸራ ይጋጮ።",
+			"created": "{{count}} ዝተዓጽዉ ግዜያት ተመዝጊቦም",
+			"created_one": "ዝተዓጽወ ግዜ ተመዝጊቡ፦ {{date}}"
+		},
+		"saveFailed": "ኣይሰለጠን። በጃኹም ደጊምኩም ፈትኑ።",
+		"blockerRemoved": "ዝተዓጽወ ግዜ ተኣልዩ።"
 	}
 }
