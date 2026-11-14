@@ -2280,7 +2280,7 @@
 				"nav": "Gespräch",
 				"small": "Nachrichten"
 			},
-			"directLinks": "Meine Direkteinladungen"
+			"directLinks": "Termine & Direkteinladungen"
 		},
 		"activity": "Zeitstrahl",
 		"language": "Sprache",
@@ -2627,6 +2627,10 @@
 			"sessionAskerDeleted": {
 				"title": "Gelöschte:r Ratsuchende:r",
 				"text": "Ein Chat mit einer ratsuchenden Person wurde gelöscht. Persönliche Daten und Nachrichten sind nicht mehr verfügbar."
+			},
+			"directInvitationRenewalRequested": {
+				"title": "Neuer Link angefragt",
+				"text": "Eine Person möchte einen neuen Link zu Ihrem Termin."
 			}
 		},
 		"error": "Fehlgeschlagen",
@@ -6914,7 +6918,8 @@
 			"emptyText": "Erstellen Sie eine Direkteinladung – mit oder ohne Termin. Sie erscheint danach hier.",
 			"create": "Direkteinladung erstellen",
 			"noUpcoming": "Keine anstehenden Termine. Geben Sie einer Direkteinladung ein Datum, oder legen Sie in einem Gespräch über ⋮ einen Termin an.",
-			"noLinks": "Keine Direkteinladungen ohne Termin."
+			"noLinks": "Keine Direkteinladungen ohne Termin.",
+			"appointmentName": "Termin"
 		},
 		"entry": {
 			"beforeStart": {
@@ -6932,13 +6937,18 @@
 				"request": "Neuen Link anfragen",
 				"sent": "Anfrage gesendet. Sie bekommen einen neuen Link, sobald Ihre Beratungsperson ihn schickt.",
 				"failed": "Die Anfrage hat nicht geklappt. Bitte versuchen Sie es erneut."
+			},
+			"access": {
+				"guestsOnly": "Dieser Link ist nur für Gäste. Bitte öffnen Sie ihn in einem Fenster, in dem Sie nicht angemeldet sind.",
+				"accountsOnly": "Für diesen Link brauchen Sie ein Konto. Bitte melden Sie sich an oder registrieren Sie sich."
 			}
 		},
 		"notice": {
 			"title": "Neuer Link angefragt",
 			"text": "{{name}} möchte einen neuen Link für „{{invitation}}“.",
 			"someone": "Eine Person",
-			"send": "Neuen Link senden"
+			"send": "Neuen Link senden",
+			"failed": "Der neue Link konnte nicht erstellt werden. Bitte versuchen Sie es erneut."
 		}
 	}
 }

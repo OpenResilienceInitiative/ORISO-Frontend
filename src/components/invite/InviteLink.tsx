@@ -55,7 +55,18 @@ import {
 	registrationScreenTitleSx
 } from '../registration/registrationDesign/registrationDesign';
 import type { Pseudonym } from '../../utils/anonName/engine';
-import { isInactiveDirectLinkError } from '../../api/apiDirectLinks';
+import {
+	apiRequestDirectInvitationRenewal,
+	directInvitationAccessError,
+	isExpiredDirectLinkError,
+	isInactiveDirectLinkError
+} from '../../api/apiDirectLinks';
+import {
+	downloadInvitationIcs,
+	InvitationBeforeStart,
+	InvitationExpired,
+	type NewLinkRequestState
+} from '../directInvitation/InvitationEntryStates';
 import type { InviteLinkContext } from '../../api/apiGetInviteLinkContext';
 import type { DirectLinkMedium } from '../conversationCreate/directLink/directLink';
 import {
@@ -122,6 +133,51 @@ const inviteErrorText = (
 		? error.message
 		: translate('inviteLink.error.generic');
 };
+/**
+ * #2252: who may enter decides the account the page creates. Guests only:
+ * always a temporary one; accounts only: always a permanent one; both: the
+ * link's default, with "Anmelden" as the other way.
+ */
+const withAccessMode = (context: InviteLinkContext): InviteLinkContext => {
+	switch (context.accessMode) {
+		case 'GUESTS_ONLY':
+			return { ...context, temporaryAccount: true };
+		case 'ACCOUNTS_ONLY':
+			return {
+				...context,
+				temporaryAccount: false,
+				hidePasswordField: false
+			};
+		default:
+			return context;
+	}
+};
+
+/** #2252: the waiting room is not open yet (start − 15 min). */
+const callOpensLater = (context: InviteLinkContext | null) => {
+	const time = (value?: string | null) => (value ? Date.parse(value) : NaN);
+	const opens = time(context?.callOpensAt);
+	return (
+		Number.isFinite(opens) &&
+		Number.isFinite(time(context?.appointmentStartTime)) &&
+		Number.isFinite(time(context?.appointmentEndTime)) &&
+		Date.now() < opens
+	);
+};
+
+/** #2252: the text of a 403 that names the only way in. */
+const accessErrorText = async (
+	error: unknown,
+	translate: (key: string) => string
+) => {
+	const only = await directInvitationAccessError(error);
+	if (only === 'guests')
+		return translate('directInvitation.entry.access.guestsOnly');
+	if (only === 'accounts')
+		return translate('directInvitation.entry.access.accountsOnly');
+	return null;
+};
+
 export const InviteLink = () => {
 	const { t } = useTranslation();
 	const navigate = useNavigate();
@@ -145,7 +201,14 @@ export const InviteLink = () => {
 		| 'staff'
 		| 'directCall'
 		| 'directOpening'
+		| 'beforeStart'
+		| 'expired'
 	>('loading');
+	/* #2252: "Neuen Link anfragen" on the expired page. */
+	const [newLinkRequest, setNewLinkRequest] =
+		useState<NewLinkRequestState>('idle');
+	/* #2252: the person chose the chat before the call opens, or the time came. */
+	const pastBeforeStartRef = useRef(false);
 	/* #1795: a counsellor's direct link. Chat guests use the identity step
 	   below; call guests the call entry; signed-in people go straight in. */
 	const [directLink, setDirectLink] = useState<{
@@ -213,13 +276,21 @@ export const InviteLink = () => {
 			try {
 				// The public context can report a paused link without creating an
 				// account or showing an existing waiting room or staff notice.
-				const context = await apiGetInviteLinkContext(token).catch(
+				let expired = false;
+				const read = await apiGetInviteLinkContext(token).catch(
 					async (error) => {
 						if (await isPausedInvite(error)) throw error;
+						/* #2252: an expired or replaced invitation has its own page. */
+						expired = await isExpiredDirectLinkError(error);
 						return null;
 					}
 				);
 				if (!mountedRef.current) return;
+				if (expired) {
+					setStatus('expired');
+					return;
+				}
+				const context = read ? withAccessMode(read) : read;
 				if (holdsCounsellorSession()) {
 					setStatus('staff');
 					return;
@@ -274,6 +345,15 @@ export const InviteLink = () => {
 						return;
 					}
 					setDirectLink({ context, medium: directMedium });
+					/* #2252: before the waiting room opens, the date and the
+					   calendar entry first; the chat is one click away. */
+					if (
+						!pastBeforeStartRef.current &&
+						callOpensLater(context)
+					) {
+						setStatus('beforeStart');
+						return;
+					}
 					if (hasActiveAuthSession()) {
 						/* Signed in: the own conversation, then the app. */
 						setStatus('directOpening');
@@ -382,6 +462,10 @@ export const InviteLink = () => {
 				setPassword(minted.password);
 				setStatus('identity');
 			} catch (err: unknown) {
+				if (await isExpiredDirectLinkError(err)) {
+					if (mountedRef.current) setStatus('expired');
+					return;
+				}
 				if (await isPausedInvite(err)) {
 					if (mountedRef.current) setStatus('paused');
 					return;
@@ -390,7 +474,9 @@ export const InviteLink = () => {
 				setDpaFailure(failure);
 				setResumeFailed(err instanceof InviteSessionResumeError);
 				setStatus('error');
-				setErrorMessage(inviteErrorText(err, t));
+				setErrorMessage(
+					(await accessErrorText(err, t)) ?? inviteErrorText(err, t)
+				);
 			}
 		})();
 	}, [token, locale, resumeAttempt, t]);
@@ -496,8 +582,18 @@ export const InviteLink = () => {
 			}
 			redirectToApp(undefined, { navigate });
 		} catch (err: unknown) {
+			if (await isExpiredDirectLinkError(err)) {
+				if (mountedRef.current) setStatus('expired');
+				return;
+			}
 			if (await isPausedInvite(err)) {
 				if (mountedRef.current) setStatus('paused');
+				return;
+			}
+			const accessText = await accessErrorText(err, t);
+			if (accessText) {
+				setStatus('error');
+				setErrorMessage(accessText);
 				return;
 			}
 			/* The account exists, so a failed login is retried on the identity
@@ -531,6 +627,31 @@ export const InviteLink = () => {
 		postcode
 	]);
 
+	/* #2252: on to the chat (or, once it opens, the waiting room). */
+	const continuePastBeforeStart = useCallback(() => {
+		pastBeforeStartRef.current = true;
+		hasRunRef.current = false;
+		setStatus('loading');
+		setResumeAttempt((attempt) => attempt + 1);
+	}, []);
+
+	/* #2252: only a person already in the conversation may ask, so a
+	   signed-out person signs in first and comes back to this page. */
+	const requestNewLink = useCallback(async () => {
+		if (!token) return;
+		if (!hasActiveAuthSession()) {
+			window.location.assign(loginPathForDirectLink(token));
+			return;
+		}
+		setNewLinkRequest('sending');
+		try {
+			await apiRequestDirectInvitationRenewal(token);
+			if (mountedRef.current) setNewLinkRequest('sent');
+		} catch {
+			if (mountedRef.current) setNewLinkRequest('failed');
+		}
+	}, [token]);
+
 	const diceLabel = t('anonymousChat.pseudonym.changeName');
 
 	if (status === 'invite') {
@@ -559,6 +680,37 @@ export const InviteLink = () => {
 				modality={directLink.medium === 'VIDEO' ? 'video' : 'audio'}
 				signedIn={directLink.signedIn}
 			/>
+		);
+	}
+
+	if (status === 'beforeStart' && directLink && token) {
+		return (
+			<StageLayout
+				stage={<Stage hasAnimation={false} isReady={true} />}
+				showLegalLinks
+				showRegistrationLink={false}
+			>
+				<InvitationBeforeStartPage
+					context={directLink.context}
+					token={token}
+					onContinue={continuePastBeforeStart}
+				/>
+			</StageLayout>
+		);
+	}
+
+	if (status === 'expired' && token) {
+		return (
+			<StageLayout
+				stage={<Stage hasAnimation={false} isReady={true} />}
+				showLegalLinks
+				showRegistrationLink={false}
+			>
+				<InvitationExpired
+					requestState={newLinkRequest}
+					onRequestNewLink={requestNewLink}
+				/>
+			</StageLayout>
 		);
 	}
 
@@ -739,20 +891,23 @@ export const InviteLink = () => {
 						>
 							{t('anonymousChat.pseudonym.continueWithSelection')}
 						</Button>
-						{directLink && token && !loginRetry && (
-							<Button
-								fullWidth
-								href={loginPathForDirectLink(token)}
-								data-cy="direct-link-login"
-								sx={{
-									mt: 1,
-									textTransform: 'none',
-									color: registrationMd3.primary
-								}}
-							>
-								{t('directLink.entry.haveAccount')}
-							</Button>
-						)}
+						{directLink &&
+							token &&
+							!loginRetry &&
+							directLink.context.accessMode !== 'GUESTS_ONLY' && (
+								<Button
+									fullWidth
+									href={loginPathForDirectLink(token)}
+									data-cy="direct-link-login"
+									sx={{
+										mt: 1,
+										textTransform: 'none',
+										color: registrationMd3.primary
+									}}
+								>
+									{t('directLink.entry.haveAccount')}
+								</Button>
+							)}
 					</Box>
 				)}
 				{status === 'error' && (
@@ -788,5 +943,46 @@ export const InviteLink = () => {
 				)}
 			</Box>
 		</StageLayout>
+	);
+};
+
+/**
+ * #2252: the entry page before the call waiting room opens. It moves on by
+ * itself at `callOpensAt` for a call; the chat is open at once.
+ */
+const InvitationBeforeStartPage = ({
+	context,
+	token,
+	onContinue
+}: {
+	context: InviteLinkContext;
+	token: string;
+	onContinue: () => void;
+}) => {
+	const { t } = useTranslation();
+	const start = new Date(context.appointmentStartTime ?? NaN);
+	const end = new Date(context.appointmentEndTime ?? NaN);
+	const isCall = context.chatType === 'AUDIO' || context.chatType === 'VIDEO';
+	useEffect(() => {
+		if (!isCall || !context.callOpensAt) return undefined;
+		const wait = Math.max(0, Date.parse(context.callOpensAt) - Date.now());
+		const timer = window.setTimeout(onContinue, wait);
+		return () => window.clearTimeout(timer);
+	}, [context.callOpensAt, isCall, onContinue]);
+	return (
+		<Box sx={{ maxWidth: 480, mx: 'auto', my: '40px', px: 2 }}>
+			<InvitationBeforeStart
+				slot={{ start, end }}
+				onAddToCalendar={() =>
+					downloadInvitationIcs({
+						title: t('directInvitation.entry.beforeStart.title'),
+						slot: { start, end },
+						url: `${window.location.origin}/invite/${token}`,
+						uid: `direct-invitation-${token}`
+					})
+				}
+				onOpenChat={onContinue}
+			/>
+		</Box>
 	);
 };

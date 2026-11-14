@@ -368,7 +368,8 @@ export const InvitationsOverview = ({
 											onShowAppointmentQr(item)
 										}
 										onEdit={
-											onEditAppointment
+											/* A 1:1 appointment without link moves in its conversation. */
+											onEditAppointment && item.url
 												? () => onEditAppointment(item)
 												: undefined
 										}

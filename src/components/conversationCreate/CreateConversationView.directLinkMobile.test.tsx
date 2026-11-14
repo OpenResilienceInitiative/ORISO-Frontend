@@ -261,6 +261,13 @@ describe('CreateConversationView - created direct link on a phone', () => {
 		fireEvent.click(
 			screen.getByRole('button', { name: /directLink.card.create/ })
 		);
+		// #2252: the Direkteinladung dialog adds appointment and settings.
+		await screen.findByTestId('invitation-dialog');
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'directInvitation.dialog.createAction'
+			})
+		);
 		await screen.findByTestId('direct-link-share-dialog');
 	};
 
