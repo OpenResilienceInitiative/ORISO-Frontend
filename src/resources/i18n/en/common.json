@@ -6940,12 +6940,14 @@
 			"repeat": "Repeat on",
 			"until": "Up to and including",
 			"save": "Block",
+			"tooMany": "Too many repetitions: at most {{max}} blocked times at once. Please choose an earlier last day.",
 			"count": "{{count}} blocked times will be added.",
 			"count_one": "{{count}} blocked time will be added.",
 			"conflicts": "Overlaps with {{count}} appointments.",
 			"conflicts_one": "Overlaps with {{count}} appointment.",
 			"created": "{{count}} blocked times added",
-			"created_one": "Time blocked: {{date}}"
+			"created_one": "{{count}} blocked time added",
+			"createdSingle": "Time blocked: {{date}}"
 		},
 		"saveFailed": "That did not work. Please try again.",
 		"blockerRemoved": "Blocked time removed."

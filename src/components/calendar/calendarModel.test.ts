@@ -1,8 +1,10 @@
-import { describe, expect, it } from 'vite-plus/test';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vite-plus/test';
 import {
 	colleaguesInScope,
+	daySpan,
 	draftError,
 	expandBlocker,
+	isWholeDays,
 	MAX_BLOCKER_OCCURRENCES,
 	findConflicts,
 	isMovable,
@@ -10,7 +12,9 @@ import {
 	kindFromLocation,
 	neutralFeedEvent,
 	redactForColleague,
+	settleMove,
 	upcomingEntries,
+	visibleHours,
 	type CalendarEntry,
 	type Colleague
 } from './calendarModel';
@@ -220,6 +224,108 @@ describe('expandBlocker', () => {
 	});
 });
 
+describe('expandBlocker across a daylight-saving change (Europe/Berlin)', () => {
+	const runnerZone = process.env.TZ;
+	beforeAll(() => {
+		process.env.TZ = 'Europe/Berlin';
+	});
+	afterAll(() => {
+		if (runnerZone === undefined) delete process.env.TZ;
+		else process.env.TZ = runnerZone;
+	});
+	const clock = (d: Date) =>
+		`${d.getDate()}. ${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`;
+
+	it('keeps 00:00–04:00 on the 23-hour day in March', () => {
+		// Sundays 21 and 28 March 2027; clocks go forward on the 28th.
+		const ranges = expandBlocker(
+			{
+				start: new Date(2027, 2, 21, 0, 0),
+				end: new Date(2027, 2, 21, 4, 0)
+			},
+			{ weekdays: [0], until: new Date(2027, 2, 28) }
+		);
+		expect(ranges.map((r) => `${clock(r.start)}–${clock(r.end)}`)).toEqual(
+			['21. 0:00–21. 4:00', '28. 0:00–28. 4:00']
+		);
+	});
+
+	it('keeps 00:00–04:00 on the 25-hour day in October', () => {
+		// Sundays 18 and 25 October 2026; clocks go back on the 25th.
+		const ranges = expandBlocker(
+			{
+				start: new Date(2026, 9, 18, 0, 0),
+				end: new Date(2026, 9, 18, 4, 0)
+			},
+			{ weekdays: [0], until: new Date(2026, 9, 25) }
+		);
+		expect(clock(ranges[1].end)).toBe('25. 4:00');
+	});
+
+	it('ends an all-day blocker at the end of its own day', () => {
+		const start = new Date(2027, 2, 21, 0, 0);
+		const end = new Date(2027, 2, 21, 23, 59, 59, 999);
+		const [, spring] = expandBlocker(
+			{ start, end },
+			{ weekdays: [0], until: new Date(2027, 2, 28) }
+		);
+		expect(spring.end.getDate()).toBe(28);
+		expect(spring.end.getHours()).toBe(23);
+		expect(spring.end.getMinutes()).toBe(59);
+	});
+
+	it('keeps the day span of a range that crosses midnight', () => {
+		const [, second] = expandBlocker(
+			{
+				start: new Date(2027, 2, 20, 22, 0),
+				end: new Date(2027, 2, 21, 6, 0)
+			},
+			{ weekdays: [6], until: new Date(2027, 2, 27) }
+		);
+		expect(clock(second.start)).toBe('27. 22:00');
+		expect(clock(second.end)).toBe('28. 6:00');
+	});
+
+	it('counts local days, not 24-hour blocks', () => {
+		expect(
+			daySpan(new Date(2027, 2, 27, 12), new Date(2027, 2, 29, 0, 30))
+		).toBe(2);
+	});
+});
+
+describe('expandBlocker limit', () => {
+	it('can expand one past the bound, so a caller sees the cut', () => {
+		const first = {
+			start: new Date(2026, 10, 16, 8, 0),
+			end: new Date(2026, 10, 16, 12, 0)
+		};
+		expect(
+			expandBlocker(
+				first,
+				{ weekdays: [0, 1, 2, 3, 4, 5, 6], until: new Date(2030, 0, 1) },
+				MAX_BLOCKER_OCCURRENCES + 1
+			)
+		).toHaveLength(MAX_BLOCKER_OCCURRENCES + 1);
+	});
+});
+
+describe('isWholeDays', () => {
+	it('is a midnight-to-midnight selection', () => {
+		expect(
+			isWholeDays({
+				start: new Date(2026, 10, 16),
+				end: new Date(2026, 10, 17)
+			})
+		).toBe(true);
+		expect(
+			isWholeDays({
+				start: new Date(2026, 10, 16, 23),
+				end: new Date(2026, 10, 17)
+			})
+		).toBe(false);
+	});
+});
+
 describe('isMovable and draftError', () => {
 	it('lets counsellors move only their own appointments and blockers', () => {
 		expect(isMovable(entry({}), 'me', 'consultant')).toBe(true);
@@ -258,5 +364,65 @@ describe('isMovable and draftError', () => {
 		expect(
 			draftError({ type: 'blocker', start, end }, now)
 		).toBeUndefined();
+	});
+});
+
+describe('settleMove', () => {
+	it('puts the entry back when the move is refused', () => {
+		const revert = vi.fn();
+		settleMove(false, revert);
+		expect(revert).toHaveBeenCalledTimes(1);
+	});
+
+	it('puts the entry back when saving fails or reports false', async () => {
+		const revert = vi.fn();
+		settleMove(Promise.reject(new Error('500')), revert);
+		settleMove(Promise.resolve(false), revert);
+		await Promise.resolve();
+		await Promise.resolve();
+		expect(revert).toHaveBeenCalledTimes(2);
+	});
+
+	it('leaves a stored move where it was dropped', async () => {
+		const revert = vi.fn();
+		settleMove(undefined, revert);
+		settleMove(true, revert);
+		settleMove(Promise.resolve(), revert);
+		await Promise.resolve();
+		expect(revert).not.toHaveBeenCalled();
+	});
+});
+
+describe('visibleHours', () => {
+	const at = (day: number, hour: number, minute = 0) =>
+		new Date(2026, 10, day, hour, minute).toISOString();
+
+	it('shows 07:00–21:00 when every entry fits', () => {
+		expect(visibleHours([{ start: at(16, 9), end: at(16, 10) }])).toEqual({
+			min: '07:00:00',
+			max: '21:00:00'
+		});
+	});
+
+	it('widens to entries before 07:00 and after 21:00', () => {
+		expect(
+			visibleHours([
+				{ start: at(16, 6, 30), end: at(16, 7, 15) },
+				{ start: at(17, 21, 30), end: at(17, 22, 15) }
+			])
+		).toEqual({ min: '06:00:00', max: '23:00:00' });
+	});
+
+	it('shows up to midnight for an entry that ends at midnight', () => {
+		expect(
+			visibleHours([{ start: at(16, 23), end: at(17, 0) }]).max
+		).toBe('24:00:00');
+	});
+
+	it('shows the whole day for an entry over midnight', () => {
+		expect(visibleHours([{ start: at(16, 22), end: at(17, 2) }])).toEqual({
+			min: '00:00:00',
+			max: '24:00:00'
+		});
 	});
 });
