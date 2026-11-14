@@ -6992,14 +6992,17 @@
 			"repeat": "ኣብዘን መዓልትታት ድገም",
 			"until": "ክሳብ (ሓዊሱ)",
 			"save": "ዕጸው",
+			"tooMany": "ብዙሕ ድግግማት፦ ብሓደ ግዜ ክሳብ {{max}} ዝተዓጽዉ ግዜያት ጥራይ። በጃኹም ዝቐደመ ናይ መወዳእታ መዓልቲ ምረጹ።",
 			"count": "{{count}} ዝተዓጽዉ ግዜያት ክምዝገቡ እዮም።",
 			"count_one": "{{count}} ዝተዓጽወ ግዜ ክምዝገብ እዩ።",
 			"conflicts": "ምስ {{count}} ቆጸራታት ይጋጮ።",
 			"conflicts_one": "ምስ {{count}} ቆጸራ ይጋጮ።",
 			"created": "{{count}} ዝተዓጽዉ ግዜያት ተመዝጊቦም",
-			"created_one": "ዝተዓጽወ ግዜ ተመዝጊቡ፦ {{date}}"
+			"created_one": "{{count}} ዝተዓጽወ ግዜ ተመዝጊቡ",
+			"createdSingle": "ዝተዓጽወ ግዜ ተመዝጊቡ፦ {{date}}"
 		},
 		"saveFailed": "ኣይሰለጠን። በጃኹም ደጊምኩም ፈትኑ።",
-		"blockerRemoved": "ዝተዓጽወ ግዜ ተኣልዩ።"
+		"blockerRemoved": "ዝተዓጽወ ግዜ ተኣልዩ።",
+		"conversationsFailed": "ዝርርባት ክጽዓኑ ኣይከኣሉን፣ ስለዚ ቆጸራታት ምስ ዝርርብ ክተኣሳሰሩ ኣይክእሉን።"
 	}
 }

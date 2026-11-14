@@ -48,10 +48,17 @@ import {
 	type CalendarImport
 } from './CalendarSyncDialog';
 import { useEntryLabel, useRangeFormat } from './useEntryLabel';
+import { useLiveNow } from './useLiveNow';
 import '../sessionsList/sessionsList.styles.scss';
 import './calendar.styles.scss';
 
 export type CalendarLoadState = 'loading' | 'ready' | 'error';
+
+/**
+ * What a change callback returns: nothing or `true` when it is done,
+ * `false` when it refuses, or a promise that settles once it is stored.
+ */
+export type ChangeResult = void | boolean | Promise<unknown>;
 
 export interface CalendarPageProps {
 	role: CalendarRole;
@@ -68,25 +75,29 @@ export interface CalendarPageProps {
 	compact?: boolean;
 	initialView?: CalendarViewName;
 	now?: Date;
-	onCreate?: (drafts: AppointmentDraft[]) => void | Promise<unknown>;
-	/** The snackbar offers to undo by moving it back. */
-	onMove?: (
-		entry: CalendarEntry,
-		start: Date,
-		end: Date
-	) => void | Promise<unknown>;
-	onCancelAppointment?: (entry: CalendarEntry) => void | Promise<unknown>;
-	onRemoveBlocker?: (entry: CalendarEntry) => void | Promise<unknown>;
+	onCreate?: (drafts: AppointmentDraft[]) => ChangeResult;
+	/**
+	 * The snackbar offers to undo by moving it back. `false`, or a promise
+	 * that rejects or resolves to `false`, refuses the move and puts the
+	 * entry back.
+	 */
+	onMove?: (entry: CalendarEntry, start: Date, end: Date) => ChangeResult;
+	onCancelAppointment?: (entry: CalendarEntry) => ChangeResult;
+	onRemoveBlocker?: (entry: CalendarEntry) => ChangeResult;
 	/** The visible range changed: load entries for it. */
 	onRangeChange?: (start: Date, end: Date) => void;
 	/** Colleagues whose calendars are switched on. */
 	onShownColleaguesChange?: (ids: string[]) => void;
 	onStart?: (entry: CalendarEntry) => void;
 	onCopyFeed?: (url: string) => void;
-	onResetFeed?: () => void;
-	onSaveImport?: (url: string) => void;
-	onRemoveImport?: () => void;
+	/** Sync actions; a rejected promise keeps the dialog's input and says so. */
+	onResetFeed?: () => void | Promise<unknown>;
+	onSaveImport?: (url: string) => void | Promise<unknown>;
+	onRemoveImport?: () => void | Promise<unknown>;
 	onRetry?: () => void;
+	/** The conversation lookup failed: appointments cannot name one. */
+	conversationsFailed?: boolean;
+	onRetryConversations?: () => void;
 }
 
 type Dialog =
@@ -101,7 +112,8 @@ type Dialog =
 
 interface Notice {
 	message: string;
-	undo?: () => void;
+	/** Settles once undone; the failure notice shows if it does not. */
+	undo?: () => ChangeResult;
 }
 
 export const CalendarPage = ({
@@ -127,13 +139,15 @@ export const CalendarPage = ({
 	onSaveImport,
 	onRemoveImport,
 	onRetry,
+	conversationsFailed = false,
+	onRetryConversations,
 	onRangeChange,
 	onShownColleaguesChange
 }: CalendarPageProps) => {
 	const { t } = useTranslation();
 	const label = useEntryLabel();
 	const format = useRangeFormat();
-	const now = useMemo(() => fixedNow ?? new Date(), [fixedNow]);
+	const now = useLiveNow(fixedNow);
 	const consultant = role === 'consultant';
 	// Like the session list chips: none selected shows everything, selected
 	// chips narrow the calendar to those kinds.
@@ -160,25 +174,42 @@ export const CalendarPage = ({
 			),
 		[entries, ownerId, shownColleagues, onlyFacets]
 	);
-	const presentFacets = CALENDAR_FACETS.filter((facet) =>
-		entries.some((e) => e.ownerId === ownerId && facetOf(e) === facet)
+	// A selected facet stays on offer after its entries are gone, so the
+	// filter can always be cleared.
+	const presentFacets = CALENDAR_FACETS.filter(
+		(facet) =>
+			onlyFacets.includes(facet) ||
+			entries.some((e) => e.ownerId === ownerId && facetOf(e) === facet)
 	);
 	const upcoming = upcomingEntries(entries, ownerId, now);
 
 	const toggle = <T,>(list: T[], item: T) =>
 		list.includes(item) ? list.filter((x) => x !== item) : [...list, item];
 
-	/** Success notice once the change is stored, the failure notice if not. */
+	/**
+	 * Success notice once the change is stored, the failure notice if it
+	 * fails. Says whether it went through: `false` for a refusal or a
+	 * failure, so a moved entry can go back.
+	 */
 	const run = (
-		result: void | Promise<unknown> | undefined,
+		result: ChangeResult | undefined,
 		success: Notice
-	) => {
+	): boolean | Promise<boolean> => {
+		if (result === false) return false;
 		if (result && typeof (result as Promise<unknown>).then === 'function')
-			(result as Promise<unknown>).then(
-				() => setNotice(success),
-				() => setNotice({ message: t('calendar.saveFailed') })
+			return (result as Promise<unknown>).then(
+				(value) => {
+					if (value === false) return false;
+					setNotice(success);
+					return true;
+				},
+				() => {
+					setNotice({ message: t('calendar.saveFailed') });
+					return false;
+				}
 			);
-		else setNotice(success);
+		setNotice(success);
+		return true;
 	};
 
 	const choose = (choice: SlotChoice) => {
@@ -197,12 +228,18 @@ export const CalendarPage = ({
 		setDialog(null);
 		const first = drafts[0];
 		run(result, {
+			// One blocker names its date; a series its count (Russian "one"
+			// also covers 21, 31 …, so a series never uses the single text).
 			message:
 				first.type === 'blocker'
-					? t('calendar.blocker.created', {
-							count: drafts.length,
-							date: format(first.start, first.end)
-						})
+					? drafts.length === 1
+						? t('calendar.blocker.createdSingle', {
+								date: format(first.start, first.end)
+							})
+						: t('calendar.blocker.created', {
+								count: drafts.length,
+								date: format(first.start, first.end)
+							})
 					: t('calendar.created', {
 							date: format(first.start, first.end)
 						})
@@ -210,7 +247,7 @@ export const CalendarPage = ({
 	};
 
 	const move = (entry: CalendarEntry, start: Date, end: Date) => {
-		run(onMove?.(entry, start, end), {
+		return run(onMove?.(entry, start, end), {
 			message: t(
 				entry.type === 'blocker'
 					? 'calendar.blockerMoved'
@@ -228,6 +265,21 @@ export const CalendarPage = ({
 					new Date(entry.end)
 				)
 		});
+	};
+
+	/** Undo through the same path: a failed undo shows the failure notice. */
+	const undo = (current: Notice) => {
+		setNotice(null);
+		const result = current.undo?.();
+		if (result === false) return;
+		if (result && typeof (result as Promise<unknown>).then === 'function')
+			(result as Promise<unknown>).then(
+				(value) => {
+					if (value === false)
+						setNotice({ message: t('calendar.saveFailed') });
+				},
+				() => setNotice({ message: t('calendar.saveFailed') })
+			);
 	};
 
 	const addButton = consultant && (
@@ -254,7 +306,7 @@ export const CalendarPage = ({
 		</IconButton>
 	);
 
-	const filters = presentFacets.length > 1 && (
+	const filters = (presentFacets.length > 1 || onlyFacets.length > 0) && (
 		<FilterChipRow
 			label={t('calendar.filterLabel')}
 			className="calendarPage__filters"
@@ -362,17 +414,11 @@ export const CalendarPage = ({
 		</aside>
 	);
 
+	// While loading, the calendar stays mounted under the spinner: it
+	// reports the first visible range, and with it starts the loading
+	// (review 4574493856).
 	let body: React.ReactNode;
-	if (state === 'loading')
-		body = (
-			<div className="calendarPage__status" aria-busy="true">
-				<CircularProgress
-					size={32}
-					aria-label={t('calendar.loading')}
-				/>
-			</div>
-		);
-	else if (state === 'error')
+	if (state === 'error')
 		body = (
 			<div className="calendarPage__status" role="alert">
 				<p>{t('calendar.error.title')}</p>
@@ -387,25 +433,59 @@ export const CalendarPage = ({
 		);
 	else
 		body = (
-			<CalendarView
-				role={role}
-				ownerId={ownerId}
-				entries={visible}
-				colleagueNames={colleagueNames}
-				compact={compact}
-				initialView={initialView}
-				now={fixedNow}
-				onSelectRange={(range, anchor) => setSlot({ range, anchor })}
-				onEntryClick={(entry) => setDialog({ type: 'details', entry })}
-				onEntryMove={move}
-				onRangeChange={onRangeChange}
-				toolbarEnd={
-					<>
-						{filters}
-						{syncButton}
-					</>
-				}
-			/>
+			<>
+				{consultant && conversationsFailed && (
+					<div
+						className="calendarPage__banner"
+						role="alert"
+						data-testid="calendar-conversations-failed"
+					>
+						<span>{t('calendar.conversationsFailed')}</span>
+						<button
+							type="button"
+							className="calendarPage__retry"
+							onClick={onRetryConversations}
+						>
+							{t('calendar.error.retry')}
+						</button>
+					</div>
+				)}
+				<CalendarView
+					role={role}
+					ownerId={ownerId}
+					entries={visible}
+					colleagueNames={colleagueNames}
+					compact={compact}
+					initialView={initialView}
+					now={fixedNow}
+					onSelectRange={(range, anchor) =>
+						setSlot({ range, anchor })
+					}
+					onEntryClick={(entry) =>
+						setDialog({ type: 'details', entry })
+					}
+					onEntryMove={move}
+					onRangeChange={onRangeChange}
+					toolbarEnd={
+						<>
+							{filters}
+							{syncButton}
+						</>
+					}
+				/>
+				{state === 'loading' && (
+					<div
+						className="calendarPage__status calendarPage__status--overlay"
+						aria-busy="true"
+						data-testid="calendar-loading"
+					>
+						<CircularProgress
+							size={32}
+							aria-label={t('calendar.loading')}
+						/>
+					</div>
+				)}
+			</>
 		);
 
 	return (
@@ -506,10 +586,7 @@ export const CalendarPage = ({
 							? {
 									label: t('calendar.undo'),
 									testId: 'calendar-undo',
-									onClick: () => {
-										notice.undo?.();
-										setNotice(null);
-									}
+									onClick: () => undo(notice)
 								}
 							: undefined
 					}
