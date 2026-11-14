@@ -23,6 +23,13 @@ export const DESKTOP_VIEWS: CalendarViewName[] = [
 	'split'
 ];
 
+/**
+ * Up to this width the calendar uses the phone layout, tablets included
+ * (Frank, prototype v15: its 960 px container). No shared breakpoint is
+ * this wide ($fromLarge is 900), so the calendar keeps its own.
+ */
+export const COMPACT_MAX_WIDTH = 960;
+
 /** Phones: no five- or seven-day grid, they do not fit. */
 export const COMPACT_VIEWS: CalendarViewName[] = [
 	'list',

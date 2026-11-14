@@ -182,39 +182,10 @@ export const CalendarSidebar = ({
 	const label = useEntryLabel();
 	const format = useRangeFormat();
 	const shortTime = useShortTime();
-	const [query, setQuery] = useState('');
-	const kindsAnchor = useRef<HTMLSpanElement>(null);
 	const colleagueById = useMemo(
 		() => Object.fromEntries(colleagues.map((c) => [c.id, c])),
 		[colleagues]
 	);
-
-	// --- Search ---
-	const results = useMemo(() => {
-		const q = query.trim().toLowerCase();
-		if (!q) return [];
-		return entries
-			.filter(
-				(e) =>
-					e.ownerId === ownerId || shownColleagues.includes(e.ownerId)
-			)
-			.filter((e) =>
-				[
-					label(e, e.ownerId !== ownerId),
-					e.title,
-					e.address,
-					colleagueById[e.ownerId]?.displayName
-				]
-					.filter(Boolean)
-					.some((text) => text!.toLowerCase().includes(q))
-			)
-			.sort(
-				(a, b) =>
-					new Date(a.start).getTime() - new Date(b.start).getTime()
-			)
-			.slice(0, MAX_SEARCH_RESULTS);
-	}, [query, entries, ownerId, shownColleagues, label, colleagueById]);
-
 	const own = entries.filter((e) => e.ownerId === ownerId);
 
 	// --- Als Nächstes: nearest at the bottom, next to the quick entry ---
@@ -230,19 +201,11 @@ export const CalendarSidebar = ({
 	} | null>(null);
 
 	const kindsButton = (
-		<span ref={kindsAnchor} className="calendarSide__kindsAnchor">
-			<DisplayFilterButton
-				label={t('calendar.kindsMenu.label')}
-				customised={hiddenFacets.length > 0}
-				customisedLabel={t('calendar.kindsMenu.customised')}
-				open={kindsMenuOpen}
-				onClick={() =>
-					kindsAnchor.current && onOpenKinds(kindsAnchor.current)
-				}
-				compact
-				data-cy="calendar-kinds-button"
-			/>
-		</span>
+		<CalendarKindsButton
+			customised={hiddenFacets.length > 0}
+			open={kindsMenuOpen}
+			onOpen={onOpenKinds}
+		/>
 	);
 	/** The rail: who (initials) and when (start time), nothing else. */
 	const railFace = (who: string, start: Date | string) => (
@@ -271,62 +234,20 @@ export const CalendarSidebar = ({
 		>
 			{/* As in "Gespräche": the display filter sits at the left of the
 			    search field (Frank, 2026-11-14); the rail keeps only it. */}
-			{rail ? (
-				kindsButton
-			) : (
-				<ListSearchField
-					leading={kindsButton}
-					value={query}
-					onChange={setQuery}
-					placeholder={t('calendar.search.placeholder')}
-					clearLabel={t('calendar.search.clear')}
-					className="calendarSide__search"
-				/>
-			)}
-			{!rail && query.trim() && (
-				<section
-					className="calendarSide__section"
-					aria-label={t('calendar.search.results')}
-				>
-					{results.length === 0 ? (
-						<p className="calendarSide__muted">
-							{t('calendar.search.empty')}
-						</p>
-					) : (
-						<ul className="calendarSide__list">
-							{results.map((entry) => (
-								<li key={entry.id}>
-									<button
-										type="button"
-										className={`calendarSide__row calendarSide__row--k-${facetOf(entry)}`}
-										onClick={(e) =>
-											onOpenEntry(entry, e.currentTarget)
-										}
-									>
-										<span className="calendarSide__rowIcon">
-											<CalendarEntryGlyph
-												entry={entry}
-												colleague={
-													entry.ownerId !== ownerId
-												}
-											/>
-										</span>
-										<span className="calendarSide__rowName">
-											{label(
-												entry,
-												entry.ownerId !== ownerId
-											)}
-										</span>
-										<span className="calendarSide__rowTime">
-											{format(entry.start)}
-										</span>
-									</button>
-								</li>
-							))}
-						</ul>
+			{/* On the phone and the tablet the search sits at the very top of
+			    the calendar instead (Frank, prototype v15). */}
+			{rail
+				? kindsButton
+				: !sheet && (
+						<CalendarSearch
+							ownerId={ownerId}
+							entries={entries}
+							colleagues={colleagues}
+							shownColleagues={shownColleagues}
+							onOpenEntry={onOpenEntry}
+							leading={kindsButton}
+						/>
 					)}
-				</section>
-			)}
 
 			{!sheet && !rail && (
 				<CalendarKindChips
@@ -420,108 +341,126 @@ export const CalendarSidebar = ({
 				</section>
 			)}
 
-			<section className="calendarSide__section">
-				<h2 className="calendarSide__title">
-					{t('calendar.upcoming')}
-				</h2>
-				{upcoming.length === 0 ? (
-					<p className="calendarSide__muted">
-						{t('calendar.upcomingEmpty')}
-					</p>
-				) : (
-					<ul
-						className="calendarSide__list"
-						data-cy="calendar-upcoming"
-					>
-						{upcoming.map((entry) => (
-							<li
-								key={entry.id}
-								className="calendarSide__upcoming"
-							>
-								<button
-									type="button"
-									className={`calendarSide__row calendarSide__row--k-${facetOf(entry)}`}
-									aria-describedby={
-										peek?.entry.id === entry.id
-											? 'calendar-upcoming-peek'
-											: undefined
-									}
-									onMouseEnter={(e) =>
-										setPeek({ el: e.currentTarget, entry })
-									}
-									onMouseLeave={() => setPeek(null)}
-									onFocus={(e) =>
-										setPeek({ el: e.currentTarget, entry })
-									}
-									onBlur={() => setPeek(null)}
-									onClick={(e) => {
-										setPeek(null);
-										onOpenEntry(entry, e.currentTarget);
-									}}
-									aria-label={
-										rail
-											? `${label(entry)}, ${shortTime(
-													new Date(entry.start),
-													now,
-													new Date(entry.end)
-												)}`
-											: undefined
-									}
-									data-cy={`calendar-upcoming-${entry.id}`}
+			{/* Not on the phone and the tablet: the calendar shows what is
+			    next (Frank, prototype v15). */}
+			{!sheet && (
+				<section className="calendarSide__section">
+					<h2 className="calendarSide__title">
+						{t('calendar.upcoming')}
+					</h2>
+					{upcoming.length === 0 ? (
+						<p className="calendarSide__muted">
+							{t('calendar.upcomingEmpty')}
+						</p>
+					) : (
+						<ul
+							className="calendarSide__list"
+							data-cy="calendar-upcoming"
+						>
+							{upcoming.map((entry) => (
+								<li
+									key={entry.id}
+									className="calendarSide__upcoming"
 								>
-									{rail && railFace(label(entry), entry.start)}
-									<span className="calendarSide__rowIcon">
-										<CalendarEntryGlyph entry={entry} />
-									</span>
-									<span className="calendarSide__rowName">
-										{label(entry)}
-									</span>
-									<span className="calendarSide__rowTime">
-										{shortTime(
-											new Date(entry.start),
-											now,
-											new Date(entry.end)
-										)}
-									</span>
-								</button>
-								{onOpenChat &&
-									!rail &&
-									entry.type === 'appointment' &&
-									entry.sessionId !== undefined && (
-										<button
-											type="button"
-											className="calendarSide__chat"
-											aria-label={t(
-												'calendar.upcomingChat',
-												{ name: label(entry) }
+									<button
+										type="button"
+										className={`calendarSide__row calendarSide__row--k-${facetOf(entry)}`}
+										aria-describedby={
+											peek?.entry.id === entry.id
+												? 'calendar-upcoming-peek'
+												: undefined
+										}
+										onMouseEnter={(e) =>
+											setPeek({
+												el: e.currentTarget,
+												entry
+											})
+										}
+										onMouseLeave={() => setPeek(null)}
+										onFocus={(e) =>
+											setPeek({
+												el: e.currentTarget,
+												entry
+											})
+										}
+										onBlur={() => setPeek(null)}
+										onClick={(e) => {
+											setPeek(null);
+											onOpenEntry(entry, e.currentTarget);
+										}}
+										aria-label={
+											rail
+												? `${label(entry)}, ${shortTime(
+														new Date(entry.start),
+														now,
+														new Date(entry.end)
+													)}`
+												: undefined
+										}
+										data-cy={`calendar-upcoming-${entry.id}`}
+									>
+										{rail &&
+											railFace(label(entry), entry.start)}
+										<span className="calendarSide__rowIcon">
+											<CalendarEntryGlyph entry={entry} />
+										</span>
+										<span className="calendarSide__rowName">
+											{label(entry)}
+										</span>
+										<span className="calendarSide__rowTime">
+											{shortTime(
+												new Date(entry.start),
+												now,
+												new Date(entry.end)
 											)}
-											title={t('calendar.upcomingChat', {
-												name: label(entry)
-											})}
-											onClick={() => onOpenChat(entry)}
-											data-cy={`calendar-upcoming-chat-${entry.id}`}
-										>
-											<ChatBubbleOutlineIcon fontSize="small" />
-										</button>
-									)}
-							</li>
-						))}
-					</ul>
-				)}
-				<Popper
-					open={!!peek}
-					anchorEl={peek?.el}
-					placement="right-start"
-					className="calendarPeekPopper"
-					id="calendar-upcoming-peek"
-					modifiers={[
-						{ name: 'offset', options: { offset: [0, 8] } }
-					]}
-				>
-					{/* Popper's root is the `role="tooltip"` the row points at. */}
-					{peek && <CalendarEntryPeek entry={peek.entry} clickHint />}
-				</Popper>
-			</section>
+										</span>
+									</button>
+									{onOpenChat &&
+										!rail &&
+										entry.type === 'appointment' &&
+										entry.sessionId !== undefined && (
+											<button
+												type="button"
+												className="calendarSide__chat"
+												aria-label={t(
+													'calendar.upcomingChat',
+													{ name: label(entry) }
+												)}
+												title={t(
+													'calendar.upcomingChat',
+													{
+														name: label(entry)
+													}
+												)}
+												onClick={() =>
+													onOpenChat(entry)
+												}
+												data-cy={`calendar-upcoming-chat-${entry.id}`}
+											>
+												<ChatBubbleOutlineIcon fontSize="small" />
+											</button>
+										)}
+								</li>
+							))}
+						</ul>
+					)}
+					<Popper
+						open={!!peek}
+						anchorEl={peek?.el}
+						placement="right-start"
+						className="calendarPeekPopper"
+						id="calendar-upcoming-peek"
+						modifiers={[
+							{ name: 'offset', options: { offset: [0, 8] } }
+						]}
+					>
+						{/* Popper's root is the `role="tooltip"` the row points at. */}
+						{peek && (
+							<CalendarEntryPeek entry={peek.entry} clickHint />
+						)}
+					</Popper>
+				</section>
+			)}
 
 			{consultant && onCreate && sheet && (
 				<div className="calendarSide__quickRow">
@@ -584,7 +523,8 @@ export const CalendarSidebar = ({
 				</div>
 			)}
 
-			{consultant && onWorkingHours && !narrow && (
+			{/* On the phone and the tablet the hours live in ⋮. */}
+			{consultant && onWorkingHours && !narrow && !sheet && (
 				<button
 					type="button"
 					className="calendarSide__hours"
@@ -604,6 +544,155 @@ export const CalendarSidebar = ({
 				</button>
 			)}
 		</aside>
+	);
+};
+
+/* ------------------------------------------------------------------ */
+
+/** "Was anzeigen", the display filter at the left of the search field. */
+export const CalendarKindsButton = ({
+	customised,
+	open,
+	onOpen
+}: {
+	customised: boolean;
+	open: boolean;
+	onOpen: (anchor: HTMLElement) => void;
+}) => {
+	const { t } = useTranslation();
+	const anchor = useRef<HTMLSpanElement>(null);
+	return (
+		<span ref={anchor} className="calendarSide__kindsAnchor">
+			<DisplayFilterButton
+				label={t('calendar.kindsMenu.label')}
+				customised={customised}
+				customisedLabel={t('calendar.kindsMenu.customised')}
+				open={open}
+				onClick={() => anchor.current && onOpen(anchor.current)}
+				compact
+				data-cy="calendar-kinds-button"
+			/>
+		</span>
+	);
+};
+
+export interface CalendarSearchProps {
+	ownerId: string;
+	/** Every loaded entry (own and colleagues'). */
+	entries: CalendarEntry[];
+	colleagues: Colleague[];
+	/** Colleagues shown: search finds their entries too. */
+	shownColleagues: string[];
+	onOpenEntry: (entry: CalendarEntry, anchor: HTMLElement) => void;
+	/** At the left of the field (the display filter in the column). */
+	leading?: React.ReactNode;
+	/** The results float over what is below (top of the calendar). */
+	floating?: boolean;
+}
+
+/**
+ * Search in one's own and the shown colleagues' entries: in the left
+ * column on a wide screen, at the very top of the calendar on the phone
+ * and the tablet.
+ */
+export const CalendarSearch = ({
+	ownerId,
+	entries,
+	colleagues,
+	shownColleagues,
+	onOpenEntry,
+	leading,
+	floating = false
+}: CalendarSearchProps) => {
+	const { t } = useTranslation();
+	const label = useEntryLabel();
+	const format = useRangeFormat();
+	const [query, setQuery] = useState('');
+	const colleagueById = useMemo(
+		() => Object.fromEntries(colleagues.map((c) => [c.id, c])),
+		[colleagues]
+	);
+
+	const results = useMemo(() => {
+		const q = query.trim().toLowerCase();
+		if (!q) return [];
+		return entries
+			.filter(
+				(e) =>
+					e.ownerId === ownerId || shownColleagues.includes(e.ownerId)
+			)
+			.filter((e) =>
+				[
+					label(e, e.ownerId !== ownerId),
+					e.title,
+					e.address,
+					colleagueById[e.ownerId]?.displayName
+				]
+					.filter(Boolean)
+					.some((text) => text!.toLowerCase().includes(q))
+			)
+			.sort(
+				(a, b) =>
+					new Date(a.start).getTime() - new Date(b.start).getTime()
+			)
+			.slice(0, MAX_SEARCH_RESULTS);
+	}, [query, entries, ownerId, shownColleagues, label, colleagueById]);
+
+	return (
+		<>
+			<ListSearchField
+				leading={leading}
+				value={query}
+				onChange={setQuery}
+				placeholder={t('calendar.search.placeholder')}
+				clearLabel={t('calendar.search.clear')}
+				className="calendarSide__search"
+			/>
+			{query.trim() && (
+				<section
+					className={`calendarSide__section${floating ? ' calendarSearch__results' : ''}`}
+					aria-label={t('calendar.search.results')}
+				>
+					{results.length === 0 ? (
+						<p className="calendarSide__muted">
+							{t('calendar.search.empty')}
+						</p>
+					) : (
+						<ul className="calendarSide__list">
+							{results.map((entry) => (
+								<li key={entry.id}>
+									<button
+										type="button"
+										className={`calendarSide__row calendarSide__row--k-${facetOf(entry)}`}
+										onClick={(e) =>
+											onOpenEntry(entry, e.currentTarget)
+										}
+									>
+										<span className="calendarSide__rowIcon">
+											<CalendarEntryGlyph
+												entry={entry}
+												colleague={
+													entry.ownerId !== ownerId
+												}
+											/>
+										</span>
+										<span className="calendarSide__rowName">
+											{label(
+												entry,
+												entry.ownerId !== ownerId
+											)}
+										</span>
+										<span className="calendarSide__rowTime">
+											{format(entry.start)}
+										</span>
+									</button>
+								</li>
+							))}
+						</ul>
+					)}
+				</section>
+			)}
+		</>
 	);
 };
 
@@ -661,7 +750,8 @@ export const CalendarKindChips = ({
 			{presentFacets
 				.filter(
 					(facet) =>
-						!hiddenFacets.includes(facet) || onlyFacets.includes(facet)
+						!hiddenFacets.includes(facet) ||
+						onlyFacets.includes(facet)
 				)
 				.map((facet) => (
 					<span

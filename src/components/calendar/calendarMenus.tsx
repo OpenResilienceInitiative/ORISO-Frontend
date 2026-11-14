@@ -596,7 +596,7 @@ export const SettingsMenuContent = ({
 				<ChatMenuDropdownItem
 					role="menuitem"
 					icon={<WorkHistoryOutlinedIcon fontSize="small" />}
-					title={t('calendar.settings.workingHours')}
+					title={t('calendar.workingHours.title')}
 					description={
 						workingHoursSummary ?? t('calendar.workingHours.none')
 					}

@@ -25,9 +25,28 @@ vi.mock('./CalendarPage', () => ({
 }));
 const navigate = vi.fn();
 vi.mock('react-router-dom', () => ({ useNavigate: () => navigate }));
-vi.mock('../../hooks/useResponsive', () => ({
-	useResponsive: () => ({ untilM: false })
-}));
+// The screen width the media queries answer for. react-responsive takes
+// window.matchMedia when it loads, so the stand-in goes in first.
+const screen = vi.hoisted(() => {
+	const state = { width: 1440 };
+	window.matchMedia = ((query: string) => {
+		const max = /max-width:\s*(\d+)/.exec(query);
+		const min = /min-width:\s*(\d+)/.exec(query);
+		return {
+			matches:
+				(!max || state.width <= Number(max[1])) &&
+				(!min || state.width >= Number(min[1])),
+			media: query,
+			onchange: null,
+			addListener: () => undefined,
+			removeListener: () => undefined,
+			addEventListener: () => undefined,
+			removeEventListener: () => undefined,
+			dispatchEvent: () => false
+		};
+	}) as unknown as typeof window.matchMedia;
+	return state;
+});
 const sendNotice = vi.fn(() => Promise.resolve());
 vi.mock('../sessionsList/timeline/useAppointmentNotice', () => ({
 	useAppointmentNotice: () => sendNotice
@@ -106,6 +125,7 @@ const showWeek = () =>
 afterEach(() => {
 	cleanup();
 	vi.useRealTimers();
+	screen.width = 1440;
 });
 beforeEach(() => {
 	vi.clearAllMocks();
@@ -136,6 +156,26 @@ beforeEach(() => {
 			{ weekday: 1, start: '08:00', end: '18:00' }
 		]
 	});
+});
+
+describe('CalendarPageWired — phone and tablet layout (prototype v15)', () => {
+	it.each([
+		[390, true, true],
+		[599, true, true],
+		[600, true, false],
+		[820, true, false],
+		[960, true, false],
+		[961, false, false],
+		[1440, false, false]
+	])(
+		'at %i px: phone layout %s, at most three days %s',
+		(width, compact, phone) => {
+			screen.width = width;
+			render(<CalendarPageWired />);
+			expect(props.compact).toBe(compact);
+			expect(props.phone).toBe(phone);
+		}
+	);
 });
 
 describe('CalendarPageWired', () => {

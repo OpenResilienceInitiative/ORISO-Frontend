@@ -123,6 +123,8 @@ import {
 } from './calendarZoom';
 import {
 	CalendarKindChips,
+	CalendarKindsButton,
+	CalendarSearch,
 	CalendarSidebar,
 	type CalendarSidebarProps
 } from './CalendarSidebar';
@@ -204,7 +206,17 @@ export interface CalendarPageProps {
 	dayExceptions?: DayExceptions;
 	/** Bundesland whose public holidays are days off; null = none. */
 	holidayRegion?: HolidayRegion | null;
+	/**
+	 * Phone and tablet (Frank, prototype v15): the calendar fills the
+	 * screen, the search sits at the very top, the working hours live in
+	 * ⋮, no "Als Nächstes", and the bottom sheet only holds open requests.
+	 */
 	compact?: boolean;
+	/**
+	 * A phone: at most three days in the grid. The tablet keeps the work
+	 * week. Defaults to `compact`.
+	 */
+	phone?: boolean;
 	/** Phone: where the bottom sheet starts (default half). */
 	initialSheet?: SheetStop;
 	initialView?: CalendarViewName;
@@ -371,6 +383,7 @@ export const CalendarPage = ({
 	dayExceptions,
 	holidayRegion = null,
 	compact = false,
+	phone = compact,
 	initialSheet = 'half',
 	initialView,
 	initialShownColleagues = [],
@@ -409,11 +422,11 @@ export const CalendarPage = ({
 	const summarise = useWorkingHoursSummary();
 	const now = useLiveNow(fixedNow);
 	const consultant = role === 'consultant';
-	const views = compact ? COMPACT_VIEWS : DESKTOP_VIEWS;
+	const views = phone ? COMPACT_VIEWS : DESKTOP_VIEWS;
 	const controller = useCalendarController();
 
 	const [view, setView] = useState<CalendarViewName>(
-		initialView ?? (compact ? 'list' : 'workWeek')
+		initialView ?? (phone ? 'list' : 'workWeek')
 	);
 	const [title, setTitle] = useState('');
 	/** The day the grid stands on; the split view starts on this day. */
@@ -606,6 +619,26 @@ export const CalendarPage = ({
 		setAnchorDate(day);
 		if (!split) controller.gotoDate(day);
 	};
+
+	// Turned into a phone, five or seven days become three; back on a
+	// wider screen, three become the work week (prototype v15).
+	const wasPhone = useRef(phone);
+	useEffect(() => {
+		if (wasPhone.current === phone) return;
+		wasPhone.current = phone;
+		const next: CalendarViewName | null = phone
+			? view === 'workWeek' || view === 'week'
+				? 'threeDays'
+				: null
+			: view === 'threeDays'
+				? 'workWeek'
+				: null;
+		if (!next) return;
+		controller.changeView(FC_VIEW[next]);
+		setView(next);
+		// Only the switch between phone and wider matters here.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [phone]);
 
 	// --- Zoom: one half-hour height for the time grid and "Nebeneinander";
 	// until it is changed, each keeps today's height. ---
@@ -1836,8 +1869,10 @@ export const CalendarPage = ({
 		</>
 	);
 
-	// The left column on a wide screen, the bottom sheet on a phone.
-	const sheetCovers = compact && !fullscreen && sheet === 'full';
+	// The left column on a wide screen, the bottom sheet on the phone and
+	// the tablet, there only while requests are open (prototype v15).
+	const sheetShown = compact && !fullscreen && allPending.length > 0;
+	const sheetCovers = sheetShown && sheet === 'full';
 	const sideProps: CalendarSidebarProps = {
 		ownerId,
 		consultant,
@@ -1872,6 +1907,7 @@ export const CalendarPage = ({
 			className={[
 				'calendarPage',
 				compact && 'calendarPage--compact',
+				sheetShown && 'calendarPage--sheet',
 				fullscreen && 'calendarPage--fullscreen'
 			]
 				.filter(Boolean)
@@ -1916,6 +1952,29 @@ export const CalendarPage = ({
 				// covers is out of reach until it goes down again.
 				inert={sheetCovers || undefined}
 			>
+				{compact && (
+					<div className="calendarStage__search">
+						<CalendarSearch
+							ownerId={ownerId}
+							entries={entries}
+							colleagues={colleagues}
+							shownColleagues={shownColleagues}
+							onOpenEntry={(entry, anchor) =>
+								openEntry(entry, anchor)
+							}
+							leading={
+								<CalendarKindsButton
+									customised={hiddenFacets.length > 0}
+									open={menu?.type === 'kinds'}
+									onOpen={(anchor) =>
+										setMenu({ type: 'kinds', anchor })
+									}
+								/>
+							}
+							floating
+						/>
+					</div>
+				)}
 				{header}
 				{compact && phoneKinds}
 				{toolbar}
@@ -1930,7 +1989,7 @@ export const CalendarPage = ({
 					onClick={() => setSheet('half')}
 				/>
 			)}
-			{compact && !fullscreen && (
+			{sheetShown && (
 				<CalendarSheet
 					stop={sheet}
 					onStop={setSheet}

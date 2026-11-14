@@ -754,6 +754,27 @@
 	flex: none;
 }
 
+// Phone and tablet: the search at the very top of the calendar; its
+// results float over the calendar below.
+.calendarStage__search {
+	position: relative;
+	flex: none;
+}
+
+.calendarSearch__results {
+	position: absolute;
+	z-index: 20;
+	top: calc(100% + 6px);
+	right: 0;
+	left: 0;
+	max-height: 50vh;
+	padding: 8px;
+	border-radius: 16px;
+	background: var(--m3-surface-container-lowest, #ffffff);
+	box-shadow: 0 6px 18px rgba(26, 28, 30, 0.16);
+	overflow-y: auto;
+}
+
 // The column sized like "Gespräche" (Frank, prototype v15): 420 px to begin
 // with, the pink grip centred on it (it stays put while the list scrolls),
 // rail 80 / compact 220 / 397–500. The page gap is the pane gap, so the grip
@@ -1229,10 +1250,15 @@
 	border-radius: 24px;
 	background: var(--m3-surface-container-lowest, #ffffff);
 
-	// Room under the grid for the sheet when it peeks.
 	.calendarPage--compact & {
-		padding: 12px 12px 80px;
+		padding: 12px;
 		border-radius: 0;
+	}
+
+	// Room under the grid for the sheet when it peeks; the sheet is only
+	// there while requests are open.
+	.calendarPage--sheet & {
+		padding-bottom: 80px;
 	}
 }
 

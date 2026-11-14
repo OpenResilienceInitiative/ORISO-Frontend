@@ -25,7 +25,9 @@ import {
 	hasUserAuthority,
 	UserDataContext
 } from '../../globalState';
+import { useMediaQuery } from 'react-responsive';
 import { useResponsive } from '../../hooks/useResponsive';
+import { COMPACT_MAX_WIDTH } from './calendarViews';
 import {
 	apiCreateCalendarBlocker,
 	apiDeleteCalendarBlocker,
@@ -130,7 +132,10 @@ const toConversations = (items: any[] | undefined): ConversationRef[] =>
 
 export const CalendarPageWired = () => {
 	const navigate = useNavigate();
-	const { untilM } = useResponsive();
+	// Phone and tablet share the phone layout up to 960 px; below the
+	// shared $fromMedium (600 px) it is a phone with at most three days.
+	const compact = useMediaQuery({ maxWidth: COMPACT_MAX_WIDTH });
+	const { untilS: phone } = useResponsive();
 	const { userData } = useContext(UserDataContext);
 	const consultant = hasUserAuthority(
 		AUTHORITIES.CONSULTANT_DEFAULT,
@@ -277,7 +282,10 @@ export const CalendarPageWired = () => {
 					})
 				: // Strict: a failure shows the retry instead of no rooms.
 					apiGetAskerSessionList({ strict: true });
-		const from = (offset: number, found: ConversationRef[]): Promise<void> =>
+		const from = (
+			offset: number,
+			found: ConversationRef[]
+		): Promise<void> =>
 			page(offset).then((list) => {
 				if (!latest()) return undefined;
 				const sessions = list?.sessions ?? [];
@@ -592,7 +600,8 @@ export const CalendarPageWired = () => {
 			conversations={conversations}
 			feed={sync ? feedFromApi(sync) : undefined}
 			busyImport={sync ? importFromApi(sync) : {}}
-			compact={untilM}
+			compact={compact}
+			phone={phone}
 			workingHours={consultant ? plan?.hours : undefined}
 			workingHoursLoaded={consultant && planLoaded}
 			dayExceptions={consultant ? plan?.exceptions : undefined}

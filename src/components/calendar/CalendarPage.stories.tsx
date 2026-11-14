@@ -10,7 +10,10 @@ import {
 	within
 } from 'storybook/test';
 import { NavigationStoryShell } from '../app/NavigationStoryShell';
-import { phone390Globals } from '../message/messageStoryShell';
+import {
+	phone390Globals,
+	tablet820Globals
+} from '../message/messageStoryShell';
 import { CalendarPage, type CalendarLoadState } from './CalendarPage';
 import { BlockerDialog } from './BlockerDialog';
 import { WorkingHoursDialog } from './WorkingHoursDialog';
@@ -52,6 +55,8 @@ interface HarnessProps {
 	state?: CalendarLoadState;
 	empty?: boolean;
 	compact?: boolean;
+	/** With `compact`: a phone (three days at most); false = tablet. */
+	phone?: boolean;
 	initialView?: CalendarViewName;
 	shownColleagues?: string[];
 	fullscreen?: boolean;
@@ -80,6 +85,7 @@ const Scenario = ({
 	state = 'ready',
 	empty = false,
 	compact = false,
+	phone,
 	initialView,
 	shownColleagues = [],
 	fullscreen = false,
@@ -159,6 +165,7 @@ const Scenario = ({
 			}}
 			busyImport={busyImport}
 			compact={compact}
+			phone={phone}
 			initialSheet={initialSheet}
 			initialView={initialView}
 			initialShownColleagues={shownColleagues}
@@ -913,10 +920,71 @@ export const Phone: Story = {
 	}
 };
 
+export const Tablet: Story = {
+	name: 'Counsellor — tablet 820 px (phone layout, work week)',
+	globals: tablet820Globals,
+	args: { compact: true, phone: false },
+	play: async ({ canvasElement }) => {
+		const canvas = canvasOf(canvasElement);
+		await canvas.findByTestId('calendar-view');
+		// The tablet keeps the work week.
+		await expect(
+			(await findCy('calendar-view-menu')).textContent
+		).toContain('Arbeitswoche');
+		// The search at the very top, "Was anzeigen" in it.
+		const stage =
+			canvasElement.querySelector<HTMLElement>('.calendarStage')!;
+		const search = stage.firstElementChild as HTMLElement;
+		await expect(search.className).toBe('calendarStage__search');
+		await expect(
+			search.querySelector('[data-cy="calendar-kinds-button"]')
+		).toBeTruthy();
+		// No "Als Nächstes", no hours line, no sheet without open requests.
+		await expect(
+			canvasElement.querySelector('[data-cy="calendar-upcoming"]')
+		).toBeNull();
+		await expect(
+			canvasElement.querySelector('[data-cy="calendar-working-hours"]')
+		).toBeNull();
+		await expect(
+			canvasElement.querySelector('[data-cy="calendar-sheet"]')
+		).toBeNull();
+		// The hours live in ⋮.
+		await userEvent.click(await findCy('calendar-settings'));
+		const item = await findCy('calendar-settings-working-hours');
+		await expect(item.textContent).toContain('Arbeitszeit festlegen');
+		await expect(item.textContent).toContain('08:00');
+		await userEvent.keyboard('{Escape}');
+	}
+};
+
+export const TabletRequests: Story = {
+	name: 'Counsellor — tablet 820 px, the sheet with an open request',
+	globals: tablet820Globals,
+	args: {
+		compact: true,
+		phone: false,
+		shownColleagues: ['kaya'],
+		proposals: STORY_PROPOSALS
+	},
+	play: async () => {
+		const sheet = await findCy('calendar-sheet');
+		await expect(within(sheet).getByText('Offene Anfragen')).toBeTruthy();
+		await expect(
+			sheet.querySelector('[data-cy="calendar-upcoming"]')
+		).toBeNull();
+	}
+};
+
 export const PhoneQuickEntry: Story = {
 	name: 'Counsellor — phone 390 px, kind chips and quick entry',
 	globals: phone390Globals,
-	args: { compact: true },
+	// The sheet is there while a request is open.
+	args: {
+		compact: true,
+		shownColleagues: ['kaya'],
+		proposals: STORY_PROPOSALS
+	},
 	play: async ({ canvasElement }) => {
 		const stage =
 			canvasElement.querySelector<HTMLElement>('.calendarStage')!;
@@ -935,13 +1003,18 @@ export const PhoneQuickEntry: Story = {
 		await expect(
 			kinds.querySelector('[data-cy="calendar-kinds-button"]')
 		).toBeNull();
-		// "Was anzeigen" sits in the search field of the sheet, as in
-		// "Gespräche".
+		// "Was anzeigen" sits in the search field, as in "Gespräche"; on the
+		// phone the search is at the very top of the calendar.
+		const search = stage.firstElementChild as HTMLElement;
+		await expect(search.className).toBe('calendarStage__search');
+		await expect(
+			search.querySelector('[data-cy="calendar-kinds-button"]')
+		).toBeTruthy();
 		await findCy('calendar-sheet');
 		const sheet = cyEl('calendar-sheet');
 		await expect(
 			sheet.querySelector('[data-cy="calendar-kinds-button"]')
-		).toBeTruthy();
+		).toBeNull();
 		// Quick entry stays folded in the sheet until asked for; folded, it
 		// stays mounted (hidden), so a draft survives.
 		const quickPanel = () =>
@@ -977,7 +1050,12 @@ export const PhoneQuickEntry: Story = {
 const sheetStory = (stop: 'peek' | 'half' | 'full', label: string) => ({
 	name: `Counsellor — phone 390 px, sheet ${stop}`,
 	globals: phone390Globals,
-	args: { compact: true, initialSheet: stop },
+	args: {
+		compact: true,
+		initialSheet: stop,
+		shownColleagues: ['kaya'],
+		proposals: STORY_PROPOSALS
+	},
 	play: async ({ canvasElement }: { canvasElement: HTMLElement }) => {
 		await findCy('calendar-sheet');
 		const sheet = cyEl('calendar-sheet');
