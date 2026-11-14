@@ -970,11 +970,15 @@ $message-avatar-overlap: -19px;
 		}
 
 		// Not inside an attachment card: its spans are its layout, and flattening
-		// them ran the file name and the status line together.
+		// them ran the file name and the status line together. The same holds
+		// for a reply quote, whose text clamps to two lines as a block, and
+		// for answered passages, which hold quotes and voice players.
 		span:not(
 			.messageItem__highlight,
 			.messageItem__messageTime,
-			.attachmentCard *
+			.attachmentCard *,
+			.messageItem__replyQuote *,
+			.messageItem__passageReplies *
 		) {
 			display: inline;
 		}
@@ -1651,6 +1655,34 @@ $message-avatar-overlap: -19px;
 		color: inherit;
 		opacity: 0.85;
 	}
+
+	// Selection reply: the quote leads back to the marked passage.
+	&--jump {
+		width: 100%;
+		box-sizing: border-box;
+		border-top: 0;
+		border-right: 0;
+		border-bottom: 0;
+		font: inherit;
+		font-size: 12px;
+		text-align: left;
+		color: inherit;
+		cursor: pointer;
+		transition: background-color 150ms ease;
+
+		&:hover {
+			background: var(--m3-surface-container-high, rgba(0, 0, 0, 0.08));
+		}
+
+		&:focus-visible {
+			outline: 2px solid var(--m3-primary-outline, #930008);
+			outline-offset: 2px;
+		}
+	}
+
+	&--myMessage.messageItem__replyQuote--jump:hover {
+		background: rgba(255, 255, 255, 0.32);
+	}
 }
 
 // Reactions (Figma 336-12244 / 336-12225): white M3 assist chips inside the
@@ -1923,4 +1955,73 @@ $message-avatar-overlap: -19px;
 			outline-offset: 1px;
 		}
 	}
+}
+
+// Selection reply (selectionReply/PassageReplyBlocks.tsx).
+// Several passages answered in one message: quote, then its comment.
+.messageItem__passageReplies {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	margin: 0 0 8px;
+	padding: 0;
+	list-style: none;
+}
+
+.messageItem__passageReply {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+
+	.messageItem__replyQuote {
+		margin-bottom: 0;
+	}
+}
+
+.messageItem__passageReplyText {
+	margin: 0;
+	white-space: pre-wrap;
+}
+
+/*
+ * A passage a moderator blurred. The characters are random already
+ * (Zahlensalat); the blurred glyphs on a crisp tinted pill make the hiding
+ * obvious at a glance. Only the glyphs blur, so a focus ring stays sharp.
+ */
+.passageBlur {
+	padding: 0 2px;
+	border-radius: 4px;
+
+	// Darker than every bubble (grey, pink) in light and dark scheme.
+	background: var(--m3-outline-variant, #c4c7c8);
+	color: transparent;
+
+	// Fill wins over every `color` rule: the global `[role='button']:hover`
+	// once painted the salad sharp and red, and the blur seemed gone.
+	-webkit-text-fill-color: transparent;
+	text-shadow: 0 0 6px var(--m3-on-surface, #1b1b1c);
+	user-select: none;
+	-webkit-user-select: none;
+}
+
+.passageBlur--removable {
+	cursor: pointer;
+
+	&:hover {
+		box-shadow: inset 0 0 0 1px var(--m3-outline, #747878);
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--m3-primary, #415f91);
+		outline-offset: 2px;
+	}
+}
+
+.passageBlur__srLabel {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
 }

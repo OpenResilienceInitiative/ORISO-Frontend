@@ -1,0 +1,450 @@
+// Selection reply: the bar over a marked passage and the answer field under
+// it. Both reuse the chat menu's card (white, 8 px radius, menu elevation)
+// and its row treatment (pale blue `--oriso-menu-hover-surface`, primary
+// label). Tokens only — the hex values are the static fallbacks.
+
+$selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
+
+// The menu-row hover and focus of every control in the bar and the field.
+@mixin selection-reply-control-states {
+	&:hover:not(:disabled),
+	&:focus-visible {
+		background-color: var(--oriso-menu-hover-surface, #e7effc);
+		color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
+		outline: none;
+	}
+
+	&:focus-visible {
+		box-shadow: 0 0 0 2px var(--m3-primary-outline, #930008);
+	}
+}
+
+.selectionReply {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+	flex: 1 1 auto;
+}
+
+.selectionReply__toolbar {
+	position: absolute;
+	z-index: 30;
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	padding: 4px;
+	transform: translateX(-50%);
+	box-sizing: border-box;
+	background: var(--m3-surface-container-lowest, #fff);
+	border: 1px solid var(--m3-outline-variant, #c4c7c8);
+	border-radius: 8px;
+	box-shadow: $selection-reply-elevation;
+	white-space: nowrap;
+}
+
+.selectionReply__toolbarButton {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	min-height: 40px;
+	padding: 0 12px;
+	border: 0;
+	border-radius: 8px;
+	background: transparent;
+	color: var(--m3-on-surface, #1b1b1c);
+	font: inherit;
+	font-size: 14px;
+	line-height: 20px;
+	font-weight: 500;
+	cursor: pointer;
+	transition:
+		background-color 150ms ease,
+		color 150ms ease;
+
+	svg {
+		flex-shrink: 0;
+	}
+
+	&--icon {
+		position: relative;
+		justify-content: center;
+		width: 40px;
+		padding: 0;
+		font-size: 20px;
+	}
+
+	// The label as a small tip above the button, on hover and keyboard focus.
+	&:hover .selectionReply__toolbarTip,
+	&:focus-visible .selectionReply__toolbarTip {
+		opacity: 1;
+		transform: translate(-50%, 0);
+	}
+
+	@include selection-reply-control-states;
+}
+
+.selectionReply__toolbarTip {
+	position: absolute;
+	bottom: calc(100% + 10px);
+	left: 50%;
+	z-index: 1;
+	padding: 4px 8px;
+	border-radius: 4px;
+	background: var(--m3-inverse-surface, #303031);
+	color: var(--m3-inverse-on-surface, #f3f0f1);
+	font-size: 12px;
+	font-weight: 500;
+	line-height: 16px;
+	white-space: nowrap;
+	pointer-events: none;
+	opacity: 0;
+	transform: translate(-50%, 4px);
+	transition:
+		opacity 120ms ease,
+		transform 120ms ease;
+}
+
+.selectionReply__threadIcon {
+	width: 18px;
+	height: 18px;
+
+	path {
+		fill: currentColor;
+	}
+}
+
+.selectionReply__toolbarDivider {
+	width: 1px;
+	height: 20px;
+	background: var(--m3-outline-variant, #c4c7c8);
+}
+
+.selectionReply__popover {
+	// Focus lands on the dialog itself only to keep it reachable (voice
+	// reply); its controls carry the visible rings.
+	&:focus {
+		outline: none;
+	}
+
+	position: absolute;
+	z-index: 31;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	width: 400px;
+	max-width: calc(100% - 24px);
+	box-sizing: border-box;
+	padding: 12px;
+	background: var(--m3-surface-container-lowest, #fff);
+	border: 1px solid var(--m3-primary-fixed, #ffdad5);
+
+	// Round at the top left, where it points away from the passage; the
+	// other corners stay small.
+	border-radius: 24px 8px 8px;
+	box-shadow: $selection-reply-elevation;
+	color: var(--m3-on-surface, #1b1b1c);
+
+	.voiceNoteRow {
+		width: 100%;
+	}
+}
+
+// The passage, quoted the way the composer's reply bar quotes a message
+// (Figma "Reply Bar_v2"): grey surface, medium lead, regular text.
+.selectionReply__voiceError {
+	margin: 0 0 8px;
+	font-size: 13px;
+	line-height: 18px;
+	color: var(--m3-error, #ba1a1a);
+}
+
+.selectionReply__quote {
+	display: flex;
+	align-items: flex-start;
+	gap: 8px;
+	padding: 8px 8px 8px 12px;
+	border-radius: 16px 4px 4px 4px;
+	background: var(--m3-surface-container-high, #eae7e8);
+	font-size: 12px;
+	line-height: 16px;
+	letter-spacing: 0.4px;
+}
+
+.selectionReply__quoteIcon {
+	flex-shrink: 0;
+	width: 14px;
+	height: 11px;
+	margin-top: 3px;
+	color: var(--m3-on-surface-variant, #444748);
+}
+
+.selectionReply__quoteBody {
+	display: flex;
+	flex-direction: column;
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.selectionReply__quoteAuthor {
+	font-weight: 500;
+	color: var(--m3-on-surface, #141c25);
+}
+
+.selectionReply__quoteText {
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+	color: var(--m3-on-primary-fixed, #410001);
+}
+
+.selectionReply__close {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	width: 20px;
+	height: 20px;
+	padding: 0;
+	border: 0;
+	border-radius: 50%;
+	background: transparent;
+	color: var(--m3-on-surface-variant, #444748);
+	font-size: 16px;
+	cursor: pointer;
+
+	// The glyph is small, the finger needs 44 px.
+	&::before {
+		content: '';
+		position: absolute;
+		inset: -12px;
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--m3-primary, #a5000a);
+		outline-offset: 2px;
+	}
+}
+
+.selectionReply__inputRow {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.selectionReply__input {
+	flex: 1 1 auto;
+	min-width: 0;
+	height: 44px;
+	padding: 0 4px 0 8px;
+	border: 0;
+	background: transparent;
+	color: var(--m3-on-surface, #1b1b1c);
+	font: inherit;
+	font-size: 14px;
+	line-height: 20px;
+
+	&::placeholder {
+		color: var(--m3-on-surface-variant, #444748);
+	}
+
+	// The same ring as the other controls here; no hover tint for a field.
+	&:focus-visible {
+		outline: none;
+		border-radius: 4px;
+		box-shadow: 0 0 0 2px var(--m3-primary-outline, #930008);
+	}
+
+	&:disabled {
+		cursor: not-allowed;
+	}
+}
+
+.selectionReply__iconButton {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	width: 40px;
+	height: 40px;
+	padding: 0;
+	border: 0;
+	border-radius: 50%;
+	background: transparent;
+	color: var(--m3-on-surface-variant, #444748);
+	font-size: 20px;
+	cursor: pointer;
+	transition: background-color 150ms ease;
+
+	@include selection-reply-control-states;
+
+	&:disabled {
+		opacity: 0.38;
+		cursor: not-allowed;
+	}
+}
+
+.selectionReply__hintWrap {
+	position: relative;
+	display: inline-flex;
+}
+
+// "+": the answer joins the one message being put together in the composer.
+.selectionReply__collect {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	width: 40px;
+	height: 40px;
+	padding: 0;
+	border: 1px solid var(--m3-outline-variant, #c4c7c7);
+	border-radius: 50%;
+	background: transparent;
+	color: var(--m3-on-surface, #1b1b1c);
+	cursor: pointer;
+	transition:
+		background-color 150ms ease,
+		color 150ms ease;
+
+	svg {
+		font-size: 22px;
+	}
+
+	@include selection-reply-control-states;
+
+	&:disabled {
+		opacity: 0.38;
+		cursor: not-allowed;
+	}
+}
+
+// The key for each way out, shown as a tooltip on its button.
+.selectionReply__keyHint {
+	position: absolute;
+	right: 0;
+	bottom: calc(100% + 8px);
+	z-index: 2;
+	display: grid;
+	grid-template-columns: auto auto;
+	column-gap: 16px;
+	row-gap: 4px;
+	padding: 8px 12px;
+	border-radius: 8px;
+	background: var(--m3-inverse-surface, #303031);
+	color: var(--m3-inverse-on-surface, #f2f0f0);
+	font-size: 12px;
+	line-height: 16px;
+	white-space: nowrap;
+	box-shadow: $selection-reply-elevation;
+
+	kbd {
+		font: inherit;
+		text-align: right;
+		opacity: 0.75;
+	}
+}
+
+.selectionReply__send {
+	display: inline-flex;
+	flex-shrink: 0;
+
+	// A plain round button here: the composer's corner shape belongs to
+	// the composer card.
+	.sendButton {
+		width: 40px;
+		height: 40px;
+		border-radius: 50%;
+	}
+}
+
+// The passage while it is being answered, and after a jump back to it.
+// `primary-fixed` is too pale on the grey client bubble; the dim tone reads.
+::highlight(oriso-selection-reply-active) {
+	background-color: var(--m3-primary-fixed-dim, #ffb4aa);
+	color: var(--m3-on-primary-fixed, #410001);
+}
+
+// The passage a thread was started on, on the thread's root message.
+::highlight(oriso-selection-reply-thread) {
+	background-color: var(--m3-primary-fixed-dim, #ffb4aa);
+	color: var(--m3-on-primary-fixed, #410001);
+}
+
+::highlight(oriso-selection-reply-jump) {
+	background-color: var(--m3-primary-fixed-dim, #ffb4aa);
+	color: var(--m3-on-primary-fixed, #410001);
+}
+
+.messageItem__message--jumpTarget {
+	animation: selectionReplyJumpRing 2.4s ease;
+}
+
+// After a jump, focus sits on the bubble. Keyboard users see a quiet ring
+// that follows the bubble's corners; pointer users only see the jump ring.
+.messageItem__message[data-jump-focus] {
+	&:focus {
+		outline: none;
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--m3-primary-fixed-dim, #ffb4aa);
+		outline-offset: 2px;
+	}
+}
+
+@keyframes selectionReplyJumpRing {
+	0%,
+	45% {
+		box-shadow: 0 0 0 3px var(--m3-primary-fixed-dim, #ffb4aa);
+	}
+
+	100% {
+		box-shadow: 0 0 0 0 transparent;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.messageItem__message--jumpTarget {
+		animation: none;
+		box-shadow: 0 0 0 3px var(--m3-primary-fixed-dim, #ffb4aa);
+	}
+
+	.selectionReply__toolbarButton,
+	.selectionReply__toolbarTip,
+	.selectionReply__iconButton {
+		transition: none;
+	}
+}
+
+/* Blur (moderators): the entry in the bar and the bar on a blurred passage. */
+.selectionReply__blurIcon {
+	flex: none;
+	width: 16px;
+	height: 16px;
+
+	path {
+		fill: currentColor;
+	}
+}
+
+.selectionReply__wideLabel {
+	display: inline-flex;
+	align-items: center;
+}
+
+.selectionReply__blurredBy {
+	padding: 0 8px 0 12px;
+	color: var(--m3-on-surface-variant, #444748);
+	font-size: 12px;
+	line-height: 16px;
+	white-space: nowrap;
+}
+
+@media (width <= 599px) {
+	.selectionReply__wideLabel {
+		display: none;
+	}
+}

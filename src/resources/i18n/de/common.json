@@ -2236,7 +2236,32 @@
 			"previewLabel": "Antwort an",
 			"cancel": "Antwort verwerfen",
 			"quoteLabel": "Antwort auf",
-			"quoteUnknown": "Frühere Nachricht"
+			"quoteUnknown": "Frühere Nachricht",
+			"jumpToQuote": "Zur zitierten Stelle von {{author}} springen"
+		},
+		"selectionReply": {
+			"blur": "Schwärzen",
+			"blurredLabel": "Geschwärzte Stelle",
+			"blurredBy": "Geschwärzt von {{name}}",
+			"removeBlur": "Schwärzung aufheben",
+			"removeBlurLabel": "Geschwärzte Stelle – Schwärzung aufheben",
+			"blurBar": "Aktionen für die geschwärzte Stelle",
+			"toolbar": "Aktionen für die markierte Stelle",
+			"reply": "Antworten",
+			"replyVoice": "Mit Sprachnachricht antworten",
+			"startThread": "Thread",
+			"dialog": "Auf die markierte Stelle von {{author}} antworten",
+			"cancel": "Abbrechen",
+			"inputLabel": "Antwort auf die markierte Stelle",
+			"placeholder": "Antwort schreiben …",
+			"placeholderWithVoice": "Text dazu, wenn gewünscht …",
+			"addToComposer": "Zur Nachricht hinzufügen",
+			"sendNow": "Sofort senden",
+			"keys": "↵ zur Nachricht hinzufügen · {{sendKey}} ↵ alles sofort senden · Esc abbrechen",
+			"pendingLead": "{{number}} · {{author}}",
+			"pendingStatus": "Antwort {{number}} an {{author}}, gesammelt für die nächste Nachricht",
+			"remove": "Antwort {{number}} entfernen",
+			"voiceDuration": "Sprachnachricht {{duration}}"
 		},
 		"thread": {
 			"unknownRoot": "Frühere Nachricht",

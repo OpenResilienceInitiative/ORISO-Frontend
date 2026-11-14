@@ -2220,7 +2220,32 @@
 			"previewLabel": "Ответ для",
 			"cancel": "Отменить ответ",
 			"quoteLabel": "Ответ на",
-			"quoteUnknown": "Предыдущее сообщение"
+			"quoteUnknown": "Предыдущее сообщение",
+			"jumpToQuote": "Перейти к цитируемому фрагменту от {{author}}"
+		},
+		"selectionReply": {
+			"blur": "Размыть",
+			"blurredLabel": "Размытый фрагмент",
+			"blurredBy": "Размыто: {{name}}",
+			"removeBlur": "Убрать размытие",
+			"removeBlurLabel": "Размытый фрагмент – убрать размытие",
+			"blurBar": "Действия для размытого фрагмента",
+			"toolbar": "Действия для выделенного фрагмента",
+			"reply": "Ответить",
+			"replyVoice": "Ответить голосовым сообщением",
+			"startThread": "Начать ветку",
+			"dialog": "Ответ на выделенный фрагмент от {{author}}",
+			"cancel": "Отмена",
+			"inputLabel": "Ответ на выделенный фрагмент",
+			"placeholder": "Написать ответ …",
+			"placeholderWithVoice": "Добавьте текст, если хотите …",
+			"addToComposer": "Добавить в сообщение",
+			"sendNow": "Отправить сейчас",
+			"keys": "↵ добавить в сообщение · {{sendKey}} ↵ отправить сейчас · Esc отмена",
+			"pendingLead": "{{number}} · {{author}}",
+			"pendingStatus": "Ответ {{number}} для {{author}}, собран для следующего сообщения",
+			"remove": "Удалить ответ {{number}}",
+			"voiceDuration": "Голосовое сообщение {{duration}}"
 		},
 		"thread": {
 			"unknownRoot": "Предыдущее сообщение",

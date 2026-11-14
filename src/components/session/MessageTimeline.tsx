@@ -58,6 +58,12 @@ export interface MessageTimelineProps {
 		replyToEventId?: string | null
 	) => MessageItemProps['replyQuote'];
 	onReplyDirect?: (message: MessageItem) => void;
+	/** Selection reply: jump from a reply's quote back to the quoted passage. */
+	onJumpToReplyQuote?: (message: MessageItem) => void;
+	/** Selection reply: jump from one answered passage back to it. */
+	onJumpToPassage?: MessageItemProps['onJumpToPassage'];
+	/** Moderators: blurred passages offer "Remove blur". */
+	canRemovePassageBlur?: boolean;
 	/** Own messages only — the timeline applies the ownership gate. */
 	onEditDirect?: (message: MessageItem) => void;
 	/** Own messages only — the timeline applies the ownership gate. */
@@ -96,6 +102,9 @@ export const MessageTimeline = ({
 	onOpenThread,
 	resolveReplyQuote,
 	onReplyDirect,
+	onJumpToReplyQuote,
+	onJumpToPassage,
+	canRemovePassageBlur,
 	onEditDirect,
 	onDeleteDirect,
 	reactionsFor,
@@ -171,6 +180,17 @@ export const MessageTimeline = ({
 									? () => onReplyDirect(message)
 									: undefined
 							}
+							onJumpToReplyQuote={
+								onJumpToReplyQuote && message.replyToEventId
+									? () => onJumpToReplyQuote(message)
+									: undefined
+							}
+							onJumpToPassage={
+								message.passageReplies?.length
+									? onJumpToPassage
+									: undefined
+							}
+							canRemovePassageBlur={canRemovePassageBlur}
 							onEditDirect={
 								own && onEditDirect
 									? () => onEditDirect(message)
