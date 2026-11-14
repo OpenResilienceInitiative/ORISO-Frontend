@@ -1,7 +1,9 @@
 /**
- * "Arbeitszeit festlegen" (ADR-032, UserService#1649): one window per
- * weekday. Outside them the calendar is shaded and the free-time search
- * does not look; booking ignores them.
+ * "Arbeitszeit festlegen" (ADR-032, UserService#1649): hours per weekday
+ * and a lunch break (on by default, stored as two windows a day). Outside
+ * them the calendar is shaded and the free-time search does not look;
+ * booking ignores them. "Feiertage frei" shows only with a region and is
+ * not stored yet (no backend).
  */
 import * as React from 'react';
 import { useState } from 'react';
@@ -9,8 +11,11 @@ import { useTranslation } from 'react-i18next';
 import { M3Dialog } from '../m3Dialog/M3Dialog';
 import { Switch } from '../Switch';
 import {
+	breakOf,
 	groupWorkingHours,
 	invalidRows,
+	isBreakValid,
+	type DayBreak,
 	rowsToWorkingHours,
 	workingHoursToRows,
 	type WorkingDayRow,
@@ -21,7 +26,13 @@ export interface WorkingHoursDialogProps {
 	open: boolean;
 	hours: WorkingHours;
 	fullScreen?: boolean;
-	onSave: (hours: WorkingHours) => void;
+	/**
+	 * Region whose public holidays count as days off, e.g. "NRW". Without
+	 * it the switch is not shown (UserService has no holidays yet).
+	 */
+	holidayRegion?: string;
+	holidaysOff?: boolean;
+	onSave: (hours: WorkingHours, extras: { holidaysOff: boolean }) => void;
 	onClose: () => void;
 }
 
@@ -57,6 +68,8 @@ export const WorkingHoursDialog = ({
 	open,
 	hours,
 	fullScreen,
+	holidayRegion,
+	holidaysOff = false,
 	onSave,
 	onClose
 }: WorkingHoursDialogProps) => {
@@ -65,7 +78,10 @@ export const WorkingHoursDialog = ({
 	const [rows, setRows] = useState<WorkingDayRow[]>(() =>
 		workingHoursToRows(hours)
 	);
+	const [dayBreak, setDayBreak] = useState<DayBreak>(() => breakOf(hours));
+	const [holidays, setHolidays] = useState(holidaysOff);
 	const invalid = invalidRows(rows);
+	const breakInvalid = !isBreakValid(dayBreak);
 	const update = (weekday: number, patch: Partial<WorkingDayRow>) =>
 		setRows((all) =>
 			all.map((r) => (r.weekday === weekday ? { ...r, ...patch } : r))
@@ -85,8 +101,11 @@ export const WorkingHoursDialog = ({
 				{
 					label: t('calendar.workingHours.save'),
 					primary: true,
-					disabled: invalid.length > 0,
-					onClick: () => onSave(rowsToWorkingHours(rows)),
+					disabled: invalid.length > 0 || breakInvalid,
+					onClick: () =>
+						onSave(rowsToWorkingHours(rows, dayBreak), {
+							holidaysOff: holidays
+						}),
 					testId: 'calendar-working-hours-save'
 				}
 			]}
@@ -156,9 +175,90 @@ export const WorkingHoursDialog = ({
 						</div>
 					);
 				})}
+				<div
+					className={`calendarHours__row calendarHours__row--break${dayBreak.enabled ? '' : ' calendarHours__row--off'}`}
+					data-cy="calendar-hours-break"
+				>
+					<Switch
+						checked={dayBreak.enabled}
+						onChange={(enabled) =>
+							setDayBreak((b) => ({ ...b, enabled }))
+						}
+						aria-label={t('calendar.workingHours.break')}
+						showIcon={false}
+					/>
+					<span className="calendarHours__day">
+						{t('calendar.workingHours.break')}
+					</span>
+					<label className="calendarHours__time">
+						<span className="sr-only">
+							{t('calendar.workingHours.breakFrom')}
+						</span>
+						<input
+							type="time"
+							step={900}
+							value={dayBreak.start}
+							disabled={!dayBreak.enabled}
+							aria-invalid={breakInvalid || undefined}
+							onChange={(e) =>
+								setDayBreak((b) => ({
+									...b,
+									start: e.target.value
+								}))
+							}
+						/>
+					</label>
+					<span aria-hidden="true">–</span>
+					<label className="calendarHours__time">
+						<span className="sr-only">
+							{t('calendar.workingHours.breakTo')}
+						</span>
+						<input
+							type="time"
+							step={900}
+							value={dayBreak.end}
+							disabled={!dayBreak.enabled}
+							aria-invalid={breakInvalid || undefined}
+							onChange={(e) =>
+								setDayBreak((b) => ({
+									...b,
+									end: e.target.value
+								}))
+							}
+						/>
+					</label>
+				</div>
+				{holidayRegion && (
+					<div
+						className="calendarHours__row calendarHours__row--holidays"
+						data-cy="calendar-hours-holidays"
+					>
+						<Switch
+							checked={holidays}
+							onChange={setHolidays}
+							aria-label={t('calendar.workingHours.holidays', {
+								region: holidayRegion
+							})}
+							showIcon={false}
+						/>
+						<span className="calendarHours__holidays">
+							{t('calendar.workingHours.holidays', {
+								region: holidayRegion
+							})}
+							<small>
+								{t('calendar.workingHours.holidaysHint')}
+							</small>
+						</span>
+					</div>
+				)}
 				{invalid.length > 0 && (
 					<p className="calendarDialog__error" role="alert">
 						{t('calendar.workingHours.invalid')}
+					</p>
+				)}
+				{breakInvalid && (
+					<p className="calendarDialog__error" role="alert">
+						{t('calendar.workingHours.breakInvalid')}
 					</p>
 				)}
 			</div>

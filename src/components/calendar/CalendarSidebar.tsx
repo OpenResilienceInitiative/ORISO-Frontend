@@ -5,7 +5,7 @@
  * calendars shown next to one's own.
  */
 import * as React from 'react';
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Popper } from '@mui/material';
 import { ListSearchField } from '../listSearchField/ListSearchField';
@@ -30,15 +30,21 @@ import {
 import type { MoveProposal } from './calendarActions';
 import { nextFreeHours } from './calendarFreeTime';
 import {
+	DEFAULT_QUICK_DURATION,
+	QUICK_DURATIONS,
+	dateField,
+	fieldsFromEntry,
 	parseQuickEntry,
 	quickEntryGaps,
+	rangeFromFields,
+	timeField,
+	type QuickFields,
 	type QuickKind
 } from './calendarQuickEntry';
 import { useShortTime } from './calendarShortTime';
 import type { WorkingHours } from './calendarWorkingHours';
 import { CalendarEntryPeek } from './CalendarEntryPeek';
 import { useEntryLabel, useRangeFormat } from './useEntryLabel';
-import { useWeekdayNames } from './WorkingHoursDialog';
 
 const QUICK_KINDS: QuickKind[] = [
 	'video',
@@ -75,11 +81,8 @@ export interface CalendarSidebarProps {
 	) => void;
 	onWithdrawProposal?: (proposal: MoveProposal) => void;
 	onOpenEntry: (entry: CalendarEntry, anchor: HTMLElement) => void;
-	/** Colleagues shown, and the last ones that were (pills). */
+	/** Colleagues shown: search finds their entries too. */
 	shownColleagues: string[];
-	recentColleagues: string[];
-	onToggleColleague: (id: string) => void;
-	onOpenPeople: (anchor: HTMLElement) => void;
 	onCreate?: (drafts: AppointmentDraft[]) => void;
 	/** "Mehr Angaben …": the full dialog with what the line already says. */
 	onMoreDetails?: (draft: {
@@ -111,9 +114,6 @@ export const CalendarSidebar = ({
 	onWithdrawProposal,
 	onOpenEntry,
 	shownColleagues,
-	recentColleagues,
-	onToggleColleague,
-	onOpenPeople,
 	onCreate,
 	onMoreDetails,
 	onWorkingHours
@@ -155,17 +155,7 @@ export const CalendarSidebar = ({
 			.slice(0, MAX_SEARCH_RESULTS);
 	}, [query, entries, ownerId, shownColleagues, label, colleagueById]);
 
-	// --- Kind chips ---
 	const own = entries.filter((e) => e.ownerId === ownerId);
-	const presentFacets = CALENDAR_FACETS.filter((facet) =>
-		own.some((e) => facetOf(e) === facet)
-	);
-	const futureCount = (facet: CalendarEntryFacet) =>
-		own.filter(
-			(e) =>
-				facetOf(e) === facet &&
-				new Date(e.end).getTime() > now.getTime()
-		).length;
 
 	// --- Als Nächstes: nearest at the bottom, next to the quick entry ---
 	const upcoming = upcomingEntries(
@@ -185,7 +175,28 @@ export const CalendarSidebar = ({
 			aria-label={t('calendar.side.label')}
 			data-cy="calendar-side"
 		>
+			{/* As in "Gespräche": the display filter sits at the left of the
+			    search field (Frank, 2026-11-14). */}
 			<ListSearchField
+				leading={
+					<span
+						ref={kindsAnchor}
+						className="calendarSide__kindsAnchor"
+					>
+						<DisplayFilterButton
+							label={t('calendar.kindsMenu.label')}
+							customised={hiddenFacets.length > 0}
+							customisedLabel={t('calendar.kindsMenu.customised')}
+							open={kindsMenuOpen}
+							onClick={() =>
+								kindsAnchor.current &&
+								onOpenKinds(kindsAnchor.current)
+							}
+							compact
+							data-cy="calendar-kinds-button"
+						/>
+					</span>
+				}
 				value={query}
 				onChange={setQuery}
 				placeholder={t('calendar.search.placeholder')}
@@ -237,50 +248,16 @@ export const CalendarSidebar = ({
 				</section>
 			)}
 
-			<FilterChipRow
-				label={t('calendar.filterLabel')}
+			<CalendarKindChips
+				ownerId={ownerId}
+				now={now}
+				entries={entries}
+				onlyFacets={onlyFacets}
+				hiddenFacets={hiddenFacets}
+				onToggleFacet={onToggleFacet}
+				onHighlightFacet={onHighlightFacet}
 				className="calendarSide__chips"
-				trailing={
-					<span
-						ref={kindsAnchor}
-						className="calendarSide__kindsAnchor"
-					>
-						<DisplayFilterButton
-							label={t('calendar.kindsMenu.label')}
-							customised={hiddenFacets.length > 0}
-							customisedLabel={t('calendar.kindsMenu.customised')}
-							open={kindsMenuOpen}
-							onClick={() =>
-								kindsAnchor.current &&
-								onOpenKinds(kindsAnchor.current)
-							}
-							data-cy="calendar-kinds-button"
-						/>
-					</span>
-				}
-			>
-				{presentFacets
-					.filter((facet) => !hiddenFacets.includes(facet))
-					.map((facet) => (
-						<span
-							key={facet}
-							className={`calendarSide__chip calendarSide__chip--k-${facet}`}
-							onMouseEnter={() => onHighlightFacet(facet)}
-							onMouseLeave={() => onHighlightFacet(null)}
-							onFocus={() => onHighlightFacet(facet)}
-							onBlur={() => onHighlightFacet(null)}
-						>
-							<FilterChip
-								label={t(`calendar.facets.${facet}`)}
-								icon={FACET_ICON_COMPONENT[facet]}
-								active={onlyFacets.includes(facet)}
-								count={futureCount(facet)}
-								onClick={() => onToggleFacet(facet)}
-								data-cy={`calendar-filter-${facet}`}
-							/>
-						</span>
-					))}
-			</FilterChipRow>
+			/>
 
 			{openProposals.length > 0 && (
 				<section className="calendarSide__section">
@@ -431,62 +408,6 @@ export const CalendarSidebar = ({
 				/>
 			)}
 
-			{consultant && (
-				<section className="calendarSide__section">
-					<h2 className="calendarSide__title">
-						{t('calendar.people.besides')}
-					</h2>
-					<div
-						className="calendarSide__pills"
-						role="group"
-						aria-label={t('calendar.people.besides')}
-					>
-						<button
-							type="button"
-							className="calendarSide__pill calendarSide__pill--me"
-							aria-pressed="true"
-							disabled
-						>
-							{t('calendar.people.me')}
-						</button>
-						{recentColleagues
-							.map((id) => colleagueById[id])
-							.filter(Boolean)
-							.map((c) => (
-								<button
-									key={c.id}
-									type="button"
-									className="calendarSide__pill"
-									aria-pressed={shownColleagues.includes(
-										c.id
-									)}
-									title={c.agencyName}
-									onClick={() => onToggleColleague(c.id)}
-									data-cy={`calendar-pill-${c.id}`}
-								>
-									{c.displayName}
-								</button>
-							))}
-						{colleagues.length > 0 && (
-							<button
-								type="button"
-								className="calendarSide__pill calendarSide__pill--more"
-								aria-haspopup="menu"
-								onClick={(e) => onOpenPeople(e.currentTarget)}
-								data-cy="calendar-pill-more"
-							>
-								{t('calendar.people.more')}
-							</button>
-						)}
-					</div>
-					{colleagues.length === 0 && (
-						<p className="calendarSide__muted">
-							{t('calendar.colleaguesEmpty')}
-						</p>
-					)}
-				</section>
-			)}
-
 			{consultant && onWorkingHours && (
 				<button
 					type="button"
@@ -512,6 +433,79 @@ export const CalendarSidebar = ({
 
 /* ------------------------------------------------------------------ */
 
+export interface CalendarKindChipsProps {
+	ownerId: string;
+	now: Date;
+	entries: CalendarEntry[];
+	onlyFacets: CalendarEntryFacet[];
+	hiddenFacets: CalendarEntryFacet[];
+	onToggleFacet: (facet: CalendarEntryFacet) => void;
+	onHighlightFacet: (facet: CalendarEntryFacet | null) => void;
+	/** Pinned at the right end (the display filter button on the phone). */
+	trailing?: React.ReactNode;
+	className?: string;
+}
+
+/**
+ * One chip per kind of own entry, with the number still ahead. In the left
+ * column on a wide screen, in row 2 under the header on the phone.
+ */
+export const CalendarKindChips = ({
+	ownerId,
+	now,
+	entries,
+	onlyFacets,
+	hiddenFacets,
+	onToggleFacet,
+	onHighlightFacet,
+	trailing,
+	className
+}: CalendarKindChipsProps) => {
+	const { t } = useTranslation();
+	const own = entries.filter((e) => e.ownerId === ownerId);
+	const presentFacets = CALENDAR_FACETS.filter((facet) =>
+		own.some((e) => facetOf(e) === facet)
+	);
+	const futureCount = (facet: CalendarEntryFacet) =>
+		own.filter(
+			(e) =>
+				facetOf(e) === facet &&
+				new Date(e.end).getTime() > now.getTime()
+		).length;
+
+	return (
+		<FilterChipRow
+			label={t('calendar.filterLabel')}
+			className={className}
+			trailing={trailing}
+		>
+			{presentFacets
+				.filter((facet) => !hiddenFacets.includes(facet))
+				.map((facet) => (
+					<span
+						key={facet}
+						className={`calendarSide__chip calendarSide__chip--k-${facet}`}
+						onMouseEnter={() => onHighlightFacet(facet)}
+						onMouseLeave={() => onHighlightFacet(null)}
+						onFocus={() => onHighlightFacet(facet)}
+						onBlur={() => onHighlightFacet(null)}
+					>
+						<FilterChip
+							label={t(`calendar.facets.${facet}`)}
+							icon={FACET_ICON_COMPONENT[facet]}
+							active={onlyFacets.includes(facet)}
+							count={futureCount(facet)}
+							onClick={() => onToggleFacet(facet)}
+							data-cy={`calendar-filter-${facet}`}
+						/>
+					</span>
+				))}
+		</FilterChipRow>
+	);
+};
+
+/* ------------------------------------------------------------------ */
+
 interface QuickEntryProps {
 	ownerId: string;
 	now: Date;
@@ -520,41 +514,69 @@ interface QuickEntryProps {
 	workingHours: WorkingHours;
 	onCreate: (drafts: AppointmentDraft[]) => void;
 	onMoreDetails?: CalendarSidebarProps['onMoreDetails'];
+	/** Focus the line when shown (the phone slides it open on demand). */
+	autoFocus?: boolean;
 }
-
-const pad = (n: number) => String(n).padStart(2, '0');
 
 /**
  * "Do 14 Uhr Video ruhiges": day, time, kind and conversation from one line.
  * The kind chips and the free-hour pills fill in what typing leaves out.
  */
-const QuickEntry = ({
+export const QuickEntry = ({
 	ownerId,
 	now,
 	entries,
 	conversations,
 	workingHours,
 	onCreate,
-	onMoreDetails
+	onMoreDetails,
+	autoFocus = false
 }: QuickEntryProps) => {
 	const { t } = useTranslation();
 	const format = useRangeFormat();
 	const shortTime = useShortTime();
-	const weekday = useWeekdayNames('short');
 	const inputRef = useRef<HTMLInputElement>(null);
+	useEffect(() => {
+		if (autoFocus) inputRef.current?.focus();
+	}, [autoFocus]);
 	const [text, setText] = useState('');
 	const [kind, setKind] = useState<QuickKind | undefined>();
 	const [sessionId, setSessionId] = useState<number | undefined>();
+	const [fields, setFields] = useState<Partial<QuickFields>>({
+		duration: DEFAULT_QUICK_DURATION
+	});
+	/** "1 Std | 30 Min": how long the offered free time is. */
+	const [slot, setSlot] = useState<30 | 60>(60);
 	const parsed = parseQuickEntry(text, { now, conversations, kind });
+	const range = rangeFromFields(fields);
 	const entry = {
-		...parsed,
+		kind: parsed.kind,
+		start: range?.start,
+		end: range?.end,
 		sessionId: sessionId ?? parsed.sessionId
 	};
-	const gaps = text.trim() || kind ? quickEntryGaps(entry) : [];
+	const touched = !!(text.trim() || kind || fields.date || fields.time);
+	const gaps = touched ? quickEntryGaps(entry) : [];
 	const free = useMemo(
-		() => nextFreeHours({ entries, ownerId, hours: workingHours, now }),
-		[entries, ownerId, workingHours, now]
+		() =>
+			nextFreeHours({
+				entries,
+				ownerId,
+				hours: workingHours,
+				now,
+				minutes: slot
+			}),
+		[entries, ownerId, workingHours, now, slot]
 	);
+	const type = (value: string) => {
+		setText(value);
+		// The line prefills what it names; the fields stay what is saved.
+		const prefill = fieldsFromEntry(
+			parseQuickEntry(value, { now, conversations, kind })
+		);
+		if (Object.keys(prefill).length > 0)
+			setFields((current) => ({ ...current, ...prefill }));
+	};
 	const effectiveKind = entry.kind;
 	const conversation = conversations.find(
 		(c) => c.sessionId === entry.sessionId
@@ -564,6 +586,7 @@ const QuickEntry = ({
 		setText('');
 		setKind(undefined);
 		setSessionId(undefined);
+		setFields({ duration: DEFAULT_QUICK_DURATION });
 	};
 
 	const submit = () => {
@@ -584,7 +607,7 @@ const QuickEntry = ({
 	};
 
 	let status: string;
-	if (!text.trim() && !kind) status = t('calendar.quick.hint');
+	if (!touched) status = t('calendar.quick.hint');
 	else if (gaps.length > 0)
 		status = t('calendar.quick.missing', {
 			list: gaps.map((g) => t(`calendar.quick.gaps.${g}`)).join(', ')
@@ -622,12 +645,63 @@ const QuickEntry = ({
 					ref={inputRef}
 					className="calendarQuick__input"
 					value={text}
-					onChange={(e) => setText(e.target.value)}
+					onChange={(e) => type(e.target.value)}
 					placeholder={t('calendar.quick.placeholder')}
 					aria-label={t('calendar.quick.title')}
 					aria-describedby="calendar-quick-status"
 					data-cy="calendar-quick-input"
 				/>
+				<div className="calendarQuick__fields">
+					<label className="calendarQuick__field">
+						<span>{t('calendar.quick.date')}</span>
+						<input
+							type="date"
+							value={fields.date ?? ''}
+							onChange={(e) =>
+								setFields((f) => ({
+									...f,
+									date: e.target.value
+								}))
+							}
+							data-cy="calendar-quick-date"
+						/>
+					</label>
+					<label className="calendarQuick__field">
+						<span>{t('calendar.quick.time')}</span>
+						<input
+							type="time"
+							step={900}
+							value={fields.time ?? ''}
+							onChange={(e) =>
+								setFields((f) => ({
+									...f,
+									time: e.target.value
+								}))
+							}
+							data-cy="calendar-quick-time"
+						/>
+					</label>
+				</div>
+				<div
+					className="calendarQuick__durations"
+					role="group"
+					aria-label={t('calendar.quick.duration')}
+				>
+					{QUICK_DURATIONS.map((d) => (
+						<button
+							key={d}
+							type="button"
+							className="calendarQuick__duration"
+							aria-pressed={fields.duration === d}
+							onClick={() =>
+								setFields((f) => ({ ...f, duration: d }))
+							}
+							data-cy={`calendar-quick-duration-${d}`}
+						>
+							{t('calendar.quick.minutes', { count: d })}
+						</button>
+					))}
+				</div>
 				<div
 					className="calendarQuick__kinds"
 					role="group"
@@ -651,11 +725,35 @@ const QuickEntry = ({
 						</button>
 					))}
 				</div>
-				{free.length > 0 && (
-					<div className="calendarQuick__free">
+				<div className="calendarQuick__free">
+					<div className="calendarQuick__freeHead">
 						<span className="calendarQuick__freeLabel">
-							{t('calendar.quick.freeHours')}
+							{slot === 60
+								? t('calendar.quick.freeHours')
+								: t('calendar.quick.freeHalf')}
 						</span>
+						<div
+							className="calendarQuick__slot"
+							role="group"
+							aria-label={t('calendar.quick.slot')}
+						>
+							{([60, 30] as const).map((m) => (
+								<button
+									key={m}
+									type="button"
+									className="calendarQuick__slotButton"
+									aria-pressed={slot === m}
+									onClick={() => setSlot(m)}
+									data-cy={`calendar-quick-slot-${m}`}
+								>
+									{m === 60
+										? t('calendar.quick.hour')
+										: t('calendar.quick.halfHour')}
+								</button>
+							))}
+						</div>
+					</div>
+					{free.length > 0 && (
 						<div className="calendarQuick__freeRow">
 							{free.map((start) => (
 								<button
@@ -663,9 +761,12 @@ const QuickEntry = ({
 									type="button"
 									className="calendarQuick__freePill"
 									onClick={() => {
-										setText(
-											`${weekday(start.getDay())} ${start.getDate()}.${start.getMonth() + 1}. ${pad(start.getHours())}:${pad(start.getMinutes())}`
-										);
+										setFields((f) => ({
+											...f,
+											date: dateField(start),
+											time: timeField(start),
+											duration: slot
+										}));
 										inputRef.current?.focus();
 									}}
 									data-cy="calendar-quick-free"
@@ -674,8 +775,8 @@ const QuickEntry = ({
 								</button>
 							))}
 						</div>
-					</div>
-				)}
+					)}
+				</div>
 				{suggestions.length > 0 && (
 					<div
 						className="calendarQuick__who"
@@ -720,7 +821,7 @@ const QuickEntry = ({
 					<button
 						type="submit"
 						className="calendarQuick__save"
-						disabled={gaps.length > 0 || (!text.trim() && !kind)}
+						disabled={gaps.length > 0 || !touched}
 						data-cy="calendar-quick-save"
 					>
 						{t('calendar.quick.save')}

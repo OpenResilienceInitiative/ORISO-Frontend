@@ -88,8 +88,12 @@ export const COLLEAGUES: Colleague[] = [
 ];
 
 /** Monday to Friday, 08:00 to 18:00. */
-export const STORY_WORKING_HOURS: WorkingHours = [1, 2, 3, 4, 5].map(
-	(weekday) => ({ weekday, start: '08:00', end: '18:00' })
+/** Mon–Fri 08:00–18:00 with lunch 12:00–13:00: two windows a day. */
+export const STORY_WORKING_HOURS: WorkingHours = [1, 2, 3, 4, 5].flatMap(
+	(weekday) => [
+		{ weekday, start: '08:00', end: '12:00' },
+		{ weekday, start: '13:00', end: '18:00' }
+	]
 );
 
 export const OWN_ENTRIES: CalendarEntry[] = [

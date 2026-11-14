@@ -15,6 +15,7 @@ import type { CalendarEntry, CalendarRole } from './calendarModel';
 
 export type EntryAction =
 	| 'start'
+	| 'chat'
 	| 'join'
 	| 'move'
 	| 'propose'
@@ -53,6 +54,8 @@ export const entryActions = (
 	if (entry.type === 'appointment') {
 		if (can.start && entry.kind && STARTABLE.includes(entry.kind))
 			actions.push('start');
+		// "Zum Chat" whenever the appointment belongs to a conversation.
+		if (can.chat && entry.sessionId !== undefined) actions.push('chat');
 		if (consultant && can.move && entry.movable !== false)
 			actions.push('move');
 		if (consultant && can.cancel) actions.push('cancel');

@@ -195,6 +195,7 @@ const Harness = ({
 			}
 			onJoin={withProposals ? fn() : undefined}
 			onStart={fn()}
+			onOpenChat={fn()}
 			onResetFeed={() => setFeedToken((n) => n + 1)}
 			onSaveImport={(url) =>
 				setBusyImport({
@@ -238,7 +239,7 @@ const meta: Meta<typeof Harness> = {
 		docs: {
 			description: {
 				component:
-					'FE#1050 / ADR-032, round 2 after Frank\'s prototype (2026-11-14): built like "Gespräche" — left column with search, kind chips and filter button, open requests, "Als Nächstes", quick entry and "Kalender daneben"; stage with header (+, view switch, full screen, ⋮), toolbar (‹ Heute ▾ ›) and the calendar. One colour per kind; working hours shaded; colleague entries with tooltip; pending move proposals dashed. Click an entry for its actions, double-click to move it. Drag over free time → "Eintragen als". Month view: click or drag days → "Tag eintragen". "Nebeneinander": one column per person. Proposals and "Beitreten" have no backend yet and appear only here. Sample data.'
+					'FE#1050 / ADR-032, round 2 after Frank\'s prototype (2026-11-14): built like "Gespräche" — left column with search (display filter at its left, as in "Gespräche"), kind chips, open requests, "Als Nächstes" and quick entry with date, start and duration; one row of people above the calendar (shown colleagues pressed, recently shown ones to switch back on, "Weitere …"); stage with header (+, view switch, full screen, ⋮), toolbar (‹ Heute ▾ ›) and the calendar. One colour per kind; working hours shaded; colleague entries with tooltip; pending move proposals dashed. Click an entry for its actions, double-click to move it. Drag over free time → "Eintragen als". Month view: click or drag days → "Tag eintragen". "Nebeneinander": one column per person. Proposals and "Beitreten" have no backend yet and appear only here. Sample data.'
 			}
 		}
 	},
@@ -367,9 +368,9 @@ export const SplitView: Story = {
 		await expect(
 			canvasElement.querySelectorAll('.calendarSplit__column').length
 		).toBe(3);
-		await expect(
-			canvas.getAllByText('frei für alle').length
-		).toBeGreaterThan(0);
+		await expect(canvas.getAllByText('alle frei').length).toBeGreaterThan(
+			0
+		);
 	}
 };
 
@@ -401,9 +402,9 @@ export const SplitThreeDays: Story = {
 		await expect(
 			canvasElement.querySelector('.calendarSplit__column--sticky')
 		).toBeNull();
-		await expect(
-			canvas.getAllByText('frei für alle').length
-		).toBeGreaterThan(1);
+		await expect(canvas.getAllByText('alle frei').length).toBeGreaterThan(
+			1
+		);
 		await expect(
 			canvas.getByRole('heading', { name: '16.–18. November 2026' })
 		).toBeTruthy();
@@ -554,7 +555,12 @@ export const EntryActions: Story = {
 	play: async ({ canvasElement }) => {
 		await userEvent.click(await entryEl(canvasElement, 'a1'));
 		const menu = within(await body().findByRole('menu'));
-		for (const name of ['Video-Call starten', 'Verschieben …', 'Absagen'])
+		for (const name of [
+			'Video-Call starten',
+			'Zum Chat',
+			'Verschieben …',
+			'Absagen'
+		])
 			await expect(menu.getByRole('menuitem', { name })).toBeTruthy();
 	}
 };
@@ -643,8 +649,31 @@ export const ViewDigits: Story = {
 	args: { switcherStyle: 'digits' }
 };
 
+export const QuickTyped: Story = {
+	name: 'Quick entry — typing prefills the fields',
+	play: async () => {
+		await userEvent.type(
+			await findCy('calendar-quick-input'),
+			'Do 14 Uhr Video'
+		);
+		await expect(
+			((await findCy('calendar-quick-date')) as HTMLInputElement).value
+		).toBe('2026-11-19');
+		await expect(
+			((await findCy('calendar-quick-time')) as HTMLInputElement).value
+		).toBe('14:00');
+		// The fields are what is saved: a changed duration wins.
+		await userEvent.click(await findCy('calendar-quick-duration-45'));
+		await expect(
+			(await findCy('calendar-quick-duration-45')).getAttribute(
+				'aria-pressed'
+			)
+		).toBe('true');
+	}
+};
+
 export const QuickEntry: Story = {
-	name: 'Quick entry — next free hour',
+	name: 'Quick entry — next free half hour',
 	play: async ({ canvasElement }) => {
 		const canvas = canvasOf(canvasElement);
 		const quick = within(
@@ -658,11 +687,21 @@ export const QuickEntry: Story = {
 		);
 		const pills = quick.getAllByRole('button', { name: /\d/ });
 		await expect(pills.length).toBeGreaterThan(0);
+		// Half an hour: the free pill fills date, start and 30 minutes.
+		await userEvent.click(await findCy('calendar-quick-slot-30'));
 		await userEvent.click(
 			canvasElement.querySelector<HTMLElement>(
 				'[data-cy="calendar-quick-free"]'
 			)!
 		);
+		await expect(
+			((await findCy('calendar-quick-date')) as HTMLInputElement).value
+		).toBe('2026-11-16');
+		await expect(
+			(await findCy('calendar-quick-duration-30')).getAttribute(
+				'aria-pressed'
+			)
+		).toBe('true');
 		await userEvent.click(
 			canvasElement.querySelector<HTMLElement>(
 				'[data-cy="calendar-quick-kind-blocker"]'
@@ -695,6 +734,61 @@ export const Phone: Story = {
 	}
 };
 
+export const PhoneQuickEntry: Story = {
+	name: 'Counsellor — phone 390 px, kind chips and quick entry',
+	globals: phone390Globals,
+	args: { compact: true },
+	play: async ({ canvasElement }) => {
+		const stage =
+			canvasElement.querySelector<HTMLElement>('.calendarStage')!;
+		// Row 2 under the header: the kind chips with "Was anzeigen".
+		const kinds = await waitFor(() => {
+			const el = stage.querySelector<HTMLElement>(
+				'.calendarStage__kinds'
+			);
+			expect(el).toBeTruthy();
+			return el!;
+		});
+		await expect(
+			stage.querySelector('.calendarStage__header')!.nextElementSibling
+		).toBe(kinds);
+		await expect(await findCy('calendar-filter-video')).toBeTruthy();
+		await expect(await findCy('calendar-kinds-button')).toBeTruthy();
+		// Quick entry stays folded behind the "+" right of Heute.
+		await expect(
+			canvasElement.querySelector('[data-cy="calendar-quick"]')
+		).toBeNull();
+		await findCy('calendar-quick-toggle');
+		const quickToggle = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="calendar-quick-toggle"]'
+		)!;
+		await expect(quickToggle.getAttribute('aria-expanded')).toBe('false');
+		await userEvent.click(quickToggle);
+		await expect(quickToggle.getAttribute('aria-expanded')).toBe('true');
+		await expect(quickToggle.getAttribute('aria-label')).toBe(
+			'Schnell eintragen schließen'
+		);
+		const input = await findCy('calendar-quick-input');
+		await waitFor(() => expect(document.activeElement).toBe(input));
+		await userEvent.type(input, 'Do 14 Uhr');
+		await expect(
+			((await findCy('calendar-quick-time')) as HTMLInputElement).value
+		).toBe('14:00');
+		await userEvent.click(await findCy('calendar-quick-kind-blocker'));
+		// Saving folds it away again.
+		await userEvent.click(await findCy('calendar-quick-save'));
+		await expect(
+			await body().findByText(/Sperrzeit eingetragen/)
+		).toBeTruthy();
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector('[data-cy="calendar-quick"]')
+			).toBeNull()
+		);
+		await expect(quickToggle.getAttribute('aria-expanded')).toBe('false');
+	}
+};
+
 export const PhoneSplit: Story = {
 	name: 'Counsellor — phone 390 px, side by side',
 	globals: phone390Globals,
@@ -723,10 +817,13 @@ export const English: Story = {
 	args: { shownColleagues: ['kaya'] },
 	play: async ({ canvasElement }) => {
 		const canvas = canvasOf(canvasElement);
+		// The people row and quick entry speak English too.
 		await expect(
-			await canvas.findByText('Calendars alongside')
+			await canvas.findByRole('button', { name: 'More …' })
 		).toBeTruthy();
+		await expect(canvas.getByText('My calendar')).toBeTruthy();
 		await expect(canvas.getByText('Quick entry')).toBeTruthy();
+		await expect(canvas.getByRole('button', { name: 'Add' })).toBeTruthy();
 	}
 };
 
@@ -788,7 +885,7 @@ export const TeamCounsellingCentre: Story = {
 		await userEvent.click(
 			await waitFor(() => {
 				const el = canvasElement.querySelector<HTMLElement>(
-					'[data-cy="calendar-pill-kaya"]'
+					'[data-cy="calendar-person-kaya"]'
 				);
 				expect(el).toBeTruthy();
 				return el!;
@@ -800,7 +897,7 @@ export const TeamCounsellingCentre: Story = {
 		// Brandt works at another counselling centre: not offered.
 		await userEvent.click(
 			canvasElement.querySelector<HTMLElement>(
-				'[data-cy="calendar-pill-more"]'
+				'[data-cy="calendar-person-more"]'
 			)!
 		);
 		const menu = within(await body().findByRole('menu'));
@@ -863,6 +960,7 @@ export const WorkingHoursPiece: StoryObj = {
 		<WorkingHoursDialog
 			open
 			hours={STORY_WORKING_HOURS}
+			holidayRegion="NRW"
 			onSave={() => undefined}
 			onClose={() => undefined}
 		/>
@@ -871,11 +969,22 @@ export const WorkingHoursPiece: StoryObj = {
 		const dialog = within(
 			await body().findByTestId('calendar-working-hours-dialog')
 		);
-		await expect(dialog.getAllByRole('switch')).toHaveLength(7);
+		// Seven days, the lunch break and the holidays of the region.
+		await expect(dialog.getAllByRole('switch')).toHaveLength(9);
 		const saturday = document.querySelector<HTMLElement>(
 			'[data-cy="calendar-hours-6"] input[role="switch"]'
 		)!;
 		await expect((saturday as HTMLInputElement).checked).toBe(false);
+		// Stored as two windows a day, read back as one day and a break.
+		await expect(
+			document.querySelectorAll<HTMLInputElement>(
+				'[data-cy="calendar-hours-1"] input[type="time"]'
+			)[1].value
+		).toBe('18:00');
+		await expect(
+			dialog.getByRole('switch', { name: 'Mittagspause' })
+		).toBeChecked();
+		await expect(dialog.getByText('Feiertage frei (NRW)')).toBeTruthy();
 	}
 };
 

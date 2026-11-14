@@ -303,6 +303,17 @@ export const CalendarView = ({
 						{initialsOf(owner.displayName)}
 					</span>
 				)}
+				{!owner &&
+					!proposal &&
+					entry.type === 'appointment' &&
+					entry.title && (
+						<span
+							className="calEntry__initials calEntry__initials--asker"
+							aria-hidden="true"
+						>
+							{initialsOf(entry.title)}
+						</span>
+					)}
 				<span className="calEntry__icon">
 					<CalendarEntryGlyph entry={entry} colleague={colleague} />
 				</span>

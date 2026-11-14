@@ -59,6 +59,7 @@ import {
 import {
 	readRecentColleagues,
 	readSwitcherStyle,
+	MAX_RECENT_COLLEAGUES,
 	recentPills,
 	rememberColleague,
 	writeRecentColleagues,
@@ -76,7 +77,12 @@ import {
 	type SplitDays
 } from './CalendarSplitView';
 import { CalendarPager } from './CalendarPager';
-import { CalendarSidebar } from './CalendarSidebar';
+import {
+	CalendarKindChips,
+	CalendarSidebar,
+	QuickEntry
+} from './CalendarSidebar';
+import { DisplayFilterButton } from '../displayFilter/DisplayFilterButton';
 import { CalendarMenu } from './CalendarMenu';
 import {
 	EntryMenuContent,
@@ -91,6 +97,7 @@ import {
 	type SlotChoice
 } from './calendarMenus';
 import { initialsOf } from './CalendarEntryPeek';
+import { HoverScrollArrows } from '../hoverScrollArrows/HoverScrollArrows';
 import { AppointmentDialog } from './AppointmentDialog';
 import { BlockerDialog } from './BlockerDialog';
 import {
@@ -103,6 +110,7 @@ import {
 	type CalendarImport
 } from './CalendarSyncDialog';
 import { useEntryLabel, useRangeFormat } from './useEntryLabel';
+import type { QuickKind } from './calendarQuickEntry';
 import '../sessionsList/sessionsList.styles.scss';
 import './calendar.styles.scss';
 
@@ -146,6 +154,15 @@ export interface CalendarPageProps {
 	onCancelAppointment?: (entry: CalendarEntry) => void | Promise<unknown>;
 	onRemoveBlocker?: (entry: CalendarEntry) => void | Promise<unknown>;
 	onSaveWorkingHours?: (hours: WorkingHours) => void | Promise<unknown>;
+	/**
+	 * "Feiertage frei" in the working-hours dialog. UserService has no
+	 * holidays yet: rendered only when passed (Storybook).
+	 */
+	holidays?: {
+		region: string;
+		off: boolean;
+		onChange: (off: boolean) => void;
+	};
 	/** Pending move proposals for colleagues' entries (no backend yet). */
 	proposals?: MoveProposal[];
 	onProposeMove?: (
@@ -161,6 +178,8 @@ export interface CalendarPageProps {
 	/** Colleagues whose calendars are switched on. */
 	onShownColleaguesChange?: (ids: string[]) => void;
 	onStart?: (entry: CalendarEntry) => void;
+	/** "Zum Chat": open the conversation an appointment belongs to. */
+	onOpenChat?: (entry: CalendarEntry) => void;
 	onCopyFeed?: (url: string) => void;
 	onResetFeed?: () => void;
 	onSaveImport?: (url: string) => void;
@@ -260,11 +279,13 @@ export const CalendarPage = ({
 	onCancelAppointment,
 	onRemoveBlocker,
 	onSaveWorkingHours,
+	holidays,
 	proposals = [],
 	onProposeMove,
 	onWithdrawProposal,
 	onJoin,
 	onStart,
+	onOpenChat,
 	onCopyFeed,
 	onResetFeed,
 	onSaveImport,
@@ -312,7 +333,11 @@ export const CalendarPage = ({
 	const [dialog, setDialog] = useState<Dialog>(null);
 	const [notice, setNotice] = useState<Notice | null>(null);
 	const [dragging, setDragging] = useState(false);
+	/** Phone: quick entry slides open under the toolbar on demand. */
+	const [quickOpen, setQuickOpen] = useState(false);
 	const stageRef = useRef<HTMLDivElement>(null);
+	const kindsRef = useRef<HTMLSpanElement>(null);
+	const peopleRef = useRef<HTMLDivElement>(null);
 	const [stageWidth, setStageWidth] = useState(0);
 
 	useEffect(() => {
@@ -501,6 +526,27 @@ export const CalendarPage = ({
 		run(onCreate?.(drafts), createNotice(drafts));
 	};
 
+	/** "Mehr Angaben …" in quick entry: the full dialog, prefilled. */
+	const moreDetails = (draft: {
+		kind?: QuickKind;
+		start?: Date;
+		end?: Date;
+		sessionId?: number;
+	}) => {
+		setQuickOpen(false);
+		const slot =
+			draft.start && draft.end
+				? { start: draft.start, end: draft.end }
+				: undefined;
+		if (draft.kind === 'blocker') setDialog({ type: 'blocker', slot });
+		else
+			setDialog({
+				type: 'appointment',
+				slot: slot && { ...slot, kind: draft.kind ?? 'video' },
+				sessionId: draft.sessionId
+			});
+	};
+
 	const chooseSlot = (choice: SlotChoice) => {
 		if (menu?.type !== 'slot') return;
 		const range = menu.range;
@@ -552,6 +598,7 @@ export const CalendarPage = ({
 
 	const can = {
 		start: !!onStart,
+		chat: !!onOpenChat,
 		join: !!onJoin,
 		move: !!onMove,
 		propose: !!onProposeMove,
@@ -578,10 +625,11 @@ export const CalendarPage = ({
 
 	const entryAction = (
 		entry: CalendarEntry,
-		action: 'start' | 'join' | 'cancel' | 'remove'
+		action: 'start' | 'chat' | 'join' | 'cancel' | 'remove'
 	) => {
 		setMenu(null);
 		if (action === 'start') onStart?.(entry);
+		else if (action === 'chat') onOpenChat?.(entry);
 		else if (action === 'join') onJoin?.(entry);
 		else if (action === 'cancel')
 			run(onCancelAppointment?.(entry), {
@@ -944,6 +992,23 @@ export const CalendarPage = ({
 					</button>
 				</QuickTip>
 			</div>
+			{compact && consultant && onCreate && (
+				<button
+					type="button"
+					className="calendarStage__quickToggle"
+					aria-expanded={quickOpen}
+					aria-controls="calendar-quick-panel"
+					aria-label={
+						quickOpen
+							? t('calendar.quick.close')
+							: t('calendar.quick.title')
+					}
+					onClick={() => setQuickOpen((open) => !open)}
+					data-cy="calendar-quick-toggle"
+				>
+					<AddIcon fontSize="small" />
+				</button>
+			)}
 			<h2 className="calendarStage__range" aria-live="polite">
 				{rangeTitle}
 			</h2>
@@ -972,79 +1037,134 @@ export const CalendarPage = ({
 		</div>
 	);
 
-	// A phone has no left column: the bar itself offers "Weitere …".
-	const pickOnPhone = compact && consultant && colleagues.length > 0;
-	const peopleBar = (shown.length > 0 || pickOnPhone) && (
-		<div
-			className="calendarStage__people"
-			role="group"
-			aria-label={t('calendar.people.bar')}
-			onMouseLeave={() => setHighlight(null)}
+	// One row above the calendar (Frank, 2026-11-14): shown colleagues are
+	// pressed chips, the last ones shown are unpressed chips to switch back
+	// on, then "Weitere …". It scrolls sideways with arrows at the edges.
+	const hiddenRecent = recentPills(
+		recent,
+		colleagues.map((c) => c.id)
+	)
+		.filter((id) => !shownColleagues.includes(id))
+		.map((id) => colleagueById[id])
+		.filter(Boolean)
+		.slice(0, MAX_RECENT_COLLEAGUES) as Colleague[];
+	const personChip = (
+		id: string,
+		name: string,
+		pressed: boolean,
+		onClick: () => void,
+		colleague?: Colleague
+	) => (
+		<button
+			key={id}
+			type="button"
+			className={`calendarStage__person${colleague && !pressed ? ' calendarStage__person--off' : ''}`}
+			aria-pressed={pressed}
+			title={colleague?.agencyName}
+			onMouseEnter={() => pressed && setHighlight({ owner: id })}
+			onFocus={() => pressed && setHighlight({ owner: id })}
+			onBlur={() => setHighlight(null)}
+			onClick={onClick}
+			data-cy={`calendar-person-${id}`}
 		>
-			{[
-				{ id: ownerId, name: t('calendar.people.me') },
-				...shown.map((c) => ({
-					id: c.id,
-					name: c.displayName,
-					short: c.agencyShort,
-					agency: c.agencyName
-				}))
-			].map(
-				(p: {
-					id: string;
-					name: string;
-					short?: string;
-					agency?: string;
-				}) => (
-					<button
-						key={p.id}
-						type="button"
-						className="calendarStage__person"
-						aria-pressed={!muted.includes(p.id)}
-						title={p.agency}
-						onMouseEnter={() => setHighlight({ owner: p.id })}
-						onFocus={() => setHighlight({ owner: p.id })}
-						onBlur={() => setHighlight(null)}
-						onClick={() => setMuted((all) => toggle(all, p.id))}
-						data-cy={`calendar-person-${p.id}`}
-					>
-						<span
-							className={`calendarStage__personAvatar${p.id === ownerId ? ' calendarStage__personAvatar--me' : ''}`}
-							aria-hidden="true"
-						>
-							{p.id === ownerId
-								? t('calendar.people.me')
-								: initialsOf(p.name)}
-						</span>
-						<span>
-							{p.id === ownerId
-								? t('calendar.myCalendar')
-								: p.name}
-						</span>
-						{p.short && (
-							<span className="calendarStage__agency">
-								{p.short}
-							</span>
-						)}
-					</button>
-				)
-			)}
-			{pickOnPhone && (
-				<button
-					type="button"
-					className="calendarStage__person calendarStage__person--more"
-					aria-haspopup="menu"
-					aria-expanded={menu?.type === 'people'}
-					onClick={openAt('people')}
-					data-cy="calendar-person-more"
-				>
-					{t('calendar.people.more')}
-				</button>
-			)}
-			<span className="calendarStage__peopleHint">
-				{t('calendar.people.hint')}
+			<span
+				className={`calendarStage__personAvatar${colleague ? '' : ' calendarStage__personAvatar--me'}`}
+				aria-hidden="true"
+			>
+				{colleague ? initialsOf(name) : t('calendar.people.me')}
 			</span>
-		</div>
+			<span>{colleague ? name : t('calendar.myCalendar')}</span>
+			{colleague?.agencyShort && (
+				<span className="calendarStage__agency">
+					{colleague.agencyShort}
+				</span>
+			)}
+		</button>
+	);
+	const peopleBar = consultant &&
+		(colleagues.length > 0 || shown.length > 0) && (
+			<div
+				className="calendarStage__people"
+				role="group"
+				aria-label={t('calendar.people.bar')}
+				title={t('calendar.people.hint')}
+				onMouseLeave={() => setHighlight(null)}
+			>
+				<HoverScrollArrows
+					targetRef={peopleRef}
+					data-cy="calendar-people-arrows"
+					sx={{ flex: 1, minWidth: 0 }}
+				>
+					<div ref={peopleRef} className="calendarStage__peopleRow">
+						{personChip(ownerId, '', !muted.includes(ownerId), () =>
+							setMuted((all) => toggle(all, ownerId))
+						)}
+						{shown.map((c) =>
+							personChip(
+								c.id,
+								c.displayName,
+								true,
+								() => toggleColleague(c.id),
+								c
+							)
+						)}
+						{hiddenRecent.map((c) =>
+							personChip(
+								c.id,
+								c.displayName,
+								false,
+								() => toggleColleague(c.id),
+								c
+							)
+						)}
+						{colleagues.length > 0 && (
+							<button
+								type="button"
+								className="calendarStage__person calendarStage__person--more"
+								aria-haspopup="menu"
+								aria-expanded={menu?.type === 'people'}
+								onClick={openAt('people')}
+								data-cy="calendar-person-more"
+							>
+								{t('calendar.people.more')}
+							</button>
+						)}
+					</div>
+				</HoverScrollArrows>
+			</div>
+		);
+
+	// Phone: no left column, so the kind chips are row 2 under the header,
+	// with "Was anzeigen" pinned at their end (Frank, 2026-11-14).
+	const phoneKinds = (
+		<CalendarKindChips
+			ownerId={ownerId}
+			now={now}
+			entries={entries}
+			onlyFacets={onlyFacets}
+			hiddenFacets={hiddenFacets}
+			onToggleFacet={(facet) =>
+				setOnlyFacets((all) => toggle(all, facet))
+			}
+			onHighlightFacet={(facet) => setHighlight(facet ? { facet } : null)}
+			className="calendarStage__kinds"
+			trailing={
+				<span ref={kindsRef} className="calendarSide__kindsAnchor">
+					<DisplayFilterButton
+						label={t('calendar.kindsMenu.label')}
+						customised={hiddenFacets.length > 0}
+						customisedLabel={t('calendar.kindsMenu.customised')}
+						open={menu?.type === 'kinds'}
+						onClick={() =>
+							kindsRef.current &&
+							setMenu({ type: 'kinds', anchor: kindsRef.current })
+						}
+						compact
+						data-cy="calendar-kinds-button"
+					/>
+				</span>
+			}
+		/>
 	);
 
 	const splitOverflows =
@@ -1194,38 +1314,8 @@ export const CalendarPage = ({
 					}
 					onOpenEntry={(entry, anchor) => openEntry(entry, anchor)}
 					shownColleagues={shownColleagues}
-					recentColleagues={recentPills(
-						recent,
-						colleagues.map((c) => c.id)
-					)}
-					onToggleColleague={toggleColleague}
-					onOpenPeople={(anchor) =>
-						setMenu({ type: 'people', anchor })
-					}
 					onCreate={onCreate ? create : undefined}
-					onMoreDetails={(draft) => {
-						if (draft.kind === 'blocker')
-							setDialog({
-								type: 'blocker',
-								slot:
-									draft.start && draft.end
-										? { start: draft.start, end: draft.end }
-										: undefined
-							});
-						else
-							setDialog({
-								type: 'appointment',
-								slot:
-									draft.start && draft.end
-										? {
-												start: draft.start,
-												end: draft.end,
-												kind: draft.kind ?? 'video'
-											}
-										: undefined,
-								sessionId: draft.sessionId
-							});
-					}}
+					onMoreDetails={moreDetails}
 					onWorkingHours={
 						onSaveWorkingHours
 							? () => setDialog({ type: 'workingHours' })
@@ -1240,7 +1330,28 @@ export const CalendarPage = ({
 				data-split={split || undefined}
 			>
 				{header}
+				{compact && phoneKinds}
 				{toolbar}
+				{compact && quickOpen && onCreate && (
+					<div
+						id="calendar-quick-panel"
+						className="calendarStage__quick"
+					>
+						<QuickEntry
+							ownerId={ownerId}
+							now={now}
+							entries={entries}
+							conversations={conversations}
+							workingHours={workingHours}
+							onCreate={(drafts) => {
+								setQuickOpen(false);
+								create(drafts);
+							}}
+							onMoreDetails={moreDetails}
+							autoFocus
+						/>
+					</div>
+				)}
 				{peopleBar}
 				<div className="calendarStage__grid">{body}</div>
 			</section>
@@ -1289,8 +1400,12 @@ export const CalendarPage = ({
 				<WorkingHoursDialog
 					open
 					hours={workingHours}
+					holidayRegion={holidays?.region}
+					holidaysOff={holidays?.off}
 					fullScreen={compact}
-					onSave={(hours) => {
+					onSave={(hours, extras) => {
+						if (holidays && extras.holidaysOff !== holidays.off)
+							holidays.onChange(extras.holidaysOff);
 						setDialog(null);
 						const next = summarise(hours);
 						run(onSaveWorkingHours?.(hours), {

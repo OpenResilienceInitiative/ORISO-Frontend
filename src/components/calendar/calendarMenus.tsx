@@ -20,6 +20,7 @@ import LoginOutlinedIcon from '@mui/icons-material/LoginOutlined';
 import EventBusyOutlinedIcon from '@mui/icons-material/EventBusyOutlined';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import PlayArrowOutlinedIcon from '@mui/icons-material/PlayArrowOutlined';
+import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 import {
 	ChatMenuDropdownDivider,
 	ChatMenuDropdownGroupLabel,
@@ -28,6 +29,7 @@ import {
 	ChatMenuDropdownNote,
 	handleMenuKeyDown
 } from '../chatMenuDropdown/ChatMenuDropdown';
+import { initialsOf } from './CalendarEntryPeek';
 import {
 	APPOINTMENT_KINDS,
 	findConflicts,
@@ -343,15 +345,16 @@ export interface EntryMenuContentProps {
 	entries: CalendarEntry[];
 	ownerId: string;
 	onMode: (mode: 'list' | 'move' | 'propose') => void;
-	onAction: (action: 'start' | 'join' | 'cancel' | 'remove') => void;
+	onAction: (action: 'start' | 'chat' | 'join' | 'cancel' | 'remove') => void;
 	onMove: (start: Date, end: Date) => void;
 }
 
 const ACTION_ICON: Record<
-	'start' | 'join' | 'cancel' | 'remove',
+	'start' | 'chat' | 'join' | 'cancel' | 'remove',
 	React.ReactNode
 > = {
 	start: <PlayArrowOutlinedIcon fontSize="small" />,
+	chat: <ChatBubbleOutlineIcon fontSize="small" />,
 	join: <LoginOutlinedIcon fontSize="small" />,
 	cancel: <EventBusyOutlinedIcon fontSize="small" />,
 	remove: <DeleteOutlineIcon fontSize="small" />
@@ -379,12 +382,27 @@ export const EntryMenuContent = ({
 		: format(entry.start, entry.end);
 	// The move / proposal form is a dialog and may carry a heading; the
 	// action list is a menu and may not.
+	// Who it is with, as ORISO shows people: the colleague, the advice
+	// seeker of an appointment, or "Ich" for one's own blocked time.
+	const who = colleague
+		? initialsOf(colleague.displayName)
+		: entry.type === 'appointment' && entry.title
+			? initialsOf(entry.title)
+			: t('calendar.people.me');
 	const header = (
-		<ChatMenuDropdownHeader
-			subtitle={range}
-			title={title}
-			titleAs={mode === 'list' ? 'p' : 'h2'}
-		/>
+		<div className="calendarMenu__head">
+			<span
+				className={`calendarMenu__avatar${colleague || entry.type === 'appointment' ? '' : ' calendarMenu__avatar--me'}`}
+				aria-hidden="true"
+			>
+				{who}
+			</span>
+			<ChatMenuDropdownHeader
+				subtitle={range}
+				title={title}
+				titleAs={mode === 'list' ? 'p' : 'h2'}
+			/>
+		</div>
 	);
 
 	if (mode !== 'list')
@@ -407,6 +425,8 @@ export const EntryMenuContent = ({
 		switch (action) {
 			case 'start':
 				return t(`calendar.details.start.${entry.kind ?? 'video'}`);
+			case 'chat':
+				return t('calendar.entryMenu.chat');
 			case 'join':
 				return t('calendar.entryMenu.join');
 			case 'move':

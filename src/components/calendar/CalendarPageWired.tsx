@@ -359,6 +359,7 @@ export const CalendarPageWired = () => {
 			onRemoveBlocker={consultant ? removeBlocker : undefined}
 			onSaveWorkingHours={consultant ? saveWorkingHours : undefined}
 			onStart={start}
+			onOpenChat={start}
 			onCopyFeed={(url) => navigator.clipboard?.writeText(url)}
 			onResetFeed={() =>
 				apiResetCalendarFeed().then(setSync, () => undefined)

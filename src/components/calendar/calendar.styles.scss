@@ -20,8 +20,6 @@
 	--cal-kind-chat: #6a4c9c;
 	--cal-kind-group: #00707a;
 	--cal-kind-blocker: var(--m3-secondary, #5f6365);
-	--cal-free: #e3f0e6;
-	--cal-free-line: #3f6b4b;
 }
 
 @each $kind in video, phone, onsite, chat, group, blocker {
@@ -185,6 +183,49 @@
 	font-size: 10px;
 	font-weight: 600;
 	line-height: 16px;
+}
+
+// The advice seeker of one's own appointment, round like ORISO's avatars.
+.calEntry__initials--asker {
+	min-width: 16px;
+	padding: 0 2px;
+	border-radius: 8px;
+	background: var(--m3-secondary-container, #dce3ec);
+	color: var(--m3-on-secondary-container, #1b1b1c);
+	text-align: center;
+}
+
+// Entry menu: who it is with, then the header.
+.calendarMenu__head {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding-left: 12px;
+
+	.chatMenuDropdown__header {
+		flex: 1;
+		min-width: 0;
+		padding-left: 0;
+	}
+}
+
+.calendarMenu__avatar {
+	display: inline-flex;
+	flex: none;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	border-radius: 50%;
+	background: var(--m3-secondary-container, #dce3ec);
+	color: var(--m3-on-secondary-container, #1b1b1c);
+	font-size: 12px;
+	font-weight: 600;
+
+	&--me {
+		background: var(--m3-primary-container, #ffdad5);
+		color: var(--m3-on-primary-container, #410001);
+	}
 }
 
 .calEntry__icon {
@@ -654,46 +695,6 @@
 	}
 }
 
-.calendarSide__pills {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 6px;
-}
-
-.calendarSide__pill {
-	height: 32px;
-	padding: 0 12px;
-	border: 1px solid var(--m3-outline-variant, #c4c7c8);
-	border-radius: 16px;
-	background: transparent;
-	color: var(--m3-on-surface, #1b1b1c);
-	font: inherit;
-	font-size: 13px;
-	cursor: pointer;
-
-	&[aria-pressed='true'] {
-		border-color: transparent;
-		background: var(--m3-secondary-container, #dce3ec);
-		color: var(--m3-on-secondary-container, #1b1b1c);
-	}
-
-	&:hover:not(:disabled) {
-		background: var(--oriso-menu-hover-surface, rgba(27, 27, 28, 0.08));
-	}
-
-	&:focus-visible {
-		outline: 2px solid var(--m3-primary, #a5000a);
-	}
-
-	&--me:disabled {
-		cursor: default;
-	}
-
-	&--more {
-		color: var(--m3-primary, #a5000a);
-	}
-}
-
 .calendarSide__hours {
 	display: flex;
 	align-items: center;
@@ -798,23 +799,99 @@
 	gap: 4px;
 }
 
+// Date, start and duration: what is saved (Frank, 2026-11-14).
+.calendarQuick__fields {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 8px;
+}
+
+.calendarQuick__field {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	color: var(--m3-on-surface-variant, #444748);
+	font-size: 12px;
+
+	input {
+		box-sizing: border-box;
+		width: 100%;
+		height: 36px;
+		padding: 0 8px;
+		border: 1px solid var(--m3-outline, #747878);
+		border-radius: 8px;
+		background: transparent;
+		color: var(--m3-on-surface, #1b1b1c);
+		font: inherit;
+		font-size: 14px;
+	}
+}
+
+.calendarQuick__durations,
+.calendarQuick__slot {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+}
+
+.calendarQuick__duration,
+.calendarQuick__slotButton {
+	height: 28px;
+	padding: 0 10px;
+	border: 1px solid var(--m3-outline-variant, #c4c7c8);
+	border-radius: 14px;
+	background: transparent;
+	color: var(--m3-on-surface-variant, #444748);
+	font: inherit;
+	font-size: 12px;
+	cursor: pointer;
+
+	&[aria-pressed='true'] {
+		border-color: transparent;
+		background: var(--m3-secondary-container, #dce3ec);
+		color: var(--m3-on-secondary-container, #1b1b1c);
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--m3-primary, #a5000a);
+	}
+}
+
+.calendarQuick__slotButton {
+	height: 24px;
+	padding: 0 8px;
+	font-size: 11px;
+}
+
+.calendarQuick__freeHead {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+}
+
 .calendarQuick__freeLabel {
 	color: var(--m3-on-surface-variant, #444748);
 	font-size: 12px;
 }
 
-// Free time is green, here and in the side-by-side view.
+// Free time is the light secondary blue (Frank, 2026-11-14: not green),
+// here and in the side-by-side view.
 .calendarQuick__freePill {
 	height: 28px;
 	padding: 0 12px;
-	border: 1px solid var(--cal-free-line);
+	border: 1px solid var(--m3-secondary, #4c555f);
 	border-radius: 14px;
-	background: var(--cal-free);
-	color: var(--cal-free-line);
+	background: var(--m3-secondary-fixed, #dae3f0);
+	color: var(--m3-secondary, #4c555f);
 	font: inherit;
 	font-size: 12px;
 	font-weight: 600;
 	cursor: pointer;
+
+	&:hover {
+		background: var(--m3-secondary-fixed-dim, #bec7d4);
+	}
 
 	&:focus-visible {
 		outline: 2px solid var(--m3-primary, #a5000a);
@@ -967,13 +1044,70 @@
 // Phone: the people bar right below already shows who is on; the header
 // keeps the title, "+", the view pill and ⋮ on one line.
 .calendarPage--compact {
-	.calendarStage__avatars,
-	.calendarStage__peopleHint {
+	.calendarStage__avatars {
 		display: none;
 	}
 
 	.calendarStage__header {
 		gap: 6px;
+	}
+}
+
+// Phone row 2: the kind chips with "Was anzeigen" pinned at their end.
+.calendarStage__kinds {
+	flex: none;
+	min-width: 0;
+
+	// The stage's own gap spaces the rows; drop the list toolbar's margin.
+	.filterChipRow__scroll {
+		margin-bottom: 0;
+	}
+}
+
+// Phone: "+" right of the Heute pill opens quick entry under the toolbar.
+.calendarStage__quickToggle {
+	display: inline-grid;
+	flex: none;
+	place-items: center;
+	width: 36px;
+	height: 36px;
+	padding: 0;
+	border: none;
+	border-radius: 50%;
+	background: var(--m3-primary, #a5000a);
+	color: var(--m3-on-primary, #ffffff);
+	cursor: pointer;
+
+	svg {
+		transition: transform 0.2s ease;
+	}
+
+	&[aria-expanded='true'] svg {
+		transform: rotate(45deg);
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--m3-primary, #a5000a);
+		outline-offset: 2px;
+	}
+}
+
+@keyframes calendarQuickSlideDown {
+	from {
+		opacity: 0;
+		transform: translateY(-10px);
+	}
+}
+
+.calendarStage__quick {
+	flex: none;
+	padding: 12px;
+	border-radius: 16px;
+	background: var(--m3-surface-container-low, #f6f3f3);
+	animation: calendarQuickSlideDown 0.25s ease;
+
+	@media (prefers-reduced-motion: reduce) {
+		animation: none;
 	}
 }
 
@@ -1144,13 +1278,28 @@
 
 .calendarStage__people {
 	display: flex;
-	flex-wrap: wrap;
+	min-width: 0;
+}
+
+// One row; many colleagues scroll sideways (arrows at the edges).
+.calendarStage__peopleRow {
+	display: flex;
+	flex: 1;
 	align-items: center;
 	gap: 6px;
+	min-width: 0;
+	padding: 2px;
+	overflow-x: auto;
+	scrollbar-width: none;
+
+	&::-webkit-scrollbar {
+		display: none;
+	}
 }
 
 .calendarStage__person {
 	display: inline-flex;
+	flex: none;
 	align-items: center;
 	gap: 6px;
 	height: 32px;
@@ -1161,11 +1310,24 @@
 	color: var(--m3-on-surface, #1b1b1c);
 	font: inherit;
 	font-size: 13px;
+	white-space: nowrap;
 	cursor: pointer;
 
-	&[aria-pressed='false'] {
+	// Shown colleagues are pressed; one's own calendar unpressed is muted.
+	&[aria-pressed='true']:not(:first-child) {
+		border-color: transparent;
+		background: var(--m3-secondary-container, #dce3ec);
+		color: var(--m3-on-secondary-container, #1b1b1c);
+	}
+
+	&[aria-pressed='false']:first-child {
 		opacity: 0.5;
 		text-decoration: line-through;
+	}
+
+	// Recently shown, now hidden: one click shows them again.
+	&--off {
+		color: var(--m3-on-surface-variant, #444748);
 	}
 
 	&--more {
@@ -1187,11 +1349,6 @@
 .calendarSplit__avatar--me {
 	background: var(--m3-primary-container, #ffdad5);
 	color: var(--m3-on-primary-container, #410001);
-}
-
-.calendarStage__peopleHint {
-	color: var(--m3-outline, #747878);
-	font-size: 12px;
 }
 
 .calendarStage__grid {
@@ -1390,8 +1547,8 @@
 	position: absolute;
 	right: 0;
 	left: 0;
-	border-left: 3px solid var(--cal-free-line);
-	background: var(--cal-free);
+	border-left: 3px solid var(--m3-secondary, #4c555f);
+	background: var(--m3-secondary-fixed, #dae3f0);
 	pointer-events: none;
 }
 
@@ -1399,7 +1556,7 @@
 	position: absolute;
 	top: 2px;
 	right: 6px;
-	color: var(--cal-free-line);
+	color: var(--m3-secondary, #4c555f);
 	font-size: 11px;
 	font-weight: 600;
 }
@@ -1458,6 +1615,27 @@
 
 .calendarHours__day {
 	font-size: 14px;
+}
+
+// Lunch break and holidays sit under the days, set apart by a line.
+.calendarHours__row--break {
+	padding-top: 10px;
+	border-top: 1px solid var(--m3-outline-variant, #c4c7c8);
+}
+
+.calendarHours__row--holidays {
+	grid-template-columns: auto 1fr;
+}
+
+.calendarHours__holidays {
+	display: flex;
+	flex-direction: column;
+	font-size: 14px;
+
+	small {
+		color: var(--m3-on-surface-variant, #444748);
+		font-size: 12px;
+	}
 }
 
 .calendarHours__time input {
