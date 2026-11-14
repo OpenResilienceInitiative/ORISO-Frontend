@@ -644,9 +644,13 @@ export const CalendarPage = ({
 		if (outcome === true) setDialog(null);
 		if (typeof outcome === 'boolean') return outcome;
 		creating.current = true;
+		// Close the dialog that saved, not one opened while it ran
+		// (review 4575868938).
+		const origin = dialog;
 		return outcome.then((stored) => {
 			creating.current = false;
-			if (stored) setDialog(null);
+			if (stored)
+				setDialog((current) => (current === origin ? null : current));
 			return stored;
 		});
 	};
@@ -1458,84 +1462,92 @@ export const CalendarPage = ({
 					</button>
 				</div>
 			)}
-			<CalendarPager
-				onPage={page}
-				enabled={!compact && !splitOverflows}
-				dragging={dragging}
+			{/* Covered by the error: out of reach for the keyboard and
+			    screen readers as well, but mounted (review 4575868941). */}
+			<div
+				className="calendarPage__covered"
+				inert={state === 'error' || undefined}
+				data-testid="calendar-covered"
 			>
-				{split ? (
-					<CalendarSplitView
-						day={anchorDate}
-						days={splitDays}
-						role={role}
-						ownerId={ownerId}
-						colleagues={shown}
-						entries={visible}
-						busyEntries={busyEntries}
-						now={now}
-						workingPlan={workingPlan}
-						onEdgeChange={gripsOn ? onEdgeChange : undefined}
-						proposals={pending}
-						highlight={highlight}
-						muted={muted}
-						onSelectRange={(range, anchor) =>
-							setMenu({ type: 'slot', range, anchor })
-						}
-						onEntryOpen={openEntry}
-						onProposalOpen={(proposal, anchor) => {
-							const found = pending.find(
-								(p) => p.proposal.id === proposal.id
-							);
-							if (found)
-								setMenu({
-									type: 'proposal',
-									proposal,
-									entry: found.entry,
-									anchor
-								});
-						}}
-					/>
-				) : (
-					<CalendarView
-						controller={controller}
-						view={view}
-						role={role}
-						ownerId={ownerId}
-						entries={visible}
-						colleagues={colleagueById}
-						compact={compact}
-						now={fixedNow}
-						initialDate={anchorDate}
-						workingPlan={workingPlan}
-						onEdgeChange={gripsOn ? onEdgeChange : undefined}
-						proposals={pending}
-						highlight={highlight}
-						muted={muted}
-						onSelectRange={(range, anchor) =>
-							setMenu({ type: 'slot', range, anchor })
-						}
-						onSelectDays={(start, days, anchor) =>
-							setMenu({ type: 'month', start, days, anchor })
-						}
-						onEntryOpen={openEntry}
-						onProposalOpen={(proposal, anchor) => {
-							const found = pending.find(
-								(p) => p.proposal.id === proposal.id
-							);
-							if (found)
-								setMenu({
-									type: 'proposal',
-									proposal,
-									entry: found.entry,
-									anchor
-								});
-						}}
-						onEntryMove={move}
-						onDatesSet={datesSet}
-						onDragChange={setDragging}
-					/>
-				)}
-			</CalendarPager>
+				<CalendarPager
+					onPage={page}
+					enabled={!compact && !splitOverflows}
+					dragging={dragging}
+				>
+					{split ? (
+						<CalendarSplitView
+							day={anchorDate}
+							days={splitDays}
+							role={role}
+							ownerId={ownerId}
+							colleagues={shown}
+							entries={visible}
+							busyEntries={busyEntries}
+							now={now}
+							workingPlan={workingPlan}
+							onEdgeChange={gripsOn ? onEdgeChange : undefined}
+							proposals={pending}
+							highlight={highlight}
+							muted={muted}
+							onSelectRange={(range, anchor) =>
+								setMenu({ type: 'slot', range, anchor })
+							}
+							onEntryOpen={openEntry}
+							onProposalOpen={(proposal, anchor) => {
+								const found = pending.find(
+									(p) => p.proposal.id === proposal.id
+								);
+								if (found)
+									setMenu({
+										type: 'proposal',
+										proposal,
+										entry: found.entry,
+										anchor
+									});
+							}}
+						/>
+					) : (
+						<CalendarView
+							controller={controller}
+							view={view}
+							role={role}
+							ownerId={ownerId}
+							entries={visible}
+							colleagues={colleagueById}
+							compact={compact}
+							now={fixedNow}
+							initialDate={anchorDate}
+							workingPlan={workingPlan}
+							onEdgeChange={gripsOn ? onEdgeChange : undefined}
+							proposals={pending}
+							highlight={highlight}
+							muted={muted}
+							onSelectRange={(range, anchor) =>
+								setMenu({ type: 'slot', range, anchor })
+							}
+							onSelectDays={(start, days, anchor) =>
+								setMenu({ type: 'month', start, days, anchor })
+							}
+							onEntryOpen={openEntry}
+							onProposalOpen={(proposal, anchor) => {
+								const found = pending.find(
+									(p) => p.proposal.id === proposal.id
+								);
+								if (found)
+									setMenu({
+										type: 'proposal',
+										proposal,
+										entry: found.entry,
+										anchor
+									});
+							}}
+							onEntryMove={move}
+							onDatesSet={datesSet}
+							onDragChange={setDragging}
+						/>
+					)}
+				</CalendarPager>
+			</div>
 			{state === 'loading' && (
 				<div
 					className="calendarPage__status calendarPage__status--overlay"

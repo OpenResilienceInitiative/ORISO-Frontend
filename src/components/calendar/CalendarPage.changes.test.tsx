@@ -47,10 +47,14 @@ vi.mock('./CalendarView', async () => {
 });
 
 /* The dialog stub hands out its save, so a test can save twice. */
-const dialog: { save?: (draft: unknown) => void } = {};
+const dialog: { save?: (draft: unknown) => void; close?: () => void } = {};
 vi.mock('./AppointmentDialog', () => ({
-	AppointmentDialog: (props: { onSave: (draft: unknown) => void }) => {
+	AppointmentDialog: (props: {
+		onSave: (draft: unknown) => void;
+		onClose: () => void;
+	}) => {
 		dialog.save = props.onSave;
+		dialog.close = props.onClose;
 		return <div data-testid="appointment-dialog" />;
 	}
 }));
@@ -235,6 +239,48 @@ describe('CalendarPage — creating (review 4575214168)', () => {
 		await waitFor(() =>
 			expect(screen.queryByTestId('appointment-dialog')).toBeNull()
 		);
+	});
+
+	it('leaves a dialog opened while an earlier one was saving (review 4575868938)', async () => {
+		let store: () => void = () => undefined;
+		page({
+			onCreate: () =>
+				new Promise<void>((resolve) => {
+					store = resolve;
+				})
+		});
+		openDialog();
+		act(() => {
+			dialog.save?.(DRAFT);
+		});
+		// Cancelled while saving, and a new one opened.
+		act(() => dialog.close?.());
+		expect(screen.queryByTestId('appointment-dialog')).toBeNull();
+		openDialog();
+		await act(async () => store());
+		expect(screen.getByTestId('appointment-dialog')).toBeTruthy();
+	});
+});
+
+describe('CalendarPage — the grid under a failed load (review 4575868941)', () => {
+	it('takes the covered grid out of reach and keeps the retry outside it', () => {
+		page({ state: 'error' });
+		const covered = screen.getByTestId('calendar-covered');
+		expect(covered.hasAttribute('inert')).toBe(true);
+		expect(covered.contains(screen.getByTestId('calendar-view'))).toBe(
+			true
+		);
+		const retry = screen.getByRole('button', {
+			name: 'calendar.error.retry'
+		});
+		expect(covered.contains(retry)).toBe(false);
+	});
+
+	it('gives the grid back once loaded', () => {
+		page({ state: 'ready' });
+		expect(
+			screen.getByTestId('calendar-covered').hasAttribute('inert')
+		).toBe(false);
 	});
 });
 

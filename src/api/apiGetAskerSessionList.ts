@@ -27,6 +27,11 @@ export const apiGetAskerSessionList = async (
 			url: url,
 			method: FETCH_METHODS.GET,
 			responseHandling: [FETCH_ERRORS.EMPTY, FETCH_ERRORS.CATCH_ALL]
+		}).catch((error) => {
+			// 204: an asker with no sessions yet. That is an answer, not a
+			// failure (review 4575868929).
+			if (error?.message === FETCH_ERRORS.EMPTY) return { sessions: [] };
+			throw error;
 		});
 
 	// ToDo: We are calling this endpoint on multiple places at the same time which makes the tests flaky
