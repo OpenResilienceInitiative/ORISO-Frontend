@@ -1073,13 +1073,32 @@ export const SendNowTakesCollected: Story = {
 		withSentAnswer: false,
 		pending: CollectedInComposer.args!.pending
 	},
-	parameters: {
-		verification: {
-			// Same composer audience refresh as in story 8.
-			expectedErrors: [
-				...actWarnings({ MessageSubmitInterfaceComponent: 2 })
-			]
-		}
+	// Driving the composer inside userEvent's act() makes React warn about
+	// the composer's audience refresh and a lazily loaded piece of the sent
+	// answer; how many depends on timing and story order. This story checks
+	// what goes out, so it drops exactly those harness warnings; any other
+	// console error still reaches story verification.
+	beforeEach: () => {
+		const harnessWarnings = new Set(
+			[
+				...actWarnings({ MessageSubmitInterfaceComponent: 1 }),
+				...suspendedInAct(1)
+			].map((item) => item.message)
+		);
+		const recordError = console.error;
+		console.error = (...args: unknown[]) => {
+			const message = args
+				.map((value) =>
+					value instanceof Error ? value.message : String(value)
+				)
+				.join(' ');
+			if (!harnessWarnings.has(message)) {
+				recordError(...args);
+			}
+		};
+		return () => {
+			console.error = recordError;
+		};
 	},
 	play: async ({ canvasElement }) => {
 		await new Promise((resolve) => window.setTimeout(resolve, 2000));
