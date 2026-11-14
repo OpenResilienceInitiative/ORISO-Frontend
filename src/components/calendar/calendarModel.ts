@@ -52,7 +52,30 @@ export interface CalendarEntry {
 	 * sample data, where the role and the owner decide.
 	 */
 	movable?: boolean;
+	/** Whole day(s): shown in the all-day row, not across the time grid. */
+	allDay?: boolean;
 }
+
+/** Appointments made before the kind existed were video calls. */
+export const DEFAULT_APPOINTMENT_KIND: AppointmentKind = 'video';
+
+/**
+ * A range from one local midnight to another (or to 23:59 of the last
+ * day), which is how UserService stores an all-day blocker.
+ */
+export const isAllDayRange = (start: Date | string, end: Date | string) => {
+	const s = new Date(start);
+	const e = new Date(end);
+	const midnight = (d: Date) =>
+		d.getHours() === 0 && d.getMinutes() === 0 && d.getSeconds() === 0;
+	const lastMinute = (d: Date) =>
+		d.getHours() === 23 && d.getMinutes() === 59;
+	return (
+		midnight(s) &&
+		e.getTime() > s.getTime() &&
+		(midnight(e) || lastMinute(e))
+	);
+};
 
 /** The location values UserService already stores (ADR-032 §2a). */
 export type AppointmentLocation =
@@ -107,6 +130,11 @@ export interface Colleague {
 	displayName: string;
 	/** Name of the colleague's counselling centre. */
 	agencyName: string;
+	/**
+	 * Short code of the counselling centre, e.g. "BS-N". UserService does not
+	 * send one yet; without it the full name is shown.
+	 */
+	agencyShort?: string;
 	relation: ColleagueRelation;
 }
 

@@ -50,6 +50,58 @@ describe('calendarApiMapping', () => {
 		expect(entry.movable).toBe(false);
 	});
 
+	it('defaults an appointment whose kind the backend left out', () => {
+		// UserService omits null fields, so the property is missing entirely.
+		const own = entryFromApi({
+			id: 'a3',
+			type: 'APPOINTMENT',
+			start: '2026-11-16T09:00:00Z',
+			end: '2026-11-16T10:00:00Z',
+			ownerId: 'me',
+			movable: true
+		});
+		expect(own.kind).toBe('video');
+		const unknown = entryFromApi({
+			id: 'a4',
+			type: 'APPOINTMENT',
+			start: '2026-11-16T09:00:00Z',
+			end: '2026-11-16T10:00:00Z',
+			ownerId: 'kaya',
+			kind: 'HOLOGRAM' as never
+		});
+		expect(unknown.kind).toBe('video');
+		const group = entryFromApi({
+			id: 'chat-7-0',
+			type: 'GROUP',
+			start: '2026-11-16T09:00:00Z',
+			end: '2026-11-16T10:00:00Z',
+			ownerId: 'me'
+		});
+		expect(group).not.toHaveProperty('kind');
+	});
+
+	it('shows a blocker over whole local days in the all-day row', () => {
+		const start = new Date(2026, 10, 16);
+		const end = new Date(2026, 10, 17);
+		const entry = entryFromApi({
+			id: 'b1',
+			type: 'BLOCKER',
+			start: start.toISOString(),
+			end: end.toISOString(),
+			ownerId: 'me',
+			movable: true
+		});
+		expect(entry.allDay).toBe(true);
+		const timed = entryFromApi({
+			id: 'b2',
+			type: 'BLOCKER',
+			start: new Date(2026, 10, 16, 9).toISOString(),
+			end: new Date(2026, 10, 16, 12).toISOString(),
+			ownerId: 'me'
+		});
+		expect(timed).not.toHaveProperty('allDay');
+	});
+
 	it('keeps a colleague entry free of title and conversation when absent', () => {
 		const entry = entryFromApi({
 			id: 'k1',

@@ -51,6 +51,23 @@ export interface BlockerCreateDTO {
 	repeat?: { weekdays: number[]; until: string };
 }
 
+/**
+ * One weekly window of working time (UserService#1649): local wall-clock
+ * time in the platform's zone, weekday 0 = Sunday .. 6 = Saturday.
+ */
+export interface CalendarWorkingHoursWindowDTO {
+	weekday: number;
+	/** HH:mm */
+	start: string;
+	/** HH:mm, after start */
+	end: string;
+}
+
+/** All windows of the caller; an empty list means "none set". */
+export interface CalendarWorkingHoursDTO {
+	windows: CalendarWorkingHoursWindowDTO[];
+}
+
 export interface CalendarSyncDTO {
 	feedUrl: string;
 	feedLastFetchedAt?: string | null;
@@ -162,5 +179,24 @@ export const apiRemoveCalendarImport = (): Promise<CalendarSyncDTO> =>
 	fetchData({
 		url: `${base()}/sync/import`,
 		method: FETCH_METHODS.DELETE,
+		responseHandling: WRITE_HANDLING
+	});
+
+export const apiGetCalendarWorkingHours =
+	(): Promise<CalendarWorkingHoursDTO> =>
+		fetchData({
+			url: `${base()}/working-hours`,
+			method: FETCH_METHODS.GET,
+			responseHandling: READ_HANDLING
+		});
+
+/** Replaces every window; an empty list removes the working hours. */
+export const apiSetCalendarWorkingHours = (
+	hours: CalendarWorkingHoursDTO
+): Promise<CalendarWorkingHoursDTO> =>
+	fetchData({
+		url: `${base()}/working-hours`,
+		method: FETCH_METHODS.PUT,
+		bodyData: JSON.stringify(hours),
 		responseHandling: WRITE_HANDLING
 	});
