@@ -43,13 +43,17 @@ const selection = (): MessageSelection => {
 	};
 };
 
-const renderLayer = (recorder: {
-	start: () => Promise<void>;
-	stop: () => Promise<{ src: string; durationSec: number }>;
-	cancel: () => void;
-}) =>
+const renderLayer = (
+	recorder: {
+		start: () => Promise<void>;
+		stop: () => Promise<{ src: string; durationSec: number }>;
+		cancel: () => void;
+	},
+	extra: Partial<React.ComponentProps<typeof SelectionReplyLayer>> = {}
+) =>
 	render(
 		<SelectionReplyLayer
+			{...extra}
 			authorFor={() => 'Anna'}
 			onAddToComposer={() => {}}
 			onSendNow={() => {}}
@@ -188,5 +192,46 @@ describe('SelectionReplyLayer voice recording', () => {
 		await act(async () => stop.reject(new Error('broken')));
 		expect(screen.getByRole('alert')).toBeTruthy();
 		expect(input.disabled).toBe(false);
+	});
+});
+
+describe('SelectionReplyLayer focus on leaving the answer', () => {
+	afterEach(cleanup);
+
+	const idleRecorder = () => ({
+		start: vi.fn(async () => {}),
+		stop: vi.fn(),
+		cancel: vi.fn()
+	});
+	const openAnswer = () =>
+		fireEvent.click(
+			screen.getAllByLabelText('message.selectionReply.reply')[0]
+		);
+	const bubble = () =>
+		document.querySelector('[data-message-id="$1"] .messageItem__message');
+	const field = () =>
+		screen.getByLabelText('message.selectionReply.inputLabel');
+
+	it('Escape in the field returns focus to the marked message', () => {
+		renderLayer(idleRecorder());
+		openAnswer();
+		fireEvent.keyDown(field(), { key: 'Escape' });
+		expect(document.activeElement).toBe(bubble());
+	});
+
+	it('Cancel returns focus to the marked message', () => {
+		renderLayer(idleRecorder());
+		openAnswer();
+		fireEvent.click(screen.getByLabelText('message.selectionReply.cancel'));
+		expect(document.activeElement).toBe(bubble());
+	});
+
+	it('collecting an answer hands focus to the composer', () => {
+		const focusComposer = vi.fn();
+		renderLayer(idleRecorder(), { focusComposer });
+		openAnswer();
+		fireEvent.change(field(), { target: { value: 'Danke' } });
+		fireEvent.keyDown(field(), { key: 'Enter' });
+		expect(focusComposer).toHaveBeenCalledTimes(1);
 	});
 });

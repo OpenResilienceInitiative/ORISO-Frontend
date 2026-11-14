@@ -55,6 +55,8 @@ export interface SelectionReplyLayerProps {
 	onSendNow: (answer: SelectionAnswer) => void;
 	/** Last toolbar option: open a thread on the marked passage. */
 	onStartThread?: (passage: MarkedPassage) => void;
+	/** Focus the composer once an answer was collected or sent. */
+	focusComposer?: () => void;
 	recorder?: SelectionVoiceRecorder;
 	/**
 	 * Moderators only: "Blur" in the toolbar hides the marked passage for
@@ -110,6 +112,7 @@ export const SelectionReplyLayer = ({
 	onAddToComposer,
 	onSendNow,
 	onStartThread,
+	focusComposer,
 	recorder,
 	onBlurPassage,
 	onRemoveBlur,
@@ -425,10 +428,34 @@ export const SelectionReplyLayer = ({
 				}
 			: null;
 
+	// Leaving the answer field unmounts it; focus must not fall to the
+	// page. It goes back to the marked message, a stable place in the
+	// conversation for keyboard and screen-reader users.
+	const focusSourceMessage = () => {
+		const layer = layerRef.current;
+		const bubble =
+			active && layer
+				? findMessageBubble(layer, active.passage.eventId)
+				: null;
+		if (!bubble) {
+			return;
+		}
+		if (!bubble.hasAttribute('tabindex')) {
+			bubble.setAttribute('tabindex', '-1');
+		}
+		bubble.focus({ preventScroll: true });
+	};
+
+	const closeAnswer = () => {
+		focusSourceMessage();
+		reset();
+	};
+
 	const addToComposer = () => {
 		const next = answer();
 		if (next) {
 			onAddToComposer(next);
+			focusComposer?.();
 			reset();
 		}
 	};
@@ -437,6 +464,7 @@ export const SelectionReplyLayer = ({
 		const next = answer();
 		if (next && (next.text || next.voice)) {
 			onSendNow(next);
+			focusComposer?.();
 			reset();
 		}
 	};
@@ -676,7 +704,7 @@ export const SelectionReplyLayer = ({
 					onDiscardVoice={discardVoice}
 					onAddToComposer={addToComposer}
 					onSendNow={sendNow}
-					onClose={reset}
+					onClose={closeAnswer}
 					autoFocus={!startWithVoice}
 				/>
 			)}
