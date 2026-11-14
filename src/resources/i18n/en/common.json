@@ -6941,6 +6941,7 @@
 			"until": "Up to and including",
 			"save": "Block",
 			"tooMany": "Too many repetitions: at most {{max}} blocked times at once. Please choose an earlier last day.",
+			"clockGap": "One repetition falls into the clock change. Please choose another time.",
 			"count": "{{count}} blocked times will be added.",
 			"count_one": "{{count}} blocked time will be added.",
 			"conflicts": "Overlaps with {{count}} appointments.",
