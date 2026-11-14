@@ -63,9 +63,53 @@ export interface CalendarWorkingHoursWindowDTO {
 	end: string;
 }
 
+/** A window of one date (contract v1.2): a weekly window without weekday. */
+export interface CalendarWorkingTimeWindowDTO {
+	/** HH:mm */
+	start: string;
+	/** HH:mm, after start */
+	end: string;
+}
+
+/**
+ * The working windows of one local date (Europe/Berlin), replacing the
+ * weekly rule there. Empty `windows` = the whole day off.
+ */
+export interface CalendarWorkingDayExceptionDTO {
+	/** YYYY-MM-DD */
+	date: string;
+	windows: CalendarWorkingTimeWindowDTO[];
+}
+
+/** Bundesland whose public holidays count as days off (contract v1.2). */
+export type CalendarHolidayRegionDTO =
+	| 'BW'
+	| 'BY'
+	| 'BE'
+	| 'BB'
+	| 'HB'
+	| 'HH'
+	| 'HE'
+	| 'MV'
+	| 'NI'
+	| 'NW'
+	| 'RP'
+	| 'SL'
+	| 'SN'
+	| 'ST'
+	| 'SH'
+	| 'TH';
+
 /** All windows of the caller; an empty list means "none set". */
 export interface CalendarWorkingHoursDTO {
 	windows: CalendarWorkingHoursWindowDTO[];
+	/** Absent or null = holidays are not days off. PUT always sends it. */
+	holidayRegion?: CalendarHolidayRegionDTO | null;
+	/**
+	 * Read-only: day exceptions from 62 days back, by date. Ignored on PUT;
+	 * change them through `apiPutWorkingDayException`.
+	 */
+	exceptions?: CalendarWorkingDayExceptionDTO[];
 }
 
 export interface CalendarSyncDTO {
@@ -190,13 +234,45 @@ export const apiGetCalendarWorkingHours =
 			responseHandling: READ_HANDLING
 		});
 
-/** Replaces every window; an empty list removes the working hours. */
+/**
+ * Replaces every window and the holiday region; an empty list removes the
+ * working hours. `exceptions` are not sent (the server ignores them).
+ */
 export const apiSetCalendarWorkingHours = (
-	hours: CalendarWorkingHoursDTO
+	hours: Omit<CalendarWorkingHoursDTO, 'exceptions'>
 ): Promise<CalendarWorkingHoursDTO> =>
 	fetchData({
 		url: `${base()}/working-hours`,
 		method: FETCH_METHODS.PUT,
-		bodyData: JSON.stringify(hours),
+		bodyData: JSON.stringify({
+			windows: hours.windows,
+			holidayRegion: hours.holidayRegion ?? null
+		}),
 		responseHandling: WRITE_HANDLING
+	});
+
+const exceptionUrl = (date: string) =>
+	`${base()}/working-hours/exceptions/${encodeURIComponent(date)}`;
+
+/**
+ * Creates or replaces the exception of one date ("Nur an diesem Tag");
+ * empty `windows` takes the whole day off.
+ */
+export const apiPutWorkingDayException = (
+	date: string,
+	windows: CalendarWorkingTimeWindowDTO[]
+): Promise<CalendarWorkingDayExceptionDTO> =>
+	fetchData({
+		url: exceptionUrl(date),
+		method: FETCH_METHODS.PUT,
+		bodyData: JSON.stringify({ windows }),
+		responseHandling: WRITE_HANDLING
+	});
+
+/** The date falls back to the weekly rule (204, also when none existed). */
+export const apiDeleteWorkingDayException = (date: string): Promise<void> =>
+	fetchData({
+		url: exceptionUrl(date),
+		method: FETCH_METHODS.DELETE,
+		responseHandling: [FETCH_ERRORS.CATCH_ALL_EXCEPT_UNAUTHORIZED]
 	});
