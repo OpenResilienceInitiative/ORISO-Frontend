@@ -146,6 +146,11 @@ export const useMessageSelection = (
 				const next = read();
 				if (next) {
 					setSelection(next);
+				} else if (window.getSelection()?.isCollapsed === false) {
+					// The marking grew into a place no passage can come
+					// from (another message, a quote): Reply and Blur must
+					// not act on the passage marked before.
+					setSelection(null);
 				}
 			}, 0);
 		const onKeyUp = (event: KeyboardEvent) => {

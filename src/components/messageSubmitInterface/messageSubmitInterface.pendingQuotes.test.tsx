@@ -24,6 +24,7 @@ import {
 	UserDataContext
 } from '../../globalState';
 import { apiPutDearchive, apiSendMatrixAttachmentMessage } from '../../api';
+import { chatTransportService } from '../../services/chatTransportService';
 
 const mocks = vi.hoisted(() => ({
 	clearDraft: vi.fn().mockResolvedValue(undefined),
@@ -297,8 +298,18 @@ describe('sending queued passage quotes (PR #2232 review)', () => {
 				onCancelEdit={vi.fn()}
 			/>
 		);
+		const editTextMessage = vi
+			.spyOn(chatTransportService, 'editTextMessage')
+			.mockResolvedValue(undefined as any);
 		act(() => mocks.typeDraft('corrected text'));
 		await clickSend();
+		expect(editTextMessage).toHaveBeenCalledWith(
+			expect.objectContaining({
+				matrixRoomId: '!case:example.org',
+				targetEventId: '$edited',
+				message: expect.stringContaining('corrected text')
+			})
+		);
 		expect(onSendPendingQuotes).not.toHaveBeenCalled();
 		expect(screen.getByText(/marked passage/)).toBeTruthy();
 	});
@@ -344,6 +355,51 @@ describe('sending queued passage quotes (PR #2232 review)', () => {
 		expect(order).toEqual(['dearchive', 'quotes']);
 		expect(onSendPendingQuotes).toHaveBeenCalledWith(DRAFT);
 		expect(mocks.clearDraft).toHaveBeenCalled();
+	});
+
+	const pendingDearchive = () => {
+		let resolve!: () => void;
+		vi.mocked(apiPutDearchive).mockImplementationOnce(
+			() => new Promise<void>((done) => (resolve = done)) as any
+		);
+		return () => act(async () => resolve());
+	};
+
+	it('sends the quotes once when send is pressed twice while re-opening', async () => {
+		const finish = pendingDearchive();
+		const onSendPendingQuotes = vi.fn();
+		render(
+			<Composer
+				activeSession={archived}
+				pendingQuotes={QUOTES}
+				onSendPendingQuotes={onSendPendingQuotes}
+			/>
+		);
+		act(() => mocks.typeDraft(DRAFT));
+		await clickSend();
+		await clickSend();
+		await finish();
+		expect(vi.mocked(apiPutDearchive)).toHaveBeenCalledTimes(1);
+		expect(onSendPendingQuotes).toHaveBeenCalledTimes(1);
+	});
+
+	it('keeps text typed while the chat re-opens', async () => {
+		const finish = pendingDearchive();
+		const onSendPendingQuotes = vi.fn();
+		render(
+			<Composer
+				activeSession={archived}
+				pendingQuotes={QUOTES}
+				onSendPendingQuotes={onSendPendingQuotes}
+			/>
+		);
+		act(() => mocks.typeDraft(DRAFT));
+		await clickSend();
+		act(() => mocks.typeDraft(`${DRAFT} and page 3`));
+		await finish();
+		expect(onSendPendingQuotes).toHaveBeenCalledWith(DRAFT);
+		expect(mocks.clearDraft).not.toHaveBeenCalled();
+		expect(draftText()).toBe(`${DRAFT} and page 3`);
 	});
 
 	it('keeps the draft when re-opening the archived chat fails', async () => {

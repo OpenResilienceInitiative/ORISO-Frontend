@@ -242,10 +242,16 @@ export const jumpToPassage = (
 	const reduceMotion =
 		typeof window.matchMedia === 'function' &&
 		window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-	bubble.scrollIntoView({
-		behavior: reduceMotion ? 'auto' : 'smooth',
-		block: 'center'
-	});
+	const behavior: ScrollBehavior = reduceMotion ? 'auto' : 'smooth';
+	// Center the passage itself: in a long message the bubble's middle can
+	// be far from it.
+	const scrollTo = (target: Range | null) => {
+		const node = target?.startContainer;
+		const element =
+			node instanceof Element ? node : (node?.parentElement ?? bubble);
+		element.scrollIntoView({ behavior, block: 'center' });
+	};
+	bubble.scrollIntoView({ behavior, block: 'center' });
 	// Focus lands on the bubble itself, not its full-width row: the ring
 	// follows the bubble's shape (selectionReply.styles.scss).
 	if (!bubble.hasAttribute('tabindex')) {
@@ -268,12 +274,16 @@ export const jumpToPassage = (
 	if (!range && expand) {
 		expand.click();
 		frame = window.requestAnimationFrame(() => {
-			clearPaint = paintPassage(
-				JUMP_HIGHLIGHT,
-				findPassageRange(bubble, passage)
-			);
+			const opened = findPassageRange(bubble, passage);
+			if (opened) {
+				scrollTo(opened);
+			}
+			clearPaint = paintPassage(JUMP_HIGHLIGHT, opened);
 		});
 	} else {
+		if (range) {
+			scrollTo(range);
+		}
 		clearPaint = paintPassage(JUMP_HIGHLIGHT, range);
 	}
 	const timer = window.setTimeout(() => {

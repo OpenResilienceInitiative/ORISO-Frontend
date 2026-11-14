@@ -244,8 +244,11 @@ $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 		color: var(--m3-on-surface-variant, #444748);
 	}
 
+	// The same ring as the other controls here; no hover tint for a field.
 	&:focus-visible {
 		outline: none;
+		border-radius: 4px;
+		box-shadow: 0 0 0 2px var(--m3-primary-outline, #930008);
 	}
 
 	&:disabled {

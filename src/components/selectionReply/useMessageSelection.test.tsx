@@ -29,17 +29,23 @@ function Timeline() {
 					</span>
 				</div>
 			</div>
+			<div data-message-id="$2">
+				<div className="messageItem__message">
+					<p data-testid="next">Und ich in Basel.</p>
+				</div>
+			</div>
 		</div>
 	);
 }
 
-const selectTextOf = async (testId: string) => {
-	const node = document.querySelector(
-		`[data-testid="${testId}"]`
-	)!.firstChild!;
+const textOf = (testId: string) =>
+	document.querySelector(`[data-testid="${testId}"]`)!.firstChild!;
+
+const selectTextOf = async (testId: string, endTestId = testId) => {
+	const node = textOf(testId);
 	const range = document.createRange();
 	range.setStart(node, 0);
-	range.setEnd(node, 7);
+	range.setEnd(textOf(endTestId), 7);
 	const native = window.getSelection()!;
 	native.removeAllRanges();
 	native.addRange(range);
@@ -67,6 +73,14 @@ describe('useMessageSelection', () => {
 			eventId: '$1',
 			text: 'Ich woh'
 		});
+	});
+
+	it('drops the passage when the marking grows into another message', async () => {
+		render(<Timeline />);
+		await selectTextOf('body');
+		expect(latest).not.toBeNull();
+		await selectTextOf('body', 'next');
+		expect(latest).toBeNull();
 	});
 
 	it('ignores text marked in the answers shown above the bubble', async () => {

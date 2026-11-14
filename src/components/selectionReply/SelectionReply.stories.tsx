@@ -275,7 +275,20 @@ function SelectionReplyStage({
 		useState<ComposerPendingQuote[]>(initialPending);
 	const [voiceTakes, setVoiceTakes] = useState<
 		Record<string, { src: string; durationSec: number }>
-	>({});
+	>(() =>
+		// A collected voice answer keeps its audio when it is sent.
+		Object.fromEntries(
+			initialPending
+				.filter((quote) => quote.voiceDurationSec)
+				.map((quote) => [
+					quote.id,
+					{
+						src: createSilentWavUrl(quote.voiceDurationSec!),
+						durationSec: quote.voiceDurationSec!
+					}
+				])
+		)
+	);
 	const [thread, setThread] = useState<MarkedPassage | null>(
 		threadOn || null
 	);
@@ -1077,6 +1090,8 @@ export const SendNowTakesCollected: Story = {
 			'[data-cy="passage-reply"]'
 		);
 		await expect(blocks).toHaveLength(3);
+		// The collected voice answer goes out with its audio.
+		await expect(blocks[1].querySelector('audio')).not.toBeNull();
 		await expect(blocks[2].textContent).toContain(
 			'Die Briefe sortieren wir am Donnerstag.'
 		);

@@ -2348,19 +2348,27 @@ export const MessageSubmitInterfaceComponent = ({
 			const text = hasMessageContent(typed) ? typed : '';
 			const sendQuotes = () => {
 				onSendPendingQuotes!(text);
+				// Clear only what went out: text typed while the chat was
+				// re-opening stays in the composer and its draft.
+				if (getTypedMarkdownMessage() !== typed) {
+					return;
+				}
 				setEditorState(EditorState.createEmpty());
 				setComposerText('');
 				composerRef.current?.clear();
 				void clearDraftMessage();
 			};
 			if (isSessionArchived) {
-				// Re-open first; the draft stays if that fails.
+				// Re-open first; the draft stays if that fails. A second
+				// press while it runs must not send the quotes twice.
+				setIsRequestInProgress(true);
 				apiPutDearchive(activeSession.item.id)
 					.then(() => {
 						sendQuotes();
 						reloadActiveSession();
 					})
-					.catch(() => {});
+					.catch(() => {})
+					.finally(() => setIsRequestInProgress(false));
 			} else {
 				sendQuotes();
 			}

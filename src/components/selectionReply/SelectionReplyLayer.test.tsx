@@ -86,6 +86,21 @@ describe('SelectionReplyLayer voice recording', () => {
 		).toBeNull();
 	});
 
+	it('a second press while the microphone starts does not start it again', async () => {
+		const start = deferred<void>();
+		const recorder = {
+			start: vi.fn(() => start.promise),
+			stop: vi.fn(),
+			cancel: vi.fn()
+		};
+		renderLayer(recorder);
+		startVoiceFromToolbar();
+		startVoiceFromToolbar();
+		await act(async () => start.resolve());
+		expect(recorder.start).toHaveBeenCalledTimes(1);
+		expect(recorder.cancel).not.toHaveBeenCalled();
+	});
+
 	it('a microphone that fails to start shows an error, the field stays usable', async () => {
 		const start = deferred<void>();
 		const recorder = {

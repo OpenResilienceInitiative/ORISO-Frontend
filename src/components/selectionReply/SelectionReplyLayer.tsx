@@ -313,7 +313,8 @@ export const SelectionReplyLayer = ({
 	}, [mode]);
 
 	const startVoice = useCallback(async () => {
-		if (!recorder) {
+		// A second press while the microphone starts would race the first.
+		if (!recorder || startPendingRef.current) {
 			return;
 		}
 		voiceOpRef.current += 1;
