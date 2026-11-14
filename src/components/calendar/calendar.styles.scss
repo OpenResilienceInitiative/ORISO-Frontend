@@ -39,7 +39,7 @@
 	gap: 12px;
 	height: 100%;
 	min-height: 0;
-	font-family: var(--m3-body-font-family, inherit);
+	font-family: var(--oriso-body-font-family, #{$font-family-sans-serif});
 	color: var(--m3-on-surface, #1b1b1c);
 }
 

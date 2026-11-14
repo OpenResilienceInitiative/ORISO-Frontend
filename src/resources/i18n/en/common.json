@@ -6939,12 +6939,12 @@
 			"repeat": "Repeat on",
 			"until": "Up to and including",
 			"save": "Block",
+			"count": "{{count}} blocked times will be added.",
 			"count_one": "{{count}} blocked time will be added.",
-			"count_other": "{{count}} blocked times will be added.",
+			"conflicts": "Overlaps with {{count}} appointments.",
 			"conflicts_one": "Overlaps with {{count}} appointment.",
-			"conflicts_other": "Overlaps with {{count}} appointments.",
-			"created_one": "Time blocked: {{date}}",
-			"created_other": "{{count}} blocked times added"
+			"created": "{{count}} blocked times added",
+			"created_one": "Time blocked: {{date}}"
 		}
 	}
 }
