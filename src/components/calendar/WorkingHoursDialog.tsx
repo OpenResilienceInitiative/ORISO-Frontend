@@ -27,6 +27,7 @@ import {
 	type WorkingDayRow,
 	type WorkingHours
 } from './calendarWorkingHours';
+import { calendarLocale } from './calendarLocale';
 
 export interface WorkingHoursDialogProps {
 	open: boolean;
@@ -43,7 +44,7 @@ export interface WorkingHoursDialogProps {
 /** Long weekday names in the reader's language, by JavaScript weekday. */
 export const useWeekdayNames = (style: 'long' | 'short' = 'long') => {
 	const { i18n } = useTranslation();
-	const locale = i18n.language?.startsWith('en') ? 'en-GB' : 'de-DE';
+	const locale = calendarLocale(i18n.language);
 	const format = new Intl.DateTimeFormat(locale, { weekday: style });
 	// 15 November 2026 is a Sunday.
 	return (weekday: number) =>
@@ -92,7 +93,7 @@ export const WorkingHoursDialog = ({
 	const regionMissing = holidays && !region;
 	const upcoming =
 		holidays && region ? nextHoliday(now ?? new Date(), region) : undefined;
-	const locale = i18n.language?.startsWith('en') ? 'en-GB' : 'de-DE';
+	const locale = calendarLocale(i18n.language);
 	const upcomingText = upcoming
 		? t('calendar.holidays.next', {
 				name: t(`calendar.holidays.names.${upcoming.key}`, {
@@ -125,7 +126,8 @@ export const WorkingHoursDialog = ({
 				{
 					label: t('calendar.workingHours.save'),
 					primary: true,
-					disabled: invalid.length > 0 || breakInvalid || regionMissing,
+					disabled:
+						invalid.length > 0 || breakInvalid || regionMissing,
 					onClick: () =>
 						onSave(
 							dialogWorkingHours(hours, rows, dayBreak),

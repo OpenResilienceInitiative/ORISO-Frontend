@@ -1,3 +1,5 @@
+import { readdirSync, readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, expect, it, vi } from 'vite-plus/test';
 import { calendarLocale, fullCalendarLocale } from './calendarLocale';
 
@@ -47,5 +49,24 @@ describe('fullCalendarLocale', () => {
 	it('gives Tigrinya and unknown languages an explicit fallback', () => {
 		expect(fullCalendarLocale('ti')).toBe('en-gb');
 		expect(fullCalendarLocale('xx')).toBe('de');
+	});
+});
+
+describe('one locale policy for the calendar', () => {
+	it('leaves the choice of Intl locale to calendarLocale', () => {
+		const folder = resolve(process.cwd(), 'src/components/calendar');
+		const offenders = readdirSync(folder)
+			.filter(
+				(file) =>
+					/\.tsx?$/.test(file) &&
+					!/\.(test|stories)\.tsx?$/.test(file) &&
+					file !== 'calendarLocale.ts'
+			)
+			.filter((file) =>
+				/['"](de-DE|en-GB)['"]/.test(
+					readFileSync(resolve(folder, file), 'utf8')
+				)
+			);
+		expect(offenders).toEqual([]);
 	});
 });

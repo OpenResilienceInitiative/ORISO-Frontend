@@ -135,6 +135,7 @@ import type { QuickKind } from './calendarQuickEntry';
 import { useLiveNow } from './useLiveNow';
 import '../sessionsList/sessionsList.styles.scss';
 import './calendar.styles.scss';
+import { calendarLocale } from './calendarLocale';
 
 export type { CalendarViewName } from './calendarViews';
 export type CalendarLoadState = 'loading' | 'ready' | 'error';
@@ -561,7 +562,7 @@ export const CalendarPage = ({
 		[controller, onRangeChange]
 	);
 
-	const locale = i18n.language?.startsWith('en') ? 'en-GB' : 'de-DE';
+	const locale = calendarLocale(i18n.language);
 	const rangeTitle = !split
 		? title
 		: splitDays === 1
@@ -718,10 +719,11 @@ export const CalendarPage = ({
 	const editHours = workingHoursLoaded && !!onSaveWorkingHours;
 	const gripsOn = consultant && editHours && !!onSaveDayException;
 	const gripDate = (day: Date) =>
-		new Intl.DateTimeFormat(
-			i18n.language?.startsWith('en') ? 'en-GB' : 'de-DE',
-			{ weekday: 'short', day: 'numeric', month: 'numeric' }
-		).format(day);
+		new Intl.DateTimeFormat(calendarLocale(i18n.language), {
+			weekday: 'short',
+			day: 'numeric',
+			month: 'numeric'
+		}).format(day);
 
 	/** Keyboard users keep their place on the grip they moved. */
 	const refocusGrip = (change: EdgeChange) =>

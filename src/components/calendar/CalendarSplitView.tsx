@@ -46,6 +46,7 @@ import type { PublicHoliday } from './calendarHolidays';
 import { CalendarEntryPeek, initialsOf } from './CalendarEntryPeek';
 import type { CalendarHighlight, MenuAnchor } from './CalendarView';
 import { useEntryLabel } from './useEntryLabel';
+import { calendarLocale } from './calendarLocale';
 
 /** Shown hours, the same as the time grid's. */
 const FIRST_HOUR = 7;
@@ -233,7 +234,7 @@ export const CalendarSplitView = ({
 }: CalendarSplitViewProps) => {
 	const { t, i18n } = useTranslation();
 	const label = useEntryLabel();
-	const locale = i18n.language?.startsWith('en') ? 'en-GB' : 'de-DE';
+	const locale = calendarLocale(i18n.language);
 	const first = useMemo(() => startOfDay(dayInput), [dayInput]);
 	const grouped = days > 1;
 	const scrollRef = useRef<HTMLDivElement>(null);
@@ -309,7 +310,16 @@ export const CalendarSplitView = ({
 					holiday: effectiveDay(day, plan).holiday
 				};
 			}),
-		[first, days, entries, busyEntries, ownerId, colleagues, workingPlan, now]
+		[
+			first,
+			days,
+			entries,
+			busyEntries,
+			ownerId,
+			colleagues,
+			workingPlan,
+			now
+		]
 	);
 	const overlaps = (d: SplitDay, e: { start: string; end: string }) =>
 		new Date(e.start) < d.end && new Date(e.end) > d.day;
@@ -611,9 +621,12 @@ export const CalendarSplitView = ({
 					{own && d.holiday && (
 						<div className="calendarSplit__holiday">
 							{t('calendar.holidays.label', {
-								name: t(`calendar.holidays.names.${d.holiday.key}`, {
-									defaultValue: d.holiday.name
-								})
+								name: t(
+									`calendar.holidays.names.${d.holiday.key}`,
+									{
+										defaultValue: d.holiday.name
+									}
+								)
 							})}
 						</div>
 					)}

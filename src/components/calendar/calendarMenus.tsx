@@ -53,6 +53,7 @@ import {
 } from './calendarViews';
 import { useEntryLabel, useRangeFormat } from './useEntryLabel';
 import type { EdgeChoice } from './calendarPreferences';
+import { calendarLocale } from './calendarLocale';
 
 /** What a free range becomes: an appointment kind or a blocker. */
 export type SlotChoice = AppointmentKind | 'blocker';
@@ -142,7 +143,7 @@ export const MonthDayMenuContent = ({
 	onAppointment
 }: MonthDayMenuContentProps) => {
 	const { t, i18n } = useTranslation();
-	const locale = i18n.language?.startsWith('en') ? 'en-GB' : 'de-DE';
+	const locale = calendarLocale(i18n.language);
 	const day = new Intl.DateTimeFormat(locale, {
 		weekday: 'short',
 		day: 'numeric',
@@ -678,7 +679,7 @@ export const EdgeMenuContent = ({
 	onChoose
 }: EdgeMenuContentProps) => {
 	const { t, i18n } = useTranslation();
-	const locale = i18n.language?.startsWith('en') ? 'en-GB' : 'de-DE';
+	const locale = calendarLocale(i18n.language);
 	const short = new Intl.DateTimeFormat(locale, {
 		weekday: 'short',
 		day: 'numeric',
@@ -697,7 +698,10 @@ export const EdgeMenuContent = ({
 		<>
 			<ChatMenuDropdownHeader
 				title={`${what} ${to}`}
-				subtitle={t('calendar.grip.instead', { time: from, date: short })}
+				subtitle={t('calendar.grip.instead', {
+					time: from,
+					date: short
+				})}
 				titleAs="p"
 			/>
 			<ChatMenuDropdownItem

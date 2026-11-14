@@ -381,6 +381,164 @@ describe('CalendarPageWired', () => {
 		expect(props.dayExceptions).toEqual({});
 	});
 
+	it('opens the schedule for editing only once it has loaded (review 4574779938)', async () => {
+		let answer: (dto: unknown) => void = () => undefined;
+		api.apiGetCalendarWorkingHours.mockReturnValueOnce(
+			new Promise((resolve) => {
+				answer = resolve;
+			}) as never
+		);
+		render(<CalendarPageWired />);
+		expect(props.workingHoursLoaded).toBe(false);
+		await act(async () => {
+			answer({ windows: [{ weekday: 1, start: '08:00', end: '16:00' }] });
+		});
+		expect(props.workingHoursLoaded).toBe(true);
+	});
+
+	it('keeps the schedule closed when it cannot load (review 4574779938)', async () => {
+		api.apiGetCalendarWorkingHours.mockRejectedValueOnce(new Error('503'));
+		render(<CalendarPageWired />);
+		await showWeek();
+		await waitFor(() => expect(props.state).toBe('ready'));
+		expect(props.workingHoursLoaded).toBe(false);
+	});
+
+	it('keeps an edit when the first read answers after it (review 4574779933)', async () => {
+		let answer: (dto: unknown) => void = () => undefined;
+		api.apiGetCalendarWorkingHours.mockReturnValueOnce(
+			new Promise((resolve) => {
+				answer = resolve;
+			}) as never
+		);
+		api.apiPutWorkingDayException.mockResolvedValue({
+			date: '2026-11-17',
+			windows: [{ start: '09:30', end: '16:00' }]
+		} as never);
+		render(<CalendarPageWired />);
+		await act(() =>
+			props.onSaveDayException?.('2026-11-17', [
+				{ start: '09:30', end: '16:00' }
+			])
+		);
+		await act(async () => {
+			answer({
+				windows: [{ weekday: 1, start: '08:00', end: '16:00' }],
+				exceptions: []
+			});
+		});
+		expect(props.dayExceptions).toEqual({
+			'2026-11-17': [{ start: '09:30', end: '16:00' }]
+		});
+	});
+
+	describe('weekly hours and day exceptions saved side by side', () => {
+		const pending = () => {
+			let settle = {
+				resolve: (_: unknown) => undefined as void,
+				reject: (_: Error) => undefined as void
+			};
+			const promise = new Promise((resolve, reject) => {
+				settle = { resolve, reject };
+			});
+			return { promise, settle: () => settle };
+		};
+		const loaded = async () => {
+			render(<CalendarPageWired />);
+			await waitFor(() => expect(props.workingHours).toHaveLength(2));
+		};
+		const saveDay = async (date: string, start: string) => {
+			api.apiPutWorkingDayException.mockResolvedValueOnce({
+				date,
+				windows: [{ start, end: '16:00' }]
+			} as never);
+			await act(() =>
+				props.onSaveDayException?.(date, [{ start, end: '16:00' }])
+			);
+		};
+
+		it('keeps a day saved while the weekly save runs (review 4574981869)', async () => {
+			await loaded();
+			const weekly = pending();
+			api.apiSetCalendarWorkingHours.mockReturnValueOnce(
+				weekly.promise as never
+			);
+			let saving: Promise<void> | undefined;
+			act(() => {
+				saving = props.onSaveWorkingHours?.(
+					[{ weekday: 1, start: '07:00', end: '16:00' }],
+					null
+				);
+			});
+			await saveDay('2026-11-18', '10:00');
+			// The weekly answer's exceptions predate the day save.
+			await act(async () => {
+				weekly.settle().resolve({
+					windows: [{ weekday: 1, start: '07:00', end: '16:00' }],
+					holidayRegion: null,
+					exceptions: []
+				});
+				await saving;
+			});
+			expect(props.workingHours).toEqual([
+				{ weekday: 1, start: '07:00', end: '16:00' }
+			]);
+			expect(props.dayExceptions).toEqual({
+				'2026-11-18': [{ start: '10:00', end: '16:00' }]
+			});
+		});
+
+		it('puts back only the weekly hours when the weekly save fails (review 4574981870)', async () => {
+			await loaded();
+			const weekly = pending();
+			api.apiSetCalendarWorkingHours.mockReturnValueOnce(
+				weekly.promise as never
+			);
+			let saving: Promise<void> | undefined;
+			act(() => {
+				saving = props.onSaveWorkingHours?.(
+					[{ weekday: 1, start: '07:00', end: '16:00' }],
+					'SN'
+				);
+			});
+			await saveDay('2026-11-18', '10:00');
+			await act(async () => {
+				weekly.settle().reject(new Error('500'));
+				await expect(saving).rejects.toThrow('500');
+			});
+			expect(props.workingHours).toEqual([
+				{ weekday: 1, start: '08:00', end: '18:00' },
+				{ weekday: 2, start: '08:00', end: '16:00' }
+			]);
+			expect(props.holidayRegion).toBeNull();
+			expect(props.dayExceptions).toEqual({
+				'2026-11-18': [{ start: '10:00', end: '16:00' }]
+			});
+		});
+
+		it('lets an older failure of a day not undo its newer save (review 4574981875)', async () => {
+			await loaded();
+			const older = pending();
+			api.apiPutWorkingDayException.mockReturnValueOnce(
+				older.promise as never
+			);
+			let first: Promise<void> | undefined;
+			act(() => {
+				first = props.onSaveDayException?.('2026-11-18', [
+					{ start: '09:00', end: '16:00' }
+				]);
+			});
+			await saveDay('2026-11-18', '11:00');
+			await act(async () => {
+				older.settle().reject(new Error('409'));
+				await expect(first).rejects.toThrow('409');
+			});
+			expect(props.dayExceptions).toEqual({
+				'2026-11-18': [{ start: '11:00', end: '16:00' }]
+			});
+		});
+	});
+
 	it('keeps the next days loaded while the grid shows another month (review 4574733789)', async () => {
 		api.apiGetCalendarEntries.mockImplementation((from: Date) =>
 			Promise.resolve(from.getMonth() === 10 ? [OWN] : [])
@@ -578,22 +736,31 @@ describe('CalendarPageWired', () => {
 		await act(() => props.onShownColleaguesChange?.(['kaya']));
 		// Paging far away starts a second request for the same colleague.
 		await act(() =>
-			props.onRangeChange?.(new Date(2026, 11, 14), new Date(2026, 11, 21))
+			props.onRangeChange?.(
+				new Date(2026, 11, 14),
+				new Date(2026, 11, 21)
+			)
 		);
 		expect(answers).toHaveLength(2);
 		await act(async () =>
-			answers[1]([{ ...OWN, id: 'dec', ownerId: 'kaya', sessionId: null }])
+			answers[1]([
+				{ ...OWN, id: 'dec', ownerId: 'kaya', sessionId: null }
+			])
 		);
 		await act(async () =>
-			answers[0]([{ ...OWN, id: 'nov', ownerId: 'kaya', sessionId: null }])
+			answers[0]([
+				{ ...OWN, id: 'nov', ownerId: 'kaya', sessionId: null }
+			])
 		);
 		expect(props.entries.map((e) => e.id)).toContain('dec');
 		expect(props.entries.map((e) => e.id)).not.toContain('nov');
 	});
 
 	it('ignores an older colleague failure after a newer answer', async () => {
-		const settle: { ok: (l: unknown[]) => void; fail: (e: Error) => void }[] =
-			[];
+		const settle: {
+			ok: (l: unknown[]) => void;
+			fail: (e: Error) => void;
+		}[] = [];
 		api.apiGetColleagueCalendarEntries.mockImplementation(
 			() =>
 				new Promise((ok, fail) => {
@@ -607,10 +774,15 @@ describe('CalendarPageWired', () => {
 		await showWeek();
 		await act(() => props.onShownColleaguesChange?.(['kaya']));
 		await act(() =>
-			props.onRangeChange?.(new Date(2026, 11, 14), new Date(2026, 11, 21))
+			props.onRangeChange?.(
+				new Date(2026, 11, 14),
+				new Date(2026, 11, 21)
+			)
 		);
 		await act(async () =>
-			settle[1].ok([{ ...OWN, id: 'dec', ownerId: 'kaya', sessionId: null }])
+			settle[1].ok([
+				{ ...OWN, id: 'dec', ownerId: 'kaya', sessionId: null }
+			])
 		);
 		await act(async () => settle[0].fail(new Error('403')));
 		expect(props.entries.map((e) => e.id)).toContain('dec');
@@ -675,8 +847,8 @@ describe('CalendarPageWired', () => {
 		await showWeek();
 		await expect(props.onResetFeed?.()).rejects.toThrow('500');
 		await expect(props.onRemoveImport?.()).rejects.toThrow('500');
-		await expect(props.onSaveImport?.('https://x.test/a.ics')).rejects.toThrow(
-			'400'
-		);
+		await expect(
+			props.onSaveImport?.('https://x.test/a.ics')
+		).rejects.toThrow('400');
 	});
 });

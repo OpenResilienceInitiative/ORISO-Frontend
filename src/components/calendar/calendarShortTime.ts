@@ -5,6 +5,7 @@
  */
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { calendarLocale } from './calendarLocale';
 
 export type ShortTime =
 	| { form: 'running' }
@@ -37,15 +38,12 @@ export const shortTimeOf = (start: Date, now: Date, end?: Date): ShortTime => {
 	return { form: 'weekday', at: start };
 };
 
-const localeOf = (language?: string) =>
-	language?.startsWith('en') ? 'en-GB' : 'de-DE';
-
 /** Words a {@link ShortTime} in the reader's language. */
 export const useShortTime = () => {
 	const { t, i18n } = useTranslation();
 	return useCallback(
 		(start: Date, now: Date, end?: Date) => {
-			const locale = localeOf(i18n.language);
+			const locale = calendarLocale(i18n.language);
 			const short = shortTimeOf(start, now, end);
 			if (short.form === 'running') return t('calendar.when.running');
 			if (short.form === 'inMinutes')

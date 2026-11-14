@@ -21,6 +21,7 @@ import {
 	type TimeWindow
 } from './calendarWorkingHours';
 import { dateKeyOf } from './calendarHolidays';
+import { calendarLocale } from './calendarLocale';
 
 export type WorkEdge = 'start' | 'end';
 
@@ -174,7 +175,7 @@ export const CalendarWorkGrip = ({
 		);
 	};
 
-	const locale = i18n.language?.startsWith('en') ? 'en-GB' : 'de-DE';
+	const locale = calendarLocale(i18n.language);
 	const date = new Intl.DateTimeFormat(locale, {
 		weekday: 'short',
 		day: 'numeric',
@@ -227,7 +228,10 @@ export const CalendarWorkGrip = ({
 						}}
 						data-cy="calendar-grip-ghost"
 					>
-						<span className="calendarGrip__ghostLabel" aria-hidden="true">
+						<span
+							className="calendarGrip__ghostLabel"
+							aria-hidden="true"
+						>
 							{t(
 								edge === 'start'
 									? 'calendar.grip.ghostStart'
