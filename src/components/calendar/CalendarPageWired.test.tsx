@@ -757,6 +757,20 @@ describe('CalendarPageWired', () => {
 		);
 	});
 
+	it('keeps a colleague whose calendar did not load apart from an empty one (review 4575917303)', async () => {
+		api.apiGetColleagueCalendarEntries
+			.mockRejectedValueOnce(new Error('503'))
+			.mockResolvedValueOnce([]);
+		render(<CalendarPageWired />);
+		await showWeek();
+		await act(() => props.onShownColleaguesChange?.(['kaya']));
+		await waitFor(() => expect(props.failedColleagues).toEqual(['kaya']));
+		// Retry: loaded, even if empty, it no longer counts as missing.
+		await act(async () => props.onRetryColleagues?.());
+		await waitFor(() => expect(props.failedColleagues).toEqual([]));
+		expect(api.apiGetColleagueCalendarEntries).toHaveBeenCalledTimes(2);
+	});
+
 	it('gives advice seekers a read-only calendar without sync', async () => {
 		consultant = false;
 		render(<CalendarPageWired />);

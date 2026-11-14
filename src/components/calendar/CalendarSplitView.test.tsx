@@ -260,3 +260,38 @@ describe('CalendarSplitView — entries outside 07:00–21:00 (review 4575253322
 	});
 });
 
+
+describe('CalendarSplitView — a colleague whose calendar did not load (review 4575917303)', () => {
+	const KAYA = { id: 'kaya', displayName: 'A. Kaya' };
+	it('marks nothing "alle frei" and says the calendar is missing', () => {
+		const { container, getByText } = render(
+			<CalendarSplitView
+				day={MONDAY}
+				role="consultant"
+				ownerId="me"
+				colleagues={[KAYA]}
+				entries={[]}
+				unavailable={['kaya']}
+				now={new Date(2026, 10, 16, 7)}
+				workingPlan={HOURS}
+			/>
+		);
+		expect(freeSpans(container)).toEqual([]);
+		expect(getByText('calendar.colleagueFailedShort')).toBeTruthy();
+	});
+
+	it('still shows free time once every calendar is there', () => {
+		const { container } = render(
+			<CalendarSplitView
+				day={MONDAY}
+				role="consultant"
+				ownerId="me"
+				colleagues={[KAYA]}
+				entries={[]}
+				now={new Date(2026, 10, 16, 7)}
+				workingPlan={HOURS}
+			/>
+		);
+		expect(freeSpans(container).length).toBeGreaterThan(0);
+	});
+});

@@ -176,6 +176,11 @@ export const CalendarPageWired = () => {
 	// Per colleague: only the latest request may write their entries.
 	const colleagueRequest = useRef<Record<string, number>>({});
 	const conversationRequest = useRef(0);
+	/**
+	 * Colleagues whose calendar did not load: unknown, not free. Kept apart
+	 * from an empty calendar (review 4575917303).
+	 */
+	const [failedColleagues, setFailedColleagues] = useState<string[]>([]);
 
 	const loadColleague = useCallback((id: string) => {
 		const window = range.current;
@@ -190,14 +195,18 @@ export const CalendarPageWired = () => {
 					...all,
 					[id]: list.map(entryFromApi)
 				}));
+				setFailedColleagues((all) => all.filter((c) => c !== id));
 			},
-			// A colleague who left the Träger's reach: show nothing for them.
+			// No entries to show, and no telling whether they are free.
 			() => {
 				if (!latest()) return;
 				setColleagueEntries((all) => ({
 					...all,
 					[id]: []
 				}));
+				setFailedColleagues((all) =>
+					all.includes(id) ? all : [...all, id]
+				);
 			}
 		);
 	}, []);
@@ -592,6 +601,10 @@ export const CalendarPageWired = () => {
 			onShownColleaguesChange={showColleagues}
 			conversationsFailed={conversationsFailed}
 			onRetryConversations={loadConversations}
+			failedColleagues={failedColleagues}
+			onRetryColleagues={() =>
+				failedColleagues.forEach((id) => loadColleague(id))
+			}
 			onRetry={() => {
 				setState('loading');
 				load();

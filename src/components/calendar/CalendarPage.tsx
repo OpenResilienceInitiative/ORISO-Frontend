@@ -247,6 +247,12 @@ export interface CalendarPageProps {
 	onRetry?: () => void;
 	/** The conversation lookup failed: appointments cannot name one. */
 	conversationsFailed?: boolean;
+	/**
+	 * Colleagues whose calendar did not load: never counted as free, and
+	 * said so with a retry (review 4575917303).
+	 */
+	failedColleagues?: string[];
+	onRetryColleagues?: () => void;
 	onRetryConversations?: () => void;
 }
 
@@ -367,6 +373,8 @@ export const CalendarPage = ({
 	onRemoveImport,
 	onRetry,
 	conversationsFailed = false,
+	failedColleagues = [],
+	onRetryColleagues,
 	onRetryConversations,
 	onRangeChange,
 	onShownColleaguesChange
@@ -1465,8 +1473,34 @@ export const CalendarPage = ({
 	// (reviews 4574733779, 4574779921, 4574493856). A failed load covers it
 	// but keeps it mounted, so the chosen view and date survive the retry
 	// (review 4575159303).
+	// Shown colleagues whose calendar did not load: no "alle frei" while
+	// one is missing.
+	const unloaded = shown.filter((c) => failedColleagues.includes(c.id));
+
 	const body: React.ReactNode = (
 		<>
+			{unloaded.length > 0 && (
+				<div
+					className="calendarPage__banner"
+					role="alert"
+					data-testid="calendar-colleagues-failed"
+				>
+					<span>
+						{t('calendar.colleagueFailed', {
+							names: unloaded.map((c) => c.displayName).join(', ')
+						})}
+					</span>
+					{onRetryColleagues && (
+						<button
+							type="button"
+							className="calendarPage__retry"
+							onClick={onRetryColleagues}
+						>
+							{t('calendar.error.retry')}
+						</button>
+					)}
+				</div>
+			)}
 			{consultant && conversationsFailed && (
 				<div
 					className="calendarPage__banner"
@@ -1504,6 +1538,7 @@ export const CalendarPage = ({
 							colleagues={shown}
 							entries={visible}
 							busyEntries={busyEntries}
+							unavailable={unloaded.map((c) => c.id)}
 							now={now}
 							workingPlan={workingPlan}
 							onEdgeChange={gripsOn ? onEdgeChange : undefined}

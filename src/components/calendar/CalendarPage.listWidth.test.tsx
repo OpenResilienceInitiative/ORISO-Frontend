@@ -56,13 +56,18 @@ const page = () =>
 	);
 const frame = () =>
 	document.querySelector<HTMLElement>('[data-cy="calendar-side-frame"]')!;
-const grip = () => screen.getByRole('separator', { name: 'calendar.side.resize' });
+const grip = () =>
+	screen.getByRole('separator', { name: 'calendar.side.resize' });
 const quickPanel = () =>
 	document.querySelector<HTMLElement>('#calendar-quick-panel')!;
 const drag = (toX: number) => {
 	fireEvent(
 		grip(),
-		new MouseEvent('pointerdown', { bubbles: true, button: 0, clientX: 420 })
+		new MouseEvent('pointerdown', {
+			bubbles: true,
+			button: 0,
+			clientX: 420
+		})
 	);
 	fireEvent(
 		document,
@@ -98,9 +103,9 @@ describe('CalendarPage — the list column, sized like "Gespräche"', () => {
 		expect(
 			row.querySelector('.calendarSide__railAvatar')?.textContent
 		).toBe('ME');
-		expect(
-			row.querySelector('.calendarSide__railClock')?.textContent
-		).toBe('11:00');
+		expect(row.querySelector('.calendarSide__railClock')?.textContent).toBe(
+			'11:00'
+		);
 		expect(quickPanel().hidden).toBe(true);
 		// And back out to the wide list.
 		fireEvent.doubleClick(grip());

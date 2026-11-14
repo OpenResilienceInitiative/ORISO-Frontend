@@ -6898,6 +6898,8 @@
 		}
 	},
 	"calendar": {
+		"colleagueFailedShort": "yüklenmedi",
+		"colleagueFailed": "{{names}} takvimi yüklenemedi; bu yüzden herkesin ne zaman boş olduğu söylenemiyor.",
 		"upcomingChat": "{{name}} ile sohbete git",
 		"create": "Randevu oluştur",
 		"today": "Bugün",

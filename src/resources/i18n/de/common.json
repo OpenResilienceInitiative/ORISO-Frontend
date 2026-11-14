@@ -6888,6 +6888,8 @@
 		}
 	},
 	"calendar": {
+		"colleagueFailedShort": "nicht geladen",
+		"colleagueFailed": "Der Kalender von {{names}} konnte nicht geladen werden; ob alle frei sind, lässt sich so nicht sagen.",
 		"upcomingChat": "Zum Chat mit {{name}}",
 		"create": "Termin anlegen",
 		"today": "Heute",

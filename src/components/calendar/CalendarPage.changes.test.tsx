@@ -12,7 +12,8 @@ import {
 	fireEvent,
 	render,
 	screen,
-	waitFor
+	waitFor,
+	within
 } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { allStored, CalendarPage } from './CalendarPage';
@@ -315,5 +316,34 @@ describe('allStored — Undo of several changes (reviews 4575297339, 4575253325)
 		expect(await allStored([Promise.resolve(), undefined, true])).toBe(
 			true
 		);
+	});
+});
+
+describe('CalendarPage — a colleague calendar that did not load (review 4575917303)', () => {
+	it('says whose calendar is missing, with a retry', () => {
+		const onRetryColleagues = vi.fn();
+		page({
+			colleagues: [
+				{ id: 'kaya', displayName: 'A. Kaya' },
+				{ id: 'demir', displayName: 'E. Demir' }
+			],
+			initialShownColleagues: ['kaya', 'demir'],
+			failedColleagues: ['kaya'],
+			onRetryColleagues
+		});
+		const banner = screen.getByTestId('calendar-colleagues-failed');
+		expect(banner.textContent).toContain('calendar.colleagueFailed');
+		fireEvent.click(
+			within(banner).getByRole('button', { name: 'calendar.error.retry' })
+		);
+		expect(onRetryColleagues).toHaveBeenCalledTimes(1);
+	});
+
+	it('says nothing for a colleague who is not shown', () => {
+		page({
+			colleagues: [{ id: 'kaya', displayName: 'A. Kaya' }],
+			failedColleagues: ['kaya']
+		});
+		expect(screen.queryByTestId('calendar-colleagues-failed')).toBeNull();
 	});
 });

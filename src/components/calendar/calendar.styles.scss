@@ -1829,6 +1829,17 @@
 	white-space: nowrap;
 }
 
+// A colleague whose calendar did not load: unknown, not free.
+.calendarSplit__unloaded {
+	flex: none;
+	padding: 0 6px;
+	border-radius: 999px;
+	background: var(--m3-error-container, #ffdad6);
+	color: var(--m3-on-error-container, #410002);
+	font-size: 11px;
+	font-weight: 500;
+}
+
 .calendarSplit__allDay {
 	display: flex;
 	flex-basis: 100%;

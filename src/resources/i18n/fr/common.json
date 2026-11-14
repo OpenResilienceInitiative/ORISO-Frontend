@@ -6898,6 +6898,8 @@
 		}
 	},
 	"calendar": {
+		"colleagueFailedShort": "non chargé",
+		"colleagueFailed": "Le calendrier de {{names}} n’a pas pu être chargé : impossible de dire quand tout le monde est libre.",
 		"upcomingChat": "Aller à la discussion avec {{name}}",
 		"create": "Créer un rendez-vous",
 		"today": "Aujourd’hui",

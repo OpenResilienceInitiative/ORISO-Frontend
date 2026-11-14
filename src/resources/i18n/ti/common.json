@@ -6865,6 +6865,8 @@
 		}
 	},
 	"calendar": {
+		"colleagueFailedShort": "ኣይተጻዕነን",
+		"colleagueFailed": "ካላንደር {{names}} ክጽዓን ኣይከኣለን፣ ስለዚ ኩሉ መዓስ ነጻ ምዃኑ ክንገር ኣይከኣልን።",
 		"upcomingChat": "ናብ ዕላል ምስ {{name}} ኪድ",
 		"create": "ቆጸራ ፍጠር",
 		"today": "ሎሚ",

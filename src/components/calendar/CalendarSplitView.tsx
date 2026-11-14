@@ -164,6 +164,11 @@ export interface CalendarSplitViewProps {
 	 * count a hidden kind as free. Defaults to `entries`.
 	 */
 	busyEntries?: CalendarEntry[];
+	/**
+	 * Colleagues whose calendar did not load: their column says so, and no
+	 * time is "alle frei" while one is missing (review 4575917303).
+	 */
+	unavailable?: string[];
 	now: Date;
 	/** Weekly hours, day exceptions and the holiday region. */
 	workingPlan?: WorkingPlan;
@@ -225,6 +230,7 @@ export const CalendarSplitView = ({
 	colleagues,
 	entries,
 	busyEntries,
+	unavailable = [],
 	now,
 	workingPlan,
 	onEdgeChange,
@@ -295,6 +301,8 @@ export const CalendarSplitView = ({
 		{ id: ownerId },
 		...colleagues.map((c) => ({ id: c.id, colleague: c }))
 	];
+	// A shown colleague's calendar is missing: nobody is known to be free.
+	const missing = colleagues.some((c) => unavailable.includes(c.id));
 	const shownDays: SplitDay[] = useMemo(
 		() =>
 			Array.from({ length: days }, (_, i) => {
@@ -318,13 +326,20 @@ export const CalendarSplitView = ({
 					entries: entries.filter(
 						(e) => new Date(e.start) < end && new Date(e.end) > day
 					),
-					free: freeForEveryone({
-						entries: busyEntries ?? entries,
-						people: [ownerId, ...colleagues.map((c) => c.id)],
-						day,
-						hours: plan,
-						now
-					}),
+					// Unknown is not free: nothing is "alle frei" while a
+					// shown calendar is missing.
+					free: missing
+						? []
+						: freeForEveryone({
+								entries: busyEntries ?? entries,
+								people: [
+									ownerId,
+									...colleagues.map((c) => c.id)
+								],
+								day,
+								hours: plan,
+								now
+							}),
 					offHours,
 					holiday: effectiveDay(day, plan).holiday
 				};
@@ -334,6 +349,7 @@ export const CalendarSplitView = ({
 			days,
 			entries,
 			busyEntries,
+			missing,
 			ownerId,
 			colleagues,
 			workingPlan,
@@ -632,6 +648,12 @@ export const CalendarSplitView = ({
 							{own ? t('calendar.people.me') : initialsOf(name)}
 						</span>
 						<span className="calendarSplit__name">{name}</span>
+						{person.colleague &&
+							unavailable.includes(person.id) && (
+								<span className="calendarSplit__unloaded">
+									{t('calendar.colleagueFailedShort')}
+								</span>
+							)}
 						{person.colleague?.agencyShort && (
 							<span
 								className="calendarSplit__agency"
