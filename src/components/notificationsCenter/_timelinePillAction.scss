@@ -1,0 +1,38 @@
+// #2226: the primary pill action of the Activity Timeline detail — the
+// detail view's open/join button and the event bar's button share it; each
+// caller passes only its size.
+@mixin timeline-pill-action($min-height, $padding, $font-size, $gap) {
+	display: inline-flex;
+	align-items: center;
+	gap: $gap;
+	min-height: $min-height;
+	padding: $padding;
+	border: none;
+	border-radius: 999px;
+	background: var(--m3-primary, #a5000a);
+	color: var(--m3-on-primary, #ffffff);
+	font-size: $font-size;
+	font-weight: 600;
+	text-decoration: none;
+	cursor: pointer;
+	transition: background-color 140ms ease;
+
+	svg {
+		fill: currentcolor;
+	}
+
+	// Some glyphs ship a black fill; follow the label colour.
+	svg path {
+		fill: currentcolor;
+		fill-opacity: 1;
+	}
+
+	&:hover {
+		background: var(--m3-primary-hover, #7e0008);
+		color: var(--m3-on-primary, #ffffff);
+	}
+
+	&:focus-visible {
+		@include list-item-focus-treatment;
+	}
+}

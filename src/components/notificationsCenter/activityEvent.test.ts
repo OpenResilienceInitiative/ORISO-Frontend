@@ -8,7 +8,8 @@ import {
 	activityEventRouteIdentity,
 	activityEventSessionId,
 	describeActivityEvent,
-	isMessageActivityEvent
+	isMessageActivityEvent,
+	showsConversationPreview
 } from './activityEvent';
 
 const row = (overrides: Record<string, unknown> = {}): any => ({
@@ -306,5 +307,74 @@ describe('activityEvent (#1824: one place for an activity event’s facts)', () 
 				)
 			).toMatchObject({ title: 'T', text: 'X' });
 		});
+	});
+});
+
+describe('#2226 showsConversationPreview', () => {
+	const row = (eventType: string, params: Record<string, unknown> = {}) =>
+		({ eventType, category: 'system', params }) as any;
+	const joined = () => true;
+
+	it('shows the conversation for call and appointment entries that name their room', () => {
+		for (const eventType of [
+			'call.started',
+			'call.ended',
+			'call.missed',
+			'call.invited',
+			'group_chat.opened',
+			'group_chat.reminder',
+			'appointment.scheduled'
+		]) {
+			expect(
+				showsConversationPreview(
+					row(eventType, { roomRef: '!room:x' }),
+					joined
+				)
+			).toBe(true);
+		}
+	});
+
+	it('keeps the detail view when this app has not joined the named room', () => {
+		const asked: string[] = [];
+		const notJoined = (roomId: string) => {
+			asked.push(roomId);
+			return false;
+		};
+		expect(
+			showsConversationPreview(
+				row('group_chat.opened', { roomRef: '!room:x' }),
+				notJoined
+			)
+		).toBe(false);
+		expect(asked).toEqual(['!room:x']);
+		// Default check: no Matrix client means no joined room.
+		expect(
+			showsConversationPreview(
+				row('call.started', { roomRef: '!room:x' })
+			)
+		).toBe(false);
+	});
+
+	it('keeps the detail view when the entry names no room', () => {
+		expect(showsConversationPreview(row('group_chat.opened'))).toBe(false);
+		expect(showsConversationPreview(row('appointment.requested'))).toBe(
+			false
+		);
+	});
+
+	it('still shows message entries and never system entries', () => {
+		expect(
+			showsConversationPreview({
+				eventType: 'message.new',
+				category: 'message',
+				params: {}
+			} as any)
+		).toBe(true);
+		expect(
+			showsConversationPreview(
+				row('request.new', { roomRef: '!room:x' }),
+				joined
+			)
+		).toBe(false);
 	});
 });

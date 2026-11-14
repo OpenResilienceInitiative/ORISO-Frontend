@@ -93,9 +93,11 @@ import { ReactComponent as AudioMessageIcon } from '../../resources/img/icons/no
 import { ReactComponent as VideoMessageIcon } from '../../resources/img/icons/video-call.svg';
 import type { MatrixActivityPreviewKind } from '../../utils/matrixActivityPreview';
 import { ConversationPreview } from './ConversationPreview';
+import { ActivityEventBar } from './ActivityEventBar';
 import {
 	activityEventCaseHandoverRequestId,
-	activityEventCategory,
+	isMessageActivityEvent,
+	showsConversationPreview,
 	activityEventSessionId,
 	describeActivityEvent
 } from './activityEvent';
@@ -162,6 +164,36 @@ type JoinOutcome = Awaited<ReturnType<typeof callManager.joinExistingCall>>;
 const joinsOnOpen = (eventType?: string | null): boolean =>
 	eventType === 'group_chat.opened' || eventType === 'call.knock.requested';
 
+const isJoinCallEntry = (item: NotificationFeedItem): boolean =>
+	getEventDescriptor(item.eventType).resolveActionTarget(item.params || {})
+		.kind === 'join';
+
+/**
+ * #2226: whether pressing the entry's action really joins its call. The
+ * click (joinNotificationCall) and the label ("Beitreten" vs "Chat öffnen")
+ * use this one guard, so the label never promises the wrong thing.
+ */
+const canJoinNotificationCall = (
+	item: NotificationFeedItem,
+	topologyReady: boolean
+): boolean => {
+	const params = item.params || {};
+	return (
+		isJoinCallEntry(item) &&
+		typeof params.callId === 'string' &&
+		Boolean(params.callId.trim()) &&
+		typeof params.roomRef === 'string' &&
+		Boolean(params.roomRef.trim()) &&
+		typeof params.callRoomId === 'string' &&
+		Boolean(params.callRoomId.trim()) &&
+		(params.callType === 'audio' || params.callType === 'video') &&
+		// An empty session list would store a group call as one-to-one.
+		topologyReady &&
+		// FE#1893: a direct-link call knocks from its card in the conversation.
+		!isDirectLinkCallRoom(params.roomRef)
+	);
+};
+
 /**
  * Call cards join their existing authorized binding. A card that cannot join
  * here (incomplete, or group topology not loaded yet) opens its conversation.
@@ -175,25 +207,10 @@ const joinNotificationCall = (
 	onStart: (callId: string) => void
 ): boolean => {
 	const params = item.params || {};
-	if (
-		getEventDescriptor(item.eventType).resolveActionTarget(params).kind !==
-		'join'
-	) {
+	if (!isJoinCallEntry(item)) {
 		return false;
 	}
-	if (
-		typeof params.callId !== 'string' ||
-		!params.callId.trim() ||
-		typeof params.roomRef !== 'string' ||
-		!params.roomRef.trim() ||
-		typeof params.callRoomId !== 'string' ||
-		!params.callRoomId.trim() ||
-		(params.callType !== 'audio' && params.callType !== 'video') ||
-		// An empty session list would store a group call as one-to-one.
-		!topologyReady ||
-		// FE#1893: a direct-link call knocks from its card in the conversation.
-		isDirectLinkCallRoom(params.roomRef)
-	) {
+	if (!canJoinNotificationCall(item, topologyReady)) {
 		onCannotJoin();
 		return true;
 	}
@@ -520,12 +537,13 @@ export const NotificationsCenter = () => {
 	// menu (useActivityTimeline). E2EE note: the preview is the user's own
 	// session view rendered in the same client — decryption stays client-side
 	// (same boundary as ADR-AT-01).
-	const selectedNotificationCategory = useMemo(
-		() =>
-			selectedNotification
-				? activityEventCategory(selectedNotification)
-				: 'system',
-		[selectedNotification]
+	// #2226: call and appointment cards that name their room show their
+	// conversation too, under a compact bar with the Join action.
+	const canShowChatPreview = Boolean(
+		selectedNotification && showsConversationPreview(selectedNotification)
+	);
+	const showEventBar = Boolean(
+		selectedNotification && !isMessageActivityEvent(selectedNotification)
 	);
 
 	const selectedDisplay = useMemo(
@@ -546,11 +564,15 @@ export const NotificationsCenter = () => {
 		() => resolveStatusPageAction(selectedNotification),
 		[selectedNotification]
 	);
+	// #2226: "Beitreten" exactly when the action joins a call.
+	const joinsFromAction = (item: NotificationFeedItem) =>
+		joinsOnOpen(item.eventType) ||
+		canJoinNotificationCall(item, Boolean(sessionsContext?.ready));
 	const selectedOpenLabel = selectedLinksToStatusPage
 		? translate('notifications.center.openStatusPage')
 		: selectedNotification?.actionLabel ||
 			translate(
-				joinsOnOpen(selectedNotification?.eventType)
+				selectedNotification && joinsFromAction(selectedNotification)
 					? 'notifications.center.join'
 					: 'notifications.center.open'
 			);
@@ -568,7 +590,6 @@ export const NotificationsCenter = () => {
 				: null,
 		[selectedNotification]
 	);
-	const canShowChatPreview = selectedNotificationCategory === 'message';
 	const showConsentDetail =
 		!untilL &&
 		hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) &&
@@ -719,6 +740,17 @@ export const NotificationsCenter = () => {
 		return true;
 	};
 
+	// #2226: open the conversation an entry belongs to without joining. A
+	// join-kind call card has no path of its own, so it resolves its
+	// conversation like an ended call does instead of the list root.
+	const openConversationOnly = (item: NotificationFeedItem) => {
+		if (isJoinCallEntry(item)) {
+			openConversation(item, translate('videoCall.timeline.joinFailed'));
+			return;
+		}
+		openActivityConversation(item);
+	};
+
 	const openNotification = (
 		item: (typeof notificationFeed)[number],
 		// "Next notification" browses: it never starts a call (camera,
@@ -735,8 +767,10 @@ export const NotificationsCenter = () => {
 			return;
 		}
 		if (untilL) {
-			if (joinCall(item)) return;
-			openActivityConversation(item);
+			// #2226 (Frank, 2026-11-12): a tap on a phone opens the
+			// conversation, like selecting the card on a desktop; it never
+			// starts a call. Joining happens in the conversation itself.
+			openConversationOnly(item);
 			return;
 		}
 		selectNotification(item.id);
@@ -758,6 +792,17 @@ export const NotificationsCenter = () => {
 		if (openKnock(selectedNotification)) return;
 		if (joinCall(selectedNotification)) return;
 		openActivityConversation(selectedNotification);
+	};
+
+	// #2226: "Open the conversation to reply" in the preview opens the chat
+	// only. It never knocks or joins; the event bar's button does that.
+	const handleOpenConversation = () => {
+		if (!selectedNotification) return;
+		markNotificationAsRead(selectedNotification.id);
+		if (nextUnreadId) {
+			selectNotification(nextUnreadId);
+		}
+		openConversationOnly(selectedNotification);
 	};
 
 	const handleNextNotification = () => {
@@ -785,6 +830,14 @@ export const NotificationsCenter = () => {
 		unreadOnly,
 		markRead: markNotificationAsRead
 	});
+	// #2226 (review): a call or appointment entry whose conversation the
+	// preview would hide (room not joined, group not started, curtained)
+	// keeps its detail view — the entry's text and "Next notification" —
+	// instead of a blank read-only notice. Message entries keep the notice.
+	const callEntryPreviewHidden = Boolean(
+		showEventBar && conversation.preview?.hidesContentSettled
+	);
+	const showConversationPane = showEmbeddedChat && !callEntryPreviewHidden;
 
 	if (notificationFeed.length === 0) {
 		return (
@@ -1119,8 +1172,8 @@ export const NotificationsCenter = () => {
 													? `${selectedOpenLabel} ${translate('notifications.center.opensInNewTab')}`
 													: item.actionLabel ||
 														translate(
-															joinsOnOpen(
-																item.eventType
+															joinsFromAction(
+																item
 															)
 																? 'notifications.center.join'
 																: 'notifications.center.open'
@@ -1226,7 +1279,7 @@ export const NotificationsCenter = () => {
 							{selectedOpenLabel}
 						</MenuItem>
 					)}
-					{canShowChatPreview && (
+					{canShowChatPreview && !callEntryPreviewHidden && (
 						<MenuItem
 							onClick={() => {
 								toggleConversation();
@@ -1275,7 +1328,7 @@ export const NotificationsCenter = () => {
 			<div className="notificationsCenter__detail">
 				<div
 					className={`notificationsCenter__detailCard ${
-						showEmbeddedChat
+						showConversationPane
 							? 'notificationsCenter__detailCard--embedded'
 							: ''
 					}`}
@@ -1284,25 +1337,58 @@ export const NotificationsCenter = () => {
 						<div className="notificationsCenter__emptyDetail">
 							{translate('notifications.center.emptyDetail')}
 						</div>
-					) : showEmbeddedChat ? (
-						<ConversationPreview
-							roomId={conversation.roomId}
-							threadRootId={conversation.preview?.threadRootId}
-							access={conversation.preview ?? undefined}
-							openedThreadRootId={conversation.openedThreadRootId}
-							onShownThreadChange={
-								conversation.setOpenedThreadRootId
-							}
-							conversationPath={
-								selectedNotification
-									? getNotificationActionPath(
-											selectedNotification
-										)
-									: null
-							}
-							onConversationRead={conversation.onConversationRead}
-							onOpenConversation={handleOpenAction}
-						/>
+					) : showConversationPane ? (
+						<>
+							{showEventBar && (
+								<ActivityEventBar
+									icon={SelectedIcon}
+									title={selectedDisplay?.title ?? ''}
+									time={formatAbsoluteTime(
+										selectedNotification.createdAt,
+										i18n.language
+									)}
+									actionLabel={
+										canOpenSelected
+											? selectedOpenLabel
+											: null
+									}
+									onAction={handleOpenAction}
+								/>
+							)}
+							<ConversationPreview
+								roomId={conversation.roomId}
+								threadRootId={
+									conversation.preview?.threadRootId
+								}
+								access={conversation.preview ?? undefined}
+								openedThreadRootId={
+									conversation.openedThreadRootId
+								}
+								onShownThreadChange={
+									conversation.setOpenedThreadRootId
+								}
+								conversationPath={
+									selectedNotification
+										? // #2226: a joinable call has no open
+											// path; its drafts belong to the
+											// conversation, not to Activity.
+											(getNotificationActionPath(
+												selectedNotification
+											) ??
+											toNonEmbeddedPath(
+												resolveEndedCallConversationPath(
+													selectedNotification,
+													getDefaultSessionsPath()
+												)
+											))
+										: null
+								}
+								onConversationRead={
+									conversation.onConversationRead
+								}
+								onOpenConversation={handleOpenConversation}
+							/>
+						</>
 					) : (
 						<div className="notificationsCenter__detailBody">
 							<div className="notificationsCenter__detailHeader">
