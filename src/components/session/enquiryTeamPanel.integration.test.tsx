@@ -128,6 +128,10 @@ vi.mock('../../api/apiGetSessionRooms', () => ({
 vi.mock('../../api/apiSessionAppointments', () => ({
 	apiGetSessionAppointments: async () => []
 }));
+vi.mock('../../api/apiDirectLinks', async (original) => ({
+	...(await original<typeof import('../../api/apiDirectLinks')>()),
+	apiGetOwnDirectLinks: async () => []
+}));
 vi.mock('../../api/apiGetAgencyConsultantList', () => ({
 	apiGetAgencyConsultantList: async () => [],
 	fetchAgencyConsultantList: async () => [],
