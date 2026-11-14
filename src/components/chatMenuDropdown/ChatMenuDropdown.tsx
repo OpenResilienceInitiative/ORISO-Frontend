@@ -57,14 +57,21 @@ ChatMenuDropdown.displayName = 'ChatMenuDropdown';
 
 export const ChatMenuDropdownHeader = ({
 	subtitle,
-	title
+	title,
+	titleAs: Title = 'h2'
 }: {
 	subtitle: string;
 	title: string;
+	/**
+	 * `p` inside `role="menu"`: a menu may only own items, separators and
+	 * groups, so a heading there fails `aria-required-children`. The menu's
+	 * `aria-label` names it instead.
+	 */
+	titleAs?: 'h2' | 'p';
 }) => (
 	<div className="chatMenuDropdown__header">
 		<p className="chatMenuDropdown__subtitle">{subtitle}</p>
-		<h2 className="chatMenuDropdown__title">{title}</h2>
+		<Title className="chatMenuDropdown__title">{title}</Title>
 	</div>
 );
 
@@ -83,6 +90,74 @@ export const ChatMenuDropdownDivider = ({
 		role={role}
 	/>
 );
+
+/** A small grey label above a group of items, e.g. "Termin". */
+export const ChatMenuDropdownGroupLabel = ({
+	children
+}: {
+	children: React.ReactNode;
+}) => (
+	<p className="chatMenuDropdown__groupLabel" role="presentation">
+		{children}
+	</p>
+);
+
+/**
+ * A short explanatory line inside a menu, e.g. what a colleague can see.
+ * `tone="warning"` paints it in the primary colour for a hint that needs
+ * attention ("Außerhalb Ihrer Arbeitszeit").
+ */
+export const ChatMenuDropdownNote = ({
+	children,
+	tone = 'neutral'
+}: {
+	children: React.ReactNode;
+	tone?: 'neutral' | 'warning';
+}) => (
+	<p
+		className={clsx(
+			'chatMenuDropdown__note',
+			tone === 'warning' && 'chatMenuDropdown__note--warning'
+		)}
+	>
+		{children}
+	</p>
+);
+
+const MENU_ITEM_SELECTOR =
+	'[role="menuitem"]:not(:disabled):not([aria-disabled="true"]),' +
+	'[role="menuitemradio"]:not(:disabled):not([aria-disabled="true"]),' +
+	'[role="menuitemcheckbox"]:not(:disabled):not([aria-disabled="true"])';
+
+/**
+ * Keyboard for a `role="menu"` card: ArrowDown/ArrowUp wrap through the
+ * items, Home/End jump. Hand it to `ChatMenuDropdown`'s `onKeyDown`.
+ */
+export const handleMenuKeyDown = (event: React.KeyboardEvent<HTMLElement>) => {
+	if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return;
+	const items = Array.from(
+		event.currentTarget.querySelectorAll<HTMLElement>(MENU_ITEM_SELECTOR)
+	);
+	if (items.length === 0) return;
+	event.preventDefault();
+	const current = items.indexOf(
+		event.currentTarget.ownerDocument.activeElement as HTMLElement
+	);
+	const none = current < 0;
+	const next =
+		event.key === 'Home'
+			? 0
+			: event.key === 'End'
+				? items.length - 1
+				: event.key === 'ArrowDown'
+					? none
+						? 0
+						: (current + 1) % items.length
+					: none
+						? items.length - 1
+						: (current - 1 + items.length) % items.length;
+	items[next].focus();
+};
 
 export const ChatMenuDropdownSection = ({
 	children
