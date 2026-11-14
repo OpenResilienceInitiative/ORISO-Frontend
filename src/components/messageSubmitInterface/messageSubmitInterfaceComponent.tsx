@@ -2305,6 +2305,10 @@ export const MessageSubmitInterfaceComponent = ({
 			!activeSession.isGroup
 	);
 	const handleButtonClickRef = useRef<() => unknown>(() => undefined);
+	// The chat this composer shows now; a send that settles later checks it
+	// before it clears anything.
+	const shownSessionIdRef = useRef(activeSession.item.id);
+	shownSessionIdRef.current = activeSession.item.id;
 
 	const handleButtonClick = useCallback(() => {
 		if (uploadProgress || isRequestInProgress) {
@@ -2346,11 +2350,16 @@ export const MessageSubmitInterfaceComponent = ({
 			// leave together, as one message.
 			const typed = getTypedMarkdownMessage();
 			const text = hasMessageContent(typed) ? typed : '';
+			const sentFromSessionId = activeSession.item.id;
 			const sendQuotes = () => {
 				onSendPendingQuotes!(text);
-				// Clear only what went out: text typed while the chat was
-				// re-opening stays in the composer and its draft.
-				if (getTypedMarkdownMessage() !== typed) {
+				// Clear only what went out, and only in the chat it went to:
+				// text typed while the chat was re-opening, or another chat
+				// opened meanwhile, stays in the composer and its draft.
+				if (
+					shownSessionIdRef.current !== sentFromSessionId ||
+					getTypedMarkdownMessage() !== typed
+				) {
 					return;
 				}
 				setEditorState(EditorState.createEmpty());

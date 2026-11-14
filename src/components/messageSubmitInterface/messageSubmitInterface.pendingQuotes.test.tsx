@@ -421,6 +421,40 @@ describe('sending queued passage quotes (PR #2232 review)', () => {
 		expect(draftText()).toBe(`${DRAFT} and page 3`);
 	});
 
+	it('leaves the next chat alone when it is opened while the first re-opens', async () => {
+		const finish = pendingDearchive();
+		const onSendPendingQuotes = vi.fn();
+		const view = render(
+			<Composer
+				activeSession={archived}
+				pendingQuotes={QUOTES}
+				onSendPendingQuotes={onSendPendingQuotes}
+			/>
+		);
+		act(() => mocks.typeDraft(DRAFT));
+		await clickSend();
+		const nextChat = {
+			...session,
+			item: {
+				...session.item,
+				id: 361,
+				matrixRoomId: '!next:example.org'
+			}
+		};
+		view.rerender(
+			<Composer
+				activeSession={nextChat}
+				pendingQuotes={QUOTES}
+				onSendPendingQuotes={onSendPendingQuotes}
+			/>
+		);
+		act(() => mocks.typeDraft(DRAFT));
+		await finish();
+		expect(mocks.composerClear).not.toHaveBeenCalled();
+		expect(mocks.clearDraft).not.toHaveBeenCalled();
+		expect(draftText()).toBe(DRAFT);
+	});
+
 	it('keeps the draft when re-opening the archived chat fails', async () => {
 		vi.mocked(apiPutDearchive).mockRejectedValueOnce(new Error('403'));
 		const onSendPendingQuotes = vi.fn();
