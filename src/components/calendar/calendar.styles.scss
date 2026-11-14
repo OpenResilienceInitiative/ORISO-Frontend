@@ -81,9 +81,154 @@
 	}
 }
 
-// Outside the working hours: shaded, still clickable.
+// Outside the working hours: shaded background events, still clickable
+// (a day exception first, then a holiday of the region, then the week).
 .calendarView__offHours {
 	background: var(--m3-surface-container, #f0edee) !important;
+	opacity: 1 !important;
+}
+
+.calendarView__breakLabel {
+	display: block;
+	overflow: hidden;
+	padding: 2px 6px;
+	color: var(--m3-on-surface-variant, #444748);
+	font-size: 11px;
+	font-weight: 500;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+// A public holiday: labelled once, in the all-day row (and the month cell).
+// The public holiday's all-day marker: a label, never only a colour.
+.calendarView__holiday {
+	border-color: transparent !important;
+	background: var(--m3-primary-fixed, #ffdad5) !important;
+	cursor: default;
+}
+
+.calendarView__holidayLabel,
+.calendarSplit__holiday {
+	display: block;
+	overflow: hidden;
+	padding: 2px 6px;
+	color: var(--m3-on-primary-fixed, #410001);
+	font-size: 11px;
+	font-weight: 600;
+	line-height: 16px;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.calendarSplit__holiday {
+	margin: 4px 6px 0;
+	border-radius: 6px;
+	background: var(--m3-primary-fixed, #ffdad5);
+}
+
+// --- Grips on the edges of one's own working day ---
+
+.calendarGrip {
+	position: absolute;
+	z-index: 4;
+	left: 50%;
+	display: grid;
+	place-items: center;
+	box-sizing: border-box;
+
+	// The hit area is 24 px high (WCAG 2.2 target size); the pill inside it
+	// is 14 px, so it covers little of the grid.
+	width: 34px;
+	height: 24px;
+	padding: 0;
+	border: 0;
+	border-radius: 999px;
+	background: transparent;
+	cursor: ns-resize;
+	transform: translate(-50%, -50%);
+	pointer-events: auto;
+	touch-action: none;
+
+	// The pill.
+	&::after {
+		position: absolute;
+		inset: 5px 0;
+		box-sizing: border-box;
+		border: 1px solid var(--m3-outline, #747878);
+		border-radius: 999px;
+		background: var(--m3-surface-container-lowest, #ffffff);
+		content: '';
+		opacity: 0.85;
+	}
+
+	// Two lines on it: something to take hold of, not only a colour.
+	&::before {
+		position: relative;
+		z-index: 1;
+		width: 14px;
+		height: 3px;
+		box-sizing: content-box;
+		border-top: 1.5px solid var(--m3-outline, #747878);
+		border-bottom: 1.5px solid var(--m3-outline, #747878);
+		content: '';
+	}
+
+	&:hover,
+	&:focus-visible,
+	&--dragging {
+		&::after {
+			border-color: var(--m3-primary, #a5000a);
+			opacity: 1;
+		}
+
+		&::before {
+			border-color: var(--m3-primary, #a5000a);
+		}
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--m3-primary, #a5000a);
+		outline-offset: 0;
+	}
+
+	// This date has its own hours: filled, not only tinted.
+	&--exception {
+		&::after,
+		&:hover::after,
+		&:focus-visible::after {
+			border-color: var(--m3-primary, #a5000a);
+			background: var(--m3-primary, #a5000a);
+			opacity: 1;
+		}
+
+		&::before,
+		&:hover::before,
+		&:focus-visible::before {
+			border-color: var(--m3-on-primary, #ffffff);
+		}
+	}
+}
+
+.calendarGrip__ghost {
+	position: fixed;
+	z-index: 1300;
+	height: 0;
+	border-top: 2px dashed var(--m3-primary, #a5000a);
+	pointer-events: none;
+}
+
+.calendarGrip__ghostLabel {
+	position: absolute;
+	top: -24px;
+	right: 4px;
+	padding: 2px 7px;
+	border-radius: 6px;
+	background: var(--m3-inverse-surface, #303031);
+	color: var(--m3-inverse-on-surface, #f3f0f0);
+	font-size: 12px;
+	font-variant-numeric: tabular-nums;
+	font-weight: 600;
+	white-space: nowrap;
 }
 
 // "ganztägig" fits on one line of the time axis.
@@ -515,7 +660,10 @@
 	color: var(--m3-on-surface, #1b1b1c);
 	font-family: var(--oriso-body-font-family, #{$font-family-sans-serif});
 
+	// Phone: the stage fills the page, the left column is a bottom sheet.
 	&--compact {
+		position: relative;
+		overflow: hidden;
 		flex-direction: column;
 		gap: 0;
 	}
@@ -948,8 +1096,9 @@
 	border-radius: 24px;
 	background: var(--m3-surface-container-lowest, #ffffff);
 
+	// Room under the grid for the sheet when it peeks.
 	.calendarPage--compact & {
-		padding: 12px;
+		padding: 12px 12px 80px;
 		border-radius: 0;
 	}
 }
@@ -1064,8 +1213,97 @@
 	}
 }
 
-// Phone: "+" right of the Heute pill opens quick entry under the toolbar.
-.calendarStage__quickToggle {
+// --- Phone: the left column as a bottom sheet ---
+
+.calendarSheet {
+	position: absolute;
+	z-index: 12;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	display: flex;
+	flex-direction: column;
+	box-sizing: border-box;
+	height: 46%;
+	padding: 0 12px 12px;
+	border-radius: 24px 24px 0 0;
+	background: var(--m3-surface-container-lowest, #ffffff);
+	box-shadow: 0 -6px 18px rgba(26, 28, 30, 0.16);
+	overflow-y: auto;
+	overscroll-behavior: contain;
+	transition: height 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+
+	&--dragging {
+		transition: none;
+	}
+
+	&--peek {
+		overflow: hidden;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		transition: none;
+	}
+}
+
+.calendarSheet__scrim {
+	position: absolute;
+	z-index: 5;
+	inset: 0;
+	background: rgba(26, 28, 30, 0.12);
+}
+
+.calendarSheet__grab {
+	position: sticky;
+	z-index: 3;
+	top: 0;
+	display: flex;
+	flex: none;
+	justify-content: center;
+	width: calc(100% + 24px);
+	margin: 0 -12px;
+	padding: 10px 0 8px;
+	border: none;
+	background: var(--m3-surface-container-lowest, #ffffff);
+	cursor: grab;
+	touch-action: none;
+
+	span {
+		width: 40px;
+		height: 5px;
+		border-radius: 3px;
+		background: var(--m3-outline-variant, #c4c7c8);
+	}
+
+	&:hover span {
+		background: var(--m3-outline, #747878);
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--m3-primary, #a5000a);
+		outline-offset: -4px;
+		border-radius: 24px 24px 0 0;
+	}
+}
+
+.calendarSide--sheet {
+	flex: none;
+	width: auto;
+	padding: 0 0 12px;
+	border-radius: 0;
+	background: transparent;
+	overflow: visible;
+}
+
+// Sheet: quick entry folds behind a "+" (Frank, 2026-11-14).
+.calendarSide__quickRow {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+}
+
+.calendarSide__quickToggle {
 	display: inline-grid;
 	flex: none;
 	place-items: center;
@@ -1090,6 +1328,12 @@
 		outline: 2px solid var(--m3-primary, #a5000a);
 		outline-offset: 2px;
 	}
+
+	@media (prefers-reduced-motion: reduce) {
+		svg {
+			transition: none;
+		}
+	}
 }
 
 @keyframes calendarQuickSlideDown {
@@ -1099,11 +1343,7 @@
 	}
 }
 
-.calendarStage__quick {
-	flex: none;
-	padding: 12px;
-	border-radius: 16px;
-	background: var(--m3-surface-container-low, #f6f3f3);
+.calendarSide--sheet .calendarSide__quick {
 	animation: calendarQuickSlideDown 0.25s ease;
 
 	@media (prefers-reduced-motion: reduce) {
@@ -1352,6 +1592,7 @@
 }
 
 .calendarStage__grid {
+	position: relative;
 	display: flex;
 	flex: 1;
 	flex-direction: column;
@@ -1638,7 +1879,30 @@
 	}
 }
 
-.calendarHours__time input {
+.calendarHours__region {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px 12px;
+	padding-left: 4px;
+}
+
+.calendarHours__select {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	color: var(--m3-on-surface-variant, #444748);
+	font-size: 12px;
+}
+
+.calendarHours__next {
+	margin: 0;
+	color: var(--m3-on-surface-variant, #444748);
+	font-size: 12px;
+}
+
+.calendarHours__time input,
+.calendarHours__time select {
 	box-sizing: border-box;
 	height: 36px;
 	padding: 0 8px;
@@ -1672,6 +1936,20 @@
 	height: 100%;
 	min-height: 320px;
 	color: var(--m3-on-surface-variant, #444748);
+}
+
+// Loading: the grid stays mounted under the spinner (it reports the range).
+.calendarPage__status--overlay {
+	position: absolute;
+	z-index: 6;
+	inset: 0;
+	height: auto;
+	min-height: 0;
+	background: color-mix(
+		in srgb,
+		var(--m3-surface-container-lowest, #ffffff) 72%,
+		transparent
+	);
 }
 
 .calendarPage__retry {

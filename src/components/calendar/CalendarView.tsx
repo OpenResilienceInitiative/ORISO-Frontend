@@ -11,6 +11,7 @@
  */
 import * as React from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import FullCalendar, {
 	type CalendarController,
@@ -39,7 +40,19 @@ import {
 } from './calendarModel';
 import { CalendarEntryGlyph, facetOf } from './CalendarEntryGlyph';
 import type { MoveProposal } from './calendarActions';
-import { businessHoursOf, type WorkingHours } from './calendarWorkingHours';
+import {
+	dayEdgesOf,
+	effectiveDay,
+	minutesOf,
+	offRangesOf,
+	type WorkingPlan
+} from './calendarWorkingHours';
+import {
+	CalendarWorkGrip,
+	type EdgeChange,
+	type GripGeometry
+} from './CalendarWorkGrip';
+import type { PublicHoliday } from './calendarHolidays';
 import {
 	FC_CUSTOM_VIEWS,
 	FC_VIEW,
@@ -87,7 +100,16 @@ export interface CalendarViewProps {
 	now?: Date;
 	/** The day the grid opens on (it remounts after the split view). */
 	initialDate?: Date;
-	workingHours?: WorkingHours;
+	/** Weekly hours, day exceptions and the holiday region. */
+	workingPlan?: WorkingPlan;
+	/**
+	 * A grip on the edge of one's own working day was moved; without it the
+	 * grips are not drawn.
+	 */
+	onEdgeChange?: (
+		change: EdgeChange,
+		anchor: { x: number; y: number }
+	) => void;
 	/** Pending move proposals, drawn dashed at the proposed time. */
 	proposals?: { proposal: MoveProposal; entry: CalendarEntry }[];
 	highlight?: CalendarHighlight | null;
@@ -122,7 +144,62 @@ export interface CalendarViewProps {
 interface EventProps {
 	entry?: CalendarEntry;
 	proposal?: MoveProposal;
+	/** Background: time outside the working hours. */
+	off?: { kind: 'off' | 'break' };
+	/** Background, all-day: the public holiday of that date. */
+	holiday?: PublicHoliday;
 }
+
+/** Shown hours of the time grid; the grips measure against them. */
+const SLOT_MIN = '07:00:00';
+const SLOT_MAX = '21:00:00';
+const FIRST_MINUTE = 7 * 60;
+const LAST_MINUTE = 21 * 60;
+const TIME_GRID_VIEWS: GridViewName[] = [
+	'day',
+	'threeDays',
+	'workWeek',
+	'week'
+];
+
+const startOfDay = (date: Date) =>
+	new Date(date.getFullYear(), date.getMonth(), date.getDate());
+const nextDay = (day: Date) =>
+	new Date(day.getFullYear(), day.getMonth(), day.getDate() + 1);
+/** Minutes since midnight as a date; 24:00 is the next midnight. */
+const atMinutes = (day: Date, minutes: number) =>
+	new Date(
+		day.getFullYear(),
+		day.getMonth(),
+		day.getDate(),
+		Math.floor(minutes / 60),
+		minutes % 60
+	);
+
+/** Where a grip at HH:mm sits in its day column. */
+const gripTop = (time: string) =>
+	`${(Math.min(LAST_MINUTE, Math.max(FIRST_MINUTE, minutesOf(time))) - FIRST_MINUTE) / ((LAST_MINUTE - FIRST_MINUTE) / 100)}%`;
+
+/** YYYY-MM-DD as the local midnight. */
+const dayOfKey = (key: string) => {
+	const [year, month, date] = key.split('-').map(Number);
+	return new Date(year, month - 1, date);
+};
+
+/** The day column a grip sits in (FullCalendar's time-grid cell). */
+const measureColumn = (grip: HTMLElement): GripGeometry | null => {
+	const column = grip.closest<HTMLElement>('[role="cell"][data-date]');
+	if (!column) return null;
+	const rect = column.getBoundingClientRect();
+	return {
+		top: rect.top,
+		left: rect.left,
+		width: rect.width,
+		height: rect.height,
+		firstMinute: FIRST_MINUTE,
+		lastMinute: LAST_MINUTE
+	};
+};
 
 /**
  * FullCalendar reads an all-day end as an exclusive date. UserService may
@@ -200,7 +277,8 @@ export const CalendarView = ({
 	compact = false,
 	now,
 	initialDate,
-	workingHours = [],
+	workingPlan,
+	onEdgeChange,
 	proposals = [],
 	highlight,
 	muted = [],
@@ -225,6 +303,93 @@ export const CalendarView = ({
 		proposal?: MoveProposal;
 	} | null>(null);
 
+	// The days FullCalendar shows, for the off-time of each date.
+	const [shownRange, setShownRange] = useState<{
+		start: Date;
+		end: Date;
+	} | null>(null);
+	const timeGrid = TIME_GRID_VIEWS.includes(view);
+	const offEvents = useMemo<EventInput[]>(() => {
+		if (!workingPlan || !shownRange) return [];
+		const out: EventInput[] = [];
+		for (
+			let day = startOfDay(shownRange.start);
+			day < shownRange.end;
+			day = nextDay(day)
+		) {
+			const key = day.getTime();
+			const { holiday } = effectiveDay(day, workingPlan);
+			// A labelled all-day marker, not a background: FullCalendar
+			// paints an all-day background into the time grid too, which
+			// would print the name twice. The time grid shades the day as
+			// time off.
+			if (holiday)
+				out.push({
+					id: `holiday-${key}`,
+					start: day,
+					end: nextDay(day),
+					allDay: true,
+					editable: false,
+					startEditable: false,
+					durationEditable: false,
+					extendedProps: { holiday }
+				});
+			if (!timeGrid) continue;
+			for (const range of offRangesOf(day, workingPlan))
+				out.push({
+					id: `off-${key}-${range.from}`,
+					start: atMinutes(day, range.from),
+					end: atMinutes(day, range.to),
+					display: 'background',
+					extendedProps: { off: { kind: range.kind } }
+				});
+		}
+		return out;
+	}, [workingPlan, shownRange, timeGrid]);
+
+	// The grips go into FullCalendar's day columns themselves: inside a
+	// background event they would sit in a layer FullCalendar hides from
+	// assistive technology (aria-hidden), where nothing may take focus.
+	// Each date has an all-day cell and, after it, its time-grid column.
+	const gripsShown = timeGrid && !!onEdgeChange && !!workingPlan;
+	const [gripColumns, setGripColumns] = useState<
+		{ key: string; day: Date; el: HTMLElement }[]
+	>([]);
+	useEffect(() => {
+		const root = gridRef.current;
+		if (!gripsShown || !root) {
+			setGripColumns((current) => (current.length ? [] : current));
+			return undefined;
+		}
+		let frame = 0;
+		const scan = () => {
+			const columns = new Map<string, HTMLElement>();
+			root.querySelectorAll<HTMLElement>(
+				'[role="cell"][data-date]'
+			).forEach((el) => columns.set(el.dataset.date ?? '', el));
+			const next = [...columns]
+				.filter(([key]) => key)
+				.map(([key, el]) => ({ key, el, day: dayOfKey(key) }));
+			setGripColumns((current) =>
+				current.length === next.length &&
+				current.every((c, i) => c.el === next[i].el)
+					? current
+					: next
+			);
+		};
+		scan();
+		// FullCalendar may build new columns on any update.
+		const observer = new MutationObserver(() => {
+			cancelAnimationFrame(frame);
+			frame = requestAnimationFrame(scan);
+		});
+		observer.observe(root, { childList: true, subtree: true });
+		return () => {
+			cancelAnimationFrame(frame);
+			observer.disconnect();
+		};
+	}, [gripsShown, shownRange, view, fontsReady]);
+
 	const events = useMemo<EventInput[]>(
 		() => [
 			...entries.map((entry) => ({
@@ -244,19 +409,17 @@ export const CalendarView = ({
 				editable: false,
 				allDay: !!entry.allDay,
 				extendedProps: { entry, proposal }
-			}))
+			})),
+			...offEvents
 		],
-		[entries, proposals, ownerId, role, label, t]
-	);
-
-	const businessHours = useMemo(
-		() => businessHoursOf(workingHours),
-		[workingHours]
+		[entries, proposals, ownerId, role, label, t, offEvents]
 	);
 
 	const eventClass = useCallback(
 		(info: EventDisplayInfo) => {
-			const { entry, proposal } = propsOf(info);
+			const { entry, proposal, off, holiday } = propsOf(info);
+			if (holiday) return 'calendarView__holiday';
+			if (off) return '';
 			if (!entry) return 'calEntry calEntry--mirror';
 			const colleague = entry.ownerId !== ownerId;
 			const facet = facetOf(entry);
@@ -286,7 +449,17 @@ export const CalendarView = ({
 	);
 
 	const eventContent = (info: EventDisplayInfo) => {
-		const { entry, proposal } = propsOf(info);
+		const { entry, proposal, holiday } = propsOf(info);
+		if (holiday)
+			return (
+				<span className="calendarView__holidayLabel">
+					{t('calendar.holidays.label', {
+						name: t(`calendar.holidays.names.${holiday.key}`, {
+							defaultValue: holiday.name
+						})
+					})}
+				</span>
+			);
 		if (!entry)
 			return (
 				<span className="calEntry__inner">
@@ -341,6 +514,22 @@ export const CalendarView = ({
 			</span>
 		);
 	};
+
+	const backgroundClass = (info: EventDisplayInfo) => {
+		const { off } = propsOf(info);
+		if (off)
+			return off.kind === 'break'
+				? 'calendarView__offHours calendarView__offHours--break'
+				: 'calendarView__offHours';
+		return '';
+	};
+
+	const backgroundContent = (info: EventDisplayInfo) =>
+		propsOf(info).off?.kind === 'break' ? (
+			<span className="calendarView__breakLabel">
+				{t('calendar.workingHours.break')}
+			</span>
+		) : null;
 
 	// The entry's own element knows which entry it shows, so hover, focus
 	// and the tooltip need no lookup through FullCalendar.
@@ -405,6 +594,7 @@ export const CalendarView = ({
 			const key = `${info.start.getTime()}-${info.end.getTime()}-${info.view.title}`;
 			if (key === lastRange.current) return;
 			lastRange.current = key;
+			setShownRange({ start: info.start, end: info.end });
 			datesSetRef.current?.(info.view.title, info.start, info.end);
 		},
 		[]
@@ -481,12 +671,12 @@ export const CalendarView = ({
 					nowIndicator
 					allDaySlot
 					allDayText={t('calendar.allDay')}
-					slotMinTime="07:00:00"
-					slotMaxTime="21:00:00"
+					slotMinTime={SLOT_MIN}
+					slotMaxTime={SLOT_MAX}
 					scrollTime="08:00:00"
 					dayMaxEvents={3}
-					businessHours={businessHours}
-					nonBusinessHoursClass="calendarView__offHours"
+					backgroundEventClass={backgroundClass}
+					backgroundEventContent={backgroundContent}
 					allDayHeaderClass="calendarView__allDayHeader"
 					dayCellInnerClass={allDayCellInnerClass}
 					selectable={consultant}
@@ -516,6 +706,32 @@ export const CalendarView = ({
 					}}
 				/>
 			)}
+			{gripsShown &&
+				gripColumns.map(({ key, day, el }) => {
+					const edges = dayEdgesOf(day, workingPlan);
+					if (!edges) return null;
+					return createPortal(
+						(['start', 'end'] as const).map((edge) => {
+							const time =
+								edge === 'start' ? edges.start : edges.end;
+							return (
+								<CalendarWorkGrip
+									key={edge}
+									edge={edge}
+									day={day}
+									time={time}
+									windows={edges.windows}
+									exception={edges.exception}
+									measure={measureColumn}
+									onChange={onEdgeChange}
+									style={{ top: gripTop(time) }}
+								/>
+							);
+						}),
+						el,
+						`grip-${key}`
+					);
+				})}
 			<Popper
 				open={!!peek}
 				anchorEl={peek?.el}

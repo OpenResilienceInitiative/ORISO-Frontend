@@ -3,7 +3,10 @@
  * then every colleague whose calendar is shown (Frank's prototype,
  * 2026-11-14). Columns are at least 210px wide; when they do not fit, they
  * scroll sideways with the shared hover arrows at the edges. Time in which
- * everybody is free (within one's working hours) is green.
+ * everybody is free (within one's working hours, day exceptions and public
+ * holidays included) is marked "alle frei"; it counts every entry, also the
+ * kinds the display filter hides. One's own column carries the grips of the
+ * working day.
  *
  * - 1 day: one's own column, with the time axis, stays on the left while
  *   the colleagues scroll under it.
@@ -28,10 +31,18 @@ import { CalendarEntryGlyph, facetOf } from './CalendarEntryGlyph';
 import type { MoveProposal } from './calendarActions';
 import { freeForEveryone } from './calendarFreeTime';
 import {
+	dayEdgesOf,
+	effectiveDay,
 	minutesOf,
-	windowsOn,
-	type WorkingHours
+	offRangesOf,
+	type WorkingPlan
 } from './calendarWorkingHours';
+import {
+	CalendarWorkGrip,
+	type EdgeChange,
+	type GripGeometry
+} from './CalendarWorkGrip';
+import type { PublicHoliday } from './calendarHolidays';
 import { CalendarEntryPeek, initialsOf } from './CalendarEntryPeek';
 import type { CalendarHighlight, MenuAnchor } from './CalendarView';
 import { useEntryLabel } from './useEntryLabel';
@@ -128,8 +139,19 @@ export interface CalendarSplitViewProps {
 	colleagues: Colleague[];
 	/** Every visible entry (own and colleagues'), already filtered. */
 	entries: CalendarEntry[];
+	/**
+	 * Every entry of the people shown, unfiltered: "alle frei" must not
+	 * count a hidden kind as free. Defaults to `entries`.
+	 */
+	busyEntries?: CalendarEntry[];
 	now: Date;
-	workingHours?: WorkingHours;
+	/** Weekly hours, day exceptions and the holiday region. */
+	workingPlan?: WorkingPlan;
+	/** A grip in one's own column was moved; without it none is drawn. */
+	onEdgeChange?: (
+		change: EdgeChange,
+		anchor: { x: number; y: number }
+	) => void;
 	proposals?: { proposal: MoveProposal; entry: CalendarEntry }[];
 	highlight?: CalendarHighlight | null;
 	muted?: string[];
@@ -152,8 +174,24 @@ interface SplitDay {
 	key: string;
 	entries: CalendarEntry[];
 	free: { start: Date; end: Date }[];
-	offHours: { from: number; to: number }[];
+	offHours: { from: number; to: number; kind: 'off' | 'break' }[];
+	holiday?: PublicHoliday;
 }
+
+/** One's own body column, for dragging a grip. */
+const measureBody = (grip: HTMLElement): GripGeometry | null => {
+	const body = grip.closest<HTMLElement>('.calendarSplit__body');
+	if (!body) return null;
+	const rect = body.getBoundingClientRect();
+	return {
+		top: rect.top,
+		left: rect.left,
+		width: rect.width,
+		height: rect.height,
+		firstMinute: FIRST_HOUR * 60,
+		lastMinute: LAST_HOUR * 60
+	};
+};
 
 export const CalendarSplitView = ({
 	day: dayInput,
@@ -162,8 +200,10 @@ export const CalendarSplitView = ({
 	ownerId,
 	colleagues,
 	entries,
+	busyEntries,
 	now,
-	workingHours = [],
+	workingPlan,
+	onEdgeChange,
 	proposals = [],
 	highlight,
 	muted = [],
@@ -195,21 +235,14 @@ export const CalendarSplitView = ({
 			Array.from({ length: days }, (_, i) => {
 				const day = addDays(first, i);
 				const end = addDays(day, 1);
-				const offHours: { from: number; to: number }[] = [];
-				if (workingHours.length > 0) {
-					let cursor = FIRST_HOUR * 60;
-					for (const w of windowsOn(workingHours, day.getDay())) {
-						const from = clampMinutes(minutesOf(w.start));
-						if (from > cursor)
-							offHours.push({ from: cursor, to: from });
-						cursor = Math.max(
-							cursor,
-							clampMinutes(minutesOf(w.end))
-						);
-					}
-					if (cursor < LAST_HOUR * 60)
-						offHours.push({ from: cursor, to: LAST_HOUR * 60 });
-				}
+				const plan = workingPlan ?? { hours: [] };
+				const offHours = offRangesOf(day, plan)
+					.map((r) => ({
+						from: clampMinutes(r.from),
+						to: clampMinutes(r.to),
+						kind: r.kind
+					}))
+					.filter((r) => r.to > r.from);
 				return {
 					day,
 					end,
@@ -218,16 +251,17 @@ export const CalendarSplitView = ({
 						(e) => new Date(e.start) < end && new Date(e.end) > day
 					),
 					free: freeForEveryone({
-						entries,
+						entries: busyEntries ?? entries,
 						people: [ownerId, ...colleagues.map((c) => c.id)],
 						day,
-						hours: workingHours,
+						hours: plan,
 						now
 					}),
-					offHours
+					offHours,
+					holiday: effectiveDay(day, plan).holiday
 				};
 			}),
-		[first, days, entries, ownerId, colleagues, workingHours, now]
+		[first, days, entries, busyEntries, ownerId, colleagues, workingPlan, now]
 	);
 	const overlaps = (d: SplitDay, e: { start: string; end: string }) =>
 		new Date(e.start) < d.end && new Date(e.end) > d.day;
@@ -439,6 +473,31 @@ export const CalendarSplitView = ({
 		month: '2-digit'
 	});
 
+	/** The grips of one's own working day, where they fall in the grid. */
+	const edgeGrips = (d: SplitDay) => {
+		const edges = workingPlan ? dayEdgesOf(d.day, workingPlan) : null;
+		if (!edges || !onEdgeChange) return null;
+		return (['start', 'end'] as const).map((edge) => {
+			const time = edge === 'start' ? edges.start : edges.end;
+			const minutes = minutesOf(time);
+			if (minutes < FIRST_HOUR * 60 || minutes > LAST_HOUR * 60)
+				return null;
+			return (
+				<CalendarWorkGrip
+					key={edge}
+					edge={edge}
+					day={d.day}
+					time={time}
+					windows={edges.windows}
+					exception={edges.exception}
+					measure={measureBody}
+					onChange={onEdgeChange}
+					style={{ top: toPx(minutes) }}
+				/>
+			);
+		});
+	};
+
 	const column = (person: SplitPerson, index: number, d: SplitDay) => {
 		const { day } = d;
 		const own = index === 0;
@@ -500,6 +559,15 @@ export const CalendarSplitView = ({
 							</span>
 						)}
 					</div>
+					{own && d.holiday && (
+						<div className="calendarSplit__holiday">
+							{t('calendar.holidays.label', {
+								name: t(`calendar.holidays.names.${d.holiday.key}`, {
+									defaultValue: d.holiday.name
+								})
+							})}
+						</div>
+					)}
 					{allDay.length > 0 && (
 						<div className="calendarSplit__allDay">
 							{allDay.map((e) => (
@@ -551,13 +619,14 @@ export const CalendarSplitView = ({
 						{d.offHours.map((o) => (
 							<span
 								key={`off-${o.from}`}
-								className="calendarSplit__offHours"
+								className={`calendarSplit__offHours${o.kind === 'break' ? ' calendarSplit__offHours--break' : ''}`}
 								style={{
 									top: toPx(o.from),
 									height: toPx(o.to) - toPx(o.from)
 								}}
 							/>
 						))}
+						{own && onEdgeChange && edgeGrips(d)}
 						{d.free.map((f) => {
 							const from = clampMinutes(
 								minutesSince(day, f.start)

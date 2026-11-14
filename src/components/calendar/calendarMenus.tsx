@@ -21,6 +21,8 @@ import EventBusyOutlinedIcon from '@mui/icons-material/EventBusyOutlined';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import PlayArrowOutlinedIcon from '@mui/icons-material/PlayArrowOutlined';
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
+import TodayOutlinedIcon from '@mui/icons-material/TodayOutlined';
+import RestartAltOutlinedIcon from '@mui/icons-material/RestartAltOutlined';
 import {
 	ChatMenuDropdownDivider,
 	ChatMenuDropdownGroupLabel,
@@ -50,6 +52,7 @@ import {
 	type ViewSwitcherStyle
 } from './calendarViews';
 import { useEntryLabel, useRangeFormat } from './useEntryLabel';
+import type { EdgeChoice } from './calendarPreferences';
 
 /** What a free range becomes: an appointment kind or a blocker. */
 export type SlotChoice = AppointmentKind | 'blocker';
@@ -550,6 +553,10 @@ export interface SettingsMenuContentProps {
 	onWorkingHours?: () => void;
 	onSwitcherStyle: (style: ViewSwitcherStyle) => void;
 	onSync?: () => void;
+	/** The remembered answer after dragging a grip, if any. */
+	rememberedEdge?: EdgeChoice | null;
+	/** "Gemerkte Auswahl vergessen": ask again next time. */
+	onForgetEdge?: () => void;
 }
 
 export const SettingsMenuContent = ({
@@ -557,7 +564,9 @@ export const SettingsMenuContent = ({
 	switcherStyle,
 	onWorkingHours,
 	onSwitcherStyle,
-	onSync
+	onSync,
+	rememberedEdge,
+	onForgetEdge
 }: SettingsMenuContentProps) => {
 	const { t } = useTranslation();
 	return (
@@ -572,6 +581,20 @@ export const SettingsMenuContent = ({
 					}
 					onClick={onWorkingHours}
 					data-cy="calendar-settings-working-hours"
+				/>
+			)}
+			{rememberedEdge && onForgetEdge && (
+				<ChatMenuDropdownItem
+					role="menuitem"
+					icon={<RestartAltOutlinedIcon fontSize="small" />}
+					title={t('calendar.grip.forget')}
+					description={t(
+						rememberedEdge === 'day'
+							? 'calendar.grip.rememberedDay'
+							: 'calendar.grip.rememberedWeek'
+					)}
+					onClick={onForgetEdge}
+					data-cy="calendar-settings-forget-edge"
 				/>
 			)}
 			<ChatMenuDropdownGroupLabel>
@@ -606,6 +629,91 @@ export const SettingsMenuContent = ({
 					/>
 				</>
 			)}
+		</>
+	);
+};
+
+/* ------------------------------------------------------------------ */
+/* A moved working-hours grip: this day or always?                      */
+/* ------------------------------------------------------------------ */
+
+export interface EdgeMenuContentProps {
+	edge: 'start' | 'end';
+	day: Date;
+	/** HH:mm before and after. */
+	from: string;
+	to: string;
+	remember: boolean;
+	onRemember: (remember: boolean) => void;
+	onChoose: (choice: EdgeChoice) => void;
+}
+
+/**
+ * After a grip was let go: "Nur an diesem Tag" stores a day exception,
+ * "Immer montags" changes the weekly hours. "Auswahl merken" skips the
+ * question next time; the ⋮ menu forgets it again.
+ */
+export const EdgeMenuContent = ({
+	edge,
+	day,
+	from,
+	to,
+	remember,
+	onRemember,
+	onChoose
+}: EdgeMenuContentProps) => {
+	const { t, i18n } = useTranslation();
+	const locale = i18n.language?.startsWith('en') ? 'en-GB' : 'de-DE';
+	const short = new Intl.DateTimeFormat(locale, {
+		weekday: 'short',
+		day: 'numeric',
+		month: 'numeric'
+	}).format(day);
+	const long = new Intl.DateTimeFormat(locale, {
+		weekday: 'long',
+		day: 'numeric',
+		month: 'long',
+		year: 'numeric'
+	}).format(day);
+	const what = t(
+		edge === 'start' ? 'calendar.grip.start' : 'calendar.grip.end'
+	);
+	return (
+		<>
+			<ChatMenuDropdownHeader
+				title={`${what} ${to}`}
+				subtitle={t('calendar.grip.instead', { time: from, date: short })}
+				titleAs="p"
+			/>
+			<ChatMenuDropdownItem
+				role="menuitem"
+				icon={<TodayOutlinedIcon fontSize="small" />}
+				title={t('calendar.grip.onlyThisDay')}
+				description={long}
+				onClick={() => onChoose('day')}
+				data-cy="calendar-edge-day"
+			/>
+			<ChatMenuDropdownItem
+				role="menuitem"
+				icon={<EventRepeatOutlinedIcon fontSize="small" />}
+				title={t('calendar.grip.always', {
+					weekdays: t(`calendar.grip.weekdays.${day.getDay()}`)
+				})}
+				description={t('calendar.grip.alwaysHint')}
+				onClick={() => onChoose('week')}
+				data-cy="calendar-edge-week"
+			/>
+			<ChatMenuDropdownDivider />
+			<ChatMenuDropdownItem
+				role="menuitemcheckbox"
+				aria-checked={remember}
+				active={remember}
+				icon={<Check on={remember} />}
+				title={t('calendar.grip.remember')}
+				description={t('calendar.grip.rememberHint')}
+				onClick={() => onRemember(!remember)}
+				data-cy="calendar-edge-remember"
+			/>
 		</>
 	);
 };

@@ -11,6 +11,11 @@
  *
  * Move proposals and "Beitreten" have no backend yet: they appear only when
  * the host passes their callbacks (Storybook does, the app does not).
+ *
+ * Working time (contract v1.2): weekly hours, single dates moved by hand and
+ * the public holidays of a Bundesland. Grips on the edges of one's own
+ * working day ask "Nur an diesem Tag | Immer <Wochentag>s". On a phone the
+ * left column is a bottom sheet over the calendar.
  */
 import * as React from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -53,10 +58,24 @@ import {
 	type ViewSwitcherStyle
 } from './calendarViews';
 import {
+	effectiveDay,
 	isWithinWorkingHours,
-	type WorkingHours
+	moveEdge,
+	sameWindows,
+	windowsOn,
+	withWeekdayWindows,
+	type DayExceptions,
+	type TimeWindow,
+	type WorkingHours,
+	type WorkingPlan
 } from './calendarWorkingHours';
+import { dateKeyOf, type HolidayRegion } from './calendarHolidays';
+import type { EdgeChange } from './CalendarWorkGrip';
+import { CalendarSheet, type SheetStop } from './CalendarSheet';
 import {
+	readEdgeChoice,
+	writeEdgeChoice,
+	type EdgeChoice,
 	readRecentColleagues,
 	readSwitcherStyle,
 	MAX_RECENT_COLLEAGUES,
@@ -80,11 +99,11 @@ import { CalendarPager } from './CalendarPager';
 import {
 	CalendarKindChips,
 	CalendarSidebar,
-	QuickEntry
+	type CalendarSidebarProps
 } from './CalendarSidebar';
-import { DisplayFilterButton } from '../displayFilter/DisplayFilterButton';
 import { CalendarMenu } from './CalendarMenu';
 import {
+	EdgeMenuContent,
 	EntryMenuContent,
 	JumpMenuContent,
 	KindsMenuContent,
@@ -131,7 +150,13 @@ export interface CalendarPageProps {
 	busyImport?: CalendarImport;
 	/** Weekly working hours; empty = none set, nothing shaded. */
 	workingHours?: WorkingHours;
+	/** Single dates with their own hours ("Nur an diesem Tag"). */
+	dayExceptions?: DayExceptions;
+	/** Bundesland whose public holidays are days off; null = none. */
+	holidayRegion?: HolidayRegion | null;
 	compact?: boolean;
+	/** Phone: where the bottom sheet starts (default half). */
+	initialSheet?: SheetStop;
 	initialView?: CalendarViewName;
 	/** Storybook: colleagues shown from the start. */
 	initialShownColleagues?: string[];
@@ -153,16 +178,18 @@ export interface CalendarPageProps {
 	) => void | Promise<unknown>;
 	onCancelAppointment?: (entry: CalendarEntry) => void | Promise<unknown>;
 	onRemoveBlocker?: (entry: CalendarEntry) => void | Promise<unknown>;
-	onSaveWorkingHours?: (hours: WorkingHours) => void | Promise<unknown>;
-	/**
-	 * "Feiertage frei" in the working-hours dialog. UserService has no
-	 * holidays yet: rendered only when passed (Storybook).
-	 */
-	holidays?: {
-		region: string;
-		off: boolean;
-		onChange: (off: boolean) => void;
-	};
+	/** Weekly hours and the holiday region are stored together. */
+	onSaveWorkingHours?: (
+		hours: WorkingHours,
+		holidayRegion: HolidayRegion | null
+	) => void | Promise<unknown>;
+	/** "Nur an diesem Tag": the hours of one date (YYYY-MM-DD). */
+	onSaveDayException?: (
+		date: string,
+		windows: TimeWindow[]
+	) => void | Promise<unknown>;
+	/** The date follows the weekly hours again. */
+	onDeleteDayException?: (date: string) => void | Promise<unknown>;
 	/** Pending move proposals for colleagues' entries (no backend yet). */
 	proposals?: MoveProposal[];
 	onProposeMove?: (
@@ -217,6 +244,12 @@ type Menu =
 			type: 'settings' | 'view' | 'jump' | 'people' | 'kinds';
 			anchor: HTMLElement;
 	  }
+	| {
+			type: 'edge';
+			anchor: MenuAnchor;
+			change: EdgeChange;
+			remember: boolean;
+	  }
 	| null;
 
 interface Notice {
@@ -267,7 +300,10 @@ export const CalendarPage = ({
 	feed,
 	busyImport = {},
 	workingHours = [],
+	dayExceptions,
+	holidayRegion = null,
 	compact = false,
+	initialSheet = 'half',
 	initialView,
 	initialShownColleagues = [],
 	initialFullscreen = false,
@@ -279,7 +315,8 @@ export const CalendarPage = ({
 	onCancelAppointment,
 	onRemoveBlocker,
 	onSaveWorkingHours,
-	holidays,
+	onSaveDayException,
+	onDeleteDayException,
 	proposals = [],
 	onProposeMove,
 	onWithdrawProposal,
@@ -333,10 +370,14 @@ export const CalendarPage = ({
 	const [dialog, setDialog] = useState<Dialog>(null);
 	const [notice, setNotice] = useState<Notice | null>(null);
 	const [dragging, setDragging] = useState(false);
-	/** Phone: quick entry slides open under the toolbar on demand. */
+	/** Phone: quick entry folds open in the sheet on demand. */
 	const [quickOpen, setQuickOpen] = useState(false);
+	const [sheet, setSheet] = useState<SheetStop>(initialSheet);
+	/** "Auswahl merken" after dragging a grip; per browser. */
+	const [edgeChoice, setEdgeChoice] = useState<EdgeChoice | null>(() =>
+		readEdgeChoice(ownerId)
+	);
 	const stageRef = useRef<HTMLDivElement>(null);
-	const kindsRef = useRef<HTMLSpanElement>(null);
 	const peopleRef = useRef<HTMLDivElement>(null);
 	const [stageWidth, setStageWidth] = useState(0);
 
@@ -393,6 +434,24 @@ export const CalendarPage = ({
 		[onProposeMove, proposals, entries]
 	);
 	const summary = summarise(workingHours);
+	const workingPlan = useMemo<WorkingPlan>(
+		() => ({
+			hours: workingHours,
+			exceptions: dayExceptions,
+			holidayRegion
+		}),
+		[workingHours, dayExceptions, holidayRegion]
+	);
+	// "alle frei" counts every entry of the people shown, also the kinds the
+	// display filter hides (review 4574733782).
+	const busyEntries = useMemo(
+		() =>
+			entries.filter(
+				(e) =>
+					e.ownerId === ownerId || shownColleagues.includes(e.ownerId)
+			),
+		[entries, ownerId, shownColleagues]
+	);
 
 	const toggle = <T,>(list: T[], item: T) =>
 		list.includes(item) ? list.filter((x) => x !== item) : [...list, item];
@@ -596,6 +655,113 @@ export const CalendarPage = ({
 		});
 	};
 
+	// --- Working-hours grips (own calendar) ---
+	const gripsOn = consultant && !!onSaveWorkingHours && !!onSaveDayException;
+	const gripDate = (day: Date) =>
+		new Intl.DateTimeFormat(
+			i18n.language?.startsWith('en') ? 'en-GB' : 'de-DE',
+			{ weekday: 'short', day: 'numeric', month: 'numeric' }
+		).format(day);
+
+	/** Keyboard users keep their place on the grip they moved. */
+	const refocusGrip = (change: EdgeChange) =>
+		requestAnimationFrame(() =>
+			document
+				.querySelector<HTMLElement>(
+					`[data-grip="${dateKeyOf(change.day)}-${change.edge}"]`
+				)
+				?.focus()
+		);
+
+	/**
+	 * "Nur an diesem Tag" stores the date's windows with the edge moved;
+	 * "Immer …" changes that weekday's weekly windows (a lunch break stays).
+	 * A date that already has its own hours keeps them, with this edge
+	 * moved too.
+	 */
+	const applyEdge = (change: EdgeChange, choice: EdgeChoice) => {
+		const date = dateKeyOf(change.day);
+		const current = effectiveDay(change.day, workingPlan);
+		const moved = moveEdge(current.windows, change.edge, change.to);
+		const previousException = dayExceptions?.[date];
+		const what = t(
+			change.edge === 'start'
+				? 'calendar.grip.start'
+				: 'calendar.grip.end'
+		);
+		if (choice === 'day') {
+			run(onSaveDayException?.(date, moved), {
+				message: t('calendar.grip.savedDay', {
+					what,
+					date: gripDate(change.day),
+					time: change.to
+				}),
+				undo: () =>
+					previousException
+						? onSaveDayException?.(date, previousException)
+						: onDeleteDayException?.(date)
+			});
+		} else {
+			const weekday = change.day.getDay();
+			const base = windowsOn(workingHours, weekday);
+			const weekly = moveEdge(
+				base.length > 0 ? base : current.windows,
+				change.edge,
+				change.to
+			);
+			const previousHours = workingHours;
+			const saves: (void | Promise<unknown> | undefined)[] = [
+				onSaveWorkingHours?.(
+					withWeekdayWindows(workingHours, weekday, weekly),
+					holidayRegion
+				)
+			];
+			if (previousException)
+				saves.push(
+					sameWindows(moved, weekly)
+						? onDeleteDayException?.(date)
+						: onSaveDayException?.(date, moved)
+				);
+			run(Promise.all(saves), {
+				message: t('calendar.grip.savedWeek', {
+					what,
+					weekdays: t(`calendar.grip.weekdays.${weekday}`),
+					time: change.to
+				}),
+				undo: () => {
+					onSaveWorkingHours?.(previousHours, holidayRegion);
+					if (previousException)
+						onSaveDayException?.(date, previousException);
+				}
+			});
+		}
+		refocusGrip(change);
+	};
+
+	const decideEdge = (
+		change: EdgeChange,
+		anchor: { x: number; y: number }
+	) => {
+		if (edgeChoice) applyEdge(change, edgeChoice);
+		else setMenu({ type: 'edge', anchor, change, remember: false });
+	};
+	// One callback for the grids' whole life, so their background events
+	// are not rebuilt on every render.
+	const decideEdgeRef = useRef(decideEdge);
+	decideEdgeRef.current = decideEdge;
+	const onEdgeChange = useCallback(
+		(change: EdgeChange, anchor: { x: number; y: number }) =>
+			decideEdgeRef.current(change, anchor),
+		[]
+	);
+
+	const forgetEdge = () => {
+		setMenu(null);
+		writeEdgeChoice(ownerId, null);
+		setEdgeChoice(null);
+		setNotice({ message: t('calendar.grip.forgotten') });
+	};
+
 	const can = {
 		start: !!onStart,
 		chat: !!onOpenChat,
@@ -662,7 +828,7 @@ export const CalendarPage = ({
 					!isWithinWorkingHours(
 						menu.range.start,
 						menu.range.end,
-						workingHours
+						workingPlan
 					)
 				}
 				onChoose={chooseSlot}
@@ -745,12 +911,42 @@ export const CalendarPage = ({
 				}
 			/>
 		);
+	} else if (menu?.type === 'edge') {
+		const { change } = menu;
+		menuLabel = t('calendar.grip.menuLabel', {
+			what: t(
+				change.edge === 'start'
+					? 'calendar.grip.start'
+					: 'calendar.grip.end'
+			)
+		});
+		menuWidth = 300;
+		menuContent = (
+			<EdgeMenuContent
+				edge={change.edge}
+				day={change.day}
+				from={change.from}
+				to={change.to}
+				remember={menu.remember}
+				onRemember={(remember) => setMenu({ ...menu, remember })}
+				onChoose={(choice) => {
+					setMenu(null);
+					if (menu.remember) {
+						writeEdgeChoice(ownerId, choice);
+						setEdgeChoice(choice);
+					}
+					applyEdge(change, choice);
+				}}
+			/>
+		);
 	} else if (menu?.type === 'settings') {
 		menuLabel = t('calendar.settings.label');
 		menuAlign = 'end';
 		menuContent = (
 			<SettingsMenuContent
 				workingHoursSummary={summary}
+				rememberedEdge={gripsOn ? edgeChoice : null}
+				onForgetEdge={forgetEdge}
 				switcherStyle={switcherStyle}
 				onWorkingHours={
 					onSaveWorkingHours
@@ -992,23 +1188,6 @@ export const CalendarPage = ({
 					</button>
 				</QuickTip>
 			</div>
-			{compact && consultant && onCreate && (
-				<button
-					type="button"
-					className="calendarStage__quickToggle"
-					aria-expanded={quickOpen}
-					aria-controls="calendar-quick-panel"
-					aria-label={
-						quickOpen
-							? t('calendar.quick.close')
-							: t('calendar.quick.title')
-					}
-					onClick={() => setQuickOpen((open) => !open)}
-					data-cy="calendar-quick-toggle"
-				>
-					<AddIcon fontSize="small" />
-				</button>
-			)}
 			<h2 className="calendarStage__range" aria-live="polite">
 				{rangeTitle}
 			</h2>
@@ -1134,8 +1313,9 @@ export const CalendarPage = ({
 			</div>
 		);
 
-	// Phone: no left column, so the kind chips are row 2 under the header,
-	// with "Was anzeigen" pinned at their end (Frank, 2026-11-14).
+	// Phone: the left column is the bottom sheet, the kind chips are row 2
+	// under the header; "Was anzeigen" sits in the sheet's search field, as
+	// on a wide screen (Frank, 2026-11-14).
 	const phoneKinds = (
 		<CalendarKindChips
 			ownerId={ownerId}
@@ -1148,22 +1328,6 @@ export const CalendarPage = ({
 			}
 			onHighlightFacet={(facet) => setHighlight(facet ? { facet } : null)}
 			className="calendarStage__kinds"
-			trailing={
-				<span ref={kindsRef} className="calendarSide__kindsAnchor">
-					<DisplayFilterButton
-						label={t('calendar.kindsMenu.label')}
-						customised={hiddenFacets.length > 0}
-						customisedLabel={t('calendar.kindsMenu.customised')}
-						open={menu?.type === 'kinds'}
-						onClick={() =>
-							kindsRef.current &&
-							setMenu({ type: 'kinds', anchor: kindsRef.current })
-						}
-						compact
-						data-cy="calendar-kinds-button"
-					/>
-				</span>
-			}
 		/>
 	);
 
@@ -1172,17 +1336,11 @@ export const CalendarPage = ({
 		splitDays * (AXIS_PX + (shown.length + 1) * SPLIT_COLUMN_MIN_PX) >
 			stageWidth;
 
+	// While loading, the grid stays mounted under a spinner: it is what
+	// reports the first visible range, and with it starts the loading
+	// (reviews 4574733779, 4574779921).
 	let body: React.ReactNode;
-	if (state === 'loading')
-		body = (
-			<div className="calendarPage__status" aria-busy="true">
-				<CircularProgress
-					size={32}
-					aria-label={t('calendar.loading')}
-				/>
-			</div>
-		);
-	else if (state === 'error')
+	if (state === 'error')
 		body = (
 			<div className="calendarPage__status" role="alert">
 				<p>{t('calendar.error.title')}</p>
@@ -1197,82 +1355,129 @@ export const CalendarPage = ({
 		);
 	else
 		body = (
-			<CalendarPager
-				onPage={page}
-				enabled={!compact && !splitOverflows}
-				dragging={dragging}
-			>
-				{split ? (
-					<CalendarSplitView
-						day={anchorDate}
-						days={splitDays}
-						role={role}
-						ownerId={ownerId}
-						colleagues={shown}
-						entries={visible}
-						now={now}
-						workingHours={workingHours}
-						proposals={pending}
-						highlight={highlight}
-						muted={muted}
-						onSelectRange={(range, anchor) =>
-							setMenu({ type: 'slot', range, anchor })
-						}
-						onEntryOpen={openEntry}
-						onProposalOpen={(proposal, anchor) => {
-							const found = pending.find(
-								(p) => p.proposal.id === proposal.id
-							);
-							if (found)
-								setMenu({
-									type: 'proposal',
-									proposal,
-									entry: found.entry,
-									anchor
-								});
-						}}
-					/>
-				) : (
-					<CalendarView
-						controller={controller}
-						view={view}
-						role={role}
-						ownerId={ownerId}
-						entries={visible}
-						colleagues={colleagueById}
-						compact={compact}
-						now={fixedNow}
-						initialDate={anchorDate}
-						workingHours={workingHours}
-						proposals={pending}
-						highlight={highlight}
-						muted={muted}
-						onSelectRange={(range, anchor) =>
-							setMenu({ type: 'slot', range, anchor })
-						}
-						onSelectDays={(start, days, anchor) =>
-							setMenu({ type: 'month', start, days, anchor })
-						}
-						onEntryOpen={openEntry}
-						onProposalOpen={(proposal, anchor) => {
-							const found = pending.find(
-								(p) => p.proposal.id === proposal.id
-							);
-							if (found)
-								setMenu({
-									type: 'proposal',
-									proposal,
-									entry: found.entry,
-									anchor
-								});
-						}}
-						onEntryMove={move}
-						onDatesSet={datesSet}
-						onDragChange={setDragging}
-					/>
+			<>
+				<CalendarPager
+					onPage={page}
+					enabled={!compact && !splitOverflows}
+					dragging={dragging}
+				>
+					{split ? (
+						<CalendarSplitView
+							day={anchorDate}
+							days={splitDays}
+							role={role}
+							ownerId={ownerId}
+							colleagues={shown}
+							entries={visible}
+							busyEntries={busyEntries}
+							now={now}
+							workingPlan={workingPlan}
+							onEdgeChange={gripsOn ? onEdgeChange : undefined}
+							proposals={pending}
+							highlight={highlight}
+							muted={muted}
+							onSelectRange={(range, anchor) =>
+								setMenu({ type: 'slot', range, anchor })
+							}
+							onEntryOpen={openEntry}
+							onProposalOpen={(proposal, anchor) => {
+								const found = pending.find(
+									(p) => p.proposal.id === proposal.id
+								);
+								if (found)
+									setMenu({
+										type: 'proposal',
+										proposal,
+										entry: found.entry,
+										anchor
+									});
+							}}
+						/>
+					) : (
+						<CalendarView
+							controller={controller}
+							view={view}
+							role={role}
+							ownerId={ownerId}
+							entries={visible}
+							colleagues={colleagueById}
+							compact={compact}
+							now={fixedNow}
+							initialDate={anchorDate}
+							workingPlan={workingPlan}
+							onEdgeChange={gripsOn ? onEdgeChange : undefined}
+							proposals={pending}
+							highlight={highlight}
+							muted={muted}
+							onSelectRange={(range, anchor) =>
+								setMenu({ type: 'slot', range, anchor })
+							}
+							onSelectDays={(start, days, anchor) =>
+								setMenu({ type: 'month', start, days, anchor })
+							}
+							onEntryOpen={openEntry}
+							onProposalOpen={(proposal, anchor) => {
+								const found = pending.find(
+									(p) => p.proposal.id === proposal.id
+								);
+								if (found)
+									setMenu({
+										type: 'proposal',
+										proposal,
+										entry: found.entry,
+										anchor
+									});
+							}}
+							onEntryMove={move}
+							onDatesSet={datesSet}
+							onDragChange={setDragging}
+						/>
+					)}
+				</CalendarPager>
+				{state === 'loading' && (
+					<div
+						className="calendarPage__status calendarPage__status--overlay"
+						aria-busy="true"
+						data-testid="calendar-loading"
+					>
+						<CircularProgress
+							size={32}
+							aria-label={t('calendar.loading')}
+						/>
+					</div>
 				)}
-			</CalendarPager>
+			</>
 		);
+
+	// The left column on a wide screen, the bottom sheet on a phone.
+	const sheetCovers = compact && !fullscreen && sheet === 'full';
+	const sideProps: CalendarSidebarProps = {
+		ownerId,
+		consultant,
+		now,
+		entries,
+		colleagues,
+		conversations,
+		workingHours: workingPlan,
+		workingHoursSummary: summary,
+		onlyFacets,
+		hiddenFacets,
+		onToggleFacet: (facet) => setOnlyFacets((all) => toggle(all, facet)),
+		onHighlightFacet: (facet) => setHighlight(facet ? { facet } : null),
+		kindsMenuOpen: menu?.type === 'kinds',
+		onOpenKinds: (anchor) => setMenu({ type: 'kinds', anchor }),
+		openProposals: allPending,
+		onOpenProposal: (proposal, entry, anchor) =>
+			setMenu({ type: 'proposal', proposal, entry, anchor }),
+		onWithdrawProposal: onWithdrawProposal ? withdraw : undefined,
+		onOpenEntry: (entry, anchor) => openEntry(entry, anchor),
+		shownColleagues,
+		onCreate: onCreate ? create : undefined,
+		onMoreDetails: moreDetails,
+		onWorkingHours: onSaveWorkingHours
+			? () => setDialog({ type: 'workingHours' })
+			: undefined
+	};
 
 	return (
 		<div
@@ -1285,76 +1490,57 @@ export const CalendarPage = ({
 				.join(' ')}
 			data-testid="calendar-page"
 		>
-			{!compact && !fullscreen && (
-				<CalendarSidebar
-					ownerId={ownerId}
-					consultant={consultant}
-					now={now}
-					entries={entries}
-					colleagues={colleagues}
-					conversations={conversations}
-					workingHours={workingHours}
-					workingHoursSummary={summary}
-					onlyFacets={onlyFacets}
-					hiddenFacets={hiddenFacets}
-					onToggleFacet={(facet) =>
-						setOnlyFacets((all) => toggle(all, facet))
-					}
-					onHighlightFacet={(facet) =>
-						setHighlight(facet ? { facet } : null)
-					}
-					kindsMenuOpen={menu?.type === 'kinds'}
-					onOpenKinds={(anchor) => setMenu({ type: 'kinds', anchor })}
-					openProposals={allPending}
-					onOpenProposal={(proposal, entry, anchor) =>
-						setMenu({ type: 'proposal', proposal, entry, anchor })
-					}
-					onWithdrawProposal={
-						onWithdrawProposal ? withdraw : undefined
-					}
-					onOpenEntry={(entry, anchor) => openEntry(entry, anchor)}
-					shownColleagues={shownColleagues}
-					onCreate={onCreate ? create : undefined}
-					onMoreDetails={moreDetails}
-					onWorkingHours={
-						onSaveWorkingHours
-							? () => setDialog({ type: 'workingHours' })
-							: undefined
-					}
-				/>
-			)}
+			{!compact && !fullscreen && <CalendarSidebar {...sideProps} />}
 			<section
 				ref={stageRef}
 				className="calendarStage"
 				aria-label={t('navigation.booking.events')}
 				data-split={split || undefined}
+				// The sheet all the way up works like a dialog: what it
+				// covers is out of reach until it goes down again.
+				inert={sheetCovers || undefined}
 			>
 				{header}
 				{compact && phoneKinds}
 				{toolbar}
-				{compact && quickOpen && onCreate && (
-					<div
-						id="calendar-quick-panel"
-						className="calendarStage__quick"
-					>
-						<QuickEntry
-							ownerId={ownerId}
-							now={now}
-							entries={entries}
-							conversations={conversations}
-							workingHours={workingHours}
-							onCreate={(drafts) => {
-								setQuickOpen(false);
-								create(drafts);
-							}}
-							onMoreDetails={moreDetails}
-							autoFocus
-						/>
-					</div>
-				)}
 				{peopleBar}
 				<div className="calendarStage__grid">{body}</div>
 			</section>
+			{sheetCovers && (
+				// A tap above the sheet lowers it (Escape does, too).
+				<div
+					className="calendarSheet__scrim"
+					aria-hidden="true"
+					onClick={() => setSheet('half')}
+				/>
+			)}
+			{compact && !fullscreen && (
+				<CalendarSheet
+					stop={sheet}
+					onStop={setSheet}
+					label={t('calendar.side.label')}
+				>
+					<CalendarSidebar
+						{...sideProps}
+						variant="sheet"
+						quickOpen={quickOpen}
+						onQuickToggle={() => {
+							const open = !quickOpen;
+							setQuickOpen(open);
+							// Room for the form: the sheet opens all the way.
+							if (open) setSheet('full');
+						}}
+						onCreate={
+							onCreate
+								? (drafts) => {
+										setQuickOpen(false);
+										create(drafts);
+									}
+								: undefined
+						}
+					/>
+				</CalendarSheet>
+			)}
 
 			<CalendarMenu
 				open={!!menu}
@@ -1400,15 +1586,13 @@ export const CalendarPage = ({
 				<WorkingHoursDialog
 					open
 					hours={workingHours}
-					holidayRegion={holidays?.region}
-					holidaysOff={holidays?.off}
+					holidayRegion={holidayRegion}
+					now={now}
 					fullScreen={compact}
-					onSave={(hours, extras) => {
-						if (holidays && extras.holidaysOff !== holidays.off)
-							holidays.onChange(extras.holidaysOff);
+					onSave={(hours, region) => {
 						setDialog(null);
 						const next = summarise(hours);
-						run(onSaveWorkingHours?.(hours), {
+						run(onSaveWorkingHours?.(hours, region), {
 							message: next
 								? t('calendar.workingHours.saved', {
 										hours: next

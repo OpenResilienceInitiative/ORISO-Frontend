@@ -1,13 +1,15 @@
 /**
  * The left column of "Meine Termine", built like the one of "Gespräche"
- * (Frank's prototype, 2026-11-14): search on top, the kind chips with the
- * filter button, open requests, "Als Nächstes", quick entry and the
- * calendars shown next to one's own.
+ * (Frank's prototype, 2026-11-14): search with the display filter on its
+ * left, the kind chips, open requests, "Als Nächstes", quick entry and the
+ * working hours. On a phone the same column fills the bottom sheet; the
+ * kind chips are then in the stage and quick entry folds behind a "+".
  */
 import * as React from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Popper } from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
 import { ListSearchField } from '../listSearchField/ListSearchField';
 import { FilterChipRow } from '../displayFilter/FilterChipRow';
 import { FilterChip } from '../displayFilter/FilterChip';
@@ -42,7 +44,7 @@ import {
 	type QuickKind
 } from './calendarQuickEntry';
 import { useShortTime } from './calendarShortTime';
-import type { WorkingHours } from './calendarWorkingHours';
+import type { WorkingHours, WorkingPlan } from './calendarWorkingHours';
 import { CalendarEntryPeek } from './CalendarEntryPeek';
 import { useEntryLabel, useRangeFormat } from './useEntryLabel';
 
@@ -64,7 +66,8 @@ export interface CalendarSidebarProps {
 	entries: CalendarEntry[];
 	colleagues: Colleague[];
 	conversations: CalendarConversation[];
-	workingHours: WorkingHours;
+	/** Weekly hours or the whole plan (exceptions, holidays). */
+	workingHours: WorkingHours | WorkingPlan;
 	/** One line, e.g. "Mo–Fr 08:00–18:00"; absent = none set. */
 	workingHoursSummary?: string;
 	onlyFacets: CalendarEntryFacet[];
@@ -92,6 +95,11 @@ export interface CalendarSidebarProps {
 		sessionId?: number;
 	}) => void;
 	onWorkingHours?: () => void;
+	/** `sheet`: the phone's bottom sheet (no kind chips, quick entry folded). */
+	variant?: 'column' | 'sheet';
+	/** Sheet: quick entry is unfolded. */
+	quickOpen?: boolean;
+	onQuickToggle?: () => void;
 }
 
 export const CalendarSidebar = ({
@@ -116,8 +124,12 @@ export const CalendarSidebar = ({
 	shownColleagues,
 	onCreate,
 	onMoreDetails,
-	onWorkingHours
+	onWorkingHours,
+	variant = 'column',
+	quickOpen = false,
+	onQuickToggle
 }: CalendarSidebarProps) => {
+	const sheet = variant === 'sheet';
 	const { t } = useTranslation();
 	const label = useEntryLabel();
 	const format = useRangeFormat();
@@ -171,8 +183,8 @@ export const CalendarSidebar = ({
 
 	return (
 		<aside
-			className="calendarSide"
-			aria-label={t('calendar.side.label')}
+			className={`calendarSide${sheet ? ' calendarSide--sheet' : ''}`}
+			aria-label={sheet ? undefined : t('calendar.side.label')}
 			data-cy="calendar-side"
 		>
 			{/* As in "Gespräche": the display filter sits at the left of the
@@ -248,16 +260,18 @@ export const CalendarSidebar = ({
 				</section>
 			)}
 
-			<CalendarKindChips
-				ownerId={ownerId}
-				now={now}
-				entries={entries}
-				onlyFacets={onlyFacets}
-				hiddenFacets={hiddenFacets}
-				onToggleFacet={onToggleFacet}
-				onHighlightFacet={onHighlightFacet}
-				className="calendarSide__chips"
-			/>
+			{!sheet && (
+				<CalendarKindChips
+					ownerId={ownerId}
+					now={now}
+					entries={entries}
+					onlyFacets={onlyFacets}
+					hiddenFacets={hiddenFacets}
+					onToggleFacet={onToggleFacet}
+					onHighlightFacet={onHighlightFacet}
+					className="calendarSide__chips"
+				/>
+			)}
 
 			{openProposals.length > 0 && (
 				<section className="calendarSide__section">
@@ -396,16 +410,42 @@ export const CalendarSidebar = ({
 				</Popper>
 			</section>
 
-			{consultant && onCreate && (
-				<QuickEntry
-					ownerId={ownerId}
-					now={now}
-					entries={entries}
-					conversations={conversations}
-					workingHours={workingHours}
-					onCreate={onCreate}
-					onMoreDetails={onMoreDetails}
-				/>
+			{consultant && onCreate && sheet && (
+				<div className="calendarSide__quickRow">
+					<span className="calendarSide__title">
+						{t('calendar.quick.title')}
+					</span>
+					<button
+						type="button"
+						className="calendarSide__quickToggle"
+						aria-expanded={quickOpen}
+						aria-controls="calendar-quick-panel"
+						aria-label={
+							quickOpen
+								? t('calendar.quick.close')
+								: t('calendar.quick.title')
+						}
+						onClick={onQuickToggle}
+						data-cy="calendar-quick-toggle"
+					>
+						<AddIcon fontSize="small" />
+					</button>
+				</div>
+			)}
+			{consultant && onCreate && (!sheet || quickOpen) && (
+				<div id="calendar-quick-panel" className="calendarSide__quick">
+					<QuickEntry
+						ownerId={ownerId}
+						now={now}
+						entries={entries}
+						conversations={conversations}
+						workingHours={workingHours}
+						onCreate={onCreate}
+						onMoreDetails={onMoreDetails}
+						autoFocus={sheet}
+						hideTitle={sheet}
+					/>
+				</div>
 			)}
 
 			{consultant && onWorkingHours && (
@@ -511,11 +551,13 @@ interface QuickEntryProps {
 	now: Date;
 	entries: CalendarEntry[];
 	conversations: CalendarConversation[];
-	workingHours: WorkingHours;
+	workingHours: WorkingHours | WorkingPlan;
 	onCreate: (drafts: AppointmentDraft[]) => void;
 	onMoreDetails?: CalendarSidebarProps['onMoreDetails'];
-	/** Focus the line when shown (the phone slides it open on demand). */
+	/** Focus the line when shown (the phone folds it open on demand). */
 	autoFocus?: boolean;
+	/** The folding row above already names it (phone sheet). */
+	hideTitle?: boolean;
 }
 
 /**
@@ -530,7 +572,8 @@ export const QuickEntry = ({
 	workingHours,
 	onCreate,
 	onMoreDetails,
-	autoFocus = false
+	autoFocus = false,
+	hideTitle = false
 }: QuickEntryProps) => {
 	const { t } = useTranslation();
 	const format = useRangeFormat();
@@ -633,7 +676,11 @@ export const QuickEntry = ({
 			className="calendarSide__section calendarQuick"
 			data-cy="calendar-quick"
 		>
-			<h2 className="calendarSide__title">{t('calendar.quick.title')}</h2>
+			{hideTitle ? null : (
+				<h2 className="calendarSide__title">
+					{t('calendar.quick.title')}
+				</h2>
+			)}
 			<form
 				className="calendarQuick__form"
 				onSubmit={(e) => {

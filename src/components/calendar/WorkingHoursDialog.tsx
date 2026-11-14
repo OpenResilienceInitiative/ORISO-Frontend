@@ -1,15 +1,21 @@
 /**
- * "Arbeitszeit festlegen" (ADR-032, UserService#1649): hours per weekday
- * and a lunch break (on by default, stored as two windows a day). Outside
- * them the calendar is shaded and the free-time search does not look;
- * booking ignores them. "Feiertage frei" shows only with a region and is
- * not stored yet (no backend).
+ * "Arbeitszeit festlegen" (ADR-032, UserService#1649, contract v1.2): hours
+ * per weekday, a lunch break (on by default, stored as two windows a day)
+ * and "Feiertage frei" with the Bundesland whose public holidays are days
+ * off. Outside the hours the calendar is shaded and the free-time search
+ * does not look; booking ignores them.
  */
 import * as React from 'react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { M3Dialog } from '../m3Dialog/M3Dialog';
 import { Switch } from '../Switch';
+import {
+	HOLIDAY_REGIONS,
+	isHolidayRegion,
+	nextHoliday,
+	type HolidayRegion
+} from './calendarHolidays';
 import {
 	breakOf,
 	groupWorkingHours,
@@ -26,13 +32,11 @@ export interface WorkingHoursDialogProps {
 	open: boolean;
 	hours: WorkingHours;
 	fullScreen?: boolean;
-	/**
-	 * Region whose public holidays count as days off, e.g. "NRW". Without
-	 * it the switch is not shown (UserService has no holidays yet).
-	 */
-	holidayRegion?: string;
-	holidaysOff?: boolean;
-	onSave: (hours: WorkingHours, extras: { holidaysOff: boolean }) => void;
+	/** Bundesland whose public holidays are days off; null = none. */
+	holidayRegion?: HolidayRegion | null;
+	/** For "Nächster Feiertag: …"; today by default. */
+	now?: Date;
+	onSave: (hours: WorkingHours, holidayRegion: HolidayRegion | null) => void;
 	onClose: () => void;
 }
 
@@ -68,20 +72,40 @@ export const WorkingHoursDialog = ({
 	open,
 	hours,
 	fullScreen,
-	holidayRegion,
-	holidaysOff = false,
+	holidayRegion = null,
+	now,
 	onSave,
 	onClose
 }: WorkingHoursDialogProps) => {
-	const { t } = useTranslation();
+	const { t, i18n } = useTranslation();
 	const dayName = useWeekdayNames();
 	const [rows, setRows] = useState<WorkingDayRow[]>(() =>
 		workingHoursToRows(hours)
 	);
 	const [dayBreak, setDayBreak] = useState<DayBreak>(() => breakOf(hours));
-	const [holidays, setHolidays] = useState(holidaysOff);
+	const [holidays, setHolidays] = useState(!!holidayRegion);
+	const [region, setRegion] = useState<HolidayRegion | ''>(
+		holidayRegion ?? ''
+	);
 	const invalid = invalidRows(rows);
 	const breakInvalid = !isBreakValid(dayBreak);
+	const regionMissing = holidays && !region;
+	const upcoming =
+		holidays && region ? nextHoliday(now ?? new Date(), region) : undefined;
+	const locale = i18n.language?.startsWith('en') ? 'en-GB' : 'de-DE';
+	const upcomingText = upcoming
+		? t('calendar.holidays.next', {
+				name: t(`calendar.holidays.names.${upcoming.key}`, {
+					defaultValue: upcoming.name
+				}),
+				date: new Intl.DateTimeFormat(locale, {
+					weekday: 'short',
+					day: 'numeric',
+					month: 'numeric',
+					year: 'numeric'
+				}).format(new Date(`${upcoming.date}T12:00:00`))
+			})
+		: undefined;
 	const update = (weekday: number, patch: Partial<WorkingDayRow>) =>
 		setRows((all) =>
 			all.map((r) => (r.weekday === weekday ? { ...r, ...patch } : r))
@@ -101,11 +125,12 @@ export const WorkingHoursDialog = ({
 				{
 					label: t('calendar.workingHours.save'),
 					primary: true,
-					disabled: invalid.length > 0 || breakInvalid,
+					disabled: invalid.length > 0 || breakInvalid || regionMissing,
 					onClick: () =>
-						onSave(rowsToWorkingHours(rows, dayBreak), {
-							holidaysOff: holidays
-						}),
+						onSave(
+							rowsToWorkingHours(rows, dayBreak),
+							holidays && region ? region : null
+						),
 					testId: 'calendar-working-hours-save'
 				}
 			]}
@@ -228,27 +253,58 @@ export const WorkingHoursDialog = ({
 						/>
 					</label>
 				</div>
-				{holidayRegion && (
-					<div
-						className="calendarHours__row calendarHours__row--holidays"
-						data-cy="calendar-hours-holidays"
-					>
-						<Switch
-							checked={holidays}
-							onChange={setHolidays}
-							aria-label={t('calendar.workingHours.holidays', {
-								region: holidayRegion
-							})}
-							showIcon={false}
-						/>
-						<span className="calendarHours__holidays">
-							{t('calendar.workingHours.holidays', {
-								region: holidayRegion
-							})}
-							<small>
-								{t('calendar.workingHours.holidaysHint')}
-							</small>
-						</span>
+				<div
+					className="calendarHours__row calendarHours__row--holidays"
+					data-cy="calendar-hours-holidays"
+				>
+					<Switch
+						checked={holidays}
+						onChange={setHolidays}
+						aria-label={t('calendar.workingHours.holidays')}
+						showIcon={false}
+					/>
+					<span className="calendarHours__holidays">
+						{t('calendar.workingHours.holidays')}
+						<small>{t('calendar.workingHours.holidaysHint')}</small>
+					</span>
+				</div>
+				{holidays && (
+					<div className="calendarHours__region">
+						<label className="calendarHours__time calendarHours__select">
+							<span>{t('calendar.holidays.region')}</span>
+							<select
+								value={region}
+								aria-invalid={regionMissing || undefined}
+								aria-describedby="calendar-hours-next-holiday"
+								onChange={(e) =>
+									setRegion(
+										isHolidayRegion(e.target.value)
+											? e.target.value
+											: ''
+									)
+								}
+								data-cy="calendar-hours-region"
+							>
+								<option value="" disabled>
+									{t('calendar.holidays.choose')}
+								</option>
+								{HOLIDAY_REGIONS.map((code) => (
+									<option key={code} value={code}>
+										{t(`calendar.holidays.regions.${code}`)}
+									</option>
+								))}
+							</select>
+						</label>
+						<p
+							id="calendar-hours-next-holiday"
+							className="calendarHours__next"
+							aria-live="polite"
+							data-cy="calendar-hours-next-holiday"
+						>
+							{regionMissing
+								? t('calendar.holidays.chooseHint')
+								: upcomingText}
+						</p>
 					</div>
 				)}
 				{invalid.length > 0 && (
