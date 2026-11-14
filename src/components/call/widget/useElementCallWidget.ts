@@ -83,9 +83,30 @@ export interface ElementCallWidgetOptions {
 	 * Call design S6b (`orisoCallType`): the kind of conversation, which
 	 * picks the call's first view — `group` starts in the circle, `single`
 	 * in the one-to-one view — whatever the head count at the start.
-	 * Left off the URL when unknown.
+	 * Left off the URL when unknown. Read when the address is built and kept
+	 * for the call room (see `hostContextPending`).
 	 */
 	callType?: OrisoCallType | null;
+	/**
+	 * `orisoTopic` (FE#2233): a 1:1 conversation's Beratungsthema in the app
+	 * language, for the call's title. Left off the URL when `null`. Read when
+	 * the address is built and kept for the call room.
+	 */
+	callTopic?: string | null;
+	/**
+	 * `lang` (FE#2233): the app's UI language (`i18n.language`), so the call
+	 * does not follow the browser's. Left off the URL when unknown. Read when
+	 * the address is built and kept for the call room: switching the app's
+	 * language mid-call must not navigate the call.
+	 */
+	language?: string | null;
+	/**
+	 * The conversation behind `callType` and `callTopic` is still being
+	 * looked up. The room is joined meanwhile; only the address waits, so it
+	 * is built once, with the conversation's kind and topic, and never again
+	 * because they arrived late.
+	 */
+	hostContextPending?: boolean;
 	/**
 	 * Call design S8 (`orisoInvite=1`): this person may hand out a link to
 	 * the running call, so the call shows "Link teilen". Only together with
@@ -107,8 +128,13 @@ export interface ElementCallWidgetOptions {
 	counsellors?: readonly string[] | null;
 }
 
-/** `orisoCallType` values (call design LEDGER). */
-export type OrisoCallType = 'group' | 'single';
+/**
+ * `orisoCallType` values (call design LEDGER, FE#2233): `single` for a 1:1
+ * conversation, `circle` for a Gesprächskreis (ADR-006 `SELF_HELP`), `group`
+ * for any other group. An Element Call that does not know `circle` yet
+ * treats it as it treats an unknown value.
+ */
+export type OrisoCallType = 'single' | 'circle' | 'group';
 
 /** `org.oriso.call.window` commands (call design LEDGER). */
 export type OrisoWindowCommand = 'minimise' | 'toggle_fullscreen';
@@ -354,6 +380,9 @@ export const useElementCallWidget = (
 		onWindowCommand,
 		windowState = null,
 		callType = null,
+		callTopic = null,
+		language = null,
+		hostContextPending = false,
 		invite = false,
 		onInviteLink,
 		counsellors = null
@@ -398,6 +427,21 @@ export const useElementCallWidget = (
 		roomId: string;
 		params: Record<string, string>;
 	} | null>(null);
+	// The same for the conversation's kind, its topic and the app language
+	// (FE#2233): read when the address is first built for a room, so a
+	// language switch or a late lookup never navigates a running call. Let go
+	// once there is no call room, so the next call starts from what is
+	// current — even in the same room.
+	const hostContextRef = useRef({ callType, callTopic, language });
+	hostContextRef.current = { callType, callTopic, language };
+	const frozenHostContextRef = useRef<{
+		roomId: string;
+		context: {
+			callType: OrisoCallType | null;
+			callTopic: string | null;
+			language: string | null;
+		};
+	} | null>(null);
 
 	// A widget client cannot join rooms. Gate iframe creation on the host's
 	// membership so Element Call never starts against an invited/unknown room.
@@ -408,7 +452,18 @@ export const useElementCallWidget = (
 		setReady(false);
 		setError(null);
 
+		if (!roomId) frozenHostContextRef.current = null;
 		if (!client || !roomId) return undefined;
+
+		const hostContextFor = (room: string) => {
+			if (frozenHostContextRef.current?.roomId !== room) {
+				frozenHostContextRef.current = {
+					roomId: room,
+					context: { ...hostContextRef.current }
+				};
+			}
+			return frozenHostContextRef.current.context;
+		};
 
 		const brandFor = (room: string) => {
 			if (brandRef.current?.roomId !== room) {
@@ -462,6 +517,10 @@ export const useElementCallWidget = (
 					instanceNonceRef.current
 				);
 				if (signal.aborted) return;
+				// Prepared, but the conversation's kind and topic are still
+				// on their way: this effect runs again when they arrive.
+				if (hostContextPending) return;
+				const host = hostContextFor(roomId);
 				elementCallUrl.hash = `?${new URLSearchParams({
 					widgetId,
 					parentUrl: window.location.origin,
@@ -500,7 +559,9 @@ export const useElementCallWidget = (
 					// Call design S2: the call owns the window buttons.
 					...(hostChrome ? { orisoHostChrome: '1' } : {}),
 					// Call design S6b: the conversation's kind, not its size.
-					...(callType ? { orisoCallType: callType } : {}),
+					...(host.callType ? { orisoCallType: host.callType } : {}),
+					// FE#2233: a 1:1 call's title names the conversation's topic.
+					...(host.callTopic ? { orisoTopic: host.callTopic } : {}),
 					// Call design S8: "Link teilen" in the call's header.
 					...(offersInvite ? { orisoInvite: '1' } : {}),
 					intent: 'start_call',
@@ -511,7 +572,10 @@ export const useElementCallWidget = (
 					// The Träger's colours and logo (#2188), appended so every
 					// parameter above keeps its place. Left off the address
 					// where the Träger has set nothing the call may use.
-					...brandFor(roomId)
+					...brandFor(roomId),
+					// FE#2233: the app's language, not the browser's. Element
+					// Call reads `lang` from the fragment.
+					...(host.language ? { lang: host.language } : {})
 				}).toString()}`;
 
 				setUrl(elementCallUrl.toString());
@@ -529,7 +593,7 @@ export const useElementCallWidget = (
 		skipLobby,
 		callStartQuery,
 		hostChrome,
-		callType,
+		hostContextPending,
 		offersInvite
 	]);
 

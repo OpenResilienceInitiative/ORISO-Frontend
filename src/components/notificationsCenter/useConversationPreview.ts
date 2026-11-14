@@ -12,6 +12,12 @@ import {
 } from '../../globalState/helpers/stateHelpers';
 import type { NotificationFeedItem } from '../../globalState/provider/NotificationsProvider';
 import { useSession } from '../../hooks/useSession';
+import { resolveFeaturesForAgencyPolicy } from '../../hooks/useConversationFeatureSettings';
+import { useSessionAgencyPolicy } from '../../hooks/useSessionAgencyPolicy';
+import {
+	isSupervisionEnabledForChat,
+	resolveConversationAgencyId
+} from '../../utils/conversationFeatureSettings';
 import { useTeamDiscussionChannel } from '../../hooks/useTeamDiscussionChannel';
 import { chatTransportService } from '../../services/chatTransportService';
 import { decodeUsername } from '../../utils/encryptionHelpers';
@@ -138,14 +144,31 @@ export const useConversationPreview = (
 	);
 	const sessionId = session?.item?.id as number | undefined;
 	const isConsultant = userData ? isConsultantUser(userData) : undefined;
-	const tenant = getTenantSettings() || {};
+	// Same effective platform -> Traeger -> agency result the opened chat uses.
+	const agencyId = resolveConversationAgencyId(session?.item);
+	const { policy: agencyPolicy } = useSessionAgencyPolicy(
+		roomId ?? undefined,
+		agencyId
+	);
+	const tenant = resolveFeaturesForAgencyPolicy(
+		getTenantSettings() || {},
+		agencyPolicy,
+		agencyId,
+		agencyPolicy?.tenantId
+	);
 
 	// The chat learns the side room and the viewer's supervisor role from the
 	// same request (ADR-008).
 	const counselling =
 		Boolean(isConsultant) && Boolean(session) && !session?.isGroup;
+	// Same per-chat-type restriction as the opened chat (master + anonymous/1:1).
 	const supervisionLookup =
-		counselling && tenant.featureSupervisionEnabled !== false;
+		counselling &&
+		isSupervisionEnabledForChat(
+			tenant,
+			Boolean(session) &&
+				getModality(session as any) === Modality.LIVE_CHAT
+		);
 	const supervisors = useSessionLookup(
 		supervisionLookup ? sessionId : undefined,
 		supervisionLookup ? apiGetSessionSupervisors : null
