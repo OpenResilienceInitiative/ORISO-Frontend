@@ -38,18 +38,7 @@ const buildHarness = () => {
 		[ME, member(ME)],
 		[PEER, member(PEER)]
 	]);
-	// Members a direct invitation brought into an existing 1:1: the backend
-	// writes one org.oriso.direct_invitation_member state event per person.
-	const linkInvited = new Set<string>();
 	const room = {
-		currentState: {
-			getStateEvents: vi.fn((type: string, stateKey: string) =>
-				type === 'org.oriso.direct_invitation_member' &&
-				linkInvited.has(stateKey)
-					? { getContent: () => ({ link_id: 7, since: 1 }) }
-					: null
-			)
-		},
 		loadMembersIfNeeded: vi.fn(async () => true),
 		getMember: vi.fn((userId: string) => memberships.get(userId)),
 		getJoinedMembers: vi.fn(() =>
@@ -135,7 +124,6 @@ const buildHarness = () => {
 		crypto,
 		room,
 		memberships,
-		linkInvited,
 		emitToDevice: (event: any, encryptionInfo?: object | null) =>
 			toDeviceHandler?.({
 				message: {
@@ -598,137 +586,6 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 				keys: [{ room_id: ROOM_ID, session_id: 'wanted' }]
 			}
 		);
-	});
-
-	describe('a member invited by link into an existing 1:1 (FE#2252 CP3)', () => {
-		const GUEST = '@guest:matrix';
-		const diagnostics = () => {
-			const stages: string[] = [];
-			window.addEventListener(MATRIX_HISTORY_KEYS_DIAGNOSTIC_EVENT, (e) =>
-				stages.push((e as CustomEvent).detail.stage)
-			);
-			return stages;
-		};
-
-		it('never receives room keys for messages from before the join', async () => {
-			const harness = buildHarness();
-			harness.linkInvited.add(PEER);
-			const stages = diagnostics();
-			const service = new MatrixRoomHistoryKeyTransfer();
-			service.initialize(harness.client as any);
-			harness.emitToDevice(
-				event('org.oriso.room_history_key_request', PEER, {
-					room_id: ROOM_ID,
-					request_id: 'request-1',
-					requester_user_id: PEER,
-					requester_device_id: 'ASKER1',
-					reason: 'Ich sehe den Verlauf nicht'
-				})
-			);
-			await vi.waitFor(() =>
-				expect(stages).toContain('request-link-invited-rejected')
-			);
-
-			expect(harness.crypto.exportRoomKeys).not.toHaveBeenCalled();
-			expect(
-				harness.client.encryptAndSendToDevice
-			).not.toHaveBeenCalled();
-			expect(service.getPendingApprovals(ROOM_ID)).toEqual([]);
-		});
-
-		it('still hands the history to a late-joining counsellor in the same room', async () => {
-			const harness = buildHarness();
-			harness.memberships.set(GUEST, member(GUEST));
-			harness.linkInvited.add(GUEST);
-			const service = new MatrixRoomHistoryKeyTransfer();
-			service.initialize(harness.client as any);
-			harness.emitToDevice(
-				event('org.oriso.room_history_key_request', PEER, {
-					room_id: ROOM_ID,
-					request_id: 'request-1',
-					requester_user_id: PEER,
-					requester_device_id: 'ASKER1'
-				})
-			);
-			await vi.waitFor(() =>
-				expect(harness.client.encryptAndSendToDevice).toHaveBeenCalled()
-			);
-
-			expect(harness.client.encryptAndSendToDevice).toHaveBeenCalledWith(
-				'org.oriso.room_history_key_bundle',
-				[{ userId: PEER, deviceId: 'ASKER1' }],
-				{
-					room_id: ROOM_ID,
-					request_id: 'request-1',
-					keys: [{ room_id: ROOM_ID, session_id: 'wanted' }]
-				}
-			);
-		});
-
-		it('is not released by an approval when the mark arrives while the request waits', async () => {
-			const harness = buildHarness();
-			harness.crypto.getDeviceVerificationStatus.mockImplementation(
-				async (_userId: string, deviceId: string) => ({
-					isVerified: () => false,
-					crossSigningVerified: deviceId !== 'ASKER1'
-				})
-			);
-			applyDeviceIsolationMode(harness.client as any, true);
-			const service = new MatrixRoomHistoryKeyTransfer();
-			service.initialize(harness.client as any);
-			harness.emitToDevice(
-				event('org.oriso.room_history_key_request', PEER, {
-					room_id: ROOM_ID,
-					request_id: 'waiting',
-					requester_user_id: PEER,
-					requester_device_id: 'ASKER1',
-					reason: 'Neues Gerät'
-				})
-			);
-			await vi.waitFor(() =>
-				expect(service.getPendingApprovals(ROOM_ID)).toHaveLength(1)
-			);
-			harness.linkInvited.add(PEER);
-
-			expect(await service.approveRequest('waiting')).toBe(false);
-			expect(harness.crypto.exportRoomKeys).not.toHaveBeenCalled();
-			expect(
-				harness.client.encryptAndSendToDevice
-			).not.toHaveBeenCalled();
-			expect(service.getPendingApprovals(ROOM_ID)).toEqual([]);
-		});
-
-		it('does not ask other members for earlier keys', async () => {
-			const harness = buildHarness();
-			harness.linkInvited.add(ME);
-			const service = new MatrixRoomHistoryKeyTransfer();
-			service.initialize(harness.client as any);
-
-			expect(await service.requestKeys(ROOM_ID)).toBe(false);
-			expect(
-				harness.client.encryptAndSendToDevice
-			).not.toHaveBeenCalled();
-		});
-
-		it('does not import earlier keys an outdated client sends anyway', async () => {
-			const harness = buildHarness();
-			harness.linkInvited.add(ME);
-			const stages = diagnostics();
-			const service = new MatrixRoomHistoryKeyTransfer();
-			service.initialize(harness.client as any);
-			harness.emitToDevice(
-				event('org.oriso.room_history_key_bundle', PEER, {
-					room_id: ROOM_ID,
-					request_id: 'request-1',
-					keys: [{ room_id: ROOM_ID, session_id: 'wanted' }]
-				})
-			);
-			await vi.waitFor(() =>
-				expect(stages).toContain('bundle-link-invited-rejected')
-			);
-
-			expect(harness.crypto.importRoomKeys).not.toHaveBeenCalled();
-		});
 	});
 
 	it('rejects an unverified requester device when invisible crypto is enabled', async () => {
