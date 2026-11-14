@@ -9,7 +9,7 @@
  * `CalendarPageWired` connects it to UserService.
  */
 import * as React from 'react';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import AddIcon from '@mui/icons-material/Add';
 import SyncOutlinedIcon from '@mui/icons-material/SyncOutlined';
@@ -158,6 +158,7 @@ export const CalendarPage = ({
 		anchor: { x: number; y: number };
 	} | null>(null);
 	const [dialog, setDialog] = useState<Dialog>(null);
+	const creating = useRef(false);
 	const [notice, setNotice] = useState<Notice | null>(null);
 
 	const colleagueNames = useMemo(
@@ -223,11 +224,15 @@ export const CalendarPage = ({
 		);
 	};
 
+	/**
+	 * The dialog closes once the entries exist; a refusal or failure keeps
+	 * it open with everything typed. One creation at a time, so a second
+	 * click while saving does not create the entry twice (review 4575214168).
+	 */
 	const create = (drafts: AppointmentDraft[]) => {
-		const result = onCreate?.(drafts);
-		setDialog(null);
+		if (creating.current) return;
 		const first = drafts[0];
-		run(result, {
+		const outcome = run(onCreate?.(drafts), {
 			// One blocker names its date; a series its count (Russian "one"
 			// also covers 21, 31 …, so a series never uses the single text).
 			message:
@@ -244,6 +249,14 @@ export const CalendarPage = ({
 							date: format(first.start, first.end)
 						})
 		});
+		if (outcome === true) setDialog(null);
+		else if (outcome !== false) {
+			creating.current = true;
+			outcome.then((stored) => {
+				creating.current = false;
+				if (stored) setDialog(null);
+			});
+		}
 	};
 
 	const move = (entry: CalendarEntry, start: Date, end: Date) => {
@@ -271,7 +284,11 @@ export const CalendarPage = ({
 	const undo = (current: Notice) => {
 		setNotice(null);
 		const result = current.undo?.();
-		if (result === false) return;
+		// Refused at once: the change stays, so say so (review 4575297344).
+		if (result === false) {
+			setNotice({ message: t('calendar.saveFailed') });
+			return;
+		}
 		if (result && typeof (result as Promise<unknown>).then === 'function')
 			(result as Promise<unknown>).then(
 				(value) => {
@@ -416,23 +433,9 @@ export const CalendarPage = ({
 
 	// While loading, the calendar stays mounted under the spinner: it
 	// reports the first visible range, and with it starts the loading
-	// (review 4574493856).
-	let body: React.ReactNode;
-	if (state === 'error')
-		body = (
-			<div className="calendarPage__status" role="alert">
-				<p>{t('calendar.error.title')}</p>
-				<button
-					type="button"
-					className="calendarPage__retry"
-					onClick={onRetry}
-				>
-					{t('calendar.error.retry')}
-				</button>
-			</div>
-		);
-	else
-		body = (
+	// (review 4574493856). A failed load covers it but keeps it mounted,
+	// so the chosen view and date survive the retry (review 4575159303).
+	const body: React.ReactNode = (
 			<>
 				{consultant && conversationsFailed && (
 					<div
@@ -483,6 +486,22 @@ export const CalendarPage = ({
 							size={32}
 							aria-label={t('calendar.loading')}
 						/>
+					</div>
+				)}
+				{state === 'error' && (
+					<div
+						className="calendarPage__status calendarPage__status--overlay calendarPage__status--error"
+						role="alert"
+						data-testid="calendar-error"
+					>
+						<p>{t('calendar.error.title')}</p>
+						<button
+							type="button"
+							className="calendarPage__retry"
+							onClick={onRetry}
+						>
+							{t('calendar.error.retry')}
+						</button>
 					</div>
 				)}
 			</>
