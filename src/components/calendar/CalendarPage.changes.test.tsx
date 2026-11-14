@@ -27,11 +27,7 @@ vi.mock('react-i18next', () => ({
 }));
 
 const grid: {
-	onEntryMove?: (
-		entry: CalendarEntry,
-		start: Date,
-		end: Date
-	) => unknown;
+	onEntryMove?: (entry: CalendarEntry, start: Date, end: Date) => unknown;
 } = {};
 const mounts = vi.hoisted(() => ({ count: 0 }));
 vi.mock('./CalendarView', async () => {
@@ -261,6 +257,33 @@ describe('CalendarPage — creating (review 4575214168)', () => {
 		await act(async () => store());
 		expect(screen.getByTestId('appointment-dialog')).toBeTruthy();
 	});
+
+	it('leaves a dialog opened while a quick entry was saving (review 4575941071)', async () => {
+		let store: () => void = () => undefined;
+		const onCreate = vi.fn(
+			() =>
+				new Promise<void>((resolve) => {
+					store = resolve;
+				})
+		);
+		page({
+			onCreate,
+			conversations: [{ sessionId: 4401, username: 'ruhiges_yak' }]
+		});
+		const input = document.querySelector(
+			'[data-cy="calendar-quick-input"]'
+		) as HTMLInputElement;
+		fireEvent.change(input, {
+			target: { value: 'morgen 14 Uhr Video ruhiges' }
+		});
+		await act(async () => {
+			fireEvent.submit(input.form as HTMLFormElement);
+		});
+		expect(onCreate).toHaveBeenCalledTimes(1);
+		openDialog();
+		await act(async () => store());
+		expect(screen.getByTestId('appointment-dialog')).toBeTruthy();
+	});
 });
 
 describe('CalendarPage — the grid under a failed load (review 4575868941)', () => {
@@ -303,7 +326,9 @@ describe('allStored — Undo of several changes (reviews 4575297339, 4575253325)
 		expect(
 			await allStored([Promise.resolve(), false, Promise.resolve(true)])
 		).toBe(false);
-		expect(await allStored([Promise.resolve(false), undefined])).toBe(false);
+		expect(await allStored([Promise.resolve(false), undefined])).toBe(
+			false
+		);
 	});
 
 	it('rejects when one restoration fails, so Undo says so', async () => {

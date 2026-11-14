@@ -669,17 +669,18 @@ export const CalendarPage = ({
 	 */
 	const create = (drafts: AppointmentDraft[]): boolean | Promise<boolean> => {
 		if (creating.current) return false;
+		// Close the dialog that saved (none for quick entry), not one opened
+		// while it ran (reviews 4575868938, 4575941071).
+		const origin = dialog;
+		const closeOrigin = () =>
+			setDialog((current) => (current === origin ? null : current));
 		const outcome = run(onCreate?.(drafts), createNotice(drafts));
-		if (outcome === true) setDialog(null);
+		if (outcome === true) closeOrigin();
 		if (typeof outcome === 'boolean') return outcome;
 		creating.current = true;
-		// Close the dialog that saved, not one opened while it ran
-		// (review 4575868938).
-		const origin = dialog;
 		return outcome.then((stored) => {
 			creating.current = false;
-			if (stored)
-				setDialog((current) => (current === origin ? null : current));
+			if (stored) closeOrigin();
 			return stored;
 		});
 	};
