@@ -1,0 +1,461 @@
+/* #2252 Direkteinladung: shared dialog, overview and entry states. ORISO M3 roles only. */
+
+.invitationDialog {
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
+	padding-top: 8px;
+
+	&__slot {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+	}
+
+	&__times {
+		display: grid;
+		gap: 16px;
+		grid-template-columns: 1fr 1fr;
+	}
+
+	&__invite {
+		border-top: 1px solid var(--m3-outline-variant, #c4c7c8);
+		padding-top: 16px;
+	}
+
+	&__switchRow {
+		align-items: center;
+		display: flex;
+		gap: 16px;
+		justify-content: space-between;
+	}
+
+	&__switchText {
+		color: var(--m3-on-surface, #1b1b1c);
+		display: flex;
+		flex-direction: column;
+		font-size: 16px;
+		gap: 2px;
+		line-height: 24px;
+	}
+
+	&__hint {
+		color: var(--m3-on-surface-variant, #444748);
+		font-size: 12px;
+		line-height: 16px;
+	}
+
+	&__access {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+	}
+
+	&__label {
+		color: var(--m3-on-surface-variant, #444748);
+		font-size: 12px;
+		font-weight: 500;
+		letter-spacing: 0.5px;
+		line-height: 16px;
+	}
+
+	&__error {
+		color: var(--m3-error, #b3261e);
+		font-size: 14px;
+		margin: 0;
+	}
+}
+
+.validityStepper {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+
+	&__label {
+		color: var(--m3-on-surface-variant, #444748);
+		font-size: 12px;
+		font-weight: 500;
+		letter-spacing: 0.5px;
+		line-height: 16px;
+	}
+
+	&__row {
+		align-items: center;
+		display: flex;
+		gap: 8px;
+	}
+
+	&__step.MuiIconButton-root {
+		border: 1px solid var(--m3-outline, #747878);
+		color: var(--m3-on-surface-variant, #444748);
+		height: 40px;
+		width: 40px;
+	}
+
+	&__field {
+		align-items: center;
+		background: transparent;
+		border: 1px solid var(--m3-outline, #747878);
+		border-radius: 4px;
+		color: var(--m3-on-surface, #1b1b1c);
+		cursor: pointer;
+		display: flex;
+		flex: 1;
+		font: inherit;
+		font-size: 16px;
+		height: 48px;
+		justify-content: space-between;
+		padding: 0 12px 0 16px;
+
+		&:hover:not(:disabled) {
+			border-color: var(--m3-on-surface, #1b1b1c);
+		}
+
+		&:focus-visible {
+			outline: 2px solid var(--m3-primary, #a5000a);
+			outline-offset: 1px;
+		}
+	}
+
+	&__hint {
+		color: var(--m3-on-surface-variant, #444748);
+		font-size: 12px;
+		line-height: 16px;
+	}
+
+	&__menu {
+		max-height: 320px;
+	}
+}
+
+.invitationsOverview {
+	background: var(--m3-surface-container-lowest, #ffffff);
+	box-sizing: border-box;
+	color: var(--m3-on-surface, #1b1b1c);
+	display: flex;
+	flex-direction: column;
+	gap: 32px;
+	height: 100%;
+	margin: 0 auto;
+	max-width: 1080px;
+	overflow-y: auto;
+	padding: 24px 16px;
+	width: 100%;
+
+	@media (width >= 900px) {
+		padding: 32px 40px;
+	}
+
+	&__header {
+		align-items: center;
+		display: flex;
+		flex-wrap: wrap;
+		gap: 16px;
+		justify-content: space-between;
+	}
+
+	&__title {
+		color: var(--m3-on-surface, #1b1b1c);
+		font-size: 28px;
+		font-weight: 400;
+		line-height: 36px;
+		margin: 0;
+	}
+
+	&__create {
+		align-items: center;
+		background: var(--m3-primary, #a5000a);
+		border: none;
+		border-radius: 20px;
+		color: var(--m3-on-primary, #ffffff);
+		cursor: pointer;
+		display: inline-flex;
+		font: inherit;
+		font-size: 14px;
+		font-weight: 500;
+		gap: 8px;
+		height: 40px;
+		padding: 0 24px 0 16px;
+
+		&:hover {
+			background: var(--m3-primary-hover, #820006);
+		}
+
+		&:focus-visible {
+			outline: 2px solid var(--m3-primary, #a5000a);
+			outline-offset: 2px;
+		}
+	}
+
+	&__section {
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+	}
+
+	&__sectionEmpty {
+		border: 1px dashed var(--m3-outline-variant, #c4c7c8);
+		border-radius: 12px;
+		color: var(--m3-on-surface-variant, #444748);
+		font-size: 14px;
+		line-height: 20px;
+		margin: 0;
+		padding: 16px;
+	}
+
+	&__day {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+	}
+
+	&__dayTitle {
+		color: var(--m3-on-surface-variant, #444748);
+		font-size: 14px;
+		font-weight: 500;
+		letter-spacing: 0.1px;
+		line-height: 20px;
+		margin: 8px 0 0;
+	}
+
+	&__rows {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+
+	&__empty {
+		align-items: center;
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+		margin: 0 auto;
+		max-width: 400px;
+		padding: 48px 16px;
+		text-align: center;
+	}
+
+	&__illustration {
+		height: 160px;
+		max-width: 100%;
+		width: 160px;
+	}
+
+	&__emptyHeadline {
+		font-size: 16px;
+		font-weight: 500;
+		line-height: 24px;
+		margin: 16px 0 0;
+	}
+
+	&__emptyText {
+		color: var(--m3-on-surface-variant, #444748);
+		font-size: 14px;
+		line-height: 20px;
+		margin: 0 0 16px;
+	}
+
+	&__status {
+		align-items: center;
+		color: var(--m3-on-surface-variant, #444748);
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+		padding: 48px 16px;
+		text-align: center;
+	}
+
+	&__retry {
+		background: transparent;
+		border: 1px solid var(--m3-outline, #747878);
+		border-radius: 20px;
+		color: var(--m3-primary, #a5000a);
+		cursor: pointer;
+		font: inherit;
+		font-weight: 500;
+		height: 40px;
+		padding: 0 24px;
+	}
+}
+
+.invitationRow {
+	align-items: center;
+	background: var(--m3-surface-container-low, #f6f3f3);
+	border-radius: 12px;
+	display: grid;
+	gap: 4px 16px;
+	grid-template-areas:
+		'time actions'
+		'body body';
+	grid-template-columns: 1fr auto;
+	padding: 12px 8px 12px 16px;
+
+	@media (width >= 600px) {
+		grid-template-areas: 'time body actions';
+		grid-template-columns: 128px 1fr auto;
+	}
+
+	&__time {
+		color: var(--m3-primary, #a5000a);
+		font-size: 16px;
+		font-weight: 500;
+		grid-area: time;
+		line-height: 24px;
+	}
+
+	&__body {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+		grid-area: body;
+		min-width: 0;
+	}
+
+	&__name {
+		align-items: center;
+		color: var(--m3-on-surface, #1b1b1c);
+		display: flex;
+		font-size: 16px;
+		gap: 8px;
+		line-height: 24px;
+		overflow-wrap: anywhere;
+
+		svg {
+			color: var(--m3-on-surface-variant, #444748);
+			flex-shrink: 0;
+			height: 18px;
+			width: 18px;
+		}
+	}
+
+	&__meta {
+		color: var(--m3-on-surface-variant, #444748);
+		font-size: 14px;
+		line-height: 20px;
+	}
+
+	&__chips {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 4px;
+
+		.directLinkChip {
+			margin-left: 0;
+		}
+	}
+
+	&__actions {
+		display: flex;
+		grid-area: actions;
+	}
+}
+
+.invitationEntry {
+	align-items: center;
+	background: var(--m3-surface-container-lowest, #ffffff);
+	box-sizing: border-box;
+	color: var(--m3-on-surface, #1b1b1c);
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	margin: 0 auto;
+	max-width: 480px;
+	padding: 48px 16px;
+	text-align: center;
+	width: 100%;
+
+	&__icon {
+		color: var(--m3-primary, #a5000a);
+		height: 40px;
+		width: 40px;
+	}
+
+	&__title {
+		font-size: 24px;
+		font-weight: 400;
+		line-height: 32px;
+		margin: 0;
+	}
+
+	&__date {
+		display: flex;
+		flex-direction: column;
+		font-size: 18px;
+		font-weight: 500;
+		gap: 2px;
+		line-height: 24px;
+		margin: 8px 0;
+	}
+
+	&__text {
+		color: var(--m3-on-surface-variant, #444748);
+		font-size: 14px;
+		line-height: 20px;
+		margin: 0;
+	}
+
+	&__error {
+		color: var(--m3-error, #b3261e);
+		font-size: 14px;
+		margin: 0;
+	}
+
+	&__actions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 12px;
+		justify-content: center;
+		margin-top: 12px;
+	}
+
+	&__button {
+		align-items: center;
+		background: var(--m3-primary, #a5000a);
+		border: 1px solid transparent;
+		border-radius: 20px;
+		color: var(--m3-on-primary, #ffffff);
+		cursor: pointer;
+		display: inline-flex;
+		font: inherit;
+		font-size: 14px;
+		font-weight: 500;
+		gap: 8px;
+		height: 40px;
+		padding: 0 24px;
+
+		svg {
+			height: 18px;
+			width: 18px;
+		}
+
+		&:disabled {
+			cursor: default;
+			opacity: 0.38;
+		}
+
+		&:focus-visible {
+			outline: 2px solid var(--m3-primary, #a5000a);
+			outline-offset: 2px;
+		}
+
+		&--outlined {
+			background: transparent;
+			border-color: var(--m3-outline, #747878);
+			color: var(--m3-primary, #a5000a);
+		}
+	}
+}
+
+.newLinkRequest {
+	&__title {
+		display: block;
+		font-weight: 500;
+	}
+
+	&__text {
+		display: block;
+	}
+}

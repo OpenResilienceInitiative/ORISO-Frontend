@@ -778,10 +778,10 @@
 			"callKnockRequested": {
 				"text": "Eine Person möchte in deinen Anruf. Tritt dem Anruf bei, um sie einzulassen.",
 				"video": {
-					"text": "Eine Person möchte über deinen Direktlink in deinen Videoanruf. Tritt dem Anruf bei, um sie einzulassen."
+					"text": "Eine Person möchte über deine Direkteinladung in deinen Videoanruf. Tritt dem Anruf bei, um sie einzulassen."
 				},
 				"audio": {
-					"text": "Eine Person möchte über deinen Direktlink in deinen Audioanruf. Tritt dem Anruf bei, um sie einzulassen."
+					"text": "Eine Person möchte über deine Direkteinladung in deinen Audioanruf. Tritt dem Anruf bei, um sie einzulassen."
 				}
 			}
 		}
@@ -2897,7 +2897,7 @@
 			"scheduledAtIncomplete": "Bitte gib Datum und Uhrzeit vollständig ein oder leere das Feld."
 		},
 		"share": {
-			"title": "Dein Direktlink ist bereit",
+			"title": "Deine Direkteinladung ist bereit",
 			"description": "Teile Link oder QR-Code. Jede Person bekommt ein eigenes Gespräch mit dir."
 		},
 		"entry": {
@@ -2905,8 +2905,8 @@
 			"joinFailed": "Das hat nicht geklappt. Bitte versuche es erneut."
 		},
 		"page": {
-			"loadFailed": "Deine Direktlinks konnten nicht geladen werden.",
-			"emptyText": "Einen Direktlink erstellst du unter „Chat erstellen“. Er erscheint danach hier.",
+			"loadFailed": "Deine Direkteinladungen konnten nicht geladen werden.",
+			"emptyText": "Eine Direkteinladung erstellst du unter „Chat erstellen“. Sie erscheint danach hier.",
 			"toggleFailed": "Der Link konnte nicht umgeschaltet werden. Bitte versuche es erneut."
 		},
 		"edit": {
@@ -2933,6 +2933,28 @@
 		"lookupFailed": {
 			"title": "Wir konnten dein Konto nicht prüfen",
 			"text": "Deine Nachricht ist noch nicht gesendet und bleibt im Eingabefeld. Bitte prüfe deine Verbindung und sende sie erneut."
+		}
+	},
+	"directInvitation": {
+		"dialog": {
+			"description": "Wer den Link öffnet, kommt direkt zu dir. Ein Termin ist optional.",
+			"withoutAppointmentHint": "Ohne Termin bekommt jede Person ein eigenes Gespräch. Der Link gilt, bis du ihn löschst.",
+			"knockHint": "Du lässt jede Person selbst herein. Das lässt sich im Anruf ändern."
+		},
+		"overview": {
+			"emptyText": "Erstelle eine Direkteinladung – mit oder ohne Termin. Sie erscheint danach hier.",
+			"noUpcoming": "Keine anstehenden Termine. Gib einer Direkteinladung ein Datum, oder lege in einem Gespräch über ⋮ einen Termin an."
+		},
+		"entry": {
+			"beforeStart": {
+				"title": "Dein Termin",
+				"chatNow": "Schreiben kannst du schon jetzt."
+			},
+			"expired": {
+				"text": "Dieser Link gilt nicht mehr. Frag einen neuen an – deine Beratungsperson wird benachrichtigt.",
+				"sent": "Anfrage gesendet. Du bekommst einen neuen Link, sobald deine Beratungsperson ihn schickt.",
+				"failed": "Die Anfrage hat nicht geklappt. Bitte versuch es erneut."
+			}
 		}
 	}
 }

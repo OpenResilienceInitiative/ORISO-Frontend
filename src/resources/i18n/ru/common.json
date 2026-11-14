@@ -2255,7 +2255,7 @@
 				"nav": "Чаты",
 				"small": "Новости"
 			},
-			"directLinks": "Мои прямые ссылки",
+			"directLinks": "Мои прямые приглашения",
 			"inboxState": {
 				"empty": "Нет запросов",
 				"allOpened": "Все запросы открыты",
@@ -2569,11 +2569,11 @@
 				"text": "Кто-то хочет присоединиться к вашему звонку. Присоединитесь к звонку, чтобы впустить его.",
 				"video": {
 					"title": "Кто-то стучится – видеозвонок",
-					"text": "Кто-то хочет присоединиться к вашему видеозвонку по вашей прямой ссылке. Присоединитесь к звонку, чтобы впустить его."
+					"text": "Кто-то хочет присоединиться к вашему видеозвонку по вашему прямому приглашению. Присоединитесь к звонку, чтобы впустить его."
 				},
 				"audio": {
 					"title": "Кто-то стучится – аудиозвонок",
-					"text": "Кто-то хочет присоединиться к вашему аудиозвонку по вашей прямой ссылке. Присоединитесь к звонку, чтобы впустить его."
+					"text": "Кто-то хочет присоединиться к вашему аудиозвонку по вашему прямому приглашению. Присоединитесь к звонку, чтобы впустить его."
 				}
 			},
 			"appointmentRequested": {
@@ -4652,7 +4652,7 @@
 				"unread": "Непрочитанные",
 				"drafts": "Черновики",
 				"nearby": "Mail",
-				"directLinks": "Прямые ссылки",
+				"directLinks": "Прямые приглашения",
 				"other": "Прочее",
 				"create": "Создать",
 				"group": "Фильтры",
@@ -4679,7 +4679,7 @@
 				"team": "Командная консультация",
 				"directLinkVideo": "Видеозвонок",
 				"directLinkAudio": "Аудиозвонок",
-				"directLinkChat": "Прямая ссылка"
+				"directLinkChat": "Прямое приглашение"
 			},
 			"waiting": {
 				"minutes": "ждёт {{count}} мин.",
@@ -6777,7 +6777,7 @@
 			"invalid": "Введите пятизначный почтовый индекс."
 		},
 		"card": {
-			"title": "Прямая ссылка",
+			"title": "Прямое приглашение",
 			"subtitle": "Для обращающихся за помощью",
 			"headline": "Ссылка прямо к вам",
 			"text": "Тот, кто откроет ссылку, попадёт сразу к вам – в чат, аудио- или видеозвонок.",
@@ -6801,16 +6801,16 @@
 		"temporary": "Временно",
 		"copy": "Копировать ссылку",
 		"share": {
-			"title": "Ваша прямая ссылка готова",
+			"title": "Ваше прямое приглашение готово",
 			"description": "Поделитесь ссылкой или QR-кодом. Каждый получает отдельный разговор с вами.",
 			"copied": "Скопировано",
 			"share": "Поделиться",
-			"qrAlt": "QR-код прямой ссылки",
+			"qrAlt": "QR-код прямого приглашения",
 			"done": "Готово",
-			"linkLabel": "Прямая ссылка"
+			"linkLabel": "Прямое приглашение"
 		},
 		"list": {
-			"title": "Мои прямые ссылки",
+			"title": "Мои прямые приглашения",
 			"qr": "Показать QR-код",
 			"active": "{{name}} активна",
 			"edit": "Изменить {{name}}"
@@ -6822,16 +6822,16 @@
 			"joinFailed": "Не получилось. Попробуйте ещё раз."
 		},
 		"page": {
-			"loadFailed": "Не удалось загрузить ваши прямые ссылки.",
-			"create": "Создать новую прямую ссылку в разделе «Создать чат»",
-			"emptyHeadline": "Прямых ссылок пока нет",
-			"emptyText": "Прямую ссылку можно создать в разделе «Создать чат». После этого она появится здесь.",
-			"loading": "Прямые ссылки загружаются",
+			"loadFailed": "Не удалось загрузить ваши прямые приглашения.",
+			"create": "Создать новое прямое приглашение в разделе «Создать чат»",
+			"emptyHeadline": "Прямых приглашений пока нет",
+			"emptyText": "Прямое приглашение можно создать в разделе «Создать чат». После этого оно появится здесь.",
+			"loading": "Прямые приглашения загружаются",
 			"retry": "Повторить",
 			"toggleFailed": "Не удалось переключить ссылку. Пожалуйста, попробуйте ещё раз."
 		},
 		"edit": {
-			"title": "Изменить прямую ссылку",
+			"title": "Изменить прямое приглашение",
 			"cancel": "Отмена",
 			"save": "Сохранить",
 			"name": "Название",
@@ -6887,6 +6887,85 @@
 		"lookupFailed": {
 			"title": "Не удалось проверить вашу учётную запись",
 			"text": "Сообщение ещё не отправлено и осталось в поле ввода. Проверьте соединение и отправьте его снова."
+		}
+	},
+	"directInvitation": {
+		"dialog": {
+			"createTitle": "Direkteinladung erstellen",
+			"editTitle": "Direkteinladung bearbeiten",
+			"description": "Wer den Link öffnet, kommt direkt zu Ihnen. Ein Termin ist optional.",
+			"createAction": "Erstellen",
+			"saveAction": "Speichern",
+			"withAppointment": "Mit Termin",
+			"withAppointmentHint": "Alle, die den Link öffnen, treffen sich in einem gemeinsamen Gespräch.",
+			"withoutAppointmentHint": "Ohne Termin bekommt jede Person ein eigenes Gespräch. Der Link gilt, bis Sie ihn löschen.",
+			"inviteOthers": "Weitere Personen per Link einladen",
+			"inviteOthersHint": "Zum Beispiel eine Dolmetscherin. Eingeladene sehen nur Nachrichten ab ihrem Beitritt.",
+			"validity": {
+				"label": "Gültig nach Terminende",
+				"hint": "Danach verlieren Gäste den Zugang, und das Gespräch wird archiviert.",
+				"end": "Bis zum Ende des Termins",
+				"minutes_one": "{{count}} Minute",
+				"minutes_other": "{{count}} Minuten",
+				"hours_one": "{{count}} Stunde",
+				"hours_other": "{{count}} Stunden",
+				"less": "Kürzer",
+				"more": "Länger"
+			},
+			"access": {
+				"label": "Wer darf hinein?",
+				"guests": "Nur Gäste",
+				"accounts": "Nur mit Konto",
+				"both": "Beides"
+			},
+			"knock": "Anklopfen",
+			"knockHint": "Sie lassen jede Person selbst herein. Das lässt sich im Anruf ändern."
+		},
+		"overview": {
+			"title": "Termine & Direkteinladungen",
+			"upcoming": "Anstehende Termine",
+			"withoutAppointment": "Direkteinladungen ohne Termin",
+			"today": "Heute",
+			"tomorrow": "Morgen",
+			"time": "{{start}}–{{end}} Uhr",
+			"validUntil": "Link gültig bis {{date}}",
+			"knockOn": "Mit Anklopfen",
+			"knockOff": "Direkt hinein",
+			"oneToOne": "1:1-Gespräch mit {{name}}",
+			"copy": "Link zu {{name}} kopieren",
+			"copied": "Kopiert",
+			"qr": "QR-Code zu {{name}} zeigen",
+			"edit": "{{name}} bearbeiten",
+			"copyFailed": "Der Link konnte nicht kopiert werden.",
+			"emptyHeadline": "Noch keine Termine und Direkteinladungen",
+			"emptyText": "Erstellen Sie eine Direkteinladung – mit oder ohne Termin. Sie erscheint danach hier.",
+			"create": "Direkteinladung erstellen",
+			"noUpcoming": "Keine anstehenden Termine. Geben Sie einer Direkteinladung ein Datum, oder legen Sie in einem Gespräch über ⋮ einen Termin an.",
+			"noLinks": "Keine Direkteinladungen ohne Termin."
+		},
+		"entry": {
+			"beforeStart": {
+				"title": "Ihr Termin",
+				"with": "mit {{name}}",
+				"time": "{{start}}–{{end}} Uhr",
+				"waitingRoom": "Der Warteraum öffnet um {{time}} Uhr, 15 Minuten vor Beginn.",
+				"chatNow": "Schreiben können Sie schon jetzt.",
+				"addToCalendar": "In Kalender eintragen",
+				"openChat": "Zum Chat"
+			},
+			"expired": {
+				"title": "Link abgelaufen",
+				"text": "Dieser Link gilt nicht mehr. Fragen Sie einen neuen an – Ihre Beratungsperson wird benachrichtigt.",
+				"request": "Neuen Link anfragen",
+				"sent": "Anfrage gesendet. Sie bekommen einen neuen Link, sobald Ihre Beratungsperson ihn schickt.",
+				"failed": "Die Anfrage hat nicht geklappt. Bitte versuchen Sie es erneut."
+			}
+		},
+		"notice": {
+			"title": "Neuer Link angefragt",
+			"text": "{{name}} möchte einen neuen Link für „{{invitation}}“.",
+			"someone": "Eine Person",
+			"send": "Neuen Link senden"
 		}
 	}
 }
