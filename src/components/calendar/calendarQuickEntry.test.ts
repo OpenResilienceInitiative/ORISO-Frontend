@@ -164,7 +164,9 @@ describe('quick entry fields', () => {
 	it('rounds a typed length to the nearest choice', () => {
 		expect(nearestDuration(20)).toBe(30);
 		expect(nearestDuration(50)).toBe(45);
-		expect(nearestDuration(120)).toBe(90);
+		// Two hours is a choice since prototype v15.
+		expect(nearestDuration(120)).toBe(120);
+		expect(nearestDuration(240)).toBe(120);
 	});
 });
 

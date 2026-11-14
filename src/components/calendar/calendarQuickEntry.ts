@@ -212,7 +212,7 @@ export const quickEntryGaps = (entry: QuickEntry): QuickEntryGap[] => {
 /* date, start and duration are what gets saved.                         */
 /* ------------------------------------------------------------------ */
 
-export const QUICK_DURATIONS = [30, 45, 60, 90] as const;
+export const QUICK_DURATIONS = [30, 45, 60, 90, 120] as const;
 export type QuickDuration = (typeof QUICK_DURATIONS)[number];
 export const DEFAULT_QUICK_DURATION: QuickDuration = 60;
 

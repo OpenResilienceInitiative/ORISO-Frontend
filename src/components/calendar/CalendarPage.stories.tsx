@@ -343,7 +343,10 @@ export const WorkWeek: Story = {
 				'[data-cy="calendar-upcoming"]'
 			)!
 		);
-		const rows = upcoming.getAllByRole('button');
+		// The rows, not the "Zum Chat mit …" buttons beside them.
+		const rows = upcoming
+			.getAllByRole('button')
+			.filter((b) => !b.classList.contains('calendarSide__chat'));
 		await expect(rows[rows.length - 1].textContent).toContain('in 10 Min.');
 	}
 };
@@ -693,6 +696,13 @@ export const ViewDigits: Story = {
 	args: { switcherStyle: 'digits' }
 };
 
+/** The input inside a quick-entry field (Tag, Beginn). */
+const quickField = async (cy: string) =>
+	(await findCy(cy)).querySelector('input') as HTMLInputElement;
+/** The "Dauer" select of quick entry. */
+const quickDuration = async () =>
+	within(await findCy('calendar-quick-duration')).getByRole('combobox');
+
 export const QuickTyped: Story = {
 	name: 'Quick entry — typing prefills the fields',
 	play: async () => {
@@ -700,19 +710,20 @@ export const QuickTyped: Story = {
 			await findCy('calendar-quick-input'),
 			'Do 14 Uhr Video'
 		);
-		await expect(
-			((await findCy('calendar-quick-date')) as HTMLInputElement).value
-		).toBe('2026-11-19');
-		await expect(
-			((await findCy('calendar-quick-time')) as HTMLInputElement).value
-		).toBe('14:00');
+		await expect((await quickField('calendar-quick-date')).value).toBe(
+			'19.11.2026'
+		);
+		await expect((await quickField('calendar-quick-time')).value).toBe(
+			'14:00'
+		);
 		// The fields are what is saved: a changed duration wins.
-		await userEvent.click(await findCy('calendar-quick-duration-45'));
-		await expect(
-			(await findCy('calendar-quick-duration-45')).getAttribute(
-				'aria-pressed'
-			)
-		).toBe('true');
+		await userEvent.click(await quickDuration());
+		await userEvent.click(
+			await body().findByRole('option', { name: '45 Min.' })
+		);
+		await waitFor(async () =>
+			expect((await quickDuration()).textContent).toBe('45 Min.')
+		);
 	}
 };
 
@@ -738,14 +749,10 @@ export const QuickEntry: Story = {
 				'[data-cy="calendar-quick-free"]'
 			)!
 		);
-		await expect(
-			((await findCy('calendar-quick-date')) as HTMLInputElement).value
-		).toBe('2026-11-16');
-		await expect(
-			(await findCy('calendar-quick-duration-30')).getAttribute(
-				'aria-pressed'
-			)
-		).toBe('true');
+		await expect((await quickField('calendar-quick-date')).value).toBe(
+			'16.11.2026'
+		);
+		await expect((await quickDuration()).textContent).toBe('30 Min.');
 		await userEvent.click(
 			canvasElement.querySelector<HTMLElement>(
 				'[data-cy="calendar-quick-kind-blocker"]'
@@ -825,9 +832,9 @@ export const PhoneQuickEntry: Story = {
 		const input = await findCy('calendar-quick-input');
 		await waitFor(() => expect(document.activeElement).toBe(input));
 		await userEvent.type(input, 'Do 14 Uhr');
-		await expect(
-			((await findCy('calendar-quick-time')) as HTMLInputElement).value
-		).toBe('14:00');
+		await expect((await quickField('calendar-quick-time')).value).toBe(
+			'14:00'
+		);
 		await userEvent.click(await findCy('calendar-quick-kind-blocker'));
 		// Saving folds it away again.
 		await userEvent.click(await findCy('calendar-quick-save'));

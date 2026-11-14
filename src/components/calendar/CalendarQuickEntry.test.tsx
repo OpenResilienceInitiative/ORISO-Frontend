@@ -209,3 +209,69 @@ describe('CalendarSidebar — folding quick entry on the phone (review 457498187
 		expect(input().value).toBe('morgen 14 Uhr');
 	});
 });
+
+describe('QuickEntry — Tag, Beginn, Dauer under the line (Frank, prototype v15)', () => {
+	it('saves the day, start and length picked in the date, time and duration fields', async () => {
+		const onCreate = vi.fn(() => Promise.resolve());
+		open(onCreate);
+		const day = screen.getByRole('textbox', { name: 'calendar.quick.date' });
+		fireEvent.change(day, { target: { value: '19.11.2026' } });
+		fireEvent.blur(day);
+		const start = screen.getByRole('textbox', {
+			name: 'calendar.quick.time'
+		});
+		fireEvent.change(start, { target: { value: '14:00' } });
+		fireEvent.blur(start);
+		fireEvent.mouseDown(
+			screen.getByRole('combobox', { name: 'calendar.quick.duration' })
+		);
+		const lengths = await screen.findAllByRole('option');
+		// 30, 45, 60, 90 and 120 minutes, as in the prototype.
+		expect(lengths).toHaveLength(5);
+		fireEvent.click(lengths[4]);
+		fireEvent.click(
+			document.querySelector(
+				'[data-cy="calendar-quick-kind-blocker"]'
+			) as HTMLElement
+		);
+		await submit();
+		expect(onCreate).toHaveBeenCalledWith([
+			{
+				type: 'blocker',
+				start: new Date(2026, 10, 19, 14, 0),
+				end: new Date(2026, 10, 19, 16, 0)
+			}
+		]);
+	});
+
+	it('shows the line as the same outlined field, with Tag right under it', () => {
+		open(() => Promise.resolve());
+		expect(input().classList).toContain('MuiOutlinedInput-input');
+		const when = input().closest('.MuiFormControl-root')
+			?.nextElementSibling as HTMLElement;
+		expect(when.className).toBe('calendarQuick__when');
+		// Tag first (its own row), then Beginn and Dauer.
+		expect(
+			Array.from(when.children).map((c) => c.getAttribute('data-cy'))
+		).toEqual([
+			'calendar-quick-date',
+			'calendar-quick-time',
+			'calendar-quick-duration'
+		]);
+	});
+
+	it('fills the fields from what the line names', () => {
+		open(() => Promise.resolve());
+		fireEvent.change(input(), { target: { value: 'Do 14 Uhr' } });
+		expect(
+			screen.getByRole<HTMLInputElement>('textbox', {
+				name: 'calendar.quick.date'
+			}).value
+		).toBe('19.11.2026');
+		expect(
+			screen.getByRole<HTMLInputElement>('textbox', {
+				name: 'calendar.quick.time'
+			}).value
+		).toBe('14:00');
+	});
+});

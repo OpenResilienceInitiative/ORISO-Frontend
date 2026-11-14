@@ -7029,7 +7029,7 @@
 		},
 		"quick": {
 			"close": "Close quick entry",
-			"date": "Date",
+			"date": "Day",
 			"duration": "Duration",
 			"freeHalf": "Next free half hour",
 			"freeHours": "Next free hour",

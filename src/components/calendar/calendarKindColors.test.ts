@@ -109,3 +109,23 @@ describe('calendar scrollbars (Frank, prototype v15)', () => {
 	});
 });
 
+
+describe('quick entry fields (Frank, prototype v15)', () => {
+	const rule = (selector: string) =>
+		Array.from(css.matchAll(/([^{}]+)\{([^{}]*)\}/g)).find(([, sel]) =>
+			sel.split(',').some((s) => s.trim() === selector)
+		)?.[2] ?? '';
+
+	it('puts Tag on its own row and Beginn and Dauer side by side', () => {
+		expect(rule('.calendarQuick__when')).toMatch(
+			/grid-template-columns:\s*minmax\(0, 1fr\) minmax\(0, 1fr\)/
+		);
+		expect(rule('.calendarQuick__when > .calendarQuick__day')).toMatch(
+			/grid-column:\s*1\s*\/\s*-1/
+		);
+	});
+
+	it('gives the quick-entry box more room above and below', () => {
+		expect(rule('.calendarQuick')).toMatch(/padding-block:\s*12px 10px/);
+	});
+});

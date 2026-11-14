@@ -8,13 +8,18 @@
 import * as React from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Popper } from '@mui/material';
+import { Popper, TextField } from '@mui/material';
+import dayjs from 'dayjs';
 import AddIcon from '@mui/icons-material/Add';
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 import { ListSearchField } from '../listSearchField/ListSearchField';
 import { FilterChipRow } from '../displayFilter/FilterChipRow';
 import { FilterChip } from '../displayFilter/FilterChip';
 import { DisplayFilterButton } from '../displayFilter/DisplayFilterButton';
+import { OrisoDatePicker } from '../form/OrisoDatePicker';
+import { OrisoTimePicker } from '../form/OrisoTimePicker';
+import { OrisoSelect } from '../form/OrisoSelect';
+import { orisoTextFieldSx } from '../form/orisoInputDesign';
 import {
 	upcomingEntries,
 	type AppointmentDraft,
@@ -41,6 +46,7 @@ import {
 	quickEntryGaps,
 	rangeFromFields,
 	timeField,
+	type QuickDuration,
 	type QuickFields,
 	type QuickKind
 } from './calendarQuickEntry';
@@ -762,66 +768,85 @@ export const QuickEntry = ({
 					submit();
 				}}
 			>
-				<input
-					ref={inputRef}
+				{/* The same outlined field as Tag, Beginn and Dauer below
+				    (Frank, prototype v15). */}
+				<TextField
+					inputRef={inputRef}
 					className="calendarQuick__input"
 					value={text}
 					onChange={(e) => type(e.target.value)}
 					placeholder={t('calendar.quick.placeholder')}
-					aria-label={t('calendar.quick.title')}
-					aria-describedby="calendar-quick-status"
-					data-cy="calendar-quick-input"
+					fullWidth
+					sx={[orisoTextFieldSx, { '&': { marginTop: 0 } }]}
+					inputProps={{
+						'aria-label': t('calendar.quick.title'),
+						'aria-describedby': 'calendar-quick-status',
+						'data-cy': 'calendar-quick-input'
+					}}
 				/>
-				<div className="calendarQuick__fields">
-					<label className="calendarQuick__field">
-						<span>{t('calendar.quick.date')}</span>
-						<input
-							type="date"
-							value={fields.date ?? ''}
-							onChange={(e) =>
+				{/* Tag on its own row, then Beginn and Dauer side by side:
+				    the product's date, time and select fields. */}
+				<div className="calendarQuick__when">
+					<div
+						className="calendarQuick__day"
+						data-cy="calendar-quick-date"
+					>
+						<OrisoDatePicker
+							label={t('calendar.quick.date')}
+							value={fields.date ? dayjs(fields.date) : null}
+							onChange={(day) =>
 								setFields((f) => ({
 									...f,
-									date: e.target.value
+									date: day?.isValid()
+										? day.format('YYYY-MM-DD')
+										: undefined
 								}))
 							}
-							data-cy="calendar-quick-date"
+							weekStart={1}
 						/>
-					</label>
-					<label className="calendarQuick__field">
-						<span>{t('calendar.quick.time')}</span>
-						<input
-							type="time"
-							step={900}
-							value={fields.time ?? ''}
-							onChange={(e) =>
+					</div>
+					<div data-cy="calendar-quick-time">
+						<OrisoTimePicker
+							label={t('calendar.quick.time')}
+							ampm={false}
+							value={
+								fields.time
+									? dayjs(
+											`${fields.date ?? dateField(now)}T${fields.time}`
+										)
+									: null
+							}
+							onChange={(time) =>
 								setFields((f) => ({
 									...f,
-									time: e.target.value
+									time: time?.isValid()
+										? time.format('HH:mm')
+										: undefined
 								}))
 							}
-							data-cy="calendar-quick-time"
+							cancelLabel={t('app.cancel')}
 						/>
-					</label>
-				</div>
-				<div
-					className="calendarQuick__durations"
-					role="group"
-					aria-label={t('calendar.quick.duration')}
-				>
-					{QUICK_DURATIONS.map((d) => (
-						<button
-							key={d}
-							type="button"
-							className="calendarQuick__duration"
-							aria-pressed={fields.duration === d}
-							onClick={() =>
-								setFields((f) => ({ ...f, duration: d }))
+					</div>
+					<div data-cy="calendar-quick-duration">
+						<OrisoSelect
+							label={t('calendar.quick.duration')}
+							value={String(
+								fields.duration ?? DEFAULT_QUICK_DURATION
+							)}
+							options={QUICK_DURATIONS.map((d) => ({
+								value: String(d),
+								label: t('calendar.quick.minutes', { count: d })
+							}))}
+							onChange={(event) =>
+								setFields((f) => ({
+									...f,
+									duration: Number(
+										event.target.value
+									) as QuickDuration
+								}))
 							}
-							data-cy={`calendar-quick-duration-${d}`}
-						>
-							{t('calendar.quick.minutes', { count: d })}
-						</button>
-					))}
+						/>
+					</div>
 				</div>
 				<div
 					className="calendarQuick__kinds"

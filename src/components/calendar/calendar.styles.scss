@@ -918,26 +918,32 @@
 
 // --- Quick entry ---
 
+.calendarQuick {
+	// A little more air above and below the box (Frank, prototype v15).
+	padding-block: 12px 10px;
+}
+
 .calendarQuick__form {
 	display: flex;
 	flex-direction: column;
 	gap: 8px;
 }
 
-.calendarQuick__input {
-	box-sizing: border-box;
-	width: 100%;
-	height: 40px;
-	padding: 0 14px;
-	border: 1px solid var(--m3-outline, #747878);
-	border-radius: 20px;
-	background: var(--m3-surface-container-lowest, #ffffff);
-	color: var(--m3-on-surface, #1b1b1c);
-	font: inherit;
-	font-size: 14px;
+// Tag on its own row, then Beginn and Dauer side by side, right under the
+// text field. The fields are OrisoDatePicker, OrisoTimePicker and OrisoSelect
+// (Frank, prototype v15); the row gap leaves room for their floating labels.
+.calendarQuick__when {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+	gap: 16px 8px;
+	padding-top: 8px;
 
-	&:focus-visible {
-		@include calendar-focus-ring(0);
+	> .calendarQuick__day {
+		grid-column: 1 / -1;
+	}
+
+	.MuiFormControl-root {
+		margin: 0;
 	}
 }
 
@@ -990,42 +996,12 @@
 	gap: 4px;
 }
 
-// Date, start and duration: what is saved (Frank, 2026-11-14).
-.calendarQuick__fields {
-	display: grid;
-	grid-template-columns: 1fr 1fr;
-	gap: 8px;
-}
-
-.calendarQuick__field {
-	display: flex;
-	flex-direction: column;
-	gap: 2px;
-	color: var(--m3-on-surface-variant, #444748);
-	font-size: 12px;
-
-	input {
-		box-sizing: border-box;
-		width: 100%;
-		height: 36px;
-		padding: 0 8px;
-		border: 1px solid var(--m3-outline, #747878);
-		border-radius: 8px;
-		background: transparent;
-		color: var(--m3-on-surface, #1b1b1c);
-		font: inherit;
-		font-size: 14px;
-	}
-}
-
-.calendarQuick__durations,
 .calendarQuick__slot {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 4px;
 }
 
-.calendarQuick__duration,
 .calendarQuick__slotButton {
 	height: 28px;
 	padding: 0 10px;
