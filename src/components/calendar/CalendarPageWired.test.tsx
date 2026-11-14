@@ -48,6 +48,8 @@ vi.mock('../../api/apiCalendar', () => ({
 	apiGetCalendarSync: vi.fn(),
 	apiGetCalendarWorkingHours: vi.fn(),
 	apiSetCalendarWorkingHours: vi.fn(),
+	apiPutWorkingDayException: vi.fn(),
+	apiDeleteWorkingDayException: vi.fn(),
 	apiCreateCalendarBlocker: vi.fn(),
 	apiMoveCalendarBlocker: vi.fn(),
 	apiDeleteCalendarBlocker: vi.fn(),
@@ -97,9 +99,15 @@ const showWeek = () =>
 		props.onRangeChange?.(new Date(2026, 10, 16), new Date(2026, 10, 23))
 	);
 
-afterEach(cleanup);
+afterEach(() => {
+	cleanup();
+	vi.useRealTimers();
+});
 beforeEach(() => {
 	vi.clearAllMocks();
+	// Monday of the week the tests show: the next days are inside it.
+	vi.useFakeTimers({ toFake: ['Date'] });
+	vi.setSystemTime(new Date(2026, 10, 16, 8));
 	consultant = true;
 	api.apiGetCalendarEntries.mockResolvedValue([OWN]);
 	api.apiGetCalendarColleagues.mockResolvedValue({
@@ -222,14 +230,18 @@ describe('CalendarPageWired', () => {
 			windows: [{ weekday: 5, start: '09:00', end: '13:00' }]
 		});
 		await act(() =>
-			props.onSaveWorkingHours?.([
-				{ weekday: 5, start: '09:00', end: '13:00' },
-				{ weekday: 6, start: '18:00', end: '09:00' }
-			])
+			props.onSaveWorkingHours?.(
+				[
+					{ weekday: 5, start: '09:00', end: '13:00' },
+					{ weekday: 6, start: '18:00', end: '09:00' }
+				],
+				null
+			)
 		);
 		// A window that ends before it starts never reaches the backend.
 		expect(api.apiSetCalendarWorkingHours).toHaveBeenCalledWith({
-			windows: [{ weekday: 5, start: '09:00', end: '13:00' }]
+			windows: [{ weekday: 5, start: '09:00', end: '13:00' }],
+			holidayRegion: null
 		});
 		await waitFor(() =>
 			expect(props.workingHours).toEqual([
@@ -246,10 +258,151 @@ describe('CalendarPageWired', () => {
 		await waitFor(() => expect(props.state).toBe('ready'));
 		expect(props.workingHours).toBeUndefined();
 		await expect(
-			props.onSaveWorkingHours?.([
-				{ weekday: 1, start: '08:00', end: '18:00' }
-			])
+			props.onSaveWorkingHours?.(
+				[{ weekday: 1, start: '08:00', end: '18:00' }],
+				null
+			)
 		).rejects.toThrow('500');
+	});
+
+	it('saves the holiday region with the hours and puts it back when that fails', async () => {
+		api.apiGetCalendarWorkingHours.mockResolvedValue({
+			windows: [{ weekday: 1, start: '08:00', end: '16:00' }],
+			holidayRegion: 'NW',
+			exceptions: [
+				{
+					date: '2026-11-18',
+					windows: [{ start: '10:00', end: '14:00' }]
+				}
+			]
+		} as never);
+		render(<CalendarPageWired />);
+		await waitFor(() => expect(props.holidayRegion).toBe('NW'));
+		expect(props.dayExceptions).toEqual({
+			'2026-11-18': [{ start: '10:00', end: '14:00' }]
+		});
+		api.apiSetCalendarWorkingHours.mockResolvedValue({
+			windows: [{ weekday: 1, start: '08:00', end: '16:00' }],
+			holidayRegion: 'SN'
+		} as never);
+		await act(() =>
+			props.onSaveWorkingHours?.(
+				[{ weekday: 1, start: '08:00', end: '16:00' }],
+				'SN'
+			)
+		);
+		expect(api.apiSetCalendarWorkingHours).toHaveBeenLastCalledWith({
+			windows: [{ weekday: 1, start: '08:00', end: '16:00' }],
+			holidayRegion: 'SN'
+		});
+		expect(props.holidayRegion).toBe('SN');
+		// An answer without exceptions keeps the ones already loaded.
+		expect(props.dayExceptions).toEqual({
+			'2026-11-18': [{ start: '10:00', end: '14:00' }]
+		});
+
+		let fail: (error: Error) => void = () => undefined;
+		api.apiSetCalendarWorkingHours.mockReturnValue(
+			new Promise((_, reject) => {
+				fail = reject;
+			}) as never
+		);
+		let saving: Promise<void> | undefined;
+		act(() => {
+			saving = props.onSaveWorkingHours?.(
+				[{ weekday: 1, start: '07:00', end: '16:00' }],
+				null
+			);
+		});
+		// Shown at once ...
+		expect(props.holidayRegion).toBeNull();
+		expect(props.workingHours).toEqual([
+			{ weekday: 1, start: '07:00', end: '16:00' }
+		]);
+		await act(async () => {
+			fail(new Error('500'));
+			await expect(saving).rejects.toThrow('500');
+		});
+		// ... and back when the save failed.
+		expect(props.holidayRegion).toBe('SN');
+		expect(props.workingHours).toEqual([
+			{ weekday: 1, start: '08:00', end: '16:00' }
+		]);
+	});
+
+	it('saves and removes a day exception at once, and goes back when that fails', async () => {
+		render(<CalendarPageWired />);
+		await waitFor(() => expect(props.workingHours).toHaveLength(2));
+		api.apiPutWorkingDayException.mockResolvedValue({
+			date: '2026-11-17',
+			windows: [{ start: '09:30', end: '16:00' }]
+		} as never);
+		await act(() =>
+			props.onSaveDayException?.('2026-11-17', [
+				{ start: '09:30', end: '16:00' }
+			])
+		);
+		expect(api.apiPutWorkingDayException).toHaveBeenCalledWith(
+			'2026-11-17',
+			[{ start: '09:30', end: '16:00' }]
+		);
+		expect(props.dayExceptions).toEqual({
+			'2026-11-17': [{ start: '09:30', end: '16:00' }]
+		});
+
+		api.apiPutWorkingDayException.mockRejectedValue(new Error('409'));
+		await act(async () => {
+			await expect(
+				props.onSaveDayException?.('2026-11-17', [
+					{ start: '11:00', end: '16:00' }
+				])
+			).rejects.toThrow('409');
+		});
+		expect(props.dayExceptions).toEqual({
+			'2026-11-17': [{ start: '09:30', end: '16:00' }]
+		});
+
+		api.apiDeleteWorkingDayException.mockRejectedValueOnce(
+			new Error('500')
+		);
+		await act(async () => {
+			await expect(
+				props.onDeleteDayException?.('2026-11-17')
+			).rejects.toThrow('500');
+		});
+		expect(props.dayExceptions?.['2026-11-17']).toBeDefined();
+		api.apiDeleteWorkingDayException.mockResolvedValue(undefined as never);
+		await act(() => props.onDeleteDayException?.('2026-11-17'));
+		expect(api.apiDeleteWorkingDayException).toHaveBeenLastCalledWith(
+			'2026-11-17'
+		);
+		expect(props.dayExceptions).toEqual({});
+	});
+
+	it('keeps the next days loaded while the grid shows another month (review 4574733789)', async () => {
+		api.apiGetCalendarEntries.mockImplementation((from: Date) =>
+			Promise.resolve(from.getMonth() === 10 ? [OWN] : [])
+		);
+		render(<CalendarPageWired />);
+		await showWeek();
+		await waitFor(() =>
+			expect(props.entries.map((e) => e.id)).toEqual(['a1'])
+		);
+		// The week around today is loaded: no extra request.
+		expect(api.apiGetCalendarEntries).toHaveBeenCalledTimes(1);
+		await act(() =>
+			props.onRangeChange?.(new Date(2027, 2, 1), new Date(2027, 2, 8))
+		);
+		await waitFor(() =>
+			expect(api.apiGetCalendarEntries).toHaveBeenCalledTimes(3)
+		);
+		const near = api.apiGetCalendarEntries.mock.calls[2];
+		expect(near?.[0]).toEqual(new Date(2026, 10, 16));
+		expect(near?.[1]).toEqual(new Date(2026, 10, 24));
+		// "Als Nächstes" and the next free hours still see today's entry.
+		await waitFor(() =>
+			expect(props.entries.map((e) => e.id)).toEqual(['a1'])
+		);
 	});
 
 	it('returns the created blocked times so the page can undo them', async () => {

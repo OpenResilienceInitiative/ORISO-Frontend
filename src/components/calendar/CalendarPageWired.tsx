@@ -9,7 +9,11 @@
  *   seeker learns about it.
  * - Blocked times, the subscription link, the busy-time import and the
  *   counsellor's working hours (shaded outside, offered as free hours) use
- *   the calendar API.
+ *   the calendar API. Working hours carry the holiday region and the day
+ *   exceptions (contract v1.2); a grip saves at once and goes back if the
+ *   save fails.
+ * - The next days stay loaded on their own, so "Als Nächstes" and the next
+ *   free hours stay right while the grid shows another month.
  * - Proposals to move a colleague's appointment have no backend yet, so the
  *   page gets no proposal props here (Storybook shows them).
  */
@@ -25,12 +29,14 @@ import { useResponsive } from '../../hooks/useResponsive';
 import {
 	apiCreateCalendarBlocker,
 	apiDeleteCalendarBlocker,
+	apiDeleteWorkingDayException,
 	apiGetCalendarColleagues,
 	apiGetCalendarEntries,
 	apiGetCalendarSync,
 	apiGetCalendarWorkingHours,
 	apiGetColleagueCalendarEntries,
 	apiMoveCalendarBlocker,
+	apiPutWorkingDayException,
 	apiRemoveCalendarImport,
 	apiResetCalendarFeed,
 	apiSaveCalendarImport,
@@ -71,13 +77,39 @@ import {
 	type Colleague
 } from './calendarModel';
 import {
-	workingHoursFromApi,
-	workingHoursToApi,
-	type WorkingHours
+	dayExceptionsFromApi,
+	exceptionWindowsToApi,
+	normalizeWindows,
+	workingPlanFromApi,
+	workingPlanToApi,
+	type TimeWindow,
+	type WorkingHours,
+	type WorkingPlan
 } from './calendarWorkingHours';
+import type { HolidayRegion } from './calendarHolidays';
 
 /** How many own conversations the create dialog offers. */
 const CONVERSATION_LOOKUP_COUNT = 100;
+
+/**
+ * "Als Nächstes" and the next free hours look this far ahead from today,
+ * whatever the grid shows (review 4574733789).
+ */
+const NEARBY_DAYS = 8;
+
+const nearbyWindow = () => {
+	const from = new Date();
+	from.setHours(0, 0, 0, 0);
+	const to = new Date(from);
+	to.setDate(to.getDate() + NEARBY_DAYS);
+	return { from, to };
+};
+
+/** One entry once, the loaded window's copy first. */
+const mergeEntries = (first: CalendarEntry[], second: CalendarEntry[]) => {
+	const seen = new Set(first.map((e) => e.id));
+	return [...first, ...second.filter((e) => !seen.has(e.id))];
+};
 
 interface ConversationRef extends CalendarConversation {
 	matrixRoomId?: string;
@@ -109,6 +141,8 @@ export const CalendarPageWired = () => {
 
 	const [state, setState] = useState<CalendarLoadState>('loading');
 	const [own, setOwn] = useState<CalendarEntry[]>([]);
+	/** Own entries of the next days, when the grid shows another time. */
+	const [nearby, setNearby] = useState<CalendarEntry[]>([]);
 	const [colleagueEntries, setColleagueEntries] = useState<
 		Record<string, CalendarEntry[]>
 	>({});
@@ -117,7 +151,7 @@ export const CalendarPageWired = () => {
 		useState<CalendarVisibility>(DEFAULT_VISIBILITY);
 	const [conversations, setConversations] = useState<ConversationRef[]>([]);
 	const [sync, setSync] = useState<CalendarSyncDTO>();
-	const [workingHours, setWorkingHours] = useState<WorkingHours>();
+	const [plan, setPlan] = useState<WorkingPlan>();
 
 	const range = useRef<{ from: Date; to: Date } | undefined>(undefined);
 	const shown = useRef<string[]>([]);
@@ -155,6 +189,18 @@ export const CalendarPageWired = () => {
 				if (id === request.current) setState('error');
 			}
 		);
+		const near = nearbyWindow();
+		if (
+			window.from.getTime() <= near.from.getTime() &&
+			window.to.getTime() >= near.to.getTime()
+		)
+			setNearby([]);
+		else
+			apiGetCalendarEntries(near.from, near.to).then(
+				(list) =>
+					id === request.current && setNearby(list.map(entryFromApi)),
+				() => undefined
+			);
 		shown.current.forEach((colleague) => loadColleague(colleague));
 	}, [loadColleague]);
 
@@ -194,8 +240,7 @@ export const CalendarPageWired = () => {
 			);
 			// Without an answer the calendar shades nothing, as with none set.
 			apiGetCalendarWorkingHours().then(
-				(dto) =>
-					!cancelled && setWorkingHours(workingHoursFromApi(dto)),
+				(dto) => !cancelled && setPlan(workingPlanFromApi(dto)),
 				() => undefined
 			);
 			apiGetConsultantSessionList({
@@ -267,13 +312,14 @@ export const CalendarPageWired = () => {
 			endTime: end.toISOString()
 		};
 		// Show the new time at once; a failure reloads the stored state.
-		setOwn((all) =>
+		const moved = (all: CalendarEntry[]) =>
 			all.map((e) =>
 				e.id === entry.id
 					? { ...e, start: slot.startTime, end: slot.endTime }
 					: e
-			)
-		);
+			);
+		setOwn(moved);
+		setNearby(moved);
 		try {
 			if (entry.type === 'blocker')
 				await apiMoveCalendarBlocker(entry.id, {
@@ -318,11 +364,69 @@ export const CalendarPageWired = () => {
 		);
 	};
 
-	const saveWorkingHours = async (hours: WorkingHours) => {
-		const saved = await apiSetCalendarWorkingHours(
-			workingHoursToApi(hours)
-		);
-		setWorkingHours(workingHoursFromApi(saved));
+	// Working hours, holiday region and day exceptions show the change at
+	// once; a failed save puts the stored state back and rejects, so the
+	// page says it did not work.
+	const saveWorkingHours = async (
+		hours: WorkingHours,
+		holidayRegion: HolidayRegion | null
+	) => {
+		const before = plan;
+		const next: WorkingPlan = { ...plan, hours, holidayRegion };
+		setPlan(next);
+		try {
+			const saved = await apiSetCalendarWorkingHours(
+				workingPlanToApi(next)
+			);
+			const stored = workingPlanFromApi(saved);
+			setPlan((current) => ({
+				...current,
+				hours: stored.hours,
+				holidayRegion: stored.holidayRegion,
+				// The answer may carry the exceptions; else keep ours.
+				exceptions: saved?.exceptions
+					? stored.exceptions
+					: current?.exceptions
+			}));
+		} catch (error) {
+			setPlan((current) => (current === next ? before : current));
+			throw error;
+		}
+	};
+
+	const setException = (date: string, windows: TimeWindow[] | undefined) =>
+		setPlan((current) => {
+			const exceptions = { ...current?.exceptions };
+			if (windows) exceptions[date] = windows;
+			else delete exceptions[date];
+			return { hours: [], ...current, exceptions };
+		});
+
+	const saveDayException = async (date: string, windows: TimeWindow[]) => {
+		const before = plan?.exceptions?.[date];
+		setException(date, normalizeWindows(windows));
+		try {
+			const saved = await apiPutWorkingDayException(
+				date,
+				exceptionWindowsToApi(windows)
+			);
+			const stored = dayExceptionsFromApi(saved ? [saved] : [])[date];
+			if (stored) setException(date, stored);
+		} catch (error) {
+			setException(date, before);
+			throw error;
+		}
+	};
+
+	const deleteDayException = async (date: string) => {
+		const before = plan?.exceptions?.[date];
+		setException(date, undefined);
+		try {
+			await apiDeleteWorkingDayException(date);
+		} catch (error) {
+			setException(date, before);
+			throw error;
+		}
 	};
 
 	const showColleagues = (ids: string[]) => {
@@ -332,7 +436,10 @@ export const CalendarPageWired = () => {
 	};
 
 	// CalendarPage shows only the colleagues switched on.
-	const entries = [...own, ...Object.values(colleagueEntries).flat()];
+	const entries = [
+		...mergeEntries(own, nearby),
+		...Object.values(colleagueEntries).flat()
+	];
 
 	return (
 		<CalendarPage
@@ -346,7 +453,9 @@ export const CalendarPageWired = () => {
 			feed={sync ? feedFromApi(sync) : undefined}
 			busyImport={sync ? importFromApi(sync) : {}}
 			compact={untilM}
-			workingHours={consultant ? workingHours : undefined}
+			workingHours={consultant ? plan?.hours : undefined}
+			dayExceptions={consultant ? plan?.exceptions : undefined}
+			holidayRegion={consultant ? (plan?.holidayRegion ?? null) : null}
 			onRangeChange={changeRange}
 			onShownColleaguesChange={showColleagues}
 			onRetry={() => {
@@ -358,6 +467,8 @@ export const CalendarPageWired = () => {
 			onCancelAppointment={consultant ? cancel : undefined}
 			onRemoveBlocker={consultant ? removeBlocker : undefined}
 			onSaveWorkingHours={consultant ? saveWorkingHours : undefined}
+			onSaveDayException={consultant ? saveDayException : undefined}
+			onDeleteDayException={consultant ? deleteDayException : undefined}
 			onStart={start}
 			onOpenChat={start}
 			onCopyFeed={(url) => navigator.clipboard?.writeText(url)}
