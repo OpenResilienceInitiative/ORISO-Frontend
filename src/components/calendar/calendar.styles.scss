@@ -201,11 +201,11 @@
 	min-height: 0;
 	height: 100%;
 	box-sizing: border-box;
-	padding: 12px 12px 12px 0;
+	padding: 0;
 	overflow: auto;
 
-	@media (max-width: 899px) {
-		padding: 0;
+	@include breakpoint($fromLarge) {
+		padding: 12px 12px 12px 0;
 	}
 }
 
