@@ -7203,6 +7203,18 @@
 			"tooMany": "Çalışma saatleri haftada en fazla {{max}} zaman aralığı içerir; bu değişiklik kaydedilmedi."
 		},
 		"grip": {
+			"pauseMovedWeek": "{{weekdays}} molası artık {{start}}–{{end}}.",
+			"pauseMovedDay": "{{date}} molası artık {{start}}–{{end}}.",
+			"pauseDeletedWeek": "{{weekdays}} molası silindi.",
+			"pauseDeletedDay": "{{date}} molası silindi.",
+			"pauseScope": "Geçerli",
+			"pauseMoveHint": "aynı süre",
+			"pauseMove": "Molayı {{start}}–{{end}} saatine taşı",
+			"pauseDelete": "Molayı sil",
+			"pauseTitle": "Mola {{start}}–{{end}}",
+			"pauseMenu": "Molayı değiştir",
+			"pauseLabel": "{{date}} tarihindeki {{what}} öğesini taşı, şu an {{time}}. Ok tuşları 15 dakika değiştirir, Delete molayı siler veya taşır.",
+			"pauseCrossed": "Molayı sil veya taşı …",
 			"ghostPauseEnd": "Mola {{time}} saatine kadar",
 			"ghostPauseStart": "Mola {{time}} itibarıyla",
 			"pauseEnd": "Mola bitişi",

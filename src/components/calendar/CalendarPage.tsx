@@ -65,7 +65,11 @@ import {
 	moveEdge,
 	edgeLabelKey,
 	isPauseEdge,
+	pauseCrossed,
+	pauseMovedTo,
 	pauseOf,
+	withoutPause,
+	withPauseAt,
 	sameWindows,
 	windowsOn,
 	withWeekdayWindows,
@@ -116,6 +120,8 @@ import {
 import { CalendarMenu } from './CalendarMenu';
 import {
 	EdgeMenuContent,
+	PauseMenuContent,
+	type PauseAction,
 	EntryMenuContent,
 	JumpMenuContent,
 	KindsMenuContent,
@@ -294,6 +300,12 @@ type Menu =
 			anchor: MenuAnchor;
 			change: EdgeChange;
 			remember: boolean;
+	  }
+	| {
+			type: 'pause';
+			anchor: MenuAnchor;
+			change: EdgeChange;
+			scope: EdgeChoice;
 	  }
 	| null;
 
@@ -874,10 +886,97 @@ export const CalendarPage = ({
 		refocusGrip(change);
 	};
 
+	/**
+	 * A pause grip pulled onto the other one: "Pause löschen" leaves one
+	 * window, "Pause verschieben" puts the same pause where it was dropped;
+	 * for this date (day exception) or every such weekday (weekly rule).
+	 */
+	const applyPause = (
+		change: EdgeChange,
+		action: PauseAction,
+		scope: EdgeChoice
+	) => {
+		const date = dateKeyOf(change.day);
+		const current = effectiveDay(change.day, workingPlan);
+		const changed = (windows: typeof current.windows) => {
+			if (action === 'delete') return withoutPause(windows);
+			const target = pauseMovedTo(windows, change.edge, change.to);
+			return target ? withPauseAt(windows, target) : windows;
+		};
+		const dayWindows = changed(current.windows);
+		const moved = pauseOf(dayWindows);
+		const previousException = dayExceptions?.[date];
+		const weekday = change.day.getDay();
+		const message = (where: 'Day' | 'Week') =>
+			t(
+				`calendar.grip.pause${action === 'delete' ? 'Deleted' : 'Moved'}${where}`,
+				{
+					date: gripDate(change.day),
+					weekdays: t(`calendar.grip.weekdays.${weekday}`),
+					start: moved?.start,
+					end: moved?.end
+				}
+			);
+		if (scope === 'day') {
+			run(onSaveDayException?.(date, dayWindows), {
+				message: message('Day'),
+				undo: () =>
+					previousException
+						? onSaveDayException?.(date, previousException)
+						: onDeleteDayException?.(date)
+			});
+			refocusGrip(change);
+			return;
+		}
+		const base = windowsOn(workingHours, weekday);
+		const weekly = changed(pauseOf(base) ? base : current.windows);
+		const previousHours = workingHours;
+		const nextHours = withWeekdayWindows(workingHours, weekday, weekly);
+		if (exceedsWindowLimit(nextHours)) {
+			setNotice({
+				message: t('calendar.workingHours.tooMany', {
+					max: MAX_WORKING_HOURS_WINDOWS
+				})
+			});
+			refocusGrip(change);
+			return;
+		}
+		const saves: (void | Promise<unknown> | undefined)[] = [
+			onSaveWorkingHours?.(nextHours, holidayRegion)
+		];
+		if (previousException)
+			saves.push(
+				sameWindows(dayWindows, weekly)
+					? onDeleteDayException?.(date)
+					: onSaveDayException?.(date, dayWindows)
+			);
+		run(Promise.all(saves), {
+			message: message('Week'),
+			undo: () =>
+				allStored([
+					onSaveWorkingHours?.(previousHours, holidayRegion),
+					previousException
+						? onSaveDayException?.(date, previousException)
+						: undefined
+				])
+		});
+		refocusGrip(change);
+	};
+
 	const decideEdge = (
 		change: EdgeChange,
 		anchor: { x: number; y: number }
 	) => {
+		const windows = effectiveDay(change.day, workingPlan).windows;
+		if (pauseCrossed(windows, change.edge, change.to)) {
+			setMenu({
+				type: 'pause',
+				anchor,
+				change,
+				scope: edgeChoice ?? 'day'
+			});
+			return;
+		}
 		if (edgeChoice) applyEdge(change, edgeChoice);
 		else setMenu({ type: 'edge', anchor, change, remember: false });
 	};
@@ -1068,6 +1167,25 @@ export const CalendarPage = ({
 						setEdgeChoice(choice);
 					}
 					applyEdge(change, choice);
+				}}
+			/>
+		);
+	} else if (menu?.type === 'pause') {
+		const { change } = menu;
+		const windows = effectiveDay(change.day, workingPlan).windows;
+		const pause = pauseOf(windows);
+		menuLabel = t('calendar.grip.pauseMenu');
+		menuWidth = 300;
+		menuContent = pause && (
+			<PauseMenuContent
+				day={change.day}
+				pause={pause}
+				movedTo={pauseMovedTo(windows, change.edge, change.to)}
+				scope={menu.scope}
+				onScope={(scope) => setMenu({ ...menu, scope })}
+				onChoose={(action) => {
+					setMenu(null);
+					applyPause(change, action, menu.scope);
 				}}
 			/>
 		);

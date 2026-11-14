@@ -11,10 +11,12 @@ import {
 	cleanup,
 	fireEvent,
 	render,
+	screen,
 	waitFor
 } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { CalendarPage } from './CalendarPage';
+import { CalendarWorkGrip } from './CalendarWorkGrip';
 import type { WorkingHours } from './calendarWorkingHours';
 
 vi.mock('react-i18next', () => ({
@@ -45,6 +47,14 @@ if (!window.matchMedia)
 		removeEventListener: () => undefined,
 		dispatchEvent: () => false
 	})) as typeof window.matchMedia;
+// jsdom has no PointerEvent; a MouseEvent carries clientY and button.
+if (typeof window.PointerEvent === 'undefined')
+	Object.defineProperty(window, 'PointerEvent', {
+		configurable: true,
+		value: class PointerEvent extends MouseEvent {
+			pointerId = 1;
+		}
+	});
 window.requestAnimationFrame ??= (cb: FrameRequestCallback) =>
 	window.setTimeout(() => cb(0), 0);
 
@@ -151,5 +161,105 @@ describe('CalendarPage — grips on the pause', () => {
 		expect(
 			document.querySelector('[data-cy="calendar-menu-edge"]')
 		).toBeNull();
+	});
+});
+
+const findCy = (cy: string) =>
+	waitFor(() => {
+		const el = document.querySelector<HTMLElement>(`[data-cy="${cy}"]`);
+		expect(el).not.toBeNull();
+		return el as HTMLElement;
+	});
+
+describe('CalendarPage — deleting or moving the pause (Frank, prototype v16)', () => {
+	it('offers "Pause löschen" on Delete and deletes it for this day, with undo', async () => {
+		const onSaveDayException = vi.fn(() => Promise.resolve());
+		const onDeleteDayException = vi.fn(() => Promise.resolve());
+		page({ onSaveDayException, onDeleteDayException });
+		fireEvent.keyDown(await grip('pauseStart'), { key: 'Delete' });
+		const menu = await findCy('calendar-menu-pause');
+		expect(menu.textContent).toContain(
+			'calendar.grip.pauseTitle {"start":"12:00","end":"13:00"}'
+		);
+		await act(async () => {
+			fireEvent.click(await findCy('calendar-pause-delete'));
+		});
+		expect(onSaveDayException).toHaveBeenCalledWith(MONDAY, [
+			{ start: '08:00', end: '16:00' }
+		]);
+		expect(document.body.textContent).toContain(
+			'calendar.grip.pauseDeletedDay'
+		);
+		await act(async () => {
+			fireEvent.click(await screen.findByTestId('calendar-undo'));
+		});
+		expect(onDeleteDayException).toHaveBeenCalledWith(MONDAY);
+	});
+
+	it('moves the whole pause, same length, for every Monday', async () => {
+		const onSaveWorkingHours = vi.fn(() => Promise.resolve());
+		page({ onSaveWorkingHours });
+		// Pulled onto the pause end at 13:00: the pause would start there.
+		fireEvent.keyDown(await grip('pauseStart'), { key: 'Backspace' });
+		const move = await findCy('calendar-pause-move');
+		expect(move.textContent).toContain(
+			'calendar.grip.pauseMove {"start":"13:00","end":"14:00"}'
+		);
+		fireEvent.click(await findCy('calendar-pause-scope-week'));
+		await act(async () => {
+			fireEvent.click(await findCy('calendar-pause-move'));
+		});
+		expect(onSaveWorkingHours).toHaveBeenCalledWith(
+			[
+				{ weekday: 1, start: '08:00', end: '13:00' },
+				{ weekday: 1, start: '14:00', end: '16:00' }
+			],
+			null
+		);
+	});
+});
+
+describe('CalendarWorkGrip — a pause grip pulled past the other one', () => {
+	const geometry = {
+		top: 0,
+		left: 0,
+		width: 100,
+		height: 1440,
+		firstMinute: 0,
+		lastMinute: 1440
+	};
+
+	it('says "löschen oder verschieben" while dragging and reports the drop', () => {
+		const onChange = vi.fn();
+		render(
+			<CalendarWorkGrip
+				edge="pauseStart"
+				day={new Date(2026, 10, 16)}
+				time="12:00"
+				windows={[
+					{ start: '08:00', end: '12:00' },
+					{ start: '13:00', end: '16:00' }
+				]}
+				measure={() => geometry}
+				onChange={onChange}
+			/>
+		);
+		const el = document.querySelector('.calendarGrip') as HTMLElement;
+		// One pixel a minute: 13:30 is past the pause end.
+		fireEvent.pointerDown(el, { button: 0, clientY: 720 });
+		fireEvent.pointerMove(el, { clientY: 810 });
+		expect(
+			document.querySelector('[data-cy="calendar-grip-ghost"]')
+				?.textContent
+		).toBe('calendar.grip.pauseCrossed');
+		fireEvent.pointerUp(el, { clientY: 810 });
+		expect(onChange).toHaveBeenCalledWith(
+			expect.objectContaining({
+				edge: 'pauseStart',
+				from: '12:00',
+				to: '13:30'
+			}),
+			expect.anything()
+		);
 	});
 });

@@ -7118,6 +7118,18 @@
 			"tooMany": "Working hours hold at most {{max}} time windows a week; this change was not saved."
 		},
 		"grip": {
+			"pauseMovedWeek": "Break {{weekdays}} now {{start}}–{{end}}.",
+			"pauseMovedDay": "Break on {{date}} now {{start}}–{{end}}.",
+			"pauseDeletedWeek": "Break {{weekdays}} deleted.",
+			"pauseDeletedDay": "Break on {{date}} deleted.",
+			"pauseScope": "Applies",
+			"pauseMoveHint": "same length",
+			"pauseMove": "Move the break to {{start}}–{{end}}",
+			"pauseDelete": "Delete the break",
+			"pauseTitle": "Break {{start}}–{{end}}",
+			"pauseMenu": "Change the break",
+			"pauseLabel": "Move the {{what}} on {{date}}, now {{time}}. Arrow keys change it by 15 minutes, Delete removes or moves the break.",
+			"pauseCrossed": "Delete or move the break …",
 			"ghostPauseEnd": "Break until {{time}}",
 			"ghostPauseStart": "Break from {{time}}",
 			"pauseEnd": "End of the break",

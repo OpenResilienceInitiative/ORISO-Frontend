@@ -7193,6 +7193,18 @@
 			"tooMany": "Die Arbeitszeit hat höchstens {{max}} Zeitfenster pro Woche; diese Änderung ist nicht gespeichert."
 		},
 		"grip": {
+			"pauseMovedWeek": "Pause {{weekdays}} jetzt {{start}}–{{end}}.",
+			"pauseMovedDay": "Pause am {{date}} jetzt {{start}}–{{end}}.",
+			"pauseDeletedWeek": "Pause {{weekdays}} gelöscht.",
+			"pauseDeletedDay": "Pause am {{date}} gelöscht.",
+			"pauseScope": "Gilt",
+			"pauseMoveHint": "gleiche Länge",
+			"pauseMove": "Pause verschieben auf {{start}}–{{end}}",
+			"pauseDelete": "Pause löschen",
+			"pauseTitle": "Pause {{start}}–{{end}}",
+			"pauseMenu": "Pause ändern",
+			"pauseLabel": "{{what}} am {{date}} verschieben, jetzt {{time}}. Pfeiltasten ändern um 15 Minuten, Entf löscht oder verschiebt die Pause.",
+			"pauseCrossed": "Pause löschen oder verschieben …",
 			"ghostPauseEnd": "Pause bis {{time}}",
 			"ghostPauseStart": "Pause ab {{time}}",
 			"pauseEnd": "Pausenende",

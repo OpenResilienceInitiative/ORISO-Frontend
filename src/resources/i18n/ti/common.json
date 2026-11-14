@@ -7170,6 +7170,18 @@
 			"tooMany": "ናይ ስራሕ ሰዓታት ኣብ ሰሙን ልዕሊ {{max}} ግዜታት ክሕዝ ኣይክእልን፣ እዚ ለውጢ ኣይተዓቀበን።"
 		},
 		"grip": {
+			"pauseMovedWeek": "ዕረፍቲ {{weekdays}} ሕጂ {{start}}–{{end}}።",
+			"pauseMovedDay": "ዕረፍቲ ብ{{date}} ሕጂ {{start}}–{{end}}።",
+			"pauseDeletedWeek": "ዕረፍቲ {{weekdays}} ተሰሪዙ።",
+			"pauseDeletedDay": "ዕረፍቲ ብ{{date}} ተሰሪዙ።",
+			"pauseScope": "ይምልከት",
+			"pauseMoveHint": "ተመሳሳሊ ንውሓት",
+			"pauseMove": "ዕረፍቲ ናብ {{start}}–{{end}} ኣግዕዝ",
+			"pauseDelete": "ዕረፍቲ ሰርዝ",
+			"pauseTitle": "ዕረፍቲ {{start}}–{{end}}",
+			"pauseMenu": "ዕረፍቲ ቀይር",
+			"pauseLabel": "{{what}} ብ{{date}} ኣግዕዝ፡ ሕጂ {{time}}። መፍትሕ ምልክታት ብ15 ደቒቕ ይቕይሩ፡ Delete ዕረፍቲ ይሰርዝ ወይ የግዕዝ።",
+			"pauseCrossed": "ዕረፍቲ ሰርዝ ወይ ኣግዕዝ …",
 			"ghostPauseEnd": "ዕረፍቲ ክሳብ {{time}}",
 			"ghostPauseStart": "ዕረፍቲ ካብ {{time}}",
 			"pauseEnd": "መወዳእታ ዕረፍቲ",

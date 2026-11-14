@@ -7203,6 +7203,18 @@
 			"tooMany": "Les horaires comptent au plus {{max}} plages par semaine ; cette modification n’a pas été enregistrée."
 		},
 		"grip": {
+			"pauseMovedWeek": "Pause {{weekdays}} désormais {{start}}–{{end}}.",
+			"pauseMovedDay": "Pause du {{date}} désormais {{start}}–{{end}}.",
+			"pauseDeletedWeek": "Pause {{weekdays}} supprimée.",
+			"pauseDeletedDay": "Pause du {{date}} supprimée.",
+			"pauseScope": "S’applique",
+			"pauseMoveHint": "même durée",
+			"pauseMove": "Déplacer la pause à {{start}}–{{end}}",
+			"pauseDelete": "Supprimer la pause",
+			"pauseTitle": "Pause {{start}}–{{end}}",
+			"pauseMenu": "Modifier la pause",
+			"pauseLabel": "Déplacer {{what}} le {{date}}, actuellement {{time}}. Les flèches modifient de 15 minutes, Suppr supprime ou déplace la pause.",
+			"pauseCrossed": "Supprimer ou déplacer la pause …",
 			"ghostPauseEnd": "Pause jusqu’à {{time}}",
 			"ghostPauseStart": "Pause dès {{time}}",
 			"pauseEnd": "Fin de la pause",

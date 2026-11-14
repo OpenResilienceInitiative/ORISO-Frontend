@@ -54,7 +54,11 @@ import {
 import { useEntryLabel, useRangeFormat } from './useEntryLabel';
 import type { EdgeChoice } from './calendarPreferences';
 import { calendarLocale } from './calendarLocale';
-import { edgeLabelKey, type WorkEdge } from './calendarWorkingHours';
+import {
+	edgeLabelKey,
+	type TimeWindow,
+	type WorkEdge
+} from './calendarWorkingHours';
 
 /** What a free range becomes: an appointment kind or a blocker. */
 export type SlotChoice = AppointmentKind | 'blocker';
@@ -731,6 +735,108 @@ export const EdgeMenuContent = ({
 				description={t('calendar.grip.rememberHint')}
 				onClick={() => onRemember(!remember)}
 				data-cy="calendar-edge-remember"
+			/>
+		</>
+	);
+};
+
+/* ------------------------------------------------------------------ */
+/* A pause grip pulled onto the other one                               */
+/* ------------------------------------------------------------------ */
+
+export type PauseAction = 'delete' | 'move';
+
+export interface PauseMenuContentProps {
+	day: Date;
+	/** The pause now. */
+	pause: TimeWindow;
+	/** Where "verschieben" puts it; none when it cannot move. */
+	movedTo: TimeWindow | null;
+	scope: EdgeChoice;
+	onScope: (scope: EdgeChoice) => void;
+	onChoose: (action: PauseAction) => void;
+}
+
+/**
+ * "Pause löschen" or "Pause verschieben auf …", for this day or every
+ * such weekday (Frank, prototype v16).
+ */
+export const PauseMenuContent = ({
+	day,
+	pause,
+	movedTo,
+	scope,
+	onScope,
+	onChoose
+}: PauseMenuContentProps) => {
+	const { t, i18n } = useTranslation();
+	const locale = calendarLocale(i18n.language);
+	const short = new Intl.DateTimeFormat(locale, {
+		weekday: 'short',
+		day: 'numeric',
+		month: 'numeric'
+	}).format(day);
+	const long = new Intl.DateTimeFormat(locale, {
+		weekday: 'long',
+		day: 'numeric',
+		month: 'long',
+		year: 'numeric'
+	}).format(day);
+	return (
+		<>
+			<ChatMenuDropdownHeader
+				title={t('calendar.grip.pauseTitle', {
+					start: pause.start,
+					end: pause.end
+				})}
+				subtitle={short}
+				titleAs="p"
+			/>
+			<ChatMenuDropdownItem
+				role="menuitem"
+				icon={<DeleteOutlineIcon fontSize="small" />}
+				title={t('calendar.grip.pauseDelete')}
+				onClick={() => onChoose('delete')}
+				data-cy="calendar-pause-delete"
+			/>
+			{movedTo && (
+				<ChatMenuDropdownItem
+					role="menuitem"
+					icon={<ScheduleOutlinedIcon fontSize="small" />}
+					title={t('calendar.grip.pauseMove', {
+						start: movedTo.start,
+						end: movedTo.end
+					})}
+					description={t('calendar.grip.pauseMoveHint')}
+					onClick={() => onChoose('move')}
+					data-cy="calendar-pause-move"
+				/>
+			)}
+			<ChatMenuDropdownDivider />
+			<ChatMenuDropdownGroupLabel>
+				{t('calendar.grip.pauseScope')}
+			</ChatMenuDropdownGroupLabel>
+			<ChatMenuDropdownItem
+				role="menuitemradio"
+				aria-checked={scope === 'day'}
+				active={scope === 'day'}
+				icon={<Check on={scope === 'day'} />}
+				title={t('calendar.grip.onlyThisDay')}
+				description={long}
+				onClick={() => onScope('day')}
+				data-cy="calendar-pause-scope-day"
+			/>
+			<ChatMenuDropdownItem
+				role="menuitemradio"
+				aria-checked={scope === 'week'}
+				active={scope === 'week'}
+				icon={<Check on={scope === 'week'} />}
+				title={t('calendar.grip.always', {
+					weekdays: t(`calendar.grip.weekdays.${day.getDay()}`)
+				})}
+				description={t('calendar.grip.alwaysHint')}
+				onClick={() => onScope('week')}
+				data-cy="calendar-pause-scope-week"
 			/>
 		</>
 	);

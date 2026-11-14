@@ -373,6 +373,73 @@ export const clampEdge = (
 };
 
 /**
+ * Where a pause grip may be dragged: anywhere inside the working time. Onto
+ * or past the other pause grip, it asks to delete or move the pause
+ * (Frank, prototype v16), instead of stopping a quarter hour short.
+ */
+export const clampPauseDrag = (windows: TimeWindow[], minutes: number) => {
+	const snapped = Math.round(minutes / EDGE_STEP_MINUTES) * EDGE_STEP_MINUTES;
+	if (windows.length === 0) return snapped;
+	const low = minutesOf(windows[0].start) + EDGE_STEP_MINUTES;
+	const high = minutesOf(windows[windows.length - 1].end) - EDGE_STEP_MINUTES;
+	return Math.max(low, Math.min(high, snapped));
+};
+
+/** One pause grip pulled onto or past the other. */
+export const pauseCrossed = (
+	windows: TimeWindow[],
+	edge: WorkEdge,
+	time: string
+) => {
+	const pause = pauseOf(windows);
+	if (!pause || !isPauseEdge(edge)) return false;
+	const at = minutesOf(time);
+	return edge === 'pauseStart'
+		? at > minutesOf(pause.end) - MIN_PAUSE_MINUTES
+		: at < minutesOf(pause.start) + MIN_PAUSE_MINUTES;
+};
+
+/**
+ * The pause moved whole to where its grip was dropped: same length, inside
+ * the working time. None when it does not fit or would not move.
+ */
+export const pauseMovedTo = (
+	windows: TimeWindow[],
+	edge: WorkEdge,
+	time: string
+): TimeWindow | null => {
+	const pause = pauseOf(windows);
+	if (!pause) return null;
+	const length = minutesOf(pause.end) - minutesOf(pause.start);
+	const low = minutesOf(windows[0].start) + EDGE_STEP_MINUTES;
+	const high = minutesOf(windows[1].end) - EDGE_STEP_MINUTES - length;
+	if (high < low) return null;
+	const wanted =
+		edge === 'pauseStart' ? minutesOf(time) : minutesOf(time) - length;
+	const from = Math.max(low, Math.min(high, wanted));
+	if (from === minutesOf(pause.start)) return null;
+	return { start: timeOfMinutes(from), end: timeOfMinutes(from + length) };
+};
+
+/** The day with its pause taken out: one window. */
+export const withoutPause = (windows: TimeWindow[]): TimeWindow[] =>
+	pauseOf(windows)
+		? [{ start: windows[0].start, end: windows[1].end }]
+		: windows;
+
+/** The day with its pause at `pause`. */
+export const withPauseAt = (
+	windows: TimeWindow[],
+	pause: TimeWindow
+): TimeWindow[] =>
+	windows.length === 0
+		? windows
+		: [
+				{ start: windows[0].start, end: pause.start },
+				{ start: pause.end, end: windows[windows.length - 1].end }
+			];
+
+/**
  * The windows with work starting (or ending) at `time`. A break inside the
  * day stays; windows the new edge passes drop out.
  */

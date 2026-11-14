@@ -7226,6 +7226,18 @@
 			"tooMany": "В рабочем времени не больше {{max}} интервалов в неделю, это изменение не сохранено."
 		},
 		"grip": {
+			"pauseMovedWeek": "Перерыв {{weekdays}} теперь {{start}}–{{end}}.",
+			"pauseMovedDay": "Перерыв {{date}} теперь {{start}}–{{end}}.",
+			"pauseDeletedWeek": "Перерыв {{weekdays}} удалён.",
+			"pauseDeletedDay": "Перерыв {{date}} удалён.",
+			"pauseScope": "Действует",
+			"pauseMoveHint": "та же длительность",
+			"pauseMove": "Перенести перерыв на {{start}}–{{end}}",
+			"pauseDelete": "Удалить перерыв",
+			"pauseTitle": "Перерыв {{start}}–{{end}}",
+			"pauseMenu": "Изменить перерыв",
+			"pauseLabel": "Перенести «{{what}}» {{date}}, сейчас {{time}}. Стрелки меняют на 15 минут, Delete удаляет или переносит перерыв.",
+			"pauseCrossed": "Удалить или перенести перерыв …",
 			"ghostPauseEnd": "Перерыв до {{time}}",
 			"ghostPauseStart": "Перерыв с {{time}}",
 			"pauseEnd": "Конец перерыва",

@@ -16,8 +16,12 @@ import { useTranslation } from 'react-i18next';
 import {
 	EDGE_STEP_MINUTES,
 	clampEdge,
+	clampPauseDrag,
 	edgeLabelKey,
+	edgeTime,
+	isPauseEdge,
 	minutesOf,
+	pauseCrossed,
 	timeOfMinutes,
 	type TimeWindow,
 	type WorkEdge
@@ -114,14 +118,15 @@ export const CalendarWorkGrip = ({
 				const raw =
 					geometry.firstMinute +
 					((clientY - geometry.top) / geometry.height) * span;
-				return clampEdge(
-					w,
-					e,
-					Math.max(
-						geometry.firstMinute,
-						Math.min(geometry.lastMinute, raw)
-					)
+				const inGrid = Math.max(
+					geometry.firstMinute,
+					Math.min(geometry.lastMinute, raw)
 				);
+				// A pause grip may go onto or past the other one: that asks
+				// to delete or move the pause.
+				return isPauseEdge(e)
+					? clampPauseDrag(w, inGrid)
+					: clampEdge(w, e, inGrid);
 			};
 			let minutes = minutesOf(latest.current.time);
 			try {
@@ -170,6 +175,25 @@ export const CalendarWorkGrip = ({
 	}, []);
 
 	const keyDown = (event: React.KeyboardEvent<HTMLButtonElement>) => {
+		// Delete on a pause grip: as if pulled onto the other one.
+		if (
+			isPauseEdge(edge) &&
+			(event.key === 'Delete' || event.key === 'Backspace')
+		) {
+			const other = edgeTime(
+				windows,
+				edge === 'pauseStart' ? 'pauseEnd' : 'pauseStart'
+			);
+			if (!other) return;
+			event.preventDefault();
+			event.stopPropagation();
+			const rect = event.currentTarget.getBoundingClientRect();
+			onChange(
+				{ edge, day, from: time, to: other },
+				{ x: rect.right + 8, y: rect.top }
+			);
+			return;
+		}
 		if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') return;
 		event.preventDefault();
 		event.stopPropagation();
@@ -216,7 +240,12 @@ export const CalendarWorkGrip = ({
 					.filter(Boolean)
 					.join(' ')}
 				style={style}
-				aria-label={t('calendar.grip.label', { what, date, time })}
+				aria-label={t(
+					isPauseEdge(edge)
+						? 'calendar.grip.pauseLabel'
+						: 'calendar.grip.label',
+					{ what, date, time }
+				)}
 				title={
 					exception
 						? t('calendar.grip.titleException', { what, time })
@@ -241,7 +270,9 @@ export const CalendarWorkGrip = ({
 							className="calendarGrip__ghostLabel"
 							aria-hidden="true"
 						>
-							{t(GHOST_KEY[edge], { time: ghostTime })}
+							{pauseCrossed(windows, edge, ghostTime)
+								? t('calendar.grip.pauseCrossed')
+								: t(GHOST_KEY[edge], { time: ghostTime })}
 						</span>
 					</div>,
 					document.body
