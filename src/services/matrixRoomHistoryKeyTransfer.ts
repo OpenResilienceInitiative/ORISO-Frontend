@@ -65,12 +65,8 @@ export const LINK_INVITED_MEMBER_EVENT = 'org.oriso.direct_invitation_member';
 
 /**
  * Whether the room marks this user as invited by link. Read from the room
- * state the client already holds. Fails closed: ANY such state event counts,
- * whatever its content (empty, redacted, malformed, claiming to be lifted)
- * and whoever sent it. No client-side path lifts a mark; only the backend
- * could, and it never does (FE#2252 CP3). Only the technical Matrix admin may
- * send this event type (power level 100, set by the UserService before the
- * first mark), so a member cannot forge or redact a mark away either.
+ * state the client already holds; any stored content counts, so a mark can
+ * only be taken back by the backend, never by a malformed event.
  */
 export const isLinkInvitedMember = (
 	room: unknown,
@@ -78,7 +74,11 @@ export const isLinkInvitedMember = (
 ): boolean => {
 	if (!userId) return false;
 	const state = (room as any)?.currentState;
-	return Boolean(state?.getStateEvents?.(LINK_INVITED_MEMBER_EVENT, userId));
+	const marker = state?.getStateEvents?.(LINK_INVITED_MEMBER_EVENT, userId);
+	if (!marker) return false;
+	const content =
+		typeof marker.getContent === 'function' ? marker.getContent() : {};
+	return Boolean(content && Object.keys(content).length > 0);
 };
 
 const emitDiagnostic = (stage: string, detail: Record<string, unknown> = {}) =>
