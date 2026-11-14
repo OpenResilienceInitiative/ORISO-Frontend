@@ -1640,6 +1640,17 @@
 	overscroll-behavior-x: contain;
 }
 
+// No visible scrollbar in the time grid and "Nebeneinander" (Frank,
+// prototype v15): wheel, trackpad, touch and keys still scroll.
+.calendarView *,
+.calendarSplit__scroll {
+	scrollbar-width: none;
+
+	&::-webkit-scrollbar {
+		display: none;
+	}
+}
+
 .calendarSplit__column {
 	display: flex;
 	flex: 1 0 auto;

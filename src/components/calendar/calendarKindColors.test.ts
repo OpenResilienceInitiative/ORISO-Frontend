@@ -86,3 +86,26 @@ describe('calendar kind colours are neutral (Frank, prototype v15)', () => {
 	});
 });
 
+describe('calendar scrollbars (Frank, prototype v15)', () => {
+	/** The selectors of every rule that sets `property: value`. */
+	const selectorsWith = (property: string, value: string) =>
+		Array.from(css.matchAll(/([^{}]+)\{([^{}]*)\}/g))
+			.filter(([, , body]) =>
+				new RegExp(`${property}\\s*:\\s*${value}`).test(body)
+			)
+			.flatMap(([, selectors]) => selectors.split(',').map((x) => x.trim()));
+
+	it('hides the scrollbar of the time grid and the split view, keeping them scrollable', () => {
+		const hidden = selectorsWith('scrollbar-width', 'none');
+		expect(hidden).toContain('.calendarView *');
+		expect(hidden).toContain('.calendarSplit__scroll');
+		const webkit = selectorsWith('display', 'none');
+		expect(webkit).toContain('.calendarView *::-webkit-scrollbar');
+		expect(webkit).toContain('.calendarSplit__scroll::-webkit-scrollbar');
+		// Scrolling itself stays on.
+		expect(
+			selectorsWith('overflow', 'auto').includes('.calendarSplit__scroll')
+		).toBe(true);
+	});
+});
+
