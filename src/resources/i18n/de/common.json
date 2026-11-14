@@ -6897,7 +6897,10 @@
 			"day": "Tag",
 			"week": "Woche",
 			"month": "Monat",
-			"list": "Liste"
+			"list": "Liste",
+			"threeDays": "3 Tage",
+			"workWeek": "Arbeitswoche",
+			"split": "Nebeneinander"
 		},
 		"upcoming": "Als Nächstes",
 		"upcomingEmpty": "Keine anstehenden Termine",
@@ -7005,7 +7008,10 @@
 			"blocker": "Sperrzeiten"
 		},
 		"slotMenu": {
-			"label": "Eintragen"
+			"label": "Eintragen",
+			"as": "Eintragen als",
+			"blockerNow": "sofort eingetragen",
+			"outsideHours": "Außerhalb Ihrer Arbeitszeit."
 		},
 		"blocker": {
 			"menuItem": "Sperrzeit",
@@ -7023,6 +7029,138 @@
 			"created_one": "Sperrzeit eingetragen: {{date}}"
 		},
 		"saveFailed": "Das hat nicht geklappt. Bitte versuchen Sie es noch einmal.",
-		"blockerRemoved": "Sperrzeit entfernt."
+		"blockerRemoved": "Sperrzeit entfernt.",
+		"allDay": "ganztägig",
+		"entryMenu": {
+			"label": "Aktionen für {{title}}",
+			"join": "Beitreten",
+			"move": "Verschieben …",
+			"propose": "Verschiebung vorschlagen …",
+			"cancel": "Absagen",
+			"remove": "Entfernen",
+			"groupHint": "Termin der Gruppe. Ändern über die Gruppe.",
+			"proposeHint": "{{name}} muss bestätigen. Bis dahin bleibt der Termin, wo er ist.",
+			"date": "Tag",
+			"from": "Von",
+			"to": "Bis",
+			"saveMove": "Verschieben",
+			"sendProposal": "Vorschlag senden",
+			"back": "Zurück",
+			"conflicts": "Überschneidet sich mit einem anderen Eintrag.",
+			"invalid": "Das Ende liegt vor dem Beginn."
+		},
+		"fullscreen": "Vollbild",
+		"fullscreenExit": "Vollbild beenden (Esc)",
+		"jump": {
+			"label": "Zu einem Tag springen",
+			"today": "Heute",
+			"tomorrow": "Morgen",
+			"nextMonday": "Nächster Montag",
+			"inTwoWeeks": "In zwei Wochen",
+			"date": "Datum",
+			"go": "Anzeigen"
+		},
+		"kindsMenu": {
+			"label": "Was anzeigen",
+			"hint": "Abgewählte Arten blenden wir im Kalender und in der Liste aus.",
+			"all": "Alles anzeigen",
+			"customised": "Einige Arten sind ausgeblendet."
+		},
+		"monthMenu": {
+			"label": "Tag eintragen",
+			"allDay": "Ganztägig",
+			"allDays": "Alle {{days}} Tage ganztägig",
+			"withTime": "Mit Uhrzeit …",
+			"appointment": "Termin eintragen …",
+			"appointmentHint": "öffnet den Tag, dort die Uhrzeit ziehen",
+			"range": "{{from}} – {{to}} ({{days}} Tage)"
+		},
+		"peek": {
+			"hint": "Klick öffnet die Aktionen"
+		},
+		"people": {
+			"bar": "Personen im Kalender",
+			"besides": "Kalender daneben",
+			"hint": "Zeigen hebt hervor, Klick blendet aus",
+			"label": "Kalender anzeigen",
+			"me": "Ich",
+			"more": "Weitere …"
+		},
+		"proposal": {
+			"label": "Verschiebung",
+			"waiting": "wartet auf Bestätigung",
+			"waitingFor": "wartet auf {{name}}",
+			"title": "Ihr Vorschlag für „{{title}}“",
+			"hint": "Wartet auf {{name}}. Bis dahin bleibt der Termin, wo er ist.",
+			"withdraw": "Zurückziehen",
+			"sent": "Vorschlag gesendet: {{date}}. {{name}} muss bestätigen.",
+			"withdrawn": "Vorschlag zurückgezogen.",
+			"open": "Offene Anfragen",
+			"proposed": "Vorgeschlagen: {{date}}"
+		},
+		"quick": {
+			"title": "Schnell eintragen",
+			"placeholder": "z. B. Do 14 Uhr Video",
+			"hint": "Tippen Sie Tag und Uhrzeit, wählen Sie die Art.",
+			"freeHours": "Nächste freie Stunde",
+			"missing": "Noch offen: {{list}}",
+			"gaps": {
+				"when": "Tag und Uhrzeit",
+				"kind": "Art",
+				"who": "Gespräch"
+			},
+			"save": "Eintragen",
+			"more": "Mehr Angaben …",
+			"kind": "Art",
+			"who": "Mit wem"
+		},
+		"search": {
+			"placeholder": "Termine suchen",
+			"clear": "Suche leeren",
+			"empty": "Nichts gefunden.",
+			"results": "Suchergebnisse"
+		},
+		"settings": {
+			"label": "Kalender-Einstellungen",
+			"workingHours": "Arbeitszeit",
+			"switcher": "Ansicht wählen",
+			"switcherMenu": "als Menü",
+			"switcherDigits": "als Schalter",
+			"switcherHint": "Wird für Sie gespeichert.",
+			"sync": "Mit Outlook oder Google verbinden"
+		},
+		"side": {
+			"label": "Termine: Suche und Listen"
+		},
+		"split": {
+			"empty": "Blenden Sie Kalender von Kolleg:innen ein, um Ihren Tag daneben zu sehen.",
+			"free": "frei für alle",
+			"label": "Ihr Tag neben Kolleg:innen",
+			"oneDay": "1 Tag",
+			"range": "Zeitraum nebeneinander",
+			"threeDays": "3 Tage"
+		},
+		"viewMenu": "Ansicht: {{view}}",
+		"when": {
+			"running": "läuft",
+			"inMinutes": "in {{count}} Min.",
+			"today": "heute {{time}}",
+			"tomorrow": "morgen {{time}}",
+			"weekday": "{{day}} {{time}}"
+		},
+		"workingHours": {
+			"title": "Arbeitszeit festlegen",
+			"description": "Außerhalb dieser Zeiten ist Ihr Kalender schattiert. Termine bleiben trotzdem möglich.",
+			"none": "Keine Arbeitszeit festgelegt",
+			"set": "Festlegen",
+			"change": "Ändern",
+			"summary": "Arbeitszeit {{hours}}",
+			"save": "Speichern",
+			"from": "Beginn am {{day}}",
+			"to": "Ende am {{day}}",
+			"invalid": "Bei einem Tag liegt das Ende vor dem Beginn.",
+			"saved": "Arbeitszeit gespeichert: {{hours}}.",
+			"cleared": "Arbeitszeit entfernt."
+		}
 	}
 }

@@ -6822,7 +6822,10 @@
 			"day": "Day",
 			"week": "Week",
 			"month": "Month",
-			"list": "List"
+			"list": "List",
+			"threeDays": "3 days",
+			"workWeek": "Work week",
+			"split": "Side by side"
 		},
 		"upcoming": "Up next",
 		"upcomingEmpty": "No upcoming appointments",
@@ -6930,7 +6933,10 @@
 			"blocker": "Blocked times"
 		},
 		"slotMenu": {
-			"label": "Add"
+			"label": "Add",
+			"as": "Add as",
+			"blockerNow": "added at once",
+			"outsideHours": "Outside your working hours."
 		},
 		"blocker": {
 			"menuItem": "Blocked time",
@@ -6948,6 +6954,138 @@
 			"created_one": "Time blocked: {{date}}"
 		},
 		"saveFailed": "That did not work. Please try again.",
-		"blockerRemoved": "Blocked time removed."
+		"blockerRemoved": "Blocked time removed.",
+		"allDay": "all day",
+		"entryMenu": {
+			"label": "Actions for {{title}}",
+			"join": "Join",
+			"move": "Move …",
+			"propose": "Propose a new time …",
+			"cancel": "Cancel appointment",
+			"remove": "Remove",
+			"groupHint": "A group date. Change it in the group.",
+			"proposeHint": "{{name}} has to confirm. Until then the appointment stays where it is.",
+			"date": "Day",
+			"from": "From",
+			"to": "To",
+			"saveMove": "Move",
+			"sendProposal": "Send proposal",
+			"back": "Back",
+			"conflicts": "Overlaps with another entry.",
+			"invalid": "The end is before the start."
+		},
+		"fullscreen": "Full screen",
+		"fullscreenExit": "Exit full screen (Esc)",
+		"jump": {
+			"label": "Go to a day",
+			"today": "Today",
+			"tomorrow": "Tomorrow",
+			"nextMonday": "Next Monday",
+			"inTwoWeeks": "In two weeks",
+			"date": "Date",
+			"go": "Show"
+		},
+		"kindsMenu": {
+			"label": "What to show",
+			"hint": "Kinds you switch off are hidden in the calendar and in the list.",
+			"all": "Show everything",
+			"customised": "Some kinds are hidden."
+		},
+		"monthMenu": {
+			"label": "Enter for this day",
+			"allDay": "All day",
+			"allDays": "All {{days}} days, all day",
+			"withTime": "With a time …",
+			"appointment": "Add appointment …",
+			"appointmentHint": "opens the day; drag the time there",
+			"range": "{{from}} – {{to}} ({{days}} days)"
+		},
+		"peek": {
+			"hint": "Click opens the actions"
+		},
+		"people": {
+			"bar": "People in the calendar",
+			"besides": "Calendars alongside",
+			"hint": "Pointing highlights, a click hides",
+			"label": "Show calendars",
+			"me": "Me",
+			"more": "More …"
+		},
+		"proposal": {
+			"label": "Move",
+			"waiting": "awaiting confirmation",
+			"waitingFor": "waiting for {{name}}",
+			"title": "Your proposal for “{{title}}”",
+			"hint": "Waiting for {{name}}. Until then the appointment stays where it is.",
+			"withdraw": "Withdraw",
+			"sent": "Proposal sent: {{date}}. {{name}} has to confirm.",
+			"withdrawn": "Proposal withdrawn.",
+			"open": "Open requests",
+			"proposed": "Proposed: {{date}}"
+		},
+		"quick": {
+			"title": "Quick entry",
+			"placeholder": "e.g. Thu 2pm video",
+			"hint": "Type a day and time, pick the kind.",
+			"freeHours": "Next free hour",
+			"missing": "Still missing: {{list}}",
+			"gaps": {
+				"when": "day and time",
+				"kind": "kind",
+				"who": "conversation"
+			},
+			"save": "Add",
+			"more": "More details …",
+			"kind": "Kind",
+			"who": "With whom"
+		},
+		"search": {
+			"placeholder": "Search appointments",
+			"clear": "Clear search",
+			"empty": "Nothing found.",
+			"results": "Search results"
+		},
+		"settings": {
+			"label": "Calendar settings",
+			"workingHours": "Working hours",
+			"switcher": "Choose the view",
+			"switcherMenu": "as a menu",
+			"switcherDigits": "as buttons",
+			"switcherHint": "Saved for you.",
+			"sync": "Connect Outlook or Google"
+		},
+		"side": {
+			"label": "Appointments: search and lists"
+		},
+		"split": {
+			"empty": "Show colleagues' calendars to see your day next to theirs.",
+			"free": "free for everyone",
+			"label": "Your day next to colleagues",
+			"oneDay": "1 day",
+			"range": "Days side by side",
+			"threeDays": "3 days"
+		},
+		"viewMenu": "View: {{view}}",
+		"when": {
+			"running": "now",
+			"inMinutes": "in {{count}} min",
+			"today": "today {{time}}",
+			"tomorrow": "tomorrow {{time}}",
+			"weekday": "{{day}} {{time}}"
+		},
+		"workingHours": {
+			"title": "Set working hours",
+			"description": "Outside these hours your calendar is shaded. Appointments are still possible.",
+			"none": "No working hours set",
+			"set": "Set",
+			"change": "Change",
+			"summary": "Working hours {{hours}}",
+			"save": "Save",
+			"from": "Start on {{day}}",
+			"to": "End on {{day}}",
+			"invalid": "On one day the end is before the start.",
+			"saved": "Working hours saved: {{hours}}.",
+			"cleared": "Working hours removed."
+		}
 	}
 }

@@ -8,6 +8,8 @@ import type {
 	CalendarEntry,
 	Colleague
 } from './calendarModel';
+import type { MoveProposal } from './calendarActions';
+import type { WorkingHours } from './calendarWorkingHours';
 
 /** Monday 16 November 2026, 09:50 local time. */
 export const STORY_NOW = new Date(2026, 10, 16, 9, 50);
@@ -24,17 +26,57 @@ export const CONVERSATIONS: CalendarConversation[] = [
 	{ sessionId: 4404, username: 'helle_wolke' }
 ];
 
+const NORTH = 'Beratungsstelle Nord';
+const SOUTH = 'Beratungsstelle Süd';
+
 export const COLLEAGUES: Colleague[] = [
 	{
 		id: 'kaya',
 		displayName: 'A. Kaya',
-		agencyName: 'Beratungsstelle Nord',
+		agencyName: NORTH,
+		agencyShort: 'BS-N',
+		relation: 'sameAgency'
+	},
+	{
+		id: 'demir',
+		displayName: 'E. Demir',
+		agencyName: NORTH,
+		agencyShort: 'BS-N',
+		relation: 'sameAgency'
+	},
+	{
+		id: 'hoffmann',
+		displayName: 'K. Hoffmann',
+		agencyName: NORTH,
+		agencyShort: 'BS-N',
+		relation: 'sameAgency'
+	},
+	{
+		id: 'schulz',
+		displayName: 'S. Schulz',
+		agencyName: NORTH,
+		agencyShort: 'BS-N',
 		relation: 'sameAgency'
 	},
 	{
 		id: 'brandt',
 		displayName: 'J. Brandt',
-		agencyName: 'Beratungsstelle Süd',
+		agencyName: SOUTH,
+		agencyShort: 'BS-S',
+		relation: 'sameTenant'
+	},
+	{
+		id: 'meier',
+		displayName: 'L. Meier',
+		agencyName: SOUTH,
+		agencyShort: 'BS-S',
+		relation: 'sameTenant'
+	},
+	{
+		id: 'nowak',
+		displayName: 'P. Nowak',
+		agencyName: SOUTH,
+		agencyShort: 'BS-S',
 		relation: 'sameTenant'
 	},
 	{
@@ -44,6 +86,11 @@ export const COLLEAGUES: Colleague[] = [
 		relation: 'otherTenant'
 	}
 ];
+
+/** Monday to Friday, 08:00 to 18:00. */
+export const STORY_WORKING_HOURS: WorkingHours = [1, 2, 3, 4, 5].map(
+	(weekday) => ({ weekday, start: '08:00', end: '18:00' })
+);
 
 export const OWN_ENTRIES: CalendarEntry[] = [
 	{
@@ -104,6 +151,15 @@ export const OWN_ENTRIES: CalendarEntry[] = [
 		end: at(2, 10)
 	},
 	{ id: 'x1', type: 'busy', ownerId: ME, start: at(3, 13), end: at(3, 15) },
+	{
+		id: 'b2',
+		type: 'blocker',
+		ownerId: ME,
+		title: 'Fortbildung',
+		allDay: true,
+		start: at(3, 0),
+		end: at(4, 0)
+	},
 	{
 		id: 'a5',
 		type: 'appointment',
@@ -167,6 +223,66 @@ export const COLLEAGUE_ENTRIES: CalendarEntry[] = [
 		end: at(0, 14)
 	},
 	{
+		id: 'd1',
+		type: 'appointment',
+		kind: 'video',
+		ownerId: 'demir',
+		title: 'leise_robbe',
+		start: at(0, 9),
+		end: at(0, 10)
+	},
+	{
+		id: 'd2',
+		type: 'group',
+		ownerId: 'demir',
+		title: 'Teambesprechung Nord',
+		start: at(0, 15),
+		end: at(0, 16)
+	},
+	{
+		id: 'h1',
+		type: 'appointment',
+		kind: 'onsite',
+		ownerId: 'hoffmann',
+		title: 'wilde_hummel',
+		start: at(0, 12),
+		end: at(0, 13)
+	},
+	{
+		id: 'h2',
+		type: 'blocker',
+		ownerId: 'hoffmann',
+		start: at(0, 16),
+		end: at(0, 18)
+	},
+	{
+		id: 's1c',
+		type: 'appointment',
+		kind: 'phone',
+		ownerId: 'schulz',
+		title: 'bunte_meise',
+		start: at(0, 8),
+		end: at(0, 9)
+	},
+	{
+		id: 'm1',
+		type: 'appointment',
+		kind: 'chat',
+		ownerId: 'meier',
+		title: 'kleiner_otter',
+		start: at(0, 10, 30),
+		end: at(0, 11)
+	},
+	{
+		id: 'n1',
+		type: 'appointment',
+		kind: 'video',
+		ownerId: 'nowak',
+		title: 'sanfte_taube',
+		start: at(0, 14, 30),
+		end: at(0, 15, 30)
+	},
+	{
 		id: 'o1',
 		type: 'appointment',
 		kind: 'chat',
@@ -212,3 +328,8 @@ export const ASKER_ENTRIES: CalendarEntry[] = [
 
 export const FEED_URL =
 	'https://app.oriso.org/service/users/calendar/feed/9f3c2a7e5b1d4c8a.ics';
+
+/** A pending proposal: A. Kaya's video call on Monday, asked to move to 16:00. */
+export const STORY_PROPOSALS: MoveProposal[] = [
+	{ id: 'p1', entryId: 'k1', start: at(0, 16), end: at(0, 17) }
+];

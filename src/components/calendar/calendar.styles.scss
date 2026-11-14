@@ -1,6 +1,39 @@
-// Counsellor calendar (ADR-032, FE#1050). ORISO M3 tokens only: neutral
-// surfaces, red only for the primary action and the appointment that is about
-// to start. Kinds differ by icon, not by colour (Frank, 2026-11-14).
+// Counsellor calendar (ADR-032, FE#1050), round 2 after Frank's prototype
+// (2026-11-14). ORISO M3 tokens for surfaces, text and the primary action.
+// One colour per kind (video, phone, on-site, chat, group, blocked time):
+// the icon is tinted with it, colleague entries and proposals carry it as a
+// 4px stripe on the left. M3 has no role for these, so they are calendar
+// custom properties.
+
+// --- Kind colours, for the grid, the menus and the peek cards ---
+.calendarPage,
+.calendarView,
+.calendarSplit,
+.calendarPeek,
+.calendarPeekPopper,
+.calendarPeekTooltip,
+.calendarMenu__kind,
+.chatMenuDropdown {
+	--cal-kind-video: #2f5c9e;
+	--cal-kind-phone: #2c7a55;
+	--cal-kind-onsite: #9a5b00;
+	--cal-kind-chat: #6a4c9c;
+	--cal-kind-group: #00707a;
+	--cal-kind-blocker: var(--m3-secondary, #5f6365);
+	--cal-free: #e3f0e6;
+	--cal-free-line: #3f6b4b;
+}
+
+@each $kind in video, phone, onsite, chat, group, blocker {
+	.calEntry--k-#{$kind},
+	.calendarPeek--k-#{$kind},
+	.calendarSide__row--k-#{$kind},
+	.calendarSide__chip--k-#{$kind},
+	.calendarQuick__kind--k-#{$kind},
+	.calendarMenu__kind--#{$kind} {
+		--cal-kind: var(--cal-kind-#{$kind});
+	}
+}
 
 // --- FullCalendar classic theme, palette mapped to the ORISO scheme ---
 .calendarView {
@@ -22,7 +55,10 @@
 		var(--m3-primary, #a5000a) 8%,
 		transparent
 	);
-	--fc-classic-today: var(--m3-surface-container-low, #f6f3f3);
+
+	// Today is marked by the now line, not a fill: the fill is for the
+	// time outside the working hours.
+	--fc-classic-today: transparent;
 	--fc-classic-now: var(--m3-primary, #a5000a);
 	--fc-classic-background: var(--m3-surface-container-lowest, #ffffff);
 	--fc-classic-faint: var(--m3-surface-container-low, #f6f3f3);
@@ -33,86 +69,49 @@
 	--fc-classic-muted-foreground: var(--m3-on-surface-variant, #444748);
 	--fc-classic-border: var(--m3-outline-variant, #c4c7c8);
 	--fc-classic-strong-border: var(--m3-outline, #747878);
-
 	display: flex;
 	flex-direction: column;
-	gap: 12px;
 	height: 100%;
 	min-height: 0;
 	font-family: var(--oriso-body-font-family, #{$font-family-sans-serif});
 	color: var(--m3-on-surface, #1b1b1c);
-}
 
-.calendarView__toolbar {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	justify-content: space-between;
-	gap: 8px 16px;
-}
-
-.calendarView__nav,
-.calendarView__end {
-	display: flex;
-	align-items: center;
-	gap: 4px;
-}
-
-.calendarView__today {
-	height: 36px;
-	margin: 0 8px 0 4px;
-	padding: 0 16px;
-	border: 1px solid var(--m3-outline, #747878);
-	border-radius: 18px;
-	background: transparent;
-	color: var(--m3-on-surface, #1b1b1c);
-	font: inherit;
-	font-size: 14px;
-	font-weight: 500;
-	white-space: nowrap;
-	cursor: pointer;
-
-	&:hover {
-		background: var(--m3-hover-layer, rgba(27, 27, 28, 0.08));
-	}
-
-	&:focus-visible {
-		outline: 2px solid var(--m3-primary, #a5000a);
-		outline-offset: 2px;
+	> .fc,
+	> div:first-child {
+		flex: 1;
+		min-height: 0;
 	}
 }
 
-.calendarView__title {
-	margin: 0;
-	font-size: 20px;
-	font-weight: 500;
-	line-height: 28px;
-
-	.calendarView--compact & {
-		font-size: 16px;
-		line-height: 24px;
-	}
+// Outside the working hours: shaded, still clickable.
+.calendarView__offHours {
+	background: var(--m3-surface-container, #f0edee) !important;
 }
 
-.calendarView__grid {
-	flex: 1;
-	min-height: 480px;
+// "ganztägig" fits on one line of the time axis.
+.calendarView__allDayHeader {
+	font-size: 11px !important;
+	white-space: nowrap !important;
+}
 
-	.calendarView--compact & {
-		min-height: 420px;
-	}
+// FullCalendar writes the inner's min-height inline, so the frame around it
+// carries the one-entry height.
+.calendarView div:has(> .calendarView__allDayCell) {
+	min-height: 28px;
 }
 
 // --- One entry ---
-// Neutral grey pill with the kind icon, like the timeline (ADR-021).
 
 .calEntry {
+	--cal-kind: var(--cal-kind-video);
+
 	border: 1px solid transparent !important;
 	border-radius: 8px !important;
 	background: var(--m3-surface-container-highest, #dcdfe3) !important;
 	color: var(--m3-on-surface, #1b1b1c) !important;
 	cursor: pointer;
 	overflow: hidden;
+	transition: opacity 120ms ease-out;
 
 	&:focus-visible {
 		outline: 2px solid var(--m3-primary, #a5000a);
@@ -123,6 +122,11 @@
 	&--soon {
 		background: var(--m3-primary, #a5000a) !important;
 		color: var(--m3-on-primary, #ffffff) !important;
+
+		.calEntry__inner,
+		.calEntry__icon {
+			color: var(--m3-on-primary, #ffffff);
+		}
 	}
 
 	// Blocked time and imported busy time: hatched, no fill colour.
@@ -136,11 +140,32 @@
 		color: var(--m3-on-surface-variant, #444748) !important;
 	}
 
-	// A colleague's entry: outline only, so one's own day stays readable.
+	// A colleague's entry: white with the kind stripe, so one's own day
+	// stays readable.
 	&--colleague {
 		border-color: var(--m3-outline-variant, #c4c7c8) !important;
+		border-left: 4px solid var(--cal-kind) !important;
 		background: var(--m3-surface-container-lowest, #ffffff) !important;
 		color: var(--m3-on-surface-variant, #444748) !important;
+	}
+
+	// A move proposal: dashed at the proposed time until it is confirmed.
+	&--proposal {
+		border: 1px dashed var(--cal-kind) !important;
+		border-left: 4px solid var(--cal-kind) !important;
+		background: var(--m3-surface-container-lowest, #ffffff) !important;
+		color: var(--m3-on-surface-variant, #444748) !important;
+	}
+
+	// Pointer on a person or a kind: everything else steps back.
+	&--dimmed {
+		opacity: 0.22;
+	}
+
+	// Muted in the people bar: faded out and out of the way.
+	&--muted {
+		opacity: 0.12;
+		pointer-events: none;
 	}
 }
 
@@ -152,12 +177,23 @@
 	padding: 3px 6px;
 }
 
+.calEntry__initials {
+	flex: none;
+	padding: 0 4px;
+	border-radius: 4px;
+	background: var(--m3-surface-container-high, #eae7e8);
+	font-size: 10px;
+	font-weight: 600;
+	line-height: 16px;
+}
+
 .calEntry__icon {
 	display: inline-flex;
 	flex: none;
 	width: 16px;
 	height: 16px;
 	margin-top: 1px;
+	color: var(--cal-kind);
 
 	svg {
 		width: 16px;
@@ -190,7 +226,228 @@
 	white-space: nowrap;
 }
 
-// --- Page: the "Meine Termine" section ---
+.calEntry__waiting {
+	font-style: italic;
+}
+
+// The selection preview while dragging over free time.
+.calEntry--mirror {
+	border: 1px dashed var(--m3-primary, #a5000a) !important;
+	background: color-mix(
+		in srgb,
+		var(--m3-primary, #a5000a) 8%,
+		transparent
+	) !important;
+	color: var(--m3-on-surface, #1b1b1c) !important;
+}
+
+// --- Peek card (grid tooltip, "Als Nächstes") ---
+
+.calendarPeekPopper {
+	z-index: 1500;
+	pointer-events: none;
+}
+
+.calendarPeekTooltip {
+	max-width: none !important;
+	padding: 0 !important;
+	background: transparent !important;
+}
+
+.calendarPeek {
+	--cal-kind: var(--cal-kind-video);
+
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	box-sizing: border-box;
+	width: 260px;
+	padding: 12px;
+	border: 1px solid var(--m3-outline-variant, #c4c7c8);
+	border-radius: 12px;
+	background: var(--m3-surface-container-lowest, #ffffff);
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+	color: var(--m3-on-surface, #1b1b1c);
+	font-family: var(--oriso-body-font-family, #{$font-family-sans-serif});
+	font-size: 13px;
+	line-height: 18px;
+}
+
+.calendarPeek__tag {
+	display: inline-flex;
+	align-items: center;
+	align-self: flex-start;
+	gap: 4px;
+	padding: 2px 8px 2px 6px;
+	border-radius: 10px;
+	background: color-mix(in srgb, var(--cal-kind) 12%, transparent);
+	color: var(--cal-kind);
+	font-size: 12px;
+	font-weight: 600;
+}
+
+.calendarPeek__tagIcon {
+	display: inline-flex;
+
+	svg {
+		width: 14px;
+		height: 14px;
+	}
+
+	path {
+		fill: currentColor;
+	}
+}
+
+.calendarPeek__person {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-top: 4px;
+}
+
+.calendarPeek__avatar,
+.calendarSplit__avatar,
+.calendarStage__avatar,
+.calendarStage__personAvatar {
+	display: inline-flex;
+	flex: none;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
+	border-radius: 50%;
+	background: var(--m3-secondary-container, #dce3ec);
+	color: var(--m3-on-secondary-container, #1b1b1c);
+	font-size: 10px;
+	font-weight: 600;
+}
+
+.calendarPeek__name {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	min-width: 0;
+}
+
+.calendarPeek__agencyShort,
+.calendarSplit__agency,
+.calendarStage__agency {
+	padding: 0 6px;
+	border-radius: 8px;
+	background: var(--m3-surface-container-high, #eae7e8);
+	color: var(--m3-on-surface-variant, #444748);
+	font-size: 11px;
+	font-weight: 600;
+	line-height: 16px;
+}
+
+.calendarPeek__line {
+	color: var(--m3-on-surface-variant, #444748);
+
+	&--muted {
+		font-style: italic;
+	}
+}
+
+.calendarPeek__hint {
+	margin-top: 4px;
+	color: var(--m3-outline, #747878);
+	font-size: 12px;
+}
+
+// --- Menus: kind tint and the inline forms ---
+
+.calendarMenu__kind .chatMenuDropdown__itemIcon {
+	color: var(--cal-kind);
+
+	path {
+		fill: currentColor;
+	}
+}
+
+.calendarMenuForm {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 4px 8px 8px;
+}
+
+.calendarMenuForm__row {
+	display: flex;
+	gap: 8px;
+}
+
+.calendarMenuForm__field {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	gap: 2px;
+	min-width: 0;
+	color: var(--m3-on-surface-variant, #444748);
+	font-size: 12px;
+
+	input {
+		box-sizing: border-box;
+		width: 100%;
+		height: 36px;
+		padding: 0 8px;
+		border: 1px solid var(--m3-outline, #747878);
+		border-radius: 8px;
+		background: var(--m3-surface-container-lowest, #ffffff);
+		color: var(--m3-on-surface, #1b1b1c);
+		font: inherit;
+		font-size: 14px;
+
+		&:focus-visible {
+			outline: 2px solid var(--m3-primary, #a5000a);
+			outline-offset: 0;
+		}
+	}
+}
+
+.calendarMenuForm__actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 8px;
+}
+
+.calendarMenuForm__button {
+	height: 36px;
+	padding: 0 14px;
+	border: none;
+	border-radius: 18px;
+	background: transparent;
+	color: var(--m3-primary, #a5000a);
+	font: inherit;
+	font-size: 14px;
+	font-weight: 500;
+	cursor: pointer;
+
+	&:hover {
+		background: var(--oriso-menu-hover-surface, rgba(27, 27, 28, 0.08));
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--m3-primary, #a5000a);
+	}
+
+	&--primary {
+		background: var(--m3-primary, #a5000a);
+		color: var(--m3-on-primary, #ffffff);
+
+		&:hover {
+			background: var(--m3-primary-hover, #820006);
+		}
+	}
+
+	&:disabled {
+		opacity: 0.38;
+		cursor: default;
+	}
+}
+
+// --- Page: left column and stage, like "Gespräche" ---
 
 /* The route's slot in the app (Routing.tsx): the page fills the content
    column like a session stage card, with the same outer gap. */
@@ -203,66 +460,395 @@
 	padding: 12px 12px 12px 0;
 	overflow: auto;
 
-	@media (max-width: 899px) {
+	@media (width <= 899px) {
 		padding: 0;
 	}
 }
 
 .calendarPage {
 	display: flex;
-	flex-direction: column;
 	gap: 12px;
 	box-sizing: border-box;
 	height: 100%;
 	min-height: 0;
-	padding: 24px;
-	border-radius: 24px;
-	background: var(--m3-surface-container-lowest, #ffffff);
 	color: var(--m3-on-surface, #1b1b1c);
+	font-family: var(--oriso-body-font-family, #{$font-family-sans-serif});
 
 	&--compact {
-		padding: 16px 12px;
-		border-radius: 0;
+		flex-direction: column;
+		gap: 0;
+	}
+
+	// The calendar takes the whole window; Escape leaves.
+	&--fullscreen {
+		position: fixed;
+		z-index: 1200;
+		inset: 0;
+		padding: 12px;
+		background: var(--m3-surface-container, #f0edee);
 	}
 }
 
-.calendarPage__header {
+.calendarSide {
 	display: flex;
-	align-items: center;
-	gap: 12px;
+	flex: none;
+	flex-direction: column;
+	gap: 16px;
+	box-sizing: border-box;
+	width: 320px;
+	padding: 16px 16px 20px;
+	border-radius: 24px;
+	background: var(--m3-surface-container-lowest, #ffffff);
+	overflow-y: auto;
 }
 
-.calendarPage__headerIcon {
-	width: 24px;
-	height: 24px;
+.calendarSide__search {
+	flex: none;
+}
+
+.calendarSide__chips {
+	flex: none;
+}
+
+.calendarSide__chip {
+	display: contents;
+}
+
+.calendarSide__kindsAnchor {
+	display: inline-flex;
+}
+
+.calendarSide__section {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.calendarSide__title {
+	margin: 0;
+	color: var(--m3-on-surface-variant, #444748);
+	font-size: 14px;
+	font-weight: 500;
+	line-height: 20px;
+}
+
+.calendarSide__muted {
+	margin: 0;
+	color: var(--m3-on-surface-variant, #444748);
+	font-size: 13px;
+	line-height: 18px;
+}
+
+.calendarSide__list {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+// A compact row: tinted kind icon, name, short time.
+.calendarSide__row {
+	--cal-kind: var(--cal-kind-video);
+
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	box-sizing: border-box;
+	width: 100%;
+	min-height: 36px;
+	padding: 4px 10px;
+	border: none;
+	border-radius: 18px;
+	background: transparent;
+	color: var(--m3-on-surface, #1b1b1c);
+	font: inherit;
+	font-size: 14px;
+	text-align: left;
+	cursor: pointer;
+
+	&:hover {
+		background: var(--oriso-menu-hover-surface, rgba(27, 27, 28, 0.08));
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--m3-primary, #a5000a);
+		outline-offset: 1px;
+	}
+
+	&--proposal {
+		align-items: flex-start;
+		border: 1px dashed var(--cal-kind);
+		border-left: 4px solid var(--cal-kind);
+		border-radius: 12px;
+	}
+}
+
+.calendarSide__rowIcon {
+	display: inline-flex;
+	flex: none;
+	color: var(--cal-kind);
+
+	svg {
+		width: 18px;
+		height: 18px;
+	}
 
 	path {
 		fill: currentColor;
 	}
 }
 
-.calendarPage__title {
-	margin: 0;
-	font-size: 22px;
-	font-weight: 500;
-	line-height: 28px;
+.calendarSide__rowText {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
 }
 
-.calendarPage__create {
+.calendarSide__rowName {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.calendarSide__rowMeta {
+	color: var(--m3-on-surface-variant, #444748);
+	font-size: 12px;
+}
+
+.calendarSide__rowTime {
+	flex: none;
+	color: var(--m3-on-surface-variant, #444748);
+	font-size: 13px;
+	font-variant-numeric: tabular-nums;
+}
+
+.calendarSide__request {
 	display: flex;
-	align-items: center;
-	justify-content: center;
-	width: 48px;
-	height: 48px;
-	margin-left: auto;
+	flex-direction: column;
+	align-items: flex-end;
+	gap: 2px;
+}
+
+.calendarSide__textButton {
+	height: 32px;
+	padding: 0 12px;
 	border: none;
-	border-radius: 50%;
-	background: var(--m3-primary, #a5000a);
-	color: var(--m3-on-primary, #ffffff);
+	border-radius: 16px;
+	background: transparent;
+	color: var(--m3-primary, #a5000a);
+	font: inherit;
+	font-size: 13px;
+	font-weight: 500;
 	cursor: pointer;
 
 	&:hover {
-		background: var(--m3-primary-hover, #820006);
+		background: var(--oriso-menu-hover-surface, rgba(27, 27, 28, 0.08));
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--m3-primary, #a5000a);
+	}
+}
+
+.calendarSide__pills {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+
+.calendarSide__pill {
+	height: 32px;
+	padding: 0 12px;
+	border: 1px solid var(--m3-outline-variant, #c4c7c8);
+	border-radius: 16px;
+	background: transparent;
+	color: var(--m3-on-surface, #1b1b1c);
+	font: inherit;
+	font-size: 13px;
+	cursor: pointer;
+
+	&[aria-pressed='true'] {
+		border-color: transparent;
+		background: var(--m3-secondary-container, #dce3ec);
+		color: var(--m3-on-secondary-container, #1b1b1c);
+	}
+
+	&:hover:not(:disabled) {
+		background: var(--oriso-menu-hover-surface, rgba(27, 27, 28, 0.08));
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--m3-primary, #a5000a);
+	}
+
+	&--me:disabled {
+		cursor: default;
+	}
+
+	&--more {
+		color: var(--m3-primary, #a5000a);
+	}
+}
+
+.calendarSide__hours {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	margin-top: auto;
+	padding: 8px 10px;
+	border: none;
+	border-radius: 12px;
+	background: var(--m3-surface-container-low, #f6f3f3);
+	color: var(--m3-on-surface-variant, #444748);
+	font: inherit;
+	font-size: 13px;
+	text-align: left;
+	cursor: pointer;
+
+	&:focus-visible {
+		outline: 2px solid var(--m3-primary, #a5000a);
+	}
+}
+
+.calendarSide__hoursAction {
+	flex: none;
+	color: var(--m3-primary, #a5000a);
+	font-weight: 500;
+}
+
+// --- Quick entry ---
+
+.calendarQuick__form {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.calendarQuick__input {
+	box-sizing: border-box;
+	width: 100%;
+	height: 40px;
+	padding: 0 14px;
+	border: 1px solid var(--m3-outline, #747878);
+	border-radius: 20px;
+	background: var(--m3-surface-container-lowest, #ffffff);
+	color: var(--m3-on-surface, #1b1b1c);
+	font: inherit;
+	font-size: 14px;
+
+	&:focus-visible {
+		outline: 2px solid var(--m3-primary, #a5000a);
+		outline-offset: 0;
+	}
+}
+
+.calendarQuick__kinds,
+.calendarQuick__who,
+.calendarQuick__freeRow {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+
+.calendarQuick__kind,
+.calendarQuick__person {
+	--cal-kind: var(--m3-on-surface-variant, #444748);
+
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	height: 28px;
+	padding: 0 10px 0 8px;
+	border: 1px solid var(--m3-outline-variant, #c4c7c8);
+	border-radius: 14px;
+	background: transparent;
+	color: var(--m3-on-surface, #1b1b1c);
+	font: inherit;
+	font-size: 12px;
+	cursor: pointer;
+
+	svg {
+		width: 14px;
+		height: 14px;
+		color: var(--cal-kind);
+	}
+
+	path {
+		fill: currentColor;
+	}
+
+	&[aria-pressed='true'] {
+		border-color: var(--cal-kind);
+		background: color-mix(in srgb, var(--cal-kind) 12%, transparent);
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--m3-primary, #a5000a);
+	}
+}
+
+.calendarQuick__free {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.calendarQuick__freeLabel {
+	color: var(--m3-on-surface-variant, #444748);
+	font-size: 12px;
+}
+
+// Free time is green, here and in the side-by-side view.
+.calendarQuick__freePill {
+	height: 28px;
+	padding: 0 12px;
+	border: 1px solid var(--cal-free-line);
+	border-radius: 14px;
+	background: var(--cal-free);
+	color: var(--cal-free-line);
+	font: inherit;
+	font-size: 12px;
+	font-weight: 600;
+	cursor: pointer;
+
+	&:focus-visible {
+		outline: 2px solid var(--m3-primary, #a5000a);
+	}
+}
+
+.calendarQuick__status {
+	margin: 0;
+	color: var(--m3-on-surface-variant, #444748);
+	font-size: 12px;
+	line-height: 16px;
+}
+
+.calendarQuick__actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 6px;
+}
+
+.calendarQuick__save {
+	height: 32px;
+	padding: 0 16px;
+	border: none;
+	border-radius: 16px;
+	background: var(--m3-primary, #a5000a);
+	color: var(--m3-on-primary, #ffffff);
+	font: inherit;
+	font-size: 13px;
+	font-weight: 500;
+	cursor: pointer;
+
+	&:disabled {
+		opacity: 0.38;
+		cursor: default;
 	}
 
 	&:focus-visible {
@@ -271,149 +857,631 @@
 	}
 }
 
-.calendarPage__filters {
-	min-width: 0;
-}
+// --- Stage: header, toolbar, people bar, grid ---
 
-.calendarPage__body {
+.calendarStage {
 	display: flex;
 	flex: 1;
-	gap: 24px;
+	flex-direction: column;
+	gap: 10px;
+	box-sizing: border-box;
+	min-width: 0;
 	min-height: 0;
+	padding: 16px 20px 20px;
+	border-radius: 24px;
+	background: var(--m3-surface-container-lowest, #ffffff);
+
+	.calendarPage--compact & {
+		padding: 12px;
+		border-radius: 0;
+	}
 }
 
-.calendarPage__side {
-	display: flex;
-	flex: none;
-	flex-direction: column;
-	gap: 24px;
-	width: 264px;
-	overflow-y: auto;
-}
-
-.calendarPage__main {
-	flex: 1;
-	min-width: 0;
-}
-
-.calendarPage__section {
-	display: flex;
-	flex-direction: column;
-	gap: 8px;
-}
-
-.calendarPage__sectionTitle {
-	margin: 0;
-	color: var(--m3-on-surface-variant, #444748);
-	font-size: 14px;
-	font-weight: 500;
-	line-height: 20px;
-}
-
-.calendarPage__muted {
-	margin: 0;
-	color: var(--m3-on-surface-variant, #444748);
-	font-size: 13px;
-	line-height: 18px;
-}
-
-.calendarPage__hint {
-	margin-top: 4px;
-}
-
-.calendarPage__upcoming,
-.calendarPage__calendars {
-	display: flex;
-	flex-direction: column;
-	gap: 6px;
-	margin: 0;
-	padding: 0;
-	list-style: none;
-}
-
-// Same anatomy as the timeline pill (.tlp__entry).
-.calendarPage__entry {
+.calendarStage__header {
 	display: flex;
 	align-items: center;
-	gap: 8px;
-	box-sizing: border-box;
-	width: 100%;
-	min-height: 44px;
-	padding: 4px 14px 4px 12px;
-	border: 1px solid transparent;
-	border-radius: 22px;
-	background: var(--m3-surface-container-highest, #dcdfe3);
-	color: var(--m3-on-surface, #1b1b1c);
-	font: inherit;
-	text-align: left;
+	gap: 10px;
+	min-height: 48px;
+}
+
+.calendarStage__avatars {
+	display: inline-flex;
+	flex-shrink: 0;
+	padding: 0;
+	border: none;
+	background: transparent;
 	cursor: pointer;
 
-	&:hover {
-		background: var(--m3-surface-dim, #d3d6da);
+	.calendarStage__avatar {
+		box-shadow: 0 0 0 2px var(--m3-surface-container-lowest, #ffffff);
+
+		& + .calendarStage__avatar {
+			margin-left: -6px;
+		}
 	}
 
 	&:focus-visible {
 		outline: 2px solid var(--m3-primary, #a5000a);
-		outline-offset: 1px;
-	}
-
-	&--soon,
-	&--soon:hover {
-		background: var(--m3-primary, #a5000a);
-		color: var(--m3-on-primary, #ffffff);
+		border-radius: 12px;
 	}
 }
 
-.calendarPage__entryIcon {
+.calendarStage__title {
+	overflow: hidden;
+	min-width: 0;
+	margin: 0;
+	font-size: 22px;
+	font-weight: 500;
+	line-height: 28px;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+
+	.calendarPage--compact & {
+		font-size: 18px;
+	}
+}
+
+// The grey "+" next to the title, as in "Gespräche".
+.calendarStage__create,
+.calendarStage__round {
 	display: inline-flex;
 	flex: none;
-	width: 20px;
-	height: 20px;
+	align-items: center;
+	justify-content: center;
+	width: 40px;
+	height: 40px;
+	padding: 0;
+	border: none;
+	border-radius: 50%;
+	background: var(--m3-surface-container-high, #eae7e8);
+	color: var(--m3-on-surface-variant, #444748);
+	cursor: pointer;
 
-	svg {
-		width: 20px;
-		height: 20px;
+	&:hover {
+		background: var(--m3-surface-container-highest, #dcdfe3);
 	}
 
-	path {
-		fill: currentColor;
+	&:focus-visible {
+		outline: 2px solid var(--m3-primary, #a5000a);
+		outline-offset: 2px;
+	}
+
+	&[aria-pressed='true'] {
+		background: var(--m3-secondary-container, #dce3ec);
+		color: var(--m3-on-secondary-container, #1b1b1c);
 	}
 }
 
-.calendarPage__entryText {
+.calendarStage__round {
+	background: transparent;
+}
+
+.calendarStage__headerEnd {
 	display: flex;
-	flex-direction: column;
-	min-width: 0;
+	flex-shrink: 0;
+	align-items: center;
+	gap: 6px;
+	margin-left: auto;
 }
 
-.calendarPage__entryTime {
+// Phone: the people bar right below already shows who is on; the header
+// keeps the title, "+", the view pill and ⋮ on one line.
+.calendarPage--compact {
+	.calendarStage__avatars,
+	.calendarStage__peopleHint {
+		display: none;
+	}
+
+	.calendarStage__header {
+		gap: 6px;
+	}
+}
+
+.calendarStage__pillButton {
+	display: inline-flex;
+	flex-shrink: 0;
+	align-items: center;
+	gap: 2px;
+	white-space: nowrap;
+	height: 36px;
+	padding: 0 8px 0 14px;
+	border: 1px solid var(--m3-outline-variant, #c4c7c8);
+	border-radius: 18px;
+	background: transparent;
+	color: var(--m3-on-surface, #1b1b1c);
+	font: inherit;
+	font-size: 14px;
+	font-weight: 500;
+	cursor: pointer;
+
+	&:hover {
+		background: var(--oriso-menu-hover-surface, rgba(27, 27, 28, 0.08));
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--m3-primary, #a5000a);
+		outline-offset: 2px;
+	}
+}
+
+.calendarStage__digits {
+	display: inline-flex;
+	padding: 2px;
+	border: 1px solid var(--m3-outline-variant, #c4c7c8);
+	border-radius: 18px;
+}
+
+.calendarStage__digit {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 32px;
+	height: 30px;
+	padding: 0 6px;
+	border: none;
+	border-radius: 15px;
+	background: transparent;
+	color: var(--m3-on-surface-variant, #444748);
+	font: inherit;
+	font-size: 14px;
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+	cursor: pointer;
+
+	&[aria-checked='true'] {
+		background: var(--m3-secondary-container, #dce3ec);
+		color: var(--m3-on-secondary-container, #1b1b1c);
+	}
+
+	&:hover:not([aria-checked='true']) {
+		background: var(--oriso-menu-hover-surface, rgba(27, 27, 28, 0.08));
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--m3-primary, #a5000a);
+	}
+}
+
+.calendarStage__toolbar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px 16px;
+}
+
+// One pill: previous · Heute (with the jump list) · next.
+.calendarStage__nav {
+	display: inline-flex;
+	align-items: center;
+	height: 36px;
+	border: 1px solid var(--m3-outline-variant, #c4c7c8);
+	border-radius: 18px;
+	overflow: hidden;
+}
+
+.calendarStage__navButton,
+.calendarStage__today {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	height: 100%;
+	padding: 0 10px;
+	border: none;
+	background: transparent;
+	color: var(--m3-on-surface, #1b1b1c);
+	font: inherit;
+	font-size: 14px;
+	font-weight: 500;
+	cursor: pointer;
+
+	&:hover {
+		background: var(--oriso-menu-hover-surface, rgba(27, 27, 28, 0.08));
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--m3-primary, #a5000a);
+		outline-offset: -2px;
+	}
+}
+
+.calendarStage__today {
+	padding: 0 4px 0 12px;
+	border-left: 1px solid var(--m3-outline-variant, #c4c7c8);
+}
+
+.calendarStage__navButton--drop {
+	padding: 0 6px 0 0;
+	border-right: 1px solid var(--m3-outline-variant, #c4c7c8);
+}
+
+.calendarStage__range {
+	margin: 0;
+	font-size: 18px;
+	font-weight: 500;
+	line-height: 24px;
+
+	.calendarPage--compact & {
+		font-size: 15px;
+	}
+}
+
+// "1 Tag | 3 Tage" next to the range title in "Nebeneinander".
+.calendarStage__segmented {
+	display: inline-flex;
+	gap: 2px;
+	margin-left: auto;
+	padding: 2px;
+	border: 1px solid var(--m3-outline-variant, #c4c7c8);
+	border-radius: 18px;
+}
+
+.calendarStage__segment {
+	height: 30px;
+	padding: 0 12px;
+	border: none;
+	border-radius: 15px;
+	background: transparent;
+	color: var(--m3-on-surface-variant, #444748);
+	font: inherit;
 	font-size: 13px;
 	font-weight: 500;
-	font-variant-numeric: tabular-nums;
-	line-height: 18px;
+	white-space: nowrap;
+	cursor: pointer;
+
+	&[aria-pressed='true'] {
+		background: var(--m3-secondary-container, #dce3ec);
+		color: var(--m3-on-secondary-container, #1b1b1c);
+	}
+
+	&:hover:not([aria-pressed='true']) {
+		background: var(--oriso-menu-hover-surface, rgba(27, 27, 28, 0.08));
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--m3-primary, #a5000a);
+	}
 }
 
-.calendarPage__entryTitle {
-	overflow: hidden;
+.calendarStage__people {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px;
+}
+
+.calendarStage__person {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	height: 32px;
+	padding: 0 10px 0 4px;
+	border: 1px solid var(--m3-outline-variant, #c4c7c8);
+	border-radius: 16px;
+	background: transparent;
+	color: var(--m3-on-surface, #1b1b1c);
+	font: inherit;
+	font-size: 13px;
+	cursor: pointer;
+
+	&[aria-pressed='false'] {
+		opacity: 0.5;
+		text-decoration: line-through;
+	}
+
+	&--more {
+		padding: 0 12px;
+		border-style: dashed;
+		color: var(--m3-on-surface-variant, #444748);
+	}
+
+	&:hover {
+		background: var(--oriso-menu-hover-surface, rgba(27, 27, 28, 0.08));
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--m3-primary, #a5000a);
+	}
+}
+
+.calendarStage__personAvatar--me,
+.calendarSplit__avatar--me {
+	background: var(--m3-primary-container, #ffdad5);
+	color: var(--m3-on-primary-container, #410001);
+}
+
+.calendarStage__peopleHint {
+	color: var(--m3-outline, #747878);
 	font-size: 12px;
-	line-height: 16px;
+}
+
+.calendarStage__grid {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	min-height: 480px;
+
+	.calendarPage--compact & {
+		min-height: 420px;
+	}
+}
+
+.calendarPager {
+	position: relative;
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	min-height: 0;
+}
+
+// --- Side by side ---
+
+.calendarSplit {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	min-height: 0;
+}
+
+.calendarSplit__scroll {
+	position: relative;
+	display: flex;
+	flex: 1;
+	min-height: 0;
+	overflow: auto;
+	border: 1px solid var(--m3-outline-variant, #c4c7c8);
+	border-radius: 12px;
+	overscroll-behavior-x: contain;
+}
+
+.calendarSplit__column {
+	display: flex;
+	flex: 1 0 auto;
+	flex-direction: column;
+	border-left: 1px solid var(--m3-outline-variant, #c4c7c8);
+	background: var(--m3-surface-container-lowest, #ffffff);
+
+	// One day: one's own column stays on the left while the others scroll
+	// under it.
+	&--sticky {
+		position: sticky;
+		z-index: 2;
+		left: 0;
+		border-left: none;
+		border-right: 1px solid var(--m3-outline, #747878);
+	}
+
+	.calendarSplit__groupColumns > &--own {
+		border-left: none;
+	}
+}
+
+// Several days: one group per day, a stronger line between days.
+.calendarSplit__group {
+	display: flex;
+	flex: 1 0 auto;
+	flex-direction: column;
+
+	& + & {
+		border-left: 3px solid var(--m3-outline, #747878);
+	}
+}
+
+.calendarSplit__groupHead {
+	position: sticky;
+	z-index: 3;
+	top: 0;
+	box-sizing: border-box;
+	height: 28px;
+	padding: 4px 10px;
+	border-bottom: 1px solid var(--m3-outline-variant, #c4c7c8);
+	background: var(--m3-surface-container, #f0edee);
+	color: var(--m3-on-surface, #1b1b1c);
+	font-size: 13px;
+	font-weight: 600;
+	line-height: 20px;
+
+	.calendarSplit__group--today & {
+		color: var(--m3-primary, #a5000a);
+	}
+}
+
+.calendarSplit__groupColumns {
+	display: flex;
+	flex: 1 0 auto;
+}
+
+.calendarSplit__head {
+	position: sticky;
+	z-index: 1;
+	top: 0;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 4px;
+	min-height: 44px;
+	padding: 6px 8px;
+	border-bottom: 1px solid var(--m3-outline-variant, #c4c7c8);
+	background: var(--m3-surface-container-lowest, #ffffff);
+
+	// Below the day header.
+	.calendarSplit__scroll--days & {
+		top: 28px;
+	}
+}
+
+.calendarSplit__axisHead {
+	width: 44px;
+}
+
+.calendarSplit__person {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	min-width: 0;
+	font-size: 13px;
+	font-weight: 500;
+}
+
+.calendarSplit__name {
+	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
 }
 
-.calendarPage__calendar {
+.calendarSplit__allDay {
 	display: flex;
+	flex-basis: 100%;
+	flex-direction: column;
+	gap: 2px;
+
+	.calEntry {
+		width: 100%;
+		text-align: left;
+	}
+}
+
+.calendarSplit__bodyRow {
+	display: flex;
+}
+
+.calendarSplit__axis {
+	position: relative;
+	flex: none;
+	width: 52px;
+	color: var(--m3-on-surface-variant, #444748);
+	font-size: 11px;
+	font-variant-numeric: tabular-nums;
+}
+
+.calendarSplit__hour {
+	position: absolute;
+	right: 6px;
+	transform: translateY(-50%);
+
+	&:first-child {
+		transform: none;
+	}
+}
+
+.calendarSplit__body {
+	position: relative;
+	flex: 1;
+	min-width: 210px;
+	touch-action: pan-x pan-y;
+}
+
+.calendarSplit__line {
+	position: absolute;
+	right: 0;
+	left: 0;
+	border-top: 1px solid var(--m3-outline-variant, #c4c7c8);
+	pointer-events: none;
+}
+
+.calendarSplit__offHours {
+	position: absolute;
+	right: 0;
+	left: 0;
+	background: var(--m3-surface-container, #f0edee);
+	pointer-events: none;
+}
+
+.calendarSplit__free {
+	position: absolute;
+	right: 0;
+	left: 0;
+	border-left: 3px solid var(--cal-free-line);
+	background: var(--cal-free);
+	pointer-events: none;
+}
+
+.calendarSplit__freeLabel {
+	position: absolute;
+	top: 2px;
+	right: 6px;
+	color: var(--cal-free-line);
+	font-size: 11px;
+	font-weight: 600;
+}
+
+.calendarSplit__selection {
+	position: absolute;
+	right: 2px;
+	left: 2px;
+	border: 1px dashed var(--m3-primary, #a5000a);
+	border-radius: 6px;
+	background: color-mix(in srgb, var(--m3-primary, #a5000a) 8%, transparent);
+	pointer-events: none;
+}
+
+.calendarSplit__now {
+	position: absolute;
+	z-index: 1;
+	right: 0;
+	left: 0;
+	border-top: 2px solid var(--m3-primary, #a5000a);
+	pointer-events: none;
+}
+
+.calendarSplit__entry {
+	position: absolute;
+	box-sizing: border-box;
+	padding: 0;
+	text-align: left;
+	font: inherit;
+}
+
+.calendarSplit__empty {
+	margin: 8px 0 0;
+	color: var(--m3-on-surface-variant, #444748);
+	font-size: 13px;
+}
+
+// --- Working hours dialog ---
+
+.calendarHours {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.calendarHours__row {
+	display: grid;
+	grid-template-columns: auto 1fr auto auto auto;
 	align-items: center;
 	gap: 10px;
-	min-height: 40px;
-	font-size: 14px;
-	cursor: pointer;
 
-	input {
-		width: 18px;
-		height: 18px;
-		margin: 0;
-		accent-color: var(--m3-primary, #a5000a);
+	&--off .calendarHours__day {
+		color: var(--m3-on-surface-variant, #444748);
+	}
+}
+
+.calendarHours__day {
+	font-size: 14px;
+}
+
+.calendarHours__time input {
+	box-sizing: border-box;
+	height: 36px;
+	padding: 0 8px;
+	border: 1px solid var(--m3-outline, #747878);
+	border-radius: 8px;
+	background: var(--m3-surface-container-lowest, #ffffff);
+	color: var(--m3-on-surface, #1b1b1c);
+	font: inherit;
+	font-size: 14px;
+
+	&:disabled {
+		opacity: 0.38;
+	}
+
+	&[aria-invalid='true'] {
+		border-color: var(--m3-error, #ba1a1a);
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--m3-primary, #a5000a);
+		outline-offset: 0;
 	}
 }
 
@@ -506,30 +1574,6 @@
 	line-height: 18px;
 }
 
-.calendarDetails {
-	display: grid;
-	grid-template-columns: auto 1fr;
-	gap: 6px 16px;
-	margin: 0;
-	font-size: 14px;
-	line-height: 20px;
-
-	dt {
-		color: var(--m3-on-surface-variant, #444748);
-	}
-
-	dd {
-		margin: 0;
-	}
-}
-
-.calendarDetails__hint {
-	margin: 12px 0 0;
-	color: var(--m3-on-surface-variant, #444748);
-	font-size: 13px;
-	line-height: 18px;
-}
-
 .calendarSync__section {
 	display: flex;
 	flex-direction: column;
@@ -580,15 +1624,4 @@
 .calendarSync__previewEvent {
 	font-size: 14px;
 	line-height: 20px;
-}
-
-// The selection preview while dragging over free time.
-.calEntry--mirror {
-	border: 1px dashed var(--m3-primary, #a5000a) !important;
-	background: color-mix(
-		in srgb,
-		var(--m3-primary, #a5000a) 8%,
-		transparent
-	) !important;
-	color: var(--m3-on-surface, #1b1b1c) !important;
 }

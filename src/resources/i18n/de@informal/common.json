@@ -2958,6 +2958,25 @@
 			"importText": "Füge die private ICS-Adresse deines Outlook- oder Google-Kalenders ein. ORISO übernimmt nur, wann du belegt bist – keine Titel und keine Teilnehmenden.",
 			"importError": "Die Adresse konnte nicht gelesen werden. Bitte prüfe den Link."
 		},
-		"saveFailed": "Das hat nicht geklappt. Bitte versuch es noch einmal."
+		"saveFailed": "Das hat nicht geklappt. Bitte versuch es noch einmal.",
+		"proposal": {
+			"title": "Dein Vorschlag für „{{title}}“"
+		},
+		"quick": {
+			"hint": "Tippe Tag und Uhrzeit, wähle die Art."
+		},
+		"settings": {
+			"switcherHint": "Wird für dich gespeichert."
+		},
+		"slotMenu": {
+			"outsideHours": "Außerhalb deiner Arbeitszeit."
+		},
+		"split": {
+			"empty": "Blende Kalender von Kolleg:innen ein, um deinen Tag daneben zu sehen.",
+			"label": "Dein Tag neben Kolleg:innen"
+		},
+		"workingHours": {
+			"description": "Außerhalb dieser Zeiten ist dein Kalender schattiert. Termine bleiben trotzdem möglich."
+		}
 	}
 }

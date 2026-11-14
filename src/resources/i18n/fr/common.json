@@ -6907,7 +6907,10 @@
 			"day": "Jour",
 			"week": "Semaine",
 			"month": "Mois",
-			"list": "Liste"
+			"list": "Liste",
+			"threeDays": "3 jours",
+			"workWeek": "Semaine de travail",
+			"split": "Côte à côte"
 		},
 		"upcoming": "À venir",
 		"upcomingEmpty": "Aucun rendez-vous à venir",
@@ -7015,7 +7018,10 @@
 			"blocker": "Plages bloquées"
 		},
 		"slotMenu": {
-			"label": "Ajouter"
+			"label": "Ajouter",
+			"as": "Saisir comme",
+			"blockerNow": "saisi immédiatement",
+			"outsideHours": "En dehors de vos horaires de travail."
 		},
 		"blocker": {
 			"menuItem": "Plage bloquée",
@@ -7033,6 +7039,138 @@
 			"created_one": "Plage bloquée ajoutée : {{date}}"
 		},
 		"saveFailed": "Cela n’a pas fonctionné. Veuillez réessayer.",
-		"blockerRemoved": "Plage bloquée supprimée."
+		"blockerRemoved": "Plage bloquée supprimée.",
+		"allDay": "toute la journée",
+		"entryMenu": {
+			"label": "Actions pour {{title}}",
+			"join": "Rejoindre",
+			"move": "Déplacer …",
+			"propose": "Proposer un autre horaire …",
+			"cancel": "Annuler le rendez-vous",
+			"remove": "Supprimer",
+			"groupHint": "Rendez-vous du groupe. Modifiez-le dans le groupe.",
+			"proposeHint": "{{name}} doit confirmer. D’ici là, le rendez-vous reste en place.",
+			"date": "Jour",
+			"from": "De",
+			"to": "À",
+			"saveMove": "Déplacer",
+			"sendProposal": "Envoyer la proposition",
+			"back": "Retour",
+			"conflicts": "Chevauche une autre entrée.",
+			"invalid": "La fin est avant le début."
+		},
+		"fullscreen": "Plein écran",
+		"fullscreenExit": "Quitter le plein écran (Échap)",
+		"jump": {
+			"label": "Aller à un jour",
+			"today": "Aujourd’hui",
+			"tomorrow": "Demain",
+			"nextMonday": "Lundi prochain",
+			"inTwoWeeks": "Dans deux semaines",
+			"date": "Jour choisi",
+			"go": "Afficher"
+		},
+		"kindsMenu": {
+			"label": "Que montrer",
+			"hint": "Les types désélectionnés sont masqués dans le calendrier et dans la liste.",
+			"all": "Tout afficher",
+			"customised": "Certains types sont masqués."
+		},
+		"monthMenu": {
+			"label": "Saisir pour ce jour",
+			"allDay": "Toute la journée",
+			"allDays": "Les {{days}} jours, toute la journée",
+			"withTime": "Avec horaire …",
+			"appointment": "Saisir un rendez-vous …",
+			"appointmentHint": "ouvre le jour ; y faire glisser l’horaire",
+			"range": "{{from}} – {{to}} ({{days}} jours)"
+		},
+		"peek": {
+			"hint": "Un clic ouvre les actions"
+		},
+		"people": {
+			"bar": "Personnes dans le calendrier",
+			"besides": "Calendriers à côté",
+			"hint": "Survoler met en évidence, un clic masque",
+			"label": "Afficher des calendriers",
+			"me": "Moi",
+			"more": "Autres …"
+		},
+		"proposal": {
+			"label": "Déplacement",
+			"waiting": "en attente de confirmation",
+			"waitingFor": "en attente de {{name}}",
+			"title": "Votre proposition pour « {{title}} »",
+			"hint": "En attente de {{name}}. D’ici là, le rendez-vous reste en place.",
+			"withdraw": "Retirer",
+			"sent": "Proposition envoyée : {{date}}. {{name}} doit confirmer.",
+			"withdrawn": "Proposition retirée.",
+			"open": "Demandes en attente",
+			"proposed": "Proposé : {{date}}"
+		},
+		"quick": {
+			"title": "Saisie rapide",
+			"placeholder": "p. ex. jeu 14 h vidéo",
+			"hint": "Saisissez le jour et l’heure, choisissez le type.",
+			"freeHours": "Prochaine heure libre",
+			"missing": "Il manque : {{list}}",
+			"gaps": {
+				"when": "jour et heure",
+				"kind": "type",
+				"who": "échange"
+			},
+			"save": "Saisir",
+			"more": "Plus de détails …",
+			"kind": "Type",
+			"who": "Avec qui"
+		},
+		"search": {
+			"placeholder": "Rechercher des rendez-vous",
+			"clear": "Effacer la recherche",
+			"empty": "Aucun résultat.",
+			"results": "Résultats de recherche"
+		},
+		"settings": {
+			"label": "Paramètres du calendrier",
+			"workingHours": "Horaires de travail",
+			"switcher": "Choisir la vue",
+			"switcherMenu": "sous forme de menu",
+			"switcherDigits": "sous forme de boutons",
+			"switcherHint": "Enregistré pour vous.",
+			"sync": "Connecter Outlook ou Google"
+		},
+		"side": {
+			"label": "Rendez-vous : recherche et listes"
+		},
+		"split": {
+			"empty": "Affichez les calendriers de collègues pour voir votre journée à côté.",
+			"free": "libre pour tous",
+			"label": "Votre journée à côté des collègues",
+			"oneDay": "1 jour",
+			"range": "Jours côte à côte",
+			"threeDays": "3 jours"
+		},
+		"viewMenu": "Vue : {{view}}",
+		"when": {
+			"running": "en cours",
+			"inMinutes": "dans {{count}} min",
+			"today": "aujourd’hui {{time}}",
+			"tomorrow": "demain {{time}}",
+			"weekday": "{{day}} {{time}}"
+		},
+		"workingHours": {
+			"title": "Définir les horaires de travail",
+			"description": "En dehors de ces horaires, votre calendrier est grisé. Les rendez-vous restent possibles.",
+			"none": "Aucun horaire défini",
+			"set": "Définir",
+			"change": "Modifier",
+			"summary": "Horaires {{hours}}",
+			"save": "Enregistrer",
+			"from": "Début le {{day}}",
+			"to": "Fin le {{day}}",
+			"invalid": "Pour un jour, la fin est avant le début.",
+			"saved": "Horaires enregistrés : {{hours}}.",
+			"cleared": "Horaires supprimés."
+		}
 	}
 }

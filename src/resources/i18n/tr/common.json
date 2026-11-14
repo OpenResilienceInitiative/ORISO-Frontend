@@ -6907,7 +6907,10 @@
 			"day": "Gün",
 			"week": "Hafta",
 			"month": "Ay",
-			"list": "Liste"
+			"list": "Liste",
+			"threeDays": "3 gün",
+			"workWeek": "İş haftası",
+			"split": "Yan yana"
 		},
 		"upcoming": "Sıradaki",
 		"upcomingEmpty": "Yaklaşan randevu yok",
@@ -7015,7 +7018,10 @@
 			"blocker": "Kapalı zamanlar"
 		},
 		"slotMenu": {
-			"label": "Ekle"
+			"label": "Ekle",
+			"as": "Şu olarak kaydet",
+			"blockerNow": "hemen kaydedilir",
+			"outsideHours": "Çalışma saatlerinizin dışında."
 		},
 		"blocker": {
 			"menuItem": "Kapalı zaman",
@@ -7033,6 +7039,138 @@
 			"created_one": "Kapalı zaman eklendi: {{date}}"
 		},
 		"saveFailed": "Bu işe yaramadı. Lütfen tekrar deneyin.",
-		"blockerRemoved": "Kapalı zaman kaldırıldı."
+		"blockerRemoved": "Kapalı zaman kaldırıldı.",
+		"allDay": "tüm gün",
+		"entryMenu": {
+			"label": "{{title}} için işlemler",
+			"join": "Katıl",
+			"move": "Taşı …",
+			"propose": "Yeni saat öner …",
+			"cancel": "Randevuyu iptal et",
+			"remove": "Kaldır",
+			"groupHint": "Grup randevusu. Grup üzerinden değiştirilir.",
+			"proposeHint": "{{name}} onaylamalı. O zamana kadar randevu yerinde kalır.",
+			"date": "Gün",
+			"from": "Başlangıç",
+			"to": "Bitiş",
+			"saveMove": "Taşı",
+			"sendProposal": "Öneriyi gönder",
+			"back": "Geri",
+			"conflicts": "Başka bir kayıtla çakışıyor.",
+			"invalid": "Bitiş başlangıçtan önce."
+		},
+		"fullscreen": "Tam ekran",
+		"fullscreenExit": "Tam ekrandan çık (Esc)",
+		"jump": {
+			"label": "Bir güne git",
+			"today": "Bugün",
+			"tomorrow": "Yarın",
+			"nextMonday": "Gelecek pazartesi",
+			"inTwoWeeks": "İki hafta sonra",
+			"date": "Tarih",
+			"go": "Göster"
+		},
+		"kindsMenu": {
+			"label": "Neler gösterilsin",
+			"hint": "Seçimi kaldırılan türler takvimde ve listede gizlenir.",
+			"all": "Tümünü göster",
+			"customised": "Bazı türler gizli."
+		},
+		"monthMenu": {
+			"label": "Bu güne kaydet",
+			"allDay": "Tüm gün",
+			"allDays": "{{days}} günün tamamı",
+			"withTime": "Saatle …",
+			"appointment": "Randevu ekle …",
+			"appointmentHint": "günü açar, saati orada sürükleyin",
+			"range": "{{from}} – {{to}} ({{days}} gün)"
+		},
+		"peek": {
+			"hint": "Tıklama işlemleri açar"
+		},
+		"people": {
+			"bar": "Takvimdeki kişiler",
+			"besides": "Yanındaki takvimler",
+			"hint": "Üzerine gelmek vurgular, tıklama gizler",
+			"label": "Takvimleri göster",
+			"me": "Ben",
+			"more": "Diğer …"
+		},
+		"proposal": {
+			"label": "Taşıma",
+			"waiting": "onay bekliyor",
+			"waitingFor": "{{name}} bekleniyor",
+			"title": "„{{title}}“ için öneriniz",
+			"hint": "{{name}} bekleniyor. O zamana kadar randevu yerinde kalır.",
+			"withdraw": "Geri çek",
+			"sent": "Öneri gönderildi: {{date}}. {{name}} onaylamalı.",
+			"withdrawn": "Öneri geri çekildi.",
+			"open": "Açık talepler",
+			"proposed": "Önerilen: {{date}}"
+		},
+		"quick": {
+			"title": "Hızlı kayıt",
+			"placeholder": "örn. Per 14:00 video",
+			"hint": "Gün ve saati yazın, türü seçin.",
+			"freeHours": "Sonraki boş saat",
+			"missing": "Eksik: {{list}}",
+			"gaps": {
+				"when": "gün ve saat",
+				"kind": "tür",
+				"who": "görüşme"
+			},
+			"save": "Kaydet",
+			"more": "Daha fazla bilgi …",
+			"kind": "Tür",
+			"who": "Kiminle"
+		},
+		"search": {
+			"placeholder": "Randevu ara",
+			"clear": "Aramayı temizle",
+			"empty": "Bir şey bulunamadı.",
+			"results": "Arama sonuçları"
+		},
+		"settings": {
+			"label": "Takvim ayarları",
+			"workingHours": "Çalışma saatleri",
+			"switcher": "Görünüm seçimi",
+			"switcherMenu": "menü olarak",
+			"switcherDigits": "düğme olarak",
+			"switcherHint": "Sizin için kaydedilir.",
+			"sync": "Outlook veya Google bağla"
+		},
+		"side": {
+			"label": "Randevular: arama ve listeler"
+		},
+		"split": {
+			"empty": "Gününüzü yanlarında görmek için meslektaşlarınızın takvimlerini gösterin.",
+			"free": "herkes için boş",
+			"label": "Gününüz meslektaşlarınızın yanında",
+			"oneDay": "1 gün",
+			"range": "Yan yana günler",
+			"threeDays": "3 gün"
+		},
+		"viewMenu": "Görünüm: {{view}}",
+		"when": {
+			"running": "şimdi",
+			"inMinutes": "{{count}} dk sonra",
+			"today": "bugün {{time}}",
+			"tomorrow": "yarın {{time}}",
+			"weekday": "{{day}} {{time}}"
+		},
+		"workingHours": {
+			"title": "Çalışma saatlerini belirle",
+			"description": "Bu saatlerin dışında takviminiz gölgeli görünür. Randevu yine de mümkündür.",
+			"none": "Çalışma saati belirlenmedi",
+			"set": "Belirle",
+			"change": "Değiştir",
+			"summary": "Çalışma saatleri {{hours}}",
+			"save": "Kaydet",
+			"from": "{{day}} başlangıç",
+			"to": "{{day}} bitiş",
+			"invalid": "Bir günde bitiş başlangıçtan önce.",
+			"saved": "Çalışma saatleri kaydedildi: {{hours}}.",
+			"cleared": "Çalışma saatleri kaldırıldı."
+		}
 	}
 }

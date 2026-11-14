@@ -6874,7 +6874,10 @@
 			"day": "መዓልቲ",
 			"week": "ሰሙን",
 			"month": "ወርሒ",
-			"list": "ዝርዝር"
+			"list": "ዝርዝር",
+			"threeDays": "3 መዓልትታት",
+			"workWeek": "ናይ ስራሕ ሰሙን",
+			"split": "ጎን ንጎን"
 		},
 		"upcoming": "ዝመጽኡ ቆጸራታት",
 		"upcomingEmpty": "ዝመጽእ ቆጸራ የለን",
@@ -6982,7 +6985,10 @@
 			"blocker": "ዝተዓጽዉ ግዜያት"
 		},
 		"slotMenu": {
-			"label": "ወስኽ"
+			"label": "ወስኽ",
+			"as": "ከም እዚ መዝግብ",
+			"blockerNow": "ብቕጽበት ይምዝገብ",
+			"outsideHours": "ካብ ናይ ስራሕ ሰዓታትኩም ወጻኢ።"
 		},
 		"blocker": {
 			"menuItem": "ዝተዓጽወ ግዜ",
@@ -7000,6 +7006,138 @@
 			"created_one": "ዝተዓጽወ ግዜ ተመዝጊቡ፦ {{date}}"
 		},
 		"saveFailed": "ኣይሰለጠን። በጃኹም ደጊምኩም ፈትኑ።",
-		"blockerRemoved": "ዝተዓጽወ ግዜ ተኣልዩ።"
+		"blockerRemoved": "ዝተዓጽወ ግዜ ተኣልዩ።",
+		"allDay": "ምሉእ መዓልቲ",
+		"entryMenu": {
+			"label": "ተግባራት ን{{title}}",
+			"join": "ተጸምበር",
+			"move": "ግዜ ቀይር …",
+			"propose": "ሓድሽ ግዜ ኣማዕድው …",
+			"cancel": "ቆጸራ ሰርዝ",
+			"remove": "ኣልግስ",
+			"groupHint": "ናይ ጉጅለ ቆጸራ። ብጉጅለ ኣቢልኩም ቀይሩ።",
+			"proposeHint": "{{name}} ከረጋግጽ ኣለዎ። ክሳብ ሽዑ ቆጸራ ኣብ ቦታኡ ይጸንሕ።",
+			"date": "መዓልቲ",
+			"from": "ካብ",
+			"to": "ክሳብ",
+			"saveMove": "ግዜ ቀይር",
+			"sendProposal": "ሓሳብ ስደድ",
+			"back": "ተመለስ",
+			"conflicts": "ምስ ካልእ ምዝገባ ይጋጮ።",
+			"invalid": "መወዳእታ ቅድሚ መጀመርታ እዩ።"
+		},
+		"fullscreen": "ምሉእ ስክሪን",
+		"fullscreenExit": "ካብ ምሉእ ስክሪን ውጻእ (Esc)",
+		"jump": {
+			"label": "ናብ መዓልቲ ኪድ",
+			"today": "ሎሚ",
+			"tomorrow": "ጽባሕ",
+			"nextMonday": "ዝመጽእ ሰኑይ",
+			"inTwoWeeks": "ድሕሪ ክልተ ሰሙን",
+			"date": "ዕለት",
+			"go": "ኣርኢ"
+		},
+		"kindsMenu": {
+			"label": "እንታይ ይረአ",
+			"hint": "ዘይተመርጹ ዓይነታት ኣብ ካላንዳርን ዝርዝርን ይሕብኡ።",
+			"all": "ኩሉ ኣርኢ",
+			"customised": "ገለ ዓይነታት ተሓቢኦም ኣለዉ።"
+		},
+		"monthMenu": {
+			"label": "ነዛ መዓልቲ መዝግብ",
+			"allDay": "ምሉእ መዓልቲ",
+			"allDays": "ኩለን {{days}} መዓልትታት ምሉእ መዓልቲ",
+			"withTime": "ምስ ሰዓት …",
+			"appointment": "ቆጸራ መዝግብ …",
+			"appointmentHint": "ነታ መዓልቲ ይኸፍት፣ ኣብኡ ነቲ ሰዓት ጐትቱ",
+			"range": "{{from}} – {{to}} ({{days}} መዓልትታት)"
+		},
+		"peek": {
+			"hint": "ጠውቕ ተግባራት ይኸፍት"
+		},
+		"people": {
+			"bar": "ኣብ ካላንዳር ዘለዉ ሰባት",
+			"besides": "ኣብ ጥቓ ዘለዉ ካላንዳራት",
+			"hint": "ምጥቋም የጉልሕ፣ ጠውቕ ይሓብእ",
+			"label": "ካላንዳራት ኣርኢ",
+			"me": "ኣነ",
+			"more": "ካልኦት …"
+		},
+		"proposal": {
+			"label": "ምቕያር ግዜ",
+			"waiting": "ምርግጋጽ ይጽበ",
+			"waitingFor": "ን{{name}} ይጽበ",
+			"title": "ናትኩም ሓሳብ ን„{{title}}“",
+			"hint": "ን{{name}} ይጽበ። ክሳብ ሽዑ ቆጸራ ኣብ ቦታኡ ይጸንሕ።",
+			"withdraw": "ኣውጽእ",
+			"sent": "ሓሳብ ተላኢኹ፦ {{date}}። {{name}} ከረጋግጽ ኣለዎ።",
+			"withdrawn": "ሓሳብ ተወጺኡ።",
+			"open": "ክፉታት ሕቶታት",
+			"proposed": "ዝተማዕደወ፦ {{date}}"
+		},
+		"quick": {
+			"title": "ቅልጡፍ ምዝገባ",
+			"placeholder": "ንኣብነት ሓሙስ 14:00 ቪድዮ",
+			"hint": "መዓልትን ሰዓትን ጽሓፉ፣ ዓይነት ምረጹ።",
+			"freeHours": "ዝቕጽል ናጻ ሰዓት",
+			"missing": "ገና ዝጎደለ፦ {{list}}",
+			"gaps": {
+				"when": "መዓልትን ሰዓትን",
+				"kind": "ዓይነት",
+				"who": "ዝርርብ"
+			},
+			"save": "መዝግብ",
+			"more": "ተወሳኺ ሓበሬታ …",
+			"kind": "ዓይነት",
+			"who": "ምስ መን"
+		},
+		"search": {
+			"placeholder": "ቆጸራታት ድለ",
+			"clear": "ምድላይ ኣጽሪ",
+			"empty": "ዝተረኽበ የለን።",
+			"results": "ውጽኢት ምድላይ"
+		},
+		"settings": {
+			"label": "ቅጥዒ ካላንዳር",
+			"workingHours": "ናይ ስራሕ ሰዓታት",
+			"switcher": "ኣቀራርባ ምረጹ",
+			"switcherMenu": "ከም ዝርዝር ምርጫ",
+			"switcherDigits": "ከም መጠወቒታት",
+			"switcherHint": "ንኣኹም ይዕቀብ።",
+			"sync": "ምስ Outlook ወይ Google ኣራኽብ"
+		},
+		"side": {
+			"label": "ቆጸራታት፦ ምድላይን ዝርዝራትን"
+		},
+		"split": {
+			"empty": "መዓልትኹም ኣብ ጥቓኦም ንምርኣይ ካላንዳራት መሳርሕትኹም ኣርእዩ።",
+			"free": "ንኹሉ ናጻ",
+			"label": "መዓልትኹም ኣብ ጥቓ መሳርሕቲ",
+			"oneDay": "1 መዓልቲ",
+			"range": "መዓልትታት ጎኒ ንጎኒ",
+			"threeDays": "3 መዓልትታት"
+		},
+		"viewMenu": "ኣቀራርባ፦ {{view}}",
+		"when": {
+			"running": "ይካየድ ኣሎ",
+			"inMinutes": "ድሕሪ {{count}} ደቒቕ",
+			"today": "ሎሚ {{time}}",
+			"tomorrow": "ጽባሕ {{time}}",
+			"weekday": "{{day}} {{time}}"
+		},
+		"workingHours": {
+			"title": "ናይ ስራሕ ሰዓታት ወስን",
+			"description": "ካብዘን ሰዓታት ወጻኢ ካላንዳርኩም ጸላሎት ኣለዎ። ቆጸራ ግን ይከኣል እዩ።",
+			"none": "ናይ ስራሕ ሰዓታት ኣይተወሰነን",
+			"set": "ወስን",
+			"change": "ቀይር",
+			"summary": "ናይ ስራሕ ሰዓታት {{hours}}",
+			"save": "ዓቅብ",
+			"from": "መጀመርታ {{day}}",
+			"to": "መወዳእታ {{day}}",
+			"invalid": "ኣብ ሓንቲ መዓልቲ መወዳእታ ቅድሚ መጀመርታ እዩ።",
+			"saved": "ናይ ስራሕ ሰዓታት ተዓቂቡ፦ {{hours}}።",
+			"cleared": "ናይ ስራሕ ሰዓታት ተኣልዩ።"
+		}
 	}
 }

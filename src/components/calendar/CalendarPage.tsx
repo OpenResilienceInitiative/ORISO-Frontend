@@ -1,27 +1,35 @@
 /**
- * The "Meine Termine" section (navigation entry `/booking/events`), rebuilt
- * as the counsellor calendar of ADR-032 and FE#1050. It replaces the old
- * cal.com booking list once Frank has accepted it in Storybook.
+ * The "Meine Termine" section (navigation entry `/booking/events`): the
+ * counsellor calendar of ADR-032 and FE#1050, round 2 after Frank's
+ * prototype (2026-11-14). Built like "Gespräche": a left column with search
+ * and lists, a stage with header, toolbar and the calendar.
  *
- * Presentational: entries, colleagues, feed and import come in as props,
- * every change goes out as a callback. A callback may return a promise; a
- * rejected one shows the failure notice instead of the success notice.
- * `CalendarPageWired` connects it to UserService.
+ * Presentational: entries, colleagues, working hours, feed and import come
+ * in as props, every change goes out as a callback. A callback may return a
+ * promise; a rejected one shows the failure notice instead of the success
+ * notice. `CalendarPageWired` connects it to UserService.
+ *
+ * Move proposals and "Beitreten" have no backend yet: they appear only when
+ * the host passes their callbacks (Storybook does, the app does not).
  */
 import * as React from 'react';
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useCalendarController } from '@fullcalendar/react';
+import { CircularProgress, Tooltip } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import SyncOutlinedIcon from '@mui/icons-material/SyncOutlined';
-import { CircularProgress, IconButton, Tooltip } from '@mui/material';
-import { ReactComponent as CalendarIcon } from '../../resources/img/icons/calendar_outline.svg';
-import { FilterChipRow } from '../displayFilter/FilterChipRow';
-import { FilterChip } from '../displayFilter/FilterChip';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import FullscreenIcon from '@mui/icons-material/Fullscreen';
+import FullscreenExitIcon from '@mui/icons-material/FullscreenExit';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import CalendarMonthOutlinedIcon from '@mui/icons-material/CalendarMonthOutlined';
+import ViewAgendaOutlinedIcon from '@mui/icons-material/ViewAgendaOutlined';
+import ViewWeekOutlinedIcon from '@mui/icons-material/ViewWeekOutlined';
 import { M3Snackbar } from '../m3Snackbar/M3Snackbar';
 import {
 	DEFAULT_VISIBILITY,
-	isSoon,
-	upcomingEntries,
 	type AppointmentDraft,
 	type AppointmentKind,
 	type CalendarConversation,
@@ -30,18 +38,65 @@ import {
 	type CalendarVisibility,
 	type Colleague
 } from './calendarModel';
+import { facetOf, type CalendarEntryFacet } from './CalendarEntryGlyph';
 import {
-	CALENDAR_FACETS,
-	CalendarEntryGlyph,
-	FACET_ICON_COMPONENT,
-	facetOf,
-	type CalendarEntryFacet
-} from './CalendarEntryGlyph';
-import { CalendarView, type CalendarViewName } from './CalendarView';
-import { SlotActionMenu, type SlotChoice } from './SlotActionMenu';
+	entryActions,
+	openProposals,
+	type MoveProposal
+} from './calendarActions';
+import {
+	COMPACT_VIEWS,
+	DESKTOP_VIEWS,
+	FC_VIEW,
+	VIEW_DIGIT,
+	type CalendarViewName,
+	type ViewSwitcherStyle
+} from './calendarViews';
+import {
+	isWithinWorkingHours,
+	type WorkingHours
+} from './calendarWorkingHours';
+import {
+	readRecentColleagues,
+	readSwitcherStyle,
+	recentPills,
+	rememberColleague,
+	writeRecentColleagues,
+	writeSwitcherStyle
+} from './calendarPreferences';
+import {
+	CalendarView,
+	type CalendarHighlight,
+	type MenuAnchor
+} from './CalendarView';
+import {
+	CalendarSplitView,
+	SPLIT_COLUMN_MIN_PX,
+	SPLIT_DAY_CHOICES,
+	type SplitDays
+} from './CalendarSplitView';
+import { CalendarPager } from './CalendarPager';
+import { CalendarSidebar } from './CalendarSidebar';
+import { CalendarMenu } from './CalendarMenu';
+import {
+	EntryMenuContent,
+	JumpMenuContent,
+	KindsMenuContent,
+	MonthDayMenuContent,
+	PeopleMenuContent,
+	ProposalMenuContent,
+	SettingsMenuContent,
+	SlotMenuContent,
+	ViewMenuContent,
+	type SlotChoice
+} from './calendarMenus';
+import { initialsOf } from './CalendarEntryPeek';
 import { AppointmentDialog } from './AppointmentDialog';
 import { BlockerDialog } from './BlockerDialog';
-import { EntryDetailsDialog } from './EntryDetailsDialog';
+import {
+	WorkingHoursDialog,
+	useWorkingHoursSummary
+} from './WorkingHoursDialog';
 import {
 	CalendarSyncDialog,
 	type CalendarFeed,
@@ -51,6 +106,7 @@ import { useEntryLabel, useRangeFormat } from './useEntryLabel';
 import '../sessionsList/sessionsList.styles.scss';
 import './calendar.styles.scss';
 
+export type { CalendarViewName } from './calendarViews';
 export type CalendarLoadState = 'loading' | 'ready' | 'error';
 
 export interface CalendarPageProps {
@@ -65,9 +121,21 @@ export interface CalendarPageProps {
 	conversations?: CalendarConversation[];
 	feed?: CalendarFeed;
 	busyImport?: CalendarImport;
+	/** Weekly working hours; empty = none set, nothing shaded. */
+	workingHours?: WorkingHours;
 	compact?: boolean;
 	initialView?: CalendarViewName;
+	/** Storybook: colleagues shown from the start. */
+	initialShownColleagues?: string[];
+	initialFullscreen?: boolean;
+	initialSwitcherStyle?: ViewSwitcherStyle;
+	/** "Nebeneinander": 1 or 3 days. */
+	initialSplitDays?: SplitDays;
 	now?: Date;
+	/**
+	 * Resolving with the created entries lets the notice undo a blocker
+	 * that was entered at once.
+	 */
 	onCreate?: (drafts: AppointmentDraft[]) => void | Promise<unknown>;
 	/** The snackbar offers to undo by moving it back. */
 	onMove?: (
@@ -77,6 +145,17 @@ export interface CalendarPageProps {
 	) => void | Promise<unknown>;
 	onCancelAppointment?: (entry: CalendarEntry) => void | Promise<unknown>;
 	onRemoveBlocker?: (entry: CalendarEntry) => void | Promise<unknown>;
+	onSaveWorkingHours?: (hours: WorkingHours) => void | Promise<unknown>;
+	/** Pending move proposals for colleagues' entries (no backend yet). */
+	proposals?: MoveProposal[];
+	onProposeMove?: (
+		entry: CalendarEntry,
+		start: Date,
+		end: Date
+	) => void | Promise<unknown>;
+	onWithdrawProposal?: (proposal: MoveProposal) => void | Promise<unknown>;
+	/** Team meetings and group dates (no backend yet). */
+	onJoin?: (entry: CalendarEntry) => void;
 	/** The visible range changed: load entries for it. */
 	onRangeChange?: (start: Date, end: Date) => void;
 	/** Colleagues whose calendars are switched on. */
@@ -93,16 +172,70 @@ type Dialog =
 	| {
 			type: 'appointment';
 			slot?: { start: Date; end: Date; kind: AppointmentKind };
+			sessionId?: number;
 	  }
 	| { type: 'blocker'; slot?: { start: Date; end: Date } }
-	| { type: 'details'; entry: CalendarEntry }
+	| { type: 'workingHours' }
 	| { type: 'sync' }
+	| null;
+
+type Menu =
+	| { type: 'slot'; anchor: MenuAnchor; range: { start: Date; end: Date } }
+	| { type: 'month'; anchor: MenuAnchor; start: Date; days: number }
+	| {
+			type: 'entry';
+			anchor: MenuAnchor;
+			entry: CalendarEntry;
+			mode: 'list' | 'move' | 'propose';
+	  }
+	| {
+			type: 'proposal';
+			anchor: MenuAnchor;
+			proposal: MoveProposal;
+			entry: CalendarEntry;
+	  }
+	| {
+			type: 'settings' | 'view' | 'jump' | 'people' | 'kinds';
+			anchor: HTMLElement;
+	  }
 	| null;
 
 interface Notice {
 	message: string;
 	undo?: () => void;
 }
+
+const AXIS_PX = 52;
+
+const startOfDay = (date: Date) => {
+	const day = new Date(date);
+	day.setHours(0, 0, 0, 0);
+	return day;
+};
+const addDays = (date: Date, days: number) => {
+	const next = new Date(date);
+	next.setDate(next.getDate() + days);
+	return next;
+};
+
+/** Tooltips of the switch and the arrows show at once (Frank). */
+const QuickTip = ({
+	title,
+	children
+}: {
+	title: string;
+	children: React.ReactElement;
+}) => (
+	<Tooltip title={title} enterDelay={0} enterNextDelay={0} disableInteractive>
+		{children}
+	</Tooltip>
+);
+
+const VIEW_ICON: Partial<Record<CalendarViewName, React.ReactNode>> = {
+	month: <CalendarMonthOutlinedIcon fontSize="small" />,
+	list: <ViewAgendaOutlinedIcon fontSize="small" />,
+	split: <ViewWeekOutlinedIcon fontSize="small" />
+};
 
 export const CalendarPage = ({
 	role,
@@ -114,13 +247,23 @@ export const CalendarPage = ({
 	conversations = [],
 	feed,
 	busyImport = {},
+	workingHours = [],
 	compact = false,
 	initialView,
+	initialShownColleagues = [],
+	initialFullscreen = false,
+	initialSwitcherStyle = 'menu',
+	initialSplitDays = 1,
 	now: fixedNow,
 	onCreate,
 	onMove,
 	onCancelAppointment,
 	onRemoveBlocker,
+	onSaveWorkingHours,
+	proposals = [],
+	onProposeMove,
+	onWithdrawProposal,
+	onJoin,
 	onStart,
 	onCopyFeed,
 	onResetFeed,
@@ -130,83 +273,245 @@ export const CalendarPage = ({
 	onRangeChange,
 	onShownColleaguesChange
 }: CalendarPageProps) => {
-	const { t } = useTranslation();
+	const { t, i18n } = useTranslation();
 	const label = useEntryLabel();
 	const format = useRangeFormat();
+	const summarise = useWorkingHoursSummary();
 	const now = useMemo(() => fixedNow ?? new Date(), [fixedNow]);
 	const consultant = role === 'consultant';
+	const views = compact ? COMPACT_VIEWS : DESKTOP_VIEWS;
+	const controller = useCalendarController();
+
+	const [view, setView] = useState<CalendarViewName>(
+		initialView ?? (compact ? 'list' : 'workWeek')
+	);
+	const [title, setTitle] = useState('');
+	/** The day the grid stands on; the split view starts on this day. */
+	const [anchorDate, setAnchorDate] = useState(() => startOfDay(now));
+	const [splitDays, setSplitDays] = useState<SplitDays>(initialSplitDays);
+	const [fullscreen, setFullscreen] = useState(initialFullscreen);
+	const [switcherStyle, setSwitcherStyle] = useState<ViewSwitcherStyle>(() =>
+		readSwitcherStyle(ownerId, initialSwitcherStyle)
+	);
+	const [shownColleagues, setShownColleagues] = useState<string[]>(
+		initialShownColleagues
+	);
+	const [recent, setRecent] = useState<string[]>(() => [
+		...initialShownColleagues,
+		...readRecentColleagues(ownerId).filter(
+			(id) => !initialShownColleagues.includes(id)
+		)
+	]);
+	const [muted, setMuted] = useState<string[]>([]);
+	const [highlight, setHighlight] = useState<CalendarHighlight | null>(null);
 	// Like the session list chips: none selected shows everything, selected
-	// chips narrow the calendar to those kinds.
+	// chips narrow to those kinds. "Was anzeigen" hides kinds altogether.
 	const [onlyFacets, setOnlyFacets] = useState<CalendarEntryFacet[]>([]);
-	const [shownColleagues, setShownColleagues] = useState<string[]>([]);
-	const [slot, setSlot] = useState<{
-		range: { start: Date; end: Date };
-		anchor: { x: number; y: number };
-	} | null>(null);
+	const [hiddenFacets, setHiddenFacets] = useState<CalendarEntryFacet[]>([]);
+	const [menu, setMenu] = useState<Menu>(null);
 	const [dialog, setDialog] = useState<Dialog>(null);
 	const [notice, setNotice] = useState<Notice | null>(null);
+	const [dragging, setDragging] = useState(false);
+	const stageRef = useRef<HTMLDivElement>(null);
+	const [stageWidth, setStageWidth] = useState(0);
 
-	const colleagueNames = useMemo(
-		() => Object.fromEntries(colleagues.map((c) => [c.id, c.displayName])),
+	useEffect(() => {
+		const el = stageRef.current;
+		if (!el || typeof ResizeObserver === 'undefined') return undefined;
+		// Next frame: a width that changes the layout must not re-enter this
+		// observer's delivery ("ResizeObserver loop completed …").
+		let frame = 0;
+		const observer = new ResizeObserver(() => {
+			cancelAnimationFrame(frame);
+			frame = requestAnimationFrame(() => setStageWidth(el.clientWidth));
+		});
+		observer.observe(el);
+		return () => {
+			cancelAnimationFrame(frame);
+			observer.disconnect();
+		};
+	}, []);
+
+	const colleagueById = useMemo(
+		() => Object.fromEntries(colleagues.map((c) => [c.id, c])),
 		[colleagues]
 	);
+	const shown = shownColleagues
+		.map((id) => colleagueById[id])
+		.filter(Boolean) as Colleague[];
+	const facetVisible = (facet: CalendarEntryFacet) =>
+		!hiddenFacets.includes(facet) &&
+		(onlyFacets.length === 0 || onlyFacets.includes(facet));
 	const visible = useMemo(
 		() =>
 			entries.filter(
 				(e) =>
 					(e.ownerId === ownerId ||
 						shownColleagues.includes(e.ownerId)) &&
-					(onlyFacets.length === 0 || onlyFacets.includes(facetOf(e)))
+					facetVisible(facetOf(e))
 			),
-		[entries, ownerId, shownColleagues, onlyFacets]
+		// facetVisible reads the two facet lists
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[entries, ownerId, shownColleagues, onlyFacets, hiddenFacets]
 	);
-	const presentFacets = CALENDAR_FACETS.filter((facet) =>
-		entries.some((e) => e.ownerId === ownerId && facetOf(e) === facet)
+	const pending = useMemo(
+		() =>
+			onProposeMove
+				? openProposals(proposals, entries).filter(({ entry }) =>
+						shownColleagues.includes(entry.ownerId)
+					)
+				: [],
+		[onProposeMove, proposals, entries, shownColleagues]
 	);
-	const upcoming = upcomingEntries(entries, ownerId, now);
+	const allPending = useMemo(
+		() => (onProposeMove ? openProposals(proposals, entries) : []),
+		[onProposeMove, proposals, entries]
+	);
+	const summary = summarise(workingHours);
 
 	const toggle = <T,>(list: T[], item: T) =>
 		list.includes(item) ? list.filter((x) => x !== item) : [...list, item];
 
+	const toggleColleague = (id: string) => {
+		const next = toggle(shownColleagues, id);
+		setShownColleagues(next);
+		onShownColleaguesChange?.(next);
+		if (next.includes(id)) {
+			const remembered = rememberColleague(recent, id);
+			setRecent(remembered);
+			writeRecentColleagues(ownerId, remembered);
+		} else setMuted((all) => all.filter((x) => x !== id));
+	};
+
+	useEffect(() => {
+		if (initialShownColleagues.length > 0)
+			onShownColleaguesChange?.(initialShownColleagues);
+		// Only once: the host loads the colleagues shown from the start.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+
 	/** Success notice once the change is stored, the failure notice if not. */
 	const run = (
 		result: void | Promise<unknown> | undefined,
-		success: Notice
+		success: Notice | ((value: unknown) => Notice)
 	) => {
+		const done = (value: unknown) =>
+			setNotice(typeof success === 'function' ? success(value) : success);
 		if (result && typeof (result as Promise<unknown>).then === 'function')
-			(result as Promise<unknown>).then(
-				() => setNotice(success),
-				() => setNotice({ message: t('calendar.saveFailed') })
+			(result as Promise<unknown>).then(done, () =>
+				setNotice({ message: t('calendar.saveFailed') })
 			);
-		else setNotice(success);
+		else done(undefined);
 	};
 
-	const choose = (choice: SlotChoice) => {
-		if (!slot) return;
-		const range = slot.range;
-		setSlot(null);
-		setDialog(
-			choice === 'blocker'
-				? { type: 'blocker', slot: range }
-				: { type: 'appointment', slot: { ...range, kind: choice } }
-		);
+	// --- Navigation ---
+	const split = view === 'split';
+	const changeView = (next: CalendarViewName) => {
+		setMenu(null);
+		if (next === view) return;
+		if (next !== 'split' && view !== 'split')
+			controller.changeView(FC_VIEW[next]);
+		setView(next);
+	};
+	const page = (direction: -1 | 1) => {
+		if (split) setAnchorDate((d) => addDays(d, direction));
+		else if (direction < 0) controller.prev();
+		else controller.next();
+	};
+	const goTo = (date: Date) => {
+		setMenu(null);
+		const day = startOfDay(date);
+		setAnchorDate(day);
+		if (!split) controller.gotoDate(day);
 	};
 
-	const create = (drafts: AppointmentDraft[]) => {
-		const result = onCreate?.(drafts);
-		setDialog(null);
+	useEffect(() => {
+		if (!split) return;
+		const end = addDays(anchorDate, splitDays);
+		onRangeChange?.(anchorDate, end);
+		// onRangeChange is the host's loader, stable enough per render
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [split, anchorDate, splitDays]);
+
+	const datesSet = useCallback(
+		(nextTitle: string, start: Date, end: Date) => {
+			setTitle(nextTitle);
+			const current = controller.getDate();
+			if (current) setAnchorDate(startOfDay(current));
+			onRangeChange?.(start, end);
+		},
+		[controller, onRangeChange]
+	);
+
+	const locale = i18n.language?.startsWith('en') ? 'en-GB' : 'de-DE';
+	const rangeTitle = !split
+		? title
+		: splitDays === 1
+			? new Intl.DateTimeFormat(locale, {
+					weekday: 'long',
+					day: 'numeric',
+					month: 'long',
+					year: 'numeric'
+				}).format(anchorDate)
+			: new Intl.DateTimeFormat(locale, {
+					day: 'numeric',
+					month: 'long',
+					year: 'numeric'
+				}).formatRange(anchorDate, addDays(anchorDate, splitDays - 1));
+
+	// --- Fullscreen: Escape leaves it, unless a menu or dialog takes it ---
+	useEffect(() => {
+		if (!fullscreen) return undefined;
+		const onKey = (event: KeyboardEvent) => {
+			if (event.key === 'Escape' && !menu && !dialog)
+				setFullscreen(false);
+		};
+		document.addEventListener('keydown', onKey);
+		return () => document.removeEventListener('keydown', onKey);
+	}, [fullscreen, menu, dialog]);
+
+	// --- Creating ---
+	const createNotice = (drafts: AppointmentDraft[]) => (created: unknown) => {
 		const first = drafts[0];
-		run(result, {
+		const createdEntries = Array.isArray(created)
+			? (created as CalendarEntry[])
+			: [];
+		const when = first.allDay
+			? `${format(first.start).split(',')[0]}, ${t('calendar.allDay')}`
+			: format(first.start, first.end);
+		return {
 			message:
 				first.type === 'blocker'
 					? t('calendar.blocker.created', {
 							count: drafts.length,
-							date: format(first.start, first.end)
+							date: when
 						})
-					: t('calendar.created', {
-							date: format(first.start, first.end)
-						})
-		});
+					: t('calendar.created', { date: when }),
+			undo:
+				first.type === 'blocker' &&
+				onRemoveBlocker &&
+				createdEntries.length > 0
+					? () => createdEntries.forEach((e) => onRemoveBlocker(e))
+					: undefined
+		};
+	};
+
+	const create = (drafts: AppointmentDraft[]) => {
+		setDialog(null);
+		run(onCreate?.(drafts), createNotice(drafts));
+	};
+
+	const chooseSlot = (choice: SlotChoice) => {
+		if (menu?.type !== 'slot') return;
+		const range = menu.range;
+		setMenu(null);
+		if (choice === 'blocker')
+			create([{ type: 'blocker', start: range.start, end: range.end }]);
+		else
+			setDialog({
+				type: 'appointment',
+				slot: { ...range, kind: choice }
+			});
 	};
 
 	const move = (entry: CalendarEntry, start: Date, end: Date) => {
@@ -230,137 +535,522 @@ export const CalendarPage = ({
 		});
 	};
 
-	const addButton = consultant && (
-		<Tooltip title={t('calendar.create')}>
+	const propose = (entry: CalendarEntry, start: Date, end: Date) =>
+		run(onProposeMove?.(entry, start, end), {
+			message: t('calendar.proposal.sent', {
+				date: format(start, end),
+				name: colleagueById[entry.ownerId]?.displayName ?? ''
+			})
+		});
+
+	const withdraw = (proposal: MoveProposal) => {
+		setMenu(null);
+		run(onWithdrawProposal?.(proposal), {
+			message: t('calendar.proposal.withdrawn')
+		});
+	};
+
+	const can = {
+		start: !!onStart,
+		join: !!onJoin,
+		move: !!onMove,
+		propose: !!onProposeMove,
+		cancel: !!onCancelAppointment,
+		remove: !!onRemoveBlocker
+	};
+
+	const openEntry = (
+		entry: CalendarEntry,
+		anchor: MenuAnchor,
+		mode: 'list' | 'move' = 'list'
+	) => {
+		const actions = entryActions(entry, { ownerId, role, can });
+		const formMode =
+			mode === 'move'
+				? actions.includes('move')
+					? 'move'
+					: actions.includes('propose')
+						? 'propose'
+						: 'list'
+				: 'list';
+		setMenu({ type: 'entry', entry, anchor, mode: formMode });
+	};
+
+	const entryAction = (
+		entry: CalendarEntry,
+		action: 'start' | 'join' | 'cancel' | 'remove'
+	) => {
+		setMenu(null);
+		if (action === 'start') onStart?.(entry);
+		else if (action === 'join') onJoin?.(entry);
+		else if (action === 'cancel')
+			run(onCancelAppointment?.(entry), {
+				message: t('calendar.cancelled')
+			});
+		else
+			run(onRemoveBlocker?.(entry), {
+				message: t('calendar.blockerRemoved')
+			});
+	};
+
+	const allDayDraft = (start: Date, days: number): AppointmentDraft => {
+		const end = addDays(start, days - 1);
+		end.setHours(23, 59, 59, 999);
+		return { type: 'blocker', start: startOfDay(start), end, allDay: true };
+	};
+
+	// --- Menu content ---
+	let menuContent: React.ReactNode = null;
+	let menuLabel = '';
+	let menuRole: 'menu' | 'dialog' = 'menu';
+	let menuWidth = 280;
+	let menuAlign: 'start' | 'end' = 'start';
+	if (menu?.type === 'slot') {
+		menuLabel = t('calendar.slotMenu.label');
+		menuContent = (
+			<SlotMenuContent
+				range={menu.range}
+				outsideHours={
+					!isWithinWorkingHours(
+						menu.range.start,
+						menu.range.end,
+						workingHours
+					)
+				}
+				onChoose={chooseSlot}
+			/>
+		);
+	} else if (menu?.type === 'month') {
+		menuLabel = t('calendar.monthMenu.label');
+		const { start, days } = menu;
+		menuContent = (
+			<MonthDayMenuContent
+				start={start}
+				days={days}
+				onAllDay={() => {
+					setMenu(null);
+					create([allDayDraft(start, days)]);
+				}}
+				onWithTime={() => {
+					setMenu(null);
+					const from = new Date(start);
+					from.setHours(9, 0, 0, 0);
+					setDialog({
+						type: 'blocker',
+						slot: {
+							start: from,
+							end: new Date(from.getTime() + 3_600_000)
+						}
+					});
+				}}
+				onAppointment={() => {
+					setMenu(null);
+					setAnchorDate(startOfDay(start));
+					controller.changeView(FC_VIEW.day);
+					controller.gotoDate(start);
+					setView('day');
+				}}
+			/>
+		);
+	} else if (menu?.type === 'entry') {
+		const { entry } = menu;
+		const actions = entryActions(entry, { ownerId, role, can });
+		const colleague =
+			entry.ownerId !== ownerId
+				? colleagueById[entry.ownerId]
+				: undefined;
+		menuLabel = t('calendar.entryMenu.label', {
+			title: label(entry, !!colleague)
+		});
+		menuRole = menu.mode === 'list' ? 'menu' : 'dialog';
+		menuWidth = 300;
+		menuContent = (
+			<EntryMenuContent
+				entry={entry}
+				actions={actions}
+				colleague={colleague}
+				mode={menu.mode}
+				entries={entries}
+				ownerId={ownerId}
+				onMode={(mode) => setMenu({ ...menu, mode })}
+				onAction={(action) => entryAction(entry, action)}
+				onMove={(start, end) => {
+					setMenu(null);
+					if (menu.mode === 'propose') propose(entry, start, end);
+					else move(entry, start, end);
+				}}
+			/>
+		);
+	} else if (menu?.type === 'proposal') {
+		menuLabel = t('calendar.proposal.label');
+		menuContent = (
+			<ProposalMenuContent
+				proposal={menu.proposal}
+				entry={menu.entry}
+				approverName={
+					colleagueById[menu.entry.ownerId]?.displayName ?? ''
+				}
+				onWithdraw={
+					onWithdrawProposal
+						? () => withdraw(menu.proposal)
+						: undefined
+				}
+			/>
+		);
+	} else if (menu?.type === 'settings') {
+		menuLabel = t('calendar.settings.label');
+		menuAlign = 'end';
+		menuContent = (
+			<SettingsMenuContent
+				workingHoursSummary={summary}
+				switcherStyle={switcherStyle}
+				onWorkingHours={
+					onSaveWorkingHours
+						? () => {
+								setMenu(null);
+								setDialog({ type: 'workingHours' });
+							}
+						: undefined
+				}
+				onSwitcherStyle={(style) => {
+					setSwitcherStyle(style);
+					writeSwitcherStyle(ownerId, style);
+				}}
+				onSync={
+					feed
+						? () => {
+								setMenu(null);
+								setDialog({ type: 'sync' });
+							}
+						: undefined
+				}
+			/>
+		);
+	} else if (menu?.type === 'view') {
+		menuLabel = t('calendar.viewSwitch');
+		menuAlign = 'end';
+		menuWidth = 220;
+		menuContent = (
+			<ViewMenuContent
+				views={views}
+				current={view}
+				onChoose={changeView}
+			/>
+		);
+	} else if (menu?.type === 'jump') {
+		menuLabel = t('calendar.jump.label');
+		menuRole = 'dialog';
+		menuWidth = 240;
+		menuContent = <JumpMenuContent now={now} onJump={goTo} />;
+	} else if (menu?.type === 'people') {
+		menuLabel = t('calendar.people.label');
+		menuContent = (
+			<PeopleMenuContent
+				colleagues={colleagues}
+				shown={shownColleagues}
+				scopeHint={t(`calendar.scopeHint.${visibility.scope}`)}
+				onToggle={toggleColleague}
+			/>
+		);
+	} else if (menu?.type === 'kinds') {
+		menuLabel = t('calendar.kindsMenu.label');
+		menuAlign = 'end';
+		menuContent = (
+			<KindsMenuContent
+				hidden={hiddenFacets}
+				onToggle={(facet) =>
+					setHiddenFacets((all) => toggle(all, facet))
+				}
+				onShowAll={() => setHiddenFacets([])}
+			/>
+		);
+	}
+
+	const openAt =
+		(type: 'settings' | 'view' | 'jump' | 'people' | 'kinds') =>
+		(event: React.MouseEvent<HTMLElement>) =>
+			setMenu({ type, anchor: event.currentTarget });
+
+	// --- Header ---
+	const viewSwitch =
+		switcherStyle === 'digits' && !compact ? (
+			<div
+				className="calendarStage__digits"
+				role="radiogroup"
+				aria-label={t('calendar.viewSwitch')}
+			>
+				{views.map((name) => (
+					<QuickTip key={name} title={t(`calendar.views.${name}`)}>
+						<button
+							type="button"
+							role="radio"
+							aria-checked={name === view}
+							aria-label={t(`calendar.views.${name}`)}
+							className="calendarStage__digit"
+							onClick={() => changeView(name)}
+							data-cy={`calendar-digit-${name}`}
+						>
+							{VIEW_DIGIT[name] ?? VIEW_ICON[name]}
+						</button>
+					</QuickTip>
+				))}
+			</div>
+		) : (
 			<button
 				type="button"
-				className="calendarPage__create"
-				aria-label={t('calendar.create')}
-				onClick={() => setDialog({ type: 'appointment' })}
-				data-cy="calendar-create"
+				className="calendarStage__pillButton"
+				aria-haspopup="menu"
+				aria-expanded={menu?.type === 'view'}
+				aria-label={t('calendar.viewMenu', {
+					view: t(`calendar.views.${view}`)
+				})}
+				onClick={openAt('view')}
+				data-cy="calendar-view-menu"
 			>
-				<AddIcon />
+				{t(`calendar.views.${view}`)}
+				<ArrowDropDownIcon fontSize="small" />
 			</button>
-		</Tooltip>
-	);
+		);
 
-	const syncButton = consultant && feed && (
-		<IconButton
-			aria-label={t('calendar.sync')}
-			onClick={() => setDialog({ type: 'sync' })}
-			data-cy="calendar-sync"
-		>
-			<SyncOutlinedIcon />
-		</IconButton>
-	);
-
-	const filters = presentFacets.length > 1 && (
-		<FilterChipRow
-			label={t('calendar.filterLabel')}
-			className="calendarPage__filters"
-		>
-			{presentFacets.map((facet) => (
-				<FilterChip
-					key={facet}
-					label={t(`calendar.facets.${facet}`)}
-					icon={FACET_ICON_COMPONENT[facet]}
-					active={onlyFacets.includes(facet)}
-					onClick={() => setOnlyFacets((all) => toggle(all, facet))}
-					data-cy={`calendar-filter-${facet}`}
-				/>
-			))}
-		</FilterChipRow>
-	);
-
-	const side = !compact && (
-		<aside
-			className="calendarPage__side"
-			aria-label={t('calendar.upcoming')}
-		>
-			<section className="calendarPage__section">
-				<h2 className="calendarPage__sectionTitle">
-					{t('calendar.upcoming')}
-				</h2>
-				{upcoming.length === 0 ? (
-					<p className="calendarPage__muted">
-						{t('calendar.upcomingEmpty')}
-					</p>
-				) : (
-					<ul className="calendarPage__upcoming">
-						{upcoming.map((entry) => (
-							<li key={entry.id}>
-								<button
-									type="button"
-									className={`calendarPage__entry${isSoon(entry, now) ? ' calendarPage__entry--soon' : ''}`}
-									onClick={() =>
-										setDialog({ type: 'details', entry })
-									}
-								>
-									<span className="calendarPage__entryIcon">
-										<CalendarEntryGlyph entry={entry} />
-									</span>
-									<span className="calendarPage__entryText">
-										<span className="calendarPage__entryTime">
-											{format(entry.start, entry.end)}
-										</span>
-										<span className="calendarPage__entryTitle">
-											{label(entry)}
-										</span>
-									</span>
-								</button>
-							</li>
-						))}
-					</ul>
-				)}
-			</section>
-			{consultant && (
-				<section className="calendarPage__section">
-					<h2 className="calendarPage__sectionTitle">
-						{t('calendar.calendars')}
-					</h2>
-					<ul className="calendarPage__calendars">
-						<li>
-							<label className="calendarPage__calendar">
-								<input type="checkbox" checked disabled />
-								<span>{t('calendar.myCalendar')}</span>
-							</label>
-						</li>
-						{colleagues.map((c) => (
-							<li key={c.id}>
-								<label className="calendarPage__calendar">
-									<input
-										type="checkbox"
-										checked={shownColleagues.includes(c.id)}
-										onChange={() => {
-											const next = toggle(
-												shownColleagues,
-												c.id
-											);
-											setShownColleagues(next);
-											onShownColleaguesChange?.(next);
-										}}
-										data-cy={`calendar-colleague-${c.id}`}
-									/>
-									<span>
-										{c.displayName}
-										<span className="calendarPage__muted">
-											{' '}
-											· {c.agencyName}
-										</span>
-									</span>
-								</label>
-							</li>
-						))}
-					</ul>
-					<p className="calendarPage__muted calendarPage__hint">
-						{colleagues.length === 0
-							? t('calendar.colleaguesEmpty')
-							: t(`calendar.scopeHint.${visibility.scope}`)}
-					</p>
-				</section>
+	const header = (
+		<header className="calendarStage__header">
+			{shown.length > 0 && (
+				<button
+					type="button"
+					className="calendarStage__avatars"
+					aria-label={t('calendar.people.label')}
+					onClick={openAt('people')}
+				>
+					{shown.slice(0, 4).map((c) => (
+						<span
+							key={c.id}
+							className="calendarStage__avatar"
+							aria-hidden="true"
+						>
+							{initialsOf(c.displayName)}
+						</span>
+					))}
+				</button>
 			)}
-		</aside>
+			<h1 className="calendarStage__title">
+				{t('navigation.booking.events')}
+			</h1>
+			{consultant && onCreate && (
+				<QuickTip title={t('calendar.create')}>
+					<button
+						type="button"
+						className="calendarStage__create"
+						aria-label={t('calendar.create')}
+						onClick={() => setDialog({ type: 'appointment' })}
+						data-cy="calendar-create"
+					>
+						<AddIcon fontSize="small" />
+					</button>
+				</QuickTip>
+			)}
+			<div className="calendarStage__headerEnd">
+				{viewSwitch}
+				{!compact && (
+					<QuickTip
+						title={
+							fullscreen
+								? t('calendar.fullscreenExit')
+								: t('calendar.fullscreen')
+						}
+					>
+						<button
+							type="button"
+							className="calendarStage__round"
+							aria-label={
+								fullscreen
+									? t('calendar.fullscreenExit')
+									: t('calendar.fullscreen')
+							}
+							aria-pressed={fullscreen}
+							onClick={() => setFullscreen((on) => !on)}
+							data-cy="calendar-fullscreen"
+						>
+							{fullscreen ? (
+								<FullscreenExitIcon />
+							) : (
+								<FullscreenIcon />
+							)}
+						</button>
+					</QuickTip>
+				)}
+				{consultant && (
+					<QuickTip title={t('calendar.settings.label')}>
+						<button
+							type="button"
+							className="calendarStage__round"
+							aria-label={t('calendar.settings.label')}
+							aria-haspopup="menu"
+							aria-expanded={menu?.type === 'settings'}
+							onClick={openAt('settings')}
+							data-cy="calendar-settings"
+						>
+							<MoreVertIcon />
+						</button>
+					</QuickTip>
+				)}
+			</div>
+		</header>
 	);
+
+	const toolbar = (
+		<div className="calendarStage__toolbar">
+			<div className="calendarStage__nav" role="group">
+				<QuickTip title={t('calendar.previous')}>
+					<button
+						type="button"
+						className="calendarStage__navButton"
+						aria-label={t('calendar.previous')}
+						onClick={() => page(-1)}
+						data-cy="calendar-previous"
+					>
+						<ChevronLeftIcon fontSize="small" />
+					</button>
+				</QuickTip>
+				<button
+					type="button"
+					className="calendarStage__today"
+					onClick={() => goTo(now)}
+					data-cy="calendar-today"
+				>
+					{t('calendar.today')}
+				</button>
+				<QuickTip title={t('calendar.jump.label')}>
+					<button
+						type="button"
+						className="calendarStage__navButton calendarStage__navButton--drop"
+						aria-label={t('calendar.jump.label')}
+						aria-haspopup="dialog"
+						aria-expanded={menu?.type === 'jump'}
+						onClick={openAt('jump')}
+						data-cy="calendar-jump"
+					>
+						<ArrowDropDownIcon fontSize="small" />
+					</button>
+				</QuickTip>
+				<QuickTip title={t('calendar.next')}>
+					<button
+						type="button"
+						className="calendarStage__navButton"
+						aria-label={t('calendar.next')}
+						onClick={() => page(1)}
+						data-cy="calendar-next"
+					>
+						<ChevronRightIcon fontSize="small" />
+					</button>
+				</QuickTip>
+			</div>
+			<h2 className="calendarStage__range" aria-live="polite">
+				{rangeTitle}
+			</h2>
+			{split && (
+				<div
+					className="calendarStage__segmented"
+					role="group"
+					aria-label={t('calendar.split.range')}
+				>
+					{SPLIT_DAY_CHOICES.map((n) => (
+						<button
+							key={n}
+							type="button"
+							className="calendarStage__segment"
+							aria-pressed={splitDays === n}
+							onClick={() => setSplitDays(n)}
+							data-cy={`calendar-split-days-${n}`}
+						>
+							{n === 1
+								? t('calendar.split.oneDay')
+								: t('calendar.split.threeDays')}
+						</button>
+					))}
+				</div>
+			)}
+		</div>
+	);
+
+	// A phone has no left column: the bar itself offers "Weitere …".
+	const pickOnPhone = compact && consultant && colleagues.length > 0;
+	const peopleBar = (shown.length > 0 || pickOnPhone) && (
+		<div
+			className="calendarStage__people"
+			role="group"
+			aria-label={t('calendar.people.bar')}
+			onMouseLeave={() => setHighlight(null)}
+		>
+			{[
+				{ id: ownerId, name: t('calendar.people.me') },
+				...shown.map((c) => ({
+					id: c.id,
+					name: c.displayName,
+					short: c.agencyShort,
+					agency: c.agencyName
+				}))
+			].map(
+				(p: {
+					id: string;
+					name: string;
+					short?: string;
+					agency?: string;
+				}) => (
+					<button
+						key={p.id}
+						type="button"
+						className="calendarStage__person"
+						aria-pressed={!muted.includes(p.id)}
+						title={p.agency}
+						onMouseEnter={() => setHighlight({ owner: p.id })}
+						onFocus={() => setHighlight({ owner: p.id })}
+						onBlur={() => setHighlight(null)}
+						onClick={() => setMuted((all) => toggle(all, p.id))}
+						data-cy={`calendar-person-${p.id}`}
+					>
+						<span
+							className={`calendarStage__personAvatar${p.id === ownerId ? ' calendarStage__personAvatar--me' : ''}`}
+							aria-hidden="true"
+						>
+							{p.id === ownerId
+								? t('calendar.people.me')
+								: initialsOf(p.name)}
+						</span>
+						<span>
+							{p.id === ownerId
+								? t('calendar.myCalendar')
+								: p.name}
+						</span>
+						{p.short && (
+							<span className="calendarStage__agency">
+								{p.short}
+							</span>
+						)}
+					</button>
+				)
+			)}
+			{pickOnPhone && (
+				<button
+					type="button"
+					className="calendarStage__person calendarStage__person--more"
+					aria-haspopup="menu"
+					aria-expanded={menu?.type === 'people'}
+					onClick={openAt('people')}
+					data-cy="calendar-person-more"
+				>
+					{t('calendar.people.more')}
+				</button>
+			)}
+			<span className="calendarStage__peopleHint">
+				{t('calendar.people.hint')}
+			</span>
+		</div>
+	);
+
+	const splitOverflows =
+		split &&
+		splitDays * (AXIS_PX + (shown.length + 1) * SPLIT_COLUMN_MIN_PX) >
+			stageWidth;
 
 	let body: React.ReactNode;
 	if (state === 'loading')
@@ -387,57 +1077,193 @@ export const CalendarPage = ({
 		);
 	else
 		body = (
-			<CalendarView
-				role={role}
-				ownerId={ownerId}
-				entries={visible}
-				colleagueNames={colleagueNames}
-				compact={compact}
-				initialView={initialView}
-				now={fixedNow}
-				onSelectRange={(range, anchor) => setSlot({ range, anchor })}
-				onEntryClick={(entry) => setDialog({ type: 'details', entry })}
-				onEntryMove={move}
-				onRangeChange={onRangeChange}
-				toolbarEnd={
-					<>
-						{filters}
-						{syncButton}
-					</>
-				}
-			/>
+			<CalendarPager
+				onPage={page}
+				enabled={!compact && !splitOverflows}
+				dragging={dragging}
+			>
+				{split ? (
+					<CalendarSplitView
+						day={anchorDate}
+						days={splitDays}
+						role={role}
+						ownerId={ownerId}
+						colleagues={shown}
+						entries={visible}
+						now={now}
+						workingHours={workingHours}
+						proposals={pending}
+						highlight={highlight}
+						muted={muted}
+						onSelectRange={(range, anchor) =>
+							setMenu({ type: 'slot', range, anchor })
+						}
+						onEntryOpen={openEntry}
+						onProposalOpen={(proposal, anchor) => {
+							const found = pending.find(
+								(p) => p.proposal.id === proposal.id
+							);
+							if (found)
+								setMenu({
+									type: 'proposal',
+									proposal,
+									entry: found.entry,
+									anchor
+								});
+						}}
+					/>
+				) : (
+					<CalendarView
+						controller={controller}
+						view={view}
+						role={role}
+						ownerId={ownerId}
+						entries={visible}
+						colleagues={colleagueById}
+						compact={compact}
+						now={fixedNow}
+						initialDate={anchorDate}
+						workingHours={workingHours}
+						proposals={pending}
+						highlight={highlight}
+						muted={muted}
+						onSelectRange={(range, anchor) =>
+							setMenu({ type: 'slot', range, anchor })
+						}
+						onSelectDays={(start, days, anchor) =>
+							setMenu({ type: 'month', start, days, anchor })
+						}
+						onEntryOpen={openEntry}
+						onProposalOpen={(proposal, anchor) => {
+							const found = pending.find(
+								(p) => p.proposal.id === proposal.id
+							);
+							if (found)
+								setMenu({
+									type: 'proposal',
+									proposal,
+									entry: found.entry,
+									anchor
+								});
+						}}
+						onEntryMove={move}
+						onDatesSet={datesSet}
+						onDragChange={setDragging}
+					/>
+				)}
+			</CalendarPager>
 		);
 
 	return (
 		<div
-			className={`calendarPage${compact ? ' calendarPage--compact' : ''}`}
+			className={[
+				'calendarPage',
+				compact && 'calendarPage--compact',
+				fullscreen && 'calendarPage--fullscreen'
+			]
+				.filter(Boolean)
+				.join(' ')}
 			data-testid="calendar-page"
 		>
-			<header className="calendarPage__header">
-				<CalendarIcon
-					className="calendarPage__headerIcon"
-					aria-hidden="true"
+			{!compact && !fullscreen && (
+				<CalendarSidebar
+					ownerId={ownerId}
+					consultant={consultant}
+					now={now}
+					entries={entries}
+					colleagues={colleagues}
+					conversations={conversations}
+					workingHours={workingHours}
+					workingHoursSummary={summary}
+					onlyFacets={onlyFacets}
+					hiddenFacets={hiddenFacets}
+					onToggleFacet={(facet) =>
+						setOnlyFacets((all) => toggle(all, facet))
+					}
+					onHighlightFacet={(facet) =>
+						setHighlight(facet ? { facet } : null)
+					}
+					kindsMenuOpen={menu?.type === 'kinds'}
+					onOpenKinds={(anchor) => setMenu({ type: 'kinds', anchor })}
+					openProposals={allPending}
+					onOpenProposal={(proposal, entry, anchor) =>
+						setMenu({ type: 'proposal', proposal, entry, anchor })
+					}
+					onWithdrawProposal={
+						onWithdrawProposal ? withdraw : undefined
+					}
+					onOpenEntry={(entry, anchor) => openEntry(entry, anchor)}
+					shownColleagues={shownColleagues}
+					recentColleagues={recentPills(
+						recent,
+						colleagues.map((c) => c.id)
+					)}
+					onToggleColleague={toggleColleague}
+					onOpenPeople={(anchor) =>
+						setMenu({ type: 'people', anchor })
+					}
+					onCreate={onCreate ? create : undefined}
+					onMoreDetails={(draft) => {
+						if (draft.kind === 'blocker')
+							setDialog({
+								type: 'blocker',
+								slot:
+									draft.start && draft.end
+										? { start: draft.start, end: draft.end }
+										: undefined
+							});
+						else
+							setDialog({
+								type: 'appointment',
+								slot:
+									draft.start && draft.end
+										? {
+												start: draft.start,
+												end: draft.end,
+												kind: draft.kind ?? 'video'
+											}
+										: undefined,
+								sessionId: draft.sessionId
+							});
+					}}
+					onWorkingHours={
+						onSaveWorkingHours
+							? () => setDialog({ type: 'workingHours' })
+							: undefined
+					}
 				/>
-				<h1 className="calendarPage__title">
-					{t('navigation.booking.events')}
-				</h1>
-				{addButton}
-			</header>
-			<div className="calendarPage__body">
-				{side}
-				<div className="calendarPage__main">{body}</div>
-			</div>
+			)}
+			<section
+				ref={stageRef}
+				className="calendarStage"
+				aria-label={t('navigation.booking.events')}
+				data-split={split || undefined}
+			>
+				{header}
+				{toolbar}
+				{peopleBar}
+				<div className="calendarStage__grid">{body}</div>
+			</section>
 
-			<SlotActionMenu
-				range={slot?.range ?? null}
-				anchor={slot?.anchor ?? { x: 0, y: 0 }}
-				onChoose={choose}
-				onClose={() => setSlot(null)}
-			/>
+			<CalendarMenu
+				open={!!menu}
+				anchor={menu?.anchor ?? null}
+				label={menuLabel}
+				role={menuRole}
+				width={menuWidth}
+				align={menuAlign}
+				focusKey={menu?.type === 'entry' ? menu.mode : menu?.type}
+				onClose={() => setMenu(null)}
+				data-cy={menu ? `calendar-menu-${menu.type}` : undefined}
+			>
+				{menuContent}
+			</CalendarMenu>
+
 			{dialog?.type === 'appointment' && (
 				<AppointmentDialog
 					open
 					slot={dialog.slot}
+					initialSessionId={dialog.sessionId}
 					conversations={conversations}
 					entries={entries}
 					ownerId={ownerId}
@@ -459,27 +1285,20 @@ export const CalendarPage = ({
 					onClose={() => setDialog(null)}
 				/>
 			)}
-			{dialog?.type === 'details' && (
-				<EntryDetailsDialog
-					entry={dialog.entry}
-					role={role}
-					ownerId={ownerId}
-					colleagueName={colleagueNames[dialog.entry.ownerId]}
+			{dialog?.type === 'workingHours' && (
+				<WorkingHoursDialog
+					open
+					hours={workingHours}
 					fullScreen={compact}
-					onStart={(entry) => {
+					onSave={(hours) => {
 						setDialog(null);
-						onStart?.(entry);
-					}}
-					onCancelAppointment={(entry) => {
-						setDialog(null);
-						run(onCancelAppointment?.(entry), {
-							message: t('calendar.cancelled')
-						});
-					}}
-					onRemoveBlocker={(entry) => {
-						setDialog(null);
-						run(onRemoveBlocker?.(entry), {
-							message: t('calendar.blockerRemoved')
+						const next = summarise(hours);
+						run(onSaveWorkingHours?.(hours), {
+							message: next
+								? t('calendar.workingHours.saved', {
+										hours: next
+									})
+								: t('calendar.workingHours.cleared')
 						});
 					}}
 					onClose={() => setDialog(null)}

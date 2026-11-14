@@ -34,6 +34,8 @@ export interface AppointmentDialogProps {
 	open: boolean;
 	/** Preset from a selected slot; absent when opened from the button. */
 	slot?: { start: Date; end: Date; kind: AppointmentKind };
+	/** Preset conversation, e.g. from the quick entry. */
+	initialSessionId?: number;
 	conversations: CalendarConversation[];
 	entries: CalendarEntry[];
 	ownerId: string;
@@ -46,6 +48,7 @@ export interface AppointmentDialogProps {
 export const AppointmentDialog = ({
 	open,
 	slot,
+	initialSessionId,
 	conversations,
 	entries,
 	ownerId,
@@ -67,7 +70,9 @@ export const AppointmentDialog = ({
 		slot ? dayjs(slot.end) : initial.add(1, 'hour')
 	);
 	const [kind, setKind] = useState<AppointmentKind>(slot?.kind ?? 'video');
-	const [sessionId, setSessionId] = useState<string>('');
+	const [sessionId, setSessionId] = useState<string>(
+		initialSessionId === undefined ? '' : String(initialSessionId)
+	);
 	const [showError, setShowError] = useState(false);
 
 	const draft: Partial<AppointmentDraft> = {
