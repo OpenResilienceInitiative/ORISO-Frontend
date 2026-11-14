@@ -951,7 +951,8 @@ export const Tablet: Story = {
 		).toBeNull();
 		// The hours live in ⋮.
 		await userEvent.click(await findCy('calendar-settings'));
-		const item = await findCy('calendar-settings-working-hours');
+		await findCy('calendar-settings-working-hours');
+		const item = cyEl('calendar-settings-working-hours');
 		await expect(item.textContent).toContain('Arbeitszeit festlegen');
 		await expect(item.textContent).toContain('08:00');
 		await userEvent.keyboard('{Escape}');
@@ -968,7 +969,8 @@ export const TabletRequests: Story = {
 		proposals: STORY_PROPOSALS
 	},
 	play: async () => {
-		const sheet = await findCy('calendar-sheet');
+		await findCy('calendar-sheet');
+		const sheet = cyEl('calendar-sheet');
 		await expect(within(sheet).getByText('Offene Anfragen')).toBeTruthy();
 		await expect(
 			sheet.querySelector('[data-cy="calendar-upcoming"]')
