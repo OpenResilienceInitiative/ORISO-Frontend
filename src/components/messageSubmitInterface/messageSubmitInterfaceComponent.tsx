@@ -16,7 +16,6 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { bookingPathFor } from '../../containers/bookings/components/Booking/bookingSession';
 
 import { SendButton } from './inputField/SendButton';
 import { hasMediaUploadFeature } from '../../utils/mediaUploadHelpers';
@@ -143,13 +142,10 @@ import {
 	resolveComposerMessageSnapshot,
 	shouldPreserveComposerAfterRetry
 } from './composerMessageSnapshot';
-import { ReactComponent as CalendarMonthIcon } from '../../resources/img/icons/calendar-month-navigation.svg';
 import './emojiPicker.styles';
 import './messageSubmitInterface.styles';
 import clsx from 'clsx';
 import { mobileListView } from '../app/navigationHandler';
-import { Button, ButtonItem, BUTTON_TYPES } from '../button/Button';
-import { Headline } from '../headline/Headline';
 import { useTranslation } from 'react-i18next';
 import {
 	SUPERVISOR_FEEDBACK_PREFIX,
@@ -672,7 +668,6 @@ export const MessageSubmitInterfaceComponent = ({
 		activeSession.item.status === STATUS_ARCHIVED
 	);
 	const [isTypingActive, setIsTypingActive] = useState(activeSession.isGroup);
-	const [showAppointmentButton, setShowAppointmentButton] = useState(false);
 	const [isVoiceRecording, setIsVoiceRecording] = useState(false);
 	const [voiceRecordingDurationSec, setVoiceRecordingDurationSec] =
 		useState(0);
@@ -1130,16 +1125,6 @@ export const MessageSubmitInterfaceComponent = ({
 	useEffect(() => {
 		resizeTextarea();
 	}, [attachmentSelected]); // eslint-disable-line react-hooks/exhaustive-deps
-
-	useEffect(() => {
-		if (hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)) {
-			return;
-		}
-
-		if (activeSession.isEmptyEnquiry) {
-			setShowAppointmentButton(userData.appointmentFeatureEnabled);
-		}
-	}, [activeSession?.isEmptyEnquiry, userData]);
 
 	const removeSelectedAttachment = useCallback(() => {
 		const attachmentInput: any = attachmentInputRef.current;
@@ -2814,10 +2799,6 @@ export const MessageSubmitInterfaceComponent = ({
 		return infoData;
 	}, [activeInfo, activeSession, translate, userData]);
 
-	const handleBookingButton = useCallback(() => {
-		navigate(bookingPathFor(activeSession?.item?.id));
-	}, [navigate, activeSession?.item?.id]);
-
 	const isSelfHelpGroup = getModality(activeSession) === Modality.SELF_HELP;
 	// Practice: no uploads and no voice (one gate for buttons, input, paste, shortcuts).
 	const isPracticing = usePracticeActive();
@@ -3822,14 +3803,6 @@ export const MessageSubmitInterfaceComponent = ({
 			startVoiceRecording();
 		}
 	}, [isVoiceRecording, startVoiceRecording, stopVoiceRecording]);
-
-	const bookingButton: ButtonItem = useMemo(
-		() => ({
-			label: translate('message.submit.booking.buttonLabel'),
-			type: BUTTON_TYPES.PRIMARY
-		}),
-		[translate]
-	);
 
 	const isVoiceAttachmentSelected =
 		!!attachmentSelected?.type?.startsWith('audio/');
@@ -5414,23 +5387,6 @@ export const MessageSubmitInterfaceComponent = ({
 							/>
 						</div>
 					</div>
-					{showAppointmentButton && (
-						<div className="textarea__wrapper-booking">
-							<Headline
-								semanticLevel="5"
-								text={translate(
-									'message.submit.booking.headline'
-								)}
-								className="textarea__wrapper-booking-headline"
-							/>
-							<Button
-								item={bookingButton}
-								isLink={true}
-								buttonHandle={handleBookingButton}
-								customIcon={<CalendarMonthIcon />}
-							/>
-						</div>
-					)}
 				</div>
 				{hasUploadFunctionality && (
 					<input

@@ -86,10 +86,7 @@ import { getLegalLinkKind } from '../legalLinks/useLegalLinkContent';
 import '../sessionHeader/sessionHeader.styles';
 import './sessionMenu.styles';
 import { Button, BUTTON_TYPES, ButtonItem } from '../button/Button';
-import { ReactComponent as CalendarMonthPlusIcon } from '../../resources/img/icons/calendar-plus.svg';
-import { Text } from '../text/Text';
 import { useSearchParam } from '../../hooks/useSearchParams';
-import { bookingPathFor } from '../../containers/bookings/components/Booking/bookingSession';
 import { useTranslation } from 'react-i18next';
 import EventOutlinedIcon from '@mui/icons-material/EventOutlined';
 import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider';
@@ -320,24 +317,6 @@ export const SessionMenu = (props: SessionMenuProps) => {
 			document.removeEventListener('keydown', keydown);
 		};
 	}, [flyoutOpen, menuPosition.visibility, closeMenu]);
-
-	const [appointmentFeatureEnabled, setAppointmentFeatureEnabled] =
-		useState(false);
-
-	useEffect(() => {
-		if (!hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)) {
-			const { appointmentFeatureEnabled } = userData;
-			setAppointmentFeatureEnabled(appointmentFeatureEnabled);
-		}
-		if (!activeSession.item?.active || !activeSession.item?.subscribed) {
-			// do not get group members for a chat that has not been started and user is not subscribed
-			return;
-		}
-	}, [activeSession, userData]);
-
-	const handleBookingButton = () => {
-		navigate(bookingPathFor(activeSession?.item?.id));
-	};
 
 	const handleStopGroupChat = () => {
 		closeMenu();
@@ -654,22 +633,6 @@ export const SessionMenu = (props: SessionMenuProps) => {
 					</div>
 				)}
 
-			{!isRejectedCase &&
-				!activeSession.isEnquiry &&
-				appointmentFeatureEnabled &&
-				!isPracticing &&
-				!activeSession.isGroup && (
-					<div
-						className="sessionMenu__icon sessionMenu__icon--booking"
-						onClick={handleBookingButton}
-					>
-						<CalendarMonthPlusIcon />
-						<Text
-							type="standard"
-							text={translate('booking.mobile.calendar.label')}
-						/>
-					</div>
-				)}
 			{showSessionMenu && (
 				<>
 					<button

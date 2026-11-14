@@ -14,13 +14,19 @@ export interface SessionAppointment {
 	startTime: string;
 	endTime: string;
 	status: 'SCHEDULED' | 'CANCELLED';
+	/** ADR-032 §2a. Absent on appointments made before the calendar. */
+	kind?: SessionAppointmentKind | null;
 	/** The asker's counterpart has no displayName; the whole object may be absent. */
 	counterpart?: { username?: string; displayName?: string };
 }
 
+export type SessionAppointmentKind = 'ONSITE' | 'VIDEO' | 'PHONE' | 'CHAT';
+
 export interface SessionAppointmentSlot {
 	startTime: string;
 	endTime: string;
+	/** Left out on a move: the appointment keeps its kind. */
+	kind?: SessionAppointmentKind;
 }
 
 // A backend without these endpoints must leave the app untouched: every

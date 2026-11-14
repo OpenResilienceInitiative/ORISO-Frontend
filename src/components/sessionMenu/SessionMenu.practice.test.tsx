@@ -213,21 +213,13 @@ describe('SessionMenu calls and practice mode (no calls)', () => {
 		}
 	);
 
-	it('hides the booking entry while practising', () => {
+	it('has no cal.com booking entry, even with the old flag on (ADR-032)', () => {
 		const asker = {
 			userId: 'asker',
 			grantedAuthorities: [AUTHORITIES.ASKER_DEFAULT],
 			appointmentFeatureEnabled: true
 		};
-		const { unmount } = render(<Menu userData={asker} />);
-		expect(
-			document.querySelector('.sessionMenu__icon--booking')
-		).not.toBeNull();
-		unmount();
-
-		enterPracticeMode({ tourId: 'consultant-practice-accept' });
 		render(<Menu userData={asker} />);
-
 		expect(
 			document.querySelector('.sessionMenu__icon--booking')
 		).toBeNull();

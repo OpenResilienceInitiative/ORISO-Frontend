@@ -21,6 +21,12 @@ export const loadAuthenticatedApp = () =>
 export const loadSessionView = () =>
 	import('../session/SessionView').then((m) => ({ default: m.SessionView }));
 
+/** The calendar carries FullCalendar: load it only on "Meine Termine". */
+export const loadCalendarPage = () =>
+	import('../calendar/CalendarPageWired').then((m) => ({
+		default: m.CalendarPageWired
+	}));
+
 export const loadWriteEnquiry = () =>
 	import('../enquiry/WriteEnquiry').then((m) => ({
 		default: m.WriteEnquiry

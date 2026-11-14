@@ -6896,5 +6896,146 @@
 			"title": "Hesabınız kontrol edilemedi",
 			"text": "Mesajınız henüz gönderilmedi ve yazı alanında duruyor. Lütfen bağlantınızı kontrol edip yeniden gönderin."
 		}
+	},
+	"calendar": {
+		"create": "Randevu oluştur",
+		"today": "Bugün",
+		"previous": "Önceki",
+		"next": "Sonraki",
+		"viewSwitch": "Görünüm",
+		"views": {
+			"day": "Gün",
+			"week": "Hafta",
+			"month": "Ay",
+			"list": "Liste"
+		},
+		"upcoming": "Sıradaki",
+		"upcomingEmpty": "Yaklaşan randevu yok",
+		"calendars": "Takvimler",
+		"myCalendar": "Takvimim",
+		"scopeHint": {
+			"AGENCY": "Danışma merkezinizin takvimlerini görüyorsunuz. Bunu kurumunuz belirler.",
+			"TENANT": "Kurumunuzun tüm danışma merkezlerinin takvimlerini görüyorsunuz. Bunu kurumunuz belirler.",
+			"PLATFORM": "Platformdaki tüm danışmanların takvimlerini görüyorsunuz. Bunu kurumunuz belirler."
+		},
+		"colleaguesEmpty": "Görünür meslektaş takvimi yok.",
+		"sync": "Takvim eşitleme",
+		"kinds": {
+			"video": "Görüntülü",
+			"phone": "Telefon",
+			"onsite": "Yüz yüze",
+			"chat": "Sohbet"
+		},
+		"types": {
+			"group": "Grup randevusu",
+			"blocker": "Kapalı",
+			"busy": "Meşgul",
+			"colleague": "Meşgul"
+		},
+		"noEvents": "Bu dönemde randevu yok",
+		"loading": "Randevular yükleniyor",
+		"error": {
+			"title": "Randevular yüklenemedi.",
+			"retry": "Tekrar deneyin"
+		},
+		"dialog": {
+			"createTitle": "Yeni kayıt",
+			"description": "Günü, saati, türü ve randevunun ait olduğu danışmanlığı seçin.",
+			"conversation": "Danışmanlık",
+			"kind": "Tür",
+			"date": "Tarih",
+			"start": "Başlangıç",
+			"end": "Bitiş",
+			"note": "Not (yalnızca siz görebilirsiniz)",
+			"save": "Oluştur",
+			"saveAnyway": "Yine de oluştur",
+			"conflict": "Şununla çakışıyor: {{list}}",
+			"error": {
+				"incomplete": "Lütfen tarih ve saat seçin.",
+				"past": "Kayıt gelecekte olmalıdır.",
+				"order": "Bitiş, başlangıçtan sonra olmalıdır.",
+				"conversation": "Lütfen randevunun ait olduğu danışmanlığı seçin."
+			}
+		},
+		"details": {
+			"start": {
+				"video": "Görüntülü aramayı başlat",
+				"phone": "Aramayı başlat",
+				"chat": "Sohbeti aç"
+			},
+			"join": {
+				"video": "Görüntülü aramaya katıl",
+				"phone": "Aramaya git",
+				"chat": "Sohbeti aç"
+			},
+			"move": "Taşı",
+			"cancel": "Randevuyu iptal et",
+			"remove": "Kapalı zamanı kaldır",
+			"address": "Adres",
+			"colleague": "Takvim: {{name}}",
+			"busyHint": "Kendi takviminizden alındı. ORISO yalnızca saati bilir.",
+			"colleagueHint": "Meslektaşlarınızın yalnızca saatini ve türünü görürsünüz."
+		},
+		"moved": "{{date}} tarihine taşındı. Danışana bildirim gönderilir.",
+		"blockerMoved": "Kapalı zaman {{date}} tarihine taşındı.",
+		"cancelled": "Randevu iptal edildi. Danışana bildirim gönderilir.",
+		"created": "Randevu oluşturuldu: {{date}}",
+		"undo": "Geri al",
+		"syncDialog": {
+			"title": "Takvim eşitleme",
+			"description": "ORISO randevularınız Outlook, Google veya Apple Takvim'de – oradaki meşgul zamanlarınız da ORISO'ya.",
+			"feedTitle": "Takviminizde abone olun",
+			"feedText": "Bu bağlantıyı takviminize abonelik olarak ekleyin. Yalnızca “ORISO-Termin” ve saati gösterir, isim göstermez.",
+			"copy": "Bağlantıyı kopyala",
+			"copied": "Bağlantı kopyalandı",
+			"lastFetched": "Son alınma: {{date}}",
+			"neverFetched": "Henüz alınmadı",
+			"reset": "Bağlantıyı sıfırla",
+			"resetTitle": "Bağlantı sıfırlansın mı?",
+			"resetText": "Eski bağlantı hemen çalışmayı durdurur. Ardından takviminizde yeni bağlantıya abone olun.",
+			"resetAction": "Sıfırla",
+			"preview": "Bir randevu takviminizde böyle görünür",
+			"refreshHint": "Outlook ve Google abonelikleri yalnızca birkaç saatte bir günceller. Esas olan ORISO'dur.",
+			"importTitle": "Meşgul zamanları aktar",
+			"importText": "Outlook veya Google takviminizin özel ICS adresini yapıştırın. ORISO yalnızca ne zaman meşgul olduğunuzu alır – başlık ve katılımcı bilgisi almaz.",
+			"importField": "ICS adresi",
+			"importSave": "Aktar",
+			"importRemove": "Kaldır",
+			"importStatus": "{{host}} ile bağlantılı, son eşitleme {{date}}",
+			"importError": "Adres okunamadı. Lütfen bağlantıyı kontrol edin.",
+			"importConnected": "{{host}} ile bağlantı kuruldu. İlk eşitleme yapılıyor."
+		},
+		"filterLabel": "Göster",
+		"facets": {
+			"video": "Görüntülü",
+			"phone": "Telefon",
+			"onsite": "Yüz yüze",
+			"chat": "Sohbet",
+			"group": "Grup randevuları",
+			"blocker": "Kapalı zamanlar"
+		},
+		"slotMenu": {
+			"label": "Ekle"
+		},
+		"blocker": {
+			"menuItem": "Kapalı zaman",
+			"title": "Kapalı zaman ekle",
+			"description": "Bu süre içinde randevu verilmez. Meslektaşlarınız yalnızca “Kapalı” görür.",
+			"allDay": "Tüm gün",
+			"repeat": "Şu günlerde tekrarla",
+			"until": "Bitiş tarihi (dahil)",
+			"save": "Ekle",
+			"tooMany": "Çok fazla tekrar: tek seferde en fazla {{max}} kapalı zaman. Lütfen daha erken bir son gün seçin.",
+			"count": "{{count}} kapalı zaman eklenecek.",
+			"count_one": "{{count}} kapalı zaman eklenecek.",
+			"conflicts": "{{count}} randevuyla çakışıyor.",
+			"conflicts_one": "{{count}} randevuyla çakışıyor.",
+			"created": "{{count}} kapalı zaman eklendi",
+			"created_one": "{{count}} kapalı zaman eklendi",
+			"createdSingle": "Kapalı zaman eklendi: {{date}}"
+		},
+		"saveFailed": "Bu işe yaramadı. Lütfen tekrar deneyin.",
+		"blockerRemoved": "Kapalı zaman kaldırıldı.",
+		"conversationsFailed": "Görüşmeler yüklenemedi; randevular bir görüşmeye bağlanamıyor."
 	}
 }
