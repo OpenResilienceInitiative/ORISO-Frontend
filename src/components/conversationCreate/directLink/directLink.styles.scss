@@ -376,23 +376,6 @@
 	}
 }
 
-/* Three formats side by side: the cards share the row instead of wrapping. */
-.conversationCreate__picker:has(.directLinkCard) {
-	padding-inline: clamp(0px, calc((100% - 1146px) / 2), 128px);
-
-	.conversationCreate__cards {
-		flex-wrap: nowrap;
-		gap: 24px;
-	}
-
-	.formatCard {
-		flex: 1 1 0;
-		max-width: 360px;
-		min-width: 0;
-		width: auto;
-	}
-}
-
 /* The clipboard refused: list and share dialog say so in place. */
 .directLinkCopyError {
 	background: var(--m3-error-container, #ffdad6);
