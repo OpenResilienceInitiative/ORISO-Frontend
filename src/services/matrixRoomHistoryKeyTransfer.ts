@@ -54,6 +54,33 @@ export type PendingHistoryRequest = {
 const normalizeReason = (value: unknown): string =>
 	typeof value === 'string' ? value.trim().slice(0, MAX_REASON_LENGTH) : '';
 
+/**
+ * Room state event the UserService writes before a person invited by link
+ * (Direkteinladung, FE#2252) joins an existing 1:1; state key = that person's
+ * Matrix ID. The room hides earlier events from them ("joined" history), and
+ * no client may hand them room keys for those messages: keys for what is sent
+ * after the join reach them through ordinary Megolm sharing.
+ */
+export const LINK_INVITED_MEMBER_EVENT = 'org.oriso.direct_invitation_member';
+
+/**
+ * Whether the room marks this user as invited by link. Read from the room
+ * state the client already holds; any stored content counts, so a mark can
+ * only be taken back by the backend, never by a malformed event.
+ */
+export const isLinkInvitedMember = (
+	room: unknown,
+	userId: string | null | undefined
+): boolean => {
+	if (!userId) return false;
+	const state = (room as any)?.currentState;
+	const marker = state?.getStateEvents?.(LINK_INVITED_MEMBER_EVENT, userId);
+	if (!marker) return false;
+	const content =
+		typeof marker.getContent === 'function' ? marker.getContent() : {};
+	return Boolean(content && Object.keys(content).length > 0);
+};
+
 const emitDiagnostic = (stage: string, detail: Record<string, unknown> = {}) =>
 	window.dispatchEvent(
 		new CustomEvent(MATRIX_HISTORY_KEYS_DIAGNOSTIC_EVENT, {
@@ -252,6 +279,12 @@ export class MatrixRoomHistoryKeyTransfer {
 				room?.getMember(request.requesterUserId)?.membership !== 'join'
 			) {
 				emitDiagnostic('approval-membership-rejected');
+				this.pendingApprovals.delete(requestId);
+				this.announceResolved(request, 'dropped');
+				return false;
+			}
+			if (isLinkInvitedMember(room, request.requesterUserId)) {
+				emitDiagnostic('request-link-invited-rejected');
 				this.pendingApprovals.delete(requestId);
 				this.announceResolved(request, 'dropped');
 				return false;
@@ -539,6 +572,12 @@ export class MatrixRoomHistoryKeyTransfer {
 				this.rememberReason(roomId, options.reason);
 				return false;
 			}
+			// A person invited by link sees only what was written after the
+			// join; there is no earlier history to ask for.
+			if (isLinkInvitedMember(room, userId)) {
+				emitDiagnostic('request-link-invited-rejected');
+				return false;
+			}
 
 			const now = Date.now();
 			// A request with a written reason has its own window, so it replaces the
@@ -758,6 +797,12 @@ export class MatrixRoomHistoryKeyTransfer {
 			});
 			return;
 		}
+		if (isLinkInvitedMember(room, sender)) {
+			// Checked before any throttle, export or approval card: earlier
+			// messages stay unreadable for a person invited by link (FE#2252).
+			emitDiagnostic('request-link-invited-rejected');
+			return;
+		}
 
 		if (this.client !== client) return;
 		// A request that carries a reason waits for a person, so a device may
@@ -918,11 +963,20 @@ export class MatrixRoomHistoryKeyTransfer {
 		// The request was checked against this client; a replaced client
 		// (another account) must never send keys for it.
 		if (!crypto || this.client !== client) return false;
+		if (isLinkInvitedMember(client.getRoom(roomId), userId)) {
+			emitDiagnostic('request-link-invited-rejected');
+			return false;
+		}
 		const keys = (await crypto.exportRoomKeys()).filter(
 			(key) => key.room_id === roomId
 		);
 		if (this.client !== client) return false;
 		if (stillAllowed && !stillAllowed()) return false;
+		// The mark may have arrived while the keys were exported.
+		if (isLinkInvitedMember(client.getRoom(roomId), userId)) {
+			emitDiagnostic('request-link-invited-rejected');
+			return false;
+		}
 		if (keys.length === 0 || keys.length > MAX_KEY_BUNDLE_COUNT) {
 			emitDiagnostic('request-key-count-rejected', {
 				keyCount: keys.length
@@ -988,6 +1042,11 @@ export class MatrixRoomHistoryKeyTransfer {
 			)
 		) {
 			emitDiagnostic('bundle-membership-rejected');
+			return;
+		}
+		if (isLinkInvitedMember(room, client.getUserId())) {
+			// An outdated client may still answer; earlier keys are not taken.
+			emitDiagnostic('bundle-link-invited-rejected');
 			return;
 		}
 
