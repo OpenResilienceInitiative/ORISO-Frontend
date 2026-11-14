@@ -55,6 +55,10 @@ import {
 	callCardMayKnock,
 	joinOrKnock
 } from '../directLinkEntry/callMessageKnock';
+import {
+	shouldAutoJoinCall,
+	takeCallAutoJoin
+} from '../groupChat/waitingAdmission/callAutoJoin';
 import { ErstantwortMessage } from '../erstantwort/ErstantwortMessage';
 import { ErstantwortSequence } from '../erstantwort/ErstantwortSequence';
 import { isErstantwortMessage } from '../erstantwort/erstantwortPayload';
@@ -92,6 +96,7 @@ import { Overlay, OVERLAY_FUNCTIONS, OverlayItem } from '../overlay/Overlay';
 import { ReactComponent as XIllustration } from '../../resources/img/illustrations/x.svg';
 import { BUTTON_TYPES } from '../button/Button';
 import { getCurrentMatrixUserId } from '../../utils/matrixSession';
+import { useChatMessageDisplayConfig } from './chatMessageConfig';
 import { VideoChatDetails, VideoChatDetailsAlias } from './VideoChatDetails';
 import { MessageAvatar } from './MessageAvatar';
 import { ReactComponent as SupervisionGlyph } from '../../resources/img/icons/supervision_nocirc_400_24px.svg';
@@ -578,8 +583,11 @@ export const MessageItemComponent = ({
 		string | null | undefined
 	>(() => initialDecryptedBody(isE2eeEnabled, message));
 
-	// Character limit for collapsing messages
-	const MESSAGE_CHAR_LIMIT = 300;
+	// Character limit for collapsing messages; 0 from the platform setting means
+	// never, which no text length can exceed.
+	const { collapseThreshold, widthStyle: messageWidthStyle } =
+		useChatMessageDisplayConfig();
+	const MESSAGE_CHAR_LIMIT = collapseThreshold || Infinity;
 
 	// Reset expanded state only when message ID changes (not when message content changes)
 	useEffect(() => {
@@ -2785,6 +2793,11 @@ export const MessageItemComponent = ({
 				<CallTimelineMessage
 					call={callLifecycle}
 					loadState={apiCallStateRead}
+					/* #2237: let in from the group's waiting room: straight in. */
+					autoJoin={() => shouldAutoJoinCall(activeSession?.item?.id)}
+					onAutoJoined={() =>
+						takeCallAutoJoin(activeSession?.item?.id)
+					}
 					/* #2016: camera and microphone first, as guests get. */
 					deviceCheck={() =>
 						shouldShowDeviceCheck({
@@ -2953,6 +2966,7 @@ export const MessageItemComponent = ({
 			// Anchor for `?at=<eventId>` (channelRoute.ts): the card scrolls
 			// this bubble into view after the history has loaded.
 			data-message-id={_id}
+			style={messageWidthStyle}
 			className={`messageItem ${isSystemNotification ? 'carimatMessageFrame' : ''} ${
 				isMyMessage ? 'messageItem--right' : ''
 			} ${isFullWidthMessage ? 'messageItem--full' : ''} ${

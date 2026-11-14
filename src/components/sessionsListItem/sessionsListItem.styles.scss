@@ -34,6 +34,10 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 // session card body's marks and text end under it (`--card-trailing`).
 $card-trailing-wide: 10px;
 $card-trailing-narrow: 4px;
+
+// The menu pill's height. The top row keeps it even without a menu (enquiries,
+// supervisor view, group chats), so every card has the same spacing (FE#2182).
+$session-menu-pill-height: 32px;
 $card-border-grow: $list-item-selected-border-width - 1px;
 
 .sessionsListItem {
@@ -424,6 +428,7 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 	}
 
 	&__rowRight {
+		min-height: $session-menu-pill-height;
 		padding-right: $card-trailing-wide;
 		display: flex;
 		align-items: center;
@@ -482,6 +487,15 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		}
 	}
 
+	// FE#2183: the waiting time is the point of an enquiry card, so it is not
+	// cut to "wartet seit…" on narrow screens; the topic chip yields instead.
+	&__date--waiting {
+		@media screen and (width <= 899px) {
+			max-width: none;
+			flex-shrink: 0;
+		}
+	}
+
 	&__menuIcon {
 		display: inline-flex;
 		align-items: center;
@@ -489,7 +503,7 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		cursor: pointer;
 
 		width: 48px;
-		height: 32px;
+		height: $session-menu-pill-height;
 		padding: 0;
 		flex-shrink: 0;
 		position: relative;
@@ -998,6 +1012,11 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		}
 
 		&--liveChat {
+			// Centre icon and word on each other (FE#2182), as --nearby and
+			// --directLink do; the base rule's `end` hangs them from a shared
+			// bottom edge, so the 19 px glyph sat off the 20 px label line.
+			align-items: center;
+
 			/* Stay inside the card — the base rule pushes the icon 12px
 			   past its grid cell, which would clip the wider "Live Chat"
 			   label under the __content overflow: hidden. */
@@ -1659,4 +1678,20 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 			margin: 0;
 		}
 	}
+}
+
+/* Call design S10 (5c): a running call, seen from the list. */
+.sessionsListItem__runningCall {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	font-weight: 600;
+	color: var(--m3-primary, #a5000a);
+}
+
+.sessionsListItem__runningCallIcon {
+	flex: none;
+	width: 14px;
+	height: 14px;
+	fill: currentcolor;
 }

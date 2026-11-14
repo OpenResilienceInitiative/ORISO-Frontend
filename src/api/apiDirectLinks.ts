@@ -31,6 +31,8 @@ export interface DirectLinkDTO {
 	active: boolean;
 	admission?: 'DIRECT' | 'KNOCK';
 	createDate?: string;
+	/** #2142: informational date and time, ISO instant. */
+	scheduledAt?: string | null;
 }
 
 export interface CreateDirectLinkBody {
@@ -40,6 +42,8 @@ export interface CreateDirectLinkBody {
 	temporary?: boolean;
 	/** Only needed when the counsellor works for more than one Beratungsstelle. */
 	agencyId?: number;
+	/** #2142: informational date and time, ISO instant. */
+	scheduledAt?: string;
 }
 
 /** `UpdateDirectLinkDTO`: absent fields stay unchanged. */
@@ -48,6 +52,10 @@ export interface DirectLinkUpdate {
 	topicId?: number;
 	temporary?: boolean;
 	active?: boolean;
+	/** #2142: a new date and time; absent keeps the old one. */
+	scheduledAt?: string;
+	/** #2142: removes the date and time. */
+	clearScheduledAt?: boolean;
 }
 
 export type CallKnockStatus = 'PENDING' | 'ADMITTED' | 'DECLINED' | 'CANCELLED';
@@ -73,6 +81,8 @@ export interface CallKnock {
 	medium: DirectLinkMedium;
 	requestedAt: string;
 	decidedAt?: string | null;
+	/** The avatar the person picked (#2237). */
+	avatarId?: string | null;
 }
 
 /* Every call names the statuses it expects: without a `responseHandling`
@@ -129,7 +139,8 @@ export const toDirectLink = (dto: DirectLinkDTO): DirectLink | null => {
 		medium: dto.medium as DirectLinkMedium,
 		temporary: !!dto.temporary,
 		active: !!dto.active,
-		url: absoluteUrl(dto.url)
+		url: absoluteUrl(dto.url),
+		...(dto.scheduledAt ? { scheduledAt: dto.scheduledAt } : {})
 	};
 };
 

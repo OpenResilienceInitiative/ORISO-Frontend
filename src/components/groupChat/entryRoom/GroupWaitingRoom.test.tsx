@@ -892,3 +892,49 @@ describe('entryRoomClockHeight', () => {
 		expect(entryRoomClockHeight(1440, 950, 46)).toBe(554);
 	});
 });
+
+/* Frank, 2026-11-12: after a minute of waiting in a running group the person
+   no longer sees a greyed-out button, but that the session is open and they
+   will be let in shortly (#2237). */
+describe('GroupWaitingRoom — let in shortly (#2237)', () => {
+	afterEach(cleanup);
+
+	it('replaces the button with the note once the person waited a minute', () => {
+		render(
+			<GroupWaitingRoom
+				topicName="Trauerbegleitung"
+				plannedStart={new Date(NOW)}
+				durationMinutes={90}
+				eventId={15}
+				active
+				onJoin={vi.fn()}
+				nowMs={NOW}
+				admissionWaiting="waiting"
+				rules={[]}
+				admissionSoon="Die Sitzung läuft. Sie werden gleich hereingelassen."
+			/>
+		);
+		expect(screen.queryByTestId('group-entry-join')).toBeNull();
+		expect(
+			screen.getByTestId('group-entry-admission-soon').textContent
+		).toBe('Die Sitzung läuft. Sie werden gleich hereingelassen.');
+	});
+
+	it('keeps the button in the first minute', () => {
+		render(
+			<GroupWaitingRoom
+				topicName="Trauerbegleitung"
+				plannedStart={new Date(NOW)}
+				durationMinutes={90}
+				eventId={15}
+				active
+				onJoin={vi.fn()}
+				nowMs={NOW}
+				admissionWaiting="waiting"
+				rules={[]}
+			/>
+		);
+		expect(screen.getByTestId('group-entry-join')).toBeTruthy();
+		expect(screen.queryByTestId('group-entry-admission-soon')).toBeNull();
+	});
+});

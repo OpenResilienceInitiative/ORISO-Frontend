@@ -25,14 +25,18 @@ const ROOMS = { [CALL_ROOM]: CALL_SESSION };
 const knock = (
 	id: number,
 	displayName: string | null,
-	sessionId = CALL_SESSION
+	sessionId = CALL_SESSION,
+	secondsAgo = 20,
+	avatarId: string | null = 'magpie'
 ): CallKnock => ({
 	id,
 	sessionId,
 	displayName,
 	status: 'PENDING',
 	medium: 'VIDEO',
-	requestedAt: '2026-10-28T10:00:00Z'
+	/* Relative to now, so the waiting time reads the same on every run. */
+	requestedAt: new Date(Date.now() - secondsAgo * 1000).toISOString(),
+	avatarId
 });
 
 const ONE = [knock(1, 'sonnenblume-27')];
@@ -174,6 +178,28 @@ export const OnePersonKnocking: Story = {
 		await expect(
 			within(notice).queryByTestId('call-knock-next')
 		).toBeNull();
+	}
+};
+
+/**
+ * ORISO-Frontend#2237 — the host sees the person's picture and how long they
+ * have been waiting. After a minute "Einlassen" wiggles and a soft knock
+ * sounds, once per person.
+ */
+export const WaitingOverAMinute: Story = {
+	globals: desktop1440Globals,
+	args: { knocks: [knock(1, 'sonnenblume-27', CALL_SESSION, 185, 'fox')] },
+	play: async ({ canvas }) => {
+		const notice = await canvas.findByTestId('call-knock-notice');
+		await expect(
+			within(notice).getByTestId('call-knock-avatar')
+		).toBeVisible();
+		await expect(
+			within(notice).getByTestId('call-knock-waiting')
+		).toHaveTextContent(i18n.t('calls.knock.waitingFor', { count: 3 }));
+		await expect(
+			within(notice).getByTestId('call-knock-admit')
+		).toHaveAttribute('data-nudge', 'true');
 	}
 };
 

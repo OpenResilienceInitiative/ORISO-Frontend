@@ -65,6 +65,86 @@ export interface ElementCallWidgetOptions {
 	 * and a different URL navigates the running call.
 	 */
 	callStart?: ElementCallStart | null;
+	/**
+	 * Call design S2 (`orisoHostChrome=1`): the call draws minimise and full
+	 * screen in its own header, and the host shows no window buttons of its
+	 * own over it. The call asks for them with `org.oriso.call.window`.
+	 */
+	hostChrome?: boolean;
+	/** The call's header asked the host window to minimise or toggle full screen. */
+	onWindowCommand?: (command: OrisoWindowCommand) => void;
+	/**
+	 * What the host window is now, sent as `org.oriso.call.window_state` once
+	 * the call is ready and again on every change, so its header button shows
+	 * the right state.
+	 */
+	windowState?: OrisoWindowState | null;
+	/**
+	 * Call design S6b (`orisoCallType`): the kind of conversation, which
+	 * picks the call's first view — `group` starts in the circle, `single`
+	 * in the one-to-one view — whatever the head count at the start.
+	 * Left off the URL when unknown. Read when the address is built and kept
+	 * for the call room (see `hostContextPending`).
+	 */
+	callType?: OrisoCallType | null;
+	/**
+	 * `orisoTopic` (FE#2233): a 1:1 conversation's Beratungsthema in the app
+	 * language, for the call's title. Left off the URL when `null`. Read when
+	 * the address is built and kept for the call room.
+	 */
+	callTopic?: string | null;
+	/**
+	 * `lang` (FE#2233): the app's UI language (`i18n.language`), so the call
+	 * does not follow the browser's. Left off the URL when unknown. Read when
+	 * the address is built and kept for the call room: switching the app's
+	 * language mid-call must not navigate the call.
+	 */
+	language?: string | null;
+	/**
+	 * The conversation behind `callType` and `callTopic` is still being
+	 * looked up. The room is joined meanwhile; only the address waits, so it
+	 * is built once, with the conversation's kind and topic, and never again
+	 * because they arrived late.
+	 */
+	hostContextPending?: boolean;
+	/**
+	 * Call design S8 (`orisoInvite=1`): this person may hand out a link to
+	 * the running call, so the call shows "Link teilen". Only together with
+	 * `onInviteLink`.
+	 */
+	invite?: boolean;
+	/**
+	 * `org.oriso.call.invite_link`: create or reuse the call's link. Resolves
+	 * with its URL, or `null` when the call cannot be shared right now.
+	 */
+	onInviteLink?: () => Promise<string | null>;
+	/**
+	 * `org.oriso.call.counsellors`: the Matrix ids of the conversation's
+	 * counsellors, from the userservice. The call labels only these
+	 * "Beratung"; a role in a call identity record can be faked. Sent once
+	 * the call is ready and again whenever the list changes; `null` sends
+	 * nothing.
+	 */
+	counsellors?: readonly string[] | null;
+}
+
+/**
+ * `orisoCallType` values (call design LEDGER, FE#2233): `single` for a 1:1
+ * conversation, `circle` for a Gesprächskreis (ADR-006 `SELF_HELP`), `group`
+ * for any other group. An Element Call that does not know `circle` yet
+ * treats it as it treats an unknown value.
+ */
+export type OrisoCallType = 'single' | 'circle' | 'group';
+
+/** `org.oriso.call.window` commands (call design LEDGER). */
+export type OrisoWindowCommand = 'minimise' | 'toggle_fullscreen';
+
+const isWindowCommand = (value: unknown): value is OrisoWindowCommand =>
+	value === 'minimise' || value === 'toggle_fullscreen';
+
+/** `org.oriso.call.window_state` payload (call design LEDGER). */
+export interface OrisoWindowState {
+	fullscreen: boolean;
 }
 
 /**
@@ -100,7 +180,15 @@ export const ORISO_WIDGET_ACTIONS = {
 	/** toWidget `{ waiting, knock }`; `knock: null` = no link, no switch. */
 	knockState: 'org.oriso.call.knock_state',
 	/** fromWidget `{ knock }`; always answered, with `error` when it did not land. */
-	setKnock: 'org.oriso.call.set_knock'
+	setKnock: 'org.oriso.call.set_knock',
+	/** fromWidget `{ command }`, answered `{}` (call design S2). */
+	window: 'org.oriso.call.window',
+	/** toWidget `{ fullscreen }` (call design S2). */
+	windowState: 'org.oriso.call.window_state',
+	/** fromWidget `{}`, answered `{ url }` or `{ error }` (call design S8). */
+	inviteLink: 'org.oriso.call.invite_link',
+	/** toWidget `{ userIds }`, answered `{}` (call design S1). */
+	counsellors: 'org.oriso.call.counsellors'
 } as const;
 
 export interface OrisoKnockState {
@@ -248,6 +336,24 @@ const waitForWidgetRoomMembership = (
 	});
 };
 
+const sendWindowState = (api: ClientWidgetApi, state: OrisoWindowState) => {
+	void api.transport
+		.send(ORISO_WIDGET_ACTIONS.windowState, {
+			fullscreen: state.fullscreen
+		})
+		.catch(() => {
+			/* an older call without its own window buttons, or it went away */
+		});
+};
+
+const sendCounsellors = (api: ClientWidgetApi, userIds: string[]) => {
+	void api.transport
+		.send(ORISO_WIDGET_ACTIONS.counsellors, { userIds })
+		.catch(() => {
+			/* an older call that labels nobody, or it went away */
+		});
+};
+
 const sendKnockState = (api: ClientWidgetApi, state: OrisoKnockState) => {
 	void api.transport
 		.send(ORISO_WIDGET_ACTIONS.knockState, {
@@ -269,7 +375,17 @@ export const useElementCallWidget = (
 		onAlwaysOnScreenChange,
 		knockState = null,
 		onSetKnock,
-		callStart = null
+		callStart = null,
+		hostChrome = false,
+		onWindowCommand,
+		windowState = null,
+		callType = null,
+		callTopic = null,
+		language = null,
+		hostContextPending = false,
+		invite = false,
+		onInviteLink,
+		counsellors = null
 	}: ElementCallWidgetOptions
 ): ElementCallWidget => {
 	// By value: an equal choice in a new object must not rebuild the URL.
@@ -292,6 +408,12 @@ export const useElementCallWidget = (
 	knockStateRef.current = knockState;
 	const onSetKnockRef = useRef(onSetKnock);
 	onSetKnockRef.current = onSetKnock;
+	const onWindowCommandRef = useRef(onWindowCommand);
+	onWindowCommandRef.current = onWindowCommand;
+	const onInviteLinkRef = useRef(onInviteLink);
+	onInviteLinkRef.current = onInviteLink;
+	// Without somebody to make the link, the call must not offer one.
+	const offersInvite = invite && !!onInviteLink;
 	// The Träger's brand is read when the URL is built, not watched: a tenant
 	// that resolves again or changes later must not rebuild the address of a
 	// running call (the effect below blanks the URL and would navigate it).
@@ -305,6 +427,21 @@ export const useElementCallWidget = (
 		roomId: string;
 		params: Record<string, string>;
 	} | null>(null);
+	// The same for the conversation's kind, its topic and the app language
+	// (FE#2233): read when the address is first built for a room, so a
+	// language switch or a late lookup never navigates a running call. Let go
+	// once there is no call room, so the next call starts from what is
+	// current — even in the same room.
+	const hostContextRef = useRef({ callType, callTopic, language });
+	hostContextRef.current = { callType, callTopic, language };
+	const frozenHostContextRef = useRef<{
+		roomId: string;
+		context: {
+			callType: OrisoCallType | null;
+			callTopic: string | null;
+			language: string | null;
+		};
+	} | null>(null);
 
 	// A widget client cannot join rooms. Gate iframe creation on the host's
 	// membership so Element Call never starts against an invited/unknown room.
@@ -315,7 +452,18 @@ export const useElementCallWidget = (
 		setReady(false);
 		setError(null);
 
+		if (!roomId) frozenHostContextRef.current = null;
 		if (!client || !roomId) return undefined;
+
+		const hostContextFor = (room: string) => {
+			if (frozenHostContextRef.current?.roomId !== room) {
+				frozenHostContextRef.current = {
+					roomId: room,
+					context: { ...hostContextRef.current }
+				};
+			}
+			return frozenHostContextRef.current.context;
+		};
 
 		const brandFor = (room: string) => {
 			if (brandRef.current?.roomId !== room) {
@@ -369,6 +517,10 @@ export const useElementCallWidget = (
 					instanceNonceRef.current
 				);
 				if (signal.aborted) return;
+				// Prepared, but the conversation's kind and topic are still
+				// on their way: this effect runs again when they arrive.
+				if (hostContextPending) return;
+				const host = hostContextFor(roomId);
 				elementCallUrl.hash = `?${new URLSearchParams({
 					widgetId,
 					parentUrl: window.location.origin,
@@ -404,6 +556,14 @@ export const useElementCallWidget = (
 					...(appConfig?.calls?.atmosphere
 						? { orisoAtmosphere: appConfig.calls.atmosphere }
 						: {}),
+					// Call design S2: the call owns the window buttons.
+					...(hostChrome ? { orisoHostChrome: '1' } : {}),
+					// Call design S6b: the conversation's kind, not its size.
+					...(host.callType ? { orisoCallType: host.callType } : {}),
+					// FE#2233: a 1:1 call's title names the conversation's topic.
+					...(host.callTopic ? { orisoTopic: host.callTopic } : {}),
+					// Call design S8: "Link teilen" in the call's header.
+					...(offersInvite ? { orisoInvite: '1' } : {}),
 					intent: 'start_call',
 					callIntent: isVideo ? 'video' : 'audio',
 					// The pre-join choice (ElementCall#116): on/off and the
@@ -412,7 +572,10 @@ export const useElementCallWidget = (
 					// The Träger's colours and logo (#2188), appended so every
 					// parameter above keeps its place. Left off the address
 					// where the Träger has set nothing the call may use.
-					...brandFor(roomId)
+					...brandFor(roomId),
+					// FE#2233: the app's language, not the browser's. Element
+					// Call reads `lang` from the fragment.
+					...(host.language ? { lang: host.language } : {})
 				}).toString()}`;
 
 				setUrl(elementCallUrl.toString());
@@ -423,7 +586,16 @@ export const useElementCallWidget = (
 
 		void prepare();
 		return () => preparation.abort();
-	}, [client, roomId, isVideo, skipLobby, callStartQuery]);
+	}, [
+		client,
+		roomId,
+		isVideo,
+		skipLobby,
+		callStartQuery,
+		hostChrome,
+		hostContextPending,
+		offersInvite
+	]);
 
 	const attachIframe = useCallback(
 		(iframe: HTMLIFrameElement | null) => {
@@ -602,6 +774,48 @@ export const useElementCallWidget = (
 				api.on(`action:${action}`, acknowledgeLifecycleAction);
 			}
 
+			// Call design S2: minimise and full screen from the call's header.
+			api.on(
+				`action:${ORISO_WIDGET_ACTIONS.window}`,
+				(event: CustomEvent<IWidgetApiRequest>) => {
+					event.preventDefault();
+					const command = (event.detail.data as { command?: unknown })
+						?.command;
+					const handler = onWindowCommandRef.current;
+					if (!isWindowCommand(command) || !handler) {
+						api.transport.reply(event.detail, {
+							error: { message: 'Unknown window command' }
+						});
+						return;
+					}
+					handler(command);
+					api.transport.reply(event.detail, {});
+				}
+			);
+
+			// Call design S8: the call's link, made or reused by the host. The
+			// person who opens it knocks and is let in as before.
+			api.on(
+				`action:${ORISO_WIDGET_ACTIONS.inviteLink}`,
+				(event: CustomEvent<IWidgetApiRequest>) => {
+					event.preventDefault();
+					const handler = onInviteLinkRef.current;
+					const fail = (error: string) =>
+						api.transport.reply(event.detail, { error });
+					if (!handler) {
+						fail('This call has no link to share');
+						return;
+					}
+					handler().then(
+						(url) =>
+							url
+								? api.transport.reply(event.detail, { url })
+								: fail('The link could not be created'),
+						() => fail('The link could not be created')
+					);
+				}
+			);
+
 			// "Anklopfen" belongs to the host's call link (ElementCall#109):
 			// change it there, answer either way, then tell the call the truth.
 			api.on(
@@ -655,6 +869,21 @@ export const useElementCallWidget = (
 			knock: knockSetting ?? null
 		});
 	}, [ready, knockWaiting, knockSetting]);
+
+	const windowFullscreen = windowState?.fullscreen;
+	useEffect(() => {
+		const api = apiRef.current;
+		if (!ready || !api || windowFullscreen === undefined) return;
+		sendWindowState(api, { fullscreen: windowFullscreen });
+	}, [ready, windowFullscreen]);
+
+	// By value: the same people in a new array are not a change.
+	const counsellorsKey = counsellors ? JSON.stringify(counsellors) : null;
+	useEffect(() => {
+		const api = apiRef.current;
+		if (!ready || !api || counsellorsKey === null) return;
+		sendCounsellors(api, JSON.parse(counsellorsKey) as string[]);
+	}, [ready, counsellorsKey]);
 
 	const hangup = useCallback(async (): Promise<void> => {
 		if (!apiRef.current) return;

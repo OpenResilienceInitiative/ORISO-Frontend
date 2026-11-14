@@ -6,6 +6,9 @@
 
 export type DirectLinkMedium = 'CHAT' | 'AUDIO' | 'VIDEO';
 
+/** UserService `CounsellorDirectLinkService.NAME_MAX`. */
+export const DIRECT_LINK_NAME_MAX = 100;
+
 export const DIRECT_LINK_MEDIA: DirectLinkMedium[] = ['CHAT', 'AUDIO', 'VIDEO'];
 
 export interface DirectLink {
@@ -22,6 +25,8 @@ export interface DirectLink {
 	temporary: boolean;
 	active: boolean;
 	url: string;
+	/** #2142: optional, informational date and time (ISO instant). */
+	scheduledAt?: string;
 }
 
 /** Grilling 2026-10-27: off for chat, on for calls; the counsellor can change it. */

@@ -1,6 +1,8 @@
 import type {
+	GroupChatItemInterface,
 	ListItemInterface,
-	SessionItemInterface
+	SessionItemInterface,
+	TopicSessionInterface
 } from '../../globalState/interfaces';
 import {
 	type AvatarChoice,
@@ -29,9 +31,30 @@ export type CallConversation = Pick<
 	session?: Partial<
 		Pick<
 			SessionItemInterface,
-			'askerMatrixUserId' | 'consultantMatrixUserId'
+			| 'id'
+			| 'askerMatrixUserId'
+			| 'consultantMatrixUserId'
+			// The call's kind and topic (callHostContext, FE#2233).
+			| 'mainTopicId'
+			| 'conversationType'
+			| 'teamSession'
 		>
-	>;
+	> & {
+		/*
+		 * The session's topic. The active session's item is typed as a
+		 * session or a group chat, whose `topic` is a subject line (a
+		 * string) — which is never a Beratungsthema.
+		 */
+		topic?: Partial<Pick<TopicSessionInterface, 'id' | 'name'>> | string;
+	};
+	/** Set for a group chat; its members say who counsels (see callCounsellors). */
+	chat?: Partial<
+		Pick<
+			GroupChatItemInterface,
+			'active' | 'conversationType' | 'repetitive' | 'repeatCount'
+		>
+	> &
+		Pick<GroupChatItemInterface, 'id'>;
 };
 
 /**

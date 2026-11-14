@@ -25,6 +25,12 @@
 		line-height: var(--card-name-line);
 	}
 
+	// Name only (nothing written yet): centred on the avatar instead of level
+	// with its top edge.
+	&--nameOnly &__name {
+		top: calc((var(--card-avatar) - var(--card-name-line)) / 2);
+	}
+
 	// Two classes deep, so the list item's own rules for its slot content
 	// lose regardless of which stylesheet loads last.
 	& &__name > * {
