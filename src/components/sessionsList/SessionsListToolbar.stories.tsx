@@ -964,6 +964,7 @@ export const DirectLinksChip: Story = {
 			'[data-cy="sessions-list-chip-direct-links"]'
 		);
 		await expect(chip).not.toBeNull();
-		await expect(chip!.textContent).toContain('Direktlinks');
+		// #2252: "Direktlink" is now called "Direkteinladung".
+		await expect(chip!.textContent).toContain('Direkteinladungen');
 	}
 };

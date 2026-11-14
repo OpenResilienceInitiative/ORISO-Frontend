@@ -17,6 +17,10 @@ import {
 import { newLinkRequestEntry } from './NewLinkRequestNotice';
 import { invitationErrorEntry } from './invitationErrorSnackbar';
 import { expectWaitingRoomLayout } from '../app/registrationLoader/waitingRoomLayoutContract';
+import { Stage } from '../stage/stage';
+import { GlobalComponentContext } from '../../globalState/provider/GlobalComponentContext';
+import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider';
+import { storyLegalLinks } from '../waitingRoom/storyLegalLinks';
 
 const SLOT = {
 	start: new Date(2026, 10, 20, 14, 0),
@@ -37,7 +41,18 @@ const meta = {
 					'#2252: the invite page outside the call, in the one waiting-room frame (EntryRoomShell, shared bar). Before the waiting room opens (the server\'s callOpensAt, 15 minutes before the start): the date, "Termin eintragen" (.ics, the group room\'s calendar pill) and the chat, which works at once. After the validity ends: "Link abgelaufen" with "Neuen Link anfragen" (signed in) or the sign-in (signed out); a failure is a pop-up. The counsellor gets a pop-up with "Neuen Link senden".'
 			}
 		}
-	}
+	},
+	/* The app's stage and legal links, as in every waiting-room story: below
+	   1200 px the layout contract needs the header's "Rechtliches" menu. */
+	decorators: [
+		(Story) => (
+			<GlobalComponentContext.Provider value={{ Stage }}>
+				<LegalLinksContext.Provider value={storyLegalLinks}>
+					<Story />
+				</LegalLinksContext.Provider>
+			</GlobalComponentContext.Provider>
+		)
+	]
 } satisfies Meta;
 
 export default meta;
@@ -60,7 +75,12 @@ export const BeforeStartDesktop: Story = {
 	play: async ({ canvasElement }) => {
 		await expectWaitingRoomLayout(canvasElement);
 		await expect(body().getByTestId('group-entry-calendar')).toBeVisible();
-		await expect(body().getAllByText(/13:45 Uhr/)[0]).toBeVisible();
+		/* The column's line; the header's status line is the phone's copy. */
+		await expect(
+			within(body().getByTestId('invitation-before-start')).getByText(
+				/13:45 Uhr/
+			)
+		).toBeVisible();
 	}
 };
 

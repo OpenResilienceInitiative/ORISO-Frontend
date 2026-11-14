@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { expect, fn, userEvent, within } from 'storybook/test';
+import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import {
 	desktop1440Globals,
 	phone390Globals
@@ -79,7 +79,8 @@ export const ValidityList: Story = {
 		await userEvent.click(
 			body().getByRole('button', { name: /Gültig nach Terminende/ })
 		);
-		await expect(body().getByRole('listbox')).toBeVisible();
+		/* The menu grows in: visible once its transition has run. */
+		await waitFor(() => expect(body().getByRole('listbox')).toBeVisible());
 	}
 };
 
@@ -126,9 +127,12 @@ export const OneToOneWithGuests: Story = {
 		initial: { inviteOthers: true, access: 'guests' }
 	},
 	play: async () => {
-		await expect(
-			body().getByText(/sehen nur Nachrichten ab ihrem Beitritt/)
-		).toBeVisible();
+		/* The dialog fades in: visible once its transition has run. */
+		await waitFor(() =>
+			expect(
+				body().getByText(/sehen nur Nachrichten ab ihrem Beitritt/)
+			).toBeVisible()
+		);
 	}
 };
 
