@@ -252,9 +252,15 @@ export const CalendarPage = ({
 		if (outcome === true) setDialog(null);
 		else if (outcome !== false) {
 			creating.current = true;
+			// Close the dialog that saved, not one opened while it ran
+			// (review 4575868938).
+			const origin = dialog;
 			outcome.then((stored) => {
 				creating.current = false;
-				if (stored) setDialog(null);
+				if (stored)
+					setDialog((current) =>
+						current === origin ? null : current
+					);
 			});
 		}
 	};
@@ -453,6 +459,13 @@ export const CalendarPage = ({
 						</button>
 					</div>
 				)}
+				{/* Covered by the error: out of reach for the keyboard and
+				    screen readers as well, but mounted (review 4575868941). */}
+				<div
+					className="calendarPage__covered"
+					inert={state === 'error' || undefined}
+					data-testid="calendar-covered"
+				>
 				<CalendarView
 					role={role}
 					ownerId={ownerId}
@@ -476,6 +489,7 @@ export const CalendarPage = ({
 						</>
 					}
 				/>
+				</div>
 				{state === 'loading' && (
 					<div
 						className="calendarPage__status calendarPage__status--overlay"
