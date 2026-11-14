@@ -36,4 +36,9 @@ describe('calendar stylesheet', () => {
 			expect(sheet).toMatch(/@include list-entry-pill-time;/);
 		}
 	});
+
+	it('takes its breakpoints from the shared mixin, not raw media queries', () => {
+		expect(calendar).toMatch(/@include breakpoint\(\$fromMedium\)/);
+		expect(calendar).not.toMatch(/@media \(width >= 600px\)/);
+	});
 });
