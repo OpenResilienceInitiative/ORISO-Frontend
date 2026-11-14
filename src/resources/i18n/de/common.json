@@ -6900,6 +6900,7 @@
 		"colleagueFailedShort": "nicht geladen",
 		"colleagueFailed": "Der Kalender von {{names}} konnte nicht geladen werden; ob alle frei sind, lässt sich so nicht sagen.",
 		"upcomingChat": "Zum Chat mit {{name}}",
+		"conversationsFailedAsker": "Ihre Gespräche konnten nicht geladen werden, ein Termin führt so nicht zu seinem Chat.",
 		"create": "Termin anlegen",
 		"today": "Heute",
 		"previous": "Zurück",

@@ -293,6 +293,25 @@ describe('CalendarPage — creating (review 4575214168)', () => {
 	});
 });
 
+describe('CalendarPage — failed conversation lookup for askers (review 4575917412)', () => {
+	it('shows askers the failure with a retry that asks again', () => {
+		const onRetryConversations = vi.fn();
+		page({
+			role: 'asker',
+			conversationsFailed: true,
+			onRetryConversations
+		});
+		const banner = screen.getByTestId('calendar-conversations-failed');
+		expect(banner.textContent).toContain(
+			'calendar.conversationsFailedAsker'
+		);
+		fireEvent.click(
+			screen.getByRole('button', { name: 'calendar.error.retry' })
+		);
+		expect(onRetryConversations).toHaveBeenCalledTimes(1);
+	});
+});
+
 describe('CalendarPage — the grid under a failed load (review 4575868941)', () => {
 	it('takes the covered grid out of reach and keeps the retry outside it', () => {
 		page({ state: 'error' });

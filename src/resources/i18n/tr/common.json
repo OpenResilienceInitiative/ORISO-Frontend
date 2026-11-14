@@ -6910,6 +6910,7 @@
 		"colleagueFailedShort": "yüklenmedi",
 		"colleagueFailed": "{{names}} takvimi yüklenemedi; bu yüzden herkesin ne zaman boş olduğu söylenemiyor.",
 		"upcomingChat": "{{name}} ile sohbete git",
+		"conversationsFailedAsker": "Görüşmeleriniz yüklenemedi; bu yüzden randevudan sohbetinize geçilemiyor.",
 		"create": "Randevu oluştur",
 		"today": "Bugün",
 		"previous": "Önceki",

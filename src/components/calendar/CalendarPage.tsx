@@ -1695,13 +1695,21 @@ export const CalendarPage = ({
 						)}
 					</div>
 				)}
-				{consultant && conversationsFailed && (
+				{/* Askers too: their appointments lead to their chats
+				    (review 4575917412). */}
+				{conversationsFailed && (
 					<div
 						className="calendarPage__banner"
 						role="alert"
 						data-testid="calendar-conversations-failed"
 					>
-						<span>{t('calendar.conversationsFailed')}</span>
+						<span>
+							{t(
+								consultant
+									? 'calendar.conversationsFailed'
+									: 'calendar.conversationsFailedAsker'
+							)}
+						</span>
 						<button
 							type="button"
 							className="calendarPage__retry"

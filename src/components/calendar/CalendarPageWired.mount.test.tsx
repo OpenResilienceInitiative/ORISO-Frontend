@@ -6,7 +6,14 @@
  * reports its range and the spinner stays forever.
  */
 import * as React from 'react';
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import {
+	act,
+	cleanup,
+	fireEvent,
+	render,
+	screen,
+	waitFor
+} from '@testing-library/react';
 import {
 	afterEach,
 	beforeEach,
@@ -16,6 +23,7 @@ import {
 	vi
 } from 'vite-plus/test';
 import * as calendarApi from '../../api/apiCalendar';
+import * as askerListApi from '../../api/apiGetAskerSessionList';
 import { CalendarPageWired } from './CalendarPageWired';
 
 vi.mock('react-i18next', () => ({
@@ -24,7 +32,8 @@ vi.mock('react-i18next', () => ({
 		i18n: { language: 'de' }
 	})
 }));
-vi.mock('react-router-dom', () => ({ useNavigate: () => vi.fn() }));
+const user = vi.hoisted(() => ({ consultant: true, navigate: vi.fn() }));
+vi.mock('react-router-dom', () => ({ useNavigate: () => user.navigate }));
 vi.mock('../../hooks/useResponsive', () => ({
 	useResponsive: () => ({ untilM: false })
 }));
@@ -35,7 +44,7 @@ vi.mock('../../globalState', async () => {
 	const React = await import('react');
 	return {
 		AUTHORITIES: { CONSULTANT_DEFAULT: 'CONSULTANT_DEFAULT' },
-		hasUserAuthority: () => true,
+		hasUserAuthority: () => user.consultant,
 		UserDataContext: React.createContext({ userData: { userId: 'me' } })
 	};
 });
@@ -76,6 +85,7 @@ vi.mock('../../api/apiGetAskerSessionList', () => ({
 }));
 
 const api = vi.mocked(calendarApi);
+const askerList = vi.mocked(askerListApi);
 
 // jsdom lacks what FullCalendar and the split view measure with.
 if (typeof window.ResizeObserver === 'undefined')
@@ -104,6 +114,7 @@ afterEach(() => {
 });
 beforeEach(() => {
 	vi.clearAllMocks();
+	user.consultant = true;
 	vi.useFakeTimers({ toFake: ['Date'] });
 	vi.setSystemTime(new Date(2026, 10, 16, 8));
 	window.localStorage.clear();
@@ -130,5 +141,71 @@ describe('CalendarPageWired — first load (reviews 4574733779, 4574779921)', ()
 			expect(screen.queryByTestId('calendar-loading')).toBeNull()
 		);
 		expect(screen.getByTestId('calendar-view')).toBeTruthy();
+	});
+});
+
+describe('CalendarPageWired — an asker whose conversation lookup failed (review 4575945125)', () => {
+	it('shows the failure with a retry, and once retried the appointment leads to its chat', async () => {
+		user.consultant = false;
+		api.apiGetCalendarEntries.mockResolvedValue([
+			{
+				id: 'a1',
+				type: 'APPOINTMENT',
+				start: new Date(2026, 10, 16, 10).toISOString(),
+				end: new Date(2026, 10, 16, 11).toISOString(),
+				ownerId: 'me',
+				kind: 'VIDEO',
+				title: 'B. Berater',
+				sessionId: 4401
+			}
+		] as never);
+		askerList.apiGetAskerSessionList
+			.mockRejectedValueOnce(new Error('503'))
+			.mockResolvedValueOnce({
+				sessions: [
+					{
+						session: { id: 4401, matrixRoomId: '!room:oriso' },
+						consultant: { displayName: 'B. Berater' }
+					}
+				]
+			} as never);
+		render(<CalendarPageWired />);
+		const banner = await screen.findByTestId(
+			'calendar-conversations-failed'
+		);
+		expect(banner.textContent).toContain(
+			'calendar.conversationsFailedAsker'
+		);
+		await act(async () => {
+			fireEvent.click(
+				banner.querySelector('.calendarPage__retry') as HTMLElement
+			);
+		});
+		await waitFor(() =>
+			expect(
+				screen.queryByTestId('calendar-conversations-failed')
+			).toBeNull()
+		);
+		// "Als Nächstes" lists the appointment (the sidebar's row).
+		const row = await waitFor(() => {
+			const found = document.querySelector<HTMLElement>(
+				'[data-cy="calendar-upcoming-a1"]'
+			);
+			expect(found).not.toBeNull();
+			return found as HTMLElement;
+		});
+		fireEvent.click(row);
+		// The entry's menu (round 2) in place of the details dialog.
+		const start = await waitFor(() => {
+			const found = document.querySelector<HTMLElement>(
+				'[data-cy="calendar-entry-start"]'
+			);
+			expect(found).not.toBeNull();
+			return found as HTMLElement;
+		});
+		fireEvent.click(start);
+		expect(user.navigate).toHaveBeenCalledWith(
+			'/sessions/user/view/!room:oriso/4401'
+		);
 	});
 });

@@ -48,12 +48,9 @@
 	}
 }
 
-// The one focus ring of every calendar control and list item; only the
-// offset differs where a control sits flush against its neighbours.
-@mixin calendar-focus-ring($offset: 2px) {
-	outline: 2px solid var(--m3-primary, #a5000a);
-	outline-offset: $offset;
-}
+// The focus ring of every calendar control and list item is the shared
+// `control-focus-ring` (_listItemSelection.scss); only the offset differs
+// where a control sits flush against its neighbours.
 
 // --- FullCalendar classic theme, palette mapped to the ORISO scheme ---
 .calendarView {
@@ -247,7 +244,7 @@
 	}
 
 	&:focus-visible {
-		@include calendar-focus-ring(0);
+		@include control-focus-ring(0);
 	}
 
 	// This date has its own hours: filled, not only tinted.
@@ -323,7 +320,7 @@
 	transition: opacity 120ms ease-out;
 
 	&:focus-visible {
-		@include calendar-focus-ring(1px);
+		@include control-focus-ring(1px);
 	}
 
 	// The next appointment, from 15 minutes before its start.
@@ -649,7 +646,7 @@
 		font-size: 14px;
 
 		&:focus-visible {
-			@include calendar-focus-ring(0);
+			@include control-focus-ring(0);
 		}
 	}
 }
@@ -677,7 +674,7 @@
 	}
 
 	&:focus-visible {
-		@include calendar-focus-ring(0);
+		@include control-focus-ring(0);
 	}
 
 	&--primary {
@@ -705,11 +702,11 @@
 	min-height: 0;
 	height: 100%;
 	box-sizing: border-box;
-	padding: 12px 12px 12px 0;
+	padding: 0;
 	overflow: auto;
 
-	@media (width <= 899px) {
-		padding: 0;
+	@include breakpoint($fromLarge) {
+		padding: 12px 12px 12px 0;
 	}
 }
 
@@ -902,7 +899,7 @@
 	}
 
 	&:focus-visible {
-		@include calendar-focus-ring;
+		@include control-focus-ring;
 	}
 }
 
@@ -929,7 +926,7 @@
 	}
 
 	&:focus-visible {
-		@include calendar-focus-ring(1px);
+		@include control-focus-ring(1px);
 	}
 
 	&--proposal {
@@ -956,9 +953,7 @@
 }
 
 .calendarSide__rowText {
-	display: flex;
-	flex-direction: column;
-	min-width: 0;
+	@include list-entry-pill-text;
 }
 
 .calendarSide__rowName {
@@ -1005,7 +1000,7 @@
 	}
 
 	&:focus-visible {
-		@include calendar-focus-ring(0);
+		@include control-focus-ring(0);
 	}
 }
 
@@ -1026,7 +1021,7 @@
 	cursor: pointer;
 
 	&:focus-visible {
-		@include calendar-focus-ring(0);
+		@include control-focus-ring(0);
 	}
 }
 
@@ -1106,7 +1101,7 @@
 	}
 
 	&:focus-visible {
-		@include calendar-focus-ring(0);
+		@include control-focus-ring(0);
 	}
 }
 
@@ -1140,7 +1135,7 @@
 	}
 
 	&:focus-visible {
-		@include calendar-focus-ring(0);
+		@include control-focus-ring(0);
 	}
 }
 
@@ -1181,7 +1176,7 @@
 	}
 
 	&:focus-visible {
-		@include calendar-focus-ring(0);
+		@include control-focus-ring(0);
 	}
 }
 
@@ -1216,7 +1211,7 @@
 	}
 
 	&:focus-visible {
-		@include calendar-focus-ring(2px);
+		@include control-focus-ring(2px);
 	}
 }
 
@@ -1265,7 +1260,7 @@
 	}
 
 	&:focus-visible {
-		@include calendar-focus-ring(0);
+		@include control-focus-ring(0);
 		border-radius: 12px;
 	}
 }
@@ -1306,7 +1301,7 @@
 	}
 
 	&:focus-visible {
-		@include calendar-focus-ring(2px);
+		@include control-focus-ring(2px);
 	}
 
 	&[aria-pressed='true'] {
@@ -1423,7 +1418,7 @@
 	}
 
 	&:focus-visible {
-		@include calendar-focus-ring(-4px);
+		@include control-focus-ring(-4px);
 		border-radius: 24px 24px 0 0;
 	}
 }
@@ -1467,7 +1462,7 @@
 	}
 
 	&:focus-visible {
-		@include calendar-focus-ring(2px);
+		@include control-focus-ring(2px);
 	}
 
 	@media (prefers-reduced-motion: reduce) {
@@ -1514,7 +1509,7 @@
 	}
 
 	&:focus-visible {
-		@include calendar-focus-ring(2px);
+		@include control-focus-ring(2px);
 	}
 }
 
@@ -1552,7 +1547,7 @@
 	}
 
 	&:focus-visible {
-		@include calendar-focus-ring(0);
+		@include control-focus-ring(0);
 	}
 }
 
@@ -1593,7 +1588,7 @@
 	}
 
 	&:focus-visible {
-		@include calendar-focus-ring(-2px);
+		@include control-focus-ring(-2px);
 	}
 }
 
@@ -1680,7 +1675,7 @@
 	}
 
 	&:focus-visible {
-		@include calendar-focus-ring(0);
+		@include control-focus-ring(0);
 	}
 }
 
@@ -1749,7 +1744,7 @@
 	}
 
 	&:focus-visible {
-		@include calendar-focus-ring(0);
+		@include control-focus-ring(0);
 	}
 }
 
@@ -2130,7 +2125,7 @@
 	}
 
 	&:focus-visible {
-		@include calendar-focus-ring(0);
+		@include control-focus-ring(0);
 	}
 }
 
@@ -2199,7 +2194,7 @@
 	gap: 16px;
 
 	&--withMonth {
-		@media (width >= 600px) {
+		@include breakpoint($fromMedium) {
 			flex-direction: row;
 			align-items: flex-start;
 		}
