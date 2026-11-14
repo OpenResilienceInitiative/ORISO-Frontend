@@ -6865,6 +6865,7 @@
 		}
 	},
 	"calendar": {
+		"conversationsFailedAsker": "ዝርርባትኩም ክጽዓኑ ኣይከኣሉን፣ ስለዚ ካብ ቆጸራ ናብ ዕላልኩም ክትከዱ ኣይትኽእሉን።",
 		"create": "ቆጸራ ፍጠር",
 		"today": "ሎሚ",
 		"previous": "ዝሓለፈ",
