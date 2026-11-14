@@ -24,7 +24,6 @@ vi.mock('../../utils/tenantSettingsHelper', () => ({
 	})
 }));
 vi.mock('../budibase/budibaseLogout', () => ({ budibaseLogout: vi.fn() }));
-vi.mock('./calcomLogout', () => ({ calcomLogout: vi.fn() }));
 vi.mock('../sessionCookie/accessSessionCookie', () => ({
 	getValueFromCookie: vi.fn(() => 'access-token'),
 	removeAllCookies: vi.fn()

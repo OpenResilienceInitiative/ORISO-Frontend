@@ -1,0 +1,626 @@
+// Counsellor calendar (ADR-032, FE#1050). ORISO M3 tokens only: neutral
+// surfaces, red only for the primary action and the appointment that is about
+// to start. Kinds differ by icon, not by colour (Frank, 2026-11-14).
+
+// The one focus ring of every calendar control and list item; only the
+// offset differs where a control sits flush against its neighbours.
+@mixin calendar-focus-ring($offset: 2px) {
+	outline: 2px solid var(--m3-primary, #a5000a);
+	outline-offset: $offset;
+}
+
+// --- FullCalendar classic theme, palette mapped to the ORISO scheme ---
+.calendarView {
+	--fc-classic-button: var(--m3-surface-container-highest, #dcdfe3);
+	--fc-classic-button-border: transparent;
+	--fc-classic-button-strong: var(--m3-surface-dim, #d3d6da);
+	--fc-classic-button-strong-border: transparent;
+	--fc-classic-button-outline: var(--m3-primary, #a5000a);
+	--fc-classic-button-foreground: var(--m3-on-surface, #1b1b1c);
+	--fc-classic-primary: var(--m3-primary, #a5000a);
+	--fc-classic-primary-foreground: var(--m3-on-primary, #ffffff);
+	--fc-classic-event: var(--m3-surface-container-highest, #dcdfe3);
+	--fc-classic-event-contrast: var(--m3-on-surface, #1b1b1c);
+	--fc-classic-background-event: var(--m3-on-surface-variant, #444748);
+	--fc-classic-background-event-opacity: 8%;
+	--fc-classic-background-event-foreground-opacity: 60%;
+	--fc-classic-highlight: color-mix(
+		in srgb,
+		var(--m3-primary, #a5000a) 8%,
+		transparent
+	);
+	--fc-classic-today: var(--m3-surface-container-low, #f6f3f3);
+	--fc-classic-now: var(--m3-primary, #a5000a);
+	--fc-classic-background: var(--m3-surface-container-lowest, #ffffff);
+	--fc-classic-faint: var(--m3-surface-container-low, #f6f3f3);
+	--fc-classic-muted: var(--m3-surface-container, #f0edee);
+	--fc-classic-strong: var(--m3-surface-container-high, #eae7e8);
+	--fc-classic-foreground: var(--m3-on-surface, #1b1b1c);
+	--fc-classic-faint-foreground: var(--m3-outline, #747878);
+	--fc-classic-muted-foreground: var(--m3-on-surface-variant, #444748);
+	--fc-classic-border: var(--m3-outline-variant, #c4c7c8);
+	--fc-classic-strong-border: var(--m3-outline, #747878);
+
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	height: 100%;
+	min-height: 0;
+	font-family: var(--oriso-body-font-family, #{$font-family-sans-serif});
+	color: var(--m3-on-surface, #1b1b1c);
+}
+
+.calendarView__toolbar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px 16px;
+}
+
+.calendarView__nav,
+.calendarView__end {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.calendarView__today {
+	height: 36px;
+	margin: 0 8px 0 4px;
+	padding: 0 16px;
+	border: 1px solid var(--m3-outline, #747878);
+	border-radius: 18px;
+	background: transparent;
+	color: var(--m3-on-surface, #1b1b1c);
+	font: inherit;
+	font-size: 14px;
+	font-weight: 500;
+	white-space: nowrap;
+	cursor: pointer;
+
+	&:hover {
+		background: var(--m3-hover-layer, rgba(27, 27, 28, 0.08));
+	}
+
+	&:focus-visible {
+		@include calendar-focus-ring(2px);
+	}
+}
+
+.calendarView__title {
+	margin: 0;
+	font-size: 20px;
+	font-weight: 500;
+	line-height: 28px;
+
+	.calendarView--compact & {
+		font-size: 16px;
+		line-height: 24px;
+	}
+}
+
+.calendarView__grid {
+	flex: 1;
+	min-height: 480px;
+
+	.calendarView--compact & {
+		min-height: 420px;
+	}
+}
+
+// --- One entry ---
+// Neutral grey pill with the kind icon, like the timeline (ADR-021).
+
+.calEntry {
+	border: 1px solid transparent !important;
+	border-radius: 8px !important;
+	background: var(--m3-surface-container-highest, #dcdfe3) !important;
+	color: var(--m3-on-surface, #1b1b1c) !important;
+	cursor: pointer;
+	overflow: hidden;
+
+	&:focus-visible {
+		@include calendar-focus-ring(1px);
+	}
+
+	// The next appointment, from 15 minutes before its start.
+	&--soon {
+		background: var(--m3-primary, #a5000a) !important;
+		color: var(--m3-on-primary, #ffffff) !important;
+	}
+
+	// Blocked time and imported busy time: hatched, no fill colour.
+	&--blocker,
+	&--busy {
+		background: repeating-linear-gradient(
+			135deg,
+			var(--m3-surface-container, #f0edee) 0 6px,
+			var(--m3-surface-container-high, #eae7e8) 6px 12px
+		) !important;
+		color: var(--m3-on-surface-variant, #444748) !important;
+	}
+
+	// A colleague's entry: outline only, so one's own day stays readable.
+	&--colleague {
+		border-color: var(--m3-outline-variant, #c4c7c8) !important;
+		background: var(--m3-surface-container-lowest, #ffffff) !important;
+		color: var(--m3-on-surface-variant, #444748) !important;
+	}
+}
+
+.calEntry__inner {
+	display: flex;
+	align-items: flex-start;
+	gap: 6px;
+	min-width: 0;
+	padding: 3px 6px;
+}
+
+.calEntry__icon {
+	display: inline-flex;
+	flex: none;
+	width: 16px;
+	height: 16px;
+	margin-top: 1px;
+
+	svg {
+		width: 16px;
+		height: 16px;
+	}
+
+	path {
+		fill: currentColor;
+	}
+}
+
+.calEntry__text {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.calEntry__time {
+	font-size: 12px;
+	font-weight: 500;
+	font-variant-numeric: tabular-nums;
+	line-height: 16px;
+}
+
+.calEntry__title {
+	overflow: hidden;
+	font-size: 12px;
+	line-height: 16px;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+// --- Page: the "Meine Termine" section ---
+
+/* The route's slot in the app (Routing.tsx): the page fills the content
+   column like a session stage card, with the same outer gap. */
+.contentWrapper__calendar {
+	flex: 1;
+	min-width: 0;
+	min-height: 0;
+	height: 100%;
+	box-sizing: border-box;
+	padding: 12px 12px 12px 0;
+	overflow: auto;
+
+	@media (max-width: 899px) {
+		padding: 0;
+	}
+}
+
+.calendarPage {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	box-sizing: border-box;
+	height: 100%;
+	min-height: 0;
+	padding: 24px;
+	border-radius: 24px;
+	background: var(--m3-surface-container-lowest, #ffffff);
+	color: var(--m3-on-surface, #1b1b1c);
+
+	&--compact {
+		padding: 16px 12px;
+		border-radius: 0;
+	}
+}
+
+.calendarPage__header {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.calendarPage__headerIcon {
+	width: 24px;
+	height: 24px;
+
+	path {
+		fill: currentColor;
+	}
+}
+
+.calendarPage__title {
+	margin: 0;
+	font-size: 22px;
+	font-weight: 500;
+	line-height: 28px;
+}
+
+.calendarPage__create {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 48px;
+	height: 48px;
+	margin-left: auto;
+	border: none;
+	border-radius: 50%;
+	background: var(--m3-primary, #a5000a);
+	color: var(--m3-on-primary, #ffffff);
+	cursor: pointer;
+
+	&:hover {
+		background: var(--m3-primary-hover, #820006);
+	}
+
+	&:focus-visible {
+		@include calendar-focus-ring(2px);
+	}
+}
+
+.calendarPage__filters {
+	min-width: 0;
+}
+
+.calendarPage__body {
+	display: flex;
+	flex: 1;
+	gap: 24px;
+	min-height: 0;
+}
+
+.calendarPage__side {
+	display: flex;
+	flex: none;
+	flex-direction: column;
+	gap: 24px;
+	width: 264px;
+	overflow-y: auto;
+}
+
+.calendarPage__main {
+	position: relative;
+	flex: 1;
+	min-width: 0;
+}
+
+.calendarPage__section {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.calendarPage__sectionTitle {
+	margin: 0;
+	color: var(--m3-on-surface-variant, #444748);
+	font-size: 14px;
+	font-weight: 500;
+	line-height: 20px;
+}
+
+.calendarPage__muted {
+	margin: 0;
+	color: var(--m3-on-surface-variant, #444748);
+	font-size: 13px;
+	line-height: 18px;
+}
+
+.calendarPage__hint {
+	margin-top: 4px;
+}
+
+.calendarPage__upcoming,
+.calendarPage__calendars {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+// Same anatomy as the timeline pill (.tlp__entry).
+.calendarPage__entry {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	box-sizing: border-box;
+	width: 100%;
+	min-height: 44px;
+	padding: 4px 14px 4px 12px;
+	border: 1px solid transparent;
+	border-radius: 22px;
+	background: var(--m3-surface-container-highest, #dcdfe3);
+	color: var(--m3-on-surface, #1b1b1c);
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
+
+	&:hover {
+		background: var(--m3-surface-dim, #d3d6da);
+	}
+
+	&:focus-visible {
+		@include calendar-focus-ring(1px);
+	}
+
+	&--soon,
+	&--soon:hover {
+		background: var(--m3-primary, #a5000a);
+		color: var(--m3-on-primary, #ffffff);
+	}
+}
+
+.calendarPage__entryIcon {
+	display: inline-flex;
+	flex: none;
+	width: 20px;
+	height: 20px;
+
+	svg {
+		width: 20px;
+		height: 20px;
+	}
+
+	path {
+		fill: currentColor;
+	}
+}
+
+.calendarPage__entryText {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.calendarPage__entryTime {
+	font-size: 13px;
+	font-weight: 500;
+	font-variant-numeric: tabular-nums;
+	line-height: 18px;
+}
+
+.calendarPage__entryTitle {
+	overflow: hidden;
+	font-size: 12px;
+	line-height: 16px;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.calendarPage__calendar {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	min-height: 40px;
+	font-size: 14px;
+	cursor: pointer;
+
+	input {
+		width: 18px;
+		height: 18px;
+		margin: 0;
+		accent-color: var(--m3-primary, #a5000a);
+	}
+}
+
+.calendarPage__status {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 12px;
+	height: 100%;
+	min-height: 320px;
+	color: var(--m3-on-surface-variant, #444748);
+}
+
+// Loading: the grid stays mounted under the spinner (it reports the range).
+.calendarPage__status--overlay {
+	position: absolute;
+	z-index: 6;
+	inset: 0;
+	height: auto;
+	min-height: 0;
+	background: color-mix(
+		in srgb,
+		var(--m3-surface-container-lowest, #ffffff) 72%,
+		transparent
+	);
+}
+
+// The conversation lookup failed: say so above the grid, with a retry.
+.calendarPage__banner {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px 16px;
+	margin-bottom: 12px;
+	padding: 8px 12px 8px 16px;
+	border-radius: 12px;
+	background: var(--m3-error-container, #ffdad6);
+	color: var(--m3-on-error-container, #410002);
+}
+
+.calendarPage__retry {
+	height: 40px;
+	padding: 0 24px;
+	border: 1px solid var(--m3-outline, #747878);
+	border-radius: 20px;
+	background: transparent;
+	color: var(--m3-primary, #a5000a);
+	font: inherit;
+	font-weight: 500;
+	cursor: pointer;
+}
+
+// --- Dialogs ---
+
+.calendarDialog {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+
+	&--withMonth {
+		@media (width >= 600px) {
+			flex-direction: row;
+			align-items: flex-start;
+		}
+	}
+}
+
+.calendarDialog__month {
+	flex: none;
+}
+
+.calendarDialog__fields {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	gap: 16px;
+	min-width: 0;
+}
+
+.calendarDialog__times {
+	display: flex;
+	gap: 12px;
+}
+
+.calendarDialog__group {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.calendarDialog__label {
+	color: var(--m3-on-surface-variant, #444748);
+	font-size: 12px;
+	font-weight: 500;
+	line-height: 16px;
+}
+
+.calendarDialog__weekdays {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+
+.calendarDialog__note,
+.calendarDialog__summary {
+	margin: 0;
+	color: var(--m3-on-surface-variant, #444748);
+	font-size: 13px;
+	line-height: 18px;
+}
+
+.calendarDialog__error {
+	margin: 0;
+	color: var(--m3-error, #ba1a1a);
+	font-size: 13px;
+	line-height: 18px;
+}
+
+.calendarDetails {
+	display: grid;
+	grid-template-columns: auto 1fr;
+	gap: 6px 16px;
+	margin: 0;
+	font-size: 14px;
+	line-height: 20px;
+
+	dt {
+		color: var(--m3-on-surface-variant, #444748);
+	}
+
+	dd {
+		margin: 0;
+	}
+}
+
+.calendarDetails__hint {
+	margin: 12px 0 0;
+	color: var(--m3-on-surface-variant, #444748);
+	font-size: 13px;
+	line-height: 18px;
+}
+
+.calendarSync__section {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+
+	& + & {
+		margin-top: 20px;
+		padding-top: 20px;
+		border-top: 1px solid var(--m3-outline-variant, #c4c7c8);
+	}
+}
+
+.calendarSync__heading {
+	margin: 0;
+	font-size: 16px;
+	font-weight: 500;
+	line-height: 24px;
+}
+
+.calendarSync__text,
+.calendarSync__meta {
+	margin: 0;
+	font-size: 14px;
+	line-height: 20px;
+}
+
+.calendarSync__meta {
+	color: var(--m3-on-surface-variant, #444748);
+	font-size: 13px;
+	line-height: 18px;
+}
+
+.calendarSync__preview {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	padding: 12px;
+	border-radius: 12px;
+	background: var(--m3-surface-container, #f0edee);
+}
+
+.calendarSync__previewLabel {
+	color: var(--m3-on-surface-variant, #444748);
+	font-size: 12px;
+	line-height: 16px;
+}
+
+.calendarSync__previewEvent {
+	font-size: 14px;
+	line-height: 20px;
+}
+
+// The selection preview while dragging over free time.
+.calEntry--mirror {
+	border: 1px dashed var(--m3-primary, #a5000a) !important;
+	background: color-mix(
+		in srgb,
+		var(--m3-primary, #a5000a) 8%,
+		transparent
+	) !important;
+	color: var(--m3-on-surface, #1b1b1c) !important;
+}
