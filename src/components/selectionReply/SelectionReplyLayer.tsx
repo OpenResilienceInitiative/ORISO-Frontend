@@ -487,13 +487,11 @@ export const SelectionReplyLayer = ({
 		reset();
 	};
 
-	const openBlurBar = useCallback((span: HTMLElement) => {
+	// Where the pieces of blur `blurId` sit now, or null when they are gone.
+	const measureBlur = useCallback((eventId: string, blurId: string) => {
 		const layer = layerRef.current;
-		const eventId =
-			span.closest<HTMLElement>('[data-message-id]')?.dataset.messageId;
-		const blurId = span.dataset.passageBlurId;
-		if (!layer || !eventId || !blurId) {
-			return;
+		if (!layer) {
+			return null;
 		}
 		// Several pieces of one blur: anchor on all of them.
 		const pieces = Array.from(
@@ -501,19 +499,34 @@ export const SelectionReplyLayer = ({
 				`[data-message-id="${CSS.escape(eventId)}"] [data-passage-blur-id="${CSS.escape(blurId)}"]`
 			)
 		);
-		const rects = (pieces.length ? pieces : [span]).map((piece) =>
-			piece.getBoundingClientRect()
-		);
+		if (!pieces.length) {
+			return null;
+		}
+		const rects = pieces.map((piece) => piece.getBoundingClientRect());
+		const left = Math.min(...rects.map((rect) => rect.left));
+		const top = Math.min(...rects.map((rect) => rect.top));
 		const box = new DOMRect(
-			Math.min(...rects.map((rect) => rect.left)),
-			Math.min(...rects.map((rect) => rect.top)),
-			Math.max(...rects.map((rect) => rect.right)) -
-				Math.min(...rects.map((rect) => rect.left)),
-			Math.max(...rects.map((rect) => rect.bottom)) -
-				Math.min(...rects.map((rect) => rect.top))
+			left,
+			top,
+			Math.max(...rects.map((rect) => rect.right)) - left,
+			Math.max(...rects.map((rect) => rect.bottom)) - top
 		);
-		setBlurTarget({ eventId, blurId, anchor: anchorFor(box, layer) });
+		return anchorFor(box, layer);
 	}, []);
+
+	const openBlurBar = useCallback(
+		(span: HTMLElement) => {
+			const eventId =
+				span.closest<HTMLElement>('[data-message-id]')?.dataset
+					.messageId;
+			const blurId = span.dataset.passageBlurId;
+			const anchor = eventId && blurId && measureBlur(eventId, blurId);
+			if (eventId && blurId && anchor) {
+				setBlurTarget({ eventId, blurId, anchor });
+			}
+		},
+		[measureBlur]
+	);
 
 	// Story hook: open on a blurred passage once the rows have settled.
 	useEffect(() => {
@@ -532,12 +545,32 @@ export const SelectionReplyLayer = ({
 		return () => window.clearTimeout(timer);
 	}, [initialBlurTarget, openBlurBar]);
 
-	// The moderator's bar closes on a pointer down elsewhere, Esc or scroll.
+	// The moderator's bar closes on a pointer down elsewhere or Esc. On a
+	// scroll it follows its passage, and closes once the passage leaves the
+	// visible band: the timeline also scrolls by itself (focus, new rows).
+	const blurEventId = blurTarget?.eventId;
+	const blurId = blurTarget?.blurId;
 	useEffect(() => {
-		if (!blurTarget) {
+		if (!blurEventId || !blurId) {
 			return undefined;
 		}
 		const close = () => setBlurTarget(null);
+		const follow = () => {
+			const anchor = measureBlur(blurEventId, blurId);
+			if (
+				!anchor ||
+				anchor.bottom < anchor.visibleTop ||
+				anchor.top > anchor.visibleBottom
+			) {
+				close();
+				return;
+			}
+			setBlurTarget((current) =>
+				current?.eventId === blurEventId && current.blurId === blurId
+					? { ...current, anchor }
+					: current
+			);
+		};
 		const onPointerDown = (event: PointerEvent) => {
 			const target = event.target as Element;
 			if (
@@ -554,13 +587,15 @@ export const SelectionReplyLayer = ({
 		document.addEventListener('pointerdown', onPointerDown, true);
 		document.addEventListener('keydown', onKeyDown);
 		// Captured on the document, like the selection bar's scroll above.
-		document.addEventListener('scroll', close, true);
+		document.addEventListener('scroll', follow, true);
+		window.addEventListener('resize', follow);
 		return () => {
 			document.removeEventListener('pointerdown', onPointerDown, true);
 			document.removeEventListener('keydown', onKeyDown);
-			document.removeEventListener('scroll', close, true);
+			document.removeEventListener('scroll', follow, true);
+			window.removeEventListener('resize', follow);
 		};
-	}, [blurTarget]);
+	}, [blurEventId, blurId, measureBlur]);
 
 	const blurSpanOf = (target: EventTarget | null) =>
 		onRemoveBlur && target instanceof Element

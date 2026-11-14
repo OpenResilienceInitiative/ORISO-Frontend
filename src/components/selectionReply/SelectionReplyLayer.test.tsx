@@ -1,6 +1,13 @@
 // @vitest-environment oriso-jsdom
 import * as React from 'react';
-import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import {
 	act,
 	cleanup,
@@ -290,5 +297,75 @@ describe('SelectionReplyLayer focus on leaving the answer', () => {
 		fireEvent.change(field(), { target: { value: 'Danke' } });
 		fireEvent.keyDown(field(), { key: 'Enter' });
 		expect(focusComposer).toHaveBeenCalledTimes(1);
+	});
+});
+
+describe('SelectionReplyLayer moderator blur bar on scroll', () => {
+	beforeEach(() => {
+		// jsdom has no CSS.escape; the ids here need no escaping.
+		vi.stubGlobal('CSS', { escape: (value: string) => value });
+	});
+	afterEach(() => {
+		cleanup();
+		vi.unstubAllGlobals();
+	});
+
+	const renderBlurred = () =>
+		render(
+			<SelectionReplyLayer
+				authorFor={() => 'Anna'}
+				onAddToComposer={() => {}}
+				onSendNow={() => {}}
+				onRemoveBlur={() => {}}
+				recorder={{ start: vi.fn(), stop: vi.fn(), cancel: vi.fn() }}
+			>
+				<div data-message-id="$1">
+					<div className="messageItem__message">
+						<p>
+							Ich heiße{' '}
+							<span
+								className="passageBlur passageBlur--removable"
+								data-passage-blur-id="b1"
+								data-testid="blurred"
+							>
+								xxxx xxxxxx
+							</span>
+							.
+						</p>
+					</div>
+				</div>
+			</SelectionReplyLayer>
+		);
+	const blurBar = () =>
+		document.querySelector('[data-cy="passage-blur-bar"]');
+	const placeBlurred = (top: number) =>
+		vi
+			.spyOn(screen.getByTestId('blurred'), 'getBoundingClientRect')
+			.mockReturnValue(new DOMRect(40, top, 80, 20));
+
+	it('stays open on a scroll that keeps its passage in view', () => {
+		renderBlurred();
+		placeBlurred(100);
+		fireEvent.click(screen.getByTestId('blurred'));
+		expect(blurBar()).not.toBeNull();
+
+		placeBlurred(140);
+		act(() => {
+			document.dispatchEvent(new Event('scroll'));
+		});
+		expect(blurBar()).not.toBeNull();
+	});
+
+	it('closes once a scroll moves its passage out of view', () => {
+		renderBlurred();
+		placeBlurred(100);
+		fireEvent.click(screen.getByTestId('blurred'));
+		expect(blurBar()).not.toBeNull();
+
+		placeBlurred(window.innerHeight + 200);
+		act(() => {
+			document.dispatchEvent(new Event('scroll'));
+		});
+		expect(blurBar()).toBeNull();
 	});
 });
