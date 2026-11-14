@@ -636,7 +636,7 @@
 		},
 		"successOverlay": {
 			"button": "Fermer",
-			"headline": "Vous avez supprimé avec succès votre compte auprès de Caritas Beratung."
+			"headline": "Vous avez supprimé avec succès votre compte ORISO."
 		}
 	},
 	"deleteSession": {
@@ -3625,7 +3625,7 @@
 			"success": {
 				"button": "Rédiger un message",
 				"copy": "Vous vous êtes inscrit(e) avec succès.",
-				"headline": "Bienvenue<br>au service de consultation de la Caritas."
+				"headline": "Bienvenue<br>sur ORISO."
 			}
 		},
 		"overline": "Bienvenue sur le site de conseil en ligne",
@@ -3896,7 +3896,7 @@
 				"buttonLabel": "S'inscrire",
 				"helperText": "Nouveau sur la consultation en ligne ?"
 			},
-			"subline": "Voici comment se déroule la consultation de la Caritas",
+			"subline": "Voici comment se déroule la consultation sur ORISO",
 			"login": {
 				"buttonLabel": "Se connecter",
 				"helperText": "Déjà inscrit ?"
@@ -5428,10 +5428,10 @@
 		}
 	},
 	"consultingTypes": {
-		"title": "Welcome to Caritas online counselling",
+		"title": "Welcome to ORISO online counselling",
 		"intro": "I am looking for counselling on the following topic:",
 		"selectGroup": "Please select a topic",
-		"learnMore": "Learn more about how Caritas counselling works",
+		"learnMore": "Learn more about how ORISO counselling works",
 		"info": "Info",
 		"details": {
 			"explanation": {
@@ -5440,7 +5440,7 @@
 			}
 		},
 		"overlay": {
-			"title": "How Caritas counselling works",
+			"title": "How ORISO counselling works",
 			"close": "Close"
 		},
 		"register": "Register"
