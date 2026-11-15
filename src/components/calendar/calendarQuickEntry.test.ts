@@ -61,9 +61,9 @@ describe('parseQuickEntry', () => {
 		expect(parseQuickEntry('morgen 9:90 blocker', { now }).start).toBe(
 			undefined
 		);
-		expect(
-			parseQuickEntry('morgen 9:00-10:75 blocker', { now }).end
-		).toBe(undefined);
+		expect(parseQuickEntry('morgen 9:00-10:75 blocker', { now }).end).toBe(
+			undefined
+		);
 	});
 
 	it('prefers the exact username and refuses an ambiguous part (review 4574775704)', () => {
@@ -73,8 +73,10 @@ describe('parseQuickEntry', () => {
 			{ sessionId: 3, username: 'stille_eule' }
 		];
 		expect(
-			parseQuickEntry('morgen 10 Video eule', { now, conversations: owls })
-				.sessionId
+			parseQuickEntry('morgen 10 Video eule', {
+				now,
+				conversations: owls
+			}).sessionId
 		).toBe(2);
 		expect(
 			parseQuickEntry('morgen 10 Video mutige', {
@@ -88,6 +90,39 @@ describe('parseQuickEntry', () => {
 				conversations: owls.filter((c) => c.sessionId !== 2)
 			}).sessionId
 		).toBeUndefined();
+	});
+
+	it('never finds a person through a filler word (review 4577586483)', () => {
+		const entry = parseQuickEntry('Video mit Eule morgen 14 Uhr', {
+			now,
+			conversations: [{ sessionId: 88, username: 'schmitt88' }]
+		});
+		expect(entry.sessionId).toBeUndefined();
+		expect(entry.ambiguous).toBeUndefined();
+		// Day, time and kind still read.
+		expect(entry.kind).toBe('video');
+		expect(entry.start).toEqual(at(17, 14));
+	});
+
+	it('skips the words it read as day, time or kind (review 4577586483)', () => {
+		const people = [
+			{ sessionId: 1, username: 'telefonmann' },
+			{ sessionId: 2, username: 'morgenstern' },
+			{ sessionId: 3, username: 'uhrwerk' },
+			{ sessionId: 4, username: 'mutige_eule' }
+		];
+		expect(
+			parseQuickEntry('Telefon morgen 10 Uhr mit eule', {
+				now,
+				conversations: people
+			}).sessionId
+		).toBe(4);
+		expect(
+			parseQuickEntry('tomorrow 2pm call with mutige', {
+				now,
+				conversations: people
+			}).sessionId
+		).toBe(4);
 	});
 
 	it('gives a chat half an hour and moves a past hour to tomorrow', () => {

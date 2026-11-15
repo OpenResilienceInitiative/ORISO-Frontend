@@ -36,6 +36,85 @@ const KIND_WORDS: [RegExp, QuickKind][] = [
 	[/\bchat\b/, 'chat']
 ];
 
+/**
+ * Words that never name a conversation: kinds, days, times and filler
+ * words in German and English (the languages the parser reads), and the
+ * example prefixes of every placeholder.
+ */
+const NOT_A_NAME = new Set([
+	// kinds
+	'sperre',
+	'sperrzeit',
+	'blocker',
+	'block',
+	'pause',
+	'video',
+	'videocall',
+	'telefon',
+	'telefonat',
+	'anruf',
+	'tel',
+	'phone',
+	'call',
+	'vor',
+	'ort',
+	'präsenz',
+	'onsite',
+	'site',
+	'person',
+	'chat',
+	// days and times
+	'heute',
+	'morgen',
+	'übermorgen',
+	'today',
+	'tomorrow',
+	'day',
+	'after',
+	'montag',
+	'dienstag',
+	'mittwoch',
+	'donnerstag',
+	'freitag',
+	'samstag',
+	'sonntag',
+	'sonnabend',
+	'mon',
+	'tue',
+	'wed',
+	'thu',
+	'fri',
+	'sat',
+	'sun',
+	'monday',
+	'tuesday',
+	'wednesday',
+	'thursday',
+	'friday',
+	'saturday',
+	'sunday',
+	'uhr',
+	'bis',
+	'until',
+	// fillers
+	'mit',
+	'und',
+	'oder',
+	'termin',
+	'gespräch',
+	'beratung',
+	'with',
+	'and',
+	'the',
+	'for',
+	'appointment',
+	'meeting',
+	// placeholder prefixes (fr "p. ex.", tr "örn.", ru "напр.", ti)
+	'örn',
+	'напр',
+	'ንኣብነት'
+]);
+
 const DE_WEEKDAY =
 	/\b(mo|di|mi|do|fr|sa|so)(ntag|nstag|ttwoch|nnerstag|eitag|mstag|nntag|nnabend)?\b\.?/;
 const EN_WEEKDAY =
@@ -175,10 +254,13 @@ export const parseQuickEntry = (
 		out.end = addDays(out.end, 1);
 	}
 
-	const words = raw
-		.toLowerCase()
+	// Only what is left once day and time are read, without the words the
+	// parser reads or that only fill the line: "Video mit Eule" must not
+	// find "schmitt88" through "mit" (review 4577586483).
+	const words = text
 		.split(/[\s,]+/)
-		.filter((w) => w.length >= 3);
+		.map((w) => w.replace(/[.:]+$/, ''))
+		.filter((w) => w.length >= 3 && !NOT_A_NAME.has(w));
 	// An exact username wins; a partial name counts only when it fits one
 	// conversation ("eule" is not "mutige_eule" when "eule" exists).
 	const exact = conversations.filter((c) =>
