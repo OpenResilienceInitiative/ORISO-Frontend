@@ -435,9 +435,6 @@
 		"assignedCalendars": {
 			"iframeTitle": "Atanmış takvimler"
 		},
-		"calcom": {
-			"loading": "{{calLink}} yükleniyor"
-		},
 		"reschedule": {
 			"iframeTitle": "Randevuyu ertele"
 		},

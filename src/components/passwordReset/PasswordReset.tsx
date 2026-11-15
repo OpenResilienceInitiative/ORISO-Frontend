@@ -50,8 +50,6 @@ import {
 } from '../../globalState';
 import { useTranslation } from 'react-i18next';
 import { useAppConfig } from '../../hooks/useAppConfig';
-import { getTenantSettings } from '../../utils/tenantSettingsHelper';
-import { apiUpdatePasswordAppointments } from '../../api/apiUpdatePasswordAppointments';
 import {
 	ACCOUNT_SETUP_STEPS,
 	resolveAccountSetupStep
@@ -171,12 +169,7 @@ export const PasswordReset = ({
 	variant = 'profile'
 }: PasswordResetProps) => {
 	const { t: translate } = useTranslation();
-	const { featureAppointmentsEnabled } = getTenantSettings();
 	const { userData } = useContext(UserDataContext);
-	const isConsultant = hasUserAuthority(
-		AUTHORITIES.CONSULTANT_DEFAULT,
-		userData
-	);
 
 	const settings = useAppConfig();
 	const showPasswordChangeConfirmation = useContext(
@@ -458,21 +451,6 @@ export const PasswordReset = ({
 				}
 			})()
 				.then(async (enrollment) => {
-					// Must complete BEFORE logout clears the auth cookies —
-					// otherwise the appointments-password update races the
-					// session invalidation and dies with a 401 (stale
-					// appointments/CalDAV password). A failure must not block
-					// the logout itself.
-					if (isConsultant && featureAppointmentsEnabled) {
-						await apiUpdatePasswordAppointments(
-							userData.email,
-							newPassword
-						).catch(() => {
-							// keep the logout flowing; the appointments
-							// password can be re-synced on next login
-						});
-					}
-
 					const password = newPassword;
 					setOldPassword('');
 					setNewPassword('');
