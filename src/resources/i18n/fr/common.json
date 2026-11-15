@@ -6898,6 +6898,7 @@
 		}
 	},
 	"calendar": {
+		"chatUnavailable": "Impossible d’ouvrir le chat de ce rendez-vous.",
 		"conversationsFailedAsker": "Vos conversations n’ont pas pu être chargées : un rendez-vous ne peut donc pas vous mener à sa discussion.",
 		"create": "Créer un rendez-vous",
 		"today": "Aujourd’hui",

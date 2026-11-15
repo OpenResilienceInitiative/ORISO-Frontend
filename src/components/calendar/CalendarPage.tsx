@@ -88,7 +88,11 @@ export interface CalendarPageProps {
 	onRangeChange?: (start: Date, end: Date) => void;
 	/** Colleagues whose calendars are switched on. */
 	onShownColleaguesChange?: (ids: string[]) => void;
-	onStart?: (entry: CalendarEntry) => void;
+	/**
+	 * Start or join the call; a promise that rejects says the conversation
+	 * cannot be opened (review 4577642137).
+	 */
+	onStart?: (entry: CalendarEntry) => void | Promise<unknown>;
 	onCopyFeed?: (url: string) => void;
 	/** Sync actions; a rejected promise keeps the dialog's input and says so. */
 	onResetFeed?: () => void | Promise<unknown>;
@@ -211,6 +215,16 @@ export const CalendarPage = ({
 			);
 		setNotice(success);
 		return true;
+	};
+
+	/** A room that cannot be opened says so instead of doing nothing. */
+	const openRoom = (
+		open: CalendarPageProps['onStart'],
+		entry: CalendarEntry
+	) => {
+		Promise.resolve(open?.(entry)).catch(() =>
+			setNotice({ message: t('calendar.chatUnavailable') })
+		);
 	};
 
 	const choose = (choice: SlotChoice) => {
@@ -589,7 +603,7 @@ export const CalendarPage = ({
 					fullScreen={compact}
 					onStart={(entry) => {
 						setDialog(null);
-						onStart?.(entry);
+						openRoom(onStart, entry);
 					}}
 					onCancelAppointment={(entry) => {
 						setDialog(null);

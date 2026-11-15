@@ -6813,6 +6813,7 @@
 		}
 	},
 	"calendar": {
+		"chatUnavailable": "The chat for this appointment could not be opened.",
 		"conversationsFailedAsker": "Your conversations could not be loaded, so an appointment cannot take you to its chat.",
 		"create": "New appointment",
 		"today": "Today",

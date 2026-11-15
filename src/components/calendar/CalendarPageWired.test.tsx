@@ -13,6 +13,8 @@ import * as calendarApi from '../../api/apiCalendar';
 import * as appointmentApi from '../../api/apiSessionAppointments';
 import * as sessionListApi from '../../api/apiGetConsultantSessionList';
 import * as askerListApi from '../../api/apiGetAskerSessionList';
+import * as roomApi from '../../api/apiGetSessionRooms';
+import type { CalendarEntry } from './calendarModel';
 import type { CalendarPageProps } from './CalendarPage';
 import { CalendarPageWired } from './CalendarPageWired';
 
@@ -76,11 +78,15 @@ vi.mock('../../api/apiGetConsultantSessionList', () => ({
 vi.mock('../../api/apiGetAskerSessionList', () => ({
 	apiGetAskerSessionList: vi.fn(() => Promise.resolve({ sessions: [] }))
 }));
+vi.mock('../../api/apiGetSessionRooms', () => ({
+	apiGetSessionRoomBySessionId: vi.fn()
+}));
 
 const api = vi.mocked(calendarApi);
 const appointments = vi.mocked(appointmentApi);
 const sessionList = vi.mocked(sessionListApi);
 const askerList = vi.mocked(askerListApi);
+const rooms = vi.mocked(roomApi);
 
 const OWN = {
 	id: 'a1',
@@ -457,6 +463,68 @@ describe('CalendarPageWired', () => {
 		await act(async () => undefined);
 		expect(props.conversationsFailed).toBe(false);
 		expect(props.conversations).toHaveLength(100);
+	});
+
+	describe('starting a call (review 4577642137)', () => {
+		const appointment = (sessionId: number): CalendarEntry => ({
+			id: `a${sessionId}`,
+			type: 'appointment',
+			kind: 'video',
+			start: '2026-11-16T09:00:00Z',
+			end: '2026-11-16T10:00:00Z',
+			ownerId: 'me',
+			sessionId
+		});
+		const listed = async () => {
+			render(<CalendarPageWired />);
+			await waitFor(() => expect(props.conversations).toHaveLength(1));
+		};
+
+		it('opens a listed conversation without a lookup', async () => {
+			await listed();
+			await act(async () => {
+				await props.onStart?.(appointment(4401));
+			});
+			expect(navigate).toHaveBeenCalledWith(
+				'/sessions/consultant/sessionView/!room:oriso/4401'
+			);
+			expect(rooms.apiGetSessionRoomBySessionId).not.toHaveBeenCalled();
+		});
+
+		it('finds the room by session id for a conversation the list does not hold', async () => {
+			rooms.apiGetSessionRoomBySessionId.mockResolvedValueOnce({
+				sessions: [{ session: { id: 777, matrixRoomId: '!far:oriso' } }]
+			} as never);
+			await listed();
+			await act(async () => {
+				await props.onStart?.(appointment(777));
+			});
+			expect(rooms.apiGetSessionRoomBySessionId).toHaveBeenCalledWith(777);
+			expect(navigate).toHaveBeenCalledWith(
+				'/sessions/consultant/sessionView/!far:oriso/777'
+			);
+		});
+
+		it('rejects when no room is found, so the page can say so', async () => {
+			rooms.apiGetSessionRoomBySessionId.mockRejectedValueOnce(
+				new Error('FORBIDDEN')
+			);
+			await listed();
+			await expect(
+				act(async () => {
+					await props.onStart?.(appointment(778));
+				})
+			).rejects.toBeDefined();
+			rooms.apiGetSessionRoomBySessionId.mockResolvedValueOnce({
+				sessions: [{ session: { id: 779 } }]
+			} as never);
+			await expect(
+				act(async () => {
+					await props.onStart?.(appointment(779));
+				})
+			).rejects.toBeDefined();
+			expect(navigate).not.toHaveBeenCalled();
+		});
 	});
 
 	it('shows a failed asker lookup with the retry, not as no conversations', async () => {

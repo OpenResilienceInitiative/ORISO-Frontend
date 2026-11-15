@@ -6888,6 +6888,7 @@
 		}
 	},
 	"calendar": {
+		"chatUnavailable": "Der Chat zu diesem Termin konnte nicht geöffnet werden.",
 		"conversationsFailedAsker": "Ihre Gespräche konnten nicht geladen werden, ein Termin führt so nicht zu seinem Chat.",
 		"create": "Termin anlegen",
 		"today": "Heute",
