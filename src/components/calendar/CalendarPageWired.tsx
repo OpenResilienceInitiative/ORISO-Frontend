@@ -39,6 +39,7 @@ import {
 } from '../../api/apiSessionAppointments';
 import { apiGetConsultantSessionList } from '../../api/apiGetConsultantSessionList';
 import { apiGetAskerSessionList } from '../../api/apiGetAskerSessionList';
+import { FETCH_ERRORS } from '../../api/fetchData';
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import {
 	notifyAppointmentsChanged,
@@ -192,6 +193,12 @@ export const CalendarPageWired = () => {
 						type: SESSION_LIST_TYPES.MY_SESSION,
 						count: CONVERSATION_LOOKUP_COUNT,
 						offset
+					}).catch((error) => {
+						// 204: no (more) conversations. That is an answer,
+						// also on a later page (review 4577642135).
+						if (error?.message === FETCH_ERRORS.EMPTY)
+							return { count: 0, offset, sessions: [], total: 0 };
+						throw error;
 					})
 				: // Strict: a failure shows the retry instead of no rooms.
 					apiGetAskerSessionList({ strict: true });

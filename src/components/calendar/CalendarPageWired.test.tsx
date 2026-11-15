@@ -422,6 +422,43 @@ describe('CalendarPageWired', () => {
 		await waitFor(() => expect(props.conversations).toHaveLength(1));
 	});
 
+	it('takes a 204 for a counsellor without conversations as none, not as a failure (review 4577642135)', async () => {
+		sessionList.apiGetConsultantSessionList.mockRejectedValueOnce(
+			new Error('EMPTY')
+		);
+		render(<CalendarPageWired />);
+		await waitFor(() =>
+			expect(sessionList.apiGetConsultantSessionList).toHaveBeenCalled()
+		);
+		await act(async () => undefined);
+		expect(props.conversationsFailed).toBe(false);
+		expect(props.conversations).toEqual([]);
+	});
+
+	it('keeps the pages it has when a later page answers 204 (review 4577642135)', async () => {
+		const first = {
+			count: 100,
+			offset: 0,
+			total: 150,
+			sessions: Array.from({ length: 100 }, (_, i) => ({
+				session: { id: i + 1, matrixRoomId: `!r${i + 1}:oriso` },
+				user: { username: `u${i + 1}` }
+			}))
+		};
+		sessionList.apiGetConsultantSessionList
+			.mockResolvedValueOnce(first as never)
+			.mockRejectedValueOnce(new Error('EMPTY'));
+		render(<CalendarPageWired />);
+		await waitFor(() =>
+			expect(sessionList.apiGetConsultantSessionList).toHaveBeenCalledTimes(
+				2
+			)
+		);
+		await act(async () => undefined);
+		expect(props.conversationsFailed).toBe(false);
+		expect(props.conversations).toHaveLength(100);
+	});
+
 	it('shows a failed asker lookup with the retry, not as no conversations', async () => {
 		consultant = false;
 		// The shared helper hides failures as an empty list unless asked
