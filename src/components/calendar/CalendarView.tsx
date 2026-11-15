@@ -838,6 +838,31 @@ export const CalendarView = ({
 		peek && 'entry' in peek ? colleagues[peek.entry.ownerId] : undefined;
 	const names = (list: Colleague[]) =>
 		list.map((c) => c.displayName).join(', ');
+	/**
+	 * Who is busy in a band and who is free. An all-day entry stays in its
+	 * row and makes no band, but its owner is not free there either
+	 * (review 4576346789).
+	 */
+	const bandPeek = (band: ColleagueBand) => {
+		const busy = new Set(band.busy);
+		const from = band.start.getTime();
+		const to = band.end.getTime();
+		const away = new Set(
+			entries
+				.filter(
+					(e) =>
+						e.allDay &&
+						new Date(e.start).getTime() < to &&
+						new Date(e.end).getTime() > from
+				)
+				.map((e) => e.ownerId)
+		);
+		return {
+			busy: bandPeople.filter((c) => busy.has(c.id)),
+			free: bandPeople.filter((c) => !busy.has(c.id) && !away.has(c.id))
+		};
+	};
+	const peekPeople = peek && 'band' in peek ? bandPeek(peek.band) : null;
 
 	return (
 		<div
@@ -965,24 +990,13 @@ export const CalendarView = ({
 						</strong>
 						<span>
 							{t('calendar.bandBusy', {
-								names: names(
-									bandPeople.filter((c) =>
-										peek.band.busy.includes(c.id)
-									)
-								)
+								names: names(peekPeople?.busy ?? [])
 							})}
 						</span>
-						{bandPeople.some(
-							(c) => !peek.band.busy.includes(c.id)
-						) && (
+						{!!peekPeople?.free.length && (
 							<span>
 								{t('calendar.bandFree', {
-									names: names(
-										bandPeople.filter(
-											(c) =>
-												!peek.band.busy.includes(c.id)
-										)
-									)
+									names: names(peekPeople.free)
 								})}
 							</span>
 						)}

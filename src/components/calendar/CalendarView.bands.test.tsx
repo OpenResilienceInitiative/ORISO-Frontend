@@ -188,6 +188,33 @@ describe('CalendarView — colleagues as bands in the time grid', () => {
 		expect(screen.queryByText(/calendar\.bandUnknown/)).toBeNull();
 	});
 
+	it('never names a colleague free who has an all-day entry there (review 4576346789)', async () => {
+		const away: CalendarEntry = {
+			id: 'berg-day',
+			type: 'blocker',
+			start: new Date(2026, 10, 16).toISOString(),
+			end: new Date(2026, 10, 17).toISOString(),
+			allDay: true,
+			ownerId: 'berg'
+		};
+		render(
+			<Grid view="workWeek" entries={[ENTRIES[0], ENTRIES[1], away]} />
+		);
+		// The all-day entry stays in its row: one band, Kaya's.
+		await waitFor(() => expect(bandLabels()).toHaveLength(1));
+		act(() => {
+			fireEvent.mouseOver(
+				document.querySelector(
+					'[data-cy="calendar-band"]'
+				) as HTMLElement
+			);
+		});
+		expect(
+			(await screen.findByText(/calendar\.bandBusy/)).textContent
+		).toContain('A. Kaya');
+		expect(screen.queryByText(/calendar\.bandFree/)).toBeNull();
+	});
+
 	it('keeps single colleague entries in month and list', async () => {
 		render(<Grid view="month" />);
 		await waitFor(() => expect(shownEntry('kaya-1')).not.toBeNull());
