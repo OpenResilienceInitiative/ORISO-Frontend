@@ -1,5 +1,5 @@
 import { createElement } from 'react';
-import { Meta, StoryObj } from '@storybook/react';
+import { Meta, StoryObj } from '@storybook/react-vite';
 import { TwoFactorAuth } from './TwoFactorAuth';
 import { ModalProvider } from '../../globalState/provider/ModalProvider';
 import { APP_ORISO_FIGMA_URL } from '../storybookDesignLinks';
