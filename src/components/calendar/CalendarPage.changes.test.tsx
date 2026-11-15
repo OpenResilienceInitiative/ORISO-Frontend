@@ -453,3 +453,45 @@ describe("CalendarPage — one's own calendar still loading (review 4576368852)"
 		expect(screen.queryByTestId('calendar-colleagues-failed')).toBeNull();
 	});
 });
+
+describe('CalendarPage — bands count what the kind filter hides (review 4576423989)', () => {
+	it('hands the grid a hidden colleague blocker for the bands, not for display', async () => {
+		const kayaCall: CalendarEntry = {
+			id: 'kaya-call',
+			type: 'appointment',
+			kind: 'phone',
+			start: new Date(2026, 10, 16, 10).toISOString(),
+			end: new Date(2026, 10, 16, 12).toISOString(),
+			ownerId: 'kaya'
+		};
+		const bergBlock: CalendarEntry = {
+			id: 'berg-block',
+			type: 'blocker',
+			start: new Date(2026, 10, 16, 10).toISOString(),
+			end: new Date(2026, 10, 16, 12).toISOString(),
+			ownerId: 'berg'
+		};
+		page({
+			entries: [ENTRY, kayaCall, bergBlock],
+			colleagues: [
+				{ id: 'kaya', displayName: 'A. Kaya' },
+				{ id: 'berg', displayName: 'C. Berg' }
+			],
+			initialShownColleagues: ['kaya', 'berg']
+		});
+		const cy = (name: string) =>
+			document.querySelector(`[data-cy="${name}"]`) as HTMLElement | null;
+		fireEvent.click(cy('calendar-kinds-button') as HTMLElement);
+		await waitFor(() =>
+			expect(cy('calendar-kinds-blocker')).not.toBeNull()
+		);
+		fireEvent.click(cy('calendar-kinds-blocker') as HTMLElement);
+		const ids = (key: string) =>
+			((grid.last?.[key] as CalendarEntry[] | undefined) ?? []).map(
+				(e) => e.id
+			);
+		await waitFor(() => expect(ids('entries')).not.toContain('berg-block'));
+		expect(ids('entries')).toEqual(['a1', 'kaya-call']);
+		expect(ids('busyEntries')).toEqual(['a1', 'kaya-call', 'berg-block']);
+	});
+});

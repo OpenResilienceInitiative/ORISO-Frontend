@@ -1855,6 +1855,7 @@ export const CalendarPage = ({
 							role={role}
 							ownerId={ownerId}
 							entries={visible}
+							busyEntries={busyEntries}
 							colleagues={colleagueById}
 							bandPeople={shown.filter(
 								(c) => !unknownIds.has(c.id)

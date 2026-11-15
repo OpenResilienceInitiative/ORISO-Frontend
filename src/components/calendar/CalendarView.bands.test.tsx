@@ -219,6 +219,41 @@ describe('CalendarView — colleagues as bands in the time grid', () => {
 		expect(screen.queryByText(/calendar\.bandFree/)).toBeNull();
 	});
 
+	it('counts a colleague busy whose blocker the kind filter hides (review 4576423989)', async () => {
+		const blocker: CalendarEntry = {
+			id: 'berg-block',
+			type: 'blocker',
+			start: at(10),
+			end: at(12),
+			ownerId: 'berg'
+		};
+		// Blockers hidden: the display gets no blocker, the bands still do.
+		render(
+			<Grid
+				view="day"
+				entries={[ENTRIES[0], ENTRIES[1]]}
+				busyEntries={[ENTRIES[0], ENTRIES[1], blocker]}
+			/>
+		);
+		await waitFor(() => expect(bandLabels()).toHaveLength(1));
+		expect(bandLabels()[0]).toBe('calendar.bandSome {"busy":2,"total":2}');
+		expect(
+			document.querySelectorAll('.calendarView__band--all')
+		).toHaveLength(1);
+		expect(shownEntry('berg-block')).toBeNull();
+		act(() => {
+			fireEvent.mouseOver(
+				document.querySelector(
+					'[data-cy="calendar-band"]'
+				) as HTMLElement
+			);
+		});
+		const peek = await screen.findByText(/calendar\.bandBusy/);
+		expect(peek.textContent).toContain('A. Kaya');
+		expect(peek.textContent).toContain('C. Berg');
+		expect(screen.queryByText(/calendar\.bandFree/)).toBeNull();
+	});
+
 	it('keeps single colleague entries in month and list', async () => {
 		render(<Grid view="month" />);
 		await waitFor(() => expect(shownEntry('kaya-1')).not.toBeNull());

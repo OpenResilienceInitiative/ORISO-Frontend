@@ -108,6 +108,12 @@ export interface CalendarViewProps {
 	ownerId: string;
 	/** Own entries plus colleagues' entries, already redacted and filtered. */
 	entries: CalendarEntry[];
+	/**
+	 * The same people's entries before the kind filter: the bands count
+	 * these, so a hidden blocker still makes a colleague busy (review
+	 * 4576423989). Defaults to `entries`.
+	 */
+	busyEntries?: CalendarEntry[];
 	/** Colleagues by id, for names, initials and the tooltip. */
 	colleagues?: Record<string, Colleague>;
 	/**
@@ -352,6 +358,7 @@ export const CalendarView = ({
 	role,
 	ownerId,
 	entries,
+	busyEntries,
 	colleagues = {},
 	bandPeople = NO_PEOPLE,
 	unavailable = NO_PEOPLE,
@@ -401,9 +408,10 @@ export const CalendarView = ({
 	// single entries.
 	const people = useMemo(() => bandPeople.map((c) => c.id), [bandPeople]);
 	const banded = timeGrid && people.length > 0;
+	const counted = busyEntries ?? entries;
 	const bands = useMemo(
-		() => (banded ? colleagueBands(entries, people) : []),
-		[banded, entries, people]
+		() => (banded ? colleagueBands(counted, people) : []),
+		[banded, counted, people]
 	);
 	const gridEntries = useMemo(
 		() =>
