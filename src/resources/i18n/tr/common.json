@@ -7156,6 +7156,8 @@
 			"results": "Arama sonuçları"
 		},
 		"settings": {
+			"freeDays": "Boş günleri gir …",
+			"freeDaysHint": "İzin, köprü günü; resmî tatiller Çalışma saatleri altında",
 			"label": "Takvim ayarları",
 			"workingHours": "Çalışma saatleri",
 			"switcher": "Görünüm seçimi",

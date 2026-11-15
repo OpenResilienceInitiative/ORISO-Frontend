@@ -572,6 +572,8 @@ export interface SettingsMenuContentProps {
 	workingHoursSummary?: string;
 	switcherStyle: ViewSwitcherStyle;
 	onWorkingHours?: () => void;
+	/** "Freie Tage eintragen …": an all-day blocker from tomorrow. */
+	onFreeDays?: () => void;
 	onSwitcherStyle: (style: ViewSwitcherStyle) => void;
 	onSync?: () => void;
 	/** The remembered answer after dragging a grip, if any. */
@@ -584,6 +586,7 @@ export const SettingsMenuContent = ({
 	workingHoursSummary,
 	switcherStyle,
 	onWorkingHours,
+	onFreeDays,
 	onSwitcherStyle,
 	onSync,
 	rememberedEdge,
@@ -602,6 +605,16 @@ export const SettingsMenuContent = ({
 					}
 					onClick={onWorkingHours}
 					data-cy="calendar-settings-working-hours"
+				/>
+			)}
+			{onFreeDays && (
+				<ChatMenuDropdownItem
+					role="menuitem"
+					icon={<FacetIcon facet="blocker" />}
+					title={t('calendar.settings.freeDays')}
+					description={t('calendar.settings.freeDaysHint')}
+					onClick={onFreeDays}
+					data-cy="calendar-settings-free-days"
 				/>
 			)}
 			{rememberedEdge && onForgetEdge && (

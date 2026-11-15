@@ -7071,6 +7071,8 @@
 			"results": "Search results"
 		},
 		"settings": {
+			"freeDays": "Add days off …",
+			"freeDaysHint": "Holiday, bridge day; public holidays are under working hours",
 			"label": "Calendar settings",
 			"workingHours": "Working hours",
 			"switcher": "Choose the view",

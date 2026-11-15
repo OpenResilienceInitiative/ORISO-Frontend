@@ -1261,6 +1261,23 @@ export const CalendarPage = ({
 							}
 						: undefined
 				}
+				onFreeDays={
+					onCreate
+						? () => {
+								// Holidays, a bridge day: one whole day from
+								// tomorrow, widened in the dialog (prototype v16).
+								setMenu(null);
+								const tomorrow = addDays(startOfDay(now), 1);
+								setDialog({
+									type: 'blocker',
+									slot: {
+										start: tomorrow,
+										end: addDays(tomorrow, 1)
+									}
+								});
+							}
+						: undefined
+				}
 				onSwitcherStyle={(style) => {
 					setSwitcherStyle(style);
 					writeSwitcherStyle(ownerId, style);

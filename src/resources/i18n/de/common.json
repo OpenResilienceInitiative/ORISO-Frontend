@@ -7146,6 +7146,8 @@
 			"results": "Suchergebnisse"
 		},
 		"settings": {
+			"freeDays": "Freie Tage eintragen …",
+			"freeDaysHint": "Urlaub, Brückentag; Feiertage stehen unter Arbeitszeit",
 			"label": "Kalender-Einstellungen",
 			"workingHours": "Arbeitszeit",
 			"switcher": "Ansicht wählen",

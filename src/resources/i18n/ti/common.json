@@ -7123,6 +7123,8 @@
 			"results": "ውጽኢት ምድላይ"
 		},
 		"settings": {
+			"freeDays": "ነጻ መዓልታት ኣእቱ …",
+			"freeDaysHint": "ዕረፍቲ፣ መራኸቢ መዓልቲ፤ በዓላት ኣብ ናይ ስራሕ ሰዓታት ኣለዉ",
 			"label": "ቅጥዒ ካላንዳር",
 			"workingHours": "ናይ ስራሕ ሰዓታት",
 			"switcher": "ኣቀራርባ ምረጹ",

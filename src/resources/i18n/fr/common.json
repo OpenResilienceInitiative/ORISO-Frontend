@@ -7156,6 +7156,8 @@
 			"results": "Résultats de recherche"
 		},
 		"settings": {
+			"freeDays": "Saisir des jours libres …",
+			"freeDaysHint": "Congés, pont ; les jours fériés se trouvent sous Horaires de travail",
 			"label": "Paramètres du calendrier",
 			"workingHours": "Horaires de travail",
 			"switcher": "Choisir la vue",
