@@ -479,13 +479,13 @@ describe('CalendarPage — bands count what the kind filter hides (review 457642
 			],
 			initialShownColleagues: ['kaya', 'berg']
 		});
-		const cy = (name: string) =>
+		const byCy = (name: string) =>
 			document.querySelector(`[data-cy="${name}"]`) as HTMLElement | null;
-		fireEvent.click(cy('calendar-kinds-button') as HTMLElement);
+		fireEvent.click(byCy('calendar-kinds-button') as HTMLElement);
 		await waitFor(() =>
-			expect(cy('calendar-kinds-blocker')).not.toBeNull()
+			expect(byCy('calendar-kinds-blocker')).not.toBeNull()
 		);
-		fireEvent.click(cy('calendar-kinds-blocker') as HTMLElement);
+		fireEvent.click(byCy('calendar-kinds-blocker') as HTMLElement);
 		const ids = (key: string) =>
 			((grid.last?.[key] as CalendarEntry[] | undefined) ?? []).map(
 				(e) => e.id
