@@ -6898,6 +6898,8 @@
 		}
 	},
 	"calendar": {
+		"bandLoading": "Chargement : {{names}}",
+		"colleagueLoadingShort": "chargement …",
 		"zoomOut": "Zoom arrière",
 		"zoomIn": "Zoom avant",
 		"zoomLabel": "Zoom",
@@ -7125,6 +7127,8 @@
 			"proposed": "Proposé : {{date}}"
 		},
 		"quick": {
+			"freeUnavailable": "Créneaux libres indisponibles pour le moment.",
+			"freeLoading": "Chargement des créneaux libres …",
 			"close": "Fermer la saisie rapide",
 			"date": "Jour",
 			"duration": "Durée",

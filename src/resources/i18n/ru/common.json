@@ -6915,6 +6915,8 @@
 		}
 	},
 	"calendar": {
+		"bandLoading": "Загружается: {{names}}",
+		"colleagueLoadingShort": "загружается …",
 		"zoomOut": "Уменьшить",
 		"zoomIn": "Увеличить",
 		"zoomLabel": "Масштаб",
@@ -7148,6 +7150,8 @@
 			"proposed": "Предложено: {{date}}"
 		},
 		"quick": {
+			"freeUnavailable": "Свободное время сейчас недоступно.",
+			"freeLoading": "Свободное время загружается …",
 			"close": "Закрыть быструю запись",
 			"date": "Дата",
 			"duration": "Длительность",

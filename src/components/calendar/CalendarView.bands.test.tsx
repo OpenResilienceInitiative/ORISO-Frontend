@@ -165,6 +165,29 @@ describe('CalendarView — colleagues as bands in the time grid', () => {
 		expect(document.querySelector('.calendarView__band--all')).toBeNull();
 	});
 
+	it('says on hover whose calendar is still loading, and never darkens meanwhile (review 4576313280)', async () => {
+		render(
+			<Grid
+				view="workWeek"
+				entries={ENTRIES.filter((e) => e.ownerId !== 'berg')}
+				bandPeople={[KAYA]}
+				loading={[BERG]}
+			/>
+		);
+		await waitFor(() => expect(bandLabels()).toHaveLength(1));
+		expect(document.querySelector('.calendarView__band--all')).toBeNull();
+		act(() => {
+			fireEvent.mouseOver(
+				document.querySelector(
+					'[data-cy="calendar-band"]'
+				) as HTMLElement
+			);
+		});
+		const peek = await screen.findByText(/calendar\.bandLoading/);
+		expect(peek.textContent).toContain('C. Berg');
+		expect(screen.queryByText(/calendar\.bandUnknown/)).toBeNull();
+	});
+
 	it('keeps single colleague entries in month and list', async () => {
 		render(<Grid view="month" />);
 		await waitFor(() => expect(shownEntry('kaya-1')).not.toBeNull());

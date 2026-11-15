@@ -797,6 +797,66 @@ describe('CalendarPageWired', () => {
 		);
 	});
 
+	it('marks a shown colleague as loading until their range is in, also after paging (review 4576313280)', async () => {
+		const answers: ((list: never[]) => void)[] = [];
+		api.apiGetColleagueCalendarEntries.mockImplementation(
+			() => new Promise((resolve) => answers.push(resolve))
+		);
+		render(<CalendarPageWired />);
+		await showWeek();
+		await act(() => props.onShownColleaguesChange?.(['kaya']));
+		expect(props.loadingColleagues).toEqual(['kaya']);
+		await act(async () => answers[0]([]));
+		await waitFor(() => expect(props.loadingColleagues).toEqual([]));
+		// Another month: the old entries say nothing about it.
+		await act(() =>
+			props.onRangeChange?.(new Date(2027, 2, 1), new Date(2027, 2, 8))
+		);
+		expect(props.loadingColleagues).toEqual(['kaya']);
+		await act(async () => answers[1]([]));
+		await waitFor(() => expect(props.loadingColleagues).toEqual([]));
+		// Switched off while loading: no longer anyone's concern.
+		await act(() =>
+			props.onRangeChange?.(new Date(2027, 5, 1), new Date(2027, 5, 8))
+		);
+		expect(props.loadingColleagues).toEqual(['kaya']);
+		await act(() => props.onShownColleaguesChange?.([]));
+		expect(props.loadingColleagues).toEqual([]);
+	});
+
+	it('says the next free hours are unknown while this week did not load, and tries again (review 4576313283)', async () => {
+		let nearCalls = 0;
+		api.apiGetCalendarEntries.mockImplementation((from: Date, to: Date) => {
+			if (from.getFullYear() === 2027) return Promise.resolve([]);
+			if (to.getTime() === new Date(2026, 10, 24).getTime()) {
+				nearCalls += 1;
+				return nearCalls < 3
+					? Promise.reject(new Error('503'))
+					: Promise.resolve([OWN]);
+			}
+			return Promise.resolve([OWN]);
+		});
+		render(<CalendarPageWired />);
+		await showWeek();
+		await waitFor(() => expect(props.freeHoursState).toBe('ready'));
+		await act(() =>
+			props.onRangeChange?.(new Date(2027, 2, 1), new Date(2027, 2, 8))
+		);
+		await waitFor(() => expect(props.freeHoursState).toBe('failed'));
+		expect(props.entries.map((e) => e.id)).toEqual([]);
+		// The retry next to the free hours.
+		await act(async () => props.onRetryFreeHours?.());
+		await waitFor(() => expect(nearCalls).toBe(2));
+		await waitFor(() => expect(props.freeHoursState).toBe('failed'));
+		// Paging inside the loaded month tries again as well.
+		await act(() =>
+			props.onRangeChange?.(new Date(2027, 2, 2), new Date(2027, 2, 3))
+		);
+		await waitFor(() => expect(props.freeHoursState).toBe('ready'));
+		expect(nearCalls).toBe(3);
+		expect(props.entries.map((e) => e.id)).toEqual(['a1']);
+	});
+
 	it('keeps a colleague whose calendar did not load apart from an empty one (review 4575917303)', async () => {
 		api.apiGetColleagueCalendarEntries
 			.mockRejectedValueOnce(new Error('503'))

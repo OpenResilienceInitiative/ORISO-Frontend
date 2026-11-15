@@ -126,7 +126,8 @@ import {
 	CalendarKindsButton,
 	CalendarSearch,
 	CalendarSidebar,
-	type CalendarSidebarProps
+	type CalendarSidebarProps,
+	type FreeHoursState
 } from './CalendarSidebar';
 import { CalendarMenu } from './CalendarMenu';
 import {
@@ -282,7 +283,18 @@ export interface CalendarPageProps {
 	 * said so with a retry (review 4575917303).
 	 */
 	failedColleagues?: string[];
+	/**
+	 * Colleagues whose calendar for the shown time is still loading:
+	 * unknown as well, marked as loading (review 4576313280).
+	 */
+	loadingColleagues?: string[];
 	onRetryColleagues?: () => void;
+	/**
+	 * Whether this week's own entries are in, which the next free hours
+	 * are taken from; otherwise none are offered (review 4576313283).
+	 */
+	freeHoursState?: FreeHoursState;
+	onRetryFreeHours?: () => void;
 	onRetryConversations?: () => void;
 }
 
@@ -411,7 +423,10 @@ export const CalendarPage = ({
 	onRetry,
 	conversationsFailed = false,
 	failedColleagues = [],
+	loadingColleagues = [],
 	onRetryColleagues,
+	freeHoursState = 'ready',
+	onRetryFreeHours,
 	onRetryConversations,
 	onRangeChange,
 	onShownColleaguesChange
@@ -1709,6 +1724,12 @@ export const CalendarPage = ({
 	// Shown colleagues whose calendar did not load: no "alle frei" while
 	// one is missing.
 	const unloaded = shown.filter((c) => failedColleagues.includes(c.id));
+	// Still loading: as unknown for shared free time, but not a failure.
+	const stillLoading = shown.filter(
+		(c) =>
+			loadingColleagues.includes(c.id) && !failedColleagues.includes(c.id)
+	);
+	const unknown = [...unloaded, ...stillLoading].map((c) => c.id);
 
 	const body: React.ReactNode = (
 		<>
@@ -1783,7 +1804,8 @@ export const CalendarPage = ({
 							colleagues={shown}
 							entries={visible}
 							busyEntries={busyEntries}
-							unavailable={unloaded.map((c) => c.id)}
+							unavailable={unknown}
+							loading={stillLoading.map((c) => c.id)}
 							now={now}
 							workingPlan={workingPlan}
 							onEdgeChange={gripsOn ? onEdgeChange : undefined}
@@ -1817,9 +1839,10 @@ export const CalendarPage = ({
 							entries={visible}
 							colleagues={colleagueById}
 							bandPeople={shown.filter(
-								(c) => !failedColleagues.includes(c.id)
+								(c) => !unknown.includes(c.id)
 							)}
 							unavailable={unloaded}
+							loading={stillLoading}
 							compact={compact}
 							now={fixedNow}
 							initialDate={anchorDate}
@@ -1913,6 +1936,8 @@ export const CalendarPage = ({
 		onOpenChat,
 		shownColleagues,
 		onCreate: onCreate ? create : undefined,
+		freeHoursState,
+		onRetryFreeHours,
 		onMoreDetails: moreDetails,
 		onWorkingHours: editHours
 			? () => setDialog({ type: 'workingHours' })

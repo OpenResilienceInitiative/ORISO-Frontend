@@ -6888,6 +6888,8 @@
 		}
 	},
 	"calendar": {
+		"bandLoading": "Wird geladen: {{names}}",
+		"colleagueLoadingShort": "wird geladen …",
 		"zoomOut": "Herauszoomen",
 		"zoomIn": "Hineinzoomen",
 		"zoomLabel": "Zoom",
@@ -7115,6 +7117,8 @@
 			"proposed": "Vorgeschlagen: {{date}}"
 		},
 		"quick": {
+			"freeUnavailable": "Freie Zeiten gerade nicht verfügbar.",
+			"freeLoading": "Freie Zeiten werden geladen …",
 			"close": "Schnell eintragen schließen",
 			"date": "Tag",
 			"duration": "Dauer",

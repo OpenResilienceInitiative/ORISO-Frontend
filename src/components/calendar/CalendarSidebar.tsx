@@ -70,6 +70,12 @@ const MAX_SEARCH_RESULTS = 8;
 /** What creating from the quick entry reports (see `onCreate`). */
 export type QuickCreateResult = void | boolean | Promise<unknown>;
 
+/**
+ * Whether the entries the next free hours come from (this week's own) are
+ * in: `loading` and `failed` offer none, `failed` with a retry.
+ */
+export type FreeHoursState = 'ready' | 'loading' | 'failed';
+
 export interface CalendarSidebarProps {
 	ownerId: string;
 	consultant: boolean;
@@ -108,6 +114,9 @@ export interface CalendarSidebarProps {
 	 * was not created: the quick entry keeps its draft.
 	 */
 	onCreate?: (drafts: AppointmentDraft[]) => QuickCreateResult;
+	/** This week's own entries are in: see {@link FreeHoursState}. */
+	freeHoursState?: FreeHoursState;
+	onRetryFreeHours?: () => void;
 	/** "Mehr Angaben …": the full dialog with what the line already says. */
 	onMoreDetails?: (draft: {
 		kind?: QuickKind;
@@ -157,6 +166,8 @@ export const CalendarSidebar = ({
 	onOpenChat,
 	shownColleagues,
 	onCreate,
+	freeHoursState,
+	onRetryFreeHours,
 	onMoreDetails,
 	onWorkingHours,
 	variant = 'column',
@@ -515,6 +526,8 @@ export const CalendarSidebar = ({
 						conversations={conversations}
 						workingHours={workingHours}
 						onCreate={onCreate}
+						freeHours={freeHoursState}
+						onRetryFreeHours={onRetryFreeHours}
 						onMoreDetails={onMoreDetails}
 						autoFocus={sheet && quickOpen}
 						focusSignal={quickFocus}
@@ -785,6 +798,12 @@ interface QuickEntryProps {
 	conversations: CalendarConversation[];
 	workingHours: WorkingHours | WorkingPlan;
 	onCreate: (drafts: AppointmentDraft[]) => QuickCreateResult;
+	/**
+	 * Free hours are offered only when this week's entries are in, so none
+	 * that is actually busy is offered (review 4576313283).
+	 */
+	freeHours?: FreeHoursState;
+	onRetryFreeHours?: () => void;
 	onMoreDetails?: CalendarSidebarProps['onMoreDetails'];
 	/** Focus the line when shown (the phone folds it open on demand). */
 	autoFocus?: boolean;
@@ -805,6 +824,8 @@ export const QuickEntry = ({
 	conversations,
 	workingHours,
 	onCreate,
+	freeHours = 'ready',
+	onRetryFreeHours,
 	onMoreDetails,
 	autoFocus = false,
 	hideTitle = false,
@@ -1084,7 +1105,27 @@ export const QuickEntry = ({
 							))}
 						</div>
 					</div>
-					{free.length > 0 && (
+					{freeHours === 'loading' && (
+						<p className="calendarQuick__freeNote" role="status">
+							{t('calendar.quick.freeLoading')}
+						</p>
+					)}
+					{freeHours === 'failed' && (
+						<p className="calendarQuick__freeNote" role="status">
+							<span>{t('calendar.quick.freeUnavailable')}</span>
+							{onRetryFreeHours && (
+								<button
+									type="button"
+									className="calendarQuick__freeRetry"
+									onClick={onRetryFreeHours}
+									data-cy="calendar-quick-free-retry"
+								>
+									{t('calendar.error.retry')}
+								</button>
+							)}
+						</p>
+					)}
+					{freeHours === 'ready' && free.length > 0 && (
 						<div className="calendarQuick__freeRow">
 							{free.map((start) => (
 								<button

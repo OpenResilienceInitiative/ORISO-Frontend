@@ -28,6 +28,8 @@ vi.mock('react-i18next', () => ({
 
 const grid: {
 	onEntryMove?: (entry: CalendarEntry, start: Date, end: Date) => unknown;
+	/** The latest props, for what the page hands the grid. */
+	last?: Record<string, unknown>;
 } = {};
 const mounts = vi.hoisted(() => ({ count: 0 }));
 vi.mock('./CalendarView', async (importOriginal) => {
@@ -38,6 +40,7 @@ vi.mock('./CalendarView', async (importOriginal) => {
 		...actual,
 		CalendarView: (props: typeof grid) => {
 			grid.onEntryMove = props.onEntryMove;
+			grid.last = props as Record<string, unknown>;
 			useEffect(() => {
 				mounts.count += 1;
 			}, []);
@@ -417,6 +420,28 @@ describe('CalendarPage — a colleague calendar that did not load (review 457591
 			colleagues: [{ id: 'kaya', displayName: 'A. Kaya' }],
 			failedColleagues: ['kaya']
 		});
+		expect(screen.queryByTestId('calendar-colleagues-failed')).toBeNull();
+	});
+});
+
+describe('CalendarPage — a colleague calendar still loading (review 4576313280)', () => {
+	const ids = (key: string) =>
+		((grid.last?.[key] as { id: string }[] | undefined) ?? []).map(
+			(c) => c.id
+		);
+
+	it('leaves them out of the bands and says they are loading, without the failure banner', () => {
+		page({
+			colleagues: [
+				{ id: 'kaya', displayName: 'A. Kaya' },
+				{ id: 'demir', displayName: 'E. Demir' }
+			],
+			initialShownColleagues: ['kaya', 'demir'],
+			loadingColleagues: ['kaya']
+		});
+		expect(ids('bandPeople')).toEqual(['demir']);
+		expect(ids('loading')).toEqual(['kaya']);
+		expect(ids('unavailable')).toEqual([]);
 		expect(screen.queryByTestId('calendar-colleagues-failed')).toBeNull();
 	});
 });

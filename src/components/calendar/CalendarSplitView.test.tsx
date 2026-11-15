@@ -361,3 +361,25 @@ describe('CalendarSplitView — a colleague whose calendar did not load (review 
 		expect(freeSpans(container).length).toBeGreaterThan(0);
 	});
 });
+
+describe('CalendarSplitView — a colleague whose calendar is still loading (review 4576313280)', () => {
+	const KAYA = { id: 'kaya', displayName: 'A. Kaya' };
+	it('marks nothing "alle frei" and says the calendar is loading, not missing', () => {
+		const { container, getByText, queryByText } = render(
+			<CalendarSplitView
+				day={MONDAY}
+				role="consultant"
+				ownerId="me"
+				colleagues={[KAYA]}
+				entries={[]}
+				unavailable={['kaya']}
+				loading={['kaya']}
+				now={new Date(2026, 10, 16, 7)}
+				workingPlan={HOURS}
+			/>
+		);
+		expect(freeSpans(container)).toEqual([]);
+		expect(getByText('calendar.colleagueLoadingShort')).toBeTruthy();
+		expect(queryByText('calendar.colleagueFailedShort')).toBeNull();
+	});
+});

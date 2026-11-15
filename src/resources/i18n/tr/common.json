@@ -6898,6 +6898,8 @@
 		}
 	},
 	"calendar": {
+		"bandLoading": "Yükleniyor: {{names}}",
+		"colleagueLoadingShort": "yükleniyor …",
 		"zoomOut": "Uzaklaştır",
 		"zoomIn": "Yakınlaştır",
 		"zoomLabel": "Yakınlaştırma",
@@ -7125,6 +7127,8 @@
 			"proposed": "Önerilen: {{date}}"
 		},
 		"quick": {
+			"freeUnavailable": "Boş zamanlar şu anda kullanılamıyor.",
+			"freeLoading": "Boş zamanlar yükleniyor …",
 			"close": "Hızlı girişi kapat",
 			"date": "Tarih",
 			"duration": "Süre",

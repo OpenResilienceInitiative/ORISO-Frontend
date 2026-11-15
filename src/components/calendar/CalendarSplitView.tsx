@@ -171,6 +171,11 @@ export interface CalendarSplitViewProps {
 	 * time is "alle frei" while one is missing (review 4575917303).
 	 */
 	unavailable?: string[];
+	/**
+	 * Of those, the ones whose calendar is still loading: their column
+	 * says "wird geladen" instead (review 4576313280).
+	 */
+	loading?: string[];
 	now: Date;
 	/** Weekly hours, day exceptions and the holiday region. */
 	workingPlan?: WorkingPlan;
@@ -233,6 +238,7 @@ export const CalendarSplitView = ({
 	entries,
 	busyEntries,
 	unavailable = [],
+	loading = [],
 	now,
 	workingPlan,
 	onEdgeChange,
@@ -654,11 +660,16 @@ export const CalendarSplitView = ({
 						</span>
 						<span className="calendarSplit__name">{name}</span>
 						{person.colleague &&
-							unavailable.includes(person.id) && (
+							unavailable.includes(person.id) &&
+							(loading.includes(person.id) ? (
+								<span className="calendarSplit__unloaded calendarSplit__unloaded--loading">
+									{t('calendar.colleagueLoadingShort')}
+								</span>
+							) : (
 								<span className="calendarSplit__unloaded">
 									{t('calendar.colleagueFailedShort')}
 								</span>
-							)}
+							))}
 						{person.colleague?.agencyShort && (
 							<span
 								className="calendarSplit__agency"

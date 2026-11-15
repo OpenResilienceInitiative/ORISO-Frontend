@@ -6813,6 +6813,8 @@
 		}
 	},
 	"calendar": {
+		"bandLoading": "Loading: {{names}}",
+		"colleagueLoadingShort": "loading …",
 		"zoomOut": "Zoom out",
 		"zoomIn": "Zoom in",
 		"zoomLabel": "Zoom",
@@ -7040,6 +7042,8 @@
 			"proposed": "Proposed: {{date}}"
 		},
 		"quick": {
+			"freeUnavailable": "Free times are not available right now.",
+			"freeLoading": "Loading free times …",
 			"close": "Close quick entry",
 			"date": "Day",
 			"duration": "Duration",

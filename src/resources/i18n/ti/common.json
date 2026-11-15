@@ -6865,6 +6865,8 @@
 		}
 	},
 	"calendar": {
+		"bandLoading": "ይጽዓን ኣሎ፦ {{names}}",
+		"colleagueLoadingShort": "ይጽዓን ኣሎ …",
 		"zoomOut": "ኣንእስ",
 		"zoomIn": "ኣጕልሕ",
 		"zoomLabel": "ምጕላሕ",
@@ -7092,6 +7094,8 @@
 			"proposed": "ዝተማዕደወ፦ {{date}}"
 		},
 		"quick": {
+			"freeUnavailable": "ነጻ ግዜታት ሕጂ ኣይርከቡን።",
+			"freeLoading": "ነጻ ግዜታት ይጽዓኑ ኣለዉ …",
 			"close": "ቅልጡፍ ምእታው ዕጸው",
 			"date": "ዕለት",
 			"duration": "ንውሓት",

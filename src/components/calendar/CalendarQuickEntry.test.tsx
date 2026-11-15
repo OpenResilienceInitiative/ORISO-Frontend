@@ -214,7 +214,9 @@ describe('QuickEntry — Tag, Beginn, Dauer under the line (Frank, prototype v15
 	it('saves the day, start and length picked in the date, time and duration fields', async () => {
 		const onCreate = vi.fn(() => Promise.resolve());
 		open(onCreate);
-		const day = screen.getByRole('textbox', { name: 'calendar.quick.date' });
+		const day = screen.getByRole('textbox', {
+			name: 'calendar.quick.date'
+		});
 		fireEvent.change(day, { target: { value: '19.11.2026' } });
 		fireEvent.blur(day);
 		const start = screen.getByRole('textbox', {
@@ -273,5 +275,53 @@ describe('QuickEntry — Tag, Beginn, Dauer under the line (Frank, prototype v15
 				name: 'calendar.quick.time'
 			}).value
 		).toBe('14:00');
+	});
+});
+
+describe('QuickEntry — next free hours only when this week is known (review 4576313283)', () => {
+	const WEEK = [1, 2, 3, 4, 5].map((weekday) => ({
+		weekday,
+		start: '08:00',
+		end: '18:00'
+	}));
+	const pills = () =>
+		document.querySelectorAll('[data-cy="calendar-quick-free"]');
+	const quick = (
+		freeHours: React.ComponentProps<typeof QuickEntry>['freeHours'],
+		onRetryFreeHours?: () => void
+	) =>
+		render(
+			<QuickEntry
+				ownerId="me"
+				now={NOW}
+				entries={[]}
+				conversations={CONVERSATIONS}
+				workingHours={WEEK}
+				onCreate={() => undefined}
+				freeHours={freeHours}
+				onRetryFreeHours={onRetryFreeHours}
+			/>
+		);
+
+	it('offers free hours once this week is loaded', () => {
+		quick('ready');
+		expect(pills().length).toBeGreaterThan(0);
+	});
+
+	it('offers none while this week is loading', () => {
+		quick('loading');
+		expect(pills()).toHaveLength(0);
+		expect(screen.getByText('calendar.quick.freeLoading')).toBeTruthy();
+	});
+
+	it('offers none when this week did not load, with a retry', () => {
+		const onRetryFreeHours = vi.fn();
+		quick('failed', onRetryFreeHours);
+		expect(pills()).toHaveLength(0);
+		expect(screen.getByText('calendar.quick.freeUnavailable')).toBeTruthy();
+		fireEvent.click(
+			screen.getByRole('button', { name: 'calendar.error.retry' })
+		);
+		expect(onRetryFreeHours).toHaveBeenCalledTimes(1);
 	});
 });

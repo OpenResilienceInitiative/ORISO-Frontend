@@ -1089,6 +1089,32 @@
 	gap: 6px;
 }
 
+// This week's entries are not in: no free hours are offered, so none that
+// is actually busy (review 4576313283).
+.calendarQuick__freeNote {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	margin: 0;
+	color: var(--m3-on-surface-variant, #444748);
+	font-size: 12px;
+}
+
+.calendarQuick__freeRetry {
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: var(--m3-primary, #a5000a);
+	font: inherit;
+	font-weight: 500;
+	cursor: pointer;
+
+	&:focus-visible {
+		@include control-focus-ring;
+	}
+}
+
 .calendarQuick__kind,
 .calendarQuick__person {
 	display: inline-flex;
@@ -1933,6 +1959,12 @@
 	color: var(--m3-on-error-container, #410002);
 	font-size: 11px;
 	font-weight: 500;
+
+	// Still loading: unknown for now, not a failure (review 4576313280).
+	&--loading {
+		background: var(--m3-surface-container-high, #eae7e8);
+		color: var(--m3-on-surface-variant, #444748);
+	}
 }
 
 .calendarSplit__allDay {

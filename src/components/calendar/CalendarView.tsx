@@ -117,6 +117,11 @@ export interface CalendarViewProps {
 	bandPeople?: Colleague[];
 	/** Shown colleagues whose calendars did not load: no "all busy". */
 	unavailable?: Colleague[];
+	/**
+	 * Shown colleagues whose calendars are still loading: no "all busy"
+	 * either, and the band says they are loading (review 4576313280).
+	 */
+	loading?: Colleague[];
 	compact?: boolean;
 	/** Fixed "now" for Storybook and tests. */
 	now?: Date;
@@ -350,6 +355,7 @@ export const CalendarView = ({
 	colleagues = {},
 	bandPeople = NO_PEOPLE,
 	unavailable = NO_PEOPLE,
+	loading = NO_PEOPLE,
 	compact = false,
 	now,
 	initialDate,
@@ -417,7 +423,9 @@ export const CalendarView = ({
 				});
 	// "All busy" only when every shown calendar is known.
 	const allBusy = (band: ColleagueBand) =>
-		band.busy.length === people.length && unavailable.length === 0;
+		band.busy.length === people.length &&
+		unavailable.length === 0 &&
+		loading.length === 0;
 
 	const offEvents = useMemo<EventInput[]>(() => {
 		if (!workingPlan || !shownRange) return [];
@@ -982,6 +990,13 @@ export const CalendarView = ({
 							<span>
 								{t('calendar.bandUnknown', {
 									names: names(unavailable)
+								})}
+							</span>
+						)}
+						{loading.length > 0 && (
+							<span>
+								{t('calendar.bandLoading', {
+									names: names(loading)
 								})}
 							</span>
 						)}

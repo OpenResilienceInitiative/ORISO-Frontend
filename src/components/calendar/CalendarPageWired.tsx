@@ -59,6 +59,7 @@ import {
 } from '../sessionsList/timeline/conversationAppointments';
 import { useAppointmentNotice } from '../sessionsList/timeline/useAppointmentNotice';
 import { CalendarPage, type CalendarLoadState } from './CalendarPage';
+import type { FreeHoursState } from './CalendarSidebar';
 import {
 	blockerToApi,
 	colleagueFromApi,
@@ -186,6 +187,20 @@ export const CalendarPageWired = () => {
 	 * from an empty calendar (review 4575917303).
 	 */
 	const [failedColleagues, setFailedColleagues] = useState<string[]>([]);
+	/**
+	 * Colleagues whose calendar for the loaded window is still on its way
+	 * (just switched on, or another window): unknown as well, not free
+	 * (review 4576313280).
+	 */
+	const [loadingColleagues, setLoadingColleagues] = useState<string[]>([]);
+	/**
+	 * This week's own entries, which the next free hours come from: in,
+	 * on their way or failed (review 4576313283).
+	 */
+	const [freeHoursState, setFreeHoursState] =
+		useState<FreeHoursState>('loading');
+	const freeHoursFailed = useRef(false);
+	const nearbyRequest = useRef(0);
 
 	const loadColleague = useCallback((id: string) => {
 		const window = range.current;
@@ -193,6 +208,9 @@ export const CalendarPageWired = () => {
 		const generation = (colleagueRequest.current[id] ?? 0) + 1;
 		colleagueRequest.current[id] = generation;
 		const latest = () => colleagueRequest.current[id] === generation;
+		const settled = () =>
+			setLoadingColleagues((all) => all.filter((c) => c !== id));
+		setLoadingColleagues((all) => (all.includes(id) ? all : [...all, id]));
 		return apiGetColleagueCalendarEntries(id, window.from, window.to).then(
 			(list) => {
 				if (!latest()) return;
@@ -201,6 +219,7 @@ export const CalendarPageWired = () => {
 					[id]: list.map(entryFromApi)
 				}));
 				setFailedColleagues((all) => all.filter((c) => c !== id));
+				settled();
 			},
 			// No entries to show, and no telling whether they are free.
 			() => {
@@ -212,54 +231,87 @@ export const CalendarPageWired = () => {
 				setFailedColleagues((all) =>
 					all.includes(id) ? all : [...all, id]
 				);
+				settled();
 			}
 		);
 	}, []);
+
+	const setFreeHours = useCallback((next: FreeHoursState) => {
+		freeHoursFailed.current = next === 'failed';
+		setFreeHoursState(next);
+	}, []);
+
+	/**
+	 * This week's own entries when the loaded window is elsewhere. A
+	 * failure is not silent: the free hours say so and offer a retry, and
+	 * the next paging tries again (review 4576313283).
+	 */
+	const loadNearby = useCallback(() => {
+		const generation = ++nearbyRequest.current;
+		const near = nearbyWindow();
+		setFreeHours('loading');
+		apiGetCalendarEntries(near.from, near.to).then(
+			(list) => {
+				if (generation !== nearbyRequest.current) return;
+				setNearby(list.map(entryFromApi));
+				setFreeHours('ready');
+			},
+			() => {
+				if (generation === nearbyRequest.current)
+					setFreeHours('failed');
+			}
+		);
+	}, [setFreeHours]);
 
 	const load = useCallback(() => {
 		const window = range.current;
 		if (!window) return;
 		const id = ++request.current;
+		const near = nearbyWindow();
+		// The window holds this week: its answer is what the free hours use.
+		const holdsThisWeek =
+			window.from.getTime() <= near.from.getTime() &&
+			window.to.getTime() >= near.to.getTime();
 		apiGetCalendarEntries(window.from, window.to).then(
 			(list) => {
 				if (id !== request.current) return;
 				setOwn(list.map(entryFromApi));
 				setState('ready');
+				if (holdsThisWeek) setFreeHours('ready');
 			},
 			() => {
-				if (id === request.current) setState('error');
+				if (id !== request.current) return;
+				setState('error');
+				if (holdsThisWeek) setFreeHours('failed');
 			}
 		);
-		const near = nearbyWindow();
-		if (
-			window.from.getTime() <= near.from.getTime() &&
-			window.to.getTime() >= near.to.getTime()
-		)
+		if (holdsThisWeek) {
+			// A nearby answer still on its way is no longer needed.
+			nearbyRequest.current += 1;
 			setNearby([]);
-		else
-			apiGetCalendarEntries(near.from, near.to).then(
-				(list) =>
-					id === request.current && setNearby(list.map(entryFromApi)),
-				() => undefined
-			);
+			setFreeHours('loading');
+		} else loadNearby();
 		shown.current.forEach((colleague) => loadColleague(colleague));
-	}, [loadColleague]);
+	}, [loadColleague, loadNearby, setFreeHours]);
 
 	const changeRange = useCallback(
 		(start: Date, end: Date) => {
 			const next = loadWindow(start, end);
 			const current = range.current;
-			// Paging inside the loaded window needs no request.
+			// Paging inside the loaded window needs no request, except
+			// for this week's entries if they failed (review 4576313283).
 			if (
 				current &&
 				current.from.getTime() <= start.getTime() &&
 				current.to.getTime() >= end.getTime()
-			)
+			) {
+				if (freeHoursFailed.current) loadNearby();
 				return;
+			}
 			range.current = next;
 			load();
 		},
-		[load]
+		[load, loadNearby]
 	);
 
 	useEffect(() => onAppointmentsChanged(load), [load]);
@@ -565,12 +617,15 @@ export const CalendarPageWired = () => {
 	const showColleagues = (ids: string[]) => {
 		const added = ids.filter((id) => !shown.current.includes(id));
 		// A colleague switched off: a request still running for them is stale.
-		shown.current
-			.filter((id) => !ids.includes(id))
-			.forEach((id) => {
-				colleagueRequest.current[id] =
-					(colleagueRequest.current[id] ?? 0) + 1;
-			});
+		const removed = shown.current.filter((id) => !ids.includes(id));
+		removed.forEach((id) => {
+			colleagueRequest.current[id] =
+				(colleagueRequest.current[id] ?? 0) + 1;
+		});
+		if (removed.length)
+			setLoadingColleagues((all) =>
+				all.filter((id) => !removed.includes(id))
+			);
 		shown.current = ids;
 		added.forEach((id) => loadColleague(id));
 	};
@@ -611,9 +666,12 @@ export const CalendarPageWired = () => {
 			conversationsFailed={conversationsFailed}
 			onRetryConversations={loadConversations}
 			failedColleagues={failedColleagues}
+			loadingColleagues={loadingColleagues}
 			onRetryColleagues={() =>
 				failedColleagues.forEach((id) => loadColleague(id))
 			}
+			freeHoursState={freeHoursState}
+			onRetryFreeHours={loadNearby}
 			onRetry={() => {
 				setState('loading');
 				load();
