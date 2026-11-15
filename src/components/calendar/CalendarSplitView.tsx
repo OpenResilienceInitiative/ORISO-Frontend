@@ -458,10 +458,20 @@ export const CalendarSplitView = ({
 						const start = atClock(selected, a);
 						const end = atClock(selected, b);
 						setSelection(null);
-						// Local times the spring clock change skips move
-						// forward by the gap (as in hasEmptyOccurrence); a
-						// selection left without length offers nothing.
-						if (end.getTime() <= start.getTime()) return;
+						// A selection that touches the hour the spring clock
+						// change skips offers nothing: both times must keep
+						// the clock time chosen. On purpose stricter than a
+						// repeating blocker, whose occurrence may move
+						// forward by the gap (review 4575941074).
+						const keeps = (date: Date, minutes: number) =>
+							date.getHours() * 60 + date.getMinutes() ===
+							minutes % (24 * 60);
+						if (
+							!keeps(start, a) ||
+							!keeps(end, b) ||
+							end.getTime() <= start.getTime()
+						)
+							return;
 						onSelectRange?.(
 							{ start, end },
 							{ x: event.clientX, y: event.clientY }

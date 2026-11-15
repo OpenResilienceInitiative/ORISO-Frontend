@@ -225,6 +225,58 @@ describe('CalendarSplitView — the hour the spring clock change skips (review 4
 	});
 });
 
+describe('CalendarSplitView — a drag over the skipped DST hour (review 4575941074)', () => {
+	const drag = (fromY: number, toY: number) => {
+		const onSelectRange = vi.fn();
+		const { container } = render(
+			<CalendarSplitView
+				day={new Date(2027, 2, 28)}
+				role="consultant"
+				ownerId="me"
+				colleagues={[]}
+				entries={[
+					{
+						id: 'early',
+						type: 'appointment',
+						kind: 'phone',
+						start: new Date(2027, 2, 28, 1).toISOString(),
+						end: new Date(2027, 2, 28, 1, 30).toISOString(),
+						ownerId: 'me'
+					}
+				]}
+				now={new Date(2027, 2, 27, 7)}
+				onSelectRange={onSelectRange}
+			/>
+		);
+		const body = container.querySelector(
+			'.calendarSplit__column--own .calendarSplit__body'
+		) as HTMLElement;
+		body.getBoundingClientRect = () =>
+			({ top: 0, left: 0, width: 200, height: 1104 }) as DOMRect;
+		// The axis starts at 01:00, 48 px an hour.
+		fireEvent.pointerDown(body, { button: 0, clientY: fromY });
+		fireEvent.pointerMove(body, { clientY: toY });
+		fireEvent.pointerUp(body, { clientY: toY });
+		return onSelectRange;
+	};
+
+	it('offers nothing for a drag that starts at 02:30 and ends at 04:00', () => {
+		expect(drag(72, 144)).not.toHaveBeenCalled();
+	});
+
+	it('offers nothing for a drag from 02:15 to 03:45', () => {
+		expect(drag(60, 132)).not.toHaveBeenCalled();
+	});
+
+	it('still offers a drag from 04:00 to 05:00, after the gap', () => {
+		const onSelectRange = drag(144, 192);
+		expect(onSelectRange).toHaveBeenCalledTimes(1);
+		const [range] = onSelectRange.mock.calls[0];
+		expect([range.start.getHours(), range.end.getHours()]).toEqual([4, 5]);
+		expect(range.end.getMinutes()).toBe(15);
+	});
+});
+
 describe('CalendarSplitView — heads of equal height (review 4574775727)', () => {
 	const allDay = (id: string, ownerId: string): CalendarEntry => ({
 		id,
