@@ -20,22 +20,49 @@ export const foldsIntoBand = (entry: CalendarEntry, people: string[]) =>
 	!entry.allDay && people.includes(entry.ownerId);
 
 /**
+ * When an entry keeps its owner busy. An all-day one covers its whole days
+ * (an end stored as 23:59 counts its last day, an end at the start one
+ * day), though it stays in the all-day row (review 4576368849).
+ */
+const busySpan = (entry: CalendarEntry): [number, number] => {
+	if (!entry.allDay) return [toTime(entry.start), toTime(entry.end)];
+	const from = new Date(entry.start);
+	from.setHours(0, 0, 0, 0);
+	const to = new Date(entry.end);
+	if (
+		to.getHours() ||
+		to.getMinutes() ||
+		to.getSeconds() ||
+		to.getMilliseconds()
+	)
+		to.setHours(24, 0, 0, 0);
+	if (to.getTime() <= from.getTime()) {
+		to.setTime(from.getTime());
+		to.setDate(to.getDate() + 1);
+	}
+	return [from.getTime(), to.getTime()];
+};
+
+/**
  * One band per stretch in which the same colleagues are busy. Adjacent
- * stretches with the same people merge; free gaps get no band.
+ * stretches with the same people merge; free gaps get no band. Every
+ * entry of the band people counts, all-day ones included; only the timed
+ * ones fold (see {@link foldsIntoBand}).
  */
 export const colleagueBands = (
 	entries: CalendarEntry[],
 	people: string[]
 ): ColleagueBand[] => {
-	const busy = entries.filter(
-		(entry) =>
-			foldsIntoBand(entry, people) &&
-			toTime(entry.end) > toTime(entry.start)
-	);
+	const shown = new Set(people);
+	const busy = entries
+		.filter((entry) => shown.has(entry.ownerId))
+		.map((entry) => {
+			const [from, to] = busySpan(entry);
+			return { ownerId: entry.ownerId, from, to };
+		})
+		.filter((entry) => entry.to > entry.from);
 	const cuts = [
-		...new Set(
-			busy.flatMap((entry) => [toTime(entry.start), toTime(entry.end)])
-		)
+		...new Set(busy.flatMap((entry) => [entry.from, entry.to]))
 	].sort((a, b) => a - b);
 	const bands: ColleagueBand[] = [];
 	for (let i = 0; i < cuts.length - 1; i += 1) {
@@ -43,10 +70,7 @@ export const colleagueBands = (
 		const to = cuts[i + 1];
 		const owners = new Set(
 			busy
-				.filter(
-					(entry) =>
-						toTime(entry.start) < to && toTime(entry.end) > from
-				)
+				.filter((entry) => entry.from < to && entry.to > from)
 				.map((entry) => entry.ownerId)
 		);
 		const who = people.filter((id) => owners.has(id));

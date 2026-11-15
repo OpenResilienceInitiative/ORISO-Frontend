@@ -188,7 +188,7 @@ describe('CalendarView — colleagues as bands in the time grid', () => {
 		expect(screen.queryByText(/calendar\.bandUnknown/)).toBeNull();
 	});
 
-	it('never names a colleague free who has an all-day entry there (review 4576346789)', async () => {
+	it('never names a colleague free who has an all-day entry there (reviews 4576346789, 4576368849)', async () => {
 		const away: CalendarEntry = {
 			id: 'berg-day',
 			type: 'blocker',
@@ -197,21 +197,25 @@ describe('CalendarView — colleagues as bands in the time grid', () => {
 			allDay: true,
 			ownerId: 'berg'
 		};
-		render(
-			<Grid view="workWeek" entries={[ENTRIES[0], ENTRIES[1], away]} />
+		render(<Grid view="day" entries={[ENTRIES[0], ENTRIES[1], away]} />);
+		// Berg is busy all day; with Kaya's appointment both are.
+		await waitFor(() =>
+			expect(bandLabels()).toEqual([
+				'calendar.bandSome {"busy":1,"total":2}',
+				'calendar.bandSome {"busy":2,"total":2}',
+				'calendar.bandSome {"busy":1,"total":2}'
+			])
 		);
-		// The all-day entry stays in its row: one band, Kaya's.
-		await waitFor(() => expect(bandLabels()).toHaveLength(1));
 		act(() => {
 			fireEvent.mouseOver(
-				document.querySelector(
+				document.querySelectorAll<HTMLElement>(
 					'[data-cy="calendar-band"]'
-				) as HTMLElement
+				)[1]
 			);
 		});
-		expect(
-			(await screen.findByText(/calendar\.bandBusy/)).textContent
-		).toContain('A. Kaya');
+		const busy = await screen.findByText(/calendar\.bandBusy/);
+		expect(busy.textContent).toContain('A. Kaya');
+		expect(busy.textContent).toContain('C. Berg');
 		expect(screen.queryByText(/calendar\.bandFree/)).toBeNull();
 	});
 

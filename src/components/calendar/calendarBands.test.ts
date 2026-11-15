@@ -57,17 +57,46 @@ describe('colleagueBands — colleagues fold into one band per stretch', () => {
 		]);
 	});
 
-	it('leaves out own entries, all-day entries and colleagues not shown', () => {
+	it('leaves out own entries and colleagues not shown', () => {
 		const bands = colleagueBands(
 			[
 				entry('own', 'me', [9], [10]),
-				entry('day', 'kaya', [0], [0], { allDay: true }),
 				entry('other', 'kraus', [11], [12]),
 				entry('k1', 'kaya', [14], [15])
 			],
 			['kaya']
 		);
 		expect(bands.map(span)).toEqual([[840, 900]]);
+	});
+
+	it('counts an all-day entry as busy the whole day, though it never folds (review 4576368849)', () => {
+		const away = entry('day', 'berg', [0], [0], { allDay: true });
+		const bands = colleagueBands(
+			[away, entry('k1', 'kaya', [10], [12])],
+			['kaya', 'berg']
+		);
+		expect(bands.map(span)).toEqual([
+			[0, 600],
+			[600, 720],
+			[720, 0]
+		]);
+		expect(bands.map((b) => b.busy)).toEqual([
+			['berg'],
+			['kaya', 'berg'],
+			['berg']
+		]);
+		expect(bands[2].end).toEqual(new Date(2026, 10, 17));
+		// It stays in the all-day row.
+		expect(foldsIntoBand(away, ['kaya', 'berg'])).toBe(false);
+	});
+
+	it('takes an all-day entry stored up to 23:59 as its whole last day', () => {
+		const bands = colleagueBands(
+			[entry('day', 'berg', [0], [23, 59], { allDay: true })],
+			['berg']
+		);
+		expect(bands).toHaveLength(1);
+		expect(bands[0].end).toEqual(new Date(2026, 10, 17));
 	});
 
 	it('folds only timed entries of the band people', () => {
