@@ -7180,6 +7180,9 @@
 			"tooMany": "ናይ ስራሕ ሰዓታት ኣብ ሰሙን ልዕሊ {{max}} ግዜታት ክሕዝ ኣይክእልን፣ እዚ ለውጢ ኣይተዓቀበን።"
 		},
 		"grip": {
+			"weekOnly": "ብኸፊል ጥራይ ተዓቂቡ: ሰዓታት {{weekdays}} ተቐይሩ፣ {{date}} ግን ኣይተቐየረን።",
+			"weekUndone": "ዝተቐየረ የለን: {{date}} ክዕቀብ ኣይከኣለን፣ ስለዚ ን{{weekdays}} እቶም ዝነበሩ ሰዓታት ይቕጽሉ።",
+			"tooManyDays": "ብዙሕ ናይ ገዛእ ርእሶም ሰዓታት ዘለዎም መዓልትታት: ቢዝሒ {{max}}። ዝኣረጉ ፍሉያት ደምስሱ።",
 			"pauseMovedWeek": "ዕረፍቲ {{weekdays}} ሕጂ {{start}}–{{end}}።",
 			"pauseMovedDay": "ዕረፍቲ ብ{{date}} ሕጂ {{start}}–{{end}}።",
 			"pauseDeletedWeek": "ዕረፍቲ {{weekdays}} ተሰሪዙ።",

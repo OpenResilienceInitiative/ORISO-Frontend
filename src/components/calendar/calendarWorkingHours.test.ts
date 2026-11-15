@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vite-plus/test';
 import {
+	DAY_EXCEPTION_DAYS_AHEAD,
+	DAY_EXCEPTION_DAYS_BACK,
+	dayExceptionAllowed,
 	DEFAULT_PAUSE,
 	MAX_WORKING_HOURS_WINDOWS,
 	clampEdge,
@@ -516,5 +519,21 @@ describe('pause grips (Frank, prototype v15)', () => {
 			{ start: '08:00', end: '12:00' },
 			{ start: '13:30', end: '16:00' }
 		]);
+	});
+});
+
+describe('dayExceptionAllowed — the dates UserService keeps and shows (review 4577586484)', () => {
+	const now = new Date(2026, 10, 16, 9);
+	const day = (offset: number) => new Date(2026, 10, 16 + offset, 12);
+
+	it('allows today − 62 to today + 400 days, the same window as UserService#1651', () => {
+		expect([DAY_EXCEPTION_DAYS_BACK, DAY_EXCEPTION_DAYS_AHEAD]).toEqual([
+			62, 400
+		]);
+		expect(dayExceptionAllowed(day(0), now)).toBe(true);
+		expect(dayExceptionAllowed(day(-62), now)).toBe(true);
+		expect(dayExceptionAllowed(day(400), now)).toBe(true);
+		expect(dayExceptionAllowed(day(-63), now)).toBe(false);
+		expect(dayExceptionAllowed(day(401), now)).toBe(false);
 	});
 });

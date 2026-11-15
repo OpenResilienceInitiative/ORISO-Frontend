@@ -37,6 +37,39 @@ export type WorkingHours = WorkingHoursWindow[];
 /** UserService accepts at most this many windows. */
 export const MAX_WORKING_HOURS_WINDOWS = 14;
 
+/**
+ * The dates whose own hours UserService keeps and shows: from 62 days
+ * back to 400 days ahead, the same window as UserService#1651. Grips are
+ * drawn only there (review 4577586484).
+ */
+export const DAY_EXCEPTION_DAYS_BACK = 62;
+export const DAY_EXCEPTION_DAYS_AHEAD = 400;
+
+/** At most this many dates with their own hours; UserService answers 409. */
+export const MAX_DAY_EXCEPTIONS = 400;
+
+/** Thrown for that 409, so the page can say what to do. */
+export class TooManyDayExceptions extends Error {
+	constructor() {
+		super('TOO_MANY_DAY_EXCEPTIONS');
+		this.name = 'TooManyDayExceptions';
+	}
+}
+
+/** Calendar days from `now`'s date to `day`'s date, DST-proof. */
+const daysFrom = (now: Date, day: Date) =>
+	Math.round(
+		(Date.UTC(day.getFullYear(), day.getMonth(), day.getDate()) -
+			Date.UTC(now.getFullYear(), now.getMonth(), now.getDate())) /
+			86_400_000
+	);
+
+/** Whether `day` may get its own hours, seen from `now`. */
+export const dayExceptionAllowed = (day: Date, now: Date) => {
+	const days = daysFrom(now, day);
+	return days >= -DAY_EXCEPTION_DAYS_BACK && days <= DAY_EXCEPTION_DAYS_AHEAD;
+};
+
 /** Monday first, the order the dialog lists the days in. */
 export const WEEKDAYS_MONDAY_FIRST = [1, 2, 3, 4, 5, 6, 0];
 

@@ -49,6 +49,7 @@ import { CalendarEntryGlyph, facetOf } from './CalendarEntryGlyph';
 import type { MoveProposal } from './calendarActions';
 import {
 	dayEdgesOf,
+	dayExceptionAllowed,
 	gripEdges,
 	effectiveDay,
 	minutesOf,
@@ -940,6 +941,9 @@ export const CalendarView = ({
 			)}
 			{gripsShown &&
 				gripColumns.map(({ key, day, el }) => {
+					// Only dates whose own hours UserService keeps and
+					// shows (review 4577586484).
+					if (!dayExceptionAllowed(day, nowDate)) return null;
 					const edges = dayEdgesOf(day, workingPlan);
 					if (!edges) return null;
 					return createPortal(

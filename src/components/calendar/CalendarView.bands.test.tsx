@@ -260,3 +260,44 @@ describe('CalendarView — colleagues as bands in the time grid', () => {
 		expect(bandLabels()).toEqual([]);
 	});
 });
+
+describe('CalendarView — grips only where own hours are kept (review 4577586484)', () => {
+	const WEEKDAYS = {
+		hours: [1, 2, 3, 4, 5].map((weekday) => ({
+			weekday,
+			start: '08:00',
+			end: '16:00'
+		}))
+	};
+	const gripDates = () =>
+		Array.from(document.querySelectorAll<HTMLElement>('[data-grip]')).map(
+			(el) => el.dataset.grip?.slice(0, 10)
+		);
+
+	it('draws grips on this week', async () => {
+		render(
+			<Grid
+				view="workWeek"
+				workingPlan={WEEKDAYS}
+				onEdgeChange={vi.fn()}
+			/>
+		);
+		await waitFor(() => expect(gripDates().length).toBeGreaterThan(0));
+	});
+
+	it('draws none more than 400 days ahead, and stops at the last kept date', async () => {
+		// 400 days after 16 Nov 2026 is Tuesday 21 Dec 2027.
+		render(
+			<Grid
+				view="workWeek"
+				workingPlan={WEEKDAYS}
+				onEdgeChange={vi.fn()}
+				initialDate={new Date(2027, 11, 20)}
+			/>
+		);
+		await waitFor(() => expect(gripDates().length).toBeGreaterThan(0));
+		expect(new Set(gripDates())).toEqual(
+			new Set(['2027-12-20', '2027-12-21'])
+		);
+	});
+});

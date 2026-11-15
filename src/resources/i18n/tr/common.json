@@ -7213,6 +7213,9 @@
 			"tooMany": "Çalışma saatleri haftada en fazla {{max}} zaman aralığı içerir; bu değişiklik kaydedilmedi."
 		},
 		"grip": {
+			"weekOnly": "Yalnızca kısmen kaydedildi: {{weekdays}} için saatler değişti, {{date}} için değişmedi.",
+			"weekUndone": "Hiçbir şey değişmedi: {{date}} kaydedilemedi, bu yüzden {{weekdays}} için önceki saatler geçerli.",
+			"tooManyDays": "Kendi saatleri olan çok fazla gün var: en fazla {{max}}. Eski istisnaları silin.",
 			"pauseMovedWeek": "{{weekdays}} molası artık {{start}}–{{end}}.",
 			"pauseMovedDay": "{{date}} molası artık {{start}}–{{end}}.",
 			"pauseDeletedWeek": "{{weekdays}} molası silindi.",

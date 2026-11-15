@@ -62,7 +62,9 @@ import {
 	effectiveDay,
 	exceedsWindowLimit,
 	isWithinWorkingHours,
+	MAX_DAY_EXCEPTIONS,
 	MAX_WORKING_HOURS_WINDOWS,
+	TooManyDayExceptions,
 	moveEdge,
 	edgeLabelKey,
 	isPauseEdge,
@@ -349,6 +351,22 @@ interface Notice {
 	message: string;
 	/** Settles once undone; the failure notice shows if it does not. */
 	undo?: () => ChangeResult;
+	/** Nothing (or not all) was stored: try the same change again. */
+	retry?: () => void;
+}
+
+/**
+ * "Immer <Wochentag>" on a date with its own hours: the weekly hours were
+ * stored, the date was not. `undone` says whether the weekly hours went
+ * back (review 4577586478).
+ */
+class WeekWithoutDay extends Error {
+	constructor(
+		readonly dayError: unknown,
+		readonly undone: boolean
+	) {
+		super('WEEK_WITHOUT_DAY');
+	}
 }
 
 const AXIS_PX = 52;
@@ -599,7 +617,10 @@ export const CalendarPage = ({
 	 */
 	const run = (
 		result: ChangeResult | undefined,
-		success: Notice | ((value: unknown) => Notice)
+		success: Notice | ((value: unknown) => Notice),
+		failure: (error: unknown) => Notice = () => ({
+			message: t('calendar.saveFailed')
+		})
 	): boolean | Promise<boolean> => {
 		const done = (value: unknown) => {
 			setNotice(typeof success === 'function' ? success(value) : success);
@@ -609,8 +630,8 @@ export const CalendarPage = ({
 		if (result && typeof (result as Promise<unknown>).then === 'function')
 			return (result as Promise<unknown>).then(
 				(value) => (value === false ? false : done(value)),
-				() => {
-					setNotice({ message: t('calendar.saveFailed') });
+				(error) => {
+					setNotice(failure(error));
 					return false;
 				}
 			);
@@ -882,6 +903,80 @@ export const CalendarPage = ({
 				?.focus()
 		);
 
+	/** A day save that failed: the 409 at the limit says what to do. */
+	const dayFailure = (error: unknown): Notice => ({
+		message:
+			error instanceof TooManyDayExceptions
+				? t('calendar.grip.tooManyDays', { max: MAX_DAY_EXCEPTIONS })
+				: t('calendar.saveFailed')
+	});
+
+	/**
+	 * "Immer <Wochentag>": the weekly hours, then the date's own hours when
+	 * it has some. One after the other; when the date fails, the weekly
+	 * hours go back, so nothing stays half saved, and the notice says what
+	 * happened and offers to try again (review 4577586478).
+	 */
+	const saveWeekThenDay = ({
+		nextHours,
+		previousHours,
+		saveDay,
+		success,
+		place,
+		retry
+	}: {
+		nextHours: WorkingHours;
+		previousHours: WorkingHours;
+		saveDay?: () => ChangeResult | undefined;
+		success: Notice;
+		place: { date: string; weekdays: string };
+		retry: () => void;
+	}) =>
+		run(
+			(async () => {
+				if (
+					(await onSaveWorkingHours?.(nextHours, holidayRegion)) ===
+					false
+				)
+					return false;
+				if (!saveDay) return true;
+				try {
+					if ((await saveDay()) === false) throw new Error('refused');
+				} catch (error) {
+					let undone = true;
+					try {
+						await onSaveWorkingHours?.(
+							previousHours,
+							holidayRegion
+						);
+					} catch {
+						undone = false;
+					}
+					throw new WeekWithoutDay(error, undone);
+				}
+				return true;
+			})(),
+			success,
+			(error) => {
+				if (!(error instanceof WeekWithoutDay))
+					return { message: t('calendar.saveFailed'), retry };
+				const limit = error.dayError instanceof TooManyDayExceptions;
+				const what = t(
+					error.undone
+						? 'calendar.grip.weekUndone'
+						: 'calendar.grip.weekOnly',
+					place
+				);
+				return {
+					message: limit
+						? `${what} ${t('calendar.grip.tooManyDays', { max: MAX_DAY_EXCEPTIONS })}`
+						: what,
+					// At the limit, the same change fails again.
+					...(!limit && { retry })
+				};
+			}
+		);
+
 	/**
 	 * "Nur an diesem Tag" stores the date's windows with the edge moved;
 	 * "Immer …" changes that weekday's weekly windows (a lunch break stays).
@@ -895,17 +990,21 @@ export const CalendarPage = ({
 		const previousException = dayExceptions?.[date];
 		const what = t(edgeLabelKey(change.edge));
 		if (choice === 'day') {
-			run(onSaveDayException?.(date, moved), {
-				message: t('calendar.grip.savedDay', {
-					what,
-					date: gripDate(change.day),
-					time: change.to
-				}),
-				undo: () =>
-					previousException
-						? onSaveDayException?.(date, previousException)
-						: onDeleteDayException?.(date)
-			});
+			run(
+				onSaveDayException?.(date, moved),
+				{
+					message: t('calendar.grip.savedDay', {
+						what,
+						date: gripDate(change.day),
+						time: change.to
+					}),
+					undo: () =>
+						previousException
+							? onSaveDayException?.(date, previousException)
+							: onDeleteDayException?.(date)
+				},
+				dayFailure
+			);
 		} else {
 			const weekday = change.day.getDay();
 			const base = windowsOn(workingHours, weekday);
@@ -931,30 +1030,36 @@ export const CalendarPage = ({
 				refocusGrip(change);
 				return;
 			}
-			const saves: (void | Promise<unknown> | undefined)[] = [
-				onSaveWorkingHours?.(nextHours, holidayRegion)
-			];
-			if (previousException)
-				saves.push(
-					sameWindows(moved, weekly)
-						? onDeleteDayException?.(date)
-						: onSaveDayException?.(date, moved)
-				);
-			run(Promise.all(saves), {
-				message: t('calendar.grip.savedWeek', {
-					what,
-					weekdays: t(`calendar.grip.weekdays.${weekday}`),
-					time: change.to
-				}),
-				// Both restorations go through Undo's failure notice
-				// (review 4575253325).
-				undo: () =>
-					allStored([
-						onSaveWorkingHours?.(previousHours, holidayRegion),
-						previousException
-							? onSaveDayException?.(date, previousException)
-							: undefined
-					])
+			saveWeekThenDay({
+				nextHours,
+				previousHours,
+				saveDay: previousException
+					? () =>
+							sameWindows(moved, weekly)
+								? onDeleteDayException?.(date)
+								: onSaveDayException?.(date, moved)
+					: undefined,
+				success: {
+					message: t('calendar.grip.savedWeek', {
+						what,
+						weekdays: t(`calendar.grip.weekdays.${weekday}`),
+						time: change.to
+					}),
+					// Both restorations go through Undo's failure notice
+					// (review 4575253325).
+					undo: () =>
+						allStored([
+							onSaveWorkingHours?.(previousHours, holidayRegion),
+							previousException
+								? onSaveDayException?.(date, previousException)
+								: undefined
+						])
+				},
+				place: {
+					date: gripDate(change.day),
+					weekdays: t(`calendar.grip.weekdays.${weekday}`)
+				},
+				retry: () => latestApply.current.applyEdge(change, 'week')
 			});
 		}
 		refocusGrip(change);
@@ -992,13 +1097,17 @@ export const CalendarPage = ({
 				}
 			);
 		if (scope === 'day') {
-			run(onSaveDayException?.(date, dayWindows), {
-				message: message('Day'),
-				undo: () =>
-					previousException
-						? onSaveDayException?.(date, previousException)
-						: onDeleteDayException?.(date)
-			});
+			run(
+				onSaveDayException?.(date, dayWindows),
+				{
+					message: message('Day'),
+					undo: () =>
+						previousException
+							? onSaveDayException?.(date, previousException)
+							: onDeleteDayException?.(date)
+				},
+				dayFailure
+			);
 			refocusGrip(change);
 			return;
 		}
@@ -1017,27 +1126,37 @@ export const CalendarPage = ({
 			refocusGrip(change);
 			return;
 		}
-		const saves: (void | Promise<unknown> | undefined)[] = [
-			onSaveWorkingHours?.(nextHours, holidayRegion)
-		];
-		if (previousException)
-			saves.push(
-				sameWindows(dayWindows, weekly)
-					? onDeleteDayException?.(date)
-					: onSaveDayException?.(date, dayWindows)
-			);
-		run(Promise.all(saves), {
-			message: message('Week'),
-			undo: () =>
-				allStored([
-					onSaveWorkingHours?.(previousHours, holidayRegion),
-					previousException
-						? onSaveDayException?.(date, previousException)
-						: undefined
-				])
+		saveWeekThenDay({
+			nextHours,
+			previousHours,
+			saveDay: previousException
+				? () =>
+						sameWindows(dayWindows, weekly)
+							? onDeleteDayException?.(date)
+							: onSaveDayException?.(date, dayWindows)
+				: undefined,
+			success: {
+				message: message('Week'),
+				undo: () =>
+					allStored([
+						onSaveWorkingHours?.(previousHours, holidayRegion),
+						previousException
+							? onSaveDayException?.(date, previousException)
+							: undefined
+					])
+			},
+			place: {
+				date: gripDate(change.day),
+				weekdays: t(`calendar.grip.weekdays.${weekday}`)
+			},
+			retry: () => latestApply.current.applyPause(change, action, 'week')
 		});
 		refocusGrip(change);
 	};
+
+	// Retry runs the change again on what the page shows by then.
+	const latestApply = useRef({ applyEdge, applyPause });
+	latestApply.current = { applyEdge, applyPause };
 
 	const decideEdge = (
 		change: EdgeChange,
@@ -2166,7 +2285,16 @@ export const CalendarPage = ({
 									testId: 'calendar-undo',
 									onClick: () => undo(notice)
 								}
-							: undefined
+							: notice.retry
+								? {
+										label: t('calendar.error.retry'),
+										testId: 'calendar-retry',
+										onClick: () => {
+											setNotice(null);
+											notice.retry?.();
+										}
+									}
+								: undefined
 					}
 					onClose={() => setNotice(null)}
 					closeLabel={t('app.close')}

@@ -481,3 +481,39 @@ describe('CalendarSplitView — a colleague whose calendar is still loading (rev
 		expect(queryByText('calendar.colleagueFailedShort')).toBeNull();
 	});
 });
+
+describe('CalendarSplitView — grips only where own hours are kept (review 4577586484)', () => {
+	const grips = (day: Date) => {
+		const { container, unmount } = render(
+			<CalendarSplitView
+				day={day}
+				role="consultant"
+				ownerId="me"
+				colleagues={[]}
+				entries={[]}
+				now={new Date(2026, 10, 16, 7)}
+				workingPlan={{
+					hours: [1, 2, 3, 4, 5].map((weekday) => ({
+						weekday,
+						start: '08:00',
+						end: '16:00'
+					}))
+				}}
+				onEdgeChange={vi.fn()}
+			/>
+		);
+		const count = container.querySelectorAll('[data-grip]').length;
+		unmount();
+		return count;
+	};
+
+	it('draws them within today − 62 to today + 400 days, and not beyond', () => {
+		expect(grips(new Date(2026, 10, 16))).toBeGreaterThan(0);
+		// 400 days ahead is Tuesday 21 December 2027.
+		expect(grips(new Date(2027, 11, 21))).toBeGreaterThan(0);
+		expect(grips(new Date(2027, 11, 22))).toBe(0);
+		// 62 days back is Tuesday 15 September 2026.
+		expect(grips(new Date(2026, 8, 15))).toBeGreaterThan(0);
+		expect(grips(new Date(2026, 8, 14))).toBe(0);
+	});
+});

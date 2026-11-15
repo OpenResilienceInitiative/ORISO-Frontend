@@ -7128,6 +7128,9 @@
 			"tooMany": "Working hours hold at most {{max}} time windows a week; this change was not saved."
 		},
 		"grip": {
+			"weekOnly": "Only partly saved: the hours for {{weekdays}} changed, but {{date}} did not.",
+			"weekUndone": "Nothing changed: {{date}} could not be saved, so {{weekdays}} keep their previous hours.",
+			"tooManyDays": "Too many days with their own hours: at most {{max}}. Delete older exceptions.",
 			"pauseMovedWeek": "Break {{weekdays}} now {{start}}–{{end}}.",
 			"pauseMovedDay": "Break on {{date}} now {{start}}–{{end}}.",
 			"pauseDeletedWeek": "Break {{weekdays}} deleted.",

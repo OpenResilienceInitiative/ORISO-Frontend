@@ -15,6 +15,7 @@ import * as sessionListApi from '../../api/apiGetConsultantSessionList';
 import * as askerListApi from '../../api/apiGetAskerSessionList';
 import type { CalendarPageProps } from './CalendarPage';
 import { CalendarPageWired } from './CalendarPageWired';
+import { TooManyDayExceptions } from './calendarWorkingHours';
 
 let props: CalendarPageProps;
 vi.mock('./CalendarPage', () => ({
@@ -667,6 +668,21 @@ describe('CalendarPageWired', () => {
 			expect(props.dayExceptions).toEqual({
 				'2026-11-18': [{ start: '11:00', end: '16:00' }]
 			});
+		});
+	});
+
+	it('turns a 409 for a day into the limit of own days (review 4577586484)', async () => {
+		render(<CalendarPageWired />);
+		await waitFor(() => expect(props.workingHours).toHaveLength(2));
+		api.apiPutWorkingDayException.mockRejectedValueOnce(
+			new Error('CONFLICT')
+		);
+		await act(async () => {
+			await expect(
+				props.onSaveDayException?.('2026-11-18', [
+					{ start: '09:00', end: '16:00' }
+				])
+			).rejects.toBeInstanceOf(TooManyDayExceptions);
 		});
 	});
 

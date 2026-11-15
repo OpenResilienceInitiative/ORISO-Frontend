@@ -32,6 +32,7 @@ import type { MoveProposal } from './calendarActions';
 import { freeForEveryone } from './calendarFreeTime';
 import {
 	dayEdgesOf,
+	dayExceptionAllowed,
 	gripEdges,
 	effectiveDay,
 	minutesOf,
@@ -600,6 +601,9 @@ export const CalendarSplitView = ({
 
 	/** The grips of one's own working day, where they fall in the grid. */
 	const edgeGrips = (d: SplitDay) => {
+		// Only dates whose own hours UserService keeps and shows (review
+		// 4577586484).
+		if (!dayExceptionAllowed(d.day, now)) return null;
 		const edges = workingPlan ? dayEdgesOf(d.day, workingPlan) : null;
 		if (!edges || !onEdgeChange) return null;
 		return gripEdges(edges).map(({ edge, time }) => {

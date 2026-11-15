@@ -52,6 +52,7 @@ import {
 } from '../../api/apiSessionAppointments';
 import { apiGetConsultantSessionList } from '../../api/apiGetConsultantSessionList';
 import { apiGetAskerSessionList } from '../../api/apiGetAskerSessionList';
+import { FETCH_ERRORS } from '../../api/fetchData';
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import {
 	notifyAppointmentsChanged,
@@ -83,6 +84,7 @@ import {
 	dayExceptionsFromApi,
 	exceptionWindowsToApi,
 	normalizeWindows,
+	TooManyDayExceptions,
 	workingPlanFromApi,
 	workingPlanToApi,
 	type TimeWindow,
@@ -622,7 +624,15 @@ export const CalendarPageWired = () => {
 		setException(date, shown);
 		try {
 			const saved = await inDateOrder(date, () =>
-				apiPutWorkingDayException(date, exceptionWindowsToApi(windows))
+				apiPutWorkingDayException(
+					date,
+					exceptionWindowsToApi(windows)
+				).catch((error) => {
+					// 409: the limit of dates with own hours (review 4577586484).
+					throw error?.message === FETCH_ERRORS.CONFLICT
+						? new TooManyDayExceptions()
+						: error;
+				})
 			);
 			const stored =
 				dayExceptionsFromApi(saved ? [saved] : [])[date] ?? shown;

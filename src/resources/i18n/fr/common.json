@@ -7213,6 +7213,9 @@
 			"tooMany": "Les horaires comptent au plus {{max}} plages par semaine ; cette modification n’a pas été enregistrée."
 		},
 		"grip": {
+			"weekOnly": "Enregistré en partie seulement : les horaires des {{weekdays}} ont changé, mais pas {{date}}.",
+			"weekUndone": "Rien n’a changé : {{date}} n’a pas pu être enregistré, les {{weekdays}} gardent donc leurs horaires précédents.",
+			"tooManyDays": "Trop de jours avec des horaires propres : {{max}} au maximum. Supprimez les exceptions plus anciennes.",
 			"pauseMovedWeek": "Pause {{weekdays}} désormais {{start}}–{{end}}.",
 			"pauseMovedDay": "Pause du {{date}} désormais {{start}}–{{end}}.",
 			"pauseDeletedWeek": "Pause {{weekdays}} supprimée.",

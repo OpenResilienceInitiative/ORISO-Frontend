@@ -7203,6 +7203,9 @@
 			"tooMany": "Die Arbeitszeit hat höchstens {{max}} Zeitfenster pro Woche; diese Änderung ist nicht gespeichert."
 		},
 		"grip": {
+			"weekOnly": "Nur zum Teil gespeichert: Die Zeiten für {{weekdays}} sind geändert, {{date}} aber nicht.",
+			"weekUndone": "Nichts geändert: {{date}} ließ sich nicht speichern, deshalb gelten für {{weekdays}} wieder die bisherigen Zeiten.",
+			"tooManyDays": "Zu viele eigene Tage: höchstens {{max}}. Löschen Sie ältere Ausnahmen.",
 			"pauseMovedWeek": "Pause {{weekdays}} jetzt {{start}}–{{end}}.",
 			"pauseMovedDay": "Pause am {{date}} jetzt {{start}}–{{end}}.",
 			"pauseDeletedWeek": "Pause {{weekdays}} gelöscht.",
