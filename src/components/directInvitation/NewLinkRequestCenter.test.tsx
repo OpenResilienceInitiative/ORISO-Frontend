@@ -227,4 +227,32 @@ describe('NewLinkRequestCenter', () => {
 			)
 		).toBeTruthy();
 	});
+
+	it('shows a later request when the earlier one was read in the same update', async () => {
+		const { rerender, stack } = renderCenter([request('1', 9)]);
+		await screen.findByText('directInvitation.notice.text:Termin Frau M.');
+		act(() => stack.dismiss('new-link-request-9'));
+		/* No snapshot in between where the invitation has no unread request. */
+		rerender(
+			<NotificationsContext.Provider
+				value={
+					{
+						notificationFeed: [
+							request('1', 9, '2026-11-14T10:01:00Z' as any),
+							request('4', 9)
+						],
+						markNotificationAsRead
+					} as any
+				}
+			>
+				<NewLinkRequestCenter stack={stack} />
+				<M3SnackbarHost stack={stack} />
+			</NotificationsContext.Provider>
+		);
+		expect(
+			await screen.findByText(
+				'directInvitation.notice.text:Termin Frau M.'
+			)
+		).toBeTruthy();
+	});
 });

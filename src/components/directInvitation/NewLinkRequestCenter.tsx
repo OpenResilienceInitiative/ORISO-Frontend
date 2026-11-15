@@ -29,6 +29,10 @@ const linkIdOf = (item: NotificationFeedItem): string | null => {
 		: null;
 };
 
+/** Whether any of these requests has not had a pop-up yet. */
+const hasNew = (shown: ReadonlySet<string>, ids: string[]) =>
+	ids.some((id) => !shown.has(id));
+
 export const NewLinkRequestCenter = ({
 	stack = appSnackbarStack
 }: {
@@ -41,6 +45,9 @@ export const NewLinkRequestCenter = ({
 	const markRead = notifications?.markNotificationAsRead;
 	const [names, setNames] = useState<Record<string, string>>();
 	const { send: renew, dialog } = useSendNewLink(stack);
+	/* Request ids already behind a pop-up. Per request, not per invitation:
+	   a later request for the same invitation must pop up again even when the
+	   earlier one was read in the same feed update. */
 	const shown = useRef(new Set<string>());
 
 	/* Unread requests by invitation; older rows of the same one go along. */
@@ -63,9 +70,9 @@ export const NewLinkRequestCenter = ({
 	const [settled, setSettled] = useState<ReadonlySet<string>>(new Set());
 	const unknown = useMemo(
 		() =>
-			[...open.keys()].some(
-				(linkId) =>
-					!shown.current.has(linkId) &&
+			[...open.entries()].some(
+				([linkId, ids]) =>
+					hasNew(shown.current, ids) &&
 					!(names && linkId in names) &&
 					!settled.has(linkId)
 			),
@@ -94,11 +101,11 @@ export const NewLinkRequestCenter = ({
 		};
 	}, [open, unknown]);
 
-	/* An answered invitation (its requests read) may pop up again for a
-	   later request. */
+	/* Forget requests that are no longer unread. */
 	useEffect(() => {
-		shown.current.forEach((linkId) => {
-			if (!open.has(linkId)) shown.current.delete(linkId);
+		const unread = new Set([...open.values()].flat());
+		shown.current.forEach((id) => {
+			if (!unread.has(id)) shown.current.delete(id);
 		});
 	}, [open]);
 
@@ -116,12 +123,12 @@ export const NewLinkRequestCenter = ({
 			}
 			return made;
 		};
-		open.forEach((_ids, linkId) => {
-			if (shown.current.has(linkId)) return;
+		open.forEach((ids, linkId) => {
+			if (!hasNew(shown.current, ids)) return;
 			/* Wait for a read that covers this invitation; a failed read
 			   shows it without a name rather than not at all. */
 			if (!(linkId in names) && !settled.has(linkId)) return;
-			shown.current.add(linkId);
+			ids.forEach((id) => shown.current.add(id));
 			stack.enqueue(
 				newLinkRequestEntry(
 					{

@@ -94,6 +94,69 @@ describe('openDirectLinkConversation', () => {
 		expect(isDirectLinkCallRoom('!other:oriso')).toBe(false);
 	});
 
+	it('keeps a chat-first opening out of the call knock (#2252)', async () => {
+		const redirect = vi.fn();
+		const cancelKnock = vi.fn().mockResolvedValue(undefined);
+		await openDirectLinkConversation('tok', {
+			start: vi.fn().mockResolvedValue({
+				sessionId: 9,
+				matrixRoomId: '!room:oriso',
+				medium: 'VIDEO',
+				admission: 'KNOCK',
+				created: true,
+				knockId: 21,
+				knockStatus: 'PENDING'
+			}),
+			redirect,
+			cancelKnock,
+			chatFirst: true
+		});
+		expect(readPendingKnock()).toBeNull();
+		/* The counsellor is not left with a person who is not waiting. */
+		expect(cancelKnock).toHaveBeenCalledWith(21);
+		expect(redirect).toHaveBeenCalledWith(9);
+		/* A later call in this conversation still knocks through the link. */
+		expect(directLinkSessionOf(9)).toEqual({
+			token: 'tok',
+			medium: 'VIDEO',
+			matrixRoomId: '!room:oriso'
+		});
+	});
+
+	it('keeps an admission when the chat comes first, and still enters if the cancel fails', async () => {
+		const redirect = vi.fn();
+		const cancelKnock = vi.fn().mockRejectedValue(new Error('down'));
+		const started = {
+			sessionId: 9,
+			medium: 'AUDIO',
+			admission: 'KNOCK',
+			created: false,
+			knockId: 21
+		};
+		await openDirectLinkConversation('tok', {
+			start: vi.fn().mockResolvedValue({
+				...started,
+				knockStatus: 'ADMITTED',
+				callAdmitted: true
+			}),
+			redirect,
+			cancelKnock,
+			chatFirst: true
+		});
+		expect(cancelKnock).not.toHaveBeenCalled();
+		await openDirectLinkConversation('tok', {
+			start: vi.fn().mockResolvedValue({
+				...started,
+				knockStatus: 'PENDING'
+			}),
+			redirect,
+			cancelKnock,
+			chatFirst: true
+		});
+		expect(readPendingKnock()).toBeNull();
+		expect(redirect).toHaveBeenCalledTimes(2);
+	});
+
 	it('enters nothing when the link refuses', async () => {
 		const redirect = vi.fn();
 		await expect(

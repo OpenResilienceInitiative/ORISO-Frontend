@@ -1,4 +1,5 @@
 import {
+	apiCancelOwnCallKnock,
 	apiStartDirectLinkConversation,
 	CallKnockStatus,
 	DirectLinkConversation
@@ -278,17 +279,26 @@ export const isDirectLinkCallRoom = (roomId: string | null | undefined) =>
 export interface OpenDirectLinkDeps {
 	start?: typeof apiStartDirectLinkConversation;
 	redirect?: (sessionId: number) => void;
+	cancelKnock?: typeof apiCancelOwnCallKnock;
+	/**
+	 * #2252: the person chose "Zum Chat" before the call opened. The knock
+	 * gates only the call; the chat works at once, so no call knock goes along.
+	 */
+	chatFirst?: boolean;
 }
 
 /**
  * The signed-in person opens (or reopens) their conversation through the
- * link and enters the app on it. For a call the knock goes along.
+ * link and enters the app on it. For a call the knock goes along, unless
+ * the person chose the chat first.
  */
 export const openDirectLinkConversation = async (
 	token: string,
 	{
 		start = apiStartDirectLinkConversation,
-		redirect = (sessionId) => redirectToApp(undefined, { sessionId })
+		redirect = (sessionId) => redirectToApp(undefined, { sessionId }),
+		cancelKnock = apiCancelOwnCallKnock,
+		chatFirst = false
 	}: OpenDirectLinkDeps = {}
 ): Promise<DirectLinkConversation> => {
 	const conversation = await start(token);
@@ -301,8 +311,15 @@ export const openDirectLinkConversation = async (
 		rememberAdmittedConversation(conversation.sessionId);
 	}
 	const knock = pendingKnockFrom(token, conversation);
-	if (knock) rememberPendingKnock(knock);
+	if (knock && !chatFirst) rememberPendingKnock(knock);
 	else forgetPendingKnock();
+	/* The server knocks as soon as the call window is open, also when the
+	   person came for the chat: withdraw that knock so the counsellor is not
+	   asked to let in someone who is not waiting. An admission stays (the
+	   server cancels only a pending knock); the call in the chat knocks anew. */
+	if (knock && chatFirst && knock.status === 'PENDING') {
+		await cancelKnock(knock.knockId).catch(() => undefined);
+	}
 	redirect(conversation.sessionId);
 	return conversation;
 };

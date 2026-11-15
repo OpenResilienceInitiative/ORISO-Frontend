@@ -375,7 +375,9 @@ export const InviteLink = () => {
 					if (hasActiveAuthSession()) {
 						/* Signed in: the own conversation, then the app. */
 						setStatus('directOpening');
-						await openDirectLinkConversation(token);
+						await openDirectLinkConversation(token, {
+							chatFirst: chatFirstRef.current
+						});
 						return;
 					}
 					/* A person without a session, at an audio or video link of a
@@ -594,8 +596,11 @@ export const InviteLink = () => {
 			);
 			if (directLink && token) {
 				/* The account exists and is signed in: the own conversation
-				   with the counsellor, not a new enquiry. */
-				await openDirectLinkConversation(token);
+				   with the counsellor, not a new enquiry. "Zum Chat" stays the
+				   chat, not the call's knock (#2252). */
+				await openDirectLinkConversation(token, {
+					chatFirst: chatFirstRef.current
+				});
 				return;
 			}
 			redirectToApp(undefined, { navigate });

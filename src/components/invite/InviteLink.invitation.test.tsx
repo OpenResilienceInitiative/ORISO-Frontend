@@ -144,7 +144,8 @@ vi.mock('../../api/apiDirectLinks', async () => {
 	return {
 		...actual,
 		apiStartDirectLinkConversation: vi.fn(),
-		apiRequestDirectInvitationRenewal: vi.fn()
+		apiRequestDirectInvitationRenewal: vi.fn(),
+		apiCancelOwnCallKnock: vi.fn(() => Promise.resolve())
 	};
 });
 vi.mock('../auth/auth', async () => {
@@ -171,8 +172,15 @@ vi.mock('../app/Loading', () => ({
 }));
 
 const { InviteLink } = await import('./InviteLink');
-const { apiStartDirectLinkConversation, apiRequestDirectInvitationRenewal } =
-	await import('../../api/apiDirectLinks');
+const {
+	apiStartDirectLinkConversation,
+	apiRequestDirectInvitationRenewal,
+	apiCancelOwnCallKnock
+} = await import('../../api/apiDirectLinks');
+const { redirectToApp } = await import('../registration/autoLogin');
+const { readPendingKnock } = await import(
+	'../directLinkEntry/directLinkEntryFlow'
+);
 const { hasActiveAuthSession } = await import('../auth/auth');
 const { apiGetConsultingType } = await import('../../api/apiGetConsultingType');
 
@@ -317,6 +325,62 @@ describe('InviteLink with a Direkteinladung (#2252)', () => {
 
 		expect(await screen.findByLabelText('User-ID')).toBeTruthy();
 		expect(screen.queryByTestId('direct-link-call-entry')).toBeNull();
+	});
+
+	/* The call opened while the person registered: the server knocks, but
+	   the person chose the chat and must not land in the call's knock. */
+	const knockingVideo = {
+		sessionId: 60,
+		matrixRoomId: '!room:oriso',
+		medium: 'VIDEO' as const,
+		admission: 'KNOCK' as const,
+		created: true,
+		knockId: 31,
+		knockStatus: 'PENDING' as const
+	};
+
+	it('enters the chat, not the call knock, after "Zum Chat" and registering', async () => {
+		vi.mocked(apiGetInviteLinkContext).mockResolvedValue(
+			appointmentContext('VIDEO', 20)
+		);
+		vi.mocked(apiStartDirectLinkConversation).mockResolvedValueOnce(
+			knockingVideo as any
+		);
+		renderInvite();
+		fireEvent.click(
+			await screen.findByRole('button', {
+				name: /directInvitation.entry.beforeStart.openChat/
+			})
+		);
+		await screen.findByLabelText('User-ID');
+		if (screen.queryByLabelText('Ihre Postleitzahl')) typePostcode('10115');
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Weiter mit Auswahl' })
+		);
+
+		await waitFor(() => expect(redirectToApp).toHaveBeenCalled());
+		expect(readPendingKnock()).toBeNull();
+		expect(apiCancelOwnCallKnock).toHaveBeenCalledWith(31);
+	});
+
+	it('enters the chat, not the call knock, after "Zum Chat" when signed in', async () => {
+		vi.mocked(hasActiveAuthSession).mockReturnValue(true);
+		vi.mocked(apiGetInviteLinkContext).mockResolvedValue(
+			appointmentContext('VIDEO', 20)
+		);
+		vi.mocked(apiStartDirectLinkConversation).mockResolvedValueOnce(
+			knockingVideo as any
+		);
+		renderInvite();
+		fireEvent.click(
+			await screen.findByRole('button', {
+				name: /directInvitation.entry.beforeStart.openChat/
+			})
+		);
+
+		await waitFor(() => expect(redirectToApp).toHaveBeenCalled());
+		expect(readPendingKnock()).toBeNull();
+		expect(apiCancelOwnCallKnock).toHaveBeenCalledWith(31);
 	});
 
 	it('opens the waiting room from 15 minutes before the start', async () => {
