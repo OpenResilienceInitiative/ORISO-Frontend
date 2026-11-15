@@ -197,6 +197,13 @@ export const CalendarPageWired = () => {
 	 * This week's own entries, which the next free hours come from: in,
 	 * on their way or failed (review 4576313283).
 	 */
+	/**
+	 * One's own calendar for the loaded window is on its way (paged
+	 * elsewhere): until it is in, the previous range's entries say nothing
+	 * about free time (review 4576368852). It stays on after a failure,
+	 * which the page shows anyway.
+	 */
+	const [ownLoading, setOwnLoading] = useState(true);
 	const [freeHoursState, setFreeHoursState] =
 		useState<FreeHoursState>('loading');
 	const freeHoursFailed = useRef(false);
@@ -272,10 +279,12 @@ export const CalendarPageWired = () => {
 		const holdsThisWeek =
 			window.from.getTime() <= near.from.getTime() &&
 			window.to.getTime() >= near.to.getTime();
+		setOwnLoading(true);
 		apiGetCalendarEntries(window.from, window.to).then(
 			(list) => {
 				if (id !== request.current) return;
 				setOwn(list.map(entryFromApi));
+				setOwnLoading(false);
 				setState('ready');
 				if (holdsThisWeek) setFreeHours('ready');
 			},
@@ -666,7 +675,9 @@ export const CalendarPageWired = () => {
 			conversationsFailed={conversationsFailed}
 			onRetryConversations={loadConversations}
 			failedColleagues={failedColleagues}
-			loadingColleagues={loadingColleagues}
+			loadingCalendars={
+				ownLoading ? [ownerId, ...loadingColleagues] : loadingColleagues
+			}
 			onRetryColleagues={() =>
 				failedColleagues.forEach((id) => loadColleague(id))
 			}

@@ -309,8 +309,10 @@ export const CalendarSplitView = ({
 		{ id: ownerId },
 		...colleagues.map((c) => ({ id: c.id, colleague: c }))
 	];
-	// A shown colleague's calendar is missing: nobody is known to be free.
-	const missing = colleagues.some((c) => unavailable.includes(c.id));
+	// A shown calendar is missing or still loading, one's own included:
+	// nobody is known to be free (reviews 4575917303, 4576368852).
+	const unknownIds = new Set(unavailable);
+	const missing = people.some((p) => unknownIds.has(p.id));
 	const shownDays: SplitDay[] = useMemo(
 		() =>
 			Array.from({ length: days }, (_, i) => {
@@ -669,8 +671,7 @@ export const CalendarSplitView = ({
 							{own ? t('calendar.people.me') : initialsOf(name)}
 						</span>
 						<span className="calendarSplit__name">{name}</span>
-						{person.colleague &&
-							unavailable.includes(person.id) &&
+						{unknownIds.has(person.id) &&
 							(loading.includes(person.id) ? (
 								<span className="calendarSplit__unloaded calendarSplit__unloaded--loading">
 									{t('calendar.colleagueLoadingShort')}

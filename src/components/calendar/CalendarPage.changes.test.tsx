@@ -437,11 +437,19 @@ describe('CalendarPage — a colleague calendar still loading (review 4576313280
 				{ id: 'demir', displayName: 'E. Demir' }
 			],
 			initialShownColleagues: ['kaya', 'demir'],
-			loadingColleagues: ['kaya']
+			loadingCalendars: ['kaya']
 		});
 		expect(ids('bandPeople')).toEqual(['demir']);
 		expect(ids('loading')).toEqual(['kaya']);
 		expect(ids('unavailable')).toEqual([]);
+		expect(screen.queryByTestId('calendar-colleagues-failed')).toBeNull();
+	});
+});
+
+describe("CalendarPage — one's own calendar still loading (review 4576368852)", () => {
+	it('marks one\'s own column as loading in the split view, so nothing is "alle frei"', () => {
+		page({ initialView: 'split', loadingCalendars: ['me'] });
+		expect(screen.getByText('calendar.colleagueLoadingShort')).toBeTruthy();
 		expect(screen.queryByTestId('calendar-colleagues-failed')).toBeNull();
 	});
 });

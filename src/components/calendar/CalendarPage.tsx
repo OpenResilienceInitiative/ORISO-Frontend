@@ -285,10 +285,12 @@ export interface CalendarPageProps {
 	 */
 	failedColleagues?: string[];
 	/**
-	 * Colleagues whose calendar for the shown time is still loading:
-	 * unknown as well, marked as loading (review 4576313280).
+	 * Calendars whose shown time is still loading, one's own (`ownerId`)
+	 * or colleagues': unknown as well, marked as loading. Shared free time
+	 * shows only once every shown calendar has this range (reviews
+	 * 4576313280, 4576368852).
 	 */
-	loadingColleagues?: string[];
+	loadingCalendars?: string[];
 	onRetryColleagues?: () => void;
 	/**
 	 * Whether this week's own entries are in, which the next free hours
@@ -424,7 +426,7 @@ export const CalendarPage = ({
 	onRetry,
 	conversationsFailed = false,
 	failedColleagues = [],
-	loadingColleagues = [],
+	loadingCalendars = [],
 	onRetryColleagues,
 	freeHoursState = 'ready',
 	onRetryFreeHours,
@@ -1728,7 +1730,7 @@ export const CalendarPage = ({
 	// Shown colleagues whose calendar did not load: no "alle frei" while
 	// one is missing.
 	const failedIds = new Set(failedColleagues);
-	const loadingIds = new Set(loadingColleagues);
+	const loadingIds = new Set(loadingCalendars);
 	const unloaded = shown.filter((c) => failedIds.has(c.id));
 	// Still loading: as unknown for shared free time, but not a failure
 	// (reviews 4576313280, 4576346785).
@@ -1736,7 +1738,13 @@ export const CalendarPage = ({
 		(c) => loadingIds.has(c.id) && !failedIds.has(c.id)
 	);
 	const unknownIds = new Set([...failedIds, ...loadingIds]);
-	const unknown = shown.filter((c) => unknownIds.has(c.id)).map((c) => c.id);
+	// One's own calendar of another range on its way: the split view
+	// knows nobody to be free either (review 4576368852).
+	const ownLoading = loadingIds.has(ownerId) ? [ownerId] : [];
+	const unknown = [
+		...ownLoading,
+		...shown.filter((c) => unknownIds.has(c.id)).map((c) => c.id)
+	];
 
 	const body: React.ReactNode = (
 		<>
@@ -1812,7 +1820,10 @@ export const CalendarPage = ({
 							entries={visible}
 							busyEntries={busyEntries}
 							unavailable={unknown}
-							loading={stillLoading.map((c) => c.id)}
+							loading={[
+								...ownLoading,
+								...stillLoading.map((c) => c.id)
+							]}
 							now={now}
 							workingPlan={workingPlan}
 							onEdgeChange={gripsOn ? onEdgeChange : undefined}

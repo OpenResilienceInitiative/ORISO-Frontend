@@ -225,6 +225,26 @@ describe('CalendarSplitView — the hour the spring clock change skips (review 4
 	});
 });
 
+describe("CalendarSplitView — one's own calendar still loading (review 4576368852)", () => {
+	it('marks nothing "alle frei" and says one\'s own calendar is loading', () => {
+		const { container, getByText } = render(
+			<CalendarSplitView
+				day={MONDAY}
+				role="consultant"
+				ownerId="me"
+				colleagues={[{ id: 'kaya', displayName: 'A. Kaya' }]}
+				entries={[]}
+				unavailable={['me']}
+				loading={['me']}
+				now={new Date(2026, 10, 16, 7)}
+				workingPlan={HOURS}
+			/>
+		);
+		expect(freeSpans(container)).toEqual([]);
+		expect(getByText('calendar.colleagueLoadingShort')).toBeTruthy();
+	});
+});
+
 describe('CalendarSplitView — a drag over the skipped DST hour (review 4575941074)', () => {
 	const drag = (fromY: number, toY: number) => {
 		const onSelectRange = vi.fn();

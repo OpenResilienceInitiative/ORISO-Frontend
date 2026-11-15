@@ -802,26 +802,63 @@ describe('CalendarPageWired', () => {
 		api.apiGetColleagueCalendarEntries.mockImplementation(
 			() => new Promise((resolve) => answers.push(resolve))
 		);
+		// Only the colleagues here; one's own calendar has its own test.
+		const colleaguesLoading = () =>
+			(props.loadingCalendars ?? []).filter((id) => id !== 'me');
 		render(<CalendarPageWired />);
 		await showWeek();
 		await act(() => props.onShownColleaguesChange?.(['kaya']));
-		expect(props.loadingColleagues).toEqual(['kaya']);
+		expect(colleaguesLoading()).toEqual(['kaya']);
 		await act(async () => answers[0]([]));
-		await waitFor(() => expect(props.loadingColleagues).toEqual([]));
+		await waitFor(() => expect(colleaguesLoading()).toEqual([]));
 		// Another month: the old entries say nothing about it.
 		await act(() =>
 			props.onRangeChange?.(new Date(2027, 2, 1), new Date(2027, 2, 8))
 		);
-		expect(props.loadingColleagues).toEqual(['kaya']);
+		expect(colleaguesLoading()).toEqual(['kaya']);
 		await act(async () => answers[1]([]));
-		await waitFor(() => expect(props.loadingColleagues).toEqual([]));
+		await waitFor(() => expect(colleaguesLoading()).toEqual([]));
 		// Switched off while loading: no longer anyone's concern.
 		await act(() =>
 			props.onRangeChange?.(new Date(2027, 5, 1), new Date(2027, 5, 8))
 		);
-		expect(props.loadingColleagues).toEqual(['kaya']);
+		expect(colleaguesLoading()).toEqual(['kaya']);
 		await act(() => props.onShownColleaguesChange?.([]));
-		expect(props.loadingColleagues).toEqual([]);
+		expect(colleaguesLoading()).toEqual([]);
+	});
+
+	it('marks its own calendar as loading while another range is on its way (review 4576368852)', async () => {
+		render(<CalendarPageWired />);
+		await showWeek();
+		await waitFor(() => expect(props.loadingCalendars ?? []).toEqual([]));
+		let answer!: (list: (typeof OWN)[]) => void;
+		api.apiGetCalendarEntries.mockImplementation((from: Date) =>
+			// The loaded window around March; this week's comes apart.
+			from.getFullYear() === 2027
+				? new Promise((resolve) => {
+						answer = resolve;
+					})
+				: Promise.resolve([OWN])
+		);
+		await act(() =>
+			props.onRangeChange?.(new Date(2027, 2, 1), new Date(2027, 2, 8))
+		);
+		// The previous range's own entries say nothing about this one.
+		expect(props.loadingCalendars).toContain('me');
+		await act(async () =>
+			answer([
+				{
+					...OWN,
+					id: 'm1',
+					start: '2027-03-02T09:00:00Z',
+					end: '2027-03-02T10:00:00Z'
+				}
+			])
+		);
+		await waitFor(() =>
+			expect(props.loadingCalendars ?? []).not.toContain('me')
+		);
+		expect(props.entries.map((e) => e.id)).toContain('m1');
 	});
 
 	it('says the next free hours are unknown while this week did not load, and tries again (review 4576313283)', async () => {
