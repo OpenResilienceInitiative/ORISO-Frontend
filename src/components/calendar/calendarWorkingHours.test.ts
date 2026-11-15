@@ -130,6 +130,20 @@ describe('calendarWorkingHours', () => {
 		});
 	});
 
+	it('derives no pause from windows that touch or overlap (review 4576346792)', () => {
+		const rows = workingHoursToRows([
+			{ weekday: 1, start: '08:00', end: '12:00' },
+			{ weekday: 1, start: '12:00', end: '18:00' },
+			{ weekday: 2, start: '08:00', end: '13:00' },
+			{ weekday: 2, start: '12:00', end: '18:00' }
+		]);
+		expect(rows[0].pause.enabled).toBe(false);
+		expect(rows[1].pause.enabled).toBe(false);
+		expect([rows[0].start, rows[0].end]).toEqual(['08:00', '18:00']);
+		// Nothing blocks saving another day.
+		expect(invalidPauses(rows)).toEqual([]);
+	});
+
 	it('turns the rows back into windows and flags reversed times', () => {
 		const rows = workingHoursToRows(MON_FRI);
 		rows[0] = { ...rows[0], end: '07:00' };

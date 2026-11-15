@@ -71,6 +71,7 @@ import {
 	pauseOf,
 	withoutPause,
 	withPauseAt,
+	weeklyWithPause,
 	sameWindows,
 	windowsOn,
 	withWeekdayWindows,
@@ -906,15 +907,16 @@ export const CalendarPage = ({
 		} else {
 			const weekday = change.day.getDay();
 			const base = windowsOn(workingHours, weekday);
-			// A pause moved for every week needs a week with a pause; the
-			// day's own windows stand in when the week has none.
-			const weekly = moveEdge(
-				base.length > 0 && (!isPauseEdge(change.edge) || pauseOf(base))
-					? base
-					: current.windows,
-				change.edge,
-				change.to
-			);
+			// The weekly start and end stay what they are: a pause edge
+			// moved for every week on a day with its own hours brings only
+			// that day's pause into a week without one (review 4576346783).
+			// Without weekly hours, the day's own stand in.
+			const weekly =
+				base.length === 0
+					? moveEdge(current.windows, change.edge, change.to)
+					: isPauseEdge(change.edge) && !pauseOf(base)
+						? weeklyWithPause(base, pauseOf(moved))
+						: moveEdge(base, change.edge, change.to);
 			const previousHours = workingHours;
 			const nextHours = withWeekdayWindows(workingHours, weekday, weekly);
 			// Over UserService's limit: refuse it, never drop another day.
@@ -999,7 +1001,9 @@ export const CalendarPage = ({
 			return;
 		}
 		const base = windowsOn(workingHours, weekday);
-		const weekly = changed(pauseOf(base) ? base : current.windows);
+		// Only the pause changes in the weekly hours, never their start and
+		// end; with none, the day's own windows stand in (review 4576346783).
+		const weekly = base.length ? weeklyWithPause(base, moved) : dayWindows;
 		const previousHours = workingHours;
 		const nextHours = withWeekdayWindows(workingHours, weekday, weekly);
 		if (exceedsWindowLimit(nextHours)) {

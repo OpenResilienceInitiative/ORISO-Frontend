@@ -217,6 +217,76 @@ describe('CalendarPage — deleting or moving the pause (Frank, prototype v16)',
 	});
 });
 
+describe('CalendarPage — a pause of a day with its own hours, for every Monday (review 4576346783)', () => {
+	/** Every Monday 08:00–18:00 without a pause; this one has its own. */
+	const WEEKLY: WorkingHours = [{ weekday: 1, start: '08:00', end: '18:00' }];
+	const OWN = {
+		[MONDAY]: [
+			{ start: '09:00', end: '12:00' },
+			{ start: '13:00', end: '17:00' }
+		]
+	};
+
+	it('leaves the weekly hours as they are when the pause is deleted for every Monday', async () => {
+		const onSaveWorkingHours = vi.fn(() => Promise.resolve());
+		page({
+			workingHours: WEEKLY,
+			dayExceptions: OWN,
+			onSaveWorkingHours,
+			onSaveDayException: vi.fn(() => Promise.resolve())
+		});
+		fireEvent.keyDown(await grip('pauseStart'), { key: 'Delete' });
+		fireEvent.click(await findCy('calendar-pause-scope-week'));
+		await act(async () => {
+			fireEvent.click(await findCy('calendar-pause-delete'));
+		});
+		expect(onSaveWorkingHours).toHaveBeenCalledWith(WEEKLY, null);
+	});
+
+	it('moves only the pause into the weekly hours, keeping their start and end', async () => {
+		const onSaveWorkingHours = vi.fn(() => Promise.resolve());
+		page({
+			workingHours: WEEKLY,
+			dayExceptions: OWN,
+			onSaveWorkingHours,
+			onSaveDayException: vi.fn(() => Promise.resolve())
+		});
+		fireEvent.keyDown(await grip('pauseStart'), { key: 'Backspace' });
+		fireEvent.click(await findCy('calendar-pause-scope-week'));
+		await act(async () => {
+			fireEvent.click(await findCy('calendar-pause-move'));
+		});
+		expect(onSaveWorkingHours).toHaveBeenCalledWith(
+			[
+				{ weekday: 1, start: '08:00', end: '13:00' },
+				{ weekday: 1, start: '14:00', end: '18:00' }
+			],
+			null
+		);
+	});
+
+	it("moves a pause edge for every Monday without taking the day's start and end", async () => {
+		const onSaveWorkingHours = vi.fn(() => Promise.resolve());
+		page({
+			workingHours: WEEKLY,
+			dayExceptions: OWN,
+			onSaveWorkingHours,
+			onSaveDayException: vi.fn(() => Promise.resolve())
+		});
+		fireEvent.keyDown(await grip('pauseEnd'), { key: 'ArrowUp' });
+		await act(async () => {
+			fireEvent.click(await findCy('calendar-edge-week'));
+		});
+		expect(onSaveWorkingHours).toHaveBeenCalledWith(
+			[
+				{ weekday: 1, start: '08:00', end: '12:00' },
+				{ weekday: 1, start: '12:45', end: '18:00' }
+			],
+			null
+		);
+	});
+});
+
 describe('CalendarWorkGrip — a pause grip pulled past the other one', () => {
 	const geometry = {
 		top: 0,

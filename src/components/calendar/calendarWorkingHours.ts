@@ -440,6 +440,25 @@ export const withPauseAt = (
 			];
 
 /**
+ * A weekday's weekly windows with only the pause changed: at `pause`, or
+ * none when it is `null`. The weekly start and end stay, so a day with its
+ * own hours never hands them to every week (review 4576346783). A pause
+ * that does not fit inside leaves the week as it is.
+ */
+export const weeklyWithPause = (
+	weekly: TimeWindow[],
+	pause: TimeWindow | null
+): TimeWindow[] => {
+	if (weekly.length === 0) return weekly;
+	if (!pause) return withoutPause(weekly);
+	const fits =
+		minutesOf(pause.start) > minutesOf(weekly[0].start) &&
+		minutesOf(pause.end) < minutesOf(weekly[weekly.length - 1].end) &&
+		minutesOf(pause.end) > minutesOf(pause.start);
+	return fits ? withPauseAt(weekly, pause) : weekly;
+};
+
+/**
  * The windows with work starting (or ending) at `time`. A break inside the
  * day stays; windows the new edge passes drop out.
  */
@@ -560,8 +579,11 @@ export const workingHoursToRows = (hours: WorkingHours): WorkingDayRow[] => {
 					minutesOf(w.end) > minutesOf(latest) ? w.end : latest,
 				day[0].end
 			),
+			// A pause only where the windows leave a gap: touching or
+			// overlapping ones have none (review 4576346792).
 			pause:
-				day.length >= 2
+				day.length >= 2 &&
+				minutesOf(day[1].start) > minutesOf(day[0].end)
 					? { enabled: true, start: day[0].end, end: day[1].start }
 					: { ...DEFAULT_PAUSE, enabled: false }
 		};
