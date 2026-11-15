@@ -1727,13 +1727,16 @@ export const CalendarPage = ({
 	// (review 4575159303).
 	// Shown colleagues whose calendar did not load: no "alle frei" while
 	// one is missing.
-	const unloaded = shown.filter((c) => failedColleagues.includes(c.id));
-	// Still loading: as unknown for shared free time, but not a failure.
+	const failedIds = new Set(failedColleagues);
+	const loadingIds = new Set(loadingColleagues);
+	const unloaded = shown.filter((c) => failedIds.has(c.id));
+	// Still loading: as unknown for shared free time, but not a failure
+	// (reviews 4576313280, 4576346785).
 	const stillLoading = shown.filter(
-		(c) =>
-			loadingColleagues.includes(c.id) && !failedColleagues.includes(c.id)
+		(c) => loadingIds.has(c.id) && !failedIds.has(c.id)
 	);
-	const unknown = [...unloaded, ...stillLoading].map((c) => c.id);
+	const unknownIds = new Set([...failedIds, ...loadingIds]);
+	const unknown = shown.filter((c) => unknownIds.has(c.id)).map((c) => c.id);
 
 	const body: React.ReactNode = (
 		<>
@@ -1843,7 +1846,7 @@ export const CalendarPage = ({
 							entries={visible}
 							colleagues={colleagueById}
 							bandPeople={shown.filter(
-								(c) => !unknown.includes(c.id)
+								(c) => !unknownIds.has(c.id)
 							)}
 							unavailable={unloaded}
 							loading={stillLoading}
