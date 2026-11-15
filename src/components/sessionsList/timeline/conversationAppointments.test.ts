@@ -30,6 +30,27 @@ describe('conversation appointments', () => {
 		});
 	});
 
+	it('shows the kind the calendar shows, video when the record names none (review 4577642140)', () => {
+		const base = appointment('a', '', '');
+		const location = (kind: SessionAppointment['kind']) =>
+			appointmentToBooking({ ...base, kind }).location;
+		expect([
+			location('ONSITE'),
+			location('PHONE'),
+			location('VIDEO'),
+			location('CHAT'),
+			location(undefined),
+			location(null)
+		]).toEqual([
+			'IN_PERSON',
+			'PHONE_CALL',
+			'VIDEO_CALL',
+			'CHAT',
+			'VIDEO_CALL',
+			'VIDEO_CALL'
+		]);
+	});
+
 	it('copes with a counterpart without display name, or none', () => {
 		const base = appointment('a', '', '');
 		expect(
