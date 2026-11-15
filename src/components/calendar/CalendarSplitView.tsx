@@ -460,10 +460,12 @@ export const CalendarSplitView = ({
 						const start = atClock(selected, a);
 						const end = atClock(selected, b);
 						setSelection(null);
-						// A selection that touches the hour the spring clock
-						// change skips offers nothing: both times must keep
-						// the clock time chosen. On purpose stricter than a
-						// repeating blocker, whose occurrence may move
+						// A selection with an end inside the hour the spring
+						// clock change skips offers nothing: both times must
+						// keep the clock time chosen. A selection that only
+						// spans the gap (01:30–04:00) keeps both ends and is
+						// offered (review 4576421331). On purpose stricter
+						// than a repeating blocker, whose occurrence may move
 						// forward by the gap (review 4575941074).
 						const keeps = (date: Date, minutes: number) =>
 							date.getHours() * 60 + date.getMinutes() ===

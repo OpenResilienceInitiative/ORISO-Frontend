@@ -246,6 +246,17 @@ describe("CalendarSplitView — one's own calendar still loading (review 4576368
 });
 
 describe('CalendarSplitView — a drag over the skipped DST hour (review 4575941074)', () => {
+	// Only Europe/Berlin skips 02:00–03:00 on 28 March 2027; pin it, so
+	// the suite means the same on a runner in UTC (review 4576421331).
+	const runnerZone = process.env.TZ;
+	beforeAll(() => {
+		process.env.TZ = 'Europe/Berlin';
+	});
+	afterAll(() => {
+		if (runnerZone === undefined) delete process.env.TZ;
+		else process.env.TZ = runnerZone;
+	});
+
 	const drag = (fromY: number, toY: number) => {
 		const onSelectRange = vi.fn();
 		const { container } = render(
@@ -286,6 +297,21 @@ describe('CalendarSplitView — a drag over the skipped DST hour (review 4575941
 
 	it('offers nothing for a drag from 02:15 to 03:45', () => {
 		expect(drag(60, 132)).not.toHaveBeenCalled();
+	});
+
+	it('offers a drag from 01:30 to 04:00: it spans the gap, but both ends exist', () => {
+		// Policy (review 4576421331): only an end inside the skipped hour
+		// is refused. Both 01:30 and 04:00 exist on the clock, so the
+		// range keeps them; it lasts 1.5 hours of real time.
+		const onSelectRange = drag(24, 132);
+		expect(onSelectRange).toHaveBeenCalledTimes(1);
+		const [range] = onSelectRange.mock.calls[0];
+		expect(range.start.getDate()).toBe(28);
+		expect([range.start.getHours(), range.start.getMinutes()]).toEqual([
+			1, 30
+		]);
+		expect([range.end.getHours(), range.end.getMinutes()]).toEqual([4, 0]);
+		expect(range.end.getTime() - range.start.getTime()).toBe(90 * 60000);
 	});
 
 	it('still offers a drag from 04:00 to 05:00, after the gap', () => {
