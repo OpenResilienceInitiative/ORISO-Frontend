@@ -573,11 +573,12 @@ describe('CalendarPageWired', () => {
 				} as never)
 				.mockRejectedValueOnce(new Error('500'));
 			let saveA: Promise<void> | undefined;
+			let saveB: Promise<void> | undefined;
 			act(() => {
 				saveA = props.onSaveWorkingHours?.(hoursA, null);
+				saveB = props.onSaveWorkingHours?.(hoursB, null);
 			});
-			await act(() => props.onSaveWorkingHours?.(hoursB, null));
-			// A was stored before B but answers after it.
+			// B waits for A (review 4577586476); A answers, then B.
 			await act(async () => {
 				a.settle().resolve({
 					windows: hoursA,
@@ -585,6 +586,7 @@ describe('CalendarPageWired', () => {
 					exceptions: []
 				});
 				await saveA;
+				await saveB;
 			});
 			await act(async () => {
 				await expect(
@@ -601,18 +603,26 @@ describe('CalendarPageWired', () => {
 				a.promise as never
 			);
 			let saveA: Promise<void> | undefined;
+			let saveB: Promise<void> | undefined;
+			api.apiPutWorkingDayException.mockResolvedValueOnce({
+				date: '2026-11-18',
+				windows: [{ start: '11:00', end: '16:00' }]
+			} as never);
 			act(() => {
 				saveA = props.onSaveDayException?.('2026-11-18', [
 					{ start: '09:00', end: '16:00' }
 				]);
+				saveB = props.onSaveDayException?.('2026-11-18', [
+					{ start: '11:00', end: '16:00' }
+				]);
 			});
-			await saveDay('2026-11-18', '11:00');
 			await act(async () => {
 				a.settle().resolve({
 					date: '2026-11-18',
 					windows: [{ start: '09:00', end: '16:00' }]
 				});
 				await saveA;
+				await saveB;
 			});
 			api.apiPutWorkingDayException.mockRejectedValueOnce(
 				new Error('500')
@@ -636,18 +646,153 @@ describe('CalendarPageWired', () => {
 				older.promise as never
 			);
 			let first: Promise<void> | undefined;
+			let second: Promise<void> | undefined;
+			api.apiPutWorkingDayException.mockResolvedValueOnce({
+				date: '2026-11-18',
+				windows: [{ start: '11:00', end: '16:00' }]
+			} as never);
 			act(() => {
 				first = props.onSaveDayException?.('2026-11-18', [
 					{ start: '09:00', end: '16:00' }
 				]);
+				second = props.onSaveDayException?.('2026-11-18', [
+					{ start: '11:00', end: '16:00' }
+				]);
 			});
-			await saveDay('2026-11-18', '11:00');
 			await act(async () => {
 				older.settle().reject(new Error('409'));
 				await expect(first).rejects.toThrow('409');
+				await second;
 			});
 			expect(props.dayExceptions).toEqual({
 				'2026-11-18': [{ start: '11:00', end: '16:00' }]
+			});
+		});
+	});
+
+	describe('saves in click order (review 4577586476)', () => {
+		const deferred = () => {
+			let resolve: (value: unknown) => void = () => undefined;
+			let reject: (error: Error) => void = () => undefined;
+			const promise = new Promise((res, rej) => {
+				resolve = res;
+				reject = rej;
+			});
+			return { promise, resolve, reject };
+		};
+		const loaded = async () => {
+			render(<CalendarPageWired />);
+			await waitFor(() => expect(props.workingHours).toHaveLength(2));
+		};
+		const MONDAY_A = [{ weekday: 1, start: '07:00', end: '16:00' }];
+		const MONDAY_B = [
+			{ weekday: 1, start: '07:00', end: '16:00' },
+			{ weekday: 2, start: '08:00', end: '15:00' }
+		];
+
+		it('sends a weekly save only after the one before it has answered', async () => {
+			await loaded();
+			const a = deferred();
+			api.apiSetCalendarWorkingHours
+				.mockReturnValueOnce(a.promise as never)
+				.mockResolvedValueOnce({
+					windows: MONDAY_B,
+					holidayRegion: null,
+					exceptions: []
+				} as never);
+			let saveA: Promise<void> | undefined;
+			let saveB: Promise<void> | undefined;
+			act(() => {
+				saveA = props.onSaveWorkingHours?.(MONDAY_A, null);
+				saveB = props.onSaveWorkingHours?.(MONDAY_B, null);
+			});
+			await act(async () => undefined);
+			expect(api.apiSetCalendarWorkingHours).toHaveBeenCalledTimes(1);
+			// Both show at once; only the requests wait.
+			expect(props.workingHours).toEqual(MONDAY_B);
+			await act(async () => {
+				a.resolve({
+					windows: MONDAY_A,
+					holidayRegion: null,
+					exceptions: []
+				});
+				await saveA;
+				await saveB;
+			});
+			expect(api.apiSetCalendarWorkingHours).toHaveBeenCalledTimes(2);
+			expect(
+				api.apiSetCalendarWorkingHours.mock.calls[1][0].windows
+			).toEqual(MONDAY_B);
+			expect(props.workingHours).toEqual(MONDAY_B);
+		});
+
+		it('still sends the next weekly save when the one before it failed', async () => {
+			await loaded();
+			const a = deferred();
+			api.apiSetCalendarWorkingHours
+				.mockReturnValueOnce(a.promise as never)
+				.mockResolvedValueOnce({
+					windows: MONDAY_B,
+					holidayRegion: null,
+					exceptions: []
+				} as never);
+			let saveA: Promise<void> | undefined;
+			let saveB: Promise<void> | undefined;
+			act(() => {
+				saveA = props.onSaveWorkingHours?.(MONDAY_A, null);
+				saveB = props.onSaveWorkingHours?.(MONDAY_B, null);
+			});
+			await act(async () => {
+				a.reject(new Error('500'));
+				await expect(saveA).rejects.toThrow('500');
+				await saveB;
+			});
+			expect(api.apiSetCalendarWorkingHours).toHaveBeenCalledTimes(2);
+			expect(props.workingHours).toEqual(MONDAY_B);
+		});
+
+		it('sends the saves of one date in order, and another date at once', async () => {
+			await loaded();
+			const first = deferred();
+			api.apiPutWorkingDayException
+				.mockReturnValueOnce(first.promise as never)
+				.mockResolvedValueOnce({
+					date: '2026-11-19',
+					windows: [{ start: '10:00', end: '16:00' }]
+				} as never);
+			api.apiDeleteWorkingDayException.mockResolvedValueOnce(
+				undefined as never
+			);
+			let put: Promise<void> | undefined;
+			let removal: Promise<void> | undefined;
+			let other: Promise<void> | undefined;
+			act(() => {
+				put = props.onSaveDayException?.('2026-11-18', [
+					{ start: '09:00', end: '16:00' }
+				]);
+				removal = props.onDeleteDayException?.('2026-11-18');
+				other = props.onSaveDayException?.('2026-11-19', [
+					{ start: '10:00', end: '16:00' }
+				]);
+			});
+			await act(async () => {
+				await other;
+			});
+			expect(api.apiPutWorkingDayException).toHaveBeenCalledTimes(2);
+			expect(api.apiDeleteWorkingDayException).not.toHaveBeenCalled();
+			await act(async () => {
+				first.resolve({
+					date: '2026-11-18',
+					windows: [{ start: '09:00', end: '16:00' }]
+				});
+				await put;
+				await removal;
+			});
+			expect(api.apiDeleteWorkingDayException).toHaveBeenCalledWith(
+				'2026-11-18'
+			);
+			expect(props.dayExceptions).toEqual({
+				'2026-11-19': [{ start: '10:00', end: '16:00' }]
 			});
 		});
 	});

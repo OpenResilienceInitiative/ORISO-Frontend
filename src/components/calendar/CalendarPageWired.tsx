@@ -175,6 +175,13 @@ export const CalendarPageWired = () => {
 	const exceptionConfirmedOps = useRef<Record<string, number>>({});
 	/** Edits since mount; the first read only applies when there are none. */
 	const planEdits = useRef(0);
+	/**
+	 * Saves reach UserService in click order: one chain for the weekly
+	 * plan, one per date. Each save waits until the previous save of its
+	 * chain has settled (review 4577586476).
+	 */
+	const weeklyChain = useRef<Promise<unknown>>(Promise.resolve());
+	const dateChains = useRef<Record<string, Promise<unknown>>>({});
 
 	const range = useRef<{ from: Date; to: Date } | undefined>(undefined);
 	const shown = useRef<string[]>([]);
@@ -514,6 +521,25 @@ export const CalendarPageWired = () => {
 	// the latest save of that date. An older answer or failure changes
 	// nothing a newer operation has written (reviews 4574981869,
 	// 4574981870, 4574981875).
+	/** Sends `request` once the save before it in `chain` has settled. */
+	const after = <T,>(
+		chain: Promise<unknown> | undefined,
+		request: () => Promise<T>
+	) => {
+		const sent = (chain ?? Promise.resolve()).then(request, request);
+		return { sent, settled: sent.catch(() => undefined) };
+	};
+	const inWeeklyOrder = <T,>(request: () => Promise<T>) => {
+		const { sent, settled } = after(weeklyChain.current, request);
+		weeklyChain.current = settled;
+		return sent;
+	};
+	const inDateOrder = <T,>(date: string, request: () => Promise<T>) => {
+		const { sent, settled } = after(dateChains.current[date], request);
+		dateChains.current[date] = settled;
+		return sent;
+	};
+
 	const saveWorkingHours = async (
 		hours: WorkingHours,
 		holidayRegion: HolidayRegion | null
@@ -524,8 +550,8 @@ export const CalendarPageWired = () => {
 		const next: WorkingPlan = { ...plan, hours, holidayRegion };
 		setPlan((current) => ({ ...current, hours, holidayRegion }));
 		try {
-			const saved = await apiSetCalendarWorkingHours(
-				workingPlanToApi(next)
+			const saved = await inWeeklyOrder(() =>
+				apiSetCalendarWorkingHours(workingPlanToApi(next))
 			);
 			const stored = workingPlanFromApi(saved);
 			if (generation > weeklyConfirmedOp.current) {
@@ -595,9 +621,8 @@ export const CalendarPageWired = () => {
 		const shown = normalizeWindows(windows);
 		setException(date, shown);
 		try {
-			const saved = await apiPutWorkingDayException(
-				date,
-				exceptionWindowsToApi(windows)
+			const saved = await inDateOrder(date, () =>
+				apiPutWorkingDayException(date, exceptionWindowsToApi(windows))
 			);
 			const stored =
 				dayExceptionsFromApi(saved ? [saved] : [])[date] ?? shown;
@@ -614,7 +639,7 @@ export const CalendarPageWired = () => {
 		const { generation, latest } = ownDate(date);
 		setException(date, undefined);
 		try {
-			await apiDeleteWorkingDayException(date);
+			await inDateOrder(date, () => apiDeleteWorkingDayException(date));
 			confirmException(date, generation, undefined);
 		} catch (error) {
 			if (latest())
