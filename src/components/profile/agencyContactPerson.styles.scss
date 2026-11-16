@@ -75,8 +75,39 @@
 	}
 
 	&__chat {
-		margin-top: 4px;
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		margin-top: 6px;
+		padding: 4px 14px 4px 10px;
+		border: 1px solid var(--m3-outline, #747775);
+		border-radius: 16px;
+		background: transparent;
+		color: var(--oriso-primary-text, var(--m3-primary, $primary));
 		font-size: $font-size-tertiary;
+		font-weight: $font-weight-medium;
+		line-height: 20px;
+		cursor: pointer;
+
+		&:hover:not(:disabled) {
+			background: var(--m3-surface-container-high, #eae7e8);
+		}
+
+		&:focus-visible {
+			outline: $focus-outline;
+			outline-offset: 2px;
+		}
+
+		&:disabled {
+			cursor: default;
+			opacity: 0.6;
+		}
+	}
+
+	&__chatIcon {
+		width: 18px;
+		height: 18px;
+		fill: currentColor;
 	}
 
 	&__traegerEmail {

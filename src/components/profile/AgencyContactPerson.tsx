@@ -4,6 +4,7 @@ import type {
 	AgencyContact,
 	AgencyContactPerson as Person
 } from '../../api/apiGetAgencyContactPerson';
+import { ReactComponent as ChatIcon } from '../../resources/img/icons/modality-chat.svg';
 import { Tag } from '../tag/Tag';
 import {
 	canStartChat,
@@ -123,7 +124,7 @@ export const AgencyContactPerson = ({
 								)}
 								{chat && (
 									<button
-										className="agencyContactPerson__chat button-as-link primary"
+										className="agencyContactPerson__chat"
 										type="button"
 										onClick={() => onStartChat(person)}
 										disabled={isStartingChat}
@@ -135,6 +136,10 @@ export const AgencyContactPerson = ({
 											chatError ? errorId : undefined
 										}
 									>
+										<ChatIcon
+											className="agencyContactPerson__chatIcon"
+											aria-hidden="true"
+										/>
 										{translate(`${KEY}.startChat`)}
 									</button>
 								)}
