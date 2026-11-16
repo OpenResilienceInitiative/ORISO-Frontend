@@ -1,4 +1,4 @@
-/** Types of the add-on contract `oriso-addon/v1` (ADR-032) as the web app sees it. */
+/** Types of the add-on contract `oriso-addon/v1` (ADR-034) as the web app sees it. */
 
 export const ADDON_CONTRACT = 'oriso-addon/v1';
 

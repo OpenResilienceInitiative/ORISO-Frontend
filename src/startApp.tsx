@@ -78,7 +78,7 @@ purgeLegacyDraftStorage();
 // Parked recovery keys the login password protects expire after a week.
 purgeParkedRecoveryKeys('expired');
 
-// Add-ons render with this React instead of bundling their own (ADR-032).
+// Add-ons render with this React instead of bundling their own (ADR-034).
 installAddonShared();
 
 // React 19 uses createRoot API

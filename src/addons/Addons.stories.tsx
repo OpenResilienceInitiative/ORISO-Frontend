@@ -158,7 +158,7 @@ const meta = {
 		docs: {
 			description: {
 				component:
-					'Add-on apps (ADR-032) mounted into the slots of the web app. The registry ' +
+					'Add-on apps (ADR-034) mounted into the slots of the web app. The registry ' +
 					'and the bundle are stubbed: the bundle is a small inline form.'
 			}
 		}

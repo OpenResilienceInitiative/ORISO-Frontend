@@ -6,7 +6,7 @@ import { ADDON_CONTRACT } from './addonTypes';
 export const ADDON_SHARED_GLOBAL = '__ORISO_ADDON_SHARED__';
 
 /**
- * Add-ons use the host's React instead of bundling their own (ADR-032). Their build maps
+ * Add-ons use the host's React instead of bundling their own (ADR-034). Their build maps
  * `react`, `react-dom/client` and `react/jsx-runtime` onto this global.
  */
 export const installAddonShared = (
