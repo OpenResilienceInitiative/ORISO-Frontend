@@ -3231,14 +3231,17 @@ $cal-new-pill-hover: #4b4f51;
 .calendarHours {
 	display: flex;
 	flex-direction: column;
-	gap: 6px;
+	gap: 0;
 }
 
+// Each day is a block: the day with its hours, its pause under it, a
+// hairline below (prototype v17 `.whday`; Frank *10: more air).
 .calendarHours__row {
 	display: grid;
-	grid-template-columns: auto 1fr auto auto auto;
+	grid-template-columns: auto minmax(88px, 1fr) auto auto auto;
 	align-items: center;
-	gap: 10px;
+	gap: 12px;
+	padding-top: 10px;
 
 	&--off .calendarHours__day {
 		color: var(--m3-on-surface-variant, #444748);
@@ -3254,8 +3257,10 @@ $cal-new-pill-hover: #4b4f51;
 // the day (Frank, prototype v15).
 .calendarHours__row--pause {
 	grid-template-columns: 1fr auto auto auto;
-	margin-top: -6px;
-	padding-left: 52px;
+	padding-top: 6px;
+	padding-bottom: 10px;
+	padding-left: 64px;
+	border-bottom: 1px solid var(--m3-surface-container-highest, #e4e2e2);
 	color: var(--m3-on-surface-variant, #444748);
 	font-size: 13px;
 }
@@ -3271,6 +3276,16 @@ $cal-new-pill-hover: #4b4f51;
 		margin: 0;
 		accent-color: var(--m3-primary, #a5000a);
 	}
+}
+
+.calendarHours__holidayBox {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	margin-top: 8px;
+	padding: 4px 16px 14px;
+	border-radius: 16px;
+	background: var(--m3-surface-container-low, #f6f3f3);
 }
 
 .calendarHours__row--holidays {
@@ -3291,15 +3306,15 @@ $cal-new-pill-hover: #4b4f51;
 .calendarHours__region {
 	display: flex;
 	flex-wrap: wrap;
-	align-items: center;
-	gap: 6px 12px;
-	padding-left: 4px;
+	align-items: flex-end;
+	gap: 8px 16px;
+	padding-left: 64px;
 }
 
 .calendarHours__select {
 	display: flex;
 	flex-direction: column;
-	gap: 2px;
+	gap: 4px;
 	color: var(--m3-on-surface-variant, #444748);
 	font-size: 12px;
 }
@@ -3313,8 +3328,8 @@ $cal-new-pill-hover: #4b4f51;
 .calendarHours__time input,
 .calendarHours__time select {
 	box-sizing: border-box;
-	height: 36px;
-	padding: 0 8px;
+	height: 40px;
+	padding: 0 10px;
 	border: 1px solid var(--m3-outline, #747878);
 	border-radius: 8px;
 	background: var(--m3-surface-container-lowest, #ffffff);
@@ -3585,7 +3600,7 @@ $cal-new-pill-hover: #4b4f51;
 // "Vom Montag übernehmen" under the days (prototype v17).
 .calendarHours__copy {
 	align-self: flex-start;
-	margin: 2px 0 4px;
+	margin: 8px 0 0;
 	padding: 6px 8px;
 	font-size: 13px;
 	text-align: left;

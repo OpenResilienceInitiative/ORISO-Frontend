@@ -313,60 +313,68 @@ export const WorkingHoursDialog = ({
 				>
 					{t('calendar.workingHours.copyMonday')}
 				</button>
-				<div
-					className="calendarHours__row calendarHours__row--holidays"
-					data-cy="calendar-hours-holidays"
-				>
-					<Switch
-						checked={holidays}
-						onChange={setHolidays}
-						aria-label={t('calendar.workingHours.holidays')}
-						showIcon={false}
-					/>
-					<span className="calendarHours__holidays">
-						{t('calendar.workingHours.holidays')}
-						<small>{t('calendar.workingHours.holidaysHint')}</small>
-					</span>
-				</div>
-				{holidays && (
-					<div className="calendarHours__region">
-						<label className="calendarHours__time calendarHours__select">
-							<span>{t('calendar.holidays.region')}</span>
-							<select
-								value={region}
-								aria-invalid={regionMissing || undefined}
-								aria-describedby="calendar-hours-next-holiday"
-								onChange={(e) =>
-									setRegion(
-										isHolidayRegion(e.target.value)
-											? e.target.value
-											: ''
-									)
-								}
-								data-cy="calendar-hours-region"
-							>
-								<option value="" disabled>
-									{t('calendar.holidays.choose')}
-								</option>
-								{HOLIDAY_REGIONS.map((code) => (
-									<option key={code} value={code}>
-										{t(`calendar.holidays.regions.${code}`)}
-									</option>
-								))}
-							</select>
-						</label>
-						<p
-							id="calendar-hours-next-holiday"
-							className="calendarHours__next"
-							aria-live="polite"
-							data-cy="calendar-hours-next-holiday"
-						>
-							{regionMissing
-								? t('calendar.holidays.chooseHint')
-								: upcomingText}
-						</p>
+				{/* Holidays and the Bundesland in one box under the days
+				    (Frank *10: more air, the region choice stands out). */}
+				<div className="calendarHours__holidayBox">
+					<div
+						className="calendarHours__row calendarHours__row--holidays"
+						data-cy="calendar-hours-holidays"
+					>
+						<Switch
+							checked={holidays}
+							onChange={setHolidays}
+							aria-label={t('calendar.workingHours.holidays')}
+							showIcon={false}
+						/>
+						<span className="calendarHours__holidays">
+							{t('calendar.workingHours.holidays')}
+							<small>
+								{t('calendar.workingHours.holidaysHint')}
+							</small>
+						</span>
 					</div>
-				)}
+					{holidays && (
+						<div className="calendarHours__region">
+							<label className="calendarHours__time calendarHours__select">
+								<span>{t('calendar.holidays.region')}</span>
+								<select
+									value={region}
+									aria-invalid={regionMissing || undefined}
+									aria-describedby="calendar-hours-next-holiday"
+									onChange={(e) =>
+										setRegion(
+											isHolidayRegion(e.target.value)
+												? e.target.value
+												: ''
+										)
+									}
+									data-cy="calendar-hours-region"
+								>
+									<option value="" disabled>
+										{t('calendar.holidays.choose')}
+									</option>
+									{HOLIDAY_REGIONS.map((code) => (
+										<option key={code} value={code}>
+											{t(
+												`calendar.holidays.regions.${code}`
+											)}
+										</option>
+									))}
+								</select>
+							</label>
+							<p
+								id="calendar-hours-next-holiday"
+								className="calendarHours__next"
+								aria-live="polite"
+								data-cy="calendar-hours-next-holiday"
+							>
+								{regionMissing
+									? t('calendar.holidays.chooseHint')
+									: upcomingText}
+							</p>
+						</div>
+					)}
+				</div>
 				{invalid.length > 0 && (
 					<p className="calendarDialog__error" role="alert">
 						{t('calendar.workingHours.invalid')}
