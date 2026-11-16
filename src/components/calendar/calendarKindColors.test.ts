@@ -23,7 +23,11 @@ const css = compileString(
 				findFileUrl: (url: string) =>
 					url.startsWith('~')
 						? pathToFileURL(
-								resolve(process.cwd(), 'node_modules', url.slice(1))
+								resolve(
+									process.cwd(),
+									'node_modules',
+									url.slice(1)
+								)
 							)
 						: null
 			}
@@ -93,7 +97,9 @@ describe('calendar scrollbars (Frank, prototype v15)', () => {
 			.filter(([, , body]) =>
 				new RegExp(`${property}\\s*:\\s*${value}`).test(body)
 			)
-			.flatMap(([, selectors]) => selectors.split(',').map((x) => x.trim()));
+			.flatMap(([, selectors]) =>
+				selectors.split(',').map((x) => x.trim())
+			);
 
 	it('hides the scrollbar of the time grid and the split view, keeping them scrollable', () => {
 		const hidden = selectorsWith('scrollbar-width', 'none');
@@ -108,7 +114,6 @@ describe('calendar scrollbars (Frank, prototype v15)', () => {
 		).toBe(true);
 	});
 });
-
 
 describe('quick entry fields (Frank, prototype v15)', () => {
 	const rule = (selector: string) =>
@@ -125,7 +130,10 @@ describe('quick entry fields (Frank, prototype v15)', () => {
 		);
 	});
 
-	it('gives the quick-entry box more room above and below', () => {
-		expect(rule('.calendarQuick')).toMatch(/padding-block:\s*12px 10px/);
+	it('gives quick entry its own white box (prototype v17)', () => {
+		const box = rule('.calendarQuick');
+		expect(box).toMatch(/padding:\s*18px 12px 16px/);
+		expect(box).toMatch(/border-radius:\s*22px/);
+		expect(box).toMatch(/background:\s*var\(--m3-surface-container-lowest/);
 	});
 });

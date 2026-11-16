@@ -7149,26 +7149,33 @@
 			"close": "Schnell eintragen schließen",
 			"date": "Tag",
 			"duration": "Dauer",
-			"freeHalf": "Nächste freie halbe Stunde",
-			"freeHours": "Nächste freie Stunde",
 			"gaps": {
-				"when": "Tag und Uhrzeit",
-				"kind": "Art",
-				"who": "Gespräch"
+				"when": "Tag und Beginn",
+				"kind": "welche Art",
+				"who": "mit wem"
 			},
 			"halfHour": "30 Min",
-			"hint": "Tippen Sie Tag und Uhrzeit, wählen Sie die Art.",
+			"hint": "Art wählen, Tag und Beginn setzen oder eine freie Zeit antippen.",
 			"hour": "1 Std",
 			"kind": "Art",
-			"minutes": "{{count}} Min.",
-			"missing": "Noch offen: {{list}}",
+			"missing": "Noch offen: {{list}}.",
 			"more": "Mehr Angaben …",
-			"placeholder": "z. B. Do 14 Uhr Video",
-			"save": "Hinzufügen",
+			"placeholder": "Mit wem? z. B. „mutige_eule“ oder „Do 14 Uhr“",
+			"save": "Eintragen",
 			"slot": "Länge der freien Zeit",
 			"time": "Beginn",
 			"title": "Schnell eintragen",
-			"who": "Mit wem"
+			"who": "Mit wem",
+			"freeNext": "Nächste freie",
+			"lengths": {
+				"30": "30 Min",
+				"45": "45 Min",
+				"60": "1 Std",
+				"90": "1½ Std",
+				"120": "2 Std"
+			},
+			"ready": "{{noun}} mit {{name}}",
+			"outsideHours": "außerhalb der Arbeitszeit"
 		},
 		"search": {
 			"placeholder": "Suche",
@@ -7332,6 +7339,15 @@
 			"keys": "Eingabe wechselt die Höhe, die Pfeiltasten ziehen die Liste auf oder ein. Ziehen geht auch.",
 			"open": "Liste aufziehen"
 		},
-		"conversationsFailed": "Die Gespräche konnten nicht geladen werden, Termine lassen sich so keinem Gespräch zuordnen."
+		"conversationsFailed": "Die Gespräche konnten nicht geladen werden, Termine lassen sich so keinem Gespräch zuordnen.",
+		"nouns": {
+			"video": "Video-Termin",
+			"phone": "Telefontermin",
+			"onsite": "Termin vor Ort",
+			"chat": "Chat-Termin",
+			"group": "Gruppentermin",
+			"blocker": "Sperrzeit",
+			"busy": "Belegt"
+		}
 	}
 }

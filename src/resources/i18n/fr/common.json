@@ -7159,26 +7159,33 @@
 			"close": "Fermer la saisie rapide",
 			"date": "Jour",
 			"duration": "Durée",
-			"freeHalf": "Prochaine demi-heure libre",
-			"freeHours": "Prochaine heure libre",
 			"gaps": {
 				"when": "jour et heure",
 				"kind": "type",
 				"who": "échange"
 			},
 			"halfHour": "30 minutes",
-			"hint": "Saisissez le jour et l’heure, choisissez le type.",
+			"hint": "Choisissez le type, indiquez le jour et le début, ou touchez un créneau libre.",
 			"hour": "1 heure",
 			"kind": "Type",
-			"minutes": "{{count}} minutes",
 			"missing": "Il manque : {{list}}",
 			"more": "Plus de détails …",
-			"placeholder": "p. ex. 14 h",
+			"placeholder": "Avec qui ? p. ex. « mutige_eule » ou « 14 h »",
 			"save": "Ajouter",
 			"slot": "Durée du créneau libre",
 			"time": "Début",
 			"title": "Saisie rapide",
-			"who": "Avec qui"
+			"who": "Avec qui",
+			"freeNext": "Prochains créneaux libres",
+			"lengths": {
+				"30": "30 min",
+				"45": "45 min",
+				"60": "1 h",
+				"90": "1 h 30",
+				"120": "2 h"
+			},
+			"ready": "{{noun}} avec {{name}}",
+			"outsideHours": "en dehors des heures de travail"
 		},
 		"search": {
 			"placeholder": "Rechercher",
@@ -7342,6 +7349,15 @@
 			"keys": "Entrée change la hauteur ; les flèches ouvrent ou replient la liste. On peut aussi glisser.",
 			"open": "Ouvrir la liste"
 		},
-		"conversationsFailed": "Les conversations n’ont pas pu être chargées : les rendez-vous ne peuvent pas y être associés."
+		"conversationsFailed": "Les conversations n’ont pas pu être chargées : les rendez-vous ne peuvent pas y être associés.",
+		"nouns": {
+			"video": "Rendez-vous vidéo",
+			"phone": "Rendez-vous téléphonique",
+			"onsite": "Rendez-vous sur place",
+			"chat": "Rendez-vous par chat",
+			"group": "Rendez-vous de groupe",
+			"blocker": "Plage bloquée",
+			"busy": "Occupé"
+		}
 	}
 }

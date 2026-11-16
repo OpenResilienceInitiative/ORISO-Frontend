@@ -7074,26 +7074,33 @@
 			"close": "Close quick entry",
 			"date": "Day",
 			"duration": "Duration",
-			"freeHalf": "Next free half hour",
-			"freeHours": "Next free hour",
 			"gaps": {
-				"when": "day and time",
-				"kind": "kind",
-				"who": "conversation"
+				"when": "day and start",
+				"kind": "which kind",
+				"who": "with whom"
 			},
 			"halfHour": "30 min",
-			"hint": "Type a day and time, pick the kind.",
+			"hint": "Pick a kind, set day and start, or tap a free time.",
 			"hour": "1 h",
 			"kind": "Kind",
-			"minutes": "{{count}} min",
-			"missing": "Still missing: {{list}}",
+			"missing": "Still missing: {{list}}.",
 			"more": "More details …",
-			"placeholder": "e.g. Thu 2pm video",
+			"placeholder": "With whom? e.g. “mutige_eule” or “Thu 2pm”",
 			"save": "Add",
 			"slot": "Length of the free time",
 			"time": "Start",
 			"title": "Quick entry",
-			"who": "With whom"
+			"who": "With whom",
+			"freeNext": "Next free",
+			"lengths": {
+				"30": "30 min",
+				"45": "45 min",
+				"60": "1 h",
+				"90": "1½ h",
+				"120": "2 h"
+			},
+			"ready": "{{noun}} with {{name}}",
+			"outsideHours": "outside working hours"
 		},
 		"search": {
 			"placeholder": "Search",
@@ -7257,6 +7264,15 @@
 			"keys": "Enter changes the height; the arrow keys pull the list up or down. Dragging works too.",
 			"open": "Pull up the list"
 		},
-		"conversationsFailed": "The conversations could not be loaded, so appointments cannot be linked to one."
+		"conversationsFailed": "The conversations could not be loaded, so appointments cannot be linked to one.",
+		"nouns": {
+			"video": "Video appointment",
+			"phone": "Phone appointment",
+			"onsite": "On-site appointment",
+			"chat": "Chat appointment",
+			"group": "Group appointment",
+			"blocker": "Blocked time",
+			"busy": "Busy"
+		}
 	}
 }

@@ -7159,26 +7159,33 @@
 			"close": "Hızlı girişi kapat",
 			"date": "Tarih",
 			"duration": "Süre",
-			"freeHalf": "Sonraki boş yarım saat",
-			"freeHours": "Sonraki boş saat",
 			"gaps": {
 				"when": "gün ve saat",
 				"kind": "tür",
 				"who": "görüşme"
 			},
 			"halfHour": "30 dk",
-			"hint": "Gün ve saati yazın, türü seçin.",
+			"hint": "Tür seçin, gün ve başlangıcı belirleyin ya da boş bir zamana dokunun.",
 			"hour": "1 sa",
 			"kind": "Tür",
-			"minutes": "{{count}} dk.",
 			"missing": "Eksik: {{list}}",
 			"more": "Daha fazla bilgi …",
-			"placeholder": "örn. 14:00 video",
+			"placeholder": "Kiminle? örn. „mutige_eule“ veya „14:00“",
 			"save": "Ekle",
 			"slot": "Boş zamanın uzunluğu",
 			"time": "Başlangıç",
 			"title": "Hızlı kayıt",
-			"who": "Kiminle"
+			"who": "Kiminle",
+			"freeNext": "Sonraki boş",
+			"lengths": {
+				"30": "30 dk",
+				"45": "45 dk",
+				"60": "1 sa",
+				"90": "1,5 sa",
+				"120": "2 sa"
+			},
+			"ready": "{{name}} ile {{noun}}",
+			"outsideHours": "çalışma saatleri dışında"
 		},
 		"search": {
 			"placeholder": "Ara",
@@ -7342,6 +7349,15 @@
 			"keys": "Enter yüksekliği değiştirir; ok tuşları listeyi açar veya daraltır. Sürüklemek de olur.",
 			"open": "Listeyi yukarı çek"
 		},
-		"conversationsFailed": "Görüşmeler yüklenemedi; randevular bir görüşmeye bağlanamıyor."
+		"conversationsFailed": "Görüşmeler yüklenemedi; randevular bir görüşmeye bağlanamıyor.",
+		"nouns": {
+			"video": "Görüntülü randevu",
+			"phone": "Telefon randevusu",
+			"onsite": "Yüz yüze randevu",
+			"chat": "Sohbet randevusu",
+			"group": "Grup randevusu",
+			"blocker": "Engellenmiş zaman",
+			"busy": "Meşgul"
+		}
 	}
 }

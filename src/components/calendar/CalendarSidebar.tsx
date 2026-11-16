@@ -52,7 +52,11 @@ import {
 	type QuickKind
 } from './calendarQuickEntry';
 import { useShortTime } from './calendarShortTime';
-import type { WorkingHours, WorkingPlan } from './calendarWorkingHours';
+import {
+	isWithinWorkingHours,
+	type WorkingHours,
+	type WorkingPlan
+} from './calendarWorkingHours';
 import { CalendarEntryPeek, initialsOf } from './CalendarEntryPeek';
 import { avatarToneClass } from './calendarAvatar';
 import { calendarLocale } from './calendarLocale';
@@ -670,7 +674,6 @@ export const CalendarSidebar = ({
 						onMoreDetails={onMoreDetails}
 						autoFocus={sheet && quickOpen}
 						focusSignal={quickFocus}
-						hideTitle={sheet}
 					/>
 				</div>
 			)}
@@ -1005,15 +1008,41 @@ interface QuickEntryProps {
 	onMoreDetails?: CalendarSidebarProps['onMoreDetails'];
 	/** Focus the line when shown (the phone folds it open on demand). */
 	autoFocus?: boolean;
-	/** The folding row above already names it (phone sheet). */
-	hideTitle?: boolean;
 	/** Focus the line each time this counts up. */
 	focusSignal?: number;
 }
 
+/** How many people quick entry offers when "with whom" is still open. */
+const MAX_PEOPLE = 5;
+
 /**
- * "Do 14 Uhr Video ruhiges": day, time, kind and conversation from one line.
- * The kind chips and the free-hour pills fill in what typing leaves out.
+ * The line at 44 px, as Tag, Beginn and Dauer below it (prototype v17):
+ * on top of the shared outlined field, with the darker line of the box.
+ */
+const QUICK_FIELD_SX = {
+	'&': { marginTop: 0 },
+	'& .MuiOutlinedInput-root': {
+		'minHeight': '44px',
+		'fontSize': '14px',
+		'lineHeight': '20px',
+		'letterSpacing': '0.25px',
+		'& fieldset': { borderColor: 'var(--m3-outline, #747878)' },
+		'&:hover fieldset': { borderColor: 'var(--m3-on-surface, #1a1c1e)' }
+	},
+	'& .MuiInputBase-input': {
+		height: '20px',
+		paddingTop: '12px',
+		paddingBottom: '12px',
+		paddingLeft: '12px',
+		paddingRight: '12px'
+	}
+};
+
+/**
+ * "Do 14 Uhr Video ruhiges": day, time, kind and conversation from one line,
+ * in its own white box under "Jetzt" (prototype v17). The kind chips, the
+ * free-time pills and the people fill in what typing leaves out. Until it
+ * is used, only the line, the fields, the kinds and the free times show.
  */
 export const QuickEntry = ({
 	ownerId,
@@ -1026,7 +1055,6 @@ export const QuickEntry = ({
 	onRetryFreeHours,
 	onMoreDetails,
 	autoFocus = false,
-	hideTitle = false,
 	focusSignal
 }: QuickEntryProps) => {
 	const { t } = useTranslation();
@@ -1047,6 +1075,8 @@ export const QuickEntry = ({
 	});
 	/** "1 Std | 30 Min": how long the offered free time is. */
 	const [slot, setSlot] = useState<30 | 60>(60);
+	/** Focus is somewhere in the box: it shows its status and buttons. */
+	const [focused, setFocused] = useState(false);
 	const parsed = parseQuickEntry(text, { now, conversations, kind });
 	const range = rangeFromFields(fields);
 	const entry = {
@@ -1133,47 +1163,87 @@ export const QuickEntry = ({
 		);
 	};
 
-	let status: string;
+	// What it will be, in words (prototype v17): the range in bold, then
+	// "Video-Termin mit …" and a note when it lies outside the working
+	// hours; until then what is still open.
+	let status: React.ReactNode;
+	let ready = false;
 	if (!touched) status = t('calendar.quick.hint');
 	else if (gaps.length > 0)
-		status = t('calendar.quick.missing', {
-			list: gaps.map((g) => t(`calendar.quick.gaps.${g}`)).join(', ')
-		});
-	else
-		status = [
-			effectiveKind === 'blocker'
-				? t('calendar.blocker.menuItem')
-				: t(`calendar.kinds.${effectiveKind}`),
-			conversation?.username,
-			format(entry.start!, entry.end)
-		]
-			.filter(Boolean)
-			.join(' · ');
+		status = (
+			<span>
+				{t('calendar.quick.missing', {
+					list: gaps
+						.map((g) => t(`calendar.quick.gaps.${g}`))
+						.join(', ')
+				})}
+				{range && (
+					<>
+						{' '}
+						<strong>{format(range.start, range.end)}</strong>
+					</>
+				)}
+			</span>
+		);
+	else {
+		ready = true;
+		const outside = !isWithinWorkingHours(
+			entry.start!,
+			entry.end!,
+			workingHours
+		);
+		status = (
+			<>
+				<FacetIcon facet={effectiveKind!} />
+				<span>
+					<strong>{format(entry.start!, entry.end)}</strong>
+					<br />
+					{effectiveKind === 'blocker'
+						? t('calendar.nouns.blocker')
+						: t('calendar.quick.ready', {
+								noun: t(`calendar.nouns.${effectiveKind}`),
+								name: conversation?.username ?? ''
+							})}
+					{outside && (
+						<span data-cy="calendar-quick-outside">
+							{` · ${t('calendar.quick.outsideHours')}`}
+						</span>
+					)}
+				</span>
+			</>
+		);
+	}
 
 	const suggestions =
 		effectiveKind && effectiveKind !== 'blocker' && !entry.sessionId
-			? conversations.slice(0, 4)
+			? conversations.slice(0, MAX_PEOPLE)
 			: [];
+	const idle = !focused && !touched;
 
 	return (
 		<section
-			className="calendarSide__section calendarQuick"
+			className={`calendarQuick${idle ? ' calendarQuick--idle' : ''}`}
+			aria-label={t('calendar.quick.title')}
 			data-cy="calendar-quick"
 		>
-			{hideTitle ? null : (
-				<h2 className="calendarSide__title">
-					{t('calendar.quick.title')}
-				</h2>
-			)}
 			<form
 				className="calendarQuick__form"
 				onSubmit={(e) => {
 					e.preventDefault();
 					submit();
 				}}
+				onFocus={() => setFocused(true)}
+				onBlur={(e) => {
+					if (
+						!e.currentTarget.contains(
+							e.relatedTarget as Node | null
+						)
+					)
+						setFocused(false);
+				}}
 			>
 				{/* The same outlined field as Tag, Beginn and Dauer below
-				    (Frank, prototype v15). */}
+				    (Frank, prototype v15), 44 px high (v17). */}
 				<TextField
 					inputRef={inputRef}
 					className="calendarQuick__input"
@@ -1181,7 +1251,7 @@ export const QuickEntry = ({
 					onChange={(e) => type(e.target.value)}
 					placeholder={t('calendar.quick.placeholder')}
 					fullWidth
-					sx={[orisoTextFieldSx, { '&': { marginTop: 0 } }]}
+					sx={[orisoTextFieldSx, QUICK_FIELD_SX]}
 					inputProps={{
 						'aria-label': t('calendar.quick.title'),
 						'aria-describedby': 'calendar-quick-status',
@@ -1239,7 +1309,7 @@ export const QuickEntry = ({
 							)}
 							options={QUICK_DURATIONS.map((d) => ({
 								value: String(d),
-								label: t('calendar.quick.minutes', { count: d })
+								label: t(`calendar.quick.lengths.${d}`)
 							}))}
 							onChange={(event) =>
 								setFields((f) => ({
@@ -1278,9 +1348,7 @@ export const QuickEntry = ({
 				<div className="calendarQuick__free">
 					<div className="calendarQuick__freeHead">
 						<span className="calendarQuick__freeLabel">
-							{slot === 60
-								? t('calendar.quick.freeHours')
-								: t('calendar.quick.freeHalf')}
+							{t('calendar.quick.freeNext')}
 						</span>
 						<div
 							className="calendarQuick__slot"
@@ -1341,12 +1409,20 @@ export const QuickEntry = ({
 									}}
 									data-cy="calendar-quick-free"
 								>
+									<ScheduleIcon aria-hidden />
 									{shortTime(start, now)}
 								</button>
 							))}
 						</div>
 					)}
 				</div>
+				<p
+					id="calendar-quick-status"
+					className={`calendarQuick__status${ready ? ' calendarQuick__status--ready' : ''}`}
+					aria-live="polite"
+				>
+					{status}
+				</p>
 				{suggestions.length > 0 && (
 					<div
 						className="calendarQuick__who"
@@ -1359,24 +1435,24 @@ export const QuickEntry = ({
 								type="button"
 								className="calendarQuick__person"
 								onClick={() => setSessionId(c.sessionId)}
+								data-cy={`calendar-quick-person-${c.sessionId}`}
 							>
-								{c.username}
+								<span
+									className={`calendarQuick__personAvatar ${avatarToneClass(c.username)}`}
+									aria-hidden="true"
+								>
+									{initialsOf(c.username)}
+								</span>
+								<span>{c.username}</span>
 							</button>
 						))}
 					</div>
 				)}
-				<p
-					id="calendar-quick-status"
-					className="calendarQuick__status"
-					aria-live="polite"
-				>
-					{status}
-				</p>
 				<div className="calendarQuick__actions">
 					{onMoreDetails && (
 						<button
 							type="button"
-							className="calendarSide__textButton"
+							className="calendarQuick__more"
 							onClick={() => {
 								onMoreDetails({
 									...entry,
