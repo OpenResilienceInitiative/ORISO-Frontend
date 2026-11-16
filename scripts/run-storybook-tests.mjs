@@ -222,6 +222,12 @@ export const shouldRetryStorybookRun = (
 	);
 };
 
+/** Why a retry happened: the two infrastructure failures `shouldRetryStorybookRun` accepts. */
+export const retryReason = (capturedOutput) =>
+	looksLikeBrowserDisconnect(capturedOutput)
+		? 'disconnects'
+		: 'importCrashes';
+
 const sleep = (ms) =>
 	new Promise((resolve) => {
 		setTimeout(resolve, ms);
@@ -323,6 +329,7 @@ const runShardWithRetries = async (index, count) => {
 	const args = storybookShardArgs(index, count);
 	const label = count > 1 ? ` (shard ${index}/${count})` : '';
 	let attempt = 0;
+	const retries = { disconnects: 0, importCrashes: 0 };
 	let lastRun = await runStorybookTests(args);
 
 	while (lastRun.code !== 0 && attempt < MAX_BROWSER_DISCONNECT_RETRIES) {
@@ -335,10 +342,11 @@ const runShardWithRetries = async (index, count) => {
 				lastRun
 			)
 		) {
-			return { ...lastRun, retries: attempt };
+			return { ...lastRun, retries };
 		}
 
 		attempt += 1;
+		retries[retryReason(lastRun.capturedOutput)] += 1;
 		console.warn(
 			`Vitest lost its Storybook browser connection; retrying${label} (${attempt}/${MAX_BROWSER_DISCONNECT_RETRIES}).` +
 				(lastRun.outputTruncated
@@ -349,21 +357,29 @@ const runShardWithRetries = async (index, count) => {
 		lastRun = await runStorybookTests(args);
 	}
 
-	return { ...lastRun, retries: attempt };
+	return { ...lastRun, retries };
 };
 
 /**
- * One line per CI run that says how often Chrome had to be restarted. The
- * shards and retries exist because of browser disconnects (#1316, #1988);
- * this number is the evidence for keeping or removing them.
+ * One line per CI run that says how often a shard had to be re-run, split by
+ * cause. The shards and retries exist because of browser disconnects (#1316,
+ * #1988); this number is the evidence for keeping or removing them.
  */
 export const formatRetrySummary = (shards) => {
-	const total = shards.reduce((sum, shard) => sum + shard.retries, 0);
+	const sum = (key) =>
+		shards.reduce((total, shard) => total + shard.retries[key], 0);
+	const disconnects = sum('disconnects');
+	const importCrashes = sum('importCrashes');
 	const retried = shards
-		.filter((shard) => shard.retries > 0)
-		.map((shard) => `shard ${shard.index}: ${shard.retries}`);
+		.map((shard) => ({
+			index: shard.index,
+			count: shard.retries.disconnects + shard.retries.importCrashes
+		}))
+		.filter((shard) => shard.count > 0)
+		.map((shard) => `shard ${shard.index}: ${shard.count}`);
 	return (
-		`Storybook browser-disconnect retries: ${total} in ${shards.length} shard(s)` +
+		`Storybook infrastructure retries in ${shards.length} shard(s): ` +
+		`${disconnects} browser disconnect(s), ${importCrashes} import crash(es)` +
 		(retried.length ? ` (${retried.join(', ')})` : '')
 	);
 };

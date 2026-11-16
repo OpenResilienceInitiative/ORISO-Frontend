@@ -10,6 +10,7 @@ import {
 	DEFAULT_STORYBOOK_SHARDS,
 	createSuiteFailureTracker,
 	formatRetrySummary,
+	retryReason,
 	MAX_BROWSER_DISCONNECT_RETRIES,
 	looksLikeBrowserDisconnect,
 	looksLikeImportCrash,
@@ -325,7 +326,9 @@ if (plan.waitForParent) {
 				STORYBOOK_TEST_SHARDS: '4',
 				ORISO_SHARD_PLANS: JSON.stringify(plans),
 				ORISO_SHARD_EVENTS: eventsPath,
-				ORISO_SHARD_SENTINEL: 'retained-value'
+				ORISO_SHARD_SENTINEL: 'retained-value',
+				// Keep simulated shard results out of a real CI step summary.
+				GITHUB_STEP_SUMMARY: ''
 			},
 			stdio: ['ignore', 'pipe', 'pipe']
 		}
@@ -408,7 +411,7 @@ test(
 		assert.match(result.output, /fourth shard output/);
 		assert.match(
 			result.output,
-			/Storybook browser-disconnect retries: 0 in 4 shard\(s\)/
+			/Storybook infrastructure retries in 4 shard\(s\): 0 browser disconnect\(s\), 0 import crash\(es\)/
 		);
 	}
 );
@@ -474,7 +477,7 @@ test(
 		);
 		assert.match(
 			result.output,
-			/Storybook browser-disconnect retries: 0 in 1 shard\(s\)/
+			/Storybook infrastructure retries in 1 shard\(s\): 0 browser disconnect\(s\), 0 import crash\(es\)/
 		);
 	}
 );
@@ -612,20 +615,29 @@ test('the live child-output capture cannot erase a genuine failed suite before a
 	);
 });
 
-test('the retry summary counts every browser restart and names the shards', () => {
+test('the retry summary counts restarts by cause and names the shards', () => {
+	const none = { disconnects: 0, importCrashes: 0 };
 	assert.equal(
 		formatRetrySummary([
-			{ index: 1, retries: 0 },
-			{ index: 2, retries: 0 }
+			{ index: 1, retries: none },
+			{ index: 2, retries: none }
 		]),
-		'Storybook browser-disconnect retries: 0 in 2 shard(s)'
+		'Storybook infrastructure retries in 2 shard(s): 0 browser disconnect(s), 0 import crash(es)'
 	);
 	assert.equal(
 		formatRetrySummary([
-			{ index: 1, retries: 0 },
-			{ index: 2, retries: 2 },
-			{ index: 3, retries: 1 }
+			{ index: 1, retries: none },
+			{ index: 2, retries: { disconnects: 2, importCrashes: 0 } },
+			{ index: 3, retries: { disconnects: 0, importCrashes: 1 } }
 		]),
-		'Storybook browser-disconnect retries: 3 in 3 shard(s) (shard 2: 2, shard 3: 1)'
+		'Storybook infrastructure retries in 3 shard(s): 2 browser disconnect(s), 1 import crash(es) (shard 2: 2, shard 3: 1)'
+	);
+});
+
+test('a retry is attributed to its cause', () => {
+	assert.equal(retryReason(`${disconnect}\n`), 'disconnects');
+	assert.equal(
+		retryReason('Error: Failed to fetch dynamically imported module\n'),
+		'importCrashes'
 	);
 });
