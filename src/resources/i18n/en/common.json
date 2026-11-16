@@ -7010,6 +7010,7 @@
 			"label": "Go to a day",
 			"today": "Today",
 			"tomorrow": "Tomorrow",
+			"dayAfterTomorrow": "Day after tomorrow",
 			"nextMonday": "Next Monday",
 			"inTwoWeeks": "In two weeks",
 			"date": "Date",
@@ -7038,6 +7039,7 @@
 			"hint": "Pointing highlights, a click hides",
 			"label": "Show calendars",
 			"me": "Me",
+			"meAvatar": "me",
 			"more": "More …"
 		},
 		"proposal": {
@@ -7125,6 +7127,11 @@
 			"threeDays": "3 days"
 		},
 		"viewMenu": "View: {{view}}",
+		"header": {
+			"new": "New",
+			"newEntry": "New entry",
+			"shared": "Dates"
+		},
 		"when": {
 			"running": "now",
 			"inMinutes": "in {{count}} min",

@@ -11,10 +11,13 @@ export const ZOOM_STEPS = [18, 22, 30, 40, 56, 76, 96] as const;
 export const ZOOM_MIN = ZOOM_STEPS[0];
 export const ZOOM_MAX = ZOOM_STEPS[ZOOM_STEPS.length - 1];
 
-/** Today's heights, where zooming starts: the time grid … */
-export const GRID_SLOT_PX = 25;
-/** … and "Nebeneinander" (48 px per hour). */
-export const SPLIT_SLOT_PX = 24;
+/**
+ * Where zooming starts (prototype v17): 22 px per half hour, the second
+ * step, in the time grid …
+ */
+export const GRID_SLOT_PX = 22;
+/** … and in "Nebeneinander" alike (44 px per hour). */
+export const SPLIT_SLOT_PX = 22;
 
 /** Within the bounds, to a tenth of a pixel. */
 export const clampZoom = (px: number) =>

@@ -65,6 +65,8 @@ import type { PublicHoliday } from './calendarHolidays';
 import {
 	FC_CUSTOM_VIEWS,
 	FC_VIEW,
+	rangeTitleOf,
+	viewOfFcType,
 	type CalendarViewName
 } from './calendarViews';
 import {
@@ -78,7 +80,7 @@ import {
 	type ColleagueBand
 } from './calendarBands';
 import { CalendarEntryPeek, initialsOf } from './CalendarEntryPeek';
-import { fullCalendarLocale } from './calendarLocale';
+import { calendarLocale, fullCalendarLocale } from './calendarLocale';
 import { GRID_SLOT_PX } from './calendarZoom';
 import './calendar.styles.scss';
 
@@ -863,15 +865,36 @@ export const CalendarView = ({
 	const datesSetRef = useRef(onDatesSet);
 	datesSetRef.current = onDatesSet;
 	const lastRange = useRef('');
+	// The title names the days shown, "16.–20. November 2026" for the work
+	// week (prototype v17), not FullCalendar's "November 2026".
+	const titleLocale = calendarLocale(i18n.language);
 	const datesSet = useCallback(
-		(info: { start: Date; end: Date; view: { title: string } }) => {
-			const key = `${info.start.getTime()}-${info.end.getTime()}-${info.view.title}`;
+		(info: {
+			start: Date;
+			end: Date;
+			view: {
+				type: string;
+				title: string;
+				currentStart: Date;
+				currentEnd: Date;
+			};
+		}) => {
+			const shown = viewOfFcType(info.view.type);
+			const title = shown
+				? rangeTitleOf(
+						shown,
+						info.view.currentStart,
+						info.view.currentEnd,
+						titleLocale
+					)
+				: info.view.title;
+			const key = `${info.start.getTime()}-${info.end.getTime()}-${title}`;
 			if (key === lastRange.current) return;
 			lastRange.current = key;
 			setShownRange({ start: info.start, end: info.end });
-			datesSetRef.current?.(info.view.title, info.start, info.end);
+			datesSetRef.current?.(title, info.start, info.end);
 		},
-		[]
+		[titleLocale]
 	);
 
 	// One click opens the actions, two open "Verschieben" straight away.

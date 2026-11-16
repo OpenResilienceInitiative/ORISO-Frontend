@@ -7095,6 +7095,7 @@
 			"label": "Aller à un jour",
 			"today": "Aujourd’hui",
 			"tomorrow": "Demain",
+			"dayAfterTomorrow": "Après-demain",
 			"nextMonday": "Lundi prochain",
 			"inTwoWeeks": "Dans deux semaines",
 			"date": "Jour choisi",
@@ -7123,6 +7124,7 @@
 			"hint": "Survoler met en évidence, un clic masque",
 			"label": "Afficher des calendriers",
 			"me": "Moi",
+			"meAvatar": "moi",
 			"more": "Autres …"
 		},
 		"proposal": {
@@ -7210,6 +7212,11 @@
 			"threeDays": "3 jours"
 		},
 		"viewMenu": "Vue : {{view}}",
+		"header": {
+			"new": "Nouveau",
+			"newEntry": "Nouvelle entrée",
+			"shared": "Rendez-vous"
+		},
 		"when": {
 			"running": "en cours",
 			"inMinutes": "dans {{count}} min",

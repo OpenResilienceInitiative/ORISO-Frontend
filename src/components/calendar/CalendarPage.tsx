@@ -29,13 +29,9 @@ import AddIcon from '@mui/icons-material/Add';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
-import FullscreenIcon from '@mui/icons-material/Fullscreen';
-import FullscreenExitIcon from '@mui/icons-material/FullscreenExit';
+import OpenInFullIcon from '@mui/icons-material/OpenInFull';
+import CloseFullscreenIcon from '@mui/icons-material/CloseFullscreen';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import RemoveIcon from '@mui/icons-material/Remove';
-import CalendarMonthOutlinedIcon from '@mui/icons-material/CalendarMonthOutlined';
-import ViewAgendaOutlinedIcon from '@mui/icons-material/ViewAgendaOutlined';
-import ViewWeekOutlinedIcon from '@mui/icons-material/ViewWeekOutlined';
 import { M3Snackbar } from '../m3Snackbar/M3Snackbar';
 import {
 	DEFAULT_VISIBILITY,
@@ -63,6 +59,7 @@ import {
 	DESKTOP_VIEWS,
 	FC_VIEW,
 	VIEW_DIGIT,
+	rangeTitleOf,
 	type CalendarViewName,
 	type ViewSwitcherStyle
 } from './calendarViews';
@@ -155,9 +152,11 @@ import {
 	SettingsMenuContent,
 	SlotMenuContent,
 	ViewMenuContent,
+	VIEW_ICON,
 	type SlotChoice
 } from './calendarMenus';
 import { initialsOf } from './CalendarEntryPeek';
+import { avatarToneClass } from './calendarAvatar';
 import { HoverScrollArrows } from '../hoverScrollArrows/HoverScrollArrows';
 import { AppointmentDialog } from './AppointmentDialog';
 import { BlockerDialog } from './BlockerDialog';
@@ -410,6 +409,9 @@ const addDays = (date: Date, days: number) => {
 	return next;
 };
 
+/** Below this stage width the header title shrinks from 26 to 22 px. */
+const NARROW_STAGE_PX = 640;
+
 /** Tooltips of the switch and the arrows show at once (Frank). */
 const QuickTip = ({
 	title,
@@ -422,12 +424,6 @@ const QuickTip = ({
 		{children}
 	</Tooltip>
 );
-
-const VIEW_ICON: Partial<Record<CalendarViewName, React.ReactNode>> = {
-	month: <CalendarMonthOutlinedIcon fontSize="small" />,
-	list: <ViewAgendaOutlinedIcon fontSize="small" />,
-	split: <ViewWeekOutlinedIcon fontSize="small" />
-};
 
 export const CalendarPage = ({
 	role,
@@ -790,18 +786,12 @@ export const CalendarPage = ({
 	const locale = calendarLocale(i18n.language);
 	const rangeTitle = !split
 		? title
-		: splitDays === 1
-			? new Intl.DateTimeFormat(locale, {
-					weekday: 'long',
-					day: 'numeric',
-					month: 'long',
-					year: 'numeric'
-				}).format(anchorDate)
-			: new Intl.DateTimeFormat(locale, {
-					day: 'numeric',
-					month: 'long',
-					year: 'numeric'
-				}).formatRange(anchorDate, addDays(anchorDate, splitDays - 1));
+		: rangeTitleOf(
+				splitDays === 1 ? 'day' : 'threeDays',
+				anchorDate,
+				addDays(anchorDate, splitDays),
+				locale
+			);
 
 	// --- Fullscreen: Escape leaves it, unless a menu or dialog takes it ---
 	useEffect(() => {
@@ -1746,9 +1736,11 @@ export const CalendarPage = ({
 				))}
 			</div>
 		) : (
+			// A white pill: the view's icon, its name and ▾ (prototype v17);
+			// on the phone and the tablet the icon alone.
 			<button
 				type="button"
-				className="calendarStage__pillButton"
+				className="calendarStage__viewButton"
 				aria-haspopup="menu"
 				aria-expanded={menu?.type === 'view'}
 				aria-label={t('calendar.viewMenu', {
@@ -1757,77 +1749,111 @@ export const CalendarPage = ({
 				onClick={openAt('view')}
 				data-cy="calendar-view-menu"
 			>
-				{t(`calendar.views.${view}`)}
-				<ArrowDropDownIcon fontSize="small" />
+				<span className="calendarStage__viewIcon" aria-hidden="true">
+					{VIEW_ICON[view]}
+				</span>
+				<span className="calendarStage__viewLabel">
+					{t(`calendar.views.${view}`)}
+				</span>
+				<ArrowDropDownIcon fontSize="small" aria-hidden />
 			</button>
 		);
 
+	// "Meine Termine", or "Termine" once colleagues are shown; with "ich"
+	// and every shown colleague as avatars in front and ▾ after it, one
+	// button that opens "Kalender anzeigen" (prototype v17).
+	const headerTitle =
+		shown.length > 0
+			? t('calendar.header.shared')
+			: t('navigation.booking.events');
 	const header = (
 		<header className="calendarStage__header">
-			{shown.length > 0 && (
-				<button
-					type="button"
-					className="calendarStage__avatars"
-					aria-label={t('calendar.people.label')}
-					onClick={openAt('people')}
-				>
-					{shown.slice(0, 4).map((c) => (
-						<span
-							key={c.id}
-							className="calendarStage__avatar"
-							aria-hidden="true"
-						>
-							{initialsOf(c.displayName)}
-						</span>
-					))}
-				</button>
-			)}
-			<h1 className="calendarStage__title">
-				{t('navigation.booking.events')}
-			</h1>
 			{consultant && onCreate && (
-				<QuickTip title={t('calendar.create')}>
+				<QuickTip title={t('calendar.header.newEntry')}>
 					<button
 						type="button"
 						className="calendarStage__create"
-						aria-label={t('calendar.create')}
+						aria-label={t('calendar.header.newEntry')}
 						onClick={() => setDialog({ type: 'appointment' })}
 						data-cy="calendar-create"
 					>
-						<AddIcon fontSize="small" />
+						<AddIcon aria-hidden />
+						<span
+							className="calendarStage__createLabel"
+							aria-hidden="true"
+						>
+							{t('calendar.header.new')}
+						</span>
 					</button>
 				</QuickTip>
 			)}
+			<h1 className="calendarStage__heading">
+				{consultant ? (
+					<button
+						type="button"
+						className="calendarStage__who"
+						aria-haspopup="menu"
+						aria-expanded={menu?.type === 'people'}
+						aria-label={`${headerTitle}, ${t('calendar.people.label')}`}
+						onClick={openAt('people')}
+						data-cy="calendar-who"
+					>
+						<span
+							className="calendarStage__avatars"
+							aria-hidden="true"
+						>
+							<span className="calendarStage__avatar calAvatar--me">
+								{t('calendar.people.meAvatar')}
+							</span>
+							{shown.map((c) => (
+								<span
+									key={c.id}
+									className={`calendarStage__avatar ${avatarToneClass(c.displayName)}`}
+								>
+									{initialsOf(c.displayName)}
+								</span>
+							))}
+						</span>
+						<span className="calendarStage__title">
+							{headerTitle}
+						</span>
+						<ArrowDropDownIcon
+							className="calendarStage__caret"
+							aria-hidden
+						/>
+					</button>
+				) : (
+					<span className="calendarStage__title">{headerTitle}</span>
+				)}
+			</h1>
 			<div className="calendarStage__headerEnd">
 				{viewSwitch}
-				{!compact && (
-					<QuickTip
-						title={
+				<QuickTip
+					title={
+						fullscreen
+							? t('calendar.fullscreenExit')
+							: t('calendar.fullscreen')
+					}
+				>
+					<button
+						type="button"
+						className="calendarStage__round"
+						aria-label={
 							fullscreen
 								? t('calendar.fullscreenExit')
 								: t('calendar.fullscreen')
 						}
+						aria-pressed={fullscreen}
+						onClick={() => setFullscreen((on) => !on)}
+						data-cy="calendar-fullscreen"
 					>
-						<button
-							type="button"
-							className="calendarStage__round"
-							aria-label={
-								fullscreen
-									? t('calendar.fullscreenExit')
-									: t('calendar.fullscreen')
-							}
-							aria-pressed={fullscreen}
-							onClick={() => setFullscreen((on) => !on)}
-							data-cy="calendar-fullscreen"
-						>
-							{fullscreen ? (
-								<FullscreenExitIcon />
-							) : (
-								<FullscreenIcon />
-							)}
-						</button>
-					</QuickTip>
-				)}
+						{fullscreen ? (
+							<CloseFullscreenIcon />
+						) : (
+							<OpenInFullIcon />
+						)}
+					</button>
+				</QuickTip>
 				{consultant && (
 					<QuickTip title={t('calendar.settings.label')}>
 						<button
@@ -1847,6 +1873,8 @@ export const CalendarPage = ({
 		</header>
 	);
 
+	// The date bar: a filled pill (‹ · Heute ▾ · ›) with "Heute" in light
+	// pink, the range title, then − and + (prototype v17).
 	const toolbar = (
 		<div className="calendarStage__toolbar">
 			<div className="calendarStage__nav" role="group">
@@ -1861,27 +1889,29 @@ export const CalendarPage = ({
 						<ChevronLeftIcon fontSize="small" />
 					</button>
 				</QuickTip>
-				<button
-					type="button"
-					className="calendarStage__today"
-					onClick={() => goTo(now)}
-					data-cy="calendar-today"
-				>
-					{t('calendar.today')}
-				</button>
-				<QuickTip title={t('calendar.jump.label')}>
+				<span className="calendarStage__todayPair">
 					<button
 						type="button"
-						className="calendarStage__navButton calendarStage__navButton--drop"
-						aria-label={t('calendar.jump.label')}
-						aria-haspopup="dialog"
-						aria-expanded={menu?.type === 'jump'}
-						onClick={openAt('jump')}
-						data-cy="calendar-jump"
+						className="calendarStage__today"
+						onClick={() => goTo(now)}
+						data-cy="calendar-today"
 					>
-						<ArrowDropDownIcon fontSize="small" />
+						{t('calendar.today')}
 					</button>
-				</QuickTip>
+					<QuickTip title={t('calendar.jump.label')}>
+						<button
+							type="button"
+							className="calendarStage__jump"
+							aria-label={t('calendar.jump.label')}
+							aria-haspopup="dialog"
+							aria-expanded={menu?.type === 'jump'}
+							onClick={openAt('jump')}
+							data-cy="calendar-jump"
+						>
+							<ArrowDropDownIcon fontSize="small" />
+						</button>
+					</QuickTip>
+				</span>
 				<QuickTip title={t('calendar.next')}>
 					<button
 						type="button"
@@ -1897,6 +1927,49 @@ export const CalendarPage = ({
 			<h2 className="calendarStage__range" aria-live="polite">
 				{rangeTitle}
 			</h2>
+			{timeGridShown && (
+				<div
+					className="calendarStage__segmented calendarStage__zoom"
+					role="group"
+					aria-label={t('calendar.zoomLabel')}
+					data-cy="calendar-zoom"
+				>
+					{(
+						[
+							[-1, 'calendar.zoomOut', '\u2212'],
+							[1, 'calendar.zoomIn', '+']
+						] as const
+					).map(([direction, key, glyph]) => {
+						const atBound =
+							direction < 0
+								? slotPx <= ZOOM_MIN
+								: slotPx >= ZOOM_MAX;
+						return (
+							<QuickTip key={key} title={t(key)}>
+								{/* A disabled button gets no hover: the tip sits on the span. */}
+								<span className="calendarStage__zoomTip">
+									<button
+										type="button"
+										className="calendarStage__segment calendarStage__zoomButton"
+										aria-label={t(key)}
+										disabled={atBound}
+										onClick={() =>
+											zoomTo(zoomStep(slotPx, direction))
+										}
+										data-cy={
+											direction < 0
+												? 'calendar-zoom-out'
+												: 'calendar-zoom-in'
+										}
+									>
+										<span aria-hidden="true">{glyph}</span>
+									</button>
+								</span>
+							</QuickTip>
+						);
+					})}
+				</div>
+			)}
 			{split && (
 				<div
 					className="calendarStage__segmented"
@@ -1917,49 +1990,6 @@ export const CalendarPage = ({
 								: t('calendar.split.threeDays')}
 						</button>
 					))}
-				</div>
-			)}
-			{timeGridShown && (
-				<div
-					className="calendarStage__nav calendarStage__zoom"
-					role="group"
-					aria-label={t('calendar.zoomLabel')}
-					data-cy="calendar-zoom"
-				>
-					{(
-						[
-							[-1, 'calendar.zoomOut', <RemoveIcon key="out" />],
-							[1, 'calendar.zoomIn', <AddIcon key="in" />]
-						] as const
-					).map(([direction, key, icon]) => {
-						const atBound =
-							direction < 0
-								? slotPx <= ZOOM_MIN
-								: slotPx >= ZOOM_MAX;
-						return (
-							<QuickTip key={key} title={t(key)}>
-								{/* A disabled button gets no hover: the tip sits on the span. */}
-								<span className="calendarStage__zoomTip">
-									<button
-										type="button"
-										className="calendarStage__navButton"
-										aria-label={t(key)}
-										disabled={atBound}
-										onClick={() =>
-											zoomTo(zoomStep(slotPx, direction))
-										}
-										data-cy={
-											direction < 0
-												? 'calendar-zoom-out'
-												: 'calendar-zoom-in'
-										}
-									>
-										{icon}
-									</button>
-								</span>
-							</QuickTip>
-						);
-					})}
 				</div>
 			)}
 		</div>
@@ -2367,7 +2397,13 @@ export const CalendarPage = ({
 			)}
 			<section
 				ref={stageRef}
-				className="calendarStage"
+				className={
+					// A narrow stage next to the list takes a smaller title
+					// (prototype v17: 22 px under an 1100 px wide app).
+					!compact && stageWidth > 0 && stageWidth < NARROW_STAGE_PX
+						? 'calendarStage calendarStage--narrow'
+						: 'calendarStage'
+				}
 				aria-label={t('navigation.booking.events')}
 				data-split={split || undefined}
 				// The sheet all the way up works like a dialog: what it

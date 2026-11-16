@@ -7062,6 +7062,7 @@
 			"label": "ናብ መዓልቲ ኪድ",
 			"today": "ሎሚ",
 			"tomorrow": "ጽባሕ",
+			"dayAfterTomorrow": "ድሕሪ ጽባሕ",
 			"nextMonday": "ዝመጽእ ሰኑይ",
 			"inTwoWeeks": "ድሕሪ ክልተ ሰሙን",
 			"date": "ዕለት",
@@ -7090,6 +7091,7 @@
 			"hint": "ምጥቋም የጉልሕ፣ ጠውቕ ይሓብእ",
 			"label": "ካላንዳራት ኣርኢ",
 			"me": "ኣነ",
+			"meAvatar": "ኣነ",
 			"more": "ካልኦት …"
 		},
 		"proposal": {
@@ -7177,6 +7179,11 @@
 			"threeDays": "3 መዓልትታት"
 		},
 		"viewMenu": "ኣቀራርባ፦ {{view}}",
+		"header": {
+			"new": "ሓድሽ",
+			"newEntry": "ሓድሽ መእተዊ",
+			"shared": "ቆጸራታት"
+		},
 		"when": {
 			"running": "ይካየድ ኣሎ",
 			"inMinutes": "ድሕሪ {{count}} ደቒቕ",

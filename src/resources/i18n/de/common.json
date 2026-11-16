@@ -7085,6 +7085,7 @@
 			"label": "Zu einem Tag springen",
 			"today": "Heute",
 			"tomorrow": "Morgen",
+			"dayAfterTomorrow": "Übermorgen",
 			"nextMonday": "Nächster Montag",
 			"inTwoWeeks": "In zwei Wochen",
 			"date": "Datum",
@@ -7113,6 +7114,7 @@
 			"hint": "Zeigen hebt hervor, Klick blendet aus",
 			"label": "Kalender anzeigen",
 			"me": "Ich",
+			"meAvatar": "ich",
 			"more": "Weitere …"
 		},
 		"proposal": {
@@ -7200,6 +7202,11 @@
 			"threeDays": "3 Tage"
 		},
 		"viewMenu": "Ansicht: {{view}}",
+		"header": {
+			"new": "Neu",
+			"newEntry": "Neuer Eintrag",
+			"shared": "Termine"
+		},
 		"when": {
 			"running": "läuft",
 			"inMinutes": "in {{count}} Min.",

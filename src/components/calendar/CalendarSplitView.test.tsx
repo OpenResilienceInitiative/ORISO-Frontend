@@ -11,7 +11,10 @@ import {
 	vi
 } from 'vite-plus/test';
 import type { CalendarEntry } from './calendarModel';
-import { CalendarSplitView } from './CalendarSplitView';
+import { CalendarSplitView, SPLIT_HOUR_PX } from './CalendarSplitView';
+
+/** Pixels for `hours` hours down the axis at the starting zoom. */
+const px = (hours: number) => hours * SPLIT_HOUR_PX;
 
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({
@@ -64,10 +67,10 @@ describe('CalendarSplitView — "alle frei"', () => {
 				workingPlan={HOURS}
 			/>
 		);
-		// 08–09 and 12–16, at 48 px an hour from 07:00; not 08–16.
+		// 08–09 and 12–16, from 07:00; not 08–16.
 		expect(freeSpans(container)).toEqual([
-			['48px', '48px'],
-			['240px', '192px']
+			[`${px(1)}px`, `${px(1)}px`],
+			[`${px(5)}px`, `${px(4)}px`]
 		]);
 	});
 
@@ -125,8 +128,8 @@ describe('CalendarSplitView — clock time on a daylight-saving day (reviews 457
 		const shown = container.querySelector<HTMLElement>(
 			'[data-cy="calendar-split-entry-a1"]'
 		) as HTMLElement;
-		// 48 px an hour from 07:00: 10:00 is 144 px, not 96 px (09:00).
-		expect(shown.style.top).toBe('144px');
+		// Three hours below 07:00 is 10:00, not two (09:00).
+		expect(shown.style.top).toBe(`${px(3)}px`);
 		const labels = Array.from(
 			container.querySelectorAll('.calendarSplit__hour')
 		).map((h) => h.textContent);
@@ -157,8 +160,8 @@ describe('CalendarSplitView — clock time on a daylight-saving day (reviews 457
 		) as HTMLElement;
 		body.getBoundingClientRect = () =>
 			({ top: 0, left: 0, width: 200, height: 672 }) as DOMRect;
-		fireEvent.pointerDown(body, { button: 0, clientY: 144 });
-		fireEvent.pointerUp(body, { clientY: 144 });
+		fireEvent.pointerDown(body, { button: 0, clientY: px(3) });
+		fireEvent.pointerUp(body, { clientY: px(3) });
 		const [range] = onSelectRange.mock.calls[0];
 		expect([range.start.getHours(), range.start.getMinutes()]).toEqual([
 			10, 0
@@ -209,13 +212,13 @@ describe('CalendarSplitView — the hour the spring clock change skips (review 4
 			container.querySelectorAll('.calendarSplit__hour')
 		).map((h) => h.textContent);
 		expect(labels[0]).toBe('01:00');
-		// 02:30 is 1.5 hours below 01:00, 48 px an hour.
-		fireEvent.pointerDown(body, { button: 0, clientY: 72 });
-		fireEvent.pointerUp(body, { clientY: 72 });
+		// 02:30 is 1.5 hours below 01:00.
+		fireEvent.pointerDown(body, { button: 0, clientY: px(1.5) });
+		fireEvent.pointerUp(body, { clientY: px(1.5) });
 		expect(onSelectRange).not.toHaveBeenCalled();
 		// 04:00, after the gap, still opens the menu with an hour.
-		fireEvent.pointerDown(body, { button: 0, clientY: 144 });
-		fireEvent.pointerUp(body, { clientY: 144 });
+		fireEvent.pointerDown(body, { button: 0, clientY: px(3) });
+		fireEvent.pointerUp(body, { clientY: px(3) });
 		expect(onSelectRange).toHaveBeenCalledTimes(1);
 		const [range] = onSelectRange.mock.calls[0];
 		expect([range.start.getHours(), range.start.getMinutes()]).toEqual([
@@ -257,7 +260,7 @@ describe('CalendarSplitView — a drag over the skipped DST hour (review 4575941
 		else process.env.TZ = runnerZone;
 	});
 
-	const drag = (fromY: number, toY: number) => {
+	const drag = (fromHours: number, toHours: number) => {
 		const onSelectRange = vi.fn();
 		const { container } = render(
 			<CalendarSplitView
@@ -284,26 +287,26 @@ describe('CalendarSplitView — a drag over the skipped DST hour (review 4575941
 		) as HTMLElement;
 		body.getBoundingClientRect = () =>
 			({ top: 0, left: 0, width: 200, height: 1104 }) as DOMRect;
-		// The axis starts at 01:00, 48 px an hour.
-		fireEvent.pointerDown(body, { button: 0, clientY: fromY });
-		fireEvent.pointerMove(body, { clientY: toY });
-		fireEvent.pointerUp(body, { clientY: toY });
+		// The axis starts at 01:00; the drag runs `fromHours` to `toHours` below it.
+		fireEvent.pointerDown(body, { button: 0, clientY: px(fromHours) });
+		fireEvent.pointerMove(body, { clientY: px(toHours) });
+		fireEvent.pointerUp(body, { clientY: px(toHours) });
 		return onSelectRange;
 	};
 
 	it('offers nothing for a drag that starts at 02:30 and ends at 04:00', () => {
-		expect(drag(72, 144)).not.toHaveBeenCalled();
+		expect(drag(1.5, 3)).not.toHaveBeenCalled();
 	});
 
 	it('offers nothing for a drag from 02:15 to 03:45', () => {
-		expect(drag(60, 132)).not.toHaveBeenCalled();
+		expect(drag(1.25, 2.75)).not.toHaveBeenCalled();
 	});
 
 	it('offers a drag from 01:30 to 04:00: it spans the gap, but both ends exist', () => {
 		// Policy (review 4576421331): only an end inside the skipped hour
 		// is refused. Both 01:30 and 04:00 exist on the clock, so the
 		// range keeps them; it lasts 1.5 hours of real time.
-		const onSelectRange = drag(24, 132);
+		const onSelectRange = drag(0.5, 2.75);
 		expect(onSelectRange).toHaveBeenCalledTimes(1);
 		const [range] = onSelectRange.mock.calls[0];
 		expect(range.start.getDate()).toBe(28);
@@ -315,7 +318,7 @@ describe('CalendarSplitView — a drag over the skipped DST hour (review 4575941
 	});
 
 	it('still offers a drag from 04:00 to 05:00, after the gap', () => {
-		const onSelectRange = drag(144, 192);
+		const onSelectRange = drag(3, 4);
 		expect(onSelectRange).toHaveBeenCalledTimes(1);
 		const [range] = onSelectRange.mock.calls[0];
 		expect([range.start.getHours(), range.end.getHours()]).toEqual([4, 5]);
@@ -419,9 +422,9 @@ describe('CalendarSplitView — entries outside 07:00–21:00 (review 4575253322
 			container.querySelector<HTMLElement>(
 				`[data-cy="calendar-split-entry-${id}"]`
 			)?.style.top;
-		// The axis starts at 05:00 and runs to 23:00, 48 px an hour.
-		expect(top('early')).toBe('24px');
-		expect(top('late')).toBe(`${17 * 48}px`);
+		// The axis starts at 05:00 and runs to 23:00.
+		expect(top('early')).toBe(`${px(0.5)}px`);
+		expect(top('late')).toBe(`${px(17)}px`);
 	});
 });
 
@@ -459,7 +462,7 @@ describe('CalendarSplitView — proposals outside 07:00–21:00 (review 45816408
 
 	it.each([
 		['before 07:00', 5, 6, '0px'],
-		['after 21:00', 22, 23, `${15 * 48}px`]
+		['after 21:00', 22, 23, `${px(15)}px`]
 	])(
 		'widens the axis to a proposal %s, so it is drawn at its time',
 		(_when, from, to, top) => {

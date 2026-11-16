@@ -1338,6 +1338,14 @@ $cal-avatar-tones: (#2f5d5a, #7a0e2a, #4b4f7a, #6d3d63, #7a5a1e, #36576e);
 
 // --- Stage: header, toolbar, people bar, grid ---
 
+// The stage card's light pink edge (prototype v17 `--stage-border`); no
+// M3 token has this tone.
+$cal-stage-border: #f3d9d5;
+
+// The dark grey of "+ Neu" (prototype v17 `.addpill`).
+$cal-new-pill: #5f6365;
+$cal-new-pill-hover: #4b4f51;
+
 .calendarStage {
 	display: flex;
 	flex: 1;
@@ -1346,13 +1354,15 @@ $cal-avatar-tones: (#2f5d5a, #7a0e2a, #4b4f7a, #6d3d63, #7a5a1e, #36576e);
 	box-sizing: border-box;
 	min-width: 0;
 	min-height: 0;
-	padding: 16px 20px 20px;
-	border-radius: 24px;
+	padding: 14px 18px;
+	border: 1.5px solid $cal-stage-border;
+	border-radius: 32px;
 	background: var(--m3-surface-container-lowest, #ffffff);
 
+	// Phone and tablet: the stage fills the screen, still a card.
 	.calendarPage--compact & {
-		padding: 12px;
-		border-radius: 0;
+		padding: 10px;
+		border-radius: 24px;
 	}
 
 	// Room under the grid for the sheet when it peeks; the sheet is only
@@ -1362,101 +1372,193 @@ $cal-avatar-tones: (#2f5d5a, #7a0e2a, #4b4f7a, #6d3d63, #7a5a1e, #36576e);
 	}
 }
 
+// "+ Neu", who is shown with the title, then the view and the round
+// buttons; a thin line below (prototype v17).
 .calendarStage__header {
 	display: flex;
+	flex-wrap: wrap;
 	align-items: center;
 	gap: 10px;
 	min-height: 48px;
+	padding-bottom: 10px;
+	border-bottom: 1px solid var(--m3-surface-container-highest, #e4e2e2);
+}
+
+// "+ Neu": a dark grey pill, first in the header.
+.calendarStage__create {
+	display: inline-flex;
+	flex: none;
+	align-items: center;
+	gap: 6px;
+	height: 48px;
+	padding: 0 14px 0 12px;
+	border: none;
+	border-radius: 999px;
+	background: $cal-new-pill;
+	color: #ffffff;
+	font: inherit;
+	font-weight: 600;
+	cursor: pointer;
+
+	&:hover {
+		background: $cal-new-pill-hover;
+	}
+
+	&:focus-visible {
+		@include control-focus-ring(2px);
+	}
+}
+
+.calendarStage__heading {
+	display: flex;
+	min-width: 0;
+	margin: 0;
+	font: inherit;
+}
+
+// "ich", the shown colleagues, the title and ▾: one button that opens
+// "Kalender anzeigen".
+.calendarStage__who {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	min-width: 0;
+	padding: 4px 10px 4px 4px;
+	border: none;
+	border-radius: 16px;
+	background: none;
+	color: var(--m3-on-surface, #1b1b1c);
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
+
+	&:hover,
+	&[aria-expanded='true'] {
+		background: var(--m3-hover-layer, #f9eff0);
+	}
+
+	&:focus-visible {
+		@include control-focus-ring(0);
+	}
 }
 
 .calendarStage__avatars {
 	display: inline-flex;
 	flex-shrink: 0;
-	padding: 0;
-	border: none;
-	background: transparent;
-	cursor: pointer;
 
 	.calendarStage__avatar {
-		box-shadow: 0 0 0 2px var(--m3-surface-container-lowest, #ffffff);
+		width: 52px;
+		height: 52px;
+		box-shadow: 0 0 0 3px var(--m3-surface-container-lowest, #ffffff);
+		font-size: 15px;
+		font-weight: 700;
+		letter-spacing: 0.02em;
 
 		& + .calendarStage__avatar {
-			margin-left: -6px;
+			margin-left: -14px;
 		}
-	}
-
-	&:focus-visible {
-		@include control-focus-ring(0);
-		border-radius: 12px;
 	}
 }
 
 .calendarStage__title {
 	overflow: hidden;
 	min-width: 0;
-	margin: 0;
-	font-size: 22px;
+	font-size: 26px;
 	font-weight: 500;
-	line-height: 28px;
+	letter-spacing: -0.01em;
+	line-height: 32px;
 	text-overflow: ellipsis;
 	white-space: nowrap;
 
+	.calendarStage--narrow & {
+		font-size: 22px;
+		line-height: 28px;
+	}
+
 	.calendarPage--compact & {
-		font-size: 18px;
+		font-size: 20px;
+		line-height: 26px;
 	}
 }
 
-// The grey "+" next to the title, as in "Gespräche".
-.calendarStage__create,
+.calendarStage__caret {
+	flex: none;
+	color: var(--m3-on-surface-variant, #444748);
+}
+
+// Full screen and ⋮: white, round, 48 px, a thin edge.
 .calendarStage__round {
 	display: inline-flex;
 	flex: none;
 	align-items: center;
 	justify-content: center;
-	width: 40px;
-	height: 40px;
+	box-sizing: border-box;
+	width: 48px;
+	height: 48px;
 	padding: 0;
-	border: none;
+	border: 1px solid var(--m3-surface-container-highest, #e4e2e2);
 	border-radius: 50%;
-	background: var(--m3-surface-container-high, #eae7e8);
-	color: var(--m3-on-surface-variant, #444748);
+	background: var(--m3-surface-container-lowest, #ffffff);
+	color: var(--m3-on-surface, #1b1b1c);
 	cursor: pointer;
 
 	&:hover {
-		background: var(--m3-surface-container-highest, #dcdfe3);
+		background: var(--m3-surface-container-low, #f6f3f3);
 	}
 
 	&:focus-visible {
 		@include control-focus-ring(2px);
 	}
 
-	&[aria-pressed='true'] {
-		background: var(--m3-secondary-container, #dce3ec);
-		color: var(--m3-on-secondary-container, #1b1b1c);
+	&[aria-pressed='true'],
+	&[aria-expanded='true'] {
+		background: var(--m3-selected-layer, #f5e6e7);
+		color: var(--m3-primary, #a5000a);
 	}
-}
-
-.calendarStage__round {
-	background: transparent;
 }
 
 .calendarStage__headerEnd {
 	display: flex;
 	flex-shrink: 0;
 	align-items: center;
-	gap: 6px;
+	gap: 8px;
 	margin-left: auto;
 }
 
-// Phone: the people bar right below already shows who is on; the header
-// keeps the title, "+", the view pill and ⋮ on one line.
+// Phone and tablet: smaller buttons, "Neu" and the view's name give way to
+// their icons, the avatars shrink to 40 px.
 .calendarPage--compact {
-	.calendarStage__avatars {
+	.calendarStage__header {
+		gap: 8px;
+	}
+
+	.calendarStage__create {
+		height: 42px;
+		padding: 0 12px;
+	}
+
+	.calendarStage__createLabel,
+	.calendarStage__viewLabel {
 		display: none;
 	}
 
-	.calendarStage__header {
-		gap: 6px;
+	.calendarStage__round,
+	.calendarStage__viewButton {
+		height: 42px;
+	}
+
+	.calendarStage__round {
+		width: 42px;
+	}
+
+	.calendarStage__viewButton {
+		padding: 0 6px 0 12px;
+	}
+
+	.calendarStage__avatars .calendarStage__avatar {
+		width: 40px;
+		height: 40px;
+		font-size: 13px;
 	}
 }
 
@@ -1613,25 +1715,31 @@ $cal-avatar-tones: (#2f5d5a, #7a0e2a, #4b4f7a, #6d3d63, #7a5a1e, #36576e);
 	}
 }
 
-.calendarStage__pillButton {
+// The view: a white pill with the view's icon, its name and ▾.
+.calendarStage__viewButton {
 	display: inline-flex;
 	flex-shrink: 0;
 	align-items: center;
-	gap: 2px;
-	white-space: nowrap;
-	height: 36px;
-	padding: 0 8px 0 14px;
-	border: 1px solid var(--m3-outline-variant, #c4c7c8);
-	border-radius: 18px;
-	background: transparent;
+	gap: 6px;
+	box-sizing: border-box;
+	height: 48px;
+	padding: 0 10px 0 14px;
+	border: 1px solid var(--m3-surface-container-highest, #e4e2e2);
+	border-radius: 999px;
+	background: var(--m3-surface-container-lowest, #ffffff);
 	color: var(--m3-on-surface, #1b1b1c);
 	font: inherit;
 	font-size: 14px;
 	font-weight: 500;
+	white-space: nowrap;
 	cursor: pointer;
 
 	&:hover {
-		background: var(--oriso-menu-hover-surface, rgba(27, 27, 28, 0.08));
+		background: var(--m3-surface-container-low, #f6f3f3);
+	}
+
+	&[aria-expanded='true'] {
+		background: var(--m3-selected-layer, #f5e6e7);
 	}
 
 	&:focus-visible {
@@ -1639,37 +1747,53 @@ $cal-avatar-tones: (#2f5d5a, #7a0e2a, #4b4f7a, #6d3d63, #7a5a1e, #36576e);
 	}
 }
 
+.calendarStage__viewIcon {
+	display: inline-flex;
+
+	svg {
+		width: 18px;
+		height: 18px;
+	}
+}
+
+// "als Schalter": the same filled segments as the zoom.
 .calendarStage__digits {
 	display: inline-flex;
-	padding: 2px;
-	border: 1px solid var(--m3-outline-variant, #c4c7c8);
-	border-radius: 18px;
+	gap: 2px;
+	padding: 4px;
+	border-radius: 999px;
+	background: var(--m3-surface-container, #f0edee);
 }
 
 .calendarStage__digit {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	min-width: 32px;
-	height: 30px;
-	padding: 0 6px;
+	min-width: 34px;
+	height: 36px;
+	padding: 0 8px;
 	border: none;
-	border-radius: 15px;
+	border-radius: 999px;
 	background: transparent;
 	color: var(--m3-on-surface-variant, #444748);
 	font: inherit;
-	font-size: 14px;
+	font-size: 13px;
 	font-weight: 600;
 	font-variant-numeric: tabular-nums;
 	cursor: pointer;
 
-	&[aria-checked='true'] {
-		background: var(--m3-secondary-container, #dce3ec);
-		color: var(--m3-on-secondary-container, #1b1b1c);
+	svg {
+		width: 18px;
+		height: 18px;
 	}
 
 	&:hover:not([aria-checked='true']) {
-		background: var(--oriso-menu-hover-surface, rgba(27, 27, 28, 0.08));
+		color: var(--m3-on-surface, #1b1b1c);
+	}
+
+	&[aria-checked='true'] {
+		background: var(--m3-on-primary-fixed, #410001);
+		color: #ffffff;
 	}
 
 	&:focus-visible {
@@ -1681,36 +1805,68 @@ $cal-avatar-tones: (#2f5d5a, #7a0e2a, #4b4f7a, #6d3d63, #7a5a1e, #36576e);
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
-	gap: 8px 16px;
+	gap: 10px;
 }
 
-// One pill: previous · Heute (with the jump list) · next.
+// One filled pill: previous · Heute ▾ · next, "Heute" in light pink.
 .calendarStage__nav {
 	display: inline-flex;
+	flex: none;
 	align-items: center;
-	height: 36px;
-	border: 1px solid var(--m3-outline-variant, #c4c7c8);
-	border-radius: 18px;
-	overflow: hidden;
+	gap: 2px;
+	box-sizing: border-box;
+	height: 40px;
+	padding: 3px;
+	border-radius: 999px;
+	background: var(--m3-surface-container, #f0edee);
 }
 
-.calendarStage__navButton,
-.calendarStage__today {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	height: 100%;
-	padding: 0 10px;
+.calendarStage__navButton {
+	display: grid;
+	place-items: center;
+	min-width: 34px;
+	height: 34px;
+	padding: 0;
 	border: none;
-	background: transparent;
+	border-radius: 999px;
+	background: none;
 	color: var(--m3-on-surface, #1b1b1c);
-	font: inherit;
-	font-size: 14px;
-	font-weight: 500;
 	cursor: pointer;
 
 	&:hover {
-		background: var(--oriso-menu-hover-surface, rgba(27, 27, 28, 0.08));
+		background: var(--m3-surface-container-highest, #e4e2e2);
+	}
+
+	&:focus-visible {
+		@include control-focus-ring(0);
+	}
+}
+
+.calendarStage__todayPair {
+	display: inline-flex;
+	height: 34px;
+	overflow: hidden;
+	border-radius: 999px;
+	background: var(--m3-primary-fixed-dim, #ffb4aa);
+	color: var(--m3-on-primary-fixed, #410001);
+}
+
+.calendarStage__today,
+.calendarStage__jump {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	height: 34px;
+	border: none;
+	background: none;
+	color: inherit;
+	font: inherit;
+	font-size: 14px;
+	font-weight: 600;
+	cursor: pointer;
+
+	&:hover {
+		background: rgba(65, 0, 1, 0.08);
 	}
 
 	&:focus-visible {
@@ -1719,90 +1875,105 @@ $cal-avatar-tones: (#2f5d5a, #7a0e2a, #4b4f7a, #6d3d63, #7a5a1e, #36576e);
 }
 
 .calendarStage__today {
-	padding: 0 4px 0 12px;
-	border-left: 1px solid var(--m3-outline-variant, #c4c7c8);
+	padding: 0 12px;
 }
 
-.calendarStage__navButton--drop {
-	padding: 0 6px 0 0;
-	border-right: 1px solid var(--m3-outline-variant, #c4c7c8);
+.calendarStage__jump {
+	padding: 0 6px;
+	border-left: 1px solid rgba(65, 0, 1, 0.2);
 }
 
+// "16.–20. November 2026"; on phone and tablet on a line of its own.
 .calendarStage__range {
-	margin: 0;
+	flex: 1 1 auto;
+	overflow: hidden;
+	min-width: 0;
+	margin: 0 6px;
 	font-size: 18px;
-	font-weight: 500;
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
 	line-height: 24px;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 
 	.calendarPage--compact & {
-		font-size: 15px;
+		flex-basis: 100%;
+		order: 5;
+		margin: 2px 2px 0;
+		font-size: 16px;
 	}
 }
 
-// − and + at the right end of the date bar: the zoom of the time grid.
-.calendarStage__zoom {
-	margin-left: auto;
-
-	.calendarStage__segmented + & {
-		margin-left: 0;
-	}
-
-	.calendarStage__navButton {
-		min-width: 36px;
-
-		&:disabled {
-			opacity: 0.38;
-			cursor: default;
-			background: transparent;
-		}
-
-		& + .calendarStage__navButton,
-		.calendarStage__zoomTip + .calendarStage__zoomTip & {
-			border-left: 1px solid var(--m3-outline-variant, #c4c7c8);
-		}
-	}
-}
-
-.calendarStage__zoomTip {
-	display: inline-flex;
-	height: 100%;
-}
-
-// "1 Tag | 3 Tage" next to the range title in "Nebeneinander".
+// − and + (the zoom of the time grid) and "1 Tag | 3 Tage" in
+// "Nebeneinander": small filled segments at the end of the date bar.
 .calendarStage__segmented {
 	display: inline-flex;
+	flex: none;
 	gap: 2px;
 	margin-left: auto;
-	padding: 2px;
-	border: 1px solid var(--m3-outline-variant, #c4c7c8);
-	border-radius: 18px;
+	padding: 3px;
+	border-radius: 999px;
+	background: var(--m3-surface-container, #f0edee);
+
+	& + & {
+		margin-left: 0;
+	}
 }
 
 .calendarStage__segment {
-	height: 30px;
-	padding: 0 12px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	height: 28px;
+	padding: 0 10px;
 	border: none;
-	border-radius: 15px;
+	border-radius: 999px;
 	background: transparent;
 	color: var(--m3-on-surface-variant, #444748);
 	font: inherit;
-	font-size: 13px;
-	font-weight: 500;
+	font-size: 12.5px;
+	font-weight: 600;
 	white-space: nowrap;
 	cursor: pointer;
 
-	&[aria-pressed='true'] {
-		background: var(--m3-secondary-container, #dce3ec);
-		color: var(--m3-on-secondary-container, #1b1b1c);
+	&:hover:not(:disabled, [aria-pressed='true']) {
+		color: var(--m3-on-surface, #1b1b1c);
 	}
 
-	&:hover:not([aria-pressed='true']) {
-		background: var(--oriso-menu-hover-surface, rgba(27, 27, 28, 0.08));
+	&[aria-pressed='true'] {
+		background: var(--m3-on-primary-fixed, #410001);
+		color: #ffffff;
 	}
 
 	&:focus-visible {
 		@include control-focus-ring(0);
 	}
+}
+
+.calendarStage__zoomButton {
+	min-width: 36px;
+	padding: 0 8px;
+	font-size: 18px;
+	font-weight: 500;
+
+	&:disabled {
+		opacity: 0.38;
+		cursor: default;
+	}
+}
+
+.calendarStage__zoomTip {
+	display: inline-flex;
+}
+
+// A menu row's right end: the check of the chosen view, the date of a jump.
+.calendarMenuMeta {
+	display: inline-flex;
+	flex: none;
+	align-items: center;
+	margin-left: auto;
+	font-size: 12px;
+	font-variant-numeric: tabular-nums;
 }
 
 .calendarStage__people {

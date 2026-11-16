@@ -7095,6 +7095,7 @@
 			"label": "Bir güne git",
 			"today": "Bugün",
 			"tomorrow": "Yarın",
+			"dayAfterTomorrow": "Yarından sonra",
 			"nextMonday": "Gelecek pazartesi",
 			"inTwoWeeks": "İki hafta sonra",
 			"date": "Tarih",
@@ -7123,6 +7124,7 @@
 			"hint": "Üzerine gelmek vurgular, tıklama gizler",
 			"label": "Takvimleri göster",
 			"me": "Ben",
+			"meAvatar": "ben",
 			"more": "Diğer …"
 		},
 		"proposal": {
@@ -7210,6 +7212,11 @@
 			"threeDays": "3 gün"
 		},
 		"viewMenu": "Görünüm: {{view}}",
+		"header": {
+			"new": "Yeni",
+			"newEntry": "Yeni kayıt",
+			"shared": "Randevular"
+		},
 		"when": {
 			"running": "şimdi",
 			"inMinutes": "{{count}} dk sonra",

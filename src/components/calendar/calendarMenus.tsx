@@ -24,6 +24,11 @@ import PlayArrowOutlinedIcon from '@mui/icons-material/PlayArrowOutlined';
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 import TodayOutlinedIcon from '@mui/icons-material/TodayOutlined';
 import RestartAltOutlinedIcon from '@mui/icons-material/RestartAltOutlined';
+import ViewDayIcon from '@mui/icons-material/ViewDay';
+import ViewWeekIcon from '@mui/icons-material/ViewWeek';
+import GridViewOutlinedIcon from '@mui/icons-material/GridViewOutlined';
+import ListIcon from '@mui/icons-material/List';
+import ViewColumnIcon from '@mui/icons-material/ViewColumn';
 import {
 	ChatMenuDropdownDivider,
 	ChatMenuDropdownGroupLabel,
@@ -47,11 +52,7 @@ import {
 	type CalendarEntryFacet
 } from './CalendarEntryGlyph';
 import type { EntryAction, MoveProposal } from './calendarActions';
-import {
-	VIEW_DIGIT,
-	type CalendarViewName,
-	type ViewSwitcherStyle
-} from './calendarViews';
+import { type CalendarViewName, type ViewSwitcherStyle } from './calendarViews';
 import { useEntryLabel, useRangeFormat } from './useEntryLabel';
 import type { EdgeChoice } from './calendarPreferences';
 import { calendarLocale } from './calendarLocale';
@@ -938,6 +939,48 @@ export interface ViewMenuContentProps {
 	onChoose: (view: CalendarViewName) => void;
 }
 
+/** One icon per view, in the menu, on the view button and the digits row. */
+export const VIEW_ICON: Record<CalendarViewName, React.ReactNode> = {
+	day: <ViewDayIcon fontSize="small" />,
+	threeDays: <ViewWeekIcon fontSize="small" />,
+	workWeek: <ViewWeekIcon fontSize="small" />,
+	week: <ViewWeekIcon fontSize="small" />,
+	month: <GridViewOutlinedIcon fontSize="small" />,
+	list: <ListIcon fontSize="small" />,
+	split: <ViewColumnIcon fontSize="small" />
+};
+
+/**
+ * A menu row with something at its right end: the check of the chosen
+ * view, or the date a quick jump goes to (prototype v17).
+ */
+const MetaRow = ({
+	icon,
+	title,
+	meta,
+	description
+}: {
+	icon?: React.ReactNode;
+	title: React.ReactNode;
+	meta?: React.ReactNode;
+	description?: React.ReactNode;
+}) => (
+	<>
+		{icon && <span className="chatMenuDropdown__itemIcon">{icon}</span>}
+		<span className="chatMenuDropdown__itemCenter">
+			<span className="chatMenuDropdown__itemTitleRow">
+				<span className="chatMenuDropdown__itemTitle">{title}</span>
+				{meta && <span className="calendarMenuMeta">{meta}</span>}
+			</span>
+			{description && (
+				<span className="chatMenuDropdown__itemDescription">
+					{description}
+				</span>
+			)}
+		</span>
+	</>
+);
+
 export const ViewMenuContent = ({
 	views,
 	current,
@@ -947,17 +990,32 @@ export const ViewMenuContent = ({
 	return (
 		<>
 			{views.map((view) => (
-				<ChatMenuDropdownItem
-					key={view}
-					role="menuitemradio"
-					aria-checked={view === current}
-					active={view === current}
-					icon={<Check on={view === current} />}
-					title={t(`calendar.views.${view}`)}
-					shortcut={VIEW_DIGIT[view]}
-					onClick={() => onChoose(view)}
-					data-cy={`calendar-view-${view}`}
-				/>
+				<React.Fragment key={view}>
+					{/* "Nebeneinander" is a view of another kind: a line before it. */}
+					{view === 'split' && <ChatMenuDropdownDivider />}
+					<ChatMenuDropdownItem
+						role="menuitemradio"
+						aria-checked={view === current}
+						active={view === current}
+						onClick={() => onChoose(view)}
+						data-cy={`calendar-view-${view}`}
+					>
+						<MetaRow
+							icon={VIEW_ICON[view]}
+							title={t(`calendar.views.${view}`)}
+							meta={
+								view === current ? (
+									<CheckIcon fontSize="small" aria-hidden />
+								) : undefined
+							}
+							description={
+								view === 'split'
+									? t('calendar.split.label')
+									: undefined
+							}
+						/>
+					</ChatMenuDropdownItem>
+				</React.Fragment>
 			))}
 		</>
 	);
@@ -979,7 +1037,7 @@ const startOfDay = (date: Date) => {
 };
 
 export const JumpMenuContent = ({ now, onJump }: JumpMenuContentProps) => {
-	const { t } = useTranslation();
+	const { t, i18n } = useTranslation();
 	const today = startOfDay(now);
 	const plus = (days: number) => {
 		const d = new Date(today);
@@ -991,9 +1049,16 @@ export const JumpMenuContent = ({ now, onJump }: JumpMenuContentProps) => {
 	const jumps: [string, Date][] = [
 		['today', today],
 		['tomorrow', plus(1)],
+		['dayAfterTomorrow', plus(2)],
 		['nextMonday', nextMonday],
 		['inTwoWeeks', plus(14)]
 	];
+	// Each jump says where it lands: "Mo., 16.11." (prototype v17).
+	const dayFormat = new Intl.DateTimeFormat(calendarLocale(i18n.language), {
+		weekday: 'short',
+		day: '2-digit',
+		month: '2-digit'
+	});
 	return (
 		<>
 			{/* The dialog holds a menu of quick jumps and a date form. */}
@@ -1006,10 +1071,14 @@ export const JumpMenuContent = ({ now, onJump }: JumpMenuContentProps) => {
 					<ChatMenuDropdownItem
 						key={key}
 						role="menuitem"
-						title={t(`calendar.jump.${key}`)}
 						onClick={() => onJump(date)}
 						data-cy={`calendar-jump-${key}`}
-					/>
+					>
+						<MetaRow
+							title={t(`calendar.jump.${key}`)}
+							meta={dayFormat.format(date)}
+						/>
+					</ChatMenuDropdownItem>
 				))}
 			</div>
 			<ChatMenuDropdownDivider />
