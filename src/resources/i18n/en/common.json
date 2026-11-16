@@ -6673,7 +6673,8 @@
 			"noteLabel": "Note from the counsellor",
 			"findAgency": "Find a counselling centre",
 			"requested": "Request sent",
-			"topicUnknown": "another topic"
+			"topicUnknown": "another topic",
+			"convertFirstHint": "To keep your conversation, you first create an account. Then you choose the counselling centre."
 		},
 		"duplicate": {
 			"startedTitle": "Further counselling on the same topic",

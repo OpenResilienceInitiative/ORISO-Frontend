@@ -6758,7 +6758,8 @@
 			"noteLabel": "Remarque du·de la conseiller·ère",
 			"findAgency": "Trouver un centre de conseil",
 			"requested": "Demande envoyée",
-			"topicUnknown": "un autre thème"
+			"topicUnknown": "un autre thème",
+			"convertFirstHint": "Pour garder votre conversation, créez d’abord un compte. Vous choisirez ensuite le centre de conseil."
 		},
 		"duplicate": {
 			"startedTitle": "Autre accompagnement sur le même thème",

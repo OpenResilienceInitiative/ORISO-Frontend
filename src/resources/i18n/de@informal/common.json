@@ -2863,6 +2863,9 @@
 		},
 		"request": {
 			"sameTopicInfo": "Zum gleichen Thema ist immer nur eine Beratung gleichzeitig vorgesehen. Startest du eine Beratung zu einem Thema, das du schon besprichst, wird deine bisherige Berater:in informiert, sobald die neue Beratung angenommen ist. Eine der beiden Beratungen wird dann beendet."
+		},
+		"card": {
+			"convertFirstHint": "Damit du dein Gespräch behältst, legst du zuerst ein Konto an. Danach wählst du die Beratungsstelle."
 		}
 	},
 	"calls": {
