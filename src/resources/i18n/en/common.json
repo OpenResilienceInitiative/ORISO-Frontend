@@ -6894,6 +6894,12 @@
 			"colleagueHint": "Of colleagues you only see time and kind."
 		},
 		"moved": "Moved to {{date}}. The advice seeker is notified.",
+		"movePast": "An appointment cannot be moved into the past.",
+		"moveConflict": {
+			"title": "Move anyway?",
+			"confirm": "Move anyway"
+		},
+		"soon": "Starts soon",
 		"blockerMoved": "Block moved to {{date}}.",
 		"cancelled": "Appointment cancelled. The advice seeker is notified.",
 		"created": "Appointment created: {{date}}",

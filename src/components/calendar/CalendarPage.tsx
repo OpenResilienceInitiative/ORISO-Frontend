@@ -20,7 +20,8 @@ import { FilterChip } from '../displayFilter/FilterChip';
 import { M3Snackbar } from '../m3Snackbar/M3Snackbar';
 import {
 	DEFAULT_VISIBILITY,
-	isSoon,
+	moveProblem,
+	soonEntry,
 	upcomingEntries,
 	type AppointmentDraft,
 	type AppointmentKind,
@@ -34,6 +35,7 @@ import {
 	CALENDAR_FACETS,
 	CalendarEntryGlyph,
 	FACET_ICON_COMPONENT,
+	SoonBadge,
 	facetOf,
 	type CalendarEntryFacet
 } from './CalendarEntryGlyph';
@@ -42,6 +44,7 @@ import { SlotActionMenu, type SlotChoice } from './SlotActionMenu';
 import { AppointmentDialog } from './AppointmentDialog';
 import { BlockerDialog } from './BlockerDialog';
 import { EntryDetailsDialog } from './EntryDetailsDialog';
+import { MoveConflictDialog } from './MoveConflictDialog';
 import {
 	CalendarSyncDialog,
 	type CalendarFeed,
@@ -164,6 +167,11 @@ export const CalendarPage = ({
 	const [dialog, setDialog] = useState<Dialog>(null);
 	const creating = useRef(false);
 	const [notice, setNotice] = useState<Notice | null>(null);
+	/** A move onto other entries waits for this answer. */
+	const [moveAsk, setMoveAsk] = useState<{
+		conflicts: CalendarEntry[];
+		answer: (go: boolean) => void;
+	} | null>(null);
 
 	const colleagueNames = useMemo(
 		() => Object.fromEntries(colleagues.map((c) => [c.id, c.displayName])),
@@ -187,6 +195,7 @@ export const CalendarPage = ({
 			entries.some((e) => e.ownerId === ownerId && facetOf(e) === facet)
 	);
 	const upcoming = upcomingEntries(entries, ownerId, now);
+	const soon = soonEntry(entries, ownerId, now);
 
 	const toggle = <T,>(list: T[], item: T) =>
 		list.includes(item) ? list.filter((x) => x !== item) : [...list, item];
@@ -279,7 +288,27 @@ export const CalendarPage = ({
 		}
 	};
 
+	/**
+	 * A move runs the checks creating does: never into the past for an
+	 * appointment, and a question first when it lands on other entries.
+	 * Refused or not confirmed, the entry goes back and no notice says it
+	 * moved (review 4577641945).
+	 */
 	const move = (entry: CalendarEntry, start: Date, end: Date) => {
+		const problem = moveProblem(entry, { start, end }, entries, ownerId, now);
+		if (problem?.type === 'past') {
+			setNotice({ message: t('calendar.movePast') });
+			return false;
+		}
+		if (problem?.type === 'conflict')
+			return new Promise<boolean>((answer) =>
+				setMoveAsk({ conflicts: problem.conflicts, answer })
+			).then((go) => go && commitMove(entry, start, end));
+		return commitMove(entry, start, end);
+	};
+
+	/** Says it moved only once the move went through. */
+	const commitMove = (entry: CalendarEntry, start: Date, end: Date) => {
 		return run(onMove?.(entry, start, end), {
 			message: t(
 				entry.type === 'blocker'
@@ -380,7 +409,7 @@ export const CalendarPage = ({
 							<li key={entry.id}>
 								<button
 									type="button"
-									className={`calendarPage__entry${isSoon(entry, now) ? ' calendarPage__entry--soon' : ''}`}
+									className={`calendarPage__entry${entry.id === soon?.id ? ' calendarPage__entry--soon' : ''}`}
 									onClick={() =>
 										setDialog({ type: 'details', entry })
 									}
@@ -395,6 +424,7 @@ export const CalendarPage = ({
 										<span className="calendarPage__entryTitle">
 											{label(entry)}
 										</span>
+										{entry.id === soon?.id && <SoonBadge />}
 									</span>
 								</button>
 							</li>
@@ -631,6 +661,20 @@ export const CalendarPage = ({
 					onSaveImport={(url) => onSaveImport?.(url)}
 					onRemoveImport={() => onRemoveImport?.()}
 					onClose={() => setDialog(null)}
+				/>
+			)}
+			{moveAsk && (
+				<MoveConflictDialog
+					conflicts={moveAsk.conflicts}
+					fullScreen={compact}
+					onConfirm={() => {
+						moveAsk.answer(true);
+						setMoveAsk(null);
+					}}
+					onCancel={() => {
+						moveAsk.answer(false);
+						setMoveAsk(null);
+					}}
 				/>
 			)}
 			{notice && (

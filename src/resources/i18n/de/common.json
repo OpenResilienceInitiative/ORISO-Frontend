@@ -6969,6 +6969,12 @@
 			"colleagueHint": "Von Kolleg:innen sehen Sie nur Zeit und Art."
 		},
 		"moved": "Verschoben auf {{date}}. Die ratsuchende Person wird benachrichtigt.",
+		"movePast": "Ein Termin lässt sich nicht in die Vergangenheit verschieben.",
+		"moveConflict": {
+			"title": "Trotzdem verschieben?",
+			"confirm": "Trotzdem verschieben"
+		},
+		"soon": "Beginnt gleich",
 		"blockerMoved": "Blockierung verschoben auf {{date}}.",
 		"cancelled": "Termin abgesagt. Die ratsuchende Person wird benachrichtigt.",
 		"created": "Termin angelegt: {{date}}",
