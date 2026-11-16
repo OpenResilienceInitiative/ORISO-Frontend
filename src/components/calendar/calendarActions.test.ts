@@ -36,6 +36,20 @@ describe('entryActions', () => {
 		expect(entryActions(own, context)).toEqual(['start', 'move', 'cancel']);
 	});
 
+	it('offers a chat appointment "Zum Chat" alone, not "Chat öffnen" beside it (Frank, 2026-11-16)', () => {
+		const chat: CalendarEntry = { ...own, kind: 'chat', sessionId: 7 };
+		expect(
+			entryActions(chat, { ...context, can: { ...all, chat: true } })
+		).toEqual(['chat', 'move', 'cancel']);
+		// A video appointment keeps both: the call and its conversation.
+		expect(
+			entryActions(
+				{ ...own, sessionId: 7 },
+				{ ...context, can: { ...all, chat: true } }
+			)
+		).toEqual(['start', 'chat', 'move', 'cancel']);
+	});
+
 	it('has nothing to start for an on-site appointment', () => {
 		expect(entryActions({ ...own, kind: 'onsite' }, context)).toEqual([
 			'move',

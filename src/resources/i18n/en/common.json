@@ -7005,6 +7005,8 @@
 		"entryMenu": {
 			"back": "Back",
 			"cancel": "Cancel appointment",
+			"show": "Go to appointment",
+			"showSub": "Show and highlight it in the calendar",
 			"chat": "Go to chat",
 			"conflicts": "Overlaps with another entry.",
 			"date": "Day",
@@ -7319,6 +7321,19 @@
 			"group": "Group appointment",
 			"blocker": "Blocked time",
 			"busy": "Busy"
+		},
+		"viewSettings": {
+			"title": "View · Calendar",
+			"description": "Which appointment kinds the calendar shows, which get a button in the kind row and when you receive e-mails.",
+			"kindsHeading": "Appointment kinds",
+			"showColumn": "In calendar",
+			"legendShow": "Appointments of this kind appear in the calendar and in the list.",
+			"pillColumn": "As button",
+			"legendPill": "The kind has a button in the row above “Up next”.",
+			"legendEmail": "E-mail for booked, moved and cancelled appointments. Applies to all appointment kinds together, as in your profile.",
+			"showKind": "In calendar: {{kind}}",
+			"pillKind": "As button: {{kind}}",
+			"pillMenu": "Choose button: {{kind}}"
 		}
 	}
 }

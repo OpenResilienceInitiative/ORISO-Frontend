@@ -7090,6 +7090,8 @@
 		"entryMenu": {
 			"back": "Retour",
 			"cancel": "Annuler le rendez-vous",
+			"show": "Aller au rendez-vous",
+			"showSub": "L’afficher et le mettre en évidence dans le calendrier",
 			"chat": "Aller au chat",
 			"conflicts": "Chevauche une autre entrée.",
 			"date": "Jour",
@@ -7404,6 +7406,19 @@
 			"group": "Rendez-vous de groupe",
 			"blocker": "Plage bloquée",
 			"busy": "Occupé"
+		},
+		"viewSettings": {
+			"title": "Affichage · Calendrier",
+			"description": "Quels types de rendez-vous le calendrier affiche, lesquels ont un bouton dans la barre des types et quand vous recevez des e-mails.",
+			"kindsHeading": "Types de rendez-vous",
+			"showColumn": "Dans le calendrier",
+			"legendShow": "Les rendez-vous de ce type apparaissent dans le calendrier et dans la liste.",
+			"pillColumn": "Comme bouton",
+			"legendPill": "Le type a un bouton dans la barre au-dessus de « À venir ».",
+			"legendEmail": "E-mail pour les rendez-vous réservés, déplacés et annulés. Vaut pour tous les types ensemble, comme dans le profil.",
+			"showKind": "Dans le calendrier : {{kind}}",
+			"pillKind": "Comme bouton : {{kind}}",
+			"pillMenu": "Choisir le bouton : {{kind}}"
 		}
 	}
 }

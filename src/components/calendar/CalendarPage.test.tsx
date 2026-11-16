@@ -1,12 +1,6 @@
 // @vitest-environment oriso-jsdom
 import * as React from 'react';
-import {
-	act,
-	cleanup,
-	fireEvent,
-	render,
-	screen
-} from '@testing-library/react';
+import { act, cleanup, fireEvent, render } from '@testing-library/react';
 import {
 	afterEach,
 	beforeEach,
@@ -67,11 +61,13 @@ describe('CalendarPage — live clock without a fixed now', () => {
 				entries={[appointment({})]}
 			/>
 		);
-		expect(screen.queryByText('calendar.upcomingEmpty')).toBeNull();
+		const pill = () =>
+			document.querySelector('[data-cy="calendar-upcoming-a1"]');
+		expect(pill()).not.toBeNull();
 		act(() => {
 			vi.advanceTimersByTime(2 * LIVE_NOW_INTERVAL_MS);
 		});
-		expect(screen.getByText('calendar.upcomingEmpty')).toBeTruthy();
+		expect(pill()).toBeNull();
 	});
 
 	it('keeps a fixed now for stories and tests', () => {
@@ -86,7 +82,9 @@ describe('CalendarPage — live clock without a fixed now', () => {
 		act(() => {
 			vi.advanceTimersByTime(4 * LIVE_NOW_INTERVAL_MS);
 		});
-		expect(screen.queryByText('calendar.upcomingEmpty')).toBeNull();
+		expect(
+			document.querySelector('[data-cy="calendar-upcoming-a1"]')
+		).not.toBeNull();
 	});
 });
 

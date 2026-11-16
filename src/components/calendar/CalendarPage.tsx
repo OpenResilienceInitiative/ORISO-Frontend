@@ -56,6 +56,7 @@ import {
 	openProposals,
 	ProposalNoLongerValid,
 	receivedBy,
+	type EntryAction,
 	type MoveProposal
 } from './calendarActions';
 import {
@@ -143,6 +144,10 @@ import {
 	type CalendarSidebarProps,
 	type FreeHoursState
 } from './CalendarSidebar';
+import {
+	CalendarSettingsDialog,
+	CALENDAR_CHIP_FACETS
+} from './CalendarSettingsDialog';
 import { CalendarMenu } from './CalendarMenu';
 import {
 	EdgeMenuContent,
@@ -150,7 +155,6 @@ import {
 	type PauseAction,
 	EntryMenuContent,
 	JumpMenuContent,
-	KindsMenuContent,
 	MonthDayMenuContent,
 	PeopleMenuContent,
 	ProposalMenuContent,
@@ -376,6 +380,11 @@ type Menu =
 			anchor: MenuAnchor;
 			entry: CalendarEntry;
 			mode: 'list' | 'move' | 'propose';
+			/**
+			 * Opened from "Als Nächstes" or the rail, not from the grid:
+			 * "Zum Termin" leads there (Frank, 2026-11-16).
+			 */
+			outside?: boolean;
 	  }
 	| {
 			/** `proposal`: one's own, sent; `request`: one received. */
@@ -385,7 +394,7 @@ type Menu =
 			entry: CalendarEntry;
 	  }
 	| {
-			type: 'settings' | 'view' | 'jump' | 'people' | 'kinds';
+			type: 'settings' | 'view' | 'jump' | 'people';
 			anchor: HTMLElement;
 	  }
 	| {
@@ -564,6 +573,13 @@ export const CalendarPage = ({
 	// chips narrow to those kinds. "Was anzeigen" hides kinds altogether.
 	const [onlyFacets, setOnlyFacets] = useState<CalendarEntryFacet[]>([]);
 	const [hiddenFacets, setHiddenFacets] = useState<CalendarEntryFacet[]>([]);
+	// "Ansicht · Kalender" (Frank *14): which kinds get a button in the row.
+	const [chipFacets, setChipFacets] =
+		useState<CalendarEntryFacet[]>(CALENDAR_CHIP_FACETS);
+	const [settingsOpen, setSettingsOpen] = useState(false);
+	const viewCustomised =
+		hiddenFacets.length > 0 ||
+		chipFacets.length !== CALENDAR_CHIP_FACETS.length;
 	const [menu, setMenu] = useState<Menu>(null);
 	const [dialog, setDialog] = useState<Dialog>(null);
 	const creating = useRef(false);
@@ -1619,7 +1635,8 @@ export const CalendarPage = ({
 	const openEntry = (
 		shown: CalendarEntry,
 		anchor: MenuAnchor,
-		mode: 'list' | 'move' = 'list'
+		mode: 'list' | 'move' = 'list',
+		outside = false
 	) => {
 		// Co-access: the colleague's appointment is in one's own calendar
 		// too, with the same id. UserService lets a co-access holder move
@@ -1640,15 +1657,16 @@ export const CalendarPage = ({
 						? 'propose'
 						: 'list'
 				: 'list';
-		setMenu({ type: 'entry', entry, anchor, mode: formMode });
+		setMenu({ type: 'entry', entry, anchor, mode: formMode, outside });
 	};
 
 	const entryAction = (
 		entry: CalendarEntry,
-		action: 'start' | 'chat' | 'join' | 'cancel' | 'remove'
+		action: 'show' | 'start' | 'chat' | 'join' | 'cancel' | 'remove'
 	) => {
 		setMenu(null);
-		if (action === 'start') openRoom(onStart, entry);
+		if (action === 'show') showEntry(entry);
+		else if (action === 'start') openRoom(onStart, entry);
 		else if (action === 'chat') openRoom(onOpenChat, entry);
 		else if (action === 'join') onJoin?.(entry);
 		else if (action === 'cancel') setCancelAsk(entry);
@@ -1737,7 +1755,10 @@ export const CalendarPage = ({
 		);
 	} else if (menu?.type === 'entry') {
 		const { entry } = menu;
-		const actions = entryActions(entry, { ownerId, role, can });
+		const actions: EntryAction[] = [
+			...(menu.outside ? (['show'] as const) : []),
+			...entryActions(entry, { ownerId, role, can })
+		];
 		const colleague =
 			entry.ownerId !== ownerId
 				? colleagueById[entry.ownerId]
@@ -1937,24 +1958,10 @@ export const CalendarPage = ({
 				}
 			/>
 		);
-	} else if (menu?.type === 'kinds') {
-		menuLabel = t('calendar.kindsMenu.label');
-		menuAlign = 'end';
-		menuContent = (
-			<KindsMenuContent
-				hidden={hiddenFacets}
-				entries={entries}
-				ownerId={ownerId}
-				onToggle={(facet) =>
-					setHiddenFacets((all) => toggle(all, facet))
-				}
-				onShowAll={() => setHiddenFacets([])}
-			/>
-		);
 	}
 
 	const openAt =
-		(type: 'settings' | 'view' | 'jump' | 'people' | 'kinds') =>
+		(type: 'settings' | 'view' | 'jump' | 'people') =>
 		(event: React.MouseEvent<HTMLElement>) =>
 			setMenu({ type, anchor: event.currentTarget });
 
@@ -2357,6 +2364,7 @@ export const CalendarPage = ({
 				setOnlyFacets((all) => toggle(all, facet))
 			}
 			onHighlightFacet={(facet) => setHighlight(facet ? { facet } : null)}
+			facets={chipFacets}
 			className="calendarStage__kinds"
 		/>
 	);
@@ -2582,8 +2590,10 @@ export const CalendarPage = ({
 		hiddenFacets,
 		onToggleFacet: (facet) => setOnlyFacets((all) => toggle(all, facet)),
 		onHighlightFacet: (facet) => setHighlight(facet ? { facet } : null),
-		kindsMenuOpen: menu?.type === 'kinds',
-		onOpenKinds: (anchor) => setMenu({ type: 'kinds', anchor }),
+		kindsMenuOpen: settingsOpen,
+		onOpenKinds: () => setSettingsOpen(true),
+		kindsCustomised: viewCustomised,
+		chipFacets,
 		openProposals: allPending,
 		onOpenProposal: (proposal, entry, anchor) =>
 			setMenu({ type: 'proposal', proposal, entry, anchor }),
@@ -2598,7 +2608,7 @@ export const CalendarPage = ({
 			setMenu({ type: 'request', proposal, entry, anchor }),
 		onAcceptRequest: onAcceptProposal ? accept : undefined,
 		onDeclineRequest: onDeclineProposal ? decline : undefined,
-		onOpenEntry: (entry, anchor) => openEntry(entry, anchor),
+		onOpenEntry: (entry, anchor) => openEntry(entry, anchor, 'list', true),
 		onShowEntry: showEntry,
 		shownColleagues,
 		onCreate: onCreate ? create : undefined,
@@ -2678,11 +2688,9 @@ export const CalendarPage = ({
 							onShowEntry={showEntry}
 							leading={
 								<CalendarKindsButton
-									customised={hiddenFacets.length > 0}
-									open={menu?.type === 'kinds'}
-									onOpen={(anchor) =>
-										setMenu({ type: 'kinds', anchor })
-									}
+									customised={viewCustomised}
+									open={settingsOpen}
+									onOpen={() => setSettingsOpen(true)}
 								/>
 							}
 							floating
@@ -2757,6 +2765,18 @@ export const CalendarPage = ({
 
 			{/* "Neu" and every other way in: one "Neuer Eintrag" with the
 			    tabs Termin | Sperrzeit (prototype v17). */}
+			{/* Mounted only while open: it reads the profile's e-mail settings. */}
+			{settingsOpen && (
+				<CalendarSettingsDialog
+					open
+					onClose={() => setSettingsOpen(false)}
+					hiddenFacets={hiddenFacets}
+					onHiddenChange={setHiddenFacets}
+					chipFacets={chipFacets}
+					onChipsChange={setChipFacets}
+					fullScreen={compact}
+				/>
+			)}
 			{(dialog?.type === 'appointment' || dialog?.type === 'blocker') && (
 				<NewEntryDialog
 					open

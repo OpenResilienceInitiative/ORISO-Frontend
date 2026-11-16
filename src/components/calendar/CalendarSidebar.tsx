@@ -58,6 +58,11 @@ import {
 	type WorkingPlan
 } from './calendarWorkingHours';
 import { CalendarEntryPeek, initialsOf } from './CalendarEntryPeek';
+import { FutureZone } from '../sessionsList/timeline/FutureZone';
+import type {
+	EntryModality,
+	FutureEntry
+} from '../sessionsList/timeline/timelineModel';
 import { avatarToneClass } from './calendarAvatar';
 import { calendarLocale } from './calendarLocale';
 import type { CalendarListMode } from './calendarPreferences';
@@ -73,6 +78,16 @@ const QUICK_KINDS: QuickKind[] = [
 /** The round kind chips: one kind at a time (group dates: "Was anzeigen"). */
 const KIND_CHIPS: CalendarEntryFacet[] = QUICK_KINDS;
 const MAX_UPCOMING = 5;
+
+/** The Gespräche pill's icon for each calendar kind. */
+const MODALITY_OF: Record<CalendarEntryFacet, EntryModality> = {
+	video: 'video',
+	phone: 'audio',
+	onsite: 'location',
+	chat: 'chat',
+	group: 'video',
+	blocker: 'location'
+};
 const MAX_SEARCH_RESULTS = 8;
 
 /** What creating from the quick entry reports (see `onCreate`). */
@@ -106,7 +121,12 @@ export interface CalendarSidebarProps {
 	onToggleFacet: (facet: CalendarEntryFacet) => void;
 	onHighlightFacet: (facet: CalendarEntryFacet | null) => void;
 	kindsMenuOpen: boolean;
+	/** Opens "Ansicht · Kalender" (Frank *14). */
 	onOpenKinds: (anchor: HTMLElement) => void;
+	/** Some kind is hidden or has no button: the filter button shows a dot. */
+	kindsCustomised?: boolean;
+	/** The kinds with a button in the row; default all five. */
+	chipFacets?: CalendarEntryFacet[];
 	openProposals: { proposal: MoveProposal; entry: CalendarEntry }[];
 	onOpenProposal?: (
 		proposal: MoveProposal,
@@ -191,6 +211,8 @@ export const CalendarSidebar = ({
 	onHighlightFacet,
 	kindsMenuOpen,
 	onOpenKinds,
+	kindsCustomised,
+	chipFacets,
 	openProposals,
 	onOpenProposal,
 	onWithdrawProposal,
@@ -243,6 +265,41 @@ export const CalendarSidebar = ({
 		now,
 		MAX_UPCOMING
 	).reverse();
+	// The full column shows them as in "Gespräche" (Frank, 2026-11-16: one
+	// design): pills above a "Jetzt" that is dragged to open or fold them.
+	const futureZone = !sheet && !narrow;
+	const futureSource = useMemo(
+		() => new Map(upcoming.map((entry) => [entry.id, entry])),
+		[upcoming]
+	);
+	const futureEntries = useMemo<FutureEntry[]>(
+		() =>
+			[...upcoming].reverse().map((entry) => ({
+				key: entry.id,
+				kind: entry.type === 'group' ? 'group' : 'one-to-one',
+				title: label(entry),
+				start: new Date(entry.start),
+				end: new Date(entry.end),
+				modality: MODALITY_OF[entry.kind ?? facetOf(entry)],
+				canDuplicate: false
+			})),
+		[upcoming, label]
+	);
+	const zoneRef = useRef<HTMLDivElement>(null);
+	const [listHeight, setListHeight] = useState(600);
+	useEffect(() => {
+		const side = zoneRef.current?.closest<HTMLElement>('.calendarSide');
+		if (!side) return;
+		const measure = () => setListHeight(side.clientHeight || 600);
+		measure();
+		const observer =
+			typeof ResizeObserver !== 'undefined'
+				? new ResizeObserver(measure)
+				: null;
+		observer?.observe(side);
+		return () => observer?.disconnect();
+	}, [futureZone]);
+
 	const [peek, setPeek] = useState<{
 		el: HTMLElement;
 		entry: CalendarEntry;
@@ -250,7 +307,7 @@ export const CalendarSidebar = ({
 
 	const kindsButton = (
 		<CalendarKindsButton
-			customised={hiddenFacets.length > 0}
+			customised={kindsCustomised ?? hiddenFacets.length > 0}
 			open={kindsMenuOpen}
 			onOpen={onOpenKinds}
 		/>
@@ -304,6 +361,7 @@ export const CalendarSidebar = ({
 					onlyFacets={onlyFacets}
 					onToggleFacet={onToggleFacet}
 					onHighlightFacet={onHighlightFacet}
+					facets={chipFacets}
 					className="calendarSide__chips"
 				/>
 			)}
@@ -492,9 +550,42 @@ export const CalendarSidebar = ({
 				</section>
 			)}
 
-			{/* Not on the phone and the tablet: the calendar shows what is
-			    next (Frank, prototype v15). */}
-			{!sheet && (
+			{futureZone && (
+				<div
+					ref={zoneRef}
+					className="calendarSide__future"
+					data-cy="calendar-upcoming"
+				>
+					<FutureZone
+						entries={futureEntries}
+						role="counsellor"
+						listHeight={listHeight}
+						initialReveal="most"
+						memoryKey="calendar-upcoming"
+						label={t('calendar.upcoming')}
+						nowLabel={t('calendar.side.now')}
+						fixedNow={now}
+						// Opens its actions: "Zum Termin" jumps to it in the
+						// calendar and marks it, "Zum Chat" opens the
+						// conversation (Frank *4, *7, 2026-11-16).
+						onPick={(picked, anchor) => {
+							const entry = futureSource.get(picked.key);
+							if (entry) onOpenEntry(entry, anchor);
+						}}
+						entryDataCy={(entry) =>
+							`calendar-upcoming-${entry.key}`
+						}
+						// The same one the grid marks, in the calendar's words.
+						soonLabelOf={(entry) =>
+							entry.key === soonId && t('calendar.soon')
+						}
+					/>
+				</div>
+			)}
+
+			{/* The narrow column keeps who and when per row (prototype v15);
+			    the phone and the tablet show what is next in the calendar. */}
+			{!sheet && !futureZone && (
 				<section className="calendarSide__section">
 					<h2 className="calendarSide__title">
 						{t('calendar.upcoming')}
@@ -535,12 +626,12 @@ export const CalendarSidebar = ({
 											})
 										}
 										onBlur={() => setPeek(null)}
-										// Jumps to the entry in the calendar (it
-										// flashes there) and opens its actions,
-										// "Zum Chat" among them (Frank *4, *7).
+										// Opens its actions: "Zum Termin" jumps to
+										// it in the calendar and marks it, "Zum
+										// Chat" opens the conversation (Frank *4,
+										// *7, 2026-11-16).
 										onClick={(e) => {
 											setPeek(null);
-											onShowEntry(entry);
 											onOpenEntry(entry, e.currentTarget);
 										}}
 										aria-label={
@@ -599,7 +690,7 @@ export const CalendarSidebar = ({
 			{/* "Jetzt" between what is next and what comes in (prototype
 			    v17); in the sheet and the narrow column the "+" beside it
 			    opens quick entry. */}
-			{(!sheet || quick) && (
+			{(narrow || (sheet && quick)) && (
 				<div className="calendarSide__now" data-cy="calendar-now">
 					<span className="calendarSide__nowLabel" aria-hidden="true">
 						{t('calendar.side.now')}
@@ -907,6 +998,8 @@ export interface CalendarKindChipsProps {
 	onHighlightFacet: (facet: CalendarEntryFacet | null) => void;
 	/** Pinned at the right end (the display filter button on the phone). */
 	trailing?: React.ReactNode;
+	/** The kinds with a button, chosen in "Ansicht · Kalender". */
+	facets?: CalendarEntryFacet[];
 	className?: string;
 }
 
@@ -924,6 +1017,7 @@ export const CalendarKindChips = ({
 	onToggleFacet,
 	onHighlightFacet,
 	trailing,
+	facets = KIND_CHIPS,
 	className
 }: CalendarKindChipsProps) => {
 	const { t } = useTranslation();
@@ -947,39 +1041,41 @@ export const CalendarKindChips = ({
 			className={className}
 			trailing={trailing}
 		>
-			{KIND_CHIPS.map((facet) => {
-				const on = onlyFacets.includes(facet);
-				const name =
-					facet === 'blocker'
-						? t('calendar.blocker.menuItem')
-						: t(`calendar.kinds.${facet}`);
-				return (
-					<button
-						key={facet}
-						type="button"
-						className={`calendarSide__kindChip calendarSide__chip--k-${facet}`}
-						aria-pressed={on}
-						title={name}
-						onClick={() => choose(facet)}
-						onMouseEnter={() => onHighlightFacet(facet)}
-						onMouseLeave={() => onHighlightFacet(null)}
-						onFocus={() => onHighlightFacet(facet)}
-						onBlur={() => onHighlightFacet(null)}
-						data-cy={`calendar-filter-${facet}`}
-					>
-						<FacetIcon facet={facet} />
-						{/* Read out always, shown only on the chosen chip. */}
-						<span className="calendarSide__kindChipLabel">
-							{name}
-						</span>
-						{on && (
-							<span className="calendarSide__kindChipCount">
-								{futureCount(facet)}
+			{KIND_CHIPS.filter((facet) => facets.includes(facet)).map(
+				(facet) => {
+					const on = onlyFacets.includes(facet);
+					const name =
+						facet === 'blocker'
+							? t('calendar.blocker.menuItem')
+							: t(`calendar.kinds.${facet}`);
+					return (
+						<button
+							key={facet}
+							type="button"
+							className={`calendarSide__kindChip calendarSide__chip--k-${facet}`}
+							aria-pressed={on}
+							title={name}
+							onClick={() => choose(facet)}
+							onMouseEnter={() => onHighlightFacet(facet)}
+							onMouseLeave={() => onHighlightFacet(null)}
+							onFocus={() => onHighlightFacet(facet)}
+							onBlur={() => onHighlightFacet(null)}
+							data-cy={`calendar-filter-${facet}`}
+						>
+							<FacetIcon facet={facet} />
+							{/* Read out always, shown only on the chosen chip. */}
+							<span className="calendarSide__kindChipLabel">
+								{name}
 							</span>
-						)}
-					</button>
-				);
-			})}
+							{on && (
+								<span className="calendarSide__kindChipCount">
+									{futureCount(facet)}
+								</span>
+							)}
+						</button>
+					);
+				}
+			)}
 		</FilterChipRow>
 	);
 };

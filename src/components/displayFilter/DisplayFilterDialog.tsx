@@ -137,6 +137,11 @@ export interface DisplayFilterDialogProps {
 	browserUnavailableReason?: string;
 	/** Set while delivery holds pop-ups back (mute, DND): a notice, cells stay editable. */
 	browserMutedNotice?: string;
+	/**
+	 * False: no chip-look controls (view, auto-sort). The calendar's kind
+	 * buttons have one fixed look and no unread order.
+	 */
+	showPresentation?: boolean;
 }
 
 export interface DisplayFilterColumns {
@@ -180,7 +185,8 @@ export const DisplayFilterDialog = ({
 	icon,
 	email,
 	browserUnavailableReason,
-	browserMutedNotice
+	browserMutedNotice,
+	showPresentation = true
 }: DisplayFilterDialogProps) => {
 	const controlsDisabled = !canWrite || readOnly;
 	// Show-only kinds (the future timeline panel) have no row in the sound
@@ -327,80 +333,88 @@ export const DisplayFilterDialog = ({
 
 			<section
 				className="displayFilterDialog__section"
-				aria-labelledby={`${dialogId}-presentation`}
+				aria-labelledby={
+					showPresentation ? `${dialogId}-presentation` : undefined
+				}
 			>
-				<h3
-					className="displayFilterDialog__sectionTitle"
-					id={`${dialogId}-presentation`}
-				>
-					{labels.presentationHeading}
-				</h3>
-				<fieldset
-					className="displayFilterDialog__view"
-					data-cy="display-filter-view"
-				>
-					<legend className="sr-only">{labels.viewTitle}</legend>
-					<div
-						className="displayFilterDialog__viewOptions"
-						role="radiogroup"
-						aria-label={labels.viewTitle}
-					>
-						{CHIP_VIEWS.map((view) => (
-							<label
-								key={view}
-								className={clsx(
-									'displayFilterDialog__viewOption',
-									presentation.view === view &&
-										'displayFilterDialog__viewOption--selected'
-								)}
+				{showPresentation && (
+					<>
+						<h3
+							className="displayFilterDialog__sectionTitle"
+							id={`${dialogId}-presentation`}
+						>
+							{labels.presentationHeading}
+						</h3>
+						<fieldset
+							className="displayFilterDialog__view"
+							data-cy="display-filter-view"
+						>
+							<legend className="sr-only">
+								{labels.viewTitle}
+							</legend>
+							<div
+								className="displayFilterDialog__viewOptions"
+								role="radiogroup"
+								aria-label={labels.viewTitle}
 							>
-								<input
-									type="radio"
-									name={`${dialogId}-view`}
-									value={view}
-									checked={presentation.view === view}
-									disabled={controlsDisabled}
-									onChange={() => setView(view)}
-									data-cy={`display-filter-view-${view}`}
-								/>
-								<span>
-									{view === 'icons'
-										? labels.viewIcons
-										: view === 'labels'
-											? labels.viewLabels
-											: labels.viewText}
-								</span>
-							</label>
-						))}
-					</div>
-				</fieldset>
+								{CHIP_VIEWS.map((view) => (
+									<label
+										key={view}
+										className={clsx(
+											'displayFilterDialog__viewOption',
+											presentation.view === view &&
+												'displayFilterDialog__viewOption--selected'
+										)}
+									>
+										<input
+											type="radio"
+											name={`${dialogId}-view`}
+											value={view}
+											checked={presentation.view === view}
+											disabled={controlsDisabled}
+											onChange={() => setView(view)}
+											data-cy={`display-filter-view-${view}`}
+										/>
+										<span>
+											{view === 'icons'
+												? labels.viewIcons
+												: view === 'labels'
+													? labels.viewLabels
+													: labels.viewText}
+										</span>
+									</label>
+								))}
+							</div>
+						</fieldset>
 
-				<div className="displayFilterDialog__autoRead">
-					<div className="displayFilterDialog__autoReadText">
-						<span
-							className="displayFilterDialog__autoReadTitle"
-							id={`${dialogId}-autosort`}
-						>
-							{labels.autoSort}
-						</span>
-						<span
-							className="displayFilterDialog__autoReadDescription"
-							id={`${dialogId}-autosort-desc`}
-						>
-							{labels.autoSortDescription}
-						</span>
-					</div>
-					<Switch
-						checked={presentation.autoSort}
-						disabled={controlsDisabled}
-						aria-labelledby={`${dialogId}-autosort`}
-						aria-describedby={`${dialogId}-autosort-desc`}
-						data-cy="display-filter-autosort"
-						onChange={(checked) =>
-							onChange({ ...value, autoSort: checked })
-						}
-					/>
-				</div>
+						<div className="displayFilterDialog__autoRead">
+							<div className="displayFilterDialog__autoReadText">
+								<span
+									className="displayFilterDialog__autoReadTitle"
+									id={`${dialogId}-autosort`}
+								>
+									{labels.autoSort}
+								</span>
+								<span
+									className="displayFilterDialog__autoReadDescription"
+									id={`${dialogId}-autosort-desc`}
+								>
+									{labels.autoSortDescription}
+								</span>
+							</div>
+							<Switch
+								checked={presentation.autoSort}
+								disabled={controlsDisabled}
+								aria-labelledby={`${dialogId}-autosort`}
+								aria-describedby={`${dialogId}-autosort-desc`}
+								data-cy="display-filter-autosort"
+								onChange={(checked) =>
+									onChange({ ...value, autoSort: checked })
+								}
+							/>
+						</div>
+					</>
+				)}
 
 				{panelKinds.map((kind) => (
 					<div

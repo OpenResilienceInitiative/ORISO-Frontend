@@ -7080,6 +7080,8 @@
 		"entryMenu": {
 			"back": "Zurück",
 			"cancel": "Absagen",
+			"show": "Zum Termin",
+			"showSub": "Im Kalender zeigen und markieren",
 			"chat": "Zum Chat",
 			"conflicts": "Überschneidet sich mit einem anderen Eintrag.",
 			"date": "Tag",
@@ -7394,6 +7396,19 @@
 			"group": "Gruppentermin",
 			"blocker": "Sperrzeit",
 			"busy": "Belegt"
+		},
+		"viewSettings": {
+			"title": "Ansicht · Kalender",
+			"description": "Welche Terminarten der Kalender zeigt, welche einen Knopf in der Arten-Leiste bekommen und wann Sie E-Mails erhalten.",
+			"kindsHeading": "Terminarten",
+			"showColumn": "Im Kalender",
+			"legendShow": "Termine dieser Art erscheinen im Kalender und in der Liste.",
+			"pillColumn": "Als Knopf",
+			"legendPill": "Die Art hat einen Knopf in der Leiste über „Als Nächstes“.",
+			"legendEmail": "E-Mail bei gebuchten, verschobenen und abgesagten Terminen. Gilt für alle Terminarten gemeinsam, wie im Profil.",
+			"showKind": "Im Kalender: {{kind}}",
+			"pillKind": "Als Knopf: {{kind}}",
+			"pillMenu": "Als Knopf wählen: {{kind}}"
 		}
 	}
 }

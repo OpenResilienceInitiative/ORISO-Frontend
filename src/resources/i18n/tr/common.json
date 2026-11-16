@@ -7090,6 +7090,8 @@
 		"entryMenu": {
 			"back": "Geri",
 			"cancel": "Randevuyu iptal et",
+			"show": "Randevuya git",
+			"showSub": "Takvimde göster ve vurgula",
 			"chat": "Sohbete git",
 			"conflicts": "Başka bir kayıtla çakışıyor.",
 			"date": "Gün",
@@ -7404,6 +7406,19 @@
 			"group": "Grup randevusu",
 			"blocker": "Engellenmiş zaman",
 			"busy": "Meşgul"
+		},
+		"viewSettings": {
+			"title": "Görünüm · Takvim",
+			"description": "Takvimin hangi randevu türlerini gösterdiği, hangilerinin tür çubuğunda düğmesi olduğu ve ne zaman e-posta aldığınız.",
+			"kindsHeading": "Randevu türleri",
+			"showColumn": "Takvimde",
+			"legendShow": "Bu türdeki randevular takvimde ve listede görünür.",
+			"pillColumn": "Düğme olarak",
+			"legendPill": "Türün „Sıradaki“ üstündeki çubukta bir düğmesi vardır.",
+			"legendEmail": "Rezerve edilen, ertelenen ve iptal edilen randevular için e-posta. Profildeki gibi tüm türler için birlikte geçerlidir.",
+			"showKind": "Takvimde: {{kind}}",
+			"pillKind": "Düğme olarak: {{kind}}",
+			"pillMenu": "Düğme seç: {{kind}}"
 		}
 	}
 }
