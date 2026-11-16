@@ -610,7 +610,11 @@ export const CalendarSidebar = ({
 					>
 						{/* Popper's root is the `role="tooltip"` the row points at. */}
 						{peek && (
-							<CalendarEntryPeek entry={peek.entry} clickHint />
+							<CalendarEntryPeek
+								entry={peek.entry}
+								now={now}
+								clickHint
+							/>
 						)}
 					</Popper>
 				</section>
@@ -904,11 +908,6 @@ export interface CalendarKindChipsProps {
 	now: Date;
 	entries: CalendarEntry[];
 	onlyFacets: CalendarEntryFacet[];
-	/**
-	 * No longer used: all five chips are always on offer (prototype v17);
-	 * hiding kinds is "Was anzeigen".
-	 */
-	hiddenFacets?: CalendarEntryFacet[];
 	onToggleFacet: (facet: CalendarEntryFacet) => void;
 	onHighlightFacet: (facet: CalendarEntryFacet | null) => void;
 	/** Pinned at the right end (the display filter button on the phone). */
