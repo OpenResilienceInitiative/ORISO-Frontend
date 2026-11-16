@@ -7012,6 +7012,12 @@
 		"soon": "Commence bientôt",
 		"blockerMoved": "Plage bloquée déplacée au {{date}}.",
 		"cancelled": "Rendez-vous annulé. La personne en quête de conseils est prévenue.",
+		"cancelAsk": {
+			"title": "Annuler le rendez-vous ?",
+			"description": "{{name}}, {{time}}. {{name}} est informé·e tout de suite de l’annulation.",
+			"keep": "Ne pas annuler",
+			"confirm": "Annuler le rendez-vous"
+		},
 		"created": "Rendez-vous créé : {{date}}",
 		"undo": "Revenir en arrière",
 		"syncDialog": {

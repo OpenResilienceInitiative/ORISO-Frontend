@@ -703,6 +703,32 @@ describe('CalendarPage — a call whose conversation cannot be found (review 457
 	});
 });
 
+describe('CalendarPage — "Absagen" asks first (test C10)', () => {
+	it('cancels only after the confirmation', async () => {
+		const onCancelAppointment = vi.fn(() => Promise.resolve());
+		page({ onCancelAppointment });
+		act(() => grid.onEntryOpen?.(ENTRY, document.body, 'list'));
+		fireEvent.click(
+			document.querySelector(
+				'[data-cy="calendar-entry-cancel"]'
+			) as HTMLElement
+		);
+		expect(onCancelAppointment).not.toHaveBeenCalled();
+		expect(screen.getByText('calendar.cancelAsk.title')).toBeTruthy();
+		fireEvent.click(screen.getByText('calendar.cancelAsk.keep'));
+		expect(onCancelAppointment).not.toHaveBeenCalled();
+		act(() => grid.onEntryOpen?.(ENTRY, document.body, 'list'));
+		fireEvent.click(
+			document.querySelector(
+				'[data-cy="calendar-entry-cancel"]'
+			) as HTMLElement
+		);
+		fireEvent.click(screen.getByTestId('calendar-cancel-confirm'));
+		expect(onCancelAppointment).toHaveBeenCalledWith(ENTRY);
+		expect(await screen.findByText('calendar.cancelled')).toBeTruthy();
+	});
+});
+
 describe('CalendarPage — "Zum Chat" whose conversation cannot be found (review 4577642137)', () => {
 	it('says so from the menu, also when "Als Nächstes" opened it', async () => {
 		const onOpenChat = vi.fn(() => Promise.reject(new Error('no room')));

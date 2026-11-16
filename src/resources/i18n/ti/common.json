@@ -6979,6 +6979,12 @@
 		"soon": "ቀልጢፉ ይጅምር",
 		"blockerMoved": "ዝተዓጽወ ግዜ ናብ {{date}} ተቐይሩ።",
 		"cancelled": "ቆጸራ ተሰሪዙ። እቲ ምኽሪ ዝደሊ ሰብ ክሕበር እዩ።",
+		"cancelAsk": {
+			"title": "ቆጸራ ክትስርዙ ዲኹም?",
+			"description": "{{name}}, {{time}}. {{name}} ቆጸራ ከም ዝተሰረዘ ብቕልጡፍ መልእኽቲ ይበጽሖ።",
+			"keep": "ኣይትሰርዙ",
+			"confirm": "ቆጸራ ሰርዙ"
+		},
 		"created": "ቆጸራ ተፈጢሩ፦ {{date}}",
 		"undo": "ንድሕሪት መልስ",
 		"syncDialog": {

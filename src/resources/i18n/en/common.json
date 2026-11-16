@@ -6927,6 +6927,12 @@
 		"soon": "Starts soon",
 		"blockerMoved": "Block moved to {{date}}.",
 		"cancelled": "Appointment cancelled. The advice seeker is notified.",
+		"cancelAsk": {
+			"title": "Cancel the appointment?",
+			"description": "{{name}}, {{time}}. {{name}} is told at once that the appointment is cancelled.",
+			"keep": "Keep it",
+			"confirm": "Cancel appointment"
+		},
 		"created": "Appointment created: {{date}}",
 		"undo": "Undo",
 		"syncDialog": {

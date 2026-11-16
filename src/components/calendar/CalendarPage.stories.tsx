@@ -1026,6 +1026,23 @@ export const EntryActions: Story = {
 	}
 };
 
+export const CancelAsksFirst: Story = {
+	name: 'Entry actions — "Absagen" asks first',
+	play: async ({ canvasElement }) => {
+		await userEvent.click(await entryEl(canvasElement, 'a1'));
+		await userEvent.click(await findCy('calendar-entry-cancel'));
+		const dialog = await body().findByTestId('calendar-cancel-dialog');
+		await expect(within(dialog).getByText('Termin absagen?')).toBeTruthy();
+		await userEvent.click(
+			within(dialog).getByRole('button', { name: 'Nicht absagen' })
+		);
+		await waitFor(() =>
+			expect(body().queryByTestId('calendar-cancel-dialog')).toBeNull()
+		);
+		await expect(await entryEl(canvasElement, 'a1')).toBeTruthy();
+	}
+};
+
 export const DoubleClickMoves: Story = {
 	name: 'Entry actions — double click opens "Verschieben"',
 	play: async ({ canvasElement }) => {

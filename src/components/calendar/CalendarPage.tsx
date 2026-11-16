@@ -174,6 +174,7 @@ import {
 	type CalendarImport
 } from './CalendarSyncDialog';
 import { useEntryLabel, useRangeFormat } from './useEntryLabel';
+import { M3Dialog } from '../m3Dialog/M3Dialog';
 import type { QuickKind } from './calendarQuickEntry';
 import { useLiveNow } from './useLiveNow';
 import '../sessionsList/sessionsList.styles.scss';
@@ -560,6 +561,8 @@ export const CalendarPage = ({
 		answer: (go: boolean) => void;
 	} | null>(null);
 	/** A new entry onto other entries, made outside a dialog, waits too. */
+	/** "Absagen" asks first: the advice seeker is told at once (test C10). */
+	const [cancelAsk, setCancelAsk] = useState<CalendarEntry | null>(null);
 	const [createAsk, setCreateAsk] = useState<{
 		conflicts: CalendarEntry[];
 		blocker: boolean;
@@ -1548,10 +1551,7 @@ export const CalendarPage = ({
 		if (action === 'start') openRoom(onStart, entry);
 		else if (action === 'chat') openRoom(onOpenChat, entry);
 		else if (action === 'join') onJoin?.(entry);
-		else if (action === 'cancel')
-			run(onCancelAppointment?.(entry), {
-				message: t('calendar.cancelled')
-			});
+		else if (action === 'cancel') setCancelAsk(entry);
 		else
 			run(onRemoveBlocker?.(entry), {
 				message: t('calendar.blockerRemoved')
@@ -2715,6 +2715,39 @@ export const CalendarPage = ({
 					onSaveImport={(url) => onSaveImport?.(url)}
 					onRemoveImport={() => onRemoveImport?.()}
 					onClose={() => setDialog(null)}
+				/>
+			)}
+			{cancelAsk && (
+				<M3Dialog
+					open
+					data-testid="calendar-cancel-dialog"
+					title={t('calendar.cancelAsk.title')}
+					description={t('calendar.cancelAsk.description', {
+						name: label(cancelAsk),
+						time: format(cancelAsk.start, cancelAsk.end)
+					})}
+					severity="error"
+					fullScreen={false}
+					onClose={() => setCancelAsk(null)}
+					closeLabel={t('app.close')}
+					actions={[
+						{
+							label: t('calendar.cancelAsk.keep'),
+							onClick: () => setCancelAsk(null)
+						},
+						{
+							label: t('calendar.cancelAsk.confirm'),
+							primary: true,
+							onClick: () => {
+								const entry = cancelAsk;
+								setCancelAsk(null);
+								run(onCancelAppointment?.(entry), {
+									message: t('calendar.cancelled')
+								});
+							},
+							testId: 'calendar-cancel-confirm'
+						}
+					]}
 				/>
 			)}
 			{createAsk && (

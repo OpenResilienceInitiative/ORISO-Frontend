@@ -7002,6 +7002,12 @@
 		"soon": "Beginnt gleich",
 		"blockerMoved": "Blockierung verschoben auf {{date}}.",
 		"cancelled": "Termin abgesagt. Die ratsuchende Person wird benachrichtigt.",
+		"cancelAsk": {
+			"title": "Termin absagen?",
+			"description": "{{name}}, {{time}}. {{name}} bekommt sofort eine Nachricht, dass der Termin abgesagt ist.",
+			"keep": "Nicht absagen",
+			"confirm": "Absagen"
+		},
 		"created": "Termin angelegt: {{date}}",
 		"undo": "Rückgängig",
 		"syncDialog": {

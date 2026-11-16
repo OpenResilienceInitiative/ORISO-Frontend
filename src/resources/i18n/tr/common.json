@@ -7012,6 +7012,12 @@
 		"soon": "Birazdan başlıyor",
 		"blockerMoved": "Kapalı zaman {{date}} tarihine taşındı.",
 		"cancelled": "Randevu iptal edildi. Danışana bildirim gönderilir.",
+		"cancelAsk": {
+			"title": "Randevu iptal edilsin mi?",
+			"description": "{{name}}, {{time}}. {{name}} randevunun iptal edildiğini hemen öğrenir.",
+			"keep": "İptal etme",
+			"confirm": "Randevuyu iptal et"
+		},
 		"created": "Randevu oluşturuldu: {{date}}",
 		"undo": "Geri al",
 		"syncDialog": {
