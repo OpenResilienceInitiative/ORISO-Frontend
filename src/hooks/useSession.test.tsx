@@ -423,7 +423,10 @@ describe('useSession', () => {
 			setMatrixClientServiceRef(null);
 		});
 
-		const loadSessionWithRoom = async (unreadCount: number) => {
+		const loadSessionWithRoom = async (
+			unreadCount: number,
+			roomExtras: Record<string, unknown> = {}
+		) => {
 			const rawSession = { session: { id: 5 } };
 			const extendedSession = {
 				item: { id: 5, messagesRead: true }
@@ -442,7 +445,8 @@ describe('useSession', () => {
 			);
 			setMatrixClientServiceRef({
 				getRoom: () => ({
-					getUnreadNotificationCount: () => unreadCount
+					getUnreadNotificationCount: () => unreadCount,
+					...roomExtras
 				})
 			} as any);
 
@@ -459,6 +463,39 @@ describe('useSession', () => {
 			expect(chatTransportService.markRoomAsRead).toHaveBeenCalledWith(
 				'!room:hs'
 			);
+		});
+
+		it('publishes a receipt for an encrypted message whose unread count is not computed yet (FE#1802)', async () => {
+			// Encrypted rooms: the SDK counts unread only after decryption, so
+			// a just-arrived message can still report 0 unread.
+			const result = await loadSessionWithRoom(0, {
+				myUserId: '@me:hs',
+				getLiveTimeline: () => ({
+					getEvents: () => [{ getId: () => '$new' }]
+				}),
+				hasUserReadEvent: () => false
+			});
+
+			result.current.read();
+
+			expect(chatTransportService.markRoomAsRead).toHaveBeenCalledWith(
+				'!room:hs'
+			);
+		});
+
+		it('does not publish a receipt when its own receipt is already on the latest event', async () => {
+			const result = await loadSessionWithRoom(0, {
+				myUserId: '@me:hs',
+				getLiveTimeline: () => ({
+					getEvents: () => [{ getId: () => '$seen' }]
+				}),
+				hasUserReadEvent: (userId: string, eventId: string) =>
+					userId === '@me:hs' && eventId === '$seen'
+			});
+
+			result.current.read();
+
+			expect(chatTransportService.markRoomAsRead).not.toHaveBeenCalled();
 		});
 
 		it('does not publish a receipt when the room has no unread messages', async () => {

@@ -91,6 +91,9 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		.sessionsListItem__content {
 			background-color: $session-card-selected-bg !important;
 
+			// Selected card keeps the white gap between the avatars.
+			--participant-ring: var(--m3-surface-container-lowest, #fff);
+
 			// #597: 2px solid --m3-primary (overrides resting 1px border)
 			@include list-item-selected-border($important: true);
 			box-shadow: 0 1px 0 rgba(0, 0, 0, 0.02);
@@ -237,6 +240,9 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		padding: 0;
 		margin: 0;
 		background-color: $session-card-bg;
+
+		// Ring of stacked avatars = card colour while inactive (Frank, 10.11.2026).
+		--participant-ring: #{$session-card-bg};
 		border: 1px solid $session-light-border;
 		border-radius: 24px;
 		transition:
@@ -282,6 +288,8 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		&:not(.sessionsListItem--active, .sessionsListItem--menuOpen)
 			.sessionsListItem__content:hover {
 			background-color: var(--m3-surface, #fcf9f9);
+
+			--participant-ring: var(--m3-surface, #fcf9f9);
 
 			.sessionsListItem__topic {
 				background-color: $session-chip-hover-bg;
@@ -1176,8 +1184,9 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 			height: 56px;
 		}
 
+		// 48px + the 2px the clip box reaches up for the avatar ring.
 		&--kindInRow .sessionCard__flow {
-			height: 48px;
+			height: 50px;
 		}
 
 		&--kindInRow .sessionCard__trailing {
