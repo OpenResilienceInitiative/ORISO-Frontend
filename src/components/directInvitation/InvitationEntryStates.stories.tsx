@@ -130,7 +130,10 @@ const Consent = ({
 	);
 };
 
-const agreeInPlay = async (onAgree: ReturnType<typeof fn>) => {
+/* Typed against `Consent`, so `onAgree` is an arg of these stories. */
+type ConsentStory = StoryObj<typeof Consent>;
+
+const agreeInPlay = async (onAgree: () => Promise<void>) => {
 	await waitFor(() => expect(body().getByRole('checkbox')).toBeEnabled());
 	/* Without the tick "Einverstanden" asks for it and records nothing. */
 	await userEvent.click(body().getByTestId('invitation-consent-accept'));
@@ -140,52 +143,37 @@ const agreeInPlay = async (onAgree: ReturnType<typeof fn>) => {
 	await waitFor(() => expect(onAgree).toHaveBeenCalledTimes(1));
 };
 
-export const JoinConsentCentreText: Story = {
+export const JoinConsentCentreText: ConsentStory = {
 	name: "Joiner consent · centre's text (version pinned) · 1440",
 	globals: desktop1440Globals,
-	args: { onAgree: fn(() => Promise.resolve()) },
-	render: (args) => (
-		<Consent
-			centre
-			onAgree={(args as { onAgree: () => Promise<void> }).onAgree}
-		/>
-	),
+	args: { centre: true, onAgree: fn(() => Promise.resolve()) },
+	render: (args) => <Consent {...args} />,
 	play: async ({ canvasElement, args }) => {
 		await expectWaitingRoomLayout(canvasElement);
 		/* The consent sheet slides in. */
 		await waitFor(() =>
 			expect(body().getByText(CENTRE_SENTENCE)).toBeVisible()
 		);
-		await agreeInPlay((args as { onAgree: ReturnType<typeof fn> }).onAgree);
+		await agreeInPlay(args.onAgree);
 	}
 };
 
-export const JoinConsentPlatformText: Story = {
+export const JoinConsentPlatformText: ConsentStory = {
 	name: 'Joiner consent · platform text (no version) · 390',
 	globals: phone390Globals,
-	args: { onAgree: fn(() => Promise.resolve()) },
-	render: (args) => (
-		<Consent
-			centre={false}
-			onAgree={(args as { onAgree: () => Promise<void> }).onAgree}
-		/>
-	),
+	args: { centre: false, onAgree: fn(() => Promise.resolve()) },
+	render: (args) => <Consent {...args} />,
 	play: async ({ canvasElement, args }) => {
 		await expectWaitingRoomLayout(canvasElement);
-		await agreeInPlay((args as { onAgree: ReturnType<typeof fn> }).onAgree);
+		await agreeInPlay(args.onAgree);
 	}
 };
 
-export const JoinConsentDeclined: Story = {
+export const JoinConsentDeclined: ConsentStory = {
 	name: 'Joiner consent · declined · 390',
 	globals: phone390Globals,
-	args: { onAgree: fn(() => Promise.resolve()) },
-	render: (args) => (
-		<Consent
-			centre
-			onAgree={(args as { onAgree: () => Promise<void> }).onAgree}
-		/>
-	),
+	args: { centre: true, onAgree: fn(() => Promise.resolve()) },
+	render: (args) => <Consent {...args} />,
 	play: async ({ args }) => {
 		await waitFor(() =>
 			expect(
@@ -198,9 +186,7 @@ export const JoinConsentDeclined: Story = {
 		await expect(
 			body().getByText(/nicht betreten|cannot enter/)
 		).toBeVisible();
-		await expect(
-			(args as { onAgree: ReturnType<typeof fn> }).onAgree
-		).not.toHaveBeenCalled();
+		await expect(args.onAgree).not.toHaveBeenCalled();
 	}
 };
 

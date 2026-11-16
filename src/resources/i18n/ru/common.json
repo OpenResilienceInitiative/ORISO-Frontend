@@ -7003,7 +7003,11 @@
 				"accountsOnly": "Für diesen Link brauchen Sie ein Konto. Bitte melden Sie sich an oder registrieren Sie sich."
 			},
 			"roomNotEncrypted": "Diese Einladung kann gerade nicht genutzt werden, weil das Gespräch nicht verschlüsselt ist. Bitte wenden Sie sich an die Beraterin oder den Berater.",
-			"roomUnavailable": "Die Unterhaltung ist gerade nicht erreichbar. Bitte versuchen Sie es in einem Moment erneut."
+			"roomUnavailable": "Die Unterhaltung ist gerade nicht erreichbar. Bitte versuchen Sie es in einem Moment erneut.",
+			"consent": {
+				"description": "Bitte stimmen Sie der Datenschutzerklärung der Beratungsstelle zu, bevor Sie das Gespräch betreten. Jede Person stimmt für sich selbst zu.",
+				"rejected": "Ohne Ihre Zustimmung können Sie dieses Gespräch nicht betreten. Sie können jederzeit noch zustimmen."
+			}
 		},
 		"notice": {
 			"title": "Neuer Link angefragt",
