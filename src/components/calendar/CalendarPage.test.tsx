@@ -61,7 +61,11 @@ afterEach(() => {
 describe('CalendarPage — live clock without a fixed now', () => {
 	it('drops an appointment from "upcoming" once it has ended', () => {
 		render(
-			<CalendarPage role="consultant" ownerId="me" entries={[appointment({})]} />
+			<CalendarPage
+				role="consultant"
+				ownerId="me"
+				entries={[appointment({})]}
+			/>
 		);
 		expect(screen.queryByText('calendar.upcomingEmpty')).toBeNull();
 		act(() => {
@@ -113,5 +117,127 @@ describe('CalendarPage — display filter', () => {
 		expect(chip()?.getAttribute('aria-pressed')).toBe('true');
 		fireEvent.click(chip() as Element);
 		expect(chip()).toBeNull();
+	});
+});
+
+describe('CalendarPage — working hours only once they are loaded (review 4574779938)', () => {
+	const page = (workingHoursLoaded: boolean) => (
+		<CalendarPage
+			role="consultant"
+			ownerId="me"
+			now={NOW}
+			entries={[]}
+			workingHours={[]}
+			workingHoursLoaded={workingHoursLoaded}
+			onSaveWorkingHours={() => undefined}
+			onSaveDayException={() => undefined}
+		/>
+	);
+	const entryPoints = () => {
+		fireEvent.click(
+			document.querySelector('[data-cy="calendar-settings"]') as Element
+		);
+		return {
+			menu: document.querySelector(
+				'[data-cy="calendar-settings-working-hours"]'
+			),
+			sidebar: document.querySelector(
+				'[data-cy="calendar-working-hours"]'
+			)
+		};
+	};
+
+	it('offers no way to edit them while they are not loaded', () => {
+		render(page(false));
+		expect(entryPoints()).toEqual({ menu: null, sidebar: null });
+	});
+
+	it('offers them once loaded', () => {
+		render(page(true));
+		const { menu, sidebar } = entryPoints();
+		expect(menu).not.toBeNull();
+		expect(sidebar).not.toBeNull();
+	});
+});
+
+describe('CalendarPage — grid hours (review 4574981882)', () => {
+	const slot = (time: string) =>
+		document.querySelector(`[data-time="${time}"]`);
+
+	it('widens the grid to the working hours, so every grip sits at its own time', () => {
+		render(
+			<CalendarPage
+				role="consultant"
+				ownerId="me"
+				now={NOW}
+				entries={[]}
+				initialView="workWeek"
+				workingHours={[{ weekday: 1, start: '06:00', end: '22:30' }]}
+			/>
+		);
+		expect(slot('06:00:00')).not.toBeNull();
+		expect(slot('22:30:00')).not.toBeNull();
+		expect(slot('05:30:00')).toBeNull();
+	});
+
+	it.each([
+		['before 07:00', 5, 6, '05:00:00'],
+		['after 21:00', 22, 23, '22:30:00']
+	])(
+		'widens the grid to a move proposal %s, so the dashed proposal shows (review 4581640880)',
+		(_when, from, to, slotTime) => {
+			const at = (hour: number) =>
+				new Date(2026, 10, 16, hour).toISOString();
+			// A colleague's request for one's own appointment: always drawn.
+			const own: CalendarEntry = {
+				id: 'a1',
+				type: 'appointment',
+				kind: 'phone',
+				start: at(10),
+				end: at(11),
+				ownerId: 'me'
+			};
+			render(
+				<CalendarPage
+					role="consultant"
+					ownerId="me"
+					now={NOW}
+					entries={[own]}
+					initialView="workWeek"
+					workingHours={[
+						{ weekday: 1, start: '08:00', end: '16:00' }
+					]}
+					receivedProposals={[
+						{
+							id: 'p1',
+							entryId: 'a1',
+							start: at(from),
+							end: at(to),
+							proposerId: 'kaya',
+							proposerName: 'A. Kaya',
+							approverId: 'me'
+						}
+					]}
+					onAcceptProposal={() => Promise.resolve()}
+				/>
+			);
+			expect(slot(slotTime)).not.toBeNull();
+		}
+	);
+
+	it('keeps the usual 07 to 21 grid inside ordinary hours', () => {
+		render(
+			<CalendarPage
+				role="consultant"
+				ownerId="me"
+				now={NOW}
+				entries={[]}
+				initialView="workWeek"
+				workingHours={[{ weekday: 1, start: '08:00', end: '16:00' }]}
+			/>
+		);
+		expect(slot('07:00:00')).not.toBeNull();
+		expect(slot('06:30:00')).toBeNull();
+		expect(slot('21:00:00')).toBeNull();
 	});
 });

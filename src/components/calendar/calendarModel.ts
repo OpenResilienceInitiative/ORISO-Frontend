@@ -52,7 +52,30 @@ export interface CalendarEntry {
 	 * sample data, where the role and the owner decide.
 	 */
 	movable?: boolean;
+	/** Whole day(s): shown in the all-day row, not across the time grid. */
+	allDay?: boolean;
 }
+
+/** Appointments made before the kind existed were video calls. */
+export const DEFAULT_APPOINTMENT_KIND: AppointmentKind = 'video';
+
+/**
+ * A range from one local midnight to another (or to 23:59 of the last
+ * day), which is how UserService stores an all-day blocker.
+ */
+export const isAllDayRange = (start: Date | string, end: Date | string) => {
+	const s = new Date(start);
+	const e = new Date(end);
+	const midnight = (d: Date) =>
+		d.getHours() === 0 && d.getMinutes() === 0 && d.getSeconds() === 0;
+	const lastMinute = (d: Date) =>
+		d.getHours() === 23 && d.getMinutes() === 59;
+	return (
+		midnight(s) &&
+		e.getTime() > s.getTime() &&
+		(midnight(e) || lastMinute(e))
+	);
+};
 
 /** The location values UserService already stores (ADR-032 §2a). */
 export type AppointmentLocation =
@@ -107,6 +130,11 @@ export interface Colleague {
 	displayName: string;
 	/** Name of the colleague's counselling centre. */
 	agencyName: string;
+	/**
+	 * Short code of the counselling centre, e.g. "BS-N". UserService does not
+	 * send one yet; without it the full name is shown.
+	 */
+	agencyShort?: string;
 	relation: ColleagueRelation;
 }
 
@@ -175,6 +203,24 @@ export const findConflicts = (
 				new Date(e.end).getTime()
 			)
 	);
+};
+
+/**
+ * Own entries that new drafts would overlap, by the rule the creation
+ * dialogs show: `findConflicts`, where a blocker only collides with what is
+ * not a blocker (BlockerDialog). Each entry once, in calendar order.
+ */
+export const draftConflicts = (
+	drafts: Pick<AppointmentDraft, 'type' | 'start' | 'end'>[],
+	entries: CalendarEntry[],
+	ownerId: string
+) => {
+	const hit = new Set<string>();
+	for (const draft of drafts)
+		for (const other of findConflicts(draft, entries, ownerId))
+			if (draft.type !== 'blocker' || other.type !== 'blocker')
+				hit.add(other.id);
+	return entries.filter((entry) => hit.has(entry.id));
 };
 
 /**
@@ -305,7 +351,11 @@ export const MAX_BLOCKER_OCCURRENCES = 120;
 
 /** Local calendar days from the date of `start` to the date of `end`. */
 export const daySpan = (start: Date, end: Date) => {
-	const from = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+	const from = new Date(
+		start.getFullYear(),
+		start.getMonth(),
+		start.getDate()
+	);
 	const to = new Date(end.getFullYear(), end.getMonth(), end.getDate());
 	// A local day has 23, 24 or 25 hours; rounding absorbs the DST hour.
 	return Math.round((to.getTime() - from.getTime()) / 86_400_000);
@@ -444,15 +494,17 @@ const clockTime = (minutes: number) =>
  * The hours the day and week grid show: 07:00–21:00, widened to the full
  * hour around any entry outside them. An entry over midnight shows the
  * whole day. FullCalendar never shows an entry outside these hours.
+ * All-day entries sit in the all-day row and widen nothing.
  */
 export const visibleHours = (
-	entries: Pick<CalendarEntry, 'start' | 'end'>[],
+	entries: Pick<CalendarEntry, 'start' | 'end' | 'allDay'>[],
 	from = 7 * 60,
 	to = 21 * 60
 ) => {
 	let min = from;
 	let max = to;
 	entries.forEach((entry) => {
+		if (entry.allDay) return;
 		const start = new Date(entry.start);
 		const end = new Date(entry.end);
 		if (daySpan(start, new Date(end.getTime() - 1)) > 0) {

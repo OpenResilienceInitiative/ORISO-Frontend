@@ -26,6 +26,11 @@ vi.mock('react-i18next', () => ({
 
 const grid: {
 	onEntryMove?: (entry: CalendarEntry, start: Date, end: Date) => unknown;
+	onEntryOpen?: (
+		entry: CalendarEntry,
+		anchor: HTMLElement,
+		mode: 'list' | 'move'
+	) => void;
 } = {};
 vi.mock('./CalendarView', async (importOriginal) => {
 	const actual = await importOriginal<typeof import('./CalendarView')>();
@@ -33,6 +38,7 @@ vi.mock('./CalendarView', async (importOriginal) => {
 		...actual,
 		CalendarView: (props: typeof grid) => {
 			grid.onEntryMove = props.onEntryMove;
+			grid.onEntryOpen = props.onEntryOpen;
 			return <div data-testid="calendar-view" />;
 		}
 	};
@@ -158,5 +164,44 @@ describe('CalendarPage — a drag onto other entries (review 4577641945)', () =>
 		const onMove = page();
 		expect(await drag(MOVED, at(16), at(17))).toBe(true);
 		expect(onMove).toHaveBeenCalledTimes(1);
+	});
+});
+
+describe('CalendarPage — "Verschieben" in the entry menu (review 4577641945)', () => {
+	const byCy = (name: string) =>
+		document.querySelector(`[data-cy="${name}"]`) as HTMLElement;
+	const moveWithForm = (date: string, from: string, to: string) => {
+		act(() => grid.onEntryOpen?.(MOVED, document.body, 'move'));
+		const form = byCy('calendar-move-form');
+		const [day, start, end] = Array.from(
+			form.querySelectorAll('input')
+		) as HTMLInputElement[];
+		fireEvent.change(day, { target: { value: date } });
+		fireEvent.change(start, { target: { value: from } });
+		fireEvent.change(end, { target: { value: to } });
+		return form;
+	};
+
+	it('does not ask a second time: the form already names the conflict', async () => {
+		const onMove = page();
+		moveWithForm('2026-11-17', '14:00', '15:00');
+		expect(byCy('calendar-move-form').textContent).toContain(
+			'calendar.entryMenu.conflicts'
+		);
+		await act(async () => {
+			fireEvent.click(byCy('calendar-move-submit'));
+		});
+		expect(screen.queryByTestId('calendar-move-conflict')).toBeNull();
+		expect(onMove).toHaveBeenCalledWith(MOVED, at(14), at(15));
+	});
+
+	it('still refuses the past', async () => {
+		const onMove = page();
+		moveWithForm('2026-11-15', '10:00', '11:00');
+		await act(async () => {
+			fireEvent.click(byCy('calendar-move-submit'));
+		});
+		expect(onMove).not.toHaveBeenCalled();
+		expect(screen.getByText('calendar.movePast')).toBeTruthy();
 	});
 });

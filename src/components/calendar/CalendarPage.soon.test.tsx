@@ -5,7 +5,13 @@
  * 4577641949).
  */
 import * as React from 'react';
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import {
+	cleanup,
+	fireEvent,
+	render,
+	screen,
+	waitFor
+} from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { CalendarPage } from './CalendarPage';
 import type { CalendarEntry } from './calendarModel';
@@ -61,14 +67,18 @@ const gridSoon = () =>
 	);
 const listButton = (name: RegExp) =>
 	Array.from(
-		document.querySelectorAll<HTMLElement>('.calendarPage__entry')
+		document.querySelectorAll<HTMLElement>(
+			'[data-cy="calendar-upcoming"] button.calendarSide__row'
+		)
 	).find((el) => name.test(el.textContent ?? ''));
+const byCy = (name: string) =>
+	document.querySelector(`[data-cy="${name}"]`) as HTMLElement | null;
 
 describe('CalendarPage — "Beginnt gleich" (review 4577641949)', () => {
 	it('names it in the side list button, not only by colour', () => {
 		page([own('mutige_eule', 5)]);
 		const button = listButton(/mutige_eule/) as HTMLElement;
-		expect(button.className).toContain('calendarPage__entry--soon');
+		expect(button.className).toContain('calendarSide__row--soon');
 		// The accessible name carries it: the button's text includes it.
 		expect(
 			screen
@@ -88,10 +98,41 @@ describe('CalendarPage — "Beginnt gleich" (review 4577641949)', () => {
 		page([own('later', 10), own('next', 5, 'group')]);
 		await waitFor(() => expect(gridSoon()).toEqual(['next']));
 		expect(
-			document.querySelectorAll('.calendarPage__entry--soon')
+			document.querySelectorAll('.calendarSide__row--soon')
 		).toHaveLength(1);
 		expect(listButton(/next/)?.textContent).toContain('calendar.soon');
 		expect(listButton(/later/)?.textContent).not.toContain('calendar.soon');
 		expect(screen.getAllByText('calendar.soon')).toHaveLength(2);
+	});
+
+	it('marks no other entry in the grid when the kind filter hides the soon one', async () => {
+		page([own('next', 5, 'group'), own('later', 10)]);
+		await waitFor(() => expect(gridSoon()).toEqual(['next']));
+		fireEvent.click(byCy('calendar-kinds-button') as HTMLElement);
+		await waitFor(() =>
+			expect(byCy('calendar-kinds-group')).not.toBeNull()
+		);
+		fireEvent.click(byCy('calendar-kinds-group') as HTMLElement);
+		// Hidden in both: "later" is now first in the list and the grid.
+		await waitFor(() => expect(gridSoon()).toEqual(['later']));
+		expect(listButton(/later/)?.className).toContain(
+			'calendarSide__row--soon'
+		);
+		expect(listButton(/next/)).toBeUndefined();
+	});
+
+	it('marks none in the grid when the chips leave the soon one out of it', async () => {
+		page([own('next', 5, 'group'), own('later', 10)]);
+		await waitFor(() => expect(gridSoon()).toEqual(['next']));
+		// "Nur Video" narrows the grid; "Als Nächstes" still starts with
+		// the group date, so the grid must not pick "later" instead.
+		fireEvent.click(byCy('calendar-filter-video') as HTMLElement);
+		await waitFor(() =>
+			expect(document.querySelectorAll('.calEntry')).toHaveLength(1)
+		);
+		expect(gridSoon()).toEqual([]);
+		expect(listButton(/next/)?.className).toContain(
+			'calendarSide__row--soon'
+		);
 	});
 });

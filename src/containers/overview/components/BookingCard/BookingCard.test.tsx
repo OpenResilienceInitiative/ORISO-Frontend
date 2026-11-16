@@ -122,9 +122,9 @@ describe('BookingCard — from the calendar (review 5909821771)', () => {
 		const [from, to] = api.apiGetCalendarEntries.mock.calls[0];
 		expect(from.getTime()).toBeLessThanOrEqual(NOW.getTime());
 		expect(to.getTime()).toBeGreaterThan(NOW.getTime());
-		expect(fetchSpy.urls.some((url) => url.includes('appointservice'))).toBe(
-			false
-		);
+		expect(
+			fetchSpy.urls.some((url) => url.includes('appointservice'))
+		).toBe(false);
 	});
 
 	it('shows the time of the calendar entry as it is, without a zone shift', async () => {
@@ -142,7 +142,9 @@ describe('BookingCard — from the calendar (review 5909821771)', () => {
 		await waitFor(() =>
 			expect(api.apiGetCalendarEntries).toHaveBeenCalledTimes(1)
 		);
-		expect(await screen.findByText('overview.appointmentsEmpty')).toBeTruthy();
+		expect(
+			await screen.findByText('overview.appointmentsEmpty')
+		).toBeTruthy();
 		expect(names()).toEqual([]);
 	});
 

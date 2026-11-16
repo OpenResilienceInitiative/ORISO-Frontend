@@ -172,7 +172,10 @@ export const CONSULTANT_SWITCHES: NotificationSwitch[] = [
 			'selbsthilfe-termin-bestaetigt-beratung',
 			'selbsthilfe-termin-verschoben-beratung',
 			'selbsthilfe-termin-abgesagt-beratung',
-			'selbsthilfe-termin-erinnerung-beratung'
+			'selbsthilfe-termin-erinnerung-beratung',
+			// FE#1050: a colleague proposes moving one's appointment;
+			// UserService sends it only while this flag is on.
+			'calendar-move-proposal'
 		]
 	},
 	{

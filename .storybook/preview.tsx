@@ -510,6 +510,16 @@ const storybookApiResponse = (url: URL, method: string): Response | null => {
 		return storybookEmptyResponse();
 	}
 
+	// The "Meine Termine" nav badge (FE#1050) counts the move proposals
+	// waiting for the counsellor; by default none. Calendar stories answer
+	// with their own requests.
+	if (
+		url.pathname === '/service/users/calendar/proposals' &&
+		method === 'GET'
+	) {
+		return storybookJsonResponse({ sent: [], received: [] });
+	}
+
 	if (
 		url.pathname.includes('/service/conversations/consultants/availability')
 	) {

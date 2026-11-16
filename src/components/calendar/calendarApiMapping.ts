@@ -7,17 +7,21 @@ import type {
 	CalendarColleagueDTO,
 	CalendarColleaguesDTO,
 	CalendarEntryDTO,
+	CalendarProposalDTO,
 	CalendarSyncDTO
 } from '../../api/apiCalendar';
+import type { MoveProposal } from './calendarActions';
 import type { SessionAppointmentKind } from '../../api/apiSessionAppointments';
-import type {
-	AppointmentDraft,
-	AppointmentKind,
-	CalendarEntry,
-	CalendarEntryType,
-	CalendarVisibility,
-	Colleague,
-	ColleagueRelation
+import {
+	DEFAULT_APPOINTMENT_KIND,
+	isAllDayRange,
+	type AppointmentDraft,
+	type AppointmentKind,
+	type CalendarEntry,
+	type CalendarEntryType,
+	type CalendarVisibility,
+	type Colleague,
+	type ColleagueRelation
 } from './calendarModel';
 import type { CalendarFeed, CalendarImport } from './CalendarSyncDialog';
 
@@ -45,21 +49,47 @@ export const kindToApi = (kind: AppointmentKind): SessionAppointmentKind =>
 	kind.toUpperCase() as SessionAppointmentKind;
 
 /**
- * Appointments made before the calendar carry no kind; they were always
- * video calls (the timeline shows them the same way).
+ * UserService leaves out every field that is null, so anything optional may
+ * be missing. An appointment without a kind (made before the kind existed,
+ * or a kind this frontend does not know yet) is a video call, as in the
+ * timeline; other types never carry one. A blocker over whole days is shown
+ * in the all-day row.
  */
-export const entryFromApi = (dto: CalendarEntryDTO): CalendarEntry => ({
+export const entryFromApi = (dto: CalendarEntryDTO): CalendarEntry => {
+	const type = TYPE[dto.type] ?? 'busy';
+	return {
+		id: dto.id,
+		type,
+		start: dto.start,
+		end: dto.end,
+		ownerId: dto.ownerId,
+		...(type === 'appointment' && {
+			kind: (dto.kind && KIND[dto.kind]) || DEFAULT_APPOINTMENT_KIND
+		}),
+		...(dto.title && { title: dto.title }),
+		...(typeof dto.sessionId === 'number' && { sessionId: dto.sessionId }),
+		...((type === 'blocker' || type === 'busy') &&
+			isAllDayRange(dto.start, dto.end) && { allDay: true }),
+		movable: dto.movable === true
+	};
+};
+
+/**
+ * A move proposal as the page knows it. Names UserService leaves out (null
+ * fields are not sent) stay absent; the page then names nobody.
+ */
+export const proposalFromApi = (dto: CalendarProposalDTO): MoveProposal => ({
 	id: dto.id,
-	type: TYPE[dto.type] ?? 'busy',
+	entryId: dto.entryId,
 	start: dto.start,
 	end: dto.end,
-	ownerId: dto.ownerId,
-	...(dto.type === 'APPOINTMENT' && {
-		kind: (dto.kind && KIND[dto.kind]) || 'video'
-	}),
-	...(dto.title && { title: dto.title }),
-	...(typeof dto.sessionId === 'number' && { sessionId: dto.sessionId }),
-	movable: dto.movable === true
+	entryStart: dto.entryStart,
+	entryEnd: dto.entryEnd,
+	proposerId: dto.proposerId,
+	...(dto.proposerName && { proposerName: dto.proposerName }),
+	approverId: dto.approverId,
+	...(dto.approverName && { approverName: dto.approverName }),
+	...(dto.createdAt && { createdAt: dto.createdAt })
 });
 
 export const colleagueFromApi = (dto: CalendarColleagueDTO): Colleague => ({

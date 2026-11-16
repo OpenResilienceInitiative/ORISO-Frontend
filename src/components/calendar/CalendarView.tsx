@@ -1,14 +1,20 @@
 /**
- * The calendar grid (ADR-032 §1–§2): FullCalendar's MIT core, ORISO tokens,
- * our own toolbar. Day, week, month and list for counsellors; phones get
- * list, day and month. All data comes in through props — the view never
- * fetches.
+ * The calendar grid (ADR-032 §1–§2): FullCalendar's MIT core in ORISO
+ * tokens. The page owns the toolbar, the view and the paging and hands in
+ * the controller; this component only draws entries and reports what the
+ * pointer did. All data comes in through props — the view never fetches.
+ *
+ * Round 2 (Frank's prototype, 2026-11-14): one colour per kind, working
+ * hours shaded, a "ganztägig" row, colleague entries with a tooltip, pending
+ * move proposals drawn dashed, a double click opens straight into
+ * "Verschieben".
  */
 import * as React from 'react';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import FullCalendar, {
-	useCalendarController,
+	type CalendarController,
 	type DateSelectInfo,
 	type EventClickInfo,
 	type EventDisplayInfo,
@@ -21,16 +27,14 @@ import timeGridPlugin from '@fullcalendar/react/timegrid';
 import listPlugin from '@fullcalendar/react/list';
 import interactionPlugin from '@fullcalendar/react/interaction';
 import deLocale from '@fullcalendar/react/locales/de';
+import { Popper } from '@mui/material';
 import enGbLocale from '@fullcalendar/react/locales/en-gb';
 import frLocale from '@fullcalendar/react/locales/fr';
 import ruLocale from '@fullcalendar/react/locales/ru';
 import trLocale from '@fullcalendar/react/locales/tr';
-import { IconButton } from '@mui/material';
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import '@fullcalendar/react/skeleton.css';
 import '@fullcalendar/react/themes/classic/theme.css';
-import { ButtonGroup } from '../buttonGroup/ButtonGroup';
+import './fullCalendarGuards';
 import {
 	createMoveGuard,
 	isMovable,
@@ -38,14 +42,47 @@ import {
 	visibleHours,
 	type CalendarEntry,
 	type CalendarRole,
+	type Colleague,
 	type MoveResult
 } from './calendarModel';
-import { CalendarEntryGlyph, SoonBadge } from './CalendarEntryGlyph';
-import { useEntryLabel } from './useEntryLabel';
+import { CalendarEntryGlyph, SoonBadge, facetOf } from './CalendarEntryGlyph';
+import type { MoveProposal } from './calendarActions';
+import {
+	dayEdgesOf,
+	dayExceptionAllowed,
+	gripEdges,
+	effectiveDay,
+	minutesOf,
+	offRangesOf,
+	type WorkingPlan
+} from './calendarWorkingHours';
+import {
+	CalendarWorkGrip,
+	type EdgeChange,
+	type GripGeometry
+} from './CalendarWorkGrip';
+import type { PublicHoliday } from './calendarHolidays';
+import {
+	FC_CUSTOM_VIEWS,
+	FC_VIEW,
+	type CalendarViewName
+} from './calendarViews';
+import {
+	useEntryLabel,
+	useProposalStatus,
+	useRangeFormat
+} from './useEntryLabel';
+import {
+	colleagueBands,
+	foldsIntoBand,
+	type ColleagueBand
+} from './calendarBands';
+import { CalendarEntryPeek, initialsOf } from './CalendarEntryPeek';
 import { fullCalendarLocale } from './calendarLocale';
+import { GRID_SLOT_PX } from './calendarZoom';
 import './calendar.styles.scss';
 
-export type CalendarViewName = 'day' | 'week' | 'month' | 'list';
+export type GridViewName = Exclude<CalendarViewName, 'split'>;
 
 // Module constants: new arrays per render make FullCalendar reset its view.
 const PLUGINS = [
@@ -57,111 +94,563 @@ const PLUGINS = [
 ];
 const LOCALES = [deLocale, enGbLocale, frLocale, ruLocale, trLocale];
 
-const FC_VIEW: Record<CalendarViewName, string> = {
-	day: 'timeGridDay',
-	week: 'timeGridWeek',
-	month: 'dayGridMonth',
-	list: 'listWeek'
-};
+/** A click waits this long for a second one before it opens the menu. */
+const DOUBLE_CLICK_MS = 230;
+
+/** Who or what the pointer rests on; everything else is dimmed. */
+export interface CalendarHighlight {
+	owner?: string;
+	facet?: string;
+}
+
+export type MenuAnchor = HTMLElement | { x: number; y: number };
 
 export interface CalendarViewProps {
+	controller: CalendarController;
+	view: GridViewName;
 	role: CalendarRole;
 	/** Signed-in counsellor or advice seeker. */
 	ownerId: string;
-	/** Own entries plus colleagues' entries, already redacted. */
+	/** Own entries plus colleagues' entries, already redacted and filtered. */
 	entries: CalendarEntry[];
-	/** Display names of colleagues whose entries are included. */
-	colleagueNames?: Record<string, string>;
+	/**
+	 * The same people's entries before the kind filter: the bands count
+	 * these, so a hidden blocker still makes a colleague busy (review
+	 * 4576423989). Defaults to `entries`.
+	 */
+	busyEntries?: CalendarEntry[];
+	/**
+	 * The one entry marked "Beginnt gleich", picked by the page so the grid
+	 * and the side list agree; `null` when none is soon. Left out, the grid
+	 * picks it from its own entries (review 4577641949).
+	 */
+	soonId?: string | null;
+	/** Colleagues by id, for names, initials and the tooltip. */
+	colleagues?: Record<string, Colleague>;
+	/**
+	 * Shown colleagues whose calendars loaded: in the time grid their
+	 * timed entries fold into "k von n belegt" bands.
+	 */
+	bandPeople?: Colleague[];
+	/** Shown colleagues whose calendars did not load: no "all busy". */
+	unavailable?: Colleague[];
+	/**
+	 * Shown colleagues whose calendars are still loading: no "all busy"
+	 * either, and the band says they are loading (review 4576313280).
+	 */
+	loading?: Colleague[];
 	compact?: boolean;
-	initialView?: CalendarViewName;
 	/** Fixed "now" for Storybook and tests. */
 	now?: Date;
-	/** A free range was selected (counsellors only). */
+	/** The day the grid opens on (it remounts after the split view). */
+	initialDate?: Date;
+	/** Weekly hours, day exceptions and the holiday region. */
+	workingPlan?: WorkingPlan;
+	/**
+	 * A grip on the edge of one's own working day was moved; without it the
+	 * grips are not drawn.
+	 */
+	onEdgeChange?: (
+		change: EdgeChange,
+		anchor: { x: number; y: number }
+	) => void;
+	/** Height of half an hour in the time grid (the zoom), in pixels. */
+	slotPx?: number;
+	/** Pending move proposals, drawn dashed at the proposed time. */
+	proposals?: { proposal: MoveProposal; entry: CalendarEntry }[];
+	highlight?: CalendarHighlight | null;
+	/** Owners whose entries are faded out (people bar). */
+	muted?: string[];
+	/** A free range in the time grid was selected (counsellors only). */
 	onSelectRange?: (
 		range: { start: Date; end: Date },
 		anchor: { x: number; y: number }
 	) => void;
-	onEntryClick?: (entry: CalendarEntry) => void;
+	/** One or more whole days were selected (month view, all-day row). */
+	onSelectDays?: (
+		start: Date,
+		days: number,
+		anchor: { x: number; y: number }
+	) => void;
+	/** `move`: a double click, straight into "Verschieben". */
+	onEntryOpen?: (
+		entry: CalendarEntry,
+		anchor: MenuAnchor,
+		mode: 'list' | 'move'
+	) => void;
+	onProposalOpen?: (proposal: MoveProposal, anchor: MenuAnchor) => void;
 	/**
-	 * An own entry was dragged. Return false, or a promise that rejects or
-	 * resolves to false, to put it back.
+	 * An own entry was dragged to a new time. Return false, or a promise
+	 * that rejects or resolves to false, to put it back.
 	 */
 	onEntryMove?: (entry: CalendarEntry, start: Date, end: Date) => MoveResult;
-	/** Extra controls on the right of the toolbar (filters, sync …). */
-	toolbarEnd?: React.ReactNode;
 	/** The visible range changed (first render, paging, view switch). */
-	onRangeChange?: (start: Date, end: Date) => void;
+	onDatesSet?: (title: string, start: Date, end: Date) => void;
+	/** An entry is being dragged: the page pages at the edges. */
+	onDragChange?: (dragging: boolean) => void;
 }
 
+interface EventProps {
+	entry?: CalendarEntry;
+	proposal?: MoveProposal;
+	/** Background: time outside the working hours. */
+	off?: { kind: 'off' | 'break' };
+	/** Background, all-day: the public holiday of that date. */
+	holiday?: PublicHoliday;
+	/** Background: colleagues busy in this stretch. */
+	band?: ColleagueBand;
+}
+
+/** The usual working day the time grid shows, before any widening. */
+const DAY_FROM = 7 * 60;
+const DAY_TO = 21 * 60;
+
+/**
+ * Earliest start and latest end of the working plan, on the full hour:
+ * the grid widens to them, so a grip always sits at its own time and
+ * never at a cut-off edge of the grid (review 4574981882).
+ */
+const planBounds = (plan?: WorkingPlan) => {
+	const windows = [
+		...(plan?.hours ?? []),
+		...Object.values(plan?.exceptions ?? {}).flat()
+	];
+	return windows.reduce(
+		(bounds, w) => ({
+			from: Math.min(
+				bounds.from,
+				Math.floor(minutesOf(w.start) / 60) * 60
+			),
+			to: Math.max(bounds.to, Math.ceil(minutesOf(w.end) / 60) * 60)
+		}),
+		{ from: DAY_FROM, to: DAY_TO }
+	);
+};
+/** "HH:MM:00" as minutes since midnight; "24:00:00" is 1440. */
+const slotMinutes = (slot: string) => minutesOf(slot.slice(0, 5));
+
+/**
+ * The hours the time grids show, for the time grid and "Nebeneinander"
+ * alike: the usual day widened to the working plan, to every entry and to
+ * every dashed move proposal at its proposed time, so nothing falls
+ * outside (reviews 4575253322, 4581640880).
+ */
+const gridHours = (
+	entries: Pick<CalendarEntry, 'start' | 'end' | 'allDay'>[],
+	plan?: WorkingPlan,
+	proposals: { proposal: Pick<MoveProposal, 'start' | 'end'> }[] = []
+) => {
+	const bounds = planBounds(plan);
+	return visibleHours(
+		[
+			...entries,
+			...proposals.map(({ proposal }) => ({
+				start: proposal.start,
+				end: proposal.end
+			}))
+		],
+		bounds.from,
+		bounds.to
+	);
+};
+
+/** {@link gridHours} as minutes since midnight. */
+export const gridMinutes = (
+	entries: Pick<CalendarEntry, 'start' | 'end' | 'allDay'>[],
+	plan?: WorkingPlan,
+	proposals: { proposal: Pick<MoveProposal, 'start' | 'end'> }[] = []
+) => {
+	const hours = gridHours(entries, plan, proposals);
+	return {
+		firstMinute: slotMinutes(hours.min),
+		lastMinute: slotMinutes(hours.max)
+	};
+};
+const TIME_GRID_VIEWS: GridViewName[] = [
+	'day',
+	'threeDays',
+	'workWeek',
+	'week'
+];
+
+const startOfDay = (date: Date) =>
+	new Date(date.getFullYear(), date.getMonth(), date.getDate());
+const nextDay = (day: Date) =>
+	new Date(day.getFullYear(), day.getMonth(), day.getDate() + 1);
+/** Minutes since midnight as a date; 24:00 is the next midnight. */
+const atMinutes = (day: Date, minutes: number) =>
+	new Date(
+		day.getFullYear(),
+		day.getMonth(),
+		day.getDate(),
+		Math.floor(minutes / 60),
+		minutes % 60
+	);
+
+/** Where a grip at HH:mm sits in its day column. */
+const gripTop = (time: string, first: number, last: number) =>
+	`${(Math.min(last, Math.max(first, minutesOf(time))) - first) / ((last - first) / 100)}%`;
+
+/** YYYY-MM-DD as the local midnight. */
+const dayOfKey = (key: string) => {
+	const [year, month, date] = key.split('-').map(Number);
+	return new Date(year, month - 1, date);
+};
+
+/** The day column a grip sits in (FullCalendar's time-grid cell). */
+const measureColumn =
+	(firstMinute: number, lastMinute: number) =>
+	(grip: HTMLElement): GripGeometry | null => {
+		const column = grip.closest<HTMLElement>('[role="cell"][data-date]');
+		if (!column) return null;
+		const rect = column.getBoundingClientRect();
+		return {
+			top: rect.top,
+			left: rect.left,
+			width: rect.width,
+			height: rect.height,
+			firstMinute,
+			lastMinute
+		};
+	};
+
+/**
+ * FullCalendar reads an all-day end as an exclusive date. UserService may
+ * store the last day as 23:59, which would drop that day.
+ */
+const allDayEnd = (end: string) => {
+	const date = new Date(end);
+	if (
+		date.getHours() ||
+		date.getMinutes() ||
+		date.getSeconds() ||
+		date.getMilliseconds()
+	)
+		date.setHours(24, 0, 0, 0);
+	return date;
+};
+
+/**
+ * The all-day row of the time grid starts one entry tall. FullCalendar
+ * evens out that row after measuring it; starting at the height of one
+ * entry spares the second pass ("ResizeObserver loop …") whenever a day has
+ * at most one all-day entry.
+ */
+const allDayCellInnerClass = (info: { view: { type: string } }) =>
+	info.view.type.startsWith('timeGrid') ? 'calendarView__allDayCell' : '';
+
+/** The face the grid's labels use; one variable file covers every weight. */
+const GRID_FONT = '400 14px "Inter Variable"';
+
+/** True when the face is loaded, or unknown here (system font, jsdom). */
+const fontsSettled = () => {
+	try {
+		return typeof document === 'undefined' || !document.fonts?.check
+			? true
+			: document.fonts.check(GRID_FONT);
+	} catch {
+		return true;
+	}
+};
+
+/**
+ * FullCalendar measures its labels once mounted. Mounting it while the web
+ * font is still loading makes it measure twice in one frame ("ResizeObserver
+ * loop …") and the grid visibly jumps; waiting for the font (at most a
+ * second) avoids both.
+ */
+const useFontsReady = () => {
+	const [ready, setReady] = useState(fontsSettled);
+	useEffect(() => {
+		if (ready) return undefined;
+		let active = true;
+		const done = () => active && setReady(true);
+		document.fonts.load(GRID_FONT).then(done, done);
+		const timer = window.setTimeout(done, 1000);
+		return () => {
+			active = false;
+			window.clearTimeout(timer);
+		};
+	}, [ready]);
+	return ready;
+};
+
+const propsOf = (info: { event: { extendedProps: unknown } }) =>
+	info.event.extendedProps as EventProps;
+
+const NO_PEOPLE: Colleague[] = [];
+const bandKey = (band: ColleagueBand) =>
+	`${band.start.getTime()}-${band.end.getTime()}`;
+
+const DAY_MS = 86_400_000;
+
 export const CalendarView = ({
+	controller,
+	view,
 	role,
 	ownerId,
 	entries,
-	colleagueNames = {},
+	busyEntries,
+	soonId: soonIdProp,
+	colleagues = {},
+	bandPeople = NO_PEOPLE,
+	unavailable = NO_PEOPLE,
+	loading = NO_PEOPLE,
 	compact = false,
-	initialView,
 	now,
+	initialDate,
+	workingPlan,
+	onEdgeChange,
+	proposals = [],
+	highlight,
+	muted = [],
 	onSelectRange,
-	onEntryClick,
+	onSelectDays,
+	onEntryOpen,
+	onProposalOpen,
 	onEntryMove,
-	toolbarEnd,
-	onRangeChange
+	onDatesSet,
+	onDragChange,
+	slotPx = GRID_SLOT_PX
 }: CalendarViewProps) => {
 	const { t, i18n } = useTranslation();
 	const label = useEntryLabel();
-	const [title, setTitle] = useState('');
-	const views: CalendarViewName[] = compact
-		? ['list', 'day', 'month']
-		: ['day', 'week', 'month', 'list'];
-	const [view, setView] = useState<CalendarViewName>(
-		initialView ?? (compact ? 'list' : 'week')
-	);
-	const controller = useCalendarController();
+	const format = useRangeFormat();
+	const proposalStatus = useProposalStatus(ownerId);
 	const nowDate = now ?? new Date();
 	const consultant = role === 'consultant';
+	const gridRef = useRef<HTMLDivElement>(null);
+	const fontsReady = useFontsReady();
+	const [peek, setPeek] = useState<
+		| {
+				el: HTMLElement;
+				entry: CalendarEntry;
+				proposal?: MoveProposal;
+		  }
+		| { el: HTMLElement; band: ColleagueBand }
+		| null
+	>(null);
 
-	// The usual working day, widened so no entry falls outside the grid.
-	const hours = useMemo(() => visibleHours(entries), [entries]);
+	// The days FullCalendar shows, for the off-time of each date.
+	const [shownRange, setShownRange] = useState<{
+		start: Date;
+		end: Date;
+	} | null>(null);
+	const timeGrid = TIME_GRID_VIEWS.includes(view);
+
+	// Colleagues fold into bands in the time grid; month and list keep
+	// single entries.
+	const people = useMemo(() => bandPeople.map((c) => c.id), [bandPeople]);
+	const banded = timeGrid && people.length > 0;
+	const counted = busyEntries ?? entries;
+	const bands = useMemo(
+		() => (banded ? colleagueBands(counted, people) : []),
+		[banded, counted, people]
+	);
+	const gridEntries = useMemo(
+		() =>
+			banded
+				? entries.filter((entry) => !foldsIntoBand(entry, people))
+				: entries,
+		[banded, entries, people]
+	);
+	const bandLabel = (band: ColleagueBand) =>
+		people.length === 1
+			? t('calendar.bandOne', {
+					name: colleagues[band.busy[0]]?.displayName ?? ''
+				})
+			: t('calendar.bandSome', {
+					busy: band.busy.length,
+					total: people.length
+				});
+	// "All busy" only when every shown calendar is known.
+	const allBusy = (band: ColleagueBand) =>
+		band.busy.length === people.length &&
+		unavailable.length === 0 &&
+		loading.length === 0;
+
+	const offEvents = useMemo<EventInput[]>(() => {
+		if (!workingPlan || !shownRange) return [];
+		const out: EventInput[] = [];
+		for (
+			let day = startOfDay(shownRange.start);
+			day < shownRange.end;
+			day = nextDay(day)
+		) {
+			const key = day.getTime();
+			const { holiday } = effectiveDay(day, workingPlan);
+			// A labelled all-day marker, not a background: FullCalendar
+			// paints an all-day background into the time grid too, which
+			// would print the name twice. The time grid shades the day as
+			// time off.
+			if (holiday)
+				out.push({
+					id: `holiday-${key}`,
+					start: day,
+					end: nextDay(day),
+					allDay: true,
+					editable: false,
+					startEditable: false,
+					durationEditable: false,
+					extendedProps: { holiday }
+				});
+			if (!timeGrid) continue;
+			for (const range of offRangesOf(day, workingPlan))
+				out.push({
+					id: `off-${key}-${range.from}`,
+					start: atMinutes(day, range.from),
+					end: atMinutes(day, range.to),
+					display: 'background',
+					extendedProps: { off: { kind: range.kind } }
+				});
+		}
+		return out;
+	}, [workingPlan, shownRange, timeGrid]);
+
+	// The grips go into FullCalendar's day columns themselves: inside a
+	// background event they would sit in a layer FullCalendar hides from
+	// assistive technology (aria-hidden), where nothing may take focus.
+	// Each date has an all-day cell and, after it, its time-grid column.
+	const gripsShown = timeGrid && !!onEdgeChange && !!workingPlan;
+	const [gripColumns, setGripColumns] = useState<
+		{ key: string; day: Date; el: HTMLElement }[]
+	>([]);
+	useEffect(() => {
+		const root = gridRef.current;
+		if (!gripsShown || !root) {
+			setGripColumns((current) => (current.length ? [] : current));
+			return undefined;
+		}
+		let frame = 0;
+		const scan = () => {
+			const columns = new Map<string, HTMLElement>();
+			root.querySelectorAll<HTMLElement>(
+				'[role="cell"][data-date]'
+			).forEach((el) => columns.set(el.dataset.date ?? '', el));
+			const next = [...columns]
+				.filter(([key]) => key)
+				.map(([key, el]) => ({ key, el, day: dayOfKey(key) }));
+			setGripColumns((current) =>
+				current.length === next.length &&
+				current.every((c, i) => c.el === next[i].el)
+					? current
+					: next
+			);
+		};
+		scan();
+		// FullCalendar may build new columns on any update.
+		const observer = new MutationObserver(() => {
+			cancelAnimationFrame(frame);
+			frame = requestAnimationFrame(scan);
+		});
+		observer.observe(root, { childList: true, subtree: true });
+		return () => {
+			cancelAnimationFrame(frame);
+			observer.disconnect();
+		};
+	}, [gripsShown, shownRange, view, fontsReady]);
+
+	// The usual working day, widened so no entry, no proposal and no grip
+	// falls outside the grid.
+	const hours = useMemo(
+		() => gridHours(entries, workingPlan, proposals),
+		[entries, workingPlan, proposals]
+	);
+	const firstMinute = slotMinutes(hours.min);
+	const lastMinute = slotMinutes(hours.max);
+	const measure = useMemo(
+		() => measureColumn(firstMinute, lastMinute),
+		[firstMinute, lastMinute]
+	);
 	// One move per entry until it is stored or put back.
 	const [guardMove] = useState(createMoveGuard);
 
 	const events = useMemo<EventInput[]>(
-		() =>
-			entries.map((entry) => ({
-				id: entry.id,
+		() => [
+			...gridEntries.map((entry) => ({
+				// One appointment can be in two calendars (co-access): the
+				// grid keeps one event per id, so a colleague's copy needs
+				// its own.
+				id:
+					entry.ownerId === ownerId
+						? entry.id
+						: `${entry.ownerId}/${entry.id}`,
 				start: entry.start,
-				end: entry.end,
+				end: entry.allDay ? allDayEnd(entry.end) : entry.end,
+				allDay: !!entry.allDay,
 				title: label(entry, entry.ownerId !== ownerId),
 				editable: isMovable(entry, ownerId, role),
 				extendedProps: { entry }
 			})),
-		[entries, ownerId, role, label]
+			...proposals.map(({ proposal, entry }) => ({
+				id: `proposal-${proposal.id}`,
+				start: proposal.start,
+				end: proposal.end,
+				title: t('calendar.proposal.label'),
+				editable: false,
+				allDay: !!entry.allDay,
+				extendedProps: { entry, proposal }
+			})),
+			...offEvents,
+			...bands.map((band) => ({
+				id: `band-${bandKey(band)}`,
+				start: band.start,
+				end: band.end,
+				display: 'background',
+				extendedProps: { band }
+			}))
+		],
+		[gridEntries, proposals, ownerId, role, label, t, offEvents, bands]
 	);
 
-	// "Beginnt gleich" in words and a clock, not by colour alone
-	// (review 4577641949).
-	const soonId = soonEntry(entries, ownerId, nowDate)?.id;
+	// "Beginnt gleich" in words and a clock, not by colour alone, on the
+	// one entry the side list marks too (review 4577641949).
+	const soonId =
+		soonIdProp === undefined
+			? soonEntry(entries, ownerId, nowDate)?.id
+			: (soonIdProp ?? undefined);
 
-	// The selection preview (selectMirror) is an event without an entry.
-	const entryOf = (info: { event: { extendedProps: unknown } }) =>
-		(info.event.extendedProps as { entry?: CalendarEntry }).entry;
-
-	const eventClass = (info: EventDisplayInfo) => {
-		const entry = entryOf(info);
-		if (!entry) return 'calEntry calEntry--mirror';
-		const colleague = entry.ownerId !== ownerId;
-		return [
-			'calEntry',
-			`calEntry--${entry.type}`,
-			colleague && 'calEntry--colleague',
-			entry.id === soonId && 'calEntry--soon'
-		]
-			.filter(Boolean)
-			.join(' ');
-	};
+	const eventClass = useCallback(
+		(info: EventDisplayInfo) => {
+			const { entry, proposal, off, holiday } = propsOf(info);
+			if (holiday) return 'calendarView__holiday';
+			if (off) return '';
+			if (!entry) return 'calEntry calEntry--mirror';
+			const colleague = entry.ownerId !== ownerId;
+			const facet = facetOf(entry);
+			const dimmed =
+				(highlight?.owner && highlight.owner !== entry.ownerId) ||
+				(highlight?.facet && highlight.facet !== facet);
+			return [
+				'calEntry',
+				`calEntry--${entry.type}`,
+				`calEntry--k-${facet}`,
+				colleague && 'calEntry--colleague',
+				proposal && 'calEntry--proposal',
+				!proposal && entry.id === soonId && 'calEntry--soon',
+				dimmed && 'calEntry--dimmed',
+				muted.includes(entry.ownerId) && 'calEntry--muted'
+			]
+				.filter(Boolean)
+				.join(' ');
+		},
+		// nowDate is fixed in stories; in the app a re-render refreshes it.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[ownerId, highlight?.owner, highlight?.facet, muted, soonId]
+	);
 
 	const eventContent = (info: EventDisplayInfo) => {
-		const entry = entryOf(info);
+		const { entry, proposal, holiday } = propsOf(info);
+		if (holiday)
+			return (
+				<span className="calendarView__holidayLabel">
+					{t('calendar.holidays.label', {
+						name: t(`calendar.holidays.names.${holiday.key}`, {
+							defaultValue: holiday.name
+						})
+					})}
+				</span>
+			);
 		if (!entry)
 			return (
 				<span className="calEntry__inner">
@@ -169,120 +658,329 @@ export const CalendarView = ({
 				</span>
 			);
 		const colleague = entry.ownerId !== ownerId;
-		const owner = colleague ? colleagueNames[entry.ownerId] : undefined;
+		const owner = colleague ? colleagues[entry.ownerId] : undefined;
+		const timeGrid = info.view.type.startsWith('timeGrid');
 		return (
 			<span className="calEntry__inner">
+				{owner && (
+					<span className="calEntry__initials" aria-hidden="true">
+						{initialsOf(owner.displayName)}
+					</span>
+				)}
+				{!owner &&
+					!proposal &&
+					entry.type === 'appointment' &&
+					entry.title && (
+						<span
+							className="calEntry__initials calEntry__initials--asker"
+							aria-hidden="true"
+						>
+							{initialsOf(entry.title)}
+						</span>
+					)}
 				<span className="calEntry__icon">
 					<CalendarEntryGlyph entry={entry} colleague={colleague} />
 				</span>
 				<span className="calEntry__text">
-					{info.timeText &&
-						!info.view.type.startsWith('timeGrid') && (
-							<span className="calEntry__time">
-								{info.timeText}
-							</span>
-						)}
+					{info.timeText && !timeGrid && (
+						<span className="calEntry__time">{info.timeText}</span>
+					)}
 					<span className="calEntry__title">
-						{owner ? `${owner} · ` : ''}
-						{info.event.title}
+						{proposal ? (
+							<>
+								{t('calendar.proposal.label')}
+								<span className="calEntry__waiting">
+									{' · '}
+									{proposalStatus(proposal)}
+								</span>
+							</>
+						) : (
+							<>
+								{owner ? `${owner.displayName} · ` : ''}
+								{info.event.title}
+							</>
+						)}
 					</span>
-					{entry.id === soonId && <SoonBadge />}
+					{!proposal && entry.id === soonId && <SoonBadge />}
 				</span>
 			</span>
 		);
 	};
 
+	const backgroundClass = (info: EventDisplayInfo) => {
+		const { off, band } = propsOf(info);
+		if (band)
+			return allBusy(band)
+				? 'calendarView__band calendarView__band--all'
+				: 'calendarView__band';
+		if (off)
+			return off.kind === 'break'
+				? 'calendarView__offHours calendarView__offHours--break'
+				: 'calendarView__offHours';
+		return '';
+	};
+
+	const backgroundContent = (info: EventDisplayInfo) => {
+		const { off, band } = propsOf(info);
+		if (band)
+			// Fills the band, so hovering or tapping anywhere on it explains
+			// who is busy and who is free.
+			return (
+				<span
+					className="calendarView__bandFill"
+					data-band={bandKey(band)}
+					data-cy="calendar-band"
+				>
+					<span className="calendarView__bandLabel">
+						{bandLabel(band)}
+					</span>
+				</span>
+			);
+		return off?.kind === 'break' ? (
+			<span className="calendarView__breakLabel">
+				{t('calendar.workingHours.break')}
+			</span>
+		) : null;
+	};
+
+	// The entry's own element knows which entry it shows, so hover, focus
+	// and the tooltip need no lookup through FullCalendar.
+	/** What a screen reader hears for an entry in the grid. */
+	const ariaLabelOf = (entry: CalendarEntry, proposal?: MoveProposal) => {
+		const own = entry.ownerId === ownerId && !proposal;
+		return [
+			proposal
+				? `${t('calendar.proposal.label')} · ${proposalStatus(proposal)}`
+				: label(entry, !own),
+			own ? '' : colleagues[entry.ownerId]?.displayName,
+			entry.allDay
+				? t('calendar.allDay')
+				: // A proposal stands at the proposed time: say that one.
+					format(
+						proposal?.start ?? entry.start,
+						proposal?.end ?? entry.end
+					)
+		]
+			.filter(Boolean)
+			.join(', ');
+	};
+	const eventDidMount = (info: {
+		el: HTMLElement;
+		event: { extendedProps: unknown };
+	}) => {
+		const { entry, proposal } = propsOf(info);
+		if (!entry) return;
+		info.el.dataset.entryId = entry.id;
+		info.el.dataset.owner = entry.ownerId;
+		info.el.dataset.facet = facetOf(entry);
+		if (proposal) info.el.dataset.proposalId = proposal.id;
+		if (!info.el.hasAttribute('tabindex')) info.el.tabIndex = 0;
+		info.el.setAttribute('aria-label', ariaLabelOf(entry, proposal));
+	};
+	// FullCalendar mounts an entry's element once and keeps it when only
+	// the time changes: the name follows the time, or a moved or accepted
+	// appointment would still be read out at its old time.
+	useEffect(() => {
+		// By owner too: a co-access appointment is in two calendars.
+		const byId = new Map(
+			entries.map((entry) => [`${entry.ownerId}/${entry.id}`, entry])
+		);
+		gridRef.current
+			?.querySelectorAll<HTMLElement>('[data-entry-id]')
+			.forEach((el) => {
+				const proposalId = el.dataset.proposalId;
+				const found = proposalId
+					? proposals.find((p) => p.proposal.id === proposalId)
+					: undefined;
+				const entry = proposalId
+					? found?.entry
+					: byId.get(`${el.dataset.owner}/${el.dataset.entryId}`);
+				if (!entry) return;
+				const name = ariaLabelOf(entry, found?.proposal);
+				if (el.getAttribute('aria-label') !== name)
+					el.setAttribute('aria-label', name);
+			});
+	});
+
+	// Colleague entries and proposals explain themselves on hover and on
+	// keyboard focus, at once (Frank: tooltips show immediately).
+	const findPeek = (target: EventTarget | null) => {
+		const bandEl = (target as HTMLElement | null)?.closest?.<HTMLElement>(
+			'[data-band]'
+		);
+		if (bandEl) {
+			const band = bands.find((b) => bandKey(b) === bandEl.dataset.band);
+			return band ? { el: bandEl, band } : null;
+		}
+		const el = (target as HTMLElement | null)?.closest?.<HTMLElement>(
+			'[data-entry-id]'
+		);
+		if (!el) return null;
+		const proposalId = el.dataset.proposalId;
+		if (proposalId) {
+			const found = proposals.find((p) => p.proposal.id === proposalId);
+			return found ? { el, ...found } : null;
+		}
+		const entry = entries.find(
+			(e) => e.id === el.dataset.entryId && e.ownerId === el.dataset.owner
+		);
+		if (!entry || entry.ownerId === ownerId) return null;
+		return { el, entry };
+	};
+	// FullCalendar lays its column frame over background events, so the
+	// pointer finds a band by position, not by the element on top.
+	const bandAt = (x: number, y: number) => {
+		const el = document
+			.elementsFromPoint?.(x, y)
+			.find((node) => (node as HTMLElement).dataset?.band) as
+			| HTMLElement
+			| undefined;
+		const band = el && bands.find((b) => bandKey(b) === el.dataset.band);
+		return el && band ? { el, band } : null;
+	};
+	const followBand = (event: React.MouseEvent) => {
+		const byTarget = findPeek(event.target);
+		const next =
+			bandAt(event.clientX, event.clientY) ??
+			(byTarget && 'band' in byTarget ? byTarget : null);
+		if (next)
+			setPeek((current) => (current?.el === next.el ? current : next));
+		else
+			setPeek((current) =>
+				current && 'band' in current ? null : current
+			);
+	};
+
+	const showPeek = (event: React.SyntheticEvent) => {
+		const next = findPeek(event.target);
+		setPeek((current) =>
+			current?.el === next?.el ? current : (next ?? null)
+		);
+	};
+
 	// FullCalendar reports the range after every update; only a real change
-	// may set state, or React loops.
-	const rangeChange = useRef(onRangeChange);
-	rangeChange.current = onRangeChange;
+	// may reach the page, or React loops.
+	const datesSetRef = useRef(onDatesSet);
+	datesSetRef.current = onDatesSet;
 	const lastRange = useRef('');
 	const datesSet = useCallback(
 		(info: { start: Date; end: Date; view: { title: string } }) => {
-			setTitle((previous) =>
-				previous === info.view.title ? previous : info.view.title
-			);
-			const key = `${info.start.getTime()}-${info.end.getTime()}`;
-			if (key !== lastRange.current) {
-				lastRange.current = key;
-				rangeChange.current?.(info.start, info.end);
-			}
+			const key = `${info.start.getTime()}-${info.end.getTime()}-${info.view.title}`;
+			if (key === lastRange.current) return;
+			lastRange.current = key;
+			setShownRange({ start: info.start, end: info.end });
+			datesSetRef.current?.(info.view.title, info.start, info.end);
 		},
 		[]
 	);
 
-	const changeView = (next: CalendarViewName) => {
-		setView(next);
-		controller.changeView(FC_VIEW[next]);
+	// One click opens the actions, two open "Verschieben" straight away.
+	const clickTimer = useRef<number | undefined>(undefined);
+	useEffect(() => () => window.clearTimeout(clickTimer.current), []);
+	const eventClick = (info: EventClickInfo) => {
+		const { entry, proposal } = propsOf(info);
+		if (!entry) return;
+		const el = info.el as HTMLElement;
+		const jsEvent = info.jsEvent as MouseEvent;
+		window.clearTimeout(clickTimer.current);
+		setPeek(null);
+		if (proposal) {
+			onProposalOpen?.(proposal, el);
+			return;
+		}
+		if (jsEvent?.detail >= 2) {
+			onEntryOpen?.(entry, el, 'move');
+			return;
+		}
+		// Keyboard (detail 0) opens at once.
+		if (!jsEvent?.detail) {
+			onEntryOpen?.(entry, el, 'list');
+			return;
+		}
+		clickTimer.current = window.setTimeout(
+			() => onEntryOpen?.(entry, el, 'list'),
+			DOUBLE_CLICK_MS
+		);
 	};
+
+	const select = (info: DateSelectInfo) => {
+		const pointer = info.jsEvent as MouseEvent | undefined;
+		const anchor = { x: pointer?.clientX ?? 0, y: pointer?.clientY ?? 0 };
+		if (info.allDay) {
+			const days = Math.max(
+				1,
+				Math.round((info.end.getTime() - info.start.getTime()) / DAY_MS)
+			);
+			onSelectDays?.(info.start, days, anchor);
+			return;
+		}
+		onSelectRange?.({ start: info.start, end: info.end }, anchor);
+	};
+
+	const peekColleague =
+		peek && 'entry' in peek ? colleagues[peek.entry.ownerId] : undefined;
+	const names = (list: Colleague[]) =>
+		list.map((c) => c.displayName).join(', ');
+	/**
+	 * Who is busy in a band and who is free. The bands count all-day
+	 * entries too, so a colleague away all day is never free in one
+	 * (reviews 4576346789, 4576368849).
+	 */
+	const bandPeek = (band: ColleagueBand) => {
+		const busy = new Set(band.busy);
+		return {
+			busy: bandPeople.filter((c) => busy.has(c.id)),
+			free: bandPeople.filter((c) => !busy.has(c.id))
+		};
+	};
+	const peekPeople = peek && 'band' in peek ? bandPeek(peek.band) : null;
 
 	return (
 		<div
+			ref={gridRef}
 			className={`calendarView${compact ? ' calendarView--compact' : ''}`}
 			data-testid="calendar-view"
+			onMouseOver={showPeek}
+			onMouseLeave={() => setPeek(null)}
+			onMouseMove={bands.length > 0 ? followBand : undefined}
+			// A tap on a band explains it, as hovering does.
+			onClick={(event) => {
+				const next =
+					bandAt(event.clientX, event.clientY) ??
+					findPeek(event.target);
+				if (next && 'band' in next) setPeek(next);
+			}}
+			onFocus={showPeek}
+			onBlur={() => setPeek(null)}
 		>
-			<div className="calendarView__toolbar">
-				<div className="calendarView__nav">
-					<IconButton
-						aria-label={t('calendar.previous')}
-						onClick={() => controller.prev()}
-						size="small"
-					>
-						<ChevronLeftIcon />
-					</IconButton>
-					<IconButton
-						aria-label={t('calendar.next')}
-						onClick={() => controller.next()}
-						size="small"
-					>
-						<ChevronRightIcon />
-					</IconButton>
-					<button
-						type="button"
-						className="calendarView__today"
-						onClick={() => controller.today()}
-					>
-						{t('calendar.today')}
-					</button>
-					<h2 className="calendarView__title" aria-live="polite">
-						{title}
-					</h2>
-				</div>
-				<div className="calendarView__end">
-					<ButtonGroup
-						variant="outline"
-						ariaLabel={t('calendar.viewSwitch')}
-						className="calendarView__views"
-						disableAutoStack
-						items={views.map((name) => ({
-							id: name,
-							label: t(`calendar.views.${name}`),
-							variant: name === view ? 'tonal' : 'outline',
-							ariaLabel: `${t(`calendar.views.${name}`)}${name === view ? ' ✓' : ''}`,
-							onClick: () => changeView(name)
-						}))}
-					/>
-					{toolbarEnd}
-				</div>
-			</div>
-			<div className="calendarView__grid">
+			{fontsReady && (
 				<FullCalendar
 					controller={controller}
 					plugins={PLUGINS}
 					locales={LOCALES}
 					locale={fullCalendarLocale(i18n.language)}
+					views={FC_CUSTOM_VIEWS}
 					initialView={FC_VIEW[view]}
-					initialDate={now}
+					initialDate={initialDate ?? now}
 					now={now}
 					headerToolbar={false}
 					height="100%"
 					firstDay={1}
 					nowIndicator
-					allDaySlot={false}
+					allDaySlot
+					allDayText={t('calendar.allDay')}
 					slotMinTime={hours.min}
 					slotMaxTime={hours.max}
+					// The zoom sets the height; the hour labels must not hold
+					// it up (they are taller than the closest-out steps).
+					slotMinHeight={slotPx}
+					slotHeaderInnerClass="calendarView__slotLabel"
 					scrollTime="08:00:00"
 					dayMaxEvents={3}
+					backgroundEventClass={backgroundClass}
+					backgroundEventContent={backgroundContent}
+					allDayHeaderClass="calendarView__allDayHeader"
+					dayCellInnerClass={allDayCellInnerClass}
 					selectable={consultant}
 					selectMirror
 					editable={consultant}
@@ -290,24 +988,18 @@ export const CalendarView = ({
 					events={events}
 					eventClass={eventClass}
 					eventContent={eventContent}
+					eventDidMount={eventDidMount}
 					noEventsContent={t('calendar.noEvents')}
 					datesSet={datesSet}
-					select={(info: DateSelectInfo) => {
-						const pointer = info.jsEvent as MouseEvent | undefined;
-						onSelectRange?.(
-							{ start: info.start, end: info.end },
-							{
-								x: pointer?.clientX ?? 0,
-								y: pointer?.clientY ?? 0
-							}
-						);
+					select={select}
+					eventClick={eventClick}
+					eventDragStart={() => {
+						setPeek(null);
+						onDragChange?.(true);
 					}}
-					eventClick={(info: EventClickInfo) => {
-						const entry = entryOf(info);
-						if (entry) onEntryClick?.(entry);
-					}}
+					eventDragStop={() => onDragChange?.(false)}
 					eventDrop={(info: EventDropInfo) => {
-						const entry = entryOf(info);
+						const { entry } = propsOf(info);
 						if (!entry || !info.event.start || !info.event.end) {
 							info.revert();
 							return;
@@ -320,7 +1012,100 @@ export const CalendarView = ({
 						);
 					}}
 				/>
-			</div>
+			)}
+			{gripsShown &&
+				gripColumns.map(({ key, day, el }) => {
+					// Only dates whose own hours UserService keeps and
+					// shows (review 4577586484).
+					if (!dayExceptionAllowed(day, nowDate)) return null;
+					const edges = dayEdgesOf(day, workingPlan);
+					if (!edges) return null;
+					return createPortal(
+						gripEdges(edges).map(({ edge, time }) => {
+							return (
+								<CalendarWorkGrip
+									key={edge}
+									edge={edge}
+									day={day}
+									time={time}
+									windows={edges.windows}
+									exception={edges.exception}
+									measure={measure}
+									onChange={onEdgeChange}
+									style={{
+										top: gripTop(
+											time,
+											firstMinute,
+											lastMinute
+										)
+									}}
+								/>
+							);
+						}),
+						el,
+						`grip-${key}`
+					);
+				})}
+			<Popper
+				open={!!peek}
+				anchorEl={peek?.el}
+				placement="top-start"
+				modifiers={[{ name: 'offset', options: { offset: [0, 6] } }]}
+				className="calendarPeekPopper"
+			>
+				{/* Popper's root already is the `role="tooltip"`. */}
+				{peek && 'band' in peek && (
+					<div
+						className="calendarPeek calendarPeek--band"
+						data-cy="calendar-band-peek"
+					>
+						<strong className="calendarPeek__when">
+							{format(peek.band.start, peek.band.end)}
+						</strong>
+						<span>
+							{t('calendar.bandBusy', {
+								names: names(peekPeople?.busy ?? [])
+							})}
+						</span>
+						{!!peekPeople?.free.length && (
+							<span>
+								{t('calendar.bandFree', {
+									names: names(peekPeople.free)
+								})}
+							</span>
+						)}
+						{unavailable.length > 0 && (
+							<span>
+								{t('calendar.bandUnknown', {
+									names: names(unavailable)
+								})}
+							</span>
+						)}
+						{loading.length > 0 && (
+							<span>
+								{t('calendar.bandLoading', {
+									names: names(loading)
+								})}
+							</span>
+						)}
+						<span className="calendarPeek__hint">
+							{t('calendar.bandHint')}
+						</span>
+					</div>
+				)}
+				{peek && 'entry' in peek && (
+					<CalendarEntryPeek
+						entry={peek.entry}
+						colleague={peekColleague}
+						proposal={peek.proposal}
+						proposalStatus={
+							peek.proposal
+								? proposalStatus(peek.proposal)
+								: undefined
+						}
+					/>
+				)}
+			</Popper>
 		</div>
 	);
 };

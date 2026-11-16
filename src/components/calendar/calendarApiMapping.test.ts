@@ -7,6 +7,7 @@ import {
 	loadWindow,
 	MAX_WINDOW_DAYS,
 	normalizeImportUrl,
+	proposalFromApi,
 	visibilityFromApi
 } from './calendarApiMapping';
 
@@ -48,6 +49,58 @@ describe('calendarApiMapping', () => {
 		});
 		expect(entry.kind).toBe('video');
 		expect(entry.movable).toBe(false);
+	});
+
+	it('defaults an appointment whose kind the backend left out', () => {
+		// UserService omits null fields, so the property is missing entirely.
+		const own = entryFromApi({
+			id: 'a3',
+			type: 'APPOINTMENT',
+			start: '2026-11-16T09:00:00Z',
+			end: '2026-11-16T10:00:00Z',
+			ownerId: 'me',
+			movable: true
+		});
+		expect(own.kind).toBe('video');
+		const unknown = entryFromApi({
+			id: 'a4',
+			type: 'APPOINTMENT',
+			start: '2026-11-16T09:00:00Z',
+			end: '2026-11-16T10:00:00Z',
+			ownerId: 'kaya',
+			kind: 'HOLOGRAM' as never
+		});
+		expect(unknown.kind).toBe('video');
+		const group = entryFromApi({
+			id: 'chat-7-0',
+			type: 'GROUP',
+			start: '2026-11-16T09:00:00Z',
+			end: '2026-11-16T10:00:00Z',
+			ownerId: 'me'
+		});
+		expect(group).not.toHaveProperty('kind');
+	});
+
+	it('shows a blocker over whole local days in the all-day row', () => {
+		const start = new Date(2026, 10, 16);
+		const end = new Date(2026, 10, 17);
+		const entry = entryFromApi({
+			id: 'b1',
+			type: 'BLOCKER',
+			start: start.toISOString(),
+			end: end.toISOString(),
+			ownerId: 'me',
+			movable: true
+		});
+		expect(entry.allDay).toBe(true);
+		const timed = entryFromApi({
+			id: 'b2',
+			type: 'BLOCKER',
+			start: new Date(2026, 10, 16, 9).toISOString(),
+			end: new Date(2026, 10, 16, 12).toISOString(),
+			ownerId: 'me'
+		});
+		expect(timed).not.toHaveProperty('allDay');
 	});
 
 	it('keeps a colleague entry free of title and conversation when absent', () => {
@@ -164,5 +217,33 @@ describe('calendarApiMapping', () => {
 		const month = loadWindow(new Date(2026, 9, 26), new Date(2026, 11, 7));
 		const days = (month.to.getTime() - month.from.getTime()) / 86_400_000;
 		expect(days).toBeLessThanOrEqual(MAX_WINDOW_DAYS);
+	});
+});
+
+describe('proposalFromApi (move proposals v1)', () => {
+	const dto = {
+		id: 'p1',
+		entryId: 'a1',
+		start: '2026-11-17T13:00:00Z',
+		end: '2026-11-17T14:00:00Z',
+		entryStart: '2026-11-16T09:00:00Z',
+		entryEnd: '2026-11-16T10:00:00Z',
+		proposerId: 'kaya',
+		proposerName: 'A. Kaya',
+		approverId: 'me',
+		approverName: 'M. Muster',
+		createdAt: '2026-11-15T18:00:00Z'
+	};
+
+	it('keeps both times and both people', () => {
+		expect(proposalFromApi(dto)).toEqual(dto);
+	});
+
+	it('leaves out the names UserService did not send', () => {
+		const { proposerName, approverName, createdAt, ...bare } = dto;
+		const mapped = proposalFromApi({ ...bare, proposerName: null });
+		expect(mapped).toEqual(bare);
+		expect('proposerName' in mapped).toBe(false);
+		expect('approverName' in mapped).toBe(false);
 	});
 });

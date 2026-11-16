@@ -51,6 +51,67 @@ export interface BlockerCreateDTO {
 	repeat?: { weekdays: number[]; until: string };
 }
 
+/**
+ * One weekly window of working time (UserService#1649): local wall-clock
+ * time in the platform's zone, weekday 0 = Sunday .. 6 = Saturday.
+ */
+export interface CalendarWorkingHoursWindowDTO {
+	weekday: number;
+	/** HH:mm */
+	start: string;
+	/** HH:mm, after start */
+	end: string;
+}
+
+/** A window of one date (contract v1.2): a weekly window without weekday. */
+export interface CalendarWorkingTimeWindowDTO {
+	/** HH:mm */
+	start: string;
+	/** HH:mm, after start */
+	end: string;
+}
+
+/**
+ * The working windows of one local date (Europe/Berlin), replacing the
+ * weekly rule there. Empty `windows` = the whole day off.
+ */
+export interface CalendarWorkingDayExceptionDTO {
+	/** YYYY-MM-DD */
+	date: string;
+	windows: CalendarWorkingTimeWindowDTO[];
+}
+
+/** Bundesland whose public holidays count as days off (contract v1.2). */
+export type CalendarHolidayRegionDTO =
+	| 'BW'
+	| 'BY'
+	| 'BE'
+	| 'BB'
+	| 'HB'
+	| 'HH'
+	| 'HE'
+	| 'MV'
+	| 'NI'
+	| 'NW'
+	| 'RP'
+	| 'SL'
+	| 'SN'
+	| 'ST'
+	| 'SH'
+	| 'TH';
+
+/** All windows of the caller; an empty list means "none set". */
+export interface CalendarWorkingHoursDTO {
+	windows: CalendarWorkingHoursWindowDTO[];
+	/** Absent or null = holidays are not days off. PUT always sends it. */
+	holidayRegion?: CalendarHolidayRegionDTO | null;
+	/**
+	 * Read-only: day exceptions from 62 days back, by date. Ignored on PUT;
+	 * change them through `apiPutWorkingDayException`.
+	 */
+	exceptions?: CalendarWorkingDayExceptionDTO[];
+}
+
 export interface CalendarSyncDTO {
 	feedUrl: string;
 	feedLastFetchedAt?: string | null;
@@ -162,5 +223,141 @@ export const apiRemoveCalendarImport = (): Promise<CalendarSyncDTO> =>
 	fetchData({
 		url: `${base()}/sync/import`,
 		method: FETCH_METHODS.DELETE,
+		responseHandling: WRITE_HANDLING
+	});
+
+export const apiGetCalendarWorkingHours =
+	(): Promise<CalendarWorkingHoursDTO> =>
+		fetchData({
+			url: `${base()}/working-hours`,
+			method: FETCH_METHODS.GET,
+			responseHandling: READ_HANDLING
+		});
+
+/**
+ * Replaces every window and the holiday region; an empty list removes the
+ * working hours. `exceptions` are not sent (the server ignores them).
+ */
+export const apiSetCalendarWorkingHours = (
+	hours: Omit<CalendarWorkingHoursDTO, 'exceptions'>
+): Promise<CalendarWorkingHoursDTO> =>
+	fetchData({
+		url: `${base()}/working-hours`,
+		method: FETCH_METHODS.PUT,
+		bodyData: JSON.stringify({
+			windows: hours.windows,
+			holidayRegion: hours.holidayRegion ?? null
+		}),
+		responseHandling: WRITE_HANDLING
+	});
+
+const exceptionUrl = (date: string) =>
+	`${base()}/working-hours/exceptions/${encodeURIComponent(date)}`;
+
+/**
+ * Creates or replaces the exception of one date ("Nur an diesem Tag");
+ * empty `windows` takes the whole day off.
+ */
+export const apiPutWorkingDayException = (
+	date: string,
+	windows: CalendarWorkingTimeWindowDTO[]
+): Promise<CalendarWorkingDayExceptionDTO> =>
+	fetchData({
+		url: exceptionUrl(date),
+		method: FETCH_METHODS.PUT,
+		bodyData: JSON.stringify({ windows }),
+		responseHandling: WRITE_HANDLING
+	});
+
+/** The date falls back to the weekly rule (204, also when none existed). */
+export const apiDeleteWorkingDayException = (date: string): Promise<void> =>
+	fetchData({
+		url: exceptionUrl(date),
+		method: FETCH_METHODS.DELETE,
+		responseHandling: [FETCH_ERRORS.CATCH_ALL_EXCEPT_UNAUTHORIZED]
+	});
+
+/**
+ * A request to move a colleague's appointment (contract "move proposals v1",
+ * ADR-032 addendum). Open proposals only; UserService drops a proposal once
+ * the appointment moved, was cancelled or the proposed start has passed.
+ */
+export interface CalendarProposalDTO {
+	id: string;
+	/** The appointment that would move. */
+	entryId: string;
+	/** The proposed new time, UTC instants. */
+	start: string;
+	end: string;
+	/** The appointment's time when the proposal was made. */
+	entryStart: string;
+	entryEnd: string;
+	proposerId: string;
+	proposerName?: string | null;
+	/** The appointment's owner, who accepts or declines. */
+	approverId: string;
+	approverName?: string | null;
+	createdAt?: string | null;
+}
+
+export interface CalendarProposalsDTO {
+	/** Proposals the caller made for colleagues' appointments. */
+	sent: CalendarProposalDTO[];
+	/** Proposals colleagues made for the caller's appointments. */
+	received: CalendarProposalDTO[];
+}
+
+const proposalUrl = (id?: string, action?: 'accept' | 'decline') =>
+	`${base()}/proposals${id ? `/${encodeURIComponent(id)}` : ''}${action ? `/${action}` : ''}`;
+
+export const apiGetCalendarProposals = (): Promise<CalendarProposalsDTO> =>
+	fetchData({
+		url: proposalUrl(),
+		method: FETCH_METHODS.GET,
+		responseHandling: READ_HANDLING
+	});
+
+/**
+ * Proposes a new time for a colleague's appointment. A second proposal for
+ * the same appointment replaces the caller's open one.
+ */
+export const apiCreateCalendarProposal = (proposal: {
+	entryId: string;
+	start: string;
+	end: string;
+}): Promise<CalendarProposalDTO> =>
+	fetchData({
+		url: proposalUrl(),
+		method: FETCH_METHODS.POST,
+		bodyData: JSON.stringify(proposal),
+		responseHandling: WRITE_HANDLING
+	});
+
+/** Withdraws one's own proposal (204, also when already decided). */
+export const apiWithdrawCalendarProposal = (id: string): Promise<void> =>
+	fetchData({
+		url: proposalUrl(id),
+		method: FETCH_METHODS.DELETE,
+		responseHandling: WRITE_HANDLING
+	});
+
+/**
+ * The approver accepts: the appointment moves and comes back. 409 (rejects
+ * with `FETCH_ERRORS.CONFLICT`): it moved meanwhile, the proposal is void.
+ */
+export const apiAcceptCalendarProposal = (
+	id: string
+): Promise<CalendarEntryDTO> =>
+	fetchData({
+		url: proposalUrl(id, 'accept'),
+		method: FETCH_METHODS.POST,
+		responseHandling: WRITE_HANDLING
+	});
+
+/** The approver declines: the appointment stays where it is (204). */
+export const apiDeclineCalendarProposal = (id: string): Promise<void> =>
+	fetchData({
+		url: proposalUrl(id, 'decline'),
+		method: FETCH_METHODS.POST,
 		responseHandling: WRITE_HANDLING
 	});

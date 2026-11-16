@@ -70,7 +70,14 @@ vi.mock('../../api/apiCalendar', () => ({
 	apiDeleteCalendarBlocker: vi.fn(),
 	apiResetCalendarFeed: vi.fn(),
 	apiSaveCalendarImport: vi.fn(),
-	apiRemoveCalendarImport: vi.fn()
+	apiRemoveCalendarImport: vi.fn(),
+	apiGetCalendarProposals: vi.fn(() =>
+		Promise.resolve({ sent: [], received: [] })
+	),
+	apiCreateCalendarProposal: vi.fn(),
+	apiWithdrawCalendarProposal: vi.fn(),
+	apiAcceptCalendarProposal: vi.fn(),
+	apiDeclineCalendarProposal: vi.fn()
 }));
 vi.mock('../../api/apiSessionAppointments', () => ({
 	apiCreateSessionAppointment: vi.fn(),
@@ -186,17 +193,115 @@ describe('CalendarPageWired — an asker whose conversation lookup failed (revie
 				screen.queryByTestId('calendar-conversations-failed')
 			).toBeNull()
 		);
-		await waitFor(() =>
-			expect(
-				document.querySelector('.calendarPage__entry')
-			).not.toBeNull()
-		);
-		fireEvent.click(
-			document.querySelector('.calendarPage__entry') as HTMLElement
-		);
-		fireEvent.click(await screen.findByTestId('calendar-entry-start'));
+		// "Als Nächstes" lists the appointment (the sidebar's row).
+		const row = await waitFor(() => {
+			const found = document.querySelector<HTMLElement>(
+				'[data-cy="calendar-upcoming-a1"]'
+			);
+			expect(found).not.toBeNull();
+			return found as HTMLElement;
+		});
+		fireEvent.click(row);
+		// The entry's menu (round 2) in place of the details dialog.
+		const start = await waitFor(() => {
+			const found = document.querySelector<HTMLElement>(
+				'[data-cy="calendar-entry-start"]'
+			);
+			expect(found).not.toBeNull();
+			return found as HTMLElement;
+		});
+		fireEvent.click(start);
 		expect(user.navigate).toHaveBeenCalledWith(
 			'/sessions/user/view/!room:oriso/4401'
+		);
+	});
+});
+
+describe('CalendarPageWired — answering a move proposal, page included', () => {
+	const own = {
+		id: 'a1',
+		type: 'APPOINTMENT' as const,
+		start: new Date(2026, 10, 17, 9).toISOString(),
+		end: new Date(2026, 10, 17, 10).toISOString(),
+		ownerId: 'me',
+		kind: 'VIDEO' as const,
+		title: 'ruhiges_yak',
+		sessionId: 4401,
+		movable: true
+	};
+	const request = {
+		id: 'p1',
+		entryId: 'a1',
+		start: new Date(2026, 10, 18, 14).toISOString(),
+		end: new Date(2026, 10, 18, 15).toISOString(),
+		entryStart: own.start,
+		entryEnd: own.end,
+		proposerId: 'kaya',
+		proposerName: 'A. Kaya',
+		approverId: 'me'
+	};
+
+	const acceptEl = () =>
+		document.querySelector<HTMLElement>(
+			'[data-cy="calendar-received-accept-p1"]'
+		) as HTMLElement;
+
+	beforeEach(() => {
+		api.apiGetCalendarEntries.mockResolvedValue([own] as never);
+		api.apiGetCalendarProposals.mockResolvedValue({
+			sent: [],
+			received: [request]
+		} as never);
+	});
+
+	it('moves the appointment, reloads the calendar and shows the move notice', async () => {
+		api.apiAcceptCalendarProposal.mockResolvedValue({
+			...own,
+			start: request.start,
+			end: request.end
+		} as never);
+		render(<CalendarPageWired />);
+		await waitFor(() => expect(acceptEl()).not.toBeNull());
+		const loads = api.apiGetCalendarEntries.mock.calls.length;
+		api.apiGetCalendarProposals.mockResolvedValue({
+			sent: [],
+			received: []
+		} as never);
+		await act(async () => {
+			fireEvent.click(acceptEl());
+		});
+		expect(api.apiAcceptCalendarProposal).toHaveBeenCalledWith('p1');
+		expect(await screen.findByText('calendar.moved')).toBeTruthy();
+		await waitFor(() =>
+			expect(api.apiGetCalendarEntries.mock.calls.length).toBeGreaterThan(
+				loads
+			)
+		);
+		await waitFor(() =>
+			expect(
+				document.querySelector('[data-cy="calendar-received-p1"]')
+			).toBeNull()
+		);
+	});
+
+	it('says the proposal no longer applies on a 409 and reloads', async () => {
+		api.apiAcceptCalendarProposal.mockRejectedValue(
+			new Error('CONFLICT') as never
+		);
+		render(<CalendarPageWired />);
+		await waitFor(() => expect(acceptEl()).not.toBeNull());
+		const loads = api.apiGetCalendarEntries.mock.calls.length;
+		await act(async () => {
+			fireEvent.click(acceptEl());
+		});
+		expect(
+			await screen.findByText('calendar.proposal.noLongerValid')
+		).toBeTruthy();
+		expect(screen.queryByText('calendar.moved')).toBeNull();
+		await waitFor(() =>
+			expect(api.apiGetCalendarEntries.mock.calls.length).toBeGreaterThan(
+				loads
+			)
 		);
 	});
 });

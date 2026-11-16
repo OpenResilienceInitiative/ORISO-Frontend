@@ -25,16 +25,19 @@ describe('calendar stylesheet', () => {
 		).toBeGreaterThan(0);
 	});
 
-	it('builds its list entry from the pill it shares with the Activity Timeline', () => {
+	it('shares the list-entry anatomy with the Activity Timeline', () => {
 		expect(existsSync(resolve(process.cwd(), pillPath))).toBe(true);
 		const pill = read(pillPath);
 		expect(settings).toMatch(/@import '\.\/listEntryPill';/);
 		expect(pill).toMatch(/@mixin list-entry-pill\(/);
 		expect(pill).toMatch(/@include control-focus-ring\(1px\)/);
-		for (const sheet of [calendar, timeline]) {
-			expect(sheet).toMatch(/@include list-entry-pill(\(|;)/);
-			expect(sheet).toMatch(/@include list-entry-pill-time;/);
-		}
+		expect(timeline).toMatch(/@include list-entry-pill(\(|;)/);
+		expect(timeline).toMatch(/@include list-entry-pill-time;/);
+		// "Als Nächstes" in the calendar is the prototype's compact row (36
+		// px, no fill), not the pill; its two-line text is the shared one,
+		// and no copy of the old pill entry is left behind.
+		expect(calendar).toMatch(/@include list-entry-pill-text;/);
+		expect(calendar).not.toMatch(/\.calendarPage__entry/);
 	});
 
 	it('takes its breakpoints from the shared mixin, not raw media queries', () => {

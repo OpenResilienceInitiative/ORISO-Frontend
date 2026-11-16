@@ -215,7 +215,15 @@ export const EMAIL_SAMPLE_VALUES: Record<string, string> = {
 	appUrl: 'https://beratung.example.org',
 	smtpHost: 'smtp.example.org:587',
 	smtpFrom: 'no-reply@beratung.example.org',
-	sentAt: '3. August 2026, 09:14'
+	sentAt: '3. August 2026, 09:14',
+
+	// A colleague's proposal to move an appointment (calendar, ADR-032).
+	proposerName: 'K. Reuter',
+	currentDate: '18.11.2026',
+	currentTime: '10:00',
+	proposedDate: '19.11.2026',
+	proposedTime: '14:30',
+	calendarUrl: 'https://beratung.example.org/booking/events'
 };
 
 /**
