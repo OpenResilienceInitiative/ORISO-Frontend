@@ -441,10 +441,11 @@ export const WorkWeek: Story = {
 				'[data-cy="calendar-upcoming"]'
 			)!
 		);
-		// The rows, not the "Zum Chat mit …" buttons beside them.
-		const rows = upcoming
-			.getAllByRole('button')
-			.filter((b) => !b.classList.contains('calendarSide__chat'));
+		// One button per row: "Zum Chat" is in the entry menu (Frank *4).
+		const rows = upcoming.getAllByRole('button');
+		await expect(
+			canvasElement.querySelector('.calendarSide__chat')
+		).toBeNull();
 		await expect(rows[rows.length - 1].textContent).toContain('in 10 Min.');
 	}
 };

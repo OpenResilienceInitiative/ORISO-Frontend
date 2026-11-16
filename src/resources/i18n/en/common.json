@@ -6830,7 +6830,6 @@
 		"bandOne": "{{name}} busy",
 		"colleagueFailedShort": "not loaded",
 		"colleagueFailed": "The calendar of {{names}} could not be loaded, so it cannot be said when everyone is free.",
-		"upcomingChat": "Go to the chat with {{name}}",
 		"chatUnavailable": "The chat for this appointment could not be opened.",
 		"conversationsFailedAsker": "Your conversations could not be loaded, so an appointment cannot take you to its chat.",
 		"create": "New appointment",

@@ -704,14 +704,29 @@ describe('CalendarPage — a call whose conversation cannot be found (review 457
 });
 
 describe('CalendarPage — "Zum Chat" whose conversation cannot be found (review 4577642137)', () => {
-	it('says so from the menu and from "Als Nächstes"', async () => {
+	it('says so from the menu, also when "Als Nächstes" opened it', async () => {
 		const onOpenChat = vi.fn(() => Promise.reject(new Error('no room')));
 		const withChat = { ...ENTRY, sessionId: 7 };
 		page({ onOpenChat, entries: [withChat] });
-		fireEvent.click(
+		// No extra chat button beside the row (Frank *4).
+		expect(
 			document.querySelector(
 				`[data-cy="calendar-upcoming-chat-${withChat.id}"]`
+			)
+		).toBeNull();
+		fireEvent.click(
+			document.querySelector(
+				`[data-cy="calendar-upcoming-${withChat.id}"]`
 			) as HTMLElement
+		);
+		fireEvent.click(
+			(await waitFor(() => {
+				const item = document.querySelector(
+					'[data-cy="calendar-entry-chat"]'
+				);
+				expect(item).not.toBeNull();
+				return item;
+			})) as HTMLElement
 		);
 		expect(onOpenChat).toHaveBeenCalledWith(withChat);
 		expect(

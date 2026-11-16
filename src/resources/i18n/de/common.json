@@ -6905,7 +6905,6 @@
 		"bandOne": "{{name}} belegt",
 		"colleagueFailedShort": "nicht geladen",
 		"colleagueFailed": "Der Kalender von {{names}} konnte nicht geladen werden; ob alle frei sind, lässt sich so nicht sagen.",
-		"upcomingChat": "Zum Chat mit {{name}}",
 		"chatUnavailable": "Der Chat zu diesem Termin konnte nicht geöffnet werden.",
 		"conversationsFailedAsker": "Ihre Gespräche konnten nicht geladen werden, ein Termin führt so nicht zu seinem Chat.",
 		"create": "Termin anlegen",

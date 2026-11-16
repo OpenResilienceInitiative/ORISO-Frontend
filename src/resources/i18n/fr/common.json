@@ -6915,7 +6915,6 @@
 		"bandOne": "{{name}} occupé·e",
 		"colleagueFailedShort": "non chargé",
 		"colleagueFailed": "Le calendrier de {{names}} n’a pas pu être chargé : impossible de dire quand tout le monde est libre.",
-		"upcomingChat": "Aller à la discussion avec {{name}}",
 		"chatUnavailable": "Impossible d’ouvrir le chat de ce rendez-vous.",
 		"conversationsFailedAsker": "Vos conversations n’ont pas pu être chargées : un rendez-vous ne peut donc pas vous mener à sa discussion.",
 		"create": "Créer un rendez-vous",

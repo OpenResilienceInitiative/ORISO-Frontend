@@ -6882,7 +6882,6 @@
 		"bandOne": "{{name}} ተታሒዙ",
 		"colleagueFailedShort": "ኣይተጻዕነን",
 		"colleagueFailed": "ካላንደር {{names}} ክጽዓን ኣይከኣለን፣ ስለዚ ኩሉ መዓስ ነጻ ምዃኑ ክንገር ኣይከኣልን።",
-		"upcomingChat": "ናብ ዕላል ምስ {{name}} ኪድ",
 		"chatUnavailable": "ናይዚ ቆጸራ ቻት ክኽፈት ኣይከኣለን።",
 		"conversationsFailedAsker": "ዝርርባትኩም ክጽዓኑ ኣይከኣሉን፣ ስለዚ ካብ ቆጸራ ናብ ዕላልኩም ክትከዱ ኣይትኽእሉን።",
 		"create": "ቆጸራ ፍጠር",

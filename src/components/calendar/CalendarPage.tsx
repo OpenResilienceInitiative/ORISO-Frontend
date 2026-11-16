@@ -539,7 +539,10 @@ export const CalendarPage = ({
 		)
 	]);
 	const [muted, setMuted] = useState<string[]>([]);
-	const { flashIds, expectCreated } = useCreatedFlash(entries, ownerId);
+	const { flashIds, expectCreated, flash } = useCreatedFlash(
+		entries,
+		ownerId
+	);
 	const [highlight, setHighlight] = useState<CalendarHighlight | null>(null);
 	// Like the session list chips: none selected shows everything, selected
 	// chips narrow to those kinds. "Was anzeigen" hides kinds altogether.
@@ -771,6 +774,8 @@ export const CalendarPage = ({
 		if (view === 'month' || view === 'list' || split)
 			changeView(phone ? 'threeDays' : 'workWeek');
 		goTo(start);
+		// The eye finds it where the calendar lands (Frank *7).
+		flash([entry.id]);
 		const before = new Date(
 			Math.max(start.getTime() - 3600000, startOfDay(start).getTime())
 		);
@@ -2481,9 +2486,6 @@ export const CalendarPage = ({
 		onDeclineRequest: onDeclineProposal ? decline : undefined,
 		onOpenEntry: (entry, anchor) => openEntry(entry, anchor),
 		onShowEntry: showEntry,
-		onOpenChat: onOpenChat
-			? (entry) => openRoom(onOpenChat, entry)
-			: undefined,
 		shownColleagues,
 		onCreate: onCreate ? create : undefined,
 		freeHoursState,

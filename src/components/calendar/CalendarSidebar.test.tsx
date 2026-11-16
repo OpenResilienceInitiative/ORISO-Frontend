@@ -65,30 +65,23 @@ const sidebar = (
 	);
 
 describe('CalendarSidebar — "Als Nächstes" (Frank, prototype v15)', () => {
-	it('offers "Zum Chat mit …" beside an appointment that has a chat, and goes there', () => {
-		const onOpenChat = vi.fn();
-		const onOpenEntry = vi.fn();
-		sidebar({ onOpenChat, onOpenEntry });
-		const chat = screen.getByRole('button', {
-			name: 'calendar.upcomingChat:mutige_eule'
-		});
-		fireEvent.click(chat);
-		expect(onOpenChat).toHaveBeenCalledWith(APPOINTMENT);
-		expect(onOpenEntry).not.toHaveBeenCalled();
-		// One button only: the group date has no chat of its own.
+	it('has no extra chat button: "Zum Chat" is in the entry menu (Frank *4)', () => {
+		sidebar({});
 		expect(
-			screen.getAllByRole('button', { name: /calendar\.upcomingChat/ })
-		).toHaveLength(1);
+			screen.queryByRole('button', { name: /calendar\.upcomingChat/ })
+		).toBeNull();
 	});
 
-	it('still opens the entry when the row itself is clicked', () => {
+	it('jumps to the entry in the calendar and opens its actions on click (Frank *7)', () => {
 		const onOpenEntry = vi.fn();
-		sidebar({ onOpenChat: vi.fn(), onOpenEntry });
+		const onShowEntry = vi.fn();
+		sidebar({ onOpenEntry, onShowEntry });
 		fireEvent.click(
 			document.querySelector(
 				'[data-cy="calendar-upcoming-a1"]'
 			) as HTMLElement
 		);
+		expect(onShowEntry).toHaveBeenCalledWith(APPOINTMENT);
 		expect(onOpenEntry).toHaveBeenCalledWith(
 			APPOINTMENT,
 			expect.any(HTMLElement)

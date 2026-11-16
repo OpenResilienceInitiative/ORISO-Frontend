@@ -13,7 +13,6 @@ import { useTranslation } from 'react-i18next';
 import { Popper, TextField } from '@mui/material';
 import dayjs from 'dayjs';
 import AddIcon from '@mui/icons-material/Add';
-import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 import ScheduleIcon from '@mui/icons-material/Schedule';
 import { ListSearchField } from '../listSearchField/ListSearchField';
 import { FilterChipRow } from '../displayFilter/FilterChipRow';
@@ -133,13 +132,11 @@ export interface CalendarSidebarProps {
 	onAcceptRequest?: (proposal: MoveProposal) => void;
 	onDeclineRequest?: (proposal: MoveProposal, entry: CalendarEntry) => void;
 	onOpenEntry: (entry: CalendarEntry, anchor: HTMLElement) => void;
-	/** A search result: move the calendar to its day and time. */
-	onShowEntry: (entry: CalendarEntry) => void;
 	/**
-	 * "Zum Chat mit …" beside an upcoming appointment that has a
-	 * conversation (Frank, prototype v15); without it there is no button.
+	 * A search result or an "Als Nächstes" row: move the calendar to its
+	 * day and time. "Zum Chat" lives in the entry's menu (Frank *4).
 	 */
-	onOpenChat?: (entry: CalendarEntry) => void;
+	onShowEntry: (entry: CalendarEntry) => void;
 	/** Colleagues shown: search finds their entries too. */
 	shownColleagues: string[];
 	/**
@@ -203,7 +200,6 @@ export const CalendarSidebar = ({
 	onDeclineRequest,
 	onOpenEntry,
 	onShowEntry,
-	onOpenChat,
 	shownColleagues,
 	onCreate,
 	freeHoursState,
@@ -536,8 +532,12 @@ export const CalendarSidebar = ({
 											})
 										}
 										onBlur={() => setPeek(null)}
+										// Jumps to the entry in the calendar (it
+										// flashes there) and opens its actions,
+										// "Zum Chat" among them (Frank *4, *7).
 										onClick={(e) => {
 											setPeek(null);
+											onShowEntry(entry);
 											onOpenEntry(entry, e.currentTarget);
 										}}
 										aria-label={
@@ -567,33 +567,6 @@ export const CalendarSidebar = ({
 											)}
 										</span>
 									</button>
-									{onOpenChat &&
-										!rail &&
-										entry.type === 'appointment' &&
-										entry.sessionId !== undefined && (
-											<button
-												type="button"
-												className="calendarSide__chat"
-												aria-label={t(
-													'calendar.upcomingChat',
-													{
-														name: label(entry)
-													}
-												)}
-												title={t(
-													'calendar.upcomingChat',
-													{
-														name: label(entry)
-													}
-												)}
-												onClick={() =>
-													onOpenChat(entry)
-												}
-												data-cy={`calendar-upcoming-chat-${entry.id}`}
-											>
-												<ChatBubbleOutlineIcon fontSize="small" />
-											</button>
-										)}
 								</li>
 							))}
 						</ul>

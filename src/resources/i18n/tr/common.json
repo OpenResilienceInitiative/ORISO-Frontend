@@ -6915,7 +6915,6 @@
 		"bandOne": "{{name}} dolu",
 		"colleagueFailedShort": "yüklenmedi",
 		"colleagueFailed": "{{names}} takvimi yüklenemedi; bu yüzden herkesin ne zaman boş olduğu söylenemiyor.",
-		"upcomingChat": "{{name}} ile sohbete git",
 		"chatUnavailable": "Bu randevunun sohbeti açılamadı.",
 		"conversationsFailedAsker": "Görüşmeleriniz yüklenemedi; bu yüzden randevudan sohbetinize geçilemiyor.",
 		"create": "Randevu oluştur",

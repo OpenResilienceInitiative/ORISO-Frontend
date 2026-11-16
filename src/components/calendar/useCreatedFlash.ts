@@ -50,5 +50,7 @@ export const useCreatedFlash = (entries: CalendarEntry[], ownerId: string) => {
 			}))
 		];
 	}, []);
-	return { flashIds, expectCreated };
+	/** Flash these entries now, e.g. the one the calendar jumped to. */
+	const flash = useCallback((ids: string[]) => setFlashIds(ids), []);
+	return { flashIds, expectCreated, flash };
 };
