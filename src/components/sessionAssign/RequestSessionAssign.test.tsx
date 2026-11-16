@@ -16,6 +16,8 @@ import {
 	vi
 } from 'vite-plus/test';
 import { RequestSessionAssign } from './RequestSessionAssign';
+import { apiSessionAssign } from '../../api';
+import { apiSendAliasMessage } from '../../api/apiSendAliasMessage';
 import { AskerInfoActionContext } from '../askerInfo/askerInfoActionContext';
 import {
 	ActiveSessionContext,
@@ -35,7 +37,9 @@ const { navigate, TRANSLATIONS } = vi.hoisted(() => ({
 		'session.assignSelf.overlay.button.cancel': 'Abbrechen',
 		'session.assignSelf.overlay.button.assign': 'Zuweisen',
 		'session.assignOther.overlay.headline.1': 'Zuweisen?',
-		'session.assignOther.overlay.subtitle.noTeam': 'Neu: {{newConsultant}}'
+		'session.assignOther.overlay.headline.2': 'Zugewiesen.',
+		'session.assignOther.overlay.subtitle.noTeam': 'Neu: {{newConsultant}}',
+		'session.assignOther.button.label': 'Schließen'
 	} as Record<string, string>
 }));
 
@@ -211,5 +215,53 @@ describe('RequestSessionAssign — pending-change reporting (#1192)', () => {
 		// ...so the footer must not have been told anything is pending.
 		expect(reported.at(-1)).toBe(false);
 		expect(navigate).not.toHaveBeenCalled();
+	});
+});
+
+/*
+ * #1673: confirming used to post REASSIGN_CONSULTANT to the removed
+ * /service/messages/aliasonly/new endpoint (404). The dropdown now only
+ * serves initial enquiry assignment, so confirming assigns through the
+ * supported session endpoint and never touches the alias API.
+ */
+describe('RequestSessionAssign — confirm assigns through the supported endpoint (#1673)', () => {
+	beforeEach(() => {
+		navigate.mockClear();
+		vi.mocked(apiSessionAssign).mockClear();
+		vi.mocked(apiSendAliasMessage).mockClear();
+	});
+	afterEach(cleanup);
+
+	it('assigns the chosen counsellor via apiSessionAssign, not the removed alias endpoint', async () => {
+		renderAssign();
+
+		await pick(OTHER.label);
+		fireEvent.click(await screen.findByText('Zuweisen'));
+
+		await waitFor(() => {
+			expect(apiSessionAssign).toHaveBeenCalledWith(42, OTHER.value);
+		});
+		expect(apiSendAliasMessage).not.toHaveBeenCalled();
+		expect(await screen.findByText('Zugewiesen.')).toBeTruthy();
+	});
+
+	it('does not promise the full message history in the confirmation', async () => {
+		renderAssign();
+
+		await pick(OTHER.label);
+		expect(await screen.findByText('Zuweisen?')).toBeTruthy();
+		expect(screen.queryByText(/Neu:/)).toBeNull();
+	});
+
+	it('returns to the list after the success notice is closed', async () => {
+		renderAssign();
+
+		await pick(OTHER.label);
+		fireEvent.click(await screen.findByText('Zuweisen'));
+		fireEvent.click(await screen.findByText('Schließen'));
+
+		await waitFor(() => {
+			expect(navigate).toHaveBeenCalledWith('/sessions');
+		});
 	});
 });

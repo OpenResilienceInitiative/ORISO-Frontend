@@ -8,8 +8,7 @@ import { BUTTON_TYPES } from '../button/Button';
 import {
 	apiDeleteUserFromRoom,
 	apiGetAgencyConsultantList,
-	apiSessionAssign,
-	FETCH_ERRORS
+	apiSessionAssign
 } from '../../api';
 import {
 	ConsultantListContext,
@@ -21,17 +20,22 @@ import {
 import { UserDataInterface } from '../../globalState/interfaces';
 import { OrisoSelect } from '../form/OrisoSelect';
 import { useE2EE } from '../../hooks/useE2EE';
-import {
-	ALIAS_MESSAGE_TYPES,
-	apiSendAliasMessage,
-	ConsultantReassignment,
-	ReassignStatus
-} from '../../api/apiSendAliasMessage';
 import { prepareConsultantDataForSelect } from './sessionAssignHelper';
 import { SelectChangeEvent } from '@mui/material/Select';
 import { AskerInfoActionContext } from '../askerInfo/askerInfoActionContext';
 
 export const ACCEPTED_GROUP_CLOSE = 'CLOSE';
+
+/*
+ * Initial enquiry assignment only (ORISO-Frontend#1673).
+ *
+ * This select used to confirm with REASSIGN, which posted a
+ * REASSIGN_CONSULTANT alias to the removed /service/messages/aliasonly/new
+ * endpoint (404). Handing over an active case now goes through the guarded
+ * case-handover offer ("Beratung übergeben"), so the select is only shown for
+ * enquiries and confirms through the supported assignment endpoint.
+ */
+const ASSIGN_DONE = 'ASSIGN_DONE';
 
 export const RequestSessionAssign = (props: { value?: string }) => {
 	const { t: translate } = useTranslation();
@@ -46,8 +50,6 @@ export const RequestSessionAssign = (props: { value?: string }) => {
 	const [overlayActive, setOverlayActive] = useState(false);
 	const [overlayItem, setOverlayItem] = useState({});
 	const [selectedOption, setSelectedOption] = useState(null);
-	const [reassignmentParams, setReassignmentParams] =
-		useState<ConsultantReassignment | null>(null);
 
 	const { isE2eeEnabled } = useContext(E2EEContext);
 	const { setHasPendingChange } = useContext(AskerInfoActionContext);
@@ -59,7 +61,7 @@ export const RequestSessionAssign = (props: { value?: string }) => {
 	 * `props.value` deliberately wins: `AskerInfoAssign` pins it to the
 	 * session's current consultant, and `OrisoSelect` wraps a fully controlled
 	 * MUI Select, so the dropdown shows the current allocation until a
-	 * reassignment is actually confirmed (which navigates away).
+	 * assignment is actually confirmed (which navigates away).
 	 */
 	const displayedConsultantId = props.value || selectedOption?.value || '';
 
@@ -101,37 +103,16 @@ export const RequestSessionAssign = (props: { value?: string }) => {
 		}
 	}, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-	const initOverlays = (selected, profileData) => {
+	const initOverlays = (selected) => {
 		if (selected?.value === activeSession?.consultant?.id) return;
-		const selectedConsultant = consultantList.filter(
-			(consultant) => consultant.value === activeSession?.consultant?.id
-		)[0];
 
-		const client = activeSession.user.username;
-		const newConsultant = selected.label;
-		const toAskerName = client;
-		setReassignmentParams({
-			toConsultantId: selected.value,
-			toConsultantName: selected.consultantDisplayName,
-			toAskerName,
-			fromConsultantId: selectedConsultant?.value,
-			fromConsultantName: selectedConsultant?.consultantDisplayName,
-			status: ReassignStatus.REQUESTED
-		});
-
-		let overlayText = translate(
-			'session.assignOther.overlay.subtitle.noTeam',
-			{
-				newConsultant
-			}
-		);
-
-		const reassignSession: OverlayItem = {
+		// No promise of the full message history here: that is only true for
+		// the guarded handover after the recipient's decision and consent.
+		const assignSession: OverlayItem = {
 			headline: translate('session.assignOther.overlay.headline.1', {
-				client,
-				newConsultant
+				client: activeSession.user.username,
+				newConsultant: selected.label
 			}),
-			copy: overlayText,
 			buttonSet: [
 				{
 					label: translate(
@@ -144,15 +125,28 @@ export const RequestSessionAssign = (props: { value?: string }) => {
 					label: translate(
 						'session.assignSelf.overlay.button.assign'
 					),
-					function: OVERLAY_FUNCTIONS.REASSIGN,
+					function: OVERLAY_FUNCTIONS.ASSIGN,
 					type: BUTTON_TYPES.PRIMARY
 				}
 			]
 		};
 
-		const overlay = reassignSession;
 		setOverlayActive(true);
-		setOverlayItem(overlay);
+		setOverlayItem(assignSession);
+	};
+
+	const showAssignSuccess = () => {
+		setOverlayItem({
+			headline: translate('session.assignOther.overlay.headline.2'),
+			buttonSet: [
+				{
+					label: translate('session.assignOther.button.label'),
+					function: ASSIGN_DONE,
+					type: BUTTON_TYPES.PRIMARY
+				}
+			]
+		});
+		setOverlayActive(true);
 	};
 
 	const handleE2EEAssign = async (sessionId, userId) => {
@@ -168,7 +162,7 @@ export const RequestSessionAssign = (props: { value?: string }) => {
 
 	const handleDatalistSelect = (selectedOption) => {
 		setSelectedOption(selectedOption);
-		initOverlays(selectedOption, userData);
+		initOverlays(selectedOption);
 	};
 
 	const handleConsultantSelect = (event: SelectChangeEvent<string>) => {
@@ -186,8 +180,8 @@ export const RequestSessionAssign = (props: { value?: string }) => {
 			case OVERLAY_FUNCTIONS.ASSIGN:
 				apiSessionAssign(activeSession.item.id, selectedOption.value)
 					.then(() => {
+						showAssignSuccess();
 						if (userData) {
-							initOverlays(selectedOption, userData);
 							handleE2EEAssign(
 								activeSession.item.id,
 								userData.userId
@@ -199,11 +193,8 @@ export const RequestSessionAssign = (props: { value?: string }) => {
 										activeSession.item.id,
 										profileData.userId
 									);
-									initOverlays(selectedOption, profileData);
 								})
-								.catch((error) => {
-									/* console.log(error); */
-								});
+								.catch(() => undefined);
 						}
 					})
 					.catch((error) => {
@@ -225,23 +216,16 @@ export const RequestSessionAssign = (props: { value?: string }) => {
 							setOverlayActive(true);
 							return;
 						}
-						if (error === FETCH_ERRORS.CONFLICT) {
-							return null;
-						}
+						// CONFLICT: someone else assigned it first. Either way
+						// the confirmation closes and the select snaps back.
+						setOverlayItem(null);
+						setOverlayActive(false);
 					});
 				break;
-			case OVERLAY_FUNCTIONS.REASSIGN:
-				apiSendAliasMessage({
-					matrixRoomId: activeSession.rid,
-					type: ALIAS_MESSAGE_TYPES.REASSIGN_CONSULTANT,
-					args: reassignmentParams
-				});
+			case ASSIGN_DONE:
 				setOverlayItem(null);
 				setOverlayActive(false);
-
-				navigate(
-					`${listPath}/${activeSession.item.matrixRoomId}/${activeSession.item.id}`
-				);
+				navigate(listPath);
 				break;
 			case OVERLAY_FUNCTIONS.CLOSE:
 				setOverlayItem(null);
