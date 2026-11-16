@@ -1,5 +1,5 @@
 /** Story-only historical tutorial; production waiting sessions mount BreathingCompanionHost. */
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { BreathingTutorialCard } from './BreathingTutorialCard';
 import { phone390Globals } from '../message/messageStoryShell';

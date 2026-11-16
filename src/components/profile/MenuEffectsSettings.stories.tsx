@@ -1,5 +1,5 @@
 import React from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Stack, Typography } from '@mui/material';
 import { MenuEffectsSettings } from '../../features/menu-effects/MenuEffectsSettings';
 import { GroupChatCalendarMenu } from '../groupChat/GroupChatCalendarMenu';
