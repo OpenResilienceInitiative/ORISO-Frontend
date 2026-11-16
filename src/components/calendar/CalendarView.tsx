@@ -966,7 +966,16 @@ export const CalendarView = ({
 	};
 
 	const showPeek = (event: React.SyntheticEvent) => {
-		const next = findPeek(event.target);
+		// FullCalendar's frame lies over the bands: a pointer over the frame
+		// may still be on a band, e.g. once a click's selection shadow is
+		// gone and the browser reports the frame (Frank *16.2).
+		const pointer =
+			event.type === 'mouseover' ? (event as React.MouseEvent) : null;
+		const next =
+			findPeek(event.target) ??
+			(pointer && bands.length > 0
+				? bandAt(pointer.clientX, pointer.clientY)
+				: null);
 		setPeek((current) =>
 			current?.el === next?.el ? current : (next ?? null)
 		);

@@ -685,16 +685,24 @@ export const ColleaguesBandClick: Story = {
 		await waitFor(() => expect(slotMenu(), 'Escape closes it').toBeNull());
 		// … a click on a band says who is busy and opens no menu, which
 		// would block the pointer for every other band.
-		const points = await bandPoints();
-		await clickAt(points[0]);
+		const [pressed, next] = await bandPoints();
+		await clickAt(pressed);
 		const first = await waitFor(() => {
 			expect(bandTipText(), 'explained on click').toContain('Belegt:');
 			return bandTipText();
 		});
 		await new Promise((resolve) => setTimeout(resolve, 300));
 		await expect(slotMenu(), 'no menu from a band').toBeNull();
+		// The browser says "mouseover" on the grid's frame once the
+		// selection's shadow is gone; the pointer is still on the band, so
+		// the explanation stays.
+		fireEvent.mouseOver(document.elementFromPoint(pressed.x, pressed.y)!, {
+			clientX: pressed.x,
+			clientY: pressed.y
+		});
+		await new Promise((resolve) => setTimeout(resolve, 100));
+		await expect(bandTipText(), 'still explained').toBe(first);
 		// Moving on to the next band explains that one.
-		const next = points[1];
 		fireEvent.mouseMove(document.elementFromPoint(next.x, next.y)!, {
 			clientX: next.x,
 			clientY: next.y
