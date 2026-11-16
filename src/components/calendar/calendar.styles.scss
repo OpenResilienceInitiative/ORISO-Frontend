@@ -571,6 +571,23 @@
 	font-weight: 600;
 }
 
+// One of six deep tones per person, chosen from the name (calendarAvatar.ts),
+// and the primary colour for "ich" (prototype v17). After the base rules
+// above, so the tone wins on any calendar avatar it is added to.
+$cal-avatar-tones: (#2f5d5a, #7a0e2a, #4b4f7a, #6d3d63, #7a5a1e, #36576e);
+
+@for $i from 1 through length($cal-avatar-tones) {
+	.calAvatar--tone-#{$i - 1} {
+		background: nth($cal-avatar-tones, $i) !important;
+		color: #ffffff !important;
+	}
+}
+
+.calAvatar--me {
+	background: var(--m3-primary, #a5000a) !important;
+	color: var(--m3-on-primary, #ffffff) !important;
+}
+
 .calendarPeek__name {
 	display: flex;
 	align-items: center;
