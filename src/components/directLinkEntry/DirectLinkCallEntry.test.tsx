@@ -1,6 +1,12 @@
 // @vitest-environment oriso-jsdom
 import * as React from 'react';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import {
+	cleanup,
+	fireEvent,
+	render,
+	screen,
+	waitFor
+} from '@testing-library/react';
 import {
 	afterEach,
 	beforeEach,
@@ -47,9 +53,21 @@ vi.mock('../waitingRoom/callEntry/CallEntryRoom', () => ({
 		hidePassword,
 		consent,
 		usernameEditable,
-		askPostcode
+		askPostcode,
+		onDeviceStateChange
 	}: CallEntryRoomProps) => (
 		<>
+			<button
+				onClick={() =>
+					onDeviceStateChange?.({
+						micOn: false,
+						cameraOn: true,
+						selection: {}
+					})
+				}
+			>
+				Mute
+			</button>
 			<div>{askPostcode ? 'asks postcode' : 'no postcode'}</div>
 			<div>{usernameEditable ? 'typed names' : 'generated names'}</div>
 			<div>
@@ -371,6 +389,31 @@ describe('the animal a call guest picks before entering', () => {
 		await screen.findByText('call-only entry');
 	});
 
+	// PR #2271 review: a stalled save would otherwise hold the guest on the
+	// entry page until the 30 s request timeout.
+	it('does not hold the guest at the door for a save that stalls', async () => {
+		vi.useFakeTimers({ shouldAdvanceTime: true });
+		try {
+			const saveAvatar = vi.fn(() => new Promise<never>(() => undefined));
+			render(
+				<DirectLinkCallEntry
+					token="shared-token"
+					context={call}
+					modality="video"
+					deps={{ saveAvatar }}
+				/>
+			);
+			fireEvent.click(
+				await screen.findByRole('button', { name: 'Agree and enter' })
+			);
+			await waitFor(() => expect(saveAvatar).toHaveBeenCalled());
+			await vi.advanceTimersByTimeAsync(5_000);
+			await screen.findByText('call-only entry');
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
 	it("leaves a signed-in person's own animal alone", async () => {
 		const saveAvatar = vi.fn();
 		render(
@@ -402,5 +445,32 @@ describe('the animal a call guest picks before entering', () => {
 			await screen.findByRole('button', { name: 'Agree and enter' })
 		);
 		await screen.findByText('mic on, camera on');
+	});
+
+	// PR #2271 review: the device controls stay usable while registration and
+	// the avatar save run, so a mute in that wait has to reach the call.
+	it('hands on a mute made while the account is still being created', async () => {
+		let finishRegistration: () => void = () => undefined;
+		vi.mocked(apiPostRegistration).mockImplementation(
+			() =>
+				new Promise<void>((resolve) => {
+					finishRegistration = resolve;
+				})
+		);
+		render(
+			<DirectLinkCallEntry
+				token="shared-token"
+				context={call}
+				modality="video"
+				deps={{ saveAvatar: vi.fn() }}
+			/>
+		);
+		fireEvent.click(
+			await screen.findByRole('button', { name: 'Agree and enter' })
+		);
+		await waitFor(() => expect(apiPostRegistration).toHaveBeenCalled());
+		fireEvent.click(screen.getByRole('button', { name: 'Mute' }));
+		finishRegistration();
+		await screen.findByText('mic off, camera on');
 	});
 });

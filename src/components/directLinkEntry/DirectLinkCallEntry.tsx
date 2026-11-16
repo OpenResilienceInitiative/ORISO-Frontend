@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@mui/material';
 import {
@@ -43,6 +43,9 @@ import { avatarIdOfFile } from '../../utils/avatarChoice';
 import type { DeviceChoice } from '../call/prejoin/callPrejoin';
 
 const AuthenticatedApp = lazyWithReload(loadAuthenticatedApp);
+
+/** How long entry waits for the chosen animal to be stored (FE#2209). */
+const AVATAR_SAVE_WAIT_MS = 5_000;
 
 export interface DirectLinkCallEntryDeps {
 	/** Creates the account and signs in. */
@@ -140,6 +143,12 @@ const DirectLinkCallEntryForm = ({
 		selection: {}
 	});
 	const live = useLiveCallDevices(modality, controls, deps.mediaDevices);
+	/*
+	 * The device controls stay usable while registration and the avatar save
+	 * run, so the handoff reads the latest choice, not the one from the click.
+	 */
+	const latestDevices = useRef({ controls, live });
+	latestDevices.current = { controls, live };
 	const [joining, setJoining] = useState(false);
 	const isSharedCall = context.linkKind === 'CALL';
 	const agencyId = context.agencyId;
@@ -202,15 +211,26 @@ const DirectLinkCallEntryForm = ({
 	 * the call show, and both read it from the account. Never stored, every
 	 * surface derived its own (lamb here, a frog on the knock card, a fox in
 	 * the call). Not worth keeping anybody out of the call over: without it
-	 * the account shows its derived animal, as before.
+	 * the account shows its derived animal, as before. The wait is bounded:
+	 * the knock card reads the account, so a quick save is worth waiting for,
+	 * but a stalled one must not hold the guest here until the 30 s request
+	 * timeout. A save that lands later still updates the account.
 	 */
 	const keepChosenAvatar = async (account: CallEntryAccount) => {
 		const file = account.identity?.avatar?.file;
 		if (!file) return;
+		let timer: ReturnType<typeof setTimeout> | undefined;
 		try {
-			await saveAvatar(avatarIdOfFile(file));
+			await Promise.race([
+				saveAvatar(avatarIdOfFile(file)),
+				new Promise<void>((resolve) => {
+					timer = setTimeout(resolve, AVATAR_SAVE_WAIT_MS);
+				})
+			]);
 		} catch {
 			// The derived animal stays; the person still gets in.
+		} finally {
+			clearTimeout(timer);
 		}
 	};
 
@@ -228,14 +248,15 @@ const DirectLinkCallEntryForm = ({
 				await register(account);
 				await keepChosenAvatar(account);
 			}
-			if (isSharedCall)
+			if (isSharedCall) {
+				const current = latestDevices.current;
 				onSharedCallAccepted({
-					controls,
-					cameraAvailable: !live.cameraMissing,
-					blocker: live.blocker,
-					devices: live.devices
+					controls: current.controls,
+					cameraAvailable: !current.live.cameraMissing,
+					blocker: current.live.blocker,
+					devices: current.live.devices
 				});
-			else await open(token);
+			} else await open(token);
 			return true;
 		} catch (error) {
 			setJoining(false);
