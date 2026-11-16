@@ -120,6 +120,9 @@ export const endpoints = {
 	agencyAdminContacts: (agencyId: number) =>
 		userServiceOrigin +
 		`/service/users/agencies/${agencyId}/admin-contacts`,
+	agencyContactPerson: (agencyId: number) =>
+		userServiceOrigin +
+		`/service/users/agencies/${agencyId}/contact-person`,
 	chatSeriesBase: userServiceOrigin + '/service/users/chat-series/',
 	callKnocks: userServiceOrigin + '/service/users/call-knocks',
 	keycloakAccessToken:
