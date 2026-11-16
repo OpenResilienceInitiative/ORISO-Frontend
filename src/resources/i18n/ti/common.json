@@ -6731,7 +6731,8 @@
 			"noteLabel": "መዘኻኸሪ ካብ ኣማኻሪ",
 			"findAgency": "ማእከል ምኽሪ ድለ",
 			"requested": "ሕቶ ቀሪቡ",
-			"topicUnknown": "ካልእ ኣርእስቲ"
+			"topicUnknown": "ካልእ ኣርእስቲ",
+			"convertFirstHint": "ዝርርብኩም ንምዕቃብ፡ ቅድም ሕሳብ ፍጠሩ። ድሕሪኡ ማእከል ምኽሪ ምረጹ።"
 		},
 		"duplicate": {
 			"startedTitle": "ኣብ ሓደ ኣርእስቲ ተወሳኺ ምኽሪ",

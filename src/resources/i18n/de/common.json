@@ -6750,7 +6750,8 @@
 			"noteLabel": "Notiz der Berater:in",
 			"findAgency": "Beratungsstelle finden",
 			"requested": "Anfrage gestellt",
-			"topicUnknown": "ein weiteres Thema"
+			"topicUnknown": "ein weiteres Thema",
+			"convertFirstHint": "Damit Sie Ihr Gespräch behalten, legen Sie zuerst ein Konto an. Danach wählen Sie die Beratungsstelle."
 		},
 		"duplicate": {
 			"startedTitle": "Weitere Beratung zum gleichen Thema",

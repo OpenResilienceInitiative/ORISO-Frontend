@@ -6760,7 +6760,8 @@
 			"noteLabel": "Danışmanın notu",
 			"findAgency": "Danışma merkezi bul",
 			"requested": "Talep gönderildi",
-			"topicUnknown": "başka bir konu"
+			"topicUnknown": "başka bir konu",
+			"convertFirstHint": "Görüşmenizi korumak için önce bir hesap oluşturun. Ardından danışma merkezini seçin."
 		},
 		"duplicate": {
 			"startedTitle": "Aynı konuda başka bir danışmanlık",
