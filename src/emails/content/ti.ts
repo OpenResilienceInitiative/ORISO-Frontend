@@ -538,5 +538,18 @@ export const ti: Record<EmailId, EmailContent> = {
 		footnote: 'እዚ ኢመይል ብፍላጥ ኣርእስቲ፣ ስማት ወይ ዝርዝር ተሳተፍቲ ኣይሓዘን።',
 		assurance,
 		footer
+	},
+
+	'calendar-move-proposal': {
+		subject: 'ሓሳብ ምቕያር ግዜ ቆጸራ',
+		preheader: '{{proposerName}} ንሓደ ካብ ቆጸራታትኩም ሓድሽ ግዜ የቕርብ ኣሎ።',
+		headline: 'ሓሳብ ምቕያር ግዜ ቆጸራ',
+		paragraphs: [
+			'{{proposerName}} ቆጸራኹም ካብ {{currentDate}} ሰዓት {{currentTime}} ናብ {{proposedDate}} ሰዓት {{proposedTime}} ክቕየር ሓሳብ የቕርብ ኣሎ።',
+			'ነዚ ሓሳብ ኣብ ካላንደርኩም ክትቕበልዎ ወይ ክትነጽግዎ ትኽእሉ ኢኹም። ክሳብ ሽዑ ቆጸራ ኣብ ቦታኡ ይጸንሕ።'
+		],
+		cta: { label: 'ኣብ ካላንደር ርኣዩ', href: '{{calendarUrl}}' },
+		assurance: staffAssurance,
+		footer
 	}
 };
