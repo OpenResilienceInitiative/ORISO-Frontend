@@ -418,6 +418,8 @@ const bandKey = (band: ColleagueBand) =>
 	`${band.start.getTime()}-${band.end.getTime()}`;
 
 const DAY_MS = 86_400_000;
+/** FullCalendar's slot, and so what a click without dragging selects. */
+const SLOT_MS = 30 * 60_000;
 
 export const CalendarView = ({
 	controller,
@@ -1002,6 +1004,19 @@ export const CalendarView = ({
 				Math.round((info.end.getTime() - info.start.getTime()) / DAY_MS)
 			);
 			onSelectDays?.(info.start, days, anchor);
+			return;
+		}
+		// A click on a band explains the band; only dragging over it offers
+		// "Eintragen als". The menu would otherwise open at once and, as a
+		// modal, keep the pointer from every other band (Frank *16.2).
+		const clicked = info.end.getTime() - info.start.getTime() <= SLOT_MS;
+		const band =
+			clicked && pointer
+				? bandAt(pointer.clientX, pointer.clientY)
+				: null;
+		if (band) {
+			info.view.calendar.unselect();
+			setPeek(band);
 			return;
 		}
 		onSelectRange?.({ start: info.start, end: info.end }, anchor);
