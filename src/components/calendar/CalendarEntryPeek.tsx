@@ -25,6 +25,8 @@ export interface CalendarEntryPeekProps {
 	/** Set when the entry is a colleague's. */
 	colleague?: Colleague;
 	proposal?: MoveProposal;
+	/** Under a proposal: whom it waits for, or who proposed it. */
+	proposalStatus?: string;
 	/** "Klick öffnet die Aktionen" under the card (Als Nächstes). */
 	clickHint?: boolean;
 	role?: 'tooltip';
@@ -35,6 +37,7 @@ export const CalendarEntryPeek = ({
 	entry,
 	colleague,
 	proposal,
+	proposalStatus,
 	clickHint,
 	role,
 	id
@@ -95,7 +98,7 @@ export const CalendarEntryPeek = ({
 			</span>
 			{proposal && (
 				<span className="calendarPeek__line calendarPeek__line--muted">
-					{t('calendar.proposal.waiting')}
+					{proposalStatus ?? t('calendar.proposal.waiting')}
 				</span>
 			)}
 			{!colleague && entry.address && (

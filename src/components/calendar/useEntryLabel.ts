@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { CalendarEntry } from './calendarModel';
 import { calendarLocale } from './calendarLocale';
+import { receivedBy, type MoveProposal } from './calendarActions';
 
 const sameLocalDay = (a: Date, b: Date) =>
 	a.getFullYear() === b.getFullYear() &&
@@ -28,6 +29,25 @@ export const useEntryLabel = () => {
 			return entry.title ?? t(`calendar.kinds.${entry.kind ?? 'video'}`);
 		},
 		[t]
+	);
+};
+
+/**
+ * What a dashed proposal says after "Verschiebung": one's own waits for
+ * the colleague; one received names who proposed it.
+ */
+export const useProposalStatus = (ownerId: string) => {
+	const { t } = useTranslation();
+	return useCallback(
+		(proposal: MoveProposal) =>
+			receivedBy(proposal, ownerId)
+				? t('calendar.proposal.from', {
+						name:
+							proposal.proposerName ??
+							t('calendar.proposal.someone')
+					})
+				: t('calendar.proposal.waiting'),
+		[t, ownerId]
 	);
 };
 

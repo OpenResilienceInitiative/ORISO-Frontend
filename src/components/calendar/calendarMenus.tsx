@@ -9,6 +9,7 @@ import * as React from 'react';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import CheckIcon from '@mui/icons-material/Check';
+import CloseIcon from '@mui/icons-material/Close';
 import EventOutlinedIcon from '@mui/icons-material/EventOutlined';
 import ScheduleOutlinedIcon from '@mui/icons-material/ScheduleOutlined';
 import EventRepeatOutlinedIcon from '@mui/icons-material/EventRepeatOutlined';
@@ -558,6 +559,78 @@ export const ProposalMenuContent = ({
 						data-cy="calendar-proposal-withdraw"
 					/>
 				</>
+			)}
+		</>
+	);
+};
+
+/* ------------------------------------------------------------------ */
+/* A proposal waiting for one's own answer ("Offene Anfragen")          */
+/* ------------------------------------------------------------------ */
+
+export interface RequestMenuContentProps {
+	proposal: MoveProposal;
+	/** The appointment's time the proposal was made for. */
+	from: { start: string; end: string };
+	/** The answer is on its way. */
+	busy?: boolean;
+	onAccept?: () => void;
+	onDecline?: () => void;
+}
+
+export const RequestMenuContent = ({
+	proposal,
+	from,
+	busy,
+	onAccept,
+	onDecline
+}: RequestMenuContentProps) => {
+	const { t } = useTranslation();
+	const format = useRangeFormat();
+	const name = proposal.proposerName ?? t('calendar.proposal.someone');
+	return (
+		<>
+			<div className="calendarMenu__head">
+				<span className="calendarMenu__avatar" aria-hidden="true">
+					{initialsOf(name)}
+				</span>
+				<ChatMenuDropdownHeader
+					subtitle={t('calendar.proposal.from', { name })}
+					title={t('calendar.proposal.requestMenu')}
+					titleAs="p"
+				/>
+			</div>
+			<ChatMenuDropdownNote>
+				{t('calendar.proposal.change', {
+					from: format(from.start, from.end),
+					to: format(proposal.start, proposal.end)
+				})}
+			</ChatMenuDropdownNote>
+			<ChatMenuDropdownNote>
+				{t('calendar.proposal.requestHint')}
+			</ChatMenuDropdownNote>
+			{(onAccept || onDecline) && <ChatMenuDropdownDivider />}
+			{onAccept && (
+				<ChatMenuDropdownItem
+					role="menuitem"
+					icon={<CheckIcon fontSize="small" />}
+					title={t('calendar.proposal.accept')}
+					description={t('calendar.proposal.acceptHint')}
+					disabled={busy}
+					onClick={onAccept}
+					data-cy="calendar-request-accept"
+				/>
+			)}
+			{onDecline && (
+				<ChatMenuDropdownItem
+					role="menuitem"
+					icon={<CloseIcon fontSize="small" />}
+					title={t('calendar.proposal.decline')}
+					description={t('calendar.proposal.declineHint')}
+					disabled={busy}
+					onClick={onDecline}
+					data-cy="calendar-request-decline"
+				/>
 			)}
 		</>
 	);

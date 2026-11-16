@@ -107,6 +107,24 @@ export interface CalendarSidebarProps {
 		anchor: HTMLElement
 	) => void;
 	onWithdrawProposal?: (proposal: MoveProposal) => void;
+	/**
+	 * Proposals colleagues sent for one's own appointments, with the time
+	 * each was made for (`from`): at the top of "Offene Anfragen".
+	 */
+	requests?: {
+		proposal: MoveProposal;
+		entry: CalendarEntry;
+		from: { start: string; end: string };
+	}[];
+	/** Requests whose answer is on its way: their buttons rest. */
+	answeringIds?: string[];
+	onOpenRequest?: (
+		proposal: MoveProposal,
+		entry: CalendarEntry,
+		anchor: HTMLElement
+	) => void;
+	onAcceptRequest?: (proposal: MoveProposal) => void;
+	onDeclineRequest?: (proposal: MoveProposal, entry: CalendarEntry) => void;
 	onOpenEntry: (entry: CalendarEntry, anchor: HTMLElement) => void;
 	/**
 	 * "Zum Chat mit …" beside an upcoming appointment that has a
@@ -169,6 +187,11 @@ export const CalendarSidebar = ({
 	openProposals,
 	onOpenProposal,
 	onWithdrawProposal,
+	requests = [],
+	answeringIds = [],
+	onOpenRequest,
+	onAcceptRequest,
+	onDeclineRequest,
 	onOpenEntry,
 	onOpenChat,
 	shownColleagues,
@@ -280,12 +303,127 @@ export const CalendarSidebar = ({
 				/>
 			)}
 
-			{openProposals.length > 0 && (
-				<section className="calendarSide__section">
-					<h2 className="calendarSide__title">
+			{(openProposals.length > 0 || requests.length > 0) && (
+				<section
+					className="calendarSide__section"
+					aria-labelledby="calendar-requests-title"
+					data-cy="calendar-requests"
+				>
+					<h2
+						className="calendarSide__title"
+						id="calendar-requests-title"
+					>
 						{t('calendar.proposal.open')}
 					</h2>
 					<ul className="calendarSide__list">
+						{/* Waiting for one's own answer first: they need it. */}
+						{requests.map(({ proposal, entry, from }) => {
+							const name =
+								proposal.proposerName ??
+								t('calendar.proposal.someone');
+							const change = {
+								from: format(from.start, from.end),
+								to: format(proposal.start, proposal.end)
+							};
+							const busy = answeringIds.includes(proposal.id);
+							return (
+								<li
+									key={proposal.id}
+									className="calendarSide__request calendarSide__request--received"
+									data-cy={`calendar-received-${proposal.id}`}
+								>
+									<button
+										type="button"
+										className="calendarSide__row calendarSide__row--received"
+										aria-label={t(
+											'calendar.proposal.requestLabel',
+											{ name, ...change }
+										)}
+										aria-haspopup="menu"
+										onClick={(e) =>
+											onOpenRequest?.(
+												proposal,
+												entry,
+												e.currentTarget
+											)
+										}
+									>
+										{rail ? (
+											railFace(name, proposal.start)
+										) : (
+											<span
+												className="calendarSide__requestAvatar"
+												aria-hidden="true"
+											>
+												{initialsOf(name)}
+											</span>
+										)}
+										{!rail && (
+											<span className="calendarSide__rowText">
+												<span className="calendarSide__rowName">
+													{name}
+												</span>
+												<span className="calendarSide__rowMeta calendarSide__requestChange">
+													{t(
+														'calendar.proposal.change',
+														change
+													)}
+												</span>
+											</span>
+										)}
+									</button>
+									{!rail &&
+										(onAcceptRequest ||
+											onDeclineRequest) && (
+											<div className="calendarSide__requestActions">
+												{onDeclineRequest && (
+													<button
+														type="button"
+														className="calendarSide__textButton"
+														disabled={busy}
+														aria-label={t(
+															'calendar.proposal.declineLabel',
+															{ name, ...change }
+														)}
+														onClick={() =>
+															onDeclineRequest(
+																proposal,
+																entry
+															)
+														}
+														data-cy={`calendar-received-decline-${proposal.id}`}
+													>
+														{t(
+															'calendar.proposal.decline'
+														)}
+													</button>
+												)}
+												{onAcceptRequest && (
+													<button
+														type="button"
+														className="calendarSide__textButton calendarSide__textButton--filled"
+														disabled={busy}
+														aria-label={t(
+															'calendar.proposal.acceptLabel',
+															{ name, ...change }
+														)}
+														onClick={() =>
+															onAcceptRequest(
+																proposal
+															)
+														}
+														data-cy={`calendar-received-accept-${proposal.id}`}
+													>
+														{t(
+															'calendar.proposal.accept'
+														)}
+													</button>
+												)}
+											</div>
+										)}
+								</li>
+							);
+						})}
 						{openProposals.map(({ proposal, entry }) => (
 							<li
 								key={proposal.id}

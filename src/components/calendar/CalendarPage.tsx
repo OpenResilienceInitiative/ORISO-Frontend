@@ -9,8 +9,11 @@
  * promise; a rejected one shows the failure notice instead of the success
  * notice. `CalendarPageWired` connects it to UserService.
  *
- * Move proposals and "Beitreten" have no backend yet: they appear only when
- * the host passes their callbacks (Storybook does, the app does not).
+ * Move proposals (contract "move proposals v1"): a counsellor proposes a new
+ * time for a colleague's appointment and withdraws it; the colleague finds
+ * it under "Offene Anfragen" and in the grid, and accepts or declines.
+ * "Beitreten" has no backend yet: it appears only when the host passes its
+ * callback (Storybook does, the app does not).
  *
  * Working time (contract v1.2): weekly hours, single dates moved by hand and
  * the public holidays of a Bundesland. Grips on the edges of one's own
@@ -50,6 +53,8 @@ import { facetOf, type CalendarEntryFacet } from './CalendarEntryGlyph';
 import {
 	entryActions,
 	openProposals,
+	ProposalNoLongerValid,
+	receivedBy,
 	type MoveProposal
 } from './calendarActions';
 import {
@@ -145,6 +150,7 @@ import {
 	MonthDayMenuContent,
 	PeopleMenuContent,
 	ProposalMenuContent,
+	RequestMenuContent,
 	SettingsMenuContent,
 	SlotMenuContent,
 	ViewMenuContent,
@@ -259,8 +265,20 @@ export interface CalendarPageProps {
 	) => void | Promise<unknown>;
 	/** The date follows the weekly hours again. */
 	onDeleteDayException?: (date: string) => void | Promise<unknown>;
-	/** Pending move proposals for colleagues' entries (no backend yet). */
+	/** Open move proposals sent for colleagues' appointments. */
 	proposals?: MoveProposal[];
+	/**
+	 * Open move proposals colleagues sent for one's own appointments:
+	 * "Offene Anfragen", answered with the two callbacks below.
+	 */
+	receivedProposals?: MoveProposal[];
+	/**
+	 * "Annehmen": the appointment moves. A rejection with
+	 * `ProposalNoLongerValid` says it moved meanwhile.
+	 */
+	onAcceptProposal?: (proposal: MoveProposal) => ChangeResult;
+	/** "Ablehnen": the appointment stays where it is. */
+	onDeclineProposal?: (proposal: MoveProposal) => ChangeResult;
 	onProposeMove?: (
 		entry: CalendarEntry,
 		start: Date,
@@ -331,7 +349,8 @@ type Menu =
 			mode: 'list' | 'move' | 'propose';
 	  }
 	| {
-			type: 'proposal';
+			/** `proposal`: one's own, sent; `request`: one received. */
+			type: 'proposal' | 'request';
 			anchor: MenuAnchor;
 			proposal: MoveProposal;
 			entry: CalendarEntry;
@@ -439,8 +458,11 @@ export const CalendarPage = ({
 	onSaveDayException,
 	onDeleteDayException,
 	proposals = [],
+	receivedProposals = [],
 	onProposeMove,
 	onWithdrawProposal,
+	onAcceptProposal,
+	onDeclineProposal,
 	onJoin,
 	onStart,
 	onOpenChat,
@@ -581,6 +603,24 @@ export const CalendarPage = ({
 		() => (onProposeMove ? openProposals(proposals, entries) : []),
 		[onProposeMove, proposals, entries]
 	);
+	/** Waiting for one's own answer: always in the grid and the list. */
+	const answering = !!(onAcceptProposal || onDeclineProposal);
+	const requests = useMemo(
+		() =>
+			answering
+				? openProposals(
+						receivedProposals.filter((p) => receivedBy(p, ownerId)),
+						entries
+					)
+				: [],
+		[answering, receivedProposals, entries, ownerId]
+	);
+	const gridProposals = useMemo(
+		() => [...requests, ...pending],
+		[requests, pending]
+	);
+	/** Requests being answered: one answer each, buttons off meanwhile. */
+	const [answeringIds, setAnsweringIds] = useState<string[]>([]);
 	const summary = summarise(workingHours);
 	const workingPlan = useMemo<WorkingPlan>(
 		() => ({
@@ -929,13 +969,71 @@ export const CalendarPage = ({
 			);
 	};
 
-	const propose = (entry: CalendarEntry, start: Date, end: Date) =>
-		run(onProposeMove?.(entry, start, end), {
+	const propose = (entry: CalendarEntry, start: Date, end: Date) => {
+		// UserService refuses a proposed start in the past; say so here.
+		if (start.getTime() < now.getTime()) {
+			setNotice({ message: t('calendar.movePast') });
+			return false;
+		}
+		return run(onProposeMove?.(entry, start, end), {
 			message: t('calendar.proposal.sent', {
 				date: format(start, end),
 				name: colleagueById[entry.ownerId]?.displayName ?? ''
 			})
 		});
+	};
+
+	/** The "from" of a request: the time it was made for. */
+	const requestFrom = (proposal: MoveProposal, entry: CalendarEntry) => ({
+		start: proposal.entryStart ?? entry.start,
+		end: proposal.entryEnd ?? entry.end
+	});
+
+	/** One answer per request; the buttons rest until it is in. */
+	const answer = (
+		proposal: MoveProposal,
+		send: (() => ChangeResult | undefined) | undefined,
+		success: Notice
+	) => {
+		setMenu(null);
+		if (!send || answeringIds.includes(proposal.id)) return;
+		setAnsweringIds((all) => [...all, proposal.id]);
+		void Promise.resolve(
+			run(send(), success, (error) => ({
+				message:
+					error instanceof ProposalNoLongerValid
+						? t('calendar.proposal.noLongerValid')
+						: t('calendar.saveFailed')
+			}))
+		).finally(() =>
+			setAnsweringIds((all) => all.filter((id) => id !== proposal.id))
+		);
+	};
+
+	/** The usual move notice once it moved; the advice seeker learns of it. */
+	const accept = (proposal: MoveProposal) =>
+		answer(
+			proposal,
+			onAcceptProposal && (() => onAcceptProposal(proposal)),
+			{
+				message: t('calendar.moved', {
+					date: format(proposal.start, proposal.end)
+				})
+			}
+		);
+
+	const decline = (proposal: MoveProposal, entry: CalendarEntry) => {
+		const from = requestFrom(proposal, entry);
+		answer(
+			proposal,
+			onDeclineProposal && (() => onDeclineProposal(proposal)),
+			{
+				message: t('calendar.proposal.declined', {
+					date: format(from.start, from.end)
+				})
+			}
+		);
+	};
 
 	const withdraw = (proposal: MoveProposal) => {
 		setMenu(null);
@@ -1298,6 +1396,18 @@ export const CalendarPage = ({
 			});
 	};
 
+	/** A dashed proposal in the grid: one's own to withdraw, or a request. */
+	const openProposal = (proposal: MoveProposal, anchor: MenuAnchor) => {
+		const found = gridProposals.find((p) => p.proposal.id === proposal.id);
+		if (!found) return;
+		setMenu({
+			type: receivedBy(proposal, ownerId) ? 'request' : 'proposal',
+			proposal,
+			entry: found.entry,
+			anchor
+		});
+	};
+
 	const allDayDraft = (start: Date, days: number): AppointmentDraft => {
 		const end = addDays(start, days - 1);
 		end.setHours(23, 59, 59, 999);
@@ -1398,6 +1508,22 @@ export const CalendarPage = ({
 				onWithdraw={
 					onWithdrawProposal
 						? () => withdraw(menu.proposal)
+						: undefined
+				}
+			/>
+		);
+	} else if (menu?.type === 'request') {
+		const { proposal, entry } = menu;
+		menuLabel = t('calendar.proposal.requestMenu');
+		menuContent = (
+			<RequestMenuContent
+				proposal={proposal}
+				from={requestFrom(proposal, entry)}
+				busy={answeringIds.includes(proposal.id)}
+				onAccept={onAcceptProposal ? () => accept(proposal) : undefined}
+				onDecline={
+					onDeclineProposal
+						? () => decline(proposal, entry)
 						: undefined
 				}
 			/>
@@ -2008,25 +2134,14 @@ export const CalendarPage = ({
 							workingPlan={workingPlan}
 							onEdgeChange={gripsOn ? onEdgeChange : undefined}
 							hourPx={slotPx * 2}
-							proposals={pending}
+							proposals={gridProposals}
 							highlight={highlight}
 							muted={muted}
 							onSelectRange={(range, anchor) =>
 								setMenu({ type: 'slot', range, anchor })
 							}
 							onEntryOpen={openEntry}
-							onProposalOpen={(proposal, anchor) => {
-								const found = pending.find(
-									(p) => p.proposal.id === proposal.id
-								);
-								if (found)
-									setMenu({
-										type: 'proposal',
-										proposal,
-										entry: found.entry,
-										anchor
-									});
-							}}
+							onProposalOpen={openProposal}
 						/>
 					) : (
 						<CalendarView
@@ -2049,7 +2164,7 @@ export const CalendarPage = ({
 							workingPlan={workingPlan}
 							onEdgeChange={gripsOn ? onEdgeChange : undefined}
 							slotPx={slotPx}
-							proposals={pending}
+							proposals={gridProposals}
 							highlight={highlight}
 							muted={muted}
 							onSelectRange={(range, anchor) =>
@@ -2059,18 +2174,7 @@ export const CalendarPage = ({
 								setMenu({ type: 'month', start, days, anchor })
 							}
 							onEntryOpen={openEntry}
-							onProposalOpen={(proposal, anchor) => {
-								const found = pending.find(
-									(p) => p.proposal.id === proposal.id
-								);
-								if (found)
-									setMenu({
-										type: 'proposal',
-										proposal,
-										entry: found.entry,
-										anchor
-									});
-							}}
+							onProposalOpen={openProposal}
 							onEntryMove={move}
 							onDatesSet={datesSet}
 							onDragChange={setDragging}
@@ -2111,7 +2215,10 @@ export const CalendarPage = ({
 
 	// The left column on a wide screen, the bottom sheet on the phone and
 	// the tablet, there only while requests are open (prototype v15).
-	const sheetShown = compact && !fullscreen && allPending.length > 0;
+	const sheetShown =
+		compact &&
+		!fullscreen &&
+		(allPending.length > 0 || requests.length > 0);
 	const sheetCovers = sheetShown && sheet === 'full';
 	const sideProps: CalendarSidebarProps = {
 		ownerId,
@@ -2133,6 +2240,16 @@ export const CalendarPage = ({
 		onOpenProposal: (proposal, entry, anchor) =>
 			setMenu({ type: 'proposal', proposal, entry, anchor }),
 		onWithdrawProposal: onWithdrawProposal ? withdraw : undefined,
+		requests: requests.map(({ proposal, entry }) => ({
+			proposal,
+			entry,
+			from: requestFrom(proposal, entry)
+		})),
+		answeringIds,
+		onOpenRequest: (proposal, entry, anchor) =>
+			setMenu({ type: 'request', proposal, entry, anchor }),
+		onAcceptRequest: onAcceptProposal ? accept : undefined,
+		onDeclineRequest: onDeclineProposal ? decline : undefined,
 		onOpenEntry: (entry, anchor) => openEntry(entry, anchor),
 		onOpenChat: onOpenChat
 			? (entry) => openRoom(onOpenChat, entry)

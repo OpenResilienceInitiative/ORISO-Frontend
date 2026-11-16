@@ -51,7 +51,7 @@ import {
 	type CalendarHighlight,
 	type MenuAnchor
 } from './CalendarView';
-import { useEntryLabel } from './useEntryLabel';
+import { useEntryLabel, useProposalStatus } from './useEntryLabel';
 import { calendarLocale } from './calendarLocale';
 import { SPLIT_SLOT_PX } from './calendarZoom';
 
@@ -265,6 +265,7 @@ export const CalendarSplitView = ({
 		[firstMinute, lastMinute]
 	);
 	const label = useEntryLabel();
+	const proposalStatus = useProposalStatus(ownerId);
 	const locale = calendarLocale(i18n.language);
 	const first = useMemo(() => startOfDay(dayInput), [dayInput]);
 	const grouped = days > 1;
@@ -553,7 +554,7 @@ export const CalendarSplitView = ({
 						<span className="calEntry__time">{timeText}</span>
 						<span className="calEntry__title">
 							{proposal
-								? `${t('calendar.proposal.label')} · ${t('calendar.proposal.waiting')}`
+								? `${t('calendar.proposal.label')} · ${proposalStatus(proposal)}`
 								: label(entry, colleague)}
 						</span>
 					</span>
@@ -572,6 +573,9 @@ export const CalendarSplitView = ({
 					<CalendarEntryPeek
 						entry={entry}
 						proposal={proposal}
+						proposalStatus={
+							proposal ? proposalStatus(proposal) : undefined
+						}
 						colleague={colleagues.find(
 							(c) => c.id === entry.ownerId
 						)}

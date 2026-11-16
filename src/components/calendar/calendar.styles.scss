@@ -1002,6 +1002,50 @@
 	gap: 2px;
 }
 
+// A proposal waiting for one's own answer: who, from → to, and the two
+// answers in words (nothing by colour alone).
+.calendarSide__request--received {
+	align-items: stretch;
+	padding: 4px 4px 6px;
+	border: 1px solid var(--m3-outline-variant, #c4c7c8);
+	border-radius: 12px;
+	background: var(--m3-surface-container-low, #f6f3f3);
+
+	.calendarSide--rail & {
+		padding: 0;
+		border: 0;
+		background: transparent;
+	}
+}
+
+.calendarSide__row--received {
+	align-items: flex-start;
+}
+
+.calendarSide__requestAvatar {
+	display: grid;
+	flex: none;
+	place-items: center;
+	width: 32px;
+	height: 32px;
+	border-radius: 50%;
+	background: var(--m3-surface-container-high, #ebe8e8);
+	color: var(--m3-on-surface, #1b1b1c);
+	font-size: 12px;
+	font-weight: 600;
+}
+
+.calendarSide__requestChange {
+	font-variant-numeric: tabular-nums;
+	white-space: normal;
+}
+
+.calendarSide__requestActions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 4px;
+}
+
 .calendarSide__textButton {
 	height: 32px;
 	padding: 0 12px;
@@ -1020,6 +1064,25 @@
 
 	&:focus-visible {
 		@include control-focus-ring(0);
+	}
+
+	&:disabled {
+		opacity: 0.38;
+		cursor: default;
+	}
+
+	// The main answer: filled, as the primary button of a dialog.
+	&--filled {
+		background: var(--m3-primary, #a5000a);
+		color: var(--m3-on-primary, #ffffff);
+
+		&:hover {
+			background: color-mix(
+				in srgb,
+				var(--m3-primary, #a5000a) 88%,
+				var(--m3-on-primary, #ffffff)
+			);
+		}
 	}
 }
 

@@ -67,7 +67,11 @@ import {
 	FC_VIEW,
 	type CalendarViewName
 } from './calendarViews';
-import { useEntryLabel, useRangeFormat } from './useEntryLabel';
+import {
+	useEntryLabel,
+	useProposalStatus,
+	useRangeFormat
+} from './useEntryLabel';
 import {
 	colleagueBands,
 	foldsIntoBand,
@@ -391,6 +395,7 @@ export const CalendarView = ({
 	const { t, i18n } = useTranslation();
 	const label = useEntryLabel();
 	const format = useRangeFormat();
+	const proposalStatus = useProposalStatus(ownerId);
 	const nowDate = now ?? new Date();
 	const consultant = role === 'consultant';
 	const gridRef = useRef<HTMLDivElement>(null);
@@ -659,7 +664,7 @@ export const CalendarView = ({
 								{t('calendar.proposal.label')}
 								<span className="calEntry__waiting">
 									{' · '}
-									{t('calendar.proposal.waiting')}
+									{proposalStatus(proposal)}
 								</span>
 							</>
 						) : (
@@ -729,12 +734,16 @@ export const CalendarView = ({
 			'aria-label',
 			[
 				proposal
-					? `${t('calendar.proposal.label')} · ${t('calendar.proposal.waiting')}`
+					? `${t('calendar.proposal.label')} · ${proposalStatus(proposal)}`
 					: label(entry, !own),
 				own ? '' : colleagues[entry.ownerId]?.displayName,
 				entry.allDay
 					? t('calendar.allDay')
-					: format(entry.start, entry.end)
+					: // A proposal stands at the proposed time: say that one.
+						format(
+							proposal?.start ?? entry.start,
+							proposal?.end ?? entry.end
+						)
 			]
 				.filter(Boolean)
 				.join(', ')
@@ -1035,6 +1044,11 @@ export const CalendarView = ({
 						entry={peek.entry}
 						colleague={peekColleague}
 						proposal={peek.proposal}
+						proposalStatus={
+							peek.proposal
+								? proposalStatus(peek.proposal)
+								: undefined
+						}
 					/>
 				)}
 			</Popper>
