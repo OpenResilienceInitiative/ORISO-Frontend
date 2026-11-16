@@ -72,6 +72,10 @@
 	&__email {
 		max-width: 100%;
 		overflow-wrap: anywhere;
+
+		// Inside a sentence the colour alone does not mark a link (WCAG 1.4.1).
+		text-decoration: underline;
+		text-underline-offset: 2px;
 	}
 
 	&__chat {
