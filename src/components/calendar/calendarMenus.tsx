@@ -127,6 +127,11 @@ const SlotPeopleStep = ({
 				title={t(`calendar.nouns.${kind}`)}
 				titleAs="h2"
 			/>
+			{/* Not ListSearchField: that is the pill search on top of a master
+			    list, with a 48 px leading menu or filter slot and its own
+			    clear button. Here the field is the labelled "Mit wem?" input
+			    of a 280 px menu step, where a leading menu would be a second,
+			    empty menu inside the menu (CodeRabbit pre-merge check). */}
 			<input
 				type="search"
 				className="calendarMenu__search"
