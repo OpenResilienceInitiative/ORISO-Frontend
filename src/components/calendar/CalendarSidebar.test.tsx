@@ -38,7 +38,9 @@ const GROUP: CalendarEntry = {
 	ownerId: 'me'
 };
 
-const sidebar = (props: Partial<React.ComponentProps<typeof CalendarSidebar>>) =>
+const sidebar = (
+	props: Partial<React.ComponentProps<typeof CalendarSidebar>>
+) =>
 	render(
 		<CalendarSidebar
 			ownerId="me"
@@ -56,6 +58,7 @@ const sidebar = (props: Partial<React.ComponentProps<typeof CalendarSidebar>>) =
 			onOpenKinds={() => undefined}
 			openProposals={[]}
 			onOpenEntry={() => undefined}
+			onShowEntry={() => undefined}
 			shownColleagues={[]}
 			{...props}
 		/>
@@ -110,5 +113,94 @@ describe('CalendarSidebar — "Als Nächstes" (Frank, prototype v15)', () => {
 			'calendar-upcoming-n1',
 			'calendar-upcoming-n0'
 		]);
+	});
+});
+
+describe('CalendarSidebar — pill cards and "Jetzt" (prototype v17)', () => {
+	it('leads an appointment with the advice seeker in their tone and a kind badge, a group date with its icon', () => {
+		sidebar({});
+		const card = document.querySelector(
+			'[data-cy="calendar-upcoming-a1"]'
+		) as HTMLElement;
+		const avatar = card.querySelector(
+			'.calendarSide__avatar'
+		) as HTMLElement;
+		expect(avatar.textContent).toBe('ME');
+		expect(avatar.className).toMatch(/calAvatar--tone-\d/);
+		expect(
+			card.querySelector('.calendarSide__leadKind svg')
+		).not.toBeNull();
+		const group = document.querySelector(
+			'[data-cy="calendar-upcoming-g1"]'
+		) as HTMLElement;
+		expect(group.querySelector('.calendarSide__avatar')).toBeNull();
+		expect(group.querySelector('.calendarSide__kdot svg')).not.toBeNull();
+	});
+
+	it('puts "Jetzt" between "Als Nächstes" and quick entry', () => {
+		sidebar({ onCreate: () => true });
+		const now = document.querySelector('[data-cy="calendar-now"]')!;
+		expect(now.textContent).toBe('calendar.side.now');
+		const upcoming = document.querySelector(
+			'[data-cy="calendar-upcoming"]'
+		)!;
+		const quick = document.querySelector('#calendar-quick-panel')!;
+		expect(
+			upcoming.compareDocumentPosition(now) &
+				Node.DOCUMENT_POSITION_FOLLOWING
+		).toBeTruthy();
+		expect(
+			now.compareDocumentPosition(quick) &
+				Node.DOCUMENT_POSITION_FOLLOWING
+		).toBeTruthy();
+	});
+
+	it('folds quick entry behind the "+" beside "Jetzt" in the sheet', () => {
+		const onQuickToggle = vi.fn();
+		sidebar({ onCreate: () => true, variant: 'sheet', onQuickToggle });
+		const toggle = document.querySelector(
+			'[data-cy="calendar-now"] [data-cy="calendar-quick-toggle"]'
+		) as HTMLElement;
+		expect(toggle.getAttribute('aria-expanded')).toBe('false');
+		fireEvent.click(toggle);
+		expect(onQuickToggle).toHaveBeenCalled();
+		expect(
+			document
+				.querySelector('#calendar-quick-panel')
+				?.hasAttribute('hidden')
+		).toBe(true);
+	});
+
+	it('shows the working hours as a line with "Ändern"', () => {
+		const onWorkingHours = vi.fn();
+		sidebar({ onWorkingHours, workingHoursSummary: 'Mo–Fr 08:00–18:00' });
+		const change = screen.getByRole('button', {
+			name: 'calendar.workingHours.change'
+		});
+		expect(change.getAttribute('data-cy')).toBe('calendar-working-hours');
+		expect(change.closest('.calendarSide__work')?.textContent).toContain(
+			'calendar.workingHours.summary'
+		);
+		fireEvent.click(change);
+		expect(onWorkingHours).toHaveBeenCalled();
+	});
+
+	it('hands a search result to the calendar instead of opening it', () => {
+		const onShowEntry = vi.fn();
+		const onOpenEntry = vi.fn();
+		sidebar({ onShowEntry, onOpenEntry });
+		fireEvent.change(screen.getByRole('searchbox'), {
+			target: { value: 'nord' }
+		});
+		fireEvent.click(
+			document.querySelector(
+				'[data-cy="calendar-search-g1"]'
+			) as HTMLElement
+		);
+		expect(onShowEntry).toHaveBeenCalledWith(GROUP);
+		expect(onOpenEntry).not.toHaveBeenCalled();
+		expect(
+			document.querySelector('[data-cy="calendar-search-g1"]')
+		).toBeNull();
 	});
 });

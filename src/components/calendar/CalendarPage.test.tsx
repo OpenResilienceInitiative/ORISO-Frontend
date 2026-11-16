@@ -116,7 +116,8 @@ describe('CalendarPage — display filter', () => {
 		expect(chip()).not.toBeNull();
 		expect(chip()?.getAttribute('aria-pressed')).toBe('true');
 		fireEvent.click(chip() as Element);
-		expect(chip()).toBeNull();
+		// All five kinds stay on offer (prototype v17); it is just off.
+		expect(chip()?.getAttribute('aria-pressed')).toBe('false');
 	});
 });
 

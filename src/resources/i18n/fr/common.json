@@ -6978,6 +6978,11 @@
 				"past": "L’entrée doit se situer dans le futur.",
 				"order": "La fin doit être postérieure au début.",
 				"conversation": "Veuillez choisir la consultation à laquelle le rendez-vous se rattache."
+			},
+			"entryKind": "Type d’entrée",
+			"tabs": {
+				"appointment": "Rendez-vous",
+				"blocker": "Plage bloquée"
 			}
 		},
 		"details": {
@@ -7011,7 +7016,7 @@
 		"created": "Rendez-vous créé : {{date}}",
 		"undo": "Revenir en arrière",
 		"syncDialog": {
-			"title": "Synchronisation du calendrier",
+			"title": "Connecter Outlook ou Google",
 			"description": "Vos rendez-vous ORISO dans Outlook, Google Agenda ou Calendrier d’Apple – et, en retour, vos créneaux occupés.",
 			"feedTitle": "S’abonner dans votre calendrier",
 			"feedText": "Ajoutez ce lien à votre calendrier en tant qu’abonnement. Il n’affiche que « ORISO-Termin » et l’heure, aucun nom.",
@@ -7047,7 +7052,11 @@
 			"label": "Ajouter",
 			"as": "Saisir comme",
 			"blockerNow": "saisi immédiatement",
-			"outsideHours": "En dehors de vos horaires de travail."
+			"outsideHours": "En dehors de vos horaires de travail.",
+			"who": "Avec qui",
+			"whoPlaceholder": "Avec qui ? Chercher un nom",
+			"conversations": "Consultations",
+			"noneFound": "Aucune consultation trouvée."
 		},
 		"blocker": {
 			"menuItem": "Plage bloquée",
@@ -7065,7 +7074,9 @@
 			"conflicts_one": "En conflit avec {{count}} rendez-vous.",
 			"created": "{{count}} plages bloquées ajoutées",
 			"created_one": "{{count}} plage bloquée ajoutée",
-			"createdSingle": "Plage bloquée ajoutée : {{date}}"
+			"createdSingle": "Plage bloquée ajoutée : {{date}}",
+			"workHint": "Toujours les mêmes horaires, par exemple le soir et le week-end ?",
+			"weekly": "Chaque semaine …"
 		},
 		"saveFailed": "Cela n’a pas fonctionné. Veuillez réessayer.",
 		"blockerRemoved": "Plage bloquée supprimée.",
@@ -7087,7 +7098,14 @@
 			"remove": "Supprimer",
 			"saveMove": "Déplacer",
 			"sendProposal": "Envoyer la proposition",
-			"to": "À"
+			"to": "À",
+			"withYou": "Vous et {{name}}",
+			"startSub": "avec {{name}}",
+			"chatSub": "Ouvrir la consultation avec {{name}}",
+			"joinSub": "Ouvrir la visioconférence",
+			"moveSub": "Modifier le jour et l’heure",
+			"proposeSub": "{{name}} doit confirmer",
+			"cancelSub": "{{name}} reçoit un message"
 		},
 		"fullscreen": "Plein écran",
 		"fullscreenExit": "Quitter le plein écran (Échap)",
@@ -7105,7 +7123,8 @@
 			"label": "Que montrer",
 			"hint": "Les types désélectionnés sont masqués dans le calendrier et dans la liste.",
 			"all": "Tout afficher",
-			"customised": "Certains types sont masqués."
+			"customised": "Certains types sont masqués.",
+			"blocker": "Plages bloquées et occupées"
 		},
 		"monthMenu": {
 			"label": "Saisir pour ce jour",
@@ -7165,29 +7184,36 @@
 			"close": "Fermer la saisie rapide",
 			"date": "Jour",
 			"duration": "Durée",
-			"freeHalf": "Prochaine demi-heure libre",
-			"freeHours": "Prochaine heure libre",
 			"gaps": {
 				"when": "jour et heure",
 				"kind": "type",
 				"who": "échange"
 			},
 			"halfHour": "30 minutes",
-			"hint": "Saisissez le jour et l’heure, choisissez le type.",
+			"hint": "Choisissez le type, indiquez le jour et le début, ou touchez un créneau libre.",
 			"hour": "1 heure",
 			"kind": "Type",
-			"minutes": "{{count}} minutes",
 			"missing": "Il manque : {{list}}",
 			"more": "Plus de détails …",
-			"placeholder": "p. ex. 14 h",
+			"placeholder": "Avec qui ? p. ex. « mutige_eule » ou « 14 h »",
 			"save": "Ajouter",
 			"slot": "Durée du créneau libre",
 			"time": "Début",
 			"title": "Saisie rapide",
-			"who": "Avec qui"
+			"who": "Avec qui",
+			"freeNext": "Prochains créneaux libres",
+			"lengths": {
+				"30": "30 min",
+				"45": "45 min",
+				"60": "1 h",
+				"90": "1 h 30",
+				"120": "2 h"
+			},
+			"ready": "{{noun}} avec {{name}}",
+			"outsideHours": "en dehors des heures de travail"
 		},
 		"search": {
-			"placeholder": "Rechercher des rendez-vous",
+			"placeholder": "Rechercher",
 			"clear": "Effacer la recherche",
 			"empty": "Aucun résultat.",
 			"results": "Résultats de recherche"
@@ -7201,11 +7227,15 @@
 			"switcherMenu": "sous forme de menu",
 			"switcherDigits": "sous forme de boutons",
 			"switcherHint": "Enregistré pour vous.",
-			"sync": "Connecter Outlook ou Google"
+			"sync": "Connecter Outlook ou Google",
+			"repeatBlocker": "Plage bloquée récurrente",
+			"switcherMenuSub": "Un bouton, les vues dans son menu",
+			"switcherDigitsSub": "Toutes les vues côte à côte"
 		},
 		"side": {
 			"resize": "Faire glisser pour élargir ou réduire la liste ; double-clic pour la replier ou la déplier, flèches haut et bas pour la faire défiler",
-			"label": "Rendez-vous : recherche et listes"
+			"label": "Rendez-vous : recherche et listes",
+			"now": "Maintenant"
 		},
 		"split": {
 			"empty": "Affichez les calendriers de collègues pour voir votre journée à côté.",
@@ -7249,7 +7279,8 @@
 			"summary": "Horaires {{hours}}",
 			"title": "Définir les horaires de travail",
 			"to": "Fin le {{day}}",
-			"tooMany": "Les horaires comptent au plus {{max}} plages par semaine ; cette modification n’a pas été enregistrée."
+			"tooMany": "Les horaires comptent au plus {{max}} plages par semaine ; cette modification n’a pas été enregistrée.",
+			"copyMonday": "Appliquer les horaires et la pause du lundi à tous les jours travaillés"
 		},
 		"grip": {
 			"weekOnly": "Enregistré en partie seulement : les horaires des {{weekdays}} ont changé, mais pas {{date}}.",
@@ -7353,6 +7384,15 @@
 			"keys": "Entrée change la hauteur ; les flèches ouvrent ou replient la liste. On peut aussi glisser.",
 			"open": "Ouvrir la liste"
 		},
-		"conversationsFailed": "Les conversations n’ont pas pu être chargées : les rendez-vous ne peuvent pas y être associés."
+		"conversationsFailed": "Les conversations n’ont pas pu être chargées : les rendez-vous ne peuvent pas y être associés.",
+		"nouns": {
+			"video": "Rendez-vous vidéo",
+			"phone": "Rendez-vous téléphonique",
+			"onsite": "Rendez-vous sur place",
+			"chat": "Rendez-vous par chat",
+			"group": "Rendez-vous de groupe",
+			"blocker": "Plage bloquée",
+			"busy": "Occupé"
+		}
 	}
 }

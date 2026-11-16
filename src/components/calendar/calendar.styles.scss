@@ -538,12 +538,13 @@ $cal-off-hatch: repeating-linear-gradient(
 	letter-spacing: 0;
 }
 
-// Entry menu: who it is with, then the header.
+// Entry menu (prototype v17): who it is with or the kind, then the header;
+// the kind as a tag and, for one's own appointment, "Sie und <Name>".
 .calendarMenu__head {
 	display: flex;
 	align-items: center;
-	gap: 8px;
-	padding-left: 12px;
+	gap: 10px;
+	padding-left: 8px;
 
 	.chatMenuDropdown__header {
 		flex: 1;
@@ -552,22 +553,85 @@ $cal-off-hatch: repeating-linear-gradient(
 	}
 }
 
-.calendarMenu__avatar {
+.calendarMenu__avatar,
+.calendarMenu__kdot {
 	display: inline-flex;
 	flex: none;
 	align-items: center;
 	justify-content: center;
-	width: 32px;
-	height: 32px;
+	width: 40px;
+	height: 40px;
 	border-radius: 50%;
+}
+
+.calendarMenu__avatar {
 	background: var(--m3-secondary-container, #dce3ec);
 	color: var(--m3-on-secondary-container, #1b1b1c);
-	font-size: 12px;
-	font-weight: 600;
+	font-size: 13px;
+	font-weight: 700;
+	letter-spacing: 0.02em;
+}
 
-	&--me {
-		background: var(--m3-primary-container, #ffdad5);
-		color: var(--m3-on-primary-container, #410001);
+.calendarMenu__kdot {
+	background: var(--m3-surface-container, #f0eded);
+	color: var(--cal-kind);
+
+	svg {
+		width: 20px;
+		height: 20px;
+	}
+}
+
+.calendarMenu__tagRow {
+	margin: 0;
+	padding: 0 8px 8px;
+}
+
+.calendarMenu__tag {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	padding: 2px 8px 2px 6px;
+	border-radius: 8px;
+	background: var(--m3-primary-container, #fde4e0);
+	color: var(--m3-primary, #a5000a);
+	font-size: 12.5px;
+	font-weight: 600;
+	letter-spacing: 0.01em;
+
+	svg {
+		width: 16px;
+		height: 16px;
+	}
+}
+
+.calendarMenu__who {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin: 0;
+	padding: 0 8px 8px;
+	color: var(--m3-on-surface-variant, #444748);
+	font-size: 12.5px;
+}
+
+.calendarMenu__stack {
+	display: flex;
+}
+
+.calendarMenu__mini {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 22px;
+	height: 22px;
+	border-radius: 50%;
+	box-shadow: 0 0 0 2px var(--m3-surface-container-lowest, #ffffff);
+	font-size: 9px;
+	font-weight: 700;
+
+	& + & {
+		margin-left: -6px;
 	}
 }
 
@@ -842,6 +906,70 @@ $cal-avatar-tones: (#2f5d5a, #7a0e2a, #4b4f7a, #6d3d63, #7a5a1e, #36576e);
 	}
 }
 
+// "Was anzeigen": a box on the left, the count on the right (prototype v17).
+.calendarMenu__checkItem {
+	align-items: center;
+}
+
+.calendarMenu__box {
+	display: inline-flex;
+	flex: none;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+	width: 20px;
+	height: 20px;
+	border: 2px solid var(--m3-outline, #747878);
+	border-radius: 4px;
+	color: var(--m3-on-primary, #ffffff);
+
+	svg {
+		width: 16px;
+		height: 16px;
+	}
+
+	[aria-checked='true'] > & {
+		border-color: var(--m3-primary, #a5000a);
+		background: var(--m3-primary, #a5000a);
+	}
+}
+
+.calendarMenu__checkItem .chatMenuDropdown__itemShortcut {
+	font-variant-numeric: tabular-nums;
+}
+
+// Slot menu, second step: "Mit wem?" and the conversations.
+.calendarMenu__search {
+	box-sizing: border-box;
+	width: 100%;
+	height: 40px;
+	margin: 0 0 6px;
+	padding: 0 12px;
+	border: 1px solid var(--m3-outline-variant, #c4c7c8);
+	border-radius: 12px;
+	background: var(--m3-surface-container-lowest, #ffffff);
+	color: var(--m3-on-surface, #1b1b1c);
+	font: inherit;
+	font-size: 14px;
+
+	&:focus-visible {
+		border-color: var(--m3-primary, #a5000a);
+
+		@include control-focus-ring(0);
+	}
+}
+
+.calendarMenu__people {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+}
+
+.calendarMenu__person {
+	align-items: center;
+	padding-block: 6px;
+}
+
 .calendarMenuForm {
 	display: flex;
 	flex-direction: column;
@@ -967,17 +1095,23 @@ $cal-avatar-tones: (#2f5d5a, #7a0e2a, #4b4f7a, #6d3d63, #7a5a1e, #36576e);
 	}
 }
 
+// No card of its own (prototype v17): the list lies on the grey page, as
+// in "Gespräche". The pink grip beside it is its scroll thumb.
 .calendarSide {
 	display: flex;
 	flex: none;
 	flex-direction: column;
-	gap: 16px;
+	gap: 14px;
 	box-sizing: border-box;
 	width: 320px;
-	padding: 16px 16px 20px;
-	border-radius: 24px;
-	background: var(--m3-surface-container-lowest, #ffffff);
+	padding: 0 2px 0 6px;
+	background: transparent;
 	overflow-y: auto;
+	scrollbar-width: none;
+
+	&::-webkit-scrollbar {
+		display: none;
+	}
 }
 
 .calendarSide__search {
@@ -1022,14 +1156,14 @@ $cal-avatar-tones: (#2f5d5a, #7a0e2a, #4b4f7a, #6d3d63, #7a5a1e, #36576e);
 	}
 }
 
-// Rail: who and when per appointment, the display filter on top.
+// Rail: who and when per appointment, the display filter on top, a small
+// "Jetzt" with the "+" under them.
 .calendarSide--rail {
 	align-items: center;
-	padding: 16px 8px;
+	padding: 0;
 
 	.calendarSide__title,
 	.calendarSide__muted,
-	.calendarSide__rowIcon,
 	.calendarSide__rowName,
 	.calendarSide__rowText,
 	.calendarSide__rowTime {
@@ -1046,28 +1180,47 @@ $cal-avatar-tones: (#2f5d5a, #7a0e2a, #4b4f7a, #6d3d63, #7a5a1e, #36576e);
 		gap: 3px;
 		width: 56px;
 		padding: 5px 0;
-		border-radius: 16px;
 	}
 
-	.calendarSide__quickRow {
-		justify-content: center;
+	.calendarSide__now {
+		flex-direction: column;
+		gap: 6px;
+
+		&::before,
+		&::after {
+			display: none;
+		}
+	}
+
+	.calendarSide__nowLabel {
+		padding: 3px 10px;
+		font-size: 12px;
+	}
+
+	.calendarSide__nowAdd {
+		margin: 0;
 	}
 }
 
-.calendarSide__railAvatar {
-	display: grid;
-	place-items: center;
-	width: 32px;
-	height: 32px;
-	border-radius: 50%;
-	background: var(--m3-surface-container-high, #ebe8e8);
-	color: var(--m3-on-surface, #1b1b1c);
-	font-size: 12px;
-	font-weight: 600;
+.calendarSide--compact,
+.calendarSide--rail {
+	.calendarSide__list {
+		gap: 6px;
+	}
+}
+
+.calendarSide--compact {
+	.calendarSide__rowName {
+		font-size: 14px;
+	}
+
+	.calendarSide__rowTime {
+		font-size: 12px;
+	}
 }
 
 .calendarSide__railClock {
-	color: var(--m3-on-surface-variant, #444748);
+	color: inherit;
 	font-size: 11px;
 	font-weight: 600;
 	font-variant-numeric: tabular-nums;
@@ -1077,8 +1230,95 @@ $cal-avatar-tones: (#2f5d5a, #7a0e2a, #4b4f7a, #6d3d63, #7a5a1e, #36576e);
 	flex: none;
 }
 
-.calendarSide__chip {
-	display: contents;
+// The kind chips (prototype v17): round white icon buttons; the chosen one
+// is dark and names the kind with the number still ahead.
+.calendarSide__kindChip {
+	position: relative;
+	display: inline-flex;
+	flex: none;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	box-sizing: border-box;
+	min-width: 46px;
+	height: 46px;
+	padding: 0 12px;
+	border: 0;
+	border-radius: 999px;
+	background: var(--m3-surface-container-lowest, #ffffff);
+	color: #2f3336;
+	font: inherit;
+	font-size: 14px;
+	cursor: pointer;
+
+	svg {
+		flex: none;
+		width: 22px;
+		height: 22px;
+		color: var(--cal-kind);
+	}
+
+	path {
+		fill: currentColor;
+	}
+
+	&:hover {
+		background: var(--m3-surface-container-low, #f6f3f3);
+	}
+
+	&:focus-visible {
+		@include control-focus-ring(1px);
+	}
+
+	&[aria-pressed='true'] {
+		padding: 0 14px 0 12px;
+		background: #410001;
+		color: #ffffff;
+
+		svg {
+			color: #ffffff;
+		}
+	}
+
+	// On the phone the chips sit on the white stage.
+	.calendarPage--compact & {
+		min-width: 40px;
+		height: 40px;
+		background: var(--m3-surface-container-low, #f6f3f3);
+	}
+
+	.calendarPage--compact &[aria-pressed='true'] {
+		background: #410001;
+	}
+}
+
+// Read out on every chip, shown on the chosen one only.
+.calendarSide__kindChipLabel {
+	font-weight: 500;
+	white-space: nowrap;
+
+	.calendarSide__kindChip:not([aria-pressed='true']) & {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip-path: inset(50%);
+		white-space: nowrap;
+	}
+}
+
+.calendarSide__kindChipCount {
+	display: grid;
+	place-items: center;
+	box-sizing: border-box;
+	min-width: 18px;
+	height: 18px;
+	padding: 0 5px;
+	border-radius: 9px;
+	background: #b0124f;
+	color: #ffffff;
+	font-size: 11px;
+	font-weight: 600;
 }
 
 .calendarSide__kindsAnchor {
@@ -1097,15 +1337,15 @@ $cal-avatar-tones: (#2f5d5a, #7a0e2a, #4b4f7a, #6d3d63, #7a5a1e, #36576e);
 }
 
 .calendarSide__title {
-	margin: 0;
+	margin: 2px 6px 4px;
 	color: var(--m3-on-surface-variant, #444748);
-	font-size: 14px;
-	font-weight: 500;
-	line-height: 20px;
+	font-size: 13px;
+	font-weight: 600;
+	line-height: 18px;
 }
 
 .calendarSide__muted {
-	margin: 0;
+	margin: 0 6px;
 	color: var(--m3-on-surface-variant, #444748);
 	font-size: 13px;
 	line-height: 18px;
@@ -1114,18 +1354,32 @@ $cal-avatar-tones: (#2f5d5a, #7a0e2a, #4b4f7a, #6d3d63, #7a5a1e, #36576e);
 .calendarSide__list {
 	display: flex;
 	flex-direction: column;
-	gap: 2px;
+	gap: 12px;
 	margin: 0;
 	padding: 0;
 	list-style: none;
 }
 
-// "Als Nächstes": the row opens the entry's actions, the speech bubble
+// "Als Nächstes": the card opens the entry's actions, the speech bubble
 // beside it goes straight to the conversation.
 .calendarSide__upcoming {
 	display: flex;
 	align-items: center;
-	gap: 2px;
+	gap: 4px;
+	min-width: 0;
+
+	> .calendarSide__row {
+		flex: 1;
+		min-width: 0;
+	}
+
+	.calendarSide--rail & {
+		justify-content: center;
+
+		> .calendarSide__row {
+			flex: none;
+		}
+	}
 }
 
 .calendarSide__chat {
@@ -1141,8 +1395,15 @@ $cal-avatar-tones: (#2f5d5a, #7a0e2a, #4b4f7a, #6d3d63, #7a5a1e, #36576e);
 	color: var(--m3-on-surface-variant, #444748);
 	cursor: pointer;
 
-	&:hover {
-		background: var(--oriso-menu-hover-surface, rgba(27, 27, 28, 0.08));
+	svg {
+		width: 20px;
+		height: 20px;
+	}
+
+	&:hover,
+	&:focus-visible {
+		background: var(--m3-surface-container-lowest, #ffffff);
+		color: var(--m3-primary, #a5000a);
 	}
 
 	&:focus-visible {
@@ -1150,43 +1411,106 @@ $cal-avatar-tones: (#2f5d5a, #7a0e2a, #4b4f7a, #6d3d63, #7a5a1e, #36576e);
 	}
 }
 
-// A compact row: tinted kind icon, name, short time.
+// A pill card (prototype v17): the shared list-entry pill in the grey card
+// tone with a white edge, the person's avatar, name and a short time.
 .calendarSide__row {
-	display: flex;
-	align-items: center;
-	gap: 8px;
-	box-sizing: border-box;
-	width: 100%;
-	min-height: 36px;
-	padding: 4px 10px;
-	border: none;
-	border-radius: 18px;
-	background: transparent;
-	color: var(--m3-on-surface, #1b1b1c);
-	font: inherit;
+	@include list-entry-pill;
+
+	gap: 10px;
+	padding: 5px 14px 5px 5px;
+	border-color: rgba(255, 255, 255, 0.7);
+	border-radius: 999px;
+	background: #f4f2f2;
 	font-size: 14px;
-	text-align: left;
-	cursor: pointer;
 
 	&:hover {
-		background: var(--oriso-menu-hover-surface, rgba(27, 27, 28, 0.08));
+		background: var(--m3-surface-container-lowest, #ffffff);
 	}
 
-	&:focus-visible {
-		@include control-focus-ring(1px);
+	// The next one within 15 minutes is filled (prototype v17).
+	&--soon {
+		border-color: var(--m3-primary, #a5000a);
+		background: var(--m3-primary, #a5000a);
+		color: #ffffff;
+
+		&:hover {
+			background: var(--m3-primary-hover, #820006);
+		}
+
+		.calendarSide__rowTime {
+			color: #ffe2de;
+		}
+
+		.calendarSide__kdot {
+			background: rgba(255, 255, 255, 0.18);
+			color: #ffffff;
+		}
+
+		.calendarSide__leadKind {
+			box-shadow: 0 0 0 1.5px var(--m3-primary, #a5000a);
+		}
 	}
 
-	&--proposal {
-		align-items: flex-start;
-		border: 1px dashed var(--cal-kind);
-		border-left: 4px solid var(--cal-kind);
-		border-radius: 12px;
+	// Requests: the same pill, dashed and on the lighter grey.
+	&--proposal,
+	&--received {
+		border: 1px dashed var(--m3-outline, #747878);
+		background: var(--m3-surface-container-low, #f6f3f3);
 	}
 }
 
-.calendarSide__rowIcon {
-	display: inline-flex;
+// Who it is with: the avatar in the person's tone (calendarAvatar.ts) with
+// a small kind badge, or the kind's icon in a white dot.
+.calendarSide__lead {
+	position: relative;
+	display: grid;
 	flex: none;
+}
+
+.calendarSide__avatar {
+	display: grid;
+	place-items: center;
+	width: 32px;
+	height: 32px;
+	border-radius: 50%;
+	background: var(--m3-surface-container-high, #eae7e8);
+	color: var(--m3-on-surface, #1b1b1c);
+	font-size: 11.5px;
+	font-weight: 600;
+	letter-spacing: 0.02em;
+}
+
+.calendarSide__leadKind {
+	position: absolute;
+	right: -4px;
+	bottom: -4px;
+	display: grid;
+	place-items: center;
+	width: 17px;
+	height: 17px;
+	border-radius: 50%;
+	background: var(--m3-surface-container-lowest, #ffffff);
+	box-shadow: 0 0 0 1.5px #f4f2f2;
+	color: var(--cal-kind);
+
+	svg {
+		width: 11px;
+		height: 11px;
+	}
+
+	path {
+		fill: currentColor;
+	}
+}
+
+.calendarSide__kdot {
+	display: grid;
+	flex: none;
+	place-items: center;
+	width: 32px;
+	height: 32px;
+	border-radius: 50%;
+	background: var(--m3-surface-container-lowest, #ffffff);
 	color: var(--cal-kind);
 
 	svg {
@@ -1201,66 +1525,108 @@ $cal-avatar-tones: (#2f5d5a, #7a0e2a, #4b4f7a, #6d3d63, #7a5a1e, #36576e);
 
 .calendarSide__rowText {
 	@include list-entry-pill-text;
+
+	flex: 1;
 }
 
 .calendarSide__rowName {
 	flex: 1;
 	min-width: 0;
 	overflow: hidden;
+	font-size: 15px;
+	font-weight: 500;
 	text-overflow: ellipsis;
 	white-space: nowrap;
 }
 
 .calendarSide__rowMeta {
+	overflow: hidden;
 	color: var(--m3-on-surface-variant, #444748);
 	font-size: 12px;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .calendarSide__rowTime {
 	flex: none;
+	margin-left: auto;
 	color: var(--m3-on-surface-variant, #444748);
-	font-size: 13px;
+	font-size: 12.5px;
 	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+}
+
+// Search results: kind icon, name and range, in the column or floating.
+.calendarSide__results {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.calendarSide__result {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	box-sizing: border-box;
+	width: 100%;
+	min-height: 44px;
+	padding: 4px 12px;
+	border: 0;
+	border-radius: 12px;
+	background: transparent;
+	color: var(--m3-on-surface, #1b1b1c);
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
+
+	.calendarSide__rowName {
+		font-size: 14px;
+	}
+
+	&:hover {
+		background: var(--m3-hover-layer, #f9eff0);
+	}
+
+	&:focus-visible {
+		@include control-focus-ring(1px);
+	}
+}
+
+.calendarSide__resultIcon {
+	display: inline-flex;
+	flex: none;
+	color: var(--m3-on-surface-variant, #444748);
+
+	svg {
+		width: 20px;
+		height: 20px;
+	}
+
+	path {
+		fill: currentColor;
+	}
 }
 
 .calendarSide__request {
 	display: flex;
 	flex-direction: column;
 	align-items: flex-end;
-	gap: 2px;
-}
+	gap: 4px;
 
-// A proposal waiting for one's own answer: who, from → to, and the two
-// answers in words (nothing by colour alone).
-.calendarSide__request--received {
-	align-items: stretch;
-	padding: 4px 4px 6px;
-	border: 1px solid var(--m3-outline-variant, #c4c7c8);
-	border-radius: 12px;
-	background: var(--m3-surface-container-low, #f6f3f3);
+	> .calendarSide__row {
+		align-self: stretch;
+	}
 
 	.calendarSide--rail & {
-		padding: 0;
-		border: 0;
-		background: transparent;
+		align-items: center;
+
+		> .calendarSide__row {
+			align-self: center;
+		}
 	}
-}
-
-.calendarSide__row--received {
-	align-items: flex-start;
-}
-
-.calendarSide__requestAvatar {
-	display: grid;
-	flex: none;
-	place-items: center;
-	width: 32px;
-	height: 32px;
-	border-radius: 50%;
-	background: var(--m3-surface-container-high, #ebe8e8);
-	color: var(--m3-on-surface, #1b1b1c);
-	font-size: 12px;
-	font-weight: 600;
 }
 
 .calendarSide__requestChange {
@@ -1268,6 +1634,8 @@ $cal-avatar-tones: (#2f5d5a, #7a0e2a, #4b4f7a, #6d3d63, #7a5a1e, #36576e);
 	white-space: normal;
 }
 
+// A proposal waiting for one's own answer: who, from → to, and the two
+// answers in words under the card (nothing by colour alone).
 .calendarSide__requestActions {
 	display: flex;
 	justify-content: flex-end;
@@ -1310,44 +1678,135 @@ $cal-avatar-tones: (#2f5d5a, #7a0e2a, #4b4f7a, #6d3d63, #7a5a1e, #36576e);
 	}
 }
 
-.calendarSide__hours {
+// "Jetzt" between what is next and quick entry (prototype v17): a pink
+// hairline with a pink pill; the "+" beside it opens quick entry where it
+// is folded away (phone sheet, narrow column).
+.calendarSide__now {
 	display: flex;
+	flex: none;
 	align-items: center;
-	justify-content: space-between;
-	gap: 8px;
-	margin-top: auto;
-	padding: 8px 10px;
-	border: none;
-	border-radius: 12px;
-	background: var(--m3-surface-container-low, #f6f3f3);
-	color: var(--m3-on-surface-variant, #444748);
-	font: inherit;
+
+	&::before,
+	&::after {
+		content: '';
+		flex: 1;
+		height: 1px;
+		background: var(--m3-primary-fixed-dim, #ffb4aa);
+	}
+}
+
+.calendarSide__nowLabel {
+	padding: 4px 16px;
+	border-radius: 999px;
+	background: var(--m3-primary-fixed-dim, #ffb4aa);
+	color: #410001;
 	font-size: 13px;
-	text-align: left;
+	font-weight: 600;
+	line-height: 18px;
+}
+
+.calendarSide__nowAdd {
+	display: inline-grid;
+	flex: none;
+	place-items: center;
+	width: 32px;
+	height: 32px;
+	margin: 0 8px;
+	padding: 0;
+	border: none;
+	border-radius: 50%;
+	background: var(--m3-primary, #a5000a);
+	color: var(--m3-on-primary, #ffffff);
 	cursor: pointer;
+
+	svg {
+		width: 20px;
+		height: 20px;
+		transition: transform 0.2s ease;
+	}
+
+	&[aria-expanded='true'] svg {
+		transform: rotate(45deg);
+	}
+
+	&:focus-visible {
+		@include control-focus-ring(2px);
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		svg {
+			transition: none;
+		}
+	}
+}
+
+// The working hours: plain text on the grey page with a clock and the
+// change in words (prototype v17).
+.calendarSide__work {
+	display: flex;
+	flex: none;
+	align-items: center;
+	gap: 6px;
+	margin: auto 0 0;
+	padding: 0 6px;
+	color: var(--m3-on-surface-variant, #444748);
+	font-size: 12.5px;
+	line-height: 18px;
+}
+
+.calendarSide__workIcon {
+	flex: none;
+	width: 16px !important;
+	height: 16px !important;
+}
+
+.calendarSide__workText {
+	min-width: 0;
+}
+
+.calendarSide__workButton {
+	flex: none;
+	padding: 2px 4px;
+	border: 0;
+	border-radius: 6px;
+	background: none;
+	color: var(--m3-primary, #a5000a);
+	font: inherit;
+	font-weight: 600;
+	cursor: pointer;
+
+	&:hover {
+		background: var(--m3-hover-layer, #f9eff0);
+	}
 
 	&:focus-visible {
 		@include control-focus-ring(0);
 	}
 }
 
-.calendarSide__hoursAction {
-	flex: none;
-	color: var(--m3-primary, #a5000a);
-	font-weight: 500;
-}
-
 // --- Quick entry ---
 
+// Its own white box on the grey list, no heading (prototype v17).
 .calendarQuick {
-	// A little more air above and below the box (Frank, prototype v15).
-	padding-block: 12px 10px;
+	flex: none;
+	padding: 18px 12px 16px;
+	border-radius: 22px;
+	background: var(--m3-surface-container-lowest, #ffffff);
 }
 
 .calendarQuick__form {
 	display: flex;
 	flex-direction: column;
-	gap: 8px;
+	gap: 12px;
+}
+
+// Until it is used: no status, no people, no buttons (prototype v17).
+.calendarQuick--idle {
+	.calendarQuick__status,
+	.calendarQuick__who,
+	.calendarQuick__actions {
+		display: none;
+	}
 }
 
 // Tag on its own row, then Beginn and Dauer side by side, right under the
@@ -1357,7 +1816,7 @@ $cal-avatar-tones: (#2f5d5a, #7a0e2a, #4b4f7a, #6d3d63, #7a5a1e, #36576e);
 	display: grid;
 	grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 	gap: 16px 8px;
-	padding-top: 8px;
+	padding-top: 6px;
 
 	> .calendarQuick__day {
 		grid-column: 1 / -1;
@@ -1366,14 +1825,55 @@ $cal-avatar-tones: (#2f5d5a, #7a0e2a, #4b4f7a, #6d3d63, #7a5a1e, #36576e);
 	.MuiFormControl-root {
 		margin: 0;
 	}
+
+	// 44 px as the line above (prototype v17), here only: elsewhere the
+	// shared date, time and select fields keep their 56 px.
+	.MuiFormControl-root .MuiOutlinedInput-root {
+		min-height: 44px;
+		font-size: 14px;
+		line-height: 20px;
+		letter-spacing: 0.25px;
+	}
+
+	.MuiFormControl-root .MuiInputBase-input,
+	.MuiFormControl-root .MuiSelect-select {
+		height: 20px;
+		min-height: 20px;
+		padding-top: 12px;
+		padding-bottom: 12px;
+		line-height: 20px;
+	}
+
+	.MuiFormControl-root .MuiInputLabel-root:not(.MuiInputLabel-shrink) {
+		font-size: 14px;
+		line-height: 20px;
+		transform: translate(12px, 12px) scale(1);
+	}
+
+	.MuiFormControl-root
+		.MuiOutlinedInput-root:not(.Mui-focused, .Mui-error)
+		fieldset {
+		border-color: var(--m3-outline, #747878);
+	}
 }
 
 .calendarQuick__kinds,
-.calendarQuick__who,
-.calendarQuick__freeRow {
+.calendarQuick__who {
 	display: flex;
 	flex-wrap: wrap;
+	gap: 4px;
+}
+
+.calendarQuick__freeRow {
+	display: flex;
+	flex-wrap: nowrap;
 	gap: 6px;
+	overflow-x: auto;
+	scrollbar-width: none;
+
+	&::-webkit-scrollbar {
+		display: none;
+	}
 }
 
 // This week's entries are not in: no free hours are offered, so none that
@@ -1402,24 +1902,27 @@ $cal-avatar-tones: (#2f5d5a, #7a0e2a, #4b4f7a, #6d3d63, #7a5a1e, #36576e);
 	}
 }
 
+// Kind and person chips: white pills with a thin line; the chosen kind is
+// dark with white text (prototype v17).
 .calendarQuick__kind,
 .calendarQuick__person {
 	display: inline-flex;
 	align-items: center;
 	gap: 4px;
-	height: 28px;
-	padding: 0 10px 0 8px;
+	box-sizing: border-box;
+	padding: 4px 9px 4px 7px;
 	border: 1px solid var(--m3-outline-variant, #c4c7c8);
-	border-radius: 14px;
-	background: transparent;
+	border-radius: 999px;
+	background: var(--m3-surface-container-lowest, #ffffff);
 	color: var(--m3-on-surface, #1b1b1c);
 	font: inherit;
-	font-size: 12px;
+	font-size: 12.5px;
+	line-height: 18px;
 	cursor: pointer;
 
 	svg {
-		width: 14px;
-		height: 14px;
+		width: 16px;
+		height: 16px;
 		color: var(--cal-kind);
 	}
 
@@ -1427,54 +1930,76 @@ $cal-avatar-tones: (#2f5d5a, #7a0e2a, #4b4f7a, #6d3d63, #7a5a1e, #36576e);
 		fill: currentColor;
 	}
 
-	&[aria-pressed='true'] {
-		border-color: var(--cal-kind);
-		background: color-mix(in srgb, var(--cal-kind) 12%, transparent);
-	}
-
 	&:focus-visible {
 		@include control-focus-ring(0);
 	}
+}
+
+.calendarQuick__kind[aria-pressed='true'] {
+	border-color: #410001;
+	background: #410001;
+	color: #ffffff;
+
+	svg {
+		color: #ffffff;
+	}
+}
+
+.calendarQuick__person {
+	gap: 6px;
+	padding: 3px 10px 3px 3px;
+
+	&:hover {
+		background: var(--m3-hover-layer, #f9eff0);
+	}
+}
+
+.calendarQuick__personAvatar {
+	display: grid;
+	flex: none;
+	place-items: center;
+	width: 28px;
+	height: 28px;
+	border-radius: 50%;
+	font-size: 10.5px;
+	font-weight: 600;
 }
 
 .calendarQuick__free {
 	display: flex;
 	flex-direction: column;
-	gap: 4px;
+	gap: 6px;
 }
 
+// "1 Std | 30 Min": a small filled segmented button.
 .calendarQuick__slot {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 4px;
+	display: inline-flex;
+	flex: none;
+	padding: 2px;
+	border-radius: 999px;
+	background: var(--m3-surface-container, #f0edee);
 }
 
 .calendarQuick__slotButton {
-	height: 28px;
-	padding: 0 10px;
-	border: 1px solid var(--m3-outline-variant, #c4c7c8);
-	border-radius: 14px;
+	height: 24px;
+	padding: 0 9px;
+	border: 0;
+	border-radius: 999px;
 	background: transparent;
 	color: var(--m3-on-surface-variant, #444748);
 	font: inherit;
 	font-size: 12px;
+	font-weight: 600;
 	cursor: pointer;
 
 	&[aria-pressed='true'] {
-		border-color: transparent;
-		background: var(--m3-secondary-container, #dce3ec);
-		color: var(--m3-on-secondary-container, #1b1b1c);
+		background: #410001;
+		color: #ffffff;
 	}
 
 	&:focus-visible {
 		@include control-focus-ring(0);
 	}
-}
-
-.calendarQuick__slotButton {
-	height: 24px;
-	padding: 0 8px;
-	font-size: 11px;
 }
 
 .calendarQuick__freeHead {
@@ -1487,21 +2012,32 @@ $cal-avatar-tones: (#2f5d5a, #7a0e2a, #4b4f7a, #6d3d63, #7a5a1e, #36576e);
 .calendarQuick__freeLabel {
 	color: var(--m3-on-surface-variant, #444748);
 	font-size: 12px;
+	font-weight: 600;
 }
 
 // Free time is the light secondary blue (Frank, 2026-11-14: not green),
-// here and in the side-by-side view.
+// here and in the side-by-side view, with a clock (prototype v17).
 .calendarQuick__freePill {
-	height: 28px;
-	padding: 0 12px;
+	display: inline-flex;
+	flex: none;
+	align-items: center;
+	gap: 6px;
+	padding: 4px 11px;
 	border: 1px solid var(--m3-secondary, #4c555f);
-	border-radius: 14px;
+	border-radius: 999px;
 	background: var(--m3-secondary-fixed, #dae3f0);
 	color: var(--m3-secondary, #4c555f);
 	font: inherit;
-	font-size: 12px;
-	font-weight: 600;
+	font-size: 12.5px;
+	font-weight: 500;
+	font-variant-numeric: tabular-nums;
+	line-height: 18px;
 	cursor: pointer;
+
+	svg {
+		width: 16px;
+		height: 16px;
+	}
 
 	&:hover {
 		background: var(--m3-secondary-fixed-dim, #bec7d4);
@@ -1513,10 +2049,34 @@ $cal-avatar-tones: (#2f5d5a, #7a0e2a, #4b4f7a, #6d3d63, #7a5a1e, #36576e);
 }
 
 .calendarQuick__status {
+	display: flex;
+	align-items: flex-start;
+	gap: 6px;
+	min-height: 20px;
 	margin: 0;
 	color: var(--m3-on-surface-variant, #444748);
-	font-size: 12px;
-	line-height: 16px;
+	font-size: 13px;
+	line-height: 1.4;
+
+	strong {
+		color: var(--m3-on-surface, #1b1b1c);
+		font-weight: 600;
+	}
+
+	svg {
+		flex: none;
+		width: 16px;
+		height: 16px;
+		margin-top: 1px;
+	}
+
+	path {
+		fill: currentColor;
+	}
+
+	&--ready {
+		color: var(--m3-on-surface, #1b1b1c);
+	}
 }
 
 .calendarQuick__actions {
@@ -1525,25 +2085,45 @@ $cal-avatar-tones: (#2f5d5a, #7a0e2a, #4b4f7a, #6d3d63, #7a5a1e, #36576e);
 	gap: 6px;
 }
 
+.calendarQuick__more,
 .calendarQuick__save {
-	height: 32px;
-	padding: 0 16px;
+	padding: 9px 18px;
 	border: none;
-	border-radius: 16px;
-	background: var(--m3-primary, #a5000a);
-	color: var(--m3-on-primary, #ffffff);
+	border-radius: 999px;
 	font: inherit;
-	font-size: 13px;
-	font-weight: 500;
+	font-size: 14px;
+	font-weight: 600;
+	line-height: 20px;
+	white-space: nowrap;
 	cursor: pointer;
-
-	&:disabled {
-		opacity: 0.38;
-		cursor: default;
-	}
 
 	&:focus-visible {
 		@include control-focus-ring(2px);
+	}
+}
+
+.calendarQuick__more {
+	padding: 9px 12px;
+	background: transparent;
+	color: var(--m3-primary, #a5000a);
+
+	&:hover {
+		background: var(--m3-hover-layer, #f9eff0);
+	}
+}
+
+.calendarQuick__save {
+	background: var(--m3-primary, #a5000a);
+	color: var(--m3-on-primary, #ffffff);
+
+	&:hover {
+		background: var(--m3-primary-hover, #820006);
+	}
+
+	&:disabled {
+		background: var(--m3-surface-container-highest, #e4e2e2);
+		color: var(--m3-outline, #747878);
+		cursor: default;
 	}
 }
 
@@ -1801,7 +2381,9 @@ $cal-new-pill-hover: #4b4f51;
 	height: 46%;
 	padding: 0 12px 12px;
 	border-radius: 24px 24px 0 0;
-	background: var(--m3-surface-container-lowest, #ffffff);
+
+	// The page grey, so quick entry's white box stands out (prototype v17).
+	background: var(--m3-surface-container-high, #eae7e8);
 	box-shadow: 0 -6px 18px rgba(26, 28, 30, 0.16);
 	overflow-y: auto;
 	overscroll-behavior: contain;
@@ -1844,7 +2426,7 @@ $cal-new-pill-hover: #4b4f51;
 	margin: 0 -12px;
 	padding: 10px 0 8px;
 	border: none;
-	background: var(--m3-surface-container-lowest, #ffffff);
+	background: var(--m3-surface-container-high, #eae7e8);
 	cursor: grab;
 	touch-action: none;
 
@@ -1872,46 +2454,6 @@ $cal-new-pill-hover: #4b4f51;
 	border-radius: 0;
 	background: transparent;
 	overflow: visible;
-}
-
-// Sheet: quick entry folds behind a "+" (Frank, 2026-11-14).
-.calendarSide__quickRow {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: 8px;
-}
-
-.calendarSide__quickToggle {
-	display: inline-grid;
-	flex: none;
-	place-items: center;
-	width: 36px;
-	height: 36px;
-	padding: 0;
-	border: none;
-	border-radius: 50%;
-	background: var(--m3-primary, #a5000a);
-	color: var(--m3-on-primary, #ffffff);
-	cursor: pointer;
-
-	svg {
-		transition: transform 0.2s ease;
-	}
-
-	&[aria-expanded='true'] svg {
-		transform: rotate(45deg);
-	}
-
-	&:focus-visible {
-		@include control-focus-ring(2px);
-	}
-
-	@media (prefers-reduced-motion: reduce) {
-		svg {
-			transition: none;
-		}
-	}
 }
 
 @keyframes calendarQuickSlideDown {
@@ -2872,6 +3414,101 @@ $cal-new-pill-hover: #4b4f51;
 	line-height: 18px;
 }
 
+// "Neuer Eintrag": the tabs Termin | Sperrzeit above the form (prototype
+// v17), a filled segmented button.
+.calendarNewEntry {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.calendarNewEntry__tabs {
+	display: inline-flex;
+	align-self: flex-start;
+	gap: 2px;
+	padding: 4px;
+	border-radius: 999px;
+	background: var(--m3-surface-container, #f0edee);
+}
+
+.calendarNewEntry__tab {
+	height: 36px;
+	padding: 0 16px;
+	border: 0;
+	border-radius: 999px;
+	background: transparent;
+	color: var(--m3-on-surface-variant, #444748);
+	font: inherit;
+	font-size: 13px;
+	font-weight: 600;
+	cursor: pointer;
+
+	&:hover {
+		color: var(--m3-on-surface, #1b1b1c);
+	}
+
+	&[aria-pressed='true'] {
+		background: #410001;
+		color: #ffffff;
+	}
+
+	&:focus-visible {
+		@include control-focus-ring(0);
+	}
+}
+
+// Under the blocker form: the same times every week are working hours.
+.calendarDialog__work {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px;
+	margin: 0;
+	color: var(--m3-on-surface-variant, #444748);
+	font-size: 12.5px;
+	line-height: 18px;
+}
+
+.calendarDialog__workIcon {
+	flex: none;
+	width: 16px !important;
+	height: 16px !important;
+}
+
+.calendarDialog__workButton,
+.calendarHours__copy {
+	padding: 2px 4px;
+	border: 0;
+	border-radius: 6px;
+	background: none;
+	color: var(--m3-primary, #a5000a);
+	font: inherit;
+	font-weight: 600;
+	cursor: pointer;
+
+	&:hover {
+		background: var(--m3-hover-layer, #f9eff0);
+	}
+
+	&:focus-visible {
+		@include control-focus-ring(0);
+	}
+}
+
+// "Vom Montag übernehmen" under the days (prototype v17).
+.calendarHours__copy {
+	align-self: flex-start;
+	margin: 2px 0 4px;
+	padding: 6px 8px;
+	font-size: 13px;
+	text-align: left;
+
+	&:disabled {
+		color: var(--m3-outline, #747878);
+		cursor: default;
+	}
+}
+
 .calendarDialog__error {
 	margin: 0;
 	color: var(--m3-error, #ba1a1a);
@@ -2959,9 +3596,9 @@ $cal-new-pill-hover: #4b4f51;
 	line-height: 16px;
 }
 
-// In the side list the row is not filled, so the cue takes the accent.
+// In the side list it sits on the filled card (prototype v17).
 .calendarSide__row .calendarSoon {
 	flex: none;
-	color: var(--m3-primary, #a5000a);
+	color: inherit;
 	font-size: 12px;
 }

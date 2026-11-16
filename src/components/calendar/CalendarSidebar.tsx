@@ -1,9 +1,11 @@
 /**
  * The left column of "Meine Termine", built like the one of "Gespräche"
- * (Frank's prototype, 2026-11-14): search with the display filter on its
- * left, the kind chips, open requests, "Als Nächstes", quick entry and the
- * working hours. On a phone the same column fills the bottom sheet; the
- * kind chips are then in the stage and quick entry folds behind a "+".
+ * (Frank's prototype v17): it lies on the grey page, with search and the
+ * display filter on its left, five round kind chips, open requests, "Als
+ * Nächstes" as pill cards, a pink "Jetzt", quick entry in its own white box
+ * and the working hours. On a phone the same column fills the bottom sheet;
+ * the kind chips are then in the stage and quick entry folds behind the "+"
+ * beside "Jetzt".
  */
 import * as React from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -12,9 +14,9 @@ import { Popper, TextField } from '@mui/material';
 import dayjs from 'dayjs';
 import AddIcon from '@mui/icons-material/Add';
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
+import ScheduleIcon from '@mui/icons-material/Schedule';
 import { ListSearchField } from '../listSearchField/ListSearchField';
 import { FilterChipRow } from '../displayFilter/FilterChipRow';
-import { FilterChip } from '../displayFilter/FilterChip';
 import { DisplayFilterButton } from '../displayFilter/DisplayFilterButton';
 import { OrisoDatePicker } from '../form/OrisoDatePicker';
 import { OrisoTimePicker } from '../form/OrisoTimePicker';
@@ -28,9 +30,7 @@ import {
 	type Colleague
 } from './calendarModel';
 import {
-	CALENDAR_FACETS,
 	CalendarEntryGlyph,
-	FACET_ICON_COMPONENT,
 	FacetIcon,
 	SoonBadge,
 	facetOf,
@@ -52,8 +52,13 @@ import {
 	type QuickKind
 } from './calendarQuickEntry';
 import { useShortTime } from './calendarShortTime';
-import type { WorkingHours, WorkingPlan } from './calendarWorkingHours';
+import {
+	isWithinWorkingHours,
+	type WorkingHours,
+	type WorkingPlan
+} from './calendarWorkingHours';
 import { CalendarEntryPeek, initialsOf } from './CalendarEntryPeek';
+import { avatarToneClass } from './calendarAvatar';
 import { calendarLocale } from './calendarLocale';
 import type { CalendarListMode } from './calendarPreferences';
 import { useEntryLabel, useRangeFormat } from './useEntryLabel';
@@ -65,6 +70,8 @@ const QUICK_KINDS: QuickKind[] = [
 	'chat',
 	'blocker'
 ];
+/** The round kind chips: one kind at a time (group dates: "Was anzeigen"). */
+const KIND_CHIPS: CalendarEntryFacet[] = QUICK_KINDS;
 const MAX_UPCOMING = 5;
 const MAX_SEARCH_RESULTS = 8;
 
@@ -126,6 +133,8 @@ export interface CalendarSidebarProps {
 	onAcceptRequest?: (proposal: MoveProposal) => void;
 	onDeclineRequest?: (proposal: MoveProposal, entry: CalendarEntry) => void;
 	onOpenEntry: (entry: CalendarEntry, anchor: HTMLElement) => void;
+	/** A search result: move the calendar to its day and time. */
+	onShowEntry: (entry: CalendarEntry) => void;
 	/**
 	 * "Zum Chat mit …" beside an upcoming appointment that has a
 	 * conversation (Frank, prototype v15); without it there is no button.
@@ -193,6 +202,7 @@ export const CalendarSidebar = ({
 	onAcceptRequest,
 	onDeclineRequest,
 	onOpenEntry,
+	onShowEntry,
 	onOpenChat,
 	shownColleagues,
 	onCreate,
@@ -248,17 +258,14 @@ export const CalendarSidebar = ({
 			onOpen={onOpenKinds}
 		/>
 	);
-	/** The rail: who (initials) and when (start time), nothing else. */
-	const railFace = (who: string, start: Date | string) => (
-		<>
-			<span className="calendarSide__railAvatar" aria-hidden="true">
-				{initialsOf(who)}
-			</span>
+	/** The rail shows who (the lead) and the start time, nothing else. */
+	const railClock = (start: Date | string) =>
+		rail && (
 			<span className="calendarSide__railClock" aria-hidden="true">
 				{clock.format(new Date(start))}
 			</span>
-		</>
-	);
+		);
+	const quick = consultant && !!onCreate;
 
 	return (
 		<aside
@@ -285,7 +292,7 @@ export const CalendarSidebar = ({
 							entries={entries}
 							colleagues={colleagues}
 							shownColleagues={shownColleagues}
-							onOpenEntry={onOpenEntry}
+							onShowEntry={onShowEntry}
 							leading={kindsButton}
 						/>
 					)}
@@ -296,7 +303,6 @@ export const CalendarSidebar = ({
 					now={now}
 					entries={entries}
 					onlyFacets={onlyFacets}
-					hiddenFacets={hiddenFacets}
 					onToggleFacet={onToggleFacet}
 					onHighlightFacet={onHighlightFacet}
 					className="calendarSide__chips"
@@ -348,29 +354,28 @@ export const CalendarSidebar = ({
 											)
 										}
 									>
-										{rail ? (
-											railFace(name, proposal.start)
-										) : (
+										<span
+											className="calendarSide__lead"
+											aria-hidden="true"
+										>
 											<span
-												className="calendarSide__requestAvatar"
-												aria-hidden="true"
+												className={`calendarSide__avatar ${avatarToneClass(name)}`}
 											>
 												{initialsOf(name)}
 											</span>
-										)}
-										{!rail && (
-											<span className="calendarSide__rowText">
-												<span className="calendarSide__rowName">
-													{name}
-												</span>
-												<span className="calendarSide__rowMeta calendarSide__requestChange">
-													{t(
-														'calendar.proposal.change',
-														change
-													)}
-												</span>
+										</span>
+										{railClock(proposal.start)}
+										<span className="calendarSide__rowText">
+											<span className="calendarSide__rowName">
+												{name}
 											</span>
-										)}
+											<span className="calendarSide__rowMeta calendarSide__requestChange">
+												{t(
+													'calendar.proposal.change',
+													change
+												)}
+											</span>
+										</span>
 									</button>
 									{!rail &&
 										(onAcceptRequest ||
@@ -448,17 +453,8 @@ export const CalendarSidebar = ({
 										)
 									}
 								>
-									{rail &&
-										railFace(
-											label(entry, true),
-											proposal.start
-										)}
-									<span className="calendarSide__rowIcon">
-										<CalendarEntryGlyph
-											entry={entry}
-											colleague
-										/>
-									</span>
+									<CardLead entry={entry} />
+									{railClock(proposal.start)}
 									<span className="calendarSide__rowText">
 										<span className="calendarSide__rowName">
 											{t('calendar.proposal.title', {
@@ -555,11 +551,8 @@ export const CalendarSidebar = ({
 										}
 										data-cy={`calendar-upcoming-${entry.id}`}
 									>
-										{rail &&
-											railFace(label(entry), entry.start)}
-										<span className="calendarSide__rowIcon">
-											<CalendarEntryGlyph entry={entry} />
-										</span>
+										<CardLead entry={entry} />
+										{railClock(entry.start)}
 										<span className="calendarSide__rowName">
 											{label(entry)}
 										</span>
@@ -583,7 +576,9 @@ export const CalendarSidebar = ({
 												className="calendarSide__chat"
 												aria-label={t(
 													'calendar.upcomingChat',
-													{ name: label(entry) }
+													{
+														name: label(entry)
+													}
 												)}
 												title={t(
 													'calendar.upcomingChat',
@@ -621,47 +616,47 @@ export const CalendarSidebar = ({
 				</section>
 			)}
 
-			{consultant && onCreate && sheet && (
-				<div className="calendarSide__quickRow">
-					<span className="calendarSide__title">
-						{t('calendar.quick.title')}
+			{/* "Jetzt" between what is next and what comes in (prototype
+			    v17); in the sheet and the narrow column the "+" beside it
+			    opens quick entry. */}
+			{(!sheet || quick) && (
+				<div className="calendarSide__now" data-cy="calendar-now">
+					<span className="calendarSide__nowLabel" aria-hidden="true">
+						{t('calendar.side.now')}
 					</span>
-					<button
-						type="button"
-						className="calendarSide__quickToggle"
-						aria-expanded={quickOpen}
-						aria-controls="calendar-quick-panel"
-						aria-label={
-							quickOpen
-								? t('calendar.quick.close')
-								: t('calendar.quick.title')
-						}
-						onClick={onQuickToggle}
-						data-cy="calendar-quick-toggle"
-					>
-						<AddIcon fontSize="small" />
-					</button>
-				</div>
-			)}
-			{consultant && onCreate && narrow && onWiden && (
-				<div className="calendarSide__quickRow">
-					<span className="calendarSide__title">
-						{t('calendar.quick.title')}
-					</span>
-					<button
-						type="button"
-						className="calendarSide__quickToggle"
-						aria-label={t('calendar.quick.title')}
-						onClick={onWiden}
-						data-cy="calendar-quick-widen"
-					>
-						<AddIcon fontSize="small" />
-					</button>
+					{quick && sheet && (
+						<button
+							type="button"
+							className="calendarSide__nowAdd"
+							aria-expanded={quickOpen}
+							aria-controls="calendar-quick-panel"
+							aria-label={
+								quickOpen
+									? t('calendar.quick.close')
+									: t('calendar.quick.title')
+							}
+							onClick={onQuickToggle}
+							data-cy="calendar-quick-toggle"
+						>
+							<AddIcon />
+						</button>
+					)}
+					{quick && narrow && onWiden && (
+						<button
+							type="button"
+							className="calendarSide__nowAdd"
+							aria-label={t('calendar.quick.title')}
+							onClick={onWiden}
+							data-cy="calendar-quick-widen"
+						>
+							<AddIcon />
+						</button>
+					)}
 				</div>
 			)}
 			{/* Folded on the phone or in the narrow column it stays mounted,
 			    so the draft survives. */}
-			{consultant && onCreate && (
+			{quick && (
 				<div
 					id="calendar-quick-panel"
 					className="calendarSide__quick"
@@ -679,32 +674,66 @@ export const CalendarSidebar = ({
 						onMoreDetails={onMoreDetails}
 						autoFocus={sheet && quickOpen}
 						focusSignal={quickFocus}
-						hideTitle={sheet}
 					/>
 				</div>
 			)}
 
-			{/* On the phone and the tablet the hours live in ⋮. */}
+			{/* On the phone and the tablet the hours live in ⋮. Plain text on
+			    the grey page with a clock and "Ändern" (prototype v17). */}
 			{consultant && onWorkingHours && !narrow && !sheet && (
-				<button
-					type="button"
-					className="calendarSide__hours"
-					onClick={onWorkingHours}
-					data-cy="calendar-working-hours"
-				>
-					{workingHoursSummary
-						? t('calendar.workingHours.summary', {
-								hours: workingHoursSummary
-							})
-						: t('calendar.workingHours.none')}
-					<span className="calendarSide__hoursAction">
+				<p className="calendarSide__work">
+					<ScheduleIcon
+						className="calendarSide__workIcon"
+						aria-hidden
+					/>
+					<span className="calendarSide__workText">
+						{workingHoursSummary
+							? t('calendar.workingHours.summary', {
+									hours: workingHoursSummary
+								})
+							: t('calendar.workingHours.none')}
+					</span>
+					<button
+						type="button"
+						className="calendarSide__workButton"
+						onClick={onWorkingHours}
+						data-cy="calendar-working-hours"
+					>
 						{workingHoursSummary
 							? t('calendar.workingHours.change')
 							: t('calendar.workingHours.set')}
-					</span>
-				</button>
+					</button>
+				</p>
 			)}
 		</aside>
+	);
+};
+
+/**
+ * Who an entry is with (prototype v17): the advice seeker's avatar in their
+ * tone with a small kind badge, or the kind's icon in a white dot when there
+ * is no one to show (group dates, blocked time, a colleague's entry without
+ * a name).
+ */
+const CardLead = ({ entry }: { entry: CalendarEntry }) => {
+	const facet = facetOf(entry);
+	if (entry.type === 'appointment' && entry.title)
+		return (
+			<span className="calendarSide__lead" aria-hidden="true">
+				<span
+					className={`calendarSide__avatar ${avatarToneClass(entry.title)}`}
+				>
+					{initialsOf(entry.title)}
+				</span>
+				<span className="calendarSide__leadKind">
+					<FacetIcon facet={facet} />
+				</span>
+			</span>
+		);
+	return (
+		<span className="calendarSide__kdot" aria-hidden="true">
+			<FacetIcon facet={facet} />
+		</span>
 	);
 };
 
@@ -744,7 +773,8 @@ export interface CalendarSearchProps {
 	colleagues: Colleague[];
 	/** Colleagues shown: search finds their entries too. */
 	shownColleagues: string[];
-	onOpenEntry: (entry: CalendarEntry, anchor: HTMLElement) => void;
+	/** A result was picked: move the calendar to its day and time. */
+	onShowEntry: (entry: CalendarEntry) => void;
 	/** At the left of the field (the display filter in the column). */
 	leading?: React.ReactNode;
 	/** The results float over what is below (top of the calendar). */
@@ -754,14 +784,15 @@ export interface CalendarSearchProps {
 /**
  * Search in one's own and the shown colleagues' entries: in the left
  * column on a wide screen, at the very top of the calendar on the phone
- * and the tablet.
+ * and the tablet. A result moves the calendar to that day and time
+ * (prototype v17); the entry's actions are one click on it there.
  */
 export const CalendarSearch = ({
 	ownerId,
 	entries,
 	colleagues,
 	shownColleagues,
-	onOpenEntry,
+	onShowEntry,
 	leading,
 	floating = false
 }: CalendarSearchProps) => {
@@ -769,6 +800,8 @@ export const CalendarSearch = ({
 	const label = useEntryLabel();
 	const format = useRangeFormat();
 	const [query, setQuery] = useState('');
+	/** The results close once one is picked; typing opens them again. */
+	const [picked, setPicked] = useState(false);
 	const colleagueById = useMemo(
 		() => Object.fromEntries(colleagues.map((c) => [c.id, c])),
 		[colleagues]
@@ -804,12 +837,15 @@ export const CalendarSearch = ({
 			<ListSearchField
 				leading={leading}
 				value={query}
-				onChange={setQuery}
+				onChange={(value) => {
+					setQuery(value);
+					setPicked(false);
+				}}
 				placeholder={t('calendar.search.placeholder')}
 				clearLabel={t('calendar.search.clear')}
 				className="calendarSide__search"
 			/>
-			{query.trim() && (
+			{query.trim() && !picked && (
 				<section
 					className={`calendarSide__section${floating ? ' calendarSearch__results' : ''}`}
 					aria-label={t('calendar.search.results')}
@@ -819,17 +855,19 @@ export const CalendarSearch = ({
 							{t('calendar.search.empty')}
 						</p>
 					) : (
-						<ul className="calendarSide__list">
+						<ul className="calendarSide__results">
 							{results.map((entry) => (
 								<li key={entry.id}>
 									<button
 										type="button"
-										className={`calendarSide__row calendarSide__row--k-${facetOf(entry)}`}
-										onClick={(e) =>
-											onOpenEntry(entry, e.currentTarget)
-										}
+										className="calendarSide__result"
+										onClick={() => {
+											setPicked(true);
+											onShowEntry(entry);
+										}}
+										data-cy={`calendar-search-${entry.id}`}
 									>
-										<span className="calendarSide__rowIcon">
+										<span className="calendarSide__resultIcon">
 											<CalendarEntryGlyph
 												entry={entry}
 												colleague={
@@ -837,14 +875,16 @@ export const CalendarSearch = ({
 												}
 											/>
 										</span>
-										<span className="calendarSide__rowName">
-											{label(
-												entry,
-												entry.ownerId !== ownerId
-											)}
-										</span>
-										<span className="calendarSide__rowTime">
-											{format(entry.start)}
+										<span className="calendarSide__rowText">
+											<span className="calendarSide__rowName">
+												{label(
+													entry,
+													entry.ownerId !== ownerId
+												)}
+											</span>
+											<span className="calendarSide__rowMeta">
+												{format(entry.start, entry.end)}
+											</span>
 										</span>
 									</button>
 								</li>
@@ -864,7 +904,11 @@ export interface CalendarKindChipsProps {
 	now: Date;
 	entries: CalendarEntry[];
 	onlyFacets: CalendarEntryFacet[];
-	hiddenFacets: CalendarEntryFacet[];
+	/**
+	 * No longer used: all five chips are always on offer (prototype v17);
+	 * hiding kinds is "Was anzeigen".
+	 */
+	hiddenFacets?: CalendarEntryFacet[];
 	onToggleFacet: (facet: CalendarEntryFacet) => void;
 	onHighlightFacet: (facet: CalendarEntryFacet | null) => void;
 	/** Pinned at the right end (the display filter button on the phone). */
@@ -873,15 +917,16 @@ export interface CalendarKindChipsProps {
 }
 
 /**
- * One chip per kind of own entry, with the number still ahead. In the left
- * column on a wide screen, in row 2 under the header on the phone.
+ * Five round icon chips, one per kind (prototype v17): one kind at a time;
+ * the chosen chip turns dark and names the kind with the number of own
+ * entries still ahead. Clicking it again shows all. In the left column on
+ * a wide screen, in row 2 under the header on the phone.
  */
 export const CalendarKindChips = ({
 	ownerId,
 	now,
 	entries,
 	onlyFacets,
-	hiddenFacets,
 	onToggleFacet,
 	onHighlightFacet,
 	trailing,
@@ -889,18 +934,18 @@ export const CalendarKindChips = ({
 }: CalendarKindChipsProps) => {
 	const { t } = useTranslation();
 	const own = entries.filter((e) => e.ownerId === ownerId);
-	// A selected kind stays on offer after its entries are gone, so the
-	// filter can always be cleared (reviews 4574504546, 4574493851).
-	const presentFacets = CALENDAR_FACETS.filter(
-		(facet) =>
-			onlyFacets.includes(facet) || own.some((e) => facetOf(e) === facet)
-	);
 	const futureCount = (facet: CalendarEntryFacet) =>
 		own.filter(
 			(e) =>
 				facetOf(e) === facet &&
 				new Date(e.end).getTime() > now.getTime()
 		).length;
+	// Single choice through the parent's toggle: switch the others off
+	// first, then this one (on, or off when it was the chosen one).
+	const choose = (facet: CalendarEntryFacet) => {
+		onlyFacets.filter((f) => f !== facet).forEach(onToggleFacet);
+		onToggleFacet(facet);
+	};
 
 	return (
 		<FilterChipRow
@@ -908,31 +953,39 @@ export const CalendarKindChips = ({
 			className={className}
 			trailing={trailing}
 		>
-			{presentFacets
-				.filter(
-					(facet) =>
-						!hiddenFacets.includes(facet) ||
-						onlyFacets.includes(facet)
-				)
-				.map((facet) => (
-					<span
+			{KIND_CHIPS.map((facet) => {
+				const on = onlyFacets.includes(facet);
+				const name =
+					facet === 'blocker'
+						? t('calendar.blocker.menuItem')
+						: t(`calendar.kinds.${facet}`);
+				return (
+					<button
 						key={facet}
-						className={`calendarSide__chip calendarSide__chip--k-${facet}`}
+						type="button"
+						className={`calendarSide__kindChip calendarSide__chip--k-${facet}`}
+						aria-pressed={on}
+						title={name}
+						onClick={() => choose(facet)}
 						onMouseEnter={() => onHighlightFacet(facet)}
 						onMouseLeave={() => onHighlightFacet(null)}
 						onFocus={() => onHighlightFacet(facet)}
 						onBlur={() => onHighlightFacet(null)}
+						data-cy={`calendar-filter-${facet}`}
 					>
-						<FilterChip
-							label={t(`calendar.facets.${facet}`)}
-							icon={FACET_ICON_COMPONENT[facet]}
-							active={onlyFacets.includes(facet)}
-							count={futureCount(facet)}
-							onClick={() => onToggleFacet(facet)}
-							data-cy={`calendar-filter-${facet}`}
-						/>
-					</span>
-				))}
+						<FacetIcon facet={facet} />
+						{/* Read out always, shown only on the chosen chip. */}
+						<span className="calendarSide__kindChipLabel">
+							{name}
+						</span>
+						{on && (
+							<span className="calendarSide__kindChipCount">
+								{futureCount(facet)}
+							</span>
+						)}
+					</button>
+				);
+			})}
 		</FilterChipRow>
 	);
 };
@@ -955,15 +1008,41 @@ interface QuickEntryProps {
 	onMoreDetails?: CalendarSidebarProps['onMoreDetails'];
 	/** Focus the line when shown (the phone folds it open on demand). */
 	autoFocus?: boolean;
-	/** The folding row above already names it (phone sheet). */
-	hideTitle?: boolean;
 	/** Focus the line each time this counts up. */
 	focusSignal?: number;
 }
 
+/** How many people quick entry offers when "with whom" is still open. */
+const MAX_PEOPLE = 5;
+
 /**
- * "Do 14 Uhr Video ruhiges": day, time, kind and conversation from one line.
- * The kind chips and the free-hour pills fill in what typing leaves out.
+ * The line at 44 px, as Tag, Beginn and Dauer below it (prototype v17):
+ * on top of the shared outlined field, with the darker line of the box.
+ */
+const QUICK_FIELD_SX = {
+	'&': { marginTop: 0 },
+	'& .MuiOutlinedInput-root': {
+		'minHeight': '44px',
+		'fontSize': '14px',
+		'lineHeight': '20px',
+		'letterSpacing': '0.25px',
+		'& fieldset': { borderColor: 'var(--m3-outline, #747878)' },
+		'&:hover fieldset': { borderColor: 'var(--m3-on-surface, #1a1c1e)' }
+	},
+	'& .MuiInputBase-input': {
+		height: '20px',
+		paddingTop: '12px',
+		paddingBottom: '12px',
+		paddingLeft: '12px',
+		paddingRight: '12px'
+	}
+};
+
+/**
+ * "Do 14 Uhr Video ruhiges": day, time, kind and conversation from one line,
+ * in its own white box under "Jetzt" (prototype v17). The kind chips, the
+ * free-time pills and the people fill in what typing leaves out. Until it
+ * is used, only the line, the fields, the kinds and the free times show.
  */
 export const QuickEntry = ({
 	ownerId,
@@ -976,7 +1055,6 @@ export const QuickEntry = ({
 	onRetryFreeHours,
 	onMoreDetails,
 	autoFocus = false,
-	hideTitle = false,
 	focusSignal
 }: QuickEntryProps) => {
 	const { t } = useTranslation();
@@ -997,6 +1075,8 @@ export const QuickEntry = ({
 	});
 	/** "1 Std | 30 Min": how long the offered free time is. */
 	const [slot, setSlot] = useState<30 | 60>(60);
+	/** Focus is somewhere in the box: it shows its status and buttons. */
+	const [focused, setFocused] = useState(false);
 	const parsed = parseQuickEntry(text, { now, conversations, kind });
 	const range = rangeFromFields(fields);
 	const entry = {
@@ -1083,47 +1163,87 @@ export const QuickEntry = ({
 		);
 	};
 
-	let status: string;
+	// What it will be, in words (prototype v17): the range in bold, then
+	// "Video-Termin mit …" and a note when it lies outside the working
+	// hours; until then what is still open.
+	let status: React.ReactNode;
+	let ready = false;
 	if (!touched) status = t('calendar.quick.hint');
 	else if (gaps.length > 0)
-		status = t('calendar.quick.missing', {
-			list: gaps.map((g) => t(`calendar.quick.gaps.${g}`)).join(', ')
-		});
-	else
-		status = [
-			effectiveKind === 'blocker'
-				? t('calendar.blocker.menuItem')
-				: t(`calendar.kinds.${effectiveKind}`),
-			conversation?.username,
-			format(entry.start!, entry.end)
-		]
-			.filter(Boolean)
-			.join(' · ');
+		status = (
+			<span>
+				{t('calendar.quick.missing', {
+					list: gaps
+						.map((g) => t(`calendar.quick.gaps.${g}`))
+						.join(', ')
+				})}
+				{range && (
+					<>
+						{' '}
+						<strong>{format(range.start, range.end)}</strong>
+					</>
+				)}
+			</span>
+		);
+	else {
+		ready = true;
+		const outside = !isWithinWorkingHours(
+			entry.start!,
+			entry.end!,
+			workingHours
+		);
+		status = (
+			<>
+				<FacetIcon facet={effectiveKind!} />
+				<span>
+					<strong>{format(entry.start!, entry.end)}</strong>
+					<br />
+					{effectiveKind === 'blocker'
+						? t('calendar.nouns.blocker')
+						: t('calendar.quick.ready', {
+								noun: t(`calendar.nouns.${effectiveKind}`),
+								name: conversation?.username ?? ''
+							})}
+					{outside && (
+						<span data-cy="calendar-quick-outside">
+							{` · ${t('calendar.quick.outsideHours')}`}
+						</span>
+					)}
+				</span>
+			</>
+		);
+	}
 
 	const suggestions =
 		effectiveKind && effectiveKind !== 'blocker' && !entry.sessionId
-			? conversations.slice(0, 4)
+			? conversations.slice(0, MAX_PEOPLE)
 			: [];
+	const idle = !focused && !touched;
 
 	return (
 		<section
-			className="calendarSide__section calendarQuick"
+			className={`calendarQuick${idle ? ' calendarQuick--idle' : ''}`}
+			aria-label={t('calendar.quick.title')}
 			data-cy="calendar-quick"
 		>
-			{hideTitle ? null : (
-				<h2 className="calendarSide__title">
-					{t('calendar.quick.title')}
-				</h2>
-			)}
 			<form
 				className="calendarQuick__form"
 				onSubmit={(e) => {
 					e.preventDefault();
 					submit();
 				}}
+				onFocus={() => setFocused(true)}
+				onBlur={(e) => {
+					if (
+						!e.currentTarget.contains(
+							e.relatedTarget as Node | null
+						)
+					)
+						setFocused(false);
+				}}
 			>
 				{/* The same outlined field as Tag, Beginn and Dauer below
-				    (Frank, prototype v15). */}
+				    (Frank, prototype v15), 44 px high (v17). */}
 				<TextField
 					inputRef={inputRef}
 					className="calendarQuick__input"
@@ -1131,7 +1251,7 @@ export const QuickEntry = ({
 					onChange={(e) => type(e.target.value)}
 					placeholder={t('calendar.quick.placeholder')}
 					fullWidth
-					sx={[orisoTextFieldSx, { '&': { marginTop: 0 } }]}
+					sx={[orisoTextFieldSx, QUICK_FIELD_SX]}
 					inputProps={{
 						'aria-label': t('calendar.quick.title'),
 						'aria-describedby': 'calendar-quick-status',
@@ -1189,7 +1309,7 @@ export const QuickEntry = ({
 							)}
 							options={QUICK_DURATIONS.map((d) => ({
 								value: String(d),
-								label: t('calendar.quick.minutes', { count: d })
+								label: t(`calendar.quick.lengths.${d}`)
 							}))}
 							onChange={(event) =>
 								setFields((f) => ({
@@ -1228,9 +1348,7 @@ export const QuickEntry = ({
 				<div className="calendarQuick__free">
 					<div className="calendarQuick__freeHead">
 						<span className="calendarQuick__freeLabel">
-							{slot === 60
-								? t('calendar.quick.freeHours')
-								: t('calendar.quick.freeHalf')}
+							{t('calendar.quick.freeNext')}
 						</span>
 						<div
 							className="calendarQuick__slot"
@@ -1291,12 +1409,20 @@ export const QuickEntry = ({
 									}}
 									data-cy="calendar-quick-free"
 								>
+									<ScheduleIcon aria-hidden />
 									{shortTime(start, now)}
 								</button>
 							))}
 						</div>
 					)}
 				</div>
+				<p
+					id="calendar-quick-status"
+					className={`calendarQuick__status${ready ? ' calendarQuick__status--ready' : ''}`}
+					aria-live="polite"
+				>
+					{status}
+				</p>
 				{suggestions.length > 0 && (
 					<div
 						className="calendarQuick__who"
@@ -1309,24 +1435,24 @@ export const QuickEntry = ({
 								type="button"
 								className="calendarQuick__person"
 								onClick={() => setSessionId(c.sessionId)}
+								data-cy={`calendar-quick-person-${c.sessionId}`}
 							>
-								{c.username}
+								<span
+									className={`calendarQuick__personAvatar ${avatarToneClass(c.username)}`}
+									aria-hidden="true"
+								>
+									{initialsOf(c.username)}
+								</span>
+								<span>{c.username}</span>
 							</button>
 						))}
 					</div>
 				)}
-				<p
-					id="calendar-quick-status"
-					className="calendarQuick__status"
-					aria-live="polite"
-				>
-					{status}
-				</p>
 				<div className="calendarQuick__actions">
 					{onMoreDetails && (
 						<button
 							type="button"
-							className="calendarSide__textButton"
+							className="calendarQuick__more"
 							onClick={() => {
 								onMoreDetails({
 									...entry,

@@ -6978,6 +6978,11 @@
 				"past": "Kayıt gelecekte olmalıdır.",
 				"order": "Bitiş, başlangıçtan sonra olmalıdır.",
 				"conversation": "Lütfen randevunun ait olduğu danışmanlığı seçin."
+			},
+			"entryKind": "Kayıt türü",
+			"tabs": {
+				"appointment": "Randevu",
+				"blocker": "Engellenmiş zaman"
 			}
 		},
 		"details": {
@@ -7011,7 +7016,7 @@
 		"created": "Randevu oluşturuldu: {{date}}",
 		"undo": "Geri al",
 		"syncDialog": {
-			"title": "Takvim eşitleme",
+			"title": "Outlook veya Google bağla",
 			"description": "ORISO randevularınız Outlook, Google veya Apple Takvim'de – oradaki meşgul zamanlarınız da ORISO'ya.",
 			"feedTitle": "Takviminizde abone olun",
 			"feedText": "Bu bağlantıyı takviminize abonelik olarak ekleyin. Yalnızca “ORISO-Termin” ve saati gösterir, isim göstermez.",
@@ -7047,7 +7052,11 @@
 			"label": "Ekle",
 			"as": "Şu olarak kaydet",
 			"blockerNow": "hemen kaydedilir",
-			"outsideHours": "Çalışma saatlerinizin dışında."
+			"outsideHours": "Çalışma saatlerinizin dışında.",
+			"who": "Kiminle",
+			"whoPlaceholder": "Kiminle? İsim ara",
+			"conversations": "Danışmanlıklar",
+			"noneFound": "Danışmanlık bulunamadı."
 		},
 		"blocker": {
 			"menuItem": "Kapalı zaman",
@@ -7065,7 +7074,9 @@
 			"conflicts_one": "{{count}} randevuyla çakışıyor.",
 			"created": "{{count}} kapalı zaman eklendi",
 			"created_one": "{{count}} kapalı zaman eklendi",
-			"createdSingle": "Kapalı zaman eklendi: {{date}}"
+			"createdSingle": "Kapalı zaman eklendi: {{date}}",
+			"workHint": "Hep aynı saatler mi, örneğin akşamları ve hafta sonları?",
+			"weekly": "Haftalık …"
 		},
 		"saveFailed": "Bu işe yaramadı. Lütfen tekrar deneyin.",
 		"blockerRemoved": "Kapalı zaman kaldırıldı.",
@@ -7087,7 +7098,14 @@
 			"remove": "Kaldır",
 			"saveMove": "Taşı",
 			"sendProposal": "Öneriyi gönder",
-			"to": "Bitiş"
+			"to": "Bitiş",
+			"withYou": "Siz ve {{name}}",
+			"startSub": "{{name}} ile",
+			"chatSub": "{{name}} ile danışmanlığı aç",
+			"joinSub": "Video konferansı aç",
+			"moveSub": "Günü ve saati değiştir",
+			"proposeSub": "{{name}} onaylamalı",
+			"cancelSub": "{{name}} bir mesaj alır"
 		},
 		"fullscreen": "Tam ekran",
 		"fullscreenExit": "Tam ekrandan çık (Esc)",
@@ -7105,7 +7123,8 @@
 			"label": "Neler gösterilsin",
 			"hint": "Seçimi kaldırılan türler takvimde ve listede gizlenir.",
 			"all": "Tümünü göster",
-			"customised": "Bazı türler gizli."
+			"customised": "Bazı türler gizli.",
+			"blocker": "Kapalı ve meşgul zamanlar"
 		},
 		"monthMenu": {
 			"label": "Bu güne kaydet",
@@ -7165,29 +7184,36 @@
 			"close": "Hızlı girişi kapat",
 			"date": "Tarih",
 			"duration": "Süre",
-			"freeHalf": "Sonraki boş yarım saat",
-			"freeHours": "Sonraki boş saat",
 			"gaps": {
 				"when": "gün ve saat",
 				"kind": "tür",
 				"who": "görüşme"
 			},
 			"halfHour": "30 dk",
-			"hint": "Gün ve saati yazın, türü seçin.",
+			"hint": "Tür seçin, gün ve başlangıcı belirleyin ya da boş bir zamana dokunun.",
 			"hour": "1 sa",
 			"kind": "Tür",
-			"minutes": "{{count}} dk.",
 			"missing": "Eksik: {{list}}",
 			"more": "Daha fazla bilgi …",
-			"placeholder": "örn. 14:00 video",
+			"placeholder": "Kiminle? örn. „mutige_eule“ veya „14:00“",
 			"save": "Ekle",
 			"slot": "Boş zamanın uzunluğu",
 			"time": "Başlangıç",
 			"title": "Hızlı kayıt",
-			"who": "Kiminle"
+			"who": "Kiminle",
+			"freeNext": "Sonraki boş",
+			"lengths": {
+				"30": "30 dk",
+				"45": "45 dk",
+				"60": "1 sa",
+				"90": "1,5 sa",
+				"120": "2 sa"
+			},
+			"ready": "{{name}} ile {{noun}}",
+			"outsideHours": "çalışma saatleri dışında"
 		},
 		"search": {
-			"placeholder": "Randevu ara",
+			"placeholder": "Ara",
 			"clear": "Aramayı temizle",
 			"empty": "Bir şey bulunamadı.",
 			"results": "Arama sonuçları"
@@ -7201,11 +7227,15 @@
 			"switcherMenu": "menü olarak",
 			"switcherDigits": "düğme olarak",
 			"switcherHint": "Sizin için kaydedilir.",
-			"sync": "Outlook veya Google bağla"
+			"sync": "Outlook veya Google bağla",
+			"repeatBlocker": "Tekrarlanan kapalı zaman",
+			"switcherMenuSub": "Tek düğme, görünümler menüde",
+			"switcherDigitsSub": "Tüm görünümler yan yana"
 		},
 		"side": {
 			"resize": "Listeyi genişletmek veya daraltmak için sürükleyin; çift tıklama daraltır veya açar, yukarı ve aşağı oklar kaydırır",
-			"label": "Randevular: arama ve listeler"
+			"label": "Randevular: arama ve listeler",
+			"now": "Şimdi"
 		},
 		"split": {
 			"empty": "Gününüzü yanlarında görmek için meslektaşlarınızın takvimlerini gösterin.",
@@ -7249,7 +7279,8 @@
 			"summary": "Çalışma saatleri {{hours}}",
 			"title": "Çalışma saatlerini belirle",
 			"to": "{{day}} bitiş",
-			"tooMany": "Çalışma saatleri haftada en fazla {{max}} zaman aralığı içerir; bu değişiklik kaydedilmedi."
+			"tooMany": "Çalışma saatleri haftada en fazla {{max}} zaman aralığı içerir; bu değişiklik kaydedilmedi.",
+			"copyMonday": "Pazartesinin saatlerini ve molasını tüm iş günlerine uygula"
 		},
 		"grip": {
 			"weekOnly": "Yalnızca kısmen kaydedildi: {{weekdays}} için saatler değişti, {{date}} için değişmedi.",
@@ -7353,6 +7384,15 @@
 			"keys": "Enter yüksekliği değiştirir; ok tuşları listeyi açar veya daraltır. Sürüklemek de olur.",
 			"open": "Listeyi yukarı çek"
 		},
-		"conversationsFailed": "Görüşmeler yüklenemedi; randevular bir görüşmeye bağlanamıyor."
+		"conversationsFailed": "Görüşmeler yüklenemedi; randevular bir görüşmeye bağlanamıyor.",
+		"nouns": {
+			"video": "Görüntülü randevu",
+			"phone": "Telefon randevusu",
+			"onsite": "Yüz yüze randevu",
+			"chat": "Sohbet randevusu",
+			"group": "Grup randevusu",
+			"blocker": "Engellenmiş zaman",
+			"busy": "Meşgul"
+		}
 	}
 }

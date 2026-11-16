@@ -8,7 +8,7 @@ import * as React from 'react';
 import { useMemo, useState } from 'react';
 import dayjs, { type Dayjs } from 'dayjs';
 import { useTranslation } from 'react-i18next';
-import { M3Dialog } from '../m3Dialog/M3Dialog';
+import { M3Dialog, type M3DialogAction } from '../m3Dialog/M3Dialog';
 import { OrisoCalendar } from '../form/OrisoCalendar';
 import { OrisoTimePicker } from '../form/OrisoTimePicker';
 import { OrisoSelect } from '../form/OrisoSelect';
@@ -47,18 +47,36 @@ export interface AppointmentDialogProps {
 	onClose: () => void;
 }
 
-export const AppointmentDialog = ({
-	open,
+/**
+ * A creation form without its dialog frame: what the frame shows around it
+ * and the content. "Neuer Eintrag" puts the appointment and the blocker
+ * form under one title with tabs (prototype v17); each keeps its state.
+ */
+export interface DialogForm {
+	description?: React.ReactNode;
+	icon?: React.ReactNode;
+	width: number;
+	actions: M3DialogAction[];
+	content: React.ReactNode;
+	/** The dialog's `data-testid` while this form shows. */
+	testId: string;
+}
+
+export type AppointmentFormProps = Omit<
+	AppointmentDialogProps,
+	'open' | 'fullScreen'
+>;
+
+export const useAppointmentForm = ({
 	slot,
 	initialSessionId,
 	conversations,
 	entries,
 	ownerId,
 	now,
-	fullScreen,
 	onSave,
 	onClose
-}: AppointmentDialogProps) => {
+}: AppointmentFormProps): DialogForm => {
 	const dayLabels = useDayLabels();
 	const { t } = useTranslation();
 	const format = useRangeFormat();
@@ -114,35 +132,27 @@ export const AppointmentDialog = ({
 		onSave(draft as AppointmentDraft);
 	};
 
-	return (
-		<M3Dialog
-			open={open}
-			data-testid="calendar-appointment-dialog"
-			title={t('calendar.create')}
-			description={
-				timedSlot
-					? format(timedSlot.start, timedSlot.end)
-					: t('calendar.dialog.description')
+	return {
+		testId: 'calendar-appointment-dialog',
+		description: timedSlot
+			? format(timedSlot.start, timedSlot.end)
+			: t('calendar.dialog.description'),
+		icon: slot ? <FacetIcon facet={slot.kind} /> : undefined,
+		width: slot ? 400 : 680,
+		actions: [
+			{ label: t('app.cancel'), onClick: onClose },
+			{
+				label: t(
+					conflicts.length
+						? 'calendar.dialog.saveAnyway'
+						: 'calendar.dialog.save'
+				),
+				onClick: save,
+				primary: true,
+				testId: 'calendar-appointment-save'
 			}
-			icon={slot ? <FacetIcon facet={slot.kind} /> : undefined}
-			width={slot ? 400 : 680}
-			fullScreen={fullScreen}
-			onClose={onClose}
-			closeLabel={t('app.close')}
-			actions={[
-				{ label: t('app.cancel'), onClick: onClose },
-				{
-					label: t(
-						conflicts.length
-							? 'calendar.dialog.saveAnyway'
-							: 'calendar.dialog.save'
-					),
-					onClick: save,
-					primary: true,
-					testId: 'calendar-appointment-save'
-				}
-			]}
-		>
+		],
+		content: (
 			<div
 				className={`calendarDialog${slot ? '' : ' calendarDialog--withMonth'}`}
 			>
@@ -233,6 +243,31 @@ export const AppointmentDialog = ({
 					)}
 				</div>
 			</div>
+		)
+	};
+};
+
+export const AppointmentDialog = ({
+	open,
+	fullScreen,
+	...props
+}: AppointmentDialogProps) => {
+	const { t } = useTranslation();
+	const form = useAppointmentForm(props);
+	return (
+		<M3Dialog
+			open={open}
+			data-testid={form.testId}
+			title={t('calendar.create')}
+			description={form.description}
+			icon={form.icon}
+			width={form.width}
+			fullScreen={fullScreen}
+			onClose={props.onClose}
+			closeLabel={t('app.close')}
+			actions={form.actions}
+		>
+			{form.content}
 		</M3Dialog>
 	);
 };

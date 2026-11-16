@@ -30,11 +30,13 @@ import GridViewOutlinedIcon from '@mui/icons-material/GridViewOutlined';
 import ListIcon from '@mui/icons-material/List';
 import ViewColumnIcon from '@mui/icons-material/ViewColumn';
 import GroupsOutlinedIcon from '@mui/icons-material/GroupsOutlined';
+import EditNoteOutlinedIcon from '@mui/icons-material/EditNoteOutlined';
 import {
 	ChatMenuDropdownDivider,
 	ChatMenuDropdownGroupLabel,
 	ChatMenuDropdownHeader,
 	ChatMenuDropdownItem,
+	ChatMenuDropdownItemContent,
 	ChatMenuDropdownNote,
 	handleMenuKeyDown
 } from '../chatMenuDropdown/ChatMenuDropdown';
@@ -44,6 +46,7 @@ import {
 	APPOINTMENT_KINDS,
 	findConflicts,
 	type AppointmentKind,
+	type CalendarConversation,
 	type CalendarEntry,
 	type Colleague
 } from './calendarModel';
@@ -51,6 +54,7 @@ import {
 	CALENDAR_FACETS,
 	CalendarEntryGlyph,
 	FacetIcon,
+	facetOf,
 	type CalendarEntryFacet
 } from './CalendarEntryGlyph';
 import type { EntryAction, MoveProposal } from './calendarActions';
@@ -79,20 +83,129 @@ export interface SlotMenuContentProps {
 	/** The range lies outside the working hours: say so, still allow it. */
 	outsideHours?: boolean;
 	onChoose: (choice: SlotChoice) => void;
+	/** Second step: the kind is chosen, now who it is with. */
+	kind?: AppointmentKind;
+	conversations?: CalendarConversation[];
+	/** A conversation picked: the appointment is entered at once. */
+	onPick?: (sessionId: number) => void;
+	/** "Mehr Angaben …": the full dialog, time and kind filled in. */
+	onMore?: () => void;
 }
+
+/** The most conversations the second step lists; the search finds the rest. */
+const SLOT_PEOPLE = 8;
+
+/**
+ * "Mit wem?" (prototype v17): the second step in the same card. A search
+ * field, the conversations with their avatars, one click enters the
+ * appointment.
+ */
+const SlotPeopleStep = ({
+	range,
+	kind,
+	conversations,
+	onPick,
+	onMore
+}: {
+	range: { start: Date; end: Date };
+	kind: AppointmentKind;
+	conversations: CalendarConversation[];
+	onPick: (sessionId: number) => void;
+	onMore?: () => void;
+}) => {
+	const { t } = useTranslation();
+	const format = useRangeFormat();
+	const [query, setQuery] = useState('');
+	const needle = query.trim().toLowerCase().replace(/\s+/g, '_');
+	const found = conversations
+		.filter((c) => c.username.toLowerCase().includes(needle))
+		.slice(0, SLOT_PEOPLE);
+	return (
+		<>
+			<ChatMenuDropdownHeader
+				subtitle={format(range.start, range.end)}
+				title={t(`calendar.nouns.${kind}`)}
+				titleAs="h2"
+			/>
+			<input
+				type="search"
+				className="calendarMenu__search"
+				value={query}
+				onChange={(event) => setQuery(event.target.value)}
+				placeholder={t('calendar.slotMenu.whoPlaceholder')}
+				aria-label={t('calendar.slotMenu.who')}
+				data-cy="calendar-slot-search"
+			/>
+			{found.length > 0 ? (
+				<div
+					className="calendarMenu__people"
+					role="group"
+					aria-label={t('calendar.slotMenu.conversations')}
+				>
+					{found.map((c) => (
+						<ChatMenuDropdownItem
+							key={c.sessionId}
+							className="calendarMenu__person"
+							onClick={() => onPick(c.sessionId)}
+							data-cy={`calendar-slot-person-${c.sessionId}`}
+						>
+							<span
+								className={`calendarMenu__avatar ${avatarToneClass(c.username)}`}
+								aria-hidden="true"
+							>
+								{initialsOf(c.username)}
+							</span>
+							<ChatMenuDropdownItemContent title={c.username} />
+						</ChatMenuDropdownItem>
+					))}
+				</div>
+			) : (
+				<ChatMenuDropdownNote>
+					{t('calendar.slotMenu.noneFound')}
+				</ChatMenuDropdownNote>
+			)}
+			{onMore && (
+				<>
+					<ChatMenuDropdownDivider />
+					<ChatMenuDropdownItem
+						icon={<EditNoteOutlinedIcon fontSize="small" />}
+						title={t('calendar.quick.more')}
+						onClick={onMore}
+						data-cy="calendar-slot-more"
+					/>
+				</>
+			)}
+		</>
+	);
+};
 
 /**
  * Dragging over free time: the time is chosen, one click says what it
- * becomes. A blocker is entered at once (with undo), an appointment opens
- * the dialog for the conversation.
+ * becomes. A blocker is entered at once (with undo); an appointment asks
+ * "Mit wem?" in the same card and is entered with the conversation picked
+ * (prototype v17).
  */
 export const SlotMenuContent = ({
 	range,
 	outsideHours,
-	onChoose
+	onChoose,
+	kind,
+	conversations = [],
+	onPick,
+	onMore
 }: SlotMenuContentProps) => {
 	const { t } = useTranslation();
 	const format = useRangeFormat();
+	if (kind && onPick)
+		return (
+			<SlotPeopleStep
+				range={range}
+				kind={kind}
+				conversations={conversations}
+				onPick={onPick}
+				onMore={onMore}
+			/>
+		);
 	return (
 		<>
 			<ChatMenuDropdownHeader
@@ -408,29 +521,68 @@ export const EntryMenuContent = ({
 	const range = entry.allDay
 		? `${format(entry.start).split(',')[0]}, ${t('calendar.allDay')}`
 		: format(entry.start, entry.end);
+	const facet = facetOf(entry);
+	const noun =
+		entry.type === 'appointment' ? (entry.kind ?? 'video') : entry.type;
+	// Who it is with, in the avatar tone ORISO gives that name: the
+	// colleague or the advice seeker of an appointment; other entries show
+	// their kind (prototype v17).
+	const person =
+		colleague?.displayName ??
+		(entry.type === 'appointment' ? entry.title : undefined);
+	// One's own appointment: "Sie und <Name>", both avatars stacked.
+	const partner =
+		!colleague && entry.type === 'appointment' ? entry.title : undefined;
 	// The move / proposal form is a dialog and may carry a heading; the
 	// action list is a menu and may not.
-	// Who it is with, as ORISO shows people: the colleague, the advice
-	// seeker of an appointment, or "Ich" for one's own blocked time.
-	const who = colleague
-		? initialsOf(colleague.displayName)
-		: entry.type === 'appointment' && entry.title
-			? initialsOf(entry.title)
-			: t('calendar.people.me');
 	const header = (
-		<div className="calendarMenu__head">
-			<span
-				className={`calendarMenu__avatar${colleague || entry.type === 'appointment' ? '' : ' calendarMenu__avatar--me'}`}
-				aria-hidden="true"
-			>
-				{who}
-			</span>
-			<ChatMenuDropdownHeader
-				subtitle={range}
-				title={title}
-				titleAs={mode === 'list' ? 'p' : 'h2'}
-			/>
-		</div>
+		<>
+			<div className="calendarMenu__head">
+				{person ? (
+					<span
+						className={`calendarMenu__avatar ${avatarToneClass(person)}`}
+						aria-hidden="true"
+					>
+						{initialsOf(person)}
+					</span>
+				) : (
+					<span
+						className={`calendarMenu__kdot calendarMenu__kind--${facet}`}
+						aria-hidden="true"
+					>
+						<FacetIcon facet={facet} />
+					</span>
+				)}
+				<ChatMenuDropdownHeader
+					subtitle={range}
+					title={title}
+					titleAs={mode === 'list' ? 'p' : 'h2'}
+				/>
+			</div>
+			<p className="calendarMenu__tagRow">
+				<span className="calendarMenu__tag">
+					<FacetIcon facet={facet} />
+					{t(`calendar.nouns.${noun}`)}
+				</span>
+			</p>
+			{partner && (
+				<p className="calendarMenu__who" data-cy="calendar-entry-who">
+					<span className="calendarMenu__stack" aria-hidden="true">
+						<span
+							className={`calendarMenu__mini ${avatarToneClass('', true)}`}
+						>
+							{t('calendar.people.me')}
+						</span>
+						<span
+							className={`calendarMenu__mini ${avatarToneClass(partner)}`}
+						>
+							{initialsOf(partner)}
+						</span>
+					</span>
+					{t('calendar.entryMenu.withYou', { name: partner })}
+				</p>
+			)}
+		</>
 	);
 
 	if (mode !== 'list')
@@ -465,6 +617,37 @@ export const EntryMenuContent = ({
 				return t('calendar.entryMenu.cancel');
 			default:
 				return t('calendar.entryMenu.remove');
+		}
+	};
+
+	// What each action does, under its name (prototype v17).
+	const name = entry.title;
+	const actionHint = (action: EntryAction): string | undefined => {
+		switch (action) {
+			case 'start':
+				return name
+					? t('calendar.entryMenu.startSub', { name })
+					: undefined;
+			case 'chat':
+				return name
+					? t('calendar.entryMenu.chatSub', { name })
+					: undefined;
+			case 'join':
+				return t('calendar.entryMenu.joinSub');
+			case 'move':
+				return t('calendar.entryMenu.moveSub');
+			case 'propose':
+				return colleague
+					? t('calendar.entryMenu.proposeSub', {
+							name: colleague.displayName
+						})
+					: undefined;
+			case 'cancel':
+				return name
+					? t('calendar.entryMenu.cancelSub', { name })
+					: undefined;
+			default:
+				return undefined;
 		}
 	};
 
@@ -506,6 +689,7 @@ export const EntryMenuContent = ({
 							)
 						}
 						title={actionLabel(action)}
+						description={actionHint(action)}
 						onClick={() =>
 							form ? onMode(action) : onAction(action)
 						}
@@ -594,7 +778,10 @@ export const RequestMenuContent = ({
 	return (
 		<>
 			<div className="calendarMenu__head">
-				<span className="calendarMenu__avatar" aria-hidden="true">
+				<span
+					className={`calendarMenu__avatar ${avatarToneClass(name)}`}
+					aria-hidden="true"
+				>
 					{initialsOf(name)}
 				</span>
 				<ChatMenuDropdownHeader
@@ -648,6 +835,8 @@ export interface SettingsMenuContentProps {
 	workingHoursSummary?: string;
 	switcherStyle: ViewSwitcherStyle;
 	onWorkingHours?: () => void;
+	/** "Sperrzeit mit Wiederholung": the blocker form, for a series. */
+	onRepeatBlocker?: () => void;
 	/** "Freie Tage eintragen …": an all-day blocker from tomorrow. */
 	onFreeDays?: () => void;
 	onSwitcherStyle: (style: ViewSwitcherStyle) => void;
@@ -662,6 +851,7 @@ export const SettingsMenuContent = ({
 	workingHoursSummary,
 	switcherStyle,
 	onWorkingHours,
+	onRepeatBlocker,
 	onFreeDays,
 	onSwitcherStyle,
 	onSync,
@@ -669,6 +859,10 @@ export const SettingsMenuContent = ({
 	onForgetEdge
 }: SettingsMenuContentProps) => {
 	const { t } = useTranslation();
+	const forget = rememberedEdge && onForgetEdge;
+	// Prototype v17: what to set up first, then how the views are chosen.
+	const anyAbove =
+		onWorkingHours || onRepeatBlocker || onFreeDays || onSync || forget;
 	return (
 		<>
 			{onWorkingHours && (
@@ -683,6 +877,15 @@ export const SettingsMenuContent = ({
 					data-cy="calendar-settings-working-hours"
 				/>
 			)}
+			{onRepeatBlocker && (
+				<ChatMenuDropdownItem
+					role="menuitem"
+					icon={<FacetIcon facet="blocker" />}
+					title={t('calendar.settings.repeatBlocker')}
+					onClick={onRepeatBlocker}
+					data-cy="calendar-settings-repeat-blocker"
+				/>
+			)}
 			{onFreeDays && (
 				<ChatMenuDropdownItem
 					role="menuitem"
@@ -693,7 +896,16 @@ export const SettingsMenuContent = ({
 					data-cy="calendar-settings-free-days"
 				/>
 			)}
-			{rememberedEdge && onForgetEdge && (
+			{onSync && (
+				<ChatMenuDropdownItem
+					role="menuitem"
+					icon={<SyncOutlinedIcon fontSize="small" />}
+					title={t('calendar.settings.sync')}
+					onClick={onSync}
+					data-cy="calendar-settings-sync"
+				/>
+			)}
+			{forget && (
 				<ChatMenuDropdownItem
 					role="menuitem"
 					icon={<RestartAltOutlinedIcon fontSize="small" />}
@@ -707,38 +919,29 @@ export const SettingsMenuContent = ({
 					data-cy="calendar-settings-forget-edge"
 				/>
 			)}
+			{anyAbove && <ChatMenuDropdownDivider />}
 			<ChatMenuDropdownGroupLabel>
 				{t('calendar.settings.switcher')}
 			</ChatMenuDropdownGroupLabel>
-			{(['menu', 'digits'] as ViewSwitcherStyle[]).map((style) => (
-				<ChatMenuDropdownItem
-					key={style}
-					role="menuitemradio"
-					aria-checked={switcherStyle === style}
-					active={switcherStyle === style}
-					icon={<Check on={switcherStyle === style} />}
-					title={t(
-						`calendar.settings.switcher${style === 'menu' ? 'Menu' : 'Digits'}`
-					)}
-					onClick={() => onSwitcherStyle(style)}
-					data-cy={`calendar-settings-switcher-${style}`}
-				/>
-			))}
+			{(['menu', 'digits'] as ViewSwitcherStyle[]).map((style) => {
+				const name = style === 'menu' ? 'Menu' : 'Digits';
+				return (
+					<ChatMenuDropdownItem
+						key={style}
+						role="menuitemradio"
+						aria-checked={switcherStyle === style}
+						active={switcherStyle === style}
+						title={t(`calendar.settings.switcher${name}`)}
+						description={t(`calendar.settings.switcher${name}Sub`)}
+						shortcut={<Check on={switcherStyle === style} />}
+						onClick={() => onSwitcherStyle(style)}
+						data-cy={`calendar-settings-switcher-${style}`}
+					/>
+				);
+			})}
 			<ChatMenuDropdownNote>
 				{t('calendar.settings.switcherHint')}
 			</ChatMenuDropdownNote>
-			{onSync && (
-				<>
-					<ChatMenuDropdownDivider />
-					<ChatMenuDropdownItem
-						role="menuitem"
-						icon={<SyncOutlinedIcon fontSize="small" />}
-						title={t('calendar.settings.sync')}
-						onClick={onSync}
-						data-cy="calendar-settings-sync"
-					/>
-				</>
-			)}
 		</>
 	);
 };
@@ -1279,16 +1482,41 @@ export interface KindsMenuContentProps {
 	hidden: CalendarEntryFacet[];
 	onToggle: (facet: CalendarEntryFacet) => void;
 	onShowAll: () => void;
+	/** Counted per kind on the right: one's own entries (prototype v17). */
+	entries?: CalendarEntry[];
+	ownerId?: string;
 }
 
+/**
+ * Prototype v17: a head with the hint, each kind with its box on the left
+ * and how many of one's own entries it has on the right, "Alles anzeigen"
+ * at the end.
+ */
 export const KindsMenuContent = ({
 	hidden,
 	onToggle,
-	onShowAll
+	onShowAll,
+	entries,
+	ownerId
 }: KindsMenuContentProps) => {
 	const { t } = useTranslation();
+	const counts = useMemo(() => {
+		const all = new Map<CalendarEntryFacet, number>();
+		for (const entry of entries ?? [])
+			if (entry.ownerId === ownerId)
+				all.set(facetOf(entry), (all.get(facetOf(entry)) ?? 0) + 1);
+		return all;
+	}, [entries, ownerId]);
 	return (
 		<>
+			<div className="chatMenuDropdown__header">
+				<p className="chatMenuDropdown__title">
+					{t('calendar.kindsMenu.label')}
+				</p>
+				<p className="chatMenuDropdown__subtitle">
+					{t('calendar.kindsMenu.hint')}
+				</p>
+			</div>
 			{CALENDAR_FACETS.map((facet) => {
 				const on = !hidden.includes(facet);
 				return (
@@ -1296,29 +1524,36 @@ export const KindsMenuContent = ({
 						key={facet}
 						role="menuitemcheckbox"
 						aria-checked={on}
-						className={`calendarMenu__kind calendarMenu__kind--${facet}`}
-						icon={<FacetIcon facet={facet} />}
-						title={t(`calendar.facets.${facet}`)}
-						shortcut={<Check on={on} />}
+						className={`calendarMenu__kind calendarMenu__kind--${facet} calendarMenu__checkItem`}
 						onClick={() => onToggle(facet)}
 						data-cy={`calendar-kinds-${facet}`}
-					/>
+					>
+						<span className="calendarMenu__box" aria-hidden="true">
+							{on && <CheckIcon />}
+						</span>
+						<ChatMenuDropdownItemContent
+							icon={<FacetIcon facet={facet} />}
+							title={t(
+								facet === 'blocker'
+									? 'calendar.kindsMenu.blocker'
+									: `calendar.facets.${facet}`
+							)}
+							shortcut={
+								entries
+									? String(counts.get(facet) ?? 0)
+									: undefined
+							}
+						/>
+					</ChatMenuDropdownItem>
 				);
 			})}
-			<ChatMenuDropdownNote>
-				{t('calendar.kindsMenu.hint')}
-			</ChatMenuDropdownNote>
-			{hidden.length > 0 && (
-				<>
-					<ChatMenuDropdownDivider />
-					<ChatMenuDropdownItem
-						role="menuitem"
-						title={t('calendar.kindsMenu.all')}
-						onClick={onShowAll}
-						data-cy="calendar-kinds-all"
-					/>
-				</>
-			)}
+			<ChatMenuDropdownDivider />
+			<ChatMenuDropdownItem
+				role="menuitem"
+				title={t('calendar.kindsMenu.all')}
+				onClick={onShowAll}
+				data-cy="calendar-kinds-all"
+			/>
 		</>
 	);
 };

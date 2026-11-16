@@ -2973,9 +2973,6 @@
 			"requestLabel": "{{name}} schlägt vor, deinen Termin {{from}} auf {{to}} zu verschieben",
 			"requestHint": "Bis du antwortest, bleibt der Termin, wo er ist."
 		},
-		"quick": {
-			"hint": "Tippe Tag und Uhrzeit, wähle die Art."
-		},
 		"settings": {
 			"switcherHint": "Wird für dich gespeichert."
 		},
@@ -2994,6 +2991,9 @@
 		},
 		"people": {
 			"alwaysMine": "Deine Termine siehst du immer."
+		},
+		"entryMenu": {
+			"withYou": "Du und {{name}}"
 		}
 	}
 }
