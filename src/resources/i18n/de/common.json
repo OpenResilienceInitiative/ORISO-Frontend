@@ -7199,6 +7199,7 @@
 		},
 		"split": {
 			"empty": "Blenden Sie Kalender von Kolleg:innen ein, um Ihren Tag daneben zu sehen.",
+			"choose": "Kolleg:innen wählen",
 			"free": "alle frei",
 			"label": "Ihr Tag neben Kolleg:innen",
 			"oneDay": "1 Tag",

@@ -489,8 +489,10 @@ export const CalendarPage = ({
 	const views = phone ? COMPACT_VIEWS : DESKTOP_VIEWS;
 	const controller = useCalendarController();
 
+	// A phone opens on three days, a wider screen on the work week
+	// (prototype v17).
 	const [view, setView] = useState<CalendarViewName>(
-		initialView ?? (phone ? 'list' : 'workWeek')
+		initialView ?? (phone ? 'threeDays' : 'workWeek')
 	);
 	const [title, setTitle] = useState('');
 	/** The day the grid stands on; the split view starts on this day. */
@@ -2240,6 +2242,11 @@ export const CalendarPage = ({
 							role={role}
 							ownerId={ownerId}
 							colleagues={shown}
+							onChoosePeople={
+								consultant && colleagues.length > 0
+									? openAt('people')
+									: undefined
+							}
 							entries={visible}
 							busyEntries={busyEntries}
 							unavailable={unknown}

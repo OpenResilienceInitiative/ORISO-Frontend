@@ -2332,9 +2332,11 @@ $cal-new-pill-hover: #4b4f51;
 	gap: 12px;
 }
 
-.calendarSplit__avatar--me {
-	background: var(--m3-primary-container, #ffdad5);
-	color: var(--m3-on-primary-container, #410001);
+.calendarSplit__avatar {
+	width: 28px;
+	height: 28px;
+	font-size: 11px;
+	font-weight: 700;
 }
 
 .calendarStage__grid {
@@ -2546,15 +2548,16 @@ $cal-new-pill-hover: #4b4f51;
 	position: absolute;
 	right: 0;
 	left: 0;
-	border-top: 1px solid var(--m3-outline-variant, #c4c7c8);
+	border-top: 1px solid var(--m3-surface-container-highest, #e4e2e2);
 	pointer-events: none;
 }
 
+// Hatched, as in the time grid (prototype v17).
 .calendarSplit__offHours {
 	position: absolute;
 	right: 0;
 	left: 0;
-	background: var(--m3-surface-container, #f0edee);
+	background: $cal-off-hatch;
 	pointer-events: none;
 }
 
@@ -2603,10 +2606,41 @@ $cal-new-pill-hover: #4b4f51;
 	font: inherit;
 }
 
+// Nobody shown yet: a sentence and "Kolleg:innen wählen" (prototype v17).
 .calendarSplit__empty {
-	margin: 8px 0 0;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 10px;
+	padding: 18px;
 	color: var(--m3-on-surface-variant, #444748);
 	font-size: 13px;
+
+	p {
+		max-width: 46ch;
+		margin: 0;
+		line-height: 1.45;
+	}
+}
+
+.calendarSplit__choose {
+	padding: 9px 18px;
+	border: none;
+	border-radius: 999px;
+	background: var(--m3-surface-container-high, #eae7e8);
+	color: var(--m3-on-surface, #1b1b1c);
+	font: inherit;
+	font-weight: 600;
+	white-space: nowrap;
+	cursor: pointer;
+
+	&:hover {
+		background: var(--m3-surface-container-highest, #e4e2e2);
+	}
+
+	&:focus-visible {
+		@include control-focus-ring(2px);
+	}
 }
 
 // --- Working hours dialog ---

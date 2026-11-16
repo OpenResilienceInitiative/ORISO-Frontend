@@ -163,6 +163,19 @@ describe('CalendarPage — who is shown (prototype v17)', () => {
 		]);
 	});
 
+	it('offers "Kolleg:innen wählen" in an empty "Nebeneinander"', () => {
+		page({ initialView: 'split' });
+		const own = document.querySelector('.calendarSplit__avatar')!;
+		expect(own.className).toContain('calAvatar--me');
+		expect(own.textContent).toBe('calendar.people.meAvatar');
+		const choose = cy('calendar-split-choose')!;
+		expect(choose.textContent).toBe('calendar.split.choose');
+		fireEvent.click(choose);
+		expect(cy('calendar-people-me')).not.toBeNull();
+		fireEvent.click(cy('calendar-people-kaya')!);
+		expect(cy('calendar-split-choose')).toBeNull();
+	});
+
 	it('opens "Nebeneinander" from the menu', () => {
 		page();
 		openPeopleMenu();

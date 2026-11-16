@@ -7209,6 +7209,7 @@
 		},
 		"split": {
 			"empty": "Gününüzü yanlarında görmek için meslektaşlarınızın takvimlerini gösterin.",
+			"choose": "Meslektaş seç",
 			"free": "herkes boş",
 			"label": "Gününüz meslektaşlarınızın yanında",
 			"oneDay": "1 gün",

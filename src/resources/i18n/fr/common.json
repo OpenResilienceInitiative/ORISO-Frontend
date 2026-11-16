@@ -7209,6 +7209,7 @@
 		},
 		"split": {
 			"empty": "Affichez les calendriers de collègues pour voir votre journée à côté.",
+			"choose": "Choisir des collègues",
 			"free": "tous libres",
 			"label": "Votre journée à côté des collègues",
 			"oneDay": "1 jour",

@@ -191,9 +191,9 @@ describe('CalendarPage — phone and tablet', () => {
 		expect(viewButton().textContent).toContain('calendar.views.workWeek');
 	});
 
-	it('opens the phone on the list, without five- or seven-day views', () => {
+	it('opens the phone on three days, without five- or seven-day views', () => {
 		page();
-		expect(viewButton().textContent).toContain('calendar.views.list');
+		expect(viewButton().textContent).toContain('calendar.views.threeDays');
 		fireEvent.click(viewButton());
 		const menu = cy('calendar-menu-view')!;
 		expect(within(menu).queryByText('calendar.views.workWeek')).toBeNull();

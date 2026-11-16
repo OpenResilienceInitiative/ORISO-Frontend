@@ -7124,6 +7124,7 @@
 		},
 		"split": {
 			"empty": "Show colleagues' calendars to see your day next to theirs.",
+			"choose": "Choose colleagues",
 			"free": "all free",
 			"label": "Your day next to colleagues",
 			"oneDay": "1 day",
