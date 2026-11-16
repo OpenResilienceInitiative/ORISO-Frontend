@@ -43,6 +43,13 @@ describe('calendar stylesheet', () => {
 		expect(calendar).not.toMatch(/\.calendarPage__entry/);
 	});
 
+	it('centres the list grip in the gap to the stage, not on the shell gutter (Frank *2)', () => {
+		expect(calendar).toMatch(
+			/\.calendarSide__frame \{[^}]*--pane-gap:\s*12px;[^}]*--pane-inner-gutter:\s*0px;/s
+		);
+		expect(calendar).toMatch(/^\.calendarPage \{[^}]*gap: 12px;/m);
+	});
+
 	it('takes its breakpoints from the shared mixin, not raw media queries', () => {
 		expect(calendar).toMatch(/@include breakpoint\(\$fromMedium\)/);
 		expect(calendar).toMatch(/@include breakpoint\(\$fromLarge\)/);
