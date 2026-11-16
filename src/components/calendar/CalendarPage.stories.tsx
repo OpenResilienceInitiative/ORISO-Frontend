@@ -457,6 +457,16 @@ const halfHourAt = (root: HTMLElement, clientY: number) => {
 	const first = slotRows(root)[0].getBoundingClientRect();
 	return (clientY - first.top) / first.height;
 };
+/**
+ * A one-hour appointment spans two half-hour rows at every zoom step: the
+ * entries follow the rows, not only the background.
+ */
+const expectHourTall = async (entry: () => HTMLElement | null, row: number) =>
+	waitFor(() => {
+		const box = entry()?.getBoundingClientRect();
+		expect(box).toBeTruthy();
+		expect(Math.abs(box!.height - 2 * row)).toBeLessThanOrEqual(3);
+	});
 /** A trackpad pinch as Chrome reports it: a wheel with Ctrl. */
 const pinch = (target: Element, deltaY: number, clientY: number) =>
 	target.dispatchEvent(
@@ -480,8 +490,14 @@ export const Zoom: Story = {
 		await waitFor(() => expect(height()).toBe(25));
 		const zoomIn = canvas.getByRole('button', { name: 'Hineinzoomen' });
 		const zoomOut = canvas.getByRole('button', { name: 'Herauszoomen' });
+		// 10:00–11:00 today, own appointment.
+		const hourEntry = () =>
+			canvasElement.querySelector<HTMLElement>(
+				'[data-testid="calendar-view"] [data-entry-id="a1"]'
+			);
 		await userEvent.click(zoomIn);
 		await waitFor(() => expect(height()).toBe(30));
+		await expectHourTall(hourEntry, height());
 		await userEvent.click(zoomIn);
 		await waitFor(() => expect(height()).toBe(40));
 		// Pinching keeps the time under the fingers where it is.
@@ -502,6 +518,7 @@ export const Zoom: Story = {
 		await waitFor(() => expect(height()).toBe(18));
 		await expect(zoomOut).toBeDisabled();
 		await expect(zoomIn).toBeEnabled();
+		await expectHourTall(hourEntry, height());
 	}
 };
 
@@ -521,10 +538,15 @@ export const ZoomSplit: Story = {
 			);
 		};
 		await expect(hour()).toBe(48);
+		const hourEntry = () =>
+			canvasElement.querySelector<HTMLElement>(
+				'[data-cy="calendar-split-entry-a1"]'
+			);
 		await userEvent.click(
 			canvas.getByRole('button', { name: 'Hineinzoomen' })
 		);
 		await waitFor(() => expect(hour()).toBe(60));
+		await expectHourTall(hourEntry, hour() / 2);
 		// A pinch on the columns keeps the time under the pointer.
 		const body = canvasElement.querySelector<HTMLElement>(
 			'.calendarSplit__body'
@@ -536,6 +558,13 @@ export const ZoomSplit: Story = {
 		await waitFor(() => expect(hour()).toBeLessThan(60));
 		await new Promise((done) => requestAnimationFrame(() => done(null)));
 		await expect(Math.abs(at() - before)).toBeLessThan(0.05);
+		// And at the smallest step.
+		const zoomOut = canvas.getByRole('button', { name: 'Herauszoomen' });
+		for (let i = 0; i < 8 && !(zoomOut as HTMLButtonElement).disabled; i++)
+			await userEvent.click(zoomOut);
+		await expect(zoomOut).toBeDisabled();
+		await waitFor(() => expect(hour()).toBe(36));
+		await expectHourTall(hourEntry, hour() / 2);
 	}
 };
 
