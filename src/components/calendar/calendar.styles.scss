@@ -254,22 +254,138 @@ $cal-off-hatch: repeating-linear-gradient(
 	}
 }
 
+// The band measures itself: who is busy shows only where there is room
+// (Frank *16).
 .calendarView__bandFill {
 	position: absolute;
 	inset: 0;
 	display: block;
 	overflow: hidden;
+	container-type: size;
 }
 
 .calendarView__bandLabel {
-	display: block;
+	display: flex;
+	align-items: center;
+	gap: 4px;
 	overflow: hidden;
 	padding: 2px 6px;
 	color: var(--m3-on-surface-variant, #444748);
 	font-size: 11px;
 	font-weight: 500;
-	text-overflow: ellipsis;
 	white-space: nowrap;
+}
+
+.calendarView__bandText {
+	overflow: hidden;
+	min-width: 0;
+	text-overflow: ellipsis;
+}
+
+// Who is busy (Frank *16), only where there is room. From an hour at the
+// usual zoom one line: the faces first, so nobody drops off, then the
+// names, cut at the end. From two hours one chip per person, as in the
+// people bar. A narrow column keeps the faces and drops the names.
+.calendarView__bandPeople {
+	display: none;
+	align-items: center;
+	gap: 3px;
+	overflow: hidden;
+	padding: 0 6px 4px;
+	color: var(--m3-on-surface, #1b1b1c);
+	font-size: 11px;
+	font-weight: 500;
+	white-space: nowrap;
+}
+
+.calendarView__bandPerson {
+	display: contents;
+}
+
+.calendarView__bandAvatar {
+	display: inline-flex;
+	flex: none;
+	align-items: center;
+	justify-content: center;
+	width: 16px;
+	height: 16px;
+	border-radius: 50%;
+	font-size: 8px;
+	font-weight: 600;
+	letter-spacing: 0.02em;
+}
+
+.calendarView__bandName {
+	flex: 0 1 auto;
+	order: 1;
+	overflow: hidden;
+	min-width: 0;
+	text-overflow: ellipsis;
+}
+
+.calendarView__bandPerson:not(:last-child) > .calendarView__bandName::after {
+	content: ',';
+}
+
+@container (min-height: 40px) {
+	.calendarView__bandPeople {
+		display: flex;
+	}
+}
+
+@container (min-height: 84px) {
+	.calendarView__bandPeople {
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 4px;
+	}
+
+	.calendarView__bandPerson {
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+		box-sizing: border-box;
+		max-width: 100%;
+		height: 20px;
+		padding: 0 8px 0 1px;
+		border: 1px solid var(--m3-outline-variant, #c4c7c8);
+		border-radius: 999px;
+		background: var(--m3-surface-container-lowest, #ffffff);
+	}
+
+	.calendarView__bandName::after {
+		content: none !important;
+	}
+}
+
+@container (max-width: 89px) {
+	.calendarView__bandPerson {
+		padding: 0 1px;
+	}
+
+	.calendarView__bandName {
+		display: none;
+	}
+}
+
+// On one line, cut names say less than the faces: below about 60px a
+// person the line keeps the faces only.
+@container (max-height: 83px) and (max-width: 149px) {
+	.calendarView__bandPeople[data-count='2'] .calendarView__bandName {
+		display: none;
+	}
+}
+
+@container (max-height: 83px) and (max-width: 209px) {
+	.calendarView__bandPeople[data-count='3'] .calendarView__bandName {
+		display: none;
+	}
+}
+
+@container (max-height: 83px) and (max-width: 269px) {
+	.calendarView__bandPeople[data-count='many'] .calendarView__bandName {
+		display: none;
+	}
 }
 
 // A public holiday: labelled once, in the all-day row (and the month cell).

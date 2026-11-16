@@ -539,6 +539,74 @@ export const ColleaguesMonth: Story = {
 	}
 };
 
+/** Names shown in a band, if the stylesheet leaves them visible. */
+const visibleNamesIn = (band: HTMLElement) =>
+	[...band.querySelectorAll<HTMLElement>('.calendarView__bandName')]
+		.filter((name) => name.getBoundingClientRect().width > 0)
+		.map((name) => name.textContent);
+
+export const ColleaguesWhoIsBusy: Story = {
+	name: 'Colleagues shown — who is in each band, where there is room (Frank *16)',
+	args: {
+		scope: 'TENANT',
+		shownColleagues: ['kaya', 'demir', 'hoffmann', 'nowak']
+	},
+	play: async ({ canvasElement }) => {
+		const bandOf = (label: string, name: string) =>
+			[
+				...canvasElement.querySelectorAll<HTMLElement>(
+					'[data-cy="calendar-band"]'
+				)
+			].find(
+				(band) =>
+					band.textContent?.includes(label) &&
+					band.textContent.includes(name)
+			);
+		// Monday 11–12: Kaya and Nowak, an hour tall: one line, the faces
+		// first. At 1280 px a work-week column has no room for two names,
+		// so the faces stand alone rather than as "A. K…, P. No…".
+		const hour = await waitFor(() => {
+			const band = bandOf('2 von 4 belegt', 'P. Nowak');
+			expect(band).toBeTruthy();
+			return band!;
+		});
+		const faces = [
+			...hour.querySelectorAll<HTMLElement>('.calendarView__bandAvatar')
+		].map((face) => face.getBoundingClientRect());
+		await expect(faces.map((face) => face.width)).toEqual([16, 16]);
+		await expect(Math.abs(faces[0].top - faces[1].top)).toBeLessThan(2);
+		await expect(hour.getBoundingClientRect().width).toBeLessThan(150);
+		await expect(visibleNamesIn(hour)).toEqual([]);
+		// One person in an hour: face and name.
+		const single = bandOf('1 von 4 belegt', 'E. Demir');
+		await expect(visibleNamesIn(single!)).toEqual(['E. Demir']);
+		// Thursday 09–11, two hours: one chip per person, as in the bar.
+		const tall = [
+			...canvasElement.querySelectorAll<HTMLElement>(
+				'[data-cy="calendar-band"]'
+			)
+		].find(
+			(band) =>
+				band.textContent?.includes('2 von 4 belegt') &&
+				band.getBoundingClientRect().height >= 84
+		);
+		const chips = [
+			...(tall?.querySelectorAll<HTMLElement>(
+				'.calendarView__bandPerson'
+			) ?? [])
+		].map((chip) => chip.getBoundingClientRect());
+		await expect(chips).toHaveLength(2);
+		await expect(chips[0].height).toBeGreaterThan(16);
+		await expect(chips[1].top).toBeGreaterThan(chips[0].bottom - 1);
+		await expect(visibleNamesIn(tall!)).toEqual(['A. Kaya', 'P. Nowak']);
+		// Half an hour is too short: the count alone.
+		const short = bandOf('2 von 4 belegt', 'E. Demir');
+		await expect(short).toBeTruthy();
+		await expect(visibleNamesIn(short!)).toEqual([]);
+		await expect(short!.textContent).toContain('2 von 4 belegt');
+	}
+};
+
 /** A point on a band that no grip or entry covers. */
 const pointOnBand = (band: HTMLElement) => {
 	const box = band.getBoundingClientRect();
