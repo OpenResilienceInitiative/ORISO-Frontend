@@ -14,6 +14,7 @@ import { WebsocketHandler } from './WebsocketHandler';
 import ErrorBoundary from './ErrorBoundary';
 import { LanguagesProvider } from '../../globalState/provider/LanguagesProvider';
 import { TenantThemingLoader } from './TenantThemingLoader';
+import { LoginHandoverGate } from './LoginHandoverScreen';
 import {
 	AppConfigProvider,
 	InformalProvider,
@@ -155,6 +156,7 @@ const RouterWrapper = ({ extraRoutes }: RouterWrapperProps) => {
 				<CallProvider>
 					<MatrixClientProvider>
 						<TenantThemingLoader />
+						<LoginHandoverGate />
 						{startWebsocket && <WebsocketHandler />}
 						<Suspense fallback={<Loading />}>
 							<Routes>
