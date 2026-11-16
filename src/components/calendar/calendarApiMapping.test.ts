@@ -7,6 +7,7 @@ import {
 	loadWindow,
 	MAX_WINDOW_DAYS,
 	normalizeImportUrl,
+	proposalFromApi,
 	visibilityFromApi
 } from './calendarApiMapping';
 
@@ -216,5 +217,33 @@ describe('calendarApiMapping', () => {
 		const month = loadWindow(new Date(2026, 9, 26), new Date(2026, 11, 7));
 		const days = (month.to.getTime() - month.from.getTime()) / 86_400_000;
 		expect(days).toBeLessThanOrEqual(MAX_WINDOW_DAYS);
+	});
+});
+
+describe('proposalFromApi (move proposals v1)', () => {
+	const dto = {
+		id: 'p1',
+		entryId: 'a1',
+		start: '2026-11-17T13:00:00Z',
+		end: '2026-11-17T14:00:00Z',
+		entryStart: '2026-11-16T09:00:00Z',
+		entryEnd: '2026-11-16T10:00:00Z',
+		proposerId: 'kaya',
+		proposerName: 'A. Kaya',
+		approverId: 'me',
+		approverName: 'M. Muster',
+		createdAt: '2026-11-15T18:00:00Z'
+	};
+
+	it('keeps both times and both people', () => {
+		expect(proposalFromApi(dto)).toEqual(dto);
+	});
+
+	it('leaves out the names UserService did not send', () => {
+		const { proposerName, approverName, createdAt, ...bare } = dto;
+		const mapped = proposalFromApi({ ...bare, proposerName: null });
+		expect(mapped).toEqual(bare);
+		expect('proposerName' in mapped).toBe(false);
+		expect('approverName' in mapped).toBe(false);
 	});
 });

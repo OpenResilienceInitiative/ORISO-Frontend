@@ -8,8 +8,10 @@
  * - A colleague's appointment: propose a move; it stays where it is until
  *   the colleague accepts. Colleagues' blockers and busy time: nothing.
  *
- * UserService has no proposals yet; the page shows them only when its
- * host passes the proposal callbacks (Storybook does, the app does not).
+ * Proposals follow UserService's contract "move proposals v1" (ADR-032
+ * addendum): the proposer sends and withdraws, the appointment's owner
+ * accepts or declines. The page shows each side only when its host passes
+ * the callbacks for it.
  */
 import type { CalendarEntry, CalendarRole } from './calendarModel';
 
@@ -75,7 +77,49 @@ export interface MoveProposal {
 	/** ISO date-time of the proposed new time. */
 	start: string;
 	end: string;
+	/**
+	 * The entry's time when the proposal was made: the "from" of "from →
+	 * to", also when the entry itself is not loaded.
+	 */
+	entryStart?: string;
+	entryEnd?: string;
+	proposerId?: string;
+	proposerName?: string;
+	/** The entry's owner, who accepts or declines. */
+	approverId?: string;
+	approverName?: string;
+	createdAt?: string;
 }
+
+/**
+ * UserService answered 409 to "Annehmen": the appointment moved after the
+ * proposal was made, so the proposal no longer applies.
+ */
+export class ProposalNoLongerValid extends Error {
+	constructor() {
+		super('PROPOSAL_NO_LONGER_VALID');
+	}
+}
+
+/** The proposal waits for `ownerId`: it is about one of their entries. */
+export const receivedBy = (proposal: MoveProposal, ownerId: string) =>
+	!!proposal.approverId && proposal.approverId === ownerId;
+
+/**
+ * The entry a proposal is about, from what the proposal itself carries, for
+ * an entry outside the loaded time (or a colleague not shown).
+ */
+const standInEntry = (proposal: MoveProposal): CalendarEntry | undefined =>
+	proposal.entryStart && proposal.entryEnd && proposal.approverId
+		? {
+				id: proposal.entryId,
+				type: 'appointment',
+				start: proposal.entryStart,
+				end: proposal.entryEnd,
+				ownerId: proposal.approverId,
+				movable: false
+			}
+		: undefined;
 
 /** One proposal per entry: a new one replaces the older. */
 export const addProposal = (
@@ -91,13 +135,19 @@ export const withdrawProposal = (
 	id: string
 ): MoveProposal[] => proposals.filter((p) => p.id !== id);
 
-/** Proposals whose entry is still known, paired with it, oldest first. */
+/**
+ * Proposals paired with their entry, oldest first: the loaded entry, else
+ * one made from the proposal's own times. A proposal with neither is
+ * dropped.
+ */
 export const openProposals = (
 	proposals: MoveProposal[],
 	entries: CalendarEntry[]
 ) =>
 	proposals.flatMap((proposal) => {
-		const entry = entries.find((e) => e.id === proposal.entryId);
+		const entry =
+			entries.find((e) => e.id === proposal.entryId) ??
+			standInEntry(proposal);
 		return entry ? [{ proposal, entry }] : [];
 	});
 

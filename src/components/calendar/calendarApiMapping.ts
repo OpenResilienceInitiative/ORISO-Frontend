@@ -7,8 +7,10 @@ import type {
 	CalendarColleagueDTO,
 	CalendarColleaguesDTO,
 	CalendarEntryDTO,
+	CalendarProposalDTO,
 	CalendarSyncDTO
 } from '../../api/apiCalendar';
+import type { MoveProposal } from './calendarActions';
 import type { SessionAppointmentKind } from '../../api/apiSessionAppointments';
 import {
 	DEFAULT_APPOINTMENT_KIND,
@@ -71,6 +73,24 @@ export const entryFromApi = (dto: CalendarEntryDTO): CalendarEntry => {
 		movable: dto.movable === true
 	};
 };
+
+/**
+ * A move proposal as the page knows it. Names UserService leaves out (null
+ * fields are not sent) stay absent; the page then names nobody.
+ */
+export const proposalFromApi = (dto: CalendarProposalDTO): MoveProposal => ({
+	id: dto.id,
+	entryId: dto.entryId,
+	start: dto.start,
+	end: dto.end,
+	entryStart: dto.entryStart,
+	entryEnd: dto.entryEnd,
+	proposerId: dto.proposerId,
+	...(dto.proposerName && { proposerName: dto.proposerName }),
+	approverId: dto.approverId,
+	...(dto.approverName && { approverName: dto.approverName }),
+	...(dto.createdAt && { createdAt: dto.createdAt })
+});
 
 export const colleagueFromApi = (dto: CalendarColleagueDTO): Colleague => ({
 	id: dto.id,

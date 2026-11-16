@@ -3,6 +3,7 @@ import {
 	addProposal,
 	entryActions,
 	openProposals,
+	receivedBy,
 	withdrawProposal,
 	type MoveProposal
 } from './calendarActions';
@@ -98,6 +99,50 @@ describe('move proposals', () => {
 
 	it('withdraws a proposal', () => {
 		expect(withdrawProposal([proposal], 'p1')).toEqual([]);
+	});
+
+	it("never proposes a move of a colleague's group date or of one's own entries", () => {
+		const colleague = { ...own, ownerId: 'kaya', movable: false };
+		expect(
+			entryActions({ ...colleague, type: 'group' }, context)
+		).not.toContain('propose');
+		(['appointment', 'blocker', 'busy', 'group'] as const).forEach((type) =>
+			expect(entryActions({ ...own, type }, context)).not.toContain(
+				'propose'
+			)
+		);
+	});
+
+	it('tells received proposals from sent ones by the approver', () => {
+		expect(receivedBy({ ...proposal, approverId: 'me' }, 'me')).toBe(true);
+		expect(receivedBy({ ...proposal, approverId: 'kaya' }, 'me')).toBe(
+			false
+		);
+		expect(receivedBy(proposal, 'me')).toBe(false);
+	});
+
+	it("stands in for an entry that is not loaded with the proposal's own times", () => {
+		const far = {
+			...proposal,
+			id: 'p4',
+			entryId: 'a9',
+			entryStart: '2026-12-01T09:00:00.000Z',
+			entryEnd: '2026-12-01T10:00:00.000Z',
+			approverId: 'me'
+		};
+		expect(openProposals([far], [])).toEqual([
+			{
+				proposal: far,
+				entry: {
+					id: 'a9',
+					type: 'appointment',
+					start: '2026-12-01T09:00:00.000Z',
+					end: '2026-12-01T10:00:00.000Z',
+					ownerId: 'me',
+					movable: false
+				}
+			}
+		]);
 	});
 
 	it('pairs proposals with their entry and drops orphans', () => {
