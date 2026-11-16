@@ -1,6 +1,12 @@
 // @vitest-environment oriso-jsdom
 import * as React from 'react';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import {
+	act,
+	cleanup,
+	fireEvent,
+	render,
+	screen
+} from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { FormatCardCarousel } from './FormatCardCarousel';
 
@@ -129,6 +135,52 @@ describe('FormatCardCarousel', () => {
 		expect(scrollTo.mock.calls[1][0].left).toBe(0);
 		expect(previous.disabled).toBe(true);
 		expect(next.disabled).toBe(false);
+	});
+
+	it('hands keyboard focus to "previous" when one step reaches the end', () => {
+		// Start to end in a single step: "previous" is still disabled when
+		// "next" loses its use, so focus must follow once it is enabled.
+		const { container } = renderRow();
+		const scroller = getScroller(container);
+		stubGeometry(scroller, { scrollWidth: 1000, clientWidth: 700 });
+		fireEvent.scroll(scroller);
+
+		const previous = screen.getByRole('button', {
+			name: 'groupChat.format.cardsPrevious'
+		}) as HTMLButtonElement;
+		const next = screen.getByRole('button', {
+			name: 'groupChat.format.cardsNext'
+		}) as HTMLButtonElement;
+		next.focus();
+		expect(document.activeElement).toBe(next);
+
+		// jsdom focuses a disabled button that has a tabindex (MUI sets -1);
+		// browsers do not. Behave like a browser here.
+		const realFocus = HTMLElement.prototype.focus;
+		const focusSpy = vi
+			.spyOn(HTMLButtonElement.prototype, 'focus')
+			.mockImplementation(function (
+				this: HTMLButtonElement,
+				options?: FocusOptions
+			) {
+				if (!this.disabled) realFocus.call(this, options);
+			});
+
+		// A browser reports the jump in one scroll event after the click
+		// (reduced motion: no smooth scroll in between).
+		Object.defineProperty(scroller, 'scrollTo', {
+			configurable: true,
+			value: ({ left }: { left: number }) => {
+				scroller.scrollLeft = left;
+			}
+		});
+		fireEvent.click(next);
+		act(() => {
+			scroller.dispatchEvent(new Event('scroll'));
+		});
+		expect(next.disabled).toBe(true);
+		expect(document.activeElement).toBe(previous);
+		focusSpy.mockRestore();
 	});
 
 	it('uses real, focusable buttons so the arrows work from the keyboard', () => {

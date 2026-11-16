@@ -1,5 +1,11 @@
 import * as React from 'react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+	useCallback,
+	useEffect,
+	useLayoutEffect,
+	useRef,
+	useState
+} from 'react';
 import { Box, ButtonBase, SxProps, Theme } from '@mui/material';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
@@ -217,6 +223,8 @@ export const HoverScrollArrows = ({
 	const wrapperRef = useRef<HTMLDivElement>(null);
 	const previousRef = useRef<HTMLButtonElement>(null);
 	const nextRef = useRef<HTMLButtonElement>(null);
+	/** The arrow focus should move to once it is usable (see below). */
+	const pendingFocusRef = useRef<Side | null>(null);
 
 	useEffect(() => {
 		const track = targetRef.current;
@@ -238,11 +246,30 @@ export const HoverScrollArrows = ({
 				(!prev && active === previousRef.current) ||
 				(!next && active === nextRef.current);
 			if (losing) {
-				const other =
+				const destination: Side | null =
 					active === previousRef.current
-						? next && nextRef.current
-						: prev && previousRef.current;
-				(other || wrapperRef.current)?.focus({ preventScroll: true });
+						? next
+							? 'end'
+							: null
+						: prev
+							? 'start'
+							: null;
+				const button =
+					destination === 'end'
+						? nextRef.current
+						: destination === 'start'
+							? previousRef.current
+							: null;
+				if (button && !button.disabled) {
+					button.focus({ preventScroll: true });
+				} else {
+					// The other arrow is not usable yet: one step can go from
+					// start to end, so it is still disabled (`below`) or not
+					// mounted (`overlay`). Park focus on the wrapper and move it
+					// on once the new state is committed.
+					wrapperRef.current?.focus({ preventScroll: true });
+					pendingFocusRef.current = destination;
+				}
 			}
 			setCanPrev(prev);
 			setCanNext(next);
@@ -264,6 +291,24 @@ export const HoverScrollArrows = ({
 			track.removeEventListener('scroll', update);
 		};
 	}, [targetRef, targets]);
+
+	// Finish a hand-off the scroll update had to park on the wrapper.
+	useLayoutEffect(() => {
+		const destination = pendingFocusRef.current;
+		if (!destination) return;
+		pendingFocusRef.current = null;
+		const button =
+			destination === 'end' ? nextRef.current : previousRef.current;
+		const wrapper = wrapperRef.current;
+		if (
+			button &&
+			!button.disabled &&
+			wrapper &&
+			wrapper.ownerDocument.activeElement === wrapper
+		) {
+			button.focus({ preventScroll: true });
+		}
+	}, [canPrev, canNext]);
 
 	// Pointer position rather than `:hover` on the strips: the strips let
 	// the pointer through, so cards under them stay draggable and clickable.
