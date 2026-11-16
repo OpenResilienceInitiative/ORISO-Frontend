@@ -11,6 +11,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { M3Dialog } from '../m3Dialog/M3Dialog';
 import { Switch } from '../Switch';
+import { OrisoSelect } from '../form/OrisoSelect';
 import {
 	HOLIDAY_REGIONS,
 	isHolidayRegion,
@@ -335,33 +336,30 @@ export const WorkingHoursDialog = ({
 					</div>
 					{holidays && (
 						<div className="calendarHours__region">
-							<label className="calendarHours__time calendarHours__select">
-								<span>{t('calendar.holidays.region')}</span>
-								<select
+							{/* The MUI 3 select of the design system, not an own
+							    field (Frank *12). */}
+							<div className="calendarHours__select">
+								<OrisoSelect
+									label={t('calendar.holidays.region')}
 									value={region}
-									aria-invalid={regionMissing || undefined}
+									error={regionMissing}
 									aria-describedby="calendar-hours-next-holiday"
-									onChange={(e) =>
+									options={HOLIDAY_REGIONS.map((code) => ({
+										value: code,
+										label: t(
+											`calendar.holidays.regions.${code}`
+										)
+									}))}
+									onChange={(event) =>
 										setRegion(
-											isHolidayRegion(e.target.value)
-												? e.target.value
+											isHolidayRegion(event.target.value)
+												? event.target.value
 												: ''
 										)
 									}
 									data-cy="calendar-hours-region"
-								>
-									<option value="" disabled>
-										{t('calendar.holidays.choose')}
-									</option>
-									{HOLIDAY_REGIONS.map((code) => (
-										<option key={code} value={code}>
-											{t(
-												`calendar.holidays.regions.${code}`
-											)}
-										</option>
-									))}
-								</select>
-							</label>
+								/>
+							</div>
 							<p
 								id="calendar-hours-next-holiday"
 								className="calendarHours__next"

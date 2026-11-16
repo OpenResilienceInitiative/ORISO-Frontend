@@ -1940,13 +1940,18 @@ export const WorkingHoursPiece: StoryObj = {
 			dialog.getByRole('switch', { name: 'Feiertage frei' })
 		).toBeChecked();
 		const region = dialog.getByRole('combobox', { name: 'Bundesland' });
-		await expect((region as HTMLSelectElement).value).toBe('NW');
+		await expect(region).toHaveTextContent('Nordrhein-Westfalen');
 		await expect(
 			dialog.getByText(
 				'Nächster Feiertag: 1. Weihnachtstag, Fr., 25.12.2026'
 			)
 		).toBeTruthy();
-		await userEvent.selectOptions(region, 'SN');
+		await userEvent.click(region);
+		await userEvent.click(
+			await within(document.body).findByRole('option', {
+				name: 'Sachsen'
+			})
+		);
 		await expect(
 			dialog.getByText(
 				'Nächster Feiertag: Buß- und Bettag, Mi., 18.11.2026'
