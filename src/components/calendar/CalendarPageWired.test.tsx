@@ -1519,6 +1519,48 @@ describe('CalendarPageWired — move proposals (contract v1)', () => {
 		);
 	});
 
+	it('tells the advice seeker with the notice of a direct move, in the conversation the accept answer names', async () => {
+		// UserService posts nothing (it holds no Megolm keys): the page does.
+		// The appointment is not among the loaded entries; the answer names
+		// its conversation.
+		api.apiGetCalendarEntries.mockResolvedValue([]);
+		api.apiAcceptCalendarProposal.mockResolvedValue({
+			...OWN,
+			start: RECEIVED.start,
+			end: RECEIVED.end
+		});
+		await ready();
+		await act(() => props.onAcceptProposal?.(props.receivedProposals![0]));
+		expect(sendNotice).toHaveBeenCalledTimes(1);
+		const accepted = (sendNotice.mock.calls as unknown[][])[0][0];
+		expect(accepted).toEqual(
+			expect.objectContaining({
+				kind: 'moved',
+				sessionId: 4401,
+				matrixRoomId: '!room:oriso'
+			})
+		);
+		// Moving it directly to the same time posts the very same notice.
+		sendNotice.mockClear();
+		await act(() =>
+			props.onMove?.(
+				{
+					id: 'a1',
+					type: 'appointment',
+					kind: 'video',
+					sessionId: 4401,
+					ownerId: 'me',
+					start: OWN.start,
+					end: OWN.end,
+					movable: true
+				},
+				new Date(RECEIVED.start),
+				new Date(RECEIVED.end)
+			)
+		);
+		expect(sendNotice).toHaveBeenCalledWith(accepted);
+	});
+
 	it('turns a 409 on accept into "no longer valid" and reloads the calendar', async () => {
 		api.apiAcceptCalendarProposal.mockRejectedValue(new Error('CONFLICT'));
 		await ready();

@@ -136,4 +136,26 @@ describe('apiCalendar move proposals (FE#1050)', () => {
 			})
 		);
 	});
+
+	it('hands a refused or unknown proposal (400, 403, 404) to the page notice, never the error page', async () => {
+		await api.apiCreateCalendarProposal({
+			entryId: 'k1',
+			start: '2026-11-17T13:00:00.000Z',
+			end: '2026-11-17T14:00:00.000Z'
+		});
+		await api.apiAcceptCalendarProposal('p1');
+		await api.apiWithdrawCalendarProposal('p1');
+		await api.apiDeclineCalendarProposal('p1');
+		await api.apiGetCalendarProposals();
+		expect(fetchData).toHaveBeenCalledTimes(5);
+		for (const [request] of fetchData.mock.calls) {
+			// Any status but 401 rejects as CATCH_ALL ("Speichern
+			// fehlgeschlagen"); 401 keeps the session handling.
+			expect(request.responseHandling).toContain(
+				'CATCH_ALL_EXCEPT_UNAUTHORIZED'
+			);
+			// 204, also for a proposal already decided, is done.
+			expect(request.responseHandling).not.toContain('EMPTY');
+		}
+	});
 });
