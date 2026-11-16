@@ -37,6 +37,14 @@ const join = (day: Dayjs, time: Dayjs | null) =>
 		? day.hour(time.hour()).minute(time.minute()).second(0).millisecond(0)
 		: null;
 
+/** The end on the last day; 00:00 is the midnight after it. */
+const untilEnd = (lastDay: Dayjs, time: Dayjs | null) => {
+	const end = join(lastDay, time);
+	return end && end.hour() === 0 && end.minute() === 0
+		? end.add(1, 'day')
+		: end;
+};
+
 export interface BlockerDialogProps {
 	open: boolean;
 	/** Preset from a selected slot. */
@@ -67,12 +75,11 @@ export const BlockerDialog = ({
 	const first = slot
 		? dayjs(slot.start)
 		: dayjs(now).add(1, 'day').hour(8).minute(0);
+	// A selection ends on the day of its last included instant, so a slot
+	// 23:00–00:00 stays on one day, also when its end is edited to 23:45
+	// (review 4577641942). An end at 00:00 then means the midnight after
+	// that day.
 	const span = slot
-		? daySpan(slot.start, slot.end) - (wholeDays ? 1 : 0)
-		: 0;
-	// Whole days end on the day of the last included instant, so a slot
-	// 23:00–00:00 blocks one day, not two.
-	const allDaySpan = slot
 		? daySpan(slot.start, new Date(slot.end.getTime() - 1))
 		: 0;
 	const [day, setDay] = useState<Dayjs | null>(first.startOf('day'));
@@ -99,9 +106,9 @@ export const BlockerDialog = ({
 	// One more than the bound, so a series the bound would cut is noticed.
 	const expanded = useMemo(() => {
 		if (!day) return [];
-		const lastDay = day.add(allDay ? allDaySpan : span, 'day');
+		const lastDay = day.add(span, 'day');
 		const s = allDay ? day.startOf('day') : join(day, start);
-		const e = allDay ? lastDay.endOf('day') : join(lastDay, end);
+		const e = allDay ? lastDay.endOf('day') : untilEnd(lastDay, end);
 		if (!s || !e || !e.isAfter(s)) return [];
 		// Chosen weekdays without a last day are not a single blocker.
 		if (weekdays.length && !until) return [];
@@ -112,7 +119,7 @@ export const BlockerDialog = ({
 				: undefined,
 			MAX_BLOCKER_OCCURRENCES + 1
 		);
-	}, [day, span, allDaySpan, start, end, allDay, weekdays, until]);
+	}, [day, span, start, end, allDay, weekdays, until]);
 	const tooMany = expanded.length > MAX_BLOCKER_OCCURRENCES;
 	const ranges = tooMany ? [] : expanded;
 	// A repeat whose clock time the spring change skips; never saved.
