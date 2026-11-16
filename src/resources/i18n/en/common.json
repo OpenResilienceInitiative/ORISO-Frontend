@@ -1007,7 +1007,9 @@
 			"subtitle": "We offer different specialised conversation formats for you and the advice seekers. The selection is freely configurable by the organisations and your counselling centre.",
 			"title": "Choose conversation format",
 			"panelTitle": "Create new conversation",
-			"panelMenu": "More options"
+			"panelMenu": "More options",
+			"cardsPrevious": "Previous conversation format",
+			"cardsNext": "Next conversation format"
 		},
 		"internal": {
 			"addPerson": "Add person",
@@ -2876,7 +2878,10 @@
 						"label": "Close"
 					},
 					"headline": "An error has occurred. Please try again.",
-					"xReasonAlreadyRegistered": "You are already registered with this topic at the counseling center."
+					"xReasonAlreadyRegistered": "You are already registered with this topic at the counseling center.",
+					"badRequest": "This counselling centre could not create your request. Please choose another centre or try again later.",
+					"forbidden": "You cannot request a new counselling at this centre right now.",
+					"unavailable": "Your request could not be sent just now. Please try again in a few minutes."
 				}
 			},
 			"registerSuccess": {
@@ -6670,7 +6675,8 @@
 			"noteLabel": "Note from the counsellor",
 			"findAgency": "Find a counselling centre",
 			"requested": "Request sent",
-			"topicUnknown": "another topic"
+			"topicUnknown": "another topic",
+			"convertFirstHint": "To keep your conversation, you first create an account. Then you choose the counselling centre."
 		},
 		"duplicate": {
 			"startedTitle": "Further counselling on the same topic",

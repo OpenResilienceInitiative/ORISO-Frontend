@@ -189,24 +189,24 @@ describe('GroupCallWidget tells the call its conversation', () => {
 		expect(fragment.get('lang')).toBe('en');
 	});
 
-	it('a Gesprächskreis starts as a circle, without a topic', async () => {
+	it('a Gesprächskreis starts as a circle, titled by the chat', async () => {
 		sessionRooms.byRoomIds.mockResolvedValue(groupChat('SELF_HELP'));
 		answerCall(true);
 
 		const fragment = await callFragment(renderCall());
 
 		expect(fragment.get('orisoCallType')).toBe('circle');
-		expect(fragment.has('orisoTopic')).toBe(false);
+		expect(fragment.get('orisoTopic')).toBe('Montagsrunde');
 	});
 
-	it('a team group chat starts as a group', async () => {
+	it('a team group chat starts as a group, titled by the chat (#2233 live test)', async () => {
 		sessionRooms.byRoomIds.mockResolvedValue(groupChat('INTERNAL_GROUP'));
 		answerCall(true);
 
 		const fragment = await callFragment(renderCall());
 
 		expect(fragment.get('orisoCallType')).toBe('group');
-		expect(fragment.has('orisoTopic')).toBe(false);
+		expect(fragment.get('orisoTopic')).toBe('Montagsrunde');
 	});
 
 	it('builds the address only once the conversation has answered', async () => {

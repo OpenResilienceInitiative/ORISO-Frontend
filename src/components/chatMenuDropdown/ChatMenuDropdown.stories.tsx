@@ -2,7 +2,7 @@ import ReplyOutlinedIcon from '@mui/icons-material/ReplyOutlined';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import * as React from 'react';
 import i18n from '../../i18n';
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ReactComponent as ArchiveIcon } from '../../resources/img/icons/inbox.svg';
 import { ReactComponent as BellOffIcon } from '../../resources/img/icons/bell-off.svg';
 import { ReactComponent as HelpIcon } from '../../resources/img/icons/i.svg';

@@ -17,7 +17,8 @@ const mocks = vi.hoisted(() => ({
 	prepare: vi.fn(),
 	client: { getUserId: () => '@guest:example.test' },
 	matrixSubject: 'guest-a',
-	replacementOnHold: false
+	replacementOnHold: false,
+	dialogProps: vi.fn()
 }));
 vi.mock('react-router-dom', () => ({
 	useLocation: () => ({ state: { topicId: 17 } })
@@ -63,8 +64,16 @@ vi.mock('../profile/EncryptionSettings/RecoveryKeySaveStep', () => ({
 	)
 }));
 vi.mock('../profile/NewRequestDialog/NewRequestDialog', () => ({
-	NewRequestDialog: ({ open }: { open: boolean }) =>
-		open ? <div>Written request dialog</div> : null
+	NewRequestDialog: (props: { open: boolean }) => {
+		mocks.dialogProps(props);
+		return props.open ? <div>Written request dialog</div> : null;
+	}
+}));
+vi.mock('../furtherCounselling/useFurtherCounsellingPrefill', () => ({
+	useFurtherCounsellingPrefill: () => ({
+		prefilledPostcode: '10115',
+		knownAgencyIds: [42]
+	})
 }));
 
 const mount = () =>
@@ -216,6 +225,30 @@ describe('Live Chat conversion', () => {
 				'Sign in again with this login name and your new password.'
 			)
 		).toBeNull();
+	});
+
+	it('opens the request dialog with the recommended topic and the prefill after conversion (FE#2251)', async () => {
+		mocks.status.mockResolvedValue({
+			userId: 'guest-a',
+			username: 'guest-name',
+			state: 'PROMOTED',
+			intentId: 'intent'
+		});
+		mount();
+		fireEvent.click(
+			await screen.findByRole('button', {
+				name: 'Start a written request'
+			})
+		);
+		await screen.findByText('Written request dialog');
+		expect(mocks.dialogProps).toHaveBeenLastCalledWith(
+			expect.objectContaining({
+				open: true,
+				preselectedTopicId: 17,
+				prefilledPostcode: '10115',
+				knownAgencyIds: [42]
+			})
+		);
 	});
 
 	it('does not promise a preserved chat to an unrelated registered account', async () => {

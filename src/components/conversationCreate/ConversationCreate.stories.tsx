@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { expect, waitFor } from 'storybook/test';
 import { useRef, useState } from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ReactComponent as CircleIcon } from '../../resources/img/icons/self-help-group.svg';
 import { ReactComponent as InternalIcon } from '../../resources/img/icons/internal-conversation.svg';
 import {

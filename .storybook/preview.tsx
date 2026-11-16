@@ -1038,22 +1038,13 @@ const preview: Preview = {
 				}
 			}
 		},
+		// Storybook 9+ format: named options here, the active one in `globals.backgrounds`.
 		backgrounds: {
-			default: 'light',
-			values: [
-				{
-					name: 'light',
-					value: '#ffffff'
-				},
-				{
-					name: 'dark',
-					value: '#1a1a1a'
-				},
-				{
-					name: 'gray',
-					value: '#f5f5f5'
-				}
-			]
+			options: {
+				light: { name: 'light', value: '#ffffff' },
+				dark: { name: 'dark', value: '#1a1a1a' },
+				gray: { name: 'gray', value: '#f5f5f5' }
+			}
 		}
 	},
 	globalTypes: { ...orisoSchemeGlobalType, ...entryFormDemoGlobalTypes },
@@ -1064,7 +1055,8 @@ const preview: Preview = {
 			en: { icon: '🇺🇸', title: 'Englisch', right: 'EN' }
 		},
 		scheme: 'light',
-		entryFormDemo: 'manual'
+		entryFormDemo: 'manual',
+		backgrounds: { value: 'light' }
 	},
 	tags: ['autodocs'],
 	// The scheme decorator installs custom properties before the story

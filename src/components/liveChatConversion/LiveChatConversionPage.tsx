@@ -16,6 +16,7 @@ import { MATRIX_SESSION_SUBJECT_STORAGE_KEY } from '../../utils/matrixStorageKey
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 import { RecoveryKeySaveStep } from '../profile/EncryptionSettings/RecoveryKeySaveStep';
 import { NewRequestDialog } from '../profile/NewRequestDialog/NewRequestDialog';
+import { useFurtherCounsellingPrefill } from '../furtherCounselling/useFurtherCounsellingPrefill';
 import { Loading } from '../app/Loading';
 import { LiveChatConversionForm } from './LiveChatConversionForm';
 import {
@@ -31,6 +32,10 @@ export const LiveChatConversionPage = () => {
 	const location = useLocation();
 	const { userData } = useContext(UserDataContext);
 	const { matrixClientService } = useMatrixClient();
+	// FE#2251: same prefill as the 1:1 card; the live chat's placeholder
+	// postcode is never offered (pickPrefilledPostcode).
+	const { prefilledPostcode, knownAgencyIds } =
+		useFurtherCounsellingPrefill();
 	const [status, setStatus] = useState<ConversionStatus | null>(null);
 	const [key, setKey] = useState<string | null>(null);
 	const [keyConfirmed, setKeyConfirmed] = useState(false);
@@ -297,6 +302,8 @@ export const LiveChatConversionPage = () => {
 								? location.state.topicId
 								: undefined
 						}
+						prefilledPostcode={prefilledPostcode}
+						knownAgencyIds={knownAgencyIds}
 						open={newRequest}
 						onClose={() => setNewRequest(false)}
 					/>

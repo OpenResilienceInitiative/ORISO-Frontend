@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process';
+import { appendFileSync } from 'node:fs';
 import { constants } from 'node:os';
 import { pathToFileURL } from 'node:url';
 
@@ -221,6 +222,12 @@ export const shouldRetryStorybookRun = (
 	);
 };
 
+/** Why a retry happened: the two infrastructure failures `shouldRetryStorybookRun` accepts. */
+export const retryReason = (capturedOutput) =>
+	looksLikeBrowserDisconnect(capturedOutput)
+		? 'disconnects'
+		: 'importCrashes';
+
 const sleep = (ms) =>
 	new Promise((resolve) => {
 		setTimeout(resolve, ms);
@@ -322,6 +329,7 @@ const runShardWithRetries = async (index, count) => {
 	const args = storybookShardArgs(index, count);
 	const label = count > 1 ? ` (shard ${index}/${count})` : '';
 	let attempt = 0;
+	const retries = { disconnects: 0, importCrashes: 0 };
 	let lastRun = await runStorybookTests(args);
 
 	while (lastRun.code !== 0 && attempt < MAX_BROWSER_DISCONNECT_RETRIES) {
@@ -334,10 +342,11 @@ const runShardWithRetries = async (index, count) => {
 				lastRun
 			)
 		) {
-			return lastRun;
+			return { ...lastRun, retries };
 		}
 
 		attempt += 1;
+		retries[retryReason(lastRun.capturedOutput)] += 1;
 		console.warn(
 			`Vitest lost its Storybook browser connection; retrying${label} (${attempt}/${MAX_BROWSER_DISCONNECT_RETRIES}).` +
 				(lastRun.outputTruncated
@@ -348,11 +357,57 @@ const runShardWithRetries = async (index, count) => {
 		lastRun = await runStorybookTests(args);
 	}
 
-	return lastRun;
+	return { ...lastRun, retries };
+};
+
+/**
+ * One line per CI run that says how often a shard had to be re-run, split by
+ * cause. The shards and retries exist because of browser disconnects (#1316,
+ * #1988); this number is the evidence for keeping or removing them.
+ */
+export const formatRetrySummary = (shards) => {
+	const sum = (key) =>
+		shards.reduce((total, shard) => total + shard.retries[key], 0);
+	const disconnects = sum('disconnects');
+	const importCrashes = sum('importCrashes');
+	const retried = shards
+		.map((shard) => ({
+			index: shard.index,
+			count: shard.retries.disconnects + shard.retries.importCrashes
+		}))
+		.filter((shard) => shard.count > 0)
+		.map((shard) => `shard ${shard.index}: ${shard.count}`);
+	return (
+		`Storybook infrastructure retries in ${shards.length} shard(s): ` +
+		`${disconnects} browser disconnect(s), ${importCrashes} import crash(es)` +
+		(retried.length ? ` (${retried.join(', ')})` : '')
+	);
+};
+
+const reportRetries = (shards, env = process.env) => {
+	if (shards.length === 0) return;
+	const line = formatRetrySummary(shards);
+	console.log(line);
+	if (env.GITHUB_STEP_SUMMARY) {
+		try {
+			appendFileSync(env.GITHUB_STEP_SUMMARY, `${line}\n`);
+		} catch (error) {
+			console.warn(`Could not write the step summary: ${error}`);
+		}
+	}
 };
 
 const main = async () => {
 	const shardCount = resolveShardCount();
+	const shards = [];
+	try {
+		return await runAllShards(shardCount, shards);
+	} finally {
+		reportRetries(shards);
+	}
+};
+
+const runAllShards = async (shardCount, shards) => {
 	let firstFailure = 0;
 	for (let index = 1; index <= shardCount; index += 1) {
 		if (shardCount > 1) {
@@ -361,6 +416,7 @@ const main = async () => {
 			);
 		}
 		const run = await runShardWithRetries(index, shardCount);
+		shards.push({ index, retries: run.retries });
 		const code = run.code ?? 1;
 		// Signals, spawn/setup failures and exhausted infrastructure aborts do
 		// not become ordinary test failures or launch more owned browsers.

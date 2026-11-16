@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vite-plus/test';
 import {
 	canEndTopicDuplicate,
 	canRecommendFurtherCounselling,
+	canRecommendInModality,
+	isLiveChatFurtherCounsellingEnabled,
 	isTrustedRecommendationSender,
 	pickPrefilledPostcode,
 	resolvePostcodeMode
@@ -229,6 +231,30 @@ describe('postcode prefill', () => {
 		expect(pickPrefilledPostcode([], 'SMART')).toBeUndefined();
 	});
 
+	it('SMART never prefills the placeholder postcode of an anonymous live chat (FE#2251)', () => {
+		expect(
+			pickPrefilledPostcode(
+				[
+					session(3, { postcode: 0 }),
+					session(4, { postcode: '00000' as any })
+				],
+				'SMART'
+			)
+		).toBeUndefined();
+		expect(
+			pickPrefilledPostcode(
+				[
+					session(2, { postcode: 10115 }),
+					session(8, {
+						postcode: 99999,
+						registrationType: 'ANONYMOUS' as any
+					})
+				],
+				'SMART'
+			)
+		).toBe('10115');
+	});
+
 	it('ALWAYS_EMPTY never prefills', () => {
 		expect(
 			pickPrefilledPostcode(
@@ -275,5 +301,80 @@ describe('isTrustedRecommendationSender', () => {
 				consultantMatrixUserId: ''
 			})
 		).toBe(false);
+	});
+});
+
+describe('live chat: recommend further counselling only when the centre enables it (FE#2251)', () => {
+	const ready = (enabled: boolean | null | undefined, agencyId = 21) => ({
+		agencyId,
+		tenantId: 4,
+		state: 'ready' as const,
+		settings: { featureLiveChatFurtherCounsellingEnabled: enabled }
+	});
+
+	it("is on only for a ready answer of the open conversation's centre that says true", () => {
+		expect(isLiveChatFurtherCounsellingEnabled(ready(true), 21, 4)).toBe(
+			true
+		);
+		expect(isLiveChatFurtherCounsellingEnabled(ready(false), 21, 4)).toBe(
+			false
+		);
+		expect(isLiveChatFurtherCounsellingEnabled(ready(null), 21, 4)).toBe(
+			false
+		);
+		expect(
+			isLiveChatFurtherCounsellingEnabled(ready(undefined), 21, 4)
+		).toBe(false);
+	});
+
+	it('grants nothing for a stale, loading, unavailable or missing answer', () => {
+		expect(
+			isLiveChatFurtherCounsellingEnabled(ready(true, 22), 21, 4)
+		).toBe(false);
+		expect(isLiveChatFurtherCounsellingEnabled(ready(true), 21, 5)).toBe(
+			false
+		);
+		expect(
+			isLiveChatFurtherCounsellingEnabled(
+				{ ...ready(true), state: 'loading' },
+				21,
+				4
+			)
+		).toBe(false);
+		expect(
+			isLiveChatFurtherCounsellingEnabled(
+				{ ...ready(true), state: 'unavailable' },
+				21,
+				4
+			)
+		).toBe(false);
+		expect(isLiveChatFurtherCounsellingEnabled(undefined, 21, 4)).toBe(
+			false
+		);
+	});
+
+	it('accepts an answer without tenant id like the conversation feature policy does', () => {
+		expect(
+			isLiveChatFurtherCounsellingEnabled(
+				{ ...ready(true), tenantId: undefined },
+				21,
+				4
+			)
+		).toBe(true);
+	});
+
+	it('leaves 1:1 conversations unchanged and gates only the live chat', () => {
+		expect(
+			canRecommendInModality({
+				isLiveChat: false,
+				liveChatEnabled: false
+			})
+		).toBe(true);
+		expect(
+			canRecommendInModality({ isLiveChat: true, liveChatEnabled: false })
+		).toBe(false);
+		expect(
+			canRecommendInModality({ isLiveChat: true, liveChatEnabled: true })
+		).toBe(true);
 	});
 });

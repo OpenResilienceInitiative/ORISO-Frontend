@@ -2440,8 +2440,23 @@ export const MessageItemComponent = ({
 											// Timeline: never offered in a preview (#1824).
 											!readOnly &&
 											!blocksLeavingActions &&
-											hasUserAuthority(
+											(hasUserAuthority(
 												AUTHORITIES.ASKER_DEFAULT,
+												userData
+											) ||
+												hasUserAuthority(
+													AUTHORITIES.ANONYMOUS_DEFAULT,
+													userData
+												))
+										}
+										// FE#2251: a live-chat person converts the account first.
+										viewerIsAnonymous={
+											!hasUserAuthority(
+												AUTHORITIES.ASKER_DEFAULT,
+												userData
+											) &&
+											hasUserAuthority(
+												AUTHORITIES.ANONYMOUS_DEFAULT,
 												userData
 											)
 										}

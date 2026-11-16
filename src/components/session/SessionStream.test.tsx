@@ -1763,6 +1763,222 @@ describe('SessionStream Matrix room lifecycle', () => {
 		);
 	});
 
+	describe('read receipt for messages that arrive while the conversation is open (FE#1802)', () => {
+		const me = '@me:example.org';
+		const room = { roomId: ROOM_ID, myUserId: me };
+		const messageFrom = (sender: string) => ({
+			getType: () => 'm.room.message',
+			getSender: () => sender,
+			isEncrypted: () => true,
+			isDecryptionFailure: () => false
+		});
+		const setVisibility = (state: 'visible' | 'hidden') => {
+			Object.defineProperty(document, 'visibilityState', {
+				configurable: true,
+				get: () => state
+			});
+		};
+		const emitLive = (event: any, toStart = false) =>
+			act(() =>
+				mocks.timelineListeners.forEach((listener) =>
+					listener(event, room, toStart)
+				)
+			);
+		const openConversation = async () => {
+			renderSessionStream({ isGroup: true });
+			await waitFor(() => expect(mocks.timelineListeners.length).toBe(1));
+			await waitFor(() =>
+				expect(mocks.readActiveSession).toHaveBeenCalled()
+			);
+			await passCoalescingWindow();
+			mocks.readActiveSession.mockClear();
+		};
+
+		afterEach(() => {
+			delete (document as any).visibilityState;
+			mocks.resolveSession.mockImplementation(() => ({
+				isMatrixSession: true,
+				matrixRoomId: ROOM_ID,
+				sessionId: 1
+			}));
+		});
+
+		it('marks the room read when the other side writes', async () => {
+			setVisibility('visible');
+			await openConversation();
+
+			emitLive(messageFrom('@peer:example.org'));
+
+			await waitFor(() =>
+				expect(mocks.readActiveSession).toHaveBeenCalledTimes(1)
+			);
+		});
+
+		it('marks read only once a peer message is decrypted, never for one that failed', async () => {
+			setVisibility('visible');
+			await openConversation();
+			const peer = '@peer:example.org';
+
+			emitLive({
+				getType: () => 'm.room.encrypted',
+				getSender: () => peer
+			});
+			emitLive({
+				getType: () => 'm.room.message',
+				getSender: () => peer,
+				isEncrypted: () => true,
+				isDecryptionFailure: () => true
+			});
+			await act(() => new Promise((resolve) => setTimeout(resolve, 50)));
+			expect(mocks.readActiveSession).not.toHaveBeenCalled();
+
+			emitLive(messageFrom(peer));
+			await waitFor(() =>
+				expect(mocks.readActiveSession).toHaveBeenCalledTimes(1)
+			);
+		});
+
+		it('does not mark read for its own message or older history', async () => {
+			setVisibility('visible');
+			await openConversation();
+
+			emitLive(messageFrom(me));
+			emitLive(messageFrom('@peer:example.org'), true);
+			await act(() => new Promise((resolve) => setTimeout(resolve, 50)));
+
+			expect(mocks.readActiveSession).not.toHaveBeenCalled();
+		});
+
+		it('waits while a phone side panel hides the conversation, then marks read on return', async () => {
+			setVisibility('visible');
+			await openConversation();
+			act(() => mocks.sessionItemProps.onMainChatHiddenChange(true));
+
+			emitLive(messageFrom('@peer:example.org'));
+			await act(() => new Promise((resolve) => setTimeout(resolve, 50)));
+			expect(mocks.readActiveSession).not.toHaveBeenCalled();
+
+			act(() => mocks.sessionItemProps.onMainChatHiddenChange(false));
+			await waitFor(() =>
+				expect(mocks.readActiveSession).toHaveBeenCalledTimes(1)
+			);
+		});
+
+		it('drops a deferred read when the conversation changes before the tab is visible again', async () => {
+			setVisibility('visible');
+			const view = renderSessionStream({ isGroup: true });
+			await waitFor(() => expect(mocks.timelineListeners.length).toBe(1));
+			await waitFor(() =>
+				expect(mocks.readActiveSession).toHaveBeenCalled()
+			);
+			await passCoalescingWindow();
+			setVisibility('hidden');
+			emitLive(messageFrom('@peer:example.org'));
+			await act(() => new Promise((resolve) => setTimeout(resolve, 50)));
+
+			mocks.resolveSession.mockImplementation((session: any) => ({
+				isMatrixSession: true,
+				matrixRoomId: session?.item?.matrixRoomId ?? ROOM_ID,
+				sessionId: session?.item?.id ?? 1
+			}));
+			view.rerender(
+				sessionStreamElement({
+					isGroup: true,
+					activeSession: {
+						rid: '!other:example.org',
+						isGroup: true,
+						isSession: true,
+						item: {
+							id: 2,
+							matrixRoomId: '!other:example.org',
+							active: true,
+							status: 2,
+							conversationType: 'AGENCY_COUNSELLING'
+						}
+					} as any
+				})
+			);
+			await act(() => new Promise((resolve) => setTimeout(resolve, 50)));
+			mocks.readActiveSession.mockClear();
+
+			setVisibility('visible');
+			act(() => {
+				document.dispatchEvent(new Event('visibilitychange'));
+			});
+			await act(() => new Promise((resolve) => setTimeout(resolve, 50)));
+			expect(mocks.readActiveSession).not.toHaveBeenCalled();
+		});
+
+		it('keeps a deferred read when the same conversation re-attaches for its supervision room', async () => {
+			const supervisors = deferred<any[]>();
+			mocks.getSessionSupervisors.mockReturnValueOnce(
+				supervisors.promise
+			);
+			setVisibility('visible');
+			renderSessionStream({
+				isGroup: false,
+				userData: consultantUserData,
+				activeSession: {
+					rid: ROOM_ID,
+					isGroup: false,
+					isSession: true,
+					item: {
+						id: 1,
+						matrixRoomId: ROOM_ID,
+						active: true,
+						status: 2
+					}
+				} as any
+			});
+			await waitFor(() => expect(mocks.timelineListeners.length).toBe(1));
+			await waitFor(() =>
+				expect(mocks.readActiveSession).toHaveBeenCalled()
+			);
+			await passCoalescingWindow();
+			mocks.readActiveSession.mockClear();
+
+			setVisibility('hidden');
+			emitLive(messageFrom('@peer:example.org'));
+			await act(() => new Promise((resolve) => setTimeout(resolve, 50)));
+			await act(async () => {
+				supervisors.resolve([
+					{
+						id: 7,
+						supervisorConsultantId: 'someone-else',
+						matrixRoomId: '!supervision:example.org'
+					}
+				]);
+			});
+			await waitFor(() => expect(mocks.timelineListeners.length).toBe(2));
+
+			setVisibility('visible');
+			act(() => {
+				document.dispatchEvent(new Event('visibilitychange'));
+			});
+			await waitFor(() =>
+				expect(mocks.readActiveSession).toHaveBeenCalledTimes(1)
+			);
+		});
+
+		it('waits until the tab is visible again before marking read', async () => {
+			setVisibility('visible');
+			await openConversation();
+			setVisibility('hidden');
+
+			emitLive(messageFrom('@peer:example.org'));
+			await act(() => new Promise((resolve) => setTimeout(resolve, 50)));
+			expect(mocks.readActiveSession).not.toHaveBeenCalled();
+
+			setVisibility('visible');
+			act(() => {
+				document.dispatchEvent(new Event('visibilitychange'));
+			});
+			await waitFor(() =>
+				expect(mocks.readActiveSession).toHaveBeenCalledTimes(1)
+			);
+		});
+	});
+
 	it('counts only the asker receipt for a counsellor message in a 1:1 (FE#1802, ADR-002)', async () => {
 		const counsellor = '@counsellor:example.org';
 		const asker = '@asker:example.org';

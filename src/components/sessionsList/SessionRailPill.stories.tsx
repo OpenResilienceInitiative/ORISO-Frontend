@@ -188,9 +188,9 @@ function MixedRail() {
 const meta: Meta<typeof SessionRailPill> = {
 	title: 'Components/Session/List/Session rail pill',
 	component: SessionRailPill,
+	globals: { backgrounds: { value: 'gray' } },
 	parameters: {
 		layout: 'centered',
-		backgrounds: { default: 'gray' },
 		design: [
 			{
 				type: 'figma',

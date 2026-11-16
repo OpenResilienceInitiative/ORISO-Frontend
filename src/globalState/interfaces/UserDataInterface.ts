@@ -114,6 +114,11 @@ export interface AgencySettingsInterface
 	featureDirectInviteChatEnabled?: boolean | null;
 	featureDirectInviteAudioEnabled?: boolean | null;
 	featureDirectInviteVideoEnabled?: boolean | null;
+	/**
+	 * Centre-owned "Weitere Beratung im Live-Chat empfehlen" (FE#2251), served
+	 * as stored by the AgencyService: absent or null means off.
+	 */
+	featureLiveChatFurtherCounsellingEnabled?: boolean | null;
 }
 
 export interface AgencyDepartmentDataInterface {
