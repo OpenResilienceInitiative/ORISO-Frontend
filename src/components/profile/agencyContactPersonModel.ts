@@ -7,8 +7,8 @@ import type {
 const KEY = 'profile.data.agency.contactPerson';
 
 /**
- * One plain address only. Every address shown here ends up in a `mailto:`
- * href, so anything that could add recipients, headers or a body (`?`, `&`,
+ * One plain address only. Only an address that passes this check becomes a
+ * `mailto:` link, so anything that could add recipients, headers or a body (`?`, `&`,
  * `,`, `;`, whitespace, angle brackets) is rejected rather than escaped. `%` is
  * rejected too: a mail client decodes it, so `a%2Bb@x` would write to a
  * different mailbox than shown. A rejected address of a contact person is shown
