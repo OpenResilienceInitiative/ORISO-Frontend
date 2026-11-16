@@ -284,12 +284,26 @@ export const useCaseHandoverOffer = () => {
 		onResolution: handleResolutionEvent
 	});
 
-	useEffect(
-		() => () => {
+	// The hosts (SessionMenu, AskerInfoAssign) keep this hook across session
+	// and actor changes, so drop everything the old session owned: an open
+	// dialog must never submit session B with session A's revision or
+	// recipient, and a submit cut off by the change must not leave the
+	// dialog stuck as busy.
+	useEffect(() => {
+		setOpen(false);
+		setLoading(false);
+		setBusy(false);
+		setError('');
+		setStatus(undefined);
+		setOfferStatus(undefined);
+		setCandidates([]);
+		setSelectedId('');
+		setReasonCode('');
+		submittingRef.current = false;
+		return () => {
 			generationRef.current += 1;
-		},
-		[actorId, sessionId]
-	);
+		};
+	}, [actorId, sessionId]);
 
 	const submitOffer = async () => {
 		if (
@@ -344,7 +358,9 @@ export const useCaseHandoverOffer = () => {
 					submittingRef.current = false;
 					setBusy(false);
 					await loadForm();
-					setError(translate('caseHandover.offer.conflict'));
+					// The dialog may have been closed or reopened during the reload.
+					if (generation === generationRef.current)
+						setError(translate('caseHandover.offer.conflict'));
 					return;
 				}
 				setError(translate('caseHandover.offer.submitError'));
