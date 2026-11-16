@@ -547,7 +547,13 @@ export const CalendarView = ({
 	const events = useMemo<EventInput[]>(
 		() => [
 			...gridEntries.map((entry) => ({
-				id: entry.id,
+				// One appointment can be in two calendars (co-access): the
+				// grid keeps one event per id, so a colleague's copy needs
+				// its own.
+				id:
+					entry.ownerId === ownerId
+						? entry.id
+						: `${entry.ownerId}/${entry.id}`,
 				start: entry.start,
 				end: entry.allDay ? allDayEnd(entry.end) : entry.end,
 				allDay: !!entry.allDay,
@@ -754,7 +760,10 @@ export const CalendarView = ({
 	// the time changes: the name follows the time, or a moved or accepted
 	// appointment would still be read out at its old time.
 	useEffect(() => {
-		const byId = new Map(entries.map((entry) => [entry.id, entry]));
+		// By owner too: a co-access appointment is in two calendars.
+		const byId = new Map(
+			entries.map((entry) => [`${entry.ownerId}/${entry.id}`, entry])
+		);
 		gridRef.current
 			?.querySelectorAll<HTMLElement>('[data-entry-id]')
 			.forEach((el) => {
@@ -764,7 +773,7 @@ export const CalendarView = ({
 					: undefined;
 				const entry = proposalId
 					? found?.entry
-					: byId.get(el.dataset.entryId ?? '');
+					: byId.get(`${el.dataset.owner}/${el.dataset.entryId}`);
 				if (!entry) return;
 				const name = ariaLabelOf(entry, found?.proposal);
 				if (el.getAttribute('aria-label') !== name)
@@ -791,7 +800,9 @@ export const CalendarView = ({
 			const found = proposals.find((p) => p.proposal.id === proposalId);
 			return found ? { el, ...found } : null;
 		}
-		const entry = entries.find((e) => e.id === el.dataset.entryId);
+		const entry = entries.find(
+			(e) => e.id === el.dataset.entryId && e.ownerId === el.dataset.owner
+		);
 		if (!entry || entry.ownerId === ownerId) return null;
 		return { el, entry };
 	};
