@@ -33,6 +33,7 @@ import { NotificationsContext } from '../../../globalState/provider/Notification
 import { setAppConfig } from '../../../utils/appConfig';
 import {
 	FAKE_CALL_ID,
+	FAKE_CALLER_USER_ID,
 	FAKE_CURRENT_USER_ID,
 	FAKE_ELEMENT_CALL_ROOM_ID,
 	FAKE_SIGNAL_ROOM_ID,
@@ -992,6 +993,21 @@ describe('what the host adds around the call', () => {
 		seedIncomingElementCall();
 		callManager.answerCall();
 	};
+	// Only a 1:1 session call has a share link (UserService
+	// `CallShareLinkService.requireCounsellorCall`).
+	const activeSessionCall = () => {
+		resetCallManager();
+		callManager.receiveCall(
+			FAKE_ELEMENT_CALL_ROOM_ID,
+			true,
+			FAKE_CALL_ID,
+			FAKE_CALLER_USER_ID,
+			false,
+			FAKE_SIGNAL_ROOM_ID,
+			true
+		);
+		callManager.answerCall();
+	};
 
 	const counsellor = {
 		userId: '@berater:matrix.storybook.test',
@@ -1001,10 +1017,19 @@ describe('what the host adds around the call', () => {
 	it("asks for knocks in a counsellor's Element Call call", async () => {
 		knockApi.pending.mockClear();
 		knockApi.shareLink.mockClear();
-		activeCall();
+		activeSessionCall();
 		withUser(counsellor, makeFakeMatrixClientService('active'));
 		await waitFor(() => expect(knockApi.pending).toHaveBeenCalled());
 		expect(knockApi.shareLink).toHaveBeenCalled();
+	});
+
+	it("never asks for a group call's share link: it has none", async () => {
+		knockApi.pending.mockClear();
+		knockApi.shareLink.mockClear();
+		activeCall();
+		withUser(counsellor, makeFakeMatrixClientService('active'));
+		await waitFor(() => expect(knockApi.pending).toHaveBeenCalled());
+		expect(knockApi.shareLink).not.toHaveBeenCalled();
 	});
 
 	describe('call design: "Link teilen" in the call (S8)', () => {
@@ -1055,7 +1080,7 @@ describe('what the host adds around the call', () => {
 				settings: { knock: true, temporaryAccount: true },
 				temporaryAccountAllowed: true
 			});
-			activeCall();
+			activeSessionCall();
 			const view = withUser(
 				counsellor,
 				makeFakeMatrixClientService('active')
@@ -1081,7 +1106,7 @@ describe('what the host adds around the call', () => {
 		it('answers with an error when no link can be made', async () => {
 			shareLinkApi.create.mockReset();
 			shareLinkApi.create.mockResolvedValue(null);
-			activeCall();
+			activeSessionCall();
 			withUser(counsellor, makeFakeMatrixClientService('active'));
 			const { api, detail } = await inviteLink();
 			await waitFor(
@@ -1091,6 +1116,17 @@ describe('what the host adds around the call', () => {
 					}),
 				{ timeout: 3000 }
 			);
+		});
+
+		it('offers no link in a group call: it has none', async () => {
+			shareLinkApi.create.mockReset();
+			activeCall();
+			const view = withUser(
+				counsellor,
+				makeFakeMatrixClientService('active')
+			);
+			expect((await iframeUrl(view)).has('orisoInvite')).toBe(false);
+			expect(shareLinkApi.create).not.toHaveBeenCalled();
 		});
 
 		it('offers an advice seeker no link', async () => {
