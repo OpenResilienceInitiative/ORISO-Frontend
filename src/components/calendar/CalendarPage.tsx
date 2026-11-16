@@ -348,6 +348,12 @@ type Dialog =
 			slot?: { start: Date; end: Date };
 			/** Ticked already: "Wöchentlich …" after a single blocker. */
 			weekdays?: number[];
+			/**
+			 * "Wöchentlich …": the single blocker the series replaces. It
+			 * stays until the series is saved (reviews 4589304582,
+			 * 4589304593, 4589150206).
+			 */
+			replaces?: { entry: CalendarEntry; draft: AppointmentDraft };
 	  }
 	| { type: 'workingHours' }
 	| { type: 'sync' }
@@ -400,7 +406,7 @@ interface Notice {
 	/** Nothing (or not all) was stored: try the same change again. */
 	retry?: () => void;
 	/** One blocker entered: "Wöchentlich …" turns it into a series. */
-	weekly?: { start: Date; end: Date };
+	weekly?: { entry: CalendarEntry; draft: AppointmentDraft };
 }
 
 /**
@@ -908,7 +914,7 @@ export const CalendarPage = ({
 				drafts.length === 1 &&
 				onRemoveBlocker &&
 				createdEntries.length === 1
-					? { start: first.start, end: first.end }
+					? { entry: createdEntries[0], draft: first }
 					: undefined
 		};
 	};
@@ -1094,18 +1100,80 @@ export const CalendarPage = ({
 	};
 
 	/**
-	 * "Wöchentlich …" (prototype v17): the single blocker goes, the blocker
-	 * form opens with its time and its weekday ticked.
+	 * "Wöchentlich …" (prototype v17): the blocker form opens with the single
+	 * blocker's time and its weekday ticked. The single blocker stays until
+	 * the series is saved, so closing the form loses nothing.
 	 */
 	const weekly = (current: Notice) => {
 		if (!current.weekly) return;
-		const { start, end } = current.weekly;
-		undo(current);
+		const { entry, draft } = current.weekly;
+		setNotice(null);
 		setDialog({
 			type: 'blocker',
-			slot: { start, end },
-			weekdays: [start.getDay()]
+			slot: { start: draft.start, end: draft.end },
+			weekdays: [draft.start.getDay()],
+			replaces: current.weekly
 		});
+	};
+
+	/**
+	 * The series failed after the single blocker went: put it back. The
+	 * open form then replaces the restored one, or nothing if that failed.
+	 */
+	const restoreBlocker = (replaces: {
+		entry: CalendarEntry;
+		draft: AppointmentDraft;
+	}) => {
+		const follow = (restored: unknown) => {
+			const again =
+				Array.isArray(restored) && restored.length === 1
+					? (restored[0] as CalendarEntry)
+					: undefined;
+			setDialog((current) =>
+				current?.type === 'blocker' && current.replaces === replaces
+					? {
+							...current,
+							replaces: again
+								? { entry: again, draft: replaces.draft }
+								: undefined
+						}
+					: current
+			);
+		};
+		Promise.resolve()
+			.then(() => onCreate?.([replaces.draft]))
+			.then(follow, () => follow(undefined));
+	};
+
+	/**
+	 * Saving the series: the single blocker goes first, and only once it is
+	 * gone is the series created, so the first date is never blocked twice.
+	 * A refused or failed removal creates nothing and keeps the form open;
+	 * a failed series puts the single blocker back.
+	 */
+	const replaceBlocker = (
+		replaces: { entry: CalendarEntry; draft: AppointmentDraft },
+		drafts: AppointmentDraft[]
+	): Promise<boolean> | boolean => {
+		if (creating.current) return false;
+		creating.current = true;
+		return Promise.resolve()
+			.then(() => onRemoveBlocker?.(replaces.entry))
+			.then(
+				(value) => value !== false,
+				() => false
+			)
+			.then((removed) => {
+				creating.current = false;
+				if (!removed) {
+					setNotice({ message: t('calendar.saveFailed') });
+					return false;
+				}
+				return Promise.resolve(create(drafts, true)).then((stored) => {
+					if (!stored) restoreBlocker(replaces);
+					return stored;
+				});
+			});
 	};
 
 	const propose = (entry: CalendarEntry, start: Date, end: Date) => {
@@ -2677,12 +2745,22 @@ export const CalendarPage = ({
 						dialog.type === 'blocker' ? dialog.weekdays : undefined
 					}
 					conversations={conversations}
-					entries={entries}
+					entries={
+						dialog.type === 'blocker' && dialog.replaces
+							? entries.filter(
+									(e) => e.id !== dialog.replaces?.entry.id
+								)
+							: entries
+					}
 					ownerId={ownerId}
 					now={now}
 					fullScreen={compact}
 					onSaveAppointment={(draft) => create([draft], true)}
-					onSaveBlocker={(drafts) => create(drafts, true)}
+					onSaveBlocker={(drafts) =>
+						dialog.type === 'blocker' && dialog.replaces
+							? replaceBlocker(dialog.replaces, drafts)
+							: create(drafts, true)
+					}
 					onWorkingHours={
 						editHours
 							? () => setDialog({ type: 'workingHours' })

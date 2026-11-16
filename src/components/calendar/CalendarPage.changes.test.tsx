@@ -59,15 +59,18 @@ vi.mock('./CalendarView', async (importOriginal) => {
    it was opened with. */
 const dialog: {
 	save?: (draft: unknown) => void;
+	saveBlocker?: (drafts: unknown[]) => unknown;
 	close?: () => void;
 	props?: Record<string, unknown>;
 } = {};
 vi.mock('./NewEntryDialog', () => ({
 	NewEntryDialog: (props: {
 		onSaveAppointment: (draft: unknown) => void;
+		onSaveBlocker: (drafts: unknown[]) => unknown;
 		onClose: () => void;
 	}) => {
 		dialog.save = props.onSaveAppointment;
+		dialog.saveBlocker = props.onSaveBlocker;
 		dialog.close = props.onClose;
 		dialog.props = props as unknown as Record<string, unknown>;
 		return <div data-testid="appointment-dialog" />;
@@ -834,7 +837,7 @@ describe('CalendarPage — the slot menu, prototype v17 (#115, #116)', () => {
 		});
 	});
 
-	it('"Wöchentlich …" takes the single blocker back and opens the blocker form with its weekday', async () => {
+	describe('"Wöchentlich …" (reviews 4589304582, 4589304593, 4589150206)', () => {
 		const created: CalendarEntry = {
 			id: 'b1',
 			type: 'blocker',
@@ -842,30 +845,120 @@ describe('CalendarPage — the slot menu, prototype v17 (#115, #116)', () => {
 			end: END.toISOString(),
 			ownerId: 'me'
 		};
-		const removed: CalendarEntry[] = [];
-		const onRemoveBlocker = vi.fn((entry: CalendarEntry) => {
-			removed.push(entry);
-			return Promise.resolve();
+		const series = [
+			{ type: 'blocker', start: START, end: END },
+			{
+				type: 'blocker',
+				start: new Date(2026, 10, 23, 14),
+				end: new Date(2026, 10, 23, 15)
+			}
+		];
+		const openWeekly = async (
+			props: Partial<React.ComponentProps<typeof CalendarPage>>
+		) => {
+			page(props);
+			select();
+			await act(async () => {
+				fireEvent.click(byCy('calendar-slot-blocker') as HTMLElement);
+			});
+			expect(
+				screen.getByText('calendar.blocker.createdSingle')
+			).toBeTruthy();
+			await act(async () => {
+				fireEvent.click(await screen.findByTestId('calendar-weekly'));
+			});
+		};
+
+		it('opens the blocker form with its weekday and keeps the single blocker meanwhile', async () => {
+			const onRemoveBlocker = vi.fn(() => Promise.resolve());
+			await openWeekly({
+				onCreate: () => Promise.resolve([created]),
+				onRemoveBlocker
+			});
+			expect(dialog.props?.initialTab).toBe('blocker');
+			expect(dialog.props?.slot).toEqual({ start: START, end: END });
+			// 16 November 2026 is a Monday.
+			expect(dialog.props?.initialWeekdays).toEqual([1]);
+			// The form does not count the blocker it replaces as a conflict.
+			expect(
+				(dialog.props?.entries as CalendarEntry[]).map((e) => e.id)
+			).not.toContain('b1');
+			expect(screen.queryByTestId('calendar-weekly')).toBeNull();
+			expect(onRemoveBlocker).not.toHaveBeenCalled();
+			// Closing the form loses nothing.
+			act(() => dialog.close?.());
+			expect(screen.queryByTestId('appointment-dialog')).toBeNull();
+			expect(onRemoveBlocker).not.toHaveBeenCalled();
 		});
-		page({
-			onCreate: () => Promise.resolve([created]),
-			onRemoveBlocker
+
+		it('removes the single blocker first and creates the series once it is gone', async () => {
+			const order: string[] = [];
+			const onCreate = vi.fn((drafts: unknown[]) => {
+				order.push(`create:${drafts.length}`);
+				return Promise.resolve(drafts.length === 1 ? [created] : []);
+			});
+			const onRemoveBlocker = vi.fn((entry: CalendarEntry) => {
+				order.push(`remove:${entry.id}`);
+				return Promise.resolve();
+			});
+			await openWeekly({ onCreate, onRemoveBlocker });
+			let saved: unknown;
+			await act(async () => {
+				saved = await dialog.saveBlocker?.(series);
+			});
+			expect(saved).toBe(true);
+			expect(order).toEqual(['create:1', 'remove:b1', 'create:2']);
+			expect(screen.queryByTestId('appointment-dialog')).toBeNull();
 		});
-		select();
-		await act(async () => {
-			fireEvent.click(byCy('calendar-slot-blocker') as HTMLElement);
+
+		it.each([
+			['refused', () => false as const],
+			['failed', () => Promise.reject(new Error('500'))]
+		])(
+			'creates no series and keeps the form when the removal is %s',
+			async (_, removal) => {
+				const onCreate = vi.fn(() => Promise.resolve([created]));
+				await openWeekly({
+					onCreate,
+					onRemoveBlocker: vi.fn(removal)
+				});
+				let saved: unknown;
+				await act(async () => {
+					saved = await dialog.saveBlocker?.(series);
+				});
+				expect(saved).toBe(false);
+				expect(onCreate).toHaveBeenCalledTimes(1);
+				expect(screen.getByText('calendar.saveFailed')).toBeTruthy();
+				expect(screen.getByTestId('appointment-dialog')).toBeTruthy();
+			}
+		);
+
+		it('puts the single blocker back when the series fails', async () => {
+			const restored = { ...created, id: 'b2' };
+			const onCreate = vi
+				.fn()
+				.mockResolvedValueOnce([created])
+				.mockRejectedValueOnce(new Error('500'))
+				.mockResolvedValueOnce([restored]);
+			const onRemoveBlocker = vi.fn(() => Promise.resolve());
+			await openWeekly({ onCreate, onRemoveBlocker });
+			let saved: unknown;
+			await act(async () => {
+				saved = await dialog.saveBlocker?.(series);
+			});
+			expect(saved).toBe(false);
+			await waitFor(() => expect(onCreate).toHaveBeenCalledTimes(3));
+			expect(onCreate.mock.calls[2][0]).toEqual([
+				{ type: 'blocker', start: START, end: END }
+			]);
+			expect(screen.getByTestId('appointment-dialog')).toBeTruthy();
+			// Saving again replaces the restored blocker, not the gone one.
+			onCreate.mockResolvedValueOnce([]);
+			await act(async () => {
+				await dialog.saveBlocker?.(series);
+			});
+			expect(onRemoveBlocker).toHaveBeenLastCalledWith(restored);
 		});
-		expect(screen.getByText('calendar.blocker.createdSingle')).toBeTruthy();
-		await act(async () => {
-			fireEvent.click(await screen.findByTestId('calendar-weekly'));
-		});
-		expect(onRemoveBlocker).toHaveBeenCalledTimes(1);
-		expect(removed).toEqual([created]);
-		expect(dialog.props?.initialTab).toBe('blocker');
-		expect(dialog.props?.slot).toEqual({ start: START, end: END });
-		// 16 November 2026 is a Monday.
-		expect(dialog.props?.initialWeekdays).toEqual([1]);
-		expect(screen.queryByTestId('calendar-weekly')).toBeNull();
 	});
 
 	it('offers no "Wöchentlich …" for an appointment', async () => {
