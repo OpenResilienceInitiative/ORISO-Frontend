@@ -4001,6 +4001,7 @@
 			"open": "Hand over consultation",
 			"loadForbidden": "You are not authorised to load eligible colleagues.",
 			"loadError": "The handover form could not be loaded.",
+			"loading": "Loading the handover form …",
 			"submitError": "The handover request could not be sent.",
 			"conflict": "This consultation already has an open handover offer, or it has changed. Check the current state before sending a new offer.",
 			"status": {

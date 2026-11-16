@@ -4055,6 +4055,7 @@
 			"open": "Beratung übergeben",
 			"loadForbidden": "Sie dürfen die berechtigten Kolleg:innen nicht laden.",
 			"loadError": "Das Übergabeformular konnte nicht geladen werden.",
+			"loading": "Übergabeformular wird geladen …",
 			"submitError": "Die Übergabeanfrage konnte nicht gesendet werden.",
 			"conflict": "Für diese Beratung gibt es bereits ein offenes Übergabeangebot, oder sie hat sich geändert. Prüfen Sie den aktuellen Stand, bevor Sie ein neues Angebot senden.",
 			"status": {

@@ -4035,6 +4035,7 @@
 			"open": "Transférer la consultation",
 			"loadForbidden": "Vous n’êtes pas autorisé à charger les collègues éligibles.",
 			"loadError": "Le formulaire n’a pas pu être chargé.",
+			"loading": "Chargement du formulaire …",
 			"submitError": "La demande n’a pas pu être envoyée.",
 			"conflict": "Cette consultation a déjà une offre de transfert en attente, ou elle a été modifiée. Vérifiez l’état actuel avant d’envoyer une nouvelle offre.",
 			"status": {

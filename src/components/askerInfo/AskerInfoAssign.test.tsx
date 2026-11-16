@@ -124,6 +124,34 @@ const renderAssign = (
 		</NotificationsContext.Provider>
 	);
 
+const assignFor = (session: any) => (
+	<NotificationsContext.Provider
+		value={
+			{
+				notificationFeed: [],
+				refreshNotificationFeed: vi.fn()
+			} as any
+		}
+	>
+		<UserDataContext.Provider
+			value={
+				{
+					userData: { userId: 'owner-1', grantedAuthorities: [] }
+				} as any
+			}
+		>
+			<ActiveSessionContext.Provider
+				value={{
+					activeSession: session,
+					reloadActiveSession: vi.fn()
+				}}
+			>
+				<AskerInfoAssign showLegacyAssignment={false} handoverEnabled />
+			</ActiveSessionContext.Provider>
+		</UserDataContext.Provider>
+	</NotificationsContext.Provider>
+);
+
 describe('AskerInfoAssign owner handover', () => {
 	afterEach(cleanup);
 
@@ -585,6 +613,58 @@ describe('AskerInfoAssign owner handover', () => {
 		await waitFor(() => expect(reload).toHaveBeenCalledTimes(1));
 	});
 
+	it('refreshes a retained pending offer as soon as it is reopened', async () => {
+		vi.mocked(apiCreateCaseHandoverOffer).mockResolvedValue({
+			requestId: 501,
+			sessionId: 41,
+			status: 'PENDING_RECIPIENT_ACCEPTANCE',
+			canViewContent: true,
+			clientConsentRequired: false,
+			ownershipRevision: 7
+		});
+		const firstMount = renderAssign();
+		fireEvent.click(
+			screen.getByRole('button', { name: 'caseHandover.offer.open' })
+		);
+		await screen.findByTestId('handover-dialog');
+		fireEvent.click(screen.getByText('person'));
+		fireEvent.click(screen.getByText('reason'));
+		fireEvent.click(screen.getByText('confirm'));
+		expect(
+			await screen.findByText(
+				'caseHandover.offer.status.PENDING_RECIPIENT_ACCEPTANCE'
+			)
+		).toBeTruthy();
+
+		// Leave the profile: only the operation store keeps the offer, and
+		// nothing tracks it until the profile is opened again.
+		firstMount.unmount();
+		vi.mocked(apiGetCaseHandoverRequestStatus).mockClear();
+		fireEvent(window, new Event('focus'));
+		expect(apiGetCaseHandoverRequestStatus).not.toHaveBeenCalled();
+
+		// The colleague declined while the dialog was closed.
+		vi.mocked(apiGetCaseHandoverRequestStatus).mockResolvedValue({
+			requestId: 501,
+			sessionId: 41,
+			status: 'RECIPIENT_DECLINED',
+			canViewContent: true,
+			clientConsentRequired: false,
+			ownershipRevision: 7
+		});
+		renderAssign();
+		fireEvent.click(
+			screen.getByRole('button', { name: 'caseHandover.offer.open' })
+		);
+
+		expect(
+			await screen.findByText(
+				'caseHandover.offer.status.RECIPIENT_DECLINED'
+			)
+		).toBeTruthy();
+		expect(apiGetCaseHandoverRequestStatus).toHaveBeenCalledWith(41, 501);
+	});
+
 	it('uses a backend-shaped null-request grant event only as a scoped refresh hint', async () => {
 		const reload = vi.fn();
 		vi.mocked(apiCreateCaseHandoverOffer).mockResolvedValue({
@@ -658,5 +738,88 @@ describe('AskerInfoAssign owner handover', () => {
 			)
 		);
 		await waitFor(() => expect(reload).toHaveBeenCalledTimes(1));
+	});
+
+	it('does not carry a conflict message into another session reached during the reload', async () => {
+		const reload = deferred<any>();
+		vi.mocked(apiGetCaseHandoverStatus)
+			.mockResolvedValueOnce({
+				sessionId: 41,
+				status: 'ACTIVE_OWNER',
+				canViewContent: true,
+				clientConsentRequired: false,
+				ownershipRevision: 7
+			})
+			.mockReturnValueOnce(reload.promise);
+		vi.mocked(apiCreateCaseHandoverOffer).mockRejectedValueOnce(
+			new Error('CONFLICT')
+		);
+		const view = render(assignFor(activeSession));
+		fireEvent.click(
+			screen.getByRole('button', { name: 'caseHandover.offer.open' })
+		);
+		await screen.findByTestId('handover-dialog');
+		fireEvent.click(screen.getByText('person'));
+		fireEvent.click(screen.getByText('reason'));
+		fireEvent.click(screen.getByText('confirm'));
+		await waitFor(() =>
+			expect(apiGetCaseHandoverStatus).toHaveBeenCalledTimes(2)
+		);
+
+		// Move to another session while the conflict reload is in flight.
+		view.rerender(
+			assignFor({ ...activeSession, item: { id: 42, agencyId: 9 } })
+		);
+		reload.resolve({
+			sessionId: 41,
+			status: 'ACTIVE_OWNER',
+			canViewContent: true,
+			clientConsentRequired: false,
+			ownershipRevision: 8
+		});
+		await reload.promise;
+		await new Promise((done) => setTimeout(done, 0));
+		expect(screen.queryByText('caseHandover.offer.conflict')).toBeNull();
+	});
+
+	it('closes the offer and drops its state when the active session changes', async () => {
+		const pendingSubmit = deferred<any>();
+		vi.mocked(apiCreateCaseHandoverOffer).mockReturnValueOnce(
+			pendingSubmit.promise
+		);
+		const view = render(assignFor(activeSession));
+		fireEvent.click(
+			screen.getByRole('button', { name: 'caseHandover.offer.open' })
+		);
+		await screen.findByTestId('handover-dialog');
+		fireEvent.click(screen.getByText('person'));
+		fireEvent.click(screen.getByText('reason'));
+		fireEvent.click(screen.getByText('confirm'));
+		await waitFor(() =>
+			expect(screen.getByTestId('dialog-busy').textContent).toBe('true')
+		);
+
+		// Switch to another session while the submit is still in flight.
+		view.rerender(
+			assignFor({ ...activeSession, item: { id: 42, agencyId: 9 } })
+		);
+		await waitFor(() =>
+			expect(screen.queryByTestId('handover-dialog')).toBeNull()
+		);
+
+		vi.mocked(apiGetCaseHandoverStatus).mockResolvedValue({
+			sessionId: 42,
+			status: 'ACTIVE_OWNER',
+			canViewContent: true,
+			clientConsentRequired: false,
+			ownershipRevision: 3
+		});
+		fireEvent.click(
+			screen.getByRole('button', { name: 'caseHandover.offer.open' })
+		);
+		await screen.findByTestId('handover-dialog');
+		expect(screen.getByTestId('selected-person').textContent).toBe('');
+		expect(screen.getByTestId('dialog-busy').textContent).toBe('false');
+		expect(apiGetCaseHandoverStatus).toHaveBeenLastCalledWith(42);
 	});
 });
