@@ -405,8 +405,9 @@ $cal-off-hatch: repeating-linear-gradient(
 		background: var(--m3-primary-fixed, #ffdad5) !important;
 	}
 
-	// The next appointment, from 15 minutes before its start.
-	&--soon {
+	// The next appointment, from 15 minutes before its start. Doubled class:
+	// it has to beat the pink of `&--appointment:not(…)` above (two classes).
+	&#{&}--soon {
 		background: var(--m3-primary, #a5000a) !important;
 		color: var(--m3-on-primary, #ffffff) !important;
 
