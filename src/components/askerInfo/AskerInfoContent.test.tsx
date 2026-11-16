@@ -141,12 +141,18 @@ describe('AskerInfoContent handover entry eligibility', () => {
 		).toBeNull();
 	});
 
-	it('preserves the existing non-owner assignment authority without exposing owner handover', () => {
+	/*
+	 * #1673: the dropdown on an active case could only post the removed
+	 * REASSIGN_CONSULTANT alias (404). A non-owner has no supported handover
+	 * route (offers are owner-only), so the dead control is not offered and no
+	 * colleague eligibility is widened.
+	 */
+	it('offers no dead reassignment dropdown to a non-owner of an active case, even with ASSIGN authority', () => {
 		renderContent({
 			consultantId: 'owner-2',
 			authorities: ['AUTHORIZATION_ASSIGN_CONSULTANT_TO_SESSION']
 		});
-		expect(screen.getByRole('combobox')).toBeTruthy();
+		expect(screen.queryByRole('combobox')).toBeNull();
 		expect(
 			screen.queryByRole('button', { name: 'caseHandover.offer.open' })
 		).toBeNull();

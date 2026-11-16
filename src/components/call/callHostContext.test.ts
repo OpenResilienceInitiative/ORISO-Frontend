@@ -30,6 +30,53 @@ const groupChat = (fields: Record<string, unknown>): CallConversation =>
 	({ chat: { id: 12, ...fields } }) as CallConversation;
 
 describe('callConversationParamsOf (FE#2233 checkpoint 4)', () => {
+	describe('the title of a group call (#2233 live test, 16 Nov)', () => {
+		it('is the group chat\'s own name, not "Anruf"', () => {
+			expect(
+				callConversationParamsOf(
+					true,
+					groupChat({
+						conversationType: 'INTERNAL_GROUP',
+						topic: 'QA Moabit · Brieftriage zu viert 08.11'
+					}),
+					topics,
+					'de'
+				)
+			).toEqual({
+				callType: 'group',
+				topic: 'QA Moabit · Brieftriage zu viert 08.11'
+			});
+			expect(
+				callConversationParamsOf(
+					true,
+					groupChat({
+						conversationType: 'SELF_HELP',
+						topic: '  Montagsrunde Trauer '
+					}),
+					topics,
+					'de'
+				)
+			).toEqual({ callType: 'circle', topic: 'Montagsrunde Trauer' });
+		});
+
+		it('is null for a group chat without a name, or a supervision room', () => {
+			expect(
+				callConversationParamsOf(
+					true,
+					groupChat({
+						conversationType: 'INTERNAL_GROUP',
+						topic: ' '
+					}),
+					topics,
+					'de'
+				).topic
+			).toBeNull();
+			expect(
+				callConversationParamsOf(true, null, topics, 'de').topic
+			).toBeNull();
+		});
+	});
+
 	describe('the kind of call', () => {
 		it('is single for a 1:1 conversation', () => {
 			expect(
@@ -189,18 +236,7 @@ describe('callConversationParamsOf (FE#2233 checkpoint 4)', () => {
 			).toBeNull();
 		});
 
-		it('never sends a group call a topic, nor a group chat its own subject', () => {
-			expect(
-				callConversationParamsOf(
-					true,
-					groupChat({
-						conversationType: 'SELF_HELP',
-						topic: 'Montagsrunde Trauer'
-					}),
-					topics,
-					'de'
-				).topic
-			).toBeNull();
+		it('never sends a 1:1 call a group chat subject as its topic', () => {
 			expect(
 				callConversationParamsOf(
 					false,

@@ -121,6 +121,7 @@ import {
 	canRecommendFurtherCounselling
 } from '../furtherCounselling/furtherCounsellingRules';
 import { RecommendFurtherCounsellingDialog } from '../furtherCounselling/RecommendFurtherCounsellingDialog';
+import { useRecommendAllowedInModality } from '../furtherCounselling/useRecommendAllowedInModality';
 import { getGroupChatInfoLink } from '../groupChat/groupChatInfoLink';
 
 export interface SessionMenuProps {
@@ -286,7 +287,10 @@ export const SessionMenu = (props: SessionMenuProps) => {
 		isGroup: Boolean(activeSession.isGroup),
 		isSupervisor: Boolean(props.isSupervisor)
 	});
-	const showRecommendFurtherCounselling = showRequestAdvice;
+	// FE#2251: in a live chat only when the counselling centre switched it on.
+	const recommendAllowedInModality = useRecommendAllowedInModality();
+	const showRecommendFurtherCounselling =
+		showRequestAdvice && recommendAllowedInModality;
 	const [recommendDialogOpen, setRecommendDialogOpen] = useState(false);
 	const showEndTopicDuplicate =
 		!activeSession.isGroup &&

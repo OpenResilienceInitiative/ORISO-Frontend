@@ -2856,7 +2856,10 @@
 						"label": "ዕፁው"
 					},
 					"headline": "ጌጋ ኣጋጢሙ ኣሎ። በጃኹም ደጊምኩም ፈትኑ።",
-					"xReasonAlreadyRegistered": "እዚ ርእስ ኣብ ማእከል ምክር ቀደም እተመዝገብኩም እዩ።"
+					"xReasonAlreadyRegistered": "እዚ ርእስ ኣብ ማእከል ምክር ቀደም እተመዝገብኩም እዩ።",
+					"badRequest": "እዚ ማእከል ምክሪ ሕቶኹም ክፈጥሮ ኣይከኣለን። በጃኹም ካልእ ማእከል ምረጹ ወይ ደሓር ደጊምኩም ፈትኑ።",
+					"forbidden": "ሕጂ ኣብዚ ማእከል ሓድሽ ምክሪ ክትሓቱ ኣይትኽእሉን ኢኹም።",
+					"unavailable": "ሕቶኹም ሕጂ ክለኣኽ ኣይከኣለን። በጃኹም ድሕሪ ቁሩብ ደቓይቕ ደጊምኩም ፈትኑ።"
 				}
 			},
 			"registerSuccess": {
@@ -6728,7 +6731,8 @@
 			"noteLabel": "መዘኻኸሪ ካብ ኣማኻሪ",
 			"findAgency": "ማእከል ምኽሪ ድለ",
 			"requested": "ሕቶ ቀሪቡ",
-			"topicUnknown": "ካልእ ኣርእስቲ"
+			"topicUnknown": "ካልእ ኣርእስቲ",
+			"convertFirstHint": "ዝርርብኩም ንምዕቃብ፡ ቅድም ሕሳብ ፍጠሩ። ድሕሪኡ ማእከል ምኽሪ ምረጹ።"
 		},
 		"duplicate": {
 			"startedTitle": "ኣብ ሓደ ኣርእስቲ ተወሳኺ ምኽሪ",
