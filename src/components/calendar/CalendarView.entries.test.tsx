@@ -42,7 +42,8 @@ if (!window.matchMedia)
 
 afterEach(cleanup);
 
-const at = (hour: number) => new Date(2026, 10, 16, hour).toISOString();
+const at = (hour: number, minute = 0) =>
+	new Date(2026, 10, 16, hour, minute).toISOString();
 const KAYA: Colleague = {
 	id: 'kaya',
 	displayName: 'A. Kaya',
@@ -62,7 +63,7 @@ const SHORT: CalendarEntry = {
 	...OWN,
 	id: 'short',
 	start: at(12),
-	end: at(12.5)
+	end: at(12, 30)
 };
 const COLLEAGUE: CalendarEntry = {
 	...OWN,
@@ -106,7 +107,11 @@ describe('CalendarView — one entry (prototype v17)', () => {
 		expect(own.querySelector('.calEntry__range')!.textContent).toBe(
 			'10:00–11:00'
 		);
-		// Half an hour has no room for a second line.
+		// Half an hour has no room for a second line (a real 30-minute
+		// entry, review 4589304618).
+		expect(
+			new Date(SHORT.end).getTime() - new Date(SHORT.start).getTime()
+		).toBe(30 * 60_000);
 		expect(shown('short')!.querySelector('.calEntry__range')).toBeNull();
 	});
 
