@@ -1106,7 +1106,7 @@ export const CalendarPage = ({
 	 */
 	const weekly = (current: Notice) => {
 		if (!current.weekly) return;
-		const { entry, draft } = current.weekly;
+		const { draft } = current.weekly;
 		setNotice(null);
 		setDialog({
 			type: 'blocker',
