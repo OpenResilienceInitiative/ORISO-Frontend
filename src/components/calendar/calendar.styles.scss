@@ -1077,11 +1077,7 @@
 		color: var(--m3-on-primary, #ffffff);
 
 		&:hover {
-			background: color-mix(
-				in srgb,
-				var(--m3-primary, #a5000a) 88%,
-				var(--m3-on-primary, #ffffff)
-			);
+			background: var(--m3-primary-hover, #820006);
 		}
 	}
 }
