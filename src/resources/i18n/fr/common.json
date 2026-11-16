@@ -7052,7 +7052,11 @@
 			"label": "Ajouter",
 			"as": "Saisir comme",
 			"blockerNow": "saisi immédiatement",
-			"outsideHours": "En dehors de vos horaires de travail."
+			"outsideHours": "En dehors de vos horaires de travail.",
+			"who": "Avec qui",
+			"whoPlaceholder": "Avec qui ? Chercher un nom",
+			"conversations": "Consultations",
+			"noneFound": "Aucune consultation trouvée."
 		},
 		"blocker": {
 			"menuItem": "Plage bloquée",
@@ -7071,7 +7075,8 @@
 			"created": "{{count}} plages bloquées ajoutées",
 			"created_one": "{{count}} plage bloquée ajoutée",
 			"createdSingle": "Plage bloquée ajoutée : {{date}}",
-			"workHint": "Toujours les mêmes horaires, par exemple le soir et le week-end ?"
+			"workHint": "Toujours les mêmes horaires, par exemple le soir et le week-end ?",
+			"weekly": "Chaque semaine …"
 		},
 		"saveFailed": "Cela n’a pas fonctionné. Veuillez réessayer.",
 		"blockerRemoved": "Plage bloquée supprimée.",
@@ -7093,7 +7098,14 @@
 			"remove": "Supprimer",
 			"saveMove": "Déplacer",
 			"sendProposal": "Envoyer la proposition",
-			"to": "À"
+			"to": "À",
+			"withYou": "Vous et {{name}}",
+			"startSub": "avec {{name}}",
+			"chatSub": "Ouvrir la consultation avec {{name}}",
+			"joinSub": "Ouvrir la visioconférence",
+			"moveSub": "Modifier le jour et l’heure",
+			"proposeSub": "{{name}} doit confirmer",
+			"cancelSub": "{{name}} reçoit un message"
 		},
 		"fullscreen": "Plein écran",
 		"fullscreenExit": "Quitter le plein écran (Échap)",
@@ -7110,7 +7122,8 @@
 			"label": "Que montrer",
 			"hint": "Les types désélectionnés sont masqués dans le calendrier et dans la liste.",
 			"all": "Tout afficher",
-			"customised": "Certains types sont masqués."
+			"customised": "Certains types sont masqués.",
+			"blocker": "Plages bloquées et occupées"
 		},
 		"monthMenu": {
 			"label": "Saisir pour ce jour",
@@ -7208,7 +7221,10 @@
 			"switcherMenu": "sous forme de menu",
 			"switcherDigits": "sous forme de boutons",
 			"switcherHint": "Enregistré pour vous.",
-			"sync": "Connecter Outlook ou Google"
+			"sync": "Connecter Outlook ou Google",
+			"repeatBlocker": "Plage bloquée récurrente",
+			"switcherMenuSub": "Un bouton, les vues dans son menu",
+			"switcherDigitsSub": "Toutes les vues côte à côte"
 		},
 		"side": {
 			"resize": "Faire glisser pour élargir ou réduire la liste ; double-clic pour la replier ou la déplier, flèches haut et bas pour la faire défiler",

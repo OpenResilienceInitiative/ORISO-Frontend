@@ -2988,6 +2988,9 @@
 		},
 		"holidays": {
 			"chooseHint": "Bitte wähle ein Bundesland."
+		},
+		"entryMenu": {
+			"withYou": "Du und {{name}}"
 		}
 	}
 }

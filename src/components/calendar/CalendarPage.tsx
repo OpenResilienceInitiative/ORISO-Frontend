@@ -160,6 +160,7 @@ import {
 import { initialsOf } from './CalendarEntryPeek';
 import { HoverScrollArrows } from '../hoverScrollArrows/HoverScrollArrows';
 import { NewEntryDialog } from './NewEntryDialog';
+import { BlockerCreatedMessage } from './BlockerDialog';
 import { MoveConflictDialog } from './MoveConflictDialog';
 import {
 	WorkingHoursDialog,
@@ -346,7 +347,13 @@ type Dialog =
 	| null;
 
 type Menu =
-	| { type: 'slot'; anchor: MenuAnchor; range: { start: Date; end: Date } }
+	| {
+			type: 'slot';
+			anchor: MenuAnchor;
+			range: { start: Date; end: Date };
+			/** Chosen in the first step: the card asks "Mit wem?". */
+			kind?: AppointmentKind;
+	  }
 	| { type: 'month'; anchor: MenuAnchor; start: Date; days: number }
 	| {
 			type: 'entry';
@@ -385,6 +392,8 @@ interface Notice {
 	undo?: () => ChangeResult;
 	/** Nothing (or not all) was stored: try the same change again. */
 	retry?: () => void;
+	/** One blocker entered: "Wöchentlich …" turns it into a series. */
+	weekly?: { start: Date; end: Date };
 }
 
 /**
@@ -868,6 +877,13 @@ export const CalendarPage = ({
 				onRemoveBlocker &&
 				createdEntries.length > 0
 					? () => allStored(createdEntries.map(onRemoveBlocker))
+					: undefined,
+			weekly:
+				first.type === 'blocker' &&
+				drafts.length === 1 &&
+				onRemoveBlocker &&
+				createdEntries.length === 1
+					? { start: first.start, end: first.end }
 					: undefined
 		};
 	};
@@ -940,14 +956,43 @@ export const CalendarPage = ({
 	const chooseSlot = (choice: SlotChoice) => {
 		if (menu?.type !== 'slot') return;
 		const range = menu.range;
-		setMenu(null);
-		if (choice === 'blocker')
+		if (choice === 'blocker') {
+			setMenu(null);
 			create([{ type: 'blocker', start: range.start, end: range.end }]);
-		else
-			setDialog({
+		}
+		// An appointment asks "Mit wem?" in the same card (prototype v17).
+		else setMenu({ ...menu, kind: choice });
+	};
+
+	/** "Mit wem?" answered: the appointment is entered at once. */
+	const pickSlotPerson = (sessionId: number) => {
+		if (menu?.type !== 'slot' || !menu.kind) return;
+		const { range, kind } = menu;
+		setMenu(null);
+		if (range.start.getTime() < now.getTime()) {
+			setNotice({ message: t('calendar.dialog.error.past') });
+			return;
+		}
+		create([
+			{
 				type: 'appointment',
-				slot: { ...range, kind: choice }
-			});
+				start: range.start,
+				end: range.end,
+				kind,
+				sessionId
+			}
+		]);
+	};
+
+	/** "Mehr Angaben …" in the slot card: the full dialog, prefilled. */
+	const moreSlotDetails = () => {
+		if (menu?.type !== 'slot') return;
+		const { range, kind } = menu;
+		setMenu(null);
+		setDialog({
+			type: 'appointment',
+			slot: { ...range, kind: kind ?? 'video' }
+		});
 	};
 
 	/**
@@ -1020,6 +1065,21 @@ export const CalendarPage = ({
 				},
 				() => setNotice({ message: t('calendar.saveFailed') })
 			);
+	};
+
+	/**
+	 * "Wöchentlich …" (prototype v17): the single blocker goes, the blocker
+	 * form opens with its time and its weekday ticked.
+	 */
+	const weekly = (current: Notice) => {
+		if (!current.weekly) return;
+		const { start, end } = current.weekly;
+		undo(current);
+		setDialog({
+			type: 'blocker',
+			slot: { start, end },
+			weekdays: [start.getDay()]
+		});
 	};
 
 	const propose = (entry: CalendarEntry, start: Date, end: Date) => {
@@ -1504,6 +1564,8 @@ export const CalendarPage = ({
 	let menuAlign: 'start' | 'end' = 'start';
 	if (menu?.type === 'slot') {
 		menuLabel = t('calendar.slotMenu.label');
+		// The second step has a search field: a dialog, not a menu.
+		if (menu.kind) menuRole = 'dialog';
 		menuContent = (
 			<SlotMenuContent
 				range={menu.range}
@@ -1515,6 +1577,10 @@ export const CalendarPage = ({
 					)
 				}
 				onChoose={chooseSlot}
+				kind={menu.kind}
+				conversations={conversations}
+				onPick={pickSlotPerson}
+				onMore={moreSlotDetails}
 			/>
 		);
 	} else if (menu?.type === 'month') {
@@ -1670,6 +1736,14 @@ export const CalendarPage = ({
 							}
 						: undefined
 				}
+				onRepeatBlocker={
+					onCreate
+						? () => {
+								setMenu(null);
+								setDialog({ type: 'blocker' });
+							}
+						: undefined
+				}
 				onFreeDays={
 					onCreate
 						? () => {
@@ -1733,6 +1807,8 @@ export const CalendarPage = ({
 		menuContent = (
 			<KindsMenuContent
 				hidden={hiddenFacets}
+				entries={entries}
+				ownerId={ownerId}
 				onToggle={(facet) =>
 					setHiddenFacets((all) => toggle(all, facet))
 				}
@@ -2474,7 +2550,13 @@ export const CalendarPage = ({
 				role={menuRole}
 				width={menuWidth}
 				align={menuAlign}
-				focusKey={menu?.type === 'entry' ? menu.mode : menu?.type}
+				focusKey={
+					menu?.type === 'entry'
+						? menu.mode
+						: menu?.type === 'slot'
+							? (menu.kind ?? 'slot')
+							: menu?.type
+				}
 				onClose={() => setMenu(null)}
 				data-cy={menu ? `calendar-menu-${menu.type}` : undefined}
 			>
@@ -2582,7 +2664,16 @@ export const CalendarPage = ({
 			)}
 			{notice && (
 				<M3Snackbar
-					message={notice.message}
+					message={
+						notice.weekly ? (
+							<BlockerCreatedMessage
+								message={notice.message}
+								onWeekly={() => weekly(notice)}
+							/>
+						) : (
+							notice.message
+						)
+					}
 					action={
 						notice.undo
 							? {

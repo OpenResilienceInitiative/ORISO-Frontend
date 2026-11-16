@@ -6977,7 +6977,7 @@
 		},
 		"details": {
 			"start": {
-				"video": "Video-Call starten",
+				"video": "Video starten",
 				"phone": "Anruf starten",
 				"chat": "Chat öffnen"
 			},
@@ -7042,7 +7042,11 @@
 			"label": "Eintragen",
 			"as": "Eintragen als",
 			"blockerNow": "sofort eingetragen",
-			"outsideHours": "Außerhalb Ihrer Arbeitszeit."
+			"outsideHours": "Außerhalb Ihrer Arbeitszeit.",
+			"who": "Mit wem",
+			"whoPlaceholder": "Mit wem? Name suchen",
+			"conversations": "Gespräche",
+			"noneFound": "Kein Gespräch gefunden."
 		},
 		"blocker": {
 			"menuItem": "Sperrzeit",
@@ -7061,7 +7065,8 @@
 			"created": "{{count}} Sperrzeiten eingetragen",
 			"created_one": "{{count}} Sperrzeit eingetragen",
 			"createdSingle": "Sperrzeit eingetragen: {{date}}",
-			"workHint": "Immer gleiche Zeiten, etwa abends und am Wochenende?"
+			"workHint": "Immer gleiche Zeiten, etwa abends und am Wochenende?",
+			"weekly": "Wöchentlich …"
 		},
 		"saveFailed": "Das hat nicht geklappt. Bitte versuchen Sie es noch einmal.",
 		"blockerRemoved": "Sperrzeit entfernt.",
@@ -7083,7 +7088,14 @@
 			"remove": "Entfernen",
 			"saveMove": "Verschieben",
 			"sendProposal": "Vorschlag senden",
-			"to": "Bis"
+			"to": "Bis",
+			"withYou": "Sie und {{name}}",
+			"startSub": "mit {{name}}",
+			"chatSub": "Gespräch mit {{name}} öffnen",
+			"joinSub": "Videokonferenz öffnen",
+			"moveSub": "Tag und Uhrzeit ändern",
+			"proposeSub": "{{name}} muss bestätigen",
+			"cancelSub": "{{name}} bekommt eine Nachricht"
 		},
 		"fullscreen": "Vollbild",
 		"fullscreenExit": "Vollbild beenden (Esc)",
@@ -7100,7 +7112,8 @@
 			"label": "Was anzeigen",
 			"hint": "Abgewählte Arten blenden wir im Kalender und in der Liste aus.",
 			"all": "Alles anzeigen",
-			"customised": "Einige Arten sind ausgeblendet."
+			"customised": "Einige Arten sind ausgeblendet.",
+			"blocker": "Sperrzeiten und Belegt"
 		},
 		"monthMenu": {
 			"label": "Tag eintragen",
@@ -7198,7 +7211,10 @@
 			"switcherMenu": "als Menü",
 			"switcherDigits": "als Schalter",
 			"switcherHint": "Wird für Sie gespeichert.",
-			"sync": "Mit Outlook oder Google verbinden"
+			"sync": "Mit Outlook oder Google verbinden",
+			"repeatBlocker": "Sperrzeit mit Wiederholung",
+			"switcherMenuSub": "Ein Knopf, die Ansichten im Menü",
+			"switcherDigitsSub": "Alle Ansichten nebeneinander: 1 3 5 7 M L N"
 		},
 		"side": {
 			"resize": "Liste breiter oder schmaler ziehen; Doppelklick klappt sie ein oder aus, Pfeil hoch und runter scrollt sie",

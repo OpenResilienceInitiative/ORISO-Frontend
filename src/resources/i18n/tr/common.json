@@ -7052,7 +7052,11 @@
 			"label": "Ekle",
 			"as": "Şu olarak kaydet",
 			"blockerNow": "hemen kaydedilir",
-			"outsideHours": "Çalışma saatlerinizin dışında."
+			"outsideHours": "Çalışma saatlerinizin dışında.",
+			"who": "Kiminle",
+			"whoPlaceholder": "Kiminle? İsim ara",
+			"conversations": "Danışmanlıklar",
+			"noneFound": "Danışmanlık bulunamadı."
 		},
 		"blocker": {
 			"menuItem": "Kapalı zaman",
@@ -7071,7 +7075,8 @@
 			"created": "{{count}} kapalı zaman eklendi",
 			"created_one": "{{count}} kapalı zaman eklendi",
 			"createdSingle": "Kapalı zaman eklendi: {{date}}",
-			"workHint": "Hep aynı saatler mi, örneğin akşamları ve hafta sonları?"
+			"workHint": "Hep aynı saatler mi, örneğin akşamları ve hafta sonları?",
+			"weekly": "Haftalık …"
 		},
 		"saveFailed": "Bu işe yaramadı. Lütfen tekrar deneyin.",
 		"blockerRemoved": "Kapalı zaman kaldırıldı.",
@@ -7093,7 +7098,14 @@
 			"remove": "Kaldır",
 			"saveMove": "Taşı",
 			"sendProposal": "Öneriyi gönder",
-			"to": "Bitiş"
+			"to": "Bitiş",
+			"withYou": "Siz ve {{name}}",
+			"startSub": "{{name}} ile",
+			"chatSub": "{{name}} ile danışmanlığı aç",
+			"joinSub": "Video konferansı aç",
+			"moveSub": "Günü ve saati değiştir",
+			"proposeSub": "{{name}} onaylamalı",
+			"cancelSub": "{{name}} bir mesaj alır"
 		},
 		"fullscreen": "Tam ekran",
 		"fullscreenExit": "Tam ekrandan çık (Esc)",
@@ -7110,7 +7122,8 @@
 			"label": "Neler gösterilsin",
 			"hint": "Seçimi kaldırılan türler takvimde ve listede gizlenir.",
 			"all": "Tümünü göster",
-			"customised": "Bazı türler gizli."
+			"customised": "Bazı türler gizli.",
+			"blocker": "Kapalı ve meşgul zamanlar"
 		},
 		"monthMenu": {
 			"label": "Bu güne kaydet",
@@ -7208,7 +7221,10 @@
 			"switcherMenu": "menü olarak",
 			"switcherDigits": "düğme olarak",
 			"switcherHint": "Sizin için kaydedilir.",
-			"sync": "Outlook veya Google bağla"
+			"sync": "Outlook veya Google bağla",
+			"repeatBlocker": "Tekrarlanan kapalı zaman",
+			"switcherMenuSub": "Tek düğme, görünümler menüde",
+			"switcherDigitsSub": "Tüm görünümler yan yana"
 		},
 		"side": {
 			"resize": "Listeyi genişletmek veya daraltmak için sürükleyin; çift tıklama daraltır veya açar, yukarı ve aşağı oklar kaydırır",

@@ -6902,7 +6902,7 @@
 		},
 		"details": {
 			"start": {
-				"video": "Start video call",
+				"video": "Start video",
 				"phone": "Start call",
 				"chat": "Open chat"
 			},
@@ -6967,7 +6967,11 @@
 			"label": "Add",
 			"as": "Add as",
 			"blockerNow": "added at once",
-			"outsideHours": "Outside your working hours."
+			"outsideHours": "Outside your working hours.",
+			"who": "With whom",
+			"whoPlaceholder": "With whom? Search a name",
+			"conversations": "Conversations",
+			"noneFound": "No conversation found."
 		},
 		"blocker": {
 			"menuItem": "Blocked time",
@@ -6986,7 +6990,8 @@
 			"created": "{{count}} blocked times added",
 			"created_one": "{{count}} blocked time added",
 			"createdSingle": "Time blocked: {{date}}",
-			"workHint": "Always the same times, such as evenings and weekends?"
+			"workHint": "Always the same times, such as evenings and weekends?",
+			"weekly": "Weekly …"
 		},
 		"saveFailed": "That did not work. Please try again.",
 		"blockerRemoved": "Blocked time removed.",
@@ -7008,7 +7013,14 @@
 			"remove": "Remove",
 			"saveMove": "Move",
 			"sendProposal": "Send proposal",
-			"to": "To"
+			"to": "To",
+			"withYou": "You and {{name}}",
+			"startSub": "with {{name}}",
+			"chatSub": "Open the conversation with {{name}}",
+			"joinSub": "Open the video conference",
+			"moveSub": "Change day and time",
+			"proposeSub": "{{name}} has to confirm",
+			"cancelSub": "{{name}} gets a message"
 		},
 		"fullscreen": "Full screen",
 		"fullscreenExit": "Exit full screen (Esc)",
@@ -7025,7 +7037,8 @@
 			"label": "What to show",
 			"hint": "Kinds you switch off are hidden in the calendar and in the list.",
 			"all": "Show everything",
-			"customised": "Some kinds are hidden."
+			"customised": "Some kinds are hidden.",
+			"blocker": "Blocked and busy times"
 		},
 		"monthMenu": {
 			"label": "Enter for this day",
@@ -7123,7 +7136,10 @@
 			"switcherMenu": "as a menu",
 			"switcherDigits": "as buttons",
 			"switcherHint": "Saved for you.",
-			"sync": "Connect Outlook or Google"
+			"sync": "Connect Outlook or Google",
+			"repeatBlocker": "Repeating blocked time",
+			"switcherMenuSub": "One button, the views in its menu",
+			"switcherDigitsSub": "All views side by side"
 		},
 		"side": {
 			"resize": "Drag to make the list wider or narrower; double-click folds it in or out, Up and Down scroll it",

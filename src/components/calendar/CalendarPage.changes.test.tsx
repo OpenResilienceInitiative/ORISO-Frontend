@@ -55,8 +55,13 @@ vi.mock('./CalendarView', async (importOriginal) => {
 	};
 });
 
-/* The dialog stub hands out its save, so a test can save twice. */
-const dialog: { save?: (draft: unknown) => void; close?: () => void } = {};
+/* The dialog stub hands out its save, so a test can save twice, and what
+   it was opened with. */
+const dialog: {
+	save?: (draft: unknown) => void;
+	close?: () => void;
+	props?: Record<string, unknown>;
+} = {};
 vi.mock('./NewEntryDialog', () => ({
 	NewEntryDialog: (props: {
 		onSaveAppointment: (draft: unknown) => void;
@@ -64,6 +69,7 @@ vi.mock('./NewEntryDialog', () => ({
 	}) => {
 		dialog.save = props.onSaveAppointment;
 		dialog.close = props.onClose;
+		dialog.props = props as unknown as Record<string, unknown>;
 		return <div data-testid="appointment-dialog" />;
 	}
 }));
@@ -709,5 +715,133 @@ describe('CalendarPage — "Zum Chat" whose conversation cannot be found (review
 		expect(
 			await screen.findByText('calendar.chatUnavailable')
 		).toBeTruthy();
+	});
+});
+
+describe('CalendarPage — the slot menu, prototype v17 (#115, #116)', () => {
+	const byCy = (name: string) =>
+		document.querySelector(`[data-cy="${name}"]`) as HTMLElement | null;
+	const select = () =>
+		act(() =>
+			(
+				grid.last?.onSelectRange as (
+					range: { start: Date; end: Date },
+					anchor: { x: number; y: number }
+				) => void
+			)({ start: START, end: END }, { x: 20, y: 20 })
+		);
+
+	it('asks "Mit wem?" in the same card and enters the appointment with the person picked', async () => {
+		const onCreate = vi.fn(() => Promise.resolve([]));
+		page({
+			onCreate,
+			conversations: [
+				{ sessionId: 7, username: 'mutige_eule' },
+				{ sessionId: 8, username: 'stiller_fuchs' }
+			]
+		});
+		select();
+		fireEvent.click(byCy('calendar-slot-phone') as HTMLElement);
+		const search = byCy('calendar-slot-search') as HTMLInputElement;
+		expect(search).not.toBeNull();
+		expect(byCy('calendar-menu-slot')?.getAttribute('role')).toBe('dialog');
+		fireEvent.change(search, { target: { value: 'stiller' } });
+		expect(byCy('calendar-slot-person-7')).toBeNull();
+		await act(async () => {
+			fireEvent.click(byCy('calendar-slot-person-8') as HTMLElement);
+		});
+		expect(onCreate).toHaveBeenCalledWith([
+			{
+				type: 'appointment',
+				start: START,
+				end: END,
+				kind: 'phone',
+				sessionId: 8
+			}
+		]);
+		expect(screen.queryByTestId('appointment-dialog')).toBeNull();
+	});
+
+	it('says when nobody matches and opens the full dialog from "Mehr Angaben …"', () => {
+		page({ conversations: [{ sessionId: 7, username: 'mutige_eule' }] });
+		select();
+		fireEvent.click(byCy('calendar-slot-video') as HTMLElement);
+		fireEvent.change(byCy('calendar-slot-search') as HTMLElement, {
+			target: { value: 'niemand' }
+		});
+		expect(screen.getByText('calendar.slotMenu.noneFound')).toBeTruthy();
+		fireEvent.click(byCy('calendar-slot-more') as HTMLElement);
+		expect(screen.getByTestId('appointment-dialog')).toBeTruthy();
+		expect(dialog.props?.initialTab).toBe('appointment');
+		expect(dialog.props?.slot).toEqual({
+			start: START,
+			end: END,
+			kind: 'video'
+		});
+	});
+
+	it('"Wöchentlich …" takes the single blocker back and opens the blocker form with its weekday', async () => {
+		const created: CalendarEntry = {
+			id: 'b1',
+			type: 'blocker',
+			start: START.toISOString(),
+			end: END.toISOString(),
+			ownerId: 'me'
+		};
+		const removed: CalendarEntry[] = [];
+		const onRemoveBlocker = vi.fn((entry: CalendarEntry) => {
+			removed.push(entry);
+			return Promise.resolve();
+		});
+		page({
+			onCreate: () => Promise.resolve([created]),
+			onRemoveBlocker
+		});
+		select();
+		await act(async () => {
+			fireEvent.click(byCy('calendar-slot-blocker') as HTMLElement);
+		});
+		expect(screen.getByText('calendar.blocker.createdSingle')).toBeTruthy();
+		await act(async () => {
+			fireEvent.click(await screen.findByTestId('calendar-weekly'));
+		});
+		expect(onRemoveBlocker).toHaveBeenCalledTimes(1);
+		expect(removed).toEqual([created]);
+		expect(dialog.props?.initialTab).toBe('blocker');
+		expect(dialog.props?.slot).toEqual({ start: START, end: END });
+		// 16 November 2026 is a Monday.
+		expect(dialog.props?.initialWeekdays).toEqual([1]);
+		expect(screen.queryByTestId('calendar-weekly')).toBeNull();
+	});
+
+	it('offers no "Wöchentlich …" for an appointment', async () => {
+		page({
+			onCreate: () => Promise.resolve([]),
+			conversations: [{ sessionId: 7, username: 'mutige_eule' }]
+		});
+		select();
+		fireEvent.click(byCy('calendar-slot-video') as HTMLElement);
+		await act(async () => {
+			fireEvent.click(byCy('calendar-slot-person-7') as HTMLElement);
+		});
+		expect(screen.getByText('calendar.created')).toBeTruthy();
+		expect(screen.queryByTestId('calendar-weekly')).toBeNull();
+	});
+});
+
+describe('CalendarPage — "Sperrzeit mit Wiederholung" in ⋮ (prototype v17, #122)', () => {
+	it('opens the blocker tab of "Neuer Eintrag"', () => {
+		page({ onCreate: () => Promise.resolve([]) });
+		fireEvent.click(
+			document.querySelector('[data-cy="calendar-settings"]') as Element
+		);
+		fireEvent.click(
+			document.querySelector(
+				'[data-cy="calendar-settings-repeat-blocker"]'
+			) as Element
+		);
+		expect(screen.getByTestId('appointment-dialog')).toBeTruthy();
+		expect(dialog.props?.initialTab).toBe('blocker');
+		expect(dialog.props?.slot).toBeUndefined();
 	});
 });

@@ -7019,7 +7019,11 @@
 			"label": "ወስኽ",
 			"as": "ከም እዚ መዝግብ",
 			"blockerNow": "ብቕጽበት ይምዝገብ",
-			"outsideHours": "ካብ ናይ ስራሕ ሰዓታትኩም ወጻኢ።"
+			"outsideHours": "ካብ ናይ ስራሕ ሰዓታትኩም ወጻኢ።",
+			"who": "ምስ መን",
+			"whoPlaceholder": "ምስ መን? ስም ድለ",
+			"conversations": "ምኽርታት",
+			"noneFound": "ዝኾነ ምኽሪ ኣይተረኽበን።"
 		},
 		"blocker": {
 			"menuItem": "ዝተዓጽወ ግዜ",
@@ -7038,7 +7042,8 @@
 			"created": "{{count}} ዝተዓጽዉ ግዜያት ተመዝጊቦም",
 			"created_one": "{{count}} ዝተዓጽወ ግዜ ተመዝጊቡ",
 			"createdSingle": "ዝተዓጽወ ግዜ ተመዝጊቡ፦ {{date}}",
-			"workHint": "ኩሉ ግዜ ተመሳሳሊ ሰዓታት፣ ከም ምሸትን ቀዳመ-ሰንበትን?"
+			"workHint": "ኩሉ ግዜ ተመሳሳሊ ሰዓታት፣ ከም ምሸትን ቀዳመ-ሰንበትን?",
+			"weekly": "ሰሙናዊ …"
 		},
 		"saveFailed": "ኣይሰለጠን። በጃኹም ደጊምኩም ፈትኑ።",
 		"blockerRemoved": "ዝተዓጽወ ግዜ ተኣልዩ።",
@@ -7060,7 +7065,14 @@
 			"remove": "ኣልግስ",
 			"saveMove": "ግዜ ቀይር",
 			"sendProposal": "ሓሳብ ስደድ",
-			"to": "ክሳብ"
+			"to": "ክሳብ",
+			"withYou": "ንስኹምን {{name}}ን",
+			"startSub": "ምስ {{name}}",
+			"chatSub": "ምስ {{name}} ዘሎ ምኽሪ ክፈት",
+			"joinSub": "ናይ ቪድዮ ኣኼባ ክፈት",
+			"moveSub": "መዓልትን ሰዓትን ቀይር",
+			"proposeSub": "{{name}} ከረጋግጽ ኣለዎ",
+			"cancelSub": "{{name}} መልእኽቲ ይበጽሖ"
 		},
 		"fullscreen": "ምሉእ ስክሪን",
 		"fullscreenExit": "ካብ ምሉእ ስክሪን ውጻእ (Esc)",
@@ -7077,7 +7089,8 @@
 			"label": "እንታይ ይረአ",
 			"hint": "ዘይተመርጹ ዓይነታት ኣብ ካላንዳርን ዝርዝርን ይሕብኡ።",
 			"all": "ኩሉ ኣርኢ",
-			"customised": "ገለ ዓይነታት ተሓቢኦም ኣለዉ።"
+			"customised": "ገለ ዓይነታት ተሓቢኦም ኣለዉ።",
+			"blocker": "ዝተዓጽዉን ዝተታሕዙን ግዜያት"
 		},
 		"monthMenu": {
 			"label": "ነዛ መዓልቲ መዝግብ",
@@ -7175,7 +7188,10 @@
 			"switcherMenu": "ከም ዝርዝር ምርጫ",
 			"switcherDigits": "ከም መጠወቒታት",
 			"switcherHint": "ንኣኹም ይዕቀብ።",
-			"sync": "ምስ Outlook ወይ Google ኣራኽብ"
+			"sync": "ምስ Outlook ወይ Google ኣራኽብ",
+			"repeatBlocker": "ዝድገም ዝተዓጽወ ግዜ",
+			"switcherMenuSub": "ሓደ መጠወቒ፣ ኣቀራርባታት ኣብ ዝርዝር ምርጫ",
+			"switcherDigitsSub": "ኩሎም ኣቀራርባታት ጎኒ ንጎኒ"
 		},
 		"side": {
 			"resize": "ዝርዝር ንምግፋሕ ወይ ንምጽባብ ሰሓብ፤ ክልተ ግዜ ምጥዋቕ ይዓጽዎ ወይ ይኸፍቶ፡ ላዕልን ታሕትን ዘሎ ምልክት ይሽብልሎ",

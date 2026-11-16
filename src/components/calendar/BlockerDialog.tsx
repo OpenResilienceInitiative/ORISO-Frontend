@@ -25,6 +25,8 @@ import {
 	type CalendarEntry
 } from './calendarModel';
 import ScheduleIcon from '@mui/icons-material/Schedule';
+import { Box, Button } from '@mui/material';
+import { m3SnackbarActionSx } from '../m3Snackbar/M3Snackbar';
 import { FacetIcon } from './CalendarEntryGlyph';
 import { useDayLabels } from './useEntryLabel';
 import { calendarLocale } from './calendarLocale';
@@ -320,5 +322,35 @@ export const BlockerDialog = ({
 		>
 			{form.content}
 		</M3Dialog>
+	);
+};
+
+/**
+ * The notice after one blocker (prototype v17): "Wöchentlich …" under the
+ * text turns it into a series. A snackbar carries one action, Undo, so this
+ * one sits in the message.
+ */
+export const BlockerCreatedMessage = ({
+	message,
+	onWeekly
+}: {
+	message: string;
+	onWeekly: () => void;
+}) => {
+	const { t } = useTranslation();
+	return (
+		<>
+			<Box component="span" sx={{ display: 'block' }}>
+				{message}
+			</Box>
+			<Button
+				variant="text"
+				onClick={onWeekly}
+				data-testid="calendar-weekly"
+				sx={{ ...m3SnackbarActionSx, ml: -1, mt: 0.5 }}
+			>
+				{t('calendar.blocker.weekly')}
+			</Button>
+		</>
 	);
 };
