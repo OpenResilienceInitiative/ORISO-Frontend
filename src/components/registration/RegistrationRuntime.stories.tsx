@@ -98,9 +98,9 @@ const meta = {
 			</LegalLinksProvider>
 		)
 	],
+	globals: { backgrounds: { value: 'light' } },
 	parameters: {
 		layout: 'fullscreen',
-		backgrounds: { default: 'light' },
 		router: {
 			initialPath: '/registration/topic-selection'
 		},

@@ -218,9 +218,9 @@ function FullColumnPlayground() {
 const meta: Meta = {
 	title: 'Components/Session/List/Session list column',
 	tags: ['autodocs'],
+	globals: { backgrounds: { value: 'gray' } },
 	parameters: {
 		layout: 'fullscreen',
-		backgrounds: { default: 'gray' },
 		design: [
 			{
 				type: 'figma',
