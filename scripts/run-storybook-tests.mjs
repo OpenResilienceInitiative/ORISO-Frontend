@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process';
+import { appendFileSync } from 'node:fs';
 import { constants } from 'node:os';
 import { pathToFileURL } from 'node:url';
 
@@ -348,11 +349,49 @@ const runShardWithRetries = async (index, count) => {
 		lastRun = await runStorybookTests(args);
 	}
 
-	return lastRun;
+	return { ...lastRun, retries: attempt };
+};
+
+/**
+ * One line per CI run that says how often Chrome had to be restarted. The
+ * shards and retries exist because of browser disconnects (#1316, #1988);
+ * this number is the evidence for keeping or removing them.
+ */
+export const formatRetrySummary = (shards) => {
+	const total = shards.reduce((sum, shard) => sum + shard.retries, 0);
+	const retried = shards
+		.filter((shard) => shard.retries > 0)
+		.map((shard) => `shard ${shard.index}: ${shard.retries}`);
+	return (
+		`Storybook browser-disconnect retries: ${total} in ${shards.length} shard(s)` +
+		(retried.length ? ` (${retried.join(', ')})` : '')
+	);
+};
+
+const reportRetries = (shards, env = process.env) => {
+	if (shards.length === 0) return;
+	const line = formatRetrySummary(shards);
+	console.log(line);
+	if (env.GITHUB_STEP_SUMMARY) {
+		try {
+			appendFileSync(env.GITHUB_STEP_SUMMARY, `${line}\n`);
+		} catch (error) {
+			console.warn(`Could not write the step summary: ${error}`);
+		}
+	}
 };
 
 const main = async () => {
 	const shardCount = resolveShardCount();
+	const shards = [];
+	try {
+		return await runAllShards(shardCount, shards);
+	} finally {
+		reportRetries(shards);
+	}
+};
+
+const runAllShards = async (shardCount, shards) => {
 	let firstFailure = 0;
 	for (let index = 1; index <= shardCount; index += 1) {
 		if (shardCount > 1) {
@@ -361,6 +400,7 @@ const main = async () => {
 			);
 		}
 		const run = await runShardWithRetries(index, shardCount);
+		shards.push({ index, retries: run.retries });
 		const code = run.code ?? 1;
 		// Signals, spawn/setup failures and exhausted infrastructure aborts do
 		// not become ordinary test failures or launch more owned browsers.

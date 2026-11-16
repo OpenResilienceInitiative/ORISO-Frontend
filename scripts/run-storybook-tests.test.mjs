@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url';
 import {
 	DEFAULT_STORYBOOK_SHARDS,
 	createSuiteFailureTracker,
+	formatRetrySummary,
 	MAX_BROWSER_DISCONNECT_RETRIES,
 	looksLikeBrowserDisconnect,
 	looksLikeImportCrash,
@@ -600,5 +601,23 @@ test('the live child-output capture cannot erase a genuine failed suite before a
 	assert.equal(
 		shouldRetryStorybookRun(result.code, result.capturedOutput, result),
 		false
+	);
+});
+
+test('the retry summary counts every browser restart and names the shards', () => {
+	assert.equal(
+		formatRetrySummary([
+			{ index: 1, retries: 0 },
+			{ index: 2, retries: 0 }
+		]),
+		'Storybook browser-disconnect retries: 0 in 2 shard(s)'
+	);
+	assert.equal(
+		formatRetrySummary([
+			{ index: 1, retries: 0 },
+			{ index: 2, retries: 2 },
+			{ index: 3, retries: 1 }
+		]),
+		'Storybook browser-disconnect retries: 3 in 3 shard(s) (shard 2: 2, shard 3: 1)'
 	);
 });
