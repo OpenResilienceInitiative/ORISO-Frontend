@@ -1767,8 +1767,10 @@ describe('SessionStream Matrix room lifecycle', () => {
 		const me = '@me:example.org';
 		const room = { roomId: ROOM_ID, myUserId: me };
 		const messageFrom = (sender: string) => ({
-			getType: () => 'm.room.encrypted',
-			getSender: () => sender
+			getType: () => 'm.room.message',
+			getSender: () => sender,
+			isEncrypted: () => true,
+			isDecryptionFailure: () => false
 		});
 		const setVisibility = (state: 'visible' | 'hidden') => {
 			Object.defineProperty(document, 'visibilityState', {
@@ -1802,6 +1804,30 @@ describe('SessionStream Matrix room lifecycle', () => {
 
 			emitLive(messageFrom('@peer:example.org'));
 
+			await waitFor(() =>
+				expect(mocks.readActiveSession).toHaveBeenCalledTimes(1)
+			);
+		});
+
+		it('marks read only once a peer message is decrypted, never for one that failed', async () => {
+			setVisibility('visible');
+			await openConversation();
+			const peer = '@peer:example.org';
+
+			emitLive({
+				getType: () => 'm.room.encrypted',
+				getSender: () => peer
+			});
+			emitLive({
+				getType: () => 'm.room.message',
+				getSender: () => peer,
+				isEncrypted: () => true,
+				isDecryptionFailure: () => true
+			});
+			await act(() => new Promise((resolve) => setTimeout(resolve, 50)));
+			expect(mocks.readActiveSession).not.toHaveBeenCalled();
+
+			emitLive(messageFrom(peer));
 			await waitFor(() =>
 				expect(mocks.readActiveSession).toHaveBeenCalledTimes(1)
 			);

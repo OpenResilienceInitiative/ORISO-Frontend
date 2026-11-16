@@ -34,7 +34,10 @@ import {
 import { apiPostError, ERROR_LEVEL_WARN } from '../../api/apiPostError';
 import { SESSION_LIST_TAB, SESSION_LIST_TYPES } from './sessionHelpers';
 import { buildRoomTimeline } from './roomTimeline';
-import { counterpartReaders } from '../../utils/matrixReadReceipts';
+import {
+	awaitsDecryption,
+	counterpartReaders
+} from '../../utils/matrixReadReceipts';
 import { MessageItem } from '../message/MessageItemComponent';
 import { isMatrixRoom } from '../../utils/matrixRoomUtils';
 import { Overlay, OVERLAY_FUNCTIONS, OverlayItem } from '../overlay/Overlay';
@@ -896,6 +899,9 @@ export const SessionStream = ({
 					eventType !== 'm.reaction' &&
 					eventType !== 'm.room.redaction' &&
 					event?.getSender?.() !== room?.myUserId &&
+					// Only a message the person can read counts; the transport
+					// calls again once decryption succeeds.
+					!awaitsDecryption(event) &&
 					arrivalReadTimer === null
 				) {
 					arrivalReadTimer = window.setTimeout(() => {

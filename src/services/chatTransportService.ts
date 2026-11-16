@@ -1,4 +1,5 @@
 import { feedbackMailIntentQueue } from './feedbackMailIntentQueue';
+import { awaitsDecryption } from '../utils/matrixReadReceipts';
 import { ClientEvent, Direction, MatrixEvent, Room } from 'matrix-js-sdk';
 import { loadEarlierMatrixRoomHistory } from './matrixRoomHistory';
 import {
@@ -18,9 +19,6 @@ import type {
 
 // A failed decrypt has synthetic clear type m.room.message, while its wire
 // event remains encrypted. It still needs a refresh after a later key restore.
-const awaitsTimelineDecryption = (event: MatrixEvent): boolean =>
-	event.getType() === 'm.room.encrypted' ||
-	(event.isEncrypted?.() === true && event.isDecryptionFailure?.() === true);
 
 export interface ChatTransportSession {
 	rid?: string | null;
@@ -519,7 +517,7 @@ class ChatTransportService {
 
 			if (
 				detached ||
-				!awaitsTimelineDecryption(event) ||
+				!awaitsDecryption(event) ||
 				pendingDecryptions.has(event)
 			) {
 				return;
@@ -529,7 +527,7 @@ class ChatTransportService {
 				decryptedEvent: MatrixEvent,
 				error?: Error
 			) => {
-				if (error || awaitsTimelineDecryption(decryptedEvent)) {
+				if (error || awaitsDecryption(decryptedEvent)) {
 					return;
 				}
 				clearPendingDecryption(event);
@@ -545,7 +543,7 @@ class ChatTransportService {
 				timeout
 			});
 			event.on('Event.decrypted' as any, handleDecrypted as any);
-			if (!awaitsTimelineDecryption(event)) {
+			if (!awaitsDecryption(event)) {
 				handleDecrypted(event);
 			}
 		};
@@ -565,7 +563,7 @@ class ChatTransportService {
 				error ||
 				pendingDecryptions.has(decryptedEvent) ||
 				decryptedEvent?.getRoomId?.() !== matrixRoomId ||
-				awaitsTimelineDecryption(decryptedEvent)
+				awaitsDecryption(decryptedEvent)
 			) {
 				return;
 			}
@@ -579,7 +577,7 @@ class ChatTransportService {
 		// still need a clear-content refresh when their asynchronous decrypt ends.
 		const cachedRoom = matrixClient.getRoom?.(matrixRoomId);
 		for (const event of cachedRoom?.timeline ?? []) {
-			if (awaitsTimelineDecryption(event)) {
+			if (awaitsDecryption(event)) {
 				handleTimeline(event, cachedRoom, true);
 			}
 		}
