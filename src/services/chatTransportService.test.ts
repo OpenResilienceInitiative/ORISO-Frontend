@@ -940,6 +940,65 @@ describe('chatTransportService markRoomAsRead', () => {
 	});
 });
 
+describe('chatTransportService markRoomAsRead dedupe (FE#1802)', () => {
+	afterEach(() => {
+		setMatrixClientServiceRef(null);
+	});
+
+	const roomWithEvents = (events: any[], sendReadReceipt: any) => {
+		setMatrixClientServiceRef({
+			getClient: () => ({
+				getRoom: (roomId: string) =>
+					roomId === ROOM_ID
+						? {
+								getLiveTimeline: () => ({
+									getEvents: () => events
+								})
+							}
+						: null,
+				sendReadReceipt
+			})
+		} as any);
+	};
+
+	it('sends one receipt per latest event, even when asked again while it is in flight', async () => {
+		const first = { id: 'first' };
+		const events: any[] = [first];
+		const sendReadReceipt = vi.fn(() => Promise.resolve());
+		roomWithEvents(events, sendReadReceipt);
+
+		await Promise.all([
+			chatTransportService.markRoomAsRead(ROOM_ID),
+			chatTransportService.markRoomAsRead(ROOM_ID),
+			chatTransportService.markRoomAsRead(ROOM_ID)
+		]);
+		expect(sendReadReceipt).toHaveBeenCalledTimes(1);
+
+		const second = { id: 'second' };
+		events.push(second);
+		await chatTransportService.markRoomAsRead(ROOM_ID);
+		expect(sendReadReceipt).toHaveBeenCalledTimes(2);
+		expect(sendReadReceipt).toHaveBeenLastCalledWith(second);
+	});
+
+	it('retries the same event after a failed send', async () => {
+		const latest = { id: 'latest' };
+		const sendReadReceipt = vi
+			.fn()
+			.mockRejectedValueOnce(new Error('offline'))
+			.mockResolvedValueOnce(undefined);
+		roomWithEvents([latest], sendReadReceipt);
+
+		await expect(
+			chatTransportService.markRoomAsRead(ROOM_ID)
+		).resolves.toBe(false);
+		await expect(
+			chatTransportService.markRoomAsRead(ROOM_ID)
+		).resolves.toBe(true);
+		expect(sendReadReceipt).toHaveBeenCalledTimes(2);
+	});
+});
+
 describe('chatTransportService reply relation (#435)', () => {
 	beforeEach(() => {
 		apiPostMessageEventNotification.mockClear();

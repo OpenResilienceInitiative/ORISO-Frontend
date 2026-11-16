@@ -764,14 +764,27 @@ class ChatTransportService {
 			return false;
 		}
 
+		// FE#1802: live events replayed on opening a room ask again for the
+		// same latest event; one receipt per event is enough.
+		if (this.receiptEventByRoom.get(matrixRoomId) === latestEvent) {
+			return true;
+		}
+		this.receiptEventByRoom.set(matrixRoomId, latestEvent);
+
 		try {
 			await (matrixClient as any).sendReadReceipt(latestEvent);
 			return true;
 		} catch {
 			// keep UI responsive; the receipt is retried on the next read
+			if (this.receiptEventByRoom.get(matrixRoomId) === latestEvent) {
+				this.receiptEventByRoom.delete(matrixRoomId);
+			}
 			return false;
 		}
 	}
+
+	/** Latest event a read receipt was sent (or is being sent) for, per room. */
+	private readonly receiptEventByRoom = new Map<string, unknown>();
 }
 
 export const chatTransportService = new ChatTransportService();
