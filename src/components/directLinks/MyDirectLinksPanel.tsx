@@ -3,7 +3,14 @@ import {
 	useDirectLinksRedirect
 } from './useDirectLinksAllowed';
 import * as React from 'react';
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import {
+	useCallback,
+	useContext,
+	useEffect,
+	useMemo,
+	useRef,
+	useState
+} from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { UserDataContext } from '../../globalState';
@@ -34,6 +41,9 @@ import { MyDirectLinksView } from './MyDirectLinksView';
 import { useMyDirectLinks } from './useMyDirectLinks';
 import { CREATE_CHAT_PATH } from '../app/routePaths';
 import { FETCH_ERRORS } from '../../api/fetchData';
+
+/* setTimeout overflows beyond about 24.8 days and would fire at once. */
+const MAX_TIMER_DELAY_MS = 2_147_483_647;
 
 export { CREATE_CHAT_PATH };
 
@@ -117,6 +127,30 @@ export const MyDirectLinksPanel = ({
 	const [editingInvitation, setEditingInvitation] =
 		useState<DirectLink | null>(null);
 	const [invitationError, setInvitationError] = useState<string>();
+	/* Each open of the invitation dialog is its own editor: a save that
+	   answers after it was closed (or another one opened) changes nothing. */
+	const invitationEditor = useRef(0);
+	const openInvitationEditor = (link: DirectLink | null) => {
+		invitationEditor.current += 1;
+		setEditingInvitation(link);
+		setInvitationError(undefined);
+	};
+
+	/* An invitation whose validity ends while the overview is open moves to
+	   the expired section: the list is read again once its end has passed. */
+	useEffect(() => {
+		if (!overview) return;
+		const now = Date.now();
+		const nextEnd = links
+			.filter((link) => !link.expired && link.expiresAt)
+			.map((link) => new Date(link.expiresAt!).getTime())
+			.filter((end) => Number.isFinite(end) && end > now)
+			.sort((a, b) => a - b)[0];
+		if (nextEnd === undefined) return;
+		const delay = Math.min(nextEnd - now + 1000, MAX_TIMER_DELAY_MS);
+		const timer = window.setTimeout(reload, delay);
+		return () => window.clearTimeout(timer);
+	}, [links, overview, reload]);
 
 	// Topics only matter once someone edits; a failed load keeps the topic fixed.
 	useEffect(() => {
@@ -161,13 +195,15 @@ export const MyDirectLinksPanel = ({
 
 	const saveInvitation = async (value: InvitationDialogValue) => {
 		if (!editingInvitation) return;
+		const editor = invitationEditor.current;
 		setSaving(true);
 		setInvitationError(undefined);
 		try {
 			await update(editingInvitation.id, directInvitationSettings(value));
-			setEditingInvitation(null);
+			if (editor === invitationEditor.current) openInvitationEditor(null);
 		} catch {
-			setInvitationError(t('directLink.edit.failed'));
+			if (editor === invitationEditor.current)
+				setInvitationError(t('directLink.edit.failed'));
 		} finally {
 			setSaving(false);
 		}
@@ -203,7 +239,7 @@ export const MyDirectLinksPanel = ({
 						}}
 						onEditAppointment={(item) => {
 							const link = linkOf(item.id);
-							if (link) setEditingInvitation(link);
+							if (link) openInvitationEditor(link);
 						}}
 						onToggle={toggle}
 						pendingIds={pendingIds}
@@ -241,10 +277,7 @@ export const MyDirectLinksPanel = ({
 					error={invitationError}
 					fullScreen={!fromL}
 					onSubmit={saveInvitation}
-					onClose={() => {
-						setEditingInvitation(null);
-						setInvitationError(undefined);
-					}}
+					onClose={() => openInvitationEditor(null)}
 				/>
 			)}
 			{qrLink && (

@@ -615,6 +615,73 @@ describe('Termine & Direkteinladungen (#2252)', () => {
 		);
 	});
 
+	it('ignores a save that answers after its dialog was closed and another opened', async () => {
+		const other: DirectLink = {
+			...meeting,
+			id: '10',
+			name: 'Termin Herr K.',
+			url: 'https://app.example/invite/t10',
+			appointment: {
+				id: 'a-10',
+				start: inTwoDays(14),
+				end: inTwoDays(15)
+			}
+		};
+		vi.mocked(apiGetOwnDirectLinks).mockResolvedValue([meeting, other]);
+		let answer!: (link: DirectLink) => void;
+		vi.mocked(apiUpdateDirectLink).mockReturnValue(
+			new Promise<DirectLink>((resolve) => {
+				answer = resolve;
+			})
+		);
+		renderPage();
+		await screen.findAllByTestId('upcoming-invitation');
+		const editOf = (name: string) =>
+			screen.getByRole('button', {
+				name: `directInvitation.overview.edit:${name}`
+			});
+
+		fireEvent.click(editOf('Termin Frau M.'));
+		const first = await screen.findByTestId('invitation-dialog');
+		fireEvent.click(
+			within(first).getByRole('button', {
+				name: 'directInvitation.dialog.saveAction'
+			})
+		);
+		await waitFor(() => expect(apiUpdateDirectLink).toHaveBeenCalled());
+		fireEvent.keyDown(first, { key: 'Escape' });
+		await waitFor(() =>
+			expect(screen.queryByTestId('invitation-dialog')).toBeNull()
+		);
+		fireEvent.click(editOf('Termin Herr K.'));
+		await screen.findByTestId('invitation-dialog');
+
+		await act(async () => answer(meeting));
+
+		expect(screen.getByTestId('invitation-dialog')).toBeTruthy();
+	});
+
+	it('moves an invitation to the expired ones once its validity ends while the page is open', async () => {
+		const endingSoon: DirectLink = {
+			...meeting,
+			expiresAt: new Date(Date.now() + 300).toISOString()
+		};
+		vi.mocked(apiGetOwnDirectLinks)
+			.mockResolvedValueOnce([endingSoon])
+			.mockResolvedValue([{ ...endingSoon, expired: true }]);
+		renderPage();
+		await screen.findByTestId('upcoming-invitation');
+
+		expect(
+			await screen.findByTestId(
+				'expired-invitation',
+				{},
+				{ timeout: 4000 }
+			)
+		).toBeTruthy();
+		expect(screen.queryByTestId('upcoming-invitation')).toBeNull();
+	});
+
 	it('opens the QR code of an appointment invitation', async () => {
 		vi.mocked(apiGetOwnDirectLinks).mockResolvedValue([meeting]);
 		renderPage();

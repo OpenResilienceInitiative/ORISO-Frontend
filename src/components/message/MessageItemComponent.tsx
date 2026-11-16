@@ -1368,13 +1368,18 @@ export const MessageItemComponent = ({
 		renewedNotice && renewedText ? (
 			<>
 				{renewedText.description}{' '}
-				<a
-					href={renewedNotice.url}
-					target="_blank"
-					rel="noopener noreferrer"
-				>
-					{renewedNotice.url}
-				</a>
+				{/* A Timeline preview opens nothing: the link is plain text there. */}
+				{blocksLeavingActions ? (
+					<span>{renewedNotice.url}</span>
+				) : (
+					<a
+						href={renewedNotice.url}
+						target="_blank"
+						rel="noopener noreferrer"
+					>
+						{renewedNotice.url}
+					</a>
+				)}
 			</>
 		) : null;
 	const systemNotificationTitle =
