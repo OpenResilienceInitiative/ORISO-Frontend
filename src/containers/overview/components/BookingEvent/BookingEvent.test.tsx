@@ -3,7 +3,8 @@
  * One row of "Ihre nächsten Termine" (FE#1050, item 4; review 4581640883):
  * the symbol and word of the appointment's real kind, the calendar's own;
  * no "Video-Termine sind derzeit nicht verfügbar."; and shortly before a
- * video appointment, its conversation, opened the way the calendar does.
+ * video appointment "Starten": its conversation, opened the way the
+ * calendar does and asked to start the video call (item 5).
  */
 import * as React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
@@ -26,6 +27,7 @@ import * as roomApi from '../../../../api/apiGetSessionRooms';
 import * as conversation from '../../../../components/calendar/appointmentConversation';
 import { CalendarEntryGlyph } from '../../../../components/calendar/CalendarEntryGlyph';
 import type { CalendarEntry } from '../../../../components/calendar/calendarModel';
+import { startVideoCallState } from '../../../../components/call/startCallIntent';
 import { BookingEvent } from './index';
 
 vi.mock('react-i18next', () => ({
@@ -88,7 +90,7 @@ const KINDS: [string, Partial<CalendarEntry>, string][] = [
 ];
 
 const OLD_TEXT = 'legacyVideoAppointment.unavailable.message';
-const ZUM_CHAT = 'calendar.entryMenu.chat';
+const START = 'overview.start';
 
 beforeEach(() => {
 	vi.useFakeTimers({ toFake: ['Date', 'setInterval', 'clearInterval'] });
@@ -128,7 +130,7 @@ describe('BookingEvent — the overview row of one appointment', () => {
 		}
 	);
 
-	it('offers "Zum Chat" only for a video appointment within five minutes of its start', () => {
+	it('offers "Starten" only for a video appointment within five minutes of its start', () => {
 		const rows = [
 			appointment({ id: 'video-soon', inMinutes: 3 }),
 			appointment({ id: 'video-later', inMinutes: 10 }),
@@ -150,7 +152,7 @@ describe('BookingEvent — the overview row of one appointment', () => {
 				))}
 			</>
 		);
-		const buttons = screen.getAllByRole('button', { name: ZUM_CHAT });
+		const buttons = screen.getAllByRole('button', { name: START });
 		expect(buttons).toHaveLength(1);
 		expect(
 			screen.getAllByTestId('booking-event')[0].contains(buttons[0])
@@ -160,25 +162,25 @@ describe('BookingEvent — the overview row of one appointment', () => {
 		act(() => {
 			vi.advanceTimersByTime(6 * MINUTE);
 		});
-		expect(screen.getAllByRole('button', { name: ZUM_CHAT })).toHaveLength(
-			2
-		);
+		expect(screen.getAllByRole('button', { name: START })).toHaveLength(2);
 	});
 
-	it('"Zum Chat" opens the conversation through the calendar\'s own path', async () => {
+	it('"Starten" opens the conversation through the calendar\'s own path and asks it to start the video call', async () => {
 		render(<BookingEvent appointment={appointment({ inMinutes: 3 })} />);
-		fireEvent.click(screen.getByRole('button', { name: ZUM_CHAT }));
+		fireEvent.click(screen.getByRole('button', { name: START }));
 		expect(conversation.appointmentRoomOf).toHaveBeenCalledWith(42);
 		await act(async () => {
 			await vi.mocked(conversation.appointmentRoomOf).mock.results[0]
 				.value;
 		});
 		expect(navigate).toHaveBeenCalledWith(
-			conversation.appointmentConversationPath(ROOM, 42, true)
+			conversation.appointmentConversationPath(ROOM, 42, true),
+			{ state: startVideoCallState(42) }
 		);
 		expect(roomApi.apiGetSessionRoomBySessionId).toHaveBeenCalledWith(42);
 		expect(navigate).toHaveBeenCalledWith(
-			`/sessions/consultant/sessionView/${ROOM}/42`
+			`/sessions/consultant/sessionView/${ROOM}/42`,
+			{ state: { startVideoCall: { sessionId: 42 } } }
 		);
 	});
 
@@ -187,7 +189,7 @@ describe('BookingEvent — the overview row of one appointment', () => {
 			sessions: []
 		} as never);
 		render(<BookingEvent appointment={appointment({ inMinutes: 3 })} />);
-		fireEvent.click(screen.getByRole('button', { name: ZUM_CHAT }));
+		fireEvent.click(screen.getByRole('button', { name: START }));
 		expect((await screen.findByRole('alert')).textContent).toBe(
 			'calendar.chatUnavailable'
 		);

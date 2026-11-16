@@ -10,6 +10,7 @@ import {
 	appointmentConversationPath,
 	appointmentRoomOf
 } from '../../../../components/calendar/appointmentConversation';
+import { startVideoCallState } from '../../../../components/call/startCallIntent';
 import { Button, BUTTON_TYPES } from '../../../../components/button/Button';
 import {
 	formatToHHMM,
@@ -50,23 +51,26 @@ export const BookingEvent = ({ appointment }: BookingEventProps) => {
 	}, [showCountDown]);
 
 	/*
-	 * A video appointment about to start offers its conversation: the call
-	 * is started there, behind the conversation's own checks (Träger
-	 * switches, consulting type, case state). The card does not start a
-	 * call itself; it opens the conversation the way the calendar does.
+	 * "Starten" on a video appointment about to start (Frank, 2026-11-16):
+	 * the conversation opens the way the calendar opens it, asked to start
+	 * its video call. Its own call button takes that up, with its own
+	 * checks (Träger switches, consulting type, case state); the card
+	 * decides nothing and starts nothing itself.
 	 */
 	const { sessionId } = appointment;
-	const offersChat =
+	const offersStart =
 		showCountDown &&
 		appointment.type === 'appointment' &&
 		facetOf(appointment) === 'video' &&
 		sessionId !== undefined;
-	const openChat = () => {
+	const startCall = () => {
 		if (sessionId === undefined) return;
 		setChatFailed(false);
 		appointmentRoomOf(sessionId).then(
 			(roomId) =>
-				navigate(appointmentConversationPath(roomId, sessionId, true)),
+				navigate(appointmentConversationPath(roomId, sessionId, true), {
+					state: startVideoCallState(sessionId)
+				}),
 			() => setChatFailed(true)
 		);
 	};
@@ -116,12 +120,12 @@ export const BookingEvent = ({ appointment }: BookingEventProps) => {
 					</div>
 				)}
 
-				{offersChat && (
+				{offersStart && (
 					<div className="bookingEvent__start">
 						<Button
-							buttonHandle={openChat}
+							buttonHandle={startCall}
 							item={{
-								label: translate('calendar.entryMenu.chat'),
+								label: 'overview.start',
 								type: BUTTON_TYPES.PRIMARY
 							}}
 						/>

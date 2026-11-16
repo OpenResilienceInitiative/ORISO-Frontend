@@ -2,9 +2,10 @@ import * as React from 'react';
 import { useEffect, useRef } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, within } from 'storybook/test';
-import { Route, Routes, useParams } from 'react-router-dom';
+import { Route, Routes, useLocation, useParams } from 'react-router-dom';
 import type { CalendarEntryDTO } from '../../api/apiCalendar';
 import { UserDataContext } from '../../globalState';
+import type { StartVideoCallState } from '../call/startCallIntent';
 import { BookingCard } from '../../containers/overview/components/BookingCard/BookingCard';
 import {
 	desktop1440Globals,
@@ -128,12 +129,21 @@ const useOverviewFeed = () => {
 	}, []);
 };
 
-/** Stands in for the conversation the card opens. */
+/**
+ * Stands in for the conversation the card opens, and shows whether it was
+ * asked to start its video call (the conversation's own call controls take
+ * that request up; their tests live with `SessionMenu`).
+ */
 const OpenedConversation = () => {
 	const { roomId, sessionId } = useParams();
+	const { state } = useLocation();
+	const startRequested =
+		(state as Partial<StartVideoCallState> | null)?.startVideoCall
+			?.sessionId === Number(sessionId);
 	return (
 		<p data-cy="opened-conversation">
 			{`Gespräch ${sessionId} (${roomId})`}
+			{startRequested ? ' · Video-Call wird gestartet' : ''}
 		</p>
 	);
 };
@@ -191,7 +201,8 @@ type Story = StoryObj<typeof meta>;
 /**
  * Each row names its kind with the calendar's symbol and word; no row says
  * video calls are unavailable; only the video appointment about to start
- * offers "Zum Chat", which opens its conversation.
+ * offers "Starten", which opens its conversation and asks it to start the
+ * video call (FE#1050 item 5).
  */
 const play: Story['play'] = async ({ canvasElement }) => {
 	const canvas = within(canvasElement);
@@ -210,12 +221,15 @@ const play: Story['play'] = async ({ canvasElement }) => {
 	await expect(
 		canvas.queryByText('Video-Termine sind derzeit nicht verfügbar.')
 	).toBeNull();
-	const chat = canvas.getAllByRole('button', { name: 'Zum Chat' });
-	await expect(chat).toHaveLength(1);
-	await expect(rows[0]).toContainElement(chat[0]);
-	await userEvent.click(chat[0]);
+	await expect(canvas.queryByRole('button', { name: 'Zum Chat' })).toBeNull();
+	const start = canvas.getAllByRole('button', { name: 'Starten' });
+	await expect(start).toHaveLength(1);
+	await expect(rows[0]).toContainElement(start[0]);
+	await userEvent.click(start[0]);
 	await expect(
-		await canvas.findByText(`Gespräch 42 (${ROOM})`)
+		await canvas.findByText(
+			`Gespräch 42 (${ROOM}) · Video-Call wird gestartet`
+		)
 	).toBeInTheDocument();
 };
 
