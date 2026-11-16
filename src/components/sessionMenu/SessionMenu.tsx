@@ -121,6 +121,7 @@ import { RecommendFurtherCounsellingDialog } from '../furtherCounselling/Recomme
 import { ReactComponent as HandoverIcon } from '../../resources/img/icons/case_handover_200_24px.svg';
 import { useCaseHandoverOffer } from '../caseHandover/useCaseHandoverOffer';
 import { CaseHandoverOffer } from '../caseHandover/CaseHandoverOffer';
+import { useRecommendAllowedInModality } from '../furtherCounselling/useRecommendAllowedInModality';
 import { getGroupChatInfoLink } from '../groupChat/groupChatInfoLink';
 
 export interface SessionMenuProps {
@@ -257,7 +258,10 @@ export const SessionMenu = (props: SessionMenuProps) => {
 		isGroup: Boolean(activeSession.isGroup),
 		isSupervisor: Boolean(props.isSupervisor)
 	});
-	const showRecommendFurtherCounselling = showRequestAdvice;
+	// FE#2251: in a live chat only when the counselling centre switched it on.
+	const recommendAllowedInModality = useRecommendAllowedInModality();
+	const showRecommendFurtherCounselling =
+		showRequestAdvice && recommendAllowedInModality;
 	const [recommendDialogOpen, setRecommendDialogOpen] = useState(false);
 	// FE#2250: "Beratung übergeben" — same audience as the recommend item,
 	// same offer flow (and pending state) as the profile button.

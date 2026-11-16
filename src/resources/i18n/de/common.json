@@ -1022,7 +1022,9 @@
 			"subtitle": "Wir bieten verschiedene spezialisierte Gesprächsformate für Sie und die Ratsuchenden an. Die Auswahl ist von den Trägern und Ihrer Beratungsstelle frei konfigurierbar.",
 			"title": "Gesprächsformat wählen",
 			"panelTitle": "Neue Unterhaltung erstellen",
-			"panelMenu": "Weitere Optionen"
+			"panelMenu": "Weitere Optionen",
+			"cardsPrevious": "Vorheriges Gesprächsformat",
+			"cardsNext": "Nächstes Gesprächsformat"
 		},
 		"internal": {
 			"addPerson": "Person hinzufügen",
@@ -2904,7 +2906,10 @@
 						"label": "Schließen"
 					},
 					"headline": "Es ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.",
-					"xReasonAlreadyRegistered": "Sie sind bereits mit diesem Thema in der Beratungsstelle registriert."
+					"xReasonAlreadyRegistered": "Sie sind bereits mit diesem Thema in der Beratungsstelle registriert.",
+					"badRequest": "Diese Beratungsstelle konnte Ihre Anfrage nicht anlegen. Bitte wählen Sie eine andere Beratungsstelle oder versuchen Sie es später erneut.",
+					"forbidden": "Sie können bei dieser Beratungsstelle gerade keine neue Beratung anfragen.",
+					"unavailable": "Ihre Anfrage konnte gerade nicht gesendet werden. Bitte versuchen Sie es in einigen Minuten erneut."
 				}
 			},
 			"registerSuccess": {
@@ -6749,7 +6754,8 @@
 			"noteLabel": "Notiz der Berater:in",
 			"findAgency": "Beratungsstelle finden",
 			"requested": "Anfrage gestellt",
-			"topicUnknown": "ein weiteres Thema"
+			"topicUnknown": "ein weiteres Thema",
+			"convertFirstHint": "Damit Sie Ihr Gespräch behalten, legen Sie zuerst ein Konto an. Danach wählen Sie die Beratungsstelle."
 		},
 		"duplicate": {
 			"startedTitle": "Weitere Beratung zum gleichen Thema",

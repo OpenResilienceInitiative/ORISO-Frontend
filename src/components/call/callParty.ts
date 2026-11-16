@@ -51,7 +51,12 @@ export type CallConversation = Pick<
 	chat?: Partial<
 		Pick<
 			GroupChatItemInterface,
-			'active' | 'conversationType' | 'repetitive' | 'repeatCount'
+			// `topic`: the group chat's name, the call's title (FE#2233).
+			| 'active'
+			| 'conversationType'
+			| 'repetitive'
+			| 'repeatCount'
+			| 'topic'
 		>
 	> &
 		Pick<GroupChatItemInterface, 'id'>;

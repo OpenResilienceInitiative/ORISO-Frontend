@@ -7,7 +7,10 @@ import type { OrisoCallType } from './widget/useElementCallWidget';
 export interface CallConversationParams {
 	/** `orisoCallType`: which view the call starts in. */
 	callType: OrisoCallType;
-	/** `orisoTopic`: the 1:1 conversation's topic, or `null` to send none. */
+	/**
+	 * `orisoTopic`: what the call's header calls the conversation — a 1:1's
+	 * topic, a group chat's own name — or `null` to send none.
+	 */
 	topic: string | null;
 }
 
@@ -21,9 +24,13 @@ export interface CallConversationParams {
  * other group — a team group chat, a supervision room, a modality this app
  * does not know — is a `group`.
  *
- * The topic: only for a 1:1 call, the session's Beratungsthema as the
- * registration names it in `language` (as `useTopicName` does). Never a group
- * chat's own subject line. `null` when no topic is known.
+ * The topic: for a 1:1 call, the session's Beratungsthema as the
+ * registration names it in `language` (as `useTopicName` does) — never a
+ * group chat's subject line, which is not a Beratungsthema. For a group
+ * call, the group chat's own name, the one its card and header show: the
+ * #2233 live test (16 Nov) had a team call titled "Anruf" while the chat
+ * read "QA Moabit · Brieftriage zu viert 08.11". Element Call shows it as
+ * the title as it is. `null` when neither is known.
  */
 export const callConversationParamsOf = (
 	isGroup: boolean,
@@ -55,13 +62,19 @@ export const callConversationParamsOf = (
 				: undefined;
 		return {
 			callType: modality === Modality.SELF_HELP ? 'circle' : 'group',
-			topic: null
+			topic: chatNameOf(chat)
 		};
 	}
 	return {
 		callType: 'single',
 		topic: topicOf(conversation, topics, language)
 	};
+};
+
+/** A group chat's name as its card shows it; `null` when it has none. */
+const chatNameOf = (chat: CallConversation['chat']): string | null => {
+	const name = typeof chat?.topic === 'string' ? chat.topic.trim() : '';
+	return name || null;
 };
 
 const topicOf = (

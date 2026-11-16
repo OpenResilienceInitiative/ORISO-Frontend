@@ -88,9 +88,10 @@ export interface ElementCallWidgetOptions {
 	 */
 	callType?: OrisoCallType | null;
 	/**
-	 * `orisoTopic` (FE#2233): a 1:1 conversation's Beratungsthema in the app
-	 * language, for the call's title. Left off the URL when `null`. Read when
-	 * the address is built and kept for the call room.
+	 * `orisoTopic` (FE#2233): what the call's title calls the conversation —
+	 * a 1:1's Beratungsthema in the app language, a group chat's own name.
+	 * Left off the URL when `null`. Read when the address is built and kept
+	 * for the call room.
 	 */
 	callTopic?: string | null;
 	/**
@@ -560,7 +561,7 @@ export const useElementCallWidget = (
 					...(hostChrome ? { orisoHostChrome: '1' } : {}),
 					// Call design S6b: the conversation's kind, not its size.
 					...(host.callType ? { orisoCallType: host.callType } : {}),
-					// FE#2233: a 1:1 call's title names the conversation's topic.
+					// FE#2233: the call's title names the topic (1:1) or the chat (group).
 					...(host.callTopic ? { orisoTopic: host.callTopic } : {}),
 					// Call design S8: "Link teilen" in the call's header.
 					...(offersInvite ? { orisoInvite: '1' } : {}),

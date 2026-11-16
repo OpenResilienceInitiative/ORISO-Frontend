@@ -262,6 +262,11 @@ import { loadMessageComposer } from '../app/appChunks';
 const MessageSubmitInterfaceComponent = lazyWithReload(loadMessageComposer);
 
 interface SessionItemProps {
+	/**
+	 * Phone: a side panel (thread, supervision, team) fills the screen instead
+	 * of the main chat. Read receipts wait while it is hidden (FE#1802).
+	 */
+	onMainChatHiddenChange?: (hidden: boolean) => void;
 	/** Current-session Carimat continuation inside the main scrolling timeline. */
 	mainTimelineSupplement?: React.ReactNode;
 	mainTimelineSupplementTime?: number;
@@ -3079,6 +3084,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 
 	// Phone: a side panel fills the screen instead of the main chat.
 	const mainChatHidden = isPhoneLayout && openPanel !== null;
+	const { onMainChatHiddenChange } = props;
+	useEffect(() => {
+		onMainChatHiddenChange?.(mainChatHidden);
+	}, [mainChatHidden, onMainChatHiddenChange]);
 	const shownThreadRootId =
 		openPanel === 'thread' ? activeThreadRootId : null;
 	useEffect(() => {
