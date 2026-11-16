@@ -1363,6 +1363,9 @@ export const DirectLinkConversations: Story = {
 					<RuntimeCard
 						key={row.id}
 						index={index}
+						grouped
+						isGroupStart={index === 0}
+						isGroupEnd={index === DIRECT_LINK_ROWS.length - 1}
 						item={runtimeSessionItem({
 							sessionOverrides: {
 								id: row.id,

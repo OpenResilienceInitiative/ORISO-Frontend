@@ -709,6 +709,11 @@ function SupervisionChipFilterDemo({
 							<RuntimeSessionCard
 								session={row.raw}
 								index={index}
+								// No row is open here, so all rows form one
+								// block, as `SessionsList` groups them.
+								grouped
+								isGroupStart={index === 0}
+								isGroupEnd={index === visibleRows.length - 1}
 							/>
 						</div>
 					))}
