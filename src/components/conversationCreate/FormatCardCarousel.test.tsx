@@ -5,7 +5,8 @@ import {
 	cleanup,
 	fireEvent,
 	render,
-	screen
+	screen,
+	waitFor
 } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { FormatCardCarousel } from './FormatCardCarousel';
@@ -181,6 +182,41 @@ describe('FormatCardCarousel', () => {
 		expect(next.disabled).toBe(true);
 		expect(document.activeElement).toBe(previous);
 		focusSpy.mockRestore();
+	});
+
+	it('shows the arrows when cards are added after the first layout', async () => {
+		// The Direktlink card can arrive later (availability loads): the row
+		// starts to overflow without the row or a card changing size.
+		const { container, rerender } = render(
+			<FormatCardCarousel>
+				<section>Gesprächskreis</section>
+			</FormatCardCarousel>
+		);
+		const scroller = getScroller(container);
+		stubGeometry(scroller, { scrollWidth: 700, clientWidth: 700 });
+		fireEvent.scroll(scroller);
+		expect(screen.queryByRole('button')).toBeNull();
+
+		Object.defineProperty(scroller, 'scrollWidth', {
+			configurable: true,
+			value: 1152
+		});
+		rerender(
+			<FormatCardCarousel>
+				<section>Gesprächskreis</section>
+				<section>Interna besprechen</section>
+				<section>Direktlink</section>
+			</FormatCardCarousel>
+		);
+		stubGeometry(scroller, { scrollWidth: 1152, clientWidth: 700 });
+
+		await waitFor(() =>
+			expect(
+				screen.getByRole('button', {
+					name: 'groupChat.format.cardsNext'
+				})
+			).toBeTruthy()
+		);
 	});
 
 	it('uses real, focusable buttons so the arrows work from the keyboard', () => {

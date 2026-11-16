@@ -280,14 +280,27 @@ export const HoverScrollArrows = ({
 				? new ResizeObserver(update)
 				: undefined;
 		// The track changes size with the window, its content with the cards
-		// (a card mounting late, a card growing): observe both.
+		// (a card growing): observe both. A card added or removed later can
+		// change the overflow without any observed box resizing, so watch
+		// the child list too and observe the new cards.
+		const observeCards = () =>
+			Array.from(track.children).forEach((child) =>
+				resizeObserver?.observe(child)
+			);
 		resizeObserver?.observe(track);
-		Array.from(track.children).forEach((child) =>
-			resizeObserver?.observe(child)
-		);
+		observeCards();
+		const mutationObserver =
+			typeof MutationObserver !== 'undefined'
+				? new MutationObserver(() => {
+						observeCards();
+						update();
+					})
+				: undefined;
+		mutationObserver?.observe(track, { childList: true });
 		track.addEventListener('scroll', update, { passive: true });
 		return () => {
 			resizeObserver?.disconnect();
+			mutationObserver?.disconnect();
 			track.removeEventListener('scroll', update);
 		};
 	}, [targetRef, targets]);
