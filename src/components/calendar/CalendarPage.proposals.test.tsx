@@ -307,6 +307,43 @@ describe('CalendarPage — what can be proposed', () => {
 		).toBe(false);
 	});
 
+	it('offers a co-access holder "Verschieben" instead: the appointment is in their own calendar too (UserService#1655)', async () => {
+		// UserService answers a proposal of a co-access holder with 400 and
+		// lets them move the appointment directly.
+		const onMove = vi.fn(() => Promise.resolve());
+		const onProposeMove = vi.fn();
+		const mine: CalendarEntry = { ...OWN, id: 'k1' };
+		const kayas = colleague({});
+		render(
+			<CalendarPage
+				role="consultant"
+				ownerId="me"
+				now={NOW}
+				entries={[mine, kayas]}
+				colleagues={[KAYA]}
+				initialShownColleagues={['kaya']}
+				onMove={onMove}
+				onProposeMove={onProposeMove}
+				onCancelAppointment={vi.fn()}
+			/>
+		);
+		act(() => grid.onEntryOpen?.(kayas, { x: 10, y: 10 }, 'list'));
+		expect(byCy('calendar-entry-propose')).toBeNull();
+		expect(byCy('calendar-entry-move')).not.toBeNull();
+		// A double click opens the form that moves it directly.
+		act(() => grid.onEntryOpen?.(kayas, { x: 10, y: 10 }, 'move'));
+		const form = byCy('calendar-move-form') as HTMLFormElement;
+		fireEvent.change(form.querySelector('input[type="date"]')!, {
+			target: { value: '2026-11-19' }
+		});
+		await act(async () => {
+			fireEvent.submit(form);
+		});
+		expect(onProposeMove).not.toHaveBeenCalled();
+		expect(onMove).toHaveBeenCalledTimes(1);
+		expect((onMove.mock.calls[0] as unknown[])[0]).toBe(mine);
+	});
+
 	it('refuses a proposed start in the past, as UserService would', async () => {
 		const onProposeMove = vi.fn();
 		const entry = colleague({});

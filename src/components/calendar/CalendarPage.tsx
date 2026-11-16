@@ -1381,10 +1381,20 @@ export const CalendarPage = ({
 	};
 
 	const openEntry = (
-		entry: CalendarEntry,
+		shown: CalendarEntry,
 		anchor: MenuAnchor,
 		mode: 'list' | 'move' = 'list'
 	) => {
+		// Co-access: the colleague's appointment is in one's own calendar
+		// too, with the same id. UserService lets a co-access holder move
+		// it directly and refuses a proposal (400), so its own actions
+		// apply.
+		const entry =
+			shown.ownerId !== ownerId && shown.type === 'appointment'
+				? (entries.find(
+						(e) => e.id === shown.id && e.ownerId === ownerId
+					) ?? shown)
+				: shown;
 		const actions = entryActions(entry, { ownerId, role, can });
 		const formMode =
 			mode === 'move'
