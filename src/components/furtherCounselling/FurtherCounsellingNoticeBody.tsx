@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import CheckCircleOutlineRoundedIcon from '@mui/icons-material/CheckCircleOutlineRounded';
 import { Button, BUTTON_TYPES, ButtonItem } from '../button/Button';
 import { NewRequestDialog } from '../profile/NewRequestDialog/NewRequestDialog';
@@ -21,6 +22,12 @@ export interface FurtherCounsellingNoticeBodyProps {
 	notice: FurtherCounsellingNotice;
 	/** Only the advice seeker gets "Beratungsstelle finden". */
 	viewerIsAsker: boolean;
+	/**
+	 * FE#2251: the advice seeker is an anonymous live-chat person without an
+	 * account. The button then leads to the account conversion first, which
+	 * opens the request dialog with the topic afterwards.
+	 */
+	viewerIsAnonymous?: boolean;
 	/** The room event id; keys the "Anfrage gestellt" state. */
 	messageId?: string | null;
 }
@@ -32,6 +39,7 @@ export interface FurtherCounsellingNoticeBodyProps {
 export const FurtherCounsellingNoticeBody = ({
 	notice,
 	viewerIsAsker,
+	viewerIsAnonymous = false,
 	messageId
 }: FurtherCounsellingNoticeBodyProps) => {
 	const { t: translate } = useTranslation();
@@ -59,6 +67,7 @@ export const FurtherCounsellingNoticeBody = ({
 			topicId={notice.topicId}
 			note={notice.note}
 			viewerIsAsker={viewerIsAsker}
+			viewerIsAnonymous={viewerIsAnonymous}
 			messageId={messageId}
 		/>
 	);
@@ -69,12 +78,14 @@ const RecommendationBody = ({
 	topicId,
 	note,
 	viewerIsAsker,
+	viewerIsAnonymous,
 	messageId
 }: {
 	topic: string;
 	topicId: number;
 	note: string | null;
 	viewerIsAsker: boolean;
+	viewerIsAnonymous: boolean;
 	messageId?: string | null;
 }) => {
 	const { t: translate } = useTranslation();
@@ -121,7 +132,13 @@ const RecommendationBody = ({
 					{translate('furtherCounselling.card.requested')}
 				</p>
 			)}
-			{viewerIsAsker && (
+			{viewerIsAsker && viewerIsAnonymous && (
+				<ConvertFirstAction
+					topicId={topicId}
+					button={findAgencyButton}
+				/>
+			)}
+			{viewerIsAsker && !viewerIsAnonymous && (
 				<div className="furtherCounsellingCard__actions">
 					<Button
 						item={findAgencyButton}
@@ -130,7 +147,7 @@ const RecommendationBody = ({
 					/>
 				</div>
 			)}
-			{viewerIsAsker && dialogOpen && (
+			{viewerIsAsker && !viewerIsAnonymous && dialogOpen && (
 				<RecommendationRequestDialog
 					topicId={topicId}
 					onClose={() => setDialogOpen(false)}
@@ -141,6 +158,38 @@ const RecommendationBody = ({
 				/>
 			)}
 		</div>
+	);
+};
+
+/**
+ * FE#2251: an anonymous live-chat person keeps the conversation by creating an
+ * account first; `LiveChatConversionPage` then opens the request dialog with
+ * the recommended topic (`location.state.topicId`). The live chat stays as it is.
+ */
+const ConvertFirstAction = ({
+	topicId,
+	button
+}: {
+	topicId: number;
+	button: ButtonItem;
+}) => {
+	const { t: translate } = useTranslation();
+	const navigate = useNavigate();
+	return (
+		<>
+			<p className="messageItem__systemNotificationDescription">
+				{translate('furtherCounselling.card.convertFirstHint')}
+			</p>
+			<div className="furtherCounsellingCard__actions">
+				<Button
+					item={button}
+					buttonHandle={() =>
+						navigate('/live-chat/convert', { state: { topicId } })
+					}
+					testingAttribute="further-counselling-find-agency"
+				/>
+			</div>
+		</>
 	);
 };
 

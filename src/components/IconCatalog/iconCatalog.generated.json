@@ -1141,7 +1141,6 @@
 		"exportNames": ["AppleIcon"],
 		"usageFiles": [
 			"src/components/twoFactorAuth/TwoFactorSetupDialog.tsx",
-			"src/containers/bookings/components/AddCalendar/addCalendar.tsx",
 			"src/resources/img/icons.ts"
 		],
 		"usage": "app-used"
@@ -1205,7 +1204,6 @@
 			"src/components/select/select.styles.scss",
 			"src/components/select/select2.styles.scss",
 			"src/components/select/SelectDropdown.tsx",
-			"src/containers/bookings/components/BookingDescription/bookingDescription.tsx",
 			"src/resources/img/icons.ts"
 		],
 		"usage": "app-used"
@@ -1297,7 +1295,6 @@
 			"src/components/profile/NotificationSettings/ToneControls.tsx",
 			"src/components/select/LanguageSelectDropdown.tsx",
 			"src/components/select/SelectDropdown.tsx",
-			"src/containers/bookings/components/BookingDescription/bookingDescription.tsx",
 			"src/resources/img/icons.ts"
 		],
 		"usage": "app-used"
@@ -1312,10 +1309,8 @@
 		"fileName": "arrow-up.svg",
 		"sourcePath": "src/resources/img/icons/arrow-up.svg",
 		"exportNames": [],
-		"usageFiles": [
-			"src/containers/bookings/components/BookingDescription/bookingDescription.tsx"
-		],
-		"usage": "app-used"
+		"usageFiles": [],
+		"usage": "catalogued-only"
 	},
 	{
 		"id": "ui-icon:arrows-lr:base",
@@ -1478,10 +1473,7 @@
 		"fileName": "caldav.svg",
 		"sourcePath": "src/resources/img/icons/caldav.svg",
 		"exportNames": ["CalDav"],
-		"usageFiles": [
-			"src/containers/bookings/components/AddCalendar/addCalendar.tsx",
-			"src/resources/img/icons.ts"
-		],
+		"usageFiles": ["src/resources/img/icons.ts"],
 		"usage": "app-used"
 	},
 	{
@@ -1507,7 +1499,10 @@
 		"fileName": "calendar_outline.svg",
 		"sourcePath": "src/resources/img/icons/calendar_outline.svg",
 		"exportNames": [],
-		"usageFiles": ["src/components/app/RouterConfig.tsx"],
+		"usageFiles": [
+			"src/components/app/RouterConfig.tsx",
+			"src/components/calendar/CalendarPage.tsx"
+		],
 		"usage": "app-used"
 	},
 	{
@@ -1520,10 +1515,7 @@
 		"fileName": "calendar-cancel.svg",
 		"sourcePath": "src/resources/img/icons/calendar-cancel.svg",
 		"exportNames": [],
-		"usageFiles": [
-			"src/components/message/Appointment.tsx",
-			"src/containers/bookings/components/Event/event.tsx"
-		],
+		"usageFiles": ["src/components/message/Appointment.tsx"],
 		"usage": "app-used"
 	},
 	{
@@ -1565,10 +1557,8 @@
 		"fileName": "calendar-month-navigation.svg",
 		"sourcePath": "src/resources/img/icons/calendar-month-navigation.svg",
 		"exportNames": [],
-		"usageFiles": [
-			"src/components/messageSubmitInterface/messageSubmitInterfaceComponent.tsx"
-		],
-		"usage": "app-used"
+		"usageFiles": [],
+		"usage": "catalogued-only"
 	},
 	{
 		"id": "ui-icon:calendar-month:base",
@@ -1593,12 +1583,8 @@
 		"fileName": "calendar-plus.svg",
 		"sourcePath": "src/resources/img/icons/calendar-plus.svg",
 		"exportNames": [],
-		"usageFiles": [
-			"src/components/sessionMenu/SessionMenu.tsx",
-			"src/containers/bookings/components/BookingEvents/bookingEvents.tsx",
-			"src/containers/bookings/components/NoBookings/noBookingsBooked.tsx"
-		],
-		"usage": "app-used"
+		"usageFiles": [],
+		"usage": "catalogued-only"
 	},
 	{
 		"id": "ui-icon:calendar-reschedule:base",
@@ -1610,8 +1596,8 @@
 		"fileName": "calendar-reschedule.svg",
 		"sourcePath": "src/resources/img/icons/calendar-reschedule.svg",
 		"exportNames": [],
-		"usageFiles": ["src/containers/bookings/components/Event/event.tsx"],
-		"usage": "app-used"
+		"usageFiles": [],
+		"usage": "catalogued-only"
 	},
 	{
 		"id": "ui-icon:calendar:base",
@@ -1686,8 +1672,7 @@
 			"src/components/notificationsCenter/NotificationsCenter.tsx",
 			"src/components/sessionMenu/SessionMenu.tsx",
 			"src/components/sessionsListItem/SessionListItemComponent.tsx",
-			"src/components/sessionsListItem/SessionListItemRunningCall.tsx",
-			"src/containers/bookings/components/Event/LocationType/index.tsx"
+			"src/components/sessionsListItem/SessionListItemRunningCall.tsx"
 		],
 		"usage": "app-used"
 	},
@@ -1911,8 +1896,7 @@
 		"sourcePath": "src/resources/img/icons/chat-booking.svg",
 		"exportNames": [],
 		"usageFiles": [
-			"src/components/notificationsCenter/eventDescriptors/icons.tsx",
-			"src/containers/bookings/components/Event/LocationType/index.tsx"
+			"src/components/notificationsCenter/eventDescriptors/icons.tsx"
 		],
 		"usage": "app-used"
 	},
@@ -2882,7 +2866,6 @@
 		"exportNames": ["GoogleCalendar"],
 		"usageFiles": [
 			"src/components/groupChat/GroupChatCalendarMenu.tsx",
-			"src/containers/bookings/components/AddCalendar/addCalendar.tsx",
 			"src/resources/img/icons.ts"
 		],
 		"usage": "app-used"
@@ -2911,6 +2894,7 @@
 		"sourcePath": "src/resources/img/icons/groups.svg",
 		"exportNames": [],
 		"usageFiles": [
+			"src/components/calendar/CalendarEntryGlyph.tsx",
 			"src/components/sessionsList/timeline/FutureEntryPill.tsx",
 			"src/components/sessionsListItem/GroupCardParticipants.tsx"
 		],
@@ -2998,7 +2982,6 @@
 			"src/components/sessionMenu/SessionMenu.tsx",
 			"src/components/sessionsListItem/SessionListItemMenu.tsx",
 			"src/components/twoFactorAuth/TwoFactorAuthResendMail.tsx",
-			"src/containers/bookings/components/Event/LocationType/index.tsx",
 			"src/resources/img/icons.ts",
 			"src/utils/anonName/data.ts"
 		],
@@ -3286,8 +3269,7 @@
 		"sourcePath": "src/resources/img/icons/location.svg",
 		"exportNames": [],
 		"usageFiles": [
-			"src/components/sessionsList/timeline/AppointmentKindGlyph.tsx",
-			"src/containers/bookings/components/Event/LocationType/index.tsx"
+			"src/components/sessionsList/timeline/AppointmentKindGlyph.tsx"
 		],
 		"usage": "app-used"
 	},
@@ -3619,8 +3601,7 @@
 			"src/components/help/HelpVideoCall.tsx",
 			"src/components/mobile/linkMenu/LinkMenu.tsx",
 			"src/components/profile/Documentation/index.tsx",
-			"src/components/tools/Tool.tsx",
-			"src/containers/bookings/components/MyCalendar/myCalendar.tsx"
+			"src/components/tools/Tool.tsx"
 		],
 		"usage": "app-used"
 	},
@@ -3697,10 +3678,7 @@
 		"fileName": "office365.svg",
 		"sourcePath": "src/resources/img/icons/office365.svg",
 		"exportNames": ["Office365"],
-		"usageFiles": [
-			"src/containers/bookings/components/AddCalendar/addCalendar.tsx",
-			"src/resources/img/icons.ts"
-		],
+		"usageFiles": ["src/resources/img/icons.ts"],
 		"usage": "app-used"
 	},
 	{
@@ -3996,10 +3974,7 @@
 		"exportNames": ["NewEnquiryIcon"],
 		"usageFiles": [
 			"src/components/profile/ConsultantStatistics.tsx",
-			"src/components/sessionMenu/SessionMenu.tsx",
 			"src/components/sessionsListItem/sessionsListItemHelpers.ts",
-			"src/containers/bookings/components/BookingEvents/bookingEvents.tsx",
-			"src/containers/bookings/components/NoBookings/noBookingsBooked.tsx",
 			"src/resources/img/icons.ts"
 		],
 		"usage": "app-used"
@@ -4980,10 +4955,8 @@
 		"fileName": "video-booking.svg",
 		"sourcePath": "src/resources/img/icons/video-booking.svg",
 		"exportNames": [],
-		"usageFiles": [
-			"src/containers/bookings/components/Event/LocationType/index.tsx"
-		],
-		"usage": "app-used"
+		"usageFiles": [],
+		"usage": "catalogued-only"
 	},
 	{
 		"id": "ui-icon:video-call:base",

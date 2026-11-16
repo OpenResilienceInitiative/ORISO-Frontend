@@ -57,6 +57,35 @@ export interface NewRequestDialogProps {
  * Only a confirmed consent creates the session; it is then pinned to the
  * department version and the asker lands straight in the new enquiry.
  */
+/**
+ * The headline for a refused new request (UserService#1646). Instead of the
+ * generic "Es ist ein Fehler aufgetreten" the advice seeker learns whether the
+ * centre refused this request, refused it for them, or the service was
+ * unreachable and a later retry may help.
+ */
+export const newRequestErrorHeadlineKey = (error: unknown): string => {
+	const response = error as Partial<Response> | null;
+	const status =
+		typeof response?.status === 'number' ? response.status : undefined;
+	if (
+		response?.headers?.get?.(FETCH_ERRORS.X_REASON) ===
+		X_REASON.USER_ALREADY_REGISTERED_WITH_AGENCY_AND_TOPIC
+	) {
+		return 'profile.data.registerError.overlay.xReasonAlreadyRegistered';
+	}
+	if (status === undefined || status >= 500) {
+		// No answer at all (timeout, network) or a server-side failure.
+		return 'profile.data.registerError.overlay.unavailable';
+	}
+	if (status === 400) {
+		return 'profile.data.registerError.overlay.badRequest';
+	}
+	if (status === 403) {
+		return 'profile.data.registerError.overlay.forbidden';
+	}
+	return 'profile.data.registerError.overlay.headline';
+};
+
 export const NewRequestDialog = ({
 	open,
 	onClose,
@@ -254,21 +283,11 @@ export const NewRequestDialog = ({
 					setIsRequestInProgress(false);
 					return;
 				}
-				const reason = error.headers?.get(FETCH_ERRORS.X_REASON);
-				if (
-					reason ===
-					X_REASON.USER_ALREADY_REGISTERED_WITH_AGENCY_AND_TOPIC
-				) {
-					// clone - never mutate the shared overlay item object
-					setOverlayItem({
-						...overlayItemNewRegistrationError,
-						headline: translate(
-							'profile.data.registerError.overlay.xReasonAlreadyRegistered'
-						)
-					});
-				} else {
-					setOverlayItem(overlayItemNewRegistrationError);
-				}
+				// clone - never mutate the shared overlay item object
+				setOverlayItem({
+					...overlayItemNewRegistrationError,
+					headline: translate(newRequestErrorHeadlineKey(error))
+				});
 				setIsButtonDisabled(true);
 				setOverlayActive(true);
 				setIsRequestInProgress(false);

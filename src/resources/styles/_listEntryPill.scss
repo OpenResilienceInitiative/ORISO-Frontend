@@ -1,0 +1,54 @@
+// One pill entry for appointment lists: "Als Nächstes" in the conversation
+// list (`.tlp__entry`, Activity Timeline). The counsellor calendar's own
+// "Als Nächstes" rows are compact rows without a fill (`.calendarSide__row`)
+// and share only the two-line text. This is the shared anatomy; each list
+// keeps its own spacing and its own states (soon, selected, transitions)
+// next to it.
+
+$list-entry-pill-min-height: 44px !default;
+$list-entry-pill-radius: 22px !default;
+$list-entry-pill-icon-size: 20px !default;
+
+@mixin list-entry-pill($padding-block: 0) {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	box-sizing: border-box;
+	width: 100%;
+	min-height: $list-entry-pill-min-height;
+	padding: $padding-block 14px $padding-block 12px;
+	border: 1px solid transparent;
+	border-radius: $list-entry-pill-radius;
+	background: var(--m3-surface-container-highest, #dcdfe3);
+	color: var(--m3-on-surface, #1b1b1c);
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
+
+	&:hover {
+		background: var(--m3-surface-dim, #d3d6da);
+	}
+
+	&:focus-visible {
+		@include control-focus-ring(1px);
+	}
+}
+
+@mixin list-entry-pill-icon {
+	flex: none;
+	width: $list-entry-pill-icon-size;
+	height: $list-entry-pill-icon-size;
+}
+
+@mixin list-entry-pill-text {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+}
+
+@mixin list-entry-pill-time {
+	font-size: 13px;
+	font-weight: 500;
+	font-variant-numeric: tabular-nums;
+	line-height: 18px;
+}

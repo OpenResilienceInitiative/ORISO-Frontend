@@ -5,9 +5,17 @@
  */
 import type {
 	SessionAppointment,
+	SessionAppointmentKind,
 	SessionAppointmentSlot
 } from '../../../api/apiSessionAppointments';
 import type { TimelineBooking } from './timelineModel';
+
+const LOCATION: Record<SessionAppointmentKind, TimelineBooking['location']> = {
+	ONSITE: 'IN_PERSON',
+	VIDEO: 'VIDEO_CALL',
+	PHONE: 'PHONE_CALL',
+	CHAT: 'CHAT'
+};
 
 export const appointmentToBooking = (
 	appointment: SessionAppointment
@@ -17,8 +25,9 @@ export const appointmentToBooking = (
 	sessionId: appointment.sessionId,
 	startTime: appointment.startTime,
 	endTime: appointment.endTime,
-	// The record names no modality; a conversation's appointment is its chat.
-	location: 'CHAT',
+	// The same kind as in the calendar (entryFromApi): an appointment made
+	// before the calendar names none and was a video call (review 4577642140).
+	location: (appointment.kind && LOCATION[appointment.kind]) || 'VIDEO_CALL',
 	askerName:
 		appointment.counterpart?.displayName ||
 		appointment.counterpart?.username

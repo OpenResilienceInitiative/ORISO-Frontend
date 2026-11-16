@@ -71,6 +71,17 @@ vi.mock('../profile/NewRequestDialog/NewRequestDialog', () => ({
 	NewRequestDialog: () => null
 }));
 
+// FE#2251: the conversion page now prefills the request dialog from the
+// asker's sessions and the app config. This test covers the closed-chat
+// dialog, not the prefill, so the hook is stubbed instead of widening the
+// hand-rolled globalState mock below.
+vi.mock('../furtherCounselling/useFurtherCounsellingPrefill', () => ({
+	useFurtherCounsellingPrefill: () => ({
+		prefilledPostcode: undefined,
+		knownAgencyIds: []
+	})
+}));
+
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({
 		t: (_key: string, fallback?: unknown) =>

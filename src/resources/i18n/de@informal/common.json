@@ -848,7 +848,10 @@
 			"registerError": {
 				"overlay": {
 					"headline": "Es ist ein Fehler aufgetreten. Bitte versuche es erneut.",
-					"xReasonAlreadyRegistered": "Du bist bereits mit diesem Thema in der Beratungsstelle registriert."
+					"xReasonAlreadyRegistered": "Du bist bereits mit diesem Thema in der Beratungsstelle registriert.",
+					"badRequest": "Diese Beratungsstelle konnte deine Anfrage nicht anlegen. Bitte wähle eine andere Beratungsstelle oder versuche es später erneut.",
+					"forbidden": "Du kannst bei dieser Beratungsstelle gerade keine neue Beratung anfragen.",
+					"unavailable": "Deine Anfrage konnte gerade nicht gesendet werden. Bitte versuche es in einigen Minuten erneut."
 				}
 			},
 			"registerSuccess": {
@@ -2866,6 +2869,9 @@
 		},
 		"request": {
 			"sameTopicInfo": "Zum gleichen Thema ist immer nur eine Beratung gleichzeitig vorgesehen. Startest du eine Beratung zu einem Thema, das du schon besprichst, wird deine bisherige Berater:in informiert, sobald die neue Beratung angenommen ist. Eine der beiden Beratungen wird dann beendet."
+		},
+		"card": {
+			"convertFirstHint": "Damit du dein Gespräch behältst, legst du zuerst ein Konto an. Danach wählst du die Beratungsstelle."
 		}
 	},
 	"calls": {
@@ -2974,6 +2980,58 @@
 		},
 		"notice": {
 			"failed": "Der neue Link konnte nicht erstellt werden. Bitte versuche es erneut."
+		}
+	},
+	"calendar": {
+		"grip": {
+			"tooManyDays": "Zu viele eigene Tage: höchstens {{max}}. Lösch ältere Ausnahmen."
+		},
+		"scopeHint": {
+			"AGENCY": "Du siehst die Kalender deiner Beratungsstelle. Das legt dein Träger fest.",
+			"TENANT": "Du siehst die Kalender aller Beratungsstellen deines Trägers. Das legt dein Träger fest.",
+			"PLATFORM": "Du siehst die Kalender aller Beratenden der Plattform. Das legt dein Träger fest."
+		},
+		"dialog": {
+			"note": "Notiz (nur für dich sichtbar)",
+			"description": "Wähle Tag, Uhrzeit, Art und die Beratung, zu der der Termin gehört."
+		},
+		"details": {
+			"busyHint": "Aus deinem eigenen Kalender übernommen. ORISO kennt nur die Zeit.",
+			"colleagueHint": "Von Kolleg:innen siehst du nur Zeit und Art."
+		},
+		"syncDialog": {
+			"description": "Deine ORISO-Termine in Outlook, Google oder Apple Kalender – und belegte Zeiten von dort zurück.",
+			"feedTitle": "In deinem Kalender abonnieren",
+			"feedText": "Füge diesen Link in deinem Kalender als Abonnement hinzu. Er zeigt nur „ORISO-Termin“ und die Uhrzeit, keine Namen.",
+			"resetText": "Der alte Link funktioniert sofort nicht mehr. Abonniere danach den neuen Link in deinem Kalender.",
+			"preview": "So erscheint ein Termin in deinem Kalender",
+			"importText": "Füge die private ICS-Adresse deines Outlook- oder Google-Kalenders ein. ORISO übernimmt nur, wann du belegt bist – keine Titel und keine Teilnehmenden.",
+			"importError": "Die Adresse konnte nicht gelesen werden. Bitte prüfe den Link."
+		},
+		"saveFailed": "Das hat nicht geklappt. Bitte versuch es noch einmal.",
+		"proposal": {
+			"title": "Dein Vorschlag für „{{title}}“",
+			"requestLabel": "{{name}} schlägt vor, deinen Termin {{from}} auf {{to}} zu verschieben",
+			"requestHint": "Bis du antwortest, bleibt der Termin, wo er ist."
+		},
+		"quick": {
+			"hint": "Tippe Tag und Uhrzeit, wähle die Art."
+		},
+		"settings": {
+			"switcherHint": "Wird für dich gespeichert."
+		},
+		"slotMenu": {
+			"outsideHours": "Außerhalb deiner Arbeitszeit."
+		},
+		"split": {
+			"empty": "Blende Kalender von Kolleg:innen ein, um deinen Tag daneben zu sehen.",
+			"label": "Dein Tag neben Kolleg:innen"
+		},
+		"workingHours": {
+			"description": "Außerhalb dieser Zeiten ist dein Kalender schattiert. Termine bleiben trotzdem möglich."
+		},
+		"holidays": {
+			"chooseHint": "Bitte wähle ein Bundesland."
 		}
 	}
 }

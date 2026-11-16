@@ -24,27 +24,23 @@ export const AskerInfoContent = () => {
 
 	const { type } = useContext(SessionTypeContext);
 
-	const isSessionAssignAvailable = useMemo(() => {
-		const isGroupChat = activeSession.isGroup;
-		const isEnquiryListView = type === SESSION_LIST_TYPES.ENQUIRY;
-		const isAsker = hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData);
-
-		if (isAsker || isGroupChat) {
-			return false;
-		}
-
-		if (isEnquiryListView) {
-			return hasUserAuthority(
+	/*
+	 * The assignment select only serves initial enquiry assignment (#1673).
+	 * On an active case it could only post the removed REASSIGN_CONSULTANT
+	 * alias (404); the owner hands over through the guarded case-handover
+	 * offer instead, and non-owners get no reassignment control at all.
+	 */
+	const isEnquiryAssignAvailable = useMemo(
+		() =>
+			type === SESSION_LIST_TYPES.ENQUIRY &&
+			!activeSession.isGroup &&
+			!hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) &&
+			hasUserAuthority(
 				AUTHORITIES.ASSIGN_CONSULTANT_TO_ENQUIRY,
 				userData
-			);
-		}
-
-		return hasUserAuthority(
-			AUTHORITIES.ASSIGN_CONSULTANT_TO_SESSION,
-			userData
-		);
-	}, [activeSession, type, userData]);
+			),
+		[activeSession, type, userData]
+	);
 	const isOwnerHandoverAvailable = useMemo(
 		() =>
 			type === SESSION_LIST_TYPES.MY_SESSION &&
@@ -65,14 +61,11 @@ export const AskerInfoContent = () => {
 					<AskerInfoTools />
 				</Box>
 			)}
-			{(isSessionAssignAvailable || isOwnerHandoverAvailable) && (
+			{(isEnquiryAssignAvailable || isOwnerHandoverAvailable) && (
 				<Box>
 					<div className="askerInfo__assign">
 						<AskerInfoAssign
-							showLegacyAssignment={
-								isSessionAssignAvailable &&
-								!isOwnerHandoverAvailable
-							}
+							showLegacyAssignment={isEnquiryAssignAvailable}
 							handoverEnabled={isOwnerHandoverAvailable}
 						/>
 					</div>

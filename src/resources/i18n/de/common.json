@@ -430,9 +430,6 @@
 		"assignedCalendars": {
 			"iframeTitle": "Zugewiesene Kalender"
 		},
-		"calcom": {
-			"loading": "Wird geladen: {{calLink}}"
-		},
 		"reschedule": {
 			"iframeTitle": "Termin verschieben"
 		},
@@ -1022,7 +1019,9 @@
 			"subtitle": "Wir bieten verschiedene spezialisierte Gesprächsformate für Sie und die Ratsuchenden an. Die Auswahl ist von den Trägern und Ihrer Beratungsstelle frei konfigurierbar.",
 			"title": "Gesprächsformat wählen",
 			"panelTitle": "Neue Unterhaltung erstellen",
-			"panelMenu": "Weitere Optionen"
+			"panelMenu": "Weitere Optionen",
+			"cardsPrevious": "Vorheriges Gesprächsformat",
+			"cardsNext": "Nächstes Gesprächsformat"
 		},
 		"internal": {
 			"addPerson": "Person hinzufügen",
@@ -2908,7 +2907,10 @@
 						"label": "Schließen"
 					},
 					"headline": "Es ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.",
-					"xReasonAlreadyRegistered": "Sie sind bereits mit diesem Thema in der Beratungsstelle registriert."
+					"xReasonAlreadyRegistered": "Sie sind bereits mit diesem Thema in der Beratungsstelle registriert.",
+					"badRequest": "Diese Beratungsstelle konnte Ihre Anfrage nicht anlegen. Bitte wählen Sie eine andere Beratungsstelle oder versuchen Sie es später erneut.",
+					"forbidden": "Sie können bei dieser Beratungsstelle gerade keine neue Beratung anfragen.",
+					"unavailable": "Ihre Anfrage konnte gerade nicht gesendet werden. Bitte versuchen Sie es in einigen Minuten erneut."
 				}
 			},
 			"registerSuccess": {
@@ -3050,7 +3052,7 @@
 		"noContent": "Keine Angabe",
 		"notifications": {
 			"appointmentNotificationEnabled": {
-				"description": "Ein Termin wurde angesetzt, verschoben oder abgesagt",
+				"description": "Ein Termin wurde angesetzt, verschoben, abgesagt oder eine Verschiebung wurde vorgeschlagen",
 				"title": "Termine"
 			},
 			"description": "Wir informieren Sie per E-Mail, wenn Sie eine neue Nachricht erhalten haben.",
@@ -4057,6 +4059,7 @@
 			"open": "Beratung übergeben",
 			"loadForbidden": "Sie dürfen die berechtigten Kolleg:innen nicht laden.",
 			"loadError": "Das Übergabeformular konnte nicht geladen werden.",
+			"loading": "Übergabeformular wird geladen …",
 			"submitError": "Die Übergabeanfrage konnte nicht gesendet werden.",
 			"conflict": "Für diese Beratung gibt es bereits ein offenes Übergabeangebot, oder sie hat sich geändert. Prüfen Sie den aktuellen Stand, bevor Sie ein neues Angebot senden.",
 			"status": {
@@ -6752,7 +6755,8 @@
 			"noteLabel": "Notiz der Berater:in",
 			"findAgency": "Beratungsstelle finden",
 			"requested": "Anfrage gestellt",
-			"topicUnknown": "ein weiteres Thema"
+			"topicUnknown": "ein weiteres Thema",
+			"convertFirstHint": "Damit Sie Ihr Gespräch behalten, legen Sie zuerst ein Konto an. Danach wählen Sie die Beratungsstelle."
 		},
 		"duplicate": {
 			"startedTitle": "Weitere Beratung zum gleichen Thema",
@@ -7000,5 +7004,447 @@
 			"text": "Hier ist der neue Link zum Termin:",
 			"validUntil": "Der neue Link zum Termin gilt bis {{date}}:"
 		}
+	},
+	"calendar": {
+		"bandLoading": "Wird geladen: {{names}}",
+		"colleagueLoadingShort": "wird geladen …",
+		"zoomOut": "Herauszoomen",
+		"zoomIn": "Hineinzoomen",
+		"zoomLabel": "Zoom",
+		"bandHint": "Einzelne Termine zeigt „Nebeneinander“.",
+		"bandUnknown": "Nicht geladen: {{names}}",
+		"bandFree": "Frei: {{names}}",
+		"bandBusy": "Belegt: {{names}}",
+		"bandSome": "{{busy}} von {{total}} belegt",
+		"bandOne": "{{name}} belegt",
+		"colleagueFailedShort": "nicht geladen",
+		"colleagueFailed": "Der Kalender von {{names}} konnte nicht geladen werden; ob alle frei sind, lässt sich so nicht sagen.",
+		"upcomingChat": "Zum Chat mit {{name}}",
+		"chatUnavailable": "Der Chat zu diesem Termin konnte nicht geöffnet werden.",
+		"conversationsFailedAsker": "Ihre Gespräche konnten nicht geladen werden, ein Termin führt so nicht zu seinem Chat.",
+		"create": "Termin anlegen",
+		"today": "Heute",
+		"previous": "Zurück",
+		"next": "Weiter",
+		"viewSwitch": "Ansicht",
+		"views": {
+			"day": "Tag",
+			"week": "Woche",
+			"month": "Monat",
+			"list": "Liste",
+			"threeDays": "3 Tage",
+			"workWeek": "Arbeitswoche",
+			"split": "Nebeneinander"
+		},
+		"upcoming": "Als Nächstes",
+		"upcomingEmpty": "Keine anstehenden Termine",
+		"calendars": "Kalender",
+		"myCalendar": "Mein Kalender",
+		"scopeHint": {
+			"AGENCY": "Sie sehen die Kalender Ihrer Beratungsstelle. Das legt Ihr Träger fest.",
+			"TENANT": "Sie sehen die Kalender aller Beratungsstellen Ihres Trägers. Das legt Ihr Träger fest.",
+			"PLATFORM": "Sie sehen die Kalender aller Beratenden der Plattform. Das legt Ihr Träger fest."
+		},
+		"colleaguesEmpty": "Keine Kalender von Kolleg:innen sichtbar.",
+		"sync": "Kalender-Abgleich",
+		"kinds": {
+			"video": "Video",
+			"phone": "Telefon",
+			"onsite": "Vor Ort",
+			"chat": "Chat"
+		},
+		"types": {
+			"group": "Gruppentermin",
+			"blocker": "Sperrzeit",
+			"busy": "Belegt",
+			"colleague": "Belegt"
+		},
+		"noEvents": "Keine Termine in diesem Zeitraum",
+		"loading": "Termine werden geladen",
+		"error": {
+			"title": "Die Termine konnten nicht geladen werden.",
+			"retry": "Erneut versuchen"
+		},
+		"dialog": {
+			"createTitle": "Neuer Eintrag",
+			"description": "Wählen Sie Tag, Uhrzeit, Art und die Beratung, zu der der Termin gehört.",
+			"conversation": "Beratung",
+			"kind": "Art",
+			"date": "Datum",
+			"start": "Beginn",
+			"end": "Ende",
+			"note": "Notiz (nur für Sie sichtbar)",
+			"save": "Anlegen",
+			"saveAnyway": "Trotzdem anlegen",
+			"conflict": "Überschneidet sich mit: {{list}}",
+			"error": {
+				"incomplete": "Bitte Datum und Uhrzeit wählen.",
+				"past": "Der Eintrag muss in der Zukunft liegen.",
+				"order": "Das Ende muss nach dem Beginn liegen.",
+				"conversation": "Bitte die Beratung wählen, zu der der Termin gehört."
+			}
+		},
+		"details": {
+			"start": {
+				"video": "Video-Call starten",
+				"phone": "Anruf starten",
+				"chat": "Chat öffnen"
+			},
+			"join": {
+				"video": "Video-Call beitreten",
+				"phone": "Zum Anruf",
+				"chat": "Chat öffnen"
+			},
+			"move": "Verschieben",
+			"cancel": "Absagen",
+			"remove": "Blockierung entfernen",
+			"address": "Adresse",
+			"colleague": "Kalender von {{name}}",
+			"busyHint": "Aus Ihrem eigenen Kalender übernommen. ORISO kennt nur die Zeit.",
+			"colleagueHint": "Von Kolleg:innen sehen Sie nur Zeit und Art."
+		},
+		"moved": "Verschoben auf {{date}}. Die ratsuchende Person wird benachrichtigt.",
+		"movePast": "Ein Termin lässt sich nicht in die Vergangenheit verschieben.",
+		"moveConflict": {
+			"title": "Trotzdem verschieben?",
+			"confirm": "Trotzdem verschieben"
+		},
+		"soon": "Beginnt gleich",
+		"blockerMoved": "Blockierung verschoben auf {{date}}.",
+		"cancelled": "Termin abgesagt. Die ratsuchende Person wird benachrichtigt.",
+		"created": "Termin angelegt: {{date}}",
+		"undo": "Rückgängig",
+		"syncDialog": {
+			"title": "Kalender-Abgleich",
+			"description": "Ihre ORISO-Termine in Outlook, Google oder Apple Kalender – und belegte Zeiten von dort zurück.",
+			"feedTitle": "In Ihrem Kalender abonnieren",
+			"feedText": "Fügen Sie diesen Link in Ihrem Kalender als Abonnement hinzu. Er zeigt nur „ORISO-Termin“ und die Uhrzeit, keine Namen.",
+			"copy": "Link kopieren",
+			"copied": "Link kopiert",
+			"lastFetched": "Zuletzt abgerufen: {{date}}",
+			"neverFetched": "Noch nicht abgerufen",
+			"reset": "Link zurücksetzen",
+			"resetTitle": "Link zurücksetzen?",
+			"resetText": "Der alte Link funktioniert sofort nicht mehr. Abonnieren Sie danach den neuen Link in Ihrem Kalender.",
+			"resetAction": "Zurücksetzen",
+			"preview": "So erscheint ein Termin in Ihrem Kalender",
+			"refreshHint": "Outlook und Google aktualisieren Abonnements nur alle paar Stunden. Maßgeblich ist ORISO.",
+			"importTitle": "Belegte Zeiten übernehmen",
+			"importText": "Fügen Sie die private ICS-Adresse Ihres Outlook- oder Google-Kalenders ein. ORISO übernimmt nur, wann Sie belegt sind – keine Titel und keine Teilnehmenden.",
+			"importField": "ICS-Adresse",
+			"importSave": "Übernehmen",
+			"importRemove": "Entfernen",
+			"importStatus": "Verbunden mit {{host}}, zuletzt abgeglichen {{date}}",
+			"importError": "Die Adresse konnte nicht gelesen werden. Bitte prüfen Sie den Link.",
+			"importConnected": "Verbunden mit {{host}}. Der erste Abgleich läuft."
+		},
+		"filterLabel": "Anzeigen",
+		"facets": {
+			"video": "Video",
+			"phone": "Telefon",
+			"onsite": "Vor Ort",
+			"chat": "Chat",
+			"group": "Gruppentermine",
+			"blocker": "Sperrzeiten"
+		},
+		"slotMenu": {
+			"label": "Eintragen",
+			"as": "Eintragen als",
+			"blockerNow": "sofort eingetragen",
+			"outsideHours": "Außerhalb Ihrer Arbeitszeit."
+		},
+		"blocker": {
+			"menuItem": "Sperrzeit",
+			"title": "Sperrzeit eintragen",
+			"description": "In dieser Zeit werden keine Termine vergeben. Kolleg:innen sehen nur „Sperrzeit“.",
+			"allDay": "Ganztägig",
+			"repeat": "Wiederholen an",
+			"until": "Bis einschließlich",
+			"save": "Eintragen",
+			"tooMany": "Zu viele Wiederholungen: höchstens {{max}} Sperrzeiten auf einmal. Bitte einen früheren letzten Tag wählen.",
+			"clockGap": "Eine Wiederholung fällt in die Zeitumstellung. Bitte eine andere Uhrzeit wählen.",
+			"count": "{{count}} Sperrzeiten werden eingetragen.",
+			"count_one": "{{count}} Sperrzeit wird eingetragen.",
+			"conflicts": "Überschneidet sich mit {{count}} Terminen.",
+			"conflicts_one": "Überschneidet sich mit {{count}} Termin.",
+			"created": "{{count}} Sperrzeiten eingetragen",
+			"created_one": "{{count}} Sperrzeit eingetragen",
+			"createdSingle": "Sperrzeit eingetragen: {{date}}"
+		},
+		"saveFailed": "Das hat nicht geklappt. Bitte versuchen Sie es noch einmal.",
+		"blockerRemoved": "Sperrzeit entfernt.",
+		"allDay": "ganztägig",
+		"entryMenu": {
+			"back": "Zurück",
+			"cancel": "Absagen",
+			"chat": "Zum Chat",
+			"conflicts": "Überschneidet sich mit einem anderen Eintrag.",
+			"date": "Tag",
+			"from": "Von",
+			"groupHint": "Termin der Gruppe. Ändern über die Gruppe.",
+			"invalid": "Das Ende liegt vor dem Beginn.",
+			"join": "Beitreten",
+			"label": "Aktionen für {{title}}",
+			"move": "Verschieben …",
+			"propose": "Verschiebung vorschlagen …",
+			"proposeHint": "{{name}} muss bestätigen. Bis dahin bleibt der Termin, wo er ist.",
+			"remove": "Entfernen",
+			"saveMove": "Verschieben",
+			"sendProposal": "Vorschlag senden",
+			"to": "Bis"
+		},
+		"fullscreen": "Vollbild",
+		"fullscreenExit": "Vollbild beenden (Esc)",
+		"jump": {
+			"label": "Zu einem Tag springen",
+			"today": "Heute",
+			"tomorrow": "Morgen",
+			"nextMonday": "Nächster Montag",
+			"inTwoWeeks": "In zwei Wochen",
+			"date": "Datum",
+			"go": "Anzeigen"
+		},
+		"kindsMenu": {
+			"label": "Was anzeigen",
+			"hint": "Abgewählte Arten blenden wir im Kalender und in der Liste aus.",
+			"all": "Alles anzeigen",
+			"customised": "Einige Arten sind ausgeblendet."
+		},
+		"monthMenu": {
+			"label": "Tag eintragen",
+			"allDay": "Ganztägig",
+			"allDays": "Alle {{days}} Tage ganztägig",
+			"withTime": "Mit Uhrzeit …",
+			"appointment": "Termin eintragen …",
+			"appointmentHint": "öffnet den Tag, dort die Uhrzeit ziehen",
+			"range": "{{from}} – {{to}} ({{days}} Tage)"
+		},
+		"peek": {
+			"hint": "Klick öffnet die Aktionen"
+		},
+		"people": {
+			"bar": "Personen im Kalender",
+			"hint": "Zeigen hebt hervor, Klick blendet aus",
+			"label": "Kalender anzeigen",
+			"me": "Ich",
+			"more": "Weitere …"
+		},
+		"proposal": {
+			"label": "Verschiebung",
+			"waiting": "wartet auf Bestätigung",
+			"waitingFor": "wartet auf {{name}}",
+			"title": "Ihr Vorschlag für „{{title}}“",
+			"hint": "Wartet auf {{name}}. Bis dahin bleibt der Termin, wo er ist.",
+			"withdraw": "Zurückziehen",
+			"sent": "Vorschlag gesendet: {{date}}. {{name}} muss bestätigen.",
+			"withdrawn": "Vorschlag zurückgezogen.",
+			"open": "Offene Anfragen",
+			"proposed": "Vorgeschlagen: {{date}}",
+			"from": "Vorschlag von {{name}}",
+			"someone": "Eine Kollegin oder ein Kollege",
+			"change": "{{from}} → {{to}}",
+			"requestLabel": "{{name}} schlägt vor, Ihren Termin {{from}} auf {{to}} zu verschieben",
+			"requestMenu": "Verschiebung vorgeschlagen",
+			"requestHint": "Bis Sie antworten, bleibt der Termin, wo er ist.",
+			"accept": "Annehmen",
+			"acceptHint": "Der Termin wandert auf die neue Zeit",
+			"acceptLabel": "Vorschlag von {{name}} annehmen: {{from}} auf {{to}}",
+			"decline": "Ablehnen",
+			"declineHint": "Der Termin bleibt, wie er ist",
+			"declineLabel": "Vorschlag von {{name}} ablehnen: Der Termin bleibt {{from}}",
+			"declined": "Vorschlag abgelehnt. Der Termin bleibt {{date}}.",
+			"noLongerValid": "Dieser Vorschlag gilt nicht mehr. Der Termin hat sich geändert oder ist vorbei.",
+			"navCount": "{{count}} offene Anfragen",
+			"navCount_one": "{{count}} offene Anfrage"
+		},
+		"quick": {
+			"freeUnavailable": "Freie Zeiten gerade nicht verfügbar.",
+			"freeLoading": "Freie Zeiten werden geladen …",
+			"close": "Schnell eintragen schließen",
+			"date": "Tag",
+			"duration": "Dauer",
+			"freeHalf": "Nächste freie halbe Stunde",
+			"freeHours": "Nächste freie Stunde",
+			"gaps": {
+				"when": "Tag und Uhrzeit",
+				"kind": "Art",
+				"who": "Gespräch"
+			},
+			"halfHour": "30 Min",
+			"hint": "Tippen Sie Tag und Uhrzeit, wählen Sie die Art.",
+			"hour": "1 Std",
+			"kind": "Art",
+			"minutes": "{{count}} Min.",
+			"missing": "Noch offen: {{list}}",
+			"more": "Mehr Angaben …",
+			"placeholder": "z. B. Do 14 Uhr Video",
+			"save": "Hinzufügen",
+			"slot": "Länge der freien Zeit",
+			"time": "Beginn",
+			"title": "Schnell eintragen",
+			"who": "Mit wem"
+		},
+		"search": {
+			"placeholder": "Termine suchen",
+			"clear": "Suche leeren",
+			"empty": "Nichts gefunden.",
+			"results": "Suchergebnisse"
+		},
+		"settings": {
+			"freeDays": "Freie Tage eintragen …",
+			"freeDaysHint": "Urlaub, Brückentag; Feiertage stehen unter Arbeitszeit",
+			"label": "Kalender-Einstellungen",
+			"workingHours": "Arbeitszeit",
+			"switcher": "Ansicht wählen",
+			"switcherMenu": "als Menü",
+			"switcherDigits": "als Schalter",
+			"switcherHint": "Wird für Sie gespeichert.",
+			"sync": "Mit Outlook oder Google verbinden"
+		},
+		"side": {
+			"resize": "Liste breiter oder schmaler ziehen; Doppelklick klappt sie ein oder aus, Pfeil hoch und runter scrollt sie",
+			"label": "Termine: Suche und Listen"
+		},
+		"split": {
+			"empty": "Blenden Sie Kalender von Kolleg:innen ein, um Ihren Tag daneben zu sehen.",
+			"free": "alle frei",
+			"label": "Ihr Tag neben Kolleg:innen",
+			"oneDay": "1 Tag",
+			"range": "Zeitraum nebeneinander",
+			"threeDays": "3 Tage"
+		},
+		"viewMenu": "Ansicht: {{view}}",
+		"when": {
+			"running": "läuft",
+			"inMinutes": "in {{count}} Min.",
+			"today": "heute {{time}}",
+			"tomorrow": "morgen {{time}}",
+			"weekday": "{{day}} {{time}}"
+		},
+		"workingHours": {
+			"breakOn": "{{day}}: Pause",
+			"break": "Pause",
+			"breakFrom": "{{day}}: Pause von",
+			"breakInvalid": "Eine Pause muss in der Arbeitszeit liegen und nach ihrem Beginn enden.",
+			"breakTo": "{{day}}: Pause bis",
+			"change": "Ändern",
+			"cleared": "Arbeitszeit entfernt.",
+			"description": "Außerhalb dieser Zeiten ist Ihr Kalender schattiert. Termine bleiben trotzdem möglich.",
+			"from": "Beginn am {{day}}",
+			"holidays": "Feiertage frei",
+			"holidaysHint": "Gesetzliche Feiertage werden wie arbeitsfreie Tage schattiert.",
+			"invalid": "Bei einem Tag liegt das Ende vor dem Beginn.",
+			"none": "Keine Arbeitszeit festgelegt",
+			"save": "Speichern",
+			"saved": "Arbeitszeit gespeichert: {{hours}}.",
+			"set": "Festlegen",
+			"summary": "Arbeitszeit {{hours}}",
+			"title": "Arbeitszeit festlegen",
+			"to": "Ende am {{day}}",
+			"tooMany": "Die Arbeitszeit hat höchstens {{max}} Zeitfenster pro Woche; diese Änderung ist nicht gespeichert."
+		},
+		"grip": {
+			"weekOnly": "Nur zum Teil gespeichert: Die Zeiten für {{weekdays}} sind geändert, {{date}} aber nicht.",
+			"weekUndone": "Nichts geändert: {{date}} ließ sich nicht speichern, deshalb gelten für {{weekdays}} wieder die bisherigen Zeiten.",
+			"tooManyDays": "Zu viele eigene Tage: höchstens {{max}}. Löschen Sie ältere Ausnahmen.",
+			"pauseMovedWeek": "Pause {{weekdays}} jetzt {{start}}–{{end}}.",
+			"pauseMovedDay": "Pause am {{date}} jetzt {{start}}–{{end}}.",
+			"pauseDeletedWeek": "Pause {{weekdays}} gelöscht.",
+			"pauseDeletedDay": "Pause am {{date}} gelöscht.",
+			"pauseScope": "Gilt",
+			"pauseMoveHint": "gleiche Länge",
+			"pauseMove": "Pause verschieben auf {{start}}–{{end}}",
+			"pauseDelete": "Pause löschen",
+			"pauseTitle": "Pause {{start}}–{{end}}",
+			"pauseMenu": "Pause ändern",
+			"pauseLabel": "{{what}} am {{date}} verschieben, jetzt {{time}}. Pfeiltasten ändern um 15 Minuten, Entf löscht oder verschiebt die Pause.",
+			"pauseCrossed": "Pause löschen oder verschieben …",
+			"ghostPauseEnd": "Pause bis {{time}}",
+			"ghostPauseStart": "Pause ab {{time}}",
+			"pauseEnd": "Pausenende",
+			"pauseStart": "Pausenbeginn",
+			"always": "Immer {{weekdays}}",
+			"alwaysHint": "als Regel in der Arbeitszeit",
+			"end": "Arbeitsende",
+			"forget": "Gemerkte Auswahl vergessen",
+			"forgotten": "Beim Ziehen der Arbeitszeit wird wieder gefragt.",
+			"ghostEnd": "Ende {{time}}",
+			"ghostStart": "Beginn {{time}}",
+			"instead": "statt {{time}} · {{date}}",
+			"label": "{{what}} am {{date}} verschieben, jetzt {{time}}. Pfeiltasten ändern um 15 Minuten.",
+			"menuLabel": "{{what}} ändern",
+			"onlyThisDay": "Nur an diesem Tag",
+			"remember": "Auswahl merken",
+			"rememberHint": "Nicht mehr fragen; zurücksetzen über ⋮ oben rechts",
+			"rememberedDay": "Arbeitszeit ziehen: „Nur an diesem Tag“ ist gemerkt",
+			"rememberedWeek": "Arbeitszeit ziehen: „Immer“ ist gemerkt",
+			"savedDay": "{{what}} am {{date}}: {{time}}. Gilt nur für diesen Tag.",
+			"savedWeek": "{{what}} {{weekdays}}: {{time}}. Gilt ab jetzt jede Woche.",
+			"start": "Arbeitsbeginn",
+			"title": "{{what}} {{time}} · ziehen zum Ändern",
+			"titleException": "{{what}} {{time}} (nur dieser Tag) · ziehen zum Ändern",
+			"weekdays": {
+				"0": "sonntags",
+				"1": "montags",
+				"2": "dienstags",
+				"3": "mittwochs",
+				"4": "donnerstags",
+				"5": "freitags",
+				"6": "samstags"
+			}
+		},
+		"holidays": {
+			"choose": "Bundesland wählen",
+			"chooseHint": "Bitte wählen Sie ein Bundesland.",
+			"label": "Feiertag: {{name}}",
+			"names": {
+				"allSaints": "Allerheiligen",
+				"ascension": "Christi Himmelfahrt",
+				"assumption": "Mariä Himmelfahrt",
+				"boxingDay": "2. Weihnachtstag",
+				"childrensDay": "Weltkindertag",
+				"christmasDay": "1. Weihnachtstag",
+				"corpusChristi": "Fronleichnam",
+				"easterMonday": "Ostermontag",
+				"easterSunday": "Ostersonntag",
+				"epiphany": "Heilige Drei Könige",
+				"goodFriday": "Karfreitag",
+				"labourDay": "Tag der Arbeit",
+				"newYear": "Neujahr",
+				"reformationDay": "Reformationstag",
+				"repentanceDay": "Buß- und Bettag",
+				"unityDay": "Tag der Deutschen Einheit",
+				"whitMonday": "Pfingstmontag",
+				"whitSunday": "Pfingstsonntag",
+				"womensDay": "Internationaler Frauentag"
+			},
+			"next": "Nächster Feiertag: {{name}}, {{date}}",
+			"region": "Bundesland",
+			"regions": {
+				"BB": "Brandenburg",
+				"BE": "Berlin",
+				"BW": "Baden-Württemberg",
+				"BY": "Bayern",
+				"HB": "Bremen",
+				"HE": "Hessen",
+				"HH": "Hamburg",
+				"MV": "Mecklenburg-Vorpommern",
+				"NI": "Niedersachsen",
+				"NW": "Nordrhein-Westfalen",
+				"RP": "Rheinland-Pfalz",
+				"SH": "Schleswig-Holstein",
+				"SL": "Saarland",
+				"SN": "Sachsen",
+				"ST": "Sachsen-Anhalt",
+				"TH": "Thüringen"
+			}
+		},
+		"sheet": {
+			"full": "Liste einklappen",
+			"half": "Liste ganz aufziehen",
+			"keys": "Eingabe wechselt die Höhe, die Pfeiltasten ziehen die Liste auf oder ein. Ziehen geht auch.",
+			"open": "Liste aufziehen"
+		},
+		"conversationsFailed": "Die Gespräche konnten nicht geladen werden, Termine lassen sich so keinem Gespräch zuordnen."
 	}
 }
