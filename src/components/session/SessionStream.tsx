@@ -632,14 +632,19 @@ export const SessionStream = ({
 	}, [readActiveSession, readonly]);
 
 	// FE#1802: a message that arrives while the conversation is open counts as
-	// read only once the person can see it. A hidden tab defers the receipt to
-	// the moment it becomes visible again; otherwise the other side would see
+	// read only once the person can see it. A hidden tab, or a phone side panel
+	// covering the chat, defers the receipt until the chat is visible again; otherwise the other side would see
 	// "read" for a message nobody looked at.
 	const setSessionReadRef = useRef(setSessionRead);
 	setSessionReadRef.current = setSessionRead;
 	const arrivalReadPendingRef = useRef(false);
+	// Phone: a side panel can cover the main chat while this stays mounted.
+	const mainChatHiddenRef = useRef(false);
 	const readArrivedMessages = useCallback(() => {
-		if (document.visibilityState === 'hidden') {
+		if (
+			document.visibilityState === 'hidden' ||
+			mainChatHiddenRef.current
+		) {
 			arrivalReadPendingRef.current = true;
 			return;
 		}
@@ -657,6 +662,13 @@ export const SessionStream = ({
 				handleVisibilityChange
 			);
 	}, [readArrivedMessages]);
+	const handleMainChatHiddenChange = useCallback(
+		(hidden: boolean) => {
+			mainChatHiddenRef.current = hidden;
+			if (!hidden && arrivalReadPendingRef.current) readArrivedMessages();
+		},
+		[readArrivedMessages]
+	);
 
 	const loadAfterCaseHandoverGranted = useCallback(() => {
 		setLoading(true);
@@ -1639,6 +1651,7 @@ export const SessionStream = ({
 				</div>
 			)}
 			<SessionItemComponent
+				onMainChatHiddenChange={handleMainChatHiddenChange}
 				mainTimelineSupplement={
 					<>
 						{displayedConsent &&

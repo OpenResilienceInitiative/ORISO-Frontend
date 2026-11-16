@@ -1818,6 +1818,21 @@ describe('SessionStream Matrix room lifecycle', () => {
 			expect(mocks.readActiveSession).not.toHaveBeenCalled();
 		});
 
+		it('waits while a phone side panel hides the conversation, then marks read on return', async () => {
+			setVisibility('visible');
+			await openConversation();
+			act(() => mocks.sessionItemProps.onMainChatHiddenChange(true));
+
+			emitLive(messageFrom('@peer:example.org'));
+			await act(() => new Promise((resolve) => setTimeout(resolve, 50)));
+			expect(mocks.readActiveSession).not.toHaveBeenCalled();
+
+			act(() => mocks.sessionItemProps.onMainChatHiddenChange(false));
+			await waitFor(() =>
+				expect(mocks.readActiveSession).toHaveBeenCalledTimes(1)
+			);
+		});
+
 		it('waits until the tab is visible again before marking read', async () => {
 			setVisibility('visible');
 			await openConversation();
