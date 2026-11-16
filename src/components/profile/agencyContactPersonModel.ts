@@ -9,9 +9,11 @@ const KEY = 'profile.data.agency.contactPerson';
 /**
  * One plain address only. Every address shown here ends up in a `mailto:`
  * href, so anything that could add recipients, headers or a body (`?`, `&`,
- * `,`, `;`, whitespace, angle brackets) is rejected rather than escaped: the
- * address is then shown as text, without a link. `%` is rejected too: a mail
- * client decodes it, so `a%2Bb@x` would write to a different mailbox than shown.
+ * `,`, `;`, whitespace, angle brackets) is rejected rather than escaped. `%` is
+ * rejected too: a mail client decodes it, so `a%2Bb@x` would write to a
+ * different mailbox than shown. A rejected address of a contact person is shown
+ * as text, without a link; a rejected platform support address is not shown at
+ * all, and the profile names the platform administration instead.
  */
 const PLAIN_EMAIL_PATTERN =
 	/^[^\s@?&#,;<>"'%]+@[^\s@?&#,;<>"'%]+\.[^\s@?&#,;<>"'%]+$/;
