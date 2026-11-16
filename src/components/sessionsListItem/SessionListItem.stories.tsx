@@ -372,9 +372,9 @@ function RuntimeSessionListItem(options: RuntimeSessionOptions = {}) {
 const meta = {
 	title: 'Components/Session/List/SessionListItem',
 	tags: ['autodocs'],
+	globals: { backgrounds: { value: 'gray' } },
 	parameters: {
 		layout: 'fullscreen',
-		backgrounds: { default: 'gray' },
 		router: {
 			initialPath: '/sessions/consultant/sessionView/session/4401'
 		},

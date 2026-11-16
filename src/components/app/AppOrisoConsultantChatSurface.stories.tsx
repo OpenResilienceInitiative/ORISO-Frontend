@@ -1269,9 +1269,9 @@ function AppOrisoRoutingFetchMockDecorator({
 const meta = {
 	title: 'App.Oriso/Consultant chat surface',
 	tags: ['autodocs'],
+	globals: { backgrounds: { value: 'gray' } },
 	parameters: {
 		layout: 'fullscreen',
-		backgrounds: { default: 'gray' },
 		router: {
 			initialPath: '/sessions/consultant/sessionView/session/3363'
 		},

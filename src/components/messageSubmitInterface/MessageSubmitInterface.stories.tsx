@@ -101,9 +101,9 @@ function ComposerShell({
 const meta = {
 	title: 'Components/Message/MessageSubmitInterface',
 	tags: ['autodocs'],
+	globals: { backgrounds: { value: 'gray' } },
 	parameters: {
 		layout: 'fullscreen',
-		backgrounds: { default: 'gray' },
 		design: [
 			{
 				type: 'figma',
