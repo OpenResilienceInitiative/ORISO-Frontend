@@ -253,18 +253,23 @@ export const GroupCallWidget: React.FC = () => {
 	});
 	// The call link's "Anklopfen" (UserService#1488), for the switch in the
 	// call (ElementCall#109). Every counsellor in the call may change it.
+	// Only a 1:1 session call has a link (UserService
+	// `CallShareLinkService.requireCounsellorCall`): a group chat or a
+	// Gesprächskreis answers 404 to every request, so it is never asked.
+	const isGroupCall = !!callData?.isGroup;
 	const shareLinkCall = useMemo(
 		() =>
-			callData?.signalRoomId && callData.callId
+			!isGroupCall && callData?.signalRoomId && callData.callId
 				? {
 						sourceRoomId: callData.signalRoomId,
 						callId: callData.callId
 					}
 				: null,
-		[callData?.signalRoomId, callData?.callId]
+		[isGroupCall, callData?.signalRoomId, callData?.callId]
 	);
 	const shareLinkKnock = useCallShareLinkKnock({
-		enabled: knocksEnabled,
+		// Hung up: stop once the call surface closes, whatever the call manager still holds.
+		enabled: knocksEnabled && !isDismissed,
 		call: shareLinkCall
 	});
 	const knockState = useMemo(
@@ -1489,22 +1494,18 @@ export const GroupCallWidget: React.FC = () => {
 						 * link twice — except where the link may create a
 						 * temporary account: that switch exists only here.
 						 */}
-						{isConsultantUser &&
-							widget.ready &&
-							callData?.signalRoomId && (
-								<div className="element-call-share">
-									<CallShareForCall
-										sourceRoomId={callData.signalRoomId}
-										callId={callData.callId}
-										layout={
-											isMobileView ? 'phone' : 'desktop'
-										}
-										onlyForTemporaryAccounts={
-											hostChrome && canInvite
-										}
-									/>
-								</div>
-							)}
+						{isConsultantUser && widget.ready && shareLinkCall && (
+							<div className="element-call-share">
+								<CallShareForCall
+									sourceRoomId={shareLinkCall.sourceRoomId}
+									callId={shareLinkCall.callId}
+									layout={isMobileView ? 'phone' : 'desktop'}
+									onlyForTemporaryAccounts={
+										hostChrome && canInvite
+									}
+								/>
+							</div>
+						)}
 						{/*
 						 * Somebody knocking on a direct-link call (#1892):
 						 * let them in without leaving the call. Docked
