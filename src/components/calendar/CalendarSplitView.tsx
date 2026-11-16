@@ -259,10 +259,11 @@ export const CalendarSplitView = ({
 	hourPx = SPLIT_HOUR_PX
 }: CalendarSplitViewProps) => {
 	const { t, i18n } = useTranslation();
-	// The same hours as the time grid: no entry falls outside them.
+	// The same hours as the time grid: no entry and no proposal falls
+	// outside them.
 	const { firstMinute, lastMinute } = useMemo(
-		() => gridMinutes(entries, workingPlan),
-		[entries, workingPlan]
+		() => gridMinutes(entries, workingPlan, proposals),
+		[entries, workingPlan, proposals]
 	);
 	const toPx = (minutes: number) => ((minutes - firstMinute) / 60) * hourPx;
 	const clampMinutes = (m: number) =>

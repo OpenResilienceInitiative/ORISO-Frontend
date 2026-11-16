@@ -425,6 +425,61 @@ describe('CalendarSplitView — entries outside 07:00–21:00 (review 4575253322
 	});
 });
 
+describe('CalendarSplitView — proposals outside 07:00–21:00 (review 4581640880)', () => {
+	const KAYA = {
+		id: 'kaya',
+		displayName: 'A. Kaya',
+		agencyName: 'Nord',
+		relation: 'sameAgency' as const
+	};
+	const at = (hour: number) => new Date(2026, 10, 16, hour).toISOString();
+	const kayaCall: CalendarEntry = {
+		id: 'kaya-call',
+		type: 'appointment',
+		kind: 'phone',
+		start: at(10),
+		end: at(11),
+		ownerId: 'kaya'
+	};
+	const proposal = (id: string, from: number, to: number) => ({
+		proposal: {
+			id,
+			entryId: 'kaya-call',
+			start: at(from),
+			end: at(to),
+			proposerId: 'me',
+			approverId: 'kaya'
+		},
+		entry: kayaCall
+	});
+	const dashed = (container: HTMLElement) =>
+		Array.from(
+			container.querySelectorAll<HTMLElement>('.calEntry--proposal')
+		).map((el) => el.style.top);
+
+	it.each([
+		['before 07:00', 5, 6, '0px'],
+		['after 21:00', 22, 23, `${15 * 48}px`]
+	])(
+		'widens the axis to a proposal %s, so it is drawn at its time',
+		(_when, from, to, top) => {
+			const { container } = render(
+				<CalendarSplitView
+					day={MONDAY}
+					role="consultant"
+					ownerId="me"
+					colleagues={[KAYA]}
+					entries={[kayaCall]}
+					proposals={[proposal('p1', from, to)]}
+					now={new Date(2026, 10, 16, 9)}
+					workingPlan={HOURS}
+				/>
+			);
+			expect(dashed(container)).toEqual([top]);
+		}
+	);
+});
+
 describe('CalendarSplitView — a colleague whose calendar did not load (review 4575917303)', () => {
 	const KAYA = { id: 'kaya', displayName: 'A. Kaya' };
 	it('marks nothing "alle frei" and says the calendar is missing', () => {

@@ -180,6 +180,51 @@ describe('CalendarPage — grid hours (review 4574981882)', () => {
 		expect(slot('05:30:00')).toBeNull();
 	});
 
+	it.each([
+		['before 07:00', 5, 6, '05:00:00'],
+		['after 21:00', 22, 23, '22:30:00']
+	])(
+		'widens the grid to a move proposal %s, so the dashed proposal shows (review 4581640880)',
+		(_when, from, to, slotTime) => {
+			const at = (hour: number) =>
+				new Date(2026, 10, 16, hour).toISOString();
+			// A colleague's request for one's own appointment: always drawn.
+			const own: CalendarEntry = {
+				id: 'a1',
+				type: 'appointment',
+				kind: 'phone',
+				start: at(10),
+				end: at(11),
+				ownerId: 'me'
+			};
+			render(
+				<CalendarPage
+					role="consultant"
+					ownerId="me"
+					now={NOW}
+					entries={[own]}
+					initialView="workWeek"
+					workingHours={[
+						{ weekday: 1, start: '08:00', end: '16:00' }
+					]}
+					receivedProposals={[
+						{
+							id: 'p1',
+							entryId: 'a1',
+							start: at(from),
+							end: at(to),
+							proposerId: 'kaya',
+							proposerName: 'A. Kaya',
+							approverId: 'me'
+						}
+					]}
+					onAcceptProposal={() => Promise.resolve()}
+				/>
+			);
+			expect(slot(slotTime)).not.toBeNull();
+		}
+	);
+
 	it('keeps the usual 07 to 21 grid inside ordinary hours', () => {
 		render(
 			<CalendarPage

@@ -230,16 +230,37 @@ const planBounds = (plan?: WorkingPlan) => {
 const slotMinutes = (slot: string) => minutesOf(slot.slice(0, 5));
 
 /**
- * The minutes the time grids show, for the time grid and "Nebeneinander"
- * alike: the usual day widened to the working plan and to every entry, so
- * nothing falls outside (review 4575253322).
+ * The hours the time grids show, for the time grid and "Nebeneinander"
+ * alike: the usual day widened to the working plan, to every entry and to
+ * every dashed move proposal at its proposed time, so nothing falls
+ * outside (reviews 4575253322, 4581640880).
  */
-export const gridMinutes = (
-	entries: Pick<CalendarEntry, 'start' | 'end'>[],
-	plan?: WorkingPlan
+const gridHours = (
+	entries: Pick<CalendarEntry, 'start' | 'end' | 'allDay'>[],
+	plan?: WorkingPlan,
+	proposals: { proposal: Pick<MoveProposal, 'start' | 'end'> }[] = []
 ) => {
 	const bounds = planBounds(plan);
-	const hours = visibleHours(entries, bounds.from, bounds.to);
+	return visibleHours(
+		[
+			...entries,
+			...proposals.map(({ proposal }) => ({
+				start: proposal.start,
+				end: proposal.end
+			}))
+		],
+		bounds.from,
+		bounds.to
+	);
+};
+
+/** {@link gridHours} as minutes since midnight. */
+export const gridMinutes = (
+	entries: Pick<CalendarEntry, 'start' | 'end' | 'allDay'>[],
+	plan?: WorkingPlan,
+	proposals: { proposal: Pick<MoveProposal, 'start' | 'end'> }[] = []
+) => {
+	const hours = gridHours(entries, plan, proposals);
 	return {
 		firstMinute: slotMinutes(hours.min),
 		lastMinute: slotMinutes(hours.max)
@@ -529,12 +550,12 @@ export const CalendarView = ({
 		};
 	}, [gripsShown, shownRange, view, fontsReady]);
 
-	// The usual working day, widened so no entry and no grip falls outside
-	// the grid.
-	const hours = useMemo(() => {
-		const bounds = planBounds(workingPlan);
-		return visibleHours(entries, bounds.from, bounds.to);
-	}, [entries, workingPlan]);
+	// The usual working day, widened so no entry, no proposal and no grip
+	// falls outside the grid.
+	const hours = useMemo(
+		() => gridHours(entries, workingPlan, proposals),
+		[entries, workingPlan, proposals]
+	);
 	const firstMinute = slotMinutes(hours.min);
 	const lastMinute = slotMinutes(hours.max);
 	const measure = useMemo(
