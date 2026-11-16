@@ -394,6 +394,7 @@ const StageList = () => {
 							defaultLanguage="de"
 							handleKeyDownLisItemContent={() => {}}
 							index={0}
+							grouped
 						/>
 					</div>
 				</div>

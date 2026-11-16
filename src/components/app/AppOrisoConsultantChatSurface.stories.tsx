@@ -960,12 +960,16 @@ function RealSessionListItem({
 	session,
 	index,
 	isBeforeActive = false,
-	isAfterActive = false
+	isAfterActive = false,
+	isGroupStart = true,
+	isGroupEnd = true
 }: {
 	session: ListItemInterface;
 	index: number;
 	isBeforeActive?: boolean;
 	isAfterActive?: boolean;
+	isGroupStart?: boolean;
+	isGroupEnd?: boolean;
 }) {
 	const activeSession = buildExtendedSession(session, '');
 
@@ -983,6 +987,11 @@ function RealSessionListItem({
 				index={index}
 				isBeforeActive={isBeforeActive}
 				isAfterActive={isAfterActive}
+				// Same grouping `SessionsList` applies outside the rail:
+				// inactive rows join into one block, the active row stands out.
+				grouped
+				isGroupStart={isGroupStart}
+				isGroupEnd={isGroupEnd}
 			/>
 		</ActiveSessionContext.Provider>
 	);
@@ -1063,6 +1072,19 @@ function SessionListPanel({
 										!!consultantChatSessions[index - 1] &&
 										isRuntimeSessionActive(
 											consultantChatSessions[index - 1]
+										)
+									}
+									isGroupStart={
+										index === 0 ||
+										isRuntimeSessionActive(
+											consultantChatSessions[index - 1]
+										)
+									}
+									isGroupEnd={
+										index ===
+											consultantChatSessions.length - 1 ||
+										isRuntimeSessionActive(
+											consultantChatSessions[index + 1]
 										)
 									}
 								/>

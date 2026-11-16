@@ -264,6 +264,14 @@ function ListColumn({ width, rail }: { width: number; rail: boolean }) {
 									index={index}
 									isBeforeActive={index === activeIndex - 1}
 									isAfterActive={index === activeIndex + 1}
+									grouped
+									isGroupStart={
+										index === 0 || index === activeIndex + 1
+									}
+									isGroupEnd={
+										index === items.length - 1 ||
+										index === activeIndex - 1
+									}
 								/>
 							</ListRowSession>
 						))}
