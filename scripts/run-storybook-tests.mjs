@@ -335,7 +335,7 @@ const runShardWithRetries = async (index, count) => {
 				lastRun
 			)
 		) {
-			return lastRun;
+			return { ...lastRun, retries: attempt };
 		}
 
 		attempt += 1;

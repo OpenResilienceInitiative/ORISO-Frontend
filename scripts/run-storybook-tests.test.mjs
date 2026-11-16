@@ -406,6 +406,10 @@ test(
 		}
 		assert.match(result.output, /second shard output/);
 		assert.match(result.output, /fourth shard output/);
+		assert.match(
+			result.output,
+			/Storybook browser-disconnect retries: 0 in 4 shard\(s\)/
+		);
 	}
 );
 
@@ -467,6 +471,10 @@ test(
 				.filter((event) => event.event === 'start')
 				.map((event) => event.shard),
 			[1]
+		);
+		assert.match(
+			result.output,
+			/Storybook browser-disconnect retries: 0 in 1 shard\(s\)/
 		);
 	}
 );
