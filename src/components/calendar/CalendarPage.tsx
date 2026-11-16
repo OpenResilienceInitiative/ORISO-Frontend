@@ -776,11 +776,14 @@ export const CalendarPage = ({
 	};
 	// A search result moves the calendar to its day and scrolls to an hour
 	// before it (prototype v17); month, list and "Nebeneinander" give way to
-	// the days with times.
+	// the days with times. The work week hides Saturday and Sunday, so an
+	// entry on a weekend opens the whole week (review 4589150187).
 	const showEntry = (entry: CalendarEntry) => {
 		const start = new Date(entry.start);
+		const weekend = start.getDay() === 0 || start.getDay() === 6;
 		if (view === 'month' || view === 'list' || split)
-			changeView(phone ? 'threeDays' : 'workWeek');
+			changeView(phone ? 'threeDays' : weekend ? 'week' : 'workWeek');
+		else if (view === 'workWeek' && weekend) changeView('week');
 		goTo(start);
 		// The eye finds it where the calendar lands (Frank *7).
 		flash([entry.id]);

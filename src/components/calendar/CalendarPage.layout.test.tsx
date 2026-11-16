@@ -143,6 +143,49 @@ describe('CalendarPage — phone and tablet', () => {
 		expect(search.querySelector('.calendarSearch__results')).toBeNull();
 	});
 
+	it.each(['month', 'workWeek'] as const)(
+		'opens the whole week for a weekend entry found from %s (review 4589150187)',
+		(initialView) => {
+			// Saturday, 5 December 2026: the work week hides it.
+			const saturday: CalendarEntry = {
+				...OWN,
+				id: 'a3',
+				title: 'stille_robbe',
+				start: new Date(2026, 11, 5, 15, 0).toISOString(),
+				end: new Date(2026, 11, 5, 16, 0).toISOString()
+			};
+			const onRangeChange = vi.fn();
+			page({
+				phone: false,
+				entries: [OWN, KAYA, saturday],
+				initialView,
+				onRangeChange
+			});
+			const search = stage().firstElementChild as HTMLElement;
+			fireEvent.change(within(search).getByRole('searchbox'), {
+				target: { value: 'robbe' }
+			});
+			fireEvent.click(
+				within(
+					search.querySelector<HTMLElement>(
+						'.calendarSearch__results'
+					)!
+				).getByRole('button', { name: /stille_robbe/ })
+			);
+			expect(viewButton().textContent).toContain('calendar.views.week');
+			expect(viewButton().textContent).not.toContain(
+				'calendar.views.workWeek'
+			);
+			const [start, end] = onRangeChange.mock.calls.at(-1) as [
+				Date,
+				Date
+			];
+			const day = new Date(saturday.start).getTime();
+			expect(start.getTime()).toBeLessThanOrEqual(day);
+			expect(end.getTime()).toBeGreaterThan(day);
+		}
+	);
+
 	it('shows no "Als Nächstes", no hours line and no sheet without open requests', () => {
 		page({ phone: false });
 		expect(cy('calendar-upcoming')).toBeNull();
