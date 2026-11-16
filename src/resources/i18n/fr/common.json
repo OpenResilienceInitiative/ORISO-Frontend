@@ -2885,7 +2885,10 @@
 						"label": "Fermer"
 					},
 					"headline": "Une erreur s'est produite. Veuillez réessayer.",
-					"xReasonAlreadyRegistered": "Vous êtes déjà inscrit(e) à ce sujet dans le centre de consultation."
+					"xReasonAlreadyRegistered": "Vous êtes déjà inscrit(e) à ce sujet dans le centre de consultation.",
+					"badRequest": "Ce centre de consultation n'a pas pu créer votre demande. Veuillez choisir un autre centre ou réessayer plus tard.",
+					"forbidden": "Vous ne pouvez pas demander de nouvelle consultation auprès de ce centre pour le moment.",
+					"unavailable": "Votre demande n'a pas pu être envoyée pour le moment. Veuillez réessayer dans quelques minutes."
 				}
 			},
 			"registerSuccess": {
