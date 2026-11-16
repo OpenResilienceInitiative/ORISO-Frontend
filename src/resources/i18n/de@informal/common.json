@@ -2991,6 +2991,9 @@
 		},
 		"holidays": {
 			"chooseHint": "Bitte wähle ein Bundesland."
+		},
+		"people": {
+			"alwaysMine": "Deine Termine siehst du immer."
 		}
 	}
 }

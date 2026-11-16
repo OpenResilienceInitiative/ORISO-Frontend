@@ -7123,6 +7123,10 @@
 			"bar": "Takvimdeki kişiler",
 			"hint": "Üzerine gelmek vurgular, tıklama gizler",
 			"label": "Takvimleri göster",
+			"alwaysMine": "Kendi randevularınızı her zaman görürsünüz.",
+			"sameTenant": "aynı kurum",
+			"wholeAgency": "Tüm danışma merkezini göster",
+			"split": "Yan yana gör",
 			"me": "Ben",
 			"meAvatar": "ben",
 			"more": "Diğer …"

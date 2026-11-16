@@ -7123,6 +7123,10 @@
 			"bar": "Personnes dans le calendrier",
 			"hint": "Survoler met en évidence, un clic masque",
 			"label": "Afficher des calendriers",
+			"alwaysMine": "Vous voyez toujours vos rendez-vous.",
+			"sameTenant": "même organisme",
+			"wholeAgency": "Afficher tout le centre de conseil",
+			"split": "Voir côte à côte",
 			"me": "Moi",
 			"meAvatar": "moi",
 			"more": "Autres …"

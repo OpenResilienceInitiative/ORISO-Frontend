@@ -596,8 +596,7 @@ $cal-avatar-tones: (#2f5d5a, #7a0e2a, #4b4f7a, #6d3d63, #7a5a1e, #36576e);
 }
 
 .calendarPeek__agencyShort,
-.calendarSplit__agency,
-.calendarStage__agency {
+.calendarSplit__agency {
 	padding: 0 6px;
 	border-radius: 8px;
 	background: var(--m3-surface-container-high, #eae7e8);
@@ -1997,55 +1996,132 @@ $cal-new-pill-hover: #4b4f51;
 	}
 }
 
+// A white chip per person: tone avatar, name, the agency's short name in
+// small grey (prototype v17).
 .calendarStage__person {
 	display: inline-flex;
 	flex: none;
 	align-items: center;
 	gap: 6px;
-	height: 32px;
-	padding: 0 10px 0 4px;
-	border: 1px solid var(--m3-outline-variant, #c4c7c8);
-	border-radius: 16px;
-	background: transparent;
+	box-sizing: border-box;
+	height: 34px;
+	padding: 0 12px 0 3px;
+	border: 1px solid var(--m3-surface-container-highest, #e4e2e2);
+	border-radius: 999px;
+	background: var(--m3-surface-container-lowest, #ffffff);
 	color: var(--m3-on-surface, #1b1b1c);
 	font: inherit;
 	font-size: 13px;
+	font-weight: 500;
 	white-space: nowrap;
 	cursor: pointer;
 
-	// Shown colleagues are pressed; one's own calendar unpressed is muted.
-	&[aria-pressed='true']:not(:first-child) {
-		border-color: transparent;
-		background: var(--m3-secondary-container, #dce3ec);
-		color: var(--m3-on-secondary-container, #1b1b1c);
-	}
-
-	&[aria-pressed='false']:first-child {
-		opacity: 0.5;
-		text-decoration: line-through;
-	}
-
-	// Recently shown, now hidden: one click shows them again.
-	&--off {
-		color: var(--m3-on-surface-variant, #444748);
-	}
-
-	&--more {
-		padding: 0 12px;
-		border-style: dashed;
-		color: var(--m3-on-surface-variant, #444748);
-	}
-
 	&:hover {
-		background: var(--oriso-menu-hover-surface, rgba(27, 27, 28, 0.08));
+		background: var(--m3-surface-container-low, #f6f3f3);
 	}
 
 	&:focus-visible {
 		@include control-focus-ring(0);
 	}
+
+	// One's own calendar, muted with a click.
+	&--me[aria-pressed='false'] {
+		opacity: 0.5;
+		text-decoration: line-through;
+	}
+
+	// Shown lately, hidden now: dashed and grey, one click shows it again.
+	&--off {
+		border-style: dashed;
+		border-color: var(--m3-outline-variant, #c4c7c8);
+		color: var(--m3-on-surface-variant, #444748);
+
+		.calendarStage__personAvatar {
+			opacity: 0.6;
+			filter: grayscale(1);
+		}
+	}
+
+	&--more {
+		padding: 0 12px;
+		color: var(--m3-primary, #a5000a);
+		font-weight: 600;
+	}
 }
 
-.calendarStage__personAvatar--me,
+.calendarStage__personAvatar {
+	width: 28px;
+	height: 28px;
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 0.02em;
+}
+
+.calendarStage__agency {
+	color: var(--m3-on-surface-variant, #444748);
+	font-size: 11px;
+	font-weight: 500;
+}
+
+// "Kalender anzeigen": a head, then a tick box, an avatar and a name per
+// person (prototype v17).
+.calendarPeopleMenu__head {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	padding: 6px 8px 8px;
+	color: var(--m3-on-surface-variant, #444748);
+	font-size: 12.5px;
+	line-height: 17px;
+
+	strong {
+		color: var(--m3-on-surface, #1b1b1c);
+		font-size: 14px;
+		font-weight: 600;
+		line-height: 20px;
+	}
+}
+
+.calendarPeopleMenu__check {
+	display: grid;
+	flex: none;
+	place-items: center;
+	box-sizing: border-box;
+	width: 20px;
+	height: 20px;
+	border: 2px solid var(--m3-outline, #747878);
+	border-radius: 4px;
+
+	svg {
+		width: 16px;
+		height: 16px;
+	}
+
+	&--on {
+		border-color: var(--m3-primary, #a5000a);
+		background: var(--m3-primary, #a5000a);
+		color: var(--m3-on-primary, #ffffff);
+	}
+}
+
+.calendarPeopleMenu__avatar {
+	display: inline-flex;
+	flex: none;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	height: 28px;
+	border-radius: 50%;
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 0.02em;
+}
+
+.chatMenuDropdown__item:has(.calendarPeopleMenu__check) {
+	align-items: center;
+	gap: 12px;
+}
+
 .calendarSplit__avatar--me {
 	background: var(--m3-primary-container, #ffdad5);
 	color: var(--m3-on-primary-container, #410001);

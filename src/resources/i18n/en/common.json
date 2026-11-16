@@ -7038,6 +7038,10 @@
 			"bar": "People in the calendar",
 			"hint": "Pointing highlights, a click hides",
 			"label": "Show calendars",
+			"alwaysMine": "You always see your own dates.",
+			"sameTenant": "same organisation",
+			"wholeAgency": "Show the whole counselling centre",
+			"split": "View side by side",
 			"me": "Me",
 			"meAvatar": "me",
 			"more": "More …"

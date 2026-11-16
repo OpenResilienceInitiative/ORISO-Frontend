@@ -7113,6 +7113,10 @@
 			"bar": "Personen im Kalender",
 			"hint": "Zeigen hebt hervor, Klick blendet aus",
 			"label": "Kalender anzeigen",
+			"alwaysMine": "Ihre Termine sehen Sie immer.",
+			"sameTenant": "gleicher Träger",
+			"wholeAgency": "Ganze Beratungsstelle zeigen",
+			"split": "Nebeneinander ansehen",
 			"me": "Ich",
 			"meAvatar": "ich",
 			"more": "Weitere …"

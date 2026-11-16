@@ -666,6 +666,21 @@ export const CalendarPage = ({
 		} else setMuted((all) => all.filter((x) => x !== id));
 	};
 
+	/** "Ganze Beratungsstelle zeigen": shows them all, remembers each. */
+	const showColleagues = (ids: string[]) => {
+		const added = ids.filter((id) => !shownColleagues.includes(id));
+		if (added.length === 0) return;
+		const next = [...shownColleagues, ...added];
+		setShownColleagues(next);
+		onShownColleaguesChange?.(next);
+		const remembered = added.reduce(
+			(all, id) => rememberColleague(all, id),
+			recent
+		);
+		setRecent(remembered);
+		writeRecentColleagues(ownerId, remembered);
+	};
+
 	useEffect(() => {
 		if (initialShownColleagues.length > 0)
 			onShownColleaguesChange?.(initialShownColleagues);
@@ -1684,12 +1699,19 @@ export const CalendarPage = ({
 		menuContent = <JumpMenuContent now={now} onJump={goTo} />;
 	} else if (menu?.type === 'people') {
 		menuLabel = t('calendar.people.label');
+		menuWidth = 300;
 		menuContent = (
 			<PeopleMenuContent
 				colleagues={colleagues}
 				shown={shownColleagues}
 				scopeHint={t(`calendar.scopeHint.${visibility.scope}`)}
 				onToggle={toggleColleague}
+				onShowAll={showColleagues}
+				onSideBySide={
+					views.includes('split')
+						? () => changeView('split')
+						: undefined
+				}
 			/>
 		);
 	} else if (menu?.type === 'kinds') {
@@ -2006,6 +2028,9 @@ export const CalendarPage = ({
 		.map((id) => colleagueById[id])
 		.filter(Boolean)
 		.slice(0, MAX_RECENT_COLLEAGUES) as Colleague[];
+	// White chips: "ich" first, then who is shown; who was shown lately
+	// stays as a dashed chip; "Weitere …" in red opens the people menu
+	// (prototype v17).
 	const personChip = (
 		id: string,
 		name: string,
@@ -2016,7 +2041,7 @@ export const CalendarPage = ({
 		<button
 			key={id}
 			type="button"
-			className={`calendarStage__person${colleague && !pressed ? ' calendarStage__person--off' : ''}`}
+			className={`calendarStage__person${colleague && !pressed ? ' calendarStage__person--off' : ''}${colleague ? '' : ' calendarStage__person--me'}`}
 			aria-pressed={pressed}
 			title={colleague?.agencyName}
 			onMouseEnter={() => pressed && setHighlight({ owner: id })}
@@ -2026,12 +2051,12 @@ export const CalendarPage = ({
 			data-cy={`calendar-person-${id}`}
 		>
 			<span
-				className={`calendarStage__personAvatar${colleague ? '' : ' calendarStage__personAvatar--me'}`}
+				className={`calendarStage__personAvatar ${colleague ? avatarToneClass(name) : avatarToneClass('', true)}`}
 				aria-hidden="true"
 			>
-				{colleague ? initialsOf(name) : t('calendar.people.me')}
+				{colleague ? initialsOf(name) : t('calendar.people.meAvatar')}
 			</span>
-			<span>{colleague ? name : t('calendar.myCalendar')}</span>
+			<span>{colleague ? name : t('calendar.people.me')}</span>
 			{colleague?.agencyShort && (
 				<span className="calendarStage__agency">
 					{colleague.agencyShort}
@@ -2039,14 +2064,16 @@ export const CalendarPage = ({
 			)}
 		</button>
 	);
+	// Only while someone is shown or was shown lately (prototype v17).
 	const peopleBar = consultant &&
-		(colleagues.length > 0 || shown.length > 0) && (
+		(shown.length > 0 || hiddenRecent.length > 0) && (
 			<div
 				className="calendarStage__people"
 				role="group"
 				aria-label={t('calendar.people.bar')}
 				title={t('calendar.people.hint')}
 				onMouseLeave={() => setHighlight(null)}
+				data-cy="calendar-people-bar"
 			>
 				<HoverScrollArrows
 					targetRef={peopleRef}

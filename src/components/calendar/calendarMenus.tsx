@@ -29,6 +29,7 @@ import ViewWeekIcon from '@mui/icons-material/ViewWeek';
 import GridViewOutlinedIcon from '@mui/icons-material/GridViewOutlined';
 import ListIcon from '@mui/icons-material/List';
 import ViewColumnIcon from '@mui/icons-material/ViewColumn';
+import GroupsOutlinedIcon from '@mui/icons-material/GroupsOutlined';
 import {
 	ChatMenuDropdownDivider,
 	ChatMenuDropdownGroupLabel,
@@ -38,6 +39,7 @@ import {
 	handleMenuKeyDown
 } from '../chatMenuDropdown/ChatMenuDropdown';
 import { initialsOf } from './CalendarEntryPeek';
+import { avatarToneClass } from './calendarAvatar';
 import {
 	APPOINTMENT_KINDS,
 	findConflicts,
@@ -1122,40 +1124,146 @@ export interface PeopleMenuContentProps {
 	/** Who the Träger lets one see, one sentence. */
 	scopeHint?: string;
 	onToggle: (id: string) => void;
+	/** "Ganze Beratungsstelle zeigen": every colleague of one's own centre. */
+	onShowAll?: (ids: string[]) => void;
+	/** "Nebeneinander ansehen". */
+	onSideBySide?: () => void;
 }
 
+/** A tick box, an avatar and a name: one person in "Kalender anzeigen". */
+const PersonRow = ({
+	on,
+	name,
+	avatar,
+	toneClass
+}: {
+	on: boolean;
+	name: string;
+	avatar: string;
+	toneClass: string;
+}) => (
+	<>
+		<span
+			className={`calendarPeopleMenu__check${on ? ' calendarPeopleMenu__check--on' : ''}`}
+			aria-hidden="true"
+		>
+			{on && <CheckIcon />}
+		</span>
+		<span
+			className={`calendarPeopleMenu__avatar ${toneClass}`}
+			aria-hidden="true"
+		>
+			{avatar}
+		</span>
+		<span className="chatMenuDropdown__itemTitle">{name}</span>
+	</>
+);
+
+/**
+ * "Kalender anzeigen" (prototype v17): one's own calendar, always on, then
+ * the colleagues by Beratungsstelle, the whole own centre at once, the
+ * side-by-side view and what the Träger lets one see.
+ */
 export const PeopleMenuContent = ({
 	colleagues,
 	shown,
 	scopeHint,
-	onToggle
+	onToggle,
+	onShowAll,
+	onSideBySide
 }: PeopleMenuContentProps) => {
 	const { t } = useTranslation();
-	if (colleagues.length === 0)
-		return (
-			<ChatMenuDropdownNote>
-				{t('calendar.colleaguesEmpty')}
-			</ChatMenuDropdownNote>
+	const groups = useMemo(() => {
+		const byAgency = new Map<string, Colleague[]>();
+		colleagues.forEach((c) =>
+			byAgency.set(c.agencyName, [
+				...(byAgency.get(c.agencyName) ?? []),
+				c
+			])
 		);
+		return [...byAgency.entries()];
+	}, [colleagues]);
+	const ownCentre = colleagues.filter((c) => c.relation === 'sameAgency');
 	return (
 		<>
-			{colleagues.map((c) => {
-				const on = shown.includes(c.id);
-				return (
-					<ChatMenuDropdownItem
-						key={c.id}
-						role="menuitemcheckbox"
-						aria-checked={on}
-						active={on}
-						icon={<Check on={on} />}
-						title={c.displayName}
-						description={c.agencyName}
-						shortcut={c.agencyShort}
-						onClick={() => onToggle(c.id)}
-						data-cy={`calendar-people-${c.id}`}
-					/>
-				);
-			})}
+			<div className="calendarPeopleMenu__head" role="presentation">
+				<strong>{t('calendar.people.label')}</strong>
+				<span>{t('calendar.people.alwaysMine')}</span>
+			</div>
+			<ChatMenuDropdownItem
+				role="menuitemcheckbox"
+				aria-checked={true}
+				disabled
+				data-cy="calendar-people-me"
+			>
+				<PersonRow
+					on
+					name={t('navigation.booking.events')}
+					avatar={t('calendar.people.meAvatar')}
+					toneClass={avatarToneClass('', true)}
+				/>
+			</ChatMenuDropdownItem>
+			{colleagues.length === 0 && (
+				<ChatMenuDropdownNote>
+					{t('calendar.colleaguesEmpty')}
+				</ChatMenuDropdownNote>
+			)}
+			{groups.map(([agency, people]) => (
+				<React.Fragment key={agency}>
+					<ChatMenuDropdownGroupLabel>
+						{[
+							agency,
+							people[0].agencyShort,
+							people[0].relation === 'sameTenant' &&
+								t('calendar.people.sameTenant')
+						]
+							.filter(Boolean)
+							.join(' · ')}
+					</ChatMenuDropdownGroupLabel>
+					{people.map((c) => {
+						const on = shown.includes(c.id);
+						return (
+							<ChatMenuDropdownItem
+								key={c.id}
+								role="menuitemcheckbox"
+								aria-checked={on}
+								active={on}
+								onClick={() => onToggle(c.id)}
+								data-cy={`calendar-people-${c.id}`}
+							>
+								<PersonRow
+									on={on}
+									name={c.displayName}
+									avatar={initialsOf(c.displayName)}
+									toneClass={avatarToneClass(c.displayName)}
+								/>
+							</ChatMenuDropdownItem>
+						);
+					})}
+				</React.Fragment>
+			))}
+			{((onShowAll && ownCentre.length > 0) || onSideBySide) && (
+				<ChatMenuDropdownDivider />
+			)}
+			{onShowAll && ownCentre.length > 0 && (
+				<ChatMenuDropdownItem
+					role="menuitem"
+					icon={<GroupsOutlinedIcon />}
+					title={t('calendar.people.wholeAgency')}
+					description={ownCentre[0].agencyName}
+					onClick={() => onShowAll(ownCentre.map((c) => c.id))}
+					data-cy="calendar-people-whole-agency"
+				/>
+			)}
+			{onSideBySide && (
+				<ChatMenuDropdownItem
+					role="menuitem"
+					icon={<ViewColumnIcon />}
+					title={t('calendar.people.split')}
+					onClick={onSideBySide}
+					data-cy="calendar-people-split"
+				/>
+			)}
 			{scopeHint && (
 				<ChatMenuDropdownNote>{scopeHint}</ChatMenuDropdownNote>
 			)}
