@@ -56,6 +56,7 @@ import {
 	openProposals,
 	ProposalNoLongerValid,
 	receivedBy,
+	type EntryAction,
 	type MoveProposal
 } from './calendarActions';
 import {
@@ -376,6 +377,11 @@ type Menu =
 			anchor: MenuAnchor;
 			entry: CalendarEntry;
 			mode: 'list' | 'move' | 'propose';
+			/**
+			 * Opened from "Als Nächstes" or the rail, not from the grid:
+			 * "Zum Termin" leads there (Frank, 2026-11-16).
+			 */
+			outside?: boolean;
 	  }
 	| {
 			/** `proposal`: one's own, sent; `request`: one received. */
@@ -1619,7 +1625,8 @@ export const CalendarPage = ({
 	const openEntry = (
 		shown: CalendarEntry,
 		anchor: MenuAnchor,
-		mode: 'list' | 'move' = 'list'
+		mode: 'list' | 'move' = 'list',
+		outside = false
 	) => {
 		// Co-access: the colleague's appointment is in one's own calendar
 		// too, with the same id. UserService lets a co-access holder move
@@ -1640,15 +1647,16 @@ export const CalendarPage = ({
 						? 'propose'
 						: 'list'
 				: 'list';
-		setMenu({ type: 'entry', entry, anchor, mode: formMode });
+		setMenu({ type: 'entry', entry, anchor, mode: formMode, outside });
 	};
 
 	const entryAction = (
 		entry: CalendarEntry,
-		action: 'start' | 'chat' | 'join' | 'cancel' | 'remove'
+		action: 'show' | 'start' | 'chat' | 'join' | 'cancel' | 'remove'
 	) => {
 		setMenu(null);
-		if (action === 'start') openRoom(onStart, entry);
+		if (action === 'show') showEntry(entry);
+		else if (action === 'start') openRoom(onStart, entry);
 		else if (action === 'chat') openRoom(onOpenChat, entry);
 		else if (action === 'join') onJoin?.(entry);
 		else if (action === 'cancel') setCancelAsk(entry);
@@ -1737,7 +1745,10 @@ export const CalendarPage = ({
 		);
 	} else if (menu?.type === 'entry') {
 		const { entry } = menu;
-		const actions = entryActions(entry, { ownerId, role, can });
+		const actions: EntryAction[] = [
+			...(menu.outside ? (['show'] as const) : []),
+			...entryActions(entry, { ownerId, role, can })
+		];
 		const colleague =
 			entry.ownerId !== ownerId
 				? colleagueById[entry.ownerId]
@@ -2598,7 +2609,7 @@ export const CalendarPage = ({
 			setMenu({ type: 'request', proposal, entry, anchor }),
 		onAcceptRequest: onAcceptProposal ? accept : undefined,
 		onDeclineRequest: onDeclineProposal ? decline : undefined,
-		onOpenEntry: (entry, anchor) => openEntry(entry, anchor),
+		onOpenEntry: (entry, anchor) => openEntry(entry, anchor, 'list', true),
 		onShowEntry: showEntry,
 		shownColleagues,
 		onCreate: onCreate ? create : undefined,

@@ -16,6 +16,7 @@
 import type { CalendarEntry, CalendarRole } from './calendarModel';
 
 export type EntryAction =
+	| 'show'
 	| 'start'
 	| 'chat'
 	| 'join'
@@ -54,10 +55,18 @@ export const entryActions = (
 		return actions;
 	}
 	if (entry.type === 'appointment') {
-		if (can.start && entry.kind && STARTABLE.includes(entry.kind))
+		const chat = !!can.chat && entry.sessionId !== undefined;
+		// A chat appointment starts in its conversation: "Zum Chat" alone,
+		// not "Chat öffnen" beside it (Frank, 2026-11-16).
+		if (
+			can.start &&
+			entry.kind &&
+			STARTABLE.includes(entry.kind) &&
+			!(entry.kind === 'chat' && chat)
+		)
 			actions.push('start');
 		// "Zum Chat" whenever the appointment belongs to a conversation.
-		if (can.chat && entry.sessionId !== undefined) actions.push('chat');
+		if (chat) actions.push('chat');
 		if (consultant && can.move && entry.movable !== false)
 			actions.push('move');
 		if (consultant && can.cancel) actions.push('cancel');

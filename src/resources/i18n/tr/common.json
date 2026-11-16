@@ -7090,6 +7090,8 @@
 		"entryMenu": {
 			"back": "Geri",
 			"cancel": "Randevuyu iptal et",
+			"show": "Randevuya git",
+			"showSub": "Takvimde göster ve vurgula",
 			"chat": "Sohbete git",
 			"conflicts": "Başka bir kayıtla çakışıyor.",
 			"date": "Gün",

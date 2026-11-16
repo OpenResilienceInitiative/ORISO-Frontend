@@ -7080,6 +7080,8 @@
 		"entryMenu": {
 			"back": "Zurück",
 			"cancel": "Absagen",
+			"show": "Zum Termin",
+			"showSub": "Im Kalender zeigen und markieren",
 			"chat": "Zum Chat",
 			"conflicts": "Überschneidet sich mit einem anderen Eintrag.",
 			"date": "Tag",

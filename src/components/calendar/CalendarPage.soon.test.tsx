@@ -146,6 +146,7 @@ describe('CalendarPage — an entry chosen while a kind filter hides it (review 
 		);
 		// "Als Nächstes" still lists the group date the chips hide.
 		fireEvent.click(listButton(/next/) as HTMLElement);
+		fireEvent.click(byCy('calendar-entry-show') as HTMLElement);
 		await waitFor(() =>
 			expect(document.querySelectorAll('.calEntry')).toHaveLength(2)
 		);

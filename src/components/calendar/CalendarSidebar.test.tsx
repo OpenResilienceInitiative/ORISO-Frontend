@@ -72,7 +72,7 @@ describe('CalendarSidebar — "Als Nächstes" (Frank, prototype v15)', () => {
 		).toBeNull();
 	});
 
-	it('jumps to the entry in the calendar and opens its actions on click (Frank *7)', () => {
+	it('opens its actions on click; "Zum Termin" there jumps (Frank, 2026-11-16)', () => {
 		const onOpenEntry = vi.fn();
 		const onShowEntry = vi.fn();
 		sidebar({ onOpenEntry, onShowEntry });
@@ -81,7 +81,7 @@ describe('CalendarSidebar — "Als Nächstes" (Frank, prototype v15)', () => {
 				'[data-cy="calendar-upcoming-a1"]'
 			) as HTMLElement
 		);
-		expect(onShowEntry).toHaveBeenCalledWith(APPOINTMENT);
+		expect(onShowEntry).not.toHaveBeenCalled();
 		expect(onOpenEntry).toHaveBeenCalledWith(
 			APPOINTMENT,
 			expect.any(HTMLElement)

@@ -491,14 +491,17 @@ export interface EntryMenuContentProps {
 	entries: CalendarEntry[];
 	ownerId: string;
 	onMode: (mode: 'list' | 'move' | 'propose') => void;
-	onAction: (action: 'start' | 'chat' | 'join' | 'cancel' | 'remove') => void;
+	onAction: (
+		action: 'show' | 'start' | 'chat' | 'join' | 'cancel' | 'remove'
+	) => void;
 	onMove: (start: Date, end: Date) => void;
 }
 
 const ACTION_ICON: Record<
-	'start' | 'chat' | 'join' | 'cancel' | 'remove',
+	'show' | 'start' | 'chat' | 'join' | 'cancel' | 'remove',
 	React.ReactNode
 > = {
+	show: <EventOutlinedIcon fontSize="small" />,
 	start: <PlayArrowOutlinedIcon fontSize="small" />,
 	chat: <ChatBubbleOutlineIcon fontSize="small" />,
 	join: <LoginOutlinedIcon fontSize="small" />,
@@ -608,6 +611,8 @@ export const EntryMenuContent = ({
 
 	const actionLabel = (action: EntryAction) => {
 		switch (action) {
+			case 'show':
+				return t('calendar.entryMenu.show');
 			case 'start':
 				return t(`calendar.details.start.${entry.kind ?? 'video'}`);
 			case 'chat':
@@ -629,6 +634,8 @@ export const EntryMenuContent = ({
 	const name = entry.title;
 	const actionHint = (action: EntryAction): string | undefined => {
 		switch (action) {
+			case 'show':
+				return t('calendar.entryMenu.showSub');
 			case 'start':
 				return name
 					? t('calendar.entryMenu.startSub', { name })

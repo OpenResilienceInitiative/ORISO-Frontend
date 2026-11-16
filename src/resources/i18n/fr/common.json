@@ -7090,6 +7090,8 @@
 		"entryMenu": {
 			"back": "Retour",
 			"cancel": "Annuler le rendez-vous",
+			"show": "Aller au rendez-vous",
+			"showSub": "L’afficher et le mettre en évidence dans le calendrier",
 			"chat": "Aller au chat",
 			"conflicts": "Chevauche une autre entrée.",
 			"date": "Jour",

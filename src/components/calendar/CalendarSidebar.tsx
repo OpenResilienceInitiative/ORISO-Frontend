@@ -535,12 +535,12 @@ export const CalendarSidebar = ({
 											})
 										}
 										onBlur={() => setPeek(null)}
-										// Jumps to the entry in the calendar (it
-										// flashes there) and opens its actions,
-										// "Zum Chat" among them (Frank *4, *7).
+										// Opens its actions: "Zum Termin" jumps to
+										// it in the calendar and marks it, "Zum
+										// Chat" opens the conversation (Frank *4,
+										// *7, 2026-11-16).
 										onClick={(e) => {
 											setPeek(null);
-											onShowEntry(entry);
 											onOpenEntry(entry, e.currentTarget);
 										}}
 										aria-label={
