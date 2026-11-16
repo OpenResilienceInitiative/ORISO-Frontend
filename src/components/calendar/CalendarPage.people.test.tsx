@@ -6,7 +6,7 @@
  * was shown lately.
  */
 import * as React from 'react';
-import { cleanup, fireEvent, render } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { CalendarPage, type CalendarPageProps } from './CalendarPage';
 import type { Colleague } from './calendarModel';
@@ -70,7 +70,15 @@ const page = (props: Partial<CalendarPageProps> = {}) =>
 
 const cy = (id: string) =>
 	document.querySelector<HTMLElement>(`[data-cy="${id}"]`);
-const openPeopleMenu = () => fireEvent.click(cy('calendar-who')!);
+// Controls by role and name, so a lost name or role fails the test
+// (review 4589304569); avatars and layout keep their structural selectors.
+const who = () =>
+	screen.getByRole('button', { name: /calendar\.people\.label/ });
+const openPeopleMenu = () => fireEvent.click(who());
+const chip = (name: RegExp) => screen.getByRole('button', { name });
+const menuPerson = (name: RegExp) =>
+	screen.getByRole('menuitemcheckbox', { name });
+const KAYA = /A\. Kaya/;
 
 describe('CalendarPage — who is shown (prototype v17)', () => {
 	it('shows no people bar while nobody is shown or was shown lately', () => {
@@ -81,34 +89,31 @@ describe('CalendarPage — who is shown (prototype v17)', () => {
 		// ones shown lately: dashed chips, one click shows them.
 		page();
 		expect(cy('calendar-people-bar')).not.toBeNull();
-		expect(cy('calendar-person-kaya')!.className).toContain(
-			'calendarStage__person--off'
-		);
-		fireEvent.click(cy('calendar-person-kaya')!);
-		expect(cy('calendar-person-kaya')!.getAttribute('aria-pressed')).toBe(
-			'true'
-		);
-		expect(cy('calendar-person-me')!.textContent).toContain(
-			'calendar.people.me'
+		expect(chip(KAYA).className).toContain('calendarStage__person--off');
+		fireEvent.click(chip(KAYA));
+		expect(chip(KAYA).getAttribute('aria-pressed')).toBe('true');
+		expect(chip(/^calendar\.people\.me/).getAttribute('data-cy')).toBe(
+			'calendar-person-me'
 		);
 		// Hidden again, A. Kaya stays as a dashed chip.
-		fireEvent.click(cy('calendar-person-kaya')!);
-		expect(cy('calendar-person-kaya')!.className).toContain(
-			'calendarStage__person--off'
-		);
+		fireEvent.click(chip(KAYA));
+		expect(chip(KAYA).className).toContain('calendarStage__person--off');
 	});
 
 	it('names "ich" and the shown colleagues in the header, and says "Termine"', () => {
 		page();
-		const who = cy('calendar-who')!;
-		expect(who.textContent).toContain('navigation.booking.events');
-		expect(who.querySelectorAll('.calendarStage__avatar')).toHaveLength(1);
-		expect(who.querySelector('.calAvatar--me')!.textContent).toBe(
+		const header = who();
+		expect(header.getAttribute('data-cy')).toBe('calendar-who');
+		expect(header.textContent).toContain('navigation.booking.events');
+		expect(header.querySelectorAll('.calendarStage__avatar')).toHaveLength(
+			1
+		);
+		expect(header.querySelector('.calAvatar--me')!.textContent).toBe(
 			'calendar.people.meAvatar'
 		);
 		cleanup();
 		page({ initialShownColleagues: ['kaya', 'weber'] });
-		const shared = cy('calendar-who')!;
+		const shared = who();
 		expect(shared.textContent).toContain('calendar.header.shared');
 		expect(
 			Array.from(shared.querySelectorAll('.calendarStage__avatar')).map(
@@ -120,7 +125,9 @@ describe('CalendarPage — who is shown (prototype v17)', () => {
 	it('groups the colleagues by Beratungsstelle, after one’s own calendar', () => {
 		page();
 		openPeopleMenu();
-		const own = cy('calendar-people-me') as HTMLButtonElement;
+		const own = menuPerson(
+			/navigation\.booking\.events/
+		) as HTMLButtonElement;
 		expect(own.disabled).toBe(true);
 		expect(own.getAttribute('aria-checked')).toBe('true');
 		const labels = Array.from(
@@ -149,18 +156,26 @@ describe('CalendarPage — who is shown (prototype v17)', () => {
 		const onShownColleaguesChange = vi.fn();
 		page({ onShownColleaguesChange });
 		openPeopleMenu();
-		fireEvent.click(cy('calendar-people-whole-agency')!);
+		fireEvent.click(
+			screen.getByRole('menuitem', {
+				name: /calendar\.people\.wholeAgency/
+			})
+		);
 		expect(onShownColleaguesChange).toHaveBeenLastCalledWith([
 			'kaya',
 			'osei'
 		]);
-		const pressed = (id: string) =>
-			cy(`calendar-person-${id}`)?.getAttribute('aria-pressed');
-		expect([pressed('kaya'), pressed('osei'), pressed('weber')]).toEqual([
-			'true',
-			'true',
-			'false'
-		]);
+		// The menu stays open; Escape closes it and the bar is in reach.
+		fireEvent.keyDown(document.activeElement ?? document.body, {
+			key: 'Escape'
+		});
+		const pressed = (name: RegExp) =>
+			chip(name).getAttribute('aria-pressed');
+		expect([
+			pressed(KAYA),
+			pressed(/K\. Osei/),
+			pressed(/J\. Weber/)
+		]).toEqual(['true', 'true', 'false']);
 	});
 
 	it('offers "Kolleg:innen wählen" in an empty "Nebeneinander"', () => {
@@ -168,18 +183,22 @@ describe('CalendarPage — who is shown (prototype v17)', () => {
 		const own = document.querySelector('.calendarSplit__avatar')!;
 		expect(own.className).toContain('calAvatar--me');
 		expect(own.textContent).toBe('calendar.people.meAvatar');
-		const choose = cy('calendar-split-choose')!;
-		expect(choose.textContent).toBe('calendar.split.choose');
-		fireEvent.click(choose);
-		expect(cy('calendar-people-me')).not.toBeNull();
-		fireEvent.click(cy('calendar-people-kaya')!);
-		expect(cy('calendar-split-choose')).toBeNull();
+		fireEvent.click(
+			screen.getByRole('button', { name: 'calendar.split.choose' })
+		);
+		expect(menuPerson(/navigation\.booking\.events/)).toBeTruthy();
+		fireEvent.click(menuPerson(KAYA));
+		expect(
+			screen.queryByRole('button', { name: 'calendar.split.choose' })
+		).toBeNull();
 	});
 
 	it('opens "Nebeneinander" from the menu', () => {
 		page();
 		openPeopleMenu();
-		fireEvent.click(cy('calendar-people-split')!);
+		fireEvent.click(
+			screen.getByRole('menuitem', { name: /calendar\.people\.split/ })
+		);
 		expect(cy('calendar-view-menu')!.textContent).toContain(
 			'calendar.views.split'
 		);
