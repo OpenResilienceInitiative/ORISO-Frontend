@@ -276,6 +276,9 @@ export const isDirectLinkCallRoom = (roomId: string | null | undefined) =>
 		(link) => link?.matrixRoomId === roomId && link.medium !== 'CHAT'
 	);
 
+/** How long entering the chat waits for withdrawing a call knock. */
+export const CANCEL_KNOCK_WAIT_MS = 3000;
+
 export interface OpenDirectLinkDeps {
 	start?: typeof apiStartDirectLinkConversation;
 	redirect?: (sessionId: number) => void;
@@ -326,7 +329,16 @@ export const openDirectLinkConversation = async (
 	   asked to let in someone who is not waiting. An admission stays (the
 	   server cancels only a pending knock); the call in the chat knocks anew. */
 	if (knock && chatFirst && knock.status === 'PENDING') {
-		await cancelKnock(knock.knockId).catch(() => undefined);
+		/* Best effort, and bounded: a hanging request must not hold the
+		   person outside the chat. The server ends an abandoned knock itself. */
+		let timer: ReturnType<typeof setTimeout> | undefined;
+		await Promise.race([
+			cancelKnock(knock.knockId).catch(() => undefined),
+			new Promise<void>((resolve) => {
+				timer = setTimeout(resolve, CANCEL_KNOCK_WAIT_MS);
+			})
+		]);
+		clearTimeout(timer);
 	}
 	redirect(conversation.sessionId);
 	return conversation;

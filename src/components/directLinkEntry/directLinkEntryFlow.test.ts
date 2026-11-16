@@ -7,6 +7,7 @@ import {
 	isDirectLinkCallRoom,
 	directLinkReturnPath,
 	loginPathForDirectLink,
+	CANCEL_KNOCK_WAIT_MS,
 	openDirectLinkConversation,
 	readPendingKnock
 } from './directLinkEntryFlow';
@@ -155,6 +156,33 @@ describe('openDirectLinkConversation', () => {
 		});
 		expect(readPendingKnock()).toBeNull();
 		expect(redirect).toHaveBeenCalledTimes(2);
+	});
+
+	it('does not wait long on a hanging knock cancel before entering the chat', async () => {
+		vi.useFakeTimers();
+		try {
+			const redirect = vi.fn();
+			const opening = openDirectLinkConversation('tok', {
+				start: vi.fn().mockResolvedValue({
+					sessionId: 9,
+					medium: 'VIDEO',
+					admission: 'KNOCK',
+					created: true,
+					knockId: 21,
+					knockStatus: 'PENDING'
+				}),
+				redirect,
+				cancelKnock: vi.fn(() => new Promise<void>(() => undefined)),
+				chatFirst: true
+			});
+			await vi.advanceTimersByTimeAsync(1000);
+			expect(redirect).not.toHaveBeenCalled();
+			await vi.advanceTimersByTimeAsync(CANCEL_KNOCK_WAIT_MS);
+			await opening;
+			expect(redirect).toHaveBeenCalledWith(9);
+		} finally {
+			vi.useRealTimers();
+		}
 	});
 
 	it('asks a joiner of a shared conversation for consent before entering (#2252)', async () => {
