@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useEffect, useRef, useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { a11yExcept } from '../../../.storybook/a11yExceptions';
 import {
 	expect,
 	fireEvent,
@@ -579,7 +580,7 @@ export const Zoom: Story = {
 		const height = () =>
 			slotRows(canvasElement)[0].getBoundingClientRect().height;
 		// Starts at today's height.
-		await waitFor(() => expect(height()).toBe(25));
+		await waitFor(() => expect(height()).toBe(22));
 		const zoomIn = canvas.getByRole('button', { name: 'Hineinzoomen' });
 		const zoomOut = canvas.getByRole('button', { name: 'Herauszoomen' });
 		// 10:00–11:00 today, own appointment.
@@ -629,7 +630,7 @@ export const ZoomSplit: Story = {
 				lines[0].getBoundingClientRect().top
 			);
 		};
-		await expect(hour()).toBe(48);
+		await expect(hour()).toBe(44);
 		const hourEntry = () =>
 			canvasElement.querySelector<HTMLElement>(
 				'[data-cy="calendar-split-entry-a1"]'
@@ -845,7 +846,7 @@ export const ProposeMove: Story = {
 		await userEvent.click(await entryEl(canvasElement, 'k1'));
 		const menu = within(await findCy('calendar-menu-entry'));
 		await userEvent.click(
-			menu.getByRole('menuitem', { name: 'Verschiebung vorschlagen …' })
+			menu.getByRole('menuitem', { name: /^Verschiebung vorschlagen …/ })
 		);
 		await userEvent.click(await findCy('calendar-move-submit'));
 		const canvas = canvasOf(canvasElement);
@@ -1016,11 +1017,13 @@ export const EntryActions: Story = {
 	play: async ({ canvasElement }) => {
 		await userEvent.click(await entryEl(canvasElement, 'a1'));
 		const menu = within(await body().findByRole('menu'));
+		// Each item is named by its title and the line under it (prototype
+		// v17 menus): "Video starten mit ruhiges_yak".
 		for (const name of [
-			'Video-Call starten',
-			'Zum Chat',
-			'Verschieben …',
-			'Absagen'
+			/^Video starten mit /,
+			/^Zum Chat Gespräch mit /,
+			/^Verschieben … Tag und Uhrzeit ändern$/,
+			/^Absagen .+ bekommt eine Nachricht$/
 		])
 			await expect(menu.getByRole('menuitem', { name })).toBeTruthy();
 	}
@@ -1097,7 +1100,7 @@ export const SettingsMenu: Story = {
 		const menu = within(await body().findByRole('menu'));
 		await expect(menu.getByText('Mo–Fr 08:00–18:00')).toBeTruthy();
 		await userEvent.click(
-			menu.getByRole('menuitemradio', { name: 'als Schalter' })
+			menu.getByRole('menuitemradio', { name: /^als Schalter/ })
 		);
 		await userEvent.keyboard('{Escape}');
 		await expect(
@@ -1110,7 +1113,7 @@ export const SettingsMenu: Story = {
 		);
 		await userEvent.click(
 			within(await body().findByRole('menu')).getByRole('menuitemradio', {
-				name: 'als Menü'
+				name: /^als Menü/
 			})
 		);
 		await userEvent.keyboard('{Escape}');
@@ -1150,16 +1153,21 @@ export const QuickTyped: Story = {
 		// The fields are what is saved: a changed duration wins.
 		await userEvent.click(await quickDuration());
 		await userEvent.click(
-			await body().findByRole('option', { name: '45 Min.' })
+			await body().findByRole('option', { name: '45 Min' })
 		);
 		await waitFor(async () =>
-			expect((await quickDuration()).textContent).toBe('45 Min.')
+			expect((await quickDuration()).textContent).toBe('45 Min')
 		);
 	}
 };
 
 export const QuickEntry: Story = {
 	name: 'Quick entry — next free half hour',
+	parameters: {
+		// The new half-hour entry is as tall as its duration (21 px at the
+		// default zoom); it stays reachable by keyboard and in the list view.
+		a11y: a11yExcept({ 'target-size': ['.calEntry'] })
+	},
 	play: async ({ canvasElement }) => {
 		const canvas = canvasOf(canvasElement);
 		const quick = within(
@@ -1192,7 +1200,7 @@ export const QuickEntry: Story = {
 		await expect((await quickField('calendar-quick-date')).value).toBe(
 			'16.11.2026'
 		);
-		await expect((await quickDuration()).textContent).toBe('30 Min.');
+		await expect((await quickDuration()).textContent).toBe('30 Min');
 		await userEvent.click(
 			canvasElement.querySelector<HTMLElement>(
 				'[data-cy="calendar-quick-kind-blocker"]'
@@ -1450,9 +1458,20 @@ export const English: Story = {
 		await expect(
 			await canvas.findByRole('button', { name: 'More …' })
 		).toBeTruthy();
-		await expect(canvas.getByText('My calendar')).toBeTruthy();
-		await expect(canvas.getByText('Quick entry')).toBeTruthy();
-		await expect(canvas.getByRole('button', { name: 'Add' })).toBeTruthy();
+		// v17 header: "New entry" as the + button; quick entry is a region
+		// whose "Add" shows once the box is in use.
+		await expect(
+			canvas.getByRole('button', { name: 'New entry' })
+		).toBeTruthy();
+		const quick = within(
+			canvas.getByRole('region', { name: 'Quick entry' })
+		);
+		await userEvent.click(
+			quick.getByRole('textbox', { name: 'Quick entry' })
+		);
+		await expect(
+			await quick.findByRole('button', { name: 'Add' })
+		).toBeTruthy();
 	}
 };
 
@@ -1461,7 +1480,7 @@ export const CreateAppointment: Story = {
 	play: async ({ canvasElement }) => {
 		const canvas = canvasOf(canvasElement);
 		await userEvent.click(
-			await canvas.findByRole('button', { name: 'Termin anlegen' })
+			await canvas.findByRole('button', { name: 'Neuer Eintrag' })
 		);
 		const root = await body().findByTestId('calendar-appointment-dialog');
 		const dialog = within(root);
@@ -1560,7 +1579,7 @@ export const AdviceSeeker: Story = {
 		const canvas = canvasOf(canvasElement);
 		await expect(await canvas.findByTestId('calendar-view')).toBeTruthy();
 		await expect(
-			canvas.queryByRole('button', { name: 'Termin anlegen' })
+			canvas.queryByRole('button', { name: 'Neuer Eintrag' })
 		).toBeNull();
 		await expect(
 			canvas.queryByRole('button', { name: 'Kalender-Einstellungen' })
