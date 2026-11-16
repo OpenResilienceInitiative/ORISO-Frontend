@@ -257,7 +257,11 @@ export const CalendarPageWired = () => {
 
 	/**
 	 * The open proposals of both sides. Only the latest answer counts; a
-	 * failure keeps what is shown, and the next load asks again.
+	 * failure keeps what is shown, and the next load asks again. Every
+	 * successful change of a proposal here (made, withdrawn, declined,
+	 * accepted) loads them again, which also drops a read that started
+	 * before the change: its late answer would bring back a withdrawn or
+	 * declined proposal, or hide a new one (review 4581730518).
 	 */
 	const loadProposals = useCallback(() => {
 		if (!consultant) return;
@@ -621,12 +625,13 @@ export const CalendarPageWired = () => {
 			setSentProposals((all) =>
 				addProposal(all, proposalFromApi(created))
 			);
-		else loadProposals();
+		loadProposals();
 	};
 
 	const withdrawMove = async (proposal: MoveProposal) => {
 		await apiWithdrawCalendarProposal(proposal.id);
 		setSentProposals((all) => withdrawProposal(all, proposal.id));
+		loadProposals();
 	};
 
 	/**
@@ -673,6 +678,7 @@ export const CalendarPageWired = () => {
 			throw error;
 		}
 		setReceivedProposals((all) => withdrawProposal(all, proposal.id));
+		loadProposals();
 	};
 
 	const openRoom = (roomId: string, sessionId: number) =>

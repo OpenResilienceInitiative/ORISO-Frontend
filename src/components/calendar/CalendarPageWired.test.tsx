@@ -1445,6 +1445,43 @@ describe('CalendarPageWired — move proposals (contract v1)', () => {
 		await waitFor(() => expect(props.conversations).toHaveLength(1));
 	};
 
+	/**
+	 * The read every change of a proposal starts afterwards, still on its
+	 * way: what the page shows at once is its own update.
+	 */
+	const refreshPending = () => {
+		const before = api.apiGetCalendarProposals.mock.calls.length;
+		api.apiGetCalendarProposals.mockReturnValue(
+			new Promise(() => undefined)
+		);
+		return () =>
+			expect(api.apiGetCalendarProposals.mock.calls.length).toBe(
+				before + 1
+			);
+	};
+
+	/**
+	 * A read that starts before a change and answers after it, with the
+	 * lists as they were (review 4581730518).
+	 */
+	const staleRead = async () => {
+		let answer: (dto: unknown) => void = () => undefined;
+		const before = api.apiGetCalendarProposals.mock.calls.length;
+		api.apiGetCalendarProposals.mockReturnValueOnce(
+			new Promise((resolve) => {
+				answer = resolve;
+			}) as never
+		);
+		act(() => notifyAppointmentsChanged());
+		await waitFor(() =>
+			expect(api.apiGetCalendarProposals.mock.calls.length).toBe(
+				before + 1
+			)
+		);
+		return () =>
+			act(async () => answer({ sent: [SENT], received: [RECEIVED] }));
+	};
+
 	it('loads the sent and the received proposals with the entries', async () => {
 		await ready();
 		expect(props.proposals).toEqual([
@@ -1470,6 +1507,7 @@ describe('CalendarPageWired — move proposals (contract v1)', () => {
 		const stop = onReceivedProposalCount((n) => counts.push(n));
 		await ready();
 		await waitFor(() => expect(counts).toContain(1));
+		refreshPending();
 		await act(() => props.onDeclineProposal?.(props.receivedProposals![0]));
 		await waitFor(() => expect(counts[counts.length - 1]).toBe(0));
 		stop();
@@ -1485,6 +1523,7 @@ describe('CalendarPageWired — move proposals (contract v1)', () => {
 		await ready();
 		const start = new Date('2026-11-20T08:00:00Z');
 		const end = new Date('2026-11-20T09:00:00Z');
+		const refreshed = refreshPending();
 		await act(() =>
 			props.onProposeMove?.(
 				{ ...props.entries[0], id: 'k1', ownerId: 'kaya' },
@@ -1498,14 +1537,17 @@ describe('CalendarPageWired — move proposals (contract v1)', () => {
 			end: end.toISOString()
 		});
 		expect(props.proposals?.map((p) => p.id)).toEqual(['p-new']);
+		refreshed();
 	});
 
 	it('withdraws a sent proposal', async () => {
 		api.apiWithdrawCalendarProposal.mockResolvedValue(undefined);
 		await ready();
+		const refreshed = refreshPending();
 		await act(() => props.onWithdrawProposal?.(props.proposals![0]));
 		expect(api.apiWithdrawCalendarProposal).toHaveBeenCalledWith('p-sent');
 		expect(props.proposals).toEqual([]);
+		refreshed();
 	});
 
 	it('accepts: the appointment moves, the entries reload and the advice seeker is told', async () => {
@@ -1613,10 +1655,86 @@ describe('CalendarPageWired — move proposals (contract v1)', () => {
 	it('declines a received proposal', async () => {
 		api.apiDeclineCalendarProposal.mockResolvedValue(undefined);
 		await ready();
+		const refreshed = refreshPending();
 		await act(() => props.onDeclineProposal?.(props.receivedProposals![0]));
 		expect(api.apiDeclineCalendarProposal).toHaveBeenCalledWith('p-in');
 		expect(props.receivedProposals).toEqual([]);
 		expect(sendNotice).not.toHaveBeenCalled();
+		refreshed();
+	});
+
+	describe('a read that started before a change answers after it (review 4581730518)', () => {
+		it('does not bring back a withdrawn proposal', async () => {
+			api.apiWithdrawCalendarProposal.mockResolvedValue(undefined);
+			await ready();
+			const answerLate = await staleRead();
+			api.apiGetCalendarProposals.mockResolvedValue({
+				sent: [],
+				received: [RECEIVED]
+			});
+			await act(() => props.onWithdrawProposal?.(props.proposals![0]));
+			await answerLate();
+			expect(props.proposals).toEqual([]);
+		});
+
+		it('does not bring back a declined proposal or its count', async () => {
+			const counts: number[] = [];
+			const stop = onReceivedProposalCount((n) => counts.push(n));
+			api.apiDeclineCalendarProposal.mockResolvedValue(undefined);
+			await ready();
+			const answerLate = await staleRead();
+			api.apiGetCalendarProposals.mockResolvedValue({
+				sent: [SENT],
+				received: []
+			});
+			await act(() =>
+				props.onDeclineProposal?.(props.receivedProposals![0])
+			);
+			await answerLate();
+			expect(props.receivedProposals).toEqual([]);
+			expect(counts[counts.length - 1]).toBe(0);
+			stop();
+		});
+
+		it('does not hide a new proposal', async () => {
+			const NEW = {
+				...SENT,
+				id: 'p-new',
+				start: '2026-11-20T08:00:00Z',
+				end: '2026-11-20T09:00:00Z'
+			};
+			api.apiCreateCalendarProposal.mockResolvedValue(NEW);
+			await ready();
+			const answerLate = await staleRead();
+			api.apiGetCalendarProposals.mockResolvedValue({
+				sent: [NEW],
+				received: [RECEIVED]
+			});
+			await act(() =>
+				props.onProposeMove?.(
+					{ ...props.entries[0], id: 'k1', ownerId: 'kaya' },
+					new Date(NEW.start),
+					new Date(NEW.end)
+				)
+			);
+			await answerLate();
+			expect(props.proposals?.map((p) => p.id)).toEqual(['p-new']);
+		});
+
+		it('does not bring back an accepted proposal', async () => {
+			api.apiAcceptCalendarProposal.mockResolvedValue(undefined as never);
+			await ready();
+			const answerLate = await staleRead();
+			api.apiGetCalendarProposals.mockResolvedValue({
+				sent: [SENT],
+				received: []
+			});
+			await act(() =>
+				props.onAcceptProposal?.(props.receivedProposals![0])
+			);
+			await answerLate();
+			expect(props.receivedProposals).toEqual([]);
+		});
 	});
 
 	it('rejects failed proposal calls, keeps the lists and asks UserService again', async () => {
