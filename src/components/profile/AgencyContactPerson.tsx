@@ -31,6 +31,10 @@ export interface AgencyContactPersonProps {
 	isStartingChat?: boolean;
 	/** Already translated reason why the last chat could not be opened. */
 	chatError?: string | null;
+	/** The contact is still loading: title plus a short status line. */
+	loading?: boolean;
+	/** Loading failed; `contact` then holds the support-address fallback. */
+	loadError?: boolean;
 }
 
 /** An address as a `mailto:` link, or as plain text when it is not one plain address. */
@@ -59,7 +63,9 @@ export const AgencyContactPerson = ({
 	supportEmail,
 	onStartChat,
 	isStartingChat = false,
-	chatError
+	chatError,
+	loading = false,
+	loadError = false
 }: AgencyContactPersonProps) => {
 	const { t: translate } = useTranslation();
 	const titleId = `agency-contact-person-${agencyId}`;
@@ -70,16 +76,40 @@ export const AgencyContactPerson = ({
 	const support = toMailAddress(supportEmail);
 	const traegerEmail = contact.traegerContactEmail;
 
+	const title = (
+		<p className="agencyContactPerson__title" id={titleId}>
+			{translate(`${KEY}.title`)}
+		</p>
+	);
+
+	if (loading) {
+		return (
+			<section
+				className="agencyContactPerson"
+				aria-labelledby={titleId}
+				aria-busy="true"
+			>
+				{title}
+				<p className="agencyContactPerson__group" role="status">
+					{translate(`${KEY}.loading`)}
+				</p>
+			</section>
+		);
+	}
+
 	return (
 		<section
 			className="agencyContactPerson"
 			aria-labelledby={titleId}
 			data-source={contact.source}
 		>
-			<p className="agencyContactPerson__title" id={titleId}>
-				{translate(`${KEY}.title`)}
-			</p>
-			{headingKey && (
+			{title}
+			{loadError && (
+				<p className="agencyContactPerson__group" role="status">
+					{translate(`${KEY}.loadError`)}
+				</p>
+			)}
+			{headingKey && !loadError && (
 				<p className="agencyContactPerson__heading">
 					{translate(headingKey)}
 				</p>

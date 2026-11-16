@@ -185,4 +185,22 @@ describe('AgencyContactPerson (ORISO-Admin#1534)', () => {
 		);
 		expect(screen.getByRole('alert').textContent).toBe('Chat refused');
 	});
+
+	it('shows only the title and a status line while loading', () => {
+		renderIt({ source: 'OWN', people: [person()] }, { loading: true });
+		expect(screen.getByRole('status').textContent).toBe(`${K}.loading`);
+		expect(screen.queryByText('Maria Muster')).toBeNull();
+	});
+
+	it('names the load error and keeps the support address, without the "nobody set" heading', () => {
+		renderIt(
+			{ source: 'SUPPORT_EMAIL', people: [] },
+			{ loadError: true, supportEmail: 'support@example.org' }
+		);
+		expect(screen.getByRole('status').textContent).toBe(`${K}.loadError`);
+		expect(screen.queryByText(`${K}.support.heading`)).toBeNull();
+		expect(
+			screen.getByRole('link', { name: 'support@example.org' })
+		).toBeTruthy();
+	});
 });

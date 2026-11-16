@@ -226,3 +226,29 @@ export const MobileWidth: Story = {
 		);
 	}
 };
+
+/** Still loading: the title and a short status line hold the place. */
+export const Loading: Story = {
+	args: { loading: true },
+	play: async ({ canvasElement }) => {
+		await expect(
+			within(canvasElement).getByText('Ansprechperson wird geladen …')
+		).toBeVisible();
+	}
+};
+
+/** Loading failed: the support address shows instead of a blank block. */
+export const LoadErrorFallsBackToSupport: Story = {
+	args: { contact: SCENARIOS.supportOnly, loadError: true },
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await expect(
+			canvas.getByText(
+				'Die Ansprechperson konnte gerade nicht geladen werden.'
+			)
+		).toBeVisible();
+		await expect(
+			canvas.getByRole('link', { name: 'support@oriso.example' })
+		).toBeVisible();
+	}
+};
