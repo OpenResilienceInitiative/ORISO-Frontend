@@ -63,7 +63,10 @@ export const EMAIL_IDS = [
 	// Privacy-neutral audio/video call lifecycle notifications.
 	'anruf-erinnerung',
 	'anruf-einladung',
-	'anruf-verpasst'
+	'anruf-verpasst',
+
+	// A colleague proposes moving one of the recipient's appointments (ADR-032).
+	'calendar-move-proposal'
 ] as const;
 
 export type EmailId = (typeof EMAIL_IDS)[number];
@@ -274,7 +277,8 @@ export const EMAIL_LABELS: Record<EmailId, string> = {
 	'smtp-test': 'SMTP-Test',
 	'anruf-erinnerung': 'Anruf-Erinnerung',
 	'anruf-einladung': 'Anruf-Einladung',
-	'anruf-verpasst': 'Verpasster Anruf'
+	'anruf-verpasst': 'Verpasster Anruf',
+	'calendar-move-proposal': 'Vorschlag: Termin verschieben'
 };
 
 /**
@@ -327,7 +331,8 @@ export const EMAIL_AUDIENCE: Record<EmailId, 'asker' | 'consultant' | 'admin'> =
 		'smtp-test': 'admin',
 		'anruf-erinnerung': 'asker',
 		'anruf-einladung': 'asker',
-		'anruf-verpasst': 'asker'
+		'anruf-verpasst': 'asker',
+		'calendar-move-proposal': 'consultant'
 	};
 
 /**
@@ -383,7 +388,8 @@ export const EMAIL_CLASS: Record<
 	'smtp-test': 'service',
 	'anruf-erinnerung': 'personal',
 	'anruf-einladung': 'personal',
-	'anruf-verpasst': 'personal'
+	'anruf-verpasst': 'personal',
+	'calendar-move-proposal': 'operational'
 };
 
 /** Mails whose footer carries no unsubscribe link, because nothing switches them off. */
