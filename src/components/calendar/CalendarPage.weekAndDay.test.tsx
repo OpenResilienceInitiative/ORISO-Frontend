@@ -20,6 +20,7 @@ import {
 	TooManyDayExceptions,
 	type WorkingHours
 } from './calendarWorkingHours';
+import type { HolidayRegion } from './calendarHolidays';
 
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({
@@ -217,6 +218,104 @@ describe('CalendarPage — "Immer <Wochentag>" on a date with its own hours (rev
 		);
 		// The same change would fail again: no retry.
 		expect(screen.queryByTestId('calendar-retry')).toBeNull();
+	});
+});
+
+describe('CalendarPage — a failed date puts back only its own weekday (review 4581369172)', () => {
+	/** The host the page saves through: what is saved is shown at once. */
+	const host: {
+		setRegion?: (region: HolidayRegion | null) => void;
+	} = {};
+	const Host = ({
+		onSaveWorkingHours,
+		onSaveDayException
+	}: {
+		onSaveWorkingHours: (
+			hours: WorkingHours,
+			region: HolidayRegion | null
+		) => unknown;
+		onSaveDayException: () => Promise<unknown>;
+	}) => {
+		const [hours, setHours] = React.useState<WorkingHours>([
+			...WEEKLY,
+			{ weekday: 2, start: '08:00', end: '18:00' }
+		]);
+		const [region, setRegion] = React.useState<HolidayRegion | null>('SN');
+		host.setRegion = setRegion;
+		return (
+			<CalendarPage
+				role="consultant"
+				ownerId="me"
+				now={new Date(2026, 10, 16, 9)}
+				entries={[]}
+				initialView="workWeek"
+				workingHours={hours}
+				holidayRegion={region}
+				dayExceptions={OWN}
+				onSaveWorkingHours={(next, nextRegion) => {
+					setHours(next);
+					setRegion(nextRegion);
+					return Promise.resolve(
+						onSaveWorkingHours(next, nextRegion)
+					);
+				}}
+				onSaveDayException={onSaveDayException}
+				onDeleteDayException={vi.fn()}
+			/>
+		);
+	};
+
+	it('keeps another weekday and the region saved while the date was on its way', async () => {
+		const day = deferred();
+		const onSaveWorkingHours = vi.fn();
+		render(
+			<Host
+				onSaveWorkingHours={onSaveWorkingHours}
+				onSaveDayException={() => day.promise}
+			/>
+		);
+		// 1. "Immer montags" on a Monday with its own hours: the week is
+		//    saved, the date is still on its way.
+		await endForEveryMonday();
+		await flush();
+		expect(onSaveWorkingHours).toHaveBeenLastCalledWith(
+			[
+				{ weekday: 1, start: '08:00', end: '16:45' },
+				{ weekday: 2, start: '08:00', end: '18:00' }
+			],
+			'SN'
+		);
+		// 2. Meanwhile Tuesday is saved for every week, and the region
+		//    changes (the dialog).
+		fireEvent.keyDown(
+			await waitFor(() => {
+				const el = document.querySelector<HTMLElement>(
+					'[data-grip="2026-11-17-end"]'
+				);
+				expect(el).not.toBeNull();
+				return el as HTMLElement;
+			}),
+			{ key: 'ArrowUp' }
+		);
+		await act(async () => {
+			fireEvent.click(await findCy('calendar-edge-week'));
+		});
+		await act(async () => host.setRegion?.('BY'));
+		// 3. The date fails: only Monday goes back.
+		await act(async () => {
+			day.resolve(Promise.reject(new Error('500')));
+		});
+		await flush();
+		expect(onSaveWorkingHours).toHaveBeenLastCalledWith(
+			[
+				{ weekday: 1, start: '08:00', end: '18:00' },
+				{ weekday: 2, start: '08:00', end: '17:45' }
+			],
+			'BY'
+		);
+		expect(
+			await screen.findByText(/calendar\.grip\.weekUndone/)
+		).toBeTruthy();
 	});
 });
 

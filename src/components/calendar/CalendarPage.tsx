@@ -1071,21 +1071,43 @@ export const CalendarPage = ({
 	});
 
 	/**
+	 * The schedule as the page shows it now. Putting a weekday back starts
+	 * from it, not from a snapshot of when the change began, so an edit
+	 * saved meanwhile (another weekday, the holiday region) stays (review
+	 * 4581369172).
+	 */
+	const latestSchedule = useRef({ hours: workingHours, holidayRegion });
+	latestSchedule.current = { hours: workingHours, holidayRegion };
+
+	/** One weekday back to `windows`; every other day and the region stay. */
+	const restoreWeekday = (weekday: number, windows: TimeWindow[]) => {
+		const { hours, holidayRegion: region } = latestSchedule.current;
+		return onSaveWorkingHours?.(
+			withWeekdayWindows(hours, weekday, windows),
+			region
+		);
+	};
+
+	/**
 	 * "Immer <Wochentag>": the weekly hours, then the date's own hours when
-	 * it has some. One after the other; when the date fails, the weekly
-	 * hours go back, so nothing stays half saved, and the notice says what
-	 * happened and offers to try again (review 4577586478).
+	 * it has some. One after the other; when the date fails, the weekday
+	 * goes back, so nothing stays half saved, and the notice says what
+	 * happened and offers to try again (review 4577586478). Only that
+	 * weekday goes back (review 4581369172).
 	 */
 	const saveWeekThenDay = ({
 		nextHours,
-		previousHours,
+		weekday,
+		previousWindows,
 		saveDay,
 		success,
 		place,
 		retry
 	}: {
 		nextHours: WorkingHours;
-		previousHours: WorkingHours;
+		/** The weekday this change sets, and its windows before. */
+		weekday: number;
+		previousWindows: TimeWindow[];
 		saveDay?: () => ChangeResult | undefined;
 		success: Notice;
 		place: { date: string; weekdays: string };
@@ -1104,10 +1126,7 @@ export const CalendarPage = ({
 				} catch (error) {
 					let undone = true;
 					try {
-						await onSaveWorkingHours?.(
-							previousHours,
-							holidayRegion
-						);
+						await restoreWeekday(weekday, previousWindows);
 					} catch {
 						undone = false;
 					}
@@ -1177,7 +1196,6 @@ export const CalendarPage = ({
 					: isPauseEdge(change.edge) && !pauseOf(base)
 						? weeklyWithPause(base, pauseOf(moved))
 						: moveEdge(base, change.edge, change.to);
-			const previousHours = workingHours;
 			const nextHours = withWeekdayWindows(workingHours, weekday, weekly);
 			// Over UserService's limit: refuse it, never drop another day.
 			if (exceedsWindowLimit(nextHours)) {
@@ -1191,7 +1209,8 @@ export const CalendarPage = ({
 			}
 			saveWeekThenDay({
 				nextHours,
-				previousHours,
+				weekday,
+				previousWindows: base,
 				saveDay: previousException
 					? () =>
 							sameWindows(moved, weekly)
@@ -1208,7 +1227,7 @@ export const CalendarPage = ({
 					// (review 4575253325).
 					undo: () =>
 						allStored([
-							onSaveWorkingHours?.(previousHours, holidayRegion),
+							restoreWeekday(weekday, base),
 							previousException
 								? onSaveDayException?.(date, previousException)
 								: undefined
@@ -1274,7 +1293,6 @@ export const CalendarPage = ({
 		// Only the pause changes in the weekly hours, never their start and
 		// end; with none, the day's own windows stand in (review 4576346783).
 		const weekly = base.length ? weeklyWithPause(base, moved) : dayWindows;
-		const previousHours = workingHours;
 		const nextHours = withWeekdayWindows(workingHours, weekday, weekly);
 		if (exceedsWindowLimit(nextHours)) {
 			setNotice({
@@ -1287,7 +1305,8 @@ export const CalendarPage = ({
 		}
 		saveWeekThenDay({
 			nextHours,
-			previousHours,
+			weekday,
+			previousWindows: base,
 			saveDay: previousException
 				? () =>
 						sameWindows(dayWindows, weekly)
@@ -1298,7 +1317,7 @@ export const CalendarPage = ({
 				message: message('Week'),
 				undo: () =>
 					allStored([
-						onSaveWorkingHours?.(previousHours, holidayRegion),
+						restoreWeekday(weekday, base),
 						previousException
 							? onSaveDayException?.(date, previousException)
 							: undefined
