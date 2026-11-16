@@ -3043,7 +3043,7 @@
 		"noContent": "Keine Angabe",
 		"notifications": {
 			"appointmentNotificationEnabled": {
-				"description": "Ein Termin wurde angesetzt, verschoben oder abgesagt",
+				"description": "Ein Termin wurde angesetzt, verschoben, abgesagt oder eine Verschiebung wurde vorgeschlagen",
 				"title": "Termine"
 			},
 			"description": "Wir informieren Sie per E-Mail, wenn Sie eine neue Nachricht erhalten haben.",

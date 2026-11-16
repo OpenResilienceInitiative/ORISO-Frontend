@@ -3018,7 +3018,7 @@
 		"noContent": "Not specified",
 		"notifications": {
 			"appointmentNotificationEnabled": {
-				"description": "An appointment was scheduled, postponed or cancelled",
+				"description": "An appointment was scheduled, postponed or cancelled, or a move was proposed",
 				"title": "Appointments"
 			},
 			"description": "We will inform you by e-mail when you have received a new message.",

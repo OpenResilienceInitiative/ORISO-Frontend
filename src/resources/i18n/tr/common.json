@@ -3022,7 +3022,7 @@
 		"noContent": "Belirtilmemiş",
 		"notifications": {
 			"appointmentNotificationEnabled": {
-				"description": "Bir randevu planlandı, ertelendi veya iptal edildi",
+				"description": "Bir randevu planlandı, ertelendi veya iptal edildi ya da taşıma önerildi",
 				"title": "Tarihler"
 			},
 			"description": "Yeni bir mesaj aldığınızda sizi e-posta ile bilgilendireceğiz.",

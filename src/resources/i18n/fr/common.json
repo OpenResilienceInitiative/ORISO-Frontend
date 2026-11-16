@@ -3022,7 +3022,7 @@
 		"noContent": "Aucune indication",
 		"notifications": {
 			"appointmentNotificationEnabled": {
-				"description": "Un rendez-vous a été fixé, reporté ou annulé",
+				"description": "Un rendez-vous a été fixé, reporté ou annulé, ou un déplacement a été proposé",
 				"title": "Dates"
 			},
 			"description": "Nous vous informons par e-mail lorsque vous recevez un nouveau message.",
