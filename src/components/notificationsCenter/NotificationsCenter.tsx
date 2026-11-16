@@ -121,6 +121,7 @@ import {
 	formatRelativeTime
 } from './timelineTime';
 import { ActivityTimelineEmptyState } from './ActivityTimelineEmptyState';
+import { EmptyState } from '../emptyState/EmptyState';
 import { NOTIFICATION_SETTINGS_PATH } from '../profile/notificationSettingsPath';
 import '../sessionsList/sessionsList.styles';
 import './notificationsCenter.styles';
@@ -242,7 +243,9 @@ export const NotificationsCenter = () => {
 	// (master-detail) selection, but defers to the active conversation when one
 	// is open, so it can never disagree with the conversation/request lists.
 	const { selection: activeSelection } = useActiveListItem();
-	const { untilL, fromXL } = useResponsive();
+	// The split view starts where Conversations splits (900 px), not at 1200
+	// px: in between the timeline acted like a phone (Frank, 2026-11-16).
+	const { untilM: isSinglePane, fromL: isSplitView } = useResponsive();
 	const { userData } = useContext(UserDataContext);
 	const sessionsContext = useContext(SessionsDataContext);
 	const sessions = sessionsContext?.sessions;
@@ -372,7 +375,11 @@ export const NotificationsCenter = () => {
 	// Timeline redesign: resizable list column, same interaction pattern as the
 	// conversation page (SessionsListWrapper + ResizableHandle).
 	const [listWidth, setListWidth] = useState(loadTimelineListWidth);
-	const isIconRail = fromXL && listWidth === STAGE_LAYOUT.RAIL_WIDTH;
+	const isIconRail = isSplitView && listWidth === STAGE_LAYOUT.RAIL_WIDTH;
+	// Which pane the counsellor works in (Figma 7582:27615 vs 7576:22889):
+	// the list keeps the selected card primary; a click into the preview
+	// moves the focus ring there and tones the card down to the accent.
+	const [focusedPane, setFocusedPane] = useState<'list' | 'detail'>('list');
 	const railMarkLabels = {
 		thread: translate('chatStage.switcher.kind.thread'),
 		supervision: translate('sessionList.toolbar.chips.supervision'),
@@ -517,7 +524,7 @@ export const NotificationsCenter = () => {
 	} = useActivityTimeline({
 		feed: filteredFeed,
 		routeSelection: activeSelection,
-		isPhone: untilL,
+		isPhone: isSinglePane,
 		unreadOnly,
 		markRead: markNotificationAsRead
 	});
@@ -598,7 +605,7 @@ export const NotificationsCenter = () => {
 		[selectedNotification]
 	);
 	const showConsentDetail =
-		!untilL &&
+		!isSinglePane &&
 		hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) &&
 		Boolean(userData?.userId) &&
 		selectedNotification?.eventType === 'case.handover.consent.requested' &&
@@ -767,13 +774,13 @@ export const NotificationsCenter = () => {
 		markNotificationAsRead(item.id);
 		if (!browsing && openKnock(item)) return;
 		const statusPage = resolveStatusPageAction(item);
-		if (untilL && statusPage.linksToStatusPage) {
+		if (isSinglePane && statusPage.linksToStatusPage) {
 			if (statusPage.url) {
 				openStatusPage(statusPage.url);
 			}
 			return;
 		}
-		if (untilL) {
+		if (isSinglePane) {
 			// #2226 (Frank, 2026-11-12): a tap on a phone opens the
 			// conversation, like selecting the card on a desktop; it never
 			// starts a call. Joining happens in the conversation itself.
@@ -861,15 +868,49 @@ export const NotificationsCenter = () => {
 	const canOpenShown = canOpenSelected && hiddenReason !== 'sessionUnknown';
 
 	if (notificationFeed.length === 0) {
+		if (isSinglePane) {
+			return (
+				<div className="notificationsCenter notificationsCenter--empty">
+					<ActivityTimelineEmptyState />
+				</div>
+			);
+		}
+		// Desktop: the same two panes as Conversations, with the white
+		// divider that only an empty page shows (Frank, 2026-11-16).
 		return (
-			<div className="notificationsCenter notificationsCenter--empty">
-				<ActivityTimelineEmptyState />
+			<div className="notificationsCenter notificationsCenter--emptySplit">
+				<div
+					className="notificationsCenter__listColumn"
+					style={{ width: `${listWidth}px` }}
+				>
+					<ActivityTimelineEmptyState variant="conversation-history" />
+					<ResizableHandle
+						currentWidth={listWidth}
+						onResize={handleListResize}
+						minWidth={STAGE_LAYOUT.RAIL_WIDTH}
+						ariaLabel={translate('notifications.center.title')}
+						maxWidth={TIMELINE_MAX_WIDTH}
+					/>
+				</div>
+				<div className="notificationsCenter__detail notificationsCenter__detail--empty">
+					<EmptyState
+						className="notificationsCenter__emptyDetailState"
+						headline={translate('session.emptyAllCaughtUp')}
+						variant="conversation-nothing-to-do"
+					/>
+				</div>
 			</div>
 		);
 	}
 
 	return (
-		<div className="notificationsCenter">
+		<div
+			className={`notificationsCenter ${
+				focusedPane === 'detail'
+					? 'notificationsCenter--detailFocused'
+					: ''
+			}`}
+		>
 			{messagePreviewSources.map((source) => (
 				<MatrixActivityPreviewHydrator
 					key={source.activityEventId}
@@ -879,7 +920,9 @@ export const NotificationsCenter = () => {
 			))}
 			<div
 				className={`notificationsCenter__listColumn ${isIconRail ? 'notificationsCenter__listColumn--rail' : ''}`}
-				style={{ width: fromXL ? `${listWidth}px` : undefined }}
+				style={{ width: isSplitView ? `${listWidth}px` : undefined }}
+				onPointerDownCapture={() => setFocusedPane('list')}
+				onFocusCapture={() => setFocusedPane('list')}
 			>
 				<div
 					className="sessionsListToolbar notificationsCenter__toolbar"
@@ -978,7 +1021,7 @@ export const NotificationsCenter = () => {
 					}
 					id={TIMELINE_DISPLAY_FILTER_DIALOG_ID}
 					open={displayFilterOpen}
-					fullScreen={untilL}
+					fullScreen={isSinglePane}
 					onClose={() => setDisplayFilterOpen(false)}
 					kinds={timelineKinds}
 					email={displayFilterEmail}
@@ -1335,7 +1378,7 @@ export const NotificationsCenter = () => {
 						{translate('notifications.center.markAllRead')}
 					</MenuItem>
 				</Menu>
-				{fromXL && (
+				{isSplitView && (
 					<ResizableHandle
 						currentWidth={listWidth}
 						onResize={handleListResize}
@@ -1346,7 +1389,11 @@ export const NotificationsCenter = () => {
 					/>
 				)}
 			</div>
-			<div className="notificationsCenter__detail">
+			<div
+				className="notificationsCenter__detail"
+				onPointerDownCapture={() => setFocusedPane('detail')}
+				onFocusCapture={() => setFocusedPane('detail')}
+			>
 				<div
 					className={`notificationsCenter__detailCard ${
 						showConversationPane

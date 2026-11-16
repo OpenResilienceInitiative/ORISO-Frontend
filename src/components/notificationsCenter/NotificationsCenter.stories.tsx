@@ -705,7 +705,7 @@ export const ApprovedEventIcons: Story = {
 			'--m3-tertiary-container'
 		);
 		// Phones/tablets route directly to the conversation instead of selecting a detail.
-		if (window.innerWidth < 1200) return;
+		if (window.innerWidth < 900) return;
 		await userEvent.click(threadCard);
 		await waitFor(() =>
 			expect(threadCard).toHaveClass('notificationsCenter__card--active')
