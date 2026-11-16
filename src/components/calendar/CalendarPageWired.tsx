@@ -14,8 +14,13 @@
  *   save fails.
  * - The next days stay loaded on their own, so "Als Nächstes" and the next
  *   free hours stay right while the grid shows another month.
- * - Proposals to move a colleague's appointment have no backend yet, so the
- *   page gets no proposal props here (Storybook shows them).
+ * - Move proposals (contract "move proposals v1"): counsellors propose a new
+ *   time for a colleague's appointment and answer the proposals for their
+ *   own. They load with the entries, so a move, a cancellation or an answer
+ *   that voids one also drops it. An accepted proposal moves the
+ *   appointment in UserService; the notice in the conversation goes out
+ *   from here, as for any move. The count of proposals waiting for an
+ *   answer goes to "Meine Termine" in the navigation.
  */
 import * as React from 'react';
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
@@ -32,8 +37,12 @@ import {
 	apiCreateCalendarBlocker,
 	apiDeleteCalendarBlocker,
 	apiDeleteWorkingDayException,
+	apiAcceptCalendarProposal,
+	apiCreateCalendarProposal,
+	apiDeclineCalendarProposal,
 	apiGetCalendarColleagues,
 	apiGetCalendarEntries,
+	apiGetCalendarProposals,
 	apiGetCalendarSync,
 	apiGetCalendarWorkingHours,
 	apiGetColleagueCalendarEntries,
@@ -43,6 +52,7 @@ import {
 	apiResetCalendarFeed,
 	apiSaveCalendarImport,
 	apiSetCalendarWorkingHours,
+	apiWithdrawCalendarProposal,
 	type CalendarSyncDTO
 } from '../../api/apiCalendar';
 import {
@@ -72,8 +82,16 @@ import {
 	kindToApi,
 	loadWindow,
 	normalizeImportUrl,
+	proposalFromApi,
 	visibilityFromApi
 } from './calendarApiMapping';
+import {
+	addProposal,
+	ProposalNoLongerValid,
+	withdrawProposal,
+	type MoveProposal
+} from './calendarActions';
+import { publishReceivedProposalCount } from './calendarProposalCount';
 import {
 	DEFAULT_VISIBILITY,
 	type AppointmentDraft,
@@ -219,6 +237,39 @@ export const CalendarPageWired = () => {
 		useState<FreeHoursState>('loading');
 	const freeHoursFailed = useRef(false);
 	const nearbyRequest = useRef(0);
+	/** Move proposals: sent for colleagues', received for own appointments. */
+	const [sentProposals, setSentProposals] = useState<MoveProposal[]>([]);
+	const [receivedProposals, setReceivedProposals] = useState<MoveProposal[]>(
+		[]
+	);
+	/** The received ones are known: only then is their count worth telling. */
+	const [proposalsLoaded, setProposalsLoaded] = useState(false);
+	const proposalRequest = useRef(0);
+
+	/**
+	 * The open proposals of both sides. Only the latest answer counts; a
+	 * failure keeps what is shown, and the next load asks again.
+	 */
+	const loadProposals = useCallback(() => {
+		if (!consultant) return;
+		const generation = ++proposalRequest.current;
+		apiGetCalendarProposals().then(
+			(dto) => {
+				if (generation !== proposalRequest.current) return;
+				setSentProposals((dto?.sent ?? []).map(proposalFromApi));
+				setReceivedProposals(
+					(dto?.received ?? []).map(proposalFromApi)
+				);
+				setProposalsLoaded(true);
+			},
+			() => undefined
+		);
+	}, [consultant]);
+
+	useEffect(() => {
+		if (proposalsLoaded)
+			publishReceivedProposalCount(receivedProposals.length);
+	}, [proposalsLoaded, receivedProposals.length]);
 
 	const loadColleague = useCallback((id: string) => {
 		const window = range.current;
@@ -312,7 +363,9 @@ export const CalendarPageWired = () => {
 			setFreeHours('loading');
 		} else loadNearby();
 		shown.current.forEach((colleague) => loadColleague(colleague));
-	}, [loadColleague, loadNearby, setFreeHours]);
+		// A move or cancellation voids proposals: they come with the entries.
+		loadProposals();
+	}, [loadColleague, loadNearby, setFreeHours, loadProposals]);
 
 	const changeRange = useCallback(
 		(start: Date, end: Date) => {
@@ -514,6 +567,75 @@ export const CalendarPageWired = () => {
 	const removeBlocker = async (entry: CalendarEntry) => {
 		await apiDeleteCalendarBlocker(entry.id);
 		afterChange();
+	};
+
+	/** One open proposal per appointment: a new one replaces the older. */
+	const proposeMove = async (
+		entry: CalendarEntry,
+		start: Date,
+		end: Date
+	) => {
+		const created = await apiCreateCalendarProposal({
+			entryId: entry.id,
+			start: start.toISOString(),
+			end: end.toISOString()
+		});
+		if (created?.id)
+			setSentProposals((all) =>
+				addProposal(all, proposalFromApi(created))
+			);
+		else loadProposals();
+	};
+
+	const withdrawMove = async (proposal: MoveProposal) => {
+		await apiWithdrawCalendarProposal(proposal.id);
+		setSentProposals((all) => withdrawProposal(all, proposal.id));
+	};
+
+	/**
+	 * UserService moves the appointment; the reload brings the moved entry
+	 * and drops the other proposals for it. The advice seeker gets the
+	 * usual notice. 409: it moved meanwhile, the proposal is void; the page
+	 * says so, and the calendar reloads.
+	 */
+	const acceptProposal = async (proposal: MoveProposal) => {
+		let answer;
+		try {
+			answer = await apiAcceptCalendarProposal(proposal.id);
+		} catch (error) {
+			if ((error as Error)?.message === FETCH_ERRORS.CONFLICT) {
+				reloadEntries();
+				throw new ProposalNoLongerValid();
+			}
+			// Withdrawn or gone meanwhile: the list may be stale.
+			loadProposals();
+			throw error;
+		}
+		setReceivedProposals((all) => withdrawProposal(all, proposal.id));
+		const moved = answer?.id ? entryFromApi(answer) : undefined;
+		const before = own.find((e) => e.id === proposal.entryId);
+		const start = moved?.start ?? proposal.start;
+		const end = moved?.end ?? proposal.end;
+		const place = (all: CalendarEntry[]) =>
+			all.map((e) =>
+				e.id === proposal.entryId ? { ...e, ...moved, start, end } : e
+			);
+		setOwn(place);
+		setNearby(place);
+		afterChange();
+		const sessionId = moved?.sessionId ?? before?.sessionId;
+		if (sessionId !== undefined)
+			await notice('moved', sessionId, new Date(start), new Date(end));
+	};
+
+	const declineProposal = async (proposal: MoveProposal) => {
+		try {
+			await apiDeclineCalendarProposal(proposal.id);
+		} catch (error) {
+			loadProposals();
+			throw error;
+		}
+		setReceivedProposals((all) => withdrawProposal(all, proposal.id));
 	};
 
 	const openRoom = (roomId: string, sessionId: number) =>
@@ -756,6 +878,12 @@ export const CalendarPageWired = () => {
 			onMove={consultant ? move : undefined}
 			onCancelAppointment={consultant ? cancel : undefined}
 			onRemoveBlocker={consultant ? removeBlocker : undefined}
+			proposals={consultant ? sentProposals : undefined}
+			receivedProposals={consultant ? receivedProposals : undefined}
+			onProposeMove={consultant ? proposeMove : undefined}
+			onWithdrawProposal={consultant ? withdrawMove : undefined}
+			onAcceptProposal={consultant ? acceptProposal : undefined}
+			onDeclineProposal={consultant ? declineProposal : undefined}
 			onSaveWorkingHours={consultant ? saveWorkingHours : undefined}
 			onSaveDayException={consultant ? saveDayException : undefined}
 			onDeleteDayException={consultant ? deleteDayException : undefined}

@@ -18,6 +18,8 @@ import type { CalendarEntry } from './calendarModel';
 import type { CalendarPageProps } from './CalendarPage';
 import { CalendarPageWired } from './CalendarPageWired';
 import { TooManyDayExceptions } from './calendarWorkingHours';
+import { ProposalNoLongerValid } from './calendarActions';
+import { onReceivedProposalCount } from './calendarProposalCount';
 
 let props: CalendarPageProps;
 vi.mock('./CalendarPage', () => ({
@@ -79,7 +81,14 @@ vi.mock('../../api/apiCalendar', () => ({
 	apiDeleteCalendarBlocker: vi.fn(),
 	apiResetCalendarFeed: vi.fn(),
 	apiSaveCalendarImport: vi.fn(),
-	apiRemoveCalendarImport: vi.fn()
+	apiRemoveCalendarImport: vi.fn(),
+	apiGetCalendarProposals: vi.fn(() =>
+		Promise.resolve({ sent: [], received: [] })
+	),
+	apiCreateCalendarProposal: vi.fn(),
+	apiWithdrawCalendarProposal: vi.fn(),
+	apiAcceptCalendarProposal: vi.fn(),
+	apiDeclineCalendarProposal: vi.fn()
 }));
 vi.mock('../../api/apiSessionAppointments', () => ({
 	apiCreateSessionAppointment: vi.fn(() => Promise.resolve({})),
@@ -1356,5 +1365,238 @@ describe('CalendarPageWired', () => {
 		await expect(
 			props.onSaveImport?.('https://x.test/a.ics')
 		).rejects.toThrow('400');
+	});
+});
+
+describe('CalendarPageWired — move proposals (contract v1)', () => {
+	const SENT = {
+		id: 'p-sent',
+		entryId: 'k1',
+		start: '2026-11-19T13:00:00Z',
+		end: '2026-11-19T14:00:00Z',
+		entryStart: '2026-11-18T09:00:00Z',
+		entryEnd: '2026-11-18T10:00:00Z',
+		proposerId: 'me',
+		proposerName: 'M. Muster',
+		approverId: 'kaya',
+		approverName: 'A. Kaya',
+		createdAt: '2026-11-15T18:00:00Z'
+	};
+	const RECEIVED = {
+		...SENT,
+		id: 'p-in',
+		entryId: 'a1',
+		start: '2026-11-17T13:00:00Z',
+		end: '2026-11-17T14:00:00Z',
+		entryStart: OWN.start,
+		entryEnd: OWN.end,
+		proposerId: 'kaya',
+		proposerName: 'A. Kaya',
+		approverId: 'me',
+		approverName: 'M. Muster'
+	};
+
+	beforeEach(() => {
+		api.apiGetCalendarProposals.mockResolvedValue({
+			sent: [SENT],
+			received: [RECEIVED]
+		});
+	});
+
+	const ready = async () => {
+		render(<CalendarPageWired />);
+		await showWeek();
+		await waitFor(() => expect(props.receivedProposals).toHaveLength(1));
+		await waitFor(() => expect(props.conversations).toHaveLength(1));
+	};
+
+	it('loads the sent and the received proposals with the entries', async () => {
+		await ready();
+		expect(props.proposals).toEqual([
+			expect.objectContaining({
+				id: 'p-sent',
+				entryId: 'k1',
+				approverName: 'A. Kaya'
+			})
+		]);
+		expect(props.receivedProposals).toEqual([
+			expect.objectContaining({
+				id: 'p-in',
+				entryStart: OWN.start,
+				proposerName: 'A. Kaya'
+			})
+		]);
+		expect(props.onProposeMove).toBeDefined();
+		expect(props.onAcceptProposal).toBeDefined();
+	});
+
+	it('tells the navigation how many proposals wait for an answer', async () => {
+		const counts: number[] = [];
+		const stop = onReceivedProposalCount((n) => counts.push(n));
+		await ready();
+		await waitFor(() => expect(counts).toContain(1));
+		await act(() => props.onDeclineProposal?.(props.receivedProposals![0]));
+		await waitFor(() => expect(counts[counts.length - 1]).toBe(0));
+		stop();
+	});
+
+	it('proposes a new time and lists the answer as sent, in place of an older one', async () => {
+		api.apiCreateCalendarProposal.mockResolvedValue({
+			...SENT,
+			id: 'p-new',
+			start: '2026-11-20T08:00:00Z',
+			end: '2026-11-20T09:00:00Z'
+		});
+		await ready();
+		const start = new Date('2026-11-20T08:00:00Z');
+		const end = new Date('2026-11-20T09:00:00Z');
+		await act(() =>
+			props.onProposeMove?.(
+				{ ...props.entries[0], id: 'k1', ownerId: 'kaya' },
+				start,
+				end
+			)
+		);
+		expect(api.apiCreateCalendarProposal).toHaveBeenCalledWith({
+			entryId: 'k1',
+			start: start.toISOString(),
+			end: end.toISOString()
+		});
+		expect(props.proposals?.map((p) => p.id)).toEqual(['p-new']);
+	});
+
+	it('withdraws a sent proposal', async () => {
+		api.apiWithdrawCalendarProposal.mockResolvedValue(undefined);
+		await ready();
+		await act(() => props.onWithdrawProposal?.(props.proposals![0]));
+		expect(api.apiWithdrawCalendarProposal).toHaveBeenCalledWith('p-sent');
+		expect(props.proposals).toEqual([]);
+	});
+
+	it('accepts: the appointment moves, the entries reload and the advice seeker is told', async () => {
+		api.apiAcceptCalendarProposal.mockResolvedValue({
+			...OWN,
+			start: RECEIVED.start,
+			end: RECEIVED.end
+		});
+		await ready();
+		const loads = api.apiGetCalendarEntries.mock.calls.length;
+		const proposalLoads = api.apiGetCalendarProposals.mock.calls.length;
+		// UserService now has it at the new time, the proposal gone.
+		api.apiGetCalendarEntries.mockResolvedValue([
+			{ ...OWN, start: RECEIVED.start, end: RECEIVED.end }
+		]);
+		api.apiGetCalendarProposals.mockResolvedValue({
+			sent: [SENT],
+			received: []
+		});
+		await act(() => props.onAcceptProposal?.(props.receivedProposals![0]));
+		expect(api.apiAcceptCalendarProposal).toHaveBeenCalledWith('p-in');
+		expect(props.entries.find((e) => e.id === 'a1')).toEqual(
+			expect.objectContaining({
+				start: RECEIVED.start,
+				end: RECEIVED.end
+			})
+		);
+		await waitFor(() =>
+			expect(api.apiGetCalendarEntries.mock.calls.length).toBeGreaterThan(
+				loads
+			)
+		);
+		expect(api.apiGetCalendarProposals.mock.calls.length).toBeGreaterThan(
+			proposalLoads
+		);
+		expect(props.receivedProposals).toEqual([]);
+		expect(sendNotice).toHaveBeenCalledWith(
+			expect.objectContaining({
+				kind: 'moved',
+				sessionId: 4401,
+				matrixRoomId: '!room:oriso',
+				start: new Date(RECEIVED.start),
+				end: new Date(RECEIVED.end)
+			})
+		);
+	});
+
+	it('turns a 409 on accept into "no longer valid" and reloads the calendar', async () => {
+		api.apiAcceptCalendarProposal.mockRejectedValue(new Error('CONFLICT'));
+		await ready();
+		const loads = api.apiGetCalendarEntries.mock.calls.length;
+		await expect(
+			props.onAcceptProposal?.(props.receivedProposals![0])
+		).rejects.toBeInstanceOf(ProposalNoLongerValid);
+		await waitFor(() =>
+			expect(api.apiGetCalendarEntries.mock.calls.length).toBeGreaterThan(
+				loads
+			)
+		);
+		expect(sendNotice).not.toHaveBeenCalled();
+	});
+
+	it('declines a received proposal', async () => {
+		api.apiDeclineCalendarProposal.mockResolvedValue(undefined);
+		await ready();
+		await act(() => props.onDeclineProposal?.(props.receivedProposals![0]));
+		expect(api.apiDeclineCalendarProposal).toHaveBeenCalledWith('p-in');
+		expect(props.receivedProposals).toEqual([]);
+		expect(sendNotice).not.toHaveBeenCalled();
+	});
+
+	it('rejects failed proposal calls, keeps the lists and asks UserService again', async () => {
+		api.apiCreateCalendarProposal.mockRejectedValue(new Error('CATCH_ALL'));
+		api.apiWithdrawCalendarProposal.mockRejectedValue(
+			new Error('CATCH_ALL')
+		);
+		api.apiDeclineCalendarProposal.mockRejectedValue(
+			new Error('CATCH_ALL')
+		);
+		api.apiAcceptCalendarProposal.mockRejectedValue(new Error('CATCH_ALL'));
+		await ready();
+		const proposalLoads = api.apiGetCalendarProposals.mock.calls.length;
+		await expect(
+			props.onProposeMove?.(
+				{ ...props.entries[0], id: 'k1', ownerId: 'kaya' },
+				new Date('2026-11-20T08:00:00Z'),
+				new Date('2026-11-20T09:00:00Z')
+			)
+		).rejects.toThrow('CATCH_ALL');
+		await expect(
+			props.onWithdrawProposal?.(props.proposals![0])
+		).rejects.toThrow('CATCH_ALL');
+		await expect(
+			props.onDeclineProposal?.(props.receivedProposals![0])
+		).rejects.toThrow('CATCH_ALL');
+		const accepted = props.onAcceptProposal?.(props.receivedProposals![0]);
+		await expect(accepted).rejects.toThrow('CATCH_ALL');
+		await expect(accepted).rejects.not.toBeInstanceOf(
+			ProposalNoLongerValid
+		);
+		expect(props.proposals).toHaveLength(1);
+		expect(props.receivedProposals).toHaveLength(1);
+		// A failed answer may mean it was withdrawn: the lists reload.
+		expect(api.apiGetCalendarProposals.mock.calls.length).toBeGreaterThan(
+			proposalLoads
+		);
+		expect(sendNotice).not.toHaveBeenCalled();
+	});
+
+	it('keeps what it shows when the proposals cannot load', async () => {
+		api.apiGetCalendarProposals.mockRejectedValue(new Error('CATCH_ALL'));
+		render(<CalendarPageWired />);
+		await showWeek();
+		await waitFor(() => expect(props.state).toBe('ready'));
+		expect(props.proposals).toEqual([]);
+		expect(props.receivedProposals).toEqual([]);
+	});
+
+	it('gives advice seekers no proposals', async () => {
+		consultant = false;
+		render(<CalendarPageWired />);
+		await showWeek();
+		await waitFor(() => expect(props.state).toBe('ready'));
+		expect(api.apiGetCalendarProposals).not.toHaveBeenCalled();
+		expect(props.onProposeMove).toBeUndefined();
+		expect(props.onAcceptProposal).toBeUndefined();
+		expect(props.receivedProposals).toBeUndefined();
 	});
 });
