@@ -2817,6 +2817,25 @@
 					"none": "Kein Admin per Chat erreichbar – bitte wende dich an die Plattformverwaltung.",
 					"supportEmail": "Support-Adresse:"
 				},
+				"contactPerson": {
+					"title": "Ansprechperson",
+					"deputy": "Vertretung",
+					"traegerDefault": "Standard-Ansprechperson des Trägers",
+					"alsoCounsellor": "auch Beratende*r",
+					"startChat": "Chat starten",
+					"startChatWith": "Chat mit {{name}} starten",
+					"fallback": {
+						"heading": "Noch keine Ansprechperson festgelegt — diese Admins sind zuständig:",
+						"agencyAdmins": "Admins der Beratungsstelle",
+						"tenantAdmins": "Admins des Trägers"
+					},
+					"support": {
+						"heading": "Noch keine Ansprechperson festgelegt.",
+						"text": "Bitte wenden Sie sich an den Support:",
+						"none": "Bitte wenden Sie sich an die Plattformverwaltung."
+					},
+					"traegerContactEmail": "Allgemeine Kontaktadresse des Trägers"
+				},
 				"label": "Beratungsstelle",
 				"registrationLink": {
 					"notification": {

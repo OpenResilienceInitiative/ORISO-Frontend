@@ -1,0 +1,98 @@
+// ORISO-Admin#1534: the contact person of one centre in "Meine Beratungsstellen".
+.agencyContactPerson {
+	display: flex;
+	flex-direction: column;
+	gap: $grid-base;
+	min-width: 0;
+	margin-top: $grid-base;
+	padding: $grid-base-two;
+	border-radius: 12px;
+	background: var(--m3-surface-container-low, #f6f3f3);
+	color: var(--m3-on-surface, $secondary);
+	font-size: $font-size-tertiary;
+	line-height: 20px;
+
+	p {
+		margin: 0;
+	}
+
+	&__title {
+		color: var(--m3-on-surface-variant, $tertiary);
+		font-size: $font-size-secondary;
+		font-weight: $font-weight-bold;
+		letter-spacing: 0.4px;
+		text-transform: uppercase;
+	}
+
+	&__heading {
+		font-weight: $font-weight-medium;
+	}
+
+	&__group {
+		color: var(--m3-on-surface-variant, $tertiary);
+	}
+
+	&__people {
+		display: flex;
+		flex-direction: column;
+		gap: $grid-base-two;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	&__person {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 2px;
+		min-width: 0;
+	}
+
+	&__nameRow {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 4px $grid-base;
+	}
+
+	&__name {
+		font-weight: $font-weight-bold;
+	}
+
+	&__role {
+		padding: 0 $grid-base;
+		border: 1px solid var(--m3-outline-variant, #c4c6cf);
+		border-radius: 8px;
+		color: var(--m3-on-surface-variant, $tertiary);
+		font-size: $font-size-secondary;
+		line-height: 18px;
+	}
+
+	&__email {
+		max-width: 100%;
+		overflow-wrap: anywhere;
+	}
+
+	&__chat {
+		margin-top: 4px;
+		font-size: $font-size-tertiary;
+	}
+
+	&__traegerEmail {
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+		padding-top: $grid-base;
+		border-top: 1px solid var(--m3-outline-variant, #c4c6cf);
+	}
+
+	&__traegerEmailLabel {
+		color: var(--m3-on-surface-variant, $tertiary);
+		font-size: $font-size-secondary;
+	}
+
+	&__error {
+		color: var(--m3-error, #b3261e);
+	}
+}
