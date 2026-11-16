@@ -2966,7 +2966,11 @@
 				"accountsOnly": "Für diesen Link brauchst du ein Konto. Bitte melde dich an oder registriere dich."
 			},
 			"roomNotEncrypted": "Diese Einladung kann gerade nicht genutzt werden, weil das Gespräch nicht verschlüsselt ist. Bitte wende dich an die Beraterin oder den Berater.",
-			"roomUnavailable": "Die Unterhaltung ist gerade nicht erreichbar. Bitte versuch es gleich noch einmal."
+			"roomUnavailable": "Die Unterhaltung ist gerade nicht erreichbar. Bitte versuch es gleich noch einmal.",
+			"consent": {
+				"description": "Bitte stimme der Datenschutzerklärung der Beratungsstelle zu, bevor du das Gespräch betrittst. Jede Person stimmt für sich selbst zu.",
+				"rejected": "Ohne deine Zustimmung kannst du dieses Gespräch nicht betreten. Du kannst jederzeit noch zustimmen."
+			}
 		},
 		"notice": {
 			"failed": "Der neue Link konnte nicht erstellt werden. Bitte versuche es erneut."

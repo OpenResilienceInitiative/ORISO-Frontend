@@ -285,6 +285,12 @@ export interface OpenDirectLinkDeps {
 	 * gates only the call; the chat works at once, so no call knock goes along.
 	 */
 	chatFirst?: boolean;
+	/**
+	 * #2252: a person in a shared conversation agrees for themselves. Asked
+	 * when the server says this person has not agreed yet; resolves once the
+	 * agreement is recorded. Until then the person does not enter.
+	 */
+	consent?: (conversation: DirectLinkConversation) => Promise<void>;
 }
 
 /**
@@ -298,10 +304,12 @@ export const openDirectLinkConversation = async (
 		start = apiStartDirectLinkConversation,
 		redirect = (sessionId) => redirectToApp(undefined, { sessionId }),
 		cancelKnock = apiCancelOwnCallKnock,
-		chatFirst = false
+		chatFirst = false,
+		consent
 	}: OpenDirectLinkDeps = {}
 ): Promise<DirectLinkConversation> => {
 	const conversation = await start(token);
+	if (conversation.consentRequired && consent) await consent(conversation);
 	rememberDirectLinkSession(conversation.sessionId, {
 		token,
 		medium: conversation.medium,

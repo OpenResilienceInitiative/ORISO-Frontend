@@ -88,6 +88,22 @@ vi.mock('./inviteLinkHelpers', () => ({
 	redirectToInviteSession: vi.fn()
 }));
 
+/* #2252: the joiner's own consent, before the conversation opens. */
+vi.mock('../../api/apiGetConsentText', () => ({
+	apiGetConsentText: vi.fn(() =>
+		Promise.resolve({ status: 'ok', consentText: null })
+	)
+}));
+vi.mock('../../api/apiPutSessionConsent', () => ({
+	apiPutSessionConsent: vi.fn(() => Promise.resolve())
+}));
+vi.mock('../../api/apiGetAgencyId', () => ({
+	apiGetAgencyById: vi.fn(() => Promise.resolve({ name: 'Beratung Mitte' }))
+}));
+vi.mock('../../api/apiGetPublicTopicName', () => ({
+	apiGetPublicTopicName: vi.fn(() => Promise.resolve('Schulden'))
+}));
+
 vi.mock('lottie-web', () => ({ default: {} }));
 vi.mock('lottie-react', () => ({ default: () => null }));
 vi.mock('../stage/stage', () => ({
@@ -178,6 +194,8 @@ const {
 	apiCancelOwnCallKnock
 } = await import('../../api/apiDirectLinks');
 const { redirectToApp } = await import('../registration/autoLogin');
+const { apiGetConsentText } = await import('../../api/apiGetConsentText');
+const { apiPutSessionConsent } = await import('../../api/apiPutSessionConsent');
 const { readPendingKnock } = await import(
 	'../directLinkEntry/directLinkEntryFlow'
 );
@@ -381,6 +399,91 @@ describe('InviteLink with a Direkteinladung (#2252)', () => {
 		await waitFor(() => expect(redirectToApp).toHaveBeenCalled());
 		expect(readPendingKnock()).toBeNull();
 		expect(apiCancelOwnCallKnock).toHaveBeenCalledWith(31);
+	});
+
+	describe('a joiner who has not agreed yet', () => {
+		const joining = {
+			sessionId: 70,
+			matrixRoomId: '!shared:oriso',
+			medium: 'CHAT' as const,
+			admission: 'DIRECT' as const,
+			created: false,
+			appointmentConversation: true,
+			consentRequired: true
+		};
+		const openAsJoiner = async () => {
+			vi.mocked(hasActiveAuthSession).mockReturnValue(true);
+			vi.mocked(apiGetInviteLinkContext).mockResolvedValue(
+				appointmentContext('CHAT', 5)
+			);
+			vi.mocked(apiStartDirectLinkConversation).mockResolvedValueOnce(
+				joining as any
+			);
+			renderInvite();
+			return screen.findByTestId('invitation-consent');
+		};
+		const agree = () => {
+			fireEvent.click(screen.getByRole('checkbox'));
+			fireEvent.click(
+				screen.getByRole('button', { name: 'groupChat.consent.accept' })
+			);
+		};
+
+		it("pins the centre's version, then enters", async () => {
+			vi.mocked(apiGetConsentText).mockResolvedValue({
+				status: 'ok',
+				consentText: { sentence: 'Ich stimme zu.', versionId: 44 }
+			} as any);
+			await openAsJoiner();
+			expect(await screen.findByText('Ich stimme zu.')).toBeTruthy();
+			expect(redirectToApp).not.toHaveBeenCalled();
+			agree();
+
+			await waitFor(() => expect(redirectToApp).toHaveBeenCalled());
+			expect(apiPutSessionConsent).toHaveBeenCalledWith(70, 44);
+		});
+
+		it('records the platform text without a version, then enters', async () => {
+			vi.mocked(apiGetConsentText).mockResolvedValue({
+				status: 'ok',
+				consentText: null
+			} as any);
+			await openAsJoiner();
+			agree();
+
+			await waitFor(() => expect(redirectToApp).toHaveBeenCalled());
+			expect(apiPutSessionConsent).toHaveBeenCalledWith(70, null);
+		});
+
+		it('does not enter without agreeing', async () => {
+			await openAsJoiner();
+			fireEvent.click(
+				screen.getByRole('button', { name: 'groupChat.consent.reject' })
+			);
+			expect(
+				screen.getByText('directInvitation.entry.consent.rejected')
+			).toBeTruthy();
+			/* Not ticked: "Einverstanden" asks for the box instead. */
+			fireEvent.click(
+				screen.getByRole('button', { name: 'groupChat.consent.accept' })
+			);
+			await new Promise((resolve) => setTimeout(resolve, 20));
+			expect(apiPutSessionConsent).not.toHaveBeenCalled();
+			expect(redirectToApp).not.toHaveBeenCalled();
+		});
+
+		it('stays on the consent when it cannot be saved', async () => {
+			vi.mocked(apiPutSessionConsent).mockRejectedValueOnce(
+				new Error('down')
+			);
+			await openAsJoiner();
+			agree();
+
+			expect(
+				await screen.findByText('groupChat.consent.saveFailed')
+			).toBeTruthy();
+			expect(redirectToApp).not.toHaveBeenCalled();
+		});
 	});
 
 	it('opens the waiting room from 15 minutes before the start', async () => {

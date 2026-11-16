@@ -128,6 +128,11 @@ export interface DirectLinkConversation {
 	callAdmitted?: boolean | null;
 	/** #2252: shared by everybody who opened the invitation. */
 	appointmentConversation?: boolean | null;
+	/**
+	 * #2252, shared conversations only: this person has not agreed (ADR-022
+	 * gate 2) themselves yet. Each person agrees on their own.
+	 */
+	consentRequired?: boolean | null;
 	/** #2252: before this no knock is opened; ask again from then. */
 	callOpensAt?: string | null;
 }

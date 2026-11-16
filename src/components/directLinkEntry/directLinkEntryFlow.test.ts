@@ -157,6 +157,62 @@ describe('openDirectLinkConversation', () => {
 		expect(redirect).toHaveBeenCalledTimes(2);
 	});
 
+	it('asks a joiner of a shared conversation for consent before entering (#2252)', async () => {
+		const redirect = vi.fn();
+		let agree: () => void = () => undefined;
+		const consent = vi.fn(
+			() =>
+				new Promise<void>((resolve) => {
+					agree = resolve;
+				})
+		);
+		const opening = openDirectLinkConversation('tok', {
+			start: vi.fn().mockResolvedValue({
+				sessionId: 9,
+				matrixRoomId: '!room:oriso',
+				medium: 'VIDEO',
+				admission: 'KNOCK',
+				created: false,
+				knockId: 21,
+				knockStatus: 'PENDING',
+				appointmentConversation: true,
+				consentRequired: true
+			}),
+			redirect,
+			consent
+		});
+		await vi.waitFor(() => expect(consent).toHaveBeenCalled());
+		expect(consent.mock.calls[0]).toEqual([
+			expect.objectContaining({ sessionId: 9 })
+		]);
+		/* Not in yet: no redirect and no knock handed to the app. */
+		expect(redirect).not.toHaveBeenCalled();
+		expect(readPendingKnock()).toBeNull();
+		agree();
+		await opening;
+		expect(redirect).toHaveBeenCalledWith(9);
+		expect(readPendingKnock()).toMatchObject({ knockId: 21 });
+	});
+
+	it('enters at once when the person has agreed before', async () => {
+		const redirect = vi.fn();
+		const consent = vi.fn();
+		await openDirectLinkConversation('tok', {
+			start: vi.fn().mockResolvedValue({
+				sessionId: 9,
+				medium: 'CHAT',
+				admission: 'DIRECT',
+				created: false,
+				appointmentConversation: true,
+				consentRequired: false
+			}),
+			redirect,
+			consent
+		});
+		expect(consent).not.toHaveBeenCalled();
+		expect(redirect).toHaveBeenCalledWith(9);
+	});
+
 	it('enters nothing when the link refuses', async () => {
 		const redirect = vi.fn();
 		await expect(

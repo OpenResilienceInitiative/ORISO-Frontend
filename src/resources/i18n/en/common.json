@@ -6876,7 +6876,11 @@
 				"accountsOnly": "You need an account for this link. Please sign in or register."
 			},
 			"roomNotEncrypted": "This invitation cannot be used right now because the conversation is not encrypted. Please contact your counsellor.",
-			"roomUnavailable": "The conversation cannot be reached right now. Please try again in a moment."
+			"roomUnavailable": "The conversation cannot be reached right now. Please try again in a moment.",
+			"consent": {
+				"description": "Please agree to the counselling centre's privacy policy before you enter the conversation. Everybody agrees for themselves.",
+				"rejected": "Without your agreement you cannot enter this conversation. You can still agree at any time."
+			}
 		},
 		"notice": {
 			"title": "New link requested",

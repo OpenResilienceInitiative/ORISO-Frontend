@@ -10,14 +10,20 @@
  * is `invitationEntryPhase`, fed by the server's `callOpensAt`/`expiresAt`.
  */
 import * as React from 'react';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Box, Typography } from '@mui/material';
 import EventOutlinedIcon from '@mui/icons-material/EventOutlined';
 import LinkOffOutlinedIcon from '@mui/icons-material/LinkOffOutlined';
+import PrivacyTipOutlinedIcon from '@mui/icons-material/PrivacyTipOutlined';
 import { buildAppointmentIcs } from '../../utils/appointmentIcs';
 import { downloadICSFile } from '../../utils/downloadICSFile';
 import { EntryRoomShell } from '../anonymousChat/entryRoom/EntryRoomShell';
 import { WaitingRoomBar } from '../waitingRoom/WaitingRoomBar';
+import {
+	useWaitingRoomConsent,
+	WaitingRoomConsentPanel
+} from '../waitingRoom/WaitingRoomConsent';
 import { GroupCalendarActions } from '../groupChat/entryRoom/GroupCalendarActions';
 import {
 	registrationMd3,
@@ -250,6 +256,104 @@ export const InvitationExpired = ({
 					}
 				/>
 			)}
+		</EntryRoomShell>
+	);
+};
+
+export interface InvitationConsentProps {
+	/** The sentence to agree to (the centre's, else the platform's). */
+	consentHtml: string;
+	/** The centre behind the invitation: its legal links open its texts. */
+	department?: { agencyId: number; topicId: number } | null;
+	/** Records the agreement; a rejection keeps the person on this page. */
+	onAgree: () => Promise<void>;
+}
+
+/**
+ * #2252, decision B: everybody in a shared appointment conversation agrees
+ * to the privacy statement themselves, before the conversation opens. The
+ * waiting room's consent sheet in the same frame; declining keeps the
+ * person out, with the reason, and they may still agree.
+ */
+export const InvitationConsent = ({
+	consentHtml,
+	department,
+	onAgree
+}: InvitationConsentProps) => {
+	const { t } = useTranslation();
+	const consent = useWaitingRoomConsent({ consentHtml, department });
+	const [busy, setBusy] = useState(false);
+	const [saveFailed, setSaveFailed] = useState(false);
+	const [declined, setDeclined] = useState(false);
+	// `busy` only disables the button after the next render.
+	const inFlight = useRef(false);
+	const rejectedText = t(`${KEYS}.consent.rejected`);
+
+	const agree = () =>
+		consent.guard(() => {
+			if (inFlight.current) return;
+			inFlight.current = true;
+			setBusy(true);
+			setSaveFailed(false);
+			setDeclined(false);
+			onAgree()
+				.catch(() => setSaveFailed(true))
+				.finally(() => {
+					inFlight.current = false;
+					setBusy(false);
+				});
+		});
+
+	return (
+		<EntryRoomShell
+			kicker={t(`${KEYS}.beforeStart.title`)}
+			statusLine={t('groupChat.consent.headline')}
+			department={department}
+		>
+			<Box
+				component="section"
+				aria-labelledby="invitationEntryTitle"
+				data-testid="invitation-consent"
+				sx={roomColumnSx}
+			>
+				<RoomIcon>
+					<PrivacyTipOutlinedIcon />
+				</RoomIcon>
+				<Typography
+					id="invitationEntryTitle"
+					component="h1"
+					sx={{ ...registrationScreenTitleSx, mt: 3 }}
+				>
+					{t('groupChat.consent.headline')}
+				</Typography>
+				<RoomText>{t(`${KEYS}.consent.description`)}</RoomText>
+			</Box>
+			<WaitingRoomBar
+				consent={
+					<WaitingRoomConsentPanel
+						consent={consent}
+						heading={t('groupChat.consent.headline')}
+						declineLabel={t('groupChat.consent.reject')}
+						onDecline={() => setDeclined(true)}
+						missingText={rejectedText}
+						error={
+							saveFailed
+								? t('groupChat.consent.saveFailed')
+								: declined && !consent.accepted
+									? rejectedText
+									: undefined
+						}
+						errorId="invitationConsentError"
+						disabled={busy}
+					/>
+				}
+				primary={{
+					label: t('groupChat.consent.accept'),
+					onClick: agree,
+					disabled: busy,
+					testId: 'invitation-consent-accept'
+				}}
+			/>
 		</EntryRoomShell>
 	);
 };

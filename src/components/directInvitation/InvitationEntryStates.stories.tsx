@@ -11,9 +11,11 @@ import {
 } from '../message/messageStoryShell';
 import {
 	InvitationBeforeStart,
+	InvitationConsent,
 	InvitationExpired,
 	type NewLinkRequestState
 } from './InvitationEntryStates';
+import { useConsentSentences } from '../waitingRoom/useConsentSentences';
 import { newLinkRequestEntry } from './NewLinkRequestNotice';
 import { invitationErrorEntry } from './invitationErrorSnackbar';
 import { expectWaitingRoomLayout } from '../app/registrationLoader/waitingRoomLayoutContract';
@@ -103,6 +105,103 @@ export const BeforeStartEnglish: Story = {
 	name: 'Before start · en · 1440',
 	globals: { ...desktop1440Globals, locale: 'en' },
 	render: () => <BeforeStart />
+};
+
+/* #2252, decision B: a person joining a shared appointment conversation
+   agrees for themselves before it opens. With the centre's own text its
+   version is pinned; without, agreeing to the platform text counts. */
+const CENTRE_SENTENCE =
+	'Ich stimme der Datenschutzerklärung der Beratungsstelle Mitte zu.';
+
+const Consent = ({
+	centre,
+	onAgree
+}: {
+	centre: boolean;
+	onAgree: () => Promise<void>;
+}) => {
+	const { platformHtml } = useConsentSentences(centre ? 2 : undefined);
+	return (
+		<InvitationConsent
+			consentHtml={centre ? CENTRE_SENTENCE : platformHtml}
+			department={centre ? { agencyId: 2, topicId: 14 } : null}
+			onAgree={onAgree}
+		/>
+	);
+};
+
+const agreeInPlay = async (onAgree: ReturnType<typeof fn>) => {
+	await waitFor(() => expect(body().getByRole('checkbox')).toBeEnabled());
+	/* Without the tick "Einverstanden" asks for it and records nothing. */
+	await userEvent.click(body().getByTestId('invitation-consent-accept'));
+	await expect(onAgree).not.toHaveBeenCalled();
+	await userEvent.click(body().getByRole('checkbox'));
+	await userEvent.click(body().getByTestId('invitation-consent-accept'));
+	await waitFor(() => expect(onAgree).toHaveBeenCalledTimes(1));
+};
+
+export const JoinConsentCentreText: Story = {
+	name: "Joiner consent · centre's text (version pinned) · 1440",
+	globals: desktop1440Globals,
+	args: { onAgree: fn(() => Promise.resolve()) },
+	render: (args) => (
+		<Consent
+			centre
+			onAgree={(args as { onAgree: () => Promise<void> }).onAgree}
+		/>
+	),
+	play: async ({ canvasElement, args }) => {
+		await expectWaitingRoomLayout(canvasElement);
+		/* The consent sheet slides in. */
+		await waitFor(() =>
+			expect(body().getByText(CENTRE_SENTENCE)).toBeVisible()
+		);
+		await agreeInPlay((args as { onAgree: ReturnType<typeof fn> }).onAgree);
+	}
+};
+
+export const JoinConsentPlatformText: Story = {
+	name: 'Joiner consent · platform text (no version) · 390',
+	globals: phone390Globals,
+	args: { onAgree: fn(() => Promise.resolve()) },
+	render: (args) => (
+		<Consent
+			centre={false}
+			onAgree={(args as { onAgree: () => Promise<void> }).onAgree}
+		/>
+	),
+	play: async ({ canvasElement, args }) => {
+		await expectWaitingRoomLayout(canvasElement);
+		await agreeInPlay((args as { onAgree: ReturnType<typeof fn> }).onAgree);
+	}
+};
+
+export const JoinConsentDeclined: Story = {
+	name: 'Joiner consent · declined · 390',
+	globals: phone390Globals,
+	args: { onAgree: fn(() => Promise.resolve()) },
+	render: (args) => (
+		<Consent
+			centre
+			onAgree={(args as { onAgree: () => Promise<void> }).onAgree}
+		/>
+	),
+	play: async ({ args }) => {
+		await waitFor(() =>
+			expect(
+				body().getByRole('button', { name: /Ablehnen|Decline/ })
+			).toBeVisible()
+		);
+		await userEvent.click(
+			body().getByRole('button', { name: /Ablehnen|Decline/ })
+		);
+		await expect(
+			body().getByText(/nicht betreten|cannot enter/)
+		).toBeVisible();
+		await expect(
+			(args as { onAgree: ReturnType<typeof fn> }).onAgree
+		).not.toHaveBeenCalled();
+	}
 };
 
 const Expired = ({

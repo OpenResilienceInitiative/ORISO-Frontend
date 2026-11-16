@@ -60,7 +60,8 @@ import {
 	directInvitationAccessError,
 	isRoomNotEncryptedError,
 	isExpiredDirectLinkError,
-	isInactiveDirectLinkError
+	isInactiveDirectLinkError,
+	type DirectLinkConversation
 } from '../../api/apiDirectLinks';
 import {
 	downloadInvitationIcs,
@@ -84,6 +85,7 @@ import {
 	openDirectLinkConversation
 } from '../directLinkEntry/directLinkEntryFlow';
 import { DirectLinkCallEntry } from '../directLinkEntry/DirectLinkCallEntry';
+import { DirectLinkJoinConsent } from '../directLinkEntry/DirectLinkJoinConsent';
 import { directLinkRegistration } from '../directLinkEntry/directLinkRegistration';
 import {
 	asksDirectLinkPostcode,
@@ -208,6 +210,7 @@ export const InviteLink = () => {
 	const [status, setStatus] = useState<
 		| 'loading'
 		| 'identity'
+		| 'joinConsent'
 		| 'registering'
 		| 'error'
 		| 'paused'
@@ -280,6 +283,22 @@ export const InviteLink = () => {
 	}, []);
 	const [resumeAttempt, setResumeAttempt] = useState(0);
 	const [resumeFailed, setResumeFailed] = useState(false);
+	/* #2252, decision B: a person in a shared conversation agrees for
+	   themselves before it opens. The opening waits on this promise; a
+	   person who does not agree stays on the consent and never enters. */
+	const [joinConsent, setJoinConsent] = useState<{
+		sessionId: number;
+		agreed: () => void;
+	} | null>(null);
+	const askJoinConsent = useCallback(
+		(conversation: DirectLinkConversation) =>
+			new Promise<void>((agreed) => {
+				if (!mountedRef.current) return;
+				setJoinConsent({ sessionId: conversation.sessionId, agreed });
+				setStatus('joinConsent');
+			}),
+		[]
+	);
 
 	useEffect(() => {
 		if (!token) {
@@ -376,7 +395,8 @@ export const InviteLink = () => {
 						/* Signed in: the own conversation, then the app. */
 						setStatus('directOpening');
 						await openDirectLinkConversation(token, {
-							chatFirst: chatFirstRef.current
+							chatFirst: chatFirstRef.current,
+							consent: askJoinConsent
 						});
 						return;
 					}
@@ -396,7 +416,9 @@ export const InviteLink = () => {
 						}
 						if (hasActiveAuthSession()) {
 							setStatus('directOpening');
-							await openDirectLinkConversation(token);
+							await openDirectLinkConversation(token, {
+								consent: askJoinConsent
+							});
 							return;
 						}
 						if (!callsAllowed) {
@@ -499,7 +521,7 @@ export const InviteLink = () => {
 				);
 			}
 		})();
-	}, [token, locale, resumeAttempt, t]);
+	}, [token, locale, resumeAttempt, t, askJoinConsent]);
 
 	const redeemForRoom = useCallback(async (): Promise<number> => {
 		if (!token) throw new Error(t('inviteLink.error.missingToken'));
@@ -599,7 +621,8 @@ export const InviteLink = () => {
 				   with the counsellor, not a new enquiry. "Zum Chat" stays the
 				   chat, not the call's knock (#2252). */
 				await openDirectLinkConversation(token, {
-					chatFirst: chatFirstRef.current
+					chatFirst: chatFirstRef.current,
+					consent: askJoinConsent
 				});
 				return;
 			}
@@ -647,7 +670,8 @@ export const InviteLink = () => {
 		directLink,
 		token,
 		askPostcode,
-		postcode
+		postcode,
+		askJoinConsent
 	]);
 
 	/* #2252: on to the chat (or, once it opens, the waiting room). */
@@ -717,6 +741,22 @@ export const InviteLink = () => {
 				context={directLink.context}
 				modality={directLink.medium === 'VIDEO' ? 'video' : 'audio'}
 				signedIn={directLink.signedIn}
+				deps={{
+					open: (value) =>
+						openDirectLinkConversation(value, {
+							consent: askJoinConsent
+						})
+				}}
+			/>
+		);
+	}
+
+	if (status === 'joinConsent' && joinConsent && directLink) {
+		return (
+			<DirectLinkJoinConsent
+				context={directLink.context}
+				sessionId={joinConsent.sessionId}
+				onAgreed={joinConsent.agreed}
 			/>
 		);
 	}
