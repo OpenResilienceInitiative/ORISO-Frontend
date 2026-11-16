@@ -757,8 +757,13 @@ class ChatTransportService {
 
 		const room = matrixClient.getRoom?.(matrixRoomId);
 		const events = room?.getLiveTimeline?.()?.getEvents?.() || [];
-		const latestEvent = events[events.length - 1];
-		if (!latestEvent) {
+		// FE#1802: a receipt covers everything up to its event, so it targets
+		// the newest event the person can read — never one still encrypted or
+		// failed to decrypt, which the person only sees as a placeholder.
+		const receiptEvent = [...events]
+			.reverse()
+			.find((event: any) => !awaitsDecryption(event));
+		if (!receiptEvent) {
 			return false;
 		}
 
@@ -766,25 +771,25 @@ class ChatTransportService {
 		// same latest event; one receipt per event is enough. A caller that
 		// joins an in-flight send gets that send's real result.
 		const known = this.receiptByRoom.get(matrixRoomId);
-		if (known?.event === latestEvent) {
+		if (known?.event === receiptEvent) {
 			return known.result;
 		}
 
 		const result = (async () => {
 			try {
-				await (matrixClient as any).sendReadReceipt(latestEvent);
+				await (matrixClient as any).sendReadReceipt(receiptEvent);
 				return true;
 			} catch {
 				// keep UI responsive; the receipt is retried on the next read
 				if (
-					this.receiptByRoom.get(matrixRoomId)?.event === latestEvent
+					this.receiptByRoom.get(matrixRoomId)?.event === receiptEvent
 				) {
 					this.receiptByRoom.delete(matrixRoomId);
 				}
 				return false;
 			}
 		})();
-		this.receiptByRoom.set(matrixRoomId, { event: latestEvent, result });
+		this.receiptByRoom.set(matrixRoomId, { event: receiptEvent, result });
 		return result;
 	}
 

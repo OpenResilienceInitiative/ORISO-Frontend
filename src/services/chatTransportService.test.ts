@@ -1000,6 +1000,27 @@ describe('chatTransportService markRoomAsRead dedupe (FE#1802)', () => {
 		expect(sendReadReceipt).toHaveBeenCalledTimes(1);
 	});
 
+	it('sends the receipt for the newest readable event, not a later one still encrypted or failed', async () => {
+		const readable = {
+			getType: () => 'm.room.message',
+			isEncrypted: () => true,
+			isDecryptionFailure: () => false
+		};
+		const failed = {
+			getType: () => 'm.room.message',
+			isEncrypted: () => true,
+			isDecryptionFailure: () => true
+		};
+		const stillEncrypted = { getType: () => 'm.room.encrypted' };
+		const sendReadReceipt = vi.fn(() => Promise.resolve());
+		roomWithEvents([readable, failed, stillEncrypted], sendReadReceipt);
+
+		await expect(
+			chatTransportService.markRoomAsRead(ROOM_ID)
+		).resolves.toBe(true);
+		expect(sendReadReceipt).toHaveBeenCalledWith(readable);
+	});
+
 	it('retries the same event after a failed send', async () => {
 		const latest = { id: 'latest' };
 		const sendReadReceipt = vi
