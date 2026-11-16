@@ -20,6 +20,18 @@ export const toMailAddress = (value: unknown): string | null => {
 	return PLAIN_EMAIL_PATTERN.test(email) ? email : null;
 };
 
+/**
+ * An admin without a name is listed by the e-mail address (UserService). Then
+ * name and address are the same string, and the address is shown once.
+ */
+export const nameIsEmail = (
+	person: Pick<AgencyContactPerson, 'displayName' | 'email'>
+): boolean => {
+	const name = (person.displayName ?? '').trim().toLowerCase();
+	const email = (person.email ?? '').trim().toLowerCase();
+	return name === '' || (email !== '' && name === email);
+};
+
 /** A line above the people saying why they are shown; none for the centre's own contact. */
 export const headingKeyFor = (source: AgencyContact['source']) => {
 	switch (source) {

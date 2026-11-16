@@ -50,6 +50,25 @@ describe('AgencyContactPerson (ORISO-Admin#1534)', () => {
 		expect(screen.queryByText(`${K}.fallback.heading`)).toBeNull();
 	});
 
+	it('shows the address once when an admin has no name but the address', () => {
+		renderIt({
+			source: 'OWN',
+			people: [
+				person({
+					displayName: 'Maria@Example.org',
+					email: 'maria@example.org'
+				})
+			]
+		});
+
+		const links = screen.getAllByRole('link');
+		expect(links).toHaveLength(1);
+		expect(links[0].getAttribute('href')).toBe('mailto:maria@example.org');
+		expect(screen.getByRole('listitem').textContent).not.toContain(
+			'Maria@Example.org'
+		);
+	});
+
 	it('names the Träger default as such', () => {
 		renderIt({ source: 'TRAEGER_DEFAULT', people: [person()] });
 		expect(screen.getByText(`${K}.traegerDefault`)).toBeTruthy();

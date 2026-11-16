@@ -10,6 +10,7 @@ import {
 	canStartChat,
 	fallbackGroupKeyFor,
 	headingKeyFor,
+	nameIsEmail,
 	orderedPeople,
 	roleLabelKeyFor,
 	showsCounsellorBadge,
@@ -124,6 +125,9 @@ export const AgencyContactPerson = ({
 					{people.map((person, index) => {
 						const roleKey = roleLabelKeyFor(person.role);
 						const chat = onStartChat && canStartChat(person);
+						// No name of its own: the address stands in the name's place, once.
+						const addressAsName =
+							nameIsEmail(person) && Boolean(person.email);
 						return (
 							<li
 								className="agencyContactPerson__person"
@@ -132,7 +136,11 @@ export const AgencyContactPerson = ({
 							>
 								<div className="agencyContactPerson__nameRow">
 									<span className="agencyContactPerson__name">
-										{person.displayName}
+										{addressAsName ? (
+											<MailAddress value={person.email} />
+										) : (
+											person.displayName
+										)}
 									</span>
 									{roleKey && (
 										<span className="agencyContactPerson__role">
@@ -149,7 +157,7 @@ export const AgencyContactPerson = ({
 										/>
 									)}
 								</div>
-								{person.email && (
+								{person.email && !addressAsName && (
 									<MailAddress value={person.email} />
 								)}
 								{chat && (
