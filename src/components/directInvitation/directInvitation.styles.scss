@@ -161,6 +161,25 @@
 		padding: 16px;
 	}
 
+	/* The same box as an empty section, so a failed read sits where the
+	   appointments would; the error colour tells it apart. */
+	&__sectionFailed {
+		align-items: flex-start;
+		border: 1px solid var(--m3-error, #ba1a1a);
+		border-radius: 12px;
+		color: var(--m3-on-surface, #1b1b1c);
+		display: flex;
+		flex-direction: column;
+		font-size: 14px;
+		gap: 12px;
+		line-height: 20px;
+		padding: 16px;
+
+		p {
+			margin: 0;
+		}
+	}
+
 	&__day {
 		display: flex;
 		flex-direction: column;

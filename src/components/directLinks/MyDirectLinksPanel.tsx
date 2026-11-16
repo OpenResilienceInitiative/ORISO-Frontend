@@ -3,7 +3,7 @@ import {
 	useDirectLinksRedirect
 } from './useDirectLinksAllowed';
 import * as React from 'react';
-import { useContext, useEffect, useMemo, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { UserDataContext } from '../../globalState';
@@ -33,30 +33,44 @@ import { DirectLinkEditDialog } from './DirectLinkEditDialog';
 import { MyDirectLinksView } from './MyDirectLinksView';
 import { useMyDirectLinks } from './useMyDirectLinks';
 import { CREATE_CHAT_PATH } from '../app/routePaths';
+import { FETCH_ERRORS } from '../../api/fetchData';
 
 export { CREATE_CHAT_PATH };
 
 /**
  * #2252: the 1:1 appointments for the overview. A backend without the
- * endpoint, or a failed read, leaves only the invitations.
+ * endpoint (404) has none; any other failed read is `failed`, never "no
+ * appointments", and `retry` reads them again while the invitations stay.
  */
 const useUpcomingAppointments = (enabled: boolean) => {
 	const [appointments, setAppointments] = useState<SessionAppointment[]>([]);
+	const [failed, setFailed] = useState(false);
 	const [reload, setReload] = useState(0);
-	useEffect(() => onAppointmentsChanged(() => setReload((n) => n + 1)), []);
+	const retry = useCallback(() => setReload((n) => n + 1), []);
+	useEffect(() => onAppointmentsChanged(retry), [retry]);
 	useEffect(() => {
 		if (!enabled) return undefined;
 		let active = true;
 		apiGetUpcomingAppointments().then(
-			(items) =>
-				active && setAppointments(Array.isArray(items) ? items : []),
-			() => active && setAppointments([])
+			(items) => {
+				if (!active) return;
+				setAppointments(Array.isArray(items) ? items : []);
+				setFailed(false);
+			},
+			(error: unknown) => {
+				if (!active) return;
+				const missing =
+					(error as Error | undefined)?.message ===
+					FETCH_ERRORS.NO_MATCH;
+				setAppointments([]);
+				setFailed(!missing);
+			}
 		);
 		return () => {
 			active = false;
 		};
 	}, [enabled, reload]);
-	return appointments;
+	return { appointments, failed, retry };
 };
 
 /**
@@ -80,7 +94,11 @@ export const MyDirectLinksPanel = ({
 	const [saving, setSaving] = useState(false);
 	const [saveFailed, setSaveFailed] = useState(false);
 	const [topics, setTopics] = useState<TenantAgenciesTopicsInterface[]>([]);
-	const sessionAppointments = useUpcomingAppointments(overview);
+	const {
+		appointments: sessionAppointments,
+		failed: appointmentsFailed,
+		retry: retryAppointments
+	} = useUpcomingAppointments(overview);
 	/* #2252, decision 7: "Neuen Link senden" for an expired invitation. */
 	const newLink = useSendNewLink();
 	/* A failed switch is a titled pop-up, not a box in the page. */
@@ -177,6 +195,8 @@ export const MyDirectLinksPanel = ({
 						links={sections.links}
 						onCreate={() => navigate(CREATE_CHAT_PATH)}
 						onRetry={reload}
+						appointmentsFailed={appointmentsFailed}
+						onRetryAppointments={retryAppointments}
 						onShowAppointmentQr={(item) => {
 							const link = linkOf(item.id);
 							if (link) setQrLink(link);

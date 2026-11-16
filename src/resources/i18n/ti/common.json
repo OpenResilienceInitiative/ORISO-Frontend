@@ -2249,7 +2249,7 @@
 				"nav": "ዝርርባት",
 				"small": "ዜና"
 			},
-			"directLinks": "Termine & Direkteinladungen",
+			"directLinks": "ቆጸራታትን ናይ ቀጥታ መላግቦታትን",
 			"inboxState": {
 				"empty": "ሕቶታት የለን",
 				"allOpened": "ኩሎም ሕቶታት ተኸፊቶም",
@@ -2607,8 +2607,8 @@
 				"text": "ምስ ደላዪ ምኽሪ ዝነበረ ቻት ተሰሪዙ። ውልቃዊ ሓበሬታን መልእኽትታትን ድሕሪ ሕጂ ኣይርከቡን።"
 			},
 			"directInvitationRenewalRequested": {
-				"title": "Neuer Link angefragt",
-				"text": "Eine Person möchte einen neuen Link zu Ihrem Termin."
+				"title": "ሓድሽ ሊንክ ተሓቲቱ",
+				"text": "ሓደ ሰብ ንቆጸራኹም ሓድሽ ሊንክ ይሓትት ኣሎ።"
 			}
 		},
 		"error": "ወዲቑ",
@@ -6810,7 +6810,7 @@
 			"loading": "ናይ ቀጥታ መላግቦታት ይጽዓኑ ኣለዉ",
 			"retry": "እንደገና ፈትን",
 			"toggleFailed": "እቲ መላግቦ ክቕየር ኣይከኣለን። በጃኹም እንደገና ፈትኑ።",
-			"toggleFailedTitle": "Nicht umgeschaltet"
+			"toggleFailedTitle": "ኣይተቐየረን"
 		},
 		"edit": {
 			"title": "ናይ ቀጥታ መላግቦ ኣመዓራሪ",
@@ -6873,107 +6873,109 @@
 	},
 	"directInvitation": {
 		"dialog": {
-			"createTitle": "Direkteinladung erstellen",
-			"editTitle": "Direkteinladung bearbeiten",
-			"description": "Wer den Link öffnet, kommt direkt zu Ihnen. Ein Termin ist optional.",
-			"createAction": "Erstellen",
-			"saveAction": "Speichern",
-			"withAppointment": "Mit Termin",
-			"withAppointmentHint": "Alle, die den Link öffnen, treffen sich in einem gemeinsamen Gespräch.",
-			"withoutAppointmentHint": "Ohne Termin bekommt jede Person ein eigenes Gespräch. Der Link gilt, bis Sie ihn löschen.",
-			"inviteOthers": "Weitere Personen per Link einladen",
-			"inviteOthersHint": "Zum Beispiel eine Dolmetscherin. Eingeladene sehen nur Nachrichten ab ihrem Beitritt.",
+			"createTitle": "ናይ ቀጥታ መላግቦ ፍጠር",
+			"editTitle": "ናይ ቀጥታ መላግቦ ኣርም",
+			"description": "ነቲ ሊንክ ዝኸፈተ ዝኾነ ሰብ ብቐጥታ ናባኹም ይመጽእ። ቆጸራ ግዴታ ኣይኮነን።",
+			"createAction": "ፍጠር",
+			"saveAction": "ዓቅብ",
+			"withAppointment": "ምስ ቆጸራ",
+			"withAppointmentHint": "ነቲ ሊንክ ዝኸፈቱ ኩሎም ኣብ ሓደ ሓባራዊ ዝርርብ ይራኸቡ።",
+			"withoutAppointmentHint": "ብዘይ ቆጸራ ነፍሲ ወከፍ ሰብ ናይ ባዕሉ ዝርርብ ይረክብ። እቲ ሊንክ ክሳብ ትድምሰስዎ ይሰርሕ።",
+			"inviteOthers": "ካልኦት ሰባት ብሊንክ ዓድም",
+			"inviteOthersHint": "ንኣብነት ተርጓሚ። ዝተዓደሙ ሰባት ድሕሪ ምእታዎም ዝተጻሕፉ መልእኽትታት ጥራይ ይርእዩ።",
 			"validity": {
-				"label": "Gültig nach Terminende",
-				"hint": "Danach verlieren Gäste den Zugang, und das Gespräch wird archiviert.",
-				"end": "Bis zum Ende des Termins",
-				"minutes_one": "{{count}} Minute",
-				"minutes_other": "{{count}} Minuten",
-				"hours_one": "{{count}} Stunde",
-				"hours_other": "{{count}} Stunden",
-				"less": "Kürzer",
-				"more": "Länger"
+				"label": "ድሕሪ ምውዳእ ቆጸራ ዝሰርሓሉ ግዜ",
+				"hint": "ድሕሪኡ ጋሻታት መእተዊ ይስእኑ፡ እቲ ዝርርብ ድማ ኣብ ማህደር ይቕመጥ።",
+				"end": "ክሳብ መወዳእታ ቆጸራ",
+				"minutes_one": "{{count}} ደቒቕ",
+				"minutes_other": "{{count}} ደቓይቕ",
+				"hours_one": "{{count}} ሰዓት",
+				"hours_other": "{{count}} ሰዓታት",
+				"less": "ዝሓጸረ",
+				"more": "ዝነውሐ"
 			},
 			"access": {
-				"label": "Wer darf hinein?",
-				"guests": "Nur Gäste",
-				"accounts": "Nur mit Konto",
-				"both": "Beides"
+				"label": "መን ክኣቱ ይኽእል?",
+				"guests": "ጋሻታት ጥራይ",
+				"accounts": "ኣካውንት ዘለዎም ጥራይ",
+				"both": "ክልቲኡ"
 			},
-			"knock": "Anklopfen",
-			"knockHint": "Sie lassen jede Person selbst herein. Das lässt sich im Anruf ändern."
+			"knock": "ቅድም ኳሕኳሕ",
+			"knockHint": "ነፍሲ ወከፍ ሰብ ባዕልኹም ተእትውዎ። ኣብ እዋን ጻውዒት ክትቕይርዎ ትኽእሉ ኢኹም።"
 		},
 		"overview": {
-			"title": "Termine & Direkteinladungen",
-			"upcoming": "Anstehende Termine",
-			"withoutAppointment": "Direkteinladungen ohne Termin",
-			"today": "Heute",
-			"tomorrow": "Morgen",
-			"time": "{{start}}–{{end}} Uhr",
-			"validUntil": "Link gültig bis {{date}}",
-			"knockOn": "Mit Anklopfen",
-			"knockOff": "Direkt hinein",
-			"oneToOne": "1:1-Gespräch mit {{name}}",
-			"copy": "Link zu {{name}} kopieren",
-			"copied": "Kopiert",
-			"qr": "QR-Code zu {{name}} zeigen",
-			"edit": "{{name}} bearbeiten",
-			"copyFailed": "Der Link konnte nicht kopiert werden.",
-			"emptyHeadline": "Noch keine Termine und Direkteinladungen",
-			"emptyText": "Erstellen Sie eine Direkteinladung – mit oder ohne Termin. Sie erscheint danach hier.",
-			"create": "Direkteinladung erstellen",
-			"noUpcoming": "Keine anstehenden Termine. Geben Sie einer Direkteinladung ein Datum, oder legen Sie in einem Gespräch über ⋮ einen Termin an.",
-			"noLinks": "Keine Direkteinladungen ohne Termin.",
-			"appointmentName": "Termin",
-			"copyFailedTitle": "Nicht kopiert",
-			"expired": "Abgelaufene Einladungen",
-			"sendNewLink": "Neuen Link senden für {{name}}"
+			"title": "ቆጸራታትን ናይ ቀጥታ መላግቦታትን",
+			"upcoming": "ዝመጽኡ ቆጸራታት",
+			"withoutAppointment": "ብዘይ ቆጸራ ናይ ቀጥታ መላግቦታት",
+			"today": "ሎሚ",
+			"tomorrow": "ጽባሕ",
+			"time": "ካብ {{start}} ክሳብ {{end}}",
+			"validUntil": "ሊንክ ክሳብ {{date}} ይሰርሕ",
+			"knockOn": "ቅድም ኳሕኳሕ",
+			"knockOff": "ብቐጥታ ምእታው",
+			"oneToOne": "ምስ {{name}} ናይ 1:1 ዝርርብ",
+			"copy": "ናይ {{name}} ሊንክ ቅዳሕ",
+			"copied": "ተቐዲሑ",
+			"qr": "ናይ {{name}} QR ኮድ ኣርኢ",
+			"edit": "{{name}} ኣርም",
+			"copyFailed": "እቲ ሊንክ ክቕዳሕ ኣይከኣለን።",
+			"emptyHeadline": "ክሳብ ሕጂ ቆጸራ ወይ ናይ ቀጥታ መላግቦ የለን",
+			"emptyText": "ምስ ቆጸራ ወይ ብዘይ ቆጸራ ናይ ቀጥታ መላግቦ ፍጠሩ። ድሕሪኡ ኣብዚ ይርአ።",
+			"create": "ናይ ቀጥታ መላግቦ ፍጠር",
+			"noUpcoming": "ዝመጽእ ቆጸራ የለን። ንናይ ቀጥታ መላግቦ ዕለት ሃቡ፡ ወይ ኣብ ዝርርብ ብ ⋮ ቆጸራ ወስኹ።",
+			"noLinks": "ብዘይ ቆጸራ ናይ ቀጥታ መላግቦ የለን።",
+			"appointmentName": "ቆጸራ",
+			"copyFailedTitle": "ኣይተቐድሐን",
+			"expired": "ግዜኦም ዝሓለፈ መላግቦታት",
+			"sendNewLink": "ናይ {{name}} ሓድሽ ሊንክ ስደድ",
+			"appointmentsFailed": "ቆጸራታት ክጽዓኑ ኣይከኣሉን።",
+			"appointmentsRetry": "ደጊምካ ጽዓን"
 		},
 		"entry": {
 			"beforeStart": {
-				"title": "Ihr Termin",
-				"with": "mit {{name}}",
-				"time": "{{start}}–{{end}} Uhr",
-				"waitingRoom": "Der Warteraum öffnet um {{time}} Uhr, 15 Minuten vor Beginn.",
-				"chatNow": "Schreiben können Sie schon jetzt.",
-				"openChat": "Zum Chat"
+				"title": "ቆጸራኹም",
+				"with": "ምስ {{name}}",
+				"time": "ካብ {{start}} ክሳብ {{end}}",
+				"waitingRoom": "መጸበዪ ክፍሊ ኣብ {{time}}፡ ቅድሚ ምጅማሩ 15 ደቓይቕ፡ ይኽፈት።",
+				"chatNow": "ሕጂ እውን ክትጽሕፉ ትኽእሉ ኢኹም።",
+				"openChat": "ቻት ክፈት"
 			},
 			"expired": {
-				"title": "Link abgelaufen",
-				"text": "Dieser Link gilt nicht mehr. Fragen Sie einen neuen an – Ihre Beratungsperson wird benachrichtigt.",
-				"request": "Neuen Link anfragen",
-				"sent": "Anfrage gesendet. Sie bekommen einen neuen Link, sobald Ihre Beratungsperson ihn schickt.",
-				"failed": "Die Anfrage hat nicht geklappt. Bitte versuchen Sie es erneut.",
-				"failedTitle": "Anfrage nicht gesendet",
-				"signedOut": "Dieser Link gilt nicht mehr. Einen neuen Link können Sie anfragen, wenn Sie angemeldet sind. Ohne Anmeldung wenden Sie sich bitte direkt an Ihre Beratungsperson.",
-				"signIn": "Anmelden und neuen Link anfragen"
+				"title": "ግዜ ሊንክ ሓሊፉ",
+				"text": "እዚ ሊንክ ድሕሪ ሕጂ ኣይሰርሕን። ሓድሽ ሓትቱ፤ ኣማኻሪኹም ክሕበር እዩ።",
+				"request": "ሓድሽ ሊንክ ሕተት",
+				"sent": "እቲ ሕቶ ተላኢኹ። ኣማኻሪኹም ምስ ሰደዶ ሓድሽ ሊንክ ክትረኽቡ ኢኹም።",
+				"failed": "እቲ ሕቶ ኣይበጽሐን። በጃኹም እንደገና ፈትኑ።",
+				"failedTitle": "ሕቶ ኣይተላእከን",
+				"signedOut": "እዚ ሊንክ ድሕሪ ሕጂ ኣይሰርሕን። ምስ ኣተኹም ሓድሽ ሊንክ ክትሓቱ ትኽእሉ ኢኹም። ብዘይ ምእታው፡ በጃኹም ብቐጥታ ንኣማኻሪኹም ተወከሱ።",
+				"signIn": "ሓድሽ ሊንክ ንምሕታት እቶ"
 			},
 			"access": {
-				"guestsOnly": "Dieser Link ist nur für Gäste. Bitte öffnen Sie ihn in einem Fenster, in dem Sie nicht angemeldet sind.",
-				"accountsOnly": "Für diesen Link brauchen Sie ein Konto. Bitte melden Sie sich an oder registrieren Sie sich."
+				"guestsOnly": "እዚ ሊንክ ንጋሻታት ጥራይ እዩ። በጃኹም ዘይኣቶኹምሉ መስኮት ክፈትዎ።",
+				"accountsOnly": "ነዚ ሊንክ ኣካውንት የድልየኩም። በጃኹም እተዉ ወይ ተመዝገቡ።"
 			},
-			"roomNotEncrypted": "Diese Einladung kann gerade nicht genutzt werden, weil das Gespräch nicht verschlüsselt ist. Bitte wenden Sie sich an die Beraterin oder den Berater.",
-			"roomUnavailable": "Die Unterhaltung ist gerade nicht erreichbar. Bitte versuchen Sie es in einem Moment erneut.",
+			"roomNotEncrypted": "እቲ ዝርርብ ምስጢራዊ ስለ ዘይኮነ እዚ ዕድመ ሕጂ ክጥቀመሉ ኣይከኣልን። በጃኹም ንኣማኻሪኹም ተወከሱ።",
+			"roomUnavailable": "እቲ ዝርርብ ሕጂ ኣይርከብን። በጃኹም ቁሩብ ጸኒሕኩም እንደገና ፈትኑ።",
 			"consent": {
-				"description": "Bitte stimmen Sie der Datenschutzerklärung der Beratungsstelle zu, bevor Sie das Gespräch betreten. Jede Person stimmt für sich selbst zu.",
-				"rejected": "Ohne Ihre Zustimmung können Sie dieses Gespräch nicht betreten. Sie können jederzeit noch zustimmen."
+				"description": "ናብቲ ዝርርብ ቅድሚ ምእታውኩም፡ በጃኹም ምስ ናይ ምስጢርነት ፖሊሲ ማእከል ምኽሪ ተሰማምዑ። ነፍሲ ወከፍ ሰብ ንባዕሉ ይሰማማዕ።",
+				"rejected": "ብዘይ ስምምዕኩም ናብዚ ዝርርብ ክትኣትዉ ኣይትኽእሉን። ኣብ ዝኾነ እዋን ክትሰማምዑ ትኽእሉ ኢኹም።"
 			}
 		},
 		"notice": {
-			"title": "Neuer Link angefragt",
-			"text": "{{name}} möchte einen neuen Link für „{{invitation}}“.",
-			"someone": "Eine Person",
-			"send": "Neuen Link senden",
-			"failed": "Der neue Link konnte nicht erstellt werden. Bitte versuchen Sie es erneut.",
-			"failedTitle": "Neuer Link nicht erstellt"
+			"title": "ሓድሽ ሊንክ ተሓቲቱ",
+			"text": "{{name}} ን„{{invitation}}“ ሓድሽ ሊንክ ይደሊ።",
+			"someone": "ሓደ ሰብ",
+			"send": "ሓድሽ ሊንክ ስደድ",
+			"failed": "እቲ ሓድሽ ሊንክ ክፍጠር ኣይከኣለን። በጃኹም እንደገና ፈትኑ።",
+			"failedTitle": "ሓድሽ ሊንክ ኣይተፈጥረን"
 		},
 		"conversation": {
-			"sendNewLink": "Neuen Link senden"
+			"sendNewLink": "ሓድሽ ሊንክ ስደድ"
 		},
 		"renewed": {
-			"title": "Neuer Link",
-			"text": "Hier ist der neue Link zum Termin:",
-			"validUntil": "Der neue Link zum Termin gilt bis {{date}}:"
+			"title": "ሓድሽ ሊንክ",
+			"text": "እዚ ሓድሽ ሊንክ ናይቲ ቆጸራ እዩ፦",
+			"validUntil": "እቲ ሓድሽ ሊንክ ናይቲ ቆጸራ ክሳብ {{date}} ይሰርሕ፦"
 		}
 	}
 }

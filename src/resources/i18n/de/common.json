@@ -6950,7 +6950,9 @@
 			"appointmentName": "Termin",
 			"copyFailedTitle": "Nicht kopiert",
 			"expired": "Abgelaufene Einladungen",
-			"sendNewLink": "Neuen Link senden für {{name}}"
+			"sendNewLink": "Neuen Link senden für {{name}}",
+			"appointmentsFailed": "Die Termine konnten nicht geladen werden.",
+			"appointmentsRetry": "Erneut laden"
 		},
 		"entry": {
 			"beforeStart": {

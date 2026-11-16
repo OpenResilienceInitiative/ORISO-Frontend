@@ -73,6 +73,12 @@ export interface InvitationsOverviewProps {
 	now?: Date;
 	onCreate: () => void;
 	onRetry: () => void;
+	/**
+	 * The 1:1 appointments could not be read: said so with a retry, never
+	 * shown as "no appointments". The invitations stay.
+	 */
+	appointmentsFailed?: boolean;
+	onRetryAppointments?: () => void;
 	onShowAppointmentQr: (appointment: UpcomingInvitation) => void;
 	onEditAppointment?: (appointment: UpcomingInvitation) => void;
 	onToggle: (id: string, active: boolean) => void;
@@ -252,6 +258,8 @@ export const InvitationsOverview = ({
 	now = new Date(),
 	onCreate,
 	onRetry,
+	appointmentsFailed = false,
+	onRetryAppointments,
 	onShowAppointmentQr,
 	onEditAppointment,
 	onToggle,
@@ -276,7 +284,10 @@ export const InvitationsOverview = ({
 
 	const groups = groupUpcomingByDay(appointments, now);
 	const nothing =
-		groups.length === 0 && links.length === 0 && expired.length === 0;
+		!appointmentsFailed &&
+		groups.length === 0 &&
+		links.length === 0 &&
+		expired.length === 0;
 
 	const header = (
 		<header className="invitationsOverview__header">
@@ -380,49 +391,70 @@ export const InvitationsOverview = ({
 						{t(`${KEYS}.upcoming`)}
 					</h2>
 				</header>
-				{groups.length === 0 ? (
-					<SectionEmpty text={t(`${KEYS}.noUpcoming`)} />
-				) : (
-					groups.map((group) => (
-						<div
-							key={group.day.getTime()}
-							className="invitationsOverview__day"
-						>
-							<h3 className="invitationsOverview__dayTitle">
-								{group.relative
-									? `${t(`${KEYS}.${group.relative}`)}, `
-									: ''}
-								{group.day.toLocaleDateString(locale, {
-									weekday: group.relative
-										? undefined
-										: 'long',
-									day: 'numeric',
-									month: 'long'
-								})}
-							</h3>
-							<ul className="invitationsOverview__rows">
-								{group.items.map((item) => (
-									<AppointmentRow
-										key={item.id}
-										item={item}
-										locale={locale}
-										copied={copiedId === item.id}
-										onCopy={() => void copy(item)}
-										onShowQr={() =>
-											onShowAppointmentQr(item)
-										}
-										onEdit={
-											/* A 1:1 appointment without link moves in its conversation. */
-											onEditAppointment && item.url
-												? () => onEditAppointment(item)
-												: undefined
-										}
-									/>
-								))}
-							</ul>
-						</div>
-					))
+				{appointmentsFailed && (
+					<div
+						className="invitationsOverview__sectionFailed"
+						role="alert"
+						data-testid="upcoming-appointments-failed"
+					>
+						<p>{t(`${KEYS}.appointmentsFailed`)}</p>
+						{onRetryAppointments && (
+							<Button
+								variant="outlined"
+								onClick={onRetryAppointments}
+								sx={{ textTransform: 'none' }}
+							>
+								{t(`${KEYS}.appointmentsRetry`)}
+							</Button>
+						)}
+					</div>
 				)}
+				{groups.length === 0
+					? !appointmentsFailed && (
+							<SectionEmpty text={t(`${KEYS}.noUpcoming`)} />
+						)
+					: groups.map((group) => (
+							<div
+								key={group.day.getTime()}
+								className="invitationsOverview__day"
+							>
+								<h3 className="invitationsOverview__dayTitle">
+									{group.relative
+										? `${t(`${KEYS}.${group.relative}`)}, `
+										: ''}
+									{group.day.toLocaleDateString(locale, {
+										weekday: group.relative
+											? undefined
+											: 'long',
+										day: 'numeric',
+										month: 'long'
+									})}
+								</h3>
+								<ul className="invitationsOverview__rows">
+									{group.items.map((item) => (
+										<AppointmentRow
+											key={item.id}
+											item={item}
+											locale={locale}
+											copied={copiedId === item.id}
+											onCopy={() => void copy(item)}
+											onShowQr={() =>
+												onShowAppointmentQr(item)
+											}
+											onEdit={
+												/* A 1:1 appointment without link moves in its conversation. */
+												onEditAppointment && item.url
+													? () =>
+															onEditAppointment(
+																item
+															)
+													: undefined
+											}
+										/>
+									))}
+								</ul>
+							</div>
+						))}
 			</section>
 			{expired.length > 0 && (
 				<section

@@ -6875,7 +6875,9 @@
 			"appointmentName": "Appointment",
 			"copyFailedTitle": "Not copied",
 			"expired": "Expired invitations",
-			"sendNewLink": "Send a new link for {{name}}"
+			"sendNewLink": "Send a new link for {{name}}",
+			"appointmentsFailed": "The appointments could not be loaded.",
+			"appointmentsRetry": "Reload"
 		},
 		"entry": {
 			"beforeStart": {

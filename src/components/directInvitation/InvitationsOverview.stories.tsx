@@ -223,3 +223,33 @@ export const Failed: Story = {
 	globals: desktop1440Globals,
 	args: { state: 'failed' }
 };
+
+/* The 1:1 appointments could not be read: said so with "Erneut laden",
+   never as "no appointments"; the invitations stay. */
+export const AppointmentsFailed: Story = {
+	name: 'Appointments failed · 1440',
+	globals: desktop1440Globals,
+	args: {
+		appointments: [],
+		appointmentsFailed: true,
+		onRetryAppointments: fn()
+	},
+	play: async ({ args }) => {
+		const alert = body().getByTestId('upcoming-appointments-failed');
+		await expect(alert).toBeVisible();
+		await expect(body().queryByTestId('invitations-empty')).toBeNull();
+		await userEvent.click(within(alert).getByRole('button'));
+		await expect(args.onRetryAppointments).toHaveBeenCalledTimes(1);
+	}
+};
+
+export const AppointmentsFailedPhone: Story = {
+	name: 'Appointments failed · 390',
+	globals: phone390Globals,
+	args: {
+		appointments: [],
+		links: [],
+		appointmentsFailed: true,
+		onRetryAppointments: fn()
+	}
+};

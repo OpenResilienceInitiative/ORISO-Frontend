@@ -507,6 +507,72 @@ describe('Termine & Direkteinladungen (#2252)', () => {
 		expect(await screen.findByTestId('upcoming-invitation')).toBeTruthy();
 	});
 
+	it('says so, with a retry, when the 1:1 appointments cannot be read', async () => {
+		vi.mocked(apiGetOwnDirectLinks).mockResolvedValue([flyer, meeting]);
+		vi.mocked(apiGetUpcomingAppointments)
+			.mockRejectedValueOnce(new Error('CATCH_ALL'))
+			.mockResolvedValueOnce([
+				{
+					id: 'a-2',
+					sessionId: 6,
+					startTime: inTwoDays(15),
+					endTime: inTwoDays(16),
+					status: 'SCHEDULED',
+					counterpart: { displayName: 'Ali' }
+				}
+			]);
+		renderPage();
+
+		const alert = await screen.findByTestId('upcoming-appointments-failed');
+		expect(
+			within(alert).getByText(
+				'directInvitation.overview.appointmentsFailed'
+			)
+		).toBeTruthy();
+		/* Never "no appointments"; the invitations stay. */
+		expect(
+			screen.queryByText('directInvitation.overview.noUpcoming')
+		).toBeNull();
+		expect(screen.getByText('Flyer Schule')).toBeTruthy();
+		expect(screen.getByTestId('upcoming-invitation')).toBeTruthy();
+
+		fireEvent.click(
+			within(alert).getByRole('button', {
+				name: 'directInvitation.overview.appointmentsRetry'
+			})
+		);
+		expect(
+			await screen.findByText('directInvitation.overview.oneToOne:Ali')
+		).toBeTruthy();
+		expect(screen.queryByTestId('upcoming-appointments-failed')).toBeNull();
+		expect(apiGetUpcomingAppointments).toHaveBeenCalledTimes(2);
+		expect(apiGetOwnDirectLinks).toHaveBeenCalledTimes(1);
+	});
+
+	it('does not call a failed read of the appointments "nothing yet"', async () => {
+		vi.mocked(apiGetOwnDirectLinks).mockResolvedValue([]);
+		vi.mocked(apiGetUpcomingAppointments).mockRejectedValue(
+			new Error('CATCH_ALL')
+		);
+		renderPage();
+
+		expect(
+			await screen.findByTestId('upcoming-appointments-failed')
+		).toBeTruthy();
+		expect(screen.queryByTestId('invitations-empty')).toBeNull();
+	});
+
+	it('counts a backend without the appointments endpoint (404) as none', async () => {
+		vi.mocked(apiGetOwnDirectLinks).mockResolvedValue([]);
+		vi.mocked(apiGetUpcomingAppointments).mockRejectedValue(
+			new Error('NO_MATCH')
+		);
+		renderPage();
+
+		expect(await screen.findByTestId('invitations-empty')).toBeTruthy();
+		expect(screen.queryByTestId('upcoming-appointments-failed')).toBeNull();
+	});
+
 	it('edits an appointment invitation in the shared dialog and saves its settings', async () => {
 		vi.mocked(apiGetOwnDirectLinks).mockResolvedValue([meeting]);
 		vi.mocked(apiUpdateDirectLink).mockResolvedValue({
