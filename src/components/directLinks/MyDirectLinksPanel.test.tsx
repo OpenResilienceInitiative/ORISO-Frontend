@@ -601,12 +601,6 @@ describe('Termine & Direkteinladungen (#2252)', () => {
 
 		await waitFor(() =>
 			expect(apiUpdateDirectLink).toHaveBeenCalledWith('9', {
-				appointment: {
-					startTime: meeting.appointment!.start,
-					endTime: meeting.appointment!.end
-				},
-				validityAfterEndMinutes: 1440,
-				accessMode: 'GUESTS_ONLY',
 				knock: true
 			})
 		);

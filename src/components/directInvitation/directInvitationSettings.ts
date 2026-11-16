@@ -10,9 +10,10 @@ import type { InvitationDialogValue } from './invitationModel';
 
 export const directInvitationSettings = ({
 	appointment,
-	link
+	link,
+	changed
 }: InvitationDialogValue): DirectInvitationSettings => ({
-	...(appointment
+	...(appointment && (!changed || changed.appointment)
 		? {
 				appointment: {
 					startTime: appointment.start.toISOString(),
@@ -20,10 +21,13 @@ export const directInvitationSettings = ({
 				}
 			}
 		: {}),
-	...(appointment && typeof link?.validityMinutes === 'number'
+	...(appointment &&
+	typeof link?.validityMinutes === 'number' &&
+	(!changed || changed.validityMinutes)
 		? { validityAfterEndMinutes: link.validityMinutes }
 		: {}),
-	...(link
-		? { accessMode: toAccessMode(link.access), knock: link.knock }
-		: {})
+	...(link && (!changed || changed.access)
+		? { accessMode: toAccessMode(link.access) }
+		: {}),
+	...(link && (!changed || changed.knock) ? { knock: link.knock } : {})
 });

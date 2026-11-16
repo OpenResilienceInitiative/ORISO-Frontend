@@ -14,6 +14,7 @@ import {
 import { FETCH_ERRORS } from '../../../api/fetchData';
 import {
 	apiCreateSessionDirectInvitation,
+	isRoomNotEncryptedError,
 	notifyDirectLinksChanged
 } from '../../../api/apiDirectLinks';
 import type { DirectLink } from '../../conversationCreate/directLink/directLink';
@@ -91,11 +92,13 @@ export const AppointmentDateDialog = ({
 		} catch (cause) {
 			setSaving(false);
 			setError(
-				t(
-					`sessionList.timeline.appointment.dialog.error.${
-						isConflict(cause) ? 'conflict' : 'failed'
-					}`
-				)
+				(await isRoomNotEncryptedError(cause))
+					? t('directInvitation.entry.roomNotEncrypted')
+					: t(
+							`sessionList.timeline.appointment.dialog.error.${
+								isConflict(cause) ? 'conflict' : 'failed'
+							}`
+						)
 			);
 			return;
 		}

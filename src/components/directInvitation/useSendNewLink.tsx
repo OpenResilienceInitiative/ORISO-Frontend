@@ -6,7 +6,7 @@
  * share. A failure is a titled pop-up on the stack.
  */
 import * as React from 'react';
-import { useCallback, useState } from 'react';
+import { useCallback, useContext, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
 	apiRenewDirectInvitation,
@@ -20,6 +20,8 @@ import {
 } from '../m3Snackbar/snackbarStack';
 import { useResponsive } from '../../hooks/useResponsive';
 import { invitationErrorEntry } from './invitationErrorSnackbar';
+import { NotificationsContext } from '../../globalState';
+import { DIRECT_INVITATION_RENEWAL_REQUESTED } from '../notificationsCenter/eventDescriptors/directInvitationEvents';
 
 /*
  * Each renewal issues a new token and expires the one before, so a second
@@ -41,16 +43,36 @@ const renewOnce = (linkId: string): Promise<DirectLink> => {
 export const useSendNewLink = (stack: SnackbarStack = appSnackbarStack) => {
 	const { t } = useTranslation();
 	const { fromL } = useResponsive();
+	const notifications = useContext(NotificationsContext);
 	const [renewed, setRenewed] = useState<DirectLink>();
-	const [pending, setPending] = useState<string>();
+	const [pendingIds, setPendingIds] = useState<ReadonlySet<string>>(
+		new Set()
+	);
 
 	/** @returns whether the new link was made */
 	const send = useCallback(
 		async (linkId: string): Promise<boolean> => {
-			setPending(linkId);
+			setPendingIds((before) => new Set(before).add(linkId));
 			try {
 				const link = await renewOnce(linkId);
 				notifyDirectLinksChanged();
+				/* A renewal from the overview or conversation menu also consumes
+				   any request pop-up. Leaving it behind would let a later click
+				   renew once more and invalidate the link just sent. */
+				(notifications?.notificationFeed ?? []).forEach((item) => {
+					const requestedLink = (
+						item.params as Record<string, unknown> | undefined
+					)?.linkId;
+					if (
+						item.eventType ===
+							DIRECT_INVITATION_RENEWAL_REQUESTED &&
+						!item.readAt &&
+						String(requestedLink) === linkId
+					) {
+						notifications?.markNotificationAsRead(item.id);
+					}
+				});
+				stack.dismiss(`new-link-request-${linkId}`);
 				setRenewed(link);
 				return true;
 			} catch {
@@ -64,10 +86,14 @@ export const useSendNewLink = (stack: SnackbarStack = appSnackbarStack) => {
 				);
 				return false;
 			} finally {
-				setPending(undefined);
+				setPendingIds((before) => {
+					const next = new Set(before);
+					next.delete(linkId);
+					return next;
+				});
 			}
 		},
-		[stack, t]
+		[notifications, stack, t]
 	);
 
 	const dialog = renewed ? (
@@ -79,5 +105,5 @@ export const useSendNewLink = (stack: SnackbarStack = appSnackbarStack) => {
 		/>
 	) : null;
 
-	return { send, pending, dialog };
+	return { send, pendingIds, dialog };
 };

@@ -27,6 +27,7 @@ import { onAppointmentsChanged } from '../sessionsList/timeline/conversationAppo
 import { InvitationsOverview } from '../directInvitation/InvitationsOverview';
 import { InvitationDialog } from '../directInvitation/InvitationDialog';
 import type { InvitationDialogValue } from '../directInvitation/invitationModel';
+import { timerDelay } from '../directInvitation/invitationModel';
 import { directInvitationSettings } from '../directInvitation/directInvitationSettings';
 import { overviewSections } from './invitationsOverviewData';
 import { useSendNewLink } from '../directInvitation/useSendNewLink';
@@ -41,9 +42,6 @@ import { MyDirectLinksView } from './MyDirectLinksView';
 import { useMyDirectLinks } from './useMyDirectLinks';
 import { CREATE_CHAT_PATH } from '../app/routePaths';
 import { FETCH_ERRORS } from '../../api/fetchData';
-
-/* setTimeout overflows beyond about 24.8 days and would fire at once. */
-const MAX_TIMER_DELAY_MS = 2_147_483_647;
 
 export { CREATE_CHAT_PATH };
 
@@ -147,7 +145,7 @@ export const MyDirectLinksPanel = ({
 			.filter((end) => Number.isFinite(end) && end > now)
 			.sort((a, b) => a - b)[0];
 		if (nextEnd === undefined) return;
-		const delay = Math.min(nextEnd - now + 1000, MAX_TIMER_DELAY_MS);
+		const delay = timerDelay(new Date(nextEnd + 1000));
 		const timer = window.setTimeout(reload, delay);
 		return () => window.clearTimeout(timer);
 	}, [links, overview, reload]);
@@ -227,7 +225,7 @@ export const MyDirectLinksPanel = ({
 						appointments={sections.appointments}
 						expired={sections.expired}
 						onSendNewLink={(item) => void newLink.send(item.id)}
-						sendingId={newLink.pending}
+						sendingIds={newLink.pendingIds}
 						links={sections.links}
 						onCreate={() => navigate(CREATE_CHAT_PATH)}
 						onRetry={reload}
@@ -244,7 +242,17 @@ export const MyDirectLinksPanel = ({
 						onToggle={toggle}
 						pendingIds={pendingIds}
 						onShowQr={setQrLink}
-						onEdit={setEditing}
+						onEdit={(link) => {
+							/* Legacy direct links still use the legacy editor. A
+							   Direkteinladung is identifiable by its invitation-only
+							   access / knock settings even without an appointment. */
+							if (
+								link.access !== undefined ||
+								link.knock !== undefined
+							)
+								openInvitationEditor(link);
+							else setEditing(link);
+						}}
 					/>
 					{newLink.dialog}
 				</>
@@ -261,14 +269,22 @@ export const MyDirectLinksPanel = ({
 					onRetry={reload}
 				/>
 			)}
-			{editingInvitation?.appointment && (
+			{editingInvitation && (
 				<InvitationDialog
 					variant="invitation"
 					mode="edit"
 					initial={{
-						start: new Date(editingInvitation.appointment.start),
-						end: new Date(editingInvitation.appointment.end),
-						withAppointment: true,
+						...(editingInvitation.appointment
+							? {
+									start: new Date(
+										editingInvitation.appointment.start
+									),
+									end: new Date(
+										editingInvitation.appointment.end
+									),
+									withAppointment: true
+								}
+							: {}),
 						validityMinutes: editingInvitation.validityMinutes,
 						access: editingInvitation.access,
 						knock: editingInvitation.knock

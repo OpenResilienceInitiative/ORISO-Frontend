@@ -64,7 +64,7 @@ export interface InvitationsOverviewProps {
 	expired?: UpcomingInvitation[];
 	onSendNewLink?: (invitation: UpcomingInvitation) => void;
 	/** The invitation whose new link is being made. */
-	sendingId?: string;
+	sendingIds?: ReadonlySet<string>;
 	/** Defaults to the app-wide stack; stories pass their own. */
 	stack?: SnackbarStack;
 	/** Invitations without appointment: today's tiles. */
@@ -252,7 +252,7 @@ export const InvitationsOverview = ({
 	appointments,
 	expired = [],
 	onSendNewLink,
-	sendingId,
+	sendingIds,
 	stack = appSnackbarStack,
 	links,
 	now = new Date(),
@@ -481,7 +481,7 @@ export const InvitationsOverview = ({
 								locale={locale}
 								withDate
 								testId="expired-invitation"
-								sending={sendingId === item.id}
+								sending={sendingIds?.has(item.id) ?? false}
 								onSendNewLink={
 									onSendNewLink
 										? () => onSendNewLink(item)

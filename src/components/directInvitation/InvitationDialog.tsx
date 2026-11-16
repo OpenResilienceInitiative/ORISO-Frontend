@@ -116,6 +116,11 @@ export const InvitationDialog = ({
 	const [knock, setKnock] = useState(
 		initial.knock ?? DEFAULT_LINK_SETTINGS.knock
 	);
+	const [changedLink, setChangedLink] = useState({
+		validityMinutes: false,
+		access: false,
+		knock: false
+	});
 	const [slotError, setSlotError] = useState<string>();
 
 	const showLinkSettings = isInvitation || (allowGuestInvite && inviteOthers);
@@ -125,7 +130,21 @@ export const InvitationDialog = ({
 		if (withAppointment) {
 			const start = at(day, startTime);
 			const end = at(day, endTime);
-			const problem = appointmentSlotError({ start, end }, new Date());
+			/* An appointment which has already started may still be edited (for
+			   example to extend its validity). Keep accepting its original start,
+			   while a newly selected start must still be in the future. */
+			const unchangedStart =
+				mode === 'edit' &&
+				Boolean(
+					initial.start &&
+						start?.getTime() === initial.start.getTime()
+				);
+			const problem = appointmentSlotError(
+				{ start, end },
+				unchangedStart && start
+					? new Date(start.getTime() - 1)
+					: new Date()
+			);
 			if (problem || !start || !end) {
 				setSlotError(t(`${SLOT}.error.${problem}`));
 				return;
@@ -133,6 +152,7 @@ export const InvitationDialog = ({
 			appointment = { start, end };
 		}
 		setSlotError(undefined);
+		const initialAppointment = initial.start && initial.end;
 		onSubmit({
 			appointment,
 			link: showLinkSettings
@@ -141,7 +161,26 @@ export const InvitationDialog = ({
 						access,
 						knock
 					}
-				: null
+				: null,
+			...(mode === 'edit'
+				? {
+						changed: {
+							appointment: Boolean(
+								appointment &&
+									(!initialAppointment ||
+										appointment.start.getTime() !==
+											initial.start!.getTime() ||
+										appointment.end.getTime() !==
+											initial.end!.getTime())
+							),
+							validityMinutes:
+								appointment !== null &&
+								changedLink.validityMinutes,
+							access: changedLink.access,
+							knock: changedLink.knock
+						}
+					}
+				: {})
 		});
 	};
 
@@ -263,7 +302,13 @@ export const InvitationDialog = ({
 						{withAppointment && (
 							<ValidityStepper
 								value={validity}
-								onChange={setValidity}
+								onChange={(value) => {
+									setValidity(value);
+									setChangedLink((before) => ({
+										...before,
+										validityMinutes: true
+									}));
+								}}
 							/>
 						)}
 						<div className="invitationDialog__access">
@@ -285,7 +330,13 @@ export const InvitationDialog = ({
 									value: InvitationAccess | null
 								) => {
 									/* Exclusive and required: a second click keeps it. */
-									if (value) setAccess(value);
+									if (value) {
+										setAccess(value);
+										setChangedLink((before) => ({
+											...before,
+											access: true
+										}));
+									}
 								}}
 							>
 								{INVITATION_ACCESS.map((value) => (
@@ -302,7 +353,13 @@ export const InvitationDialog = ({
 						{switchRow(
 							'knock',
 							knock,
-							setKnock,
+							(value) => {
+								setKnock(value);
+								setChangedLink((before) => ({
+									...before,
+									knock: true
+								}));
+							},
 							t(`${KEYS}.knockHint`)
 						)}
 					</>

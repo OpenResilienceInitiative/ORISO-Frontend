@@ -37,6 +37,13 @@ export interface InvitationDialogValue {
 	 * in a 1:1 only when more people are invited by link.
 	 */
 	link: InvitationLinkSettings | null;
+	/** Fields actually changed by an edit; omitted when creating. */
+	changed?: {
+		appointment: boolean;
+		validityMinutes: boolean;
+		access: boolean;
+		knock: boolean;
+	};
 }
 
 export const DEFAULT_LINK_SETTINGS: Readonly<{
