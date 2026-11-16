@@ -33,6 +33,22 @@ export const useEntryLabel = () => {
 };
 
 /**
+ * The word for an entry's kind, the one its symbol stands for: "Video",
+ * "Telefon", "Vor Ort", "Chat", "Gruppentermin", "Sperrzeit", "Belegt".
+ * The calendar and the overview card name a kind with the same word.
+ */
+export const useEntryKindLabel = () => {
+	const { t } = useTranslation();
+	return useCallback(
+		(entry: CalendarEntry) =>
+			entry.type === 'appointment'
+				? t(`calendar.kinds.${entry.kind ?? 'video'}`)
+				: t(`calendar.types.${entry.type}`),
+		[t]
+	);
+};
+
+/**
  * What a dashed proposal says after "Verschiebung": one's own waits for
  * the colleague; one received names who proposed it.
  */

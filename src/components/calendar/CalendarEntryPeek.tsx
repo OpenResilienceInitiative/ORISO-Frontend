@@ -9,7 +9,11 @@ import { useTranslation } from 'react-i18next';
 import type { CalendarEntry, Colleague } from './calendarModel';
 import { CalendarEntryGlyph, facetOf } from './CalendarEntryGlyph';
 import type { MoveProposal } from './calendarActions';
-import { useEntryLabel, useRangeFormat } from './useEntryLabel';
+import {
+	useEntryKindLabel,
+	useEntryLabel,
+	useRangeFormat
+} from './useEntryLabel';
 
 /** "A. Kaya" → "AK", "ruhiges_yak" → "RY". */
 export const initialsOf = (name: string) =>
@@ -46,10 +50,7 @@ export const CalendarEntryPeek = ({
 	const label = useEntryLabel();
 	const format = useRangeFormat();
 	const facet = facetOf(entry);
-	const kindLabel =
-		entry.type === 'appointment'
-			? t(`calendar.kinds.${entry.kind ?? 'video'}`)
-			: t(`calendar.types.${entry.type}`);
+	const kindLabel = useEntryKindLabel()(entry);
 	const when = (start: string | Date, end: string | Date) =>
 		entry.allDay
 			? `${format(start).split(',')[0]}, ${t('calendar.allDay')}`

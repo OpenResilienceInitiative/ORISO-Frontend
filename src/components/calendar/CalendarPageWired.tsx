@@ -63,8 +63,6 @@ import {
 import { apiGetConsultantSessionList } from '../../api/apiGetConsultantSessionList';
 import { apiGetAskerSessionList } from '../../api/apiGetAskerSessionList';
 import { FETCH_ERRORS } from '../../api/fetchData';
-import { apiGetSessionRoomBySessionId } from '../../api/apiGetSessionRooms';
-import { resolveSessionRoomRouteId } from '../../utils/matrixRoomUtils';
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import {
 	notifyAppointmentsChanged,
@@ -92,6 +90,10 @@ import {
 	type MoveProposal
 } from './calendarActions';
 import { publishReceivedProposalCount } from './calendarProposalCount';
+import {
+	appointmentConversationPath,
+	appointmentRoomOf
+} from './appointmentConversation';
 import {
 	DEFAULT_VISIBILITY,
 	type AppointmentDraft,
@@ -639,9 +641,7 @@ export const CalendarPageWired = () => {
 	};
 
 	const openRoom = (roomId: string, sessionId: number) =>
-		navigate(
-			`${consultant ? '/sessions/consultant/sessionView' : '/sessions/user/view'}/${roomId}/${sessionId}`
-		);
+		navigate(appointmentConversationPath(roomId, sessionId, consultant));
 
 	/**
 	 * Opens the conversation an appointment belongs to: from the list at
@@ -660,11 +660,9 @@ export const CalendarPageWired = () => {
 			return Promise.reject(
 				new Error('appointment without conversation')
 			);
-		return apiGetSessionRoomBySessionId(sessionId).then(({ sessions }) => {
-			const roomId = resolveSessionRoomRouteId(sessions?.[0]?.session);
-			if (!roomId) throw new Error('conversation without room');
-			openRoom(roomId, sessionId);
-		});
+		return appointmentRoomOf(sessionId).then((roomId) =>
+			openRoom(roomId, sessionId)
+		);
 	};
 
 	// Working hours, holiday region and day exceptions show the change at
