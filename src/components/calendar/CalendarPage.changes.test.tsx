@@ -30,6 +30,7 @@ const grid: {
 		start: Date,
 		end: Date
 	) => unknown;
+	onEntryClick?: (entry: CalendarEntry) => void;
 } = {};
 const mounts = vi.hoisted(() => ({ count: 0 }));
 vi.mock('./CalendarView', async () => {
@@ -37,6 +38,7 @@ vi.mock('./CalendarView', async () => {
 	return {
 		CalendarView: (props: typeof grid) => {
 			grid.onEntryMove = props.onEntryMove;
+			grid.onEntryClick = props.onEntryClick;
 			useEffect(() => {
 				mounts.count += 1;
 			}, []);
@@ -310,5 +312,16 @@ describe('CalendarPage — undo refused at once (review 4575297344)', () => {
 			);
 		});
 		expect(screen.getByText('calendar.saveFailed')).toBeTruthy();
+	});
+});
+
+describe('CalendarPage — a call whose conversation cannot be found (review 4577642137)', () => {
+	it('says so instead of doing nothing', async () => {
+		const onStart = vi.fn(() => Promise.reject(new Error('no room')));
+		page({ onStart });
+		act(() => grid.onEntryClick?.(ENTRY));
+		fireEvent.click(screen.getByTestId('calendar-entry-start'));
+		expect(onStart).toHaveBeenCalledWith(ENTRY);
+		expect(await screen.findByText('calendar.chatUnavailable')).toBeTruthy();
 	});
 });

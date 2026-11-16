@@ -177,6 +177,32 @@ export const findConflicts = (
 	);
 };
 
+/**
+ * What stands against moving an entry to a new time (review 4577641945).
+ * An appointment never moves into the past, as it cannot be created
+ * there (UserService refuses it too). Own entries the new time overlaps
+ * are named, so the page can ask first, as creating does; a blocker, like
+ * a new one, only collides with what is not a blocker.
+ */
+export type MoveProblem =
+	| { type: 'past' }
+	| { type: 'conflict'; conflicts: CalendarEntry[] };
+
+export const moveProblem = (
+	entry: CalendarEntry,
+	range: { start: Date; end: Date },
+	entries: CalendarEntry[],
+	ownerId: string,
+	now: Date
+): MoveProblem | null => {
+	if (entry.type !== 'blocker' && range.start.getTime() < now.getTime())
+		return { type: 'past' };
+	const conflicts = findConflicts(range, entries, ownerId, entry.id).filter(
+		(other) => entry.type !== 'blocker' || other.type !== 'blocker'
+	);
+	return conflicts.length ? { type: 'conflict', conflicts } : null;
+};
+
 /** The next own entries from now on, for "Als Nächstes". */
 export const upcomingEntries = (
 	entries: CalendarEntry[],
@@ -196,7 +222,7 @@ export const upcomingEntries = (
 		)
 		.slice(0, limit);
 
-/** The one entry that is running or starts within the next 15 minutes. */
+/** Running, or starting within the next 15 minutes. */
 export const SOON_MINUTES = 15;
 export const isSoon = (entry: CalendarEntry, now: Date) => {
 	const start = new Date(entry.start).getTime();
@@ -204,6 +230,20 @@ export const isSoon = (entry: CalendarEntry, now: Date) => {
 	return (
 		start - now.getTime() <= SOON_MINUTES * 60_000 && end > now.getTime()
 	);
+};
+
+/**
+ * The one own entry marked "Beginnt gleich": the first of "Als Nächstes"
+ * (an appointment or a group date) when it is soon. The grid and the
+ * side list mark the same one (review 4577641949).
+ */
+export const soonEntry = (
+	entries: CalendarEntry[],
+	ownerId: string,
+	now: Date
+): CalendarEntry | undefined => {
+	const [next] = upcomingEntries(entries, ownerId, now, 1);
+	return next && isSoon(next, now) ? next : undefined;
 };
 
 /**

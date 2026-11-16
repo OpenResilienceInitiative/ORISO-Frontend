@@ -120,6 +120,22 @@ describe('BlockerDialog — date span of the selection', () => {
 		expect(onSave.mock.calls[0][0][0].end).toEqual(new Date(2026, 10, 17, 0));
 	});
 
+	it('keeps a 23:00–midnight slot on its day when the end is edited (review 4577641942)', () => {
+		const onSave = vi.fn();
+		open(
+			{ start: new Date(2026, 10, 16, 23), end: new Date(2026, 10, 17, 0) },
+			onSave
+		);
+		fireEvent.change(screen.getByLabelText('calendar.dialog.end'), {
+			target: { value: '23:45' }
+		});
+		fireEvent.click(save());
+		const [[drafts]] = onSave.mock.calls;
+		expect(drafts).toHaveLength(1);
+		expect(drafts[0].start).toEqual(new Date(2026, 10, 16, 23));
+		expect(drafts[0].end).toEqual(new Date(2026, 10, 16, 23, 45));
+	});
+
 	it('blocks only the day of a 23:00–midnight slot when made all-day', () => {
 		const onSave = vi.fn();
 		open(

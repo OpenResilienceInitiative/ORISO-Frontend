@@ -39,6 +39,9 @@ import {
 } from '../../api/apiSessionAppointments';
 import { apiGetConsultantSessionList } from '../../api/apiGetConsultantSessionList';
 import { apiGetAskerSessionList } from '../../api/apiGetAskerSessionList';
+import { FETCH_ERRORS } from '../../api/fetchData';
+import { apiGetSessionRoomBySessionId } from '../../api/apiGetSessionRooms';
+import { resolveSessionRoomRouteId } from '../../utils/matrixRoomUtils';
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import {
 	notifyAppointmentsChanged,
@@ -192,6 +195,12 @@ export const CalendarPageWired = () => {
 						type: SESSION_LIST_TYPES.MY_SESSION,
 						count: CONVERSATION_LOOKUP_COUNT,
 						offset
+					}).catch((error) => {
+						// 204: no (more) conversations. That is an answer,
+						// also on a later page (review 4577642135).
+						if (error?.message === FETCH_ERRORS.EMPTY)
+							return { count: 0, offset, sessions: [], total: 0 };
+						throw error;
 					})
 				: // Strict: a failure shows the retry instead of no rooms.
 					apiGetAskerSessionList({ strict: true });
@@ -329,12 +338,31 @@ export const CalendarPageWired = () => {
 		afterChange();
 	};
 
-	const start = (entry: CalendarEntry) => {
-		const conversation = conversationOf(entry.sessionId);
-		if (!conversation?.matrixRoomId) return;
+	const openRoom = (roomId: string, sessionId: number) =>
 		navigate(
-			`${consultant ? '/sessions/consultant/sessionView' : '/sessions/user/view'}/${conversation.matrixRoomId}/${conversation.sessionId}`
+			`${consultant ? '/sessions/consultant/sessionView' : '/sessions/user/view'}/${roomId}/${sessionId}`
 		);
+
+	/**
+	 * Opens the conversation an appointment belongs to: from the list at
+	 * once, else by its session id, for one the list does not hold (shared
+	 * access, a handover, an archived one, a page still loading). Rejects
+	 * when there is no room, so the page can say so (review 4577642137).
+	 */
+	const start = (entry: CalendarEntry): Promise<void> | undefined => {
+		const { sessionId } = entry;
+		const listed = conversationOf(sessionId);
+		if (listed?.matrixRoomId) {
+			openRoom(listed.matrixRoomId, listed.sessionId);
+			return undefined;
+		}
+		if (sessionId === undefined)
+			return Promise.reject(new Error('appointment without conversation'));
+		return apiGetSessionRoomBySessionId(sessionId).then(({ sessions }) => {
+			const roomId = resolveSessionRoomRouteId(sessions?.[0]?.session);
+			if (!roomId) throw new Error('conversation without room');
+			openRoom(roomId, sessionId);
+		});
 	};
 
 	const showColleagues = (ids: string[]) => {

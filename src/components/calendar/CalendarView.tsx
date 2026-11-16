@@ -34,13 +34,13 @@ import { ButtonGroup } from '../buttonGroup/ButtonGroup';
 import {
 	createMoveGuard,
 	isMovable,
-	isSoon,
+	soonEntry,
 	visibleHours,
 	type CalendarEntry,
 	type CalendarRole,
 	type MoveResult
 } from './calendarModel';
-import { CalendarEntryGlyph } from './CalendarEntryGlyph';
+import { CalendarEntryGlyph, SoonBadge } from './CalendarEntryGlyph';
 import { useEntryLabel } from './useEntryLabel';
 import { fullCalendarLocale } from './calendarLocale';
 import './calendar.styles.scss';
@@ -138,6 +138,10 @@ export const CalendarView = ({
 		[entries, ownerId, role, label]
 	);
 
+	// "Beginnt gleich" in words and a clock, not by colour alone
+	// (review 4577641949).
+	const soonId = soonEntry(entries, ownerId, nowDate)?.id;
+
 	// The selection preview (selectMirror) is an event without an entry.
 	const entryOf = (info: { event: { extendedProps: unknown } }) =>
 		(info.event.extendedProps as { entry?: CalendarEntry }).entry;
@@ -150,10 +154,7 @@ export const CalendarView = ({
 			'calEntry',
 			`calEntry--${entry.type}`,
 			colleague && 'calEntry--colleague',
-			!colleague &&
-				entry.type === 'appointment' &&
-				isSoon(entry, nowDate) &&
-				'calEntry--soon'
+			entry.id === soonId && 'calEntry--soon'
 		]
 			.filter(Boolean)
 			.join(' ');
@@ -185,6 +186,7 @@ export const CalendarView = ({
 						{owner ? `${owner} · ` : ''}
 						{info.event.title}
 					</span>
+					{entry.id === soonId && <SoonBadge />}
 				</span>
 			</span>
 		);
