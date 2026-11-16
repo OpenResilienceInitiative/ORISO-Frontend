@@ -157,6 +157,7 @@ import {
 } from './calendarMenus';
 import { initialsOf } from './CalendarEntryPeek';
 import { avatarToneClass } from './calendarAvatar';
+import { useCreatedFlash } from './useCreatedFlash';
 import { HoverScrollArrows } from '../hoverScrollArrows/HoverScrollArrows';
 import { AppointmentDialog } from './AppointmentDialog';
 import { BlockerDialog } from './BlockerDialog';
@@ -523,6 +524,7 @@ export const CalendarPage = ({
 		)
 	]);
 	const [muted, setMuted] = useState<string[]>([]);
+	const { flashIds, expectCreated } = useCreatedFlash(entries, ownerId);
 	const [highlight, setHighlight] = useState<CalendarHighlight | null>(null);
 	// Like the session list chips: none selected shows everything, selected
 	// chips narrow to those kinds. "Was anzeigen" hides kinds altogether.
@@ -885,6 +887,7 @@ export const CalendarPage = ({
 		const origin = dialog;
 		const closeOrigin = () =>
 			setDialog((current) => (current === origin ? null : current));
+		expectCreated(drafts);
 		const outcome = run(onCreate?.(drafts), createNotice(drafts));
 		if (outcome === true) closeOrigin();
 		if (typeof outcome === 'boolean') return outcome;
@@ -2254,6 +2257,7 @@ export const CalendarPage = ({
 							proposals={gridProposals}
 							highlight={highlight}
 							muted={muted}
+							flashIds={flashIds}
 							onSelectRange={(range, anchor) =>
 								setMenu({ type: 'slot', range, anchor })
 							}
@@ -2284,6 +2288,7 @@ export const CalendarPage = ({
 							proposals={gridProposals}
 							highlight={highlight}
 							muted={muted}
+							flashIds={flashIds}
 							onSelectRange={(range, anchor) =>
 								setMenu({ type: 'slot', range, anchor })
 							}

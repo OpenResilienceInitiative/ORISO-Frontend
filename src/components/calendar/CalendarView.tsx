@@ -80,6 +80,7 @@ import {
 	type ColleagueBand
 } from './calendarBands';
 import { CalendarEntryPeek, initialsOf } from './CalendarEntryPeek';
+import { avatarToneClass } from './calendarAvatar';
 import { calendarLocale, fullCalendarLocale } from './calendarLocale';
 import { GRID_SLOT_PX } from './calendarZoom';
 import './calendar.styles.scss';
@@ -163,6 +164,8 @@ export interface CalendarViewProps {
 	highlight?: CalendarHighlight | null;
 	/** Owners whose entries are faded out (people bar). */
 	muted?: string[];
+	/** Entries just created: they flash twice (prototype v17). */
+	flashIds?: string[];
 	/** A free range in the time grid was selected (counsellors only). */
 	onSelectRange?: (
 		range: { start: Date; end: Date },
@@ -381,6 +384,35 @@ const propsOf = (info: { event: { extendedProps: unknown } }) =>
 	info.event.extendedProps as EventProps;
 
 const NO_PEOPLE: Colleague[] = [];
+const NO_IDS: string[] = [];
+
+/** Time grids wide enough for an entry's "10:00–11:00" line. */
+const WIDE_TIME_GRIDS = [FC_VIEW.day, FC_VIEW.threeDays, FC_VIEW.workWeek];
+
+/** The time axis reads "07:00" (prototype v17). */
+const SLOT_HEADER_FORMAT = {
+	hour: '2-digit',
+	minute: '2-digit',
+	hour12: false
+} as const;
+/** Day heads read "Mo., 16." (prototype v17). */
+const DAY_HEADER_FORMAT = { weekday: 'short', day: 'numeric' } as const;
+
+/** Today's head in the primary colour. */
+const dayHeaderInnerClass = (info: { isToday: boolean }) =>
+	info.isToday
+		? 'calendarView__dayHead calendarView__dayHead--today'
+		: 'calendarView__dayHead';
+/** The month: today's number in a pink circle, a tint on hover. */
+const dayCellClass = (info: { view: { type: string } }) =>
+	info.view.type.startsWith('dayGrid') ? 'calendarView__monthDay' : '';
+const dayCellTopInnerClass = (info: { isToday: boolean }) =>
+	info.isToday
+		? 'calendarView__dayNumber calendarView__dayNumber--today'
+		: 'calendarView__dayNumber';
+/** The list: no dot before an entry, a light head per day. */
+const LIST_DOT_CLASS = 'calendarView__listDot';
+const LIST_DAY_HEADER_CLASS = 'calendarView__listDay';
 const bandKey = (band: ColleagueBand) =>
 	`${band.start.getTime()}-${band.end.getTime()}`;
 
@@ -406,6 +438,7 @@ export const CalendarView = ({
 	proposals = [],
 	highlight,
 	muted = [],
+	flashIds = NO_IDS,
 	onSelectRange,
 	onSelectDays,
 	onEntryOpen,
@@ -422,6 +455,12 @@ export const CalendarView = ({
 	const nowDate = now ?? new Date();
 	const consultant = role === 'consultant';
 	const gridRef = useRef<HTMLDivElement>(null);
+	const clock = new Intl.DateTimeFormat(calendarLocale(i18n.language), {
+		hour: '2-digit',
+		minute: '2-digit'
+	});
+	const timeRange = (from: Date, to: Date) =>
+		`${clock.format(from)}–${clock.format(to)}`;
 	const fontsReady = useFontsReady();
 	const [peek, setPeek] = useState<
 		| {
@@ -630,6 +669,12 @@ export const CalendarView = ({
 				colleague && 'calEntry--colleague',
 				proposal && 'calEntry--proposal',
 				!proposal && entry.id === soonId && 'calEntry--soon',
+				// The list is plain rows, not filled blocks (prototype v17).
+				info.view.type.startsWith('list') && 'calEntry--listRow',
+				!proposal &&
+					!colleague &&
+					flashIds.includes(entry.id) &&
+					'calEntry--flash',
 				dimmed && 'calEntry--dimmed',
 				muted.includes(entry.ownerId) && 'calEntry--muted'
 			]
@@ -638,7 +683,7 @@ export const CalendarView = ({
 		},
 		// nowDate is fixed in stories; in the app a re-render refreshes it.
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[ownerId, highlight?.owner, highlight?.facet, muted, soonId]
+		[ownerId, highlight?.owner, highlight?.facet, muted, soonId, flashIds]
 	);
 
 	const eventContent = (info: EventDisplayInfo) => {
@@ -661,50 +706,66 @@ export const CalendarView = ({
 			);
 		const colleague = entry.ownerId !== ownerId;
 		const owner = colleague ? colleagues[entry.ownerId] : undefined;
-		const timeGrid = info.view.type.startsWith('timeGrid');
+		const viewType = info.view.type;
+		const start = info.event.start;
+		const end = info.event.end;
+		// "10:00–11:00" on a line of its own where columns are wide enough:
+		// day, three days, work week; from 45 minutes (prototype v17).
+		const rangeShown =
+			WIDE_TIME_GRIDS.includes(viewType) &&
+			!info.event.allDay &&
+			!!start &&
+			!!end &&
+			end.getTime() - start.getTime() >= 45 * 60_000;
+		// The month names the start; the list has a time column of its own.
+		const timeShown =
+			viewType.startsWith('dayGrid') &&
+			!info.event.allDay &&
+			info.timeText;
+		// The advice seeker on one's own appointment, the colleague on
+		// theirs: an 18 px avatar in the person's colour.
+		const avatarName = owner
+			? owner.displayName
+			: !proposal && entry.type === 'appointment'
+				? entry.title
+				: undefined;
 		return (
 			<span className="calEntry__inner">
-				{owner && (
-					<span className="calEntry__initials" aria-hidden="true">
-						{initialsOf(owner.displayName)}
-					</span>
-				)}
-				{!owner &&
-					!proposal &&
-					entry.type === 'appointment' &&
-					entry.title && (
+				<span className="calEntry__line">
+					{avatarName && (
 						<span
-							className="calEntry__initials calEntry__initials--asker"
+							className={`calEntry__avatar ${avatarToneClass(avatarName)}`}
 							aria-hidden="true"
 						>
-							{initialsOf(entry.title)}
+							{initialsOf(avatarName)}
 						</span>
 					)}
-				<span className="calEntry__icon">
-					<CalendarEntryGlyph entry={entry} colleague={colleague} />
-				</span>
-				<span className="calEntry__text">
-					{info.timeText && !timeGrid && (
+					<span className="calEntry__icon">
+						<CalendarEntryGlyph
+							entry={entry}
+							colleague={colleague}
+						/>
+					</span>
+					{timeShown && (
 						<span className="calEntry__time">{info.timeText}</span>
 					)}
 					<span className="calEntry__title">
-						{proposal ? (
-							<>
-								{t('calendar.proposal.label')}
-								<span className="calEntry__waiting">
-									{' · '}
-									{proposalStatus(proposal)}
-								</span>
-							</>
-						) : (
-							<>
-								{owner ? `${owner.displayName} · ` : ''}
-								{info.event.title}
-							</>
-						)}
+						{proposal
+							? t('calendar.proposal.label')
+							: info.event.title}
 					</span>
 					{!proposal && entry.id === soonId && <SoonBadge />}
 				</span>
+				{proposal && (
+					<span className="calEntry__status">
+						{proposalStatus(proposal)}
+					</span>
+				)}
+				{rangeShown && !proposal && (
+					<span className="calEntry__range">
+						{timeRange(start!, end!)}
+					</span>
+				)}
 			</span>
 		);
 	};
@@ -998,6 +1059,15 @@ export const CalendarView = ({
 					// it up (they are taller than the closest-out steps).
 					slotMinHeight={slotPx}
 					slotHeaderInnerClass="calendarView__slotLabel"
+					slotHeaderFormat={SLOT_HEADER_FORMAT}
+					dayHeaderFormat={DAY_HEADER_FORMAT}
+					dayHeaderInnerClass={dayHeaderInnerClass}
+					dayCellClass={dayCellClass}
+					dayCellTopInnerClass={dayCellTopInnerClass}
+					moreLinkClass="calendarView__more"
+					viewClass="calendarView__frame"
+					listItemEventBeforeClass={LIST_DOT_CLASS}
+					listDayHeaderClass={LIST_DAY_HEADER_CLASS}
 					scrollTime="08:00:00"
 					dayMaxEvents={3}
 					backgroundEventClass={backgroundClass}
@@ -1079,7 +1149,7 @@ export const CalendarView = ({
 				{/* Popper's root already is the `role="tooltip"`. */}
 				{peek && 'band' in peek && (
 					<div
-						className="calendarPeek calendarPeek--band"
+						className="calendarPeek calendarPeek--band calendarPeek--tip"
 						data-cy="calendar-band-peek"
 					>
 						<strong className="calendarPeek__when">
@@ -1118,6 +1188,7 @@ export const CalendarView = ({
 				)}
 				{peek && 'entry' in peek && (
 					<CalendarEntryPeek
+						variant="tip"
 						entry={peek.entry}
 						colleague={peekColleague}
 						proposal={peek.proposal}

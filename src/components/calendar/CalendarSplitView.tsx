@@ -194,6 +194,8 @@ export interface CalendarSplitViewProps {
 	proposals?: { proposal: MoveProposal; entry: CalendarEntry }[];
 	highlight?: CalendarHighlight | null;
 	muted?: string[];
+	/** Entries just created: they flash twice (prototype v17). */
+	flashIds?: string[];
 	onSelectRange?: (
 		range: { start: Date; end: Date },
 		anchor: { x: number; y: number }
@@ -253,6 +255,7 @@ export const CalendarSplitView = ({
 	proposals = [],
 	highlight,
 	muted = [],
+	flashIds = [],
 	onSelectRange,
 	onEntryOpen,
 	onProposalOpen,
@@ -528,6 +531,10 @@ export const CalendarSplitView = ({
 			`calEntry--k-${facet}`,
 			colleague && 'calEntry--colleague',
 			proposal && 'calEntry--proposal',
+			!proposal &&
+				!colleague &&
+				flashIds.includes(entry.id) &&
+				'calEntry--flash',
 			dimmed && 'calEntry--dimmed',
 			muted.includes(entry.ownerId) && 'calEntry--muted'
 		]

@@ -78,7 +78,19 @@ export const FC_CUSTOM_VIEWS = {
 		duration: { weeks: 1 },
 		hiddenDays: [0, 6]
 	},
-	listTwoWeeks: { type: 'list', duration: { weeks: 2 } }
+	// The list names each day once, "Montag, 16. November" (prototype v17).
+	listTwoWeeks: {
+		type: 'list',
+		duration: { weeks: 2 },
+		listDayFormat: {
+			weekday: 'long' as const,
+			day: 'numeric' as const,
+			month: 'long' as const
+		},
+		listDayAltFormat: false as const
+	},
+	// The month heads name the weekday only.
+	dayGridMonth: { dayHeaderFormat: { weekday: 'short' as const } }
 };
 
 export type ViewSwitcherStyle = 'menu' | 'digits';
