@@ -348,6 +348,9 @@ type Dialog =
 			slot?: { start: Date; end: Date };
 			/** Ticked already: "Wöchentlich …" after a single blocker. */
 			weekdays?: number[];
+			/** "Wöchentlich …": the single blocker's all-day state and note. */
+			allDay?: boolean;
+			note?: string;
 			/**
 			 * "Wöchentlich …": the single blocker the series replaces. It
 			 * stays until the series is saved (reviews 4589304582,
@@ -785,6 +788,15 @@ export const CalendarPage = ({
 	// the days with times. The work week hides Saturday and Sunday, so an
 	// entry on a weekend opens the whole week (review 4589150187).
 	const showEntry = (entry: CalendarEntry) => {
+		// A kind filter may hide the result: show its kind first, or the
+		// calendar lands on nothing (review 4589150199).
+		const facet = facetOf(entry);
+		if (!facetVisible(facet)) {
+			setHiddenFacets((all) => all.filter((f) => f !== facet));
+			setOnlyFacets((all) =>
+				all.length && !all.includes(facet) ? [...all, facet] : all
+			);
+		}
 		const start = new Date(entry.start);
 		const weekend = start.getDay() === 0 || start.getDay() === 6;
 		if (view === 'month' || view === 'list' || split)
@@ -1112,6 +1124,8 @@ export const CalendarPage = ({
 			type: 'blocker',
 			slot: { start: draft.start, end: draft.end },
 			weekdays: [draft.start.getDay()],
+			allDay: !!draft.allDay,
+			note: draft.note,
 			replaces: current.weekly
 		});
 	};
@@ -2743,6 +2757,12 @@ export const CalendarPage = ({
 					}
 					initialWeekdays={
 						dialog.type === 'blocker' ? dialog.weekdays : undefined
+					}
+					initialAllDay={
+						dialog.type === 'blocker' ? dialog.allDay : undefined
+					}
+					initialNote={
+						dialog.type === 'blocker' ? dialog.note : undefined
 					}
 					conversations={conversations}
 					entries={

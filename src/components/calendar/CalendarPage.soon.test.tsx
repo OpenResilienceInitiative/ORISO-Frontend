@@ -136,3 +136,18 @@ describe('CalendarPage — "Beginnt gleich" (review 4577641949)', () => {
 		);
 	});
 });
+
+describe('CalendarPage — an entry chosen while a kind filter hides it (review 4589150199)', () => {
+	it('shows its kind again, so the calendar does not land on nothing', async () => {
+		page([own('next', 5, 'group'), own('later', 10)]);
+		fireEvent.click(byCy('calendar-filter-video') as HTMLElement);
+		await waitFor(() =>
+			expect(document.querySelectorAll('.calEntry')).toHaveLength(1)
+		);
+		// "Als Nächstes" still lists the group date the chips hide.
+		fireEvent.click(listButton(/next/) as HTMLElement);
+		await waitFor(() =>
+			expect(document.querySelectorAll('.calEntry')).toHaveLength(2)
+		);
+	});
+});

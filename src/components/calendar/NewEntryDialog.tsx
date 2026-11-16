@@ -28,6 +28,8 @@ export interface NewEntryDialogProps {
 	initialSessionId?: number;
 	/** Blocker tab: weekdays ticked already. */
 	initialWeekdays?: number[];
+	initialAllDay?: boolean;
+	initialNote?: string;
 	conversations: CalendarConversation[];
 	entries: CalendarEntry[];
 	ownerId: string;
@@ -48,6 +50,8 @@ export const NewEntryDialog = ({
 	slot,
 	initialSessionId,
 	initialWeekdays,
+	initialAllDay,
+	initialNote,
 	conversations,
 	entries,
 	ownerId,
@@ -76,6 +80,8 @@ export const NewEntryDialog = ({
 		ownerId,
 		now,
 		initialWeekdays,
+		initialAllDay,
+		initialNote,
 		onWorkingHours,
 		onSave: onSaveBlocker,
 		onClose

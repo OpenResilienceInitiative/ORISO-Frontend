@@ -60,6 +60,13 @@ export interface BlockerDialogProps {
 	/** Weekdays ticked already ("Wöchentlich …" after a single one). */
 	initialWeekdays?: number[];
 	/**
+	 * "Wöchentlich …" keeps the single blocker's all-day state and note
+	 * (review 4589527518): an all-day draft ends at 23:59:59.999, which
+	 * the slot alone does not read as whole days.
+	 */
+	initialAllDay?: boolean;
+	initialNote?: string;
+	/**
 	 * "Arbeitszeit festlegen" under the form (prototype v17): the same
 	 * times every week are working hours rather than a blocker.
 	 */
@@ -76,6 +83,8 @@ export const useBlockerForm = ({
 	ownerId,
 	now,
 	initialWeekdays = [],
+	initialAllDay,
+	initialNote,
 	onWorkingHours,
 	onSave,
 	onClose
@@ -84,7 +93,7 @@ export const useBlockerForm = ({
 	const { t, i18n } = useTranslation();
 	// A month selection covers whole days (exclusive midnight end); a timed
 	// slot may end on a later day. Both keep their date span.
-	const wholeDays = !!slot && isWholeDays(slot);
+	const wholeDays = initialAllDay ?? (!!slot && isWholeDays(slot));
 	const first = slot
 		? dayjs(slot.start)
 		: dayjs(now).add(1, 'day').hour(8).minute(0);
@@ -109,7 +118,7 @@ export const useBlockerForm = ({
 	const [allDay, setAllDay] = useState(wholeDays);
 	const [weekdays, setWeekdays] = useState<number[]>(initialWeekdays);
 	const [until, setUntil] = useState<Dayjs | null>(first.add(4, 'week'));
-	const [note, setNote] = useState('');
+	const [note, setNote] = useState(initialNote ?? '');
 
 	const weekdayName = (weekday: number) =>
 		new Intl.DateTimeFormat(calendarLocale(i18n.language), {
