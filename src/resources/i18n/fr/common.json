@@ -7084,6 +7084,7 @@
 			"weekly": "Chaque semaine …"
 		},
 		"saveFailed": "Cela n’a pas fonctionné. Veuillez réessayer.",
+		"restoreFailed": "Le créneau bloqué a été supprimé et n’a pas pu être rétabli. Enregistrez à nouveau la série pour bloquer ce créneau.",
 		"blockerRemoved": "Plage bloquée supprimée.",
 		"allDay": "toute la journée",
 		"entryMenu": {

@@ -7074,6 +7074,7 @@
 			"weekly": "Wöchentlich …"
 		},
 		"saveFailed": "Das hat nicht geklappt. Bitte versuchen Sie es noch einmal.",
+		"restoreFailed": "Die Sperrzeit wurde gelöscht und konnte nicht wiederhergestellt werden. Speichern Sie die Serie erneut, um die Zeit wieder zu sperren.",
 		"blockerRemoved": "Sperrzeit entfernt.",
 		"allDay": "ganztägig",
 		"entryMenu": {

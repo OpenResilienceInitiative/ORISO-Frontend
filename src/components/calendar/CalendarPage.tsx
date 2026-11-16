@@ -567,6 +567,8 @@ export const CalendarPage = ({
 	const [menu, setMenu] = useState<Menu>(null);
 	const [dialog, setDialog] = useState<Dialog>(null);
 	const creating = useRef(false);
+	/** "Wöchentlich …" from removing the single blocker to its restore. */
+	const replacing = useRef(false);
 	const [notice, setNotice] = useState<Notice | null>(null);
 	/** A move onto other entries waits for this answer. */
 	const [moveAsk, setMoveAsk] = useState<{
@@ -1133,12 +1135,16 @@ export const CalendarPage = ({
 	/**
 	 * The series failed after the single blocker went: put it back. The
 	 * open form then replaces the restored one, or nothing if that failed.
+	 * A failed restore says so: the single blocker is gone, and saving the
+	 * form again blocks the time (review 4589615832).
 	 */
 	const restoreBlocker = (replaces: {
 		entry: CalendarEntry;
 		draft: AppointmentDraft;
-	}) => {
+	}): Promise<void> => {
 		const follow = (restored: unknown) => {
+			if (restored === false || restored === undefined)
+				setNotice({ message: t('calendar.restoreFailed') });
 			const again =
 				Array.isArray(restored) && restored.length === 1
 					? (restored[0] as CalendarEntry)
@@ -1154,7 +1160,7 @@ export const CalendarPage = ({
 					: current
 			);
 		};
-		Promise.resolve()
+		return Promise.resolve()
 			.then(() => onCreate?.([replaces.draft]))
 			.then(follow, () => follow(undefined));
 	};
@@ -1163,14 +1169,16 @@ export const CalendarPage = ({
 	 * Saving the series: the single blocker goes first, and only once it is
 	 * gone is the series created, so the first date is never blocked twice.
 	 * A refused or failed removal creates nothing and keeps the form open;
-	 * a failed series puts the single blocker back.
+	 * a failed series puts the single blocker back. A second save waits
+	 * until that restore has settled (review 4589615841).
 	 */
 	const replaceBlocker = (
 		replaces: { entry: CalendarEntry; draft: AppointmentDraft },
 		drafts: AppointmentDraft[]
 	): Promise<boolean> | boolean => {
-		if (creating.current) return false;
+		if (creating.current || replacing.current) return false;
 		creating.current = true;
+		replacing.current = true;
 		return Promise.resolve()
 			.then(() => onRemoveBlocker?.(replaces.entry))
 			.then(
@@ -1183,10 +1191,14 @@ export const CalendarPage = ({
 					setNotice({ message: t('calendar.saveFailed') });
 					return false;
 				}
-				return Promise.resolve(create(drafts, true)).then((stored) => {
-					if (!stored) restoreBlocker(replaces);
-					return stored;
-				});
+				return Promise.resolve(create(drafts, true)).then((stored) =>
+					stored
+						? stored
+						: restoreBlocker(replaces).then(() => stored)
+				);
+			})
+			.finally(() => {
+				replacing.current = false;
 			});
 	};
 

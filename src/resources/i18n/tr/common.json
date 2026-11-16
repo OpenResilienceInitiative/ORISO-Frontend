@@ -7084,6 +7084,7 @@
 			"weekly": "Haftalık …"
 		},
 		"saveFailed": "Bu işe yaramadı. Lütfen tekrar deneyin.",
+		"restoreFailed": "Engellenen zaman silindi ve geri yüklenemedi. Zamanı yeniden engellemek için seriyi tekrar kaydedin.",
 		"blockerRemoved": "Kapalı zaman kaldırıldı.",
 		"allDay": "tüm gün",
 		"entryMenu": {

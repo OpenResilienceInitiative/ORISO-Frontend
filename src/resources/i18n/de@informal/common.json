@@ -2968,6 +2968,7 @@
 			"importError": "Die Adresse konnte nicht gelesen werden. Bitte prüfe den Link."
 		},
 		"saveFailed": "Das hat nicht geklappt. Bitte versuch es noch einmal.",
+		"restoreFailed": "Die Sperrzeit wurde gelöscht und konnte nicht wiederhergestellt werden. Speichere die Serie noch einmal, um die Zeit wieder zu sperren.",
 		"proposal": {
 			"title": "Dein Vorschlag für „{{title}}“",
 			"requestLabel": "{{name}} schlägt vor, deinen Termin {{from}} auf {{to}} zu verschieben",

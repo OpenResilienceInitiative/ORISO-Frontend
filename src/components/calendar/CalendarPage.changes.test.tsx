@@ -959,6 +959,53 @@ describe('CalendarPage — the slot menu, prototype v17 (#115, #116)', () => {
 			});
 			expect(onRemoveBlocker).toHaveBeenLastCalledWith(restored);
 		});
+
+		it('says so when the single blocker cannot be put back (review 4589615832)', async () => {
+			const onCreate = vi
+				.fn()
+				.mockResolvedValueOnce([created])
+				.mockRejectedValueOnce(new Error('500'))
+				.mockRejectedValueOnce(new Error('500'));
+			await openWeekly({
+				onCreate,
+				onRemoveBlocker: vi.fn(() => Promise.resolve())
+			});
+			await act(async () => {
+				await dialog.saveBlocker?.(series);
+			});
+			expect(onCreate).toHaveBeenCalledTimes(3);
+			expect(screen.getByText('calendar.restoreFailed')).toBeTruthy();
+			expect(screen.getByTestId('appointment-dialog')).toBeTruthy();
+		});
+
+		it('refuses a second save until the restore has settled (review 4589615841)', async () => {
+			let restore: (value: unknown) => void = () => undefined;
+			const onCreate = vi
+				.fn()
+				.mockResolvedValueOnce([created])
+				.mockRejectedValueOnce(new Error('500'))
+				.mockImplementationOnce(
+					() => new Promise((resolve) => (restore = resolve))
+				);
+			const onRemoveBlocker = vi.fn(() => Promise.resolve());
+			await openWeekly({ onCreate, onRemoveBlocker });
+			let first: Promise<unknown> | unknown;
+			await act(async () => {
+				first = dialog.saveBlocker?.(series);
+			});
+			await waitFor(() => expect(onCreate).toHaveBeenCalledTimes(3));
+			let second: unknown;
+			await act(async () => {
+				second = await dialog.saveBlocker?.(series);
+			});
+			expect(second).toBe(false);
+			expect(onRemoveBlocker).toHaveBeenCalledTimes(1);
+			await act(async () => {
+				restore([{ ...created, id: 'b2' }]);
+				await first;
+			});
+			expect(await first).toBe(false);
+		});
 	});
 
 	it('offers no "Wöchentlich …" for an appointment', async () => {
