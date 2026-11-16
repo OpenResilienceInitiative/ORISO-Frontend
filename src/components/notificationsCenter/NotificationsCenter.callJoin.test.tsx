@@ -358,6 +358,53 @@ it('#2226: a call card whose preview would hide the conversation (group not star
 	).toBeNull();
 	expect(joinRoom).not.toHaveBeenCalled();
 	expect(sendReadReceipt).not.toHaveBeenCalled();
+	expect(
+		screen.getByText(en.notifications.center.preview.hiddenNotJoined)
+	).toBeTruthy();
+});
+
+// Regression (Frank, 2026-11-16): an "internal group call" invitation from a
+// colleague's case room showed a bare card whose "Open chat" led to a
+// not-found view. It now says why the conversation is not shown and offers
+// no dead Open.
+it('an invitation from a case that is not yours says why and offers no Open', async () => {
+	settledPreview = {
+		roomId: call.roomRef,
+		threadRootId: null,
+		session: null,
+		roomKind: null,
+		capabilities: {
+			composer: false,
+			react: false,
+			manageOwn: false,
+			threadReply: false,
+			readOnlyReason: 'sessionUnknown',
+			contentHidden: true
+		},
+		hidesContentSettled: true,
+		composerTarget: {},
+		caseHandoverStatus: null,
+		senderDisplayName: null
+	};
+	await renderCenter(1400, {
+		...callItem,
+		id: 'call-invited-foreign',
+		eventType: 'call.invited',
+		params: { ...callItem.params, sessionId: 69, seriesId: undefined }
+	});
+	expect(
+		await screen.findByText(en.notifications.center.preview.hiddenNotYours)
+	).toBeTruthy();
+	expect(
+		document.querySelector('[data-cy="activity-conversation-hidden"]')
+	).toBeTruthy();
+	expect(
+		screen.queryByRole('button', { name: en.notifications.center.open })
+	).toBeNull();
+	expect(
+		screen.getByRole('button', { name: en.notifications.center.next })
+	).toBeTruthy();
+	expect(joinRoom).not.toHaveBeenCalled();
 });
 
 it('#2226: a call card without a room keeps its detail view', async () => {

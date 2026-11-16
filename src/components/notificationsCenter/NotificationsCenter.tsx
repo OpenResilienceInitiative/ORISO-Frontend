@@ -1,3 +1,4 @@
+import { useMatrixRoomVersion } from '../../hooks/useMatrixRoomVersion';
 import { NavActivityIcon } from '../app/navigationSidebarIcons';
 import * as React from 'react';
 import {
@@ -98,6 +99,7 @@ import {
 	activityEventCaseHandoverRequestId,
 	isMessageActivityEvent,
 	showsConversationPreview,
+	activityEventRoomId,
 	activityEventSessionId,
 	describeActivityEvent
 } from './activityEvent';
@@ -539,6 +541,11 @@ export const NotificationsCenter = () => {
 	// (same boundary as ADR-AT-01).
 	// #2226: call and appointment cards that name their room show their
 	// conversation too, under a compact bar with the Join action.
+	// Whether the room is joined is read from the Matrix client; a replaced
+	// client learns it only after its first sync, so render again then.
+	useMatrixRoomVersion(
+		selectedNotification ? activityEventRoomId(selectedNotification) : null
+	);
 	const canShowChatPreview = Boolean(
 		selectedNotification && showsConversationPreview(selectedNotification)
 	);
@@ -838,6 +845,20 @@ export const NotificationsCenter = () => {
 		showEventBar && conversation.preview?.hidesContentSettled
 	);
 	const showConversationPane = showEmbeddedChat && !callEntryPreviewHidden;
+	// 2026-11-16: a hidden conversation says why, instead of a bare card. The
+	// case of someone else ("sessionUnknown") cannot be opened either: "Open
+	// chat" led to a not-found view, so the entry offers no Open there.
+	const hiddenReason = callEntryPreviewHidden
+		? (conversation.preview?.capabilities.readOnlyReason ?? null)
+		: null;
+	const hiddenConversationHint = !hiddenReason
+		? null
+		: hiddenReason === 'curtained'
+			? 'notifications.center.preview.curtained'
+			: hiddenReason === 'notJoined'
+				? 'notifications.center.preview.hiddenNotJoined'
+				: 'notifications.center.preview.hiddenNotYours';
+	const canOpenShown = canOpenSelected && hiddenReason !== 'sessionUnknown';
 
 	if (notificationFeed.length === 0) {
 		return (
@@ -1163,7 +1184,7 @@ export const NotificationsCenter = () => {
 									    origin (Figma arrow affordance) — it no longer
 									    toggles the preview, which is open by default
 									    for chat events. */}
-									{isActive && canOpenSelected && (
+									{isActive && canOpenShown && (
 										<button
 											type="button"
 											className="notificationsCenter__expander"
@@ -1269,7 +1290,7 @@ export const NotificationsCenter = () => {
 					}}
 					transformOrigin={{ vertical: 'top', horizontal: 'right' }}
 				>
-					{canOpenSelected && (
+					{canOpenShown && (
 						<MenuItem
 							onClick={() => {
 								setCardMenuAnchor(null);
@@ -1424,6 +1445,14 @@ export const NotificationsCenter = () => {
 											i18n.language
 										)}
 							</p>
+							{hiddenConversationHint && (
+								<p
+									className="notificationsCenter__detailHint"
+									data-cy="activity-conversation-hidden"
+								>
+									{translate(hiddenConversationHint)}
+								</p>
+							)}
 							{showConsentDetail && (
 								<TimelineConsentActions
 									key={JSON.stringify([
@@ -1472,7 +1501,7 @@ export const NotificationsCenter = () => {
 											</span>
 										</a>
 									)
-								) : canOpenSelected ? (
+								) : canOpenShown ? (
 									<button
 										type="button"
 										className="notificationsCenter__openButton"

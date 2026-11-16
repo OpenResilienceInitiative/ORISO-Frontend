@@ -82,15 +82,15 @@ export const activityEventCategory = (
 export const isMessageActivityEvent = (row: ActivityEventRow): boolean =>
 	activityEventCategory(row) === 'message';
 
-/** #2226: event families whose entry belongs to a conversation's call or meeting. */
-const CONVERSATION_EVENT_FAMILIES = new Set(['calls', 'appointments']);
-
 /**
- * #2226 (Frank, 2026-11-12, replaces rule 3 of #1824): a call or appointment
- * entry shows the conversation it belongs to, like a message entry. Only an
- * entry that names its room can: without one there is no conversation to show
- * and the entry keeps its detail view; the same when this app has not joined
- * that room (see isJoinedMatrixRoom). Showing never joins the call.
+ * #2226, widened 2026-11-16 (Frank: "die meisten Fenster sichtbar"): every
+ * entry that belongs to a conversation shows it, like a message entry — calls,
+ * appointments, case handovers, supervision changes, "chat finished",
+ * "request accepted". Only an entry that names its room can: without one there
+ * is no conversation to show and the entry keeps its detail view; the same
+ * when this app has not joined that room (see isJoinedMatrixRoom). Showing
+ * never joins a call. The preview's own rules (curtain, session access) still
+ * decide what is visible.
  */
 /**
  * #2226 review: whether this app has joined the room, so the preview can show
@@ -109,11 +109,7 @@ export const showsConversationPreview = (
 ): boolean => {
 	if (isMessageActivityEvent(row)) return true;
 	if (!isKnownEventType(row?.eventType)) return false;
-	if (
-		!CONVERSATION_EVENT_FAMILIES.has(
-			getEventDescriptor(row.eventType).family
-		)
-	)
+	if (getEventDescriptor(row.eventType).belongsToConversation !== true)
 		return false;
 	// Without a joined room the preview could only say "not available", so the
 	// entry keeps its detail view and "Next notification".

@@ -362,6 +362,55 @@ describe('#2226 showsConversationPreview', () => {
 		);
 	});
 
+	// Regression (Frank, 2026-11-16, fourth report): handover, supervision,
+	// "chat finished" and "request accepted" entries name their case room but
+	// only ever showed the summary card with "Open chat".
+	it('shows the conversation for every entry that belongs to one', () => {
+		for (const eventType of [
+			'inquiry.accepted',
+			'first_response.received',
+			'conversation.finished',
+			'supervisor.added',
+			'supervisor.removed',
+			'supervisor.assigned',
+			'counselor.renamed',
+			'handover.requested',
+			'case.handover.granted',
+			'case.handover.offer.received',
+			'case.handover.offer.sent',
+			'case.handover.consent.declined',
+			'call.knock.requested',
+			'group_chat.cancelled',
+			'appointment.cancelled'
+		]) {
+			expect(
+				showsConversationPreview(
+					row(eventType, { roomRef: '!room:x' }),
+					joined
+				),
+				eventType
+			).toBe(true);
+		}
+	});
+
+	it('never shows an unaccepted enquiry, a draft or a status notice', () => {
+		for (const eventType of [
+			'request.new',
+			'request.denied',
+			'waiting_room.client.joined',
+			'draft.created',
+			'service.notice.planned'
+		]) {
+			expect(
+				showsConversationPreview(
+					row(eventType, { roomRef: '!room:x' }),
+					joined
+				),
+				eventType
+			).toBe(false);
+		}
+	});
+
 	it('still shows message entries and never system entries', () => {
 		expect(
 			showsConversationPreview({

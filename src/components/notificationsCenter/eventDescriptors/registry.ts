@@ -190,6 +190,16 @@ const statusPageTarget = (params: EventActionParams): EventActionTarget => ({
 
 // --- Descriptor factory --------------------------------------------------
 
+/**
+ * Entries whose target is not a conversation: an enquiry nobody accepted yet
+ * (its content stays hidden until then), a draft and a status notice. Every
+ * other entry opens a conversation, so Activity shows it inline (Frank,
+ * 2026-11-16: "die meisten Fenster sichtbar", not only messages and calls).
+ */
+const NO_CONVERSATION_TARGETS = new Set<EventDescriptor['resolveActionTarget']>(
+	[requestTarget, requestDeniedTarget, draftTarget, statusPageTarget]
+);
+
 interface DescriptorSeed {
 	family: EventDescriptor['family'];
 	category: EventDescriptor['category'];
@@ -209,7 +219,10 @@ const descriptor = (
 	icon: seed.icon,
 	titleTemplate: `notifications.events.${seed.i18nKey}.title`,
 	textTemplate: `notifications.events.${seed.i18nKey}.text`,
-	resolveActionTarget: seed.resolveActionTarget
+	resolveActionTarget: seed.resolveActionTarget,
+	belongsToConversation: !NO_CONVERSATION_TARGETS.has(
+		seed.resolveActionTarget
+	)
 });
 
 /**
@@ -225,7 +238,8 @@ export const FALLBACK_DESCRIPTOR: EventDescriptor = {
 	icon: 'system',
 	titleTemplate: 'notifications.events.fallback.title',
 	textTemplate: 'notifications.events.fallback.text',
-	resolveActionTarget: conversationTarget
+	resolveActionTarget: conversationTarget,
+	belongsToConversation: false
 };
 
 // --- The registry --------------------------------------------------------

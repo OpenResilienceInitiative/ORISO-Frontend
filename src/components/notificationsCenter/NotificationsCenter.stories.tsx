@@ -1243,3 +1243,107 @@ export const KnockOnDirectLink: Story = {
 		).toBeGreaterThan(0);
 	}
 };
+
+const colleagueCaseRoomId = '!colleague:matrix.example';
+const colleagueCase: ListItemInterface = {
+	...firstResponseSession,
+	consultant: {
+		...firstResponseSession.consultant,
+		id: 'sb-colleague',
+		consultantId: 'sb-colleague',
+		username: 'colleague'
+	},
+	session: {
+		...firstResponseSession.session,
+		id: 612,
+		matrixRoomId: colleagueCaseRoomId
+	}
+};
+
+/**
+ * Frank, 2026-11-16: a call invitation from a colleague's 1:1 case, in whose
+ * room the counsellor only sits silently (ADR-002 §1). The entry used to show
+ * a bare summary card; it now says why the conversation is not shown. The
+ * backend no longer sends these invitations to silent colleagues
+ * (ORISO-UserService); this covers entries that already exist.
+ */
+export const InvitationFromColleaguesCase: Story = {
+	beforeEach: () => {
+		const originalService = getMatrixClientService();
+		const originalFetch = globalThis.fetch;
+		// The chat resolves as a colleague's 1:1 case: the counsellor only
+		// sits in its room silently (ADR-002 §1).
+		globalThis.fetch = (input, init) => {
+			const url = input instanceof Request ? input.url : String(input);
+			if (url.includes('/service/users/case-handover/candidates?')) {
+				return Promise.resolve(Response.json({ sessions: [] }));
+			}
+			// Without a granted handover the colleague's case stays curtained.
+			if (url.endsWith('/612/case-handover')) {
+				return Promise.resolve(
+					Response.json({ canViewContent: false })
+				);
+			}
+			return url.includes('/service/users/sessions/')
+				? Promise.resolve(Response.json({ sessions: [colleagueCase] }))
+				: originalFetch(input, init);
+		};
+		const room = {
+			roomId: colleagueCaseRoomId,
+			getMyMembership: () => 'join',
+			getMember: () => null,
+			getLiveTimeline: () => ({ getEvents: () => [] })
+		};
+		setMatrixClientServiceRef({
+			getClient: () => ({
+				getUserId: () => '@storybook:matrix.storybook.test',
+				getRoom: (id: string) => (id === room.roomId ? room : null),
+				on: noop,
+				off: noop
+			})
+		} as any);
+		return () => {
+			globalThis.fetch = originalFetch;
+			setMatrixClientServiceRef(originalService);
+		};
+	},
+	decorators: [
+		withTimelineData([
+			feedItem({
+				id: 'invite-colleague',
+				eventType: 'call.invited',
+				createdAt: minutesAgo(2),
+				sourceSessionId: '612',
+				actionPath:
+					'/sessions/consultant/sessionView/!colleague:matrix.example/612',
+				params: {
+					conversationType: 'AGENCY_COUNSELLING',
+					roomRef: '!colleague:matrix.example',
+					medium: 'VIDEO'
+				}
+			})
+		])
+	],
+	globals: { viewport: { value: 'desktop1440' } },
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await userEvent.click(
+			await canvas.findByText(
+				'Sie wurden zu einem internen Gruppenanruf eingeladen.'
+			)
+		);
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector(
+					'[data-cy="activity-conversation-hidden"]'
+				)
+			).toBeTruthy()
+		);
+		// Opening leads to the case's curtain, where access can be requested.
+		await expect(
+			canvas.getByText(
+				/Dieser Fall ist für Sie gerade nicht einsehbar|not visible to you/
+			)
+		).toBeVisible();
+	}
+};

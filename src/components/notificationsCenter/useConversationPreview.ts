@@ -33,6 +33,7 @@ import { getModality, Modality } from '../session/getModality';
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import { isActiveSupervisorOf } from '../sessionsListItem/supervisionListState';
 import { activityEventConversation } from './activityEvent';
+import { useMatrixRoomVersion } from '../../hooks/useMatrixRoomVersion';
 import {
 	type PreviewCapabilities,
 	type PreviewCaseHandover,
@@ -241,6 +242,8 @@ export const useConversationPreview = (
 	// Membership is read from the Matrix client: follow its changes so an
 	// accepted knock or a kick is not served from stale permissions.
 	const [, setRoomVersion] = useState(0);
+	// ...and follow a replaced client, which learns the room only later.
+	const matrixRoomVersion = useMatrixRoomVersion(roomId);
 	useEffect(() => {
 		if (!roomId) {
 			return undefined;
@@ -258,7 +261,7 @@ export const useConversationPreview = (
 			detachLifecycle?.();
 			detachTimeline?.();
 		};
-	}, [roomId]);
+	}, [roomId, matrixRoomVersion]);
 	const roomJoined =
 		Boolean(roomId) &&
 		chatTransportService.getMatrixRoom(roomId!)?.getMyMembership?.() ===

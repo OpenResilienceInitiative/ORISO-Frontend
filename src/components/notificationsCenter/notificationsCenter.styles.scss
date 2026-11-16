@@ -570,6 +570,15 @@
 		text-align: left;
 	}
 
+	// Why the entry's conversation is not shown here (2026-11-16).
+	&__detailHint {
+		margin: 12px 0 0;
+		font-size: 14px;
+		line-height: 1.5;
+		color: var(--m3-on-surface-variant, #4c555f);
+		text-align: left;
+	}
+
 	&__detailActions {
 		display: flex;
 		gap: 12px;

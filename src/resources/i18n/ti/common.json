@@ -2667,6 +2667,8 @@
 				"supervisorNoComposer": "ከም ተቆጻጻሪ ኣብዚ ምላሽ ክትህብ ትኽእል ኢኻ፡ ክትጽሕፍ ግን ኣይትኽእልን።",
 				"teamClosed": "ዘተ ጉጅለ ተዓጽዩ ኣሎ።",
 				"curtained": "እዚ ጉዳይ ሕጂ ንዓኻ ኣይረኣይን እዩ።",
+				"hiddenNotYours": "እዚ ዝርርብ ካብ ጉዳያትካ ኣይኮነን፣ ስለዚ ንጥፈት ኣብዚ ኣየርእዮን።",
+				"hiddenNotJoined": "ናብዚ ዝርርብ ኣይተጸንበርካን፣ ስለዚ ንጥፈት ኣብዚ ኣየርእዮን።",
 				"backToConversation": "ናብ ዘተ ተመለስ",
 				"enquiryOpenToAccept": "እዚ ሕቶ ገና ኣይተቐበለን። ንምቕባሉ ዘተ ክፈት።",
 				"consentOpenToContinue": "በጃኹም ቅድሚ ኩሉ ኣብ ቻት ከመይ ከም እትቕጽሉ ኣረጋግጹ። ንዕኡ ዘተ ክፈቱ።",
