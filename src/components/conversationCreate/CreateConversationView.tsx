@@ -71,6 +71,7 @@ import { DirectLink } from './directLink/directLink';
 import { getDirectLinkMedia } from './directLink/directLinkAvailability';
 import { RowMenu } from './RowMenu';
 import { FormatCard } from './FormatCard';
+import { FormatCardCarousel } from './FormatCardCarousel';
 import { PanelHeader } from './PanelHeader';
 import { ScreenIntro } from './ScreenIntro';
 import { BackPill } from './BackPill';
@@ -760,11 +761,11 @@ const CreateConversationFlow = ({
 				}`}
 			>
 				{fromL ? (
-					<div className="conversationCreate__cards">
+					<FormatCardCarousel>
 						{availability.circle && circleCard}
 						{availability.internal && renderInternalCard()}
 						{directLinkOffered && renderDirectLinkCard()}
-					</div>
+					</FormatCardCarousel>
 				) : (
 					<div className="conversationCreate__rows">
 						{availability.internal && (

@@ -1244,6 +1244,8 @@
 		"format": {
 			"panelTitle": "Yeni görüşme oluştur",
 			"panelMenu": "Diğer seçenekler",
+			"cardsPrevious": "Önceki görüşme formatı",
+			"cardsNext": "Sonraki görüşme formatı",
 			"back": "Geri",
 			"headerTitle": "Yeni görüşme oluştur",
 			"subtitle": "Sizin ve danışanlar için farklı, özel görüşme formatları sunuyoruz. Seçenekler, kurumlar ve danışma merkeziniz tarafından serbestçe yapılandırılabilir.",
