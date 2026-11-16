@@ -968,11 +968,31 @@ export const DeclineRequest: Story = {
 export const PhoneRequests: Story = {
 	name: 'Move proposal — received, phone 390 px (the sheet holds it)',
 	globals: phone390Globals,
-	args: { compact: true, requests: STORY_REQUESTS.slice(0, 1) },
+	args: { compact: true, requests: STORY_REQUESTS },
 	play: async () => {
 		await findCy('calendar-sheet');
 		const sheet = within(cyEl('calendar-sheet'));
 		await expect(sheet.getByText('Offene Anfragen')).toBeTruthy();
+		await expect(
+			sheet.getByRole('button', {
+				name: /^Vorschlag von A\. Kaya annehmen/
+			})
+		).toBeTruthy();
+		await expect(
+			sheet.getByRole('button', {
+				name: /^Vorschlag von E\. Demir ablehnen/
+			})
+		).toBeTruthy();
+	}
+};
+
+export const PhoneLastRequestAnswered: Story = {
+	name: 'Move proposal — received, phone 390 px, the last answer closes the sheet',
+	globals: phone390Globals,
+	args: { compact: true, requests: STORY_REQUESTS.slice(0, 1) },
+	play: async () => {
+		await findCy('calendar-sheet');
+		const sheet = within(cyEl('calendar-sheet'));
 		await userEvent.click(
 			sheet.getByRole('button', {
 				name: /^Vorschlag von A\. Kaya annehmen/
