@@ -7191,6 +7191,9 @@
 			"title": "Schnell eintragen",
 			"who": "Mit wem",
 			"freeNext": "Nächste freie",
+			"lengthHours": "{{hours}} Std",
+			"lengthMinutes": "{{minutes}} Min",
+			"lengthBoth": "{{hours}} Std {{minutes}} Min",
 			"lengths": {
 				"30": "30 Min",
 				"45": "45 Min",

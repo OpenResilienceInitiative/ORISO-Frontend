@@ -41,12 +41,12 @@ import {
 	DEFAULT_QUICK_DURATION,
 	QUICK_DURATIONS,
 	dateField,
+	durationChoices,
 	fieldsFromEntry,
 	parseQuickEntry,
 	quickEntryGaps,
 	rangeFromFields,
 	timeField,
-	type QuickDuration,
 	type QuickFields,
 	type QuickKind
 } from './calendarQuickEntry';
@@ -1045,6 +1045,16 @@ export const QuickEntry = ({
 	const [fields, setFields] = useState<Partial<QuickFields>>({
 		duration: DEFAULT_QUICK_DURATION
 	});
+	/** A choice by its name; a typed length as hours and minutes. */
+	const durationLabel = (minutes: number) => {
+		if ((QUICK_DURATIONS as readonly number[]).includes(minutes))
+			return t(`calendar.quick.lengths.${minutes}`);
+		const hours = Math.floor(minutes / 60);
+		const rest = minutes % 60;
+		if (!hours) return t('calendar.quick.lengthMinutes', { minutes });
+		if (!rest) return t('calendar.quick.lengthHours', { hours });
+		return t('calendar.quick.lengthBoth', { hours, minutes: rest });
+	};
 	/** "1 Std | 30 Min": how long the offered free time is. */
 	const [slot, setSlot] = useState<30 | 60>(60);
 	/** Focus is somewhere in the box: it shows its status and buttons. */
@@ -1303,16 +1313,16 @@ export const QuickEntry = ({
 							value={String(
 								fields.duration ?? DEFAULT_QUICK_DURATION
 							)}
-							options={QUICK_DURATIONS.map((d) => ({
-								value: String(d),
-								label: t(`calendar.quick.lengths.${d}`)
-							}))}
+							options={durationChoices(fields.duration).map(
+								(d) => ({
+									value: String(d),
+									label: durationLabel(d)
+								})
+							)}
 							onChange={(event) =>
 								setFields((f) => ({
 									...f,
-									duration: Number(
-										event.target.value
-									) as QuickDuration
+									duration: Number(event.target.value)
 								}))
 							}
 						/>

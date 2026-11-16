@@ -7226,6 +7226,9 @@
 			"title": "Быстрая запись",
 			"who": "С кем",
 			"freeNext": "Ближайшее свободное",
+			"lengthHours": "{{hours}} ч",
+			"lengthMinutes": "{{minutes}} мин",
+			"lengthBoth": "{{hours}} ч {{minutes}} мин",
 			"lengths": {
 				"30": "30 мин",
 				"45": "45 мин",

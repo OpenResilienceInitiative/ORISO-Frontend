@@ -7201,6 +7201,9 @@
 			"title": "Hızlı kayıt",
 			"who": "Kiminle",
 			"freeNext": "Sonraki boş",
+			"lengthHours": "{{hours}} sa",
+			"lengthMinutes": "{{minutes}} dk",
+			"lengthBoth": "{{hours}} sa {{minutes}} dk",
 			"lengths": {
 				"30": "30 dk",
 				"45": "45 dk",

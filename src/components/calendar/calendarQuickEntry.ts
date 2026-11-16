@@ -303,7 +303,11 @@ export interface QuickFields {
 	date: string;
 	/** HH:mm */
 	time: string;
-	duration: QuickDuration;
+	/**
+	 * Minutes: one of {@link QUICK_DURATIONS}, or exactly what a typed
+	 * range says ("9-12:30" is 210), never cut to a choice (test C2).
+	 */
+	duration: number;
 }
 
 const pad2 = (n: number) => String(n).padStart(2, '0');
@@ -314,16 +318,20 @@ export const dateField = (d: Date) =>
 export const timeField = (d: Date) =>
 	`${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
 
-/** The duration choice closest to `minutes`. */
-export const nearestDuration = (minutes: number): QuickDuration =>
-	QUICK_DURATIONS.reduce((best, d) =>
-		Math.abs(d - minutes) < Math.abs(best - minutes) ? d : best
-	);
+/**
+ * The lengths the "Dauer" field offers: the five choices, plus the length
+ * a typed range set when it is none of them, in order.
+ */
+export const durationChoices = (current?: number): number[] =>
+	current === undefined ||
+	(QUICK_DURATIONS as readonly number[]).includes(current)
+		? [...QUICK_DURATIONS]
+		: [...QUICK_DURATIONS, current].sort((a, b) => a - b);
 
 /**
  * What a typed line prefills: only the parts it names. "Do 14 Uhr" sets
  * date and start and keeps the chosen duration; "14-15:30" also the
- * duration.
+ * duration, to the minute.
  */
 export const fieldsFromEntry = (entry: QuickEntry): Partial<QuickFields> => {
 	if (!entry.start) return {};
@@ -332,7 +340,7 @@ export const fieldsFromEntry = (entry: QuickEntry): Partial<QuickFields> => {
 		time: timeField(entry.start)
 	};
 	if (entry.endGiven && entry.end && entry.end > entry.start)
-		out.duration = nearestDuration(
+		out.duration = Math.round(
 			(entry.end.getTime() - entry.start.getTime()) / 60_000
 		);
 	return out;

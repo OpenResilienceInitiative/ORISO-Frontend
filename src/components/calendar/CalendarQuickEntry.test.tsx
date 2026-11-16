@@ -212,6 +212,28 @@ describe('CalendarSidebar — folding quick entry on the phone (review 457498187
 	});
 });
 
+describe('QuickEntry — a typed range stays whole (test C2)', () => {
+	it('saves 9:00–12:30 as typed and names the length', async () => {
+		const onCreate = vi.fn(() => Promise.resolve());
+		open(onCreate);
+		fireEvent.change(input(), {
+			target: { value: '2.12. 9-12:30 Sperrzeit' }
+		});
+		expect(
+			screen.getByRole('combobox', { name: 'calendar.quick.duration' })
+				.textContent
+		).toBe('calendar.quick.lengthBoth');
+		await submit();
+		expect(onCreate).toHaveBeenCalledWith([
+			expect.objectContaining({
+				type: 'blocker',
+				start: new Date(2026, 11, 2, 9),
+				end: new Date(2026, 11, 2, 12, 30)
+			})
+		]);
+	});
+});
+
 describe('QuickEntry — the kinds lead the box (Frank *5.1)', () => {
 	it('puts the five kind chips first, in one group above the line', () => {
 		open(vi.fn());

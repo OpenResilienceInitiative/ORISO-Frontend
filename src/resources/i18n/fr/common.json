@@ -7201,6 +7201,9 @@
 			"title": "Saisie rapide",
 			"who": "Avec qui",
 			"freeNext": "Prochains créneaux libres",
+			"lengthHours": "{{hours}} h",
+			"lengthMinutes": "{{minutes}} min",
+			"lengthBoth": "{{hours}} h {{minutes}} min",
 			"lengths": {
 				"30": "30 min",
 				"45": "45 min",

@@ -7116,6 +7116,9 @@
 			"title": "Quick entry",
 			"who": "With whom",
 			"freeNext": "Next free",
+			"lengthHours": "{{hours}} h",
+			"lengthMinutes": "{{minutes}} min",
+			"lengthBoth": "{{hours}} h {{minutes}} min",
 			"lengths": {
 				"30": "30 min",
 				"45": "45 min",

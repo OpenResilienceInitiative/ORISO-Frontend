@@ -7168,6 +7168,9 @@
 			"title": "ቅልጡፍ ምዝገባ",
 			"who": "ምስ መን",
 			"freeNext": "ዝቕጽል ናጻ",
+			"lengthHours": "{{hours}} ሰዓት",
+			"lengthMinutes": "{{minutes}} ደቒቕ",
+			"lengthBoth": "{{hours}} ሰዓት {{minutes}} ደቒቕ",
 			"lengths": {
 				"30": "30 ደቒቕ",
 				"45": "45 ደቒቕ",
