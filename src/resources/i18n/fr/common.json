@@ -7207,15 +7207,15 @@
 			"title": "Saisie rapide",
 			"who": "Avec qui",
 			"freeNext": "Prochains créneaux libres",
-			"lengthHours": "{{hours}} h",
-			"lengthMinutes": "{{minutes}} min",
-			"lengthBoth": "{{hours}} h {{minutes}} min",
+			"lengthHours": "{{hours}} heures",
+			"lengthMinutes": "{{minutes}} minutes",
+			"lengthBoth": "{{hours}} h {{minutes}}",
 			"lengths": {
-				"30": "30 min",
-				"45": "45 min",
-				"60": "1 h",
+				"30": "30 minutes",
+				"45": "45 minutes",
+				"60": "1 heure",
 				"90": "1 h 30",
-				"120": "2 h"
+				"120": "2 heures"
 			},
 			"ready": "{{noun}} avec {{name}}",
 			"outsideHours": "en dehors des heures de travail"
