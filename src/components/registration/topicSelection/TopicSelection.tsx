@@ -35,6 +35,7 @@ import {
 	RegistrationData
 } from '../../../globalState/provider/RegistrationProvider';
 import { apiGetTopicsData } from '../../../api/apiGetTopicsData';
+import { apiGetTopicGroups } from '../../../api/apiGetTopicGroups';
 import { TopicsDataInterface } from '../../../globalState/interfaces/TopicsDataInterface';
 import { Loading } from '../../../components/app/Loading';
 import TaskAltIcon from '@mui/icons-material/TaskAlt';
@@ -456,11 +457,16 @@ export const TopicSelection: FC<{
 
 			try {
 				const topicsResponse = await apiGetTopicsData();
+				// The categories are optional: without them the built-in clusters apply.
+				const topicGroupsResponse = await apiGetTopicGroups().catch(
+					() => undefined
+				);
 				const filteredTopics = getFilteredTopics(topicsResponse);
 				const presentationGroups =
 					buildRegistrationTopicPresentationGroups(
 						filteredTopics,
-						locale
+						locale,
+						topicGroupsResponse?.data?.items
 					);
 				const nextListView =
 					!!(preselectedAgency || preselectedConsultant) ||

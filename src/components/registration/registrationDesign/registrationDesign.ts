@@ -3,6 +3,8 @@
 // every consumer of this design module.
 import i18n from 'i18next';
 import { TopicsDataInterface } from '../../../globalState/interfaces/TopicsDataInterface';
+import { TopicGroup } from '../../../globalState/interfaces/TopicGroups';
+import { getConsultingTypeServiceOrigin } from '../../../resources/scripts/runtimeConfig';
 import {
 	orisoInputColors,
 	orisoTextFieldSx
@@ -531,12 +533,15 @@ export type RegistrationTopicPlacement = {
 	topic: TopicsDataInterface;
 	icon: string;
 	topicGroupId: number;
-	categoryId: RegistrationCategoryId;
+	categoryId: RegistrationPanelId;
 };
+
+/** A Caritas cluster, or `group-<id>` for a category the platform admin added. */
+export type RegistrationPanelId = RegistrationCategoryId | `group-${number}`;
 
 export type RegistrationTopicPresentationGroup = {
 	id: number;
-	categoryId: RegistrationCategoryId;
+	categoryId: RegistrationPanelId;
 	name: string;
 	icon: string;
 	topicIds: number[];
@@ -742,20 +747,58 @@ export const getRegistrationTopicKey = (
 	topic?.slug ||
 	topicDisplayCopyByInternalIdentifier[topic?.internalIdentifier || ''];
 
-export const getRegistrationTopicIcon = (
-	topic?: Pick<TopicsDataInterface, 'slug' | 'internalIdentifier'>
-) =>
+const SHIPPED_ICON_PATH = '/service/topic/public/icons/';
+
+type TopicIconSource = Pick<
+	TopicsDataInterface,
+	'slug' | 'internalIdentifier'
+> &
+	Partial<Pick<TopicsDataInterface, 'icon'>>;
+
+const isShippedIcon = (icon: string) => icon.startsWith(SHIPPED_ICON_PATH);
+
+/** A shipped icon is served by the ConsultingTypeService, wherever that runs. */
+const resolveShippedIcon = (icon: string) =>
+	getConsultingTypeServiceOrigin() + icon;
+
+/**
+ * A picture the platform admin uploaded wins. A shipped Caritas icon keeps the
+ * bundled picture (which has per-category variants); only a topic the frontend
+ * does not know loads its shipped icon from the topic service.
+ */
+const ownTopicIcon = (topic?: TopicIconSource) =>
+	topic?.icon && !isShippedIcon(topic.icon) ? topic.icon : undefined;
+
+export const getRegistrationTopicIcon = (topic?: TopicIconSource) =>
+	ownTopicIcon(topic) ||
 	topicIconBySlug[topic?.slug || ''] ||
 	topicIconByInternalIdentifier[topic?.internalIdentifier || ''] ||
+	(topic?.icon ? resolveShippedIcon(topic.icon) : undefined) ||
 	category01;
+
+/**
+ * A topic with an `icon` comes from the catalogue the ConsultingTypeService ships
+ * (Caritas defaults in every language, overridable by the platform admin); it
+ * already arrives in the visitor's language (`lang` cookie).
+ */
+const isCatalogueTopic = (topic?: Pick<TopicsDataInterface, 'icon'>) =>
+	!!topic?.icon;
 
 export const getRegistrationTopicDisplay = (
 	topic?: Pick<
 		TopicsDataInterface,
 		'slug' | 'internalIdentifier' | 'titles' | 'name' | 'description'
-	>,
+	> &
+		Partial<Pick<TopicsDataInterface, 'icon'>>,
 	locale?: string
 ) => {
+	if (isCatalogueTopic(topic) && topic?.name) {
+		return {
+			title: topic.name,
+			description: topic.description || ''
+		};
+	}
+
 	const key = getRegistrationTopicKey(topic);
 	const pinnedLocale = getPinnedCopyLocale(locale);
 	const pinned = topicDisplayCopyByKey[key || ''];
@@ -780,10 +823,106 @@ export const getRegistrationTopicDisplay = (
 	};
 };
 
+/**
+ * The Caritas cluster a saved category stands for: the one sharing the most topics,
+ * at least half of the cluster's own.
+ */
+const matchCategoryDefinition = (
+	topicKeys: string[],
+	taken: Set<RegistrationCategoryId>
+) => {
+	let best: PresentationCategoryDefinition | undefined;
+	let bestOverlap = 0;
+	presentationCategoryDefinitions.forEach((definition) => {
+		if (taken.has(definition.categoryId)) return;
+		const overlap = definition.topics.filter(({ key }) =>
+			topicKeys.includes(key)
+		).length;
+		if (overlap > bestOverlap && overlap * 2 >= definition.topics.length) {
+			best = definition;
+			bestOverlap = overlap;
+		}
+	});
+	return best;
+};
+
+const resolveGroupIcon = (
+	icon: string,
+	definition?: PresentationCategoryDefinition
+) => {
+	if (!isShippedIcon(icon)) return icon;
+	return definition?.icon || resolveShippedIcon(icon);
+};
+
+/**
+ * The categories the topic service ships (Caritas defaults, overridable by the
+ * platform admin): order, membership, names and pictures come from there. A
+ * category that matches a Caritas cluster keeps the bundled per-cluster pictures.
+ */
+const buildCatalogueGroups = (
+	topics: TopicsDataInterface[],
+	apiGroups: TopicGroup[]
+): RegistrationTopicPresentationGroup[] => {
+	const topicById = new Map(topics.map((topic) => [topic.id, topic]));
+	const taken = new Set<RegistrationCategoryId>();
+
+	return apiGroups
+		.map((group) => {
+			const groupTopics = group.topicIds.flatMap((id) => {
+				const topic = topicById.get(id);
+				return topic ? [topic] : [];
+			});
+			const definition = matchCategoryDefinition(
+				groupTopics.map(
+					(topic) => getRegistrationTopicKey(topic) || ''
+				),
+				taken
+			);
+			if (definition) taken.add(definition.categoryId);
+			const categoryId: RegistrationPanelId =
+				definition?.categoryId ?? `group-${group.id}`;
+
+			const placements = groupTopics.map((topic) => {
+				const key = getRegistrationTopicKey(topic);
+				const bundled = definition?.topics.find(
+					(placement) => placement.key === key
+				)?.icon;
+				return {
+					placementId: `${categoryId}/${key || topic.id}`,
+					topic,
+					icon:
+						ownTopicIcon(topic) ||
+						bundled ||
+						getRegistrationTopicIcon(topic),
+					topicGroupId: group.id,
+					categoryId
+				};
+			});
+
+			return {
+				id: group.id,
+				categoryId,
+				name: group.name,
+				icon: group.icon
+					? resolveGroupIcon(group.icon, definition)
+					: definition?.icon || category01,
+				topicIds: placements.map(({ topic }) => topic.id),
+				topics: placements
+			};
+		})
+		.filter(({ topics }) => topics.length > 0);
+};
+
 export const buildRegistrationTopicPresentationGroups = (
 	topics: TopicsDataInterface[],
-	locale?: string
+	locale?: string,
+	apiGroups?: TopicGroup[]
 ): RegistrationTopicPresentationGroup[] => {
+	// Only a topic service that ships the catalogue sends category pictures.
+	if (apiGroups?.some((group) => !!group.icon)) {
+		return buildCatalogueGroups(topics, apiGroups);
+	}
+
 	const topicByKey = new Map<string, TopicsDataInterface>();
 
 	topics.forEach((topic) => {
@@ -826,9 +965,13 @@ export const buildRegistrationTopicPresentationGroups = (
 };
 
 export const getRegistrationTopicIconForGroup = (
-	topic?: Pick<TopicsDataInterface, 'slug' | 'internalIdentifier'>,
+	topic?: TopicIconSource,
 	topicGroupId?: number
 ) => {
+	const own = ownTopicIcon(topic);
+	if (own) {
+		return own;
+	}
 	const key = getRegistrationTopicKey(topic);
 	const category = presentationCategoryDefinitions.find(
 		({ id }) => id === topicGroupId

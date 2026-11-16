@@ -271,6 +271,46 @@ describe('TopicSelection', () => {
 		);
 	}, 15000);
 
+	it('shows the categories the topic service ships, in their order and with their pictures', async () => {
+		apiGetTopicsDataMock.mockResolvedValue([
+			{
+				...topic(9, 'Schuldenberatung'),
+				icon: 'data:image/png;base64,AAAA'
+			},
+			{ ...topic(10, 'Mietberatung'), icon: 'data:image/png;base64,BBBB' }
+		]);
+		apiGetTopicGroupsMock.mockResolvedValue({
+			data: {
+				items: [
+					{
+						id: 4,
+						name: 'Wohnen',
+						icon: 'data:image/png;base64,CCCC',
+						topicIds: [10]
+					},
+					{
+						id: 2,
+						name: 'Geld',
+						icon: 'data:image/png;base64,DDDD',
+						topicIds: [9]
+					}
+				]
+			}
+		});
+
+		renderTopicSelection();
+
+		const wohnen = await screen.findByText('Wohnen');
+		const geld = screen.getByText('Geld');
+		expect(
+			wohnen.compareDocumentPosition(geld) &
+				Node.DOCUMENT_POSITION_FOLLOWING
+		).toBeTruthy();
+		expect(
+			document.querySelector('img[src="data:image/png;base64,CCCC"]')
+		).not.toBeNull();
+	});
+
 	it('leaves loading state when the public topics request fails', async () => {
 		apiGetTopicsDataMock.mockRejectedValue(new Error('network'));
 

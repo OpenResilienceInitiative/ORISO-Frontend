@@ -459,6 +459,11 @@ const storybookApiResponse = (url: URL, method: string): Response | null => {
 		return storybookJsonResponse(storybookTopics);
 	}
 
+	// No shipped catalogue in stories: the topic step keeps its built-in clusters.
+	if (url.pathname === '/service/topic-groups') {
+		return storybookJsonResponse({ data: { items: [] } });
+	}
+
 	// A centre with a stored privacy text but no consent sentence of its own: the
 	// client shows its catalogue consent sentence. Ticking the consent box then
 	// raises no "no privacy notice stored" warning (ORISO-AgencyService#366). A
