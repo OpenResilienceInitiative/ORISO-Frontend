@@ -6480,6 +6480,7 @@
 		},
 		"share": {
 			"signInToJoin": "Melden Sie sich an, um diesem Anruf beizutreten.",
+			"guestCallTitle": "Gespräch",
 			"conversationMember": "Sie gehören bereits zu diesem Gespräch. Treten Sie dem Anruf im zugehörigen Chat bei.",
 			"openConversations": "Meine Gespräche öffnen",
 			"joinForbidden": "Sie können diesem Anruf über diesen Link nicht beitreten.",

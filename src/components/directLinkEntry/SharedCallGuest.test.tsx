@@ -8,6 +8,8 @@ import {
 	apiGetOwnCallKnock
 } from '../../api/apiDirectLinks';
 import { callManager } from '../../services/CallManager';
+import { UserDataContext } from '../../globalState/context/UserDataContext';
+import { forgetAllJoinMedia, peekJoinMedia } from '../call/prejoin/callPrejoin';
 import { SharedCallGuest } from './SharedCallGuest';
 
 vi.mock('../../api/apiJoinSharedCall', () => ({ apiJoinSharedCall: vi.fn() }));
@@ -27,13 +29,24 @@ vi.mock('../../services/CallManager', () => ({
 vi.mock('../knockWaitDialog/KnockWaitDialog', () => ({
 	KnockWaitDialog: ({
 		phase,
-		onCancel
+		onCancel,
+		media
 	}: {
 		phase: string;
 		onCancel: () => void;
+		media: {
+			micOn: boolean;
+			cameraOn: boolean;
+			avatar: { file: string };
+			onToggleMic: () => void;
+		};
 	}) => (
 		<>
 			<div>{phase}</div>
+			<div>{`mic ${media.micOn ? 'on' : 'off'}`}</div>
+			<div>{`camera ${media.cameraOn ? 'on' : 'off'}`}</div>
+			<div>{`avatar ${media.avatar.file}`}</div>
+			<button onClick={media.onToggleMic}>toggle mic</button>
 			<button onClick={onCancel}>cancel</button>
 		</>
 	)
@@ -69,6 +82,7 @@ const open = () => render(<SharedCallGuest token="link" modality="video" />);
 describe('guest entry into a running call', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		forgetAllJoinMedia();
 		vi.mocked(callManager.joinSharedCall).mockResolvedValue('joined');
 	});
 
@@ -129,5 +143,105 @@ describe('guest entry into a running call', () => {
 		fireEvent.click(await screen.findByRole('button', { name: 'cancel' }));
 		expect(apiCancelOwnCallKnock).toHaveBeenCalledWith(5);
 		expect(callManager.joinSharedCall).not.toHaveBeenCalled();
+	});
+});
+
+/*
+ * FE#2209 live test (16 Nov): after admission the guest met a second, plain
+ * Element Call lobby. The call now skips it, so the choice made before
+ * entering has to travel with the guest into the call.
+ */
+describe("the guest's device choice", () => {
+	const preJoin = {
+		controls: { micOn: true, cameraOn: false, selection: {} },
+		cameraAvailable: true
+	};
+
+	beforeEach(() => {
+		vi.clearAllMocks();
+		forgetAllJoinMedia();
+	});
+
+	it('goes into the call when the server seats the guest at once', async () => {
+		let atJoin: unknown = 'not joined';
+		vi.mocked(callManager.joinSharedCall).mockImplementation(async () => {
+			atJoin = peekJoinMedia(seat.callRoomId);
+			return 'joined';
+		});
+		vi.mocked(apiJoinSharedCall).mockResolvedValueOnce(admitted);
+		render(
+			<SharedCallGuest
+				token="link"
+				modality="video"
+				deviceChoice={preJoin}
+			/>
+		);
+		await waitFor(() =>
+			expect(callManager.joinSharedCall).toHaveBeenCalled()
+		);
+		expect(atJoin).toEqual({ audio_enabled: true, video_enabled: false });
+	});
+
+	it('opens the knock wait with it, and enters with what was changed there', async () => {
+		let atJoin: unknown = 'not joined';
+		vi.mocked(callManager.joinSharedCall).mockImplementation(async () => {
+			atJoin = peekJoinMedia(seat.callRoomId);
+			return 'joined';
+		});
+		let admit: (value: unknown) => void = () => undefined;
+		vi.mocked(apiJoinSharedCall)
+			.mockResolvedValueOnce(pending)
+			.mockResolvedValueOnce(admitted);
+		vi.mocked(apiGetOwnCallKnock).mockReturnValueOnce(
+			new Promise((resolve) => {
+				admit = resolve;
+			}) as ReturnType<typeof apiGetOwnCallKnock>
+		);
+		render(
+			<SharedCallGuest
+				token="link"
+				modality="video"
+				deviceChoice={preJoin}
+			/>
+		);
+		await screen.findByText('mic on');
+		screen.getByText('camera off');
+		fireEvent.click(screen.getByRole('button', { name: 'toggle mic' }));
+		await screen.findByText('mic off');
+		admit({ id: 5, status: 'ADMITTED' });
+		await waitFor(
+			() => expect(callManager.joinSharedCall).toHaveBeenCalledTimes(1),
+			{ timeout: 3000 }
+		);
+		expect(atJoin).toEqual({ audio_enabled: false, video_enabled: false });
+	});
+});
+
+describe("the guest's animal while knocking", () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+	});
+
+	it('is the one picked before entering, not one derived from the id', async () => {
+		vi.mocked(apiJoinSharedCall).mockResolvedValueOnce(pending);
+		vi.mocked(apiGetOwnCallKnock).mockReturnValue(
+			new Promise(() => undefined)
+		);
+		render(
+			<UserDataContext.Provider
+				value={
+					{
+						userData: {
+							userId: 'guest-1',
+							userName: 'lamm_rene_1769',
+							avatarId: 'lamb'
+						}
+					} as never
+				}
+			>
+				<SharedCallGuest token="link" modality="video" />
+			</UserDataContext.Provider>
+		);
+		await screen.findByText('avatar lamb.svg');
 	});
 });

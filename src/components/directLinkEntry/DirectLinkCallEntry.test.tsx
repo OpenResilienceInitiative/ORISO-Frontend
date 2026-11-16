@@ -90,7 +90,20 @@ vi.mock('../app/AuthenticatedApp', () => ({
 	)
 }));
 vi.mock('./SharedCallGuest', () => ({
-	SharedCallGuest: () => <div>call-only entry</div>
+	SharedCallGuest: ({
+		deviceChoice
+	}: {
+		deviceChoice?: { controls: { micOn: boolean; cameraOn: boolean } };
+	}) => (
+		<>
+			<div>call-only entry</div>
+			<div>
+				{deviceChoice
+					? `mic ${deviceChoice.controls.micOn ? 'on' : 'off'}, camera ${deviceChoice.controls.cameraOn ? 'on' : 'off'}`
+					: 'no device choice'}
+			</div>
+		</>
+	)
 }));
 vi.mock('../anonymousChat/entryRoom/EntryRoomShell', () => ({
 	EntryRoomShell: ({ children }: { children: React.ReactNode }) => (
@@ -301,5 +314,93 @@ describe('the postcode of a call guest (ORISO-Frontend#1795)', () => {
 			/>
 		);
 		await screen.findByText('no postcode');
+	});
+});
+
+/*
+ * FE#2209 live test (16 Nov): the guest picked a lamb before entering, the
+ * counsellor's knock card showed a frog and the call a fox. The pick was
+ * never stored; every surface derived its own animal.
+ */
+describe('the animal a call guest picks before entering', () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+		vi.mocked(apiPostRegistration).mockResolvedValue(undefined);
+	});
+	afterEach(cleanup);
+
+	it('is stored on the new account before the call opens', async () => {
+		const order: string[] = [];
+		vi.mocked(apiPostRegistration).mockImplementation(async () => {
+			order.push('register');
+		});
+		const saveAvatar = vi.fn(async () => {
+			order.push('avatar');
+		});
+		render(
+			<DirectLinkCallEntry
+				token="shared-token"
+				context={call}
+				modality="video"
+				deps={{ saveAvatar }}
+			/>
+		);
+		fireEvent.click(
+			await screen.findByRole('button', { name: 'Agree and enter' })
+		);
+		await screen.findByText('call-only entry');
+		expect(saveAvatar).toHaveBeenCalledWith('owl');
+		expect(order).toEqual(['register', 'avatar']);
+	});
+
+	it('does not keep the guest out of the call when storing it fails', async () => {
+		const saveAvatar = vi.fn(async () => {
+			throw new Error('offline');
+		});
+		render(
+			<DirectLinkCallEntry
+				token="shared-token"
+				context={call}
+				modality="video"
+				deps={{ saveAvatar }}
+			/>
+		);
+		fireEvent.click(
+			await screen.findByRole('button', { name: 'Agree and enter' })
+		);
+		await screen.findByText('call-only entry');
+	});
+
+	it("leaves a signed-in person's own animal alone", async () => {
+		const saveAvatar = vi.fn();
+		render(
+			<DirectLinkCallEntry
+				token="shared-token"
+				context={call}
+				modality="video"
+				signedIn
+				deps={{ saveAvatar }}
+			/>
+		);
+		fireEvent.click(
+			await screen.findByRole('button', { name: 'Agree and enter' })
+		);
+		await screen.findByText('call-only entry');
+		expect(saveAvatar).not.toHaveBeenCalled();
+	});
+
+	it('hands the device choice from the check on to the call', async () => {
+		render(
+			<DirectLinkCallEntry
+				token="shared-token"
+				context={call}
+				modality="video"
+				deps={{ saveAvatar: vi.fn() }}
+			/>
+		);
+		fireEvent.click(
+			await screen.findByRole('button', { name: 'Agree and enter' })
+		);
+		await screen.findByText('mic on, camera on');
 	});
 });

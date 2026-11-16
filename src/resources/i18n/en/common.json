@@ -6405,6 +6405,7 @@
 		},
 		"share": {
 			"signInToJoin": "Sign in to join this call.",
+			"guestCallTitle": "Conversation",
 			"conversationMember": "You are already part of this conversation. Join the call from its chat.",
 			"openConversations": "Open my conversations",
 			"joinForbidden": "You cannot join this call through this link.",

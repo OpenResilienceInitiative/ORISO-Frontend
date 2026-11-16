@@ -6490,6 +6490,7 @@
 		},
 		"share": {
 			"signInToJoin": "Bu aramaya katılmak için oturum açın.",
+			"guestCallTitle": "Görüşme",
 			"conversationMember": "Bu görüşmenin zaten bir katılımcısısınız. Aramaya görüşmenin sohbetinden katılın.",
 			"openConversations": "Görüşmelerimi aç",
 			"joinForbidden": "Bu bağlantıyla aramaya katılamazsınız.",
