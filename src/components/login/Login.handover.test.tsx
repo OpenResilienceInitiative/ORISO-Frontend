@@ -21,6 +21,8 @@ import { UrlParamsContext } from '../../globalState/provider/UrlParamsProvider';
 import { apiPatchUserData } from '../../api/apiPatchUserData';
 import { autoLogin, redirectToApp } from '../registration/autoLogin';
 import { setAppConfig } from '../../utils/appConfig';
+import { FETCH_ERRORS } from '../../api/fetchData';
+import { TWO_FACTOR_TYPES } from '../twoFactorAuth/twoFactorAuthConstants';
 import { Login } from './Login';
 import {
 	isLoginHandoverActive,
@@ -57,6 +59,13 @@ vi.mock('lottie-react', () => ({ default: () => null }));
 vi.mock('../app/appChunks', () => ({
 	warmAppChunks: vi.fn(),
 	warmCryptoEngine: vi.fn()
+}));
+vi.mock('../twoFactorAuth/TwoFactorAuthResendMail', () => ({
+	TwoFactorAuthResendMail: ({ onResend }: any) => (
+		<button type="button" data-cy="test-resend" onClick={() => onResend()}>
+			resend
+		</button>
+	)
 }));
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({ t: (key: string) => key })
@@ -181,5 +190,49 @@ describe('Login hands over behind one loading screen', () => {
 		await waitFor(() => expect(reloadUserData).toHaveBeenCalled());
 		await waitFor(() => expect(isLoginHandoverActive()).toBe(false));
 		expect(redirectToApp).not.toHaveBeenCalled();
+	});
+
+	it('keeps a newer attempt covered when an older one fails late', async () => {
+		const emailCodeRequired = Object.assign(
+			new Error(FETCH_ERRORS.BAD_REQUEST),
+			{ options: { data: { otpType: TWO_FACTOR_TYPES.EMAIL } } }
+		);
+		let rejectOlder: (error: unknown) => void = () => undefined;
+		vi.mocked(autoLogin)
+			// Password only: the realm asks for the e-mail code.
+			.mockRejectedValueOnce(emailCodeRequired as never)
+			// The code is submitted; its answer is still out.
+			.mockImplementationOnce(
+				() =>
+					new Promise<void>((_, reject) => {
+						rejectOlder = reject;
+					}) as never
+			)
+			// A resend meanwhile is accepted and starts the handover.
+			.mockImplementationOnce((async (props: any) => {
+				props.onCredentialsAccepted?.();
+				await new Promise(() => undefined);
+			}) as never);
+
+		const view = signIn(
+			vi.fn().mockReturnValue(new Promise(() => undefined))
+		);
+		const otp = await waitFor(() => {
+			const field = view.container.querySelector('#otp');
+			expect(field).not.toBeNull();
+			return field as HTMLInputElement;
+		});
+		fireEvent.change(otp, { target: { value: '123456' } });
+		fireEvent.keyUp(otp, { key: 'Enter' });
+		await waitFor(() => expect(autoLogin).toHaveBeenCalledTimes(2));
+
+		fireEvent.click(
+			view.container.querySelector('[data-cy="test-resend"]') as Element
+		);
+		await waitFor(() => expect(isLoginHandoverActive()).toBe(true));
+
+		rejectOlder(new Error(FETCH_ERRORS.BAD_REQUEST));
+		await new Promise((resolve) => setTimeout(resolve, 0));
+		expect(isLoginHandoverActive()).toBe(true);
 	});
 });

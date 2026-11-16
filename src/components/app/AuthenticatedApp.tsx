@@ -40,7 +40,7 @@ import {
 import { loadEntryScreens } from './appChunks';
 import { useGroupJoinHandoverCopy } from '../groupChat/groupJoinHandoverCopy';
 import { POST_REGISTRATION_LOADER_KEY } from '../registration/autoLogin';
-import { endLoginHandover } from './loginHandover';
+import { endLoginHandover, finishLoginHandover } from './loginHandover';
 import {
 	handleTokenRefresh,
 	isTokenRefreshUnavailableError
@@ -445,7 +445,8 @@ export const AuthenticatedApp = ({
 	/* The login handover screen (#2272) stays up until the app is
 	   ready, or until the bootstrap gave up and the login page comes back. */
 	useEffect(() => {
-		if (appReady || !loading) endLoginHandover();
+		if (appReady) finishLoginHandover();
+		else if (!loading) endLoginHandover();
 	}, [appReady, loading]);
 
 	const handleLogout = useCallback(() => {

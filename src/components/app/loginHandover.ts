@@ -74,11 +74,35 @@ export const isLoginHandoverActive = () => active;
 export const useLoginHandoverActive = () =>
 	useSyncExternalStore(subscribe, isLoginHandoverActive, () => false);
 
+// The signed-in tenant's theme is still loading: the app may be ready before
+// it, and ending the screen then would reveal the white theme modal.
+let waitingForTheme = false;
+let finishRequested = false;
+
 /** The credentials were accepted: cover the login page from now on. */
 export const beginLoginHandover = () => {
+	finishRequested = false;
 	if (active) return;
 	active = true;
 	emit();
+};
+
+/** Set by `TenantThemingLoader` while the tenant theme loads. */
+export const setLoginHandoverWaitingForTheme = (waiting: boolean) => {
+	waitingForTheme = waiting;
+	if (!waiting && finishRequested) endLoginHandover();
+};
+
+/**
+ * The app is ready: end the screen, once the tenant theme is loaded too.
+ * Failure exits call `endLoginHandover` directly and never wait.
+ */
+export const finishLoginHandover = () => {
+	if (waitingForTheme && active) {
+		finishRequested = true;
+		return;
+	}
+	endLoginHandover();
 };
 
 interface SnapshotRect {
@@ -165,8 +189,9 @@ export const removeLoginHandoverSplash = () => {
 	document.getElementById(LOGIN_HANDOVER_SPLASH_ID)?.remove();
 };
 
-/** The app is ready, or the sign-in failed: show what is underneath. */
+/** The sign-in failed or gave up: show what is underneath now. */
 export const endLoginHandover = () => {
+	finishRequested = false;
 	try {
 		getStorage()?.removeItem(LOGIN_HANDOVER_STORAGE_KEY);
 	} catch {
@@ -185,6 +210,8 @@ export const endLoginHandover = () => {
 
 /** Test-only: reset the module state between cases. */
 export const resetLoginHandoverForTests = (value = false) => {
+	waitingForTheme = false;
+	finishRequested = false;
 	active = value;
 	emit();
 };

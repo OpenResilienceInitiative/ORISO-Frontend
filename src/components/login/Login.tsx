@@ -636,6 +636,8 @@ export const Login = () => {
 								return null;
 							}),
 					(error: unknown) => {
+						// A newer attempt owns the screen and its user data.
+						if (!isLatestAttempt()) return null;
 						earlyUserDataRef.current = null;
 						endLoginHandover();
 						return handleAutoLoginFailure(error);

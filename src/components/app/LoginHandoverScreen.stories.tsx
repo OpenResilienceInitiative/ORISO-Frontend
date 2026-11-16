@@ -79,6 +79,35 @@ export const Mobile: Story = {
 	globals: { viewport: { value: 'phone375' } }
 };
 
+/** Faded in on this page, then the app is ready: it must still fade out. */
+export const FadedInThenLeaving: Story = {
+	name: 'Faded in, then leaving (same page)',
+	render: function FadedInThenLeavingStory() {
+		const [leaving, setLeaving] = useState(false);
+		useEffect(() => {
+			const timeout = window.setTimeout(() => setLeaving(true), 600);
+			return () => window.clearTimeout(timeout);
+		}, []);
+		return (
+			<div style={{ height: '100dvh', padding: 24 }}>
+				<p>The app is ready underneath.</p>
+				<LoginHandoverScreen animateIn leaving={leaving} />
+			</div>
+		);
+	},
+	play: async ({ canvasElement }) => {
+		const screen = canvasElement.querySelector<HTMLElement>(
+			'.loginHandoverScreen'
+		);
+		expect(screen).not.toBeNull();
+		if (!screen) return;
+		await waitFor(
+			() => expect(Number(getComputedStyle(screen).opacity)).toBe(0),
+			{ timeout: 3000 }
+		);
+	}
+};
+
 /** The app is ready: the screen fades out and reveals it. */
 export const LeavingToApp: Story = {
 	name: 'Leaving to the app (fades out)',

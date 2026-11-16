@@ -15,7 +15,10 @@
 		animation: loginHandoverScreenIn 240ms ease-out both;
 	}
 
+	// Drops the entrance animation too: an animation outranks this opacity,
+	// so a screen that faded in on this page would never fade out.
 	&--leaving {
+		animation: none;
 		opacity: 0;
 		pointer-events: none;
 	}
