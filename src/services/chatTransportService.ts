@@ -770,8 +770,14 @@ class ChatTransportService {
 		// FE#1802: live events replayed on opening a room ask again for the
 		// same latest event; one receipt per event is enough. A caller that
 		// joins an in-flight send gets that send's real result.
-		const known = this.receiptByRoom.get(matrixRoomId);
-		if (known?.event === receiptEvent) {
+		// Only the event id is kept, per Matrix client: no decrypted event
+		// outlives its client (sign-out, token refresh).
+		const receiptEventId: string | undefined = receiptEvent.getId?.();
+		const rooms =
+			this.receiptsByClient.get(matrixClient as object) ?? new Map();
+		this.receiptsByClient.set(matrixClient as object, rooms);
+		const known = rooms.get(matrixRoomId);
+		if (receiptEventId && known?.eventId === receiptEventId) {
 			return known.result;
 		}
 
@@ -781,22 +787,22 @@ class ChatTransportService {
 				return true;
 			} catch {
 				// keep UI responsive; the receipt is retried on the next read
-				if (
-					this.receiptByRoom.get(matrixRoomId)?.event === receiptEvent
-				) {
-					this.receiptByRoom.delete(matrixRoomId);
+				if (rooms.get(matrixRoomId)?.eventId === receiptEventId) {
+					rooms.delete(matrixRoomId);
 				}
 				return false;
 			}
 		})();
-		this.receiptByRoom.set(matrixRoomId, { event: receiptEvent, result });
+		if (receiptEventId) {
+			rooms.set(matrixRoomId, { eventId: receiptEventId, result });
+		}
 		return result;
 	}
 
-	/** Latest event a read receipt was sent (or is being sent) for, per room. */
-	private readonly receiptByRoom = new Map<
-		string,
-		{ event: unknown; result: Promise<boolean> }
+	/** Event id a read receipt was sent (or is being sent) for, per client and room. */
+	private readonly receiptsByClient = new WeakMap<
+		object,
+		Map<string, { eventId: string; result: Promise<boolean> }>
 	>();
 }
 

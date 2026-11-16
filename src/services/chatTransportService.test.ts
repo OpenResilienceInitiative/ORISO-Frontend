@@ -946,23 +946,41 @@ describe('chatTransportService markRoomAsRead dedupe (FE#1802)', () => {
 	});
 
 	const roomWithEvents = (events: any[], sendReadReceipt: any) => {
-		setMatrixClientServiceRef({
-			getClient: () => ({
-				getRoom: (roomId: string) =>
-					roomId === ROOM_ID
-						? {
-								getLiveTimeline: () => ({
-									getEvents: () => events
-								})
-							}
-						: null,
-				sendReadReceipt
-			})
-		} as any);
+		const client = {
+			getRoom: (roomId: string) =>
+				roomId === ROOM_ID
+					? {
+							getLiveTimeline: () => ({
+								getEvents: () => events
+							})
+						}
+					: null,
+			sendReadReceipt
+		};
+		currentEvents = events;
+		lastClient = client;
+		setMatrixClientServiceRef({ getClient: () => client } as any);
 	};
+	let currentEvents: any[] = [];
+	let lastClient: any = null;
+	const roomWithEventsOnSameClient = (events: any[]) => {
+		currentEvents = events;
+		lastClient.getRoom = (roomId: string) =>
+			roomId === ROOM_ID
+				? {
+						getLiveTimeline: () => ({
+							getEvents: () => currentEvents
+						})
+					}
+				: null;
+	};
+	const event = (id: string, extra: Record<string, unknown> = {}) => ({
+		getId: () => id,
+		...extra
+	});
 
 	it('sends one receipt per latest event, even when asked again while it is in flight', async () => {
-		const first = { id: 'first' };
+		const first = event('$first');
 		const events: any[] = [first];
 		const sendReadReceipt = vi.fn(() => Promise.resolve());
 		roomWithEvents(events, sendReadReceipt);
@@ -974,7 +992,7 @@ describe('chatTransportService markRoomAsRead dedupe (FE#1802)', () => {
 		]);
 		expect(sendReadReceipt).toHaveBeenCalledTimes(1);
 
-		const second = { id: 'second' };
+		const second = event('$second');
 		events.push(second);
 		await chatTransportService.markRoomAsRead(ROOM_ID);
 		expect(sendReadReceipt).toHaveBeenCalledTimes(2);
@@ -989,7 +1007,7 @@ describe('chatTransportService markRoomAsRead dedupe (FE#1802)', () => {
 					failSend = reject;
 				})
 		);
-		roomWithEvents([{ id: 'latest' }], sendReadReceipt);
+		roomWithEvents([event('$latest')], sendReadReceipt);
 
 		const first = chatTransportService.markRoomAsRead(ROOM_ID);
 		const second = chatTransportService.markRoomAsRead(ROOM_ID);
@@ -1001,11 +1019,11 @@ describe('chatTransportService markRoomAsRead dedupe (FE#1802)', () => {
 	});
 
 	it('sends the receipt for the newest readable event, not a later one still encrypted or failed', async () => {
-		const readable = {
+		const readable = event('$readable', {
 			getType: () => 'm.room.message',
 			isEncrypted: () => true,
 			isDecryptionFailure: () => false
-		};
+		});
 		const failed = {
 			getType: () => 'm.room.message',
 			isEncrypted: () => true,
@@ -1021,8 +1039,24 @@ describe('chatTransportService markRoomAsRead dedupe (FE#1802)', () => {
 		expect(sendReadReceipt).toHaveBeenCalledWith(readable);
 	});
 
+	it('dedupes by event id and forgets it with the Matrix client (no event kept)', async () => {
+		const sendReadReceipt = vi.fn(() => Promise.resolve());
+		roomWithEvents([event('$same')], sendReadReceipt);
+		await chatTransportService.markRoomAsRead(ROOM_ID);
+
+		// Same event id, re-read as a new object: no second receipt.
+		roomWithEventsOnSameClient([event('$same')]);
+		await chatTransportService.markRoomAsRead(ROOM_ID);
+		expect(sendReadReceipt).toHaveBeenCalledTimes(1);
+
+		// A new client (sign-in again, token refresh) starts from scratch.
+		roomWithEvents([event('$same')], sendReadReceipt);
+		await chatTransportService.markRoomAsRead(ROOM_ID);
+		expect(sendReadReceipt).toHaveBeenCalledTimes(2);
+	});
+
 	it('retries the same event after a failed send', async () => {
-		const latest = { id: 'latest' };
+		const latest = event('$latest');
 		const sendReadReceipt = vi
 			.fn()
 			.mockRejectedValueOnce(new Error('offline'))
