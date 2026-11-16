@@ -718,6 +718,25 @@ export const CalendarView = ({
 
 	// The entry's own element knows which entry it shows, so hover, focus
 	// and the tooltip need no lookup through FullCalendar.
+	/** What a screen reader hears for an entry in the grid. */
+	const ariaLabelOf = (entry: CalendarEntry, proposal?: MoveProposal) => {
+		const own = entry.ownerId === ownerId && !proposal;
+		return [
+			proposal
+				? `${t('calendar.proposal.label')} · ${proposalStatus(proposal)}`
+				: label(entry, !own),
+			own ? '' : colleagues[entry.ownerId]?.displayName,
+			entry.allDay
+				? t('calendar.allDay')
+				: // A proposal stands at the proposed time: say that one.
+					format(
+						proposal?.start ?? entry.start,
+						proposal?.end ?? entry.end
+					)
+		]
+			.filter(Boolean)
+			.join(', ');
+	};
 	const eventDidMount = (info: {
 		el: HTMLElement;
 		event: { extendedProps: unknown };
@@ -729,26 +748,29 @@ export const CalendarView = ({
 		info.el.dataset.facet = facetOf(entry);
 		if (proposal) info.el.dataset.proposalId = proposal.id;
 		if (!info.el.hasAttribute('tabindex')) info.el.tabIndex = 0;
-		const own = entry.ownerId === ownerId && !proposal;
-		info.el.setAttribute(
-			'aria-label',
-			[
-				proposal
-					? `${t('calendar.proposal.label')} · ${proposalStatus(proposal)}`
-					: label(entry, !own),
-				own ? '' : colleagues[entry.ownerId]?.displayName,
-				entry.allDay
-					? t('calendar.allDay')
-					: // A proposal stands at the proposed time: say that one.
-						format(
-							proposal?.start ?? entry.start,
-							proposal?.end ?? entry.end
-						)
-			]
-				.filter(Boolean)
-				.join(', ')
-		);
+		info.el.setAttribute('aria-label', ariaLabelOf(entry, proposal));
 	};
+	// FullCalendar mounts an entry's element once and keeps it when only
+	// the time changes: the name follows the time, or a moved or accepted
+	// appointment would still be read out at its old time.
+	useEffect(() => {
+		const byId = new Map(entries.map((entry) => [entry.id, entry]));
+		gridRef.current
+			?.querySelectorAll<HTMLElement>('[data-entry-id]')
+			.forEach((el) => {
+				const proposalId = el.dataset.proposalId;
+				const found = proposalId
+					? proposals.find((p) => p.proposal.id === proposalId)
+					: undefined;
+				const entry = proposalId
+					? found?.entry
+					: byId.get(el.dataset.entryId ?? '');
+				if (!entry) return;
+				const name = ariaLabelOf(entry, found?.proposal);
+				if (el.getAttribute('aria-label') !== name)
+					el.setAttribute('aria-label', name);
+			});
+	});
 
 	// Colleague entries and proposals explain themselves on hover and on
 	// keyboard focus, at once (Frank: tooltips show immediately).
