@@ -175,15 +175,41 @@ $cal-off-hatch: repeating-linear-gradient(
 	background: var(--m3-surface-container-low, #f6f3f3) !important;
 }
 
+// "Pause" sits in the middle of the band, between the grips at its top
+// and bottom edge (Frank *7.3).
 .calendarView__breakLabel {
-	display: block;
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 	overflow: hidden;
-	padding: 2px 6px;
+	pointer-events: none;
+}
+
+.calendarView__breakPill {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	max-width: calc(100% - 8px);
+	overflow: hidden;
+	padding: 1px 10px 1px 8px;
+	border-radius: 999px;
+	background: rgba(255, 255, 255, 0.85);
 	color: var(--m3-on-surface-variant, #444748);
-	font-size: 11px;
+	font-size: 12px;
+	font-style: italic;
 	font-weight: 500;
+	letter-spacing: 0.02em;
+	line-height: 18px;
 	text-overflow: ellipsis;
 	white-space: nowrap;
+
+	svg {
+		flex: none;
+		width: 14px;
+		height: 14px;
+	}
 }
 
 // Colleagues in the time grid: one grey band per stretch, "k von n

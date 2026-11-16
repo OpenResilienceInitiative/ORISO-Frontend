@@ -1838,6 +1838,32 @@ export const SplitGrips: Story = {
 	}
 };
 
+export const PauseLabel: Story = {
+	name: 'Working hours — "Pause" centred between its grips',
+	play: async ({ canvasElement }) => {
+		await canvasOf(canvasElement).findByTestId('calendar-view');
+		const pill = await waitFor(() => {
+			const el = canvasElement.querySelector<HTMLElement>(
+				'.calendarView__breakPill'
+			);
+			expect(el).toBeTruthy();
+			return el!;
+		});
+		const band = pill.closest<HTMLElement>(
+			'.calendarView__offHours--break'
+		)!;
+		const a = pill.getBoundingClientRect();
+		const b = band.getBoundingClientRect();
+		// The pill's middle is the band's middle (Frank *7.3).
+		await expect(
+			Math.abs(a.top + a.height / 2 - (b.top + b.height / 2))
+		).toBeLessThan(2);
+		await expect(
+			Math.abs(a.left + a.width / 2 - (b.left + b.width / 2))
+		).toBeLessThan(2);
+	}
+};
+
 // --- Single pieces ---
 
 export const WorkingHoursPiece: StoryObj = {

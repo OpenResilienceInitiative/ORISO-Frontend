@@ -28,6 +28,7 @@ import listPlugin from '@fullcalendar/react/list';
 import interactionPlugin from '@fullcalendar/react/interaction';
 import deLocale from '@fullcalendar/react/locales/de';
 import { Popper } from '@mui/material';
+import FreeBreakfastOutlinedIcon from '@mui/icons-material/FreeBreakfastOutlined';
 import enGbLocale from '@fullcalendar/react/locales/en-gb';
 import frLocale from '@fullcalendar/react/locales/fr';
 import ruLocale from '@fullcalendar/react/locales/ru';
@@ -799,9 +800,14 @@ export const CalendarView = ({
 					</span>
 				</span>
 			);
+		// Centred between the two pause grips, a quiet pill with a cup
+		// (Frank *7.3), not in the top left corner.
 		return off?.kind === 'break' ? (
 			<span className="calendarView__breakLabel">
-				{t('calendar.workingHours.break')}
+				<span className="calendarView__breakPill">
+					<FreeBreakfastOutlinedIcon aria-hidden />
+					{t('calendar.workingHours.break')}
+				</span>
 			</span>
 		) : null;
 	};
