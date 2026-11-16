@@ -10,7 +10,7 @@ import {
 	appointmentConversationPath,
 	appointmentRoomOf
 } from '../../../../components/calendar/appointmentConversation';
-import { startVideoCallState } from '../../../../components/call/startCallIntent';
+import { startCallState } from '../../../../components/call/startCallIntent';
 import { Button, BUTTON_TYPES } from '../../../../components/button/Button';
 import {
 	formatToHHMM,
@@ -69,7 +69,7 @@ export const BookingEvent = ({ appointment }: BookingEventProps) => {
 		appointmentRoomOf(sessionId).then(
 			(roomId) =>
 				navigate(appointmentConversationPath(roomId, sessionId, true), {
-					state: startVideoCallState(sessionId)
+					state: startCallState(sessionId, 'video')
 				}),
 			() => setChatFailed(true)
 		);

@@ -1,9 +1,10 @@
 // @vitest-environment oriso-jsdom
 /**
- * FE#1050 item 5: "Starten" on the overview card and "Video-Call starten" in
- * the calendar open the conversation with a one-shot request to start its
- * video call. The conversation's own call controls take it up: with the
- * checks of their own button, through the start of their own button, once.
+ * FE#1050 items 5 and 6: "Starten" on the overview card and "Video-Call
+ * starten" / "Anruf starten" in the calendar open the conversation with a
+ * one-shot request to start its video or audio call. The conversation's own
+ * call controls take it up: with the checks of their own button of that
+ * kind, through the start of that button, once.
  */
 import { canonicalAgencySettings } from '../../test/fixtures/conversationPolicyFixtures';
 import * as React from 'react';
@@ -30,7 +31,7 @@ import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import { enterPracticeMode, exitPracticeMode } from '../../practice';
 import type { AgencyConversationPolicy } from '../../globalState/interfaces/ConversationFeatureSettings';
 import { startRoomCall } from '../call/startRoomCall';
-import { startVideoCallState } from '../call/startCallIntent';
+import { startCallState, type CallKind } from '../call/startCallIntent';
 import { SessionMenu } from './SessionMenu';
 
 vi.mock('lottie-web', () => ({ default: { loadAnimation: () => ({}) } }));
@@ -172,9 +173,9 @@ const Conversation = ({
 );
 
 /** The conversation, opened by "Starten": one history entry with the request. */
-const opened = (key = `entry-${++entryKey}`) => ({
+const opened = (kind: CallKind = 'video', key = `entry-${++entryKey}`) => ({
 	pathname: PATH,
-	state: startVideoCallState(SESSION),
+	state: startCallState(SESSION, kind),
 	key
 });
 
@@ -214,6 +215,15 @@ const headerVideoButton = () =>
 	document.querySelector<HTMLButtonElement>(
 		'[data-cy="session-header-start-video-call"]'
 	);
+const headerAudioButton = () =>
+	document.querySelector<HTMLButtonElement>(
+		'[data-cy="session-header-start-call"]'
+	);
+/** Settings with only one kind of call switched on. */
+const onlyAudio = () =>
+	ready(canonicalAgencySettings({ featureVideoCallsEnabled: false }));
+const onlyVideo = () =>
+	ready(canonicalAgencySettings({ featureAudioCallsEnabled: false }));
 
 beforeEach(() => {
 	vi.clearAllMocks();
@@ -264,7 +274,7 @@ describe('SessionMenu takes up a start request (FE#1050)', () => {
 		view.update({ agencyFeaturePolicy: agencyLoading });
 		expect(startedCalls()).toHaveLength(0);
 		expect(addNotification).not.toHaveBeenCalled();
-		expect(location?.state).toEqual(startVideoCallState(SESSION));
+		expect(location?.state).toEqual(startCallState(SESSION, 'video'));
 
 		view.update({ agencyFeaturePolicy: ready() });
 		expect(startedCalls()).toHaveLength(1);
@@ -290,7 +300,7 @@ describe('SessionMenu takes up a start request (FE#1050)', () => {
 
 		expect(startedCalls()).toHaveLength(0);
 		expect(addNotification).not.toHaveBeenCalled();
-		expect(location?.state).toEqual(startVideoCallState(SESSION));
+		expect(location?.state).toEqual(startCallState(SESSION, 'video'));
 	});
 
 	describe('starts nothing when a check refuses, says so and keeps the conversation open', () => {
@@ -349,7 +359,7 @@ describe('SessionMenu takes up a start request (FE#1050)', () => {
 
 	describe('once per request', () => {
 		it('a re-render, a strict-mode double effect or new props do not start again', () => {
-			const view = openConversation({}, opened(), (node) => (
+			const view = openConversation({}, opened('video'), (node) => (
 				<React.StrictMode>{node}</React.StrictMode>
 			));
 			view.update({});
@@ -367,7 +377,7 @@ describe('SessionMenu takes up a start request (FE#1050)', () => {
 		});
 
 		it('a remount on the same history entry does not start again', () => {
-			const entry = opened();
+			const entry = opened('video');
 			openConversation({}, entry).unmount();
 			openConversation({}, entry);
 
@@ -420,6 +430,171 @@ describe('SessionMenu takes up a start request (FE#1050)', () => {
 
 			act(() => row!.click());
 			expect(startedCalls()).toHaveLength(1);
+		});
+	});
+
+	describe('an audio request ("Anruf starten", item 6)', () => {
+		it("starts the audio call once, with the audio button's own start, when its checks allow it", () => {
+			const view = openConversation({}, opened('audio'), (node) => (
+				<React.StrictMode>{node}</React.StrictMode>
+			));
+			view.update({});
+
+			expect(startedCalls()).toHaveLength(1);
+			expect(startedCalls()[0][0]).toMatchObject({
+				roomId: ROOM,
+				isVideo: false,
+				isGroup: false
+			});
+			expect(addNotification).not.toHaveBeenCalled();
+			expect(location?.state).toBeNull();
+		});
+
+		it('a remount on the same history entry does not start it again', () => {
+			const entry = opened('audio');
+			openConversation({}, entry).unmount();
+			openConversation({}, entry);
+
+			expect(startedCalls()).toHaveLength(1);
+		});
+
+		it("waits for the agency's answer before it decides", () => {
+			const view = openConversation(
+				{
+					agencyFeaturePolicy: {
+						agencyId: 101,
+						state: 'loading',
+						settings: canonicalAgencySettings()
+					}
+				},
+				opened('audio')
+			);
+			expect(startedCalls()).toHaveLength(0);
+			expect(addNotification).not.toHaveBeenCalled();
+
+			view.update({ agencyFeaturePolicy: ready() });
+			expect(startedCalls()).toHaveLength(1);
+			expect(startedCalls()[0][0]).toMatchObject({ isVideo: false });
+		});
+
+		describe('starts nothing when a check of the audio button refuses, says so and keeps the conversation open', () => {
+			it.each<[string, Setup | 'practice']>([
+				[
+					'the audio call switch is off for this agency',
+					{ agencyFeaturePolicy: onlyVideo() }
+				],
+				[
+					'the agency has not answered (unavailable)',
+					{
+						agencyFeaturePolicy: {
+							agencyId: 101,
+							state: 'unavailable',
+							settings: canonicalAgencySettings()
+						}
+					}
+				],
+				[
+					'the consulting type allows no calls',
+					{ isVideoCallAllowed: false }
+				],
+				['the person is no counsellor', { userData: asker }],
+				['the conversation was rejected', { status: 5 }],
+				[
+					'the counsellor supervises this conversation',
+					{ isSupervisor: true }
+				],
+				['practice mode is on', 'practice']
+			])('%s', (_gate, setup) => {
+				if (setup === 'practice')
+					enterPracticeMode({ tourId: 'consultant-practice-accept' });
+
+				openConversation(
+					setup === 'practice' ? {} : setup,
+					opened('audio')
+				);
+
+				expect(startedCalls()).toHaveLength(0);
+				expect(addNotification).toHaveBeenCalledTimes(1);
+				expect(addNotification.mock.calls[0][0]).toMatchObject({
+					title: 'directLink.entry.callsDisabled',
+					text: ''
+				});
+				expect(location?.pathname).toBe(PATH);
+				expect(location?.state).toBeNull();
+			});
+		});
+
+		it.each<[CallKind, () => AgencyConversationPolicy, boolean]>([
+			['video', onlyVideo, true],
+			['audio', onlyAudio, false]
+		])(
+			'the %s request starts only that kind of call',
+			(kind, policy, isVideo) => {
+				openConversation(
+					{ agencyFeaturePolicy: policy() },
+					opened(kind)
+				);
+
+				expect(startedCalls()).toHaveLength(1);
+				expect(startedCalls()[0][0]).toMatchObject({ isVideo });
+			}
+		);
+
+		it.each<[CallKind, () => AgencyConversationPolicy]>([
+			['video', onlyAudio],
+			['audio', onlyVideo]
+		])(
+			'the %s request, its button off, starts no call of the other kind',
+			(kind, policy) => {
+				openConversation(
+					{ agencyFeaturePolicy: policy() },
+					opened(kind)
+				);
+
+				expect(startedCalls()).toHaveLength(0);
+				expect(addNotification).toHaveBeenCalledTimes(1);
+			}
+		);
+
+		it('without a live gesture focuses and marks the audio button, not the video button; its click starts audio', () => {
+			setGesture(false);
+			openConversation({}, opened('audio'));
+
+			expect(startedCalls()).toHaveLength(0);
+			const button = headerAudioButton();
+			expect(document.activeElement).toBe(button);
+			expect(button?.closest('.sessionMenu__callOffer')).not.toBeNull();
+			expect(
+				headerVideoButton()?.closest('.sessionMenu__callOffer')
+			).toBeNull();
+
+			fireEvent.click(button!);
+			expect(startedCalls()).toHaveLength(1);
+			expect(startedCalls()[0][0]).toMatchObject({ isVideo: false });
+		});
+
+		it('without a live gesture opens the menu with its audio row marked when the calls live in the menu', () => {
+			setGesture(false);
+			openConversation({ callsInMenu: true }, opened('audio'));
+
+			expect(
+				document.querySelector('.sessionMenu__content--open')
+			).not.toBeNull();
+			const row = document.querySelector<HTMLButtonElement>(
+				'[data-cy="session-menu-start-call"]'
+			);
+			expect(row?.classList.contains('sessionMenu__callOffer')).toBe(
+				true
+			);
+			expect(
+				document
+					.querySelector('[data-cy="session-menu-start-video-call"]')
+					?.classList.contains('sessionMenu__callOffer')
+			).toBe(false);
+
+			act(() => row!.click());
+			expect(startedCalls()).toHaveLength(1);
+			expect(startedCalls()[0][0]).toMatchObject({ isVideo: false });
 		});
 	});
 });

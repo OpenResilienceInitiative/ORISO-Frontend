@@ -21,7 +21,7 @@ import { TooManyDayExceptions } from './calendarWorkingHours';
 import { ProposalNoLongerValid } from './calendarActions';
 import { onReceivedProposalCount } from './calendarProposalCount';
 import { notifyAppointmentsChanged } from '../sessionsList/timeline/conversationAppointments';
-import { startVideoCallState } from '../call/startCallIntent';
+import { startCallState } from '../call/startCallIntent';
 
 let props: CalendarPageProps;
 vi.mock('./CalendarPage', () => ({
@@ -1324,7 +1324,7 @@ describe('CalendarPageWired', () => {
 			});
 			expect(navigate).toHaveBeenCalledWith(
 				'/sessions/consultant/sessionView/!room:oriso/4401',
-				{ state: startVideoCallState(4401) }
+				{ state: startCallState(4401, 'video') }
 			);
 			expect(rooms.apiGetSessionRoomBySessionId).not.toHaveBeenCalled();
 		});
@@ -1342,7 +1342,7 @@ describe('CalendarPageWired', () => {
 			);
 			expect(navigate).toHaveBeenCalledWith(
 				'/sessions/consultant/sessionView/!far:oriso/777',
-				{ state: startVideoCallState(777) }
+				{ state: startCallState(777, 'video') }
 			);
 		});
 
@@ -1355,7 +1355,7 @@ describe('CalendarPageWired', () => {
 			});
 			expect(navigate).toHaveBeenLastCalledWith(
 				'/sessions/consultant/sessionView/!room:oriso/4401',
-				{ state: { startVideoCall: { sessionId: 4401 } } }
+				{ state: { startCall: { sessionId: 4401, kind: 'video' } } }
 			);
 			navigate.mockClear();
 			await act(async () => {
@@ -1367,7 +1367,37 @@ describe('CalendarPageWired', () => {
 			);
 		});
 
-		it.each(['phone', 'chat'] as const)(
+		// FE#1050 item 6: "Anruf starten" starts the audio call the same way.
+		it('"Anruf starten" asks the conversation to start its audio call, also after a lookup', async () => {
+			await listed();
+			await act(async () => {
+				await props.onStart?.(appointment(4401, 'phone'));
+			});
+			expect(navigate).toHaveBeenLastCalledWith(
+				'/sessions/consultant/sessionView/!room:oriso/4401',
+				{ state: { startCall: { sessionId: 4401, kind: 'audio' } } }
+			);
+			rooms.apiGetSessionRoomBySessionId.mockResolvedValueOnce({
+				sessions: [{ session: { id: 777, matrixRoomId: '!far:oriso' } }]
+			} as never);
+			await act(async () => {
+				await props.onStart?.(appointment(777, 'phone'));
+			});
+			expect(navigate).toHaveBeenLastCalledWith(
+				'/sessions/consultant/sessionView/!far:oriso/777',
+				{ state: startCallState(777, 'audio') }
+			);
+			navigate.mockClear();
+			await act(async () => {
+				await props.onOpenChat?.(appointment(4401, 'phone'));
+			});
+			expect(navigate).toHaveBeenCalledTimes(1);
+			expect(navigate).toHaveBeenCalledWith(
+				'/sessions/consultant/sessionView/!room:oriso/4401'
+			);
+		});
+
+		it.each(['chat', 'onsite'] as const)(
 			'only opens the conversation for a %s appointment',
 			async (kind) => {
 				await listed();
@@ -1381,21 +1411,26 @@ describe('CalendarPageWired', () => {
 			}
 		);
 
-		it('asks nothing of the conversation for an advice seeker', async () => {
-			consultant = false;
-			rooms.apiGetSessionRoomBySessionId.mockResolvedValueOnce({
-				sessions: [{ session: { id: 777, matrixRoomId: '!far:oriso' } }]
-			} as never);
-			render(<CalendarPageWired />);
-			await waitFor(() => expect(props.role).toBe('asker'));
-			await act(async () => {
-				await props.onStart?.(appointment(777));
-			});
-			expect(navigate).toHaveBeenCalledTimes(1);
-			expect(navigate).toHaveBeenCalledWith(
-				'/sessions/user/view/!far:oriso/777'
-			);
-		});
+		it.each(['video', 'phone'] as const)(
+			'asks nothing of the conversation for an advice seeker (%s)',
+			async (kind) => {
+				consultant = false;
+				rooms.apiGetSessionRoomBySessionId.mockResolvedValueOnce({
+					sessions: [
+						{ session: { id: 777, matrixRoomId: '!far:oriso' } }
+					]
+				} as never);
+				render(<CalendarPageWired />);
+				await waitFor(() => expect(props.role).toBe('asker'));
+				await act(async () => {
+					await props.onStart?.(appointment(777, kind));
+				});
+				expect(navigate).toHaveBeenCalledTimes(1);
+				expect(navigate).toHaveBeenCalledWith(
+					'/sessions/user/view/!far:oriso/777'
+				);
+			}
+		);
 
 		it('rejects when no room is found, so the page can say so', async () => {
 			rooms.apiGetSessionRoomBySessionId.mockRejectedValueOnce(

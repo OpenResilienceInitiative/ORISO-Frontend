@@ -94,10 +94,11 @@ import {
 	appointmentConversationPath,
 	appointmentRoomOf
 } from './appointmentConversation';
-import { startVideoCallState } from '../call/startCallIntent';
+import { startCallState, type CallKind } from '../call/startCallIntent';
 import {
 	DEFAULT_VISIBILITY,
 	type AppointmentDraft,
+	type AppointmentKind,
 	type CalendarConversation,
 	type CalendarEntry,
 	type CalendarVisibility,
@@ -155,6 +156,17 @@ const toConversations = (items: any[] | undefined): ConversationRef[] =>
 				String(item.session.id),
 			matrixRoomId: item.session.matrixRoomId
 		}));
+
+/**
+ * The call an appointment's start button starts in its conversation:
+ * "Video-Call starten" the video call, "Anruf starten" the audio call.
+ */
+const CALL_OF_APPOINTMENT: Record<AppointmentKind, CallKind | undefined> = {
+	video: 'video',
+	phone: 'audio',
+	chat: undefined,
+	onsite: undefined
+};
 
 export const CalendarPageWired = () => {
 	const navigate = useNavigate();
@@ -685,11 +697,11 @@ export const CalendarPageWired = () => {
 	const openRoom = (
 		roomId: string,
 		sessionId: number,
-		startCall: boolean
+		startCall: CallKind | undefined
 	) => {
 		const path = appointmentConversationPath(roomId, sessionId, consultant);
 		if (startCall)
-			navigate(path, { state: startVideoCallState(sessionId) });
+			navigate(path, { state: startCallState(sessionId, startCall) });
 		else navigate(path);
 	};
 
@@ -698,12 +710,12 @@ export const CalendarPageWired = () => {
 	 * once, else by its session id, for one the list does not hold (shared
 	 * access, a handover, an archived one, a page still loading). Rejects
 	 * when there is no room, so the page can say so (review 4577642137).
-	 * With `startCall`, the conversation is asked to start its video call
-	 * with its own checks (FE#1050).
+	 * With `startCall`, the conversation is asked to start that call with
+	 * the checks of its own button (FE#1050).
 	 */
 	const openConversation = (
 		entry: CalendarEntry,
-		startCall = false
+		startCall?: CallKind
 	): Promise<void> | undefined => {
 		const { sessionId } = entry;
 		const listed = conversationOf(sessionId);
@@ -721,12 +733,16 @@ export const CalendarPageWired = () => {
 	};
 
 	/**
-	 * "Video-Call starten" starts the call: the conversation opens and its
-	 * own call button takes the request up (Frank, 2026-11-16). Only a
-	 * counsellor starts calls; other kinds and askers open the conversation.
+	 * "Video-Call starten" and "Anruf starten" start the call: the
+	 * conversation opens and its own video or audio call button takes the
+	 * request up (Frank, 2026-11-16). Only a counsellor starts calls; other
+	 * kinds and askers open the conversation.
 	 */
 	const start = (entry: CalendarEntry) =>
-		openConversation(entry, consultant && entry.kind === 'video');
+		openConversation(
+			entry,
+			consultant ? CALL_OF_APPOINTMENT[entry.kind ?? 'onsite'] : undefined
+		);
 
 	// Working hours, holiday region and day exceptions show the change at
 	// once; a failed save puts the stored state back and rejects, so the

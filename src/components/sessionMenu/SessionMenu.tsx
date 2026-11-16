@@ -33,7 +33,7 @@ import {
 } from '../../globalState';
 import { STATUS_REJECTED } from '../../globalState/interfaces/SessionsDataInterface';
 import { startRoomCall } from '../call/startRoomCall';
-import { StartVideoCallRequest } from '../call/startCallIntent';
+import { StartCallRequest, type CallKind } from '../call/startCallIntent';
 import { callRoomName } from '../call/callRoomName';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import { resolveCallFeatureGates } from '../call/callFeatureGates';
@@ -153,6 +153,16 @@ export interface SessionMenuProps {
 // #1262 — backend advice-request APIs are not ready (US#1034). Keep the owner-only item visible but inert.
 const ADVICE_REQUEST_ENABLED = false;
 
+/** The call controls by kind: header buttons and their menu rows. */
+const CALL_HEADER_BUTTON: Record<CallKind, string> = {
+	video: 'session-header-start-video-call',
+	audio: 'session-header-start-call'
+};
+const CALL_MENU_ROW: Record<CallKind, string> = {
+	video: 'session-menu-start-video-call',
+	audio: 'session-menu-start-call'
+};
+
 export const SessionMenu = (props: SessionMenuProps) => {
 	const { t: translate } = useTranslation();
 	const navigate = useNavigate();
@@ -186,14 +196,15 @@ export const SessionMenu = (props: SessionMenuProps) => {
 	const menuTriggerRef = useRef<HTMLButtonElement | null>(null);
 	const menuRef = useRef<HTMLDivElement>(null);
 	/*
-	 * FE#1050: "Starten" in the calendar or on the overview asked for this
-	 * conversation's video call, but the click's gesture ran out on the
-	 * way: the own button is focused and marked instead, one click starts.
+	 * FE#1050: the calendar or the overview asked for this conversation's
+	 * video or audio call, but the click's gesture ran out on the way: the
+	 * own button of that kind is focused and marked instead, one click
+	 * starts.
 	 */
-	const [offeredCall, setOfferedCall] = useState(false);
+	const [offeredCall, setOfferedCall] = useState<CallKind | null>(null);
 	const closeMenu = useCallback(() => {
 		setFlyoutOpen(false);
-		setOfferedCall(false);
+		setOfferedCall(null);
 		menuTriggerRef.current?.focus();
 	}, []);
 	const menuPosition = useChatMenuPosition({
@@ -208,7 +219,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 		if (!offeredCall || props.callsInMenu) return;
 		wrapperRef.current
 			?.querySelector<HTMLElement>(
-				'[data-cy="session-header-start-video-call"]'
+				`[data-cy="${CALL_HEADER_BUTTON[offeredCall]}"]`
 			)
 			?.focus();
 	}, [offeredCall, props.callsInMenu]);
@@ -294,7 +305,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 		(
 			(offeredCall &&
 				menu?.querySelector<HTMLElement>(
-					'[data-cy="session-menu-start-video-call"]'
+					`[data-cy="${CALL_MENU_ROW[offeredCall]}"]`
 				)) ||
 			menu?.querySelector<HTMLElement>(
 				'a[href], button:not(:disabled), [tabindex="0"]'
@@ -619,9 +630,10 @@ export const SessionMenu = (props: SessionMenuProps) => {
 		hasVideoCallFeatures() &&
 		!props.isSupervisor;
 	const videoCallShown = callControlsShown && isVideoCallsEnabled;
+	const audioCallShown = callControlsShown && isAudioCallsEnabled;
 
 	const handleStartVideoCall = async (isVideoActivated: boolean = false) => {
-		setOfferedCall(false);
+		setOfferedCall(null);
 		if (isRejectedCase) return;
 		// The trigger lives in `call/startRoomCall.ts` because the side room needs
 		// the same steps against a different Matrix room. One implementation
@@ -640,8 +652,8 @@ export const SessionMenu = (props: SessionMenuProps) => {
 	};
 
 	/** Without a live gesture: the own start control, focused and marked. */
-	const offerVideoCall = () => {
-		setOfferedCall(true);
+	const offerCall = (kind: CallKind) => {
+		setOfferedCall(kind);
 		if (!props.callsInMenu) return;
 		const triggers = Array.from(
 			wrapperRef.current?.querySelectorAll<HTMLButtonElement>(
@@ -656,27 +668,48 @@ export const SessionMenu = (props: SessionMenuProps) => {
 	};
 
 	/** A check refuses the call: say so; the conversation stays open. */
-	const refuseVideoCall = () =>
+	const refuseCall = (title: string, text = '') =>
 		notifications?.addNotification({
 			notificationType: NOTIFICATION_TYPE_WARNING,
-			title: translate('videoCall.overlay.unsupported.headline'),
-			text:
-				!callGates.video || !consultingType?.isVideoCallAllowed
-					? translate('directLink.entry.callsDisabled')
-					: '',
+			title,
+			text,
 			closeable: true,
 			announce: 'status'
 		});
 
 	return (
 		<div className="sessionMenu__wrapper" ref={wrapperRef}>
-			<StartVideoCallRequest
+			<StartCallRequest
 				sessionId={activeSession.item?.id}
 				settled={!isLoadingTenantSettings && featuresSettled}
-				allowed={videoCallShown}
-				start={() => handleStartVideoCall(true)}
-				offer={offerVideoCall}
-				refuse={refuseVideoCall}
+				calls={{
+					video: {
+						allowed: videoCallShown,
+						start: () => handleStartVideoCall(true),
+						offer: () => offerCall('video'),
+						refuse: () =>
+							refuseCall(
+								translate(
+									'videoCall.overlay.unsupported.headline'
+								),
+								!callGates.video ||
+									!consultingType?.isVideoCallAllowed
+									? translate(
+											'directLink.entry.callsDisabled'
+										)
+									: ''
+							)
+					},
+					audio: {
+						allowed: audioCallShown,
+						start: () => handleStartVideoCall(false),
+						offer: () => offerCall('audio'),
+						refuse: () =>
+							refuseCall(
+								translate('directLink.entry.callsDisabled')
+							)
+					}
+				}}
 			/>
 			<MenuBackdrop
 				open={Boolean(flyoutOpen) && !legalModal}
@@ -691,24 +724,30 @@ export const SessionMenu = (props: SessionMenuProps) => {
 					<div
 						className="sessionMenu__videoCallButtons"
 						data-cy="session-header-video-call-buttons"
-						onBlur={() => setOfferedCall(false)}
+						onBlur={() => setOfferedCall(null)}
 					>
 						{videoCallShown && (
 							<Button
 								buttonHandle={() => handleStartVideoCall(true)}
 								item={buttonStartVideoCall}
-								testingAttribute="session-header-start-video-call"
+								testingAttribute={CALL_HEADER_BUTTON.video}
 								className={
-									offeredCall
+									offeredCall === 'video'
 										? 'sessionMenu__callOffer'
 										: undefined
 								}
 							/>
 						)}
-						{isAudioCallsEnabled && (
+						{audioCallShown && (
 							<Button
 								buttonHandle={() => handleStartVideoCall(false)}
 								item={buttonStartCall}
+								testingAttribute={CALL_HEADER_BUTTON.audio}
+								className={
+									offeredCall === 'audio'
+										? 'sessionMenu__callOffer'
+										: undefined
+								}
 							/>
 						)}
 					</div>
@@ -806,7 +845,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 										<button
 											type="button"
 											className={`sessionMenu__item chatMenuDropdown__item${
-												offeredCall
+												offeredCall === 'video'
 													? ' sessionMenu__callOffer'
 													: ''
 											}`}
@@ -814,7 +853,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 												closeMenu();
 												handleStartVideoCall(true);
 											}}
-											data-cy="session-menu-start-video-call"
+											data-cy={CALL_MENU_ROW.video}
 										>
 											<SessionMenuItemContent
 												icon={
@@ -826,15 +865,19 @@ export const SessionMenu = (props: SessionMenuProps) => {
 											/>
 										</button>
 									)}
-									{isAudioCallsEnabled && (
+									{audioCallShown && (
 										<button
 											type="button"
-											className="sessionMenu__item chatMenuDropdown__item"
+											className={`sessionMenu__item chatMenuDropdown__item${
+												offeredCall === 'audio'
+													? ' sessionMenu__callOffer'
+													: ''
+											}`}
 											onClick={() => {
 												closeMenu();
 												handleStartVideoCall(false);
 											}}
-											data-cy="session-menu-start-call"
+											data-cy={CALL_MENU_ROW.audio}
 										>
 											<SessionMenuItemContent
 												icon={

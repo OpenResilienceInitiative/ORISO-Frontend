@@ -5,7 +5,7 @@ import { expect, userEvent, within } from 'storybook/test';
 import { Route, Routes, useLocation, useParams } from 'react-router-dom';
 import type { CalendarEntryDTO } from '../../api/apiCalendar';
 import { UserDataContext } from '../../globalState';
-import type { StartVideoCallState } from '../call/startCallIntent';
+import { startCallRequestOf } from '../call/startCallIntent';
 import { BookingCard } from '../../containers/overview/components/BookingCard/BookingCard';
 import {
 	desktop1440Globals,
@@ -137,9 +137,9 @@ const useOverviewFeed = () => {
 const OpenedConversation = () => {
 	const { roomId, sessionId } = useParams();
 	const { state } = useLocation();
+	const request = startCallRequestOf(state);
 	const startRequested =
-		(state as Partial<StartVideoCallState> | null)?.startVideoCall
-			?.sessionId === Number(sessionId);
+		request?.kind === 'video' && request.sessionId === Number(sessionId);
 	return (
 		<p data-cy="opened-conversation">
 			{`Gespräch ${sessionId} (${roomId})`}

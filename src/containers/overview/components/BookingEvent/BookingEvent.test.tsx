@@ -27,7 +27,7 @@ import * as roomApi from '../../../../api/apiGetSessionRooms';
 import * as conversation from '../../../../components/calendar/appointmentConversation';
 import { CalendarEntryGlyph } from '../../../../components/calendar/CalendarEntryGlyph';
 import type { CalendarEntry } from '../../../../components/calendar/calendarModel';
-import { startVideoCallState } from '../../../../components/call/startCallIntent';
+import { startCallState } from '../../../../components/call/startCallIntent';
 import { BookingEvent } from './index';
 
 vi.mock('react-i18next', () => ({
@@ -175,12 +175,12 @@ describe('BookingEvent — the overview row of one appointment', () => {
 		});
 		expect(navigate).toHaveBeenCalledWith(
 			conversation.appointmentConversationPath(ROOM, 42, true),
-			{ state: startVideoCallState(42) }
+			{ state: startCallState(42, 'video') }
 		);
 		expect(roomApi.apiGetSessionRoomBySessionId).toHaveBeenCalledWith(42);
 		expect(navigate).toHaveBeenCalledWith(
 			`/sessions/consultant/sessionView/${ROOM}/42`,
-			{ state: { startVideoCall: { sessionId: 42 } } }
+			{ state: { startCall: { sessionId: 42, kind: 'video' } } }
 		);
 	});
 
