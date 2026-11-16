@@ -817,6 +817,8 @@ const CARD_GAP = 12;
 const CARD_CHIP_ROW = 48;
 const CARD_NAME = 24;
 const CARD_LINE = 16;
+/** The clip box reaches this far above the name line for the avatar ring. */
+const CARD_RING_REACH = 2;
 const CARD_LINES = 3;
 /** Where each preview line starts, measured from the avatar's left edge. */
 const CARD_LINE_LEFT = [60, 51, 42];
@@ -1085,7 +1087,11 @@ const expectCardLayout = async (
 			Math.abs(labelRange.getBoundingClientRect().right - menu.right)
 		).toBeLessThan(0.5);
 		const thirdLineCentre =
-			clip.top + CARD_NAME + CARD_LINE * 2 + CARD_LINE / 2;
+			clip.top +
+			CARD_RING_REACH +
+			CARD_NAME +
+			CARD_LINE * 2 +
+			CARD_LINE / 2;
 		await expect(
 			Math.abs((mail.top + mail.bottom) / 2 - thirdLineCentre)
 		).toBeLessThanOrEqual(1);
