@@ -110,8 +110,22 @@ describe('CalendarSidebar — "Als Nächstes" (Frank, prototype v15)', () => {
 });
 
 describe('CalendarSidebar — pill cards and "Jetzt" (prototype v17)', () => {
-	it('leads an appointment with the advice seeker in their tone and a kind badge, a group date with its icon', () => {
+	it('shows the next ones as the Gespräche pills above a draggable "Jetzt" (Frank, 2026-11-16)', () => {
 		sidebar({});
+		const pill = document.querySelector(
+			'[data-cy="calendar-upcoming-a1"]'
+		) as HTMLElement;
+		expect(pill.className).toContain('tlp__entry');
+		expect(pill.querySelector('.tlp__entryIcon')).not.toBeNull();
+		expect(
+			document.querySelector(
+				'[data-cy="calendar-upcoming"] [data-cy="timeline-now"] [role="separator"]'
+			)
+		).not.toBeNull();
+	});
+
+	it('keeps the avatar and kind badge per row in the narrow rail', () => {
+		sidebar({ mode: 'rail' });
 		const card = document.querySelector(
 			'[data-cy="calendar-upcoming-a1"]'
 		) as HTMLElement;
@@ -132,15 +146,14 @@ describe('CalendarSidebar — pill cards and "Jetzt" (prototype v17)', () => {
 
 	it('puts "Jetzt" between "Als Nächstes" and quick entry', () => {
 		sidebar({ onCreate: () => true });
-		const now = document.querySelector('[data-cy="calendar-now"]')!;
+		const now = document.querySelector('[data-cy="timeline-now"]')!;
 		expect(now.textContent).toBe('calendar.side.now');
-		const upcoming = document.querySelector(
-			'[data-cy="calendar-upcoming"]'
+		const pill = document.querySelector(
+			'[data-cy="calendar-upcoming-a1"]'
 		)!;
 		const quick = document.querySelector('#calendar-quick-panel')!;
 		expect(
-			upcoming.compareDocumentPosition(now) &
-				Node.DOCUMENT_POSITION_FOLLOWING
+			pill.compareDocumentPosition(now) & Node.DOCUMENT_POSITION_FOLLOWING
 		).toBeTruthy();
 		expect(
 			now.compareDocumentPosition(quick) &
