@@ -609,6 +609,48 @@ describe('Termine & Direkteinladungen (#2252)', () => {
 		);
 	});
 
+	it('edits who may enter of an invitation without appointment in the shared dialog', async () => {
+		const open: DirectLink = {
+			...flyer,
+			id: '11',
+			name: 'Offene Einladung',
+			access: 'accounts',
+			knock: true
+		};
+		vi.mocked(apiGetOwnDirectLinks).mockResolvedValue([open]);
+		vi.mocked(apiUpdateDirectLink).mockResolvedValue({
+			...open,
+			access: 'guests'
+		});
+		renderPage();
+		await screen.findByText('Offene Einladung');
+
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'directLink.list.edit:Offene Einladung'
+			})
+		);
+		/* Not the old editor, whose temporary switch could contradict the access. */
+		const dialog = await screen.findByTestId('invitation-dialog');
+		expect(screen.queryByTestId('direct-link-edit-dialog')).toBeNull();
+		fireEvent.click(
+			within(dialog).getByRole('button', {
+				name: 'directInvitation.dialog.access.guests'
+			})
+		);
+		fireEvent.click(
+			within(dialog).getByRole('button', {
+				name: 'directInvitation.dialog.saveAction'
+			})
+		);
+
+		await waitFor(() =>
+			expect(apiUpdateDirectLink).toHaveBeenCalledWith('11', {
+				accessMode: 'GUESTS_ONLY'
+			})
+		);
+	});
+
 	it('ignores a save that answers after its dialog was closed and another opened', async () => {
 		const other: DirectLink = {
 			...meeting,

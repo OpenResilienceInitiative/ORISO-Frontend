@@ -6825,6 +6825,7 @@
 	},
 	"directInvitation": {
 		"dialog": {
+			"roomNotEncrypted": "No invitation link can be created for this conversation because it is not encrypted.",
 			"createTitle": "Create direct invitation",
 			"editTitle": "Edit direct invitation",
 			"description": "Whoever opens the link comes straight to you. An appointment is optional.",

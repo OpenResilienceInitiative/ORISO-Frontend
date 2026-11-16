@@ -297,6 +297,25 @@ describe('AppointmentDateDialog', () => {
 			expect(onClose).not.toHaveBeenCalled();
 		});
 
+		it('says why when the conversation is not encrypted', async () => {
+			invite.mockRejectedValue(
+				new Response(
+					JSON.stringify({
+						reason: 'DIRECT_INVITATION_ROOM_NOT_ENCRYPTED'
+					}),
+					{ status: 409 }
+				)
+			);
+			openWithInvite();
+			fireEvent.click(inviteSwitch());
+			await clickButton(`${KEYS}.createAction`);
+
+			expect((await screen.findByRole('alert')).textContent).toBe(
+				'directInvitation.dialog.roomNotEncrypted'
+			);
+			expect(onClose).not.toHaveBeenCalled();
+		});
+
 		it('keeps the plain appointment when nobody else is invited', async () => {
 			openWithInvite();
 			await clickButton(`${KEYS}.createAction`);

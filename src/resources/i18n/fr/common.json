@@ -6910,6 +6910,7 @@
 	},
 	"directInvitation": {
 		"dialog": {
+			"roomNotEncrypted": "Aucun lien d'invitation ne peut être créé pour cette conversation, car elle n'est pas chiffrée.",
 			"createTitle": "Créer une invitation directe",
 			"editTitle": "Modifier l’invitation directe",
 			"description": "Toute personne qui ouvre le lien arrive directement chez vous. Un rendez-vous est facultatif.",

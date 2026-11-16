@@ -93,7 +93,7 @@ export const AppointmentDateDialog = ({
 			setSaving(false);
 			setError(
 				(await isRoomNotEncryptedError(cause))
-					? t('directInvitation.entry.roomNotEncrypted')
+					? t('directInvitation.dialog.roomNotEncrypted')
 					: t(
 							`sessionList.timeline.appointment.dialog.error.${
 								isConflict(cause) ? 'conflict' : 'failed'

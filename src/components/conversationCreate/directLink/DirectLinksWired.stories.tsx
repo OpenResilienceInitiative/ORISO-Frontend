@@ -147,6 +147,8 @@ export const CreateForOneOfTwoAgencies: Story = {
 			canvas.getByRole('button', { name: 'Link erstellen' })
 		);
 		await confirmInvitationDialog(canvasElement);
+		// A chat link open to both keeps a permanent account by default
+		// (Grilling 2026-10-27); only calls default to a temporary one.
 		await waitFor(() =>
 			expect(
 				directLinkMock().requests.find(
@@ -155,7 +157,7 @@ export const CreateForOneOfTwoAgencies: Story = {
 			).toEqual({
 				medium: 'CHAT',
 				topicId: 5,
-				temporary: true,
+				temporary: false,
 				name: 'Sozialberatung',
 				accessMode: 'BOTH',
 				knock: true,

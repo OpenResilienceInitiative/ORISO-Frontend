@@ -172,6 +172,54 @@ describe('InvitationDialog (#2252)', () => {
 			);
 		});
 
+		it('still saves an invitation whose appointment has started', async () => {
+			/* NOW is 12:00 on the 3rd: the appointment runs 11–13. */
+			open({
+				mode: 'edit',
+				initial: {
+					start: local(3, 11),
+					end: local(3, 13),
+					withAppointment: true,
+					validityMinutes: 1440,
+					access: 'both',
+					knock: true
+				}
+			});
+			toggle(`${KEYS}.knock`);
+			await click(`${KEYS}.saveAction`);
+
+			expect(screen.queryByRole('alert')).toBeNull();
+			expect(onSubmit).toHaveBeenCalledWith({
+				appointment: { start: local(3, 11), end: local(3, 13) },
+				link: { validityMinutes: 1440, access: 'both', knock: false },
+				/* Only what the counsellor changed is written back. */
+				changed: {
+					appointment: false,
+					validityMinutes: false,
+					access: false,
+					knock: true
+				}
+			});
+		});
+
+		it('refuses moving a started appointment to another past start', async () => {
+			open({
+				mode: 'edit',
+				initial: {
+					start: local(3, 11),
+					end: local(3, 13),
+					withAppointment: true
+				}
+			});
+			setTime('start', 10);
+			await click(`${KEYS}.saveAction`);
+
+			expect(screen.getByRole('alert').textContent).toBe(
+				`${SLOT}.error.past`
+			);
+			expect(onSubmit).not.toHaveBeenCalled();
+		});
+
 		it('refuses an empty time once a date is wanted', async () => {
 			open();
 			toggle(`${KEYS}.withAppointment`);

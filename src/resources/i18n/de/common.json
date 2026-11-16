@@ -6900,6 +6900,7 @@
 	},
 	"directInvitation": {
 		"dialog": {
+			"roomNotEncrypted": "Für dieses Gespräch kann kein Einladungslink erstellt werden, weil es nicht verschlüsselt ist.",
 			"createTitle": "Direkteinladung erstellen",
 			"editTitle": "Direkteinladung bearbeiten",
 			"description": "Wer den Link öffnet, kommt direkt zu Ihnen. Ein Termin ist optional.",

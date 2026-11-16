@@ -6877,6 +6877,7 @@
 	},
 	"directInvitation": {
 		"dialog": {
+			"roomNotEncrypted": "እቲ ዝርርብ ምስጢራዊ ስለ ዘይኮነ ናይ ዕድመ ሊንክ ክፍጠር ኣይከኣልን።",
 			"createTitle": "ናይ ቀጥታ መላግቦ ፍጠር",
 			"editTitle": "ናይ ቀጥታ መላግቦ ኣርም",
 			"description": "ነቲ ሊንክ ዝኸፈተ ዝኾነ ሰብ ብቐጥታ ናባኹም ይመጽእ። ቆጸራ ግዴታ ኣይኮነን።",

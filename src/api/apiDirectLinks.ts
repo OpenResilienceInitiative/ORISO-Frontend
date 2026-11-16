@@ -298,8 +298,24 @@ const readable = (value: unknown): DirectLink => {
 	return link;
 };
 
+/*
+ * One request at a time: the overview, the request pop-ups and an open
+ * conversation all reload on the same DIRECT_LINKS_CHANGED event (#2252).
+ * Nothing is kept once it has answered, so a later call always reads fresh.
+ */
+let ownDirectLinksRunning: Promise<DirectLink[]> | undefined;
+
 /** The caller's own links, newest first, switched-off ones included. */
 export const apiGetOwnDirectLinks = async (): Promise<DirectLink[]> => {
+	if (!ownDirectLinksRunning) {
+		ownDirectLinksRunning = fetchOwnDirectLinks().finally(() => {
+			ownDirectLinksRunning = undefined;
+		});
+	}
+	return [...(await ownDirectLinksRunning)];
+};
+
+const fetchOwnDirectLinks = async (): Promise<DirectLink[]> => {
 	let value: unknown;
 	try {
 		value = await fetchData({

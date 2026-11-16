@@ -2948,6 +2948,7 @@
 	},
 	"directInvitation": {
 		"dialog": {
+			"roomNotEncrypted": "Für dieses Gespräch kann kein Einladungslink erstellt werden, weil es nicht verschlüsselt ist.",
 			"description": "Wer den Link öffnet, kommt direkt zu dir. Ein Termin ist optional.",
 			"withoutAppointmentHint": "Ohne Termin bekommt jede Person ein eigenes Gespräch. Der Link gilt, bis du ihn löschst.",
 			"knockHint": "Du lässt jede Person selbst herein. Das lässt sich im Anruf ändern."

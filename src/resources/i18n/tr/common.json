@@ -6910,6 +6910,7 @@
 	},
 	"directInvitation": {
 		"dialog": {
+			"roomNotEncrypted": "Bu görüşme şifreli olmadığı için davet bağlantısı oluşturulamıyor.",
 			"createTitle": "Doğrudan davet oluştur",
 			"editTitle": "Doğrudan daveti düzenle",
 			"description": "Bağlantıyı açan herkes doğrudan size ulaşır. Randevu isteğe bağlıdır.",
