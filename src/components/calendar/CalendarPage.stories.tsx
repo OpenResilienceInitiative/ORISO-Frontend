@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import {
 	expect,
@@ -45,8 +45,10 @@ import {
 	OWN_ENTRIES,
 	STORY_NOW,
 	STORY_PROPOSALS,
+	STORY_REQUESTS,
 	STORY_WORKING_HOURS
 } from './calendarStoryData';
+import { publishReceivedProposalCount } from './calendarProposalCount';
 
 interface HarnessProps {
 	role?: CalendarRole;
@@ -62,6 +64,8 @@ interface HarnessProps {
 	fullscreen?: boolean;
 	switcherStyle?: ViewSwitcherStyle;
 	proposals?: MoveProposal[];
+	/** Proposals colleagues sent for one's own appointments. */
+	requests?: MoveProposal[];
 	withProposals?: boolean;
 	workingHours?: WorkingHours;
 	holidayRegion?: HolidayRegion | null;
@@ -72,11 +76,58 @@ interface HarnessProps {
 }
 
 /**
+ * Answers `GET /users/calendar/proposals` with the story's own proposals
+ * while the story is shown, so the navigation count agrees with the
+ * calendar. Installed during the first render: the navigation asks in its
+ * own effect, before this component's effects run.
+ */
+const useProposalFeed = (sent: MoveProposal[], received: MoveProposal[]) => {
+	const current = useRef({ sent, received });
+	current.current = { sent, received };
+	const restore = useRef<(() => void) | null>(null);
+	const install = () => {
+		const originalFetch = globalThis.fetch;
+		globalThis.fetch = async (input, init) => {
+			const url =
+				typeof input === 'string'
+					? input
+					: input instanceof URL
+						? input.toString()
+						: input.url;
+			const method = (
+				init?.method ??
+				(input instanceof Request ? input.method : 'GET')
+			).toUpperCase();
+			if (
+				method === 'GET' &&
+				new URL(url, window.location.href).pathname ===
+					'/service/users/calendar/proposals'
+			)
+				return new Response(JSON.stringify(current.current), {
+					status: 200,
+					headers: { 'content-type': 'application/json' }
+				});
+			return originalFetch(input, init);
+		};
+		restore.current = () => {
+			globalThis.fetch = originalFetch;
+			restore.current = null;
+		};
+	};
+	if (!restore.current) install();
+	useEffect(() => {
+		if (!restore.current) install();
+		return () => restore.current?.();
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+};
+
+/**
  * Stand-in for the UserService container: keeps entries, working hours and
  * proposals in local state, so every click works, and applies the Träger's
  * visibility the way UserService does (only colleagues in scope, redacted
- * entries). Proposals and "Beitreten" have no backend yet; only Storybook
- * passes their callbacks.
+ * entries). Proposals sent and received are answered here as UserService
+ * would; "Beitreten" has no backend yet, only Storybook passes it.
  */
 const Scenario = ({
 	role = 'consultant',
@@ -91,6 +142,7 @@ const Scenario = ({
 	fullscreen = false,
 	switcherStyle = 'menu',
 	proposals: initialProposals = [],
+	requests: initialRequests = [],
 	withProposals = true,
 	workingHours: initialHours = STORY_WORKING_HOURS,
 	holidayRegion: initialRegion = null,
@@ -111,6 +163,14 @@ const Scenario = ({
 		useState<DayExceptions>(initialExceptions);
 	const [proposals, setProposals] =
 		useState<MoveProposal[]>(initialProposals);
+	const [requests, setRequests] = useState<MoveProposal[]>(initialRequests);
+	// "Meine Termine" in the navigation counts them, as in the app: it asks
+	// UserService (answered here) and hears the calendar's own number.
+	useProposalFeed(proposals, requests);
+	useEffect(() => {
+		if (role === 'consultant')
+			publishReceivedProposalCount(requests.length);
+	}, [role, requests.length]);
 	const [feedToken, setFeedToken] = useState(0);
 	const [busyImport, setBusyImport] = useState<{
 		host?: string;
@@ -229,6 +289,37 @@ const Scenario = ({
 							)
 					: undefined
 			}
+			receivedProposals={requests}
+			onAcceptProposal={
+				withProposals
+					? (proposal) => {
+							// Like UserService: the appointment moves, the
+							// request is answered.
+							setOwn((all) =>
+								all.map((e) =>
+									e.id === proposal.entryId
+										? {
+												...e,
+												start: proposal.start,
+												end: proposal.end
+											}
+										: e
+								)
+							);
+							setRequests((all) =>
+								all.filter((p) => p.id !== proposal.id)
+							);
+						}
+					: undefined
+			}
+			onDeclineProposal={
+				withProposals
+					? (proposal) =>
+							setRequests((all) =>
+								all.filter((p) => p.id !== proposal.id)
+							)
+					: undefined
+			}
 			onJoin={withProposals ? fn() : undefined}
 			onStart={fn()}
 			onOpenChat={fn()}
@@ -286,7 +377,7 @@ const meta: Meta<typeof Harness> = {
 		docs: {
 			description: {
 				component:
-					'FE#1050 / ADR-032, round 2 after Frank\'s prototype (2026-11-14): built like "Gespräche" — left column with search (display filter at its left, as in "Gespräche"), kind chips, open requests, "Als Nächstes" and quick entry with date, start and duration; one row of people above the calendar (shown colleagues pressed, recently shown ones to switch back on, "Weitere …"); stage with header (+, view switch, full screen, ⋮), toolbar (‹ Heute ▾ ›) and the calendar. One colour per kind; working hours shaded; colleague entries with tooltip; pending move proposals dashed. Click an entry for its actions, double-click to move it. Drag over free time → "Eintragen als". Month view: click or drag days → "Tag eintragen". "Nebeneinander": one column per person. Proposals and "Beitreten" have no backend yet and appear only here. Sample data.'
+					'FE#1050 / ADR-032, round 2 after Frank\'s prototype (2026-11-14): built like "Gespräche" — left column with search (display filter at its left, as in "Gespräche"), kind chips, open requests, "Als Nächstes" and quick entry with date, start and duration; one row of people above the calendar (shown colleagues pressed, recently shown ones to switch back on, "Weitere …"); stage with header (+, view switch, full screen, ⋮), toolbar (‹ Heute ▾ ›) and the calendar. One colour per kind; working hours shaded; colleague entries with tooltip; pending move proposals dashed. Click an entry for its actions, double-click to move it. Drag over free time → "Eintragen als". Month view: click or drag days → "Tag eintragen". "Nebeneinander": one column per person. Move proposals both ways: one\'s own, dashed and withdrawable; colleagues\' proposals for one\'s own appointments at the top of "Offene Anfragen" with "Annehmen" / "Ablehnen", counted on "Meine Termine". "Beitreten" has no backend yet and appears only here. Sample data.'
 			}
 		}
 	},
@@ -758,6 +849,144 @@ export const ProposeMove: Story = {
 		await userEvent.click(await findCy('calendar-move-submit'));
 		const canvas = canvasOf(canvasElement);
 		await expect(await canvas.findByText('Offene Anfragen')).toBeTruthy();
+	}
+};
+
+/** The count on "Meine Termine" in the navigation, if any. */
+const navCount = (canvasElement: HTMLElement) =>
+	canvasElement.querySelector(
+		'a[href="/booking/events"] .navigation__item__count'
+	)?.textContent ?? null;
+
+/** A received proposal drawn in the grid at the proposed time. */
+const proposalEl = async (canvasElement: HTMLElement, id: string) => {
+	let el: HTMLElement | null = null;
+	await waitFor(() => {
+		el = canvasElement.querySelector<HTMLElement>(
+			`[data-proposal-id="${id}"]`
+		);
+		expect(el).toBeTruthy();
+	});
+	return el as unknown as HTMLElement;
+};
+
+export const ReceivedRequests: Story = {
+	name: 'Move proposal — received ("Annehmen" / "Ablehnen")',
+	args: { requests: STORY_REQUESTS },
+	play: async ({ canvasElement }) => {
+		const section = within(await findCy('calendar-requests'));
+		await expect(
+			section.getByRole('heading', { name: 'Offene Anfragen' })
+		).toBeTruthy();
+		// Who proposes what: old and new time, also for screen readers.
+		await expect(
+			section.getByRole('button', {
+				name: /^A\. Kaya schlägt vor, Ihren Termin .*10:00–11:00 auf .*15:00–16:00 zu verschieben$/
+			})
+		).toBeTruthy();
+		await expect(
+			section.getByRole('button', {
+				name: /^Vorschlag von A\. Kaya annehmen: .*10:00–11:00 auf .*15:00–16:00$/
+			})
+		).toBeTruthy();
+		await expect(
+			section.getByRole('button', {
+				name: /^Vorschlag von E\. Demir ablehnen: Der Termin bleibt .*09:00–10:00$/
+			})
+		).toBeTruthy();
+		// Dashed in the grid and named, not told by the line alone.
+		const dashed = await proposalEl(canvasElement, 'r1');
+		await expect(dashed.className).toContain('calEntry--proposal');
+		await expect(dashed.textContent).toContain('Vorschlag von A. Kaya');
+		await expect(dashed.getAttribute('aria-label')).toMatch(
+			/^Verschiebung · Vorschlag von A\. Kaya, .*15:00–16:00$/
+		);
+		// "Meine Termine" counts both.
+		await waitFor(() => expect(navCount(canvasElement)).toBe('2'));
+	}
+};
+
+export const AcceptRequest: Story = {
+	name: 'Move proposal — received, accept',
+	args: { requests: STORY_REQUESTS },
+	play: async ({ canvasElement }) => {
+		await userEvent.click(await findCy('calendar-received-accept-r1'));
+		await expect(
+			await body().findByText(
+				/^Verschoben auf .*15:00–16:00\. Die ratsuchende Person wird benachrichtigt\.$/
+			)
+		).toBeTruthy();
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector('[data-cy="calendar-received-r1"]')
+			).toBeNull()
+		);
+		// The appointment stands at the new time, the other request waits.
+		await waitFor(() =>
+			expect(
+				canvasElement
+					.querySelector(
+						'[data-entry-id="a1"]:not([data-proposal-id])'
+					)
+					?.getAttribute('aria-label')
+			).toMatch(/15:00–16:00$/)
+		);
+		await expect(
+			canvasElement.querySelector('[data-cy="calendar-received-r2"]')
+		).toBeTruthy();
+		await waitFor(() => expect(navCount(canvasElement)).toBe('1'));
+	}
+};
+
+export const DeclineRequest: Story = {
+	name: 'Move proposal — received, decline from the grid',
+	args: { requests: STORY_REQUESTS },
+	play: async ({ canvasElement }) => {
+		await userEvent.click(await proposalEl(canvasElement, 'r2'));
+		const menu = within(await findCy('calendar-menu-request'));
+		await expect(menu.getByText('Verschiebung vorgeschlagen')).toBeTruthy();
+		await userEvent.click(
+			menu.getByRole('menuitem', { name: /^Ablehnen/ })
+		);
+		await expect(
+			await body().findByText(
+				/^Vorschlag abgelehnt\. Der Termin bleibt .*09:00–10:00\.$/
+			)
+		).toBeTruthy();
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector('[data-proposal-id="r2"]')
+			).toBeNull()
+		);
+		await expect(
+			canvasElement.querySelector('[data-cy="calendar-received-r1"]')
+		).toBeTruthy();
+		await waitFor(() => expect(navCount(canvasElement)).toBe('1'));
+	}
+};
+
+export const PhoneRequests: Story = {
+	name: 'Move proposal — received, phone 390 px (the sheet holds it)',
+	globals: phone390Globals,
+	args: { compact: true, requests: STORY_REQUESTS.slice(0, 1) },
+	play: async () => {
+		await findCy('calendar-sheet');
+		const sheet = within(cyEl('calendar-sheet'));
+		await expect(sheet.getByText('Offene Anfragen')).toBeTruthy();
+		await userEvent.click(
+			sheet.getByRole('button', {
+				name: /^Vorschlag von A\. Kaya annehmen/
+			})
+		);
+		await expect(
+			await body().findByText(/^Verschoben auf .*15:00–16:00/)
+		).toBeTruthy();
+		// Nothing left to answer: the sheet goes.
+		await waitFor(() =>
+			expect(
+				document.body.querySelector('[data-cy="calendar-sheet"]')
+			).toBeNull()
+		);
 	}
 };
 

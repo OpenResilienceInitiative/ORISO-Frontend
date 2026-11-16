@@ -337,3 +337,33 @@ export const FEED_URL =
 export const STORY_PROPOSALS: MoveProposal[] = [
 	{ id: 'p1', entryId: 'k1', start: at(0, 16), end: at(0, 17) }
 ];
+
+/**
+ * Proposals colleagues sent for one's own appointments ("Offene Anfragen",
+ * receiving side): A. Kaya would move ruhiges_yak's video call to the
+ * afternoon, E. Demir stiller_fuchs's visit to Thursday.
+ */
+export const STORY_REQUESTS: MoveProposal[] = [
+	{
+		id: 'r1',
+		entryId: 'a1',
+		start: at(0, 15),
+		end: at(0, 16),
+		entryStart: at(0, 10),
+		entryEnd: at(0, 11),
+		proposerId: 'kaya',
+		proposerName: 'A. Kaya',
+		approverId: ME
+	},
+	{
+		id: 'r2',
+		entryId: 'a3',
+		start: at(3, 11),
+		end: at(3, 12),
+		entryStart: at(1, 9),
+		entryEnd: at(1, 10),
+		proposerId: 'demir',
+		proposerName: 'E. Demir',
+		approverId: ME
+	}
+];
