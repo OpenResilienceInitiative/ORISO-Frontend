@@ -6977,6 +6977,11 @@
 			"colleagueHint": "Meslektaşlarınızın yalnızca saatini ve türünü görürsünüz."
 		},
 		"moved": "{{date}} tarihine taşındı. Danışana bildirim gönderilir.",
+		"movePast": "Bir randevu geçmişe taşınamaz.",
+		"moveConflict": {
+			"title": "Yine de taşınsın mı?",
+			"confirm": "Yine de taşı"
+		},
 		"blockerMoved": "Kapalı zaman {{date}} tarihine taşındı.",
 		"cancelled": "Randevu iptal edildi. Danışana bildirim gönderilir.",
 		"created": "Randevu oluşturuldu: {{date}}",

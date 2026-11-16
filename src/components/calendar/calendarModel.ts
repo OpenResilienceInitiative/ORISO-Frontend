@@ -172,6 +172,32 @@ export const findConflicts = (
 	);
 };
 
+/**
+ * What stands against moving an entry to a new time (review 4577641945).
+ * An appointment never moves into the past, as it cannot be created
+ * there (UserService refuses it too). Own entries the new time overlaps
+ * are named, so the page can ask first, as creating does; a blocker, like
+ * a new one, only collides with what is not a blocker.
+ */
+export type MoveProblem =
+	| { type: 'past' }
+	| { type: 'conflict'; conflicts: CalendarEntry[] };
+
+export const moveProblem = (
+	entry: CalendarEntry,
+	range: { start: Date; end: Date },
+	entries: CalendarEntry[],
+	ownerId: string,
+	now: Date
+): MoveProblem | null => {
+	if (entry.type !== 'blocker' && range.start.getTime() < now.getTime())
+		return { type: 'past' };
+	const conflicts = findConflicts(range, entries, ownerId, entry.id).filter(
+		(other) => entry.type !== 'blocker' || other.type !== 'blocker'
+	);
+	return conflicts.length ? { type: 'conflict', conflicts } : null;
+};
+
 /** The next own entries from now on, for "Als Nächstes". */
 export const upcomingEntries = (
 	entries: CalendarEntry[],

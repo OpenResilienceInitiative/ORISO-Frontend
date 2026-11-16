@@ -6977,6 +6977,11 @@
 			"colleagueHint": "Pour vos collègues, vous ne voyez que l’horaire et le type."
 		},
 		"moved": "Déplacé au {{date}}. La personne en quête de conseils est prévenue.",
+		"movePast": "Un rendez-vous ne peut pas être déplacé dans le passé.",
+		"moveConflict": {
+			"title": "Déplacer quand même ?",
+			"confirm": "Déplacer quand même"
+		},
 		"blockerMoved": "Plage bloquée déplacée au {{date}}.",
 		"cancelled": "Rendez-vous annulé. La personne en quête de conseils est prévenue.",
 		"created": "Rendez-vous créé : {{date}}",

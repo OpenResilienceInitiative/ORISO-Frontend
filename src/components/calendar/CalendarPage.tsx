@@ -20,6 +20,7 @@ import { M3Snackbar } from '../m3Snackbar/M3Snackbar';
 import {
 	DEFAULT_VISIBILITY,
 	isSoon,
+	moveProblem,
 	upcomingEntries,
 	type AppointmentDraft,
 	type AppointmentKind,
@@ -41,6 +42,7 @@ import { SlotActionMenu, type SlotChoice } from './SlotActionMenu';
 import { AppointmentDialog } from './AppointmentDialog';
 import { BlockerDialog } from './BlockerDialog';
 import { EntryDetailsDialog } from './EntryDetailsDialog';
+import { MoveConflictDialog } from './MoveConflictDialog';
 import {
 	CalendarSyncDialog,
 	type CalendarFeed,
@@ -138,6 +140,11 @@ export const CalendarPage = ({
 	} | null>(null);
 	const [dialog, setDialog] = useState<Dialog>(null);
 	const [notice, setNotice] = useState<Notice | null>(null);
+	/** A move onto other entries waits for this answer. */
+	const [moveAsk, setMoveAsk] = useState<{
+		conflicts: CalendarEntry[];
+		answer: (go: boolean) => void;
+	} | null>(null);
 
 	const colleagueNames = useMemo(
 		() => Object.fromEntries(colleagues.map((c) => [c.id, c.displayName])),
@@ -199,7 +206,26 @@ export const CalendarPage = ({
 		});
 	};
 
+	/**
+	 * A move runs the checks creating does: never into the past for an
+	 * appointment, and a question first when it lands on other entries.
+	 * Refused or not confirmed, the entry goes back and no notice says it
+	 * moved (review 4577641945).
+	 */
 	const move = (entry: CalendarEntry, start: Date, end: Date) => {
+		const problem = moveProblem(entry, { start, end }, entries, ownerId, now);
+		if (problem?.type === 'past') {
+			setNotice({ message: t('calendar.movePast') });
+			return false;
+		}
+		if (problem?.type === 'conflict')
+			return new Promise<boolean>((answer) =>
+				setMoveAsk({ conflicts: problem.conflicts, answer })
+			).then((go) => go && commitMove(entry, start, end));
+		return commitMove(entry, start, end);
+	};
+
+	const commitMove = (entry: CalendarEntry, start: Date, end: Date) => {
 		if (onMove?.(entry, start, end) === false) return false;
 		setNotice({
 			message: t(
@@ -481,6 +507,20 @@ export const CalendarPage = ({
 					onSaveImport={(url) => onSaveImport?.(url)}
 					onRemoveImport={() => onRemoveImport?.()}
 					onClose={() => setDialog(null)}
+				/>
+			)}
+			{moveAsk && (
+				<MoveConflictDialog
+					conflicts={moveAsk.conflicts}
+					fullScreen={compact}
+					onConfirm={() => {
+						moveAsk.answer(true);
+						setMoveAsk(null);
+					}}
+					onCancel={() => {
+						moveAsk.answer(false);
+						setMoveAsk(null);
+					}}
 				/>
 			)}
 			{notice && (
