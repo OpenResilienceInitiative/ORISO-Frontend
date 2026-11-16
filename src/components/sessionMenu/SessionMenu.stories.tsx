@@ -379,3 +379,38 @@ export const SupervisorHasNoCalls: Story = {
 		).toBeNull();
 	}
 };
+
+/**
+ * FE#2250: the owning counsellor of a 1:1 chat finds "Beratung übergeben"
+ * directly below "Weitere Beratung empfehlen". It opens the same handover
+ * dialog as the profile button (pinned by SessionMenu.caseHandover.test.tsx).
+ */
+export const CaseHandoverBelowRecommend: Story = {
+	name: 'Owner — Beratung übergeben below the recommendation',
+	tags: ['autodocs', '!needs-data'],
+	parameters: { router: { initialPath: stageRoute } },
+	args: {
+		hasUserInitiatedStopOrLeaveRequest,
+		isAskerInfoAvailable: true
+	},
+	decorators: [withStage],
+	play: async ({ canvasElement }) => {
+		const flyout = await openTheKebab(canvasElement);
+		const rows = Array.from(
+			flyout.querySelectorAll<HTMLElement>(
+				'.sessionMenu__item.chatMenuDropdown__item'
+			)
+		);
+		const recommendAt = rows.findIndex(
+			(row) =>
+				row.dataset.cy === 'session-menu-recommend-further-counselling'
+		);
+		await expect(recommendAt).toBeGreaterThanOrEqual(0);
+		await expect(rows[recommendAt + 1]?.dataset.cy).toBe(
+			'session-menu-case-handover'
+		);
+		await expect(rows[recommendAt + 1]?.textContent).toContain(
+			'Beratung übergeben'
+		);
+	}
+};

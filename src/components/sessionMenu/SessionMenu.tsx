@@ -118,6 +118,9 @@ import {
 	canRecommendFurtherCounselling
 } from '../furtherCounselling/furtherCounsellingRules';
 import { RecommendFurtherCounsellingDialog } from '../furtherCounselling/RecommendFurtherCounsellingDialog';
+import { ReactComponent as HandoverIcon } from '../../resources/img/icons/case_handover_200_24px.svg';
+import { useCaseHandoverOffer } from '../caseHandover/useCaseHandoverOffer';
+import { CaseHandoverOffer } from '../caseHandover/CaseHandoverOffer';
 import { getGroupChatInfoLink } from '../groupChat/groupChatInfoLink';
 
 export interface SessionMenuProps {
@@ -256,6 +259,10 @@ export const SessionMenu = (props: SessionMenuProps) => {
 	});
 	const showRecommendFurtherCounselling = showRequestAdvice;
 	const [recommendDialogOpen, setRecommendDialogOpen] = useState(false);
+	// FE#2250: "Beratung übergeben" — same audience as the recommend item,
+	// same offer flow (and pending state) as the profile button.
+	const showCaseHandover = showRequestAdvice;
+	const caseHandover = useCaseHandoverOffer();
 	const showEndTopicDuplicate =
 		!activeSession.isGroup &&
 		Boolean(activeSession.isSession) &&
@@ -360,6 +367,11 @@ export const SessionMenu = (props: SessionMenuProps) => {
 	const handleRecommendFurtherCounselling = () => {
 		closeMenu();
 		setRecommendDialogOpen(true);
+	};
+
+	const handleCaseHandover = () => {
+		closeMenu();
+		caseHandover.handleOpen();
 	};
 
 	const handleEndTopicDuplicate = () => {
@@ -1058,6 +1070,37 @@ export const SessionMenu = (props: SessionMenuProps) => {
 								</div>
 							)}
 
+							{showCaseHandover && (
+								<div
+									className="sessionMenu__item chatMenuDropdown__item"
+									onClick={handleCaseHandover}
+									role="button"
+									tabIndex={0}
+									onKeyDown={(event) => {
+										if (
+											event.key === 'Enter' ||
+											event.key === ' '
+										) {
+											event.preventDefault();
+											event.currentTarget.click();
+										}
+									}}
+									data-cy="session-menu-case-handover"
+								>
+									<SessionMenuItemContent
+										icon={
+											<HandoverIcon
+												aria-hidden="true"
+												focusable="false"
+											/>
+										}
+										title={translate(
+											'caseHandover.offer.open'
+										)}
+									/>
+								</div>
+							)}
+
 							{showEndTopicDuplicate && (
 								<div
 									className="sessionMenu__item chatMenuDropdown__item"
@@ -1256,6 +1299,12 @@ export const SessionMenu = (props: SessionMenuProps) => {
 						);
 						setOverlayActive(true);
 					}}
+				/>
+			)}
+			{showCaseHandover && (
+				<CaseHandoverOffer
+					handover={caseHandover}
+					presentation="dialog"
 				/>
 			)}
 			<NotificationConfigDialog
