@@ -435,9 +435,6 @@
 		"assignedCalendars": {
 			"iframeTitle": "Calendriers assignés"
 		},
-		"calcom": {
-			"loading": "Chargement de {{calLink}}"
-		},
 		"reschedule": {
 			"iframeTitle": "Reporter le rendez-vous"
 		},

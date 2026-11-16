@@ -418,9 +418,6 @@
 		"assignedCalendars": {
 			"iframeTitle": "Assigned calendars"
 		},
-		"calcom": {
-			"loading": "Loading {{calLink}}"
-		},
 		"reschedule": {
 			"iframeTitle": "Reschedule appointment"
 		},

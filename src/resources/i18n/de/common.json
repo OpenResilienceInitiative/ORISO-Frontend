@@ -430,9 +430,6 @@
 		"assignedCalendars": {
 			"iframeTitle": "Zugewiesene Kalender"
 		},
-		"calcom": {
-			"loading": "Wird geladen: {{calLink}}"
-		},
 		"reschedule": {
 			"iframeTitle": "Termin verschieben"
 		},

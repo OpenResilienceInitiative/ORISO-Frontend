@@ -1,11 +1,7 @@
 import { useContext, useEffect, useState } from 'react';
-import { apiGetAskerSessionList } from '../../../api';
-import {
-	AUTHORITIES,
-	hasUserAuthority,
-	UserDataContext
-} from '../../../globalState';
-import { ListItemInterface } from '../../../globalState/interfaces';
+import { apiGetAskerSessionList } from '../api';
+import { AUTHORITIES, hasUserAuthority, UserDataContext } from '../globalState';
+import { ListItemInterface } from '../globalState/interfaces';
 
 export const useAskerHasAssignedConsultant = () => {
 	const { userData } = useContext(UserDataContext);

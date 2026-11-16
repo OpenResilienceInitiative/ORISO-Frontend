@@ -19,7 +19,7 @@ import { PracticeBanner } from '../../practice/PracticeBanner';
 import { PracticeSurface } from '../../practice/PracticeSurface';
 import { TwoFactorNag } from '../twoFactorAuth/TwoFactorNag';
 import { useAppConfig } from '../../hooks/useAppConfig';
-import { useAskerHasAssignedConsultant } from '../../containers/bookings/hooks/useAskerHasAssignedConsultant';
+import { useAskerHasAssignedConsultant } from '../../hooks/useAskerHasAssignedConsultant';
 import { TermsAndConditions } from '../termsandconditions/TermsAndConditions';
 import NotFound from '../notFound/NotFound';
 import { SessionsZone } from './SessionsZone';

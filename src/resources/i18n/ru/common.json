@@ -435,9 +435,6 @@
 		"assignedCalendars": {
 			"iframeTitle": "Назначенные календари"
 		},
-		"calcom": {
-			"loading": "Загрузка {{calLink}}"
-		},
 		"reschedule": {
 			"iframeTitle": "Перенести встречу"
 		},
