@@ -1,6 +1,6 @@
 import { getCounsellingDpaFailure } from '../../api/counsellingDpaFailure';
 import * as React from 'react';
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Overlay, OVERLAY_FUNCTIONS, OverlayItem } from '../overlay/Overlay';
@@ -103,6 +103,8 @@ export const RequestSessionAssign = (props: { value?: string }) => {
 		}
 	}, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+	const assignInFlight = useRef(false);
+
 	const initOverlays = (selected) => {
 		if (selected?.value === activeSession?.consultant?.id) return;
 
@@ -178,6 +180,11 @@ export const RequestSessionAssign = (props: { value?: string }) => {
 	const handleOverlayAction = (buttonFunction: string) => {
 		switch (buttonFunction) {
 			case OVERLAY_FUNCTIONS.ASSIGN:
+				// The confirmation stays clickable while the request runs; a
+				// second click must not send a duplicate assignment whose
+				// rejection would wipe the success notice.
+				if (assignInFlight.current) break;
+				assignInFlight.current = true;
 				apiSessionAssign(activeSession.item.id, selectedOption.value)
 					.then(() => {
 						showAssignSuccess();
@@ -220,6 +227,9 @@ export const RequestSessionAssign = (props: { value?: string }) => {
 						// the confirmation closes and the select snaps back.
 						setOverlayItem(null);
 						setOverlayActive(false);
+					})
+					.finally(() => {
+						assignInFlight.current = false;
 					});
 				break;
 			case ASSIGN_DONE:

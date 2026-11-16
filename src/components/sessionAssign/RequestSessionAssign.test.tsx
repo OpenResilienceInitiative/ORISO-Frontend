@@ -245,6 +245,28 @@ describe('RequestSessionAssign — confirm assigns through the supported endpoin
 		expect(await screen.findByText('Zugewiesen.')).toBeTruthy();
 	});
 
+	it('sends only one assignment request when confirm is clicked twice while pending', async () => {
+		let resolveAssign: () => void = () => undefined;
+		vi.mocked(apiSessionAssign).mockImplementationOnce(
+			() =>
+				new Promise<void>((resolve) => {
+					resolveAssign = resolve;
+				}) as any
+		);
+		renderAssign();
+
+		await pick(OTHER.label);
+		const confirm = await screen.findByText('Zuweisen');
+		fireEvent.click(confirm);
+		fireEvent.click(confirm);
+
+		expect(apiSessionAssign).toHaveBeenCalledTimes(1);
+
+		resolveAssign();
+		expect(await screen.findByText('Zugewiesen.')).toBeTruthy();
+		expect(apiSessionAssign).toHaveBeenCalledTimes(1);
+	});
+
 	it('does not promise the full message history in the confirmation', async () => {
 		renderAssign();
 
