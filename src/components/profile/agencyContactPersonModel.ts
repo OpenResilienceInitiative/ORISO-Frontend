@@ -10,10 +10,11 @@ const KEY = 'profile.data.agency.contactPerson';
  * One plain address only. Every address shown here ends up in a `mailto:`
  * href, so anything that could add recipients, headers or a body (`?`, `&`,
  * `,`, `;`, whitespace, angle brackets) is rejected rather than escaped: the
- * address is then shown as text, without a link.
+ * address is then shown as text, without a link. `%` is rejected too: a mail
+ * client decodes it, so `a%2Bb@x` would write to a different mailbox than shown.
  */
 const PLAIN_EMAIL_PATTERN =
-	/^[^\s@?&#,;<>"']+@[^\s@?&#,;<>"']+\.[^\s@?&#,;<>"']+$/;
+	/^[^\s@?&#,;<>"'%]+@[^\s@?&#,;<>"'%]+\.[^\s@?&#,;<>"'%]+$/;
 
 export const toMailAddress = (value: unknown): string | null => {
 	const email = typeof value === 'string' ? value.trim() : '';

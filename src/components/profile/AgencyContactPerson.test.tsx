@@ -169,12 +169,12 @@ describe('AgencyContactPerson (ORISO-Admin#1534)', () => {
 		}
 	);
 
-	it('shows an address that is not one plain address as text, never as a link', () => {
-		renderIt({
-			source: 'OWN',
-			people: [person({ email: 'a@example.org,b@example.org' })]
-		});
-		expect(screen.getByText('a@example.org,b@example.org')).toBeTruthy();
+	it.each([
+		['several recipients', 'a@example.org,b@example.org'],
+		['a percent-encoded character', 'sales%2Bvip@example.org']
+	])('shows an address with %s as text, never as a link', (_label, email) => {
+		renderIt({ source: 'OWN', people: [person({ email })] });
+		expect(screen.getByText(email)).toBeTruthy();
 		expect(screen.queryByRole('link')).toBeNull();
 	});
 
