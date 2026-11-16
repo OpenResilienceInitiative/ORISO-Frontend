@@ -2382,6 +2382,12 @@
 	}
 }
 
+// In the grid it is as small as the title beside it.
+.calEntry .calendarSoon {
+	font-size: 11px;
+	line-height: 16px;
+}
+
 // In the side list the row is not filled, so the cue takes the accent.
 .calendarSide__row .calendarSoon {
 	flex: none;
