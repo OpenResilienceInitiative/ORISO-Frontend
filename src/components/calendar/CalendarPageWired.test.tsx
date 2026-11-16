@@ -20,6 +20,7 @@ import { CalendarPageWired } from './CalendarPageWired';
 import { TooManyDayExceptions } from './calendarWorkingHours';
 import { ProposalNoLongerValid } from './calendarActions';
 import { onReceivedProposalCount } from './calendarProposalCount';
+import { notifyAppointmentsChanged } from '../sessionsList/timeline/conversationAppointments';
 
 let props: CalendarPageProps;
 vi.mock('./CalendarPage', () => ({
@@ -1581,7 +1582,25 @@ describe('CalendarPageWired — move proposals (contract v1)', () => {
 	});
 
 	it('keeps what it shows when the proposals cannot load', async () => {
+		await ready();
+		// A later reload fails: the lists stay as they were.
 		api.apiGetCalendarProposals.mockRejectedValue(new Error('CATCH_ALL'));
+		const loads = api.apiGetCalendarProposals.mock.calls.length;
+		act(() => notifyAppointmentsChanged());
+		await waitFor(() =>
+			expect(
+				api.apiGetCalendarProposals.mock.calls.length
+			).toBeGreaterThan(loads)
+		);
+		await act(async () => undefined);
+		expect(props.proposals).toEqual([
+			expect.objectContaining({ id: 'p-sent' })
+		]);
+		expect(props.receivedProposals).toEqual([
+			expect.objectContaining({ id: 'p-in' })
+		]);
+		cleanup();
+		// Failing from the start, the page still opens, with nothing to answer.
 		render(<CalendarPageWired />);
 		await showWeek();
 		await waitFor(() => expect(props.state).toBe('ready'));
