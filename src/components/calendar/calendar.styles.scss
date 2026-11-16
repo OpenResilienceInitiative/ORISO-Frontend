@@ -1585,8 +1585,11 @@ $cal-new-pill-hover: #4b4f51;
 
 // "+ Neu", who is shown with the title, then the view and the round
 // buttons; a thin line below (prototype v17).
+// `flex: none`: on the phone the buttons wrap to a second row, and the
+// stage column must not squeeze the header back to one row's height.
 .calendarStage__header {
 	display: flex;
+	flex: none;
 	flex-wrap: wrap;
 	align-items: center;
 	gap: 10px;
