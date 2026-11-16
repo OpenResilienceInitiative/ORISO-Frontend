@@ -21,6 +21,7 @@ import { TooManyDayExceptions } from './calendarWorkingHours';
 import { ProposalNoLongerValid } from './calendarActions';
 import { onReceivedProposalCount } from './calendarProposalCount';
 import { notifyAppointmentsChanged } from '../sessionsList/timeline/conversationAppointments';
+import { startVideoCallState } from '../call/startCallIntent';
 
 let props: CalendarPageProps;
 vi.mock('./CalendarPage', () => ({
@@ -1299,10 +1300,13 @@ describe('CalendarPageWired', () => {
 	});
 
 	describe('starting a call (review 4577642137)', () => {
-		const appointment = (sessionId: number): CalendarEntry => ({
+		const appointment = (
+			sessionId: number,
+			kind: CalendarEntry['kind'] = 'video'
+		): CalendarEntry => ({
 			id: `a${sessionId}`,
 			type: 'appointment',
-			kind: 'video',
+			kind,
 			start: '2026-11-16T09:00:00Z',
 			end: '2026-11-16T10:00:00Z',
 			ownerId: 'me',
@@ -1319,7 +1323,8 @@ describe('CalendarPageWired', () => {
 				await props.onStart?.(appointment(4401));
 			});
 			expect(navigate).toHaveBeenCalledWith(
-				'/sessions/consultant/sessionView/!room:oriso/4401'
+				'/sessions/consultant/sessionView/!room:oriso/4401',
+				{ state: startVideoCallState(4401) }
 			);
 			expect(rooms.apiGetSessionRoomBySessionId).not.toHaveBeenCalled();
 		});
@@ -1336,7 +1341,59 @@ describe('CalendarPageWired', () => {
 				777
 			);
 			expect(navigate).toHaveBeenCalledWith(
-				'/sessions/consultant/sessionView/!far:oriso/777'
+				'/sessions/consultant/sessionView/!far:oriso/777',
+				{ state: startVideoCallState(777) }
+			);
+		});
+
+		// FE#1050 item 5: only "Video-Call starten" asks the conversation to
+		// start its call; everything else only opens it.
+		it('"Video-Call starten" asks the conversation to start its video call; "Zum Chat" only opens it', async () => {
+			await listed();
+			await act(async () => {
+				await props.onStart?.(appointment(4401));
+			});
+			expect(navigate).toHaveBeenLastCalledWith(
+				'/sessions/consultant/sessionView/!room:oriso/4401',
+				{ state: { startVideoCall: { sessionId: 4401 } } }
+			);
+			navigate.mockClear();
+			await act(async () => {
+				await props.onOpenChat?.(appointment(4401));
+			});
+			expect(navigate).toHaveBeenCalledTimes(1);
+			expect(navigate).toHaveBeenCalledWith(
+				'/sessions/consultant/sessionView/!room:oriso/4401'
+			);
+		});
+
+		it.each(['phone', 'chat'] as const)(
+			'only opens the conversation for a %s appointment',
+			async (kind) => {
+				await listed();
+				await act(async () => {
+					await props.onStart?.(appointment(4401, kind));
+				});
+				expect(navigate).toHaveBeenCalledTimes(1);
+				expect(navigate).toHaveBeenCalledWith(
+					'/sessions/consultant/sessionView/!room:oriso/4401'
+				);
+			}
+		);
+
+		it('asks nothing of the conversation for an advice seeker', async () => {
+			consultant = false;
+			rooms.apiGetSessionRoomBySessionId.mockResolvedValueOnce({
+				sessions: [{ session: { id: 777, matrixRoomId: '!far:oriso' } }]
+			} as never);
+			render(<CalendarPageWired />);
+			await waitFor(() => expect(props.role).toBe('asker'));
+			await act(async () => {
+				await props.onStart?.(appointment(777));
+			});
+			expect(navigate).toHaveBeenCalledTimes(1);
+			expect(navigate).toHaveBeenCalledWith(
+				'/sessions/user/view/!far:oriso/777'
 			);
 		});
 

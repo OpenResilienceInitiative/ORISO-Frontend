@@ -94,6 +94,7 @@ import {
 	appointmentConversationPath,
 	appointmentRoomOf
 } from './appointmentConversation';
+import { startVideoCallState } from '../call/startCallIntent';
 import {
 	DEFAULT_VISIBILITY,
 	type AppointmentDraft,
@@ -681,20 +682,33 @@ export const CalendarPageWired = () => {
 		loadProposals();
 	};
 
-	const openRoom = (roomId: string, sessionId: number) =>
-		navigate(appointmentConversationPath(roomId, sessionId, consultant));
+	const openRoom = (
+		roomId: string,
+		sessionId: number,
+		startCall: boolean
+	) => {
+		const path = appointmentConversationPath(roomId, sessionId, consultant);
+		if (startCall)
+			navigate(path, { state: startVideoCallState(sessionId) });
+		else navigate(path);
+	};
 
 	/**
 	 * Opens the conversation an appointment belongs to: from the list at
 	 * once, else by its session id, for one the list does not hold (shared
 	 * access, a handover, an archived one, a page still loading). Rejects
 	 * when there is no room, so the page can say so (review 4577642137).
+	 * With `startCall`, the conversation is asked to start its video call
+	 * with its own checks (FE#1050).
 	 */
-	const start = (entry: CalendarEntry): Promise<void> | undefined => {
+	const openConversation = (
+		entry: CalendarEntry,
+		startCall = false
+	): Promise<void> | undefined => {
 		const { sessionId } = entry;
 		const listed = conversationOf(sessionId);
 		if (listed?.matrixRoomId) {
-			openRoom(listed.matrixRoomId, listed.sessionId);
+			openRoom(listed.matrixRoomId, listed.sessionId, startCall);
 			return undefined;
 		}
 		if (sessionId === undefined)
@@ -702,9 +716,17 @@ export const CalendarPageWired = () => {
 				new Error('appointment without conversation')
 			);
 		return appointmentRoomOf(sessionId).then((roomId) =>
-			openRoom(roomId, sessionId)
+			openRoom(roomId, sessionId, startCall)
 		);
 	};
+
+	/**
+	 * "Video-Call starten" starts the call: the conversation opens and its
+	 * own call button takes the request up (Frank, 2026-11-16). Only a
+	 * counsellor starts calls; other kinds and askers open the conversation.
+	 */
+	const start = (entry: CalendarEntry) =>
+		openConversation(entry, consultant && entry.kind === 'video');
 
 	// Working hours, holiday region and day exceptions show the change at
 	// once; a failed save puts the stored state back and rejects, so the
@@ -930,7 +952,7 @@ export const CalendarPageWired = () => {
 			onSaveDayException={consultant ? saveDayException : undefined}
 			onDeleteDayException={consultant ? deleteDayException : undefined}
 			onStart={start}
-			onOpenChat={start}
+			onOpenChat={(entry) => openConversation(entry)}
 			onCopyFeed={(url) => navigator.clipboard?.writeText(url)}
 			// Each sync action rejects on failure, so the dialog can say so.
 			onResetFeed={() => apiResetCalendarFeed().then(setSync)}
