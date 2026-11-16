@@ -6,6 +6,25 @@
 // it as a 4px stripe on the left. The per-kind properties stay, so a kind
 // could get its own colour again in one place.
 
+// --- The chosen kind: sidebar chips, quick entry, dialog tiles and tabs ---
+// One place for the v17 maroon (review 4589304546). m3Sweep allows no
+// text role such as --m3-on-primary-fixed as a background and no M3
+// surface role has this colour, so the ORISO brand token stands in, as in
+// the navigation.
+@mixin calendar-chosen($border: false, $icons: false) {
+	@if $border {
+		border-color: var(--oriso-on-primary-fixed, #410001);
+	}
+	background: var(--oriso-on-primary-fixed, #410001);
+	color: #ffffff;
+
+	@if $icons {
+		svg {
+			color: #ffffff;
+		}
+	}
+}
+
 // --- Kind colours, for the grid, the menus and the peek cards ---
 .calendarPage,
 .calendarView,
@@ -1303,12 +1322,7 @@ $cal-avatar-tones: (#2f5d5a, #7a0e2a, #4b4f7a, #6d3d63, #7a5a1e, #36576e);
 
 	&[aria-pressed='true'] {
 		padding: 0 14px 0 12px;
-		background: #410001;
-		color: #ffffff;
-
-		svg {
-			color: #ffffff;
-		}
+		@include calendar-chosen($icons: true);
 	}
 
 	// On the phone the chips sit on the white stage.
@@ -1319,7 +1333,7 @@ $cal-avatar-tones: (#2f5d5a, #7a0e2a, #4b4f7a, #6d3d63, #7a5a1e, #36576e);
 	}
 
 	.calendarPage--compact &[aria-pressed='true'] {
-		background: #410001;
+		@include calendar-chosen;
 	}
 }
 
@@ -1973,13 +1987,7 @@ $cal-avatar-tones: (#2f5d5a, #7a0e2a, #4b4f7a, #6d3d63, #7a5a1e, #36576e);
 }
 
 .calendarQuick__kind[aria-pressed='true'] {
-	border-color: #410001;
-	background: #410001;
-	color: #ffffff;
-
-	svg {
-		color: #ffffff;
-	}
+	@include calendar-chosen($border: true, $icons: true);
 }
 
 .calendarQuick__person {
@@ -2030,8 +2038,7 @@ $cal-avatar-tones: (#2f5d5a, #7a0e2a, #4b4f7a, #6d3d63, #7a5a1e, #36576e);
 	cursor: pointer;
 
 	&[aria-pressed='true'] {
-		background: #410001;
-		color: #ffffff;
+		@include calendar-chosen;
 	}
 
 	&:focus-visible {
@@ -3492,9 +3499,7 @@ $cal-new-pill-hover: #4b4f51;
 	}
 
 	&[aria-pressed='true'] {
-		border-color: #410001;
-		background: #410001;
-		color: #ffffff;
+		@include calendar-chosen($border: true);
 	}
 
 	&:focus-visible {
@@ -3550,8 +3555,7 @@ $cal-new-pill-hover: #4b4f51;
 	}
 
 	&[aria-pressed='true'] {
-		background: #410001;
-		color: #ffffff;
+		@include calendar-chosen;
 	}
 
 	&:focus-visible {
