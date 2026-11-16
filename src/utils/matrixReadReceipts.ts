@@ -12,6 +12,16 @@
  *   whenever one member never opens the room.
  */
 
+/**
+ * The event is not readable yet: still encrypted, or its decryption failed
+ * (the SDK then reports a synthetic `m.room.message`). A read receipt for it
+ * would claim a message was read that the person could not see (FE#1802).
+ */
+export const awaitsDecryption = (event: any): boolean =>
+	event?.getType?.() === 'm.room.encrypted' ||
+	(event?.isEncrypted?.() === true &&
+		event?.isDecryptionFailure?.() === true);
+
 const myUserIdOf = (room: any): string =>
 	room?.myUserId || room?.client?.getUserId?.() || '';
 

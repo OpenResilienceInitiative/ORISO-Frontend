@@ -1,6 +1,6 @@
 import React from 'react';
 import { M3Dialog } from '../m3Dialog/M3Dialog';
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, within, waitFor } from 'storybook/test';
 import { CompactActionMenu } from './CompactActionMenu';
 import { ChatMenuDropdownItem } from './ChatMenuDropdown';

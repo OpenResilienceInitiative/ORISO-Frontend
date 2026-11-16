@@ -11,7 +11,7 @@ import {
 import { buildExtendedSession, ExtendedSessionInterface } from '../globalState';
 import { FETCH_ERRORS } from '../api';
 import { chatTransportService } from '../services/chatTransportService';
-import { isRoomUnread } from '../utils/sessionUnread';
+import { hasUnreadLatestEvent, isRoomUnread } from '../utils/sessionUnread';
 import { apiGetChatRoomById } from '../api/apiGetChatRoomById';
 import { apiGetCaseHandoverCandidates } from '../api/apiCaseHandover';
 import {
@@ -335,7 +335,12 @@ export const useSession = (
 		// hard-coded constant and must not gate the receipt. Sessions without
 		// a Matrix room cannot publish a receipt and are a safe no-op.
 		const { matrixRoomId } = chatTransportService.resolveSession(session);
-		if (matrixRoomId && isRoomUnread(matrixRoomId)) {
+		// FE#1802: `hasUnreadLatestEvent` also covers an encrypted message
+		// whose unread count is only computed after decryption.
+		if (
+			matrixRoomId &&
+			(isRoomUnread(matrixRoomId) || hasUnreadLatestEvent(matrixRoomId))
+		) {
 			chatTransportService.markRoomAsRead(matrixRoomId).catch(() => {});
 		}
 	}, [session]);

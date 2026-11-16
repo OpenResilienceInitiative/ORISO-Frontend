@@ -1,4 +1,4 @@
-import { Meta, StoryObj } from '@storybook/react';
+import { Meta, StoryObj } from '@storybook/react-vite';
 import { Headline } from './Headline';
 
 const headlineLevelOptions = [1, 2, 3, 4, 5] as const;

@@ -205,9 +205,9 @@ function SessionsListToolbarPlayground({
 const meta: Meta = {
 	title: 'Components/Session/List/SessionsListToolbar',
 	tags: ['autodocs'],
+	globals: { backgrounds: { value: 'gray' } },
 	parameters: {
 		layout: 'fullscreen',
-		backgrounds: { default: 'gray' },
 		design: [
 			{
 				type: 'figma',
