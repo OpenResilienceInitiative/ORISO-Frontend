@@ -460,6 +460,22 @@ describe("CalendarPage — one's own calendar still loading (review 4576368852)"
 	});
 });
 
+describe('CalendarPage — saved hours not loaded (review 4581640874)', () => {
+	const freeSpans = () =>
+		document.querySelectorAll('.calendarSplit__free').length;
+
+	it('shows nothing as "alle frei" while the saved hours are unknown', () => {
+		page({ initialView: 'split', workingHoursLoaded: false });
+		expect(screen.getByTestId('calendar-split-view')).toBeTruthy();
+		expect(freeSpans()).toBe(0);
+	});
+
+	it('still shows "alle frei" once they are in, also when none are saved', () => {
+		page({ initialView: 'split', workingHoursLoaded: true });
+		expect(freeSpans()).toBeGreaterThan(0);
+	});
+});
+
 describe('CalendarPage — bands count what the kind filter hides (review 4576423989)', () => {
 	it('hands the grid a hidden colleague blocker for the bands, not for display', async () => {
 		const kayaCall: CalendarEntry = {

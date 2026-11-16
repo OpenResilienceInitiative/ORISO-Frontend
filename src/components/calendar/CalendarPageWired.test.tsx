@@ -1071,6 +1071,40 @@ describe('CalendarPageWired', () => {
 		expect(props.entries.map((e) => e.id)).toEqual(['a1']);
 	});
 
+	it('says free time is unknown while the saved hours did not load, and tries them again (review 4581640874)', async () => {
+		api.apiGetCalendarWorkingHours.mockRejectedValueOnce(new Error('503'));
+		render(<CalendarPageWired />);
+		await showWeek();
+		await waitFor(() => expect(props.state).toBe('ready'));
+		// This week's entries are in; the hours are not: no free hour from
+		// 08:00–18:00.
+		await waitFor(() => expect(props.freeHoursState).toBe('failed'));
+		expect(props.workingHoursLoaded).toBe(false);
+		expect(api.apiGetCalendarWorkingHours).toHaveBeenCalledTimes(1);
+		// The retry next to the free hours asks for the hours again.
+		await act(async () => props.onRetryFreeHours?.());
+		expect(api.apiGetCalendarWorkingHours).toHaveBeenCalledTimes(2);
+		await waitFor(() => expect(props.freeHoursState).toBe('ready'));
+		expect(props.workingHoursLoaded).toBe(true);
+		expect(props.workingHours).toHaveLength(2);
+		expect(props.workingHours).toEqual(
+			expect.arrayContaining([
+				{ weekday: 2, start: '08:00', end: '16:00' },
+				{ weekday: 1, start: '08:00', end: '18:00' }
+			])
+		);
+	});
+
+	it('says free time is still loading while the saved hours are on their way (review 4581640874)', async () => {
+		api.apiGetCalendarWorkingHours.mockReturnValueOnce(
+			new Promise(() => undefined)
+		);
+		render(<CalendarPageWired />);
+		await showWeek();
+		await waitFor(() => expect(props.state).toBe('ready'));
+		expect(props.freeHoursState).toBe('loading');
+	});
+
 	it('keeps a colleague whose calendar did not load apart from an empty one (review 4575917303)', async () => {
 		api.apiGetColleagueCalendarEntries
 			.mockRejectedValueOnce(new Error('503'))

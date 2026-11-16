@@ -212,7 +212,8 @@ export interface CalendarPageProps {
 	/**
 	 * The saved schedule has loaded. Until then (or when loading failed)
 	 * neither the dialog nor the grips edit it, so an unloaded schedule is
-	 * never saved as an empty one (review 4574779938).
+	 * never saved as an empty one (review 4574779938), and no time is
+	 * "alle frei": free time needs the saved hours (review 4581640874).
 	 */
 	workingHoursLoaded?: boolean;
 	/** Single dates with their own hours ("Nur an diesem Tag"). */
@@ -2161,6 +2162,9 @@ export const CalendarPage = ({
 							]}
 							now={now}
 							workingPlan={workingPlan}
+							workingPlanUnknown={
+								role === 'consultant' && !workingHoursLoaded
+							}
 							onEdgeChange={gripsOn ? onEdgeChange : undefined}
 							hourPx={slotPx * 2}
 							proposals={gridProposals}

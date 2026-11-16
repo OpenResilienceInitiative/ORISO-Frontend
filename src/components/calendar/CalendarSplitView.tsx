@@ -180,6 +180,12 @@ export interface CalendarSplitViewProps {
 	now: Date;
 	/** Weekly hours, day exceptions and the holiday region. */
 	workingPlan?: WorkingPlan;
+	/**
+	 * The saved hours did not load (or not yet): nothing is "alle frei",
+	 * since free time would come from 08:00–18:00 instead of the saved
+	 * hours, pauses, exceptions and holidays (review 4581640874).
+	 */
+	workingPlanUnknown?: boolean;
 	/** A grip in one's own column was moved; without it none is drawn. */
 	onEdgeChange?: (
 		change: EdgeChange,
@@ -242,6 +248,7 @@ export const CalendarSplitView = ({
 	loading = [],
 	now,
 	workingPlan,
+	workingPlanUnknown = false,
 	onEdgeChange,
 	proposals = [],
 	highlight,
@@ -314,7 +321,8 @@ export const CalendarSplitView = ({
 	// A shown calendar is missing or still loading, one's own included:
 	// nobody is known to be free (reviews 4575917303, 4576368852).
 	const unknownIds = new Set(unavailable);
-	const missing = people.some((p) => unknownIds.has(p.id));
+	const missing =
+		workingPlanUnknown || people.some((p) => unknownIds.has(p.id));
 	const shownDays: SplitDay[] = useMemo(
 		() =>
 			Array.from({ length: days }, (_, i) => {

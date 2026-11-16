@@ -185,6 +185,13 @@ export const CalendarPageWired = () => {
 	const [plan, setPlan] = useState<WorkingPlan>();
 	/** The saved schedule has loaded: until then it cannot be edited. */
 	const [planLoaded, setPlanLoaded] = useState(false);
+	/**
+	 * The saved schedule did not load. Free time is then unknown, not
+	 * 08:00–18:00: the fallback knows no saved hours, pauses, exceptions
+	 * or holidays (review 4581640874).
+	 */
+	const [planFailed, setPlanFailed] = useState(false);
+	const planRequest = useRef(0);
 	/** The plan as UserService last confirmed it; failures go back to it. */
 	const confirmed = useRef<WorkingPlan | undefined>(undefined);
 	/** Owners: the latest weekly save, the latest save per date. */
@@ -444,6 +451,32 @@ export const CalendarPageWired = () => {
 		};
 	}, [loadConversations]);
 
+	/**
+	 * The saved schedule. Without an answer the calendar shades nothing, as
+	 * with none set, and the schedule stays closed for editing: saving it
+	 * would write a default over the stored one (review 4574779938). A read
+	 * that answers after an edit changes nothing (review 4574779933). A
+	 * failure leaves free time unknown and offers a retry (review
+	 * 4581640874).
+	 */
+	const loadPlan = useCallback(() => {
+		const generation = ++planRequest.current;
+		const edits = planEdits.current;
+		setPlanFailed(false);
+		apiGetCalendarWorkingHours().then(
+			(dto) => {
+				if (generation !== planRequest.current) return;
+				const loaded = workingPlanFromApi(dto);
+				confirmed.current = loaded;
+				if (planEdits.current === edits) setPlan(loaded);
+				setPlanLoaded(true);
+			},
+			() => {
+				if (generation === planRequest.current) setPlanFailed(true);
+			}
+		);
+	}, []);
+
 	useEffect(() => {
 		let cancelled = false;
 		if (consultant) {
@@ -459,26 +492,28 @@ export const CalendarPageWired = () => {
 				(dto) => !cancelled && setSync(dto),
 				() => undefined
 			);
-			// Without an answer the calendar shades nothing, as with none set,
-			// and the schedule stays closed for editing: saving it would
-			// write a default over the stored one (review 4574779938). A read
-			// that answers after an edit changes nothing (review 4574779933).
-			const edits = planEdits.current;
-			apiGetCalendarWorkingHours().then(
-				(dto) => {
-					if (cancelled) return;
-					const loaded = workingPlanFromApi(dto);
-					confirmed.current = loaded;
-					if (planEdits.current === edits) setPlan(loaded);
-					setPlanLoaded(true);
-				},
-				() => undefined
-			);
+			loadPlan();
 		}
 		return () => {
 			cancelled = true;
+			// Unmounted: a late plan answer changes nothing.
+			planRequest.current += 1;
 		};
-	}, [consultant]);
+	}, [consultant, loadPlan]);
+
+	/**
+	 * Free time needs this week's entries and the saved schedule. Without
+	 * the schedule it is unknown, said with the free hours' own wording and
+	 * retry, never computed from 08:00–18:00 (review 4581640874).
+	 */
+	const planState: FreeHoursState =
+		!consultant || planLoaded ? 'ready' : planFailed ? 'failed' : 'loading';
+	const freeHours: FreeHoursState =
+		freeHoursState === 'failed' || planState === 'failed'
+			? 'failed'
+			: freeHoursState === 'loading' || planState === 'loading'
+				? 'loading'
+				: 'ready';
 
 	const conversationOf = (sessionId?: number) =>
 		conversations.find((c) => c.sessionId === sessionId);
@@ -865,8 +900,11 @@ export const CalendarPageWired = () => {
 			onRetryColleagues={() =>
 				failedColleagues.forEach((id) => loadColleague(id))
 			}
-			freeHoursState={freeHoursState}
-			onRetryFreeHours={loadNearby}
+			freeHoursState={freeHours}
+			onRetryFreeHours={() => {
+				if (planFailed) loadPlan();
+				if (freeHoursFailed.current) loadNearby();
+			}}
 			onRetry={() => {
 				setState('loading');
 				load();
