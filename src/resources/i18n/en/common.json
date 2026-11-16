@@ -2786,13 +2786,6 @@
 		},
 		"data": {
 			"agency": {
-				"adminContact": {
-					"error": "The admins of this counselling centre could not be loaded. Please try again later.",
-					"fallbackName": "Centre admin",
-					"link": "Contact the counselling centre admin",
-					"none": "No admin is reachable by chat – please contact the platform administration.",
-					"supportEmail": "Support address:"
-				},
 				"contactPerson": {
 					"title": "Contact person",
 					"deputy": "Deputy",
@@ -2810,7 +2803,10 @@
 						"text": "Please contact support:",
 						"none": "Please contact the platform administration."
 					},
-					"traegerContactEmail": "General contact address of the organisation"
+					"traegerContactEmail": "General contact address of the organisation",
+					"loading": "Loading the contact person …",
+					"loadError": "The contact person could not be loaded right now.",
+					"chatFallbackName": "Centre contact person"
 				},
 				"label": "Beratungsstelle",
 				"registrationLink": {

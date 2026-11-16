@@ -2810,13 +2810,6 @@
 		},
 		"data": {
 			"agency": {
-				"adminContact": {
-					"error": "Die Admins dieser Beratungsstelle konnten nicht geladen werden. Bitte später erneut versuchen.",
-					"fallbackName": "Beratungsstellen-Admin",
-					"link": "Beratungsstellen-Admin kontaktieren",
-					"none": "Kein Admin per Chat erreichbar – bitte wende dich an die Plattformverwaltung.",
-					"supportEmail": "Support-Adresse:"
-				},
 				"contactPerson": {
 					"title": "Ansprechperson",
 					"deputy": "Vertretung",
@@ -2834,7 +2827,10 @@
 						"text": "Bitte wenden Sie sich an den Support:",
 						"none": "Bitte wenden Sie sich an die Plattformverwaltung."
 					},
-					"traegerContactEmail": "Allgemeine Kontaktadresse des Trägers"
+					"traegerContactEmail": "Allgemeine Kontaktadresse des Trägers",
+					"loading": "Ansprechperson wird geladen …",
+					"loadError": "Die Ansprechperson konnte gerade nicht geladen werden.",
+					"chatFallbackName": "Ansprechperson der Beratungsstelle"
 				},
 				"label": "Beratungsstelle",
 				"registrationLink": {

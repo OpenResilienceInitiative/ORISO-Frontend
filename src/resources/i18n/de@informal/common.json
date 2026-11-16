@@ -852,6 +852,14 @@
 				"overlay": {
 					"headline": "Du hast Dich erfolgreich für ein neues Themenfeld registriert."
 				}
+			},
+			"agency": {
+				"contactPerson": {
+					"support": {
+						"text": "Bitte wende dich an den Support:",
+						"none": "Bitte wende dich an die Plattformverwaltung."
+					}
+				}
 			}
 		},
 		"documentation": {

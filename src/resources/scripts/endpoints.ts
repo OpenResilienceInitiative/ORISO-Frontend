@@ -117,9 +117,6 @@ export const endpoints = {
 	groupChatBase: userServiceOrigin + '/service/users/chat/',
 	internalSubsetChat:
 		userServiceOrigin + '/service/users/chat/internal-subset',
-	agencyAdminContacts: (agencyId: number) =>
-		userServiceOrigin +
-		`/service/users/agencies/${agencyId}/admin-contacts`,
 	agencyContactPerson: (agencyId: number) =>
 		userServiceOrigin +
 		`/service/users/agencies/${agencyId}/contact-person`,
