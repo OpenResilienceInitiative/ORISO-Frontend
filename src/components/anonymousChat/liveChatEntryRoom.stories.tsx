@@ -24,6 +24,7 @@ import {
 	phone390Globals,
 	tablet834Globals
 } from '../message/messageStoryShell';
+import { revealHoverArrow } from '../hoverScrollArrows/hoverScrollArrowsStoryPlay';
 import { expectWaitingRoomLayout } from '../app/registrationLoader/waitingRoomLayoutContract';
 import { storyLegalLinks as legalLinks } from '../waitingRoom/storyLegalLinks';
 
@@ -510,4 +511,19 @@ export const StepClosedMobile: StoryObj = {
 	globals: phone375Globals,
 	render: () => <Closed />,
 	parameters: { layout: 'fullscreen' }
+};
+
+/* Hover arrows (2026-11-11): hover the right edge of the cards on desktop. */
+export const StepWaitingHoverArrows: StoryObj = {
+	globals: desktop1440Globals,
+	name: 'B — Warteraum: Pfeile beim Darüberfahren (Desktop, Maus)',
+	render: () => <Waiting />,
+	play: async ({ canvasElement }) => {
+		await expectWaitingRoomLayout(canvasElement, { cards: true });
+		await revealHoverArrow(
+			canvasElement,
+			'end',
+			'handover-carousel-arrows'
+		);
+	}
 };

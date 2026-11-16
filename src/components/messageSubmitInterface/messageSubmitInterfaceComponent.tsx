@@ -123,6 +123,11 @@ import {
 } from '../../api';
 import { ComposerContextBar } from './ComposerContextBar';
 import {
+	ComposerPendingQuotes,
+	CONTEXT_BAR_STEP_PX,
+	type ComposerPendingQuote
+} from './ComposerPendingQuotes';
+import {
 	MessageSubmitInfo,
 	MessageSubmitInfoInterface
 } from './MessageSubmitInfo';
@@ -315,6 +320,19 @@ export interface MessageSubmitInterfaceComponentProps {
 	replyTo?: { eventId: string; author: string; text: string } | null;
 	onCancelReply?: () => void;
 	/**
+	 * Selection reply: answers to marked passages collected for the next send.
+	 * Each one shows as its own numbered reply bar above the editor.
+	 */
+	pendingQuotes?: ComposerPendingQuote[];
+	onRemovePendingQuote?: (id: string) => void;
+	/**
+	 * Selection reply: the composer's send while answers are collected. All
+	 * collected passages and the typed text (markdown, '' when none) leave
+	 * as ONE message; the send button is ready even while the editor is
+	 * empty.
+	 */
+	onSendPendingQuotes?: (typedText: string) => void;
+	/**
 	 * Editing (m.replace, #435): when set, the composer prefills this
 	 * message's text and the next send edits it in place instead of sending
 	 * a new message.
@@ -506,6 +524,9 @@ export const MessageSubmitInterfaceComponent = ({
 	threadParentPreview,
 	replyTo,
 	onCancelReply,
+	pendingQuotes,
+	onRemovePendingQuote,
+	onSendPendingQuotes,
 	editingMessage,
 	onCancelEdit,
 	mobileUnreadCount = 0,
@@ -620,6 +641,19 @@ export const MessageSubmitInterfaceComponent = ({
 		reason: Extract<AttachmentFailureReason, 'tooLarge' | 'format'>;
 	} | null>(null);
 	const [isRequestInProgress, setIsRequestInProgress] = useState(false);
+	// An archived chat re-opening before a send. Its own flag: unlike
+	// isRequestInProgress it must not pause draft saving, since the user
+	// can keep typing (or switch chats) meanwhile.
+	const [isDearchiving, setIsDearchiving] = useState(false);
+	const dearchivingRef = useRef(false);
+	const holdWhileDearchiving = (pending: Promise<unknown>) => {
+		dearchivingRef.current = true;
+		setIsDearchiving(true);
+		return pending.finally(() => {
+			dearchivingRef.current = false;
+			setIsDearchiving(false);
+		});
+	};
 	const [attachmentUpload, setAttachmentUpload] =
 		useState<AttachmentUploadControl | null>(null);
 	const [editorState, setEditorState] = useState(EditorState.createEmpty());
@@ -1128,6 +1162,25 @@ export const MessageSubmitInterfaceComponent = ({
 		setVoicePreviewUrl(null);
 		removeSelectedAttachment();
 	}, [removeSelectedAttachment, voicePreviewUrl]);
+
+	// The card's file right now. A send that settles late clears the card
+	// only if it still shows what that send took (or nothing): a file staged
+	// meanwhile, maybe in another chat, stays.
+	const attachmentSelectedRef = useRef<File | null>(null);
+	attachmentSelectedRef.current = attachmentSelected;
+	// A refused file shows on the card too, without being selected.
+	const attachmentRejectionRef = useRef(attachmentRejection);
+	attachmentRejectionRef.current = attachmentRejection;
+	const cleanupSentAttachment = useCallback(
+		(sent: File | null) => {
+			const staged = attachmentSelectedRef.current;
+			if ((staged && staged !== sent) || attachmentRejectionRef.current) {
+				return;
+			}
+			cleanupAttachment();
+		},
+		[cleanupAttachment]
+	);
 
 	const cleanupVoiceRecorder = useCallback(() => {
 		if (voiceRecordingTimerRef.current) {
@@ -1851,7 +1904,8 @@ export const MessageSubmitInterfaceComponent = ({
 											caption: message,
 											mentionedUserIds:
 												extractMentionedUserIds(
-													composerRef.current?.getHTML()
+													rawMessage ??
+														composerRef.current?.getHTML()
 												)
 										}
 									: {}),
@@ -1917,7 +1971,11 @@ export const MessageSubmitInterfaceComponent = ({
 				// before it is cleared by handleMessageSendSuccess.
 				const mentionedUserIds = retryOfId
 					? retryMentionedUserIds || []
-					: extractMentionedUserIds(composerRef.current?.getHTML());
+					: // The text that is sent, not the composer: it may show
+						// another chat by now (archived chat re-opening).
+						extractMentionedUserIds(
+							rawMessage ?? composerRef.current?.getHTML()
+						);
 				await apiSendMessage(
 					message,
 					sendToRoomWithId,
@@ -1946,7 +2004,7 @@ export const MessageSubmitInterfaceComponent = ({
 						// A retried text send owns no attachment: it must not
 						// drop a voice take that is under review.
 						if (!retryOfId) {
-							cleanupAttachment();
+							cleanupSentAttachment(attachment);
 						}
 						// Reply context is consumed by the send (#435).
 						if (!retryOfId) {
@@ -2005,12 +2063,12 @@ export const MessageSubmitInterfaceComponent = ({
 				handleMessageSendSuccess(
 					preserveComposerOnSuccess || leftChatDuringSend
 				);
-				cleanupAttachment();
+				cleanupSentAttachment(attachment);
 			}
 		},
 		[
 			activeSession,
-			cleanupAttachment,
+			cleanupSentAttachment,
 			draftScope,
 			encryptRoom,
 			hasMessageContent,
@@ -2050,7 +2108,9 @@ export const MessageSubmitInterfaceComponent = ({
 				mentionedUserIds: string[];
 				targetRoomId?: string | null;
 				feedbackMailIntent?: boolean;
-			}
+			},
+			/** Leave the composer as it is after the send (it moved on). */
+			keepComposer = false
 		) => {
 			// A file refused on the card has to be dealt with first: sending the
 			// text alone next to it would read as if the file had gone too.
@@ -2074,6 +2134,7 @@ export const MessageSubmitInterfaceComponent = ({
 				!retryOfId && attachment && recordedVoice?.file === attachment
 			);
 			const preserveComposerOnSuccess =
+				keepComposer ||
 				(isRecordedVoiceSend &&
 					hasMessageContent(currentTypedMessage)) ||
 				Boolean(
@@ -2284,9 +2345,13 @@ export const MessageSubmitInterfaceComponent = ({
 			!activeSession.isGroup
 	);
 	const handleButtonClickRef = useRef<() => unknown>(() => undefined);
+	// The chat this composer shows now; a send that settles later checks it
+	// before it clears anything.
+	const shownSessionIdRef = useRef(activeSession.item.id);
+	shownSessionIdRef.current = activeSession.item.id;
 
 	const handleButtonClick = useCallback(() => {
-		if (uploadProgress || isRequestInProgress) {
+		if (uploadProgress || isRequestInProgress || dearchivingRef.current) {
 			return null;
 		}
 		if (retentionGate.gate(() => handleButtonClickRef.current())) {
@@ -2298,6 +2363,11 @@ export const MessageSubmitInterfaceComponent = ({
 			stopVoiceRecording();
 			return null;
 		}
+		// The same guards as every other send: a refused file on the card
+		// blocks it, and so does text past the length limit.
+		if (attachmentRejection) {
+			return null;
+		}
 		if (
 			!recordedVoiceRef.current &&
 			getPlainTextFromComposerValue(getTypedMarkdownMessage()).length >
@@ -2305,14 +2375,82 @@ export const MessageSubmitInterfaceComponent = ({
 		) {
 			return null;
 		}
-
 		if (isSessionArchived && !allowDearchive) {
-			// #1824: never re-open a conversation from outside it.
+			// #1824: never re-open a conversation from outside it. Collected
+			// quotes wait behind the same gate as every other send.
 			return null;
 		}
+		// An active edit goes out as the edit; the queued quotes wait.
+		const isEditing = Boolean(editingMessage || editingMessageId);
+		const sendsQuotes = Boolean(
+			pendingQuotes?.length && onSendPendingQuotes && !isEditing
+		);
+		if (sendsQuotes && !recordedVoiceRef.current && !attachmentSelected) {
+			// Selection reply: every collected passage and the typed text
+			// leave together, as one message.
+			const typed = getTypedMarkdownMessage();
+			const text = hasMessageContent(typed) ? typed : '';
+			const sentFromSessionId = activeSession.item.id;
+			const sendQuotes = () => {
+				onSendPendingQuotes!(text);
+				// Clear only what went out, and only in the chat it went to:
+				// text typed while the chat was re-opening, or another chat
+				// opened meanwhile, stays in the composer and its draft.
+				if (
+					shownSessionIdRef.current !== sentFromSessionId ||
+					getTypedMarkdownMessage() !== typed
+				) {
+					return;
+				}
+				setEditorState(EditorState.createEmpty());
+				setComposerText('');
+				composerRef.current?.clear();
+				void clearDraftMessage();
+			};
+			if (isSessionArchived) {
+				// Re-open first; the draft stays if that fails. A second
+				// press while it runs must not send the quotes twice.
+				holdWhileDearchiving(apiPutDearchive(activeSession.item.id))
+					.then(() => {
+						sendQuotes();
+						reloadActiveSession();
+					})
+					.catch(() => {});
+			} else {
+				sendQuotes();
+			}
+			return null;
+		}
+		// A composer voice note or file still goes as its own message,
+		// right after the collected quotes.
+		const sendQuotesAlone = () => {
+			if (sendsQuotes) {
+				onSendPendingQuotes!('');
+			}
+		};
+
 		if (isSessionArchived) {
-			apiPutDearchive(activeSession.item.id)
-				.then(prepareAndSendMessage)
+			// What goes out is what was typed here when send was pressed: the
+			// person may type on, or open another chat, while this one
+			// re-opens, and that text must neither become this file's caption
+			// nor be cleared by it.
+			const typedAtPress = getTypedMarkdownMessage();
+			const sentFromSessionId = activeSession.item.id;
+			// Hold further presses while the chat re-opens; the send itself
+			// then takes over with isRequestInProgress (prepareAndSendMessage).
+			holdWhileDearchiving(apiPutDearchive(activeSession.item.id))
+				.then(() => {
+					sendQuotesAlone();
+					const movedOn =
+						shownSessionIdRef.current !== sentFromSessionId ||
+						getTypedMarkdownMessage() !== typedAtPress;
+					return prepareAndSendMessage(
+						typedAtPress,
+						undefined,
+						undefined,
+						movedOn
+					);
+				})
 				.then(() => {
 					reloadActiveSession();
 					if (
@@ -2320,6 +2458,13 @@ export const MessageSubmitInterfaceComponent = ({
 					) {
 						// Short timeout to wait for RC events finished
 						setTimeout(() => {
+							// Someone who opened another chat meanwhile
+							// stays there.
+							if (
+								shownSessionIdRef.current !== sentFromSessionId
+							) {
+								return;
+							}
 							if (window.innerWidth >= 900) {
 								navigate(
 									`${listPath}/${activeSession.item.matrixRoomId}/${activeSession.item.id}`
@@ -2335,15 +2480,24 @@ export const MessageSubmitInterfaceComponent = ({
 					// console.error(error);
 				});
 		} else {
+			sendQuotesAlone();
 			prepareAndSendMessage().then();
 		}
 	}, [
 		activeSession.item.matrixRoomId,
 		activeSession.item.id,
+		attachmentRejection,
+		attachmentSelected,
+		clearDraftMessage,
+		editingMessage,
+		editingMessageId,
 		getTypedMarkdownMessage,
+		hasMessageContent,
 		navigate,
 		isRequestInProgress,
 		isVoiceRecording,
+		onSendPendingQuotes,
+		pendingQuotes,
 		allowDearchive,
 		isSessionArchived,
 		listPath,
@@ -4156,7 +4310,19 @@ export const MessageSubmitInterfaceComponent = ({
 	// Keep the existing 196/180px baseline, then grow with the rendered TipTap
 	// content up to fourteen lines. Beyond that the editor scrolls, while the
 	// drag handle can still explicitly make the composer taller.
-	const hasContextBar = Boolean(replyTo || editingMessage);
+	const hasPendingQuotes = Boolean(pendingQuotes?.length);
+	// Every bar beyond the first adds one 32px bar + 4px gap to the reserve.
+	const contextBarCount =
+		(pendingQuotes?.length || 0) +
+		(replyTo ? 1 : 0) +
+		(editingMessage ? 1 : 0);
+	const contextStackExtra =
+		hasPendingQuotes && contextBarCount > 1
+			? (contextBarCount - 1) * CONTEXT_BAR_STEP_PX
+			: 0;
+	const hasContextBar = Boolean(
+		replyTo || editingMessage || hasPendingQuotes
+	);
 	const flushContextBarReserve =
 		flushCorner && hasContextBar && !isMobileViewport
 			? FLUSH_CONTEXT_BAR_RESERVE
@@ -4371,7 +4537,19 @@ export const MessageSubmitInterfaceComponent = ({
 				</div>
 			)}
 
-			<form className="textarea" onSubmit={handleFormSubmit}>
+			<form
+				className="textarea"
+				onSubmit={handleFormSubmit}
+				// On the phone the stacked bars rest above the card, so the
+				// form (not only the card) needs the stack's extra height.
+				style={
+					contextStackExtra
+						? ({
+								'--context-stack-extra': `${contextStackExtra}px`
+							} as React.CSSProperties)
+						: undefined
+				}
+			>
 				<div
 					className={clsx(
 						'textarea__wrapper',
@@ -4386,7 +4564,7 @@ export const MessageSubmitInterfaceComponent = ({
 								'textarea__wrapper-send-message--ready',
 							(isComposerSelected || isVoiceRecording) &&
 								'textarea__wrapper-send-message--selected',
-							(replyTo || editingMessage) &&
+							hasContextBar &&
 								'textarea__wrapper-send-message--withContextBar',
 							isExpandedComposer &&
 								'textarea__wrapper-send-message--expanded',
@@ -4418,25 +4596,49 @@ export const MessageSubmitInterfaceComponent = ({
 					>
 						{/* Relations foundation (#435): what the next send refers to.
 						    Inside the card, between drag handle and editor. */}
-						{replyTo && (
-							<ComposerContextBar
-								kind="reply"
-								lead={replyTo.author}
-								quote={replyTo.text}
-								statusLabel={`${translate('message.reply.previewLabel')} ${replyTo.author}`}
-								cancelLabel={translate('message.reply.cancel')}
-								onCancel={onCancelReply}
-							/>
-						)}
-						{editingMessage && (
-							<ComposerContextBar
-								kind="edit"
-								lead={translate('message.edit.previewLabel')}
-								quote={editingMessage.text}
-								cancelLabel={translate('message.edit.cancel')}
-								onCancel={onCancelEdit}
-							/>
-						)}
+						{(() => {
+							const relationBars = (
+								<>
+									{replyTo && (
+										<ComposerContextBar
+											kind="reply"
+											lead={replyTo.author}
+											quote={replyTo.text}
+											statusLabel={`${translate('message.reply.previewLabel')} ${replyTo.author}`}
+											cancelLabel={translate(
+												'message.reply.cancel'
+											)}
+											onCancel={onCancelReply}
+										/>
+									)}
+									{editingMessage && (
+										<ComposerContextBar
+											kind="edit"
+											lead={translate(
+												'message.edit.previewLabel'
+											)}
+											quote={editingMessage.text}
+											cancelLabel={translate(
+												'message.edit.cancel'
+											)}
+											onCancel={onCancelEdit}
+										/>
+									)}
+								</>
+							);
+							// Selection reply: several bars stack in one
+							// column; a lone reply/edit bar keeps its place.
+							return hasPendingQuotes ? (
+								<ComposerPendingQuotes
+									quotes={pendingQuotes || []}
+									onRemove={onRemovePendingQuote}
+								>
+									{relationBars}
+								</ComposerPendingQuotes>
+							) : (
+								relationBars
+							);
+						})()}
 						{/* Frank (03.11.): on the phone the format tools rest in a
 						    grey box above the card, built like the reply bar. */}
 						{isMobileViewport && !isCompactActionStripOpen && (
@@ -5172,7 +5374,8 @@ export const MessageSubmitInterfaceComponent = ({
 											onSubmitShortcut={() => {
 												if (
 													!uploadProgress &&
-													!isRequestInProgress
+													!isRequestInProgress &&
+													!dearchivingRef.current
 												) {
 													handleButtonClick();
 												}
@@ -5194,8 +5397,17 @@ export const MessageSubmitInterfaceComponent = ({
 								type="submit"
 								onSend={handleButtonClick}
 								state={deriveSendButtonState({
-									hasContent: canSendMessage,
-									isSending: isRequestInProgress,
+									hasContent:
+										canSendMessage ||
+										Boolean(
+											pendingQuotes?.length &&
+												onSendPendingQuotes &&
+												!isEditingAnyMessage &&
+												!attachmentRejection &&
+												!isMessageOverLimit
+										),
+									isSending:
+										isRequestInProgress || isDearchiving,
 									isDisabled:
 										!!uploadProgress || isVoiceRecording
 								})}
