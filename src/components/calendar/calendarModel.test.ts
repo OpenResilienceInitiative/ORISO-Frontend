@@ -3,6 +3,7 @@ import {
 	colleaguesInScope,
 	createMoveGuard,
 	daySpan,
+	draftConflicts,
 	draftError,
 	expandBlocker,
 	hasEmptyOccurrence,
@@ -102,6 +103,66 @@ describe('redactForColleague', () => {
 				showUsernames: true
 			}).type
 		).toBe('blocker');
+	});
+});
+
+describe('draftConflicts (review 4582758042)', () => {
+	const entries = [
+		entry({ id: 'appointment' }),
+		entry({
+			id: 'blocker',
+			type: 'blocker',
+			start: '2026-11-16T10:00:00Z',
+			end: '2026-11-16T11:00:00Z'
+		}),
+		entry({
+			id: 'busy',
+			type: 'busy',
+			start: '2026-11-16T11:00:00Z',
+			end: '2026-11-16T12:00:00Z'
+		}),
+		entry({ id: 'colleague', ownerId: 'colleague' })
+	];
+	const at = (type: 'appointment' | 'blocker', from: string, to: string) => ({
+		type,
+		start: new Date(`2026-11-16T${from}:00Z`),
+		end: new Date(`2026-11-16T${to}:00Z`)
+	});
+
+	it('names every own entry a new appointment overlaps, blockers and busy time included', () => {
+		expect(
+			draftConflicts(
+				[at('appointment', '09:30', '11:30')],
+				entries,
+				'me'
+			).map((e) => e.id)
+		).toEqual(['appointment', 'blocker', 'busy']);
+	});
+
+	it('lets a new blocker collide only with what is not a blocker, as the blocker dialog does', () => {
+		expect(
+			draftConflicts(
+				[at('blocker', '09:30', '11:30')],
+				entries,
+				'me'
+			).map((e) => e.id)
+		).toEqual(['appointment', 'busy']);
+	});
+
+	it('names an entry once for several drafts, and none for free time', () => {
+		expect(
+			draftConflicts(
+				[
+					at('appointment', '09:00', '09:30'),
+					at('appointment', '09:30', '10:00')
+				],
+				entries,
+				'me'
+			).map((e) => e.id)
+		).toEqual(['appointment']);
+		expect(
+			draftConflicts([at('appointment', '12:00', '13:00')], entries, 'me')
+		).toEqual([]);
 	});
 });
 
@@ -248,9 +309,10 @@ describe('expandBlocker across a daylight-saving change (Europe/Berlin)', () => 
 			},
 			{ weekdays: [0], until: new Date(2027, 2, 28) }
 		);
-		expect(ranges.map((r) => `${clock(r.start)}–${clock(r.end)}`)).toEqual(
-			['21. 0:00–21. 4:00', '28. 0:00–28. 4:00']
-		);
+		expect(ranges.map((r) => `${clock(r.start)}–${clock(r.end)}`)).toEqual([
+			'21. 0:00–21. 4:00',
+			'28. 0:00–28. 4:00'
+		]);
 	});
 
 	it('keeps 00:00–04:00 on the 25-hour day in October', () => {
@@ -318,7 +380,10 @@ describe('expandBlocker limit', () => {
 		expect(
 			expandBlocker(
 				first,
-				{ weekdays: [0, 1, 2, 3, 4, 5, 6], until: new Date(2030, 0, 1) },
+				{
+					weekdays: [0, 1, 2, 3, 4, 5, 6],
+					until: new Date(2030, 0, 1)
+				},
 				MAX_BLOCKER_OCCURRENCES + 1
 			)
 		).toHaveLength(MAX_BLOCKER_OCCURRENCES + 1);
@@ -475,9 +540,9 @@ describe('visibleHours', () => {
 	});
 
 	it('shows up to midnight for an entry that ends at midnight', () => {
-		expect(
-			visibleHours([{ start: at(16, 23), end: at(17, 0) }]).max
-		).toBe('24:00:00');
+		expect(visibleHours([{ start: at(16, 23), end: at(17, 0) }]).max).toBe(
+			'24:00:00'
+		);
 	});
 
 	it('shows the whole day for an entry over midnight', () => {
@@ -518,7 +583,14 @@ describe('soonEntry — the one entry marked "Beginnt gleich" (review 4577641949
 	it('counts a group date like an appointment, never a blocker or a colleague', () => {
 		expect(
 			soonEntry(
-				[own('group', '2026-11-16T10:00:00Z', '2026-11-16T11:00:00Z', 'group')],
+				[
+					own(
+						'group',
+						'2026-11-16T10:00:00Z',
+						'2026-11-16T11:00:00Z',
+						'group'
+					)
+				],
 				'me',
 				now
 			)?.id
@@ -526,9 +598,18 @@ describe('soonEntry — the one entry marked "Beginnt gleich" (review 4577641949
 		expect(
 			soonEntry(
 				[
-					own('block', '2026-11-16T09:55:00Z', '2026-11-16T11:00:00Z', 'blocker'),
+					own(
+						'block',
+						'2026-11-16T09:55:00Z',
+						'2026-11-16T11:00:00Z',
+						'blocker'
+					),
 					{
-						...own('kaya', '2026-11-16T09:55:00Z', '2026-11-16T11:00:00Z'),
+						...own(
+							'kaya',
+							'2026-11-16T09:55:00Z',
+							'2026-11-16T11:00:00Z'
+						),
 						ownerId: 'kaya'
 					}
 				],

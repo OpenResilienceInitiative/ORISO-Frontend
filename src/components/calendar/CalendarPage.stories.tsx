@@ -1317,8 +1317,18 @@ export const PhoneQuickEntry: Story = {
 			'14:00'
 		);
 		await userEvent.click(await findCy('calendar-quick-kind-blocker'));
-		// Saving folds it away again.
+		// Thursday 14:00 is taken: quick entry asks first, with the creation
+		// dialogs' words, and only "Trotzdem anlegen" saves (review
+		// 4582758042). Saving folds it away again.
 		await userEvent.click(await findCy('calendar-quick-save'));
+		const ask = within(
+			await body().findByTestId('calendar-create-conflict')
+		);
+		await expect(ask.getByText(/^Überschneidet sich mit: /)).toBeTruthy();
+		await expect(quickPanel()?.hidden).toBe(false);
+		await userEvent.click(
+			ask.getByRole('button', { name: 'Trotzdem anlegen' })
+		);
 		await expect(
 			await body().findByText(/Sperrzeit eingetragen/)
 		).toBeTruthy();

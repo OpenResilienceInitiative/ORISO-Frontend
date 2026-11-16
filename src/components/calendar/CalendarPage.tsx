@@ -39,6 +39,7 @@ import ViewWeekOutlinedIcon from '@mui/icons-material/ViewWeekOutlined';
 import { M3Snackbar } from '../m3Snackbar/M3Snackbar';
 import {
 	DEFAULT_VISIBILITY,
+	draftConflicts,
 	moveProblem,
 	soonEntry,
 	type AppointmentDraft,
@@ -540,6 +541,12 @@ export const CalendarPage = ({
 		conflicts: CalendarEntry[];
 		answer: (go: boolean) => void;
 	} | null>(null);
+	/** A new entry onto other entries, made outside a dialog, waits too. */
+	const [createAsk, setCreateAsk] = useState<{
+		conflicts: CalendarEntry[];
+		blocker: boolean;
+		answer: (go: boolean) => void;
+	} | null>(null);
 	const [dragging, setDragging] = useState(false);
 	/** Phone: quick entry folds open in the sheet on demand. */
 	const [quickOpen, setQuickOpen] = useState(false);
@@ -845,9 +852,29 @@ export const CalendarPage = ({
 	 * draft. A dialog closes only then: a refusal or failure keeps it open
 	 * with everything typed. One creation at a time, so a second save while
 	 * the first runs creates nothing (reviews 4575214168, 4575297363).
+	 *
+	 * Every way to create passes here. Onto own entries it asks first, as
+	 * the creation dialogs do, with their words; a dialog has shown its
+	 * conflict note and "Trotzdem anlegen" already, so its save comes
+	 * `warned` and is not asked twice. Not confirmed, nothing is created
+	 * and quick entry keeps its draft (review 4582758042).
 	 */
-	const create = (drafts: AppointmentDraft[]): boolean | Promise<boolean> => {
+	const create = (
+		drafts: AppointmentDraft[],
+		warned = false
+	): boolean | Promise<boolean> => {
 		if (creating.current) return false;
+		if (!warned) {
+			const conflicts = draftConflicts(drafts, entries, ownerId);
+			if (conflicts.length > 0)
+				return new Promise<boolean>((answer) =>
+					setCreateAsk({
+						conflicts,
+						blocker: drafts.every((d) => d.type === 'blocker'),
+						answer
+					})
+				).then((go) => (go ? create(drafts, true) : false));
+		}
 		// Close the dialog that saved (none for quick entry), not one opened
 		// while it ran (reviews 4575868938, 4575941071).
 		const origin = dialog;
@@ -2440,7 +2467,7 @@ export const CalendarPage = ({
 					ownerId={ownerId}
 					now={now}
 					fullScreen={compact}
-					onSave={(draft) => create([draft])}
+					onSave={(draft) => create([draft], true)}
 					onClose={() => setDialog(null)}
 				/>
 			)}
@@ -2452,7 +2479,7 @@ export const CalendarPage = ({
 					ownerId={ownerId}
 					now={now}
 					fullScreen={compact}
-					onSave={create}
+					onSave={(drafts) => create(drafts, true)}
 					onClose={() => setDialog(null)}
 				/>
 			)}
@@ -2488,6 +2515,27 @@ export const CalendarPage = ({
 					onSaveImport={(url) => onSaveImport?.(url)}
 					onRemoveImport={() => onRemoveImport?.()}
 					onClose={() => setDialog(null)}
+				/>
+			)}
+			{createAsk && (
+				<MoveConflictDialog
+					conflicts={createAsk.conflicts}
+					fullScreen={compact}
+					title={t(
+						createAsk.blocker
+							? 'calendar.blocker.title'
+							: 'calendar.create'
+					)}
+					confirmLabel={t('calendar.dialog.saveAnyway')}
+					testIdPrefix="calendar-create"
+					onConfirm={() => {
+						createAsk.answer(true);
+						setCreateAsk(null);
+					}}
+					onCancel={() => {
+						createAsk.answer(false);
+						setCreateAsk(null);
+					}}
 				/>
 			)}
 			{moveAsk && (

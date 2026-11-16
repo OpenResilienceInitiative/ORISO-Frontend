@@ -302,6 +302,155 @@ describe('CalendarPage — creating (review 4575214168)', () => {
 	});
 });
 
+describe('CalendarPage — creating onto own entries asks first (review 4582758042)', () => {
+	/** Tomorrow 14:00 to 15:00 is taken. */
+	const TAKEN: CalendarEntry = {
+		...ENTRY,
+		id: 'taken',
+		start: new Date(2026, 10, 17, 14).toISOString(),
+		end: new Date(2026, 10, 17, 15).toISOString()
+	};
+	const WEEK = [1, 2, 3, 4, 5].map((weekday) => ({
+		weekday,
+		start: '08:00',
+		end: '18:00'
+	}));
+	const conversations = [{ sessionId: 4401, username: 'ruhiges_yak' }];
+	const input = () =>
+		document.querySelector(
+			'[data-cy="calendar-quick-input"]'
+		) as HTMLInputElement;
+	const quick = async (line: string) => {
+		fireEvent.change(input(), { target: { value: line } });
+		await act(async () => {
+			fireEvent.submit(input().form as HTMLFormElement);
+		});
+	};
+	const question = () => screen.queryByTestId('calendar-create-conflict');
+
+	it('quick entry onto a taken time asks first and saves only with "Trotzdem anlegen"', async () => {
+		const onCreate = vi.fn(() => Promise.resolve());
+		page({ onCreate, conversations, entries: [ENTRY, TAKEN] });
+		await quick('morgen 14 Uhr Video ruhiges');
+
+		expect(onCreate).not.toHaveBeenCalled();
+		expect(question()?.textContent).toContain('calendar.dialog.conflict');
+		expect(within(question()!).getByText('calendar.create')).toBeTruthy();
+		expect(screen.getByTestId('calendar-create-anyway').textContent).toBe(
+			'calendar.dialog.saveAnyway'
+		);
+
+		await act(async () => {
+			fireEvent.click(screen.getByTestId('calendar-create-anyway'));
+		});
+		expect(onCreate).toHaveBeenCalledTimes(1);
+		expect(onCreate).toHaveBeenCalledWith([
+			{
+				type: 'appointment',
+				kind: 'video',
+				start: new Date(2026, 10, 17, 14),
+				end: new Date(2026, 10, 17, 15),
+				sessionId: 4401
+			}
+		]);
+		expect(question()).toBeNull();
+		// Saved: the draft goes.
+		await waitFor(() => expect(input().value).toBe(''));
+	});
+
+	it('saves nothing when the question is cancelled, and keeps the draft', async () => {
+		const onCreate = vi.fn(() => Promise.resolve());
+		page({ onCreate, conversations, entries: [ENTRY, TAKEN] });
+		await quick('morgen 14 Uhr Video ruhiges');
+		await act(async () => {
+			fireEvent.click(screen.getByTestId('calendar-create-cancel'));
+		});
+
+		expect(onCreate).not.toHaveBeenCalled();
+		expect(question()).toBeNull();
+		expect(input().value).toBe('morgen 14 Uhr Video ruhiges');
+	});
+
+	it('saves a free time without a question', async () => {
+		const onCreate = vi.fn(() => Promise.resolve());
+		page({ onCreate, conversations, entries: [ENTRY, TAKEN] });
+		await quick('morgen 16 Uhr Video ruhiges');
+
+		expect(question()).toBeNull();
+		expect(onCreate).toHaveBeenCalledTimes(1);
+	});
+
+	it('asks when a suggested free hour is lengthened into a taken one; unchanged, it saves at once', async () => {
+		const onCreate = vi.fn(() => Promise.resolve());
+		const offered = async () => {
+			fireEvent.change(input(), {
+				target: { value: 'Video ruhiges' }
+			});
+			// The first free hour today ends where "mutige_eule" begins.
+			fireEvent.click(
+				document.querySelector(
+					'[data-cy="calendar-quick-free"]'
+				) as HTMLElement
+			);
+		};
+		page({
+			onCreate,
+			conversations,
+			now: new Date(2026, 10, 16, 8, 30),
+			workingHours: WEEK
+		});
+		await offered();
+		await act(async () => {
+			fireEvent.submit(input().form as HTMLFormElement);
+		});
+		expect(question()).toBeNull();
+		expect(onCreate).toHaveBeenCalledTimes(1);
+		const [free] = (
+			onCreate.mock.calls[0] as unknown as [{ start: Date; end: Date }[]]
+		)[0];
+		expect(free.end.getTime()).toBeLessThanOrEqual(
+			new Date(ENTRY.start).getTime()
+		);
+
+		onCreate.mockClear();
+		await waitFor(() => expect(input().value).toBe(''));
+		await offered();
+		fireEvent.mouseDown(
+			screen.getByRole('combobox', { name: 'calendar.quick.duration' })
+		);
+		// 120 minutes reach into "mutige_eule".
+		fireEvent.click((await screen.findAllByRole('option'))[4]);
+		await act(async () => {
+			fireEvent.submit(input().form as HTMLFormElement);
+		});
+		expect(onCreate).not.toHaveBeenCalled();
+		expect(question()?.textContent).toContain('calendar.dialog.conflict');
+	});
+
+	it('does not ask again for a dialog save: the dialog has shown its own note', async () => {
+		const onCreate = vi.fn(() => Promise.resolve());
+		page({ onCreate, conversations, entries: [ENTRY, TAKEN] });
+		fireEvent.click(
+			document.querySelector('[data-cy="calendar-create"]') as HTMLElement
+		);
+		const onto = {
+			type: 'appointment',
+			kind: 'video',
+			start: new Date(2026, 10, 17, 14),
+			end: new Date(2026, 10, 17, 15),
+			sessionId: 4401
+		};
+		// Not awaited: a second question would leave the save waiting.
+		await act(async () => {
+			dialog.save?.(onto);
+		});
+
+		expect(question()).toBeNull();
+		expect(onCreate).toHaveBeenCalledTimes(1);
+		expect(onCreate).toHaveBeenCalledWith([onto]);
+	});
+});
+
 describe('CalendarPage — failed conversation lookup for askers (review 4575917412)', () => {
 	it('shows askers the failure with a retry that asks again', () => {
 		const onRetryConversations = vi.fn();

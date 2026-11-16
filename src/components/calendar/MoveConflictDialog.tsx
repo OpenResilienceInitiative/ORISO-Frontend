@@ -1,6 +1,9 @@
 /**
  * A dragged entry would overlap own entries: ask before moving it, as the
- * creation dialogs do (review 4577641945).
+ * creation dialogs do (review 4577641945). A new entry made outside the
+ * creation dialogs (quick entry, a blocker from the grid or the month) asks
+ * the same question with the dialogs' title and "Trotzdem anlegen"
+ * (review 4582758042).
  */
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -13,13 +16,22 @@ export interface MoveConflictDialogProps {
 	fullScreen?: boolean;
 	onConfirm: () => void;
 	onCancel: () => void;
+	/** Already translated; defaults to "Trotzdem verschieben?". */
+	title?: string;
+	/** Already translated; defaults to "Trotzdem verschieben". */
+	confirmLabel?: string;
+	/** `calendar-move` gives `calendar-move-conflict`, `-cancel`, `-anyway`. */
+	testIdPrefix?: string;
 }
 
 export const MoveConflictDialog = ({
 	conflicts,
 	fullScreen,
 	onConfirm,
-	onCancel
+	onCancel,
+	title,
+	confirmLabel,
+	testIdPrefix = 'calendar-move'
 }: MoveConflictDialogProps) => {
 	const { t } = useTranslation();
 	const label = useEntryLabel();
@@ -27,8 +39,8 @@ export const MoveConflictDialog = ({
 	return (
 		<M3Dialog
 			open
-			data-testid="calendar-move-conflict"
-			title={t('calendar.moveConflict.title')}
+			data-testid={`${testIdPrefix}-conflict`}
+			title={title ?? t('calendar.moveConflict.title')}
 			width={400}
 			fullScreen={fullScreen}
 			onClose={onCancel}
@@ -37,13 +49,13 @@ export const MoveConflictDialog = ({
 				{
 					label: t('app.cancel'),
 					onClick: onCancel,
-					testId: 'calendar-move-cancel'
+					testId: `${testIdPrefix}-cancel`
 				},
 				{
-					label: t('calendar.moveConflict.confirm'),
+					label: confirmLabel ?? t('calendar.moveConflict.confirm'),
 					onClick: onConfirm,
 					primary: true,
-					testId: 'calendar-move-anyway'
+					testId: `${testIdPrefix}-anyway`
 				}
 			]}
 		>

@@ -206,6 +206,24 @@ export const findConflicts = (
 };
 
 /**
+ * Own entries that new drafts would overlap, by the rule the creation
+ * dialogs show: `findConflicts`, where a blocker only collides with what is
+ * not a blocker (BlockerDialog). Each entry once, in calendar order.
+ */
+export const draftConflicts = (
+	drafts: Pick<AppointmentDraft, 'type' | 'start' | 'end'>[],
+	entries: CalendarEntry[],
+	ownerId: string
+) => {
+	const hit = new Set<string>();
+	for (const draft of drafts)
+		for (const other of findConflicts(draft, entries, ownerId))
+			if (draft.type !== 'blocker' || other.type !== 'blocker')
+				hit.add(other.id);
+	return entries.filter((entry) => hit.has(entry.id));
+};
+
+/**
  * What stands against moving an entry to a new time (review 4577641945).
  * An appointment never moves into the past, as it cannot be created
  * there (UserService refuses it too). Own entries the new time overlaps
@@ -333,7 +351,11 @@ export const MAX_BLOCKER_OCCURRENCES = 120;
 
 /** Local calendar days from the date of `start` to the date of `end`. */
 export const daySpan = (start: Date, end: Date) => {
-	const from = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+	const from = new Date(
+		start.getFullYear(),
+		start.getMonth(),
+		start.getDate()
+	);
 	const to = new Date(end.getFullYear(), end.getMonth(), end.getDate());
 	// A local day has 23, 24 or 25 hours; rounding absorbs the DST hour.
 	return Math.round((to.getTime() - from.getTime()) / 86_400_000);
