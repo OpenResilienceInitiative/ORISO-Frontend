@@ -2883,7 +2883,10 @@
 						"label": "Kapat"
 					},
 					"headline": "Bir hata oluştu. Lütfen tekrar deneyin.",
-					"xReasonAlreadyRegistered": "Bu konuda danışma merkezine zaten kayıtlısınız."
+					"xReasonAlreadyRegistered": "Bu konuda danışma merkezine zaten kayıtlısınız.",
+					"badRequest": "Bu danışma merkezi talebinizi oluşturamadı. Lütfen başka bir merkez seçin veya daha sonra tekrar deneyin.",
+					"forbidden": "Şu anda bu merkezde yeni bir danışmanlık talep edemezsiniz.",
+					"unavailable": "Talebiniz şu anda gönderilemedi. Lütfen birkaç dakika sonra tekrar deneyin."
 				}
 			},
 			"registerSuccess": {

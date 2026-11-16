@@ -326,6 +326,63 @@ describe('NewRequestDialog', () => {
 		expect(apiPutSessionConsentMock).not.toHaveBeenCalled();
 	});
 
+	/*
+	 * UserService#1646: a refused request used to end in the generic
+	 * "Es ist ein Fehler aufgetreten" whatever the server said. The overlay
+	 * now names the kind of failure.
+	 */
+	const submitAfterConsent = async () => {
+		renderReadyDialog();
+		const request = await requestButton();
+		await waitFor(() => expect(request).toHaveProperty('disabled', false));
+		fireEvent.click(request);
+		fireEvent.click(await screen.findByRole('checkbox'));
+		await waitFor(() => expect(request).toHaveProperty('disabled', false));
+		fireEvent.click(request);
+	};
+	const refusal = (status: number, reason?: string) => ({
+		status,
+		headers: new Headers(reason ? { 'x-reason': reason } : {})
+	});
+
+	it.each([
+		[400, 'profile.data.registerError.overlay.badRequest'],
+		[403, 'profile.data.registerError.overlay.forbidden'],
+		[500, 'profile.data.registerError.overlay.unavailable'],
+		[503, 'profile.data.registerError.overlay.unavailable']
+	])(
+		'explains a %s refusal specifically instead of the generic error',
+		async (status, key) => {
+			apiPostAdditionalEnquiryMock.mockRejectedValue(refusal(status));
+			await submitAfterConsent();
+
+			expect((await screen.findByTestId('overlay')).textContent).toBe(
+				key
+			);
+			expect(navigateMock).not.toHaveBeenCalled();
+		}
+	);
+
+	it('explains a lost connection as temporarily unavailable', async () => {
+		apiPostAdditionalEnquiryMock.mockRejectedValue(new Error('TIMEOUT'));
+		await submitAfterConsent();
+
+		expect((await screen.findByTestId('overlay')).textContent).toBe(
+			'profile.data.registerError.overlay.unavailable'
+		);
+	});
+
+	it('keeps the already-registered explanation for that X-Reason', async () => {
+		apiPostAdditionalEnquiryMock.mockRejectedValue(
+			refusal(409, 'already-registered')
+		);
+		await submitAfterConsent();
+
+		expect((await screen.findByTestId('overlay')).textContent).toBe(
+			'profile.data.registerError.overlay.xReasonAlreadyRegistered'
+		);
+	});
+
 	it('pins the consent to the department version that was on screen', async () => {
 		consentTextForLabel = { versionId: 31 };
 		apiPostAdditionalEnquiryMock.mockResolvedValue({ sessionId: 8 });

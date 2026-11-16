@@ -2904,7 +2904,10 @@
 						"label": "Schließen"
 					},
 					"headline": "Es ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.",
-					"xReasonAlreadyRegistered": "Sie sind bereits mit diesem Thema in der Beratungsstelle registriert."
+					"xReasonAlreadyRegistered": "Sie sind bereits mit diesem Thema in der Beratungsstelle registriert.",
+					"badRequest": "Diese Beratungsstelle konnte Ihre Anfrage nicht anlegen. Bitte wählen Sie eine andere Beratungsstelle oder versuchen Sie es später erneut.",
+					"forbidden": "Sie können bei dieser Beratungsstelle gerade keine neue Beratung anfragen.",
+					"unavailable": "Ihre Anfrage konnte gerade nicht gesendet werden. Bitte versuchen Sie es in einigen Minuten erneut."
 				}
 			},
 			"registerSuccess": {

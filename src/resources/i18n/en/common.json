@@ -2879,7 +2879,10 @@
 						"label": "Close"
 					},
 					"headline": "An error has occurred. Please try again.",
-					"xReasonAlreadyRegistered": "You are already registered with this topic at the counseling center."
+					"xReasonAlreadyRegistered": "You are already registered with this topic at the counseling center.",
+					"badRequest": "This counselling centre could not create your request. Please choose another centre or try again later.",
+					"forbidden": "You cannot request a new counselling at this centre right now.",
+					"unavailable": "Your request could not be sent just now. Please try again in a few minutes."
 				}
 			},
 			"registerSuccess": {
