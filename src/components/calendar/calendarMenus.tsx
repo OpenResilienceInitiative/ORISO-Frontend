@@ -845,6 +845,12 @@ export interface SettingsMenuContentProps {
 	rememberedEdge?: EdgeChoice | null;
 	/** "Gemerkte Auswahl vergessen": ask again next time. */
 	onForgetEdge?: () => void;
+	/**
+	 * Whether the working-hours and pause grips show; with
+	 * `onShowGrips` a checkable item switches them (Frank *7.2).
+	 */
+	showGrips?: boolean;
+	onShowGrips?: (show: boolean) => void;
 }
 
 export const SettingsMenuContent = ({
@@ -856,13 +862,20 @@ export const SettingsMenuContent = ({
 	onSwitcherStyle,
 	onSync,
 	rememberedEdge,
-	onForgetEdge
+	onForgetEdge,
+	showGrips = true,
+	onShowGrips
 }: SettingsMenuContentProps) => {
 	const { t } = useTranslation();
 	const forget = rememberedEdge && onForgetEdge;
 	// Prototype v17: what to set up first, then how the views are chosen.
 	const anyAbove =
-		onWorkingHours || onRepeatBlocker || onFreeDays || onSync || forget;
+		onWorkingHours ||
+		onShowGrips ||
+		onRepeatBlocker ||
+		onFreeDays ||
+		onSync ||
+		forget;
 	return (
 		<>
 			{onWorkingHours && (
@@ -875,6 +888,18 @@ export const SettingsMenuContent = ({
 					}
 					onClick={onWorkingHours}
 					data-cy="calendar-settings-working-hours"
+				/>
+			)}
+			{onShowGrips && (
+				<ChatMenuDropdownItem
+					role="menuitemcheckbox"
+					aria-checked={showGrips}
+					icon={<ScheduleOutlinedIcon fontSize="small" />}
+					title={t('calendar.settings.grips')}
+					description={t('calendar.settings.gripsSub')}
+					shortcut={<Check on={showGrips} />}
+					onClick={() => onShowGrips(!showGrips)}
+					data-cy="calendar-settings-grips"
 				/>
 			)}
 			{onRepeatBlocker && (

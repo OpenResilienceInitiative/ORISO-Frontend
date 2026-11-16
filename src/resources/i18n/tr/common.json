@@ -7226,6 +7226,8 @@
 			"switcherMenu": "menü olarak",
 			"switcherDigits": "düğme olarak",
 			"switcherHint": "Sizin için kaydedilir.",
+			"grips": "Çalışma saatini ve molayı sürükle",
+			"gripsSub": "Takvimde tutamaçları göster",
 			"sync": "Outlook veya Google bağla",
 			"repeatBlocker": "Tekrarlanan kapalı zaman",
 			"switcherMenuSub": "Tek düğme, görünümler menüde",

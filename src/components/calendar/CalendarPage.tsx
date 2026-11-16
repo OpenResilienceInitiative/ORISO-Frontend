@@ -101,6 +101,8 @@ import {
 	rememberColleague,
 	writeRecentColleagues,
 	writeSwitcherStyle,
+	readShowGrips,
+	writeShowGrips,
 	DEFAULT_LIST_WIDTH,
 	LIST_RAIL_WIDTH,
 	listModeOf,
@@ -1172,7 +1174,10 @@ export const CalendarPage = ({
 
 	// --- Working-hours grips (own calendar) ---
 	const editHours = workingHoursLoaded && !!onSaveWorkingHours;
-	const gripsOn = consultant && editHours && !!onSaveDayException;
+	const gripsAvailable = consultant && editHours && !!onSaveDayException;
+	// Switchable in ⋮ and kept in this browser (Frank *7.2).
+	const [showGrips, setShowGrips] = useState(() => readShowGrips(ownerId));
+	const gripsOn = gripsAvailable && showGrips;
 	const gripDate = (day: Date) =>
 		new Intl.DateTimeFormat(calendarLocale(i18n.language), {
 			weekday: 'short',
@@ -1742,6 +1747,15 @@ export const CalendarPage = ({
 				workingHoursSummary={summary}
 				rememberedEdge={gripsOn ? edgeChoice : null}
 				onForgetEdge={forgetEdge}
+				showGrips={showGrips}
+				onShowGrips={
+					gripsAvailable
+						? (show) => {
+								setShowGrips(show);
+								writeShowGrips(ownerId, show);
+							}
+						: undefined
+				}
 				switcherStyle={switcherStyle}
 				onWorkingHours={
 					editHours

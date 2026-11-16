@@ -7141,6 +7141,8 @@
 			"switcherMenu": "as a menu",
 			"switcherDigits": "as buttons",
 			"switcherHint": "Saved for you.",
+			"grips": "Drag working hours and break",
+			"gripsSub": "Show the grips in the calendar",
 			"sync": "Connect Outlook or Google",
 			"repeatBlocker": "Repeating blocked time",
 			"switcherMenuSub": "One button, the views in its menu",

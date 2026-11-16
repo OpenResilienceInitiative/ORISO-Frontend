@@ -1583,6 +1583,39 @@ const forgetEdgeChoice = () => {
 
 const gripOf = (cy: string) => findCy(`calendar-grip-${cy}`);
 
+const showGripsAgain = () => {
+	try {
+		window.localStorage.removeItem(`oriso.calendar.grips.${ME}`);
+	} catch {
+		// Storage blocked: nothing remembered either.
+	}
+};
+
+export const GripsSwitchedOff: Story = {
+	name: 'Working hours — grips switched off in ⋮',
+	beforeEach: () => {
+		showGripsAgain();
+		return showGripsAgain;
+	},
+	play: async ({ canvasElement }) => {
+		const canvas = canvasOf(canvasElement);
+		await gripOf('2026-11-17-start');
+		await userEvent.click(
+			canvas.getByRole('button', { name: 'Kalender-Einstellungen' })
+		);
+		const toggle = within(await body().findByRole('menu')).getByRole(
+			'menuitemcheckbox',
+			{ name: /Arbeitszeit und Pause ziehen/ }
+		);
+		await expect(toggle.getAttribute('aria-checked')).toBe('true');
+		await userEvent.click(toggle);
+		await userEvent.keyboard('{Escape}');
+		await waitFor(() =>
+			expect(canvasElement.querySelector('[data-grip]')).toBeNull()
+		);
+	}
+};
+
 export const Grips: Story = {
 	name: 'Working hours — grips on the own calendar',
 	beforeEach: forgetEdgeChoice,

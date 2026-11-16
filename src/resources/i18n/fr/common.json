@@ -7226,6 +7226,8 @@
 			"switcherMenu": "sous forme de menu",
 			"switcherDigits": "sous forme de boutons",
 			"switcherHint": "Enregistré pour vous.",
+			"grips": "Faire glisser horaires et pause",
+			"gripsSub": "Afficher les poignées dans le calendrier",
 			"sync": "Connecter Outlook ou Google",
 			"repeatBlocker": "Plage bloquée récurrente",
 			"switcherMenuSub": "Un bouton, les vues dans son menu",

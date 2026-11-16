@@ -293,10 +293,13 @@ describe('⋮ settings — order of prototype v17 (#122)', () => {
 				rememberedEdge="day"
 				onForgetEdge={() => undefined}
 				onSwitcherStyle={() => undefined}
+				showGrips
+				onShowGrips={() => undefined}
 			/>
 		);
 		expect(cyOrder(container)).toEqual([
 			'calendar-settings-working-hours',
+			'calendar-settings-grips',
 			'calendar-settings-repeat-blocker',
 			'calendar-settings-free-days',
 			'calendar-settings-sync',
