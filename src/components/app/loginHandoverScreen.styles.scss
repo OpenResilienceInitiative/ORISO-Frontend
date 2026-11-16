@@ -1,0 +1,42 @@
+// Above the tenant-theming modal (z-index 9999) and every app overlay: from
+// "Login" until the app is ready this is the only thing on screen.
+.loginHandoverScreen {
+	position: fixed;
+	inset: 0;
+	z-index: 10000;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: var(--m3-background, #fcf9f9);
+	opacity: 1;
+	transition: opacity 240ms ease-out;
+
+	&--enter {
+		animation: loginHandoverScreenIn 240ms ease-out both;
+	}
+
+	&--leaving {
+		opacity: 0;
+		pointer-events: none;
+	}
+}
+
+@keyframes loginHandoverScreenIn {
+	from {
+		opacity: 0;
+	}
+
+	to {
+		opacity: 1;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.loginHandoverScreen {
+		transition: none;
+
+		&--enter {
+			animation: none;
+		}
+	}
+}

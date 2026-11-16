@@ -40,6 +40,7 @@ import {
 import { loadEntryScreens } from './appChunks';
 import { useGroupJoinHandoverCopy } from '../groupChat/groupJoinHandoverCopy';
 import { POST_REGISTRATION_LOADER_KEY } from '../registration/autoLogin';
+import { endLoginHandover } from './loginHandover';
 import {
 	handleTokenRefresh,
 	isTokenRefreshUnavailableError
@@ -175,7 +176,10 @@ export const AuthenticatedApp = ({
 
 	useEffect(() => {
 		// The previous authenticated tree has been unmounted before navigation.
-		if (peerExitPath) window.location.replace(peerExitPath);
+		if (peerExitPath) {
+			endLoginHandover();
+			window.location.replace(peerExitPath);
+		}
 	}, [peerExitPath]);
 
 	const [appReady, setAppReady] = useState<boolean>(false);
@@ -437,6 +441,12 @@ export const AuthenticatedApp = ({
 	useEffect(() => {
 		onAppReady();
 	}, [appReady]); // eslint-disable-line react-hooks/exhaustive-deps
+
+	/* The login handover screen (#2272) stays up until the app is
+	   ready, or until the bootstrap gave up and the login page comes back. */
+	useEffect(() => {
+		if (appReady || !loading) endLoginHandover();
+	}, [appReady, loading]);
 
 	const handleLogout = useCallback(() => {
 		matrixBootstrap.current?.controller.abort();
