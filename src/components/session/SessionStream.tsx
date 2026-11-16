@@ -631,6 +631,33 @@ export const SessionStream = ({
 		readActiveSession();
 	}, [readActiveSession, readonly]);
 
+	// FE#1802: a message that arrives while the conversation is open counts as
+	// read only once the person can see it. A hidden tab defers the receipt to
+	// the moment it becomes visible again; otherwise the other side would see
+	// "read" for a message nobody looked at.
+	const setSessionReadRef = useRef(setSessionRead);
+	setSessionReadRef.current = setSessionRead;
+	const arrivalReadPendingRef = useRef(false);
+	const readArrivedMessages = useCallback(() => {
+		if (document.visibilityState === 'hidden') {
+			arrivalReadPendingRef.current = true;
+			return;
+		}
+		arrivalReadPendingRef.current = false;
+		setSessionReadRef.current();
+	}, []);
+	useEffect(() => {
+		const handleVisibilityChange = () => {
+			if (arrivalReadPendingRef.current) readArrivedMessages();
+		};
+		document.addEventListener('visibilitychange', handleVisibilityChange);
+		return () =>
+			document.removeEventListener(
+				'visibilitychange',
+				handleVisibilityChange
+			);
+	}, [readArrivedMessages]);
+
 	const loadAfterCaseHandoverGranted = useCallback(() => {
 		setLoading(true);
 		return fetchSessionMessagesRef
@@ -807,6 +834,7 @@ export const SessionStream = ({
 		let retryTimer: number | null = null;
 		let earlierRefreshTimer: number | null = null;
 		let receiptRefreshTimer: number | null = null;
+		let arrivalReadTimer: number | null = null;
 		let detachTimelineListeners: Array<() => void> = [];
 		let lastRefreshAt = 0;
 		const refreshMessages = () => {
@@ -837,6 +865,23 @@ export const SessionStream = ({
 					eventType !== 'm.room.redaction'
 				) {
 					return;
+				}
+
+				// FE#1802: the receipt was sent once when the conversation
+				// opened; a later message from the other side needs its own,
+				// or its sender keeps seeing "sent" while it is on screen.
+				if (
+					!toStartOfTimeline &&
+					room?.roomId === clientRoomId &&
+					eventType !== 'm.reaction' &&
+					eventType !== 'm.room.redaction' &&
+					event?.getSender?.() !== room?.myUserId &&
+					arrivalReadTimer === null
+				) {
+					arrivalReadTimer = window.setTimeout(() => {
+						arrivalReadTimer = null;
+						readArrivedMessages();
+					}, 0);
 				}
 
 				if (toStartOfTimeline) {
@@ -971,6 +1016,8 @@ export const SessionStream = ({
 				window.clearTimeout(earlierRefreshTimer);
 			if (receiptRefreshTimer !== null)
 				window.clearTimeout(receiptRefreshTimer);
+			if (arrivalReadTimer !== null)
+				window.clearTimeout(arrivalReadTimer);
 			detachTimelineListeners.forEach((detach) => detach());
 		};
 		// matrixRoomId is derived from resolvedChatSession (already a dep).
@@ -984,7 +1031,8 @@ export const SessionStream = ({
 		matrixRoomId,
 		matrixClientService,
 		matrixClientGeneration,
-		mayRequestHistoryKeys
+		mayRequestHistoryKeys,
+		readArrivedMessages
 	]);
 
 	const groupChatStoppedOverlay: OverlayItem = useMemo(

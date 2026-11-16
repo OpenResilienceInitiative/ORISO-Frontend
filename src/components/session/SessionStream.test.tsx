@@ -1763,6 +1763,80 @@ describe('SessionStream Matrix room lifecycle', () => {
 		);
 	});
 
+	describe('read receipt for messages that arrive while the conversation is open (FE#1802)', () => {
+		const me = '@me:example.org';
+		const room = { roomId: ROOM_ID, myUserId: me };
+		const messageFrom = (sender: string) => ({
+			getType: () => 'm.room.encrypted',
+			getSender: () => sender
+		});
+		const setVisibility = (state: 'visible' | 'hidden') => {
+			Object.defineProperty(document, 'visibilityState', {
+				configurable: true,
+				get: () => state
+			});
+		};
+		const emitLive = (event: any, toStart = false) =>
+			act(() =>
+				mocks.timelineListeners.forEach((listener) =>
+					listener(event, room, toStart)
+				)
+			);
+		const openConversation = async () => {
+			renderSessionStream({ isGroup: true });
+			await waitFor(() => expect(mocks.timelineListeners.length).toBe(1));
+			await waitFor(() =>
+				expect(mocks.readActiveSession).toHaveBeenCalled()
+			);
+			await passCoalescingWindow();
+			mocks.readActiveSession.mockClear();
+		};
+
+		afterEach(() => {
+			delete (document as any).visibilityState;
+		});
+
+		it('marks the room read when the other side writes', async () => {
+			setVisibility('visible');
+			await openConversation();
+
+			emitLive(messageFrom('@peer:example.org'));
+
+			await waitFor(() =>
+				expect(mocks.readActiveSession).toHaveBeenCalledTimes(1)
+			);
+		});
+
+		it('does not mark read for its own message or older history', async () => {
+			setVisibility('visible');
+			await openConversation();
+
+			emitLive(messageFrom(me));
+			emitLive(messageFrom('@peer:example.org'), true);
+			await act(() => new Promise((resolve) => setTimeout(resolve, 50)));
+
+			expect(mocks.readActiveSession).not.toHaveBeenCalled();
+		});
+
+		it('waits until the tab is visible again before marking read', async () => {
+			setVisibility('visible');
+			await openConversation();
+			setVisibility('hidden');
+
+			emitLive(messageFrom('@peer:example.org'));
+			await act(() => new Promise((resolve) => setTimeout(resolve, 50)));
+			expect(mocks.readActiveSession).not.toHaveBeenCalled();
+
+			setVisibility('visible');
+			act(() => {
+				document.dispatchEvent(new Event('visibilitychange'));
+			});
+			await waitFor(() =>
+				expect(mocks.readActiveSession).toHaveBeenCalledTimes(1)
+			);
+		});
+	});
+
 	it('counts only the asker receipt for a counsellor message in a 1:1 (FE#1802, ADR-002)', async () => {
 		const counsellor = '@counsellor:example.org';
 		const asker = '@asker:example.org';
