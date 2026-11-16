@@ -1796,6 +1796,11 @@ describe('SessionStream Matrix room lifecycle', () => {
 
 		afterEach(() => {
 			delete (document as any).visibilityState;
+			mocks.resolveSession.mockImplementation(() => ({
+				isMatrixSession: true,
+				matrixRoomId: ROOM_ID,
+				sessionId: 1
+			}));
 		});
 
 		it('marks the room read when the other side writes', async () => {
@@ -1871,6 +1876,11 @@ describe('SessionStream Matrix room lifecycle', () => {
 			emitLive(messageFrom('@peer:example.org'));
 			await act(() => new Promise((resolve) => setTimeout(resolve, 50)));
 
+			mocks.resolveSession.mockImplementation((session: any) => ({
+				isMatrixSession: true,
+				matrixRoomId: session?.item?.matrixRoomId ?? ROOM_ID,
+				sessionId: session?.item?.id ?? 1
+			}));
 			view.rerender(
 				sessionStreamElement({
 					isGroup: true,
@@ -1897,6 +1907,57 @@ describe('SessionStream Matrix room lifecycle', () => {
 			});
 			await act(() => new Promise((resolve) => setTimeout(resolve, 50)));
 			expect(mocks.readActiveSession).not.toHaveBeenCalled();
+		});
+
+		it('keeps a deferred read when the same conversation re-attaches for its supervision room', async () => {
+			const supervisors = deferred<any[]>();
+			mocks.getSessionSupervisors.mockReturnValueOnce(
+				supervisors.promise
+			);
+			setVisibility('visible');
+			renderSessionStream({
+				isGroup: false,
+				userData: consultantUserData,
+				activeSession: {
+					rid: ROOM_ID,
+					isGroup: false,
+					isSession: true,
+					item: {
+						id: 1,
+						matrixRoomId: ROOM_ID,
+						active: true,
+						status: 2
+					}
+				} as any
+			});
+			await waitFor(() => expect(mocks.timelineListeners.length).toBe(1));
+			await waitFor(() =>
+				expect(mocks.readActiveSession).toHaveBeenCalled()
+			);
+			await passCoalescingWindow();
+			mocks.readActiveSession.mockClear();
+
+			setVisibility('hidden');
+			emitLive(messageFrom('@peer:example.org'));
+			await act(() => new Promise((resolve) => setTimeout(resolve, 50)));
+			await act(async () => {
+				supervisors.resolve([
+					{
+						id: 7,
+						supervisorConsultantId: 'someone-else',
+						matrixRoomId: '!supervision:example.org'
+					}
+				]);
+			});
+			await waitFor(() => expect(mocks.timelineListeners.length).toBe(2));
+
+			setVisibility('visible');
+			act(() => {
+				document.dispatchEvent(new Event('visibilitychange'));
+			});
+			await waitFor(() =>
+				expect(mocks.readActiveSession).toHaveBeenCalledTimes(1)
+			);
 		});
 
 		it('waits until the tab is visible again before marking read', async () => {

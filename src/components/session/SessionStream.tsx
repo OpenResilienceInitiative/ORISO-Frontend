@@ -673,6 +673,16 @@ export const SessionStream = ({
 				handleVisibilityChange
 			);
 	}, [readArrivedMessages]);
+	// A deferred read belongs to one conversation under one content access;
+	// drop it when either changes (not when listeners merely re-attach, e.g.
+	// once the supervision side room is known).
+	const deferredReadRoomId = resolvedChatSession.matrixRoomId;
+	useEffect(
+		() => () => {
+			arrivalReadPendingRef.current = false;
+		},
+		[deferredReadRoomId, mayRequestHistoryKeys]
+	);
 	const handleMainChatHiddenChange = useCallback(
 		(hidden: boolean) => {
 			mainChatHiddenRef.current = hidden;
@@ -1044,9 +1054,6 @@ export const SessionStream = ({
 				window.clearTimeout(receiptRefreshTimer);
 			if (arrivalReadTimer !== null)
 				window.clearTimeout(arrivalReadTimer);
-			// Room or content access changed: a deferred read belonged to the
-			// old scope.
-			arrivalReadPendingRef.current = false;
 			detachTimelineListeners.forEach((detach) => detach());
 		};
 		// matrixRoomId is derived from resolvedChatSession (already a dep).
