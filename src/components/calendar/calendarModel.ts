@@ -217,7 +217,7 @@ export const upcomingEntries = (
 		)
 		.slice(0, limit);
 
-/** The one entry that is running or starts within the next 15 minutes. */
+/** Running, or starting within the next 15 minutes. */
 export const SOON_MINUTES = 15;
 export const isSoon = (entry: CalendarEntry, now: Date) => {
 	const start = new Date(entry.start).getTime();
@@ -225,6 +225,20 @@ export const isSoon = (entry: CalendarEntry, now: Date) => {
 	return (
 		start - now.getTime() <= SOON_MINUTES * 60_000 && end > now.getTime()
 	);
+};
+
+/**
+ * The one own entry marked "Beginnt gleich": the first of "Als Nächstes"
+ * (an appointment or a group date) when it is soon. The grid and the
+ * side list mark the same one (review 4577641949).
+ */
+export const soonEntry = (
+	entries: CalendarEntry[],
+	ownerId: string,
+	now: Date
+): CalendarEntry | undefined => {
+	const [next] = upcomingEntries(entries, ownerId, now, 1);
+	return next && isSoon(next, now) ? next : undefined;
 };
 
 /**

@@ -4,8 +4,10 @@
  * tells entries apart by these symbols, not by colour (Frank, 2026-11-14).
  */
 import * as React from 'react';
+import { useTranslation } from 'react-i18next';
 import BlockOutlinedIcon from '@mui/icons-material/BlockOutlined';
 import EventBusyOutlinedIcon from '@mui/icons-material/EventBusyOutlined';
+import ScheduleIcon from '@mui/icons-material/Schedule';
 import { ReactComponent as GroupsIcon } from '../../resources/img/icons/groups.svg';
 import { AppointmentKindGlyph } from '../sessionsList/timeline/AppointmentKindGlyph';
 import { MODALITY_BY_KIND, type CalendarEntry } from './calendarModel';
@@ -72,4 +74,19 @@ export const CalendarEntryGlyph = ({
 	)
 		return <EventBusyOutlinedIcon aria-hidden="true" focusable="false" />;
 	return <FacetIcon facet={facetOf(entry)} />;
+};
+
+/**
+ * "Beginnt gleich" with a clock: the soon state in words, so it does not
+ * rest on the red fill alone, and part of the entry's accessible name
+ * (review 4577641949).
+ */
+export const SoonBadge = () => {
+	const { t } = useTranslation();
+	return (
+		<span className="calendarSoon" data-cy="calendar-soon">
+			<ScheduleIcon className="calendarSoon__icon" aria-hidden />
+			<span className="calendarSoon__text">{t('calendar.soon')}</span>
+		</span>
+	);
 };

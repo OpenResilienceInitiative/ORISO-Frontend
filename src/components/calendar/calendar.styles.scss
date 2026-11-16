@@ -579,3 +579,25 @@
 	) !important;
 	color: var(--m3-on-surface, #1b1b1c) !important;
 }
+
+// "Beginnt gleich": the soon state in words and a clock, not only red
+// (review 4577641949). Inherits the entry's on-primary colour.
+.calendarSoon {
+	display: inline-flex;
+	align-items: center;
+	gap: 2px;
+	min-width: 0;
+	font-weight: 600;
+	white-space: nowrap;
+
+	&__icon {
+		flex: none;
+		width: 14px !important;
+		height: 14px !important;
+	}
+
+	&__text {
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+}

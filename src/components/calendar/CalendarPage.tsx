@@ -19,8 +19,8 @@ import { FilterChip } from '../displayFilter/FilterChip';
 import { M3Snackbar } from '../m3Snackbar/M3Snackbar';
 import {
 	DEFAULT_VISIBILITY,
-	isSoon,
 	moveProblem,
+	soonEntry,
 	upcomingEntries,
 	type AppointmentDraft,
 	type AppointmentKind,
@@ -34,6 +34,7 @@ import {
 	CALENDAR_FACETS,
 	CalendarEntryGlyph,
 	FACET_ICON_COMPONENT,
+	SoonBadge,
 	facetOf,
 	type CalendarEntryFacet
 } from './CalendarEntryGlyph';
@@ -168,6 +169,7 @@ export const CalendarPage = ({
 			entries.some((e) => e.ownerId === ownerId && facetOf(e) === facet)
 	);
 	const upcoming = upcomingEntries(entries, ownerId, now);
+	const soon = soonEntry(entries, ownerId, now);
 
 	const toggle = <T,>(list: T[], item: T) =>
 		list.includes(item) ? list.filter((x) => x !== item) : [...list, item];
@@ -309,7 +311,7 @@ export const CalendarPage = ({
 							<li key={entry.id}>
 								<button
 									type="button"
-									className={`calendarPage__entry${isSoon(entry, now) ? ' calendarPage__entry--soon' : ''}`}
+									className={`calendarPage__entry${entry.id === soon?.id ? ' calendarPage__entry--soon' : ''}`}
 									onClick={() =>
 										setDialog({ type: 'details', entry })
 									}
@@ -324,6 +326,7 @@ export const CalendarPage = ({
 										<span className="calendarPage__entryTitle">
 											{label(entry)}
 										</span>
+										{entry.id === soon?.id && <SoonBadge />}
 									</span>
 								</button>
 							</li>

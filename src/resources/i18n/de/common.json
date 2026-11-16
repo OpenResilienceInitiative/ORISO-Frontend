@@ -6972,6 +6972,7 @@
 			"title": "Trotzdem verschieben?",
 			"confirm": "Trotzdem verschieben"
 		},
+		"soon": "Beginnt gleich",
 		"blockerMoved": "Blockierung verschoben auf {{date}}.",
 		"cancelled": "Termin abgesagt. Die ratsuchende Person wird benachrichtigt.",
 		"created": "Termin angelegt: {{date}}",

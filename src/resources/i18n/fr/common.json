@@ -6982,6 +6982,7 @@
 			"title": "Déplacer quand même ?",
 			"confirm": "Déplacer quand même"
 		},
+		"soon": "Commence bientôt",
 		"blockerMoved": "Plage bloquée déplacée au {{date}}.",
 		"cancelled": "Rendez-vous annulé. La personne en quête de conseils est prévenue.",
 		"created": "Rendez-vous créé : {{date}}",

@@ -6897,6 +6897,7 @@
 			"title": "Move anyway?",
 			"confirm": "Move anyway"
 		},
+		"soon": "Starts soon",
 		"blockerMoved": "Block moved to {{date}}.",
 		"cancelled": "Appointment cancelled. The advice seeker is notified.",
 		"created": "Appointment created: {{date}}",
