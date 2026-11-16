@@ -10,7 +10,7 @@ export type EntryKind = 'group' | 'one-to-one';
 export type TimelineRole = 'counsellor' | 'asker';
 export type TimelineFilter = 'all' | EntryKind;
 
-/** Real API shapes (`ChatOccurrence`, `BookingEventsInterface`), trimmed to what the list needs. */
+/** Real API shapes (`ChatOccurrence`, a conversation's appointment), trimmed to what the list needs. */
 export interface TimelineOccurrence {
 	seriesId: number;
 	occurrenceIndex: number;

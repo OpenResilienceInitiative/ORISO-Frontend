@@ -435,9 +435,6 @@
 		"assignedCalendars": {
 			"iframeTitle": "ዝተመዓራረዩ ኣቆጻጽራታት"
 		},
-		"calcom": {
-			"loading": "Wird geladen: {{calLink}}"
-		},
 		"reschedule": {
 			"iframeTitle": "Termin verschieben"
 		},
@@ -6879,6 +6876,7 @@
 		"colleagueFailedShort": "ኣይተጻዕነን",
 		"colleagueFailed": "ካላንደር {{names}} ክጽዓን ኣይከኣለን፣ ስለዚ ኩሉ መዓስ ነጻ ምዃኑ ክንገር ኣይከኣልን።",
 		"upcomingChat": "ናብ ዕላል ምስ {{name}} ኪድ",
+		"chatUnavailable": "ናይዚ ቆጸራ ቻት ክኽፈት ኣይከኣለን።",
 		"conversationsFailedAsker": "ዝርርባትኩም ክጽዓኑ ኣይከኣሉን፣ ስለዚ ካብ ቆጸራ ናብ ዕላልኩም ክትከዱ ኣይትኽእሉን።",
 		"create": "ቆጸራ ፍጠር",
 		"today": "ሎሚ",
@@ -6962,6 +6960,12 @@
 			"colleagueHint": "ካብ መሳርሕትኹም ግዜን ዓይነትን ጥራይ ትርእዩ።"
 		},
 		"moved": "ናብ {{date}} ተቐይሩ። እቲ ምኽሪ ዝደሊ ሰብ ክሕበር እዩ።",
+		"movePast": "ቆጸራ ናብ ዝሓለፈ ግዜ ክግዕዝ ኣይክእልን።",
+		"moveConflict": {
+			"title": "ብዘየገድስ ይግዓዝ?",
+			"confirm": "ብዘየገድስ ኣግዕዝ"
+		},
+		"soon": "ቀልጢፉ ይጅምር",
 		"blockerMoved": "ዝተዓጽወ ግዜ ናብ {{date}} ተቐይሩ።",
 		"cancelled": "ቆጸራ ተሰሪዙ። እቲ ምኽሪ ዝደሊ ሰብ ክሕበር እዩ።",
 		"created": "ቆጸራ ተፈጢሩ፦ {{date}}",

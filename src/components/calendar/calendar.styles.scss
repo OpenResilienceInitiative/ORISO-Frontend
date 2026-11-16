@@ -2359,3 +2359,32 @@
 	font-size: 14px;
 	line-height: 20px;
 }
+
+// "Beginnt gleich": the soon state in words and a clock, not only red
+// (review 4577641949). Inherits the entry's on-primary colour.
+.calendarSoon {
+	display: inline-flex;
+	align-items: center;
+	gap: 2px;
+	min-width: 0;
+	font-weight: 600;
+	white-space: nowrap;
+
+	&__icon {
+		flex: none;
+		width: 14px !important;
+		height: 14px !important;
+	}
+
+	&__text {
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+}
+
+// In the side list the row is not filled, so the cue takes the accent.
+.calendarSide__row .calendarSoon {
+	flex: none;
+	color: var(--m3-primary, #a5000a);
+	font-size: 12px;
+}

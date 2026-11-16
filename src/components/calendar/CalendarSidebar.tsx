@@ -32,6 +32,7 @@ import {
 	CalendarEntryGlyph,
 	FACET_ICON_COMPONENT,
 	FacetIcon,
+	SoonBadge,
 	facetOf,
 	type CalendarEntryFacet
 } from './CalendarEntryGlyph';
@@ -80,6 +81,11 @@ export interface CalendarSidebarProps {
 	ownerId: string;
 	consultant: boolean;
 	now: Date;
+	/**
+	 * The one entry marked "Beginnt gleich", the same the grid marks
+	 * (review 4577641949).
+	 */
+	soonId?: string;
 	/** Every loaded entry (own and colleagues'). */
 	entries: CalendarEntry[];
 	colleagues: Colleague[];
@@ -148,6 +154,7 @@ export const CalendarSidebar = ({
 	ownerId,
 	consultant,
 	now,
+	soonId,
 	entries,
 	colleagues,
 	conversations,
@@ -375,7 +382,7 @@ export const CalendarSidebar = ({
 								>
 									<button
 										type="button"
-										className={`calendarSide__row calendarSide__row--k-${facetOf(entry)}`}
+										className={`calendarSide__row calendarSide__row--k-${facetOf(entry)}${entry.id === soonId ? ' calendarSide__row--soon' : ''}`}
 										aria-describedby={
 											peek?.entry.id === entry.id
 												? 'calendar-upcoming-peek'
@@ -405,7 +412,7 @@ export const CalendarSidebar = ({
 														new Date(entry.start),
 														now,
 														new Date(entry.end)
-													)}`
+													)}${entry.id === soonId ? `, ${t('calendar.soon')}` : ''}`
 												: undefined
 										}
 										data-cy={`calendar-upcoming-${entry.id}`}
@@ -418,6 +425,9 @@ export const CalendarSidebar = ({
 										<span className="calendarSide__rowName">
 											{label(entry)}
 										</span>
+										{entry.id === soonId && !rail && (
+											<SoonBadge />
+										)}
 										<span className="calendarSide__rowTime">
 											{shortTime(
 												new Date(entry.start),

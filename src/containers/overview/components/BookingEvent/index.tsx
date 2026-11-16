@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { BookingEventsInterface } from '../../../../globalState/interfaces/BookingsInterface';
+import type { CalendarEntry } from '../../../../components/calendar/calendarModel';
 import {
-	convertUTCDateToLocalDate,
 	formatToHHMM,
 	getPrettyDateFromMessageDate,
 	prettyPrintTimeDifference
@@ -11,20 +10,18 @@ import './booking-event.styles.scss';
 import { useTranslation } from 'react-i18next';
 
 interface BookingEventProps {
-	booking: BookingEventsInterface;
+	/** One of the counsellor's own calendar appointments. */
+	appointment: CalendarEntry;
 }
 
 const COUNTDOWN_START = 5 * 60 * 1000;
 
-export const BookingEvent = ({ booking }: BookingEventProps) => {
+export const BookingEvent = ({ appointment }: BookingEventProps) => {
 	const { t: translate } = useTranslation();
 
-	const startTime = new Date(
-		convertUTCDateToLocalDate(new Date(booking.startTime))
-	);
-	const endTime = new Date(
-		convertUTCDateToLocalDate(new Date(booking.endTime))
-	);
+	// Calendar times are instants: no zone shift, unlike cal.com's.
+	const startTime = new Date(appointment.start);
+	const endTime = new Date(appointment.end);
 	const showCountDown = startTime.getTime() - Date.now() < COUNTDOWN_START;
 	const [countdown, setCountdown] = useState(showCountDown && Date.now());
 
@@ -43,7 +40,7 @@ export const BookingEvent = ({ booking }: BookingEventProps) => {
 		<div className="bookingEvent">
 			<div className="bookingEvent__header">
 				<div className="bookingEvent__askerName">
-					{booking.askerName}
+					{appointment.title}
 				</div>
 			</div>
 

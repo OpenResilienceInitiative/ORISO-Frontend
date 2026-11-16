@@ -30,6 +30,11 @@ const grid: {
 	onEntryMove?: (entry: CalendarEntry, start: Date, end: Date) => unknown;
 	/** The latest props, for what the page hands the grid. */
 	last?: Record<string, unknown>;
+	onEntryOpen?: (
+		entry: CalendarEntry,
+		anchor: HTMLElement,
+		mode: 'list' | 'move'
+	) => void;
 } = {};
 const mounts = vi.hoisted(() => ({ count: 0 }));
 vi.mock('./CalendarView', async (importOriginal) => {
@@ -41,6 +46,7 @@ vi.mock('./CalendarView', async (importOriginal) => {
 		CalendarView: (props: typeof grid) => {
 			grid.onEntryMove = props.onEntryMove;
 			grid.last = props as Record<string, unknown>;
+			grid.onEntryOpen = props.onEntryOpen;
 			useEffect(() => {
 				mounts.count += 1;
 			}, []);
@@ -493,5 +499,50 @@ describe('CalendarPage — bands count what the kind filter hides (review 457642
 		await waitFor(() => expect(ids('entries')).not.toContain('berg-block'));
 		expect(ids('entries')).toEqual(['a1', 'kaya-call']);
 		expect(ids('busyEntries')).toEqual(['a1', 'kaya-call', 'berg-block']);
+	});
+});
+
+describe('CalendarPage — a call whose conversation cannot be found (review 4577642137)', () => {
+	it('says so instead of doing nothing', async () => {
+		const onStart = vi.fn(() => Promise.reject(new Error('no room')));
+		page({ onStart });
+		act(() => grid.onEntryOpen?.(ENTRY, document.body, 'list'));
+		fireEvent.click(
+			document.querySelector(
+				'[data-cy="calendar-entry-start"]'
+			) as HTMLElement
+		);
+		expect(onStart).toHaveBeenCalledWith(ENTRY);
+		expect(
+			await screen.findByText('calendar.chatUnavailable')
+		).toBeTruthy();
+	});
+});
+
+describe('CalendarPage — "Zum Chat" whose conversation cannot be found (review 4577642137)', () => {
+	it('says so from the menu and from "Als Nächstes"', async () => {
+		const onOpenChat = vi.fn(() => Promise.reject(new Error('no room')));
+		const withChat = { ...ENTRY, sessionId: 7 };
+		page({ onOpenChat, entries: [withChat] });
+		fireEvent.click(
+			document.querySelector(
+				`[data-cy="calendar-upcoming-chat-${withChat.id}"]`
+			) as HTMLElement
+		);
+		expect(onOpenChat).toHaveBeenCalledWith(withChat);
+		expect(
+			await screen.findByText('calendar.chatUnavailable')
+		).toBeTruthy();
+		fireEvent.click(screen.getByLabelText('app.close'));
+		act(() => grid.onEntryOpen?.(withChat, document.body, 'list'));
+		fireEvent.click(
+			document.querySelector(
+				'[data-cy="calendar-entry-chat"]'
+			) as HTMLElement
+		);
+		expect(onOpenChat).toHaveBeenCalledTimes(2);
+		expect(
+			await screen.findByText('calendar.chatUnavailable')
+		).toBeTruthy();
 	});
 });

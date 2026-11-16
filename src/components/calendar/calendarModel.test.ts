@@ -11,6 +11,7 @@ import {
 	findConflicts,
 	isMovable,
 	isSoon,
+	soonEntry,
 	kindFromLocation,
 	neutralFeedEvent,
 	redactForColleague,
@@ -493,5 +494,47 @@ describe('visibleHours', () => {
 				{ start: at(16, 9), end: at(16, 10) }
 			])
 		).toEqual({ min: '07:00:00', max: '21:00:00' });
+	});
+});
+
+describe('soonEntry — the one entry marked "Beginnt gleich" (review 4577641949)', () => {
+	const now = new Date('2026-11-16T09:50:00Z');
+	const own = (
+		id: string,
+		start: string,
+		end: string,
+		type: CalendarEntry['type'] = 'appointment'
+	): CalendarEntry => ({ id, type, start, end, ownerId: 'me' });
+
+	it('marks only the next one, not every overlapping one', () => {
+		const entries = [
+			own('later', '2026-11-16T10:00:00Z', '2026-11-16T11:00:00Z'),
+			own('next', '2026-11-16T09:55:00Z', '2026-11-16T10:30:00Z')
+		];
+		expect(entries.every((e) => isSoon(e, now))).toBe(true);
+		expect(soonEntry(entries, 'me', now)?.id).toBe('next');
+	});
+
+	it('counts a group date like an appointment, never a blocker or a colleague', () => {
+		expect(
+			soonEntry(
+				[own('group', '2026-11-16T10:00:00Z', '2026-11-16T11:00:00Z', 'group')],
+				'me',
+				now
+			)?.id
+		).toBe('group');
+		expect(
+			soonEntry(
+				[
+					own('block', '2026-11-16T09:55:00Z', '2026-11-16T11:00:00Z', 'blocker'),
+					{
+						...own('kaya', '2026-11-16T09:55:00Z', '2026-11-16T11:00:00Z'),
+						ownerId: 'kaya'
+					}
+				],
+				'me',
+				now
+			)
+		).toBeUndefined();
 	});
 });

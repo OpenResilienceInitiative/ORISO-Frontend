@@ -36,6 +36,8 @@ import ViewWeekOutlinedIcon from '@mui/icons-material/ViewWeekOutlined';
 import { M3Snackbar } from '../m3Snackbar/M3Snackbar';
 import {
 	DEFAULT_VISIBILITY,
+	moveProblem,
+	soonEntry,
 	type AppointmentDraft,
 	type AppointmentKind,
 	type CalendarConversation,
@@ -152,6 +154,7 @@ import { initialsOf } from './CalendarEntryPeek';
 import { HoverScrollArrows } from '../hoverScrollArrows/HoverScrollArrows';
 import { AppointmentDialog } from './AppointmentDialog';
 import { BlockerDialog } from './BlockerDialog';
+import { MoveConflictDialog } from './MoveConflictDialog';
 import {
 	WorkingHoursDialog,
 	useWorkingHoursSummary
@@ -270,9 +273,13 @@ export interface CalendarPageProps {
 	onRangeChange?: (start: Date, end: Date) => void;
 	/** Colleagues whose calendars are switched on. */
 	onShownColleaguesChange?: (ids: string[]) => void;
-	onStart?: (entry: CalendarEntry) => void;
+	/**
+	 * Start or join the call; a promise that rejects says the conversation
+	 * cannot be opened (review 4577642137).
+	 */
+	onStart?: (entry: CalendarEntry) => void | Promise<unknown>;
 	/** "Zum Chat": open the conversation an appointment belongs to. */
-	onOpenChat?: (entry: CalendarEntry) => void;
+	onOpenChat?: (entry: CalendarEntry) => void | Promise<unknown>;
 	onCopyFeed?: (url: string) => void;
 	/** Sync actions; a rejected promise keeps the dialog's input and says so. */
 	onResetFeed?: () => void | Promise<unknown>;
@@ -505,6 +512,11 @@ export const CalendarPage = ({
 	const [dialog, setDialog] = useState<Dialog>(null);
 	const creating = useRef(false);
 	const [notice, setNotice] = useState<Notice | null>(null);
+	/** A move onto other entries waits for this answer. */
+	const [moveAsk, setMoveAsk] = useState<{
+		conflicts: CalendarEntry[];
+		answer: (go: boolean) => void;
+	} | null>(null);
 	const [dragging, setDragging] = useState(false);
 	/** Phone: quick entry folds open in the sheet on demand. */
 	const [quickOpen, setQuickOpen] = useState(false);
@@ -588,6 +600,13 @@ export const CalendarPage = ({
 			),
 		[entries, ownerId, shownColleagues]
 	);
+	// "Beginnt gleich" marks one entry, the first of "Als Nächstes", in the
+	// grid and the side list alike (review 4577641949).
+	const soonId = soonEntry(
+		entries.filter((e) => !hiddenFacets.includes(facetOf(e))),
+		ownerId,
+		now
+	)?.id;
 
 	const toggle = <T,>(list: T[], item: T) =>
 		list.includes(item) ? list.filter((x) => x !== item) : [...list, item];
@@ -636,6 +655,16 @@ export const CalendarPage = ({
 				}
 			);
 		return done(undefined);
+	};
+
+	/** A room that cannot be opened says so instead of doing nothing. */
+	const openRoom = (
+		open: CalendarPageProps['onStart'],
+		entry: CalendarEntry
+	) => {
+		Promise.resolve(open?.(entry)).catch(() =>
+			setNotice({ message: t('calendar.chatUnavailable') })
+		);
 	};
 
 	// --- Navigation ---
@@ -828,7 +857,39 @@ export const CalendarPage = ({
 			});
 	};
 
-	const move = (entry: CalendarEntry, start: Date, end: Date) => {
+	/**
+	 * A move runs the checks creating does: never into the past for an
+	 * appointment, and a question first when it lands on other entries.
+	 * Refused or not confirmed, the entry goes back and no notice says it
+	 * moved (review 4577641945). The move form already shows the conflict
+	 * note above its button, so it does not ask a second time (`warned`).
+	 */
+	const move = (
+		entry: CalendarEntry,
+		start: Date,
+		end: Date,
+		warned = false
+	) => {
+		const problem = moveProblem(
+			entry,
+			{ start, end },
+			entries,
+			ownerId,
+			now
+		);
+		if (problem?.type === 'past') {
+			setNotice({ message: t('calendar.movePast') });
+			return false;
+		}
+		if (problem?.type === 'conflict' && !warned)
+			return new Promise<boolean>((answer) =>
+				setMoveAsk({ conflicts: problem.conflicts, answer })
+			).then((go) => go && commitMove(entry, start, end));
+		return commitMove(entry, start, end);
+	};
+
+	/** Says it moved only once the move went through. */
+	const commitMove = (entry: CalendarEntry, start: Date, end: Date) => {
 		return run(onMove?.(entry, start, end), {
 			message: t(
 				entry.type === 'blocker'
@@ -1224,8 +1285,8 @@ export const CalendarPage = ({
 		action: 'start' | 'chat' | 'join' | 'cancel' | 'remove'
 	) => {
 		setMenu(null);
-		if (action === 'start') onStart?.(entry);
-		else if (action === 'chat') onOpenChat?.(entry);
+		if (action === 'start') openRoom(onStart, entry);
+		else if (action === 'chat') openRoom(onOpenChat, entry);
 		else if (action === 'join') onJoin?.(entry);
 		else if (action === 'cancel')
 			run(onCancelAppointment?.(entry), {
@@ -1321,7 +1382,7 @@ export const CalendarPage = ({
 				onMove={(start, end) => {
 					setMenu(null);
 					if (menu.mode === 'propose') propose(entry, start, end);
-					else move(entry, start, end);
+					else move(entry, start, end, true);
 				}}
 			/>
 		);
@@ -1975,6 +2036,7 @@ export const CalendarPage = ({
 							ownerId={ownerId}
 							entries={visible}
 							busyEntries={busyEntries}
+							soonId={soonId ?? null}
 							colleagues={colleagueById}
 							bandPeople={shown.filter(
 								(c) => !unknownIds.has(c.id)
@@ -2055,6 +2117,7 @@ export const CalendarPage = ({
 		ownerId,
 		consultant,
 		now,
+		soonId,
 		entries,
 		colleagues,
 		conversations,
@@ -2071,7 +2134,9 @@ export const CalendarPage = ({
 			setMenu({ type: 'proposal', proposal, entry, anchor }),
 		onWithdrawProposal: onWithdrawProposal ? withdraw : undefined,
 		onOpenEntry: (entry, anchor) => openEntry(entry, anchor),
-		onOpenChat,
+		onOpenChat: onOpenChat
+			? (entry) => openRoom(onOpenChat, entry)
+			: undefined,
 		shownColleagues,
 		onCreate: onCreate ? create : undefined,
 		freeHoursState,
@@ -2273,6 +2338,20 @@ export const CalendarPage = ({
 					onSaveImport={(url) => onSaveImport?.(url)}
 					onRemoveImport={() => onRemoveImport?.()}
 					onClose={() => setDialog(null)}
+				/>
+			)}
+			{moveAsk && (
+				<MoveConflictDialog
+					conflicts={moveAsk.conflicts}
+					fullScreen={compact}
+					onConfirm={() => {
+						moveAsk.answer(true);
+						setMoveAsk(null);
+					}}
+					onCancel={() => {
+						moveAsk.answer(false);
+						setMoveAsk(null);
+					}}
 				/>
 			)}
 			{notice && (

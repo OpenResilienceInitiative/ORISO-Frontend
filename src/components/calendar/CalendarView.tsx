@@ -38,14 +38,14 @@ import './fullCalendarGuards';
 import {
 	createMoveGuard,
 	isMovable,
-	isSoon,
+	soonEntry,
 	visibleHours,
 	type CalendarEntry,
 	type CalendarRole,
 	type Colleague,
 	type MoveResult
 } from './calendarModel';
-import { CalendarEntryGlyph, facetOf } from './CalendarEntryGlyph';
+import { CalendarEntryGlyph, SoonBadge, facetOf } from './CalendarEntryGlyph';
 import type { MoveProposal } from './calendarActions';
 import {
 	dayEdgesOf,
@@ -115,6 +115,12 @@ export interface CalendarViewProps {
 	 * 4576423989). Defaults to `entries`.
 	 */
 	busyEntries?: CalendarEntry[];
+	/**
+	 * The one entry marked "Beginnt gleich", picked by the page so the grid
+	 * and the side list agree; `null` when none is soon. Left out, the grid
+	 * picks it from its own entries (review 4577641949).
+	 */
+	soonId?: string | null;
 	/** Colleagues by id, for names, initials and the tooltip. */
 	colleagues?: Record<string, Colleague>;
 	/**
@@ -360,6 +366,7 @@ export const CalendarView = ({
 	ownerId,
 	entries,
 	busyEntries,
+	soonId: soonIdProp,
 	colleagues = {},
 	bandPeople = NO_PEOPLE,
 	unavailable = NO_PEOPLE,
@@ -564,6 +571,13 @@ export const CalendarView = ({
 		[gridEntries, proposals, ownerId, role, label, t, offEvents, bands]
 	);
 
+	// "Beginnt gleich" in words and a clock, not by colour alone, on the
+	// one entry the side list marks too (review 4577641949).
+	const soonId =
+		soonIdProp === undefined
+			? soonEntry(entries, ownerId, nowDate)?.id
+			: (soonIdProp ?? undefined);
+
 	const eventClass = useCallback(
 		(info: EventDisplayInfo) => {
 			const { entry, proposal, off, holiday } = propsOf(info);
@@ -581,11 +595,7 @@ export const CalendarView = ({
 				`calEntry--k-${facet}`,
 				colleague && 'calEntry--colleague',
 				proposal && 'calEntry--proposal',
-				!colleague &&
-					!proposal &&
-					entry.type === 'appointment' &&
-					isSoon(entry, nowDate) &&
-					'calEntry--soon',
+				!proposal && entry.id === soonId && 'calEntry--soon',
 				dimmed && 'calEntry--dimmed',
 				muted.includes(entry.ownerId) && 'calEntry--muted'
 			]
@@ -594,7 +604,7 @@ export const CalendarView = ({
 		},
 		// nowDate is fixed in stories; in the app a re-render refreshes it.
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[ownerId, highlight?.owner, highlight?.facet, muted]
+		[ownerId, highlight?.owner, highlight?.facet, muted, soonId]
 	);
 
 	const eventContent = (info: EventDisplayInfo) => {
@@ -659,6 +669,7 @@ export const CalendarView = ({
 							</>
 						)}
 					</span>
+					{!proposal && entry.id === soonId && <SoonBadge />}
 				</span>
 			</span>
 		);
