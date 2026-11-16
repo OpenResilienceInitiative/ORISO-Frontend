@@ -57,12 +57,12 @@ vi.mock('./CalendarView', async (importOriginal) => {
 
 /* The dialog stub hands out its save, so a test can save twice. */
 const dialog: { save?: (draft: unknown) => void; close?: () => void } = {};
-vi.mock('./AppointmentDialog', () => ({
-	AppointmentDialog: (props: {
-		onSave: (draft: unknown) => void;
+vi.mock('./NewEntryDialog', () => ({
+	NewEntryDialog: (props: {
+		onSaveAppointment: (draft: unknown) => void;
 		onClose: () => void;
 	}) => {
-		dialog.save = props.onSave;
+		dialog.save = props.onSaveAppointment;
 		dialog.close = props.onClose;
 		return <div data-testid="appointment-dialog" />;
 	}

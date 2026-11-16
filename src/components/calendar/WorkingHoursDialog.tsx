@@ -125,6 +125,23 @@ export const WorkingHoursDialog = ({
 					: r
 			)
 		);
+	// One set of hours for the week: Monday's times and pause on every
+	// working day (prototype v17).
+	const monday = rows.find((r) => r.weekday === 1);
+	const copyMonday = () =>
+		monday &&
+		setRows((all) =>
+			all.map((r) =>
+				r.enabled && r.weekday !== 1
+					? {
+							...r,
+							start: monday.start,
+							end: monday.end,
+							pause: { ...monday.pause }
+						}
+					: r
+			)
+		);
 
 	return (
 		<M3Dialog
@@ -287,6 +304,15 @@ export const WorkingHoursDialog = ({
 						</React.Fragment>
 					);
 				})}
+				<button
+					type="button"
+					className="calendarHours__copy"
+					disabled={!monday?.enabled}
+					onClick={copyMonday}
+					data-cy="calendar-hours-copy-monday"
+				>
+					{t('calendar.workingHours.copyMonday')}
+				</button>
 				<div
 					className="calendarHours__row calendarHours__row--holidays"
 					data-cy="calendar-hours-holidays"

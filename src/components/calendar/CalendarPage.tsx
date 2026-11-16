@@ -159,8 +159,7 @@ import {
 } from './calendarMenus';
 import { initialsOf } from './CalendarEntryPeek';
 import { HoverScrollArrows } from '../hoverScrollArrows/HoverScrollArrows';
-import { AppointmentDialog } from './AppointmentDialog';
-import { BlockerDialog } from './BlockerDialog';
+import { NewEntryDialog } from './NewEntryDialog';
 import { MoveConflictDialog } from './MoveConflictDialog';
 import {
 	WorkingHoursDialog,
@@ -336,7 +335,12 @@ type Dialog =
 			slot?: { start: Date; end: Date; kind: AppointmentKind };
 			sessionId?: number;
 	  }
-	| { type: 'blocker'; slot?: { start: Date; end: Date } }
+	| {
+			type: 'blocker';
+			slot?: { start: Date; end: Date };
+			/** Ticked already: "Wöchentlich …" after a single blocker. */
+			weekdays?: number[];
+	  }
 	| { type: 'workingHours' }
 	| { type: 'sync' }
 	| null;
@@ -2477,29 +2481,33 @@ export const CalendarPage = ({
 				{menuContent}
 			</CalendarMenu>
 
-			{dialog?.type === 'appointment' && (
-				<AppointmentDialog
+			{/* "Neu" and every other way in: one "Neuer Eintrag" with the
+			    tabs Termin | Sperrzeit (prototype v17). */}
+			{(dialog?.type === 'appointment' || dialog?.type === 'blocker') && (
+				<NewEntryDialog
 					open
+					initialTab={dialog.type}
 					slot={dialog.slot}
-					initialSessionId={dialog.sessionId}
+					initialSessionId={
+						dialog.type === 'appointment'
+							? dialog.sessionId
+							: undefined
+					}
+					initialWeekdays={
+						dialog.type === 'blocker' ? dialog.weekdays : undefined
+					}
 					conversations={conversations}
 					entries={entries}
 					ownerId={ownerId}
 					now={now}
 					fullScreen={compact}
-					onSave={(draft) => create([draft], true)}
-					onClose={() => setDialog(null)}
-				/>
-			)}
-			{dialog?.type === 'blocker' && (
-				<BlockerDialog
-					open
-					slot={dialog.slot}
-					entries={entries}
-					ownerId={ownerId}
-					now={now}
-					fullScreen={compact}
-					onSave={(drafts) => create(drafts, true)}
+					onSaveAppointment={(draft) => create([draft], true)}
+					onSaveBlocker={(drafts) => create(drafts, true)}
+					onWorkingHours={
+						editHours
+							? () => setDialog({ type: 'workingHours' })
+							: undefined
+					}
 					onClose={() => setDialog(null)}
 				/>
 			)}

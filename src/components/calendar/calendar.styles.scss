@@ -2791,6 +2791,101 @@ $cal-avatar-tones: (#2f5d5a, #7a0e2a, #4b4f7a, #6d3d63, #7a5a1e, #36576e);
 	line-height: 18px;
 }
 
+// "Neuer Eintrag": the tabs Termin | Sperrzeit above the form (prototype
+// v17), a filled segmented button.
+.calendarNewEntry {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.calendarNewEntry__tabs {
+	display: inline-flex;
+	align-self: flex-start;
+	gap: 2px;
+	padding: 4px;
+	border-radius: 999px;
+	background: var(--m3-surface-container, #f0edee);
+}
+
+.calendarNewEntry__tab {
+	height: 36px;
+	padding: 0 16px;
+	border: 0;
+	border-radius: 999px;
+	background: transparent;
+	color: var(--m3-on-surface-variant, #444748);
+	font: inherit;
+	font-size: 13px;
+	font-weight: 600;
+	cursor: pointer;
+
+	&:hover {
+		color: var(--m3-on-surface, #1b1b1c);
+	}
+
+	&[aria-pressed='true'] {
+		background: #410001;
+		color: #ffffff;
+	}
+
+	&:focus-visible {
+		@include control-focus-ring(0);
+	}
+}
+
+// Under the blocker form: the same times every week are working hours.
+.calendarDialog__work {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px;
+	margin: 0;
+	color: var(--m3-on-surface-variant, #444748);
+	font-size: 12.5px;
+	line-height: 18px;
+}
+
+.calendarDialog__workIcon {
+	flex: none;
+	width: 16px !important;
+	height: 16px !important;
+}
+
+.calendarDialog__workButton,
+.calendarHours__copy {
+	padding: 2px 4px;
+	border: 0;
+	border-radius: 6px;
+	background: none;
+	color: var(--m3-primary, #a5000a);
+	font: inherit;
+	font-weight: 600;
+	cursor: pointer;
+
+	&:hover {
+		background: var(--m3-hover-layer, #f9eff0);
+	}
+
+	&:focus-visible {
+		@include control-focus-ring(0);
+	}
+}
+
+// "Vom Montag übernehmen" under the days (prototype v17).
+.calendarHours__copy {
+	align-self: flex-start;
+	margin: 2px 0 4px;
+	padding: 6px 8px;
+	font-size: 13px;
+	text-align: left;
+
+	&:disabled {
+		color: var(--m3-outline, #747878);
+		cursor: default;
+	}
+}
+
 .calendarDialog__error {
 	margin: 0;
 	color: var(--m3-error, #ba1a1a);

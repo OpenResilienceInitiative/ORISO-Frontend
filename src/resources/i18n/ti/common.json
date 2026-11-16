@@ -6945,6 +6945,11 @@
 				"past": "እቲ ምዝገባ ኣብ መጻኢ ክኸውን ኣለዎ።",
 				"order": "እቲ መወዳእታ ድሕሪ እቲ መጀመሪ ክኸውን ኣለዎ።",
 				"conversation": "በጃኹም እቲ ቆጸራ ዝምልከቶ ምኽሪ ምረጹ።"
+			},
+			"entryKind": "ዓይነት ምዝገባ",
+			"tabs": {
+				"appointment": "ቆጸራ",
+				"blocker": "ዝተዓጽወ ግዜ"
 			}
 		},
 		"details": {
@@ -6978,7 +6983,7 @@
 		"created": "ቆጸራ ተፈጢሩ፦ {{date}}",
 		"undo": "ንድሕሪት መልስ",
 		"syncDialog": {
-			"title": "ምውህሃድ ካላንዳር",
+			"title": "ምስ Outlook ወይ Google ኣራኽብ",
 			"description": "ቆጸራታት ORISO ኣብ Outlook፡ Google ወይ Apple ካላንዳር – ካብኡ ድማ ዝተታሕዙ ግዜያት ናብ ORISO።",
 			"feedTitle": "ኣብ ካላንዳርኩም ምዝገባ ግበሩ",
 			"feedText": "ነዚ ሊንክ ኣብ ካላንዳርኩም ከም ምዝገባ ወስኹዎ። “ORISO-Termin”ን ሰዓትን ጥራይ የርኢ፡ ስም ኣየርእን።",
@@ -7032,7 +7037,8 @@
 			"conflicts_one": "ምስ {{count}} ቆጸራ ይጋጮ።",
 			"created": "{{count}} ዝተዓጽዉ ግዜያት ተመዝጊቦም",
 			"created_one": "{{count}} ዝተዓጽወ ግዜ ተመዝጊቡ",
-			"createdSingle": "ዝተዓጽወ ግዜ ተመዝጊቡ፦ {{date}}"
+			"createdSingle": "ዝተዓጽወ ግዜ ተመዝጊቡ፦ {{date}}",
+			"workHint": "ኩሉ ግዜ ተመሳሳሊ ሰዓታት፣ ከም ምሸትን ቀዳመ-ሰንበትን?"
 		},
 		"saveFailed": "ኣይሰለጠን። በጃኹም ደጊምኩም ፈትኑ።",
 		"blockerRemoved": "ዝተዓጽወ ግዜ ተኣልዩ።",
@@ -7212,7 +7218,8 @@
 			"summary": "ናይ ስራሕ ሰዓታት {{hours}}",
 			"title": "ናይ ስራሕ ሰዓታት ወስን",
 			"to": "መወዳእታ {{day}}",
-			"tooMany": "ናይ ስራሕ ሰዓታት ኣብ ሰሙን ልዕሊ {{max}} ግዜታት ክሕዝ ኣይክእልን፣ እዚ ለውጢ ኣይተዓቀበን።"
+			"tooMany": "ናይ ስራሕ ሰዓታት ኣብ ሰሙን ልዕሊ {{max}} ግዜታት ክሕዝ ኣይክእልን፣ እዚ ለውጢ ኣይተዓቀበን።",
+			"copyMonday": "ሰዓታትን ዕረፍትን ናይ ሰኑይ ንኹሎም መዓልታት ስራሕ ተጠቐም"
 		},
 		"grip": {
 			"weekOnly": "ብኸፊል ጥራይ ተዓቂቡ: ሰዓታት {{weekdays}} ተቐይሩ፣ {{date}} ግን ኣይተቐየረን።",

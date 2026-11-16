@@ -6978,6 +6978,11 @@
 				"past": "Kayıt gelecekte olmalıdır.",
 				"order": "Bitiş, başlangıçtan sonra olmalıdır.",
 				"conversation": "Lütfen randevunun ait olduğu danışmanlığı seçin."
+			},
+			"entryKind": "Kayıt türü",
+			"tabs": {
+				"appointment": "Randevu",
+				"blocker": "Engellenmiş zaman"
 			}
 		},
 		"details": {
@@ -7011,7 +7016,7 @@
 		"created": "Randevu oluşturuldu: {{date}}",
 		"undo": "Geri al",
 		"syncDialog": {
-			"title": "Takvim eşitleme",
+			"title": "Outlook veya Google bağla",
 			"description": "ORISO randevularınız Outlook, Google veya Apple Takvim'de – oradaki meşgul zamanlarınız da ORISO'ya.",
 			"feedTitle": "Takviminizde abone olun",
 			"feedText": "Bu bağlantıyı takviminize abonelik olarak ekleyin. Yalnızca “ORISO-Termin” ve saati gösterir, isim göstermez.",
@@ -7065,7 +7070,8 @@
 			"conflicts_one": "{{count}} randevuyla çakışıyor.",
 			"created": "{{count}} kapalı zaman eklendi",
 			"created_one": "{{count}} kapalı zaman eklendi",
-			"createdSingle": "Kapalı zaman eklendi: {{date}}"
+			"createdSingle": "Kapalı zaman eklendi: {{date}}",
+			"workHint": "Hep aynı saatler mi, örneğin akşamları ve hafta sonları?"
 		},
 		"saveFailed": "Bu işe yaramadı. Lütfen tekrar deneyin.",
 		"blockerRemoved": "Kapalı zaman kaldırıldı.",
@@ -7245,7 +7251,8 @@
 			"summary": "Çalışma saatleri {{hours}}",
 			"title": "Çalışma saatlerini belirle",
 			"to": "{{day}} bitiş",
-			"tooMany": "Çalışma saatleri haftada en fazla {{max}} zaman aralığı içerir; bu değişiklik kaydedilmedi."
+			"tooMany": "Çalışma saatleri haftada en fazla {{max}} zaman aralığı içerir; bu değişiklik kaydedilmedi.",
+			"copyMonday": "Pazartesinin saatlerini ve molasını tüm iş günlerine uygula"
 		},
 		"grip": {
 			"weekOnly": "Yalnızca kısmen kaydedildi: {{weekdays}} için saatler değişti, {{date}} için değişmedi.",
