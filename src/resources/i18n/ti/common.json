@@ -7109,7 +7109,7 @@
 			"declineHint": "ቆጸራ ከም ዘለዎ ይጸንሕ",
 			"declineLabel": "ሓሳብ {{name}} ኣይትቐበል፦ ቆጸራ {{from}} ይጸንሕ",
 			"declined": "ሓሳብ ኣይተቐበልኩምን። ቆጸራ {{date}} ይጸንሕ።",
-			"noLongerValid": "ቆጸራ ኣብዚ ማእከል ተቐይሩ እዩ። እቲ ሓሳብ ድሕሪ ሕጂ ኣይሰርሕን።",
+			"noLongerValid": "እዚ ሓሳብ ድሕሪ ሕጂ ኣይሰርሕን። እቲ ቆጸራ ተቐይሩ ወይ ሓሊፉ እዩ።",
 			"navCount": "{{count}} ክፉታት ሕቶታት",
 			"navCount_one": "{{count}} ክፉት ሕቶ"
 		},

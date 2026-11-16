@@ -92,8 +92,10 @@ export interface MoveProposal {
 }
 
 /**
- * UserService answered 409 to "Annehmen": the appointment moved after the
- * proposal was made, so the proposal no longer applies.
+ * UserService answered 409 to "Annehmen": the proposal no longer applies.
+ * The answer names no cause (no longer open; the appointment moved, was
+ * cancelled or began; the proposed start passed; the conversation was
+ * finished or reassigned), so the page says it neutrally.
  */
 export class ProposalNoLongerValid extends Error {
 	constructor() {

@@ -7132,7 +7132,7 @@
 			"declineHint": "Der Termin bleibt, wie er ist",
 			"declineLabel": "Vorschlag von {{name}} ablehnen: Der Termin bleibt {{from}}",
 			"declined": "Vorschlag abgelehnt. Der Termin bleibt {{date}}.",
-			"noLongerValid": "Der Termin wurde inzwischen verschoben. Der Vorschlag gilt nicht mehr.",
+			"noLongerValid": "Dieser Vorschlag gilt nicht mehr. Der Termin hat sich geändert oder ist vorbei.",
 			"navCount": "{{count}} offene Anfragen",
 			"navCount_one": "{{count}} offene Anfrage"
 		},

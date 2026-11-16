@@ -274,7 +274,7 @@ export interface CalendarPageProps {
 	receivedProposals?: MoveProposal[];
 	/**
 	 * "Annehmen": the appointment moves. A rejection with
-	 * `ProposalNoLongerValid` says it moved meanwhile.
+	 * `ProposalNoLongerValid` says the proposal no longer applies.
 	 */
 	onAcceptProposal?: (proposal: MoveProposal) => ChangeResult;
 	/** "Ablehnen": the appointment stays where it is. */

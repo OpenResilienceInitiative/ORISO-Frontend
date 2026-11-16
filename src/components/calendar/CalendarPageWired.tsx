@@ -595,8 +595,8 @@ export const CalendarPageWired = () => {
 	/**
 	 * UserService moves the appointment; the reload brings the moved entry
 	 * and drops the other proposals for it. The advice seeker gets the
-	 * usual notice. 409: it moved meanwhile, the proposal is void; the page
-	 * says so, and the calendar reloads.
+	 * usual notice. 409: the proposal is void (UserService names no cause);
+	 * the page says so, and the calendar reloads.
 	 */
 	const acceptProposal = async (proposal: MoveProposal) => {
 		let answer;

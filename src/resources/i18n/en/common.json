@@ -7057,7 +7057,7 @@
 			"declineHint": "The appointment stays as it is",
 			"declineLabel": "Decline the proposal from {{name}}: the appointment stays at {{from}}",
 			"declined": "Proposal declined. The appointment stays at {{date}}.",
-			"noLongerValid": "The appointment has been moved in the meantime. The proposal no longer applies.",
+			"noLongerValid": "This proposal no longer applies. The appointment has changed or is over.",
 			"navCount": "{{count}} open requests",
 			"navCount_one": "{{count}} open request"
 		},

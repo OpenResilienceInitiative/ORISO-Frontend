@@ -7142,7 +7142,7 @@
 			"declineHint": "Le rendez-vous reste inchangé",
 			"declineLabel": "Refuser la proposition de {{name}} : le rendez-vous reste le {{from}}",
 			"declined": "Proposition refusée. Le rendez-vous reste le {{date}}.",
-			"noLongerValid": "Le rendez-vous a été déplacé entre-temps. La proposition n’est plus valable.",
+			"noLongerValid": "Cette proposition n’est plus valable. Le rendez-vous a changé ou est passé.",
 			"navCount": "{{count}} demandes en attente",
 			"navCount_one": "{{count}} demande en attente"
 		},
