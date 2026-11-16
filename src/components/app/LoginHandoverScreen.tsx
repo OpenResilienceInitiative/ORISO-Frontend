@@ -1,6 +1,14 @@
 import clsx from 'clsx';
 import * as React from 'react';
-import { useEffect, useLayoutEffect, useState } from 'react';
+import {
+	forwardRef,
+	useEffect,
+	useLayoutEffect,
+	useRef,
+	useState
+} from 'react';
+import { createPortal } from 'react-dom';
+import { useTranslation } from 'react-i18next';
 import { Loading } from './Loading';
 import {
 	endLoginHandover,
@@ -27,20 +35,32 @@ export interface LoginHandoverScreenProps {
  * background with the ORISO loading animation, the same one the app shows
  * while it boots, so the whole sign-in reads as one screen.
  */
-export const LoginHandoverScreen = ({
-	animateIn = false,
-	leaving = false
-}: LoginHandoverScreenProps) => (
-	<div
-		className={clsx('loginHandoverScreen', {
-			'loginHandoverScreen--enter': animateIn,
-			'loginHandoverScreen--leaving': leaving
-		})}
-		data-cy="login-handover-screen"
-	>
-		<Loading layout="page" delayMs={0} />
-	</div>
-);
+export const LoginHandoverScreen = forwardRef<
+	HTMLDivElement,
+	LoginHandoverScreenProps
+>(({ animateIn = false, leaving = false }, ref) => {
+	const { t } = useTranslation();
+	const label = t('app.wait');
+	return (
+		<div
+			ref={ref}
+			className={clsx('loginHandoverScreen', {
+				'loginHandoverScreen--enter': animateIn,
+				'loginHandoverScreen--leaving': leaving
+			})}
+			data-cy="login-handover-screen"
+			role="status"
+			aria-label={label}
+			aria-live="polite"
+			tabIndex={-1}
+		>
+			<div aria-hidden="true">
+				<Loading layout="page" delayMs={0} label={label} />
+			</div>
+		</div>
+	);
+});
+LoginHandoverScreen.displayName = 'LoginHandoverScreen';
 
 const prefersReducedMotion = () => {
 	try {
@@ -54,6 +74,7 @@ const prefersReducedMotion = () => {
 export const LoginHandoverGate = () => {
 	const active = useLoginHandoverActive();
 	const [mounted, setMounted] = useState(active);
+	const screenRef = useRef<HTMLDivElement>(null);
 	// Active on the first render means a new document continues the handover:
 	// the screen is already there (app.html painted its background), so it
 	// must not fade in a second time.
@@ -72,6 +93,32 @@ export const LoginHandoverGate = () => {
 			window.cancelAnimationFrame(second);
 		};
 	}, [mounted]);
+
+	// The screen is portalled outside the app container so the covered login
+	// page can be made inert without also disabling this status. Move focus to
+	// the status while it covers the page, then return it when a same-document
+	// failure reveals the form again.
+	useLayoutEffect(() => {
+		if (!active || !mounted) return;
+		const covered = document.querySelector<HTMLElement>('.app__container');
+		const previousFocus =
+			document.activeElement instanceof HTMLElement
+				? document.activeElement
+				: null;
+		const alreadyInert = covered?.hasAttribute('inert') ?? false;
+		covered?.setAttribute('inert', '');
+		screenRef.current?.focus({ preventScroll: true });
+		return () => {
+			if (covered && !alreadyInert) covered.removeAttribute('inert');
+			// Let the browser apply the inert removal before restoring focus.
+			// A new handover started in the meantime owns focus instead.
+			queueMicrotask(() => {
+				if (!isLoginHandoverActive() && previousFocus?.isConnected) {
+					previousFocus.focus({ preventScroll: true });
+				}
+			});
+		};
+	}, [active, mounted]);
 
 	useEffect(() => {
 		if (active) {
@@ -105,5 +152,12 @@ export const LoginHandoverGate = () => {
 	}, []);
 
 	if (!mounted) return null;
-	return <LoginHandoverScreen animateIn={!continued} leaving={!active} />;
+	return createPortal(
+		<LoginHandoverScreen
+			ref={screenRef}
+			animateIn={!continued}
+			leaving={!active}
+		/>,
+		document.body
+	);
 };

@@ -99,19 +99,20 @@ describe('LoginHandoverGate', () => {
 	});
 	afterEach(() => {
 		cleanup();
+		document.querySelector('.app__container')?.remove();
 		vi.useRealTimers();
 	});
 
 	it('shows nothing without a handover', () => {
-		const { container } = render(<LoginHandoverGate />);
-		expect(container.childElementCount).toBe(0);
+		render(<LoginHandoverGate />);
+		expect(document.querySelector('.loginHandoverScreen')).toBeNull();
 	});
 
 	it('fades in on the login page and out when the app is ready', () => {
-		const { container } = render(<LoginHandoverGate />);
+		render(<LoginHandoverGate />);
 
 		act(() => beginLoginHandover());
-		const overlay = container.querySelector('.loginHandoverScreen');
+		const overlay = document.querySelector('.loginHandoverScreen');
 		expect(overlay?.classList.contains('loginHandoverScreen--enter')).toBe(
 			true
 		);
@@ -125,17 +126,41 @@ describe('LoginHandoverGate', () => {
 		act(() => {
 			vi.advanceTimersByTime(LOGIN_HANDOVER_FADE_MS);
 		});
-		expect(container.childElementCount).toBe(0);
+		expect(document.querySelector('.loginHandoverScreen')).toBeNull();
 	});
 
 	it('continues without a second fade-in on the app document', () => {
 		resetLoginHandoverForTests(true);
-		const { container } = render(<LoginHandoverGate />);
-		const overlay = container.querySelector('.loginHandoverScreen');
+		render(<LoginHandoverGate />);
+		const overlay = document.querySelector('.loginHandoverScreen');
 		expect(overlay).not.toBeNull();
 		expect(overlay?.classList.contains('loginHandoverScreen--enter')).toBe(
 			false
 		);
+	});
+
+	it('makes the covered app inert and restores focus after a same-document failure', async () => {
+		const covered = document.createElement('div');
+		covered.className = 'app__container';
+		const loginButton = document.createElement('button');
+		loginButton.textContent = 'Login';
+		covered.appendChild(loginButton);
+		document.body.appendChild(covered);
+		loginButton.focus();
+		render(<LoginHandoverGate />);
+
+		act(() => beginLoginHandover());
+		const overlay = screen.getByRole('status');
+		expect(covered.hasAttribute('inert')).toBe(true);
+		expect(covered.contains(overlay)).toBe(false);
+		expect(document.activeElement).toBe(overlay);
+
+		await act(async () => {
+			endLoginHandover();
+			await Promise.resolve();
+		});
+		expect(covered.hasAttribute('inert')).toBe(false);
+		expect(document.activeElement).toBe(loginButton);
 	});
 
 	it('never keeps a person behind the screen for good', () => {
