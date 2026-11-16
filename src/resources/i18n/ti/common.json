@@ -2189,7 +2189,32 @@
 			"previewLabel": "መልሲ ናብ",
 			"cancel": "መልሲ ሰርዝ",
 			"quoteLabel": "መልሲ ናይ",
-			"quoteUnknown": "ቀዳማይ መልእኽቲ"
+			"quoteUnknown": "ቀዳማይ መልእኽቲ",
+			"jumpToQuote": "ናብቲ ካብ {{author}} ዝተጠቕሰ ክፋል ኪድ"
+		},
+		"selectionReply": {
+			"blur": "ሕባእ",
+			"blurredLabel": "ዝተሓብአ ክፋል",
+			"blurredBy": "ብ{{name}} ተሓቢኡ",
+			"removeBlur": "መሊስካ ኣርኢ",
+			"removeBlurLabel": "ዝተሓብአ ክፋል – መሊስካ ኣርኢ",
+			"blurBar": "ንዝተሓብአ ክፋል ዝምልከቱ ተግባራት",
+			"toolbar": "ንዝተመልከተ ክፋል ዝኸውን ተግባራት",
+			"reply": "መልሲ",
+			"replyVoice": "ብድምጻዊ መልእኽቲ መልሲ ሃብ",
+			"startThread": "ዛዕባ ጀምር",
+			"dialog": "ነቲ ካብ {{author}} ዝተመልከተ ክፋል መልሲ",
+			"cancel": "ሰርዝ",
+			"inputLabel": "ነቲ ዝተመልከተ ክፋል መልሲ",
+			"placeholder": "መልሲ ጸሓፍ …",
+			"placeholderWithVoice": "እንተደሊኻ ጽሑፍ ወስኽ …",
+			"addToComposer": "ናብ መልእኽቲ ወስኽ",
+			"sendNow": "ሕጂ ስደድ",
+			"keys": "↵ ናብ መልእኽቲ ወስኽ · {{sendKey}} ↵ ሕጂ ስደድ · Esc ሰርዝ",
+			"pendingLead": "{{number}} · {{author}}",
+			"pendingStatus": "መልሲ {{number}} ን{{author}}፣ ንዝቕጽል መልእኽቲ ተኣኪቡ",
+			"remove": "መልሲ {{number}} ኣልግስ",
+			"voiceDuration": "ድምጻዊ መልእኽቲ {{duration}}"
 		},
 		"thread": {
 			"unknownRoot": "ቀዳማይ መልእኽቲ",

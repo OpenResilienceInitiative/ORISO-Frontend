@@ -2023,3 +2023,66 @@ export const FormatsExperience: Story = {
 		await canvas.findByRole('button', { name: 'Textstil' });
 	}
 };
+
+/**
+ * Selection reply on the phone (PR #2232 review): three queued passages plus
+ * a reply stack above the card. The form reserves the whole stack, and the
+ * format tray rests above the stack instead of on its lowest bar.
+ */
+export const PendingQuotesStackMobile: Story = {
+	name: 'Queued passage quotes — mobile stack',
+	globals: phone390Globals,
+	render: () => (
+		<ComposerShell
+			replyTo={{
+				eventId: '$reply:matrix.example.org',
+				author: 'Anna',
+				text: 'Earlier message'
+			}}
+			onCancelReply={() => {}}
+			pendingQuotes={[1, 2, 3].map((n) => ({
+				id: `q${n}`,
+				eventId: `$quote${n}:matrix.example.org`,
+				author: 'Anna',
+				excerpt: `Marked passage ${n}`
+			}))}
+			onRemovePendingQuote={() => {}}
+			onSendPendingQuotes={() => {}}
+			onMobileNavigateBack={() => {}}
+		/>
+	),
+	play: async ({ canvasElement }) => {
+		const stack = await waitFor(() => {
+			const element = canvasElement.querySelector<HTMLElement>(
+				'.messageSubmit__contextStack'
+			);
+			expect(element).toBeTruthy();
+			return element!;
+		});
+		await userEvent.click(
+			await within(canvasElement).findByRole('button', {
+				name: /Zurück zu allen Werkzeugen|all tools/i
+			})
+		);
+		const tray = await waitFor(() => {
+			const element = canvasElement.querySelector<HTMLElement>(
+				'.messageSubmit__formatTray'
+			);
+			expect(element).toBeTruthy();
+			return element!;
+		});
+		const form = canvasElement.querySelector<HTMLElement>('form.textarea')!;
+		await waitFor(() => {
+			const stackBox = stack.getBoundingClientRect();
+			const trayBox = tray.getBoundingClientRect();
+			// The tray clears the topmost bar, never covering a remove button.
+			expect(Math.round(trayBox.bottom)).toBeLessThanOrEqual(
+				Math.round(stackBox.top)
+			);
+			// The form reserves the stack and the tray above the card.
+			expect(
+				Math.round(form.getBoundingClientRect().top)
+			).toBeLessThanOrEqual(Math.round(trayBox.top));
+		});
+	}
+};

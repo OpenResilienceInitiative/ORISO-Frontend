@@ -2215,7 +2215,32 @@
 			"previewLabel": "Réponse à",
 			"cancel": "Abandonner la réponse",
 			"quoteLabel": "En réponse à",
-			"quoteUnknown": "Message précédent"
+			"quoteUnknown": "Message précédent",
+			"jumpToQuote": "Aller au passage cité de {{author}}"
+		},
+		"selectionReply": {
+			"blur": "Flouter",
+			"blurredLabel": "Passage flouté",
+			"blurredBy": "Flouté par {{name}}",
+			"removeBlur": "Retirer le flou",
+			"removeBlurLabel": "Passage flouté – retirer le flou",
+			"blurBar": "Actions pour le passage flouté",
+			"toolbar": "Actions pour le passage marqué",
+			"reply": "Répondre",
+			"replyVoice": "Répondre par message vocal",
+			"startThread": "Démarrer un fil",
+			"dialog": "Répondre au passage marqué de {{author}}",
+			"cancel": "Annuler",
+			"inputLabel": "Répondre au passage marqué",
+			"placeholder": "Écrire une réponse …",
+			"placeholderWithVoice": "Ajouter un texte si vous le souhaitez …",
+			"addToComposer": "Ajouter au message",
+			"sendNow": "Envoyer maintenant",
+			"keys": "↵ ajouter au message · {{sendKey}} ↵ envoyer maintenant · Échap annuler",
+			"pendingLead": "{{number}} · {{author}}",
+			"pendingStatus": "Réponse {{number}} à {{author}}, réunie pour le prochain message",
+			"remove": "Retirer la réponse {{number}}",
+			"voiceDuration": "Message vocal {{duration}}"
 		},
 		"thread": {
 			"unknownRoot": "Message précédent",

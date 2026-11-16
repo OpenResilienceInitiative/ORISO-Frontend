@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { MessageTimeline } from './MessageTimeline';
 import { useThreadFocusReturn } from './useThreadFocusReturn';

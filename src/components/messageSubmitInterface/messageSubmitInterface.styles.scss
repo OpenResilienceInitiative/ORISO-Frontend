@@ -283,18 +283,25 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 						// (the framed card has a 16px bottom inset to spend).
 						&.textarea__wrapper-send-message--withContextBar {
 							min-height: calc(
-								var(--composer-height, 106px) + 52px
+								var(--composer-height, 106px) + 52px +
+									var(--context-stack-extra, 0px)
 							);
-							height: calc(var(--composer-height, 106px) + 52px);
+							height: calc(
+								var(--composer-height, 106px) + 52px +
+									var(--context-stack-extra, 0px)
+							);
 
 							.textarea__inputWrapper,
 							.textarea__buttons {
-								top: 52px;
+								top: calc(
+									52px + var(--context-stack-extra, 0px)
+								);
 							}
 
 							// The field fills the shell, and the bar lines up
 							// with the field (Figma 18:1990).
-							.messageSubmit__contextBar {
+							.messageSubmit__contextBar,
+							.messageSubmit__contextStack {
 								left: 0;
 								right: 0;
 							}
@@ -2015,25 +2022,81 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 	}
 }
 
+// Selection reply: several reply bars in one column, where the single bar
+// sits. The bars keep their own look and only give up their own position.
+.messageSubmit__contextStack {
+	position: absolute;
+	top: 16px;
+	left: 16px;
+	right: 16px;
+	z-index: 8;
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+
+	.messageSubmit__contextBar {
+		position: static;
+		width: 100%;
+		box-shadow: none;
+	}
+
+	@media screen and (width <= 899px) {
+		top: auto;
+		left: 0;
+		right: 0;
+		bottom: calc(100% + 6px);
+
+		.messageSubmit__contextBar {
+			box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+		}
+	}
+}
+
+.messageSubmit__pendingQuoteAnswer {
+	color: var(--m3-on-surface, #141c25);
+}
+
+.messageSubmit__pendingQuoteVoice {
+	display: inline-flex;
+	align-items: center;
+	gap: 2px;
+	margin-left: 6px;
+	color: var(--m3-on-surface, #141c25);
+	font-variant-numeric: tabular-nums;
+
+	svg {
+		width: 14px;
+		height: 14px;
+	}
+}
+
 // Room for the bar: 16 inset + 32 bar + 4 gap above the editor, and the card
 // grows by the same 36px so the editor keeps its height.
 @media screen and (width >= 900px) {
 	.textarea__wrapper-send-message--withContextBar:not(
 		.textarea__wrapper-send-message--expanded
 	) {
-		height: calc(var(--composer-height, 196px) + 36px);
-		min-height: calc(var(--composer-height, 196px) + 36px);
+		height: calc(
+			var(--composer-height, 196px) + 36px +
+				var(--context-stack-extra, 0px)
+		);
+		min-height: calc(
+			var(--composer-height, 196px) + 36px +
+				var(--context-stack-extra, 0px)
+		);
 
 		.textarea__inputWrapper,
 		.textarea__buttons {
-			top: 52px;
+			top: calc(52px + var(--context-stack-extra, 0px));
 		}
 	}
 }
 
+// `--context-stack-extra` (set on the form) adds every stacked bar beyond
+// the first, so queued quotes plus a reply/edit bar stay inside the reserve.
 @media screen and (width <= 899px) {
 	.textarea:has(.messageSubmit__contextBar) {
-		padding-top: 54px;
+		padding-top: calc(54px + var(--context-stack-extra, 0px));
 	}
 
 	.textarea:has(.messageSubmit__formatTray) {
@@ -2041,7 +2104,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 	}
 
 	.textarea:has(.messageSubmit__contextBar):has(.messageSubmit__formatTray) {
-		padding-top: 108px;
+		padding-top: calc(108px + var(--context-stack-extra, 0px));
 	}
 }
 
@@ -2061,8 +2124,9 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
-.messageSubmit__contextBar ~ .messageSubmit__formatTray {
-	bottom: calc(100% + 44px);
+.messageSubmit__contextBar ~ .messageSubmit__formatTray,
+.messageSubmit__contextStack ~ .messageSubmit__formatTray {
+	bottom: calc(100% + 44px + var(--context-stack-extra, 0px));
 }
 
 // Maximised, there is no room above the card and the card clips its children,

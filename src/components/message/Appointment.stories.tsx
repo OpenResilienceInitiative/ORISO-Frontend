@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { ALIAS_MESSAGE_TYPES } from '../../api/apiSendAliasMessage';
 import { Appointment } from './Appointment';

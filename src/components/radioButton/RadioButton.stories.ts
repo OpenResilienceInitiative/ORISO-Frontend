@@ -1,4 +1,4 @@
-import { Meta, StoryObj } from '@storybook/react';
+import { Meta, StoryObj } from '@storybook/react-vite';
 import { RadioButton } from './RadioButton';
 
 const meta = {
@@ -8,7 +8,8 @@ const meta = {
 	parameters: {
 		docs: {
 			description: {
-				component: 'RadioButton component for single selection from multiple options.'
+				component:
+					'RadioButton component for single selection from multiple options.'
 			}
 		}
 	}

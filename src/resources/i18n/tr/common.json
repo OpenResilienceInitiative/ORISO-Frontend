@@ -2215,7 +2215,32 @@
 			"previewLabel": "Şuna yanıt",
 			"cancel": "Yanıtı iptal et",
 			"quoteLabel": "Şu mesaja yanıt",
-			"quoteUnknown": "Önceki mesaj"
+			"quoteUnknown": "Önceki mesaj",
+			"jumpToQuote": "{{author}} adlı kişinin alıntılanan bölümüne git"
+		},
+		"selectionReply": {
+			"blur": "Bulanıklaştır",
+			"blurredLabel": "Bulanıklaştırılmış bölüm",
+			"blurredBy": "{{name}} tarafından bulanıklaştırıldı",
+			"removeBlur": "Bulanıklığı kaldır",
+			"removeBlurLabel": "Bulanıklaştırılmış bölüm – bulanıklığı kaldır",
+			"blurBar": "Bulanıklaştırılmış bölüm için işlemler",
+			"toolbar": "İşaretlenen bölüm için işlemler",
+			"reply": "Yanıtla",
+			"replyVoice": "Sesli mesajla yanıtla",
+			"startThread": "Konu başlat",
+			"dialog": "{{author}} adlı kişinin işaretlenen bölümüne yanıt",
+			"cancel": "İptal",
+			"inputLabel": "İşaretlenen bölüme yanıt",
+			"placeholder": "Yanıt yazın …",
+			"placeholderWithVoice": "İsterseniz metin ekleyin …",
+			"addToComposer": "Mesaja ekle",
+			"sendNow": "Hemen gönder",
+			"keys": "↵ mesaja ekle · {{sendKey}} ↵ hemen gönder · Esc iptal",
+			"pendingLead": "{{number}} · {{author}}",
+			"pendingStatus": "{{author}} için {{number}}. yanıt, sonraki mesaj için toplandı",
+			"remove": "{{number}}. yanıtı kaldır",
+			"voiceDuration": "Sesli mesaj {{duration}}"
 		},
 		"thread": {
 			"unknownRoot": "Önceki mesaj",

@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { ErstantwortEmailOverlay } from './ErstantwortEmailOverlay';
 import { phone390Globals } from '../message/messageStoryShell';
