@@ -165,6 +165,7 @@ export const endpoints = {
 		userServiceOrigin + `/service/users/sessions/${sessionId}/appointments`,
 	upcomingAppointments:
 		userServiceOrigin + '/service/users/appointments/upcoming',
+	calendarBase: userServiceOrigin + '/service/users/calendar',
 	sessionRooms: userServiceOrigin + '/service/users/sessions/room',
 	teamDiscussion: (sessionId: number) =>
 		userServiceOrigin +

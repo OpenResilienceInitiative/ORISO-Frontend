@@ -5,7 +5,7 @@
  * fetches.
  */
 import * as React from 'react';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import FullCalendar, {
 	useCalendarController,
@@ -89,6 +89,8 @@ export interface CalendarViewProps {
 	onEntryMove?: (entry: CalendarEntry, start: Date, end: Date) => MoveResult;
 	/** Extra controls on the right of the toolbar (filters, sync …). */
 	toolbarEnd?: React.ReactNode;
+	/** The visible range changed (first render, paging, view switch). */
+	onRangeChange?: (start: Date, end: Date) => void;
 }
 
 export const CalendarView = ({
@@ -102,7 +104,8 @@ export const CalendarView = ({
 	onSelectRange,
 	onEntryClick,
 	onEntryMove,
-	toolbarEnd
+	toolbarEnd,
+	onRangeChange
 }: CalendarViewProps) => {
 	const { t, i18n } = useTranslation();
 	const label = useEntryLabel();
@@ -191,11 +194,20 @@ export const CalendarView = ({
 
 	// FullCalendar reports the range after every update; only a real change
 	// may set state, or React loops.
+	const rangeChange = useRef(onRangeChange);
+	rangeChange.current = onRangeChange;
+	const lastRange = useRef('');
 	const datesSet = useCallback(
-		(info: { view: { title: string } }) =>
+		(info: { start: Date; end: Date; view: { title: string } }) => {
 			setTitle((previous) =>
 				previous === info.view.title ? previous : info.view.title
-			),
+			);
+			const key = `${info.start.getTime()}-${info.end.getTime()}`;
+			if (key !== lastRange.current) {
+				lastRange.current = key;
+				rangeChange.current?.(info.start, info.end);
+			}
+		},
 		[]
 	);
 

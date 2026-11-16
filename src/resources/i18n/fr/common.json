@@ -6904,6 +6904,8 @@
 		}
 	},
 	"calendar": {
+		"chatUnavailable": "Impossible d’ouvrir le chat de ce rendez-vous.",
+		"conversationsFailedAsker": "Vos conversations n’ont pas pu être chargées : un rendez-vous ne peut donc pas vous mener à sa discussion.",
 		"create": "Créer un rendez-vous",
 		"today": "Aujourd’hui",
 		"previous": "Précédent",
@@ -7013,8 +7015,9 @@
 			"importField": "Adresse ICS",
 			"importSave": "Reprendre",
 			"importRemove": "Supprimer",
-			"importStatus": "{{count}} créneaux occupés, dernière synchronisation {{date}}",
-			"importError": "L’adresse n’a pas pu être lue. Veuillez vérifier le lien."
+			"importStatus": "Connecté à {{host}}, dernière synchronisation {{date}}",
+			"importError": "L’adresse n’a pas pu être lue. Veuillez vérifier le lien.",
+			"importConnected": "Connecté à {{host}}. La première synchronisation est en cours."
 		},
 		"filterLabel": "Afficher",
 		"facets": {
@@ -7045,6 +7048,9 @@
 			"created": "{{count}} plages bloquées ajoutées",
 			"created_one": "{{count}} plage bloquée ajoutée",
 			"createdSingle": "Plage bloquée ajoutée : {{date}}"
-		}
+		},
+		"saveFailed": "Cela n’a pas fonctionné. Veuillez réessayer.",
+		"blockerRemoved": "Plage bloquée supprimée.",
+		"conversationsFailed": "Les conversations n’ont pas pu être chargées : les rendez-vous ne peuvent pas y être associés."
 	}
 }

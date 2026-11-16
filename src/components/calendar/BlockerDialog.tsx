@@ -125,9 +125,16 @@ export const BlockerDialog = ({
 	// A repeat whose clock time the spring change skips; never saved.
 	const clockGap = hasEmptyOccurrence(ranges);
 
-	const conflicts = ranges.flatMap((r) =>
-		findConflicts(r, entries, ownerId).filter((e) => e.type !== 'blocker')
-	);
+	// Only ranges that exist are checked: an empty or reversed one is
+	// refused anyway and would report overlaps it does not have
+	// (review 4575877910).
+	const conflicts = ranges
+		.filter((r) => r.end.getTime() > r.start.getTime())
+		.flatMap((r) =>
+			findConflicts(r, entries, ownerId).filter(
+				(e) => e.type !== 'blocker'
+			)
+		);
 	// A whole day counts by its date, so today stays possible after 00:00.
 	const invalid =
 		ranges.length === 0 ||
@@ -168,7 +175,11 @@ export const BlockerDialog = ({
 								start: r.start,
 								end: r.end,
 								allDay,
-								note: note || undefined
+								note: note || undefined,
+								repeat:
+									weekdays.length && until
+										? { weekdays, until: until.toDate() }
+										: undefined
 							}))
 						)
 				}

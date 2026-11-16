@@ -62,9 +62,8 @@ const Scenario = ({
 	);
 	const [feedToken, setFeedToken] = useState(0);
 	const [busyImport, setBusyImport] = useState<{
-		url?: string;
+		host?: string;
 		lastSyncedAt?: string;
-		busyCount?: number;
 	}>({});
 	const ownerId = role === 'asker' ? 'asker' : ME;
 	const colleagueEntries = COLLEAGUE_ENTRIES.filter((e) =>
@@ -134,8 +133,7 @@ const Scenario = ({
 			onResetFeed={() => setFeedToken((n) => n + 1)}
 			onSaveImport={(url) =>
 				setBusyImport({
-					url,
-					busyCount: 14,
+					host: new URL(url.replace(/^webcal:/i, 'https:')).host,
 					lastSyncedAt: STORY_NOW.toISOString()
 				})
 			}

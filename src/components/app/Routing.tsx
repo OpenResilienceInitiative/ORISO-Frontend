@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { useContext, useMemo } from 'react';
+import { Suspense, useContext, useMemo } from 'react';
+import { Loading } from './Loading';
 import { Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { RouterConfigUser, RouterConfigConsultant } from './RouterConfig';
 import { AbsenceHandler } from './AbsenceHandler';
@@ -159,10 +160,12 @@ export const Routing = (props: RoutingProps) => {
 							key={`booking-${path}`}
 							path={rel(path)}
 							element={
-								<div className="contentWrapper__booking">
-									<route.component
-										type={route.type || null}
-									/>
+								<div className="contentWrapper__calendar">
+									<Suspense fallback={<Loading />}>
+										<route.component
+											type={route.type || null}
+										/>
+									</Suspense>
 								</div>
 							}
 						/>

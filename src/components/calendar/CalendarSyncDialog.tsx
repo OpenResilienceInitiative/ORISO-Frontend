@@ -16,12 +16,29 @@ export interface CalendarFeed {
 	lastFetchedAt?: string;
 }
 
+/**
+ * The busy-time import. The private address never comes back from
+ * UserService, only its host, so the field starts empty and replaces it.
+ */
 export interface CalendarImport {
-	url?: string;
+	host?: string;
 	lastSyncedAt?: string;
-	busyCount?: number;
 	failed?: boolean;
 }
+
+/**
+ * A sync action. A returned promise that rejects means it failed: the
+ * dialog says so and keeps what the user typed.
+ */
+type SyncAction<A extends unknown[] = []> = (
+	...args: A
+) => void | Promise<unknown>;
+
+const settle = (result: void | Promise<unknown>) =>
+	Promise.resolve(result).then(
+		() => true,
+		() => false
+	);
 
 export interface CalendarSyncDialogProps {
 	open: boolean;
@@ -29,9 +46,9 @@ export interface CalendarSyncDialogProps {
 	busyImport: CalendarImport;
 	fullScreen?: boolean;
 	onCopyFeed: (url: string) => void;
-	onResetFeed: () => void;
-	onSaveImport: (url: string) => void;
-	onRemoveImport: () => void;
+	onResetFeed: SyncAction;
+	onSaveImport: SyncAction<[url: string]>;
+	onRemoveImport: SyncAction;
 	onClose: () => void;
 }
 
@@ -50,7 +67,27 @@ export const CalendarSyncDialog = ({
 	const format = useRangeFormat();
 	const [copied, setCopied] = useState(false);
 	const [confirmReset, setConfirmReset] = useState(false);
-	const [importUrl, setImportUrl] = useState(busyImport.url ?? '');
+	const [importUrl, setImportUrl] = useState('');
+	const [pending, setPending] = useState(false);
+	const [failed, setFailed] = useState(false);
+
+	/** Runs a sync action; `onSuccess` only once it is stored. */
+	const act = (result: void | Promise<unknown>, onSuccess?: () => void) => {
+		setPending(true);
+		setFailed(false);
+		settle(result).then((stored) => {
+			setPending(false);
+			if (stored) onSuccess?.();
+			else setFailed(true);
+		});
+	};
+
+	/**
+	 * Empties the field once the action is stored, unless the user typed a
+	 * new address meanwhile: that one was never sent.
+	 */
+	const clearIfUnchanged = (sent: string) => () =>
+		setImportUrl((current) => (current === sent ? '' : current));
 
 	if (confirmReset)
 		return (
@@ -73,7 +110,7 @@ export const CalendarSyncDialog = ({
 						onClick: () => {
 							setConfirmReset(false);
 							setCopied(false);
-							onResetFeed();
+							act(onResetFeed());
 						}
 					}
 				]}
@@ -140,6 +177,7 @@ export const CalendarSyncDialog = ({
 							id: 'reset',
 							label: t('calendar.syncDialog.reset'),
 							variant: 'outline',
+							disabled: pending,
 							testingAttribute: 'calendar-feed-reset',
 							onClick: () => setConfirmReset(true)
 						}
@@ -176,11 +214,17 @@ export const CalendarSyncDialog = ({
 					helperText={
 						busyImport.failed
 							? t('calendar.syncDialog.importError')
-							: busyImport.url && busyImport.lastSyncedAt
-								? t('calendar.syncDialog.importStatus', {
-										count: busyImport.busyCount ?? 0,
-										date: format(busyImport.lastSyncedAt)
-									})
+							: busyImport.host !== undefined
+								? busyImport.lastSyncedAt
+									? t('calendar.syncDialog.importStatus', {
+											host: busyImport.host,
+											date: format(
+												busyImport.lastSyncedAt
+											)
+										})
+									: t('calendar.syncDialog.importConnected', {
+											host: busyImport.host
+										})
 								: undefined
 					}
 					fullWidth
@@ -194,13 +238,19 @@ export const CalendarSyncDialog = ({
 							id: 'save',
 							label: t('calendar.syncDialog.importSave'),
 							variant: 'tonal',
-							disabled: !/^(https?|webcal):\/\//.test(
-								importUrl.trim()
-							),
+							disabled:
+								pending ||
+								!/^(https?|webcal):\/\//.test(importUrl.trim()),
 							testingAttribute: 'calendar-import-save',
-							onClick: () => onSaveImport(importUrl.trim())
+							// The private address stays until it is stored, so a
+							// failed save can be corrected and sent again.
+							onClick: () =>
+								act(
+									onSaveImport(importUrl.trim()),
+									clearIfUnchanged(importUrl)
+								)
 						},
-						...(busyImport.url
+						...(busyImport.host !== undefined
 							? [
 									{
 										id: 'remove',
@@ -208,18 +258,25 @@ export const CalendarSyncDialog = ({
 											'calendar.syncDialog.importRemove'
 										),
 										variant: 'outline' as const,
+										disabled: pending,
 										testingAttribute:
 											'calendar-import-remove',
-										onClick: () => {
-											setImportUrl('');
-											onRemoveImport();
-										}
+										onClick: () =>
+											act(
+												onRemoveImport(),
+												clearIfUnchanged(importUrl)
+											)
 									}
 								]
 							: [])
 					]}
 				/>
 			</section>
+			{failed && (
+				<p className="calendarDialog__error" role="alert">
+					{t('calendar.saveFailed')}
+				</p>
+			)}
 		</M3Dialog>
 	);
 };

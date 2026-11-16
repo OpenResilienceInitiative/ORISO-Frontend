@@ -2,12 +2,8 @@
 // surfaces, red only for the primary action and the appointment that is about
 // to start. Kinds differ by icon, not by colour (Frank, 2026-11-14).
 
-// The one focus ring of every calendar control and list item; only the
-// offset differs where a control sits flush against its neighbours.
-@mixin calendar-focus-ring($offset: 2px) {
-	outline: 2px solid var(--m3-primary, #a5000a);
-	outline-offset: $offset;
-}
+// Focus ring: the shared `control-focus-ring` (_listItemSelection.scss);
+// only the offset differs where a control sits flush against its neighbours.
 
 // --- FullCalendar classic theme, palette mapped to the ORISO scheme ---
 .calendarView {
@@ -84,7 +80,7 @@
 	}
 
 	&:focus-visible {
-		@include calendar-focus-ring(2px);
+		@include control-focus-ring(2px);
 	}
 }
 
@@ -121,7 +117,7 @@
 	overflow: hidden;
 
 	&:focus-visible {
-		@include calendar-focus-ring(1px);
+		@include control-focus-ring(1px);
 	}
 
 	// The next appointment, from 15 minutes before its start.
@@ -197,6 +193,22 @@
 
 // --- Page: the "Meine Termine" section ---
 
+/* The route's slot in the app (Routing.tsx): the page fills the content
+   column like a session stage card, with the same outer gap. */
+.contentWrapper__calendar {
+	flex: 1;
+	min-width: 0;
+	min-height: 0;
+	height: 100%;
+	box-sizing: border-box;
+	padding: 0;
+	overflow: auto;
+
+	@include breakpoint($fromLarge) {
+		padding: 12px 12px 12px 0;
+	}
+}
+
 .calendarPage {
 	display: flex;
 	flex-direction: column;
@@ -255,7 +267,7 @@
 	}
 
 	&:focus-visible {
-		@include calendar-focus-ring(2px);
+		@include control-focus-ring(2px);
 	}
 }
 
@@ -280,8 +292,14 @@
 }
 
 .calendarPage__main {
+	position: relative;
 	flex: 1;
 	min-width: 0;
+}
+
+// Only there to make the grid inert under the error; no box of its own.
+.calendarPage__covered {
+	display: contents;
 }
 
 .calendarPage__section {
@@ -320,29 +338,10 @@
 }
 
 // Same anatomy as the timeline pill (.tlp__entry).
+// The pill entry shared with the Activity Timeline (_listEntryPill.scss); the
+// calendar list keeps a little padding above and below for two-line titles.
 .calendarPage__entry {
-	display: flex;
-	align-items: center;
-	gap: 8px;
-	box-sizing: border-box;
-	width: 100%;
-	min-height: 44px;
-	padding: 4px 14px 4px 12px;
-	border: 1px solid transparent;
-	border-radius: 22px;
-	background: var(--m3-surface-container-highest, #dcdfe3);
-	color: var(--m3-on-surface, #1b1b1c);
-	font: inherit;
-	text-align: left;
-	cursor: pointer;
-
-	&:hover {
-		background: var(--m3-surface-dim, #d3d6da);
-	}
-
-	&:focus-visible {
-		@include calendar-focus-ring(1px);
-	}
+	@include list-entry-pill(4px);
 
 	&--soon,
 	&--soon:hover {
@@ -352,10 +351,9 @@
 }
 
 .calendarPage__entryIcon {
+	@include list-entry-pill-icon;
+
 	display: inline-flex;
-	flex: none;
-	width: 20px;
-	height: 20px;
 
 	svg {
 		width: 20px;
@@ -368,16 +366,11 @@
 }
 
 .calendarPage__entryText {
-	display: flex;
-	flex-direction: column;
-	min-width: 0;
+	@include list-entry-pill-text;
 }
 
 .calendarPage__entryTime {
-	font-size: 13px;
-	font-weight: 500;
-	font-variant-numeric: tabular-nums;
-	line-height: 18px;
+	@include list-entry-pill-time;
 }
 
 .calendarPage__entryTitle {
@@ -413,6 +406,40 @@
 	height: 100%;
 	min-height: 320px;
 	color: var(--m3-on-surface-variant, #444748);
+}
+
+// Loading: the grid stays mounted under the spinner (it reports the range).
+.calendarPage__status--overlay {
+	position: absolute;
+	z-index: 6;
+	inset: 0;
+	height: auto;
+	min-height: 0;
+	background: color-mix(
+		in srgb,
+		var(--m3-surface-container-lowest, #ffffff) 72%,
+		transparent
+	);
+}
+
+// Loading failed: the grid stays mounted under the notice, so the chosen
+// view survives the retry, but is covered (review 4575159303).
+.calendarPage__status--error {
+	background: var(--m3-surface-container-lowest, #ffffff);
+}
+
+// The conversation lookup failed: say so above the grid, with a retry.
+.calendarPage__banner {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px 16px;
+	margin-bottom: 12px;
+	padding: 8px 12px 8px 16px;
+	border-radius: 12px;
+	background: var(--m3-error-container, #ffdad6);
+	color: var(--m3-on-error-container, #410002);
 }
 
 .calendarPage__retry {

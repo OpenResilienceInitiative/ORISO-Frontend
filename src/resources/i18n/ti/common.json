@@ -6871,6 +6871,8 @@
 		}
 	},
 	"calendar": {
+		"chatUnavailable": "ናይዚ ቆጸራ ቻት ክኽፈት ኣይከኣለን።",
+		"conversationsFailedAsker": "ዝርርባትኩም ክጽዓኑ ኣይከኣሉን፣ ስለዚ ካብ ቆጸራ ናብ ዕላልኩም ክትከዱ ኣይትኽእሉን።",
 		"create": "ቆጸራ ፍጠር",
 		"today": "ሎሚ",
 		"previous": "ዝሓለፈ",
@@ -6980,8 +6982,9 @@
 			"importField": "ICS ኣድራሻ",
 			"importSave": "ኣምጽእ",
 			"importRemove": "ኣወግድ",
-			"importStatus": "{{count}} ዝተታሕዙ ግዜያት፡ ናይ መወዳእታ ምውህሃድ {{date}}",
-			"importError": "እቲ ኣድራሻ ክንበብ ኣይከኣለን። በጃኹም ነቲ ሊንክ ኣረጋግጹ።"
+			"importStatus": "ምስ {{host}} ተኣሳሲሩ፡ ናይ መወዳእታ ምውህሃድ {{date}}",
+			"importError": "እቲ ኣድራሻ ክንበብ ኣይከኣለን። በጃኹም ነቲ ሊንክ ኣረጋግጹ።",
+			"importConnected": "ምስ {{host}} ተኣሳሲሩ። እቲ ቀዳማይ ምውህሃድ ይካየድ ኣሎ።"
 		},
 		"filterLabel": "ኣርኢ",
 		"facets": {
@@ -7012,6 +7015,9 @@
 			"created": "{{count}} ዝተዓጽዉ ግዜያት ተመዝጊቦም",
 			"created_one": "{{count}} ዝተዓጽወ ግዜ ተመዝጊቡ",
 			"createdSingle": "ዝተዓጽወ ግዜ ተመዝጊቡ፦ {{date}}"
-		}
+		},
+		"saveFailed": "ኣይሰለጠን። በጃኹም ደጊምኩም ፈትኑ።",
+		"blockerRemoved": "ዝተዓጽወ ግዜ ተኣልዩ።",
+		"conversationsFailed": "ዝርርባት ክጽዓኑ ኣይከኣሉን፣ ስለዚ ቆጸራታት ምስ ዝርርብ ክተኣሳሰሩ ኣይክእሉን።"
 	}
 }

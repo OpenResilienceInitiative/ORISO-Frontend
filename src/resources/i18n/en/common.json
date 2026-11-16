@@ -6819,6 +6819,8 @@
 		}
 	},
 	"calendar": {
+		"chatUnavailable": "The chat for this appointment could not be opened.",
+		"conversationsFailedAsker": "Your conversations could not be loaded, so an appointment cannot take you to its chat.",
 		"create": "New appointment",
 		"today": "Today",
 		"previous": "Previous",
@@ -6928,8 +6930,9 @@
 			"importField": "ICS address",
 			"importSave": "Take over",
 			"importRemove": "Remove",
-			"importStatus": "{{count}} busy times, last synced {{date}}",
-			"importError": "The address could not be read. Please check the link."
+			"importStatus": "Connected to {{host}}, last synced {{date}}",
+			"importError": "The address could not be read. Please check the link.",
+			"importConnected": "Connected to {{host}}. The first sync is running."
 		},
 		"filterLabel": "Show",
 		"facets": {
@@ -6960,6 +6963,9 @@
 			"created": "{{count}} blocked times added",
 			"created_one": "{{count}} blocked time added",
 			"createdSingle": "Time blocked: {{date}}"
-		}
+		},
+		"saveFailed": "That did not work. Please try again.",
+		"blockerRemoved": "Blocked time removed.",
+		"conversationsFailed": "The conversations could not be loaded, so appointments cannot be linked to one."
 	}
 }

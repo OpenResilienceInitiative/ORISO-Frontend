@@ -6904,6 +6904,8 @@
 		}
 	},
 	"calendar": {
+		"chatUnavailable": "Bu randevunun sohbeti açılamadı.",
+		"conversationsFailedAsker": "Görüşmeleriniz yüklenemedi; bu yüzden randevudan sohbetinize geçilemiyor.",
 		"create": "Randevu oluştur",
 		"today": "Bugün",
 		"previous": "Önceki",
@@ -7013,8 +7015,9 @@
 			"importField": "ICS adresi",
 			"importSave": "Aktar",
 			"importRemove": "Kaldır",
-			"importStatus": "{{count}} meşgul zaman, son eşitleme {{date}}",
-			"importError": "Adres okunamadı. Lütfen bağlantıyı kontrol edin."
+			"importStatus": "{{host}} ile bağlantılı, son eşitleme {{date}}",
+			"importError": "Adres okunamadı. Lütfen bağlantıyı kontrol edin.",
+			"importConnected": "{{host}} ile bağlantı kuruldu. İlk eşitleme yapılıyor."
 		},
 		"filterLabel": "Göster",
 		"facets": {
@@ -7045,6 +7048,9 @@
 			"created": "{{count}} kapalı zaman eklendi",
 			"created_one": "{{count}} kapalı zaman eklendi",
 			"createdSingle": "Kapalı zaman eklendi: {{date}}"
-		}
+		},
+		"saveFailed": "Bu işe yaramadı. Lütfen tekrar deneyin.",
+		"blockerRemoved": "Kapalı zaman kaldırıldı.",
+		"conversationsFailed": "Görüşmeler yüklenemedi; randevular bir görüşmeye bağlanamıyor."
 	}
 }

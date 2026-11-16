@@ -47,6 +47,11 @@ export interface CalendarEntry {
 	sessionId?: number;
 	/** On-site appointments: address of the counselling centre. */
 	address?: string;
+	/**
+	 * UserService's verdict on whether this entry may be dragged. Absent in
+	 * sample data, where the role and the owner decide.
+	 */
+	movable?: boolean;
 }
 
 /** The location values UserService already stores (ADR-032 §2a). */
@@ -258,6 +263,7 @@ export const isMovable = (
 	ownerId: string,
 	role: CalendarRole
 ) =>
+	entry.movable !== false &&
 	role === 'consultant' &&
 	entry.ownerId === ownerId &&
 	(entry.type === 'appointment' || entry.type === 'blocker');
@@ -361,7 +367,15 @@ export const expandBlocker = (
 	return out;
 };
 
-/** True when a range of the series ends at or before its own start. */
+/**
+ * True when a range of the series ends at or before its own start.
+ *
+ * Clock-gap policy (RFC 5545, 3.3.5): a local time inside the spring gap
+ * moves forward by the gap, as `Date` does, so 02:30 on the change day is
+ * 03:30. An occurrence that still has a length after that (02:30–04:00
+ * becomes 03:30–04:00) is kept and saved; only one that comes out empty or
+ * reversed (02:30–03:00 becomes 03:30–03:00) blocks the series.
+ */
 export const hasEmptyOccurrence = (ranges: { start: Date; end: Date }[]) =>
 	ranges.some((range) => range.end.getTime() <= range.start.getTime());
 
