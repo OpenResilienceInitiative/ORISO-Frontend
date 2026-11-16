@@ -1214,6 +1214,30 @@ export const QuickEntry = ({
 						setFocused(false);
 				}}
 			>
+				{/* The kind first, all in one row (Frank *5.1). */}
+				<div
+					className="calendarQuick__kinds"
+					role="group"
+					aria-label={t('calendar.quick.kind')}
+				>
+					{QUICK_KINDS.map((k) => (
+						<button
+							key={k}
+							type="button"
+							className={`calendarQuick__kind calendarQuick__kind--k-${k}`}
+							aria-pressed={effectiveKind === k}
+							onClick={() => setKind(kind === k ? undefined : k)}
+							data-cy={`calendar-quick-kind-${k}`}
+						>
+							<FacetIcon facet={k} />
+							<span>
+								{k === 'blocker'
+									? t('calendar.blocker.menuItem')
+									: t(`calendar.kinds.${k}`)}
+							</span>
+						</button>
+					))}
+				</div>
 				{/* The same outlined field as Tag, Beginn and Dauer below
 				    (Frank, prototype v15), 44 px high (v17). */}
 				<TextField
@@ -1293,29 +1317,6 @@ export const QuickEntry = ({
 							}
 						/>
 					</div>
-				</div>
-				<div
-					className="calendarQuick__kinds"
-					role="group"
-					aria-label={t('calendar.quick.kind')}
-				>
-					{QUICK_KINDS.map((k) => (
-						<button
-							key={k}
-							type="button"
-							className={`calendarQuick__kind calendarQuick__kind--k-${k}`}
-							aria-pressed={effectiveKind === k}
-							onClick={() => setKind(kind === k ? undefined : k)}
-							data-cy={`calendar-quick-kind-${k}`}
-						>
-							<FacetIcon facet={k} />
-							<span>
-								{k === 'blocker'
-									? t('calendar.blocker.menuItem')
-									: t(`calendar.kinds.${k}`)}
-							</span>
-						</button>
-					))}
 				</div>
 				<div className="calendarQuick__free">
 					<div className="calendarQuick__freeHead">

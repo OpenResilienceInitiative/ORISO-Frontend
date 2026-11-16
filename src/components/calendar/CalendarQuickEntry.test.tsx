@@ -212,6 +212,18 @@ describe('CalendarSidebar — folding quick entry on the phone (review 457498187
 	});
 });
 
+describe('QuickEntry — the kinds lead the box (Frank *5.1)', () => {
+	it('puts the five kind chips first, in one group above the line', () => {
+		open(vi.fn());
+		const form = document.querySelector('.calendarQuick__form')!;
+		const first = form.firstElementChild as HTMLElement;
+		expect(first.className).toBe('calendarQuick__kinds');
+		expect(
+			first.querySelectorAll('[data-cy^="calendar-quick-kind-"]')
+		).toHaveLength(5);
+	});
+});
+
 describe('QuickEntry — Tag, Beginn, Dauer under the line (Frank, prototype v15)', () => {
 	it('saves the day, start and length picked in the date, time and duration fields', async () => {
 		const onCreate = vi.fn(() => Promise.resolve());

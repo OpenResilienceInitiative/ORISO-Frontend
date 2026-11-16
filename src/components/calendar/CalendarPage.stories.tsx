@@ -1156,6 +1156,15 @@ export const QuickEntry: Story = {
 		);
 		const pills = quick.getAllByRole('button', { name: /\d/ });
 		await expect(pills.length).toBeGreaterThan(0);
+		// The kind chips lead the box, in one row (Frank *5.1).
+		const kinds = canvasElement.querySelector<HTMLElement>(
+			'.calendarQuick__form > .calendarQuick__kinds:first-child'
+		)!;
+		await expect(kinds).toBeTruthy();
+		const tops = Array.from(kinds.children).map(
+			(chip) => (chip as HTMLElement).offsetTop
+		);
+		await expect(new Set(tops).size).toBe(1);
 		// Half an hour: the free pill fills date, start and 30 minutes.
 		await userEvent.click(await findCy('calendar-quick-slot-30'));
 		await userEvent.click(
