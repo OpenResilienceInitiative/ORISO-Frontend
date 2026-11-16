@@ -5,6 +5,8 @@ import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { useTranslation } from 'react-i18next';
 import { orisoInputColors } from '../form/orisoInputDesign';
+import { ReactComponent as ArrowLeftIcon } from '../../resources/img/icons/arrow-left.svg';
+import { ReactComponent as ArrowRightIcon } from '../../resources/img/icons/arrow-right.svg';
 
 /** -1 = towards the start (left), 1 = towards the end (right). */
 export type ScrollDirection = -1 | 1;
@@ -32,6 +34,16 @@ export interface HoverScrollArrowsProps {
 	 * the edge cuts off (see `edgeZoneWidth`).
 	 */
 	'edgeZone'?: number;
+	/**
+	 * `overlay` (default): desktop-only arrows that fade in over the row's
+	 * edges on hover. `below`: always-visible round buttons under the row,
+	 * for touch screens too (Figma 7633-34734, "Create New Conversation");
+	 * shown while the row overflows, disabled at either end.
+	 */
+	'placement'?: 'overlay' | 'below';
+	/** Accessible names; default "scroll previous / next". */
+	'labels'?: { previous: string; next: string };
+	'className'?: string;
 	'data-cy'?: string;
 	'sx'?: SxProps<Theme>;
 }
@@ -43,6 +55,10 @@ const BUTTON_SIZE = 40;
 const FADE = '180ms cubic-bezier(0.2, 0, 0, 1)';
 /** The arrow pops in softly: a short ease-out with a little overshoot. */
 const POP = '320ms cubic-bezier(0.34, 1.24, 0.44, 1)';
+/** The `below` buttons: Figma pill, 128 x 96, radius 100. */
+const PILL_WIDTH = 128;
+const PILL_HEIGHT = 96;
+const PILL_COLOR = 'var(--m3-secondary-container, #646d78)';
 
 const clamp = (value: number, max: number) => Math.min(max, Math.max(0, value));
 
@@ -176,6 +192,10 @@ export const edgeZoneWidth = (
  *
  * Only for a fine pointer that can hover: phones and tablets swipe and never
  * see the arrows. Keyboard focus on an arrow shows it too.
+ *
+ * `placement="below"` is the second look of the same control: round buttons
+ * under the row that are always there, for layouts whose design draws them
+ * (the create-chat format cards). Same steps, edges and focus hand-off.
  */
 export const HoverScrollArrows = ({
 	targetRef,
@@ -183,9 +203,13 @@ export const HoverScrollArrows = ({
 	onStep,
 	targets = snapTargets,
 	edgeZone = 120,
+	placement = 'overlay',
+	labels,
+	className,
 	'data-cy': dataCy = 'hover-scroll-arrows',
 	sx
 }: HoverScrollArrowsProps) => {
+	const below = placement === 'below';
 	const { t } = useTranslation();
 	const [canPrev, setCanPrev] = useState(false);
 	const [canNext, setCanNext] = useState(false);
@@ -228,7 +252,12 @@ export const HoverScrollArrows = ({
 			typeof ResizeObserver !== 'undefined'
 				? new ResizeObserver(update)
 				: undefined;
+		// The track changes size with the window, its content with the cards
+		// (a card mounting late, a card growing): observe both.
 		resizeObserver?.observe(track);
+		Array.from(track.children).forEach((child) =>
+			resizeObserver?.observe(child)
+		);
 		track.addEventListener('scroll', update, { passive: true });
 		return () => {
 			resizeObserver?.disconnect();
@@ -240,7 +269,7 @@ export const HoverScrollArrows = ({
 	// the pointer through, so cards under them stay draggable and clickable.
 	const onPointerMove = useCallback(
 		(event: React.PointerEvent<HTMLElement>) => {
-			if (event.pointerType === 'touch') return;
+			if (below || event.pointerType === 'touch') return;
 			const bounds = event.currentTarget.getBoundingClientRect();
 			const x = event.clientX - bounds.left;
 			const track = targetRef.current;
@@ -254,7 +283,7 @@ export const HoverScrollArrows = ({
 						: null
 			);
 		},
-		[edgeZone, targetRef]
+		[below, edgeZone, targetRef]
 	);
 
 	const step = (direction: ScrollDirection) => {
@@ -264,6 +293,62 @@ export const HoverScrollArrows = ({
 		}
 		const track = targetRef.current;
 		if (track) scrollOneStep(track, direction);
+	};
+
+	const label = (isStart: boolean) =>
+		isStart
+			? (labels?.previous ?? t('app.scrollPrevious'))
+			: (labels?.next ?? t('app.scrollNext'));
+
+	/** `below`: both pills while the row overflows, disabled at its ends. */
+	const renderControls = () => {
+		if (!canPrev && !canNext) return null;
+		return (
+			<Box
+				data-cy={`${dataCy}-controls`}
+				sx={{ display: 'flex', justifyContent: 'space-between' }}
+			>
+				{([true, false] as const).map((isStart) => {
+					const Icon = isStart ? ArrowLeftIcon : ArrowRightIcon;
+					return (
+						<ButtonBase
+							key={isStart ? 'previous' : 'next'}
+							ref={isStart ? previousRef : nextRef}
+							aria-label={label(isStart)}
+							data-cy={`${dataCy}-${isStart ? 'previous' : 'next'}`}
+							disabled={isStart ? !canPrev : !canNext}
+							onClick={() => step(isStart ? -1 : 1)}
+							sx={{
+								'width': PILL_WIDTH,
+								'height': PILL_HEIGHT,
+								'borderRadius': '100px',
+								'bgcolor': PILL_COLOR,
+								'color': orisoInputColors.onPrimary,
+								'transition': `opacity ${FADE}, background-color ${FADE}`,
+								'& svg': {
+									fill: 'currentcolor',
+									width: 24,
+									height: 24
+								},
+								'&:hover': {
+									bgcolor: `color-mix(in srgb, ${PILL_COLOR} 85%, black)`
+								},
+								'&.Mui-focusVisible': {
+									outline: `3px solid ${orisoInputColors.focus}`,
+									outlineOffset: 2
+								},
+								'&.Mui-disabled': { opacity: 0.38 },
+								'@media (prefers-reduced-motion: reduce)': {
+									transition: 'none'
+								}
+							}}
+						>
+							<Icon aria-hidden />
+						</ButtonBase>
+					);
+				})}
+			</Box>
+		);
 	};
 
 	const renderSide = (side: Side) => {
@@ -322,9 +407,7 @@ export const HoverScrollArrows = ({
 			>
 				<ButtonBase
 					ref={isStart ? previousRef : nextRef}
-					aria-label={t(
-						isStart ? 'app.scrollPrevious' : 'app.scrollNext'
-					)}
+					aria-label={label(isStart)}
 					data-cy={`${dataCy}-${isStart ? 'previous' : 'next'}`}
 					onClick={() => step(isStart ? -1 : 1)}
 					sx={{
@@ -358,6 +441,7 @@ export const HoverScrollArrows = ({
 	return (
 		<Box
 			ref={wrapperRef}
+			className={className}
 			// Focus lands here only when the last arrow it was on goes away.
 			tabIndex={-1}
 			data-cy={dataCy}
@@ -370,6 +454,7 @@ export const HoverScrollArrows = ({
 					position: 'relative',
 					display: 'flex',
 					flexDirection: 'column',
+					gap: below ? '16px' : 0,
 					minWidth: 0,
 					outline: 'none'
 				},
@@ -377,8 +462,14 @@ export const HoverScrollArrows = ({
 			]}
 		>
 			{children}
-			{renderSide('start')}
-			{renderSide('end')}
+			{below ? (
+				renderControls()
+			) : (
+				<>
+					{renderSide('start')}
+					{renderSide('end')}
+				</>
+			)}
 		</Box>
 	);
 };

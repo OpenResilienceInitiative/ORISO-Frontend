@@ -1271,11 +1271,7 @@ $cc-card-width: 360px;
 $cc-card-min-height: 480px;
 
 .formatCardCarousel {
-	display: flex;
-	flex-direction: column;
-	gap: 16px;
-	min-width: 0;
-
+	/* Arrows and layout come from the shared HoverScrollArrows (`below`). */
 	&__scroller {
 		/* Stretch so every format ends up the same height whatever its copy. */
 		align-items: stretch;
@@ -1311,51 +1307,6 @@ $cc-card-min-height: 480px;
 			scroll-snap-align: start;
 			width: $cc-card-width;
 		}
-	}
-
-	&__controls {
-		display: flex;
-		justify-content: space-between;
-	}
-
-	&__button {
-		align-items: center;
-		background: $cc-secondary-container;
-		border: none;
-		border-radius: 100px;
-		color: $cc-on-primary;
-		cursor: pointer;
-		display: flex;
-		height: 96px;
-		justify-content: center;
-		transition: opacity $cc-motion-duration $cc-motion-easing;
-		width: 128px;
-
-		svg {
-			fill: currentcolor;
-			height: 24px;
-			width: 24px;
-		}
-
-		&:hover:not(:disabled) {
-			background: color-mix(in srgb, $cc-secondary-container 85%, black);
-		}
-
-		&:focus-visible {
-			outline: 3px solid $cc-primary;
-			outline-offset: 2px;
-		}
-
-		&:disabled {
-			cursor: default;
-			opacity: 0.38;
-		}
-	}
-}
-
-@media (prefers-reduced-motion: reduce) {
-	.formatCardCarousel__button {
-		transition: none;
 	}
 }
 
