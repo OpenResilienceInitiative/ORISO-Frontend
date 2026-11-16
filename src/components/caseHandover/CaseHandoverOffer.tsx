@@ -95,8 +95,12 @@ export const CaseHandoverOffer = ({
 	);
 
 	if (presentation === 'dialog') {
+		// The menu closes before the form loads: show progress and a close
+		// control instead of nothing until the requests answer.
 		const showStateDialog =
-			open && !showOfferDialog && (Boolean(offerStatus) || showRetry);
+			open &&
+			!showOfferDialog &&
+			(loading || Boolean(offerStatus) || showRetry);
 		return (
 			<>
 				{offerDialog}
@@ -144,6 +148,11 @@ export const CaseHandoverOffer = ({
 					>
 						{errorLine}
 						{statusLine}
+						{loading && !offerStatus && (
+							<p role="status">
+								{translate('caseHandover.offer.loading')}
+							</p>
+						)}
 					</M3Dialog>
 				)}
 			</>

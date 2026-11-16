@@ -4033,6 +4033,7 @@
 			"open": "Danışmanlığı devret",
 			"loadForbidden": "Uygun meslektaşları yükleme yetkiniz yok.",
 			"loadError": "Devir formu yüklenemedi.",
+			"loading": "Devir formu yükleniyor …",
 			"submitError": "Devir isteği gönderilemedi.",
 			"conflict": "Bu danışmanlık için zaten açık bir devir teklifi var veya danışmanlık değişti. Yeni bir teklif göndermeden önce güncel durumu kontrol edin.",
 			"status": {

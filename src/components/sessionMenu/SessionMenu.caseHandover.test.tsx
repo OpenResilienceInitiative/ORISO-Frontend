@@ -250,17 +250,40 @@ describe('SessionMenu — Beratung übergeben (#2250)', () => {
 		});
 		fireEvent.click(screen.getByText(HANDOVER));
 
-		const dialog = await screen.findByRole('dialog');
+		// The loading dialog comes first; wait for the form itself.
+		const person = await screen.findByRole('combobox', {
+			name: 'supervisorDialog.personLabel.handover'
+		});
+		const dialog = person.closest<HTMLElement>('[role="dialog"]');
+		expect(dialog).toBeTruthy();
 		expect(
-			within(dialog).getByText('supervisorDialog.title.handover')
-		).toBeTruthy();
-		expect(
-			within(dialog).getByRole('combobox', {
-				name: 'supervisorDialog.personLabel.handover'
-			})
+			within(dialog as HTMLElement).getByText(
+				'supervisorDialog.title.handover'
+			)
 		).toBeTruthy();
 		expect(apiGetCaseHandoverStatus).toHaveBeenCalledWith(1);
 		expect(apiGetCaseHandoverRecipients).toHaveBeenCalledWith(1);
+	});
+
+	it('shows progress in a dialog while the handover form loads', async () => {
+		vi.mocked(apiGetCaseHandoverStatus).mockReturnValue(
+			new Promise(() => undefined) as any
+		);
+		renderMenu({
+			user: counsellor,
+			activeSession: oneOnOne(sessionItem(1))
+		});
+		fireEvent.click(screen.getByText(HANDOVER));
+
+		const dialog = await screen.findByTestId('case-handover-state-dialog');
+		expect(within(dialog).getByRole('status').textContent).toBe(
+			'caseHandover.offer.loading'
+		);
+		expect(
+			within(dialog).getAllByRole('button', {
+				name: 'supervisorDialog.close'
+			}).length
+		).toBeGreaterThan(0);
 	});
 
 	it('shows the pending offer instead of opening a second offer form', async () => {

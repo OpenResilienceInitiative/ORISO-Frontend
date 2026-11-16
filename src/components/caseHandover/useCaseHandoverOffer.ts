@@ -194,9 +194,17 @@ export const useCaseHandoverOffer = () => {
 		if (identity) {
 			const retained = getCaseHandoverOperation(identity);
 			if (retained?.status) {
+				// Provisional only: nothing tracked the offer while the dialog
+				// was closed, so the colleague may have answered meanwhile.
 				setOfferStatus(retained.status);
 				setSelectedId(retained.targetConsultantId || '');
 				setReasonCode(retained.reasonCode);
+				const retainedRequestId = retained.status.requestId;
+				if (
+					retainedRequestId &&
+					!terminalOfferStatus(retained.status.status)
+				)
+					void refreshOfferStatus(retainedRequestId);
 				return;
 			}
 			if (retained) {

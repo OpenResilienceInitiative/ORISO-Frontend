@@ -585,6 +585,49 @@ describe('AskerInfoAssign owner handover', () => {
 		await waitFor(() => expect(reload).toHaveBeenCalledTimes(1));
 	});
 
+	it('refreshes a retained pending offer as soon as it is reopened', async () => {
+		vi.mocked(apiCreateCaseHandoverOffer).mockResolvedValue({
+			requestId: 501,
+			sessionId: 41,
+			status: 'PENDING_RECIPIENT_ACCEPTANCE',
+			canViewContent: true,
+			clientConsentRequired: false,
+			ownershipRevision: 7
+		});
+		renderAssign();
+		const open = screen.getByRole('button', {
+			name: 'caseHandover.offer.open'
+		});
+		fireEvent.click(open);
+		await screen.findByTestId('handover-dialog');
+		fireEvent.click(screen.getByText('person'));
+		fireEvent.click(screen.getByText('reason'));
+		fireEvent.click(screen.getByText('confirm'));
+		expect(
+			await screen.findByText(
+				'caseHandover.offer.status.PENDING_RECIPIENT_ACCEPTANCE'
+			)
+		).toBeTruthy();
+
+		// The colleague declined while nothing was tracking the offer.
+		vi.mocked(apiGetCaseHandoverRequestStatus).mockResolvedValue({
+			requestId: 501,
+			sessionId: 41,
+			status: 'RECIPIENT_DECLINED',
+			canViewContent: true,
+			clientConsentRequired: false,
+			ownershipRevision: 7
+		});
+		fireEvent.click(open);
+
+		expect(
+			await screen.findByText(
+				'caseHandover.offer.status.RECIPIENT_DECLINED'
+			)
+		).toBeTruthy();
+		expect(apiGetCaseHandoverRequestStatus).toHaveBeenCalledWith(41, 501);
+	});
+
 	it('uses a backend-shaped null-request grant event only as a scoped refresh hint', async () => {
 		const reload = vi.fn();
 		vi.mocked(apiCreateCaseHandoverOffer).mockResolvedValue({
