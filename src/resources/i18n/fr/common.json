@@ -7181,7 +7181,7 @@
 			"who": "Avec qui"
 		},
 		"search": {
-			"placeholder": "Rechercher des rendez-vous",
+			"placeholder": "Rechercher",
 			"clear": "Effacer la recherche",
 			"empty": "Aucun résultat.",
 			"results": "Résultats de recherche"
@@ -7199,7 +7199,8 @@
 		},
 		"side": {
 			"resize": "Faire glisser pour élargir ou réduire la liste ; double-clic pour la replier ou la déplier, flèches haut et bas pour la faire défiler",
-			"label": "Rendez-vous : recherche et listes"
+			"label": "Rendez-vous : recherche et listes",
+			"now": "Maintenant"
 		},
 		"split": {
 			"empty": "Affichez les calendriers de collègues pour voir votre journée à côté.",

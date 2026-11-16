@@ -735,6 +735,27 @@ export const CalendarPage = ({
 		setAnchorDate(day);
 		if (!split) controller.gotoDate(day);
 	};
+	// A search result moves the calendar to its day and scrolls to an hour
+	// before it (prototype v17); month, list and "Nebeneinander" give way to
+	// the days with times.
+	const showEntry = (entry: CalendarEntry) => {
+		const start = new Date(entry.start);
+		if (view === 'month' || view === 'list' || split)
+			changeView(phone ? 'threeDays' : 'workWeek');
+		goTo(start);
+		const before = new Date(
+			Math.max(start.getTime() - 3600000, startOfDay(start).getTime())
+		);
+		const time = `${String(before.getHours()).padStart(2, '0')}:${String(before.getMinutes()).padStart(2, '0')}:00`;
+		// The controller has no scrollToTime; its calendar does.
+		window.setTimeout(() =>
+			(
+				controller as unknown as {
+					calendarApi?: { scrollToTime(time: string): void };
+				}
+			).calendarApi?.scrollToTime(time)
+		);
+	};
 
 	// Turned into a phone, five or seven days become three; back on a
 	// wider screen, three become the work week (prototype v15).
@@ -2311,6 +2332,7 @@ export const CalendarPage = ({
 		onAcceptRequest: onAcceptProposal ? accept : undefined,
 		onDeclineRequest: onDeclineProposal ? decline : undefined,
 		onOpenEntry: (entry, anchor) => openEntry(entry, anchor),
+		onShowEntry: showEntry,
 		onOpenChat: onOpenChat
 			? (entry) => openRoom(onOpenChat, entry)
 			: undefined,
@@ -2381,9 +2403,7 @@ export const CalendarPage = ({
 							entries={entries}
 							colleagues={colleagues}
 							shownColleagues={shownColleagues}
-							onOpenEntry={(entry, anchor) =>
-								openEntry(entry, anchor)
-							}
+							onShowEntry={showEntry}
 							leading={
 								<CalendarKindsButton
 									customised={hiddenFacets.length > 0}

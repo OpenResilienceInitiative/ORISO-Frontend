@@ -7171,7 +7171,7 @@
 			"who": "Mit wem"
 		},
 		"search": {
-			"placeholder": "Termine suchen",
+			"placeholder": "Suche",
 			"clear": "Suche leeren",
 			"empty": "Nichts gefunden.",
 			"results": "Suchergebnisse"
@@ -7189,7 +7189,8 @@
 		},
 		"side": {
 			"resize": "Liste breiter oder schmaler ziehen; Doppelklick klappt sie ein oder aus, Pfeil hoch und runter scrollt sie",
-			"label": "Termine: Suche und Listen"
+			"label": "Termine: Suche und Listen",
+			"now": "Jetzt"
 		},
 		"split": {
 			"empty": "Blenden Sie Kalender von Kolleg:innen ein, um Ihren Tag daneben zu sehen.",

@@ -7096,7 +7096,7 @@
 			"who": "With whom"
 		},
 		"search": {
-			"placeholder": "Search appointments",
+			"placeholder": "Search",
 			"clear": "Clear search",
 			"empty": "Nothing found.",
 			"results": "Search results"
@@ -7114,7 +7114,8 @@
 		},
 		"side": {
 			"resize": "Drag to make the list wider or narrower; double-click folds it in or out, Up and Down scroll it",
-			"label": "Appointments: search and lists"
+			"label": "Appointments: search and lists",
+			"now": "Now"
 		},
 		"split": {
 			"empty": "Show colleagues' calendars to see your day next to theirs.",

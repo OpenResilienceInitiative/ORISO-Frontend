@@ -7181,7 +7181,7 @@
 			"who": "Kiminle"
 		},
 		"search": {
-			"placeholder": "Randevu ara",
+			"placeholder": "Ara",
 			"clear": "Aramayı temizle",
 			"empty": "Bir şey bulunamadı.",
 			"results": "Arama sonuçları"
@@ -7199,7 +7199,8 @@
 		},
 		"side": {
 			"resize": "Listeyi genişletmek veya daraltmak için sürükleyin; çift tıklama daraltır veya açar, yukarı ve aşağı oklar kaydırır",
-			"label": "Randevular: arama ve listeler"
+			"label": "Randevular: arama ve listeler",
+			"now": "Şimdi"
 		},
 		"split": {
 			"empty": "Gününüzü yanlarında görmek için meslektaşlarınızın takvimlerini gösterin.",

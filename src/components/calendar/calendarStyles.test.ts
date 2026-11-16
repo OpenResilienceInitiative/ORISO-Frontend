@@ -33,9 +33,12 @@ describe('calendar stylesheet', () => {
 		expect(pill).toMatch(/@include control-focus-ring\(1px\)/);
 		expect(timeline).toMatch(/@include list-entry-pill(\(|;)/);
 		expect(timeline).toMatch(/@include list-entry-pill-time;/);
-		// "Als Nächstes" in the calendar is the prototype's compact row (36
-		// px, no fill), not the pill; its two-line text is the shared one,
-		// and no copy of the old pill entry is left behind.
+		// "Als Nächstes" in the calendar is the shared pill in the
+		// prototype's card tone (v17), with the shared two-line text, and no
+		// copy of the old pill entry is left behind.
+		expect(calendar).toMatch(
+			/\.calendarSide__row \{\s*@include list-entry-pill;/
+		);
 		expect(calendar).toMatch(/@include list-entry-pill-text;/);
 		expect(calendar).not.toMatch(/\.calendarPage__entry/);
 	});
