@@ -211,6 +211,13 @@ $iconSize: 20px;
 		}
 	}
 
+	// FE#1050: the start control a "Starten" in the calendar or on the
+	// overview points at when it could not start the call itself.
+	&__callOffer .button__item,
+	&__item.sessionMenu__callOffer {
+		@include control-focus-ring;
+	}
+
 	&__icon--desktop {
 		width: 44px;
 		height: 44px;
