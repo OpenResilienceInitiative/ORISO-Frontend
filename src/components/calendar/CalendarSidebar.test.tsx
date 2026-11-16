@@ -196,4 +196,31 @@ describe('CalendarSidebar — pill cards and "Jetzt" (prototype v17)', () => {
 			document.querySelector('[data-cy="calendar-search-g1"]')
 		).toBeNull();
 	});
+
+	it('finds only what the display filter shows (review 4589304604)', () => {
+		sidebar({ onlyFacets: ['phone'] });
+		fireEvent.change(screen.getByRole('searchbox'), {
+			target: { value: 'nord' }
+		});
+		expect(
+			document.querySelector('[data-cy="calendar-search-g1"]')
+		).toBeNull();
+		expect(screen.getByText('calendar.search.empty')).toBeTruthy();
+		cleanup();
+		sidebar({ hiddenFacets: ['group'] });
+		fireEvent.change(screen.getByRole('searchbox'), {
+			target: { value: 'nord' }
+		});
+		expect(
+			document.querySelector('[data-cy="calendar-search-g1"]')
+		).toBeNull();
+		cleanup();
+		sidebar({ onlyFacets: ['group'] });
+		fireEvent.change(screen.getByRole('searchbox'), {
+			target: { value: 'nord' }
+		});
+		expect(
+			document.querySelector('[data-cy="calendar-search-g1"]')
+		).not.toBeNull();
+	});
 });

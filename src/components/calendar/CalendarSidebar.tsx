@@ -33,6 +33,7 @@ import {
 	FacetIcon,
 	SoonBadge,
 	facetOf,
+	facetShown,
 	type CalendarEntryFacet
 } from './CalendarEntryGlyph';
 import type { MoveProposal } from './calendarActions';
@@ -288,6 +289,8 @@ export const CalendarSidebar = ({
 							entries={entries}
 							colleagues={colleagues}
 							shownColleagues={shownColleagues}
+							onlyFacets={onlyFacets}
+							hiddenFacets={hiddenFacets}
 							onShowEntry={onShowEntry}
 							leading={kindsButton}
 						/>
@@ -750,6 +753,12 @@ export interface CalendarSearchProps {
 	colleagues: Colleague[];
 	/** Colleagues shown: search finds their entries too. */
 	shownColleagues: string[];
+	/**
+	 * The display filter: search finds only what the grid shows, so a
+	 * picked result is there where the calendar lands (review 4589304604).
+	 */
+	onlyFacets?: CalendarEntryFacet[];
+	hiddenFacets?: CalendarEntryFacet[];
 	/** A result was picked: move the calendar to its day and time. */
 	onShowEntry: (entry: CalendarEntry) => void;
 	/** At the left of the field (the display filter in the column). */
@@ -769,6 +778,8 @@ export const CalendarSearch = ({
 	entries,
 	colleagues,
 	shownColleagues,
+	onlyFacets = [],
+	hiddenFacets = [],
 	onShowEntry,
 	leading,
 	floating = false
@@ -790,7 +801,9 @@ export const CalendarSearch = ({
 		return entries
 			.filter(
 				(e) =>
-					e.ownerId === ownerId || shownColleagues.includes(e.ownerId)
+					(e.ownerId === ownerId ||
+						shownColleagues.includes(e.ownerId)) &&
+					facetShown(facetOf(e), onlyFacets, hiddenFacets)
 			)
 			.filter((e) =>
 				[
@@ -807,7 +820,16 @@ export const CalendarSearch = ({
 					new Date(a.start).getTime() - new Date(b.start).getTime()
 			)
 			.slice(0, MAX_SEARCH_RESULTS);
-	}, [query, entries, ownerId, shownColleagues, label, colleagueById]);
+	}, [
+		query,
+		entries,
+		ownerId,
+		shownColleagues,
+		onlyFacets,
+		hiddenFacets,
+		label,
+		colleagueById
+	]);
 
 	return (
 		<>

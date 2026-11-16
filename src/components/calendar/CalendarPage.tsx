@@ -46,7 +46,11 @@ import {
 	type CalendarVisibility,
 	type Colleague
 } from './calendarModel';
-import { facetOf, type CalendarEntryFacet } from './CalendarEntryGlyph';
+import {
+	facetOf,
+	facetShown,
+	type CalendarEntryFacet
+} from './CalendarEntryGlyph';
 import {
 	entryActions,
 	openProposals,
@@ -605,8 +609,7 @@ export const CalendarPage = ({
 		.map((id) => colleagueById[id])
 		.filter(Boolean) as Colleague[];
 	const facetVisible = (facet: CalendarEntryFacet) =>
-		!hiddenFacets.includes(facet) &&
-		(onlyFacets.length === 0 || onlyFacets.includes(facet));
+		facetShown(facet, onlyFacets, hiddenFacets);
 	const visible = useMemo(
 		() =>
 			entries.filter(
@@ -2573,6 +2576,8 @@ export const CalendarPage = ({
 							entries={entries}
 							colleagues={colleagues}
 							shownColleagues={shownColleagues}
+							onlyFacets={onlyFacets}
+							hiddenFacets={hiddenFacets}
 							onShowEntry={showEntry}
 							leading={
 								<CalendarKindsButton
