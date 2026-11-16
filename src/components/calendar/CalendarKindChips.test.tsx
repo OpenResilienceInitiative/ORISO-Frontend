@@ -55,8 +55,9 @@ describe('CalendarKindChips — five round chips, one kind at a time (prototype 
 		]);
 	});
 
-	it('keeps a chosen kind on offer while "Was anzeigen" hides it (reviews 4574504546, 4574493851)', () => {
-		const list = chips({ onlyFacets: ['video'], hiddenFacets: ['video'] });
+	it('keeps all five on offer while one kind is chosen (reviews 4574504546, 4574493851)', () => {
+		const list = chips({ onlyFacets: ['video'] });
+		expect(list).toHaveLength(5);
 		expect(ids(list)).toContain('calendar-filter-video');
 		expect(list[0].getAttribute('aria-pressed')).toBe('true');
 	});

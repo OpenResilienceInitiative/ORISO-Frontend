@@ -2234,7 +2234,6 @@ export const CalendarPage = ({
 			now={now}
 			entries={entries}
 			onlyFacets={onlyFacets}
-			hiddenFacets={hiddenFacets}
 			onToggleFacet={(facet) =>
 				setOnlyFacets((all) => toggle(all, facet))
 			}
