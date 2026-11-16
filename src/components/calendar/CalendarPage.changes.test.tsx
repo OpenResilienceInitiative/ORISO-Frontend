@@ -663,14 +663,14 @@ describe('CalendarPage — bands count what the kind filter hides (review 457642
 			document.querySelector(`[data-cy="${name}"]`) as HTMLElement | null;
 		fireEvent.click(byCy('calendar-kinds-button') as HTMLElement);
 		await waitFor(() =>
-			expect(byCy('calendar-kinds-blocker')).not.toBeNull()
+			expect(byCy('display-filter-show-blocker')).not.toBeNull()
 		);
 		expect(
 			byCy('calendar-kinds-button')?.querySelector(
 				'.displayFilterButton__dot'
 			)
 		).toBeNull();
-		fireEvent.click(byCy('calendar-kinds-blocker') as HTMLElement);
+		fireEvent.click(byCy('display-filter-show-blocker') as HTMLElement);
 		// The search field's filter button carries the dot (prototype v17).
 		await waitFor(() =>
 			expect(

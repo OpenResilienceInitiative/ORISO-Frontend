@@ -9,7 +9,11 @@ import { useEmailSettings } from '../profile/EmailNotifications/emailSetting';
 import type { DisplayFilterSection } from '../../utils/displayFilter/model';
 import { usesNewNotifications } from '../../utils/newNotificationsToggle';
 import { useAppConfig } from '../../hooks/useAppConfig';
-import { emailSettingForKind } from './emailSettingForKind';
+import {
+	emailSettingForKind,
+	type EmailSettingRole
+} from './emailSettingForKind';
+import type { NotificationSwitch } from '../profile/EmailNotifications/notificationMatrix';
 import type { DisplayFilterEmailColumn } from './DisplayFilterKindTable';
 
 /**
@@ -21,7 +25,13 @@ import type { DisplayFilterEmailColumn } from './DisplayFilterKindTable';
  * or while the master e-mail switch is off.
  */
 export const useDisplayFilterEmailColumn = (
-	section: DisplayFilterSection
+	section: DisplayFilterSection,
+	/** Another area's kinds (the calendar) map to the profile switches here. */
+	resolve: (
+		section: DisplayFilterSection,
+		kindId: string,
+		role: EmailSettingRole
+	) => NotificationSwitch | null = emailSettingForKind
 ): DisplayFilterEmailColumn | undefined => {
 	const { t } = useTranslation();
 	const newNotifications = usesNewNotifications(useAppConfig());
@@ -42,24 +52,24 @@ export const useDisplayFilterEmailColumn = (
 		: 'asker';
 	const onChange = useCallback(
 		async (kindId: string, next: boolean) => {
-			const entry = emailSettingForKind(section, kindId, role);
+			const entry = resolve(section, kindId, role);
 			if (entry) await change(entry.source, next);
 		},
-		[change, role, section]
+		[change, resolve, role, section]
 	);
 
 	const column = useMemo(
 		() => ({
 			cell: (kindId: string) => {
 				if (unavailableReason) return null;
-				const entry = emailSettingForKind(section, kindId, role);
+				const entry = resolve(section, kindId, role);
 				if (!entry) return null;
 				return { checked: read(entry.source) };
 			},
 			onChange,
 			unavailableReason
 		}),
-		[onChange, read, role, section, unavailableReason]
+		[onChange, read, resolve, role, section, unavailableReason]
 	);
 	return newNotifications ? column : undefined;
 };

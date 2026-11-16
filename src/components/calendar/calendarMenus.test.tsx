@@ -6,7 +6,6 @@ import type { CalendarEntry } from './calendarModel';
 import {
 	EdgeMenuContent,
 	EntryMenuContent,
-	KindsMenuContent,
 	MonthDayMenuContent,
 	MoveForm,
 	SettingsMenuContent
@@ -119,74 +118,6 @@ const cyOrder = (container: HTMLElement) =>
 	[...container.querySelectorAll('[data-cy]')].map((el) =>
 		el.getAttribute('data-cy')
 	);
-
-describe('"Was anzeigen" — prototype v17 (#48)', () => {
-	const own = (id: string, type: CalendarEntry['type'], kind?: 'phone') => ({
-		...entry(new Date(2026, 10, 16, 9), new Date(2026, 10, 16, 10)),
-		id,
-		type,
-		kind
-	});
-
-	it("counts one's own entries per kind, busy time with the blockers", () => {
-		const { container } = render(
-			<KindsMenuContent
-				hidden={[]}
-				onToggle={() => undefined}
-				onShowAll={() => undefined}
-				ownerId="me"
-				entries={[
-					own('a', 'appointment', 'phone'),
-					own('b', 'appointment', 'phone'),
-					own('c', 'blocker'),
-					own('d', 'busy'),
-					{ ...own('e', 'appointment', 'phone'), ownerId: 'kaya' }
-				]}
-			/>
-		);
-		const count = (facet: string) =>
-			container.querySelector(`[data-cy="calendar-kinds-${facet}"] kbd`)
-				?.textContent;
-		expect(count('phone')).toBe('2');
-		expect(count('blocker')).toBe('2');
-		expect(count('video')).toBe('0');
-		expect(
-			container.querySelector('[data-cy="calendar-kinds-blocker"]')
-				?.textContent
-		).toContain('calendar.kindsMenu.blocker');
-	});
-
-	it('heads the menu with the hint, a box per kind and "Alles anzeigen" always', () => {
-		const onToggle = vi.fn();
-		const { container, getByText } = render(
-			<KindsMenuContent
-				hidden={['chat']}
-				onToggle={onToggle}
-				onShowAll={() => undefined}
-			/>
-		);
-		expect(getByText('calendar.kindsMenu.label')).toBeTruthy();
-		expect(getByText('calendar.kindsMenu.hint')).toBeTruthy();
-		const chat = container.querySelector(
-			'[data-cy="calendar-kinds-chat"]'
-		) as HTMLElement;
-		expect(chat.getAttribute('aria-checked')).toBe('false');
-		expect(chat.firstElementChild?.className).toBe('calendarMenu__box');
-		expect(chat.querySelector('.calendarMenu__box svg')).toBeNull();
-		expect(
-			container.querySelector(
-				'[data-cy="calendar-kinds-video"] .calendarMenu__box svg'
-			)
-		).not.toBeNull();
-		fireEvent.click(chat);
-		expect(onToggle).toHaveBeenCalledWith('chat');
-		expect(
-			container.querySelector('[data-cy="calendar-kinds-all"]')
-		).not.toBeNull();
-		// Without entries there is nothing to count.
-		expect(chat.querySelector('kbd')).toBeNull();
-	});
-});
 
 describe('entry menu — head and actions, prototype v17 (#118, #119)', () => {
 	const appointment: CalendarEntry = {

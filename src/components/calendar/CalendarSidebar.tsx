@@ -121,7 +121,12 @@ export interface CalendarSidebarProps {
 	onToggleFacet: (facet: CalendarEntryFacet) => void;
 	onHighlightFacet: (facet: CalendarEntryFacet | null) => void;
 	kindsMenuOpen: boolean;
+	/** Opens "Ansicht · Kalender" (Frank *14). */
 	onOpenKinds: (anchor: HTMLElement) => void;
+	/** Some kind is hidden or has no button: the filter button shows a dot. */
+	kindsCustomised?: boolean;
+	/** The kinds with a button in the row; default all five. */
+	chipFacets?: CalendarEntryFacet[];
 	openProposals: { proposal: MoveProposal; entry: CalendarEntry }[];
 	onOpenProposal?: (
 		proposal: MoveProposal,
@@ -206,6 +211,8 @@ export const CalendarSidebar = ({
 	onHighlightFacet,
 	kindsMenuOpen,
 	onOpenKinds,
+	kindsCustomised,
+	chipFacets,
 	openProposals,
 	onOpenProposal,
 	onWithdrawProposal,
@@ -300,7 +307,7 @@ export const CalendarSidebar = ({
 
 	const kindsButton = (
 		<CalendarKindsButton
-			customised={hiddenFacets.length > 0}
+			customised={kindsCustomised ?? hiddenFacets.length > 0}
 			open={kindsMenuOpen}
 			onOpen={onOpenKinds}
 		/>
@@ -354,6 +361,7 @@ export const CalendarSidebar = ({
 					onlyFacets={onlyFacets}
 					onToggleFacet={onToggleFacet}
 					onHighlightFacet={onHighlightFacet}
+					facets={chipFacets}
 					className="calendarSide__chips"
 				/>
 			)}
@@ -990,6 +998,8 @@ export interface CalendarKindChipsProps {
 	onHighlightFacet: (facet: CalendarEntryFacet | null) => void;
 	/** Pinned at the right end (the display filter button on the phone). */
 	trailing?: React.ReactNode;
+	/** The kinds with a button, chosen in "Ansicht · Kalender". */
+	facets?: CalendarEntryFacet[];
 	className?: string;
 }
 
@@ -1007,6 +1017,7 @@ export const CalendarKindChips = ({
 	onToggleFacet,
 	onHighlightFacet,
 	trailing,
+	facets = KIND_CHIPS,
 	className
 }: CalendarKindChipsProps) => {
 	const { t } = useTranslation();
@@ -1030,39 +1041,41 @@ export const CalendarKindChips = ({
 			className={className}
 			trailing={trailing}
 		>
-			{KIND_CHIPS.map((facet) => {
-				const on = onlyFacets.includes(facet);
-				const name =
-					facet === 'blocker'
-						? t('calendar.blocker.menuItem')
-						: t(`calendar.kinds.${facet}`);
-				return (
-					<button
-						key={facet}
-						type="button"
-						className={`calendarSide__kindChip calendarSide__chip--k-${facet}`}
-						aria-pressed={on}
-						title={name}
-						onClick={() => choose(facet)}
-						onMouseEnter={() => onHighlightFacet(facet)}
-						onMouseLeave={() => onHighlightFacet(null)}
-						onFocus={() => onHighlightFacet(facet)}
-						onBlur={() => onHighlightFacet(null)}
-						data-cy={`calendar-filter-${facet}`}
-					>
-						<FacetIcon facet={facet} />
-						{/* Read out always, shown only on the chosen chip. */}
-						<span className="calendarSide__kindChipLabel">
-							{name}
-						</span>
-						{on && (
-							<span className="calendarSide__kindChipCount">
-								{futureCount(facet)}
+			{KIND_CHIPS.filter((facet) => facets.includes(facet)).map(
+				(facet) => {
+					const on = onlyFacets.includes(facet);
+					const name =
+						facet === 'blocker'
+							? t('calendar.blocker.menuItem')
+							: t(`calendar.kinds.${facet}`);
+					return (
+						<button
+							key={facet}
+							type="button"
+							className={`calendarSide__kindChip calendarSide__chip--k-${facet}`}
+							aria-pressed={on}
+							title={name}
+							onClick={() => choose(facet)}
+							onMouseEnter={() => onHighlightFacet(facet)}
+							onMouseLeave={() => onHighlightFacet(null)}
+							onFocus={() => onHighlightFacet(facet)}
+							onBlur={() => onHighlightFacet(null)}
+							data-cy={`calendar-filter-${facet}`}
+						>
+							<FacetIcon facet={facet} />
+							{/* Read out always, shown only on the chosen chip. */}
+							<span className="calendarSide__kindChipLabel">
+								{name}
 							</span>
-						)}
-					</button>
-				);
-			})}
+							{on && (
+								<span className="calendarSide__kindChipCount">
+									{futureCount(facet)}
+								</span>
+							)}
+						</button>
+					);
+				}
+			)}
 		</FilterChipRow>
 	);
 };

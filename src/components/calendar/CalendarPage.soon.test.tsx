@@ -108,9 +108,9 @@ describe('CalendarPage — "Beginnt gleich" (review 4577641949)', () => {
 		await waitFor(() => expect(gridSoon()).toEqual(['next']));
 		fireEvent.click(byCy('calendar-kinds-button') as HTMLElement);
 		await waitFor(() =>
-			expect(byCy('calendar-kinds-group')).not.toBeNull()
+			expect(byCy('display-filter-show-group')).not.toBeNull()
 		);
-		fireEvent.click(byCy('calendar-kinds-group') as HTMLElement);
+		fireEvent.click(byCy('display-filter-show-group') as HTMLElement);
 		// Hidden in both: "later" is now first in the list and the grid.
 		await waitFor(() => expect(gridSoon()).toEqual(['later']));
 		expect(listButton(/later/)?.className).toContain('tlp__entry--soon');

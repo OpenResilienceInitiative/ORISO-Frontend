@@ -1531,6 +1531,50 @@ export const FilterKinds: Story = {
 	}
 };
 
+/** Frank *14: the filter button opens "Ansicht · Kalender", as in Gespräche. */
+export const ViewSettings: Story = {
+	name: 'Settings — "Ansicht · Kalender" dialog',
+	play: async ({ canvasElement }) => {
+		const canvas = canvasOf(canvasElement);
+		await canvas.findByTestId('calendar-view');
+		await userEvent.click(
+			canvasElement.querySelector<HTMLElement>(
+				'[data-cy="calendar-kinds-button"]'
+			)!
+		);
+		await body().findByText('Ansicht · Kalender');
+		// "Als Knopf" off for phone: its button leaves the kind row.
+		await expect(
+			canvasElement.querySelector('[data-cy="calendar-filter-phone"]')
+		).toBeTruthy();
+		await userEvent.click(
+			await body().findByRole('button', {
+				name: 'Als Knopf wählen: Telefon'
+			})
+		);
+		await userEvent.click(
+			await body().findByRole('menuitemradio', { name: /^Aus/ })
+		);
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector('[data-cy="calendar-filter-phone"]')
+			).toBeNull()
+		);
+		// "Im Kalender" off for video: its entries leave the grid.
+		const before = canvasElement.querySelectorAll(
+			'.calendarView .calEntry'
+		).length;
+		await userEvent.click(
+			await body().findByRole('checkbox', { name: 'Im Kalender: Video' })
+		);
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelectorAll('.calendarView .calEntry').length
+			).toBeLessThan(before)
+		);
+	}
+};
+
 export const TeamCounsellingCentre: Story = {
 	name: 'Team — Träger allows the counselling centre',
 	args: { scope: 'AGENCY' },

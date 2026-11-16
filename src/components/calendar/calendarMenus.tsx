@@ -50,13 +50,7 @@ import {
 	type CalendarEntry,
 	type Colleague
 } from './calendarModel';
-import {
-	CALENDAR_FACETS,
-	CalendarEntryGlyph,
-	FacetIcon,
-	facetOf,
-	type CalendarEntryFacet
-} from './CalendarEntryGlyph';
+import { CalendarEntryGlyph, FacetIcon, facetOf } from './CalendarEntryGlyph';
 import type { EntryAction, MoveProposal } from './calendarActions';
 import { type CalendarViewName, type ViewSwitcherStyle } from './calendarViews';
 import { useEntryLabel, useRangeFormat } from './useEntryLabel';
@@ -1507,90 +1501,6 @@ export const PeopleMenuContent = ({
 			{scopeHint && (
 				<ChatMenuDropdownNote>{scopeHint}</ChatMenuDropdownNote>
 			)}
-		</>
-	);
-};
-
-/* ------------------------------------------------------------------ */
-/* "Was anzeigen": which kinds the calendar and the list show           */
-/* ------------------------------------------------------------------ */
-
-export interface KindsMenuContentProps {
-	hidden: CalendarEntryFacet[];
-	onToggle: (facet: CalendarEntryFacet) => void;
-	onShowAll: () => void;
-	/** Counted per kind on the right: one's own entries (prototype v17). */
-	entries?: CalendarEntry[];
-	ownerId?: string;
-}
-
-/**
- * Prototype v17: a head with the hint, each kind with its box on the left
- * and how many of one's own entries it has on the right, "Alles anzeigen"
- * at the end.
- */
-export const KindsMenuContent = ({
-	hidden,
-	onToggle,
-	onShowAll,
-	entries,
-	ownerId
-}: KindsMenuContentProps) => {
-	const { t } = useTranslation();
-	const counts = useMemo(() => {
-		const all = new Map<CalendarEntryFacet, number>();
-		for (const entry of entries ?? [])
-			if (entry.ownerId === ownerId)
-				all.set(facetOf(entry), (all.get(facetOf(entry)) ?? 0) + 1);
-		return all;
-	}, [entries, ownerId]);
-	return (
-		<>
-			<div className="chatMenuDropdown__header">
-				<p className="chatMenuDropdown__title">
-					{t('calendar.kindsMenu.label')}
-				</p>
-				<p className="chatMenuDropdown__subtitle">
-					{t('calendar.kindsMenu.hint')}
-				</p>
-			</div>
-			{CALENDAR_FACETS.map((facet) => {
-				const on = !hidden.includes(facet);
-				return (
-					<ChatMenuDropdownItem
-						key={facet}
-						role="menuitemcheckbox"
-						aria-checked={on}
-						className={`calendarMenu__kind calendarMenu__kind--${facet} calendarMenu__checkItem`}
-						onClick={() => onToggle(facet)}
-						data-cy={`calendar-kinds-${facet}`}
-					>
-						<span className="calendarMenu__box" aria-hidden="true">
-							{on && <CheckIcon />}
-						</span>
-						<ChatMenuDropdownItemContent
-							icon={<FacetIcon facet={facet} />}
-							title={t(
-								facet === 'blocker'
-									? 'calendar.kindsMenu.blocker'
-									: `calendar.facets.${facet}`
-							)}
-							shortcut={
-								entries
-									? String(counts.get(facet) ?? 0)
-									: undefined
-							}
-						/>
-					</ChatMenuDropdownItem>
-				);
-			})}
-			<ChatMenuDropdownDivider />
-			<ChatMenuDropdownItem
-				role="menuitem"
-				title={t('calendar.kindsMenu.all')}
-				onClick={onShowAll}
-				data-cy="calendar-kinds-all"
-			/>
 		</>
 	);
 };
