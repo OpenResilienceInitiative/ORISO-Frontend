@@ -662,7 +662,20 @@ describe('CalendarPage — bands count what the kind filter hides (review 457642
 		await waitFor(() =>
 			expect(byCy('calendar-kinds-blocker')).not.toBeNull()
 		);
+		expect(
+			byCy('calendar-kinds-button')?.querySelector(
+				'.displayFilterButton__dot'
+			)
+		).toBeNull();
 		fireEvent.click(byCy('calendar-kinds-blocker') as HTMLElement);
+		// The search field's filter button carries the dot (prototype v17).
+		await waitFor(() =>
+			expect(
+				byCy('calendar-kinds-button')?.querySelector(
+					'.displayFilterButton__dot'
+				)
+			).not.toBeNull()
+		);
 		const ids = (key: string) =>
 			((grid.last?.[key] as CalendarEntry[] | undefined) ?? []).map(
 				(e) => e.id

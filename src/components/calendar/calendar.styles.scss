@@ -1323,6 +1323,16 @@ $cal-avatar-tones: (#2f5d5a, #7a0e2a, #4b4f7a, #6d3d63, #7a5a1e, #36576e);
 
 .calendarSide__kindsAnchor {
 	display: inline-flex;
+
+	// The dot on "Was anzeigen" while kinds are hidden: 8 px with a ring in
+	// the search pill's colour, as in prototype v17 (diff row 48).
+	.displayFilterButton__dot {
+		top: 3px;
+		right: 3px;
+		width: 8px;
+		height: 8px;
+		box-shadow: 0 0 0 2px var(--m3-surface-container-low, #f6f3f3);
+	}
 }
 
 // Only there to make the grid inert under the error; no box of its own.
