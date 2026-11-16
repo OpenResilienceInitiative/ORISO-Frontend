@@ -95,7 +95,10 @@ const BROWSER_ASSOCIATIONS: Record<
 	'smtp-test': { kind: 'unmapped' },
 	'anruf-erinnerung': { kind: 'unmapped' },
 	'anruf-einladung': { kind: 'unmapped' },
-	'anruf-verpasst': { kind: 'unmapped' }
+	'anruf-verpasst': { kind: 'unmapped' },
+	// FE#1050: the approver sees the proposal in the calendar and the
+	// "Meine Termine" count; no browser event exists for it.
+	'calendar-move-proposal': { kind: 'unmapped' }
 };
 
 /**
