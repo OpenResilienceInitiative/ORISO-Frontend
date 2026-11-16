@@ -1,5 +1,5 @@
 import * as React from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, fireEvent, userEvent, waitFor } from 'storybook/test';
 import { WaitingAreaCountdown } from './WaitingAreaCountdown';
 import {
