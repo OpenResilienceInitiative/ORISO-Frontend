@@ -23,7 +23,7 @@ export interface NewEntryDialogProps {
 	open: boolean;
 	/** The tab it opens on. */
 	initialTab: NewEntryTab;
-	/** Preset range; the kind is the appointment's (video when absent). */
+	/** Preset range; without a kind the appointment tab offers the kind tiles. */
 	slot?: { start: Date; end: Date; kind?: AppointmentKind };
 	initialSessionId?: number;
 	/** Blocker tab: weekdays ticked already. */
@@ -61,7 +61,7 @@ export const NewEntryDialog = ({
 	const { t } = useTranslation();
 	const [tab, setTab] = useState<NewEntryTab>(initialTab);
 	const appointment = useAppointmentForm({
-		slot: slot && { ...slot, kind: slot.kind ?? 'video' },
+		slot,
 		initialSessionId,
 		conversations,
 		entries,
@@ -88,6 +88,7 @@ export const NewEntryDialog = ({
 			data-testid={form.testId}
 			title={t('calendar.dialog.createTitle')}
 			description={form.description}
+			icon={form.icon}
 			width={680}
 			fullScreen={fullScreen}
 			onClose={onClose}

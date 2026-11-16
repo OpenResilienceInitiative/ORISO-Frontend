@@ -156,4 +156,37 @@ describe('NewEntryDialog — "Neuer Eintrag" with Termin | Sperrzeit (prototype 
 			})
 		]);
 	});
+
+	it('has an icon above its title (Frank *1)', () => {
+		open();
+		expect(document.querySelector('.m3Dialog__heroIcon svg')).toBeTruthy();
+	});
+
+	it('offers "Art" as four tiles in a wrapping grid, also for a slot without a kind (Frank *1, test C7)', () => {
+		const onSaveAppointment = vi.fn();
+		open({ slot: SLOT, initialSessionId: 7, onSaveAppointment });
+		const tiles = Array.from(
+			document.querySelectorAll<HTMLElement>(
+				'.calendarDialog__kinds [data-cy^="calendar-dialog-kind-"]'
+			)
+		);
+		expect(tiles.map((b) => b.dataset.cy)).toEqual([
+			'calendar-dialog-kind-video',
+			'calendar-dialog-kind-phone',
+			'calendar-dialog-kind-onsite',
+			'calendar-dialog-kind-chat'
+		]);
+		expect(tiles[0].getAttribute('aria-pressed')).toBe('true');
+		fireEvent.click(tiles[1]);
+		expect(tiles[1].getAttribute('aria-pressed')).toBe('true');
+		fireEvent.click(screen.getByTestId('calendar-appointment-save'));
+		expect(onSaveAppointment).toHaveBeenCalledWith(
+			expect.objectContaining({ kind: 'phone', start: SLOT.start })
+		);
+	});
+
+	it('shows no kind tiles when the slot already has its kind', () => {
+		open({ slot: { ...SLOT, kind: 'phone' } });
+		expect(document.querySelector('.calendarDialog__kinds')).toBeNull();
+	});
 });

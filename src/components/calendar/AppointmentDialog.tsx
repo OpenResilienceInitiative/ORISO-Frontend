@@ -12,7 +12,7 @@ import { M3Dialog, type M3DialogAction } from '../m3Dialog/M3Dialog';
 import { OrisoCalendar } from '../form/OrisoCalendar';
 import { OrisoTimePicker } from '../form/OrisoTimePicker';
 import { OrisoSelect } from '../form/OrisoSelect';
-import { ButtonGroup } from '../buttonGroup/ButtonGroup';
+import EventOutlinedIcon from '@mui/icons-material/EventOutlined';
 import {
 	APPOINTMENT_KINDS,
 	daySpan,
@@ -34,8 +34,12 @@ const join = (day: Dayjs | null, time: Dayjs | null) =>
 
 export interface AppointmentDialogProps {
 	open: boolean;
-	/** Preset from a selected slot; absent when opened from the button. */
-	slot?: { start: Date; end: Date; kind: AppointmentKind };
+	/**
+	 * Preset from a selected slot; absent when opened from the button. A
+	 * slot without a kind ("Neuer Eintrag" from a drag) still offers the
+	 * kind tiles.
+	 */
+	slot?: { start: Date; end: Date; kind?: AppointmentKind };
 	/** Preset conversation, e.g. from the quick entry. */
 	initialSessionId?: number;
 	conversations: CalendarConversation[];
@@ -137,7 +141,12 @@ export const useAppointmentForm = ({
 		description: timedSlot
 			? format(timedSlot.start, timedSlot.end)
 			: t('calendar.dialog.description'),
-		icon: slot ? <FacetIcon facet={slot.kind} /> : undefined,
+		// Every creation dialog has an icon above its title (Frank, *1).
+		icon: slot?.kind ? (
+			<FacetIcon facet={slot.kind} />
+		) : (
+			<EventOutlinedIcon />
+		),
 		width: slot ? 400 : 680,
 		actions: [
 			{ label: t('app.cancel'), onClick: onClose },
@@ -198,31 +207,33 @@ export const useAppointmentForm = ({
 							/>
 						</div>
 					)}
-					{!slot && (
-						<>
-							<div
-								className="calendarDialog__group"
-								role="group"
-								aria-label={t('calendar.dialog.kind')}
-							>
-								<span className="calendarDialog__label">
-									{t('calendar.dialog.kind')}
-								</span>
-								<ButtonGroup
-									variant="outline"
-									disableAutoStack
-									items={APPOINTMENT_KINDS.map((k) => ({
-										id: k,
-										label: t(`calendar.kinds.${k}`),
-										icon: <FacetIcon facet={k} />,
-										variant:
-											k === kind ? 'tonal' : 'outline',
-										ariaLabel: `${t(`calendar.kinds.${k}`)}${k === kind ? ' ✓' : ''}`,
-										onClick: () => setKind(k)
-									}))}
-								/>
+					{!slot?.kind && (
+						// "Art" as button tiles in a grid that wraps, never a
+						// row that runs out of the dialog (Frank *1; test C7).
+						<div
+							className="calendarDialog__group"
+							role="group"
+							aria-label={t('calendar.dialog.kind')}
+						>
+							<span className="calendarDialog__label">
+								{t('calendar.dialog.kind')}
+							</span>
+							<div className="calendarDialog__kinds">
+								{APPOINTMENT_KINDS.map((k) => (
+									<button
+										key={k}
+										type="button"
+										className="calendarDialog__kindTile"
+										aria-pressed={k === kind}
+										onClick={() => setKind(k)}
+										data-cy={`calendar-dialog-kind-${k}`}
+									>
+										<FacetIcon facet={k} />
+										<span>{t(`calendar.kinds.${k}`)}</span>
+									</button>
+								))}
 							</div>
-						</>
+						</div>
 					)}
 					{conflicts.length > 0 && (
 						<p className="calendarDialog__note" role="status">

@@ -1436,9 +1436,15 @@ export const CreateAppointment: Story = {
 		await userEvent.click(
 			await canvas.findByRole('button', { name: 'Termin anlegen' })
 		);
-		const dialog = within(
-			await body().findByTestId('calendar-appointment-dialog')
-		);
+		const root = await body().findByTestId('calendar-appointment-dialog');
+		const dialog = within(root);
+		// An icon above the title, "Art" as four tiles (Frank *1, test C7).
+		await expect(
+			root.querySelector('.m3Dialog__heroIcon svg')
+		).toBeTruthy();
+		const phone = dialog.getByRole('button', { name: 'Telefon' });
+		await userEvent.click(phone);
+		await expect(phone.getAttribute('aria-pressed')).toBe('true');
 		await userEvent.click(dialog.getByTestId('calendar-appointment-save'));
 		await expect(await dialog.findByRole('alert')).toBeTruthy();
 	}
