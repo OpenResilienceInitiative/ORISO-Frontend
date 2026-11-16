@@ -765,26 +765,36 @@ class ChatTransportService {
 		}
 
 		// FE#1802: live events replayed on opening a room ask again for the
-		// same latest event; one receipt per event is enough.
-		if (this.receiptEventByRoom.get(matrixRoomId) === latestEvent) {
-			return true;
+		// same latest event; one receipt per event is enough. A caller that
+		// joins an in-flight send gets that send's real result.
+		const known = this.receiptByRoom.get(matrixRoomId);
+		if (known?.event === latestEvent) {
+			return known.result;
 		}
-		this.receiptEventByRoom.set(matrixRoomId, latestEvent);
 
-		try {
-			await (matrixClient as any).sendReadReceipt(latestEvent);
-			return true;
-		} catch {
-			// keep UI responsive; the receipt is retried on the next read
-			if (this.receiptEventByRoom.get(matrixRoomId) === latestEvent) {
-				this.receiptEventByRoom.delete(matrixRoomId);
+		const result = (async () => {
+			try {
+				await (matrixClient as any).sendReadReceipt(latestEvent);
+				return true;
+			} catch {
+				// keep UI responsive; the receipt is retried on the next read
+				if (
+					this.receiptByRoom.get(matrixRoomId)?.event === latestEvent
+				) {
+					this.receiptByRoom.delete(matrixRoomId);
+				}
+				return false;
 			}
-			return false;
-		}
+		})();
+		this.receiptByRoom.set(matrixRoomId, { event: latestEvent, result });
+		return result;
 	}
 
 	/** Latest event a read receipt was sent (or is being sent) for, per room. */
-	private readonly receiptEventByRoom = new Map<string, unknown>();
+	private readonly receiptByRoom = new Map<
+		string,
+		{ event: unknown; result: Promise<boolean> }
+	>();
 }
 
 export const chatTransportService = new ChatTransportService();

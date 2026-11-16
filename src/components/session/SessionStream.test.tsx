@@ -1833,6 +1833,46 @@ describe('SessionStream Matrix room lifecycle', () => {
 			);
 		});
 
+		it('drops a deferred read when the conversation changes before the tab is visible again', async () => {
+			setVisibility('visible');
+			const view = renderSessionStream({ isGroup: true });
+			await waitFor(() => expect(mocks.timelineListeners.length).toBe(1));
+			await waitFor(() =>
+				expect(mocks.readActiveSession).toHaveBeenCalled()
+			);
+			await passCoalescingWindow();
+			setVisibility('hidden');
+			emitLive(messageFrom('@peer:example.org'));
+			await act(() => new Promise((resolve) => setTimeout(resolve, 50)));
+
+			view.rerender(
+				sessionStreamElement({
+					isGroup: true,
+					activeSession: {
+						rid: '!other:example.org',
+						isGroup: true,
+						isSession: true,
+						item: {
+							id: 2,
+							matrixRoomId: '!other:example.org',
+							active: true,
+							status: 2,
+							conversationType: 'AGENCY_COUNSELLING'
+						}
+					} as any
+				})
+			);
+			await act(() => new Promise((resolve) => setTimeout(resolve, 50)));
+			mocks.readActiveSession.mockClear();
+
+			setVisibility('visible');
+			act(() => {
+				document.dispatchEvent(new Event('visibilitychange'));
+			});
+			await act(() => new Promise((resolve) => setTimeout(resolve, 50)));
+			expect(mocks.readActiveSession).not.toHaveBeenCalled();
+		});
+
 		it('waits until the tab is visible again before marking read', async () => {
 			setVisibility('visible');
 			await openConversation();

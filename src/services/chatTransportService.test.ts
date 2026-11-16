@@ -981,6 +981,25 @@ describe('chatTransportService markRoomAsRead dedupe (FE#1802)', () => {
 		expect(sendReadReceipt).toHaveBeenLastCalledWith(second);
 	});
 
+	it('gives a caller that joins an in-flight send the real result of that send', async () => {
+		let failSend!: (error: Error) => void;
+		const sendReadReceipt = vi.fn(
+			() =>
+				new Promise<void>((_resolve, reject) => {
+					failSend = reject;
+				})
+		);
+		roomWithEvents([{ id: 'latest' }], sendReadReceipt);
+
+		const first = chatTransportService.markRoomAsRead(ROOM_ID);
+		const second = chatTransportService.markRoomAsRead(ROOM_ID);
+		failSend(new Error('offline'));
+
+		await expect(first).resolves.toBe(false);
+		await expect(second).resolves.toBe(false);
+		expect(sendReadReceipt).toHaveBeenCalledTimes(1);
+	});
+
 	it('retries the same event after a failed send', async () => {
 		const latest = { id: 'latest' };
 		const sendReadReceipt = vi

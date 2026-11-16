@@ -640,7 +640,15 @@ export const SessionStream = ({
 	const arrivalReadPendingRef = useRef(false);
 	// Phone: a side panel can cover the main chat while this stays mounted.
 	const mainChatHiddenRef = useRef(false);
+	// A deferred read must not outlive the content access it was earned under
+	// (case-handover curtain).
+	const mayViewContentRef = useRef(mayRequestHistoryKeys);
+	mayViewContentRef.current = mayRequestHistoryKeys;
 	const readArrivedMessages = useCallback(() => {
+		if (!mayViewContentRef.current) {
+			arrivalReadPendingRef.current = false;
+			return;
+		}
 		if (
 			document.visibilityState === 'hidden' ||
 			mainChatHiddenRef.current
@@ -1030,6 +1038,9 @@ export const SessionStream = ({
 				window.clearTimeout(receiptRefreshTimer);
 			if (arrivalReadTimer !== null)
 				window.clearTimeout(arrivalReadTimer);
+			// Room or content access changed: a deferred read belonged to the
+			// old scope.
+			arrivalReadPendingRef.current = false;
 			detachTimelineListeners.forEach((detach) => detach());
 		};
 		// matrixRoomId is derived from resolvedChatSession (already a dep).
