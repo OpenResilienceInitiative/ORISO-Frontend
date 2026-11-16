@@ -575,3 +575,37 @@ describe('CalendarSplitView — grips only where own hours are kept (review 4577
 		expect(grips(new Date(2026, 8, 14))).toBe(0);
 	});
 });
+
+describe('CalendarSplitView — the time in the entry name (review 4589304613)', () => {
+	it('names a 30-minute own appointment with its time, though the box shows none', () => {
+		const short: CalendarEntry = {
+			id: 'a1',
+			type: 'appointment',
+			kind: 'video',
+			title: 'mutige_eule',
+			start: new Date(2026, 10, 16, 10).toISOString(),
+			end: new Date(2026, 10, 16, 10, 30).toISOString(),
+			ownerId: 'me'
+		};
+		const { container } = render(
+			<CalendarSplitView
+				day={MONDAY}
+				role="consultant"
+				ownerId="me"
+				colleagues={[]}
+				entries={[short]}
+				now={new Date(2026, 10, 16, 7)}
+			/>
+		);
+		const button = container.querySelector<HTMLElement>(
+			'[data-cy="calendar-split-entry-a1"]'
+		)!;
+		// No visible range below 45 minutes …
+		expect(button.querySelector('.calEntry__range')).toBeNull();
+		// … but the name says title and time.
+		const name = button.getAttribute('aria-label') ?? '';
+		expect(name).toContain('mutige_eule');
+		expect(name).toContain('10:00');
+		expect(name).toContain('10:30');
+	});
+});

@@ -52,7 +52,11 @@ import {
 	type CalendarHighlight,
 	type MenuAnchor
 } from './CalendarView';
-import { useEntryLabel, useProposalStatus } from './useEntryLabel';
+import {
+	useEntryLabel,
+	useProposalStatus,
+	useRangeFormat
+} from './useEntryLabel';
 import { calendarLocale } from './calendarLocale';
 import { SPLIT_SLOT_PX } from './calendarZoom';
 
@@ -280,6 +284,7 @@ export const CalendarSplitView = ({
 		[firstMinute, lastMinute]
 	);
 	const label = useEntryLabel();
+	const rangeFormat = useRangeFormat();
 	const proposalStatus = useProposalStatus(ownerId);
 	const locale = calendarLocale(i18n.language);
 	const first = useMemo(() => startOfDay(dayInput), [dayInput]);
@@ -560,11 +565,30 @@ export const CalendarSplitView = ({
 			!entry.allDay &&
 			new Date(entry.end).getTime() - new Date(entry.start).getTime() >=
 				45 * 60_000;
+		// The name says the time even when the box is too short to show it,
+		// as in the day grid (review 4589304613).
+		const name = [
+			proposal
+				? `${t('calendar.proposal.label')} · ${proposalStatus(proposal)}`
+				: label(entry, colleague),
+			colleague
+				? colleagues.find((c) => c.id === entry.ownerId)?.displayName
+				: '',
+			entry.allDay
+				? t('calendar.allDay')
+				: rangeFormat(
+						proposal?.start ?? entry.start,
+						proposal?.end ?? entry.end
+					)
+		]
+			.filter(Boolean)
+			.join(', ');
 		const button = (
 			<button
 				key={proposal ? `p-${proposal.id}` : entry.id}
 				type="button"
 				className={className}
+				aria-label={name}
 				style={{
 					top: toPx(from),
 					height: Math.max(18, toPx(to) - toPx(from) - 2),
