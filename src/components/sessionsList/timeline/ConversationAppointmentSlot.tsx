@@ -22,7 +22,7 @@ import {
 	AppointmentDateDialog,
 	type AppointmentDateDialogProps
 } from './AppointmentDateDialog';
-import { useDirectLinksAllowed } from '../../directLinks/useDirectLinksAllowed';
+import { useDirectLinkMedia } from '../../directLinks/useDirectLinksAllowed';
 import { useResponsive } from '../../../hooks/useResponsive';
 import { RoomNextAppointment } from './AppointmentSplitButton';
 import {
@@ -41,14 +41,18 @@ import { useAppointmentActions } from './useAppointmentActions';
    erlauben" allows a medium. Mounted with the dialog, so the agencies'
    settings are read only when a counsellor opens it. */
 const CreateOrMoveDialog = (
-	props: Omit<AppointmentDateDialogProps, 'allowGuestInvite' | 'fullScreen'>
+	props: Omit<
+		AppointmentDateDialogProps,
+		'allowGuestInvite' | 'inviteMedia' | 'fullScreen'
+	>
 ) => {
-	const allowGuestInvite = useDirectLinksAllowed(!props.entry);
+	const inviteMedia = useDirectLinkMedia(!props.entry);
 	const { fromL } = useResponsive();
 	return (
 		<AppointmentDateDialog
 			{...props}
-			allowGuestInvite={allowGuestInvite}
+			allowGuestInvite={inviteMedia.length > 0}
+			inviteMedia={inviteMedia}
 			fullScreen={!fromL}
 		/>
 	);
@@ -106,7 +110,17 @@ export const ConversationAppointmentSlot = ({
 					items: Array.isArray(items) ? items : null
 				});
 			},
-			() => active && setLoaded({ sessionId, items: null })
+			// A failed first load leaves the slot hidden. A failed refresh
+			// keeps this visit's list, so an open dialog stays mounted: after
+			// a refused link it holds the saved appointment for the retry
+			// (FE#2279 review). Leaving the conversation resets above.
+			() =>
+				active &&
+				setLoaded((prev) =>
+					prev?.sessionId === sessionId
+						? prev
+						: { sessionId, items: null }
+				)
 		);
 		return () => {
 			active = false;

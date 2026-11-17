@@ -6955,10 +6955,11 @@
 			"createAction": "Erstellen",
 			"saveAction": "Speichern",
 			"withAppointment": "Mit Termin",
-			"withAppointmentHint": "Alle, die den Link öffnen, treffen sich in einem gemeinsamen Gespräch.",
+			"withAppointmentHint": "Alle, die den Link öffnen, treffen sich in einem gemeinsamen Gespräch. Der Termin steht auch in Ihrem Kalender.",
 			"withoutAppointmentHint": "Ohne Termin bekommt jede Person ein eigenes Gespräch. Der Link gilt, bis Sie ihn löschen.",
 			"inviteOthers": "Weitere Personen per Link einladen",
 			"inviteOthersHint": "Zum Beispiel eine Dolmetscherin. Eingeladene sehen nur Nachrichten ab ihrem Beitritt.",
+			"inviteOthersMediumOff": "Für diese Art sind Direkteinladungen nicht freigegeben. Wählen Sie eine andere Art, um weitere Personen einzuladen.",
 			"validity": {
 				"label": "Gültig nach Terminende",
 				"hint": "Danach verlieren Gäste den Zugang, und das Gespräch wird archiviert.",
@@ -6977,7 +6978,15 @@
 				"both": "Beides"
 			},
 			"knock": "Anklopfen",
-			"knockHint": "Sie lassen jede Person selbst herein. Das lässt sich im Anruf ändern."
+			"knockHint": "Sie lassen jede Person selbst herein. Das lässt sich im Anruf ändern.",
+			"newPerson": {
+				"option": "Neue Person per Direkteinladung …",
+				"hint": "Diese Person hat noch kein Gespräch mit Ihnen. Im nächsten Schritt erstellen Sie eine Direkteinladung mit diesem Termin.",
+				"action": "Weiter zur Direkteinladung"
+			},
+			"linkFailedTitle": "Einladungslink nicht erstellt",
+			"linkFailedAfterAppointment": "Der Termin ist angelegt, der Einladungslink aber nicht. Bitte versuchen Sie es erneut.",
+			"appointmentSaved": "Der Termin ist angelegt."
 		},
 		"overview": {
 			"title": "Termine & Direkteinladungen",
@@ -7052,7 +7061,8 @@
 			"title": "Neuer Link",
 			"text": "Hier ist der neue Link zum Termin:",
 			"validUntil": "Der neue Link zum Termin gilt bis {{date}}:"
-		}
+		},
+		"fromCalendar": "Termin aus dem Kalender: {{range}}. Wählen Sie Thema und Medium, dann erstellen Sie die Direkteinladung."
 	},
 	"calendar": {
 		"bandLoading": "Wird geladen: {{names}}",

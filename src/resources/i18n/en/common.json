@@ -6880,10 +6880,11 @@
 			"createAction": "Create",
 			"saveAction": "Save",
 			"withAppointment": "With appointment",
-			"withAppointmentHint": "Everyone who opens the link meets in one shared conversation.",
+			"withAppointmentHint": "Everyone who opens the link meets in one shared conversation. The appointment also appears in your calendar.",
 			"withoutAppointmentHint": "Without an appointment, each person gets their own conversation. The link works until you delete it.",
 			"inviteOthers": "Invite more people by link",
 			"inviteOthersHint": "For example an interpreter. Invited people only see messages written after they joined.",
+			"inviteOthersMediumOff": "Direct invitations are not enabled for this type. Choose another type to invite more people.",
 			"validity": {
 				"label": "Valid after the appointment ends",
 				"hint": "After that, guests lose access and the conversation is archived.",
@@ -6902,7 +6903,15 @@
 				"both": "Both"
 			},
 			"knock": "Knock first",
-			"knockHint": "You let each person in yourself. You can change this during the call."
+			"knockHint": "You let each person in yourself. You can change this during the call.",
+			"newPerson": {
+				"option": "New person by direct invitation …",
+				"hint": "This person has no conversation with you yet. In the next step you create a direct invitation with this appointment.",
+				"action": "Continue to direct invitation"
+			},
+			"linkFailedTitle": "Invitation link not created",
+			"linkFailedAfterAppointment": "The appointment is saved, but the invitation link is not. Please try again.",
+			"appointmentSaved": "The appointment is saved."
 		},
 		"overview": {
 			"title": "Appointments & direct invitations",
@@ -6977,7 +6986,8 @@
 			"title": "New link",
 			"text": "Here is the new link to the appointment:",
 			"validUntil": "The new link to the appointment works until {{date}}:"
-		}
+		},
+		"fromCalendar": "Appointment from the calendar: {{range}}. Choose topic and medium, then create the direct invitation."
 	},
 	"calendar": {
 		"bandLoading": "Loading: {{names}}",

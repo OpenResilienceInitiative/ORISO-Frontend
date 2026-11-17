@@ -6,6 +6,27 @@
 	gap: 20px;
 	padding-top: 8px;
 
+	/* The calendar's "+": the month next to the fields (prototype v17). */
+	&--withMonth {
+		@include breakpoint($fromMedium) {
+			align-items: flex-start;
+			flex-direction: row;
+		}
+	}
+
+	&__month {
+		flex: none;
+	}
+
+	&__fields,
+	&__link {
+		display: flex;
+		flex: 1;
+		flex-direction: column;
+		gap: 20px;
+		min-width: 0;
+	}
+
 	&__slot {
 		display: flex;
 		flex-direction: column;
