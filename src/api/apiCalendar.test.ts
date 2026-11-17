@@ -159,3 +159,59 @@ describe('apiCalendar move proposals (FE#1050)', () => {
 		}
 	});
 });
+
+describe('apiCalendar appointments with a colleague (FE#2305)', () => {
+	const MEETINGS =
+		'https://api.test/service/users/calendar/colleague-appointments';
+	const call = (index = 0) => fetchData.mock.calls[index][0];
+	beforeEach(() => fetchData.mockReset().mockResolvedValue({}));
+
+	it('creates, answers and cancels one', async () => {
+		await api.apiCreateColleagueAppointment({
+			colleagueId: 'kai',
+			start: '2026-11-19T09:00:00.000Z',
+			end: '2026-11-19T10:00:00.000Z',
+			kind: 'VIDEO'
+		});
+		expect(call()).toEqual(
+			expect.objectContaining({ url: MEETINGS, method: 'POST' })
+		);
+		expect(JSON.parse(call().bodyData)).toEqual({
+			colleagueId: 'kai',
+			start: '2026-11-19T09:00:00.000Z',
+			end: '2026-11-19T10:00:00.000Z',
+			kind: 'VIDEO'
+		});
+		await api.apiAcceptColleagueAppointment('m 1');
+		expect(call(1)).toEqual(
+			expect.objectContaining({
+				url: `${MEETINGS}/m%201/accept`,
+				method: 'POST'
+			})
+		);
+		await api.apiDeclineColleagueAppointment('m1');
+		expect(call(2)).toEqual(
+			expect.objectContaining({
+				url: `${MEETINGS}/m1/decline`,
+				method: 'POST'
+			})
+		);
+		await api.apiCancelColleagueAppointment('m1');
+		expect(call(3)).toEqual(
+			expect.objectContaining({ url: `${MEETINGS}/m1`, method: 'DELETE' })
+		);
+	});
+
+	it('reads and replaces the auto-accept list', async () => {
+		await api.apiGetCalendarAutoAccept();
+		expect(call()).toEqual(
+			expect.objectContaining({
+				url: 'https://api.test/service/users/calendar/auto-accept',
+				method: 'GET'
+			})
+		);
+		await api.apiSetCalendarAutoAccept({ colleagueIds: ['kai'] });
+		expect(call(1).method).toBe('PUT');
+		expect(JSON.parse(call(1).bodyData)).toEqual({ colleagueIds: ['kai'] });
+	});
+});

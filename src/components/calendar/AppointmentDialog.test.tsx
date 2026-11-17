@@ -114,3 +114,135 @@ describe('AppointmentDialog — selected slot', () => {
 		);
 	});
 });
+
+describe('with a colleague (FE#2305)', () => {
+	const colleagues = [
+		{
+			id: 'kai',
+			displayName: 'Kai Colleague',
+			agencyName: 'Beratungsstelle Nord',
+			relation: 'sameAgency' as const
+		}
+	];
+
+	it('makes the appointment with a colleague instead of a conversation', () => {
+		const onSave = vi.fn();
+		render(
+			<AppointmentDialog
+				open
+				conversations={[{ sessionId: 7, username: 'mutige_eule' }]}
+				colleagues={colleagues}
+				entries={[]}
+				ownerId="me"
+				now={NOW}
+				onSave={onSave}
+				onClose={() => undefined}
+			/>
+		);
+		fireEvent.click(
+			screen.getByRole('radio', { name: 'calendar.dialog.withColleague' })
+		);
+		expect(
+			screen.queryByLabelText('calendar.dialog.conversation')
+		).toBeNull();
+		fireEvent.change(screen.getByLabelText('calendar.dialog.colleague'), {
+			target: { value: 'kai' }
+		});
+		fireEvent.click(
+			screen.getByRole('button', { name: 'calendar.kinds.onsite' })
+		);
+		fireEvent.click(screen.getByTestId('calendar-appointment-save'));
+
+		expect(onSave).toHaveBeenCalledTimes(1);
+		const draft = onSave.mock.calls[0][0];
+		expect(draft.colleagueId).toBe('kai');
+		expect(draft.sessionId).toBeUndefined();
+		expect(draft.kind).toBe('onsite');
+	});
+
+	it('asks for the colleague before saving', () => {
+		const onSave = vi.fn();
+		render(
+			<AppointmentDialog
+				open
+				conversations={[]}
+				colleagues={colleagues}
+				entries={[]}
+				ownerId="me"
+				now={NOW}
+				onSave={onSave}
+				onClose={() => undefined}
+			/>
+		);
+		fireEvent.click(
+			screen.getByRole('radio', { name: 'calendar.dialog.withColleague' })
+		);
+		fireEvent.click(screen.getByTestId('calendar-appointment-save'));
+		expect(onSave).not.toHaveBeenCalled();
+		expect(screen.getByRole('alert').textContent).toBe(
+			'calendar.dialog.error.colleague'
+		);
+	});
+
+	it('offers no choice when there are no colleagues', () => {
+		render(
+			<AppointmentDialog
+				open
+				conversations={[]}
+				entries={[]}
+				ownerId="me"
+				now={NOW}
+				onSave={vi.fn()}
+				onClose={() => undefined}
+			/>
+		);
+		expect(
+			screen.queryByRole('radio', {
+				name: 'calendar.dialog.withColleague'
+			})
+		).toBeNull();
+	});
+});
+
+describe('without an internal chat (FE#2305, Frank 2026-11-17)', () => {
+	it('offers only "Vor Ort" for a colleague one may not chat with', () => {
+		const onSave = vi.fn();
+		render(
+			<AppointmentDialog
+				open
+				conversations={[]}
+				colleagues={[
+					{
+						id: 'far',
+						displayName: 'Far Colleague',
+						agencyName: 'Süd',
+						relation: 'sameTenant',
+						internalChat: false
+					}
+				]}
+				entries={[]}
+				ownerId="me"
+				now={NOW}
+				onSave={onSave}
+				onClose={() => undefined}
+			/>
+		);
+		fireEvent.click(
+			screen.getByRole('radio', { name: 'calendar.dialog.withColleague' })
+		);
+		fireEvent.change(screen.getByLabelText('calendar.dialog.colleague'), {
+			target: { value: 'far' }
+		});
+		expect(
+			screen.queryByRole('button', { name: 'calendar.kinds.video' })
+		).toBeNull();
+		expect(
+			screen.getByRole('button', { name: 'calendar.kinds.onsite' })
+		).toBeTruthy();
+		expect(screen.getByText('calendar.dialog.onsiteOnly')).toBeTruthy();
+		fireEvent.click(screen.getByTestId('calendar-appointment-save'));
+		expect(onSave.mock.calls[0][0]).toEqual(
+			expect.objectContaining({ colleagueId: 'far', kind: 'onsite' })
+		);
+	});
+});

@@ -22,7 +22,8 @@ import {
 	type AppointmentDraft,
 	type AppointmentKind,
 	type CalendarConversation,
-	type CalendarEntry
+	type CalendarEntry,
+	type Colleague
 } from './calendarModel';
 import { FacetIcon } from './CalendarEntryGlyph';
 import { useEntryLabel, useRangeFormat, useDayLabels } from './useEntryLabel';
@@ -31,6 +32,9 @@ const join = (day: Dayjs | null, time: Dayjs | null) =>
 	day && time
 		? day.hour(time.hour()).minute(time.minute()).second(0).millisecond(0)
 		: null;
+
+type WithWhom = 'conversation' | 'colleague';
+const WITH_WHOM: WithWhom[] = ['conversation', 'colleague'];
 
 export interface AppointmentDialogProps {
 	open: boolean;
@@ -43,6 +47,11 @@ export interface AppointmentDialogProps {
 	/** Preset conversation, e.g. from the quick entry. */
 	initialSessionId?: number;
 	conversations: CalendarConversation[];
+	/**
+	 * Colleagues one may meet instead of an advice seeker (FE#2305): the
+	 * calendar's colleague list. Without any, only conversations are offered.
+	 */
+	colleagues?: Colleague[];
 	entries: CalendarEntry[];
 	ownerId: string;
 	now: Date;
@@ -64,6 +73,8 @@ export interface DialogForm {
 	content: React.ReactNode;
 	/** The dialog's `data-testid` while this form shows. */
 	testId: string;
+	/** A switch shown in the dialog's top row, next to the tabs. */
+	toolbar?: React.ReactNode;
 }
 
 export type AppointmentFormProps = Omit<
@@ -75,6 +86,7 @@ export const useAppointmentForm = ({
 	slot,
 	initialSessionId,
 	conversations,
+	colleagues = [],
 	entries,
 	ownerId,
 	now,
@@ -105,16 +117,34 @@ export const useAppointmentForm = ({
 	const [sessionId, setSessionId] = useState<string>(
 		initialSessionId === undefined ? '' : String(initialSessionId)
 	);
+	// "Mit Beratung" or "Mit Kollegin/Kollege" (FE#2305, Frank: "Was ist,
+	// wenn ich einfach mit einem Kollegen sprechen will?").
+	const [withWhom, setWithWhom] = useState<WithWhom>('conversation');
+	const [colleagueId, setColleagueId] = useState('');
 	const [showError, setShowError] = useState(false);
+	const withColleague = withWhom === 'colleague';
+	// Where no internal chat is allowed, only "Vor Ort" is possible (Frank,
+	// 2026-11-17: "dann zeigst du halt einfach nur einen Vor-Ort-Termin an").
+	const onsiteOnly =
+		withColleague &&
+		colleagues.find((c) => c.id === colleagueId)?.internalChat === false;
+	const kinds: AppointmentKind[] = onsiteOnly
+		? ['onsite']
+		: APPOINTMENT_KINDS;
+	const chosenKind: AppointmentKind = onsiteOnly ? 'onsite' : kind;
 
 	const draft: Partial<AppointmentDraft> = {
 		type: 'appointment',
 		start: join(day, start)?.toDate(),
 		end: join(day ? day.add(span, 'day') : null, end)?.toDate(),
-		kind,
-		sessionId: sessionId === '' ? undefined : Number(sessionId)
+		kind: chosenKind,
+		...(withColleague
+			? { colleagueId: colleagueId || undefined }
+			: { sessionId: sessionId === '' ? undefined : Number(sessionId) })
 	};
-	const error = draftError(draft, now);
+	const checked = draftError(draft, now);
+	const error =
+		checked === 'conversation' && withColleague ? 'colleague' : checked;
 	const conflicts = useMemo(
 		() =>
 			draft.start && draft.end
@@ -136,8 +166,38 @@ export const useAppointmentForm = ({
 		onSave(draft as AppointmentDraft);
 	};
 
+	// On the same line as "Termin | Sperrzeit" (Frank, 2026-11-17: "alles
+	// in eine Linie"), so both columns below start at the same height.
+	const toolbar =
+		colleagues.length > 0 ? (
+			<div
+				className="calendarNewEntry__tabs calendarDialog__with"
+				role="radiogroup"
+				aria-label={t('calendar.dialog.withWhom')}
+			>
+				{WITH_WHOM.map((value) => (
+					<button
+						key={value}
+						type="button"
+						role="radio"
+						className="calendarNewEntry__tab"
+						aria-checked={withWhom === value}
+						onClick={() => setWithWhom(value)}
+						data-cy={`calendar-dialog-with-${value}`}
+					>
+						{t(
+							value === 'colleague'
+								? 'calendar.dialog.withColleague'
+								: 'calendar.dialog.withConversation'
+						)}
+					</button>
+				))}
+			</div>
+		) : undefined;
+
 	return {
 		testId: 'calendar-appointment-dialog',
+		toolbar,
 		description: timedSlot
 			? format(timedSlot.start, timedSlot.end)
 			: t('calendar.dialog.description'),
@@ -178,17 +238,46 @@ export const useAppointmentForm = ({
 					</div>
 				)}
 				<div className="calendarDialog__fields">
-					<OrisoSelect
-						label={t('calendar.dialog.conversation')}
-						value={sessionId}
-						options={conversations.map((c) => ({
-							value: String(c.sessionId),
-							label: c.username
-						}))}
-						onChange={(event) => setSessionId(event.target.value)}
-						error={showError && error === 'conversation'}
-						fullWidth
-					/>
+					{withColleague ? (
+						<OrisoSelect
+							label={t('calendar.dialog.colleague')}
+							value={colleagueId}
+							options={colleagues.map((c) => ({
+								value: c.id,
+								label: c.agencyName
+									? `${c.displayName} · ${c.agencyName}`
+									: c.displayName
+							}))}
+							onChange={(event) =>
+								setColleagueId(event.target.value)
+							}
+							error={showError && error === 'colleague'}
+							fullWidth
+						/>
+					) : (
+						<OrisoSelect
+							label={t('calendar.dialog.conversation')}
+							value={sessionId}
+							options={conversations.map((c) => ({
+								value: String(c.sessionId),
+								label: c.username
+							}))}
+							onChange={(event) =>
+								setSessionId(event.target.value)
+							}
+							error={showError && error === 'conversation'}
+							fullWidth
+						/>
+					)}
+					{withColleague && (
+						<p className="calendarDialog__note">
+							{t(
+								onsiteOnly
+									? 'calendar.dialog.onsiteOnly'
+									: 'calendar.dialog.colleagueHint'
+							)}
+						</p>
+					)}
 					{!timed && (
 						<div className="calendarDialog__times">
 							<OrisoTimePicker
@@ -219,12 +308,12 @@ export const useAppointmentForm = ({
 								{t('calendar.dialog.kind')}
 							</span>
 							<div className="calendarDialog__kinds">
-								{APPOINTMENT_KINDS.map((k) => (
+								{kinds.map((k) => (
 									<button
 										key={k}
 										type="button"
 										className="calendarDialog__kindTile"
-										aria-pressed={k === kind}
+										aria-pressed={k === chosenKind}
 										onClick={() => setKind(k)}
 										data-cy={`calendar-dialog-kind-${k}`}
 									>
@@ -278,6 +367,9 @@ export const AppointmentDialog = ({
 			closeLabel={t('app.close')}
 			actions={form.actions}
 		>
+			{form.toolbar && (
+				<div className="calendarNewEntry__head">{form.toolbar}</div>
+			)}
 			{form.content}
 		</M3Dialog>
 	);

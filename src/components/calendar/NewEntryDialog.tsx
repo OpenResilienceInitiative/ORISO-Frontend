@@ -14,6 +14,7 @@ import type {
 	AppointmentDraft,
 	AppointmentKind,
 	CalendarConversation,
+	Colleague,
 	CalendarEntry
 } from './calendarModel';
 
@@ -31,6 +32,8 @@ export interface NewEntryDialogProps {
 	initialAllDay?: boolean;
 	initialNote?: string;
 	conversations: CalendarConversation[];
+	/** Colleagues one may meet instead of an advice seeker (FE#2305). */
+	colleagues?: Colleague[];
 	entries: CalendarEntry[];
 	ownerId: string;
 	now: Date;
@@ -53,6 +56,7 @@ export const NewEntryDialog = ({
 	initialAllDay,
 	initialNote,
 	conversations,
+	colleagues,
 	entries,
 	ownerId,
 	now,
@@ -68,6 +72,7 @@ export const NewEntryDialog = ({
 		slot,
 		initialSessionId,
 		conversations,
+		colleagues,
 		entries,
 		ownerId,
 		now,
@@ -102,23 +107,26 @@ export const NewEntryDialog = ({
 			actions={form.actions}
 		>
 			<div className="calendarNewEntry">
-				<div
-					className="calendarNewEntry__tabs"
-					role="group"
-					aria-label={t('calendar.dialog.entryKind')}
-				>
-					{TABS.map((value) => (
-						<button
-							key={value}
-							type="button"
-							className="calendarNewEntry__tab"
-							aria-pressed={tab === value}
-							onClick={() => setTab(value)}
-							data-cy={`calendar-new-tab-${value}`}
-						>
-							{t(`calendar.dialog.tabs.${value}`)}
-						</button>
-					))}
+				<div className="calendarNewEntry__head">
+					<div
+						className="calendarNewEntry__tabs"
+						role="group"
+						aria-label={t('calendar.dialog.entryKind')}
+					>
+						{TABS.map((value) => (
+							<button
+								key={value}
+								type="button"
+								className="calendarNewEntry__tab"
+								aria-pressed={tab === value}
+								onClick={() => setTab(value)}
+								data-cy={`calendar-new-tab-${value}`}
+							>
+								{t(`calendar.dialog.tabs.${value}`)}
+							</button>
+						))}
+					</div>
+					{form.toolbar}
 				</div>
 				{form.content}
 			</div>

@@ -7111,13 +7111,20 @@
 				"incomplete": "Veuillez choisir une date et une heure.",
 				"past": "L’entrée doit se situer dans le futur.",
 				"order": "La fin doit être postérieure au début.",
-				"conversation": "Veuillez choisir la consultation à laquelle le rendez-vous se rattache."
+				"conversation": "Veuillez choisir la consultation à laquelle le rendez-vous se rattache.",
+				"colleague": "Veuillez choisir un ou une collègue."
 			},
 			"entryKind": "Type d’entrée",
 			"tabs": {
 				"appointment": "Rendez-vous",
 				"blocker": "Plage bloquée"
-			}
+			},
+			"withWhom": "Rendez-vous avec",
+			"withConversation": "Personne conseillée",
+			"withColleague": "Collègue",
+			"colleague": "Collègue",
+			"colleagueHint": "Le rendez-vous est placé dans votre chat interne commun. S'il n'existe pas encore, il est créé.",
+			"onsiteOnly": "Aucun chat interne n'est autorisé avec ce ou cette collègue. Seul un rendez-vous sur place est possible."
 		},
 		"details": {
 			"start": {
@@ -7559,6 +7566,30 @@
 		"links": {
 			"title": "Liens sans rendez-vous",
 			"hint": "Liens d’invitation à partager : copiez-les ou affichez un code QR."
+		},
+		"meeting": {
+			"accept": "Accepter",
+			"decline": "Refuser",
+			"accepted": "Rendez-vous accepté.",
+			"declined": "Rendez-vous refusé.",
+			"cancelled": "Rendez-vous annulé.",
+			"cancelAsk": "{{name}}, {{time}}. Le rendez-vous disparaît des deux calendriers.",
+			"cancelSub": "Disparaît aussi chez {{name}}",
+			"chatSub": "Chat interne avec {{name}}",
+			"pendingInvited": "{{name}} vous invite. Veuillez accepter ou refuser.",
+			"pendingSent": "Demandé. En attente de {{name}}.",
+			"confirmed": "Confirmé avec {{name}}."
+		},
+		"autoAccept": {
+			"menu": "Accepter les rendez-vous automatiquement …",
+			"menuHint": "De quels collègues",
+			"title": "Accepter les rendez-vous automatiquement",
+			"description": "Les rendez-vous de ces collègues sont fixés immédiatement dans votre calendrier.",
+			"colleagues": "Collègues",
+			"search": "Rechercher un nom",
+			"hint": "Les rendez-vous de toutes les autres personnes attendent votre accord.",
+			"save": "Enregistrer",
+			"saved": "Liste enregistrée."
 		}
 	}
 }

@@ -70,7 +70,23 @@ export const entryFromApi = (dto: CalendarEntryDTO): CalendarEntry => {
 		...(typeof dto.sessionId === 'number' && { sessionId: dto.sessionId }),
 		...((type === 'blocker' || type === 'busy') &&
 			isAllDayRange(dto.start, dto.end) && { allDay: true }),
-		movable: dto.movable === true
+		movable: dto.movable === true,
+		...(type === 'appointment' &&
+			dto.colleagueId && {
+				meeting: {
+					colleagueId: dto.colleagueId,
+					colleagueName: dto.colleagueName ?? dto.title ?? '',
+					status:
+						dto.colleagueStatus === 'CONFIRMED'
+							? ('confirmed' as const)
+							: ('pending' as const),
+					invited: dto.invited === true,
+					...(dto.matrixRoomId && { matrixRoomId: dto.matrixRoomId }),
+					...(typeof dto.chatId === 'number' && {
+						chatId: dto.chatId
+					})
+				}
+			})
 	};
 };
 
@@ -96,7 +112,10 @@ export const colleagueFromApi = (dto: CalendarColleagueDTO): Colleague => ({
 	id: dto.id,
 	displayName: dto.displayName,
 	agencyName: dto.agencyName ?? '',
-	relation: RELATION[dto.relation] ?? 'otherTenant'
+	relation: RELATION[dto.relation] ?? 'otherTenant',
+	...(typeof dto.internalChat === 'boolean' && {
+		internalChat: dto.internalChat
+	})
 });
 
 export const visibilityFromApi = (

@@ -173,6 +173,7 @@ import { avatarToneClass } from './calendarAvatar';
 import { useCreatedFlash } from './useCreatedFlash';
 import { HoverScrollArrows } from '../hoverScrollArrows/HoverScrollArrows';
 import { NewEntryDialog } from './NewEntryDialog';
+import { AutoAcceptDialog } from './AutoAcceptDialog';
 import { BlockerCreatedMessage } from './BlockerDialog';
 import { MoveConflictDialog } from './MoveConflictDialog';
 import {
@@ -307,6 +308,20 @@ export interface CalendarPageProps {
 		end: Date
 	) => void | Promise<unknown>;
 	onWithdrawProposal?: (proposal: MoveProposal) => void | Promise<unknown>;
+	/**
+	 * An appointment with a colleague (FE#2305): the invited counsellor
+	 * accepts or declines it.
+	 */
+	onAnswerMeeting?: (
+		entry: CalendarEntry,
+		answer: 'accept' | 'decline'
+	) => ChangeResult;
+	/**
+	 * The colleagues whose appointments are accepted automatically; with
+	 * `onSaveAutoAccept` the more menu offers to change the list (FE#2305).
+	 */
+	autoAcceptIds?: string[];
+	onSaveAutoAccept?: (colleagueIds: string[]) => ChangeResult;
 	/** Team meetings and group dates (no backend yet). */
 	onJoin?: (entry: CalendarEntry) => void;
 	/** The visible range changed: load entries for it. */
@@ -373,6 +388,7 @@ type Dialog =
 	  }
 	| { type: 'workingHours' }
 	| { type: 'sync' }
+	| { type: 'autoAccept' }
 	| null;
 
 type Menu =
@@ -500,6 +516,9 @@ export const CalendarPage = ({
 	onCreate,
 	onMove,
 	onCancelAppointment,
+	onAnswerMeeting,
+	autoAcceptIds,
+	onSaveAutoAccept,
 	onRemoveBlocker,
 	onSaveWorkingHours,
 	onSaveDayException,
@@ -1685,7 +1704,9 @@ export const CalendarPage = ({
 		move: !!onMove,
 		propose: !!onProposeMove,
 		cancel: !!onCancelAppointment,
-		remove: !!onRemoveBlocker
+		remove: !!onRemoveBlocker,
+		accept: !!onAnswerMeeting,
+		decline: !!onAnswerMeeting
 	};
 
 	const openEntry = (
@@ -1718,10 +1739,26 @@ export const CalendarPage = ({
 
 	const entryAction = (
 		entry: CalendarEntry,
-		action: 'show' | 'start' | 'chat' | 'join' | 'cancel' | 'remove'
+		action:
+			| 'show'
+			| 'start'
+			| 'chat'
+			| 'join'
+			| 'cancel'
+			| 'remove'
+			| 'accept'
+			| 'decline'
 	) => {
 		setMenu(null);
-		if (action === 'show') showEntry(entry);
+		if (action === 'accept' || action === 'decline')
+			run(onAnswerMeeting?.(entry, action), {
+				message: t(
+					action === 'accept'
+						? 'calendar.meeting.accepted'
+						: 'calendar.meeting.declined'
+				)
+			});
+		else if (action === 'show') showEntry(entry);
 		else if (action === 'start') openRoom(onStart, entry);
 		else if (action === 'chat') openRoom(onOpenChat, entry);
 		else if (action === 'join') onJoin?.(entry);
@@ -1976,6 +2013,14 @@ export const CalendarPage = ({
 						? () => {
 								setMenu(null);
 								setDialog({ type: 'sync' });
+							}
+						: undefined
+				}
+				onAutoAccept={
+					onSaveAutoAccept && colleagues.length > 0
+						? () => {
+								setMenu(null);
+								setDialog({ type: 'autoAccept' });
 							}
 						: undefined
 				}
@@ -2877,6 +2922,7 @@ export const CalendarPage = ({
 						dialog.type === 'blocker' ? dialog.note : undefined
 					}
 					conversations={bookable}
+					colleagues={onCreate ? colleagues : undefined}
 					entries={
 						dialog.type === 'blocker' && dialog.replaces
 							? entries.filter(
@@ -2898,6 +2944,23 @@ export const CalendarPage = ({
 							? () => setDialog({ type: 'workingHours' })
 							: undefined
 					}
+					onClose={() => setDialog(null)}
+				/>
+			)}
+			{dialog?.type === 'autoAccept' && onSaveAutoAccept && (
+				<AutoAcceptDialog
+					open
+					colleagues={colleagues}
+					selected={autoAcceptIds ?? []}
+					fullScreen={compact}
+					onSave={(ids) => {
+						setDialog(null);
+						run(onSaveAutoAccept(ids), {
+							message: t('calendar.autoAccept.saved', {
+								count: ids.length
+							})
+						});
+					}}
 					onClose={() => setDialog(null)}
 				/>
 			)}
@@ -2940,10 +3003,15 @@ export const CalendarPage = ({
 					open
 					data-testid="calendar-cancel-dialog"
 					title={t('calendar.cancelAsk.title')}
-					description={t('calendar.cancelAsk.description', {
-						name: label(cancelAsk),
-						time: format(cancelAsk.start, cancelAsk.end)
-					})}
+					description={t(
+						cancelAsk.meeting
+							? 'calendar.meeting.cancelAsk'
+							: 'calendar.cancelAsk.description',
+						{
+							name: label(cancelAsk),
+							time: format(cancelAsk.start, cancelAsk.end)
+						}
+					)}
 					severity="error"
 					fullScreen={false}
 					onClose={() => setCancelAsk(null)}
@@ -2960,7 +3028,11 @@ export const CalendarPage = ({
 								const entry = cancelAsk;
 								setCancelAsk(null);
 								run(onCancelAppointment?.(entry), {
-									message: t('calendar.cancelled')
+									message: t(
+										entry.meeting
+											? 'calendar.meeting.cancelled'
+											: 'calendar.cancelled'
+									)
 								});
 							},
 							testId: 'calendar-cancel-confirm'
