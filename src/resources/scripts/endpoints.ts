@@ -35,24 +35,6 @@ export const endpoints = {
 	appointmentBaseNew: (sessionId: number) =>
 		apiUrl + `/service/appointments/sessions/${sessionId}/enquiry/new`,
 	appointmentServiceBase: apiUrl + '/service/agency/',
-	appointmentServiceCalDav:
-		agencyServiceOrigin + '/service/appointservice/caldav',
-	appointmentServiceCalDavAccount:
-		agencyServiceOrigin + '/service/appointservice/caldav/hasAccount',
-	appointmentServiceMeetingLink: (agencyId: number) =>
-		agencyServiceOrigin +
-		`/service/appointservice/agencies/${agencyId}/initialMeetingSlug`,
-	counselorAppointmentLink: (userId: string) =>
-		agencyServiceOrigin +
-		`/service/appointservice/consultants/${userId}/meetingSlug`,
-	counselorToken:
-		agencyServiceOrigin + `/service/appointservice/consultants/token`,
-	appointmentsServiceBookingEventsByUserId: (userId: string) =>
-		agencyServiceOrigin +
-		`/service/appointservice/askers/${userId}/bookings`,
-	appointmentsServiceConsultantBookings: (userId: string, status: string) =>
-		agencyServiceOrigin +
-		`/service/appointservice/consultants/${userId}/bookings?status=${status}`,
 	askerSessions: userServiceOrigin + '/service/users/sessions/askers',
 	askerSessionsBase: userServiceOrigin + '/service/users/askers/sessions',
 	banUser: (matrixUserId, chatId) =>
@@ -167,6 +149,7 @@ export const endpoints = {
 		userServiceOrigin + `/service/users/sessions/${sessionId}/appointments`,
 	upcomingAppointments:
 		userServiceOrigin + '/service/users/appointments/upcoming',
+	calendarBase: userServiceOrigin + '/service/users/calendar',
 	sessionRooms: userServiceOrigin + '/service/users/sessions/room',
 	teamDiscussion: (sessionId: number) =>
 		userServiceOrigin +

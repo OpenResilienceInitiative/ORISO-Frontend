@@ -62,6 +62,7 @@ import {
 } from './useLiveChatAvailabilityLossNotice';
 import { useLiveChatDpaRestrictionNotice } from './useLiveChatDpaRestrictionNotice';
 import { useOpenEnquiryCount } from './useOpenEnquiryCount';
+import { useOpenProposalCount } from './useOpenProposalCount';
 import {
 	ENQUIRY_LIST_PATH,
 	NEW_ENQUIRY_NOTICE_ID,
@@ -73,6 +74,8 @@ export interface NavigationBarProps {
 	routerConfig: any;
 }
 
+/** "Meine Termine": its count is the move proposals waiting (FE#1050). */
+const CALENDAR_PATH = '/booking/events';
 const REGEX_DASH = /\//g;
 const stripLocalePrefix = (label: string) => label.replace(/^\([^)]+\)\s*/, '');
 const hyphenateRailLabel = (label: string, breakAfter: number) => {
@@ -256,6 +259,13 @@ export const NavigationBar = ({
 		notificationsContext?.hiddenUnreadInLoadedPages ?? 0;
 	// FE#1435: open enquiries on "Anfragen", visible from every section.
 	const openEnquiryCount = useOpenEnquiryCount(isConsultant);
+	// FE#1050: move proposals waiting for an answer, on "Meine Termine".
+	const openProposalCount = useOpenProposalCount(
+		isConsultant &&
+			(routerConfig?.navigation ?? []).some(
+				(item: { to?: string }) => item?.to === CALENDAR_PATH
+			)
+	);
 	const removeNotificationRef = useRef(
 		notificationsContext?.removeNotification
 	);
@@ -277,8 +287,16 @@ export const NavigationBar = ({
 		'/profile':
 			isFirstVisit && !browserNotificationsSettings().visited ? 1 : 0,
 		'/notifications': visibleUnreadCount,
-		[ENQUIRY_LIST_PATH]: openEnquiryCount ?? 0
+		[ENQUIRY_LIST_PATH]: openEnquiryCount ?? 0,
+		[CALENDAR_PATH]: openProposalCount ?? 0
 	};
+	/** What the count on an item says, read out with the item's name. */
+	const countKey = (to: string) =>
+		to === ENQUIRY_LIST_PATH
+			? 'sessionList.rail.openEnquiries'
+			: to === CALENDAR_PATH
+				? 'calendar.proposal.navCount'
+				: 'sessionList.rail.unreadCount';
 	const unreadNavTitle = (to: string): string | undefined =>
 		to === '/notifications' && hiddenUnreadInLoadedPages > 0
 			? translate('notifications.displayFilter.badgeHiddenHint', {
@@ -443,9 +461,7 @@ export const NavigationBar = ({
 									? translate(
 											addonBadge > 0
 												? 'addons.badge'
-												: item.to === ENQUIRY_LIST_PATH
-													? 'sessionList.rail.openEnquiries'
-													: 'sessionList.rail.unreadCount',
+												: countKey(item.to),
 											{
 												count: unreadCount
 											}

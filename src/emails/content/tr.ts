@@ -571,5 +571,19 @@ export const tr: Record<EmailId, EmailContent> = {
 			'Bu e-posta kasıtlı olarak konu, ad veya katılımcı bilgisi içermez.',
 		assurance,
 		footer
+	},
+
+	'calendar-move-proposal': {
+		subject: 'Randevu için yeni zaman önerisi',
+		preheader:
+			'{{proposerName}}, randevularınızdan biri için yeni bir zaman öneriyor.',
+		headline: 'Randevu için yeni zaman önerisi',
+		paragraphs: [
+			'{{proposerName}}, {{currentDate}} saat {{currentTime}} tarihindeki randevunuzu {{proposedDate}} saat {{proposedTime}} olarak değiştirmeyi öneriyor.',
+			'Öneriyi takviminizde kabul edebilir veya reddedebilirsiniz. O zamana kadar randevu yerinde kalır.'
+		],
+		cta: { label: 'Takvimde görüntüle', href: '{{calendarUrl}}' },
+		assurance: staffAssurance,
+		footer
 	}
 };

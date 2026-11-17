@@ -167,25 +167,23 @@ export const peekDeviceSelection = (
 	roomRef: string | null | undefined
 ): CallDeviceSelection => (roomRef && chosen.get(roomRef)?.selection) || {};
 
+/** What a device check says now: switches, devices and what blocks it. */
+export interface DeviceChoice {
+	controls: CallDeviceControls;
+	cameraAvailable: boolean;
+	blocker?: CallEntryBlocker;
+	/** What the check found: the choice names its devices by label. */
+	devices?: {
+		microphone: readonly CallDevice[];
+		camera: readonly CallDevice[];
+	};
+}
+
 /** Keeps what a device check (`useCallDeviceCheck`) says now for that room. */
 export const keepDeviceChoice = (
 	roomRef: string,
 	modality: CallModality,
-	{
-		controls,
-		cameraAvailable,
-		blocker,
-		devices
-	}: {
-		controls: CallDeviceControls;
-		cameraAvailable: boolean;
-		blocker?: CallEntryBlocker;
-		/** What the check found: the choice names its devices by label. */
-		devices?: {
-			microphone: readonly CallDevice[];
-			camera: readonly CallDevice[];
-		};
-	}
+	{ controls, cameraAvailable, blocker, devices }: DeviceChoice
 ) =>
 	rememberJoinMedia(
 		roomRef,

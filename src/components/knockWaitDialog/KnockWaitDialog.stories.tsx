@@ -26,6 +26,7 @@ import {
 } from '../waitingRoom/callEntry/callEntryTypes';
 import { useLiveCallDevices } from '../waitingRoom/callEntry/useLiveCallDevices';
 import type { Avatar } from '../../utils/pseudonymGenerator';
+import { ownAskerAvatar } from '../../utils/avatarChoice';
 
 const devices: CallDevices = {
 	camera: [
@@ -60,6 +61,10 @@ type DemoProps = Omit<KnockWaitDialogProps, 'phase' | 'media'> & {
 	cameraAvailable?: boolean;
 	initialCameraOn?: boolean;
 	micLevel?: number;
+	/** Call only: the person's animal. Defaults to a fixed owl. */
+	avatar?: Avatar;
+	/** Call only: the name under the preview. */
+	mediaName?: string;
 	/** The host's answer, a moment after the dialog opens. */
 	hostAnswer?: Extract<KnockWaitEvent, 'admitted' | 'declined'>;
 	onToggleMic?: () => void;
@@ -80,6 +85,8 @@ const KnockWaitDemo = ({
 	cameraAvailable = true,
 	initialCameraOn = true,
 	micLevel = 0.45,
+	avatar = owl,
+	mediaName = 'eule_mika_4821',
 	hostAnswer,
 	onToggleMic,
 	onSelectDevice,
@@ -108,8 +115,8 @@ const KnockWaitDemo = ({
 			media={
 				modality && {
 					modality,
-					name: 'eule_mika_4821',
-					avatar: owl,
+					name: mediaName,
+					avatar,
 					devices,
 					selection,
 					micLevel,
@@ -350,6 +357,28 @@ export const CallWaitingCameraOff: Story = {
 			'aria-pressed',
 			'false'
 		);
+	}
+};
+
+/**
+ * FE#2209: a call-link guest waits with the animal they picked on the link's
+ * page (here a lamb), on the palette derived from their id, as the call shows
+ * it. Before, the wait derived its own animal from the id alone.
+ */
+export const CallWaitingGuestOwnAnimal: Story = {
+	name: 'Call · waiting, camera off · guest keeps their animal',
+	globals: desktop1440Globals,
+	args: {
+		...call,
+		initialCameraOn: false,
+		mediaName: 'lamm_jona_2209',
+		avatar: ownAskerAvatar('guest-2209', { avatarId: 'lamb' })
+	},
+	play: async ({ canvasElement }) => {
+		const p = page(canvasElement);
+		const avatar = await p.findByTestId('video-avatar');
+		await expectVisible(avatar);
+		await waitFor(() => expect(avatar.querySelector('svg')).not.toBeNull());
 	}
 };
 
