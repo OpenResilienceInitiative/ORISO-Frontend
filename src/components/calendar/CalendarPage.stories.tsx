@@ -40,7 +40,10 @@ import { MyDirectLinksView } from '../directLinks/MyDirectLinksView';
 import { DirectLinkShareDialog } from '../conversationCreate/directLink/DirectLinkShareDialog';
 import type { DirectLink } from '../conversationCreate/directLink/directLink';
 import { SAMPLE_DIRECT_LINKS } from '../directLinks/directLinkSamples';
-import { CalendarLinksBox } from './CalendarLinksSection';
+import {
+	CalendarLinksBox,
+	useCalendarLinksLabels
+} from './CalendarLinksSection';
 import {
 	ASKER_ENTRIES,
 	COLLEAGUE_ENTRIES,
@@ -442,9 +445,11 @@ const cyEl = (cy: string) =>
 const StoryLinksPanel = () => {
 	const [links, setLinks] = useState<DirectLink[]>(SAMPLE_DIRECT_LINKS);
 	const [qr, setQr] = useState<DirectLink | null>(null);
+	const labels = useCalendarLinksLabels();
 	return (
 		<>
 			<MyDirectLinksView
+				{...labels}
 				state="ready"
 				links={links}
 				onToggle={(id, active) =>

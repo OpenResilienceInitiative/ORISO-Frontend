@@ -7,34 +7,32 @@ import { useTranslation } from 'react-i18next';
 import { MyDirectLinksPanel } from '../directLinks/MyDirectLinksPanel';
 import { useDirectLinksAllowed } from '../directLinks/useDirectLinksAllowed';
 
-/** The titled box under the list; `children` is the list of links. */
+/** The box under the list; `children` is the titled list of links. */
 export const CalendarLinksBox = ({
 	children
 }: {
 	children: React.ReactNode;
-}) => {
+}) => (
+	<div className="calendarPage__links" data-cy="calendar-links">
+		{children}
+	</div>
+);
+
+/** Title and line for the links list, as the calendar names it. */
+export const useCalendarLinksLabels = () => {
 	const { t } = useTranslation();
-	return (
-		<section
-			className="calendarPage__links"
-			aria-labelledby="calendar-links-title"
-			data-cy="calendar-links"
-		>
-			<h2 className="calendarPage__linksTitle" id="calendar-links-title">
-				{t('calendar.links.title')}
-			</h2>
-			<p className="calendarPage__linksHint">
-				{t('calendar.links.hint')}
-			</p>
-			{children}
-		</section>
-	);
+	return {
+		title: t('calendar.links.title'),
+		description: t('calendar.links.hint')
+	};
 };
 
 /** The counsellor's own links, hidden while no medium is allowed. */
-export const CalendarLinksSection = () =>
-	useDirectLinksAllowed(true) ? (
+export const CalendarLinksSection = () => {
+	const labels = useCalendarLinksLabels();
+	return useDirectLinksAllowed(true) ? (
 		<CalendarLinksBox>
-			<MyDirectLinksPanel />
+			<MyDirectLinksPanel {...labels} />
 		</CalendarLinksBox>
 	) : null;
+};

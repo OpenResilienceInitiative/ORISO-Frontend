@@ -3767,18 +3767,3 @@ $cal-new-pill-hover: #4b4f51;
 	border-top: 1px solid var(--m3-outline-variant, #c4c7c7);
 	overflow-y: auto;
 }
-
-.calendarPage__linksTitle {
-	margin: 0;
-	color: var(--m3-on-surface, #1c1b1b);
-	font-size: 16px;
-	font-weight: 600;
-	line-height: 24px;
-}
-
-.calendarPage__linksHint {
-	margin: 0;
-	color: var(--m3-on-surface-variant, #444748);
-	font-size: 13px;
-	line-height: 18px;
-}

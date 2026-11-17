@@ -23,7 +23,14 @@ import { CREATE_CHAT_PATH } from '../app/routePaths';
 export { CREATE_CHAT_PATH };
 
 /** #1894: list + QR + edit, wired to UserService#1479. */
-export const MyDirectLinksPanel = () => {
+export const MyDirectLinksPanel = ({
+	title,
+	description
+}: {
+	/** *19: the calendar shows the list as "Links ohne Termin". */
+	title?: string;
+	description?: string;
+} = {}) => {
 	const navigate = useNavigate();
 	const { fromL } = useResponsive();
 	const { userData } = useContext(UserDataContext);
@@ -88,6 +95,8 @@ export const MyDirectLinksPanel = () => {
 				onEdit={setEditing}
 				onCreate={() => navigate(CREATE_CHAT_PATH)}
 				onRetry={reload}
+				title={title}
+				description={description}
 			/>
 			{qrLink && (
 				<DirectLinkShareDialog
