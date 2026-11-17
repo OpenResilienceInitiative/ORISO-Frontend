@@ -6953,10 +6953,11 @@
 			"createAction": "Oluştur",
 			"saveAction": "Kaydet",
 			"withAppointment": "Randevulu",
-			"withAppointmentHint": "Bağlantıyı açan herkes ortak bir görüşmede buluşur.",
+			"withAppointmentHint": "Bağlantıyı açan herkes ortak bir görüşmede buluşur. Randevu takviminizde de görünür.",
 			"withoutAppointmentHint": "Randevu olmadan her kişi kendi görüşmesini alır. Bağlantı siz silene kadar çalışır.",
 			"inviteOthers": "Bağlantıyla başka kişileri davet et",
 			"inviteOthersHint": "Örneğin bir tercüman. Davet edilen kişiler yalnızca katıldıktan sonra yazılan mesajları görür.",
+			"inviteOthersMediumOff": "Bu tür için doğrudan davetler etkin değil. Başka kişileri davet etmek için başka bir tür seçin.",
 			"validity": {
 				"label": "Randevu bittikten sonra geçerlilik",
 				"hint": "Ardından misafirler erişimi kaybeder ve görüşme arşivlenir.",
@@ -6975,7 +6976,15 @@
 				"both": "Her ikisi"
 			},
 			"knock": "Önce kapıyı çal",
-			"knockHint": "Her kişiyi içeri siz alırsınız. Bunu görüşme sırasında değiştirebilirsiniz."
+			"knockHint": "Her kişiyi içeri siz alırsınız. Bunu görüşme sırasında değiştirebilirsiniz.",
+			"newPerson": {
+				"option": "Doğrudan davetle yeni kişi …",
+				"hint": "Bu kişinin sizinle henüz bir görüşmesi yok. Sonraki adımda bu randevuyla bir doğrudan davet oluşturursunuz.",
+				"action": "Doğrudan davete devam et"
+			},
+			"linkFailedTitle": "Davet bağlantısı oluşturulmadı",
+			"linkFailedAfterAppointment": "Randevu kaydedildi, ancak davet bağlantısı oluşturulmadı. Lütfen tekrar deneyin.",
+			"appointmentSaved": "Randevu kaydedildi."
 		},
 		"overview": {
 			"title": "Randevular ve doğrudan davetler",
@@ -7050,7 +7059,8 @@
 			"title": "Yeni bağlantı",
 			"text": "Randevunun yeni bağlantısı:",
 			"validUntil": "Randevunun yeni bağlantısı {{date}} tarihine kadar geçerli:"
-		}
+		},
+		"fromCalendar": "Takvimden randevu: {{range}}. Konu ve ortamı seçin, ardından doğrudan daveti oluşturun."
 	},
 	"calendar": {
 		"bandLoading": "Yükleniyor: {{names}}",
