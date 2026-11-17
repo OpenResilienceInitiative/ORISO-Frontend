@@ -14,6 +14,7 @@ import {
 } from '../../../globalState';
 import { ConversationAppointmentSlot } from './ConversationAppointmentSlot';
 import {
+	appointmentsEpoch,
 	forgetKnownAppointments,
 	rememberSessionAppointments,
 	rememberUpcomingAppointments
@@ -157,22 +158,29 @@ describe('ConversationAppointmentSlot', () => {
 
 		it('draws a known appointment in the first frame, before its own load', () => {
 			getAppointments.mockReturnValue(new Promise(() => undefined));
-			rememberUpcomingAppointments([upcoming() as never]);
+			rememberUpcomingAppointments(
+				[upcoming() as never],
+				appointmentsEpoch()
+			);
 			const { container } = renderSlot(vi.fn());
 			expect(row(container)).not.toBeNull();
 		});
 
 		it('draws no row in the first frame for a conversation the list knows has none', () => {
 			getAppointments.mockReturnValue(new Promise(() => undefined));
-			rememberUpcomingAppointments([
-				{ ...upcoming(), sessionId: 9999 } as never
-			]);
+			rememberUpcomingAppointments(
+				[{ ...upcoming(), sessionId: 9999 } as never],
+				appointmentsEpoch()
+			);
 			const { container } = renderSlot(vi.fn());
 			expect(row(container)).toBeNull();
 		});
 
 		it("lets the conversation's own load replace the guess", async () => {
-			rememberUpcomingAppointments([upcoming() as never]);
+			rememberUpcomingAppointments(
+				[upcoming() as never],
+				appointmentsEpoch()
+			);
 			getAppointments.mockResolvedValue([]);
 			const { container } = renderSlot(vi.fn());
 			expect(row(container)).not.toBeNull();
@@ -180,8 +188,11 @@ describe('ConversationAppointmentSlot', () => {
 		});
 
 		it('prefers the newer of the two sources', async () => {
-			rememberUpcomingAppointments([upcoming() as never]);
-			rememberSessionAppointments(4401, []);
+			rememberUpcomingAppointments(
+				[upcoming() as never],
+				appointmentsEpoch()
+			);
+			rememberSessionAppointments(4401, [], appointmentsEpoch());
 			getAppointments.mockReturnValue(new Promise(() => undefined));
 			const { container } = renderSlot(vi.fn());
 			expect(row(container)).toBeNull();

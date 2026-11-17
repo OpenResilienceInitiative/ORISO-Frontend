@@ -11,6 +11,7 @@ import {
 } from '../../../globalState';
 import { ConversationAppointmentSlot } from './ConversationAppointmentSlot';
 import {
+	appointmentsEpoch,
 	forgetKnownAppointments,
 	rememberUpcomingAppointments
 } from './conversationAppointments';
@@ -69,7 +70,8 @@ const Slot = ({
 }) => {
 	const [restore] = useState(() => {
 		forgetKnownAppointments();
-		if (known) rememberUpcomingAppointments(known as never);
+		if (known)
+			rememberUpcomingAppointments(known as never, appointmentsEpoch());
 		return installFetch(route);
 	});
 	React.useEffect(() => restore, [restore]);

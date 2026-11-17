@@ -735,7 +735,9 @@ $room-header-gap-top: 2px;
 		color: #fff;
 	}
 
-	&__add--interactive {
+	/* The pending "+" stays focusable, so it shares the focus treatment. */
+	&__add--interactive,
+	&__add--pending {
 		cursor: pointer;
 
 		&:focus-visible {

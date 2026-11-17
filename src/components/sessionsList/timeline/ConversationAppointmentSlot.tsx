@@ -27,6 +27,7 @@ import { useResponsive } from '../../../hooks/useResponsive';
 import { RoomNextAppointment } from './AppointmentSplitButton';
 import {
 	appointmentToBooking,
+	appointmentsEpoch,
 	knownSessionAppointments,
 	onAppointmentsChanged,
 	rememberSessionAppointments,
@@ -90,11 +91,12 @@ export const ConversationAppointmentSlot = ({
 	useEffect(() => {
 		if (sessionId === undefined) return undefined;
 		let active = true;
+		const epoch = appointmentsEpoch();
 		apiGetSessionAppointments(sessionId).then(
 			(items) => {
 				if (!active) return;
 				if (Array.isArray(items))
-					rememberSessionAppointments(sessionId, items);
+					rememberSessionAppointments(sessionId, items, epoch);
 				setLoaded({
 					sessionId,
 					items: Array.isArray(items) ? items : null

@@ -101,15 +101,28 @@ type KnownAppointments = { at: number; items: SessionAppointment[] };
 const knownBySession = new Map<number, KnownAppointments>();
 let knownUpcoming: KnownAppointments | undefined;
 let knownClock = 0;
+/* Bumped by every forget (logout). A request captures it when it starts, so
+   an answer that lands after the logout cannot refill the store for the
+   next user, whatever the timing of React's effect cleanup. */
+let knownEpoch = 0;
+
+export const appointmentsEpoch = () => knownEpoch;
 
 export const rememberSessionAppointments = (
 	sessionId: number,
-	items: SessionAppointment[]
+	items: SessionAppointment[],
+	startedInEpoch: number
 ) => {
+	if (startedInEpoch !== knownEpoch) return;
 	knownBySession.set(sessionId, { at: ++knownClock, items });
 };
 
-export const rememberUpcomingAppointments = (items: SessionAppointment[]) => {
+/** Only a successful read: a failed one says nothing about appointments. */
+export const rememberUpcomingAppointments = (
+	items: SessionAppointment[],
+	startedInEpoch: number
+) => {
+	if (startedInEpoch !== knownEpoch) return;
 	knownUpcoming = { at: ++knownClock, items };
 };
 
@@ -122,8 +135,9 @@ export const knownSessionAppointments = (
 	return knownUpcoming?.items.filter((a) => a.sessionId === sessionId);
 };
 
-/** Tests and logout: start from nothing known. */
+/** Logout (and tests): start from nothing known; in-flight answers are void. */
 export const forgetKnownAppointments = () => {
+	knownEpoch += 1;
 	knownBySession.clear();
 	knownUpcoming = undefined;
 };

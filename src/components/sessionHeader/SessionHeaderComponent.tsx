@@ -133,6 +133,7 @@ import { HeaderPlusMenu, type PlusMenuAnchor } from './HeaderPlusMenu';
 import { canRecommendFurtherCounselling } from '../furtherCounselling/furtherCounsellingRules';
 import { useCaseHandoverOffer } from '../caseHandover/useCaseHandoverOffer';
 import { CaseHandoverOffer } from '../caseHandover/CaseHandoverOffer';
+import { isPracticeId, isPracticeRoomId } from '../../practice/practiceIds';
 import { resolveAssignedConsultantLabel } from '../session/assignedConsultantLabel';
 export interface SessionHeaderProps {
 	consultantAbsent?: SessionConsultantInterface;
@@ -1193,8 +1194,15 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 						});
 						const canOpenSupervisorModal =
 							supervisorAddState.mode === 'interactive';
+						/* Practice conversations keep the direct "+": the
+						   supervision tour teaches exactly that click, and a
+						   handover could not leave the practice sandbox. */
+						const isPracticeConversation =
+							isPracticeId(activeSession.item.id) ||
+							isPracticeRoomId(activeSession.item.matrixRoomId);
 						const canHandOverHere =
 							!untilL &&
+							!isPracticeConversation &&
 							canRecommendFurtherCounselling({
 								isRejectedCase:
 									Number(activeSession.item.status) ===
