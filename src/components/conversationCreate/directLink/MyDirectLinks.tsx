@@ -31,10 +31,7 @@ interface MyDirectLinksProps {
 	headerAction?: React.ReactNode;
 	/** #1894: shown instead of the grid while there are no links. */
 	emptyState?: React.ReactNode;
-	/**
-	 * #2252 / *19: the overview and the calendar name this section
-	 * "Links ohne Termin".
-	 */
+	/** #2252 / *19: the overview and the calendar name the list "without appointment". */
 	title?: string;
 	/** *19: one line under the title. */
 	description?: string;
