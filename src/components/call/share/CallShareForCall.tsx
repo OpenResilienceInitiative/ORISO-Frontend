@@ -22,8 +22,8 @@ export interface CallShareForCallProps {
 	layout: CallShareProps['layout'];
 	/**
 	 * Only when the link can create a temporary account: the call's own
-	 * header hands out the link ("Link teilen", host chrome), but that
-	 * account switch exists only here (call design S8, #2215 review).
+	 * header hands out the link ("Link teilen", host chrome), but the guest
+	 * account select exists only here (call design S8, #2215 review).
 	 */
 	onlyForTemporaryAccounts?: boolean;
 }
@@ -83,7 +83,7 @@ export const CallShareForCall = ({
 
 	// One PATCH at a time, so an older change can never land after a newer one.
 	// A change replaced before it was sent is skipped: the newer one carries both
-	// switches.
+	// settings.
 	const change = (next: CallShareSettings) => {
 		const request = ++latest.current;
 		const forCall = call.current;
@@ -109,7 +109,7 @@ export const CallShareForCall = ({
 			layout={layout}
 			settings={settings}
 			onSettingsChange={change}
-			temporaryAccountAllowed={link.temporaryAccountAllowed}
+			allowedGuestAccountModes={link.allowedGuestAccountModes}
 		/>
 	);
 };

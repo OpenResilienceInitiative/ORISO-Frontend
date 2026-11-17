@@ -7258,5 +7258,47 @@
 			"open": "Pull up the list"
 		},
 		"conversationsFailed": "The conversations could not be loaded, so appointments cannot be linked to one."
+	},
+	"guestAccountMode": {
+		"label": "Guest account",
+		"menuLabel": "Choose guest account",
+		"option": {
+			"TEMPORARY": "Delete after the session",
+			"GUEST_CHOOSES": "Guest chooses",
+			"PERMANENT": "Permanent"
+		},
+		"hint": {
+			"TEMPORARY": "New guests get an account that is deleted after the conversation.",
+			"GUEST_CHOOSES": "New guests choose when they join: without an account or with their own account.",
+			"PERMANENT": "New guests create their own account."
+		},
+		"newGuestsOnly": "Applies only to people who open the link from now on.",
+		"entry": {
+			"withoutAccount": "Join without an account",
+			"withAccount": "Create an account",
+			"temporaryNote": "Your access is deleted after the conversation. You can still keep it later.",
+			"accountNote": "With your own account you can come back later."
+		},
+		"keep": {
+			"action": "Keep account",
+			"actionDescription": "Otherwise your account is deleted after the conversation.",
+			"title": "Keep account",
+			"text": "Otherwise your account is deleted after the conversation. Set a password and it stays, and you can sign in again later.",
+			"loginName": "Your username: {{name}}",
+			"password": "Password",
+			"repeat": "Repeat password",
+			"mismatch": "The passwords do not match.",
+			"submit": "Keep account",
+			"cancel": "Cancel",
+			"success": "Your account stays.",
+			"recoveryPending": "Your account stays. To read your messages on another device, you need your recovery key.",
+			"error": {
+				"badRequest": "The password does not meet the requirements.",
+				"forbidden": "This invitation does not let you keep the account.",
+				"notFound": "Your account was not found. Please sign in again.",
+				"conflict": "Your account is being deleted or is already permanent.",
+				"generic": "That did not work. Please try again."
+			}
+		}
 	}
 }

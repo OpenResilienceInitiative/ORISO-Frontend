@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { offersTemporaryAccount } from '../../guestAccountMode/guestAccountMode';
 import { DirectLinkCard, DirectLinkDraft } from './DirectLinkCard';
 import { DirectLinkShareDialog } from './DirectLinkShareDialog';
 import { DirectLink, DirectLinkMedium } from './directLink';
@@ -57,7 +58,7 @@ export const DirectLinkCreateCard = ({
 	const handleCreate = async ({
 		topic,
 		medium,
-		temporary,
+		guestAccountMode,
 		name,
 		scheduledAt
 	}: DirectLinkDraft) => {
@@ -74,7 +75,8 @@ export const DirectLinkCreateCard = ({
 				await create({
 					medium,
 					topicId,
-					temporary,
+					guestAccountMode,
+					temporary: offersTemporaryAccount(guestAccountMode),
 					...(label ? { name: label } : {}),
 					...(scheduledAt ? { scheduledAt } : {}),
 					...(agencyId !== undefined ? { agencyId } : {})

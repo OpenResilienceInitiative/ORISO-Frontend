@@ -101,6 +101,9 @@ export const installDirectLinkMockApi = (
 				topicName: body.name,
 				medium: body.medium,
 				temporary: Boolean(body.temporary),
+				...(body.guestAccountMode
+					? { guestAccountMode: body.guestAccountMode }
+					: {}),
 				admission: body.medium === 'CHAT' ? 'DIRECT' : 'KNOCK'
 			});
 			links.unshift(link);

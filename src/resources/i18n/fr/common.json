@@ -7343,5 +7343,47 @@
 			"open": "Ouvrir la liste"
 		},
 		"conversationsFailed": "Les conversations n’ont pas pu être chargées : les rendez-vous ne peuvent pas y être associés."
+	},
+	"guestAccountMode": {
+		"label": "Compte invité",
+		"menuLabel": "Choisir le compte invité",
+		"option": {
+			"TEMPORARY": "Supprimer après la séance",
+			"GUEST_CHOOSES": "L’invité choisit",
+			"PERMANENT": "Durable"
+		},
+		"hint": {
+			"TEMPORARY": "Les nouveaux invités reçoivent un compte supprimé après l’entretien.",
+			"GUEST_CHOOSES": "Les nouveaux invités choisissent en entrant : sans compte ou avec leur propre compte.",
+			"PERMANENT": "Les nouveaux invités créent leur propre compte."
+		},
+		"newGuestsOnly": "Ne s’applique qu’aux personnes qui ouvrent le lien désormais.",
+		"entry": {
+			"withoutAccount": "Rejoindre sans compte",
+			"withAccount": "Créer un compte",
+			"temporaryNote": "Votre accès est supprimé après l’entretien. Vous pourrez encore le conserver plus tard.",
+			"accountNote": "Avec votre propre compte, vous pourrez revenir plus tard."
+		},
+		"keep": {
+			"action": "Conserver le compte",
+			"actionDescription": "Sinon, votre compte est supprimé après l’entretien.",
+			"title": "Conserver le compte",
+			"text": "Sinon, votre compte est supprimé après l’entretien. Définissez un mot de passe : il est conservé et vous pourrez vous reconnecter plus tard.",
+			"loginName": "Votre nom d’utilisateur : {{name}}",
+			"password": "Mot de passe",
+			"repeat": "Répéter le mot de passe",
+			"mismatch": "Les mots de passe ne correspondent pas.",
+			"submit": "Conserver le compte",
+			"cancel": "Annuler",
+			"success": "Votre compte est conservé.",
+			"recoveryPending": "Votre compte est conservé. Pour lire vos messages sur un autre appareil, il vous faut votre clé de récupération.",
+			"error": {
+				"badRequest": "Le mot de passe ne remplit pas les conditions.",
+				"forbidden": "Cette invitation ne permet pas de conserver le compte.",
+				"notFound": "Votre compte est introuvable. Veuillez vous reconnecter.",
+				"conflict": "Votre compte est en cours de suppression ou est déjà durable.",
+				"generic": "Cela n’a pas fonctionné. Veuillez réessayer."
+			}
+		}
 	}
 }

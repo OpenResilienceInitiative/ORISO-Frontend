@@ -55,6 +55,7 @@ describe('DirectLinkCreateCard', () => {
 			expect(create).toHaveBeenCalledWith({
 				medium: 'AUDIO',
 				topicId: 4,
+				guestAccountMode: 'GUEST_CHOOSES',
 				temporary: true,
 				name: 'Termin Frau M.',
 				scheduledAt: new Date('2026-11-20T14:30').toISOString()
@@ -75,6 +76,7 @@ describe('DirectLinkCreateCard', () => {
 			expect(create).toHaveBeenCalledWith({
 				medium: 'CHAT',
 				topicId: 4,
+				guestAccountMode: 'PERMANENT',
 				temporary: false,
 				name: 'Sucht'
 			})

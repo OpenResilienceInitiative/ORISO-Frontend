@@ -214,7 +214,8 @@ const CreateConversationFlow = ({
 				consultantIds: draft.consultantIds.filter(
 					(consultantId) => consultantId !== userData?.userId
 				),
-				agencyId: draft.agencyId
+				agencyId: draft.agencyId,
+				guestAccountMode: draft.guestAccountMode
 			};
 		} catch {
 			// Invalid persisted start etc. — keep the form gated (no prefill).

@@ -1077,8 +1077,13 @@ describe('what the host adds around the call', () => {
 			shareLinkApi.create.mockResolvedValue({
 				id: 7,
 				url: 'https://app.oriso.test/c/abc',
-				settings: { knock: true, temporaryAccount: true },
-				temporaryAccountAllowed: true
+				settings: { knock: true, guestAccountMode: 'GUEST_CHOOSES' },
+				temporaryAccountAllowed: true,
+				allowedGuestAccountModes: [
+					'TEMPORARY',
+					'GUEST_CHOOSES',
+					'PERMANENT'
+				]
 			});
 			activeSessionCall();
 			const view = withUser(

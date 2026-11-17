@@ -47,9 +47,25 @@ describe('toDirectLink', () => {
 			agencyId: 11,
 			medium: 'VIDEO',
 			temporary: true,
+			guestAccountMode: 'GUEST_CHOOSES',
 			active: false,
 			url: 'https://app.example/invite/abc'
 		});
+	});
+
+	/* UserService#1662: the mode wins over the old switch, which follows it. */
+	it('reads the guest account mode and derives the temporary mirror from it', () => {
+		const link = toDirectLink({
+			...dto,
+			temporary: true,
+			guestAccountMode: 'PERMANENT'
+		});
+		expect(link?.guestAccountMode).toBe('PERMANENT');
+		expect(link?.temporary).toBe(false);
+		expect(
+			toDirectLink({ ...dto, guestAccountMode: 'TEMPORARY' })
+				?.guestAccountMode
+		).toBe('TEMPORARY');
 	});
 
 	it('makes a relative entry URL absolute on the current host', () => {

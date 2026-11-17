@@ -96,10 +96,12 @@ export const CreateAndShare: Story = {
 		const create = directLinkMock().requests.find(
 			(request) => request.method === 'POST'
 		);
-		// One Beratungsstelle: no agency id; calls default to a temporary account.
+		// One Beratungsstelle: no agency id; calls default to the guest
+		// choosing the account (UserService#1662), with the old switch mirrored.
 		await expect(create?.body).toEqual({
 			medium: 'VIDEO',
 			topicId: 4,
+			guestAccountMode: 'GUEST_CHOOSES',
 			temporary: true,
 			name: 'Schulden'
 		});
@@ -136,6 +138,7 @@ export const CreateForOneOfTwoAgencies: Story = {
 			).toEqual({
 				medium: 'CHAT',
 				topicId: 5,
+				guestAccountMode: 'PERMANENT',
 				temporary: false,
 				name: 'Sozialberatung',
 				agencyId: 91
