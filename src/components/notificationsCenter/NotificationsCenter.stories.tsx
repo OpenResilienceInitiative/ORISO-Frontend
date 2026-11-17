@@ -1328,9 +1328,7 @@ export const InvitationFromColleaguesCase: Story = {
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
 		await userEvent.click(
-			await canvas.findByText(
-				'Sie wurden zu einem internen Gruppenanruf eingeladen.'
-			)
+			await canvas.findByText('Sie wurden zu einem Anruf eingeladen.')
 		);
 		await waitFor(() =>
 			expect(
