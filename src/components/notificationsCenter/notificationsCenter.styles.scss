@@ -31,7 +31,10 @@
 		flex-direction: column;
 		min-height: 0;
 		flex-shrink: 0;
-		padding: 16px 20px 16px 16px;
+
+		// The gutters of "Gespräche": 24 px above the search, 12 px each
+		// side, so list, grip and detail sit 24 px apart (Frank, 2026-11-17).
+		padding: 24px 12px 16px;
 		gap: 4px;
 		background: var(--m3-surface-container-high, #eae7e8);
 	}
@@ -96,18 +99,12 @@
 		background: transparent;
 
 		// #2226: the search pill sits on the same gutter as in Conversations
-		// (6 px on phones, 12 px from large), not on the card column's
-		// 16 / 20 px padding.
-		// Column padding: 16 px each side below 900 px, 16 / 20 px above.
+		// (6 px on phones, 12 px from large). Below 900 px the column pads
+		// 16 px, from 900 px it pads 12 px like Conversations.
 		margin: 0 -10px;
 
 		@include breakpoint($fromLarge) {
-			margin: 0 -4px;
-		}
-
-		// stylelint-disable-next-line media-feature-range-notation
-		@media (min-width: 1200px) {
-			margin: 0 -8px 0 -4px;
+			margin: 0;
 		}
 
 		.sessionsListToolbar__search {
@@ -129,7 +126,6 @@
 		overflow-y: auto;
 		display: flex;
 		flex-direction: column;
-		padding-right: 2px;
 		scrollbar-width: none;
 
 		&::-webkit-scrollbar {
@@ -490,7 +486,9 @@
 		flex: 1;
 		min-width: 0;
 		min-height: 0;
-		padding: 16px 16px 16px 20px;
+
+		// As in "Gespräche": 24 px around the card, 12 px towards the grip.
+		padding: 24px 24px 24px 12px;
 		display: flex;
 		background-color: #eae7e8;
 	}

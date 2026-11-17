@@ -105,6 +105,54 @@ export const SplitAtSmallDesktop: Story = {
 	}
 };
 
+/**
+ * Frank, 2026-11-17: the gutters of "Gespräche". 24 px above the search and
+ * the detail card, and 24 px between the last card and the detail card, with
+ * the grip centred in that gap (it was 16 px above and 42 px between).
+ */
+export const GuttersMatchConversations: Story = {
+	play: async ({ canvasElement }) => {
+		const column = await waitFor(() => {
+			const element = canvasElement.querySelector<HTMLElement>(
+				'.notificationsCenter__listColumn'
+			);
+			expect(element).not.toBeNull();
+			return element!;
+		});
+		const box = (selector: string) =>
+			canvasElement
+				.querySelector<HTMLElement>(selector)!
+				.getBoundingClientRect();
+		const left = box('.notificationsCenter').left;
+		const top = box('.notificationsCenter').top;
+		const columnRight = column.getBoundingClientRect().right;
+		await waitFor(() =>
+			expect(
+				Math.round(box('.notificationsCenter__toolbar').top - top)
+			).toBe(24)
+		);
+		expect(
+			Math.round(box('.notificationsCenter__detailCard').top - top)
+		).toBe(24);
+		expect(
+			Math.round(box('.notificationsCenter__toolbar').left - left)
+		).toBe(12);
+		// The last card and the detail card: 12 px each side of the edge.
+		const card = box(
+			'.notificationsCenter__card:not(.notificationsCenter__card--active)'
+		);
+		expect(Math.round(columnRight - card.right)).toBe(12);
+		expect(
+			Math.round(
+				box('.notificationsCenter__detailCard').left - columnRight
+			)
+		).toBe(12);
+		// The grip sits on the edge, in the middle of the 24 px gap.
+		const grip = box('.sessionsList__resizeHandlePill');
+		expect(Math.round(grip.left + grip.width / 2 - columnRight)).toBe(0);
+	}
+};
+
 export const PreviewFocusTonesCardDown: Story = {
 	play: async ({ canvasElement }) => {
 		const card = await waitFor(() => {
