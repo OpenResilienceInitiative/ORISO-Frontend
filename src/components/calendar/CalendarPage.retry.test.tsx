@@ -88,7 +88,7 @@ describe('CalendarPage — saving an appointment again after a failure', () => {
 			/>
 		);
 		fireEvent.click(
-			screen.getByRole('button', { name: 'calendar.create' })
+			screen.getByRole('button', { name: 'calendar.header.newEntry' })
 		);
 		fireEvent.change(field('calendar.dialog.conversation'), {
 			target: { value: '4402' }

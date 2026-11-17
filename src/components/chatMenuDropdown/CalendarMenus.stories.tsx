@@ -6,7 +6,6 @@ import { CalendarMenu } from '../calendar/CalendarMenu';
 import {
 	EntryMenuContent,
 	JumpMenuContent,
-	KindsMenuContent,
 	MonthDayMenuContent,
 	PeopleMenuContent,
 	ProposalMenuContent,
@@ -292,19 +291,6 @@ export const People: Story = {
 				shown={['kaya', 'brandt']}
 				scopeHint="Sie sehen die Kalender Ihrer Beratungsstelle. Das legt Ihr Träger fest."
 				onToggle={fn()}
-			/>
-		</Card>
-	)
-};
-
-export const Kinds: Story = {
-	name: '"Was anzeigen"',
-	render: () => (
-		<Card label="Was anzeigen">
-			<KindsMenuContent
-				hidden={['group']}
-				onToggle={fn()}
-				onShowAll={fn()}
 			/>
 		</Card>
 	)

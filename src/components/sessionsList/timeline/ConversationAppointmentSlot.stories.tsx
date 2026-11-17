@@ -171,7 +171,7 @@ export const CreateDialog: Story = {
 			})
 		);
 		await expect(
-			await within(document.body).findByTestId('appointment-date-dialog')
+			await within(document.body).findByTestId('invitation-dialog')
 		).toBeInTheDocument();
 	}
 };
@@ -194,7 +194,7 @@ export const MoveConflict: Story = {
 		});
 		await userEvent.click(bar);
 		await userEvent.click(await body.findByText('Termin verschieben'));
-		const dialog = await body.findByTestId('appointment-date-dialog');
+		const dialog = await body.findByTestId('invitation-dialog');
 		await userEvent.click(
 			within(dialog).getByRole('button', { name: 'Verschieben' })
 		);

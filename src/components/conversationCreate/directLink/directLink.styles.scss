@@ -198,6 +198,14 @@
 		margin: 0;
 	}
 
+	/* *19: one line under the title in the calendar's "Links ohne Termin". */
+	&__description {
+		color: var(--m3-on-surface-variant, #444748);
+		font-size: 14px;
+		line-height: 20px;
+		margin: -4px 0 0;
+	}
+
 	/* Column count follows the pane; a tile left alone in the last row widens (see .directLinkTile). */
 	&__grid {
 		display: grid;

@@ -199,6 +199,83 @@ afterEach(() => {
 	setMatrixClientServiceRef(null);
 });
 
+// Regression (Frank, 2026-11-16): the app replaces its Matrix client at
+// runtime. The new client starts with no rooms; the preview stayed on the old
+// client and showed "chat preview not available yet" for the counsellor's own
+// case until the page was reloaded.
+describe('ConversationPreview follows a replaced Matrix client', () => {
+	const emitter = () => {
+		const listeners = new Map<string, Set<(...args: any[]) => void>>();
+		return {
+			getUserId: () => OWN,
+			on: (event: string, listener: (...args: any[]) => void) => {
+				if (!listeners.has(event)) listeners.set(event, new Set());
+				listeners.get(event)!.add(listener);
+			},
+			removeListener: (
+				event: string,
+				listener: (...args: any[]) => void
+			) => listeners.get(event)?.delete(listener),
+			emit: (event: string, ...args: any[]) =>
+				listeners.get(event)?.forEach((listener) => listener(...args)),
+			listenerCount: (event: string) => listeners.get(event)?.size ?? 0
+		};
+	};
+
+	it('shows the conversation once the new client has synced the room', async () => {
+		const events = [
+			matrixEvent({
+				id: '$1',
+				sender: LISA,
+				body: 'Hallo nach dem Wechsel'
+			})
+		];
+		arrange(events);
+		const oldClient = emitter();
+		const newClient = emitter();
+		let current = oldClient;
+		const changeListeners = new Set<(client: any) => void>();
+		setMatrixClientServiceRef({
+			getClient: () => current,
+			onClientChange: (listener: (client: any) => void) => {
+				changeListeners.add(listener);
+				return () => changeListeners.delete(listener);
+			}
+		} as any);
+
+		renderPreview({ roomId: '!room:matrix.example' });
+		expect(screen.getByText('Hallo nach dem Wechsel')).toBeTruthy();
+		const subscriptionsBefore =
+			transport.onMatrixTimeline.mock.calls.length;
+
+		// The swap: the new client has no rooms yet.
+		transport.getMatrixRoom.mockReturnValue(null);
+		act(() => {
+			current = newClient;
+			changeListeners.forEach((listener) => listener(newClient));
+		});
+		expect(
+			screen.getByText('notifications.center.preview.unavailable')
+		).toBeTruthy();
+		// It no longer listens on the old client.
+		expect(oldClient.listenerCount('Room')).toBe(0);
+
+		// The new client's first sync brings the room.
+		transport.getMatrixRoom.mockReturnValue(room);
+		act(() => {
+			newClient.emit('Room', room);
+		});
+
+		await waitFor(() =>
+			expect(screen.getByText('Hallo nach dem Wechsel')).toBeTruthy()
+		);
+		// Live updates now come from the new client.
+		expect(transport.onMatrixTimeline.mock.calls.length).toBeGreaterThan(
+			subscriptionsBefore
+		);
+	});
+});
+
 describe('ConversationPreview (#420): the real chat rows, read-only', () => {
 	it('renders the room through the chat message rows', () => {
 		arrange([

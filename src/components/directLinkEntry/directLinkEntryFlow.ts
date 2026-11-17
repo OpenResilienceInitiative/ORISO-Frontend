@@ -1,4 +1,5 @@
 import {
+	apiCancelOwnCallKnock,
 	apiStartDirectLinkConversation,
 	CallKnockStatus,
 	DirectLinkConversation
@@ -275,23 +276,43 @@ export const isDirectLinkCallRoom = (roomId: string | null | undefined) =>
 		(link) => link?.matrixRoomId === roomId && link.medium !== 'CHAT'
 	);
 
+/** How long entering the chat waits for withdrawing a call knock. */
+export const CANCEL_KNOCK_WAIT_MS = 3000;
+
 export interface OpenDirectLinkDeps {
 	start?: typeof apiStartDirectLinkConversation;
 	redirect?: (sessionId: number) => void;
+	cancelKnock?: typeof apiCancelOwnCallKnock;
+	/**
+	 * #2252: the person chose "Zum Chat" before the call opened. The knock
+	 * gates only the call; the chat works at once, so no call knock goes along.
+	 */
+	chatFirst?: boolean;
+	/**
+	 * #2252: a person in a shared conversation agrees for themselves. Asked
+	 * when the server says this person has not agreed yet; resolves once the
+	 * agreement is recorded. Until then the person does not enter.
+	 */
+	consent?: (conversation: DirectLinkConversation) => Promise<void>;
 }
 
 /**
  * The signed-in person opens (or reopens) their conversation through the
- * link and enters the app on it. For a call the knock goes along.
+ * link and enters the app on it. For a call the knock goes along, unless
+ * the person chose the chat first.
  */
 export const openDirectLinkConversation = async (
 	token: string,
 	{
 		start = apiStartDirectLinkConversation,
-		redirect = (sessionId) => redirectToApp(undefined, { sessionId })
+		redirect = (sessionId) => redirectToApp(undefined, { sessionId }),
+		cancelKnock = apiCancelOwnCallKnock,
+		chatFirst = false,
+		consent
 	}: OpenDirectLinkDeps = {}
 ): Promise<DirectLinkConversation> => {
 	const conversation = await start(token);
+	if (conversation.consentRequired && consent) await consent(conversation);
 	rememberDirectLinkSession(conversation.sessionId, {
 		token,
 		medium: conversation.medium,
@@ -301,8 +322,24 @@ export const openDirectLinkConversation = async (
 		rememberAdmittedConversation(conversation.sessionId);
 	}
 	const knock = pendingKnockFrom(token, conversation);
-	if (knock) rememberPendingKnock(knock);
+	if (knock && !chatFirst) rememberPendingKnock(knock);
 	else forgetPendingKnock();
+	/* The server knocks as soon as the call window is open, also when the
+	   person came for the chat: withdraw that knock so the counsellor is not
+	   asked to let in someone who is not waiting. An admission stays (the
+	   server cancels only a pending knock); the call in the chat knocks anew. */
+	if (knock && chatFirst && knock.status === 'PENDING') {
+		/* Best effort, and bounded: a hanging request must not hold the
+		   person outside the chat. The server ends an abandoned knock itself. */
+		let timer: ReturnType<typeof setTimeout> | undefined;
+		await Promise.race([
+			cancelKnock(knock.knockId).catch(() => undefined),
+			new Promise<void>((resolve) => {
+				timer = setTimeout(resolve, CANCEL_KNOCK_WAIT_MS);
+			})
+		]);
+		clearTimeout(timer);
+	}
 	redirect(conversation.sessionId);
 	return conversation;
 };

@@ -48,5 +48,4 @@ export const calendarLocale = (language?: string): string => {
 
 /** The FullCalendar locale code for `i18n.language`, e.g. 'en' → 'en-gb'. */
 export const fullCalendarLocale = (language?: string): string =>
-	FULLCALENDAR_LOCALES[baseLanguage(language)] ??
-	FULLCALENDAR_LOCALES.de;
+	FULLCALENDAR_LOCALES[baseLanguage(language)] ?? FULLCALENDAR_LOCALES.de;

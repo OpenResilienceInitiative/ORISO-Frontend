@@ -33,11 +33,21 @@ describe('calendar stylesheet', () => {
 		expect(pill).toMatch(/@include control-focus-ring\(1px\)/);
 		expect(timeline).toMatch(/@include list-entry-pill(\(|;)/);
 		expect(timeline).toMatch(/@include list-entry-pill-time;/);
-		// "Als Nächstes" in the calendar is the prototype's compact row (36
-		// px, no fill), not the pill; its two-line text is the shared one,
-		// and no copy of the old pill entry is left behind.
+		// "Als Nächstes" in the calendar is the shared pill in the
+		// prototype's card tone (v17), with the shared two-line text, and no
+		// copy of the old pill entry is left behind.
+		expect(calendar).toMatch(
+			/\.calendarSide__row \{\s*@include list-entry-pill;/
+		);
 		expect(calendar).toMatch(/@include list-entry-pill-text;/);
 		expect(calendar).not.toMatch(/\.calendarPage__entry/);
+	});
+
+	it('centres the list grip in the gap to the stage, not on the shell gutter (Frank *2)', () => {
+		expect(calendar).toMatch(
+			/\.calendarSide__frame \{[^}]*--pane-gap:\s*12px;[^}]*--pane-inner-gutter:\s*0px;/s
+		);
+		expect(calendar).toMatch(/^\.calendarPage \{[^}]*gap: 12px;/m);
 	});
 
 	it('takes its breakpoints from the shared mixin, not raw media queries', () => {

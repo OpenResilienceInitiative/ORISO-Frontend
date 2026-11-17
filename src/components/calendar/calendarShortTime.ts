@@ -1,6 +1,7 @@
 /**
  * The short time labels of the calendar's left column, like the
- * conversation list: "in 10 Min", "heute 14:00", "morgen 9:00", "Do 10:00".
+ * conversation list: "in 10 Min", "heute 14:00", "morgen 9:00", "Do 10:00",
+ * and a week or more ahead with the date, "Mo 23.11. 11:00" (test C11).
  * The pure part decides which form; `useShortTime` words it.
  */
 import { useCallback } from 'react';
@@ -10,7 +11,7 @@ import { calendarLocale } from './calendarLocale';
 export type ShortTime =
 	| { form: 'running' }
 	| { form: 'inMinutes'; minutes: number }
-	| { form: 'today' | 'tomorrow' | 'weekday'; at: Date };
+	| { form: 'today' | 'tomorrow' | 'weekday' | 'date'; at: Date };
 
 const MINUTE = 60_000;
 
@@ -35,6 +36,8 @@ export const shortTimeOf = (start: Date, now: Date, end?: Date): ShortTime => {
 	const days = dayDiff(now, start);
 	if (days === 0) return { form: 'today', at: start };
 	if (days === 1) return { form: 'tomorrow', at: start };
+	// A weekday alone is ambiguous from seven days on: say the date too.
+	if (days >= 7) return { form: 'date', at: start };
 	return { form: 'weekday', at: start };
 };
 
@@ -52,15 +55,24 @@ export const useShortTime = () => {
 				hour: 'numeric',
 				minute: '2-digit'
 			}).format(short.at);
-			if (short.form === 'weekday')
+			if (short.form === 'weekday' || short.form === 'date') {
+				const weekday = new Intl.DateTimeFormat(locale, {
+					weekday: 'short'
+				})
+					.format(short.at)
+					.replace(/\.$/, '');
+				const date =
+					short.form === 'date'
+						? ` ${new Intl.DateTimeFormat(locale, {
+								day: '2-digit',
+								month: '2-digit'
+							}).format(short.at)}`
+						: '';
 				return t('calendar.when.weekday', {
-					day: new Intl.DateTimeFormat(locale, {
-						weekday: 'short'
-					})
-						.format(short.at)
-						.replace(/\.$/, ''),
+					day: `${weekday}${date}`,
 					time
 				});
+			}
 			return t(`calendar.when.${short.form}`, { time });
 		},
 		[t, i18n.language]

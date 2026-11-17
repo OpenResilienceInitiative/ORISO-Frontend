@@ -6,21 +6,3 @@
 	padding: 8px 16px;
 	background: var(--m3-surface-container-lowest, #fff);
 }
-
-.appointmentDateDialog {
-	display: flex;
-	flex-direction: column;
-	gap: 16px;
-	padding-top: 8px;
-
-	&__times {
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: 16px;
-	}
-
-	&__error {
-		margin: 0;
-		color: var(--m3-error, #cc0000);
-	}
-}

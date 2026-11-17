@@ -100,9 +100,9 @@ describe('CalendarPage — the list column, sized like "Gespräche"', () => {
 		const row = document.querySelector(
 			'[data-cy="calendar-upcoming-a1"]'
 		) as HTMLElement;
-		expect(
-			row.querySelector('.calendarSide__railAvatar')?.textContent
-		).toBe('ME');
+		expect(row.querySelector('.calendarSide__avatar')?.textContent).toBe(
+			'ME'
+		);
 		expect(row.querySelector('.calendarSide__railClock')?.textContent).toBe(
 			'11:00'
 		);

@@ -11,6 +11,13 @@ export interface ActivityEventBarProps {
 	/** "Beitreten" for a joinable call, else the entry's open label. */
 	actionLabel?: string | null;
 	onAction?: () => void;
+	/**
+	 * A second, quieter action: "Zum Kalender" on an appointment entry that
+	 * also has a conversation (Frank, 2026-11-17).
+	 */
+	secondaryLabel?: string | null;
+	secondaryIcon?: React.ReactNode;
+	onSecondary?: () => void;
 }
 
 /**
@@ -24,7 +31,10 @@ export const ActivityEventBar = ({
 	title,
 	time,
 	actionLabel,
-	onAction
+	onAction,
+	secondaryLabel,
+	secondaryIcon,
+	onSecondary
 }: ActivityEventBarProps) => (
 	<div className="activityEventBar" data-cy="activity-event-bar">
 		{Icon && (
@@ -36,6 +46,17 @@ export const ActivityEventBar = ({
 			<h2 className="activityEventBar__title">{title}</h2>
 			<p className="activityEventBar__time">{time}</p>
 		</div>
+		{secondaryLabel && onSecondary && (
+			<button
+				type="button"
+				className="activityEventBar__action activityEventBar__action--secondary"
+				onClick={onSecondary}
+				data-cy="activity-event-bar-secondary"
+			>
+				{secondaryIcon}
+				{secondaryLabel}
+			</button>
+		)}
 		{actionLabel && onAction && (
 			<button
 				type="button"

@@ -13,9 +13,9 @@ import {
 describe('calendar zoom', () => {
 	it("steps from today's height through 18/22/30/40/56/76/96", () => {
 		expect(zoomStep(GRID_SLOT_PX, 1)).toBe(30);
-		expect(zoomStep(GRID_SLOT_PX, -1)).toBe(22);
+		expect(zoomStep(GRID_SLOT_PX, -1)).toBe(18);
 		expect(zoomStep(SPLIT_SLOT_PX, 1)).toBe(30);
-		expect(zoomStep(SPLIT_SLOT_PX, -1)).toBe(22);
+		expect(zoomStep(SPLIT_SLOT_PX, -1)).toBe(18);
 		expect(zoomStep(30, 1)).toBe(40);
 		expect(zoomStep(76, 1)).toBe(96);
 		expect(zoomStep(22, -1)).toBe(18);
