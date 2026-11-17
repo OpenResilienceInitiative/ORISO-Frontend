@@ -2494,16 +2494,11 @@ export const MessageItemComponent = ({
 												))
 										}
 										// FE#2251: a live-chat person converts the account first.
-										viewerIsAnonymous={
-											!hasUserAuthority(
-												AUTHORITIES.ASKER_DEFAULT,
-												userData
-											) &&
-											hasUserAuthority(
-												AUTHORITIES.ANONYMOUS_DEFAULT,
-												userData
-											)
-										}
+										// Decided by the conversation, as SessionItemComponent does:
+										// a guest from a live chat link is a plain user
+										// (ASKER_DEFAULT), never ANONYMOUS_DEFAULT. An account that
+										// is already converted skips the form on the convert page.
+										viewerIsAnonymous={isLiveChatModality}
 										messageId={_id}
 									/>
 								)}
