@@ -49,10 +49,12 @@ export { CREATE_CHAT_PATH };
  * #2252: the 1:1 appointments for the overview. A backend without the
  * endpoint (404) has none; any other failed read is `failed`, never "no
  * appointments", and `retry` reads them again while the invitations stay.
+ * Until the first read has answered they are `loading`, not "none yet".
  */
 const useUpcomingAppointments = (enabled: boolean) => {
 	const [appointments, setAppointments] = useState<SessionAppointment[]>([]);
 	const [failed, setFailed] = useState(false);
+	const [answered, setAnswered] = useState(false);
 	const [reload, setReload] = useState(0);
 	const retry = useCallback(() => setReload((n) => n + 1), []);
 	useEffect(() => onAppointmentsChanged(retry), [retry]);
@@ -64,6 +66,7 @@ const useUpcomingAppointments = (enabled: boolean) => {
 				if (!active) return;
 				setAppointments(Array.isArray(items) ? items : []);
 				setFailed(false);
+				setAnswered(true);
 			},
 			(error: unknown) => {
 				if (!active) return;
@@ -72,13 +75,14 @@ const useUpcomingAppointments = (enabled: boolean) => {
 					FETCH_ERRORS.NO_MATCH;
 				setAppointments([]);
 				setFailed(!missing);
+				setAnswered(true);
 			}
 		);
 		return () => {
 			active = false;
 		};
 	}, [enabled, reload]);
-	return { appointments, failed, retry };
+	return { appointments, failed, loading: enabled && !answered, retry };
 };
 
 /**
@@ -110,6 +114,7 @@ export const MyDirectLinksPanel = ({
 	const {
 		appointments: sessionAppointments,
 		failed: appointmentsFailed,
+		loading: appointmentsLoading,
 		retry: retryAppointments
 	} = useUpcomingAppointments(overview);
 	/* #2252, decision 7: "Neuen Link senden" for an expired invitation. */
@@ -243,7 +248,13 @@ export const MyDirectLinksPanel = ({
 			{sections ? (
 				<>
 					<InvitationsOverview
-						state={state}
+						/* The overview waits for both reads: appointments not
+						   read yet must not look like "nothing yet". */
+						state={
+							state === 'ready' && appointmentsLoading
+								? 'loading'
+								: state
+						}
 						appointments={sections.appointments}
 						expired={sections.expired}
 						onSendNewLink={(item) => void newLink.send(item.id)}

@@ -499,6 +499,40 @@ describe('Termine & Direkteinladungen (#2252)', () => {
 		).toBeTruthy();
 	});
 
+	it('does not call appointments still loading "nothing yet"', async () => {
+		vi.mocked(apiGetOwnDirectLinks).mockResolvedValue([]);
+		let answer!: (items: unknown) => void;
+		vi.mocked(apiGetUpcomingAppointments).mockReturnValue(
+			new Promise((resolve) => {
+				answer = resolve;
+			}) as any
+		);
+		renderPage();
+		await waitFor(() => expect(apiGetOwnDirectLinks).toHaveBeenCalled());
+		await act(async () => undefined);
+
+		expect(screen.queryByTestId('invitations-empty')).toBeNull();
+		expect(
+			screen.queryByText('directInvitation.overview.noUpcoming')
+		).toBeNull();
+
+		await act(async () =>
+			answer([
+				{
+					id: 'a-2',
+					sessionId: 6,
+					startTime: inTwoDays(15),
+					endTime: inTwoDays(16),
+					status: 'SCHEDULED',
+					counterpart: { displayName: 'Ali' }
+				}
+			])
+		);
+		expect(
+			await screen.findByText('directInvitation.overview.oneToOne:Ali')
+		).toBeTruthy();
+	});
+
 	it('still shows the invitations when the 1:1 appointments cannot be read', async () => {
 		vi.mocked(apiGetOwnDirectLinks).mockResolvedValue([meeting]);
 		vi.mocked(apiGetUpcomingAppointments).mockRejectedValue(new Error('x'));
