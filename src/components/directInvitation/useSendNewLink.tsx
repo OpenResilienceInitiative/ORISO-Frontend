@@ -6,7 +6,7 @@
  * share. A failure is a titled pop-up on the stack.
  */
 import * as React from 'react';
-import { useCallback, useContext, useState } from 'react';
+import { useCallback, useContext, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
 	apiRenewDirectInvitation,
@@ -44,6 +44,10 @@ export const useSendNewLink = (stack: SnackbarStack = appSnackbarStack) => {
 	const { t } = useTranslation();
 	const { fromL } = useResponsive();
 	const notifications = useContext(NotificationsContext);
+	/* The feed as it is when the renewal answers: a request that arrived
+	   while it ran must be consumed too, not only the ones seen at the click. */
+	const notificationsRef = useRef(notifications);
+	notificationsRef.current = notifications;
 	const [renewed, setRenewed] = useState<DirectLink>();
 	const [pendingIds, setPendingIds] = useState<ReadonlySet<string>>(
 		new Set()
@@ -59,7 +63,8 @@ export const useSendNewLink = (stack: SnackbarStack = appSnackbarStack) => {
 				/* A renewal from the overview or conversation menu also consumes
 				   any request pop-up. Leaving it behind would let a later click
 				   renew once more and invalidate the link just sent. */
-				(notifications?.notificationFeed ?? []).forEach((item) => {
+				const latest = notificationsRef.current;
+				(latest?.notificationFeed ?? []).forEach((item) => {
 					const requestedLink = (
 						item.params as Record<string, unknown> | undefined
 					)?.linkId;
@@ -69,7 +74,7 @@ export const useSendNewLink = (stack: SnackbarStack = appSnackbarStack) => {
 						!item.readAt &&
 						String(requestedLink) === linkId
 					) {
-						notifications?.markNotificationAsRead(item.id);
+						latest?.markNotificationAsRead(item.id);
 					}
 				});
 				stack.dismiss(`new-link-request-${linkId}`);
@@ -93,7 +98,7 @@ export const useSendNewLink = (stack: SnackbarStack = appSnackbarStack) => {
 				});
 			}
 		},
-		[notifications, stack, t]
+		[stack, t]
 	);
 
 	const dialog = renewed ? (

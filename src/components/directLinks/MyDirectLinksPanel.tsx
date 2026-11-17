@@ -27,7 +27,10 @@ import { onAppointmentsChanged } from '../sessionsList/timeline/conversationAppo
 import { InvitationsOverview } from '../directInvitation/InvitationsOverview';
 import { InvitationDialog } from '../directInvitation/InvitationDialog';
 import type { InvitationDialogValue } from '../directInvitation/invitationModel';
-import { timerDelay } from '../directInvitation/invitationModel';
+import {
+	nextExpiryRead,
+	READ_RETRY_MS
+} from '../directInvitation/invitationModel';
 import { directInvitationSettings } from '../directInvitation/directInvitationSettings';
 import { overviewSections } from './invitationsOverviewData';
 import { useSendNewLink } from '../directInvitation/useSendNewLink';
@@ -49,10 +52,12 @@ export { CREATE_CHAT_PATH };
  * #2252: the 1:1 appointments for the overview. A backend without the
  * endpoint (404) has none; any other failed read is `failed`, never "no
  * appointments", and `retry` reads them again while the invitations stay.
+ * Until the first read has answered they are `loading`, not "none yet".
  */
 const useUpcomingAppointments = (enabled: boolean) => {
 	const [appointments, setAppointments] = useState<SessionAppointment[]>([]);
 	const [failed, setFailed] = useState(false);
+	const [answered, setAnswered] = useState(false);
 	const [reload, setReload] = useState(0);
 	const retry = useCallback(() => setReload((n) => n + 1), []);
 	useEffect(() => onAppointmentsChanged(retry), [retry]);
@@ -64,6 +69,7 @@ const useUpcomingAppointments = (enabled: boolean) => {
 				if (!active) return;
 				setAppointments(Array.isArray(items) ? items : []);
 				setFailed(false);
+				setAnswered(true);
 			},
 			(error: unknown) => {
 				if (!active) return;
@@ -72,13 +78,14 @@ const useUpcomingAppointments = (enabled: boolean) => {
 					FETCH_ERRORS.NO_MATCH;
 				setAppointments([]);
 				setFailed(!missing);
+				setAnswered(true);
 			}
 		);
 		return () => {
 			active = false;
 		};
 	}, [enabled, reload]);
-	return { appointments, failed, retry };
+	return { appointments, failed, loading: enabled && !answered, retry };
 };
 
 /**
@@ -105,11 +112,13 @@ export const MyDirectLinksPanel = ({
 	const [qrLink, setQrLink] = useState<DirectLink | null>(null);
 	const [editing, setEditing] = useState<DirectLink | null>(null);
 	const [saving, setSaving] = useState(false);
+	const [legacySaving, setLegacySaving] = useState(false);
 	const [saveFailed, setSaveFailed] = useState(false);
 	const [topics, setTopics] = useState<TenantAgenciesTopicsInterface[]>([]);
 	const {
 		appointments: sessionAppointments,
 		failed: appointmentsFailed,
+		loading: appointmentsLoading,
 		retry: retryAppointments
 	} = useUpcomingAppointments(overview);
 	/* #2252, decision 7: "Neuen Link senden" for an expired invitation. */
@@ -131,28 +140,37 @@ export const MyDirectLinksPanel = ({
 		useState<DirectLink | null>(null);
 	const [invitationError, setInvitationError] = useState<string>();
 	/* Each open of the invitation dialog is its own editor: a save that
-	   answers after it was closed (or another one opened) changes nothing. */
+	   answers after it was closed (or another one opened) changes nothing,
+	   not even the busy state, and a new editor starts without one. */
 	const invitationEditor = useRef(0);
 	const openInvitationEditor = (link: DirectLink | null) => {
 		invitationEditor.current += 1;
 		setEditingInvitation(link);
 		setInvitationError(undefined);
+		setSaving(false);
 	};
 
 	/* An invitation whose validity ends while the overview is open moves to
-	   the expired section: the list is read again once its end has passed. */
+	   the expired section: the list is read again once its end has passed.
+	   A failed read keeps the old list, so nothing would change and no new
+	   timer start: it is asked again until a read succeeds. */
 	useEffect(() => {
 		if (!overview) return;
-		const now = Date.now();
-		const nextEnd = links
-			.filter((link) => !link.expired && link.expiresAt)
-			.map((link) => new Date(link.expiresAt!).getTime())
-			.filter((end) => Number.isFinite(end) && end > now)
-			.sort((a, b) => a - b)[0];
-		if (nextEnd === undefined) return;
-		const delay = timerDelay(new Date(nextEnd + 1000));
-		const timer = window.setTimeout(reload, delay);
-		return () => window.clearTimeout(timer);
+		const delay = nextExpiryRead(links);
+		if (delay === undefined) return;
+		let active = true;
+		let timer: number | undefined;
+		const refresh = () => {
+			void reload().then((read) => {
+				if (!read && active)
+					timer = window.setTimeout(refresh, READ_RETRY_MS);
+			});
+		};
+		timer = window.setTimeout(refresh, delay);
+		return () => {
+			active = false;
+			window.clearTimeout(timer);
+		};
 	}, [links, overview, reload]);
 
 	// Topics only matter once someone edits; a failed load keeps the topic fixed.
@@ -183,8 +201,10 @@ export const MyDirectLinksPanel = ({
 		setSaveFailed(false);
 	};
 
+	/* The legacy dialog has its own busy flag: closed while saving, it must
+	   not free the invitation editor's Save (#2285). */
 	const save = async (link: DirectLink, change: DirectLinkUpdate) => {
-		setSaving(true);
+		setLegacySaving(true);
 		setSaveFailed(false);
 		try {
 			await update(link.id, change);
@@ -192,7 +212,7 @@ export const MyDirectLinksPanel = ({
 		} catch {
 			setSaveFailed(true);
 		} finally {
-			setSaving(false);
+			setLegacySaving(false);
 		}
 	};
 
@@ -208,7 +228,7 @@ export const MyDirectLinksPanel = ({
 			if (editor === invitationEditor.current)
 				setInvitationError(t('directLink.edit.failed'));
 		} finally {
-			setSaving(false);
+			if (editor === invitationEditor.current) setSaving(false);
 		}
 	};
 
@@ -226,7 +246,13 @@ export const MyDirectLinksPanel = ({
 			{sections ? (
 				<>
 					<InvitationsOverview
-						state={state}
+						/* The overview waits for both reads: appointments not
+						   read yet must not look like "nothing yet". */
+						state={
+							state === 'ready' && appointmentsLoading
+								? 'loading'
+								: state
+						}
 						appointments={sections.appointments}
 						expired={sections.expired}
 						onSendNewLink={(item) => void newLink.send(item.id)}
@@ -314,7 +340,7 @@ export const MyDirectLinksPanel = ({
 			<DirectLinkEditDialog
 				link={editing}
 				topics={topicOptions}
-				saving={saving}
+				saving={legacySaving}
 				failed={saveFailed}
 				fullScreen={!fromL}
 				onClose={closeEdit}

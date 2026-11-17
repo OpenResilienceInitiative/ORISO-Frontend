@@ -2254,6 +2254,20 @@
 		},
 		"deliveryStatus": {
 			"sent": "Envoyé"
+		},
+		"appointmentNotice": {
+			"title": {
+				"created": "Rendez-vous fixé",
+				"moved": "Rendez-vous déplacé",
+				"cancelled": "Rendez-vous annulé"
+			},
+			"by": "par {{name}}",
+			"before": "Avant :",
+			"after": "Nouveau :",
+			"action": {
+				"createNew": "Créer un nouveau rendez-vous",
+				"openCalendar": "Ouvrir dans le calendrier"
+			}
 		}
 	},
 	"navigation": {
@@ -7258,7 +7272,8 @@
 			"joinSub": "Ouvrir la visioconférence",
 			"moveSub": "Modifier le jour et l’heure",
 			"proposeSub": "{{name}} doit confirmer",
-			"cancelSub": "{{name}} reçoit un message"
+			"cancelSub": "{{name}} reçoit un message",
+			"reason": "Motif (facultatif)"
 		},
 		"fullscreen": "Plein écran",
 		"fullscreenExit": "Quitter le plein écran (Échap)",
@@ -7329,7 +7344,8 @@
 			"declined": "Proposition refusée. Le rendez-vous reste le {{date}}.",
 			"noLongerValid": "Cette proposition n’est plus valable. Le rendez-vous a changé ou est passé.",
 			"navCount": "{{count}} demandes en attente",
-			"navCount_one": "{{count}} demande en attente"
+			"navCount_one": "{{count}} demande en attente",
+			"reason": "Motif : {{reason}}"
 		},
 		"quick": {
 			"freeUnavailable": "Créneaux libres indisponibles pour le moment.",

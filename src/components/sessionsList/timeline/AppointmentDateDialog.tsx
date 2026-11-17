@@ -92,13 +92,20 @@ export const AppointmentDateDialog = ({
 			retry !== undefined && !sameSlot(retry.slot, appointment);
 		const stored =
 			retry === undefined || timeChanged || retry.kind !== value.kind;
+		/* A move names where it stood: the entry moved here, or on a retry
+		   the time stored before (the chat card's old → new). */
+		const before = isMove ? entry : timeChanged ? retry?.slot : undefined;
 		const announce = () =>
 			sendNotice({
 				kind: isMove || timeChanged ? 'moved' : 'created',
 				start,
 				end,
 				sessionId,
-				matrixRoomId
+				matrixRoomId,
+				...(before && {
+					previousStart: before.start,
+					previousEnd: before.end
+				})
 			});
 		setSaving(true);
 		setError(undefined);

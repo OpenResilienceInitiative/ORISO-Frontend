@@ -136,6 +136,11 @@ export interface Colleague {
 	 * send one yet; without it the full name is shown.
 	 */
 	agencyShort?: string;
+	/**
+	 * The username, which tells two of the same name apart (UserService#1663).
+	 * Only colleagues of the own Träger carry it.
+	 */
+	secondaryLabel?: string;
 	relation: ColleagueRelation;
 }
 

@@ -164,7 +164,11 @@ describe('AppointmentDateDialog', () => {
 		});
 		expect(create).not.toHaveBeenCalled();
 		expect(notice).toHaveBeenCalledWith(
-			expect.objectContaining({ kind: 'moved' })
+			expect.objectContaining({
+				kind: 'moved',
+				previousStart: new Date(local(6, 9)),
+				previousEnd: new Date(local(6, 10))
+			})
 		);
 	});
 
@@ -368,7 +372,10 @@ describe('AppointmentDateDialog', () => {
 				expect.objectContaining({
 					kind: 'moved',
 					start: new Date(local(5, 14)),
-					end: new Date(local(5, 16))
+					end: new Date(local(5, 16)),
+					// The chat card's old → new: the time stored before.
+					previousStart: new Date(local(5, 14)),
+					previousEnd: new Date(local(5, 15))
 				})
 			);
 		});

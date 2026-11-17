@@ -2228,6 +2228,20 @@
 		},
 		"deliveryStatus": {
 			"sent": "ተላኢኹ"
+		},
+		"appointmentNotice": {
+			"title": {
+				"created": "ቆጸራ ተሓዚ",
+				"moved": "ቆጸራ ተቐይሩ",
+				"cancelled": "ቆጸራ ተሰሪዙ"
+			},
+			"by": "ብ {{name}}",
+			"before": "ቅድሚ፦",
+			"after": "ሓድሽ፦",
+			"action": {
+				"createNew": "ሓድሽ ቆጸራ ፍጠር",
+				"openCalendar": "ኣብ ዓውደ-ኣዋርሕ ክፈት"
+			}
 		}
 	},
 	"navigation": {
@@ -7225,7 +7239,8 @@
 			"joinSub": "ናይ ቪድዮ ኣኼባ ክፈት",
 			"moveSub": "መዓልትን ሰዓትን ቀይር",
 			"proposeSub": "{{name}} ከረጋግጽ ኣለዎ",
-			"cancelSub": "{{name}} መልእኽቲ ይበጽሖ"
+			"cancelSub": "{{name}} መልእኽቲ ይበጽሖ",
+			"reason": "ምኽንያት (ኣማራጺ)"
 		},
 		"fullscreen": "ምሉእ ስክሪን",
 		"fullscreenExit": "ካብ ምሉእ ስክሪን ውጻእ (Esc)",
@@ -7296,7 +7311,8 @@
 			"declined": "ሓሳብ ኣይተቐበልኩምን። ቆጸራ {{date}} ይጸንሕ።",
 			"noLongerValid": "እዚ ሓሳብ ድሕሪ ሕጂ ኣይሰርሕን። እቲ ቆጸራ ተቐይሩ ወይ ሓሊፉ እዩ።",
 			"navCount": "{{count}} ክፉታት ሕቶታት",
-			"navCount_one": "{{count}} ክፉት ሕቶ"
+			"navCount_one": "{{count}} ክፉት ሕቶ",
+			"reason": "ምኽንያት: {{reason}}"
 		},
 		"quick": {
 			"freeUnavailable": "ነጻ ግዜታት ሕጂ ኣይርከቡን።",

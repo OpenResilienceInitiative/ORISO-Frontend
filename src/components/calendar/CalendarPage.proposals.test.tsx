@@ -154,6 +154,20 @@ describe('CalendarPage — "Offene Verschiebungen" for proposals received', () =
 		expect(what.textContent).toContain('calendar.kinds.video');
 	});
 
+	it('shows the reason the colleague gave in the row (US#1663)', () => {
+		page({ receivedProposals: [{ ...REQUEST, reason: 'Raum belegt' }] });
+		const reason = byCy('calendar-received-reason-p1') as HTMLElement;
+		expect(
+			(byCy('calendar-received-p1') as HTMLElement).contains(reason)
+		).toBe(true);
+		expect(reason.textContent).toContain('Raum belegt');
+	});
+
+	it('shows no reason line when the colleague gave none', () => {
+		page();
+		expect(byCy('calendar-received-reason-p1')).toBeNull();
+	});
+
 	it('names the old time from the proposal when the appointment is not loaded', () => {
 		page({ entries: [] });
 		const row = byCy('calendar-received-p1') as HTMLElement;
