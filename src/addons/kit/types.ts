@@ -12,6 +12,8 @@ export interface KitButtonProps {
 	id?: string;
 	/** Accessible name when the visible content is not enough. */
 	title?: string;
+	/** `submit` submits the surrounding form, also on Enter; defaults to `button`. */
+	type?: 'button' | 'submit';
 }
 
 export interface KitTextFieldProps {

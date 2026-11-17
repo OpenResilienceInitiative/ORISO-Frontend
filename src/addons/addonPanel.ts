@@ -15,6 +15,10 @@ export const parseAddonPanel = (search: string) => {
 		: null;
 };
 
+/** Marks the header button of an app, so focus can return to it when its panel closes. */
+export const addonActionId = (addonName: string, appId: string) =>
+	`${addonName}/${appId}`;
+
 /** The search string with the add-on panel set, or removed for `null`; other panels close. */
 export const withAddonPanel = (
 	search: string,

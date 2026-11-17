@@ -6,7 +6,7 @@ import { ActiveSessionContext, LocaleContext } from '../globalState';
 import { ReactComponent as ToolsIcon } from '../resources/img/icons/tools_outline.svg';
 import { appTitle, useCaseAddonApps } from './addonRegistry';
 import { AddonBadge } from './AddonBadge';
-import { parseAddonPanel, withAddonPanel } from './addonPanel';
+import { addonActionId, parseAddonPanel, withAddonPanel } from './addonPanel';
 import './addons.styles';
 
 /** Buttons in the case view header that open the counsellor's add-on apps as side panel. */
@@ -36,6 +36,7 @@ export const AddonSessionActions = () => {
 						key={`${addon.name}/${app.id}`}
 						type="button"
 						className="addonActions__button"
+						data-addon-action={addonActionId(addon.name, app.id)}
 						aria-pressed={active}
 						aria-label={
 							app.badge && app.badge > 0

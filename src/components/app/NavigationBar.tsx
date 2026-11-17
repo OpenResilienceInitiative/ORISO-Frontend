@@ -581,7 +581,16 @@ export const NavigationBar = ({
 											handleKeyDownMenu(e, index)
 										}
 										ref={(el) => {
-											ref_menu.current[index] = el;
+											if (el) {
+												ref_menu.current[index] = el;
+											} else {
+												// Items can disappear (add-on apps); keep no stale entries at the end.
+												ref_menu.current.length =
+													Math.min(
+														ref_menu.current.length,
+														index
+													);
+											}
 										}}
 										tabIndex={index === 0 ? 0 : -1}
 									>

@@ -58,12 +58,14 @@ const Button = ({
 	variant = 'primary',
 	disabled,
 	id,
-	title
+	title,
+	type = 'button'
 }: KitButtonProps) => (
 	<CoreButton
 		item={{ type: BUTTON_TYPE_BY_VARIANT[variant], id, title }}
 		buttonHandle={onClick ? () => onClick() : undefined}
 		disabled={disabled}
+		type={type}
 	>
 		{children}
 	</CoreButton>

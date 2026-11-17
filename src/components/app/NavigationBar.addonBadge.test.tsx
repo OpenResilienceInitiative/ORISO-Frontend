@@ -1,6 +1,6 @@
 // @vitest-environment oriso-jsdom
 import * as React from 'react';
-import { cleanup, render, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import {
 	afterEach,
@@ -66,21 +66,23 @@ const addonRoutes = (badge?: number) => ({
 	]
 });
 
+const navigationTree = (routerConfig: ReturnType<typeof addonRoutes>) => (
+	<MemoryRouter initialEntries={['/sessions/consultant/sessionView']}>
+		<NotificationsContext.Provider
+			value={{ removeNotification: vi.fn() } as never}
+		>
+			<NavigationStoryProviders role="consultant">
+				<NavigationBar
+					routerConfig={routerConfig}
+					onLogout={() => {}}
+				/>
+			</NavigationStoryProviders>
+		</NotificationsContext.Provider>
+	</MemoryRouter>
+);
+
 const renderNavigation = (badge?: number) =>
-	render(
-		<MemoryRouter initialEntries={['/sessions/consultant/sessionView']}>
-			<NotificationsContext.Provider
-				value={{ removeNotification: vi.fn() } as never}
-			>
-				<NavigationStoryProviders role="consultant">
-					<NavigationBar
-						routerConfig={addonRoutes(badge)}
-						onLogout={() => {}}
-					/>
-				</NavigationStoryProviders>
-			</NotificationsContext.Provider>
-		</MemoryRouter>
-	);
+	render(navigationTree(addonRoutes(badge)));
 
 const addonLink = (container: HTMLElement) =>
 	container.querySelector(
@@ -127,5 +129,24 @@ describe('NavigationBar add-on badge (oriso-addon/v1 section 4)', () => {
 		expect(addonLink(container).getAttribute('aria-label')).toBe(
 			'Übersicht'
 		);
+	});
+
+	it('moves on from the last item once an add-on entry disappeared', async () => {
+		const view = renderNavigation();
+		await waitFor(() => expect(addonLink(view.container)).toBeTruthy());
+		const routes = addonRoutes();
+		view.rerender(
+			navigationTree({ navigation: routes.navigation.slice(0, 1) })
+		);
+		await waitFor(() => expect(addonLink(view.container)).toBeNull());
+		const sessions = view.container.querySelector(
+			'a[href="/sessions/consultant/sessionView"]'
+		) as HTMLAnchorElement;
+		sessions.focus();
+
+		fireEvent.keyDown(sessions, { key: 'ArrowDown' });
+
+		expect(document.activeElement).not.toBe(sessions);
+		expect(document.activeElement).not.toBe(document.body);
 	});
 });

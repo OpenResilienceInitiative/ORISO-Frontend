@@ -17,6 +17,24 @@ describe('web kit', () => {
 		expect(onClick).toHaveBeenCalledTimes(1);
 	});
 
+	it('submits the surrounding form with a submit button, and only then', () => {
+		const onSubmit = vi.fn((event: React.FormEvent) =>
+			event.preventDefault()
+		);
+		render(
+			<form onSubmit={onSubmit}>
+				<Button>Abbrechen</Button>
+				<Button type="submit">Speichern</Button>
+			</form>
+		);
+
+		fireEvent.click(screen.getByRole('button', { name: 'Abbrechen' }));
+		expect(onSubmit).not.toHaveBeenCalled();
+
+		fireEvent.click(screen.getByRole('button', { name: 'Speichern' }));
+		expect(onSubmit).toHaveBeenCalledTimes(1);
+	});
+
 	it('renders headline text as text, never as HTML', () => {
 		const { container } = render(
 			<Headline level={3}>{'<img src=x onerror=alert(1)>'}</Headline>
