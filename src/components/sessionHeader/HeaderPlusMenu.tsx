@@ -78,11 +78,19 @@ export const HeaderPlusMenu = ({
 			!ref.current?.contains(e.target as Node) &&
 			!opener?.current?.contains(e.target as Node) &&
 			onClose();
+		// Focus landing anywhere but the menu or the "+" closes it, also when
+		// it got there through the "+" (menu → "+" → next control).
+		const onFocus = (e: FocusEvent) =>
+			!ref.current?.contains(e.target as Node) &&
+			!opener?.current?.contains(e.target as Node) &&
+			onClose();
 		document.addEventListener('keydown', onKey, true);
 		document.addEventListener('mousedown', onDown);
+		document.addEventListener('focusin', onFocus);
 		return () => {
 			document.removeEventListener('keydown', onKey, true);
 			document.removeEventListener('mousedown', onDown);
+			document.removeEventListener('focusin', onFocus);
 		};
 	}, [onClose, opener]);
 

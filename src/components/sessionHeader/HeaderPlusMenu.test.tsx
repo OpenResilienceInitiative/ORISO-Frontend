@@ -104,6 +104,22 @@ describe('HeaderPlusMenu', () => {
 		opener.remove();
 	});
 
+	it('closes when focus goes from the menu to the "+" and then elsewhere (review)', () => {
+		const outside = document.createElement('button');
+		const opener = document.createElement('button');
+		document.body.append(outside, opener);
+		const { onClose } = renderMenu({ opener: { current: opener } });
+		const [, handover] = screen.getAllByRole('menuitem');
+		fireEvent.blur(handover, { relatedTarget: opener });
+		fireEvent.focusIn(opener);
+		expect(onClose).not.toHaveBeenCalled();
+		fireEvent.focusOut(opener, { relatedTarget: outside });
+		fireEvent.focusIn(outside);
+		expect(onClose).toHaveBeenCalled();
+		outside.remove();
+		opener.remove();
+	});
+
 	it('sits below the "+" and stays inside the window', () => {
 		expect(plusMenuPosition({ left: 100, bottom: 60 }, 1440)).toEqual({
 			top: 68,
