@@ -35,6 +35,8 @@ export interface AddonPlacement {
 	agencyId?: number;
 	sessionId?: number;
 	askerId?: string;
+	/** The Träger of an anonymous visitor, when the tenant context has no id (single-domain hosts). */
+	tenantId?: number;
 }
 
 const THEME_TOKEN_PREFIX = '--m3-';
@@ -206,6 +208,7 @@ export const useAddonHostProps = (
 		[addNotification]
 	);
 	const { agencyId, sessionId, askerId } = placement;
+	const tenantId = placement.tenantId ?? tenant?.id;
 	const themeVersion = useThemeVersion();
 	const { name, version, apiBase } = addon;
 	// The app keeps the functions it got at mount; they call the registration's current callbacks.
@@ -220,6 +223,13 @@ export const useAddonHostProps = (
 	const back = useCallback(() => registrationRef.current?.back(), []);
 	const topicId = registration?.topicId;
 	const postcode = registration?.postcode;
+	const api = useMemo(
+		() =>
+			isRegistration
+				? addonPublicApiCall({ apiBase }, tenantId)
+				: addonApiCall({ apiBase }, { agencyId, sessionId }),
+		[isRegistration, apiBase, tenantId, agencyId, sessionId]
+	);
 
 	return useMemo(
 		() => ({
@@ -232,16 +242,14 @@ export const useAddonHostProps = (
 				username: userData?.userName,
 				roles: userData?.userRoles ?? []
 			},
-			tenant: { id: tenant?.id, name: tenant?.name },
+			tenant: { id: tenantId, name: tenant?.name },
 			locale,
 			informal: Boolean(informal),
 			theme: readThemeTokens(),
 			agencyId,
 			sessionId,
 			askerId,
-			api: isRegistration
-				? addonPublicApiCall({ apiBase }, tenant?.id)
-				: addonApiCall({ apiBase }, { agencyId, sessionId }),
+			api,
 			navigate: goTo,
 			notify,
 			...(isRegistration ? { topicId, postcode, complete, back } : {})
@@ -256,11 +264,13 @@ export const useAddonHostProps = (
 			slot,
 			userData,
 			tenant,
+			tenantId,
 			locale,
 			informal,
 			agencyId,
 			sessionId,
 			askerId,
+			api,
 			goTo,
 			notify,
 			themeVersion,

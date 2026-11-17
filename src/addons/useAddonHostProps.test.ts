@@ -1,11 +1,17 @@
 // @vitest-environment jsdom
+import { createElement, PropsWithChildren } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { renderHook } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
+import { LocaleContext } from '../globalState';
 import {
 	addonApiCall,
 	addonPublicApiCall,
 	addonNotice,
-	readThemeTokens
+	readThemeTokens,
+	useAddonHostProps
 } from './useAddonHostProps';
+import { AvailableAddon } from './addonTypes';
 
 describe('addonApiCall', () => {
 	afterEach(() => vi.unstubAllGlobals());
@@ -160,5 +166,48 @@ describe('addonPublicApiCall', () => {
 		expect(headers.get('X-Oriso-Tenant-Id')).toBe('7');
 		expect(headers.has('Authorization')).toBe(false);
 		expect(init.credentials).toBe('omit');
+	});
+});
+
+describe('useAddonHostProps', () => {
+	const addon: AvailableAddon = {
+		name: 'demo',
+		version: '1.0.0',
+		entry: '/service/addons/demo/ui/entry.js',
+		apiBase: '/service/addons/demo/api',
+		apps: [
+			{ id: 'page', title: { de: 'Demo' }, slots: ['consultant.session'] }
+		]
+	};
+
+	it('keeps the api client when only unrelated host props change', () => {
+		let locale = 'de';
+		const wrapper = ({ children }: PropsWithChildren) =>
+			createElement(
+				MemoryRouter,
+				null,
+				createElement(
+					LocaleContext.Provider,
+					{ value: { locale } as never },
+					children
+				)
+			);
+		const { result, rerender } = renderHook(
+			({ sessionId }) =>
+				useAddonHostProps(addon, addon.apps[0], 'consultant.session', {
+					agencyId: 3,
+					sessionId
+				}),
+			{ wrapper, initialProps: { sessionId: 42 } }
+		);
+		const first = result.current;
+
+		locale = 'en';
+		rerender({ sessionId: 42 });
+		expect(result.current.locale).toBe('en');
+		expect(result.current.api).toBe(first.api);
+
+		rerender({ sessionId: 43 });
+		expect(result.current.api).not.toBe(first.api);
 	});
 });
