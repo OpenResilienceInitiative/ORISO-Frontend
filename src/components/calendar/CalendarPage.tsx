@@ -148,6 +148,7 @@ import {
 	CalendarSettingsDialog,
 	CALENDAR_CHIP_FACETS
 } from './CalendarSettingsDialog';
+import type { ChipView } from '../displayFilter/displayFilterTypes';
 import { CalendarMenu } from './CalendarMenu';
 import {
 	EdgeMenuContent,
@@ -252,6 +253,12 @@ export interface CalendarPageProps {
 	/** Phone: where the bottom sheet starts (default half). */
 	initialSheet?: SheetStop;
 	initialView?: CalendarViewName;
+	/**
+	 * Links without an appointment, shown under the list (Frank, 2026-11-17:
+	 * "Meine Direktlinks" moves into the calendar). The wired page passes
+	 * the real links panel, stories a sample.
+	 */
+	linksPanel?: React.ReactNode;
 	/** Storybook: colleagues shown from the start. */
 	initialShownColleagues?: string[];
 	initialFullscreen?: boolean;
@@ -494,6 +501,7 @@ export const CalendarPage = ({
 	phone = compact,
 	initialSheet = 'half',
 	initialView,
+	linksPanel,
 	initialShownColleagues = [],
 	initialFullscreen = false,
 	initialSwitcherStyle = 'menu',
@@ -539,11 +547,9 @@ export const CalendarPage = ({
 	const views = phone ? COMPACT_VIEWS : DESKTOP_VIEWS;
 	const controller = useCalendarController();
 
-	// A phone opens on three days, a wider screen on the work week
-	// (prototype v17).
-	const [view, setView] = useState<CalendarViewName>(
-		initialView ?? (phone ? 'threeDays' : 'workWeek')
-	);
+	// Without a saved choice the calendar opens as the list (Frank,
+	// 2026-11-17), on the phone and on a wide screen alike.
+	const [view, setView] = useState<CalendarViewName>(initialView ?? 'list');
 	const [title, setTitle] = useState('');
 	/** The day the grid stands on; the split view starts on this day. */
 	const [anchorDate, setAnchorDate] = useState(() => startOfDay(now));
@@ -604,10 +610,12 @@ export const CalendarPage = ({
 	// "Ansicht · Kalender" (Frank *14): which kinds get a button in the row.
 	const [chipFacets, setChipFacets] =
 		useState<CalendarEntryFacet[]>(CALENDAR_CHIP_FACETS);
+	const [chipView, setChipView] = useState<ChipView>('icons');
 	const [settingsOpen, setSettingsOpen] = useState(false);
 	const viewCustomised =
 		hiddenFacets.length > 0 ||
-		chipFacets.length !== CALENDAR_CHIP_FACETS.length;
+		chipFacets.length !== CALENDAR_CHIP_FACETS.length ||
+		chipView !== 'icons';
 	const [menu, setMenu] = useState<Menu>(null);
 	const [dialog, setDialog] = useState<Dialog>(null);
 	const creating = useRef(false);
@@ -847,6 +855,13 @@ export const CalendarPage = ({
 				all.length && !all.includes(facet) ? [...all, facet] : all
 			);
 		}
+		// A muted calendar ("ich" off) cannot be clicked: unmute the owner
+		// (review 4589661566).
+		setMuted((all) =>
+			all.includes(entry.ownerId)
+				? all.filter((id) => id !== entry.ownerId)
+				: all
+		);
 		const start = new Date(entry.start);
 		const weekend = start.getDay() === 0 || start.getDay() === 6;
 		if (view === 'month' || view === 'list' || split)
@@ -2514,6 +2529,7 @@ export const CalendarPage = ({
 			}
 			onHighlightFacet={(facet) => setHighlight(facet ? { facet } : null)}
 			facets={chipFacets}
+			view={chipView}
 			className="calendarStage__kinds"
 		/>
 	);
@@ -2693,6 +2709,7 @@ export const CalendarPage = ({
 						/>
 					)}
 				</CalendarPager>
+				{view === 'list' && linksPanel}
 			</div>
 			{state === 'loading' && (
 				<div
@@ -2750,6 +2767,7 @@ export const CalendarPage = ({
 		onOpenKinds: () => setSettingsOpen(true),
 		kindsCustomised: viewCustomised,
 		chipFacets,
+		chipView,
 		openProposals: allPending,
 		onOpenProposal: (proposal, entry, anchor) =>
 			setMenu({ type: 'proposal', proposal, entry, anchor }),
@@ -2945,6 +2963,8 @@ export const CalendarPage = ({
 					onHiddenChange={setHiddenFacets}
 					chipFacets={chipFacets}
 					onChipsChange={setChipFacets}
+					chipView={chipView}
+					onChipViewChange={setChipView}
 					fullScreen={compact}
 				/>
 			)}

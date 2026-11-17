@@ -7431,6 +7431,10 @@
 			"ownerOnly": "Seul·e {{name}} peut modifier cela.",
 			"all": "Tout le monde côte à côte",
 			"create": "Ajouter à cette heure"
+		},
+		"links": {
+			"title": "Liens sans rendez-vous",
+			"hint": "Liens d’invitation à partager : copiez-les ou affichez un code QR."
 		}
 	}
 }

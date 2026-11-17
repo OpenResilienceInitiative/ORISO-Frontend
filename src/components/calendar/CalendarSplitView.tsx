@@ -867,16 +867,19 @@ export const CalendarSplitView = ({
 								style={{ top: (h - firstHour) * hourPx }}
 							/>
 						))}
-						{d.offHours.map((o) => (
-							<span
-								key={`off-${o.from}`}
-								className={`calendarSplit__offHours${o.kind === 'break' ? ' calendarSplit__offHours--break' : ''}`}
-								style={{
-									top: toPx(o.from),
-									height: toPx(o.to) - toPx(o.from)
-								}}
-							/>
-						))}
+						{/* One's own working hours and pause; a colleague's
+							column is not shaded with them (Frank, 2026-11-17). */}
+						{own &&
+							d.offHours.map((o) => (
+								<span
+									key={`off-${o.from}`}
+									className={`calendarSplit__offHours${o.kind === 'break' ? ' calendarSplit__offHours--break' : ''}`}
+									style={{
+										top: toPx(o.from),
+										height: toPx(o.to) - toPx(o.from)
+									}}
+								/>
+							))}
 						{own && onEdgeChange && edgeGrips(d)}
 						{d.free.map((f) => {
 							const from = clampMinutes(

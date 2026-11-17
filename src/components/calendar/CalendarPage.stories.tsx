@@ -36,6 +36,14 @@ import type { DayExceptions, WorkingHours } from './calendarWorkingHours';
 import type { HolidayRegion } from './calendarHolidays';
 import type { SplitDays } from './CalendarSplitView';
 import type { SheetStop } from './CalendarSheet';
+import { MyDirectLinksView } from '../directLinks/MyDirectLinksView';
+import { DirectLinkShareDialog } from '../conversationCreate/directLink/DirectLinkShareDialog';
+import type { DirectLink } from '../conversationCreate/directLink/directLink';
+import { SAMPLE_DIRECT_LINKS } from '../directLinks/directLinkSamples';
+import {
+	CalendarLinksBox,
+	useCalendarLinksLabels
+} from './CalendarLinksSection';
 import {
 	ASKER_ENTRIES,
 	COLLEAGUE_ENTRIES,
@@ -60,7 +68,10 @@ interface HarnessProps {
 	compact?: boolean;
 	/** With `compact`: a phone (three days at most); false = tablet. */
 	phone?: boolean;
-	initialView?: CalendarViewName;
+	/** 'unset' = what a counsellor sees with nothing set (the list, *19). */
+	initialView?: CalendarViewName | 'unset';
+	/** Show "Links ohne Termin" with sample links in the list (*19). */
+	links?: boolean;
 	shownColleagues?: string[];
 	fullscreen?: boolean;
 	switcherStyle?: ViewSwitcherStyle;
@@ -139,6 +150,7 @@ const Scenario = ({
 	compact = false,
 	phone,
 	initialView,
+	links = false,
 	shownColleagues = [],
 	fullscreen = false,
 	switcherStyle = 'menu',
@@ -228,7 +240,21 @@ const Scenario = ({
 			compact={compact}
 			phone={phone}
 			initialSheet={initialSheet}
-			initialView={initialView}
+			initialView={
+				initialView === 'unset'
+					? undefined
+					: // Stories keep the grid they were written for; the
+						// list as the default has its own story (*19).
+						(initialView ??
+						((phone ?? compact) ? 'threeDays' : 'workWeek'))
+			}
+			linksPanel={
+				links ? (
+					<CalendarLinksBox>
+						<StoryLinksPanel />
+					</CalendarLinksBox>
+				) : undefined
+			}
 			initialShownColleagues={shownColleagues}
 			initialFullscreen={fullscreen}
 			initialSwitcherStyle={switcherStyle}
@@ -415,8 +441,43 @@ const findCy = (cy: string) =>
 const cyEl = (cy: string) =>
 	document.body.querySelector<HTMLElement>(`[data-cy="${cy}"]`)!;
 
+/** "Links ohne Termin" with sample links: copy, QR code, on/off. */
+const StoryLinksPanel = () => {
+	const [links, setLinks] = useState<DirectLink[]>(SAMPLE_DIRECT_LINKS);
+	const [qr, setQr] = useState<DirectLink | null>(null);
+	const labels = useCalendarLinksLabels();
+	return (
+		<>
+			<MyDirectLinksView
+				{...labels}
+				state="ready"
+				links={links}
+				onToggle={(id, active) =>
+					setLinks((all) =>
+						all.map((link) =>
+							link.id === id ? { ...link, active } : link
+						)
+					)
+				}
+				onShowQr={setQr}
+				onEdit={() => undefined}
+				onCreate={() => undefined}
+				onRetry={() => undefined}
+				onCopy={() => undefined}
+			/>
+			{qr && (
+				<DirectLinkShareDialog
+					open
+					link={qr}
+					onClose={() => setQr(null)}
+				/>
+			)}
+		</>
+	);
+};
+
 export const WorkWeek: Story = {
-	name: 'Counsellor — work week (default)',
+	name: 'Counsellor — work week',
 	play: async ({ canvasElement }) => {
 		const canvas = canvasOf(canvasElement);
 		await expect(await canvas.findByTestId('calendar-view')).toBeTruthy();
@@ -472,8 +533,40 @@ export const Day: Story = {
 };
 
 export const List: Story = {
-	name: 'Counsellor — list',
-	args: { initialView: 'list' }
+	name: 'Counsellor — list (default), with "Links ohne Termin"',
+	args: { initialView: 'unset', links: true },
+	play: async ({ canvasElement }) => {
+		const canvas = canvasOf(canvasElement);
+		// Nothing set: the list is the first view (*19).
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector('[data-cy="calendar-links"]')
+			).not.toBeNull()
+		);
+		const links = within(
+			canvasElement.querySelector<HTMLElement>(
+				'[data-cy="calendar-links"]'
+			)!
+		);
+		await expect(
+			links.getByRole('heading', { name: 'Links ohne Termin' })
+		).toBeTruthy();
+		await expect(links.getByText('Flyer Schule')).toBeTruthy();
+		await expect(canvas.getByTestId('calendar-view')).toBeTruthy();
+		// "Beginnt gleich" stays readable in the list: the row does not take
+		// the red soon fill the red words sit on (review 4589661574).
+		const soonRow = await waitFor(() => {
+			const row = canvasElement.querySelector<HTMLElement>(
+				'.calEntry--listRow.calEntry--soon'
+			);
+			expect(row).not.toBeNull();
+			return row!;
+		});
+		const badge = soonRow.querySelector<HTMLElement>('.calendarSoon')!;
+		await expect(getComputedStyle(soonRow).backgroundColor).not.toBe(
+			getComputedStyle(badge).color
+		);
+	}
 };
 
 export const ColleaguesShown: Story = {

@@ -23,6 +23,7 @@
  *   answer goes to "Meine Termine" in the navigation.
  */
 import * as React from 'react';
+import { CalendarLinksSection } from './CalendarLinksSection';
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -179,6 +180,7 @@ export const CalendarPageWired = () => {
 		AUTHORITIES.CONSULTANT_DEFAULT,
 		userData
 	);
+	// "Meine Direktlinks" lives under the list now (Frank, 2026-11-17).
 	const ownerId = userData?.userId ?? '';
 	const sendNotice = useAppointmentNotice();
 
@@ -918,6 +920,7 @@ export const CalendarPageWired = () => {
 
 	return (
 		<CalendarPage
+			linksPanel={consultant ? <CalendarLinksSection /> : undefined}
 			role={consultant ? 'consultant' : 'asker'}
 			ownerId={ownerId}
 			state={state}

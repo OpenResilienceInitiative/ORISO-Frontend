@@ -7431,6 +7431,10 @@
 			"ownerOnly": "Bunu yalnızca {{name}} değiştirebilir.",
 			"all": "Herkes yan yana",
 			"create": "Bu saate ekle"
+		},
+		"links": {
+			"title": "Randevusuz bağlantılar",
+			"hint": "Paylaşabileceğiniz davet bağlantıları: kopyalayın veya QR kodu gösterin."
 		}
 	}
 }

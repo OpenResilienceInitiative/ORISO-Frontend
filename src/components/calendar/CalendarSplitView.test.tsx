@@ -662,3 +662,45 @@ describe('CalendarSplitView — opened from a band (Frank *16.2)', () => {
 		).toBe('true');
 	});
 });
+
+describe('CalendarSplitView — own working hours stay in the own column', () => {
+	// Frank, 2026-11-17: moving one's own pause ("Immer") moved it for every
+	// colleague too. One's working hours and pause are one's own; a
+	// colleague's column is not shaded with them.
+	it('shades off-hours and the pause only in the own column', () => {
+		const { container } = render(
+			<CalendarSplitView
+				day={MONDAY}
+				role="consultant"
+				ownerId="me"
+				colleagues={[
+					{
+						id: 'kaya',
+						displayName: 'A. Kaya',
+						agencyName: 'Nord',
+						relation: 'sameAgency'
+					}
+				]}
+				entries={[]}
+				now={new Date(2026, 10, 16, 7)}
+				workingPlan={{
+					hours: [
+						{ weekday: 1, start: '08:00', end: '12:00' },
+						{ weekday: 1, start: '12:30', end: '16:00' }
+					]
+				}}
+			/>
+		);
+		const bodies = Array.from(
+			container.querySelectorAll<HTMLElement>('.calendarSplit__body')
+		);
+		expect(bodies).toHaveLength(2);
+		const shaded = (body: HTMLElement) =>
+			body.querySelectorAll('.calendarSplit__offHours').length;
+		expect(shaded(bodies[0])).toBeGreaterThan(0);
+		expect(
+			bodies[0].querySelector('.calendarSplit__offHours--break')
+		).not.toBeNull();
+		expect(shaded(bodies[1])).toBe(0);
+	});
+});

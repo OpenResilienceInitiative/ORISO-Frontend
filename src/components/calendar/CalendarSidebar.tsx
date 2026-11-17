@@ -16,6 +16,8 @@ import AddIcon from '@mui/icons-material/Add';
 import ScheduleIcon from '@mui/icons-material/Schedule';
 import { ListSearchField } from '../listSearchField/ListSearchField';
 import { FilterChipRow } from '../displayFilter/FilterChipRow';
+import { FilterChip } from '../displayFilter/FilterChip';
+import type { ChipView } from '../displayFilter/displayFilterTypes';
 import { DisplayFilterButton } from '../displayFilter/DisplayFilterButton';
 import { OrisoDatePicker } from '../form/OrisoDatePicker';
 import { OrisoTimePicker } from '../form/OrisoTimePicker';
@@ -30,6 +32,7 @@ import {
 } from './calendarModel';
 import {
 	CalendarEntryGlyph,
+	FACET_ICON_COMPONENT,
 	FacetIcon,
 	SoonBadge,
 	facetOf,
@@ -127,6 +130,7 @@ export interface CalendarSidebarProps {
 	kindsCustomised?: boolean;
 	/** The kinds with a button in the row; default all five. */
 	chipFacets?: CalendarEntryFacet[];
+	chipView?: ChipView;
 	openProposals: { proposal: MoveProposal; entry: CalendarEntry }[];
 	onOpenProposal?: (
 		proposal: MoveProposal,
@@ -213,6 +217,7 @@ export const CalendarSidebar = ({
 	onOpenKinds,
 	kindsCustomised,
 	chipFacets,
+	chipView,
 	openProposals,
 	onOpenProposal,
 	onWithdrawProposal,
@@ -362,6 +367,7 @@ export const CalendarSidebar = ({
 					onToggleFacet={onToggleFacet}
 					onHighlightFacet={onHighlightFacet}
 					facets={chipFacets}
+					view={chipView}
 					className="calendarSide__chips"
 				/>
 			)}
@@ -1000,6 +1006,8 @@ export interface CalendarKindChipsProps {
 	trailing?: React.ReactNode;
 	/** The kinds with a button, chosen in "Ansicht · Kalender". */
 	facets?: CalendarEntryFacet[];
+	/** How the chips look, as in Gespräche: icons, labels or text. */
+	view?: ChipView;
 	className?: string;
 }
 
@@ -1018,6 +1026,7 @@ export const CalendarKindChips = ({
 	onHighlightFacet,
 	trailing,
 	facets = KIND_CHIPS,
+	view = 'icons',
 	className
 }: CalendarKindChipsProps) => {
 	const { t } = useTranslation();
@@ -1048,31 +1057,28 @@ export const CalendarKindChips = ({
 						facet === 'blocker'
 							? t('calendar.blocker.menuItem')
 							: t(`calendar.kinds.${facet}`);
+					// The same chip as in Gespräche (Frank, 2026-11-17): one
+					// module, one look, the chosen one names itself. The span
+					// carries the grid highlight while hovered or focused.
 					return (
-						<button
+						<span
 							key={facet}
-							type="button"
-							className={`calendarSide__kindChip calendarSide__chip--k-${facet}`}
-							aria-pressed={on}
-							title={name}
-							onClick={() => choose(facet)}
+							className="calendarSide__chipHover"
 							onMouseEnter={() => onHighlightFacet(facet)}
 							onMouseLeave={() => onHighlightFacet(null)}
 							onFocus={() => onHighlightFacet(facet)}
 							onBlur={() => onHighlightFacet(null)}
-							data-cy={`calendar-filter-${facet}`}
 						>
-							<FacetIcon facet={facet} />
-							{/* Read out always, shown only on the chosen chip. */}
-							<span className="calendarSide__kindChipLabel">
-								{name}
-							</span>
-							{on && (
-								<span className="calendarSide__kindChipCount">
-									{futureCount(facet)}
-								</span>
-							)}
-						</button>
+							<FilterChip
+								label={name}
+								icon={FACET_ICON_COMPONENT[facet]}
+								active={on}
+								count={on ? futureCount(facet) : undefined}
+								view={view}
+								onClick={() => choose(facet)}
+								data-cy={`calendar-filter-${facet}`}
+							/>
+						</span>
 					);
 				}
 			)}

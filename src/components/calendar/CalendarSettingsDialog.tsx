@@ -13,6 +13,7 @@ import { DisplayFilterDialog } from '../displayFilter/DisplayFilterDialog';
 import { useDisplayFilterLabels } from '../displayFilter/useDisplayFilterLabels';
 import { useDisplayFilterEmailColumn } from '../displayFilter/useDisplayFilterEmailColumn';
 import type {
+	ChipView,
 	DisplayFilterKindOption,
 	DisplayFilterValue
 } from '../displayFilter/displayFilterTypes';
@@ -60,6 +61,9 @@ export interface CalendarSettingsDialogProps {
 	onHiddenChange: (next: CalendarEntryFacet[]) => void;
 	chipFacets: CalendarEntryFacet[];
 	onChipsChange: (next: CalendarEntryFacet[]) => void;
+	/** How the kind buttons look, as in Gespräche. */
+	chipView: ChipView;
+	onChipViewChange: (next: ChipView) => void;
 	fullScreen?: boolean;
 	id?: string;
 }
@@ -71,6 +75,8 @@ export const CalendarSettingsDialog = ({
 	onHiddenChange,
 	chipFacets,
 	onChipsChange,
+	chipView,
+	onChipViewChange,
 	fullScreen,
 	id = 'calendar-settings'
 }: CalendarSettingsDialogProps) => {
@@ -117,6 +123,7 @@ export const CalendarSettingsDialog = ({
 	const value = useMemo<DisplayFilterValue>(
 		() => ({
 			autoReadHidden: false,
+			view: chipView,
 			kinds: Object.fromEntries(
 				CALENDAR_FACETS.map((facet) => [
 					facet,
@@ -127,7 +134,7 @@ export const CalendarSettingsDialog = ({
 				])
 			)
 		}),
-		[hiddenFacets, chipFacets]
+		[hiddenFacets, chipFacets, chipView]
 	);
 
 	const onChange = useCallback(
@@ -140,13 +147,23 @@ export const CalendarSettingsDialog = ({
 				(facet) => resolveKindSetting(next, facet).pill
 			);
 			if (chips.join() !== chipFacets.join()) onChipsChange(chips);
+			if (next.view && next.view !== chipView)
+				onChipViewChange(next.view);
 		},
-		[hiddenFacets, chipFacets, onHiddenChange, onChipsChange]
+		[
+			hiddenFacets,
+			chipFacets,
+			chipView,
+			onHiddenChange,
+			onChipsChange,
+			onChipViewChange
+		]
 	);
 
 	const customised =
 		hiddenFacets.length > 0 ||
-		chipFacets.length !== CALENDAR_CHIP_FACETS.length;
+		chipFacets.length !== CALENDAR_CHIP_FACETS.length ||
+		chipView !== 'icons';
 
 	return (
 		<DisplayFilterDialog
@@ -158,10 +175,11 @@ export const CalendarSettingsDialog = ({
 			onReset={() => {
 				onHiddenChange([]);
 				onChipsChange(CALENDAR_CHIP_FACETS);
+				onChipViewChange('icons');
 			}}
 			canReset={customised}
 			showAutoRead={false}
-			showPresentation={false}
+			showPresentation="view"
 			columns={{ show: true, sound: false }}
 			email={email}
 			labels={labels}
