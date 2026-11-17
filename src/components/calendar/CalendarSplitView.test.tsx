@@ -651,3 +651,45 @@ describe('CalendarSplitView — own working hours stay in the own column', () =>
 		expect(shaded(bodies[1])).toBe(0);
 	});
 });
+
+describe('CalendarSplitView — scrolls to a chosen time (review 4594744890)', () => {
+	it('starts at the focus time instead of 08:00, and follows a new one', () => {
+		const calls: number[] = [];
+		const spy = vi
+			.spyOn(HTMLElement.prototype, 'scrollTo')
+			.mockImplementation(function (
+				this: HTMLElement,
+				options?: ScrollToOptions | number
+			) {
+				if (typeof options === 'object' && options.top !== undefined)
+					calls.push(options.top);
+			});
+		const props = {
+			day: MONDAY,
+			role: 'consultant' as const,
+			ownerId: 'me',
+			colleagues: [],
+			entries: [],
+			now: new Date(2026, 10, 16, 7),
+			workingPlan: HOURS
+		};
+		const { rerender } = render(
+			<CalendarSplitView
+				{...props}
+				focusTime={new Date(2026, 10, 16, 18)}
+			/>
+		);
+		const at18 = calls[calls.length - 1];
+		rerender(
+			<CalendarSplitView
+				{...props}
+				focusTime={new Date(2026, 10, 16, 19)}
+			/>
+		);
+		const at19 = calls[calls.length - 1];
+		spy.mockRestore();
+		expect(at19 - at18).toBe(px(1));
+		// Later than the 08:00 start.
+		expect(at18).toBeGreaterThan(px(8 - 7));
+	});
+});

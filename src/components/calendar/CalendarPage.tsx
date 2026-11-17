@@ -585,6 +585,8 @@ export const CalendarPage = ({
 		)
 	]);
 	const [muted, setMuted] = useState<string[]>([]);
+	/** Where "Nebeneinander" scrolls to after an entry was chosen. */
+	const [splitFocus, setSplitFocus] = useState<Date | undefined>();
 	const { flashIds, expectCreated, flash } = useCreatedFlash(
 		entries,
 		ownerId
@@ -878,6 +880,8 @@ export const CalendarPage = ({
 		const before = new Date(
 			Math.max(start.getTime() - 3600000, startOfDay(start).getTime())
 		);
+		// Side by side has its own scroll box (review 4594744890).
+		setSplitFocus(before);
 		const time = `${String(before.getHours()).padStart(2, '0')}:${String(before.getMinutes()).padStart(2, '0')}:00`;
 		// The controller has no scrollToTime; its calendar does.
 		window.setTimeout(() =>
@@ -2528,6 +2532,7 @@ export const CalendarPage = ({
 					{split ? (
 						<CalendarSplitView
 							day={anchorDate}
+							focusTime={splitFocus}
 							days={splitDays}
 							role={role}
 							ownerId={ownerId}
