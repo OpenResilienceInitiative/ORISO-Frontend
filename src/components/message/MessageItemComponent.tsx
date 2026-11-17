@@ -49,6 +49,8 @@ import type { CallLifecycleMessage } from '../../utils/callLifecycleMessage';
 import { shouldShowDeviceCheck } from '../call/prejoin/callPrejoin';
 import type { CallJoinHooks } from '../directLinkEntry/callMessageKnock';
 import { CallTimelineMessage } from './CallTimelineMessage';
+import { AppointmentNoticeCard } from './AppointmentNoticeMessage';
+import { recognizeLegacyAppointmentNotice } from './appointmentNotice';
 import { apiCallStateRead } from '../../api/apiCallState';
 import { callManager } from '../../services/CallManager';
 import {
@@ -2992,6 +2994,44 @@ export const MessageItemComponent = ({
 										}
 									)
 					}
+				/>
+			</div>
+		);
+	}
+
+	/* A 1:1 appointment change (FE#1960 notice): its own card, booked / moved
+	   / cancelled, with the shortcuts this viewer may use. Only from the
+	   conversation's counsellor (or one's own as a counsellor): anyone else
+	   writing the same words keeps an ordinary bubble. Notices from before the
+	   payload are recognised by their sentence. */
+	const appointmentNoticeTrusted =
+		(isOwnEvent &&
+			hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)) ||
+		isTrustedRecommendationSender({
+			senderId: userId,
+			consultantMatrixUserId: activeSession?.item?.consultantMatrixUserId
+		});
+	const appointmentNotice = !appointmentNoticeTrusted
+		? null
+		: parsedMessage.isSystemNotification
+			? parsedMessage.systemNotificationAppointment
+			: attachments?.length
+				? null
+				: recognizeLegacyAppointmentNotice(
+						parsedMessage.cleanedMessage
+					);
+	if (appointmentNotice) {
+		return (
+			<div className="messageItem" data-message-id={_id}>
+				{getMessageDate()}
+				<AppointmentNoticeCard
+					notice={appointmentNotice}
+					sessionId={activeSession?.item?.id}
+					byName={formattedName || undefined}
+					timestamp={
+						messageTime ? formatToHHMM(messageTime) : undefined
+					}
+					readOnly={blocksLeavingActions}
 				/>
 			</div>
 		);

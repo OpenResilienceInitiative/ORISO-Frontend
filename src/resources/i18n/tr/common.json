@@ -2254,6 +2254,20 @@
 		},
 		"deliveryStatus": {
 			"sent": "Gönderildi"
+		},
+		"appointmentNotice": {
+			"title": {
+				"created": "Randevu belirlendi",
+				"moved": "Randevu ertelendi",
+				"cancelled": "Randevu iptal edildi"
+			},
+			"by": "{{name}} tarafından",
+			"before": "Önce:",
+			"after": "Yeni:",
+			"action": {
+				"createNew": "Yeni randevu oluştur",
+				"openCalendar": "Takvimde aç"
+			}
 		}
 	},
 	"navigation": {

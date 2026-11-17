@@ -2253,6 +2253,20 @@
 		},
 		"deliveryStatus": {
 			"sent": "Sent"
+		},
+		"appointmentNotice": {
+			"title": {
+				"created": "Appointment scheduled",
+				"moved": "Appointment moved",
+				"cancelled": "Appointment cancelled"
+			},
+			"by": "by {{name}}",
+			"before": "Before:",
+			"after": "New:",
+			"action": {
+				"createNew": "Add new appointment",
+				"openCalendar": "Open in calendar"
+			}
 		}
 	},
 	"navigation": {

@@ -250,6 +250,11 @@ export interface CalendarPageProps {
 	initialSheet?: SheetStop;
 	initialView?: CalendarViewName;
 	/**
+	 * The day to open on: "Im Kalender öffnen" on an appointment's card in
+	 * the chat (`?date=`). Absent: today.
+	 */
+	initialDate?: Date;
+	/**
 	 * Links without an appointment, shown under the list (Frank, 2026-11-17:
 	 * "Meine Direktlinks" moves into the calendar). The wired page passes
 	 * the real links panel, stories a sample.
@@ -493,6 +498,7 @@ export const CalendarPage = ({
 	phone = compact,
 	initialSheet = 'half',
 	initialView,
+	initialDate,
 	linksPanel,
 	initialShownColleagues = [],
 	initialFullscreen = false,
@@ -549,7 +555,9 @@ export const CalendarPage = ({
 	const [view, setView] = useState<CalendarViewName>(initialView ?? 'list');
 	const [title, setTitle] = useState('');
 	/** The day the grid stands on; the split view starts on this day. */
-	const [anchorDate, setAnchorDate] = useState(() => startOfDay(now));
+	const [anchorDate, setAnchorDate] = useState(() =>
+		startOfDay(initialDate ?? now)
+	);
 	const [splitDays, setSplitDays] = useState<SplitDays>(initialSplitDays);
 	const [fullscreen, setFullscreen] = useState(initialFullscreen);
 	// The left column, sized like "Gespräche" and remembered per person
