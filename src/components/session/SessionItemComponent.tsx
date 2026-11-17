@@ -249,8 +249,7 @@ import { SelectionReplyLayer } from '../selectionReply/SelectionReplyLayer';
 import { useSessionPassageReplies } from '../selectionReply/useSessionPassageReplies';
 import { jumpToPassage } from '../selectionReply/passageRange';
 import type { PassageReply } from '../selectionReply/PassageReplyBlocks';
-import { canBlurPassages } from '../selectionReply/passageBlurPermission';
-import { NOTIFICATION_TYPE_ERROR } from '../../globalState/provider/NotificationsProvider';
+import { useSessionPassageBlur } from '../selectionReply/useSessionPassageBlur';
 import { isCaseHandoverCoAccess } from './caseHandoverHelpers';
 import { CaseHandoverReadOnlyNotice } from './CaseHandoverReadOnlyNotice';
 import {
@@ -329,8 +328,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		getModalityIfKnown(activeSession)
 	);
 	const { userData, setUserData } = useContext(UserDataContext);
-	const { addEventNotification, addNotification } =
-		useContext(NotificationsContext);
+	const { addEventNotification } = useContext(NotificationsContext);
 	const { type, path: listPath } = useContext(SessionTypeContext);
 	const { locale } = useContext(LocaleContext);
 	const legalLinks = useContext(LegalLinksContext);
@@ -3115,66 +3113,15 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	}, []);
 	// Moderator blur (#2229): only the room's moderators blur a passage or
 	// lift a blur; everyone in the chat sees it.
-	const canBlur = canBlurPassages({
+	const passageBlur = useSessionPassageBlur({
+		matrixRoomId: resolvedMatrixRoomId,
+		blurSenders: props.passageBlurSenders,
 		activeSession,
 		userData,
 		isConsultant: isConsultantUser,
 		isSupervisorView,
 		isReadOnly: isRejectedSession || isCoAccessViewer
 	});
-	const notifyBlurFailed = useCallback(() => {
-		addNotification({
-			notificationType: NOTIFICATION_TYPE_ERROR,
-			title: translate('message.selectionReply.blurFailed.title'),
-			text: translate('message.selectionReply.blurFailed.text')
-		});
-	}, [addNotification, translate]);
-	const handleBlurPassage = useCallback(
-		(
-			passage: { eventId: string },
-			blur: { start: number; length: number }
-		) => {
-			if (!resolvedMatrixRoomId) {
-				return;
-			}
-			chatTransportService
-				.sendPassageBlur({
-					matrixRoomId: resolvedMatrixRoomId,
-					targetEventId: passage.eventId,
-					start: blur.start,
-					length: blur.length
-				})
-				.catch(notifyBlurFailed);
-		},
-		[resolvedMatrixRoomId, notifyBlurFailed]
-	);
-	const handleRemoveBlur = useCallback(
-		(_eventId: string, blurId: string) => {
-			if (!resolvedMatrixRoomId) {
-				return;
-			}
-			chatTransportService
-				.redactMessage({
-					matrixRoomId: resolvedMatrixRoomId,
-					targetEventId: blurId
-				})
-				.catch(notifyBlurFailed);
-		},
-		[resolvedMatrixRoomId, notifyBlurFailed]
-	);
-	const blurredByFor = useCallback(
-		(_eventId: string, blurId: string) => {
-			const senderId = props.passageBlurSenders?.get(blurId);
-			if (!senderId) {
-				return undefined;
-			}
-			const member = chatTransportService
-				.getMatrixRoom(resolvedMatrixRoomId || '')
-				?.getMember?.(senderId);
-			return member?.name || member?.rawDisplayName || undefined;
-		},
-		[props.passageBlurSenders, resolvedMatrixRoomId]
-	);
 	const handleThreadFromPassage = useCallback(
 		(passage: { eventId: string }) => {
 			const root = (messages || []).find(
@@ -3656,7 +3603,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							{/* MATRIX MIGRATION: For Matrix sessions (no rid), skip E2EE ready check */}
 							{messages && (ready || !activeSession.rid) && (
 								<SelectionReplyLayer
-									enabled={passageReplies.enabled || canBlur}
+									enabled={
+										passageReplies.enabled ||
+										passageBlur.canBlur
+									}
 									authorFor={authorForPassage}
 									onAddToComposer={passageReplies.collect}
 									onSendNow={passageReplies.sendNow}
@@ -3666,13 +3616,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 											: undefined
 									}
 									recorder={passageReplies.recorder}
-									onBlurPassage={
-										canBlur ? handleBlurPassage : undefined
-									}
-									onRemoveBlur={
-										canBlur ? handleRemoveBlur : undefined
-									}
-									blurredByFor={blurredByFor}
+									onBlurPassage={passageBlur.onBlurPassage}
+									onRemoveBlur={passageBlur.onRemoveBlur}
+									blurredByFor={passageBlur.blurredByFor}
 								>
 									<MessageTimeline
 										messages={messages}
@@ -3766,7 +3712,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 												: handleUnreact
 										}
 										onJumpToPassage={handleJumpToPassage}
-										canRemovePassageBlur={canBlur}
+										canRemovePassageBlur={
+											passageBlur.canBlur
+										}
 									/>
 								</SelectionReplyLayer>
 							)}
