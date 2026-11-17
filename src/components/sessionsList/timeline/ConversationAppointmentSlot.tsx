@@ -83,9 +83,13 @@ export const ConversationAppointmentSlot = ({
 	useEffect(() => {
 		if (sessionId === undefined) return undefined;
 		let active = true;
+		// A failed first load leaves `appointments` unset (the slot stays
+		// hidden). A failed refresh keeps the list it has, so an open dialog
+		// stays mounted: after a refused link it holds the saved appointment
+		// for the retry (FE#2279 review). A new conversation resets above.
 		apiGetSessionAppointments(sessionId).then(
 			(items) => active && setAppointments(items),
-			() => active && setAppointments(undefined)
+			() => undefined
 		);
 		return () => {
 			active = false;
