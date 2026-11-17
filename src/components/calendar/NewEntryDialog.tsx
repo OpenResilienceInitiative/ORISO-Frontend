@@ -1,7 +1,8 @@
 /**
  * "Neuer Eintrag" (prototype v17): one dialog for "Neu" and every other way
- * to enter something, with the tabs Termin | Sperrzeit. Each tab is the
- * form of the appointment or the blocker dialog; switching keeps what was
+ * to enter something, with the tabs Termin | Sperrzeit. "Termin" is the
+ * shared invitation form (one flow with "Chat erstellen" and the 1:1's
+ * "Termin anlegen"), "Sperrzeit" the blocker form; switching keeps what was
  * entered in the other. A counsellor also gets "Abwesenheit", a planned
  * absence over whole days (ORISO-Frontend#2303).
  *
@@ -14,9 +15,11 @@ import * as React from 'react';
 import { useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { M3Dialog } from '../m3Dialog/M3Dialog';
-import { useAppointmentForm } from './AppointmentDialog';
+import { useCalendarInvitationForm } from './useCalendarInvitationForm';
 import { useBlockerForm } from './BlockerDialog';
 import { useAbsenceForm, type AbsenceDraft } from './AbsenceForm';
+import type { InvitationPreset } from '../directInvitation/invitationModel';
+import type { DirectLinkMedium } from '../conversationCreate/directLink/directLink';
 import type {
 	AppointmentDraft,
 	AppointmentKind,
@@ -53,6 +56,12 @@ export interface NewEntryDialogProps {
 	onSaveAbsence?: (draft: AbsenceDraft) => void;
 	/** The absence the profile holds already, to edit it here. */
 	initialAbsence?: Partial<AbsenceDraft>;
+	/** Termin: "Weitere Personen per Link einladen", as in the 1:1. */
+	allowGuestInvite?: boolean;
+	/** Termin: the media "Direkteinladung erlauben" allows (the Art's medium). */
+	inviteMedia?: readonly DirectLinkMedium[];
+	/** Termin: "Neue Person per Direkteinladung …" opens "Chat erstellen". */
+	onInviteNewPerson?: (preset: InvitationPreset) => void;
 	onClose: () => void;
 }
 
@@ -85,6 +94,9 @@ export const NewEntryDialog = ({
 	onWorkingHours,
 	onSaveAbsence,
 	initialAbsence,
+	allowGuestInvite,
+	inviteMedia,
+	onInviteNewPerson,
 	onClose
 }: NewEntryDialogProps) => {
 	const { t } = useTranslation();
@@ -104,7 +116,8 @@ export const NewEntryDialog = ({
 		setTab(next);
 		tabRefs.current[next]?.focus();
 	};
-	const appointment = useAppointmentForm({
+	/* The shared invitation form of "Chat erstellen" and the 1:1. */
+	const appointment = useCalendarInvitationForm({
 		slot,
 		initialSessionId,
 		conversations,
@@ -112,6 +125,9 @@ export const NewEntryDialog = ({
 		ownerId,
 		now,
 		onSave: onSaveAppointment,
+		allowGuestInvite,
+		inviteMedia,
+		onInviteNewPerson,
 		onClose
 	});
 	const blocker = useBlockerForm({

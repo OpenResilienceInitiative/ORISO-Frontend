@@ -13,7 +13,7 @@ import EventBusyOutlinedIcon from '@mui/icons-material/EventBusyOutlined';
 import { OrisoDatePicker } from '../form/OrisoDatePicker';
 import { OrisoTextField } from '../form/OrisoTextField';
 import { findConflicts, type CalendarEntry } from './calendarModel';
-import type { DialogForm } from './AppointmentDialog';
+import type { DialogForm } from './dialogForm';
 import { calendarLocale } from './calendarLocale';
 
 /** A planned absence as the profile stores it: first and last day, inclusive. */

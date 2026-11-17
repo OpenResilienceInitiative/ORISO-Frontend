@@ -1102,8 +1102,9 @@
 				"display": {
 					"suffix": " hast Du:"
 				},
-				"prefix": "Deine Zahlen des"
-			}
+				"prefix": "Deine Zahlen für"
+			},
+			"csvHeader": {}
 		},
 		"unsetEmail": {
 			"confirmOverlay": {
@@ -2961,7 +2962,13 @@
 		"dialog": {
 			"description": "Wer den Link öffnet, kommt direkt zu dir. Ein Termin ist optional.",
 			"withoutAppointmentHint": "Ohne Termin bekommt jede Person ein eigenes Gespräch. Der Link gilt, bis du ihn löschst.",
-			"knockHint": "Du lässt jede Person selbst herein. Das lässt sich im Anruf ändern."
+			"knockHint": "Du lässt jede Person selbst herein. Das lässt sich im Anruf ändern.",
+			"newPerson": {
+				"hint": "Diese Person hat noch kein Gespräch mit dir. Im nächsten Schritt erstellst du eine Direkteinladung mit diesem Termin."
+			},
+			"linkFailedAfterAppointment": "Der Termin ist angelegt, der Einladungslink aber nicht. Bitte versuche es erneut.",
+			"withAppointmentHint": "Alle, die den Link öffnen, treffen sich in einem gemeinsamen Gespräch. Der Termin steht auch in deinem Kalender.",
+			"inviteOthersMediumOff": "Für diese Art sind Direkteinladungen nicht freigegeben. Wähle eine andere Art, um weitere Personen einzuladen."
 		},
 		"overview": {
 			"emptyText": "Erstelle eine Direkteinladung – mit oder ohne Termin. Sie erscheint danach hier.",
@@ -2991,7 +2998,8 @@
 		},
 		"notice": {
 			"failed": "Der neue Link konnte nicht erstellt werden. Bitte versuche es erneut."
-		}
+		},
+		"fromCalendar": "Termin aus dem Kalender: {{range}}. Wähle Thema und Medium, dann erstellst du die Direkteinladung."
 	},
 	"calendar": {
 		"grip": {
@@ -3055,6 +3063,24 @@
 			"conflicts": "In diesem Zeitraum liegen {{count}} Termine. Sie bleiben bestehen – sag sie bei Bedarf selbst ab oder verschiebe sie.",
 			"conflicts_one": "In diesem Zeitraum liegt {{count}} Termin. Er bleibt bestehen – sag ihn bei Bedarf selbst ab oder verschiebe ihn.",
 			"saved": "Abwesenheit eingetragen. Sie steht auch in deinem Profil."
+		}
+	},
+	"managePeople": {
+		"self": "(du)",
+		"standing": {
+			"hint": "Vom Admin der Beratungsstelle festgelegt. Supervision bleibt immer an: Du kannst die Person wechseln, aber nicht ersatzlos entfernen."
+		},
+		"error": {
+			"add": "Die Person konnte nicht hinzugefügt werden. Bitte versuch es erneut.",
+			"remove": "Die Person konnte nicht entfernt werden. Bitte versuch es erneut.",
+			"replace": "Der Wechsel hat nicht geklappt. Bitte versuch es erneut."
+		},
+		"supervision": {
+			"description": "Supervisor:innen lesen in diesem Fall mit und sprechen mit dir im Supervisions-Chat.",
+			"reasonMissing": "Bitte gib einen Grund an."
+		},
+		"groupChat": {
+			"description": "Sieh, wer diese Gruppe leitet, und teile den Link mit allen, die teilnehmen möchten."
 		}
 	}
 }
