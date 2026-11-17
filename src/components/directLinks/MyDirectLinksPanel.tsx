@@ -27,7 +27,10 @@ import { onAppointmentsChanged } from '../sessionsList/timeline/conversationAppo
 import { InvitationsOverview } from '../directInvitation/InvitationsOverview';
 import { InvitationDialog } from '../directInvitation/InvitationDialog';
 import type { InvitationDialogValue } from '../directInvitation/invitationModel';
-import { READ_RETRY_MS, timerDelay } from '../directInvitation/invitationModel';
+import {
+	nextExpiryRead,
+	READ_RETRY_MS
+} from '../directInvitation/invitationModel';
 import { directInvitationSettings } from '../directInvitation/directInvitationSettings';
 import { overviewSections } from './invitationsOverviewData';
 import { useSendNewLink } from '../directInvitation/useSendNewLink';
@@ -109,6 +112,7 @@ export const MyDirectLinksPanel = ({
 	const [qrLink, setQrLink] = useState<DirectLink | null>(null);
 	const [editing, setEditing] = useState<DirectLink | null>(null);
 	const [saving, setSaving] = useState(false);
+	const [legacySaving, setLegacySaving] = useState(false);
 	const [saveFailed, setSaveFailed] = useState(false);
 	const [topics, setTopics] = useState<TenantAgenciesTopicsInterface[]>([]);
 	const {
@@ -152,13 +156,8 @@ export const MyDirectLinksPanel = ({
 	   timer start: it is asked again until a read succeeds. */
 	useEffect(() => {
 		if (!overview) return;
-		const now = Date.now();
-		const nextEnd = links
-			.filter((link) => !link.expired && link.expiresAt)
-			.map((link) => new Date(link.expiresAt!).getTime())
-			.filter((end) => Number.isFinite(end) && end > now)
-			.sort((a, b) => a - b)[0];
-		if (nextEnd === undefined) return;
+		const delay = nextExpiryRead(links);
+		if (delay === undefined) return;
 		let active = true;
 		let timer: number | undefined;
 		const refresh = () => {
@@ -167,10 +166,7 @@ export const MyDirectLinksPanel = ({
 					timer = window.setTimeout(refresh, READ_RETRY_MS);
 			});
 		};
-		timer = window.setTimeout(
-			refresh,
-			timerDelay(new Date(nextEnd + 1000))
-		);
+		timer = window.setTimeout(refresh, delay);
 		return () => {
 			active = false;
 			window.clearTimeout(timer);
@@ -205,8 +201,10 @@ export const MyDirectLinksPanel = ({
 		setSaveFailed(false);
 	};
 
+	/* The legacy dialog has its own busy flag: closed while saving, it must
+	   not free the invitation editor's Save (#2285). */
 	const save = async (link: DirectLink, change: DirectLinkUpdate) => {
-		setSaving(true);
+		setLegacySaving(true);
 		setSaveFailed(false);
 		try {
 			await update(link.id, change);
@@ -214,7 +212,7 @@ export const MyDirectLinksPanel = ({
 		} catch {
 			setSaveFailed(true);
 		} finally {
-			setSaving(false);
+			setLegacySaving(false);
 		}
 	};
 
@@ -342,7 +340,7 @@ export const MyDirectLinksPanel = ({
 			<DirectLinkEditDialog
 				link={editing}
 				topics={topicOptions}
-				saving={saving}
+				saving={legacySaving}
 				failed={saveFailed}
 				fullScreen={!fromL}
 				onClose={closeEdit}

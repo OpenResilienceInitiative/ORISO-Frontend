@@ -101,6 +101,29 @@ export const timerDelay = (at: Date, now: Date = new Date()): number =>
  */
 export const READ_RETRY_MS = 30_000;
 
+/**
+ * #2285: how long until the links are read again so an invitation that
+ * expires while shown gets the server's `expired` flag. Just after the
+ * earliest end still ahead (capped at the longest timer, so a far end is
+ * reached through early reads); an end already passed that the server still
+ * calls active is asked again after `READ_RETRY_MS`. Undefined when nothing
+ * waits to expire. The overview and the conversation share it.
+ */
+export const nextExpiryRead = (
+	links: readonly { expired?: boolean; expiresAt?: string }[],
+	now: number = Date.now()
+): number | undefined => {
+	const at = links
+		.filter((link) => !link.expired && link.expiresAt)
+		.map((link) => new Date(link.expiresAt!).getTime())
+		.filter((end) => Number.isFinite(end))
+		.map((end) => (end > now ? end + 1000 : now + READ_RETRY_MS))
+		.sort((a, b) => a - b)[0];
+	return at === undefined
+		? undefined
+		: timerDelay(new Date(at), new Date(now));
+};
+
 export interface DayGroup<T> {
 	/** Local midnight of the day. */
 	day: Date;

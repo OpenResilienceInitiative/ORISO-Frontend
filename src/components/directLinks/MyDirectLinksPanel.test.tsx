@@ -787,6 +787,62 @@ describe('Termine & Direkteinladungen (#2252)', () => {
 		);
 	});
 
+	it('keeps an invitation save busy when a closed legacy save answers', async () => {
+		vi.mocked(apiGetOwnDirectLinks).mockResolvedValue([flyer, meeting]);
+		const answers: ((link: DirectLink) => void)[] = [];
+		vi.mocked(apiUpdateDirectLink).mockImplementation(
+			() =>
+				new Promise<DirectLink>((resolve) => {
+					answers.push(resolve);
+				})
+		);
+		renderPage();
+		await screen.findByTestId('upcoming-invitation');
+
+		/* A legacy link: its own dialog, closed while its save runs. */
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'directLink.list.edit:Flyer Schule'
+			})
+		);
+		const legacy = await screen.findByTestId('direct-link-edit-dialog');
+		fireEvent.change(
+			within(legacy).getByLabelText('directLink.edit.name'),
+			{ target: { value: 'Flyer Rathaus' } }
+		);
+		fireEvent.click(within(legacy).getByTestId('direct-link-edit-save'));
+		await waitFor(() => expect(answers).toHaveLength(1));
+		fireEvent.click(
+			within(legacy).getByRole('button', {
+				name: 'directLink.edit.cancel'
+			})
+		);
+
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'directInvitation.overview.edit:Termin Frau M.'
+			})
+		);
+		const dialog = await screen.findByTestId('invitation-dialog');
+		const save = () =>
+			within(screen.getByTestId('invitation-dialog')).getByRole(
+				'button',
+				{ name: 'directInvitation.dialog.saveAction' }
+			) as HTMLButtonElement;
+		fireEvent.click(
+			within(dialog).getByRole('button', {
+				name: 'directInvitation.dialog.saveAction'
+			})
+		);
+		await waitFor(() => expect(answers).toHaveLength(2));
+		expect(save().disabled).toBe(true);
+
+		await act(async () => answers[0]({ ...flyer, name: 'Flyer Rathaus' }));
+
+		/* The invitation save is still running: no second update. */
+		expect(save().disabled).toBe(true);
+	});
+
 	/* A fixed clock: the page must not depend on rendering fast enough to
 	   see the row before it expires (#2252 review). */
 	const settle = (ms = 0) =>
