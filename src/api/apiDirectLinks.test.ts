@@ -117,6 +117,43 @@ describe('apiGetOwnDirectLinks', () => {
 		vi.mocked(fetchData).mockRejectedValue(new Error('boom'));
 		await expect(apiGetOwnDirectLinks()).rejects.toThrow('boom');
 	});
+
+	/* #2252 review: the overview, the request pop-ups and the open
+	   conversation all reload on one DIRECT_LINKS_CHANGED event. */
+	it('shares one request between callers while it is running', async () => {
+		vi.mocked(fetchData).mockClear();
+		let answer: (value: unknown) => void = () => undefined;
+		vi.mocked(fetchData).mockReturnValue(
+			new Promise((resolve) => {
+				answer = resolve;
+			})
+		);
+
+		const all = Promise.all([
+			apiGetOwnDirectLinks(),
+			apiGetOwnDirectLinks(),
+			apiGetOwnDirectLinks()
+		]);
+		answer([dto]);
+		const results = await all;
+
+		expect(fetchData).toHaveBeenCalledTimes(1);
+		expect(results.map((links) => links.map((link) => link.id))).toEqual([
+			['7'],
+			['7'],
+			['7']
+		]);
+		/* Each caller gets its own array to keep. */
+		expect(results[0]).not.toBe(results[1]);
+	});
+
+	it('asks again once the earlier request has finished', async () => {
+		vi.mocked(fetchData).mockClear();
+		vi.mocked(fetchData).mockResolvedValue([dto]);
+		await apiGetOwnDirectLinks();
+		await apiGetOwnDirectLinks();
+		expect(fetchData).toHaveBeenCalledTimes(2);
+	});
 });
 
 describe('apiUpdateDirectLink', () => {

@@ -599,7 +599,10 @@ const SAMPLE_LINKS: DirectLink[] = [
 const createVideoLink = async (canvasElement: HTMLElement) => {
 	const canvas = within(canvasElement);
 	const body = within(document.body);
-	const heading = await canvas.findByRole('heading', { name: 'Direktlink' });
+	// #2252: "Direktlink" is now called "Direkteinladung".
+	const heading = await canvas.findByRole('heading', {
+		name: 'Direkteinladung'
+	});
 	const card = within(heading.closest('section') as HTMLElement);
 	// The split button carries the label on both of its halves.
 	await userEvent.click(
@@ -616,13 +619,13 @@ const createVideoLink = async (canvasElement: HTMLElement) => {
 	await userEvent.click(card.getByRole('button', { name: 'Link erstellen' }));
 	const dialog = await body.findByTestId('direct-link-share-dialog');
 	await expect(
-		await within(dialog).findByAltText('QR-Code zum Direktlink')
+		await within(dialog).findByAltText('QR-Code zur Direkteinladung')
 	).toBeInTheDocument();
 	await userEvent.click(
 		within(dialog).getByRole('button', { name: 'Fertig' })
 	);
 	const list = await canvas.findByRole('region', {
-		name: 'Meine Direktlinks'
+		name: 'Meine Direkteinladungen'
 	});
 	await expect(within(list).getAllByText('Schulden')[0]).toBeInTheDocument();
 };
@@ -762,7 +765,7 @@ export const DirectLinkFlowMobile: Story = {
 	play: async ({ canvasElement }) => {
 		await userEvent.click(
 			await within(canvasElement).findByRole('button', {
-				name: /Direktlink/
+				name: /Direkteinladung/
 			})
 		);
 		await createVideoLink(canvasElement);

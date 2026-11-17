@@ -78,6 +78,9 @@ const EXPECTED_ROW: Record<
 	'handover.auto_confirmed': { consultant: 'conversations/handover' },
 	'handover.denied': { consultant: 'conversations/handover' },
 	'call.knock.requested': { consultant: 'timeCritical/call' },
+	'direct_invitation.renewal_requested': {
+		consultant: 'timeCritical/appointment'
+	},
 	'call.invited': {
 		consultant: 'timeCritical/call',
 		asker: 'timeCritical/call'

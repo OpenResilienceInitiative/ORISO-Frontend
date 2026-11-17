@@ -24,34 +24,35 @@ import PlayArrowOutlinedIcon from '@mui/icons-material/PlayArrowOutlined';
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 import TodayOutlinedIcon from '@mui/icons-material/TodayOutlined';
 import RestartAltOutlinedIcon from '@mui/icons-material/RestartAltOutlined';
+import ViewDayIcon from '@mui/icons-material/ViewDay';
+import ViewWeekIcon from '@mui/icons-material/ViewWeek';
+import GridViewOutlinedIcon from '@mui/icons-material/GridViewOutlined';
+import ListIcon from '@mui/icons-material/List';
+import ViewColumnIcon from '@mui/icons-material/ViewColumn';
+import GroupsOutlinedIcon from '@mui/icons-material/GroupsOutlined';
+import EditNoteOutlinedIcon from '@mui/icons-material/EditNoteOutlined';
 import {
 	ChatMenuDropdownDivider,
 	ChatMenuDropdownGroupLabel,
 	ChatMenuDropdownHeader,
 	ChatMenuDropdownItem,
+	ChatMenuDropdownItemContent,
 	ChatMenuDropdownNote,
 	handleMenuKeyDown
 } from '../chatMenuDropdown/ChatMenuDropdown';
 import { initialsOf } from './CalendarEntryPeek';
+import { avatarToneClass } from './calendarAvatar';
 import {
 	APPOINTMENT_KINDS,
 	findConflicts,
 	type AppointmentKind,
+	type CalendarConversation,
 	type CalendarEntry,
 	type Colleague
 } from './calendarModel';
-import {
-	CALENDAR_FACETS,
-	CalendarEntryGlyph,
-	FacetIcon,
-	type CalendarEntryFacet
-} from './CalendarEntryGlyph';
+import { CalendarEntryGlyph, FacetIcon, facetOf } from './CalendarEntryGlyph';
 import type { EntryAction, MoveProposal } from './calendarActions';
-import {
-	VIEW_DIGIT,
-	type CalendarViewName,
-	type ViewSwitcherStyle
-} from './calendarViews';
+import { type CalendarViewName, type ViewSwitcherStyle } from './calendarViews';
 import { useEntryLabel, useRangeFormat } from './useEntryLabel';
 import type { EdgeChoice } from './calendarPreferences';
 import { calendarLocale } from './calendarLocale';
@@ -76,20 +77,134 @@ export interface SlotMenuContentProps {
 	/** The range lies outside the working hours: say so, still allow it. */
 	outsideHours?: boolean;
 	onChoose: (choice: SlotChoice) => void;
+	/** Second step: the kind is chosen, now who it is with. */
+	kind?: AppointmentKind;
+	conversations?: CalendarConversation[];
+	/** A conversation picked: the appointment is entered at once. */
+	onPick?: (sessionId: number) => void;
+	/** "Mehr Angaben …": the full dialog, time and kind filled in. */
+	onMore?: () => void;
 }
+
+/** The most conversations the second step lists; the search finds the rest. */
+const SLOT_PEOPLE = 8;
+
+/**
+ * "Mit wem?" (prototype v17): the second step in the same card. A search
+ * field, the conversations with their avatars, one click enters the
+ * appointment.
+ */
+const SlotPeopleStep = ({
+	range,
+	kind,
+	conversations,
+	onPick,
+	onMore
+}: {
+	range: { start: Date; end: Date };
+	kind: AppointmentKind;
+	conversations: CalendarConversation[];
+	onPick: (sessionId: number) => void;
+	onMore?: () => void;
+}) => {
+	const { t } = useTranslation();
+	const format = useRangeFormat();
+	const [query, setQuery] = useState('');
+	const needle = query.trim().toLowerCase().replace(/\s+/g, '_');
+	const found = conversations
+		.filter((c) => c.username.toLowerCase().includes(needle))
+		.slice(0, SLOT_PEOPLE);
+	return (
+		<>
+			<ChatMenuDropdownHeader
+				subtitle={format(range.start, range.end)}
+				title={t(`calendar.nouns.${kind}`)}
+				titleAs="h2"
+			/>
+			{/* Not ListSearchField: that is the pill search on top of a master
+			    list, with a 48 px leading menu or filter slot and its own
+			    clear button. Here the field is the labelled "Mit wem?" input
+			    of a 280 px menu step, where a leading menu would be a second,
+			    empty menu inside the menu (CodeRabbit pre-merge check). */}
+			<input
+				type="search"
+				className="calendarMenu__search"
+				value={query}
+				onChange={(event) => setQuery(event.target.value)}
+				placeholder={t('calendar.slotMenu.whoPlaceholder')}
+				aria-label={t('calendar.slotMenu.who')}
+				data-cy="calendar-slot-search"
+			/>
+			{found.length > 0 ? (
+				<div
+					className="calendarMenu__people"
+					role="group"
+					aria-label={t('calendar.slotMenu.conversations')}
+				>
+					{found.map((c) => (
+						<ChatMenuDropdownItem
+							key={c.sessionId}
+							className="calendarMenu__person"
+							onClick={() => onPick(c.sessionId)}
+							data-cy={`calendar-slot-person-${c.sessionId}`}
+						>
+							<span
+								className={`calendarMenu__avatar ${avatarToneClass(c.username)}`}
+								aria-hidden="true"
+							>
+								{initialsOf(c.username)}
+							</span>
+							<ChatMenuDropdownItemContent title={c.username} />
+						</ChatMenuDropdownItem>
+					))}
+				</div>
+			) : (
+				<ChatMenuDropdownNote>
+					{t('calendar.slotMenu.noneFound')}
+				</ChatMenuDropdownNote>
+			)}
+			{onMore && (
+				<>
+					<ChatMenuDropdownDivider />
+					<ChatMenuDropdownItem
+						icon={<EditNoteOutlinedIcon fontSize="small" />}
+						title={t('calendar.quick.more')}
+						onClick={onMore}
+						data-cy="calendar-slot-more"
+					/>
+				</>
+			)}
+		</>
+	);
+};
 
 /**
  * Dragging over free time: the time is chosen, one click says what it
- * becomes. A blocker is entered at once (with undo), an appointment opens
- * the dialog for the conversation.
+ * becomes. A blocker is entered at once (with undo); an appointment asks
+ * "Mit wem?" in the same card and is entered with the conversation picked
+ * (prototype v17).
  */
 export const SlotMenuContent = ({
 	range,
 	outsideHours,
-	onChoose
+	onChoose,
+	kind,
+	conversations = [],
+	onPick,
+	onMore
 }: SlotMenuContentProps) => {
 	const { t } = useTranslation();
 	const format = useRangeFormat();
+	if (kind && onPick)
+		return (
+			<SlotPeopleStep
+				range={range}
+				kind={kind}
+				conversations={conversations}
+				onPick={onPick}
+				onMore={onMore}
+			/>
+		);
 	return (
 		<>
 			<ChatMenuDropdownHeader
@@ -370,14 +485,17 @@ export interface EntryMenuContentProps {
 	entries: CalendarEntry[];
 	ownerId: string;
 	onMode: (mode: 'list' | 'move' | 'propose') => void;
-	onAction: (action: 'start' | 'chat' | 'join' | 'cancel' | 'remove') => void;
+	onAction: (
+		action: 'show' | 'start' | 'chat' | 'join' | 'cancel' | 'remove'
+	) => void;
 	onMove: (start: Date, end: Date) => void;
 }
 
 const ACTION_ICON: Record<
-	'start' | 'chat' | 'join' | 'cancel' | 'remove',
+	'show' | 'start' | 'chat' | 'join' | 'cancel' | 'remove',
 	React.ReactNode
 > = {
+	show: <EventOutlinedIcon fontSize="small" />,
 	start: <PlayArrowOutlinedIcon fontSize="small" />,
 	chat: <ChatBubbleOutlineIcon fontSize="small" />,
 	join: <LoginOutlinedIcon fontSize="small" />,
@@ -405,29 +523,68 @@ export const EntryMenuContent = ({
 	const range = entry.allDay
 		? `${format(entry.start).split(',')[0]}, ${t('calendar.allDay')}`
 		: format(entry.start, entry.end);
+	const facet = facetOf(entry);
+	const noun =
+		entry.type === 'appointment' ? (entry.kind ?? 'video') : entry.type;
+	// Who it is with, in the avatar tone ORISO gives that name: the
+	// colleague or the advice seeker of an appointment; other entries show
+	// their kind (prototype v17).
+	const person =
+		colleague?.displayName ??
+		(entry.type === 'appointment' ? entry.title : undefined);
+	// One's own appointment: "Sie und <Name>", both avatars stacked.
+	const partner =
+		!colleague && entry.type === 'appointment' ? entry.title : undefined;
 	// The move / proposal form is a dialog and may carry a heading; the
 	// action list is a menu and may not.
-	// Who it is with, as ORISO shows people: the colleague, the advice
-	// seeker of an appointment, or "Ich" for one's own blocked time.
-	const who = colleague
-		? initialsOf(colleague.displayName)
-		: entry.type === 'appointment' && entry.title
-			? initialsOf(entry.title)
-			: t('calendar.people.me');
 	const header = (
-		<div className="calendarMenu__head">
-			<span
-				className={`calendarMenu__avatar${colleague || entry.type === 'appointment' ? '' : ' calendarMenu__avatar--me'}`}
-				aria-hidden="true"
-			>
-				{who}
-			</span>
-			<ChatMenuDropdownHeader
-				subtitle={range}
-				title={title}
-				titleAs={mode === 'list' ? 'p' : 'h2'}
-			/>
-		</div>
+		<>
+			<div className="calendarMenu__head">
+				{person ? (
+					<span
+						className={`calendarMenu__avatar ${avatarToneClass(person)}`}
+						aria-hidden="true"
+					>
+						{initialsOf(person)}
+					</span>
+				) : (
+					<span
+						className={`calendarMenu__kdot calendarMenu__kind--${facet}`}
+						aria-hidden="true"
+					>
+						<FacetIcon facet={facet} />
+					</span>
+				)}
+				<ChatMenuDropdownHeader
+					subtitle={range}
+					title={title}
+					titleAs={mode === 'list' ? 'p' : 'h2'}
+				/>
+			</div>
+			<p className="calendarMenu__tagRow">
+				<span className="calendarMenu__tag">
+					<FacetIcon facet={facet} />
+					{t(`calendar.nouns.${noun}`)}
+				</span>
+			</p>
+			{partner && (
+				<p className="calendarMenu__who" data-cy="calendar-entry-who">
+					<span className="calendarMenu__stack" aria-hidden="true">
+						<span
+							className={`calendarMenu__mini ${avatarToneClass('', true)}`}
+						>
+							{t('calendar.people.me')}
+						</span>
+						<span
+							className={`calendarMenu__mini ${avatarToneClass(partner)}`}
+						>
+							{initialsOf(partner)}
+						</span>
+					</span>
+					{t('calendar.entryMenu.withYou', { name: partner })}
+				</p>
+			)}
+		</>
 	);
 
 	if (mode !== 'list')
@@ -448,6 +605,8 @@ export const EntryMenuContent = ({
 
 	const actionLabel = (action: EntryAction) => {
 		switch (action) {
+			case 'show':
+				return t('calendar.entryMenu.show');
 			case 'start':
 				return t(`calendar.details.start.${entry.kind ?? 'video'}`);
 			case 'chat':
@@ -462,6 +621,39 @@ export const EntryMenuContent = ({
 				return t('calendar.entryMenu.cancel');
 			default:
 				return t('calendar.entryMenu.remove');
+		}
+	};
+
+	// What each action does, under its name (prototype v17).
+	const name = entry.title;
+	const actionHint = (action: EntryAction): string | undefined => {
+		switch (action) {
+			case 'show':
+				return t('calendar.entryMenu.showSub');
+			case 'start':
+				return name
+					? t('calendar.entryMenu.startSub', { name })
+					: undefined;
+			case 'chat':
+				return name
+					? t('calendar.entryMenu.chatSub', { name })
+					: undefined;
+			case 'join':
+				return t('calendar.entryMenu.joinSub');
+			case 'move':
+				return t('calendar.entryMenu.moveSub');
+			case 'propose':
+				return colleague
+					? t('calendar.entryMenu.proposeSub', {
+							name: colleague.displayName
+						})
+					: undefined;
+			case 'cancel':
+				return name
+					? t('calendar.entryMenu.cancelSub', { name })
+					: undefined;
+			default:
+				return undefined;
 		}
 	};
 
@@ -503,6 +695,7 @@ export const EntryMenuContent = ({
 							)
 						}
 						title={actionLabel(action)}
+						description={actionHint(action)}
 						onClick={() =>
 							form ? onMode(action) : onAction(action)
 						}
@@ -565,7 +758,7 @@ export const ProposalMenuContent = ({
 };
 
 /* ------------------------------------------------------------------ */
-/* A proposal waiting for one's own answer ("Offene Anfragen")          */
+/* A proposal waiting for one's own answer ("Offene Verschiebungen")    */
 /* ------------------------------------------------------------------ */
 
 export interface RequestMenuContentProps {
@@ -591,7 +784,10 @@ export const RequestMenuContent = ({
 	return (
 		<>
 			<div className="calendarMenu__head">
-				<span className="calendarMenu__avatar" aria-hidden="true">
+				<span
+					className={`calendarMenu__avatar ${avatarToneClass(name)}`}
+					aria-hidden="true"
+				>
 					{initialsOf(name)}
 				</span>
 				<ChatMenuDropdownHeader
@@ -645,6 +841,8 @@ export interface SettingsMenuContentProps {
 	workingHoursSummary?: string;
 	switcherStyle: ViewSwitcherStyle;
 	onWorkingHours?: () => void;
+	/** "Sperrzeit mit Wiederholung": the blocker form, for a series. */
+	onRepeatBlocker?: () => void;
 	/** "Freie Tage eintragen …": an all-day blocker from tomorrow. */
 	onFreeDays?: () => void;
 	onSwitcherStyle: (style: ViewSwitcherStyle) => void;
@@ -653,19 +851,37 @@ export interface SettingsMenuContentProps {
 	rememberedEdge?: EdgeChoice | null;
 	/** "Gemerkte Auswahl vergessen": ask again next time. */
 	onForgetEdge?: () => void;
+	/**
+	 * Whether the working-hours and pause grips show; with
+	 * `onShowGrips` a checkable item switches them (Frank *7.2).
+	 */
+	showGrips?: boolean;
+	onShowGrips?: (show: boolean) => void;
 }
 
 export const SettingsMenuContent = ({
 	workingHoursSummary,
 	switcherStyle,
 	onWorkingHours,
+	onRepeatBlocker,
 	onFreeDays,
 	onSwitcherStyle,
 	onSync,
 	rememberedEdge,
-	onForgetEdge
+	onForgetEdge,
+	showGrips = true,
+	onShowGrips
 }: SettingsMenuContentProps) => {
 	const { t } = useTranslation();
+	const forget = rememberedEdge && onForgetEdge;
+	// Prototype v17: what to set up first, then how the views are chosen.
+	const anyAbove =
+		onWorkingHours ||
+		onShowGrips ||
+		onRepeatBlocker ||
+		onFreeDays ||
+		onSync ||
+		forget;
 	return (
 		<>
 			{onWorkingHours && (
@@ -680,6 +896,27 @@ export const SettingsMenuContent = ({
 					data-cy="calendar-settings-working-hours"
 				/>
 			)}
+			{onShowGrips && (
+				<ChatMenuDropdownItem
+					role="menuitemcheckbox"
+					aria-checked={showGrips}
+					icon={<ScheduleOutlinedIcon fontSize="small" />}
+					title={t('calendar.settings.grips')}
+					description={t('calendar.settings.gripsSub')}
+					shortcut={<Check on={showGrips} />}
+					onClick={() => onShowGrips(!showGrips)}
+					data-cy="calendar-settings-grips"
+				/>
+			)}
+			{onRepeatBlocker && (
+				<ChatMenuDropdownItem
+					role="menuitem"
+					icon={<FacetIcon facet="blocker" />}
+					title={t('calendar.settings.repeatBlocker')}
+					onClick={onRepeatBlocker}
+					data-cy="calendar-settings-repeat-blocker"
+				/>
+			)}
 			{onFreeDays && (
 				<ChatMenuDropdownItem
 					role="menuitem"
@@ -690,7 +927,16 @@ export const SettingsMenuContent = ({
 					data-cy="calendar-settings-free-days"
 				/>
 			)}
-			{rememberedEdge && onForgetEdge && (
+			{onSync && (
+				<ChatMenuDropdownItem
+					role="menuitem"
+					icon={<SyncOutlinedIcon fontSize="small" />}
+					title={t('calendar.settings.sync')}
+					onClick={onSync}
+					data-cy="calendar-settings-sync"
+				/>
+			)}
+			{forget && (
 				<ChatMenuDropdownItem
 					role="menuitem"
 					icon={<RestartAltOutlinedIcon fontSize="small" />}
@@ -704,38 +950,29 @@ export const SettingsMenuContent = ({
 					data-cy="calendar-settings-forget-edge"
 				/>
 			)}
+			{anyAbove && <ChatMenuDropdownDivider />}
 			<ChatMenuDropdownGroupLabel>
 				{t('calendar.settings.switcher')}
 			</ChatMenuDropdownGroupLabel>
-			{(['menu', 'digits'] as ViewSwitcherStyle[]).map((style) => (
-				<ChatMenuDropdownItem
-					key={style}
-					role="menuitemradio"
-					aria-checked={switcherStyle === style}
-					active={switcherStyle === style}
-					icon={<Check on={switcherStyle === style} />}
-					title={t(
-						`calendar.settings.switcher${style === 'menu' ? 'Menu' : 'Digits'}`
-					)}
-					onClick={() => onSwitcherStyle(style)}
-					data-cy={`calendar-settings-switcher-${style}`}
-				/>
-			))}
+			{(['menu', 'digits'] as ViewSwitcherStyle[]).map((style) => {
+				const name = style === 'menu' ? 'Menu' : 'Digits';
+				return (
+					<ChatMenuDropdownItem
+						key={style}
+						role="menuitemradio"
+						aria-checked={switcherStyle === style}
+						active={switcherStyle === style}
+						title={t(`calendar.settings.switcher${name}`)}
+						description={t(`calendar.settings.switcher${name}Sub`)}
+						shortcut={<Check on={switcherStyle === style} />}
+						onClick={() => onSwitcherStyle(style)}
+						data-cy={`calendar-settings-switcher-${style}`}
+					/>
+				);
+			})}
 			<ChatMenuDropdownNote>
 				{t('calendar.settings.switcherHint')}
 			</ChatMenuDropdownNote>
-			{onSync && (
-				<>
-					<ChatMenuDropdownDivider />
-					<ChatMenuDropdownItem
-						role="menuitem"
-						icon={<SyncOutlinedIcon fontSize="small" />}
-						title={t('calendar.settings.sync')}
-						onClick={onSync}
-						data-cy="calendar-settings-sync"
-					/>
-				</>
-			)}
 		</>
 	);
 };
@@ -938,6 +1175,48 @@ export interface ViewMenuContentProps {
 	onChoose: (view: CalendarViewName) => void;
 }
 
+/** One icon per view, in the menu, on the view button and the digits row. */
+export const VIEW_ICON: Record<CalendarViewName, React.ReactNode> = {
+	day: <ViewDayIcon fontSize="small" />,
+	threeDays: <ViewWeekIcon fontSize="small" />,
+	workWeek: <ViewWeekIcon fontSize="small" />,
+	week: <ViewWeekIcon fontSize="small" />,
+	month: <GridViewOutlinedIcon fontSize="small" />,
+	list: <ListIcon fontSize="small" />,
+	split: <ViewColumnIcon fontSize="small" />
+};
+
+/**
+ * A menu row with something at its right end: the check of the chosen
+ * view, or the date a quick jump goes to (prototype v17).
+ */
+const MetaRow = ({
+	icon,
+	title,
+	meta,
+	description
+}: {
+	icon?: React.ReactNode;
+	title: React.ReactNode;
+	meta?: React.ReactNode;
+	description?: React.ReactNode;
+}) => (
+	<>
+		{icon && <span className="chatMenuDropdown__itemIcon">{icon}</span>}
+		<span className="chatMenuDropdown__itemCenter">
+			<span className="chatMenuDropdown__itemTitleRow">
+				<span className="chatMenuDropdown__itemTitle">{title}</span>
+				{meta && <span className="calendarMenuMeta">{meta}</span>}
+			</span>
+			{description && (
+				<span className="chatMenuDropdown__itemDescription">
+					{description}
+				</span>
+			)}
+		</span>
+	</>
+);
+
 export const ViewMenuContent = ({
 	views,
 	current,
@@ -947,17 +1226,32 @@ export const ViewMenuContent = ({
 	return (
 		<>
 			{views.map((view) => (
-				<ChatMenuDropdownItem
-					key={view}
-					role="menuitemradio"
-					aria-checked={view === current}
-					active={view === current}
-					icon={<Check on={view === current} />}
-					title={t(`calendar.views.${view}`)}
-					shortcut={VIEW_DIGIT[view]}
-					onClick={() => onChoose(view)}
-					data-cy={`calendar-view-${view}`}
-				/>
+				<React.Fragment key={view}>
+					{/* "Nebeneinander" is a view of another kind: a line before it. */}
+					{view === 'split' && <ChatMenuDropdownDivider />}
+					<ChatMenuDropdownItem
+						role="menuitemradio"
+						aria-checked={view === current}
+						active={view === current}
+						onClick={() => onChoose(view)}
+						data-cy={`calendar-view-${view}`}
+					>
+						<MetaRow
+							icon={VIEW_ICON[view]}
+							title={t(`calendar.views.${view}`)}
+							meta={
+								view === current ? (
+									<CheckIcon fontSize="small" aria-hidden />
+								) : undefined
+							}
+							description={
+								view === 'split'
+									? t('calendar.split.label')
+									: undefined
+							}
+						/>
+					</ChatMenuDropdownItem>
+				</React.Fragment>
 			))}
 		</>
 	);
@@ -979,7 +1273,7 @@ const startOfDay = (date: Date) => {
 };
 
 export const JumpMenuContent = ({ now, onJump }: JumpMenuContentProps) => {
-	const { t } = useTranslation();
+	const { t, i18n } = useTranslation();
 	const today = startOfDay(now);
 	const plus = (days: number) => {
 		const d = new Date(today);
@@ -991,9 +1285,16 @@ export const JumpMenuContent = ({ now, onJump }: JumpMenuContentProps) => {
 	const jumps: [string, Date][] = [
 		['today', today],
 		['tomorrow', plus(1)],
+		['dayAfterTomorrow', plus(2)],
 		['nextMonday', nextMonday],
 		['inTwoWeeks', plus(14)]
 	];
+	// Each jump says where it lands: "Mo., 16.11." (prototype v17).
+	const dayFormat = new Intl.DateTimeFormat(calendarLocale(i18n.language), {
+		weekday: 'short',
+		day: '2-digit',
+		month: '2-digit'
+	});
 	return (
 		<>
 			{/* The dialog holds a menu of quick jumps and a date form. */}
@@ -1006,10 +1307,14 @@ export const JumpMenuContent = ({ now, onJump }: JumpMenuContentProps) => {
 					<ChatMenuDropdownItem
 						key={key}
 						role="menuitem"
-						title={t(`calendar.jump.${key}`)}
 						onClick={() => onJump(date)}
 						data-cy={`calendar-jump-${key}`}
-					/>
+					>
+						<MetaRow
+							title={t(`calendar.jump.${key}`)}
+							meta={dayFormat.format(date)}
+						/>
+					</ChatMenuDropdownItem>
 				))}
 			</div>
 			<ChatMenuDropdownDivider />
@@ -1053,94 +1358,148 @@ export interface PeopleMenuContentProps {
 	/** Who the Träger lets one see, one sentence. */
 	scopeHint?: string;
 	onToggle: (id: string) => void;
+	/** "Ganze Beratungsstelle zeigen": every colleague of one's own centre. */
+	onShowAll?: (ids: string[]) => void;
+	/** "Nebeneinander ansehen". */
+	onSideBySide?: () => void;
 }
 
+/** A tick box, an avatar and a name: one person in "Kalender anzeigen". */
+const PersonRow = ({
+	on,
+	name,
+	avatar,
+	toneClass
+}: {
+	on: boolean;
+	name: string;
+	avatar: string;
+	toneClass: string;
+}) => (
+	<>
+		<span
+			className={`calendarPeopleMenu__check${on ? ' calendarPeopleMenu__check--on' : ''}`}
+			aria-hidden="true"
+		>
+			{on && <CheckIcon />}
+		</span>
+		<span
+			className={`calendarPeopleMenu__avatar ${toneClass}`}
+			aria-hidden="true"
+		>
+			{avatar}
+		</span>
+		<span className="chatMenuDropdown__itemTitle">{name}</span>
+	</>
+);
+
+/**
+ * "Kalender anzeigen" (prototype v17): one's own calendar, always on, then
+ * the colleagues by Beratungsstelle, the whole own centre at once, the
+ * side-by-side view and what the Träger lets one see.
+ */
 export const PeopleMenuContent = ({
 	colleagues,
 	shown,
 	scopeHint,
-	onToggle
+	onToggle,
+	onShowAll,
+	onSideBySide
 }: PeopleMenuContentProps) => {
 	const { t } = useTranslation();
-	if (colleagues.length === 0)
-		return (
-			<ChatMenuDropdownNote>
-				{t('calendar.colleaguesEmpty')}
-			</ChatMenuDropdownNote>
+	const groups = useMemo(() => {
+		const byAgency = new Map<string, Colleague[]>();
+		colleagues.forEach((c) =>
+			byAgency.set(c.agencyName, [
+				...(byAgency.get(c.agencyName) ?? []),
+				c
+			])
 		);
+		return [...byAgency.entries()];
+	}, [colleagues]);
+	const ownCentre = colleagues.filter((c) => c.relation === 'sameAgency');
 	return (
 		<>
-			{colleagues.map((c) => {
-				const on = shown.includes(c.id);
-				return (
-					<ChatMenuDropdownItem
-						key={c.id}
-						role="menuitemcheckbox"
-						aria-checked={on}
-						active={on}
-						icon={<Check on={on} />}
-						title={c.displayName}
-						description={c.agencyName}
-						shortcut={c.agencyShort}
-						onClick={() => onToggle(c.id)}
-						data-cy={`calendar-people-${c.id}`}
-					/>
-				);
-			})}
+			<div className="calendarPeopleMenu__head" role="presentation">
+				<strong>{t('calendar.people.label')}</strong>
+				<span>{t('calendar.people.alwaysMine')}</span>
+			</div>
+			<ChatMenuDropdownItem
+				role="menuitemcheckbox"
+				aria-checked={true}
+				disabled
+				data-cy="calendar-people-me"
+			>
+				<PersonRow
+					on
+					name={t('navigation.booking.events')}
+					avatar={t('calendar.people.meAvatar')}
+					toneClass={avatarToneClass('', true)}
+				/>
+			</ChatMenuDropdownItem>
+			{colleagues.length === 0 && (
+				<ChatMenuDropdownNote>
+					{t('calendar.colleaguesEmpty')}
+				</ChatMenuDropdownNote>
+			)}
+			{groups.map(([agency, people]) => (
+				<React.Fragment key={agency}>
+					<ChatMenuDropdownGroupLabel>
+						{[
+							agency,
+							people[0].agencyShort,
+							people[0].relation === 'sameTenant' &&
+								t('calendar.people.sameTenant')
+						]
+							.filter(Boolean)
+							.join(' · ')}
+					</ChatMenuDropdownGroupLabel>
+					{people.map((c) => {
+						const on = shown.includes(c.id);
+						return (
+							<ChatMenuDropdownItem
+								key={c.id}
+								role="menuitemcheckbox"
+								aria-checked={on}
+								active={on}
+								onClick={() => onToggle(c.id)}
+								data-cy={`calendar-people-${c.id}`}
+							>
+								<PersonRow
+									on={on}
+									name={c.displayName}
+									avatar={initialsOf(c.displayName)}
+									toneClass={avatarToneClass(c.displayName)}
+								/>
+							</ChatMenuDropdownItem>
+						);
+					})}
+				</React.Fragment>
+			))}
+			{((onShowAll && ownCentre.length > 0) || onSideBySide) && (
+				<ChatMenuDropdownDivider />
+			)}
+			{onShowAll && ownCentre.length > 0 && (
+				<ChatMenuDropdownItem
+					role="menuitem"
+					icon={<GroupsOutlinedIcon />}
+					title={t('calendar.people.wholeAgency')}
+					description={ownCentre[0].agencyName}
+					onClick={() => onShowAll(ownCentre.map((c) => c.id))}
+					data-cy="calendar-people-whole-agency"
+				/>
+			)}
+			{onSideBySide && (
+				<ChatMenuDropdownItem
+					role="menuitem"
+					icon={<ViewColumnIcon />}
+					title={t('calendar.people.split')}
+					onClick={onSideBySide}
+					data-cy="calendar-people-split"
+				/>
+			)}
 			{scopeHint && (
 				<ChatMenuDropdownNote>{scopeHint}</ChatMenuDropdownNote>
-			)}
-		</>
-	);
-};
-
-/* ------------------------------------------------------------------ */
-/* "Was anzeigen": which kinds the calendar and the list show           */
-/* ------------------------------------------------------------------ */
-
-export interface KindsMenuContentProps {
-	hidden: CalendarEntryFacet[];
-	onToggle: (facet: CalendarEntryFacet) => void;
-	onShowAll: () => void;
-}
-
-export const KindsMenuContent = ({
-	hidden,
-	onToggle,
-	onShowAll
-}: KindsMenuContentProps) => {
-	const { t } = useTranslation();
-	return (
-		<>
-			{CALENDAR_FACETS.map((facet) => {
-				const on = !hidden.includes(facet);
-				return (
-					<ChatMenuDropdownItem
-						key={facet}
-						role="menuitemcheckbox"
-						aria-checked={on}
-						className={`calendarMenu__kind calendarMenu__kind--${facet}`}
-						icon={<FacetIcon facet={facet} />}
-						title={t(`calendar.facets.${facet}`)}
-						shortcut={<Check on={on} />}
-						onClick={() => onToggle(facet)}
-						data-cy={`calendar-kinds-${facet}`}
-					/>
-				);
-			})}
-			<ChatMenuDropdownNote>
-				{t('calendar.kindsMenu.hint')}
-			</ChatMenuDropdownNote>
-			{hidden.length > 0 && (
-				<>
-					<ChatMenuDropdownDivider />
-					<ChatMenuDropdownItem
-						role="menuitem"
-						title={t('calendar.kindsMenu.all')}
-						onClick={onShowAll}
-						data-cy="calendar-kinds-all"
-					/>
-				</>
 			)}
 		</>
 	);

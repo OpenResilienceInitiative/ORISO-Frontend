@@ -369,7 +369,11 @@ export const OrisoTimePicker = ({
 			onChange?.(null);
 			return;
 		}
-		const parsed = dayjs(trimmed, parseFormats, true);
+		// "1030" or "930": a time typed without its colon.
+		const withColon = /^\d{3,4}$/.test(trimmed)
+			? `${trimmed.slice(0, -2)}:${trimmed.slice(-2)}`
+			: trimmed;
+		const parsed = dayjs(withColon, parseFormats, true);
 		if (parsed.isValid()) {
 			const base = value ?? dayjs();
 			onChange?.(

@@ -8,11 +8,11 @@ import * as React from 'react';
 import { useMemo, useState } from 'react';
 import dayjs, { type Dayjs } from 'dayjs';
 import { useTranslation } from 'react-i18next';
-import { M3Dialog } from '../m3Dialog/M3Dialog';
+import { M3Dialog, type M3DialogAction } from '../m3Dialog/M3Dialog';
 import { OrisoCalendar } from '../form/OrisoCalendar';
 import { OrisoTimePicker } from '../form/OrisoTimePicker';
 import { OrisoSelect } from '../form/OrisoSelect';
-import { ButtonGroup } from '../buttonGroup/ButtonGroup';
+import EventOutlinedIcon from '@mui/icons-material/EventOutlined';
 import {
 	APPOINTMENT_KINDS,
 	daySpan,
@@ -34,8 +34,12 @@ const join = (day: Dayjs | null, time: Dayjs | null) =>
 
 export interface AppointmentDialogProps {
 	open: boolean;
-	/** Preset from a selected slot; absent when opened from the button. */
-	slot?: { start: Date; end: Date; kind: AppointmentKind };
+	/**
+	 * Preset from a selected slot; absent when opened from the button. A
+	 * slot without a kind ("Neuer Eintrag" from a drag) still offers the
+	 * kind tiles.
+	 */
+	slot?: { start: Date; end: Date; kind?: AppointmentKind };
 	/** Preset conversation, e.g. from the quick entry. */
 	initialSessionId?: number;
 	conversations: CalendarConversation[];
@@ -47,18 +51,36 @@ export interface AppointmentDialogProps {
 	onClose: () => void;
 }
 
-export const AppointmentDialog = ({
-	open,
+/**
+ * A creation form without its dialog frame: what the frame shows around it
+ * and the content. "Neuer Eintrag" puts the appointment and the blocker
+ * form under one title with tabs (prototype v17); each keeps its state.
+ */
+export interface DialogForm {
+	description?: React.ReactNode;
+	icon?: React.ReactNode;
+	width: number;
+	actions: M3DialogAction[];
+	content: React.ReactNode;
+	/** The dialog's `data-testid` while this form shows. */
+	testId: string;
+}
+
+export type AppointmentFormProps = Omit<
+	AppointmentDialogProps,
+	'open' | 'fullScreen'
+>;
+
+export const useAppointmentForm = ({
 	slot,
 	initialSessionId,
 	conversations,
 	entries,
 	ownerId,
 	now,
-	fullScreen,
 	onSave,
 	onClose
-}: AppointmentDialogProps) => {
+}: AppointmentFormProps): DialogForm => {
 	const dayLabels = useDayLabels();
 	const { t } = useTranslation();
 	const format = useRangeFormat();
@@ -114,35 +136,32 @@ export const AppointmentDialog = ({
 		onSave(draft as AppointmentDraft);
 	};
 
-	return (
-		<M3Dialog
-			open={open}
-			data-testid="calendar-appointment-dialog"
-			title={t('calendar.create')}
-			description={
-				timedSlot
-					? format(timedSlot.start, timedSlot.end)
-					: t('calendar.dialog.description')
+	return {
+		testId: 'calendar-appointment-dialog',
+		description: timedSlot
+			? format(timedSlot.start, timedSlot.end)
+			: t('calendar.dialog.description'),
+		// Every creation dialog has an icon above its title (Frank, *1).
+		icon: slot?.kind ? (
+			<FacetIcon facet={slot.kind} />
+		) : (
+			<EventOutlinedIcon />
+		),
+		width: slot ? 400 : 680,
+		actions: [
+			{ label: t('app.cancel'), onClick: onClose },
+			{
+				label: t(
+					conflicts.length
+						? 'calendar.dialog.saveAnyway'
+						: 'calendar.dialog.save'
+				),
+				onClick: save,
+				primary: true,
+				testId: 'calendar-appointment-save'
 			}
-			icon={slot ? <FacetIcon facet={slot.kind} /> : undefined}
-			width={slot ? 400 : 680}
-			fullScreen={fullScreen}
-			onClose={onClose}
-			closeLabel={t('app.close')}
-			actions={[
-				{ label: t('app.cancel'), onClick: onClose },
-				{
-					label: t(
-						conflicts.length
-							? 'calendar.dialog.saveAnyway'
-							: 'calendar.dialog.save'
-					),
-					onClick: save,
-					primary: true,
-					testId: 'calendar-appointment-save'
-				}
-			]}
-		>
+		],
+		content: (
 			<div
 				className={`calendarDialog${slot ? '' : ' calendarDialog--withMonth'}`}
 			>
@@ -188,31 +207,33 @@ export const AppointmentDialog = ({
 							/>
 						</div>
 					)}
-					{!slot && (
-						<>
-							<div
-								className="calendarDialog__group"
-								role="group"
-								aria-label={t('calendar.dialog.kind')}
-							>
-								<span className="calendarDialog__label">
-									{t('calendar.dialog.kind')}
-								</span>
-								<ButtonGroup
-									variant="outline"
-									disableAutoStack
-									items={APPOINTMENT_KINDS.map((k) => ({
-										id: k,
-										label: t(`calendar.kinds.${k}`),
-										icon: <FacetIcon facet={k} />,
-										variant:
-											k === kind ? 'tonal' : 'outline',
-										ariaLabel: `${t(`calendar.kinds.${k}`)}${k === kind ? ' ✓' : ''}`,
-										onClick: () => setKind(k)
-									}))}
-								/>
+					{!slot?.kind && (
+						// "Art" as button tiles in a grid that wraps, never a
+						// row that runs out of the dialog (Frank *1; test C7).
+						<div
+							className="calendarDialog__group"
+							role="group"
+							aria-label={t('calendar.dialog.kind')}
+						>
+							<span className="calendarDialog__label">
+								{t('calendar.dialog.kind')}
+							</span>
+							<div className="calendarDialog__kinds">
+								{APPOINTMENT_KINDS.map((k) => (
+									<button
+										key={k}
+										type="button"
+										className="calendarDialog__kindTile"
+										aria-pressed={k === kind}
+										onClick={() => setKind(k)}
+										data-cy={`calendar-dialog-kind-${k}`}
+									>
+										<FacetIcon facet={k} />
+										<span>{t(`calendar.kinds.${k}`)}</span>
+									</button>
+								))}
 							</div>
-						</>
+						</div>
 					)}
 					{conflicts.length > 0 && (
 						<p className="calendarDialog__note" role="status">
@@ -233,6 +254,31 @@ export const AppointmentDialog = ({
 					)}
 				</div>
 			</div>
+		)
+	};
+};
+
+export const AppointmentDialog = ({
+	open,
+	fullScreen,
+	...props
+}: AppointmentDialogProps) => {
+	const { t } = useTranslation();
+	const form = useAppointmentForm(props);
+	return (
+		<M3Dialog
+			open={open}
+			data-testid={form.testId}
+			title={t('calendar.create')}
+			description={form.description}
+			icon={form.icon}
+			width={form.width}
+			fullScreen={fullScreen}
+			onClose={props.onClose}
+			closeLabel={t('app.close')}
+			actions={form.actions}
+		>
+			{form.content}
 		</M3Dialog>
 	);
 };

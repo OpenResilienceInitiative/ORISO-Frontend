@@ -28,6 +28,14 @@ describe('shortTimeOf', () => {
 		});
 	});
 
+	it('adds the date from seven days on, where a weekday alone is ambiguous (test C11)', () => {
+		expect(shortTimeOf(at(22, 10), now, at(22, 11)).form).toBe('weekday');
+		expect(shortTimeOf(at(23, 11), now, at(23, 12))).toEqual({
+			form: 'date',
+			at: at(23, 11)
+		});
+	});
+
 	it('never counts down a free slot without an end', () => {
 		expect(shortTimeOf(at(16, 10), now).form).toBe('today');
 	});

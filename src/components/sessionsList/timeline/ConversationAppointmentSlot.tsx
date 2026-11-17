@@ -18,7 +18,12 @@ import {
 	apiGetSessionAppointments,
 	type SessionAppointment
 } from '../../../api/apiSessionAppointments';
-import { AppointmentDateDialog } from './AppointmentDateDialog';
+import {
+	AppointmentDateDialog,
+	type AppointmentDateDialogProps
+} from './AppointmentDateDialog';
+import { useDirectLinksAllowed } from '../../directLinks/useDirectLinksAllowed';
+import { useResponsive } from '../../../hooks/useResponsive';
 import { RoomNextAppointment } from './AppointmentSplitButton';
 import {
 	appointmentToBooking,
@@ -27,6 +32,23 @@ import {
 } from './conversationAppointments';
 import { buildFutureEntries, type FutureEntry } from './timelineModel';
 import { useAppointmentActions } from './useAppointmentActions';
+
+/* #2252: "Weitere Personen per Link einladen" only where "Direkteinladung
+   erlauben" allows a medium. Mounted with the dialog, so the agencies'
+   settings are read only when a counsellor opens it. */
+const CreateOrMoveDialog = (
+	props: Omit<AppointmentDateDialogProps, 'allowGuestInvite' | 'fullScreen'>
+) => {
+	const allowGuestInvite = useDirectLinksAllowed(!props.entry);
+	const { fromL } = useResponsive();
+	return (
+		<AppointmentDateDialog
+			{...props}
+			allowGuestInvite={allowGuestInvite}
+			fullScreen={!fromL}
+		/>
+	);
+};
 
 export const ConversationAppointmentSlot = ({
 	canChange,
@@ -113,7 +135,7 @@ export const ConversationAppointmentSlot = ({
 				onAction={onAction}
 			/>
 			{dialog && (
-				<AppointmentDateDialog
+				<CreateOrMoveDialog
 					sessionId={sessionId}
 					matrixRoomId={matrixRoomId}
 					entry={dialog.entry}

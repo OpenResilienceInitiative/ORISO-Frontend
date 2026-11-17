@@ -28,6 +28,7 @@ import listPlugin from '@fullcalendar/react/list';
 import interactionPlugin from '@fullcalendar/react/interaction';
 import deLocale from '@fullcalendar/react/locales/de';
 import { Popper } from '@mui/material';
+import FreeBreakfastOutlinedIcon from '@mui/icons-material/FreeBreakfastOutlined';
 import enGbLocale from '@fullcalendar/react/locales/en-gb';
 import frLocale from '@fullcalendar/react/locales/fr';
 import ruLocale from '@fullcalendar/react/locales/ru';
@@ -65,6 +66,8 @@ import type { PublicHoliday } from './calendarHolidays';
 import {
 	FC_CUSTOM_VIEWS,
 	FC_VIEW,
+	rangeTitleOf,
+	viewOfFcType,
 	type CalendarViewName
 } from './calendarViews';
 import {
@@ -78,7 +81,8 @@ import {
 	type ColleagueBand
 } from './calendarBands';
 import { CalendarEntryPeek, initialsOf } from './CalendarEntryPeek';
-import { fullCalendarLocale } from './calendarLocale';
+import { avatarToneClass } from './calendarAvatar';
+import { calendarLocale, fullCalendarLocale } from './calendarLocale';
 import { GRID_SLOT_PX } from './calendarZoom';
 import './calendar.styles.scss';
 
@@ -161,6 +165,8 @@ export interface CalendarViewProps {
 	highlight?: CalendarHighlight | null;
 	/** Owners whose entries are faded out (people bar). */
 	muted?: string[];
+	/** Entries just created: they flash twice (prototype v17). */
+	flashIds?: string[];
 	/** A free range in the time grid was selected (counsellors only). */
 	onSelectRange?: (
 		range: { start: Date; end: Date },
@@ -379,10 +385,51 @@ const propsOf = (info: { event: { extendedProps: unknown } }) =>
 	info.event.extendedProps as EventProps;
 
 const NO_PEOPLE: Colleague[] = [];
+const NO_IDS: string[] = [];
+
+/** Time grids wide enough for an entry's "10:00–11:00" line. */
+const WIDE_TIME_GRIDS = [FC_VIEW.day, FC_VIEW.threeDays, FC_VIEW.workWeek];
+
+/** The time axis reads "07:00" (prototype v17). */
+const SLOT_HEADER_FORMAT = {
+	hour: '2-digit',
+	minute: '2-digit',
+	hour12: false
+} as const;
+/** Day heads read "Mo., 16." (prototype v17). */
+const DAY_HEADER_FORMAT = { weekday: 'short', day: 'numeric' } as const;
+
+/** Today's head in the primary colour. */
+const dayHeaderInnerClass = (info: { isToday: boolean }) =>
+	info.isToday
+		? 'calendarView__dayHead calendarView__dayHead--today'
+		: 'calendarView__dayHead';
+/** The month: today's number in a pink circle, a tint on hover. */
+const dayCellClass = (info: { view: { type: string } }) =>
+	info.view.type.startsWith('dayGrid') ? 'calendarView__monthDay' : '';
+const dayCellTopInnerClass = (info: { isToday: boolean }) =>
+	info.isToday
+		? 'calendarView__dayNumber calendarView__dayNumber--today'
+		: 'calendarView__dayNumber';
+/** The list: no dot before an entry, a light head per day. */
+const LIST_DOT_CLASS = 'calendarView__listDot';
+const LIST_DAY_HEADER_CLASS = 'calendarView__listDay';
 const bandKey = (band: ColleagueBand) =>
 	`${band.start.getTime()}-${band.end.getTime()}`;
 
+/** A colleague's avatar in a band, in the colour of their chip. */
+const BandAvatar = ({ name }: { name: string }) => (
+	<span
+		className={`calendarView__bandAvatar ${avatarToneClass(name)}`}
+		aria-hidden="true"
+	>
+		{initialsOf(name)}
+	</span>
+);
+
 const DAY_MS = 86_400_000;
+/** FullCalendar's slot, and so what a click without dragging selects. */
+const SLOT_MS = 30 * 60_000;
 
 export const CalendarView = ({
 	controller,
@@ -404,6 +451,7 @@ export const CalendarView = ({
 	proposals = [],
 	highlight,
 	muted = [],
+	flashIds = NO_IDS,
 	onSelectRange,
 	onSelectDays,
 	onEntryOpen,
@@ -420,6 +468,12 @@ export const CalendarView = ({
 	const nowDate = now ?? new Date();
 	const consultant = role === 'consultant';
 	const gridRef = useRef<HTMLDivElement>(null);
+	const clock = new Intl.DateTimeFormat(calendarLocale(i18n.language), {
+		hour: '2-digit',
+		minute: '2-digit'
+	});
+	const timeRange = (from: Date, to: Date) =>
+		`${clock.format(from)}–${clock.format(to)}`;
 	const fontsReady = useFontsReady();
 	const [peek, setPeek] = useState<
 		| {
@@ -453,6 +507,10 @@ export const CalendarView = ({
 				? entries.filter((entry) => !foldsIntoBand(entry, people))
 				: entries,
 		[banded, entries, people]
+	);
+	const bandPeopleById = useMemo(
+		() => new Map(bandPeople.map((c) => [c.id, c])),
+		[bandPeople]
 	);
 	const bandLabel = (band: ColleagueBand) =>
 		people.length === 1
@@ -628,6 +686,12 @@ export const CalendarView = ({
 				colleague && 'calEntry--colleague',
 				proposal && 'calEntry--proposal',
 				!proposal && entry.id === soonId && 'calEntry--soon',
+				// The list is plain rows, not filled blocks (prototype v17).
+				info.view.type.startsWith('list') && 'calEntry--listRow',
+				!proposal &&
+					!colleague &&
+					flashIds.includes(entry.id) &&
+					'calEntry--flash',
 				dimmed && 'calEntry--dimmed',
 				muted.includes(entry.ownerId) && 'calEntry--muted'
 			]
@@ -636,7 +700,7 @@ export const CalendarView = ({
 		},
 		// nowDate is fixed in stories; in the app a re-render refreshes it.
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[ownerId, highlight?.owner, highlight?.facet, muted, soonId]
+		[ownerId, highlight?.owner, highlight?.facet, muted, soonId, flashIds]
 	);
 
 	const eventContent = (info: EventDisplayInfo) => {
@@ -659,50 +723,66 @@ export const CalendarView = ({
 			);
 		const colleague = entry.ownerId !== ownerId;
 		const owner = colleague ? colleagues[entry.ownerId] : undefined;
-		const timeGrid = info.view.type.startsWith('timeGrid');
+		const viewType = info.view.type;
+		const start = info.event.start;
+		const end = info.event.end;
+		// "10:00–11:00" on a line of its own where columns are wide enough:
+		// day, three days, work week; from 45 minutes (prototype v17).
+		const rangeShown =
+			WIDE_TIME_GRIDS.includes(viewType) &&
+			!info.event.allDay &&
+			!!start &&
+			!!end &&
+			end.getTime() - start.getTime() >= 45 * 60_000;
+		// The month names the start; the list has a time column of its own.
+		const timeShown =
+			viewType.startsWith('dayGrid') &&
+			!info.event.allDay &&
+			info.timeText;
+		// The advice seeker on one's own appointment, the colleague on
+		// theirs: an 18 px avatar in the person's colour.
+		const avatarName = owner
+			? owner.displayName
+			: !proposal && entry.type === 'appointment'
+				? entry.title
+				: undefined;
 		return (
 			<span className="calEntry__inner">
-				{owner && (
-					<span className="calEntry__initials" aria-hidden="true">
-						{initialsOf(owner.displayName)}
-					</span>
-				)}
-				{!owner &&
-					!proposal &&
-					entry.type === 'appointment' &&
-					entry.title && (
+				<span className="calEntry__line">
+					{avatarName && (
 						<span
-							className="calEntry__initials calEntry__initials--asker"
+							className={`calEntry__avatar ${avatarToneClass(avatarName)}`}
 							aria-hidden="true"
 						>
-							{initialsOf(entry.title)}
+							{initialsOf(avatarName)}
 						</span>
 					)}
-				<span className="calEntry__icon">
-					<CalendarEntryGlyph entry={entry} colleague={colleague} />
-				</span>
-				<span className="calEntry__text">
-					{info.timeText && !timeGrid && (
+					<span className="calEntry__icon">
+						<CalendarEntryGlyph
+							entry={entry}
+							colleague={colleague}
+						/>
+					</span>
+					{timeShown && (
 						<span className="calEntry__time">{info.timeText}</span>
 					)}
 					<span className="calEntry__title">
-						{proposal ? (
-							<>
-								{t('calendar.proposal.label')}
-								<span className="calEntry__waiting">
-									{' · '}
-									{proposalStatus(proposal)}
-								</span>
-							</>
-						) : (
-							<>
-								{owner ? `${owner.displayName} · ` : ''}
-								{info.event.title}
-							</>
-						)}
+						{proposal
+							? t('calendar.proposal.label')
+							: info.event.title}
 					</span>
 					{!proposal && entry.id === soonId && <SoonBadge />}
 				</span>
+				{proposal && (
+					<span className="calEntry__status">
+						{proposalStatus(proposal)}
+					</span>
+				)}
+				{rangeShown && !proposal && (
+					<span className="calEntry__range">
+						{timeRange(start!, end!)}
+					</span>
+				)}
 			</span>
 		);
 	};
@@ -722,9 +802,14 @@ export const CalendarView = ({
 
 	const backgroundContent = (info: EventDisplayInfo) => {
 		const { off, band } = propsOf(info);
-		if (band)
+		if (band) {
+			const busy = band.busy
+				.map((id) => bandPeopleById.get(id))
+				.filter((c): c is Colleague => !!c);
 			// Fills the band, so hovering or tapping anywhere on it explains
-			// who is busy and who is free.
+			// who is busy and who is free. Where there is room it also shows
+			// who: avatar and name as in the people bar (Frank *16); the
+			// stylesheet decides by the band's own size.
 			return (
 				<span
 					className="calendarView__bandFill"
@@ -732,13 +817,42 @@ export const CalendarView = ({
 					data-cy="calendar-band"
 				>
 					<span className="calendarView__bandLabel">
-						{bandLabel(band)}
+						{people.length === 1 && busy[0] && (
+							<BandAvatar name={busy[0].displayName} />
+						)}
+						<span className="calendarView__bandText">
+							{bandLabel(band)}
+						</span>
 					</span>
+					{people.length > 1 && (
+						<span
+							className="calendarView__bandPeople"
+							data-count={busy.length > 3 ? 'many' : busy.length}
+						>
+							{busy.map((c) => (
+								<span
+									key={c.id}
+									className="calendarView__bandPerson"
+								>
+									<BandAvatar name={c.displayName} />
+									<span className="calendarView__bandName">
+										{c.displayName}
+									</span>
+								</span>
+							))}
+						</span>
+					)}
 				</span>
 			);
+		}
+		// Centred between the two pause grips, a quiet pill with a cup
+		// (Frank *7.3), not in the top left corner.
 		return off?.kind === 'break' ? (
 			<span className="calendarView__breakLabel">
-				{t('calendar.workingHours.break')}
+				<span className="calendarView__breakPill">
+					<FreeBreakfastOutlinedIcon aria-hidden />
+					{t('calendar.workingHours.break')}
+				</span>
 			</span>
 		) : null;
 	};
@@ -852,7 +966,16 @@ export const CalendarView = ({
 	};
 
 	const showPeek = (event: React.SyntheticEvent) => {
-		const next = findPeek(event.target);
+		// FullCalendar's frame lies over the bands: a pointer over the frame
+		// may still be on a band, e.g. once a click's selection shadow is
+		// gone and the browser reports the frame (Frank *16.2).
+		const pointer =
+			event.type === 'mouseover' ? (event as React.MouseEvent) : null;
+		const next =
+			findPeek(event.target) ??
+			(pointer && bands.length > 0
+				? bandAt(pointer.clientX, pointer.clientY)
+				: null);
 		setPeek((current) =>
 			current?.el === next?.el ? current : (next ?? null)
 		);
@@ -863,15 +986,36 @@ export const CalendarView = ({
 	const datesSetRef = useRef(onDatesSet);
 	datesSetRef.current = onDatesSet;
 	const lastRange = useRef('');
+	// The title names the days shown, "16.–20. November 2026" for the work
+	// week (prototype v17), not FullCalendar's "November 2026".
+	const titleLocale = calendarLocale(i18n.language);
 	const datesSet = useCallback(
-		(info: { start: Date; end: Date; view: { title: string } }) => {
-			const key = `${info.start.getTime()}-${info.end.getTime()}-${info.view.title}`;
+		(info: {
+			start: Date;
+			end: Date;
+			view: {
+				type: string;
+				title: string;
+				currentStart: Date;
+				currentEnd: Date;
+			};
+		}) => {
+			const shown = viewOfFcType(info.view.type);
+			const title = shown
+				? rangeTitleOf(
+						shown,
+						info.view.currentStart,
+						info.view.currentEnd,
+						titleLocale
+					)
+				: info.view.title;
+			const key = `${info.start.getTime()}-${info.end.getTime()}-${title}`;
 			if (key === lastRange.current) return;
 			lastRange.current = key;
 			setShownRange({ start: info.start, end: info.end });
-			datesSetRef.current?.(info.view.title, info.start, info.end);
+			datesSetRef.current?.(title, info.start, info.end);
 		},
-		[]
+		[titleLocale]
 	);
 
 	// One click opens the actions, two open "Verschieben" straight away.
@@ -912,6 +1056,19 @@ export const CalendarView = ({
 				Math.round((info.end.getTime() - info.start.getTime()) / DAY_MS)
 			);
 			onSelectDays?.(info.start, days, anchor);
+			return;
+		}
+		// A click on a band explains the band; only dragging over it offers
+		// "Eintragen als". The menu would otherwise open at once and, as a
+		// modal, keep the pointer from every other band (Frank *16.2).
+		const clicked = info.end.getTime() - info.start.getTime() <= SLOT_MS;
+		const band =
+			clicked && pointer
+				? bandAt(pointer.clientX, pointer.clientY)
+				: null;
+		if (band) {
+			info.view.calendar.unselect();
+			setPeek(band);
 			return;
 		}
 		onSelectRange?.({ start: info.start, end: info.end }, anchor);
@@ -975,6 +1132,15 @@ export const CalendarView = ({
 					// it up (they are taller than the closest-out steps).
 					slotMinHeight={slotPx}
 					slotHeaderInnerClass="calendarView__slotLabel"
+					slotHeaderFormat={SLOT_HEADER_FORMAT}
+					dayHeaderFormat={DAY_HEADER_FORMAT}
+					dayHeaderInnerClass={dayHeaderInnerClass}
+					dayCellClass={dayCellClass}
+					dayCellTopInnerClass={dayCellTopInnerClass}
+					moreLinkClass="calendarView__more"
+					viewClass="calendarView__frame"
+					listItemEventBeforeClass={LIST_DOT_CLASS}
+					listDayHeaderClass={LIST_DAY_HEADER_CLASS}
 					scrollTime="08:00:00"
 					dayMaxEvents={3}
 					backgroundEventClass={backgroundClass}
@@ -1056,7 +1222,7 @@ export const CalendarView = ({
 				{/* Popper's root already is the `role="tooltip"`. */}
 				{peek && 'band' in peek && (
 					<div
-						className="calendarPeek calendarPeek--band"
+						className="calendarPeek calendarPeek--band calendarPeek--tip"
 						data-cy="calendar-band-peek"
 					>
 						<strong className="calendarPeek__when">
@@ -1095,6 +1261,7 @@ export const CalendarView = ({
 				)}
 				{peek && 'entry' in peek && (
 					<CalendarEntryPeek
+						variant="tip"
 						entry={peek.entry}
 						colleague={peekColleague}
 						proposal={peek.proposal}

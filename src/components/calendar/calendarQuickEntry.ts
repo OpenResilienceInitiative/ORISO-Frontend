@@ -141,6 +141,8 @@ const EN_DAYS: Record<string, number> = {
 const RANGE =
 	/\b(\d{1,2})(?::(\d{2}))?\s*(am|pm|uhr|h)?\s*(?:-|bis|to|until)\s*(\d{1,2})(?::(\d{2}))?\s*(am|pm|uhr|h)?/;
 const SINGLE = /\b(\d{1,2})(?::(\d{2}))?\s*(am|pm|uhr|h)?(?![\d.])/;
+/** "1030", "930": a time typed without its colon (test finding C9). */
+const COMPACT = /\b(\d{1,2})(\d{2})\s*(uhr|h)?(?![\d.])/;
 
 const startOfDay = (date: Date) => {
 	const day = new Date(date);
@@ -221,7 +223,19 @@ export const parseQuickEntry = (
 
 	const base = day ?? today;
 	const range = take(text.match(RANGE));
-	const single = range ? null : take(text.match(SINGLE));
+	const single = range
+		? null
+		: (take(text.match(SINGLE)) ??
+			(() => {
+				// Same groups as SINGLE; only a real clock time ("2575" stays
+				// text).
+				const compact = text.match(COMPACT);
+				return compact &&
+					Number(compact[1]) < 24 &&
+					Number(compact[2]) < 60
+					? take(compact)
+					: null;
+			})());
 	// "9:90" is no time: Date would quietly turn it into 10:30.
 	if (range) {
 		const startHour = hour24(Number(range[1]), range[3] ?? range[6]);
@@ -303,7 +317,11 @@ export interface QuickFields {
 	date: string;
 	/** HH:mm */
 	time: string;
-	duration: QuickDuration;
+	/**
+	 * Minutes: one of {@link QUICK_DURATIONS}, or exactly what a typed
+	 * range says ("9-12:30" is 210), never cut to a choice (test C2).
+	 */
+	duration: number;
 }
 
 const pad2 = (n: number) => String(n).padStart(2, '0');
@@ -314,16 +332,20 @@ export const dateField = (d: Date) =>
 export const timeField = (d: Date) =>
 	`${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
 
-/** The duration choice closest to `minutes`. */
-export const nearestDuration = (minutes: number): QuickDuration =>
-	QUICK_DURATIONS.reduce((best, d) =>
-		Math.abs(d - minutes) < Math.abs(best - minutes) ? d : best
-	);
+/**
+ * The lengths the "Dauer" field offers: the five choices, plus the length
+ * a typed range set when it is none of them, in order.
+ */
+export const durationChoices = (current?: number): number[] =>
+	current === undefined ||
+	(QUICK_DURATIONS as readonly number[]).includes(current)
+		? [...QUICK_DURATIONS]
+		: [...QUICK_DURATIONS, current].sort((a, b) => a - b);
 
 /**
  * What a typed line prefills: only the parts it names. "Do 14 Uhr" sets
  * date and start and keeps the chosen duration; "14-15:30" also the
- * duration.
+ * duration, to the minute.
  */
 export const fieldsFromEntry = (entry: QuickEntry): Partial<QuickFields> => {
 	if (!entry.start) return {};
@@ -332,7 +354,7 @@ export const fieldsFromEntry = (entry: QuickEntry): Partial<QuickFields> => {
 		time: timeField(entry.start)
 	};
 	if (entry.endGiven && entry.end && entry.end > entry.start)
-		out.duration = nearestDuration(
+		out.duration = Math.round(
 			(entry.end.getTime() - entry.start.getTime()) / 60_000
 		);
 	return out;

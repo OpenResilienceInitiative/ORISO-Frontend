@@ -97,6 +97,7 @@ import { useTranslation } from 'react-i18next';
 import EventOutlinedIcon from '@mui/icons-material/EventOutlined';
 import VerifiedUserOutlinedIcon from '@mui/icons-material/VerifiedUserOutlined';
 import { useKeepAccountDialog } from '../temporaryAccount/KeepAccountEntry';
+import AddLinkOutlinedIcon from '@mui/icons-material/AddLinkOutlined';
 import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider';
 import { useMatrixRoomUsers } from '../../hooks/useMatrixRoomUsers';
 import LegalLinks from '../legalLinks/LegalLinks';
@@ -154,6 +155,11 @@ export interface SessionMenuProps {
 	 * counsellor may create one here and the backend can store it.
 	 */
 	onCreateAppointment?: () => void;
+	/**
+	 * #2252: "Neuen Link senden" for an expired Direkteinladung of this
+	 * conversation. Set only while there is one.
+	 */
+	onSendNewLink?: () => void;
 }
 
 // #1262 — backend advice-request APIs are not ready (US#1034). Keep the owner-only item visible but inert.
@@ -945,6 +951,25 @@ export const SessionMenu = (props: SessionMenuProps) => {
 										icon={<VerifiedUserOutlinedIcon />}
 										title={translate(
 											'guestAccountMode.keep.action'
+										)}
+									/>
+								</button>
+							)}
+
+							{props.onSendNewLink && (
+								<button
+									type="button"
+									className="sessionMenu__item chatMenuDropdown__item"
+									onClick={() => {
+										closeMenu();
+										props.onSendNewLink?.();
+									}}
+									data-cy="session-menu-send-new-link"
+								>
+									<SessionMenuItemContent
+										icon={<AddLinkOutlinedIcon />}
+										title={translate(
+											'directInvitation.conversation.sendNewLink'
 										)}
 									/>
 								</button>

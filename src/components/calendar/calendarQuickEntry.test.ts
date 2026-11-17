@@ -7,7 +7,7 @@ import ti from '../../resources/i18n/ti/common.json';
 import tr from '../../resources/i18n/tr/common.json';
 import {
 	fieldsFromEntry,
-	nearestDuration,
+	durationChoices,
 	parseQuickEntry,
 	quickEntryGaps,
 	rangeFromFields
@@ -164,14 +164,14 @@ describe('quick entry fields', () => {
 				endGiven: true
 			})
 		).toEqual({ date: '2026-11-19', time: '14:00', duration: 60 });
-		// 14:00–15:20 is closest to 90 minutes.
+		// 14:00–15:20 stays 80 minutes, not the nearest choice (test C2).
 		expect(
 			fieldsFromEntry({
 				start: at(19, 14),
 				end: at(19, 15, 20),
 				endGiven: true
 			}).duration
-		).toBe(90);
+		).toBe(80);
 		expect(fieldsFromEntry({ start: at(19, 14) })).toEqual({
 			date: '2026-11-19',
 			time: '14:00'
@@ -196,12 +196,19 @@ describe('quick entry fields', () => {
 		expect(rangeFromFields({ time: '14:00' })).toBeUndefined();
 	});
 
-	it('rounds a typed length to the nearest choice', () => {
-		expect(nearestDuration(20)).toBe(30);
-		expect(nearestDuration(50)).toBe(45);
-		// Two hours is a choice since prototype v15.
-		expect(nearestDuration(120)).toBe(120);
-		expect(nearestDuration(240)).toBe(120);
+	it('keeps a typed range longer than two hours whole (test C2)', () => {
+		const typed = parseQuickEntry('2.12. 9-12:30 Sperrzeit', { now });
+		const fields = fieldsFromEntry(typed);
+		expect(fields.duration).toBe(210);
+		const range = rangeFromFields(fields)!;
+		expect(range.end.getHours()).toBe(12);
+		expect(range.end.getMinutes()).toBe(30);
+	});
+
+	it('offers a typed length beside the five choices, in order', () => {
+		expect(durationChoices(60)).toEqual([30, 45, 60, 90, 120]);
+		expect(durationChoices(210)).toEqual([30, 45, 60, 90, 120, 210]);
+		expect(durationChoices(80)).toEqual([30, 45, 60, 80, 90, 120]);
 	});
 });
 
@@ -255,4 +262,21 @@ describe('quick entry placeholder examples (review 4574779949)', () => {
 				.forEach(([kind]) => expect(parsed.kind).toBe(kind));
 		}
 	);
+});
+
+describe('parseQuickEntry — four digits as a time (test finding C9)', () => {
+	const now = new Date(2026, 10, 16, 9, 50);
+	it('reads "1030" as 10:30 and "930" as 9:30', () => {
+		expect(parseQuickEntry('morgen 1030 Video', { now }).start).toEqual(
+			new Date(2026, 10, 17, 10, 30)
+		);
+		expect(parseQuickEntry('morgen 930 Video', { now }).start).toEqual(
+			new Date(2026, 10, 17, 9, 30)
+		);
+	});
+	it('reads no time from "2575"', () => {
+		expect(
+			parseQuickEntry('morgen 2575 Video', { now }).start
+		).toBeUndefined();
+	});
 });
