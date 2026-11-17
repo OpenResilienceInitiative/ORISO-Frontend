@@ -184,6 +184,54 @@ export const roomMentionMemberIds = (
 		.map((member) => `${member.userId}`);
 
 /**
+ * The @-mention directory of a room whose members are all colleagues, such
+ * as an internal colleague chat (FE#1211). That chat belongs to no
+ * counselling centre, so the agency list cannot name its people; the room
+ * itself can. Keyed by Matrix id, which is also what the mention carries.
+ */
+export const roomMemberMentionDirectory = (
+	room:
+		| {
+				getMembers?: () => Array<{
+					userId?: string;
+					name?: string;
+					membership?: string;
+				}>;
+		  }
+		| null
+		| undefined,
+	selfMatrixUserId?: string | null
+): Map<
+	string,
+	{ displayName: string; username: string; matrixUserId: string }
+> => {
+	const directory = new Map<
+		string,
+		{ displayName: string; username: string; matrixUserId: string }
+	>();
+	(room?.getMembers?.() || []).forEach((member) => {
+		const userId = `${member?.userId || ''}`.trim();
+		if (
+			!isMatrixUserId(userId) ||
+			userId === selfMatrixUserId ||
+			isTechnicalMatrixUser(userId) ||
+			(member.membership !== 'join' && member.membership !== 'invite')
+		) {
+			return;
+		}
+		const username = decodeUsernameSafely(
+			userId.replace(/^@/, '').split(':')[0]
+		);
+		directory.set(userId, {
+			displayName: `${member.name || ''}`.trim() || username,
+			username,
+			matrixUserId: userId
+		});
+	});
+	return directory;
+};
+
+/**
  * Pairs the agency directory with who is in the room. Exact identity only: a
  * shared surname or homeserver must never mark somebody as in the chat, and
  * above all must never put another person's Matrix id on their mention pill.

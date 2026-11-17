@@ -98,9 +98,11 @@ import {
 	groupAudienceOptions,
 	resolveMentionCandidates,
 	roomMentionMemberIds,
+	roomMemberMentionDirectory,
 	type AudienceKind,
 	type AudienceOption
 } from './audienceOptions';
+import { mentionDirectorySource } from './mentionDirectorySource';
 import {
 	AUTHORITIES,
 	getContact,
@@ -2800,6 +2802,8 @@ export const MessageSubmitInterfaceComponent = ({
 	}, [activeInfo, activeSession, translate, userData]);
 
 	const isSelfHelpGroup = getModality(activeSession) === Modality.SELF_HELP;
+	const isInternalGroup =
+		getModality(activeSession) === Modality.INTERNAL_GROUP;
 	// Practice: no uploads and no voice (one gate for buttons, input, paste, shortcuts).
 	const isPracticing = usePracticeActive();
 	const effectiveFeatures = useConversationFeatureSettings(tenant?.settings);
@@ -2946,14 +2950,27 @@ export const MessageSubmitInterfaceComponent = ({
 			userData
 		);
 		const isAskerOnly = hasAskerAuthority && !hasConsultantAuthority;
-		if (isAskerOnly || isAnonymousChat) {
+		const source = mentionDirectorySource({
+			isAskerOnly,
+			modality: getModality(activeSession),
+			agencyId
+		});
+		if (source === 'none') {
 			// Mentions are a counsellor tool; askers and anonymous chats have
 			// no directory by design, not by failure.
 			setAgencyConsultantDirectory(new Map());
 			setMentionDirectoryState('unavailable');
 			return;
 		}
-		if (!agencyId) {
+		if (source === 'room') {
+			// FE#1211: an internal colleague chat has no centre to ask. Its
+			// names are read from the room when the list opens (see
+			// mentionDataRef below), so there is nothing to load here.
+			setAgencyConsultantDirectory(new Map());
+			setMentionDirectoryState('ready');
+			return;
+		}
+		if (source === 'missing') {
 			setAgencyConsultantDirectory(new Map());
 			setMentionDirectoryState('error');
 			apiPostError({
@@ -2988,11 +3005,10 @@ export const MessageSubmitInterfaceComponent = ({
 						}
 						const displayName =
 							`${consultant?.displayName || ''}`.trim();
-						const fallbackName = `${consultant?.firstName || ''} ${
-							consultant?.lastName || ''
-						}`
-							.trim()
-							.replace(/\s+/g, ' ');
+						const fallbackName =
+							`${consultant?.firstName || ''} ${consultant?.lastName || ''}`
+								.trim()
+								.replace(/\s+/g, ' ');
 						// #1998: the list sends the stored, encoded name
 						// ("enc.…"); room members carry the plain one in their
 						// Matrix id, so only the decoded name can match them.
@@ -3038,6 +3054,7 @@ export const MessageSubmitInterfaceComponent = ({
 		activeSession?.item?.agencyId,
 		activeSession?.agency?.id,
 		isAnonymousChat,
+		isInternalGroup,
 		userData
 	]);
 
@@ -4132,7 +4149,7 @@ export const MessageSubmitInterfaceComponent = ({
 	// once on mount, so its getCandidates closure reads through this ref to
 	// always see the current agency directory and room membership.
 	const mentionDataRef = useRef({
-		directory: agencyConsultantDirectory,
+		readDirectory: () => agencyConsultantDirectory,
 		directoryState: mentionDirectoryState,
 		readMemberIds: (): string[] => [],
 		reachOutsideRoom: false,
@@ -4145,23 +4162,38 @@ export const MessageSubmitInterfaceComponent = ({
 	// component does not re-render while someone types, so a snapshot from
 	// the last render can predate the room's members.
 	const teamMentionRoomId = teamDiscussion ? targetRoomId : undefined;
-	useLoadRoomMembers(teamMentionRoomId);
+	// FE#1211: an internal colleague chat names its people from its own room,
+	// read the same way when the list opens.
+	const internalMentionRoomId =
+		!teamMentionRoomId && isInternalGroup
+			? getMatrixRoomId() || undefined
+			: undefined;
+	const liveMentionRoomId = teamMentionRoomId || internalMentionRoomId;
+	useLoadRoomMembers(liveMentionRoomId);
+	const readLiveMentionRoom = () =>
+		liveMentionRoomId
+			? matrixClientService?.getClient?.()?.getRoom?.(liveMentionRoomId)
+			: undefined;
 	const audienceMentionMemberIds = audienceOptions
 		.filter((option) => option.value !== AUDIENCE_ALL)
 		.map((option) => option.value);
 	mentionDataRef.current = {
-		directory: agencyConsultantDirectory,
+		readDirectory: () =>
+			internalMentionRoomId
+				? roomMemberMentionDirectory(
+						readLiveMentionRoom(),
+						getCurrentMatrixUserId()
+					)
+				: agencyConsultantDirectory,
 		directoryState: mentionDirectoryState,
 		// Intentional mentions (#435): audienceOptions already resolves room
 		// members to their real Matrix user id (option.value is member.userId
 		// for room members — see the audience-options effect above), so only
 		// a *resolved* member id ends up in a mention.
 		readMemberIds: () =>
-			teamMentionRoomId
+			liveMentionRoomId
 				? roomMentionMemberIds(
-						matrixClientService
-							?.getClient?.()
-							?.getRoom?.(teamMentionRoomId),
+						readLiveMentionRoom(),
 						getCurrentMatrixUserId()
 					)
 				: audienceMentionMemberIds,
@@ -4184,10 +4216,10 @@ export const MessageSubmitInterfaceComponent = ({
 			getCheckedLabel: (count: number) =>
 				translate('message.mention.checked', { value: count }),
 			getCandidates: () => {
-				const { directory, readMemberIds, reachOutsideRoom } =
+				const { readDirectory, readMemberIds, reachOutsideRoom } =
 					mentionDataRef.current;
 				return resolveMentionCandidates(
-					directory,
+					readDirectory(),
 					readMemberIds(),
 					reachOutsideRoom
 				);
