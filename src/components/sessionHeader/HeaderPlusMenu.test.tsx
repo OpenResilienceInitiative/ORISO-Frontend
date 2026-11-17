@@ -87,6 +87,23 @@ describe('HeaderPlusMenu', () => {
 		expect(onClose).toHaveBeenCalledTimes(2);
 	});
 
+	it('closes when keyboard focus leaves it, not when it moves inside (review)', () => {
+		const outside = document.createElement('button');
+		const opener = document.createElement('button');
+		document.body.append(outside, opener);
+		const { onClose } = renderMenu({ opener: { current: opener } });
+		const [supervision, handover] = screen.getAllByRole('menuitem');
+		fireEvent.blur(supervision, { relatedTarget: handover });
+		fireEvent.blur(handover, { relatedTarget: opener });
+		fireEvent.blur(handover, { relatedTarget: null });
+		expect(onClose).not.toHaveBeenCalled();
+		fireEvent.blur(handover, { relatedTarget: outside });
+		expect(onClose).toHaveBeenCalledTimes(1);
+		expect(document.activeElement).not.toBe(opener);
+		outside.remove();
+		opener.remove();
+	});
+
 	it('sits below the "+" and stays inside the window', () => {
 		expect(plusMenuPosition({ left: 100, bottom: 60 }, 1440)).toEqual({
 			top: 68,

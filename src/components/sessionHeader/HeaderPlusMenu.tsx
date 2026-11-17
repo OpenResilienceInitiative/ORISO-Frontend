@@ -103,6 +103,17 @@ export const HeaderPlusMenu = ({
 				data-cy="session-header-plus-menu"
 				style={{ width: MENU_WIDTH }}
 				onKeyDown={handleMenuKeyDown}
+				onBlur={(e) => {
+					// Tab out of the menu closes it; moving between its items,
+					// back to the "+" or out of the window does not.
+					const next = e.relatedTarget as Node | null;
+					if (
+						next &&
+						!ref.current?.contains(next) &&
+						!opener?.current?.contains(next)
+					)
+						onClose();
+				}}
 			>
 				<ChatMenuDropdownItem
 					role="menuitem"

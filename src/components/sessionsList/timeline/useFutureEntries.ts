@@ -83,8 +83,9 @@ export const useFutureEntries = ({
 		apiGetUpcomingAppointments()
 			.then(
 				(items) => {
-					// Only a successful answer is shared with the room header.
-					if (Array.isArray(items))
+					// Only a successful, still current answer is shared with
+					// the room header; a superseded one must not replace it.
+					if (active && Array.isArray(items))
 						rememberUpcomingAppointments(items, epoch);
 					return items;
 				},

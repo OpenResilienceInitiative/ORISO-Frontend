@@ -209,6 +209,45 @@ describe('ConversationAppointmentSlot', () => {
 			const { container } = renderSlot(vi.fn());
 			expect(row(container)).toBeNull();
 		});
+
+		it("does not reuse an earlier visit's load when coming back (review)", async () => {
+			const Slot = ({ id }: { id: number }) => (
+				<UserDataContext.Provider
+					value={
+						{
+							userData: {
+								userId: 'c1',
+								grantedAuthorities: [
+									AUTHORITIES.CONSULTANT_DEFAULT
+								]
+							}
+						} as never
+					}
+				>
+					<ActiveSessionContext.Provider
+						value={
+							{
+								activeSession: {
+									item: { id, matrixRoomId: `!r${id}:x` },
+									rid: `!r${id}:x`
+								}
+							} as never
+						}
+					>
+						<ConversationAppointmentSlot canChange />
+					</ActiveSessionContext.Provider>
+				</UserDataContext.Provider>
+			);
+			getAppointments.mockResolvedValueOnce([upcoming()]);
+			const { container, rerender } = render(<Slot id={4401} />);
+			await waitFor(() => expect(row(container)).not.toBeNull());
+
+			getAppointments.mockReturnValue(new Promise(() => undefined));
+			rerender(<Slot id={5502} />);
+			rememberUpcomingAppointments([], appointmentsEpoch());
+			rerender(<Slot id={4401} />);
+			expect(row(container)).toBeNull();
+		});
 	});
 
 	it('lends the chat cards its create dialog, saying whether one is booked', async () => {

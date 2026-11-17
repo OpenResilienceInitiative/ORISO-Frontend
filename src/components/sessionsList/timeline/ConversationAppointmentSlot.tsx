@@ -89,6 +89,9 @@ export const ConversationAppointmentSlot = ({
 	useEffect(() => {
 		setDialog(null);
 	}, [sessionId]);
+	/* The own load belongs to this visit: leaving drops it, so coming back
+	   starts from what is known now, not from an older answer. */
+	useEffect(() => () => setLoaded(undefined), [sessionId]);
 	useEffect(() => {
 		if (sessionId === undefined) return undefined;
 		let active = true;
