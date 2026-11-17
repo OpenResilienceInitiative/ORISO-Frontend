@@ -10,7 +10,49 @@ describe('add-on panel in the URL', () => {
 		});
 		expect(parseAddonPanel('?addon=only-name')).toBeNull();
 		expect(parseAddonPanel('?addon=a/b/c')).toBeNull();
+		expect(
+			parseAddonPanel('?addon=a/b/consultant.session-menu/d')
+		).toBeNull();
 		expect(parseAddonPanel('')).toBeNull();
+	});
+
+	it('keeps the slot the panel was opened from', () => {
+		expect(parseAddonPanel('?addon=a/b/consultant.session-menu')).toEqual({
+			addonName: 'a',
+			appId: 'b',
+			slot: 'consultant.session-menu'
+		});
+		expect(
+			withAddonPanel('', {
+				addonName: 'a',
+				appId: 'b',
+				slot: 'consultant.session-menu'
+			})
+		).toBe('?addon=a%2Fb%2Fconsultant.session-menu');
+		const both = {
+			slots: ['consultant.session', 'consultant.session-menu']
+		} as const;
+		expect(
+			addonPanelSlot(
+				{ slots: [...both.slots] },
+				'consultant',
+				'consultant.session-menu'
+			)
+		).toBe('consultant.session-menu');
+		expect(
+			addonPanelSlot(
+				{ slots: ['consultant.session'] },
+				'consultant',
+				'consultant.session-menu'
+			)
+		).toBe('consultant.session');
+		expect(
+			addonPanelSlot(
+				{ slots: ['asker.session-menu'] },
+				'consultant',
+				'asker.session-menu'
+			)
+		).toBeUndefined();
 	});
 
 	it('opens the add-on panel instead of another channel and keeps other parameters', () => {

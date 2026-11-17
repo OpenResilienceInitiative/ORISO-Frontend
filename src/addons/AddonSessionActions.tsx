@@ -52,7 +52,8 @@ export const AddonSessionActions = () => {
 										? null
 										: {
 												addonName: addon.name,
-												appId: app.id
+												appId: app.id,
+												slot: 'consultant.session'
 											}
 								)
 							})

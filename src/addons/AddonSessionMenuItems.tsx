@@ -59,7 +59,8 @@ export const AddonSessionMenuItems = ({
 								pathname: location.pathname,
 								search: withAddonPanel(location.search, {
 									addonName: addon.name,
-									appId: app.id
+									appId: app.id,
+									slot
 								})
 							});
 						}}

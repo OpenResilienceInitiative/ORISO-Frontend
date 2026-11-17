@@ -116,7 +116,7 @@ describe('AddonSessionMenuItems', () => {
 
 		expect(onSelect).toHaveBeenCalledTimes(1);
 		expect(screen.getByTestId('search').textContent).toBe(
-			'?addon=digisucht-tools%2Fgoals'
+			'?addon=digisucht-tools%2Fgoals%2Fasker.session-menu'
 		);
 	});
 });

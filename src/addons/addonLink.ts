@@ -42,7 +42,7 @@ export const addonLinkPath = (
 		slot === 'consultant.session-menu' ||
 		slot === 'asker.session-menu'
 	) {
-		return `${caseView}?${new URLSearchParams({ addon: `${addon}/${appId}` })}`;
+		return `${caseView}?${new URLSearchParams({ addon: `${addon}/${appId}/${slot}` })}`;
 	}
 	if (slot === 'consultant.asker-profile') {
 		return `${caseView}/userProfile`;
