@@ -103,6 +103,9 @@ export const isJoinedMatrixRoom = (roomId: string): boolean =>
 		?.getRoom?.(roomId)
 		?.getMyMembership?.() === 'join';
 
+/** Entries that ask for a decision answered in Activity's detail view. */
+const DECISION_EVENT_TYPES = new Set(['case.handover.consent.requested']);
+
 export const showsConversationPreview = (
 	row: ActivityEventRow,
 	isJoinedRoom: (roomId: string) => boolean = isJoinedMatrixRoom
@@ -111,6 +114,10 @@ export const showsConversationPreview = (
 	if (!isKnownEventType(row?.eventType)) return false;
 	if (getEventDescriptor(row.eventType).belongsToConversation !== true)
 		return false;
+	// A request for the advice seeker's decision keeps its detail view: the
+	// approve/decline buttons live there, the conversation has none (#2275
+	// review).
+	if (DECISION_EVENT_TYPES.has(row.eventType)) return false;
 	// Without a joined room the preview could only say "not available", so the
 	// entry keeps its detail view and "Next notification".
 	const roomId = activityEventRoomId(row);

@@ -334,6 +334,21 @@ describe('#2226 showsConversationPreview', () => {
 		}
 	});
 
+	it('keeps the detail view for a consent request, where its approve and decline buttons are', () => {
+		expect(
+			showsConversationPreview(
+				row('case.handover.consent.requested', { roomRef: '!room:x' }),
+				joined
+			)
+		).toBe(false);
+		expect(
+			showsConversationPreview(
+				row('case.handover.granted', { roomRef: '!room:x' }),
+				joined
+			)
+		).toBe(true);
+	});
+
 	it('keeps the detail view when this app has not joined the named room', () => {
 		const asked: string[] = [];
 		const notJoined = (roomId: string) => {

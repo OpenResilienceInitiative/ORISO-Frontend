@@ -271,9 +271,9 @@ $rail-pill-padding: 3px;
 		background: var(--m3-hover-layer, #f9eff0);
 	}
 
+	// The same keyboard halo as the rail pills.
 	&:focus-visible {
-		outline: 2px solid var(--m3-primary, #a5000a);
-		outline-offset: 2px;
+		@include list-item-focus-treatment;
 	}
 
 	svg {

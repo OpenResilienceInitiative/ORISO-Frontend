@@ -141,6 +141,12 @@ export const SessionsListWrapper = ({
 		() => handleResize(DEFAULT_LIST_WIDTH),
 		[handleResize]
 	);
+	// Review (CodeRabbit): beside an open side pane a narrow screen (about
+	// 900-980 px) leaves the list less room than its text layout needs, so
+	// widening would stay a rail. The rail then offers no search button rather
+	// than one that does nothing; the pane stays as the reader opened it.
+	const railWiden =
+		maxListWidth >= ICON_ONLY_THRESHOLD ? handleWiden : undefined;
 
 	if (hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData)) {
 		return (
@@ -151,10 +157,7 @@ export const SessionsListWrapper = ({
 					position: 'relative'
 				}}
 			>
-				<SessionListRailProvider
-					rail={isIconOnly}
-					onWiden={handleWiden}
-				>
+				<SessionListRailProvider rail={isIconOnly} onWiden={railWiden}>
 					<SessionsList
 						defaultLanguage={fixedLanguages[0]}
 						sessionTypes={sessionTypes}
@@ -179,7 +182,7 @@ export const SessionsListWrapper = ({
 				position: 'relative'
 			}}
 		>
-			<SessionListRailProvider rail={isIconOnly} onWiden={handleWiden}>
+			<SessionListRailProvider rail={isIconOnly} onWiden={railWiden}>
 				<SessionsList
 					defaultLanguage={fixedLanguages[0]}
 					sessionTypes={sessionTypes}
