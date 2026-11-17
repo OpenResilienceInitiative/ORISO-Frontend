@@ -31,7 +31,15 @@ const asker = {
 const temporaryAsker = {
 	...asker,
 	userName: 'eule_mika_4821',
-	temporaryAccount: true
+	temporaryAccount: true,
+	/* The server says keeping it will succeed (guest chooses). */
+	temporaryAccountKeepAllowed: true
+};
+
+/** UserService#1662: a temporary account that may not be kept (TEMPORARY). */
+const temporaryAskerNoKeep = {
+	...temporaryAsker,
+	temporaryAccountKeepAllowed: false
 };
 
 const consultant = {
@@ -180,7 +188,14 @@ const keepOfferedWithoutDisplayNames = async (canvasElement: HTMLElement) => {
 	await expect(
 		canvasElement.querySelector('.askerDisplayNameSettings')
 	).toBeNull();
+	await expectNoPasswordCard(canvasElement);
 };
+
+/* A temporary account has no password of its own to change. */
+const expectNoPasswordCard = async (canvasElement: HTMLElement) =>
+	expect(
+		within(canvasElement).queryByRole('heading', { name: 'Passwort' })
+	).toBeNull();
 
 export const TemporaryAskerDesktop1440: Story = {
 	name: 'Temporary asker · security · 1440 (#1662)',
@@ -197,6 +212,30 @@ export const TemporaryAskerMobile390Security: Story = {
 		router: { initialPath: '/profile/einstellungen/sicherheit' }
 	},
 	play: ({ canvasElement }) => keepOfferedWithoutDisplayNames(canvasElement)
+};
+
+/** Neither "Konto behalten" nor a password card when keeping would fail. */
+export const TemporaryAskerNoKeepMobile390Security: Story = {
+	name: 'Temporary asker · may not keep · security · 390 (#1662)',
+	decorators: [withStage(temporaryAskerNoKeep)],
+	globals: phone390,
+	parameters: {
+		router: { initialPath: '/profile/einstellungen/sicherheit' }
+	},
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await waitFor(
+			() =>
+				expect(canvas.getAllByRole('heading').length).toBeGreaterThan(
+					0
+				),
+			{ timeout: 8000 }
+		);
+		await expect(
+			canvas.queryByRole('button', { name: 'Konto behalten' })
+		).toBeNull();
+		await expectNoPasswordCard(canvasElement);
+	}
 };
 
 export const TemporaryAskerGeneral1440: Story = {

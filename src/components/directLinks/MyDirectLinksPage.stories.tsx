@@ -19,6 +19,8 @@ const SAMPLE_LINKS: DirectLink[] = [
 		topicId: 3,
 		medium: 'VIDEO',
 		temporary: true,
+		// UserService#1662: the chip names the mode ("Temporär").
+		guestAccountMode: 'TEMPORARY',
 		active: true,
 		url: 'https://app.oriso.org/invite/Ab3dE6gH'
 	},
@@ -29,6 +31,7 @@ const SAMPLE_LINKS: DirectLink[] = [
 		topicId: 4,
 		medium: 'CHAT',
 		temporary: false,
+		guestAccountMode: 'PERMANENT',
 		active: true,
 		url: 'https://app.oriso.org/invite/Zy8xW6vU',
 		// #2142: the date and time the counsellor noted.
@@ -41,6 +44,8 @@ const SAMPLE_LINKS: DirectLink[] = [
 		topicId: 3,
 		medium: 'AUDIO',
 		temporary: true,
+		// "Gast wählt", no longer "Temporär".
+		guestAccountMode: 'GUEST_CHOOSES',
 		active: false,
 		url: 'https://app.oriso.org/invite/Qr5sT2uV'
 	}
@@ -134,6 +139,26 @@ const meta: Meta<typeof PageStory> = {
 };
 export default meta;
 type Story = StoryObj<typeof PageStory>;
+
+/** UserService#1662: "Temporär" for TEMPORARY only, "Gast wählt" for GUEST_CHOOSES. */
+export const ModeChips: Story = {
+	name: 'Account chips per mode (#1662)',
+	args: { initial: SAMPLE_LINKS },
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const chipsOf = async (name: string) =>
+			Array.from(
+				(await canvas.findByText(name))
+					.closest('li')!
+					.querySelectorAll('.directLinkChip')
+			).map((chip) => chip.textContent);
+		await expect(await chipsOf('Flyer Schule')).toEqual(['Temporär']);
+		await expect(await chipsOf('Plakat Rathaus')).toEqual([]);
+		await expect(await chipsOf('Telefonsprechstunde')).toEqual([
+			'Gast wählt'
+		]);
+	}
+};
 
 export const WithLinks: Story = {
 	name: 'Links (desktop)',

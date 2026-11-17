@@ -174,6 +174,20 @@ describe('Security and privacy groups', () => {
 			).toBeNull();
 		});
 
+		it('shows no empty sign-in group when there is neither a keep card nor two-factor', () => {
+			render(view('asker', false, true, false));
+			expect(
+				screen.queryByRole('region', {
+					name: 'profile.securityPrivacy.account.title'
+				})
+			).toBeNull();
+			expect(
+				screen.getByRole('region', {
+					name: 'profile.securityPrivacy.recovery.title'
+				})
+			).toBeTruthy();
+		});
+
 		it('offers no keep card when the server will not let it keep', () => {
 			render(view('asker', true, true, false));
 			expect(

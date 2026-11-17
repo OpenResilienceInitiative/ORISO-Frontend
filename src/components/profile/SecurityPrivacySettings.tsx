@@ -48,36 +48,44 @@ export const SecurityPrivacySettings = ({
 	/* UserService#1662: a guest without an account may keep it; until then
 	   the display names stay hidden (the server refuses changes anyway). */
 	const temporary = Boolean(asker && userData.temporaryAccount);
+	const keepable = temporary && isKeepableTemporaryAccount(userData);
+	/* A temporary account that may not be kept has no card here at all
+	   (no password, no keep offer); without two-factor the group stays out
+	   instead of showing an empty heading. */
+	const hasAccountCards =
+		!temporary || keepable || Boolean(userData.twoFactorAuth?.isEnabled);
 	return (
 		<div className="securityPrivacySettings">
-			<section aria-labelledby={`${id}-account`}>
-				<h2 id={`${id}-account`} className="headline headline--4">
-					{t('profile.securityPrivacy.account.title')}
-				</h2>
-				<p className="securityPrivacySettings__description">
-					{t('profile.securityPrivacy.account.description')}
-				</p>
-				<div className="profile__cards securityPrivacySettings__cards">
-					{temporary && isKeepableTemporaryAccount(userData) && (
-						<ProfileCard icon={VerifiedUserOutlinedIcon}>
-							<KeepAccountEntry />
-						</ProfileCard>
-					)}
-					{/* A temporary account has no password of its own to
+			{hasAccountCards && (
+				<section aria-labelledby={`${id}-account`}>
+					<h2 id={`${id}-account`} className="headline headline--4">
+						{t('profile.securityPrivacy.account.title')}
+					</h2>
+					<p className="securityPrivacySettings__description">
+						{t('profile.securityPrivacy.account.description')}
+					</p>
+					<div className="profile__cards securityPrivacySettings__cards">
+						{keepable && (
+							<ProfileCard icon={VerifiedUserOutlinedIcon}>
+								<KeepAccountEntry />
+							</ProfileCard>
+						)}
+						{/* A temporary account has no password of its own to
 					    change (it was generated at entry); keeping the
 					    account sets one. */}
-					{!temporary && (
-						<ProfileCard icon={LockOutlinedIcon}>
-							<PasswordReset />
-						</ProfileCard>
-					)}
-					{userData.twoFactorAuth?.isEnabled && (
-						<ProfileCard icon={ShieldOutlinedIcon}>
-							<TwoFactorAuth />
-						</ProfileCard>
-					)}
-				</div>
-			</section>
+						{!temporary && (
+							<ProfileCard icon={LockOutlinedIcon}>
+								<PasswordReset />
+							</ProfileCard>
+						)}
+						{userData.twoFactorAuth?.isEnabled && (
+							<ProfileCard icon={ShieldOutlinedIcon}>
+								<TwoFactorAuth />
+							</ProfileCard>
+						)}
+					</div>
+				</section>
+			)}
 			<section aria-labelledby={`${id}-recovery`}>
 				<h2 id={`${id}-recovery`} className="headline headline--4">
 					{t('profile.securityPrivacy.recovery.title')}
