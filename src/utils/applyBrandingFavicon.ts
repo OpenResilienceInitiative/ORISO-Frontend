@@ -28,6 +28,15 @@ export const applyBrandingFavicon = (favicon: string): void => {
 	}
 
 	links.forEach((link) => {
+		// A section tab icon is showing (sectionFavicon/tabIconLinks): the
+		// branding becomes the default it returns to, the section icon stays.
+		if (link.hasAttribute('data-section-icon')) {
+			link.setAttribute('data-default-href', favicon);
+			link.setAttribute('data-default-type', '\u0000');
+			link.setAttribute('data-default-sizes', '\u0000');
+			return;
+		}
+		if (link.hasAttribute('data-section-icon-png')) return;
 		link.setAttribute('href', favicon);
 		link.removeAttribute('sizes');
 		link.removeAttribute('type');

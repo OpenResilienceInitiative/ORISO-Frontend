@@ -12,6 +12,7 @@ import {
 	E2EEProvider
 } from '../../globalState';
 import { NavigationBar } from './NavigationBar';
+import { SectionFavicon } from './sectionFavicon/SectionFavicon';
 import { Header } from '../header/Header';
 import { ReleaseNote } from '../releaseNote/ReleaseNote';
 import { Walkthrough } from '../walkthrough/Walkthrough';
@@ -95,6 +96,9 @@ export const Routing = (props: RoutingProps) => {
 								<NavigationBar
 									routerConfig={routerConfig}
 									onLogout={logout}
+								/>
+								<SectionFavicon
+									navigation={routerConfig.navigation}
 								/>
 								<section className="contentWrapper">
 									<Header />

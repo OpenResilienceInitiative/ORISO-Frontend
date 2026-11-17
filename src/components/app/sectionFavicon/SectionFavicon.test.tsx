@@ -1,0 +1,108 @@
+// @vitest-environment oriso-jsdom
+import * as React from 'react';
+import { act } from 'react';
+import { createRoot, type Root } from 'react-dom/client';
+import { MemoryRouter, useNavigate } from 'react-router-dom';
+import { afterEach, beforeEach, describe, expect, it } from 'vite-plus/test';
+import { SectionFavicon } from './SectionFavicon';
+import { TenantContext } from '../../../globalState/provider/TenantProvider';
+import { NavChatsIconFilled } from '../navigationSidebarIcons';
+
+const Profile = () => (
+	<svg viewBox="0 0 24 24">
+		<path d="M0 0h1" />
+	</svg>
+);
+const navigation = [
+	{ to: '/sessions/consultant/sessionView', iconFilled: NavChatsIconFilled },
+	{ to: '/profile', icon: Profile }
+];
+
+let go: (to: string) => void = () => {};
+const Navigator = () => {
+	const navigate = useNavigate();
+	go = (to) => navigate(to);
+	return null;
+};
+
+const iconHrefs = () =>
+	Array.from(
+		document.querySelectorAll<HTMLLinkElement>("link[rel~='icon']")
+	).map((l) => l.getAttribute('href') ?? '');
+
+const svgOf = (href: string) =>
+	decodeURIComponent(href.slice('data:image/svg+xml,'.length));
+
+describe('SectionFavicon', () => {
+	let container: HTMLDivElement;
+	let root: Root;
+
+	const render = (path: string, primaryColor = '#cc1e1c') =>
+		act(() => {
+			root.render(
+				<TenantContext.Provider
+					value={
+						{
+							tenant: { theming: { primaryColor } } as any,
+							setTenant: () => {},
+							updateTenantSettings: () => {}
+						} as any
+					}
+				>
+					<MemoryRouter initialEntries={[path]}>
+						<Navigator />
+						<SectionFavicon navigation={navigation} />
+					</MemoryRouter>
+				</TenantContext.Provider>
+			);
+		});
+
+	beforeEach(() => {
+		// jsdom has no canvas: the PNG fallback is skipped (covered in Storybook).
+		HTMLCanvasElement.prototype.getContext = (() => null) as any;
+		document.head.innerHTML = '<link rel="icon" href="/favicon.ico" />';
+		container = document.createElement('div');
+		document.body.appendChild(container);
+		root = createRoot(container);
+	});
+	afterEach(() => {
+		act(() => root.unmount());
+		container.remove();
+	});
+
+	it('shows the section icon in the tenant colour and follows route changes', () => {
+		render('/sessions/consultant/sessionView/1/2');
+		const [chats] = iconHrefs();
+		expect(chats.startsWith('data:image/svg+xml,')).toBe(true);
+		expect(svgOf(chats)).toContain('color="#cc1e1c"');
+		expect(svgOf(chats)).toContain('viewBox="0 0 27 27"');
+
+		act(() => go('/profile'));
+		const [profile] = iconHrefs();
+		expect(profile).not.toBe(chats);
+		expect(svgOf(profile)).toContain('viewBox="0 0 24 24"');
+	});
+
+	it('keeps the default favicon on routes without a section', () => {
+		render('/drafts');
+		expect(iconHrefs()).toEqual(['/favicon.ico']);
+	});
+
+	it('returns to the default favicon on leaving a section and on unmount', () => {
+		render('/profile');
+		expect(iconHrefs()[0]).not.toBe('/favicon.ico');
+		act(() => go('/drafts'));
+		expect(iconHrefs()).toEqual(['/favicon.ico']);
+		act(() => go('/profile'));
+		act(() => root.unmount());
+		expect(iconHrefs()).toEqual(['/favicon.ico']);
+		root = createRoot(container);
+	});
+
+	it('redraws when the tenant colour arrives later', () => {
+		render('/profile', '#1c4f8f');
+		expect(svgOf(iconHrefs()[0])).toContain('#1c4f8f');
+		render('/profile', '#a5000a');
+		expect(svgOf(iconHrefs()[0])).toContain('#a5000a');
+	});
+});
