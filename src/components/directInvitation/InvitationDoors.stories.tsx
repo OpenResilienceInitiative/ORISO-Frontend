@@ -257,44 +257,62 @@ export const CalendarFromSlotPhone: Story = {
 
 const onDone = fn();
 
+const ChatErstellenCard = () => (
+	<div className="conversationCreate">
+		<div className="conversationCreate__single">
+			<DirectLinkCreateCard
+				topics={[{ value: '4', label: 'Schulden' }]}
+				agencies={[{ id: 88, topicIds: [4] }]}
+				media={['CHAT', 'AUDIO', 'VIDEO']}
+				onDone={onDone}
+				initialMedium="AUDIO"
+				preset={{ ...SLOT, kind: 'phone' }}
+			/>
+		</div>
+	</div>
+);
+
+/** Audio preselected from the Art; the dialog opens with the calendar's time. */
+const openFromCalendar = async (canvas: ReturnType<typeof within>) => {
+	await expect(
+		canvas.getByRole('button', { name: 'Audioanruf' })
+	).toHaveAttribute('aria-pressed', 'true');
+	await userEvent.click(
+		canvas.getByRole('button', { name: 'Link erstellen' })
+	);
+	const root = await body().findByTestId('invitation-dialog');
+	await expect(
+		within(root).getByRole('switch', { name: 'Mit Termin' })
+	).toBeChecked();
+	await expect(sections(root)).toEqual(['slot', 'link']);
+	return root;
+};
+
 /**
  * Door A, opened from the calendar's "Neue Person per Direkteinladung …":
  * the medium comes from the Art (Telefon → audio call), and the
  * Direkteinladung opens with "Mit Termin" on and the calendar's time.
  */
+export const ChatErstellenFromCalendarDialog: Story = {
+	name: 'Chat erstellen · Direkteinladung opened with the calendar slot · 1440',
+	globals: desktop1440Globals,
+	beforeEach: () => installDirectLinkMockApi(),
+	render: () => <ChatErstellenCard />,
+	play: async ({ canvas }) => {
+		await openFromCalendar(canvas);
+	}
+};
+
+/** The same, saved: the invitation carries the calendar's time. */
 export const ChatErstellenFromCalendar: Story = {
 	name: 'Chat erstellen · Direkteinladung with the calendar slot · 1440',
 	globals: desktop1440Globals,
 	beforeEach: () => installDirectLinkMockApi(),
-	render: () => (
-		<div className="conversationCreate">
-			<div className="conversationCreate__single">
-				<DirectLinkCreateCard
-					topics={[{ value: '4', label: 'Schulden' }]}
-					agencies={[{ id: 88, topicIds: [4] }]}
-					media={['CHAT', 'AUDIO', 'VIDEO']}
-					onDone={onDone}
-					initialMedium="AUDIO"
-					preset={{ ...SLOT, kind: 'phone' }}
-				/>
-			</div>
-		</div>
-	),
+	render: () => <ChatErstellenCard />,
 	play: async ({ canvas }) => {
-		await expect(
-			canvas.getByRole('button', { name: 'Audioanruf' })
-		).toHaveAttribute('aria-pressed', 'true');
+		const root = await openFromCalendar(canvas);
 		await userEvent.click(
-			canvas.getByRole('button', { name: 'Link erstellen' })
-		);
-		const root = await body().findByTestId('invitation-dialog');
-		const dialog = within(root);
-		await expect(
-			dialog.getByRole('switch', { name: 'Mit Termin' })
-		).toBeChecked();
-		await expect(sections(root)).toEqual(['slot', 'link']);
-		await userEvent.click(
-			dialog.getByRole('button', { name: 'Erstellen' })
+			within(root).getByRole('button', { name: 'Erstellen' })
 		);
 		await waitFor(() =>
 			expect(
