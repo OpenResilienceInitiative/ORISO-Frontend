@@ -92,12 +92,19 @@ describe('parseAddonCalendar', () => {
 		});
 	});
 
-	it('gives all-day entries the whole day and unknown kinds the appointment kind', () => {
+	it('ends all-day entries at the next local midnight and gives unknown kinds the appointment kind', () => {
 		const [entry] = parseAddonCalendar({
-			entries: [{ ...rawEntry, kind: 'party', allDay: true }]
+			entries: [
+				{
+					...rawEntry,
+					kind: 'party',
+					allDay: true,
+					start: new Date(2026, 10, 20, 15, 0).toISOString()
+				}
+			]
 		});
 		expect(entry.kind).toBe('appointment');
-		expect(entry.end?.toISOString()).toBe('2026-11-21T09:00:00.000Z');
+		expect(entry.end?.getTime()).toBe(new Date(2026, 10, 21).getTime());
 	});
 
 	it('returns nothing for an unexpected response', () => {
@@ -146,6 +153,23 @@ describe('useAddonCalendarEntries', () => {
 
 	const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 
+	it("asks from the start of today, so today's all-day entries stay", async () => {
+		vi.mocked(apiGetAddonRegistry).mockResolvedValue([tools]);
+		renderHook(() => useCalendar(true));
+		await waitFor(() => expect(vi.mocked(fetchData)).toHaveBeenCalled());
+		const query = new URLSearchParams(
+			vi.mocked(fetchData).mock.calls[0][0].url.split('?')[1]
+		);
+		const today = new Date();
+		expect(Date.parse(query.get('from') ?? '')).toBe(
+			new Date(
+				today.getFullYear(),
+				today.getMonth(),
+				today.getDate()
+			).getTime()
+		);
+	});
+
 	it('asks for at most 92 days', async () => {
 		vi.mocked(apiGetAddonRegistry).mockResolvedValue([tools]);
 		renderHook(() => {
@@ -163,8 +187,14 @@ describe('useAddonCalendarEntries', () => {
 		expect(days).toBe(92);
 	});
 
-	it('does not call the AddonService without add-ons', async () => {
+	it('loads entries of apps that are only visible in a case', async () => {
 		vi.mocked(apiGetAddonRegistry).mockResolvedValue([]);
+		const { result } = renderHook(() => useCalendar(true));
+		await waitFor(() => expect(result.current).toHaveLength(1));
+	});
+
+	it('does not call the calendar without an AddonService', async () => {
+		vi.mocked(apiGetAddonRegistry).mockResolvedValue(null);
 		renderHook(() => useCalendar(true));
 		await waitFor(() =>
 			expect(vi.mocked(apiGetAddonRegistry)).toHaveBeenCalled()

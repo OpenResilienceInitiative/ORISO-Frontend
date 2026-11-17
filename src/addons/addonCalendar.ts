@@ -37,6 +37,9 @@ const toDate = (value: unknown): Date | undefined => {
 	return Number.isNaN(date.getTime()) ? undefined : date;
 };
 
+const startOfDay = (date: Date, offsetDays = 0) =>
+	new Date(date.getFullYear(), date.getMonth(), date.getDate() + offsetDays);
+
 const toTexts = (value: unknown): Record<string, string> =>
 	isRecord(value)
 		? (Object.fromEntries(
@@ -61,9 +64,7 @@ const toEntry = (raw: unknown): AddonCalendarEntry | null => {
 		return null;
 	}
 	const allDay = raw.allDay === true;
-	const end =
-		toDate(raw.end) ??
-		(allDay ? new Date(start.getTime() + DAY_MS) : undefined);
+	const end = toDate(raw.end) ?? (allDay ? startOfDay(start, 1) : undefined);
 	const link = isRecord(raw.link) ? raw.link : {};
 	const sessionId = link.sessionId;
 	return {
@@ -118,7 +119,10 @@ export const apiGetAddonCalendar = async (
 	}
 };
 
-/** Add-on calendar entries from now until `monthsAhead`; loads only when the user has add-ons. */
+/**
+ * Add-on calendar entries from the start of today until `monthsAhead`; loads once an AddonService
+ * answered, also when no app is visible outside a case.
+ */
 export const useAddonCalendarEntries = ({
 	enabled,
 	monthsAhead
@@ -126,9 +130,9 @@ export const useAddonCalendarEntries = ({
 	enabled: boolean;
 	monthsAhead: number;
 }): AddonCalendarEntry[] => {
-	const { addons } = useAddonRegistry();
+	const { addons, available } = useAddonRegistry();
 	const [entries, setEntries] = useState<AddonCalendarEntry[]>([]);
-	const active = enabled && addons.length > 0;
+	const active = enabled && available;
 
 	useEffect(() => {
 		if (!active) {
@@ -136,7 +140,7 @@ export const useAddonCalendarEntries = ({
 			return undefined;
 		}
 		let current = true;
-		const from = new Date();
+		const from = startOfDay(new Date());
 		const to = new Date(from);
 		to.setMonth(to.getMonth() + monthsAhead);
 		const latest = new Date(from.getTime() + MAX_RANGE_DAYS * DAY_MS);
