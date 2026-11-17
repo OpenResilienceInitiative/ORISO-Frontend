@@ -25,7 +25,9 @@ export const apiGetAddonRegistry = async (
 		const response: AddonRegistryResponse = await fetchData({
 			url: endpoints.addonRegistry,
 			method: FETCH_METHODS.GET,
+			// fetchData parses a GET with headers as JSON only when they name the content type.
 			headersData: {
+				'Content-Type': 'application/json',
 				[AGENCY_HEADER]: context.agencyId?.toString(),
 				[SESSION_HEADER]: context.sessionId?.toString()
 			},
