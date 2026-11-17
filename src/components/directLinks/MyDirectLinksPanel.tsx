@@ -131,12 +131,14 @@ export const MyDirectLinksPanel = ({
 		useState<DirectLink | null>(null);
 	const [invitationError, setInvitationError] = useState<string>();
 	/* Each open of the invitation dialog is its own editor: a save that
-	   answers after it was closed (or another one opened) changes nothing. */
+	   answers after it was closed (or another one opened) changes nothing,
+	   not even the busy state, and a new editor starts without one. */
 	const invitationEditor = useRef(0);
 	const openInvitationEditor = (link: DirectLink | null) => {
 		invitationEditor.current += 1;
 		setEditingInvitation(link);
 		setInvitationError(undefined);
+		setSaving(false);
 	};
 
 	/* An invitation whose validity ends while the overview is open moves to
@@ -223,7 +225,7 @@ export const MyDirectLinksPanel = ({
 			if (editor === invitationEditor.current)
 				setInvitationError(t('directLink.edit.failed'));
 		} finally {
-			setSaving(false);
+			if (editor === invitationEditor.current) setSaving(false);
 		}
 	};
 

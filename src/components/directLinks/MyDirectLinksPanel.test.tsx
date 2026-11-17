@@ -697,6 +697,62 @@ describe('Termine & Direkteinladungen (#2252)', () => {
 		expect(screen.getByTestId('invitation-dialog')).toBeTruthy();
 	});
 
+	it('keeps a newer save busy when an earlier, closed one answers', async () => {
+		const other: DirectLink = {
+			...meeting,
+			id: '10',
+			name: 'Termin Herr K.',
+			url: 'https://app.example/invite/t10',
+			appointment: {
+				id: 'a-10',
+				start: inTwoDays(14),
+				end: inTwoDays(15)
+			}
+		};
+		vi.mocked(apiGetOwnDirectLinks).mockResolvedValue([meeting, other]);
+		const answers: ((link: DirectLink) => void)[] = [];
+		vi.mocked(apiUpdateDirectLink).mockImplementation(
+			() =>
+				new Promise<DirectLink>((resolve) => {
+					answers.push(resolve);
+				})
+		);
+		renderPage();
+		await screen.findAllByTestId('upcoming-invitation');
+		const editOf = (name: string) =>
+			screen.getByRole('button', {
+				name: `directInvitation.overview.edit:${name}`
+			});
+		const saveIn = (dialog: HTMLElement) =>
+			within(dialog).getByRole('button', {
+				name: 'directInvitation.dialog.saveAction'
+			}) as HTMLButtonElement;
+
+		fireEvent.click(editOf('Termin Frau M.'));
+		const first = await screen.findByTestId('invitation-dialog');
+		fireEvent.click(saveIn(first));
+		await waitFor(() => expect(answers).toHaveLength(1));
+		fireEvent.keyDown(first, { key: 'Escape' });
+		await waitFor(() =>
+			expect(screen.queryByTestId('invitation-dialog')).toBeNull()
+		);
+
+		fireEvent.click(editOf('Termin Herr K.'));
+		const second = await screen.findByTestId('invitation-dialog');
+		/* The new editor has not saved anything yet. */
+		expect(saveIn(second).disabled).toBe(false);
+		fireEvent.click(saveIn(second));
+		await waitFor(() => expect(answers).toHaveLength(2));
+		expect(saveIn(second).disabled).toBe(true);
+
+		await act(async () => answers[0](meeting));
+
+		/* Save B is still running. */
+		expect(saveIn(screen.getByTestId('invitation-dialog')).disabled).toBe(
+			true
+		);
+	});
+
 	/* A fixed clock: the page must not depend on rendering fast enough to
 	   see the row before it expires (#2252 review). */
 	const settle = (ms = 0) =>
