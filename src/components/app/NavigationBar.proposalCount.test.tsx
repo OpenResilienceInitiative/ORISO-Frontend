@@ -118,7 +118,7 @@ describe('NavigationBar "Meine Termine" count (FE#1050)', () => {
 			apiGetCalendarProposals.mockResolvedValue(proposals(2));
 			const { container } = renderNavigation();
 			await waitFor(() => expect(count(container)).toBe('2'));
-			// "Meine Termine, 2 offene Anfragen" (keys: no catalogue here).
+			// "Meine Termine, 2 offene Verschiebungen" (keys: no catalogue here).
 			expect(calendarLink(container).getAttribute('aria-label')).toBe(
 				'navigation.booking.events, calendar.proposal.navCount'
 			);

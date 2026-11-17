@@ -19,6 +19,9 @@ export interface MyDirectLinksViewProps {
 	onCreate: () => void;
 	onRetry: () => void;
 	onCopy?: (url: string) => void | Promise<void>;
+	/** *19: title and one line for the calendar's "Links ohne Termin". */
+	title?: string;
+	description?: string;
 }
 
 /** The round button: links are only created in "Create chat". */
@@ -74,7 +77,9 @@ export const MyDirectLinksView = ({
 	onEdit,
 	onCreate,
 	onRetry,
-	onCopy
+	onCopy,
+	title,
+	description
 }: MyDirectLinksViewProps) => {
 	const { t } = useTranslation();
 
@@ -115,6 +120,8 @@ export const MyDirectLinksView = ({
 				onCopy={onCopy}
 				headerAction={<CreateButton onCreate={onCreate} />}
 				emptyState={<DirectLinksEmptyState />}
+				title={title}
+				description={description}
 			/>
 			{toggleFailed && (
 				<p role="alert" className="myDirectLinksPage__error">

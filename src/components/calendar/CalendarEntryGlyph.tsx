@@ -37,6 +37,19 @@ export const facetOf = (entry: CalendarEntry): CalendarEntryFacet => {
 	return entry.kind ?? 'video';
 };
 
+/**
+ * Whether the display filter shows a facet: not hidden, and among the
+ * "only these" kinds when some are chosen. The grid and the search use
+ * the same rule, so search finds nothing the grid would not show.
+ */
+export const facetShown = (
+	facet: CalendarEntryFacet,
+	onlyFacets: CalendarEntryFacet[],
+	hiddenFacets: CalendarEntryFacet[]
+) =>
+	!hiddenFacets.includes(facet) &&
+	(onlyFacets.length === 0 || onlyFacets.includes(facet));
+
 export const FacetIcon = ({
 	facet,
 	...props

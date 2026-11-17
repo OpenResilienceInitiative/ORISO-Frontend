@@ -14,6 +14,7 @@ import {
 	endLoginHandover,
 	finishLoginHandover,
 	isLoginHandoverActive,
+	LOGIN_HANDOVER_CONTENT_GRACE_MS,
 	resetLoginHandoverForTests
 } from './loginHandover';
 import { TenantThemingLoader } from './TenantThemingLoader';
@@ -33,6 +34,14 @@ vi.mock('../modal/Modal', () => ({
 }));
 vi.mock('../spinner/Spinner', () => ({ Spinner: () => null }));
 
+const frames = () =>
+	act(
+		() =>
+			new Promise<void>((resolve) =>
+				setTimeout(resolve, LOGIN_HANDOVER_CONTENT_GRACE_MS + 20)
+			)
+	);
+
 describe('TenantThemingLoader during a login handover', () => {
 	beforeEach(() => {
 		isLoadingTheme = true;
@@ -43,11 +52,12 @@ describe('TenantThemingLoader during a login handover', () => {
 		endLoginHandover();
 	});
 
-	it('keeps the handover until the theme is loaded after the app is ready', () => {
+	it('keeps the handover until the theme is loaded after the app is ready', async () => {
 		beginLoginHandover();
 		const view = render(<TenantThemingLoader />);
 
 		act(() => finishLoginHandover());
+		await frames();
 		expect(isLoginHandoverActive()).toBe(true);
 		expect(
 			view.container.querySelector('[data-cy="theme-modal"]')
@@ -55,17 +65,19 @@ describe('TenantThemingLoader during a login handover', () => {
 
 		isLoadingTheme = false;
 		view.rerender(<TenantThemingLoader />);
+		await frames();
 		expect(isLoginHandoverActive()).toBe(false);
 		expect(
 			view.container.querySelector('[data-cy="theme-modal"]')
 		).toBeNull();
 	});
 
-	it('ends at once when the theme is already there', () => {
+	it('ends at once when the theme is already there', async () => {
 		isLoadingTheme = false;
 		beginLoginHandover();
 		render(<TenantThemingLoader />);
 		act(() => finishLoginHandover());
+		await frames();
 		expect(isLoginHandoverActive()).toBe(false);
 	});
 

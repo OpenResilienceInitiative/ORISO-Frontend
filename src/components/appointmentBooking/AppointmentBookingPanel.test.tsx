@@ -23,7 +23,9 @@ vi.mock('react-i18next', () => ({
 			TRANSLATIONS[key] ??
 			(typeof fallback === 'string'
 				? fallback
-				: ((fallback?.defaultValue as string) ?? key))
+				: ((fallback?.defaultValue as string) ?? key)),
+		// The date picker names months in the UI language (test finding C8).
+		i18n: { language: 'en-GB' }
 	})
 }));
 

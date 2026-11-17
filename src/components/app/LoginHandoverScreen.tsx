@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { Loading } from './Loading';
 import {
 	endLoginHandover,
+	getContinuedLoginHandoverLabel,
 	isLoginHandoverActive,
 	removeLoginHandoverSplash,
 	useLoginHandoverActive
@@ -28,6 +29,8 @@ export interface LoginHandoverScreenProps {
 	animateIn?: boolean;
 	/** Fade out to reveal the app. */
 	leaving?: boolean;
+	/** Overrides the default label (the words the login page showed). */
+	label?: string;
 }
 
 /**
@@ -38,9 +41,9 @@ export interface LoginHandoverScreenProps {
 export const LoginHandoverScreen = forwardRef<
 	HTMLDivElement,
 	LoginHandoverScreenProps
->(({ animateIn = false, leaving = false }, ref) => {
+>(({ animateIn = false, leaving = false, label: labelProp }, ref) => {
 	const { t } = useTranslation();
-	const label = t('app.wait');
+	const label = labelProp ?? t('app.wait');
 	return (
 		<div
 			ref={ref}
@@ -157,6 +160,7 @@ export const LoginHandoverGate = () => {
 			ref={screenRef}
 			animateIn={!continued}
 			leaving={!active}
+			label={continued ? getContinuedLoginHandoverLabel() : undefined}
 		/>,
 		document.body
 	);

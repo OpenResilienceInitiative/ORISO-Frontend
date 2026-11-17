@@ -254,3 +254,39 @@ describe('MessageItemComponent — further counselling notices (FE#1876)', () =>
 		expect(document.body.textContent).not.toContain('newSessionId');
 	});
 });
+
+describe('MessageItemComponent — "Neuen Link senden" notice (#2252)', () => {
+	const renewed = `[SYSTEM_NOTIFICATION]${JSON.stringify({
+		type: 'DIRECT_INVITATION_RENEWED',
+		url: 'https://app.example/invite/new'
+	})}`;
+
+	it('links the new invitation in the conversation', () => {
+		renderNotice({
+			raw: renewed,
+			senderId: MOCK_CONSULTANT_MATRIX_ID,
+			viewer: 'asker'
+		});
+		expect(
+			screen
+				.getByRole('link', { name: 'https://app.example/invite/new' })
+				.getAttribute('href')
+		).toBe('https://app.example/invite/new');
+	});
+
+	it.each(['interactive', 'read'] as const)(
+		'shows the new link as plain text in the Activity Timeline (%s preview), which must not leave the Timeline',
+		(previewMode) => {
+			renderNotice({
+				raw: renewed,
+				senderId: MOCK_CONSULTANT_MATRIX_ID,
+				viewer: 'asker',
+				previewMode
+			});
+			expect(
+				screen.getByText('https://app.example/invite/new')
+			).toBeTruthy();
+			expect(screen.queryByRole('link')).toBeNull();
+		}
+	);
+});

@@ -256,7 +256,8 @@ describe('shared params contract (#846)', () => {
 				'slot',
 				'important',
 				'title',
-				'text'
+				'text',
+				'linkId'
 			].sort()
 		);
 	});

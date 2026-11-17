@@ -23,6 +23,7 @@ import { apiAddSessionSupervisor } from '../../api/apiAddSessionSupervisor';
 import { apiRemoveSessionSupervisor } from '../../api/apiRemoveSessionSupervisor';
 import { apiSendMessage } from '../../api/apiSendMessage';
 import { ConversationAppointmentSlot } from '../sessionsList/timeline/ConversationAppointmentSlot';
+import { ConversationNewLinkAction } from '../directInvitation/ConversationNewLinkAction';
 import {
 	NotificationsContext,
 	NOTIFICATION_TYPE_SUCCESS,
@@ -274,6 +275,14 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 	>(undefined);
 	const handleCreateAppointmentChange = useCallback(
 		(open?: () => void) => setOpenCreateAppointment(() => open),
+		[]
+	);
+	// #2252: "Neuen Link senden" while an invitation of this chat expired.
+	const [sendNewLink, setSendNewLink] = useState<(() => void) | undefined>(
+		undefined
+	);
+	const handleSendNewLinkChange = useCallback(
+		(open?: () => void) => setSendNewLink(() => open),
 		[]
 	);
 	const [supervisionReason, setSupervisionReason] = useState<string>('');
@@ -1287,6 +1296,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 					}
 					callsInMenu={callsInMenu}
 					onCreateAppointment={openCreateAppointment}
+					onSendNewLink={sendNewLink}
 					isAskerInfoAvailable={isAskerInfoAvailable()}
 					bannedUsers={props.bannedUsers}
 					isSupervisor={isSupervisor}
@@ -1352,6 +1362,16 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 					)}
 					{topic?.name && <SessionTopic name={topic.name} />}
 				</div>
+			)}
+			{activeSession.isSession && isConsultantUser && (
+				<ConversationNewLinkAction
+					sessionId={activeSession.item.id}
+					/* Also archived: the expiry archives the appointment
+					   conversation, and a new link reopens it. The backend
+					   answers only for the invitation's own counsellor. */
+					enabled
+					onChange={handleSendNewLinkChange}
+				/>
 			)}
 			{activeSession.isSession && (isAskerUser || isConsultantUser) && (
 				<ConversationAppointmentSlot

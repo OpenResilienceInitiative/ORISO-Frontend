@@ -284,7 +284,10 @@ const prepareHistory = async (
 		if (
 			path.endsWith('/supervisors') ||
 			path.endsWith('/consultants') ||
-			/\/sessions\/\d+\/appointments$/.test(path)
+			/\/sessions\/\d+\/appointments$/.test(path) ||
+			// #2252: the header looks for an expired invitation of this chat.
+			(path === '/service/users/directlinks' &&
+				route.request().method() === 'GET')
 		)
 			return route.fulfill({ json: [] });
 		if (path.includes('/sessions/room'))

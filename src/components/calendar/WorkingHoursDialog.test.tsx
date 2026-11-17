@@ -124,3 +124,50 @@ describe('WorkingHoursDialog — a pause per weekday (Frank, prototype v15)', ()
 		).toBe(true);
 	});
 });
+
+describe('WorkingHoursDialog — "Vom Montag übernehmen" (prototype v17)', () => {
+	const copy = () =>
+		document.querySelector<HTMLButtonElement>(
+			'[data-cy="calendar-hours-copy-monday"]'
+		)!;
+	const timesOf = (weekday: number) =>
+		Array.from(
+			document.querySelectorAll<HTMLInputElement>(
+				`[data-cy="calendar-hours-${weekday}"] input[type="time"], [data-cy="calendar-hours-pause-${weekday}"] input[type="time"]`
+			)
+		).map((input) => input.value);
+
+	it("puts Monday's times and pause on every working day, not on days off", () => {
+		const onSave = vi.fn();
+		open(
+			[
+				{ weekday: 1, start: '09:00', end: '12:30' },
+				{ weekday: 1, start: '13:30', end: '17:00' },
+				{ weekday: 2, start: '08:00', end: '18:00' },
+				{ weekday: 4, start: '10:00', end: '14:00' }
+			],
+			onSave
+		);
+		expect(copy().textContent).toBe('calendar.workingHours.copyMonday');
+		fireEvent.click(copy());
+		expect(timesOf(2)).toEqual(timesOf(1));
+		expect(timesOf(4)).toEqual(timesOf(1));
+		fireEvent.click(save());
+		const [[hours]] = onSave.mock.calls;
+		expect(
+			hours.filter((w: { weekday: number }) => w.weekday === 4)
+		).toEqual([
+			{ weekday: 4, start: '09:00', end: '12:30' },
+			{ weekday: 4, start: '13:30', end: '17:00' }
+		]);
+		// Wednesday stays off.
+		expect(hours.some((w: { weekday: number }) => w.weekday === 3)).toBe(
+			false
+		);
+	});
+
+	it('rests while Monday is off', () => {
+		open([{ weekday: 2, start: '08:00', end: '18:00' }]);
+		expect(copy().disabled).toBe(true);
+	});
+});

@@ -89,6 +89,14 @@ export const endpoints = {
 	directLink: (linkId: string) =>
 		userServiceOrigin +
 		`/service/users/directlinks/${encodeURIComponent(linkId)}`,
+	/** #2252 "Neuen Link senden": a new token for the same appointment. */
+	directLinkRenewal: (linkId: string) =>
+		userServiceOrigin +
+		`/service/users/directlinks/${encodeURIComponent(linkId)}/renewal`,
+	/** #2252 "Neuen Link anfragen": a person asks the counsellor. */
+	inviteLinkRenewalRequests: (token: string) =>
+		userServiceOrigin +
+		`/service/users/invitelinks/${encodeURIComponent(token)}/renewal-requests`,
 	userDrafts: userServiceOrigin + '/service/users/drafts',
 	tutorialProgress: userServiceOrigin + '/service/users/tutorials/progress',
 	email: userServiceOrigin + '/service/users/email',
@@ -101,9 +109,9 @@ export const endpoints = {
 	groupChatBase: userServiceOrigin + '/service/users/chat/',
 	internalSubsetChat:
 		userServiceOrigin + '/service/users/chat/internal-subset',
-	agencyAdminContacts: (agencyId: number) =>
+	agencyContactPerson: (agencyId: number) =>
 		userServiceOrigin +
-		`/service/users/agencies/${agencyId}/admin-contacts`,
+		`/service/users/agencies/${agencyId}/contact-person`,
 	chatSeriesBase: userServiceOrigin + '/service/users/chat-series/',
 	callKnocks: userServiceOrigin + '/service/users/call-knocks',
 	keycloakAccessToken:
@@ -147,6 +155,10 @@ export const endpoints = {
 	sessionBase: userServiceOrigin + '/service/users/sessions',
 	sessionAppointments: (sessionId: number) =>
 		userServiceOrigin + `/service/users/sessions/${sessionId}/appointments`,
+	/** #2252: invite more people by link into a 1:1, for an appointment. */
+	sessionDirectInvitations: (sessionId: number) =>
+		userServiceOrigin +
+		`/service/users/sessions/${sessionId}/direct-invitations`,
 	upcomingAppointments:
 		userServiceOrigin + '/service/users/appointments/upcoming',
 	calendarBase: userServiceOrigin + '/service/users/calendar',

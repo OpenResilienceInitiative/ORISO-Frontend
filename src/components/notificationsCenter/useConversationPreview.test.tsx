@@ -470,6 +470,26 @@ describe('useConversationPreview (#1824)', () => {
 		expect(result.current?.capabilities.composer).toBe(false);
 	});
 
+	it('settles a failed session lookup as hidden, so the entry explains it (#2275 review)', async () => {
+		fakes.useSession.mockReturnValue({ session: null, ready: true });
+		const { result } = render(row());
+		await waitFor(() =>
+			expect(result.current?.hidesContentSettled).toBe(true)
+		);
+		expect(result.current?.capabilities.readOnlyReason).toBe(
+			'sessionUnknown'
+		);
+		expect(result.current?.capabilities.contentHidden).toBe(true);
+	});
+
+	it('does not settle while the session lookup is still running', async () => {
+		fakes.useSession.mockReturnValue({ session: null, ready: false });
+		const { result } = render(row());
+		await new Promise((resolve) => setTimeout(resolve, 20));
+		expect(result.current?.hidesContentSettled).toBe(false);
+		expect(result.current?.capabilities.contentHidden).toBe(true);
+	});
+
 	it('stays read only when the group info cannot be loaded', async () => {
 		fakes.useSession.mockReturnValue({
 			session: session({

@@ -64,4 +64,16 @@
 			height: 16px;
 		}
 	}
+
+	// Outlined, like "Nächste Benachrichtigung": the second way out.
+	&__action--secondary {
+		border: 1px solid var(--m3-outline-variant, #c4c7c7);
+		background: var(--m3-surface-container-lowest, #ffffff);
+		color: var(--m3-secondary, #4c555f);
+
+		&:hover {
+			background: var(--m3-hover-layer, #f9eff0);
+			color: var(--m3-primary, #a5000a);
+		}
+	}
 }

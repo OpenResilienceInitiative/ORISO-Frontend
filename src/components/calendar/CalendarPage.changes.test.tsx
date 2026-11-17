@@ -55,15 +55,24 @@ vi.mock('./CalendarView', async (importOriginal) => {
 	};
 });
 
-/* The dialog stub hands out its save, so a test can save twice. */
-const dialog: { save?: (draft: unknown) => void; close?: () => void } = {};
-vi.mock('./AppointmentDialog', () => ({
-	AppointmentDialog: (props: {
-		onSave: (draft: unknown) => void;
+/* The dialog stub hands out its save, so a test can save twice, and what
+   it was opened with. */
+const dialog: {
+	save?: (draft: unknown) => void;
+	saveBlocker?: (drafts: unknown[]) => unknown;
+	close?: () => void;
+	props?: Record<string, unknown>;
+} = {};
+vi.mock('./NewEntryDialog', () => ({
+	NewEntryDialog: (props: {
+		onSaveAppointment: (draft: unknown) => void;
+		onSaveBlocker: (drafts: unknown[]) => unknown;
 		onClose: () => void;
 	}) => {
-		dialog.save = props.onSave;
+		dialog.save = props.onSaveAppointment;
+		dialog.saveBlocker = props.onSaveBlocker;
 		dialog.close = props.onClose;
+		dialog.props = props as unknown as Record<string, unknown>;
 		return <div data-testid="appointment-dialog" />;
 	}
 }));
@@ -654,9 +663,22 @@ describe('CalendarPage — bands count what the kind filter hides (review 457642
 			document.querySelector(`[data-cy="${name}"]`) as HTMLElement | null;
 		fireEvent.click(byCy('calendar-kinds-button') as HTMLElement);
 		await waitFor(() =>
-			expect(byCy('calendar-kinds-blocker')).not.toBeNull()
+			expect(byCy('display-filter-show-blocker')).not.toBeNull()
 		);
-		fireEvent.click(byCy('calendar-kinds-blocker') as HTMLElement);
+		expect(
+			byCy('calendar-kinds-button')?.querySelector(
+				'.displayFilterButton__dot'
+			)
+		).toBeNull();
+		fireEvent.click(byCy('display-filter-show-blocker') as HTMLElement);
+		// The search field's filter button carries the dot (prototype v17).
+		await waitFor(() =>
+			expect(
+				byCy('calendar-kinds-button')?.querySelector(
+					'.displayFilterButton__dot'
+				)
+			).not.toBeNull()
+		);
 		const ids = (key: string) =>
 			((grid.last?.[key] as CalendarEntry[] | undefined) ?? []).map(
 				(e) => e.id
@@ -684,15 +706,56 @@ describe('CalendarPage — a call whose conversation cannot be found (review 457
 	});
 });
 
+describe('CalendarPage — "Absagen" asks first (test C10)', () => {
+	it('cancels only after the confirmation', async () => {
+		const onCancelAppointment = vi.fn(() => Promise.resolve());
+		page({ onCancelAppointment });
+		act(() => grid.onEntryOpen?.(ENTRY, document.body, 'list'));
+		fireEvent.click(
+			document.querySelector(
+				'[data-cy="calendar-entry-cancel"]'
+			) as HTMLElement
+		);
+		expect(onCancelAppointment).not.toHaveBeenCalled();
+		expect(screen.getByText('calendar.cancelAsk.title')).toBeTruthy();
+		fireEvent.click(screen.getByText('calendar.cancelAsk.keep'));
+		expect(onCancelAppointment).not.toHaveBeenCalled();
+		act(() => grid.onEntryOpen?.(ENTRY, document.body, 'list'));
+		fireEvent.click(
+			document.querySelector(
+				'[data-cy="calendar-entry-cancel"]'
+			) as HTMLElement
+		);
+		fireEvent.click(screen.getByTestId('calendar-cancel-confirm'));
+		expect(onCancelAppointment).toHaveBeenCalledWith(ENTRY);
+		expect(await screen.findByText('calendar.cancelled')).toBeTruthy();
+	});
+});
+
 describe('CalendarPage — "Zum Chat" whose conversation cannot be found (review 4577642137)', () => {
-	it('says so from the menu and from "Als Nächstes"', async () => {
+	it('says so from the menu, also when "Als Nächstes" opened it', async () => {
 		const onOpenChat = vi.fn(() => Promise.reject(new Error('no room')));
 		const withChat = { ...ENTRY, sessionId: 7 };
 		page({ onOpenChat, entries: [withChat] });
-		fireEvent.click(
+		// No extra chat button beside the row (Frank *4).
+		expect(
 			document.querySelector(
 				`[data-cy="calendar-upcoming-chat-${withChat.id}"]`
+			)
+		).toBeNull();
+		fireEvent.click(
+			document.querySelector(
+				`[data-cy="calendar-upcoming-${withChat.id}"]`
 			) as HTMLElement
+		);
+		fireEvent.click(
+			(await waitFor(() => {
+				const item = document.querySelector(
+					'[data-cy="calendar-entry-chat"]'
+				);
+				expect(item).not.toBeNull();
+				return item;
+			})) as HTMLElement
 		);
 		expect(onOpenChat).toHaveBeenCalledWith(withChat);
 		expect(
@@ -709,5 +772,270 @@ describe('CalendarPage — "Zum Chat" whose conversation cannot be found (review
 		expect(
 			await screen.findByText('calendar.chatUnavailable')
 		).toBeTruthy();
+	});
+});
+
+describe('CalendarPage — the slot menu, prototype v17 (#115, #116)', () => {
+	const byCy = (name: string) =>
+		document.querySelector(`[data-cy="${name}"]`) as HTMLElement | null;
+	const select = () =>
+		act(() =>
+			(
+				grid.last?.onSelectRange as (
+					range: { start: Date; end: Date },
+					anchor: { x: number; y: number }
+				) => void
+			)({ start: START, end: END }, { x: 20, y: 20 })
+		);
+
+	it('asks "Mit wem?" in the same card and enters the appointment with the person picked', async () => {
+		const onCreate = vi.fn(() => Promise.resolve([]));
+		page({
+			onCreate,
+			conversations: [
+				{ sessionId: 7, username: 'mutige_eule' },
+				{ sessionId: 8, username: 'stiller_fuchs' }
+			]
+		});
+		select();
+		fireEvent.click(byCy('calendar-slot-phone') as HTMLElement);
+		const search = byCy('calendar-slot-search') as HTMLInputElement;
+		expect(search).not.toBeNull();
+		expect(byCy('calendar-menu-slot')?.getAttribute('role')).toBe('dialog');
+		fireEvent.change(search, { target: { value: 'stiller' } });
+		expect(byCy('calendar-slot-person-7')).toBeNull();
+		await act(async () => {
+			fireEvent.click(byCy('calendar-slot-person-8') as HTMLElement);
+		});
+		expect(onCreate).toHaveBeenCalledWith([
+			{
+				type: 'appointment',
+				start: START,
+				end: END,
+				kind: 'phone',
+				sessionId: 8
+			}
+		]);
+		expect(screen.queryByTestId('appointment-dialog')).toBeNull();
+	});
+
+	it('says when nobody matches and opens the full dialog from "Mehr Angaben …"', () => {
+		page({ conversations: [{ sessionId: 7, username: 'mutige_eule' }] });
+		select();
+		fireEvent.click(byCy('calendar-slot-video') as HTMLElement);
+		fireEvent.change(byCy('calendar-slot-search') as HTMLElement, {
+			target: { value: 'niemand' }
+		});
+		expect(screen.getByText('calendar.slotMenu.noneFound')).toBeTruthy();
+		fireEvent.click(byCy('calendar-slot-more') as HTMLElement);
+		expect(screen.getByTestId('appointment-dialog')).toBeTruthy();
+		expect(dialog.props?.initialTab).toBe('appointment');
+		expect(dialog.props?.slot).toEqual({
+			start: START,
+			end: END,
+			kind: 'video'
+		});
+	});
+
+	describe('"Wöchentlich …" (reviews 4589304582, 4589304593, 4589150206)', () => {
+		const created: CalendarEntry = {
+			id: 'b1',
+			type: 'blocker',
+			start: START.toISOString(),
+			end: END.toISOString(),
+			ownerId: 'me'
+		};
+		const series = [
+			{ type: 'blocker', start: START, end: END },
+			{
+				type: 'blocker',
+				start: new Date(2026, 10, 23, 14),
+				end: new Date(2026, 10, 23, 15)
+			}
+		];
+		const openWeekly = async (
+			props: Partial<React.ComponentProps<typeof CalendarPage>>
+		) => {
+			page(props);
+			select();
+			await act(async () => {
+				fireEvent.click(byCy('calendar-slot-blocker') as HTMLElement);
+			});
+			expect(
+				screen.getByText('calendar.blocker.createdSingle')
+			).toBeTruthy();
+			await act(async () => {
+				fireEvent.click(await screen.findByTestId('calendar-weekly'));
+			});
+		};
+
+		it('opens the blocker form with its weekday and keeps the single blocker meanwhile', async () => {
+			const onRemoveBlocker = vi.fn(() => Promise.resolve());
+			await openWeekly({
+				onCreate: () => Promise.resolve([created]),
+				onRemoveBlocker
+			});
+			expect(dialog.props?.initialTab).toBe('blocker');
+			expect(dialog.props?.slot).toEqual({ start: START, end: END });
+			// 16 November 2026 is a Monday.
+			expect(dialog.props?.initialWeekdays).toEqual([1]);
+			// The form does not count the blocker it replaces as a conflict.
+			expect(
+				(dialog.props?.entries as CalendarEntry[]).map((e) => e.id)
+			).not.toContain('b1');
+			expect(screen.queryByTestId('calendar-weekly')).toBeNull();
+			expect(onRemoveBlocker).not.toHaveBeenCalled();
+			// Closing the form loses nothing.
+			act(() => dialog.close?.());
+			expect(screen.queryByTestId('appointment-dialog')).toBeNull();
+			expect(onRemoveBlocker).not.toHaveBeenCalled();
+		});
+
+		it('removes the single blocker first and creates the series once it is gone', async () => {
+			const order: string[] = [];
+			const onCreate = vi.fn((drafts: unknown[]) => {
+				order.push(`create:${drafts.length}`);
+				return Promise.resolve(drafts.length === 1 ? [created] : []);
+			});
+			const onRemoveBlocker = vi.fn((entry: CalendarEntry) => {
+				order.push(`remove:${entry.id}`);
+				return Promise.resolve();
+			});
+			await openWeekly({ onCreate, onRemoveBlocker });
+			let saved: unknown;
+			await act(async () => {
+				saved = await dialog.saveBlocker?.(series);
+			});
+			expect(saved).toBe(true);
+			expect(order).toEqual(['create:1', 'remove:b1', 'create:2']);
+			expect(screen.queryByTestId('appointment-dialog')).toBeNull();
+		});
+
+		it.each([
+			['refused', () => false as const],
+			['failed', () => Promise.reject(new Error('500'))]
+		])(
+			'creates no series and keeps the form when the removal is %s',
+			async (_, removal) => {
+				const onCreate = vi.fn(() => Promise.resolve([created]));
+				await openWeekly({
+					onCreate,
+					onRemoveBlocker: vi.fn(removal)
+				});
+				let saved: unknown;
+				await act(async () => {
+					saved = await dialog.saveBlocker?.(series);
+				});
+				expect(saved).toBe(false);
+				expect(onCreate).toHaveBeenCalledTimes(1);
+				expect(screen.getByText('calendar.saveFailed')).toBeTruthy();
+				expect(screen.getByTestId('appointment-dialog')).toBeTruthy();
+			}
+		);
+
+		it('puts the single blocker back when the series fails', async () => {
+			const restored = { ...created, id: 'b2' };
+			const onCreate = vi
+				.fn()
+				.mockResolvedValueOnce([created])
+				.mockRejectedValueOnce(new Error('500'))
+				.mockResolvedValueOnce([restored]);
+			const onRemoveBlocker = vi.fn(() => Promise.resolve());
+			await openWeekly({ onCreate, onRemoveBlocker });
+			let saved: unknown;
+			await act(async () => {
+				saved = await dialog.saveBlocker?.(series);
+			});
+			expect(saved).toBe(false);
+			await waitFor(() => expect(onCreate).toHaveBeenCalledTimes(3));
+			expect(onCreate.mock.calls[2][0]).toEqual([
+				{ type: 'blocker', start: START, end: END }
+			]);
+			expect(screen.getByTestId('appointment-dialog')).toBeTruthy();
+			// Saving again replaces the restored blocker, not the gone one.
+			onCreate.mockResolvedValueOnce([]);
+			await act(async () => {
+				await dialog.saveBlocker?.(series);
+			});
+			expect(onRemoveBlocker).toHaveBeenLastCalledWith(restored);
+		});
+
+		it('says so when the single blocker cannot be put back (review 4589615832)', async () => {
+			const onCreate = vi
+				.fn()
+				.mockResolvedValueOnce([created])
+				.mockRejectedValueOnce(new Error('500'))
+				.mockRejectedValueOnce(new Error('500'));
+			await openWeekly({
+				onCreate,
+				onRemoveBlocker: vi.fn(() => Promise.resolve())
+			});
+			await act(async () => {
+				await dialog.saveBlocker?.(series);
+			});
+			expect(onCreate).toHaveBeenCalledTimes(3);
+			expect(screen.getByText('calendar.restoreFailed')).toBeTruthy();
+			expect(screen.getByTestId('appointment-dialog')).toBeTruthy();
+		});
+
+		it('refuses a second save until the restore has settled (review 4589615841)', async () => {
+			let restore: (value: unknown) => void = () => undefined;
+			const onCreate = vi
+				.fn()
+				.mockResolvedValueOnce([created])
+				.mockRejectedValueOnce(new Error('500'))
+				.mockImplementationOnce(
+					() => new Promise((resolve) => (restore = resolve))
+				);
+			const onRemoveBlocker = vi.fn(() => Promise.resolve());
+			await openWeekly({ onCreate, onRemoveBlocker });
+			let first: Promise<unknown> | unknown;
+			await act(async () => {
+				first = dialog.saveBlocker?.(series);
+			});
+			await waitFor(() => expect(onCreate).toHaveBeenCalledTimes(3));
+			let second: unknown;
+			await act(async () => {
+				second = await dialog.saveBlocker?.(series);
+			});
+			expect(second).toBe(false);
+			expect(onRemoveBlocker).toHaveBeenCalledTimes(1);
+			await act(async () => {
+				restore([{ ...created, id: 'b2' }]);
+				await first;
+			});
+			expect(await first).toBe(false);
+		});
+	});
+
+	it('offers no "Wöchentlich …" for an appointment', async () => {
+		page({
+			onCreate: () => Promise.resolve([]),
+			conversations: [{ sessionId: 7, username: 'mutige_eule' }]
+		});
+		select();
+		fireEvent.click(byCy('calendar-slot-video') as HTMLElement);
+		await act(async () => {
+			fireEvent.click(byCy('calendar-slot-person-7') as HTMLElement);
+		});
+		expect(screen.getByText('calendar.created')).toBeTruthy();
+		expect(screen.queryByTestId('calendar-weekly')).toBeNull();
+	});
+});
+
+describe('CalendarPage — "Sperrzeit mit Wiederholung" in ⋮ (prototype v17, #122)', () => {
+	it('opens the blocker tab of "Neuer Eintrag"', () => {
+		page({ onCreate: () => Promise.resolve([]) });
+		fireEvent.click(
+			document.querySelector('[data-cy="calendar-settings"]') as Element
+		);
+		fireEvent.click(
+			document.querySelector(
+				'[data-cy="calendar-settings-repeat-blocker"]'
+			) as Element
+		);
+		expect(screen.getByTestId('appointment-dialog')).toBeTruthy();
+		expect(dialog.props?.initialTab).toBe('blocker');
+		expect(dialog.props?.slot).toBeUndefined();
 	});
 });

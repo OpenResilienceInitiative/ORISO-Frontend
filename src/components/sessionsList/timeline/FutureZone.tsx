@@ -79,6 +79,11 @@ export interface FutureZoneProps {
 	nowRef?: React.Ref<HTMLDivElement>;
 	/** Stories pin the clock; the real list runs on the real one. */
 	fixedNow?: Date;
+	/** The calendar hands a picked pill to its own entry menu. */
+	onPick?: (entry: FutureEntry, anchor: HTMLElement) => void;
+	entryDataCy?: (entry: FutureEntry) => string;
+	/** The host's own "starts soon" text per pill, or false for none. */
+	soonLabelOf?: (entry: FutureEntry) => string | false;
 }
 
 const revealTarget = (
@@ -109,7 +114,10 @@ export const FutureZone = forwardRef<FutureZoneHandle, FutureZoneProps>(
 			label = 'Anstehende Termine',
 			nowLabel = 'Jetzt',
 			nowRef,
-			fixedNow
+			fixedNow,
+			onPick,
+			entryDataCy,
+			soonLabelOf
 		},
 		ref
 	) => {
@@ -277,6 +285,9 @@ export const FutureZone = forwardRef<FutureZoneHandle, FutureZoneProps>(
 										unread={unreadOf?.(row.entry)}
 										onOpen={onOpen}
 										onAction={onAction}
+										onPick={onPick}
+										dataCy={entryDataCy?.(row.entry)}
+										soonLabel={soonLabelOf?.(row.entry)}
 									/>
 								) : (
 									row.extra.render(now)
