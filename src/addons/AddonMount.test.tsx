@@ -21,7 +21,9 @@ const addon: AvailableAddon = {
 
 const mountTree = (
 	loader: (url: string) => Promise<AddonModule>,
-	mountedAddon: AvailableAddon = addon
+	mountedAddon: AvailableAddon = addon,
+	locale = 'de',
+	onFailure?: () => void
 ) => (
 	<MemoryRouter>
 		<UserDataContext.Provider
@@ -35,12 +37,13 @@ const mountTree = (
 				} as never
 			}
 		>
-			<LocaleContext.Provider value={{ locale: 'de' } as never}>
+			<LocaleContext.Provider value={{ locale } as never}>
 				<AddonMount
 					addon={mountedAddon}
 					app={mountedAddon.apps[0]}
 					slot="asker.navigation"
 					loader={loader}
+					onFailure={onFailure}
 				/>
 			</LocaleContext.Provider>
 		</UserDataContext.Provider>
@@ -146,6 +149,82 @@ describe('AddonMount', () => {
 				'mount other'
 			])
 		);
+	});
+});
+
+describe('AddonMount while host props change', () => {
+	const pendingModule = () => {
+		let resolve: (module: AddonModule) => void = () => {};
+		const promise = new Promise<AddonModule>((done) => {
+			resolve = done;
+		});
+		return { promise, resolve };
+	};
+
+	it('does not bootstrap a bundle whose mount was cancelled while it loaded', async () => {
+		const loading = pendingModule();
+		const module: AddonModule = {
+			bootstrap: vi.fn(),
+			mount: vi.fn(),
+			unmount: vi.fn()
+		};
+		const loader = vi.fn(() => loading.promise);
+		const view = render(mountTree(loader));
+		await waitFor(() => expect(loader).toHaveBeenCalled());
+		view.unmount();
+		loading.resolve(module);
+		await new Promise((resolve) => setTimeout(resolve, 0));
+
+		expect(module.bootstrap).not.toHaveBeenCalled();
+		expect(module.mount).not.toHaveBeenCalled();
+	});
+
+	it('mounts with the latest props and skips updates queued with older ones', async () => {
+		const loading = pendingModule();
+		const module: AddonModule = {
+			mount: vi.fn(),
+			unmount: vi.fn(),
+			update: vi.fn()
+		};
+		const loader = () => loading.promise;
+		const view = render(mountTree(loader));
+		view.rerender(mountTree(loader, addon, 'en'));
+		loading.resolve(module);
+
+		await waitFor(() => expect(module.mount).toHaveBeenCalledTimes(1));
+		await new Promise((resolve) => setTimeout(resolve, 0));
+		expect(
+			(vi.mocked(module.mount).mock.calls[0][0] as AddonHostProps).locale
+		).toBe('en');
+		expect(module.update).not.toHaveBeenCalled();
+	});
+
+	it('tears the app down and shows the error when update fails', async () => {
+		vi.spyOn(console, 'error').mockImplementation(() => {});
+		const onFailure = vi.fn();
+		const module: AddonModule = {
+			mount: vi.fn(({ domElement }: AddonHostProps) => {
+				domElement.textContent = 'old case';
+			}),
+			unmount: vi.fn(),
+			update: vi.fn().mockRejectedValue(new Error('broken'))
+		};
+		const loader = () => Promise.resolve(module);
+		const view = render(mountTree(loader, addon, 'de', onFailure));
+		expect(await screen.findByText('old case')).toBeTruthy();
+
+		view.rerender(mountTree(loader, addon, 'en', onFailure));
+
+		expect((await screen.findByRole('alert')).textContent).toBe(
+			'addons.loadError'
+		);
+		expect(module.unmount).toHaveBeenCalledTimes(1);
+		expect(screen.queryByText('old case')).toBeNull();
+		expect(onFailure).toHaveBeenCalledTimes(1);
+
+		view.unmount();
+		await new Promise((resolve) => setTimeout(resolve, 0));
+		expect(module.unmount).toHaveBeenCalledTimes(1);
 	});
 });
 

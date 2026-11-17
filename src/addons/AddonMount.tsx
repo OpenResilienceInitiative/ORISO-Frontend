@@ -13,6 +13,18 @@ import {
 import { loadAddonModule } from './loadAddonModule';
 import { AddonPlacement, useAddonHostProps } from './useAddonHostProps';
 
+const teardown = async ({ module, props }: MountedApp) => {
+	try {
+		await module.unmount(props);
+	} catch (error) {
+		console.error(
+			`Add-on ${props.addon.name}/${props.app.id} failed`,
+			error
+		);
+	}
+	props.domElement.replaceChildren();
+};
+
 const bootstraps = new WeakMap<AddonModule, Promise<void>>();
 
 /** Runs a bundle's `bootstrap` once, however many apps of it mount at the same time. */
@@ -44,6 +56,8 @@ interface AddonMountProps {
 	registration?: AddonRegistrationProps;
 	/** Injected in tests; defaults to the loader from context. */
 	loader?: AddonModuleLoader;
+	onMounted?: () => void;
+	onFailure?: () => void;
 }
 
 interface MountedApp {
@@ -59,7 +73,9 @@ export const AddonMount = ({
 	slot,
 	placement,
 	registration,
-	loader: loaderProp
+	loader: loaderProp,
+	onMounted,
+	onFailure
 }: AddonMountProps) => {
 	const contextLoader = useContext(AddonModuleLoaderContext);
 	const loader = loaderProp ?? contextLoader;
@@ -76,6 +92,8 @@ export const AddonMount = ({
 	const hostPropsRef = useRef(hostProps);
 	hostPropsRef.current = hostProps;
 	const mountedRef = useRef<MountedApp | null>(null);
+	const callbacks = useRef({ onMounted, onFailure });
+	callbacks.current = { onMounted, onFailure };
 	// Every lifecycle call of this container waits for the previous one.
 	const lifecycle = useRef<Promise<void>>(Promise.resolve());
 	const label = `${addon.name}/${app.id}`;
@@ -101,6 +119,9 @@ export const AddonMount = ({
 			}
 			try {
 				const module = await loader(`${apiUrl}${addon.entry}`);
+				if (!active) {
+					return;
+				}
 				const current = hostPropsRef.current;
 				const props: AddonHostProps = { ...current, domElement };
 				await bootstrapOnce(module, props);
@@ -110,10 +131,14 @@ export const AddonMount = ({
 				await module.mount(props);
 				mounted = { module, props, hostProps: current };
 				mountedRef.current = mounted;
+				if (active) {
+					callbacks.current.onMounted?.();
+				}
 			} catch (error) {
 				console.error(`Add-on ${label} failed`, error);
 				if (active) {
 					setFailed(true);
+					callbacks.current.onFailure?.();
 				}
 			}
 		});
@@ -122,12 +147,10 @@ export const AddonMount = ({
 			active = false;
 			// Runs after the commit: an add-on may unmount its own React root, which React refuses during one.
 			enqueue(async () => {
-				if (!mounted) {
+				if (!mounted || mountedRef.current !== mounted) {
 					return;
 				}
-				if (mountedRef.current === mounted) {
-					mountedRef.current = null;
-				}
+				mountedRef.current = null;
 				await mounted.module.unmount(mounted.props);
 			});
 		};
@@ -138,21 +161,33 @@ export const AddonMount = ({
 	useEffect(() => {
 		enqueue(async () => {
 			const mounted = mountedRef.current;
-			if (!mounted || mounted.hostProps === hostProps) {
+			if (
+				!mounted ||
+				mounted.hostProps === hostProps ||
+				hostProps !== hostPropsRef.current
+			) {
 				return;
 			}
 			const props: AddonHostProps = {
 				...hostProps,
 				domElement: mounted.props.domElement
 			};
-			if (mounted.module.update) {
-				await mounted.module.update(props);
-			} else {
-				await mounted.module.unmount(mounted.props);
-				await mounted.module.mount(props);
+			try {
+				if (mounted.module.update) {
+					await mounted.module.update(props);
+				} else {
+					await mounted.module.unmount(mounted.props);
+					await mounted.module.mount(props);
+				}
+				mounted.props = props;
+				mounted.hostProps = hostProps;
+			} catch (error) {
+				console.error(`Add-on ${label} failed`, error);
+				mountedRef.current = null;
+				await teardown(mounted);
+				setFailed(true);
+				callbacks.current.onFailure?.();
 			}
-			mounted.props = props;
-			mounted.hostProps = hostProps;
 		});
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [hostProps]);
