@@ -7591,6 +7591,18 @@
 			"pillKind": "Comme bouton : {{kind}}",
 			"pillMenu": "Choisir le bouton : {{kind}}"
 		},
+		"bandCard": {
+			"label": "Qui est occupé·e",
+			"back": "Retour à la liste",
+			"busy": "Occupé·es",
+			"free": "Libres",
+			"nobodyFree": "Personne n’est libre.",
+			"show": "Voir le calendrier",
+			"showLabel": "Voir le calendrier de {{name}}",
+			"ownerOnly": "Seul·e {{name}} peut modifier cela.",
+			"all": "Tout le monde côte à côte",
+			"create": "Ajouter à cette heure"
+		},
 		"links": {
 			"title": "Liens sans rendez-vous",
 			"hint": "Liens d’invitation à partager : copiez-les ou affichez un code QR."
