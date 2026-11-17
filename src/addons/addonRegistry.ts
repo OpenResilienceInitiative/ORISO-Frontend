@@ -28,6 +28,7 @@ export const REGISTRY_POLL_MS = 60_000;
 
 const registries = new Map<string, AddonRegistryState>();
 const inFlight = new Map<string, Promise<AvailableAddon[] | null>>();
+const publishedGeneration = new Map<string, number>();
 const listeners = new Set<() => void>();
 let generation = 0;
 /** Changes with every login: requests of an earlier identity never publish. */
@@ -52,7 +53,8 @@ const contextKey = ({ agencyId, sessionId }: AddonRegistryContext) =>
 // Header button, side panel and profile tiles of one case share one request.
 const loadRegistry = (key: string, context?: AddonRegistryContext) => {
 	const requestIdentity = identity;
-	const requestKey = `${requestIdentity}:${key}#${generation}`;
+	const requestGeneration = generation;
+	const requestKey = `${requestIdentity}:${key}#${requestGeneration}`;
 	let request = inFlight.get(requestKey);
 	if (!request) {
 		request = apiGetAddonRegistry(context).finally(() =>
@@ -61,13 +63,22 @@ const loadRegistry = (key: string, context?: AddonRegistryContext) => {
 		inFlight.set(requestKey, request);
 	}
 	return request.then((addons) => {
-		if (requestIdentity === identity) {
-			setRegistry(key, {
-				addons: addons ?? [],
-				loaded: true,
-				available: addons !== null
-			});
+		if (
+			requestIdentity !== identity ||
+			requestGeneration < (publishedGeneration.get(key) ?? -1)
+		) {
+			return;
 		}
+		// A refresh that fails keeps the last answer: open add-ons stay mounted until the service is back.
+		if (addons === null && registries.get(key)?.available) {
+			return;
+		}
+		publishedGeneration.set(key, requestGeneration);
+		setRegistry(key, {
+			addons: addons ?? [],
+			loaded: true,
+			available: addons !== null
+		});
 	});
 };
 
@@ -75,6 +86,7 @@ const startIdentity = () => {
 	identity += 1;
 	registries.clear();
 	inFlight.clear();
+	publishedGeneration.clear();
 	notify();
 };
 

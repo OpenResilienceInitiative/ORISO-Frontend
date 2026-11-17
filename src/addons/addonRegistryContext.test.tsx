@@ -162,6 +162,59 @@ describe('add-on registry in context', () => {
 		expect(vi.mocked(apiGetAddonRegistry)).toHaveBeenCalledTimes(2);
 	});
 
+	const refreshNow = async () => {
+		vi.useFakeTimers();
+		act(() => refreshAddonRegistries());
+		await act(async () => {
+			vi.advanceTimersByTime(REGISTRY_REFRESH_DEBOUNCE_MS);
+		});
+		vi.useRealTimers();
+	};
+
+	it('keeps the last registry when a refresh fails', async () => {
+		vi.mocked(apiGetAddonRegistry).mockResolvedValueOnce([addon(1)]);
+		const { result } = renderHook(() => {
+			useAddonRegistryLoader('u1');
+			return useAddonRegistry();
+		});
+		await waitFor(() => expect(result.current.addons).toHaveLength(1));
+
+		vi.mocked(apiGetAddonRegistry).mockResolvedValueOnce(null);
+		await refreshNow();
+		await waitFor(() =>
+			expect(vi.mocked(apiGetAddonRegistry)).toHaveBeenCalledTimes(2)
+		);
+		await act(async () => {});
+
+		expect(result.current).toMatchObject({
+			available: true,
+			addons: [addon(1)]
+		});
+	});
+
+	it('never lets an older answer replace the answer of a later refresh', async () => {
+		let answerFirst: (addons: AvailableAddon[]) => void = () => {};
+		vi.mocked(apiGetAddonRegistry)
+			.mockReturnValueOnce(
+				new Promise((resolve) => {
+					answerFirst = resolve;
+				})
+			)
+			.mockResolvedValueOnce([addon(5)]);
+		const { result } = renderHook(() => {
+			useAddonRegistryLoader('u1');
+			return useAddonRegistry();
+		});
+
+		await refreshNow();
+		await waitFor(() =>
+			expect(result.current.addons[0]?.apps[0].badge).toBe(5)
+		);
+		await act(async () => answerFirst([addon(1)]));
+
+		expect(result.current.addons[0].apps[0].badge).toBe(5);
+	});
+
 	it('tells an instance without AddonService from one without visible add-ons', async () => {
 		vi.mocked(apiGetAddonRegistry).mockResolvedValueOnce(null);
 		const { result } = renderHook(() => {
