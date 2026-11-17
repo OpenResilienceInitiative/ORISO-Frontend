@@ -7576,5 +7576,84 @@
 			"title": "Randevusuz bağlantılar",
 			"hint": "Paylaşabileceğiniz davet bağlantıları: kopyalayın veya QR kodu gösterin."
 		}
+	},
+	"managePeople": {
+		"self": "(siz)",
+		"loading": "Yükleniyor…",
+		"working": "İşleniyor…",
+		"retry": "Tekrar dene",
+		"cancel": "Vazgeç",
+		"search": "Ada veya kuruma göre ara",
+		"noMatches": "Bu aramayla eşleşen kimse yok.",
+		"otherPerson": "Başka birini seç",
+		"since": "{{date}} tarihinden beri",
+		"role": {
+			"owner": "Sahibi",
+			"coModerator": "Yardımcı moderatör"
+		},
+		"standing": {
+			"badge": "Kalıcı atanmış",
+			"hint": "Merkez yöneticisi tarafından belirlendi. Süpervizyon her zaman açıktır: bu kişiyi değiştirebilirsiniz ama yerine kimseyi koymadan çıkaramazsınız.",
+			"noReplacement": "Merkez yöneticisi tarafından belirlendi. Şu anda bu merkezde devralabilecek başka kimse yok."
+		},
+		"add": {
+			"action": "Ekle",
+			"labelFor": "{{name}} ekle",
+			"confirm": "{{name}} ekle"
+		},
+		"remove": {
+			"action": "Çıkar",
+			"labelFor": "{{name}} çıkar",
+			"confirm": "Gerçekten çıkarılsın mı?"
+		},
+		"replace": {
+			"action": "Değiştir",
+			"labelFor": "{{name}} değiştir",
+			"title": "{{name}} yerine kim geçsin?",
+			"confirm": "{{name}} ile değiştir",
+			"pick": "Seç",
+			"pickLabelFor": "{{name}} seç"
+		},
+		"error": {
+			"members": "Liste yüklenemedi.",
+			"candidates": "Uygun kişiler yüklenemedi.",
+			"add": "Kişi eklenemedi. Lütfen tekrar deneyin.",
+			"remove": "Kişi çıkarılamadı. Lütfen tekrar deneyin.",
+			"replace": "Değişiklik yapılamadı. Lütfen tekrar deneyin.",
+			"refused": "Bu kişi artık buraya eklenemez. Kurumu veya bu sohbet buna izin vermiyor. Liste güncellendi."
+		},
+		"supervision": {
+			"title": "Süpervizyonu yönet",
+			"description": "Süpervizörler bu vakayı okur ve sizinle süpervizyon sohbetinde konuşur.",
+			"membersTitle": "Mevcut süpervizyon",
+			"emptyMembers": "Bu vakanın henüz süpervizörü yok.",
+			"addTitle": "Süpervizör ekle",
+			"emptyCandidates": "Bu merkezde başka kimse süpervizör olarak işaretli değil. Buna merkez yöneticisi karar verir.",
+			"reasonLabel": "Süpervizyon nedeni",
+			"reasonPlaceholder": "Bu kişi vakaya neden süpervizörlük yapmalı?",
+			"reasonMissing": "Lütfen bir neden girin.",
+			"added": "{{name}} artık bu vakanın süpervizörü."
+		},
+		"internalChat": {
+			"title": "Kişileri yönet",
+			"description": "Bu dahili sohbetteki herkes meslektaş ekleyebilir.",
+			"membersTitle": "Bu sohbette",
+			"emptyMembers": "Bu sohbette henüz kimse yok.",
+			"addTitle": "Meslektaş ekle",
+			"addNote": "Yeni kişiler mesajları katıldıkları andan itibaren görür, öncekileri görmez.",
+			"emptyCandidates": "Bu sohbete başka meslektaş eklenemez.",
+			"added": "{{name}} bu sohbete eklendi."
+		},
+		"groupChat": {
+			"title": "Kişileri yönet",
+			"description": "Bu grubu kimin yönettiğini görün ve bağlantıyı katılmak isteyenlerle paylaşın.",
+			"membersTitle": "Moderasyon",
+			"emptyMembers": "Bu grubun henüz moderasyonu yok.",
+			"addTitle": "Yardımcı moderatör ekle",
+			"emptyCandidates": "Bu gruba başka meslektaş eklenemez.",
+			"inviteTitle": "Kişileri davet et",
+			"inviteDescription": "Danışanlar bu bağlantı veya QR kod ile katılır.",
+			"added": "{{name}} artık bu grubun ortak moderatörü."
+		}
 	}
 }

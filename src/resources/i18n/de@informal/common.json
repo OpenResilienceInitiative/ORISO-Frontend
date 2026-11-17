@@ -3047,5 +3047,23 @@
 		"entryMenu": {
 			"withYou": "Du und {{name}}"
 		}
+	},
+	"managePeople": {
+		"self": "(du)",
+		"standing": {
+			"hint": "Vom Admin der Beratungsstelle festgelegt. Supervision bleibt immer an: Du kannst die Person wechseln, aber nicht ersatzlos entfernen."
+		},
+		"error": {
+			"add": "Die Person konnte nicht hinzugefügt werden. Bitte versuch es erneut.",
+			"remove": "Die Person konnte nicht entfernt werden. Bitte versuch es erneut.",
+			"replace": "Der Wechsel hat nicht geklappt. Bitte versuch es erneut."
+		},
+		"supervision": {
+			"description": "Supervisor:innen lesen in diesem Fall mit und sprechen mit dir im Supervisions-Chat.",
+			"reasonMissing": "Bitte gib einen Grund an."
+		},
+		"groupChat": {
+			"description": "Sieh, wer diese Gruppe leitet, und teile den Link mit allen, die teilnehmen möchten."
+		}
 	}
 }

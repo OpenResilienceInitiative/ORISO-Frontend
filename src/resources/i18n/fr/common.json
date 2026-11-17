@@ -7576,5 +7576,84 @@
 			"title": "Liens sans rendez-vous",
 			"hint": "Liens d’invitation à partager : copiez-les ou affichez un code QR."
 		}
+	},
+	"managePeople": {
+		"self": "(vous)",
+		"loading": "Chargement…",
+		"working": "En cours…",
+		"retry": "Réessayer",
+		"cancel": "Annuler",
+		"search": "Rechercher par nom ou organisation",
+		"noMatches": "Personne ne correspond à cette recherche.",
+		"otherPerson": "Choisir une autre personne",
+		"since": "Depuis le {{date}}",
+		"role": {
+			"owner": "Propriétaire",
+			"coModerator": "Co-modération"
+		},
+		"standing": {
+			"badge": "Affectation permanente",
+			"hint": "Défini par l’administration du centre. La supervision reste toujours active : vous pouvez remplacer cette personne, mais pas simplement la retirer.",
+			"noReplacement": "Défini par l’administration du centre. Personne d’autre dans ce centre ne peut reprendre pour le moment."
+		},
+		"add": {
+			"action": "Ajouter",
+			"labelFor": "Ajouter {{name}}",
+			"confirm": "Ajouter {{name}}"
+		},
+		"remove": {
+			"action": "Retirer",
+			"labelFor": "Retirer {{name}}",
+			"confirm": "Vraiment retirer ?"
+		},
+		"replace": {
+			"action": "Remplacer",
+			"labelFor": "Remplacer {{name}}",
+			"title": "Qui doit prendre la relève de {{name}} ?",
+			"confirm": "Remplacer par {{name}}",
+			"pick": "Choisir",
+			"pickLabelFor": "Choisir {{name}}"
+		},
+		"error": {
+			"members": "La liste n’a pas pu être chargée.",
+			"candidates": "Les personnes disponibles n’ont pas pu être chargées.",
+			"add": "Cette personne n’a pas pu être ajoutée. Veuillez réessayer.",
+			"remove": "Cette personne n’a pas pu être retirée. Veuillez réessayer.",
+			"replace": "Le remplacement a échoué. Veuillez réessayer.",
+			"refused": "Cette personne ne peut plus être ajoutée ici. Son organisation ou ce chat ne l'autorise pas. La liste a été mise à jour."
+		},
+		"supervision": {
+			"title": "Gérer la supervision",
+			"description": "Les superviseurs lisent ce dossier et échangent avec vous dans le chat de supervision.",
+			"membersTitle": "Supervision actuelle",
+			"emptyMembers": "Ce dossier n’a pas encore de superviseur.",
+			"addTitle": "Ajouter un superviseur",
+			"emptyCandidates": "Personne d’autre dans ce centre n’est désigné comme superviseur. L’administration du centre en décide.",
+			"reasonLabel": "Motif de la supervision",
+			"reasonPlaceholder": "Pourquoi cette personne doit-elle superviser ce dossier ?",
+			"reasonMissing": "Veuillez indiquer un motif.",
+			"added": "{{name}} supervise désormais ce dossier."
+		},
+		"internalChat": {
+			"title": "Gérer les personnes",
+			"description": "Tous les membres de ce chat interne peuvent inviter des collègues.",
+			"membersTitle": "Dans ce chat",
+			"emptyMembers": "Personne n’est encore dans ce chat.",
+			"addTitle": "Ajouter un collègue",
+			"addNote": "Les nouvelles personnes voient les messages à partir de leur arrivée, pas les précédents.",
+			"emptyCandidates": "Aucun autre collègue ne peut être ajouté à ce chat.",
+			"added": "{{name}} a été ajouté·e à ce chat."
+		},
+		"groupChat": {
+			"title": "Gérer les personnes",
+			"description": "Voyez qui anime ce groupe et partagez le lien avec celles et ceux qui souhaitent participer.",
+			"membersTitle": "Modération",
+			"emptyMembers": "Ce groupe n’a pas encore de modération.",
+			"addTitle": "Ajouter une co-modération",
+			"emptyCandidates": "Aucun autre collègue ne peut être ajouté à ce groupe.",
+			"inviteTitle": "Inviter des personnes",
+			"inviteDescription": "Les personnes en recherche de conseil rejoignent via ce lien ou ce code QR.",
+			"added": "{{name}} co-modère désormais ce groupe."
+		}
 	}
 }
