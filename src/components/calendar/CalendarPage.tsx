@@ -185,7 +185,13 @@ import {
 	type CalendarImport
 } from './CalendarSyncDialog';
 import { useEntryLabel, useRangeFormat } from './useEntryLabel';
-import { entriesInBand, type ColleagueBand } from './calendarBands';
+import {
+	bandKey,
+	colleagueBands,
+	currentBand,
+	entriesInBand,
+	type ColleagueBand
+} from './calendarBands';
 import {
 	CalendarBandCard,
 	type BandMoveAction,
@@ -752,6 +758,39 @@ export const CalendarPage = ({
 			),
 		[entries, ownerId, shownColleagues]
 	);
+	// The bands on screen, folded as the time grid folds them. An open band
+	// card shows its band as it is now: it follows a moved or cancelled
+	// entry and a hidden colleague, and closes when the band is gone
+	// (review 4601827605).
+	const bandPeopleKey = shown
+		.filter(
+			(c) =>
+				!failedColleagues.includes(c.id) &&
+				!loadingCalendars.includes(c.id)
+		)
+		.map((c) => c.id)
+		.join(',');
+	const screenBands = useMemo(
+		() =>
+			colleagueBands(
+				busyEntries,
+				bandPeopleKey ? bandPeopleKey.split(',') : []
+			),
+		[busyEntries, bandPeopleKey]
+	);
+	const liveSideBand = sideBand
+		? currentBand(bandKey(sideBand), screenBands)
+		: null;
+	const liveMenuBand =
+		menu?.type === 'band'
+			? currentBand(bandKey(menu.band), screenBands)
+			: null;
+	useEffect(() => {
+		if (sideBand && !liveSideBand) setSideBand(null);
+	}, [sideBand, liveSideBand]);
+	useEffect(() => {
+		if (menu?.type === 'band' && !liveMenuBand) setMenu(null);
+	}, [menu, liveMenuBand]);
 	// "Beginnt gleich" marks one entry, the first of "Als Nächstes", in the
 	// grid and the side list alike (review 4577641949).
 	const soonId = soonEntry(
@@ -967,9 +1006,19 @@ export const CalendarPage = ({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [split, anchorDate, splitDays]);
 
+	const shownStart = useRef<number | null>(null);
 	const datesSet = useCallback(
 		(nextTitle: string, start: Date, end: Date) => {
 			setTitle(nextTitle);
+			// Another week or day: a band card of the old one closes
+			// (review 4601827596).
+			if (shownStart.current !== start.getTime()) {
+				if (shownStart.current !== null) {
+					setSideBand(null);
+					setMenu((m) => (m?.type === 'band' ? null : m));
+				}
+				shownStart.current = start.getTime();
+			}
 			const current = controller.getDate();
 			if (current) setAnchorDate(startOfDay(current));
 			onRangeChange?.(start, end);
@@ -1959,7 +2008,9 @@ export const CalendarPage = ({
 		menuRole = 'dialog';
 		menuWidth = 320;
 		menuContent = (
-			<CalendarBandCard {...bandCardProps(menu.band, 'menu')} />
+			<CalendarBandCard
+				{...bandCardProps(liveMenuBand ?? menu.band, 'menu')}
+			/>
 		);
 	} else if (menu?.type === 'entry') {
 		const { entry } = menu;
@@ -2754,10 +2805,7 @@ export const CalendarPage = ({
 							onEntryOpen={openEntry}
 							onProposalOpen={openProposal}
 							onBandOpen={openBand}
-							selectedBand={
-								sideBand ??
-								(menu?.type === 'band' ? menu.band : null)
-							}
+							selectedBand={liveSideBand ?? liveMenuBand}
 							onEntryMove={move}
 							onDatesSet={datesSet}
 							onDragChange={setDragging}
@@ -2866,7 +2914,7 @@ export const CalendarPage = ({
 					className={[
 						'calendarSide__frame',
 						`calendarSide__frame--${listMode}`,
-						sideBand && 'calendarSide__frame--band'
+						liveSideBand && 'calendarSide__frame--band'
 					]
 						.filter(Boolean)
 						.join(' ')}
@@ -2883,12 +2931,12 @@ export const CalendarPage = ({
 							setQuickFocus((n) => n + 1);
 						}}
 					/>
-					{sideBand && (
+					{liveSideBand && (
 						// Over the list, which keeps its place and state
 						// underneath (and is hidden from the keyboard).
 						<div className="calendarSide__bandCard">
 							<CalendarBandCard
-								{...bandCardProps(sideBand, 'side')}
+								{...bandCardProps(liveSideBand, 'side')}
 							/>
 						</div>
 					)}

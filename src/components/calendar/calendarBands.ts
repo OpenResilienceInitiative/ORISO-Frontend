@@ -89,6 +89,21 @@ export const colleagueBands = (
 	return bands;
 };
 
+/** A band's stretch, which names it on screen (`data-band`). */
+export const bandKey = (band: ColleagueBand) =>
+	`${band.start.getTime()}-${band.end.getTime()}`;
+
+/**
+ * The band of that stretch among the bands on screen now, or null when
+ * there is none any more. An open band card shows this one, so moving,
+ * cancelling or hiding while it is open updates or closes the card
+ * (review 4601827605).
+ */
+export const currentBand = (
+	key: string,
+	bands: ColleagueBand[]
+): ColleagueBand | null => bands.find((band) => bandKey(band) === key) ?? null;
+
 /** A busy colleague of a band and what keeps them busy in it. */
 export interface BandPerson {
 	personId: string;

@@ -76,6 +76,7 @@ import {
 	useRangeFormat
 } from './useEntryLabel';
 import {
+	bandKey,
 	colleagueBands,
 	foldsIntoBand,
 	type ColleagueBand
@@ -422,8 +423,6 @@ const dayCellTopInnerClass = (info: { isToday: boolean }) =>
 /** The list: no dot before an entry, a light head per day. */
 const LIST_DOT_CLASS = 'calendarView__listDot';
 const LIST_DAY_HEADER_CLASS = 'calendarView__listDay';
-const bandKey = (band: ColleagueBand) =>
-	`${band.start.getTime()}-${band.end.getTime()}`;
 
 /** A colleague's avatar in a band, in the colour of their chip. */
 const BandAvatar = ({ name }: { name: string }) => (

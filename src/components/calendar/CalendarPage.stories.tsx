@@ -953,6 +953,28 @@ export const ColleaguesBandCard: Story = {
 	}
 };
 
+export const ColleaguesBandCardOtherWeek: Story = {
+	name: 'Colleagues shown — the band card closes on another week (review 4601827596)',
+	args: { scope: 'TENANT', shownColleagues: TEAM },
+	play: async ({ canvasElement }) => {
+		await clickAt((await bandByKey(canvasElement, MONDAY_BAND)).point);
+		await waitFor(() => expect(sideBandCard()).toBeTruthy());
+		await userEvent.click(await findCy('calendar-next'));
+		// No card for a band that is no longer on screen; the list is back.
+		await waitFor(() => expect(sideBandCard()).toBeNull());
+		await expect(
+			getComputedStyle(
+				canvasElement.querySelector<HTMLElement>(
+					'[data-cy="calendar-side"]'
+				)!
+			).visibility
+		).toBe('visible');
+		await expect(
+			canvasElement.querySelector('[data-band][data-selected="true"]')
+		).toBeNull();
+	}
+};
+
 export const ColleaguesBandCardActions: Story = {
 	name: 'Colleagues shown — from the band card: propose a new time, or enter one’s own (Frank *16.2)',
 	args: { scope: 'TENANT', shownColleagues: TEAM },
