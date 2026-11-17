@@ -10,6 +10,7 @@ import { M3Dialog } from '../../m3Dialog/M3Dialog';
 import { copyTextToClipboard } from '../../../utils/clipboardHelpers';
 import { DirectLink } from './directLink';
 import { DirectLinkMediumIcon } from './DirectLinkMediumIcon';
+import { DirectLinkModeChip } from './DirectLinkModeChip';
 import './directLink.styles.scss';
 
 interface DirectLinkShareDialogProps {
@@ -78,11 +79,7 @@ export const DirectLinkShareDialog = ({
 					{t(`directLink.medium.${link.medium.toLowerCase()}`)} ·{' '}
 					{link.topic}
 				</span>
-				{link.temporary && (
-					<span className="directLinkChip">
-						{t('directLink.temporary')}
-					</span>
-				)}
+				<DirectLinkModeChip link={link} />
 			</div>
 			{qr && (
 				<img

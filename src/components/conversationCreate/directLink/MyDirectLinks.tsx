@@ -12,6 +12,7 @@ import { Switch } from '../../Switch';
 import { ArtworkImage } from '../ArtworkImage';
 import { DirectLink } from './directLink';
 import { DirectLinkMediumIcon } from './DirectLinkMediumIcon';
+import { DirectLinkModeChip } from './DirectLinkModeChip';
 import { formatScheduledAt } from './directLinkSchedule';
 import './directLink.styles.scss';
 
@@ -136,11 +137,7 @@ export const MyDirectLinks = ({
 								)}
 								<span className="directLinkTile__meta">
 									{link.topic}
-									{link.temporary && (
-										<span className="directLinkChip">
-											{t('directLink.temporary')}
-										</span>
-									)}
+									<DirectLinkModeChip link={link} />
 								</span>
 								<div className="directLinkTile__actions">
 									<button
