@@ -115,6 +115,21 @@
 		.sessionsListToolbar__chipsScroll {
 			margin-bottom: 8px;
 		}
+
+		// "Nur Text": the icon-only "mark all read" takes the 28 px of the
+		// text pills beside it.
+		.filterChipRow--dense .sessionsListToolbar__chip--iconOnly {
+			min-width: 28px;
+			min-height: 28px;
+			width: 28px;
+			height: 28px;
+			padding: 0;
+
+			svg {
+				width: 18px;
+				height: 18px;
+			}
+		}
 	}
 
 	// Scrollable timeline list. Grouped-list contract shared with the
@@ -393,13 +408,27 @@
 			color: var(--m3-on-primary-fixed, #410001);
 		}
 
+		.notificationsCenter__cardTitleRow {
+			// Room for the 48 px "⋮" button and 8 px of air.
+			padding-right: 56px;
+			min-height: 32px;
+			align-items: center;
+		}
+
 		.notificationsCenter__cardText {
 			color: var(--m3-on-tertiary-fixed, #141c25);
 			-webkit-line-clamp: 3;
 			padding-right: 24px;
 		}
 
+		// The content column runs as tall as the icon column, so the time
+		// sits on the bottom padding instead of floating above it.
+		.notificationsCenter__cardContent {
+			align-self: stretch;
+		}
+
 		.notificationsCenter__cardTime--footer {
+			margin-top: auto;
 			color: var(--m3-secondary-container, #646d78);
 			font-weight: 600;
 		}
@@ -409,39 +438,52 @@
 		}
 	}
 
-	// "..." actions on the active card.
+	// "⋮" actions on the active card: the round button of the Gespräche
+	// cards (sessionsListItem__menuIcon), its right edge on the text edge of
+	// the card, level with the title (Frank, 2026-11-17).
 	&__cardMenu {
 		position: absolute;
-		top: 10px;
-		right: 10px;
+		top: 12px;
+
+		// Card border 2 + padding 19 = the text edge.
+		right: 21px;
 	}
 
-	// The expander reserves its own column, so keep the menu inside the card.
+	// The expander (46) and the row gap (8) sit right of the card.
 	&__listRow--withExpander &__cardMenu {
-		right: 62px;
+		right: calc(21px + 46px + 8px);
 	}
 
-	// Figma: white oval with a soft red-tinted ring around the "..." glyph.
 	&__cardMenuButton {
 		appearance: none;
-		width: 44px;
-		height: 28px;
+		width: 48px;
+		height: 32px;
+		padding: 0;
+		box-sizing: border-box;
+
+		// The soft red ring of the Figma card: a white border would vanish
+		// on the white selected card.
 		border: 1px solid var(--m3-on-primary-container, #ffe2de);
-		border-radius: 999px;
+		border-radius: 32px;
 		background: var(--m3-surface-container-lowest, #ffffff);
-		color: var(--m3-secondary, #4c555f);
+		color: #1e1e1e;
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
 		cursor: pointer;
+		box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+		transition:
+			border-color 160ms ease,
+			background-color 160ms ease;
 
 		svg {
-			width: 18px;
-			height: 18px;
+			width: 24px;
+			height: 24px;
+			fill: currentcolor;
 		}
 
 		&:hover {
-			background: var(--m3-primary-fixed, #ffdad7);
+			background: rgba(255, 209, 209, 0.35);
 		}
 
 		&:focus-visible {

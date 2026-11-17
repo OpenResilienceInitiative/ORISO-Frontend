@@ -11,9 +11,10 @@ import {
 	useState
 } from 'react';
 import { useNavigate } from 'react-router-dom';
-import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import OpenInFullIcon from '@mui/icons-material/OpenInFull';
+import CalendarMonthOutlinedIcon from '@mui/icons-material/CalendarMonthOutlined';
 import { ReactComponent as OpenInNewIcon } from '../../resources/img/icons/open-in-new-tab.svg';
+import AlternateEmailIcon from '@mui/icons-material/AlternateEmail';
 import MarkChatUnreadOutlinedIcon from '@mui/icons-material/MarkChatUnreadOutlined';
 import { Menu, MenuItem } from '@mui/material';
 import {
@@ -32,7 +33,8 @@ import {
 	getFamiliesInFeed,
 	TIMELINE_KIND_ORDER,
 	TimelineFamilyFilter,
-	TimelineKindId
+	TimelineKindId,
+	timelineKindOf
 } from './timelineFilter';
 import { useDisplayFilter } from '../../hooks/useDisplayFilter';
 import {
@@ -87,6 +89,7 @@ import {
 } from './timelineListWidth';
 import { ReactComponent as LoadOlderIcon } from '../../resources/img/icons/arrow-down.svg';
 import { ListSearchField } from '../listSearchField/ListSearchField';
+import { MenuVerticalIcon } from '../../resources/img/icons';
 import { MatrixActivityPreviewHydrator } from './MatrixActivityPreviewHydrator';
 import { ReactComponent as ImageMessageIcon } from '../../resources/img/icons/file-image.svg';
 import { ReactComponent as FileMessageIcon } from '../../resources/img/icons/file-doc.svg';
@@ -235,6 +238,9 @@ const joinNotificationCall = (
 	return true;
 };
 
+/** "Meine Termine": where an appointment without a conversation leads. */
+const CALENDAR_PATH = '/booking/events';
+
 export const NotificationsCenter = () => {
 	const { t: translate, i18n } = useTranslation();
 	const navigate = useNavigate();
@@ -290,6 +296,7 @@ export const NotificationsCenter = () => {
 	const [activeFamily, setActiveFamily] =
 		useState<TimelineFamilyFilter>(null);
 	const [unreadOnly, setUnreadOnly] = useState(false);
+	const [mentionsOnly, setMentionsOnly] = useState(false);
 	const [searchQuery, setSearchQuery] = useState('');
 	// #924: decrypted card previews, behind the case-handover gate.
 	const {
@@ -486,6 +493,7 @@ export const NotificationsCenter = () => {
 					family: activeFamily,
 					query: searchQuery,
 					unreadOnly,
+					mentionsOnly,
 					bundledUnderOther: kindsUnderOther(
 						timelineFilter,
 						timelineKinds
@@ -507,6 +515,7 @@ export const NotificationsCenter = () => {
 			timelineKinds,
 			searchQuery,
 			unreadOnly,
+			mentionsOnly,
 			translate,
 			i18n.language,
 			visiblePreview
@@ -559,6 +568,14 @@ export const NotificationsCenter = () => {
 	const showEventBar = Boolean(
 		selectedNotification && !isMessageActivityEvent(selectedNotification)
 	);
+	// Frank, 2026-11-17: an appointment shows its conversation when it has
+	// one, with "Zum Kalender" beside "Chat öffnen"; without a conversation
+	// its one way out is the calendar ("Meine Termine").
+	const selectedIsAppointment = Boolean(
+		selectedNotification &&
+			timelineKindOf(selectedNotification) === 'appointments'
+	);
+	const opensCalendar = selectedIsAppointment && !canShowChatPreview;
 
 	const selectedDisplay = useMemo(
 		() =>
@@ -584,12 +601,15 @@ export const NotificationsCenter = () => {
 		canJoinNotificationCall(item, Boolean(sessionsContext?.ready));
 	const selectedOpenLabel = selectedLinksToStatusPage
 		? translate('notifications.center.openStatusPage')
-		: selectedNotification?.actionLabel ||
-			translate(
-				selectedNotification && joinsFromAction(selectedNotification)
-					? 'notifications.center.join'
-					: 'notifications.center.open'
-			);
+		: opensCalendar
+			? translate('notifications.center.openCalendar')
+			: selectedNotification?.actionLabel ||
+				translate(
+					selectedNotification &&
+						joinsFromAction(selectedNotification)
+						? 'notifications.center.join'
+						: 'notifications.center.open'
+				);
 	const selectedSessionNumericId = useMemo(
 		() =>
 			selectedNotification
@@ -647,7 +667,8 @@ export const NotificationsCenter = () => {
 			: getDefaultSessionsPath());
 	const canOpenSelected = selectedLinksToStatusPage
 		? selectedStatusPageUrl !== null
-		: Boolean(
+		: opensCalendar ||
+			Boolean(
 				selectedNotification &&
 					activityConversationPath(selectedNotification)
 			);
@@ -800,12 +821,22 @@ export const NotificationsCenter = () => {
 			return;
 		}
 		markNotificationAsRead(selectedNotification.id);
+		if (opensCalendar) {
+			navigate(CALENDAR_PATH);
+			return;
+		}
 		if (nextUnreadId) {
 			selectNotification(nextUnreadId);
 		}
 		if (openKnock(selectedNotification)) return;
 		if (joinCall(selectedNotification)) return;
 		openActivityConversation(selectedNotification);
+	};
+
+	const handleOpenCalendar = () => {
+		if (!selectedNotification) return;
+		markNotificationAsRead(selectedNotification.id);
+		navigate(CALENDAR_PATH);
 	};
 
 	// #2226: "Open the conversation to reply" in the preview opens the chat
@@ -958,6 +989,13 @@ export const NotificationsCenter = () => {
 					{notificationFeed.length > 0 && (
 						<FilterChipRow
 							label={translate('notifications.center.title')}
+							// "Nur Text" draws the small, dense filter boxes of
+							// Gespräche, not full-size pills (Frank, 2026-11-17).
+							className={
+								chipPresentation.view === 'text'
+									? 'filterChipRow--dense'
+									: undefined
+							}
 						>
 							{pillKinds.map((kind) => (
 								<FilterChip
@@ -981,11 +1019,20 @@ export const NotificationsCenter = () => {
 							<button
 								type="button"
 								aria-pressed={unreadOnly}
-								className={`sessionsListToolbar__chip ${
-									unreadOnly
-										? 'sessionsListToolbar__chip--active'
-										: 'sessionsListToolbar__chip--iconOnly'
-								}`}
+								className={[
+									'sessionsListToolbar__chip',
+									unreadOnly &&
+										'sessionsListToolbar__chip--active',
+									!unreadOnly &&
+										chipPresentation.view === 'icons' &&
+										'sessionsListToolbar__chip--iconOnly',
+									chipPresentation.view === 'text' &&
+										'sessionsListToolbar__chip--text',
+									chipPresentation.view === 'labels' &&
+										'sessionsListToolbar__chip--labelled'
+								]
+									.filter(Boolean)
+									.join(' ')}
 								onClick={() => setUnreadOnly((value) => !value)}
 								title={translate(
 									'notifications.center.unreadFilter'
@@ -994,13 +1041,63 @@ export const NotificationsCenter = () => {
 									'notifications.center.unreadFilter'
 								)}
 							>
-								<MarkChatUnreadOutlinedIcon className="sessionsListToolbar__chipIconSvg" />
+								{chipPresentation.view !== 'text' && (
+									<MarkChatUnreadOutlinedIcon className="sessionsListToolbar__chipIconSvg" />
+								)}
 								<span
 									className="sessionsListToolbar__chipLabel"
-									aria-hidden={!unreadOnly}
+									aria-hidden={
+										!unreadOnly &&
+										chipPresentation.view === 'icons'
+									}
 								>
 									{translate(
 										'notifications.center.unreadFilter'
+									)}
+								</span>
+							</button>
+							{/* "@": only the entries that mention me (Frank,
+							    2026-11-17). */}
+							<button
+								type="button"
+								aria-pressed={mentionsOnly}
+								className={[
+									'sessionsListToolbar__chip',
+									mentionsOnly &&
+										'sessionsListToolbar__chip--active',
+									!mentionsOnly &&
+										chipPresentation.view === 'icons' &&
+										'sessionsListToolbar__chip--iconOnly',
+									chipPresentation.view === 'text' &&
+										'sessionsListToolbar__chip--text',
+									chipPresentation.view === 'labels' &&
+										'sessionsListToolbar__chip--labelled'
+								]
+									.filter(Boolean)
+									.join(' ')}
+								onClick={() =>
+									setMentionsOnly((value) => !value)
+								}
+								title={translate(
+									'notifications.center.mentionsFilter'
+								)}
+								aria-label={translate(
+									'notifications.center.mentionsFilter'
+								)}
+								data-cy="timeline-chip-mentions"
+							>
+								{chipPresentation.view !== 'text' && (
+									<AlternateEmailIcon className="sessionsListToolbar__chipIconSvg" />
+								)}
+								<span
+									className="sessionsListToolbar__chipLabel"
+									aria-hidden={
+										!mentionsOnly &&
+										chipPresentation.view === 'icons'
+									}
+								>
+									{translate(
+										'notifications.center.mentionsFilter'
 									)}
 								</span>
 							</button>
@@ -1131,7 +1228,7 @@ export const NotificationsCenter = () => {
 											? 'notificationsCenter__listRow--active'
 											: ''
 									} ${
-										isActive
+										isActive && canOpenShown
 											? 'notificationsCenter__listRow--withExpander'
 											: ''
 									} ${
@@ -1218,7 +1315,7 @@ export const NotificationsCenter = () => {
 													)
 												}
 											>
-												<MoreHorizIcon />
+												<MenuVerticalIcon />
 											</button>
 										</span>
 									)}
@@ -1421,6 +1518,17 @@ export const NotificationsCenter = () => {
 											: null
 									}
 									onAction={handleOpenAction}
+									secondaryLabel={
+										selectedIsAppointment
+											? translate(
+													'notifications.center.openCalendar'
+												)
+											: null
+									}
+									secondaryIcon={
+										<CalendarMonthOutlinedIcon aria-hidden="true" />
+									}
+									onSecondary={handleOpenCalendar}
 								/>
 							)}
 							<ConversationPreview
@@ -1554,7 +1662,11 @@ export const NotificationsCenter = () => {
 										className="notificationsCenter__openButton"
 										onClick={handleOpenAction}
 									>
-										<OpenInFullIcon />
+										{opensCalendar ? (
+											<CalendarMonthOutlinedIcon />
+										) : (
+											<OpenInFullIcon />
+										)}
 										{selectedOpenLabel}
 									</button>
 								) : null}

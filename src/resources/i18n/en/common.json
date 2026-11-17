@@ -2656,6 +2656,8 @@
 			"systemTag": "System notification",
 			"messageTag": "Message notification",
 			"unreadFilter": "Unread",
+			"mentionsFilter": "Mentions",
+			"openCalendar": "Open calendar",
 			"showPreview": "Show conversation preview",
 			"showDetails": "Show details",
 			"next": "Next notification",

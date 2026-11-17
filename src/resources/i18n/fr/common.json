@@ -2659,6 +2659,8 @@
 			"systemTag": "Notification du système",
 			"messageTag": "Notification de message",
 			"unreadFilter": "Non lues",
+			"mentionsFilter": "Mentions",
+			"openCalendar": "Ouvrir le calendrier",
 			"next": "Notification suivante",
 			"cardMenu": "Actions de notification",
 			"markRead": "Marquer comme lu",

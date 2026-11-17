@@ -2680,6 +2680,8 @@
 			"systemTag": "Systembenachrichtigung",
 			"messageTag": "Nachrichtenbenachrichtigung",
 			"unreadFilter": "Ungelesen",
+			"mentionsFilter": "Erwähnungen",
+			"openCalendar": "Zum Kalender",
 			"showPreview": "Chat-Vorschau anzeigen",
 			"showDetails": "Details anzeigen",
 			"next": "Nächste Benachrichtigung",

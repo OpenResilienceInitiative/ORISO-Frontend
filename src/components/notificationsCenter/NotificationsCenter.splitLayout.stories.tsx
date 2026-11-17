@@ -223,3 +223,166 @@ export const EmptyPageShowsBothPanes: Story = {
 		expect(getComputedStyle(handle, '::before').content).not.toBe('none');
 	}
 };
+
+/**
+ * Frank, 2026-11-17: the "⋮" of the selected card is the round button of the
+ * Gespräche cards, its right edge on the text edge (it stuck out to the
+ * right), and the time sits on the bottom padding (it floated above it).
+ */
+export const CardMenuSitsOnTheTextEdge: Story = {
+	play: async ({ canvasElement }) => {
+		const card = await waitFor(() => {
+			const active = canvasElement.querySelector<HTMLElement>(
+				'.notificationsCenter__card--active'
+			);
+			expect(active).not.toBeNull();
+			return active!;
+		});
+		const button = canvasElement.querySelector<HTMLElement>(
+			'.notificationsCenter__cardMenuButton'
+		)!;
+		const time = card.querySelector<HTMLElement>(
+			'.notificationsCenter__cardTime--footer'
+		)!;
+		// Measure the card after its grow-in, not halfway through it.
+		card.ownerDocument
+			.getAnimations()
+			.forEach((animation) => animation.finish());
+		expect(getComputedStyle(button).borderRadius).toBe('32px');
+		expect(button.getBoundingClientRect().width).toBe(48);
+		expect(
+			Math.abs(
+				button.getBoundingClientRect().right -
+					time.getBoundingClientRect().right
+			)
+		).toBeLessThanOrEqual(1);
+		// Bottom border 2 + padding 15 + at most a few px of line box.
+		expect(
+			card.getBoundingClientRect().bottom -
+				time.getBoundingClientRect().bottom
+		).toBeLessThanOrEqual(20);
+	}
+};
+
+/**
+ * Frank, 2026-11-17: "Nur Text" in the display filter draws the small, dense
+ * filter boxes of Gespräche, not full-size pills.
+ */
+export const TextViewUsesDenseChips: Story = {
+	play: async ({ canvasElement }) => {
+		await userEvent.click(
+			await waitFor(() => {
+				const button = canvasElement.querySelector<HTMLElement>(
+					'[data-cy="timeline-display-filter"]'
+				);
+				expect(button).not.toBeNull();
+				return button!;
+			})
+		);
+		await userEvent.click(
+			await waitFor(() => {
+				const option =
+					canvasElement.ownerDocument.querySelector<HTMLElement>(
+						'[data-cy="display-filter-view-text"]'
+					);
+				expect(option).not.toBeNull();
+				return option!;
+			})
+		);
+		await userEvent.keyboard('{Escape}');
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector('.filterChipRow--dense')
+			).not.toBeNull()
+		);
+		const chips = Array.from(
+			canvasElement.querySelectorAll<HTMLElement>(
+				'.notificationsCenter__toolbar .filterChipRow .sessionsListToolbar__chip'
+			)
+		);
+		expect(chips.length).toBeGreaterThan(2);
+		for (const chip of chips) {
+			expect(chip.getBoundingClientRect().height).toBeLessThanOrEqual(28);
+		}
+	}
+};
+
+/** Frank, 2026-11-17: an "@" pill keeps only the entries that mention me. */
+export const MentionsPillKeepsMentionsOnly: Story = {
+	decorators: [
+		withTimelineData([
+			feedItem({
+				id: 'mention-yes',
+				eventType: 'thread.reply.new',
+				createdAt: minutesAgo(2),
+				readAt: null,
+				params: { mentioned: true }
+			} as any),
+			feedItem({
+				id: 'mention-no',
+				eventType: 'thread.reply.new',
+				createdAt: minutesAgo(5),
+				readAt: null,
+				params: { mentioned: false }
+			} as any),
+			feedItem({
+				id: 'mention-appointment',
+				eventType: 'appointment.scheduled',
+				createdAt: minutesAgo(8),
+				readAt: null
+			})
+		])
+	],
+	play: async ({ canvasElement }) => {
+		const pill = await waitFor(() => {
+			const element = canvasElement.querySelector<HTMLElement>(
+				'[data-cy="timeline-chip-mentions"]'
+			);
+			expect(element).not.toBeNull();
+			return element!;
+		});
+		expect(
+			canvasElement.querySelectorAll('.notificationsCenter__card')
+		).toHaveLength(3);
+		await userEvent.click(pill);
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelectorAll('.notificationsCenter__card')
+			).toHaveLength(1)
+		);
+		expect(pill).toHaveAttribute('aria-pressed', 'true');
+		await userEvent.click(pill);
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelectorAll('.notificationsCenter__card')
+			).toHaveLength(3)
+		);
+	}
+};
+
+/**
+ * Frank, 2026-11-17: an appointment without a conversation leads to the
+ * calendar: "Zum Kalender" in the preview, not "Chat öffnen".
+ */
+export const AppointmentWithoutChatLeadsToCalendar: Story = {
+	play: async ({ canvasElement }) => {
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector(
+					'.notificationsCenter__card--active'
+				)
+			).not.toBeNull()
+		);
+		const open = await waitFor(() => {
+			const button = canvasElement.querySelector<HTMLElement>(
+				'.notificationsCenter__openButton'
+			);
+			expect(button).not.toBeNull();
+			return button!;
+		});
+		expect(open.textContent).toContain('Zum Kalender');
+		expect(
+			canvasElement.querySelector('.notificationsCenter__expander')
+		).not.toBeNull();
+	}
+};

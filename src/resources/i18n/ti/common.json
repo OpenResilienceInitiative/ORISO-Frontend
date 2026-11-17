@@ -2633,6 +2633,8 @@
 			"systemTag": "መፍለጢ ሲስተም",
 			"messageTag": "መፍለጢ መልእኽቲ",
 			"unreadFilter": "ዘይተነበበ",
+			"mentionsFilter": "ዝተጠቕሱ",
+			"openCalendar": "ናብ ካላንደር",
 			"next": "ቀጻሊ ሓበሬታ",
 			"cardMenu": "ናይ ሓበሬታ ተግባራት",
 			"markRead": "ከም ተነብበ ምልክት ግበር",

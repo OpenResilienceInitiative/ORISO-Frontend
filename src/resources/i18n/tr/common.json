@@ -2659,6 +2659,8 @@
 			"systemTag": "Sistem bildirimi",
 			"messageTag": "Mesaj bildirimi",
 			"unreadFilter": "Okunmamış",
+			"mentionsFilter": "Bahsedilenler",
+			"openCalendar": "Takvime git",
 			"next": "Sonraki bildirim",
 			"cardMenu": "Bildirim işlemleri",
 			"markRead": "Okundu olarak işaretle",
