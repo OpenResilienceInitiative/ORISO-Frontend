@@ -27,7 +27,7 @@ import { onAppointmentsChanged } from '../sessionsList/timeline/conversationAppo
 import { InvitationsOverview } from '../directInvitation/InvitationsOverview';
 import { InvitationDialog } from '../directInvitation/InvitationDialog';
 import type { InvitationDialogValue } from '../directInvitation/invitationModel';
-import { timerDelay } from '../directInvitation/invitationModel';
+import { READ_RETRY_MS, timerDelay } from '../directInvitation/invitationModel';
 import { directInvitationSettings } from '../directInvitation/directInvitationSettings';
 import { overviewSections } from './invitationsOverviewData';
 import { useSendNewLink } from '../directInvitation/useSendNewLink';
@@ -140,7 +140,9 @@ export const MyDirectLinksPanel = ({
 	};
 
 	/* An invitation whose validity ends while the overview is open moves to
-	   the expired section: the list is read again once its end has passed. */
+	   the expired section: the list is read again once its end has passed.
+	   A failed read keeps the old list, so nothing would change and no new
+	   timer start: it is asked again until a read succeeds. */
 	useEffect(() => {
 		if (!overview) return;
 		const now = Date.now();
@@ -150,9 +152,22 @@ export const MyDirectLinksPanel = ({
 			.filter((end) => Number.isFinite(end) && end > now)
 			.sort((a, b) => a - b)[0];
 		if (nextEnd === undefined) return;
-		const delay = timerDelay(new Date(nextEnd + 1000));
-		const timer = window.setTimeout(reload, delay);
-		return () => window.clearTimeout(timer);
+		let active = true;
+		let timer: number | undefined;
+		const refresh = () => {
+			void reload().then((read) => {
+				if (!read && active)
+					timer = window.setTimeout(refresh, READ_RETRY_MS);
+			});
+		};
+		timer = window.setTimeout(
+			refresh,
+			timerDelay(new Date(nextEnd + 1000))
+		);
+		return () => {
+			active = false;
+			window.clearTimeout(timer);
+		};
 	}, [links, overview, reload]);
 
 	// Topics only matter once someone edits; a failed load keeps the topic fixed.

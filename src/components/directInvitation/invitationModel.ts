@@ -95,6 +95,12 @@ export const MAX_TIMER_MS = 2 ** 31 - 1;
 export const timerDelay = (at: Date, now: Date = new Date()): number =>
 	Math.min(MAX_TIMER_MS, Math.max(0, at.getTime() - now.getTime()));
 
+/**
+ * #2252: how long to wait before reading the links again when a read that
+ * a timer (an expiry) asked for has failed; nothing else would ask again.
+ */
+export const READ_RETRY_MS = 30_000;
+
 export interface DayGroup<T> {
 	/** Local midnight of the day. */
 	day: Date;

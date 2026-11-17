@@ -729,6 +729,33 @@ describe('Termine & Direkteinladungen (#2252)', () => {
 		}
 	});
 
+	it('reads again at expiry when the read right after it failed', async () => {
+		vi.useFakeTimers({ now: Date.now() });
+		try {
+			const endingSoon: DirectLink = {
+				...meeting,
+				expiresAt: new Date(Date.now() + 60_000).toISOString()
+			};
+			vi.mocked(apiGetOwnDirectLinks)
+				.mockResolvedValueOnce([endingSoon])
+				.mockRejectedValueOnce(new Error('CATCH_ALL'))
+				.mockResolvedValue([{ ...endingSoon, expired: true }]);
+			renderPage();
+			await settle();
+
+			await settle(61_000);
+			/* The failed read keeps the list as it was. */
+			expect(apiGetOwnDirectLinks).toHaveBeenCalledTimes(2);
+			expect(screen.getByTestId('upcoming-invitation')).toBeTruthy();
+
+			await settle(60_000);
+			expect(screen.getByTestId('expired-invitation')).toBeTruthy();
+			expect(screen.queryByTestId('upcoming-invitation')).toBeNull();
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
 	it('opens the QR code of an appointment invitation', async () => {
 		vi.mocked(apiGetOwnDirectLinks).mockResolvedValue([meeting]);
 		renderPage();
