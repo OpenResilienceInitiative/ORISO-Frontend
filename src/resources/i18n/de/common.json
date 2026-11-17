@@ -2275,6 +2275,20 @@
 		},
 		"deliveryStatus": {
 			"sent": "Gesendet"
+		},
+		"appointmentNotice": {
+			"title": {
+				"created": "Termin vereinbart",
+				"moved": "Termin verschoben",
+				"cancelled": "Termin abgesagt"
+			},
+			"by": "von {{name}}",
+			"before": "Vorher:",
+			"after": "Neu:",
+			"action": {
+				"createNew": "Neuen Termin anlegen",
+				"openCalendar": "Im Kalender öffnen"
+			}
 		}
 	},
 	"navigation": {

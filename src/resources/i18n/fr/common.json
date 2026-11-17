@@ -2254,6 +2254,20 @@
 		},
 		"deliveryStatus": {
 			"sent": "Envoyé"
+		},
+		"appointmentNotice": {
+			"title": {
+				"created": "Rendez-vous fixé",
+				"moved": "Rendez-vous déplacé",
+				"cancelled": "Rendez-vous annulé"
+			},
+			"by": "par {{name}}",
+			"before": "Avant :",
+			"after": "Nouveau :",
+			"action": {
+				"createNew": "Créer un nouveau rendez-vous",
+				"openCalendar": "Ouvrir dans le calendrier"
+			}
 		}
 	},
 	"navigation": {

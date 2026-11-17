@@ -2228,6 +2228,20 @@
 		},
 		"deliveryStatus": {
 			"sent": "ተላኢኹ"
+		},
+		"appointmentNotice": {
+			"title": {
+				"created": "ቆጸራ ተሓዚ",
+				"moved": "ቆጸራ ተቐይሩ",
+				"cancelled": "ቆጸራ ተሰሪዙ"
+			},
+			"by": "ብ {{name}}",
+			"before": "ቅድሚ፦",
+			"after": "ሓድሽ፦",
+			"action": {
+				"createNew": "ሓድሽ ቆጸራ ፍጠር",
+				"openCalendar": "ኣብ ዓውደ-ኣዋርሕ ክፈት"
+			}
 		}
 	},
 	"navigation": {

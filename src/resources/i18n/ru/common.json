@@ -2259,6 +2259,20 @@
 		},
 		"deliveryStatus": {
 			"sent": "Отправлено"
+		},
+		"appointmentNotice": {
+			"title": {
+				"created": "Встреча назначена",
+				"moved": "Встреча перенесена",
+				"cancelled": "Встреча отменена"
+			},
+			"by": "Автор: {{name}}",
+			"before": "Было:",
+			"after": "Стало:",
+			"action": {
+				"createNew": "Создать новую встречу",
+				"openCalendar": "Открыть в календаре"
+			}
 		}
 	},
 	"navigation": {
