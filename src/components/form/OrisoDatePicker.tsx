@@ -53,23 +53,31 @@ export const OrisoDatePicker = ({
 	const [inputText, setInputText] = React.useState(
 		value ? value.format(format) : ''
 	);
+	const [outOfRange, setOutOfRange] = React.useState(false);
 
 	React.useEffect(() => {
 		setInputText(value ? value.format(format) : '');
+		setOutOfRange(false);
 	}, [value, format]);
 
 	const commitInput = (text: string) => {
 		const trimmed = text.trim();
 		if (!trimmed) {
+			setOutOfRange(false);
 			onChange?.(null);
 			return;
 		}
 
 		const parsed = dayjs(trimmed, format, true);
-		if (parsed.isValid()) {
-			onChange?.(parsed);
-		} else {
+		if (!parsed.isValid()) {
 			setInputText(value ? value.format(format) : '');
+			return;
+		}
+		const tooEarly = minDate && parsed.isBefore(minDate, 'day');
+		const tooLate = maxDate && parsed.isAfter(maxDate, 'day');
+		setOutOfRange(Boolean(tooEarly || tooLate));
+		if (!tooEarly && !tooLate) {
+			onChange?.(parsed);
 		}
 	};
 
@@ -93,7 +101,7 @@ export const OrisoDatePicker = ({
 				value={inputText}
 				placeholder={placeholder ?? format}
 				helperText={helperText}
-				error={error}
+				error={error || outOfRange}
 				disabled={disabled}
 				fullWidth={fullWidth}
 				onChange={(event) => setInputText(event.target.value)}

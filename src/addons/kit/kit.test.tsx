@@ -131,6 +131,34 @@ describe('web kit', () => {
 		).toBe('');
 	});
 
+	it('refuses a typed date outside min and max and marks the field invalid', () => {
+		const onChange = vi.fn();
+		render(
+			<DatePicker
+				label="Ende"
+				value="2026-03-05"
+				onChange={onChange}
+				min="2026-03-01"
+				max="2026-03-31"
+			/>
+		);
+		const input = screen.getByLabelText('Ende') as HTMLInputElement;
+
+		fireEvent.change(input, { target: { value: '01.04.2026' } });
+		fireEvent.blur(input);
+		expect(onChange).not.toHaveBeenCalled();
+		expect(input.getAttribute('aria-invalid')).toBe('true');
+
+		fireEvent.change(input, { target: { value: '28.02.2026' } });
+		fireEvent.blur(input);
+		expect(onChange).not.toHaveBeenCalled();
+
+		fireEvent.change(input, { target: { value: '31.03.2026' } });
+		fireEvent.blur(input);
+		expect(onChange).toHaveBeenLastCalledWith('2026-03-31');
+		expect(input.getAttribute('aria-invalid')).toBe('false');
+	});
+
 	it('reports numbers as numbers and an empty field as null', () => {
 		const onChange = vi.fn();
 		render(
