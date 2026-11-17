@@ -466,7 +466,7 @@
 		border: 1px solid var(--m3-on-primary-container, #ffe2de);
 		border-radius: 32px;
 		background: var(--m3-surface-container-lowest, #ffffff);
-		color: #1e1e1e;
+		color: var(--m3-on-surface, #1b1b1c);
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
@@ -482,8 +482,9 @@
 			fill: currentcolor;
 		}
 
+		// The theme's hover layer, like the rail's search button.
 		&:hover {
-			background: rgba(255, 209, 209, 0.35);
+			background: var(--m3-hover-layer, #f9eff0);
 		}
 
 		&:focus-visible {
@@ -693,6 +694,19 @@
 		svg {
 			width: 18px;
 			height: 18px;
+		}
+	}
+
+	// "Zum Kalender" beside the conversation action: outlined, like the
+	// event bar's secondary action.
+	&__openButton--secondary {
+		border: 1px solid var(--m3-outline-variant, #c4c7c7);
+		background: var(--m3-surface-container-lowest, #ffffff);
+		color: var(--m3-secondary, #4c555f);
+
+		&:hover {
+			background: var(--m3-hover-layer, #f9eff0);
+			color: var(--m3-primary, #a5000a);
 		}
 	}
 

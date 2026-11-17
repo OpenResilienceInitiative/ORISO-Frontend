@@ -9,6 +9,7 @@ import {
 	activityEventSessionId,
 	describeActivityEvent,
 	isMessageActivityEvent,
+	leadsToCalendar,
 	showsConversationPreview
 } from './activityEvent';
 
@@ -440,5 +441,42 @@ describe('#2226 showsConversationPreview', () => {
 				joined
 			)
 		).toBe(false);
+	});
+});
+
+describe('#2275 leadsToCalendar', () => {
+	const row = (eventType: string, extra: Record<string, unknown> = {}) =>
+		({ eventType, category: 'system', ...extra }) as any;
+
+	it('sends an appointment that names no conversation to the calendar', () => {
+		expect(leadsToCalendar(row('appointment.scheduled'))).toBe(true);
+	});
+
+	it('keeps the conversation of an appointment that names one, joined or not', () => {
+		expect(
+			leadsToCalendar(
+				row('appointment.scheduled', { params: { roomRef: '!r:x' } })
+			)
+		).toBe(false);
+		expect(
+			leadsToCalendar(
+				row('appointment.scheduled', { sourceSessionId: 7 })
+			)
+		).toBe(false);
+	});
+
+	it('keeps the join view of a group entry whose room is not joined yet', () => {
+		expect(
+			leadsToCalendar(
+				row('group_chat.opened', {
+					params: { roomRef: '!group:x', groupChatId: 'g-1' }
+				})
+			)
+		).toBe(false);
+	});
+
+	it('never sends other entries to the calendar', () => {
+		expect(leadsToCalendar(row('call.missed'))).toBe(false);
+		expect(leadsToCalendar(row('unknown.type'))).toBe(false);
 	});
 });

@@ -101,6 +101,7 @@ import { ActivityEventBar } from './ActivityEventBar';
 import {
 	activityEventCaseHandoverRequestId,
 	isMessageActivityEvent,
+	leadsToCalendar,
 	showsConversationPreview,
 	activityEventRoomId,
 	activityEventSessionId,
@@ -575,7 +576,11 @@ export const NotificationsCenter = () => {
 		selectedNotification &&
 			timelineKindOf(selectedNotification) === 'appointments'
 	);
-	const opensCalendar = selectedIsAppointment && !canShowChatPreview;
+	// #2275 review: the calendar decision rests on whether the entry names a
+	// conversation, not on whether the preview can show it.
+	const opensCalendar = Boolean(
+		selectedNotification && leadsToCalendar(selectedNotification)
+	);
 
 	const selectedDisplay = useMemo(
 		() =>
@@ -779,6 +784,10 @@ export const NotificationsCenter = () => {
 	// join-kind call card has no path of its own, so it resolves its
 	// conversation like an ended call does instead of the list root.
 	const openConversationOnly = (item: NotificationFeedItem) => {
+		if (leadsToCalendar(item)) {
+			navigate(CALENDAR_PATH);
+			return;
+		}
 		if (isJoinCallEntry(item)) {
 			openConversation(item, translate('videoCall.timeline.joinFailed'));
 			return;
@@ -821,7 +830,7 @@ export const NotificationsCenter = () => {
 			return;
 		}
 		markNotificationAsRead(selectedNotification.id);
-		if (opensCalendar) {
+		if (leadsToCalendar(selectedNotification)) {
 			navigate(CALENDAR_PATH);
 			return;
 		}
@@ -1519,7 +1528,7 @@ export const NotificationsCenter = () => {
 									}
 									onAction={handleOpenAction}
 									secondaryLabel={
-										selectedIsAppointment
+										selectedIsAppointment && !opensCalendar
 											? translate(
 													'notifications.center.openCalendar'
 												)
@@ -1657,18 +1666,37 @@ export const NotificationsCenter = () => {
 										</a>
 									)
 								) : canOpenShown ? (
-									<button
-										type="button"
-										className="notificationsCenter__openButton"
-										onClick={handleOpenAction}
-									>
-										{opensCalendar ? (
-											<CalendarMonthOutlinedIcon />
-										) : (
-											<OpenInFullIcon />
-										)}
-										{selectedOpenLabel}
-									</button>
+									<>
+										{/* #2275 review: an appointment
+										    whose conversation stays hidden
+										    keeps its way to the calendar. */}
+										{selectedIsAppointment &&
+											!opensCalendar && (
+												<button
+													type="button"
+													className="notificationsCenter__openButton notificationsCenter__openButton--secondary"
+													data-cy="activity-detail-calendar"
+													onClick={handleOpenCalendar}
+												>
+													<CalendarMonthOutlinedIcon aria-hidden="true" />
+													{translate(
+														'notifications.center.openCalendar'
+													)}
+												</button>
+											)}
+										<button
+											type="button"
+											className="notificationsCenter__openButton"
+											onClick={handleOpenAction}
+										>
+											{opensCalendar ? (
+												<CalendarMonthOutlinedIcon />
+											) : (
+												<OpenInFullIcon />
+											)}
+											{selectedOpenLabel}
+										</button>
+									</>
 								) : null}
 								<button
 									type="button"
