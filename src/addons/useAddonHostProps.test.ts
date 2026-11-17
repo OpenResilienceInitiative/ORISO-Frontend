@@ -2,6 +2,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
 	addonApiCall,
+	addonPublicApiCall,
 	addonNotice,
 	readThemeTokens
 } from './useAddonHostProps';
@@ -133,5 +134,31 @@ describe('addonNotice', () => {
 		expect(notice?.text).toBe(
 			'&lt;img src=x onerror=alert(1)&gt; &amp; mehr'
 		);
+	});
+});
+
+describe('addonPublicApiCall', () => {
+	afterEach(() => vi.unstubAllGlobals());
+
+	it('calls the public API with the Träger and without a login', async () => {
+		const fetchMock = vi.fn().mockResolvedValue(new Response('{}'));
+		vi.stubGlobal('fetch', fetchMock);
+
+		await addonPublicApiCall(
+			{ apiBase: '/service/addons/finder/public/api' },
+			7,
+			'https://example.org'
+		)('agencies?postcode=10115', {
+			headers: { Authorization: 'Bearer leaked' }
+		});
+
+		const [url, init] = fetchMock.mock.calls[0];
+		expect(url).toBe(
+			'https://example.org/service/addons/finder/public/api/agencies?postcode=10115'
+		);
+		const headers = init.headers as Headers;
+		expect(headers.get('X-Oriso-Tenant-Id')).toBe('7');
+		expect(headers.has('Authorization')).toBe(false);
+		expect(init.credentials).toBe('omit');
 	});
 });

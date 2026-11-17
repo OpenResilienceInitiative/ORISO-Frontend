@@ -1,4 +1,4 @@
-import { useCallback, useContext, useMemo } from 'react';
+import { useCallback, useContext, useMemo, useRef } from 'react';
 import { useThemeVersion } from '../utils/theme/useThemeVersion';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -21,9 +21,12 @@ import {
 	ADDON_CONTRACT,
 	AGENCY_HEADER,
 	SESSION_HEADER,
+	TENANT_HEADER,
 	AddonApp,
 	AddonHostProps,
 	AddonNotice,
+	AddonRegistrationProps,
+	AddonRegistrationResult,
 	AddonSlot,
 	AvailableAddon
 } from './addonTypes';
@@ -112,6 +115,27 @@ export const addonApiCall = (
 	};
 };
 
+/** The public API of a registration add-on: no login, the Träger in a header. */
+export const addonPublicApiCall = (
+	addon: Pick<AvailableAddon, 'apiBase'>,
+	tenantId: number | undefined,
+	baseUrl: string = apiUrl
+) => {
+	return (path: string, init: RequestInit = {}) => {
+		const headers = new Headers(init.headers);
+		headers.delete('Authorization');
+		if (tenantId != null) {
+			headers.set(TENANT_HEADER, String(tenantId));
+		}
+		const relative = path.startsWith('/') ? path : `/${path}`;
+		return fetch(`${baseUrl}${addon.apiBase}${relative}`, {
+			...init,
+			headers,
+			credentials: 'omit'
+		});
+	};
+};
+
 const NOTICE_TYPES = {
 	success: NOTIFICATION_TYPE_SUCCESS,
 	info: NOTIFICATION_TYPE_INFO,
@@ -162,7 +186,8 @@ export const useAddonHostProps = (
 	addon: AvailableAddon,
 	app: AddonApp,
 	slot: AddonSlot,
-	placement: AddonPlacement = {}
+	placement: AddonPlacement = {},
+	registration?: AddonRegistrationProps
 ): Omit<AddonHostProps, 'domElement'> => {
 	const { userData } = useContext(UserDataContext) ?? {};
 	const { tenant } = useContext(TenantContext) ?? {};
@@ -183,6 +208,18 @@ export const useAddonHostProps = (
 	const { agencyId, sessionId, askerId } = placement;
 	const themeVersion = useThemeVersion();
 	const { name, version, apiBase } = addon;
+	// The app keeps the functions it got at mount; they call the registration's current callbacks.
+	const registrationRef = useRef(registration);
+	registrationRef.current = registration;
+	const isRegistration = Boolean(registration);
+	const complete = useCallback(
+		(result: AddonRegistrationResult) =>
+			registrationRef.current?.complete(result),
+		[]
+	);
+	const back = useCallback(() => registrationRef.current?.back(), []);
+	const topicId = registration?.topicId;
+	const postcode = registration?.postcode;
 
 	return useMemo(
 		() => ({
@@ -202,9 +239,12 @@ export const useAddonHostProps = (
 			agencyId,
 			sessionId,
 			askerId,
-			api: addonApiCall({ apiBase }, { agencyId, sessionId }),
+			api: isRegistration
+				? addonPublicApiCall({ apiBase }, tenant?.id)
+				: addonApiCall({ apiBase }, { agencyId, sessionId }),
 			navigate: goTo,
-			notify
+			notify,
+			...(isRegistration ? { topicId, postcode, complete, back } : {})
 		}),
 		// themeVersion: the tokens are read again once a tenant palette landed.
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -223,7 +263,12 @@ export const useAddonHostProps = (
 			askerId,
 			goTo,
 			notify,
-			themeVersion
+			themeVersion,
+			isRegistration,
+			topicId,
+			postcode,
+			complete,
+			back
 		]
 	);
 };

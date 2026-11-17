@@ -6,6 +6,7 @@ import {
 	AddonApp,
 	AddonHostProps,
 	AddonModule,
+	AddonRegistrationProps,
 	AddonSlot,
 	AvailableAddon
 } from './addonTypes';
@@ -40,6 +41,7 @@ interface AddonMountProps {
 	app: AddonApp;
 	slot: AddonSlot;
 	placement?: AddonPlacement;
+	registration?: AddonRegistrationProps;
 	/** Injected in tests; defaults to the loader from context. */
 	loader?: AddonModuleLoader;
 }
@@ -56,6 +58,7 @@ export const AddonMount = ({
 	app,
 	slot,
 	placement,
+	registration,
 	loader: loaderProp
 }: AddonMountProps) => {
 	const contextLoader = useContext(AddonModuleLoaderContext);
@@ -63,7 +66,13 @@ export const AddonMount = ({
 	const { t: translate } = useTranslation();
 	const element = useRef<HTMLDivElement>(null);
 	const [failed, setFailed] = useState(false);
-	const hostProps = useAddonHostProps(addon, app, slot, placement);
+	const hostProps = useAddonHostProps(
+		addon,
+		app,
+		slot,
+		placement,
+		registration
+	);
 	const hostPropsRef = useRef(hostProps);
 	hostPropsRef.current = hostProps;
 	const mountedRef = useRef<MountedApp | null>(null);

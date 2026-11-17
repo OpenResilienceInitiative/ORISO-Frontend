@@ -4,12 +4,16 @@ export const ADDON_CONTRACT = 'oriso-addon/v1';
 
 export const AGENCY_HEADER = 'X-Oriso-Agency-Id';
 export const SESSION_HEADER = 'X-Oriso-Session-Id';
+export const TENANT_HEADER = 'X-Oriso-Tenant-Id';
 
 export type AddonSlot =
 	| 'asker.navigation'
 	| 'consultant.navigation'
+	| 'asker.session-menu'
 	| 'consultant.session'
+	| 'consultant.session-menu'
 	| 'consultant.asker-profile'
+	| 'registration.agency-finder'
 	| 'admin.page';
 
 export interface AddonApp {
@@ -18,6 +22,9 @@ export interface AddonApp {
 	slots: AddonSlot[];
 	/** Reported by dynamic apps (contract section 4); 0 or absent means none. */
 	badge?: number;
+	/** Same-origin path of a monochrome SVG, e.g. `/service/addons/<name>/ui/icons/goals.svg`. */
+	icon?: string;
+	description?: Record<string, string>;
 }
 
 /** One entry of `GET /service/addons/registry`, already filtered for the caller. */
@@ -47,6 +54,39 @@ export interface AddonNotice {
 	title?: string;
 }
 
+/** What the `registration.agency-finder` app hands back to the registration. */
+export interface AddonRegistrationResult {
+	agencyId: number;
+	topicId?: number;
+	postcode?: string;
+	consultingType?: number;
+	/** Opaque id of what the add-on stored, `[A-Za-z0-9_-]{1,64}`; sent with the registration. */
+	registrationRef?: string;
+}
+
+/** `GET /service/addons/public/registration?tenantId=`: the app replacing the agency selection. */
+export interface RegistrationAddonResponse {
+	contract: string;
+	name: string;
+	version: string;
+	react?: string;
+	appId: string;
+	title: Record<string, string>;
+	icon?: string;
+	entry: string;
+	apiBase: string;
+}
+
+/** What the registration passes to its `registration.agency-finder` app. */
+export interface AddonRegistrationProps {
+	/** The topic chosen so far, if any. */
+	topicId?: number;
+	/** The postcode entered so far, if any. */
+	postcode?: string;
+	complete: (result: AddonRegistrationResult) => void;
+	back: () => void;
+}
+
 /** What every lifecycle function of an add-on bundle receives. */
 export interface AddonHostProps {
 	contract: typeof ADDON_CONTRACT;
@@ -64,7 +104,17 @@ export interface AddonHostProps {
 	agencyId?: number;
 	sessionId?: number;
 	askerId?: string;
-	/** Calls the add-on's own API with the user's login. */
+	/** Only in slot `registration.agency-finder`: topic and postcode chosen so far. */
+	topicId?: number;
+	postcode?: string;
+	/** Only in slot `registration.agency-finder`: hands the chosen agency to the registration. */
+	complete?: (result: AddonRegistrationResult) => void;
+	/** Only in slot `registration.agency-finder`: back to the previous registration step. */
+	back?: () => void;
+	/**
+	 * Calls the add-on's own API with the user's login; in `registration.agency-finder` its
+	 * public API, with the Träger in `X-Oriso-Tenant-Id` and without a login.
+	 */
 	api: (path: string, init?: RequestInit) => Promise<Response>;
 	navigate: (to: string) => void;
 	/** Shows a short message through the host's notifications. */

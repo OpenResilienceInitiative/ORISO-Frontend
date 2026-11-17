@@ -47,6 +47,8 @@ interface SessionStorageData {
 	zipcode: string;
 	age?: string;
 	state?: string;
+	/** Set by a registration add-on (`registration.agency-finder`), sent with the registration. */
+	registrationRef?: string;
 }
 
 export interface RegistrationData extends SessionStorageData {
