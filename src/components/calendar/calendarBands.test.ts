@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vite-plus/test';
-import { colleagueBands, foldsIntoBand } from './calendarBands';
+import { colleagueBands, entriesInBand, foldsIntoBand } from './calendarBands';
 import type { CalendarEntry } from './calendarModel';
 
 const at = (hour: number, minute = 0) =>
@@ -111,5 +111,40 @@ describe('colleagueBands — colleagues fold into one band per stretch', () => {
 		expect(foldsIntoBand(entry('m', 'me', [9], [10]), ['kaya'])).toBe(
 			false
 		);
+	});
+});
+
+describe('entriesInBand — what keeps each colleague of a band busy (Frank *16.2)', () => {
+	const band = {
+		start: new Date(2026, 10, 16, 11),
+		end: new Date(2026, 10, 16, 12),
+		busy: ['kaya', 'berg']
+	};
+
+	it('lists each busy person’s entries in the stretch, in band order, earliest first', () => {
+		const people = entriesInBand(band, [
+			entry('b1', 'berg', [11], [13]),
+			entry('k2', 'kaya', [11, 30], [12]),
+			entry('k1', 'kaya', [10], [11, 30]),
+			// Ends where the band begins: not in it.
+			entry('k0', 'kaya', [9], [11]),
+			// Not busy in this band.
+			entry('d1', 'demir', [11], [12])
+		]);
+		expect(
+			people.map((p) => [p.personId, p.entries.map((e) => e.id)])
+		).toEqual([
+			['kaya', ['k1', 'k2']],
+			['berg', ['b1']]
+		]);
+	});
+
+	it('counts a whole-day entry, as the band does', () => {
+		const people = entriesInBand(band, [
+			entry('b1', 'berg', [11], [13]),
+			entry('ba', 'berg', [0], [23, 59], { allDay: true }),
+			entry('k1', 'kaya', [11], [12])
+		]);
+		expect(people[1].entries.map((e) => e.id)).toEqual(['ba', 'b1']);
 	});
 });

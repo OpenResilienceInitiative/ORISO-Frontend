@@ -659,9 +659,14 @@ const freePointIn = (root: HTMLElement, date: string) => {
 const bandTipText = () =>
 	document.querySelector('[data-cy="calendar-band-peek"]')?.textContent ?? '';
 const slotMenu = () => document.querySelector('[data-cy="calendar-menu-slot"]');
+/** The band card where it takes the list's place. */
+const sideBandCard = () =>
+	document.querySelector<HTMLElement>(
+		'[data-cy="calendar-side-frame"] [data-cy="calendar-band-card"]'
+	);
 
 export const ColleaguesBandClick: Story = {
-	name: 'Colleagues shown — a click on a band explains it, no "Eintragen als" (Frank *16.2)',
+	name: 'Colleagues shown — a click on a band opens who is busy, no "Eintragen als" (Frank *16.2)',
 	args: { shownColleagues: ['kaya', 'demir'] },
 	play: async ({ canvasElement }) => {
 		// Measured when used: the grid scrolls to 08:00 once it is laid out.
@@ -683,34 +688,31 @@ export const ColleaguesBandClick: Story = {
 		await findCy('calendar-menu-slot');
 		await userEvent.keyboard('{Escape}');
 		await waitFor(() => expect(slotMenu(), 'Escape closes it').toBeNull());
-		// … a click on a band says who is busy and opens no menu, which
-		// would block the pointer for every other band.
+		// … a click on a band says who is busy, in the left column, and
+		// opens no menu, which would block the pointer for every other band.
 		const [pressed, next] = await bandPoints();
 		await clickAt(pressed);
-		const first = await waitFor(() => {
-			expect(bandTipText(), 'explained on click').toContain('Belegt:');
-			return bandTipText();
-		});
+		await waitFor(() =>
+			expect(sideBandCard(), 'explained on click').toBeTruthy()
+		);
 		await new Promise((resolve) => setTimeout(resolve, 300));
 		await expect(slotMenu(), 'no menu from a band').toBeNull();
 		// The browser says "mouseover" on the grid's frame once the
-		// selection's shadow is gone; the pointer is still on the band, so
-		// the explanation stays.
+		// selection's shadow is gone; the card stays.
 		fireEvent.mouseOver(document.elementFromPoint(pressed.x, pressed.y)!, {
 			clientX: pressed.x,
 			clientY: pressed.y
 		});
 		await new Promise((resolve) => setTimeout(resolve, 100));
-		await expect(bandTipText(), 'still explained').toBe(first);
+		await expect(sideBandCard(), 'still explained').toBeTruthy();
 		// Moving on to the next band explains that one.
 		fireEvent.mouseMove(document.elementFromPoint(next.x, next.y)!, {
 			clientX: next.x,
 			clientY: next.y
 		});
-		await waitFor(() => {
-			expect(bandTipText(), 'explained on hover').toContain('Belegt:');
-			expect(bandTipText()).not.toBe(first);
-		});
+		await waitFor(() =>
+			expect(bandTipText(), 'explained on hover').toContain('Belegt:')
+		);
 		// Dragging over a band still offers "Eintragen als": colleagues
 		// being busy never blocks one's own calendar.
 		const [from] = await bandPoints();
@@ -738,6 +740,142 @@ export const ColleaguesBandClick: Story = {
 		fireEvent.pointerUp(document, { ...press, ...end });
 		fireEvent.mouseUp(document, { button: 0, ...end });
 		await findCy('calendar-menu-slot');
+	}
+};
+
+/** Monday 11–12: A. Kaya (video) and P. Nowak (phone), "2 von 4 belegt". */
+const MONDAY_BAND = `${new Date(2026, 10, 16, 11).getTime()}-${new Date(2026, 10, 16, 12).getTime()}`;
+const TEAM = ['kaya', 'demir', 'hoffmann', 'nowak'];
+/** A band by its stretch, and a point on it no entry or grip covers. */
+const bandByKey = (root: HTMLElement, key: string) =>
+	waitFor(() => {
+		const band = root.querySelector<HTMLElement>(`[data-band="${key}"]`);
+		expect(band).toBeTruthy();
+		const point = pointOnBand(band!);
+		expect(point).toBeTruthy();
+		return { band: band!, point: point! };
+	});
+
+export const ColleaguesBandCard: Story = {
+	name: 'Colleagues shown — a click on a band: who is busy, in the left column (Frank *16.2)',
+	args: { scope: 'TENANT', shownColleagues: TEAM },
+	play: async ({ canvasElement }) => {
+		const { band, point } = await bandByKey(canvasElement, MONDAY_BAND);
+		await clickAt(point);
+		const card = await waitFor(() => {
+			expect(sideBandCard()).toBeTruthy();
+			return sideBandCard()!;
+		});
+		const inCard = within(card);
+		// Who is busy with what, and who is free.
+		await expect(
+			inCard.getByTestId('calendar-band-person-kaya').textContent
+		).toContain('Video · 11:00–12:00');
+		await expect(
+			inCard.getByTestId('calendar-band-person-nowak').textContent
+		).toContain('Telefon · 11:00–12:00');
+		const free = inCard.getByTestId('calendar-band-free').textContent;
+		await expect(free).toContain('E. Demir');
+		await expect(free).toContain('K. Hoffmann');
+		// The band is outlined; the list waits under the card, out of reach;
+		// no menu holds the pointer.
+		await waitFor(() => expect(band.dataset.selected).toBe('true'));
+		const list = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="calendar-side"]'
+		)!;
+		await expect(getComputedStyle(list).visibility).toBe('hidden');
+		await expect(
+			document.querySelector('[data-cy^="calendar-menu-"]')
+		).toBeNull();
+		// Escape gives the list back; a click brings the card again.
+		await waitFor(() =>
+			expect(card.contains(document.activeElement)).toBe(true)
+		);
+		await userEvent.keyboard('{Escape}');
+		await waitFor(() => expect(sideBandCard()).toBeNull());
+		await expect(getComputedStyle(list).visibility).toBe('visible');
+		await clickAt((await bandByKey(canvasElement, MONDAY_BAND)).point);
+		await waitFor(() => expect(sideBandCard()).toBeTruthy());
+		// "Kalender ansehen": side by side on that day, A. Kaya marked.
+		await userEvent.click(
+			within(sideBandCard()!).getByRole('button', {
+				name: 'Kalender von A. Kaya ansehen'
+			})
+		);
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector(
+					'[data-cy="calendar-split-column-kaya"]'
+				)?.classList
+			).toContain('calendarSplit__column--marked')
+		);
+		await expect(sideBandCard()).toBeNull();
+	}
+};
+
+export const ColleaguesBandCardActions: Story = {
+	name: 'Colleagues shown — from the band card: propose a new time, or enter one’s own (Frank *16.2)',
+	args: { scope: 'TENANT', shownColleagues: TEAM },
+	play: async ({ canvasElement }) => {
+		await clickAt((await bandByKey(canvasElement, MONDAY_BAND)).point);
+		const card = await waitFor(() => {
+			expect(sideBandCard()).toBeTruthy();
+			return sideBandCard()!;
+		});
+		// A colleague's appointment: a proposal they accept, through the
+		// form the calendar already has.
+		await userEvent.click(
+			within(
+				within(card).getByTestId('calendar-band-person-kaya')
+			).getByRole('button', { name: /Verschiebung vorschlagen/ })
+		);
+		await findCy('calendar-menu-entry');
+		await expect(sideBandCard(), 'the card stays').toBeTruthy();
+		await userEvent.keyboard('{Escape}');
+		await waitFor(() =>
+			expect(
+				document.querySelector('[data-cy="calendar-menu-entry"]')
+			).toBeNull()
+		);
+		// One's own entry at that time: "Eintragen als".
+		await userEvent.click(
+			within(sideBandCard()!).getByRole('button', {
+				name: /Zu dieser Zeit eintragen/
+			})
+		);
+		await findCy('calendar-menu-slot');
+	}
+};
+
+export const ColleaguesBandCardFullscreen: Story = {
+	name: 'Colleagues shown — full screen: the band card opens at the band (Frank *16.2)',
+	args: { scope: 'TENANT', shownColleagues: TEAM, fullscreen: true },
+	play: async ({ canvasElement }) => {
+		await clickAt((await bandByKey(canvasElement, MONDAY_BAND)).point);
+		const menu = within(await findCy('calendar-menu-band'));
+		await expect(
+			menu.getByTestId('calendar-band-person-kaya')
+		).toBeTruthy();
+		await expect(
+			menu.queryByRole('button', { name: 'Zurück zur Liste' })
+		).toBeNull();
+		await expect(sideBandCard()).toBeNull();
+	}
+};
+
+export const ColleaguesBandCardPhone: Story = {
+	name: 'Colleagues shown — phone 390 px: a tap on a band opens the card over the calendar (Frank *16.2)',
+	globals: phone390Globals,
+	args: { scope: 'TENANT', shownColleagues: TEAM, compact: true },
+	play: async ({ canvasElement }) => {
+		await clickAt((await bandByKey(canvasElement, MONDAY_BAND)).point);
+		const menu = within(await findCy('calendar-menu-band'));
+		await expect(
+			menu.getByTestId('calendar-band-person-nowak')
+		).toBeTruthy();
+		await expect(
+			menu.getByTestId('calendar-band-free').textContent
+		).toContain('E. Demir');
 	}
 };
 

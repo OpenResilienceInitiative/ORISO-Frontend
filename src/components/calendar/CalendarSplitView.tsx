@@ -213,6 +213,13 @@ export interface CalendarSplitViewProps {
 		mode: 'list' | 'move'
 	) => void;
 	onProposalOpen?: (proposal: MoveProposal, anchor: MenuAnchor) => void;
+	/**
+	 * Where the day starts scrolled to, in minutes since midnight; 08:00
+	 * without it. A band's "Kalender ansehen" starts an hour before it.
+	 */
+	startMinutes?: number;
+	/** The colleague a band's "Kalender ansehen" asked for: marked. */
+	markedOwner?: string;
 	/** Height of an hour in px (the page's zoom). */
 	hourPx?: number;
 }
@@ -267,6 +274,8 @@ export const CalendarSplitView = ({
 	onSelectRange,
 	onEntryOpen,
 	onProposalOpen,
+	startMinutes,
+	markedOwner,
 	hourPx = SPLIT_HOUR_PX
 }: CalendarSplitViewProps) => {
 	const { t, i18n } = useTranslation();
@@ -409,9 +418,27 @@ export const CalendarSplitView = ({
 		};
 	}, [grouped]);
 
-	// Start the day at 08:00, like the time grid.
+	// Start the day at 08:00, like the time grid, or where a band asked
+	// for; a marked colleague's column comes into view next to one's own.
 	useEffect(() => {
-		scrollRef.current?.scrollTo({ top: Math.max(0, toPx(8 * 60)) });
+		const track = scrollRef.current;
+		track?.scrollTo({
+			top: Math.max(0, toPx(startMinutes ?? 8 * 60))
+		});
+		const marked = track?.querySelector<HTMLElement>(
+			'.calendarSplit__column--marked'
+		);
+		if (!track || !marked) return;
+		const sticky = grouped
+			? 0
+			: ((track.firstElementChild as HTMLElement | null)?.offsetWidth ??
+				0);
+		const left = marked.offsetLeft - sticky;
+		const shown =
+			left >= track.scrollLeft &&
+			left + marked.offsetWidth <=
+				track.scrollLeft + track.clientWidth - sticky;
+		if (!shown) track.scrollTo({ left: Math.max(0, left) });
 		// Only on mount; zooming keeps its own place.
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
@@ -726,13 +753,15 @@ export const CalendarSplitView = ({
 			}))
 		]);
 		const name = person.colleague?.displayName ?? t('calendar.people.me');
+		const marked = !own && person.id === markedOwner;
 		return (
 			<div
 				key={person.id}
 				className={[
 					'calendarSplit__column',
 					own && 'calendarSplit__column--own',
-					sticky && 'calendarSplit__column--sticky'
+					sticky && 'calendarSplit__column--sticky',
+					marked && 'calendarSplit__column--marked'
 				]
 					.filter(Boolean)
 					.join(' ')}
@@ -748,7 +777,10 @@ export const CalendarSplitView = ({
 			>
 				<div className="calendarSplit__head">
 					{own && <span className="calendarSplit__axisHead" />}
-					<div className="calendarSplit__person">
+					<div
+						className="calendarSplit__person"
+						aria-current={marked || undefined}
+					>
 						<span
 							className={`calendarSplit__avatar ${avatarToneClass(name, own)}`}
 							aria-hidden="true"

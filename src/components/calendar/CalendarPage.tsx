@@ -182,6 +182,12 @@ import {
 	type CalendarImport
 } from './CalendarSyncDialog';
 import { useEntryLabel, useRangeFormat } from './useEntryLabel';
+import { entriesInBand, type ColleagueBand } from './calendarBands';
+import {
+	CalendarBandCard,
+	type BandMoveAction,
+	type CalendarBandCardProps
+} from './CalendarBandCard';
 import { M3Dialog } from '../m3Dialog/M3Dialog';
 import type { QuickKind } from './calendarQuickEntry';
 import { useLiveNow } from './useLiveNow';
@@ -398,6 +404,12 @@ type Menu =
 			anchor: HTMLElement;
 	  }
 	| {
+			/** A colleague band, opened at the band (Frank *16.2). */
+			type: 'band';
+			anchor: MenuAnchor;
+			band: ColleagueBand;
+	  }
+	| {
 			type: 'edge';
 			anchor: MenuAnchor;
 			change: EdgeChange;
@@ -548,6 +560,22 @@ export const CalendarPage = ({
 	};
 	const listMode = listModeOf(listWidth);
 	const sideScroll = useRef<HTMLDivElement>(null);
+	/**
+	 * A clicked colleague band: on a wide screen its card takes the place
+	 * of the list in the left column, which has room for five or six
+	 * people (Frank, 2026-11-17); in full screen, next to the rail and on
+	 * the phone it opens at the band instead.
+	 */
+	const [sideBand, setSideBand] = useState<ColleagueBand | null>(null);
+	const bandInSide = !compact && !fullscreen && listMode === 'full';
+	useEffect(() => {
+		if (!bandInSide) setSideBand(null);
+	}, [bandInSide]);
+	/** "Kalender ansehen" from a band: where the split view starts. */
+	const [splitFocus, setSplitFocus] = useState<{
+		minutes: number;
+		owner?: string;
+	} | null>(null);
 	/** Counts up when "+" in the narrow column asks for the quick entry. */
 	const [quickFocus, setQuickFocus] = useState(0);
 
@@ -786,6 +814,10 @@ export const CalendarPage = ({
 	const changeView = (next: CalendarViewName) => {
 		setMenu(null);
 		if (next === view) return;
+		// Bands are only in the time grid; the split view starts at 08:00
+		// unless a band asked for its time.
+		setSideBand(null);
+		if (next !== 'split') setSplitFocus(null);
 		if (next !== 'split' && view !== 'split')
 			controller.changeView(FC_VIEW[next]);
 		setView(next);
@@ -1660,6 +1692,116 @@ export const CalendarPage = ({
 		setMenu({ type: 'entry', entry, anchor, mode: formMode, outside });
 	};
 
+	// --- Colleague bands: who is busy with what (Frank *16.2) ---
+	const openBand = (band: ColleagueBand, el: HTMLElement) => {
+		if (bandInSide) {
+			setMenu(null);
+			setSideBand(band);
+			return;
+		}
+		// At the band's top right; the menu keeps itself on the screen.
+		const box = el.getBoundingClientRect();
+		setMenu({
+			type: 'band',
+			band,
+			anchor: { x: Math.round(box.right), y: Math.round(box.top) }
+		});
+	};
+	/** "Kalender ansehen" or "Alle nebeneinander": an hour before the band. */
+	const showSideBySide = (band: ColleagueBand, owner: string | null) => {
+		const start = band.start;
+		setSplitFocus({
+			minutes: Math.max(
+				0,
+				start.getHours() * 60 + start.getMinutes() - 60
+			),
+			owner: owner ?? undefined
+		});
+		changeView('split');
+		setAnchorDate(startOfDay(start));
+		// The eye finds that colleague's entries where the calendar lands.
+		if (owner)
+			flash(
+				entriesInBand(band, busyEntries)
+					.find((p) => p.personId === owner)
+					?.entries.map((e) => e.id) ?? []
+			);
+	};
+	/**
+	 * What one may do with a colleague's entry from the card: one's own
+	 * co-access copy moves, a future appointment takes a proposal, the
+	 * rest only its owner changes (UserService, checked 2026-11-16).
+	 */
+	const bandMoveAction = (entry: CalendarEntry): BandMoveAction => {
+		if (new Date(entry.start).getTime() <= now.getTime()) return null;
+		const mine =
+			entry.type === 'appointment'
+				? entries.find(
+						(e) => e.id === entry.id && e.ownerId === ownerId
+					)
+				: undefined;
+		const actions = entryActions(mine ?? entry, { ownerId, role, can });
+		if (actions.includes('move')) return 'move';
+		return actions.includes('propose') ? 'propose' : null;
+	};
+	const bandCardProps = (
+		band: ColleagueBand,
+		variant: 'side' | 'menu'
+	): CalendarBandCardProps => {
+		const busy = new Set(band.busy);
+		const failed = shown.filter((c) => failedColleagues.includes(c.id));
+		const pending = shown.filter(
+			(c) =>
+				loadingCalendars.includes(c.id) &&
+				!failedColleagues.includes(c.id)
+		);
+		const names = (list: Colleague[]) =>
+			list.map((c) => c.displayName).join(', ');
+		// From the menu at the band, the next card opens where it was.
+		const anchorOf = (el: HTMLElement): MenuAnchor =>
+			variant === 'menu' && menu?.type === 'band' ? menu.anchor : el;
+		return {
+			band,
+			busy: entriesInBand(band, busyEntries).flatMap(
+				({ personId, entries: list }) =>
+					colleagueById[personId]
+						? [
+								{
+									colleague: colleagueById[personId],
+									entries: list
+								}
+							]
+						: []
+			),
+			free: shown.filter(
+				(c) =>
+					!busy.has(c.id) &&
+					!failedColleagues.includes(c.id) &&
+					!loadingCalendars.includes(c.id)
+			),
+			unknownNote: pending.length
+				? t('calendar.bandLoading', { names: names(pending) })
+				: failed.length
+					? t('calendar.bandUnknown', { names: names(failed) })
+					: undefined,
+			moveActionOf: bandMoveAction,
+			onShowCalendar: (owner) => showSideBySide(band, owner),
+			onMoveEntry: (entry, el) => openEntry(entry, anchorOf(el), 'move'),
+			onCreate:
+				consultant && onCreate
+					? (el) =>
+							setMenu({
+								type: 'slot',
+								range: { start: band.start, end: band.end },
+								anchor: anchorOf(el)
+							})
+					: undefined,
+			onClose: () =>
+				variant === 'side' ? setSideBand(null) : setMenu(null),
+			variant
+		};
+	};
+
 	const entryAction = (
 		entry: CalendarEntry,
 		action: 'show' | 'start' | 'chat' | 'join' | 'cancel' | 'remove'
@@ -1752,6 +1894,13 @@ export const CalendarPage = ({
 					setView('day');
 				}}
 			/>
+		);
+	} else if (menu?.type === 'band') {
+		menuLabel = t('calendar.bandCard.label');
+		menuRole = 'dialog';
+		menuWidth = 320;
+		menuContent = (
+			<CalendarBandCard {...bandCardProps(menu.band, 'menu')} />
 		);
 	} else if (menu?.type === 'entry') {
 		const { entry } = menu;
@@ -2497,6 +2646,8 @@ export const CalendarPage = ({
 							}
 							onEntryOpen={openEntry}
 							onProposalOpen={openProposal}
+							startMinutes={splitFocus?.minutes}
+							markedOwner={splitFocus?.owner}
 						/>
 					) : (
 						<CalendarView
@@ -2531,6 +2682,11 @@ export const CalendarPage = ({
 							}
 							onEntryOpen={openEntry}
 							onProposalOpen={openProposal}
+							onBandOpen={openBand}
+							selectedBand={
+								sideBand ??
+								(menu?.type === 'band' ? menu.band : null)
+							}
 							onEntryMove={move}
 							onDatesSet={datesSet}
 							onDragChange={setDragging}
@@ -2634,7 +2790,13 @@ export const CalendarPage = ({
 		>
 			{!compact && !fullscreen && (
 				<div
-					className={`calendarSide__frame calendarSide__frame--${listMode}`}
+					className={[
+						'calendarSide__frame',
+						`calendarSide__frame--${listMode}`,
+						sideBand && 'calendarSide__frame--band'
+					]
+						.filter(Boolean)
+						.join(' ')}
 					style={{ width: listWidth }}
 					data-cy="calendar-side-frame"
 				>
@@ -2648,6 +2810,15 @@ export const CalendarPage = ({
 							setQuickFocus((n) => n + 1);
 						}}
 					/>
+					{sideBand && (
+						// Over the list, which keeps its place and state
+						// underneath (and is hidden from the keyboard).
+						<div className="calendarSide__bandCard">
+							<CalendarBandCard
+								{...bandCardProps(sideBand, 'side')}
+							/>
+						</div>
+					)}
 					{/* The pink grip of "Gespräche": centred on the column, so
 					    it stays put while the list scrolls. */}
 					<ResizableHandle
