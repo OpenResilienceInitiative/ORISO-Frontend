@@ -178,3 +178,40 @@ describe('CalendarPage — an own entry chosen while "ich" is muted (review 4589
 		);
 	});
 });
+
+describe('CalendarPage — a colleague entry chosen in search (review 4594535280)', () => {
+	it('lands side by side, where the entry is drawn on its own', async () => {
+		const theirs: CalendarEntry = {
+			...own('kaya-call', 120),
+			ownerId: 'kaya',
+			title: 'mutige_eule'
+		};
+		render(
+			<CalendarPage
+				role="consultant"
+				ownerId="me"
+				now={NOW}
+				entries={[own('next', 5), theirs]}
+				initialView="week"
+				colleagues={[
+					{
+						id: 'kaya',
+						displayName: 'A. Kaya',
+						agencyName: 'Nord',
+						relation: 'sameAgency'
+					}
+				]}
+				initialShownColleagues={['kaya']}
+			/>
+		);
+		fireEvent.change(
+			screen.getAllByPlaceholderText('calendar.search.placeholder')[0],
+			{ target: { value: 'Kaya' } }
+		);
+		fireEvent.click(byCy('calendar-search-kaya-call') as HTMLElement);
+		await waitFor(() =>
+			expect(screen.queryByTestId('calendar-split-view')).not.toBeNull()
+		);
+		expect(byCy('calendar-split-entry-kaya-call')).not.toBeNull();
+	});
+});

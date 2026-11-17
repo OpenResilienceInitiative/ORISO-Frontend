@@ -862,7 +862,14 @@ export const CalendarPage = ({
 		);
 		const start = new Date(entry.start);
 		const weekend = start.getDay() === 0 || start.getDay() === 6;
-		if (view === 'month' || view === 'list' || split)
+		// A colleague's entry is only a band in one's own grid; side by
+		// side draws it on its own, with its actions (review 4594535280).
+		const colleagueOnly =
+			entry.ownerId !== ownerId &&
+			!entries.some((e) => e.id === entry.id && e.ownerId === ownerId);
+		if (colleagueOnly) {
+			if (!split) changeView('split');
+		} else if (view === 'month' || view === 'list' || split)
 			changeView(phone ? 'threeDays' : weekend ? 'week' : 'workWeek');
 		else if (view === 'workWeek' && weekend) changeView('week');
 		goTo(start);
@@ -2831,7 +2838,15 @@ export const CalendarPage = ({
 					hiddenFacets={hiddenFacets}
 					onHiddenChange={setHiddenFacets}
 					chipFacets={chipFacets}
-					onChipsChange={setChipFacets}
+					onChipsChange={(next) => {
+						setChipFacets(next);
+						// A chosen kind whose button leaves the row would stay
+						// filtered with no way back: clear it (review
+						// 4594645452).
+						setOnlyFacets((all) =>
+							all.filter((facet) => next.includes(facet))
+						);
+					}}
 					chipView={chipView}
 					onChipViewChange={setChipView}
 					fullScreen={compact}
