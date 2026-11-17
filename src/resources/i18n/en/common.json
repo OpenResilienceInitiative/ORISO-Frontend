@@ -4748,7 +4748,8 @@
 					"cancelled": "Appointment cancelled: {{date}}",
 					"requested": "Appointment requested: {{date}} – waiting for confirmation",
 					"confirmed": "Appointment confirmed: {{date}}",
-					"declined": "Appointment request declined: {{date}}"
+					"declined": "Appointment request declined: {{date}}",
+					"withdrawn": "Appointment request withdrawn: {{date}}"
 				},
 				"noticeFailed": {
 					"title": "Notice not sent",
@@ -4759,10 +4760,8 @@
 					"text": "The appointment could not be cancelled. Please try again."
 				},
 				"request": {
-					"title": "Appointment request",
-					"waiting": "Requested – waiting for confirmation",
-					"confirm": "Confirm",
-					"decline": "Decline",
+					"marker": "Requested",
+					"failedTitle": "Request not answered",
 					"taken": "This time is no longer free. Decline the request or suggest another time in the chat.",
 					"failed": "That did not work. Please try again."
 				}
@@ -5339,8 +5338,7 @@
 				"confirmRequest": "Request appointment",
 				"requested": "Your request has been sent. It is waiting for your counsellor to confirm it."
 			},
-			"nextRequested": "Your requested appointment",
-			"requestedStatus": "Requested – waiting for confirmation"
+			"nextRequested": "Your requested appointment"
 		},
 		"incomingCall": {
 			"description": "calls...",
@@ -7539,9 +7537,10 @@
 			"autoAccept": "Confirm bookings automatically",
 			"autoAcceptOn": "After the notice period an appointment is booked at once; short-notice bookings are requests.",
 			"autoAcceptOff": "Every booking is a request that you confirm.",
-			"noticeDays": "Notice period in days",
+			"noticeDays": "Notice",
 			"noticeDaysHint": "Within these days before the appointment a booking becomes a request.",
-			"noticeInvalid": "Please enter a whole number from 0 to {{max}}.",
+			"noticeDaysOption": "{{count}} days",
+			"noticeDaysOption_one": "{{count}} day",
 			"slotMinutes": "Length of an appointment",
 			"minutes": "{{count}} min",
 			"invalid": "The end must be after the start."

@@ -254,6 +254,49 @@ describe('entries in the real list', () => {
 		);
 		expect(items.map((i) => i.key)).toEqual(['reminder']);
 	});
+
+	describe('a request waiting for the counsellor (FE#2287)', () => {
+		const request = {
+			kind: 'one-to-one' as const,
+			canDuplicate: false,
+			canModerate: true,
+			requested: true as const
+		};
+
+		it('lets the counsellor confirm or decline it, nothing else', () => {
+			const items = entryMenu(request, 'counsellor');
+			expect(items.map((i) => [i.key, i.title, i.disabled])).toEqual([
+				['confirm', 'Termin bestätigen', false],
+				['decline', 'Termin ablehnen', false]
+			]);
+		});
+
+		it('lets the advice seeker withdraw it through the cancel entry', () => {
+			const items = entryMenu(request, 'asker');
+			expect(items.map((i) => [i.key, i.title, i.disabled])).toEqual([
+				['cancel', 'Anfrage zurückziehen', false]
+			]);
+		});
+
+		it('carries the request from the booking to its entry', () => {
+			const [twin] = buildFutureEntries({
+				now: new Date('2026-10-28T10:00:00Z'),
+				occurrences: [],
+				seriesToSession: {},
+				sessions: [],
+				bookings: [
+					{
+						id: 'r-1',
+						appointmentId: 'r-1',
+						startTime: '2026-10-29T10:00:00Z',
+						location: 'VIDEO_CALL',
+						requested: true
+					}
+				]
+			});
+			expect(twin.requested).toBe(true);
+		});
+	});
 });
 
 describe('pill time and countdown', () => {

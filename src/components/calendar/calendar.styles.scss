@@ -3391,8 +3391,8 @@ $cal-new-pill-hover: #4b4f51;
 	}
 }
 
-/* Sprechstunden (FE#2287): the booking settings under the days. */
-/* A day wraps its times under it where the dialog is narrow (390 px). */
+/* Sprechstunden (FE#2287): a day wraps its times under it where the dialog
+   is narrow (390 px). */
 .calendarConsultation__row {
 	display: flex;
 	flex-wrap: wrap;
@@ -3420,81 +3420,6 @@ $cal-new-pill-hover: #4b4f51;
 	margin: 4px 0 0;
 	color: var(--m3-on-surface-variant, #444748);
 	font-size: 12px;
-}
-
-.calendarConsultation__field {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	justify-content: space-between;
-	gap: 8px 16px;
-	font-size: 14px;
-
-	> span {
-		display: flex;
-		flex: 1 1 200px;
-		flex-direction: column;
-		min-width: 0;
-	}
-
-	small {
-		color: var(--m3-on-surface-variant, #444748);
-		font-size: 12px;
-	}
-
-	input {
-		box-sizing: border-box;
-		width: 80px;
-		height: 40px;
-		padding: 0 10px;
-		border: 1px solid var(--m3-outline, #747878);
-		border-radius: 8px;
-		background: var(--m3-surface-container-lowest, #ffffff);
-		color: var(--m3-on-surface, #1b1b1c);
-		font: inherit;
-		font-size: 14px;
-
-		&[aria-invalid='true'] {
-			border-color: var(--m3-error, #ba1a1a);
-		}
-
-		&:focus-visible {
-			@include control-focus-ring(0);
-		}
-	}
-}
-
-.calendarConsultation__segments {
-	display: inline-flex;
-	overflow: hidden;
-	border: 1px solid var(--m3-outline, #747878);
-	border-radius: 20px;
-}
-
-.calendarConsultation__segment {
-	min-width: 72px;
-	height: 40px;
-	padding: 0 16px;
-	border: 0;
-	background: transparent;
-	color: var(--m3-on-surface, #1b1b1c);
-	font: inherit;
-	font-size: 14px;
-	cursor: pointer;
-
-	& + & {
-		border-left: 1px solid var(--m3-outline, #747878);
-	}
-
-	&--on {
-		background: var(--m3-secondary-container, #e8def8);
-		color: var(--m3-on-secondary-container, #1d192b);
-		font-weight: 600;
-	}
-
-	&:focus-visible {
-		@include control-focus-ring(0);
-	}
 }
 
 .calendarHours__region {

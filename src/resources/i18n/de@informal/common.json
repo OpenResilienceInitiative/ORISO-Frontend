@@ -3082,8 +3082,7 @@
 		},
 		"consultationHours": {
 			"description": "In diesen Zeiten können Ratsuchende selbst einen Termin bei dir buchen. Sie gelten unabhängig von deiner Arbeitszeit.",
-			"autoAcceptOff": "Jede Buchung ist eine Anfrage, die du bestätigst.",
-			"noticeInvalid": "Bitte gib eine ganze Zahl von 0 bis {{max}} ein."
+			"autoAcceptOff": "Jede Buchung ist eine Anfrage, die du bestätigst."
 		}
 	}
 }

@@ -4782,7 +4782,8 @@
 					"cancelled": "Rendez-vous annulé : {{date}}",
 					"requested": "Rendez-vous demandé : {{date}} – en attente de confirmation",
 					"confirmed": "Rendez-vous confirmé : {{date}}",
-					"declined": "Demande de rendez-vous refusée : {{date}}"
+					"declined": "Demande de rendez-vous refusée : {{date}}",
+					"withdrawn": "Demande de rendez-vous retirée : {{date}}"
 				},
 				"noticeFailed": {
 					"title": "Avis non envoyé",
@@ -4793,10 +4794,8 @@
 					"text": "Le rendez-vous n’a pas pu être annulé. Veuillez réessayer."
 				},
 				"request": {
-					"title": "Demande de rendez-vous",
-					"waiting": "Demandé – en attente de confirmation",
-					"confirm": "Confirmer",
-					"decline": "Refuser",
+					"marker": "Demandé",
+					"failedTitle": "Demande sans réponse",
 					"taken": "Ce créneau n’est plus libre. Refusez la demande ou proposez un autre horaire dans le chat.",
 					"failed": "Cela n’a pas fonctionné. Veuillez réessayer."
 				}
@@ -5374,8 +5373,7 @@
 				"confirmRequest": "Demander le rendez-vous",
 				"requested": "Votre demande a été envoyée. Elle attend la confirmation de votre conseiller ou conseillère."
 			},
-			"nextRequested": "Votre rendez-vous demandé",
-			"requestedStatus": "Demandé – en attente de confirmation"
+			"nextRequested": "Votre rendez-vous demandé"
 		},
 		"incomingCall": {
 			"description": "appelle...",
@@ -7624,9 +7622,10 @@
 			"autoAccept": "Confirmer les réservations automatiquement",
 			"autoAcceptOn": "Après le délai de prévenance, un rendez-vous est réservé immédiatement ; les réservations à court terme sont des demandes.",
 			"autoAcceptOff": "Chaque réservation est une demande que vous confirmez.",
-			"noticeDays": "Délai de prévenance en jours",
+			"noticeDays": "Délai de préavis",
 			"noticeDaysHint": "Dans ces jours précédant le rendez-vous, une réservation devient une demande.",
-			"noticeInvalid": "Veuillez saisir un nombre entier de 0 à {{max}}.",
+			"noticeDaysOption": "{{count}} jours",
+			"noticeDaysOption_one": "{{count}} jour",
 			"slotMinutes": "Durée d’un rendez-vous",
 			"minutes": "{{count}} minutes",
 			"invalid": "La fin doit être après le début."

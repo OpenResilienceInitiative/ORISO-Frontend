@@ -10,12 +10,12 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { M3Dialog } from '../m3Dialog/M3Dialog';
 import { Switch } from '../Switch';
+import { OrisoSelect } from '../form/OrisoSelect';
 import { useWeekdayNames } from './WorkingHoursDialog';
 import {
 	consultationHoursToApi,
 	consultationRows,
 	invalidConsultationRows,
-	isNoticeDays,
 	MAX_NOTICE_DAYS,
 	type ConsultationDayRow,
 	type ConsultationHours,
@@ -31,6 +31,7 @@ export interface ConsultationHoursDialogProps {
 }
 
 const SLOT_MINUTES: SlotMinutes[] = [30, 60];
+const NOTICE_DAYS = Array.from({ length: MAX_NOTICE_DAYS + 1 }, (_, n) => n);
 
 export const ConsultationHoursDialog = ({
 	open,
@@ -45,13 +46,11 @@ export const ConsultationHoursDialog = ({
 		consultationRows(hours.windows)
 	);
 	const [autoAccept, setAutoAccept] = useState(hours.autoAccept);
-	const [notice, setNotice] = useState(String(hours.noticeDays));
+	const [noticeDays, setNoticeDays] = useState(hours.noticeDays);
 	const [slotMinutes, setSlotMinutes] = useState<SlotMinutes>(
 		hours.slotMinutes
 	);
 	const invalid = invalidConsultationRows(rows);
-	const noticeDays = notice.trim() === '' ? Number.NaN : Number(notice);
-	const noticeWrong = !isNoticeDays(noticeDays);
 	const empty = rows.every((r) => !r.enabled);
 	const update = (weekday: number, patch: Partial<ConsultationDayRow>) =>
 		setRows((all) =>
@@ -72,7 +71,7 @@ export const ConsultationHoursDialog = ({
 				{
 					label: t('calendar.consultationHours.save'),
 					primary: true,
-					disabled: invalid.length > 0 || noticeWrong,
+					disabled: invalid.length > 0,
 					onClick: () =>
 						onSave(
 							consultationHoursToApi(rows, {
@@ -160,7 +159,7 @@ export const ConsultationHoursDialog = ({
 						{t('calendar.consultationHours.empty')}
 					</p>
 				)}
-				<div className="calendarHours__holidayBox calendarConsultation__settings">
+				<div className="calendarHours__holidayBox">
 					<div className="calendarHours__row calendarHours__row--holidays">
 						<Switch
 							checked={autoAccept}
@@ -182,61 +181,61 @@ export const ConsultationHoursDialog = ({
 							</small>
 						</span>
 					</div>
-					<label className="calendarConsultation__field">
-						<span>
-							{t('calendar.consultationHours.noticeDays')}
-							<small>
-								{t('calendar.consultationHours.noticeDaysHint')}
-							</small>
-						</span>
-						<input
-							type="number"
-							inputMode="numeric"
-							min={0}
-							max={MAX_NOTICE_DAYS}
-							step={1}
-							value={notice}
-							aria-invalid={noticeWrong || undefined}
-							onChange={(e) => setNotice(e.target.value)}
-							data-testid="consultation-hours-notice-days"
-						/>
-					</label>
-					<div
-						className="calendarConsultation__field"
-						role="group"
-						aria-label={t('calendar.consultationHours.slotMinutes')}
-					>
-						<span>
-							{t('calendar.consultationHours.slotMinutes')}
-						</span>
-						<div className="calendarConsultation__segments">
-							{SLOT_MINUTES.map((minutes) => (
-								<button
-									key={minutes}
-									type="button"
-									aria-pressed={slotMinutes === minutes}
-									className={`calendarConsultation__segment${slotMinutes === minutes ? ' calendarConsultation__segment--on' : ''}`}
-									onClick={() => setSlotMinutes(minutes)}
-									data-testid={`consultation-hours-slot-${minutes}`}
-								>
-									{t('calendar.consultationHours.minutes', {
-										count: minutes
-									})}
-								</button>
-							))}
+					{/* The MUI 3 select of the design system, like "Bundesland"
+					    in the working hours (Frank *12), not own fields. */}
+					<div className="calendarHours__region">
+						<div className="calendarHours__select">
+							<OrisoSelect
+								label={t(
+									'calendar.consultationHours.noticeDays'
+								)}
+								value={String(noticeDays)}
+								helperText={t(
+									'calendar.consultationHours.noticeDaysHint'
+								)}
+								options={NOTICE_DAYS.map((days) => ({
+									value: String(days),
+									label: t(
+										'calendar.consultationHours.noticeDaysOption',
+										{ count: days }
+									)
+								}))}
+								onChange={(event) =>
+									setNoticeDays(Number(event.target.value))
+								}
+								data-cy="consultation-hours-notice-days"
+							/>
+						</div>
+						<div className="calendarHours__select">
+							<OrisoSelect
+								label={t(
+									'calendar.consultationHours.slotMinutes'
+								)}
+								value={String(slotMinutes)}
+								options={SLOT_MINUTES.map((minutes) => ({
+									value: String(minutes),
+									label: t(
+										'calendar.consultationHours.minutes',
+										{
+											count: minutes
+										}
+									)
+								}))}
+								onChange={(event) =>
+									setSlotMinutes(
+										Number(
+											event.target.value
+										) as SlotMinutes
+									)
+								}
+								data-cy="consultation-hours-slot-minutes"
+							/>
 						</div>
 					</div>
 				</div>
 				{invalid.length > 0 && (
 					<p className="calendarDialog__error" role="alert">
 						{t('calendar.consultationHours.invalid')}
-					</p>
-				)}
-				{noticeWrong && (
-					<p className="calendarDialog__error" role="alert">
-						{t('calendar.consultationHours.noticeInvalid', {
-							max: MAX_NOTICE_DAYS
-						})}
 					</p>
 				)}
 			</div>

@@ -30,7 +30,8 @@ export const appointmentToBooking = (
 	location: (appointment.kind && LOCATION[appointment.kind]) || 'VIDEO_CALL',
 	askerName:
 		appointment.counterpart?.displayName ||
-		appointment.counterpart?.username
+		appointment.counterpart?.username,
+	...(appointment.status === 'REQUESTED' ? { requested: true as const } : {})
 });
 
 /** Scheduled and not over, nearest first. */
@@ -71,6 +72,23 @@ export const pendingRequests = (
 				new Date(b.startTime).getTime()
 		);
 
+/**
+ * What the split button of a conversation shows (ADR-021 §5): the nearest of
+ * its scheduled appointments and its requests (FE#2287), like the list's
+ * next-appointment rule.
+ */
+export const nextConversationAppointment = (
+	appointments: SessionAppointment[],
+	now: Date
+): SessionAppointment | undefined =>
+	[
+		...upcomingAppointments(appointments, now),
+		...pendingRequests(appointments, now)
+	].sort(
+		(a, b) =>
+			new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+	)[0];
+
 export type AppointmentSlotError = 'incomplete' | 'past' | 'order';
 
 export const appointmentSlotError = (
@@ -93,7 +111,7 @@ export const toAppointmentSlot = (
 
 /**
  * `requested`: the asker asked for a time (FE#2287); `confirmed` and
- * `declined`: the counsellor's answer.
+ * `declined`: the counsellor's answer; `withdrawn`: the asker took it back.
  */
 export type AppointmentNoticeKind =
 	| 'created'
@@ -101,7 +119,8 @@ export type AppointmentNoticeKind =
 	| 'cancelled'
 	| 'requested'
 	| 'confirmed'
-	| 'declined';
+	| 'declined'
+	| 'withdrawn';
 
 export const appointmentNoticeKey = (kind: AppointmentNoticeKind) =>
 	`sessionList.timeline.appointment.notice.${kind}`;

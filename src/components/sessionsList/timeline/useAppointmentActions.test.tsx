@@ -19,14 +19,18 @@ import { useAppointmentActions } from './useAppointmentActions';
 import { onAppointmentsChanged } from './conversationAppointments';
 import type { FutureEntry } from './timelineModel';
 
-const { cancel, skip, send, navigate } = vi.hoisted(() => ({
+const { cancel, confirm, decline, skip, send, navigate } = vi.hoisted(() => ({
 	cancel: vi.fn(),
+	confirm: vi.fn(),
+	decline: vi.fn(),
 	skip: vi.fn(),
 	send: vi.fn(),
 	navigate: vi.fn()
 }));
 vi.mock('../../../api/apiSessionAppointments', () => ({
-	apiCancelSessionAppointment: cancel
+	apiCancelSessionAppointment: cancel,
+	apiConfirmSessionAppointment: confirm,
+	apiDeclineSessionAppointment: decline
 }));
 vi.mock('../../../api/apiGetChatOccurrences', () => ({
 	apiSkipChatOccurrence: skip
@@ -132,6 +136,86 @@ describe('useAppointmentActions for a 1:1 appointment', () => {
 		run('reschedule', entry);
 		expect(onMove).toHaveBeenCalledWith(entry);
 		expect(navigate).not.toHaveBeenCalled();
+	});
+});
+
+describe('useAppointmentActions for a request (FE#2287)', () => {
+	const request: FutureEntry = { ...entry, requested: true };
+	let changed: ReturnType<typeof vi.fn>;
+	let stop: () => void;
+	beforeEach(() => {
+		cancel.mockReset().mockResolvedValue({});
+		confirm.mockReset().mockResolvedValue({});
+		decline.mockReset().mockResolvedValue({});
+		send.mockReset().mockResolvedValue({});
+		changed = vi.fn();
+		stop = onAppointmentsChanged(changed);
+	});
+	afterEach(() => {
+		stop();
+		cleanup();
+	});
+
+	it('confirms it, leaves the notice in the room and reloads', async () => {
+		const { run } = setup({});
+		run('confirm', request);
+		await settle();
+		expect(confirm).toHaveBeenCalledWith(4, 'a');
+		expect(send.mock.calls[0][0]).toBe(
+			'sessionList.timeline.appointment.notice.confirmed'
+		);
+		expect(changed).toHaveBeenCalled();
+	});
+
+	it('declines it and leaves the notice in the room', async () => {
+		const { run } = setup({});
+		run('decline', request);
+		await settle();
+		expect(decline).toHaveBeenCalledWith(4, 'a');
+		expect(send.mock.calls[0][0]).toBe(
+			'sessionList.timeline.appointment.notice.declined'
+		);
+	});
+
+	it('a taken time is said through the app notification, without a notice', async () => {
+		confirm.mockRejectedValue(
+			new Response(null, {
+				status: 409,
+				headers: { 'X-Reason': 'REQUESTED_TIME_TAKEN' }
+			})
+		);
+		const { run, addNotification } = setup({});
+		run('confirm', request);
+		await settle();
+		expect(send).not.toHaveBeenCalled();
+		expect(addNotification).toHaveBeenCalledWith(
+			expect.objectContaining({
+				notificationType: 'error',
+				title: 'sessionList.timeline.appointment.request.failedTitle',
+				text: 'sessionList.timeline.appointment.request.taken'
+			})
+		);
+		expect(changed).toHaveBeenCalled();
+	});
+
+	it('another failure says to try again', async () => {
+		decline.mockRejectedValue(new Error('CATCH_ALL'));
+		const { run, addNotification } = setup({});
+		run('decline', request);
+		await settle();
+		expect(addNotification.mock.calls[0][0].text).toBe(
+			'sessionList.timeline.appointment.request.failed'
+		);
+	});
+
+	it('the advice seeker withdraws it through cancel, with its own notice', async () => {
+		const { run } = setup({});
+		run('cancel', request);
+		await settle();
+		expect(cancel).toHaveBeenCalledWith(4, 'a');
+		expect(send.mock.calls[0][0]).toBe(
+			'sessionList.timeline.appointment.notice.withdrawn'
+		);
 	});
 });
 

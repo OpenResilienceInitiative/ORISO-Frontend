@@ -1951,9 +1951,17 @@ export const ConsultationHoursSettings: Story = {
 		const dialog = within(
 			await body().findByTestId('calendar-consultation-hours-dialog')
 		);
+		// The design system's select, like "Bundesland" in the working hours.
 		await expect(
-			dialog.getByTestId('consultation-hours-slot-60')
-		).toHaveAttribute('aria-pressed', 'true');
+			dialog.getByRole('combobox', { name: 'Dauer eines Termins' })
+		).toHaveTextContent('60 Min.');
+		await expect(
+			dialog.getByRole('combobox', { name: 'Vorlaufzeit' })
+		).toHaveTextContent('2 Tage');
+		// Show the settings at the end of the dialog, as after scrolling down.
+		dialog
+			.getByRole('combobox', { name: 'Dauer eines Termins' })
+			.scrollIntoView({ block: 'center' });
 	}
 };
 

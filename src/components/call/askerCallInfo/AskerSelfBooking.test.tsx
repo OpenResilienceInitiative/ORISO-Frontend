@@ -282,9 +282,15 @@ describe('AskerCallInfo self-booking (FE#1050)', () => {
 			const card = await screen.findByTestId(
 				'asker-call-info-appointment'
 			);
-			expect(card.textContent).toContain(
-				'videoCall.askerInfo.requestedStatus'
+			// Same words as the split button below the header, no own chip.
+			expect(
+				card.querySelector('.askerCallInfo__slot')?.textContent
+			).toMatch(
+				/^sessionList\.timeline\.appointment\.request\.marker · /
 			);
+			expect(
+				screen.queryByTestId('asker-call-info-requested')
+			).toBeNull();
 			expect(
 				screen.getByText('videoCall.askerInfo.booking.requested')
 			).toBeTruthy();

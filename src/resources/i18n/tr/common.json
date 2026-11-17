@@ -4782,7 +4782,8 @@
 					"cancelled": "Randevu iptal edildi: {{date}}",
 					"requested": "Randevu talep edildi: {{date}} – onay bekleniyor",
 					"confirmed": "Randevu onaylandı: {{date}}",
-					"declined": "Randevu talebi reddedildi: {{date}}"
+					"declined": "Randevu talebi reddedildi: {{date}}",
+					"withdrawn": "Randevu talebi geri çekildi: {{date}}"
 				},
 				"noticeFailed": {
 					"title": "Bildirim gönderilmedi",
@@ -4793,10 +4794,8 @@
 					"text": "Randevu iptal edilemedi. Lütfen tekrar deneyin."
 				},
 				"request": {
-					"title": "Randevu talebi",
-					"waiting": "Talep edildi – onay bekleniyor",
-					"confirm": "Onayla",
-					"decline": "Reddet",
+					"marker": "Talep edildi",
+					"failedTitle": "Talep yanıtlanmadı",
 					"taken": "Bu zaman artık dolu. Talebi reddedin veya sohbette başka bir zaman önerin.",
 					"failed": "Bu işe yaramadı. Lütfen tekrar deneyin."
 				}
@@ -5374,8 +5373,7 @@
 				"confirmRequest": "Randevu talep et",
 				"requested": "Talebiniz gönderildi. Danışmanınızın onayını bekliyor."
 			},
-			"nextRequested": "Talep ettiğiniz randevu",
-			"requestedStatus": "Talep edildi – onay bekleniyor"
+			"nextRequested": "Talep ettiğiniz randevu"
 		},
 		"incomingCall": {
 			"description": "arar.",
@@ -7624,9 +7622,10 @@
 			"autoAccept": "Rezervasyonları otomatik onayla",
 			"autoAcceptOn": "Ön bildirim süresinden sonra randevu hemen alınır; kısa süreli rezervasyonlar taleptir.",
 			"autoAcceptOff": "Her rezervasyon, sizin onayladığınız bir taleptir.",
-			"noticeDays": "Gün olarak ön bildirim süresi",
+			"noticeDays": "Ön bildirim süresi",
 			"noticeDaysHint": "Randevudan önceki bu günler içinde rezervasyon talebe dönüşür.",
-			"noticeInvalid": "Lütfen 0 ile {{max}} arasında bir tam sayı girin.",
+			"noticeDaysOption": "{{count}} gün",
+			"noticeDaysOption_one": "{{count}} gün",
 			"slotMinutes": "Randevu süresi",
 			"minutes": "{{count}} dk",
 			"invalid": "Bitiş, başlangıçtan sonra olmalıdır."

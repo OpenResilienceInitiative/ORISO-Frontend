@@ -4756,7 +4756,8 @@
 					"cancelled": "ቆጸራ ተሰሪዙ፦ {{date}}",
 					"requested": "ቆጸራ ተሓቲቱ፦ {{date}} – ምርግጋጽ ይጽበ",
 					"confirmed": "ቆጸራ ተረጋጊጹ፦ {{date}}",
-					"declined": "ሕቶ ቆጸራ ተነጺጉ፦ {{date}}"
+					"declined": "ሕቶ ቆጸራ ተነጺጉ፦ {{date}}",
+					"withdrawn": "ሕቶ ቆጸራ ተሰሒቡ፦ {{date}}"
 				},
 				"noticeFailed": {
 					"title": "መተሓሳሰቢ ኣይተላእከን",
@@ -4767,10 +4768,8 @@
 					"text": "እቲ ቆጸራ ክስረዝ ኣይከኣለን። በጃኹም እንደገና ፈትኑ።"
 				},
 				"request": {
-					"title": "ሕቶ ቆጸራ",
-					"waiting": "ተሓቲቱ – ምርግጋጽ ይጽበ",
-					"confirm": "ኣረጋግጽ",
-					"decline": "ንጸግ",
+					"marker": "ተሓቲቱ",
+					"failedTitle": "ሕቶ ኣይተመለሰን",
 					"taken": "እዚ ግዜ ተታሒዙ ኣሎ። ነቲ ሕቶ ንጸጎ ወይ ኣብ ቻት ካልእ ግዜ ኣቕርብ።",
 					"failed": "ኣይሰለጠን። በጃኻ ደጊምካ ፈትን።"
 				}
@@ -5348,8 +5347,7 @@
 				"confirmRequest": "ቈጸራ ሕተት",
 				"requested": "ሕቶኻ ተላኢኹ ኣሎ። ምርግጋጽ ኣማኻሪኻ ይጽበ ኣሎ።"
 			},
-			"nextRequested": "ዝሓተትካዮ ቈጸራ",
-			"requestedStatus": "ተሓቲቱ – ምርግጋጽ ይጽበ"
+			"nextRequested": "ዝሓተትካዮ ቈጸራ"
 		},
 		"incomingCall": {
 			"description": "ጻውዒታት...",
@@ -7591,9 +7589,10 @@
 			"autoAccept": "ምሓዝ ብኣውቶማቲክ ኣረጋግጽ",
 			"autoAcceptOn": "ድሕሪ ግዜ መጠንቀቕታ ቈጸራ ብቕጽበት ይሕዝ፤ ቀልጢፎም ዝሕዙ ሕቶታት እዮም።",
 			"autoAcceptOff": "ነፍሲ ወከፍ ምሓዝ ንስኻ እተረጋግጾ ሕቶ እዩ።",
-			"noticeDays": "ግዜ መጠንቀቕታ ብመዓልቲ",
+			"noticeDays": "ቅድመ-ግዜ",
 			"noticeDaysHint": "ኣብዘን መዓልታት ቅድሚ እቲ ቈጸራ ምሓዝ ሕቶ ይኸውን።",
-			"noticeInvalid": "በጃኻ ካብ 0 ክሳብ {{max}} ምሉእ ቍጽሪ ኣእቱ።",
+			"noticeDaysOption": "{{count}} መዓልታት",
+			"noticeDaysOption_one": "{{count}} መዓልቲ",
 			"slotMinutes": "ንውሓት ቈጸራ",
 			"minutes": "{{count}} ደቒቕ",
 			"invalid": "መወዳእታ ድሕሪ መጀመርታ ክኸውን ኣለዎ።"

@@ -4,11 +4,11 @@
  * header stays as it was: creating one is a ⋮ menu entry, which this slot
  * offers through `onCreateChange` and answers with its date dialog.
  * A backend without the endpoint offers nothing: there would be nowhere to
- * store the appointment.
+ * store the appointment. An advice seeker's request (FE#2287) shows in the
+ * same button, marked "angefragt"; its menu answers or withdraws it.
  */
 import * as React from 'react';
 import { useCallback, useContext, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
 	ActiveSessionContext,
 	AUTHORITIES,
@@ -16,12 +16,9 @@ import {
 	UserDataContext
 } from '../../../globalState';
 import {
-	apiConfirmSessionAppointment,
-	apiDeclineSessionAppointment,
 	apiGetSessionAppointments,
 	type SessionAppointment
 } from '../../../api/apiSessionAppointments';
-import { AppointmentRequestCard } from './AppointmentRequestCard';
 import {
 	AppointmentDateDialog,
 	type AppointmentDateDialogProps
@@ -31,12 +28,9 @@ import { useResponsive } from '../../../hooks/useResponsive';
 import { RoomNextAppointment } from './AppointmentSplitButton';
 import {
 	appointmentToBooking,
-	notifyAppointmentsChanged,
-	onAppointmentsChanged,
-	pendingRequests,
-	upcomingAppointments
+	nextConversationAppointment,
+	onAppointmentsChanged
 } from './conversationAppointments';
-import { useAppointmentNotice } from './useAppointmentNotice';
 import { buildFutureEntries, type FutureEntry } from './timelineModel';
 import { useAppointmentActions } from './useAppointmentActions';
 
@@ -56,12 +50,6 @@ const CreateOrMoveDialog = (
 		/>
 	);
 };
-
-/** The `X-Reason` of a refused decision; `null` for another failure. */
-const refusalReason = (cause: unknown): string | null =>
-	cause instanceof Response && cause.status === 409
-		? (cause.headers.get('X-Reason') ?? '')
-		: null;
 
 export const ConversationAppointmentSlot = ({
 	canChange,
@@ -83,16 +71,11 @@ export const ConversationAppointmentSlot = ({
 	const [appointments, setAppointments] = useState<SessionAppointment[]>();
 	const [dialog, setDialog] = useState<{ entry?: FutureEntry } | null>(null);
 	const [reload, setReload] = useState(0);
-	const [deciding, setDeciding] = useState(false);
-	const [decisionError, setDecisionError] = useState<string>();
-	const { t } = useTranslation();
-	const sendNotice = useAppointmentNotice();
 
 	useEffect(() => onAppointmentsChanged(() => setReload((n) => n + 1)), []);
 	useEffect(() => {
 		setDialog(null);
 		setAppointments(undefined);
-		setDecisionError(undefined);
 	}, [sessionId]);
 	useEffect(() => {
 		if (sessionId === undefined) return undefined;
@@ -120,51 +103,7 @@ export const ConversationAppointmentSlot = ({
 	if (sessionId === undefined || !Array.isArray(appointments)) return null;
 
 	const isAsker = hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData);
-	const request = pendingRequests(appointments, new Date())[0];
-	/* FE#2287: confirm or decline the advice seeker's request. The backend
-	   checks the time again under locks; a taken time is said, not hidden. */
-	const decide = async (kind: 'confirmed' | 'declined') => {
-		if (!request) return;
-		setDeciding(true);
-		setDecisionError(undefined);
-		try {
-			await (kind === 'confirmed'
-				? apiConfirmSessionAppointment(sessionId, request.id)
-				: apiDeclineSessionAppointment(sessionId, request.id));
-		} catch (cause) {
-			setDeciding(false);
-			setDecisionError(
-				t(
-					refusalReason(cause) === 'REQUESTED_TIME_TAKEN'
-						? 'sessionList.timeline.appointment.request.taken'
-						: 'sessionList.timeline.appointment.request.failed'
-				)
-			);
-			return;
-		}
-		setDeciding(false);
-		await sendNotice({
-			kind,
-			start: new Date(request.startTime),
-			end: new Date(request.endTime),
-			sessionId,
-			matrixRoomId
-		});
-		notifyAppointmentsChanged();
-	};
-	const requestCard = request ? (
-		<AppointmentRequestCard
-			start={new Date(request.startTime)}
-			end={new Date(request.endTime)}
-			role={isAsker ? 'asker' : 'counsellor'}
-			busy={deciding}
-			error={decisionError}
-			onConfirm={canChange ? () => void decide('confirmed') : undefined}
-			onDecline={canChange ? () => void decide('declined') : undefined}
-		/>
-	) : undefined;
-
-	const next = upcomingAppointments(appointments, new Date())[0];
+	const next = nextConversationAppointment(appointments, new Date());
 	const entry = next
 		? buildFutureEntries({
 				now: new Date(),
@@ -192,7 +131,6 @@ export const ConversationAppointmentSlot = ({
 				entry={entry}
 				role={isAsker ? 'asker' : 'counsellor'}
 				onAction={onAction}
-				action={requestCard}
 			/>
 			{dialog && (
 				<CreateOrMoveDialog

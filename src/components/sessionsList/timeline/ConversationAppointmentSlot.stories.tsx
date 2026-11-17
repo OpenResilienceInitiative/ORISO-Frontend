@@ -212,54 +212,47 @@ export const MoveConflict: Story = {
 	}
 };
 
+const openSlotMenu = async (canvasElement: HTMLElement) => {
+	const main = await waitFor(() => {
+		const found = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="room-next-appointment"] .splitButton__main'
+		);
+		expect(found).not.toBeNull();
+		return found!;
+	});
+	await expect(main).toHaveTextContent(/^Angefragt · /);
+	await userEvent.click(main);
+	return within(document.body);
+};
+
 /**
- * FE#2287: the advice seeker asked for a time outside instant booking. The
- * counsellor confirms or declines it under the header; the advice seeker
- * gets a chat notice either way.
+ * FE#2287: the advice seeker asked for a time outside instant booking. It
+ * shows in the same split button, marked "angefragt"; the counsellor answers
+ * it from the button's menu, and the advice seeker gets a chat notice.
  */
 export const CounsellorDecidesRequest: Story = {
 	args: { route: { get: [request] }, role: 'consultant', canChange: true },
 	play: async ({ canvasElement }) => {
-		const card = await within(canvasElement).findByTestId(
-			'appointment-request-card'
-		);
+		const body = await openSlotMenu(canvasElement);
 		await expect(
-			within(card).getByTestId('appointment-request-confirm')
+			await body.findByRole('menuitem', { name: /Termin bestätigen/ })
 		).toBeEnabled();
 		await expect(
-			within(card).getByTestId('appointment-request-decline')
+			body.getByRole('menuitem', { name: /Termin ablehnen/ })
 		).toBeEnabled();
 	}
 };
 
-/** The time was taken meanwhile: confirming says so, declining stays. */
-export const CounsellorRequestTimeTaken: Story = {
-	args: {
-		route: { get: [request], write: 409, reason: 'REQUESTED_TIME_TAKEN' },
-		role: 'consultant',
-		canChange: true
-	},
-	play: async ({ canvasElement }) => {
-		const canvas = within(canvasElement);
-		await userEvent.click(
-			await canvas.findByTestId('appointment-request-confirm')
-		);
-		await expect(await canvas.findByRole('alert')).toBeInTheDocument();
-		await expect(
-			canvas.getByTestId('appointment-request-decline')
-		).toBeEnabled();
-	}
-};
-
-/** The advice seeker sees the request waiting, without actions. */
+/** The advice seeker withdraws the request through the cancel entry. */
 export const AskerRequestWaiting: Story = {
 	args: { route: { get: [request] }, role: 'asker', canChange: false },
 	play: async ({ canvasElement }) => {
-		const card = await within(canvasElement).findByTestId(
-			'appointment-request-card'
-		);
+		const body = await openSlotMenu(canvasElement);
 		await expect(
-			within(card).queryByTestId('appointment-request-confirm')
+			await body.findByRole('menuitem', { name: /Anfrage zurückziehen/ })
+		).toBeEnabled();
+		await expect(
+			body.queryByRole('menuitem', { name: /Termin bestätigen/ })
 		).toBeNull();
 	}
 };

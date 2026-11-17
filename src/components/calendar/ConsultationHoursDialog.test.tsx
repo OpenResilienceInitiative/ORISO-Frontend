@@ -7,12 +7,24 @@ import type { ConsultationHours } from './calendarConsultationHours';
 
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({
-		t: (key: string) => key,
+		t: (key: string, options?: { count?: number }) =>
+			options?.count === undefined ? key : `${key}:${options.count}`,
 		i18n: { language: 'de' }
 	})
 }));
 
 afterEach(cleanup);
+
+/* Both settings are the design system's select, like "Bundesland" in the
+   working hours (Frank *12), not own fields. */
+const select = (label: string) =>
+	screen.getByRole('combobox', {
+		name: `calendar.consultationHours.${label}`
+	});
+const choose = (label: string, option: string) => {
+	fireEvent.mouseDown(select(label));
+	fireEvent.click(screen.getByRole('option', { name: option }));
+};
 
 const none: ConsultationHours = {
 	windows: [],
@@ -42,10 +54,8 @@ describe('ConsultationHoursDialog (FE#2287)', () => {
 				.querySelector('input[type="checkbox"]')!
 		);
 		fireEvent.click(screen.getByTestId('consultation-hours-auto-accept'));
-		fireEvent.change(screen.getByTestId('consultation-hours-notice-days'), {
-			target: { value: '3' }
-		});
-		fireEvent.click(screen.getByTestId('consultation-hours-slot-30'));
+		choose('noticeDays', 'calendar.consultationHours.noticeDaysOption:3');
+		choose('slotMinutes', 'calendar.consultationHours.minutes:30');
 		fireEvent.click(screen.getByTestId('consultation-hours-save'));
 
 		expect(onSave).toHaveBeenCalledWith({
@@ -68,21 +78,15 @@ describe('ConsultationHoursDialog (FE#2287)', () => {
 			(friday.querySelector('input[type="checkbox"]') as HTMLInputElement)
 				.checked
 		).toBe(true);
-		expect(
-			(
-				screen.getByTestId(
-					'consultation-hours-notice-days'
-				) as HTMLInputElement
-			).value
-		).toBe('2');
-		expect(
-			screen
-				.getByTestId('consultation-hours-slot-30')
-				.getAttribute('aria-pressed')
-		).toBe('true');
+		expect(select('noticeDays').textContent).toBe(
+			'calendar.consultationHours.noticeDaysOption:2'
+		);
+		expect(select('slotMinutes').textContent).toBe(
+			'calendar.consultationHours.minutes:30'
+		);
 	});
 
-	it('refuses an end before the start and an impossible notice', () => {
+	it('refuses an end before the start', () => {
 		const onSave = open({
 			...none,
 			windows: [{ weekday: 1, start: '09:00', end: '10:00' }]
@@ -97,15 +101,18 @@ describe('ConsultationHoursDialog (FE#2287)', () => {
 		const save = screen.getByTestId('consultation-hours-save');
 		expect((save as HTMLButtonElement).disabled).toBe(true);
 
-		fireEvent.change(monday.querySelectorAll('input[type="time"]')[1], {
-			target: { value: '10:00' }
-		});
-		fireEvent.change(screen.getByTestId('consultation-hours-notice-days'), {
-			target: { value: '45' }
-		});
-		expect((save as HTMLButtonElement).disabled).toBe(true);
 		fireEvent.click(save);
 		expect(onSave).not.toHaveBeenCalled();
+	});
+
+	it('offers notice days from 0 to 30 only', () => {
+		open(none);
+		fireEvent.mouseDown(select('noticeDays'));
+		const options = screen.getAllByRole('option');
+		expect(options).toHaveLength(31);
+		expect(options[30].textContent).toBe(
+			'calendar.consultationHours.noticeDaysOption:30'
+		);
 	});
 
 	it('says that without Sprechstunden nobody can book', () => {

@@ -46,19 +46,6 @@
 	font-weight: 500;
 }
 
-/* FE#2287: a request waiting for the counsellor, under the medium. */
-.askerCallInfo__status {
-	display: inline-flex;
-	align-self: flex-start;
-	margin-top: 4px;
-	padding: 2px 8px;
-	border: 1px dashed var(--m3-outline, #74777f);
-	border-radius: 8px;
-	font-size: 12px;
-	line-height: 16px;
-	color: var(--m3-on-surface-variant, #44474e);
-}
-
 .askerCallInfo__medium,
 .askerCallInfo__hint {
 	font-size: 14px;
@@ -100,6 +87,7 @@
 	font-size: 14px;
 	line-height: 20px;
 	font-weight: 600;
+
 	// A confirmation, not an error: this theme's primary is red.
 	color: var(--m3-on-surface, #1b1b1f);
 }

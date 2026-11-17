@@ -115,16 +115,17 @@ export const AskerCallInfoDialog = ({
 							? 'videoCall.askerInfo.nextRequested'
 							: 'videoCall.askerInfo.next'
 					)}
-					status={
-						state.requested
-							? t('videoCall.askerInfo.requestedStatus')
-							: undefined
-					}
 					medium={t(`videoCall.askerInfo.medium.${state.medium}`)}
-					slot={formatEntrySlot(
-						{ start: state.start, end: state.end },
-						locale
-					)}
+					slot={
+						/* FE#2287: the same words as the split button below
+						   the header, "Angefragt · <time>". */
+						state.requested
+							? `${t('sessionList.timeline.appointment.request.marker')} · ${formatEntrySlot({ start: state.start, end: state.end }, locale)}`
+							: formatEntrySlot(
+									{ start: state.start, end: state.end },
+									locale
+								)
+					}
 					glyph={GLYPH[state.medium]}
 				/>
 			)}
@@ -158,14 +159,11 @@ export const AskerCallInfoDialog = ({
 
 const AppointmentCard = ({
 	label,
-	status,
 	medium,
 	slot,
 	glyph
 }: {
 	label: string;
-	/** FE#2287: "Angefragt – wartet auf Bestätigung". */
-	status?: string;
 	medium: string;
 	slot: string;
 	glyph: EntryModality;
@@ -184,14 +182,6 @@ const AppointmentCard = ({
 				<span className="askerCallInfo__details">
 					<span className="askerCallInfo__slot">{slot}</span>
 					<span className="askerCallInfo__medium">{medium}</span>
-					{status && (
-						<span
-							className="askerCallInfo__status"
-							data-testid="asker-call-info-requested"
-						>
-							{status}
-						</span>
-					)}
 				</span>
 			</span>
 		</div>

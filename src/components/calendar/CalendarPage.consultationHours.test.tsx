@@ -53,7 +53,12 @@ describe('CalendarPage — Sprechstunden (FE#2287)', () => {
 		expect(
 			screen.getByTestId('calendar-consultation-hours-dialog')
 		).toBeTruthy();
-		fireEvent.click(screen.getByTestId('consultation-hours-slot-30'));
+		fireEvent.mouseDown(
+			screen.getByRole('combobox', {
+				name: 'calendar.consultationHours.slotMinutes'
+			})
+		);
+		fireEvent.click(screen.getAllByRole('option')[0]);
 		fireEvent.click(screen.getByTestId('consultation-hours-save'));
 
 		expect(onSave).toHaveBeenCalledWith({

@@ -21,25 +21,18 @@ import {
 } from '../../../globalState';
 import { ConversationAppointmentSlot } from './ConversationAppointmentSlot';
 
-const { getAppointments, confirm, decline, sendNotice } = vi.hoisted(() => ({
+const { getAppointments, onAction } = vi.hoisted(() => ({
 	getAppointments: vi.fn(),
-	confirm: vi.fn(),
-	decline: vi.fn(),
-	sendNotice: vi.fn().mockResolvedValue(undefined)
+	onAction: vi.fn()
 }));
 vi.mock('../../../api/apiSessionAppointments', () => ({
-	apiGetSessionAppointments: getAppointments,
-	apiConfirmSessionAppointment: confirm,
-	apiDeclineSessionAppointment: decline
-}));
-vi.mock('./useAppointmentNotice', () => ({
-	useAppointmentNotice: () => sendNotice
+	apiGetSessionAppointments: getAppointments
 }));
 vi.mock('./AppointmentDateDialog', () => ({
 	AppointmentDateDialog: () => <div data-testid="appointment-date-dialog" />
 }));
 vi.mock('./useAppointmentActions', () => ({
-	useAppointmentActions: () => vi.fn()
+	useAppointmentActions: () => onAction
 }));
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({
@@ -48,8 +41,8 @@ vi.mock('react-i18next', () => ({
 	})
 }));
 
-const upcoming = () => {
-	const start = new Date(Date.now() + 2 * 24 * 3600 * 1000);
+const upcoming = (days = 2) => {
+	const start = new Date(Date.now() + days * 24 * 3600 * 1000);
 	return {
 		id: 'a1',
 		sessionId: 4401,
@@ -60,7 +53,23 @@ const upcoming = () => {
 	};
 };
 
-const requested = () => ({ ...upcoming(), id: 'r1', status: 'REQUESTED' });
+const requested = (days = 2) => ({
+	...upcoming(days),
+	id: 'r1',
+	status: 'REQUESTED'
+});
+
+const MARKER = 'sessionList.timeline.appointment.request.marker';
+const splitButtonLabel = async (container: HTMLElement) => {
+	const main = await waitFor(() => {
+		const found = container.querySelector<HTMLElement>(
+			'[data-cy="room-next-appointment"] .splitButton__main'
+		);
+		expect(found).not.toBeNull();
+		return found!;
+	});
+	return main;
+};
 
 const renderSlot = (
 	onCreateChange: (open?: () => void) => void,
@@ -99,9 +108,7 @@ const renderSlot = (
 afterEach(() => {
 	cleanup();
 	getAppointments.mockReset();
-	confirm.mockReset();
-	decline.mockReset();
-	sendNotice.mockClear();
+	onAction.mockReset();
 });
 
 describe('ConversationAppointmentSlot', () => {
@@ -169,88 +176,77 @@ describe('ConversationAppointmentSlot', () => {
 	});
 
 	describe('a request waiting for the counsellor (FE#2287)', () => {
-		it('lets the counsellor confirm it and tells the asker in the chat', async () => {
+		it('shows in the same split button, marked as requested', async () => {
 			getAppointments.mockResolvedValue([requested()]);
-			confirm.mockResolvedValue({ ...requested(), status: 'SCHEDULED' });
-			renderSlot(vi.fn());
-
-			const card = await screen.findByTestId('appointment-request-card');
-			expect(card.textContent).toContain(
-				'sessionList.timeline.appointment.request.title'
-			);
-			fireEvent.click(screen.getByTestId('appointment-request-confirm'));
-
-			await waitFor(() =>
-				expect(confirm).toHaveBeenCalledWith(4401, 'r1')
-			);
-			await waitFor(() =>
-				expect(sendNotice).toHaveBeenCalledWith(
-					expect.objectContaining({
-						kind: 'confirmed',
-						sessionId: 4401
-					})
+			const { container } = renderSlot(vi.fn());
+			const main = await splitButtonLabel(container);
+			expect(main.textContent).toMatch(new RegExp(`^${MARKER} · `));
+			expect(
+				container.querySelector(
+					'[data-testid="appointment-request-card"]'
 				)
-			);
+			).toBeNull();
+			expect(
+				container.querySelectorAll(
+					'[data-cy="room-next-appointment"] button'
+				)
+			).toHaveLength(2);
 		});
 
-		it('lets the counsellor decline it and tells the asker in the chat', async () => {
+		it('lets the counsellor confirm or decline it from the menu', async () => {
 			getAppointments.mockResolvedValue([requested()]);
-			decline.mockResolvedValue({ ...requested(), status: 'DECLINED' });
-			renderSlot(vi.fn());
-
-			fireEvent.click(
-				await screen.findByTestId('appointment-request-decline')
-			);
-
-			await waitFor(() =>
-				expect(decline).toHaveBeenCalledWith(4401, 'r1')
-			);
-			await waitFor(() =>
-				expect(sendNotice).toHaveBeenCalledWith(
-					expect.objectContaining({ kind: 'declined' })
-				)
-			);
-		});
-
-		it('says so when the time is no longer free, and keeps decline', async () => {
-			getAppointments.mockResolvedValue([requested()]);
-			confirm.mockRejectedValue(
-				new Response(null, {
-					status: 409,
-					headers: { 'X-Reason': 'REQUESTED_TIME_TAKEN' }
+			const { container } = renderSlot(vi.fn());
+			fireEvent.click(await splitButtonLabel(container));
+			const items = screen.getAllByRole('menuitem');
+			expect(items.map((item) => item.textContent)).toEqual([
+				expect.stringContaining('Termin bestätigen'),
+				expect.stringContaining('Termin ablehnen')
+			]);
+			fireEvent.click(items[0]);
+			expect(onAction).toHaveBeenCalledWith(
+				'confirm',
+				expect.objectContaining({
+					requested: true,
+					sessionId: 4401,
+					booking: expect.objectContaining({ appointmentId: 'r1' })
 				})
 			);
-			renderSlot(vi.fn());
-
-			fireEvent.click(
-				await screen.findByTestId('appointment-request-confirm')
-			);
-
-			expect(
-				await screen.findByText(
-					'sessionList.timeline.appointment.request.taken'
-				)
-			).toBeTruthy();
-			expect(sendNotice).not.toHaveBeenCalled();
-			expect(
-				screen.getByTestId('appointment-request-decline')
-			).toBeTruthy();
 		});
 
-		it('shows the asker that it waits for confirmation, without actions', async () => {
+		it('lets the advice seeker withdraw it from the menu', async () => {
 			getAppointments.mockResolvedValue([requested()]);
-			renderSlot(vi.fn(), false, AUTHORITIES.ASKER_DEFAULT);
-
-			const card = await screen.findByTestId('appointment-request-card');
-			expect(card.textContent).toContain(
-				'sessionList.timeline.appointment.request.waiting'
+			const { container } = renderSlot(
+				vi.fn(),
+				false,
+				AUTHORITIES.ASKER_DEFAULT
 			);
+			const main = await splitButtonLabel(container);
+			expect(main.textContent).toContain(MARKER);
+			fireEvent.click(main);
+			const items = screen.getAllByRole('menuitem');
+			expect(items.map((item) => item.textContent)).toEqual([
+				expect.stringContaining('Anfrage zurückziehen')
+			]);
+			fireEvent.click(items[0]);
+			expect(onAction).toHaveBeenCalledWith(
+				'cancel',
+				expect.objectContaining({ requested: true })
+			);
+		});
+
+		it('shows the nearer of a confirmed appointment and a request', async () => {
+			getAppointments.mockResolvedValue([upcoming(2), requested(3)]);
+			const first = renderSlot(vi.fn());
 			expect(
-				screen.queryByTestId('appointment-request-confirm')
-			).toBeNull();
+				(await splitButtonLabel(first.container)).textContent
+			).not.toContain(MARKER);
+			cleanup();
+
+			getAppointments.mockResolvedValue([upcoming(2), requested(1)]);
+			const second = renderSlot(vi.fn());
 			expect(
-				screen.queryByTestId('appointment-request-decline')
-			).toBeNull();
+				(await splitButtonLabel(second.container)).textContent
+			).toContain(MARKER);
 		});
 	});
 });

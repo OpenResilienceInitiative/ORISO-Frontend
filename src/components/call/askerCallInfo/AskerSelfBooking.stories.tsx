@@ -238,8 +238,8 @@ export const Requested: Story = {
 		);
 		await userEvent.click(view.getByTestId('asker-self-booking-confirm'));
 		await expect(
-			await view.findByTestId('asker-call-info-requested')
-		).toBeInTheDocument();
+			await view.findByTestId('asker-call-info-appointment')
+		).toHaveTextContent(/Angefragt · /);
 	}
 };
 

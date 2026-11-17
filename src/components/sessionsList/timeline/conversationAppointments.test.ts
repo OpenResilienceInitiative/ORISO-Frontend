@@ -31,6 +31,14 @@ describe('conversation appointments', () => {
 		});
 	});
 
+	it('marks a request waiting for the counsellor (FE#2287)', () => {
+		const base = appointment('a', '', '');
+		expect(appointmentToBooking(base).requested).toBeUndefined();
+		expect(
+			appointmentToBooking({ ...base, status: 'REQUESTED' }).requested
+		).toBe(true);
+	});
+
 	it('shows the kind the calendar shows, video when the record names none (review 4577642140)', () => {
 		const base = appointment('a', '', '');
 		const location = (kind: SessionAppointment['kind']) =>
