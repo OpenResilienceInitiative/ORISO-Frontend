@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useHoldLoginHandover } from '../app/loginHandover';
 import {
 	useCallback,
 	useContext,
@@ -304,6 +305,9 @@ export const SessionsList = ({
 		);
 
 	const [isLoading, setIsLoading] = useState(true);
+	// Right after sign-in the loading screen waits for this first list, so it
+	// does not pop in while the screen fades out (#2272).
+	useHoldLoginHandover(`sessionsList:${type}`, isLoading);
 	const [currentOffset, setCurrentOffset] = useState(0);
 	const [totalItems, setTotalItems] = useState(0);
 	const hasMoreSessionPages = totalItems > currentOffset + SESSION_COUNT;
