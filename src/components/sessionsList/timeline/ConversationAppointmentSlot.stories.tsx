@@ -30,16 +30,26 @@ const appointment = {
 	status: 'SCHEDULED',
 	counterpart: { username: 'ruhiges_yak_kim' }
 };
-type Route = { get: unknown[] | number; write?: number };
+const request = {
+	...appointment,
+	id: '6f1c1a70-0000-4000-8000-000000000002',
+	startTime: inDays(3, 10),
+	endTime: inDays(3, 11),
+	status: 'REQUESTED'
+};
+type Route = { get: unknown[] | number; write?: number; reason?: string };
 
-const installFetch = ({ get, write = 200 }: Route) => {
+const installFetch = ({ get, write = 200, reason }: Route) => {
 	const previous = window.fetch;
 	window.fetch = async (input, init) => {
 		const url = typeof input === 'string' ? input : (input as Request).url;
 		const method = init?.method ?? (input as Request).method ?? 'GET';
 		if (!/\/appointments/.test(url)) return previous(input, init);
 		if (method !== 'GET')
-			return new Response(JSON.stringify(appointment), { status: write });
+			return new Response(JSON.stringify(appointment), {
+				status: write,
+				headers: reason ? { 'X-Reason': reason } : undefined
+			});
 		return typeof get === 'number'
 			? new Response('', { status: get })
 			: new Response(JSON.stringify(get), { status: 200 });
@@ -199,5 +209,57 @@ export const MoveConflict: Story = {
 			within(dialog).getByRole('button', { name: 'Verschieben' })
 		);
 		await expect(await within(dialog).findByRole('alert')).toBeVisible();
+	}
+};
+
+/**
+ * FE#2287: the advice seeker asked for a time outside instant booking. The
+ * counsellor confirms or declines it under the header; the advice seeker
+ * gets a chat notice either way.
+ */
+export const CounsellorDecidesRequest: Story = {
+	args: { route: { get: [request] }, role: 'consultant', canChange: true },
+	play: async ({ canvasElement }) => {
+		const card = await within(canvasElement).findByTestId(
+			'appointment-request-card'
+		);
+		await expect(
+			within(card).getByTestId('appointment-request-confirm')
+		).toBeEnabled();
+		await expect(
+			within(card).getByTestId('appointment-request-decline')
+		).toBeEnabled();
+	}
+};
+
+/** The time was taken meanwhile: confirming says so, declining stays. */
+export const CounsellorRequestTimeTaken: Story = {
+	args: {
+		route: { get: [request], write: 409, reason: 'REQUESTED_TIME_TAKEN' },
+		role: 'consultant',
+		canChange: true
+	},
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await userEvent.click(
+			await canvas.findByTestId('appointment-request-confirm')
+		);
+		await expect(await canvas.findByRole('alert')).toBeInTheDocument();
+		await expect(
+			canvas.getByTestId('appointment-request-decline')
+		).toBeEnabled();
+	}
+};
+
+/** The advice seeker sees the request waiting, without actions. */
+export const AskerRequestWaiting: Story = {
+	args: { route: { get: [request] }, role: 'asker', canChange: false },
+	play: async ({ canvasElement }) => {
+		const card = await within(canvasElement).findByTestId(
+			'appointment-request-card'
+		);
+		await expect(
+			within(card).queryByTestId('appointment-request-confirm')
+		).toBeNull();
 	}
 };

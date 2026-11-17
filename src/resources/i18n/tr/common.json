@@ -345,7 +345,10 @@
 			"pickDay": "Lütfen önce takvimden bir gün seçin.",
 			"subline": "Önce bir gün, sonra bir saat seçin.",
 			"times": "Boş saatler",
-			"weekdays": "P,P,S,Ç,P,C,C"
+			"weekdays": "P,P,S,Ç,P,C,C",
+			"legendInstant": "Hemen alınır",
+			"legendRequest": "Talep – randevuyu danışmanınız onaylar",
+			"requestTime": "Talep"
 		},
 		"availability": {
 			"description": "Tavsiye almak isteyen kişilerin sizden randevu alabilmeleri için genel uygunluk durumunuzu buraya girin.",
@@ -4776,7 +4779,10 @@
 				"notice": {
 					"created": "Randevu belirlendi: {{date}}",
 					"moved": "Randevu şu tarihe ertelendi: {{date}}",
-					"cancelled": "Randevu iptal edildi: {{date}}"
+					"cancelled": "Randevu iptal edildi: {{date}}",
+					"requested": "Randevu talep edildi: {{date}} – onay bekleniyor",
+					"confirmed": "Randevu onaylandı: {{date}}",
+					"declined": "Randevu talebi reddedildi: {{date}}"
 				},
 				"noticeFailed": {
 					"title": "Bildirim gönderilmedi",
@@ -4785,6 +4791,14 @@
 				"cancelFailed": {
 					"title": "Randevu iptal edilmedi",
 					"text": "Randevu iptal edilemedi. Lütfen tekrar deneyin."
+				},
+				"request": {
+					"title": "Randevu talebi",
+					"waiting": "Talep edildi – onay bekleniyor",
+					"confirm": "Onayla",
+					"decline": "Reddet",
+					"taken": "Bu zaman artık dolu. Talebi reddedin veya sohbette başka bir zaman önerin.",
+					"failed": "Bu işe yaramadı. Lütfen tekrar deneyin."
 				}
 			}
 		},
@@ -5342,8 +5356,8 @@
 			"booking": {
 				"title": "Randevu al",
 				"description": {
-					"video": "Görüntülü arama için danışmanınızın boş bir zamanını seçin. Randevu hemen alınır.",
-					"phone": "Telefon görüşmesi için danışmanınızın boş bir zamanını seçin. Randevu hemen alınır."
+					"video": "Görüntülü arama için danışmanınızın boş bir zamanını seçin. „Hemen alınır“ işaretli zamanlar hemen kesinleşir; talepleri danışmanınız onaylar.",
+					"phone": "Telefon görüşmesi için danışmanınızın boş bir zamanını seçin. „Hemen alınır“ işaretli zamanlar hemen kesinleşir; talepleri danışmanınız onaylar."
 				},
 				"loading": "Boş zamanlar yükleniyor …",
 				"error": "Boş zamanlar şu anda yüklenemedi. Lütfen daha sonra tekrar deneyin.",
@@ -5354,8 +5368,12 @@
 				"taken": "Bu zaman az önce alındı. Lütfen başka bir zaman seçin.",
 				"failed": "Randevu alınamadı. Lütfen tekrar deneyin.",
 				"booked": "Randevunuz alındı. Danışmanınız sohbette bilgilendirilir.",
-				"limit": "Bu görüşme için zaten bir randevu alınmış."
-			}
+				"limit": "Bu görüşme için zaten bir randevu alınmış.",
+				"confirmRequest": "Randevu talep et",
+				"requested": "Talebiniz gönderildi. Danışmanınızın onayını bekliyor."
+			},
+			"nextRequested": "Talep ettiğiniz randevu",
+			"requestedStatus": "Talep edildi – onay bekleniyor"
 		},
 		"incomingCall": {
 			"description": "arar.",
@@ -7593,6 +7611,23 @@
 		"links": {
 			"title": "Randevusuz bağlantılar",
 			"hint": "Paylaşabileceğiniz davet bağlantıları: kopyalayın veya QR kodu gösterin."
+		},
+		"consultationHours": {
+			"title": "Görüşme saatleri",
+			"description": "Bu saatlerde danışanlar sizinle kendileri randevu alabilir. Çalışma saatlerinizden bağımsızdır.",
+			"save": "Görüşme saatlerini kaydet",
+			"saved": "Görüşme saatleri kaydedildi",
+			"empty": "Görüşme saatleri olmadan kimse randevu alamaz.",
+			"none": "Görüşme saati belirlenmedi",
+			"autoAccept": "Rezervasyonları otomatik onayla",
+			"autoAcceptOn": "Ön bildirim süresinden sonra randevu hemen alınır; kısa süreli rezervasyonlar taleptir.",
+			"autoAcceptOff": "Her rezervasyon, sizin onayladığınız bir taleptir.",
+			"noticeDays": "Gün olarak ön bildirim süresi",
+			"noticeDaysHint": "Randevudan önceki bu günler içinde rezervasyon talebe dönüşür.",
+			"noticeInvalid": "Lütfen 0 ile {{max}} arasında bir tam sayı girin.",
+			"slotMinutes": "Randevu süresi",
+			"minutes": "{{count}} dk",
+			"invalid": "Bitiş, başlangıçtan sonra olmalıdır."
 		}
 	}
 }

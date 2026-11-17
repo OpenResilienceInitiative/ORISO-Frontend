@@ -1,10 +1,15 @@
 /**
  * Self-booking (FE#1050, ADR-020 §4): "Termin anfragen" in the advice
  * seeker's call dialog opens the free times of the counsellor. The asker
- * picks a day and a time and books it at once as a video or phone
- * appointment — what they clicked. The server owns the free times and checks
- * the slot again when it books, so a time taken meanwhile comes back as a
- * conflict, which reads the free times again.
+ * picks a day and a time and books it as a video or phone appointment —
+ * what they clicked. The server owns the free times and checks the slot
+ * again when it books, so a time taken meanwhile comes back as a conflict,
+ * which reads the free times again.
+ *
+ * Sprechstunden (FE#2287): a time is booked at once or is a request the
+ * counsellor confirms; the picker marks the requests and the button says
+ * "Termin anfragen" for one. Without free time, only an asker who can write
+ * in the chat (registered, not temporary) is pointed there.
  */
 import * as React from 'react';
 import { useCallback, useEffect, useState } from 'react';
@@ -22,6 +27,7 @@ import {
 	SELF_BOOKING_DAYS,
 	bookingWindow,
 	firstSlotDay,
+	requestTimesOn,
 	slotAt,
 	slotTimesOn
 } from './askerSelfBooking';
@@ -46,7 +52,10 @@ export interface AskerSelfBookingDialogProps {
 	onBooked: (appointment: SessionAppointment) => void;
 	/** The conversation already has an upcoming appointment (one at a time). */
 	onLimitReached: () => void;
-	/** "Im Chat schreiben", when the counsellor has no free time. */
+	/**
+	 * "Im Chat schreiben", when the counsellor has no free time. Without it
+	 * (a temporary asker) the dialog gives no chat hint (FE#2287).
+	 */
 	onWriteInChat?: () => void;
 	loadSlots: LoadSlots;
 	bookSlot: BookSlot;
@@ -107,6 +116,13 @@ export const AskerSelfBookingDialog = ({
 		(on: Dayjs) => (Array.isArray(slots) ? slotTimesOn(slots, on) : []),
 		[slots]
 	);
+
+	const requestTimesForDay = useCallback(
+		(on: Dayjs) => (Array.isArray(slots) ? requestTimesOn(slots, on) : []),
+		[slots]
+	);
+	const chosenIsRequest =
+		day !== null && time !== null && requestTimesForDay(day).includes(time);
 
 	const selectDay = (next: Dayjs) => {
 		setDay(next);
@@ -173,7 +189,11 @@ export const AskerSelfBookingDialog = ({
 								testId: 'asker-self-booking-back'
 							},
 							{
-								label: t('videoCall.askerInfo.booking.confirm'),
+								label: t(
+									chosenIsRequest
+										? 'videoCall.askerInfo.booking.confirmRequest'
+										: 'videoCall.askerInfo.booking.confirm'
+								),
 								onClick: confirm,
 								primary: true,
 								disabled: !day || !time || busy,
@@ -226,9 +246,11 @@ export const AskerSelfBookingDialog = ({
 					<p className="askerCallInfo__text">
 						{t('videoCall.askerInfo.booking.none')}
 					</p>
-					<p className="askerCallInfo__hint">
-						{t('videoCall.askerInfo.requestHint')}
-					</p>
+					{onWriteInChat && (
+						<p className="askerCallInfo__hint">
+							{t('videoCall.askerInfo.requestHint')}
+						</p>
+					)}
 				</div>
 			)}
 			{problem && (
@@ -247,6 +269,7 @@ export const AskerSelfBookingDialog = ({
 						setProblem(undefined);
 					}}
 					slotsForDay={slotsForDay}
+					requestTimesForDay={requestTimesForDay}
 					maxDate={dayjs().add(SELF_BOOKING_DAYS, 'day')}
 				/>
 			)}

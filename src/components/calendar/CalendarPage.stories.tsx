@@ -1,4 +1,5 @@
 import * as React from 'react';
+import type { ConsultationHours } from './calendarConsultationHours';
 import { useEffect, useRef, useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { a11yExcept } from '../../../.storybook/a11yExceptions';
@@ -171,6 +172,18 @@ const Scenario = ({
 		empty ? [] : role === 'asker' ? ASKER_ENTRIES : OWN_ENTRIES
 	);
 	const [hours, setHours] = useState<WorkingHours>(initialHours);
+	/* Sprechstunden (FE#2287): Tuesday and Thursday mornings, requests
+	   inside two days. */
+	const [consultationHours, setConsultationHours] =
+		React.useState<ConsultationHours>({
+			windows: [
+				{ weekday: 2, start: '09:00', end: '12:00' },
+				{ weekday: 4, start: '14:00', end: '17:00' }
+			],
+			autoAccept: true,
+			noticeDays: 2,
+			slotMinutes: 60
+		});
 	const [region, setRegion] = useState<HolidayRegion | null>(initialRegion);
 	const [exceptions, setExceptions] =
 		useState<DayExceptions>(initialExceptions);
@@ -284,6 +297,10 @@ const Scenario = ({
 				setHours(next);
 				setRegion(nextRegion);
 			}}
+			consultationHours={
+				role === 'consultant' ? consultationHours : undefined
+			}
+			onSaveConsultationHours={setConsultationHours}
 			onSaveDayException={(date, windows) =>
 				setExceptions((all) => ({ ...all, [date]: windows }))
 			}
@@ -1896,6 +1913,50 @@ export const ChipRemovedClearsFilter: Story = {
 };
 
 /** Frank *14: the filter button opens "Ansicht · Kalender", as in Gespräche. */
+/**
+ * FE#2287: "Sprechstunden" sits under the working hours in ⋮. Advice
+ * seekers book only inside these windows; outside the notice days a
+ * booking is confirmed at once when "Automatisch bestätigen" is on.
+ */
+export const SettingsMenuWithConsultationHours: Story = {
+	name: 'Settings — ⋮ menu with Sprechstunden',
+	play: async ({ canvasElement }) => {
+		const canvas = canvasOf(canvasElement);
+		await userEvent.click(
+			await canvas.findByRole('button', {
+				name: 'Kalender-Einstellungen'
+			})
+		);
+		const menu = within(await body().findByRole('menu'));
+		await expect(
+			menu.getByRole('menuitem', { name: /Sprechstunden/ })
+		).toBeTruthy();
+	}
+};
+
+export const ConsultationHoursSettings: Story = {
+	name: 'Settings — Sprechstunden dialog',
+	play: async ({ canvasElement }) => {
+		const canvas = canvasOf(canvasElement);
+		await userEvent.click(
+			await canvas.findByRole('button', {
+				name: 'Kalender-Einstellungen'
+			})
+		);
+		await userEvent.click(
+			within(await body().findByRole('menu')).getByRole('menuitem', {
+				name: /Sprechstunden/
+			})
+		);
+		const dialog = within(
+			await body().findByTestId('calendar-consultation-hours-dialog')
+		);
+		await expect(
+			dialog.getByTestId('consultation-hours-slot-60')
+		).toHaveAttribute('aria-pressed', 'true');
+	}
+};
+
 export const ViewSettings: Story = {
 	name: 'Settings — "Ansicht · Kalender" dialog',
 	play: async ({ canvasElement }) => {

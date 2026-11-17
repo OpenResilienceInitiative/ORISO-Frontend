@@ -226,6 +226,44 @@ export const apiRemoveCalendarImport = (): Promise<CalendarSyncDTO> =>
 		responseHandling: WRITE_HANDLING
 	});
 
+/**
+ * A counsellor's Sprechstunden (FE#2287): weekly windows advice seekers can
+ * book, separate from the working hours, and how they are booked.
+ */
+export interface CalendarConsultationHoursDTO {
+	windows: CalendarWorkingHoursWindowDTO[];
+	/** A booking outside the notice period is confirmed at once. Default true. */
+	autoAccept?: boolean;
+	/** Inside this many days before the start a booking is a request. Default 1. */
+	noticeDays?: number;
+	/** 30 or 60. Default 60. */
+	slotMinutes?: 30 | 60;
+}
+
+export const apiGetCalendarConsultationHours =
+	(): Promise<CalendarConsultationHoursDTO> =>
+		fetchData({
+			url: `${base()}/consultation-hours`,
+			method: FETCH_METHODS.GET,
+			responseHandling: READ_HANDLING
+		});
+
+/** Replaces every window and the three settings at once. */
+export const apiSetCalendarConsultationHours = (
+	hours: Required<CalendarConsultationHoursDTO>
+): Promise<CalendarConsultationHoursDTO> =>
+	fetchData({
+		url: `${base()}/consultation-hours`,
+		method: FETCH_METHODS.PUT,
+		bodyData: JSON.stringify({
+			windows: hours.windows,
+			autoAccept: hours.autoAccept,
+			noticeDays: hours.noticeDays,
+			slotMinutes: hours.slotMinutes
+		}),
+		responseHandling: WRITE_HANDLING
+	});
+
 export const apiGetCalendarWorkingHours =
 	(): Promise<CalendarWorkingHoursDTO> =>
 		fetchData({

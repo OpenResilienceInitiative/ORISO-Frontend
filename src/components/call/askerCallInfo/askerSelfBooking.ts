@@ -25,6 +25,16 @@ export const slotTimesOn = (slots: AppointmentSlot[], day: Dayjs) =>
 		.sort((a, b) => a.valueOf() - b.valueOf())
 		.map((start) => start.format('HH:mm'));
 
+/**
+ * FE#2287: the local start times (HH:mm) of the slots on `day` that are
+ * requests the counsellor confirms; the others are booked at once.
+ */
+export const requestTimesOn = (slots: AppointmentSlot[], day: Dayjs) =>
+	slotTimesOn(
+		slots.filter((slot) => slot.bookingMode === 'REQUEST'),
+		day
+	);
+
 /** The slot that starts at the instant the picker confirmed. */
 export const slotAt = (slots: AppointmentSlot[], isoDateTime: string) => {
 	const at = dayjs(isoDateTime).valueOf();

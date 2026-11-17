@@ -212,4 +212,120 @@ describe('AskerCallInfo self-booking (FE#1050)', () => {
 			await screen.findByTestId('asker-call-info-request')
 		).toBeTruthy();
 	});
+
+	describe('Sprechstunden: instant times and requests (FE#2287)', () => {
+		const later = start.add(1, 'hour');
+		const instant = { ...free, bookingMode: 'INSTANT' as const };
+		const request = {
+			startTime: later.toDate().toISOString(),
+			endTime: later.add(1, 'hour').toDate().toISOString(),
+			bookingMode: 'REQUEST' as const
+		};
+		const requested: SessionAppointment = {
+			id: 'a-2',
+			sessionId: 7,
+			status: 'REQUESTED',
+			kind: 'VIDEO',
+			startTime: request.startTime,
+			endTime: request.endTime
+		};
+
+		it('marks the request times and explains them', async () => {
+			await openBooking({
+				loadSlots: vi.fn().mockResolvedValue([instant, request])
+			});
+
+			const asked = await screen.findByTestId(
+				`appointment-booking-slot-${later.format('HH:mm')}`
+			);
+			expect(asked.getAttribute('data-booking-mode')).toBe('REQUEST');
+			expect(
+				screen
+					.getByTestId(
+						`appointment-booking-slot-${start.format('HH:mm')}`
+					)
+					.getAttribute('data-booking-mode')
+			).toBe('INSTANT');
+			expect(
+				screen
+					.getByTestId('appointment-booking-legend')
+					.querySelector('[data-booking-mode="REQUEST"]')
+			).toBeTruthy();
+		});
+
+		it('asks for a request time and shows it as waiting for confirmation', async () => {
+			const bookSlot = vi.fn().mockResolvedValue(requested);
+			const onBooked = vi.fn();
+			await openBooking({
+				loadSlots: vi.fn().mockResolvedValue([instant, request]),
+				bookSlot,
+				onBooked
+			});
+			fireEvent.click(
+				await screen.findByTestId(
+					`appointment-booking-slot-${later.format('HH:mm')}`
+				)
+			);
+			const confirm = screen.getByTestId('asker-self-booking-confirm');
+			expect(confirm.textContent).toBe(
+				'videoCall.askerInfo.booking.confirmRequest'
+			);
+			fireEvent.click(confirm);
+
+			await waitFor(() =>
+				expect(bookSlot).toHaveBeenCalledWith(7, {
+					startTime: request.startTime,
+					endTime: request.endTime,
+					kind: 'VIDEO'
+				})
+			);
+			const card = await screen.findByTestId(
+				'asker-call-info-appointment'
+			);
+			expect(card.textContent).toContain(
+				'videoCall.askerInfo.requestedStatus'
+			);
+			expect(
+				screen.getByText('videoCall.askerInfo.booking.requested')
+			).toBeTruthy();
+			expect(onBooked).toHaveBeenCalledWith(requested);
+		});
+
+		it('books an instant time with "Termin buchen"', async () => {
+			await openBooking({
+				loadSlots: vi.fn().mockResolvedValue([instant, request])
+			});
+			await pickFirstTime();
+
+			expect(
+				screen.getByTestId('asker-self-booking-confirm').textContent
+			).toBe('videoCall.askerInfo.booking.confirm');
+		});
+
+		it('gives a temporary asker no chat hint when there is no free time', async () => {
+			await openBooking({
+				loadSlots: vi.fn().mockResolvedValue([]),
+				onRequestTime: undefined
+			});
+
+			expect(
+				await screen.findByText('videoCall.askerInfo.booking.none')
+			).toBeTruthy();
+			expect(
+				screen.queryByText('videoCall.askerInfo.requestHint')
+			).toBeNull();
+			expect(screen.queryByTestId('asker-self-booking-chat')).toBeNull();
+		});
+
+		it('gives a registered asker the hint to write in the chat', async () => {
+			await openBooking({
+				loadSlots: vi.fn().mockResolvedValue([]),
+				onRequestTime: vi.fn()
+			});
+
+			expect(
+				await screen.findByText('videoCall.askerInfo.requestHint')
+			).toBeTruthy();
+		});
+	});
 });

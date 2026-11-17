@@ -103,7 +103,8 @@
 		"appointment": {
 			"noTimes": "An diesem Tag ist keine Zeit frei. Bitte wähle einen anderen Tag.",
 			"pickDay": "Bitte wähle zuerst einen Tag im Kalender.",
-			"subline": "Wähle einen Tag und danach eine Uhrzeit."
+			"subline": "Wähle einen Tag und danach eine Uhrzeit.",
+			"legendRequest": "Anfrage – deine Beratungsperson bestätigt den Termin"
 		},
 		"availability": {
 			"description": "Gib hier Deine allgemeine Verfügbarkeit an, damit Ratsuchende Termine bei Dir buchen können.",
@@ -1691,6 +1692,14 @@
 		},
 		"supervision": {
 			"badge": "Supervision – Du liest in diesem Chat mit"
+		},
+		"timeline": {
+			"appointment": {
+				"request": {
+					"taken": "Diese Zeit ist inzwischen belegt. Lehne die Anfrage ab oder schlage im Chat eine andere Zeit vor.",
+					"failed": "Das hat nicht geklappt. Bitte versuche es noch einmal."
+				}
+			}
 		}
 	},
 	"statusOverlay": {
@@ -1953,15 +1962,17 @@
 			"error": "Der Termin konnte gerade nicht geladen werden. Bitte versuch es später noch einmal.",
 			"booking": {
 				"description": {
-					"video": "Wähle eine freie Zeit deiner Beratungsperson für einen Videoanruf. Der Termin ist sofort gebucht.",
-					"phone": "Wähle eine freie Zeit deiner Beratungsperson für einen Telefonanruf. Der Termin ist sofort gebucht."
+					"video": "Wähle eine freie Zeit deiner Beratungsperson für einen Videoanruf. Mit „Sofort gebucht“ markierte Zeiten stehen gleich fest, Anfragen bestätigt deine Beratungsperson.",
+					"phone": "Wähle eine freie Zeit deiner Beratungsperson für einen Telefonanruf. Mit „Sofort gebucht“ markierte Zeiten stehen gleich fest, Anfragen bestätigt deine Beratungsperson."
 				},
 				"error": "Die freien Zeiten konnten gerade nicht geladen werden. Bitte versuch es später noch einmal.",
 				"none": "Deine Beratungsperson hat in den nächsten zwei Wochen keine freie Zeit.",
 				"taken": "Diese Zeit ist gerade vergeben worden. Bitte wähle eine andere.",
 				"failed": "Der Termin konnte nicht gebucht werden. Bitte versuch es noch einmal.",
-				"booked": "Dein Termin ist gebucht. Deine Beratungsperson wird im Chat benachrichtigt."
-			}
+				"booked": "Dein Termin ist gebucht. Deine Beratungsperson wird im Chat benachrichtigt.",
+				"requested": "Deine Anfrage ist gesendet. Sie wartet auf die Bestätigung deiner Beratungsperson."
+			},
+			"nextRequested": "Dein angefragter Termin"
 		}
 	},
 	"voice": {
@@ -3065,6 +3076,11 @@
 		},
 		"entryMenu": {
 			"withYou": "Du und {{name}}"
+		},
+		"consultationHours": {
+			"description": "In diesen Zeiten können Ratsuchende selbst einen Termin bei dir buchen. Sie gelten unabhängig von deiner Arbeitszeit.",
+			"autoAcceptOff": "Jede Buchung ist eine Anfrage, die du bestätigst.",
+			"noticeInvalid": "Bitte gib eine ganze Zahl von 0 bis {{max}} ein."
 		}
 	}
 }

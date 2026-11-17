@@ -340,7 +340,10 @@
 			"pickDay": "Bitte wählen Sie zuerst einen Tag im Kalender.",
 			"subline": "Wählen Sie einen Tag und danach eine Uhrzeit.",
 			"times": "Freie Zeiten",
-			"weekdays": "S,M,D,M,D,F,S"
+			"weekdays": "S,M,D,M,D,F,S",
+			"legendInstant": "Sofort gebucht",
+			"legendRequest": "Anfrage – Ihre Beratungsperson bestätigt den Termin",
+			"requestTime": "Anfrage"
 		},
 		"availability": {
 			"description": "Geben Sie hier Ihre allgemeine Verfügbarkeit an, damit Ratsuchende Termine bei Ihnen buchen können.",
@@ -4793,7 +4796,10 @@
 				"notice": {
 					"created": "Termin vereinbart: {{date}}",
 					"moved": "Termin verschoben auf: {{date}}",
-					"cancelled": "Termin abgesagt: {{date}}"
+					"cancelled": "Termin abgesagt: {{date}}",
+					"requested": "Termin angefragt: {{date}} – wartet auf Bestätigung",
+					"confirmed": "Termin bestätigt: {{date}}",
+					"declined": "Terminanfrage abgelehnt: {{date}}"
 				},
 				"noticeFailed": {
 					"title": "Hinweis nicht gesendet",
@@ -4802,6 +4808,14 @@
 				"cancelFailed": {
 					"title": "Termin nicht abgesagt",
 					"text": "Der Termin konnte nicht abgesagt werden. Bitte versuchen Sie es erneut."
+				},
+				"request": {
+					"title": "Terminanfrage",
+					"waiting": "Angefragt – wartet auf Bestätigung",
+					"confirm": "Bestätigen",
+					"decline": "Ablehnen",
+					"taken": "Diese Zeit ist inzwischen belegt. Lehnen Sie die Anfrage ab oder schlagen Sie im Chat eine andere Zeit vor.",
+					"failed": "Das hat nicht geklappt. Bitte versuchen Sie es noch einmal."
 				}
 			}
 		},
@@ -5359,8 +5373,8 @@
 			"booking": {
 				"title": "Termin buchen",
 				"description": {
-					"video": "Wählen Sie eine freie Zeit Ihrer Beratungsperson für einen Videoanruf. Der Termin ist sofort gebucht.",
-					"phone": "Wählen Sie eine freie Zeit Ihrer Beratungsperson für einen Telefonanruf. Der Termin ist sofort gebucht."
+					"video": "Wählen Sie eine freie Zeit Ihrer Beratungsperson für einen Videoanruf. Mit „Sofort gebucht“ markierte Zeiten stehen gleich fest, Anfragen bestätigt Ihre Beratungsperson.",
+					"phone": "Wählen Sie eine freie Zeit Ihrer Beratungsperson für einen Telefonanruf. Mit „Sofort gebucht“ markierte Zeiten stehen gleich fest, Anfragen bestätigt Ihre Beratungsperson."
 				},
 				"loading": "Freie Zeiten werden geladen …",
 				"error": "Die freien Zeiten konnten gerade nicht geladen werden. Bitte versuchen Sie es später noch einmal.",
@@ -5371,8 +5385,12 @@
 				"taken": "Diese Zeit ist gerade vergeben worden. Bitte wählen Sie eine andere.",
 				"failed": "Der Termin konnte nicht gebucht werden. Bitte versuchen Sie es noch einmal.",
 				"booked": "Ihr Termin ist gebucht. Ihre Beratungsperson wird im Chat benachrichtigt.",
-				"limit": "Für dieses Gespräch ist schon ein Termin gebucht."
-			}
+				"limit": "Für dieses Gespräch ist schon ein Termin gebucht.",
+				"confirmRequest": "Termin anfragen",
+				"requested": "Ihre Anfrage ist gesendet. Sie wartet auf die Bestätigung Ihrer Beratungsperson."
+			},
+			"nextRequested": "Ihr angefragter Termin",
+			"requestedStatus": "Angefragt – wartet auf Bestätigung"
 		},
 		"incomingCall": {
 			"description": "ruft an...",
@@ -7583,6 +7601,23 @@
 		"links": {
 			"title": "Links ohne Termin",
 			"hint": "Einladungslinks, die Sie teilen können: kopieren oder als QR-Code zeigen."
+		},
+		"consultationHours": {
+			"title": "Sprechstunden",
+			"description": "In diesen Zeiten können Ratsuchende selbst einen Termin bei Ihnen buchen. Sie gelten unabhängig von Ihrer Arbeitszeit.",
+			"save": "Sprechstunden speichern",
+			"saved": "Sprechstunden gespeichert",
+			"empty": "Ohne Sprechstunden können Ratsuchende keinen Termin buchen.",
+			"none": "Keine Sprechstunden festgelegt",
+			"autoAccept": "Buchungen automatisch bestätigen",
+			"autoAcceptOn": "Nach der Vorlaufzeit ist ein Termin sofort gebucht; kurzfristige Buchungen sind Anfragen.",
+			"autoAcceptOff": "Jede Buchung ist eine Anfrage, die Sie bestätigen.",
+			"noticeDays": "Vorlaufzeit in Tagen",
+			"noticeDaysHint": "Innerhalb dieser Tage vor dem Termin wird eine Buchung zur Anfrage.",
+			"noticeInvalid": "Bitte eine ganze Zahl von 0 bis {{max}} eingeben.",
+			"slotMinutes": "Dauer eines Termins",
+			"minutes": "{{count}} Min.",
+			"invalid": "Das Ende muss nach dem Beginn liegen."
 		}
 	}
 }

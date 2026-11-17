@@ -159,3 +159,40 @@ describe('apiCalendar move proposals (FE#1050)', () => {
 		}
 	});
 });
+
+/** Sprechstunden (FE#2287): the counsellor's bookable windows and settings. */
+describe('apiCalendar consultation hours (FE#2287)', () => {
+	beforeEach(() => fetchData.mockReset().mockResolvedValue({}));
+
+	it("reads the caller's Sprechstunden", async () => {
+		await api.apiGetCalendarConsultationHours();
+		expect(fetchData.mock.calls[0][0]).toEqual(
+			expect.objectContaining({
+				url: 'https://api.test/service/users/calendar/consultation-hours',
+				method: 'GET'
+			})
+		);
+	});
+
+	it('puts windows and the three settings at once', async () => {
+		await api.apiSetCalendarConsultationHours({
+			windows: [{ weekday: 2, start: '09:00', end: '12:00' }],
+			autoAccept: false,
+			noticeDays: 2,
+			slotMinutes: 30
+		});
+		const call = fetchData.mock.calls[0][0];
+		expect(call).toEqual(
+			expect.objectContaining({
+				url: 'https://api.test/service/users/calendar/consultation-hours',
+				method: 'PUT'
+			})
+		);
+		expect(JSON.parse(call.bodyData)).toEqual({
+			windows: [{ weekday: 2, start: '09:00', end: '12:00' }],
+			autoAccept: false,
+			noticeDays: 2,
+			slotMinutes: 30
+		});
+	});
+});

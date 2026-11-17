@@ -134,6 +134,8 @@ import { useCaseHandoverOffer } from '../caseHandover/useCaseHandoverOffer';
 import { CaseHandoverOffer } from '../caseHandover/CaseHandoverOffer';
 import { useRecommendAllowedInModality } from '../furtherCounselling/useRecommendAllowedInModality';
 import { getGroupChatInfoLink } from '../groupChat/groupChatInfoLink';
+import { useOwnTemporaryAccount } from '../temporaryAccount/temporaryAccountStore';
+import { isAnonymousAsker } from '../termsandconditions/isAnonymousAsker';
 
 export interface SessionMenuProps {
 	hasUserInitiatedStopOrLeaveRequest: React.MutableRefObject<boolean>;
@@ -609,6 +611,13 @@ export const SessionMenu = (props: SessionMenuProps) => {
 				subRoute: 'userProfile'
 			});
 
+	/* FE#2287: without free time only a registered asker is pointed to the
+	   chat; a temporary (direct-link) or anonymous asker is not. Read before
+	   the redirect below so the hook order never changes. */
+	const { account: ownTemporaryAccount } = useOwnTemporaryAccount(
+		!!hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData)
+	);
+
 	if (redirectToSessionsList) {
 		mobileListView();
 		return <Navigate to={listPath + getSessionListTab()} replace />;
@@ -685,6 +694,8 @@ export const SessionMenu = (props: SessionMenuProps) => {
 			isSupervisor: Boolean(props.isSupervisor),
 			videoCallAllowed: Boolean(consultingType?.isVideoCallAllowed)
 		});
+	const askerCanWriteLater =
+		!ownTemporaryAccount && !isAnonymousAsker(userData);
 	const callButtonsShown = callControlsShown || askerCallInfoShown;
 	const videoButtonShown = callButtonsShown && isVideoCallsEnabled;
 	const audioButtonShown = callButtonsShown && isAudioCallsEnabled;
@@ -790,18 +801,26 @@ export const SessionMenu = (props: SessionMenuProps) => {
 						/* The counsellor learns of it as the asker learns of
 						   a counsellor's appointment: a line in the chat. */
 						void sendAppointmentNotice({
-							kind: 'created',
+							/* FE#2287: a request waits for the counsellor. */
+							kind:
+								appointment.status === 'REQUESTED'
+									? 'requested'
+									: 'created',
 							start: new Date(appointment.startTime),
 							end: new Date(appointment.endTime),
 							sessionId: activeSession.item.id,
 							matrixRoomId: activeSession.item.matrixRoomId
 						});
 					}}
-					onRequestTime={() => {
-						setAskerCallInfoOpen(false);
-						// After the dialog has handed focus back to its trigger.
-						window.setTimeout(focusChatComposer, 0);
-					}}
+					onRequestTime={
+						askerCanWriteLater
+							? () => {
+									setAskerCallInfoOpen(false);
+									// After the dialog has handed focus back to its trigger.
+									window.setTimeout(focusChatComposer, 0);
+								}
+							: undefined
+					}
 				/>
 			)}
 			<MenuBackdrop

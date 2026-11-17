@@ -13,7 +13,11 @@ export interface SessionAppointment {
 	/** UTC instants. */
 	startTime: string;
 	endTime: string;
-	status: 'SCHEDULED' | 'CANCELLED';
+	/**
+	 * REQUESTED: an advice seeker's booking waiting for the counsellor
+	 * (FE#2287); DECLINED: a request the counsellor declined.
+	 */
+	status: SessionAppointmentStatus;
 	/** ADR-032 §2a. Absent on appointments made before the calendar. */
 	kind?: SessionAppointmentKind | null;
 	/** The asker's counterpart has no displayName; the whole object may be absent. */
@@ -22,6 +26,12 @@ export interface SessionAppointment {
 
 export type SessionAppointmentKind = 'ONSITE' | 'VIDEO' | 'PHONE' | 'CHAT';
 
+export type SessionAppointmentStatus =
+	| 'SCHEDULED'
+	| 'CANCELLED'
+	| 'REQUESTED'
+	| 'DECLINED';
+
 export interface SessionAppointmentSlot {
 	startTime: string;
 	endTime: string;
@@ -29,10 +39,18 @@ export interface SessionAppointmentSlot {
 	kind?: SessionAppointmentKind;
 }
 
+/**
+ * How a free time is booked (FE#2287): INSTANT is scheduled at once, REQUEST
+ * waits for the counsellor to confirm.
+ */
+export type SlotBookingMode = 'INSTANT' | 'REQUEST';
+
 /** A time the asker may book with the counsellor (FE#1050). UTC instants. */
 export interface AppointmentSlot {
 	startTime: string;
 	endTime: string;
+	/** Absent from an older backend: booked at once. */
+	bookingMode?: SlotBookingMode;
 }
 
 /** How a self-booked appointment takes place: what the asker clicked. */
@@ -143,3 +161,26 @@ export const apiBookAppointmentSlot = (
 			FETCH_ERRORS.CATCH_ALL_EXCEPT_UNAUTHORIZED
 		]
 	});
+
+const decide =
+	(decision: 'confirm' | 'decline') =>
+	(sessionId: number, appointmentId: string): Promise<SessionAppointment> =>
+		fetchData({
+			url: `${endpoints.sessionAppointments(sessionId)}/${appointmentId}/${decision}`,
+			method: FETCH_METHODS.POST,
+			responseHandling: [
+				FETCH_SUCCESS.CONTENT,
+				FETCH_ERRORS.CONFLICT_WITH_RESPONSE,
+				FETCH_ERRORS.CATCH_ALL_EXCEPT_UNAUTHORIZED
+			]
+		});
+
+/**
+ * FE#2287: the counsellor confirms an advice seeker's request; it becomes
+ * SCHEDULED. A 409 rejects with the `Response`: `REQUESTED_TIME_TAKEN` (the
+ * time is no longer free) or `APPOINTMENT_NOT_REQUESTED`.
+ */
+export const apiConfirmSessionAppointment = decide('confirm');
+
+/** FE#2287: the counsellor declines a request; it becomes DECLINED. */
+export const apiDeclineSessionAppointment = decide('decline');

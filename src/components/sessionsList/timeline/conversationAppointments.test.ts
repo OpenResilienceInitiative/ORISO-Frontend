@@ -4,6 +4,7 @@ import {
 	appointmentNoticeKey,
 	appointmentSlotError,
 	appointmentToBooking,
+	pendingRequests,
 	toAppointmentSlot,
 	upcomingAppointments
 } from './conversationAppointments';
@@ -129,6 +130,59 @@ describe('conversation appointments', () => {
 		});
 		expect(appointmentNoticeKey('moved')).toBe(
 			'sessionList.timeline.appointment.notice.moved'
+		);
+	});
+
+	it('lists the requests waiting for the counsellor, not ended, nearest first (FE#2287)', () => {
+		const later = appointment(
+			'later',
+			'2026-11-05T10:00:00Z',
+			'2026-11-05T11:00:00Z',
+			'REQUESTED'
+		);
+		const sooner = appointment(
+			'sooner',
+			'2026-11-03T10:00:00Z',
+			'2026-11-03T11:00:00Z',
+			'REQUESTED'
+		);
+		const over = appointment(
+			'over',
+			'2026-11-01T10:00:00Z',
+			'2026-11-01T11:00:00Z',
+			'REQUESTED'
+		);
+		const declined = appointment(
+			'declined',
+			'2026-11-04T10:00:00Z',
+			'2026-11-04T11:00:00Z',
+			'DECLINED'
+		);
+		const scheduled = appointment(
+			'scheduled',
+			'2026-11-04T12:00:00Z',
+			'2026-11-04T13:00:00Z'
+		);
+		expect(
+			pendingRequests(
+				[later, over, declined, scheduled, sooner],
+				NOW
+			).map((a) => a.id)
+		).toEqual(['sooner', 'later']);
+		expect(
+			upcomingAppointments([later, scheduled], NOW).map((a) => a.id)
+		).toEqual(['scheduled']);
+	});
+
+	it('names the notices of a request and its answer (FE#2287)', () => {
+		expect(appointmentNoticeKey('requested')).toBe(
+			'sessionList.timeline.appointment.notice.requested'
+		);
+		expect(appointmentNoticeKey('confirmed')).toBe(
+			'sessionList.timeline.appointment.notice.confirmed'
+		);
+		expect(appointmentNoticeKey('declined')).toBe(
+			'sessionList.timeline.appointment.notice.declined'
 		);
 	});
 });

@@ -59,3 +59,26 @@ describe('apiSessionAppointments self-booking', () => {
 		);
 	});
 });
+
+/** Requests (FE#2287): the counsellor confirms or declines an asker's request. */
+describe('apiSessionAppointments requests', () => {
+	beforeEach(() => fetchData.mockReset().mockResolvedValue({}));
+
+	it.each([
+		['confirm', 'apiConfirmSessionAppointment'],
+		['decline', 'apiDeclineSessionAppointment']
+	] as const)(
+		'%ss a request and hands a conflict on with its reason',
+		async (decision, name) => {
+			await api[name](7, 'a-1');
+			const call = fetchData.mock.calls[0][0];
+			expect(call.url).toBe(
+				`https://api.test/service/users/sessions/7/appointments/a-1/${decision}`
+			);
+			expect(call.method).toBe('POST');
+			expect(call.responseHandling).toEqual(
+				expect.arrayContaining(['CONFLICT_WITH_RESPONSE'])
+			);
+		}
+	);
+});

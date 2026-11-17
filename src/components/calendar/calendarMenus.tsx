@@ -15,6 +15,7 @@ import ScheduleOutlinedIcon from '@mui/icons-material/ScheduleOutlined';
 import EventRepeatOutlinedIcon from '@mui/icons-material/EventRepeatOutlined';
 import UndoOutlinedIcon from '@mui/icons-material/UndoOutlined';
 import WbSunnyOutlinedIcon from '@mui/icons-material/WbSunnyOutlined';
+import EventAvailableOutlinedIcon from '@mui/icons-material/EventAvailableOutlined';
 import WorkHistoryOutlinedIcon from '@mui/icons-material/WorkHistoryOutlined';
 import SyncOutlinedIcon from '@mui/icons-material/SyncOutlined';
 import LoginOutlinedIcon from '@mui/icons-material/LoginOutlined';
@@ -841,6 +842,10 @@ export interface SettingsMenuContentProps {
 	workingHoursSummary?: string;
 	switcherStyle: ViewSwitcherStyle;
 	onWorkingHours?: () => void;
+	/** Sprechstunden as one line (FE#2287); absent = none set. */
+	consultationHoursSummary?: string;
+	/** "Sprechstunden": the times advice seekers can book. */
+	onConsultationHours?: () => void;
 	/** "Sperrzeit mit Wiederholung": the blocker form, for a series. */
 	onRepeatBlocker?: () => void;
 	/** "Freie Tage eintragen …": an all-day blocker from tomorrow. */
@@ -863,6 +868,8 @@ export const SettingsMenuContent = ({
 	workingHoursSummary,
 	switcherStyle,
 	onWorkingHours,
+	consultationHoursSummary,
+	onConsultationHours,
 	onRepeatBlocker,
 	onFreeDays,
 	onSwitcherStyle,
@@ -877,6 +884,7 @@ export const SettingsMenuContent = ({
 	// Prototype v17: what to set up first, then how the views are chosen.
 	const anyAbove =
 		onWorkingHours ||
+		onConsultationHours ||
 		onShowGrips ||
 		onRepeatBlocker ||
 		onFreeDays ||
@@ -894,6 +902,19 @@ export const SettingsMenuContent = ({
 					}
 					onClick={onWorkingHours}
 					data-cy="calendar-settings-working-hours"
+				/>
+			)}
+			{onConsultationHours && (
+				<ChatMenuDropdownItem
+					role="menuitem"
+					icon={<EventAvailableOutlinedIcon fontSize="small" />}
+					title={t('calendar.consultationHours.title')}
+					description={
+						consultationHoursSummary ??
+						t('calendar.consultationHours.none')
+					}
+					onClick={onConsultationHours}
+					data-cy="calendar-settings-consultation-hours"
 				/>
 			)}
 			{onShowGrips && (

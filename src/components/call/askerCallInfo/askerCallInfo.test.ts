@@ -22,6 +22,24 @@ describe('askerCallInfoState', () => {
 		});
 	});
 
+	it('names a request waiting for the counsellor as requested (FE#2287)', () => {
+		expect(
+			askerCallInfoState([appointment({ status: 'REQUESTED' })], now)
+		).toEqual({
+			status: 'appointment',
+			start: new Date('2026-11-19T14:00:00Z'),
+			end: new Date('2026-11-19T15:00:00Z'),
+			medium: 'video',
+			requested: true
+		});
+	});
+
+	it('ignores a declined request (FE#2287)', () => {
+		expect(
+			askerCallInfoState([appointment({ status: 'DECLINED' })], now)
+		).toEqual({ status: 'none' });
+	});
+
 	it('is an error when the read failed', () => {
 		expect(askerCallInfoState('error', now)).toEqual({ status: 'error' });
 	});

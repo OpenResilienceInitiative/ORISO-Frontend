@@ -33,6 +33,8 @@ import {
 } from './AskerSelfBookingDialog';
 import './askerCallInfo.styles.scss';
 
+export type AskerBookingNotice = 'booked' | 'limit' | 'requested';
+
 const GLYPH: Record<AskerCallMedium, EntryModality> = {
 	video: 'video',
 	phone: 'audio',
@@ -53,9 +55,10 @@ export interface AskerCallInfoDialogProps {
 	fullScreen?: boolean;
 	/**
 	 * FE#1050: the asker has just booked the appointment shown, or a booking
-	 * was refused because the conversation already has this one.
+	 * was refused because the conversation already has this one. FE#2287:
+	 * `requested` — the asker has just asked for the time shown.
 	 */
-	notice?: 'booked' | 'limit';
+	notice?: AskerBookingNotice;
 	/** "Termin anfragen" opens the free times (FE#1050), not the chat. */
 	selfBooking?: boolean;
 }
@@ -107,7 +110,16 @@ export const AskerCallInfoDialog = ({
 			)}
 			{state.status === 'appointment' && (
 				<AppointmentCard
-					label={t('videoCall.askerInfo.next')}
+					label={t(
+						state.requested
+							? 'videoCall.askerInfo.nextRequested'
+							: 'videoCall.askerInfo.next'
+					)}
+					status={
+						state.requested
+							? t('videoCall.askerInfo.requestedStatus')
+							: undefined
+					}
 					medium={t(`videoCall.askerInfo.medium.${state.medium}`)}
 					slot={formatEntrySlot(
 						{ start: state.start, end: state.end },
@@ -146,11 +158,14 @@ export const AskerCallInfoDialog = ({
 
 const AppointmentCard = ({
 	label,
+	status,
 	medium,
 	slot,
 	glyph
 }: {
 	label: string;
+	/** FE#2287: "Angefragt – wartet auf Bestätigung". */
+	status?: string;
 	medium: string;
 	slot: string;
 	glyph: EntryModality;
@@ -169,6 +184,14 @@ const AppointmentCard = ({
 				<span className="askerCallInfo__details">
 					<span className="askerCallInfo__slot">{slot}</span>
 					<span className="askerCallInfo__medium">{medium}</span>
+					{status && (
+						<span
+							className="askerCallInfo__status"
+							data-testid="asker-call-info-requested"
+						>
+							{status}
+						</span>
+					)}
 				</span>
 			</span>
 		</div>
@@ -205,7 +228,7 @@ export const AskerCallInfo = ({
 		SessionAppointment[] | 'error' | undefined
 	>();
 	const [booking, setBooking] = useState(false);
-	const [notice, setNotice] = useState<'booked' | 'limit'>();
+	const [notice, setNotice] = useState<AskerBookingNotice>();
 	/* Counts the reads; a refused booking reads the appointments again. */
 	const [reads, setReads] = useState(0);
 	useEffect(() => {
@@ -241,7 +264,11 @@ export const AskerCallInfo = ({
 						...(Array.isArray(known) ? known : []),
 						appointment
 					]);
-					setNotice('booked');
+					setNotice(
+						appointment.status === 'REQUESTED'
+							? 'requested'
+							: 'booked'
+					);
 					setBooking(false);
 					onBooked?.(appointment);
 				}}

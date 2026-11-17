@@ -50,6 +50,27 @@ export const upcomingAppointments = (
 				new Date(b.startTime).getTime()
 		);
 
+/**
+ * FE#2287: an advice seeker's requests waiting for the counsellor, not over,
+ * nearest first. They are no appointment yet: `upcomingAppointments` leaves
+ * them out.
+ */
+export const pendingRequests = (
+	appointments: SessionAppointment[],
+	now: Date
+): SessionAppointment[] =>
+	appointments
+		.filter(
+			(a) =>
+				a.status === 'REQUESTED' &&
+				new Date(a.endTime).getTime() > now.getTime()
+		)
+		.sort(
+			(a, b) =>
+				new Date(a.startTime).getTime() -
+				new Date(b.startTime).getTime()
+		);
+
 export type AppointmentSlotError = 'incomplete' | 'past' | 'order';
 
 export const appointmentSlotError = (
@@ -70,7 +91,17 @@ export const toAppointmentSlot = (
 	endTime: end.toISOString()
 });
 
-export type AppointmentNoticeKind = 'created' | 'moved' | 'cancelled';
+/**
+ * `requested`: the asker asked for a time (FE#2287); `confirmed` and
+ * `declined`: the counsellor's answer.
+ */
+export type AppointmentNoticeKind =
+	| 'created'
+	| 'moved'
+	| 'cancelled'
+	| 'requested'
+	| 'confirmed'
+	| 'declined';
 
 export const appointmentNoticeKey = (kind: AppointmentNoticeKind) =>
 	`sessionList.timeline.appointment.notice.${kind}`;

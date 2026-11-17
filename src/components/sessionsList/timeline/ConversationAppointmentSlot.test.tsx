@@ -5,7 +5,14 @@
  * without one, the header stays as it was.
  */
 import * as React from 'react';
-import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
+import {
+	act,
+	cleanup,
+	fireEvent,
+	render,
+	screen,
+	waitFor
+} from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import {
 	ActiveSessionContext,
@@ -14,9 +21,19 @@ import {
 } from '../../../globalState';
 import { ConversationAppointmentSlot } from './ConversationAppointmentSlot';
 
-const { getAppointments } = vi.hoisted(() => ({ getAppointments: vi.fn() }));
+const { getAppointments, confirm, decline, sendNotice } = vi.hoisted(() => ({
+	getAppointments: vi.fn(),
+	confirm: vi.fn(),
+	decline: vi.fn(),
+	sendNotice: vi.fn().mockResolvedValue(undefined)
+}));
 vi.mock('../../../api/apiSessionAppointments', () => ({
-	apiGetSessionAppointments: getAppointments
+	apiGetSessionAppointments: getAppointments,
+	apiConfirmSessionAppointment: confirm,
+	apiDeclineSessionAppointment: decline
+}));
+vi.mock('./useAppointmentNotice', () => ({
+	useAppointmentNotice: () => sendNotice
 }));
 vi.mock('./AppointmentDateDialog', () => ({
 	AppointmentDateDialog: () => <div data-testid="appointment-date-dialog" />
@@ -43,9 +60,12 @@ const upcoming = () => {
 	};
 };
 
+const requested = () => ({ ...upcoming(), id: 'r1', status: 'REQUESTED' });
+
 const renderSlot = (
 	onCreateChange: (open?: () => void) => void,
-	canChange = true
+	canChange = true,
+	authority: string = AUTHORITIES.CONSULTANT_DEFAULT
 ) =>
 	render(
 		<UserDataContext.Provider
@@ -53,7 +73,7 @@ const renderSlot = (
 				{
 					userData: {
 						userId: 'c1',
-						grantedAuthorities: [AUTHORITIES.CONSULTANT_DEFAULT]
+						grantedAuthorities: [authority]
 					}
 				} as never
 			}
@@ -79,6 +99,9 @@ const renderSlot = (
 afterEach(() => {
 	cleanup();
 	getAppointments.mockReset();
+	confirm.mockReset();
+	decline.mockReset();
+	sendNotice.mockClear();
 });
 
 describe('ConversationAppointmentSlot', () => {
@@ -143,5 +166,91 @@ describe('ConversationAppointmentSlot', () => {
 		renderSlot(onCreateChange, false);
 		await act(async () => undefined);
 		expect(onCreateChange).not.toHaveBeenCalledWith(expect.any(Function));
+	});
+
+	describe('a request waiting for the counsellor (FE#2287)', () => {
+		it('lets the counsellor confirm it and tells the asker in the chat', async () => {
+			getAppointments.mockResolvedValue([requested()]);
+			confirm.mockResolvedValue({ ...requested(), status: 'SCHEDULED' });
+			renderSlot(vi.fn());
+
+			const card = await screen.findByTestId('appointment-request-card');
+			expect(card.textContent).toContain(
+				'sessionList.timeline.appointment.request.title'
+			);
+			fireEvent.click(screen.getByTestId('appointment-request-confirm'));
+
+			await waitFor(() =>
+				expect(confirm).toHaveBeenCalledWith(4401, 'r1')
+			);
+			await waitFor(() =>
+				expect(sendNotice).toHaveBeenCalledWith(
+					expect.objectContaining({
+						kind: 'confirmed',
+						sessionId: 4401
+					})
+				)
+			);
+		});
+
+		it('lets the counsellor decline it and tells the asker in the chat', async () => {
+			getAppointments.mockResolvedValue([requested()]);
+			decline.mockResolvedValue({ ...requested(), status: 'DECLINED' });
+			renderSlot(vi.fn());
+
+			fireEvent.click(
+				await screen.findByTestId('appointment-request-decline')
+			);
+
+			await waitFor(() =>
+				expect(decline).toHaveBeenCalledWith(4401, 'r1')
+			);
+			await waitFor(() =>
+				expect(sendNotice).toHaveBeenCalledWith(
+					expect.objectContaining({ kind: 'declined' })
+				)
+			);
+		});
+
+		it('says so when the time is no longer free, and keeps decline', async () => {
+			getAppointments.mockResolvedValue([requested()]);
+			confirm.mockRejectedValue(
+				new Response(null, {
+					status: 409,
+					headers: { 'X-Reason': 'REQUESTED_TIME_TAKEN' }
+				})
+			);
+			renderSlot(vi.fn());
+
+			fireEvent.click(
+				await screen.findByTestId('appointment-request-confirm')
+			);
+
+			expect(
+				await screen.findByText(
+					'sessionList.timeline.appointment.request.taken'
+				)
+			).toBeTruthy();
+			expect(sendNotice).not.toHaveBeenCalled();
+			expect(
+				screen.getByTestId('appointment-request-decline')
+			).toBeTruthy();
+		});
+
+		it('shows the asker that it waits for confirmation, without actions', async () => {
+			getAppointments.mockResolvedValue([requested()]);
+			renderSlot(vi.fn(), false, AUTHORITIES.ASKER_DEFAULT);
+
+			const card = await screen.findByTestId('appointment-request-card');
+			expect(card.textContent).toContain(
+				'sessionList.timeline.appointment.request.waiting'
+			);
+			expect(
+				screen.queryByTestId('appointment-request-confirm')
+			).toBeNull();
+			expect(
+				screen.queryByTestId('appointment-request-decline')
+			).toBeNull();
+		});
 	});
 });

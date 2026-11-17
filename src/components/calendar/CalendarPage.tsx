@@ -179,6 +179,8 @@ import {
 	WorkingHoursDialog,
 	useWorkingHoursSummary
 } from './WorkingHoursDialog';
+import { ConsultationHoursDialog } from './ConsultationHoursDialog';
+import type { ConsultationHours } from './calendarConsultationHours';
 import {
 	CalendarSyncDialog,
 	type CalendarFeed,
@@ -224,6 +226,14 @@ export interface CalendarPageProps {
 	busyImport?: CalendarImport;
 	/** Weekly working hours; empty = none set, nothing shaded. */
 	workingHours?: WorkingHours;
+	/**
+	 * Sprechstunden and booking settings (FE#2287); absent until loaded,
+	 * and then not offered, so unloaded ones are never saved as empty.
+	 */
+	consultationHours?: ConsultationHours;
+	onSaveConsultationHours?: (
+		hours: ConsultationHours
+	) => void | Promise<unknown>;
 	/**
 	 * The saved schedule has loaded. Until then (or when loading failed)
 	 * neither the dialog nor the grips edit it, so an unloaded schedule is
@@ -372,6 +382,7 @@ type Dialog =
 			replaces?: { entry: CalendarEntry; draft: AppointmentDraft };
 	  }
 	| { type: 'workingHours' }
+	| { type: 'consultationHours' }
 	| { type: 'sync' }
 	| null;
 
@@ -484,6 +495,8 @@ export const CalendarPage = ({
 	feed,
 	busyImport = {},
 	workingHours = [],
+	consultationHours,
+	onSaveConsultationHours,
 	workingHoursLoaded = true,
 	dayExceptions,
 	holidayRegion = null,
@@ -1349,6 +1362,8 @@ export const CalendarPage = ({
 
 	// --- Working-hours grips (own calendar) ---
 	const editHours = workingHoursLoaded && !!onSaveWorkingHours;
+	const editConsultationHours =
+		consultant && !!consultationHours && !!onSaveConsultationHours;
 	const gripsAvailable = consultant && editHours && !!onSaveDayException;
 	// Switchable in ⋮ and kept in this browser (Frank *7.2).
 	const [showGrips, setShowGrips] = useState(() => readShowGrips(ownerId));
@@ -1939,6 +1954,19 @@ export const CalendarPage = ({
 						? () => {
 								setMenu(null);
 								setDialog({ type: 'workingHours' });
+							}
+						: undefined
+				}
+				consultationHoursSummary={
+					consultationHours
+						? summarise(consultationHours.windows)
+						: undefined
+				}
+				onConsultationHours={
+					editConsultationHours
+						? () => {
+								setMenu(null);
+								setDialog({ type: 'consultationHours' });
 							}
 						: undefined
 				}
@@ -2922,6 +2950,22 @@ export const CalendarPage = ({
 					onClose={() => setDialog(null)}
 				/>
 			)}
+			{dialog?.type === 'consultationHours' &&
+				editConsultationHours &&
+				consultationHours && (
+					<ConsultationHoursDialog
+						open
+						hours={consultationHours}
+						fullScreen={compact}
+						onSave={(hours) => {
+							setDialog(null);
+							run(onSaveConsultationHours?.(hours), {
+								message: t('calendar.consultationHours.saved')
+							});
+						}}
+						onClose={() => setDialog(null)}
+					/>
+				)}
 			{dialog?.type === 'sync' && feed && (
 				<CalendarSyncDialog
 					open

@@ -5,6 +5,7 @@ import {
 	bookingWindow,
 	firstSlotDay,
 	mediumOfCall,
+	requestTimesOn,
 	slotAt,
 	slotTimesOn
 } from './askerSelfBooking';
@@ -51,5 +52,15 @@ describe('askerSelfBooking (FE#1050)', () => {
 	it('books what the asker clicked: video or phone', () => {
 		expect(mediumOfCall(true)).toBe('VIDEO');
 		expect(mediumOfCall(false)).toBe('PHONE');
+	});
+
+	it('names the times of a day that are requests (FE#2287)', () => {
+		const mixed = [
+			{ ...slot(thu9), bookingMode: 'REQUEST' as const },
+			{ ...slot(thu930), bookingMode: 'INSTANT' as const },
+			{ ...slot(fri14), bookingMode: 'REQUEST' as const }
+		];
+		expect(requestTimesOn(mixed, dayjs(thu9))).toEqual(['09:00']);
+		expect(requestTimesOn(slots, dayjs(thu9))).toEqual([]);
 	});
 });

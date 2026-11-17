@@ -7,7 +7,10 @@ import type {
 	SessionAppointment,
 	SessionAppointmentKind
 } from '../../../api/apiSessionAppointments';
-import { upcomingAppointments } from '../../sessionsList/timeline/conversationAppointments';
+import {
+	pendingRequests,
+	upcomingAppointments
+} from '../../sessionsList/timeline/conversationAppointments';
 
 export type AskerCallMedium = 'video' | 'phone' | 'onsite' | 'chat';
 
@@ -20,6 +23,8 @@ export type AskerCallInfoState =
 			start: Date;
 			end: Date;
 			medium: AskerCallMedium;
+			/** FE#2287: asked for, waiting for the counsellor to confirm. */
+			requested?: true;
 	  };
 
 const MEDIUM: Record<SessionAppointmentKind, AskerCallMedium> = {
@@ -40,13 +45,17 @@ export const askerCallInfoState = (
 ): AskerCallInfoState => {
 	if (appointments === undefined) return { status: 'loading' };
 	if (appointments === 'error') return { status: 'error' };
-	const next = upcomingAppointments(appointments, now)[0];
+	/* A conversation has one at a time: a scheduled appointment, or else a
+	   request waiting for the counsellor (FE#2287). */
+	const scheduled = upcomingAppointments(appointments, now)[0];
+	const next = scheduled ?? pendingRequests(appointments, now)[0];
 	if (!next) return { status: 'none' };
 	return {
 		status: 'appointment',
 		start: new Date(next.startTime),
 		end: new Date(next.endTime),
-		medium: (next.kind && MEDIUM[next.kind]) || 'video'
+		medium: (next.kind && MEDIUM[next.kind]) || 'video',
+		...(scheduled ? {} : { requested: true as const })
 	};
 };
 

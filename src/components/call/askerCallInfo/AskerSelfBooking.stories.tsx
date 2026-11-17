@@ -9,7 +9,10 @@ import type {
 } from '../../../api/apiSessionAppointments';
 
 /* Free times relative to today, two to six days ahead, like the server
-   offers them: one hour long on the half hour, outside the lead time. */
+   offers them from the Sprechstunden: one hour long on the half hour,
+   outside the lead time. The first morning lies inside the counsellor's
+   notice days, so its times are requests (FE#2287); the rest are booked
+   at once. */
 const firstDay = dayjs().add(2, 'day').startOf('day');
 const slots: AppointmentSlot[] = [0, 1, 3, 4].flatMap((offset) =>
 	['09:00', '09:30', '10:00', '13:30', '14:00', '15:30'].map((time) => {
@@ -17,11 +20,16 @@ const slots: AppointmentSlot[] = [0, 1, 3, 4].flatMap((offset) =>
 		const start = firstDay.add(offset, 'day').hour(hour).minute(minute);
 		return {
 			startTime: start.toDate().toISOString(),
-			endTime: start.add(1, 'hour').toDate().toISOString()
+			endTime: start.add(1, 'hour').toDate().toISOString(),
+			bookingMode:
+				offset === 0 && hour < 12
+					? ('REQUEST' as const)
+					: ('INSTANT' as const)
 		};
 	})
 );
-const chosen = slots[2];
+const chosen = slots[3];
+const requestSlot = slots[2];
 const booked: SessionAppointment = {
 	id: 'story-appointment',
 	sessionId: 7,
@@ -33,6 +41,14 @@ const booked: SessionAppointment = {
 const noAppointments = () => Promise.resolve([] as SessionAppointment[]);
 const freeTimes = () => Promise.resolve(slots);
 const timeLabel = dayjs(chosen.startTime).format('HH:mm');
+const requestLabel = dayjs(requestSlot.startTime).format('HH:mm');
+const requested: SessionAppointment = {
+	...booked,
+	id: 'story-request',
+	status: 'REQUESTED',
+	startTime: requestSlot.startTime,
+	endTime: requestSlot.endTime
+};
 
 const openBooking = async () => {
 	const view = within(document.body);
@@ -49,7 +65,7 @@ const meta = {
 		docs: {
 			description: {
 				component:
-					'FE#1050, product owner 17 Nov 2026: an advice seeker without an appointment clicks the video or audio button of a 1:1 conversation, then "Termin anfragen", and books a free time of the counsellor at once. The free times come from the UserService (working hours minus appointments, group dates, blockers and imported busy times, nothing inside the 24-hour lead time, at most 14 days ahead). Video or phone is what the asker clicked. After booking the dialog shows the new appointment; the counsellor gets a line in the chat.'
+					'FE#1050 and FE#2287, product owner 17 Nov 2026: an advice seeker without an appointment clicks the video or audio button of a 1:1 conversation, then "Termin anfragen", and picks a free time of the counsellor. The free times come from the UserService: the counsellor\'s Sprechstunden minus appointments, open requests, group dates, blockers, imported busy times and holidays, at most 14 days ahead, in the counsellor\'s slot length. A time outside the notice days of a counsellor with "automatisch bestätigen" is booked at once; any other time is a request (dashed, hourglass) that the counsellor confirms or declines. Without Sprechstunden there is no free time; registered advice seekers are pointed to the chat, temporary ones are not. Video or phone is what the asker clicked.'
 			}
 		}
 	},
@@ -186,5 +202,56 @@ export const AlreadyBooked: Story = {
 		await expect(
 			await view.findByTestId('asker-call-info-appointment')
 		).toBeInTheDocument();
+	}
+};
+
+/** FE#2287: times booked at once and requests side by side, with a legend. */
+export const InstantAndRequestTimes: Story = {
+	name: 'Instant times and requests',
+	play: async () => {
+		const view = await openBooking();
+		const request = await view.findByTestId(
+			`appointment-booking-slot-${requestLabel}`
+		);
+		await expect(request).toHaveAttribute('data-booking-mode', 'REQUEST');
+		await expect(
+			view.getByTestId(`appointment-booking-slot-${timeLabel}`)
+		).toHaveAttribute('data-booking-mode', 'INSTANT');
+		await expect(
+			view.getByTestId('appointment-booking-legend')
+		).toBeInTheDocument();
+		await userEvent.click(request);
+		await expect(
+			view.getByTestId('asker-self-booking-confirm')
+		).toHaveTextContent('Termin anfragen');
+	}
+};
+
+/** The request is sent: it waits for the counsellor's confirmation. */
+export const Requested: Story = {
+	name: 'Requested – waiting for confirmation',
+	args: { bookSlot: () => Promise.resolve(requested) },
+	play: async () => {
+		const view = await openBooking();
+		await userEvent.click(
+			await view.findByTestId(`appointment-booking-slot-${requestLabel}`)
+		);
+		await userEvent.click(view.getByTestId('asker-self-booking-confirm'));
+		await expect(
+			await view.findByTestId('asker-call-info-requested')
+		).toBeInTheDocument();
+	}
+};
+
+/** A temporary advice seeker gets no hint to write in the chat. */
+export const NoSlotsTemporaryAsker: Story = {
+	name: 'No free times (temporary advice seeker)',
+	args: { loadSlots: () => Promise.resolve([]), onRequestTime: undefined },
+	play: async () => {
+		const view = await openBooking();
+		await expect(
+			await view.findByText(/keine freie Zeit/)
+		).toBeInTheDocument();
+		await expect(view.queryByTestId('asker-self-booking-chat')).toBeNull();
 	}
 };

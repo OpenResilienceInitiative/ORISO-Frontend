@@ -38,11 +38,26 @@ const apiGetSessionAppointments = vi.hoisted(() =>
 	vi.fn().mockResolvedValue([])
 );
 const apiGetAppointmentSlots = vi.hoisted(() => vi.fn().mockResolvedValue([]));
+const apiBookAppointmentSlot = vi.hoisted(() => vi.fn());
 vi.mock('../../api/apiSessionAppointments', () => ({
 	apiGetSessionAppointments,
 	apiGetAppointmentSlots,
-	apiBookAppointmentSlot: vi.fn()
+	apiBookAppointmentSlot
 }));
+const apiSendMessage = vi.hoisted(() => vi.fn().mockResolvedValue({}));
+vi.mock('../../api/apiSendMessage', () => ({ apiSendMessage }));
+/* FE#2287: a direct-link guest's temporary account, null for everyone else. */
+const ownTemporaryAccount = vi.hoisted(() => ({ current: null as unknown }));
+vi.mock(
+	'../temporaryAccount/temporaryAccountStore',
+	async (importOriginal) => ({
+		...(await importOriginal<object>()),
+		useOwnTemporaryAccount: () => ({
+			status: 'ready',
+			account: ownTemporaryAccount.current
+		})
+	})
+);
 
 // Browser-only animation renderers have no canvas in jsdom.
 vi.mock('lottie-web', () => ({ default: { loadAnimation: () => ({}) } }));
@@ -189,6 +204,8 @@ afterEach(() => {
 	vi.restoreAllMocks();
 	document.getElementById('overlay')?.remove();
 	tenant.current = null;
+	ownTemporaryAccount.current = null;
+	apiGetAppointmentSlots.mockResolvedValue([]);
 });
 
 const HEADER = {
@@ -256,6 +273,72 @@ describe('SessionMenu call buttons for an advice seeker', () => {
 		);
 		expect(startRoomCall).not.toHaveBeenCalled();
 		composer.remove();
+	});
+
+	it.each([
+		['a temporary asker', asker, { messageRetention: 'ALWAYS_TEMPORARY' }],
+		[
+			'an anonymous asker',
+			{
+				userId: 'anon',
+				grantedAuthorities: [
+					AUTHORITIES.ASKER_DEFAULT,
+					AUTHORITIES.ANONYMOUS_DEFAULT
+				]
+			},
+			null
+		]
+	] as const)(
+		'without free times, %s gets no hint to write in the chat (FE#2287)',
+		async (_who, userData, account) => {
+			ownTemporaryAccount.current = account;
+			render(<Menu userData={userData} />);
+			fireEvent.click(headerButton('video')!);
+			fireEvent.click(
+				await screen.findByTestId('asker-call-info-request')
+			);
+			expect(
+				await screen.findByText('videoCall.askerInfo.booking.none')
+			).toBeTruthy();
+			expect(
+				screen.queryByText('videoCall.askerInfo.requestHint')
+			).toBeNull();
+			expect(screen.queryByTestId('asker-self-booking-chat')).toBeNull();
+		}
+	);
+
+	it('a request tells the counsellor in the chat that it waits for them (FE#2287)', async () => {
+		const start = new Date(Date.now() + 2 * 86_400_000);
+		start.setHours(10, 0, 0, 0);
+		const end = new Date(start.getTime() + 3_600_000);
+		const time = `${String(start.getHours()).padStart(2, '0')}:00`;
+		apiGetAppointmentSlots.mockResolvedValue([
+			{
+				startTime: start.toISOString(),
+				endTime: end.toISOString(),
+				bookingMode: 'REQUEST'
+			}
+		]);
+		apiBookAppointmentSlot.mockResolvedValue({
+			id: 'r-1',
+			sessionId: -2,
+			status: 'REQUESTED',
+			kind: 'VIDEO',
+			startTime: start.toISOString(),
+			endTime: end.toISOString()
+		});
+		render(<Menu userData={asker} />);
+		fireEvent.click(headerButton('video')!);
+		fireEvent.click(await screen.findByTestId('asker-call-info-request'));
+		fireEvent.click(
+			await screen.findByTestId(`appointment-booking-slot-${time}`)
+		);
+		fireEvent.click(screen.getByTestId('asker-self-booking-confirm'));
+
+		await waitFor(() => expect(apiSendMessage).toHaveBeenCalled());
+		expect(apiSendMessage.mock.calls[0][0]).toBe(
+			'sessionList.timeline.appointment.notice.requested'
+		);
 	});
 
 	it('in the kebab menu the rows open the information too', async () => {

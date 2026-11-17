@@ -260,3 +260,47 @@ describe('⋮ settings — order of prototype v17 (#122)', () => {
 		expect(onRepeatBlocker).toHaveBeenCalled();
 	});
 });
+
+describe('⋮ settings — Sprechstunden (FE#2287)', () => {
+	it('offers them right after the working hours, with their summary', () => {
+		const onConsultationHours = vi.fn();
+		const { container } = render(
+			<SettingsMenuContent
+				workingHoursSummary="Mo–Fr 08:00–18:00"
+				consultationHoursSummary="Di 09:00–12:00"
+				switcherStyle="digits"
+				onWorkingHours={() => undefined}
+				onConsultationHours={onConsultationHours}
+				onSwitcherStyle={() => undefined}
+			/>
+		);
+		expect(cyOrder(container).slice(0, 2)).toEqual([
+			'calendar-settings-working-hours',
+			'calendar-settings-consultation-hours'
+		]);
+		const item = container.querySelector(
+			'[data-cy="calendar-settings-consultation-hours"]'
+		) as HTMLElement;
+		expect(
+			item.querySelector('.chatMenuDropdown__itemDescription')
+				?.textContent
+		).toBe('Di 09:00–12:00');
+		fireEvent.click(item);
+		expect(onConsultationHours).toHaveBeenCalled();
+	});
+
+	it('says when none are set', () => {
+		const { container } = render(
+			<SettingsMenuContent
+				switcherStyle="digits"
+				onConsultationHours={() => undefined}
+				onSwitcherStyle={() => undefined}
+			/>
+		);
+		expect(
+			container.querySelector(
+				'[data-cy="calendar-settings-consultation-hours"] .chatMenuDropdown__itemDescription'
+			)?.textContent
+		).toBe('calendar.consultationHours.none');
+	});
+});

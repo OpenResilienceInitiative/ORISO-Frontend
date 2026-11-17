@@ -345,7 +345,10 @@
 			"pickDay": "Veuillez d’abord choisir un jour dans le calendrier.",
 			"subline": "Choisissez un jour, puis une heure.",
 			"times": "Horaires libres",
-			"weekdays": "D,L,M,M,J,V,S"
+			"weekdays": "D,L,M,M,J,V,S",
+			"legendInstant": "Réservé immédiatement",
+			"legendRequest": "Demande – votre conseiller ou conseillère confirme le rendez-vous",
+			"requestTime": "Demande"
 		},
 		"availability": {
 			"description": "Indiquez ici votre disponibilité générale afin que les personnes en quête de conseils puissent réserver des rendez-vous chez vous.",
@@ -4776,7 +4779,10 @@
 				"notice": {
 					"created": "Rendez-vous fixé : {{date}}",
 					"moved": "Rendez-vous déplacé au : {{date}}",
-					"cancelled": "Rendez-vous annulé : {{date}}"
+					"cancelled": "Rendez-vous annulé : {{date}}",
+					"requested": "Rendez-vous demandé : {{date}} – en attente de confirmation",
+					"confirmed": "Rendez-vous confirmé : {{date}}",
+					"declined": "Demande de rendez-vous refusée : {{date}}"
 				},
 				"noticeFailed": {
 					"title": "Avis non envoyé",
@@ -4785,6 +4791,14 @@
 				"cancelFailed": {
 					"title": "Rendez-vous non annulé",
 					"text": "Le rendez-vous n’a pas pu être annulé. Veuillez réessayer."
+				},
+				"request": {
+					"title": "Demande de rendez-vous",
+					"waiting": "Demandé – en attente de confirmation",
+					"confirm": "Confirmer",
+					"decline": "Refuser",
+					"taken": "Ce créneau n’est plus libre. Refusez la demande ou proposez un autre horaire dans le chat.",
+					"failed": "Cela n’a pas fonctionné. Veuillez réessayer."
 				}
 			}
 		},
@@ -5342,8 +5356,8 @@
 			"booking": {
 				"title": "Réserver un rendez-vous",
 				"description": {
-					"video": "Choisissez un créneau libre de votre conseiller ou conseillère pour un appel vidéo. Le rendez-vous est réservé immédiatement.",
-					"phone": "Choisissez un créneau libre de votre conseiller ou conseillère pour un appel téléphonique. Le rendez-vous est réservé immédiatement."
+					"video": "Choisissez un créneau libre de votre conseiller ou conseillère pour un appel vidéo. Les créneaux « Réservé immédiatement » sont fixés tout de suite ; les demandes sont confirmées par votre conseiller ou conseillère.",
+					"phone": "Choisissez un créneau libre de votre conseiller ou conseillère pour un appel téléphonique. Les créneaux « Réservé immédiatement » sont fixés tout de suite ; les demandes sont confirmées par votre conseiller ou conseillère."
 				},
 				"loading": "Chargement des créneaux libres …",
 				"error": "Les créneaux libres n'ont pas pu être chargés. Veuillez réessayer plus tard.",
@@ -5354,8 +5368,12 @@
 				"taken": "Ce créneau vient d'être pris. Veuillez en choisir un autre.",
 				"failed": "Le rendez-vous n'a pas pu être réservé. Veuillez réessayer.",
 				"booked": "Votre rendez-vous est réservé. Votre conseiller ou conseillère est informé(e) dans le chat.",
-				"limit": "Un rendez-vous est déjà réservé pour cette conversation."
-			}
+				"limit": "Un rendez-vous est déjà réservé pour cette conversation.",
+				"confirmRequest": "Demander le rendez-vous",
+				"requested": "Votre demande a été envoyée. Elle attend la confirmation de votre conseiller ou conseillère."
+			},
+			"nextRequested": "Votre rendez-vous demandé",
+			"requestedStatus": "Demandé – en attente de confirmation"
 		},
 		"incomingCall": {
 			"description": "appelle...",
@@ -7593,6 +7611,23 @@
 		"links": {
 			"title": "Liens sans rendez-vous",
 			"hint": "Liens d’invitation à partager : copiez-les ou affichez un code QR."
+		},
+		"consultationHours": {
+			"title": "Heures de consultation",
+			"description": "Pendant ces heures, les personnes en recherche de conseil peuvent réserver elles-mêmes un rendez-vous avec vous. Elles sont indépendantes de vos heures de travail.",
+			"save": "Enregistrer les heures de consultation",
+			"saved": "Heures de consultation enregistrées",
+			"empty": "Sans heures de consultation, personne ne peut réserver de rendez-vous.",
+			"none": "Aucune heure de consultation définie",
+			"autoAccept": "Confirmer les réservations automatiquement",
+			"autoAcceptOn": "Après le délai de prévenance, un rendez-vous est réservé immédiatement ; les réservations à court terme sont des demandes.",
+			"autoAcceptOff": "Chaque réservation est une demande que vous confirmez.",
+			"noticeDays": "Délai de prévenance en jours",
+			"noticeDaysHint": "Dans ces jours précédant le rendez-vous, une réservation devient une demande.",
+			"noticeInvalid": "Veuillez saisir un nombre entier de 0 à {{max}}.",
+			"slotMinutes": "Durée d’un rendez-vous",
+			"minutes": "{{count}} minutes",
+			"invalid": "La fin doit être après le début."
 		}
 	}
 }

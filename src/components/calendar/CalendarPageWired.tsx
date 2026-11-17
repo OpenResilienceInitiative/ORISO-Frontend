@@ -46,6 +46,8 @@ import {
 	apiGetCalendarProposals,
 	apiGetCalendarSync,
 	apiGetCalendarWorkingHours,
+	apiGetCalendarConsultationHours,
+	apiSetCalendarConsultationHours,
 	apiGetColleagueCalendarEntries,
 	apiMoveCalendarBlocker,
 	apiPutWorkingDayException,
@@ -116,6 +118,10 @@ import {
 	type WorkingHours,
 	type WorkingPlan
 } from './calendarWorkingHours';
+import {
+	consultationHoursFromApi,
+	type ConsultationHours
+} from './calendarConsultationHours';
 import type { HolidayRegion } from './calendarHolidays';
 
 /** Page size of the conversation lookup; every page is loaded. */
@@ -210,6 +216,10 @@ export const CalendarPageWired = () => {
 	const [conversationsFailed, setConversationsFailed] = useState(false);
 	const [sync, setSync] = useState<CalendarSyncDTO>();
 	const [plan, setPlan] = useState<WorkingPlan>();
+	/* Sprechstunden (FE#2287): undefined until read, so unread ones are
+	   never offered for editing and saved as empty. */
+	const [consultationHours, setConsultationHours] =
+		useState<ConsultationHours>();
 	/** The saved schedule has loaded: until then it cannot be edited. */
 	const [planLoaded, setPlanLoaded] = useState(false);
 	/**
@@ -529,6 +539,12 @@ export const CalendarPageWired = () => {
 				(dto) => !cancelled && setSync(dto),
 				() => undefined
 			);
+			apiGetCalendarConsultationHours().then(
+				(dto) =>
+					!cancelled &&
+					setConsultationHours(consultationHoursFromApi(dto)),
+				() => undefined
+			);
 			loadPlan();
 		}
 		return () => {
@@ -790,6 +806,12 @@ export const CalendarPageWired = () => {
 		return sent;
 	};
 
+	/** The whole set at once; the answer is what UserService stored. */
+	const saveConsultationHours = async (hours: ConsultationHours) => {
+		const saved = await apiSetCalendarConsultationHours(hours);
+		setConsultationHours(consultationHoursFromApi(saved));
+	};
+
 	const saveWorkingHours = async (
 		hours: WorkingHours,
 		holidayRegion: HolidayRegion | null
@@ -986,6 +1008,10 @@ export const CalendarPageWired = () => {
 			onAcceptProposal={consultant ? acceptProposal : undefined}
 			onDeclineProposal={consultant ? declineProposal : undefined}
 			onSaveWorkingHours={consultant ? saveWorkingHours : undefined}
+			consultationHours={consultant ? consultationHours : undefined}
+			onSaveConsultationHours={
+				consultant ? saveConsultationHours : undefined
+			}
 			onSaveDayException={consultant ? saveDayException : undefined}
 			onDeleteDayException={consultant ? deleteDayException : undefined}
 			onStart={start}

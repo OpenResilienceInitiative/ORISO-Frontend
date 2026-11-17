@@ -1,6 +1,8 @@
 import * as React from 'react';
 import { useCallback, useMemo } from 'react';
 import { Box, Button, Typography } from '@mui/material';
+import HourglassEmptyOutlinedIcon from '@mui/icons-material/HourglassEmptyOutlined';
+import EventAvailableOutlinedIcon from '@mui/icons-material/EventAvailableOutlined';
 import dayjs, { Dayjs } from 'dayjs';
 import { useTranslation } from 'react-i18next';
 import { OrisoCalendar } from '../form/OrisoCalendar';
@@ -15,6 +17,12 @@ export interface AppointmentSlotPickerProps {
 	onTimeChange: (time: string) => void;
 	/** Which times (HH:mm, local) a day offers. */
 	slotsForDay: (day: Dayjs) => string[];
+	/**
+	 * FE#2287: which of those times are requests the counsellor confirms;
+	 * the others are booked at once. Without it every time is booked at once
+	 * and nothing is marked.
+	 */
+	requestTimesForDay?: (day: Dayjs) => string[];
 	/** The last day that can offer anything. */
 	maxDate?: Dayjs;
 	/**
@@ -36,6 +44,7 @@ export const AppointmentSlotPicker = ({
 	onDayChange,
 	onTimeChange,
 	slotsForDay,
+	requestTimesForDay,
 	maxDate,
 	layout = 'page'
 }: AppointmentSlotPickerProps) => {
@@ -73,6 +82,13 @@ export const AppointmentSlotPicker = ({
 				.isAfter(now);
 		});
 	}, [day, slotsForDay]);
+
+	const requests = useMemo(
+		() => new Set(day && requestTimesForDay ? requestTimesForDay(day) : []),
+		[day, requestTimesForDay]
+	);
+	const marked = requests.size > 0;
+	const requestLabel = tr('requestTime', 'Anfrage');
 
 	const page = layout === 'page';
 
@@ -169,21 +185,70 @@ export const AppointmentSlotPicker = ({
 							gap: 1
 						}}
 					>
-						{slots.map((slot) => (
-							<Button
-								key={slot}
-								variant={
-									slot === time ? 'contained' : 'outlined'
-								}
-								size="small"
-								aria-pressed={slot === time}
-								onClick={() => onTimeChange(slot)}
-								data-testid={`appointment-booking-slot-${slot}`}
-								sx={slotButtonSx}
-							>
-								{slot}
-							</Button>
-						))}
+						{slots.map((slot) => {
+							const request = requests.has(slot);
+							return (
+								<Button
+									key={slot}
+									variant={
+										slot === time ? 'contained' : 'outlined'
+									}
+									size="small"
+									aria-pressed={slot === time}
+									aria-label={
+										request
+											? `${slot}, ${requestLabel}`
+											: undefined
+									}
+									onClick={() => onTimeChange(slot)}
+									data-testid={`appointment-booking-slot-${slot}`}
+									data-booking-mode={
+										requestTimesForDay
+											? request
+												? 'REQUEST'
+												: 'INSTANT'
+											: undefined
+									}
+									startIcon={
+										request ? (
+											<HourglassEmptyOutlinedIcon
+												aria-hidden="true"
+												fontSize="small"
+											/>
+										) : undefined
+									}
+									sx={request ? requestSlotSx : slotButtonSx}
+								>
+									{slot}
+								</Button>
+							);
+						})}
+					</Box>
+				)}
+				{/* FE#2287: what the two kinds of time mean, under the times. */}
+				{day && slots.length > 0 && marked && (
+					<Box
+						component="ul"
+						data-testid="appointment-booking-legend"
+						sx={legendSx}
+					>
+						<li data-booking-mode="INSTANT">
+							<EventAvailableOutlinedIcon
+								aria-hidden="true"
+								fontSize="small"
+							/>
+							{tr('legendInstant', 'Sofort gebucht')}
+						</li>
+						<li data-booking-mode="REQUEST">
+							<HourglassEmptyOutlinedIcon
+								aria-hidden="true"
+								fontSize="small"
+							/>
+							{tr(
+								'legendRequest',
+								'Anfrage – Ihre Beratungsperson bestätigt den Termin'
+							)}
+						</li>
 					</Box>
 				)}
 			</Box>
@@ -208,4 +273,33 @@ const slotButtonSx = {
 		borderColor: orisoDateTimeColors.outline,
 		color: orisoDateTimeColors.onSurface
 	}
+} as const;
+
+/**
+ * FE#2287: a time the counsellor still confirms. Dashed outline and an
+ * hourglass, so the difference does not rest on colour alone.
+ */
+const requestSlotSx = {
+	...slotButtonSx,
+	'&.MuiButton-outlined': {
+		borderColor: orisoDateTimeColors.outline,
+		borderStyle: 'dashed',
+		color: orisoDateTimeColors.onSurface
+	},
+	'& .MuiButton-startIcon': { mr: 0.5, ml: -0.5 }
+} as const;
+
+const legendSx = {
+	'listStyle': 'none',
+	'm': 0,
+	'mt': 1.5,
+	'p': 0,
+	'display': 'flex',
+	'flexDirection': 'column',
+	'gap': 0.5,
+	'fontSize': 13,
+	'lineHeight': '18px',
+	'color': registrationMd3.onSurfaceVariant,
+	'& li': { display: 'flex', alignItems: 'center', gap: 0.75 },
+	'& svg': { fontSize: 18 }
 } as const;
