@@ -53,6 +53,12 @@ export interface UserDataInterface {
 	 * predating the flag never send it.
 	 */
 	passwordChangeRequired?: boolean;
+	/**
+	 * UserService#1662: an asker who joined through an invitation without an
+	 * account. Display name, e-mail and notifications stay hidden until the
+	 * account is kept. Optional: older backends never send it.
+	 */
+	temporaryAccount?: boolean;
 	userId: string;
 	userName: string;
 	userRoles: string[];

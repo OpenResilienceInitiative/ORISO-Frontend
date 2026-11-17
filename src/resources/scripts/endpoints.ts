@@ -167,6 +167,8 @@ export const endpoints = {
 	twoFactorAuthEmail: userServiceOrigin + '/service/users/2fa/email',
 	updateMessage: userServiceOrigin + '/service/messages/',
 	userData: userServiceOrigin + '/service/users/data',
+	keepTemporaryAccount:
+		userServiceOrigin + '/service/users/temporary-account/keep',
 	eventNotifications:
 		userServiceOrigin + '/service/users/event-notifications',
 	doNotDisturb:

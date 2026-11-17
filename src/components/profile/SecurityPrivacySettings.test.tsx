@@ -38,6 +38,9 @@ vi.mock('./AskerDisplayNameSettings', () => ({
 vi.mock('./DeleteAccount', () => ({
 	DeleteAccount: () => <button>Delete account</button>
 }));
+vi.mock('../temporaryAccount/KeepAccountEntry', () => ({
+	KeepAccountEntry: () => <button>Keep account</button>
+}));
 vi.mock('./EncryptionSettings', () => ({
 	EncryptionSettingsPanel: () => {
 		const [step, setStep] = useState(0);
@@ -50,13 +53,18 @@ vi.mock('./EncryptionSettings', () => ({
 }));
 
 afterEach(cleanup);
-const view = (role: string, twoFactorEnabled = true) => (
+const view = (
+	role: string,
+	twoFactorEnabled = true,
+	temporaryAccount?: boolean
+) => (
 	<UserDataContext.Provider
 		value={
 			{
 				userData: {
 					grantedAuthorities: [role],
-					twoFactorAuth: { isEnabled: twoFactorEnabled }
+					twoFactorAuth: { isEnabled: twoFactorEnabled },
+					temporaryAccount
 				}
 			} as never
 		}
@@ -134,6 +142,35 @@ describe('Security and privacy groups', () => {
 			).toBeNull();
 		}
 	);
+
+	describe('a temporary account (UserService#1662)', () => {
+		it('offers to keep the account and hides the display names', () => {
+			render(view('asker', true, true));
+			const account = screen.getByRole('region', {
+				name: 'profile.securityPrivacy.account.title'
+			});
+			expect(
+				within(account).getByRole('button', { name: 'Keep account' })
+			).toBeTruthy();
+			expect(
+				screen.queryByRole('button', { name: 'Asker display names' })
+			).toBeNull();
+			// Deleting stays possible.
+			expect(
+				screen.getByRole('button', { name: 'Delete account' })
+			).toBeTruthy();
+		});
+
+		it('shows the display names again and no keep offer once the account is kept', () => {
+			render(view('asker', true, false));
+			expect(
+				screen.queryByRole('button', { name: 'Keep account' })
+			).toBeNull();
+			expect(
+				screen.getByRole('button', { name: 'Asker display names' })
+			).toBeTruthy();
+		});
+	});
 
 	it('retains the two-factor availability condition', () => {
 		render(view('asker', false));
