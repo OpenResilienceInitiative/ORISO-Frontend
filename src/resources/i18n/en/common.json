@@ -6418,11 +6418,6 @@
 				"on": "Guests wait until you let them in. Switching it off lets everyone waiting in at once.",
 				"off": "Guests enter the call directly, without waiting."
 			},
-			"temporaryAccount": {
-				"label": "Temporary account",
-				"on": "Guests get a guest account that is deleted after the call.",
-				"off": "Guests sign in with their own account or create one."
-			},
 			"linkLabel": "Link to the call",
 			"copy": "Copy",
 			"copied": "Copied",
@@ -6711,7 +6706,6 @@
 			"text": "Whoever opens the link reaches you directly – in a chat, an audio call or a video call.",
 			"topicLabel": "Choose topic",
 			"mediumLabel": "Kind of contact",
-			"temporary": "Temporary account",
 			"temporaryHint": "The account is deleted after the conversation.",
 			"create": "Create link",
 			"createFailed": "The link could not be created. Please try again.",
@@ -6766,7 +6760,6 @@
 			"nameRequired": "Please enter a name.",
 			"topic": "Topic",
 			"mediumFixed": "The type of contact cannot be changed",
-			"temporaryHint": "Applies only to people who open the link from now on.",
 			"failed": "The change could not be saved. Please try again.",
 			"scheduledAt": "Date and time",
 			"clearScheduledAt": "Remove"

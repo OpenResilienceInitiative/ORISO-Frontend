@@ -6493,11 +6493,6 @@
 				"on": "Gäste warten, bis Sie sie einlassen. Schalten Sie es aus, kommen alle Wartenden sofort herein.",
 				"off": "Gäste kommen ohne Warten direkt in den Anruf."
 			},
-			"temporaryAccount": {
-				"label": "Temporäres Konto",
-				"on": "Gäste bekommen ein Gastkonto, das nach dem Anruf gelöscht wird.",
-				"off": "Gäste melden sich mit einem eigenen Konto an oder legen eines an."
-			},
 			"linkLabel": "Link zum Anruf",
 			"copy": "Kopieren",
 			"copied": "Kopiert",
@@ -6786,7 +6781,6 @@
 			"text": "Wer den Link öffnet, landet ohne Umweg bei Ihnen – im Chat, im Audio- oder im Videoanruf.",
 			"topicLabel": "Thema wählen",
 			"mediumLabel": "Art des Kontakts",
-			"temporary": "Temporäres Konto",
 			"temporaryHint": "Das Konto wird nach dem Gespräch gelöscht.",
 			"create": "Link erstellen",
 			"createFailed": "Der Link konnte nicht erstellt werden. Bitte versuchen Sie es erneut.",
@@ -6841,7 +6835,6 @@
 			"nameRequired": "Bitte geben Sie einen Namen ein.",
 			"topic": "Thema",
 			"mediumFixed": "Art des Kontakts lässt sich nicht ändern",
-			"temporaryHint": "Gilt nur für Personen, die den Link neu öffnen.",
 			"failed": "Die Änderung konnte nicht gespeichert werden. Bitte versuchen Sie es erneut.",
 			"scheduledAt": "Datum und Uhrzeit",
 			"clearScheduledAt": "Entfernen"

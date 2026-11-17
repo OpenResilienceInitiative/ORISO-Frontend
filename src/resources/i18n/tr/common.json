@@ -6503,11 +6503,6 @@
 				"on": "Misafirler siz içeri alana kadar bekler. Kapatırsanız bekleyen herkes hemen içeri girer.",
 				"off": "Misafirler beklemeden doğrudan aramaya katılır."
 			},
-			"temporaryAccount": {
-				"label": "Geçici hesap",
-				"on": "Misafirler aramadan sonra silinen bir misafir hesabı alır.",
-				"off": "Misafirler kendi hesaplarıyla giriş yapar veya hesap oluşturur."
-			},
 			"linkLabel": "Aramanın bağlantısı",
 			"copy": "Kopyala",
 			"copied": "Kopyalandı",
@@ -6796,7 +6791,6 @@
 			"text": "Bağlantıyı açan kişi size doğrudan ulaşır – sohbette, sesli veya görüntülü aramada.",
 			"topicLabel": "Konu seçin",
 			"mediumLabel": "İletişim türü",
-			"temporary": "Geçici hesap",
 			"temporaryHint": "Hesap görüşmeden sonra silinir.",
 			"create": "Bağlantı oluştur",
 			"createFailed": "Bağlantı oluşturulamadı. Lütfen tekrar deneyin.",
@@ -6851,7 +6845,6 @@
 			"nameRequired": "Lütfen bir ad girin.",
 			"topic": "Konu",
 			"mediumFixed": "İletişim türü değiştirilemez",
-			"temporaryHint": "Yalnızca bağlantıyı bundan sonra açan kişiler için geçerlidir.",
 			"failed": "Değişiklik kaydedilemedi. Lütfen tekrar deneyin.",
 			"scheduledAt": "Tarih ve saat",
 			"clearScheduledAt": "Kaldır"

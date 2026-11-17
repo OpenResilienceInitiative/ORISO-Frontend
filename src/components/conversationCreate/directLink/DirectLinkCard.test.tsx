@@ -128,7 +128,6 @@ describe('DirectLinkCard', () => {
 			screen.getByRole('button', { name: 'directLink.medium.chat' })
 		);
 		expect(screen.queryByRole('switch')).toBeNull();
-		expect(screen.queryByText('directLink.card.temporary')).toBeNull();
 		fireEvent.click(
 			screen.getByRole('button', {
 				name: 'guestAccountMode.option.PERMANENT'
