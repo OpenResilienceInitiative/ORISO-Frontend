@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useTenant } from '../../../globalState';
 import {
 	buildSectionFaviconSvg,
+	readFaviconColors,
 	resolveSectionNavItem,
 	sectionIconOf,
 	svgToPngDataUrl,
@@ -12,10 +13,12 @@ import {
 } from './sectionFaviconSvg';
 import { restoreDefaultTabIcon, showSectionTabIcon } from './tabIconLinks';
 import { restoreDefaultTitle, showSectionTitle } from './tabTitle';
+import { useThemeVersion } from '../../../utils/theme/useThemeVersion';
 
 /**
  * Gives the browser tab the name and icon of the section the person is in (Kalender,
- * Beratungen, Profil, …), drawn in the tenant colour. Mounted inside the
+ * Beratungen, Profil, …), painted in the primary / on-primary design tokens
+ * (so a Träger palette reaches it). Mounted inside the
  * authenticated app shell only, so before login and on plain pages the
  * default favicon stays; leaving the shell (logout) restores it.
  */
@@ -25,7 +28,8 @@ export const SectionFavicon = ({
 	navigation: ReadonlyArray<SectionNavItem | null | undefined> | undefined;
 }) => {
 	const { pathname } = useLocation();
-	const primaryColor = useTenant()?.theming?.primaryColor;
+	// Re-read the design tokens whenever a (Träger) palette lands.
+	const themeVersion = useThemeVersion();
 	const item = resolveSectionNavItem(pathname, navigation);
 	const Icon = item ? sectionIconOf(item) : null;
 	const { t: translate, i18n } = useTranslation();
@@ -44,8 +48,13 @@ export const SectionFavicon = ({
 			restoreDefaultTabIcon();
 			return;
 		}
+		const colors = readFaviconColors();
+		if (!colors) {
+			restoreDefaultTabIcon();
+			return;
+		}
 		let current = true;
-		const svg = buildSectionFaviconSvg(Icon, primaryColor);
+		const svg = buildSectionFaviconSvg(Icon, colors);
 		const svgHref = toSvgDataUrl(svg);
 		showSectionTabIcon({ svgHref, pngHref: null });
 		svgToPngDataUrl(svg).then((pngHref) => {
@@ -54,7 +63,7 @@ export const SectionFavicon = ({
 		return () => {
 			current = false;
 		};
-	}, [Icon, primaryColor]);
+	}, [Icon, themeVersion, tenant]);
 
 	useEffect(
 		() => () => {

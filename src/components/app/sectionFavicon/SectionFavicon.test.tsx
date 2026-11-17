@@ -5,6 +5,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { MemoryRouter, useNavigate } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it } from 'vite-plus/test';
 import { SectionFavicon } from './SectionFavicon';
+import { THEME_APPLIED_EVENT } from '../../../utils/theme/themeEvents';
 import i18next from 'i18next';
 import { I18nextProvider, initReactI18next } from 'react-i18next';
 import { TenantContext } from '../../../globalState/provider/TenantProvider';
@@ -67,17 +68,25 @@ const iconHrefs = () =>
 const svgOf = (href: string) =>
 	decodeURIComponent(href.slice('data:image/svg+xml,'.length));
 
+const setTokens = (primary: string | null, onPrimary: string | null) => {
+	const style = document.documentElement.style;
+	if (primary) style.setProperty('--m3-primary', primary);
+	else style.removeProperty('--m3-primary');
+	if (onPrimary) style.setProperty('--m3-on-primary', onPrimary);
+	else style.removeProperty('--m3-on-primary');
+};
+
 describe('SectionFavicon', () => {
 	let container: HTMLDivElement;
 	let root: Root;
 
-	const render = (path: string, primaryColor = '#cc1e1c') =>
+	const render = (path: string) =>
 		act(() => {
 			root.render(
 				<TenantContext.Provider
 					value={
 						{
-							tenant: { theming: { primaryColor } } as any,
+							tenant: { theming: {} } as any,
 							setTenant: () => {},
 							updateTenantSettings: () => {}
 						} as any
@@ -96,6 +105,8 @@ describe('SectionFavicon', () => {
 	beforeEach(() => {
 		// jsdom has no canvas: the PNG fallback is skipped (covered in Storybook).
 		HTMLCanvasElement.prototype.getContext = (() => null) as any;
+		// The compiled token defaults, as the stylesheet would provide them.
+		setTokens('#a5000a', '#ffffff');
 		document.head.innerHTML =
 			'<title>caritas-berlin</title><link rel="icon" href="/favicon.ico" />';
 		container = document.createElement('div');
@@ -105,13 +116,15 @@ describe('SectionFavicon', () => {
 	afterEach(() => {
 		act(() => root.unmount());
 		container.remove();
+		document.documentElement.removeAttribute('style');
 	});
 
-	it('shows the section icon in the tenant colour and follows route changes', () => {
+	it('shows the section icon in the primary/on-primary tokens and follows route changes', () => {
 		render('/sessions/consultant/sessionView/1/2');
 		const [chats] = iconHrefs();
 		expect(chats.startsWith('data:image/svg+xml,')).toBe(true);
-		expect(svgOf(chats)).toContain('color="#cc1e1c"');
+		expect(svgOf(chats)).toContain('fill="#a5000a"/>');
+		expect(svgOf(chats)).toContain('color="#ffffff"');
 		expect(svgOf(chats)).toContain('viewBox="0 0 27 27"');
 
 		act(() => go('/profile'));
@@ -152,10 +165,23 @@ describe('SectionFavicon', () => {
 		root = createRoot(container);
 	});
 
-	it('redraws when the tenant colour arrives later', () => {
-		render('/profile', '#1c4f8f');
-		expect(svgOf(iconHrefs()[0])).toContain('#1c4f8f');
-		render('/profile', '#a5000a');
-		expect(svgOf(iconHrefs()[0])).toContain('#a5000a');
+	it('redraws when a Träger palette lands (theme-applied event)', () => {
+		render('/profile');
+		expect(svgOf(iconHrefs()[0])).toContain('fill="#a5000a"/>');
+
+		setTokens('#1c4f8f', '#fefefe');
+		act(() => {
+			window.dispatchEvent(new CustomEvent(THEME_APPLIED_EVENT));
+		});
+		const svg = svgOf(iconHrefs()[0]);
+		expect(svg).toContain('fill="#1c4f8f"/>');
+		expect(svg).toContain('color="#fefefe"');
+	});
+
+	it('keeps the default favicon when the tokens are missing, but still titles the tab', () => {
+		setTokens(null, null);
+		render('/profile');
+		expect(iconHrefs()).toEqual(['/favicon.ico']);
+		expect(document.title).toBe('Mein Profil');
 	});
 });

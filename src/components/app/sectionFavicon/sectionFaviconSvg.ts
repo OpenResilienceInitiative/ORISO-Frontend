@@ -5,15 +5,21 @@ import { renderToStaticMarkup } from 'react-dom/server';
  * Per-section browser tab icon (FE: section favicons).
  *
  * The tab shows the same glyph the navigation rail shows for the section the
- * person is in, on a dark rounded tile, in the tenant's primary colour. It is
- * computed on every route change from what is already in memory (the router
- * config and the tenant theming); nothing is stored.
+ * person is in: a rounded tile in the `primary` token with the glyph in the
+ * `on-primary` token (Frank, 2026-11-17). Both are read from the live design
+ * tokens, so a Träger's own palette (applyTenantPalette) reaches the tab too;
+ * this file holds no colour values. It is computed on every route change from
+ * what is already in memory; nothing is stored.
  */
 
-/** Dark tile behind the glyph, so the tenant colour reads in light and dark tab strips. */
-export const FAVICON_TILE_COLOR = '#1f1f23';
-/** Used when the tenant has no (valid) primary colour. ORISO default red. */
-export const FALLBACK_GLYPH_COLOR = '#cc1e1c';
+/** The design tokens the tab icon is painted with. */
+export const FAVICON_TILE_TOKEN = '--m3-primary';
+export const FAVICON_GLYPH_TOKEN = '--m3-on-primary';
+
+export interface FaviconColors {
+	tile: string;
+	glyph: string;
+}
 
 const TILE_SIZE = 64;
 const TILE_RADIUS = 14;
@@ -57,17 +63,34 @@ export const sectionIconOf = (item: SectionNavItem): IconComponent | null =>
 
 const HEX = /^#(?:[0-9a-f]{3}|[0-9a-f]{4}|[0-9a-f]{6}|[0-9a-f]{8})$/i;
 const FUNCTIONAL = /^(?:rgb|rgba|hsl|hsla)\(\s*[0-9.%\s,/+-]+\)$/i;
+const NAMED = /^[a-z]{3,20}$/i;
 
 /**
- * The tenant primary colour if it is a plain colour value, else the fallback.
- * The value goes into SVG markup, so anything that is not a plain hex or
- * rgb()/hsl() colour is rejected rather than escaped.
+ * A plain colour value, or null. The value goes into SVG markup, so anything
+ * that is not a hex, rgb()/hsl() or named colour is rejected, not escaped.
  */
-export const resolveGlyphColor = (color: string | null | undefined): string => {
+export const plainColor = (color: string | null | undefined): string | null => {
 	const value = typeof color === 'string' ? color.trim() : '';
-	return HEX.test(value) || FUNCTIONAL.test(value)
+	return HEX.test(value) || FUNCTIONAL.test(value) || NAMED.test(value)
 		? value
-		: FALLBACK_GLYPH_COLOR;
+		: null;
+};
+
+const readToken = (root: HTMLElement, name: string): string =>
+	getComputedStyle(root).getPropertyValue(name).trim() ||
+	root.style.getPropertyValue(name).trim();
+
+/**
+ * Tile and glyph colours from the design tokens in effect on `root`
+ * (compiled defaults, overridden by the Träger palette). Null when either is
+ * missing or not a plain colour: the default favicon then stays.
+ */
+export const readFaviconColors = (
+	root: HTMLElement = document.documentElement
+): FaviconColors | null => {
+	const tile = plainColor(readToken(root, FAVICON_TILE_TOKEN));
+	const glyph = plainColor(readToken(root, FAVICON_GLYPH_TOKEN));
+	return tile && glyph ? { tile, glyph } : null;
 };
 
 /** Place the rendered icon's root `<svg>` inside the tile (drop its own size). */
@@ -85,14 +108,18 @@ const placeGlyph = (markup: string): string =>
 /** The tab icon as standalone SVG markup. */
 export const buildSectionFaviconSvg = (
 	Icon: IconComponent,
-	primaryColor: string | null | undefined
+	colors: FaviconColors
 ): string => {
-	const color = resolveGlyphColor(primaryColor);
+	const tile = plainColor(colors.tile);
+	const color = plainColor(colors.glyph);
+	if (!tile || !color) {
+		throw new Error('buildSectionFaviconSvg: colours must be plain values');
+	}
 	const glyph = placeGlyph(renderToStaticMarkup(createElement(Icon)));
 	return (
 		`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${TILE_SIZE} ${TILE_SIZE}" width="${TILE_SIZE}" height="${TILE_SIZE}">` +
-		`<rect width="${TILE_SIZE}" height="${TILE_SIZE}" rx="${TILE_RADIUS}" fill="${FAVICON_TILE_COLOR}"/>` +
-		// Some icon files hard-code a grey fill that the rail recolours with
+		`<rect width="${TILE_SIZE}" height="${TILE_SIZE}" rx="${TILE_RADIUS}" fill="${tile}"/>` +
+		// Some icon files hard-code a fill that the rail recolours with
 		// CSS (counsellor_request_filled.svg); do the same here.
 		`<style>.glyph [fill]:not([fill="none"]){fill:${color}}</style>` +
 		`<g class="glyph" fill="${color}" color="${color}">${glyph}</g>` +
