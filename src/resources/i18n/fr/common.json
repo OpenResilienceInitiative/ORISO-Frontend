@@ -3300,7 +3300,7 @@
 				},
 				"filename": "Statistiques de la consultation en ligne",
 				"title": "Vous pouvez télécharger ici vos statistiques sur la période de consultation que vous avez choisie :",
-				"total": "Total"
+				"total": "Ensemble"
 			},
 			"csvHeader": {
 				"numberOfAppointments": "Rendez-vous tenus",

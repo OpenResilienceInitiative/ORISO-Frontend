@@ -3273,13 +3273,20 @@
 					"label": "ናይ ኤክሰል ፋይል ኣውርድ"
 				},
 				"filename": "ስታቲስቲክስ ብኢንተርነት ዝወሃብ ምኽሪ",
-				"title": "ንዝመረጽኩሞ ናይ ምምኽኻር ግዜ ስታቲስቲክስኩም ኣብዚ ክትረኽብዎ ትኽእሉ ኢኹም፤"
+				"title": "ንዝመረጽኩሞ ናይ ምምኽኻር ግዜ ስታቲስቲክስኩም ኣብዚ ክትረኽብዎ ትኽእሉ ኢኹም፤",
+				"total": "ጠቕላላ"
 			},
 			"csvHeader": {
-				"numberOfAppointments": "ቆጸራታት ተሓዚኡ",
+				"numberOfAppointments": "ዝተኻየዱ ቆጸራታት",
 				"numberOfAssignedSessions": "ምምኽኻር ተቐባልነት ረኺቡ።",
+				"numberOfCancelledAppointments": "ዝተሰረዙ ቆጸራታት",
+				"numberOfChatAppointments": "ካብዚ ቻት",
+				"numberOfOnsiteAppointments": "ካብዚ ኣብ ቦታ",
+				"numberOfPhoneAppointments": "ካብዚ ተሌፎን",
 				"numberOfSentMessages": "ዝተጻሕፈ መልእኽትታት",
 				"numberOfSessionsWhereConsultantWasActive": "ንጡፍ ምምኽኻር",
+				"numberOfVideoAppointments": "ካብዚ ቪድዮ",
+				"period": "እዋን",
 				"videoCallDuration": "ንውሓት ግዜ ቪድዮ ጻውዒት ብደቒቕ:ካልኢት"
 			},
 			"period": {
