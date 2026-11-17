@@ -173,6 +173,42 @@ describe('buildSectionFaviconSvg', () => {
 		);
 	});
 
+	it('crops to the measured ink and fits tight, with line weight, at tab size', () => {
+		const box = { x: 3, y: 2, width: 18, height: 20 };
+		const tab = parse(
+			buildSectionFaviconSvg(CalendarIconFilled, CARITAS, {
+				fit: 'tab',
+				box
+			})
+		);
+		const inner = tab.querySelector('g svg')!;
+		expect(inner.getAttribute('width')).toBe('46');
+		expect(inner.getAttribute('x')).toBe('9');
+		// 20 * 0.045 = 0.9 line weight, half of it as room on each side.
+		expect(inner.getAttribute('viewBox')).toBe('2.55 1.55 18.9 20.9');
+		expect(inner.getAttribute('stroke-width')).toBe('0.9');
+		expect(tab.querySelector('style')!.textContent).toContain(
+			'stroke:#ffffff'
+		);
+	});
+
+	it('leaves more air and no extra weight in the large preview', () => {
+		const box = { x: 3, y: 2, width: 18, height: 20 };
+		const large = parse(
+			buildSectionFaviconSvg(CalendarIconFilled, CARITAS, {
+				fit: 'large',
+				box
+			})
+		);
+		const inner = large.querySelector('g svg')!;
+		expect(inner.getAttribute('width')).toBe('38');
+		expect(inner.getAttribute('viewBox')).toBe('3 2 18 20');
+		expect(inner.hasAttribute('stroke-width')).toBe(false);
+		expect(large.querySelector('style')!.textContent).not.toContain(
+			'stroke'
+		);
+	});
+
 	it('never lets an invalid colour into the markup', () => {
 		expect(() =>
 			buildSectionFaviconSvg(CalendarIconFilled, {

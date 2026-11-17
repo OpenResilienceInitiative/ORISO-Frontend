@@ -11,6 +11,7 @@ import {
 	FAVICON_GLYPH_TOKEN,
 	FAVICON_TILE_TOKEN,
 	buildSectionFaviconSvg,
+	measureGlyphBox,
 	readFaviconColors,
 	sectionIconOf,
 	svgToPngDataUrl,
@@ -51,8 +52,13 @@ const IconRow = ({
 	colors: FaviconColors;
 }) => {
 	const Icon = sectionIconOf(item)!;
-	const svg = buildSectionFaviconSvg(Icon, colors);
+	const box = measureGlyphBox(Icon);
+	// The real tab icon (tight fit) and the roomier large preview.
+	const svg = buildSectionFaviconSvg(Icon, colors, { fit: 'tab', box });
 	const href = toSvgDataUrl(svg);
+	const largeHref = toSvgDataUrl(
+		buildSectionFaviconSvg(Icon, colors, { fit: 'large', box })
+	);
 	const [png, setPng] = React.useState<string | null>(null);
 	React.useEffect(() => {
 		let current = true;
@@ -70,7 +76,12 @@ const IconRow = ({
 			style={{ display: 'contents' }}
 		>
 			<span style={{ fontWeight: 600 }}>{label(item)}</span>
-			<img src={href} width={64} height={64} alt={`${label(item)} 64`} />
+			<img
+				src={largeHref}
+				width={64}
+				height={64}
+				alt={`${label(item)} 64`}
+			/>
 			<img src={href} width={32} height={32} alt={`${label(item)} 32`} />
 			<img src={href} width={16} height={16} alt={`${label(item)} 16`} />
 			{png ? (

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useTenant } from '../../../globalState';
 import {
 	buildSectionFaviconSvg,
+	measureGlyphBox,
 	readFaviconColors,
 	resolveSectionNavItem,
 	sectionIconOf,
@@ -54,7 +55,10 @@ export const SectionFavicon = ({
 			return;
 		}
 		let current = true;
-		const svg = buildSectionFaviconSvg(Icon, colors);
+		const svg = buildSectionFaviconSvg(Icon, colors, {
+			fit: 'tab',
+			box: measureGlyphBox(Icon)
+		});
 		const svgHref = toSvgDataUrl(svg);
 		showSectionTabIcon({ svgHref, pngHref: null });
 		svgToPngDataUrl(svg).then((pngHref) => {
