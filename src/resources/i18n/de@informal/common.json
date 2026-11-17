@@ -677,7 +677,6 @@
 		},
 		"selectionReply": {
 			"sendFailed": {
-				"title": "Antworten nicht gesendet",
 				"text": "Deine Antworten auf die markierten Stellen sind noch gesammelt. Bitte sende sie erneut."
 			}
 		}
