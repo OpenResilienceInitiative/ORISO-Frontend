@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { LocaleContext, UserDataContext } from '../globalState';
-import { AddonMount } from './AddonMount';
+import { AddonMount, bootstrapOnce } from './AddonMount';
 import { AddonHostProps, AddonModule, AvailableAddon } from './addonTypes';
 
 vi.mock('react-i18next', () => ({
@@ -19,31 +19,44 @@ const addon: AvailableAddon = {
 	apps: [{ id: 'page', title: { de: 'Demo' }, slots: ['asker.navigation'] }]
 };
 
+const mountTree = (
+	loader: (url: string) => Promise<AddonModule>,
+	mountedAddon: AvailableAddon = addon
+) => (
+	<MemoryRouter>
+		<UserDataContext.Provider
+			value={
+				{
+					userData: {
+						userId: 'u1',
+						userName: 'jane',
+						userRoles: ['user']
+					}
+				} as never
+			}
+		>
+			<LocaleContext.Provider value={{ locale: 'de' } as never}>
+				<AddonMount
+					addon={mountedAddon}
+					app={mountedAddon.apps[0]}
+					slot="asker.navigation"
+					loader={loader}
+				/>
+			</LocaleContext.Provider>
+		</UserDataContext.Provider>
+	</MemoryRouter>
+);
+
 const renderMount = (loader: (url: string) => Promise<AddonModule>) =>
-	render(
-		<MemoryRouter>
-			<UserDataContext.Provider
-				value={
-					{
-						userData: {
-							userId: 'u1',
-							userName: 'jane',
-							userRoles: ['user']
-						}
-					} as never
-				}
-			>
-				<LocaleContext.Provider value={{ locale: 'de' } as never}>
-					<AddonMount
-						addon={addon}
-						app={addon.apps[0]}
-						slot="asker.navigation"
-						loader={loader}
-					/>
-				</LocaleContext.Provider>
-			</UserDataContext.Provider>
-		</MemoryRouter>
-	);
+	render(mountTree(loader));
+
+const deferred = () => {
+	let resolve: () => void = () => {};
+	const promise = new Promise<void>((done) => {
+		resolve = done;
+	});
+	return { promise, resolve };
+};
 
 describe('AddonMount', () => {
 	it('bootstraps once, mounts with the host props and unmounts on removal', async () => {
@@ -80,5 +93,90 @@ describe('AddonMount', () => {
 		expect((await screen.findByRole('alert')).textContent).toBe(
 			'addons.loadError'
 		);
+	});
+
+	it('keeps the app mounted when a registry refresh delivers the same add-on again', async () => {
+		const module: AddonModule = {
+			mount: vi.fn(),
+			unmount: vi.fn(),
+			update: vi.fn()
+		};
+		const loader = () => Promise.resolve(module);
+		const view = render(mountTree(loader));
+		await waitFor(() => expect(module.mount).toHaveBeenCalledTimes(1));
+
+		view.rerender(mountTree(loader, { ...addon, apps: [...addon.apps] }));
+		await new Promise((resolve) => setTimeout(resolve, 0));
+
+		expect(module.mount).toHaveBeenCalledTimes(1);
+		expect(module.unmount).not.toHaveBeenCalled();
+	});
+
+	it('does not mount a replacement before the previous app has unmounted', async () => {
+		const unmounting = deferred();
+		const calls: string[] = [];
+		const module: AddonModule = {
+			mount: vi.fn(({ app }: AddonHostProps) => {
+				calls.push(`mount ${app.id}`);
+			}),
+			unmount: vi.fn(async ({ app }: AddonHostProps) => {
+				calls.push(`unmount ${app.id}`);
+				await unmounting.promise;
+				calls.push(`unmounted ${app.id}`);
+			})
+		};
+		const loader = () => Promise.resolve(module);
+		const other: AvailableAddon = {
+			...addon,
+			apps: [{ ...addon.apps[0], id: 'other' }]
+		};
+		const view = render(mountTree(loader));
+		await waitFor(() => expect(calls).toEqual(['mount page']));
+
+		view.rerender(mountTree(loader, other));
+		await waitFor(() => expect(calls).toContain('unmount page'));
+		expect(calls).not.toContain('mount other');
+
+		unmounting.resolve();
+		await waitFor(() =>
+			expect(calls).toEqual([
+				'mount page',
+				'unmount page',
+				'unmounted page',
+				'mount other'
+			])
+		);
+	});
+});
+
+describe('bootstrapOnce', () => {
+	it('bootstraps a bundle once while several of its apps mount at the same time', async () => {
+		const started = deferred();
+		const module: AddonModule = {
+			bootstrap: vi.fn(() => started.promise),
+			mount: vi.fn(),
+			unmount: vi.fn()
+		};
+		const props = {} as AddonHostProps;
+		const first = bootstrapOnce(module, props);
+		const second = bootstrapOnce(module, props);
+		started.resolve();
+		await Promise.all([first, second]);
+		expect(module.bootstrap).toHaveBeenCalledTimes(1);
+	});
+
+	it('tries again after a failed bootstrap', async () => {
+		const module: AddonModule = {
+			bootstrap: vi
+				.fn()
+				.mockRejectedValueOnce(new Error('offline'))
+				.mockResolvedValueOnce(undefined),
+			mount: vi.fn(),
+			unmount: vi.fn()
+		};
+		const props = {} as AddonHostProps;
+		await expect(bootstrapOnce(module, props)).rejects.toThrow('offline');
+		await expect(bootstrapOnce(module, props)).resolves.toBeUndefined();
+		expect(module.bootstrap).toHaveBeenCalledTimes(2);
 	});
 });

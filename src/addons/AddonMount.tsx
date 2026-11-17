@@ -12,7 +12,22 @@ import {
 import { loadAddonModule } from './loadAddonModule';
 import { AddonPlacement, useAddonHostProps } from './useAddonHostProps';
 
-const bootstrapped = new WeakSet<AddonModule>();
+const bootstraps = new WeakMap<AddonModule, Promise<void>>();
+
+/** Runs a bundle's `bootstrap` once, however many apps of it mount at the same time. */
+export const bootstrapOnce = (module: AddonModule, props: AddonHostProps) => {
+	let bootstrap = bootstraps.get(module);
+	if (!bootstrap) {
+		bootstrap = Promise.resolve(module.bootstrap?.(props)).catch(
+			(error) => {
+				bootstraps.delete(module);
+				throw error;
+			}
+		);
+		bootstraps.set(module, bootstrap);
+	}
+	return bootstrap;
+};
 
 type AddonModuleLoader = (url: string) => Promise<AddonModule>;
 
@@ -29,6 +44,12 @@ interface AddonMountProps {
 	loader?: AddonModuleLoader;
 }
 
+interface MountedApp {
+	module: AddonModule;
+	props: AddonHostProps;
+	hostProps: Omit<AddonHostProps, 'domElement'>;
+}
+
 /** Loads an add-on bundle and mounts one of its apps into a slot. */
 export const AddonMount = ({
 	addon,
@@ -43,6 +64,18 @@ export const AddonMount = ({
 	const element = useRef<HTMLDivElement>(null);
 	const [failed, setFailed] = useState(false);
 	const hostProps = useAddonHostProps(addon, app, slot, placement);
+	const hostPropsRef = useRef(hostProps);
+	hostPropsRef.current = hostProps;
+	const mountedRef = useRef<MountedApp | null>(null);
+	// Every lifecycle call of this container waits for the previous one.
+	const lifecycle = useRef<Promise<void>>(Promise.resolve());
+	const label = `${addon.name}/${app.id}`;
+
+	const enqueue = (step: () => Promise<void>) => {
+		lifecycle.current = lifecycle.current.then(step).catch((error) => {
+			console.error(`Add-on ${label} failed`, error);
+		});
+	};
 
 	useEffect(() => {
 		const domElement = element.current;
@@ -50,50 +83,70 @@ export const AddonMount = ({
 			return undefined;
 		}
 		let active = true;
-		let mounted: { module: AddonModule; props: AddonHostProps } | null =
-			null;
+		let mounted: MountedApp | null = null;
 		setFailed(false);
 
-		(async () => {
+		enqueue(async () => {
+			if (!active) {
+				return;
+			}
 			try {
 				const module = await loader(`${apiUrl}${addon.entry}`);
-				const props: AddonHostProps = { ...hostProps, domElement };
-				if (!bootstrapped.has(module)) {
-					await module.bootstrap?.(props);
-					bootstrapped.add(module);
-				}
+				const current = hostPropsRef.current;
+				const props: AddonHostProps = { ...current, domElement };
+				await bootstrapOnce(module, props);
 				if (!active) {
 					return;
 				}
 				await module.mount(props);
-				mounted = { module, props };
-				if (!active) {
-					await module.unmount(props);
-				}
+				mounted = { module, props, hostProps: current };
+				mountedRef.current = mounted;
 			} catch (error) {
-				console.error(`Add-on ${addon.name}/${app.id} failed`, error);
+				console.error(`Add-on ${label} failed`, error);
 				if (active) {
 					setFailed(true);
 				}
 			}
-		})();
+		});
 
 		return () => {
 			active = false;
-			if (mounted) {
-				const { module, props } = mounted;
-				// Deferred: an add-on may unmount its own React root, which React refuses during a commit.
-				Promise.resolve()
-					.then(() => module.unmount(props))
-					.catch((error) =>
-						console.error(
-							`Add-on ${addon.name}/${app.id} failed to unmount`,
-							error
-						)
-					);
-			}
+			// Runs after the commit: an add-on may unmount its own React root, which React refuses during one.
+			enqueue(async () => {
+				if (!mounted) {
+					return;
+				}
+				if (mountedRef.current === mounted) {
+					mountedRef.current = null;
+				}
+				await mounted.module.unmount(mounted.props);
+			});
 		};
-	}, [addon, app.id, hostProps, loader]);
+		// Host props reach a mounted app through `update` below, so a new registry snapshot does not remount it.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [addon.name, addon.entry, app.id, slot, loader]);
+
+	useEffect(() => {
+		enqueue(async () => {
+			const mounted = mountedRef.current;
+			if (!mounted || mounted.hostProps === hostProps) {
+				return;
+			}
+			const props: AddonHostProps = {
+				...hostProps,
+				domElement: mounted.props.domElement
+			};
+			if (mounted.module.update) {
+				await mounted.module.update(props);
+			} else {
+				await mounted.module.unmount(mounted.props);
+				await mounted.module.mount(props);
+			}
+			mounted.props = props;
+			mounted.hostProps = hostProps;
+		});
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [hostProps]);
 
 	return (
 		<div

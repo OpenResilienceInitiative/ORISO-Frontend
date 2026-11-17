@@ -55,6 +55,29 @@ describe('readThemeTokens', () => {
 		root.style.setProperty('--other', 'x');
 		expect(readThemeTokens(root)).toEqual({ '--m3-primary': '#009fe3' });
 	});
+
+	it('includes the default palette declared in the stylesheets', () => {
+		const style = document.createElement('style');
+		style.textContent = ':root { --m3-surface: #fff; --unrelated: 1px; }';
+		document.head.appendChild(style);
+		const root = document.documentElement;
+		root.style.setProperty('--m3-primary', '#009fe3');
+		const computed = {
+			getPropertyValue: (name: string) =>
+				({ '--m3-surface': ' #fafafa', '--m3-primary': '#009fe3' })[
+					name
+				] ?? ''
+		};
+		try {
+			expect(readThemeTokens(root, computed)).toEqual({
+				'--m3-primary': '#009fe3',
+				'--m3-surface': '#fafafa'
+			});
+		} finally {
+			style.remove();
+			root.style.removeProperty('--m3-primary');
+		}
+	});
 });
 
 describe('addonNotice', () => {
@@ -98,5 +121,17 @@ describe('addonNotice', () => {
 	it('ignores a message without text', () => {
 		expect(addonNotice({ type: 'info', text: '' })).toBeNull();
 		expect(addonNotice(undefined as never)).toBeNull();
+	});
+
+	it('escapes markup, because the host renders string notifications as HTML', () => {
+		const notice = addonNotice({
+			type: 'info',
+			title: '<b>Ziele</b>',
+			text: '<img src=x onerror=alert(1)> & mehr'
+		});
+		expect(notice?.title).toBe('&lt;b&gt;Ziele&lt;/b&gt;');
+		expect(notice?.text).toBe(
+			'&lt;img src=x onerror=alert(1)&gt; &amp; mehr'
+		);
 	});
 });
