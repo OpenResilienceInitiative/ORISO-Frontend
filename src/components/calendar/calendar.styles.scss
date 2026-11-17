@@ -3805,8 +3805,9 @@ $cal-new-pill-hover: #4b4f51;
 .calendarAbsence__conflicts {
 	padding: 12px 16px;
 	border-radius: 12px;
-	background: var(--m3-error-container, #f9dedc);
-	color: var(--m3-on-error-container, #410e0b);
+	border-left: 4px solid var(--m3-error, #b3261e);
+	background: var(--m3-surface-container-high, #ece6f0);
+	color: var(--m3-on-surface, #1d1b20);
 	font-size: 14px;
 
 	p {
@@ -3816,5 +3817,12 @@ $cal-new-pill-hover: #4b4f51;
 	ul {
 		margin: 0;
 		padding-left: 18px;
+	}
+}
+
+/* Full dates do not fit two side by side on a phone. */
+@media (max-width: 420px) {
+	.calendarAbsence .calendarDialog__times {
+		flex-direction: column;
 	}
 }
