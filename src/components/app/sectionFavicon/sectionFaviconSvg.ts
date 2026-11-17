@@ -25,17 +25,17 @@ const TILE_SIZE = 64;
 const TILE_RADIUS = 14;
 
 /**
- * How much of the tile the glyph's ink fills, and how much its lines are
- * thickened (share of the glyph size). Frank, 2026-11-17: small icons need
- * little padding and a bit more weight to stay readable; a large preview
- * looks right with more air around the glyph.
+ * How much of the tile the glyph's ink fills. Frank, 2026-11-17: small icons
+ * need little padding to stay readable; a large preview looks right with more
+ * air around the glyph. Lines keep their own width (no added weight: it
+ * filled the details of detailed icons).
  *   tab   — the real browser tab icon (shown at 16–32 px)
  *   large — previews (Storybook, 64 px and up)
  */
 export type FaviconFit = 'tab' | 'large';
-const FITS: Record<FaviconFit, { glyph: number; weight: number }> = {
-	tab: { glyph: 46, weight: 0.045 },
-	large: { glyph: 38, weight: 0 }
+const FITS: Record<FaviconFit, { glyph: number }> = {
+	tab: { glyph: 46 },
+	large: { glyph: 38 }
 };
 /** Without a measured ink box, the icon's own viewBox (with its padding) is used. */
 const UNMEASURED_GLYPH = 40;
@@ -156,25 +156,21 @@ const placeGlyph = (
 ): string =>
 	markup.replace(/^<svg\b([^>]*)>/, (_match, attrs: string) => {
 		const stripped = attrs.replace(
-			/\s(?:width|height|x|y|class|aria-hidden|aria-label|stroke-width)="[^"]*"/g,
+			/\s(?:width|height|x|y|class|aria-hidden|aria-label)="[^"]*"/g,
 			''
 		);
 		const size = box ? FITS[fit].glyph : UNMEASURED_GLYPH;
 		const offset = (TILE_SIZE - size) / 2;
 		let rest = stripped;
-		let weight = '';
 		if (box) {
-			// Crop to the ink, with room for the added line weight.
-			const stroke = Math.max(box.width, box.height) * FITS[fit].weight;
-			const pad = stroke / 2;
+			// Crop to the ink, so every glyph fills the tile equally.
 			rest = rest.replace(/\sviewBox="[^"]*"/, '');
-			rest += ` viewBox="${round(box.x - pad)} ${round(box.y - pad)} ${round(
-				box.width + stroke
-			)} ${round(box.height + stroke)}"`;
-			if (stroke > 0) weight = ` stroke-width="${round(stroke)}"`;
+			rest += ` viewBox="${round(box.x)} ${round(box.y)} ${round(
+				box.width
+			)} ${round(box.height)}"`;
 		}
 		rest = rest.trim();
-		return `<svg x="${offset}" y="${offset}" width="${size}" height="${size}"${weight}${rest ? ` ${rest}` : ''}>`;
+		return `<svg x="${offset}" y="${offset}" width="${size}" height="${size}"${rest ? ` ${rest}` : ''}>`;
 	});
 
 /** The tab icon as standalone SVG markup. */
@@ -196,18 +192,12 @@ export const buildSectionFaviconSvg = (
 		fit,
 		box
 	);
-	const bold = box && FITS[fit].weight > 0;
 	return (
 		`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${TILE_SIZE} ${TILE_SIZE}" width="${TILE_SIZE}" height="${TILE_SIZE}">` +
 		`<rect width="${TILE_SIZE}" height="${TILE_SIZE}" rx="${TILE_RADIUS}" fill="${tile}"/>` +
 		// Some icon files hard-code a fill that the rail recolours with CSS
-		// (counsellor_request_filled.svg); do the same here. At tab size thin
-		// lines get a little weight: a stroke in the glyph colour.
-		`<style>.glyph [fill]:not([fill="none"]){fill:${color}}` +
-		(bold
-			? `.glyph path,.glyph circle,.glyph ellipse,.glyph polygon{stroke:${color};stroke-linejoin:round}`
-			: '') +
-		`</style>` +
+		// (counsellor_request_filled.svg); do the same here.
+		`<style>.glyph [fill]:not([fill="none"]){fill:${color}}</style>` +
 		`<g class="glyph" fill="${color}" color="${color}">${glyph}</g>` +
 		`</svg>`
 	);
