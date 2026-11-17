@@ -1239,7 +1239,6 @@
 			"src/components/chatStage/PanelHeader.tsx",
 			"src/components/conversationCreate/BackPill.tsx",
 			"src/components/datepicker/datepicker.styles.scss",
-			"src/components/hoverScrollArrows/HoverScrollArrows.tsx",
 			"src/components/legalContent/LegalAnchorChips.tsx",
 			"src/components/profile/Profile.tsx",
 			"src/components/sessionHeader/GroupChatHeader/index.tsx",
@@ -1276,7 +1275,6 @@
 		"exportNames": ["ArrowRightIcon"],
 		"usageFiles": [
 			"src/components/datepicker/datepicker.styles.scss",
-			"src/components/hoverScrollArrows/HoverScrollArrows.tsx",
 			"src/components/legalContent/LegalAnchorChips.tsx",
 			"src/components/mobile/linkMenu/LinkMenu.tsx",
 			"src/resources/img/icons.ts"
@@ -1501,7 +1499,10 @@
 		"fileName": "calendar_outline.svg",
 		"sourcePath": "src/resources/img/icons/calendar_outline.svg",
 		"exportNames": [],
-		"usageFiles": ["src/components/app/RouterConfig.tsx"],
+		"usageFiles": [
+			"src/components/app/RouterConfig.tsx",
+			"src/components/calendar/CalendarPage.tsx"
+		],
 		"usage": "app-used"
 	},
 	{
@@ -1705,6 +1706,7 @@
 			"src/components/call/states/MinimizedCallDock.tsx",
 			"src/components/incomingVideoCall/IncomingVideoCall.tsx",
 			"src/components/message/CallTimelineSystemMessage.tsx",
+			"src/containers/overview/components/BookingEvent/index.tsx",
 			"src/resources/img/icons.ts"
 		],
 		"usage": "app-used"
@@ -1733,9 +1735,7 @@
 		"sourcePath": "src/resources/img/icons/case_handover_200_24px.svg",
 		"exportNames": [],
 		"usageFiles": [
-			"src/components/caseHandover/CaseHandoverOffer.tsx",
 			"src/components/notifications/EventNotice.tsx",
-			"src/components/sessionMenu/SessionMenu.tsx",
 			"src/components/supervisorDialog/SupervisorDialog.tsx"
 		],
 		"usage": "app-used"
@@ -3692,6 +3692,7 @@
 		"sourcePath": "src/resources/img/icons/open-in-new-tab.svg",
 		"exportNames": [],
 		"usageFiles": [
+			"src/components/notificationsCenter/notificationsCenter.styles.scss",
 			"src/components/notificationsCenter/NotificationsCenter.tsx"
 		],
 		"usage": "app-used"
@@ -4986,9 +4987,7 @@
 		"exportNames": ["CrossMarkIcon", "RemoveIcon", "StopGroupChatIcon"],
 		"usageFiles": [
 			"src/components/app/inboxNavIconPaths.ts",
-			"src/components/calendar/CalendarPage.tsx",
 			"src/components/call/callIdentity.ts",
-			"src/components/caseHandover/CaseHandoverOffer.tsx",
 			"src/components/chatStage/ChannelMenu.tsx",
 			"src/components/chatStage/ChannelSwitcherFab.tsx",
 			"src/components/chatStage/PanelHeader.tsx",
