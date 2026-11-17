@@ -104,7 +104,7 @@ const Grid = (
 const bandLabels = () =>
 	Array.from(
 		document.querySelectorAll<HTMLElement>('[data-cy="calendar-band"]')
-	).map((band) => band.textContent);
+	).map((band) => band.querySelector('.calendarView__bandText')?.textContent);
 const shownEntry = (id: string) =>
 	document.querySelector(`[data-entry-id="${id}"]`);
 
@@ -122,6 +122,54 @@ describe('CalendarView — colleagues as bands in the time grid', () => {
 		// Darker where everyone shown is busy.
 		const all = document.querySelectorAll('.calendarView__band--all');
 		expect(all).toHaveLength(1);
+	});
+
+	it('shows who is busy in a band, avatar and name like the people chips (Frank *16)', async () => {
+		render(<Grid view="workWeek" />);
+		await waitFor(() => expect(bandLabels()).toHaveLength(3));
+		const people = Array.from(
+			document.querySelectorAll<HTMLElement>('[data-cy="calendar-band"]')
+		).map((band) =>
+			Array.from(
+				band.querySelectorAll<HTMLElement>('.calendarView__bandPerson')
+			).map((person) => [
+				person.querySelector('.calendarView__bandAvatar')?.textContent,
+				person.querySelector('.calendarView__bandName')?.textContent
+			])
+		);
+		// Kaya 10–12, Berg 11–13: in the order of the people bar.
+		expect(people).toEqual([
+			[['AK', 'A. Kaya']],
+			[
+				['AK', 'A. Kaya'],
+				['CB', 'C. Berg']
+			],
+			[['CB', 'C. Berg']]
+		]);
+		// The same colour as the person's chip in the people bar.
+		const avatar = document.querySelector('.calendarView__bandAvatar');
+		expect(avatar?.className).toMatch(/calAvatar--tone-\d/);
+		expect(avatar?.getAttribute('aria-hidden')).toBe('true');
+	});
+
+	it('gives the one colleague shown an avatar and no second name', async () => {
+		render(
+			<Grid
+				view="day"
+				entries={ENTRIES.filter((e) => e.ownerId !== 'berg')}
+				bandPeople={[KAYA]}
+			/>
+		);
+		await waitFor(() => expect(bandLabels()).toHaveLength(1));
+		const band = document.querySelector('[data-cy="calendar-band"]')!;
+		expect(
+			band.querySelector(
+				'.calendarView__bandLabel .calendarView__bandAvatar'
+			)?.textContent
+		).toBe('AK');
+		expect(band.querySelectorAll('.calendarView__bandPerson')).toHaveLength(
+			0
+		);
 	});
 
 	it('names the one colleague shown', async () => {

@@ -130,7 +130,10 @@ describe('quick entry fields (Frank, prototype v15)', () => {
 		);
 	});
 
-	it('gives the quick-entry box more room above and below', () => {
-		expect(rule('.calendarQuick')).toMatch(/padding-block:\s*12px 10px/);
+	it('gives quick entry its own white box (prototype v17)', () => {
+		const box = rule('.calendarQuick');
+		expect(box).toMatch(/padding:\s*18px 12px 16px/);
+		expect(box).toMatch(/border-radius:\s*22px/);
+		expect(box).toMatch(/background:\s*var\(--m3-surface-container-lowest/);
 	});
 });

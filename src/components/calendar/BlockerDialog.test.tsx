@@ -346,3 +346,117 @@ describe('BlockerDialog — a repeat the spring clock change skips (Europe/Berli
 		);
 	});
 });
+
+describe('BlockerDialog — conflicts (test finding C16)', () => {
+	const booked: CalendarEntry = {
+		id: 'a1',
+		type: 'appointment',
+		kind: 'video',
+		title: 'mutige_eule',
+		start: new Date(2027, 2, 21, 10).toISOString(),
+		end: new Date(2027, 2, 21, 11).toISOString(),
+		ownerId: 'me'
+	};
+	const renderOver = (entries: CalendarEntry[]) =>
+		render(
+			<BlockerDialog
+				open
+				slot={{
+					start: new Date(2027, 2, 21, 10, 30),
+					end: new Date(2027, 2, 21, 12)
+				}}
+				entries={entries}
+				ownerId="me"
+				now={NOW}
+				onSave={() => undefined}
+				onClose={() => undefined}
+			/>
+		);
+
+	it('asks "Trotzdem anlegen" over an appointment, as appointments do', () => {
+		renderOver([booked]);
+		expect(screen.getByTestId('calendar-blocker-save').textContent).toBe(
+			'calendar.dialog.saveAnyway'
+		);
+	});
+
+	it('keeps the plain save without a conflict', () => {
+		renderOver([]);
+		expect(screen.getByTestId('calendar-blocker-save').textContent).toBe(
+			'calendar.blocker.save'
+		);
+	});
+});
+
+describe('BlockerDialog — weekly and working hours (prototype v17)', () => {
+	it('starts with the weekdays it was given', () => {
+		render(
+			<BlockerDialog
+				open
+				slot={{
+					start: new Date(2026, 10, 16, 18),
+					end: new Date(2026, 10, 16, 20)
+				}}
+				initialWeekdays={[1]}
+				entries={[]}
+				ownerId="me"
+				now={NOW}
+				onSave={() => undefined}
+				onClose={() => undefined}
+			/>
+		);
+		expect(
+			document
+				.querySelector('[data-cy="calendar-weekday-1"]')
+				?.getAttribute('aria-pressed')
+		).toBe('true');
+		expect(screen.getByLabelText('calendar.blocker.until')).toBeTruthy();
+	});
+
+	it('keeps the all-day state and note of the blocker it repeats (review 4589527518)', () => {
+		const onSave = vi.fn();
+		render(
+			<BlockerDialog
+				open
+				slot={{
+					start: new Date(2026, 10, 16),
+					end: new Date(2026, 10, 16, 23, 59, 59, 999)
+				}}
+				initialWeekdays={[1]}
+				initialAllDay
+				initialNote="Supervision"
+				entries={[]}
+				ownerId="me"
+				now={NOW}
+				onSave={onSave}
+				onClose={() => undefined}
+			/>
+		);
+		fireEvent.click(save());
+		const drafts = onSave.mock.calls[0][0];
+		expect(drafts.length).toBeGreaterThan(1);
+		expect(drafts[0].allDay).toBe(true);
+		expect(drafts[0].note).toBe('Supervision');
+		expect(drafts[0].start).toEqual(new Date(2026, 10, 16));
+		expect(drafts[0].end).toEqual(new Date(2026, 10, 16, 23, 59, 59, 999));
+	});
+
+	it('points to the working hours for the same times every week', () => {
+		const onWorkingHours = vi.fn();
+		render(
+			<BlockerDialog
+				open
+				entries={[]}
+				ownerId="me"
+				now={NOW}
+				onWorkingHours={onWorkingHours}
+				onSave={() => undefined}
+				onClose={() => undefined}
+			/>
+		);
+		fireEvent.click(
+			screen.getByRole('button', { name: 'calendar.workingHours.title' })
+		);
+		expect(onWorkingHours).toHaveBeenCalled();
+	});
+});

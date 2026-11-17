@@ -69,6 +69,26 @@ describe('QuickEntry — the draft until it is created (review 4574775715)', () 
 	});
 });
 
+describe('QuickEntry — a slow first save shows progress (test finding C13)', () => {
+	it('says "saving" with a spinner until the entry exists', async () => {
+		let done: (value: boolean) => void = () => undefined;
+		open(() => new Promise<boolean>((resolve) => (done = resolve)));
+		fireEvent.change(input(), {
+			target: { value: 'morgen 14 Uhr Video ruhiges' }
+		});
+		await submit();
+		const save = document.querySelector(
+			'[data-cy="calendar-quick-save"]'
+		) as HTMLButtonElement;
+		expect(save.getAttribute('aria-busy')).toBe('true');
+		expect(save.textContent).toBe('calendar.quick.saving');
+		expect(save.querySelector('[role="progressbar"]')).not.toBeNull();
+		await act(async () => done(true));
+		expect(save.getAttribute('aria-busy')).toBe('false');
+		expect(save.textContent).toBe('calendar.quick.save');
+	});
+});
+
 describe('QuickEntry — conversation named in the line (review 4574779936)', () => {
 	it('replaces an earlier pick with the conversation the line names', async () => {
 		const onCreate = vi.fn(() => Promise.resolve());
@@ -121,10 +141,11 @@ describe('QuickEntry — a name that fits several conversations (review 45752973
 		});
 		await submit();
 		expect(onCreate).not.toHaveBeenCalled();
-		// "Still missing: who" (the stub translation shows the key).
-		expect(
-			document.querySelector('#calendar-quick-status')?.textContent
-		).toBe('calendar.quick.missing');
+		// "Still missing: who" (the stub translation shows the key), with
+		// the range already set in bold.
+		const status = document.querySelector('#calendar-quick-status');
+		expect(status?.textContent).toMatch(/^calendar\.quick\.missing /);
+		expect(status?.querySelector('strong')).not.toBeNull();
 	});
 });
 
@@ -189,6 +210,7 @@ describe('CalendarSidebar — folding quick entry on the phone (review 457498187
 			onOpenKinds={() => undefined}
 			openProposals={[]}
 			onOpenEntry={() => undefined}
+			onShowEntry={() => undefined}
 			shownColleagues={[]}
 			onCreate={() => undefined}
 			variant="sheet"
@@ -207,6 +229,40 @@ describe('CalendarSidebar — folding quick entry on the phone (review 457498187
 		).toBe(true);
 		rerender(sidebar(true));
 		expect(input().value).toBe('morgen 14 Uhr');
+	});
+});
+
+describe('QuickEntry — a typed range stays whole (test C2)', () => {
+	it('saves 9:00–12:30 as typed and names the length', async () => {
+		const onCreate = vi.fn(() => Promise.resolve());
+		open(onCreate);
+		fireEvent.change(input(), {
+			target: { value: '2.12. 9-12:30 Sperrzeit' }
+		});
+		expect(
+			screen.getByRole('combobox', { name: 'calendar.quick.duration' })
+				.textContent
+		).toBe('calendar.quick.lengthBoth');
+		await submit();
+		expect(onCreate).toHaveBeenCalledWith([
+			expect.objectContaining({
+				type: 'blocker',
+				start: new Date(2026, 11, 2, 9),
+				end: new Date(2026, 11, 2, 12, 30)
+			})
+		]);
+	});
+});
+
+describe('QuickEntry — the kinds lead the box (Frank *5.1)', () => {
+	it('puts the five kind chips first, in one group above the line', () => {
+		open(vi.fn());
+		const form = document.querySelector('.calendarQuick__form')!;
+		const first = form.firstElementChild as HTMLElement;
+		expect(first.className).toBe('calendarQuick__kinds');
+		expect(
+			first.querySelectorAll('[data-cy^="calendar-quick-kind-"]')
+		).toHaveLength(5);
 	});
 });
 
@@ -323,5 +379,123 @@ describe('QuickEntry — next free hours only when this week is known (review 45
 			screen.getByRole('button', { name: 'calendar.error.retry' })
 		);
 		expect(onRetryFreeHours).toHaveBeenCalledTimes(1);
+	});
+});
+
+describe('QuickEntry — its own box, as in prototype v17', () => {
+	const WEEK = [1, 2, 3, 4, 5].map((weekday) => ({
+		weekday,
+		start: '08:00',
+		end: '18:00'
+	}));
+	const status = () =>
+		document.querySelector('#calendar-quick-status') as HTMLElement;
+	const quick = () =>
+		document.querySelector('[data-cy="calendar-quick"]') as HTMLElement;
+	const box = () =>
+		render(
+			<QuickEntry
+				ownerId="me"
+				now={NOW}
+				entries={[]}
+				conversations={CONVERSATIONS}
+				workingHours={WEEK}
+				onCreate={() => undefined}
+			/>
+		);
+
+	it('has no heading of its own', () => {
+		box();
+		expect(quick().querySelector('h2')).toBeNull();
+		expect(quick().getAttribute('aria-label')).toBe('calendar.quick.title');
+	});
+
+	it('rests until it is used: no status, people or buttons', () => {
+		box();
+		expect(quick().classList).toContain('calendarQuick--idle');
+		fireEvent.focus(input());
+		expect(quick().classList).not.toContain('calendarQuick--idle');
+		fireEvent.blur(input());
+		expect(quick().classList).toContain('calendarQuick--idle');
+		// Once something is typed it stays open.
+		fireEvent.change(input(), { target: { value: 'morgen' } });
+		expect(quick().classList).not.toContain('calendarQuick--idle');
+	});
+
+	it('says what it will be, in bold, and warns outside the working hours', () => {
+		box();
+		fireEvent.change(input(), {
+			target: { value: 'morgen 14 Uhr Video ruhiges' }
+		});
+		expect(status().classList).toContain('calendarQuick__status--ready');
+		expect(status().textContent).toContain('calendar.quick.ready');
+		expect(status().querySelector('strong')).not.toBeNull();
+		expect(
+			status().querySelector('[data-cy="calendar-quick-outside"]')
+		).toBeNull();
+		fireEvent.change(input(), {
+			target: { value: 'morgen 20 Uhr Video ruhiges' }
+		});
+		expect(
+			status().querySelector('[data-cy="calendar-quick-outside"]')
+				?.textContent
+		).toBe(' · calendar.quick.outsideHours');
+	});
+
+	it('offers up to five people with their avatars while "with whom" is open', () => {
+		render(
+			<QuickEntry
+				ownerId="me"
+				now={NOW}
+				entries={[]}
+				conversations={Array.from({ length: 7 }, (_, i) => ({
+					sessionId: 5000 + i,
+					username: `person_${i}`
+				}))}
+				workingHours={WEEK}
+				onCreate={() => undefined}
+			/>
+		);
+		fireEvent.change(input(), { target: { value: 'morgen 14 Uhr Video' } });
+		const people = document.querySelectorAll('.calendarQuick__person');
+		expect(people).toHaveLength(5);
+		const avatar = people[0].querySelector('.calendarQuick__personAvatar');
+		expect(avatar?.textContent).toBe('P0');
+		expect(avatar?.className).toMatch(/calAvatar--tone-\d/);
+	});
+
+	it('names the lengths as in the prototype', async () => {
+		box();
+		fireEvent.mouseDown(
+			screen.getByRole('combobox', { name: 'calendar.quick.duration' })
+		);
+		const lengths = await screen.findAllByRole('option');
+		expect(lengths.map((o) => o.textContent)).toEqual([
+			'calendar.quick.lengths.30',
+			'calendar.quick.lengths.45',
+			'calendar.quick.lengths.60',
+			'calendar.quick.lengths.90',
+			'calendar.quick.lengths.120'
+		]);
+	});
+});
+
+describe('QuickEntry — each line is read fresh (test finding C3)', () => {
+	it('drops the conversation and length the previous line named', async () => {
+		const onCreate = vi.fn(() => Promise.resolve());
+		open(onCreate);
+		fireEvent.change(input(), {
+			target: { value: 'morgen 14-15:30 Video ruhiges' }
+		});
+		// A new line that names neither: no conversation, the default length.
+		fireEvent.change(input(), { target: { value: 'Do 14 Uhr Sperrzeit' } });
+		await submit();
+		expect(onCreate).toHaveBeenCalledWith([
+			expect.objectContaining({
+				type: 'blocker',
+				start: new Date(2026, 10, 19, 14),
+				end: new Date(2026, 10, 19, 15)
+			})
+		]);
 	});
 });

@@ -87,10 +87,15 @@ const useUpcomingAppointments = (enabled: boolean) => {
  * with a date and the 1:1 appointments by day, the others as tiles.
  */
 export const MyDirectLinksPanel = ({
-	overview = false
+	overview = false,
+	title,
+	description
 }: {
 	overview?: boolean;
-}) => {
+	/** *19: the calendar shows the list as "Links ohne Termin". */
+	title?: string;
+	description?: string;
+} = {}) => {
 	const { t } = useTranslation();
 	const navigate = useNavigate();
 	const { fromL } = useResponsive();
@@ -267,6 +272,8 @@ export const MyDirectLinksPanel = ({
 					onEdit={setEditing}
 					onCreate={() => navigate(CREATE_CHAT_PATH)}
 					onRetry={reload}
+					title={title}
+					description={description}
 				/>
 			)}
 			{editingInvitation && (

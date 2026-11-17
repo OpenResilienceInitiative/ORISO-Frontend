@@ -11,7 +11,7 @@ import { copyTextToClipboard } from '../../utils/clipboardHelpers';
 import { GenerateQrCode } from '../generateQrCode/GenerateQrCode';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import { useTranslation } from 'react-i18next';
-import { AgencyAdminContact } from './AgencyAdminContact';
+import { AgencyContactPersonSection } from './AgencyContactPersonSection';
 
 export const ConsultantAgencies = () => {
 	const settings = useAppConfig();
@@ -44,7 +44,7 @@ export const ConsultantAgencies = () => {
 						>
 							<div>
 								{agencyName(item)}
-								<AgencyAdminContact
+								<AgencyContactPersonSection
 									agencyId={item.id}
 									agencyName={agencyName(item)}
 								/>

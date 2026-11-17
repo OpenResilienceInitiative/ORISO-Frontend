@@ -286,6 +286,23 @@ export const COLLEAGUE_ENTRIES: CalendarEntry[] = [
 		start: at(0, 14, 30),
 		end: at(0, 15, 30)
 	},
+	// With Kaya: "2 von 4 belegt" for an hour and for two (Frank *16).
+	{
+		id: 'n2',
+		type: 'appointment',
+		kind: 'phone',
+		ownerId: 'nowak',
+		title: 'kurze_lerche',
+		start: at(0, 11),
+		end: at(0, 12)
+	},
+	{
+		id: 'n3',
+		type: 'blocker',
+		ownerId: 'nowak',
+		start: at(3, 9),
+		end: at(3, 11)
+	},
 	{
 		id: 'o1',
 		type: 'appointment',
@@ -339,7 +356,7 @@ export const STORY_PROPOSALS: MoveProposal[] = [
 ];
 
 /**
- * Proposals colleagues sent for one's own appointments ("Offene Anfragen",
+ * Proposals colleagues sent for one's own appointments ("Offene Verschiebungen",
  * receiving side): A. Kaya would move ruhiges_yak's video call to the
  * afternoon, E. Demir stiller_fuchs's visit to Thursday.
  */

@@ -78,10 +78,64 @@ export const FC_CUSTOM_VIEWS = {
 		duration: { weeks: 1 },
 		hiddenDays: [0, 6]
 	},
-	listTwoWeeks: { type: 'list', duration: { weeks: 2 } }
+	// The list names each day once, "Montag, 16. November" (prototype v17).
+	listTwoWeeks: {
+		type: 'list',
+		duration: { weeks: 2 },
+		listDayFormat: {
+			weekday: 'long' as const,
+			day: 'numeric' as const,
+			month: 'long' as const
+		},
+		listDayAltFormat: false as const
+	},
+	// The month heads name the weekday only.
+	dayGridMonth: { dayHeaderFormat: { weekday: 'short' as const } }
 };
 
 export type ViewSwitcherStyle = 'menu' | 'digits';
+
+/** The view name for a FullCalendar view type. */
+export const viewOfFcType = (type: string): CalendarViewName | undefined =>
+	(Object.keys(FC_VIEW) as (keyof typeof FC_VIEW)[]).find(
+		(name) => FC_VIEW[name] === type
+	);
+
+const plusDays = (date: Date, days: number) =>
+	new Date(date.getFullYear(), date.getMonth(), date.getDate() + days);
+
+/**
+ * The range title of the date bar (prototype v17): "Montag, 16. November
+ * 2026" for one day, "November 2026" for the month, and otherwise the shown
+ * days as a range, "16.–20. November 2026" for the work week (Monday to
+ * Friday, not the whole week behind it). `start` is the first day,
+ * `end` the day after the last; the locale words it.
+ */
+export const rangeTitleOf = (
+	view: CalendarViewName,
+	start: Date,
+	end: Date,
+	locale: string
+) => {
+	if (view === 'day' || plusDays(start, 1).getTime() >= end.getTime())
+		return new Intl.DateTimeFormat(locale, {
+			weekday: 'long',
+			day: 'numeric',
+			month: 'long',
+			year: 'numeric'
+		}).format(start);
+	if (view === 'month')
+		return new Intl.DateTimeFormat(locale, {
+			month: 'long',
+			year: 'numeric'
+		}).format(start);
+	const last = view === 'workWeek' ? plusDays(start, 4) : plusDays(end, -1);
+	return new Intl.DateTimeFormat(locale, {
+		day: 'numeric',
+		month: 'long',
+		year: 'numeric'
+	}).formatRange(start, last);
+};
 
 export const isTimeGrid = (view: CalendarViewName) =>
 	view === 'day' ||

@@ -58,36 +58,30 @@ const sidebar = (
 			onOpenKinds={() => undefined}
 			openProposals={[]}
 			onOpenEntry={() => undefined}
+			onShowEntry={() => undefined}
 			shownColleagues={[]}
 			{...props}
 		/>
 	);
 
 describe('CalendarSidebar — "Als Nächstes" (Frank, prototype v15)', () => {
-	it('offers "Zum Chat mit …" beside an appointment that has a chat, and goes there', () => {
-		const onOpenChat = vi.fn();
-		const onOpenEntry = vi.fn();
-		sidebar({ onOpenChat, onOpenEntry });
-		const chat = screen.getByRole('button', {
-			name: 'calendar.upcomingChat:mutige_eule'
-		});
-		fireEvent.click(chat);
-		expect(onOpenChat).toHaveBeenCalledWith(APPOINTMENT);
-		expect(onOpenEntry).not.toHaveBeenCalled();
-		// One button only: the group date has no chat of its own.
+	it('has no extra chat button: "Zum Chat" is in the entry menu (Frank *4)', () => {
+		sidebar({});
 		expect(
-			screen.getAllByRole('button', { name: /calendar\.upcomingChat/ })
-		).toHaveLength(1);
+			screen.queryByRole('button', { name: /calendar\.upcomingChat/ })
+		).toBeNull();
 	});
 
-	it('still opens the entry when the row itself is clicked', () => {
+	it('opens its actions on click; "Zum Termin" there jumps (Frank, 2026-11-16)', () => {
 		const onOpenEntry = vi.fn();
-		sidebar({ onOpenChat: vi.fn(), onOpenEntry });
+		const onShowEntry = vi.fn();
+		sidebar({ onOpenEntry, onShowEntry });
 		fireEvent.click(
 			document.querySelector(
 				'[data-cy="calendar-upcoming-a1"]'
 			) as HTMLElement
 		);
+		expect(onShowEntry).not.toHaveBeenCalled();
 		expect(onOpenEntry).toHaveBeenCalledWith(
 			APPOINTMENT,
 			expect.any(HTMLElement)
@@ -112,5 +106,134 @@ describe('CalendarSidebar — "Als Nächstes" (Frank, prototype v15)', () => {
 			'calendar-upcoming-n1',
 			'calendar-upcoming-n0'
 		]);
+	});
+});
+
+describe('CalendarSidebar — pill cards and "Jetzt" (prototype v17)', () => {
+	it('shows the next ones as the Gespräche pills above a draggable "Jetzt" (Frank, 2026-11-16)', () => {
+		sidebar({});
+		const pill = document.querySelector(
+			'[data-cy="calendar-upcoming-a1"]'
+		) as HTMLElement;
+		expect(pill.className).toContain('tlp__entry');
+		expect(pill.querySelector('.tlp__entryIcon')).not.toBeNull();
+		expect(
+			document.querySelector(
+				'[data-cy="calendar-upcoming"] [data-cy="timeline-now"] [role="separator"]'
+			)
+		).not.toBeNull();
+	});
+
+	it('keeps the avatar and kind badge per row in the narrow rail', () => {
+		sidebar({ mode: 'rail' });
+		const card = document.querySelector(
+			'[data-cy="calendar-upcoming-a1"]'
+		) as HTMLElement;
+		const avatar = card.querySelector(
+			'.calendarSide__avatar'
+		) as HTMLElement;
+		expect(avatar.textContent).toBe('ME');
+		expect(avatar.className).toMatch(/calAvatar--tone-\d/);
+		expect(
+			card.querySelector('.calendarSide__leadKind svg')
+		).not.toBeNull();
+		const group = document.querySelector(
+			'[data-cy="calendar-upcoming-g1"]'
+		) as HTMLElement;
+		expect(group.querySelector('.calendarSide__avatar')).toBeNull();
+		expect(group.querySelector('.calendarSide__kdot svg')).not.toBeNull();
+	});
+
+	it('puts "Jetzt" between "Als Nächstes" and quick entry', () => {
+		sidebar({ onCreate: () => true });
+		const now = document.querySelector('[data-cy="timeline-now"]')!;
+		expect(now.textContent).toBe('calendar.side.now');
+		const pill = document.querySelector(
+			'[data-cy="calendar-upcoming-a1"]'
+		)!;
+		const quick = document.querySelector('#calendar-quick-panel')!;
+		expect(
+			pill.compareDocumentPosition(now) & Node.DOCUMENT_POSITION_FOLLOWING
+		).toBeTruthy();
+		expect(
+			now.compareDocumentPosition(quick) &
+				Node.DOCUMENT_POSITION_FOLLOWING
+		).toBeTruthy();
+	});
+
+	it('folds quick entry behind the "+" beside "Jetzt" in the sheet', () => {
+		const onQuickToggle = vi.fn();
+		sidebar({ onCreate: () => true, variant: 'sheet', onQuickToggle });
+		const toggle = document.querySelector(
+			'[data-cy="calendar-now"] [data-cy="calendar-quick-toggle"]'
+		) as HTMLElement;
+		expect(toggle.getAttribute('aria-expanded')).toBe('false');
+		fireEvent.click(toggle);
+		expect(onQuickToggle).toHaveBeenCalled();
+		expect(
+			document
+				.querySelector('#calendar-quick-panel')
+				?.hasAttribute('hidden')
+		).toBe(true);
+	});
+
+	it('shows the working hours as a line with "Ändern"', () => {
+		const onWorkingHours = vi.fn();
+		sidebar({ onWorkingHours, workingHoursSummary: 'Mo–Fr 08:00–18:00' });
+		const change = screen.getByRole('button', {
+			name: 'calendar.workingHours.change'
+		});
+		expect(change.getAttribute('data-cy')).toBe('calendar-working-hours');
+		expect(change.closest('.calendarSide__work')?.textContent).toContain(
+			'calendar.workingHours.summary'
+		);
+		fireEvent.click(change);
+		expect(onWorkingHours).toHaveBeenCalled();
+	});
+
+	it('hands a search result to the calendar instead of opening it', () => {
+		const onShowEntry = vi.fn();
+		const onOpenEntry = vi.fn();
+		sidebar({ onShowEntry, onOpenEntry });
+		fireEvent.change(screen.getByRole('searchbox'), {
+			target: { value: 'nord' }
+		});
+		fireEvent.click(
+			document.querySelector(
+				'[data-cy="calendar-search-g1"]'
+			) as HTMLElement
+		);
+		expect(onShowEntry).toHaveBeenCalledWith(GROUP);
+		expect(onOpenEntry).not.toHaveBeenCalled();
+		expect(
+			document.querySelector('[data-cy="calendar-search-g1"]')
+		).toBeNull();
+	});
+
+	it('finds only what the display filter shows (review 4589304604)', () => {
+		sidebar({ onlyFacets: ['phone'] });
+		fireEvent.change(screen.getByRole('searchbox'), {
+			target: { value: 'nord' }
+		});
+		expect(
+			document.querySelector('[data-cy="calendar-search-g1"]')
+		).toBeNull();
+		expect(screen.getByText('calendar.search.empty')).toBeTruthy();
+		cleanup();
+		sidebar({ hiddenFacets: ['group'] });
+		fireEvent.change(screen.getByRole('searchbox'), {
+			target: { value: 'nord' }
+		});
+		expect(
+			document.querySelector('[data-cy="calendar-search-g1"]')
+		).toBeNull();
+		cleanup();
+		sidebar({ onlyFacets: ['group'] });
+		fireEvent.change(screen.getByRole('searchbox'), {
+			target: { value: 'nord' }
+		});
+		expect(
+			document.querySelector('[data-cy="calendar-search-g1"]')
+		).not.toBeNull();
 	});
 });

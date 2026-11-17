@@ -31,8 +31,10 @@ interface MyDirectLinksProps {
 	headerAction?: React.ReactNode;
 	/** #1894: shown instead of the grid while there are no links. */
 	emptyState?: React.ReactNode;
-	/** #2252: the overview names this section "without appointment". */
+	/** #2252 / *19: the overview and the calendar name the list "without appointment". */
 	title?: string;
+	/** *19: one line under the title. */
+	description?: string;
 }
 
 /**
@@ -48,7 +50,8 @@ export const MyDirectLinks = ({
 	onEdit,
 	headerAction,
 	emptyState,
-	title
+	title,
+	description
 }: MyDirectLinksProps) => {
 	const { t, i18n } = useTranslation();
 	const [copiedId, setCopiedId] = useState<string>();
@@ -87,6 +90,9 @@ export const MyDirectLinks = ({
 					</div>
 				)}
 			</header>
+			{description && (
+				<p className="myDirectLinks__description">{description}</p>
+			)}
 			{copyFailed && (
 				<p role="alert" className="directLinkCopyError">
 					{t('groupChat.shareDialog.copyFailed')}
