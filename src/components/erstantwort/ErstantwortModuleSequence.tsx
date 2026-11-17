@@ -20,7 +20,7 @@ import '../pseudonym/PseudonymCard.styles.scss';
 import './ErstantwortSequence.styles.scss';
 
 /**
- * ADR-035: renders a **version-2** Erstantwort — the resolved conversation
+ * ADR-036: renders a **version-2** Erstantwort — the resolved conversation
  * module — in exactly the order the editor arranged it.
  *
  * Grouping keeps Frank's "one complete message" rule from version 1 (15.10.):

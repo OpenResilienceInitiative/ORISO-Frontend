@@ -22,7 +22,7 @@ import type {
 /**
  * One answer as it leaves the chat: the question id **and its version**, so a
  * later edit of the question never changes what an old answer meant
- * (ADR-035 decision 9).
+ * (ADR-036 decision 9).
  */
 export interface ErstantwortAnswer {
 	questionId: string;
@@ -44,7 +44,7 @@ const isEmpty = (value: string | string[] | undefined) =>
 	Array.isArray(value) ? value.length === 0 : !value?.trim();
 
 /**
- * The question block of a version-2 Erstantwort (ADR-035 part B): free text,
+ * The question block of a version-2 Erstantwort (ADR-036 part B): free text,
  * single select as radio buttons or a select field, multi select, and hints.
  *
  * A plain form inside the Carimat bubble, not a dialog: the person keeps the

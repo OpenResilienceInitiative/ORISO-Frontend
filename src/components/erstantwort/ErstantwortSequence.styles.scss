@@ -191,14 +191,14 @@
 
 /* Avatar/header/bubble geometry belongs to CarimatMessageFrame. */
 
-/* ADR-035 version 2: an open panel is a headline with its text. */
+/* ADR-036 version 2: an open panel is a headline with its text. */
 .erstantwort__part + .erstantwort__part,
 .erstantwort__body + .erstantwort__part,
 .erstantwort__faq + .erstantwort__part {
 	margin-top: 4px;
 }
 
-/* Question block (ADR-035 part B): the controls are the form kit's
+/* Question block (ADR-036 part B): the controls are the form kit's
    (OrisoSelect, OrisoTextarea, MUI Radio, M3Checkbox); only the rhythm
    between questions lives here. */
 .erstantwort__questionForm {

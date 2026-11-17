@@ -19,7 +19,7 @@ const v2 = (sections: unknown[], extra: Record<string, unknown> = {}) =>
 		...extra
 	});
 
-describe('parseErstantwortModule (ADR-035 decision 8)', () => {
+describe('parseErstantwortModule (ADR-036 decision 8)', () => {
 	it('ignores everything that is not a version-2 FIRST_RESPONSE event', () => {
 		expect(parseErstantwortModule('hello').status).toBe('none');
 		expect(

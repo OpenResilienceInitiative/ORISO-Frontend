@@ -2,7 +2,7 @@ import { SYSTEM_NOTIFICATION_PREFIX } from '../message/messageConstants';
 import { SYSTEM_NOTIFICATION_FIRST_RESPONSE } from './erstantwortPayload';
 
 /**
- * ADR-035 decision 8: the version-2 Erstantwort payload.
+ * ADR-036 decision 8: the version-2 Erstantwort payload.
  *
  * Delivery is unchanged from ADR-018 — one `[SYSTEM_NOTIFICATION]` event with
  * the wording frozen at send time — but instead of a fixed Baustein catalogue

@@ -113,7 +113,7 @@ const questions: ErstantwortSection = {
 	]
 };
 
-describe('ErstantwortModuleSequence (ADR-035, version-2 payload)', () => {
+describe('ErstantwortModuleSequence (ADR-036, version-2 payload)', () => {
 	it('draws messages and panels in the editor order as one message', () => {
 		render(
 			<ErstantwortModuleSequence

@@ -15,7 +15,7 @@ import { phone390Globals } from '../message/messageStoryShell';
 import './ErstantwortSequence.styles.scss';
 
 /**
- * **Erstantwort, version 2** (ADR-035): the resolved conversation module as the
+ * **Erstantwort, version 2** (ADR-036): the resolved conversation module as the
  * person sees it in the chat.
  *
  * Every story below starts from a raw `[SYSTEM_NOTIFICATION]` event and runs it
