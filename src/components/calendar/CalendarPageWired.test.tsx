@@ -1909,3 +1909,38 @@ describe('CalendarPageWired — move proposals (contract v1)', () => {
 		expect(props.receivedProposals).toBeUndefined();
 	});
 });
+
+describe('CalendarPageWired — which conversations can be booked (C1, C6)', () => {
+	it("marks a deleted advice seeker and another counsellor's conversation as not bookable", async () => {
+		vi.mocked(
+			sessionList.apiGetConsultantSessionList
+		).mockResolvedValueOnce({
+			sessions: [
+				{
+					session: { id: 1 },
+					user: { username: 'eigene_eule' },
+					consultant: { id: 'me' }
+				},
+				{
+					session: { id: 2 },
+					user: { username: 'geloescht', deleted: true },
+					consultant: { id: 'me' }
+				},
+				{
+					session: { id: 3 },
+					user: { username: 'herbs_antilope' },
+					consultant: { id: 'herb' }
+				}
+			]
+		} as never);
+		render(<CalendarPageWired />);
+		await waitFor(() => expect(props.conversations).toHaveLength(3));
+		expect(
+			props.conversations?.map((c) => [c.sessionId, c.bookable])
+		).toEqual([
+			[1, true],
+			[2, false],
+			[3, false]
+		]);
+	});
+});

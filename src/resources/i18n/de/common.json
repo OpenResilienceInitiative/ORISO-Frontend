@@ -6987,7 +6987,7 @@
 			},
 			"move": "Verschieben",
 			"cancel": "Absagen",
-			"remove": "Blockierung entfernen",
+			"remove": "Sperrzeit entfernen",
 			"address": "Adresse",
 			"colleague": "Kalender von {{name}}",
 			"busyHint": "Aus Ihrem eigenen Kalender übernommen. ORISO kennt nur die Zeit.",
@@ -7000,7 +7000,7 @@
 			"confirm": "Trotzdem verschieben"
 		},
 		"soon": "Beginnt gleich",
-		"blockerMoved": "Blockierung verschoben auf {{date}}.",
+		"blockerMoved": "Sperrzeit verschoben auf {{date}}.",
 		"cancelled": "Termin abgesagt. Die ratsuchende Person wird benachrichtigt.",
 		"cancelAsk": {
 			"title": "Termin absagen?",

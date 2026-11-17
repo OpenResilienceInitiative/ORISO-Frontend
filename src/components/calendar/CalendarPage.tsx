@@ -532,6 +532,11 @@ export const CalendarPage = ({
 	const summarise = useWorkingHoursSummary();
 	const now = useLiveNow(fixedNow);
 	const consultant = role === 'consultant';
+	// New appointments only for one's own, living conversations (C1, C6).
+	const bookable = useMemo(
+		() => conversations.filter((c) => c.bookable !== false),
+		[conversations]
+	);
 	const views = phone ? COMPACT_VIEWS : DESKTOP_VIEWS;
 	const controller = useCalendarController();
 
@@ -1731,7 +1736,7 @@ export const CalendarPage = ({
 				}
 				onChoose={chooseSlot}
 				kind={menu.kind}
-				conversations={conversations}
+				conversations={bookable}
 				onPick={pickSlotPerson}
 				onMore={moreSlotDetails}
 			/>
@@ -2600,7 +2605,7 @@ export const CalendarPage = ({
 		soonId,
 		entries,
 		colleagues,
-		conversations,
+		conversations: bookable,
 		workingHours: workingPlan,
 		workingHoursSummary: summary,
 		onlyFacets,
@@ -2816,7 +2821,7 @@ export const CalendarPage = ({
 					initialNote={
 						dialog.type === 'blocker' ? dialog.note : undefined
 					}
-					conversations={conversations}
+					conversations={bookable}
 					entries={
 						dialog.type === 'blocker' && dialog.replaces
 							? entries.filter(
