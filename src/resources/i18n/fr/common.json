@@ -6960,10 +6960,11 @@
 			"createAction": "Créer",
 			"saveAction": "Enregistrer",
 			"withAppointment": "Avec rendez-vous",
-			"withAppointmentHint": "Toutes les personnes qui ouvrent le lien se retrouvent dans une conversation commune.",
+			"withAppointmentHint": "Toutes les personnes qui ouvrent le lien se retrouvent dans une conversation commune. Le rendez-vous apparaît aussi dans votre calendrier.",
 			"withoutAppointmentHint": "Sans rendez-vous, chaque personne a sa propre conversation. Le lien fonctionne jusqu’à ce que vous le supprimiez.",
 			"inviteOthers": "Inviter d’autres personnes par lien",
 			"inviteOthersHint": "Par exemple un ou une interprète. Les personnes invitées ne voient que les messages écrits après leur arrivée.",
+			"inviteOthersMediumOff": "Les invitations directes ne sont pas activées pour ce type. Choisissez un autre type pour inviter d'autres personnes.",
 			"validity": {
 				"label": "Validité après la fin du rendez-vous",
 				"hint": "Ensuite, les invités perdent l’accès et la conversation est archivée.",
@@ -6982,7 +6983,15 @@
 				"both": "Les deux"
 			},
 			"knock": "Frapper avant d’entrer",
-			"knockHint": "Vous faites entrer chaque personne vous-même. Vous pouvez modifier ce réglage pendant l’appel."
+			"knockHint": "Vous faites entrer chaque personne vous-même. Vous pouvez modifier ce réglage pendant l’appel.",
+			"newPerson": {
+				"option": "Nouvelle personne par invitation directe …",
+				"hint": "Cette personne n'a pas encore de conversation avec vous. À l'étape suivante, vous créez une invitation directe avec ce rendez-vous.",
+				"action": "Continuer vers l'invitation directe"
+			},
+			"linkFailedTitle": "Lien d'invitation non créé",
+			"linkFailedAfterAppointment": "Le rendez-vous est enregistré, mais pas le lien d'invitation. Veuillez réessayer.",
+			"appointmentSaved": "Le rendez-vous est enregistré."
 		},
 		"overview": {
 			"title": "Rendez-vous et invitations directes",
@@ -7057,7 +7066,8 @@
 			"title": "Nouveau lien",
 			"text": "Voici le nouveau lien pour le rendez-vous :",
 			"validUntil": "Le nouveau lien pour le rendez-vous est valable jusqu’au {{date}} :"
-		}
+		},
+		"fromCalendar": "Rendez-vous du calendrier : {{range}}. Choisissez le thème et le média, puis créez l'invitation directe."
 	},
 	"calendar": {
 		"bandLoading": "Chargement : {{names}}",

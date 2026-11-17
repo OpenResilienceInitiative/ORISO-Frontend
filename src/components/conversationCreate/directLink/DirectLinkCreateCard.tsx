@@ -7,7 +7,10 @@ import { defaultTemporary, DirectLink, DirectLinkMedium } from './directLink';
 import { agencyForTopic } from './directLinkAvailability';
 import { useDirectLinks } from './useDirectLinks';
 import { InvitationDialog } from '../../directInvitation/InvitationDialog';
-import type { InvitationDialogValue } from '../../directInvitation/invitationModel';
+import type {
+	InvitationDialogValue,
+	InvitationPreset
+} from '../../directInvitation/invitationModel';
 import { directInvitationSettings } from '../../directInvitation/directInvitationSettings';
 
 export interface DirectLinkCreateCardProps {
@@ -37,6 +40,10 @@ export interface DirectLinkCreateCardProps {
 	 * outside the card, for the same reason as `onCreated`.
 	 */
 	onDraft?: (draft: DirectLinkDraft) => void;
+	/** Preselected medium (from the calendar's Art). */
+	initialMedium?: DirectLinkMedium;
+	/** The calendar's slot, for the card's own dialog (without `onDraft`). */
+	preset?: InvitationPreset;
 }
 
 export interface DirectInvitationSetupOptions {
@@ -45,6 +52,11 @@ export interface DirectInvitationSetupOptions {
 	/** Phones: the dialog fills the screen. */
 	compact?: boolean;
 	onCreated: (link: DirectLink) => void;
+	/**
+	 * The calendar's slot ("Neue Person per Direkteinladung …"): the dialog
+	 * opens with "Mit Termin" on and this time filled in.
+	 */
+	preset?: InvitationPreset;
 }
 
 /**
@@ -56,7 +68,8 @@ export const useDirectInvitationSetup = ({
 	topics,
 	agencies,
 	compact = false,
-	onCreated
+	onCreated,
+	preset
 }: DirectInvitationSetupOptions) => {
 	const { t } = useTranslation();
 	const { create } = useDirectLinks({ load: false });
@@ -105,6 +118,15 @@ export const useDirectInvitationSetup = ({
 	const dialog = draft ? (
 		<InvitationDialog
 			variant="invitation"
+			initial={
+				preset
+					? {
+							start: preset.start,
+							end: preset.end,
+							withAppointment: true
+						}
+					: undefined
+			}
 			fullScreen={compact}
 			saving={submitting}
 			error={failed ? t('directLink.card.createFailed') : undefined}
@@ -135,7 +157,9 @@ export const DirectLinkCreateCard = ({
 	topicsLoadFailed,
 	onRetryTopics,
 	onCreated,
-	onDraft
+	onDraft,
+	initialMedium,
+	preset
 }: DirectLinkCreateCardProps) => {
 	const [ownShared, setOwnShared] = useState<DirectLink>();
 	const shared = onCreated ? undefined : ownShared;
@@ -143,7 +167,8 @@ export const DirectLinkCreateCard = ({
 		topics,
 		agencies,
 		compact,
-		onCreated: onCreated ?? setOwnShared
+		onCreated: onCreated ?? setOwnShared,
+		preset
 	});
 
 	return (
@@ -157,6 +182,7 @@ export const DirectLinkCreateCard = ({
 				topicsLoadFailed={topicsLoadFailed}
 				onRetryTopics={onRetryTopics}
 				settingsInDialog
+				initialMedium={initialMedium}
 			/>
 			{!onDraft && ownSetup.dialog}
 			{shared && (
