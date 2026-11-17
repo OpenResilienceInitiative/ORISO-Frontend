@@ -8,6 +8,7 @@ import {
 	NotificationsContext
 } from '../../globalState/provider/NotificationsProvider';
 import { KnockWaitDialog } from '../knockWaitDialog/KnockWaitDialog';
+import { M3Dialog } from '../m3Dialog/M3Dialog';
 import { useCallDeviceCheck } from '../waitingRoom/callEntry/useCallDeviceCheck';
 import { CallModality } from '../waitingRoom/callEntry/callEntryTypes';
 import { getMatrixClientService } from '../../services/matrixClientRegistry';
@@ -65,7 +66,10 @@ export const waitForJoinedRoom = (
 
 export interface DirectLinkKnockGateDeps extends DirectLinkKnockDeps {
 	/** Joins the counsellor's call once the person was let in. */
-	joinCounsellorsCall: (knock: PendingKnock) => Promise<CallJoinResult>;
+	joinCounsellorsCall: (
+		knock: PendingKnock,
+		options?: Pick<JoinCounsellorsCallOptions, 'confirmLeaveRunningCall'>
+	) => Promise<CallJoinResult>;
 	/** Joins the running call recorded with the knock (after a reload). */
 	joinRunningCall: (knock: PendingKnock) => Promise<CallJoinResult>;
 	mediaDevices?: MediaDevices;
@@ -85,23 +89,44 @@ const ringsFrom = (call: CallData | null, room: string) =>
 	(call.signalRoomId ?? call.roomId) === room;
 
 /**
+ * Asks the person let in whether to leave the call they are in for the
+ * counsellor's; resolves `true` for yes. `signal` aborts when the question
+ * no longer applies (the running call ended meanwhile).
+ */
+export type ConfirmLeaveRunningCall = (signal: AbortSignal) => Promise<boolean>;
+
+export interface JoinCounsellorsCallOptions {
+	manager?: Pick<
+		typeof callManager,
+		| 'getCurrentCall'
+		| 'answerCall'
+		| 'subscribe'
+		| 'getWaitingCall'
+		| 'answerWaitingCall'
+	>;
+	timeoutMs?: number;
+	/** Without it, a call waiting behind a running one is never answered. */
+	confirmLeaveRunningCall?: ConfirmLeaveRunningCall;
+}
+
+/**
  * Let in after a knock: only counsellors start calls (Frank, 17 Nov 2026),
  * so the person joins the call the counsellor starts in this conversation
  * as soon as it rings; they never start one of their own. Without a call
  * from the counsellor in time the result is `unavailable`.
+ *
+ * Still in another call, the counsellor's call waits behind it: the person
+ * is asked first (Frank, 17 Nov 2026). Yes leaves the running call and
+ * joins; no stays in it and the result is `unavailable`. The wait does not
+ * run out while they decide.
  */
 export const joinCounsellorsCall = (
 	knock: PendingKnock,
 	{
 		manager = callManager,
-		timeoutMs = COUNSELLOR_CALL_WAIT_MS
-	}: {
-		manager?: Pick<
-			typeof callManager,
-			'getCurrentCall' | 'answerCall' | 'subscribe'
-		>;
-		timeoutMs?: number;
-	} = {}
+		timeoutMs = COUNSELLOR_CALL_WAIT_MS,
+		confirmLeaveRunningCall
+	}: JoinCounsellorsCallOptions = {}
 ): Promise<CallJoinResult> =>
 	new Promise((resolve) => {
 		const room = knock.matrixRoomId;
@@ -110,17 +135,46 @@ export const joinCounsellorsCall = (
 			return;
 		}
 		let done = false;
+		let asking: AbortController | null = null;
 		let unsubscribe: () => void = () => undefined;
 		let timer: ReturnType<typeof setTimeout> | undefined;
 		const finish = (result: CallJoinResult) => {
 			if (done) return;
 			done = true;
+			asking?.abort();
 			unsubscribe();
 			clearTimeout(timer);
 			resolve(result);
 		};
+		const askAboutWaitingCall = () => {
+			const waiting = manager.getWaitingCall();
+			if (asking || !confirmLeaveRunningCall || !ringsFrom(waiting, room))
+				return;
+			const question = new AbortController();
+			asking = question;
+			clearTimeout(timer);
+			confirmLeaveRunningCall(question.signal).then(
+				(yes) => {
+					if (done || question.signal.aborted) return;
+					if (
+						!yes ||
+						manager.getWaitingCall()?.callId !== waiting?.callId
+					) {
+						finish('unavailable');
+						return;
+					}
+					manager.answerWaitingCall(waiting!.callId);
+					finish('joined');
+				},
+				() => finish('unavailable')
+			);
+		};
 		const tryAnswer = (call: CallData | null) => {
-			if (done || !ringsFrom(call, room)) return;
+			if (done) return;
+			if (!ringsFrom(call, room)) {
+				askAboutWaitingCall();
+				return;
+			}
 			/* `answerCall` answers the manager's current call and does nothing
 			   otherwise: only that one counts as joined; else keep waiting. */
 			if (manager.getCurrentCall()?.callId !== call?.callId) return;
@@ -267,6 +321,43 @@ export const DirectLinkKnock = ({
 };
 
 /**
+ * "Laufenden Anruf beenden und beitreten?" (Frank, 17 Nov 2026): the person
+ * let in is still in another call while the counsellor's call rings.
+ */
+export const LeaveRunningCallDialog = ({
+	onStay,
+	onLeave
+}: {
+	onStay: () => void;
+	onLeave: () => void;
+}) => {
+	const { t } = useTranslation();
+	return (
+		<M3Dialog
+			title={t('videoCall.timeline.leaveRunningCallTitle')}
+			description={t('videoCall.timeline.leaveRunningCallText')}
+			width={420}
+			closeLabel={t('app.close')}
+			onClose={onStay}
+			actions={[
+				{
+					label: t('videoCall.timeline.leaveRunningCallStay'),
+					onClick: onStay,
+					testId: 'leave-running-call-stay'
+				},
+				{
+					label: t('videoCall.timeline.leaveRunningCallJoin'),
+					onClick: onLeave,
+					primary: true,
+					testId: 'leave-running-call-confirm'
+				}
+			]}
+			data-testid="leave-running-call-dialog"
+		/>
+	);
+};
+
+/**
  * Mounted once in the app. After a direct-link call entry the app is loaded
  * on the person's conversation with a knock in `sessionStorage`; this shows
  * the knock dialog over that conversation and, once the person is let in,
@@ -298,6 +389,25 @@ export const DirectLinkKnockGate = ({
 		return () => window.removeEventListener(PENDING_KNOCK_EVENT, pick);
 	}, []);
 	const joinCall = deps.joinCounsellorsCall ?? joinCounsellorsCall;
+	/* The open "end the running call?" question, answered once. */
+	const [leaveQuestion, setLeaveQuestion] = useState<{
+		answer: (yes: boolean) => void;
+	} | null>(null);
+	const confirmLeaveRunningCall: ConfirmLeaveRunningCall = (signal) =>
+		new Promise<boolean>((resolve) => {
+			const question = {
+				answer: (yes: boolean) => {
+					setLeaveQuestion((open) =>
+						open === question ? null : open
+					);
+					resolve(yes);
+				}
+			};
+			signal.addEventListener('abort', () => question.answer(false), {
+				once: true
+			});
+			if (!signal.aborted) setLeaveQuestion(question);
+		});
 	const joinRunningCall = deps.joinRunningCall ?? defaultJoinRunningCall;
 	/* No call took the switches, so no later call in this room may. */
 	const forgetSwitches = (admitted: PendingKnock) => {
@@ -330,52 +440,64 @@ export const DirectLinkKnockGate = ({
 
 	/* Only over the person's own conversations: not on the invite page,
 	   the login or anywhere a counsellor works. */
+	const leaveDialog = leaveQuestion && (
+		<LeaveRunningCallDialog
+			onStay={() => leaveQuestion.answer(false)}
+			onLeave={() => leaveQuestion.answer(true)}
+		/>
+	);
+
 	if (!knock || !location.pathname.startsWith('/sessions/user/view')) {
-		return null;
+		return leaveDialog || null;
 	}
 
 	return (
-		<DirectLinkKnock
-			key={knock.knockId}
-			knock={knock}
-			deps={deps}
-			pollMs={pollMs}
-			onDone={() => setKnock(null)}
-			onAdmitted={(admitted) => {
-				setKnock(null);
-				/* Let in once: later calls here join without a knock. */
-				rememberAdmittedConversation(admitted.sessionId);
-				/* Join the call that is already running, never a second one;
+		<>
+			{leaveDialog}
+			<DirectLinkKnock
+				key={knock.knockId}
+				knock={knock}
+				deps={deps}
+				pollMs={pollMs}
+				onDone={() => setKnock(null)}
+				onAdmitted={(admitted) => {
+					setKnock(null);
+					/* Let in once: later calls here join without a knock. */
+					rememberAdmittedConversation(admitted.sessionId);
+					/* Join the call that is already running, never a second one;
 				   after a reload the one recorded with the knock (#2016). */
-				const storedJoin = takeAdmittedJoin(admitted.sessionId);
-				switch (admissionAction(admitted, storedJoin)) {
-					case 'storedJoin':
-						storedJoin?.();
-						return;
-					case 'joinRunningCall':
-						void joinRunningCall(admitted).then(
-							(result) => {
-								if (result !== 'joined') {
-									runningCallJoinFailed(admitted);
-								}
-							},
-							() => runningCallJoinFailed(admitted)
-						);
-						return;
-					case 'joinCounsellorsCall':
-						void joinCall(admitted).then(
-							(result) => {
-								if (result !== 'joined') {
-									counsellorCallMissing(admitted);
-								}
-							},
-							() => counsellorCallMissing(admitted)
-						);
-						return;
-					case 'none':
-						forgetSwitches(admitted);
-				}
-			}}
-		/>
+					const storedJoin = takeAdmittedJoin(admitted.sessionId);
+					switch (admissionAction(admitted, storedJoin)) {
+						case 'storedJoin':
+							storedJoin?.();
+							return;
+						case 'joinRunningCall':
+							void joinRunningCall(admitted).then(
+								(result) => {
+									if (result !== 'joined') {
+										runningCallJoinFailed(admitted);
+									}
+								},
+								() => runningCallJoinFailed(admitted)
+							);
+							return;
+						case 'joinCounsellorsCall':
+							void joinCall(admitted, {
+								confirmLeaveRunningCall
+							}).then(
+								(result) => {
+									if (result !== 'joined') {
+										counsellorCallMissing(admitted);
+									}
+								},
+								() => counsellorCallMissing(admitted)
+							);
+							return;
+						case 'none':
+							forgetSwitches(admitted);
+					}
+				}}
+			/>
+		</>
 	);
 };

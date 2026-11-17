@@ -50,9 +50,17 @@ const ringing = (signalRoomId: string): CallData => ({
 /** A CallManager stand-in: one current call and its listeners. */
 const fakeManager = (initial: CallData | null = null) => {
 	let current = initial;
+	let waiting: CallData | null = null;
 	const listeners = new Set<(call: CallData | null) => void>();
 	const manager = {
 		getCurrentCall: () => current,
+		getWaitingCall: () => waiting,
+		answerWaitingCall: vi.fn((callId: string) => {
+			if (waiting?.callId !== callId) return;
+			current = { ...waiting, state: 'connecting' };
+			waiting = null;
+			listeners.forEach((listener) => listener(current));
+		}),
 		answerCall: vi.fn(() => {
 			if (current) current = { ...current, state: 'connecting' };
 			listeners.forEach((listener) => listener(current));
@@ -63,6 +71,17 @@ const fakeManager = (initial: CallData | null = null) => {
 		},
 		ring: (call: CallData) => {
 			current = call;
+			listeners.forEach((listener) => listener(current));
+		},
+		/** A second call rings behind the running one. */
+		waitBehind: (call: CallData) => {
+			waiting = call;
+			listeners.forEach((listener) => listener(current));
+		},
+		/** The running call ends: the waiting one rings as the current one. */
+		promote: () => {
+			current = waiting;
+			waiting = null;
 			listeners.forEach((listener) => listener(current));
 		},
 		/** A listener hears a call the manager does not hold as current. */
@@ -155,5 +174,138 @@ describe('joining the counsellor’s call after being let in', () => {
 		expect(manager.listenerCount()).toBe(0);
 		expect(startRoomCall).not.toHaveBeenCalled();
 		expect(startCall).not.toHaveBeenCalled();
+	});
+});
+
+describe('let in while still in another call (Frank, 17 Nov 2026)', () => {
+	const running: CallData = {
+		...ringing('!elsewhere:oriso'),
+		callId: 'call_running',
+		isIncoming: false,
+		state: 'connected'
+	};
+	const counsellors = { ...ringing(ROOM), callId: 'call_counsellor' };
+
+	afterEach(() => vi.useRealTimers());
+
+	it('asks first and, on yes, leaves the running call to join', async () => {
+		const manager = fakeManager(running);
+		const confirmLeaveRunningCall = vi.fn(async () => true);
+		const joined = joinCounsellorsCall(knock, {
+			manager,
+			confirmLeaveRunningCall
+		});
+
+		manager.waitBehind(counsellors);
+
+		await expect(joined).resolves.toBe('joined');
+		expect(confirmLeaveRunningCall).toHaveBeenCalledOnce();
+		expect(manager.answerWaitingCall).toHaveBeenCalledWith(
+			'call_counsellor'
+		);
+		expect(manager.answerCall).not.toHaveBeenCalled();
+		expect(manager.listenerCount()).toBe(0);
+	});
+
+	it('asks for a call that already waits when the person is let in', async () => {
+		const manager = fakeManager(running);
+		manager.waitBehind(counsellors);
+		const confirmLeaveRunningCall = vi.fn(async () => true);
+
+		await expect(
+			joinCounsellorsCall(knock, { manager, confirmLeaveRunningCall })
+		).resolves.toBe('joined');
+		expect(manager.answerWaitingCall).toHaveBeenCalledOnce();
+	});
+
+	it('on no, stays in the running call and reports unavailable', async () => {
+		const manager = fakeManager(running);
+		const confirmLeaveRunningCall = vi.fn(async () => false);
+		const joined = joinCounsellorsCall(knock, {
+			manager,
+			confirmLeaveRunningCall
+		});
+
+		manager.waitBehind(counsellors);
+		manager.waitBehind(counsellors);
+
+		await expect(joined).resolves.toBe('unavailable');
+		expect(confirmLeaveRunningCall).toHaveBeenCalledOnce();
+		expect(manager.answerWaitingCall).not.toHaveBeenCalled();
+		expect(manager.getCurrentCall()?.callId).toBe('call_running');
+	});
+
+	it('never asks about a waiting call from another conversation', async () => {
+		vi.useFakeTimers();
+		const manager = fakeManager(running);
+		const confirmLeaveRunningCall = vi.fn(async () => true);
+		const joined = joinCounsellorsCall(knock, {
+			manager,
+			confirmLeaveRunningCall,
+			timeoutMs: 1_000
+		});
+
+		manager.waitBehind({ ...counsellors, signalRoomId: '!other:oriso' });
+		await vi.advanceTimersByTimeAsync(1_000);
+
+		await expect(joined).resolves.toBe('unavailable');
+		expect(confirmLeaveRunningCall).not.toHaveBeenCalled();
+	});
+
+	it('does not give up while the person is still deciding', async () => {
+		vi.useFakeTimers();
+		const manager = fakeManager(running);
+		let answer: (yes: boolean) => void = () => undefined;
+		const confirmLeaveRunningCall = vi.fn(
+			() => new Promise<boolean>((resolve) => (answer = resolve))
+		);
+		const joined = joinCounsellorsCall(knock, {
+			manager,
+			confirmLeaveRunningCall,
+			timeoutMs: 1_000
+		});
+
+		manager.waitBehind(counsellors);
+		await vi.advanceTimersByTimeAsync(5_000);
+		answer(true);
+
+		await expect(joined).resolves.toBe('joined');
+		expect(manager.answerWaitingCall).toHaveBeenCalledOnce();
+	});
+
+	it('withdraws the question when the running call ends meanwhile', async () => {
+		const manager = fakeManager(running);
+		let signal: AbortSignal | undefined;
+		const confirmLeaveRunningCall = vi.fn((asked: AbortSignal) => {
+			signal = asked;
+			return new Promise<boolean>(() => undefined);
+		});
+		const joined = joinCounsellorsCall(knock, {
+			manager,
+			confirmLeaveRunningCall
+		});
+
+		manager.waitBehind(counsellors);
+		manager.promote();
+
+		await expect(joined).resolves.toBe('joined');
+		expect(manager.answerCall).toHaveBeenCalledOnce();
+		expect(manager.answerWaitingCall).not.toHaveBeenCalled();
+		expect(signal?.aborted).toBe(true);
+	});
+
+	it('without anyone to ask, never answers the waiting call', async () => {
+		vi.useFakeTimers();
+		const manager = fakeManager(running);
+		const joined = joinCounsellorsCall(knock, {
+			manager,
+			timeoutMs: 1_000
+		});
+
+		manager.waitBehind(counsellors);
+		await vi.advanceTimersByTimeAsync(1_000);
+
+		await expect(joined).resolves.toBe('unavailable');
+		expect(manager.answerWaitingCall).not.toHaveBeenCalled();
 	});
 });

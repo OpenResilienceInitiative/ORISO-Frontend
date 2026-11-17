@@ -5342,6 +5342,10 @@
 			"joinFailed": "Şu anda katılınamıyor. Diğer etkin aramanızı sonlandırıp tekrar deneyin.",
 			"counsellorCallPending": "Görüşme henüz başlamadı",
 			"counsellorCallPendingText": "Görüşmeyi yalnızca danışmanınız başlatabilir. Danışmanınız sizi aradığında katılabilirsiniz. Lütfen aramayı bekleyin.",
+			"leaveRunningCallTitle": "Devam eden görüşme sonlandırılıp katılınsın mı?",
+			"leaveRunningCallText": "Danışmanınız sizi arıyor. Hâlâ başka bir görüşmedesiniz; katıldığınızda bu görüşme sona erer.",
+			"leaveRunningCallStay": "Görüşmede kal",
+			"leaveRunningCallJoin": "Sonlandır ve katıl",
 			"endedElsewhere": "Bu arama zaten sona erdi.",
 			"video": {
 				"running": "Görüntülü arama sürüyor",

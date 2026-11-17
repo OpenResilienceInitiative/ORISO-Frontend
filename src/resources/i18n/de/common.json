@@ -5359,6 +5359,10 @@
 			"joinFailed": "Der Beitritt ist gerade nicht möglich. Beenden Sie gegebenenfalls Ihren anderen Anruf und versuchen Sie es erneut.",
 			"counsellorCallPending": "Der Anruf hat noch nicht begonnen",
 			"counsellorCallPendingText": "Nur Ihre Beraterin oder Ihr Berater kann den Anruf starten. Sie können beitreten, sobald sie oder er Sie anruft. Bitte warten Sie auf den Anruf.",
+			"leaveRunningCallTitle": "Laufenden Anruf beenden und beitreten?",
+			"leaveRunningCallText": "Ihre Beraterin oder Ihr Berater ruft Sie an. Sie sind noch in einem anderen Anruf; er wird beendet, wenn Sie beitreten.",
+			"leaveRunningCallStay": "Im Anruf bleiben",
+			"leaveRunningCallJoin": "Beenden und beitreten",
 			"endedElsewhere": "Dieser Anruf ist bereits beendet.",
 			"video": {
 				"running": "Videoanruf läuft",

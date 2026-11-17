@@ -1976,7 +1976,8 @@
 			"nextRequested": "Dein angefragter Termin"
 		},
 		"timeline": {
-			"counsellorCallPendingText": "Nur deine Beraterin oder dein Berater kann den Anruf starten. Du kannst beitreten, sobald sie oder er dich anruft. Bitte warte auf den Anruf."
+			"counsellorCallPendingText": "Nur deine Beraterin oder dein Berater kann den Anruf starten. Du kannst beitreten, sobald sie oder er dich anruft. Bitte warte auf den Anruf.",
+			"leaveRunningCallText": "Deine Beraterin oder dein Berater ruft dich an. Du bist noch in einem anderen Anruf; er wird beendet, wenn du beitrittst."
 		}
 	},
 	"voice": {

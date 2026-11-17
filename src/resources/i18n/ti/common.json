@@ -5316,6 +5316,10 @@
 			"joinFailed": "ሕጂ ምጽንባር ኣይተኻእለን። ካልእ ጻውዒት እንተሎ ዛዝሙ እሞ ደጊምኩም ፈትኑ።",
 			"counsellorCallPending": "ጻውዒት ገና ኣይጀመረን",
 			"counsellorCallPendingText": "ጻውዒት ክጅምር ዝኽእል ኣማኻሪኹም ጥራይ እዩ። ኣማኻሪኹም ምስ ደወለልኩም ክትጽንበሩ ትኽእሉ ኢኹም። በጃኹም ንጻውዒት ተጸበዩ።",
+			"leaveRunningCallTitle": "ዝቕጽል ዘሎ ጻውዒት ኣቋሪጽኩም ክትጽንበሩ ትደልዩ ዶ?",
+			"leaveRunningCallText": "ኣማኻሪኹም ይድውለልኩም ኣሎ። ገና ኣብ ካልእ ጻውዒት ኢኹም ዘለኹም፤ ምስ ተጸንበርኩም ይቋረጽ።",
+			"leaveRunningCallStay": "ኣብ ጻውዒት ጽንሑ",
+			"leaveRunningCallJoin": "ኣቋርጽ ተጸንበር",
 			"endedElsewhere": "እዚ ጻውዒት ድሮ ተወዲኡ እዩ።",
 			"video": {
 				"running": "ቪድዮ ጻውዒት ይካየድ ኣሎ",

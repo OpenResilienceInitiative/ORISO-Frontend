@@ -5342,6 +5342,10 @@
 			"joinFailed": "Impossible de rejoindre l’appel pour le moment. Terminez tout autre appel actif et réessayez.",
 			"counsellorCallPending": "L’appel n’a pas encore commencé",
 			"counsellorCallPendingText": "Seul·e votre conseiller·ère peut lancer l’appel. Vous pourrez le rejoindre dès qu’il ou elle vous appellera. Veuillez attendre l’appel.",
+			"leaveRunningCallTitle": "Mettre fin à l’appel en cours et rejoindre ?",
+			"leaveRunningCallText": "Votre conseiller·ère vous appelle. Vous êtes encore dans un autre appel ; il prendra fin si vous rejoignez.",
+			"leaveRunningCallStay": "Rester dans l’appel",
+			"leaveRunningCallJoin": "Terminer et rejoindre",
 			"endedElsewhere": "Cet appel est déjà terminé.",
 			"video": {
 				"running": "Appel vidéo en cours",
