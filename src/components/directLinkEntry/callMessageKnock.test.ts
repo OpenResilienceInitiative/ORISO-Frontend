@@ -377,7 +377,7 @@ describe('one window for knocking from the call message (#2016)', () => {
 		expect(admissionAction(knock, () => undefined)).toBe('storedJoin');
 		expect(
 			admissionAction({ ...knock, joinExisting: false }, undefined)
-		).toBe('startCall');
+		).toBe('joinCounsellorsCall');
 		// From the card, but nothing on record to join: the card's next tap.
 		expect(
 			admissionAction({ ...knock, joinCall: undefined }, undefined)

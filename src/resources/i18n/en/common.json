@@ -5282,6 +5282,8 @@
 		"timeline": {
 			"join": "Join call",
 			"joinFailed": "Unable to join right now. End any other active call and try again.",
+			"counsellorCallPending": "The call has not started yet",
+			"counsellorCallPendingText": "Only your counsellor can start the call. You can join as soon as they call you. Please wait for the call.",
 			"endedElsewhere": "This call has already ended.",
 			"video": {
 				"running": "Video call in progress",

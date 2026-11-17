@@ -59,7 +59,10 @@ const knock: PendingKnock = {
 
 const letIn = (
 	pending: PendingKnock,
-	joinRunningCall: (knock: PendingKnock) => Promise<CallJoinResult>
+	joinRunningCall: (knock: PendingKnock) => Promise<CallJoinResult>,
+	joinCounsellorsCall: (
+		knock: PendingKnock
+	) => Promise<CallJoinResult> = () => Promise.resolve('joined')
 ) => {
 	rememberPendingKnock(pending);
 	const addNotification = vi.fn();
@@ -69,7 +72,7 @@ const letIn = (
 				<DirectLinkKnockGate
 					deps={{
 						joinRunningCall,
-						startCall: vi.fn(() => Promise.resolve())
+						joinCounsellorsCall
 					}}
 				/>
 			</MemoryRouter>
@@ -119,6 +122,45 @@ describe('DirectLinkKnockGate when the person is let in after a reload', () => {
 		letIn(knock, join);
 		await settled();
 		expect(join).not.toHaveBeenCalled();
+		expect(peekJoinMedia(ROOM)).toBeNull();
+	});
+});
+
+describe('DirectLinkKnockGate when the person is let in from the direct link', () => {
+	afterEach(() => {
+		cleanup();
+		forgetAllJoinMedia();
+		sessionStorage.clear();
+	});
+
+	const fromLink: PendingKnock = { ...knock, joinExisting: false };
+
+	it("joins the counsellor's call and says nothing when it came", async () => {
+		const join = vi.fn(() => Promise.resolve<CallJoinResult>('joined'));
+		const runningCall = vi.fn(() =>
+			Promise.resolve<CallJoinResult>('joined')
+		);
+		const addNotification = letIn(fromLink, runningCall, join);
+		await waitFor(() => expect(join).toHaveBeenCalledWith(fromLink), {
+			timeout: 2_000
+		});
+		await settled();
+		expect(runningCall).not.toHaveBeenCalled();
+		expect(addNotification).not.toHaveBeenCalled();
+	});
+
+	it('says the counsellor starts the call when none came', async () => {
+		const addNotification = letIn(fromLink, vi.fn(), () =>
+			Promise.resolve<CallJoinResult>('unavailable')
+		);
+		await waitFor(() => expect(addNotification).toHaveBeenCalledTimes(1), {
+			timeout: 2_000
+		});
+		expect(addNotification.mock.calls[0][0]).toMatchObject({
+			notificationType: 'info',
+			title: 'videoCall.timeline.counsellorCallPending',
+			text: 'videoCall.timeline.counsellorCallPendingText'
+		});
 		expect(peekJoinMedia(ROOM)).toBeNull();
 	});
 });

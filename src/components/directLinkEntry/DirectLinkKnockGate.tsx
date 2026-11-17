@@ -4,12 +4,12 @@ import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 import {
 	NOTIFICATION_TYPE_ERROR,
+	NOTIFICATION_TYPE_INFO,
 	NotificationsContext
 } from '../../globalState/provider/NotificationsProvider';
 import { KnockWaitDialog } from '../knockWaitDialog/KnockWaitDialog';
 import { useCallDeviceCheck } from '../waitingRoom/callEntry/useCallDeviceCheck';
 import { CallModality } from '../waitingRoom/callEntry/callEntryTypes';
-import { startRoomCall } from '../call/startRoomCall';
 import { getMatrixClientService } from '../../services/matrixClientRegistry';
 import {
 	forgetPendingKnock,
@@ -24,10 +24,9 @@ import {
 	rememberAdmittedConversation,
 	takeAdmittedJoin
 } from './callMessageKnock';
-import { callManager } from '../../services/CallManager';
+import { CallData, callManager } from '../../services/CallManager';
 import {
 	keepDeviceChoice,
-	peekJoinMedia,
 	rememberJoinMedia
 } from '../call/prejoin/callPrejoin';
 
@@ -65,8 +64,8 @@ export const waitForJoinedRoom = (
 	});
 
 export interface DirectLinkKnockGateDeps extends DirectLinkKnockDeps {
-	/** Starts the call once the person was let in. */
-	startCall: (knock: PendingKnock) => Promise<void>;
+	/** Joins the counsellor's call once the person was let in. */
+	joinCounsellorsCall: (knock: PendingKnock) => Promise<CallJoinResult>;
 	/** Joins the running call recorded with the knock (after a reload). */
 	joinRunningCall: (knock: PendingKnock) => Promise<CallJoinResult>;
 	mediaDevices?: MediaDevices;
@@ -76,21 +75,63 @@ export interface DirectLinkKnockGateDeps extends DirectLinkKnockDeps {
 const callRoomOf = (knock: PendingKnock) =>
 	knock.joinCall?.roomRef ?? knock.matrixRoomId ?? null;
 
+/** How long the person let in waits for the counsellor's call to ring. */
+export const COUNSELLOR_CALL_WAIT_MS = 60_000;
+
+const ringsFrom = (call: CallData | null, room: string) =>
+	!!call &&
+	call.isIncoming &&
+	call.state === 'ringing' &&
+	(call.signalRoomId ?? call.roomId) === room;
+
 /**
- * Let in after a knock: starts the call. The camera choice from the device
- * check (#2016) also decides whether the permission request asks for the
- * camera; the choice itself stays for the call to take (`GroupCallWidget`).
+ * Let in after a knock: only counsellors start calls (Frank, 17 Nov 2026),
+ * so the person joins the call the counsellor starts in this conversation
+ * as soon as it rings; they never start one of their own. Without a call
+ * from the counsellor in time the result is `unavailable`.
  */
-export const defaultStartCall = async (knock: PendingKnock) => {
-	if (knock.matrixRoomId) await waitForJoinedRoom(knock.matrixRoomId);
-	const isVideo = knock.medium === 'VIDEO';
-	const chosen = peekJoinMedia(callRoomOf(knock));
-	await startRoomCall({
-		roomId: knock.matrixRoomId,
-		isVideo,
-		requestCamera: isVideo && (chosen?.video_enabled ?? true)
+export const joinCounsellorsCall = (
+	knock: PendingKnock,
+	{
+		manager = callManager,
+		timeoutMs = COUNSELLOR_CALL_WAIT_MS
+	}: {
+		manager?: Pick<
+			typeof callManager,
+			'getCurrentCall' | 'answerCall' | 'subscribe'
+		>;
+		timeoutMs?: number;
+	} = {}
+): Promise<CallJoinResult> =>
+	new Promise((resolve) => {
+		const room = knock.matrixRoomId;
+		if (!room) {
+			resolve('unavailable');
+			return;
+		}
+		let done = false;
+		let unsubscribe: () => void = () => undefined;
+		let timer: ReturnType<typeof setTimeout> | undefined;
+		const finish = (result: CallJoinResult) => {
+			if (done) return;
+			done = true;
+			unsubscribe();
+			clearTimeout(timer);
+			resolve(result);
+		};
+		const tryAnswer = (call: CallData | null) => {
+			if (done || !ringsFrom(call, room)) return;
+			manager.answerCall();
+			finish('joined');
+		};
+		unsubscribe = manager.subscribe(tryAnswer);
+		if (done) {
+			unsubscribe();
+			return;
+		}
+		timer = setTimeout(() => finish('unavailable'), timeoutMs);
+		tryAnswer(manager.getCurrentCall());
 	});
-};
 
 /*
  * #2016: let in after a reload, the person joins the running call the card
@@ -253,7 +294,7 @@ export const DirectLinkKnockGate = ({
 		window.addEventListener(PENDING_KNOCK_EVENT, pick);
 		return () => window.removeEventListener(PENDING_KNOCK_EVENT, pick);
 	}, []);
-	const startCall = deps.startCall ?? defaultStartCall;
+	const joinCall = deps.joinCounsellorsCall ?? joinCounsellorsCall;
 	const joinRunningCall = deps.joinRunningCall ?? defaultJoinRunningCall;
 	/* No call took the switches, so no later call in this room may. */
 	const forgetSwitches = (admitted: PendingKnock) => {
@@ -269,6 +310,18 @@ export const DirectLinkKnockGate = ({
 			text: '',
 			closeable: true,
 			timeout: 5000
+		});
+	};
+
+	/* Only the counsellor starts the call: say so when none came. */
+	const counsellorCallMissing = (admitted: PendingKnock) => {
+		forgetSwitches(admitted);
+		addNotification({
+			notificationType: NOTIFICATION_TYPE_INFO,
+			title: t('videoCall.timeline.counsellorCallPending'),
+			text: t('videoCall.timeline.counsellorCallPendingText'),
+			closeable: true,
+			timeout: 10000
 		});
 	};
 
@@ -306,8 +359,15 @@ export const DirectLinkKnockGate = ({
 							() => runningCallJoinFailed(admitted)
 						);
 						return;
-					case 'startCall':
-						void startCall(admitted).catch(() => undefined);
+					case 'joinCounsellorsCall':
+						void joinCall(admitted).then(
+							(result) => {
+								if (result !== 'joined') {
+									counsellorCallMissing(admitted);
+								}
+							},
+							() => counsellorCallMissing(admitted)
+						);
 						return;
 					case 'none':
 						forgetSwitches(admitted);

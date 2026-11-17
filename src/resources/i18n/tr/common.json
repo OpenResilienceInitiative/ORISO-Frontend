@@ -5317,6 +5317,8 @@
 		"timeline": {
 			"join": "Aramaya katıl",
 			"joinFailed": "Şu anda katılınamıyor. Diğer etkin aramanızı sonlandırıp tekrar deneyin.",
+			"counsellorCallPending": "Görüşme henüz başlamadı",
+			"counsellorCallPendingText": "Görüşmeyi yalnızca danışmanınız başlatabilir. Danışmanınız sizi aradığında katılabilirsiniz. Lütfen aramayı bekleyin.",
 			"endedElsewhere": "Bu arama zaten sona erdi.",
 			"video": {
 				"running": "Görüntülü arama sürüyor",

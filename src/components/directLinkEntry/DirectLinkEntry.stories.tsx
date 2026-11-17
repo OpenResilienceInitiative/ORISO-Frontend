@@ -309,7 +309,7 @@ export const KnockWithdrawn: Story = {
 /* ---------- Running call's card in a direct-link conversation ---------- */
 
 const joinRunningCall = fn(async () => 'joined' as const);
-const startNewCall = fn(async () => undefined);
+const joinCounsellorsCall = fn(async () => 'joined' as const);
 
 export const KnockFromCallMessage: Story = {
 	name: "5 · Running call's card → knock → let in → joins that call",
@@ -318,7 +318,7 @@ export const KnockFromCallMessage: Story = {
 	decorators: [(Story) => withMessageShell(Story, { parameters: {} })],
 	beforeEach: () => {
 		joinRunningCall.mockClear();
-		startNewCall.mockClear();
+		joinCounsellorsCall.mockClear();
 		forgetPendingKnock();
 		localStorage.removeItem(DIRECT_LINK_ADMITTED_KEY);
 		rememberDirectLinkSession(4711, { token: 'tok7', medium: 'VIDEO' });
@@ -348,7 +348,7 @@ export const KnockFromCallMessage: Story = {
 				pollMs={400}
 				deps={{
 					mediaDevices: scriptedDevices(),
-					startCall: startNewCall
+					joinCounsellorsCall
 				}}
 			/>
 		</>
@@ -379,7 +379,7 @@ export const KnockFromCallMessage: Story = {
 		await waitFor(() => expect(joinRunningCall).toHaveBeenCalledOnce(), {
 			timeout: 4000
 		});
-		await expect(startNewCall).not.toHaveBeenCalled();
+		await expect(joinCounsellorsCall).not.toHaveBeenCalled();
 		// Let in once: the next call in this conversation joins directly.
 		await expect(wasAdmittedTo(4711)).toBe(true);
 	}

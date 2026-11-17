@@ -1973,6 +1973,9 @@
 				"requested": "Deine Anfrage ist gesendet. Sie wartet auf die Bestätigung deiner Beratungsperson."
 			},
 			"nextRequested": "Dein angefragter Termin"
+		},
+		"timeline": {
+			"counsellorCallPendingText": "Nur deine Beraterin oder dein Berater kann den Anruf starten. Du kannst beitreten, sobald sie oder er dich anruft. Bitte warte auf den Anruf."
 		}
 	},
 	"voice": {

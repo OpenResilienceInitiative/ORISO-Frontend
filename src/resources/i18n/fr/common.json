@@ -5317,6 +5317,8 @@
 		"timeline": {
 			"join": "Rejoindre l’appel",
 			"joinFailed": "Impossible de rejoindre l’appel pour le moment. Terminez tout autre appel actif et réessayez.",
+			"counsellorCallPending": "L’appel n’a pas encore commencé",
+			"counsellorCallPendingText": "Seul·e votre conseiller·ère peut lancer l’appel. Vous pourrez le rejoindre dès qu’il ou elle vous appellera. Veuillez attendre l’appel.",
 			"endedElsewhere": "Cet appel est déjà terminé.",
 			"video": {
 				"running": "Appel vidéo en cours",
