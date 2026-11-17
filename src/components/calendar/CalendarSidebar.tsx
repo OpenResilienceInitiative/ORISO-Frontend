@@ -1204,16 +1204,33 @@ export const QuickEntry = ({
 			}),
 		[entries, ownerId, workingHours, now, slot]
 	);
+	/**
+	 * What the line itself set, as opposed to a pick or a field the
+	 * counsellor changed: a new line drops it when it names nothing of the
+	 * kind (test finding C3).
+	 */
+	const fromLine = useRef({ session: false, duration: false });
 	const type = (value: string) => {
 		setText(value);
 		const typed = parseQuickEntry(value, { now, conversations, kind });
 		// A conversation the line names replaces an earlier pick; a line
-		// that names none keeps it; a name that fits several drops it, so
-		// "who" blocks saving until one is chosen (review 4575297354).
-		if (typed.sessionId !== undefined) setSessionId(typed.sessionId);
-		else if (typed.ambiguous) setSessionId(undefined);
+		// that names none keeps a pick but drops one the earlier line named;
+		// a name that fits several drops it, so "who" blocks saving until
+		// one is chosen (review 4575297354).
+		if (typed.sessionId !== undefined) {
+			setSessionId(typed.sessionId);
+			fromLine.current.session = true;
+		} else if (typed.ambiguous || fromLine.current.session) {
+			setSessionId(undefined);
+			fromLine.current.session = false;
+		}
 		// The line prefills what it names; the fields stay what is saved.
 		const prefill = fieldsFromEntry(typed);
+		if (prefill.duration !== undefined) fromLine.current.duration = true;
+		else if (fromLine.current.duration) {
+			prefill.duration = DEFAULT_QUICK_DURATION;
+			fromLine.current.duration = false;
+		}
 		if (Object.keys(prefill).length > 0)
 			setFields((current) => ({ ...current, ...prefill }));
 	};
@@ -1227,6 +1244,7 @@ export const QuickEntry = ({
 		setKind(undefined);
 		setSessionId(undefined);
 		setFields({ duration: DEFAULT_QUICK_DURATION });
+		fromLine.current = { session: false, duration: false };
 	};
 
 	// One creation at a time; a draft changed while it ran stays (reviews
@@ -1443,12 +1461,13 @@ export const QuickEntry = ({
 									label: durationLabel(d)
 								})
 							)}
-							onChange={(event) =>
+							onChange={(event) => {
+								fromLine.current.duration = false;
 								setFields((f) => ({
 									...f,
 									duration: Number(event.target.value)
-								}))
-							}
+								}));
+							}}
 						/>
 					</div>
 				</div>
@@ -1541,7 +1560,10 @@ export const QuickEntry = ({
 								key={c.sessionId}
 								type="button"
 								className="calendarQuick__person"
-								onClick={() => setSessionId(c.sessionId)}
+								onClick={() => {
+									setSessionId(c.sessionId);
+									fromLine.current.session = false;
+								}}
 								data-cy={`calendar-quick-person-${c.sessionId}`}
 							>
 								<span

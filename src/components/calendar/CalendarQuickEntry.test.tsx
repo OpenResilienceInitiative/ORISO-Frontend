@@ -459,3 +459,23 @@ describe('QuickEntry — its own box, as in prototype v17', () => {
 		]);
 	});
 });
+
+describe('QuickEntry — each line is read fresh (test finding C3)', () => {
+	it('drops the conversation and length the previous line named', async () => {
+		const onCreate = vi.fn(() => Promise.resolve());
+		open(onCreate);
+		fireEvent.change(input(), {
+			target: { value: 'morgen 14-15:30 Video ruhiges' }
+		});
+		// A new line that names neither: no conversation, the default length.
+		fireEvent.change(input(), { target: { value: 'Do 14 Uhr Sperrzeit' } });
+		await submit();
+		expect(onCreate).toHaveBeenCalledWith([
+			expect.objectContaining({
+				type: 'blocker',
+				start: new Date(2026, 10, 19, 14),
+				end: new Date(2026, 10, 19, 15)
+			})
+		]);
+	});
+});

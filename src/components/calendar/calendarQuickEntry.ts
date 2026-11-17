@@ -141,6 +141,8 @@ const EN_DAYS: Record<string, number> = {
 const RANGE =
 	/\b(\d{1,2})(?::(\d{2}))?\s*(am|pm|uhr|h)?\s*(?:-|bis|to|until)\s*(\d{1,2})(?::(\d{2}))?\s*(am|pm|uhr|h)?/;
 const SINGLE = /\b(\d{1,2})(?::(\d{2}))?\s*(am|pm|uhr|h)?(?![\d.])/;
+/** "1030", "930": a time typed without its colon (test finding C9). */
+const COMPACT = /\b(\d{1,2})(\d{2})\s*(uhr|h)?(?![\d.])/;
 
 const startOfDay = (date: Date) => {
 	const day = new Date(date);
@@ -221,7 +223,19 @@ export const parseQuickEntry = (
 
 	const base = day ?? today;
 	const range = take(text.match(RANGE));
-	const single = range ? null : take(text.match(SINGLE));
+	const single = range
+		? null
+		: (take(text.match(SINGLE)) ??
+			(() => {
+				// Same groups as SINGLE; only a real clock time ("2575" stays
+				// text).
+				const compact = text.match(COMPACT);
+				return compact &&
+					Number(compact[1]) < 24 &&
+					Number(compact[2]) < 60
+					? take(compact)
+					: null;
+			})());
 	// "9:90" is no time: Date would quietly turn it into 10:30.
 	if (range) {
 		const startHour = hour24(Number(range[1]), range[3] ?? range[6]);

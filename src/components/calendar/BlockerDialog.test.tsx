@@ -347,6 +347,47 @@ describe('BlockerDialog — a repeat the spring clock change skips (Europe/Berli
 	});
 });
 
+describe('BlockerDialog — conflicts (test finding C16)', () => {
+	const booked: CalendarEntry = {
+		id: 'a1',
+		type: 'appointment',
+		kind: 'video',
+		title: 'mutige_eule',
+		start: new Date(2027, 2, 21, 10).toISOString(),
+		end: new Date(2027, 2, 21, 11).toISOString(),
+		ownerId: 'me'
+	};
+	const renderOver = (entries: CalendarEntry[]) =>
+		render(
+			<BlockerDialog
+				open
+				slot={{
+					start: new Date(2027, 2, 21, 10, 30),
+					end: new Date(2027, 2, 21, 12)
+				}}
+				entries={entries}
+				ownerId="me"
+				now={NOW}
+				onSave={() => undefined}
+				onClose={() => undefined}
+			/>
+		);
+
+	it('asks "Trotzdem anlegen" over an appointment, as appointments do', () => {
+		renderOver([booked]);
+		expect(screen.getByTestId('calendar-blocker-save').textContent).toBe(
+			'calendar.dialog.saveAnyway'
+		);
+	});
+
+	it('keeps the plain save without a conflict', () => {
+		renderOver([]);
+		expect(screen.getByTestId('calendar-blocker-save').textContent).toBe(
+			'calendar.blocker.save'
+		);
+	});
+});
+
 describe('BlockerDialog — weekly and working hours (prototype v17)', () => {
 	it('starts with the weekdays it was given', () => {
 		render(

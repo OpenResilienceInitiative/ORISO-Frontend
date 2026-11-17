@@ -180,7 +180,13 @@ export const useBlockerForm = ({
 		actions: [
 			{ label: t('app.cancel'), onClick: onClose },
 			{
-				label: t('calendar.blocker.save'),
+				// Over appointments the save is the question, as in the
+				// appointment dialog (test finding C16).
+				label: t(
+					conflicts.length
+						? 'calendar.dialog.saveAnyway'
+						: 'calendar.blocker.save'
+				),
 				primary: true,
 				disabled: invalid,
 				testId: 'calendar-blocker-save',
