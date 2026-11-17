@@ -5943,6 +5943,14 @@
 			"dataProtection": "ናይ ውልቂ ሓበሬታይ እንታይ ይኸውን?",
 			"modalityNote": "እቲ ምኽሪ ከመይ ይካየድ?",
 			"title": "ብተደጋጋሚ ዝሕተቱ ሕቶታት"
+		},
+		"questions": {
+			"title": "ሒደት ሕቶታት",
+			"send": "መልስታት ስደድ",
+			"required": "በጃኹም ነዚ ሕቶ ምለሱ።",
+			"requiredMark": "ግድን",
+			"thanks": "ስለ መልስታትኩም የቐንየልና።",
+			"choose": "በጃኹም ምረጹ"
 		}
 	},
 	"legal": {

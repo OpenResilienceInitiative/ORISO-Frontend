@@ -5969,6 +5969,14 @@
 			"dataProtection": "Que deviennent mes données ?",
 			"modalityNote": "Comment se déroule le conseil ?",
 			"title": "Questions fréquentes"
+		},
+		"questions": {
+			"title": "Quelques questions",
+			"send": "Envoyer les réponses",
+			"required": "Veuillez répondre à cette question.",
+			"requiredMark": "obligatoire",
+			"thanks": "Merci pour vos réponses.",
+			"choose": "Veuillez choisir"
 		}
 	},
 	"legal": {
