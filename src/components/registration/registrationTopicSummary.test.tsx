@@ -41,6 +41,29 @@ const availableSteps = [
 	{ name: 'zipcode', component: Step, mandatoryFields: ['zipcode'] }
 ];
 
+const debtPickedHere = {
+	id: 14,
+	slug: 'debt',
+	name: 'Schulden',
+	description: 'Hilfe bei Schulden',
+	icon: '/service/topic/public/icons/t-05-schulden.png'
+};
+/** The topic step before "Weiter": the pick lives in the step, not yet in the context. */
+const PickingStep = ({ onChange }: { onChange: (data: unknown) => void }) => {
+	React.useEffect(() => {
+		onChange({ mainTopicId: 14, mainTopic: debtPickedHere });
+	}, [onChange]);
+	return <div data-testid="step-body" />;
+};
+const pickingSteps = [
+	{
+		name: 'topic-selection',
+		component: PickingStep,
+		mandatoryFields: ['mainTopic']
+	},
+	{ name: 'zipcode', component: Step, mandatoryFields: ['zipcode'] }
+];
+
 const debtDe = {
 	id: 14,
 	slug: 'debt',
@@ -53,7 +76,8 @@ const debtEn = { ...debtDe, name: 'Debt', description: 'Help with debt' };
 const screenFor = (
 	locale: string,
 	data: Record<string, unknown>,
-	updateRegistrationData = vi.fn()
+	updateRegistrationData = vi.fn(),
+	{ steps = availableSteps, at = 'zipcode' } = {}
 ) => (
 	<AppConfigContext.Provider value={{} as any}>
 		<GlobalComponentContext.Provider
@@ -71,13 +95,13 @@ const screenFor = (
 									setDisabledNextButton: () => undefined,
 									updateRegistrationData,
 									registrationData: data,
-									availableSteps,
+									availableSteps: steps,
 									registrationConsultingType: null
 								} as any
 							}
 						>
 							<MemoryRouter
-								initialEntries={['/registration/zipcode']}
+								initialEntries={[`/registration/${at}`]}
 							>
 								<Routes>
 									<Route
@@ -113,6 +137,23 @@ describe('registration — the picked topic in the summary', () => {
 		await waitFor(() =>
 			expect(update).toHaveBeenCalledWith({ mainTopic: debtEn })
 		);
+	});
+
+	it('follows a language switch for a topic picked but not yet confirmed', async () => {
+		getTopics.mockResolvedValue([debtEn]);
+		const update = vi.fn();
+		const onTopicStep = { steps: pickingSteps, at: 'topic-selection' };
+		const view = render(screenFor('de', {}, update, onTopicStep));
+		await waitFor(() =>
+			expect(document.body.textContent).toContain('Schulden')
+		);
+
+		view.rerender(screenFor('en', {}, update, onTopicStep));
+
+		await waitFor(() =>
+			expect(document.body.textContent).toContain('Debt')
+		);
+		expect(document.body.textContent).not.toContain('Schulden');
 	});
 
 	it('keeps the picture of the category the topic was picked in', () => {

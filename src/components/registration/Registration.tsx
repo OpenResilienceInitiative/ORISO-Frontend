@@ -423,8 +423,9 @@ export const Registration = () => {
 	);
 
 	/* A catalogue topic (one with an `icon`) arrives in the language it was
-	   fetched in. When the visitor switches language on a later step, fetch it
-	   again so the summary follows the switch. */
+	   fetched in. When the visitor switches language, fetch it again so the
+	   summary follows the switch. Only a fetched match counts as done; a failed
+	   fetch keeps the old copy and is tried again on the next step. */
 	const catalogueTopicId = mergedRegistrationData.mainTopic?.icon
 		? mergedRegistrationData.mainTopic.id
 		: undefined;
@@ -441,14 +442,26 @@ export const Registration = () => {
 			const fresh = topics?.find(
 				(topic) => topic.id === catalogueTopicId
 			);
-			if (cancelled) return;
+			if (cancelled || !fresh) return;
 			setTopicCopyLocale(locale);
-			if (fresh) updateRegistrationData?.({ mainTopic: fresh });
+			updateRegistrationData?.({ mainTopic: fresh });
+			// A pick not yet committed lives in stepData, which wins the merge.
+			setStepData((pending) =>
+				pending.mainTopic?.id === fresh.id
+					? { ...pending, mainTopic: fresh }
+					: pending
+			);
 		})();
 		return () => {
 			cancelled = true;
 		};
-	}, [catalogueTopicId, locale, topicCopyLocale, updateRegistrationData]);
+	}, [
+		catalogueTopicId,
+		currStepIndex,
+		locale,
+		topicCopyLocale,
+		updateRegistrationData
+	]);
 	// Same data the payload reads, so the copy and the request agree.
 	const joinsTheGroup =
 		getGroupJoin({

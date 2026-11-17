@@ -517,6 +517,25 @@ describe('topic catalogue from the API', () => {
 		);
 	});
 
+	it('shows the shipped picture the platform admin chose for a known category', () => {
+		const [crisisPicture] = buildRegistrationTopicPresentationGroups(
+			catalogueTopics,
+			'de',
+			[{ ...alterGroup, icon: '/service/topic/public/icons/cat-05.png' }]
+		).map(({ icon }) => icon);
+		const [otherShipped] = buildRegistrationTopicPresentationGroups(
+			catalogueTopics,
+			'de',
+			[{ ...alterGroup, icon: '/service/topic/public/icons/cat-06.png' }]
+		).map(({ icon }) => icon);
+
+		expect(crisisPicture).toBe(getRegistrationCategoryIcon(10002));
+		expect(crisisPicture).not.toBe(getRegistrationCategoryIcon(10001));
+		expect(otherShipped).toMatch(
+			/\/service\/topic\/public\/icons\/cat-06\.png$/
+		);
+	});
+
 	it('gives every category its own panel id, also a category the frontend does not know', () => {
 		const groups = buildRegistrationTopicPresentationGroups(
 			catalogueTopics,

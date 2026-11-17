@@ -846,12 +846,23 @@ const matchCategoryDefinition = (
 	return best;
 };
 
-const resolveGroupIcon = (
-	icon: string,
-	definition?: PresentationCategoryDefinition
-) => {
+/** The category pictures the topic service ships that the frontend also bundles. */
+const bundledCategoryIconByShippedFile: Record<string, string> = {
+	'cat-01.png': category01,
+	'cat-02.png': category02,
+	'cat-03.png': category03,
+	'cat-04.png': category04,
+	'cat-05.png': category05
+};
+
+/** The picture the platform admin chose; bundled when the frontend has it, else from the topic service. */
+const resolveGroupIcon = (icon: string) => {
 	if (!isShippedIcon(icon)) return icon;
-	return definition?.icon || resolveShippedIcon(icon);
+	return (
+		bundledCategoryIconByShippedFile[
+			icon.slice(SHIPPED_ICON_PATH.length)
+		] || resolveShippedIcon(icon)
+	);
 };
 
 /**
@@ -904,7 +915,7 @@ const buildCatalogueGroups = (
 				categoryId,
 				name: group.name,
 				icon: group.icon
-					? resolveGroupIcon(group.icon, definition)
+					? resolveGroupIcon(group.icon)
 					: definition?.icon || category01,
 				topicIds: placements.map(({ topic }) => topic.id),
 				topics: placements
