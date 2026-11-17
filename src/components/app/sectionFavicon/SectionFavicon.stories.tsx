@@ -85,7 +85,7 @@ const IconRow = ({
 				}}
 			>
 				<img src={href} width={16} height={16} alt="" />
-				{label(item)} – ORISO
+				{label(item)}
 			</span>
 		</li>
 	);
