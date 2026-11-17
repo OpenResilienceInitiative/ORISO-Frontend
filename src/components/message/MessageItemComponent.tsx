@@ -1268,7 +1268,8 @@ export const MessageItemComponent = ({
 	);
 	const grantNotificationPolicy = emailCollectionSetupPolicy(
 		tenant?.settings,
-		erstantwortModality
+		erstantwortModality,
+		userData
 	);
 	useEffect(
 		() => setShowGrantNotifications(false),

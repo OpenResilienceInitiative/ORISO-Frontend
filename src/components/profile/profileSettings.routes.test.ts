@@ -139,3 +139,36 @@ describe('Settings → "Meine Links" (#1894)', () => {
 		}
 	);
 });
+
+describe('Settings for a temporary account (UserService#1662)', () => {
+	const shownFor = (enabled: boolean, userData: object) => {
+		const group = profileRoutesSettings([], {
+			releaseToggles: { enableNewNotifications: enabled }
+		} as AppConfigInterface).find(
+			(entry) => isTabGroup(entry) && entry.url === '/email'
+		);
+		if (!group || !isTabGroup(group)) throw new Error('missing tab');
+		return group.elements
+			.filter((entry) =>
+				solveCondition(entry.condition, userData as never, [])
+			)
+			.map((entry) => entry.component);
+	};
+
+	it.each([true, false])(
+		'hides the e-mail and browser notification panels (modern=%s), and they come back after keeping',
+		async (enabled) => {
+			const { BrowserNotification } = await import(
+				'./BrowserNotifications'
+			);
+			const temporary = shownFor(enabled, { temporaryAccount: true });
+			expect(temporary).not.toContain(EmailNotification);
+			expect(temporary).not.toContain(BrowserNotification);
+
+			const kept = shownFor(enabled, { temporaryAccount: false });
+			expect(kept).toContain(
+				enabled ? EmailNotification : BrowserNotification
+			);
+		}
+	);
+});
