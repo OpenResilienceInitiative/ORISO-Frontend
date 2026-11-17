@@ -38,6 +38,10 @@ import { callRoomName } from '../call/callRoomName';
 import { canAskerSeeCallInfo } from '../call/askerCallInfo/askerCallInfo';
 import { AskerCallInfo } from '../call/askerCallInfo/AskerCallInfoDialog';
 import { focusChatComposer } from '../call/askerCallInfo/focusChatComposer';
+import { mediumOfCall } from '../call/askerCallInfo/askerSelfBooking';
+import type { SelfBookingMedium } from '../../api/apiSessionAppointments';
+import { useAppointmentNotice } from '../sessionsList/timeline/useAppointmentNotice';
+import { notifyAppointmentsChanged } from '../sessionsList/timeline/conversationAppointments';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import { resolveCallFeatureGates } from '../call/callFeatureGates';
 import {
@@ -216,6 +220,10 @@ export const SessionMenu = (props: SessionMenuProps) => {
 	 */
 	const [offeredCall, setOfferedCall] = useState<CallKind | null>(null);
 	const [askerCallInfoOpen, setAskerCallInfoOpen] = useState(false);
+	/* FE#1050: what the asker clicked — "Termin anfragen" books that medium. */
+	const [askerCallMedium, setAskerCallMedium] =
+		useState<SelfBookingMedium>('VIDEO');
+	const sendAppointmentNotice = useAppointmentNotice();
 	const closeMenu = useCallback(() => {
 		setFlyoutOpen(false);
 		setOfferedCall(null);
@@ -704,6 +712,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 	const handleCallButton = (isVideoActivated: boolean) => {
 		if (askerCallInfoShown) {
 			setOfferedCall(null);
+			setAskerCallMedium(mediumOfCall(isVideoActivated));
 			setAskerCallInfoOpen(true);
 			return;
 		}
@@ -774,7 +783,20 @@ export const SessionMenu = (props: SessionMenuProps) => {
 				<AskerCallInfo
 					sessionId={activeSession.item.id}
 					open={askerCallInfoOpen}
+					medium={askerCallMedium}
 					onClose={() => setAskerCallInfoOpen(false)}
+					onBooked={(appointment) => {
+						notifyAppointmentsChanged();
+						/* The counsellor learns of it as the asker learns of
+						   a counsellor's appointment: a line in the chat. */
+						void sendAppointmentNotice({
+							kind: 'created',
+							start: new Date(appointment.startTime),
+							end: new Date(appointment.endTime),
+							sessionId: activeSession.item.id,
+							matrixRoomId: activeSession.item.matrixRoomId
+						});
+					}}
 					onRequestTime={() => {
 						setAskerCallInfoOpen(false);
 						// After the dialog has handed focus back to its trigger.

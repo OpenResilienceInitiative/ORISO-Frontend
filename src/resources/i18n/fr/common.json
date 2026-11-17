@@ -5337,7 +5337,24 @@
 			"requestHint": "Écrivez dans le chat à votre conseiller ou conseillère quand cela vous convient.",
 			"request": "Demander un rendez-vous",
 			"loading": "Chargement du rendez-vous …",
-			"error": "Le rendez-vous n’a pas pu être chargé. Veuillez réessayer plus tard."
+			"error": "Le rendez-vous n’a pas pu être chargé. Veuillez réessayer plus tard.",
+			"booking": {
+				"title": "Réserver un rendez-vous",
+				"description": {
+					"video": "Choisissez un créneau libre de votre conseiller ou conseillère pour un appel vidéo. Le rendez-vous est réservé immédiatement.",
+					"phone": "Choisissez un créneau libre de votre conseiller ou conseillère pour un appel téléphonique. Le rendez-vous est réservé immédiatement."
+				},
+				"loading": "Chargement des créneaux libres …",
+				"error": "Les créneaux libres n'ont pas pu être chargés. Veuillez réessayer plus tard.",
+				"none": "Votre conseiller ou conseillère n'a pas de créneau libre dans les deux prochaines semaines.",
+				"writeInChat": "Écrire dans le chat",
+				"back": "Retour",
+				"confirm": "Réserver le rendez-vous",
+				"taken": "Ce créneau vient d'être pris. Veuillez en choisir un autre.",
+				"failed": "Le rendez-vous n'a pas pu être réservé. Veuillez réessayer.",
+				"booked": "Votre rendez-vous est réservé. Votre conseiller ou conseillère est informé(e) dans le chat.",
+				"limit": "Un rendez-vous est déjà réservé pour cette conversation."
+			}
 		},
 		"incomingCall": {
 			"description": "appelle...",

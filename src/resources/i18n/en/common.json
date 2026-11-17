@@ -5302,7 +5302,24 @@
 			"requestHint": "Write to your counsellor in the chat when it suits you.",
 			"request": "Request an appointment",
 			"loading": "Loading the appointment …",
-			"error": "The appointment could not be loaded right now. Please try again later."
+			"error": "The appointment could not be loaded right now. Please try again later.",
+			"booking": {
+				"title": "Book an appointment",
+				"description": {
+					"video": "Choose a free time of your counsellor for a video call. The appointment is booked at once.",
+					"phone": "Choose a free time of your counsellor for a phone call. The appointment is booked at once."
+				},
+				"loading": "Loading free times …",
+				"error": "The free times could not be loaded right now. Please try again later.",
+				"none": "Your counsellor has no free time in the next two weeks.",
+				"writeInChat": "Write in the chat",
+				"back": "Back",
+				"confirm": "Book appointment",
+				"taken": "This time has just been taken. Please choose another one.",
+				"failed": "The appointment could not be booked. Please try again.",
+				"booked": "Your appointment is booked. Your counsellor is notified in the chat.",
+				"limit": "An appointment is already booked for this conversation."
+			}
 		},
 		"incomingCall": {
 			"description": "calls...",

@@ -29,6 +29,15 @@ export interface SessionAppointmentSlot {
 	kind?: SessionAppointmentKind;
 }
 
+/** A time the asker may book with the counsellor (FE#1050). UTC instants. */
+export interface AppointmentSlot {
+	startTime: string;
+	endTime: string;
+}
+
+/** How a self-booked appointment takes place: what the asker clicked. */
+export type SelfBookingMedium = 'VIDEO' | 'PHONE';
+
 // A backend without these endpoints must leave the app untouched: every
 // failure rejects for the caller to handle, only a 401 keeps the session logic.
 const READ_HANDLING = [FETCH_ERRORS.CATCH_ALL_EXCEPT_UNAUTHORIZED];
@@ -89,4 +98,48 @@ export const apiCancelSessionAppointment = (
 		url: `${endpoints.sessionAppointments(sessionId)}/${appointmentId}/cancel`,
 		method: FETCH_METHODS.POST,
 		responseHandling: WRITE_HANDLING
+	});
+
+/**
+ * FE#1050: the counsellor's free slots that start in [from, to), earliest
+ * first. The server allows at most fourteen days and offers nothing inside
+ * its lead time.
+ */
+export const apiGetAppointmentSlots = (
+	sessionId: number,
+	from: Date,
+	to: Date,
+	medium: SelfBookingMedium
+): Promise<AppointmentSlot[]> => {
+	const query = new URLSearchParams({
+		from: from.toISOString(),
+		to: to.toISOString(),
+		medium
+	});
+	return fetchData({
+		url: `${endpoints.sessionAppointmentSlots(sessionId)}?${query}`,
+		method: FETCH_METHODS.GET,
+		responseHandling: READ_HANDLING
+	});
+};
+
+/**
+ * FE#1050: books one offered slot. A 409 rejects with the `Response`, whose
+ * `X-Reason` tells the cases apart: `SELF_BOOKING_LIMIT_REACHED` (the
+ * conversation already has an upcoming appointment),
+ * `SLOT_OUTSIDE_BOOKING_WINDOW`, or none (the time was taken meanwhile).
+ */
+export const apiBookAppointmentSlot = (
+	sessionId: number,
+	slot: AppointmentSlot & { kind: SelfBookingMedium }
+): Promise<SessionAppointment> =>
+	fetchData({
+		url: `${endpoints.sessionAppointmentSlots(sessionId)}/booking`,
+		method: FETCH_METHODS.POST,
+		bodyData: JSON.stringify(slot),
+		responseHandling: [
+			FETCH_SUCCESS.CONTENT,
+			FETCH_ERRORS.CONFLICT_WITH_RESPONSE,
+			FETCH_ERRORS.CATCH_ALL_EXCEPT_UNAUTHORIZED
+		]
 	});

@@ -1,13 +1,12 @@
 import * as React from 'react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Box, Button, IconButton, Typography } from '@mui/material';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Box, IconButton, Typography } from '@mui/material';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
-import dayjs, { Dayjs } from 'dayjs';
+import type { Dayjs } from 'dayjs';
 import { useTranslation } from 'react-i18next';
-import { OrisoCalendar } from '../form/OrisoCalendar';
+import { AppointmentSlotPicker } from './AppointmentSlotPicker';
 import { RegistrationFooter } from '../registrationFooter/RegistrationFooter';
 import { registrationMd3 } from '../registration/registrationDesign/registrationDesign';
-import { orisoDateTimeColors } from '../form/orisoDateTimeDesign';
 import { translateWithFallback } from '../../utils/translationFallback';
 import { prefersReducedMotion } from '../../hooks/usePrefersReducedMotion';
 
@@ -73,9 +72,6 @@ export const AppointmentBookingPanel = ({
 			translateWithFallback(t, `booking.appointment.${key}`, fallback),
 		[t]
 	);
-	/* Nothing in the past can be booked; the month before today stays
-	   reachable, its days do not. */
-	const notBefore = useMemo(() => dayjs().startOf('day'), []);
 	const [day, setDay] = useState<Dayjs | null>(null);
 	const [time, setTime] = useState<string | null>(null);
 	const [leaving, setLeaving] = useState(false);
@@ -144,32 +140,6 @@ export const AppointmentBookingPanel = ({
 	}, []);
 
 	const back = backLabel ?? tr('back', 'Zurück zum Warteraum');
-	/* One key, seven languages: the calendar wants single letters starting on
-	   Sunday, and every language spells them differently. */
-	const dayLabels = tr('weekdays', 'S,M,D,M,D,F,S').split(',');
-	/* Today is bookable, but the hours that have gone are not: `notBefore`
-	   compares calendar days, so without this the grid still offered 09:00 at
-	   half past four and `confirm` handed a past ISO datetime on. */
-	const slots = useMemo(() => {
-		if (!day) {
-			return [];
-		}
-		const offered = slotsForDay(day);
-		const now = dayjs();
-		if (!day.isSame(now, 'day')) {
-			return offered;
-		}
-		return offered.filter((slot) => {
-			const [hour, minute] = slot.split(':').map(Number);
-			return day
-				.hour(hour)
-				.minute(minute)
-				.second(0)
-				.millisecond(0)
-				.isAfter(now);
-		});
-	}, [day, slotsForDay]);
-
 	const selectDay = (next: Dayjs) => {
 		setDay(next);
 		/* A time only means something together with its day — another day may
@@ -285,109 +255,16 @@ export const AppointmentBookingPanel = ({
 						flex: 1,
 						minHeight: 0,
 						overflowY: 'auto',
-						display: 'flex',
-						/* Side by side once there is room: the calendar keeps
-						   its own width and the times fill the space next to
-						   it, instead of leaving that half of the screen empty
-						   and pushing the times below the fold (Frank,
-						   2026-09-07, arrow on the review screenshot). */
-						flexDirection: { xs: 'column', md: 'row' },
-						alignItems: { xs: 'center', md: 'flex-start' },
-						gap: { xs: 2, sm: 2.5, md: 4 },
 						pb: { xs: '104px', sm: '120px' }
 					}}
 				>
-					{/* The design system's month grid, not a second calendar:
-					    days, months and years, both dropdowns, the Figma's
-					    docked container. It may shrink below its 328 px on a
-					    375 pt phone — the cells inside need 304. */}
-					<Box
-						sx={{
-							'maxWidth': '100%',
-							'flex': 'none',
-							'& > *': { maxWidth: '100%' }
-						}}
-					>
-						<OrisoCalendar
-							value={day}
-							onChange={selectDay}
-							minDate={notBefore}
-							weekStart={1}
-							dayLabels={dayLabels}
-						/>
-					</Box>
-
-					<Box sx={{ width: '100%', minWidth: 0 }}>
-						<Typography
-							component="h2"
-							sx={{
-								fontSize: 14,
-								fontWeight: 600,
-								color: registrationMd3.onSurface,
-								mb: 1
-							}}
-						>
-							{tr('times', 'Freie Zeiten')}
-							{day ? ` — ${day.format('DD.MM.YYYY')}` : ''}
-						</Typography>
-						{!day && (
-							<Typography
-								data-testid="appointment-booking-hint"
-								sx={{
-									fontSize: 14,
-									color: registrationMd3.onSurfaceVariant
-								}}
-							>
-								{tr(
-									'pickDay',
-									'Bitte wählen Sie zuerst einen Tag im Kalender.'
-								)}
-							</Typography>
-						)}
-						{day && slots.length === 0 && (
-							<Typography
-								data-testid="appointment-booking-empty"
-								sx={{
-									fontSize: 14,
-									color: registrationMd3.onSurfaceVariant
-								}}
-							>
-								{tr(
-									'noTimes',
-									'An diesem Tag ist keine Zeit frei. Bitte wählen Sie einen anderen Tag.'
-								)}
-							</Typography>
-						)}
-						{day && slots.length > 0 && (
-							<Box
-								role="group"
-								aria-label={tr('times', 'Freie Zeiten')}
-								sx={{
-									display: 'flex',
-									flexWrap: 'wrap',
-									gap: 1
-								}}
-							>
-								{slots.map((slot) => (
-									<Button
-										key={slot}
-										variant={
-											slot === time
-												? 'contained'
-												: 'outlined'
-										}
-										size="small"
-										aria-pressed={slot === time}
-										onClick={() => setTime(slot)}
-										data-testid={`appointment-booking-slot-${slot}`}
-										sx={slotButtonSx}
-									>
-										{slot}
-									</Button>
-								))}
-							</Box>
-						)}
-					</Box>
+					<AppointmentSlotPicker
+						day={day}
+						time={time}
+						onDayChange={selectDay}
+						onTimeChange={setTime}
+						slotsForDay={slotsForDay}
+					/>
 				</Box>
 			</Box>
 
@@ -409,22 +286,3 @@ export const AppointmentBookingPanel = ({
 		</Box>
 	);
 };
-
-/**
- * A time is a chip, not a form button: the theme pads an outlined button to
- * 50 px, which turns six times into a wall. 40 px is the M3 chip height and
- * still a finger's target.
- */
-const slotButtonSx = {
-	'minHeight': 40,
-	'minWidth': 84,
-	'py': 0,
-	'px': 1.75,
-	'fontSize': 14,
-	'lineHeight': '20px',
-	'borderRadius': '20px',
-	'&.MuiButton-outlined': {
-		borderColor: orisoDateTimeColors.outline,
-		color: orisoDateTimeColors.onSurface
-	}
-} as const;

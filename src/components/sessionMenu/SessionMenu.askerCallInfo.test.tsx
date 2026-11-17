@@ -37,8 +37,11 @@ vi.mock('../call/startRoomCall', () => ({ startRoomCall }));
 const apiGetSessionAppointments = vi.hoisted(() =>
 	vi.fn().mockResolvedValue([])
 );
+const apiGetAppointmentSlots = vi.hoisted(() => vi.fn().mockResolvedValue([]));
 vi.mock('../../api/apiSessionAppointments', () => ({
-	apiGetSessionAppointments
+	apiGetSessionAppointments,
+	apiGetAppointmentSlots,
+	apiBookAppointmentSlot: vi.fn()
 }));
 
 // Browser-only animation renderers have no canvas in jsdom.
@@ -214,7 +217,30 @@ describe('SessionMenu call buttons for an advice seeker', () => {
 		}
 	);
 
-	it('"Termin anfragen" closes the information and opens the composer', async () => {
+	it.each([
+		['video', 'VIDEO'],
+		['audio', 'PHONE']
+	] as const)(
+		'"Termin anfragen" after the %s button opens the free %s times (FE#1050)',
+		async (kind, medium) => {
+			render(<Menu userData={asker} />);
+			fireEvent.click(headerButton(kind)!);
+			fireEvent.click(
+				await screen.findByTestId('asker-call-info-request')
+			);
+			await waitFor(() =>
+				expect(apiGetAppointmentSlots).toHaveBeenCalledWith(
+					-2,
+					expect.any(Date),
+					expect.any(Date),
+					medium
+				)
+			);
+			expect(startRoomCall).not.toHaveBeenCalled();
+		}
+	);
+
+	it('without free times, "Im Chat schreiben" opens the composer', async () => {
 		const composer = document.createElement('div');
 		composer.className = 'textarea__input';
 		composer.innerHTML = '<div contenteditable="true" tabindex="0"></div>';
@@ -222,6 +248,7 @@ describe('SessionMenu call buttons for an advice seeker', () => {
 		render(<Menu userData={asker} />);
 		fireEvent.click(headerButton('video')!);
 		fireEvent.click(await screen.findByTestId('asker-call-info-request'));
+		fireEvent.click(await screen.findByTestId('asker-self-booking-chat'));
 		await waitFor(() =>
 			expect(
 				document.activeElement?.getAttribute('contenteditable')

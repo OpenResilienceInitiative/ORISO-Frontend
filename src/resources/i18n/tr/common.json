@@ -5337,7 +5337,24 @@
 			"requestHint": "Size ne zaman uygun olduğunu danışmanınıza sohbette yazın.",
 			"request": "Randevu iste",
 			"loading": "Randevu yükleniyor …",
-			"error": "Randevu şu anda yüklenemedi. Lütfen daha sonra tekrar deneyin."
+			"error": "Randevu şu anda yüklenemedi. Lütfen daha sonra tekrar deneyin.",
+			"booking": {
+				"title": "Randevu al",
+				"description": {
+					"video": "Görüntülü arama için danışmanınızın boş bir zamanını seçin. Randevu hemen alınır.",
+					"phone": "Telefon görüşmesi için danışmanınızın boş bir zamanını seçin. Randevu hemen alınır."
+				},
+				"loading": "Boş zamanlar yükleniyor …",
+				"error": "Boş zamanlar şu anda yüklenemedi. Lütfen daha sonra tekrar deneyin.",
+				"none": "Danışmanınızın önümüzdeki iki hafta içinde boş zamanı yok.",
+				"writeInChat": "Sohbete yaz",
+				"back": "Geri",
+				"confirm": "Randevu al",
+				"taken": "Bu zaman az önce alındı. Lütfen başka bir zaman seçin.",
+				"failed": "Randevu alınamadı. Lütfen tekrar deneyin.",
+				"booked": "Randevunuz alındı. Danışmanınız sohbette bilgilendirilir.",
+				"limit": "Bu görüşme için zaten bir randevu alınmış."
+			}
 		},
 		"incomingCall": {
 			"description": "arar.",

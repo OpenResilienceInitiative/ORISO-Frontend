@@ -5354,7 +5354,24 @@
 			"requestHint": "Schreiben Sie Ihrer Beratungsperson im Chat, wann es Ihnen passt.",
 			"request": "Termin anfragen",
 			"loading": "Der Termin wird geladen …",
-			"error": "Der Termin konnte gerade nicht geladen werden. Bitte versuchen Sie es später noch einmal."
+			"error": "Der Termin konnte gerade nicht geladen werden. Bitte versuchen Sie es später noch einmal.",
+			"booking": {
+				"title": "Termin buchen",
+				"description": {
+					"video": "Wählen Sie eine freie Zeit Ihrer Beratungsperson für einen Videoanruf. Der Termin ist sofort gebucht.",
+					"phone": "Wählen Sie eine freie Zeit Ihrer Beratungsperson für einen Telefonanruf. Der Termin ist sofort gebucht."
+				},
+				"loading": "Freie Zeiten werden geladen …",
+				"error": "Die freien Zeiten konnten gerade nicht geladen werden. Bitte versuchen Sie es später noch einmal.",
+				"none": "Ihre Beratungsperson hat in den nächsten zwei Wochen keine freie Zeit.",
+				"writeInChat": "Im Chat schreiben",
+				"back": "Zurück",
+				"confirm": "Termin buchen",
+				"taken": "Diese Zeit ist gerade vergeben worden. Bitte wählen Sie eine andere.",
+				"failed": "Der Termin konnte nicht gebucht werden. Bitte versuchen Sie es noch einmal.",
+				"booked": "Ihr Termin ist gebucht. Ihre Beratungsperson wird im Chat benachrichtigt.",
+				"limit": "Für dieses Gespräch ist schon ein Termin gebucht."
+			}
 		},
 		"incomingCall": {
 			"description": "ruft an...",

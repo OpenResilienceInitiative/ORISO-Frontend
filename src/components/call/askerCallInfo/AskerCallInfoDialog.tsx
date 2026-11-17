@@ -11,7 +11,10 @@ import { useTranslation } from 'react-i18next';
 import EventOutlinedIcon from '@mui/icons-material/EventOutlined';
 import { M3Dialog, type M3DialogAction } from '../../m3Dialog/M3Dialog';
 import {
+	apiBookAppointmentSlot,
+	apiGetAppointmentSlots,
 	apiGetSessionAppointments,
+	type SelfBookingMedium,
 	type SessionAppointment
 } from '../../../api/apiSessionAppointments';
 import { MODALITY_ICON } from '../../sessionsList/timeline/AppointmentKindGlyph';
@@ -23,6 +26,11 @@ import {
 	type AskerCallInfoState,
 	type AskerCallMedium
 } from './askerCallInfo';
+import {
+	AskerSelfBookingDialog,
+	type BookSlot,
+	type LoadSlots
+} from './AskerSelfBookingDialog';
 import './askerCallInfo.styles.scss';
 
 const GLYPH: Record<AskerCallMedium, EntryModality> = {
@@ -43,6 +51,11 @@ export interface AskerCallInfoDialogProps {
 	onRequestTime?: () => void;
 	/** Phones: the caller decides (`useResponsive().untilL`). */
 	fullScreen?: boolean;
+	/**
+	 * FE#1050: the asker has just booked the appointment shown, or a booking
+	 * was refused because the conversation already has this one.
+	 */
+	notice?: 'booked' | 'limit';
 }
 
 export const AskerCallInfoDialog = ({
@@ -50,7 +63,8 @@ export const AskerCallInfoDialog = ({
 	onClose,
 	state,
 	onRequestTime,
-	fullScreen
+	fullScreen,
+	notice
 }: AskerCallInfoDialogProps) => {
 	const { t, i18n } = useTranslation();
 	const locale = normalizeTimelineLocale(
@@ -83,6 +97,11 @@ export const AskerCallInfoDialog = ({
 			fullScreen={fullScreen}
 			data-testid="asker-call-info"
 		>
+			{state.status === 'appointment' && notice && (
+				<p className="askerCallInfo__booked" role="status">
+					{t(`videoCall.askerInfo.booking.${notice}`)}
+				</p>
+			)}
 			{state.status === 'appointment' && (
 				<AppointmentCard
 					label={t('videoCall.askerInfo.next')}
@@ -151,7 +170,10 @@ const AppointmentCard = ({
 
 /**
  * The dialog with its data: reads the conversation's appointments each time
- * it opens (the asker may read them, `SessionAppointmentService`).
+ * it opens (the asker may read them, `SessionAppointmentService`). With a
+ * `medium` — the button the asker clicked — "Termin anfragen" opens the
+ * counsellor's free times to book one (FE#1050); without one it is the
+ * plain `onRequestTime`.
  */
 export const AskerCallInfo = ({
 	sessionId,
@@ -159,16 +181,32 @@ export const AskerCallInfo = ({
 	onClose,
 	onRequestTime,
 	fullScreen,
-	load = apiGetSessionAppointments
-}: Omit<AskerCallInfoDialogProps, 'state'> & {
+	medium,
+	onBooked,
+	load = apiGetSessionAppointments,
+	loadSlots = apiGetAppointmentSlots,
+	bookSlot = apiBookAppointmentSlot
+}: Omit<AskerCallInfoDialogProps, 'state' | 'notice'> & {
 	sessionId: number;
+	medium?: SelfBookingMedium;
+	onBooked?: (appointment: SessionAppointment) => void;
 	load?: (sessionId: number) => Promise<SessionAppointment[]>;
+	loadSlots?: LoadSlots;
+	bookSlot?: BookSlot;
 }) => {
 	const [appointments, setAppointments] = useState<
 		SessionAppointment[] | 'error' | undefined
 	>();
+	const [booking, setBooking] = useState(false);
+	const [notice, setNotice] = useState<'booked' | 'limit'>();
+	/* Counts the reads; a refused booking reads the appointments again. */
+	const [reads, setReads] = useState(0);
 	useEffect(() => {
-		if (!open) return undefined;
+		if (!open) {
+			setBooking(false);
+			setNotice(undefined);
+			return undefined;
+		}
 		let active = true;
 		setAppointments(undefined);
 		load(sessionId).then(
@@ -178,14 +216,44 @@ export const AskerCallInfo = ({
 		return () => {
 			active = false;
 		};
-	}, [open, sessionId, load]);
+	}, [open, sessionId, load, reads]);
+
+	if (open && booking && medium) {
+		return (
+			<AskerSelfBookingDialog
+				sessionId={sessionId}
+				medium={medium}
+				fullScreen={fullScreen}
+				loadSlots={loadSlots}
+				bookSlot={bookSlot}
+				onClose={onClose}
+				onBack={() => setBooking(false)}
+				onWriteInChat={onRequestTime}
+				onBooked={(appointment) => {
+					setAppointments((known) => [
+						...(Array.isArray(known) ? known : []),
+						appointment
+					]);
+					setNotice('booked');
+					setBooking(false);
+					onBooked?.(appointment);
+				}}
+				onLimitReached={() => {
+					setNotice('limit');
+					setBooking(false);
+					setReads((count) => count + 1);
+				}}
+			/>
+		);
+	}
 
 	return (
 		<AskerCallInfoDialog
 			open={open}
 			onClose={onClose}
-			onRequestTime={onRequestTime}
+			onRequestTime={medium ? () => setBooking(true) : onRequestTime}
 			fullScreen={fullScreen}
+			notice={notice}
 			state={askerCallInfoState(appointments, new Date())}
 		/>
 	);
