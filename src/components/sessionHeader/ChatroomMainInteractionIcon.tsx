@@ -23,7 +23,9 @@ interface ChatroomMainInteractionIconProps {
 	 */
 	addPending?: boolean;
 	className?: string;
-	onAddClick?: () => void;
+	onAddClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
+	/** The "+" opens a menu: its open state for `aria-expanded`. */
+	addExpanded?: boolean;
 	showAddIcon?: boolean;
 	type: ChatroomConversationIconType;
 	/**
@@ -47,6 +49,7 @@ export const ChatroomMainInteractionIcon = ({
 	addLabel,
 	addTooltip = true,
 	addPending = false,
+	addExpanded,
 	className,
 	onAddClick,
 	showAddIcon = false,
@@ -95,6 +98,10 @@ export const ChatroomMainInteractionIcon = ({
 						className="chatroomMainInteractionIcon__add chatroomMainInteractionIcon__add--interactive"
 						aria-label={addLabel}
 						data-tour-target="session-supervisor-add"
+						aria-haspopup={
+							addExpanded === undefined ? undefined : 'menu'
+						}
+						aria-expanded={addExpanded}
 						onClick={onAddClick}
 					>
 						{addContent}

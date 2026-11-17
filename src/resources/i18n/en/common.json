@@ -5628,6 +5628,11 @@
 			"status": {
 				"on": "Supervision on",
 				"off": "Supervision off"
+			},
+			"plusMenu": {
+				"menuLabel": "Add or hand over",
+				"supervisionHint": "A colleague watches along. The case stays with you.",
+				"handoverHint": "The case moves to a colleague. You hand it over completely."
 			}
 		}
 	},

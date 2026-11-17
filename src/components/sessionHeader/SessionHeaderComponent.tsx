@@ -129,6 +129,10 @@ import {
 } from './SupervisorConsultantPicker';
 import { useSupervisorConsultantDirectory } from './useSupervisorConsultantDirectory';
 import { resolveRoomHeaderDensity } from './roomHeaderDensity';
+import { HeaderPlusMenu, type PlusMenuAnchor } from './HeaderPlusMenu';
+import { canRecommendFurtherCounselling } from '../furtherCounselling/furtherCounsellingRules';
+import { useCaseHandoverOffer } from '../caseHandover/useCaseHandoverOffer';
+import { CaseHandoverOffer } from '../caseHandover/CaseHandoverOffer';
 import { resolveAssignedConsultantLabel } from '../session/assignedConsultantLabel';
 export interface SessionHeaderProps {
 	consultantAbsent?: SessionConsultantInterface;
@@ -271,6 +275,13 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		: 'loading';
 	const isLoadingSupervisors = supervisorLoadState === 'loading';
 	const [isSupervisorModalOpen, setIsSupervisorModalOpen] = useState(false);
+	// Frank 17.11.2026: on desktop the "+" also offers "Beratung übergeben"
+	// to the assigned counsellor — the same audience and dialog as the ⋮
+	// entry (FE#2250). The phone keeps its grey "+" and the ⋮ entry.
+	const caseHandover = useCaseHandoverOffer();
+	const plusButtonRef = useRef<HTMLElement | null>(null);
+	const [plusMenuAnchor, setPlusMenuAnchor] = useState<PlusMenuAnchor>();
+	const closePlusMenu = useCallback(() => setPlusMenuAnchor(undefined), []);
 	// FE#1960: "Termin anlegen" is a ⋮ menu entry; the appointment slot
 	// below the header owns the dialog and hands its opener up while
 	// creating is possible.
@@ -1182,6 +1193,29 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 						});
 						const canOpenSupervisorModal =
 							supervisorAddState.mode === 'interactive';
+						const canHandOverHere =
+							!untilL &&
+							canRecommendFurtherCounselling({
+								isRejectedCase:
+									Number(activeSession.item.status) ===
+									STATUS_REJECTED,
+								isSessionOwner:
+									Boolean(activeSession.consultant?.id) &&
+									String(activeSession.consultant.id) ===
+										String(userData.userId),
+								isConsultant: !!hasUserAuthority(
+									AUTHORITIES.CONSULTANT_DEFAULT,
+									userData
+								),
+								isEnquiryList:
+									type === SESSION_LIST_TYPES.ENQUIRY,
+								isSession: Boolean(activeSession.isSession),
+								isGroup: Boolean(activeSession.isGroup),
+								isSupervisor: Boolean(isSupervisor)
+							});
+						/* With the handover the "+" opens a menu; it never waits
+						   for the supervision answer, the menu entry does. */
+						const plusOpensMenu = canHandOverHere;
 						/* FE#1115: only an unaccepted enquiry sweeps; empty ones and waiting
 						   live chats keep their avatar stack. No empty slot is reserved. */
 						const isSearchingForConsultant =
@@ -1204,20 +1238,65 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 										!activeSession.isEnquiry
 									}
 									addLabel={translate(
-										supervisorAddState.labelKey
+										plusOpensMenu
+											? 'sessionHeader.supervisor.plusMenu.menuLabel'
+											: supervisorAddState.labelKey
 									)}
 									addPending={
+										!plusOpensMenu &&
 										supervisorAddState.mode === 'pending'
 									}
-									onAddClick={
-										canOpenSupervisorModal
-											? () =>
-													setIsSupervisorModalOpen(
-														true
-													)
+									addExpanded={
+										plusOpensMenu
+											? Boolean(plusMenuAnchor)
 											: undefined
 									}
+									onAddClick={
+										plusOpensMenu
+											? (event) => {
+													if (plusMenuAnchor) {
+														closePlusMenu();
+														return;
+													}
+													plusButtonRef.current =
+														event.currentTarget;
+													const rect =
+														event.currentTarget.getBoundingClientRect();
+													setPlusMenuAnchor({
+														left: rect.left,
+														bottom: rect.bottom
+													});
+												}
+											: canOpenSupervisorModal
+												? () =>
+														setIsSupervisorModalOpen(
+															true
+														)
+												: undefined
+									}
 								/>
+								{plusOpensMenu && plusMenuAnchor && (
+									<HeaderPlusMenu
+										anchor={plusMenuAnchor}
+										opener={plusButtonRef}
+										supervisionAvailable={
+											canOpenSupervisorModal
+										}
+										supervisionUnavailableLabel={
+											supervisorAddState.mode ===
+											'pending'
+												? undefined
+												: translate(
+														supervisorAddState.labelKey
+													)
+										}
+										onSupervision={() =>
+											setIsSupervisorModalOpen(true)
+										}
+										onHandover={caseHandover.handleOpen}
+										onClose={closePlusMenu}
+									/>
+								)}
 								{!isSearchingForConsultant && (
 									<ParticipantAvatarStack
 										{...HEADER_STACK_PROPS}
@@ -1404,6 +1483,8 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 						email={userData.email}
 					/>
 				)}
+
+			<CaseHandoverOffer handover={caseHandover} presentation="dialog" />
 
 			{/* Supervisor Management Modal - Rendered via Portal */}
 			{isSupervisionEnabledForCurrentChat &&

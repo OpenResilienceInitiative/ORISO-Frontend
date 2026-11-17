@@ -5703,6 +5703,11 @@
 			"status": {
 				"on": "Supervision an",
 				"off": "Supervision aus"
+			},
+			"plusMenu": {
+				"menuLabel": "Hinzufügen oder übergeben",
+				"supervisionHint": "Eine Kollegin oder ein Kollege schaut mit. Der Fall bleibt bei Ihnen.",
+				"handoverHint": "Der Fall geht ganz an eine Kollegin oder einen Kollegen. Sie geben ihn ab."
 			}
 		}
 	},

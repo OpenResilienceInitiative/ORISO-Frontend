@@ -902,6 +902,31 @@ export const ActiveConversation: Story = {
 	}
 };
 
+/**
+ * Frank 17.11.2026: on desktop the assigned counsellor's "+" opens a menu —
+ * "Supervisor verwalten" (a colleague watches along, the case stays) and
+ * "Beratung übergeben" (the case moves to a colleague). The phone keeps its
+ * grey "+" ("am Desktop verfügbar") and the ⋮ entry.
+ */
+export const PlusMenuSupervisionOrHandover: Story = {
+	globals: { viewport: { value: 'desktop1366', isRotated: false } },
+	render: () => renderSessionHeader(mockActiveConversation()),
+	play: async ({ canvasElement }) => {
+		const plus = await waitFor(() => {
+			const button = canvasElement.querySelector<HTMLButtonElement>(
+				'.chatroomMainInteractionIcon__add--interactive'
+			);
+			expect(button).not.toBeNull();
+			return button!;
+		});
+		await expect(plus).toHaveAttribute('aria-haspopup', 'menu');
+		await userEvent.click(plus);
+		const menu = await within(document.body).findByRole('menu');
+		await expect(within(menu).getAllByRole('menuitem')).toHaveLength(2);
+		await expect(plus).toHaveAttribute('aria-expanded', 'true');
+	}
+};
+
 /* The topic tag under the title is small text on a tinted fill: it must reach
    4.5:1 for every Träger, also a light one (#1499, Träger 2 = #b4ddee). */
 const expectLegibleTopicTag = async (canvasElement: HTMLElement) => {
