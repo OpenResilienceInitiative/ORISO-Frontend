@@ -199,9 +199,17 @@ export const buildFutureEntries = ({
 			}
 		};
 	});
-	return [...fromOccurrences, ...fromBookings]
-		.filter((entry) => !hasEnded(entry, now))
-		.sort((a, b) => a.start.getTime() - b.start.getTime());
+	return (
+		[...fromOccurrences, ...fromBookings]
+			.filter((entry) => !hasEnded(entry, now))
+			// Unanswered by its start, a request has expired (Frank, 17 Nov), as in
+			// the conversation's appointment slot.
+			.filter(
+				(entry) =>
+					!entry.requested || entry.start.getTime() > now.getTime()
+			)
+			.sort((a, b) => a.start.getTime() - b.start.getTime())
+	);
 };
 
 /** An entry without a mapped room only shows when no filter is active. */

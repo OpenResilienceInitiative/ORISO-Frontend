@@ -7664,7 +7664,8 @@
 			"noticeDaysOption_one": "{{count}} jour",
 			"slotMinutes": "Durée d’un rendez-vous",
 			"minutes": "{{count}} minutes",
-			"invalid": "La fin doit être après le début."
+			"invalid": "La fin doit être après le début.",
+			"loadFailed": "Chargement impossible. Réessayer"
 		},
 		"appointmentRequest": {
 			"status": "Demandé · attend votre réponse",

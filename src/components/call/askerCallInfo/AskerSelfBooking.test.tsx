@@ -127,6 +127,38 @@ describe('AskerCallInfo self-booking (FE#1050)', () => {
 		expect(onBooked).toHaveBeenCalledWith(booked);
 	});
 
+	it('forgets the chosen time when the conversation changes', async () => {
+		const loadSlots = vi.fn().mockResolvedValue([free]);
+		const bookSlot = vi.fn().mockResolvedValue(booked);
+		const props = {
+			open: true,
+			onClose: vi.fn(),
+			medium: 'VIDEO' as const,
+			load: () => Promise.resolve([]),
+			loadSlots,
+			bookSlot
+		};
+		const { rerender } = render(<AskerCallInfo sessionId={7} {...props} />);
+		fireEvent.click(await screen.findByTestId('asker-call-info-request'));
+		await pickFirstTime();
+
+		rerender(<AskerCallInfo sessionId={8} {...props} />);
+		await waitFor(() =>
+			expect(loadSlots).toHaveBeenLastCalledWith(
+				8,
+				expect.any(Date),
+				expect.any(Date),
+				'VIDEO'
+			)
+		);
+		await screen.findByTestId(
+			`appointment-booking-slot-${start.format('HH:mm')}`
+		);
+		fireEvent.click(screen.getByTestId('asker-self-booking-confirm'));
+
+		expect(bookSlot).not.toHaveBeenCalled();
+	});
+
 	it('says when the counsellor has no free time and offers the chat', async () => {
 		const onRequestTime = vi.fn();
 		await openBooking({

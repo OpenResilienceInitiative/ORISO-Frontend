@@ -7654,7 +7654,8 @@
 			"noticeDaysOption_one": "{{count}} Tag",
 			"slotMinutes": "Dauer eines Termins",
 			"minutes": "{{count}} Min.",
-			"invalid": "Das Ende muss nach dem Beginn liegen."
+			"invalid": "Das Ende muss nach dem Beginn liegen.",
+			"loadFailed": "Konnten nicht geladen werden. Erneut versuchen"
 		},
 		"appointmentRequest": {
 			"status": "Angefragt · wartet auf Sie",

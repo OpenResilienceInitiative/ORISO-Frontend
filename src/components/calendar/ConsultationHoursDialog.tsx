@@ -26,6 +26,8 @@ export interface ConsultationHoursDialogProps {
 	open: boolean;
 	hours: ConsultationHours;
 	fullScreen?: boolean;
+	/** A save is on its way: the dialog holds a second one back. */
+	saving?: boolean;
 	onSave: (hours: ConsultationHours) => void;
 	onClose: () => void;
 }
@@ -37,6 +39,7 @@ export const ConsultationHoursDialog = ({
 	open,
 	hours,
 	fullScreen,
+	saving = false,
 	onSave,
 	onClose
 }: ConsultationHoursDialogProps) => {
@@ -71,14 +74,14 @@ export const ConsultationHoursDialog = ({
 				{
 					label: t('calendar.consultationHours.save'),
 					primary: true,
-					disabled: invalid.length > 0,
+					disabled: saving || invalid.length > 0,
 					onClick: () =>
 						onSave(
-							consultationHoursToApi(rows, {
-								autoAccept,
-								noticeDays,
-								slotMinutes
-							})
+							consultationHoursToApi(
+								rows,
+								{ autoAccept, noticeDays, slotMinutes },
+								hours.windows
+							)
 						),
 					testId: 'consultation-hours-save'
 				}

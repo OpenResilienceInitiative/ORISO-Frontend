@@ -7579,7 +7579,8 @@
 			"noticeDaysOption_one": "{{count}} day",
 			"slotMinutes": "Length of an appointment",
 			"minutes": "{{count}} min",
-			"invalid": "The end must be after the start."
+			"invalid": "The end must be after the start.",
+			"loadFailed": "Could not be loaded. Try again"
 		},
 		"appointmentRequest": {
 			"status": "Requested · waiting for you",

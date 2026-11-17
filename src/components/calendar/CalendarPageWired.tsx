@@ -251,6 +251,21 @@ export const CalendarPageWired = () => {
 	   never offered for editing and saved as empty. */
 	const [consultationHours, setConsultationHours] =
 		useState<ConsultationHours>();
+	const [consultationHoursFailed, setConsultationHoursFailed] =
+		useState(false);
+	/** Read once on mount; again from ⋮ when that failed. */
+	const loadConsultationHours = useCallback(
+		(cancelled: () => boolean = () => false) => {
+			setConsultationHoursFailed(false);
+			apiGetCalendarConsultationHours().then(
+				(dto) =>
+					!cancelled() &&
+					setConsultationHours(consultationHoursFromApi(dto)),
+				() => !cancelled() && setConsultationHoursFailed(true)
+			);
+		},
+		[]
+	);
 	/** The saved schedule has loaded: until then it cannot be edited. */
 	const [planLoaded, setPlanLoaded] = useState(false);
 	/**
@@ -570,12 +585,7 @@ export const CalendarPageWired = () => {
 				(dto) => !cancelled && setSync(dto),
 				() => undefined
 			);
-			apiGetCalendarConsultationHours().then(
-				(dto) =>
-					!cancelled &&
-					setConsultationHours(consultationHoursFromApi(dto)),
-				() => undefined
-			);
+			loadConsultationHours(() => cancelled);
 			loadPlan();
 		}
 		return () => {
@@ -583,7 +593,7 @@ export const CalendarPageWired = () => {
 			// Unmounted: a late plan answer changes nothing.
 			planRequest.current += 1;
 		};
-	}, [consultant, loadPlan]);
+	}, [consultant, loadPlan, loadConsultationHours]);
 
 	/**
 	 * Free time needs this week's entries and the saved schedule. Without
@@ -1141,6 +1151,10 @@ export const CalendarPageWired = () => {
 				onDeclineRequest={consultant ? declineRequest : undefined}
 				onSaveWorkingHours={consultant ? saveWorkingHours : undefined}
 				consultationHours={consultant ? consultationHours : undefined}
+				consultationHoursFailed={consultant && consultationHoursFailed}
+				onRetryConsultationHours={
+					consultant ? () => loadConsultationHours() : undefined
+				}
 				onSaveConsultationHours={
 					consultant ? saveConsultationHours : undefined
 				}

@@ -178,13 +178,17 @@ export const Booked: Story = {
 	}
 };
 
+/* The first read finds nothing, every later one the booked appointment. Kept
+   at module scope and reset before each run, so a replay starts afresh. */
+let alreadyBookedReads = 0;
+
 export const AlreadyBooked: Story = {
 	name: 'Conversation already has an appointment',
+	beforeEach: () => {
+		alreadyBookedReads = 0;
+	},
 	args: {
-		load: (() => {
-			let reads = 0;
-			return () => Promise.resolve(reads++ === 0 ? [] : [booked]);
-		})(),
+		load: () => Promise.resolve(alreadyBookedReads++ === 0 ? [] : [booked]),
 		bookSlot: () =>
 			Promise.reject(
 				new Response(null, {

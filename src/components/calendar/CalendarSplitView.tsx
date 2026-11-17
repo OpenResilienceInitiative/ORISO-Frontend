@@ -580,7 +580,9 @@ export const CalendarSplitView = ({
 		const name = [
 			proposal
 				? `${t('calendar.proposal.label')} · ${proposalStatus(proposal)}`
-				: label(entry, colleague),
+				: entry.requested
+					? `${label(entry, colleague)} · ${t('calendar.appointmentRequest.status')}`
+					: label(entry, colleague),
 			colleague
 				? colleagues.find((c) => c.id === entry.ownerId)?.displayName
 				: '',

@@ -241,6 +241,9 @@ export const AskerCallInfo = ({
 	if (open && booking && medium) {
 		return (
 			<AskerSelfBookingDialog
+				/* A time chosen for one conversation is never booked in
+				   another: a new conversation starts the dialog afresh. */
+				key={sessionId}
 				sessionId={sessionId}
 				medium={medium}
 				fullScreen={fullScreen}

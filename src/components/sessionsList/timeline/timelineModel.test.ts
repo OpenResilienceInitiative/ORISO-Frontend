@@ -296,6 +296,35 @@ describe('entries in the real list', () => {
 			});
 			expect(twin.requested).toBe(true);
 		});
+
+		it('drops a request once its start has passed: it has expired', () => {
+			const entries = buildFutureEntries({
+				now: new Date('2026-10-29T10:00:00Z'),
+				occurrences: [],
+				seriesToSession: {},
+				sessions: [],
+				bookings: [
+					{
+						id: 'started',
+						appointmentId: 'started',
+						startTime: '2026-10-29T10:00:00Z',
+						endTime: '2026-10-29T11:00:00Z',
+						location: 'VIDEO_CALL',
+						requested: true
+					},
+					{
+						id: 'booked',
+						appointmentId: 'booked',
+						startTime: '2026-10-29T09:30:00Z',
+						endTime: '2026-10-29T10:30:00Z',
+						location: 'VIDEO_CALL'
+					}
+				]
+			});
+			expect(entries.map((entry) => entry.key)).toEqual([
+				'booking-booked'
+			]);
+		});
 	});
 });
 

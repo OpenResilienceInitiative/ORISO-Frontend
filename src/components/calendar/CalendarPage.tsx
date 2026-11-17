@@ -238,6 +238,9 @@ export interface CalendarPageProps {
 	onSaveConsultationHours?: (
 		hours: ConsultationHours
 	) => void | Promise<unknown>;
+	/** Loading them failed: ⋮ says so and loads them again on a click. */
+	consultationHoursFailed?: boolean;
+	onRetryConsultationHours?: () => void;
 	/**
 	 * The saved schedule has loaded. Until then (or when loading failed)
 	 * neither the dialog nor the grips edit it, so an unloaded schedule is
@@ -533,6 +536,8 @@ export const CalendarPage = ({
 	workingHours = [],
 	consultationHours,
 	onSaveConsultationHours,
+	consultationHoursFailed = false,
+	onRetryConsultationHours,
 	workingHoursLoaded = true,
 	dayExceptions,
 	holidayRegion = null,
@@ -845,6 +850,8 @@ export const CalendarPage = ({
 	 * fails. Says whether it went through: `false` for a refusal or a
 	 * failure, so a moved entry goes back and quick entry keeps its draft.
 	 */
+	const [savingConsultationHours, setSavingConsultationHours] =
+		useState(false);
 	const run = (
 		result: ChangeResult | undefined,
 		success: Notice | ((value: unknown) => Notice),
@@ -1462,6 +1469,11 @@ export const CalendarPage = ({
 	const editHours = workingHoursLoaded && !!onSaveWorkingHours;
 	const editConsultationHours =
 		consultant && !!consultationHours && !!onSaveConsultationHours;
+	const retryConsultationHours =
+		consultant &&
+		!consultationHours &&
+		consultationHoursFailed &&
+		!!onRetryConsultationHours;
 	const gripsAvailable = consultant && editHours && !!onSaveDayException;
 	// Switchable in ⋮ and kept in this browser (Frank *7.2).
 	const [showGrips, setShowGrips] = useState(() => readShowGrips(ownerId));
@@ -2079,7 +2091,9 @@ export const CalendarPage = ({
 				consultationHoursSummary={
 					consultationHours
 						? summarise(consultationHours.windows)
-						: undefined
+						: retryConsultationHours
+							? t('calendar.consultationHours.loadFailed')
+							: undefined
 				}
 				onConsultationHours={
 					editConsultationHours
@@ -2087,7 +2101,12 @@ export const CalendarPage = ({
 								setMenu(null);
 								setDialog({ type: 'consultationHours' });
 							}
-						: undefined
+						: retryConsultationHours
+							? () => {
+									setMenu(null);
+									onRetryConsultationHours?.();
+								}
+							: undefined
 				}
 				onRepeatBlocker={
 					onCreate
@@ -3090,13 +3109,32 @@ export const CalendarPage = ({
 						open
 						hours={consultationHours}
 						fullScreen={compact}
+						saving={savingConsultationHours}
 						onSave={(hours) => {
-							setDialog(null);
-							run(onSaveConsultationHours?.(hours), {
-								message: t('calendar.consultationHours.saved')
+							/* Open until the save settles: reopened meanwhile, the
+							   dialog would show the old set and save it back over
+							   this one. A failed save keeps the draft for a retry. */
+							const saved = run(
+								onSaveConsultationHours?.(hours),
+								{
+									message: t(
+										'calendar.consultationHours.saved'
+									)
+								}
+							);
+							if (typeof saved === 'boolean') {
+								if (saved) setDialog(null);
+								return;
+							}
+							setSavingConsultationHours(true);
+							void saved.then((ok) => {
+								setSavingConsultationHours(false);
+								if (ok) setDialog(null);
 							});
 						}}
-						onClose={() => setDialog(null)}
+						onClose={() => {
+							if (!savingConsultationHours) setDialog(null);
+						}}
 					/>
 				)}
 			{dialog?.type === 'sync' && feed && (

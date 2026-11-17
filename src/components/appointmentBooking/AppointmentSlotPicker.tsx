@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Box, Button, Typography } from '@mui/material';
 import HourglassEmptyOutlinedIcon from '@mui/icons-material/HourglassEmptyOutlined';
 import EventAvailableOutlinedIcon from '@mui/icons-material/EventAvailableOutlined';
@@ -63,12 +63,18 @@ export const AppointmentSlotPicker = ({
 	/* Today is bookable, but the hours that have gone are not: `notBefore`
 	   compares calendar days, so without this the grid still offered 09:00 at
 	   half past four and `confirm` handed a past ISO datetime on. */
+	/* The grid stays open while time passes: a time that starts meanwhile
+	   goes from the list (CodeRabbit on FE#2298). */
+	const [now, setNow] = useState(() => dayjs());
+	useEffect(() => {
+		const tick = window.setInterval(() => setNow(dayjs()), 30_000);
+		return () => window.clearInterval(tick);
+	}, []);
 	const slots = useMemo(() => {
 		if (!day) {
 			return [];
 		}
 		const offered = slotsForDay(day);
-		const now = dayjs();
 		if (!day.isSame(now, 'day')) {
 			return offered;
 		}
@@ -81,7 +87,7 @@ export const AppointmentSlotPicker = ({
 				.millisecond(0)
 				.isAfter(now);
 		});
-	}, [day, slotsForDay]);
+	}, [day, slotsForDay, now]);
 
 	const requests = useMemo(
 		() => new Set(day && requestTimesForDay ? requestTimesForDay(day) : []),

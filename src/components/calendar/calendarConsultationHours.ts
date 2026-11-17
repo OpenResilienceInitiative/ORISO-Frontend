@@ -1,8 +1,8 @@
 /**
  * Sprechstunden (ORISO-Frontend#2287): the weekly windows advice seekers can
  * book themselves, separate from the working hours, and the three booking
- * settings. The dialog edits one window per weekday; UserService checks the
- * same limits again.
+ * settings. The dialog edits the first window of each weekday and keeps any
+ * further ones; UserService checks the same limits again.
  */
 import type { CalendarConsultationHoursDTO } from '../../api/apiCalendar';
 import {
@@ -88,14 +88,27 @@ export const consultationRows = (windows: WorkingHours): ConsultationDayRow[] =>
 export const invalidConsultationRows = (rows: ConsultationDayRow[]) =>
 	rows.filter((r) => r.enabled && !validWindow(r)).map((r) => r.weekday);
 
+/**
+ * The whole set UserService stores. The dialog edits the first window of a
+ * weekday; further windows of a day that stays on are kept as stored, so a
+ * save never drops a window the dialog does not show (UserService allows
+ * several per weekday that do not overlap).
+ */
 export const consultationHoursToApi = (
 	rows: ConsultationDayRow[],
-	settings: ConsultationSettings
+	settings: ConsultationSettings,
+	stored: WorkingHours = []
 ): ConsultationHours => ({
 	windows: rows
 		.filter((r) => r.enabled)
-		.map(({ weekday, start, end }) => ({ weekday, start, end }))
-		.sort((a, b) => a.weekday - b.weekday),
+		.flatMap(({ weekday, start, end }) => [
+			{ weekday, start, end },
+			...stored.filter((w) => w.weekday === weekday).slice(1)
+		])
+		.sort(
+			(a, b) =>
+				a.weekday - b.weekday || minutesOf(a.start) - minutesOf(b.start)
+		),
 	autoAccept: settings.autoAccept,
 	noticeDays: settings.noticeDays,
 	slotMinutes: settings.slotMinutes

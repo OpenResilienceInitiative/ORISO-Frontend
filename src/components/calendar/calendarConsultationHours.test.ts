@@ -76,6 +76,33 @@ describe('Sprechstunden (FE#2287)', () => {
 		});
 	});
 
+	it('keeps a second window of a weekday the dialog does not show (review on FE#2298)', () => {
+		const stored = [
+			{ weekday: 1, start: '09:00', end: '11:00' },
+			{ weekday: 1, start: '14:00', end: '16:00' },
+			{ weekday: 3, start: '09:00', end: '10:00' },
+			{ weekday: 3, start: '15:00', end: '16:00' }
+		];
+		// Monday's first window is edited, Wednesday is switched off.
+		const rows = consultationRows(stored).map((r) =>
+			r.weekday === 1
+				? { ...r, end: '12:00' }
+				: r.weekday === 3
+					? { ...r, enabled: false }
+					: r
+		);
+		expect(
+			consultationHoursToApi(
+				rows,
+				{ autoAccept: true, noticeDays: 1, slotMinutes: 60 },
+				stored
+			).windows
+		).toEqual([
+			{ weekday: 1, start: '09:00', end: '12:00' },
+			{ weekday: 1, start: '14:00', end: '16:00' }
+		]);
+	});
+
 	it('names the days whose end is not after the start', () => {
 		const rows = consultationRows([]).map((r) =>
 			r.weekday === 4

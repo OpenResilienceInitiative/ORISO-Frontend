@@ -7693,7 +7693,8 @@
 			"noticeDaysOption_one": "{{count}} дн.",
 			"slotMinutes": "Длительность встречи",
 			"minutes": "{{count}} мин",
-			"invalid": "Конец должен быть позже начала."
+			"invalid": "Конец должен быть позже начала.",
+			"loadFailed": "Не удалось загрузить. Повторить"
 		},
 		"appointmentRequest": {
 			"status": "Запрошено · ждёт вашего ответа",

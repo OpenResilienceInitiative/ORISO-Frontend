@@ -7664,7 +7664,8 @@
 			"noticeDaysOption_one": "{{count}} gün",
 			"slotMinutes": "Randevu süresi",
 			"minutes": "{{count}} dk",
-			"invalid": "Bitiş, başlangıçtan sonra olmalıdır."
+			"invalid": "Bitiş, başlangıçtan sonra olmalıdır.",
+			"loadFailed": "Yüklenemedi. Tekrar dene"
 		},
 		"appointmentRequest": {
 			"status": "Talep edildi · yanıtınızı bekliyor",

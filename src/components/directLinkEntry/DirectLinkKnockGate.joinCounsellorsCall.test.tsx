@@ -65,6 +65,10 @@ const fakeManager = (initial: CallData | null = null) => {
 			current = call;
 			listeners.forEach((listener) => listener(current));
 		},
+		/** A listener hears a call the manager does not hold as current. */
+		emit: (call: CallData) => {
+			listeners.forEach((listener) => listener(call));
+		},
 		listenerCount: () => listeners.size
 	};
 	return manager;
@@ -108,6 +112,29 @@ describe('joining the counsellor’s call after being let in', () => {
 		});
 
 		manager.ring(ringing('!other:oriso'));
+		await vi.advanceTimersByTimeAsync(1_000);
+
+		await expect(joined).resolves.toBe('unavailable');
+		expect(manager.answerCall).not.toHaveBeenCalled();
+	});
+
+	it('does not report "joined" for a ringing call that is not the current one', async () => {
+		vi.useFakeTimers();
+		// Another call runs and stays current: answering the counsellor's
+		// call would do nothing, so the person must not be told they joined.
+		const running: CallData = {
+			...ringing('!elsewhere:oriso'),
+			callId: 'call_running',
+			isIncoming: false,
+			state: 'connected'
+		};
+		const manager = fakeManager(running);
+		const joined = joinCounsellorsCall(knock, {
+			manager,
+			timeoutMs: 1_000
+		});
+
+		manager.emit({ ...ringing(ROOM), callId: 'call_counsellor' });
 		await vi.advanceTimersByTimeAsync(1_000);
 
 		await expect(joined).resolves.toBe('unavailable');

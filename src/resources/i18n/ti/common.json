@@ -7631,7 +7631,8 @@
 			"noticeDaysOption_one": "{{count}} መዓልቲ",
 			"slotMinutes": "ንውሓት ቈጸራ",
 			"minutes": "{{count}} ደቒቕ",
-			"invalid": "መወዳእታ ድሕሪ መጀመርታ ክኸውን ኣለዎ።"
+			"invalid": "መወዳእታ ድሕሪ መጀመርታ ክኸውን ኣለዎ።",
+			"loadFailed": "ክጽዕን ኣይተኻእለን። ደጊምካ ፈትን"
 		},
 		"appointmentRequest": {
 			"status": "ተሓቲቱ · ንመልስኹም ይጽበ",

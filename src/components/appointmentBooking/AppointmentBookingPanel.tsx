@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Box, IconButton, Typography } from '@mui/material';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
-import type { Dayjs } from 'dayjs';
+import dayjs, { type Dayjs } from 'dayjs';
 import { useTranslation } from 'react-i18next';
 import { AppointmentSlotPicker } from './AppointmentSlotPicker';
 import { RegistrationFooter } from '../registrationFooter/RegistrationFooter';
@@ -152,9 +152,13 @@ export const AppointmentBookingPanel = ({
 			return;
 		}
 		const [hour, minute] = time.split(':').map(Number);
-		onConfirm(
-			day.hour(hour).minute(minute).second(0).millisecond(0).format()
-		);
+		const start = day.hour(hour).minute(minute).second(0).millisecond(0);
+		/* Chosen a while ago, the time may have started meanwhile. */
+		if (!start.isAfter(dayjs())) {
+			setTime(null);
+			return;
+		}
+		onConfirm(start.format());
 	};
 
 	return (

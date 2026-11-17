@@ -121,6 +121,9 @@ export const joinCounsellorsCall = (
 		};
 		const tryAnswer = (call: CallData | null) => {
 			if (done || !ringsFrom(call, room)) return;
+			/* `answerCall` answers the manager's current call and does nothing
+			   otherwise: only that one counts as joined; else keep waiting. */
+			if (manager.getCurrentCall()?.callId !== call?.callId) return;
 			manager.answerCall();
 			finish('joined');
 		};
