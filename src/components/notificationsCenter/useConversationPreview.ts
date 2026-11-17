@@ -139,7 +139,7 @@ export const useConversationPreview = (
 		[event]
 	);
 	const roomId = visible ? (conversation?.roomId ?? null) : null;
-	const { session } = useSession(
+	const { session, ready: sessionLookupDone } = useSession(
 		roomId,
 		roomId ? (conversation?.sessionId ?? undefined) : undefined
 	);
@@ -339,8 +339,12 @@ export const useConversationPreview = (
 		groupJoinBlocked
 	});
 
+	// #2275 review: a lookup that finished without a session (a foreign case)
+	// settles too, so the entry says why it is hidden and offers no Open.
+	const sessionSettled =
+		Boolean(session?.item) || (Boolean(sessionLookupDone) && !session);
 	const settled =
-		Boolean(session?.item) &&
+		sessionSettled &&
 		isConsultant !== undefined &&
 		caseHandover !== 'loading' &&
 		// A finished lookup settles even when it failed (value null);

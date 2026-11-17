@@ -55,6 +55,13 @@ vi.mock('./ConversationPreview', () => ({
 	)
 }));
 
+// These tests are about joining and opening calls, not about whose case the
+// room is: the session lookup stays pending, as it did here before a finished
+// lookup without a session settled the preview as hidden (#2275 review).
+vi.mock('../../hooks/useSession', () => ({
+	useSession: () => ({ session: null, ready: false })
+}));
+
 // #2226 review: lets a test answer as the preview model would once its
 // lookups are done; null keeps the real hook.
 let settledPreview: Record<string, unknown> | null = null;
@@ -405,6 +412,46 @@ it('an invitation from a case that is not yours says why and offers no Open', as
 		screen.getByRole('button', { name: en.notifications.center.next })
 	).toBeTruthy();
 	expect(joinRoom).not.toHaveBeenCalled();
+});
+
+// #2275 review: an appointment whose conversation is not the viewer's keeps
+// its way to the calendar although Open is withheld.
+it('an appointment from a case that is not yours still offers the calendar', async () => {
+	settledPreview = {
+		roomId: call.roomRef,
+		threadRootId: null,
+		session: null,
+		roomKind: null,
+		capabilities: {
+			composer: false,
+			react: false,
+			manageOwn: false,
+			threadReply: false,
+			readOnlyReason: 'sessionUnknown',
+			contentHidden: true
+		},
+		hidesContentSettled: true,
+		composerTarget: {},
+		caseHandoverStatus: null,
+		senderDisplayName: null
+	};
+	await renderCenter(1400, {
+		...callItem,
+		id: 'appointment-foreign',
+		eventType: 'appointment.scheduled',
+		params: { ...callItem.params, sessionId: 69, seriesId: undefined }
+	});
+	expect(
+		await screen.findByText(en.notifications.center.preview.hiddenNotYours)
+	).toBeTruthy();
+	expect(
+		screen.queryByRole('button', { name: en.notifications.center.open })
+	).toBeNull();
+	expect(
+		screen.getByRole('button', {
+			name: en.notifications.center.openCalendar
+		})
+	).toBeTruthy();
 });
 
 it('#2226: a call card without a room keeps its detail view', async () => {

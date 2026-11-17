@@ -1665,11 +1665,13 @@ export const NotificationsCenter = () => {
 											</span>
 										</a>
 									)
-								) : canOpenShown ? (
+								) : (
 									<>
 										{/* #2275 review: an appointment
 										    whose conversation stays hidden
-										    keeps its way to the calendar. */}
+										    keeps its way to the calendar,
+										    even where Open is withheld
+										    (sessionUnknown). */}
 										{selectedIsAppointment &&
 											!opensCalendar && (
 												<button
@@ -1684,20 +1686,22 @@ export const NotificationsCenter = () => {
 													)}
 												</button>
 											)}
-										<button
-											type="button"
-											className="notificationsCenter__openButton"
-											onClick={handleOpenAction}
-										>
-											{opensCalendar ? (
-												<CalendarMonthOutlinedIcon />
-											) : (
-												<OpenInFullIcon />
-											)}
-											{selectedOpenLabel}
-										</button>
+										{canOpenShown && (
+											<button
+												type="button"
+												className="notificationsCenter__openButton"
+												onClick={handleOpenAction}
+											>
+												{opensCalendar ? (
+													<CalendarMonthOutlinedIcon />
+												) : (
+													<OpenInFullIcon />
+												)}
+												{selectedOpenLabel}
+											</button>
+										)}
 									</>
-								) : null}
+								)}
 								<button
 									type="button"
 									className="notificationsCenter__nextButton"

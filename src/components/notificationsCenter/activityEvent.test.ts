@@ -335,6 +335,15 @@ describe('#2226 showsConversationPreview', () => {
 		}
 	});
 
+	it('keeps the detail view for an entry with nothing to open (#1159)', () => {
+		expect(
+			showsConversationPreview(
+				row('session.asker_deleted', { roomRef: '!room:x' }),
+				joined
+			)
+		).toBe(false);
+	});
+
 	it('keeps the detail view for a consent request, where its approve and decline buttons are', () => {
 		expect(
 			showsConversationPreview(
