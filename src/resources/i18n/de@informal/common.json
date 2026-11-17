@@ -2972,7 +2972,8 @@
 		"proposal": {
 			"title": "Dein Vorschlag für „{{title}}“",
 			"requestLabel": "{{name}} schlägt vor, deinen Termin {{from}} auf {{to}} zu verschieben",
-			"requestHint": "Bis du antwortest, bleibt der Termin, wo er ist."
+			"requestHint": "Bis du antwortest, bleibt der Termin, wo er ist.",
+			"reason": "Grund: {{reason}}"
 		},
 		"settings": {
 			"switcherHint": "Wird für dich gespeichert."
@@ -2994,7 +2995,8 @@
 			"alwaysMine": "Deine Termine siehst du immer."
 		},
 		"entryMenu": {
-			"withYou": "Du und {{name}}"
+			"withYou": "Du und {{name}}",
+			"reason": "Grund (optional)"
 		}
 	}
 }

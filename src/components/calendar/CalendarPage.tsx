@@ -304,7 +304,9 @@ export interface CalendarPageProps {
 	onProposeMove?: (
 		entry: CalendarEntry,
 		start: Date,
-		end: Date
+		end: Date,
+		/** Why one asks, trimmed (UserService#1663). */
+		reason?: string
 	) => void | Promise<unknown>;
 	onWithdrawProposal?: (proposal: MoveProposal) => void | Promise<unknown>;
 	/** Team meetings and group dates (no backend yet). */
@@ -1274,13 +1276,18 @@ export const CalendarPage = ({
 			});
 	};
 
-	const propose = (entry: CalendarEntry, start: Date, end: Date) => {
+	const propose = (
+		entry: CalendarEntry,
+		start: Date,
+		end: Date,
+		reason?: string
+	) => {
 		// UserService refuses a proposed start in the past; say so here.
 		if (start.getTime() < now.getTime()) {
 			setNotice({ message: t('calendar.movePast') });
 			return false;
 		}
-		return run(onProposeMove?.(entry, start, end), {
+		return run(onProposeMove?.(entry, start, end, reason), {
 			message: t('calendar.proposal.sent', {
 				date: format(start, end),
 				name: colleagueById[entry.ownerId]?.displayName ?? ''
@@ -1834,9 +1841,10 @@ export const CalendarPage = ({
 				ownerId={ownerId}
 				onMode={(mode) => setMenu({ ...menu, mode })}
 				onAction={(action) => entryAction(entry, action)}
-				onMove={(start, end) => {
+				onMove={(start, end, reason) => {
 					setMenu(null);
-					if (menu.mode === 'propose') propose(entry, start, end);
+					if (menu.mode === 'propose')
+						propose(entry, start, end, reason);
 					else move(entry, start, end, true);
 				}}
 			/>
@@ -2326,6 +2334,14 @@ export const CalendarPage = ({
 			.map((c) => c.displayName)
 			.filter((name, i, all) => all.indexOf(name) !== i)
 	);
+	// The second hint under a chip: the centre's code always; for a name
+	// that repeats, the username (UserService#1663), else the centre.
+	const chipHint = (colleague: Colleague) =>
+		twinNames.has(colleague.displayName)
+			? colleague.secondaryLabel ||
+				colleague.agencyShort ||
+				colleague.agencyName
+			: colleague.agencyShort;
 	const personChip = (
 		id: string,
 		name: string,
@@ -2352,14 +2368,11 @@ export const CalendarPage = ({
 				{colleague ? initialsOf(name) : t('calendar.people.meAvatar')}
 			</span>
 			<span>{colleague ? name : t('calendar.people.me')}</span>
-			{colleague &&
-				(colleague.agencyShort ||
-					(twinNames.has(colleague.displayName) &&
-						colleague.agencyName)) && (
-					<span className="calendarStage__agency">
-						{colleague.agencyShort ?? colleague.agencyName}
-					</span>
-				)}
+			{colleague && chipHint(colleague) && (
+				<span className="calendarStage__agency">
+					{chipHint(colleague)}
+				</span>
+			)}
 		</button>
 	);
 	// Only while someone is shown or was shown lately (prototype v17).

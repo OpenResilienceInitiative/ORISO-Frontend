@@ -647,12 +647,14 @@ export const CalendarPageWired = () => {
 	const proposeMove = async (
 		entry: CalendarEntry,
 		start: Date,
-		end: Date
+		end: Date,
+		reason?: string
 	) => {
 		const created = await apiCreateCalendarProposal({
 			entryId: entry.id,
 			start: start.toISOString(),
-			end: end.toISOString()
+			end: end.toISOString(),
+			...(reason && { reason })
 		});
 		if (created?.id)
 			setSentProposals((all) =>

@@ -8,6 +8,7 @@ import {
 	EntryMenuContent,
 	MonthDayMenuContent,
 	MoveForm,
+	RequestMenuContent,
 	SettingsMenuContent
 } from './calendarMenus';
 
@@ -74,6 +75,94 @@ describe('MoveForm — the end date (review 4574775688)', () => {
 			new Date(2026, 10, 20, 23),
 			new Date(2026, 10, 21, 1)
 		);
+	});
+});
+
+describe('MoveForm — a reason with the proposal (US#1663)', () => {
+	const shown = entry(new Date(2026, 10, 16, 10), new Date(2026, 10, 16, 11));
+	const form = (mode: 'move' | 'propose') => {
+		const onSubmit = vi.fn();
+		const view = render(
+			<MoveForm
+				entry={shown}
+				mode={mode}
+				entries={[]}
+				ownerId="me"
+				onSubmit={onSubmit}
+				onBack={() => undefined}
+			/>
+		);
+		const submit = () =>
+			fireEvent.submit(
+				view.container.querySelector(
+					'[data-cy="calendar-move-form"]'
+				) as HTMLFormElement
+			);
+		return { ...view, onSubmit, submit };
+	};
+
+	it('sends the trimmed reason with a proposal, at most 500 characters', () => {
+		const { container, onSubmit, submit } = form('propose');
+		const reason = container.querySelector(
+			'[data-cy="calendar-move-reason"]'
+		) as HTMLTextAreaElement;
+		expect(reason.maxLength).toBe(500);
+		fireEvent.change(reason, { target: { value: '  Raum belegt ' } });
+		submit();
+		expect(onSubmit).toHaveBeenCalledWith(
+			new Date(shown.start),
+			new Date(shown.end),
+			'Raum belegt'
+		);
+	});
+
+	it('sends no reason when the field stays empty', () => {
+		const { onSubmit, submit } = form('propose');
+		submit();
+		expect(onSubmit).toHaveBeenCalledWith(
+			new Date(shown.start),
+			new Date(shown.end)
+		);
+	});
+
+	it('asks for no reason when one moves an own entry', () => {
+		const { container } = form('move');
+		expect(
+			container.querySelector('[data-cy="calendar-move-reason"]')
+		).toBeNull();
+	});
+});
+
+describe('RequestMenuContent — the reason (US#1663)', () => {
+	const proposal = {
+		id: 'p1',
+		entryId: 'a1',
+		start: new Date(2026, 10, 18, 14).toISOString(),
+		end: new Date(2026, 10, 18, 15).toISOString(),
+		proposerName: 'A. Kaya'
+	};
+	const from = { start: proposal.start, end: proposal.end };
+
+	it('shows the reason above the answers', () => {
+		const { container } = render(
+			<RequestMenuContent
+				proposal={{ ...proposal, reason: 'Raum belegt' }}
+				from={from}
+			/>
+		);
+		expect(
+			container.querySelector('[data-cy="calendar-request-reason"]')
+				?.textContent
+		).toContain('Raum belegt');
+	});
+
+	it('shows no reason line without one', () => {
+		const { container } = render(
+			<RequestMenuContent proposal={proposal} from={from} />
+		);
+		expect(
+			container.querySelector('[data-cy="calendar-request-reason"]')
+		).toBeNull();
 	});
 });
 
