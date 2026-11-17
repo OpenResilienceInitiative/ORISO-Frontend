@@ -131,7 +131,7 @@ $cal-off-hatch: repeating-linear-gradient(
 .calendarView__past {
 	background: color-mix(
 		in srgb,
-		var(--m3-on-surface, #1b1b1c) 7%,
+		var(--m3-surface-dim, #d3d6da) 45%,
 		transparent
 	) !important;
 	opacity: 1 !important;
@@ -141,7 +141,7 @@ $cal-off-hatch: repeating-linear-gradient(
 .calendarView__monthDay--past {
 	background: color-mix(
 		in srgb,
-		var(--m3-on-surface, #1b1b1c) 5%,
+		var(--m3-surface-dim, #d3d6da) 35%,
 		transparent
 	);
 
