@@ -2,7 +2,8 @@
  * "Neuer Eintrag" (prototype v17): one dialog for "Neu" and every other way
  * to enter something, with the tabs Termin | Sperrzeit. Each tab is the
  * form of the appointment or the blocker dialog; switching keeps what was
- * entered in the other.
+ * entered in the other. A counsellor also gets "Abwesenheit", a planned
+ * absence over whole days (ORISO-Frontend#2303).
  */
 import * as React from 'react';
 import { useState } from 'react';
@@ -10,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { M3Dialog } from '../m3Dialog/M3Dialog';
 import { useAppointmentForm } from './AppointmentDialog';
 import { useBlockerForm } from './BlockerDialog';
+import { useAbsenceForm, type AbsenceDraft } from './AbsenceForm';
 import type {
 	AppointmentDraft,
 	AppointmentKind,
@@ -17,7 +19,7 @@ import type {
 	CalendarEntry
 } from './calendarModel';
 
-export type NewEntryTab = 'appointment' | 'blocker';
+export type NewEntryTab = 'appointment' | 'blocker' | 'absence';
 
 export interface NewEntryDialogProps {
 	open: boolean;
@@ -39,10 +41,17 @@ export interface NewEntryDialogProps {
 	onSaveBlocker: (drafts: AppointmentDraft[]) => void;
 	/** "Arbeitszeit festlegen" under the blocker form. */
 	onWorkingHours?: () => void;
+	/**
+	 * Saves a planned absence; without it there is no "Abwesenheit" tab
+	 * (ORISO-Frontend#2303).
+	 */
+	onSaveAbsence?: (draft: AbsenceDraft) => void;
+	/** The absence the profile holds already, to edit it here. */
+	initialAbsence?: Partial<AbsenceDraft>;
 	onClose: () => void;
 }
 
-const TABS: NewEntryTab[] = ['appointment', 'blocker'];
+const TABS: NewEntryTab[] = ['appointment', 'blocker', 'absence'];
 
 export const NewEntryDialog = ({
 	open,
@@ -60,6 +69,8 @@ export const NewEntryDialog = ({
 	onSaveAppointment,
 	onSaveBlocker,
 	onWorkingHours,
+	onSaveAbsence,
+	initialAbsence,
 	onClose
 }: NewEntryDialogProps) => {
 	const { t } = useTranslation();
@@ -86,7 +97,23 @@ export const NewEntryDialog = ({
 		onSave: onSaveBlocker,
 		onClose
 	});
-	const form = tab === 'appointment' ? appointment : blocker;
+	const absence = useAbsenceForm({
+		slot: slot && { start: slot.start, end: slot.end },
+		initialAbsence,
+		entries,
+		ownerId,
+		now,
+		onSave: (draft) => onSaveAbsence?.(draft),
+		onClose
+	});
+	const tabs = TABS.filter((value) => value !== 'absence' || onSaveAbsence);
+	const shown = tabs.includes(tab) ? tab : 'appointment';
+	const form =
+		shown === 'appointment'
+			? appointment
+			: shown === 'blocker'
+				? blocker
+				: absence;
 
 	return (
 		<M3Dialog
@@ -107,12 +134,12 @@ export const NewEntryDialog = ({
 					role="group"
 					aria-label={t('calendar.dialog.entryKind')}
 				>
-					{TABS.map((value) => (
+					{tabs.map((value) => (
 						<button
 							key={value}
 							type="button"
 							className="calendarNewEntry__tab"
-							aria-pressed={tab === value}
+							aria-pressed={shown === value}
 							onClick={() => setTab(value)}
 							data-cy={`calendar-new-tab-${value}`}
 						>

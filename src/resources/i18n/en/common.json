@@ -2955,7 +2955,13 @@
 					"label": "Deactivate your absence to leave a message or edit it."
 				},
 				"label": "Deposit an out of office message",
-				"title": "My absence"
+				"title": "My absence",
+				"from": "Absent from (optional)",
+				"until": "Absent until (optional)",
+				"dateHint": "Without a date the absence lasts until further notice, until you switch it off. After the end date you are present again automatically.",
+				"planned": "Planned from {{start}}",
+				"activeUntil": "Absent up to and including {{end}}",
+				"invalidRange": "The end date is before the start date."
 			},
 			"liveChat": {
 				"title": "My Live-Chat availability",
@@ -7002,7 +7008,8 @@
 			"group": "Group date",
 			"blocker": "Blocked",
 			"busy": "Busy",
-			"colleague": "Busy"
+			"colleague": "Busy",
+			"absence": "Absent"
 		},
 		"noEvents": "No appointments in this period",
 		"loading": "Loading appointments",
@@ -7031,7 +7038,8 @@
 			"entryKind": "Kind of entry",
 			"tabs": {
 				"appointment": "Appointment",
-				"blocker": "Blocked time"
+				"blocker": "Blocked time",
+				"absence": "Absence"
 			}
 		},
 		"details": {
@@ -7474,6 +7482,18 @@
 		"links": {
 			"title": "Links without an appointment",
 			"hint": "Invitation links you can share: copy them or show a QR code."
+		},
+		"absence": {
+			"description": "Choose the days you are away. During that time advice seekers see your absence message.",
+			"from": "From",
+			"until": "Until",
+			"message": "Absence message",
+			"messageHint": "Advice seekers see this message but can still write to you.",
+			"effect": "After the last day you are present again automatically. The same absence shows in your profile.",
+			"save": "Add absence",
+			"conflicts": "{{count}} appointments fall in this period. They stay in place – cancel or move them yourself if needed.",
+			"conflicts_one": "{{count}} appointment falls in this period. It stays in place – cancel or move it yourself if needed.",
+			"saved": "Absence added. It also shows in your profile."
 		}
 	}
 }

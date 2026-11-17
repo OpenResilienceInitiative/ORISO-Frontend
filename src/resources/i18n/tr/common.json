@@ -2959,7 +2959,13 @@
 					"label": "Mesaj bırakmak veya düzenlemek için devamsızlığınızı devre dışı bırakın."
 				},
 				"label": "Ofis dışı bir mesajı saklayın",
-				"title": "Benim yokluğum"
+				"title": "Benim yokluğum",
+				"from": "Yokluk başlangıcı (isteğe bağlı)",
+				"until": "Yokluk bitişi (isteğe bağlı)",
+				"dateHint": "Tarih olmadan yokluk, siz kapatana kadar süresiz geçerlidir. Bitiş tarihinden sonra otomatik olarak yeniden mevcut olursunuz.",
+				"planned": "{{start}} tarihinden itibaren planlandı",
+				"activeUntil": "{{end}} dahil yok",
+				"invalidRange": "Bitiş tarihi başlangıç tarihinden önce."
 			},
 			"liveChat": {
 				"title": "Live-Chat uygunluğum",
@@ -7087,7 +7093,8 @@
 			"group": "Grup randevusu",
 			"blocker": "Kapalı",
 			"busy": "Meşgul",
-			"colleague": "Meşgul"
+			"colleague": "Meşgul",
+			"absence": "Yok"
 		},
 		"noEvents": "Bu dönemde randevu yok",
 		"loading": "Randevular yükleniyor",
@@ -7116,7 +7123,8 @@
 			"entryKind": "Kayıt türü",
 			"tabs": {
 				"appointment": "Randevu",
-				"blocker": "Engellenmiş zaman"
+				"blocker": "Engellenmiş zaman",
+				"absence": "Yokluk"
 			}
 		},
 		"details": {
@@ -7559,6 +7567,18 @@
 		"links": {
 			"title": "Randevusuz bağlantılar",
 			"hint": "Paylaşabileceğiniz davet bağlantıları: kopyalayın veya QR kodu gösterin."
+		},
+		"absence": {
+			"description": "Uzakta olacağınız günleri seçin. Bu süre boyunca danışanlar yokluk mesajınızı görür.",
+			"from": "Başlangıç",
+			"until": "Bitiş",
+			"message": "Yokluk mesajı",
+			"messageHint": "Danışanlar bu mesajı görür ama size yine de yazabilir.",
+			"effect": "Son günden sonra otomatik olarak yeniden mevcut olursunuz. Aynı yokluk profilinizde de görünür.",
+			"save": "Yokluğu kaydet",
+			"conflicts": "Bu dönemde {{count}} randevu var. Randevular yerinde kalır – gerekirse kendiniz iptal edin veya erteleyin.",
+			"conflicts_one": "Bu dönemde {{count}} randevu var. Randevu yerinde kalır – gerekirse kendiniz iptal edin veya erteleyin.",
+			"saved": "Yokluk kaydedildi. Profilinizde de görünür."
 		}
 	}
 }

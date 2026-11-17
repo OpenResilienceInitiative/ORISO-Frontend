@@ -3800,3 +3800,21 @@ $cal-new-pill-hover: #4b4f51;
 	border-top: 1px solid var(--m3-outline-variant, #c4c7c7);
 	overflow-y: auto;
 }
+
+/* Planned absence tab (ORISO-Frontend#2303): the appointments it covers. */
+.calendarAbsence__conflicts {
+	padding: 12px 16px;
+	border-radius: 12px;
+	background: var(--m3-error-container, #f9dedc);
+	color: var(--m3-on-error-container, #410e0b);
+	font-size: 14px;
+
+	p {
+		margin: 0 0 4px;
+	}
+
+	ul {
+		margin: 0;
+		padding-left: 18px;
+	}
+}

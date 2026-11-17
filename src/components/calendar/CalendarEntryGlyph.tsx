@@ -33,7 +33,13 @@ export const CALENDAR_FACETS: CalendarEntryFacet[] = [
 /** Imported busy time counts as blocked time for filtering. */
 export const facetOf = (entry: CalendarEntry): CalendarEntryFacet => {
 	if (entry.type === 'group') return 'group';
-	if (entry.type === 'blocker' || entry.type === 'busy') return 'blocker';
+	// An absence blocks like an all-day Sperrzeit (Frank, 2026-11-17).
+	if (
+		entry.type === 'blocker' ||
+		entry.type === 'busy' ||
+		entry.type === 'absence'
+	)
+		return 'blocker';
 	return entry.kind ?? 'video';
 };
 
@@ -83,6 +89,7 @@ export const CalendarEntryGlyph = ({
 }) => {
 	if (
 		entry.type === 'busy' ||
+		entry.type === 'absence' ||
 		(colleague && !entry.kind && entry.type !== 'group')
 	)
 		return <EventBusyOutlinedIcon aria-hidden="true" focusable="false" />;

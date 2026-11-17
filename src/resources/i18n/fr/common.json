@@ -2959,7 +2959,13 @@
 					"label": "Désactivez votre absence pour déposer un message ou le modifier."
 				},
 				"label": "Déposer un message d'absence",
-				"title": "Mon absence"
+				"title": "Mon absence",
+				"from": "Absent·e du (facultatif)",
+				"until": "Absent·e jusqu'au (facultatif)",
+				"dateHint": "Sans date, l'absence dure jusqu'à nouvel ordre, jusqu'à ce que vous la désactiviez. Après la date de fin, vous êtes automatiquement de nouveau présent·e.",
+				"planned": "Prévue à partir du {{start}}",
+				"activeUntil": "Absent·e jusqu'au {{end}} inclus",
+				"invalidRange": "La date de fin est antérieure à la date de début."
 			},
 			"liveChat": {
 				"title": "Ma disponibilité Live-Chat",
@@ -7087,7 +7093,8 @@
 			"group": "Rendez-vous de groupe",
 			"blocker": "Plage bloquée",
 			"busy": "Occupé",
-			"colleague": "Occupé"
+			"colleague": "Occupé",
+			"absence": "Absent·e"
 		},
 		"noEvents": "Aucun rendez-vous sur cette période",
 		"loading": "Chargement des rendez-vous",
@@ -7116,7 +7123,8 @@
 			"entryKind": "Type d’entrée",
 			"tabs": {
 				"appointment": "Rendez-vous",
-				"blocker": "Plage bloquée"
+				"blocker": "Plage bloquée",
+				"absence": "Absence prévue"
 			}
 		},
 		"details": {
@@ -7559,6 +7567,18 @@
 		"links": {
 			"title": "Liens sans rendez-vous",
 			"hint": "Liens d’invitation à partager : copiez-les ou affichez un code QR."
+		},
+		"absence": {
+			"description": "Choisissez les jours de votre absence. Pendant cette période, les personnes qui demandent conseil voient votre message d'absence.",
+			"from": "Du",
+			"until": "Au",
+			"message": "Message d'absence",
+			"messageHint": "Les personnes qui demandent conseil voient ce message mais peuvent toujours vous écrire.",
+			"effect": "Après le dernier jour, vous êtes automatiquement de nouveau présent·e. La même absence figure dans votre profil.",
+			"save": "Enregistrer l'absence",
+			"conflicts": "{{count}} rendez-vous tombent pendant cette période. Ils sont maintenus – annulez-les ou déplacez-les vous-même si nécessaire.",
+			"conflicts_one": "{{count}} rendez-vous tombe pendant cette période. Il est maintenu – annulez-le ou déplacez-le vous-même si nécessaire.",
+			"saved": "Absence enregistrée. Elle figure aussi dans votre profil."
 		}
 	}
 }

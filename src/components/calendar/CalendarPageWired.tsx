@@ -64,6 +64,8 @@ import {
 import { apiGetConsultantSessionList } from '../../api/apiGetConsultantSessionList';
 import { apiGetAskerSessionList } from '../../api/apiGetAskerSessionList';
 import { FETCH_ERRORS } from '../../api/fetchData';
+import { apiSetAbsence } from '../../api/apiSetAbsence';
+import type { AbsenceDraft } from './AbsenceForm';
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import {
 	notifyAppointmentsChanged,
@@ -187,7 +189,7 @@ export const CalendarPageWired = () => {
 	// shared $fromMedium (600 px) it is a phone with at most three days.
 	const compact = useMediaQuery({ maxWidth: COMPACT_MAX_WIDTH });
 	const { untilS: phone } = useResponsive();
-	const { userData } = useContext(UserDataContext);
+	const { userData, reloadUserData } = useContext(UserDataContext);
 	const consultant = hasUserAuthority(
 		AUTHORITIES.CONSULTANT_DEFAULT,
 		userData
@@ -930,6 +932,28 @@ export const CalendarPageWired = () => {
 		if (range.current) load();
 	};
 
+	/**
+	 * "Abwesenheit" (ORISO-Frontend#2303): the profile's absence, switched on
+	 * for these days. The profile and the calendar both read it back.
+	 */
+	const saveAbsence = (draft: AbsenceDraft) =>
+		apiSetAbsence(true, draft.message, {
+			start: draft.start,
+			end: draft.end
+		})
+			.then(() => reloadUserData?.())
+			.then(() => reloadEntries());
+	const absence =
+		consultant && (userData?.absenceStart || userData?.absenceEnd)
+			? {
+					start: userData.absenceStart ?? undefined,
+					end: userData.absenceEnd ?? undefined,
+					message: userData.absenceMessage ?? ''
+				}
+			: consultant
+				? { message: userData?.absenceMessage ?? '' }
+				: undefined;
+
 	// CalendarPage shows only the colleagues switched on.
 	const entries = [
 		...mergeEntries(own, nearby),
@@ -976,6 +1000,8 @@ export const CalendarPageWired = () => {
 				if (conversationsFailed) loadConversations();
 			}}
 			onCreate={consultant ? create : undefined}
+			onSaveAbsence={consultant ? saveAbsence : undefined}
+			absence={absence}
 			onMove={consultant ? move : undefined}
 			onCancelAppointment={consultant ? cancel : undefined}
 			onRemoveBlocker={consultant ? removeBlocker : undefined}

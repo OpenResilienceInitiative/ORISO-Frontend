@@ -154,7 +154,7 @@ export const useBlockerForm = ({
 		.filter((r) => r.end.getTime() > r.start.getTime())
 		.flatMap((r) =>
 			findConflicts(r, entries, ownerId).filter(
-				(e) => e.type !== 'blocker'
+				(e) => e.type !== 'blocker' && e.type !== 'absence'
 			)
 		);
 	// A whole day counts by its date, so today stays possible after 00:00.

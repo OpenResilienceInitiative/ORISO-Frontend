@@ -2980,7 +2980,13 @@
 					"label": "Deaktivieren Sie Ihre Abwesenheit, um eine Nachricht zu hinterlegen oder sie zu bearbeiten."
 				},
 				"label": "Hinterlegen Sie eine Abwesenheitsnachricht",
-				"title": "Meine Abwesenheit"
+				"title": "Meine Abwesenheit",
+				"from": "Abwesend von (optional)",
+				"until": "Abwesend bis (optional)",
+				"dateHint": "Ohne Datum gilt die Abwesenheit bis auf Weiteres, bis Sie sie ausschalten. Nach dem Bis-Datum sind Sie automatisch wieder anwesend.",
+				"planned": "Geplant ab {{start}}",
+				"activeUntil": "Abwesend bis einschließlich {{end}}",
+				"invalidRange": "Das Bis-Datum liegt vor dem Von-Datum."
 			},
 			"liveChat": {
 				"title": "Meine Live-Chat Verfügbarkeit",
@@ -7077,7 +7083,8 @@
 			"group": "Gruppentermin",
 			"blocker": "Sperrzeit",
 			"busy": "Belegt",
-			"colleague": "Belegt"
+			"colleague": "Belegt",
+			"absence": "Abwesend"
 		},
 		"noEvents": "Keine Termine in diesem Zeitraum",
 		"loading": "Termine werden geladen",
@@ -7106,7 +7113,8 @@
 			"entryKind": "Art des Eintrags",
 			"tabs": {
 				"appointment": "Termin",
-				"blocker": "Sperrzeit"
+				"blocker": "Sperrzeit",
+				"absence": "Abwesenheit"
 			}
 		},
 		"details": {
@@ -7549,6 +7557,18 @@
 		"links": {
 			"title": "Links ohne Termin",
 			"hint": "Einladungslinks, die Sie teilen können: kopieren oder als QR-Code zeigen."
+		},
+		"absence": {
+			"description": "Wählen Sie die Tage, an denen Sie abwesend sind. Ratsuchende sehen in dieser Zeit Ihre Abwesenheitsnachricht.",
+			"from": "Von",
+			"until": "Bis",
+			"message": "Abwesenheitsnachricht",
+			"messageHint": "Ratsuchende sehen diese Nachricht, können Ihnen aber weiterhin schreiben.",
+			"effect": "Nach dem letzten Tag sind Sie automatisch wieder anwesend. Dieselbe Abwesenheit steht in Ihrem Profil.",
+			"save": "Abwesenheit eintragen",
+			"conflicts": "In diesem Zeitraum liegen {{count}} Termine. Sie bleiben bestehen – sagen Sie sie bei Bedarf selbst ab oder verschieben Sie sie.",
+			"conflicts_one": "In diesem Zeitraum liegt {{count}} Termin. Er bleibt bestehen – sagen Sie ihn bei Bedarf selbst ab oder verschieben Sie ihn.",
+			"saved": "Abwesenheit eingetragen. Sie steht auch in Ihrem Profil."
 		}
 	}
 }
