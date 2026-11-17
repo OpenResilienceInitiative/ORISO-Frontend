@@ -3364,14 +3364,9 @@ $cal-new-pill-hover: #4b4f51;
 .calendarHours__pauseOn {
 	display: inline-flex;
 	align-items: center;
-	gap: 6px;
-
-	input {
-		width: 16px;
-		height: 16px;
-		margin: 0;
-		accent-color: var(--m3-primary, #a5000a);
-	}
+	white-space: nowrap;
+	/* The M3 checkbox brings its own 40px state layer; pull it to the row edge. */
+	margin-inline-start: -11px;
 }
 
 .calendarHours__holidayBox {

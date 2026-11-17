@@ -56,6 +56,7 @@ import { type CalendarViewName, type ViewSwitcherStyle } from './calendarViews';
 import { useEntryLabel, useRangeFormat } from './useEntryLabel';
 import type { EdgeChoice } from './calendarPreferences';
 import { calendarLocale } from './calendarLocale';
+import { OrisoTextarea } from '../form/OrisoTextarea';
 import {
 	edgeLabelKey,
 	type TimeWindow,
@@ -454,16 +455,18 @@ export const MoveForm = ({
 				</ChatMenuDropdownNote>
 			)}
 			{mode === 'propose' && (
-				<label className="calendarMenuForm__field">
-					<span>{t('calendar.entryMenu.reason')}</span>
-					<textarea
-						value={reason}
-						maxLength={MAX_PROPOSAL_REASON}
-						rows={2}
-						onChange={(e) => setReason(e.target.value)}
-						data-cy="calendar-move-reason"
-					/>
-				</label>
+				<OrisoTextarea
+					label={t('calendar.entryMenu.reason')}
+					value={reason}
+					minRows={2}
+					fullWidth
+					size="small"
+					onChange={(e) => setReason(e.target.value)}
+					inputProps={{
+						'maxLength': MAX_PROPOSAL_REASON,
+						'data-cy': 'calendar-move-reason'
+					}}
+				/>
 			)}
 			{mode === 'propose' && approverName && (
 				<ChatMenuDropdownNote>

@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
+import { M3Checkbox } from '../../../M3Checkbox';
 import type { MentionCandidate } from './mentionFiltering';
 import './mentionList.styles.scss';
 
@@ -239,17 +240,17 @@ export const MentionList = forwardRef<MentionListRef, MentionListProps>(
 									</span>
 								)}
 							</button>
-							<label className="mentionList__check">
-								<input
-									type="checkbox"
+							<span className="mentionList__check">
+								<M3Checkbox
 									checked={isChecked(item)}
-									aria-label={
+									hideLabel
+									label={
 										getCheckLabel?.(item.displayName) ??
 										item.displayName
 									}
 									onChange={() => toggleItem(index)}
 								/>
-							</label>
+							</span>
 						</div>
 					))}
 				</div>

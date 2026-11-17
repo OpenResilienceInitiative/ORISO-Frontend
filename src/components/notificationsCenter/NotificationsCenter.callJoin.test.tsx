@@ -235,7 +235,9 @@ it('locks timeline display filter edits during initial Matrix sync without askin
 			name: en.notifications.displayFilter.button
 		})
 	);
-	const view = screen.getAllByRole('radio')[0] as HTMLInputElement;
+	const view = document.querySelector(
+		'[data-cy^="display-filter-view-"]'
+	) as HTMLButtonElement; // first segment of the view switch
 	expect(view.disabled).toBe(true);
 	expect(
 		screen.queryByText(en.notifications.displayFilter.readOnlyHint)

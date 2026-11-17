@@ -1127,24 +1127,9 @@ body.conversationCreate--active .navigation__wrapper {
 	flex-direction: column;
 	gap: 8px;
 
+	/* OrisoTextarea draws the same outlined field as the welcome text. */
 	&__input {
-		/* Same box as the welcome field above: outline role, 4px, body-large. */
-		background: $cc-surface-container-low;
-		border: 1px solid var(--m3-outline, #747878);
-		border-radius: 4px;
-		font-family: inherit;
-		font-size: 16px;
-		letter-spacing: 0.5px;
-		line-height: 24px;
-		min-height: 120px;
-		padding: 12px 16px;
-		resize: vertical;
 		width: 100%;
-
-		&:focus-visible {
-			border-color: $cc-primary;
-			outline: 2px solid $cc-primary;
-		}
 	}
 
 	&__row {

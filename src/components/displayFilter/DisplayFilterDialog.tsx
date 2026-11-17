@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useId } from 'react';
 import TuneIcon from '@mui/icons-material/Tune';
-import clsx from 'clsx';
+import { ToggleButton, ToggleButtonGroup } from '@mui/material';
 import { M3Dialog } from '../m3Dialog/M3Dialog';
 import { Switch } from '../Switch';
 import {
@@ -166,6 +166,36 @@ export const SESSION_COLUMNS: DisplayFilterColumns = {
  * and sections it really has. Presentational: the caller owns the value
  * (slice 2 store), the e-mail column and the list integration.
  */
+/** M3 segmented button: outlined pill, secondary-container fill when selected. */
+const segmentedSx = {
+	'borderRadius': '999px',
+	'& .MuiToggleButton-root': {
+		'minHeight': 32,
+		'px': '14px',
+		'py': 0,
+		'border': 0,
+		'borderRadius': 0,
+		'textTransform': 'none',
+		'fontSize': 12,
+		'fontWeight': 500,
+		'lineHeight': '16px',
+		'letterSpacing': '0.5px',
+		'color': 'var(--m3-on-surface, #1b1b1c)',
+		'& + .MuiToggleButton-root': {
+			borderLeft: '1px solid var(--m3-outline, #74777f)'
+		},
+		'&.Mui-selected, &.Mui-selected:hover': {
+			backgroundColor: 'var(--m3-secondary-container, #e4e2e2)',
+			color: 'var(--m3-on-secondary-container, #1b1b1c)'
+		},
+		'&.Mui-focusVisible': {
+			outline: '2px solid var(--m3-primary, #a5000a)',
+			outlineOffset: '-2px'
+		},
+		'&.Mui-disabled': { opacity: 0.38 }
+	}
+} as const;
+
 export const DisplayFilterDialog = ({
 	open,
 	onClose,
@@ -352,39 +382,34 @@ export const DisplayFilterDialog = ({
 							<legend className="sr-only">
 								{labels.viewTitle}
 							</legend>
-							<div
+							{/* M3 single-select segmented button (MUI ToggleButtonGroup). */}
+							<ToggleButtonGroup
+								exclusive
+								size="small"
 								className="displayFilterDialog__viewOptions"
-								role="radiogroup"
 								aria-label={labels.viewTitle}
+								value={presentation.view}
+								disabled={controlsDisabled}
+								onChange={(_, view: ChipView | null) => {
+									if (view) setView(view);
+								}}
+								sx={segmentedSx}
 							>
 								{CHIP_VIEWS.map((view) => (
-									<label
+									<ToggleButton
 										key={view}
-										className={clsx(
-											'displayFilterDialog__viewOption',
-											presentation.view === view &&
-												'displayFilterDialog__viewOption--selected'
-										)}
+										value={view}
+										disableRipple
+										data-cy={`display-filter-view-${view}`}
 									>
-										<input
-											type="radio"
-											name={`${dialogId}-view`}
-											value={view}
-											checked={presentation.view === view}
-											disabled={controlsDisabled}
-											onChange={() => setView(view)}
-											data-cy={`display-filter-view-${view}`}
-										/>
-										<span>
-											{view === 'icons'
-												? labels.viewIcons
-												: view === 'labels'
-													? labels.viewLabels
-													: labels.viewText}
-										</span>
-									</label>
+										{view === 'icons'
+											? labels.viewIcons
+											: view === 'labels'
+												? labels.viewLabels
+												: labels.viewText}
+									</ToggleButton>
 								))}
-							</div>
+							</ToggleButtonGroup>
 						</fieldset>
 
 						{showPresentation === true && (

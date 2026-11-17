@@ -7,9 +7,11 @@ import {
 	List,
 	ListItem,
 	ListItemAvatar,
-	NativeSelect,
+	MenuItem,
+	Select,
 	Typography
 } from '@mui/material';
+import { orisoSelectMenuProps } from '../form/orisoInputDesign';
 import {
 	apiChangeGroupChatParticipantRole,
 	apiRemoveGroupChatParticipant,
@@ -199,8 +201,10 @@ export const GroupChatRoleManager = ({
 									{participant.displayName}
 								</Typography>
 								{canManageParticipant ? (
-									<NativeSelect
+									<Select
+										variant="standard"
 										disableUnderline
+										MenuProps={orisoSelectMenuProps}
 										value={participant.role}
 										disabled={pendingId !== null}
 										inputProps={{
@@ -225,13 +229,13 @@ export const GroupChatRoleManager = ({
 										}}
 									>
 										{EDITABLE_ROLES.map((role) => (
-											<option value={role} key={role}>
+											<MenuItem value={role} key={role}>
 												{translate(
 													`groupChat.roles.${role}`
 												)}
-											</option>
+											</MenuItem>
 										))}
-									</NativeSelect>
+									</Select>
 								) : (
 									<Typography
 										component="span"

@@ -298,47 +298,6 @@
 	overflow: hidden;
 }
 
-.displayFilterDialog__viewOption {
-	position: relative;
-	display: inline-flex;
-	align-items: center;
-	min-height: 32px;
-	padding: 0 14px;
-	font-size: 12px;
-	font-weight: 500;
-	line-height: 16px;
-	letter-spacing: 0.5px;
-	color: var(--m3-on-surface, #1b1b1c);
-	cursor: pointer;
-
-	& + & {
-		border-left: 1px solid var(--m3-outline, #74777f);
-	}
-
-	input {
-		position: absolute;
-		inset: 0;
-		margin: 0;
-		opacity: 0;
-		cursor: pointer;
-	}
-
-	&--selected {
-		background: var(--m3-secondary-container, #e4e2e2);
-		color: var(--m3-on-secondary-container, #1b1b1c);
-	}
-
-	&:has(input:focus-visible) {
-		outline: 2px solid var(--m3-primary, #a5000a);
-		outline-offset: -2px;
-	}
-
-	&:has(input:disabled) {
-		opacity: 0.38;
-		cursor: default;
-	}
-}
-
 .displayFilterDialog__row--deactivated .displayFilterDialog__kind {
 	color: var(--m3-on-surface-variant, #444748);
 }

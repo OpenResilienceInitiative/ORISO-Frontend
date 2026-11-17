@@ -5,7 +5,8 @@ import {
 	fireEvent,
 	render,
 	screen,
-	waitFor
+	waitFor,
+	within
 } from '@testing-library/react';
 import {
 	afterEach,
@@ -41,6 +42,19 @@ const participants: UserService.Schemas.GroupChatParticipantDTO[] = [
 	{ consultantId: 'other', displayName: 'Charlie', role: 'PARTICIPANT' }
 ];
 
+const roleSelect = (name: string) =>
+	screen.getByRole('combobox', { name: `groupChat.roles.roleLabel ${name}` });
+
+/** Opens the kit select (MUI menu, not a native list) and picks a role. */
+const chooseRole = (name: string, role: string) => {
+	fireEvent.mouseDown(roleSelect(name));
+	fireEvent.click(
+		within(screen.getByRole('listbox')).getByRole('option', {
+			name: `groupChat.roles.${role}`
+		})
+	);
+};
+
 describe('GroupChatRoleManager', () => {
 	beforeEach(() => vi.clearAllMocks());
 	afterEach(cleanup);
@@ -54,12 +68,7 @@ describe('GroupChatRoleManager', () => {
 			/>
 		);
 
-		fireEvent.change(
-			screen.getByLabelText('groupChat.roles.roleLabel Bob'),
-			{
-				target: { value: 'CO_MODERATOR' }
-			}
-		);
+		chooseRole('Bob', 'CO_MODERATOR');
 
 		await waitFor(() =>
 			expect(apiChangeGroupChatParticipantRole).toHaveBeenCalledWith(
@@ -68,6 +77,7 @@ describe('GroupChatRoleManager', () => {
 				'CO_MODERATOR'
 			)
 		);
+		fireEvent.mouseDown(roleSelect('Charlie'));
 		expect(
 			screen.queryAllByRole('option', { name: 'groupChat.roles.OWNER' })
 		).toHaveLength(0);
@@ -85,12 +95,7 @@ describe('GroupChatRoleManager', () => {
 			/>
 		);
 
-		fireEvent.change(
-			screen.getByLabelText('groupChat.roles.roleLabel Bob'),
-			{
-				target: { value: 'CO_MODERATOR' }
-			}
-		);
+		chooseRole('Bob', 'CO_MODERATOR');
 
 		expect(
 			(
@@ -99,13 +104,9 @@ describe('GroupChatRoleManager', () => {
 				}) as HTMLButtonElement
 			).disabled
 		).toBe(true);
-		expect(
-			(
-				screen.getByLabelText(
-					'groupChat.roles.roleLabel Charlie'
-				) as HTMLSelectElement
-			).disabled
-		).toBe(true);
+		expect(roleSelect('Charlie').getAttribute('aria-disabled')).toBe(
+			'true'
+		);
 	});
 
 	it('keeps the previous role and shows an error when an update fails', async () => {
@@ -120,13 +121,12 @@ describe('GroupChatRoleManager', () => {
 			/>
 		);
 
-		const select = screen.getByLabelText(
-			'groupChat.roles.roleLabel Bob'
-		) as HTMLSelectElement;
-		fireEvent.change(select, { target: { value: 'CO_MODERATOR' } });
+		chooseRole('Bob', 'CO_MODERATOR');
 
 		await screen.findByRole('alert');
-		expect(select.value).toBe('PARTICIPANT');
+		expect(roleSelect('Bob').textContent).toBe(
+			'groupChat.roles.PARTICIPANT'
+		);
 	});
 
 	it('transfers primary ownership through a stable consultant id', async () => {

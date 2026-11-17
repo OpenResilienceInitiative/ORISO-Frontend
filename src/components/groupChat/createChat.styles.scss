@@ -230,21 +230,8 @@ $inputSpacing: 32px;
 		gap: $grid-base-two;
 	}
 
-	/* The node gives the text fields the outline role and a 4px radius. */
+	/* OrisoTextarea draws the outlined field; only the width is set here. */
 	&__welcomeInput {
-		background: var(--m3-surface-container-low, #f6f3f3);
-		border: 1px solid var(--m3-outline, #747878);
-		border-radius: 4px;
-		box-sizing: border-box;
-		color: var(--m3-on-surface, #1b1b1c);
-		display: block;
-		font-size: 16px;
-		letter-spacing: 0.5px;
-		line-height: 24px;
-		margin: 0;
-		min-height: 120px;
-		padding: 8px 16px;
-		resize: vertical;
 		width: 100%;
 	}
 

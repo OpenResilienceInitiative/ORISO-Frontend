@@ -261,9 +261,10 @@ describe('DisplayFilterDialog chip presentation + Träger switch (Frank 2026-09-
 	it('lets the user pick the chip view and auto-sort, stored on the section value', () => {
 		const onValue = vi.fn();
 		render(<Harness onValue={onValue} />);
-		const textView = screen.getByRole('radio', { name: 'Text' });
-		const iconsView = screen.getByRole('radio', { name: 'Icons' });
-		expect((iconsView as HTMLInputElement).checked).toBe(true);
+		// M3 segmented button (MUI ToggleButtonGroup): pressed = selected.
+		const textView = screen.getByRole('button', { name: 'Text' });
+		const iconsView = screen.getByRole('button', { name: 'Icons' });
+		expect(iconsView.getAttribute('aria-pressed')).toBe('true');
 		fireEvent.click(textView);
 		expect(
 			(onValue.mock.calls.at(-1)?.[0] as DisplayFilterValue).view
