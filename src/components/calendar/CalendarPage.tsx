@@ -1253,6 +1253,11 @@ export const CalendarPage = ({
 	 * A refused or failed removal creates nothing and keeps the form open;
 	 * a failed series puts the single blocker back. A second save waits
 	 * until that restore has settled (review 4589615841).
+	 *
+	 * A series fails in three ways: refused (`false`), rejected, or thrown
+	 * at once by the host. All three put the single blocker back and resolve
+	 * to `false`; a throw also says the save failed, as a rejection does
+	 * (review 4595635794).
 	 */
 	const replaceBlocker = (
 		replaces: { entry: CalendarEntry; draft: AppointmentDraft },
@@ -1273,11 +1278,20 @@ export const CalendarPage = ({
 					setNotice({ message: t('calendar.saveFailed') });
 					return false;
 				}
-				return Promise.resolve(create(drafts, true)).then((stored) =>
-					stored
-						? stored
-						: restoreBlocker(replaces).then(() => stored)
-				);
+				return Promise.resolve()
+					.then(() => create(drafts, true))
+					.then(
+						(stored) => stored,
+						() => {
+							setNotice({ message: t('calendar.saveFailed') });
+							return false;
+						}
+					)
+					.then((stored) =>
+						stored
+							? stored
+							: restoreBlocker(replaces).then(() => stored)
+					);
 			})
 			.finally(() => {
 				replacing.current = false;
