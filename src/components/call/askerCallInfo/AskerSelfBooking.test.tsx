@@ -160,7 +160,7 @@ describe('AskerCallInfo self-booking (FE#1050)', () => {
 		expect(bookSlot).not.toHaveBeenCalled();
 	});
 
-	it('ignores a booking that finishes after the conversation changed', async () => {
+	it('reports a booking that finishes after the conversation changed to the conversation it was made in, without showing it in the new one', async () => {
 		let finish: (value: SessionAppointment) => void = () => undefined;
 		const bookSlot = vi.fn(
 			() =>
@@ -184,10 +184,21 @@ describe('AskerCallInfo self-booking (FE#1050)', () => {
 		fireEvent.click(screen.getByTestId('asker-self-booking-confirm'));
 		await waitFor(() => expect(bookSlot).toHaveBeenCalled());
 
-		rerender(<AskerCallInfo sessionId={8} {...props} />);
+		const onBookedInEight = vi.fn();
+		rerender(
+			<AskerCallInfo
+				sessionId={8}
+				{...props}
+				onBooked={onBookedInEight}
+			/>
+		);
 		await act(async () => finish(booked));
 
-		expect(onBooked).not.toHaveBeenCalled();
+		// The server made the appointment: the counsellor's notice and the
+		// appointment list still learn of it, in the conversation it was made in.
+		expect(onBooked).toHaveBeenCalledOnce();
+		expect(onBooked).toHaveBeenCalledWith(booked);
+		expect(onBookedInEight).not.toHaveBeenCalled();
 		expect(screen.queryByTestId('asker-call-info-appointment')).toBeNull();
 	});
 

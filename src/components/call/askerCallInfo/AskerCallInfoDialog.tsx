@@ -242,7 +242,7 @@ export const AskerCallInfo = ({
 
 	if (open && booking && medium) {
 		/* A booking still on its way when the conversation changes belongs to
-		   the old one: its answer must not land in this one. */
+		   the old one: its answer must not show in this one. */
 		const startedFor = sessionId;
 		const stillOpen = () => currentSession.current === startedFor;
 		return (
@@ -259,17 +259,20 @@ export const AskerCallInfo = ({
 				onBack={() => setBooking(false)}
 				onWriteInChat={onRequestTime}
 				onBooked={(appointment) => {
-					if (!stillOpen()) return;
-					setAppointments((known) => [
-						...(Array.isArray(known) ? known : []),
-						appointment
-					]);
-					setNotice(
-						appointment.status === 'REQUESTED'
-							? 'requested'
-							: 'booked'
-					);
-					setBooking(false);
+					/* The server made it: the conversation it was made in
+					   learns of it either way (this render's `onBooked`). */
+					if (stillOpen()) {
+						setAppointments((known) => [
+							...(Array.isArray(known) ? known : []),
+							appointment
+						]);
+						setNotice(
+							appointment.status === 'REQUESTED'
+								? 'requested'
+								: 'booked'
+						);
+						setBooking(false);
+					}
 					onBooked?.(appointment);
 				}}
 				onLimitReached={() => {

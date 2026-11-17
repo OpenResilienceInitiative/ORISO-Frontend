@@ -78,6 +78,11 @@ const fakeManager = (initial: CallData | null = null) => {
 			waiting = call;
 			listeners.forEach((listener) => listener(current));
 		},
+		/** The waiting caller hangs up; the running call goes on. */
+		dropWaiting: () => {
+			waiting = null;
+			listeners.forEach((listener) => listener(current));
+		},
 		/** The running call ends: the waiting one rings as the current one. */
 		promote: () => {
 			current = waiting;
@@ -292,6 +297,27 @@ describe('let in while still in another call (Frank, 17 Nov 2026)', () => {
 		expect(manager.answerCall).toHaveBeenCalledOnce();
 		expect(manager.answerWaitingCall).not.toHaveBeenCalled();
 		expect(signal?.aborted).toBe(true);
+	});
+
+	it('withdraws the question and gives up when the counsellor hangs up meanwhile', async () => {
+		const manager = fakeManager(running);
+		let signal: AbortSignal | undefined;
+		const confirmLeaveRunningCall = vi.fn((asked: AbortSignal) => {
+			signal = asked;
+			return new Promise<boolean>(() => undefined);
+		});
+		const joined = joinCounsellorsCall(knock, {
+			manager,
+			confirmLeaveRunningCall
+		});
+
+		manager.waitBehind(counsellors);
+		manager.dropWaiting();
+
+		await expect(joined).resolves.toBe('unavailable');
+		expect(signal?.aborted).toBe(true);
+		expect(manager.answerWaitingCall).not.toHaveBeenCalled();
+		expect(manager.listenerCount()).toBe(0);
 	});
 
 	it('without anyone to ask, never answers the waiting call', async () => {

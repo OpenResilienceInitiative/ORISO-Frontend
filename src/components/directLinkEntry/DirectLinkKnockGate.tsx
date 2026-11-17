@@ -136,6 +136,7 @@ export const joinCounsellorsCall = (
 		}
 		let done = false;
 		let asking: AbortController | null = null;
+		let askedAbout: string | null = null;
 		let unsubscribe: () => void = () => undefined;
 		let timer: ReturnType<typeof setTimeout> | undefined;
 		const finish = (result: CallJoinResult) => {
@@ -152,6 +153,7 @@ export const joinCounsellorsCall = (
 				return;
 			const question = new AbortController();
 			asking = question;
+			askedAbout = waiting?.callId ?? null;
 			clearTimeout(timer);
 			confirmLeaveRunningCall(question.signal).then(
 				(yes) => {
@@ -163,6 +165,8 @@ export const joinCounsellorsCall = (
 						finish('unavailable');
 						return;
 					}
+					/* Answered: leaving the running call is no hang-up to react to. */
+					asking = null;
 					manager.answerWaitingCall(waiting!.callId);
 					finish('joined');
 				},
@@ -172,12 +176,21 @@ export const joinCounsellorsCall = (
 		const tryAnswer = (call: CallData | null) => {
 			if (done) return;
 			if (!ringsFrom(call, room)) {
+				/* The counsellor hung up while the person decided: the
+				   question goes, and so does the wait. */
+				if (asking && manager.getWaitingCall()?.callId !== askedAbout) {
+					finish('unavailable');
+					return;
+				}
 				askAboutWaitingCall();
 				return;
 			}
 			/* `answerCall` answers the manager's current call and does nothing
 			   otherwise: only that one counts as joined; else keep waiting. */
 			if (manager.getCurrentCall()?.callId !== call?.callId) return;
+			/* Promoted while the person decided: no question left to answer. */
+			asking?.abort();
+			asking = null;
 			manager.answerCall();
 			finish('joined');
 		};
