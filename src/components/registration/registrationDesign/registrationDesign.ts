@@ -956,7 +956,7 @@ export const buildRegistrationTopicPresentationGroups = (
 					{
 						placementId: `${category.categoryId}/${placement.key}`,
 						topic,
-						icon: placement.icon,
+						icon: ownTopicIcon(topic) || placement.icon,
 						topicGroupId: category.id,
 						categoryId: category.categoryId
 					}

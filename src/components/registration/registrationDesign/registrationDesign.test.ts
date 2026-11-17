@@ -451,6 +451,20 @@ describe('topic catalogue from the API', () => {
 		expect(getRegistrationTopicIconForGroup(topic, 10001)).toBe(ownPicture);
 	});
 
+	it('shows an uploaded topic picture also in the built-in categories', () => {
+		const ownPicture = 'data:image/png;base64,iVBORw0KGgo=';
+		const topics = allTopics.map((topic) =>
+			topic.slug === 'debt' ? { ...topic, icon: ownPicture } : topic
+		);
+
+		const debtRows = buildRegistrationTopicPresentationGroups(topics, 'de')
+			.flatMap(({ topics: rows }) => rows)
+			.filter(({ topic }) => topic.slug === 'debt');
+
+		expect(debtRows.length).toBeGreaterThan(0);
+		debtRows.forEach(({ icon }) => expect(icon).toBe(ownPicture));
+	});
+
 	it('keeps the per-category picture of a shipped Caritas icon', () => {
 		const topic = fromCatalogue('u25-suicide-prevention', 9);
 

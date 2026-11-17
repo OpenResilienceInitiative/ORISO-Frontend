@@ -397,7 +397,8 @@ export const TopicSelection: FC<{
 		if (topics?.length === 1) {
 			setValue(topics[0].id);
 			onChange({
-				mainTopic: topics[0]
+				mainTopic: topics[0],
+				topicIcon: undefined
 			});
 		}
 	}, [topics, onChange]);
@@ -617,7 +618,8 @@ export const TopicSelection: FC<{
 												);
 												onChange({
 													mainTopic: topic,
-													topicGroupId: undefined
+													topicGroupId: undefined,
+													topicIcon: undefined
 												});
 											}}
 										/>
@@ -900,7 +902,9 @@ export const TopicSelection: FC<{
 																				mainTopic:
 																					placement.topic,
 																				topicGroupId:
-																					topicGroup.id
+																					topicGroup.id,
+																				topicIcon:
+																					placement.icon
 																			}
 																		);
 																	}}

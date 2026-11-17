@@ -90,7 +90,7 @@ const topicWithSlug = (
 	internalIdentifier: slug
 });
 
-const renderTopicSelection = () =>
+const renderTopicSelection = (onChange = vi.fn()) =>
 	render(
 		<LocaleContext.Provider
 			value={{
@@ -119,7 +119,7 @@ const renderTopicSelection = () =>
 					}}
 				>
 					<TopicSelection
-						onChange={vi.fn()}
+						onChange={onChange}
 						nextStepUrl="/next"
 						onNextClick={vi.fn()}
 					/>
@@ -364,6 +364,40 @@ describe('TopicSelection', () => {
 		expect(
 			document.querySelector('img[src="data:image/png;base64,CCCC"]')
 		).not.toBeNull();
+	});
+
+	it('picks a topic row together with the picture it shows there', async () => {
+		vi.stubGlobal('scrollTo', vi.fn());
+		apiGetTopicsDataMock.mockResolvedValue([
+			{ ...topic(10, 'Mietberatung'), icon: 'data:image/png;base64,BBBB' }
+		]);
+		apiGetTopicGroupsMock.mockResolvedValue({
+			data: {
+				items: [
+					{
+						id: 4,
+						name: 'Wohnen',
+						icon: 'data:image/png;base64,CCCC',
+						topicIds: [10]
+					}
+				]
+			}
+		});
+		const onChange = vi.fn();
+		renderTopicSelection(onChange);
+
+		fireEvent.click(await screen.findByText('Wohnen'));
+		fireEvent.click(await screen.findByText('Mietberatung'));
+
+		await waitFor(() =>
+			expect(onChange).toHaveBeenCalledWith(
+				expect.objectContaining({
+					mainTopic: expect.objectContaining({ id: 10 }),
+					topicGroupId: 4,
+					topicIcon: 'data:image/png;base64,BBBB'
+				})
+			)
+		);
 	});
 
 	it('leaves loading state when the public topics request fails', async () => {
