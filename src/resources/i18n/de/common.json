@@ -6921,7 +6921,6 @@
 		"bandOne": "{{name}} belegt",
 		"colleagueFailedShort": "nicht geladen",
 		"colleagueFailed": "Der Kalender von {{names}} konnte nicht geladen werden; ob alle frei sind, lässt sich so nicht sagen.",
-		"upcomingChat": "Zum Chat mit {{name}}",
 		"chatUnavailable": "Der Chat zu diesem Termin konnte nicht geöffnet werden.",
 		"conversationsFailedAsker": "Ihre Gespräche konnten nicht geladen werden, ein Termin führt so nicht zu seinem Chat.",
 		"create": "Termin anlegen",
@@ -6984,11 +6983,16 @@
 				"past": "Der Eintrag muss in der Zukunft liegen.",
 				"order": "Das Ende muss nach dem Beginn liegen.",
 				"conversation": "Bitte die Beratung wählen, zu der der Termin gehört."
+			},
+			"entryKind": "Art des Eintrags",
+			"tabs": {
+				"appointment": "Termin",
+				"blocker": "Sperrzeit"
 			}
 		},
 		"details": {
 			"start": {
-				"video": "Video-Call starten",
+				"video": "Video starten",
 				"phone": "Anruf starten",
 				"chat": "Chat öffnen"
 			},
@@ -6999,7 +7003,7 @@
 			},
 			"move": "Verschieben",
 			"cancel": "Absagen",
-			"remove": "Blockierung entfernen",
+			"remove": "Sperrzeit entfernen",
 			"address": "Adresse",
 			"colleague": "Kalender von {{name}}",
 			"busyHint": "Aus Ihrem eigenen Kalender übernommen. ORISO kennt nur die Zeit.",
@@ -7012,12 +7016,18 @@
 			"confirm": "Trotzdem verschieben"
 		},
 		"soon": "Beginnt gleich",
-		"blockerMoved": "Blockierung verschoben auf {{date}}.",
+		"blockerMoved": "Sperrzeit verschoben auf {{date}}.",
 		"cancelled": "Termin abgesagt. Die ratsuchende Person wird benachrichtigt.",
+		"cancelAsk": {
+			"title": "Termin absagen?",
+			"description": "{{name}}, {{time}}. {{name}} bekommt sofort eine Nachricht, dass der Termin abgesagt ist.",
+			"keep": "Nicht absagen",
+			"confirm": "Absagen"
+		},
 		"created": "Termin angelegt: {{date}}",
 		"undo": "Rückgängig",
 		"syncDialog": {
-			"title": "Kalender-Abgleich",
+			"title": "Mit Outlook oder Google verbinden",
 			"description": "Ihre ORISO-Termine in Outlook, Google oder Apple Kalender – und belegte Zeiten von dort zurück.",
 			"feedTitle": "In Ihrem Kalender abonnieren",
 			"feedText": "Fügen Sie diesen Link in Ihrem Kalender als Abonnement hinzu. Er zeigt nur „ORISO-Termin“ und die Uhrzeit, keine Namen.",
@@ -7053,7 +7063,11 @@
 			"label": "Eintragen",
 			"as": "Eintragen als",
 			"blockerNow": "sofort eingetragen",
-			"outsideHours": "Außerhalb Ihrer Arbeitszeit."
+			"outsideHours": "Außerhalb Ihrer Arbeitszeit.",
+			"who": "Mit wem",
+			"whoPlaceholder": "Mit wem? Name suchen",
+			"conversations": "Gespräche",
+			"noneFound": "Kein Gespräch gefunden."
 		},
 		"blocker": {
 			"menuItem": "Sperrzeit",
@@ -7071,14 +7085,19 @@
 			"conflicts_one": "Überschneidet sich mit {{count}} Termin.",
 			"created": "{{count}} Sperrzeiten eingetragen",
 			"created_one": "{{count}} Sperrzeit eingetragen",
-			"createdSingle": "Sperrzeit eingetragen: {{date}}"
+			"createdSingle": "Sperrzeit eingetragen: {{date}}",
+			"workHint": "Immer gleiche Zeiten, etwa abends und am Wochenende?",
+			"weekly": "Wöchentlich …"
 		},
 		"saveFailed": "Das hat nicht geklappt. Bitte versuchen Sie es noch einmal.",
+		"restoreFailed": "Die Sperrzeit wurde gelöscht und konnte nicht wiederhergestellt werden. Speichern Sie die Serie erneut, um die Zeit wieder zu sperren.",
 		"blockerRemoved": "Sperrzeit entfernt.",
 		"allDay": "ganztägig",
 		"entryMenu": {
 			"back": "Zurück",
 			"cancel": "Absagen",
+			"show": "Zum Termin",
+			"showSub": "Im Kalender zeigen und markieren",
 			"chat": "Zum Chat",
 			"conflicts": "Überschneidet sich mit einem anderen Eintrag.",
 			"date": "Tag",
@@ -7093,7 +7112,14 @@
 			"remove": "Entfernen",
 			"saveMove": "Verschieben",
 			"sendProposal": "Vorschlag senden",
-			"to": "Bis"
+			"to": "Bis",
+			"withYou": "Sie und {{name}}",
+			"startSub": "mit {{name}}",
+			"chatSub": "Gespräch mit {{name}} öffnen",
+			"joinSub": "Videokonferenz öffnen",
+			"moveSub": "Tag und Uhrzeit ändern",
+			"proposeSub": "{{name}} muss bestätigen",
+			"cancelSub": "{{name}} bekommt eine Nachricht"
 		},
 		"fullscreen": "Vollbild",
 		"fullscreenExit": "Vollbild beenden (Esc)",
@@ -7101,6 +7127,7 @@
 			"label": "Zu einem Tag springen",
 			"today": "Heute",
 			"tomorrow": "Morgen",
+			"dayAfterTomorrow": "Übermorgen",
 			"nextMonday": "Nächster Montag",
 			"inTwoWeeks": "In zwei Wochen",
 			"date": "Datum",
@@ -7110,7 +7137,8 @@
 			"label": "Was anzeigen",
 			"hint": "Abgewählte Arten blenden wir im Kalender und in der Liste aus.",
 			"all": "Alles anzeigen",
-			"customised": "Einige Arten sind ausgeblendet."
+			"customised": "Einige Arten sind ausgeblendet.",
+			"blocker": "Sperrzeiten und Belegt"
 		},
 		"monthMenu": {
 			"label": "Tag eintragen",
@@ -7128,7 +7156,12 @@
 			"bar": "Personen im Kalender",
 			"hint": "Zeigen hebt hervor, Klick blendet aus",
 			"label": "Kalender anzeigen",
+			"alwaysMine": "Ihre Termine sehen Sie immer.",
+			"sameTenant": "gleicher Träger",
+			"wholeAgency": "Ganze Beratungsstelle zeigen",
+			"split": "Nebeneinander ansehen",
 			"me": "Ich",
+			"meAvatar": "ich",
 			"more": "Weitere …"
 		},
 		"proposal": {
@@ -7140,7 +7173,7 @@
 			"withdraw": "Zurückziehen",
 			"sent": "Vorschlag gesendet: {{date}}. {{name}} muss bestätigen.",
 			"withdrawn": "Vorschlag zurückgezogen.",
-			"open": "Offene Anfragen",
+			"open": "Offene Verschiebungen",
 			"proposed": "Vorgeschlagen: {{date}}",
 			"from": "Vorschlag von {{name}}",
 			"someone": "Eine Kollegin oder ein Kollege",
@@ -7156,8 +7189,8 @@
 			"declineLabel": "Vorschlag von {{name}} ablehnen: Der Termin bleibt {{from}}",
 			"declined": "Vorschlag abgelehnt. Der Termin bleibt {{date}}.",
 			"noLongerValid": "Dieser Vorschlag gilt nicht mehr. Der Termin hat sich geändert oder ist vorbei.",
-			"navCount": "{{count}} offene Anfragen",
-			"navCount_one": "{{count}} offene Anfrage"
+			"navCount": "{{count}} offene Verschiebungen",
+			"navCount_one": "{{count}} offene Verschiebung"
 		},
 		"quick": {
 			"freeUnavailable": "Freie Zeiten gerade nicht verfügbar.",
@@ -7165,29 +7198,40 @@
 			"close": "Schnell eintragen schließen",
 			"date": "Tag",
 			"duration": "Dauer",
-			"freeHalf": "Nächste freie halbe Stunde",
-			"freeHours": "Nächste freie Stunde",
 			"gaps": {
-				"when": "Tag und Uhrzeit",
-				"kind": "Art",
-				"who": "Gespräch"
+				"when": "Tag und Beginn",
+				"kind": "welche Art",
+				"who": "mit wem"
 			},
 			"halfHour": "30 Min",
-			"hint": "Tippen Sie Tag und Uhrzeit, wählen Sie die Art.",
+			"hint": "Art wählen, Tag und Beginn setzen oder eine freie Zeit antippen.",
 			"hour": "1 Std",
 			"kind": "Art",
-			"minutes": "{{count}} Min.",
-			"missing": "Noch offen: {{list}}",
+			"missing": "Noch offen: {{list}}.",
 			"more": "Mehr Angaben …",
-			"placeholder": "z. B. Do 14 Uhr Video",
-			"save": "Hinzufügen",
+			"placeholder": "Mit wem? z. B. „mutige_eule“ oder „Do 14 Uhr“",
+			"save": "Eintragen",
+			"saving": "Wird gespeichert …",
 			"slot": "Länge der freien Zeit",
 			"time": "Beginn",
 			"title": "Schnell eintragen",
-			"who": "Mit wem"
+			"who": "Mit wem",
+			"freeNext": "Nächste freie",
+			"lengthHours": "{{hours}} Std",
+			"lengthMinutes": "{{minutes}} Min",
+			"lengthBoth": "{{hours}} Std {{minutes}} Min",
+			"lengths": {
+				"30": "30 Min",
+				"45": "45 Min",
+				"60": "1 Std",
+				"90": "1½ Std",
+				"120": "2 Std"
+			},
+			"ready": "{{noun}} mit {{name}}",
+			"outsideHours": "außerhalb der Arbeitszeit"
 		},
 		"search": {
-			"placeholder": "Termine suchen",
+			"placeholder": "Suche",
 			"clear": "Suche leeren",
 			"empty": "Nichts gefunden.",
 			"results": "Suchergebnisse"
@@ -7201,14 +7245,21 @@
 			"switcherMenu": "als Menü",
 			"switcherDigits": "als Schalter",
 			"switcherHint": "Wird für Sie gespeichert.",
-			"sync": "Mit Outlook oder Google verbinden"
+			"grips": "Arbeitszeit und Pause ziehen",
+			"gripsSub": "Griffe im Kalender zeigen",
+			"sync": "Mit Outlook oder Google verbinden",
+			"repeatBlocker": "Sperrzeit mit Wiederholung",
+			"switcherMenuSub": "Ein Knopf, die Ansichten im Menü",
+			"switcherDigitsSub": "Alle Ansichten nebeneinander: 1 3 5 7 M L N"
 		},
 		"side": {
 			"resize": "Liste breiter oder schmaler ziehen; Doppelklick klappt sie ein oder aus, Pfeil hoch und runter scrollt sie",
-			"label": "Termine: Suche und Listen"
+			"label": "Termine: Suche und Listen",
+			"now": "Jetzt"
 		},
 		"split": {
 			"empty": "Blenden Sie Kalender von Kolleg:innen ein, um Ihren Tag daneben zu sehen.",
+			"choose": "Kolleg:innen wählen",
 			"free": "alle frei",
 			"label": "Ihr Tag neben Kolleg:innen",
 			"oneDay": "1 Tag",
@@ -7216,6 +7267,11 @@
 			"threeDays": "3 Tage"
 		},
 		"viewMenu": "Ansicht: {{view}}",
+		"header": {
+			"new": "Neu",
+			"newEntry": "Neuer Eintrag",
+			"shared": "Termine"
+		},
 		"when": {
 			"running": "läuft",
 			"inMinutes": "in {{count}} Min.",
@@ -7243,7 +7299,8 @@
 			"summary": "Arbeitszeit {{hours}}",
 			"title": "Arbeitszeit festlegen",
 			"to": "Ende am {{day}}",
-			"tooMany": "Die Arbeitszeit hat höchstens {{max}} Zeitfenster pro Woche; diese Änderung ist nicht gespeichert."
+			"tooMany": "Die Arbeitszeit hat höchstens {{max}} Zeitfenster pro Woche; diese Änderung ist nicht gespeichert.",
+			"copyMonday": "Zeiten und Pause vom Montag für alle Arbeitstage übernehmen"
 		},
 		"grip": {
 			"weekOnly": "Nur zum Teil gespeichert: Die Zeiten für {{weekdays}} sind geändert, {{date}} aber nicht.",
@@ -7347,6 +7404,32 @@
 			"keys": "Eingabe wechselt die Höhe, die Pfeiltasten ziehen die Liste auf oder ein. Ziehen geht auch.",
 			"open": "Liste aufziehen"
 		},
-		"conversationsFailed": "Die Gespräche konnten nicht geladen werden, Termine lassen sich so keinem Gespräch zuordnen."
+		"conversationsFailed": "Die Gespräche konnten nicht geladen werden, Termine lassen sich so keinem Gespräch zuordnen.",
+		"nouns": {
+			"video": "Video-Termin",
+			"phone": "Telefontermin",
+			"onsite": "Termin vor Ort",
+			"chat": "Chat-Termin",
+			"group": "Gruppentermin",
+			"blocker": "Sperrzeit",
+			"busy": "Belegt"
+		},
+		"viewSettings": {
+			"title": "Ansicht · Kalender",
+			"description": "Welche Terminarten der Kalender zeigt, welche einen Knopf in der Arten-Leiste bekommen und wann Sie E-Mails erhalten.",
+			"kindsHeading": "Terminarten",
+			"showColumn": "Im Kalender",
+			"legendShow": "Termine dieser Art erscheinen im Kalender und in der Liste.",
+			"pillColumn": "Als Knopf",
+			"legendPill": "Die Art hat einen Knopf in der Leiste über „Als Nächstes“.",
+			"legendEmail": "E-Mail bei gebuchten, verschobenen und abgesagten Terminen. Gilt für alle Terminarten gemeinsam, wie im Profil.",
+			"showKind": "Im Kalender: {{kind}}",
+			"pillKind": "Als Knopf: {{kind}}",
+			"pillMenu": "Als Knopf wählen: {{kind}}"
+		},
+		"links": {
+			"title": "Links ohne Termin",
+			"hint": "Einladungslinks, die Sie teilen können: kopieren oder als QR-Code zeigen."
+		}
 	}
 }

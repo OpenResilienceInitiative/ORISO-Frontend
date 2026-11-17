@@ -46,12 +46,17 @@ import {
 } from './CalendarWorkGrip';
 import type { PublicHoliday } from './calendarHolidays';
 import { CalendarEntryPeek, initialsOf } from './CalendarEntryPeek';
+import { avatarToneClass } from './calendarAvatar';
 import {
 	gridMinutes,
 	type CalendarHighlight,
 	type MenuAnchor
 } from './CalendarView';
-import { useEntryLabel, useProposalStatus } from './useEntryLabel';
+import {
+	useEntryLabel,
+	useProposalStatus,
+	useRangeFormat
+} from './useEntryLabel';
 import { calendarLocale } from './calendarLocale';
 import { SPLIT_SLOT_PX } from './calendarZoom';
 
@@ -154,6 +159,11 @@ export interface SplitPerson {
 export interface CalendarSplitViewProps {
 	/** The first day shown. */
 	day: Date;
+	/**
+	 * Scroll so this time is near the top: an entry chosen in search or
+	 * "Als Nächstes" (review 4594744890). Without it the day starts at 08:00.
+	 */
+	focusTime?: Date;
 	/** How many days side by side; 1 keeps one's own column sticky. */
 	days?: SplitDays;
 	role: CalendarRole;
@@ -194,6 +204,10 @@ export interface CalendarSplitViewProps {
 	proposals?: { proposal: MoveProposal; entry: CalendarEntry }[];
 	highlight?: CalendarHighlight | null;
 	muted?: string[];
+	/** Entries just created: they flash twice (prototype v17). */
+	flashIds?: string[];
+	/** Nobody shown yet: "Kolleg:innen wählen" opens the people menu. */
+	onChoosePeople?: (event: React.MouseEvent<HTMLElement>) => void;
 	onSelectRange?: (
 		range: { start: Date; end: Date },
 		anchor: { x: number; y: number }
@@ -238,6 +252,7 @@ const measureBody =
 
 export const CalendarSplitView = ({
 	day: dayInput,
+	focusTime,
 	days = 1,
 	role,
 	ownerId,
@@ -253,6 +268,8 @@ export const CalendarSplitView = ({
 	proposals = [],
 	highlight,
 	muted = [],
+	flashIds = [],
+	onChoosePeople,
 	onSelectRange,
 	onEntryOpen,
 	onProposalOpen,
@@ -273,6 +290,7 @@ export const CalendarSplitView = ({
 		[firstMinute, lastMinute]
 	);
 	const label = useEntryLabel();
+	const rangeFormat = useRangeFormat();
 	const proposalStatus = useProposalStatus(ownerId);
 	const locale = calendarLocale(i18n.language);
 	const first = useMemo(() => startOfDay(dayInput), [dayInput]);
@@ -397,12 +415,15 @@ export const CalendarSplitView = ({
 		};
 	}, [grouped]);
 
-	// Start the day at 08:00, like the time grid.
+	// Start the day at 08:00, like the time grid, or at the chosen time.
+	const focusMinutes = focusTime
+		? focusTime.getHours() * 60 + focusTime.getMinutes()
+		: 8 * 60;
 	useEffect(() => {
-		scrollRef.current?.scrollTo({ top: Math.max(0, toPx(8 * 60)) });
-		// Only on mount; zooming keeps its own place.
+		scrollRef.current?.scrollTo({ top: Math.max(0, toPx(focusMinutes)) });
+		// Only on mount and for a new focus; zooming keeps its own place.
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	}, [focusTime?.getTime()]);
 
 	const step = (direction: ScrollDirection) => {
 		const track = scrollRef.current;
@@ -528,20 +549,55 @@ export const CalendarSplitView = ({
 			`calEntry--k-${facet}`,
 			colleague && 'calEntry--colleague',
 			proposal && 'calEntry--proposal',
+			!proposal &&
+				!colleague &&
+				flashIds.includes(entry.id) &&
+				'calEntry--flash',
 			dimmed && 'calEntry--dimmed',
 			muted.includes(entry.ownerId) && 'calEntry--muted'
 		]
 			.filter(Boolean)
 			.join(' ');
-		const timeText = `${new Intl.DateTimeFormat(locale, {
+		const clock = new Intl.DateTimeFormat(locale, {
 			hour: '2-digit',
 			minute: '2-digit'
-		}).format(new Date(proposal?.start ?? entry.start))}`;
+		});
+		// As in the day grid (prototype v17): the advice seeker's avatar on
+		// one's own appointment, "10:00–11:00" below from 45 minutes; the
+		// column already says whose an entry is.
+		const avatarName =
+			!colleague && !proposal && entry.type === 'appointment'
+				? entry.title
+				: undefined;
+		const rangeShown =
+			!proposal &&
+			!entry.allDay &&
+			new Date(entry.end).getTime() - new Date(entry.start).getTime() >=
+				45 * 60_000;
+		// The name says the time even when the box is too short to show it,
+		// as in the day grid (review 4589304613).
+		const name = [
+			proposal
+				? `${t('calendar.proposal.label')} · ${proposalStatus(proposal)}`
+				: label(entry, colleague),
+			colleague
+				? colleagues.find((c) => c.id === entry.ownerId)?.displayName
+				: '',
+			entry.allDay
+				? t('calendar.allDay')
+				: rangeFormat(
+						proposal?.start ?? entry.start,
+						proposal?.end ?? entry.end
+					)
+		]
+			.filter(Boolean)
+			.join(', ');
 		const button = (
 			<button
 				key={proposal ? `p-${proposal.id}` : entry.id}
 				type="button"
 				className={className}
+				aria-label={name}
 				style={{
 					top: toPx(from),
 					height: Math.max(18, toPx(to) - toPx(from) - 2),
@@ -553,20 +609,38 @@ export const CalendarSplitView = ({
 				data-cy={`calendar-split-entry-${entry.id}`}
 			>
 				<span className="calEntry__inner">
-					<span className="calEntry__icon">
-						<CalendarEntryGlyph
-							entry={entry}
-							colleague={colleague}
-						/>
-					</span>
-					<span className="calEntry__text">
-						<span className="calEntry__time">{timeText}</span>
+					<span className="calEntry__line">
+						{avatarName && (
+							<span
+								className={`calEntry__avatar ${avatarToneClass(avatarName)}`}
+								aria-hidden="true"
+							>
+								{initialsOf(avatarName)}
+							</span>
+						)}
+						<span className="calEntry__icon">
+							<CalendarEntryGlyph
+								entry={entry}
+								colleague={colleague}
+							/>
+						</span>
 						<span className="calEntry__title">
 							{proposal
-								? `${t('calendar.proposal.label')} · ${proposalStatus(proposal)}`
+								? t('calendar.proposal.label')
 								: label(entry, colleague)}
 						</span>
 					</span>
+					{proposal && (
+						<span className="calEntry__status">
+							{proposalStatus(proposal)}
+						</span>
+					)}
+					{rangeShown && (
+						<span className="calEntry__range">
+							{clock.format(new Date(entry.start))}–
+							{clock.format(new Date(entry.end))}
+						</span>
+					)}
 				</span>
 			</button>
 		);
@@ -580,6 +654,7 @@ export const CalendarSplitView = ({
 				slotProps={{ tooltip: { className: 'calendarPeekTooltip' } }}
 				title={
 					<CalendarEntryPeek
+						variant="tip"
 						entry={entry}
 						proposal={proposal}
 						proposalStatus={
@@ -684,10 +759,12 @@ export const CalendarSplitView = ({
 					{own && <span className="calendarSplit__axisHead" />}
 					<div className="calendarSplit__person">
 						<span
-							className={`calendarSplit__avatar${own ? ' calendarSplit__avatar--me' : ''}`}
+							className={`calendarSplit__avatar ${avatarToneClass(name, own)}`}
 							aria-hidden="true"
 						>
-							{own ? t('calendar.people.me') : initialsOf(name)}
+							{own
+								? t('calendar.people.meAvatar')
+								: initialsOf(name)}
 						</span>
 						<span className="calendarSplit__name">{name}</span>
 						{unknownIds.has(person.id) &&
@@ -767,16 +844,19 @@ export const CalendarSplitView = ({
 								style={{ top: (h - firstHour) * hourPx }}
 							/>
 						))}
-						{d.offHours.map((o) => (
-							<span
-								key={`off-${o.from}`}
-								className={`calendarSplit__offHours${o.kind === 'break' ? ' calendarSplit__offHours--break' : ''}`}
-								style={{
-									top: toPx(o.from),
-									height: toPx(o.to) - toPx(o.from)
-								}}
-							/>
-						))}
+						{/* One's own working hours and pause; a colleague's
+							column is not shaded with them (Frank, 2026-11-17). */}
+						{own &&
+							d.offHours.map((o) => (
+								<span
+									key={`off-${o.from}`}
+									className={`calendarSplit__offHours${o.kind === 'break' ? ' calendarSplit__offHours--break' : ''}`}
+									style={{
+										top: toPx(o.from),
+										height: toPx(o.to) - toPx(o.from)
+									}}
+								/>
+							))}
 						{own && onEdgeChange && edgeGrips(d)}
 						{d.free.map((f) => {
 							const from = clampMinutes(
@@ -891,9 +971,20 @@ export const CalendarSplitView = ({
 				</div>
 			</HoverScrollArrows>
 			{colleagues.length === 0 && (
-				<p className="calendarSplit__empty">
-					{t('calendar.split.empty')}
-				</p>
+				<div className="calendarSplit__empty">
+					<p>{t('calendar.split.empty')}</p>
+					{onChoosePeople && (
+						<button
+							type="button"
+							className="calendarSplit__choose"
+							aria-haspopup="menu"
+							onClick={onChoosePeople}
+							data-cy="calendar-split-choose"
+						>
+							{t('calendar.split.choose')}
+						</button>
+					)}
+				</div>
 			)}
 		</div>
 	);

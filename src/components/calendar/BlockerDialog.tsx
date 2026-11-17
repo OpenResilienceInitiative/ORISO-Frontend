@@ -24,9 +24,13 @@ import {
 	type AppointmentDraft,
 	type CalendarEntry
 } from './calendarModel';
+import ScheduleIcon from '@mui/icons-material/Schedule';
+import { Box, Button } from '@mui/material';
+import { m3SnackbarActionSx } from '../m3Snackbar/M3Snackbar';
 import { FacetIcon } from './CalendarEntryGlyph';
 import { useDayLabels } from './useEntryLabel';
 import { calendarLocale } from './calendarLocale';
+import type { DialogForm } from './AppointmentDialog';
 
 /** Monday first, JavaScript weekday numbers. */
 const WEEKDAYS = [1, 2, 3, 4, 5, 6, 0];
@@ -53,25 +57,43 @@ export interface BlockerDialogProps {
 	ownerId: string;
 	now: Date;
 	fullScreen?: boolean;
+	/** Weekdays ticked already ("Wöchentlich …" after a single one). */
+	initialWeekdays?: number[];
+	/**
+	 * "Wöchentlich …" keeps the single blocker's all-day state and note
+	 * (review 4589527518): an all-day draft ends at 23:59:59.999, which
+	 * the slot alone does not read as whole days.
+	 */
+	initialAllDay?: boolean;
+	initialNote?: string;
+	/**
+	 * "Arbeitszeit festlegen" under the form (prototype v17): the same
+	 * times every week are working hours rather than a blocker.
+	 */
+	onWorkingHours?: () => void;
 	onSave: (drafts: AppointmentDraft[]) => void;
 	onClose: () => void;
 }
 
-export const BlockerDialog = ({
-	open,
+export type BlockerFormProps = Omit<BlockerDialogProps, 'open' | 'fullScreen'>;
+
+export const useBlockerForm = ({
 	slot,
 	entries,
 	ownerId,
 	now,
-	fullScreen,
+	initialWeekdays = [],
+	initialAllDay,
+	initialNote,
+	onWorkingHours,
 	onSave,
 	onClose
-}: BlockerDialogProps) => {
+}: BlockerFormProps): DialogForm => {
 	const dayLabels = useDayLabels();
 	const { t, i18n } = useTranslation();
 	// A month selection covers whole days (exclusive midnight end); a timed
 	// slot may end on a later day. Both keep their date span.
-	const wholeDays = !!slot && isWholeDays(slot);
+	const wholeDays = initialAllDay ?? (!!slot && isWholeDays(slot));
 	const first = slot
 		? dayjs(slot.start)
 		: dayjs(now).add(1, 'day').hour(8).minute(0);
@@ -94,9 +116,9 @@ export const BlockerDialog = ({
 				: first.add(4, 'hour')
 	);
 	const [allDay, setAllDay] = useState(wholeDays);
-	const [weekdays, setWeekdays] = useState<number[]>([]);
+	const [weekdays, setWeekdays] = useState<number[]>(initialWeekdays);
 	const [until, setUntil] = useState<Dayjs | null>(first.add(4, 'week'));
-	const [note, setNote] = useState('');
+	const [note, setNote] = useState(initialNote ?? '');
 
 	const weekdayName = (weekday: number) =>
 		new Intl.DateTimeFormat(calendarLocale(i18n.language), {
@@ -150,41 +172,41 @@ export const BlockerDialog = ({
 				: [...all, weekday]
 		);
 
-	return (
-		<M3Dialog
-			open={open}
-			data-testid="calendar-blocker-dialog"
-			title={t('calendar.blocker.title')}
-			description={t('calendar.blocker.description')}
-			icon={<FacetIcon facet="blocker" />}
-			width={680}
-			fullScreen={fullScreen}
-			onClose={onClose}
-			closeLabel={t('app.close')}
-			actions={[
-				{ label: t('app.cancel'), onClick: onClose },
-				{
-					label: t('calendar.blocker.save'),
-					primary: true,
-					disabled: invalid,
-					testId: 'calendar-blocker-save',
-					onClick: () =>
-						onSave(
-							ranges.map((r) => ({
-								type: 'blocker',
-								start: r.start,
-								end: r.end,
-								allDay,
-								note: note || undefined,
-								repeat:
-									weekdays.length && until
-										? { weekdays, until: until.toDate() }
-										: undefined
-							}))
-						)
-				}
-			]}
-		>
+	return {
+		testId: 'calendar-blocker-dialog',
+		description: t('calendar.blocker.description'),
+		icon: <FacetIcon facet="blocker" />,
+		width: 680,
+		actions: [
+			{ label: t('app.cancel'), onClick: onClose },
+			{
+				// Over appointments the save is the question, as in the
+				// appointment dialog (test finding C16).
+				label: t(
+					conflicts.length
+						? 'calendar.dialog.saveAnyway'
+						: 'calendar.blocker.save'
+				),
+				primary: true,
+				disabled: invalid,
+				testId: 'calendar-blocker-save',
+				onClick: () =>
+					onSave(
+						ranges.map((r) => ({
+							type: 'blocker',
+							start: r.start,
+							end: r.end,
+							allDay,
+							note: note || undefined,
+							repeat:
+								weekdays.length && until
+									? { weekdays, until: until.toDate() }
+									: undefined
+						}))
+					)
+			}
+		],
+		content: (
 			<div className="calendarDialog calendarDialog--withMonth">
 				<div className="calendarDialog__month">
 					<OrisoCalendar
@@ -270,8 +292,80 @@ export const BlockerDialog = ({
 						{conflicts.length > 0 &&
 							` ${t('calendar.blocker.conflicts', { count: conflicts.length })}`}
 					</p>
+					{onWorkingHours && (
+						<p className="calendarDialog__work">
+							<ScheduleIcon
+								className="calendarDialog__workIcon"
+								aria-hidden
+							/>
+							<span>{t('calendar.blocker.workHint')}</span>
+							<button
+								type="button"
+								className="calendarDialog__workButton"
+								onClick={onWorkingHours}
+								data-cy="calendar-blocker-working-hours"
+							>
+								{t('calendar.workingHours.title')}
+							</button>
+						</p>
+					)}
 				</div>
 			</div>
+		)
+	};
+};
+
+export const BlockerDialog = ({
+	open,
+	fullScreen,
+	...props
+}: BlockerDialogProps) => {
+	const { t } = useTranslation();
+	const form = useBlockerForm(props);
+	return (
+		<M3Dialog
+			open={open}
+			data-testid={form.testId}
+			title={t('calendar.blocker.title')}
+			description={form.description}
+			icon={form.icon}
+			width={form.width}
+			fullScreen={fullScreen}
+			onClose={props.onClose}
+			closeLabel={t('app.close')}
+			actions={form.actions}
+		>
+			{form.content}
 		</M3Dialog>
+	);
+};
+
+/**
+ * The notice after one blocker (prototype v17): "Wöchentlich …" under the
+ * text turns it into a series. A snackbar carries one action, Undo, so this
+ * one sits in the message.
+ */
+export const BlockerCreatedMessage = ({
+	message,
+	onWeekly
+}: {
+	message: string;
+	onWeekly: () => void;
+}) => {
+	const { t } = useTranslation();
+	return (
+		<>
+			<Box component="span" sx={{ display: 'block' }}>
+				{message}
+			</Box>
+			<Button
+				variant="text"
+				onClick={onWeekly}
+				data-testid="calendar-weekly"
+				sx={{ ...m3SnackbarActionSx, ml: -1, mt: 0.5 }}
+			>
+				{t('calendar.blocker.weekly')}
+			</Button>
+		</>
 	);
 };

@@ -58,10 +58,7 @@ afterEach(cleanup);
 
 const NOW = new Date(2026, 10, 14, 12, 0);
 
-const open = (
-	slot: { start: Date; end: Date },
-	onSave = vi.fn()
-) => {
+const open = (slot: { start: Date; end: Date }, onSave = vi.fn()) => {
 	render(
 		<AppointmentDialog
 			open

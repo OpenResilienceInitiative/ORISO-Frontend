@@ -95,7 +95,7 @@ describe('CalendarPage — zoom', () => {
 
 	it("steps from today's height, side by side as well, and stops at 18 and 96", () => {
 		page('split');
-		expect(hourPx()).toBe(48);
+		expect(hourPx()).toBe(44);
 		fireEvent.click(zoomIn());
 		expect(hourPx()).toBe(60);
 		fireEvent.click(zoomOut());
@@ -116,7 +116,7 @@ describe('CalendarPage — zoom', () => {
 			cancelable: true
 		});
 		fireEvent(splitBody(), plain);
-		expect(hourPx()).toBe(48);
+		expect(hourPx()).toBe(44);
 		expect(plain.defaultPrevented).toBe(false);
 		const pinch = new WheelEvent('wheel', {
 			deltaY: -20,
@@ -125,8 +125,8 @@ describe('CalendarPage — zoom', () => {
 			cancelable: true
 		});
 		fireEvent(splitBody(), pinch);
-		// 24 · e^0.2 = 29.3 px per half hour.
-		expect(hourPx()).toBeCloseTo(58.6, 1);
+		// 22 · e^0.2 = 26.9 px per half hour.
+		expect(hourPx()).toBeCloseTo(53.8, 1);
 		expect(pinch.defaultPrevented).toBe(true);
 	});
 
@@ -145,9 +145,9 @@ describe('CalendarPage — zoom', () => {
 			fireEvent(splitBody(), event);
 		};
 		change(1.5);
-		expect(hourPx()).toBe(72);
+		expect(hourPx()).toBe(66);
 		change(2);
-		expect(hourPx()).toBe(96);
+		expect(hourPx()).toBe(88);
 		fireEvent(splitBody(), new Event('gestureend', { bubbles: true }));
 	});
 
@@ -155,7 +155,7 @@ describe('CalendarPage — zoom', () => {
 		page('split');
 		touch('touchstart', 100);
 		const move = touch('touchmove', 150);
-		expect(hourPx()).toBe(72);
+		expect(hourPx()).toBe(66);
 		expect(move.defaultPrevented).toBe(true);
 		touch('touchend', 150);
 	});

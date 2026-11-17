@@ -321,6 +321,12 @@ export interface CalendarConversation {
 	sessionId: number;
 	/** The advice seeker's username. */
 	username: string;
+	/**
+	 * False for a deleted advice seeker or another counsellor's
+	 * conversation: its appointments still show, but no new one is offered
+	 * (test findings C1, C6). Absent means bookable.
+	 */
+	bookable?: boolean;
 }
 
 export interface AppointmentDraft {
