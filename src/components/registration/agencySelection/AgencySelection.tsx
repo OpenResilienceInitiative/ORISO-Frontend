@@ -20,7 +20,11 @@ import { UrlParamsContext } from '../../../globalState/provider/UrlParamsProvide
 import { useAgenciesForRegistration } from '../../../containers/registration/hooks/useAgenciesForRegistration';
 import { Loading } from '../../../components/app/Loading';
 import { registrationScreenTitleSx } from '../registrationDesign/registrationDesign';
-import { useRegistrationAddon } from '../../../addons/registrationAddon';
+import {
+	useRegistrationAddon,
+	useRegistrationTenantId
+} from '../../../addons/registrationAddon';
+import { useAppConfig } from '../../../hooks/useAppConfig';
 import { RegistrationAddonStep } from '../../../addons/RegistrationAddonStep';
 import { useRegistrationAddonComplete } from './useRegistrationAddonComplete';
 
@@ -47,17 +51,36 @@ const CenteredLoading = () => (
 /** The agency selection step: an add-on's when the Träger has one, the core's otherwise. */
 export const AgencySelection: FC<AgencySelectionProps> = (props) => {
 	const { tenant } = useContext(TenantContext) ?? {};
-	const registrationAddon = useRegistrationAddon(tenant?.id);
+	const { setDisabledNextButton } = useContext(RegistrationContext);
+	const tenantServiceUsed = useAppConfig()?.useTenantService;
+	const tenantId = useRegistrationTenantId(
+		tenant?.id,
+		Boolean(tenant && tenantServiceUsed)
+	);
+	const registrationAddon = useRegistrationAddon(tenantId);
+	const [addonUnavailable, setAddonUnavailable] = useState(false);
+	const loading =
+		tenantId === undefined || registrationAddon.status === 'loading';
+	const addonOwnsStep =
+		loading || (registrationAddon.status === 'ready' && !addonUnavailable);
 
-	if (registrationAddon.status === 'loading') {
+	useEffect(() => {
+		if (addonOwnsStep) {
+			setDisabledNextButton?.(true);
+		}
+	}, [addonOwnsStep, setDisabledNextButton]);
+
+	if (loading) {
 		return <CenteredLoading />;
 	}
-	if (registrationAddon.status === 'ready') {
+	if (registrationAddon.status === 'ready' && !addonUnavailable) {
 		return (
 			<AddonAgencySelection
 				{...props}
 				addon={registrationAddon.addon}
 				app={registrationAddon.app}
+				tenantId={tenantId ?? undefined}
+				onUnavailable={() => setAddonUnavailable(true)}
 			/>
 		);
 	}
@@ -67,12 +90,14 @@ export const AgencySelection: FC<AgencySelectionProps> = (props) => {
 const AddonAgencySelection = ({
 	addon,
 	app,
+	tenantId,
+	onUnavailable,
 	onNextClick,
 	prevStepUrl
 }: AgencySelectionProps &
 	Pick<
 		React.ComponentProps<typeof RegistrationAddonStep>,
-		'addon' | 'app'
+		'addon' | 'app' | 'tenantId' | 'onUnavailable'
 	>) => {
 	const navigate = useNavigate();
 	const { registrationData } = useContext(RegistrationContext);
@@ -88,8 +113,10 @@ const AddonAgencySelection = ({
 			app={app}
 			topicId={registrationData?.mainTopic?.id}
 			postcode={registrationData?.zipcode || undefined}
+			tenantId={tenantId}
 			onComplete={complete}
 			onBack={back}
+			onUnavailable={onUnavailable}
 		/>
 	);
 };

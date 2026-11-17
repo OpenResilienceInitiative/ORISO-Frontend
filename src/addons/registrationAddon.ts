@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { endpoints } from '../resources/scripts/endpoints';
+import { apiGetTenantTheming } from '../api/apiGetTenantTheming';
+import { getLinkAgencyId } from '../utils/linkAgencyId';
 import {
 	ADDON_CONTRACT,
 	AddonApp,
@@ -21,6 +23,8 @@ export type RegistrationAddonState =
 
 /** Without an answer in this time the registration keeps its own agency selection. */
 export const REGISTRATION_ADDON_TIMEOUT_MS = 4000;
+/** An app not mounted in this time gives the step back to the core agency selection. */
+export const REGISTRATION_ADDON_MOUNT_TIMEOUT_MS = 10000;
 
 const REGISTRATION_REF = /^[A-Za-z0-9_-]{1,64}$/;
 const ADDON_PATH = /^\/service\/addons\/[A-Za-z0-9._-]+\//;
@@ -108,7 +112,61 @@ const lookupRegistrationAddon = (tenantId: number) => {
 	return lookup;
 };
 
-export const resetRegistrationAddonForTests = () => lookups.clear();
+const tenantIdLookups = new Map<number | null, Promise<number | null>>();
+
+const lookupTenantId = (linkAgencyId: number | null) => {
+	let lookup = tenantIdLookups.get(linkAgencyId);
+	if (!lookup) {
+		lookup = apiGetTenantTheming(linkAgencyId)
+			.then((tenant) => tenant?.id ?? null)
+			.catch(() => null);
+		tenantIdLookups.set(linkAgencyId, lookup);
+	}
+	return lookup;
+};
+
+export const resetRegistrationAddonForTests = () => {
+	lookups.clear();
+	tenantIdLookups.clear();
+};
+
+/**
+ * The Träger the registration belongs to: the tenant context's, or, where that has no id
+ * (single-domain hosts), the one the tenant service resolves for this visitor. `undefined`
+ * while that is looked up, `null` for none.
+ */
+export const useRegistrationTenantId = (
+	contextTenantId: number | null | undefined,
+	lookup: boolean
+): number | null | undefined => {
+	const needsLookup = contextTenantId == null && lookup;
+	const [found, setFound] = useState<{ value: number | null }>();
+
+	useEffect(() => {
+		if (!needsLookup) {
+			return undefined;
+		}
+		let active = true;
+		lookupTenantId(getLinkAgencyId(window.location.search)).then(
+			(value) => {
+				if (active) {
+					setFound({ value });
+				}
+			}
+		);
+		return () => {
+			active = false;
+		};
+	}, [needsLookup]);
+
+	if (contextTenantId != null) {
+		return contextTenantId;
+	}
+	if (!lookup) {
+		return null;
+	}
+	return found ? found.value : undefined;
+};
 
 /**
  * The add-on that replaces the agency selection for this Träger, if any. Also for registrations

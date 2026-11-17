@@ -1,10 +1,11 @@
-import { useCallback, useContext, useRef } from 'react';
+import { useCallback, useContext, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
 	NOTIFICATION_TYPE_ERROR,
 	NotificationsContext,
 	RegistrationContext
 } from '../../../globalState';
+import { UrlParamsContext } from '../../../globalState/provider/UrlParamsProvider';
 import { apiGetAgencyById } from '../../../api';
 import { apiGetTopicById } from '../../../api/apiGetTopicId';
 import { AddonRegistrationResult } from '../../../addons/addonTypes';
@@ -18,8 +19,17 @@ export const useRegistrationAddonComplete = (onNextClick: () => void) => {
 	const { registrationData, updateRegistrationData } =
 		useContext(RegistrationContext);
 	const { addNotification } = useContext(NotificationsContext) ?? {};
+	const { topic: linkTopic } = useContext(UrlParamsContext) ?? {};
 	const mainTopicId = registrationData?.mainTopic?.id;
 	const busy = useRef(false);
+	const active = useRef(true);
+
+	useEffect(() => {
+		active.current = true;
+		return () => {
+			active.current = false;
+		};
+	}, []);
 
 	return useCallback(
 		async (result: AddonRegistrationResult) => {
@@ -28,12 +38,24 @@ export const useRegistrationAddonComplete = (onNextClick: () => void) => {
 			}
 			busy.current = true;
 			try {
+				if (
+					linkTopic &&
+					result.topicId != null &&
+					result.topicId !== linkTopic.id
+				) {
+					throw new Error(
+						'The add-on chose another topic than the registration link'
+					);
+				}
 				const [agency, mainTopic] = await Promise.all([
 					apiGetAgencyById(result.agencyId),
 					result.topicId != null && result.topicId !== mainTopicId
 						? apiGetTopicById(result.topicId)
 						: undefined
 				]);
+				if (!active.current) {
+					return;
+				}
 				const topicChanged =
 					result.topicId != null && result.topicId !== mainTopicId;
 				if (!agency || (topicChanged && !mainTopic)) {
@@ -53,6 +75,9 @@ export const useRegistrationAddonComplete = (onNextClick: () => void) => {
 				});
 				onNextClick();
 			} catch (error) {
+				if (!active.current) {
+					return;
+				}
 				console.error('Registration add-on result not usable', error);
 				addNotification?.({
 					notificationType: NOTIFICATION_TYPE_ERROR,
@@ -65,6 +90,13 @@ export const useRegistrationAddonComplete = (onNextClick: () => void) => {
 				busy.current = false;
 			}
 		},
-		[addNotification, mainTopicId, onNextClick, t, updateRegistrationData]
+		[
+			addNotification,
+			linkTopic,
+			mainTopicId,
+			onNextClick,
+			t,
+			updateRegistrationData
+		]
 	);
 };

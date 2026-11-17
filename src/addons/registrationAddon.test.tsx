@@ -6,8 +6,14 @@ import {
 	isRegistrationRef,
 	resetRegistrationAddonForTests,
 	toRegistrationResult,
-	useRegistrationAddon
+	useRegistrationAddon,
+	useRegistrationTenantId
 } from './registrationAddon';
+import { apiGetTenantTheming } from '../api/apiGetTenantTheming';
+
+vi.mock('../api/apiGetTenantTheming', () => ({
+	apiGetTenantTheming: vi.fn()
+}));
 
 const answer = {
 	contract: 'oriso-addon/v1',
@@ -105,6 +111,25 @@ describe('registration add-on', () => {
 		expect(
 			renderHook(() => useRegistrationAddon(null)).result.current
 		).toEqual({ status: 'none' });
+	});
+
+	it('looks the Träger up where the tenant context has no id', async () => {
+		vi.mocked(apiGetTenantTheming).mockResolvedValue({ id: 4 } as never);
+
+		expect(
+			renderHook(() => useRegistrationTenantId(7, true)).result.current
+		).toBe(7);
+		expect(
+			renderHook(() => useRegistrationTenantId(undefined, false)).result
+				.current
+		).toBeNull();
+		const lookedUp = renderHook(() =>
+			useRegistrationTenantId(undefined, true)
+		);
+		expect(lookedUp.result.current).toBeUndefined();
+		await waitFor(() => expect(lookedUp.result.current).toBe(4));
+		expect(apiGetTenantTheming).toHaveBeenCalledTimes(1);
+		expect(apiGetTenantTheming).toHaveBeenCalledWith(null);
 	});
 
 	it('checks what the app hands back', () => {

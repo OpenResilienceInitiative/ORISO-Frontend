@@ -1,12 +1,15 @@
 import * as React from 'react';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import {
 	AddonApp,
 	AddonRegistrationResult,
 	AvailableAddon
 } from './addonTypes';
 import { AddonMount } from './AddonMount';
-import { toRegistrationResult } from './registrationAddon';
+import {
+	REGISTRATION_ADDON_MOUNT_TIMEOUT_MS,
+	toRegistrationResult
+} from './registrationAddon';
 import './addons.styles';
 
 export interface RegistrationAddonStepProps {
@@ -14,9 +17,12 @@ export interface RegistrationAddonStepProps {
 	app: AddonApp;
 	topicId?: number;
 	postcode?: string;
+	tenantId?: number;
 	/** Called with a checked result; an app's call without a usable agency is ignored. */
 	onComplete: (result: AddonRegistrationResult) => void;
 	onBack: () => void;
+	/** The app failed or did not mount in time. */
+	onUnavailable?: () => void;
 }
 
 /** The registration's agency selection, done by an add-on (`registration.agency-finder`). */
@@ -25,9 +31,27 @@ export const RegistrationAddonStep = ({
 	app,
 	topicId,
 	postcode,
+	tenantId,
 	onComplete,
-	onBack
+	onBack,
+	onUnavailable
 }: RegistrationAddonStepProps) => {
+	const unavailable = useRef(onUnavailable);
+	unavailable.current = onUnavailable;
+	const mountTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+	useEffect(() => {
+		mountTimer.current = setTimeout(
+			() => unavailable.current?.(),
+			REGISTRATION_ADDON_MOUNT_TIMEOUT_MS
+		);
+		return () => clearTimeout(mountTimer.current);
+	}, []);
+	const mounted = useCallback(() => clearTimeout(mountTimer.current), []);
+	const failed = useCallback(() => {
+		clearTimeout(mountTimer.current);
+		unavailable.current?.();
+	}, []);
+	const placement = useMemo(() => ({ tenantId }), [tenantId]);
 	const complete = useCallback(
 		(result: AddonRegistrationResult) => {
 			const checked = toRegistrationResult(result);
@@ -56,7 +80,10 @@ export const RegistrationAddonStep = ({
 				addon={addon}
 				app={app}
 				slot="registration.agency-finder"
+				placement={placement}
 				registration={registration}
+				onMounted={mounted}
+				onFailure={failed}
 			/>
 		</div>
 	);

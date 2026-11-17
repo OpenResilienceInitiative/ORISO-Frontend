@@ -7,7 +7,10 @@ import { TenantContext } from '../globalState';
 import { AddonModuleLoaderContext } from './AddonMount';
 import { RegistrationAddonStep } from './RegistrationAddonStep';
 import { AddonHostProps, AddonModule } from './addonTypes';
-import { toRegistrationAddon } from './registrationAddon';
+import {
+	REGISTRATION_ADDON_MOUNT_TIMEOUT_MS,
+	toRegistrationAddon
+} from './registrationAddon';
 
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({ t: (key: string) => key })
@@ -23,30 +26,41 @@ const { addon, app } = toRegistrationAddon({
 	apiBase: '/service/addons/finder/public/api'
 })!;
 
-const mountWith = (module: AddonModule, onSubmit = vi.fn()) => {
+const mountWith = (
+	module: AddonModule,
+	onSubmit = vi.fn(),
+	{
+		loader = () => Promise.resolve(module),
+		tenantId
+	}: {
+		loader?: () => Promise<AddonModule>;
+		tenantId?: number;
+	} = {}
+) => {
 	const onComplete = vi.fn();
 	const onBack = vi.fn();
+	const onUnavailable = vi.fn();
 	render(
 		<MemoryRouter>
 			<TenantContext.Provider value={{ tenant: { id: 7 } } as never}>
-				<AddonModuleLoaderContext.Provider
-					value={() => Promise.resolve(module)}
-				>
+				<AddonModuleLoaderContext.Provider value={loader}>
 					<form onSubmit={onSubmit}>
 						<RegistrationAddonStep
 							addon={addon}
 							app={app}
 							topicId={3}
 							postcode="10115"
+							tenantId={tenantId}
 							onComplete={onComplete}
 							onBack={onBack}
+							onUnavailable={onUnavailable}
 						/>
 					</form>
 				</AddonModuleLoaderContext.Provider>
 			</TenantContext.Provider>
 		</MemoryRouter>
 	);
-	return { onComplete, onBack };
+	return { onComplete, onBack, onUnavailable };
 };
 
 const mounted = async (module: AddonModule) => {
@@ -58,6 +72,56 @@ describe('RegistrationAddonStep', () => {
 	afterEach(() => {
 		cleanup();
 		vi.unstubAllGlobals();
+		vi.useRealTimers();
+	});
+
+	it('gives the step back when the bundle fails', async () => {
+		vi.spyOn(console, 'error').mockImplementation(() => {});
+		const module: AddonModule = { mount: vi.fn(), unmount: vi.fn() };
+		const { onUnavailable } = mountWith(module, vi.fn(), {
+			loader: () => Promise.reject(new Error('offline'))
+		});
+
+		await waitFor(() => expect(onUnavailable).toHaveBeenCalledTimes(1));
+	});
+
+	it('gives the step back when the app does not mount in time', async () => {
+		vi.useFakeTimers();
+		const module: AddonModule = { mount: vi.fn(), unmount: vi.fn() };
+		const { onUnavailable } = mountWith(module, vi.fn(), {
+			loader: () => new Promise(() => {})
+		});
+
+		await vi.advanceTimersByTimeAsync(REGISTRATION_ADDON_MOUNT_TIMEOUT_MS);
+
+		expect(onUnavailable).toHaveBeenCalledTimes(1);
+	});
+
+	it('keeps the step once the app is mounted', async () => {
+		vi.useFakeTimers();
+		const module: AddonModule = { mount: vi.fn(), unmount: vi.fn() };
+		const { onUnavailable } = mountWith(module);
+
+		await vi.advanceTimersByTimeAsync(REGISTRATION_ADDON_MOUNT_TIMEOUT_MS);
+
+		expect(module.mount).toHaveBeenCalled();
+		expect(onUnavailable).not.toHaveBeenCalled();
+	});
+
+	it('uses the Träger the registration looked up when the tenant context has no id', async () => {
+		const fetchMock = vi.fn().mockResolvedValue(new Response('{}'));
+		vi.stubGlobal('fetch', fetchMock);
+		const module: AddonModule = { mount: vi.fn(), unmount: vi.fn() };
+		mountWith(module, vi.fn(), { tenantId: 4 });
+
+		const props = await mounted(module);
+		expect(props.tenant.id).toBe(4);
+		await props.api('/agencies');
+		expect(
+			(fetchMock.mock.calls[0][1].headers as Headers).get(
+				'X-Oriso-Tenant-Id'
+			)
+		).toBe('4');
 	});
 
 	it('mounts the app with what the registration knows and its public API', async () => {

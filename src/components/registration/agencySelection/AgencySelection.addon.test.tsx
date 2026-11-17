@@ -25,7 +25,8 @@ vi.mock('react-i18next', () => ({
 }));
 
 vi.mock('../../../addons/registrationAddon', () => ({
-	useRegistrationAddon: vi.fn()
+	useRegistrationAddon: vi.fn(),
+	useRegistrationTenantId: (tenantId: number | undefined) => tenantId ?? null
 }));
 
 vi.mock('../../../addons/RegistrationAddonStep', () => ({
@@ -34,6 +35,7 @@ vi.mock('../../../addons/RegistrationAddonStep', () => ({
 		postcode?: string;
 		onComplete: (result: unknown) => void;
 		onBack: () => void;
+		onUnavailable?: () => void;
 	}) => (
 		<div data-testid="addon-step">
 			<span>{`topic ${props.topicId} postcode ${props.postcode}`}</span>
@@ -53,6 +55,9 @@ vi.mock('../../../addons/RegistrationAddonStep', () => ({
 			</button>
 			<button type="button" onClick={props.onBack}>
 				back
+			</button>
+			<button type="button" onClick={props.onUnavailable}>
+				fail
 			</button>
 		</div>
 	)
@@ -76,14 +81,17 @@ const Where = () => (
 	<output data-testid="where">{useLocation().pathname}</output>
 );
 
-const renderStep = () => {
+const renderStep = ({ linkTopic }: { linkTopic?: { id: number } } = {}) => {
 	const updateRegistrationData = vi.fn();
+	const setDisabledNextButton = vi.fn();
 	const onNextClick = vi.fn();
 	const addNotification = vi.fn();
-	render(
+	const view = render(
 		<MemoryRouter initialEntries={['/registration/agency-selection']}>
 			<TenantContext.Provider value={{ tenant: { id: 7 } } as never}>
-				<UrlParamsContext.Provider value={{} as never}>
+				<UrlParamsContext.Provider
+					value={{ topic: linkTopic } as never}
+				>
 					<NotificationsContext.Provider
 						value={{ addNotification } as never}
 					>
@@ -93,7 +101,8 @@ const renderStep = () => {
 									mainTopic: { id: 3 },
 									zipcode: '12043'
 								} as never,
-								updateRegistrationData
+								updateRegistrationData,
+								setDisabledNextButton
 							}}
 						>
 							<AgencySelection
@@ -109,8 +118,21 @@ const renderStep = () => {
 			</TenantContext.Provider>
 		</MemoryRouter>
 	);
-	return { updateRegistrationData, onNextClick, addNotification };
+	return {
+		view,
+		updateRegistrationData,
+		setDisabledNextButton,
+		onNextClick,
+		addNotification
+	};
 };
+
+const withAddon = () =>
+	vi.mocked(useRegistrationAddon).mockReturnValue({
+		status: 'ready',
+		addon: {} as never,
+		app: {} as never
+	});
 
 describe('AgencySelection with a registration add-on', () => {
 	afterEach(() => {
@@ -196,5 +218,61 @@ describe('AgencySelection with a registration add-on', () => {
 
 		expect(screen.queryByTestId('core-selection')).toBeNull();
 		expect(screen.queryByTestId('addon-step')).toBeNull();
+	});
+
+	it('disables the host Next button while the add-on looks up or owns the step', () => {
+		vi.mocked(useRegistrationAddon).mockReturnValue({ status: 'loading' });
+		expect(renderStep().setDisabledNextButton).toHaveBeenCalledWith(true);
+		cleanup();
+
+		withAddon();
+		expect(renderStep().setDisabledNextButton).toHaveBeenCalledWith(true);
+		cleanup();
+
+		vi.mocked(useRegistrationAddon).mockReturnValue({ status: 'none' });
+		expect(renderStep().setDisabledNextButton).not.toHaveBeenCalled();
+	});
+
+	it('falls back to the core selection when the add-on cannot be shown', () => {
+		withAddon();
+		renderStep();
+
+		fireEvent.click(screen.getByRole('button', { name: 'fail' }));
+
+		expect(screen.queryByTestId('addon-step')).toBeNull();
+		expect(screen.getByTestId('core-selection')).toBeTruthy();
+	});
+
+	it('drops a completion that resolves after the step was left', async () => {
+		withAddon();
+		let answer: (agency: unknown) => void = () => {};
+		vi.mocked(apiGetAgencyById).mockReturnValue(
+			new Promise((resolve) => {
+				answer = resolve;
+			}) as never
+		);
+		vi.mocked(apiGetTopicById).mockResolvedValue({ id: 9 } as never);
+		const { view, updateRegistrationData, onNextClick } = renderStep();
+
+		fireEvent.click(screen.getByRole('button', { name: 'complete' }));
+		view.unmount();
+		answer({ id: 12, consultingType: 1 });
+		await new Promise((resolve) => setTimeout(resolve, 0));
+
+		expect(updateRegistrationData).not.toHaveBeenCalled();
+		expect(onNextClick).not.toHaveBeenCalled();
+	});
+
+	it('rejects a topic other than the one the registration link names', async () => {
+		withAddon();
+		const { updateRegistrationData, onNextClick, addNotification } =
+			renderStep({ linkTopic: { id: 3 } });
+
+		fireEvent.click(screen.getByRole('button', { name: 'complete' }));
+
+		await waitFor(() => expect(addNotification).toHaveBeenCalled());
+		expect(apiGetAgencyById).not.toHaveBeenCalled();
+		expect(updateRegistrationData).not.toHaveBeenCalled();
+		expect(onNextClick).not.toHaveBeenCalled();
 	});
 });
