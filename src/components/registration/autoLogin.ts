@@ -39,6 +39,12 @@ interface AutoLoginProps {
 	otp?: string;
 	useOldUser?: boolean;
 	tenantData?: TenantDataInterface;
+	/**
+	 * Called once Keycloak accepted the credentials and the token passed the
+	 * checks below, before the Matrix token and staging run. The login page
+	 * uses it to show its handover screen and start loading in parallel.
+	 */
+	onCredentialsAccepted?: () => void;
 }
 
 const loginKeycloak = async (
@@ -69,6 +75,7 @@ const loginKeycloak = async (
 
 export const autoLogin = async ({
 	password,
+	onCredentialsAccepted,
 	...autoLoginProps
 }: AutoLoginProps): Promise<any> => {
 	clearLoginRecoveryPassword();
@@ -129,6 +136,8 @@ export const autoLogin = async ({
 			throw new Error(FETCH_ERRORS.UNAUTHORIZED);
 		}
 	}
+
+	onCredentialsAccepted?.();
 
 	// Matrix is the only chat backend: fetch and persist the Matrix login
 	// data. The Matrix client itself is created once by AuthenticatedApp.
