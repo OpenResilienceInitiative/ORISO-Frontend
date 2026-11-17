@@ -5288,6 +5288,22 @@
 			"startCall": "Start audio call",
 			"startVideoCall": "Start video call"
 		},
+		"askerInfo": {
+			"title": "Your counsellor starts calls",
+			"description": "You cannot start a call here. Your counsellor will call you in this conversation at the agreed appointment.",
+			"next": "Your next appointment",
+			"medium": {
+				"video": "Video call",
+				"phone": "Phone call",
+				"onsite": "On site",
+				"chat": "Chat"
+			},
+			"none": "No appointment has been set up for this conversation yet.",
+			"requestHint": "Write to your counsellor in the chat when it suits you.",
+			"request": "Request an appointment",
+			"loading": "Loading the appointment …",
+			"error": "The appointment could not be loaded right now. Please try again later."
+		},
 		"incomingCall": {
 			"description": "calls...",
 			"ignored": "has been trying to reach you.",

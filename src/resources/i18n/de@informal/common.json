@@ -1943,6 +1943,13 @@
 				"action": "Bitte schließe diesen Tab, um zu Beratung & Hilfe zurückzukehren.",
 				"reason": "Leider bist Du nicht berechtigt diese Seite einzusehen."
 			}
+		},
+		"askerInfo": {
+			"title": "Anrufe startet deine Beratungsperson",
+			"description": "Du kannst hier keinen Anruf starten. Deine Beratungsperson ruft dich zum vereinbarten Termin hier im Gespräch an.",
+			"next": "Dein nächster Termin",
+			"requestHint": "Schreib deiner Beratungsperson im Chat, wann es dir passt.",
+			"error": "Der Termin konnte gerade nicht geladen werden. Bitte versuch es später noch einmal."
 		}
 	},
 	"voice": {

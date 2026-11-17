@@ -5323,6 +5323,22 @@
 			"startCall": "Démarrer un appel audio",
 			"startVideoCall": "Démarrer un appel vidéo"
 		},
+		"askerInfo": {
+			"title": "C’est votre conseiller ou conseillère qui lance les appels",
+			"description": "Vous ne pouvez pas lancer d’appel ici. Votre conseiller ou conseillère vous appellera dans cette conversation au rendez-vous convenu.",
+			"next": "Votre prochain rendez-vous",
+			"medium": {
+				"video": "Appel vidéo",
+				"phone": "Appel téléphonique",
+				"onsite": "Sur place",
+				"chat": "Discussion"
+			},
+			"none": "Aucun rendez-vous n’a encore été fixé pour cette conversation.",
+			"requestHint": "Écrivez dans le chat à votre conseiller ou conseillère quand cela vous convient.",
+			"request": "Demander un rendez-vous",
+			"loading": "Chargement du rendez-vous …",
+			"error": "Le rendez-vous n’a pas pu être chargé. Veuillez réessayer plus tard."
+		},
 		"incomingCall": {
 			"description": "appelle...",
 			"ignored": "a essayé de vous contacter.",

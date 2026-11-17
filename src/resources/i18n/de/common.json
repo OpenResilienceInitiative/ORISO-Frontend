@@ -5340,6 +5340,22 @@
 			"startCall": "Audio-Call starten",
 			"startVideoCall": "Video-Call starten"
 		},
+		"askerInfo": {
+			"title": "Anrufe startet Ihre Beratungsperson",
+			"description": "Sie können hier keinen Anruf starten. Ihre Beratungsperson ruft Sie zum vereinbarten Termin hier im Gespräch an.",
+			"next": "Ihr nächster Termin",
+			"medium": {
+				"video": "Videoanruf",
+				"phone": "Telefonanruf",
+				"onsite": "Vor Ort",
+				"chat": "Chat"
+			},
+			"none": "Für dieses Gespräch ist noch kein Termin vereinbart.",
+			"requestHint": "Schreiben Sie Ihrer Beratungsperson im Chat, wann es Ihnen passt.",
+			"request": "Termin anfragen",
+			"loading": "Der Termin wird geladen …",
+			"error": "Der Termin konnte gerade nicht geladen werden. Bitte versuchen Sie es später noch einmal."
+		},
 		"incomingCall": {
 			"description": "ruft an...",
 			"ignored": "hat versucht Sie zu erreichen.",

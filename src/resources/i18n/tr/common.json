@@ -5323,6 +5323,22 @@
 			"startCall": "Sesli aramayı başlat",
 			"startVideoCall": "Görüntülü aramayı başlat"
 		},
+		"askerInfo": {
+			"title": "Aramaları danışmanınız başlatır",
+			"description": "Burada arama başlatamazsınız. Danışmanınız sizi kararlaştırılan randevuda bu görüşmede arayacaktır.",
+			"next": "Bir sonraki randevunuz",
+			"medium": {
+				"video": "Görüntülü arama",
+				"phone": "Telefon araması",
+				"onsite": "Yüz yüze",
+				"chat": "Sohbet"
+			},
+			"none": "Bu görüşme için henüz bir randevu belirlenmedi.",
+			"requestHint": "Size ne zaman uygun olduğunu danışmanınıza sohbette yazın.",
+			"request": "Randevu iste",
+			"loading": "Randevu yükleniyor …",
+			"error": "Randevu şu anda yüklenemedi. Lütfen daha sonra tekrar deneyin."
+		},
 		"incomingCall": {
 			"description": "arar.",
 			"ignored": "sana ulaşmaya çalışıyor.",
