@@ -128,6 +128,61 @@ const renderTopicSelection = () =>
 		</LocaleContext.Provider>
 	);
 
+/** Like LocaleProvider: the `lang` cookie the topic API reads is written in the parent's effect. */
+const CookieWritingLocale = ({
+	locale,
+	children
+}: {
+	locale: string;
+	children: React.ReactNode;
+}) => {
+	React.useEffect(() => {
+		document.cookie = `lang=${locale}`;
+	}, [locale]);
+	return (
+		<LocaleContext.Provider
+			value={{
+				locale,
+				initLocale: 'de',
+				setLocale: vi.fn(),
+				locales: ['de', 'en'],
+				selectableLocales: ['de', 'en']
+			}}
+		>
+			{children}
+		</LocaleContext.Provider>
+	);
+};
+
+const selectionIn = (locale: string) => (
+	<CookieWritingLocale locale={locale}>
+		<UrlParamsContext.Provider
+			value={{
+				agency: null,
+				consultingType: null,
+				consultant: null,
+				topic: null,
+				loaded: true,
+				slugFallback: undefined,
+				zipcode: undefined
+			}}
+		>
+			<RegistrationContext.Provider
+				value={{
+					registrationData: {} as RegistrationData,
+					setDisabledNextButton: vi.fn()
+				}}
+			>
+				<TopicSelection
+					onChange={vi.fn()}
+					nextStepUrl="/next"
+					onNextClick={vi.fn()}
+				/>
+			</RegistrationContext.Provider>
+		</UrlParamsContext.Provider>
+	</CookieWritingLocale>
+);
+
 describe('TopicSelection', () => {
 	afterEach(() => {
 		cleanup();
@@ -353,5 +408,21 @@ describe('TopicSelection', () => {
 		const emptyState = await screen.findByRole('status');
 		expect(emptyState.textContent).toContain('registration.topic.empty');
 		expect(screen.queryByRole('alert')).toBeNull();
+	});
+
+	it('asks for the topics in the new language after a language switch', async () => {
+		const asked: string[] = [];
+		apiGetTopicsDataMock.mockImplementation(async () => {
+			asked.push(/lang=(\w+)/.exec(document.cookie)?.[1] ?? '');
+			return [topic(9, 'Schuldenberatung')];
+		});
+		apiGetTopicGroupsMock.mockResolvedValue({ data: { items: [] } });
+
+		const view = render(selectionIn('de'));
+		await screen.findByText('Schuldenberatung');
+		view.rerender(selectionIn('en'));
+
+		await waitFor(() => expect(asked).toHaveLength(2));
+		expect(asked[1]).toBe('en');
 	});
 });

@@ -461,6 +461,10 @@ export const TopicSelection: FC<{
 			setLoadError(false);
 
 			try {
+				// LocaleProvider writes the `lang` cookie (which picks the topic language)
+				// in its own effect, after this one: let it run first.
+				await Promise.resolve();
+				if (cancelled) return;
 				const topicsResponse = await apiGetTopicsData();
 				// The categories are optional: without them the built-in clusters apply.
 				const topicGroupsResponse = await apiGetTopicGroups().catch(
