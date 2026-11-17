@@ -31,8 +31,10 @@ import { RoomNextAppointment } from './AppointmentSplitButton';
 import {
 	appointmentToBooking,
 	nextConversationAppointment,
-	onAppointmentsChanged
+	onAppointmentsChanged,
+	upcomingAppointments
 } from './conversationAppointments';
+import { lendAppointmentCreate } from './appointmentCreateBridge';
 import { buildFutureEntries, type FutureEntry } from './timelineModel';
 import { useAppointmentActions } from './useAppointmentActions';
 
@@ -130,10 +132,24 @@ export const ConversationAppointmentSlot = ({
 		onCreateChange(canCreate ? openCreate : undefined);
 		return () => onCreateChange(undefined);
 	}, [canCreate, onCreateChange, openCreate]);
+	/* The split button shows the nearest appointment or request (FE#2287). */
+	const next = Array.isArray(appointments)
+		? nextConversationAppointment(appointments, new Date())
+		: undefined;
+	/* The chat's cancelled-appointment card offers "Neuen Termin anlegen"
+	   with this same opener, so it follows the same rule. */
+	const hasUpcoming = Array.isArray(appointments)
+		? upcomingAppointments(appointments, new Date()).length > 0
+		: false;
+	useEffect(() => {
+		if (!canCreate || sessionId === undefined) return undefined;
+		return lendAppointmentCreate(sessionId, {
+			open: openCreate,
+			hasUpcoming
+		});
+	}, [canCreate, sessionId, openCreate, hasUpcoming]);
 	if (sessionId === undefined || !Array.isArray(appointments)) return null;
 
-	const isAsker = hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData);
-	const next = nextConversationAppointment(appointments, new Date());
 	const entry = next
 		? buildFutureEntries({
 				now: new Date(),
@@ -159,7 +175,11 @@ export const ConversationAppointmentSlot = ({
 		<>
 			<RoomNextAppointment
 				entry={entry}
-				role={isAsker ? 'asker' : 'counsellor'}
+				role={
+					hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData)
+						? 'asker'
+						: 'counsellor'
+				}
 				onAction={onAction}
 			/>
 			{dialog && (

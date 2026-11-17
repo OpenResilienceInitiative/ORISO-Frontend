@@ -262,6 +262,11 @@ export interface CalendarPageProps {
 	initialSheet?: SheetStop;
 	initialView?: CalendarViewName;
 	/**
+	 * The day to open on: "Im Kalender öffnen" on an appointment's card in
+	 * the chat (`?date=`). Absent: today.
+	 */
+	initialDate?: Date;
+	/**
 	 * Links without an appointment, shown under the list (Frank, 2026-11-17:
 	 * "Meine Direktlinks" moves into the calendar). The wired page passes
 	 * the real links panel, stories a sample.
@@ -316,7 +321,9 @@ export interface CalendarPageProps {
 	onProposeMove?: (
 		entry: CalendarEntry,
 		start: Date,
-		end: Date
+		end: Date,
+		/** Why one asks, trimmed (UserService#1663). */
+		reason?: string
 	) => void | Promise<unknown>;
 	onWithdrawProposal?: (proposal: MoveProposal) => void | Promise<unknown>;
 	/**
@@ -519,6 +526,7 @@ export const CalendarPage = ({
 	phone = compact,
 	initialSheet = 'half',
 	initialView,
+	initialDate,
 	linksPanel,
 	initialShownColleagues = [],
 	initialFullscreen = false,
@@ -577,7 +585,9 @@ export const CalendarPage = ({
 	const [view, setView] = useState<CalendarViewName>(initialView ?? 'list');
 	const [title, setTitle] = useState('');
 	/** The day the grid stands on; the split view starts on this day. */
-	const [anchorDate, setAnchorDate] = useState(() => startOfDay(now));
+	const [anchorDate, setAnchorDate] = useState(() =>
+		startOfDay(initialDate ?? now)
+	);
 	const [splitDays, setSplitDays] = useState<SplitDays>(initialSplitDays);
 	const [fullscreen, setFullscreen] = useState(initialFullscreen);
 	// The left column, sized like "Gespräche" and remembered per person
@@ -1273,6 +1283,11 @@ export const CalendarPage = ({
 	 * A refused or failed removal creates nothing and keeps the form open;
 	 * a failed series puts the single blocker back. A second save waits
 	 * until that restore has settled (review 4589615841).
+	 *
+	 * A series fails in three ways: refused (`false`), rejected, or thrown
+	 * at once by the host. All three put the single blocker back and resolve
+	 * to `false`; a throw also says the save failed, as a rejection does
+	 * (review 4595635794).
 	 */
 	const replaceBlocker = (
 		replaces: { entry: CalendarEntry; draft: AppointmentDraft },
@@ -1293,24 +1308,38 @@ export const CalendarPage = ({
 					setNotice({ message: t('calendar.saveFailed') });
 					return false;
 				}
-				return Promise.resolve(create(drafts, true)).then((stored) =>
-					stored
-						? stored
-						: restoreBlocker(replaces).then(() => stored)
-				);
+				return Promise.resolve()
+					.then(() => create(drafts, true))
+					.then(
+						(stored) => stored,
+						() => {
+							setNotice({ message: t('calendar.saveFailed') });
+							return false;
+						}
+					)
+					.then((stored) =>
+						stored
+							? stored
+							: restoreBlocker(replaces).then(() => stored)
+					);
 			})
 			.finally(() => {
 				replacing.current = false;
 			});
 	};
 
-	const propose = (entry: CalendarEntry, start: Date, end: Date) => {
+	const propose = (
+		entry: CalendarEntry,
+		start: Date,
+		end: Date,
+		reason?: string
+	) => {
 		// UserService refuses a proposed start in the past; say so here.
 		if (start.getTime() < now.getTime()) {
 			setNotice({ message: t('calendar.movePast') });
 			return false;
 		}
-		return run(onProposeMove?.(entry, start, end), {
+		return run(onProposeMove?.(entry, start, end, reason), {
 			message: t('calendar.proposal.sent', {
 				date: format(start, end),
 				name: colleagueById[entry.ownerId]?.displayName ?? ''
@@ -1906,9 +1935,10 @@ export const CalendarPage = ({
 				ownerId={ownerId}
 				onMode={(mode) => setMenu({ ...menu, mode })}
 				onAction={(action) => entryAction(entry, action)}
-				onMove={(start, end) => {
+				onMove={(start, end, reason) => {
 					setMenu(null);
-					if (menu.mode === 'propose') propose(entry, start, end);
+					if (menu.mode === 'propose')
+						propose(entry, start, end, reason);
 					else move(entry, start, end, true);
 				}}
 			/>
@@ -2426,6 +2456,14 @@ export const CalendarPage = ({
 			.map((c) => c.displayName)
 			.filter((name, i, all) => all.indexOf(name) !== i)
 	);
+	// The second hint under a chip: the centre's code always; for a name
+	// that repeats, the username (UserService#1663), else the centre.
+	const chipHint = (colleague: Colleague) =>
+		twinNames.has(colleague.displayName)
+			? colleague.secondaryLabel ||
+				colleague.agencyShort ||
+				colleague.agencyName
+			: colleague.agencyShort;
 	const personChip = (
 		id: string,
 		name: string,
@@ -2452,14 +2490,11 @@ export const CalendarPage = ({
 				{colleague ? initialsOf(name) : t('calendar.people.meAvatar')}
 			</span>
 			<span>{colleague ? name : t('calendar.people.me')}</span>
-			{colleague &&
-				(colleague.agencyShort ||
-					(twinNames.has(colleague.displayName) &&
-						colleague.agencyName)) && (
-					<span className="calendarStage__agency">
-						{colleague.agencyShort ?? colleague.agencyName}
-					</span>
-				)}
+			{colleague && chipHint(colleague) && (
+				<span className="calendarStage__agency">
+					{chipHint(colleague)}
+				</span>
+			)}
 		</button>
 	);
 	// Only while someone is shown or was shown lately (prototype v17).

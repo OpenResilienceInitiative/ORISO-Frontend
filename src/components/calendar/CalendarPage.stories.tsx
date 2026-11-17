@@ -1230,6 +1230,10 @@ export const ReceivedRequests: Story = {
 		await expect(
 			section.getByRole('heading', { name: 'Offene Verschiebungen' })
 		).toBeTruthy();
+		// The reason A. Kaya gave (UserService#1663).
+		await expect(
+			section.getByText('Grund: Raum 2 ist an dem Vormittag belegt.')
+		).toBeTruthy();
 		// Who proposes what: old and new time, also for screen readers.
 		await expect(
 			section.getByRole('button', {

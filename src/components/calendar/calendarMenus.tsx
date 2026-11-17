@@ -350,6 +350,9 @@ const daysApart = (start: Date, end: Date) =>
 			86_400_000
 	);
 
+/** UserService keeps at most this many characters (UserService#1663). */
+export const MAX_PROPOSAL_REASON = 500;
+
 export interface MoveFormProps {
 	entry: CalendarEntry;
 	/** `move` changes the own entry; `propose` asks the colleague. */
@@ -359,7 +362,8 @@ export interface MoveFormProps {
 	ownerId: string;
 	/** Whose confirmation a proposal waits for. */
 	approverName?: string;
-	onSubmit: (start: Date, end: Date) => void;
+	/** A proposal may carry a reason (UserService#1663); a move never does. */
+	onSubmit: (start: Date, end: Date, reason?: string) => void;
 	onBack: () => void;
 }
 
@@ -378,6 +382,7 @@ export const MoveForm = ({
 	const [date, setDate] = useState(dateValue(start));
 	const [from, setFrom] = useState(timeValue(start));
 	const [to, setTo] = useState(timeValue(end));
+	const [reason, setReason] = useState('');
 	// The end keeps its distance in days, so an entry over midnight or
 	// over several days moves as a whole.
 	const endDays = daysApart(start, end);
@@ -401,7 +406,10 @@ export const MoveForm = ({
 			className="calendarMenuForm"
 			onSubmit={(event) => {
 				event.preventDefault();
-				if (!invalid) onSubmit(nextStart!, nextEnd!);
+				if (invalid) return;
+				const why = mode === 'propose' ? reason.trim() : '';
+				if (why) onSubmit(nextStart!, nextEnd!, why);
+				else onSubmit(nextStart!, nextEnd!);
 			}}
 			data-cy="calendar-move-form"
 		>
@@ -446,6 +454,18 @@ export const MoveForm = ({
 					{t('calendar.entryMenu.conflicts')}
 				</ChatMenuDropdownNote>
 			)}
+			{mode === 'propose' && (
+				<label className="calendarMenuForm__field">
+					<span>{t('calendar.entryMenu.reason')}</span>
+					<textarea
+						value={reason}
+						maxLength={MAX_PROPOSAL_REASON}
+						rows={2}
+						onChange={(e) => setReason(e.target.value)}
+						data-cy="calendar-move-reason"
+					/>
+				</label>
+			)}
 			{mode === 'propose' && approverName && (
 				<ChatMenuDropdownNote>
 					{t('calendar.entryMenu.proposeHint', {
@@ -489,7 +509,7 @@ export interface EntryMenuContentProps {
 	onAction: (
 		action: 'show' | 'start' | 'chat' | 'join' | 'cancel' | 'remove'
 	) => void;
-	onMove: (start: Date, end: Date) => void;
+	onMove: (start: Date, end: Date, reason?: string) => void;
 }
 
 const ACTION_ICON: Record<
@@ -767,7 +787,8 @@ interface AnswerMenuContentProps {
 	name: string;
 	subtitle: string;
 	title: string;
-	notes: string[];
+	/** Falsy entries are left out. */
+	notes: React.ReactNode[];
 	acceptTitle: string;
 	acceptHint: string;
 	declineTitle: string;
@@ -809,8 +830,10 @@ const AnswerMenuContent = ({
 				titleAs="p"
 			/>
 		</div>
-		{notes.map((note) => (
-			<ChatMenuDropdownNote key={note}>{note}</ChatMenuDropdownNote>
+		{notes.filter(Boolean).map((note, index) => (
+			// The notes never reorder while the menu is open.
+			// eslint-disable-next-line react/no-array-index-key
+			<ChatMenuDropdownNote key={index}>{note}</ChatMenuDropdownNote>
 		))}
 		{(onAccept || onDecline) && <ChatMenuDropdownDivider />}
 		{onAccept && (
@@ -870,6 +893,13 @@ export const RequestMenuContent = ({
 					from: format(from.start, from.end),
 					to: format(proposal.start, proposal.end)
 				}),
+				proposal.reason && (
+					<span data-cy="calendar-request-reason">
+						{t('calendar.proposal.reason', {
+							reason: proposal.reason
+						})}
+					</span>
+				),
 				t('calendar.proposal.requestHint')
 			]}
 			acceptTitle={t('calendar.proposal.accept')}

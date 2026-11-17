@@ -370,7 +370,9 @@ export const STORY_REQUESTS: MoveProposal[] = [
 		entryEnd: at(0, 11),
 		proposerId: 'kaya',
 		proposerName: 'A. Kaya',
-		approverId: ME
+		approverId: ME,
+		// UserService#1663: the proposer may say why.
+		reason: 'Raum 2 ist an dem Vormittag belegt.'
 	},
 	{
 		id: 'r2',

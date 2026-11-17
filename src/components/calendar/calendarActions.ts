@@ -97,6 +97,8 @@ export interface MoveProposal {
 	/** The entry's owner, who accepts or declines. */
 	approverId?: string;
 	approverName?: string;
+	/** Why the proposer asks (UserService#1663). */
+	reason?: string;
 	createdAt?: string;
 }
 

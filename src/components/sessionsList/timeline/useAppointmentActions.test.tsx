@@ -16,6 +16,7 @@ import {
 	UserDataContext
 } from '../../../globalState';
 import { useAppointmentActions } from './useAppointmentActions';
+import { parseMessagePrefixes } from '../../message/messageConstants';
 import { onAppointmentsChanged } from './conversationAppointments';
 import type { FutureEntry } from './timelineModel';
 
@@ -98,9 +99,15 @@ describe('useAppointmentActions for a 1:1 appointment', () => {
 		expect(cancel).toHaveBeenCalledWith(4, 'a');
 		expect(onCancelled).toHaveBeenCalledWith(entry);
 		expect(send).toHaveBeenCalledTimes(1);
-		expect(send.mock.calls[0][0]).toBe(
+		// The sentence rides along for previews; the card reads the data.
+		const notice = parseMessagePrefixes(send.mock.calls[0][0]);
+		expect(notice.cleanedMessage).toBe(
 			'sessionList.timeline.appointment.notice.cancelled'
 		);
+		expect(notice.systemNotificationAppointment).toEqual({
+			kind: 'cancelled',
+			slot: { start: entry.start, end: entry.end }
+		});
 		expect(send.mock.calls[0][5]).toBe('!room:x');
 		expect(navigate).not.toHaveBeenCalled();
 	});

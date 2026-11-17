@@ -74,6 +74,7 @@ import {
 	onAppointmentsChanged
 } from '../sessionsList/timeline/conversationAppointments';
 import { useAppointmentNotice } from '../sessionsList/timeline/useAppointmentNotice';
+import { parseCalendarDayParam } from '../message/appointmentNotice';
 import { CalendarPage, type CalendarLoadState } from './CalendarPage';
 import type { FreeHoursState } from './CalendarSidebar';
 import {
@@ -204,6 +205,13 @@ export const CalendarPageWired = () => {
 	// "Meine Direktlinks" lives under the list now (Frank, 2026-11-17).
 	const ownerId = userData?.userId ?? '';
 	const sendNotice = useAppointmentNotice();
+	/* "Im Kalender öffnen" on an appointment's card in the chat: the page
+	   mounts fresh from that link, so the first address is the one meant. */
+	const [openOnDay] = useState(() =>
+		parseCalendarDayParam(
+			new URLSearchParams(window.location.search).get('date')
+		)
+	);
 
 	const [state, setState] = useState<CalendarLoadState>('loading');
 	const [own, setOwn] = useState<CalendarEntry[]>([]);
@@ -578,14 +586,20 @@ export const CalendarPageWired = () => {
 		kind: 'created' | 'moved' | 'cancelled' | 'confirmed' | 'declined',
 		sessionId: number,
 		start: Date,
-		end: Date
+		end: Date,
+		/** A move: where it stood, for the chat card's old → new. */
+		previous?: { start: string | Date; end: string | Date }
 	) =>
 		sendNotice({
 			kind,
 			start,
 			end,
 			sessionId,
-			matrixRoomId: conversationOf(sessionId)?.matrixRoomId
+			matrixRoomId: conversationOf(sessionId)?.matrixRoomId,
+			...(previous && {
+				previousStart: new Date(previous.start),
+				previousEnd: new Date(previous.end)
+			})
 		});
 
 	const afterChange = () => {
@@ -638,7 +652,7 @@ export const CalendarPageWired = () => {
 					entry.id,
 					slot
 				);
-				await notice('moved', entry.sessionId, start, end);
+				await notice('moved', entry.sessionId, start, end, entry);
 			}
 		} finally {
 			afterChange();
@@ -706,12 +720,14 @@ export const CalendarPageWired = () => {
 	const proposeMove = async (
 		entry: CalendarEntry,
 		start: Date,
-		end: Date
+		end: Date,
+		reason?: string
 	) => {
 		const created = await apiCreateCalendarProposal({
 			entryId: entry.id,
 			start: start.toISOString(),
-			end: end.toISOString()
+			end: end.toISOString(),
+			...(reason && { reason })
 		});
 		if (created?.id)
 			setSentProposals((all) =>
@@ -759,7 +775,17 @@ export const CalendarPageWired = () => {
 		afterChange();
 		const sessionId = moved?.sessionId ?? before?.sessionId;
 		if (sessionId !== undefined)
-			await notice('moved', sessionId, new Date(start), new Date(end));
+			await notice(
+				'moved',
+				sessionId,
+				new Date(start),
+				new Date(end),
+				// The loaded entry, else its time when it was proposed.
+				before ??
+					(proposal.entryStart && proposal.entryEnd
+						? { start: proposal.entryStart, end: proposal.entryEnd }
+						: undefined)
+			);
 	};
 
 	const declineProposal = async (proposal: MoveProposal) => {
@@ -1006,6 +1032,7 @@ export const CalendarPageWired = () => {
 			linksPanel={consultant ? <CalendarLinksSection /> : undefined}
 			role={consultant ? 'consultant' : 'asker'}
 			ownerId={ownerId}
+			initialDate={openOnDay}
 			state={state}
 			entries={entries}
 			colleagues={colleagues}

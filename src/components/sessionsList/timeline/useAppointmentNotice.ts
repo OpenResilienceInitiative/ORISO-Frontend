@@ -2,6 +2,10 @@
  * The line a 1:1 appointment change leaves in its conversation (FE#1960). It
  * goes through the normal send path, so the room's encryption covers it. The
  * appointment already changed: a failed notice only tells the person.
+ *
+ * It carries the slot as data (`appointmentNotice.ts`), so the chat draws it
+ * as an appointment card in the reader's language, with the old slot of a
+ * move; the sentence stays as its description for previews.
  */
 import { useCallback, useContext } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -11,6 +15,11 @@ import {
 	NotificationsContext,
 	UserDataContext
 } from '../../../globalState';
+import {
+	buildAppointmentNoticePayload,
+	isCardNoticeKind
+} from '../../message/appointmentNotice';
+import { SYSTEM_NOTIFICATION_PREFIX } from '../../message/messageConstants';
 import { normalizeTimelineLocale } from '../futureTimelineTime';
 import {
 	appointmentNoticeKey,
@@ -24,6 +33,9 @@ export interface AppointmentNotice {
 	end?: Date;
 	sessionId: number;
 	matrixRoomId?: string;
+	/** A move: the slot it had before, shown struck through. */
+	previousStart?: Date;
+	previousEnd?: Date;
 }
 
 export const useAppointmentNotice = () => {
@@ -33,13 +45,36 @@ export const useAppointmentNotice = () => {
 	const senderName = userData?.displayName || userData?.userName || null;
 
 	return useCallback(
-		({ kind, start, end, sessionId, matrixRoomId }: AppointmentNotice) => {
+		({
+			kind,
+			start,
+			end,
+			sessionId,
+			matrixRoomId,
+			previousStart,
+			previousEnd
+		}: AppointmentNotice) => {
 			const date = formatEntrySlot(
 				{ start, end },
 				normalizeTimelineLocale(i18n.resolvedLanguage, i18n.language)
 			);
+			const sentence = t(appointmentNoticeKey(kind), { date });
+			// A request and its answer (FE#2287) have no card yet: they stay
+			// the plain sentence they were before the card existed.
+			const message = isCardNoticeKind(kind)
+				? `${SYSTEM_NOTIFICATION_PREFIX}${buildAppointmentNoticePayload(
+						{
+							kind,
+							start,
+							end,
+							previousStart,
+							previousEnd,
+							description: sentence
+						}
+					)}`
+				: sentence;
 			return apiSendMessage(
-				t(appointmentNoticeKey(kind), { date }),
+				message,
 				matrixRoomId ?? sessionId,
 				false,
 				false,
