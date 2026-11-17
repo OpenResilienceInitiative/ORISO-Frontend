@@ -138,6 +138,34 @@ describe('apiGetOwnDirectLinks', () => {
 		await apiGetOwnDirectLinks();
 		expect(fetchData).toHaveBeenCalledTimes(2);
 	});
+
+	/* #2252 review: a read started before a renewal answers with the old
+	   links; a reload after the change must not join it. */
+	it('asks again after a change while an older request is still running', async () => {
+		vi.mocked(fetchData).mockClear();
+		const answers: ((value: unknown) => void)[] = [];
+		vi.mocked(fetchData).mockImplementation(
+			() =>
+				new Promise((resolve) => {
+					answers.push(resolve);
+				})
+		);
+
+		const before = apiGetOwnDirectLinks();
+		notifyDirectLinksChanged();
+		const after = apiGetOwnDirectLinks();
+		/* The older read answers first; it must not free the newer one's
+		   slot, so a third caller still shares the newer read. */
+		answers[0]([{ ...dto, name: 'Alt' }]);
+		await before;
+		const third = apiGetOwnDirectLinks();
+		answers[1]([{ ...dto, name: 'Neu' }]);
+
+		expect(fetchData).toHaveBeenCalledTimes(2);
+		expect((await before)[0].name).toBe('Alt');
+		expect((await after)[0].name).toBe('Neu');
+		expect((await third)[0].name).toBe('Neu');
+	});
 });
 
 describe('apiUpdateDirectLink', () => {

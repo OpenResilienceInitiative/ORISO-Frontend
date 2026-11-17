@@ -19,19 +19,23 @@ export const useMyDirectLinks = () => {
 	const [toggleFailed, setToggleFailed] = useState(false);
 	const request = useRef(0);
 
-	const reload = useCallback(() => {
+	/** @returns whether this read was applied, so a timer can ask again. */
+	const reload = useCallback((): Promise<boolean> => {
 		const current = ++request.current;
-		apiGetOwnDirectLinks()
+		return apiGetOwnDirectLinks()
 			.then((result) => {
-				if (current !== request.current) return;
+				/* Replaced by a newer read: nothing applied yet (#2285). */
+				if (current !== request.current) return false;
 				setLinks(result);
 				setState('ready');
+				return true;
 			})
 			.catch(() => {
-				if (current !== request.current) return;
+				if (current !== request.current) return false;
 				setState((previous) =>
 					previous === 'ready' ? previous : 'failed'
 				);
+				return false;
 			});
 	}, []);
 
