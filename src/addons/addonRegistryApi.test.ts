@@ -45,6 +45,58 @@ describe('apiGetAddonRegistry', () => {
 		expect(sentHeaders().has('X-Oriso-Session-Id')).toBe(false);
 	});
 
+	it('leaves out add-ons whose bundle or API is not below the add-on route', async () => {
+		answer({
+			contract: 'oriso-addon/v1',
+			addons: [
+				{
+					...addon,
+					name: 'elsewhere',
+					entry: '@evil.example/entry.js'
+				},
+				{ ...addon, name: 'other-host', apiBase: '//evil.example/api' },
+				{
+					...addon,
+					name: 'climbs',
+					entry: '/service/addons/tools/../../users/entry.js'
+				},
+				{ ...addon, name: undefined },
+				addon
+			]
+		});
+
+		await expect(apiGetAddonRegistry()).resolves.toEqual([addon]);
+	});
+
+	it('keeps an add-on but leaves out apps it cannot place', async () => {
+		answer({
+			contract: 'oriso-addon/v1',
+			addons: [
+				{
+					...addon,
+					apps: [
+						{ id: 'no-slots', title: {} },
+						null,
+						{ id: 'untitled', slots: ['admin.page'] },
+						...addon.apps
+					]
+				},
+				{ ...addon, name: 'no-apps', apps: undefined }
+			]
+		});
+
+		await expect(apiGetAddonRegistry()).resolves.toEqual([
+			{
+				...addon,
+				apps: [
+					{ id: 'untitled', title: {}, slots: ['admin.page'] },
+					...addon.apps
+				]
+			},
+			{ ...addon, name: 'no-apps', apps: [] }
+		]);
+	});
+
 	it('reports no AddonService for another contract or a failed request', async () => {
 		answer({ contract: 'oriso-addon/v2', addons: [addon] });
 		await expect(apiGetAddonRegistry()).resolves.toBeNull();

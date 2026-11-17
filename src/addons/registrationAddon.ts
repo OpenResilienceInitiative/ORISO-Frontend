@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { endpoints } from '../resources/scripts/endpoints';
 import { apiGetTenantTheming } from '../api/apiGetTenantTheming';
 import { getLinkAgencyId } from '../utils/linkAgencyId';
+import { isAddonPath } from './addonRegistryApi';
 import {
 	ADDON_CONTRACT,
 	AddonApp,
@@ -27,7 +28,6 @@ export const REGISTRATION_ADDON_TIMEOUT_MS = 4000;
 export const REGISTRATION_ADDON_MOUNT_TIMEOUT_MS = 10000;
 
 const REGISTRATION_REF = /^[A-Za-z0-9_-]{1,64}$/;
-const ADDON_PATH = /^\/service\/addons\/[A-Za-z0-9._-]+\//;
 
 export const isRegistrationRef = (value: unknown): value is string =>
 	typeof value === 'string' && REGISTRATION_REF.test(value);
@@ -44,8 +44,8 @@ export const toRegistrationAddon = (
 		!isText(answer.appId) ||
 		!isText(answer.entry) ||
 		!isText(answer.apiBase) ||
-		!ADDON_PATH.test(answer.entry) ||
-		!ADDON_PATH.test(answer.apiBase)
+		!isAddonPath(answer.entry) ||
+		!isAddonPath(answer.apiBase)
 	) {
 		return null;
 	}
