@@ -5,7 +5,15 @@ import { describe, expect, it, vi } from 'vitest';
 import { webKit } from '.';
 import { ADDON_SHARED_GLOBAL, installAddonShared } from '../addonShared';
 
-const { Button, Headline, TextField, Checkbox } = webKit;
+const {
+	Button,
+	Headline,
+	TextField,
+	Checkbox,
+	RadioGroup,
+	DatePicker,
+	NumberField
+} = webKit;
 
 describe('web kit', () => {
 	it('renders button text as given, without treating it as a translation key', () => {
@@ -63,6 +71,87 @@ describe('web kit', () => {
 
 		expect(onText).toHaveBeenCalledWith('Alex');
 		expect(onCheck).toHaveBeenCalledWith(true);
+	});
+
+	it('reports the chosen radio option and keeps disabled options out of reach', () => {
+		const onChange = vi.fn();
+		render(
+			<RadioGroup
+				label="Kontakt"
+				value="chat"
+				onChange={onChange}
+				helperText="Später änderbar"
+				options={[
+					{ value: 'chat', label: 'Im Chat' },
+					{ value: 'call', label: 'Per Anruf' },
+					{ value: 'visit', label: 'Vor Ort', disabled: true }
+				]}
+			/>
+		);
+
+		const describedBy = screen
+			.getByRole('radiogroup')
+			.getAttribute('aria-describedby');
+		expect(document.getElementById(describedBy ?? '')?.textContent).toBe(
+			'Später änderbar'
+		);
+		expect(screen.getByRole('group', { name: 'Kontakt' })).toBeTruthy();
+		expect(
+			(screen.getByLabelText('Im Chat') as HTMLInputElement).checked
+		).toBe(true);
+		expect(
+			(screen.getByLabelText('Vor Ort') as HTMLInputElement).disabled
+		).toBe(true);
+
+		fireEvent.click(screen.getByLabelText('Per Anruf'));
+
+		expect(onChange).toHaveBeenCalledWith('call');
+	});
+
+	it('takes and reports dates as YYYY-MM-DD', () => {
+		const onChange = vi.fn();
+		const { rerender } = render(
+			<DatePicker label="Beginn" value="2026-03-05" onChange={onChange} />
+		);
+
+		const input = screen.getByLabelText('Beginn') as HTMLInputElement;
+		expect(input.value).toBe('05.03.2026');
+
+		fireEvent.change(input, { target: { value: '24.12.2026' } });
+		fireEvent.blur(input);
+		expect(onChange).toHaveBeenLastCalledWith('2026-12-24');
+
+		fireEvent.change(input, { target: { value: '' } });
+		fireEvent.blur(input);
+		expect(onChange).toHaveBeenLastCalledWith('');
+
+		rerender(<DatePicker label="Beginn" value="" onChange={onChange} />);
+		expect(
+			(screen.getByLabelText('Beginn') as HTMLInputElement).value
+		).toBe('');
+	});
+
+	it('reports numbers as numbers and an empty field as null', () => {
+		const onChange = vi.fn();
+		render(
+			<NumberField
+				label="Tage"
+				value={3}
+				onChange={onChange}
+				min={0}
+				max={7}
+			/>
+		);
+
+		const input = screen.getByLabelText('Tage') as HTMLInputElement;
+		expect(input.value).toBe('3');
+		expect(input.max).toBe('7');
+
+		fireEvent.change(input, { target: { value: '5' } });
+		expect(onChange).toHaveBeenLastCalledWith(5);
+
+		fireEvent.change(input, { target: { value: '' } });
+		expect(onChange).toHaveBeenLastCalledWith(null);
 	});
 
 	it('is part of the shared host modules', () => {

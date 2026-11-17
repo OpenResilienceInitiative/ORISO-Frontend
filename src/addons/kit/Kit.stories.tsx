@@ -11,6 +11,9 @@ const {
 	Textarea,
 	Checkbox,
 	Select,
+	RadioGroup,
+	DatePicker,
+	NumberField,
 	Notice,
 	Card,
 	Headline,
@@ -22,6 +25,9 @@ const KitShowcase = () => {
 	const [goals, setGoals] = useState('');
 	const [shared, setShared] = useState(false);
 	const [rhythm, setRhythm] = useState('weekly');
+	const [contact, setContact] = useState('chat');
+	const [startDate, setStartDate] = useState('');
+	const [daysPerWeek, setDaysPerWeek] = useState<number | null>(null);
 
 	return (
 		<Card>
@@ -53,6 +59,38 @@ const KitShowcase = () => {
 						{ value: 'weekly', label: 'Wöchentlich' },
 						{ value: 'monthly', label: 'Monatlich' }
 					]}
+				/>
+				<RadioGroup
+					label="Wie möchten Sie Kontakt halten?"
+					value={contact}
+					onChange={setContact}
+					options={[
+						{ value: 'chat', label: 'Im Chat' },
+						{ value: 'call', label: 'Per Videoanruf' },
+						{
+							value: 'visit',
+							label: 'Vor Ort (zurzeit nicht möglich)',
+							disabled: true
+						}
+					]}
+					helperText="Sie können das später ändern."
+				/>
+				<DatePicker
+					label="Ab wann gilt Ihr Ziel?"
+					value={startDate}
+					onChange={setStartDate}
+					min="2026-01-01"
+					helperText="TT.MM.JJJJ"
+				/>
+				<NumberField
+					label="An wie vielen Tagen pro Woche?"
+					value={daysPerWeek}
+					onChange={setDaysPerWeek}
+					min={0}
+					max={7}
+					step={1}
+					error={daysPerWeek != null && daysPerWeek > 7}
+					helperText="0 bis 7"
 				/>
 				<Checkbox
 					label="Mit meiner Beratung teilen"
