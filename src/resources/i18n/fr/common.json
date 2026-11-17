@@ -7419,6 +7419,10 @@
 			"showKind": "Dans le calendrier : {{kind}}",
 			"pillKind": "Comme bouton : {{kind}}",
 			"pillMenu": "Choisir le bouton : {{kind}}"
+		},
+		"links": {
+			"title": "Liens sans rendez-vous",
+			"hint": "Liens d’invitation à partager : copiez-les ou affichez un code QR."
 		}
 	}
 }

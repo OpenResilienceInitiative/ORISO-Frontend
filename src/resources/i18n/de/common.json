@@ -7409,6 +7409,10 @@
 			"showKind": "Im Kalender: {{kind}}",
 			"pillKind": "Als Knopf: {{kind}}",
 			"pillMenu": "Als Knopf wählen: {{kind}}"
+		},
+		"links": {
+			"title": "Links ohne Termin",
+			"hint": "Einladungslinks, die Sie teilen können: kopieren oder als QR-Code zeigen."
 		}
 	}
 }

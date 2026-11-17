@@ -7334,6 +7334,10 @@
 			"showKind": "In calendar: {{kind}}",
 			"pillKind": "As button: {{kind}}",
 			"pillMenu": "Choose button: {{kind}}"
+		},
+		"links": {
+			"title": "Links without an appointment",
+			"hint": "Invitation links you can share: copy them or show a QR code."
 		}
 	}
 }

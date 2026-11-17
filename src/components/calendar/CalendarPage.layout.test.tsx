@@ -229,7 +229,7 @@ describe('CalendarPage — phone and tablet', () => {
 	});
 
 	it('keeps the work week on the tablet', () => {
-		page({ phone: false });
+		page({ phone: false, initialView: 'workWeek' });
 		expect(viewButton().textContent).toContain('calendar.views.workWeek');
 		fireEvent.click(viewButton());
 		const menu = cy('calendar-menu-view')!;
@@ -255,9 +255,9 @@ describe('CalendarPage — phone and tablet', () => {
 		expect(viewButton().textContent).toContain('calendar.views.workWeek');
 	});
 
-	it('opens the phone on three days, without five- or seven-day views', () => {
+	it('opens the phone on the list (*19), without five- or seven-day views', () => {
 		page();
-		expect(viewButton().textContent).toContain('calendar.views.threeDays');
+		expect(viewButton().textContent).toContain('calendar.views.list');
 		fireEvent.click(viewButton());
 		const menu = cy('calendar-menu-view')!;
 		expect(within(menu).queryByText('calendar.views.workWeek')).toBeNull();

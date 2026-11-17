@@ -7419,6 +7419,10 @@
 			"showKind": "Takvimde: {{kind}}",
 			"pillKind": "Düğme olarak: {{kind}}",
 			"pillMenu": "Düğme seç: {{kind}}"
+		},
+		"links": {
+			"title": "Randevusuz bağlantılar",
+			"hint": "Paylaşabileceğiniz davet bağlantıları: kopyalayın veya QR kodu gösterin."
 		}
 	}
 }

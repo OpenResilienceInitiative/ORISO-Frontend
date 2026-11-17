@@ -59,6 +59,10 @@ vi.mock('../sessionsList/timeline/useAppointmentNotice', () => ({
 	useAppointmentNotice: () => sendNotice
 }));
 let consultant = true;
+// *19: the links box has its own data hooks; not part of these tests.
+vi.mock('./CalendarLinksSection', () => ({
+	CalendarLinksSection: () => null
+}));
 vi.mock('../../globalState', async () => {
 	const React = await import('react');
 	return {
