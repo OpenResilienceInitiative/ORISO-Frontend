@@ -489,6 +489,16 @@ const installAppOrisoRoutingFetchMocks = () => {
 		const parsed = new URL(url);
 		const { pathname } = parsed;
 
+		// The Anfragen list also asks for anonymous live-chat enquiries; none
+		// here, answered like the backend answers an empty feed (204). Unanswered
+		// it logged a console error, which fails the Storybook verification.
+		if (
+			pathname ===
+			'/service/conversations/consultants/enquiries/anonymous'
+		) {
+			return new Response(null, { status: 204 });
+		}
+
 		if (
 			runtimeNoEnquiries &&
 			pathname ===
