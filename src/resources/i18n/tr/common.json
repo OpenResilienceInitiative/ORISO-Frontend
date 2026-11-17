@@ -7677,7 +7677,8 @@
 			"slotMinutes": "Randevu süresi",
 			"minutes": "{{count}} dk",
 			"invalid": "Bitiş, başlangıçtan sonra olmalıdır.",
-			"loadFailed": "Yüklenemedi. Tekrar dene"
+			"loadFailed": "Yüklenemedi. Tekrar dene",
+			"overlaps": "Saatler bu gündeki başka bir görüşme saatiyle çakışıyor."
 		},
 		"appointmentRequest": {
 			"status": "Talep edildi · yanıtınızı bekliyor",

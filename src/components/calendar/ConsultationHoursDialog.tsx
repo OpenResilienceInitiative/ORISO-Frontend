@@ -16,6 +16,7 @@ import {
 	consultationHoursToApi,
 	consultationRows,
 	invalidConsultationRows,
+	overlappingConsultationRows,
 	MAX_NOTICE_DAYS,
 	type ConsultationDayRow,
 	type ConsultationHours,
@@ -54,6 +55,7 @@ export const ConsultationHoursDialog = ({
 		hours.slotMinutes
 	);
 	const invalid = invalidConsultationRows(rows);
+	const overlapping = overlappingConsultationRows(rows, hours.windows);
 	const empty = rows.every((r) => !r.enabled);
 	const update = (weekday: number, patch: Partial<ConsultationDayRow>) =>
 		setRows((all) =>
@@ -74,7 +76,8 @@ export const ConsultationHoursDialog = ({
 				{
 					label: t('calendar.consultationHours.save'),
 					primary: true,
-					disabled: saving || invalid.length > 0,
+					disabled:
+						saving || invalid.length > 0 || overlapping.length > 0,
 					onClick: () =>
 						onSave(
 							consultationHoursToApi(
@@ -94,7 +97,9 @@ export const ConsultationHoursDialog = ({
 			>
 				{rows.map((row) => {
 					const name = dayName(row.weekday);
-					const wrong = invalid.includes(row.weekday);
+					const wrong =
+						invalid.includes(row.weekday) ||
+						overlapping.includes(row.weekday);
 					return (
 						<div
 							key={row.weekday}
@@ -108,6 +113,7 @@ export const ConsultationHoursDialog = ({
 								}
 								aria-label={name}
 								showIcon={false}
+								disabled={saving}
 							/>
 							<span className="calendarHours__day">{name}</span>
 							<span className="calendarConsultation__times">
@@ -121,7 +127,7 @@ export const ConsultationHoursDialog = ({
 										type="time"
 										step={900}
 										value={row.start}
-										disabled={!row.enabled}
+										disabled={saving || !row.enabled}
 										aria-invalid={wrong || undefined}
 										onChange={(e) =>
 											update(row.weekday, {
@@ -141,7 +147,7 @@ export const ConsultationHoursDialog = ({
 										type="time"
 										step={900}
 										value={row.end}
-										disabled={!row.enabled}
+										disabled={saving || !row.enabled}
 										aria-invalid={wrong || undefined}
 										onChange={(e) =>
 											update(row.weekday, {
@@ -167,6 +173,7 @@ export const ConsultationHoursDialog = ({
 						<Switch
 							checked={autoAccept}
 							onChange={setAutoAccept}
+							disabled={saving}
 							aria-label={t(
 								'calendar.consultationHours.autoAccept'
 							)}
@@ -207,6 +214,7 @@ export const ConsultationHoursDialog = ({
 									setNoticeDays(Number(event.target.value))
 								}
 								data-cy="consultation-hours-notice-days"
+								disabled={saving}
 							/>
 						</div>
 						<div className="calendarHours__select">
@@ -224,6 +232,7 @@ export const ConsultationHoursDialog = ({
 										}
 									)
 								}))}
+								disabled={saving}
 								onChange={(event) =>
 									setSlotMinutes(
 										Number(
@@ -239,6 +248,11 @@ export const ConsultationHoursDialog = ({
 				{invalid.length > 0 && (
 					<p className="calendarDialog__error" role="alert">
 						{t('calendar.consultationHours.invalid')}
+					</p>
+				)}
+				{overlapping.length > 0 && (
+					<p className="calendarDialog__error" role="alert">
+						{t('calendar.consultationHours.overlaps')}
 					</p>
 				)}
 			</div>

@@ -1,6 +1,7 @@
 // @vitest-environment oriso-jsdom
 import * as React from 'react';
 import {
+	act,
 	cleanup,
 	fireEvent,
 	render,
@@ -157,6 +158,37 @@ describe('AskerCallInfo self-booking (FE#1050)', () => {
 		fireEvent.click(screen.getByTestId('asker-self-booking-confirm'));
 
 		expect(bookSlot).not.toHaveBeenCalled();
+	});
+
+	it('ignores a booking that finishes after the conversation changed', async () => {
+		let finish: (value: SessionAppointment) => void = () => undefined;
+		const bookSlot = vi.fn(
+			() =>
+				new Promise<SessionAppointment>((resolve) => {
+					finish = resolve;
+				})
+		);
+		const onBooked = vi.fn();
+		const props = {
+			open: true,
+			onClose: vi.fn(),
+			medium: 'VIDEO' as const,
+			load: () => Promise.resolve([]),
+			loadSlots: vi.fn().mockResolvedValue([free]),
+			bookSlot,
+			onBooked
+		};
+		const { rerender } = render(<AskerCallInfo sessionId={7} {...props} />);
+		fireEvent.click(await screen.findByTestId('asker-call-info-request'));
+		await pickFirstTime();
+		fireEvent.click(screen.getByTestId('asker-self-booking-confirm'));
+		await waitFor(() => expect(bookSlot).toHaveBeenCalled());
+
+		rerender(<AskerCallInfo sessionId={8} {...props} />);
+		await act(async () => finish(booked));
+
+		expect(onBooked).not.toHaveBeenCalled();
+		expect(screen.queryByTestId('asker-call-info-appointment')).toBeNull();
 	});
 
 	it('says when the counsellor has no free time and offers the chat', async () => {

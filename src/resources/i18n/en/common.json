@@ -7592,7 +7592,8 @@
 			"slotMinutes": "Length of an appointment",
 			"minutes": "{{count}} min",
 			"invalid": "The end must be after the start.",
-			"loadFailed": "Could not be loaded. Try again"
+			"loadFailed": "Could not be loaded. Try again",
+			"overlaps": "The times overlap another consultation window on this day."
 		},
 		"appointmentRequest": {
 			"status": "Requested · waiting for you",

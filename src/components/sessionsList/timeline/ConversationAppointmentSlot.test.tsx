@@ -311,6 +311,35 @@ describe('ConversationAppointmentSlot', () => {
 			).toHaveLength(2);
 		});
 
+		it('leaves the split button when its start passes, without a reload', async () => {
+			vi.useFakeTimers({ shouldAdvanceTime: true });
+			try {
+				const soon = new Date(Date.now() + 5_000);
+				getAppointments.mockResolvedValue([
+					{
+						...requested(),
+						startTime: soon.toISOString(),
+						endTime: new Date(
+							soon.getTime() + 3600_000
+						).toISOString()
+					}
+				]);
+				const { container } = renderSlot(vi.fn());
+				await splitButtonLabel(container);
+
+				await act(async () => {
+					await vi.advanceTimersByTimeAsync(6_000);
+				});
+
+				expect(
+					container.querySelector('[data-cy="room-next-appointment"]')
+				).toBeNull();
+				expect(getAppointments).toHaveBeenCalledTimes(1);
+			} finally {
+				vi.useRealTimers();
+			}
+		});
+
 		it('lets the counsellor confirm or decline it from the menu', async () => {
 			getAppointments.mockResolvedValue([requested()]);
 			const { container } = renderSlot(vi.fn());

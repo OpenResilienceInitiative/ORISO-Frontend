@@ -7644,7 +7644,8 @@
 			"slotMinutes": "ንውሓት ቈጸራ",
 			"minutes": "{{count}} ደቒቕ",
 			"invalid": "መወዳእታ ድሕሪ መጀመርታ ክኸውን ኣለዎ።",
-			"loadFailed": "ክጽዕን ኣይተኻእለን። ደጊምካ ፈትን"
+			"loadFailed": "ክጽዕን ኣይተኻእለን። ደጊምካ ፈትን",
+			"overlaps": "እቲ ሰዓታት ምስ ካልእ ናይ ምኽሪ ግዜ ኣብዚ መዓልቲ ይጋጠም።"
 		},
 		"appointmentRequest": {
 			"status": "ተሓቲቱ · ንመልስኹም ይጽበ",

@@ -121,4 +121,58 @@ describe('ConsultationHoursDialog (FE#2287)', () => {
 			'calendar.consultationHours.empty'
 		);
 	});
+
+	it('holds every control while a save is on its way', () => {
+		render(
+			<ConsultationHoursDialog
+				open
+				saving
+				hours={{
+					...none,
+					windows: [{ weekday: 2, start: '09:00', end: '12:00' }]
+				}}
+				onSave={vi.fn()}
+				onClose={() => undefined}
+			/>
+		);
+		const day = screen.getByTestId('consultation-hours-2');
+		day.querySelectorAll('input').forEach((input) =>
+			expect((input as HTMLInputElement).disabled).toBe(true)
+		);
+		expect(
+			(
+				screen.getByTestId(
+					'consultation-hours-auto-accept'
+				) as HTMLInputElement
+			).disabled
+		).toBe(true);
+		expect(select('noticeDays').getAttribute('aria-disabled')).toBe('true');
+		expect(select('slotMinutes').getAttribute('aria-disabled')).toBe(
+			'true'
+		);
+	});
+
+	it('refuses a day whose edited window runs into its second one', () => {
+		const onSave = open({
+			...none,
+			windows: [
+				{ weekday: 1, start: '09:00', end: '11:00' },
+				{ weekday: 1, start: '14:00', end: '16:00' }
+			]
+		});
+		const end = screen
+			.getByTestId('consultation-hours-1')
+			.querySelectorAll('input[type="time"]')[1] as HTMLInputElement;
+		fireEvent.change(end, { target: { value: '15:00' } });
+
+		expect(
+			(screen.getByTestId('consultation-hours-save') as HTMLButtonElement)
+				.disabled
+		).toBe(true);
+		expect(
+			screen.getByText('calendar.consultationHours.overlaps')
+		).toBeTruthy();
+		fireEvent.click(screen.getByTestId('consultation-hours-save'));
+		expect(onSave).not.toHaveBeenCalled();
+	});
 });

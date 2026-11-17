@@ -125,6 +125,17 @@ export const hasEnded = (
 	now: Date
 ): boolean => (entry.end ?? entry.start).getTime() <= now.getTime();
 
+/**
+ * Gone from the future list: an appointment once it has ended, a request
+ * once it has started: unanswered by then it has expired (Frank, 17 Nov).
+ */
+export const isGone = (
+	entry: Pick<FutureEntry, 'start' | 'end' | 'requested'>,
+	now: Date
+): boolean =>
+	hasEnded(entry, now) ||
+	(!!entry.requested && entry.start.getTime() <= now.getTime());
+
 export const buildFutureEntries = ({
 	now,
 	occurrences,
@@ -199,17 +210,9 @@ export const buildFutureEntries = ({
 			}
 		};
 	});
-	return (
-		[...fromOccurrences, ...fromBookings]
-			.filter((entry) => !hasEnded(entry, now))
-			// Unanswered by its start, a request has expired (Frank, 17 Nov), as in
-			// the conversation's appointment slot.
-			.filter(
-				(entry) =>
-					!entry.requested || entry.start.getTime() > now.getTime()
-			)
-			.sort((a, b) => a.start.getTime() - b.start.getTime())
-	);
+	return [...fromOccurrences, ...fromBookings]
+		.filter((entry) => !isGone(entry, now))
+		.sort((a, b) => a.start.getTime() - b.start.getTime());
 };
 
 /** An entry without a mapped room only shows when no filter is active. */

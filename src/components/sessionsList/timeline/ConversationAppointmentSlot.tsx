@@ -32,6 +32,7 @@ import {
 	appointmentToBooking,
 	nextConversationAppointment,
 	onAppointmentsChanged,
+	pendingRequests,
 	upcomingAppointments
 } from './conversationAppointments';
 import { lendAppointmentCreate } from './appointmentCreateBridge';
@@ -140,6 +141,22 @@ export const ConversationAppointmentSlot = ({
 		onCreateChange(canCreate ? openCreate : undefined);
 		return () => onCreateChange(undefined);
 	}, [canCreate, onCreateChange, openCreate]);
+	/* A request expires at its start (FE#2287): the slot renders again then,
+	   without waiting for another update. */
+	const [expiryTick, setExpiryTick] = useState(0);
+	useEffect(() => {
+		if (!Array.isArray(appointments)) return undefined;
+		const now = Date.now();
+		const nextStart = pendingRequests(appointments, new Date(now))
+			.map((a) => new Date(a.startTime).getTime())
+			.sort((a, b) => a - b)[0];
+		if (nextStart === undefined) return undefined;
+		const timer = window.setTimeout(
+			() => setExpiryTick((n) => n + 1),
+			nextStart - now + 1
+		);
+		return () => window.clearTimeout(timer);
+	}, [appointments, expiryTick]);
 	/* The split button shows the nearest appointment or request (FE#2287). */
 	const next = Array.isArray(appointments)
 		? nextConversationAppointment(appointments, new Date())

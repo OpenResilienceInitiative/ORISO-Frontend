@@ -18,7 +18,7 @@ import { ResizableHandle } from '../ResizableHandle';
 import { revealSnapPoints, stepSnap, clampReveal } from '../verticalHandleMath';
 import type { AppointmentAction } from './AppointmentSplitButton';
 import { FutureEntryPill } from './FutureEntryPill';
-import { hasEnded, type FutureEntry, type TimelineRole } from './timelineModel';
+import { isGone, type FutureEntry, type TimelineRole } from './timelineModel';
 import './futureZone.styles.scss';
 
 /** How far the zone opens on first show (display setting). */
@@ -137,7 +137,8 @@ export const FutureZone = forwardRef<FutureZoneHandle, FutureZoneProps>(
 
 		// Furthest appointment first: the next one sits right above "Jetzt".
 		const shownEntries = useMemo(
-			() => entries.filter((entry) => !hasEnded(entry, now)).reverse(),
+			// A request leaves at its start, every other entry at its end.
+			() => entries.filter((entry) => !isGone(entry, now)).reverse(),
 			[entries, now]
 		);
 

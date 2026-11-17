@@ -7667,7 +7667,8 @@
 			"slotMinutes": "Dauer eines Termins",
 			"minutes": "{{count}} Min.",
 			"invalid": "Das Ende muss nach dem Beginn liegen.",
-			"loadFailed": "Konnten nicht geladen werden. Erneut versuchen"
+			"loadFailed": "Konnten nicht geladen werden. Erneut versuchen",
+			"overlaps": "Die Zeiten überschneiden sich mit einer weiteren Sprechstunde an diesem Tag."
 		},
 		"appointmentRequest": {
 			"status": "Angefragt · wartet auf Sie",

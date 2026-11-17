@@ -89,6 +89,30 @@ export const invalidConsultationRows = (rows: ConsultationDayRow[]) =>
 	rows.filter((r) => r.enabled && !validWindow(r)).map((r) => r.weekday);
 
 /**
+ * The weekdays whose edited window overlaps a further stored window of the
+ * same day; UserService refuses overlapping windows of one day.
+ */
+export const overlappingConsultationRows = (
+	rows: ConsultationDayRow[],
+	stored: WorkingHours
+) =>
+	rows
+		.filter(
+			(r) =>
+				r.enabled &&
+				validWindow(r) &&
+				stored
+					.filter((w) => w.weekday === r.weekday)
+					.slice(1)
+					.some(
+						(w) =>
+							minutesOf(w.start) < minutesOf(r.end) &&
+							minutesOf(w.end) > minutesOf(r.start)
+					)
+		)
+		.map((r) => r.weekday);
+
+/**
  * The whole set UserService stores. The dialog edits the first window of a
  * weekday; further windows of a day that stays on are kept as stored, so a
  * save never drops a window the dialog does not show (UserService allows

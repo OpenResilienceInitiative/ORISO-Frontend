@@ -9,7 +9,8 @@ import {
 	filterEntries,
 	formatEntryDate,
 	nextEntryBySession,
-	type TimelineSession
+	type TimelineSession,
+	isGone
 } from './timelineModel';
 
 const NOW = new Date('2026-10-28T10:00:00');
@@ -295,6 +296,17 @@ describe('entries in the real list', () => {
 				]
 			});
 			expect(twin.requested).toBe(true);
+		});
+
+		it('counts a request as gone from its start, an appointment from its end', () => {
+			const start = new Date('2026-10-29T10:00:00Z');
+			const end = new Date('2026-10-29T11:00:00Z');
+			const during = new Date('2026-10-29T10:30:00Z');
+			const before = new Date('2026-10-29T09:59:00Z');
+			expect(isGone({ start, end, requested: true }, during)).toBe(true);
+			expect(isGone({ start, end, requested: true }, before)).toBe(false);
+			expect(isGone({ start, end }, during)).toBe(false);
+			expect(isGone({ start, end }, end)).toBe(true);
 		});
 
 		it('drops a request once its start has passed: it has expired', () => {

@@ -6,7 +6,7 @@
  * icons and date format, so it reads like the appointment below the header.
  */
 import * as React from 'react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import EventOutlinedIcon from '@mui/icons-material/EventOutlined';
 import { M3Dialog, type M3DialogAction } from '../../m3Dialog/M3Dialog';
@@ -218,6 +218,8 @@ export const AskerCallInfo = ({
 		SessionAppointment[] | 'error' | undefined
 	>();
 	const [booking, setBooking] = useState(false);
+	const currentSession = useRef(sessionId);
+	currentSession.current = sessionId;
 	const [notice, setNotice] = useState<AskerBookingNotice>();
 	/* Counts the reads; a refused booking reads the appointments again. */
 	const [reads, setReads] = useState(0);
@@ -239,6 +241,10 @@ export const AskerCallInfo = ({
 	}, [open, sessionId, load, reads]);
 
 	if (open && booking && medium) {
+		/* A booking still on its way when the conversation changes belongs to
+		   the old one: its answer must not land in this one. */
+		const startedFor = sessionId;
+		const stillOpen = () => currentSession.current === startedFor;
 		return (
 			<AskerSelfBookingDialog
 				/* A time chosen for one conversation is never booked in
@@ -253,6 +259,7 @@ export const AskerCallInfo = ({
 				onBack={() => setBooking(false)}
 				onWriteInChat={onRequestTime}
 				onBooked={(appointment) => {
+					if (!stillOpen()) return;
 					setAppointments((known) => [
 						...(Array.isArray(known) ? known : []),
 						appointment
@@ -266,6 +273,7 @@ export const AskerCallInfo = ({
 					onBooked?.(appointment);
 				}}
 				onLimitReached={() => {
+					if (!stillOpen()) return;
 					setNotice('limit');
 					setBooking(false);
 					setReads((count) => count + 1);
