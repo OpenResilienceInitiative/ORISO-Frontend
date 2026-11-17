@@ -1,4 +1,4 @@
-import { useSyncExternalStore } from 'react';
+import { useLayoutEffect, useSyncExternalStore } from 'react';
 
 /**
  * The login handover (#2272): one calm loading screen from the moment Keycloak accepts
@@ -57,7 +57,16 @@ export const readPendingLoginHandover = (
 	}
 };
 
-let active = typeof window !== 'undefined' && !!readPendingLoginHandover();
+const pendingOnLoad =
+	typeof window !== 'undefined' ? readPendingLoginHandover() : null;
+let active = !!pendingOnLoad;
+
+/**
+ * The label the login page showed. The app document may speak the profile's
+ * language already; switching words mid-screen read as a second screen.
+ */
+export const getContinuedLoginHandoverLabel = () =>
+	pendingOnLoad?.label?.text || undefined;
 const listeners = new Set<() => void>();
 
 const emit = () => listeners.forEach((listener) => listener());
@@ -74,35 +83,86 @@ export const isLoginHandoverActive = () => active;
 export const useLoginHandoverActive = () =>
 	useSyncExternalStore(subscribe, isLoginHandoverActive, () => false);
 
-// The signed-in tenant's theme is still loading: the app may be ready before
-// it, and ending the screen then would reveal the white theme modal.
-let waitingForTheme = false;
+/**
+ * What the screen still waits for once the app is ready: the signed-in
+ * tenant's theme (else the white theme modal shows as it fades out) and the
+ * first content, e.g. the session list (else it pops in during the fade).
+ */
+const holds = new Set<string>();
 let finishRequested = false;
+let finishFrame = 0;
+let finishCap = 0;
+
+/** Content is never worth waiting for longer than this after "ready". */
+export const LOGIN_HANDOVER_FINISH_MAX_WAIT_MS = 4_000;
+
+const clearFinish = () => {
+	finishRequested = false;
+	if (typeof window === 'undefined') return;
+	window.cancelAnimationFrame(finishFrame);
+	window.clearTimeout(finishCap);
+	finishFrame = 0;
+	finishCap = 0;
+};
+
+const endIfFinished = () => {
+	if (finishRequested && !finishFrame && holds.size === 0) endLoginHandover();
+};
 
 /** The credentials were accepted: cover the login page from now on. */
 export const beginLoginHandover = () => {
-	finishRequested = false;
+	clearFinish();
 	if (active) return;
 	active = true;
 	emit();
 };
 
+/** Keeps the screen up after "ready" while `holding` (see `holds`). */
+export const setLoginHandoverHold = (key: string, holding: boolean) => {
+	if (holding) holds.add(key);
+	else holds.delete(key);
+	endIfFinished();
+};
+
 /** Set by `TenantThemingLoader` while the tenant theme loads. */
-export const setLoginHandoverWaitingForTheme = (waiting: boolean) => {
-	waitingForTheme = waiting;
-	if (!waiting && finishRequested) endLoginHandover();
+export const setLoginHandoverWaitingForTheme = (waiting: boolean) =>
+	setLoginHandoverHold('theme', waiting);
+
+/**
+ * First content (a list) keeps the screen up while it loads. A layout effect,
+ * so it is in place before the app's ready effect can finish the screen.
+ */
+export const useHoldLoginHandover = (key: string, holding: boolean) => {
+	useLayoutEffect(() => {
+		setLoginHandoverHold(key, holding);
+	}, [key, holding]);
+	useLayoutEffect(() => () => setLoginHandoverHold(key, false), [key]);
 };
 
 /**
- * The app is ready: end the screen, once the tenant theme is loaded too.
- * Failure exits call `endLoginHandover` directly and never wait.
+ * The app is ready: end the screen once the theme and the first content are
+ * there too. It looks two frames later, so content the ready render mounts
+ * can still register, and gives up waiting after
+ * `LOGIN_HANDOVER_FINISH_MAX_WAIT_MS`. Failure exits call `endLoginHandover`
+ * directly and never wait.
  */
 export const finishLoginHandover = () => {
-	if (waitingForTheme && active) {
-		finishRequested = true;
+	if (!active) {
+		endLoginHandover();
 		return;
 	}
-	endLoginHandover();
+	if (finishRequested) return;
+	finishRequested = true;
+	finishCap = window.setTimeout(
+		endLoginHandover,
+		LOGIN_HANDOVER_FINISH_MAX_WAIT_MS
+	);
+	finishFrame = window.requestAnimationFrame(() => {
+		finishFrame = window.requestAnimationFrame(() => {
+			finishFrame = 0;
+			endIfFinished();
+		});
+	});
 };
 
 interface SnapshotRect {
@@ -191,7 +251,7 @@ export const removeLoginHandoverSplash = () => {
 
 /** The sign-in failed or gave up: show what is underneath now. */
 export const endLoginHandover = () => {
-	finishRequested = false;
+	clearFinish();
 	try {
 		getStorage()?.removeItem(LOGIN_HANDOVER_STORAGE_KEY);
 	} catch {
@@ -210,8 +270,8 @@ export const endLoginHandover = () => {
 
 /** Test-only: reset the module state between cases. */
 export const resetLoginHandoverForTests = (value = false) => {
-	waitingForTheme = false;
-	finishRequested = false;
+	holds.clear();
+	clearFinish();
 	active = value;
 	emit();
 };
