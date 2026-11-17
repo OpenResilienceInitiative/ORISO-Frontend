@@ -14,6 +14,7 @@ import {
 	endLoginHandover,
 	finishLoginHandover,
 	isLoginHandoverActive,
+	LOGIN_HANDOVER_CONTENT_GRACE_MS,
 	resetLoginHandoverForTests
 } from './loginHandover';
 import { TenantThemingLoader } from './TenantThemingLoader';
@@ -37,9 +38,7 @@ const frames = () =>
 	act(
 		() =>
 			new Promise<void>((resolve) =>
-				requestAnimationFrame(() =>
-					requestAnimationFrame(() => resolve())
-				)
+				setTimeout(resolve, LOGIN_HANDOVER_CONTENT_GRACE_MS + 20)
 			)
 	);
 

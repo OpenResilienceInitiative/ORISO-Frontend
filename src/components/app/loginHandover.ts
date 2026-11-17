@@ -89,24 +89,32 @@ export const useLoginHandoverActive = () =>
  * first content, e.g. the session list (else it pops in during the fade).
  */
 const holds = new Set<string>();
+// Ends as soon as content that registered within the grace has loaded.
+let contentSeen = false;
 let finishRequested = false;
-let finishFrame = 0;
+let finishGrace = 0;
 let finishCap = 0;
 
+/**
+ * How long after "ready" the first content may take to mount and register
+ * (the session list mounted 19 ms after it on Dev, behind a route change).
+ */
+export const LOGIN_HANDOVER_CONTENT_GRACE_MS = 250;
 /** Content is never worth waiting for longer than this after "ready". */
 export const LOGIN_HANDOVER_FINISH_MAX_WAIT_MS = 4_000;
 
 const clearFinish = () => {
 	finishRequested = false;
+	contentSeen = false;
 	if (typeof window === 'undefined') return;
-	window.cancelAnimationFrame(finishFrame);
+	window.clearTimeout(finishGrace);
 	window.clearTimeout(finishCap);
-	finishFrame = 0;
+	finishGrace = 0;
 	finishCap = 0;
 };
 
 const endIfFinished = () => {
-	if (finishRequested && !finishFrame && holds.size === 0) endLoginHandover();
+	if (finishRequested && !finishGrace && holds.size === 0) endLoginHandover();
 };
 
 /** The credentials were accepted: cover the login page from now on. */
@@ -119,8 +127,14 @@ export const beginLoginHandover = () => {
 
 /** Keeps the screen up after "ready" while `holding` (see `holds`). */
 export const setLoginHandoverHold = (key: string, holding: boolean) => {
-	if (holding) holds.add(key);
-	else holds.delete(key);
+	if (holding) {
+		holds.add(key);
+		if (finishRequested) contentSeen = true;
+	} else holds.delete(key);
+	if (contentSeen && finishGrace && holds.size === 0) {
+		window.clearTimeout(finishGrace);
+		finishGrace = 0;
+	}
 	endIfFinished();
 };
 
@@ -141,8 +155,9 @@ export const useHoldLoginHandover = (key: string, holding: boolean) => {
 
 /**
  * The app is ready: end the screen once the theme and the first content are
- * there too. It looks two frames later, so content the ready render mounts
- * can still register, and gives up waiting after
+ * there too. Content gets `LOGIN_HANDOVER_CONTENT_GRACE_MS` to mount and
+ * register (a hold that registers and releases inside it ends the screen as
+ * soon as the grace is over), and gives up waiting after
  * `LOGIN_HANDOVER_FINISH_MAX_WAIT_MS`. Failure exits call `endLoginHandover`
  * directly and never wait.
  */
@@ -157,12 +172,10 @@ export const finishLoginHandover = () => {
 		endLoginHandover,
 		LOGIN_HANDOVER_FINISH_MAX_WAIT_MS
 	);
-	finishFrame = window.requestAnimationFrame(() => {
-		finishFrame = window.requestAnimationFrame(() => {
-			finishFrame = 0;
-			endIfFinished();
-		});
-	});
+	finishGrace = window.setTimeout(() => {
+		finishGrace = 0;
+		endIfFinished();
+	}, LOGIN_HANDOVER_CONTENT_GRACE_MS);
 };
 
 interface SnapshotRect {

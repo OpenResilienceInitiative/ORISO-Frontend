@@ -14,6 +14,7 @@ import {
 	endLoginHandover,
 	finishLoginHandover,
 	isLoginHandoverActive,
+	LOGIN_HANDOVER_CONTENT_GRACE_MS,
 	LOGIN_HANDOVER_FINISH_MAX_WAIT_MS,
 	resetLoginHandoverForTests,
 	useHoldLoginHandover
@@ -31,15 +32,9 @@ const Holder = ({ holding }: { holding: boolean }) => {
 	return null;
 };
 
-const frames = () =>
-	act(
-		() =>
-			new Promise<void>((resolve) =>
-				requestAnimationFrame(() =>
-					requestAnimationFrame(() => resolve())
-				)
-			)
-	);
+const wait = (ms: number) =>
+	act(() => new Promise<void>((resolve) => setTimeout(resolve, ms)));
+const frames = () => wait(LOGIN_HANDOVER_CONTENT_GRACE_MS + 20);
 
 describe('login handover waits for the first content', () => {
 	beforeEach(() => resetLoginHandoverForTests(false));
@@ -61,16 +56,26 @@ describe('login handover waits for the first content', () => {
 		expect(isLoginHandoverActive()).toBe(false);
 	});
 
+	it('ends as soon as content that registered after ready has loaded', async () => {
+		beginLoginHandover();
+		act(() => finishLoginHandover());
+		const view = render(<Holder holding />);
+		view.rerender(<Holder holding={false} />);
+		await wait(20);
+		expect(isLoginHandoverActive()).toBe(false);
+	});
+
 	it('also waits for content that mounts right after the app is ready', async () => {
 		beginLoginHandover();
 		act(() => finishLoginHandover());
-		// The routes render in the same commit as "ready".
+		// On Dev the session list mounted 19 ms after "ready", behind a route change.
+		await wait(30);
 		render(<Holder holding />);
 		await frames();
 		expect(isLoginHandoverActive()).toBe(true);
 	});
 
-	it('ends within two frames when nothing holds it', async () => {
+	it('ends after the grace when nothing holds it', async () => {
 		beginLoginHandover();
 		act(() => finishLoginHandover());
 		await frames();
