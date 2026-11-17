@@ -59,6 +59,12 @@ export interface UserDataInterface {
 	 * account is kept. Optional: older backends never send it.
 	 */
 	temporaryAccount?: boolean;
+	/**
+	 * UserService#1662: the temporary account may be kept ("Konto behalten"
+	 * will succeed). Optional: older backends never send it, and nothing is
+	 * offered then.
+	 */
+	temporaryAccountKeepAllowed?: boolean;
 	userId: string;
 	userName: string;
 	userRoles: string[];

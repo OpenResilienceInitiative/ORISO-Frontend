@@ -12,20 +12,25 @@ import { Headline } from '../headline/Headline';
 import { Text } from '../text/Text';
 import { KeepAccountDialog } from './KeepAccountDialog';
 
-/** UserService#1662: "Konto behalten" is offered to an asker whose account is temporary. */
+/**
+ * UserService#1662: "Konto behalten" is offered to an asker whose account is
+ * temporary, and only when the server says keeping will succeed
+ * (`temporaryAccountKeepAllowed`: the guest entered under "Gast wählt"). A
+ * server that does not say offers nothing.
+ */
 export const isKeepableTemporaryAccount = (
 	userData: UserDataInterface | null | undefined
 ): boolean =>
 	Boolean(
 		userData?.temporaryAccount &&
+			userData.temporaryAccountKeepAllowed === true &&
 			hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData)
 	);
 
 /**
  * The keep-account dialog for any entry point (profile card, conversation
- * menu). The server does not say whether this account may be kept (only a
- * guest who entered under "Gast wählt" may); a refused keep explains itself
- * in the dialog. The user data is refreshed when the dialog closes after a
+ * menu). A keep the server still refuses explains itself in the dialog. The
+ * user data is refreshed when the dialog closes after a
  * kept account, so the success message stays readable and the hidden
  * functions come back afterwards.
  */

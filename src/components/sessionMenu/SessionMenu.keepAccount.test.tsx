@@ -167,11 +167,12 @@ afterEach(() => {
 	tenant.current = null;
 });
 
-const guest = (temporaryAccount: boolean) => ({
+const guest = (temporaryAccount: boolean, keepAllowed = temporaryAccount) => ({
 	userId: 'guest',
 	userName: 'eule_mika_4821',
 	grantedAuthorities: [AUTHORITIES.ASKER_DEFAULT],
-	temporaryAccount
+	temporaryAccount,
+	temporaryAccountKeepAllowed: keepAllowed
 });
 const keepRow = () =>
 	document.querySelector<HTMLElement>(
@@ -187,6 +188,11 @@ describe('SessionMenu "Konto behalten"', () => {
 		expect(
 			screen.getByRole('dialog', { name: 'keep account' })
 		).toBeTruthy();
+	});
+
+	it('is absent for a temporary account the server will not let keep', () => {
+		render(<Menu userData={guest(true, false)} />);
+		expect(keepRow()).toBeNull();
 	});
 
 	it('is absent for a permanent account and for a counsellor', () => {

@@ -22,7 +22,10 @@ import { DisplayNameSettings } from './DisplayNameSettings';
 import { AskerDisplayNameSettings } from './AskerDisplayNameSettings';
 import { DeleteAccount } from './DeleteAccount';
 import { ProfileCard } from './ProfileCard';
-import { KeepAccountEntry } from '../temporaryAccount/KeepAccountEntry';
+import {
+	isKeepableTemporaryAccount,
+	KeepAccountEntry
+} from '../temporaryAccount/KeepAccountEntry';
 import './securityPrivacySettings.styles';
 
 export interface SecurityPrivacySettingsProps {
@@ -55,14 +58,19 @@ export const SecurityPrivacySettings = ({
 					{t('profile.securityPrivacy.account.description')}
 				</p>
 				<div className="profile__cards securityPrivacySettings__cards">
-					{temporary && (
+					{temporary && isKeepableTemporaryAccount(userData) && (
 						<ProfileCard icon={VerifiedUserOutlinedIcon}>
 							<KeepAccountEntry />
 						</ProfileCard>
 					)}
-					<ProfileCard icon={LockOutlinedIcon}>
-						<PasswordReset />
-					</ProfileCard>
+					{/* A temporary account has no password of its own to
+					    change (it was generated at entry); keeping the
+					    account sets one. */}
+					{!temporary && (
+						<ProfileCard icon={LockOutlinedIcon}>
+							<PasswordReset />
+						</ProfileCard>
+					)}
 					{userData.twoFactorAuth?.isEnabled && (
 						<ProfileCard icon={ShieldOutlinedIcon}>
 							<TwoFactorAuth />

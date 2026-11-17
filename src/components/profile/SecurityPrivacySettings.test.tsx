@@ -39,7 +39,11 @@ vi.mock('./DeleteAccount', () => ({
 	DeleteAccount: () => <button>Delete account</button>
 }));
 vi.mock('../temporaryAccount/KeepAccountEntry', () => ({
-	KeepAccountEntry: () => <button>Keep account</button>
+	KeepAccountEntry: () => <button>Keep account</button>,
+	isKeepableTemporaryAccount: (user?: {
+		temporaryAccount?: boolean;
+		temporaryAccountKeepAllowed?: boolean;
+	}) => Boolean(user?.temporaryAccount && user.temporaryAccountKeepAllowed)
 }));
 vi.mock('./EncryptionSettings', () => ({
 	EncryptionSettingsPanel: () => {
@@ -56,7 +60,8 @@ afterEach(cleanup);
 const view = (
 	role: string,
 	twoFactorEnabled = true,
-	temporaryAccount?: boolean
+	temporaryAccount?: boolean,
+	temporaryAccountKeepAllowed = temporaryAccount
 ) => (
 	<UserDataContext.Provider
 		value={
@@ -64,7 +69,8 @@ const view = (
 				userData: {
 					grantedAuthorities: [role],
 					twoFactorAuth: { isEnabled: twoFactorEnabled },
-					temporaryAccount
+					temporaryAccount,
+					temporaryAccountKeepAllowed
 				}
 			} as never
 		}
@@ -161,6 +167,23 @@ describe('Security and privacy groups', () => {
 			).toBeTruthy();
 		});
 
+		it('offers no password change: the account has no password of its own yet', () => {
+			render(view('asker', true, true));
+			expect(
+				screen.queryByRole('button', { name: 'Password' })
+			).toBeNull();
+		});
+
+		it('offers no keep card when the server will not let it keep', () => {
+			render(view('asker', true, true, false));
+			expect(
+				screen.queryByRole('button', { name: 'Keep account' })
+			).toBeNull();
+			expect(
+				screen.queryByRole('button', { name: 'Password' })
+			).toBeNull();
+		});
+
 		it('shows the display names again and no keep offer once the account is kept', () => {
 			render(view('asker', true, false));
 			expect(
@@ -168,6 +191,9 @@ describe('Security and privacy groups', () => {
 			).toBeNull();
 			expect(
 				screen.getByRole('button', { name: 'Asker display names' })
+			).toBeTruthy();
+			expect(
+				screen.getByRole('button', { name: 'Password' })
 			).toBeTruthy();
 		});
 	});

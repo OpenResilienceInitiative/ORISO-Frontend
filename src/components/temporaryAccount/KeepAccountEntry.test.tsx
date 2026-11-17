@@ -33,6 +33,7 @@ const user = (overrides: Record<string, unknown> = {}) =>
 		grantedAuthorities: [ASKER],
 		userRoles: ['user'],
 		temporaryAccount: true,
+		temporaryAccountKeepAllowed: true,
 		...overrides
 	}) as any;
 
@@ -69,6 +70,27 @@ describe('KeepAccountEntry (UserService#1662)', () => {
 			)
 		).toBe(false);
 		expect(isKeepableTemporaryAccount(null as any)).toBe(false);
+	});
+
+	it('is offered only when the server says keeping will succeed', () => {
+		// A guest who entered under "Nach der Sitzung löschen" cannot keep it.
+		expect(
+			isKeepableTemporaryAccount(
+				user({ temporaryAccountKeepAllowed: false })
+			)
+		).toBe(false);
+		// An older server that does not say: not offered.
+		expect(
+			isKeepableTemporaryAccount(
+				user({ temporaryAccountKeepAllowed: undefined })
+			)
+		).toBe(false);
+		renderEntry(user({ temporaryAccountKeepAllowed: false }));
+		expect(
+			screen.queryByRole('button', {
+				name: 'guestAccountMode.keep.action'
+			})
+		).toBeNull();
 	});
 
 	it('shows nothing for a permanent account', () => {
