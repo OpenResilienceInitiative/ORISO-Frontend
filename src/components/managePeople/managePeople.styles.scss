@@ -123,7 +123,7 @@
 		border: 0;
 		border-radius: 20px;
 		background: transparent;
-		color: var(--oriso-primary-text, var(--m3-primary));
+		color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 		cursor: pointer;
 		font-size: 14px;
 		font-weight: 500;
@@ -154,14 +154,14 @@
 
 		&--primary {
 			padding: 0 24px;
-			background: var(--m3-primary);
+			background: var(--m3-primary, #a5000a);
 			color: var(--m3-on-primary, #fff);
 
 			&:hover:not(:disabled) {
 				background: color-mix(
 					in srgb,
-					var(--m3-primary) 92%,
-					var(--m3-on-primary, #fff)
+					var(--m3-primary, #a5000a) 92%,
+					#fff
 				);
 			}
 		}
@@ -180,15 +180,11 @@
 		text-align: left;
 
 		&:hover:not(:disabled) {
-			background: color-mix(
-				in srgb,
-				var(--m3-on-surface, #1b1b1c) 8%,
-				transparent
-			);
+			background: var(--m3-surface-container-high, #eae7e8);
 		}
 
 		&:focus-visible {
-			outline: 2px solid var(--m3-primary);
+			outline: 2px solid var(--m3-primary, #a5000a);
 			outline-offset: -2px;
 		}
 
@@ -215,7 +211,7 @@
 
 	&__candidateAction {
 		flex-shrink: 0;
-		color: var(--oriso-primary-text, var(--m3-primary));
+		color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 		font-size: 14px;
 		font-weight: 500;
 		line-height: 20px;

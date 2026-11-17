@@ -7357,7 +7357,7 @@
 			"add": "እቲ ሰብ ክውሰኽ ኣይከኣለን። በጃኹም እንደገና ፈትኑ።",
 			"remove": "እቲ ሰብ ክወጽእ ኣይከኣለን። በጃኹም እንደገና ፈትኑ።",
 			"replace": "ምቕያር ኣይተሳኽዐን። በጃኹም እንደገና ፈትኑ።",
-			"refused": "This person can no longer be added here. Their organisation or this chat does not allow it. The list has been updated."
+			"refused": "እዚ ሰብ ኣብዚ ደጊም ክውሰኽ ኣይክእልን እዩ። ትካሉ ወይ እዚ ቻት ኣይፈቕዶን። እቲ ዝርዝር ተሓዲሱ ኣሎ።"
 		},
 		"supervision": {
 			"title": "ሱፐርቪዥን ኣመሓድር",
@@ -7369,7 +7369,7 @@
 			"reasonLabel": "ምኽንያት ሱፐርቪዥን",
 			"reasonPlaceholder": "እዚ ሰብ ስለምንታይ እዚ ጉዳይ ይቆጻጸር?",
 			"reasonMissing": "በጃኹም ምኽንያት ኣእትዉ።",
-			"added": "{{name}} now supervises this case."
+			"added": "{{name}} ሕጂ ነዚ ጉዳይ ይቆጻጸሮ ኣሎ።"
 		},
 		"internalChat": {
 			"title": "ሰባት ኣመሓድር",
@@ -7379,7 +7379,7 @@
 			"addTitle": "መሳርሕቲ ወስኽ",
 			"addNote": "ሓደሽቲ ሰባት መልእኽትታት ካብ ዝተጸንበርሉ እዋን ጀሚሮም ይርእዩ፡ ነቶም ዝሓለፉ ኣይኮነን።",
 			"emptyCandidates": "ናብዚ ቻት ካልእ መሳርሕቲ ክውሰኽ ኣይከኣልን።",
-			"added": "{{name}} was added to this chat."
+			"added": "{{name}} ሕጂ ኣብዚ ቻት ኣሎ።"
 		},
 		"groupChat": {
 			"title": "ሰባት ኣመሓድር",
@@ -7390,7 +7390,7 @@
 			"emptyCandidates": "ናብዚ ጉጅለ ካልእ መሳርሕቲ ክውሰኽ ኣይከኣልን።",
 			"inviteTitle": "ሰባት ዓድም",
 			"inviteDescription": "ምኽሪ ዝደልዩ ሰባት ብዚ ሊንክ ወይ QR ኮድ ይጽንበሩ።",
-			"added": "{{name}} now co-moderates this group."
+			"added": "{{name}} ሕጂ ነዚ ጉጅለ ብሓባር የመሓድሮ ኣሎ።"
 		}
 	}
 }
