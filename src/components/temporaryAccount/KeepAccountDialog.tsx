@@ -178,7 +178,11 @@ export const KeepAccountDialog = ({
 					}
 				/>
 				{errorKey && (
-					<Typography role="alert" color="error" sx={{ mt: 1 }}>
+					<Typography
+						role="alert"
+						color="error"
+						sx={{ mt: 1, fontSize: 14 }}
+					>
 						{t(errorKey)}
 					</Typography>
 				)}

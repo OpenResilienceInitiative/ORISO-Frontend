@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useCallback, useContext, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@mui/material';
+import { Box, Button } from '@mui/material';
 import {
 	AUTHORITIES,
 	hasUserAuthority
@@ -78,13 +78,15 @@ export const KeepAccountEntry = () => {
 					className="tertiary"
 				/>
 			</div>
-			<Button
-				variant="contained"
-				onClick={openDialog}
-				sx={{ textTransform: 'none', borderRadius: '20px', mt: 1 }}
-			>
-				{t('guestAccountMode.keep.action')}
-			</Button>
+			<Box sx={{ display: 'flex', justifyContent: 'center', mt: 1 }}>
+				<Button
+					variant="contained"
+					onClick={openDialog}
+					sx={{ textTransform: 'none', borderRadius: '20px' }}
+				>
+					{t('guestAccountMode.keep.action')}
+				</Button>
+			</Box>
 			{dialog}
 		</div>
 	);

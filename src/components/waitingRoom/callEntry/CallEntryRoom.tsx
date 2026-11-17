@@ -383,26 +383,12 @@ export const CallEntryRoom = ({
 							data-testid="call-entry-identity-column"
 							sx={{ gridColumn: { lg: 2 }, gridRow: { lg: 1 } }}
 						>
-							<CallEntryIdentity
-								modality={modality}
-								identity={identity}
-								onIdentityChange={setIdentity}
-								username={username}
-								onUsernameChange={setUsername}
-								password={password}
-								onPasswordChange={setPassword}
-								hidePassword={hidePassword}
-								usernameFeedback={usernameFeedback}
-								onUsernameBlur={() => setUsernameBlurred(true)}
-								usernameEditable={usernameEditable}
-								askPostcode={askPostcode}
-								postcode={postcode}
-								onPostcodeChange={setPostcode}
-							/>
+							{/* UserService#1662: the choice comes first, so the fields it
+							    adds or removes appear below it and the button stays put. */}
 							{accountChoice && (
 								<Box
 									data-testid="call-entry-account-choice"
-									sx={{ mt: 2 }}
+									sx={{ mb: 2 }}
 								>
 									<Typography
 										sx={{
@@ -433,6 +419,22 @@ export const CallEntryRoom = ({
 									</Button>
 								</Box>
 							)}
+							<CallEntryIdentity
+								modality={modality}
+								identity={identity}
+								onIdentityChange={setIdentity}
+								username={username}
+								onUsernameChange={setUsername}
+								password={password}
+								onPasswordChange={setPassword}
+								hidePassword={hidePassword}
+								usernameFeedback={usernameFeedback}
+								onUsernameBlur={() => setUsernameBlurred(true)}
+								usernameEditable={usernameEditable}
+								askPostcode={askPostcode}
+								postcode={postcode}
+								onPostcodeChange={setPostcode}
+							/>
 							{loginLink}
 						</Box>
 					)}
