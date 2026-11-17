@@ -417,7 +417,19 @@ const LIST_DAY_HEADER_CLASS = 'calendarView__listDay';
 const bandKey = (band: ColleagueBand) =>
 	`${band.start.getTime()}-${band.end.getTime()}`;
 
+/** A colleague's avatar in a band, in the colour of their chip. */
+const BandAvatar = ({ name }: { name: string }) => (
+	<span
+		className={`calendarView__bandAvatar ${avatarToneClass(name)}`}
+		aria-hidden="true"
+	>
+		{initialsOf(name)}
+	</span>
+);
+
 const DAY_MS = 86_400_000;
+/** FullCalendar's slot, and so what a click without dragging selects. */
+const SLOT_MS = 30 * 60_000;
 
 export const CalendarView = ({
 	controller,
@@ -495,6 +507,10 @@ export const CalendarView = ({
 				? entries.filter((entry) => !foldsIntoBand(entry, people))
 				: entries,
 		[banded, entries, people]
+	);
+	const bandPeopleById = useMemo(
+		() => new Map(bandPeople.map((c) => [c.id, c])),
+		[bandPeople]
 	);
 	const bandLabel = (band: ColleagueBand) =>
 		people.length === 1
@@ -786,9 +802,14 @@ export const CalendarView = ({
 
 	const backgroundContent = (info: EventDisplayInfo) => {
 		const { off, band } = propsOf(info);
-		if (band)
+		if (band) {
+			const busy = band.busy
+				.map((id) => bandPeopleById.get(id))
+				.filter((c): c is Colleague => !!c);
 			// Fills the band, so hovering or tapping anywhere on it explains
-			// who is busy and who is free.
+			// who is busy and who is free. Where there is room it also shows
+			// who: avatar and name as in the people bar (Frank *16); the
+			// stylesheet decides by the band's own size.
 			return (
 				<span
 					className="calendarView__bandFill"
@@ -796,10 +817,34 @@ export const CalendarView = ({
 					data-cy="calendar-band"
 				>
 					<span className="calendarView__bandLabel">
-						{bandLabel(band)}
+						{people.length === 1 && busy[0] && (
+							<BandAvatar name={busy[0].displayName} />
+						)}
+						<span className="calendarView__bandText">
+							{bandLabel(band)}
+						</span>
 					</span>
+					{people.length > 1 && (
+						<span
+							className="calendarView__bandPeople"
+							data-count={busy.length > 3 ? 'many' : busy.length}
+						>
+							{busy.map((c) => (
+								<span
+									key={c.id}
+									className="calendarView__bandPerson"
+								>
+									<BandAvatar name={c.displayName} />
+									<span className="calendarView__bandName">
+										{c.displayName}
+									</span>
+								</span>
+							))}
+						</span>
+					)}
 				</span>
 			);
+		}
 		// Centred between the two pause grips, a quiet pill with a cup
 		// (Frank *7.3), not in the top left corner.
 		return off?.kind === 'break' ? (
@@ -921,7 +966,16 @@ export const CalendarView = ({
 	};
 
 	const showPeek = (event: React.SyntheticEvent) => {
-		const next = findPeek(event.target);
+		// FullCalendar's frame lies over the bands: a pointer over the frame
+		// may still be on a band, e.g. once a click's selection shadow is
+		// gone and the browser reports the frame (Frank *16.2).
+		const pointer =
+			event.type === 'mouseover' ? (event as React.MouseEvent) : null;
+		const next =
+			findPeek(event.target) ??
+			(pointer && bands.length > 0
+				? bandAt(pointer.clientX, pointer.clientY)
+				: null);
 		setPeek((current) =>
 			current?.el === next?.el ? current : (next ?? null)
 		);
@@ -1002,6 +1056,19 @@ export const CalendarView = ({
 				Math.round((info.end.getTime() - info.start.getTime()) / DAY_MS)
 			);
 			onSelectDays?.(info.start, days, anchor);
+			return;
+		}
+		// A click on a band explains the band; only dragging over it offers
+		// "Eintragen als". The menu would otherwise open at once and, as a
+		// modal, keep the pointer from every other band (Frank *16.2).
+		const clicked = info.end.getTime() - info.start.getTime() <= SLOT_MS;
+		const band =
+			clicked && pointer
+				? bandAt(pointer.clientX, pointer.clientY)
+				: null;
+		if (band) {
+			info.view.calendar.unselect();
+			setPeek(band);
 			return;
 		}
 		onSelectRange?.({ start: info.start, end: info.end }, anchor);

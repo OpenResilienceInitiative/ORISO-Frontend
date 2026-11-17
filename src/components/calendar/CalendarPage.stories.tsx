@@ -539,6 +539,208 @@ export const ColleaguesMonth: Story = {
 	}
 };
 
+/** Names shown in a band, if the stylesheet leaves them visible. */
+const visibleNamesIn = (band: HTMLElement) =>
+	[...band.querySelectorAll<HTMLElement>('.calendarView__bandName')]
+		.filter((name) => name.getBoundingClientRect().width > 0)
+		.map((name) => name.textContent);
+
+export const ColleaguesWhoIsBusy: Story = {
+	name: 'Colleagues shown — who is in each band, where there is room (Frank *16)',
+	args: {
+		scope: 'TENANT',
+		shownColleagues: ['kaya', 'demir', 'hoffmann', 'nowak']
+	},
+	play: async ({ canvasElement }) => {
+		const bandOf = (label: string, name: string) =>
+			[
+				...canvasElement.querySelectorAll<HTMLElement>(
+					'[data-cy="calendar-band"]'
+				)
+			].find(
+				(band) =>
+					band.textContent?.includes(label) &&
+					band.textContent.includes(name)
+			);
+		// Monday 11–12: Kaya and Nowak, an hour tall: one line, the faces
+		// first. At 1280 px a work-week column has no room for two names,
+		// so the faces stand alone rather than as "A. K…, P. No…".
+		const hour = await waitFor(() => {
+			const band = bandOf('2 von 4 belegt', 'P. Nowak');
+			expect(band).toBeTruthy();
+			return band!;
+		});
+		const faces = [
+			...hour.querySelectorAll<HTMLElement>('.calendarView__bandAvatar')
+		].map((face) => face.getBoundingClientRect());
+		await expect(faces.map((face) => face.width)).toEqual([16, 16]);
+		await expect(Math.abs(faces[0].top - faces[1].top)).toBeLessThan(2);
+		await expect(hour.getBoundingClientRect().width).toBeLessThan(150);
+		await expect(visibleNamesIn(hour)).toEqual([]);
+		// One person in an hour: face and name.
+		const single = bandOf('1 von 4 belegt', 'E. Demir');
+		await expect(visibleNamesIn(single!)).toEqual(['E. Demir']);
+		// Thursday 09–11, two hours: one chip per person, as in the bar.
+		const tall = [
+			...canvasElement.querySelectorAll<HTMLElement>(
+				'[data-cy="calendar-band"]'
+			)
+		].find(
+			(band) =>
+				band.textContent?.includes('2 von 4 belegt') &&
+				band.getBoundingClientRect().height >= 84
+		);
+		const chips = [
+			...(tall?.querySelectorAll<HTMLElement>(
+				'.calendarView__bandPerson'
+			) ?? [])
+		].map((chip) => chip.getBoundingClientRect());
+		await expect(chips).toHaveLength(2);
+		await expect(chips[0].height).toBeGreaterThan(16);
+		await expect(chips[1].top).toBeGreaterThan(chips[0].bottom - 1);
+		await expect(visibleNamesIn(tall!)).toEqual(['A. Kaya', 'P. Nowak']);
+		// Half an hour is too short: the count alone.
+		const short = bandOf('2 von 4 belegt', 'E. Demir');
+		await expect(short).toBeTruthy();
+		await expect(visibleNamesIn(short!)).toEqual([]);
+		await expect(short!.textContent).toContain('2 von 4 belegt');
+	}
+};
+
+/** A point on a band that no grip or entry covers. */
+const pointOnBand = (band: HTMLElement) => {
+	const box = band.getBoundingClientRect();
+	const x = box.left + box.width * 0.7;
+	for (let y = box.top + 6; y < box.bottom - 4; y += 4) {
+		const top = document.elementFromPoint(x, y);
+		if (
+			top &&
+			!top.closest('.calendarGrip, .calEntry') &&
+			document.elementsFromPoint(x, y).includes(band)
+		)
+			return { x, y };
+	}
+	return null;
+};
+/** A click without movement, on whatever a real pointer would hit there. */
+const clickAt = async ({ x, y }: { x: number; y: number }) => {
+	const target = document.elementFromPoint(x, y) as HTMLElement;
+	const at = { clientX: x, clientY: y, button: 0 };
+	const pointer = { ...at, isPrimary: true, pointerId: 1 };
+	fireEvent.pointerDown(target, { ...pointer, buttons: 1 });
+	fireEvent.mouseDown(target, { ...at, buttons: 1 });
+	await new Promise((resolve) => setTimeout(resolve, 50));
+	fireEvent.pointerUp(target, pointer);
+	fireEvent.mouseUp(target, at);
+	fireEvent.click(target, { ...at, detail: 1 });
+};
+/** A point in a day's time-grid column with no entry and no band on it. */
+const freePointIn = (root: HTMLElement, date: string) => {
+	const view = root.querySelector('[data-testid="calendar-view"]')!;
+	const columns = view.querySelectorAll<HTMLElement>(
+		`[role="cell"][data-date="${date}"]`
+	);
+	// The first cell is the day's all-day cell, the last its time column.
+	const allDay = columns[0].getBoundingClientRect();
+	const column = columns[columns.length - 1].getBoundingClientRect();
+	const x = column.left + column.width / 2;
+	for (const row of view.querySelectorAll<HTMLElement>('[data-time]')) {
+		const box = row.getBoundingClientRect();
+		const y = box.top + box.height / 2;
+		const top = document.elementFromPoint(x, y);
+		const taken = document
+			.elementsFromPoint(x, y)
+			.some((el) => el.closest('.calEntry, [data-band], .calendarGrip'));
+		if (top && view.contains(top) && !taken && y > allDay.bottom + 2)
+			return { x, y };
+	}
+	throw new Error(`no free time on ${date}`);
+};
+const bandTipText = () =>
+	document.querySelector('[data-cy="calendar-band-peek"]')?.textContent ?? '';
+const slotMenu = () => document.querySelector('[data-cy="calendar-menu-slot"]');
+
+export const ColleaguesBandClick: Story = {
+	name: 'Colleagues shown — a click on a band explains it, no "Eintragen als" (Frank *16.2)',
+	args: { shownColleagues: ['kaya', 'demir'] },
+	play: async ({ canvasElement }) => {
+		// Measured when used: the grid scrolls to 08:00 once it is laid out.
+		const bandPoints = () =>
+			waitFor(() => {
+				const list = [
+					...canvasElement.querySelectorAll<HTMLElement>(
+						'[data-cy="calendar-band"]'
+					)
+				]
+					.map(pointOnBand)
+					.filter((point) => point !== null);
+				expect(list.length).toBeGreaterThan(1);
+				return list;
+			});
+		await bandPoints();
+		// A click on free time still offers "Eintragen als" …
+		await clickAt(freePointIn(canvasElement, '2026-11-18'));
+		await findCy('calendar-menu-slot');
+		await userEvent.keyboard('{Escape}');
+		await waitFor(() => expect(slotMenu(), 'Escape closes it').toBeNull());
+		// … a click on a band says who is busy and opens no menu, which
+		// would block the pointer for every other band.
+		const [pressed, next] = await bandPoints();
+		await clickAt(pressed);
+		const first = await waitFor(() => {
+			expect(bandTipText(), 'explained on click').toContain('Belegt:');
+			return bandTipText();
+		});
+		await new Promise((resolve) => setTimeout(resolve, 300));
+		await expect(slotMenu(), 'no menu from a band').toBeNull();
+		// The browser says "mouseover" on the grid's frame once the
+		// selection's shadow is gone; the pointer is still on the band, so
+		// the explanation stays.
+		fireEvent.mouseOver(document.elementFromPoint(pressed.x, pressed.y)!, {
+			clientX: pressed.x,
+			clientY: pressed.y
+		});
+		await new Promise((resolve) => setTimeout(resolve, 100));
+		await expect(bandTipText(), 'still explained').toBe(first);
+		// Moving on to the next band explains that one.
+		fireEvent.mouseMove(document.elementFromPoint(next.x, next.y)!, {
+			clientX: next.x,
+			clientY: next.y
+		});
+		await waitFor(() => {
+			expect(bandTipText(), 'explained on hover').toContain('Belegt:');
+			expect(bandTipText()).not.toBe(first);
+		});
+		// Dragging over a band still offers "Eintragen als": colleagues
+		// being busy never blocks one's own calendar.
+		const [from] = await bandPoints();
+		const target = document.elementFromPoint(from.x, from.y)!;
+		const press = { button: 0, isPrimary: true, pointerId: 1 };
+		fireEvent.pointerDown(target, {
+			...press,
+			buttons: 1,
+			clientX: from.x,
+			clientY: from.y
+		});
+		fireEvent.mouseDown(target, {
+			button: 0,
+			buttons: 1,
+			clientX: from.x,
+			clientY: from.y
+		});
+		for (const step of [10, 30, 50, 70]) {
+			const at = { clientX: from.x, clientY: from.y + step, buttons: 1 };
+			fireEvent.pointerMove(document, { ...press, ...at });
+			fireEvent.mouseMove(document, at);
+			await new Promise((resolve) => setTimeout(resolve, 20));
+		}
+		const end = { clientX: from.x, clientY: from.y + 70 };
+		fireEvent.pointerUp(document, { ...press, ...end });
+		fireEvent.mouseUp(document, { button: 0, ...end });
+		await findCy('calendar-menu-slot');
+	}
+};
+
 /** Half-hour rows of the time grid (lanes and labels share the height). */
 const slotRows = (root: HTMLElement) => [
 	...root.querySelectorAll<HTMLElement>(
