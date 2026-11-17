@@ -41,7 +41,7 @@ export const addonLinkPath = (
 		return `${caseView}?${new URLSearchParams({ addon: `${addon}/${appId}` })}`;
 	}
 	if (slot === 'consultant.asker-profile') {
-		return caseView;
+		return `${caseView}/userProfile`;
 	}
 	return null;
 };

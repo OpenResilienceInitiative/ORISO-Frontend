@@ -442,7 +442,7 @@ describe('WP-06 event-descriptor registry', () => {
 			[
 				'consultant.asker-profile',
 				42,
-				'/sessions/consultant/sessionView/session/42'
+				'/sessions/consultant/sessionView/session/42/userProfile'
 			]
 		])('opens the %s target', (slot, sessionId, path) => {
 			expect(

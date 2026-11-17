@@ -28,13 +28,13 @@ describe('add-on link targets', () => {
 		);
 	});
 
-	it('opens the case view for an asker-profile app', () => {
+	it('opens the client profile for an asker-profile app', () => {
 		expect(
 			addonLinkPath(
 				{ ...tools, slot: 'consultant.asker-profile', sessionId: '42' },
 				'/sessions/consultant/sessionView'
 			)
-		).toBe('/sessions/consultant/sessionView/session/42');
+		).toBe('/sessions/consultant/sessionView/session/42/userProfile');
 	});
 
 	it('has no target without add-on, app, session or a known slot', () => {
