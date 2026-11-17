@@ -4,12 +4,12 @@ import {
 	EmptyState,
 	EmptyType
 } from '../../../../containers/overview/components/EmptyState';
-import { useConsultantBookings } from '../../../../containers/overview/hooks/useConsultantBookings';
+import { useUpcomingAppointments } from '../../../../containers/overview/hooks/useUpcomingAppointments';
 
 export const OverviewBookings = () => {
-	const { bookings } = useConsultantBookings();
+	const { appointments } = useUpcomingAppointments();
 
-	if (bookings.length === 0) {
+	if (appointments.length === 0) {
 		return (
 			<EmptyState
 				type={EmptyType.Termine}
@@ -19,9 +19,9 @@ export const OverviewBookings = () => {
 	}
 	return (
 		<div className="bookings">
-			{bookings.map((booking) => {
-				return <BookingEvent booking={booking} key={booking.id} />;
-			})}
+			{appointments.map((appointment) => (
+				<BookingEvent appointment={appointment} key={appointment.id} />
+			))}
 		</div>
 	);
 };

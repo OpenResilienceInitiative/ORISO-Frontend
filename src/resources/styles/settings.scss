@@ -8,6 +8,9 @@
 // WP-06 Activity Timeline — shared list-item selection tokens + mixins (Slice 0b)
 @import './listItemSelection';
 
+// Pill entry of the appointment lists (Activity Timeline, counsellor calendar)
+@import './listEntryPill';
+
 // Global topic tag colour tokens + mixins
 @import './topicTag';
 

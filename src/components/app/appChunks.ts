@@ -21,6 +21,12 @@ export const loadAuthenticatedApp = () =>
 export const loadSessionView = () =>
 	import('../session/SessionView').then((m) => ({ default: m.SessionView }));
 
+/** The calendar carries FullCalendar: load it only on "Meine Termine". */
+export const loadCalendarPage = () =>
+	import('../calendar/CalendarPageWired').then((m) => ({
+		default: m.CalendarPageWired
+	}));
+
 export const loadWriteEnquiry = () =>
 	import('../enquiry/WriteEnquiry').then((m) => ({
 		default: m.WriteEnquiry
@@ -100,4 +106,22 @@ export const warmWhenIdle = (task: () => void) => {
 	}
 	const timer = window.setTimeout(task, 1000);
 	return () => window.clearTimeout(timer);
+};
+
+let cryptoWarmed = false;
+
+/**
+ * The Matrix crypto engine (about 5.5 MB of WebAssembly) is the largest single
+ * download on the way into the app. Login warms it while the person already
+ * sees the handover screen, so the app's own load after the document load
+ * finds it in the HTTP cache instead of on the critical path.
+ */
+export const warmCryptoEngine = () => {
+	if (cryptoWarmed) return;
+	cryptoWarmed = true;
+	import('@matrix-org/matrix-sdk-crypto-wasm')
+		.then((crypto) => crypto.initAsync())
+		.catch(() => {
+			cryptoWarmed = false;
+		});
 };

@@ -5,6 +5,12 @@ import { useNavigate } from 'react-router-dom';
 import { endpoints } from '../../resources/scripts/endpoints';
 import { Button, BUTTON_TYPES, ButtonItem } from '../button/Button';
 import { autoLogin, redirectToApp } from '../registration/autoLogin';
+import {
+	beginLoginHandover,
+	endLoginHandover,
+	persistLoginHandover
+} from '../app/loginHandover';
+import { warmAppChunks, warmCryptoEngine } from '../app/appChunks';
 import { readLastOpenSession } from '../../utils/lastOpenSession';
 import {
 	clearAuthSession,
@@ -115,6 +121,12 @@ export const Login = () => {
 	const { locale, initLocale } = useContext(LocaleContext);
 	const { tenant } = useContext(TenantContext);
 	const { reloadUserData } = useContext(UserDataContext);
+	/* Started the moment the credentials are accepted, in parallel with the
+	   Matrix token; postLogin picks it up instead of asking a second time. */
+	const earlyUserDataRef = useRef<Promise<UserDataInterface> | null>(null);
+	/* Set once postLogin hands over to the app with a document load: from
+	   then on the handover screen must stay until the page is gone. */
+	const leavingForAppRef = useRef(false);
 	const { Stage } = useContext(GlobalComponentContext);
 	const gcid = useSearchParam<string>('gcid');
 	const appointmentSeriesId = useSearchParam<string>('seriesId');
@@ -330,7 +342,13 @@ export const Login = () => {
 
 	const postLogin = useCallback(
 		() =>
-			reloadUserData().then(async (userData: UserDataInterface) => {
+			(
+				(() => {
+					const early = earlyUserDataRef.current;
+					earlyUserDataRef.current = null;
+					return early ?? reloadUserData();
+				})() as Promise<UserDataInterface>
+			).then(async (userData: UserDataInterface) => {
 				// A language the person chose on the login screen wins over the
 				// stored profile language, which the app applies after the
 				// redirect. A choice that equals the browser default counts too
@@ -369,6 +387,8 @@ export const Login = () => {
 					userData
 				);
 				if (appointment) {
+					leavingForAppRef.current = true;
+					persistLoginHandover();
 					return redirectToApp(undefined, appointment);
 				}
 
@@ -393,6 +413,8 @@ export const Login = () => {
 					   users work around by reloading. Registration keeps its
 					   client-side nav; it has a handover animation to cover
 					   the gap, and login does not. */
+					leavingForAppRef.current = true;
+					persistLoginHandover();
 					return redirectToApp(gcid, { restorePath, returnTo });
 				}
 			}),
@@ -563,7 +585,21 @@ export const Login = () => {
 				username: username,
 				password: password,
 				tenantData: tenant,
-				...(otp ? { otp } : {})
+				...(otp ? { otp } : {}),
+				onCredentialsAccepted: () => {
+					if (!isLatestAttempt()) return;
+					/* One calm screen from here until the app is ready,
+					   instead of the login page flickering underneath the
+					   tenant switch, the Matrix token and the user data. */
+					leavingForAppRef.current = false;
+					beginLoginHandover();
+					// The app's code and crypto engine download meanwhile.
+					warmAppChunks();
+					warmCryptoEngine();
+					const early = reloadUserData();
+					early.catch(() => undefined);
+					earlyUserDataRef.current = early;
+				}
 			})
 				// Two rejection paths on purpose: only `autoLogin` failures are
 				// login failures. `postLogin` reports its own problems (e.g. the
@@ -578,6 +614,9 @@ export const Login = () => {
 								// failing after a successful token) would otherwise
 								// leave the form silent. Not a login failure, so it is
 								// not counted.
+								if (isLatestAttempt()) {
+									leavingForAppRef.current = false;
+								}
 								if (
 									isLatestAttempt() &&
 									(error as Error | null)?.message !==
@@ -588,8 +627,21 @@ export const Login = () => {
 									);
 								}
 							})
-							.then(() => null),
-					handleAutoLoginFailure
+							.then(() => {
+								// Still here: the form has something to say.
+								if (!leavingForAppRef.current) {
+									earlyUserDataRef.current = null;
+									endLoginHandover();
+								}
+								return null;
+							}),
+					(error: unknown) => {
+						// A newer attempt owns the screen and its user data.
+						if (!isLatestAttempt()) return null;
+						earlyUserDataRef.current = null;
+						endLoginHandover();
+						return handleAutoLoginFailure(error);
+					}
 				)
 				.finally(() => {
 					if (isLatestAttempt()) {

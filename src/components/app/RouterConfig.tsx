@@ -47,14 +47,11 @@ import {
 } from './navigationSidebarIcons';
 import { ToolsList } from '../tools/ToolsList';
 import { OverviewPage } from '../../containers/overview/overview';
-import { Booking } from '../../containers/bookings/components/Booking/booking';
-import { BookingCancellation } from '../../containers/bookings/components/BookingCancellation/bookingCancellation';
-import { BookingEvents } from '../../containers/bookings/components/BookingEvents/bookingEvents';
-import { BookingReschedule } from '../../containers/bookings/components/BookingReschedule/bookingReschedule';
 import { NotificationsCenter } from '../notificationsCenter/NotificationsCenter';
 import { DraftsCenter } from '../draftsCenter/DraftsCenter';
 import { lazyWithReload } from '../../utils/chunkLoadRecovery';
 import {
+	loadCalendarPage,
 	loadGroupEntryRoom,
 	loadSessionView,
 	loadWriteEnquiry
@@ -63,36 +60,26 @@ import {
 const GroupEntryRoom = lazyWithReload(loadGroupEntryRoom);
 const SessionView = lazyWithReload(loadSessionView);
 const WriteEnquiry = lazyWithReload(loadWriteEnquiry);
+const CalendarPageWired = lazyWithReload(loadCalendarPage);
 
-const showAppointmentsMenuItem = (userData, hasAssignedConsultant) => {
-	return (
-		userData.appointmentFeatureEnabled &&
-		(hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) ||
-			(hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) &&
-				hasAssignedConsultant))
-	);
-};
+/**
+ * "Meine Termine" is the calendar of ADR-032 (FE#1050): every counsellor has
+ * one, an advice seeker once a counsellor is assigned. It no longer depends
+ * on the cal.com flag `appointmentFeatureEnabled`.
+ */
+const showAppointmentsMenuItem = (userData, hasAssignedConsultant) =>
+	hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) ||
+	(hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) &&
+		hasAssignedConsultant);
 
 const showToolsMenuItem = (userData, consultingTypes, sessionsData, hasTools) =>
 	hasTools;
 
 const appointmentRoutes = [
 	{
-		path: '/booking',
-		component: Booking
-	},
-	{
-		path: '/booking/cancellation',
-		component: BookingCancellation
-	},
-	{
-		path: '/booking/reschedule',
-		component: BookingReschedule
-	},
-	{
 		path: '/booking/events',
 		exact: false,
-		component: BookingEvents
+		component: CalendarPageWired
 	}
 ];
 

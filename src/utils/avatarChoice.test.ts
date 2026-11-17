@@ -5,8 +5,10 @@ import {
 	avatarIdOfFile,
 	chosenAvatarOf,
 	counsellorChoiceOf,
-	COUNSELLOR_MOTIF_FILES
+	COUNSELLOR_MOTIF_FILES,
+	ownAskerAvatar
 } from './avatarChoice';
+import { generateAvatarForUser } from './pseudonymGenerator';
 
 describe('avatarChoice (#1240)', () => {
 	it('maps the stored id to the app file and back', () => {
@@ -82,5 +84,24 @@ describe('counsellorChoiceOf', () => {
 		expect(
 			counsellorChoiceOf({ kind: 'animal', file: 'crane.svg' })
 		).toEqual({ kind: 'initials' });
+	});
+});
+
+describe('ownAskerAvatar (FE#2209: one animal everywhere)', () => {
+	it('shows the animal the person picked, on the palette of their id', () => {
+		const derived = generateAvatarForUser('guest-1');
+		expect(ownAskerAvatar('guest-1', { avatarId: 'lamb' })).toEqual({
+			...derived,
+			file: 'lamb.svg'
+		});
+	});
+
+	it('falls back to the animal derived from the id without a pick', () => {
+		expect(ownAskerAvatar('guest-1', null)).toEqual(
+			generateAvatarForUser('guest-1')
+		);
+		expect(ownAskerAvatar('guest-1', { avatarId: 'unicorn' })).toEqual(
+			generateAvatarForUser('guest-1')
+		);
 	});
 });
