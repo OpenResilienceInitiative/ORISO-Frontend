@@ -340,6 +340,42 @@ describe('ConversationAppointmentSlot', () => {
 			}
 		});
 
+		it('never sets a timer browsers fire at once for a request weeks ahead', async () => {
+			// Browsers run any delay above 2^31 - 1 ms (24.8 days) immediately:
+			// the slot would render, set the timer again and loop.
+			vi.useFakeTimers({ shouldAdvanceTime: true });
+			const setTimeoutSpy = vi.spyOn(window, 'setTimeout');
+			try {
+				getAppointments.mockResolvedValue([requested(30)]);
+				const { container } = renderSlot(vi.fn());
+				const main = await splitButtonLabel(container);
+
+				const delays = setTimeoutSpy.mock.calls
+					.map(([, delay]) => delay ?? 0)
+					.filter((delay) => delay > 24 * 3600_000);
+				expect(delays.length).toBeGreaterThan(0);
+				delays.forEach((delay) =>
+					expect(delay).toBeLessThanOrEqual(2_147_483_647)
+				);
+				const scheduled = setTimeoutSpy.mock.calls.length;
+				await act(async () => {
+					await vi.advanceTimersByTimeAsync(1_000);
+				});
+				expect(
+					setTimeoutSpy.mock.calls.filter(
+						([, delay]) => (delay ?? 0) > 24 * 3600_000
+					).length
+				).toBe(delays.length);
+				expect(
+					setTimeoutSpy.mock.calls.length - scheduled
+				).toBeLessThan(5);
+				expect(main.textContent).toMatch(new RegExp(`^${MARKER} · `));
+			} finally {
+				setTimeoutSpy.mockRestore();
+				vi.useRealTimers();
+			}
+		});
+
 		it('lets the counsellor confirm or decline it from the menu', async () => {
 			getAppointments.mockResolvedValue([requested()]);
 			const { container } = renderSlot(vi.fn());

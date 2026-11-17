@@ -60,6 +60,9 @@ const CreateOrMoveDialog = (
 	);
 };
 
+/** The longest delay `setTimeout` honours (2^31 - 1 ms). */
+const MAX_TIMER_DELAY_MS = 2_147_483_647;
+
 export const ConversationAppointmentSlot = ({
 	canChange,
 	onCreateChange
@@ -151,9 +154,12 @@ export const ConversationAppointmentSlot = ({
 			.map((a) => new Date(a.startTime).getTime())
 			.sort((a, b) => a - b)[0];
 		if (nextStart === undefined) return undefined;
+		/* Browsers fire a delay above 2^31 - 1 ms (24.8 days) at once. A capped
+		   wake-up only renders again, which sets the timer for what is left;
+		   whether the request expired is always read from the clock. */
 		const timer = window.setTimeout(
 			() => setExpiryTick((n) => n + 1),
-			nextStart - now + 1
+			Math.min(nextStart - now + 1, MAX_TIMER_DELAY_MS)
 		);
 		return () => window.clearTimeout(timer);
 	}, [appointments, expiryTick]);
