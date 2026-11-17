@@ -172,6 +172,8 @@ import { initialsOf } from './CalendarEntryPeek';
 import { avatarToneClass } from './calendarAvatar';
 import { useCreatedFlash } from './useCreatedFlash';
 import { HoverScrollArrows } from '../hoverScrollArrows/HoverScrollArrows';
+import type { InvitationPreset } from '../directInvitation/invitationModel';
+import type { DirectLinkMedium } from '../conversationCreate/directLink/directLink';
 import { NewEntryDialog } from './NewEntryDialog';
 import { BlockerCreatedMessage } from './BlockerDialog';
 import { MoveConflictDialog } from './MoveConflictDialog';
@@ -284,6 +286,18 @@ export interface CalendarPageProps {
 	 * that was entered at once.
 	 */
 	onCreate?: (drafts: AppointmentDraft[]) => ChangeResult;
+	/**
+	 * "Termin": "Weitere Personen per Link einladen" where "Direkteinladung
+	 * erlauben" allows it (as "Termin anlegen" in a 1:1).
+	 */
+	allowGuestInvite?: boolean;
+	/** The media it allows: the link takes the Art's medium. */
+	inviteMedia?: readonly DirectLinkMedium[];
+	/**
+	 * "Termin": "Neue Person per Direkteinladung …" — someone without a
+	 * conversation yet; the page hands the slot to "Chat erstellen".
+	 */
+	onInviteNewPerson?: (preset: InvitationPreset) => void;
 	/**
 	 * The snackbar offers to undo by moving it back. `false`, or a promise
 	 * that rejects or resolves to `false`, refuses the move and puts the
@@ -529,6 +543,9 @@ export const CalendarPage = ({
 	initialSplitDays = 1,
 	now: fixedNow,
 	onCreate,
+	allowGuestInvite,
+	inviteMedia,
+	onInviteNewPerson,
 	onMove,
 	onCancelAppointment,
 	onRemoveBlocker,
@@ -1342,6 +1359,11 @@ export const CalendarPage = ({
 	 * A refused or failed removal creates nothing and keeps the form open;
 	 * a failed series puts the single blocker back. A second save waits
 	 * until that restore has settled (review 4589615841).
+	 *
+	 * A series fails in three ways: refused (`false`), rejected, or thrown
+	 * at once by the host. All three put the single blocker back and resolve
+	 * to `false`; a throw also says the save failed, as a rejection does
+	 * (review 4595635794).
 	 */
 	const replaceBlocker = (
 		replaces: { entry: CalendarEntry; draft: AppointmentDraft },
@@ -1362,11 +1384,20 @@ export const CalendarPage = ({
 					setNotice({ message: t('calendar.saveFailed') });
 					return false;
 				}
-				return Promise.resolve(create(drafts, true)).then((stored) =>
-					stored
-						? stored
-						: restoreBlocker(replaces).then(() => stored)
-				);
+				return Promise.resolve()
+					.then(() => create(drafts, true))
+					.then(
+						(stored) => stored,
+						() => {
+							setNotice({ message: t('calendar.saveFailed') });
+							return false;
+						}
+					)
+					.then((stored) =>
+						stored
+							? stored
+							: restoreBlocker(replaces).then(() => stored)
+					);
 			})
 			.finally(() => {
 				replacing.current = false;
@@ -3166,6 +3197,15 @@ export const CalendarPage = ({
 					now={now}
 					fullScreen={compact}
 					onSaveAppointment={(draft) => create([draft], true)}
+					allowGuestInvite={allowGuestInvite}
+					inviteMedia={inviteMedia}
+					onInviteNewPerson={
+						onInviteNewPerson &&
+						((preset) => {
+							setDialog(null);
+							onInviteNewPerson(preset);
+						})
+					}
 					onSaveBlocker={(drafts) =>
 						dialog.type === 'blocker' && dialog.replaces
 							? replaceBlocker(dialog.replaces, drafts)
