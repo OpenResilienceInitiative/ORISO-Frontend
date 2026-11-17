@@ -94,6 +94,14 @@ export interface RemoveReactionOptions {
 	matrixClientServiceOverride?: MatrixClientService | null;
 }
 
+export interface SendPassageBlurOptions {
+	matrixRoomId: string;
+	targetEventId: string;
+	start: number;
+	length: number;
+	matrixClientServiceOverride?: MatrixClientService | null;
+}
+
 export interface RedactMessageOptions {
 	matrixRoomId: string;
 	targetEventId: string;
@@ -328,6 +336,29 @@ class ChatTransportService {
 		);
 
 		return { success: true, event_id: response.event_id };
+	}
+
+	/** Blur a passage of a message (#2229); lift it with redactMessage. */
+	public async sendPassageBlur({
+		matrixRoomId,
+		targetEventId,
+		start,
+		length,
+		matrixClientServiceOverride
+	}: SendPassageBlurOptions): Promise<any> {
+		const matrixClientService =
+			matrixClientServiceOverride || getMatrixClientService();
+		if (!matrixClientService?.getClient()) {
+			return Promise.reject(new Error('Matrix client not initialized'));
+		}
+
+		const response = await matrixClientService.sendPassageBlur(
+			matrixRoomId,
+			targetEventId,
+			{ start, length }
+		);
+
+		return { success: true, event_id: response?.event_id };
 	}
 
 	/** Delete a message by redacting the Matrix event (#827). */

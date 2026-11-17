@@ -2264,6 +2264,10 @@
 			"sendFailed": {
 				"title": "Antworten nicht gesendet",
 				"text": "Ihre Antworten auf die markierten Stellen sind noch gesammelt. Bitte senden Sie sie erneut."
+			},
+			"blurFailed": {
+				"title": "Schwärzung nicht gespeichert",
+				"text": "Die Stelle konnte nicht geschwärzt oder die Schwärzung nicht aufgehoben werden. Bitte versuchen Sie es erneut."
 			}
 		},
 		"thread": {
@@ -4684,7 +4688,8 @@
 			"channel": {
 				"thread": "Thread:",
 				"supervision": "Supervision:"
-			}
+			},
+			"blurred": "Nachricht mit geschwärzter Stelle"
 		},
 		"reloadButton": {
 			"label": "Erneut laden"

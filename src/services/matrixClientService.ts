@@ -38,6 +38,10 @@ import {
 import { getImageDimensions } from '../utils/imageDimensions';
 import { buildMentionsContent } from '../utils/messageMentions';
 import {
+	buildPassageBlurContent,
+	PASSAGE_BLUR_EVENT_TYPE
+} from '../components/selectionReply/passageBlurEvents';
+import {
 	buildPassageRepliesContent,
 	type PassageRepliesFallbackLabels,
 	type PassageReplyContentItem
@@ -736,6 +740,41 @@ export class MatrixClientService {
 			}
 
 			return this.client.sendEvent(roomId, 'm.reaction' as any, content);
+		}
+	}
+
+	/**
+	 * Blur a passage of a message (#2229): a room event that points at the
+	 * message and holds only the position. Lifting the blur redacts it.
+	 */
+	public async sendPassageBlur(
+		roomId: string,
+		targetEventId: string,
+		blur: { start: number; length: number }
+	): Promise<any> {
+		await this.ensureFreshToken();
+
+		const content = buildPassageBlurContent(targetEventId, blur) as any;
+		const send = () => {
+			if (!this.client) {
+				throw new Error('Matrix client not initialized');
+			}
+			return this.client.sendEvent(
+				roomId,
+				PASSAGE_BLUR_EVENT_TYPE as any,
+				content
+			);
+		};
+
+		try {
+			return await send();
+		} catch (error) {
+			if (!isMatrixExpiredTokenError(error)) {
+				throw error;
+			}
+
+			await this.refreshMatrixToken();
+			return send();
 		}
 	}
 

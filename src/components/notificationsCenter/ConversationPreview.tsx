@@ -33,6 +33,11 @@ import {
 } from '../../globalState/helpers/stateHelpers';
 import type { MessageItem } from '../message/MessageItemComponent';
 import { MessageTimeline } from '../session/MessageTimeline';
+import {
+	extractPassageBlurEvents,
+	groupPassageBlurs,
+	withPassageBlurs
+} from '../selectionReply/passageBlurEvents';
 import { buildRoomTimeline } from '../session/roomTimeline';
 import { counterpartReaders } from '../../utils/matrixReadReceipts';
 import { buildReplyQuotePreview } from '../session/replyQuote';
@@ -339,15 +344,22 @@ export const ConversationPreview = ({
 			chatTransportService.getMatrixRoomMessages(readableRoomId, limit)
 		);
 		setTimeline({
-			messages: buildRoomTimeline(
-				events,
-				readableRoomId,
-				room,
-				translateRef.current('e2ee.message.encryption.text'),
-				readableRoomId === activeSession?.rid ||
-					readableRoomId === activeSession?.item?.matrixRoomId
-					? counterpartReaders(activeSession, (room as any)?.myUserId)
-					: undefined
+			// A moderator's blur (#2229) hides the passage here as well.
+			messages: withPassageBlurs(
+				buildRoomTimeline(
+					events,
+					readableRoomId,
+					room,
+					translateRef.current('e2ee.message.encryption.text'),
+					readableRoomId === activeSession?.rid ||
+						readableRoomId === activeSession?.item?.matrixRoomId
+						? counterpartReaders(
+								activeSession,
+								(room as any)?.myUserId
+							)
+						: undefined
+				),
+				groupPassageBlurs(extractPassageBlurEvents(events))
 			),
 			reactionEvents: extractReactionEvents(events),
 			activityByEvent: new Map(

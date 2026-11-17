@@ -2243,6 +2243,10 @@
 			"sendFailed": {
 				"title": "Réponses non envoyées",
 				"text": "Vos réponses aux passages marqués sont toujours rassemblées. Veuillez les renvoyer."
+			},
+			"blurFailed": {
+				"title": "Masquage non enregistré",
+				"text": "Le passage n’a pas pu être masqué ou le masquage n’a pas pu être levé. Veuillez réessayer."
 			}
 		},
 		"thread": {
@@ -4650,7 +4654,8 @@
 			},
 			"registered": {
 				"tab": "Premières demandes"
-			}
+			},
+			"blurred": "Message avec un passage masqué"
 		},
 		"reloadButton": {
 			"label": "Charger à nouveau"

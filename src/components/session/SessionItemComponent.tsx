@@ -249,6 +249,8 @@ import { SelectionReplyLayer } from '../selectionReply/SelectionReplyLayer';
 import { useSessionPassageReplies } from '../selectionReply/useSessionPassageReplies';
 import { jumpToPassage } from '../selectionReply/passageRange';
 import type { PassageReply } from '../selectionReply/PassageReplyBlocks';
+import { canBlurPassages } from '../selectionReply/passageBlurPermission';
+import { NOTIFICATION_TYPE_ERROR } from '../../globalState/provider/NotificationsProvider';
 import { isCaseHandoverCoAccess } from './caseHandoverHelpers';
 import { CaseHandoverReadOnlyNotice } from './CaseHandoverReadOnlyNotice';
 import {
@@ -279,6 +281,8 @@ interface SessionItemProps {
 	messages?: MessageItem[];
 	/** Reactions (m.annotation, #435): raw reaction events for the loaded window. */
 	reactionEvents?: ReactionEvent[];
+	/** Moderator blurs (#2229): blur event id → Matrix id of who blurred. */
+	passageBlurSenders?: Map<string, string>;
 	/**
 	 * WP-B2 (ADR-008): the supervision side room's own timeline. Never part
 	 * of `messages`; rendered in the SupervisionPanel next to the chat.
@@ -325,7 +329,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		getModalityIfKnown(activeSession)
 	);
 	const { userData, setUserData } = useContext(UserDataContext);
-	const { addEventNotification } = useContext(NotificationsContext);
+	const { addEventNotification, addNotification } =
+		useContext(NotificationsContext);
 	const { type, path: listPath } = useContext(SessionTypeContext);
 	const { locale } = useContext(LocaleContext);
 	const legalLinks = useContext(LegalLinksContext);
@@ -3061,9 +3066,16 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			if (!target) {
 				return null;
 			}
-			return buildReplyQuotePreview(target);
+			const quote = buildReplyQuotePreview(target);
+			// A blurred passage (#2229) must not come back in a quote.
+			return target.passageBlurs?.length
+				? {
+						...quote,
+						text: translate('message.selectionReply.blurredLabel')
+					}
+				: quote;
 		},
-		[messages]
+		[messages, translate]
 	);
 
 	// Selection reply (#2202): mark a passage in a message, answer it, and
@@ -3101,6 +3113,68 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			);
 		}
 	}, []);
+	// Moderator blur (#2229): only the room's moderators blur a passage or
+	// lift a blur; everyone in the chat sees it.
+	const canBlur = canBlurPassages({
+		activeSession,
+		userData,
+		isConsultant: isConsultantUser,
+		isSupervisorView,
+		isReadOnly: isRejectedSession || isCoAccessViewer
+	});
+	const notifyBlurFailed = useCallback(() => {
+		addNotification({
+			notificationType: NOTIFICATION_TYPE_ERROR,
+			title: translate('message.selectionReply.blurFailed.title'),
+			text: translate('message.selectionReply.blurFailed.text')
+		});
+	}, [addNotification, translate]);
+	const handleBlurPassage = useCallback(
+		(
+			passage: { eventId: string },
+			blur: { start: number; length: number }
+		) => {
+			if (!resolvedMatrixRoomId) {
+				return;
+			}
+			chatTransportService
+				.sendPassageBlur({
+					matrixRoomId: resolvedMatrixRoomId,
+					targetEventId: passage.eventId,
+					start: blur.start,
+					length: blur.length
+				})
+				.catch(notifyBlurFailed);
+		},
+		[resolvedMatrixRoomId, notifyBlurFailed]
+	);
+	const handleRemoveBlur = useCallback(
+		(_eventId: string, blurId: string) => {
+			if (!resolvedMatrixRoomId) {
+				return;
+			}
+			chatTransportService
+				.redactMessage({
+					matrixRoomId: resolvedMatrixRoomId,
+					targetEventId: blurId
+				})
+				.catch(notifyBlurFailed);
+		},
+		[resolvedMatrixRoomId, notifyBlurFailed]
+	);
+	const blurredByFor = useCallback(
+		(_eventId: string, blurId: string) => {
+			const senderId = props.passageBlurSenders?.get(blurId);
+			if (!senderId) {
+				return undefined;
+			}
+			const member = chatTransportService
+				.getMatrixRoom(resolvedMatrixRoomId || '')
+				?.getMember?.(senderId);
+			return member?.name || member?.rawDisplayName || undefined;
+		},
+		[props.passageBlurSenders, resolvedMatrixRoomId]
+	);
 	const handleThreadFromPassage = useCallback(
 		(passage: { eventId: string }) => {
 			const root = (messages || []).find(
@@ -3582,7 +3656,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							{/* MATRIX MIGRATION: For Matrix sessions (no rid), skip E2EE ready check */}
 							{messages && (ready || !activeSession.rid) && (
 								<SelectionReplyLayer
-									enabled={passageReplies.enabled}
+									enabled={passageReplies.enabled || canBlur}
 									authorFor={authorForPassage}
 									onAddToComposer={passageReplies.collect}
 									onSendNow={passageReplies.sendNow}
@@ -3592,6 +3666,13 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 											: undefined
 									}
 									recorder={passageReplies.recorder}
+									onBlurPassage={
+										canBlur ? handleBlurPassage : undefined
+									}
+									onRemoveBlur={
+										canBlur ? handleRemoveBlur : undefined
+									}
+									blurredByFor={blurredByFor}
 								>
 									<MessageTimeline
 										messages={messages}
@@ -3685,6 +3766,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 												: handleUnreact
 										}
 										onJumpToPassage={handleJumpToPassage}
+										canRemovePassageBlur={canBlur}
 									/>
 								</SelectionReplyLayer>
 							)}

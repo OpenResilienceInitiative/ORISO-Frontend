@@ -2,6 +2,7 @@ import {
 	getPassageReplies,
 	getPassageRepliesText
 } from '../selectionReply/passageReplyContent';
+import { extractPassageBlurEvents } from '../selectionReply/passageBlurEvents';
 import { stripReplyFallback } from '../../utils/messageRelations';
 import {
 	getSystemNotificationPreview,
@@ -30,7 +31,8 @@ export type MatrixRoomPreviewKind =
 	| 'user_left_chat'
 	| 'inquiry_accepted'
 	| 'case_handover_taken_over'
-	| 'system_notification';
+	| 'system_notification'
+	| 'blurred';
 
 /**
  * B2 / T24 (Frank: preview prefix): the secondary channel the newest message
@@ -152,6 +154,8 @@ export const getPreviewLastMessageType = (
 
 export interface MatrixPreviewEvent {
 	getType?: () => string;
+	getId?: () => string | undefined;
+	isRedacted?: () => boolean;
 	getClearContent?: () => Record<string, any>;
 	getContent?: () => Record<string, any>;
 	getSender?: () => string;
@@ -217,7 +221,29 @@ export const filterVisibleMatrixPreviewEvents = (
 	});
 };
 
-const toPreview = (event: MatrixPreviewEvent): MatrixRoomPreview | null => {
+/**
+ * Messages with a live moderator blur (#2229). Their preview never shows
+ * text: the blur positions refer to the rendered message, and a preview that
+ * guessed wrong would show the hidden words in the chat list.
+ */
+const blurredMessageIds = (events: MatrixPreviewEvent[]): Set<string> =>
+	new Set(extractPassageBlurEvents(events).map((blur) => blur.targetEventId));
+
+const toPreview = (
+	event: MatrixPreviewEvent,
+	blurred: Set<string> = new Set()
+): MatrixRoomPreview | null => {
+	const preview = toUnblurredPreview(event);
+	const eventId = event.getId?.();
+	if (preview?.text && eventId && blurred.has(eventId)) {
+		return { ...preview, kind: 'blurred', text: null };
+	}
+	return preview;
+};
+
+const toUnblurredPreview = (
+	event: MatrixPreviewEvent
+): MatrixRoomPreview | null => {
 	const eventType = event.getType?.();
 	if (eventType === 'm.room.encrypted') {
 		const clearContent = event.getClearContent?.();
@@ -335,8 +361,9 @@ export const getLatestMatrixRoomPreview = (
 	const newestFirst = [...events].sort(
 		(a, b) => (b.getTs?.() || 0) - (a.getTs?.() || 0)
 	);
+	const blurred = blurredMessageIds(events);
 	for (const event of newestFirst) {
-		const preview = toPreview(event);
+		const preview = toPreview(event, blurred);
 		if (preview) {
 			return preview;
 		}
@@ -356,8 +383,9 @@ export const getLatestTimedMatrixRoomPreview = (
 	const newestFirst = [...events].sort(
 		(a, b) => (b.getTs?.() || 0) - (a.getTs?.() || 0)
 	);
+	const blurred = blurredMessageIds(events);
 	for (const event of newestFirst) {
-		const preview = toPreview(event);
+		const preview = toPreview(event, blurred);
 		if (preview) {
 			return { ...preview, ts: event.getTs?.() || 0 };
 		}
@@ -391,11 +419,12 @@ export const getRoomPreviewsByChannel = (
 	);
 	let main: TimedRoomPreview | null = null;
 	let thread: TimedRoomPreview | null = null;
+	const blurred = blurredMessageIds(events);
 	for (const event of newestFirst) {
 		if (main && thread) {
 			break;
 		}
-		const preview = toPreview(event);
+		const preview = toPreview(event, blurred);
 		if (!preview) {
 			continue;
 		}

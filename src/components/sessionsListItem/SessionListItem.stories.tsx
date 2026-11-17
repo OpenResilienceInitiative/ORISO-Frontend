@@ -838,6 +838,8 @@ type CardPreview = {
 	glyphs?: Array<'thread' | 'voice'>;
 	/** true / false are asserted at desktop width; undefined is not. */
 	truncated?: boolean;
+	/** A moderator blurred a passage of this message (#2229). */
+	blurred?: boolean;
 };
 
 const textMessage = (body: string, thread = false) => ({
@@ -925,6 +927,16 @@ const cardPreviews: CardPreview[] = [
 		text: '0:42',
 		glyphs: ['voice'],
 		truncated: false
+	},
+	{
+		key: 'blurred',
+		label: 'Geschwärzt — die Vorschau zeigt keinen Text (#2229)',
+		content: textMessage(
+			'Ich wohne in der Hauptstraße 5, meine Nummer ist 0151 2345678.'
+		),
+		text: 'Nachricht mit geschwärzter Stelle',
+		blurred: true,
+		truncated: false
 	}
 ];
 
@@ -939,15 +951,38 @@ const seedCardPreviews = () => {
 			const preview = cardPreviews.find(
 				(candidate) => cardRoomId(candidate.key) === roomId
 			);
+			const messageId = `$card-${preview?.key}`;
 			return preview
 				? [
 						{
 							getType: () => 'm.room.message',
+							getId: () => messageId,
 							getClearContent: () => preview.content,
 							getContent: () => preview.content,
 							getSender: () => '@asker-4401:oriso.example',
 							getTs: () => 1_773_822_900_000
-						}
+						},
+						// A moderator's blur: position only, never the text.
+						...(preview.blurred
+							? [
+									{
+										getType: () => 'org.oriso.passage_blur',
+										getId: () => `$blur-${preview.key}`,
+										getContent: () => ({
+											'm.relates_to': {
+												rel_type:
+													'org.oriso.passage_blur',
+												event_id: messageId
+											},
+											'start': 13,
+											'length': 49
+										}),
+										getSender: () =>
+											'@consultant-1:oriso.example',
+										getTs: () => 1_773_822_960_000
+									}
+								]
+							: [])
 					]
 				: [];
 		}
