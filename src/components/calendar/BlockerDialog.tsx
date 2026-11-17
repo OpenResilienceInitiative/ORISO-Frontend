@@ -30,7 +30,7 @@ import { m3SnackbarActionSx } from '../m3Snackbar/M3Snackbar';
 import { FacetIcon } from './CalendarEntryGlyph';
 import { useDayLabels } from './useEntryLabel';
 import { calendarLocale } from './calendarLocale';
-import type { DialogForm } from './AppointmentDialog';
+import type { DialogForm } from './dialogForm';
 
 /** Monday first, JavaScript weekday numbers. */
 const WEEKDAYS = [1, 2, 3, 4, 5, 6, 0];

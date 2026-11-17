@@ -7,21 +7,25 @@
 import * as React from 'react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-	apiCreateSessionAppointment,
-	apiMoveSessionAppointment
-} from '../../../api/apiSessionAppointments';
+import { apiMoveSessionAppointment } from '../../../api/apiSessionAppointments';
 import { FETCH_ERRORS } from '../../../api/fetchData';
 import {
-	apiCreateSessionDirectInvitation,
 	isRoomNotEncryptedError,
 	notifyDirectLinksChanged
 } from '../../../api/apiDirectLinks';
-import type { DirectLink } from '../../conversationCreate/directLink/directLink';
+import type {
+	DirectLink,
+	DirectLinkMedium
+} from '../../conversationCreate/directLink/directLink';
 import { DirectLinkShareDialog } from '../../conversationCreate/directLink/DirectLinkShareDialog';
-import { directInvitationSettings } from '../../directInvitation/directInvitationSettings';
 import { InvitationDialog } from '../../directInvitation/InvitationDialog';
 import type { InvitationDialogValue } from '../../directInvitation/invitationModel';
+import {
+	InvitationAfterAppointmentError,
+	sameSlot,
+	saveAppointmentInvitation,
+	type SavedAppointment
+} from '../../directInvitation/saveAppointmentInvitation';
 import {
 	notifyAppointmentsChanged,
 	toAppointmentSlot
@@ -40,6 +44,8 @@ export interface AppointmentDateDialogProps {
 	 * ("Direkteinladung erlauben" allows it). Moving never does.
 	 */
 	allowGuestInvite?: boolean;
+	/** The media "Direkteinladung erlauben" allows: the link takes the Art's. */
+	inviteMedia?: readonly DirectLinkMedium[];
 	/** Phones: the dialogs fill the screen. */
 	fullScreen?: boolean;
 }
@@ -56,6 +62,7 @@ export const AppointmentDateDialog = ({
 	entry,
 	onClose,
 	allowGuestInvite = false,
+	inviteMedia,
 	fullScreen = false
 }: AppointmentDateDialogProps) => {
 	const { t } = useTranslation();
@@ -67,30 +74,83 @@ export const AppointmentDateDialog = ({
 	/* #2252: the invitation link, shown once the appointment exists. */
 	const [shared, setShared] = useState<DirectLink>();
 
+	/* The appointment exists although its link failed: a retry only adds
+	   the link (one save path with the calendar), after storing a changed
+	   time or Art. */
+	const [savedAppointment, setSavedAppointment] =
+		useState<SavedAppointment>();
+
 	const save = async (value: InvitationDialogValue) => {
 		const { appointment } = value;
 		if (!appointment) return;
 		const { start, end } = appointment;
 		const withInvite = !isMove && allowGuestInvite && value.link !== null;
+		/* What the conversation and the calendar already know: nothing on the
+		   first try; on a retry, the stored appointment's time and Art. */
+		const retry = savedAppointment;
+		const timeChanged =
+			retry !== undefined && !sameSlot(retry.slot, appointment);
+		const stored =
+			retry === undefined || timeChanged || retry.kind !== value.kind;
+		/* A move names where it stood: the entry moved here, or on a retry
+		   the time stored before (the chat card's old → new). */
+		const before = isMove ? entry : timeChanged ? retry?.slot : undefined;
+		const announce = () =>
+			sendNotice({
+				kind: isMove || timeChanged ? 'moved' : 'created',
+				start,
+				end,
+				sessionId,
+				matrixRoomId,
+				...(before && {
+					previousStart: before.start,
+					previousEnd: before.end
+				})
+			});
 		setSaving(true);
 		setError(undefined);
-		const slot = toAppointmentSlot(start, end);
 		let invitation: DirectLink | undefined;
 		try {
-			if (withInvite) {
-				/* One call: the backend creates the appointment and binds the
-				   invitation to it, so a refusal leaves no appointment behind. */
-				invitation = await apiCreateSessionDirectInvitation(
+			if (isMove) {
+				await apiMoveSessionAppointment(
 					sessionId,
-					directInvitationSettings(value)
+					appointmentId,
+					toAppointmentSlot(start, end)
 				);
 			} else {
-				await (isMove
-					? apiMoveSessionAppointment(sessionId, appointmentId, slot)
-					: apiCreateSessionAppointment(sessionId, slot));
+				invitation = (
+					await saveAppointmentInvitation({
+						sessionId,
+						slot: appointment,
+						kind: value.kind,
+						link: withInvite ? value.link : null,
+						saved: savedAppointment
+					})
+				).invitation;
 			}
 		} catch (cause) {
 			setSaving(false);
+			if (cause instanceof InvitationAfterAppointmentError) {
+				setSavedAppointment({
+					appointmentId: cause.appointmentId,
+					slot: appointment,
+					kind: value.kind
+				});
+				setError(
+					(await isRoomNotEncryptedError(cause.cause))
+						? `${t('directInvitation.dialog.roomNotEncrypted')} ${t(
+								'directInvitation.dialog.appointmentSaved'
+							)}`
+						: t(
+								'directInvitation.dialog.linkFailedAfterAppointment'
+							)
+				);
+				/* The appointment was stored or changed although the link
+				   failed: calendar and conversation hear of it now. */
+				if (stored) notifyAppointmentsChanged();
+				if (retry === undefined || timeChanged) await announce();
+				return;
+			}
 			setError(
 				(await isRoomNotEncryptedError(cause))
 					? t('directInvitation.dialog.roomNotEncrypted')
@@ -110,15 +170,9 @@ export const AppointmentDateDialog = ({
 		} else {
 			onClose();
 		}
-		await sendNotice({
-			kind: isMove ? 'moved' : 'created',
-			start,
-			end,
-			sessionId,
-			matrixRoomId,
-			...(isMove &&
-				entry && { previousStart: entry.start, previousEnd: entry.end })
-		});
+		/* A retry after a failed link left its notice already, unless it
+		   moved the appointment since. */
+		if (retry === undefined || timeChanged) await announce();
 	};
 
 	if (shared) {
@@ -138,6 +192,8 @@ export const AppointmentDateDialog = ({
 			mode={isMove ? 'edit' : 'create'}
 			initial={entry ? { start: entry.start, end: entry.end } : undefined}
 			allowGuestInvite={!isMove && allowGuestInvite}
+			inviteMedia={inviteMedia}
+			withKind={!isMove}
 			onSubmit={save}
 			onClose={onClose}
 			saving={saving}
