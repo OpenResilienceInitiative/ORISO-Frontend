@@ -5352,6 +5352,7 @@
 			},
 			"none": "Für dieses Gespräch ist noch kein Termin vereinbart.",
 			"requestHint": "Schreiben Sie Ihrer Beratungsperson im Chat, wann es Ihnen passt.",
+			"requestHintBooking": "Wählen Sie eine freie Zeit Ihrer Beratungsperson und buchen Sie den Termin direkt.",
 			"request": "Termin anfragen",
 			"loading": "Der Termin wird geladen …",
 			"error": "Der Termin konnte gerade nicht geladen werden. Bitte versuchen Sie es später noch einmal.",

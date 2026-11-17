@@ -74,6 +74,16 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+export const Information: Story = {
+	name: 'Information before booking',
+	play: async () => {
+		const view = within(document.body);
+		await expect(
+			await view.findByTestId('asker-call-info-request')
+		).toBeInTheDocument();
+	}
+};
+
 export const SlotsAvailable: Story = {
 	name: 'Free times available',
 	play: async () => {

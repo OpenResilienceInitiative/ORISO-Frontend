@@ -5335,6 +5335,7 @@
 			},
 			"none": "Aucun rendez-vous n’a encore été fixé pour cette conversation.",
 			"requestHint": "Écrivez dans le chat à votre conseiller ou conseillère quand cela vous convient.",
+			"requestHintBooking": "Choisissez un créneau libre de votre conseiller ou conseillère et réservez directement le rendez-vous.",
 			"request": "Demander un rendez-vous",
 			"loading": "Chargement du rendez-vous …",
 			"error": "Le rendez-vous n’a pas pu être chargé. Veuillez réessayer plus tard.",

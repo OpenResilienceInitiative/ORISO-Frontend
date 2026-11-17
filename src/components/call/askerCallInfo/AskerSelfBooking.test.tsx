@@ -68,6 +68,24 @@ const pickFirstTime = async () => {
 };
 
 describe('AskerCallInfo self-booking (FE#1050)', () => {
+	it('tells the asker to pick a free time, not to write in the chat', async () => {
+		render(
+			<AskerCallInfo
+				sessionId={7}
+				open
+				onClose={vi.fn()}
+				medium="VIDEO"
+				load={() => Promise.resolve([])}
+			/>
+		);
+		expect(
+			await screen.findByText('videoCall.askerInfo.requestHintBooking')
+		).toBeTruthy();
+		expect(
+			screen.queryByText('videoCall.askerInfo.requestHint')
+		).toBeNull();
+	});
+
 	it('opens the free times of the counsellor on "Termin anfragen"', async () => {
 		const loadSlots = vi.fn().mockResolvedValue([free]);
 		await openBooking({ loadSlots });

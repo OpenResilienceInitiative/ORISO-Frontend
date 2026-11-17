@@ -5300,6 +5300,7 @@
 			},
 			"none": "No appointment has been set up for this conversation yet.",
 			"requestHint": "Write to your counsellor in the chat when it suits you.",
+			"requestHintBooking": "Choose a free time of your counsellor and book the appointment directly.",
 			"request": "Request an appointment",
 			"loading": "Loading the appointment …",
 			"error": "The appointment could not be loaded right now. Please try again later.",

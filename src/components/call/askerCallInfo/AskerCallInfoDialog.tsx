@@ -56,6 +56,8 @@ export interface AskerCallInfoDialogProps {
 	 * was refused because the conversation already has this one.
 	 */
 	notice?: 'booked' | 'limit';
+	/** "Termin anfragen" opens the free times (FE#1050), not the chat. */
+	selfBooking?: boolean;
 }
 
 export const AskerCallInfoDialog = ({
@@ -64,7 +66,8 @@ export const AskerCallInfoDialog = ({
 	state,
 	onRequestTime,
 	fullScreen,
-	notice
+	notice,
+	selfBooking
 }: AskerCallInfoDialogProps) => {
 	const { t, i18n } = useTranslation();
 	const locale = normalizeTimelineLocale(
@@ -119,7 +122,11 @@ export const AskerCallInfoDialog = ({
 						{t('videoCall.askerInfo.none')}
 					</p>
 					<p className="askerCallInfo__hint">
-						{t('videoCall.askerInfo.requestHint')}
+						{t(
+							selfBooking
+								? 'videoCall.askerInfo.requestHintBooking'
+								: 'videoCall.askerInfo.requestHint'
+						)}
 					</p>
 				</div>
 			)}
@@ -186,7 +193,7 @@ export const AskerCallInfo = ({
 	load = apiGetSessionAppointments,
 	loadSlots = apiGetAppointmentSlots,
 	bookSlot = apiBookAppointmentSlot
-}: Omit<AskerCallInfoDialogProps, 'state' | 'notice'> & {
+}: Omit<AskerCallInfoDialogProps, 'state' | 'notice' | 'selfBooking'> & {
 	sessionId: number;
 	medium?: SelfBookingMedium;
 	onBooked?: (appointment: SessionAppointment) => void;
@@ -254,6 +261,7 @@ export const AskerCallInfo = ({
 			onRequestTime={medium ? () => setBooking(true) : onRequestTime}
 			fullScreen={fullScreen}
 			notice={notice}
+			selfBooking={Boolean(medium)}
 			state={askerCallInfoState(appointments, new Date())}
 		/>
 	);

@@ -87,5 +87,6 @@
 	font-size: 14px;
 	line-height: 20px;
 	font-weight: 600;
-	color: var(--m3-primary, #3f5f90);
+	// A confirmation, not an error: this theme's primary is red.
+	color: var(--m3-on-surface, #1b1b1f);
 }
