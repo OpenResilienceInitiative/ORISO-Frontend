@@ -2802,8 +2802,8 @@ export const MessageSubmitInterfaceComponent = ({
 	}, [activeInfo, activeSession, translate, userData]);
 
 	const isSelfHelpGroup = getModality(activeSession) === Modality.SELF_HELP;
-	const isInternalGroup =
-		getModality(activeSession) === Modality.INTERNAL_GROUP;
+	const sessionModality = getModality(activeSession);
+	const isInternalGroup = sessionModality === Modality.INTERNAL_GROUP;
 	// Practice: no uploads and no voice (one gate for buttons, input, paste, shortcuts).
 	const isPracticing = usePracticeActive();
 	const effectiveFeatures = useConversationFeatureSettings(tenant?.settings);
@@ -2952,7 +2952,7 @@ export const MessageSubmitInterfaceComponent = ({
 		const isAskerOnly = hasAskerAuthority && !hasConsultantAuthority;
 		const source = mentionDirectorySource({
 			isAskerOnly,
-			modality: getModality(activeSession),
+			modality: sessionModality,
 			agencyId
 		});
 		if (source === 'none') {
@@ -3054,7 +3054,7 @@ export const MessageSubmitInterfaceComponent = ({
 		activeSession?.item?.agencyId,
 		activeSession?.agency?.id,
 		isAnonymousChat,
-		isInternalGroup,
+		sessionModality,
 		userData
 	]);
 
