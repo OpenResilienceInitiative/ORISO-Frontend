@@ -437,7 +437,7 @@ describe('WP-06 event-descriptor registry', () => {
 			[
 				'consultant.session',
 				42,
-				'/sessions/consultant/sessionView/session/42?addon=digisucht-tools%2Fgoals'
+				'/sessions/consultant/sessionView/session/42?addon=digisucht-tools%2Fgoals%2Fconsultant.session'
 			],
 			[
 				'consultant.asker-profile',

@@ -291,7 +291,7 @@ describe('shared params contract (#846)', () => {
 				'/sessions/consultant/sessionView'
 			)
 		).toBe(
-			'/sessions/consultant/sessionView/session/42?addon=digisucht-tools%2Fgoals'
+			'/sessions/consultant/sessionView/session/42?addon=digisucht-tools%2Fgoals%2Fconsultant.session'
 		);
 	});
 
