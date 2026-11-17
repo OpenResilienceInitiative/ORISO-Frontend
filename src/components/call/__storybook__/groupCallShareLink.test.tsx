@@ -44,6 +44,8 @@ const sessionRooms = vi.hoisted(() => ({ byRoomIds: vi.fn() }));
 const widgetHandlers = vi.hoisted(
 	() => new Map<string, (event: unknown) => void>()
 );
+/** Every action the host sends to the call, across widget instances. */
+const widgetSends = vi.hoisted(() => vi.fn());
 
 vi.mock('../../../api/apiCallShareLinkKnock', async (importOriginal) => ({
 	...(await importOriginal<
@@ -80,7 +82,10 @@ vi.mock('matrix-widget-api', async (importOriginal) => {
 		ClientWidgetApi: class {
 			public readonly transport = {
 				reply: vi.fn(),
-				send: vi.fn().mockResolvedValue({})
+				send: vi.fn((...args: unknown[]) => {
+					widgetSends(...args);
+					return Promise.resolve({});
+				})
 			};
 			public readonly setViewedRoomId = vi.fn();
 			public readonly updateTheme = vi.fn().mockResolvedValue({});
@@ -329,11 +334,34 @@ describe('GroupCallWidget and the call share link', () => {
 		answerCall(true);
 
 		const view = renderCall();
-		await joinCall(view);
+		widgetSends.mockClear();
+		const fragment = await joinCall(view);
+		const address = (
+			view.container.querySelector(
+				'.element-call-iframe'
+			) as HTMLIFrameElement
+		).src;
 		await passTime(70_000);
 		const asked = shareLinks.get.mock.calls.length;
 		const created = shareLinks.create.mock.calls.length;
 		expect(asked).toBe(6);
+
+		// The running call drops "Link teilen" live, without a new address.
+		expect(fragment.get('orisoInvite')).toBe('1');
+		const inviteStates = widgetSends.mock.calls.filter(
+			(call) => call[0] === 'org.oriso.call.invite_available'
+		);
+		expect(inviteStates.at(-1)).toEqual([
+			'org.oriso.call.invite_available',
+			{ available: false }
+		]);
+		expect(
+			(
+				view.container.querySelector(
+					'.element-call-iframe'
+				) as HTMLIFrameElement
+			).src
+		).toBe(address);
 
 		await passTime(5 * 60_000);
 

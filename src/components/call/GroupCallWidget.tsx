@@ -352,9 +352,9 @@ export const GroupCallWidget: React.FC = () => {
 	/* UserService#1662 (Frank, 17 Nov): a group call a plain member or an
 	   advice seeker started has no binding, so no link. Once the server has
 	   said so the bounded number of times, nothing here offers or creates
-	   one. ("Link teilen" inside the running call stays in its address, which
-	   is built once; changing it would reload the call. It then answers that
-	   the call cannot be shared right now.) */
+	   one. "Link teilen" inside the running call is on its address, which is
+	   built once; changing it would reload the call, so the call is told
+	   live (`inviteAvailable`) and drops its link entries. */
 	const linkShareable = shareLinkKnock.shareable;
 	const onInviteLink = useCallback(async (): Promise<string | null> => {
 		if (!shareLinkCall || !linkShareable) return null;
@@ -421,6 +421,7 @@ export const GroupCallWidget: React.FC = () => {
 			hostContextPending,
 			invite: canInvite,
 			onInviteLink,
+			inviteAvailable: linkShareable,
 			counsellors
 		}
 	);
