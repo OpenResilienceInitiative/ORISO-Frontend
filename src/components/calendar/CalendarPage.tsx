@@ -823,6 +823,13 @@ export const CalendarPage = ({
 				all.length && !all.includes(facet) ? [...all, facet] : all
 			);
 		}
+		// A muted calendar ("ich" off) cannot be clicked: unmute the owner
+		// (review 4589661566).
+		setMuted((all) =>
+			all.includes(entry.ownerId)
+				? all.filter((id) => id !== entry.ownerId)
+				: all
+		);
 		const start = new Date(entry.start);
 		const weekend = start.getDay() === 0 || start.getDay() === 6;
 		if (view === 'month' || view === 'list' || split)

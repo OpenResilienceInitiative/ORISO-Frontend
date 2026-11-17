@@ -568,7 +568,9 @@ $cal-off-hatch: repeating-linear-gradient(
 
 	// The next appointment, from 15 minutes before its start. Doubled class:
 	// it has to beat the pink of `&--appointment:not(…)` above (two classes).
-	&#{&}--soon {
+	// A list row keeps its own plain background; there "Beginnt gleich"
+	// stays red on it (review 4589661574).
+	&#{&}--soon:not(.calEntry--listRow) {
 		background: var(--m3-primary, #a5000a) !important;
 		color: var(--m3-on-primary, #ffffff) !important;
 

@@ -146,3 +146,35 @@ describe('CalendarPage — an entry chosen while a kind filter hides it (review 
 		);
 	});
 });
+
+describe('CalendarPage — an own entry chosen while "ich" is muted (review 4589661566)', () => {
+	it('unmutes its owner, so the entry can be opened where it lands', async () => {
+		render(
+			<CalendarPage
+				role="consultant"
+				ownerId="me"
+				now={NOW}
+				entries={[own('next', 5)]}
+				initialView="week"
+				colleagues={[
+					{
+						id: 'kaya',
+						displayName: 'A. Kaya',
+						agencyName: 'Nord',
+						relation: 'sameAgency'
+					}
+				]}
+				initialShownColleagues={['kaya']}
+			/>
+		);
+		fireEvent.click(byCy('calendar-person-me') as HTMLElement);
+		await waitFor(() =>
+			expect(document.querySelector('.calEntry--muted')).not.toBeNull()
+		);
+		fireEvent.click(listButton(/next/) as HTMLElement);
+		fireEvent.click(byCy('calendar-entry-show') as HTMLElement);
+		await waitFor(() =>
+			expect(document.querySelector('.calEntry--muted')).toBeNull()
+		);
+	});
+});

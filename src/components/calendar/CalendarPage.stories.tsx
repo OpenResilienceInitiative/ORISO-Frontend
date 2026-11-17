@@ -553,6 +553,19 @@ export const List: Story = {
 		).toBeTruthy();
 		await expect(links.getByText('Flyer Schule')).toBeTruthy();
 		await expect(canvas.getByTestId('calendar-view')).toBeTruthy();
+		// "Beginnt gleich" stays readable in the list: the row does not take
+		// the red soon fill the red words sit on (review 4589661574).
+		const soonRow = await waitFor(() => {
+			const row = canvasElement.querySelector<HTMLElement>(
+				'.calEntry--listRow.calEntry--soon'
+			);
+			expect(row).not.toBeNull();
+			return row!;
+		});
+		const badge = soonRow.querySelector<HTMLElement>('.calendarSoon')!;
+		await expect(getComputedStyle(soonRow).backgroundColor).not.toBe(
+			getComputedStyle(badge).color
+		);
 	}
 };
 
