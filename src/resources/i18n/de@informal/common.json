@@ -2185,7 +2185,6 @@
 				"disabledUnavailable": "Supervisor hinzufügen – hier nicht verfügbar"
 			},
 			"plusMenu": {
-				"menuLabel": "Hinzufügen oder übergeben",
 				"supervisionHint": "Eine Kollegin oder ein Kollege schaut mit. Der Fall bleibt bei dir.",
 				"handoverHint": "Der Fall geht ganz an eine Kollegin oder einen Kollegen. Du gibst ihn ab."
 			}
