@@ -1,4 +1,8 @@
-import { ALL_ANIMAL_FILES } from './pseudonymGenerator';
+import {
+	ALL_ANIMAL_FILES,
+	type Avatar,
+	generateAvatarForUser
+} from './pseudonymGenerator';
 
 /** The id the backend and Admin store: the lower-case file stem, e.g. `magpie`. */
 export const avatarIdOfFile = (file: string): string =>
@@ -53,4 +57,21 @@ export const counsellorChoiceOf = (
 	if (choice?.kind === 'animal' && avatarIdOfFile(choice.file) !== 'crane')
 		return { kind: 'motif', file: choice.file };
 	return { kind: 'initials' };
+};
+
+/**
+ * An advice seeker's own animal: the stored pick, on the palette derived from
+ * `seed` as everywhere else. Without a usable pick, the derived animal.
+ * FE#2209: a surface that derives the animal from the id alone shows a
+ * different animal than the one the person chose.
+ */
+export const ownAskerAvatar = (
+	seed: string,
+	identity?: AvatarIdentity | null
+): Avatar => {
+	const derived = generateAvatarForUser(seed);
+	const choice = chosenAvatarOf(identity);
+	return choice?.kind === 'animal'
+		? { ...derived, file: choice.file }
+		: derived;
 };

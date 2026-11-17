@@ -194,4 +194,10 @@ export interface EventDescriptor {
 	textTemplate: string;
 	/** Origin-based action target. Pure — returns a descriptor, never navigates. */
 	resolveActionTarget: (params: EventActionParams) => EventActionTarget;
+	/**
+	 * The entry belongs to a conversation (a case, a group or its call or
+	 * meeting), so Activity shows that conversation like a message entry.
+	 * False for an enquiry not yet accepted, a draft and a status notice.
+	 */
+	belongsToConversation?: boolean;
 }

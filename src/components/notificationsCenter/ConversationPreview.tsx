@@ -13,6 +13,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { chatTransportService } from '../../services/chatTransportService';
 import { getMatrixClientService } from '../../services/matrixClientRegistry';
+import { useMatrixRoomVersion } from '../../hooks/useMatrixRoomVersion';
 import { extractReactionEvents } from '../../utils/matrixTimelineEventFormatter';
 import {
 	aggregateReactions,
@@ -254,6 +255,9 @@ export const ConversationPreview = ({
 	}, []);
 	const capabilities = access?.capabilities;
 	const readableRoomId = capabilities?.contentHidden ? null : roomId;
+	// A replaced Matrix client has the room only after its first sync:
+	// reload and re-subscribe then instead of staying on the old client.
+	const matrixRoomVersion = useMatrixRoomVersion(readableRoomId);
 	const { limit, status, loadOlder, refreshStatus } = usePreviewHistoryPaging(
 		readableRoomId,
 		captureScroll
@@ -351,7 +355,15 @@ export const ConversationPreview = ({
 			)
 		});
 		refreshStatus();
-	}, [readableRoomId, limit, refreshStatus, activeSession]);
+		// matrixRoomVersion: re-read (and re-subscribe) on the current client.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [
+		readableRoomId,
+		limit,
+		refreshStatus,
+		activeSession,
+		matrixRoomVersion
+	]);
 
 	useEffect(() => {
 		loadMessages();

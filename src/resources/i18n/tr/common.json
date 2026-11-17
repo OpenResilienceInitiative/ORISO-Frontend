@@ -2659,6 +2659,8 @@
 			"systemTag": "Sistem bildirimi",
 			"messageTag": "Mesaj bildirimi",
 			"unreadFilter": "Okunmamış",
+			"mentionsFilter": "Bahsedilenler",
+			"openCalendar": "Takvime git",
 			"next": "Sonraki bildirim",
 			"cardMenu": "Bildirim işlemleri",
 			"markRead": "Okundu olarak işaretle",
@@ -2693,6 +2695,8 @@
 				"supervisorNoComposer": "Süpervizör olarak burada tepki verebilirsiniz ama yazamazsınız.",
 				"teamClosed": "Ekip görüşmesi kapandı.",
 				"curtained": "Bu vaka şu anda sizin için görünür değil.",
+				"hiddenNotYours": "Bu görüşme sizin vakalarınızdan biri değil; bu yüzden etkinlik burada göstermiyor.",
+				"hiddenNotJoined": "Bu görüşmeye katılmadınız; bu yüzden etkinlik burada göstermiyor.",
 				"backToConversation": "Görüşmeye dön",
 				"enquiryOpenToAccept": "Bu talep henüz kabul edilmedi. Kabul etmek için görüşmeyi açın.",
 				"consentOpenToContinue": "Lütfen önce sohbette nasıl devam edileceğini onaylayın. Bunun için görüşmeyi açın.",
@@ -2788,12 +2792,27 @@
 		},
 		"data": {
 			"agency": {
-				"adminContact": {
-					"error": "Bu danışma merkezinin yöneticileri yüklenemedi. Lütfen daha sonra tekrar deneyin.",
-					"fallbackName": "Merkez yöneticisi",
-					"link": "Danışma merkezi yöneticisiyle iletişime geç",
-					"none": "Sohbet üzerinden ulaşılabilen bir yönetici yok – lütfen platform yönetimiyle iletişime geçin.",
-					"supportEmail": "Destek adresi:"
+				"contactPerson": {
+					"title": "İrtibat kişisi",
+					"deputy": "Vekil",
+					"traegerDefault": "Kuruluşun varsayılan irtibat kişisi",
+					"alsoCounsellor": "aynı zamanda danışman",
+					"startChat": "Sohbet başlat",
+					"startChatWith": "{{name}} ile sohbet başlat",
+					"fallback": {
+						"heading": "Henüz irtibat kişisi belirlenmedi — bu yöneticiler sorumludur:",
+						"agencyAdmins": "Danışma merkezinin yöneticileri",
+						"tenantAdmins": "Kuruluşun yöneticileri"
+					},
+					"support": {
+						"heading": "Henüz irtibat kişisi belirlenmedi.",
+						"text": "Lütfen destek ekibine başvurun:",
+						"none": "Lütfen platform yönetimine başvurun."
+					},
+					"traegerContactEmail": "Kuruluşun genel iletişim adresi",
+					"loading": "İrtibat kişisi yükleniyor …",
+					"loadError": "İrtibat kişisi şu anda yüklenemedi.",
+					"chatFallbackName": "Danışma merkezi irtibat kişisi"
 				},
 				"label": "Danışma Merkezi",
 				"registrationLink": {
@@ -6490,6 +6509,7 @@
 		},
 		"share": {
 			"signInToJoin": "Bu aramaya katılmak için oturum açın.",
+			"guestCallTitle": "Görüşme",
 			"conversationMember": "Bu görüşmenin zaten bir katılımcısısınız. Aramaya görüşmenin sohbetinden katılın.",
 			"openConversations": "Görüşmelerimi aç",
 			"joinForbidden": "Bu bağlantıyla aramaya katılamazsınız.",

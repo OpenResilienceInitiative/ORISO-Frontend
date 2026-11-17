@@ -37,6 +37,7 @@ export const SessionsListWrapper = ({
 		EXPANDED_SNAP_THRESHOLD
 	} = SESSIONS_LIST_RESIZE;
 	const MIN_WIDTH = 80;
+	const DEFAULT_LIST_WIDTH = 420;
 	const { fromL } = useResponsive();
 	const { fixed: fixedLanguages } = useContext(LanguagesContext);
 	const { userData } = useContext(UserDataContext);
@@ -46,7 +47,7 @@ export const SessionsListWrapper = ({
 	// (Figma node 115: min 397 / max 500).
 	const [sidebarWidth, setSidebarWidth] = useState<number>(() => {
 		const saved = localStorage.getItem('sessionsList_width');
-		const width = saved ? Number.parseInt(saved, 10) : 420;
+		const width = saved ? Number.parseInt(saved, 10) : DEFAULT_LIST_WIDTH;
 
 		// Snap to proper size if in awkward range (prevent text truncation)
 		if (width > MIN_WIDTH && width < ICON_ONLY_THRESHOLD) {
@@ -134,6 +135,19 @@ export const SessionsListWrapper = ({
 		[maxListWidth, panelOpen]
 	);
 
+	// The rail's search button: back to the default column (Frank,
+	// 2026-11-17, "like the search in Meine Termine").
+	const handleWiden = useCallback(
+		() => handleResize(DEFAULT_LIST_WIDTH),
+		[handleResize]
+	);
+	// Review (CodeRabbit): beside an open side pane a narrow screen (about
+	// 900-980 px) leaves the list less room than its text layout needs, so
+	// widening would stay a rail. The rail then offers no search button rather
+	// than one that does nothing; the pane stays as the reader opened it.
+	const railWiden =
+		maxListWidth >= ICON_ONLY_THRESHOLD ? handleWiden : undefined;
+
 	if (hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData)) {
 		return (
 			<div
@@ -143,7 +157,7 @@ export const SessionsListWrapper = ({
 					position: 'relative'
 				}}
 			>
-				<SessionListRailProvider rail={isIconOnly}>
+				<SessionListRailProvider rail={isIconOnly} onWiden={railWiden}>
 					<SessionsList
 						defaultLanguage={fixedLanguages[0]}
 						sessionTypes={sessionTypes}
@@ -168,7 +182,7 @@ export const SessionsListWrapper = ({
 				position: 'relative'
 			}}
 		>
-			<SessionListRailProvider rail={isIconOnly}>
+			<SessionListRailProvider rail={isIconOnly} onWiden={railWiden}>
 				<SessionsList
 					defaultLanguage={fixedLanguages[0]}
 					sessionTypes={sessionTypes}
