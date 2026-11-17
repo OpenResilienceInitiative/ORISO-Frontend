@@ -7,10 +7,12 @@ import { SidePanel } from '../components/chatStage/SidePanel';
 import { AddonAppInSlot, appTitle } from './addonRegistry';
 import { AddonMount } from './AddonMount';
 import { useCaseAskerId } from './useCaseAskerId';
-import { addonActionId } from './addonPanel';
+import { addonActionId, AddonPanelSlot } from './addonPanel';
+import { AddonIcon } from './AddonIcon';
 import './addons.styles';
 
 interface AddonSessionPanelProps extends AddonAppInSlot {
+	slot?: AddonPanelSlot;
 	agencyId?: number;
 	sessionId?: number;
 	variant?: React.ComponentProps<typeof SidePanel>['variant'];
@@ -21,10 +23,33 @@ interface AddonSessionPanelProps extends AddonAppInSlot {
 const focusLost = () =>
 	!document.activeElement || document.activeElement === document.body;
 
-/** An add-on app as the side panel of a counsellor's case view (`consultant.session`). */
+const isShown = (element: HTMLElement) => element.getClientRects().length > 0;
+
+// A menu entry is gone with its closed menu; then the menu's own button takes focus.
+const returnFocus = (actionId: string) => {
+	const actions = Array.from(
+		document.querySelectorAll<HTMLElement>('[data-addon-action]')
+	).filter((action) => action.dataset.addonAction === actionId);
+	const target =
+		actions.find(isShown) ??
+		(actions.some((action) => action.dataset.addonMenuEntry !== undefined)
+			? Array.from(
+					document.querySelectorAll<HTMLElement>(
+						'[aria-controls="flyout"]'
+					)
+				).find(isShown)
+			: actions[0]);
+	target?.focus();
+};
+
+/**
+ * An add-on app as the side panel beside a chat: the counsellor's case view
+ * (`consultant.session`, `consultant.session-menu`) or the client's chat (`asker.session-menu`).
+ */
 export const AddonSessionPanel = ({
 	addon,
 	app,
+	slot = 'consultant.session',
 	agencyId,
 	sessionId,
 	variant,
@@ -34,7 +59,10 @@ export const AddonSessionPanel = ({
 	const { t: translate } = useTranslation();
 	const locale = useContext(LocaleContext)?.locale ?? 'de';
 	const title = appTitle(app, locale);
-	const { settled, askerId } = useCaseAskerId(sessionId);
+	// Clients are the asker themselves; only a counsellor's case has another one to look up.
+	const forCounsellor = slot !== 'asker.session-menu';
+	const { settled, askerId } = useCaseAskerId(sessionId, forCounsellor);
+	const ready = !forCounsellor || settled;
 	const heading = useRef<HTMLHeadingElement>(null);
 	const actionId = addonActionId(addon.name, app.id);
 
@@ -43,13 +71,7 @@ export const AddonSessionPanel = ({
 		heading.current?.focus();
 		return () => {
 			if (focusLost()) {
-				Array.from(
-					document.querySelectorAll<HTMLElement>(
-						'[data-addon-action]'
-					)
-				)
-					.find((action) => action.dataset.addonAction === actionId)
-					?.focus();
+				returnFocus(actionId);
 			}
 		};
 	}, [actionId]);
@@ -67,6 +89,10 @@ export const AddonSessionPanel = ({
 						ref={heading}
 						tabIndex={-1}
 					>
+						<AddonIcon
+							icon={app.icon}
+							className="addonPanel__icon"
+						/>
 						{title}
 					</h2>
 					<button
@@ -80,11 +106,11 @@ export const AddonSessionPanel = ({
 				</div>
 			}
 			content={
-				settled ? (
+				ready ? (
 					<AddonMount
 						addon={addon}
 						app={app}
-						slot="consultant.session"
+						slot={slot}
 						placement={{ agencyId, sessionId, askerId }}
 					/>
 				) : (

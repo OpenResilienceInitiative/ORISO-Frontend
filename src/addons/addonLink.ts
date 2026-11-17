@@ -37,7 +37,11 @@ export const addonLinkPath = (
 	}
 	if (sessionId == null || sessionId === '') return null;
 	const caseView = `${sessionsBasePath}/session/${encodeURIComponent(String(sessionId))}`;
-	if (slot === 'consultant.session') {
+	if (
+		slot === 'consultant.session' ||
+		slot === 'consultant.session-menu' ||
+		slot === 'asker.session-menu'
+	) {
 		return `${caseView}?${new URLSearchParams({ addon: `${addon}/${appId}` })}`;
 	}
 	if (slot === 'consultant.asker-profile') {

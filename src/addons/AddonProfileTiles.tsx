@@ -4,6 +4,7 @@ import { ActiveSessionContext, LocaleContext } from '../globalState';
 import { Box } from '../components/box/Box';
 import { appTitle, useCaseAddonApps } from './addonRegistry';
 import { AddonBadge } from './AddonBadge';
+import { AddonIcon } from './AddonIcon';
 import { AddonMount } from './AddonMount';
 import { useCaseAskerId } from './useCaseAskerId';
 import './addons.styles';
@@ -29,6 +30,10 @@ export const AddonProfileTiles = () => {
 				<Box key={`${addon.name}/${app.id}`}>
 					<div className="addonTile">
 						<h2 className="addonTile__title">
+							<AddonIcon
+								icon={app.icon}
+								className="addonTile__icon"
+							/>
 							{appTitle(app, locale)}
 							<AddonBadge badge={app.badge} />
 						</h2>

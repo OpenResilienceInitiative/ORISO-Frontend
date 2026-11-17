@@ -5,6 +5,7 @@ import {
 	useCaseAddonRegistry
 } from './addonRegistry';
 import { AddonRegistryContext } from './addonRegistryApi';
+import { AddonApp, AddonSlot } from './addonTypes';
 import { ADDON_PANEL_PARAM, withChannel } from '../utils/channelRoute';
 
 export const parseAddonPanel = (search: string) => {
@@ -34,18 +35,43 @@ export const withAddonPanel = (
 	return next ? `?${next}` : '';
 };
 
-/** The add-on app the URL opens in the case view, if this case's registry has it. */
+export type AddonPanelSlot = Extract<
+	AddonSlot,
+	'consultant.session' | 'consultant.session-menu' | 'asker.session-menu'
+>;
+
+const PANEL_SLOTS: Record<'consultant' | 'asker', AddonPanelSlot[]> = {
+	consultant: ['consultant.session', 'consultant.session-menu'],
+	asker: ['asker.session-menu']
+};
+
+/** The slot an app opens in beside the chat for a role, or none. */
+export const addonPanelSlot = (
+	app: Pick<AddonApp, 'slots'>,
+	role: 'consultant' | 'asker'
+): AddonPanelSlot | undefined =>
+	PANEL_SLOTS[role].find((candidate) => app.slots.includes(candidate));
+
+export interface OpenAddonPanel extends AddonAppInSlot {
+	slot: AddonPanelSlot;
+}
+
+/**
+ * The add-on app the URL opens beside the chat, if this session's registry has it in a slot of
+ * the role: the case view's header buttons and session menu for counsellors, the session menu
+ * for clients.
+ */
 export const useOpenAddonPanel = (
 	search: string,
-	context: AddonRegistryContext
-): AddonAppInSlot | null => {
+	context: AddonRegistryContext,
+	role: 'consultant' | 'asker' = 'consultant'
+): OpenAddonPanel | null => {
 	const { addons } = useCaseAddonRegistry(context);
 	return useMemo(() => {
 		const panel = parseAddonPanel(search);
 		const found =
 			panel && findAddonApp(addons, panel.addonName, panel.appId);
-		return found && found.app.slots.includes('consultant.session')
-			? found
-			: null;
-	}, [addons, search]);
+		const slot = found ? addonPanelSlot(found.app, role) : undefined;
+		return found && slot ? { ...found, slot } : null;
+	}, [addons, search, role]);
 };

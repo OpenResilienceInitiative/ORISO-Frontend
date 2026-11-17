@@ -14,10 +14,19 @@
 
 .addonTile {
 	&__title {
+		display: flex;
+		align-items: center;
+		gap: 8px;
 		margin: 0 0 12px;
 		font-size: 16px;
 		line-height: 24px;
 		color: var(--m3-on-surface, #1b1b1c);
+	}
+
+	&__icon {
+		width: 20px;
+		height: 20px;
+		color: var(--m3-on-surface-variant, #444748);
 	}
 }
 
@@ -39,10 +48,19 @@
 	}
 
 	&__title {
+		display: flex;
+		align-items: center;
+		gap: 8px;
 		margin: 0;
 		font-size: 18px;
 		line-height: 24px;
 		color: var(--m3-on-surface, #1b1b1c);
+	}
+
+	&__icon {
+		width: 20px;
+		height: 20px;
+		color: var(--m3-on-surface-variant, #444748);
 	}
 
 	&__close {
@@ -80,7 +98,8 @@
 		font-size: 14px;
 		cursor: pointer;
 
-		svg {
+		svg,
+		.addonActions__icon {
 			width: 18px;
 			height: 18px;
 		}
@@ -134,4 +153,18 @@
 	font-weight: 600;
 	line-height: 18px;
 	vertical-align: middle;
+}
+
+.addonIcon {
+	display: inline-block;
+	flex: none;
+	width: 1em;
+	height: 1em;
+	background-color: currentcolor;
+	mask: var(--addon-icon) center / contain no-repeat;
+}
+
+.addonMenuEntry__icon {
+	width: 100%;
+	height: 100%;
 }

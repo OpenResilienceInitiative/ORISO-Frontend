@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from 'vitest';
-import { parseAddonPanel, withAddonPanel } from './addonPanel';
+import { addonPanelSlot, parseAddonPanel, withAddonPanel } from './addonPanel';
 
 describe('add-on panel in the URL', () => {
 	it('reads add-on and app from ?addon=', () => {
@@ -31,5 +31,26 @@ describe('add-on panel in the URL', () => {
 	it('closes the panel', () => {
 		expect(withAddonPanel('?addon=a%2Fb&tab=1', null)).toBe('?tab=1');
 		expect(withAddonPanel('?addon=a%2Fb', null)).toBe('');
+	});
+
+	it('opens an app beside the chat only in a slot of the role', () => {
+		expect(
+			addonPanelSlot(
+				{ slots: ['consultant.session', 'consultant.session-menu'] },
+				'consultant'
+			)
+		).toBe('consultant.session');
+		expect(
+			addonPanelSlot({ slots: ['consultant.session-menu'] }, 'consultant')
+		).toBe('consultant.session-menu');
+		expect(addonPanelSlot({ slots: ['asker.session-menu'] }, 'asker')).toBe(
+			'asker.session-menu'
+		);
+		expect(
+			addonPanelSlot({ slots: ['consultant.session'] }, 'asker')
+		).toBeUndefined();
+		expect(
+			addonPanelSlot({ slots: ['asker.session-menu'] }, 'consultant')
+		).toBeUndefined();
 	});
 });

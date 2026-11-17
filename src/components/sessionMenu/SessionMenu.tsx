@@ -127,6 +127,7 @@ import { useCaseHandoverOffer } from '../caseHandover/useCaseHandoverOffer';
 import { CaseHandoverOffer } from '../caseHandover/CaseHandoverOffer';
 import { useRecommendAllowedInModality } from '../furtherCounselling/useRecommendAllowedInModality';
 import { getGroupChatInfoLink } from '../groupChat/groupChatInfoLink';
+import { AddonSessionMenuItems } from '../../addons/AddonSessionMenuItems';
 
 export interface SessionMenuProps {
 	hasUserInitiatedStopOrLeaveRequest: React.MutableRefObject<boolean>;
@@ -967,6 +968,10 @@ export const SessionMenu = (props: SessionMenuProps) => {
 										shortcut="⇧P"
 									/>
 								</Link>
+							)}
+
+							{!activeSession.isGroup && (
+								<AddonSessionMenuItems onSelect={closeMenu} />
 							)}
 
 							<div

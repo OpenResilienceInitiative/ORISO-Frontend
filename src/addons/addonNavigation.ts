@@ -3,6 +3,7 @@ import { ReactComponent as ToolsIconFilled } from '../resources/img/icons/tools_
 import { AddonSlot, AvailableAddon } from './addonTypes';
 import { appsInSlot, appTitle } from './addonRegistry';
 import { addonAppPath } from './addonLink';
+import { addonNavigationIcon } from './AddonIcon';
 
 export { addonAppPath };
 
@@ -16,8 +17,9 @@ export const addonNavigationItems = (
 		const title = appTitle(app, locale);
 		return {
 			to: addonAppPath(addon.name, app.id),
-			icon: ToolsIconOutline,
-			iconFilled: ToolsIconFilled,
+			// An own icon is one shape for both states; colour shows which is active.
+			icon: app.icon ? addonNavigationIcon(app.icon) : ToolsIconOutline,
+			iconFilled: app.icon ? undefined : ToolsIconFilled,
 			navSlot: 'row' as const,
 			title,
 			titleKeys: { large: title },

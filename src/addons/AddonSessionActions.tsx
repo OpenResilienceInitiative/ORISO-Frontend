@@ -3,9 +3,9 @@ import { useContext } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ActiveSessionContext, LocaleContext } from '../globalState';
-import { ReactComponent as ToolsIcon } from '../resources/img/icons/tools_outline.svg';
 import { appTitle, useCaseAddonApps } from './addonRegistry';
 import { AddonBadge } from './AddonBadge';
+import { AddonIcon } from './AddonIcon';
 import { addonActionId, parseAddonPanel, withAddonPanel } from './addonPanel';
 import './addons.styles';
 
@@ -58,7 +58,10 @@ export const AddonSessionActions = () => {
 							})
 						}
 					>
-						<ToolsIcon aria-hidden="true" />
+						<AddonIcon
+							icon={app.icon}
+							className="addonActions__icon"
+						/>
 						<span>{title}</span>
 						<AddonBadge badge={app.badge} decorative />
 					</button>
