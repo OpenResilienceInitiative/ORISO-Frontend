@@ -68,8 +68,12 @@ export const entryFromApi = (dto: CalendarEntryDTO): CalendarEntry => {
 		}),
 		...(dto.title && { title: dto.title }),
 		...(typeof dto.sessionId === 'number' && { sessionId: dto.sessionId }),
+		// The stored flag wins (UserService#1663); an older answer or an
+		// imported busy time falls back to the range.
 		...((type === 'blocker' || type === 'busy') &&
-			isAllDayRange(dto.start, dto.end) && { allDay: true }),
+			(typeof dto.allDay === 'boolean'
+				? dto.allDay
+				: isAllDayRange(dto.start, dto.end)) && { allDay: true }),
 		movable: dto.movable === true
 	};
 };
@@ -89,6 +93,7 @@ export const proposalFromApi = (dto: CalendarProposalDTO): MoveProposal => ({
 	...(dto.proposerName && { proposerName: dto.proposerName }),
 	approverId: dto.approverId,
 	...(dto.approverName && { approverName: dto.approverName }),
+	...(dto.reason && { reason: dto.reason }),
 	...(dto.createdAt && { createdAt: dto.createdAt })
 });
 
@@ -96,6 +101,7 @@ export const colleagueFromApi = (dto: CalendarColleagueDTO): Colleague => ({
 	id: dto.id,
 	displayName: dto.displayName,
 	agencyName: dto.agencyName ?? '',
+	...(dto.secondaryLabel && { secondaryLabel: dto.secondaryLabel }),
 	relation: RELATION[dto.relation] ?? 'otherTenant'
 });
 

@@ -3,6 +3,8 @@ import {
 	groupUpcomingByDay,
 	invitationEntryPhase,
 	MAX_TIMER_MS,
+	nextExpiryRead,
+	READ_RETRY_MS,
 	timerDelay
 } from './invitationModel';
 
@@ -117,5 +119,35 @@ describe('upcoming appointments by day (#2252 overview)', () => {
 		expect(groups.map((g) => [g.relative, g.day])).toEqual([
 			[null, new Date(2026, 10, 19)]
 		]);
+	});
+});
+
+/* #2285: when the links are read again so an invitation that expires while
+   shown gets the server's `expired` flag. */
+describe('nextExpiryRead', () => {
+	const now = new Date(2026, 10, 20, 12, 0).getTime();
+	const ending = (inMs: number, expired = false) => ({
+		expired,
+		expiresAt: new Date(now + inMs).toISOString()
+	});
+
+	it('reads just after the earliest end still ahead', () => {
+		expect(nextExpiryRead([ending(90_000), ending(60_000)], now)).toBe(
+			61_000
+		);
+	});
+
+	it('reads again later when an end has passed but the server still calls it active', () => {
+		expect(nextExpiryRead([ending(-5_000)], now)).toBe(READ_RETRY_MS);
+	});
+
+	it('waits for nothing that has expired or has no end', () => {
+		expect(nextExpiryRead([ending(60_000, true), {}], now)).toBeUndefined();
+	});
+
+	it('caps a far expiry at the longest timer', () => {
+		expect(nextExpiryRead([ending(MAX_TIMER_MS * 2)], now)).toBe(
+			MAX_TIMER_MS
+		);
 	});
 });

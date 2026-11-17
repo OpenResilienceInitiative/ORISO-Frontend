@@ -320,15 +320,21 @@ const readable = (value: unknown): DirectLink => {
  * One request at a time: the overview, the request pop-ups and an open
  * conversation all reload on the same DIRECT_LINKS_CHANGED event (#2252).
  * Nothing is kept once it has answered, so a later call always reads fresh.
+ * A change forgets a request still running (`notifyDirectLinksChanged`): it
+ * started before the change and would answer with the old links.
  */
 let ownDirectLinksRunning: Promise<DirectLink[]> | undefined;
 
 /** The caller's own links, newest first, switched-off ones included. */
 export const apiGetOwnDirectLinks = async (): Promise<DirectLink[]> => {
 	if (!ownDirectLinksRunning) {
-		ownDirectLinksRunning = fetchOwnDirectLinks().finally(() => {
-			ownDirectLinksRunning = undefined;
+		const started = fetchOwnDirectLinks().finally(() => {
+			/* Only free the slot it still holds, not a newer read's. */
+			if (ownDirectLinksRunning === started) {
+				ownDirectLinksRunning = undefined;
+			}
 		});
+		ownDirectLinksRunning = started;
 	}
 	return [...(await ownDirectLinksRunning)];
 };
@@ -483,5 +489,8 @@ export const apiCancelOwnCallKnock = (knockId: number): Promise<void> =>
    list (clock page or settings) shows it straight away. */
 export const DIRECT_LINKS_CHANGED_EVENT = 'oriso:direct-links-changed';
 
-export const notifyDirectLinksChanged = () =>
+export const notifyDirectLinksChanged = () => {
+	/* The reloads this triggers must read after the change (#2252). */
+	ownDirectLinksRunning = undefined;
 	window.dispatchEvent(new Event(DIRECT_LINKS_CHANGED_EVENT));
+};

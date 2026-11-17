@@ -508,6 +508,40 @@ describe('Termine & Direkteinladungen (#2252)', () => {
 		).toBeTruthy();
 	});
 
+	it('does not call appointments still loading "nothing yet"', async () => {
+		vi.mocked(apiGetOwnDirectLinks).mockResolvedValue([]);
+		let answer!: (items: unknown) => void;
+		vi.mocked(apiGetUpcomingAppointments).mockReturnValue(
+			new Promise((resolve) => {
+				answer = resolve;
+			}) as any
+		);
+		renderPage();
+		await waitFor(() => expect(apiGetOwnDirectLinks).toHaveBeenCalled());
+		await act(async () => undefined);
+
+		expect(screen.queryByTestId('invitations-empty')).toBeNull();
+		expect(
+			screen.queryByText('directInvitation.overview.noUpcoming')
+		).toBeNull();
+
+		await act(async () =>
+			answer([
+				{
+					id: 'a-2',
+					sessionId: 6,
+					startTime: inTwoDays(15),
+					endTime: inTwoDays(16),
+					status: 'SCHEDULED',
+					counterpart: { displayName: 'Ali' }
+				}
+			])
+		);
+		expect(
+			await screen.findByText('directInvitation.overview.oneToOne:Ali')
+		).toBeTruthy();
+	});
+
 	it('still shows the invitations when the 1:1 appointments cannot be read', async () => {
 		vi.mocked(apiGetOwnDirectLinks).mockResolvedValue([meeting]);
 		vi.mocked(apiGetUpcomingAppointments).mockRejectedValue(new Error('x'));
@@ -706,25 +740,175 @@ describe('Termine & Direkteinladungen (#2252)', () => {
 		expect(screen.getByTestId('invitation-dialog')).toBeTruthy();
 	});
 
-	it('moves an invitation to the expired ones once its validity ends while the page is open', async () => {
-		const endingSoon: DirectLink = {
+	it('keeps a newer save busy when an earlier, closed one answers', async () => {
+		const other: DirectLink = {
 			...meeting,
-			expiresAt: new Date(Date.now() + 300).toISOString()
+			id: '10',
+			name: 'Termin Herr K.',
+			url: 'https://app.example/invite/t10',
+			appointment: {
+				id: 'a-10',
+				start: inTwoDays(14),
+				end: inTwoDays(15)
+			}
 		};
-		vi.mocked(apiGetOwnDirectLinks)
-			.mockResolvedValueOnce([endingSoon])
-			.mockResolvedValue([{ ...endingSoon, expired: true }]);
+		vi.mocked(apiGetOwnDirectLinks).mockResolvedValue([meeting, other]);
+		const answers: ((link: DirectLink) => void)[] = [];
+		vi.mocked(apiUpdateDirectLink).mockImplementation(
+			() =>
+				new Promise<DirectLink>((resolve) => {
+					answers.push(resolve);
+				})
+		);
+		renderPage();
+		await screen.findAllByTestId('upcoming-invitation');
+		const editOf = (name: string) =>
+			screen.getByRole('button', {
+				name: `directInvitation.overview.edit:${name}`
+			});
+		const saveIn = (dialog: HTMLElement) =>
+			within(dialog).getByRole('button', {
+				name: 'directInvitation.dialog.saveAction'
+			}) as HTMLButtonElement;
+
+		fireEvent.click(editOf('Termin Frau M.'));
+		const first = await screen.findByTestId('invitation-dialog');
+		fireEvent.click(saveIn(first));
+		await waitFor(() => expect(answers).toHaveLength(1));
+		fireEvent.keyDown(first, { key: 'Escape' });
+		await waitFor(() =>
+			expect(screen.queryByTestId('invitation-dialog')).toBeNull()
+		);
+
+		fireEvent.click(editOf('Termin Herr K.'));
+		const second = await screen.findByTestId('invitation-dialog');
+		/* The new editor has not saved anything yet. */
+		expect(saveIn(second).disabled).toBe(false);
+		fireEvent.click(saveIn(second));
+		await waitFor(() => expect(answers).toHaveLength(2));
+		expect(saveIn(second).disabled).toBe(true);
+
+		await act(async () => answers[0](meeting));
+
+		/* Save B is still running. */
+		expect(saveIn(screen.getByTestId('invitation-dialog')).disabled).toBe(
+			true
+		);
+	});
+
+	it('keeps an invitation save busy when a closed legacy save answers', async () => {
+		vi.mocked(apiGetOwnDirectLinks).mockResolvedValue([flyer, meeting]);
+		const answers: ((link: DirectLink) => void)[] = [];
+		vi.mocked(apiUpdateDirectLink).mockImplementation(
+			() =>
+				new Promise<DirectLink>((resolve) => {
+					answers.push(resolve);
+				})
+		);
 		renderPage();
 		await screen.findByTestId('upcoming-invitation');
 
-		expect(
-			await screen.findByTestId(
-				'expired-invitation',
-				{},
-				{ timeout: 4000 }
-			)
-		).toBeTruthy();
-		expect(screen.queryByTestId('upcoming-invitation')).toBeNull();
+		/* A legacy link: its own dialog, closed while its save runs. */
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'directLink.list.edit:Flyer Schule'
+			})
+		);
+		const legacy = await screen.findByTestId('direct-link-edit-dialog');
+		fireEvent.change(
+			within(legacy).getByLabelText('directLink.edit.name'),
+			{ target: { value: 'Flyer Rathaus' } }
+		);
+		fireEvent.click(within(legacy).getByTestId('direct-link-edit-save'));
+		await waitFor(() => expect(answers).toHaveLength(1));
+		fireEvent.click(
+			within(legacy).getByRole('button', {
+				name: 'directLink.edit.cancel'
+			})
+		);
+
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'directInvitation.overview.edit:Termin Frau M.'
+			})
+		);
+		const dialog = await screen.findByTestId('invitation-dialog');
+		const save = () =>
+			within(screen.getByTestId('invitation-dialog')).getByRole(
+				'button',
+				{ name: 'directInvitation.dialog.saveAction' }
+			) as HTMLButtonElement;
+		fireEvent.click(
+			within(dialog).getByRole('button', {
+				name: 'directInvitation.dialog.saveAction'
+			})
+		);
+		await waitFor(() => expect(answers).toHaveLength(2));
+		expect(save().disabled).toBe(true);
+
+		await act(async () => answers[0]({ ...flyer, name: 'Flyer Rathaus' }));
+
+		/* The invitation save is still running: no second update. */
+		expect(save().disabled).toBe(true);
+	});
+
+	/* A fixed clock: the page must not depend on rendering fast enough to
+	   see the row before it expires (#2252 review). */
+	const settle = (ms = 0) =>
+		act(async () => {
+			await vi.advanceTimersByTimeAsync(ms);
+		});
+
+	it('moves an invitation to the expired ones once its validity ends while the page is open', async () => {
+		vi.useFakeTimers({ now: Date.now() });
+		try {
+			const endingSoon: DirectLink = {
+				...meeting,
+				expiresAt: new Date(Date.now() + 60_000).toISOString()
+			};
+			vi.mocked(apiGetOwnDirectLinks)
+				.mockResolvedValueOnce([endingSoon])
+				.mockResolvedValue([{ ...endingSoon, expired: true }]);
+			renderPage();
+			await settle();
+			expect(screen.getByTestId('upcoming-invitation')).toBeTruthy();
+
+			await settle(59_000);
+			expect(screen.getByTestId('upcoming-invitation')).toBeTruthy();
+
+			await settle(2_000);
+			expect(screen.getByTestId('expired-invitation')).toBeTruthy();
+			expect(screen.queryByTestId('upcoming-invitation')).toBeNull();
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
+	it('reads again at expiry when the read right after it failed', async () => {
+		vi.useFakeTimers({ now: Date.now() });
+		try {
+			const endingSoon: DirectLink = {
+				...meeting,
+				expiresAt: new Date(Date.now() + 60_000).toISOString()
+			};
+			vi.mocked(apiGetOwnDirectLinks)
+				.mockResolvedValueOnce([endingSoon])
+				.mockRejectedValueOnce(new Error('CATCH_ALL'))
+				.mockResolvedValue([{ ...endingSoon, expired: true }]);
+			renderPage();
+			await settle();
+
+			await settle(61_000);
+			/* The failed read keeps the list as it was. */
+			expect(apiGetOwnDirectLinks).toHaveBeenCalledTimes(2);
+			expect(screen.getByTestId('upcoming-invitation')).toBeTruthy();
+
+			await settle(60_000);
+			expect(screen.getByTestId('expired-invitation')).toBeTruthy();
+			expect(screen.queryByTestId('upcoming-invitation')).toBeNull();
+		} finally {
+			vi.useRealTimers();
+		}
 	});
 
 	it('opens the QR code of an appointment invitation', async () => {
