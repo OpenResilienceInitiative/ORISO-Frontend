@@ -253,19 +253,19 @@ export const GroupCallWidget: React.FC = () => {
 	});
 	// The call link's "Anklopfen" (UserService#1488), for the switch in the
 	// call (ElementCall#109). Every counsellor in the call may change it.
-	// Only a 1:1 session call has a link (UserService
-	// `CallShareLinkService.requireCounsellorCall`): a group chat or a
-	// Gesprächskreis answers 404 to every request, so it is never asked.
-	const isGroupCall = !!callData?.isGroup;
+	// UserService#1662: group calls and Gesprächskreise have a link too. The
+	// server binds an encrypted group call from its creator's registration
+	// (CallManager's observation request) and registers guests under the
+	// creator's Beratungsstelle.
 	const shareLinkCall = useMemo(
 		() =>
-			!isGroupCall && callData?.signalRoomId && callData.callId
+			callData?.signalRoomId && callData.callId
 				? {
 						sourceRoomId: callData.signalRoomId,
 						callId: callData.callId
 					}
 				: null,
-		[isGroupCall, callData?.signalRoomId, callData?.callId]
+		[callData?.signalRoomId, callData?.callId]
 	);
 	const shareLinkKnock = useCallShareLinkKnock({
 		// Hung up: stop once the call surface closes, whatever the call manager still holds.
