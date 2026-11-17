@@ -4821,7 +4821,9 @@
 		},
 		"deletedAsker": {
 			"title": "Gelöschte:r Ratsuchende:r",
-			"hint": "Dieser Chat wurde gelöscht. Persönliche Daten und Nachrichten sind nicht mehr verfügbar."
+			"hint": "Dieser Chat wurde gelöscht. Persönliche Daten und Nachrichten sind nicht mehr verfügbar.",
+			"preview": "Chat wurde gelöscht",
+			"previewArchived": "Gelöscht · im Archiv"
 		}
 	},
 	"statusOverlay": {
@@ -7645,5 +7647,15 @@
 			"inviteDescription": "Ratsuchende treten über diesen Link oder QR-Code bei.",
 			"added": "{{name}} moderiert jetzt diese Gruppe mit."
 		}
+	},
+	"deletedAskerSession": {
+		"notice": {
+			"title": "Dieser Chat wurde gelöscht",
+			"deletedOn": "Gelöscht am {{date}}",
+			"text": "Persönliche Daten und Nachrichten der ratsuchenden Person sind nicht mehr verfügbar."
+		},
+		"archiveHint": "Verschieben Sie den Eintrag ins Archiv, damit er aus Ihrer Liste und den Aktivitäten verschwindet.",
+		"archived": "Dieser Eintrag ist im Archiv.",
+		"archiveFailed": "Archivieren hat nicht geklappt. Bitte versuchen Sie es erneut."
 	}
 }

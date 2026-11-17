@@ -10,6 +10,8 @@ export interface DeletedAskerSession {
 	formerSessionId: number;
 	agencyId?: number;
 	deletedAt: string;
+	/** Set once the counsellor moved the placeholder into their archive. */
+	archivedAt?: string;
 }
 
 const isDeletedAskerSession = (
@@ -25,17 +27,21 @@ const isDeletedAskerSession = (
 };
 
 /**
- * The calling counsellor's placeholders from the last 30 days. Best-effort:
- * the conversation list must keep working when this call fails, so every
- * failure reads as "no placeholders".
+ * The calling counsellor's placeholders from the last 30 days: the active ones,
+ * or with `archived` the ones in their archive. Best-effort: the conversation
+ * list must keep working when this call fails, so every failure reads as "no
+ * placeholders".
  */
 export const apiGetDeletedAskerSessions = async (
-	signal?: AbortSignal
+	signal?: AbortSignal,
+	{ archived = false }: { archived?: boolean } = {}
 ): Promise<DeletedAskerSession[]> => {
 	let response: unknown;
 	try {
 		response = await fetchData({
-			url: endpoints.consultantDeletedAskerSessions,
+			url: archived
+				? `${endpoints.consultantDeletedAskerSessions}?archived=true`
+				: endpoints.consultantDeletedAskerSessions,
 			method: FETCH_METHODS.GET,
 			responseHandling: [FETCH_ERRORS.EMPTY, FETCH_ERRORS.CATCH_ALL],
 			...(signal ? { signal } : {})

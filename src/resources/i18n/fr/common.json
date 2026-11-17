@@ -4804,7 +4804,9 @@
 		},
 		"deletedAsker": {
 			"title": "Personne en quête de conseil supprimée",
-			"hint": "Ce chat a été supprimé. Les données personnelles et les messages ne sont plus disponibles."
+			"hint": "Ce chat a été supprimé. Les données personnelles et les messages ne sont plus disponibles.",
+			"preview": "Le chat a été supprimé",
+			"previewArchived": "Supprimé · aux archives"
 		}
 	},
 	"statusOverlay": {
@@ -7655,5 +7657,15 @@
 			"inviteDescription": "Les personnes en recherche de conseil rejoignent via ce lien ou ce code QR.",
 			"added": "{{name}} co-modère désormais ce groupe."
 		}
+	},
+	"deletedAskerSession": {
+		"notice": {
+			"title": "Ce chat a été supprimé",
+			"deletedOn": "Supprimé le {{date}}",
+			"text": "Les données personnelles et les messages de la personne en quête de conseil ne sont plus disponibles."
+		},
+		"archiveHint": "Déplacez l'entrée vers les archives pour qu'elle disparaisse de votre liste et de vos activités.",
+		"archived": "Cette entrée se trouve dans les archives.",
+		"archiveFailed": "L'archivage n'a pas fonctionné. Veuillez réessayer."
 	}
 }

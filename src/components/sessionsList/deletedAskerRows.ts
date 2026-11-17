@@ -1,7 +1,7 @@
 import type { DeletedAskerSession } from '../../api/apiGetDeletedAskerSessions';
 
 /**
- * A grey, non-clickable row "Gelöschte:r Ratsuchende:r" in the counsellor's
+ * A card "Gelöschte:r Ratsuchende:r" in the counsellor's
  * conversation list (ORISO-Frontend#1159). It stands where the deleted chat
  * used to be, so the counsellor can tell a deletion from a technical problem.
  * It carries no personal data.
@@ -11,6 +11,8 @@ export interface DeletedAskerRow {
 	formerSessionId: number;
 	/** Epoch milliseconds: where the row sorts among the conversations. */
 	timestamp: number;
+	/** Shown in the archive tab: already moved there by the counsellor. */
+	archived?: boolean;
 }
 
 /** A chat whose advice seeker is marked for deletion but not yet deleted. */
