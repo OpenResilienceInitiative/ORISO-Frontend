@@ -3328,6 +3328,7 @@ $cal-new-pill-hover: #4b4f51;
 	display: flex;
 	flex-direction: column;
 	gap: 0;
+	container: calendar-hours / inline-size;
 }
 
 // Each day is a block: the day with its hours, its pause under it, a
@@ -3367,6 +3368,74 @@ $cal-new-pill-hover: #4b4f51;
 	white-space: nowrap;
 	/* The M3 checkbox brings its own 40px state layer; pull it to the row edge. */
 	margin-inline-start: -11px;
+}
+
+// Phone (Frank 2026-11-17): one line per day did not fit, the end time
+// ran off the dialog. The day keeps its switch and name on top; the times
+// move to their own line under the name, the pause row lines up with them.
+@container calendar-hours (max-width: 480px) {
+	.calendarHours__row {
+		grid-template-columns: 52px minmax(0, 1fr) auto minmax(0, 1fr);
+		grid-template-areas:
+			'switch day day day'
+			'. from dash to';
+		gap: 8px;
+
+		> :nth-child(1) {
+			grid-area: switch;
+		}
+
+		> :nth-child(2) {
+			grid-area: day;
+		}
+
+		> :nth-child(3) {
+			grid-area: from;
+		}
+
+		> :nth-child(4) {
+			grid-area: dash;
+		}
+
+		> :nth-child(5) {
+			grid-area: to;
+		}
+	}
+
+	.calendarHours__row--pause {
+		grid-template-areas:
+			'. day day day'
+			'. from dash to';
+		padding-left: 0;
+
+		> :nth-child(1) {
+			grid-area: day;
+		}
+
+		> :nth-child(2) {
+			grid-area: from;
+		}
+
+		> :nth-child(3) {
+			grid-area: dash;
+		}
+
+		> :nth-child(4) {
+			grid-area: to;
+		}
+	}
+
+	.calendarHours__time {
+		min-width: 0;
+
+		input {
+			width: 100%;
+		}
+	}
+
+	.calendarHours__region {
+		padding-left: 0;
+	}
 }
 
 .calendarHours__holidayBox {

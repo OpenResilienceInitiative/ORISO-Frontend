@@ -700,15 +700,16 @@
 		white-space: nowrap;
 	}
 
+	/* No tinted card per kind (Frank 2026-11-17: the light boxes were
+	   removed everywhere else); a hairline between kinds, as on desktop. */
 	.displayFilterDialog__table .displayFilterDialog__row {
 		display: flex;
 		flex-direction: column;
 		gap: 8px;
-		margin: 0 0 8px;
-		padding: 12px 14px;
+		margin: 0;
+		padding: 12px 0;
 		border: 0;
-		border-radius: 16px;
-		background: var(--m3-surface-container-low, #f7f2f2);
+		border-bottom: 1px solid var(--m3-outline-variant, #c4c7c7);
 	}
 
 	.displayFilterDialog__table
