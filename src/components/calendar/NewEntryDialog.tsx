@@ -4,9 +4,14 @@
  * shared invitation form (one flow with "Chat erstellen" and the 1:1's
  * "Termin anlegen"), "Sperrzeit" the blocker form; switching keeps what was
  * entered in the other.
+ *
+ * The switch is a WAI-ARIA tab list, since it changes the form below: one
+ * Tab stop on the selected tab, the arrow keys (wrapping), Home and End
+ * move and select, and the form sits in the tab panel the tabs control
+ * (review 4595635797).
  */
 import * as React from 'react';
-import { useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { M3Dialog } from '../m3Dialog/M3Dialog';
 import { useCalendarInvitationForm } from './useCalendarInvitationForm';
@@ -53,6 +58,14 @@ export interface NewEntryDialogProps {
 
 const TABS: NewEntryTab[] = ['appointment', 'blocker'];
 
+/** Which tab a key moves to, from the index of the selected one. */
+const TAB_KEYS: Partial<Record<string, (at: number) => number>> = {
+	ArrowRight: (at) => (at + 1) % TABS.length,
+	ArrowLeft: (at) => (at - 1 + TABS.length) % TABS.length,
+	Home: () => 0,
+	End: () => TABS.length - 1
+};
+
 export const NewEntryDialog = ({
 	open,
 	initialTab,
@@ -76,6 +89,18 @@ export const NewEntryDialog = ({
 }: NewEntryDialogProps) => {
 	const { t } = useTranslation();
 	const [tab, setTab] = useState<NewEntryTab>(initialTab);
+	const ids = useId();
+	const tabId = (value: NewEntryTab) => `${ids}-tab-${value}`;
+	const panelId = `${ids}-panel`;
+	const tabRefs = useRef<Partial<Record<NewEntryTab, HTMLButtonElement>>>({});
+	const onTabKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>) => {
+		const step = TAB_KEYS[event.key];
+		if (!step) return;
+		event.preventDefault();
+		const next = TABS[step(TABS.indexOf(tab))];
+		setTab(next);
+		tabRefs.current[next]?.focus();
+	};
 	/* The shared invitation form of "Chat erstellen" and the 1:1. */
 	const appointment = useCalendarInvitationForm({
 		slot,
@@ -120,23 +145,34 @@ export const NewEntryDialog = ({
 			<div className="calendarNewEntry">
 				<div
 					className="calendarNewEntry__tabs"
-					role="group"
+					role="tablist"
 					aria-label={t('calendar.dialog.entryKind')}
 				>
 					{TABS.map((value) => (
 						<button
 							key={value}
+							ref={(el) => {
+								if (el) tabRefs.current[value] = el;
+								else delete tabRefs.current[value];
+							}}
 							type="button"
+							role="tab"
+							id={tabId(value)}
 							className="calendarNewEntry__tab"
-							aria-pressed={tab === value}
+							aria-selected={tab === value}
+							aria-controls={panelId}
+							tabIndex={tab === value ? 0 : -1}
 							onClick={() => setTab(value)}
+							onKeyDown={onTabKeyDown}
 							data-cy={`calendar-new-tab-${value}`}
 						>
 							{t(`calendar.dialog.tabs.${value}`)}
 						</button>
 					))}
 				</div>
-				{form.content}
+				<div role="tabpanel" id={panelId} aria-labelledby={tabId(tab)}>
+					{form.content}
+				</div>
 			</div>
 		</M3Dialog>
 	);
