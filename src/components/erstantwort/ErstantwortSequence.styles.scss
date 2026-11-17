@@ -198,104 +198,38 @@
 	margin-top: 4px;
 }
 
-/* Question block (ADR-035 part B): a plain form inside the bubble. */
+/* Question block (ADR-035 part B): the controls are the form kit's
+   (OrisoSelect, OrisoTextarea, MUI Radio, M3Checkbox); only the rhythm
+   between questions lives here. */
 .erstantwort__questionForm {
 	display: flex;
 	flex-direction: column;
-	gap: 16px;
+	gap: 20px;
 	margin-top: 8px;
 }
 
 .erstantwort__question {
 	display: flex;
 	flex-direction: column;
-	gap: 6px;
 	min-width: 0;
 }
 
-.erstantwort__questionGroup {
-	display: flex;
-	flex-direction: column;
-	gap: 6px;
-	min-width: 0;
-	margin: 0;
-	padding: 0;
-	border: 0;
-}
-
-.erstantwort__questionLabel {
-	padding: 0;
+/* Doubled class: MUI's FormLabel styles would otherwise win. */
+.erstantwort__question .erstantwort__questionLabel {
+	margin-bottom: 8px;
 	font-family: $font-family-sans-serif;
 	font-size: 15px;
 	font-weight: 600;
 	line-height: 1.4;
+	color: inherit;
 }
 
-.erstantwort__questionRequired {
-	font-weight: 400;
-	color: var(--md-sys-color-on-surface-variant, #444748);
-}
-
-.erstantwort__questionHelp,
 .erstantwort__questionHint {
 	margin: 0;
 	font-family: $font-family-sans-serif;
 	font-size: 14px;
 	line-height: 1.45;
 	color: var(--md-sys-color-on-surface-variant, #444748);
-}
-
-.erstantwort__questionOption {
-	display: flex;
-	align-items: center;
-	gap: 10px;
-	min-height: 40px;
-	font-family: $font-family-sans-serif;
-	font-size: 15px;
-	cursor: pointer;
-
-	input {
-		flex: none;
-		width: 20px;
-		height: 20px;
-		margin: 0;
-		accent-color: var(--m3-primary, #a5000a);
-	}
-}
-
-.erstantwort__questionInput {
-	width: 100%;
-	min-width: 0;
-	min-height: 44px;
-	padding: 10px 12px;
-	border: 1px solid var(--md-sys-color-outline, #747878);
-	border-radius: 8px;
-	background: var(--md-sys-color-surface, #ffffff);
-	color: inherit;
-	font-family: $font-family-sans-serif;
-	font-size: 15px;
-	line-height: 1.4;
-
-	&:focus-visible {
-		outline: 2px solid var(--m3-primary, #a5000a);
-		outline-offset: 1px;
-	}
-
-	&[aria-invalid='true'] {
-		border-color: var(--m3-error, #ba1a1a);
-	}
-}
-
-textarea.erstantwort__questionInput {
-	resize: vertical;
-}
-
-.erstantwort__questionError {
-	margin: 0;
-	font-family: $font-family-sans-serif;
-	font-size: 13px;
-	font-weight: 600;
-	color: var(--m3-error, #ba1a1a);
 }
 
 .erstantwort__questionsDone {

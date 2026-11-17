@@ -181,7 +181,7 @@ describe('ErstantwortModuleSequence (ADR-035, version-2 payload)', () => {
 		const block = screen.getByTestId('erstantwort-questions-intake');
 		expect(within(block).getAllByRole('radio')).toHaveLength(2);
 		expect(
-			within(block).getByRole('combobox', { name: 'Bundesland' })
+			within(block).getByRole('combobox', { name: /Bundesland/ })
 		).toBeTruthy();
 		expect(within(block).getAllByRole('checkbox')).toHaveLength(2);
 		expect(
@@ -226,9 +226,10 @@ describe('ErstantwortModuleSequence (ADR-035, version-2 payload)', () => {
 			/>
 		);
 		fireEvent.click(screen.getByRole('radio', { name: '18 oder älter' }));
-		fireEvent.change(screen.getByRole('combobox', { name: 'Bundesland' }), {
-			target: { value: 'be' }
-		});
+		fireEvent.mouseDown(
+			screen.getByRole('combobox', { name: /Bundesland/ })
+		);
+		fireEvent.click(screen.getByRole('option', { name: 'Berlin' }));
 		fireEvent.click(screen.getByRole('checkbox', { name: 'Familie' }));
 		fireEvent.click(
 			screen.getByRole('button', { name: 'Antworten senden' })

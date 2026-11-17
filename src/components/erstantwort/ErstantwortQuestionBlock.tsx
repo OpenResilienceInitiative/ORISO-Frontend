@@ -2,6 +2,18 @@ import * as React from 'react';
 import { useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import CheckCircleOutlineRoundedIcon from '@mui/icons-material/CheckCircleOutlineRounded';
+import {
+	Checkbox,
+	FormControl,
+	FormControlLabel,
+	FormGroup,
+	FormHelperText,
+	FormLabel,
+	Radio,
+	RadioGroup
+} from '@mui/material';
+import { OrisoSelect } from '../form/OrisoSelect';
+import { OrisoTextarea } from '../form/OrisoTextarea';
 import type {
 	ErstantwortQuestion,
 	ErstantwortQuestionsSection
@@ -75,7 +87,7 @@ export const ErstantwortQuestionBlock: React.FC<
 		if (open.length) {
 			setMissing(new Set(open));
 			const first = formRef.current?.querySelector<HTMLElement>(
-				`[data-question-id="${open[0]}"] input, [data-question-id="${open[0]}"] select, [data-question-id="${open[0]}"] textarea`
+				`[data-question-id="${open[0]}"] :is(input, textarea, [role="combobox"])`
 			);
 			first?.focus();
 			return;
@@ -105,42 +117,21 @@ export const ErstantwortQuestionBlock: React.FC<
 	const fieldId = (question: ErstantwortQuestion) =>
 		`${baseId}-${question.id}`;
 
-	const requiredLabel = (
-		<span className="erstantwort__questionRequired">
-			{` (${t('erstantwort.questions.requiredMark', 'Pflichtangabe')})`}
-		</span>
+	/* The required mark is part of the label text, so it is read out and not
+	   carried by colour or an asterisk alone. */
+	const labelText = (question: ErstantwortQuestion) =>
+		question.required
+			? `${question.label} (${t('erstantwort.questions.requiredMark', 'Pflichtangabe')})`
+			: question.label;
+
+	const errorText = t(
+		'erstantwort.questions.required',
+		'Bitte beantworten Sie diese Frage.'
 	);
 
-	const errorFor = (question: ErstantwortQuestion) =>
-		missing.has(question.id) ? (
-			<p
-				id={`${fieldId(question)}-error`}
-				className="erstantwort__questionError"
-			>
-				{t(
-					'erstantwort.questions.required',
-					'Bitte beantworten Sie diese Frage.'
-				)}
-			</p>
-		) : null;
-
-	const describedBy = (question: ErstantwortQuestion) =>
-		[
-			question.help ? `${fieldId(question)}-help` : null,
-			missing.has(question.id) ? `${fieldId(question)}-error` : null
-		]
-			.filter(Boolean)
-			.join(' ') || undefined;
-
-	const help = (question: ErstantwortQuestion) =>
-		question.help ? (
-			<p
-				id={`${fieldId(question)}-help`}
-				className="erstantwort__questionHelp"
-			>
-				{question.help}
-			</p>
-		) : null;
+	/* Help text, replaced by the error while the question is still open. */
+	const helperText = (question: ErstantwortQuestion) =>
+		missing.has(question.id) ? errorText : question.help;
 
 	const renderQuestion = (question: ErstantwortQuestion) => {
 		const id = fieldId(question);
@@ -155,111 +146,135 @@ export const ErstantwortQuestionBlock: React.FC<
 		if (question.type === 'text') {
 			return (
 				<>
-					<label htmlFor={id} className="erstantwort__questionLabel">
-						{question.label}
-						{question.required && requiredLabel}
-					</label>
-					{help(question)}
-					<textarea
+					<FormLabel
+						htmlFor={id}
+						error={invalid}
+						className="erstantwort__questionLabel"
+					>
+						{labelText(question)}
+					</FormLabel>
+					<OrisoTextarea
 						id={id}
-						className="erstantwort__questionInput"
-						rows={3}
 						value={(values[question.id] as string) ?? ''}
-						aria-invalid={invalid || undefined}
-						aria-describedby={describedBy(question)}
+						error={invalid}
+						helperText={helperText(question)}
+						minRows={3}
+						fullWidth
 						onChange={(event) =>
 							setValue(question.id, event.target.value)
 						}
 					/>
-					{errorFor(question)}
 				</>
 			);
 		}
 
 		if (question.type === 'single' && question.display === 'dropdown') {
 			return (
-				<>
-					<label htmlFor={id} className="erstantwort__questionLabel">
-						{question.label}
-						{question.required && requiredLabel}
-					</label>
-					{help(question)}
-					<select
-						id={id}
-						className="erstantwort__questionInput"
-						value={(values[question.id] as string) ?? ''}
-						aria-invalid={invalid || undefined}
-						aria-describedby={describedBy(question)}
-						onChange={(event) =>
-							setValue(question.id, event.target.value)
-						}
-					>
-						<option value="">
-							{t('erstantwort.questions.choose', 'Bitte wählen')}
-						</option>
-						{question.options.map((option) => (
-							<option key={option.id} value={option.id}>
-								{option.label}
-							</option>
-						))}
-					</select>
-					{errorFor(question)}
-				</>
+				<OrisoSelect
+					id={id}
+					labelAbove
+					placeholder={t(
+						'erstantwort.questions.choose',
+						'Bitte wählen'
+					)}
+					label={labelText(question)}
+					value={(values[question.id] as string) ?? ''}
+					error={invalid}
+					helperText={helperText(question)}
+					options={question.options.map((option) => ({
+						value: option.id,
+						label: option.label
+					}))}
+					onChange={(event) =>
+						setValue(question.id, event.target.value)
+					}
+				/>
 			);
 		}
 
-		const multi = question.type === 'multi';
-		const current = values[question.id];
-		const selected = new Set(
-			Array.isArray(current) ? current : current ? [current] : []
-		);
-		return (
-			<fieldset
-				className="erstantwort__questionGroup"
-				role={multi ? 'group' : 'radiogroup'}
-				aria-labelledby={`${id}-legend`}
-				aria-invalid={invalid || undefined}
-				aria-describedby={describedBy(question)}
+		const legendId = `${id}-legend`;
+		const helper = helperText(question);
+		const helperId = helper ? `${id}-helper` : undefined;
+		const legend = (
+			<FormLabel
+				id={legendId}
+				component="legend"
+				className="erstantwort__questionLabel"
 			>
-				<legend
-					id={`${id}-legend`}
-					className="erstantwort__questionLabel"
-				>
-					{question.label}
-					{question.required && requiredLabel}
-				</legend>
-				{help(question)}
-				{question.options.map((option) => (
-					<label
-						key={option.id}
-						className="erstantwort__questionOption"
+				{labelText(question)}
+			</FormLabel>
+		);
+		const helperNode = helper ? (
+			<FormHelperText id={helperId} error={invalid}>
+				{helper}
+			</FormHelperText>
+		) : null;
+
+		if (question.type === 'single') {
+			return (
+				<FormControl component="fieldset" error={invalid} fullWidth>
+					{legend}
+					<RadioGroup
+						name={id}
+						value={(values[question.id] as string) ?? ''}
+						aria-labelledby={legendId}
+						aria-describedby={helperId}
+						aria-invalid={invalid || undefined}
+						onChange={(_, value) => setValue(question.id, value)}
 					>
-						<input
-							type={multi ? 'checkbox' : 'radio'}
-							name={id}
-							value={option.id}
-							checked={selected.has(option.id)}
-							onChange={(event) => {
-								if (!multi) {
-									setValue(question.id, option.id);
-									return;
-								}
-								const next = new Set(selected);
-								if (event.target.checked) next.add(option.id);
-								else next.delete(option.id);
-								setValue(
-									question.id,
-									question.options
-										.map((entry) => entry.id)
-										.filter((entryId) => next.has(entryId))
-								);
-							}}
+						{question.options.map((option) => (
+							<FormControlLabel
+								key={option.id}
+								value={option.id}
+								control={<Radio />}
+								label={option.label}
+							/>
+						))}
+					</RadioGroup>
+					{helperNode}
+				</FormControl>
+			);
+		}
+
+		const selected = Array.isArray(values[question.id])
+			? (values[question.id] as string[])
+			: [];
+		return (
+			<FormControl component="fieldset" error={invalid} fullWidth>
+				{legend}
+				<FormGroup
+					role="group"
+					aria-labelledby={legendId}
+					aria-describedby={helperId}
+				>
+					{question.options.map((option) => (
+						<FormControlLabel
+							key={option.id}
+							label={option.label}
+							control={
+								<Checkbox
+									checked={selected.includes(option.id)}
+									onChange={(event) =>
+										setValue(
+											question.id,
+											question.options
+												.map((entry) => entry.id)
+												.filter((entryId) =>
+													entryId === option.id
+														? event.target.checked
+														: selected.includes(
+																entryId
+															)
+												)
+										)
+									}
+								/>
+							}
 						/>
-						<span>{option.label}</span>
-					</label>
-				))}
-				{errorFor(question)}
-			</fieldset>
+					))}
+				</FormGroup>
+				{helperNode}
+			</FormControl>
 		);
 	};
 

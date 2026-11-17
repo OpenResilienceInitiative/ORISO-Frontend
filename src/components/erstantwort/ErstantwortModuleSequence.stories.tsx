@@ -251,7 +251,7 @@ export const WithQuestionBlock: Story = {
 		await expect(within(block).getAllByRole('radio')).toHaveLength(3);
 		await expect(
 			within(block).getByRole('combobox', {
-				name: 'In welchem Bundesland wohnen Sie?'
+				name: /In welchem Bundesland/
 			})
 		).toBeTruthy();
 	}
@@ -278,11 +278,15 @@ export const QuestionsAnswered: Story = {
 	play: async ({ canvasElement, args }) => {
 		const canvas = within(canvasElement);
 		await userEvent.click(canvas.getByRole('radio', { name: '18 bis 26' }));
-		await userEvent.selectOptions(
-			canvas.getByRole('combobox', {
-				name: 'In welchem Bundesland wohnen Sie?'
-			}),
-			'be'
+		await userEvent.click(
+			canvas.getByRole('combobox', { name: /In welchem Bundesland/ })
+		);
+		/* The menu is a portal on the document body. */
+		await userEvent.click(
+			await within(canvasElement.ownerDocument.body).findByRole(
+				'option',
+				{ name: 'Berlin' }
+			)
 		);
 		await userEvent.click(
 			canvas.getByRole('button', { name: 'Antworten senden' })

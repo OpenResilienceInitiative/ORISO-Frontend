@@ -4,7 +4,7 @@ import * as React from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { SelectChangeEvent } from '@mui/material/Select';
-import { OrisoMultiSelect } from './OrisoSelect';
+import { OrisoMultiSelect, OrisoSelect } from './OrisoSelect';
 
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({
@@ -109,5 +109,40 @@ describe('OrisoMultiSelect searchable', () => {
 		const nextValue = onChange.mock.calls[0][0].target.value as string[];
 		expect(nextValue).toContain('de');
 		expect(nextValue).toContain('fr');
+	});
+});
+
+describe('OrisoSelect labelAbove', () => {
+	it('puts the whole label above the field and shows the placeholder inside', () => {
+		render(
+			<OrisoSelect
+				labelAbove
+				placeholder="Please choose"
+				label="In which federal state do you live?"
+				value=""
+				options={languageOptions}
+			/>
+		);
+		const label = screen.getByText('In which federal state do you live?');
+		expect(label.tagName).toBe('LABEL');
+		expect(label.className).not.toContain('MuiInputLabel');
+		expect(
+			screen.getByRole('combobox', { name: /In which federal state/ })
+		).toBeTruthy();
+		expect(screen.getByText('Please choose')).toBeTruthy();
+	});
+
+	it('shows the chosen option instead of the placeholder', () => {
+		render(
+			<OrisoSelect
+				labelAbove
+				placeholder="Please choose"
+				label="Language"
+				value="fr"
+				options={languageOptions}
+			/>
+		);
+		expect(screen.getByText('(FR) French')).toBeTruthy();
+		expect(screen.queryByText('Please choose')).toBeNull();
 	});
 });
