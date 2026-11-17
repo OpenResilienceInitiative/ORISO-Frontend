@@ -60,7 +60,9 @@ import {
 } from '../../api/apiCalendar';
 import {
 	apiCancelSessionAppointment,
+	apiConfirmSessionAppointment,
 	apiCreateSessionAppointment,
+	apiDeclineSessionAppointment,
 	apiMoveSessionAppointment
 } from '../../api/apiSessionAppointments';
 import { apiGetConsultantSessionList } from '../../api/apiGetConsultantSessionList';
@@ -89,6 +91,7 @@ import {
 import {
 	addProposal,
 	ProposalNoLongerValid,
+	RequestedTimeTaken,
 	withdrawProposal,
 	type MoveProposal
 } from './calendarActions';
@@ -572,7 +575,7 @@ export const CalendarPageWired = () => {
 		conversations.find((c) => c.sessionId === sessionId);
 
 	const notice = (
-		kind: 'created' | 'moved' | 'cancelled',
+		kind: 'created' | 'moved' | 'cancelled' | 'confirmed' | 'declined',
 		sessionId: number,
 		start: Date,
 		end: Date
@@ -653,6 +656,46 @@ export const CalendarPageWired = () => {
 			new Date(entry.end)
 		);
 	};
+
+	/**
+	 * FE#2287: the counsellor answers an advice seeker's request from the
+	 * calendar, with the same calls and the same conversation notice as from
+	 * the appointment button under the chat header. A refused answer reloads
+	 * the calendar; `REQUESTED_TIME_TAKEN` says the time is no longer free.
+	 */
+	const answerRequest = async (
+		entry: CalendarEntry,
+		decision: 'confirmed' | 'declined'
+	) => {
+		if (entry.sessionId === undefined) return;
+		try {
+			await (
+				decision === 'confirmed'
+					? apiConfirmSessionAppointment
+					: apiDeclineSessionAppointment
+			)(entry.sessionId, entry.id);
+		} catch (error) {
+			reloadEntries();
+			if (
+				error instanceof Response &&
+				error.headers.get('X-Reason') === 'REQUESTED_TIME_TAKEN'
+			)
+				throw new RequestedTimeTaken();
+			throw error;
+		}
+		reloadEntries();
+		afterChange();
+		await notice(
+			decision,
+			entry.sessionId,
+			new Date(entry.start),
+			new Date(entry.end)
+		);
+	};
+	const confirmRequest = (entry: CalendarEntry) =>
+		answerRequest(entry, 'confirmed');
+	const declineRequest = (entry: CalendarEntry) =>
+		answerRequest(entry, 'declined');
 
 	const removeBlocker = async (entry: CalendarEntry) => {
 		await apiDeleteCalendarBlocker(entry.id);
@@ -1007,6 +1050,8 @@ export const CalendarPageWired = () => {
 			onWithdrawProposal={consultant ? withdrawMove : undefined}
 			onAcceptProposal={consultant ? acceptProposal : undefined}
 			onDeclineProposal={consultant ? declineProposal : undefined}
+			onConfirmRequest={consultant ? confirmRequest : undefined}
+			onDeclineRequest={consultant ? declineRequest : undefined}
 			onSaveWorkingHours={consultant ? saveWorkingHours : undefined}
 			consultationHours={consultant ? consultationHours : undefined}
 			onSaveConsultationHours={

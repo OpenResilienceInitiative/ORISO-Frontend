@@ -70,7 +70,8 @@ export const entryFromApi = (dto: CalendarEntryDTO): CalendarEntry => {
 		...(typeof dto.sessionId === 'number' && { sessionId: dto.sessionId }),
 		...((type === 'blocker' || type === 'busy') &&
 			isAllDayRange(dto.start, dto.end) && { allDay: true }),
-		movable: dto.movable === true
+		movable: dto.movable === true,
+		...(dto.requested === true && { requested: true })
 	};
 };
 

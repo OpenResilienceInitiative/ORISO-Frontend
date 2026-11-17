@@ -4783,7 +4783,8 @@
 					"requested": "Rendez-vous demandé : {{date}} – en attente de confirmation",
 					"confirmed": "Rendez-vous confirmé : {{date}}",
 					"declined": "Demande de rendez-vous refusée : {{date}}",
-					"withdrawn": "Demande de rendez-vous retirée : {{date}}"
+					"withdrawn": "Demande de rendez-vous retirée : {{date}}",
+					"expired": "Demande de rendez-vous expirée : {{date}} – sans réponse avant le début"
 				},
 				"noticeFailed": {
 					"title": "Avis non envoyé",
@@ -7629,6 +7630,18 @@
 			"slotMinutes": "Durée d’un rendez-vous",
 			"minutes": "{{count}} minutes",
 			"invalid": "La fin doit être après le début."
+		},
+		"appointmentRequest": {
+			"status": "Demandé · attend votre réponse",
+			"from": "Demande de {{name}}",
+			"menu": "Rendez-vous demandé",
+			"hint": "Jusqu'à votre réponse, le créneau est réservé. Sans réponse avant le début, la demande expire.",
+			"confirm": "Confirmer",
+			"confirmHint": "Le rendez-vous est fixé",
+			"decline": "Refuser",
+			"declineHint": "Le créneau redevient libre",
+			"confirmed": "Rendez-vous confirmé : {{date}}.",
+			"declined": "Demande de rendez-vous refusée : {{date}}."
 		}
 	}
 }

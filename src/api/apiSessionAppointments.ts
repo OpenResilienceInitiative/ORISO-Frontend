@@ -20,6 +20,13 @@ export interface SessionAppointment {
 	status: SessionAppointmentStatus;
 	/** ADR-032 §2a. Absent on appointments made before the calendar. */
 	kind?: SessionAppointmentKind | null;
+	/**
+	 * FE#2287: a DECLINED request nobody answered by its start, declined
+	 * automatically. `noticePending`: its conversation notice is still to be
+	 * posted; claim it first with `apiClaimSessionAppointmentExpiryNotice`.
+	 */
+	expired?: boolean;
+	noticePending?: boolean;
 	/** The asker's counterpart has no displayName; the whole object may be absent. */
 	counterpart?: { username?: string; displayName?: string };
 }
@@ -184,3 +191,18 @@ export const apiConfirmSessionAppointment = decide('confirm');
 
 /** FE#2287: the counsellor declines a request; it becomes DECLINED. */
 export const apiDeclineSessionAppointment = decide('decline');
+
+/**
+ * FE#2287: claims the conversation notice of a request that expired
+ * unanswered. Only the first participant's claim succeeds; any later one
+ * rejects (409), so the notice is posted once.
+ */
+export const apiClaimSessionAppointmentExpiryNotice = (
+	sessionId: number,
+	appointmentId: string
+): Promise<unknown> =>
+	fetchData({
+		url: `${endpoints.sessionAppointments(sessionId)}/${appointmentId}/expiry-notice`,
+		method: FETCH_METHODS.POST,
+		responseHandling: WRITE_HANDLING
+	});

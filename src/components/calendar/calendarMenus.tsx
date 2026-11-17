@@ -759,8 +759,86 @@ export const ProposalMenuContent = ({
 };
 
 /* ------------------------------------------------------------------ */
-/* A proposal waiting for one's own answer ("Offene Verschiebungen")    */
+/* Something waiting for one's own answer: yes or no                    */
 /* ------------------------------------------------------------------ */
+
+interface AnswerMenuContentProps {
+	/** Who asks: avatar and "… von {name}". */
+	name: string;
+	subtitle: string;
+	title: string;
+	notes: string[];
+	acceptTitle: string;
+	acceptHint: string;
+	declineTitle: string;
+	declineHint: string;
+	/** The answer is on its way. */
+	busy?: boolean;
+	onAccept?: () => void;
+	onDecline?: () => void;
+}
+
+/**
+ * The one answer menu of the calendar: a colleague's move proposal and an
+ * advice seeker's appointment request (FE#2287) look and work alike.
+ */
+const AnswerMenuContent = ({
+	name,
+	subtitle,
+	title,
+	notes,
+	acceptTitle,
+	acceptHint,
+	declineTitle,
+	declineHint,
+	busy,
+	onAccept,
+	onDecline
+}: AnswerMenuContentProps) => (
+	<>
+		<div className="calendarMenu__head">
+			<span
+				className={`calendarMenu__avatar ${avatarToneClass(name)}`}
+				aria-hidden="true"
+			>
+				{initialsOf(name)}
+			</span>
+			<ChatMenuDropdownHeader
+				subtitle={subtitle}
+				title={title}
+				titleAs="p"
+			/>
+		</div>
+		{notes.map((note) => (
+			<ChatMenuDropdownNote key={note}>{note}</ChatMenuDropdownNote>
+		))}
+		{(onAccept || onDecline) && <ChatMenuDropdownDivider />}
+		{onAccept && (
+			<ChatMenuDropdownItem
+				role="menuitem"
+				icon={<CheckIcon fontSize="small" />}
+				title={acceptTitle}
+				description={acceptHint}
+				disabled={busy}
+				onClick={onAccept}
+				data-cy="calendar-request-accept"
+			/>
+		)}
+		{onDecline && (
+			<ChatMenuDropdownItem
+				role="menuitem"
+				icon={<CloseIcon fontSize="small" />}
+				title={declineTitle}
+				description={declineHint}
+				disabled={busy}
+				onClick={onDecline}
+				data-cy="calendar-request-decline"
+			/>
+		)}
+	</>
+);
+
+/* A proposal waiting for one's own answer ("Offene Verschiebungen") */
 
 export interface RequestMenuContentProps {
 	proposal: MoveProposal;
@@ -783,53 +861,63 @@ export const RequestMenuContent = ({
 	const format = useRangeFormat();
 	const name = proposal.proposerName ?? t('calendar.proposal.someone');
 	return (
-		<>
-			<div className="calendarMenu__head">
-				<span
-					className={`calendarMenu__avatar ${avatarToneClass(name)}`}
-					aria-hidden="true"
-				>
-					{initialsOf(name)}
-				</span>
-				<ChatMenuDropdownHeader
-					subtitle={t('calendar.proposal.from', { name })}
-					title={t('calendar.proposal.requestMenu')}
-					titleAs="p"
-				/>
-			</div>
-			<ChatMenuDropdownNote>
-				{t('calendar.proposal.change', {
+		<AnswerMenuContent
+			name={name}
+			subtitle={t('calendar.proposal.from', { name })}
+			title={t('calendar.proposal.requestMenu')}
+			notes={[
+				t('calendar.proposal.change', {
 					from: format(from.start, from.end),
 					to: format(proposal.start, proposal.end)
-				})}
-			</ChatMenuDropdownNote>
-			<ChatMenuDropdownNote>
-				{t('calendar.proposal.requestHint')}
-			</ChatMenuDropdownNote>
-			{(onAccept || onDecline) && <ChatMenuDropdownDivider />}
-			{onAccept && (
-				<ChatMenuDropdownItem
-					role="menuitem"
-					icon={<CheckIcon fontSize="small" />}
-					title={t('calendar.proposal.accept')}
-					description={t('calendar.proposal.acceptHint')}
-					disabled={busy}
-					onClick={onAccept}
-					data-cy="calendar-request-accept"
-				/>
-			)}
-			{onDecline && (
-				<ChatMenuDropdownItem
-					role="menuitem"
-					icon={<CloseIcon fontSize="small" />}
-					title={t('calendar.proposal.decline')}
-					description={t('calendar.proposal.declineHint')}
-					disabled={busy}
-					onClick={onDecline}
-					data-cy="calendar-request-decline"
-				/>
-			)}
-		</>
+				}),
+				t('calendar.proposal.requestHint')
+			]}
+			acceptTitle={t('calendar.proposal.accept')}
+			acceptHint={t('calendar.proposal.acceptHint')}
+			declineTitle={t('calendar.proposal.decline')}
+			declineHint={t('calendar.proposal.declineHint')}
+			busy={busy}
+			onAccept={onAccept}
+			onDecline={onDecline}
+		/>
+	);
+};
+
+/* An advice seeker's appointment request (FE#2287) */
+
+export interface AppointmentRequestMenuContentProps {
+	entry: CalendarEntry;
+	busy?: boolean;
+	onConfirm?: () => void;
+	onDecline?: () => void;
+}
+
+export const AppointmentRequestMenuContent = ({
+	entry,
+	busy,
+	onConfirm,
+	onDecline
+}: AppointmentRequestMenuContentProps) => {
+	const { t } = useTranslation();
+	const format = useRangeFormat();
+	const name = entry.title ?? t('calendar.proposal.someone');
+	return (
+		<AnswerMenuContent
+			name={name}
+			subtitle={t('calendar.appointmentRequest.from', { name })}
+			title={t('calendar.appointmentRequest.menu')}
+			notes={[
+				`${t(`calendar.kinds.${entry.kind ?? 'video'}`)} · ${format(entry.start, entry.end)}`,
+				t('calendar.appointmentRequest.hint')
+			]}
+			acceptTitle={t('calendar.appointmentRequest.confirm')}
+			acceptHint={t('calendar.appointmentRequest.confirmHint')}
+			declineTitle={t('calendar.appointmentRequest.decline')}
+			declineHint={t('calendar.appointmentRequest.declineHint')}
+			busy={busy}
+			onAccept={onConfirm}
+			onDecline={onDecline}
+		/>
 	);
 };
 

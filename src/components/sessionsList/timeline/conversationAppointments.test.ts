@@ -182,6 +182,30 @@ describe('conversation appointments', () => {
 		).toEqual(['scheduled']);
 	});
 
+	it('drops a request at its start: unanswered by then, it has expired (Frank, 17 Nov)', () => {
+		const starting = appointment(
+			'starting',
+			NOW.toISOString(),
+			new Date(NOW.getTime() + 3600_000).toISOString(),
+			'REQUESTED'
+		);
+		const justAfter = appointment(
+			'justAfter',
+			new Date(NOW.getTime() + 1).toISOString(),
+			new Date(NOW.getTime() + 3600_000).toISOString(),
+			'REQUESTED'
+		);
+		expect(
+			pendingRequests([starting, justAfter], NOW).map((a) => a.id)
+		).toEqual(['justAfter']);
+	});
+
+	it('names the notice of an expired request (FE#2287)', () => {
+		expect(appointmentNoticeKey('expired')).toBe(
+			'sessionList.timeline.appointment.notice.expired'
+		);
+	});
+
 	it('names the notices of a request and its answer (FE#2287)', () => {
 		expect(appointmentNoticeKey('requested')).toBe(
 			'sessionList.timeline.appointment.notice.requested'

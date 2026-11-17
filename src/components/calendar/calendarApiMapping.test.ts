@@ -38,6 +38,23 @@ describe('calendarApiMapping', () => {
 		});
 	});
 
+	it('marks an advice seeker’s request waiting for confirmation (FE#2287)', () => {
+		const request = entryFromApi({
+			id: 'r1',
+			type: 'APPOINTMENT',
+			start: '2026-11-16T09:00:00Z',
+			end: '2026-11-16T10:00:00Z',
+			ownerId: 'me',
+			kind: 'VIDEO',
+			title: 'ruhiges_yak',
+			sessionId: 4401,
+			movable: false,
+			requested: true
+		});
+		expect(request.requested).toBe(true);
+		expect(request.movable).toBe(false);
+	});
+
 	it('treats an appointment from before the calendar as a video call', () => {
 		const entry = entryFromApi({
 			id: 'a2',

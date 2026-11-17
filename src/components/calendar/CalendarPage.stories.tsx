@@ -54,6 +54,7 @@ import {
 	ME,
 	OWN_ENTRIES,
 	STORY_NOW,
+	STORY_APPOINTMENT_REQUESTS,
 	STORY_PROPOSALS,
 	STORY_REQUESTS,
 	STORY_WORKING_HOURS
@@ -79,6 +80,8 @@ interface HarnessProps {
 	proposals?: MoveProposal[];
 	/** Proposals colleagues sent for one's own appointments. */
 	requests?: MoveProposal[];
+	/** FE#2287: advice seekers' requests waiting for confirmation. */
+	appointmentRequests?: CalendarEntry[];
 	withProposals?: boolean;
 	workingHours?: WorkingHours;
 	holidayRegion?: HolidayRegion | null;
@@ -157,6 +160,7 @@ const Scenario = ({
 	switcherStyle = 'menu',
 	proposals: initialProposals = [],
 	requests: initialRequests = [],
+	appointmentRequests = [],
 	withProposals = true,
 	workingHours: initialHours = STORY_WORKING_HOURS,
 	holidayRegion: initialRegion = null,
@@ -169,7 +173,11 @@ const Scenario = ({
 	const colleagues =
 		role === 'consultant' ? colleaguesInScope(COLLEAGUES, scope) : [];
 	const [own, setOwn] = useState<CalendarEntry[]>(
-		empty ? [] : role === 'asker' ? ASKER_ENTRIES : OWN_ENTRIES
+		empty
+			? []
+			: role === 'asker'
+				? ASKER_ENTRIES
+				: [...OWN_ENTRIES, ...appointmentRequests]
 	);
 	const [hours, setHours] = useState<WorkingHours>(initialHours);
 	/* Sprechstunden (FE#2287): Tuesday and Thursday mornings, requests
@@ -361,6 +369,32 @@ const Scenario = ({
 					? (proposal) =>
 							setRequests((all) =>
 								all.filter((p) => p.id !== proposal.id)
+							)
+					: undefined
+			}
+			onConfirmRequest={
+				role === 'consultant'
+					? (entry) =>
+							// Like UserService: the request becomes an
+							// ordinary appointment.
+							setOwn((all) =>
+								all.map((e) =>
+									e.id === entry.id
+										? {
+												...e,
+												requested: undefined,
+												movable: true
+											}
+										: e
+								)
+							)
+					: undefined
+			}
+			onDeclineRequest={
+				role === 'consultant'
+					? (entry) =>
+							setOwn((all) =>
+								all.filter((e) => e.id !== entry.id)
 							)
 					: undefined
 			}
@@ -1280,6 +1314,104 @@ export const DeclineRequest: Story = {
 			canvasElement.querySelector('[data-cy="calendar-received-r1"]')
 		).toBeTruthy();
 		await waitFor(() => expect(navCount(canvasElement)).toBe('1'));
+	}
+};
+
+/** FE#2287: an advice seeker's request in the grid. */
+const appointmentRequestEl = async (canvasElement: HTMLElement) => {
+	let el: HTMLElement | null = null;
+	await waitFor(() => {
+		el = canvasElement.querySelector<HTMLElement>('[data-entry-id="q1"]');
+		expect(el).toBeTruthy();
+	});
+	return el as unknown as HTMLElement;
+};
+
+export const AppointmentRequest: Story = {
+	name: 'Appointment request — advice seeker asked, dashed until answered (FE#2287)',
+	args: { appointmentRequests: STORY_APPOINTMENT_REQUESTS },
+	play: async ({ canvasElement }) => {
+		const dashed = await appointmentRequestEl(canvasElement);
+		await expect(dashed.className).toContain('calEntry--proposal');
+		await expect(dashed.className).toContain('calEntry--requested');
+		await expect(dashed.textContent).toContain(
+			'Angefragt · wartet auf Sie'
+		);
+		await expect(dashed.getAttribute('aria-label')).toMatch(
+			/leise_lerche · Angefragt · wartet auf Sie, .*11:00–12:00$/
+		);
+	}
+};
+
+export const AppointmentRequestMenu: Story = {
+	name: 'Appointment request — "Bestätigen" / "Ablehnen" like a move proposal',
+	args: { appointmentRequests: STORY_APPOINTMENT_REQUESTS },
+	play: async ({ canvasElement }) => {
+		await userEvent.click(await appointmentRequestEl(canvasElement));
+		const menu = within(await findCy('calendar-menu-appointmentRequest'));
+		await expect(menu.getByText('Termin angefragt')).toBeTruthy();
+		await expect(menu.getByText('Anfrage von leise_lerche')).toBeTruthy();
+		await expect(
+			menu.getByRole('menuitem', { name: /^Bestätigen/ })
+		).toBeTruthy();
+		await expect(
+			menu.getByRole('menuitem', { name: /^Ablehnen/ })
+		).toBeTruthy();
+	}
+};
+
+export const AppointmentRequestConfirm: Story = {
+	name: 'Appointment request — confirmed, an ordinary appointment',
+	args: { appointmentRequests: STORY_APPOINTMENT_REQUESTS },
+	play: async ({ canvasElement }) => {
+		await userEvent.click(await appointmentRequestEl(canvasElement));
+		const menu = within(await findCy('calendar-menu-appointmentRequest'));
+		await userEvent.click(
+			menu.getByRole('menuitem', { name: /^Bestätigen/ })
+		);
+		await expect(
+			await body().findByText(/^Termin bestätigt: .*11:00–12:00\.$/)
+		).toBeTruthy();
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector('[data-entry-id="q1"]')?.className
+			).not.toContain('calEntry--proposal')
+		);
+	}
+};
+
+export const AppointmentRequestDecline: Story = {
+	name: 'Appointment request — declined, the time is free',
+	args: { appointmentRequests: STORY_APPOINTMENT_REQUESTS },
+	play: async ({ canvasElement }) => {
+		await userEvent.click(await appointmentRequestEl(canvasElement));
+		const menu = within(await findCy('calendar-menu-appointmentRequest'));
+		await userEvent.click(
+			menu.getByRole('menuitem', { name: /^Ablehnen/ })
+		);
+		await expect(
+			await body().findByText(
+				/^Terminanfrage abgelehnt: .*11:00–12:00\.$/
+			)
+		).toBeTruthy();
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector('[data-entry-id="q1"]')
+			).toBeNull()
+		);
+	}
+};
+
+export const AppointmentRequestPhone: Story = {
+	name: 'Appointment request — phone 390 px',
+	globals: phone390Globals,
+	args: {
+		compact: true,
+		phone: true,
+		appointmentRequests: STORY_APPOINTMENT_REQUESTS
+	},
+	play: async ({ canvasElement }) => {
+		await appointmentRequestEl(canvasElement);
 	}
 };
 

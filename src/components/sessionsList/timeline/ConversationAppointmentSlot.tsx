@@ -16,9 +16,11 @@ import {
 	UserDataContext
 } from '../../../globalState';
 import {
+	apiClaimSessionAppointmentExpiryNotice,
 	apiGetSessionAppointments,
 	type SessionAppointment
 } from '../../../api/apiSessionAppointments';
+import { useAppointmentNotice } from './useAppointmentNotice';
 import {
 	AppointmentDateDialog,
 	type AppointmentDateDialogProps
@@ -88,6 +90,34 @@ export const ConversationAppointmentSlot = ({
 			active = false;
 		};
 	}, [sessionId, reload]);
+
+	/*
+	 * FE#2287: a request nobody answered by its start was declined by
+	 * UserService, which cannot write into the encrypted room. Whoever opens
+	 * the conversation first claims the notice and posts it, the way a
+	 * counsellor's decline is posted; a lost claim posts nothing.
+	 */
+	const sendNotice = useAppointmentNotice();
+	useEffect(() => {
+		if (sessionId === undefined || !Array.isArray(appointments)) return;
+		appointments
+			.filter((a) => a.expired && a.noticePending)
+			.forEach((a) => {
+				apiClaimSessionAppointmentExpiryNotice(sessionId, a.id).then(
+					() =>
+						sendNotice({
+							kind: 'expired',
+							start: new Date(a.startTime),
+							end: new Date(a.endTime),
+							sessionId,
+							matrixRoomId
+						}),
+					() => undefined
+				);
+			});
+		// Once per load of the list.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [appointments]);
 
 	const onAction = useAppointmentActions({
 		onMove: (entry) => setDialog({ entry })

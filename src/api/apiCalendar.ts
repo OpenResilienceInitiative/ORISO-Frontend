@@ -27,6 +27,8 @@ export interface CalendarEntryDTO {
 	sessionId?: number | null;
 	seriesId?: string | null;
 	movable?: boolean;
+	/** FE#2287: own view only, an advice seeker's request waiting for confirmation. */
+	requested?: boolean;
 }
 
 export interface CalendarColleagueDTO {

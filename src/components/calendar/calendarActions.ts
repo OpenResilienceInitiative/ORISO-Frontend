@@ -112,6 +112,16 @@ export class ProposalNoLongerValid extends Error {
 	}
 }
 
+/**
+ * FE#2287: confirming an advice seeker's request was refused because the
+ * time is no longer free (UserService `REQUESTED_TIME_TAKEN`).
+ */
+export class RequestedTimeTaken extends Error {
+	constructor() {
+		super('REQUESTED_TIME_TAKEN');
+	}
+}
+
 /** The proposal waits for `ownerId`: it is about one of their entries. */
 export const receivedBy = (proposal: MoveProposal, ownerId: string) =>
 	!!proposal.approverId && proposal.approverId === ownerId;

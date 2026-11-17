@@ -4749,7 +4749,8 @@
 					"requested": "Appointment requested: {{date}} – waiting for confirmation",
 					"confirmed": "Appointment confirmed: {{date}}",
 					"declined": "Appointment request declined: {{date}}",
-					"withdrawn": "Appointment request withdrawn: {{date}}"
+					"withdrawn": "Appointment request withdrawn: {{date}}",
+					"expired": "Appointment request expired: {{date}} – it was not answered before it began"
 				},
 				"noticeFailed": {
 					"title": "Notice not sent",
@@ -7544,6 +7545,18 @@
 			"slotMinutes": "Length of an appointment",
 			"minutes": "{{count}} min",
 			"invalid": "The end must be after the start."
+		},
+		"appointmentRequest": {
+			"status": "Requested · waiting for you",
+			"from": "Request from {{name}}",
+			"menu": "Appointment requested",
+			"hint": "Until you answer, the time is held. Without an answer by its start, the request expires.",
+			"confirm": "Confirm",
+			"confirmHint": "The appointment is booked",
+			"decline": "Decline",
+			"declineHint": "The time becomes free again",
+			"confirmed": "Appointment confirmed: {{date}}.",
+			"declined": "Appointment request declined: {{date}}."
 		}
 	}
 }

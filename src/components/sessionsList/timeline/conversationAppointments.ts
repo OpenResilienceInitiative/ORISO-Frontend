@@ -64,7 +64,8 @@ export const pendingRequests = (
 		.filter(
 			(a) =>
 				a.status === 'REQUESTED' &&
-				new Date(a.endTime).getTime() > now.getTime()
+				// Unanswered by its start, a request has expired (Frank, 17 Nov).
+				new Date(a.startTime).getTime() > now.getTime()
 		)
 		.sort(
 			(a, b) =>
@@ -111,7 +112,9 @@ export const toAppointmentSlot = (
 
 /**
  * `requested`: the asker asked for a time (FE#2287); `confirmed` and
- * `declined`: the counsellor's answer; `withdrawn`: the asker took it back.
+ * `declined`: the counsellor's answer; `withdrawn`: the asker took it back;
+ * `expired`: nobody answered it by its start, so it was declined
+ * automatically.
  */
 export type AppointmentNoticeKind =
 	| 'created'
@@ -120,7 +123,8 @@ export type AppointmentNoticeKind =
 	| 'requested'
 	| 'confirmed'
 	| 'declined'
-	| 'withdrawn';
+	| 'withdrawn'
+	| 'expired';
 
 export const appointmentNoticeKey = (kind: AppointmentNoticeKind) =>
 	`sessionList.timeline.appointment.notice.${kind}`;

@@ -4800,7 +4800,8 @@
 					"requested": "Termin angefragt: {{date}} – wartet auf Bestätigung",
 					"confirmed": "Termin bestätigt: {{date}}",
 					"declined": "Terminanfrage abgelehnt: {{date}}",
-					"withdrawn": "Terminanfrage zurückgezogen: {{date}}"
+					"withdrawn": "Terminanfrage zurückgezogen: {{date}}",
+					"expired": "Terminanfrage abgelaufen: {{date}} – sie wurde bis zum Beginn nicht beantwortet"
 				},
 				"noticeFailed": {
 					"title": "Hinweis nicht gesendet",
@@ -7619,6 +7620,18 @@
 			"slotMinutes": "Dauer eines Termins",
 			"minutes": "{{count}} Min.",
 			"invalid": "Das Ende muss nach dem Beginn liegen."
+		},
+		"appointmentRequest": {
+			"status": "Angefragt · wartet auf Sie",
+			"from": "Anfrage von {{name}}",
+			"menu": "Termin angefragt",
+			"hint": "Bis Sie antworten, ist die Zeit vorgemerkt. Ohne Antwort bis zum Beginn verfällt die Anfrage.",
+			"confirm": "Bestätigen",
+			"confirmHint": "Der Termin wird fest eingetragen",
+			"decline": "Ablehnen",
+			"declineHint": "Die Zeit wird wieder frei",
+			"confirmed": "Termin bestätigt: {{date}}.",
+			"declined": "Terminanfrage abgelehnt: {{date}}."
 		}
 	}
 }

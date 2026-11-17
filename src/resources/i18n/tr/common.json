@@ -4783,7 +4783,8 @@
 					"requested": "Randevu talep edildi: {{date}} – onay bekleniyor",
 					"confirmed": "Randevu onaylandı: {{date}}",
 					"declined": "Randevu talebi reddedildi: {{date}}",
-					"withdrawn": "Randevu talebi geri çekildi: {{date}}"
+					"withdrawn": "Randevu talebi geri çekildi: {{date}}",
+					"expired": "Randevu talebinin süresi doldu: {{date}} – başlangıca kadar yanıtlanmadı"
 				},
 				"noticeFailed": {
 					"title": "Bildirim gönderilmedi",
@@ -7629,6 +7630,18 @@
 			"slotMinutes": "Randevu süresi",
 			"minutes": "{{count}} dk",
 			"invalid": "Bitiş, başlangıçtan sonra olmalıdır."
+		},
+		"appointmentRequest": {
+			"status": "Talep edildi · yanıtınızı bekliyor",
+			"from": "{{name}} adlı kişiden talep",
+			"menu": "Randevu talep edildi",
+			"hint": "Siz yanıtlayana kadar zaman ayrılmıştır. Başlangıca kadar yanıt verilmezse talep geçersiz olur.",
+			"confirm": "Onayla",
+			"confirmHint": "Randevu kesinleşir",
+			"decline": "Reddet",
+			"declineHint": "Zaman yeniden boşa çıkar",
+			"confirmed": "Randevu onaylandı: {{date}}.",
+			"declined": "Randevu talebi reddedildi: {{date}}."
 		}
 	}
 }

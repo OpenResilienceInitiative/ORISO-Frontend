@@ -548,7 +548,8 @@ export const CalendarSplitView = ({
 			`calEntry--${entry.type}`,
 			`calEntry--k-${facet}`,
 			colleague && 'calEntry--colleague',
-			proposal && 'calEntry--proposal',
+			(proposal || entry.requested) && 'calEntry--proposal',
+			!proposal && entry.requested && 'calEntry--requested',
 			!proposal &&
 				!colleague &&
 				flashIds.includes(entry.id) &&
@@ -633,6 +634,11 @@ export const CalendarSplitView = ({
 					{proposal && (
 						<span className="calEntry__status">
 							{proposalStatus(proposal)}
+						</span>
+					)}
+					{!proposal && entry.requested && (
+						<span className="calEntry__status">
+							{t('calendar.appointmentRequest.status')}
 						</span>
 					)}
 					{rangeShown && (

@@ -55,6 +55,7 @@ import {
 	entryActions,
 	openProposals,
 	ProposalNoLongerValid,
+	RequestedTimeTaken,
 	receivedBy,
 	type EntryAction,
 	type MoveProposal
@@ -161,6 +162,7 @@ import {
 	MonthDayMenuContent,
 	PeopleMenuContent,
 	ProposalMenuContent,
+	AppointmentRequestMenuContent,
 	RequestMenuContent,
 	SettingsMenuContent,
 	SlotMenuContent,
@@ -317,6 +319,13 @@ export interface CalendarPageProps {
 		end: Date
 	) => void | Promise<unknown>;
 	onWithdrawProposal?: (proposal: MoveProposal) => void | Promise<unknown>;
+	/**
+	 * FE#2287: "Bestätigen" an advice seeker's request. A rejection with
+	 * `RequestedTimeTaken` says the time is no longer free.
+	 */
+	onConfirmRequest?: (entry: CalendarEntry) => ChangeResult;
+	/** FE#2287: "Ablehnen" an advice seeker's request; the time is free. */
+	onDeclineRequest?: (entry: CalendarEntry) => ChangeResult;
 	/** Team meetings and group dates (no backend yet). */
 	onJoin?: (entry: CalendarEntry) => void;
 	/** The visible range changed: load entries for it. */
@@ -411,6 +420,12 @@ type Menu =
 			type: 'proposal' | 'request';
 			anchor: MenuAnchor;
 			proposal: MoveProposal;
+			entry: CalendarEntry;
+	  }
+	| {
+			/** FE#2287: an advice seeker's request, answered like a proposal. */
+			type: 'appointmentRequest';
+			anchor: MenuAnchor;
 			entry: CalendarEntry;
 	  }
 	| {
@@ -523,6 +538,8 @@ export const CalendarPage = ({
 	onWithdrawProposal,
 	onAcceptProposal,
 	onDeclineProposal,
+	onConfirmRequest,
+	onDeclineRequest,
 	onJoin,
 	onStart,
 	onOpenChat,
@@ -1353,6 +1370,41 @@ export const CalendarPage = ({
 		);
 	};
 
+	/** FE#2287: one answer per request, as for a proposal. */
+	const answerRequest = (
+		entry: CalendarEntry,
+		send: ((entry: CalendarEntry) => ChangeResult) | undefined,
+		success: Notice
+	) => {
+		setMenu(null);
+		if (!send || answeringIds.includes(entry.id)) return;
+		setAnsweringIds((all) => [...all, entry.id]);
+		void Promise.resolve(
+			run(send(entry), success, (error) => ({
+				message:
+					error instanceof RequestedTimeTaken
+						? t('sessionList.timeline.appointment.request.taken')
+						: t('calendar.saveFailed')
+			}))
+		).finally(() =>
+			setAnsweringIds((all) => all.filter((id) => id !== entry.id))
+		);
+	};
+
+	const confirmRequest = (entry: CalendarEntry) =>
+		answerRequest(entry, onConfirmRequest, {
+			message: t('calendar.appointmentRequest.confirmed', {
+				date: format(entry.start, entry.end)
+			})
+		});
+
+	const declineRequest = (entry: CalendarEntry) =>
+		answerRequest(entry, onDeclineRequest, {
+			message: t('calendar.appointmentRequest.declined', {
+				date: format(entry.start, entry.end)
+			})
+		});
+
 	const withdraw = (proposal: MoveProposal) => {
 		setMenu(null);
 		run(onWithdrawProposal?.(proposal), {
@@ -1719,6 +1771,11 @@ export const CalendarPage = ({
 						(e) => e.id === shown.id && e.ownerId === ownerId
 					) ?? shown)
 				: shown;
+		// FE#2287: one's own request is answered, like a proposal.
+		if (entry.requested && entry.ownerId === ownerId) {
+			setMenu({ type: 'appointmentRequest', entry, anchor });
+			return;
+		}
 		const actions = entryActions(entry, { ownerId, role, can });
 		const formMode =
 			mode === 'move'
@@ -1885,6 +1942,21 @@ export const CalendarPage = ({
 					onDeclineProposal
 						? () => decline(proposal, entry)
 						: undefined
+				}
+			/>
+		);
+	} else if (menu?.type === 'appointmentRequest') {
+		const { entry } = menu;
+		menuLabel = t('calendar.appointmentRequest.menu');
+		menuContent = (
+			<AppointmentRequestMenuContent
+				entry={entry}
+				busy={answeringIds.includes(entry.id)}
+				onConfirm={
+					onConfirmRequest ? () => confirmRequest(entry) : undefined
+				}
+				onDecline={
+					onDeclineRequest ? () => declineRequest(entry) : undefined
 				}
 			/>
 		);

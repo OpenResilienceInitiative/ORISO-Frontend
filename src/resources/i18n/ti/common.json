@@ -4757,7 +4757,8 @@
 					"requested": "ቆጸራ ተሓቲቱ፦ {{date}} – ምርግጋጽ ይጽበ",
 					"confirmed": "ቆጸራ ተረጋጊጹ፦ {{date}}",
 					"declined": "ሕቶ ቆጸራ ተነጺጉ፦ {{date}}",
-					"withdrawn": "ሕቶ ቆጸራ ተሰሒቡ፦ {{date}}"
+					"withdrawn": "ሕቶ ቆጸራ ተሰሒቡ፦ {{date}}",
+					"expired": "ሕቶ ቆጸራ ግዜኡ ሓሊፉ፦ {{date}} – ክሳብ መጀመርታ ኣይተመለሰን"
 				},
 				"noticeFailed": {
 					"title": "መተሓሳሰቢ ኣይተላእከን",
@@ -7596,6 +7597,18 @@
 			"slotMinutes": "ንውሓት ቈጸራ",
 			"minutes": "{{count}} ደቒቕ",
 			"invalid": "መወዳእታ ድሕሪ መጀመርታ ክኸውን ኣለዎ።"
+		},
+		"appointmentRequest": {
+			"status": "ተሓቲቱ · ንመልስኹም ይጽበ",
+			"from": "ሕቶ ካብ {{name}}",
+			"menu": "ቆጸራ ተሓቲቱ",
+			"hint": "ክሳብ እትምልሱ እቲ ግዜ ተሓልዩ ኣሎ። ክሳብ መጀመርታ መልሲ እንተዘይተዋሂቡ እቲ ሕቶ ይውዳእ።",
+			"confirm": "ኣረጋግጹ",
+			"confirmHint": "እቲ ቆጸራ ይጽናዕ",
+			"decline": "ንጸጉ",
+			"declineHint": "እቲ ግዜ ደጊሙ ናጻ ይኸውን",
+			"confirmed": "ቆጸራ ተረጋጊጹ፦ {{date}}።",
+			"declined": "ሕቶ ቆጸራ ተነጺጉ፦ {{date}}።"
 		}
 	}
 }

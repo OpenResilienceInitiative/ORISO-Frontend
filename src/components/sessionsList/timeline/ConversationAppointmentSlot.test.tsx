@@ -21,12 +21,20 @@ import {
 } from '../../../globalState';
 import { ConversationAppointmentSlot } from './ConversationAppointmentSlot';
 
-const { getAppointments, onAction } = vi.hoisted(() => ({
-	getAppointments: vi.fn(),
-	onAction: vi.fn()
-}));
+const { getAppointments, onAction, claimNotice, sendNotice } = vi.hoisted(
+	() => ({
+		getAppointments: vi.fn(),
+		onAction: vi.fn(),
+		claimNotice: vi.fn(),
+		sendNotice: vi.fn()
+	})
+);
 vi.mock('../../../api/apiSessionAppointments', () => ({
-	apiGetSessionAppointments: getAppointments
+	apiGetSessionAppointments: getAppointments,
+	apiClaimSessionAppointmentExpiryNotice: claimNotice
+}));
+vi.mock('./useAppointmentNotice', () => ({
+	useAppointmentNotice: () => sendNotice
 }));
 vi.mock('./AppointmentDateDialog', () => ({
 	AppointmentDateDialog: () => <div data-testid="appointment-date-dialog" />
@@ -109,6 +117,8 @@ afterEach(() => {
 	cleanup();
 	getAppointments.mockReset();
 	onAction.mockReset();
+	claimNotice.mockReset();
+	sendNotice.mockReset();
 });
 
 describe('ConversationAppointmentSlot', () => {
@@ -173,6 +183,50 @@ describe('ConversationAppointmentSlot', () => {
 		renderSlot(onCreateChange, false);
 		await act(async () => undefined);
 		expect(onCreateChange).not.toHaveBeenCalledWith(expect.any(Function));
+	});
+
+	describe('a request nobody answered by its start (FE#2287, Frank 17 Nov)', () => {
+		const expired = () => ({
+			...requested(-1),
+			id: 'x1',
+			status: 'DECLINED',
+			expired: true,
+			noticePending: true
+		});
+
+		it('claims its notice and posts it into the conversation once', async () => {
+			getAppointments.mockResolvedValue([expired()]);
+			claimNotice.mockResolvedValue(undefined);
+			sendNotice.mockResolvedValue(undefined);
+			renderSlot(vi.fn(), false, AUTHORITIES.ASKER_DEFAULT);
+			await waitFor(() => expect(sendNotice).toHaveBeenCalledTimes(1));
+			expect(claimNotice).toHaveBeenCalledWith(4401, 'x1');
+			expect(sendNotice).toHaveBeenCalledWith(
+				expect.objectContaining({
+					kind: 'expired',
+					sessionId: 4401,
+					matrixRoomId: '!r:x'
+				})
+			);
+		});
+
+		it('posts nothing when the other side claimed it first', async () => {
+			getAppointments.mockResolvedValue([expired()]);
+			claimNotice.mockRejectedValue(new Error('409'));
+			renderSlot(vi.fn());
+			await waitFor(() => expect(claimNotice).toHaveBeenCalled());
+			await act(async () => undefined);
+			expect(sendNotice).not.toHaveBeenCalled();
+		});
+
+		it('claims nothing for an expired request whose notice is out', async () => {
+			getAppointments.mockResolvedValue([
+				{ ...expired(), noticePending: undefined }
+			]);
+			renderSlot(vi.fn());
+			await act(async () => undefined);
+			expect(claimNotice).not.toHaveBeenCalled();
+		});
 	});
 
 	describe('a request waiting for the counsellor (FE#2287)', () => {

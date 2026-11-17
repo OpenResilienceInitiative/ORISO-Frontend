@@ -54,6 +54,12 @@ export interface CalendarEntry {
 	movable?: boolean;
 	/** Whole day(s): shown in the all-day row, not across the time grid. */
 	allDay?: boolean;
+	/**
+	 * FE#2287: an advice seeker's request waiting for this counsellor's
+	 * confirmation. Drawn dashed like a move proposal and answered the same
+	 * way; never moved.
+	 */
+	requested?: boolean;
 }
 
 /** Appointments made before the kind existed were video calls. */

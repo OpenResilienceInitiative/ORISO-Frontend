@@ -3083,6 +3083,18 @@
 		"consultationHours": {
 			"description": "In diesen Zeiten können Ratsuchende selbst einen Termin bei dir buchen. Sie gelten unabhängig von deiner Arbeitszeit.",
 			"autoAcceptOff": "Jede Buchung ist eine Anfrage, die du bestätigst."
+		},
+		"appointmentRequest": {
+			"status": "Angefragt · wartet auf dich",
+			"from": "Anfrage von {{name}}",
+			"menu": "Termin angefragt",
+			"hint": "Bis du antwortest, ist die Zeit vorgemerkt. Ohne Antwort bis zum Beginn verfällt die Anfrage.",
+			"confirm": "Bestätigen",
+			"confirmHint": "Der Termin wird fest eingetragen",
+			"decline": "Ablehnen",
+			"declineHint": "Die Zeit wird wieder frei",
+			"confirmed": "Termin bestätigt: {{date}}.",
+			"declined": "Terminanfrage abgelehnt: {{date}}."
 		}
 	}
 }
