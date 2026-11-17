@@ -214,6 +214,8 @@ interface EventProps {
 	holiday?: PublicHoliday;
 	/** Background: colleagues busy in this stretch. */
 	band?: ColleagueBand;
+	/** Background: time already gone (Frank, 2026-11-17). */
+	past?: true;
 }
 
 /** The usual working day the time grid shows, before any widening. */
@@ -414,8 +416,12 @@ const dayHeaderInnerClass = (info: { isToday: boolean }) =>
 		? 'calendarView__dayHead calendarView__dayHead--today'
 		: 'calendarView__dayHead';
 /** The month: today's number in a pink circle, a tint on hover. */
-const dayCellClass = (info: { view: { type: string } }) =>
-	info.view.type.startsWith('dayGrid') ? 'calendarView__monthDay' : '';
+const dayCellClass = (info: { view: { type: string }; isPast: boolean }) => {
+	if (!info.view.type.startsWith('dayGrid')) return '';
+	return info.isPast
+		? 'calendarView__monthDay calendarView__monthDay--past'
+		: 'calendarView__monthDay';
+};
 const dayCellTopInnerClass = (info: { isToday: boolean }) =>
 	info.isToday
 		? 'calendarView__dayNumber calendarView__dayNumber--today'
@@ -578,6 +584,28 @@ export const CalendarView = ({
 		return out;
 	}, [workingPlan, shownRange, timeGrid]);
 
+	// The past greyed (Frank, 2026-11-17): every day before now, and today
+	// up to now, so it is plain that one is looking back.
+	const minuteNow = Math.floor(nowDate.getTime() / 60000);
+	const pastEvents = useMemo<EventInput[]>(() => {
+		if (!timeGrid || !shownRange) return [];
+		const until = minuteNow * 60000;
+		const out: EventInput[] = [];
+		for (
+			let day = startOfDay(shownRange.start);
+			day < shownRange.end && day.getTime() < until;
+			day = nextDay(day)
+		)
+			out.push({
+				id: `past-${day.getTime()}`,
+				start: day,
+				end: new Date(Math.min(nextDay(day).getTime(), until)),
+				display: 'background',
+				extendedProps: { past: true }
+			});
+		return out;
+	}, [timeGrid, shownRange, minuteNow]);
+
 	// The grips go into FullCalendar's day columns themselves: inside a
 	// background event they would sit in a layer FullCalendar hides from
 	// assistive technology (aria-hidden), where nothing may take focus.
@@ -663,6 +691,7 @@ export const CalendarView = ({
 				extendedProps: { entry, proposal }
 			})),
 			...offEvents,
+			...pastEvents,
 			...bands.map((band) => ({
 				id: `band-${bandKey(band)}`,
 				start: band.start,
@@ -671,7 +700,17 @@ export const CalendarView = ({
 				extendedProps: { band }
 			}))
 		],
-		[gridEntries, proposals, ownerId, role, label, t, offEvents, bands]
+		[
+			gridEntries,
+			proposals,
+			ownerId,
+			role,
+			label,
+			t,
+			offEvents,
+			pastEvents,
+			bands
+		]
 	);
 
 	// "Beginnt gleich" in words and a clock, not by colour alone, on the
@@ -801,7 +840,8 @@ export const CalendarView = ({
 	};
 
 	const backgroundClass = (info: EventDisplayInfo) => {
-		const { off, band } = propsOf(info);
+		const { off, band, past } = propsOf(info);
+		if (past) return 'calendarView__past';
 		if (band)
 			return allBusy(band)
 				? 'calendarView__band calendarView__band--all'
@@ -1184,6 +1224,15 @@ export const CalendarView = ({
 					height="100%"
 					firstDay={1}
 					nowIndicator
+					// Now stands out, its time on the hour axis (Frank,
+					// 2026-11-17).
+					nowIndicatorLineClass="calendarView__nowLine"
+					nowIndicatorHeaderClass="calendarView__nowHead"
+					nowIndicatorHeaderContent={(info: { date: Date }) => (
+						<span className="calendarView__nowTime">
+							{clock.format(info.date)}
+						</span>
+					)}
 					allDaySlot
 					allDayText={t('calendar.allDay')}
 					slotMinTime={hours.min}
@@ -1242,8 +1291,13 @@ export const CalendarView = ({
 			{gripsShown &&
 				gripColumns.map(({ key, day, el }) => {
 					// Only dates whose own hours UserService keeps and
-					// shows (review 4577586484).
-					if (!dayExceptionAllowed(day, nowDate)) return null;
+					// shows (review 4577586484), and none gone by: a past
+					// day's hours need no setting (Frank, 2026-11-17).
+					if (
+						day < startOfDay(nowDate) ||
+						!dayExceptionAllowed(day, nowDate)
+					)
+						return null;
 					const edges = dayEdgesOf(day, workingPlan);
 					if (!edges) return null;
 					return createPortal(

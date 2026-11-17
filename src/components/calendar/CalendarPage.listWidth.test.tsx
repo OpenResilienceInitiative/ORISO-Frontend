@@ -121,15 +121,20 @@ describe('CalendarPage — the list column, sized like "Gespräche"', () => {
 		expect(
 			document.querySelector('[data-cy="calendar-working-hours"]')
 		).toBeNull();
-		// "+" opens the list wide again with the line ready.
+		// "+" opens quick entry as a pop-up at the "+", line ready; the
+		// column keeps its width (Frank, 2026-11-17).
 		fireEvent.click(
 			document.querySelector(
-				'[data-cy="calendar-quick-widen"]'
+				'[data-cy="calendar-quick-open"]'
 			) as HTMLElement
 		);
-		expect(frame().style.width).toBe('420px');
+		expect(frame().style.width).toBe('220px');
+		const popup = document.querySelector(
+			'[data-cy="calendar-menu-quick"]'
+		) as HTMLElement;
+		expect(popup).not.toBeNull();
 		expect(document.activeElement).toBe(
-			document.querySelector('[data-cy="calendar-quick-input"]')
+			popup.querySelector('[data-cy="calendar-quick-input"]')
 		);
 	});
 

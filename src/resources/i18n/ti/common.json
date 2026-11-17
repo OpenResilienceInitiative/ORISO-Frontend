@@ -7236,6 +7236,9 @@
 		"fullscreenExit": "ካብ ምሉእ ስክሪን ውጻእ (Esc)",
 		"jump": {
 			"label": "ናብ መዓልቲ ኪድ",
+			"weekAgo": "ቅድሚ ሰሙን",
+			"threeDaysAgo": "ቅድሚ ሰለስተ መዓልቲ",
+			"yesterday": "ትማሊ",
 			"today": "ሎሚ",
 			"tomorrow": "ጽባሕ",
 			"dayAfterTomorrow": "ድሕሪ ጽባሕ",

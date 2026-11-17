@@ -7269,6 +7269,9 @@
 		"fullscreenExit": "Tam ekrandan çık (Esc)",
 		"jump": {
 			"label": "Bir güne git",
+			"weekAgo": "Bir hafta önce",
+			"threeDaysAgo": "Üç gün önce",
+			"yesterday": "Dün",
 			"today": "Bugün",
 			"tomorrow": "Yarın",
 			"dayAfterTomorrow": "Yarından sonra",

@@ -1311,7 +1311,11 @@ export const JumpMenuContent = ({ now, onJump }: JumpMenuContentProps) => {
 	};
 	const nextMonday = plus((8 - today.getDay()) % 7 || 7);
 	const [picked, setPicked] = useState(dateValue(today));
+	// Back as well as ahead (Frank, 2026-11-17), in calendar order.
 	const jumps: [string, Date][] = [
+		['weekAgo', plus(-7)],
+		['threeDaysAgo', plus(-3)],
+		['yesterday', plus(-1)],
 		['today', today],
 		['tomorrow', plus(1)],
 		['dayAfterTomorrow', plus(2)],

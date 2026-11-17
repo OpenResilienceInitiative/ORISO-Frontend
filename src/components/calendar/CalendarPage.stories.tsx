@@ -551,6 +551,59 @@ export const WorkWeek: Story = {
 	}
 };
 
+export const PastAndNow: Story = {
+	name: 'Counsellor — the past greyed, now with its time, jumps back (Frank, 2026-11-17)',
+	play: async ({ canvasElement }) => {
+		const view = await waitFor(() => {
+			const el = canvasElement.querySelector<HTMLElement>(
+				'[data-testid="calendar-view"]'
+			);
+			expect(el).toBeTruthy();
+			return el!;
+		});
+		// Now says its time on the hour axis, and the line is drawn.
+		const nowTime = await waitFor(() => {
+			const el = view.querySelector<HTMLElement>(
+				'.calendarView__nowTime'
+			);
+			expect(el).toBeTruthy();
+			return el!;
+		});
+		await expect(nowTime.textContent).toBe('09:50');
+		const line = view.querySelector<HTMLElement>('.calendarView__nowLine')!;
+		await expect(line).toBeTruthy();
+		// Today until now is greyed, up to the line.
+		const past = Array.from(
+			view.querySelectorAll<HTMLElement>('.calendarView__past')
+		);
+		await expect(past.length).toBeGreaterThan(0);
+		const lineTop = line.getBoundingClientRect().top;
+		await expect(
+			past.some(
+				(el) =>
+					Math.abs(el.getBoundingClientRect().bottom - lineTop) <= 2
+			)
+		).toBe(true);
+		// A week back: every day greyed, no working-hour grips to set.
+		await userEvent.click(await findCy('calendar-jump'));
+		await userEvent.click(await findCy('calendar-jump-weekAgo'));
+		await waitFor(() =>
+			expect(
+				view.querySelectorAll('.calendarView__past').length
+			).toBeGreaterThanOrEqual(5)
+		);
+		await expect(view.querySelectorAll('.calendarGrip').length).toBe(0);
+		await expect(view.querySelector('.calendarView__nowLine')).toBeNull();
+		// Back to today: the grips are there again.
+		await userEvent.click(await findCy('calendar-today'));
+		await waitFor(() =>
+			expect(
+				view.querySelectorAll('.calendarGrip').length
+			).toBeGreaterThan(0)
+		);
+	}
+};
+
 export const Week: Story = {
 	name: 'Counsellor — week',
 	args: { initialView: 'week' }

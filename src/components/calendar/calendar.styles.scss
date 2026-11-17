@@ -140,6 +140,69 @@ $cal-off-hatch: repeating-linear-gradient(
 	opacity: 1 !important;
 }
 
+// The past under a grey veil (Frank, 2026-11-17): days gone by and today
+// up to now, so one sees at a glance that one is looking back. Over the
+// hatching, under the entries.
+.calendarView__past {
+	background: color-mix(
+		in srgb,
+		var(--m3-on-surface, #1b1b1c) 7%,
+		transparent
+	) !important;
+	opacity: 1 !important;
+	pointer-events: none;
+}
+
+.calendarView__monthDay--past {
+	background: color-mix(
+		in srgb,
+		var(--m3-on-surface, #1b1b1c) 5%,
+		transparent
+	);
+
+	.calendarView__dayNumber {
+		color: var(--m3-outline, #747878);
+	}
+}
+
+// Now stands out: a 2 px line in the accent with a dot at its start, and
+// the time in a pill on the hour axis instead of the small arrow.
+.calendarView .calendarView__nowLine {
+	z-index: 5;
+	border-top: 2px solid var(--m3-primary, #a5000a);
+
+	&::before {
+		content: '';
+		position: absolute;
+		top: -6px;
+		left: -5px;
+		width: 10px;
+		height: 10px;
+		border-radius: 50%;
+		background: var(--m3-primary, #a5000a);
+	}
+}
+
+.calendarView .calendarView__nowHead {
+	display: flex;
+	justify-content: flex-end;
+	width: auto;
+	height: auto;
+	border: 0;
+	transform: translateY(-50%);
+}
+
+.calendarView__nowTime {
+	padding: 1px 6px;
+	border-radius: 999px;
+	background: var(--m3-primary, #a5000a);
+	color: var(--m3-on-primary, #ffffff);
+	font-size: 12px;
+	font-variant-numeric: tabular-nums;
+	font-weight: 600;
+	line-height: 18px;
+}
+
 // The grid: rounded corners, bold day heads, today's head in red.
 .calendarView__frame {
 	overflow: hidden;

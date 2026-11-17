@@ -7269,6 +7269,9 @@
 		"fullscreenExit": "Quitter le plein écran (Échap)",
 		"jump": {
 			"label": "Aller à un jour",
+			"weekAgo": "Il y a une semaine",
+			"threeDaysAgo": "Il y a trois jours",
+			"yesterday": "Hier",
 			"today": "Aujourd’hui",
 			"tomorrow": "Demain",
 			"dayAfterTomorrow": "Après-demain",

@@ -7259,6 +7259,9 @@
 		"fullscreenExit": "Vollbild beenden (Esc)",
 		"jump": {
 			"label": "Zu einem Tag springen",
+			"weekAgo": "Vor einer Woche",
+			"threeDaysAgo": "Vor drei Tagen",
+			"yesterday": "Gestern",
 			"today": "Heute",
 			"tomorrow": "Morgen",
 			"dayAfterTomorrow": "Übermorgen",

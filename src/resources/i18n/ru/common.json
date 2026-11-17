@@ -7296,6 +7296,9 @@
 		"fullscreenExit": "Выйти из полноэкранного режима (Esc)",
 		"jump": {
 			"label": "Перейти к дню",
+			"weekAgo": "Неделю назад",
+			"threeDaysAgo": "Три дня назад",
+			"yesterday": "Вчера",
 			"today": "Сегодня",
 			"tomorrow": "Завтра",
 			"dayAfterTomorrow": "Послезавтра",

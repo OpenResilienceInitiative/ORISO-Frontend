@@ -7184,6 +7184,9 @@
 		"fullscreenExit": "Exit full screen (Esc)",
 		"jump": {
 			"label": "Go to a day",
+			"weekAgo": "A week ago",
+			"threeDaysAgo": "Three days ago",
+			"yesterday": "Yesterday",
 			"today": "Today",
 			"tomorrow": "Tomorrow",
 			"dayAfterTomorrow": "Day after tomorrow",

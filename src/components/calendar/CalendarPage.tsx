@@ -110,7 +110,6 @@ import {
 	writeSwitcherStyle,
 	readShowGrips,
 	writeShowGrips,
-	DEFAULT_LIST_WIDTH,
 	LIST_RAIL_WIDTH,
 	listModeOf,
 	readListWidth,
@@ -143,6 +142,7 @@ import {
 	CalendarKindsButton,
 	CalendarSearch,
 	CalendarSidebar,
+	QuickEntry,
 	type CalendarSidebarProps,
 	type FreeHoursState
 } from './CalendarSidebar';
@@ -426,6 +426,11 @@ type Menu =
 			anchor: HTMLElement;
 	  }
 	| {
+			/** Quick entry at the "+" of the narrow column (Frank, 2026-11-17). */
+			type: 'quick';
+			anchor: HTMLElement;
+	  }
+	| {
 			/** A colleague band, opened at the band (Frank *16.2). */
 			type: 'band';
 			anchor: MenuAnchor;
@@ -605,8 +610,6 @@ export const CalendarPage = ({
 		minutes: number;
 		owner?: string;
 	} | null>(null);
-	/** Counts up when "+" in the narrow column asks for the quick entry. */
-	const [quickFocus, setQuickFocus] = useState(0);
 
 	const [switcherStyle, setSwitcherStyle] = useState<ViewSwitcherStyle>(() =>
 		readSwitcherStyle(ownerId, initialSwitcherStyle)
@@ -920,6 +923,10 @@ export const CalendarPage = ({
 		setMenu(null);
 		const day = startOfDay(date);
 		setAnchorDate(day);
+		// A Saturday or Sunday is not in the work week: show the whole week,
+		// or the jump lands on nothing (Frank, 2026-11-17).
+		if (view === 'workWeek' && (day.getDay() === 0 || day.getDay() === 6))
+			changeView('week');
 		if (!split) controller.gotoDate(day);
 	};
 	// A search result moves the calendar to its day and scrolls to an hour
@@ -2211,6 +2218,36 @@ export const CalendarPage = ({
 				onChoose={changeView}
 			/>
 		);
+	} else if (menu?.type === 'quick') {
+		menuLabel = t('calendar.quick.title');
+		menuRole = 'dialog';
+		menuWidth = 440;
+		menuContent = (
+			<div className="calendarMenu__quick">
+				<QuickEntry
+					ownerId={ownerId}
+					now={now}
+					entries={entries}
+					conversations={bookable}
+					workingHours={workingPlan}
+					onCreate={
+						onCreate
+							? (drafts: AppointmentDraft[]) => {
+									const done = create(drafts);
+									void Promise.resolve(done).then((ok) => {
+										if (ok) setMenu(null);
+									});
+									return done;
+								}
+							: undefined
+					}
+					freeHours={freeHoursState}
+					onRetryFreeHours={onRetryFreeHours}
+					onMoreDetails={moreDetails}
+					autoFocus
+				/>
+			</div>
+		);
 	} else if (menu?.type === 'jump') {
 		menuLabel = t('calendar.jump.label');
 		menuRole = 'dialog';
@@ -2946,11 +2983,9 @@ export const CalendarPage = ({
 						{...sideProps}
 						mode={listMode}
 						scrollRef={sideScroll}
-						quickFocus={quickFocus}
-						onWiden={() => {
-							setListWidth(DEFAULT_LIST_WIDTH);
-							setQuickFocus((n) => n + 1);
-						}}
+						onQuickOpen={(anchor) =>
+							setMenu({ type: 'quick', anchor })
+						}
 					/>
 					{liveSideBand && (
 						// Over the list, which keeps its place and state

@@ -197,8 +197,11 @@ export interface CalendarSidebarProps {
 	mode?: CalendarListMode;
 	/** The scrolling column, for the grip's Up and Down keys. */
 	scrollRef?: React.Ref<HTMLElement>;
-	/** "+" in the narrow column: open it wide with quick entry ready. */
-	onWiden?: () => void;
+	/**
+	 * "+" in the narrow column: quick entry as a pop-up at the "+", the
+	 * column keeps its width (Frank, 2026-11-17).
+	 */
+	onQuickOpen?: (anchor: HTMLElement) => void;
 	/** Counts up to focus the quick entry line. */
 	quickFocus?: number;
 }
@@ -243,7 +246,7 @@ export const CalendarSidebar = ({
 	onQuickToggle,
 	mode = 'full',
 	scrollRef,
-	onWiden,
+	onQuickOpen,
 	quickFocus
 }: CalendarSidebarProps) => {
 	const sheet = variant === 'sheet';
@@ -756,13 +759,15 @@ export const CalendarSidebar = ({
 							<AddIcon />
 						</button>
 					)}
-					{quick && narrow && onWiden && (
+					{quick && narrow && onQuickOpen && (
 						<button
 							type="button"
 							className="calendarSide__nowAdd"
 							aria-label={t('calendar.quick.title')}
-							onClick={onWiden}
-							data-cy="calendar-quick-widen"
+							onClick={(event) =>
+								onQuickOpen(event.currentTarget)
+							}
+							data-cy="calendar-quick-open"
 						>
 							<AddIcon />
 						</button>
