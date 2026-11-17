@@ -5,8 +5,34 @@ import { createRoot, type Root } from 'react-dom/client';
 import { MemoryRouter, useNavigate } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it } from 'vite-plus/test';
 import { SectionFavicon } from './SectionFavicon';
+import i18next from 'i18next';
+import { I18nextProvider, initReactI18next } from 'react-i18next';
 import { TenantContext } from '../../../globalState/provider/TenantProvider';
 import { NavChatsIconFilled } from '../navigationSidebarIcons';
+
+const i18n = i18next.createInstance();
+void i18n.use(initReactI18next).init({
+	lng: 'de',
+	initImmediate: false,
+	resources: {
+		de: {
+			translation: {
+				navigation: {
+					myProfile: 'Mein Profil',
+					consultant: { sessions: { nav: 'Gespräch' } }
+				}
+			}
+		},
+		en: {
+			translation: {
+				navigation: {
+					myProfile: 'My profile',
+					consultant: { sessions: { nav: 'Chats' } }
+				}
+			}
+		}
+	}
+});
 
 const Profile = () => (
 	<svg viewBox="0 0 24 24">
@@ -14,8 +40,16 @@ const Profile = () => (
 	</svg>
 );
 const navigation = [
-	{ to: '/sessions/consultant/sessionView', iconFilled: NavChatsIconFilled },
-	{ to: '/profile', icon: Profile }
+	{
+		to: '/sessions/consultant/sessionView',
+		iconFilled: NavChatsIconFilled,
+		titleKeys: { large: 'navigation.consultant.sessions.nav' }
+	},
+	{
+		to: '/profile',
+		icon: Profile,
+		titleKeys: { large: 'navigation.myProfile' }
+	}
 ];
 
 let go: (to: string) => void = () => {};
@@ -49,10 +83,12 @@ describe('SectionFavicon', () => {
 						} as any
 					}
 				>
-					<MemoryRouter initialEntries={[path]}>
-						<Navigator />
-						<SectionFavicon navigation={navigation} />
-					</MemoryRouter>
+					<I18nextProvider i18n={i18n}>
+						<MemoryRouter initialEntries={[path]}>
+							<Navigator />
+							<SectionFavicon navigation={navigation} />
+						</MemoryRouter>
+					</I18nextProvider>
 				</TenantContext.Provider>
 			);
 		});
@@ -60,7 +96,8 @@ describe('SectionFavicon', () => {
 	beforeEach(() => {
 		// jsdom has no canvas: the PNG fallback is skipped (covered in Storybook).
 		HTMLCanvasElement.prototype.getContext = (() => null) as any;
-		document.head.innerHTML = '<link rel="icon" href="/favicon.ico" />';
+		document.head.innerHTML =
+			'<title>caritas-berlin</title><link rel="icon" href="/favicon.ico" />';
 		container = document.createElement('div');
 		document.body.appendChild(container);
 		root = createRoot(container);
@@ -83,12 +120,27 @@ describe('SectionFavicon', () => {
 		expect(svgOf(profile)).toContain('viewBox="0 0 24 24"');
 	});
 
-	it('keeps the default favicon on routes without a section', () => {
+	it('keeps the default favicon and title on routes without a section', () => {
 		render('/drafts');
 		expect(iconHrefs()).toEqual(['/favicon.ico']);
+		expect(document.title).toBe('caritas-berlin');
 	});
 
-	it('returns to the default favicon on leaving a section and on unmount', () => {
+	it('titles the tab with only the section name, in the active language', async () => {
+		render('/profile');
+		expect(document.title).toBe('Mein Profil');
+		expect(document.title).not.toContain('caritas');
+
+		await act(() => i18n.changeLanguage('en'));
+		expect(document.title).toBe('My profile');
+		await act(() => i18n.changeLanguage('de'));
+		expect(document.title).toBe('Mein Profil');
+
+		act(() => go('/drafts'));
+		expect(document.title).toBe('caritas-berlin');
+	});
+
+	it('returns to the default favicon and title on leaving a section and on unmount', () => {
 		render('/profile');
 		expect(iconHrefs()[0]).not.toBe('/favicon.ico');
 		act(() => go('/drafts'));
@@ -96,6 +148,7 @@ describe('SectionFavicon', () => {
 		act(() => go('/profile'));
 		act(() => root.unmount());
 		expect(iconHrefs()).toEqual(['/favicon.ico']);
+		expect(document.title).toBe('caritas-berlin');
 		root = createRoot(container);
 	});
 

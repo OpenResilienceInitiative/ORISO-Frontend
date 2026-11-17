@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useTenant } from '../../../globalState';
 import {
 	buildSectionFaviconSvg,
@@ -10,9 +11,10 @@ import {
 	type SectionNavItem
 } from './sectionFaviconSvg';
 import { restoreDefaultTabIcon, showSectionTabIcon } from './tabIconLinks';
+import { restoreDefaultTitle, showSectionTitle } from './tabTitle';
 
 /**
- * Gives the browser tab the icon of the section the person is in (Kalender,
+ * Gives the browser tab the name and icon of the section the person is in (Kalender,
  * Beratungen, Profil, …), drawn in the tenant colour. Mounted inside the
  * authenticated app shell only, so before login and on plain pages the
  * default favicon stays; leaving the shell (logout) restores it.
@@ -26,6 +28,16 @@ export const SectionFavicon = ({
 	const primaryColor = useTenant()?.theming?.primaryColor;
 	const item = resolveSectionNavItem(pathname, navigation);
 	const Icon = item ? sectionIconOf(item) : null;
+	const { t: translate, i18n } = useTranslation();
+	const titleKey = (item?.titleKeys as { large?: string } | undefined)?.large;
+	// Only the section name, in the active language (Frank, 2026-11-17).
+	const sectionTitle = titleKey ? translate(titleKey) : null;
+	const tenant = useTenant();
+
+	useEffect(() => {
+		if (sectionTitle) showSectionTitle(sectionTitle);
+		else restoreDefaultTitle();
+	}, [sectionTitle, i18n.language, tenant]);
 
 	useEffect(() => {
 		if (!Icon) {
@@ -44,7 +56,13 @@ export const SectionFavicon = ({
 		};
 	}, [Icon, primaryColor]);
 
-	useEffect(() => () => restoreDefaultTabIcon(), []);
+	useEffect(
+		() => () => {
+			restoreDefaultTabIcon();
+			restoreDefaultTitle();
+		},
+		[]
+	);
 
 	return null;
 };

@@ -125,7 +125,7 @@ const Gallery = ({
 const meta: Meta<typeof Gallery> = {
 	title: 'Components/Layout/SectionFavicon',
 	component: Gallery,
-	args: { role: 'consultant', primaryColor: '#cc1e1c' },
+	args: { role: 'consultant', primaryColor: '#a5000a' },
 	argTypes: {
 		role: { control: 'inline-radio', options: ['consultant', 'asker'] },
 		primaryColor: { control: 'color' }
@@ -151,7 +151,7 @@ const expectEveryIconDrawn = async (
 
 export const Counsellor: Story = {
 	play: async ({ canvasElement }) =>
-		expectEveryIconDrawn(canvasElement, '#cc1e1c', [
+		expectEveryIconDrawn(canvasElement, '#a5000a', [
 			'/overview',
 			'/sessions/consultant/sessionPreview',
 			'/sessions/consultant/sessionView',
@@ -164,7 +164,7 @@ export const Counsellor: Story = {
 export const Asker: Story = {
 	args: { role: 'asker' },
 	play: async ({ canvasElement }) =>
-		expectEveryIconDrawn(canvasElement, '#cc1e1c', [
+		expectEveryIconDrawn(canvasElement, '#a5000a', [
 			'/sessions/user/view',
 			'/notifications',
 			'/profile',
@@ -249,6 +249,7 @@ export const LiveTabIcon: Story = {
 			expect(tabIconHref()).toMatch(/^data:image\/svg\+xml,/)
 		);
 		const calendar = tabIconHref();
+		await expect(document.title).toBe(i18n.t('navigation.booking.events'));
 		await waitFor(() =>
 			expect(
 				document.querySelector('link[data-section-icon-png]')
@@ -259,6 +260,7 @@ export const LiveTabIcon: Story = {
 			canvas.getByRole('button', { name: i18n.t('navigation.myProfile') })
 		);
 		await waitFor(() => expect(tabIconHref()).not.toBe(calendar));
+		await expect(document.title).toBe(i18n.t('navigation.myProfile'));
 		await expect(tabIconHref()).toMatch(/^data:image\/svg\+xml,/);
 
 		await userEvent.click(
