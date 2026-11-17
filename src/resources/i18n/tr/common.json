@@ -7584,6 +7584,18 @@
 			"pillKind": "Düğme olarak: {{kind}}",
 			"pillMenu": "Düğme seç: {{kind}}"
 		},
+		"bandCard": {
+			"label": "Kim dolu",
+			"back": "Listeye dön",
+			"busy": "Dolu",
+			"free": "Boş",
+			"nobodyFree": "Kimse boş değil.",
+			"show": "Takvimi gör",
+			"showLabel": "{{name}} takvimini gör",
+			"ownerOnly": "Bunu yalnızca {{name}} değiştirebilir.",
+			"all": "Herkes yan yana",
+			"create": "Bu saate ekle"
+		},
 		"links": {
 			"title": "Randevusuz bağlantılar",
 			"hint": "Paylaşabileceğiniz davet bağlantıları: kopyalayın veya QR kodu gösterin."
