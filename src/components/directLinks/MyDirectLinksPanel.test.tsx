@@ -697,25 +697,36 @@ describe('Termine & Direkteinladungen (#2252)', () => {
 		expect(screen.getByTestId('invitation-dialog')).toBeTruthy();
 	});
 
-	it('moves an invitation to the expired ones once its validity ends while the page is open', async () => {
-		const endingSoon: DirectLink = {
-			...meeting,
-			expiresAt: new Date(Date.now() + 300).toISOString()
-		};
-		vi.mocked(apiGetOwnDirectLinks)
-			.mockResolvedValueOnce([endingSoon])
-			.mockResolvedValue([{ ...endingSoon, expired: true }]);
-		renderPage();
-		await screen.findByTestId('upcoming-invitation');
+	/* A fixed clock: the page must not depend on rendering fast enough to
+	   see the row before it expires (#2252 review). */
+	const settle = (ms = 0) =>
+		act(async () => {
+			await vi.advanceTimersByTimeAsync(ms);
+		});
 
-		expect(
-			await screen.findByTestId(
-				'expired-invitation',
-				{},
-				{ timeout: 4000 }
-			)
-		).toBeTruthy();
-		expect(screen.queryByTestId('upcoming-invitation')).toBeNull();
+	it('moves an invitation to the expired ones once its validity ends while the page is open', async () => {
+		vi.useFakeTimers({ now: Date.now() });
+		try {
+			const endingSoon: DirectLink = {
+				...meeting,
+				expiresAt: new Date(Date.now() + 60_000).toISOString()
+			};
+			vi.mocked(apiGetOwnDirectLinks)
+				.mockResolvedValueOnce([endingSoon])
+				.mockResolvedValue([{ ...endingSoon, expired: true }]);
+			renderPage();
+			await settle();
+			expect(screen.getByTestId('upcoming-invitation')).toBeTruthy();
+
+			await settle(59_000);
+			expect(screen.getByTestId('upcoming-invitation')).toBeTruthy();
+
+			await settle(2_000);
+			expect(screen.getByTestId('expired-invitation')).toBeTruthy();
+			expect(screen.queryByTestId('upcoming-invitation')).toBeNull();
+		} finally {
+			vi.useRealTimers();
+		}
 	});
 
 	it('opens the QR code of an appointment invitation', async () => {
