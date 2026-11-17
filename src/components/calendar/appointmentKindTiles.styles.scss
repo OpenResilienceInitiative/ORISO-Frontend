@@ -1,3 +1,5 @@
+@import './calendarChosen';
+
 .appointmentKindTiles {
 	display: flex;
 	flex-direction: column;
@@ -50,11 +52,9 @@
 		background: var(--m3-surface-container-low, #f6f3f3);
 	}
 
-	// The calendar's chosen tone (calendar.styles.scss `calendar-chosen`).
+	// The calendar's chosen tone, one place for all chosen controls.
 	&[aria-pressed='true'] {
-		border-color: var(--oriso-on-primary-fixed, #410001);
-		background: var(--oriso-on-primary-fixed, #410001);
-		color: #ffffff;
+		@include calendar-chosen($border: true);
 	}
 
 	&:focus-visible {

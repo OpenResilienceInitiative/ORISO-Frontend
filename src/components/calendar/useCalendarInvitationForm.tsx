@@ -22,7 +22,7 @@ import type {
 	InvitationPreset
 } from '../directInvitation/invitationModel';
 import type { DirectLinkMedium } from '../conversationCreate/directLink/directLink';
-import type { AppointmentFormProps, DialogForm } from './AppointmentDialog';
+import type { AppointmentFormProps, DialogForm } from './dialogForm';
 import { FacetIcon } from './CalendarEntryGlyph';
 import {
 	findConflicts,
