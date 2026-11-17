@@ -93,16 +93,21 @@ describe('CalendarPage — saving an appointment again after a failure', () => {
 		fireEvent.change(field('calendar.dialog.conversation'), {
 			target: { value: '4402' }
 		});
-		fireEvent.change(field('calendar.dialog.start'), {
-			target: { value: '14:00' }
-		});
-		fireEvent.change(field('calendar.dialog.end'), {
+		fireEvent.change(
+			field('sessionList.timeline.appointment.dialog.start'),
+			{
+				target: { value: '14:00' }
+			}
+		);
+		fireEvent.change(field('sessionList.timeline.appointment.dialog.end'), {
 			target: { value: '15:30' }
 		});
 		const save = () =>
 			act(async () => {
 				fireEvent.click(
-					screen.getByRole('button', { name: 'calendar.dialog.save' })
+					screen.getByRole('button', {
+						name: 'sessionList.timeline.appointment.dialog.createAction'
+					})
 				);
 			});
 
@@ -111,8 +116,12 @@ describe('CalendarPage — saving an appointment again after a failure', () => {
 		expect(screen.getByText('calendar.saveFailed')).toBeTruthy();
 		// Still open, with everything entered.
 		expect(field('calendar.dialog.conversation').value).toBe('4402');
-		expect(field('calendar.dialog.start').value).toBe('14:00');
-		expect(field('calendar.dialog.end').value).toBe('15:30');
+		expect(
+			field('sessionList.timeline.appointment.dialog.start').value
+		).toBe('14:00');
+		expect(field('sessionList.timeline.appointment.dialog.end').value).toBe(
+			'15:30'
+		);
 
 		await save();
 		expect(onCreate).toHaveBeenCalledTimes(2);
@@ -125,7 +134,9 @@ describe('CalendarPage — saving an appointment again after a failure', () => {
 			end: new Date(2026, 10, 17, 15, 30)
 		});
 		expect(
-			screen.queryByRole('button', { name: 'calendar.dialog.save' })
+			screen.queryByRole('button', {
+				name: 'sessionList.timeline.appointment.dialog.createAction'
+			})
 		).toBeNull();
 	});
 });

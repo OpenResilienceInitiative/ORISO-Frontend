@@ -58,6 +58,11 @@ interface DirectLinkCardProps {
 	 * switch. Off: the card of #2142 with both (default).
 	 */
 	settingsInDialog?: boolean;
+	/**
+	 * Preselected medium, e.g. from the calendar's Art when "Neue Person per
+	 * Direkteinladung …" opened "Chat erstellen". Ignored when not allowed.
+	 */
+	initialMedium?: DirectLinkMedium;
 }
 
 /**
@@ -74,7 +79,8 @@ export const DirectLinkCard = ({
 	errorMessage,
 	topicsLoadFailed = false,
 	onRetryTopics,
-	settingsInDialog = false
+	settingsInDialog = false,
+	initialMedium
 }: DirectLinkCardProps) => {
 	const { t } = useTranslation();
 	const id = useId();
@@ -83,8 +89,16 @@ export const DirectLinkCard = ({
 	// Topics may arrive after the first render; a single one needs no choice.
 	const topic = topics.length === 1 ? topics[0].value : pickedTopic;
 	const [topicMenuOpen, setTopicMenuOpen] = useState(false);
-	const [medium, setMedium] = useState<DirectLinkMedium>();
-	const [temporary, setTemporary] = useState(false);
+	const presetMedium =
+		initialMedium && media.includes(initialMedium)
+			? initialMedium
+			: undefined;
+	const [medium, setMedium] = useState<DirectLinkMedium | undefined>(
+		presetMedium
+	);
+	const [temporary, setTemporary] = useState(
+		presetMedium ? defaultTemporary(presetMedium) : false
+	);
 	const [name, setName] = useState('');
 	const [scheduledLocal, setScheduledLocal] = useState('');
 	/* A half-typed datetime-local reads as '' with `validity.badInput`;
