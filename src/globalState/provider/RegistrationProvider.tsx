@@ -53,6 +53,8 @@ export interface RegistrationData extends SessionStorageData {
 	agency: AgencyDataInterface;
 	mainTopic: TopicsDataInterface;
 	topic?: TopicsDataInterface;
+	/** The picture the chosen placement showed, so the summary keeps the category-specific one. */
+	topicIcon?: string;
 }
 
 interface RegistrationContextInterface {
@@ -418,7 +420,8 @@ export function RegistrationProvider({ children }: PropsWithChildren<{}>) {
 				? {
 						mainTopic: undefined,
 						mainTopicId: undefined,
-						topicGroupId: undefined
+						topicGroupId: undefined,
+						topicIcon: undefined
 					}
 				: {}),
 			...(clearTopic ? { topic: undefined, topicId: undefined } : {})

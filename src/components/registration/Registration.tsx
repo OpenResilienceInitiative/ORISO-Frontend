@@ -54,6 +54,7 @@ import {
 } from '../../components/registration/autoLogin';
 import { PreselectionBox } from './preselectionBox/PreselectionBox';
 import { endpoints } from '../../resources/scripts/endpoints';
+import { apiGetTopicsData } from '../../api/apiGetTopicsData';
 import {
 	accountExistsAfterTimeout,
 	apiGetAskerSessionList,
@@ -420,6 +421,34 @@ export const Registration = () => {
 		}),
 		[registrationData, stepData]
 	);
+
+	/* A catalogue topic (one with an `icon`) arrives in the language it was
+	   fetched in. When the visitor switches language on a later step, fetch it
+	   again so the summary follows the switch. */
+	const catalogueTopicId = mergedRegistrationData.mainTopic?.icon
+		? mergedRegistrationData.mainTopic.id
+		: undefined;
+	const [topicCopyLocale, setTopicCopyLocale] = useState(locale);
+	useEffect(() => {
+		if (catalogueTopicId === undefined || topicCopyLocale === locale) {
+			return undefined;
+		}
+		let cancelled = false;
+		(async () => {
+			// LocaleProvider writes the `lang` cookie in its own effect, after this one.
+			await Promise.resolve();
+			const topics = await apiGetTopicsData().catch(() => undefined);
+			const fresh = topics?.find(
+				(topic) => topic.id === catalogueTopicId
+			);
+			if (cancelled) return;
+			setTopicCopyLocale(locale);
+			if (fresh) updateRegistrationData?.({ mainTopic: fresh });
+		})();
+		return () => {
+			cancelled = true;
+		};
+	}, [catalogueTopicId, locale, topicCopyLocale, updateRegistrationData]);
 	// Same data the payload reads, so the copy and the request agree.
 	const joinsTheGroup =
 		getGroupJoin({
@@ -442,7 +471,8 @@ export const Registration = () => {
 		selectedTopic?.name ||
 		null;
 	const selectedTopicIcon = selectedTopic
-		? getRegistrationTopicIconForGroup(
+		? mergedRegistrationData.topicIcon ||
+			getRegistrationTopicIconForGroup(
 				selectedTopic,
 				mergedRegistrationData.topicGroupId
 			)
@@ -483,6 +513,7 @@ export const Registration = () => {
 			topic: undefined,
 			topicId: undefined,
 			topicGroupId: undefined,
+			topicIcon: undefined,
 			agency: undefined,
 			agencyId: undefined,
 			age: undefined,

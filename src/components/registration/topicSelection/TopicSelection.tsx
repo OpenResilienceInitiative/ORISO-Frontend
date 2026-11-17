@@ -214,7 +214,11 @@ export const TopicSelection: FC<{
 				setValue(topic.id);
 				setTopicGroupId(undefined);
 				setSelectedPlacementId(`list/${topic.id}`);
-				onChange({ mainTopic: topic, topicGroupId: undefined });
+				onChange({
+					mainTopic: topic,
+					topicGroupId: undefined,
+					topicIcon: undefined
+				});
 				return;
 			}
 
@@ -237,7 +241,8 @@ export const TopicSelection: FC<{
 			setSelectedPlacementId(placement.placementId);
 			onChange({
 				mainTopic: placement.topic,
-				topicGroupId: placement.topicGroupId
+				topicGroupId: placement.topicGroupId,
+				topicIcon: placement.icon
 			});
 			setExpandedTopicGroupIds((currentIds) =>
 				currentIds.includes(placement.topicGroupId)
