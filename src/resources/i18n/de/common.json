@@ -3320,26 +3320,35 @@
 					"label": "Download Excel Datei"
 				},
 				"filename": "Statistik Online-Beratung",
-				"title": "Ihre Statistik über Ihren gewählten Beratungszeitraum können Sie hier herunterladen:"
+				"title": "Ihre Statistik über Ihren gewählten Beratungszeitraum können Sie hier herunterladen:",
+				"total": "Gesamt"
 			},
 			"csvHeader": {
-				"numberOfAppointments": "Termine gebucht",
+				"numberOfAppointments": "Termine stattgefunden",
 				"numberOfAssignedSessions": "Beratungen angenommen",
+				"numberOfCancelledAppointments": "Termine abgesagt",
+				"numberOfChatAppointments": "davon Chat",
+				"numberOfOnsiteAppointments": "davon vor Ort",
+				"numberOfPhoneAppointments": "davon Telefon",
 				"numberOfSentMessages": "Nachrichten geschrieben",
 				"numberOfSessionsWhereConsultantWasActive": "Aktive Beratungen",
+				"numberOfVideoAppointments": "davon Video",
+				"period": "Zeitraum",
 				"videoCallDuration": "Dauer von Video-Calls in Minuten:Sekunden"
 			},
 			"period": {
-				"currentMonth": "aktuellen Monats",
-				"currentYear": "aktuellen Jahres",
+				"currentMonth": "diesen Monat",
+				"currentWeek": "diese Woche",
+				"currentYear": "dieses Jahr",
 				"display": {
 					"default": "DD.MM.JJJJ - DD.MM.JJJJ",
 					"prefix": "Im Zeitraum vom ",
 					"suffix": " haben Sie:"
 				},
-				"lastMonth": "letzten Monats",
-				"lastYear": "vergangenen Jahres",
-				"prefix": "Ihre Zahlen des"
+				"lastMonth": "letzten Monat",
+				"lastWeek": "letzte Woche",
+				"lastYear": "letztes Jahr",
+				"prefix": "Ihre Zahlen für"
 			},
 			"title": "Meine Statistik"
 		},

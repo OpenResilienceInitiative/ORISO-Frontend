@@ -3299,17 +3299,25 @@
 					"label": "Télécharger le fichier Excel"
 				},
 				"filename": "Statistiques de la consultation en ligne",
-				"title": "Vous pouvez télécharger ici vos statistiques sur la période de consultation que vous avez choisie :"
+				"title": "Vous pouvez télécharger ici vos statistiques sur la période de consultation que vous avez choisie :",
+				"total": "Total"
 			},
 			"csvHeader": {
-				"numberOfAppointments": "Dates réservées",
+				"numberOfAppointments": "Rendez-vous tenus",
 				"numberOfAssignedSessions": "Délibérations adoptées",
+				"numberOfCancelledAppointments": "Rendez-vous annulés",
+				"numberOfChatAppointments": "dont chat",
+				"numberOfOnsiteAppointments": "dont sur place",
+				"numberOfPhoneAppointments": "dont téléphone",
 				"numberOfSentMessages": "Nouvelles écrites",
 				"numberOfSessionsWhereConsultantWasActive": "Consultations actives",
+				"numberOfVideoAppointments": "dont vidéo",
+				"period": "Période",
 				"videoCallDuration": "Durée des appels vidéo en minutes:secondes"
 			},
 			"period": {
 				"currentMonth": "mois en cours",
+				"currentWeek": "semaine en cours",
 				"currentYear": "année en cours",
 				"display": {
 					"default": "JJ.MM.AAAA - JJ.MM.AAAA",
@@ -3317,6 +3325,7 @@
 					"suffix": " vous avez"
 				},
 				"lastMonth": "dernier mois",
+				"lastWeek": "semaine dernière",
 				"lastYear": "l'année dernière",
 				"prefix": "Vos chiffres du"
 			},

@@ -3304,17 +3304,25 @@
 					"label": "Скачать файл Excel"
 				},
 				"filename": "Статистика онлайн-консультирования",
-				"title": "Здесь вы можете скачать статистику за выбранный вами период консультирования:"
+				"title": "Здесь вы можете скачать статистику за выбранный вами период консультирования:",
+				"total": "Итого"
 			},
 			"csvHeader": {
-				"numberOfAppointments": "Даты забронированы",
+				"numberOfAppointments": "Состоявшиеся встречи",
 				"numberOfAssignedSessions": "Консультации принимаются",
+				"numberOfCancelledAppointments": "Отменённые встречи",
+				"numberOfChatAppointments": "из них в чате",
+				"numberOfOnsiteAppointments": "из них очно",
+				"numberOfPhoneAppointments": "из них по телефону",
 				"numberOfSentMessages": "Новости написаны",
 				"numberOfSessionsWhereConsultantWasActive": "Активные консультации",
+				"numberOfVideoAppointments": "из них видео",
+				"period": "Период",
 				"videoCallDuration": "Продолжительность видеозвонков в минутах:секундах"
 			},
 			"period": {
 				"currentMonth": "текущий месяц",
+				"currentWeek": "текущая неделя",
 				"currentYear": "текущий год",
 				"display": {
 					"default": "ДД.ММ.ГГГГ - ДД.ММ.ГГГГ",
@@ -3322,6 +3330,7 @@
 					"suffix": " у вас есть:"
 				},
 				"lastMonth": "последний месяц",
+				"lastWeek": "прошлая неделя",
 				"lastYear": "прошлый год",
 				"prefix": "Ваши цифры для"
 			},

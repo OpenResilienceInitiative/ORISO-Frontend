@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
 	apiGetConsultantStatistics,
 	ApiGetConsultantStatisticsInterface,
@@ -12,6 +12,7 @@ import { ReactComponent as PersonsIcon } from '../../resources/img/icons/persons
 import { ReactComponent as SpeechBubbleIcon } from '../../resources/img/icons/speech-bubble.svg';
 import { ReactComponent as SpeechBubblePlusIcon } from '../../resources/img/icons/speech-bubble-plus.svg';
 import { ReactComponent as DownloadIcon } from '../../resources/img/icons/download.svg';
+import EventOutlinedIcon from '@mui/icons-material/EventOutlined';
 import { CSVLink } from 'react-csv';
 import { formatToDDMMYYYY } from '../../utils/dateHelpers';
 import dayjs from 'dayjs';
@@ -19,170 +20,115 @@ import './statistics.styles';
 import './profile.styles';
 import { useTranslation } from 'react-i18next';
 import { SelectChangeEvent } from '@mui/material/Select';
+import {
+	breakdownForPeriod,
+	csvColumns,
+	csvRows,
+	datesForPeriod,
+	StatisticsPeriod,
+	statisticsPeriods
+} from './consultantStatisticsData';
 
-const statisticsPeriodOptionCurrentMonth = 'currentMonth';
-const statisticsPeriodOptionLastMonth = 'lastMonth';
-const statisticsPeriodOptionCurrentYear = 'currentYear';
-const statisticsPeriodOptionLastYear = 'lastYear';
+type LoadStatistics = (
+	request: ApiGetConsultantStatisticsInterface
+) => Promise<ConsultantStatisticsDTO>;
 
-type statisticOptions =
-	| typeof statisticsPeriodOptionCurrentMonth
-	| typeof statisticsPeriodOptionLastMonth
-	| typeof statisticsPeriodOptionCurrentYear
-	| typeof statisticsPeriodOptionLastYear;
+interface ConsultantStatisticsProps {
+	/** Where the figures come from; Storybook passes sample figures. */
+	loadStatistics?: LoadStatistics;
+}
 
-const getDatesForSelectedPeriod = (
-	selectedOption: statisticOptions
-): ApiGetConsultantStatisticsInterface => {
-	const currentDate = dayjs();
-	const currentYear = currentDate.get('year');
-	const endOfLastMonth = currentDate.date(0);
-	const daysInCurrentMonth = currentDate.daysInMonth();
+const appointmentKinds = [
+	'numberOfVideoAppointments',
+	'numberOfPhoneAppointments',
+	'numberOfOnsiteAppointments',
+	'numberOfChatAppointments'
+] as const;
 
-	const optionDates = {
-		lastMonth: {
-			startDate: endOfLastMonth.date(1).format('YYYY-MM-DD'),
-			endDate: endOfLastMonth.format('YYYY-MM-DD')
-		},
-		currentMonth: {
-			startDate: currentDate.date(1).format('YYYY-MM-DD'),
-			endDate: currentDate.date(daysInCurrentMonth).format('YYYY-MM-DD')
-		},
-		currentYear: {
-			startDate: `${currentYear}-01-01`,
-			endDate: `${currentYear}-12-31`
-		},
-		lastYear: {
-			startDate: `${currentYear - 1}-01-01`,
-			endDate: `${currentYear - 1}-12-31`
-		}
-	};
-	return optionDates[selectedOption];
-};
-
-export const ConsultantStatistics = () => {
+/**
+ * The counsellor's own figures in the profile (ORISO-Frontend#2299):
+ * realised appointments by kind and cancelled ones, consultations and
+ * messages for a week, month or year, and a CSV with one row per day, week
+ * or month plus a total row. Only aggregated own numbers, never content.
+ */
+export const ConsultantStatistics = ({
+	loadStatistics = apiGetConsultantStatistics
+}: ConsultantStatisticsProps) => {
 	const { t: translate } = useTranslation();
-	const [isRequestInProgress, setIsRequestInProgress] =
-		useState<boolean>(false);
-	const [statisticsPeriod, setStatisticsPeriod] = useState<statisticOptions>(
-		statisticsPeriodOptionCurrentMonth
-	);
-	const [periodDisplay, setPeriodDisplay] = useState<string>(
-		translate('profile.statistics.period.display.default')
-	);
-	const [selectedStatistics, setSelectedStatistics] =
-		useState<ConsultantStatisticsDTO>(null);
-	const [csvData, setCsvData] = useState([]);
-
-	const csvHeaders = [
-		{
-			label: translate(
-				'profile.statistics.csvHeader.numberOfAssignedSessions'
-			),
-			key: 'numberOfAssignedSessions'
-		},
-		{
-			label: translate(
-				'profile.statistics.csvHeader.numberOfSessionsWhereConsultantWasActive'
-			),
-			key: 'numberOfActiveSessions'
-		},
-		{
-			label: translate(
-				'profile.statistics.csvHeader.numberOfSentMessages'
-			),
-			key: 'numberOfSentMessages'
-		}
-	];
+	const [statisticsPeriod, setStatisticsPeriod] =
+		useState<StatisticsPeriod>('currentMonth');
+	const [statistics, setStatistics] =
+		useState<ConsultantStatisticsDTO | null>(null);
 
 	const currentYear = dayjs().get('year');
-
-	const statisticsPeriodOptions: {
-		value: statisticOptions;
-		label: string;
-	}[] = [
-		{
-			value: statisticsPeriodOptionCurrentMonth,
-			label: translate('profile.statistics.period.currentMonth')
-		},
-		{
-			value: statisticsPeriodOptionLastMonth,
-			label: translate('profile.statistics.period.lastMonth')
-		},
-		{
-			value: statisticsPeriodOptionCurrentYear,
-			// Caritas parity: the year picker shows the concrete year, not
-			// just "current"/"past" - appending it needs no new translation
-			// keys across all 6 languages, unlike a "Jahres {{year}}" key
-			// would (grammar differs per language, e.g. genitive in German).
-			label: `${translate(
-				'profile.statistics.period.currentYear'
-			)} (${currentYear})`
-		},
-		{
-			value: statisticsPeriodOptionLastYear,
-			label: `${translate(
-				'profile.statistics.period.lastYear'
-			)} (${currentYear - 1})`
+	const periodOptions = statisticsPeriods.map((value) => {
+		const label = translate(`profile.statistics.period.${value}`);
+		// The year picker shows the concrete year, without a new key per language.
+		if (value === 'currentYear') {
+			return { value, label: `${label} (${currentYear})` };
 		}
-	];
+		if (value === 'lastYear') {
+			return { value, label: `${label} (${currentYear - 1})` };
+		}
+		return { value, label };
+	});
 
 	useEffect(() => {
-		if (statisticsPeriod) {
-			const dates: ApiGetConsultantStatisticsInterface =
-				getDatesForSelectedPeriod(statisticsPeriod);
-			getConsultantStatistics(dates.startDate, dates.endDate);
-		}
-	}, [statisticsPeriod]); // eslint-disable-line react-hooks/exhaustive-deps
-
-	const getPeriodOptions = () => {
-		return statisticsPeriodOptions.filter(
-			(option) => option.value === statisticsPeriod
-		)[0];
-	};
-
-	const preSelectedOption = statisticsPeriod
-		? getPeriodOptions()
-		: statisticsPeriodOptions[0];
-
-	const handleStatisticsPeriodSelect = (event: SelectChangeEvent<string>) => {
-		setStatisticsPeriod(event.target.value as statisticOptions);
-	};
-
-	const getConsultantStatistics = (startDate: string, endDate: string) => {
-		if (isRequestInProgress) {
-			return null;
-		}
-		setIsRequestInProgress(true);
-		apiGetConsultantStatistics({ startDate, endDate })
-			.then((response: ConsultantStatisticsDTO) => {
-				const data = [
-					{
-						numberOfAssignedSessions:
-							response.numberOfAssignedSessions,
-						numberOfActiveSessions: response.numberOfActiveSessions,
-						numberOfSentMessages: response.numberOfSentMessages
-					}
-				];
-
-				setCsvData(data);
-
-				setSelectedStatistics(response);
-				const startDateString = formatToDDMMYYYY(
-					Date.parse(response.startDate)
-				);
-				const endDateString = formatToDDMMYYYY(
-					Date.parse(response.endDate)
-				);
-				setPeriodDisplay(`${startDateString} - ${endDateString}`);
+		let current = true;
+		loadStatistics({
+			...datesForPeriod(statisticsPeriod),
+			breakdown: breakdownForPeriod(statisticsPeriod)
+		})
+			.then((response) => {
+				if (current) setStatistics(response);
 			})
-			.catch((error) => {
-				// console.log(error);
-			})
-			.finally(() => {
-				setIsRequestInProgress(false);
+			.catch(() => {
+				if (current) setStatistics(null);
 			});
-	};
+		return () => {
+			current = false;
+		};
+	}, [statisticsPeriod, loadStatistics]);
+
+	const periodDisplay = statistics
+		? `${formatToDDMMYYYY(dayjs(statistics.startDate).valueOf())} - ${formatToDDMMYYYY(dayjs(statistics.endDate).valueOf())}`
+		: translate('profile.statistics.period.display.default');
+
+	const csvHeaders = csvColumns.map((key) => ({
+		key,
+		label: translate(`profile.statistics.csvHeader.${key}`)
+	}));
+	const csvData = useMemo(
+		() =>
+			statistics
+				? csvRows(
+						statistics,
+						translate('profile.statistics.complete.total')
+					)
+				: [],
+		[statistics, translate]
+	);
+
+	const figure = (key: keyof ConsultantStatisticsDTO) =>
+		Number(statistics?.[key] ?? 0);
+
+	const tile = (
+		icon: React.ReactNode,
+		key: keyof ConsultantStatisticsDTO,
+		children?: React.ReactNode
+	) => (
+		<div className="statistics__visualization" data-figure={key}>
+			<span>
+				{icon}
+				<p>{figure(key)}</p>
+			</span>
+			<Text
+				text={translate(`profile.statistics.csvHeader.${key}`)}
+				type="standard"
+			/>
+			{children}
+		</div>
+	);
 
 	return (
 		<div className="statistics">
@@ -200,9 +146,13 @@ export const ConsultantStatistics = () => {
 				<OrisoSelect
 					id="statisticsSelect"
 					label={translate('profile.statistics.period.prefix')}
-					options={statisticsPeriodOptions}
-					value={preSelectedOption.value}
-					onChange={handleStatisticsPeriodSelect}
+					options={periodOptions}
+					value={statisticsPeriod}
+					onChange={(event: SelectChangeEvent<string>) =>
+						setStatisticsPeriod(
+							event.target.value as StatisticsPeriod
+						)
+					}
 				/>
 			</div>
 			<div className="b--1 p--3 mb--4">
@@ -216,59 +166,50 @@ export const ConsultantStatistics = () => {
 					type="standard"
 				/>
 				<div className="statistics__visuals__wrapper">
-					<div className="statistics__visualization text--center br--1 pr--4">
-						<span>
-							<PersonsIcon aria-hidden="true" focusable="false" />
-							<p>
-								{selectedStatistics?.numberOfAssignedSessions ||
-									0}
-							</p>
-						</span>
-						<Text
-							text={translate(
-								'profile.statistics.csvHeader.numberOfAssignedSessions'
-							)}
-							type="standard"
-						/>
-					</div>
-					<div className="statistics__visualization pl--4 pr--4 br--1">
-						<span>
-							<SpeechBubbleIcon
-								aria-hidden="true"
-								focusable="false"
-							/>
-							<p>
-								{selectedStatistics?.numberOfActiveSessions ||
-									0}
-							</p>
-						</span>
-						<Text
-							text={translate(
-								'profile.statistics.csvHeader.numberOfSessionsWhereConsultantWasActive'
-							)}
-							type="standard"
-						/>
-					</div>
-					<div className="statistics__visualization pl--4">
-						<span>
-							<SpeechBubblePlusIcon
-								aria-hidden="true"
-								focusable="false"
-							/>
-							<p>
-								{selectedStatistics?.numberOfSentMessages || 0}
-							</p>
-						</span>
-						<Text
-							text={translate(
-								'profile.statistics.csvHeader.numberOfSentMessages'
-							)}
-							type="standard"
-						/>
-					</div>
+					{tile(
+						<EventOutlinedIcon aria-hidden="true" />,
+						'numberOfAppointments',
+						<ul className="statistics__breakdown">
+							{appointmentKinds.map((key) => (
+								<li key={key}>
+									{translate(
+										`profile.statistics.csvHeader.${key}`
+									)}
+									: <strong>{figure(key)}</strong>
+								</li>
+							))}
+							<li>
+								{translate(
+									'profile.statistics.csvHeader.numberOfCancelledAppointments'
+								)}
+								:{' '}
+								<strong>
+									{figure('numberOfCancelledAppointments')}
+								</strong>
+							</li>
+						</ul>
+					)}
+					{tile(
+						<PersonsIcon aria-hidden="true" focusable="false" />,
+						'numberOfAssignedSessions'
+					)}
+					{tile(
+						<SpeechBubbleIcon
+							aria-hidden="true"
+							focusable="false"
+						/>,
+						'numberOfActiveSessions'
+					)}
+					{tile(
+						<SpeechBubblePlusIcon
+							aria-hidden="true"
+							focusable="false"
+						/>,
+						'numberOfSentMessages'
+					)}
 				</div>
 			</div>
-			{csvData && (
+			{statistics && (
 				<div className="statistics__download">
 					<Text
 						text={translate('profile.statistics.complete.title')}

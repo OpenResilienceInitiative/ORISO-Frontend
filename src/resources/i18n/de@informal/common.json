@@ -1101,8 +1101,9 @@
 				"display": {
 					"suffix": " hast Du:"
 				},
-				"prefix": "Deine Zahlen des"
-			}
+				"prefix": "Deine Zahlen für"
+			},
+			"csvHeader": {}
 		},
 		"unsetEmail": {
 			"confirmOverlay": {
