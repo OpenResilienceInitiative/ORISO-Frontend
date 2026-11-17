@@ -738,7 +738,7 @@
 	},
 	"enquiry": {
 		"teamDiscussion": {
-			"open": "Teambesprechung öffnen"
+			"open": "Team-Chat öffnen"
 		},
 		"acceptButton": {
 			"anonymous": "Chat starten",
@@ -2346,10 +2346,10 @@
 				"open": "Chat öffnen"
 			},
 			"mention": {
-				"title": "Erwähnung in der Team-Besprechung",
+				"title": "Erwähnung im Team-Chat",
 				"from": "Von {{name}}",
 				"several": "{{count}} neue Erwähnungen",
-				"open": "Team-Besprechung öffnen"
+				"open": "Team-Chat öffnen"
 			},
 			"handover": {
 				"title": "Neue Fallübergabe",
@@ -2647,8 +2647,8 @@
 				"text": "Eine Übersicht Ihrer anstehenden Termine liegt bereit."
 			},
 			"teamDiscussionNew": {
-				"title": "Team-Besprechung",
-				"text": "{{senderDisplayName}} hat in der Team-Besprechung geschrieben"
+				"title": "Team-Chat",
+				"text": "{{senderDisplayName}} hat im Team-Chat geschrieben"
 			},
 			"firstResponseReceived": {
 				"title": "Ihre ersten Schritte",
@@ -2732,7 +2732,7 @@
 				"archivedOpenToReply": "Diese Unterhaltung ist archiviert. Öffnen Sie die Unterhaltung, um zu antworten.",
 				"notJoined": "Nur lesen, bis Ihr Beitritt bestätigt und der Raum geladen ist.",
 				"supervisorNoComposer": "Als Supervisor:in können Sie hier reagieren, aber nicht schreiben.",
-				"teamClosed": "Die Teamberatung ist geschlossen.",
+				"teamClosed": "Der Team-Chat ist geschlossen.",
 				"curtained": "Dieser Fall ist für Sie gerade nicht einsehbar.",
 				"hiddenNotYours": "Diese Unterhaltung gehört nicht zu Ihren Fällen. Darum zeigt die Aktivität sie hier nicht.",
 				"hiddenNotJoined": "Sie sind dieser Unterhaltung nicht beigetreten. Darum zeigt die Aktivität sie hier nicht.",
@@ -3194,7 +3194,7 @@
 				},
 				"kind": {
 					"new": "Neue Anfrage",
-					"teamDiscussion": "Team-Besprechung",
+					"teamDiscussion": "Team-Chat",
 					"standard": "Standard-Benachrichtigung",
 					"liveChat": "Live-Chat-Nachricht",
 					"mention": "@ Erwähnung",
@@ -3517,7 +3517,7 @@
 		"names": {
 			"agency": "Übungsstelle",
 			"topic": "Übung",
-			"teamRoom": "Team-Besprechung (Übung)",
+			"teamRoom": "Team-Chat (Übung)",
 			"supervisionRoom": "Supervision (Übung)"
 		}
 	},
@@ -5875,7 +5875,7 @@
 		}
 	},
 	"teamDiscussion": {
-		"title": "Team-Besprechung",
+		"title": "Team-Chat",
 		"startHint": "Besprechung starten",
 		"postCount": "{{count}} Beiträge",
 		"postCount_one": "1 Beitrag",
@@ -5886,7 +5886,7 @@
 		"placeholder": "Nachricht an das Team …",
 		"send": "Senden",
 		"error": {
-			"open": "Die Team-Besprechung konnte nicht geöffnet werden.",
+			"open": "Der Team-Chat konnte nicht geöffnet werden.",
 			"send": "Die Nachricht konnte nicht gesendet werden."
 		}
 	},
@@ -6214,12 +6214,12 @@
 					"intro": "In der Liste wartet eine Übungsanfrage. Klicken Sie darauf, um sie zu öffnen."
 				},
 				"openTeam": {
-					"title": "Teambesprechung öffnen",
-					"intro": "Bei Ihnen ist die Teambesprechung aktiviert: Damit stimmen Sie sich mit Ihrem Team ab, bevor Sie annehmen. Klicken Sie auf „Teambesprechung öffnen“."
+					"title": "Team-Chat öffnen",
+					"intro": "Bei Ihnen ist der Team-Chat aktiviert: Damit stimmen Sie sich mit Ihrem Team ab, bevor Sie annehmen. Klicken Sie auf „Team-Chat öffnen“."
 				},
 				"teamReply": {
 					"title": "Im Team antworten",
-					"intro": "Lesen Sie die Nachricht aus dem Team und schreiben Sie eine Antwort. Wenn Sie die Anfrage annehmen, wird die Teambesprechung geschlossen."
+					"intro": "Lesen Sie die Nachricht aus dem Team und schreiben Sie eine Antwort. Wenn Sie die Anfrage annehmen, wird der Team-Chat geschlossen."
 				},
 				"accept": {
 					"title": "Anfrage annehmen",

@@ -726,7 +726,7 @@
 	},
 	"enquiry": {
 		"teamDiscussion": {
-			"open": "Open team discussion"
+			"open": "Open team chat"
 		},
 		"acceptButton": {
 			"anonymous": "Start chat",
@@ -2322,10 +2322,10 @@
 				"open": "Open chat"
 			},
 			"mention": {
-				"title": "Mention in the team discussion",
+				"title": "Mention in the team chat",
 				"from": "From {{name}}",
 				"several": "{{count}} new mentions",
-				"open": "Open team discussion"
+				"open": "Open team chat"
 			},
 			"handover": {
 				"title": "New case handover",
@@ -2623,8 +2623,8 @@
 				"text": "A briefing of your upcoming appointments is ready."
 			},
 			"teamDiscussionNew": {
-				"title": "Team discussion",
-				"text": "{{senderDisplayName}} posted in the team discussion"
+				"title": "Team chat",
+				"text": "{{senderDisplayName}} posted in the team chat"
 			},
 			"firstResponseReceived": {
 				"title": "Your first steps",
@@ -2708,7 +2708,7 @@
 				"archivedOpenToReply": "This conversation is archived. Open the conversation to reply.",
 				"notJoined": "Read only until your join is confirmed and the room has loaded.",
 				"supervisorNoComposer": "As supervisor you can react here, but not write.",
-				"teamClosed": "The team discussion is closed.",
+				"teamClosed": "The team chat is closed.",
 				"curtained": "This case is not visible to you right now.",
 				"hiddenNotYours": "This conversation is not one of your cases, so Activity does not show it here.",
 				"hiddenNotJoined": "You have not joined this conversation, so Activity does not show it here.",
@@ -3156,7 +3156,7 @@
 				},
 				"kind": {
 					"new": "New request",
-					"teamDiscussion": "Team discussion",
+					"teamDiscussion": "Team chat",
 					"standard": "Standard notification",
 					"liveChat": "Live chat message",
 					"mention": "@ Mention",
@@ -3479,7 +3479,7 @@
 		"names": {
 			"agency": "Practice agency",
 			"topic": "Practice",
-			"teamRoom": "Team discussion (practice)",
+			"teamRoom": "Team chat (practice)",
 			"supervisionRoom": "Supervision (practice)"
 		}
 	},
@@ -5800,7 +5800,7 @@
 		}
 	},
 	"teamDiscussion": {
-		"title": "Team discussion",
+		"title": "Team chat",
 		"startHint": "Start discussion",
 		"postCount": "{{count}} posts",
 		"postCount_one": "1 post",
@@ -5811,7 +5811,7 @@
 		"placeholder": "Message to the team …",
 		"send": "Send",
 		"error": {
-			"open": "The team discussion could not be opened.",
+			"open": "The team chat could not be opened.",
 			"send": "The message could not be sent."
 		}
 	},
@@ -6139,12 +6139,12 @@
 					"intro": "A practice request is waiting in the list. Click it to open it."
 				},
 				"openTeam": {
-					"title": "Open the team discussion",
-					"intro": "The team discussion is switched on for you: use it to check with your team before you accept. Click “Open team discussion”."
+					"title": "Open the team chat",
+					"intro": "The team chat is switched on for you: use it to check with your team before you accept. Click “Open team chat”."
 				},
 				"teamReply": {
 					"title": "Reply in the team",
-					"intro": "Read the message from your team and write a reply. When you accept the request, the team discussion is closed."
+					"intro": "Read the message from your team and write a reply. When you accept the request, the team chat is closed."
 				},
 				"accept": {
 					"title": "Accept the request",
