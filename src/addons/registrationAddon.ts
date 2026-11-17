@@ -102,11 +102,17 @@ export const apiGetRegistrationAddon = async (
 
 const lookups = new Map<number, Promise<RegistrationAddon | null>>();
 
+/** How long finding a Träger took: that time is gone from its add-on's fallback window. */
+const tenantLookupMs = new Map<number, number>();
+
 /** One lookup per Träger and page load: every registration step asks the same question. */
 const lookupRegistrationAddon = (tenantId: number) => {
 	let lookup = lookups.get(tenantId);
 	if (!lookup) {
-		lookup = apiGetRegistrationAddon(tenantId);
+		lookup = apiGetRegistrationAddon(
+			tenantId,
+			REGISTRATION_ADDON_TIMEOUT_MS - (tenantLookupMs.get(tenantId) ?? 0)
+		);
 		lookups.set(tenantId, lookup);
 	}
 	return lookup;
@@ -114,12 +120,32 @@ const lookupRegistrationAddon = (tenantId: number) => {
 
 const tenantIdLookups = new Map<number | null, Promise<number | null>>();
 
+/**
+ * Finding the Träger shares the add-on's fallback window: a tenant service that does not answer
+ * in that time means no add-on, not a registration that waits for the request's own timeout.
+ */
 const lookupTenantId = (linkAgencyId: number | null) => {
 	let lookup = tenantIdLookups.get(linkAgencyId);
 	if (!lookup) {
-		lookup = apiGetTenantTheming(linkAgencyId)
-			.then((tenant) => tenant?.id ?? null)
-			.catch(() => null);
+		const startedAt = Date.now();
+		let timer: ReturnType<typeof setTimeout>;
+		lookup = Promise.race([
+			apiGetTenantTheming(linkAgencyId)
+				.then((tenant) => tenant?.id ?? null)
+				.catch(() => null),
+			new Promise<null>((resolve) => {
+				timer = setTimeout(
+					() => resolve(null),
+					REGISTRATION_ADDON_TIMEOUT_MS
+				);
+			})
+		]).then((tenantId) => {
+			clearTimeout(timer);
+			if (tenantId != null) {
+				tenantLookupMs.set(tenantId, Date.now() - startedAt);
+			}
+			return tenantId;
+		});
 		tenantIdLookups.set(linkAgencyId, lookup);
 	}
 	return lookup;
@@ -128,6 +154,7 @@ const lookupTenantId = (linkAgencyId: number | null) => {
 export const resetRegistrationAddonForTests = () => {
 	lookups.clear();
 	tenantIdLookups.clear();
+	tenantLookupMs.clear();
 };
 
 /**

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import {
 	apiGetRegistrationAddon,
 	isRegistrationRef,
@@ -130,6 +130,55 @@ describe('registration add-on', () => {
 		await waitFor(() => expect(lookedUp.result.current).toBe(4));
 		expect(apiGetTenantTheming).toHaveBeenCalledTimes(1);
 		expect(apiGetTenantTheming).toHaveBeenCalledWith(null);
+	});
+
+	const hangingUntilAborted = () =>
+		vi
+			.spyOn(globalThis, 'fetch')
+			.mockImplementation(
+				(_url, init) =>
+					new Promise((_resolve, reject) =>
+						init?.signal?.addEventListener('abort', () =>
+							reject(new DOMException('aborted', 'AbortError'))
+						)
+					)
+			);
+
+	it('stops waiting for the Träger after the fallback window', async () => {
+		vi.useFakeTimers();
+		vi.mocked(apiGetTenantTheming).mockReturnValue(new Promise(() => {}));
+
+		const lookedUp = renderHook(() =>
+			useRegistrationTenantId(undefined, true)
+		);
+		await act(() => vi.advanceTimersByTimeAsync(3999));
+		expect(lookedUp.result.current).toBeUndefined();
+		await act(() => vi.advanceTimersByTimeAsync(1));
+
+		expect(lookedUp.result.current).toBeNull();
+	});
+
+	it('gives the add-on only what finding the Träger left of the window', async () => {
+		vi.useFakeTimers();
+		vi.mocked(apiGetTenantTheming).mockReturnValue(
+			new Promise((resolve) =>
+				setTimeout(() => resolve({ id: 4 } as never), 3000)
+			)
+		);
+		hangingUntilAborted();
+
+		const lookedUp = renderHook(() =>
+			useRegistrationTenantId(undefined, true)
+		);
+		await act(() => vi.advanceTimersByTimeAsync(3000));
+		expect(lookedUp.result.current).toBe(4);
+
+		const addon = renderHook(() => useRegistrationAddon(4));
+		await act(() => vi.advanceTimersByTimeAsync(999));
+		expect(addon.result.current.status).toBe('loading');
+		await act(() => vi.advanceTimersByTimeAsync(1));
+
+		expect(addon.result.current).toEqual({ status: 'none' });
 	});
 
 	it('checks what the app hands back', () => {
