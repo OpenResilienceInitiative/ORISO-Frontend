@@ -57,6 +57,8 @@ export interface ButtonProps {
 	/** Semantic product-tour anchor, rendered as `data-tour-target`. */
 	tourTarget?: string;
 	ariaHasPopup?: React.AriaAttributes['aria-haspopup'];
+	/** Rendered as given instead of translating `item.label`. */
+	children?: React.ReactNode;
 }
 
 export const Button = (props: ButtonProps) => {
@@ -167,7 +169,7 @@ export const Button = (props: ButtonProps) => {
 					<ReloadIcon className="button__icon" />
 				)}
 				{item.icon && item.icon}
-				{item.label && translate(item.label)}
+				{props.children ?? (item.label && translate(item.label))}
 			</button>
 		</div>
 	);
