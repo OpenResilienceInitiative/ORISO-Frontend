@@ -36,6 +36,14 @@ import type { DayExceptions, WorkingHours } from './calendarWorkingHours';
 import type { HolidayRegion } from './calendarHolidays';
 import type { SplitDays } from './CalendarSplitView';
 import type { SheetStop } from './CalendarSheet';
+import { MyDirectLinksView } from '../directLinks/MyDirectLinksView';
+import { DirectLinkShareDialog } from '../conversationCreate/directLink/DirectLinkShareDialog';
+import type { DirectLink } from '../conversationCreate/directLink/directLink';
+import { SAMPLE_DIRECT_LINKS } from '../directLinks/directLinkSamples';
+import {
+	CalendarLinksBox,
+	useCalendarLinksLabels
+} from './CalendarLinksSection';
 import {
 	ASKER_ENTRIES,
 	COLLEAGUE_ENTRIES,
@@ -60,7 +68,10 @@ interface HarnessProps {
 	compact?: boolean;
 	/** With `compact`: a phone (three days at most); false = tablet. */
 	phone?: boolean;
-	initialView?: CalendarViewName;
+	/** 'unset' = what a counsellor sees with nothing set (the list, *19). */
+	initialView?: CalendarViewName | 'unset';
+	/** Show "Links ohne Termin" with sample links in the list (*19). */
+	links?: boolean;
 	shownColleagues?: string[];
 	fullscreen?: boolean;
 	switcherStyle?: ViewSwitcherStyle;
@@ -139,6 +150,7 @@ const Scenario = ({
 	compact = false,
 	phone,
 	initialView,
+	links = false,
 	shownColleagues = [],
 	fullscreen = false,
 	switcherStyle = 'menu',
@@ -228,7 +240,21 @@ const Scenario = ({
 			compact={compact}
 			phone={phone}
 			initialSheet={initialSheet}
-			initialView={initialView}
+			initialView={
+				initialView === 'unset'
+					? undefined
+					: // Stories keep the grid they were written for; the
+						// list as the default has its own story (*19).
+						(initialView ??
+						((phone ?? compact) ? 'threeDays' : 'workWeek'))
+			}
+			linksPanel={
+				links ? (
+					<CalendarLinksBox>
+						<StoryLinksPanel />
+					</CalendarLinksBox>
+				) : undefined
+			}
 			initialShownColleagues={shownColleagues}
 			initialFullscreen={fullscreen}
 			initialSwitcherStyle={switcherStyle}
@@ -378,7 +404,7 @@ const meta: Meta<typeof Harness> = {
 		docs: {
 			description: {
 				component:
-					'FE#1050 / ADR-032, round 2 after Frank\'s prototype (2026-11-14): built like "Gespräche" — left column with search (display filter at its left, as in "Gespräche"), kind chips, open requests, "Als Nächstes" and quick entry with date, start and duration; one row of people above the calendar (shown colleagues pressed, recently shown ones to switch back on, "Weitere …"); stage with header (+, view switch, full screen, ⋮), toolbar (‹ Heute ▾ ›) and the calendar. One colour per kind; working hours shaded; colleague entries with tooltip; pending move proposals dashed. Click an entry for its actions, double-click to move it. Drag over free time → "Eintragen als". Month view: click or drag days → "Tag eintragen". "Nebeneinander": one column per person. Move proposals both ways: one\'s own, dashed and withdrawable; colleagues\' proposals for one\'s own appointments at the top of "Offene Anfragen" with "Annehmen" / "Ablehnen", counted on "Meine Termine". "Beitreten" has no backend yet and appears only here. Sample data.'
+					'FE#1050 / ADR-032, round 2 after Frank\'s prototype (2026-11-14): built like "Gespräche" — left column with search (display filter at its left, as in "Gespräche"), kind chips, open requests, "Als Nächstes" and quick entry with date, start and duration; one row of people above the calendar (shown colleagues pressed, recently shown ones to switch back on, "Weitere …"); stage with header (+, view switch, full screen, ⋮), toolbar (‹ Heute ▾ ›) and the calendar. One colour per kind; working hours shaded; colleague entries with tooltip; pending move proposals dashed. Click an entry for its actions, double-click to move it. Drag over free time → "Eintragen als". Month view: click or drag days → "Tag eintragen". "Nebeneinander": one column per person. Move proposals both ways: one\'s own, dashed and withdrawable; colleagues\' proposals for one\'s own appointments at the top of "Offene Verschiebungen" with "Annehmen" / "Ablehnen", counted on "Meine Termine". "Beitreten" has no backend yet and appears only here. Sample data.'
 			}
 		}
 	},
@@ -415,8 +441,43 @@ const findCy = (cy: string) =>
 const cyEl = (cy: string) =>
 	document.body.querySelector<HTMLElement>(`[data-cy="${cy}"]`)!;
 
+/** "Links ohne Termin" with sample links: copy, QR code, on/off. */
+const StoryLinksPanel = () => {
+	const [links, setLinks] = useState<DirectLink[]>(SAMPLE_DIRECT_LINKS);
+	const [qr, setQr] = useState<DirectLink | null>(null);
+	const labels = useCalendarLinksLabels();
+	return (
+		<>
+			<MyDirectLinksView
+				{...labels}
+				state="ready"
+				links={links}
+				onToggle={(id, active) =>
+					setLinks((all) =>
+						all.map((link) =>
+							link.id === id ? { ...link, active } : link
+						)
+					)
+				}
+				onShowQr={setQr}
+				onEdit={() => undefined}
+				onCreate={() => undefined}
+				onRetry={() => undefined}
+				onCopy={() => undefined}
+			/>
+			{qr && (
+				<DirectLinkShareDialog
+					open
+					link={qr}
+					onClose={() => setQr(null)}
+				/>
+			)}
+		</>
+	);
+};
+
 export const WorkWeek: Story = {
-	name: 'Counsellor — work week (default)',
+	name: 'Counsellor — work week',
 	play: async ({ canvasElement }) => {
 		const canvas = canvasOf(canvasElement);
 		await expect(await canvas.findByTestId('calendar-view')).toBeTruthy();
@@ -472,8 +533,40 @@ export const Day: Story = {
 };
 
 export const List: Story = {
-	name: 'Counsellor — list',
-	args: { initialView: 'list' }
+	name: 'Counsellor — list (default), with "Links ohne Termin"',
+	args: { initialView: 'unset', links: true },
+	play: async ({ canvasElement }) => {
+		const canvas = canvasOf(canvasElement);
+		// Nothing set: the list is the first view (*19).
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector('[data-cy="calendar-links"]')
+			).not.toBeNull()
+		);
+		const links = within(
+			canvasElement.querySelector<HTMLElement>(
+				'[data-cy="calendar-links"]'
+			)!
+		);
+		await expect(
+			links.getByRole('heading', { name: 'Links ohne Termin' })
+		).toBeTruthy();
+		await expect(links.getByText('Flyer Schule')).toBeTruthy();
+		await expect(canvas.getByTestId('calendar-view')).toBeTruthy();
+		// "Beginnt gleich" stays readable in the list: the row does not take
+		// the red soon fill the red words sit on (review 4589661574).
+		const soonRow = await waitFor(() => {
+			const row = canvasElement.querySelector<HTMLElement>(
+				'.calEntry--listRow.calEntry--soon'
+			);
+			expect(row).not.toBeNull();
+			return row!;
+		});
+		const badge = soonRow.querySelector<HTMLElement>('.calendarSoon')!;
+		await expect(getComputedStyle(soonRow).backgroundColor).not.toBe(
+			getComputedStyle(badge).color
+		);
+	}
 };
 
 export const ColleaguesShown: Story = {
@@ -1003,11 +1096,13 @@ export const Fullscreen: Story = {
 };
 
 export const PendingProposal: Story = {
-	name: 'Move proposal — pending (dashed, "Offene Anfragen")',
+	name: 'Move proposal — pending (dashed, "Offene Verschiebungen")',
 	args: { shownColleagues: ['kaya'], proposals: STORY_PROPOSALS },
 	play: async ({ canvasElement }) => {
 		const canvas = canvasOf(canvasElement);
-		await expect(await canvas.findByText('Offene Anfragen')).toBeTruthy();
+		await expect(
+			await canvas.findByText('Offene Verschiebungen')
+		).toBeTruthy();
 		await waitFor(() =>
 			expect(
 				canvasElement.querySelectorAll('.calEntry--proposal').length
@@ -1031,7 +1126,7 @@ export const WithdrawProposal: Story = {
 			})
 		);
 		await waitFor(() =>
-			expect(canvas.queryByText('Offene Anfragen')).toBeNull()
+			expect(canvas.queryByText('Offene Verschiebungen')).toBeNull()
 		);
 		await expect(
 			await body().findByText('Vorschlag zurückgezogen.')
@@ -1052,7 +1147,9 @@ export const ProposeMove: Story = {
 		);
 		await userEvent.click(await findCy('calendar-move-submit'));
 		const canvas = canvasOf(canvasElement);
-		await expect(await canvas.findByText('Offene Anfragen')).toBeTruthy();
+		await expect(
+			await canvas.findByText('Offene Verschiebungen')
+		).toBeTruthy();
 	}
 };
 
@@ -1080,7 +1177,7 @@ export const ReceivedRequests: Story = {
 	play: async ({ canvasElement }) => {
 		const section = within(await findCy('calendar-requests'));
 		await expect(
-			section.getByRole('heading', { name: 'Offene Anfragen' })
+			section.getByRole('heading', { name: 'Offene Verschiebungen' })
 		).toBeTruthy();
 		// Who proposes what: old and new time, also for screen readers.
 		await expect(
@@ -1176,7 +1273,7 @@ export const PhoneRequests: Story = {
 	play: async () => {
 		await findCy('calendar-sheet');
 		const sheet = within(cyEl('calendar-sheet'));
-		await expect(sheet.getByText('Offene Anfragen')).toBeTruthy();
+		await expect(sheet.getByText('Offene Verschiebungen')).toBeTruthy();
 		await expect(
 			sheet.getByRole('button', {
 				name: /^Vorschlag von A\. Kaya annehmen/
@@ -1435,6 +1532,36 @@ export const Phone: Story = {
 	}
 };
 
+export const PhoneTouchTargets: Story = {
+	name: 'Counsellor — phone 390 px, controls at least 44 px (test finding C25)',
+	globals: phone390Globals,
+	args: { compact: true, initialView: 'threeDays' },
+	play: async ({ canvasElement }) => {
+		await findCy('calendar-previous');
+		const tall = (el: Element | null) =>
+			el ? Math.round(el.getBoundingClientRect().height) : 0;
+		const wide = (el: Element | null) =>
+			el ? Math.round(el.getBoundingClientRect().width) : 0;
+		for (const id of [
+			'calendar-previous',
+			'calendar-next',
+			'calendar-jump',
+			'calendar-today'
+		]) {
+			const el = canvasElement.querySelector(`[data-cy="${id}"]`);
+			await expect({ id, h: tall(el) >= 44, w: wide(el) >= 44 }).toEqual({
+				id,
+				h: true,
+				w: true
+			});
+		}
+		const search = canvasElement.querySelector(
+			'.calendarStage__search .sessionsListToolbar__searchInput'
+		);
+		await expect(tall(search)).toBeGreaterThanOrEqual(44);
+	}
+};
+
 export const Tablet: Story = {
 	name: 'Counsellor — tablet 820 px (phone layout, work week)',
 	globals: tablet820Globals,
@@ -1486,7 +1613,9 @@ export const TabletRequests: Story = {
 	play: async () => {
 		await findCy('calendar-sheet');
 		const sheet = cyEl('calendar-sheet');
-		await expect(within(sheet).getByText('Offene Anfragen')).toBeTruthy();
+		await expect(
+			within(sheet).getByText('Offene Verschiebungen')
+		).toBeTruthy();
 		await expect(
 			sheet.querySelector('[data-cy="calendar-upcoming"]')
 		).toBeNull();
@@ -1730,6 +1859,39 @@ export const FilterKinds: Story = {
 				canvasElement.querySelectorAll('.calendarView .calEntry').length
 			).toBe(all)
 		);
+	}
+};
+
+/** Review 4594645452: a chip that leaves the row takes its filter along. */
+export const ChipRemovedClearsFilter: Story = {
+	name: 'Settings — removing a chosen kind button clears its filter',
+	play: async ({ canvasElement }) => {
+		const canvas = canvasOf(canvasElement);
+		await canvas.findByTestId('calendar-view');
+		const count = () =>
+			canvasElement.querySelectorAll('.calendarView .calEntry').length;
+		await waitFor(() => expect(count()).toBeGreaterThan(0));
+		const all = count();
+		await userEvent.click(
+			canvasElement.querySelector<HTMLElement>(
+				'[data-cy="calendar-filter-phone"]'
+			)!
+		);
+		await waitFor(() => expect(count()).toBeLessThan(all));
+		await userEvent.click(
+			canvasElement.querySelector<HTMLElement>(
+				'[data-cy="calendar-kinds-button"]'
+			)!
+		);
+		await userEvent.click(
+			await body().findByRole('button', {
+				name: 'Als Knopf wählen: Telefon'
+			})
+		);
+		await userEvent.click(
+			await body().findByRole('menuitemradio', { name: /^Aus/ })
+		);
+		await waitFor(() => expect(count()).toBe(all));
 	}
 };
 

@@ -107,9 +107,9 @@ export const endpoints = {
 	groupChatBase: userServiceOrigin + '/service/users/chat/',
 	internalSubsetChat:
 		userServiceOrigin + '/service/users/chat/internal-subset',
-	agencyAdminContacts: (agencyId: number) =>
+	agencyContactPerson: (agencyId: number) =>
 		userServiceOrigin +
-		`/service/users/agencies/${agencyId}/admin-contacts`,
+		`/service/users/agencies/${agencyId}/contact-person`,
 	chatSeriesBase: userServiceOrigin + '/service/users/chat-series/',
 	callKnocks: userServiceOrigin + '/service/users/call-knocks',
 	keycloakAccessToken:

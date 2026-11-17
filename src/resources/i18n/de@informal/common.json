@@ -722,6 +722,8 @@
 				"notJoined": "Nur lesen, bis dein Beitritt bestätigt und der Raum geladen ist.",
 				"supervisorNoComposer": "Als Supervisor:in kannst du hier reagieren, aber nicht schreiben.",
 				"curtained": "Dieser Fall ist für dich gerade nicht einsehbar.",
+				"hiddenNotYours": "Diese Unterhaltung gehört nicht zu deinen Fällen. Darum zeigt die Aktivität sie hier nicht.",
+				"hiddenNotJoined": "Du bist dieser Unterhaltung nicht beigetreten. Darum zeigt die Aktivität sie hier nicht.",
 				"enquiryOpenToAccept": "Diese Anfrage ist noch nicht angenommen. Öffne die Unterhaltung, um sie anzunehmen.",
 				"consentOpenToContinue": "Bitte bestätige zuerst im Chat, wie es weitergeht. Öffne dazu die Unterhaltung.",
 				"actionFailed": "Das hat nicht geklappt. Bitte versuche es erneut."
@@ -857,6 +859,14 @@
 			"registerSuccess": {
 				"overlay": {
 					"headline": "Du hast Dich erfolgreich für ein neues Themenfeld registriert."
+				}
+			},
+			"agency": {
+				"contactPerson": {
+					"support": {
+						"text": "Bitte wende dich an den Support:",
+						"none": "Bitte wende dich an die Plattformverwaltung."
+					}
 				}
 			}
 		},

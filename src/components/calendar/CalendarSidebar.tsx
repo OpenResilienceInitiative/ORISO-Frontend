@@ -10,12 +10,14 @@
 import * as React from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Popper, TextField } from '@mui/material';
+import { CircularProgress, Popper, TextField } from '@mui/material';
 import dayjs from 'dayjs';
 import AddIcon from '@mui/icons-material/Add';
 import ScheduleIcon from '@mui/icons-material/Schedule';
 import { ListSearchField } from '../listSearchField/ListSearchField';
 import { FilterChipRow } from '../displayFilter/FilterChipRow';
+import { FilterChip } from '../displayFilter/FilterChip';
+import type { ChipView } from '../displayFilter/displayFilterTypes';
 import { DisplayFilterButton } from '../displayFilter/DisplayFilterButton';
 import { OrisoDatePicker } from '../form/OrisoDatePicker';
 import { OrisoTimePicker } from '../form/OrisoTimePicker';
@@ -30,6 +32,7 @@ import {
 } from './calendarModel';
 import {
 	CalendarEntryGlyph,
+	FACET_ICON_COMPONENT,
 	FacetIcon,
 	SoonBadge,
 	facetOf,
@@ -66,7 +69,11 @@ import type {
 import { avatarToneClass } from './calendarAvatar';
 import { calendarLocale } from './calendarLocale';
 import type { CalendarListMode } from './calendarPreferences';
-import { useEntryLabel, useRangeFormat } from './useEntryLabel';
+import {
+	useEntryKindLabel,
+	useEntryLabel,
+	useRangeFormat
+} from './useEntryLabel';
 
 const QUICK_KINDS: QuickKind[] = [
 	'video',
@@ -127,6 +134,7 @@ export interface CalendarSidebarProps {
 	kindsCustomised?: boolean;
 	/** The kinds with a button in the row; default all five. */
 	chipFacets?: CalendarEntryFacet[];
+	chipView?: ChipView;
 	openProposals: { proposal: MoveProposal; entry: CalendarEntry }[];
 	onOpenProposal?: (
 		proposal: MoveProposal,
@@ -136,7 +144,7 @@ export interface CalendarSidebarProps {
 	onWithdrawProposal?: (proposal: MoveProposal) => void;
 	/**
 	 * Proposals colleagues sent for one's own appointments, with the time
-	 * each was made for (`from`): at the top of "Offene Anfragen".
+	 * each was made for (`from`): at the top of "Offene Verschiebungen".
 	 */
 	requests?: {
 		proposal: MoveProposal;
@@ -213,6 +221,7 @@ export const CalendarSidebar = ({
 	onOpenKinds,
 	kindsCustomised,
 	chipFacets,
+	chipView,
 	openProposals,
 	onOpenProposal,
 	onWithdrawProposal,
@@ -250,6 +259,7 @@ export const CalendarSidebar = ({
 		[i18n.language]
 	);
 	const label = useEntryLabel();
+	const kindLabel = useEntryKindLabel();
 	const format = useRangeFormat();
 	const shortTime = useShortTime();
 	const colleagueById = useMemo(
@@ -362,6 +372,7 @@ export const CalendarSidebar = ({
 					onToggleFacet={onToggleFacet}
 					onHighlightFacet={onHighlightFacet}
 					facets={chipFacets}
+					view={chipView}
 					className="calendarSide__chips"
 				/>
 			)}
@@ -426,6 +437,25 @@ export const CalendarSidebar = ({
 											<span className="calendarSide__rowName">
 												{name}
 											</span>
+											{/* Which appointment would move (test finding C21). */}
+											{entry && (
+												<span
+													className="calendarSide__rowMeta"
+													data-cy={`calendar-received-what-${proposal.id}`}
+												>
+													{[
+														kindLabel(entry),
+														label(entry)
+													]
+														.filter(
+															(part, i, all) =>
+																all.indexOf(
+																	part
+																) === i
+														)
+														.join(' · ')}
+												</span>
+											)}
 											<span className="calendarSide__rowMeta calendarSide__requestChange">
 												{t(
 													'calendar.proposal.change',
@@ -1000,6 +1030,8 @@ export interface CalendarKindChipsProps {
 	trailing?: React.ReactNode;
 	/** The kinds with a button, chosen in "Ansicht · Kalender". */
 	facets?: CalendarEntryFacet[];
+	/** How the chips look, as in Gespräche: icons, labels or text. */
+	view?: ChipView;
 	className?: string;
 }
 
@@ -1018,6 +1050,7 @@ export const CalendarKindChips = ({
 	onHighlightFacet,
 	trailing,
 	facets = KIND_CHIPS,
+	view = 'icons',
 	className
 }: CalendarKindChipsProps) => {
 	const { t } = useTranslation();
@@ -1048,31 +1081,28 @@ export const CalendarKindChips = ({
 						facet === 'blocker'
 							? t('calendar.blocker.menuItem')
 							: t(`calendar.kinds.${facet}`);
+					// The same chip as in Gespräche (Frank, 2026-11-17): one
+					// module, one look, the chosen one names itself. The span
+					// carries the grid highlight while hovered or focused.
 					return (
-						<button
+						<span
 							key={facet}
-							type="button"
-							className={`calendarSide__kindChip calendarSide__chip--k-${facet}`}
-							aria-pressed={on}
-							title={name}
-							onClick={() => choose(facet)}
+							className="calendarSide__chipHover"
 							onMouseEnter={() => onHighlightFacet(facet)}
 							onMouseLeave={() => onHighlightFacet(null)}
 							onFocus={() => onHighlightFacet(facet)}
 							onBlur={() => onHighlightFacet(null)}
-							data-cy={`calendar-filter-${facet}`}
 						>
-							<FacetIcon facet={facet} />
-							{/* Read out always, shown only on the chosen chip. */}
-							<span className="calendarSide__kindChipLabel">
-								{name}
-							</span>
-							{on && (
-								<span className="calendarSide__kindChipCount">
-									{futureCount(facet)}
-								</span>
-							)}
-						</button>
+							<FilterChip
+								label={name}
+								icon={FACET_ICON_COMPONENT[facet]}
+								active={on}
+								count={on ? futureCount(facet) : undefined}
+								view={view}
+								onClick={() => choose(facet)}
+								data-cy={`calendar-filter-${facet}`}
+							/>
+						</span>
 					);
 				}
 			)}
@@ -1198,16 +1228,33 @@ export const QuickEntry = ({
 			}),
 		[entries, ownerId, workingHours, now, slot]
 	);
+	/**
+	 * What the line itself set, as opposed to a pick or a field the
+	 * counsellor changed: a new line drops it when it names nothing of the
+	 * kind (test finding C3).
+	 */
+	const fromLine = useRef({ session: false, duration: false });
 	const type = (value: string) => {
 		setText(value);
 		const typed = parseQuickEntry(value, { now, conversations, kind });
 		// A conversation the line names replaces an earlier pick; a line
-		// that names none keeps it; a name that fits several drops it, so
-		// "who" blocks saving until one is chosen (review 4575297354).
-		if (typed.sessionId !== undefined) setSessionId(typed.sessionId);
-		else if (typed.ambiguous) setSessionId(undefined);
+		// that names none keeps a pick but drops one the earlier line named;
+		// a name that fits several drops it, so "who" blocks saving until
+		// one is chosen (review 4575297354).
+		if (typed.sessionId !== undefined) {
+			setSessionId(typed.sessionId);
+			fromLine.current.session = true;
+		} else if (typed.ambiguous || fromLine.current.session) {
+			setSessionId(undefined);
+			fromLine.current.session = false;
+		}
 		// The line prefills what it names; the fields stay what is saved.
 		const prefill = fieldsFromEntry(typed);
+		if (prefill.duration !== undefined) fromLine.current.duration = true;
+		else if (fromLine.current.duration) {
+			prefill.duration = DEFAULT_QUICK_DURATION;
+			fromLine.current.duration = false;
+		}
 		if (Object.keys(prefill).length > 0)
 			setFields((current) => ({ ...current, ...prefill }));
 	};
@@ -1221,6 +1268,7 @@ export const QuickEntry = ({
 		setKind(undefined);
 		setSessionId(undefined);
 		setFields({ duration: DEFAULT_QUICK_DURATION });
+		fromLine.current = { session: false, duration: false };
 	};
 
 	// One creation at a time; a draft changed while it ran stays (reviews
@@ -1437,12 +1485,13 @@ export const QuickEntry = ({
 									label: durationLabel(d)
 								})
 							)}
-							onChange={(event) =>
+							onChange={(event) => {
+								fromLine.current.duration = false;
 								setFields((f) => ({
 									...f,
 									duration: Number(event.target.value)
-								}))
-							}
+								}));
+							}}
 						/>
 					</div>
 				</div>
@@ -1535,7 +1584,10 @@ export const QuickEntry = ({
 								key={c.sessionId}
 								type="button"
 								className="calendarQuick__person"
-								onClick={() => setSessionId(c.sessionId)}
+								onClick={() => {
+									setSessionId(c.sessionId);
+									fromLine.current.session = false;
+								}}
 								data-cy={`calendar-quick-person-${c.sessionId}`}
 							>
 								<span
@@ -1569,9 +1621,22 @@ export const QuickEntry = ({
 						type="submit"
 						className="calendarQuick__save"
 						disabled={saving || gaps.length > 0 || !touched}
+						aria-busy={saving}
 						data-cy="calendar-quick-save"
 					>
-						{t('calendar.quick.save')}
+						{/* The first save can take seconds (test finding C13). */}
+						{saving && (
+							<CircularProgress
+								size={14}
+								color="inherit"
+								className="calendarQuick__saving"
+							/>
+						)}
+						{t(
+							saving
+								? 'calendar.quick.saving'
+								: 'calendar.quick.save'
+						)}
 					</button>
 				</div>
 			</form>

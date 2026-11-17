@@ -11,7 +11,7 @@
  *
  * Move proposals (contract "move proposals v1"): a counsellor proposes a new
  * time for a colleague's appointment and withdraws it; the colleague finds
- * it under "Offene Anfragen" and in the grid, and accepts or declines.
+ * it under "Offene Verschiebungen" and in the grid, and accepts or declines.
  * "Beitreten" has no backend yet: it appears only when the host passes its
  * callback (Storybook does, the app does not).
  *
@@ -100,11 +100,13 @@ import {
 	writeEdgeChoice,
 	type EdgeChoice,
 	readRecentColleagues,
+	readShownColleagues,
 	readSwitcherStyle,
 	MAX_RECENT_COLLEAGUES,
 	recentPills,
 	rememberColleague,
 	writeRecentColleagues,
+	writeShownColleagues,
 	writeSwitcherStyle,
 	readShowGrips,
 	writeShowGrips,
@@ -148,6 +150,7 @@ import {
 	CalendarSettingsDialog,
 	CALENDAR_CHIP_FACETS
 } from './CalendarSettingsDialog';
+import type { ChipView } from '../displayFilter/displayFilterTypes';
 import { CalendarMenu } from './CalendarMenu';
 import {
 	EdgeMenuContent,
@@ -248,6 +251,12 @@ export interface CalendarPageProps {
 	/** Phone: where the bottom sheet starts (default half). */
 	initialSheet?: SheetStop;
 	initialView?: CalendarViewName;
+	/**
+	 * Links without an appointment, shown under the list (Frank, 2026-11-17:
+	 * "Meine Direktlinks" moves into the calendar). The wired page passes
+	 * the real links panel, stories a sample.
+	 */
+	linksPanel?: React.ReactNode;
 	/** Storybook: colleagues shown from the start. */
 	initialShownColleagues?: string[];
 	initialFullscreen?: boolean;
@@ -296,7 +305,7 @@ export interface CalendarPageProps {
 	proposals?: MoveProposal[];
 	/**
 	 * Open move proposals colleagues sent for one's own appointments:
-	 * "Offene Anfragen", answered with the two callbacks below.
+	 * "Offene Verschiebungen", answered with the two callbacks below.
 	 */
 	receivedProposals?: MoveProposal[];
 	/**
@@ -496,6 +505,7 @@ export const CalendarPage = ({
 	phone = compact,
 	initialSheet = 'half',
 	initialView,
+	linksPanel,
 	initialShownColleagues = [],
 	initialFullscreen = false,
 	initialSwitcherStyle = 'menu',
@@ -541,14 +551,17 @@ export const CalendarPage = ({
 	const summarise = useWorkingHoursSummary();
 	const now = useLiveNow(fixedNow);
 	const consultant = role === 'consultant';
+	// New appointments only for one's own, living conversations (C1, C6).
+	const bookable = useMemo(
+		() => conversations.filter((c) => c.bookable !== false),
+		[conversations]
+	);
 	const views = phone ? COMPACT_VIEWS : DESKTOP_VIEWS;
 	const controller = useCalendarController();
 
-	// A phone opens on three days, a wider screen on the work week
-	// (prototype v17).
-	const [view, setView] = useState<CalendarViewName>(
-		initialView ?? (phone ? 'threeDays' : 'workWeek')
-	);
+	// Without a saved choice the calendar opens as the list (Frank,
+	// 2026-11-17), on the phone and on a wide screen alike.
+	const [view, setView] = useState<CalendarViewName>(initialView ?? 'list');
 	const [title, setTitle] = useState('');
 	/** The day the grid stands on; the split view starts on this day. */
 	const [anchorDate, setAnchorDate] = useState(() => startOfDay(now));
@@ -571,16 +584,26 @@ export const CalendarPage = ({
 	const [switcherStyle, setSwitcherStyle] = useState<ViewSwitcherStyle>(() =>
 		readSwitcherStyle(ownerId, initialSwitcherStyle)
 	);
-	const [shownColleagues, setShownColleagues] = useState<string[]>(
-		initialShownColleagues
-	);
+	// The host's list wins; otherwise the ones shown before the reload,
+	// still in reach (test finding C20).
+	const [startShown] = useState<string[]>(() => {
+		if (initialShownColleagues.length > 0) return initialShownColleagues;
+		const stored = readShownColleagues(ownerId);
+		return colleagues.length > 0
+			? stored.filter((id) => colleagues.some((c) => c.id === id))
+			: stored;
+	});
+	const [shownColleagues, setShownColleagues] =
+		useState<string[]>(startShown);
 	const [recent, setRecent] = useState<string[]>(() => [
-		...initialShownColleagues,
+		...startShown,
 		...readRecentColleagues(ownerId).filter(
-			(id) => !initialShownColleagues.includes(id)
+			(id) => !startShown.includes(id)
 		)
 	]);
 	const [muted, setMuted] = useState<string[]>([]);
+	/** Where "Nebeneinander" scrolls to after an entry was chosen. */
+	const [splitFocus, setSplitFocus] = useState<Date | undefined>();
 	const { flashIds, expectCreated, flash } = useCreatedFlash(
 		entries,
 		ownerId
@@ -593,10 +616,12 @@ export const CalendarPage = ({
 	// "Ansicht · Kalender" (Frank *14): which kinds get a button in the row.
 	const [chipFacets, setChipFacets] =
 		useState<CalendarEntryFacet[]>(CALENDAR_CHIP_FACETS);
+	const [chipView, setChipView] = useState<ChipView>('icons');
 	const [settingsOpen, setSettingsOpen] = useState(false);
 	const viewCustomised =
 		hiddenFacets.length > 0 ||
-		chipFacets.length !== CALENDAR_CHIP_FACETS.length;
+		chipFacets.length !== CALENDAR_CHIP_FACETS.length ||
+		chipView !== 'icons';
 	const [menu, setMenu] = useState<Menu>(null);
 	const [dialog, setDialog] = useState<Dialog>(null);
 	const creating = useRef(false);
@@ -731,6 +756,7 @@ export const CalendarPage = ({
 		const next = toggle(shownColleagues, id);
 		setShownColleagues(next);
 		onShownColleaguesChange?.(next);
+		writeShownColleagues(ownerId, next);
 		if (next.includes(id)) {
 			const remembered = rememberColleague(recent, id);
 			setRecent(remembered);
@@ -745,6 +771,7 @@ export const CalendarPage = ({
 		const next = [...shownColleagues, ...added];
 		setShownColleagues(next);
 		onShownColleaguesChange?.(next);
+		writeShownColleagues(ownerId, next);
 		const remembered = added.reduce(
 			(all, id) => rememberColleague(all, id),
 			recent
@@ -754,11 +781,24 @@ export const CalendarPage = ({
 	};
 
 	useEffect(() => {
-		if (initialShownColleagues.length > 0)
-			onShownColleaguesChange?.(initialShownColleagues);
+		if (startShown.length > 0) onShownColleaguesChange?.(startShown);
 		// Only once: the host loads the colleagues shown from the start.
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
+
+	// Colleagues that arrive after the start: drop a remembered one who is
+	// out of reach now, so no empty column waits for them.
+	useEffect(() => {
+		if (colleagues.length === 0) return;
+		const kept = shownColleagues.filter((id) =>
+			colleagues.some((c) => c.id === id)
+		);
+		if (kept.length === shownColleagues.length) return;
+		setShownColleagues(kept);
+		onShownColleaguesChange?.(kept);
+		writeShownColleagues(ownerId, kept);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [colleagues]);
 
 	/**
 	 * Success notice once the change is stored, the failure notice if it
@@ -832,9 +872,23 @@ export const CalendarPage = ({
 				all.length && !all.includes(facet) ? [...all, facet] : all
 			);
 		}
+		// A muted calendar ("ich" off) cannot be clicked: unmute the owner
+		// (review 4589661566).
+		setMuted((all) =>
+			all.includes(entry.ownerId)
+				? all.filter((id) => id !== entry.ownerId)
+				: all
+		);
 		const start = new Date(entry.start);
 		const weekend = start.getDay() === 0 || start.getDay() === 6;
-		if (view === 'month' || view === 'list' || split)
+		// A colleague's entry is only a band in one's own grid; side by
+		// side draws it on its own, with its actions (review 4594535280).
+		const colleagueOnly =
+			entry.ownerId !== ownerId &&
+			!entries.some((e) => e.id === entry.id && e.ownerId === ownerId);
+		if (colleagueOnly) {
+			if (!split) changeView('split');
+		} else if (view === 'month' || view === 'list' || split)
 			changeView(phone ? 'threeDays' : weekend ? 'week' : 'workWeek');
 		else if (view === 'workWeek' && weekend) changeView('week');
 		goTo(start);
@@ -843,6 +897,8 @@ export const CalendarPage = ({
 		const before = new Date(
 			Math.max(start.getTime() - 3600000, startOfDay(start).getTime())
 		);
+		// Side by side has its own scroll box (review 4594744890).
+		setSplitFocus(before);
 		const time = `${String(before.getHours()).padStart(2, '0')}:${String(before.getMinutes()).padStart(2, '0')}:00`;
 		// The controller has no scrollToTime; its calendar does.
 		window.setTimeout(() =>
@@ -1733,7 +1789,7 @@ export const CalendarPage = ({
 				}
 				onChoose={chooseSlot}
 				kind={menu.kind}
-				conversations={conversations}
+				conversations={bookable}
 				onPick={pickSlotPerson}
 				onMore={moreSlotDetails}
 			/>
@@ -2280,6 +2336,13 @@ export const CalendarPage = ({
 	// White chips: "ich" first, then who is shown; who was shown lately
 	// stays as a dashed chip; "Weitere …" in red opens the people menu
 	// (prototype v17).
+	// Names that repeat get their Beratungsstelle on the chip, so two
+	// "Bart Simpson" can be told apart (test finding C12).
+	const twinNames = new Set(
+		colleagues
+			.map((c) => c.displayName)
+			.filter((name, i, all) => all.indexOf(name) !== i)
+	);
 	const personChip = (
 		id: string,
 		name: string,
@@ -2306,11 +2369,14 @@ export const CalendarPage = ({
 				{colleague ? initialsOf(name) : t('calendar.people.meAvatar')}
 			</span>
 			<span>{colleague ? name : t('calendar.people.me')}</span>
-			{colleague?.agencyShort && (
-				<span className="calendarStage__agency">
-					{colleague.agencyShort}
-				</span>
-			)}
+			{colleague &&
+				(colleague.agencyShort ||
+					(twinNames.has(colleague.displayName) &&
+						colleague.agencyName)) && (
+					<span className="calendarStage__agency">
+						{colleague.agencyShort ?? colleague.agencyName}
+					</span>
+				)}
 		</button>
 	);
 	// Only while someone is shown or was shown lately (prototype v17).
@@ -2382,6 +2448,7 @@ export const CalendarPage = ({
 			}
 			onHighlightFacet={(facet) => setHighlight(facet ? { facet } : null)}
 			facets={chipFacets}
+			view={chipView}
 			className="calendarStage__kinds"
 		/>
 	);
@@ -2482,6 +2549,7 @@ export const CalendarPage = ({
 					{split ? (
 						<CalendarSplitView
 							day={anchorDate}
+							focusTime={splitFocus}
 							days={splitDays}
 							role={role}
 							ownerId={ownerId}
@@ -2554,6 +2622,7 @@ export const CalendarPage = ({
 						/>
 					)}
 				</CalendarPager>
+				{view === 'list' && linksPanel}
 			</div>
 			{state === 'loading' && (
 				<div
@@ -2600,7 +2669,7 @@ export const CalendarPage = ({
 		soonId,
 		entries,
 		colleagues,
-		conversations,
+		conversations: bookable,
 		workingHours: workingPlan,
 		workingHoursSummary: summary,
 		onlyFacets,
@@ -2611,6 +2680,7 @@ export const CalendarPage = ({
 		onOpenKinds: () => setSettingsOpen(true),
 		kindsCustomised: viewCustomised,
 		chipFacets,
+		chipView,
 		openProposals: allPending,
 		onOpenProposal: (proposal, entry, anchor) =>
 			setMenu({ type: 'proposal', proposal, entry, anchor }),
@@ -2790,7 +2860,17 @@ export const CalendarPage = ({
 					hiddenFacets={hiddenFacets}
 					onHiddenChange={setHiddenFacets}
 					chipFacets={chipFacets}
-					onChipsChange={setChipFacets}
+					onChipsChange={(next) => {
+						setChipFacets(next);
+						// A chosen kind whose button leaves the row would stay
+						// filtered with no way back: clear it (review
+						// 4594645452).
+						setOnlyFacets((all) =>
+							all.filter((facet) => next.includes(facet))
+						);
+					}}
+					chipView={chipView}
+					onChipViewChange={setChipView}
 					fullScreen={compact}
 				/>
 			)}
@@ -2813,7 +2893,7 @@ export const CalendarPage = ({
 					initialNote={
 						dialog.type === 'blocker' ? dialog.note : undefined
 					}
-					conversations={conversations}
+					conversations={bookable}
 					entries={
 						dialog.type === 'blocker' && dialog.replaces
 							? entries.filter(

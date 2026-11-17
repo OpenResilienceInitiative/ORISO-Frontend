@@ -67,11 +67,11 @@ describe('CalendarKindChips — five round chips, one kind at a time (prototype 
 		const phone = list[1];
 		expect(phone.getAttribute('aria-pressed')).toBe('true');
 		expect(
-			phone.querySelector('.calendarSide__kindChipCount')?.textContent
+			phone.querySelector('.sessionsListToolbar__chipBadge')?.textContent
 		).toBe('1');
 		expect(
 			list.filter((chip) =>
-				chip.querySelector('.calendarSide__kindChipCount')
+				chip.querySelector('.sessionsListToolbar__chipBadge')
 			)
 		).toHaveLength(1);
 		// Every chip still says which kind it is.

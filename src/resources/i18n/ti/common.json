@@ -2637,6 +2637,8 @@
 			"systemTag": "መፍለጢ ሲስተም",
 			"messageTag": "መፍለጢ መልእኽቲ",
 			"unreadFilter": "ዘይተነበበ",
+			"mentionsFilter": "ዝተጠቕሱ",
+			"openCalendar": "ናብ ካላንደር",
 			"next": "ቀጻሊ ሓበሬታ",
 			"cardMenu": "ናይ ሓበሬታ ተግባራት",
 			"markRead": "ከም ተነብበ ምልክት ግበር",
@@ -2671,6 +2673,8 @@
 				"supervisorNoComposer": "ከም ተቆጻጻሪ ኣብዚ ምላሽ ክትህብ ትኽእል ኢኻ፡ ክትጽሕፍ ግን ኣይትኽእልን።",
 				"teamClosed": "ዘተ ጉጅለ ተዓጽዩ ኣሎ።",
 				"curtained": "እዚ ጉዳይ ሕጂ ንዓኻ ኣይረኣይን እዩ።",
+				"hiddenNotYours": "እዚ ዝርርብ ካብ ጉዳያትካ ኣይኮነን፣ ስለዚ ንጥፈት ኣብዚ ኣየርእዮን።",
+				"hiddenNotJoined": "ናብዚ ዝርርብ ኣይተጸንበርካን፣ ስለዚ ንጥፈት ኣብዚ ኣየርእዮን።",
 				"backToConversation": "ናብ ዘተ ተመለስ",
 				"enquiryOpenToAccept": "እዚ ሕቶ ገና ኣይተቐበለን። ንምቕባሉ ዘተ ክፈት።",
 				"consentOpenToContinue": "በጃኹም ቅድሚ ኩሉ ኣብ ቻት ከመይ ከም እትቕጽሉ ኣረጋግጹ። ንዕኡ ዘተ ክፈቱ።",
@@ -2766,12 +2770,27 @@
 		},
 		"data": {
 			"agency": {
-				"adminContact": {
-					"error": "ኣመሓደርቲ ናይዚ ማእከል ምኽሪ ክጽዓኑ ኣይከኣሉን። በጃኻ ድሕሪ ገለ ግዜ ደጊምካ ፈትን።",
-					"fallbackName": "ኣመሓዳሪ ማእከል",
-					"link": "ኣመሓዳሪ ማእከል ምኽሪ ርከብ",
-					"none": "ብቻት ዝርከብ ኣመሓዳሪ የለን – በጃኻ ምምሕዳር ፕላትፎርም ርከብ።",
-					"supportEmail": "ኣድራሻ ደገፍ:"
+				"contactPerson": {
+					"title": "ሰብ ርክብ",
+					"deputy": "ተተካኢ",
+					"traegerDefault": "ናይ ትካል ስሩዕ ሰብ ርክብ",
+					"alsoCounsellor": "ከምኡ’ውን ኣማኻሪ",
+					"startChat": "ዕላል ጀምር",
+					"startChatWith": "ምስ {{name}} ዕላል ጀምር",
+					"fallback": {
+						"heading": "ገና ሰብ ርክብ ኣይተወሰነን — እዞም ኣመሓደርቲ ሓላፍነት ኣለዎም፡",
+						"agencyAdmins": "ኣመሓደርቲ ማእከል ምኽሪ",
+						"tenantAdmins": "ኣመሓደርቲ ትካል"
+					},
+					"support": {
+						"heading": "ገና ሰብ ርክብ ኣይተወሰነን።",
+						"text": "በጃኹም ንደገፍ ተወከሱ፡",
+						"none": "በጃኹም ንምምሕዳር መድረኽ ተወከሱ።"
+					},
+					"traegerContactEmail": "ሓፈሻዊ ኣድራሻ ርክብ ናይ ትካል",
+					"loading": "ሰብ ርክብ ይጽዓን ኣሎ …",
+					"loadError": "ሰብ ርክብ ሕጂ ክጽዓን ኣይከኣለን።",
+					"chatFallbackName": "ሰብ ርክብ ማእከል ምኽሪ"
 				},
 				"label": "ማእከል ምኽሪ",
 				"registrationLink": {
@@ -6468,6 +6487,7 @@
 		},
 		"share": {
 			"signInToJoin": "ነዚ ጻውዒት ክትጽንበሩ ናብ ሕሳብኩም እተዉ።",
+			"guestCallTitle": "ዝርርብ",
 			"conversationMember": "ኣብዚ ዕላል ድሮ ተሳታፊ ኢኹም። ካብቲ ዕላል ናብቲ ጻውዒት ተጸንበሩ።",
 			"openConversations": "ዕላላተይ ክፈት",
 			"joinForbidden": "በዚ ሊንክ ናብዚ ጻውዒት ክትጽንበሩ ኣይትኽእሉን።",
@@ -7297,6 +7317,7 @@
 			"more": "ተወሳኺ ሓበሬታ …",
 			"placeholder": "ምስ መን? ንኣብነት «mutige_eule» ወይ «14:00»",
 			"save": "ወስኽ",
+			"saving": "ይዕቀብ ኣሎ …",
 			"slot": "ንውሓት ናጻ ግዜ",
 			"time": "መጀመርታ",
 			"title": "ቅልጡፍ ምዝገባ",
@@ -7511,6 +7532,10 @@
 			"showKind": "ኣብ ዓውደ-ኣዋርሕ: {{kind}}",
 			"pillKind": "ከም መጠወቒ: {{kind}}",
 			"pillMenu": "መጠወቒ ምረጽ: {{kind}}"
+		},
+		"links": {
+			"title": "ቆጸራ ዘይብሎም ሊንክታት",
+			"hint": "ክተካፍልዎም እትኽእሉ ናይ ዕድመ ሊንክታት: ቅዳሕ ወይ QR-ኮድ ኣርኢ።"
 		}
 	}
 }

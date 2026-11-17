@@ -208,11 +208,11 @@ export const RuntimeConsultantRail: Story = {
 };
 
 /**
- * #1894 (Frank, 28 Oct): the clock entry "Meine Direktlinks" shows while
- * "Direkteinladung erlauben" allows at least one medium, here only video.
+ * *19 (Frank, 2026-11-17): "Meine Direktlinks" moved into the calendar
+ * list, so the clock entry is gone even while a medium is allowed.
  */
 export const DirectLinksOneMediumAllowed: Story = {
-	name: 'Direct links: clock entry with one medium allowed',
+	name: 'Direct links: no clock entry, the links live in the calendar',
 	args: {
 		role: 'consultant',
 		layout: 'desktop',
@@ -225,9 +225,12 @@ export const DirectLinksOneMediumAllowed: Story = {
 	play: async ({ canvasElement }) => {
 		await waitFor(() =>
 			expect(
-				canvasElement.querySelector('a[href="/direct-links"]')
+				canvasElement.querySelector('a[href="/booking/events"]')
 			).not.toBeNull()
 		);
+		await expect(
+			canvasElement.querySelector('a[href="/direct-links"]')
+		).toBeNull();
 	}
 };
 

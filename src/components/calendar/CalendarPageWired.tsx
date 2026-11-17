@@ -23,6 +23,7 @@
  *   answer goes to "Meine Termine" in the navigation.
  */
 import * as React from 'react';
+import { CalendarLinksSection } from './CalendarLinksSection';
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -158,11 +159,23 @@ interface ConversationRef extends CalendarConversation {
 	matrixRoomId?: string;
 }
 
-const toConversations = (items: any[] | undefined): ConversationRef[] =>
+const toConversations = (
+	items: any[] | undefined,
+	ownUserId?: string
+): ConversationRef[] =>
 	(items ?? [])
 		.filter((item) => item?.session?.id && !item?.chat)
 		.map((item) => ({
 			sessionId: item.session.id,
+			// A deleted advice seeker or another counsellor's conversation
+			// keeps its appointments, but gets no new one (C1, C6).
+			bookable:
+				!item.user?.deleted &&
+				!(
+					ownUserId &&
+					item.consultant?.id &&
+					item.consultant.id !== ownUserId
+				),
 			username:
 				item.user?.username ??
 				item.consultant?.displayName ??
@@ -193,6 +206,7 @@ export const CalendarPageWired = () => {
 		AUTHORITIES.CONSULTANT_DEFAULT,
 		userData
 	);
+	// "Meine Direktlinks" lives under the list now (Frank, 2026-11-17).
 	const ownerId = userData?.userId ?? '';
 	const sendNotice = useAppointmentNotice();
 	const { t } = useTranslation();
@@ -466,7 +480,13 @@ export const CalendarPageWired = () => {
 			page(offset).then((list) => {
 				if (!latest()) return undefined;
 				const sessions = list?.sessions ?? [];
-				const all = [...found, ...toConversations(sessions)];
+				const all = [
+					...found,
+					...toConversations(
+						sessions,
+						consultant ? userData?.userId : undefined
+					)
+				];
 				setConversations(all);
 				const received = offset + sessions.length;
 				return consultant &&
@@ -478,7 +498,7 @@ export const CalendarPageWired = () => {
 		from(0, []).catch(() => {
 			if (latest()) setConversationsFailed(true);
 		});
-	}, [consultant]);
+	}, [consultant, userData?.userId]);
 
 	useEffect(() => {
 		loadConversations();
@@ -969,6 +989,7 @@ export const CalendarPageWired = () => {
 	return (
 		<>
 			<CalendarPage
+				linksPanel={consultant ? <CalendarLinksSection /> : undefined}
 				role={consultant ? 'consultant' : 'asker'}
 				ownerId={ownerId}
 				state={state}

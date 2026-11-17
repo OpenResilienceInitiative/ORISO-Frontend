@@ -189,7 +189,28 @@ const statusPageTarget = (params: EventActionParams): EventActionTarget => ({
 	url: params.statusUrl ?? null
 });
 
+// An entry with nothing left to open (#1159). Named, so the exclusion set
+// below recognises it (#2275 review).
+const noActionTarget = (): EventActionTarget => ({ kind: 'none' });
+
 // --- Descriptor factory --------------------------------------------------
+
+/**
+ * Entries whose target is not a conversation: an enquiry nobody accepted yet
+ * (its content stays hidden until then), a draft, a status notice and an
+ * entry with nothing to open. Every other entry opens a conversation, so
+ * Activity shows it inline (Frank, 2026-11-16: "die meisten Fenster
+ * sichtbar", not only messages and calls).
+ */
+const NO_CONVERSATION_TARGETS = new Set<EventDescriptor['resolveActionTarget']>(
+	[
+		requestTarget,
+		requestDeniedTarget,
+		draftTarget,
+		statusPageTarget,
+		noActionTarget
+	]
+);
 
 interface DescriptorSeed {
 	family: EventDescriptor['family'];
@@ -210,7 +231,10 @@ const descriptor = (
 	icon: seed.icon,
 	titleTemplate: `notifications.events.${seed.i18nKey}.title`,
 	textTemplate: `notifications.events.${seed.i18nKey}.text`,
-	resolveActionTarget: seed.resolveActionTarget
+	resolveActionTarget: seed.resolveActionTarget,
+	belongsToConversation: !NO_CONVERSATION_TARGETS.has(
+		seed.resolveActionTarget
+	)
 });
 
 /**
@@ -226,7 +250,8 @@ export const FALLBACK_DESCRIPTOR: EventDescriptor = {
 	icon: 'system',
 	titleTemplate: 'notifications.events.fallback.title',
 	textTemplate: 'notifications.events.fallback.text',
-	resolveActionTarget: conversationTarget
+	resolveActionTarget: conversationTarget,
+	belongsToConversation: false
 };
 
 // --- The registry --------------------------------------------------------
@@ -566,7 +591,7 @@ const seeds: EventDescriptor[] = [
 		category: 'system',
 		icon: 'system',
 		i18nKey: 'sessionAskerDeleted',
-		resolveActionTarget: () => ({ kind: 'none' })
+		resolveActionTarget: noActionTarget
 	})
 ];
 

@@ -1026,6 +1026,11 @@ const preview: Preview = {
 					styles: { width: '834px', height: '1194px' },
 					type: 'tablet'
 				},
+				desktop1024: {
+					name: 'Desktop 1024 (small laptop, split window)',
+					styles: { width: '1024px', height: '768px' },
+					type: 'desktop'
+				},
 				desktop1280: {
 					name: 'Desktop 1280',
 					styles: { width: '1280px', height: '800px' },

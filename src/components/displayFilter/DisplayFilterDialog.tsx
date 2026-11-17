@@ -138,10 +138,10 @@ export interface DisplayFilterDialogProps {
 	/** Set while delivery holds pop-ups back (mute, DND): a notice, cells stay editable. */
 	browserMutedNotice?: string;
 	/**
-	 * False: no chip-look controls (view, auto-sort). The calendar's kind
-	 * buttons have one fixed look and no unread order.
+	 * Which chip-look controls to offer: all (default), only the view (the
+	 * calendar has no unread order to sort by) or none.
 	 */
-	showPresentation?: boolean;
+	showPresentation?: boolean | 'view';
 }
 
 export interface DisplayFilterColumns {
@@ -387,32 +387,37 @@ export const DisplayFilterDialog = ({
 							</div>
 						</fieldset>
 
-						<div className="displayFilterDialog__autoRead">
-							<div className="displayFilterDialog__autoReadText">
-								<span
-									className="displayFilterDialog__autoReadTitle"
-									id={`${dialogId}-autosort`}
-								>
-									{labels.autoSort}
-								</span>
-								<span
-									className="displayFilterDialog__autoReadDescription"
-									id={`${dialogId}-autosort-desc`}
-								>
-									{labels.autoSortDescription}
-								</span>
+						{showPresentation === true && (
+							<div className="displayFilterDialog__autoRead">
+								<div className="displayFilterDialog__autoReadText">
+									<span
+										className="displayFilterDialog__autoReadTitle"
+										id={`${dialogId}-autosort`}
+									>
+										{labels.autoSort}
+									</span>
+									<span
+										className="displayFilterDialog__autoReadDescription"
+										id={`${dialogId}-autosort-desc`}
+									>
+										{labels.autoSortDescription}
+									</span>
+								</div>
+								<Switch
+									checked={presentation.autoSort}
+									disabled={controlsDisabled}
+									aria-labelledby={`${dialogId}-autosort`}
+									aria-describedby={`${dialogId}-autosort-desc`}
+									data-cy="display-filter-autosort"
+									onChange={(checked) =>
+										onChange({
+											...value,
+											autoSort: checked
+										})
+									}
+								/>
 							</div>
-							<Switch
-								checked={presentation.autoSort}
-								disabled={controlsDisabled}
-								aria-labelledby={`${dialogId}-autosort`}
-								aria-describedby={`${dialogId}-autosort-desc`}
-								data-cy="display-filter-autosort"
-								onChange={(checked) =>
-									onChange({ ...value, autoSort: checked })
-								}
-							/>
-						</div>
+						)}
 					</>
 				)}
 

@@ -263,3 +263,20 @@ describe('quick entry placeholder examples (review 4574779949)', () => {
 		}
 	);
 });
+
+describe('parseQuickEntry — four digits as a time (test finding C9)', () => {
+	const now = new Date(2026, 10, 16, 9, 50);
+	it('reads "1030" as 10:30 and "930" as 9:30', () => {
+		expect(parseQuickEntry('morgen 1030 Video', { now }).start).toEqual(
+			new Date(2026, 10, 17, 10, 30)
+		);
+		expect(parseQuickEntry('morgen 930 Video', { now }).start).toEqual(
+			new Date(2026, 10, 17, 9, 30)
+		);
+	});
+	it('reads no time from "2575"', () => {
+		expect(
+			parseQuickEntry('morgen 2575 Video', { now }).start
+		).toBeUndefined();
+	});
+});

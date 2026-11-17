@@ -2684,6 +2684,8 @@
 			"systemTag": "Systembenachrichtigung",
 			"messageTag": "Nachrichtenbenachrichtigung",
 			"unreadFilter": "Ungelesen",
+			"mentionsFilter": "Erwähnungen",
+			"openCalendar": "Zum Kalender",
 			"showPreview": "Chat-Vorschau anzeigen",
 			"showDetails": "Details anzeigen",
 			"next": "Nächste Benachrichtigung",
@@ -2718,6 +2720,8 @@
 				"supervisorNoComposer": "Als Supervisor:in können Sie hier reagieren, aber nicht schreiben.",
 				"teamClosed": "Die Teamberatung ist geschlossen.",
 				"curtained": "Dieser Fall ist für Sie gerade nicht einsehbar.",
+				"hiddenNotYours": "Diese Unterhaltung gehört nicht zu Ihren Fällen. Darum zeigt die Aktivität sie hier nicht.",
+				"hiddenNotJoined": "Sie sind dieser Unterhaltung nicht beigetreten. Darum zeigt die Aktivität sie hier nicht.",
 				"backToConversation": "Zurück zur Unterhaltung",
 				"enquiryOpenToAccept": "Diese Anfrage ist noch nicht angenommen. Öffnen Sie die Unterhaltung, um sie anzunehmen.",
 				"consentOpenToContinue": "Bitte bestätigen Sie zuerst im Chat, wie es weitergeht. Öffnen Sie dazu die Unterhaltung.",
@@ -2813,12 +2817,27 @@
 		},
 		"data": {
 			"agency": {
-				"adminContact": {
-					"error": "Die Admins dieser Beratungsstelle konnten nicht geladen werden. Bitte später erneut versuchen.",
-					"fallbackName": "Beratungsstellen-Admin",
-					"link": "Beratungsstellen-Admin kontaktieren",
-					"none": "Kein Admin per Chat erreichbar – bitte wende dich an die Plattformverwaltung.",
-					"supportEmail": "Support-Adresse:"
+				"contactPerson": {
+					"title": "Ansprechperson",
+					"deputy": "Vertretung",
+					"traegerDefault": "Standard-Ansprechperson des Trägers",
+					"alsoCounsellor": "auch Beratende*r",
+					"startChat": "Chat starten",
+					"startChatWith": "Chat mit {{name}} starten",
+					"fallback": {
+						"heading": "Noch keine Ansprechperson festgelegt — diese Admins sind zuständig:",
+						"agencyAdmins": "Admins der Beratungsstelle",
+						"tenantAdmins": "Admins des Trägers"
+					},
+					"support": {
+						"heading": "Noch keine Ansprechperson festgelegt.",
+						"text": "Bitte wenden Sie sich an den Support:",
+						"none": "Bitte wenden Sie sich an die Plattformverwaltung."
+					},
+					"traegerContactEmail": "Allgemeine Kontaktadresse des Trägers",
+					"loading": "Ansprechperson wird geladen …",
+					"loadError": "Die Ansprechperson konnte gerade nicht geladen werden.",
+					"chatFallbackName": "Ansprechperson der Beratungsstelle"
 				},
 				"label": "Beratungsstelle",
 				"registrationLink": {
@@ -6484,6 +6503,7 @@
 		},
 		"share": {
 			"signInToJoin": "Melden Sie sich an, um diesem Anruf beizutreten.",
+			"guestCallTitle": "Gespräch",
 			"conversationMember": "Sie gehören bereits zu diesem Gespräch. Treten Sie dem Anruf im zugehörigen Chat bei.",
 			"openConversations": "Meine Gespräche öffnen",
 			"joinForbidden": "Sie können diesem Anruf über diesen Link nicht beitreten.",
@@ -7112,7 +7132,7 @@
 			},
 			"move": "Verschieben",
 			"cancel": "Absagen",
-			"remove": "Blockierung entfernen",
+			"remove": "Sperrzeit entfernen",
 			"address": "Adresse",
 			"colleague": "Kalender von {{name}}",
 			"busyHint": "Aus Ihrem eigenen Kalender übernommen. ORISO kennt nur die Zeit.",
@@ -7125,7 +7145,7 @@
 			"confirm": "Trotzdem verschieben"
 		},
 		"soon": "Beginnt gleich",
-		"blockerMoved": "Blockierung verschoben auf {{date}}.",
+		"blockerMoved": "Sperrzeit verschoben auf {{date}}.",
 		"cancelled": "Termin abgesagt. Die ratsuchende Person wird benachrichtigt.",
 		"cancelAsk": {
 			"title": "Termin absagen?",
@@ -7282,7 +7302,7 @@
 			"withdraw": "Zurückziehen",
 			"sent": "Vorschlag gesendet: {{date}}. {{name}} muss bestätigen.",
 			"withdrawn": "Vorschlag zurückgezogen.",
-			"open": "Offene Anfragen",
+			"open": "Offene Verschiebungen",
 			"proposed": "Vorgeschlagen: {{date}}",
 			"from": "Vorschlag von {{name}}",
 			"someone": "Eine Kollegin oder ein Kollege",
@@ -7298,8 +7318,8 @@
 			"declineLabel": "Vorschlag von {{name}} ablehnen: Der Termin bleibt {{from}}",
 			"declined": "Vorschlag abgelehnt. Der Termin bleibt {{date}}.",
 			"noLongerValid": "Dieser Vorschlag gilt nicht mehr. Der Termin hat sich geändert oder ist vorbei.",
-			"navCount": "{{count}} offene Anfragen",
-			"navCount_one": "{{count}} offene Anfrage"
+			"navCount": "{{count}} offene Verschiebungen",
+			"navCount_one": "{{count}} offene Verschiebung"
 		},
 		"quick": {
 			"freeUnavailable": "Freie Zeiten gerade nicht verfügbar.",
@@ -7320,6 +7340,7 @@
 			"more": "Mehr Angaben …",
 			"placeholder": "Mit wem? z. B. „mutige_eule“ oder „Do 14 Uhr“",
 			"save": "Eintragen",
+			"saving": "Wird gespeichert …",
 			"slot": "Länge der freien Zeit",
 			"time": "Beginn",
 			"title": "Schnell eintragen",
@@ -7534,6 +7555,10 @@
 			"showKind": "Im Kalender: {{kind}}",
 			"pillKind": "Als Knopf: {{kind}}",
 			"pillMenu": "Als Knopf wählen: {{kind}}"
+		},
+		"links": {
+			"title": "Links ohne Termin",
+			"hint": "Einladungslinks, die Sie teilen können: kopieren oder als QR-Code zeigen."
 		}
 	}
 }

@@ -6,17 +6,29 @@
 import * as React from 'react';
 import EventOutlinedIcon from '@mui/icons-material/EventOutlined';
 import { ReactComponent as ChatIcon } from '../../../resources/img/icons/modality-chat.svg';
-import { ReactComponent as AudioIcon } from '../../../resources/img/icons/modality-audio.svg';
+import CallOutlinedIcon from '@mui/icons-material/CallOutlined';
 import { ReactComponent as VideoIcon } from '../../../resources/img/icons/modality-video.svg';
 import { ReactComponent as LocationIcon } from '../../../resources/img/icons/location.svg';
 import type { EntryModality } from './timelineModel';
+
+/**
+ * Phone appointments show a handset, not a microphone (Frank, 2026-11-17:
+ * "Telefonie braucht unbedingt einen Telefonhörer").
+ */
+const PhoneIcon = ({ className }: React.SVGProps<SVGSVGElement>) => (
+	<CallOutlinedIcon
+		className={className}
+		aria-hidden="true"
+		focusable="false"
+	/>
+);
 
 export const MODALITY_ICON: Record<
 	EntryModality,
 	React.FC<React.SVGProps<SVGSVGElement>>
 > = {
 	chat: ChatIcon,
-	audio: AudioIcon,
+	audio: PhoneIcon,
 	video: VideoIcon,
 	location: LocationIcon
 };

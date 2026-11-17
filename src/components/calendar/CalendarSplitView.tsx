@@ -159,6 +159,11 @@ export interface SplitPerson {
 export interface CalendarSplitViewProps {
 	/** The first day shown. */
 	day: Date;
+	/**
+	 * Scroll so this time is near the top: an entry chosen in search or
+	 * "Als Nächstes" (review 4594744890). Without it the day starts at 08:00.
+	 */
+	focusTime?: Date;
 	/** How many days side by side; 1 keeps one's own column sticky. */
 	days?: SplitDays;
 	role: CalendarRole;
@@ -247,6 +252,7 @@ const measureBody =
 
 export const CalendarSplitView = ({
 	day: dayInput,
+	focusTime,
 	days = 1,
 	role,
 	ownerId,
@@ -409,12 +415,15 @@ export const CalendarSplitView = ({
 		};
 	}, [grouped]);
 
-	// Start the day at 08:00, like the time grid.
+	// Start the day at 08:00, like the time grid, or at the chosen time.
+	const focusMinutes = focusTime
+		? focusTime.getHours() * 60 + focusTime.getMinutes()
+		: 8 * 60;
 	useEffect(() => {
-		scrollRef.current?.scrollTo({ top: Math.max(0, toPx(8 * 60)) });
-		// Only on mount; zooming keeps its own place.
+		scrollRef.current?.scrollTo({ top: Math.max(0, toPx(focusMinutes)) });
+		// Only on mount and for a new focus; zooming keeps its own place.
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	}, [focusTime?.getTime()]);
 
 	const step = (direction: ScrollDirection) => {
 		const track = scrollRef.current;
@@ -835,16 +844,19 @@ export const CalendarSplitView = ({
 								style={{ top: (h - firstHour) * hourPx }}
 							/>
 						))}
-						{d.offHours.map((o) => (
-							<span
-								key={`off-${o.from}`}
-								className={`calendarSplit__offHours${o.kind === 'break' ? ' calendarSplit__offHours--break' : ''}`}
-								style={{
-									top: toPx(o.from),
-									height: toPx(o.to) - toPx(o.from)
-								}}
-							/>
-						))}
+						{/* One's own working hours and pause; a colleague's
+							column is not shaded with them (Frank, 2026-11-17). */}
+						{own &&
+							d.offHours.map((o) => (
+								<span
+									key={`off-${o.from}`}
+									className={`calendarSplit__offHours${o.kind === 'break' ? ' calendarSplit__offHours--break' : ''}`}
+									style={{
+										top: toPx(o.from),
+										height: toPx(o.to) - toPx(o.from)
+									}}
+								/>
+							))}
 						{own && onEdgeChange && edgeGrips(d)}
 						{d.free.map((f) => {
 							const from = clampMinutes(
