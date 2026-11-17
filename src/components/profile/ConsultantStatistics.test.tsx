@@ -62,11 +62,59 @@ describe('ConsultantStatistics', () => {
 		expect(screen.getByText('3')).toBeDefined();
 	});
 
-	it('defaults the messages-sent tile to 0 before the first response arrives', () => {
+	it('asks for the current month split into weeks by default', () => {
 		apiGetConsultantStatisticsMock.mockReturnValue(new Promise(() => {}));
 
 		render(<ConsultantStatistics />);
 
-		expect(screen.getAllByText('0')).toHaveLength(3);
+		expect(apiGetConsultantStatisticsMock).toHaveBeenLastCalledWith(
+			expect.objectContaining({ breakdown: 'WEEK' })
+		);
+		const { startDate } = apiGetConsultantStatisticsMock.mock.lastCall[0];
+		expect(startDate).toMatch(/-01$/);
+	});
+
+	it('shows realised appointments with their kinds and the cancelled ones', async () => {
+		const loadStatistics = vi.fn().mockResolvedValue({
+			startDate: '2026-07-01',
+			endDate: '2026-07-31',
+			numberOfAssignedSessions: 1,
+			numberOfActiveSessions: 2,
+			numberOfSentMessages: 30,
+			numberOfAppointments: 9,
+			numberOfVideoAppointments: 4,
+			numberOfPhoneAppointments: 3,
+			numberOfOnsiteAppointments: 1,
+			numberOfChatAppointments: 1,
+			numberOfCancelledAppointments: 5
+		});
+
+		const { container } = render(
+			<ConsultantStatistics loadStatistics={loadStatistics} />
+		);
+
+		await waitFor(() => {
+			expect(screen.getByText('9')).toBeDefined();
+		});
+		const tile = container.querySelector(
+			'[data-figure="numberOfAppointments"]'
+		);
+		expect(tile?.textContent).toContain(
+			'profile.statistics.csvHeader.numberOfVideoAppointments: 4'
+		);
+		expect(tile?.textContent).toContain(
+			'profile.statistics.csvHeader.numberOfCancelledAppointments: 5'
+		);
+	});
+
+	it('defaults every figure to 0 before the first response arrives', () => {
+		apiGetConsultantStatisticsMock.mockReturnValue(new Promise(() => {}));
+
+		const { container } = render(<ConsultantStatistics />);
+
+		const figures = [
+			...container.querySelectorAll('.statistics__visualization span p')
+		].map((node) => node.textContent);
+		expect(figures).toEqual(['0', '0', '0', '0']);
 	});
 });

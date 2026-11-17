@@ -174,6 +174,8 @@ import { initialsOf } from './CalendarEntryPeek';
 import { avatarToneClass } from './calendarAvatar';
 import { useCreatedFlash } from './useCreatedFlash';
 import { HoverScrollArrows } from '../hoverScrollArrows/HoverScrollArrows';
+import type { InvitationPreset } from '../directInvitation/invitationModel';
+import type { DirectLinkMedium } from '../conversationCreate/directLink/directLink';
 import { NewEntryDialog } from './NewEntryDialog';
 import { BlockerCreatedMessage } from './BlockerDialog';
 import { MoveConflictDialog } from './MoveConflictDialog';
@@ -284,6 +286,18 @@ export interface CalendarPageProps {
 	 * that was entered at once.
 	 */
 	onCreate?: (drafts: AppointmentDraft[]) => ChangeResult;
+	/**
+	 * "Termin": "Weitere Personen per Link einladen" where "Direkteinladung
+	 * erlauben" allows it (as "Termin anlegen" in a 1:1).
+	 */
+	allowGuestInvite?: boolean;
+	/** The media it allows: the link takes the Art's medium. */
+	inviteMedia?: readonly DirectLinkMedium[];
+	/**
+	 * "Termin": "Neue Person per Direkteinladung …" — someone without a
+	 * conversation yet; the page hands the slot to "Chat erstellen".
+	 */
+	onInviteNewPerson?: (preset: InvitationPreset) => void;
 	/**
 	 * The snackbar offers to undo by moving it back. `false`, or a promise
 	 * that rejects or resolves to `false`, refuses the move and puts the
@@ -534,6 +548,9 @@ export const CalendarPage = ({
 	initialSplitDays = 1,
 	now: fixedNow,
 	onCreate,
+	allowGuestInvite,
+	inviteMedia,
+	onInviteNewPerson,
 	onMove,
 	onCancelAppointment,
 	onRemoveBlocker,
@@ -3023,6 +3040,15 @@ export const CalendarPage = ({
 					now={now}
 					fullScreen={compact}
 					onSaveAppointment={(draft) => create([draft], true)}
+					allowGuestInvite={allowGuestInvite}
+					inviteMedia={inviteMedia}
+					onInviteNewPerson={
+						onInviteNewPerson &&
+						((preset) => {
+							setDialog(null);
+							onInviteNewPerson(preset);
+						})
+					}
 					onSaveBlocker={(drafts) =>
 						dialog.type === 'blocker' && dialog.replaces
 							? replaceBlocker(dialog.replaces, drafts)
