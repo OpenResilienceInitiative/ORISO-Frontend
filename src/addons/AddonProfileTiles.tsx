@@ -1,11 +1,11 @@
 import * as React from 'react';
-import { useContext, useEffect, useState } from 'react';
+import { useContext } from 'react';
 import { ActiveSessionContext, LocaleContext } from '../globalState';
-import { apiGetUserDataBySessionId } from '../api/apiGetUserDataBySessionId';
 import { Box } from '../components/box/Box';
 import { appTitle, useCaseAddonApps } from './addonRegistry';
 import { AddonBadge } from './AddonBadge';
 import { AddonMount } from './AddonMount';
+import { useCaseAskerId } from './useCaseAskerId';
 import './addons.styles';
 
 /** Tiles of add-on apps in the client profile counsellors see (`consultant.asker-profile`). */
@@ -18,24 +18,7 @@ export const AddonProfileTiles = () => {
 		agencyId,
 		sessionId
 	});
-	const [askerId, setAskerId] = useState<string>();
-
-	useEffect(() => {
-		if (!sessionId || apps.length === 0) {
-			return undefined;
-		}
-		let cancelled = false;
-		apiGetUserDataBySessionId(sessionId)
-			.then((data) => {
-				if (!cancelled) {
-					setAskerId(data?.askerId);
-				}
-			})
-			.catch(() => undefined);
-		return () => {
-			cancelled = true;
-		};
-	}, [sessionId, apps.length]);
+	const { askerId } = useCaseAskerId(sessionId, apps.length > 0);
 
 	if (apps.length === 0 || !sessionId || !askerId) {
 		return null;

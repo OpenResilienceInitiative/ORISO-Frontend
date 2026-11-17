@@ -6,6 +6,7 @@ import { LocaleContext } from '../globalState';
 import { SidePanel } from '../components/chatStage/SidePanel';
 import { AddonAppInSlot, appTitle } from './addonRegistry';
 import { AddonMount } from './AddonMount';
+import { useCaseAskerId } from './useCaseAskerId';
 import './addons.styles';
 
 interface AddonSessionPanelProps extends AddonAppInSlot {
@@ -29,6 +30,7 @@ export const AddonSessionPanel = ({
 	const { t: translate } = useTranslation();
 	const locale = useContext(LocaleContext)?.locale ?? 'de';
 	const title = appTitle(app, locale);
+	const { settled, askerId } = useCaseAskerId(sessionId);
 
 	return (
 		<SidePanel
@@ -50,12 +52,16 @@ export const AddonSessionPanel = ({
 				</div>
 			}
 			content={
-				<AddonMount
-					addon={addon}
-					app={app}
-					slot="consultant.session"
-					placement={{ agencyId, sessionId }}
-				/>
+				settled ? (
+					<AddonMount
+						addon={addon}
+						app={app}
+						slot="consultant.session"
+						placement={{ agencyId, sessionId, askerId }}
+					/>
+				) : (
+					<div className="addonMount" aria-busy="true" />
+				)
 			}
 		/>
 	);

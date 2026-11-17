@@ -9,6 +9,7 @@ import {
 	UserDataContext
 } from '../globalState';
 import { AddonSlot } from './addonTypes';
+import { AddonPlacement } from './useAddonHostProps';
 import { appTitle, findAddonApp, useAddonRegistry } from './addonRegistry';
 import { AddonMount } from './AddonMount';
 import './addons.styles';
@@ -28,6 +29,12 @@ export const AddonPage = () => {
 		? 'consultant.navigation'
 		: 'asker.navigation';
 	const found = findAddonApp(addons, addonName, appId);
+	const agencies = userData?.agencies ?? [];
+	// With several agencies there is no single one to choose; the AddonService then uses all of them.
+	const placement: AddonPlacement =
+		slot === 'consultant.navigation' && agencies.length === 1
+			? { agencyId: agencies[0].id }
+			: {};
 
 	if (!loaded) {
 		return null;
@@ -42,7 +49,12 @@ export const AddonPage = () => {
 	return (
 		<div className="addonPage">
 			<h1 className="addonPage__title">{appTitle(found.app, locale)}</h1>
-			<AddonMount addon={found.addon} app={found.app} slot={slot} />
+			<AddonMount
+				addon={found.addon}
+				app={found.app}
+				slot={slot}
+				placement={placement}
+			/>
 		</div>
 	);
 };
