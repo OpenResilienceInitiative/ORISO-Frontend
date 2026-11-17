@@ -356,7 +356,7 @@ export const STORY_PROPOSALS: MoveProposal[] = [
 ];
 
 /**
- * Proposals colleagues sent for one's own appointments ("Offene Anfragen",
+ * Proposals colleagues sent for one's own appointments ("Offene Verschiebungen",
  * receiving side): A. Kaya would move ruhiges_yak's video call to the
  * afternoon, E. Demir stiller_fuchs's visit to Thursday.
  */

@@ -404,7 +404,7 @@ const meta: Meta<typeof Harness> = {
 		docs: {
 			description: {
 				component:
-					'FE#1050 / ADR-032, round 2 after Frank\'s prototype (2026-11-14): built like "Gespräche" — left column with search (display filter at its left, as in "Gespräche"), kind chips, open requests, "Als Nächstes" and quick entry with date, start and duration; one row of people above the calendar (shown colleagues pressed, recently shown ones to switch back on, "Weitere …"); stage with header (+, view switch, full screen, ⋮), toolbar (‹ Heute ▾ ›) and the calendar. One colour per kind; working hours shaded; colleague entries with tooltip; pending move proposals dashed. Click an entry for its actions, double-click to move it. Drag over free time → "Eintragen als". Month view: click or drag days → "Tag eintragen". "Nebeneinander": one column per person. Move proposals both ways: one\'s own, dashed and withdrawable; colleagues\' proposals for one\'s own appointments at the top of "Offene Anfragen" with "Annehmen" / "Ablehnen", counted on "Meine Termine". "Beitreten" has no backend yet and appears only here. Sample data.'
+					'FE#1050 / ADR-032, round 2 after Frank\'s prototype (2026-11-14): built like "Gespräche" — left column with search (display filter at its left, as in "Gespräche"), kind chips, open requests, "Als Nächstes" and quick entry with date, start and duration; one row of people above the calendar (shown colleagues pressed, recently shown ones to switch back on, "Weitere …"); stage with header (+, view switch, full screen, ⋮), toolbar (‹ Heute ▾ ›) and the calendar. One colour per kind; working hours shaded; colleague entries with tooltip; pending move proposals dashed. Click an entry for its actions, double-click to move it. Drag over free time → "Eintragen als". Month view: click or drag days → "Tag eintragen". "Nebeneinander": one column per person. Move proposals both ways: one\'s own, dashed and withdrawable; colleagues\' proposals for one\'s own appointments at the top of "Offene Verschiebungen" with "Annehmen" / "Ablehnen", counted on "Meine Termine". "Beitreten" has no backend yet and appears only here. Sample data.'
 			}
 		}
 	},
@@ -1096,11 +1096,13 @@ export const Fullscreen: Story = {
 };
 
 export const PendingProposal: Story = {
-	name: 'Move proposal — pending (dashed, "Offene Anfragen")',
+	name: 'Move proposal — pending (dashed, "Offene Verschiebungen")',
 	args: { shownColleagues: ['kaya'], proposals: STORY_PROPOSALS },
 	play: async ({ canvasElement }) => {
 		const canvas = canvasOf(canvasElement);
-		await expect(await canvas.findByText('Offene Anfragen')).toBeTruthy();
+		await expect(
+			await canvas.findByText('Offene Verschiebungen')
+		).toBeTruthy();
 		await waitFor(() =>
 			expect(
 				canvasElement.querySelectorAll('.calEntry--proposal').length
@@ -1124,7 +1126,7 @@ export const WithdrawProposal: Story = {
 			})
 		);
 		await waitFor(() =>
-			expect(canvas.queryByText('Offene Anfragen')).toBeNull()
+			expect(canvas.queryByText('Offene Verschiebungen')).toBeNull()
 		);
 		await expect(
 			await body().findByText('Vorschlag zurückgezogen.')
@@ -1145,7 +1147,9 @@ export const ProposeMove: Story = {
 		);
 		await userEvent.click(await findCy('calendar-move-submit'));
 		const canvas = canvasOf(canvasElement);
-		await expect(await canvas.findByText('Offene Anfragen')).toBeTruthy();
+		await expect(
+			await canvas.findByText('Offene Verschiebungen')
+		).toBeTruthy();
 	}
 };
 
@@ -1173,7 +1177,7 @@ export const ReceivedRequests: Story = {
 	play: async ({ canvasElement }) => {
 		const section = within(await findCy('calendar-requests'));
 		await expect(
-			section.getByRole('heading', { name: 'Offene Anfragen' })
+			section.getByRole('heading', { name: 'Offene Verschiebungen' })
 		).toBeTruthy();
 		// Who proposes what: old and new time, also for screen readers.
 		await expect(
@@ -1269,7 +1273,7 @@ export const PhoneRequests: Story = {
 	play: async () => {
 		await findCy('calendar-sheet');
 		const sheet = within(cyEl('calendar-sheet'));
-		await expect(sheet.getByText('Offene Anfragen')).toBeTruthy();
+		await expect(sheet.getByText('Offene Verschiebungen')).toBeTruthy();
 		await expect(
 			sheet.getByRole('button', {
 				name: /^Vorschlag von A\. Kaya annehmen/
@@ -1528,6 +1532,36 @@ export const Phone: Story = {
 	}
 };
 
+export const PhoneTouchTargets: Story = {
+	name: 'Counsellor — phone 390 px, controls at least 44 px (test finding C25)',
+	globals: phone390Globals,
+	args: { compact: true, initialView: 'threeDays' },
+	play: async ({ canvasElement }) => {
+		await findCy('calendar-previous');
+		const tall = (el: Element | null) =>
+			el ? Math.round(el.getBoundingClientRect().height) : 0;
+		const wide = (el: Element | null) =>
+			el ? Math.round(el.getBoundingClientRect().width) : 0;
+		for (const id of [
+			'calendar-previous',
+			'calendar-next',
+			'calendar-jump',
+			'calendar-today'
+		]) {
+			const el = canvasElement.querySelector(`[data-cy="${id}"]`);
+			await expect({ id, h: tall(el) >= 44, w: wide(el) >= 44 }).toEqual({
+				id,
+				h: true,
+				w: true
+			});
+		}
+		const search = canvasElement.querySelector(
+			'.calendarStage__search .sessionsListToolbar__searchInput'
+		);
+		await expect(tall(search)).toBeGreaterThanOrEqual(44);
+	}
+};
+
 export const Tablet: Story = {
 	name: 'Counsellor — tablet 820 px (phone layout, work week)',
 	globals: tablet820Globals,
@@ -1579,7 +1613,9 @@ export const TabletRequests: Story = {
 	play: async () => {
 		await findCy('calendar-sheet');
 		const sheet = cyEl('calendar-sheet');
-		await expect(within(sheet).getByText('Offene Anfragen')).toBeTruthy();
+		await expect(
+			within(sheet).getByText('Offene Verschiebungen')
+		).toBeTruthy();
 		await expect(
 			sheet.querySelector('[data-cy="calendar-upcoming"]')
 		).toBeNull();

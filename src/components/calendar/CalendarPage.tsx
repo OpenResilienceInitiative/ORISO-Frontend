@@ -11,7 +11,7 @@
  *
  * Move proposals (contract "move proposals v1"): a counsellor proposes a new
  * time for a colleague's appointment and withdraws it; the colleague finds
- * it under "Offene Anfragen" and in the grid, and accepts or declines.
+ * it under "Offene Verschiebungen" and in the grid, and accepts or declines.
  * "Beitreten" has no backend yet: it appears only when the host passes its
  * callback (Storybook does, the app does not).
  *
@@ -100,11 +100,13 @@ import {
 	writeEdgeChoice,
 	type EdgeChoice,
 	readRecentColleagues,
+	readShownColleagues,
 	readSwitcherStyle,
 	MAX_RECENT_COLLEAGUES,
 	recentPills,
 	rememberColleague,
 	writeRecentColleagues,
+	writeShownColleagues,
 	writeSwitcherStyle,
 	readShowGrips,
 	writeShowGrips,
@@ -289,7 +291,7 @@ export interface CalendarPageProps {
 	proposals?: MoveProposal[];
 	/**
 	 * Open move proposals colleagues sent for one's own appointments:
-	 * "Offene Anfragen", answered with the two callbacks below.
+	 * "Offene Verschiebungen", answered with the two callbacks below.
 	 */
 	receivedProposals?: MoveProposal[];
 	/**
@@ -565,13 +567,21 @@ export const CalendarPage = ({
 	const [switcherStyle, setSwitcherStyle] = useState<ViewSwitcherStyle>(() =>
 		readSwitcherStyle(ownerId, initialSwitcherStyle)
 	);
-	const [shownColleagues, setShownColleagues] = useState<string[]>(
-		initialShownColleagues
-	);
+	// The host's list wins; otherwise the ones shown before the reload,
+	// still in reach (test finding C20).
+	const [startShown] = useState<string[]>(() => {
+		if (initialShownColleagues.length > 0) return initialShownColleagues;
+		const stored = readShownColleagues(ownerId);
+		return colleagues.length > 0
+			? stored.filter((id) => colleagues.some((c) => c.id === id))
+			: stored;
+	});
+	const [shownColleagues, setShownColleagues] =
+		useState<string[]>(startShown);
 	const [recent, setRecent] = useState<string[]>(() => [
-		...initialShownColleagues,
+		...startShown,
 		...readRecentColleagues(ownerId).filter(
-			(id) => !initialShownColleagues.includes(id)
+			(id) => !startShown.includes(id)
 		)
 	]);
 	const [muted, setMuted] = useState<string[]>([]);
@@ -727,6 +737,7 @@ export const CalendarPage = ({
 		const next = toggle(shownColleagues, id);
 		setShownColleagues(next);
 		onShownColleaguesChange?.(next);
+		writeShownColleagues(ownerId, next);
 		if (next.includes(id)) {
 			const remembered = rememberColleague(recent, id);
 			setRecent(remembered);
@@ -741,6 +752,7 @@ export const CalendarPage = ({
 		const next = [...shownColleagues, ...added];
 		setShownColleagues(next);
 		onShownColleaguesChange?.(next);
+		writeShownColleagues(ownerId, next);
 		const remembered = added.reduce(
 			(all, id) => rememberColleague(all, id),
 			recent
@@ -750,11 +762,24 @@ export const CalendarPage = ({
 	};
 
 	useEffect(() => {
-		if (initialShownColleagues.length > 0)
-			onShownColleaguesChange?.(initialShownColleagues);
+		if (startShown.length > 0) onShownColleaguesChange?.(startShown);
 		// Only once: the host loads the colleagues shown from the start.
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
+
+	// Colleagues that arrive after the start: drop a remembered one who is
+	// out of reach now, so no empty column waits for them.
+	useEffect(() => {
+		if (colleagues.length === 0) return;
+		const kept = shownColleagues.filter((id) =>
+			colleagues.some((c) => c.id === id)
+		);
+		if (kept.length === shownColleagues.length) return;
+		setShownColleagues(kept);
+		onShownColleaguesChange?.(kept);
+		writeShownColleagues(ownerId, kept);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [colleagues]);
 
 	/**
 	 * Success notice once the change is stored, the failure notice if it
@@ -2283,6 +2308,13 @@ export const CalendarPage = ({
 	// White chips: "ich" first, then who is shown; who was shown lately
 	// stays as a dashed chip; "Weitere …" in red opens the people menu
 	// (prototype v17).
+	// Names that repeat get their Beratungsstelle on the chip, so two
+	// "Bart Simpson" can be told apart (test finding C12).
+	const twinNames = new Set(
+		colleagues
+			.map((c) => c.displayName)
+			.filter((name, i, all) => all.indexOf(name) !== i)
+	);
 	const personChip = (
 		id: string,
 		name: string,
@@ -2309,11 +2341,14 @@ export const CalendarPage = ({
 				{colleague ? initialsOf(name) : t('calendar.people.meAvatar')}
 			</span>
 			<span>{colleague ? name : t('calendar.people.me')}</span>
-			{colleague?.agencyShort && (
-				<span className="calendarStage__agency">
-					{colleague.agencyShort}
-				</span>
-			)}
+			{colleague &&
+				(colleague.agencyShort ||
+					(twinNames.has(colleague.displayName) &&
+						colleague.agencyName)) && (
+					<span className="calendarStage__agency">
+						{colleague.agencyShort ?? colleague.agencyName}
+					</span>
+				)}
 		</button>
 	);
 	// Only while someone is shown or was shown lately (prototype v17).

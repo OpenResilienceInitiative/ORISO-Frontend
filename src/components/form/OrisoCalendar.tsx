@@ -152,8 +152,10 @@ export const OrisoCalendar = ({
 	const { t, i18n } = useTranslation();
 	// dayjs has no locale loaded: names come from Intl in the UI language
 	// ("25. November 2026", not "25 November 2026"; test finding C8).
+	// Without an i18n instance (some test setups) German applies.
+	const language = i18n?.language || 'de';
 	const names = React.useMemo(() => {
-		const lang = (i18n.language || 'de').split('@')[0];
+		const lang = language.split('@')[0];
 		const fmt = (options: Intl.DateTimeFormatOptions) =>
 			new Intl.DateTimeFormat(lang, options);
 		const short = fmt({ month: 'short' });
@@ -166,7 +168,7 @@ export const OrisoCalendar = ({
 			monthYear: (d: Dayjs) => monthYear.format(d.toDate()),
 			day: (d: Dayjs) => day.format(d.toDate())
 		};
-	}, [i18n.language]);
+	}, [language]);
 	const resolvedCancel = cancelLabel ?? t('form.calendar.cancel');
 	const resolvedOk = okLabel ?? t('form.calendar.ok');
 	const today = dayjs();

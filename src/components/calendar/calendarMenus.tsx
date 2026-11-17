@@ -758,7 +758,7 @@ export const ProposalMenuContent = ({
 };
 
 /* ------------------------------------------------------------------ */
-/* A proposal waiting for one's own answer ("Offene Anfragen")          */
+/* A proposal waiting for one's own answer ("Offene Verschiebungen")    */
 /* ------------------------------------------------------------------ */
 
 export interface RequestMenuContentProps {
