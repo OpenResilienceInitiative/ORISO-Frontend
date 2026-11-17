@@ -23,7 +23,9 @@ interface AddonSessionPanelProps extends AddonAppInSlot {
 const focusLost = () =>
 	!document.activeElement || document.activeElement === document.body;
 
-const isShown = (element: HTMLElement) => element.getClientRects().length > 0;
+const isShown = (element: HTMLElement) =>
+	element.getClientRects().length > 0 &&
+	getComputedStyle(element).visibility !== 'hidden';
 
 // A menu entry is gone with its closed menu; then the menu's own button takes focus.
 const returnFocus = (actionId: string) => {

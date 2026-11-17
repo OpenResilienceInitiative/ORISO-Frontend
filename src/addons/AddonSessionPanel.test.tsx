@@ -93,7 +93,7 @@ describe('AddonSessionPanel', () => {
 		expect(props.askerId).toBeUndefined();
 	});
 
-	it('hands focus to the menu button when its menu entry is gone', () => {
+	it('hands focus to the menu button when its menu entry is hidden in the closed menu', () => {
 		const MenuCase = ({ open }: { open: boolean }) => (
 			<MemoryRouter>
 				<AddonModuleLoaderContext.Provider
@@ -102,7 +102,7 @@ describe('AddonSessionPanel', () => {
 					<button type="button" aria-controls="flyout">
 						Menü
 					</button>
-					<div style={{ display: 'none' }}>
+					<div style={{ visibility: 'hidden' }}>
 						<button
 							type="button"
 							data-addon-action="digisucht-tools/goals"
@@ -126,9 +126,7 @@ describe('AddonSessionPanel', () => {
 		const shown = vi
 			.spyOn(HTMLElement.prototype, 'getClientRects')
 			.mockImplementation(function (this: HTMLElement) {
-				return (this.getAttribute('aria-controls') === 'flyout'
-					? [{}]
-					: []) as unknown as DOMRectList;
+				return [{}] as unknown as DOMRectList;
 			});
 		const view = render(<MenuCase open />);
 		view.rerender(<MenuCase open={false} />);
