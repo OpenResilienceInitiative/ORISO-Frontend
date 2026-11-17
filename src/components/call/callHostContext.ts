@@ -71,6 +71,44 @@ export const callConversationParamsOf = (
 	};
 };
 
+/** What the call widget is opened with: its lobby, kind and title. */
+export interface CallWidgetEntry extends CallConversationParams {
+	/** `skipLobby`: straight into the call, without Element Call's lobby. */
+	skipLobby: boolean;
+}
+
+/**
+ * How a call opens (FE#2209 live test, 16 Nov).
+ *
+ * Everybody skips Element Call's lobby: members chose their devices in
+ * ORISO's own check, and a guest who came through a call's shared link chose
+ * them on the link's page and in the knock wait (`SharedCallGuest` hands that
+ * choice to the call). A guest used to meet a second, plain lobby ("Anruf
+ * beitreten") after being let in.
+ *
+ * A guest has no conversation and must not learn it (UserService#1487): the
+ * call's topic names the advice seeker's Beratungsthema, so a guest's call is
+ * called `guestTitle`, a neutral word, instead of "Anruf". It is a `group`
+ * call for the guest, as before: the guest makes it at least three people.
+ */
+export const callWidgetEntryOf = (
+	call: { sharedCallGuest?: string; isGroup?: boolean },
+	conversation: CallConversation | null | undefined,
+	topics: readonly TopicsDataInterface[] | null | undefined,
+	language: string | undefined,
+	guestTitle: string
+): CallWidgetEntry => ({
+	skipLobby: true,
+	...(call.sharedCallGuest
+		? { callType: 'group', topic: guestTitle.trim() || null }
+		: callConversationParamsOf(
+				!!call.isGroup,
+				conversation,
+				topics,
+				language
+			))
+});
+
 /** A group chat's name as its card shows it; `null` when it has none. */
 const chatNameOf = (chat: CallConversation['chat']): string | null => {
 	const name = typeof chat?.topic === 'string' ? chat.topic.trim() : '';

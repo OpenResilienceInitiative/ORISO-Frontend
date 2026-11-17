@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vite-plus/test';
 import type { TopicsDataInterface } from '../../globalState/interfaces';
 import type { CallConversation } from './callParty';
-import { callConversationParamsOf } from './callHostContext';
+import { callConversationParamsOf, callWidgetEntryOf } from './callHostContext';
 
 const debt = {
 	id: 7,
@@ -245,6 +245,48 @@ describe('callConversationParamsOf (FE#2233 checkpoint 4)', () => {
 					'de'
 				).topic
 			).toBeNull();
+		});
+	});
+});
+
+describe('callWidgetEntryOf (FE#2209 live test, 16 Nov)', () => {
+	const guest = { sharedCallGuest: '@guest:example', isGroup: true };
+
+	it("takes a shared-call guest straight into the call, past Element Call's lobby", () => {
+		expect(
+			callWidgetEntryOf(guest, null, topics, 'de', 'Gespräch').skipLobby
+		).toBe(true);
+	});
+
+	it("gives a guest a neutral title, never the conversation's topic", () => {
+		expect(
+			callWidgetEntryOf(
+				guest,
+				session({ mainTopicId: 7 }),
+				topics,
+				'de',
+				'Gespräch'
+			)
+		).toEqual({ skipLobby: true, callType: 'group', topic: 'Gespräch' });
+	});
+
+	it('keeps the conversation rule for members', () => {
+		expect(
+			callWidgetEntryOf(
+				{ isGroup: false },
+				session({ mainTopicId: 9 }),
+				topics,
+				'de',
+				'Gespräch'
+			)
+		).toEqual({
+			skipLobby: true,
+			...callConversationParamsOf(
+				false,
+				session({ mainTopicId: 9 }),
+				topics,
+				'de'
+			)
 		});
 	});
 });
