@@ -3313,17 +3313,25 @@
 					"label": "Excel dosyasını indirin"
 				},
 				"filename": "Çevrimiçi danışmanlık istatistikleri",
-				"title": "Seçtiğiniz danışmanlık dönemi için istatistiklerinizi buradan indirebilirsiniz:"
+				"title": "Seçtiğiniz danışmanlık dönemi için istatistiklerinizi buradan indirebilirsiniz:",
+				"total": "Toplam"
 			},
 			"csvHeader": {
-				"numberOfAppointments": "Rezerve edilen tarihler",
+				"numberOfAppointments": "Gerçekleşen randevular",
 				"numberOfAssignedSessions": "İstişareler kabul edildi",
+				"numberOfCancelledAppointments": "İptal edilen randevular",
+				"numberOfChatAppointments": "Sohbet",
+				"numberOfOnsiteAppointments": "Yüz yüze",
+				"numberOfPhoneAppointments": "Telefon",
 				"numberOfSentMessages": "Yazılı Haberler",
 				"numberOfSessionsWhereConsultantWasActive": "Aktif istişareler",
+				"numberOfVideoAppointments": "Video",
+				"period": "Dönem",
 				"videoCallDuration": "Dakika:saniye cinsinden görüntülü arama süresi"
 			},
 			"period": {
 				"currentMonth": "geçerli ay",
+				"currentWeek": "bu hafta",
 				"currentYear": "cari yıl",
 				"display": {
 					"default": "GG.AA.YYYY - GG.AA.YYYY",
@@ -3331,6 +3339,7 @@
 					"suffix": " sahipsin:"
 				},
 				"lastMonth": "geçen ay",
+				"lastWeek": "geçen hafta",
 				"lastYear": "geçen yıl",
 				"prefix": "Sizin rakamlarınız"
 			},

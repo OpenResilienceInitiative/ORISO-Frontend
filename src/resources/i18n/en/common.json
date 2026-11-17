@@ -3296,26 +3296,35 @@
 					"label": "Download Excel file"
 				},
 				"filename": "Statistics online consulting",
-				"title": "You can download your statistics for your selected consulting period here:"
+				"title": "You can download your statistics for your selected consulting period here:",
+				"total": "Total"
 			},
 			"csvHeader": {
-				"numberOfAppointments": "Appointments booked",
+				"numberOfAppointments": "Appointments held",
 				"numberOfAssignedSessions": "Consultations accepted",
+				"numberOfCancelledAppointments": "Appointments cancelled",
+				"numberOfChatAppointments": "of which chat",
+				"numberOfOnsiteAppointments": "of which on site",
+				"numberOfPhoneAppointments": "of which phone",
 				"numberOfSentMessages": "Messages written",
 				"numberOfSessionsWhereConsultantWasActive": "Active consulting",
+				"numberOfVideoAppointments": "of which video",
+				"period": "Period",
 				"videoCallDuration": "Duration of video calls in minutes:seconds"
 			},
 			"period": {
-				"currentMonth": "current month",
-				"currentYear": "current year",
+				"currentMonth": "this month",
+				"currentWeek": "this week",
+				"currentYear": "this year",
 				"display": {
 					"default": "DD.MM.JJJJ - DD.MM.JJJJ",
 					"prefix": "In the period from ",
 					"suffix": " you have:"
 				},
 				"lastMonth": "last month",
-				"lastYear": "past year",
-				"prefix": "Your numbers of the"
+				"lastWeek": "last week",
+				"lastYear": "last year",
+				"prefix": "Your numbers for"
 			},
 			"title": "My statistics"
 		},
