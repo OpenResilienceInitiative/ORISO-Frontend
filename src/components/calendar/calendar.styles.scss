@@ -1302,6 +1302,11 @@ $cal-avatar-tones: (#2f5d5a, #7a0e2a, #4b4f7a, #6d3d63, #7a5a1e, #36576e);
 .calendarStage__search {
 	position: relative;
 	flex: none;
+
+	// The whole field height takes the tap (test finding C25).
+	.sessionsListToolbar__searchInput {
+		min-height: 44px;
+	}
 }
 
 .calendarSearch__results {
@@ -2214,6 +2219,9 @@ $cal-avatar-tones: (#2f5d5a, #7a0e2a, #4b4f7a, #6d3d63, #7a5a1e, #36576e);
 }
 
 .calendarQuick__save {
+	display: inline-flex;
+	gap: 8px;
+	align-items: center;
 	background: var(--m3-primary, #a5000a);
 	color: var(--m3-on-primary, #ffffff);
 
@@ -2738,6 +2746,29 @@ $cal-new-pill-hover: #4b4f51;
 .calendarStage__jump {
 	padding: 0 6px;
 	border-left: 1px solid rgba(65, 0, 1, 0.2);
+}
+
+// Phone and tablet are touched: every control of the date bar is at least
+// 44 px (test finding C25).
+.calendarPage--compact {
+	.calendarStage__nav {
+		height: 50px;
+	}
+
+	.calendarStage__navButton {
+		min-width: 44px;
+		height: 44px;
+	}
+
+	.calendarStage__todayPair,
+	.calendarStage__today,
+	.calendarStage__jump {
+		height: 44px;
+	}
+
+	.calendarStage__jump {
+		min-width: 44px;
+	}
 }
 
 // "16.–20. November 2026"; on phone and tablet on a line of its own.

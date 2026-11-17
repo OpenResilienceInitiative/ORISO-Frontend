@@ -80,6 +80,80 @@ const menuPerson = (name: RegExp) =>
 	screen.getByRole('menuitemcheckbox', { name });
 const KAYA = /A\. Kaya/;
 
+describe('CalendarPage — colleagues with the same name (test finding C12)', () => {
+	it('names the Beratungsstelle on chips whose names repeat', () => {
+		const twins: Colleague[] = [
+			{
+				id: 'bart1',
+				displayName: 'Bart Simpson',
+				agencyName: 'Beratungsstelle Nord',
+				relation: 'sameAgency'
+			},
+			{
+				id: 'bart2',
+				displayName: 'Bart Simpson',
+				agencyName: 'Beratungsstelle Süd',
+				relation: 'sameTenant'
+			},
+			{
+				id: 'lisa',
+				displayName: 'Lisa Simpson',
+				agencyName: 'Beratungsstelle Nord',
+				relation: 'sameAgency'
+			}
+		];
+		page({ colleagues: twins });
+		expect(cy('calendar-person-bart1')?.textContent).toContain(
+			'Beratungsstelle Nord'
+		);
+		expect(cy('calendar-person-bart2')?.textContent).toContain(
+			'Beratungsstelle Süd'
+		);
+		// A unique name needs no second hint.
+		expect(cy('calendar-person-lisa')?.textContent).not.toContain(
+			'Beratungsstelle'
+		);
+	});
+});
+
+describe('CalendarPage — shown colleagues survive a reload (test finding C20)', () => {
+	it('shows the same colleagues switched on after a reload', () => {
+		page();
+		openPeopleMenu();
+		fireEvent.click(menuPerson(KAYA));
+		cleanup();
+		const shown = vi.fn();
+		page({ onShownColleaguesChange: shown });
+		expect(chip(KAYA).getAttribute('aria-pressed')).toBe('true');
+		expect(shown).toHaveBeenCalledWith(['kaya']);
+	});
+
+	it('drops a remembered colleague who is no longer in reach', () => {
+		page();
+		openPeopleMenu();
+		fireEvent.click(menuPerson(KAYA));
+		cleanup();
+		const shown = vi.fn();
+		page({
+			colleagues: COLLEAGUES.filter((c) => c.id !== 'kaya'),
+			onShownColleaguesChange: shown
+		});
+		expect(shown).not.toHaveBeenCalledWith(['kaya']);
+		expect(screen.queryByRole('button', { name: KAYA })).toBeNull();
+	});
+
+	it('starts with nobody shown once every colleague was hidden again', () => {
+		page();
+		openPeopleMenu();
+		fireEvent.click(menuPerson(KAYA));
+		fireEvent.click(menuPerson(KAYA));
+		cleanup();
+		const shown = vi.fn();
+		page({ onShownColleaguesChange: shown });
+		expect(shown).not.toHaveBeenCalled();
+	});
+});
+
 describe('CalendarPage — who is shown (prototype v17)', () => {
 	it('shows no people bar while nobody is shown or was shown lately', () => {
 		page({ colleagues: [] });

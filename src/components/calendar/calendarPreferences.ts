@@ -77,6 +77,26 @@ export const writeRecentColleagues = (ownerId: string, ids: string[]) =>
 	write(key(ownerId, 'recent'), JSON.stringify(ids));
 
 /**
+ * The colleagues shown at the moment, so a reload shows them again, switched
+ * on (test finding C20). An empty list forgets them.
+ */
+export const readShownColleagues = (ownerId: string): string[] => {
+	try {
+		const parsed = JSON.parse(read(key(ownerId, 'shown')) ?? '[]');
+		return Array.isArray(parsed)
+			? parsed.filter((id) => typeof id === 'string')
+			: [];
+	} catch {
+		return [];
+	}
+};
+
+export const writeShownColleagues = (ownerId: string, ids: string[]) =>
+	ids.length
+		? write(key(ownerId, 'shown'), JSON.stringify(ids))
+		: remove(key(ownerId, 'shown'));
+
+/**
  * The pills of "Kalender daneben": the last shown colleagues first (most
  * recent first), filled up from the list, only colleagues still in reach.
  */

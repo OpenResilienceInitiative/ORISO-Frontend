@@ -69,6 +69,26 @@ describe('QuickEntry — the draft until it is created (review 4574775715)', () 
 	});
 });
 
+describe('QuickEntry — a slow first save shows progress (test finding C13)', () => {
+	it('says "saving" with a spinner until the entry exists', async () => {
+		let done: (value: boolean) => void = () => undefined;
+		open(() => new Promise<boolean>((resolve) => (done = resolve)));
+		fireEvent.change(input(), {
+			target: { value: 'morgen 14 Uhr Video ruhiges' }
+		});
+		await submit();
+		const save = document.querySelector(
+			'[data-cy="calendar-quick-save"]'
+		) as HTMLButtonElement;
+		expect(save.getAttribute('aria-busy')).toBe('true');
+		expect(save.textContent).toBe('calendar.quick.saving');
+		expect(save.querySelector('[role="progressbar"]')).not.toBeNull();
+		await act(async () => done(true));
+		expect(save.getAttribute('aria-busy')).toBe('false');
+		expect(save.textContent).toBe('calendar.quick.save');
+	});
+});
+
 describe('QuickEntry — conversation named in the line (review 4574779936)', () => {
 	it('replaces an earlier pick with the conversation the line names', async () => {
 		const onCreate = vi.fn(() => Promise.resolve());

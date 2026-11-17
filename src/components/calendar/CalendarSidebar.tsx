@@ -10,7 +10,7 @@
 import * as React from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Popper, TextField } from '@mui/material';
+import { CircularProgress, Popper, TextField } from '@mui/material';
 import dayjs from 'dayjs';
 import AddIcon from '@mui/icons-material/Add';
 import ScheduleIcon from '@mui/icons-material/Schedule';
@@ -69,7 +69,11 @@ import type {
 import { avatarToneClass } from './calendarAvatar';
 import { calendarLocale } from './calendarLocale';
 import type { CalendarListMode } from './calendarPreferences';
-import { useEntryLabel, useRangeFormat } from './useEntryLabel';
+import {
+	useEntryKindLabel,
+	useEntryLabel,
+	useRangeFormat
+} from './useEntryLabel';
 
 const QUICK_KINDS: QuickKind[] = [
 	'video',
@@ -140,7 +144,7 @@ export interface CalendarSidebarProps {
 	onWithdrawProposal?: (proposal: MoveProposal) => void;
 	/**
 	 * Proposals colleagues sent for one's own appointments, with the time
-	 * each was made for (`from`): at the top of "Offene Anfragen".
+	 * each was made for (`from`): at the top of "Offene Verschiebungen".
 	 */
 	requests?: {
 		proposal: MoveProposal;
@@ -255,6 +259,7 @@ export const CalendarSidebar = ({
 		[i18n.language]
 	);
 	const label = useEntryLabel();
+	const kindLabel = useEntryKindLabel();
 	const format = useRangeFormat();
 	const shortTime = useShortTime();
 	const colleagueById = useMemo(
@@ -432,6 +437,25 @@ export const CalendarSidebar = ({
 											<span className="calendarSide__rowName">
 												{name}
 											</span>
+											{/* Which appointment would move (test finding C21). */}
+											{entry && (
+												<span
+													className="calendarSide__rowMeta"
+													data-cy={`calendar-received-what-${proposal.id}`}
+												>
+													{[
+														kindLabel(entry),
+														label(entry)
+													]
+														.filter(
+															(part, i, all) =>
+																all.indexOf(
+																	part
+																) === i
+														)
+														.join(' · ')}
+												</span>
+											)}
 											<span className="calendarSide__rowMeta calendarSide__requestChange">
 												{t(
 													'calendar.proposal.change',
@@ -1597,9 +1621,22 @@ export const QuickEntry = ({
 						type="submit"
 						className="calendarQuick__save"
 						disabled={saving || gaps.length > 0 || !touched}
+						aria-busy={saving}
 						data-cy="calendar-quick-save"
 					>
-						{t('calendar.quick.save')}
+						{/* The first save can take seconds (test finding C13). */}
+						{saving && (
+							<CircularProgress
+								size={14}
+								color="inherit"
+								className="calendarQuick__saving"
+							/>
+						)}
+						{t(
+							saving
+								? 'calendar.quick.saving'
+								: 'calendar.quick.save'
+						)}
 					</button>
 				</div>
 			</form>
