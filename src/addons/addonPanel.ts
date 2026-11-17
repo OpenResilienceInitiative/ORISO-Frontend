@@ -5,9 +5,7 @@ import {
 	useCaseAddonRegistry
 } from './addonRegistry';
 import { AddonRegistryContext } from './addonRegistryApi';
-
-/** `?addon=<add-on>/<app>` opens an add-on app as the side panel of the case view. */
-export const ADDON_PANEL_PARAM = 'addon';
+import { ADDON_PANEL_PARAM, withChannel } from '../utils/channelRoute';
 
 export const parseAddonPanel = (search: string) => {
 	const value = new URLSearchParams(search).get(ADDON_PANEL_PARAM);
@@ -22,8 +20,7 @@ export const withAddonPanel = (
 	search: string,
 	panel: { addonName: string; appId: string } | null
 ) => {
-	const params = new URLSearchParams(search);
-	params.delete('channel');
+	const params = new URLSearchParams(withChannel(search, null));
 	if (panel) {
 		params.set(ADDON_PANEL_PARAM, `${panel.addonName}/${panel.appId}`);
 	} else {

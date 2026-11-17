@@ -20,6 +20,12 @@ describe('add-on panel in the URL', () => {
 				appId: 'goals'
 			})
 		).toBe('?tab=1&addon=digisucht-tools%2Fgoals');
+		expect(
+			withAddonPanel('?channel=thread%3Aroot&at=e1', {
+				addonName: 'a',
+				appId: 'b'
+			})
+		).toBe('?addon=a%2Fb');
 	});
 
 	it('closes the panel', () => {
