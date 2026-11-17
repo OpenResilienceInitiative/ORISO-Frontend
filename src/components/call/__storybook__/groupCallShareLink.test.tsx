@@ -45,7 +45,10 @@ const widgetHandlers = vi.hoisted(
 	() => new Map<string, (event: unknown) => void>()
 );
 
-vi.mock('../../../api/apiCallShareLinkKnock', () => ({
+vi.mock('../../../api/apiCallShareLinkKnock', async (importOriginal) => ({
+	...(await importOriginal<
+		typeof import('../../../api/apiCallShareLinkKnock')
+	>()),
 	apiGetCallShareLinkKnock: shareLinks.get,
 	apiSetCallShareLinkKnock: vi.fn()
 }));
@@ -307,6 +310,36 @@ describe('GroupCallWidget and the call share link', () => {
 		leave.mockRestore();
 
 		expect(shareLinks.get.mock.calls.length).toBe(asked);
+	});
+
+	/*
+	 * UserService#1662 (Frank, 17 Nov): a group call a plain member or an
+	 * advice seeker started has no binding and gets no link. The counsellor's
+	 * client stops asking after a bounded number of tries, offers no share
+	 * button and creates nothing.
+	 */
+	it('a group call the server cannot share stops asking and offers no link', async () => {
+		shareLinks.get.mockRejectedValue(
+			Object.assign(new Error('CALL_SHARE_LINK_NO_CALL'), {
+				callNotShareable: true
+			})
+		);
+		shareLinks.create.mockResolvedValue(null);
+		sessionRooms.byRoomIds.mockResolvedValue(groupChat('INTERNAL_GROUP'));
+		answerCall(true);
+
+		const view = renderCall();
+		await joinCall(view);
+		await passTime(70_000);
+		const asked = shareLinks.get.mock.calls.length;
+		const created = shareLinks.create.mock.calls.length;
+		expect(asked).toBe(6);
+
+		await passTime(5 * 60_000);
+
+		expect(shareLinks.get.mock.calls.length).toBe(asked);
+		expect(shareLinks.create.mock.calls.length).toBe(created);
+		expect(view.container.querySelector('.element-call-share')).toBeNull();
 	});
 
 	it('a group call stops asking for its share link once the counsellor hangs up', async () => {

@@ -349,8 +349,15 @@ export const GroupCallWidget: React.FC = () => {
 	 */
 	const canInvite =
 		isConsultantUser && !!shareLinkCall && !callData?.sharedCallGuest;
+	/* UserService#1662 (Frank, 17 Nov): a group call a plain member or an
+	   advice seeker started has no binding, so no link. Once the server has
+	   said so the bounded number of times, nothing here offers or creates
+	   one. ("Link teilen" inside the running call stays in its address, which
+	   is built once; changing it would reload the call. It then answers that
+	   the call cannot be shared right now.) */
+	const linkShareable = shareLinkKnock.shareable;
 	const onInviteLink = useCallback(async (): Promise<string | null> => {
-		if (!shareLinkCall) return null;
+		if (!shareLinkCall || !linkShareable) return null;
 		const created = await apiCreateCallShareLink(shareLinkCall);
 		if (created) return created.url;
 		// Right after joining the server may not see this person in the call
@@ -359,7 +366,7 @@ export const GroupCallWidget: React.FC = () => {
 			setTimeout(resolve, INVITE_LINK_RETRY_MS)
 		);
 		return (await apiCreateCallShareLink(shareLinkCall))?.url ?? null;
-	}, [shareLinkCall]);
+	}, [shareLinkCall, linkShareable]);
 
 	/*
 	 * Call design S1: who may be labelled "Beratung" in the call. From the
@@ -1496,18 +1503,25 @@ export const GroupCallWidget: React.FC = () => {
 						 * link twice — except where the link may create a
 						 * temporary account: that switch exists only here.
 						 */}
-						{isConsultantUser && widget.ready && shareLinkCall && (
-							<div className="element-call-share">
-								<CallShareForCall
-									sourceRoomId={shareLinkCall.sourceRoomId}
-									callId={shareLinkCall.callId}
-									layout={isMobileView ? 'phone' : 'desktop'}
-									onlyForTemporaryAccounts={
-										hostChrome && canInvite
-									}
-								/>
-							</div>
-						)}
+						{isConsultantUser &&
+							widget.ready &&
+							shareLinkCall &&
+							linkShareable && (
+								<div className="element-call-share">
+									<CallShareForCall
+										sourceRoomId={
+											shareLinkCall.sourceRoomId
+										}
+										callId={shareLinkCall.callId}
+										layout={
+											isMobileView ? 'phone' : 'desktop'
+										}
+										onlyForTemporaryAccounts={
+											hostChrome && canInvite
+										}
+									/>
+								</div>
+							)}
 						{/*
 						 * Somebody knocking on a direct-link call (#1892):
 						 * let them in without leaving the call. Docked
