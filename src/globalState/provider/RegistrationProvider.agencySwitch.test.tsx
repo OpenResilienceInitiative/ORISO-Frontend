@@ -260,3 +260,77 @@ describe('RegistrationProvider — restoring a subject area at another centre', 
 		);
 	});
 });
+
+describe('RegistrationProvider — a direct-link topic after a language switch', () => {
+	beforeEach(() => {
+		getUrlParameterMock.mockImplementation((name: string) =>
+			name === 'tid' ? String(URL_TOPIC_ID) : null
+		);
+		sessionStorage.clear();
+	});
+
+	afterEach(() => {
+		cleanup();
+		vi.clearAllMocks();
+	});
+
+	const Refresher = () => {
+		const { registrationData, updateRegistrationData } =
+			useContext(RegistrationContext);
+		return (
+			<>
+				<span data-testid="topic-name">
+					{registrationData?.mainTopic?.name ?? 'none'}
+				</span>
+				<button
+					type="button"
+					onClick={() =>
+						updateRegistrationData({
+							mainTopic: {
+								id: URL_TOPIC_ID,
+								name: 'Addiction'
+							} as never
+						})
+					}
+				>
+					refresh
+				</button>
+			</>
+		);
+	};
+
+	it('keeps the refreshed copy of the same topic instead of restoring the link one', async () => {
+		render(
+			<UrlParamsContext.Provider
+				value={{
+					loaded: true,
+					agency: null,
+					consultingType: null,
+					consultant: null,
+					topic: { id: URL_TOPIC_ID, name: 'Sucht' } as never,
+					slugFallback: undefined,
+					zipcode: undefined
+				}}
+			>
+				<MemoryRouter>
+					<RegistrationProvider>
+						<Refresher />
+					</RegistrationProvider>
+				</MemoryRouter>
+			</UrlParamsContext.Provider>
+		);
+		await waitFor(() =>
+			expect(screen.getByTestId('topic-name').textContent).toBe('Sucht')
+		);
+
+		screen.getByRole('button', { name: 'refresh' }).click();
+
+		await waitFor(() =>
+			expect(screen.getByTestId('topic-name').textContent).toBe(
+				'Addiction'
+			)
+		);
+		await new Promise((resolve) => setTimeout(resolve, 50));
+		expect(screen.getByTestId('topic-name').textContent).toBe('Addiction');
+	});
+});

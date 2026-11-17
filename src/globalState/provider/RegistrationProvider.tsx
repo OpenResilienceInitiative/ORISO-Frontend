@@ -318,7 +318,12 @@ export function RegistrationProvider({ children }: PropsWithChildren<{}>) {
 		updateRegistrationData({
 			...(directLinkZipcode ? { zipcode: directLinkZipcode } : {}),
 			...(directLinkAgency ? { agency: directLinkAgency } : {}),
-			...(preselectedTopic ? { mainTopic: preselectedTopic } : {})
+			// The same topic in another language (refreshed after a language
+			// switch) stays; only a different topic is replaced by the link's.
+			...(preselectedTopic &&
+			registrationData?.mainTopic?.id !== preselectedTopic.id
+				? { mainTopic: preselectedTopic }
+				: {})
 		});
 
 		setPreselectedSteps(
