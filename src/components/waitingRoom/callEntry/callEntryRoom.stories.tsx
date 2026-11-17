@@ -350,6 +350,79 @@ export const VideoChangeAvatar: Story = {
 	}
 };
 
+/**
+ * UserService#1662, "Gast wählt": the guest joins without an account by
+ * default (temporary, password hidden, no postcode) or creates one. The
+ * stage plays the part of `DirectLinkCallEntry`, which keeps the choice.
+ */
+const AccountChoiceStage = (
+	args: CallEntryRoomProps & { startWithAccount?: boolean }
+) => {
+	const { startWithAccount = false, ...room } = args;
+	const [temporary, setTemporary] = useState(!startWithAccount);
+	return (
+		<CallEntryRoom
+			{...room}
+			hidePassword={temporary}
+			askPostcode={!temporary}
+			accountChoice={{
+				temporary,
+				onToggle: () => setTemporary((current) => !current)
+			}}
+		/>
+	);
+};
+
+export const VideoGuestChoosesWithoutAccount: Story = {
+	name: 'Video · guest chooses · without account (default, #1662)',
+	globals: desktop1440Globals,
+	args: { ...base, modality: 'video', initialMicHeard: true, micLevel: 0.55 },
+	render: (args) => <AccountChoiceStage {...args} />,
+	play: async ({ canvasElement, canvas }) => {
+		await expectWaitingRoomLayout(canvasElement);
+		await expect(
+			canvas.getByRole('button', { name: 'Konto anlegen' })
+		).toBeVisible();
+		await expect(
+			canvasElement.querySelector('input[autocomplete="postal-code"]')
+		).toBeNull();
+		await gateOpens(canvasElement);
+	}
+};
+
+export const VideoGuestChoosesWithAccount: Story = {
+	name: 'Video · guest chooses · account chosen (#1662)',
+	globals: desktop1440Globals,
+	args: { ...base, modality: 'video', initialMicHeard: true, micLevel: 0.55 },
+	render: (args) => <AccountChoiceStage {...args} />,
+	play: async ({ canvasElement, canvas }) => {
+		await userEvent.click(
+			canvas.getByRole('button', { name: 'Konto anlegen' })
+		);
+		await expect(
+			canvas.getByRole('button', { name: 'Ohne Konto beitreten' })
+		).toBeVisible();
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector('input[autocomplete="postal-code"]')
+			).not.toBeNull()
+		);
+	}
+};
+
+export const VideoGuestChoosesPhone: Story = {
+	name: 'Video · guest chooses · phone (#1662)',
+	globals: phone390Globals,
+	args: { ...base, modality: 'video', initialMicHeard: true, micLevel: 0.55 },
+	render: (args) => <AccountChoiceStage {...args} />,
+	play: async ({ canvasElement, canvas }) => {
+		await expectWaitingRoomLayout(canvasElement);
+		await expect(
+			canvas.getByRole('button', { name: 'Konto anlegen' })
+		).toBeVisible();
+	}
+};
+
 export const VideoPhone: Story = {
 	name: 'Video · phone',
 	globals: phone390Globals,

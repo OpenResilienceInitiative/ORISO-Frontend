@@ -54,9 +54,17 @@ vi.mock('../waitingRoom/callEntry/CallEntryRoom', () => ({
 		consent,
 		usernameEditable,
 		askPostcode,
-		onDeviceStateChange
+		onDeviceStateChange,
+		accountChoice
 	}: CallEntryRoomProps) => (
 		<>
+			{accountChoice && (
+				<button onClick={accountChoice.onToggle}>
+					{accountChoice.temporary
+						? 'guestAccountMode.entry.withAccount'
+						: 'guestAccountMode.entry.withoutAccount'}
+				</button>
+			)}
 			<button
 				onClick={() =>
 					onDeviceStateChange?.({
@@ -472,5 +480,95 @@ describe('the animal a call guest picks before entering', () => {
 		fireEvent.click(screen.getByRole('button', { name: 'Mute' }));
 		finishRegistration();
 		await screen.findByText('mic off, camera on');
+	});
+});
+
+/* UserService#1662: the entry offers what the link's guest account mode allows. */
+describe('the guest account mode of the link', () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+		vi.mocked(apiPostRegistration).mockResolvedValue(undefined);
+	});
+	afterEach(cleanup);
+
+	const registered = () =>
+		vi.mocked(apiPostRegistration).mock.calls[0][1] as Record<
+			string,
+			unknown
+		>;
+
+	const enter = async (context: InviteLinkContext) => {
+		render(
+			<DirectLinkCallEntry
+				token="shared-token"
+				context={context}
+				modality="video"
+			/>
+		);
+		await screen.findByText('Department consent');
+	};
+
+	it('lets the guest choose, starting without an account', async () => {
+		await enter({ ...call, guestAccountMode: 'GUEST_CHOOSES' });
+		expect(screen.getByText('temporary account')).toBeTruthy();
+		expect(screen.getByText('no postcode')).toBeTruthy();
+
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'guestAccountMode.entry.withAccount'
+			})
+		);
+		expect(screen.getByText('new account')).toBeTruthy();
+		expect(screen.getByText('asks postcode')).toBeTruthy();
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Agree and enter' })
+		);
+		await screen.findByText('call-only entry');
+		expect(registered()).toMatchObject({
+			temporary: false,
+			postcode: '10115'
+		});
+	});
+
+	it('registers a temporary account when the guest stays without one', async () => {
+		await enter({ ...call, guestAccountMode: 'GUEST_CHOOSES' });
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Agree and enter' })
+		);
+		await screen.findByText('call-only entry');
+		expect(registered()).toMatchObject({ temporary: true });
+	});
+
+	it('offers only an account for PERMANENT', async () => {
+		await enter({
+			...call,
+			temporaryAccount: false,
+			guestAccountMode: 'PERMANENT'
+		});
+		expect(
+			screen.queryByRole('button', {
+				name: /guestAccountMode.entry/
+			})
+		).toBeNull();
+		expect(screen.getByText('new account')).toBeTruthy();
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Agree and enter' })
+		);
+		await screen.findByText('call-only entry');
+		expect(registered()).toMatchObject({ temporary: false });
+	});
+
+	it('offers only a temporary account for TEMPORARY', async () => {
+		await enter({ ...call, guestAccountMode: 'TEMPORARY' });
+		expect(
+			screen.queryByRole('button', {
+				name: /guestAccountMode.entry/
+			})
+		).toBeNull();
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Agree and enter' })
+		);
+		await screen.findByText('call-only entry');
+		expect(registered()).toMatchObject({ temporary: true });
 	});
 });
