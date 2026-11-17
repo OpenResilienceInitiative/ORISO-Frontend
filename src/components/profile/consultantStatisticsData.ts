@@ -75,6 +75,14 @@ export const csvColumns = [
 	'numberOfSentMessages'
 ] as const;
 
+/** Translation key of a figure; the active-sessions label predates the field name. */
+export const figureLabelKey = (key: string) =>
+	`profile.statistics.csvHeader.${
+		key === 'numberOfActiveSessions'
+			? 'numberOfSessionsWhereConsultantWasActive'
+			: key
+	}`;
+
 export type CsvRow = Record<(typeof csvColumns)[number], string | number>;
 
 const periodLabel = (startDate: string, endDate: string) => {

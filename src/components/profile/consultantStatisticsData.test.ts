@@ -3,8 +3,12 @@ import dayjs from 'dayjs';
 import {
 	breakdownForPeriod,
 	csvRows,
-	datesForPeriod
+	csvColumns,
+	datesForPeriod,
+	figureLabelKey
 } from './consultantStatisticsData';
+import de from '../../resources/i18n/de/common.json';
+import en from '../../resources/i18n/en/common.json';
 
 // Wednesday 15 July 2026
 const today = dayjs('2026-07-15T12:00:00');
@@ -112,5 +116,21 @@ describe('csvRows', () => {
 		expect(rows).toHaveLength(1);
 		expect(rows[0].numberOfAppointments).toBe(0);
 		expect(rows[0].numberOfCancelledAppointments).toBe(0);
+	});
+});
+
+describe('figureLabelKey', () => {
+	it('has a German and English label for every CSV column', () => {
+		for (const locale of [de, en]) {
+			for (const column of csvColumns) {
+				const path = figureLabelKey(column).split('.');
+				const label = path.reduce(
+					(node: unknown, part) =>
+						(node as Record<string, unknown> | undefined)?.[part],
+					locale as unknown
+				);
+				expect(typeof label, column).toBe('string');
+			}
+		}
 	});
 });

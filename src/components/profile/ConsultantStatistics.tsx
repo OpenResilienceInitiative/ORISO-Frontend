@@ -25,6 +25,7 @@ import {
 	csvColumns,
 	csvRows,
 	datesForPeriod,
+	figureLabelKey,
 	StatisticsPeriod,
 	statisticsPeriods
 } from './consultantStatisticsData';
@@ -96,7 +97,7 @@ export const ConsultantStatistics = ({
 
 	const csvHeaders = csvColumns.map((key) => ({
 		key,
-		label: translate(`profile.statistics.csvHeader.${key}`)
+		label: translate(figureLabelKey(key))
 	}));
 	const csvData = useMemo(
 		() =>
@@ -122,10 +123,7 @@ export const ConsultantStatistics = ({
 				{icon}
 				<p>{figure(key)}</p>
 			</span>
-			<Text
-				text={translate(`profile.statistics.csvHeader.${key}`)}
-				type="standard"
-			/>
+			<Text text={translate(figureLabelKey(key))} type="standard" />
 			{children}
 		</div>
 	);
@@ -172,10 +170,8 @@ export const ConsultantStatistics = ({
 						<ul className="statistics__breakdown">
 							{appointmentKinds.map((key) => (
 								<li key={key}>
-									{translate(
-										`profile.statistics.csvHeader.${key}`
-									)}
-									: <strong>{figure(key)}</strong>
+									{translate(figureLabelKey(key))}:{' '}
+									<strong>{figure(key)}</strong>
 								</li>
 							))}
 							<li>

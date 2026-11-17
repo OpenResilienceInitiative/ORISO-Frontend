@@ -23,7 +23,8 @@
 
 	&__visuals__wrapper {
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+		grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+		align-items: start;
 		gap: $grid-base-three;
 		margin: $grid-base-four 0 0;
 	}
@@ -45,7 +46,7 @@
 
 		span {
 			display: flex;
-			flex-grow: 1;
+			align-items: center;
 
 			svg {
 				flex-shrink: 0;
@@ -63,8 +64,10 @@
 			}
 		}
 
-		> p {
+		> p,
+		> .text {
 			font-weight: $font-weight-medium;
+			text-align: center;
 		}
 	}
 
