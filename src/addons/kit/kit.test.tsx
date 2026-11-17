@@ -131,7 +131,7 @@ describe('web kit', () => {
 		).toBe('');
 	});
 
-	it('refuses a typed date outside min and max and marks the field invalid', () => {
+	it('refuses a typed date outside min and max and shows the kept date again', () => {
 		const onChange = vi.fn();
 		render(
 			<DatePicker
@@ -147,16 +147,16 @@ describe('web kit', () => {
 		fireEvent.change(input, { target: { value: '01.04.2026' } });
 		fireEvent.blur(input);
 		expect(onChange).not.toHaveBeenCalled();
-		expect(input.getAttribute('aria-invalid')).toBe('true');
+		expect(input.value).toBe('05.03.2026');
 
 		fireEvent.change(input, { target: { value: '28.02.2026' } });
 		fireEvent.blur(input);
 		expect(onChange).not.toHaveBeenCalled();
+		expect(input.value).toBe('05.03.2026');
 
 		fireEvent.change(input, { target: { value: '31.03.2026' } });
 		fireEvent.blur(input);
 		expect(onChange).toHaveBeenLastCalledWith('2026-03-31');
-		expect(input.getAttribute('aria-invalid')).toBe('false');
 	});
 
 	it('reports numbers as numbers and an empty field as null', () => {
