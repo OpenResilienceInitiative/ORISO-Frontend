@@ -66,6 +66,7 @@ import { ErstantwortSequence } from '../erstantwort/ErstantwortSequence';
 import { isErstantwortMessage } from '../erstantwort/erstantwortPayload';
 import { getErstantwortRenderModeForSession } from '../erstantwort/erstantwortRoomGate';
 import { MessageAttachment } from './MessageAttachment';
+import { MessageHtml } from './MessageHtml';
 import type { MediaCheckState } from './MessageAttachment';
 import { passageReplyAudioAttachment } from '../../utils/matrixTimelineEventFormatter';
 import type { ChatAttachment, ChatFile } from './chatAttachmentTypes';
@@ -2787,10 +2788,8 @@ export const MessageItemComponent = ({
 
 									return (
 										<>
-											<span
-												dangerouslySetInnerHTML={{
-													__html: displayMessage
-												}}
+											<MessageHtml
+												html={displayMessage}
 											/>
 											{isLongMessage && (
 												<button
@@ -2840,11 +2839,9 @@ export const MessageItemComponent = ({
 								(attachment) => attachment.hasCaption
 							) &&
 								renderedMessageWithoutPrefix && (
-									<span
+									<MessageHtml
 										className="messageItem__attachmentCaption"
-										dangerouslySetInnerHTML={{
-											__html: renderedMessageWithoutPrefix
-										}}
+										html={renderedMessageWithoutPrefix}
 									/>
 								)}
 							{/*
