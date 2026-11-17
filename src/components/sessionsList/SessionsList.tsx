@@ -119,7 +119,11 @@ import { createRefreshThrottle, isRoomInSessions } from './liveListRefresh';
 import { countUnreadSessions } from '../../utils/sessionUnread';
 import { useUnreadVersion } from '../../hooks/useUnreadVersion';
 import { useActiveListItem } from '../../hooks/useActiveListItem';
-import { useSessionListRail } from './SessionListRailContext';
+import {
+	useSessionListRail,
+	useSessionListRailWiden
+} from './SessionListRailContext';
+import { IconSearch } from './SessionsListToolbar';
 import { useCaseHandoverBatch } from './useCaseHandoverBatch';
 import { getFormatChipVisibility } from './formatChipVisibility';
 import { useCounsellorAgencyFormats } from '../../hooks/useCounsellorAgencyFormats';
@@ -270,6 +274,7 @@ export const SessionsList = ({
 }: SessionsListProps) => {
 	const { t: translate } = useTranslation();
 	const isRail = useSessionListRail();
+	const widenRail = useSessionListRailWiden();
 
 	const { groupId: groupIdFromParam, sessionId: sessionIdFromParam } =
 		useParams<{ groupId: string; sessionId: string }>();
@@ -2720,6 +2725,20 @@ export const SessionsList = ({
 	// Half / almost all of the list are stops: measured on the whole column,
 	// which does not shrink while the zone opens.
 	const innerWrapperRef = useRef<HTMLDivElement>(null);
+	// The rail keeps the search, as the rail of "Meine Termine" keeps its
+	// search's filter button (Frank, 2026-11-17): one press opens the column
+	// and puts the cursor into the search field.
+	const openSearchFromRail = useCallback(() => {
+		widenRail?.();
+		// After the commit that shows the toolbar again.
+		window.setTimeout(() =>
+			innerWrapperRef.current
+				?.querySelector<HTMLInputElement>(
+					'.sessionsListToolbar__searchInput'
+				)
+				?.focus()
+		);
+	}, [widenRail]);
 	const [timelineListHeight, setTimelineListHeight] = useState(520);
 	useEffect(() => {
 		const el = innerWrapperRef.current;
@@ -3138,6 +3157,18 @@ export const SessionsList = ({
 						</div>
 					</FocusTrap>
 				)}
+			{isRail && showMySessionToolbar && widenRail && (
+				<button
+					type="button"
+					className="sessionsList__railSearch"
+					aria-label={translate('sessionList.toolbar.search.label')}
+					title={translate('sessionList.toolbar.search.label')}
+					onClick={openSearchFromRail}
+					data-cy="session-list-rail-search"
+				>
+					<IconSearch />
+				</button>
+			)}
 			<div className="sessionsList__scrollArea">
 				<div
 					className={clsx('sessionsList__scrollContainer', {
@@ -3363,7 +3394,10 @@ export const SessionsList = ({
 				)}
 			</div>
 
+			{/* Not in the rail: 80 px set the sentence one letter per line
+			    (Frank, 2026-11-17); the rail's search button stays. */}
 			{!isLoading &&
+				!isRail &&
 				!isCreateChatActive &&
 				!isReloadButtonVisible &&
 				visibleListItemCount === 0 && (

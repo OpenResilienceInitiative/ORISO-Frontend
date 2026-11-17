@@ -33,6 +33,7 @@ import { getModality, Modality } from '../session/getModality';
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import { isActiveSupervisorOf } from '../sessionsListItem/supervisionListState';
 import { activityEventConversation } from './activityEvent';
+import { useMatrixRoomVersion } from '../../hooks/useMatrixRoomVersion';
 import {
 	type PreviewCapabilities,
 	type PreviewCaseHandover,
@@ -138,7 +139,7 @@ export const useConversationPreview = (
 		[event]
 	);
 	const roomId = visible ? (conversation?.roomId ?? null) : null;
-	const { session } = useSession(
+	const { session, ready: sessionLookupDone } = useSession(
 		roomId,
 		roomId ? (conversation?.sessionId ?? undefined) : undefined
 	);
@@ -241,6 +242,8 @@ export const useConversationPreview = (
 	// Membership is read from the Matrix client: follow its changes so an
 	// accepted knock or a kick is not served from stale permissions.
 	const [, setRoomVersion] = useState(0);
+	// ...and follow a replaced client, which learns the room only later.
+	const matrixRoomVersion = useMatrixRoomVersion(roomId);
 	useEffect(() => {
 		if (!roomId) {
 			return undefined;
@@ -258,7 +261,7 @@ export const useConversationPreview = (
 			detachLifecycle?.();
 			detachTimeline?.();
 		};
-	}, [roomId]);
+	}, [roomId, matrixRoomVersion]);
 	const roomJoined =
 		Boolean(roomId) &&
 		chatTransportService.getMatrixRoom(roomId!)?.getMyMembership?.() ===
@@ -336,8 +339,12 @@ export const useConversationPreview = (
 		groupJoinBlocked
 	});
 
+	// #2275 review: a lookup that finished without a session (a foreign case)
+	// settles too, so the entry says why it is hidden and offers no Open.
+	const sessionSettled =
+		Boolean(session?.item) || (Boolean(sessionLookupDone) && !session);
 	const settled =
-		Boolean(session?.item) &&
+		sessionSettled &&
 		isConsultant !== undefined &&
 		caseHandover !== 'loading' &&
 		// A finished lookup settles even when it failed (value null);

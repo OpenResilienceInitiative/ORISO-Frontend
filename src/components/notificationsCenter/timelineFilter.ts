@@ -53,6 +53,11 @@ export interface TimelineFilterState {
 	 */
 	unreadOnly?: boolean;
 	/**
+	 * Only keep entries in which the counsellor was @-mentioned (Frank,
+	 * 2026-11-17: "die Add-Funktion"). Composes like `unreadOnly`.
+	 */
+	mentionsOnly?: boolean;
+	/**
 	 * Kinds whose own pill is off and that therefore travel with the
 	 * Sonstiges chip (Frank 2026-09-16, `kindsUnderOther`).
 	 */
@@ -63,6 +68,7 @@ export interface TimelineFilterState {
 export interface TimelineFilterableItem {
 	eventType?: string | null;
 	readAt?: string | null;
+	params?: { mentioned?: boolean | null } | null;
 }
 
 /**
@@ -127,6 +133,9 @@ export const filterTimelineItems = <T extends TimelineFilterableItem>(
 			return false;
 		}
 		if (state.unreadOnly && item.readAt) {
+			return false;
+		}
+		if (state.mentionsOnly && item.params?.mentioned !== true) {
 			return false;
 		}
 		if (!query) {
