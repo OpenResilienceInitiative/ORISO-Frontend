@@ -903,6 +903,32 @@ const answerRows = (canvasElement: HTMLElement) =>
 	);
 
 /**
+ * Lets React's act() warnings for the composer and the lazily loaded
+ * answer pass, however often they come; every other console error still
+ * reaches story verification. Returns the cleanup for `beforeEach`.
+ */
+const dropHarnessWarnings = () => {
+	const harness = new Set(
+		[
+			...actWarnings({ MessageSubmitInterfaceComponent: 1 }),
+			...suspendedInAct(1)
+		].map((item) => item.message)
+	);
+	const recordError = console.error;
+	console.error = (...args: unknown[]) => {
+		const message = args
+			.map((value) =>
+				value instanceof Error ? value.message : String(value)
+			)
+			.join(' ');
+		if (!harness.has(message)) recordError(...args);
+	};
+	return () => {
+		console.error = recordError;
+	};
+};
+
+/**
  * 8 · Vier Stellen, eine Nachricht: four passages of one long message are
  * marked and commented one after another (voice, text, voice, text) and
  * leave together as ONE message.
@@ -914,19 +940,13 @@ export const FourAnswersLongMessage: Story = {
 		withLongMessage: true,
 		voiceLengths: LONG_STORY_VOICE_LENGTHS
 	},
-	parameters: {
-		verification: {
-			// The composer re-reads its audience (who can see the message)
-			// each time a passage joins it, outside act(): once per passage.
-			// Browser behaviour, counted exactly so any further warning
-			// still fails.
-			expectedErrors: [
-				...actWarnings({ MessageSubmitInterfaceComponent: 4 }),
-				// A lazily loaded piece of the sent answer mounts once.
-				...suspendedInAct(1)
-			]
-		}
-	},
+	// Driving the composer inside userEvent's act() makes React warn when
+	// the composer re-reads its audience and when a lazily loaded piece of
+	// the sent answer mounts. How often depends on timing: CI counted 7
+	// where a local run counts 4 (FE#2282, run 44025123517). The play checks
+	// what goes out, so it drops exactly those two harness warnings, as
+	// story 9 did (b676bb5b0); any other console error still fails.
+	beforeEach: () => dropHarnessWarnings(),
 	play: async ({ canvasElement }) => {
 		await playFourPassages(canvasElement);
 	}

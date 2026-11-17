@@ -7,6 +7,10 @@ import {
 	parseConsultantRenamedNotice
 } from './consultantRenamedNotice';
 import {
+	type AppointmentNotice,
+	parseAppointmentNoticePayload
+} from './appointmentNotice';
+import {
 	DirectInvitationRenewedNotice,
 	parseDirectInvitationRenewedNotice
 } from './directInvitationRenewedNotice';
@@ -134,6 +138,7 @@ export const parseMessagePrefixes = (message?: string | null) => {
 				null as ConsultantRenamedNotice | null,
 			systemNotificationDirectInvitationRenewed:
 				null as DirectInvitationRenewedNotice | null,
+			systemNotificationAppointment: null as AppointmentNotice | null,
 			visibleToUserIds: [] as string[]
 		};
 	}
@@ -156,6 +161,7 @@ export const parseMessagePrefixes = (message?: string | null) => {
 		null;
 	let systemNotificationDirectInvitationRenewed: DirectInvitationRenewedNotice | null =
 		null;
+	let systemNotificationAppointment: AppointmentNotice | null = null;
 	let visibleToUserIds: string[] = [];
 
 	let keepParsingPrefixes = true;
@@ -243,6 +249,8 @@ export const parseMessagePrefixes = (message?: string | null) => {
 				parseConsultantRenamedNotice(parsed);
 			systemNotificationDirectInvitationRenewed =
 				parseDirectInvitationRenewedNotice(parsed);
+			systemNotificationAppointment =
+				parseAppointmentNoticePayload(parsed);
 			if (
 				systemNotificationType ===
 				SYSTEM_NOTIFICATION_CASE_HANDOVER_GRANTED
@@ -283,6 +291,7 @@ export const parseMessagePrefixes = (message?: string | null) => {
 		systemNotificationFurtherCounselling,
 		systemNotificationConsultantRenamed,
 		systemNotificationDirectInvitationRenewed,
+		systemNotificationAppointment,
 		visibleToUserIds
 	};
 };

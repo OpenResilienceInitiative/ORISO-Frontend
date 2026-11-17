@@ -3633,7 +3633,7 @@ $cal-new-pill-hover: #4b4f51;
 		color: var(--m3-on-surface, #1b1b1c);
 	}
 
-	&[aria-pressed='true'] {
+	&[aria-selected='true'] {
 		@include calendar-chosen;
 	}
 
@@ -3821,8 +3821,10 @@ $cal-new-pill-hover: #4b4f51;
 }
 
 /* Full dates do not fit two side by side on a phone. */
-@media (max-width: 420px) {
-	.calendarAbsence .calendarDialog__times {
-		flex-direction: column;
+.calendarAbsence .calendarDialog__times {
+	flex-direction: column;
+
+	@include breakpoint($fromMedium) {
+		flex-direction: row;
 	}
 }

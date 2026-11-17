@@ -4,9 +4,14 @@
  * form of the appointment or the blocker dialog; switching keeps what was
  * entered in the other. A counsellor also gets "Abwesenheit", a planned
  * absence over whole days (ORISO-Frontend#2303).
+ *
+ * The switch is a WAI-ARIA tab list, since it changes the form below: one
+ * Tab stop on the selected tab, the arrow keys (wrapping), Home and End
+ * move and select, and the form sits in the tab panel the tabs control
+ * (review 4595635797).
  */
 import * as React from 'react';
-import { useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { M3Dialog } from '../m3Dialog/M3Dialog';
 import { useAppointmentForm } from './AppointmentDialog';
@@ -53,6 +58,15 @@ export interface NewEntryDialogProps {
 
 const TABS: NewEntryTab[] = ['appointment', 'blocker', 'absence'];
 
+/** Which tab a key moves to, from the index of the selected one among `count`. */
+const TAB_KEYS: Partial<Record<string, (at: number, count: number) => number>> =
+	{
+		ArrowRight: (at, count) => (at + 1) % count,
+		ArrowLeft: (at, count) => (at - 1 + count) % count,
+		Home: () => 0,
+		End: (_at, count) => count - 1
+	};
+
 export const NewEntryDialog = ({
 	open,
 	initialTab,
@@ -75,6 +89,21 @@ export const NewEntryDialog = ({
 }: NewEntryDialogProps) => {
 	const { t } = useTranslation();
 	const [tab, setTab] = useState<NewEntryTab>(initialTab);
+	const ids = useId();
+	const tabId = (value: NewEntryTab) => `${ids}-tab-${value}`;
+	const panelId = `${ids}-panel`;
+	const tabRefs = useRef<Partial<Record<NewEntryTab, HTMLButtonElement>>>({});
+	// "Abwesenheit" only where an absence can be stored (#2303).
+	const tabs = TABS.filter((value) => value !== 'absence' || onSaveAbsence);
+	const shown = tabs.includes(tab) ? tab : 'appointment';
+	const onTabKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>) => {
+		const step = TAB_KEYS[event.key];
+		if (!step) return;
+		event.preventDefault();
+		const next = tabs[step(tabs.indexOf(shown), tabs.length)];
+		setTab(next);
+		tabRefs.current[next]?.focus();
+	};
 	const appointment = useAppointmentForm({
 		slot,
 		initialSessionId,
@@ -106,8 +135,6 @@ export const NewEntryDialog = ({
 		onSave: (draft) => onSaveAbsence?.(draft),
 		onClose
 	});
-	const tabs = TABS.filter((value) => value !== 'absence' || onSaveAbsence);
-	const shown = tabs.includes(tab) ? tab : 'appointment';
 	const form =
 		shown === 'appointment'
 			? appointment
@@ -131,23 +158,38 @@ export const NewEntryDialog = ({
 			<div className="calendarNewEntry">
 				<div
 					className="calendarNewEntry__tabs"
-					role="group"
+					role="tablist"
 					aria-label={t('calendar.dialog.entryKind')}
 				>
 					{tabs.map((value) => (
 						<button
 							key={value}
+							ref={(el) => {
+								if (el) tabRefs.current[value] = el;
+								else delete tabRefs.current[value];
+							}}
 							type="button"
+							role="tab"
+							id={tabId(value)}
 							className="calendarNewEntry__tab"
-							aria-pressed={shown === value}
+							aria-selected={shown === value}
+							aria-controls={panelId}
+							tabIndex={shown === value ? 0 : -1}
 							onClick={() => setTab(value)}
+							onKeyDown={onTabKeyDown}
 							data-cy={`calendar-new-tab-${value}`}
 						>
 							{t(`calendar.dialog.tabs.${value}`)}
 						</button>
 					))}
 				</div>
-				{form.content}
+				<div
+					role="tabpanel"
+					id={panelId}
+					aria-labelledby={tabId(shown)}
+				>
+					{form.content}
+				</div>
 			</div>
 		</M3Dialog>
 	);

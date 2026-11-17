@@ -960,6 +960,49 @@ describe('CalendarPage — the slot menu, prototype v17 (#115, #116)', () => {
 			expect(onRemoveBlocker).toHaveBeenLastCalledWith(restored);
 		});
 
+		it.each([
+			[
+				'throws at once',
+				() => {
+					throw new Error('500');
+				}
+			],
+			['is rejected', () => Promise.reject(new Error('500'))]
+		])(
+			'puts the single blocker back when saving the series %s (review 4595635794)',
+			async (_, failure) => {
+				const restored = { ...created, id: 'b2' };
+				const onCreate = vi
+					.fn()
+					.mockResolvedValueOnce([created])
+					.mockImplementationOnce(failure)
+					.mockResolvedValueOnce([restored]);
+				const onRemoveBlocker = vi.fn(() => Promise.resolve());
+				await openWeekly({ onCreate, onRemoveBlocker });
+				let saved: unknown;
+				await act(async () => {
+					saved = await dialog.saveBlocker?.(series);
+				});
+				expect(saved).toBe(false);
+				expect(onCreate).toHaveBeenCalledTimes(3);
+				expect(onCreate.mock.calls[2][0]).toEqual([
+					{ type: 'blocker', start: START, end: END }
+				]);
+				expect(screen.getByText('calendar.saveFailed')).toBeTruthy();
+				expect(screen.getByTestId('appointment-dialog')).toBeTruthy();
+				// Nothing is left half-way: saving again replaces the
+				// restored blocker and creates the series.
+				onCreate.mockResolvedValueOnce([]);
+				let again: unknown;
+				await act(async () => {
+					again = await dialog.saveBlocker?.(series);
+				});
+				expect(again).toBe(true);
+				expect(onRemoveBlocker).toHaveBeenCalledTimes(2);
+				expect(onRemoveBlocker).toHaveBeenLastCalledWith(restored);
+			}
+		);
+
 		it('says so when the single blocker cannot be put back (review 4589615832)', async () => {
 			const onCreate = vi
 				.fn()
