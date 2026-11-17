@@ -35,6 +35,14 @@ if (typeof window.ResizeObserver === 'undefined')
 	} as unknown as typeof ResizeObserver;
 if (!HTMLElement.prototype.scrollTo)
 	HTMLElement.prototype.scrollTo = () => undefined;
+// jsdom has no PointerEvent: a press would carry no position.
+if (typeof window.PointerEvent === 'undefined')
+	Object.defineProperty(window, 'PointerEvent', {
+		configurable: true,
+		value: class PointerEvent extends MouseEvent {
+			pointerId = 1;
+		}
+	});
 if (!window.matchMedia)
 	window.matchMedia = ((query: string) => ({
 		matches: false,
@@ -182,6 +190,56 @@ describe('CalendarView — colleagues as bands in the time grid', () => {
 		);
 		await waitFor(() => expect(bandLabels()).toHaveLength(1));
 		expect(bandLabels()[0]).toBe('calendar.bandOne {"name":"A. Kaya"}');
+	});
+
+	it('hands a click on a band to the page, which opens the card (Frank *16.2)', async () => {
+		const onBandOpen = vi.fn();
+		render(<Grid view="workWeek" onBandOpen={onBandOpen} />);
+		await waitFor(() => expect(bandLabels()).toHaveLength(3));
+		const second = document.querySelectorAll<HTMLElement>(
+			'[data-cy="calendar-band"]'
+		)[1];
+		fireEvent.pointerDown(second, { clientX: 5, clientY: 5 });
+		fireEvent.click(second, { clientX: 5, clientY: 5 });
+		expect(onBandOpen).toHaveBeenCalledTimes(1);
+		const [band, el] = onBandOpen.mock.calls[0];
+		expect(band.busy).toEqual(['kaya', 'berg']);
+		expect(el).toBe(second);
+	});
+
+	it('takes no drag over a band for a click on it', async () => {
+		const onBandOpen = vi.fn();
+		render(<Grid view="workWeek" onBandOpen={onBandOpen} />);
+		await waitFor(() => expect(bandLabels()).toHaveLength(3));
+		const first = document.querySelector<HTMLElement>(
+			'[data-cy="calendar-band"]'
+		)!;
+		fireEvent.pointerDown(first, { clientX: 5, clientY: 5 });
+		fireEvent.click(first, { clientX: 5, clientY: 60 });
+		expect(onBandOpen).not.toHaveBeenCalled();
+	});
+
+	it('marks the band the card is about', async () => {
+		const { rerender } = render(<Grid view="workWeek" />);
+		await waitFor(() => expect(bandLabels()).toHaveLength(3));
+		const selected = () =>
+			Array.from(
+				document.querySelectorAll<HTMLElement>(
+					'[data-cy="calendar-band"]'
+				)
+			).map((band) => band.dataset.selected === 'true');
+		expect(selected()).toEqual([false, false, false]);
+		rerender(
+			<Grid
+				view="workWeek"
+				selectedBand={{
+					start: new Date(2026, 10, 16, 11),
+					end: new Date(2026, 10, 16, 12),
+					busy: ['kaya', 'berg']
+				}}
+			/>
+		);
+		await waitFor(() => expect(selected()).toEqual([false, true, false]));
 	});
 
 	it('tells who is busy and who is free on hover', async () => {
