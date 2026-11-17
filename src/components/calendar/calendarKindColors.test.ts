@@ -23,7 +23,11 @@ const css = compileString(
 				findFileUrl: (url: string) =>
 					url.startsWith('~')
 						? pathToFileURL(
-								resolve(process.cwd(), 'node_modules', url.slice(1))
+								resolve(
+									process.cwd(),
+									'node_modules',
+									url.slice(1)
+								)
 							)
 						: null
 			}
@@ -93,7 +97,9 @@ describe('calendar scrollbars (Frank, prototype v15)', () => {
 			.filter(([, , body]) =>
 				new RegExp(`${property}\\s*:\\s*${value}`).test(body)
 			)
-			.flatMap(([, selectors]) => selectors.split(',').map((x) => x.trim()));
+			.flatMap(([, selectors]) =>
+				selectors.split(',').map((x) => x.trim())
+			);
 
 	it('hides the scrollbar of the time grid and the split view, keeping them scrollable', () => {
 		const hidden = selectorsWith('scrollbar-width', 'none');
@@ -108,7 +114,6 @@ describe('calendar scrollbars (Frank, prototype v15)', () => {
 		).toBe(true);
 	});
 });
-
 
 describe('quick entry fields (Frank, prototype v15)', () => {
 	const rule = (selector: string) =>

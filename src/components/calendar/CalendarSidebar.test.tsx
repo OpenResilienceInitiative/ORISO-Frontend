@@ -38,7 +38,9 @@ const GROUP: CalendarEntry = {
 	ownerId: 'me'
 };
 
-const sidebar = (props: Partial<React.ComponentProps<typeof CalendarSidebar>>) =>
+const sidebar = (
+	props: Partial<React.ComponentProps<typeof CalendarSidebar>>
+) =>
 	render(
 		<CalendarSidebar
 			ownerId="me"

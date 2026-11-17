@@ -100,7 +100,10 @@ describe('BlockerDialog — date span of the selection', () => {
 	it('keeps the end date of a slot that runs over several days', () => {
 		const onSave = vi.fn();
 		open(
-			{ start: new Date(2026, 10, 16, 8), end: new Date(2026, 10, 18, 12) },
+			{
+				start: new Date(2026, 10, 16, 8),
+				end: new Date(2026, 10, 18, 12)
+			},
 			onSave
 		);
 		fireEvent.click(save());
@@ -113,17 +116,25 @@ describe('BlockerDialog — date span of the selection', () => {
 	it('keeps a slot from 23:00 to midnight', () => {
 		const onSave = vi.fn();
 		open(
-			{ start: new Date(2026, 10, 16, 23), end: new Date(2026, 10, 17, 0) },
+			{
+				start: new Date(2026, 10, 16, 23),
+				end: new Date(2026, 10, 17, 0)
+			},
 			onSave
 		);
 		fireEvent.click(save());
-		expect(onSave.mock.calls[0][0][0].end).toEqual(new Date(2026, 10, 17, 0));
+		expect(onSave.mock.calls[0][0][0].end).toEqual(
+			new Date(2026, 10, 17, 0)
+		);
 	});
 
 	it('keeps a 23:00–midnight slot on its day when the end is edited (review 4577641942)', () => {
 		const onSave = vi.fn();
 		open(
-			{ start: new Date(2026, 10, 16, 23), end: new Date(2026, 10, 17, 0) },
+			{
+				start: new Date(2026, 10, 16, 23),
+				end: new Date(2026, 10, 17, 0)
+			},
 			onSave
 		);
 		fireEvent.change(screen.getByLabelText('calendar.dialog.end'), {
@@ -139,7 +150,10 @@ describe('BlockerDialog — date span of the selection', () => {
 	it('blocks only the day of a 23:00–midnight slot when made all-day', () => {
 		const onSave = vi.fn();
 		open(
-			{ start: new Date(2026, 10, 16, 23), end: new Date(2026, 10, 17, 0) },
+			{
+				start: new Date(2026, 10, 16, 23),
+				end: new Date(2026, 10, 17, 0)
+			},
 			onSave
 		);
 		fireEvent.click(
@@ -155,7 +169,10 @@ describe('BlockerDialog — date span of the selection', () => {
 	it('turns a month selection of whole days into an all-day blocker', () => {
 		const onSave = vi.fn();
 		// Two days in the month view: 16 and 17 November, end exclusive.
-		open({ start: new Date(2026, 10, 16), end: new Date(2026, 10, 18) }, onSave);
+		open(
+			{ start: new Date(2026, 10, 16), end: new Date(2026, 10, 18) },
+			onSave
+		);
 		expect(save().hasAttribute('disabled')).toBe(false);
 		fireEvent.click(save());
 		const draft = onSave.mock.calls[0][0][0];
@@ -178,8 +195,9 @@ describe('BlockerDialog — incomplete fields', () => {
 	it('does not save a weekly series without its last day as one blocker', () => {
 		open();
 		fireEvent.click(
-			within(screen.getByRole('group', { name: 'calendar.blocker.repeat' }))
-				.getAllByRole('button')[0]
+			within(
+				screen.getByRole('group', { name: 'calendar.blocker.repeat' })
+			).getAllByRole('button')[0]
 		);
 		expect(save().hasAttribute('disabled')).toBe(false);
 		fireEvent.change(screen.getByLabelText('calendar.blocker.until'), {
@@ -242,8 +260,9 @@ describe('BlockerDialog — a repeat the spring clock change skips (Europe/Berli
 			onSave
 		);
 		fireEvent.click(
-			within(screen.getByRole('group', { name: 'calendar.blocker.repeat' }))
-				.getAllByRole('button')[6]
+			within(
+				screen.getByRole('group', { name: 'calendar.blocker.repeat' })
+			).getAllByRole('button')[6]
 		);
 		fireEvent.change(screen.getByLabelText('calendar.blocker.until'), {
 			target: { value: '2027-03-28' }
@@ -267,8 +286,9 @@ describe('BlockerDialog — a repeat the spring clock change skips (Europe/Berli
 			onSave
 		);
 		fireEvent.click(
-			within(screen.getByRole('group', { name: 'calendar.blocker.repeat' }))
-				.getAllByRole('button')[6]
+			within(
+				screen.getByRole('group', { name: 'calendar.blocker.repeat' })
+			).getAllByRole('button')[6]
 		);
 		fireEvent.change(screen.getByLabelText('calendar.blocker.until'), {
 			target: { value: '2027-03-28' }
@@ -314,8 +334,9 @@ describe('BlockerDialog — a repeat the spring clock change skips (Europe/Berli
 			/>
 		);
 		fireEvent.click(
-			within(screen.getByRole('group', { name: 'calendar.blocker.repeat' }))
-				.getAllByRole('button')[6]
+			within(
+				screen.getByRole('group', { name: 'calendar.blocker.repeat' })
+			).getAllByRole('button')[6]
 		);
 		fireEvent.change(screen.getByLabelText('calendar.blocker.until'), {
 			target: { value: '2027-03-28' }

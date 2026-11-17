@@ -73,9 +73,10 @@ describe('CalendarPager — edge dwell while dragging (review 4574775698)', () =
 	} as DOMRect;
 
 	const dragAt = (clientX: number, clientY: number) => {
-		vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue(
-			bounds
-		);
+		vi.spyOn(
+			HTMLElement.prototype,
+			'getBoundingClientRect'
+		).mockReturnValue(bounds);
 		const onPage = vi.fn();
 		render(
 			<CalendarPager onPage={onPage} dragging data-cy="pager">

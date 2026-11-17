@@ -2274,7 +2274,7 @@
 				"nav": "Conversation",
 				"small": "Nouvelles"
 			},
-			"directLinks": "Mes liens directs",
+			"directLinks": "Rendez-vous et invitations directes",
 			"inboxState": {
 				"empty": "Aucune demande",
 				"allOpened": "Toutes les demandes ont été ouvertes",
@@ -2588,11 +2588,11 @@
 				"text": "Une personne souhaite rejoindre votre appel. Rejoignez l'appel pour la laisser entrer.",
 				"video": {
 					"title": "Une personne frappe – appel vidéo",
-					"text": "Une personne souhaite rejoindre votre appel vidéo via votre lien direct. Rejoignez l'appel pour la laisser entrer."
+					"text": "Une personne souhaite rejoindre votre appel vidéo via votre invitation directe. Rejoignez l'appel pour la laisser entrer."
 				},
 				"audio": {
 					"title": "Une personne frappe – appel audio",
-					"text": "Une personne souhaite rejoindre votre appel audio via votre lien direct. Rejoignez l'appel pour la laisser entrer."
+					"text": "Une personne souhaite rejoindre votre appel audio via votre invitation directe. Rejoignez l'appel pour la laisser entrer."
 				}
 			},
 			"appointmentRequested": {
@@ -2630,6 +2630,10 @@
 			"sessionAskerDeleted": {
 				"title": "Personne en quête de conseil supprimée",
 				"text": "Un chat avec une personne en quête de conseil a été supprimé. Les données personnelles et les messages ne sont plus disponibles."
+			},
+			"directInvitationRenewalRequested": {
+				"title": "Nouveau lien demandé",
+				"text": "Une personne demande un nouveau lien pour votre rendez-vous."
 			}
 		},
 		"error": "Échec",
@@ -4673,7 +4677,7 @@
 				"unread": "Non lu",
 				"drafts": "Brouillons",
 				"nearby": "Mail",
-				"directLinks": "Liens directs",
+				"directLinks": "Invitations directes",
 				"other": "Autres",
 				"create": "Créer",
 				"group": "Filtres",
@@ -4700,7 +4704,7 @@
 				"team": "Conseil en équipe",
 				"directLinkVideo": "Appel vidéo",
 				"directLinkAudio": "Appel audio",
-				"directLinkChat": "Lien direct"
+				"directLinkChat": "Invitation directe"
 			},
 			"waiting": {
 				"minutes": "en attente depuis {{count}} min",
@@ -6789,7 +6793,7 @@
 			"invalid": "Veuillez saisir votre code postal à cinq chiffres."
 		},
 		"card": {
-			"title": "Lien direct",
+			"title": "Invitation directe",
 			"subtitle": "Pour les personnes en recherche de conseil",
 			"headline": "Un lien direct vers vous",
 			"text": "Toute personne qui ouvre le lien vous rejoint directement – par chat, appel audio ou appel vidéo.",
@@ -6813,16 +6817,18 @@
 		"temporary": "Temporaire",
 		"copy": "Copier le lien",
 		"share": {
-			"title": "Votre lien direct est prêt",
+			"title": "Votre invitation directe est prête",
 			"description": "Partagez le lien ou le code QR. Chaque personne obtient son propre entretien avec vous.",
+			"descriptionAppointment": "Partagez le lien ou le code QR. Toutes les personnes qui l’ouvrent vous retrouvent dans un même entretien pour le rendez-vous.",
+			"descriptionJoin": "Partagez le lien ou le code QR. La personne qui l’ouvre rejoint cet entretien.",
 			"copied": "Copié",
 			"share": "Partager",
-			"qrAlt": "Code QR du lien direct",
+			"qrAlt": "Code QR de l’invitation directe",
 			"done": "Terminé",
-			"linkLabel": "Lien direct"
+			"linkLabel": "Invitation directe"
 		},
 		"list": {
-			"title": "Mes liens directs",
+			"title": "Mes invitations directes",
 			"qr": "Afficher le code QR",
 			"active": "{{name}} actif",
 			"edit": "Modifier {{name}}"
@@ -6834,16 +6840,17 @@
 			"joinFailed": "Cela n'a pas fonctionné. Veuillez réessayer."
 		},
 		"page": {
-			"loadFailed": "Vos liens directs n’ont pas pu être chargés.",
-			"create": "Créer un nouveau lien direct dans « Créer un chat »",
-			"emptyHeadline": "Il n’y a pas encore de liens directs",
-			"emptyText": "Vous créez un lien direct dans « Créer un chat ». Il apparaît ensuite ici.",
-			"loading": "Chargement des liens directs",
+			"loadFailed": "Vos invitations directes n’ont pas pu être chargées.",
+			"create": "Créer une nouvelle invitation directe dans « Créer un chat »",
+			"emptyHeadline": "Il n’y a pas encore d’invitations directes",
+			"emptyText": "Vous créez une invitation directe dans « Créer un chat ». Elle apparaît ensuite ici.",
+			"loading": "Chargement des invitations directes",
 			"retry": "Réessayer",
-			"toggleFailed": "Le lien n’a pas pu être activé ou désactivé. Veuillez réessayer."
+			"toggleFailed": "Le lien n’a pas pu être activé ou désactivé. Veuillez réessayer.",
+			"toggleFailedTitle": "Non modifié"
 		},
 		"edit": {
-			"title": "Modifier le lien direct",
+			"title": "Modifier l’invitation directe",
 			"cancel": "Annuler",
 			"save": "Enregistrer",
 			"name": "Nom",
@@ -6899,6 +6906,114 @@
 		"lookupFailed": {
 			"title": "Nous n'avons pas pu vérifier votre compte",
 			"text": "Votre message n'a pas encore été envoyé et reste dans le champ de saisie. Vérifiez votre connexion et envoyez-le à nouveau."
+		}
+	},
+	"directInvitation": {
+		"dialog": {
+			"roomNotEncrypted": "Aucun lien d'invitation ne peut être créé pour cette conversation, car elle n'est pas chiffrée.",
+			"createTitle": "Créer une invitation directe",
+			"editTitle": "Modifier l’invitation directe",
+			"description": "Toute personne qui ouvre le lien arrive directement chez vous. Un rendez-vous est facultatif.",
+			"createAction": "Créer",
+			"saveAction": "Enregistrer",
+			"withAppointment": "Avec rendez-vous",
+			"withAppointmentHint": "Toutes les personnes qui ouvrent le lien se retrouvent dans une conversation commune.",
+			"withoutAppointmentHint": "Sans rendez-vous, chaque personne a sa propre conversation. Le lien fonctionne jusqu’à ce que vous le supprimiez.",
+			"inviteOthers": "Inviter d’autres personnes par lien",
+			"inviteOthersHint": "Par exemple un ou une interprète. Les personnes invitées ne voient que les messages écrits après leur arrivée.",
+			"validity": {
+				"label": "Validité après la fin du rendez-vous",
+				"hint": "Ensuite, les invités perdent l’accès et la conversation est archivée.",
+				"end": "Jusqu’à la fin du rendez-vous",
+				"minutes_one": "{{count}} min",
+				"minutes_other": "{{count}} min",
+				"hours_one": "{{count}} heure",
+				"hours_other": "{{count}} heures",
+				"less": "Plus court",
+				"more": "Plus long"
+			},
+			"access": {
+				"label": "Qui peut entrer ?",
+				"guests": "Invités uniquement",
+				"accounts": "Comptes uniquement",
+				"both": "Les deux"
+			},
+			"knock": "Frapper avant d’entrer",
+			"knockHint": "Vous faites entrer chaque personne vous-même. Vous pouvez modifier ce réglage pendant l’appel."
+		},
+		"overview": {
+			"title": "Rendez-vous et invitations directes",
+			"upcoming": "Rendez-vous à venir",
+			"withoutAppointment": "Invitations directes sans rendez-vous",
+			"today": "Aujourd’hui",
+			"tomorrow": "Demain",
+			"time": "de {{start}} à {{end}}",
+			"validUntil": "Lien valable jusqu’au {{date}}",
+			"knockOn": "Frapper avant d’entrer",
+			"knockOff": "Entrée directe",
+			"oneToOne": "Conversation individuelle avec {{name}}",
+			"copy": "Copier le lien pour {{name}}",
+			"copied": "Copié",
+			"qr": "Afficher le code QR pour {{name}}",
+			"edit": "Modifier {{name}}",
+			"copyFailed": "Le lien n’a pas pu être copié.",
+			"emptyHeadline": "Pas encore de rendez-vous ni d’invitations directes",
+			"emptyText": "Créez une invitation directe, avec ou sans rendez-vous. Elle apparaît ensuite ici.",
+			"create": "Créer une invitation directe",
+			"noUpcoming": "Aucun rendez-vous à venir. Donnez une date à une invitation directe ou ajoutez un rendez-vous dans une conversation via ⋮.",
+			"noLinks": "Aucune invitation directe sans rendez-vous.",
+			"appointmentName": "Rendez-vous",
+			"copyFailedTitle": "Non copié",
+			"expired": "Invitations expirées",
+			"sendNewLink": "Envoyer un nouveau lien pour {{name}}",
+			"appointmentsFailed": "Les rendez-vous n’ont pas pu être chargés.",
+			"appointmentsRetry": "Recharger"
+		},
+		"entry": {
+			"beforeStart": {
+				"title": "Votre rendez-vous",
+				"with": "avec {{name}}",
+				"time": "de {{start}} à {{end}}",
+				"waitingRoom": "La salle d’attente ouvre à {{time}}, 15 minutes avant le début.",
+				"chatNow": "Vous pouvez déjà écrire dès maintenant.",
+				"openChat": "Ouvrir le chat"
+			},
+			"expired": {
+				"title": "Lien expiré",
+				"text": "Ce lien n’est plus valable. Demandez-en un nouveau ; votre conseiller ou conseillère sera informé(e).",
+				"request": "Demander un nouveau lien",
+				"sent": "Demande envoyée. Vous recevrez un nouveau lien dès que votre conseiller ou conseillère l’enverra.",
+				"failed": "La demande n’a pas abouti. Veuillez réessayer.",
+				"failedTitle": "Demande non envoyée",
+				"signedOut": "Ce lien n’est plus valable. Vous pouvez demander un nouveau lien une fois connecté(e). Sans connexion, veuillez contacter directement votre conseiller ou conseillère.",
+				"signIn": "Se connecter pour demander un nouveau lien"
+			},
+			"access": {
+				"guestsOnly": "Ce lien est réservé aux invités. Veuillez l’ouvrir dans une fenêtre où vous n’êtes pas connecté(e).",
+				"accountsOnly": "Ce lien nécessite un compte. Veuillez vous connecter ou vous inscrire."
+			},
+			"roomNotEncrypted": "Cette invitation ne peut pas être utilisée pour le moment, car la conversation n’est pas chiffrée. Veuillez contacter votre conseiller ou conseillère.",
+			"roomUnavailable": "La conversation est momentanément inaccessible. Veuillez réessayer dans un instant.",
+			"consent": {
+				"description": "Veuillez accepter la politique de confidentialité du service de consultation avant d’entrer dans la conversation. Chaque personne donne son accord pour elle-même.",
+				"rejected": "Sans votre accord, vous ne pouvez pas entrer dans cette conversation. Vous pouvez donner votre accord à tout moment."
+			}
+		},
+		"notice": {
+			"title": "Nouveau lien demandé",
+			"text": "{{name}} souhaite un nouveau lien pour « {{invitation}} ».",
+			"someone": "Une personne",
+			"send": "Envoyer un nouveau lien",
+			"failed": "Le nouveau lien n’a pas pu être créé. Veuillez réessayer.",
+			"failedTitle": "Nouveau lien non créé"
+		},
+		"conversation": {
+			"sendNewLink": "Envoyer un nouveau lien"
+		},
+		"renewed": {
+			"title": "Nouveau lien",
+			"text": "Voici le nouveau lien pour le rendez-vous :",
+			"validUntil": "Le nouveau lien pour le rendez-vous est valable jusqu’au {{date}} :"
 		}
 	},
 	"calendar": {
