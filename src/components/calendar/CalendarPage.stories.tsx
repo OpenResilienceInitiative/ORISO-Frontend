@@ -58,6 +58,7 @@ import {
 	STORY_WORKING_HOURS
 } from './calendarStoryData';
 import { publishReceivedProposalCount } from './calendarProposalCount';
+import { STAGE_LAYOUT } from '../chatStage/stageLayout';
 
 interface HarnessProps {
 	role?: CalendarRole;
@@ -441,6 +442,40 @@ const findCy = (cy: string) =>
 const cyEl = (cy: string) =>
 	document.body.querySelector<HTMLElement>(`[data-cy="${cy}"]`)!;
 
+/**
+ * The pink grip of the left column sits as in "Gespräche": centred in the
+ * same 24 px gap between the column and the calendar card, so the pill has
+ * the same room on both sides (Frank, 2026-11-17; `STAGE_LAYOUT`, T34).
+ * `leftEdge` is the right edge of what the column shows.
+ */
+const expectGripAsInGespraeche = async (
+	canvasElement: HTMLElement,
+	leftEdge: () => number
+) => {
+	const pill = canvasElement
+		.querySelector(
+			'[data-cy="calendar-side-resize"] .sessionsList__resizeHandlePill'
+		)!
+		.getBoundingClientRect();
+	const stage = canvasElement
+		.querySelector('.calendarStage')!
+		.getBoundingClientRect();
+	const room = Math.round((STAGE_LAYOUT.LIST_CARD_GAP - pill.width) / 2);
+	await expect({
+		left: Math.round(pill.left - leftEdge()),
+		right: Math.round(stage.left - pill.right),
+		gap: Math.round(stage.left - leftEdge())
+	}).toEqual({ left: room, right: room, gap: STAGE_LAYOUT.LIST_CARD_GAP });
+};
+
+/** Right edge of the left column's content (its widest section). */
+const sideContentRight = (canvasElement: HTMLElement) => () =>
+	Math.max(
+		...Array.from(
+			canvasElement.querySelector('.calendarSide')!.children
+		).map((el) => el.getBoundingClientRect().right)
+	);
+
 /** "Links ohne Termin" with sample links: copy, QR code, on/off. */
 const StoryLinksPanel = () => {
 	const [links, setLinks] = useState<DirectLink[]>(SAMPLE_DIRECT_LINKS);
@@ -509,6 +544,10 @@ export const WorkWeek: Story = {
 			canvasElement.querySelector('.calendarSide__chat')
 		).toBeNull();
 		await expect(rows[rows.length - 1].textContent).toContain('in 10 Min.');
+		await expectGripAsInGespraeche(
+			canvasElement,
+			sideContentRight(canvasElement)
+		);
 	}
 };
 
@@ -880,6 +919,14 @@ export const ColleaguesBandCard: Story = {
 		await expect(
 			document.querySelector('[data-cy^="calendar-menu-"]')
 		).toBeNull();
+		// The card keeps the list's room beside the grip.
+		await expectGripAsInGespraeche(
+			canvasElement,
+			() =>
+				card
+					.closest('.calendarBandCard__frame')!
+					.getBoundingClientRect().right
+		);
 		// Escape gives the list back; a click brings the card again.
 		await waitFor(() =>
 			expect(card.contains(document.activeElement)).toBe(true)
