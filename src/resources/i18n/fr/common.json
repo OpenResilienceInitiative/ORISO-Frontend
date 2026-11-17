@@ -6921,6 +6921,7 @@
 			"withoutAppointmentHint": "Sans rendez-vous, chaque personne a sa propre conversation. Le lien fonctionne jusqu’à ce que vous le supprimiez.",
 			"inviteOthers": "Inviter d’autres personnes par lien",
 			"inviteOthersHint": "Par exemple un ou une interprète. Les personnes invitées ne voient que les messages écrits après leur arrivée.",
+			"inviteOthersMediumOff": "Les invitations directes ne sont pas activées pour ce type. Choisissez un autre type pour inviter d'autres personnes.",
 			"validity": {
 				"label": "Validité après la fin du rendez-vous",
 				"hint": "Ensuite, les invités perdent l’accès et la conversation est archivée.",

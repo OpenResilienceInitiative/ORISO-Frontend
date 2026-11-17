@@ -106,6 +106,22 @@ describe('calendar "Termin" — the shared invitation form', () => {
 		});
 	});
 
+	it('offers no link for an Art whose medium "Direkteinladung erlauben" does not allow', () => {
+		open({
+			slot: { ...SLOT, kind: 'video' },
+			initialSessionId: 7,
+			allowGuestInvite: true,
+			inviteMedia: ['CHAT']
+		});
+		const invite = screen.getByRole('switch', {
+			name: 'directInvitation.dialog.inviteOthers'
+		}) as HTMLInputElement;
+		expect(invite.disabled).toBe(true);
+		expect(
+			screen.getByText('directInvitation.dialog.inviteOthersMediumOff')
+		).toBeTruthy();
+	});
+
 	it('offers no link where "Direkteinladung erlauben" does not allow it', () => {
 		open({ slot: { ...SLOT, kind: 'video' } });
 		expect(

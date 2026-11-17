@@ -73,7 +73,7 @@ import { notifyDirectLinksChanged } from '../../api/apiDirectLinks';
 import { CREATE_CHAT_PATH } from '../app/routePaths';
 import type { DirectLink } from '../conversationCreate/directLink/directLink';
 import { DirectLinkShareDialog } from '../conversationCreate/directLink/DirectLinkShareDialog';
-import { useDirectLinksAllowed } from '../directLinks/useDirectLinksAllowed';
+import { useDirectLinkMedia } from '../directLinks/useDirectLinksAllowed';
 import {
 	toInvitationPresetState,
 	type InvitationPreset
@@ -198,7 +198,8 @@ export const CalendarPageWired = () => {
 	const { t } = useTranslation();
 	/* One invitation flow with "Chat erstellen" and the 1:1: the same
 	   "Direkteinladung erlauben" gate, the same share dialog. */
-	const allowGuestInvite = useDirectLinksAllowed(consultant);
+	const inviteMedia = useDirectLinkMedia(consultant);
+	const allowGuestInvite = inviteMedia.length > 0;
 	const [sharedInvitation, setSharedInvitation] = useState<DirectLink>();
 
 	const [state, setState] = useState<CalendarLoadState>('loading');
@@ -1010,6 +1011,7 @@ export const CalendarPageWired = () => {
 				}}
 				onCreate={consultant ? create : undefined}
 				allowGuestInvite={consultant && allowGuestInvite}
+				inviteMedia={inviteMedia}
 				onInviteNewPerson={
 					consultant && allowGuestInvite ? inviteNewPerson : undefined
 				}

@@ -473,6 +473,34 @@ describe('AppointmentDateDialog', () => {
 			expect(invite).not.toHaveBeenCalled();
 		});
 
+		it('offers the link only for an Art whose medium is allowed', async () => {
+			create.mockResolvedValue({ id: 'a1' });
+			invite.mockResolvedValue(link);
+			render(
+				<AppointmentDateDialog
+					sessionId={4401}
+					matrixRoomId="!room:x"
+					onClose={onClose}
+					allowGuestInvite
+					inviteMedia={['CHAT']}
+				/>
+			);
+			// Video (the default Art) has no allowed link: no refused link
+			// after the appointment was stored.
+			expect((inviteSwitch() as HTMLInputElement).disabled).toBe(true);
+			fireEvent.click(
+				document.querySelector<HTMLElement>(
+					'[data-cy="calendar-dialog-kind-chat"]'
+				)!
+			);
+			fireEvent.click(inviteSwitch());
+			await clickButton(`${KEYS}.createAction`);
+			expect(invite).toHaveBeenCalledWith(
+				4401,
+				expect.objectContaining({ medium: 'CHAT' })
+			);
+		});
+
 		it('does not offer the invitation without permission', () => {
 			open();
 			expect(

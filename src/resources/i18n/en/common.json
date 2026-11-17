@@ -6836,6 +6836,7 @@
 			"withoutAppointmentHint": "Without an appointment, each person gets their own conversation. The link works until you delete it.",
 			"inviteOthers": "Invite more people by link",
 			"inviteOthersHint": "For example an interpreter. Invited people only see messages written after they joined.",
+			"inviteOthersMediumOff": "Direct invitations are not enabled for this type. Choose another type to invite more people.",
 			"validity": {
 				"label": "Valid after the appointment ends",
 				"hint": "After that, guests lose access and the conversation is archived.",

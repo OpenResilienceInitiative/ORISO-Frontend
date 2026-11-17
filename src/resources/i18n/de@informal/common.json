@@ -2955,7 +2955,8 @@
 				"hint": "Diese Person hat noch kein Gespräch mit dir. Im nächsten Schritt erstellst du eine Direkteinladung mit diesem Termin."
 			},
 			"linkFailedAfterAppointment": "Der Termin ist angelegt, der Einladungslink aber nicht. Bitte versuche es erneut.",
-			"withAppointmentHint": "Alle, die den Link öffnen, treffen sich in einem gemeinsamen Gespräch. Der Termin steht auch in deinem Kalender."
+			"withAppointmentHint": "Alle, die den Link öffnen, treffen sich in einem gemeinsamen Gespräch. Der Termin steht auch in deinem Kalender.",
+			"inviteOthersMediumOff": "Für diese Art sind Direkteinladungen nicht freigegeben. Wähle eine andere Art, um weitere Personen einzuladen."
 		},
 		"overview": {
 			"emptyText": "Erstelle eine Direkteinladung – mit oder ohne Termin. Sie erscheint danach hier.",

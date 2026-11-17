@@ -6921,6 +6921,7 @@
 			"withoutAppointmentHint": "Randevu olmadan her kişi kendi görüşmesini alır. Bağlantı siz silene kadar çalışır.",
 			"inviteOthers": "Bağlantıyla başka kişileri davet et",
 			"inviteOthersHint": "Örneğin bir tercüman. Davet edilen kişiler yalnızca katıldıktan sonra yazılan mesajları görür.",
+			"inviteOthersMediumOff": "Bu tür için doğrudan davetler etkin değil. Başka kişileri davet etmek için başka bir tür seçin.",
 			"validity": {
 				"label": "Randevu bittikten sonra geçerlilik",
 				"hint": "Ardından misafirler erişimi kaybeder ve görüşme arşivlenir.",

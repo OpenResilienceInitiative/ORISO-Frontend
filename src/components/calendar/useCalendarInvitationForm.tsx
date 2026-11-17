@@ -21,6 +21,7 @@ import type {
 	InvitationDialogValue,
 	InvitationPreset
 } from '../directInvitation/invitationModel';
+import type { DirectLinkMedium } from '../conversationCreate/directLink/directLink';
 import type { AppointmentFormProps, DialogForm } from './AppointmentDialog';
 import { FacetIcon } from './CalendarEntryGlyph';
 import {
@@ -35,6 +36,8 @@ const DEFAULT_HOUR = 10;
 export interface CalendarInvitationFormProps extends AppointmentFormProps {
 	/** "Weitere Personen per Link einladen" ("Direkteinladung erlauben"). */
 	allowGuestInvite?: boolean;
+	/** The media it allows: the link takes the Art's medium. */
+	inviteMedia?: readonly DirectLinkMedium[];
 	/** "Neue Person per Direkteinladung …": open "Chat erstellen" with this slot. */
 	onInviteNewPerson?: (preset: InvitationPreset) => void;
 }
@@ -66,6 +69,7 @@ export const useCalendarInvitationForm = ({
 	onSave,
 	onClose,
 	allowGuestInvite = false,
+	inviteMedia,
 	onInviteNewPerson
 }: CalendarInvitationFormProps): DialogForm => {
 	const { t } = useTranslation();
@@ -98,6 +102,7 @@ export const useCalendarInvitationForm = ({
 			onInviteNewPerson
 		},
 		allowGuestInvite,
+		inviteMedia,
 		dateLayout: slot ? 'field' : 'month',
 		conflicts: (range) => {
 			const found = findConflicts(range, entries, ownerId);

@@ -268,6 +268,71 @@ describe('one invitation form behind three doors', () => {
 		});
 	});
 
+	describe('"Direkteinladung erlauben" per medium: the link follows the Art', () => {
+		const inviteSwitch = () =>
+			screen.getByRole('switch', { name: `${KEYS}.inviteOthers` });
+		const pickKind = (kind: string) =>
+			fireEvent.click(
+				document.querySelector<HTMLElement>(
+					`[data-cy="calendar-dialog-kind-${kind}"]`
+				)!
+			);
+
+		it('says why there is no link for an Art whose medium is not allowed', async () => {
+			// Chat links allowed, video links not; the Art defaults to Video.
+			open({
+				withKind: true,
+				allowGuestInvite: true,
+				inviteMedia: ['CHAT'],
+				initial: { start: START, end: END, inviteOthers: true }
+			});
+			expect((inviteSwitch() as HTMLInputElement).disabled).toBe(true);
+			expect((inviteSwitch() as HTMLInputElement).checked).toBe(false);
+			expect(
+				screen.getByText(`${KEYS}.inviteOthersMediumOff`)
+			).toBeTruthy();
+			expect(sections()).not.toContain('link');
+
+			// Only the appointment is saved: no link the backend would refuse.
+			await click(`${SLOT}.createAction`);
+			expect(onSubmit).toHaveBeenCalledWith({
+				appointment: { start: START, end: END },
+				link: null,
+				kind: 'video'
+			});
+		});
+
+		it('offers the link again for an Art whose medium is allowed', async () => {
+			open({
+				withKind: true,
+				allowGuestInvite: true,
+				inviteMedia: ['CHAT'],
+				initial: { start: START, end: END, inviteOthers: true }
+			});
+			pickKind('chat');
+			expect((inviteSwitch() as HTMLInputElement).disabled).toBe(false);
+			expect(sections()).toContain('link');
+			await click(`${SLOT}.createAction`);
+			expect(onSubmit).toHaveBeenCalledWith(
+				expect.objectContaining({
+					link: expect.objectContaining({ access: 'both' }),
+					kind: 'chat'
+				})
+			);
+		});
+
+		it('takes the Art a calendar slot already knows', () => {
+			open({
+				withKind: true,
+				allowGuestInvite: true,
+				inviteMedia: ['CHAT', 'AUDIO'],
+				known: { slot: true, kind: true },
+				initial: { start: START, end: END, kind: 'video' }
+			});
+			expect((inviteSwitch() as HTMLInputElement).disabled).toBe(true);
+		});
+	});
+
 	it('shows the month next to the fields for the calendar\'s "+"', () => {
 		open({ dateLayout: 'month' });
 		expect(screen.getByTestId('month')).toBeTruthy();

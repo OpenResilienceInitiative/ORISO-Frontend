@@ -170,6 +170,7 @@ import { avatarToneClass } from './calendarAvatar';
 import { useCreatedFlash } from './useCreatedFlash';
 import { HoverScrollArrows } from '../hoverScrollArrows/HoverScrollArrows';
 import type { InvitationPreset } from '../directInvitation/invitationModel';
+import type { DirectLinkMedium } from '../conversationCreate/directLink/directLink';
 import { NewEntryDialog } from './NewEntryDialog';
 import { BlockerCreatedMessage } from './BlockerDialog';
 import { MoveConflictDialog } from './MoveConflictDialog';
@@ -264,6 +265,8 @@ export interface CalendarPageProps {
 	 * erlauben" allows it (as "Termin anlegen" in a 1:1).
 	 */
 	allowGuestInvite?: boolean;
+	/** The media it allows: the link takes the Art's medium. */
+	inviteMedia?: readonly DirectLinkMedium[];
 	/**
 	 * "Termin": "Neue Person per Direkteinladung …" — someone without a
 	 * conversation yet; the page hands the slot to "Chat erstellen".
@@ -500,6 +503,7 @@ export const CalendarPage = ({
 	now: fixedNow,
 	onCreate,
 	allowGuestInvite,
+	inviteMedia,
 	onInviteNewPerson,
 	onMove,
 	onCancelAppointment,
@@ -2822,6 +2826,7 @@ export const CalendarPage = ({
 					fullScreen={compact}
 					onSaveAppointment={(draft) => create([draft], true)}
 					allowGuestInvite={allowGuestInvite}
+					inviteMedia={inviteMedia}
 					onInviteNewPerson={
 						onInviteNewPerson &&
 						((preset) => {

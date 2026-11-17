@@ -13,7 +13,10 @@ import {
 	isRoomNotEncryptedError,
 	notifyDirectLinksChanged
 } from '../../../api/apiDirectLinks';
-import type { DirectLink } from '../../conversationCreate/directLink/directLink';
+import type {
+	DirectLink,
+	DirectLinkMedium
+} from '../../conversationCreate/directLink/directLink';
 import { DirectLinkShareDialog } from '../../conversationCreate/directLink/DirectLinkShareDialog';
 import { InvitationDialog } from '../../directInvitation/InvitationDialog';
 import type { InvitationDialogValue } from '../../directInvitation/invitationModel';
@@ -41,6 +44,8 @@ export interface AppointmentDateDialogProps {
 	 * ("Direkteinladung erlauben" allows it). Moving never does.
 	 */
 	allowGuestInvite?: boolean;
+	/** The media "Direkteinladung erlauben" allows: the link takes the Art's. */
+	inviteMedia?: readonly DirectLinkMedium[];
 	/** Phones: the dialogs fill the screen. */
 	fullScreen?: boolean;
 }
@@ -57,6 +62,7 @@ export const AppointmentDateDialog = ({
 	entry,
 	onClose,
 	allowGuestInvite = false,
+	inviteMedia,
 	fullScreen = false
 }: AppointmentDateDialogProps) => {
 	const { t } = useTranslation();
@@ -179,6 +185,7 @@ export const AppointmentDateDialog = ({
 			mode={isMove ? 'edit' : 'create'}
 			initial={entry ? { start: entry.start, end: entry.end } : undefined}
 			allowGuestInvite={!isMove && allowGuestInvite}
+			inviteMedia={inviteMedia}
 			withKind={!isMove}
 			onSubmit={save}
 			onClose={onClose}

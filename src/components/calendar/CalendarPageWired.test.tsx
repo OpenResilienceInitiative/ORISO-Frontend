@@ -36,7 +36,8 @@ vi.mock('react-router-dom', () => ({ useNavigate: () => navigate }));
    test switches it on. */
 const directLinks = vi.hoisted(() => ({ allowed: false }));
 vi.mock('../directLinks/useDirectLinksAllowed', () => ({
-	useDirectLinksAllowed: () => directLinks.allowed
+	useDirectLinkMedia: () =>
+		directLinks.allowed ? ['CHAT', 'AUDIO', 'VIDEO'] : []
 }));
 const { invite } = vi.hoisted(() => ({ invite: vi.fn() }));
 vi.mock('../../api/apiDirectLinks', async (importOriginal) => ({

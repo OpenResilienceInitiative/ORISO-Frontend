@@ -6911,6 +6911,7 @@
 			"withoutAppointmentHint": "Ohne Termin bekommt jede Person ein eigenes Gespräch. Der Link gilt, bis Sie ihn löschen.",
 			"inviteOthers": "Weitere Personen per Link einladen",
 			"inviteOthersHint": "Zum Beispiel eine Dolmetscherin. Eingeladene sehen nur Nachrichten ab ihrem Beitritt.",
+			"inviteOthersMediumOff": "Für diese Art sind Direkteinladungen nicht freigegeben. Wählen Sie eine andere Art, um weitere Personen einzuladen.",
 			"validity": {
 				"label": "Gültig nach Terminende",
 				"hint": "Danach verlieren Gäste den Zugang, und das Gespräch wird archiviert.",

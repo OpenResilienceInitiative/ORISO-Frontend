@@ -46,9 +46,11 @@ import {
 	INVITATION_ACCESS,
 	type InvitationAccess,
 	type InvitationDialogValue,
+	MEDIUM_FOR_KIND,
 	type InvitationPreset,
 	type InvitationSlot
 } from './invitationModel';
+import type { DirectLinkMedium } from '../conversationCreate/directLink/directLink';
 import { ValidityStepper } from './ValidityStepper';
 import '../conversationCreate/directLink/directLink.styles.scss';
 import './directInvitation.styles.scss';
@@ -127,6 +129,12 @@ export interface InvitationFormProps {
 	initial?: InvitationDialogInitial;
 	/** Appointment variant only: offer "Weitere Personen per Link einladen". */
 	allowGuestInvite?: boolean;
+	/**
+	 * The media "Direkteinladung erlauben" allows. With the Art, the link's
+	 * medium is the Art's (`MEDIUM_FOR_KIND`): chat links may be allowed
+	 * while video links are not. Absent: no restriction per medium.
+	 */
+	inviteMedia?: readonly DirectLinkMedium[];
 	/** Called with a validated value. The dialog stays open; the caller closes it. */
 	onSubmit: (value: InvitationDialogValue) => void;
 	onClose: () => void;
@@ -203,6 +211,7 @@ export const useInvitationForm = ({
 	mode = 'create',
 	initial = {},
 	allowGuestInvite = false,
+	inviteMedia,
 	onSubmit,
 	onClose,
 	saving = false,
@@ -272,8 +281,15 @@ export const useInvitationForm = ({
 	}>();
 
 	const newPerson = conversation === NEW_PERSON;
+	/* The backend refuses a link whose medium is not allowed, after the
+	   appointment was stored: such an Art offers no link and says why. */
+	const kindMediumOff =
+		withKind &&
+		inviteMedia !== undefined &&
+		!inviteMedia.includes(MEDIUM_FOR_KIND[kind]);
+	const invitingOthers = inviteOthers && !kindMediumOff;
 	const showLinkSettings =
-		isInvitation || (allowGuestInvite && inviteOthers && !newPerson);
+		isInvitation || (allowGuestInvite && invitingOthers && !newPerson);
 	/* A known slot keeps its own end date (23:00 to midnight, over night). */
 	const slot: Partial<InvitationSlot> = slotKnown
 		? { start: initial.start, end: initial.end }
@@ -384,7 +400,8 @@ export const useInvitationForm = ({
 		key: string,
 		checked: boolean,
 		onChange: (next: boolean) => void,
-		hint?: string
+		hint?: string,
+		disabled = false
 	) => (
 		<div className="invitationDialog__switchRow">
 			<span className="invitationDialog__switchText">
@@ -401,6 +418,7 @@ export const useInvitationForm = ({
 			<Switch
 				checked={checked}
 				onChange={onChange}
+				disabled={disabled}
 				aria-labelledby={`${id}-${key}`}
 				aria-describedby={hint ? `${id}-${key}-hint` : undefined}
 			/>
@@ -493,9 +511,16 @@ export const useInvitationForm = ({
 				>
 					{switchRow(
 						'inviteOthers',
-						inviteOthers,
+						invitingOthers,
 						setInviteOthers,
-						t(`${KEYS}.inviteOthersHint`)
+						t(
+							`${KEYS}.${
+								kindMediumOff
+									? 'inviteOthersMediumOff'
+									: 'inviteOthersHint'
+							}`
+						),
+						kindMediumOff
 					)}
 				</section>
 			)}

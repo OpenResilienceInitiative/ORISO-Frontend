@@ -11,6 +11,7 @@ import {
 	directLinkMock,
 	installDirectLinkMockApi
 } from '../directLinkEntry/__storybook__/directLinkMockApi';
+import type { DirectLinkMedium } from '../conversationCreate/directLink/directLink';
 import { InvitationDialog } from './InvitationDialog';
 import '../calendar/calendar.styles.scss';
 import '../conversationCreate/conversationCreate.styles.scss';
@@ -81,10 +82,12 @@ const expectSharedInviteSection = async (root: HTMLElement) => {
 
 const CalendarTermin = ({
 	slot,
-	compact = false
+	compact = false,
+	inviteMedia
 }: {
 	slot?: { start: Date; end: Date };
 	compact?: boolean;
+	inviteMedia?: readonly DirectLinkMedium[];
 }) => (
 	<NewEntryDialog
 		open
@@ -96,6 +99,7 @@ const CalendarTermin = ({
 		now={new Date()}
 		fullScreen={compact}
 		allowGuestInvite
+		inviteMedia={inviteMedia}
 		onInviteNewPerson={onInviteNewPerson}
 		onSaveAppointment={onSaveAppointment}
 		onSaveBlocker={fn()}
@@ -205,6 +209,35 @@ export const CalendarFromSlot: Story = {
 			sessionId: 4401,
 			link: { validityMinutes: 1440, access: 'both', knock: true }
 		});
+	}
+};
+
+/**
+ * "Direkteinladung erlauben" allows chat and audio links, not video: the
+ * link takes the Art's medium, so Video offers no link and says why.
+ */
+export const CalendarFromSlotVideoNotAllowed: Story = {
+	name: 'Calendar slot · video links not allowed · 1440',
+	globals: desktop1440Globals,
+	beforeEach: () => onSaveAppointment.mockClear(),
+	render: () => (
+		<CalendarTermin slot={SLOT} inviteMedia={['CHAT', 'AUDIO']} />
+	),
+	play: async () => {
+		const root = await body().findByTestId('calendar-appointment-dialog');
+		const dialog = within(root);
+		const invite = () =>
+			dialog.getByRole('switch', {
+				name: 'Weitere Personen per Link einladen'
+			});
+		await expect(invite()).toBeDisabled();
+		await expect(
+			dialog.getByText(/Für diese Art sind Direkteinladungen nicht/)
+		).toBeInTheDocument();
+		await userEvent.click(dialog.getByRole('button', { name: 'Telefon' }));
+		await expect(invite()).toBeEnabled();
+		await userEvent.click(dialog.getByRole('button', { name: 'Video' }));
+		await expect(invite()).toBeDisabled();
 	}
 };
 

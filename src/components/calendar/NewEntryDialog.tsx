@@ -12,6 +12,7 @@ import { M3Dialog } from '../m3Dialog/M3Dialog';
 import { useCalendarInvitationForm } from './useCalendarInvitationForm';
 import { useBlockerForm } from './BlockerDialog';
 import type { InvitationPreset } from '../directInvitation/invitationModel';
+import type { DirectLinkMedium } from '../conversationCreate/directLink/directLink';
 import type {
 	AppointmentDraft,
 	AppointmentKind,
@@ -43,6 +44,8 @@ export interface NewEntryDialogProps {
 	onWorkingHours?: () => void;
 	/** Termin: "Weitere Personen per Link einladen", as in the 1:1. */
 	allowGuestInvite?: boolean;
+	/** Termin: the media "Direkteinladung erlauben" allows (the Art's medium). */
+	inviteMedia?: readonly DirectLinkMedium[];
 	/** Termin: "Neue Person per Direkteinladung …" opens "Chat erstellen". */
 	onInviteNewPerson?: (preset: InvitationPreset) => void;
 	onClose: () => void;
@@ -67,6 +70,7 @@ export const NewEntryDialog = ({
 	onSaveBlocker,
 	onWorkingHours,
 	allowGuestInvite,
+	inviteMedia,
 	onInviteNewPerson,
 	onClose
 }: NewEntryDialogProps) => {
@@ -82,6 +86,7 @@ export const NewEntryDialog = ({
 		now,
 		onSave: onSaveAppointment,
 		allowGuestInvite,
+		inviteMedia,
 		onInviteNewPerson,
 		onClose
 	});
