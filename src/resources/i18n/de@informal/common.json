@@ -739,8 +739,8 @@
 				"text": "Eine Klient:in ist dem Warteraum beigetreten."
 			},
 			"callInvited": {
-				"title": "Einladung zu internem Gruppenanruf",
-				"text": "Du wurdest zu einem internen Gruppenanruf eingeladen."
+				"title": "Einladung zum Anruf",
+				"text": "Du wurdest zu einem Anruf eingeladen."
 			},
 			"appointmentRequested": {
 				"title": "Termin für einen Anruf angefragt",

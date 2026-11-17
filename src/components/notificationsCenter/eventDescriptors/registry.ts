@@ -491,7 +491,8 @@ const seeds: EventDescriptor[] = [
 		i18nKey: 'callMissed',
 		resolveActionTarget: conversationTarget
 	}),
-	// Invitation to an internal (team) group call — Figma 2026-07-12.
+	// Invitation to a call: one-to-one counselling (sessionId) or group
+	// (seriesId). FE#1211: the wording names neither, so it is true for both.
 	descriptor('call.invited', {
 		family: 'calls',
 		category: 'system',

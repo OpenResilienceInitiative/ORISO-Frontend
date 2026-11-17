@@ -2591,8 +2591,8 @@
 				"text": "A client has joined the waiting room."
 			},
 			"callInvited": {
-				"title": "Invitation to internal group call",
-				"text": "You have been invited to an internal group call."
+				"title": "Call invitation",
+				"text": "You have been invited to a call."
 			},
 			"callKnockRequested": {
 				"title": "Someone is knocking",

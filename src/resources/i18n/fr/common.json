@@ -2594,8 +2594,8 @@
 				"text": "Un·e client·e a rejoint la salle d'attente."
 			},
 			"callInvited": {
-				"title": "Invitation à un appel de groupe interne",
-				"text": "Vous avez été invité·e à un appel de groupe interne."
+				"title": "Invitation à un appel",
+				"text": "Vous avez été invité·e à un appel."
 			},
 			"callKnockRequested": {
 				"title": "Une personne frappe",

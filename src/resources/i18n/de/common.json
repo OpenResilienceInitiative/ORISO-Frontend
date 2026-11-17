@@ -2615,8 +2615,8 @@
 				"text": "Eine Klient:in ist dem Warteraum beigetreten."
 			},
 			"callInvited": {
-				"title": "Einladung zu internem Gruppenanruf",
-				"text": "Sie wurden zu einem internen Gruppenanruf eingeladen."
+				"title": "Einladung zum Anruf",
+				"text": "Sie wurden zu einem Anruf eingeladen."
 			},
 			"callKnockRequested": {
 				"title": "Jemand klopft an",
