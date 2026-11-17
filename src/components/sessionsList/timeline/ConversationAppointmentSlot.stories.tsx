@@ -10,6 +10,10 @@ import {
 	UserDataContext
 } from '../../../globalState';
 import { ConversationAppointmentSlot } from './ConversationAppointmentSlot';
+import {
+	forgetKnownAppointments,
+	rememberUpcomingAppointments
+} from './conversationAppointments';
 
 /**
  * The next 1:1 appointment below the conversation header (FE#1960).
@@ -30,7 +34,8 @@ const appointment = {
 	status: 'SCHEDULED',
 	counterpart: { username: 'ruhiges_yak_kim' }
 };
-type Route = { get: unknown[] | number; write?: number };
+/** `hang`: the conversation's own load never answers (a slow network). */
+type Route = { get: unknown[] | number | 'hang'; write?: number };
 
 const installFetch = ({ get, write = 200 }: Route) => {
 	const previous = window.fetch;
@@ -40,6 +45,7 @@ const installFetch = ({ get, write = 200 }: Route) => {
 		if (!/\/appointments/.test(url)) return previous(input, init);
 		if (method !== 'GET')
 			return new Response(JSON.stringify(appointment), { status: write });
+		if (get === 'hang') return new Promise<Response>(() => undefined);
 		return typeof get === 'number'
 			? new Response('', { status: get })
 			: new Response(JSON.stringify(get), { status: 200 });
@@ -52,13 +58,20 @@ const installFetch = ({ get, write = 200 }: Route) => {
 const Slot = ({
 	route,
 	role,
-	canChange
+	canChange,
+	known
 }: {
 	route: Route;
 	role: 'asker' | 'consultant';
 	canChange: boolean;
+	/** What the list already loaded ("my upcoming appointments"). */
+	known?: unknown[];
 }) => {
-	const [restore] = useState(() => installFetch(route));
+	const [restore] = useState(() => {
+		forgetKnownAppointments();
+		if (known) rememberUpcomingAppointments(known as never);
+		return installFetch(route);
+	});
 	React.useEffect(() => restore, [restore]);
 	const [openCreate, setOpenCreate] = useState<() => void>();
 	const onCreateChange = React.useCallback(
@@ -199,5 +212,26 @@ export const MoveConflict: Story = {
 			within(dialog).getByRole('button', { name: 'Verschieben' })
 		);
 		await expect(await within(dialog).findByRole('alert')).toBeVisible();
+	}
+};
+
+/**
+ * The jumping appointment button (Frank, 17.11.2026): the row used to appear
+ * 100–250 ms after the header on every conversation switch and push the
+ * messages down. With the list's appointments already known, the row is in
+ * the header's first frame although the conversation's own load is still
+ * running.
+ */
+export const KnownAppointmentInFirstFrame: Story = {
+	args: {
+		route: { get: 'hang' },
+		role: 'consultant',
+		canChange: true,
+		known: [appointment]
+	},
+	play: async ({ canvasElement }) => {
+		await expect(
+			canvasElement.querySelector('[data-cy="room-next-appointment"]')
+		).not.toBeNull();
 	}
 };

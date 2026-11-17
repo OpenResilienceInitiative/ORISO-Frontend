@@ -86,3 +86,44 @@ export const onAppointmentsChanged = (listener: () => void) => {
 	window.addEventListener(CHANGED_EVENT, listener);
 	return () => window.removeEventListener(CHANGED_EVENT, listener);
 };
+
+/*
+ * What is already known about a conversation's appointments, so its header
+ * draws the appointment row in the same frame as itself. Without it the row
+ * appeared 100–250 ms later on every conversation switch and pushed the
+ * messages down (the "jumping" appointment button). The header still loads
+ * the conversation's own list and replaces this guess.
+ * Two sources, the newer one wins: the header's own load per conversation,
+ * and the list's "my upcoming appointments" (a conversation missing there
+ * has none of the viewer's upcoming ones).
+ */
+type KnownAppointments = { at: number; items: SessionAppointment[] };
+const knownBySession = new Map<number, KnownAppointments>();
+let knownUpcoming: KnownAppointments | undefined;
+let knownClock = 0;
+
+export const rememberSessionAppointments = (
+	sessionId: number,
+	items: SessionAppointment[]
+) => {
+	knownBySession.set(sessionId, { at: ++knownClock, items });
+};
+
+export const rememberUpcomingAppointments = (items: SessionAppointment[]) => {
+	knownUpcoming = { at: ++knownClock, items };
+};
+
+export const knownSessionAppointments = (
+	sessionId: number | undefined
+): SessionAppointment[] | undefined => {
+	if (sessionId === undefined) return undefined;
+	const own = knownBySession.get(sessionId);
+	if (own && (!knownUpcoming || own.at > knownUpcoming.at)) return own.items;
+	return knownUpcoming?.items.filter((a) => a.sessionId === sessionId);
+};
+
+/** Tests and logout: start from nothing known. */
+export const forgetKnownAppointments = () => {
+	knownBySession.clear();
+	knownUpcoming = undefined;
+};

@@ -103,7 +103,10 @@ import { useTopic } from '../../globalState';
 import { Button, ButtonItem, BUTTON_TYPES } from '../button/Button';
 import { OrisoTextarea } from '../form/OrisoTextarea';
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
-import { useConversationFeatureSettings } from '../../hooks/useConversationFeatureSettings';
+import {
+	useConversationFeatureSettings,
+	useConversationFeatureSettingsSettled
+} from '../../hooks/useConversationFeatureSettings';
 import { SYSTEM_NOTIFICATION_PREFIX } from '../message/messageConstants';
 import { messageEventEmitter } from '../../services/messageEventEmitter';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
@@ -202,6 +205,8 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		featureSupervisionAnonymousChatsEnabled = true,
 		featureSupervisionOneOnOneChatsEnabled = true
 	} = useConversationFeatureSettings(getTenantSettings());
+	const areConversationFeaturesSettled =
+		useConversationFeatureSettingsSettled();
 
 	const contact = getContact(activeSession);
 	const userSessionData = contact?.sessionData;
@@ -1172,7 +1177,8 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 								!activeSession.isGroup &&
 								!activeSession.isEnquiry,
 							isSupervisor,
-							isMobile: untilL
+							isMobile: untilL,
+							isSettled: areConversationFeaturesSettled
 						});
 						const canOpenSupervisorModal =
 							supervisorAddState.mode === 'interactive';
@@ -1200,6 +1206,9 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 									addLabel={translate(
 										supervisorAddState.labelKey
 									)}
+									addPending={
+										supervisorAddState.mode === 'pending'
+									}
 									onAddClick={
 										canOpenSupervisorModal
 											? () =>

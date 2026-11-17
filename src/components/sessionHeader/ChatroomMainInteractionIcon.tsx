@@ -17,6 +17,11 @@ interface ChatroomMainInteractionIconProps {
 	addLabel?: string;
 	/** The disabled "+" also shows `addLabel` on hover; false names it for screen readers only. */
 	addTooltip?: boolean;
+	/**
+	 * The answer whether "+" can act is still loading: keep the active look
+	 * (no grey flash on every conversation switch) but do nothing yet.
+	 */
+	addPending?: boolean;
 	className?: string;
 	onAddClick?: () => void;
 	showAddIcon?: boolean;
@@ -41,6 +46,7 @@ const conversationIconSources: Partial<
 export const ChatroomMainInteractionIcon = ({
 	addLabel,
 	addTooltip = true,
+	addPending = false,
 	className,
 	onAddClick,
 	showAddIcon = false,
@@ -73,7 +79,17 @@ export const ChatroomMainInteractionIcon = ({
 			)}
 		>
 			{showAddIcon &&
-				(onAddClick ? (
+				(addPending ? (
+					<button
+						type="button"
+						className="chatroomMainInteractionIcon__add chatroomMainInteractionIcon__add--pending"
+						aria-label={addLabel}
+						aria-disabled="true"
+						aria-busy="true"
+					>
+						{addContent}
+					</button>
+				) : onAddClick ? (
 					<button
 						type="button"
 						className="chatroomMainInteractionIcon__add chatroomMainInteractionIcon__add--interactive"

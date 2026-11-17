@@ -753,6 +753,12 @@ $room-header-gap-top: 2px;
 		opacity: 0.45;
 	}
 
+	/* Same look as the active "+" so a conversation switch does not flash
+	   grey; only the cursor says it is not ready yet. */
+	&__add--pending {
+		cursor: progress;
+	}
+
 	&__addContent {
 		width: 32px;
 		height: 32px;

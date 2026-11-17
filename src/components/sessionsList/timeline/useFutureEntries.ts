@@ -16,7 +16,8 @@ import {
 import { toSeriesApiTimestamp } from '../futureTimelineTime';
 import {
 	appointmentToBooking,
-	onAppointmentsChanged
+	onAppointmentsChanged,
+	rememberUpcomingAppointments
 } from './conversationAppointments';
 import {
 	buildFutureEntries,
@@ -79,14 +80,13 @@ export const useFutureEntries = ({
 		).then((results) => active && setOccurrences(results.flat()));
 		apiGetUpcomingAppointments()
 			.catch(() => [] as SessionAppointment[])
-			.then(
-				(items) =>
-					active &&
-					Array.isArray(items) &&
-					setAppointments(
-						items.filter((a) => new Date(a.startTime) < to)
-					)
-			);
+			.then((items) => {
+				if (!active || !Array.isArray(items)) return;
+				rememberUpcomingAppointments(items);
+				setAppointments(
+					items.filter((a) => new Date(a.startTime) < to)
+				);
+			});
 		return () => {
 			active = false;
 		};

@@ -27,7 +27,9 @@ import { useResponsive } from '../../../hooks/useResponsive';
 import { RoomNextAppointment } from './AppointmentSplitButton';
 import {
 	appointmentToBooking,
+	knownSessionAppointments,
 	onAppointmentsChanged,
+	rememberSessionAppointments,
 	upcomingAppointments
 } from './conversationAppointments';
 import { buildFutureEntries, type FutureEntry } from './timelineModel';
@@ -67,21 +69,38 @@ export const ConversationAppointmentSlot = ({
 	const sessionId = activeSession?.item.id;
 	const matrixRoomId =
 		activeSession?.item.matrixRoomId || activeSession?.rid || undefined;
-	const [appointments, setAppointments] = useState<SessionAppointment[]>();
+	/* This conversation's own load; `null` = it failed (no endpoint). Until
+	   it arrives the row shows what is already known, in the header's first
+	   frame, so nothing below it moves when the load lands. */
+	const [loaded, setLoaded] = useState<{
+		sessionId: number;
+		items: SessionAppointment[] | null;
+	}>();
+	const appointments =
+		loaded && loaded.sessionId === sessionId
+			? (loaded.items ?? undefined)
+			: knownSessionAppointments(sessionId);
 	const [dialog, setDialog] = useState<{ entry?: FutureEntry } | null>(null);
 	const [reload, setReload] = useState(0);
 
 	useEffect(() => onAppointmentsChanged(() => setReload((n) => n + 1)), []);
 	useEffect(() => {
 		setDialog(null);
-		setAppointments(undefined);
 	}, [sessionId]);
 	useEffect(() => {
 		if (sessionId === undefined) return undefined;
 		let active = true;
 		apiGetSessionAppointments(sessionId).then(
-			(items) => active && setAppointments(items),
-			() => active && setAppointments(undefined)
+			(items) => {
+				if (!active) return;
+				if (Array.isArray(items))
+					rememberSessionAppointments(sessionId, items);
+				setLoaded({
+					sessionId,
+					items: Array.isArray(items) ? items : null
+				});
+			},
+			() => active && setLoaded({ sessionId, items: null })
 		);
 		return () => {
 			active = false;
