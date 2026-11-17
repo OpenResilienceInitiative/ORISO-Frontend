@@ -127,8 +127,17 @@ const CoreAgencySelection: FC<AgencySelectionProps> = ({
 	onChange
 }) => {
 	const { t } = useTranslation();
-	const { registrationData } = useContext(RegistrationContext);
+	const { registrationData, updateRegistrationData } =
+		useContext(RegistrationContext);
 	const { consultant: preselectedConsultant } = useContext(UrlParamsContext);
+
+	// Whatever is chosen here is the core's choice: an earlier add-on's ref does not go with it.
+	const staleRegistrationRef = registrationData?.registrationRef;
+	useEffect(() => {
+		if (staleRegistrationRef !== undefined) {
+			updateRegistrationData?.({ registrationRef: undefined });
+		}
+	}, [staleRegistrationRef, updateRegistrationData]);
 
 	const { isLoading, agencies } = useAgenciesForRegistration({
 		topic: registrationData.mainTopic,

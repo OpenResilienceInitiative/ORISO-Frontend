@@ -81,7 +81,10 @@ const Where = () => (
 	<output data-testid="where">{useLocation().pathname}</output>
 );
 
-const renderStep = ({ linkTopic }: { linkTopic?: { id: number } } = {}) => {
+const renderStep = ({
+	linkTopic,
+	registrationRef
+}: { linkTopic?: { id: number }; registrationRef?: string } = {}) => {
 	const updateRegistrationData = vi.fn();
 	const setDisabledNextButton = vi.fn();
 	const onNextClick = vi.fn();
@@ -99,7 +102,8 @@ const renderStep = ({ linkTopic }: { linkTopic?: { id: number } } = {}) => {
 							value={{
 								registrationData: {
 									mainTopic: { id: 3 },
-									zipcode: '12043'
+									zipcode: '12043',
+									registrationRef
 								} as never,
 								updateRegistrationData,
 								setDisabledNextButton
@@ -241,6 +245,20 @@ describe('AgencySelection with a registration add-on', () => {
 
 		expect(screen.queryByTestId('addon-step')).toBeNull();
 		expect(screen.getByTestId('core-selection')).toBeTruthy();
+	});
+
+	it('drops an earlier add-on ref once the core selection takes the step', () => {
+		withAddon();
+		const { updateRegistrationData } = renderStep({
+			registrationRef: 'ref-1'
+		});
+		expect(updateRegistrationData).not.toHaveBeenCalled();
+
+		fireEvent.click(screen.getByRole('button', { name: 'fail' }));
+
+		expect(updateRegistrationData).toHaveBeenCalledWith({
+			registrationRef: undefined
+		});
 	});
 
 	it('drops a completion that resolves after the step was left', async () => {

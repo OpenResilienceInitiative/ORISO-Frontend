@@ -277,10 +277,18 @@ export function RegistrationProvider({ children }: PropsWithChildren<{}>) {
 
 	const updateRegistrationData = useCallback(
 		(data?: Partial<RegistrationData>) => {
-			setRegistrationData((registrationData) => ({
-				...registrationData,
-				...data
-			}));
+			setRegistrationData((registrationData) => {
+				const next = { ...registrationData, ...data };
+				// A registration add-on's ref belongs to the agency it came with: it
+				// goes when that agency is cleared or replaced without a new ref.
+				if (
+					!(data && 'registrationRef' in data) &&
+					next.agency?.id !== registrationData?.agency?.id
+				) {
+					next.registrationRef = undefined;
+				}
+				return next;
+			});
 		},
 		[]
 	);
