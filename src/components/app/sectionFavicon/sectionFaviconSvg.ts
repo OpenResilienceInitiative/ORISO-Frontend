@@ -92,7 +92,10 @@ export const buildSectionFaviconSvg = (
 	return (
 		`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${TILE_SIZE} ${TILE_SIZE}" width="${TILE_SIZE}" height="${TILE_SIZE}">` +
 		`<rect width="${TILE_SIZE}" height="${TILE_SIZE}" rx="${TILE_RADIUS}" fill="${FAVICON_TILE_COLOR}"/>` +
-		`<g fill="${color}" color="${color}">${glyph}</g>` +
+		// Some icon files hard-code a grey fill that the rail recolours with
+		// CSS (counsellor_request_filled.svg); do the same here.
+		`<style>.glyph [fill]:not([fill="none"]){fill:${color}}</style>` +
+		`<g class="glyph" fill="${color}" color="${color}">${glyph}</g>` +
 		`</svg>`
 	);
 };

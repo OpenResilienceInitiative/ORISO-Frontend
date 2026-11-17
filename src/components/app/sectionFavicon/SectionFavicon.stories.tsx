@@ -227,7 +227,26 @@ const LiveControls = ({ role }: { role: 'consultant' | 'asker' }) => {
  * a route without a section restores the default favicon. It starts on the
  * calendar section (`parameters.router.initialPath`).
  */
+/** The default icon link `src/pages/app.html` declares (Storybook serves `public/`). */
+const withAppDefaultIcon = (Story: React.ComponentType) => {
+	if (
+		!document.querySelector(
+			"link[rel~='icon'][href$='/favicon.ico'], link[data-section-icon]"
+		)
+	) {
+		document
+			.querySelectorAll("link[rel~='icon']")
+			.forEach((link) => link.remove());
+		const link = document.createElement('link');
+		link.setAttribute('rel', 'icon');
+		link.setAttribute('href', '/favicon.ico');
+		document.head.appendChild(link);
+	}
+	return <Story />;
+};
+
 export const LiveTabIcon: Story = {
+	decorators: [withAppDefaultIcon],
 	parameters: { router: { initialPath: '/booking/events' } },
 	render: ({ role, primaryColor }) => (
 		<TenantContext.Provider
@@ -266,9 +285,7 @@ export const LiveTabIcon: Story = {
 		await userEvent.click(
 			canvas.getByRole('button', { name: 'No section (/drafts)' })
 		);
-		await waitFor(() =>
-			expect(tabIconHref()).not.toMatch(/^data:image\/svg\+xml,/)
-		);
+		await waitFor(() => expect(tabIconHref()).toMatch(/\/favicon\.ico$/));
 		await expect(
 			document.querySelector('link[data-section-icon-png]')
 		).toBeNull();

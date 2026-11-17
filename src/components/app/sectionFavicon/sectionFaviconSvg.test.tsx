@@ -128,6 +128,21 @@ describe('buildSectionFaviconSvg', () => {
 		);
 	});
 
+	it('recolours glyphs whose file hard-codes a grey fill, like the rail does', () => {
+		const Grey = () => (
+			<svg viewBox="0 0 32 32" fill="none">
+				<path d="M0 0h1" fill="#4C555F" />
+			</svg>
+		);
+		const svg = buildSectionFaviconSvg(Grey, '#a5000a');
+		expect(svg).toContain(
+			'<style>.glyph [fill]:not([fill="none"]){fill:#a5000a}</style>'
+		);
+		expect(parse(svg).querySelector('g')!.getAttribute('class')).toBe(
+			'glyph'
+		);
+	});
+
 	it('never lets an invalid colour into the markup', () => {
 		const svg = buildSectionFaviconSvg(CalendarIconFilled, '"/><x');
 		expect(svg).not.toContain('"/><x');
