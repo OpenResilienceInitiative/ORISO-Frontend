@@ -441,25 +441,28 @@ export const NavigationBar = ({
 									0,
 									Number(item.badge) || 0
 								);
-								const unreadCount =
-									addonBadge ||
-									Number(
-										pathsToShowUnreadMessageNotification[
-											item.to
-										] || 0
-									);
-								const showUnreadNav =
-									addonBadge > 0 ||
-									(Object.keys(
-										pathsToShowUnreadMessageNotification
-									).includes(item.to) &&
-										unreadCount > 0);
+								const messageCount = Object.keys(
+									pathsToShowUnreadMessageNotification
+								).includes(item.to)
+									? Number(
+											pathsToShowUnreadMessageNotification[
+												item.to
+											] || 0
+										)
+									: 0;
+								// Unread messages win over an add-on badge on the same item.
+								const showsAddonBadge =
+									messageCount === 0 && addonBadge > 0;
+								const unreadCount = showsAddonBadge
+									? addonBadge
+									: messageCount;
+								const showUnreadNav = unreadCount > 0;
 								const label =
 									item.title ??
 									translate(item.titleKeys.large);
 								const unreadLabel = showUnreadNav
 									? translate(
-											addonBadge > 0
+											showsAddonBadge
 												? 'addons.badge'
 												: countKey(item.to),
 											{
@@ -469,9 +472,10 @@ export const NavigationBar = ({
 									: '';
 								// The Link's aria-label is its whole accessible
 								// name, so the count has to be part of it.
-								const unreadTitle = showUnreadNav
-									? unreadNavTitle(item.to)
-									: undefined;
+								const unreadTitle =
+									showUnreadNav && !showsAddonBadge
+										? unreadNavTitle(item.to)
+										: undefined;
 								const linkLabel = showUnreadNav
 									? [label, unreadLabel, unreadTitle]
 											.filter(Boolean)

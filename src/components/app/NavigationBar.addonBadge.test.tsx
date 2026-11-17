@@ -131,6 +131,40 @@ describe('NavigationBar add-on badge (oriso-addon/v1 section 4)', () => {
 		);
 	});
 
+	it.each([
+		[
+			'open enquiries win over the add-on badge',
+			5,
+			'5',
+			'sessionList.rail.openEnquiries'
+		],
+		['the add-on badge shows without enquiries', 0, '2', 'addons.badge']
+	])('%s', async (_label, enquiries, shown, key) => {
+		apiGetConsultantEnquiryCount.mockResolvedValue(enquiries);
+		const { container } = render(
+			navigationTree({
+				navigation: [
+					{
+						to: '/sessions/consultant/sessionPreview',
+						title: 'Anfragen',
+						titleKeys: { large: 'Anfragen' },
+						badge: 2
+					}
+				]
+			} as never)
+		);
+		const link = () =>
+			container.querySelector(
+				'a[href="/sessions/consultant/sessionPreview"]'
+			) as HTMLAnchorElement;
+		await waitFor(() =>
+			expect(
+				link()?.querySelector('.navigation__item__count')?.textContent
+			).toBe(shown)
+		);
+		expect(link().getAttribute('aria-label')).toBe(`Anfragen, ${key}`);
+	});
+
 	it('moves on from the last item once an add-on entry disappeared', async () => {
 		const view = renderNavigation();
 		await waitFor(() => expect(addonLink(view.container)).toBeTruthy());
