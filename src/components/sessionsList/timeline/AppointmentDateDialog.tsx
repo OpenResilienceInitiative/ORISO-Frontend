@@ -19,7 +19,9 @@ import { InvitationDialog } from '../../directInvitation/InvitationDialog';
 import type { InvitationDialogValue } from '../../directInvitation/invitationModel';
 import {
 	InvitationAfterAppointmentError,
-	saveAppointmentInvitation
+	sameSlot,
+	saveAppointmentInvitation,
+	type SavedAppointment
 } from '../../directInvitation/saveAppointmentInvitation';
 import {
 	notifyAppointmentsChanged,
@@ -67,17 +69,31 @@ export const AppointmentDateDialog = ({
 	const [shared, setShared] = useState<DirectLink>();
 
 	/* The appointment exists although its link failed: a retry only adds
-	   the link (one save path with the calendar). */
-	const [savedAppointment, setSavedAppointment] = useState<{
-		appointmentId: string;
-		slot: { start: Date; end: Date };
-	}>();
+	   the link (one save path with the calendar), after storing a changed
+	   time or Art. */
+	const [savedAppointment, setSavedAppointment] =
+		useState<SavedAppointment>();
 
 	const save = async (value: InvitationDialogValue) => {
 		const { appointment } = value;
 		if (!appointment) return;
 		const { start, end } = appointment;
 		const withInvite = !isMove && allowGuestInvite && value.link !== null;
+		/* What the conversation and the calendar already know: nothing on the
+		   first try; on a retry, the stored appointment's time and Art. */
+		const retry = savedAppointment;
+		const timeChanged =
+			retry !== undefined && !sameSlot(retry.slot, appointment);
+		const stored =
+			retry === undefined || timeChanged || retry.kind !== value.kind;
+		const announce = () =>
+			sendNotice({
+				kind: isMove || timeChanged ? 'moved' : 'created',
+				start,
+				end,
+				sessionId,
+				matrixRoomId
+			});
 		setSaving(true);
 		setError(undefined);
 		let invitation: DirectLink | undefined;
@@ -102,10 +118,10 @@ export const AppointmentDateDialog = ({
 		} catch (cause) {
 			setSaving(false);
 			if (cause instanceof InvitationAfterAppointmentError) {
-				const firstTime = savedAppointment === undefined;
 				setSavedAppointment({
 					appointmentId: cause.appointmentId,
-					slot: appointment
+					slot: appointment,
+					kind: value.kind
 				});
 				setError(
 					(await isRoomNotEncryptedError(cause.cause))
@@ -116,16 +132,10 @@ export const AppointmentDateDialog = ({
 								'directInvitation.dialog.linkFailedAfterAppointment'
 							)
 				);
-				if (firstTime) {
-					notifyAppointmentsChanged();
-					await sendNotice({
-						kind: 'created',
-						start,
-						end,
-						sessionId,
-						matrixRoomId
-					});
-				}
+				/* The appointment was stored or changed although the link
+				   failed: calendar and conversation hear of it now. */
+				if (stored) notifyAppointmentsChanged();
+				if (retry === undefined || timeChanged) await announce();
 				return;
 			}
 			setError(
@@ -147,15 +157,9 @@ export const AppointmentDateDialog = ({
 		} else {
 			onClose();
 		}
-		/* A retry after a failed link left its notice already. */
-		if (savedAppointment !== undefined) return;
-		await sendNotice({
-			kind: isMove ? 'moved' : 'created',
-			start,
-			end,
-			sessionId,
-			matrixRoomId
-		});
+		/* A retry after a failed link left its notice already, unless it
+		   moved the appointment since. */
+		if (retry === undefined || timeChanged) await announce();
 	};
 
 	if (shared) {

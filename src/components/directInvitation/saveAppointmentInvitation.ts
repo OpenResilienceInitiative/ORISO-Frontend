@@ -45,9 +45,16 @@ export interface AppointmentInvitationInput {
 	link: InvitationLinkSettings | null;
 	/**
 	 * A retry after {@link InvitationAfterAppointmentError}: the stored
-	 * appointment, moved first when the time was changed since.
+	 * appointment, updated first when its time or Art was changed since.
 	 */
-	saved?: { appointmentId: string; slot: InvitationSlot };
+	saved?: SavedAppointment;
+}
+
+/** The appointment a failed invitation left behind, as it is stored. */
+export interface SavedAppointment {
+	appointmentId: string;
+	slot: InvitationSlot;
+	kind?: AppointmentKind;
 }
 
 export interface AppointmentInvitationResult {
@@ -55,7 +62,7 @@ export interface AppointmentInvitationResult {
 	invitation?: DirectLink;
 }
 
-const sameSlot = (a: InvitationSlot, b: InvitationSlot) =>
+export const sameSlot = (a: InvitationSlot, b: InvitationSlot) =>
 	a.start.getTime() === b.start.getTime() &&
 	a.end.getTime() === b.end.getTime();
 
@@ -71,7 +78,9 @@ export const saveAppointmentInvitation = async ({
 		...(kind ? { kind: kindToApi(kind) } : {})
 	};
 	let id = saved?.appointmentId;
-	if (saved && !sameSlot(saved.slot, slot)) {
+	/* The link's medium follows the Art: a changed Art is stored first, so
+	   appointment and link never disagree. */
+	if (saved && (!sameSlot(saved.slot, slot) || saved.kind !== kind)) {
 		await apiMoveSessionAppointment(
 			sessionId,
 			saved.appointmentId,

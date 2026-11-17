@@ -103,6 +103,26 @@ describe('saveAppointmentInvitation — one save path for the 1:1 and the calend
 		);
 	});
 
+	it('stores a changed Art before the retry, so appointment and link agree', async () => {
+		await saveAppointmentInvitation({
+			sessionId: 4,
+			slot,
+			kind: 'phone',
+			link,
+			saved: { appointmentId: 'a1', slot, kind: 'video' }
+		});
+		expect(create).not.toHaveBeenCalled();
+		expect(move).toHaveBeenCalledWith(4, 'a1', {
+			startTime: '2026-11-20T13:00:00.000Z',
+			endTime: '2026-11-20T14:00:00.000Z',
+			kind: 'PHONE'
+		});
+		expect(invite).toHaveBeenCalledWith(
+			4,
+			expect.objectContaining({ appointmentId: 'a1', medium: 'AUDIO' })
+		);
+	});
+
 	it('leaves an appointment failure as it is: nothing was stored', async () => {
 		const failure = new Error('down');
 		create.mockRejectedValue(failure);

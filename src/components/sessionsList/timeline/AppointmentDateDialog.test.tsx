@@ -362,6 +362,87 @@ describe('AppointmentDateDialog', () => {
 				endTime: local(5, 16),
 				kind: 'VIDEO'
 			});
+			// The conversation still shows 14–15: it hears of the move.
+			expect(notice).toHaveBeenCalledTimes(2);
+			expect(notice).toHaveBeenLastCalledWith(
+				expect.objectContaining({
+					kind: 'moved',
+					start: new Date(local(5, 14)),
+					end: new Date(local(5, 16))
+				})
+			);
+		});
+
+		it('announces a moved time even when the link is refused again, and only once', async () => {
+			create.mockResolvedValue({ id: 'a1' });
+			invite.mockRejectedValue(new Response(null, { status: 409 }));
+			const changed = vi.fn();
+			const stop = onAppointmentsChanged(changed);
+			openWithInvite();
+			setField('date', '2026-11-05');
+			setTime('start', 14);
+			setTime('end', 15);
+			fireEvent.click(inviteSwitch());
+			await clickButton(`${KEYS}.createAction`);
+			expect(changed).toHaveBeenCalledTimes(1);
+
+			setTime('end', 16);
+			await clickButton(`${KEYS}.createAction`);
+			expect(move).toHaveBeenCalledTimes(1);
+			expect(changed).toHaveBeenCalledTimes(2);
+			expect(notice).toHaveBeenCalledTimes(2);
+			expect(notice).toHaveBeenLastCalledWith(
+				expect.objectContaining({
+					kind: 'moved',
+					end: new Date(local(5, 16))
+				})
+			);
+
+			// Unchanged since: the next retry only tries the link again.
+			await clickButton(`${KEYS}.createAction`);
+			stop();
+			expect(move).toHaveBeenCalledTimes(1);
+			expect(changed).toHaveBeenCalledTimes(2);
+			expect(notice).toHaveBeenCalledTimes(2);
+		});
+
+		it('stores a changed Art before the retry, without a second notice', async () => {
+			create.mockResolvedValue({ id: 'a1' });
+			invite.mockRejectedValueOnce(new Response(null, { status: 409 }));
+			const changed = vi.fn();
+			const stop = onAppointmentsChanged(changed);
+			openWithInvite();
+			setField('date', '2026-11-05');
+			setTime('start', 14);
+			setTime('end', 15);
+			fireEvent.click(inviteSwitch());
+			await clickButton(`${KEYS}.createAction`);
+
+			invite.mockResolvedValue(link);
+			fireEvent.click(
+				document.querySelector<HTMLElement>(
+					'[data-cy="calendar-dialog-kind-phone"]'
+				)!
+			);
+			await clickButton(`${KEYS}.createAction`);
+			stop();
+
+			// Telefon for the link means Telefon for the stored appointment.
+			expect(move).toHaveBeenCalledWith(4401, 'a1', {
+				startTime: local(5, 14),
+				endTime: local(5, 15),
+				kind: 'PHONE'
+			});
+			expect(invite).toHaveBeenLastCalledWith(
+				4401,
+				expect.objectContaining({
+					appointmentId: 'a1',
+					medium: 'AUDIO'
+				})
+			);
+			// The time did not change: the notice in the chat still holds.
+			expect(notice).toHaveBeenCalledTimes(1);
+			expect(changed).toHaveBeenCalledTimes(2);
 		});
 
 		it('says why when the conversation is not encrypted, and that the appointment stands', async () => {
