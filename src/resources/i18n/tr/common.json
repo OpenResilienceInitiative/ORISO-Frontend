@@ -2788,12 +2788,27 @@
 		},
 		"data": {
 			"agency": {
-				"adminContact": {
-					"error": "Bu danışma merkezinin yöneticileri yüklenemedi. Lütfen daha sonra tekrar deneyin.",
-					"fallbackName": "Merkez yöneticisi",
-					"link": "Danışma merkezi yöneticisiyle iletişime geç",
-					"none": "Sohbet üzerinden ulaşılabilen bir yönetici yok – lütfen platform yönetimiyle iletişime geçin.",
-					"supportEmail": "Destek adresi:"
+				"contactPerson": {
+					"title": "İrtibat kişisi",
+					"deputy": "Vekil",
+					"traegerDefault": "Kuruluşun varsayılan irtibat kişisi",
+					"alsoCounsellor": "aynı zamanda danışman",
+					"startChat": "Sohbet başlat",
+					"startChatWith": "{{name}} ile sohbet başlat",
+					"fallback": {
+						"heading": "Henüz irtibat kişisi belirlenmedi — bu yöneticiler sorumludur:",
+						"agencyAdmins": "Danışma merkezinin yöneticileri",
+						"tenantAdmins": "Kuruluşun yöneticileri"
+					},
+					"support": {
+						"heading": "Henüz irtibat kişisi belirlenmedi.",
+						"text": "Lütfen destek ekibine başvurun:",
+						"none": "Lütfen platform yönetimine başvurun."
+					},
+					"traegerContactEmail": "Kuruluşun genel iletişim adresi",
+					"loading": "İrtibat kişisi yükleniyor …",
+					"loadError": "İrtibat kişisi şu anda yüklenemedi.",
+					"chatFallbackName": "Danışma merkezi irtibat kişisi"
 				},
 				"label": "Danışma Merkezi",
 				"registrationLink": {

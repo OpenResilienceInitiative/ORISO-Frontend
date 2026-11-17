@@ -2788,12 +2788,27 @@
 		},
 		"data": {
 			"agency": {
-				"adminContact": {
-					"error": "Les administrateurs de ce centre de consultation n'ont pas pu être chargés. Veuillez réessayer plus tard.",
-					"fallbackName": "Admin du centre",
-					"link": "Contacter l'administrateur du centre de consultation",
-					"none": "Aucun administrateur n'est joignable par chat – veuillez vous adresser à l'administration de la plateforme.",
-					"supportEmail": "Adresse du support :"
+				"contactPerson": {
+					"title": "Personne de contact",
+					"deputy": "Suppléant·e",
+					"traegerDefault": "Personne de contact par défaut de l’organisme",
+					"alsoCounsellor": "également conseiller·ère",
+					"startChat": "Démarrer le chat",
+					"startChatWith": "Démarrer un chat avec {{name}}",
+					"fallback": {
+						"heading": "Aucune personne de contact définie — ces administrateur·rices sont responsables :",
+						"agencyAdmins": "Administrateur·rices du centre de conseil",
+						"tenantAdmins": "Administrateur·rices de l’organisme"
+					},
+					"support": {
+						"heading": "Aucune personne de contact définie.",
+						"text": "Veuillez contacter le support :",
+						"none": "Veuillez contacter l’administration de la plateforme."
+					},
+					"traegerContactEmail": "Adresse de contact générale de l’organisme",
+					"loading": "Chargement de la personne de contact …",
+					"loadError": "La personne de contact n’a pas pu être chargée pour le moment.",
+					"chatFallbackName": "Contact du centre de conseil"
 				},
 				"label": "Service de consultation",
 				"registrationLink": {

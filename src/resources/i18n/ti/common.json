@@ -2762,12 +2762,27 @@
 		},
 		"data": {
 			"agency": {
-				"adminContact": {
-					"error": "ኣመሓደርቲ ናይዚ ማእከል ምኽሪ ክጽዓኑ ኣይከኣሉን። በጃኻ ድሕሪ ገለ ግዜ ደጊምካ ፈትን።",
-					"fallbackName": "ኣመሓዳሪ ማእከል",
-					"link": "ኣመሓዳሪ ማእከል ምኽሪ ርከብ",
-					"none": "ብቻት ዝርከብ ኣመሓዳሪ የለን – በጃኻ ምምሕዳር ፕላትፎርም ርከብ።",
-					"supportEmail": "ኣድራሻ ደገፍ:"
+				"contactPerson": {
+					"title": "ሰብ ርክብ",
+					"deputy": "ተተካኢ",
+					"traegerDefault": "ናይ ትካል ስሩዕ ሰብ ርክብ",
+					"alsoCounsellor": "ከምኡ’ውን ኣማኻሪ",
+					"startChat": "ዕላል ጀምር",
+					"startChatWith": "ምስ {{name}} ዕላል ጀምር",
+					"fallback": {
+						"heading": "ገና ሰብ ርክብ ኣይተወሰነን — እዞም ኣመሓደርቲ ሓላፍነት ኣለዎም፡",
+						"agencyAdmins": "ኣመሓደርቲ ማእከል ምኽሪ",
+						"tenantAdmins": "ኣመሓደርቲ ትካል"
+					},
+					"support": {
+						"heading": "ገና ሰብ ርክብ ኣይተወሰነን።",
+						"text": "በጃኹም ንደገፍ ተወከሱ፡",
+						"none": "በጃኹም ንምምሕዳር መድረኽ ተወከሱ።"
+					},
+					"traegerContactEmail": "ሓፈሻዊ ኣድራሻ ርክብ ናይ ትካል",
+					"loading": "ሰብ ርክብ ይጽዓን ኣሎ …",
+					"loadError": "ሰብ ርክብ ሕጂ ክጽዓን ኣይከኣለን።",
+					"chatFallbackName": "ሰብ ርክብ ማእከል ምኽሪ"
 				},
 				"label": "ማእከል ምኽሪ",
 				"registrationLink": {
