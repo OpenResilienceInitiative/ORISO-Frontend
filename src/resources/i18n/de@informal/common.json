@@ -2950,7 +2950,12 @@
 		"dialog": {
 			"description": "Wer den Link öffnet, kommt direkt zu dir. Ein Termin ist optional.",
 			"withoutAppointmentHint": "Ohne Termin bekommt jede Person ein eigenes Gespräch. Der Link gilt, bis du ihn löschst.",
-			"knockHint": "Du lässt jede Person selbst herein. Das lässt sich im Anruf ändern."
+			"knockHint": "Du lässt jede Person selbst herein. Das lässt sich im Anruf ändern.",
+			"newPerson": {
+				"hint": "Diese Person hat noch kein Gespräch mit dir. Im nächsten Schritt erstellst du eine Direkteinladung mit diesem Termin."
+			},
+			"linkFailedAfterAppointment": "Der Termin ist angelegt, der Einladungslink aber nicht. Bitte versuche es erneut.",
+			"withAppointmentHint": "Alle, die den Link öffnen, treffen sich in einem gemeinsamen Gespräch. Der Termin steht auch in deinem Kalender."
 		},
 		"overview": {
 			"emptyText": "Erstelle eine Direkteinladung – mit oder ohne Termin. Sie erscheint danach hier.",
@@ -2980,7 +2985,8 @@
 		},
 		"notice": {
 			"failed": "Der neue Link konnte nicht erstellt werden. Bitte versuche es erneut."
-		}
+		},
+		"fromCalendar": "Termin aus dem Kalender: {{range}}. Wähle Thema und Medium, dann erstellst du die Direkteinladung."
 	},
 	"calendar": {
 		"grip": {

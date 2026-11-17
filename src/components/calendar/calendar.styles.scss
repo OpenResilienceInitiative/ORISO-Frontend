@@ -3592,53 +3592,8 @@ $cal-new-pill-hover: #4b4f51;
 	line-height: 16px;
 }
 
-// "Art": four tiles, two per row on a narrow dialog (prototype v17
-// `.kindgrid`; Frank *1, test C7).
-.calendarDialog__kinds {
-	display: grid;
-	grid-template-columns: repeat(2, minmax(0, 1fr));
-	gap: 6px;
-
-	@include breakpoint($fromMedium) {
-		grid-template-columns: repeat(4, minmax(0, 1fr));
-	}
-}
-
-.calendarDialog__kindTile {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	gap: 4px;
-	min-width: 0;
-	min-height: 64px;
-	padding: 10px 4px;
-	border: 1px solid var(--m3-outline-variant, #c4c7c8);
-	border-radius: 14px;
-	background: var(--m3-surface-container-lowest, #ffffff);
-	color: var(--m3-on-surface, #1b1b1c);
-	font: inherit;
-	font-size: 13px;
-	cursor: pointer;
-
-	span {
-		max-width: 100%;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-	}
-
-	&:hover {
-		background: var(--m3-surface-container-low, #f6f3f3);
-	}
-
-	&[aria-pressed='true'] {
-		@include calendar-chosen($border: true);
-	}
-
-	&:focus-visible {
-		@include control-focus-ring(0);
-	}
-}
+// "Art" tiles: appointmentKindTiles.styles.scss (shared with "Termin
+// anlegen" in a 1:1, one invitation flow).
 
 .calendarDialog__weekdays {
 	display: flex;

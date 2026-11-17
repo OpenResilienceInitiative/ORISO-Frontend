@@ -7,21 +7,20 @@
 import * as React from 'react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-	apiCreateSessionAppointment,
-	apiMoveSessionAppointment
-} from '../../../api/apiSessionAppointments';
+import { apiMoveSessionAppointment } from '../../../api/apiSessionAppointments';
 import { FETCH_ERRORS } from '../../../api/fetchData';
 import {
-	apiCreateSessionDirectInvitation,
 	isRoomNotEncryptedError,
 	notifyDirectLinksChanged
 } from '../../../api/apiDirectLinks';
 import type { DirectLink } from '../../conversationCreate/directLink/directLink';
 import { DirectLinkShareDialog } from '../../conversationCreate/directLink/DirectLinkShareDialog';
-import { directInvitationSettings } from '../../directInvitation/directInvitationSettings';
 import { InvitationDialog } from '../../directInvitation/InvitationDialog';
 import type { InvitationDialogValue } from '../../directInvitation/invitationModel';
+import {
+	InvitationAfterAppointmentError,
+	saveAppointmentInvitation
+} from '../../directInvitation/saveAppointmentInvitation';
 import {
 	notifyAppointmentsChanged,
 	toAppointmentSlot
@@ -67,6 +66,13 @@ export const AppointmentDateDialog = ({
 	/* #2252: the invitation link, shown once the appointment exists. */
 	const [shared, setShared] = useState<DirectLink>();
 
+	/* The appointment exists although its link failed: a retry only adds
+	   the link (one save path with the calendar). */
+	const [savedAppointment, setSavedAppointment] = useState<{
+		appointmentId: string;
+		slot: { start: Date; end: Date };
+	}>();
+
 	const save = async (value: InvitationDialogValue) => {
 		const { appointment } = value;
 		if (!appointment) return;
@@ -74,23 +80,54 @@ export const AppointmentDateDialog = ({
 		const withInvite = !isMove && allowGuestInvite && value.link !== null;
 		setSaving(true);
 		setError(undefined);
-		const slot = toAppointmentSlot(start, end);
 		let invitation: DirectLink | undefined;
 		try {
-			if (withInvite) {
-				/* One call: the backend creates the appointment and binds the
-				   invitation to it, so a refusal leaves no appointment behind. */
-				invitation = await apiCreateSessionDirectInvitation(
+			if (isMove) {
+				await apiMoveSessionAppointment(
 					sessionId,
-					directInvitationSettings(value)
+					appointmentId,
+					toAppointmentSlot(start, end)
 				);
 			} else {
-				await (isMove
-					? apiMoveSessionAppointment(sessionId, appointmentId, slot)
-					: apiCreateSessionAppointment(sessionId, slot));
+				invitation = (
+					await saveAppointmentInvitation({
+						sessionId,
+						slot: appointment,
+						kind: value.kind,
+						link: withInvite ? value.link : null,
+						saved: savedAppointment
+					})
+				).invitation;
 			}
 		} catch (cause) {
 			setSaving(false);
+			if (cause instanceof InvitationAfterAppointmentError) {
+				const firstTime = savedAppointment === undefined;
+				setSavedAppointment({
+					appointmentId: cause.appointmentId,
+					slot: appointment
+				});
+				setError(
+					(await isRoomNotEncryptedError(cause.cause))
+						? `${t('directInvitation.dialog.roomNotEncrypted')} ${t(
+								'directInvitation.dialog.appointmentSaved'
+							)}`
+						: t(
+								'directInvitation.dialog.linkFailedAfterAppointment'
+							)
+				);
+				if (firstTime) {
+					notifyAppointmentsChanged();
+					await sendNotice({
+						kind: 'created',
+						start,
+						end,
+						sessionId,
+						matrixRoomId
+					});
+				}
+				return;
+			}
 			setError(
 				(await isRoomNotEncryptedError(cause))
 					? t('directInvitation.dialog.roomNotEncrypted')
@@ -110,6 +147,8 @@ export const AppointmentDateDialog = ({
 		} else {
 			onClose();
 		}
+		/* A retry after a failed link left its notice already. */
+		if (savedAppointment !== undefined) return;
 		await sendNotice({
 			kind: isMove ? 'moved' : 'created',
 			start,
@@ -136,6 +175,7 @@ export const AppointmentDateDialog = ({
 			mode={isMove ? 'edit' : 'create'}
 			initial={entry ? { start: entry.start, end: entry.end } : undefined}
 			allowGuestInvite={!isMove && allowGuestInvite}
+			withKind={!isMove}
 			onSubmit={save}
 			onClose={onClose}
 			saving={saving}

@@ -1,30 +1,53 @@
 /**
- * The one dialog for a Direkteinladung and for "Termin anlegen" in a 1:1
- * conversation (#2252, decision 5). Presentational: it validates the slot
- * and hands the value to `onSubmit`; saving, API errors and notices belong
- * to the caller.
+ * The one form for a Direkteinladung, for "Termin anlegen" in a 1:1
+ * conversation and for a calendar appointment (#2252, decision 5: one
+ * appointment type, one shared dialog). Presentational: it validates and
+ * hands the value to `onSubmit`; saving, API errors and notices belong to
+ * the caller.
+ *
+ * Every door shows the same sections in the same order and asks only what
+ * it does not know yet:
+ *
+ *   Beratung (calendar only) → Termin → Art → Weitere Personen per Link
+ *   einladen → link settings → conflict note
  *
  * - `variant="invitation"`: date optional. Without one, every person who
  *   opens the link gets their own conversation; with one, they share one
  *   appointment conversation, valid until end + validity.
  * - `variant="appointment"`: date required. `allowGuestInvite` adds the
  *   section "Weitere Personen per Link einladen" (e.g. an interpreter).
+ *
+ * `useInvitationForm` is the form without its frame, so the calendar's
+ * "Neuer Eintrag" can show it as its "Termin" tab; `InvitationDialog` is the
+ * frame "Chat erstellen" and the 1:1 use.
  */
 import * as React from 'react';
 import { useId, useState } from 'react';
 import dayjs, { type Dayjs } from 'dayjs';
 import { useTranslation } from 'react-i18next';
 import { ToggleButton, ToggleButtonGroup } from '@mui/material';
+import EventOutlinedIcon from '@mui/icons-material/EventOutlined';
+import LinkOutlinedIcon from '@mui/icons-material/LinkOutlined';
+import { OrisoCalendar } from '../form/OrisoCalendar';
 import { OrisoDatePicker } from '../form/OrisoDatePicker';
+import { OrisoSelect } from '../form/OrisoSelect';
 import { OrisoTimePicker } from '../form/OrisoTimePicker';
-import { M3Dialog } from '../m3Dialog/M3Dialog';
+import { M3Dialog, type M3DialogAction } from '../m3Dialog/M3Dialog';
 import { Switch } from '../Switch';
 import { appointmentSlotError } from '../sessionsList/timeline/conversationAppointments';
+import { AppointmentKindTiles } from '../calendar/AppointmentKindTiles';
+import {
+	DEFAULT_APPOINTMENT_KIND,
+	type AppointmentKind
+} from '../calendar/calendarModel';
+import { useDayLabels } from '../calendar/useEntryLabel';
 import {
 	DEFAULT_LINK_SETTINGS,
 	INVITATION_ACCESS,
 	type InvitationAccess,
-	type InvitationDialogValue
+	type InvitationDialogValue,
+	type InvitationPreset,
+	type InvitationSlot
 } from './invitationModel';
 import { ValidityStepper } from './ValidityStepper';
 import '../conversationCreate/directLink/directLink.styles.scss';
@@ -34,6 +57,8 @@ const SLOT = 'sessionList.timeline.appointment.dialog';
 const KEYS = 'directInvitation.dialog';
 const DEFAULT_HOUR = 10;
 const DEFAULT_MINUTES = 60;
+/** The "Beratung" choice that hands over to a Direkteinladung. */
+const NEW_PERSON = 'new-person';
 
 const at = (day: Dayjs | null, time: Dayjs | null) =>
 	day && time
@@ -57,9 +82,30 @@ export interface InvitationDialogInitial {
 	validityMinutes?: number;
 	access?: InvitationAccess;
 	knock?: boolean;
+	/** With `withKind`: the preselected Art (default video). */
+	kind?: AppointmentKind;
 }
 
-export interface InvitationDialogProps {
+/** Door C (calendar): the conversation is not known yet. */
+export interface InvitationConversationChoice {
+	options: { sessionId: number; label: string }[];
+	initial?: number;
+	/**
+	 * Offers "Neue Person per Direkteinladung …": hands the time and Art to
+	 * the Direkteinladung of "Chat erstellen" (door A) instead of saving.
+	 */
+	onInviteNewPerson?: (preset: InvitationPreset) => void;
+}
+
+/** What a conflict with other entries means for this slot. */
+export interface InvitationConflict {
+	/** Already translated, e.g. "Überschneidet sich mit: …". */
+	note: string;
+	/** The primary action while it conflicts, e.g. "Trotzdem anlegen". */
+	actionLabel: string;
+}
+
+export interface InvitationFormProps {
 	variant: InvitationDialogVariant;
 	/** `edit`: change an existing invitation / move an appointment. */
 	mode?: 'create' | 'edit';
@@ -73,11 +119,71 @@ export interface InvitationDialogProps {
 	saving?: boolean;
 	/** Already-translated error from the caller (e.g. the API refused). */
 	error?: string;
+	/** Appointment variant: ask the Art (Vor Ort, Video, Telefon, Chat). */
+	withKind?: boolean;
+	/** Ask for the conversation first (the calendar does not know it). */
+	conversations?: InvitationConversationChoice;
+	/**
+	 * What the door already knows and does not ask again: a calendar slot
+	 * gives the time (`initial.start`/`end`), a slot with a kind the Art.
+	 */
+	known?: { slot?: boolean; kind?: boolean };
+	/** `month`: the month next to the fields (the calendar's "+"); default a date field. */
+	dateLayout?: 'field' | 'month';
+	/** Overlaps with the counsellor's other entries for a slot, if any. */
+	conflicts?: (slot: InvitationSlot) => InvitationConflict | undefined;
+	/** "Now" for the past check; stories and tests pin it. */
+	now?: Date;
+	/** Replaces the frame's description, e.g. the calendar slot's range. */
+	description?: React.ReactNode;
+	/** Replaces the icon above the title, e.g. the slot's kind. */
+	icon?: React.ReactNode;
+	/** Test ids the door's own tests rely on. */
+	testIds?: { root?: string; submit?: string };
+}
+
+export interface InvitationDialogProps extends InvitationFormProps {
 	/** M3 full-screen presentation on phones; the caller picks the breakpoint. */
 	fullScreen?: boolean;
 }
 
-export const InvitationDialog = ({
+/** The form without its frame: what the frame shows around it and the content. */
+export interface InvitationForm {
+	title: string;
+	description: React.ReactNode;
+	icon: React.ReactNode;
+	width: number;
+	actions: M3DialogAction[];
+	content: React.ReactNode;
+	testId: string;
+}
+
+/** The calendar's "+": the month to pick the day ("da müsste dann der Kalender sein"). */
+const InvitationMonth = ({
+	value,
+	onChange,
+	now
+}: {
+	value: Dayjs | null;
+	onChange: (day: Dayjs | null) => void;
+	now?: Date;
+}) => {
+	const dayLabels = useDayLabels();
+	return (
+		<div className="invitationDialog__month">
+			<OrisoCalendar
+				value={value}
+				onChange={onChange}
+				minDate={dayjs(now).startOf('day')}
+				weekStart={1}
+				dayLabels={dayLabels}
+				disableContainer
+			/>
+		</div>
+	);
+};
+
+export const useInvitationForm = ({
 	variant,
 	mode = 'create',
 	initial = {},
@@ -86,14 +192,23 @@ export const InvitationDialog = ({
 	onClose,
 	saving = false,
 	error,
-	fullScreen = false
-}: InvitationDialogProps) => {
+	withKind = false,
+	conversations,
+	known = {},
+	dateLayout = 'field',
+	conflicts,
+	now,
+	description,
+	icon,
+	testIds = {}
+}: InvitationFormProps): InvitationForm => {
 	const { t } = useTranslation();
 	const id = useId();
 	const isInvitation = variant === 'invitation';
+	const slotKnown = Boolean(known.slot && initial.start && initial.end);
 	const initialStart = initial.start
 		? dayjs(initial.start)
-		: dayjs().add(1, 'day').hour(DEFAULT_HOUR).minute(0);
+		: dayjs(now).add(1, 'day').hour(DEFAULT_HOUR).minute(0);
 	const [withAppointment, setWithAppointment] = useState(
 		isInvitation ? Boolean(initial.withAppointment ?? initial.start) : true
 	);
@@ -106,6 +221,14 @@ export const InvitationDialog = ({
 		initial.end
 			? dayjs(initial.end)
 			: initialStart.add(DEFAULT_MINUTES, 'minute')
+	);
+	const [kind, setKind] = useState<AppointmentKind>(
+		initial.kind ?? DEFAULT_APPOINTMENT_KIND
+	);
+	const [conversation, setConversation] = useState<string>(
+		conversations?.initial === undefined
+			? ''
+			: String(conversations.initial)
 	);
 	const [validity, setValidity] = useState(
 		initial.validityMinutes ?? DEFAULT_LINK_SETTINGS.validityMinutes
@@ -121,15 +244,30 @@ export const InvitationDialog = ({
 		access: false,
 		knock: false
 	});
-	const [slotError, setSlotError] = useState<string>();
+	const [formError, setFormError] = useState<{
+		text: string;
+		field?: 'conversation';
+	}>();
 
-	const showLinkSettings = isInvitation || (allowGuestInvite && inviteOthers);
+	const newPerson = conversation === NEW_PERSON;
+	const showLinkSettings =
+		isInvitation || (allowGuestInvite && inviteOthers && !newPerson);
+	/* A known slot keeps its own end date (23:00 to midnight, over night). */
+	const slot: Partial<InvitationSlot> = slotKnown
+		? { start: initial.start, end: initial.end }
+		: {
+				start: at(day, startTime) ?? undefined,
+				end: at(day, endTime) ?? undefined
+			};
+	const conflict =
+		withAppointment && conflicts && slot.start && slot.end
+			? conflicts({ start: slot.start, end: slot.end })
+			: undefined;
 
 	const submit = () => {
 		let appointment: InvitationDialogValue['appointment'] = null;
 		if (withAppointment) {
-			const start = at(day, startTime);
-			const end = at(day, endTime);
+			const { start, end } = slot;
 			/* An appointment which has already started may still be edited (for
 			   example to extend its validity). Keep accepting its original start,
 			   while a newly selected start must still be in the future. */
@@ -143,15 +281,29 @@ export const InvitationDialog = ({
 				{ start, end },
 				unchangedStart && start
 					? new Date(start.getTime() - 1)
-					: new Date()
+					: (now ?? new Date())
 			);
 			if (problem || !start || !end) {
-				setSlotError(t(`${SLOT}.error.${problem}`));
+				setFormError({ text: t(`${SLOT}.error.${problem}`) });
 				return;
 			}
 			appointment = { start, end };
 		}
-		setSlotError(undefined);
+		if (conversations && conversation === '') {
+			setFormError({
+				text: t('calendar.dialog.error.conversation'),
+				field: 'conversation'
+			});
+			return;
+		}
+		setFormError(undefined);
+		if (newPerson && appointment) {
+			conversations?.onInviteNewPerson?.({
+				...appointment,
+				...(withKind ? { kind } : {})
+			});
+			return;
+		}
 		const initialAppointment = initial.start && initial.end;
 		onSubmit({
 			appointment,
@@ -162,6 +314,8 @@ export const InvitationDialog = ({
 						knock
 					}
 				: null,
+			...(withKind ? { kind } : {}),
+			...(conversations ? { sessionId: Number(conversation) } : {}),
 			...(mode === 'edit'
 				? {
 						changed: {
@@ -187,10 +341,18 @@ export const InvitationDialog = ({
 	const title = isInvitation
 		? t(`${KEYS}.${mode === 'edit' ? 'editTitle' : 'createTitle'}`)
 		: t(`${SLOT}.${mode === 'edit' ? 'moveTitle' : 'createTitle'}`);
-	const action = isInvitation
-		? t(`${KEYS}.${mode === 'edit' ? 'saveAction' : 'createAction'}`)
-		: t(`${SLOT}.${mode === 'edit' ? 'moveAction' : 'createAction'}`);
-	const shownError = slotError ?? error;
+	const action = newPerson
+		? t(`${KEYS}.newPerson.action`)
+		: (conflict?.actionLabel ??
+			(isInvitation
+				? t(
+						`${KEYS}.${mode === 'edit' ? 'saveAction' : 'createAction'}`
+					)
+				: t(
+						`${SLOT}.${mode === 'edit' ? 'moveAction' : 'createAction'}`
+					)));
+	const shownError = formError?.text ?? error;
+	const month = dateLayout === 'month' && withAppointment && !slotKnown;
 
 	const switchRow = (
 		key: string,
@@ -219,157 +381,239 @@ export const InvitationDialog = ({
 		</div>
 	);
 
-	return (
-		<M3Dialog
-			open
-			data-testid="invitation-dialog"
-			title={title}
-			description={
-				isInvitation
-					? t(`${KEYS}.description`)
-					: t(`${SLOT}.description`)
-			}
-			width={480}
-			fullScreen={fullScreen}
-			onClose={onClose}
-			closeLabel={t('app.close')}
-			actions={[
-				{ label: t('app.cancel'), onClick: onClose },
-				{
-					label: action,
-					onClick: submit,
-					primary: true,
-					disabled: saving,
-					busy: saving
-				}
-			]}
-		>
-			<div className="invitationDialog">
-				{/* Editing keeps the appointment: the backend cannot drop
-				    one from an invitation, only move it. */}
-				{isInvitation &&
-					mode !== 'edit' &&
-					switchRow(
-						'withAppointment',
-						withAppointment,
-						setWithAppointment,
-						t(
-							`${KEYS}.${withAppointment ? 'withAppointmentHint' : 'withoutAppointmentHint'}`
-						)
+	const fields = (
+		<div className="invitationDialog__fields">
+			{conversations && (
+				<section data-section="conversation">
+					<OrisoSelect
+						label={t('calendar.dialog.conversation')}
+						value={conversation}
+						options={[
+							...conversations.options.map((option) => ({
+								value: String(option.sessionId),
+								label: option.label
+							})),
+							...(conversations.onInviteNewPerson
+								? [
+										{
+											value: NEW_PERSON,
+											label: t(`${KEYS}.newPerson.option`)
+										}
+									]
+								: [])
+						]}
+						onChange={(event) =>
+							setConversation(String(event.target.value))
+						}
+						error={formError?.field === 'conversation'}
+						fullWidth
+					/>
+					{newPerson && (
+						<p className="invitationDialog__hint" role="status">
+							{t(`${KEYS}.newPerson.hint`)}
+						</p>
 					)}
-				{withAppointment && (
-					<section className="invitationDialog__slot">
+				</section>
+			)}
+			{/* Editing keeps the appointment: the backend cannot drop
+			    one from an invitation, only move it. */}
+			{isInvitation &&
+				mode !== 'edit' &&
+				switchRow(
+					'withAppointment',
+					withAppointment,
+					setWithAppointment,
+					t(
+						`${KEYS}.${withAppointment ? 'withAppointmentHint' : 'withoutAppointmentHint'}`
+					)
+				)}
+			{withAppointment && !slotKnown && (
+				<section className="invitationDialog__slot" data-section="slot">
+					{!month && (
 						<OrisoDatePicker
 							label={t(`${SLOT}.date`)}
 							value={day}
 							onChange={setDay}
-							minDate={dayjs().startOf('day')}
+							minDate={dayjs(now).startOf('day')}
 							weekStart={1}
 						/>
-						<div className="invitationDialog__times">
-							<OrisoTimePicker
-								label={t(`${SLOT}.start`)}
-								ampm={false}
-								value={startTime}
-								onChange={setStartTime}
-								cancelLabel={t('app.cancel')}
-							/>
-							<OrisoTimePicker
-								label={t(`${SLOT}.end`)}
-								ampm={false}
-								value={endTime}
-								onChange={setEndTime}
-								cancelLabel={t('app.cancel')}
-							/>
-						</div>
-					</section>
-				)}
-				{!isInvitation && allowGuestInvite && (
-					<section
-						className="invitationDialog__invite"
-						aria-labelledby={`${id}-inviteOthers`}
-					>
-						{switchRow(
-							'inviteOthers',
-							inviteOthers,
-							setInviteOthers,
-							t(`${KEYS}.inviteOthersHint`)
-						)}
-					</section>
-				)}
-				{showLinkSettings && (
-					<>
-						{withAppointment && (
-							<ValidityStepper
-								value={validity}
-								onChange={(value) => {
-									setValidity(value);
-									setChangedLink((before) => ({
-										...before,
-										validityMinutes: true
-									}));
-								}}
-							/>
-						)}
-						<div className="invitationDialog__access">
-							<span
-								id={`${id}-access`}
-								className="invitationDialog__label"
-							>
-								{t(`${KEYS}.access.label`)}
-							</span>
-							<ToggleButtonGroup
-								exclusive
-								fullWidth
-								size="small"
-								color="primary"
-								aria-labelledby={`${id}-access`}
-								value={access}
-								onChange={(
-									_event,
-									value: InvitationAccess | null
-								) => {
-									/* Exclusive and required: a second click keeps it. */
-									if (value) {
-										setAccess(value);
-										setChangedLink((before) => ({
-											...before,
-											access: true
-										}));
-									}
-								}}
-							>
-								{INVITATION_ACCESS.map((value) => (
-									<ToggleButton
-										key={value}
-										value={value}
-										sx={{ textTransform: 'none' }}
-									>
-										{t(`${KEYS}.access.${value}`)}
-									</ToggleButton>
-								))}
-							</ToggleButtonGroup>
-						</div>
-						{switchRow(
-							'knock',
-							knock,
-							(value) => {
-								setKnock(value);
+					)}
+					<div className="invitationDialog__times">
+						<OrisoTimePicker
+							label={t(`${SLOT}.start`)}
+							ampm={false}
+							value={startTime}
+							onChange={setStartTime}
+							cancelLabel={t('app.cancel')}
+						/>
+						<OrisoTimePicker
+							label={t(`${SLOT}.end`)}
+							ampm={false}
+							value={endTime}
+							onChange={setEndTime}
+							cancelLabel={t('app.cancel')}
+						/>
+					</div>
+				</section>
+			)}
+			{withKind && !known.kind && (
+				<AppointmentKindTiles value={kind} onChange={setKind} />
+			)}
+			{!isInvitation && allowGuestInvite && !newPerson && (
+				<section
+					className="invitationDialog__invite"
+					aria-labelledby={`${id}-inviteOthers`}
+					data-section="invite"
+				>
+					{switchRow(
+						'inviteOthers',
+						inviteOthers,
+						setInviteOthers,
+						t(`${KEYS}.inviteOthersHint`)
+					)}
+				</section>
+			)}
+			{showLinkSettings && (
+				<div className="invitationDialog__link" data-section="link">
+					{withAppointment && (
+						<ValidityStepper
+							value={validity}
+							onChange={(value) => {
+								setValidity(value);
 								setChangedLink((before) => ({
 									...before,
-									knock: true
+									validityMinutes: true
 								}));
-							},
-							t(`${KEYS}.knockHint`)
-						)}
-					</>
+							}}
+						/>
+					)}
+					<div className="invitationDialog__access">
+						<span
+							id={`${id}-access`}
+							className="invitationDialog__label"
+						>
+							{t(`${KEYS}.access.label`)}
+						</span>
+						<ToggleButtonGroup
+							exclusive
+							fullWidth
+							size="small"
+							color="primary"
+							aria-labelledby={`${id}-access`}
+							value={access}
+							onChange={(
+								_event,
+								value: InvitationAccess | null
+							) => {
+								/* Exclusive and required: a second click keeps it. */
+								if (value) {
+									setAccess(value);
+									setChangedLink((before) => ({
+										...before,
+										access: true
+									}));
+								}
+							}}
+						>
+							{INVITATION_ACCESS.map((value) => (
+								<ToggleButton
+									key={value}
+									value={value}
+									sx={{ textTransform: 'none' }}
+								>
+									{t(`${KEYS}.access.${value}`)}
+								</ToggleButton>
+							))}
+						</ToggleButtonGroup>
+					</div>
+					{switchRow(
+						'knock',
+						knock,
+						(value) => {
+							setKnock(value);
+							setChangedLink((before) => ({
+								...before,
+								knock: true
+							}));
+						},
+						t(`${KEYS}.knockHint`)
+					)}
+				</div>
+			)}
+			{conflict && (
+				<p
+					className="invitationDialog__hint"
+					role="status"
+					data-section="conflict"
+				>
+					{conflict.note}
+				</p>
+			)}
+			{shownError && (
+				<p className="invitationDialog__error" role="alert">
+					{shownError}
+				</p>
+			)}
+		</div>
+	);
+
+	return {
+		title,
+		description:
+			description ??
+			(isInvitation
+				? t(`${KEYS}.description`)
+				: t(`${SLOT}.description`)),
+		/* Every creation dialog has an icon above its title (Frank *1). */
+		icon:
+			icon ??
+			(isInvitation ? <LinkOutlinedIcon /> : <EventOutlinedIcon />),
+		width: month ? 680 : 480,
+		testId: testIds.root ?? 'invitation-dialog',
+		actions: [
+			{ label: t('app.cancel'), onClick: onClose },
+			{
+				label: action,
+				onClick: submit,
+				primary: true,
+				disabled: saving,
+				busy: saving,
+				...(testIds.submit ? { testId: testIds.submit } : {})
+			}
+		],
+		content: (
+			<div
+				className={`invitationDialog${month ? ' invitationDialog--withMonth' : ''}`}
+			>
+				{month && (
+					<InvitationMonth value={day} onChange={setDay} now={now} />
 				)}
-				{shownError && (
-					<p className="invitationDialog__error" role="alert">
-						{shownError}
-					</p>
-				)}
+				{fields}
 			</div>
+		)
+	};
+};
+
+export const InvitationDialog = ({
+	fullScreen = false,
+	...props
+}: InvitationDialogProps) => {
+	const { t } = useTranslation();
+	const form = useInvitationForm(props);
+	return (
+		<M3Dialog
+			open
+			data-testid={form.testId}
+			title={form.title}
+			description={form.description}
+			icon={form.icon}
+			width={form.width}
+			fullScreen={fullScreen}
+			onClose={props.onClose}
+			closeLabel={t('app.close')}
+			actions={form.actions}
+		>
+			{form.content}
 		</M3Dialog>
 	);
 };

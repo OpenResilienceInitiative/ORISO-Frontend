@@ -32,6 +32,22 @@ vi.mock('./CalendarPage', () => ({
 }));
 const navigate = vi.fn();
 vi.mock('react-router-dom', () => ({ useNavigate: () => navigate }));
+/* "Direkteinladung erlauben" needs the tenant and agencies; off unless a
+   test switches it on. */
+const directLinks = vi.hoisted(() => ({ allowed: false }));
+vi.mock('../directLinks/useDirectLinksAllowed', () => ({
+	useDirectLinksAllowed: () => directLinks.allowed
+}));
+const { invite } = vi.hoisted(() => ({ invite: vi.fn() }));
+vi.mock('../../api/apiDirectLinks', async (importOriginal) => ({
+	...(await importOriginal<typeof import('../../api/apiDirectLinks')>()),
+	apiCreateSessionDirectInvitation: invite
+}));
+vi.mock('../conversationCreate/directLink/DirectLinkShareDialog', () => ({
+	DirectLinkShareDialog: ({ link }: { link: { url: string } }) => (
+		<div data-testid="share-dialog">{link.url}</div>
+	)
+}));
 // The screen width the media queries answer for. react-responsive takes
 // window.matchMedia when it loads, so the stand-in goes in first.
 const screen = vi.hoisted(() => {
@@ -141,6 +157,7 @@ const showWeek = () =>
 	);
 
 afterEach(() => {
+	directLinks.allowed = false;
 	cleanup();
 	vi.useRealTimers();
 	screen.width = 1440;
@@ -278,6 +295,113 @@ describe('CalendarPageWired', () => {
 				matrixRoomId: '!room:oriso'
 			})
 		);
+	});
+
+	describe('one invitation flow with "Chat erstellen" and the 1:1', () => {
+		it('offers the link and the new person only where "Direkteinladung erlauben" allows it', async () => {
+			render(<CalendarPageWired />);
+			await showWeek();
+			expect(props.allowGuestInvite).toBe(false);
+			expect(props.onInviteNewPerson).toBeUndefined();
+		});
+
+		it('hands a new person to "Chat erstellen" with the slot and Art', async () => {
+			directLinks.allowed = true;
+			render(<CalendarPageWired />);
+			await showWeek();
+			expect(props.allowGuestInvite).toBe(true);
+			const start = new Date('2026-11-17T09:00:00Z');
+			const end = new Date('2026-11-17T10:00:00Z');
+			act(() =>
+				props.onInviteNewPerson?.({ start, end, kind: 'onsite' })
+			);
+			expect(navigate).toHaveBeenCalledWith(
+				'/sessions/consultant/sessionView/createGroupChat/',
+				{
+					state: {
+						invitationPreset: {
+							start: start.toISOString(),
+							end: end.toISOString(),
+							kind: 'onsite'
+						}
+					}
+				}
+			);
+		});
+
+		it('binds the invitation to the new appointment and shows its link', async () => {
+			directLinks.allowed = true;
+			appointments.apiCreateSessionAppointment.mockResolvedValue({
+				id: 'a9'
+			} as never);
+			invite.mockResolvedValue({ id: 'l1', url: 'https://x/invite/t1' });
+			const view = render(<CalendarPageWired />);
+			await showWeek();
+			await waitFor(() => expect(props.conversations).toHaveLength(1));
+			const start = new Date('2026-11-17T09:00:00Z');
+			const end = new Date('2026-11-17T10:00:00Z');
+			await act(() =>
+				props.onCreate?.([
+					{
+						type: 'appointment',
+						start,
+						end,
+						kind: 'video',
+						sessionId: 4401,
+						link: {
+							validityMinutes: 1440,
+							access: 'both',
+							knock: true
+						}
+					}
+				])
+			);
+			expect(invite).toHaveBeenCalledWith(4401, {
+				appointmentId: 'a9',
+				medium: 'VIDEO',
+				validityAfterEndMinutes: 1440,
+				accessMode: 'BOTH',
+				knock: true
+			});
+			expect((await view.findByTestId('share-dialog')).textContent).toBe(
+				'https://x/invite/t1'
+			);
+			expect(sendNotice).toHaveBeenCalledWith(
+				expect.objectContaining({ kind: 'created', sessionId: 4401 })
+			);
+		});
+
+		it('keeps the appointment when only its link fails', async () => {
+			directLinks.allowed = true;
+			appointments.apiCreateSessionAppointment.mockResolvedValue({
+				id: 'a9'
+			} as never);
+			invite.mockRejectedValue(new Response(null, { status: 409 }));
+			render(<CalendarPageWired />);
+			await showWeek();
+			await waitFor(() => expect(props.conversations).toHaveLength(1));
+			await expect(
+				act(() =>
+					props.onCreate?.([
+						{
+							type: 'appointment',
+							start: new Date('2026-11-17T09:00:00Z'),
+							end: new Date('2026-11-17T10:00:00Z'),
+							kind: 'video',
+							sessionId: 4401,
+							link: {
+								validityMinutes: 60,
+								access: 'both',
+								knock: true
+							}
+						}
+					])
+				)
+			).resolves.toBeUndefined();
+			expect(sendNotice).toHaveBeenCalledWith(
+				expect.objectContaining({ kind: 'created' })
+			);
+		});
 	});
 
 	it('loads the working hours sorted and saves them through UserService', async () => {

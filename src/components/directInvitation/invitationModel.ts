@@ -2,6 +2,9 @@
  * Direkteinladung (#2252): the values the shared invitation/appointment
  * dialog hands back, and the time rules of the entry page.
  */
+import { calendarLocale } from '../calendar/calendarLocale';
+import type { AppointmentKind } from '../calendar/calendarModel';
+import type { DirectLinkMedium } from '../conversationCreate/directLink/directLink';
 import { DEFAULT_VALIDITY_MINUTES } from './invitationValidity';
 
 /** Who may come in through the link (decision 8). */
@@ -37,6 +40,10 @@ export interface InvitationDialogValue {
 	 * in a 1:1 only when more people are invited by link.
 	 */
 	link: InvitationLinkSettings | null;
+	/** The Art, when the door asks it (`withKind`). */
+	kind?: AppointmentKind;
+	/** The conversation, when the door asks it (the calendar). */
+	sessionId?: number;
 	/** Fields actually changed by an edit; omitted when creating. */
 	changed?: {
 		appointment: boolean;
@@ -45,6 +52,78 @@ export interface InvitationDialogValue {
 		knock: boolean;
 	};
 }
+
+/**
+ * What another door already knows when it hands over to the Direkteinladung
+ * of "Chat erstellen": the calendar's "Neue Person per Direkteinladung …"
+ * passes its slot and Art, so the invitation opens with that appointment.
+ */
+export interface InvitationPreset extends InvitationSlot {
+	kind?: AppointmentKind;
+}
+
+/**
+ * The link medium for an Art. "Vor Ort" meets in person; its link opens the
+ * chat. "Telefon" is an ORISO audio call.
+ */
+export const MEDIUM_FOR_KIND: Readonly<
+	Record<AppointmentKind, DirectLinkMedium>
+> = {
+	video: 'VIDEO',
+	phone: 'AUDIO',
+	chat: 'CHAT',
+	onsite: 'CHAT'
+};
+
+/** The location state "Chat erstellen" reads its preset from. */
+export interface InvitationPresetState {
+	invitationPreset?: { start: string; end: string; kind?: AppointmentKind };
+}
+
+/** A preset as router state (plain values; dates as ISO strings). */
+export const toInvitationPresetState = (
+	preset: InvitationPreset
+): InvitationPresetState => ({
+	invitationPreset: {
+		start: preset.start.toISOString(),
+		end: preset.end.toISOString(),
+		...(preset.kind ? { kind: preset.kind } : {})
+	}
+});
+
+/** The preset back from router state; anything unreadable is no preset. */
+export const fromInvitationPresetState = (
+	state: unknown
+): InvitationPreset | undefined => {
+	const raw = (state as InvitationPresetState | null | undefined)
+		?.invitationPreset;
+	if (!raw) return undefined;
+	const start = new Date(raw.start);
+	const end = new Date(raw.end);
+	if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()))
+		return undefined;
+	if (end.getTime() <= start.getTime()) return undefined;
+	return {
+		start,
+		end,
+		...(raw.kind && raw.kind in MEDIUM_FOR_KIND ? { kind: raw.kind } : {})
+	};
+};
+
+/** "Mo., 16. Nov., 14:00–15:00" in the UI language (de@informal too). */
+export const formatPresetRange = (slot: InvitationSlot, language: string) => {
+	const locale = calendarLocale(language);
+	const day = new Intl.DateTimeFormat(locale, {
+		weekday: 'short',
+		day: 'numeric',
+		month: 'short'
+	}).format(slot.start);
+	const time = new Intl.DateTimeFormat(locale, {
+		hour: '2-digit',
+		minute: '2-digit'
+	});
+	return `${day}, ${time.format(slot.start)}–${time.format(slot.end)}`;
+};
 
 export const DEFAULT_LINK_SETTINGS: Readonly<{
 	validityMinutes: number;
