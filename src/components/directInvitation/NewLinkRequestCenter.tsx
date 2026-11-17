@@ -49,6 +49,8 @@ export const NewLinkRequestCenter = ({
 	   a later request for the same invitation must pop up again even when the
 	   earlier one was read in the same feed update. */
 	const shown = useRef(new Set<string>());
+	/* Invitations with a pop-up on the stack. */
+	const queued = useRef(new Set<string>());
 
 	/* Unread requests by invitation; older rows of the same one go along. */
 	const open = useMemo(() => {
@@ -101,13 +103,20 @@ export const NewLinkRequestCenter = ({
 		};
 	}, [open, unknown]);
 
-	/* Forget requests that are no longer unread. */
+	/* Forget requests that are no longer unread. An invitation left without
+	   unread requests loses its pop-up: another tab or device has renewed it,
+	   and a click here would renew again and expire the link just shared. */
 	useEffect(() => {
 		const unread = new Set([...open.values()].flat());
 		shown.current.forEach((id) => {
 			if (!unread.has(id)) shown.current.delete(id);
 		});
-	}, [open]);
+		queued.current.forEach((linkId) => {
+			if (open.has(linkId)) return;
+			queued.current.delete(linkId);
+			stack.dismiss(`new-link-request-${linkId}`);
+		});
+	}, [open, stack]);
 
 	const openRef = useRef(open);
 	openRef.current = open;
@@ -129,6 +138,7 @@ export const NewLinkRequestCenter = ({
 			   shows it without a name rather than not at all. */
 			if (!(linkId in names) && !settled.has(linkId)) return;
 			ids.forEach((id) => shown.current.add(id));
+			queued.current.add(linkId);
 			stack.enqueue(
 				newLinkRequestEntry(
 					{
