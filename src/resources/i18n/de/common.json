@@ -7396,7 +7396,7 @@
 		},
 		"internalChat": {
 			"title": "Personen verwalten",
-			"description": "Alle in diesem internen Chat können Kolleg:innen dazuholen. Nur die Besitzer:in kann Personen entfernen.",
+			"description": "Alle in diesem internen Chat können Kolleg:innen dazuholen.",
 			"membersTitle": "In diesem Chat",
 			"emptyMembers": "In diesem Chat ist noch niemand.",
 			"addTitle": "Kolleg:in hinzufügen",

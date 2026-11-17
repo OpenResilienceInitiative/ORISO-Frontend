@@ -7406,7 +7406,7 @@
 		},
 		"internalChat": {
 			"title": "Gérer les personnes",
-			"description": "Tous les membres de ce chat interne peuvent inviter des collègues. Seul le propriétaire peut retirer des personnes.",
+			"description": "Tous les membres de ce chat interne peuvent inviter des collègues.",
 			"membersTitle": "Dans ce chat",
 			"emptyMembers": "Personne n’est encore dans ce chat.",
 			"addTitle": "Ajouter un collègue",

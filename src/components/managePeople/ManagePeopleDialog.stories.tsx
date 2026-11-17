@@ -409,38 +409,6 @@ export const InternalChatAsMember: Story = {
 	}
 };
 
-/** The owner can also remove; a second click confirms inside the row. */
-export const InternalChatAsOwner: Story = {
-	render: () => (
-		<GroupStageDialog
-			options={{
-				kind: 'internalChat',
-				members: [
-					{ ...INTERNAL_MEMBERS[0], id: 'me', isSelf: true },
-					{ ...INTERNAL_MEMBERS[2], canRemove: true },
-					{
-						id: 'maggie',
-						name: 'Maggie Simpson',
-						role: 'coModerator',
-						canRemove: true,
-						canReplace: false
-					}
-				],
-				candidates: COLLEAGUES.slice(2, 4)
-			}}
-		/>
-	),
-	play: async () => {
-		const canvas = dialogCanvas();
-		await userEvent.click(
-			await canvas.findByRole('button', {
-				name: 'Herb Powell entfernen'
-			})
-		);
-		await canvas.findByText('Wirklich entfernen?');
-	}
-};
-
 /** A running group: moderation plus the invite link and QR code. */
 export const GroupChatWithInvite: Story = {
 	render: () => (

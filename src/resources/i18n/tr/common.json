@@ -7406,7 +7406,7 @@
 		},
 		"internalChat": {
 			"title": "Kişileri yönet",
-			"description": "Bu dahili sohbetteki herkes meslektaş ekleyebilir. Kişileri yalnızca sahibi çıkarabilir.",
+			"description": "Bu dahili sohbetteki herkes meslektaş ekleyebilir.",
 			"membersTitle": "Bu sohbette",
 			"emptyMembers": "Bu sohbette henüz kimse yok.",
 			"addTitle": "Meslektaş ekle",

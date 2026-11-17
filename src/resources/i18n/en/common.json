@@ -7321,7 +7321,7 @@
 		},
 		"internalChat": {
 			"title": "Manage people",
-			"description": "Everyone in this internal chat can bring in colleagues. Only the owner can remove people.",
+			"description": "Everyone in this internal chat can bring in colleagues.",
 			"membersTitle": "In this chat",
 			"emptyMembers": "Nobody is in this chat yet.",
 			"addTitle": "Add a colleague",
