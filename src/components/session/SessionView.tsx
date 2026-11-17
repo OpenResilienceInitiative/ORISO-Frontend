@@ -3,6 +3,7 @@ import { useSessionAgencyPolicy } from '../../hooks/useSessionAgencyPolicy';
 import * as React from 'react';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import {
+	matchPath,
 	Navigate,
 	useParams,
 	useNavigate,
@@ -47,6 +48,10 @@ import { knockableGroupId } from '../groupChat/joinRequest/knockableGroupId';
 import { groupInviteTokenFor } from '../groupChat/groupInviteTokenMemory';
 import { useSessionAvatarMembers } from '../../hooks/useSessionAvatarMembers';
 import { CaseHandoverOfferGate } from './CaseHandoverOfferGate';
+import {
+	ASKER_SESSION_DETAIL_PATH,
+	REJECTED_ENQUIRY_QUERY_PARAM
+} from '../app/routePaths';
 
 const positiveInteger = (value: string | null | undefined): number | null => {
 	if (!value || !/^\d+$/.test(value)) return null;
@@ -82,9 +87,14 @@ export const SessionView = () => {
 	}
 
 	const parsedSessionId = positiveInteger(sessionId);
-	const requestId = positiveInteger(
-		new URLSearchParams(search).get('caseHandoverRequestId')
-	);
+	const query = new URLSearchParams(search);
+	const requireRejectedEnquiry =
+		query.get(REJECTED_ENQUIRY_QUERY_PARAM) === '1' &&
+		matchPath(ASKER_SESSION_DETAIL_PATH, pathname) !== null;
+	if (requireRejectedEnquiry && parsedSessionId === null) {
+		return <Navigate to={sessionType.path} replace />;
+	}
+	const requestId = positiveInteger(query.get('caseHandoverRequestId'));
 	const isStableConsultantSessionRoute =
 		!groupId &&
 		parsedSessionId !== null &&
@@ -129,10 +139,15 @@ export const SessionView = () => {
 		);
 	}
 
-	return <SessionViewBody />;
+	return (
+		<SessionViewBody
+			key={requireRejectedEnquiry ? parsedSessionId : undefined}
+			requireRejectedEnquiry={requireRejectedEnquiry}
+		/>
+	);
 };
 
-const SessionViewBody = () => {
+const SessionViewBody = ({ requireRejectedEnquiry = false }) => {
 	const {
 		groupId: groupIdFromParam,
 		sessionId: sessionIdFromParam,
@@ -172,7 +187,8 @@ const SessionViewBody = () => {
 			!(
 				hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) ||
 				(userData?.userRoles || []).includes('CONSULTANT')
-			)
+			),
+		requireRejectedEnquiry
 	);
 
 	const sessionListTab = useSearchParam<SESSION_LIST_TAB>('sessionListTab');

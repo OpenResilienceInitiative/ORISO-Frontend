@@ -9,7 +9,7 @@ import {
 	waitFor
 } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vite-plus/test';
-import { CallTimelineMessage } from './CallTimelineMessage';
+import { CallTimelineMessage, formatCallDuration } from './CallTimelineMessage';
 import {
 	claimKnock,
 	isKnockClaimed,
@@ -44,12 +44,17 @@ const ui = vi.hoisted(() => ({ language: '' }));
 
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({
-		t: (key: string, values?: { start?: string; name?: string }) =>
+		t: (
+			key: string,
+			values?: { start?: string; name?: string; duration?: string }
+		) =>
 			values?.start
 				? `${key}: ${values.start}`
 				: values?.name
 					? `${key}: ${values.name}`
-					: key,
+					: values?.duration
+						? `${key}: ${values.duration}`
+						: key,
 		i18n: ui
 	})
 }));
@@ -224,9 +229,97 @@ it('does not describe an invitation timestamp as the call start', () => {
 	expect(
 		screen.queryByText(/message\.callLifecycle\.description\.ended:/)
 	).toBeNull();
+	// Only the description falls back to the label; the title is the call
+	// type (and topic), no longer the state a second time (#2237).
 	expect(screen.getAllByText('videoCall.timeline.video.ended')).toHaveLength(
-		2
+		1
 	);
+	expect(screen.getByText('message.callLifecycle.type.video')).toBeTruthy();
+});
+
+it('titles the card with the call type and the conversation topic (#2237)', () => {
+	const call: CallLifecycleMessage = {
+		callId: 'topic-call',
+		roomRef: '!source:example',
+		callRoomId: '!media:example',
+		callType: 'audio',
+		state: 'ended',
+		participants: []
+	};
+	render(
+		<ActiveSessionContext.Provider
+			value={
+				{
+					activeSession: { item: { topic: { name: 'Schulden' } } }
+				} as never
+			}
+		>
+			<CallTimelineMessage call={call} />
+		</ActiveSessionContext.Provider>
+	);
+	expect(
+		screen.getByText('message.callLifecycle.type.audio · Schulden')
+	).toBeTruthy();
+});
+
+it('counts a running call up every second from its start (#2237)', () => {
+	vi.useFakeTimers();
+	vi.setSystemTime(new Date('2026-11-12T22:00:00.000Z'));
+	try {
+		const call: CallLifecycleMessage = {
+			callId: 'live-call',
+			roomRef: '!source:example',
+			callRoomId: '!media:example',
+			callType: 'video',
+			state: 'running',
+			startedAt: '2026-11-12T21:55:58.000Z',
+			participants: []
+		};
+		render(<CallTimelineMessage call={call} />);
+		const timer = screen.getByRole('timer');
+		expect(timer.textContent).toContain('04:02');
+		act(() => {
+			vi.advanceTimersByTime(3000);
+		});
+		expect(timer.textContent).toContain('04:05');
+	} finally {
+		vi.useRealTimers();
+	}
+});
+
+it('shows when a missed call rang instead of repeating "missed" (#2237)', () => {
+	// The shown time follows the local zone; pin one with a whole-hour offset.
+	const runnerZone = process.env.TZ;
+	process.env.TZ = 'Europe/Berlin';
+	vi.useFakeTimers();
+	vi.setSystemTime(new Date('2026-11-13T15:00:00.000Z'));
+	try {
+		ui.language = 'de';
+		const call: CallLifecycleMessage = {
+			callId: 'missed-call',
+			roomRef: '!source:example',
+			callRoomId: '!media:example',
+			callType: 'video',
+			state: 'missed',
+			invitedAt: '2026-11-13T09:40:00.000Z',
+			participants: []
+		};
+		render(<CallTimelineMessage call={call} />);
+		const shown = screen.getByText(/\d{2}:40/, {
+			selector: '[data-cy="call-timeline-duration"]'
+		});
+		expect(shown.textContent).not.toContain('2026');
+	} finally {
+		ui.language = '';
+		vi.useRealTimers();
+		if (runnerZone === undefined) delete process.env.TZ;
+		else process.env.TZ = runnerZone;
+	}
+});
+
+it('formats call durations from one hour on with hours', () => {
+	expect(formatCallDuration(65)).toBe('01:05');
+	expect(formatCallDuration(3725)).toBe('1:02:05');
 });
 
 it('says who is in the call now, not who has ever been', () => {
@@ -555,6 +648,42 @@ it('names the caller in an internal group chat by the member display name, not t
 	expect(screen.queryByText(/blinky2/)).toBeNull();
 });
 
+it('names group-call participants by the member display name, not the login (#2237)', () => {
+	const call: CallLifecycleMessage = {
+		callId: 'running-group-call',
+		roomRef: '!group:example',
+		callRoomId: '!media:example',
+		callType: 'video',
+		state: 'running',
+		participants: [{ userId: '@blinky2:example', displayName: 'blinky2' }]
+	};
+	const activeSession = {
+		isGroup: true,
+		item: { moderators: [] }
+	} as unknown as ExtendedSessionInterface;
+	render(
+		<ActiveSessionContext.Provider
+			value={{
+				activeSession,
+				avatarMembers: [
+					{
+						_id: '@blinky2:example',
+						username: 'blinky2',
+						displayName: 'Blinky Zwei'
+					}
+				]
+			}}
+		>
+			<CallTimelineMessage call={call} />
+		</ActiveSessionContext.Provider>
+	);
+	const names = screen
+		.getAllByRole('img')
+		.map((avatar) => avatar.getAttribute('aria-label'));
+	expect(names).toContain('Blinky Zwei');
+	expect(names.join(' ')).not.toMatch(/blinky2/);
+});
+
 it('falls back to the profile name of a group-call caller when no display name is known', () => {
 	const call: CallLifecycleMessage = {
 		callId: 'missed-group-call-2',
@@ -881,4 +1010,85 @@ it('says so on the card when the call after admission cannot be joined (#2016)',
 	expect(
 		await screen.findByText('videoCall.timeline.joinFailed')
 	).toBeTruthy();
+});
+
+/* #2237: let in from the group's waiting room, the person goes straight into
+   the running call: the card joins without a click, once. */
+it('joins a running call by itself when the waiting room let the person in', async () => {
+	const call: CallLifecycleMessage = {
+		callId: 'admitted-call',
+		roomRef: '!group:example',
+		callRoomId: '!media:example',
+		callType: 'video',
+		state: 'running',
+		participants: []
+	};
+	const onJoin = vi.fn(async () => 'joined' as const);
+	const autoJoin = vi.fn(() => true);
+	const onAutoJoined = vi.fn();
+	const { rerender } = render(
+		<CallTimelineMessage
+			call={call}
+			onJoin={onJoin}
+			autoJoin={autoJoin}
+			onAutoJoined={onAutoJoined}
+		/>
+	);
+	await waitFor(() => expect(onAutoJoined).toHaveBeenCalledTimes(1));
+	rerender(
+		<CallTimelineMessage call={call} onJoin={onJoin} autoJoin={autoJoin} />
+	);
+	await act(async () => undefined);
+	expect(onJoin).toHaveBeenCalledTimes(1);
+	expect(autoJoin).toHaveBeenCalledTimes(1);
+});
+
+it('keeps the mark when the automatic join did not go through', async () => {
+	const call: CallLifecycleMessage = {
+		callId: 'stale-call',
+		roomRef: '!group:example',
+		callRoomId: '!media:example',
+		callType: 'video',
+		state: 'running',
+		participants: []
+	};
+	const onJoin = vi.fn(async () => 'unavailable' as const);
+	const onAutoJoined = vi.fn();
+	render(
+		<CallTimelineMessage
+			call={call}
+			onJoin={onJoin}
+			autoJoin={() => true}
+			onAutoJoined={onAutoJoined}
+		/>
+	);
+	await waitFor(() => expect(onJoin).toHaveBeenCalledTimes(1));
+	await act(async () => undefined);
+	expect(onAutoJoined).not.toHaveBeenCalled();
+});
+
+it('leaves an ended call and an unmarked one alone', async () => {
+	const ended: CallLifecycleMessage = {
+		callId: 'ended-call',
+		roomRef: '!group:example',
+		callRoomId: '!media:example',
+		callType: 'video',
+		state: 'ended',
+		participants: []
+	};
+	const onJoin = vi.fn(async () => 'joined' as const);
+	const autoJoin = vi.fn(() => true);
+	render(
+		<CallTimelineMessage call={ended} onJoin={onJoin} autoJoin={autoJoin} />
+	);
+	render(
+		<CallTimelineMessage
+			call={{ ...ended, callId: 'other', state: 'running' }}
+			onJoin={onJoin}
+			autoJoin={() => false}
+		/>
+	);
+	await act(async () => undefined);
+	expect(autoJoin).not.toHaveBeenCalled();
+	expect(onJoin).not.toHaveBeenCalled();
 });

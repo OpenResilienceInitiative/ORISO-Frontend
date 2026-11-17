@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { ReactComponent as CallOffIcon } from '../../resources/img/icons/call-off.svg';
 import { ReactComponent as InfoIcon } from '../../resources/img/icons/i.svg';
@@ -12,41 +12,41 @@ interface SystemMessageProps {
 	children?: React.ReactElement;
 }
 
+/**
+ * The system-notice icon as Storybook shows it (Chat/System messages/General
+ * notices): same glyph, size and `--m3-secondary` colour wherever a platform
+ * notice needs it, e.g. the call card's avatar column (#2237).
+ */
+export const SystemMessageIcon = ({
+	icon
+}: {
+	icon: typeof ICON_CALL_OFF | typeof ICON_INFO;
+}) => {
+	const { t: translate } = useTranslation();
+	const Icon = icon === ICON_CALL_OFF ? CallOffIcon : InfoIcon;
+	const label =
+		icon === ICON_CALL_OFF
+			? translate('videoCall.info')
+			: translate('notifications.info');
+	return (
+		<Icon
+			className="systemMessage__icon"
+			title={label}
+			aria-label={label}
+		/>
+	);
+};
+
 export const SystemMessage: React.FC<SystemMessageProps> = ({
 	subject,
 	icon,
 	children
 }) => {
-	const { t: translate } = useTranslation();
-	const getIcon = useCallback(() => {
-		switch (icon) {
-			case ICON_CALL_OFF:
-				return CallOffIcon;
-			case ICON_INFO:
-				return InfoIcon;
-		}
-		return null;
-	}, [icon]);
-
-	const Icon = getIcon();
-
 	return (
 		<div className="systemMessage__subjectWrapper">
-			{Icon && (
+			{icon && (
 				<div>
-					<Icon
-						className="systemMessage__icon"
-						title={
-							icon === 'call_off'
-								? translate('videoCall.info')
-								: translate('notifications.info')
-						}
-						aria-label={
-							icon === 'call_off'
-								? translate('videoCall.info')
-								: translate('notifications.info')
-						}
-					/>
+					<SystemMessageIcon icon={icon} />
 				</div>
 			)}
 			<div>

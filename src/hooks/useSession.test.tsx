@@ -311,6 +311,51 @@ describe('useSession', () => {
 		expect(result.current.session).toBe(extendedSession);
 	});
 
+	it.each([
+		{ session: { id: 4711, status: 5 } },
+		{ chat: { id: 4711, active: true } },
+		{ session: { id: 4711, status: 5 }, chat: { id: 4711, active: true } },
+		{ session: { id: 4712, status: 5 } },
+		{ session: { id: 4711, status: 2 } },
+		undefined
+	])('accepts only the exact rejected 1:1 response: %j', async (entry) => {
+		const extended = { item: { id: 4711, status: 5 } };
+		vi.mocked(apiGetSessionRoomBySessionId).mockResolvedValue({
+			sessions: entry ? [entry] : []
+		} as never);
+		vi.mocked(buildExtendedSession).mockReturnValue(extended as never);
+		vi.mocked(apiGetCaseHandoverCandidates).mockResolvedValue({
+			sessions: []
+		});
+
+		const { result } = renderHook(() =>
+			useSession(null, 4711, undefined, false, true)
+		);
+
+		await waitFor(() => expect(result.current.ready).toBe(true));
+		const exact =
+			!entry?.chat &&
+			entry?.session?.id === 4711 &&
+			entry.session.status === 5;
+		expect(result.current.session).toBe(exact ? extended : null);
+		expect(apiGetCaseHandoverCandidates).not.toHaveBeenCalled();
+		expect(apiGetChatRoomById).not.toHaveBeenCalled();
+	});
+
+	it('does not attempt another room lookup when rejected enquiry access fails', async () => {
+		vi.mocked(apiGetSessionRoomBySessionId).mockRejectedValueOnce(
+			new Error('FORBIDDEN')
+		);
+		const { result } = renderHook(() =>
+			useSession(null, 4711, undefined, false, true)
+		);
+
+		await waitFor(() => expect(result.current.ready).toBe(true));
+		expect(result.current.session).toBeNull();
+		expect(apiGetCaseHandoverCandidates).not.toHaveBeenCalled();
+		expect(apiGetChatRoomById).not.toHaveBeenCalled();
+	});
+
 	it('loads a valid zero-valued chat id', async () => {
 		const rawSession = { chat: { id: 0 } };
 		const extendedSession = { item: rawSession.chat, isGroup: true };
@@ -378,7 +423,10 @@ describe('useSession', () => {
 			setMatrixClientServiceRef(null);
 		});
 
-		const loadSessionWithRoom = async (unreadCount: number) => {
+		const loadSessionWithRoom = async (
+			unreadCount: number,
+			roomExtras: Record<string, unknown> = {}
+		) => {
 			const rawSession = { session: { id: 5 } };
 			const extendedSession = {
 				item: { id: 5, messagesRead: true }
@@ -397,7 +445,8 @@ describe('useSession', () => {
 			);
 			setMatrixClientServiceRef({
 				getRoom: () => ({
-					getUnreadNotificationCount: () => unreadCount
+					getUnreadNotificationCount: () => unreadCount,
+					...roomExtras
 				})
 			} as any);
 
@@ -414,6 +463,39 @@ describe('useSession', () => {
 			expect(chatTransportService.markRoomAsRead).toHaveBeenCalledWith(
 				'!room:hs'
 			);
+		});
+
+		it('publishes a receipt for an encrypted message whose unread count is not computed yet (FE#1802)', async () => {
+			// Encrypted rooms: the SDK counts unread only after decryption, so
+			// a just-arrived message can still report 0 unread.
+			const result = await loadSessionWithRoom(0, {
+				myUserId: '@me:hs',
+				getLiveTimeline: () => ({
+					getEvents: () => [{ getId: () => '$new' }]
+				}),
+				hasUserReadEvent: () => false
+			});
+
+			result.current.read();
+
+			expect(chatTransportService.markRoomAsRead).toHaveBeenCalledWith(
+				'!room:hs'
+			);
+		});
+
+		it('does not publish a receipt when its own receipt is already on the latest event', async () => {
+			const result = await loadSessionWithRoom(0, {
+				myUserId: '@me:hs',
+				getLiveTimeline: () => ({
+					getEvents: () => [{ getId: () => '$seen' }]
+				}),
+				hasUserReadEvent: (userId: string, eventId: string) =>
+					userId === '@me:hs' && eventId === '$seen'
+			});
+
+			result.current.read();
+
+			expect(chatTransportService.markRoomAsRead).not.toHaveBeenCalled();
 		});
 
 		it('does not publish a receipt when the room has no unread messages', async () => {

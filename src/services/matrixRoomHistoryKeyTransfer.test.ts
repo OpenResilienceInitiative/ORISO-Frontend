@@ -5,6 +5,7 @@ import {
 	MATRIX_HISTORY_KEYS_DIAGNOSTIC_EVENT,
 	MATRIX_HISTORY_KEYS_IMPORTED_EVENT,
 	MATRIX_HISTORY_KEYS_REQUESTED_EVENT,
+	MATRIX_HISTORY_KEYS_SENT_EVENT,
 	MATRIX_HISTORY_REQUEST_PENDING_EVENT,
 	MATRIX_HISTORY_REQUEST_RESOLVED_EVENT,
 	MatrixRoomHistoryKeyTransfer,
@@ -67,7 +68,24 @@ const buildHarness = () => {
 			{ room_id: ROOM_ID, session_id: 'wanted' },
 			{ room_id: '!other:matrix', session_id: 'blocked' }
 		]),
-		importRoomKeys: vi.fn().mockResolvedValue(undefined)
+		importRoomKeys: vi.fn().mockResolvedValue(undefined),
+		// Like the SDK, this encrypts for every device it knows. The plain
+		// message rides along so queueToDevice below can hand it to the
+		// encryptAndSendToDevice spy the assertions use.
+		encryptToDeviceMessages: vi.fn(
+			async (
+				eventType: string,
+				devices: { userId: string; deviceId: string }[],
+				payload: object
+			) => ({
+				eventType: 'm.room.encrypted',
+				batch: devices.map(({ userId, deviceId }) => ({
+					userId,
+					deviceId,
+					payload: { plain: { eventType, payload } }
+				}))
+			})
+		)
 	};
 	const client = {
 		getCrypto: vi.fn(() => crypto),
@@ -79,7 +97,27 @@ const buildHarness = () => {
 				toDeviceHandler = handler;
 		}),
 		off: vi.fn(),
-		encryptAndSendToDevice: vi.fn().mockResolvedValue(undefined)
+		encryptAndSendToDevice: vi.fn().mockResolvedValue(undefined),
+		queueToDevice: vi.fn(
+			async (batch: {
+				batch: {
+					userId: string;
+					deviceId: string;
+					payload: { plain: { eventType: string; payload: object } };
+				}[];
+			}) => {
+				if (batch.batch.length === 0) return;
+				const { eventType, payload } = batch.batch[0].payload.plain;
+				await client.encryptAndSendToDevice(
+					eventType,
+					batch.batch.map(({ userId, deviceId }) => ({
+						userId,
+						deviceId
+					})),
+					payload
+				);
+			}
+		)
 	};
 	return {
 		client,
@@ -1565,6 +1603,149 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 			expect(
 				harness.client.encryptAndSendToDevice
 			).not.toHaveBeenCalled();
+		});
+
+		describe('checks that the approved key bundle was queued', () => {
+			const watch = () => {
+				const stages: string[] = [];
+				const sent = vi.fn();
+				const resolved = vi.fn();
+				const onDiagnostic = (e: Event) =>
+					stages.push((e as CustomEvent).detail.stage);
+				window.addEventListener(
+					MATRIX_HISTORY_KEYS_DIAGNOSTIC_EVENT,
+					onDiagnostic
+				);
+				window.addEventListener(MATRIX_HISTORY_KEYS_SENT_EVENT, sent);
+				window.addEventListener(
+					MATRIX_HISTORY_REQUEST_RESOLVED_EVENT,
+					resolved
+				);
+				return {
+					stages,
+					sent,
+					resolved,
+					stop: () => {
+						window.removeEventListener(
+							MATRIX_HISTORY_KEYS_DIAGNOSTIC_EVENT,
+							onDiagnostic
+						);
+						window.removeEventListener(
+							MATRIX_HISTORY_KEYS_SENT_EVENT,
+							sent
+						);
+						window.removeEventListener(
+							MATRIX_HISTORY_REQUEST_RESOLVED_EVENT,
+							resolved
+						);
+					}
+				};
+			};
+
+			it('queues the bundle for exactly the requesting device', async () => {
+				const { harness, service } = setup();
+				harness.emitToDevice(
+					unverifiedRequest('It was about my school')
+				);
+				await vi.waitFor(() =>
+					expect(service.getPendingApprovals()).toHaveLength(1)
+				);
+
+				await expect(
+					service.approveRequest('reset-request')
+				).resolves.toBe(true);
+				expect(harness.client.queueToDevice).toHaveBeenCalledWith(
+					expect.objectContaining({
+						batch: [
+							expect.objectContaining({
+								userId: PEER,
+								deviceId: 'ASKER1'
+							})
+						]
+					})
+				);
+			});
+
+			it('reports a failure and keeps the request when the SDK leaves the device out of the batch', async () => {
+				const { harness, service } = setup();
+				harness.emitToDevice(
+					unverifiedRequest('It was about my school')
+				);
+				await vi.waitFor(() =>
+					expect(service.getPendingApprovals()).toHaveLength(1)
+				);
+				// The SDK skips a device it does not know and still resolves.
+				harness.crypto.encryptToDeviceMessages.mockResolvedValueOnce({
+					eventType: 'm.room.encrypted',
+					batch: []
+				});
+				const seen = watch();
+				try {
+					await expect(
+						service.approveRequest('reset-request')
+					).resolves.toBe(false);
+
+					expect(seen.stages).toContain('bundle-not-queued');
+					expect(seen.sent).not.toHaveBeenCalled();
+					expect(seen.resolved).not.toHaveBeenCalled();
+					expect(harness.client.queueToDevice).not.toHaveBeenCalled();
+					expect(service.getPendingApprovals()).toEqual([
+						expect.objectContaining({ requestId: 'reset-request' })
+					]);
+				} finally {
+					seen.stop();
+				}
+			});
+
+			it('reports a failure and keeps the request when queueing the bundle fails', async () => {
+				const { harness, service } = setup();
+				harness.emitToDevice(
+					unverifiedRequest('It was about my school')
+				);
+				await vi.waitFor(() =>
+					expect(service.getPendingApprovals()).toHaveLength(1)
+				);
+				harness.client.queueToDevice.mockRejectedValueOnce(
+					new Error('store unavailable')
+				);
+				const seen = watch();
+				try {
+					await expect(
+						service.approveRequest('reset-request')
+					).resolves.toBe(false);
+
+					expect(seen.stages).toContain('approval-failed');
+					expect(seen.sent).not.toHaveBeenCalled();
+					expect(seen.resolved).not.toHaveBeenCalled();
+					expect(service.getPendingApprovals()).toEqual([
+						expect.objectContaining({ requestId: 'reset-request' })
+					]);
+				} finally {
+					seen.stop();
+				}
+			});
+
+			it('lets the counsellor retry once the device is known', async () => {
+				const { harness, service } = setup();
+				harness.emitToDevice(
+					unverifiedRequest('It was about my school')
+				);
+				await vi.waitFor(() =>
+					expect(service.getPendingApprovals()).toHaveLength(1)
+				);
+				harness.crypto.encryptToDeviceMessages.mockResolvedValueOnce({
+					eventType: 'm.room.encrypted',
+					batch: []
+				});
+
+				await expect(
+					service.approveRequest('reset-request')
+				).resolves.toBe(false);
+				await expect(
+					service.approveRequest('reset-request')
+				).resolves.toBe(true);
+				expect(service.getPendingApprovals()).toEqual([]);
+			});
 		});
 
 		it('does not let a request id from another room overwrite a waiting one', async () => {

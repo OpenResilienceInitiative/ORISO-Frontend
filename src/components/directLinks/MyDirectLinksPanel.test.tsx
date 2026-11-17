@@ -198,6 +198,106 @@ describe('My direct links (#1894)', () => {
 		);
 	});
 
+	/* ORISO-Frontend#2142: the noted date and time shows on the tile and can be changed or removed. */
+	it('shows the noted date and time on the tile', async () => {
+		vi.mocked(apiGetOwnDirectLinks).mockResolvedValue([
+			{
+				...flyer,
+				scheduledAt: new Date(2026, 10, 20, 14, 30).toISOString()
+			}
+		]);
+		renderPage();
+		const time = await screen.findByTestId('direct-link-scheduled-at');
+		expect(time.textContent).toContain('14:30');
+		expect(time.getAttribute('datetime')).toBe(
+			new Date(2026, 10, 20, 14, 30).toISOString()
+		);
+	});
+
+	it('sets, and then removes, the date and time in the edit dialog', async () => {
+		const at = new Date('2026-11-20T14:30').toISOString();
+		vi.mocked(apiUpdateDirectLink).mockResolvedValueOnce({
+			...flyer,
+			scheduledAt: at
+		});
+		renderPage();
+		await screen.findByText('Flyer Schule');
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'directLink.list.edit:Flyer Schule'
+			})
+		);
+		let dialog = await screen.findByTestId('direct-link-edit-dialog');
+		fireEvent.change(
+			within(dialog).getByLabelText('directLink.edit.scheduledAt'),
+			{ target: { value: '2026-11-20T14:30' } }
+		);
+		fireEvent.click(within(dialog).getByTestId('direct-link-edit-save'));
+		await waitFor(() =>
+			expect(apiUpdateDirectLink).toHaveBeenCalledWith('7', {
+				scheduledAt: at
+			})
+		);
+		await screen.findByTestId('direct-link-scheduled-at');
+
+		vi.mocked(apiUpdateDirectLink).mockResolvedValueOnce(flyer);
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'directLink.list.edit:Flyer Schule'
+			})
+		);
+		dialog = await screen.findByTestId('direct-link-edit-dialog');
+		expect(
+			(
+				within(dialog).getByLabelText(
+					'directLink.edit.scheduledAt'
+				) as HTMLInputElement
+			).value
+		).toBe('2026-11-20T14:30');
+		fireEvent.click(
+			within(dialog).getByRole('button', {
+				name: 'directLink.edit.clearScheduledAt'
+			})
+		);
+		fireEvent.click(within(dialog).getByTestId('direct-link-edit-save'));
+		await waitFor(() =>
+			expect(apiUpdateDirectLink).toHaveBeenLastCalledWith('7', {
+				clearScheduledAt: true
+			})
+		);
+	});
+
+	it('keeps the date when the edited date/time is incomplete', async () => {
+		vi.mocked(apiGetOwnDirectLinks).mockResolvedValue([
+			{
+				...flyer,
+				scheduledAt: new Date(2026, 10, 20, 14, 30).toISOString()
+			}
+		]);
+		renderPage();
+		await screen.findByText('Flyer Schule');
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'directLink.list.edit:Flyer Schule'
+			})
+		);
+		const dialog = await screen.findByTestId('direct-link-edit-dialog');
+		const input = within(dialog).getByLabelText(
+			'directLink.edit.scheduledAt'
+		) as HTMLInputElement;
+		Object.defineProperty(input, 'validity', {
+			configurable: true,
+			value: { badInput: true, valid: false }
+		});
+		fireEvent.change(input, { target: { value: '' } });
+		fireEvent.click(within(dialog).getByTestId('direct-link-edit-save'));
+
+		expect(apiUpdateDirectLink).not.toHaveBeenCalled();
+		expect(
+			within(dialog).getByText('directLink.card.scheduledAtIncomplete')
+		).toBeTruthy();
+	});
+
 	it('changes the temporary switch for new people only', async () => {
 		vi.mocked(apiUpdateDirectLink).mockResolvedValue({
 			...flyer,

@@ -1,6 +1,7 @@
 import { isAskerDisplayNameTypingAllowed } from '../../utils/askerAccountPolicy';
 import { useFrozenPhoneLayout } from '../../utils/embeddedComposerFullscreen';
 import { useConversationFeatureSettings } from '../../hooks/useConversationFeatureSettings';
+import { isSupervisionEnabledForChat } from '../../utils/conversationFeatureSettings';
 import { useDelayedSessionRefresh } from './useDelayedSessionRefresh';
 import { useChatHistoryPagination } from './useChatHistoryPagination';
 import { useThreadRouteHistory } from './useThreadRouteHistory';
@@ -261,6 +262,11 @@ import { loadMessageComposer } from '../app/appChunks';
 const MessageSubmitInterfaceComponent = lazyWithReload(loadMessageComposer);
 
 interface SessionItemProps {
+	/**
+	 * Phone: a side panel (thread, supervision, team) fills the screen instead
+	 * of the main chat. Read receipts wait while it is hidden (FE#1802).
+	 */
+	onMainChatHiddenChange?: (hidden: boolean) => void;
 	/** Current-session Carimat continuation inside the main scrolling timeline. */
 	mainTimelineSupplement?: React.ReactNode;
 	mainTimelineSupplementTime?: number;
@@ -532,18 +538,17 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const [robotSequenceVisibleCount, setRobotSequenceVisibleCount] =
 		useState(0);
 
-	// Threads feature toggle (tenant-level). Master switch disables for all chat types.
-	// When enabled, per-chat-type switches decide if threads are available in 1-on-1 vs group chats.
+	// Threads/supervision toggles: effective platform -> Traeger -> agency result.
+	// Master switch disables for all chat types; per-chat-type switches refine it.
+	const conversationFeatures =
+		useConversationFeatureSettings(getTenantSettings());
 	const {
-		featureSupervisionEnabled = true,
-		featureSupervisionAnonymousChatsEnabled = true,
-		featureSupervisionOneOnOneChatsEnabled = true,
 		featureThreadsEnabled = true,
 		featureThreadsAnonymousChatsEnabled = true,
 		featureThreadsGroupChatsEnabled = true,
 		featureThreadsOneOnOneEnabled = true,
 		featureThreadsSupervisionChatsEnabled = true
-	} = getTenantSettings();
+	} = conversationFeatures;
 	const contact = getContact(activeSession);
 	const isAnonymousChat = getModality(activeSession) === Modality.LIVE_CHAT;
 	const chatType: 'anonymous' | 'oneOnOne' | 'group' | 'supervision' =
@@ -816,11 +821,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				: chatType === 'supervision'
 					? featureThreadsSupervisionChatsEnabled !== false
 					: featureThreadsOneOnOneEnabled !== false);
-	const isSupervisionEnabledForCurrentChat =
-		featureSupervisionEnabled !== false &&
-		(isAnonymousChat
-			? featureSupervisionAnonymousChatsEnabled !== false
-			: featureSupervisionOneOnOneChatsEnabled !== false);
+	const isSupervisionEnabledForCurrentChat = isSupervisionEnabledForChat(
+		conversationFeatures,
+		isAnonymousChat
+	);
 
 	// WP-B2 safety net: the client-facing timeline never carries side-room
 	// items, whatever SessionStream handed over.
@@ -2859,8 +2863,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	// (`call/callFeatureGates.ts`) — only the room differs: the call goes to
 	// the SIDE room, so its Element Call room is created from
 	// `supervisionRoomId` and admits exactly that room's members.
-	const supervisionFeatures =
-		useConversationFeatureSettings(getTenantSettings());
+	const supervisionFeatures = conversationFeatures;
 	const supervisionCallGates =
 		resolveSupervisionCallFeatureGates(supervisionFeatures);
 	// Role/session eligibility is separate from the feature-policy helper.
@@ -3081,6 +3084,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 
 	// Phone: a side panel fills the screen instead of the main chat.
 	const mainChatHidden = isPhoneLayout && openPanel !== null;
+	const { onMainChatHiddenChange } = props;
+	useEffect(() => {
+		onMainChatHiddenChange?.(mainChatHidden);
+	}, [mainChatHidden, onMainChatHiddenChange]);
 	const shownThreadRootId =
 		openPanel === 'thread' ? activeThreadRootId : null;
 	useEffect(() => {
@@ -3243,7 +3250,12 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 								props.hasUserInitiatedStopOrLeaveRequest
 							}
 							bannedUsers={props.bannedUsers}
-							hideBackButton={isPhoneLayout}
+							// D7: the composer carries the phone's back arrow. The
+							// group privacy gate renders no composer, so its header
+							// keeps the arrow there.
+							hideBackButton={
+								isPhoneLayout && !shouldShowGroupConsentGate
+							}
 							callsInMenu={isPhoneLayout}
 							hideGroupTopic={shouldShowGroupConsentGate}
 						/>

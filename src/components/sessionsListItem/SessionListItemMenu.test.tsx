@@ -62,7 +62,6 @@ const VISIBILITY_ALL_HIDDEN: ChatroomSettingsMenuVisibility = {
 	showChatSettings: false,
 	showArchive: false,
 	showDearchive: false,
-	showDelete: false,
 	showRequestHelp: false,
 	showLeaveGroup: false
 };
@@ -107,7 +106,6 @@ const renderMenu = ({
 				onChatSettings={onChatSettings}
 				onArchive={onArchive}
 				onDearchive={noop}
-				onDelete={noop}
 				onRequestHelp={noop}
 				onLeaveGroup={onLeaveGroup}
 				legalLinks={legalLinks}
@@ -276,7 +274,6 @@ describe('SessionListItemMenu', () => {
 							onChatSettings={noop}
 							onArchive={noop}
 							onDearchive={noop}
-							onDelete={noop}
 							onRequestHelp={noop}
 							onLeaveGroup={noop}
 							legalLinks={[]}

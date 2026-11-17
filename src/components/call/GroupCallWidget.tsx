@@ -26,6 +26,10 @@ import {
 } from './prejoin/callPrejoin';
 import { useJoinMediaForCall } from './prejoin/useJoinMediaForCall';
 import {
+	groupConversationRoomOf,
+	useLeaveCallWhenRemoved
+} from './useLeaveCallWhenRemoved';
+import {
 	NOTIFICATION_TYPE_WARNING,
 	NotificationsContext
 } from '../../globalState/provider/NotificationsProvider';
@@ -64,6 +68,8 @@ import { callKnockScopeOf } from './knockNotice/callKnockModel';
 import { useCallKnocks } from './knockNotice/useCallKnocks';
 import { useCallShareLinkKnock } from './knockNotice/useCallShareLinkKnock';
 import { type CallConversation, callPartyOf, counterpartOf } from './callParty';
+import { callWidgetEntryOf } from './callHostContext';
+import { TopicsContext } from '../../globalState/provider/TopicsProvider';
 import { IncomingCallCard } from './states/IncomingCallCard';
 import { DockedCall } from './states/DockedCall';
 import './GroupCallWidget.scss';
@@ -117,6 +123,16 @@ const INVITE_LINK_RETRY_MS = 1000;
 const IDENTITY_RETRY_DELAYS_MS = [1000, 2000, 4000] as const;
 const IDENTITY_RETRY_CEILING_MS = 8000;
 
+/*
+ * FE#2233: how long the call's address waits for its conversation, whose
+ * kind (`orisoCallType`) and topic (`orisoTopic`) go on it. The room is
+ * joined meanwhile. The lookup is one userservice request, already settled
+ * for an incoming call (it starts when the call rings); a slow or failing
+ * userservice must not keep anybody out of the call, so after this the call
+ * starts without them — `single`/`group` from the call itself.
+ */
+const CALL_CONVERSATION_WAIT_MS = 2000;
+
 /** Looks up the conversation a call belongs to; returns the effect cleanup. */
 const conversationOf = (
 	roomId: string,
@@ -127,13 +143,18 @@ const conversationOf = (
 		.then(({ sessions }) => {
 			if (!controller.signal.aborted) found(sessions?.[0] ?? null);
 		})
-		.catch(() => undefined);
+		.catch(() => {
+			// Settled without a conversation: nothing to wait for any more.
+			if (!controller.signal.aborted) found(null);
+		});
 	return () => controller.abort();
 };
 
 export const GroupCallWidget: React.FC = () => {
-	const { t } = useTranslation();
+	const { t, i18n } = useTranslation();
 	const { matrixClientService } = useMatrixClient();
+	// Outside the app's providers (Storybook) there is no topic catalogue.
+	const topics = useContext(TopicsContext)?.topics;
 	// `null` until a provider is above us; the widget renders in places that
 	// do not guarantee one.
 	const userData = useContext(UserDataContext)?.userData;
@@ -143,6 +164,10 @@ export const GroupCallWidget: React.FC = () => {
 	const [conversation, setConversation] = useState<CallConversation | null>(
 		null
 	);
+	/* The conversation room whose lookup has answered, or given up (FE#2233). */
+	const [conversationSettledFor, setConversationSettledFor] = useState<
+		string | null
+	>(null);
 	const [waitingCall, setWaitingCall] = useState<CallData | null>(null);
 	const [waitingConversation, setWaitingConversation] =
 		useState<CallConversation | null>(null);
@@ -192,6 +217,13 @@ export const GroupCallWidget: React.FC = () => {
 	const callRoomId = callData
 		? (callData.elementCallRoomId ?? callData.roomId)
 		: null;
+	/*
+	 * The conversation the call belongs to is looked up by its signal room.
+	 * A shared-call guest has none.
+	 */
+	const conversationRoomId = callData?.sharedCallGuest
+		? undefined
+		: callData?.signalRoomId || callData?.roomId;
 	const shouldPrepareWidget =
 		!!callData &&
 		callState !== 'left' &&
@@ -221,18 +253,23 @@ export const GroupCallWidget: React.FC = () => {
 	});
 	// The call link's "Anklopfen" (UserService#1488), for the switch in the
 	// call (ElementCall#109). Every counsellor in the call may change it.
+	// Only a 1:1 session call has a link (UserService
+	// `CallShareLinkService.requireCounsellorCall`): a group chat or a
+	// Gesprächskreis answers 404 to every request, so it is never asked.
+	const isGroupCall = !!callData?.isGroup;
 	const shareLinkCall = useMemo(
 		() =>
-			callData?.signalRoomId && callData.callId
+			!isGroupCall && callData?.signalRoomId && callData.callId
 				? {
 						sourceRoomId: callData.signalRoomId,
 						callId: callData.callId
 					}
 				: null,
-		[callData?.signalRoomId, callData?.callId]
+		[isGroupCall, callData?.signalRoomId, callData?.callId]
 	);
 	const shareLinkKnock = useCallShareLinkKnock({
-		enabled: knocksEnabled,
+		// Hung up: stop once the call surface closes, whatever the call manager still holds.
+		enabled: knocksEnabled && !isDismissed,
 		call: shareLinkCall
 	});
 	const knockState = useMemo(
@@ -332,13 +369,33 @@ export const GroupCallWidget: React.FC = () => {
 	 */
 	const counsellors = useCallCounsellors(conversation);
 
+	/*
+	 * FE#2233: what the call is told about its conversation — its kind
+	 * (Gesprächskreis → circle, other groups → group, 1:1 → single) and, for
+	 * a 1:1 call, its topic — and the app's language. The address is built
+	 * once the lookup has answered (or given up), and the widget keeps what
+	 * it was built with for the whole call.
+	 */
+	const conversationParams = callData
+		? callWidgetEntryOf(
+				callData,
+				conversation,
+				topics,
+				i18n?.language,
+				t('calls.share.guestCallTitle')
+			)
+		: null;
+	const hostContextPending =
+		!!conversationRoomId && conversationSettledFor !== conversationRoomId;
+
 	const widget = useElementCallWidget(
 		matrixClientService?.getClient() ?? null,
 		{
 			roomId: shouldPrepareWidget ? callRoomId : null,
 			isVideo: callData?.isVideo ?? true,
-			// Let the guest confirm devices in the iframe before it publishes media.
-			skipLobby: !callData?.sharedCallGuest,
+			// FE#2209: nobody meets Element Call's own lobby; a guest's device
+			// choice arrives as the call's start parameters (`callStart`).
+			skipLobby: conversationParams?.skipLobby ?? true,
 			onClose: closeCallSurface,
 			knockState,
 			onSetKnock: shareLinkKnock.setKnock,
@@ -346,11 +403,15 @@ export const GroupCallWidget: React.FC = () => {
 			hostChrome,
 			onWindowCommand,
 			windowState,
-			// Call design S6b: a group conversation starts in the circle even
+			// Call design S6b: a group conversation starts in a group view even
 			// with two people in it; a 1:1 session in the one-to-one view.
 			// `isGroup` is the conversation's kind as the caller decided it
-			// (group chat, or a supervision room with a second supervisor).
-			callType: callData ? (callData.isGroup ? 'group' : 'single') : null,
+			// (group chat, or a supervision room with a second supervisor);
+			// the modality tells a Gesprächskreis (`circle`) from the rest.
+			callType: conversationParams?.callType ?? null,
+			callTopic: conversationParams?.topic ?? null,
+			language: i18n?.language ?? null,
+			hostContextPending,
 			invite: canInvite,
 			onInviteLink,
 			counsellors
@@ -825,16 +886,32 @@ export const GroupCallWidget: React.FC = () => {
 	 * Who is ringing, and whom the call is with, looked up in the
 	 * conversation the call belongs to, so the card and the dock show names
 	 * and avatars from the session list instead of a fixed "G" (#780).
-	 * Unknown callers keep the generic line.
+	 * Unknown callers keep the generic line. The same answer gives the call
+	 * its kind and topic (FE#2233), so the call's address waits for it.
 	 */
-	const conversationRoomId = callData?.sharedCallGuest
-		? undefined
-		: callData?.signalRoomId || callData?.roomId;
 	const waitingRoomId = waitingCall?.signalRoomId || waitingCall?.roomId;
 	useEffect(() => {
 		setConversation(null);
-		if (!conversationRoomId) return;
-		return conversationOf(conversationRoomId, setConversation);
+		if (!conversationRoomId) {
+			// Between calls: the next call in this room waits for its lookup.
+			setConversationSettledFor(null);
+			return;
+		}
+		let settled = false;
+		const settle = () => {
+			if (settled) return;
+			settled = true;
+			setConversationSettledFor(conversationRoomId);
+		};
+		const giveUp = setTimeout(settle, CALL_CONVERSATION_WAIT_MS);
+		const stop = conversationOf(conversationRoomId, (found) => {
+			setConversation(found);
+			settle();
+		});
+		return () => {
+			clearTimeout(giveUp);
+			stop();
+		};
 	}, [conversationRoomId]);
 	useEffect(() => {
 		setWaitingConversation(null);
@@ -975,6 +1052,28 @@ export const GroupCallWidget: React.FC = () => {
 			if (!current || current.callId === endingCallId) closeCallSurface();
 		})();
 	};
+
+	/*
+	 * Removed from the Gesprächskreis by a moderator while its call runs
+	 * (ORISO-Admin#1518 follow-up): the ban stops new call tokens but not a
+	 * running call, so this app leaves it itself, through the same hangup
+	 * handshake as the end button, and says why.
+	 */
+	useLeaveCallWhenRemoved(
+		groupConversationRoomOf(callData),
+		callState === 'connecting' || callState === 'in_call',
+		() => {
+			notifications?.addNotification({
+				notificationType: NOTIFICATION_TYPE_WARNING,
+				title: t('groupChat.removed.overlay.headline'),
+				text: '',
+				closeable: true,
+				timeout: 10_000
+			});
+			handleEndCall();
+		},
+		clientGeneration
+	);
 
 	const handleToggleFullscreen = () => {
 		const container = containerRef.current;
@@ -1397,22 +1496,18 @@ export const GroupCallWidget: React.FC = () => {
 						 * link twice — except where the link may create a
 						 * temporary account: that switch exists only here.
 						 */}
-						{isConsultantUser &&
-							widget.ready &&
-							callData?.signalRoomId && (
-								<div className="element-call-share">
-									<CallShareForCall
-										sourceRoomId={callData.signalRoomId}
-										callId={callData.callId}
-										layout={
-											isMobileView ? 'phone' : 'desktop'
-										}
-										onlyForTemporaryAccounts={
-											hostChrome && canInvite
-										}
-									/>
-								</div>
-							)}
+						{isConsultantUser && widget.ready && shareLinkCall && (
+							<div className="element-call-share">
+								<CallShareForCall
+									sourceRoomId={shareLinkCall.sourceRoomId}
+									callId={shareLinkCall.callId}
+									layout={isMobileView ? 'phone' : 'desktop'}
+									onlyForTemporaryAccounts={
+										hostChrome && canInvite
+									}
+								/>
+							</div>
+						)}
 						{/*
 						 * Somebody knocking on a direct-link call (#1892):
 						 * let them in without leaving the call. Docked

@@ -334,77 +334,47 @@ it('rolling the login suggestion preserves the independently chosen avatar (#102
 	expect(getAccountDataDraft().identity.avatar).toEqual(initial.avatar);
 });
 
-describe('optional ordinary registration alias', () => {
-	it('starts blank and keeps credentials and avatar when alias typing or dice changes', () => {
-		renderAccountData(tenantWith({}));
-		const login = screen.getByLabelText<HTMLInputElement>(
-			'registration.account.username.label'
-		);
-		const before = getAccountDataDraft();
-		const alias = screen.getByLabelText<HTMLInputElement>(
-			'profile.data.displayName'
-		);
-		expect(alias.value).toBe('');
-		expect(alias.required).toBe(false);
-		fireEvent.change(alias, { target: { value: 'Visible alias' } });
-		expect(alias.value).toBe('Visible alias');
-		expect(login.value).toBe(before.username);
-		fireEvent.click(
-			screen.getByRole('button', {
-				name: 'registration.account.displayName.suggest'
-			})
-		);
-		expect(alias.value).not.toBe('');
-		expect(alias.value).not.toBe('Visible alias');
-		expect(login.value).toBe(before.username);
-		expect(getAccountDataDraft().identity.avatar).toEqual(
-			before.identity.avatar
-		);
-		fireEvent.click(
-			screen.getByRole('button', {
-				name: 'registration.account.displayName.useUsername'
-			})
-		);
-		expect(alias.value).toBe('');
-		expect(login.value).toBe(before.username);
-	});
-	it('allows only generated alias choices when typing is disabled', () => {
+describe('registration offers no display-name field (#2210)', () => {
+	it.each([
+		['AGENCY_COUNSELLING', true],
+		['AGENCY_COUNSELLING', false],
+		['SELF_HELP', true]
+	] as const)(
+		'%s with typing=%s shows no display name, dice or use-User-ID button',
+		(type, editable) => {
+			renderAccountData(
+				tenantWith({ featureDisplayNameEditable: editable }),
+				{},
+				false,
+				vi.fn(),
+				'checkbox',
+				type
+			);
+			expect(
+				screen.queryByLabelText('profile.data.displayName')
+			).toBeNull();
+			expect(
+				screen.queryByText('registration.account.displayName.optional')
+			).toBeNull();
+			expect(
+				screen.queryByRole('button', {
+					name: 'registration.account.displayName.suggest'
+				})
+			).toBeNull();
+			expect(
+				screen.queryByRole('button', {
+					name: 'registration.account.displayName.useUsername'
+				})
+			).toBeNull();
+		}
+	);
+	it('keeps the User-ID read-only when typing is disabled', () => {
 		renderAccountData(tenantWith({ featureDisplayNameEditable: false }));
-		const alias = screen.getByLabelText<HTMLInputElement>(
-			'profile.data.displayName'
-		);
-		const generatedAlias = alias.value;
-		expect(generatedAlias).not.toBe('');
-		expect(alias.readOnly).toBe(true);
 		expect(
 			screen.getByLabelText<HTMLInputElement>(
 				'registration.account.username.label'
 			).readOnly
 		).toBe(true);
-		fireEvent.change(alias, { target: { value: 'Forbidden custom' } });
-		expect(alias.value).toBe(generatedAlias);
-		expect(
-			screen.queryByRole('button', {
-				name: 'registration.account.displayName.useUsername'
-			})
-		).toBeNull();
-		fireEvent.click(
-			screen.getByRole('button', {
-				name: 'registration.account.displayName.suggest'
-			})
-		);
-		expect(alias.value).not.toBe('');
-	});
-	it('offers no unsupported alias field for self-help signup', () => {
-		renderAccountData(
-			tenantWith({}),
-			{},
-			false,
-			vi.fn(),
-			'checkbox',
-			'SELF_HELP'
-		);
-		expect(screen.queryByLabelText('profile.data.displayName')).toBeNull();
 	});
 });
 
@@ -448,14 +418,14 @@ describe('registration context collection permission', () => {
 	});
 });
 
-describe('completed optional alias data', () => {
+describe('registration submits no display name (#2210)', () => {
 	it.each([
-		['AGENCY_COUNSELLING', true, 'Chosen alias'],
-		['AGENCY_COUNSELLING', false, undefined],
-		['SELF_HELP', true, undefined]
+		['AGENCY_COUNSELLING', true],
+		['AGENCY_COUNSELLING', false],
+		['SELF_HELP', true]
 	] as const)(
-		'submits only supported alias data for %s typing=%s',
-		async (type, editable, expected) => {
+		'%s typing=%s ignores a display name left in an old draft',
+		async (type, editable) => {
 			const identity = generatePseudonym('de');
 			setAccountDataDraft({
 				identity,
@@ -466,8 +436,8 @@ describe('completed optional alias data', () => {
 				acceptedConsentBinding: null,
 				email: '',
 				twoFactorAuthEnabled: false,
-				displayName: '  Chosen alias  '
-			});
+				displayName: 'Sichere-Passphrase9!'
+			} as Parameters<typeof setAccountDataDraft>[0]);
 			const onChange = vi.fn();
 			renderAccountData(
 				tenantWith({ featureDisplayNameEditable: editable }),
@@ -482,11 +452,13 @@ describe('completed optional alias data', () => {
 					expect.objectContaining({
 						username: editable
 							? 'fixed_login'
-							: 'generated_login_1234',
-						displayName: editable ? expected : identity.displayName
+							: 'generated_login_1234'
 					})
 				)
 			);
+			for (const [data] of onChange.mock.calls) {
+				expect(data).not.toHaveProperty('displayName');
+			}
 		}
 	);
 });

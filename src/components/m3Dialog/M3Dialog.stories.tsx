@@ -1,5 +1,5 @@
 import * as React from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { M3Dialog } from './M3Dialog';
 import { GdprIcon, ImprintIcon } from '../../resources/img/icons';
 import { phone390Globals } from '../message/messageStoryShell';

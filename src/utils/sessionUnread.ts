@@ -33,6 +33,30 @@ export const isRoomUnread = (matrixRoomId?: string | null): boolean => {
 };
 
 /**
+ * True when my own read receipt is not yet on the room's latest event
+ * (FE#1802). Unlike `isRoomUnread` this does not wait for the notification
+ * count: in an encrypted room the SDK counts a message only after it was
+ * decrypted, so a message that just arrived can still report 0 unread.
+ */
+export const hasUnreadLatestEvent = (matrixRoomId?: string | null): boolean => {
+	if (!matrixRoomId) {
+		return false;
+	}
+
+	try {
+		const room: any = getMatrixClientService()?.getRoom(matrixRoomId);
+		const events = room?.getLiveTimeline?.()?.getEvents?.() || [];
+		const latestEventId = events[events.length - 1]?.getId?.();
+		if (!latestEventId || !room?.myUserId) {
+			return false;
+		}
+		return !room.hasUserReadEvent(room.myUserId, latestEventId);
+	} catch {
+		return false;
+	}
+};
+
+/**
  * HOW MANY unread notifications the room has, not just whether it has any.
  *
  * `isRoomUnread` above already asks Matrix for this number and throws it away

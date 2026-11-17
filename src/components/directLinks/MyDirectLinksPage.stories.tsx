@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useState } from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, within } from 'storybook/test';
 import { Route, Routes } from 'react-router-dom';
 import { TenantContext, UserDataContext } from '../../globalState';
@@ -30,7 +30,9 @@ const SAMPLE_LINKS: DirectLink[] = [
 		medium: 'CHAT',
 		temporary: false,
 		active: true,
-		url: 'https://app.oriso.org/invite/Zy8xW6vU'
+		url: 'https://app.oriso.org/invite/Zy8xW6vU',
+		// #2142: the date and time the counsellor noted.
+		scheduledAt: '2026-11-20T13:30:00.000Z'
 	},
 	{
 		id: '3',

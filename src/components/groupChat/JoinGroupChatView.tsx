@@ -49,6 +49,10 @@ import { CallPrejoinDialog } from '../call/prejoin/CallPrejoinDialog';
 import { shouldShowDeviceCheck } from '../call/prejoin/callPrejoin';
 import { getGroupWaitingRoomTopic } from './entryRoom/groupWaitingRoomData';
 import { useGroupWaitingRoomSchedule } from './entryRoom/useGroupWaitingRoomSchedule';
+import { useGroupWaitingAdmission } from './waitingAdmission/useGroupWaitingAdmission';
+import { markCallAutoJoin } from './waitingAdmission/callAutoJoin';
+import { useAfterDelay } from './waitingAdmission/useAfterDelay';
+import { askCallDevicesWhileWaiting } from './waitingAdmission/askCallDevices';
 
 interface JoinGroupChatViewProps {
 	forceBannedOverlay?: boolean;
@@ -314,6 +318,39 @@ export const JoinGroupChatView = ({
 			});
 	};
 
+	/* #2237 (Frank, 2026-11-12): in an audio or video group the advice seeker
+	   agrees while waiting, even before the start, and then waits. A
+	   moderator in the group's running call sees them and lets them in; that
+	   click is the only one: the group is joined here and its running call
+	   joins by itself once the chat is open (`callAutoJoin`). Text groups
+	   keep "agree and join". */
+	const callGroup =
+		isAsker &&
+		(activeSession.item.modality === 'VIDEO' ||
+			activeSession.item.modality === 'AUDIO');
+	const [waitingForAdmission, setWaitingForAdmission] = useState(false);
+	useGroupWaitingAdmission({
+		chatId: activeSession.item.id,
+		enabled: callGroup && waitingForAdmission && !joinBlockedByBan,
+		onAdmitted: () => {
+			markCallAutoJoin(activeSession.item.id);
+			void handleButtonClick();
+		}
+	});
+	const waitedAMinute = useAfterDelay(
+		callGroup && waitingForAdmission && Boolean(activeSession.item.active),
+		60_000
+	);
+	const handleRoomJoin = (): Promise<unknown> | false => {
+		if (!callGroup) return handleButtonClick();
+		if (joinBlockedByBan) return false;
+		/* The consent click is the gesture: camera and microphone are asked
+		   now, not when the call opens (#2237). */
+		askCallDevicesWhileWaiting(activeSession.item.modality);
+		setWaitingForAdmission(true);
+		return false;
+	};
+
 	const handleOverlayAction = (buttonFunction: string) => {
 		if (buttonFunction === OVERLAY_FUNCTIONS.CLOSE) {
 			setOverlayActive(false);
@@ -446,8 +483,19 @@ export const JoinGroupChatView = ({
 							? translate('groupChat.removed.overlay.headline')
 							: undefined
 					}
-					onJoin={handleButtonClick}
+					onJoin={handleRoomJoin}
 					joinBusy={isRequestInProgress}
+					openBeforeStart={callGroup}
+					admissionWaiting={
+						callGroup && waitingForAdmission
+							? translate('groupChat.waitingAdmission.waiting')
+							: undefined
+					}
+					admissionSoon={
+						waitedAMinute
+							? translate('groupChat.waitingAdmission.openSoon')
+							: undefined
+					}
 					onDeviceCheck={
 						offerDeviceCheck
 							? () => setCheckingDevices(true)

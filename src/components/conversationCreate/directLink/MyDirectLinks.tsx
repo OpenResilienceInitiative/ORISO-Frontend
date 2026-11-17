@@ -12,6 +12,7 @@ import { Switch } from '../../Switch';
 import { ArtworkImage } from '../ArtworkImage';
 import { DirectLink } from './directLink';
 import { DirectLinkMediumIcon } from './DirectLinkMediumIcon';
+import { formatScheduledAt } from './directLinkSchedule';
 import './directLink.styles.scss';
 
 /** How long the check stays on a copied tile. */
@@ -46,7 +47,7 @@ export const MyDirectLinks = ({
 	headerAction,
 	emptyState
 }: MyDirectLinksProps) => {
-	const { t } = useTranslation();
+	const { t, i18n } = useTranslation();
 	const [copiedId, setCopiedId] = useState<string>();
 	const [copyFailed, setCopyFailed] = useState(false);
 
@@ -121,6 +122,18 @@ export const MyDirectLinks = ({
 								<span className="directLinkTile__name">
 									{link.name}
 								</span>
+								{link.scheduledAt && (
+									<time
+										className="directLinkTile__time"
+										dateTime={link.scheduledAt}
+										data-testid="direct-link-scheduled-at"
+									>
+										{formatScheduledAt(
+											link.scheduledAt,
+											i18n?.language
+										)}
+									</time>
+								)}
 								<span className="directLinkTile__meta">
 									{link.topic}
 									{link.temporary && (

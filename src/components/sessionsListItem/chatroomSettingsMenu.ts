@@ -39,7 +39,6 @@ export interface ChatroomSettingsMenuInput {
 export interface ChatroomSettingsMenuVisibility {
 	showArchive: boolean;
 	showDearchive: boolean;
-	showDelete: boolean;
 	showRequestHelp: boolean;
 	showChatSettings: boolean;
 	showLeaveGroup: boolean;
@@ -64,15 +63,14 @@ export const getChatroomSettingsMenuVisibility = ({
 }: ChatroomSettingsMenuInput): ChatroomSettingsMenuVisibility => {
 	// Mirrors the header menu's gates in SessionMenu.tsx so both entry points
 	// stay in lockstep. A supervisor only observes a colleague's session, so it
-	// is neither theirs to archive (SessionMenu gates archive on
-	// `!props.isSupervisor` too) nor to delete.
+	// is not theirs to archive (SessionMenu gates archive on
+	// `!props.isSupervisor` too). There is no delete: it removed the chat for
+	// the advice seeker too (ORISO-Admin#1518); counsellors archive instead.
 	const isOwnEditableSession =
 		!isAsker &&
 		listType !== SESSION_LIST_TYPES.ENQUIRY &&
 		isSession &&
 		!isSupervisorView;
-
-	const showDelete = isOwnEditableSession && isConsultant;
 
 	// ADR-016: the Team-Besprechung is an agency-counselling, consultant-only
 	// side room. Creating one is only possible while the enquiry is open; after
@@ -102,7 +100,6 @@ export const getChatroomSettingsMenuVisibility = ({
 	return {
 		showArchive: isOwnEditableSession && !isArchiveTab,
 		showDearchive: isOwnEditableSession && isArchiveTab,
-		showDelete,
 		showRequestHelp,
 		showChatSettings,
 		showLeaveGroup

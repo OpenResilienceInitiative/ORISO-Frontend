@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
-import { Meta, StoryObj } from '@storybook/react';
+import { Meta, StoryObj } from '@storybook/react-vite';
 import { a11yExcept } from '../../../.storybook/a11yExceptions';
 import { ScrollableSection } from './ScrollableSection';
 

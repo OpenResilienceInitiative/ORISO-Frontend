@@ -930,11 +930,27 @@ export class MatrixRoomHistoryKeyTransfer {
 			return false;
 		}
 
-		await client.encryptAndSendToDevice(
+		// encryptAndSendToDevice resolves even when the SDK left the device out
+		// (it skips a device it does not know), so a lost hand-over would look
+		// like a sent one. Encrypt and queue separately and check the batch.
+		const batch = await crypto.encryptToDeviceMessages(
 			KEY_BUNDLE_EVENT,
 			[{ userId, deviceId }],
 			{ room_id: roomId, request_id: requestId, keys }
 		);
+		if (this.client !== client) return false;
+		if (stillAllowed && !stillAllowed()) return false;
+		const queuedForDevice = batch.batch.some(
+			(message) =>
+				message.userId === userId && message.deviceId === deviceId
+		);
+		if (!queuedForDevice) {
+			emitDiagnostic('bundle-not-queued');
+			return false;
+		}
+		// Resolves once the batch is stored in the SDK's to-device queue,
+		// which keeps retrying the send; a rejection reaches the caller.
+		await client.queueToDevice(batch);
 		window.dispatchEvent(
 			new CustomEvent(MATRIX_HISTORY_KEYS_SENT_EVENT, {
 				detail: { roomId, keyCount: keys.length }

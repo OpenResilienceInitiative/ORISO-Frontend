@@ -34,6 +34,10 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 // session card body's marks and text end under it (`--card-trailing`).
 $card-trailing-wide: 10px;
 $card-trailing-narrow: 4px;
+
+// The menu pill's height. The top row keeps it even without a menu (enquiries,
+// supervisor view, group chats), so every card has the same spacing (FE#2182).
+$session-menu-pill-height: 32px;
 $card-border-grow: $list-item-selected-border-width - 1px;
 
 .sessionsListItem {
@@ -86,6 +90,9 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 
 		.sessionsListItem__content {
 			background-color: $session-card-selected-bg !important;
+
+			// Selected card keeps the white gap between the avatars.
+			--participant-ring: var(--m3-surface-container-lowest, #fff);
 
 			// #597: 2px solid --m3-primary (overrides resting 1px border)
 			@include list-item-selected-border($important: true);
@@ -233,6 +240,9 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		padding: 0;
 		margin: 0;
 		background-color: $session-card-bg;
+
+		// Ring of stacked avatars = card colour while inactive (Frank, 10.11.2026).
+		--participant-ring: #{$session-card-bg};
 		border: 1px solid $session-light-border;
 		border-radius: 24px;
 		transition:
@@ -278,6 +288,8 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		&:not(.sessionsListItem--active, .sessionsListItem--menuOpen)
 			.sessionsListItem__content:hover {
 			background-color: var(--m3-surface, #fcf9f9);
+
+			--participant-ring: var(--m3-surface, #fcf9f9);
 
 			.sessionsListItem__topic {
 				background-color: $session-chip-hover-bg;
@@ -411,6 +423,7 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 	}
 
 	&__rowRight {
+		min-height: $session-menu-pill-height;
 		padding-right: $card-trailing-wide;
 		display: flex;
 		align-items: center;
@@ -469,6 +482,15 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		}
 	}
 
+	// FE#2183: the waiting time is the point of an enquiry card, so it is not
+	// cut to "wartet seit…" on narrow screens; the topic chip yields instead.
+	&__date--waiting {
+		@media screen and (width <= 899px) {
+			max-width: none;
+			flex-shrink: 0;
+		}
+	}
+
 	&__menuIcon {
 		display: inline-flex;
 		align-items: center;
@@ -476,7 +498,7 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		cursor: pointer;
 
 		width: 48px;
-		height: 32px;
+		height: $session-menu-pill-height;
 		padding: 0;
 		flex-shrink: 0;
 		position: relative;
@@ -985,6 +1007,11 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		}
 
 		&--liveChat {
+			// Centre icon and word on each other (FE#2182), as --nearby and
+			// --directLink do; the base rule's `end` hangs them from a shared
+			// bottom edge, so the 19 px glyph sat off the 20 px label line.
+			align-items: center;
+
 			/* Stay inside the card — the base rule pushes the icon 12px
 			   past its grid cell, which would clip the wider "Live Chat"
 			   label under the __content overflow: hidden. */
@@ -1157,8 +1184,9 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 			height: 56px;
 		}
 
+		// 48px + the 2px the clip box reaches up for the avatar ring.
 		&--kindInRow .sessionCard__flow {
-			height: 48px;
+			height: 50px;
 		}
 
 		&--kindInRow .sessionCard__trailing {

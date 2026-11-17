@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { useConsultantBookings } from '../../../../containers/overview/hooks/useConsultantBookings';
+import { useUpcomingAppointments } from '../../../../containers/overview/hooks/useUpcomingAppointments';
 import { useConsultantData } from '../../../../containers/overview/hooks/useConsultantData';
 import { LinkMenu } from '../../../mobile/linkMenu/LinkMenu';
 import { SESSION_LIST_TYPES } from '../../../session/sessionHelpers';
@@ -14,7 +14,7 @@ export const OverviewSessions = () => {
 	const { total: totalMySessions } = useConsultantData({
 		type: SESSION_LIST_TYPES.MY_SESSION
 	});
-	const { bookings } = useConsultantBookings();
+	const { appointments } = useUpcomingAppointments();
 
 	const getCount = useCallback((count) => (count > 9 ? '9+' : count), []);
 
@@ -33,9 +33,9 @@ export const OverviewSessions = () => {
 		},
 		{
 			title: `${translate('overview.upcomingAppointments', {
-				countStr: getCount(bookings.length)
+				countStr: getCount(appointments.length)
 			})}`,
-			url: '/booking/events/gebuchte'
+			url: '/booking/events'
 		}
 	];
 	return <LinkMenu items={items} />;

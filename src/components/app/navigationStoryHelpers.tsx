@@ -92,9 +92,12 @@ export function NavigationStoryProviders({
 	role,
 	liveChatViaSidebar = true,
 	tenantSettings,
+	appointmentFeatureEnabled = false,
 	children
 }: {
 	role: 'consultant' | 'asker';
+	/** Shows the "Meine Termine" rail entry (calendar, FE#1050). */
+	appointmentFeatureEnabled?: boolean;
 	/**
 	 * The consultant's profile preference "Live Chat über Menü Leiste
 	 * aktivieren" (UserService `liveChatViaSidebar`). Defaults to on so the
@@ -107,8 +110,12 @@ export function NavigationStoryProviders({
 }) {
 	const [userData, setUserData] = useState(() =>
 		role === 'consultant'
-			? { ...consultantUserData, liveChatViaSidebar }
-			: askerUserData
+			? {
+					...consultantUserData,
+					liveChatViaSidebar,
+					appointmentFeatureEnabled
+				}
+			: { ...askerUserData, appointmentFeatureEnabled }
 	);
 
 	/*

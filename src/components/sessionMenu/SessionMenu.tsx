@@ -1,4 +1,7 @@
-import { useConversationFeatureSettings } from '../../hooks/useConversationFeatureSettings';
+import {
+	useConversationFeatureSettings,
+	useConversationFeatureSettingsSettled
+} from '../../hooks/useConversationFeatureSettings';
 import {
 	getSessionMenuAgency,
 	getSessionMenuLegalDepartment
@@ -24,10 +27,13 @@ import {
 	UserDataContext,
 	ActiveSessionContext,
 	SessionsDataContext,
-	REMOVE_SESSIONS
+	REMOVE_SESSIONS,
+	NotificationsContext,
+	NOTIFICATION_TYPE_WARNING
 } from '../../globalState';
 import { STATUS_REJECTED } from '../../globalState/interfaces/SessionsDataInterface';
 import { startRoomCall } from '../call/startRoomCall';
+import { StartCallRequest, type CallKind } from '../call/startCallIntent';
 import { callRoomName } from '../call/callRoomName';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import { resolveCallFeatureGates } from '../call/callFeatureGates';
@@ -86,9 +92,6 @@ import { getLegalLinkKind } from '../legalLinks/useLegalLinkContent';
 import '../sessionHeader/sessionHeader.styles';
 import './sessionMenu.styles';
 import { Button, BUTTON_TYPES, ButtonItem } from '../button/Button';
-import { ReactComponent as CalendarMonthPlusIcon } from '../../resources/img/icons/calendar-plus.svg';
-import DeleteSession from '../session/DeleteSession';
-import { Text } from '../text/Text';
 import { useSearchParam } from '../../hooks/useSearchParams';
 import { useTranslation } from 'react-i18next';
 import EventOutlinedIcon from '@mui/icons-material/EventOutlined';
@@ -118,6 +121,10 @@ import {
 	canRecommendFurtherCounselling
 } from '../furtherCounselling/furtherCounsellingRules';
 import { RecommendFurtherCounsellingDialog } from '../furtherCounselling/RecommendFurtherCounsellingDialog';
+import { ReactComponent as HandoverIcon } from '../../resources/img/icons/case_handover_200_24px.svg';
+import { useCaseHandoverOffer } from '../caseHandover/useCaseHandoverOffer';
+import { CaseHandoverOffer } from '../caseHandover/CaseHandoverOffer';
+import { useRecommendAllowedInModality } from '../furtherCounselling/useRecommendAllowedInModality';
 import { getGroupChatInfoLink } from '../groupChat/groupChatInfoLink';
 
 export interface SessionMenuProps {
@@ -149,6 +156,16 @@ export interface SessionMenuProps {
 
 // #1262 — backend advice-request APIs are not ready (US#1034). Keep the owner-only item visible but inert.
 const ADVICE_REQUEST_ENABLED = false;
+
+/** The call controls by kind: header buttons and their menu rows. */
+const CALL_HEADER_BUTTON: Record<CallKind, string> = {
+	video: 'session-header-start-video-call',
+	audio: 'session-header-start-call'
+};
+const CALL_MENU_ROW: Record<CallKind, string> = {
+	video: 'session-menu-start-video-call',
+	audio: 'session-menu-start-call'
+};
 
 export const SessionMenu = (props: SessionMenuProps) => {
 	const { t: translate } = useTranslation();
@@ -182,8 +199,16 @@ export const SessionMenu = (props: SessionMenuProps) => {
 	const [flyoutOpen, setFlyoutOpen] = useState(null);
 	const menuTriggerRef = useRef<HTMLButtonElement | null>(null);
 	const menuRef = useRef<HTMLDivElement>(null);
+	/*
+	 * FE#1050: the calendar or the overview asked for this conversation's
+	 * video or audio call, but the click's gesture ran out on the way: the
+	 * own button of that kind is focused and marked instead, one click
+	 * starts.
+	 */
+	const [offeredCall, setOfferedCall] = useState<CallKind | null>(null);
 	const closeMenu = useCallback(() => {
 		setFlyoutOpen(false);
+		setOfferedCall(null);
 		menuTriggerRef.current?.focus();
 	}, []);
 	const menuPosition = useChatMenuPosition({
@@ -191,6 +216,17 @@ export const SessionMenu = (props: SessionMenuProps) => {
 		anchorRef: menuTriggerRef,
 		menuRef
 	});
+	const wrapperRef = useRef<HTMLDivElement>(null);
+	const featuresSettled = useConversationFeatureSettingsSettled();
+	const notifications = useContext(NotificationsContext);
+	useEffect(() => {
+		if (!offeredCall || props.callsInMenu) return;
+		wrapperRef.current
+			?.querySelector<HTMLElement>(
+				`[data-cy="${CALL_HEADER_BUTTON[offeredCall]}"]`
+			)
+			?.focus();
+	}, [offeredCall, props.callsInMenu]);
 	useEffect(() => {
 		if (!flyoutOpen) return;
 		const closeIfTriggerHidden = () => {
@@ -254,8 +290,15 @@ export const SessionMenu = (props: SessionMenuProps) => {
 		isGroup: Boolean(activeSession.isGroup),
 		isSupervisor: Boolean(props.isSupervisor)
 	});
-	const showRecommendFurtherCounselling = showRequestAdvice;
+	// FE#2251: in a live chat only when the counselling centre switched it on.
+	const recommendAllowedInModality = useRecommendAllowedInModality();
+	const showRecommendFurtherCounselling =
+		showRequestAdvice && recommendAllowedInModality;
 	const [recommendDialogOpen, setRecommendDialogOpen] = useState(false);
+	// FE#2250: "Beratung übergeben" — same audience as the recommend item,
+	// same offer flow (and pending state) as the profile button.
+	const showCaseHandover = showRequestAdvice;
+	const caseHandover = useCaseHandoverOffer();
 	const showEndTopicDuplicate =
 		!activeSession.isGroup &&
 		Boolean(activeSession.isSession) &&
@@ -270,8 +313,14 @@ export const SessionMenu = (props: SessionMenuProps) => {
 	useEffect(() => {
 		if (!flyoutOpen || menuPosition.visibility !== 'visible') return;
 		const menu = menuRef.current;
-		menu?.querySelector<HTMLElement>(
-			'a[href], button:not(:disabled), [tabindex="0"]'
+		(
+			(offeredCall &&
+				menu?.querySelector<HTMLElement>(
+					`[data-cy="${CALL_MENU_ROW[offeredCall]}"]`
+				)) ||
+			menu?.querySelector<HTMLElement>(
+				'a[href], button:not(:disabled), [tabindex="0"]'
+			)
 		)?.focus();
 		const outside = (event: MouseEvent) => {
 			if (
@@ -319,25 +368,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 			document.removeEventListener('mousedown', outside);
 			document.removeEventListener('keydown', keydown);
 		};
-	}, [flyoutOpen, menuPosition.visibility, closeMenu]);
-
-	const [appointmentFeatureEnabled, setAppointmentFeatureEnabled] =
-		useState(false);
-
-	useEffect(() => {
-		if (!hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)) {
-			const { appointmentFeatureEnabled } = userData;
-			setAppointmentFeatureEnabled(appointmentFeatureEnabled);
-		}
-		if (!activeSession.item?.active || !activeSession.item?.subscribed) {
-			// do not get group members for a chat that has not been started and user is not subscribed
-			return;
-		}
-	}, [activeSession, userData]);
-
-	const handleBookingButton = () => {
-		navigate('/booking/');
-	};
+	}, [flyoutOpen, menuPosition.visibility, closeMenu, offeredCall]);
 
 	const handleStopGroupChat = () => {
 		closeMenu();
@@ -360,6 +391,11 @@ export const SessionMenu = (props: SessionMenuProps) => {
 	const handleRecommendFurtherCounselling = () => {
 		closeMenu();
 		setRecommendDialogOpen(true);
+	};
+
+	const handleCaseHandover = () => {
+		closeMenu();
+		caseHandover.handleOpen();
 	};
 
 	const handleEndTopicDuplicate = () => {
@@ -515,10 +551,6 @@ export const SessionMenu = (props: SessionMenuProps) => {
 		}
 	};
 
-	const onSuccessDeleteSession = useCallback(() => {
-		setRedirectToSessionsList(true);
-	}, []);
-
 	//TODO:
 	//enquiries: only RS profil
 	//sessions: rs, docu
@@ -606,7 +638,18 @@ export const SessionMenu = (props: SessionMenuProps) => {
 		type !== SESSION_LIST_TYPES.ENQUIRY &&
 		consultingType.isVideoCallAllowed;
 
+	// The checks that put the call controls on screen: one place for the
+	// buttons, the menu rows and a start request (FE#1050).
+	const callControlsShown =
+		sessionMenuOwnsCallControls(activeSession.isGroup) &&
+		!isLoadingTenantSettings &&
+		hasVideoCallFeatures() &&
+		!props.isSupervisor;
+	const videoCallShown = callControlsShown && isVideoCallsEnabled;
+	const audioCallShown = callControlsShown && isAudioCallsEnabled;
+
 	const handleStartVideoCall = async (isVideoActivated: boolean = false) => {
+		setOfferedCall(null);
 		if (isRejectedCase) return;
 		// The trigger lives in `call/startRoomCall.ts` because the side room needs
 		// the same steps against a different Matrix room. One implementation
@@ -624,8 +667,66 @@ export const SessionMenu = (props: SessionMenuProps) => {
 		});
 	};
 
+	/** Without a live gesture: the own start control, focused and marked. */
+	const offerCall = (kind: CallKind) => {
+		setOfferedCall(kind);
+		if (!props.callsInMenu) return;
+		const triggers = Array.from(
+			wrapperRef.current?.querySelectorAll<HTMLButtonElement>(
+				'.sessionMenu__icon'
+			) ?? []
+		);
+		menuTriggerRef.current =
+			triggers.find((trigger) => trigger.getClientRects().length > 0) ??
+			triggers[0] ??
+			null;
+		setFlyoutOpen(true);
+	};
+
+	/** A check refuses the call: say so; the conversation stays open. */
+	const refuseCall = (title: string, text = '') =>
+		notifications?.addNotification({
+			notificationType: NOTIFICATION_TYPE_WARNING,
+			title,
+			text,
+			closeable: true,
+			announce: 'status'
+		});
+
 	return (
-		<div className="sessionMenu__wrapper">
+		<div className="sessionMenu__wrapper" ref={wrapperRef}>
+			<StartCallRequest
+				sessionId={activeSession.item?.id}
+				settled={!isLoadingTenantSettings && featuresSettled}
+				calls={{
+					video: {
+						allowed: videoCallShown,
+						start: () => handleStartVideoCall(true),
+						offer: () => offerCall('video'),
+						refuse: () =>
+							refuseCall(
+								translate(
+									'videoCall.overlay.unsupported.headline'
+								),
+								!callGates.video ||
+									!consultingType?.isVideoCallAllowed
+									? translate(
+											'directLink.entry.callsDisabled'
+										)
+									: ''
+							)
+					},
+					audio: {
+						allowed: audioCallShown,
+						start: () => handleStartVideoCall(false),
+						offer: () => offerCall('audio'),
+						refuse: () =>
+							refuseCall(
+								translate('directLink.entry.callsDisabled')
+							)
+					}
+				}}
+			/>
 			<MenuBackdrop
 				open={Boolean(flyoutOpen) && !legalModal}
 				onClose={() => {
@@ -633,47 +734,41 @@ export const SessionMenu = (props: SessionMenuProps) => {
 					menuTriggerRef.current?.focus();
 				}}
 			/>
-			{sessionMenuOwnsCallControls(activeSession.isGroup) &&
-				!isLoadingTenantSettings &&
-				hasVideoCallFeatures() &&
-				!props.isSupervisor &&
+			{callControlsShown &&
 				!props.callsInMenu &&
 				(isAudioCallsEnabled || isVideoCallsEnabled) && (
 					<div
 						className="sessionMenu__videoCallButtons"
 						data-cy="session-header-video-call-buttons"
+						onBlur={() => setOfferedCall(null)}
 					>
-						{isVideoCallsEnabled && (
+						{videoCallShown && (
 							<Button
 								buttonHandle={() => handleStartVideoCall(true)}
 								item={buttonStartVideoCall}
+								testingAttribute={CALL_HEADER_BUTTON.video}
+								className={
+									offeredCall === 'video'
+										? 'sessionMenu__callOffer'
+										: undefined
+								}
 							/>
 						)}
-						{isAudioCallsEnabled && (
+						{audioCallShown && (
 							<Button
 								buttonHandle={() => handleStartVideoCall(false)}
 								item={buttonStartCall}
+								testingAttribute={CALL_HEADER_BUTTON.audio}
+								className={
+									offeredCall === 'audio'
+										? 'sessionMenu__callOffer'
+										: undefined
+								}
 							/>
 						)}
 					</div>
 				)}
 
-			{!isRejectedCase &&
-				!activeSession.isEnquiry &&
-				appointmentFeatureEnabled &&
-				!isPracticing &&
-				!activeSession.isGroup && (
-					<div
-						className="sessionMenu__icon sessionMenu__icon--booking"
-						onClick={handleBookingButton}
-					>
-						<CalendarMonthPlusIcon />
-						<Text
-							type="standard"
-							text={translate('booking.mobile.calendar.label')}
-						/>
-					</div>
-				)}
 			{showSessionMenu && (
 				<>
 					<button
@@ -753,63 +848,65 @@ export const SessionMenu = (props: SessionMenuProps) => {
 							    are rows of this menu instead of header buttons —
 							    the organism's rows (icon · title), same handlers
 							    as the buttons, same feature gates. */}
-							{props.callsInMenu &&
-								sessionMenuOwnsCallControls(
-									activeSession.isGroup
-								) &&
-								!isLoadingTenantSettings &&
-								hasVideoCallFeatures() &&
-								!props.isSupervisor && (
-									<>
-										{/* Review v10: real controls — native buttons
+							{props.callsInMenu && callControlsShown && (
+								<>
+									{/* Review v10: real controls — native buttons
 										    (role button, keyboard by default) inside the
 										    organism's `role="dialog"` card; the visible
 										    title is the accessible name. A `menuitem`
 										    role needs the organism's container to be a
 										    `role="menu"` — that is the organism-wide
 										    keyboard ticket, not this row. */}
-										{isVideoCallsEnabled && (
-											<button
-												type="button"
-												className="sessionMenu__item chatMenuDropdown__item"
-												onClick={() => {
-													closeMenu();
-													handleStartVideoCall(true);
-												}}
-												data-cy="session-menu-start-video-call"
-											>
-												<SessionMenuItemContent
-													icon={
-														<MenuVideoCallIcon data-icon-id="ui-icon:modality-video:base" />
-													}
-													title={translate(
-														'videoCall.button.startVideoCall'
-													)}
-												/>
-											</button>
-										)}
-										{isAudioCallsEnabled && (
-											<button
-												type="button"
-												className="sessionMenu__item chatMenuDropdown__item"
-												onClick={() => {
-													closeMenu();
-													handleStartVideoCall(false);
-												}}
-												data-cy="session-menu-start-call"
-											>
-												<SessionMenuItemContent
-													icon={
-														<MenuAudioCallIcon data-icon-id="ui-icon:timeline-add-call:base" />
-													}
-													title={translate(
-														'videoCall.button.startCall'
-													)}
-												/>
-											</button>
-										)}
-									</>
-								)}
+									{videoCallShown && (
+										<button
+											type="button"
+											className={`sessionMenu__item chatMenuDropdown__item${
+												offeredCall === 'video'
+													? ' sessionMenu__callOffer'
+													: ''
+											}`}
+											onClick={() => {
+												closeMenu();
+												handleStartVideoCall(true);
+											}}
+											data-cy={CALL_MENU_ROW.video}
+										>
+											<SessionMenuItemContent
+												icon={
+													<MenuVideoCallIcon data-icon-id="ui-icon:modality-video:base" />
+												}
+												title={translate(
+													'videoCall.button.startVideoCall'
+												)}
+											/>
+										</button>
+									)}
+									{audioCallShown && (
+										<button
+											type="button"
+											className={`sessionMenu__item chatMenuDropdown__item${
+												offeredCall === 'audio'
+													? ' sessionMenu__callOffer'
+													: ''
+											}`}
+											onClick={() => {
+												closeMenu();
+												handleStartVideoCall(false);
+											}}
+											data-cy={CALL_MENU_ROW.audio}
+										>
+											<SessionMenuItemContent
+												icon={
+													<MenuAudioCallIcon data-icon-id="ui-icon:timeline-add-call:base" />
+												}
+												title={translate(
+													'videoCall.button.startCall'
+												)}
+											/>
+										</button>
+									)}
+								</>
+							)}
 
 							{props.onCreateAppointment && (
 								<button
@@ -1062,6 +1159,37 @@ export const SessionMenu = (props: SessionMenuProps) => {
 								</div>
 							)}
 
+							{showCaseHandover && (
+								<div
+									className="sessionMenu__item chatMenuDropdown__item"
+									onClick={handleCaseHandover}
+									role="button"
+									tabIndex={0}
+									onKeyDown={(event) => {
+										if (
+											event.key === 'Enter' ||
+											event.key === ' '
+										) {
+											event.preventDefault();
+											event.currentTarget.click();
+										}
+									}}
+									data-cy="session-menu-case-handover"
+								>
+									<SessionMenuItemContent
+										icon={
+											<HandoverIcon
+												aria-hidden="true"
+												focusable="false"
+											/>
+										}
+										title={translate(
+											'caseHandover.offer.open'
+										)}
+									/>
+								</div>
+							)}
+
 							{showEndTopicDuplicate && (
 								<div
 									className="sessionMenu__item chatMenuDropdown__item"
@@ -1161,53 +1289,8 @@ export const SessionMenu = (props: SessionMenuProps) => {
 									</>
 								)}
 
-							{hasUserAuthority(
-								AUTHORITIES.CONSULTANT_DEFAULT,
-								userData
-							) &&
-								type !== SESSION_LIST_TYPES.ENQUIRY &&
-								!isRejectedCase &&
-								activeSession.isSession &&
-								!props.isSupervisor && (
-									<DeleteSession
-										chatId={activeSession.item.id}
-										onSuccess={onSuccessDeleteSession}
-									>
-										{(onClick) => (
-											<div
-												onClick={() => {
-													closeMenu();
-													menuTriggerRef.current?.focus();
-													onClick();
-												}}
-												role="button"
-												tabIndex={0}
-												onKeyDown={(event) => {
-													if (
-														event.key === 'Enter' ||
-														event.key === ' '
-													) {
-														event.preventDefault();
-														event.currentTarget.click();
-													}
-												}}
-												className="sessionMenu__item chatMenuDropdown__item"
-											>
-												<SessionMenuItemContent
-													icon={
-														<TrashIcon data-icon-id="ui-icon:trash:base" />
-													}
-													title={translate(
-														'chatFlyout.remove'
-													)}
-													description={translate(
-														'chatFlyout.removeDescription'
-													)}
-												/>
-											</div>
-										)}
-									</DeleteSession>
-								)}
+							{/* No delete: it removed the chat for the advice seeker too
+							    (ORISO-Admin#1518). Counsellors archive instead. */}
 
 							{activeSession.isGroup && (
 								<SessionMenuFlyoutGroup
@@ -1305,6 +1388,12 @@ export const SessionMenu = (props: SessionMenuProps) => {
 						);
 						setOverlayActive(true);
 					}}
+				/>
+			)}
+			{showCaseHandover && (
+				<CaseHandoverOffer
+					handover={caseHandover}
+					presentation="dialog"
 				/>
 			)}
 			<NotificationConfigDialog

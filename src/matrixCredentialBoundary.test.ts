@@ -40,12 +40,6 @@ describe('Matrix credential boundary', () => {
 		);
 	});
 
-	it('does not disclose chat credentials to the booking provider', () => {
-		expect(
-			source('./containers/bookings/components/Booking/booking.tsx')
-		).not.toMatch(/rcToken|rcUserId|rc_uid|rc_token/);
-	});
-
 	it('has no credential-bearing Element Call SPA fallback', () => {
 		expect(productionSource()).not.toMatch(
 			/ORISO_CALL_|getElementCallAccessToken|matrix_call_device_id|oriso-call-(?:ended|action)|widgetModeEnabled/

@@ -33,33 +33,14 @@
 // --- One appointment ---
 
 .tlp__entry {
-	display: flex;
-	align-items: center;
-	gap: 8px;
-	box-sizing: border-box;
-	width: 100%;
-	min-height: 44px;
-	padding: 0 14px 0 12px;
-	border: 1px solid transparent;
-	border-radius: 22px;
-	background: var(--m3-surface-container-highest, #dcdfe3);
-	color: var(--m3-on-surface, #1b1b1c);
-	font: inherit;
-	text-align: left;
-	cursor: pointer;
+	// Shared pill anatomy (_listEntryPill.scss); the timeline adds the
+	// transitions and its selected states.
 	transition:
 		background-color 150ms ease,
 		color 150ms ease,
 		border-color 150ms ease;
 
-	&:hover {
-		background: var(--m3-surface-dim, #d3d6da);
-	}
-
-	&:focus-visible {
-		outline: 2px solid var(--m3-primary, #a5000a);
-		outline-offset: 1px;
-	}
+	@include list-entry-pill;
 
 	&--soon,
 	&--soon:hover {
@@ -80,9 +61,7 @@
 }
 
 .tlp__entryIcon {
-	flex: none;
-	width: 20px;
-	height: 20px;
+	@include list-entry-pill-icon;
 
 	path,
 	* {
@@ -91,18 +70,15 @@
 }
 
 .tlp__entryText {
-	display: flex;
+	@include list-entry-pill-text;
+
 	flex: 1;
-	flex-direction: column;
-	min-width: 0;
 }
 
 .tlp__entryTime {
+	@include list-entry-pill-time;
+
 	overflow: hidden;
-	font-size: 13px;
-	font-weight: 500;
-	font-variant-numeric: tabular-nums;
-	line-height: 18px;
 	text-overflow: ellipsis;
 	white-space: nowrap;
 }

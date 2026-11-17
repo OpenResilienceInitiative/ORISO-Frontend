@@ -444,6 +444,82 @@ describe('useDraftMessage', () => {
 		expect(mocks.apiDeleteUserDraft).not.toHaveBeenCalled();
 	});
 
+	describe('typing while an archived chat re-opens (PR #2232)', () => {
+		const CHAT_A = 'scope:session-360|thread:main';
+		const CHAT_B = 'scope:session-361|thread:main';
+		const store = new Map<string, DraftPayload>();
+		beforeEach(() => {
+			store.clear();
+			mocks.apiUpsertUserDraft.mockImplementation(
+				async (scopeKey, payload) => {
+					store.set(scopeKey, payload);
+				}
+			);
+			mocks.apiGetUserDraft.mockImplementation((scopeKey) => {
+				const saved = store.get(scopeKey);
+				return saved
+					? Promise.resolve(saved)
+					: Promise.reject({ message: 'EMPTY' });
+			});
+		});
+
+		const visit = (enabledWhileTyping: boolean) => {
+			const loadDraft = vi.fn();
+			const view = renderHook(
+				({
+					scopeKey,
+					enabled
+				}: {
+					scopeKey: string;
+					enabled: boolean;
+				}) =>
+					useDraftMessage(enabled, loadDraft, {
+						forcedScopeKey: scopeKey
+					}),
+				{ wrapper, initialProps: { scopeKey: CHAT_A, enabled: true } }
+			);
+			return { ...view, loadDraft, enabledWhileTyping };
+		};
+
+		const typeSwitchAndReturn = async (enabledWhileTyping: boolean) => {
+			const { result, rerender, loadDraft, unmount } =
+				visit(enabledWhileTyping);
+			await waitFor(() => expect(result.current.loaded).toBe(true));
+			// Send pressed: the chat starts re-opening.
+			rerender({ scopeKey: CHAT_A, enabled: enabledWhileTyping });
+			act(() => {
+				result.current.onChange('<p>Noch ein Satz für A</p>');
+			});
+			// Chat B opens before the re-open settles.
+			rerender({ scopeKey: CHAT_B, enabled: true });
+			await waitFor(() => expect(result.current.loaded).toBe(true));
+			loadDraft.mockClear();
+			// Back to chat A.
+			rerender({ scopeKey: CHAT_A, enabled: true });
+			await waitFor(() => expect(result.current.loaded).toBe(true));
+			await act(async () => {
+				await Promise.resolve();
+			});
+			const restored = loadDraft.mock.calls.map((args) =>
+				JSON.stringify(args)
+			);
+			unmount();
+			return restored;
+		};
+
+		it('restores chat A’s draft when saving stays on during the re-open', async () => {
+			const restored = await typeSwitchAndReturn(true);
+			expect(store.get(CHAT_A)?.text).toContain('Noch ein Satz für A');
+			expect(restored.join(' ')).toContain('Noch ein Satz für A');
+		});
+
+		it('loses it when saving is paused during the re-open (the old guard)', async () => {
+			const restored = await typeSwitchAndReturn(false);
+			expect(store.get(CHAT_A)).toBeUndefined();
+			expect(restored.join(' ')).not.toContain('Noch ein Satz für A');
+		});
+	});
+
 	it('does not carry buffered text over into the next scope', async () => {
 		const loadDraft = vi.fn();
 

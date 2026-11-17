@@ -64,6 +64,13 @@
 		justify-content: space-between;
 	}
 
+	/* #2142: optional name and date/time, once the medium is chosen. */
+	&__details {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+	}
+
 	&__temporaryText {
 		color: var(--m3-on-surface, #1b1b1c);
 		display: flex;
@@ -323,6 +330,13 @@
 		overflow-wrap: break-word;
 	}
 
+	/* #2142: the date and time the counsellor noted. */
+	&__time {
+		color: var(--m3-on-surface, #1a1c1e);
+		font-size: 14px;
+		line-height: 20px;
+	}
+
 	&__meta {
 		align-items: center;
 		color: var(--m3-on-surface-variant, #444748);
@@ -359,23 +373,6 @@
 		&:last-child:nth-child(3n + 2):not(:nth-child(2)) {
 			grid-column: span 2;
 		}
-	}
-}
-
-/* Three formats side by side: the cards share the row instead of wrapping. */
-.conversationCreate__picker:has(.directLinkCard) {
-	padding-inline: clamp(0px, calc((100% - 1146px) / 2), 128px);
-
-	.conversationCreate__cards {
-		flex-wrap: nowrap;
-		gap: 24px;
-	}
-
-	.formatCard {
-		flex: 1 1 0;
-		max-width: 360px;
-		min-width: 0;
-		width: auto;
 	}
 }
 

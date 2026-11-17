@@ -4,6 +4,8 @@
 // Timeline card palette: Figma App.Oriso 7574:39299 / 7574:39661.
 // Keep event glyphs dynamic; the shared card state owns their colours.
 
+@import './timelinePillAction';
+
 .notificationsCenter {
 	display: flex;
 	flex-direction: row;
@@ -89,6 +91,21 @@
 	&__listColumn .sessionsListToolbar {
 		padding: 0;
 		background: transparent;
+
+		// #2226: the search pill sits on the same gutter as in Conversations
+		// (6 px on phones, 12 px from large), not on the card column's
+		// 16 / 20 px padding.
+		// Column padding: 16 px each side below 1200 px, 16 / 20 px above.
+		margin: 0 -10px;
+
+		@include breakpoint($fromLarge) {
+			margin: 0 -4px;
+		}
+
+		// stylelint-disable-next-line media-feature-range-notation
+		@media (min-width: 1200px) {
+			margin: 0 -8px 0 -4px;
+		}
 
 		.sessionsListToolbar__search {
 			margin-bottom: 8px;
@@ -563,42 +580,12 @@
 
 	// Figma: big red pill "View Conversation" with expand glyph.
 	&__openButton {
-		display: inline-flex;
-		align-items: center;
-		gap: 10px;
-		min-height: 56px;
-		padding: 0 32px;
-		border: none;
-		border-radius: 999px;
-		background: var(--m3-primary, #a5000a);
-		color: var(--m3-on-primary, #ffffff);
-		font-size: 16px;
-		font-weight: 600;
-
 		// #876: the status-page action is a link; it must look like the button.
-		text-decoration: none;
-		cursor: pointer;
-		transition: background-color 140ms ease;
+		@include timeline-pill-action(56px, 0 32px, 16px, 10px);
 
 		svg {
 			width: 18px;
 			height: 18px;
-			fill: currentcolor;
-		}
-
-		// `open-in-new-tab.svg` ships a black 0.9 fill; follow the label colour.
-		svg path {
-			fill: currentcolor;
-			fill-opacity: 1;
-		}
-
-		&:hover {
-			background: var(--m3-primary-hover, #7e0008);
-			color: var(--m3-on-primary, #ffffff);
-		}
-
-		&:focus-visible {
-			@include list-item-focus-treatment;
 		}
 	}
 

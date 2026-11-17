@@ -206,6 +206,29 @@ describe('call observation across sign-out', () => {
 		expect(end).toHaveBeenCalledWith({ sourceRoomId: SOURCE, callId });
 	});
 
+	// #2237: a 1:1 session's invite is encrypted too, so the server only knows
+	// the call through this registration. Without it "Beitreten" got a 404.
+	it('registers a started one-to-one call as well', async () => {
+		sendEvent.mockResolvedValue({ event_id: '$invite' });
+		callManager.startCall(SOURCE, true, false);
+		await vi.waitFor(() => expect(register).toHaveBeenCalledTimes(1));
+		expect(register.mock.calls[0][0]).toMatchObject({
+			sourceRoomId: SOURCE,
+			callRoomId: ROOM,
+			video: true
+		});
+	});
+
+	it('ends the observation on the server when a one-to-one call ends', async () => {
+		sendEvent.mockResolvedValue({ event_id: '$invite' });
+		callManager.startCall(SOURCE, false, false);
+		await vi.waitFor(() => expect(register).toHaveBeenCalledTimes(1));
+		const callId = callManager.getCurrentCall()!.callId;
+		callManager.endCall(false);
+		await vi.waitFor(() => expect(end).toHaveBeenCalledTimes(1));
+		expect(end).toHaveBeenCalledWith({ sourceRoomId: SOURCE, callId });
+	});
+
 	it('ends the observation on the server when a call nobody joined is left', async () => {
 		sendEvent.mockResolvedValue({ event_id: '$invite' });
 		callManager.startCall(SOURCE, true, true);

@@ -510,6 +510,16 @@ const storybookApiResponse = (url: URL, method: string): Response | null => {
 		return storybookEmptyResponse();
 	}
 
+	// The "Meine Termine" nav badge (FE#1050) counts the move proposals
+	// waiting for the counsellor; by default none. Calendar stories answer
+	// with their own requests.
+	if (
+		url.pathname === '/service/users/calendar/proposals' &&
+		method === 'GET'
+	) {
+		return storybookJsonResponse({ sent: [], received: [] });
+	}
+
 	if (
 		url.pathname.includes('/service/conversations/consultants/availability')
 	) {
@@ -1038,22 +1048,13 @@ const preview: Preview = {
 				}
 			}
 		},
+		// Storybook 9+ format: named options here, the active one in `globals.backgrounds`.
 		backgrounds: {
-			default: 'light',
-			values: [
-				{
-					name: 'light',
-					value: '#ffffff'
-				},
-				{
-					name: 'dark',
-					value: '#1a1a1a'
-				},
-				{
-					name: 'gray',
-					value: '#f5f5f5'
-				}
-			]
+			options: {
+				light: { name: 'light', value: '#ffffff' },
+				dark: { name: 'dark', value: '#1a1a1a' },
+				gray: { name: 'gray', value: '#f5f5f5' }
+			}
 		}
 	},
 	globalTypes: { ...orisoSchemeGlobalType, ...entryFormDemoGlobalTypes },
@@ -1064,7 +1065,8 @@ const preview: Preview = {
 			en: { icon: '🇺🇸', title: 'Englisch', right: 'EN' }
 		},
 		scheme: 'light',
-		entryFormDemo: 'manual'
+		entryFormDemo: 'manual',
+		backgrounds: { value: 'light' }
 	},
 	tags: ['autodocs'],
 	// The scheme decorator installs custom properties before the story
