@@ -249,6 +249,12 @@ $cal-off-hatch: repeating-linear-gradient(
 	container-type: size;
 }
 
+// The band its card is about: outlined, so the eye finds it from the
+// left column (Frank *16.2).
+.calendarView__bandFill[data-selected='true'] {
+	box-shadow: inset 0 0 0 2px var(--m3-primary, #a5000a);
+}
+
 .calendarView__bandLabel {
 	display: flex;
 	align-items: center;
@@ -1023,7 +1029,8 @@ $cal-avatar-tones: (#2f5d5a, #7a0e2a, #4b4f7a, #6d3d63, #7a5a1e, #36576e);
 }
 
 .calendarPeek__agencyShort,
-.calendarSplit__agency {
+.calendarSplit__agency,
+.calendarBandCard__agency {
 	padding: 0 6px;
 	border-radius: 8px;
 	background: var(--m3-surface-container-high, #eae7e8);
@@ -1219,9 +1226,11 @@ $cal-avatar-tones: (#2f5d5a, #7a0e2a, #4b4f7a, #6d3d63, #7a5a1e, #36576e);
 	}
 }
 
+$cal-page-gap: 12px;
+
 .calendarPage {
 	display: flex;
-	gap: 12px;
+	gap: $cal-page-gap;
 	box-sizing: border-box;
 	height: 100%;
 	min-height: 0;
@@ -1303,23 +1312,37 @@ $cal-avatar-tones: (#2f5d5a, #7a0e2a, #4b4f7a, #6d3d63, #7a5a1e, #36576e);
 
 // The column sized like "Gespräche" (Frank, prototype v15): 420 px to begin
 // with, the pink grip centred on it (it stays put while the list scrolls),
-// rail 80 / compact 220 / 397–500. The page gap is the pane gap, so the grip
-// sits in its middle.
+// rail 80 / compact 220 / 397–500.
 .calendarSide__frame {
-	// The grip sits on the middle of the 12 px gap to the stage, as in
-	// "Gespräche". The app shell's `.contentWrapper` declares a 12 px
-	// `--pane-inner-gutter` for the sessions list; the calendar column has
-	// none, and inheriting it moved the grip 12 px left of the gap (Frank *2).
-	--pane-gap: 12px;
-	--pane-inner-gutter: 0px;
+	// The grip sits as in "Gespräche" (Frank *2, 2026-11-17): centred in a
+	// 24 px gap between what the column shows and the calendar card, 8 px
+	// either side of the pill, as on the chat stage (`--pane-gap`,
+	// `STAGE_LAYOUT.LIST_CARD_GAP`). The column's content ends
+	// `--pane-inner-gutter` before its edge: its own 2 px padding, or 12 px
+	// on the rail, which centres 56 px rows in 80 px. The margin makes up
+	// the rest of the gap after the page gap.
+	--pane-gap: 24px;
+	--pane-inner-gutter: 2px;
 
 	position: relative;
 	display: flex;
 	flex: none;
 	min-height: 0;
+	margin-right: calc(
+		var(--pane-gap) - var(--pane-inner-gutter) - #{$cal-page-gap}
+	);
 
 	> .calendarSide {
 		width: 100%;
+		padding-right: var(--pane-inner-gutter);
+	}
+
+	&--rail {
+		--pane-inner-gutter: 12px;
+
+		> .calendarSide {
+			padding-right: 0;
+		}
 	}
 }
 
@@ -3757,6 +3780,183 @@ $cal-new-pill-hover: #4b4f51;
 	flex: none;
 	color: inherit;
 	font-size: 12px;
+}
+
+// --- The card of a colleague band (Frank *16.2) ---------------------------
+// On a wide screen it takes the list's place in the left column; the list
+// keeps its place and state underneath, out of sight and out of reach.
+.calendarSide__frame--band > .calendarSide {
+	visibility: hidden;
+}
+
+.calendarSide__bandCard {
+	position: absolute;
+	z-index: 2;
+
+	// The list's own room, so the grip keeps 8 px to the card as to the list.
+	inset: 0 var(--pane-inner-gutter) 0 6px;
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+
+	.calendarBandCard__frame {
+		width: 100%;
+		max-width: none;
+		max-height: 100%;
+		padding: 12px 12px 14px;
+	}
+}
+
+.calendarBandCard {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+	outline: none;
+}
+
+.calendarBandCard__head {
+	display: flex;
+	align-items: flex-start;
+	gap: 4px;
+
+	.chatMenuDropdown__header {
+		flex: 1;
+		min-width: 0;
+		padding-left: 8px;
+	}
+}
+
+.calendarBandCard__people {
+	display: flex;
+	flex-direction: column;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.calendarBandCard__person {
+	padding: 6px 0 4px;
+	border-bottom: 1px solid var(--m3-outline-variant, #c4c7c8);
+
+	&:last-child {
+		border-bottom: 0;
+	}
+}
+
+.calendarBandCard__who {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	min-width: 0;
+	margin: 0;
+	padding: 0 8px;
+	color: var(--m3-on-surface, #1b1b1c);
+	font-size: 14px;
+	font-weight: 600;
+	line-height: 20px;
+}
+
+.calendarBandCard__avatar {
+	display: inline-flex;
+	flex: none;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
+	border-radius: 50%;
+	font-size: 10px;
+	font-weight: 700;
+	letter-spacing: 0.02em;
+}
+
+.calendarBandCard__name {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.calendarBandCard__agency {
+	flex: none;
+}
+
+.calendarBandCard__entries {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	margin: 2px 0 0;
+	padding: 0 8px 0 40px;
+	color: var(--m3-on-surface-variant, #444748);
+	font-size: 13px;
+	line-height: 18px;
+	list-style: none;
+}
+
+.calendarBandCard__entry {
+	display: flex;
+	align-items: flex-start;
+	gap: 6px;
+}
+
+.calendarBandCard__glyph {
+	display: inline-flex;
+	flex: none;
+	padding-top: 1px;
+
+	svg {
+		width: 16px;
+		height: 16px;
+	}
+}
+
+.calendarBandCard__title {
+	display: block;
+	color: var(--m3-on-surface, #1b1b1c);
+}
+
+.calendarBandCard__actions {
+	display: flex;
+	flex-direction: column;
+	margin-top: 2px;
+	padding-left: 32px;
+}
+
+.calendarBandCard__chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	margin: 0;
+	padding: 0 8px 4px;
+	list-style: none;
+}
+
+// Like a chip of the people bar.
+.calendarBandCard__chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	height: 28px;
+	padding: 0 10px 0 2px;
+	box-sizing: border-box;
+	border: 1px solid var(--m3-outline-variant, #c4c7c8);
+	border-radius: 999px;
+	background: var(--m3-surface-container-lowest, #ffffff);
+	color: var(--m3-on-surface, #1b1b1c);
+	font-size: 13px;
+	font-weight: 500;
+}
+
+.calendarBandCard__divider {
+	margin: 8px 0 4px;
+}
+
+// "Kalender ansehen" from a band: that colleague's column is marked by an
+// outline and a bold name, not by colour alone.
+.calendarSplit__column--marked {
+	box-shadow: inset 0 0 0 2px var(--m3-primary, #a5000a);
+
+	.calendarSplit__name {
+		font-weight: 700;
+	}
 }
 
 // "Links ohne Termin" under the list (Frank, 2026-11-17): the former

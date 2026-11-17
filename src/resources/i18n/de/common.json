@@ -7634,6 +7634,18 @@
 			"pillKind": "Als Knopf: {{kind}}",
 			"pillMenu": "Als Knopf wählen: {{kind}}"
 		},
+		"bandCard": {
+			"label": "Wer ist belegt",
+			"back": "Zurück zur Liste",
+			"busy": "Belegt",
+			"free": "Frei",
+			"nobodyFree": "Niemand frei.",
+			"show": "Kalender ansehen",
+			"showLabel": "Kalender von {{name}} ansehen",
+			"ownerOnly": "Nur {{name}} kann das ändern.",
+			"all": "Alle nebeneinander",
+			"create": "Zu dieser Zeit eintragen"
+		},
 		"links": {
 			"title": "Links ohne Termin",
 			"hint": "Einladungslinks, die Sie teilen können: kopieren oder als QR-Code zeigen."

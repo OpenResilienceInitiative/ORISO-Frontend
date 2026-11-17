@@ -88,3 +88,47 @@ export const colleagueBands = (
 	}
 	return bands;
 };
+
+/** A band's stretch, which names it on screen (`data-band`). */
+export const bandKey = (band: ColleagueBand) =>
+	`${band.start.getTime()}-${band.end.getTime()}`;
+
+/**
+ * The band of that stretch among the bands on screen now, or null when
+ * there is none any more. An open band card shows this one, so moving,
+ * cancelling or hiding while it is open updates or closes the card
+ * (review 4601827605).
+ */
+export const currentBand = (
+	key: string,
+	bands: ColleagueBand[]
+): ColleagueBand | null => bands.find((band) => bandKey(band) === key) ?? null;
+
+/** A busy colleague of a band and what keeps them busy in it. */
+export interface BandPerson {
+	personId: string;
+	entries: CalendarEntry[];
+}
+
+/**
+ * Who is busy in a band with what, in the band's order, each person's
+ * entries earliest first: the card a click on a band opens (Frank *16.2).
+ * An all-day entry counts as the band counts it.
+ */
+export const entriesInBand = (
+	band: ColleagueBand,
+	entries: CalendarEntry[]
+): BandPerson[] => {
+	const from = band.start.getTime();
+	const to = band.end.getTime();
+	return band.busy.map((personId) => ({
+		personId,
+		entries: entries
+			.filter((entry) => {
+				if (entry.ownerId !== personId) return false;
+				const [start, end] = busySpan(entry);
+				return start < to && end > from;
+			})
+			.sort((a, b) => busySpan(a)[0] - busySpan(b)[0])
+	}));
+};

@@ -642,6 +642,59 @@ describe('CalendarSplitView — the time in the entry name (review 4589304613)',
 	});
 });
 
+describe('CalendarSplitView — opened from a band (Frank *16.2)', () => {
+	const KAYA = { id: 'kaya', displayName: 'A. Kaya' };
+	const BERG = { id: 'berg', displayName: 'C. Berg' };
+
+	it('starts an hour before the band instead of at 08:00', () => {
+		const scrollTo = vi.spyOn(HTMLElement.prototype, 'scrollTo');
+		render(
+			<CalendarSplitView
+				day={MONDAY}
+				role="consultant"
+				ownerId="me"
+				colleagues={[KAYA, BERG]}
+				entries={[]}
+				now={new Date(2026, 10, 16, 7)}
+				workingPlan={HOURS}
+				startMinutes={10 * 60}
+			/>
+		);
+		// The axis begins at 07:00: 10:00 is three hours down.
+		expect(scrollTo).toHaveBeenCalledWith({ top: px(3) });
+		scrollTo.mockRestore();
+	});
+
+	it('marks the colleague whose calendar was asked for, by more than colour', () => {
+		const { container } = render(
+			<CalendarSplitView
+				day={MONDAY}
+				role="consultant"
+				ownerId="me"
+				colleagues={[KAYA, BERG]}
+				entries={[]}
+				now={new Date(2026, 10, 16, 7)}
+				workingPlan={HOURS}
+				markedOwner="kaya"
+			/>
+		);
+		const column = (id: string) =>
+			container.querySelector(`[data-cy="calendar-split-column-${id}"]`)!;
+		expect(column('kaya').classList).toContain(
+			'calendarSplit__column--marked'
+		);
+		expect(column('berg').classList).not.toContain(
+			'calendarSplit__column--marked'
+		);
+		// For a screen reader, too.
+		expect(
+			column('kaya')
+				.querySelector('.calendarSplit__person')
+				?.getAttribute('aria-current')
+		).toBe('true');
+	});
+});
+
 describe('CalendarSplitView — own working hours stay in the own column', () => {
 	// Frank, 2026-11-17: moving one's own pause ("Immer") moved it for every
 	// colleague too. One's working hours and pause are one's own; a

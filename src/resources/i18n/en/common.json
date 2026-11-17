@@ -7559,6 +7559,18 @@
 			"pillKind": "As button: {{kind}}",
 			"pillMenu": "Choose button: {{kind}}"
 		},
+		"bandCard": {
+			"label": "Who is busy",
+			"back": "Back to the list",
+			"busy": "Busy",
+			"free": "Free",
+			"nobodyFree": "Nobody is free.",
+			"show": "View calendar",
+			"showLabel": "View the calendar of {{name}}",
+			"ownerOnly": "Only {{name}} can change this.",
+			"all": "Everyone side by side",
+			"create": "Add at this time"
+		},
 		"links": {
 			"title": "Links without an appointment",
 			"hint": "Invitation links you can share: copy them or show a QR code."

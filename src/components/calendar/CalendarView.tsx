@@ -76,6 +76,7 @@ import {
 	useRangeFormat
 } from './useEntryLabel';
 import {
+	bandKey,
 	colleagueBands,
 	foldsIntoBand,
 	type ColleagueBand
@@ -185,6 +186,14 @@ export interface CalendarViewProps {
 		mode: 'list' | 'move'
 	) => void;
 	onProposalOpen?: (proposal: MoveProposal, anchor: MenuAnchor) => void;
+	/**
+	 * A colleague band was clicked or tapped: the page opens who is busy
+	 * with what (Frank *16.2). Without it the click explains the band in
+	 * the tooltip, as hovering does.
+	 */
+	onBandOpen?: (band: ColleagueBand, el: HTMLElement) => void;
+	/** The band that card is about: it is outlined. */
+	selectedBand?: ColleagueBand | null;
 	/**
 	 * An own entry was dragged to a new time. Return false, or a promise
 	 * that rejects or resolves to false, to put it back.
@@ -414,8 +423,6 @@ const dayCellTopInnerClass = (info: { isToday: boolean }) =>
 /** The list: no dot before an entry, a light head per day. */
 const LIST_DOT_CLASS = 'calendarView__listDot';
 const LIST_DAY_HEADER_CLASS = 'calendarView__listDay';
-const bandKey = (band: ColleagueBand) =>
-	`${band.start.getTime()}-${band.end.getTime()}`;
 
 /** A colleague's avatar in a band, in the colour of their chip. */
 const BandAvatar = ({ name }: { name: string }) => (
@@ -430,6 +437,8 @@ const BandAvatar = ({ name }: { name: string }) => (
 const DAY_MS = 86_400_000;
 /** FullCalendar's slot, and so what a click without dragging selects. */
 const SLOT_MS = 30 * 60_000;
+/** A press that moves further than this is a drag, not a click. */
+const CLICK_SLOP_PX = 6;
 
 export const CalendarView = ({
 	controller,
@@ -456,6 +465,8 @@ export const CalendarView = ({
 	onSelectDays,
 	onEntryOpen,
 	onProposalOpen,
+	onBandOpen,
+	selectedBand,
 	onEntryMove,
 	onDatesSet,
 	onDragChange,
@@ -468,6 +479,8 @@ export const CalendarView = ({
 	const nowDate = now ?? new Date();
 	const consultant = role === 'consultant';
 	const gridRef = useRef<HTMLDivElement>(null);
+	/** Where the last press began: a click that moved is a drag. */
+	const pressedAt = useRef<{ x: number; y: number } | null>(null);
 	const clock = new Intl.DateTimeFormat(calendarLocale(i18n.language), {
 		hour: '2-digit',
 		minute: '2-digit'
@@ -821,6 +834,11 @@ export const CalendarView = ({
 				<span
 					className="calendarView__bandFill"
 					data-band={bandKey(band)}
+					data-selected={
+						selectedBand && bandKey(selectedBand) === bandKey(band)
+							? 'true'
+							: undefined
+					}
 					data-cy="calendar-band"
 				>
 					<span className="calendarView__bandLabel">
@@ -1077,10 +1095,25 @@ export const CalendarView = ({
 				: null;
 		if (band) {
 			info.view.calendar.unselect();
-			setPeek(band);
+			openBand(band);
 			return;
 		}
 		onSelectRange?.({ start: info.start, end: info.end }, anchor);
+	};
+
+	/**
+	 * A band was clicked: the page opens its card, or without a page the
+	 * tooltip explains it. A mouse click arrives through `select` (the
+	 * browser sends no click: FullCalendar swaps the element under the
+	 * pointer), a tap through the click handler.
+	 */
+	const openBand = (found: { el: HTMLElement; band: ColleagueBand }) => {
+		if (!onBandOpen) {
+			setPeek(found);
+			return;
+		}
+		setPeek(null);
+		onBandOpen(found.band, found.el);
 	};
 
 	const peekColleague =
@@ -1100,6 +1133,12 @@ export const CalendarView = ({
 		};
 	};
 	const peekPeople = peek && 'band' in peek ? bandPeek(peek.band) : null;
+	// The band whose card is open needs no tooltip on top of it.
+	const peekIsCard =
+		!!peek &&
+		'band' in peek &&
+		!!selectedBand &&
+		bandKey(peek.band) === bandKey(selectedBand);
 
 	return (
 		<div
@@ -1109,12 +1148,33 @@ export const CalendarView = ({
 			onMouseOver={showPeek}
 			onMouseLeave={() => setPeek(null)}
 			onMouseMove={bands.length > 0 ? followBand : undefined}
-			// A tap on a band explains it, as hovering does.
+			// Pointer, not mouse: FullCalendar's drag may cancel the mouse
+			// events of a press, never the pointer's.
+			onPointerDownCapture={(event) => {
+				pressedAt.current = { x: event.clientX, y: event.clientY };
+			}}
+			// A tap on a band opens it (Frank *16.2); see `openBand`.
+			// Dragging over a band books one's own time instead, and an
+			// entry, grip or link on top of a band keeps its own click.
 			onClick={(event) => {
+				const down = pressedAt.current;
+				pressedAt.current = null;
+				if (
+					down &&
+					Math.hypot(event.clientX - down.x, event.clientY - down.y) >
+						CLICK_SLOP_PX
+				)
+					return;
+				if (
+					(event.target as HTMLElement).closest?.(
+						'[data-entry-id], .calendarGrip, a, button'
+					)
+				)
+					return;
 				const next =
 					bandAt(event.clientX, event.clientY) ??
 					findPeek(event.target);
-				if (next && 'band' in next) setPeek(next);
+				if (next?.band) openBand({ el: next.el, band: next.band });
 			}}
 			onFocus={showPeek}
 			onBlur={() => setPeek(null)}
@@ -1222,7 +1282,7 @@ export const CalendarView = ({
 					);
 				})}
 			<Popper
-				open={!!peek}
+				open={!!peek && !peekIsCard}
 				anchorEl={peek?.el}
 				placement="top-start"
 				modifiers={[{ name: 'offset', options: { offset: [0, 6] } }]}
