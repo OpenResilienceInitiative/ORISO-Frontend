@@ -70,6 +70,21 @@ const at = (day: Dayjs | null, time: Dayjs | null) =>
 				.toDate()
 		: null;
 
+/**
+ * The fields show one date: an appointment that came in over midnight
+ * (23:00 to 00:00, from a calendar slot) keeps its end on the later day
+ * while the end time is not after the start. Once it is, the end is on the
+ * start day again; a new appointment never wraps.
+ */
+const overnightEnd = (
+	start: Date | null,
+	end: Date | null,
+	endDays: number
+): Date | undefined =>
+	start && end && endDays > 0 && end.getTime() <= start.getTime()
+		? dayjs(end).add(endDays, 'day').toDate()
+		: (end ?? undefined);
+
 export type InvitationDialogVariant = 'invitation' | 'appointment';
 
 export interface InvitationDialogInitial {
@@ -215,6 +230,13 @@ export const useInvitationForm = ({
 	const [inviteOthers, setInviteOthers] = useState(
 		Boolean(initial.inviteOthers)
 	);
+	/* Days from the given start to the given end: 1 for 23:00 to 00:00. */
+	const initialEndDays =
+		initial.start && initial.end
+			? dayjs(initial.end)
+					.startOf('day')
+					.diff(dayjs(initial.start).startOf('day'), 'day')
+			: 0;
 	const [day, setDay] = useState<Dayjs | null>(initialStart);
 	const [startTime, setStartTime] = useState<Dayjs | null>(initialStart);
 	const [endTime, setEndTime] = useState<Dayjs | null>(
@@ -257,7 +279,11 @@ export const useInvitationForm = ({
 		? { start: initial.start, end: initial.end }
 		: {
 				start: at(day, startTime) ?? undefined,
-				end: at(day, endTime) ?? undefined
+				end: overnightEnd(
+					at(day, startTime),
+					at(day, endTime),
+					initialEndDays
+				)
 			};
 	const conflict =
 		withAppointment && conflicts && slot.start && slot.end
