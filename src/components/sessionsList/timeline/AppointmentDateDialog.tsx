@@ -115,7 +115,9 @@ export const AppointmentDateDialog = ({
 			start,
 			end,
 			sessionId,
-			matrixRoomId
+			matrixRoomId,
+			...(isMove &&
+				entry && { previousStart: entry.start, previousEnd: entry.end })
 		});
 	};
 

@@ -58,13 +58,15 @@ const renderNotice = ({
 	senderId,
 	viewer,
 	consultantMatrixUserId = MOCK_CONSULTANT_MATRIX_ID,
-	previewMode
+	previewMode,
+	conversationType = 'AGENCY_COUNSELLING'
 }: {
 	raw: string;
 	senderId: string;
 	viewer: 'asker' | 'consultant';
 	consultantMatrixUserId?: string;
 	previewMode?: 'read' | 'interactive';
+	conversationType?: 'AGENCY_COUNSELLING' | 'LIVE_CHAT';
 }) =>
 	render(
 		<MemoryRouter>
@@ -103,8 +105,7 @@ const renderNotice = ({
 											...mockActiveSession1on1(),
 											item: {
 												...mockActiveSession1on1().item,
-												conversationType:
-													'AGENCY_COUNSELLING',
+												conversationType,
 												consultantMatrixUserId
 											}
 										},
@@ -156,6 +157,29 @@ describe('MessageItemComponent — further counselling notices (FE#1876)', () =>
 		).toBeTruthy();
 		// Never the raw JSON payload.
 		expect(document.body.textContent).not.toContain('topicId');
+		// A 1:1 advice seeker already has an account: no conversion step.
+		expect(
+			screen.queryByText('furtherCounselling.card.convertFirstHint')
+		).toBeNull();
+	});
+
+	it('sends a live chat person to the account conversion first, though the account carries the advice seeker authority (FE#2251)', () => {
+		// Dev, 17 Nov: a live chat guest from an invite link is a plain user
+		// (AUTHORIZATION_USER_DEFAULT), never ANONYMOUS_DEFAULT.
+		renderNotice({
+			raw: recommendation,
+			senderId: MOCK_CONSULTANT_MATRIX_ID,
+			viewer: 'asker',
+			conversationType: 'LIVE_CHAT'
+		});
+		expect(
+			screen.getByText('furtherCounselling.card.convertFirstHint')
+		).toBeTruthy();
+		expect(
+			screen.getByRole('button', {
+				name: 'furtherCounselling.card.findAgency'
+			})
+		).toBeTruthy();
 	});
 
 	it.each(['interactive', 'read'] as const)(

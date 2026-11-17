@@ -12,6 +12,7 @@ import {
 } from '../../api/apiDirectLinks';
 import type { DirectLink } from '../conversationCreate/directLink/directLink';
 import type { SnackbarStack } from '../m3Snackbar/snackbarStack';
+import { nextExpiryRead, READ_RETRY_MS } from './invitationModel';
 import { useSendNewLink } from './useSendNewLink';
 
 export const ConversationNewLinkAction = ({
@@ -43,14 +44,37 @@ export const ConversationNewLinkAction = ({
 			return undefined;
 		}
 		let active = true;
+		let retry: number | undefined;
 		apiGetOwnDirectLinks().then(
 			(own) => active && setLinks(own),
-			() => active && setLinks([])
+			() => {
+				if (!active) return;
+				/* Unknown is not "expired": no offer that could renew a link
+				   just sent, but asked again, so the offer can come back. */
+				setLinks([]);
+				retry = window.setTimeout(
+					() => setReload((n) => n + 1),
+					READ_RETRY_MS
+				);
+			}
 		);
 		return () => {
 			active = false;
+			window.clearTimeout(retry);
 		};
 	}, [enabled, sessionId, reload]);
+
+	/* An invitation of this conversation that expires while it is open: read
+	   again once its end has passed, so the offer appears (#2252 review).
+	   Every read re-arms it, also after an early read of a far end (#2285). */
+	useEffect(() => {
+		const delay = nextExpiryRead(
+			links.filter((link) => link.sessionId === sessionId)
+		);
+		if (delay === undefined) return undefined;
+		const timer = window.setTimeout(() => setReload((n) => n + 1), delay);
+		return () => window.clearTimeout(timer);
+	}, [links, sessionId]);
 
 	/* The newest expired invitation of this conversation (newest first). */
 	const expired = useMemo(

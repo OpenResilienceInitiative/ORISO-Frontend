@@ -2253,6 +2253,20 @@
 		},
 		"deliveryStatus": {
 			"sent": "Sent"
+		},
+		"appointmentNotice": {
+			"title": {
+				"created": "Appointment scheduled",
+				"moved": "Appointment moved",
+				"cancelled": "Appointment cancelled"
+			},
+			"by": "by {{name}}",
+			"before": "Before:",
+			"after": "New:",
+			"action": {
+				"createNew": "Add new appointment",
+				"openCalendar": "Open in calendar"
+			}
 		}
 	},
 	"navigation": {
@@ -7168,7 +7182,8 @@
 			"joinSub": "Open the video conference",
 			"moveSub": "Change day and time",
 			"proposeSub": "{{name}} has to confirm",
-			"cancelSub": "{{name}} gets a message"
+			"cancelSub": "{{name}} gets a message",
+			"reason": "Reason (optional)"
 		},
 		"fullscreen": "Full screen",
 		"fullscreenExit": "Exit full screen (Esc)",
@@ -7239,7 +7254,8 @@
 			"declined": "Proposal declined. The appointment stays at {{date}}.",
 			"noLongerValid": "This proposal no longer applies. The appointment has changed or is over.",
 			"navCount": "{{count}} open requests",
-			"navCount_one": "{{count}} open request"
+			"navCount_one": "{{count}} open request",
+			"reason": "Reason: {{reason}}"
 		},
 		"quick": {
 			"freeUnavailable": "Free times are not available right now.",

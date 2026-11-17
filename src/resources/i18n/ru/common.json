@@ -2259,6 +2259,20 @@
 		},
 		"deliveryStatus": {
 			"sent": "Отправлено"
+		},
+		"appointmentNotice": {
+			"title": {
+				"created": "Встреча назначена",
+				"moved": "Встреча перенесена",
+				"cancelled": "Встреча отменена"
+			},
+			"by": "Автор: {{name}}",
+			"before": "Было:",
+			"after": "Стало:",
+			"action": {
+				"createNew": "Создать новую встречу",
+				"openCalendar": "Открыть в календаре"
+			}
 		}
 	},
 	"navigation": {
@@ -7280,7 +7294,8 @@
 			"joinSub": "Открыть видеоконференцию",
 			"moveSub": "Изменить день и время",
 			"proposeSub": "Нужно подтверждение от {{name}}",
-			"cancelSub": "{{name}} получит сообщение"
+			"cancelSub": "{{name}} получит сообщение",
+			"reason": "Причина (необязательно)"
 		},
 		"fullscreen": "Полный экран",
 		"fullscreenExit": "Выйти из полноэкранного режима (Esc)",
@@ -7353,7 +7368,8 @@
 			"navCount": "{{count}} открытых запросов",
 			"navCount_one": "{{count}} открытый запрос",
 			"navCount_few": "{{count}} открытых запроса",
-			"navCount_many": "{{count}} открытых запросов"
+			"navCount_many": "{{count}} открытых запросов",
+			"reason": "Причина: {{reason}}"
 		},
 		"quick": {
 			"freeUnavailable": "Свободное время сейчас недоступно.",

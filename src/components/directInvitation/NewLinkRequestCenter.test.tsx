@@ -228,6 +228,43 @@ describe('NewLinkRequestCenter', () => {
 		).toBeTruthy();
 	});
 
+	it('closes the pop-up once its requests were read elsewhere', async () => {
+		const { rerender, stack } = renderCenter([
+			request('1', 9),
+			request('2', 9),
+			request('5', 12)
+		]);
+		await screen.findByText('directInvitation.notice.text:Termin Frau M.');
+		/* Another tab renewed invitation 9; the next poll has both read. */
+		rerender(
+			<NotificationsContext.Provider
+				value={
+					{
+						notificationFeed: [
+							request('1', 9, '2026-11-14T10:01:00Z' as any),
+							request('2', 9, '2026-11-14T10:01:00Z' as any),
+							request('5', 12)
+						],
+						markNotificationAsRead
+					} as any
+				}
+			>
+				<NewLinkRequestCenter stack={stack} />
+				<M3SnackbarHost stack={stack} />
+			</NotificationsContext.Provider>
+		);
+		await act(async () => undefined);
+
+		/* Left open, it would renew again and expire the link just shared. */
+		expect(
+			screen.queryByText('directInvitation.notice.text:Termin Frau M.')
+		).toBeNull();
+		expect(stack.getSnapshot().map((entry) => entry.id)).toEqual([
+			'new-link-request-12'
+		]);
+		expect(apiRenewDirectInvitation).not.toHaveBeenCalled();
+	});
+
 	it('shows a later request when the earlier one was read in the same update', async () => {
 		const { rerender, stack } = renderCenter([request('1', 9)]);
 		await screen.findByText('directInvitation.notice.text:Termin Frau M.');

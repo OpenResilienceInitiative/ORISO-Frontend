@@ -116,6 +116,39 @@ describe('CalendarPage — colleagues with the same name (test finding C12)', ()
 	});
 });
 
+describe('CalendarPage — the username tells twins of one centre apart (US#1663)', () => {
+	it('shows the username UserService sends on chips whose names repeat', () => {
+		page({
+			colleagues: [
+				{
+					id: 'bart1',
+					displayName: 'Bart Simpson',
+					agencyName: 'Beratungsstelle Nord',
+					secondaryLabel: 'bart.s',
+					relation: 'sameAgency'
+				},
+				{
+					id: 'bart2',
+					displayName: 'Bart Simpson',
+					agencyName: 'Beratungsstelle Nord',
+					secondaryLabel: 'bsimpson',
+					relation: 'sameAgency'
+				},
+				{
+					id: 'lisa',
+					displayName: 'Lisa Simpson',
+					agencyName: 'Beratungsstelle Nord',
+					secondaryLabel: 'lisa',
+					relation: 'sameAgency'
+				}
+			]
+		});
+		expect(cy('calendar-person-bart1')?.textContent).toContain('bart.s');
+		expect(cy('calendar-person-bart2')?.textContent).toContain('bsimpson');
+		expect(cy('calendar-person-lisa')?.textContent).not.toContain('lisa');
+	});
+});
+
 describe('CalendarPage — shown colleagues survive a reload (test finding C20)', () => {
 	it('shows the same colleagues switched on after a reload', () => {
 		page();
