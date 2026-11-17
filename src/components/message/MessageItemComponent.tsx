@@ -67,6 +67,7 @@ import { isErstantwortMessage } from '../erstantwort/erstantwortPayload';
 import { getErstantwortRenderModeForSession } from '../erstantwort/erstantwortRoomGate';
 import { MessageAttachment } from './MessageAttachment';
 import type { MediaCheckState } from './MessageAttachment';
+import { passageReplyAudioAttachment } from '../../utils/matrixTimelineEventFormatter';
 import type { ChatAttachment, ChatFile } from './chatAttachmentTypes';
 import { getModality, Modality } from '../session/getModality';
 import {
@@ -2520,6 +2521,31 @@ export const MessageItemComponent = ({
 										replies={passageReplies!}
 										isMyMessage={isMyMessage}
 										onJump={onJumpToPassage}
+										renderAudio={(audio, index) => {
+											const voice =
+												passageReplyAudioAttachment(
+													audio
+												);
+											return (
+												<MessageAttachment
+													key={`passage-audio-${index}`}
+													attachment={
+														voice.attachment
+													}
+													rid={rid}
+													file={voice.file}
+													t="matrix-e2e-file"
+													hasRenderedMessage
+													mediaCheckState={getAttachmentMediaCheckState(
+														voice.attachment
+													)}
+													inlineDisplayEnabled={
+														attachmentInlineDisplayEnabled
+													}
+													isOwnMessage={isMyMessage}
+												/>
+											);
+										}}
 									/>
 								)}
 							{/* Relations foundation (#435): quote of the replied-to

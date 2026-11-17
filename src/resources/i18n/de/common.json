@@ -2260,7 +2260,11 @@
 			"pendingLead": "{{number}} · {{author}}",
 			"pendingStatus": "Antwort {{number}} an {{author}}, gesammelt für die nächste Nachricht",
 			"remove": "Antwort {{number}} entfernen",
-			"voiceDuration": "Sprachnachricht {{duration}}"
+			"voiceDuration": "Sprachnachricht {{duration}}",
+			"sendFailed": {
+				"title": "Antworten nicht gesendet",
+				"text": "Ihre Antworten auf die markierten Stellen sind noch gesammelt. Bitte senden Sie sie erneut."
+			}
 		},
 		"thread": {
 			"unknownRoot": "Frühere Nachricht",

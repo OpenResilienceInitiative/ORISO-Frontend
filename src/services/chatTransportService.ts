@@ -14,8 +14,10 @@ import {
 import { getMatrixClientService } from './matrixClientRegistry';
 import type {
 	MatrixClientService,
-	MatrixFileMessageOptions
+	MatrixFileMessageOptions,
+	OutgoingPassageReply
 } from './matrixClientService';
+import type { PassageRepliesFallbackLabels } from '../components/selectionReply/passageReplyContent';
 
 // A failed decrypt has synthetic clear type m.room.message, while its wire
 // event remains encrypted. It still needs a refresh after a later key restore.
@@ -57,6 +59,18 @@ export interface SendTextMessageOptions {
 	senderDisplayName?: string | null;
 	teamDiscussion?: boolean;
 	feedbackMailIntent?: boolean;
+	matrixClientServiceOverride?: MatrixClientService | null;
+}
+
+export interface SendPassageRepliesOptions {
+	matrixRoomId: string;
+	replies: OutgoingPassageReply[];
+	/** Composer text sent beside the answers (markdown, '' when none). */
+	typedText: string;
+	labels: PassageRepliesFallbackLabels;
+	supervisorMessage?: boolean;
+	senderDisplayName?: string | null;
+	teamDiscussion?: boolean;
 	matrixClientServiceOverride?: MatrixClientService | null;
 }
 
@@ -209,6 +223,47 @@ class ChatTransportService {
 			}).catch(() => undefined);
 
 		return { success: true, event_id: response.event_id };
+	}
+
+	/**
+	 * Answers to several marked passages as one message (ADR-022). Announced
+	 * like any other message: metadata only, never the content (FE-H01).
+	 */
+	public async sendPassageReplies({
+		matrixRoomId,
+		replies,
+		typedText,
+		labels,
+		supervisorMessage,
+		senderDisplayName,
+		teamDiscussion,
+		matrixClientServiceOverride
+	}: SendPassageRepliesOptions): Promise<any> {
+		const matrixClientService =
+			matrixClientServiceOverride || getMatrixClientService();
+		if (!matrixClientService?.getClient()) {
+			return Promise.reject(new Error('Matrix client not initialized'));
+		}
+
+		const response = await matrixClientService.sendPassageReplies(
+			matrixRoomId,
+			replies,
+			typedText,
+			labels
+		);
+
+		apiPostMessageEventNotification({
+			roomId: matrixRoomId,
+			matrixRoom: true,
+			threadRootId: null,
+			supervisorMessage: !!supervisorMessage,
+			senderDisplayName: senderDisplayName || null,
+			teamDiscussion: !!teamDiscussion,
+			mentionedUserIds: null,
+			matrixEventId: response?.event_id || null
+		}).catch(() => undefined);
+
+		return { success: true, event_id: response?.event_id };
 	}
 
 	/** Edit a previously sent message (m.replace), same relations mechanic as reply/thread. */

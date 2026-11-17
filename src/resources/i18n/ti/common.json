@@ -2213,7 +2213,11 @@
 			"pendingLead": "{{number}} · {{author}}",
 			"pendingStatus": "መልሲ {{number}} ን{{author}}፣ ንዝቕጽል መልእኽቲ ተኣኪቡ",
 			"remove": "መልሲ {{number}} ኣልግስ",
-			"voiceDuration": "ድምጻዊ መልእኽቲ {{duration}}"
+			"voiceDuration": "ድምጻዊ መልእኽቲ {{duration}}",
+			"sendFailed": {
+				"title": "መልስታት ኣይተላእኩን",
+				"text": "ንዝተመልከቱ ክፍልታት ዝሃብኩምዎም መልስታት ገና ተኣኪቦም ኣለዉ። በጃኹም ደጊምኩም ስደድዎም።"
+			}
 		},
 		"thread": {
 			"unknownRoot": "ቀዳማይ መልእኽቲ",

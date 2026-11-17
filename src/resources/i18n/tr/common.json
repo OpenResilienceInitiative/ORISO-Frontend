@@ -2239,7 +2239,11 @@
 			"pendingLead": "{{number}} · {{author}}",
 			"pendingStatus": "{{author}} için {{number}}. yanıt, sonraki mesaj için toplandı",
 			"remove": "{{number}}. yanıtı kaldır",
-			"voiceDuration": "Sesli mesaj {{duration}}"
+			"voiceDuration": "Sesli mesaj {{duration}}",
+			"sendFailed": {
+				"title": "Yanıtlar gönderilmedi",
+				"text": "İşaretlenen bölümlere verdiğiniz yanıtlar hâlâ toplanmış durumda. Lütfen yeniden gönderin."
+			}
 		},
 		"thread": {
 			"unknownRoot": "Önceki mesaj",

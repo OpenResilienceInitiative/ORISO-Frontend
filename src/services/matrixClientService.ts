@@ -37,6 +37,11 @@ import {
 
 import { getImageDimensions } from '../utils/imageDimensions';
 import { buildMentionsContent } from '../utils/messageMentions';
+import {
+	buildPassageRepliesContent,
+	type PassageRepliesFallbackLabels,
+	type PassageReplyContentItem
+} from '../components/selectionReply/passageReplyContent';
 
 const TOKEN_REFRESH_BUFFER_MS = 2 * 60 * 1000;
 const isPreparedSyncState = (state: string | null): boolean =>
@@ -67,6 +72,14 @@ export interface MatrixFileContentOptions extends MessageRelationOptions {
 	/** Intentional mentions in the caption (m.mentions). */
 	mentionedUserIds?: string[];
 }
+
+/**
+ * One answered passage on its way out (ADR-022). A voice answer is the
+ * recorded file; it is encrypted and uploaded before the message is sent.
+ */
+export type OutgoingPassageReply = Omit<PassageReplyContentItem, 'audio'> & {
+	voice?: { file: File; durationMs: number } | null;
+};
 
 export interface MatrixFileMessageOptions extends MatrixFileContentOptions {
 	abortController?: AbortController;
@@ -793,6 +806,82 @@ export class MatrixClientService {
 
 			await withTokenFailureNamed(this.refreshMatrixToken());
 			stopIfCancelled();
+			return sendWithCurrentClient();
+		}
+	}
+
+	/**
+	 * Several answered passages as ONE message (ADR-022). Every clip is
+	 * encrypted and uploaded first; a failed upload sends nothing, so the
+	 * caller can keep the collection and offer the send again.
+	 */
+	public async sendPassageReplies(
+		roomId: string,
+		replies: OutgoingPassageReply[],
+		typedText: string,
+		labels: PassageRepliesFallbackLabels
+	): Promise<any> {
+		await this.ensureFreshToken();
+
+		const sendWithCurrentClient = async () => {
+			const client = this.client;
+			if (!client) {
+				throw new Error('Matrix client not initialized');
+			}
+			if (!client.getRoom(roomId)) {
+				await client.joinRoom(roomId);
+			}
+			await this.refreshTrackedRoomMemberDevices(client, roomId);
+			const items: PassageReplyContentItem[] = [];
+			for (const { voice, ...reply } of replies) {
+				if (!voice) {
+					items.push(reply);
+					continue;
+				}
+				const encryptedAttachment = await encryptMatrixAttachment(
+					voice.file
+				);
+				const upload = await client.uploadContent(
+					encryptedAttachment.encryptedBlob,
+					{ includeFilename: false, type: 'application/octet-stream' }
+				);
+				items.push({
+					...reply,
+					audio: {
+						file: {
+							...encryptedAttachment.file,
+							url: upload.content_uri
+						},
+						mimetype: voice.file.type || 'audio/webm',
+						durationMs: voice.durationMs,
+						size: voice.file.size
+					}
+				});
+			}
+			const content = buildPassageRepliesContent(
+				items,
+				typedText,
+				labels
+			);
+			const txnId = client.makeTxnId?.();
+			try {
+				return await (txnId
+					? client.sendMessage(roomId, content as any, txnId)
+					: client.sendMessage(roomId, content as any));
+			} catch (error) {
+				this.dropFailedLocalEcho(client, roomId, txnId, error);
+				throw error;
+			}
+		};
+
+		try {
+			return await sendWithCurrentClient();
+		} catch (error) {
+			if (!isMatrixExpiredTokenError(error)) {
+				throw error;
+			}
+
+			await this.refreshMatrixToken();
 			return sendWithCurrentClient();
 		}
 	}
