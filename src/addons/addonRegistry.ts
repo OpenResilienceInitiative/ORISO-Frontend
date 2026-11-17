@@ -11,17 +11,27 @@ export interface AddonAppInSlot {
 export interface AddonRegistryState {
 	addons: AvailableAddon[];
 	loaded: boolean;
+	/** An AddonService answered: the instance has add-ons, even when none is visible right now. */
+	available: boolean;
 }
 
-const EMPTY: AddonRegistryState = { addons: [], loaded: false };
+const EMPTY: AddonRegistryState = {
+	addons: [],
+	loaded: false,
+	available: false
+};
 const GLOBAL_KEY = '';
 const NO_CASE_KEY = 'no-case';
 export const REGISTRY_REFRESH_DEBOUNCE_MS = 1000;
+/** Releases and badges can change without a notification the timeline shows. */
+export const REGISTRY_POLL_MS = 60_000;
 
 const registries = new Map<string, AddonRegistryState>();
-const inFlight = new Map<string, Promise<AvailableAddon[]>>();
+const inFlight = new Map<string, Promise<AvailableAddon[] | null>>();
 const listeners = new Set<() => void>();
 let generation = 0;
+/** Changes with every login: requests of an earlier identity never publish. */
+let identity = 0;
 let refreshTimer: ReturnType<typeof setTimeout> | undefined;
 
 const notify = () => listeners.forEach((listener) => listener());
@@ -40,8 +50,9 @@ const contextKey = ({ agencyId, sessionId }: AddonRegistryContext) =>
 	`${agencyId ?? ''}/${sessionId ?? ''}`;
 
 // Header button, side panel and profile tiles of one case share one request.
-const fetchRegistry = (key: string, context?: AddonRegistryContext) => {
-	const requestKey = `${key}#${generation}`;
+const loadRegistry = (key: string, context?: AddonRegistryContext) => {
+	const requestIdentity = identity;
+	const requestKey = `${requestIdentity}:${key}#${generation}`;
 	let request = inFlight.get(requestKey);
 	if (!request) {
 		request = apiGetAddonRegistry(context).finally(() =>
@@ -49,12 +60,26 @@ const fetchRegistry = (key: string, context?: AddonRegistryContext) => {
 		);
 		inFlight.set(requestKey, request);
 	}
-	return request;
+	return request.then((addons) => {
+		if (requestIdentity === identity) {
+			setRegistry(key, {
+				addons: addons ?? [],
+				loaded: true,
+				available: addons !== null
+			});
+		}
+	});
+};
+
+const startIdentity = () => {
+	identity += 1;
+	registries.clear();
+	inFlight.clear();
+	notify();
 };
 
 export const resetAddonRegistryForTests = () => {
-	registries.clear();
-	inFlight.clear();
+	startIdentity();
 	clearTimeout(refreshTimer);
 	generation = 0;
 	notify();
@@ -88,8 +113,8 @@ export const useAddonRegistryLoader = (userId: string | undefined) => {
 	const currentGeneration = useGeneration();
 
 	useEffect(() => {
-		registries.clear();
-		notify();
+		startIdentity();
+		return startIdentity;
 	}, [userId]);
 
 	useEffect(() => {
@@ -97,23 +122,21 @@ export const useAddonRegistryLoader = (userId: string | undefined) => {
 			return undefined;
 		}
 		window.addEventListener('focus', refreshAddonRegistries);
-		return () =>
+		const poll = setInterval(() => {
+			if (document.visibilityState === 'visible') {
+				refreshAddonRegistries();
+			}
+		}, REGISTRY_POLL_MS);
+		return () => {
 			window.removeEventListener('focus', refreshAddonRegistries);
+			clearInterval(poll);
+		};
 	}, [userId]);
 
 	useEffect(() => {
-		if (!userId) {
-			return undefined;
+		if (userId) {
+			void loadRegistry(GLOBAL_KEY);
 		}
-		let cancelled = false;
-		fetchRegistry(GLOBAL_KEY).then((addons) => {
-			if (!cancelled) {
-				setRegistry(GLOBAL_KEY, { addons, loaded: true });
-			}
-		});
-		return () => {
-			cancelled = true;
-		};
 	}, [userId, currentGeneration]);
 };
 
@@ -134,18 +157,9 @@ export const useCaseAddonRegistry = (
 	const state = useRegistryState(key ?? NO_CASE_KEY);
 
 	useEffect(() => {
-		if (!key) {
-			return undefined;
+		if (key) {
+			void loadRegistry(key, context);
 		}
-		let cancelled = false;
-		fetchRegistry(key, context).then((addons) => {
-			if (!cancelled) {
-				setRegistry(key, { addons, loaded: true });
-			}
-		});
-		return () => {
-			cancelled = true;
-		};
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [key, currentGeneration]);
 

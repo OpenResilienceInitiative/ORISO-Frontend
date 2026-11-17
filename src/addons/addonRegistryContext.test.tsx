@@ -13,6 +13,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { ActiveSessionContext, LocaleContext } from '../globalState';
 import { apiGetAddonRegistry } from './addonRegistryApi';
 import {
+	REGISTRY_POLL_MS,
 	REGISTRY_REFRESH_DEBOUNCE_MS,
 	refreshAddonRegistries,
 	resetAddonRegistryForTests,
@@ -82,7 +83,8 @@ describe('add-on registry in context', () => {
 		const withoutLogin = renderHook(() => useCaseAddonRegistry(context));
 		expect(withoutSession.result.current).toEqual({
 			addons: [],
-			loaded: false
+			loaded: false,
+			available: false
 		});
 		expect(withoutLogin.result.current.loaded).toBe(false);
 		expect(vi.mocked(apiGetAddonRegistry)).not.toHaveBeenCalled();
@@ -118,6 +120,56 @@ describe('add-on registry in context', () => {
 		);
 		expect(result.current.global.addons[0].apps[0].badge).toBe(5);
 		expect(vi.mocked(apiGetAddonRegistry)).toHaveBeenCalledTimes(4);
+	});
+
+	it('never publishes a registry requested for the previous login', async () => {
+		let answerFirstUser: (addons: AvailableAddon[]) => void = () => {};
+		vi.mocked(apiGetAddonRegistry)
+			.mockReturnValueOnce(
+				new Promise((resolve) => {
+					answerFirstUser = resolve;
+				})
+			)
+			.mockResolvedValueOnce([]);
+		const { result, rerender } = renderHook(
+			({ userId }) => {
+				useAddonRegistryLoader(userId);
+				return useAddonRegistry();
+			},
+			{ initialProps: { userId: 'u1' } }
+		);
+		rerender({ userId: 'u2' });
+		await waitFor(() => expect(result.current.loaded).toBe(true));
+
+		await act(async () => answerFirstUser([addon(1)]));
+
+		expect(result.current.addons).toEqual([]);
+		expect(vi.mocked(apiGetAddonRegistry)).toHaveBeenCalledTimes(2);
+	});
+
+	it('loads the registries again every minute while the page is visible', async () => {
+		vi.useFakeTimers();
+		vi.mocked(apiGetAddonRegistry).mockResolvedValue([addon()]);
+		renderHook(() => useAddonRegistryLoader('u1'));
+		expect(vi.mocked(apiGetAddonRegistry)).toHaveBeenCalledTimes(1);
+
+		await act(async () => {
+			vi.advanceTimersByTime(
+				REGISTRY_POLL_MS + REGISTRY_REFRESH_DEBOUNCE_MS
+			);
+		});
+
+		expect(vi.mocked(apiGetAddonRegistry)).toHaveBeenCalledTimes(2);
+	});
+
+	it('tells an instance without AddonService from one without visible add-ons', async () => {
+		vi.mocked(apiGetAddonRegistry).mockResolvedValueOnce(null);
+		const { result } = renderHook(() => {
+			useAddonRegistryLoader('u1');
+			return useAddonRegistry();
+		});
+		await waitFor(() => expect(result.current.loaded).toBe(true));
+		expect(result.current).toMatchObject({ addons: [], available: false });
 	});
 });
 

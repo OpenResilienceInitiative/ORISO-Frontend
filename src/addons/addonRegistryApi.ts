@@ -14,13 +14,13 @@ export interface AddonRegistryContext {
 }
 
 /**
- * Loads the add-ons enabled for the logged-in user. Instances without an AddonService, or
- * with an incompatible one, simply have no add-ons: nothing here may break the app. With a
- * context, the AddonService decides for that case's agency and session.
+ * Loads the add-ons enabled for the logged-in user; `null` on instances without an AddonService,
+ * or with an incompatible one: nothing here may break the app. With a context, the AddonService
+ * decides for that case's agency and session.
  */
 export const apiGetAddonRegistry = async (
 	context: AddonRegistryContext = {}
-): Promise<AvailableAddon[]> => {
+): Promise<AvailableAddon[] | null> => {
 	try {
 		const response: AddonRegistryResponse = await fetchData({
 			url: endpoints.addonRegistry,
@@ -37,10 +37,10 @@ export const apiGetAddonRegistry = async (
 			response?.contract !== ADDON_CONTRACT ||
 			!Array.isArray(response.addons)
 		) {
-			return [];
+			return null;
 		}
 		return response.addons;
 	} catch {
-		return [];
+		return null;
 	}
 };

@@ -45,12 +45,12 @@ describe('apiGetAddonRegistry', () => {
 		expect(sentHeaders().has('X-Oriso-Session-Id')).toBe(false);
 	});
 
-	it('shows no add-ons for another contract or a failed request', async () => {
+	it('reports no AddonService for another contract or a failed request', async () => {
 		answer({ contract: 'oriso-addon/v2', addons: [addon] });
-		await expect(apiGetAddonRegistry()).resolves.toEqual([]);
+		await expect(apiGetAddonRegistry()).resolves.toBeNull();
 		vi.restoreAllMocks();
 
 		answer({}, 500);
-		await expect(apiGetAddonRegistry()).resolves.toEqual([]);
+		await expect(apiGetAddonRegistry()).resolves.toBeNull();
 	});
 });
