@@ -1962,6 +1962,9 @@
 				"failed": "Der Termin konnte nicht gebucht werden. Bitte versuch es noch einmal.",
 				"booked": "Dein Termin ist gebucht. Deine Beratungsperson wird im Chat benachrichtigt."
 			}
+		},
+		"timeline": {
+			"counsellorCallPendingText": "Nur deine Beraterin oder dein Berater kann den Anruf starten. Du kannst beitreten, sobald sie oder er dich anruft. Bitte warte auf den Anruf."
 		}
 	},
 	"voice": {
