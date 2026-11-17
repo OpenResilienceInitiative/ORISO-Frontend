@@ -25,6 +25,17 @@ export interface InviteLinkContext {
 		| 'GUEST_DECIDES'
 		| 'ALWAYS_PERSISTENT'
 		| null;
+	/** #2252 Direkteinladung: who may enter; the page offers only the allowed ways. */
+	accessMode?: 'GUESTS_ONLY' | 'ACCOUNTS_ONLY' | 'BOTH' | null;
+	/** #2252: whether the call waits for the counsellor. */
+	knock?: boolean | null;
+	/** #2252, with an appointment only (ISO instants). */
+	appointmentStartTime?: string | null;
+	appointmentEndTime?: string | null;
+	/** #2252: the call waiting room opens then; the chat works at once. */
+	callOpensAt?: string | null;
+	/** #2252: afterwards the link answers 410 `DIRECT_LINK_EXPIRED`. */
+	expiresAt?: string | null;
 }
 
 /* The page waits on this before it either opens the live-chat room or falls
