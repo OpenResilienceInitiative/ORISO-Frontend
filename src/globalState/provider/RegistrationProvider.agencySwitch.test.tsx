@@ -299,6 +299,55 @@ describe('RegistrationProvider — a direct-link topic after a language switch',
 		);
 	};
 
+	it('drops the picture of an earlier pick when the link names another topic', async () => {
+		sessionStorage.setItem(
+			registrationSessionStorageKey,
+			JSON.stringify({
+				username: '',
+				password: '',
+				mainTopicId: CARRIED_OVER_TOPIC_ID,
+				topicIcon: '/bundled/earlier-pick.png'
+			})
+		);
+		apiGetTopicByIdMock.mockResolvedValue({
+			id: CARRIED_OVER_TOPIC_ID,
+			name: 'Suchtberatung'
+		} as never);
+		const IconProbe = () => {
+			const { registrationData } = useContext(RegistrationContext);
+			return (
+				<span data-testid="topic-icon">
+					{`${registrationData?.mainTopic?.id ?? 'none'}:${registrationData?.topicIcon ?? 'none'}`}
+				</span>
+			);
+		};
+		render(
+			<UrlParamsContext.Provider
+				value={{
+					loaded: true,
+					agency: null,
+					consultingType: null,
+					consultant: null,
+					topic: { id: URL_TOPIC_ID, name: 'Schulden' } as never,
+					slugFallback: undefined,
+					zipcode: undefined
+				}}
+			>
+				<MemoryRouter>
+					<RegistrationProvider>
+						<IconProbe />
+					</RegistrationProvider>
+				</MemoryRouter>
+			</UrlParamsContext.Provider>
+		);
+
+		await waitFor(() =>
+			expect(screen.getByTestId('topic-icon').textContent).toBe(
+				`${URL_TOPIC_ID}:none`
+			)
+		);
+	});
+
 	it('keeps the refreshed copy of the same topic instead of restoring the link one', async () => {
 		render(
 			<UrlParamsContext.Provider

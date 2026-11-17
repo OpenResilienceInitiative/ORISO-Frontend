@@ -322,7 +322,8 @@ export function RegistrationProvider({ children }: PropsWithChildren<{}>) {
 			// switch) stays; only a different topic is replaced by the link's.
 			...(preselectedTopic &&
 			registrationData?.mainTopic?.id !== preselectedTopic.id
-				? { mainTopic: preselectedTopic }
+				? // A picture from an earlier pick belongs to that other topic.
+					{ mainTopic: preselectedTopic, topicIcon: undefined }
 				: {})
 		});
 
