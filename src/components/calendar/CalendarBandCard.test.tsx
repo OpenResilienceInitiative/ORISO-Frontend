@@ -103,6 +103,29 @@ describe('CalendarBandCard — who is busy in a band (Frank *16.2)', () => {
 		expect(nowak.textContent).toContain('10:30–12:00');
 	});
 
+	it('shows a phone appointment with a handset, not a microphone (Frank *19)', () => {
+		const NOWAK_PHONE: CalendarEntry = {
+			id: 'n2',
+			type: 'appointment',
+			kind: 'phone',
+			ownerId: 'nowak',
+			start: at(11),
+			end: at(12)
+		};
+		render(
+			<Card
+				busy={[
+					{ colleague: KAYA, entries: [KAYA_VIDEO] },
+					{ colleague: NOWAK, entries: [NOWAK_PHONE] }
+				]}
+			/>
+		);
+		const nowak = screen.getByTestId('calendar-band-person-nowak');
+		expect(
+			nowak.querySelector('[data-testid="CallOutlinedIcon"]')
+		).not.toBeNull();
+	});
+
 	it('lists who is free', () => {
 		render(<Card />);
 		const free = screen.getByTestId('calendar-band-free');
