@@ -6945,7 +6945,6 @@
 		"bandOne": "{{name}} busy",
 		"colleagueFailedShort": "not loaded",
 		"colleagueFailed": "The calendar of {{names}} could not be loaded, so it cannot be said when everyone is free.",
-		"upcomingChat": "Go to the chat with {{name}}",
 		"chatUnavailable": "The chat for this appointment could not be opened.",
 		"conversationsFailedAsker": "Your conversations could not be loaded, so an appointment cannot take you to its chat.",
 		"create": "New appointment",
@@ -7008,11 +7007,16 @@
 				"past": "The entry must be in the future.",
 				"order": "The end must be after the start.",
 				"conversation": "Please choose the conversation this appointment belongs to."
+			},
+			"entryKind": "Kind of entry",
+			"tabs": {
+				"appointment": "Appointment",
+				"blocker": "Blocked time"
 			}
 		},
 		"details": {
 			"start": {
-				"video": "Start video call",
+				"video": "Start video",
 				"phone": "Start call",
 				"chat": "Open chat"
 			},
@@ -7038,10 +7042,16 @@
 		"soon": "Starts soon",
 		"blockerMoved": "Block moved to {{date}}.",
 		"cancelled": "Appointment cancelled. The advice seeker is notified.",
+		"cancelAsk": {
+			"title": "Cancel the appointment?",
+			"description": "{{name}}, {{time}}. {{name}} is told at once that the appointment is cancelled.",
+			"keep": "Keep it",
+			"confirm": "Cancel appointment"
+		},
 		"created": "Appointment created: {{date}}",
 		"undo": "Undo",
 		"syncDialog": {
-			"title": "Calendar sync",
+			"title": "Connect Outlook or Google",
 			"description": "Your ORISO appointments in Outlook, Google or Apple Calendar – and busy times back from there.",
 			"feedTitle": "Subscribe in your calendar",
 			"feedText": "Add this link to your calendar as a subscription. It only shows “ORISO-Termin” and the time, no names.",
@@ -7077,7 +7087,11 @@
 			"label": "Add",
 			"as": "Add as",
 			"blockerNow": "added at once",
-			"outsideHours": "Outside your working hours."
+			"outsideHours": "Outside your working hours.",
+			"who": "With whom",
+			"whoPlaceholder": "With whom? Search a name",
+			"conversations": "Conversations",
+			"noneFound": "No conversation found."
 		},
 		"blocker": {
 			"menuItem": "Blocked time",
@@ -7095,14 +7109,19 @@
 			"conflicts_one": "Overlaps with {{count}} appointment.",
 			"created": "{{count}} blocked times added",
 			"created_one": "{{count}} blocked time added",
-			"createdSingle": "Time blocked: {{date}}"
+			"createdSingle": "Time blocked: {{date}}",
+			"workHint": "Always the same times, such as evenings and weekends?",
+			"weekly": "Weekly …"
 		},
 		"saveFailed": "That did not work. Please try again.",
+		"restoreFailed": "The blocked time was removed and could not be restored. Save the series again to block the time again.",
 		"blockerRemoved": "Blocked time removed.",
 		"allDay": "all day",
 		"entryMenu": {
 			"back": "Back",
 			"cancel": "Cancel appointment",
+			"show": "Go to appointment",
+			"showSub": "Show and highlight it in the calendar",
 			"chat": "Go to chat",
 			"conflicts": "Overlaps with another entry.",
 			"date": "Day",
@@ -7117,7 +7136,14 @@
 			"remove": "Remove",
 			"saveMove": "Move",
 			"sendProposal": "Send proposal",
-			"to": "To"
+			"to": "To",
+			"withYou": "You and {{name}}",
+			"startSub": "with {{name}}",
+			"chatSub": "Open the conversation with {{name}}",
+			"joinSub": "Open the video conference",
+			"moveSub": "Change day and time",
+			"proposeSub": "{{name}} has to confirm",
+			"cancelSub": "{{name}} gets a message"
 		},
 		"fullscreen": "Full screen",
 		"fullscreenExit": "Exit full screen (Esc)",
@@ -7125,6 +7151,7 @@
 			"label": "Go to a day",
 			"today": "Today",
 			"tomorrow": "Tomorrow",
+			"dayAfterTomorrow": "Day after tomorrow",
 			"nextMonday": "Next Monday",
 			"inTwoWeeks": "In two weeks",
 			"date": "Date",
@@ -7134,7 +7161,8 @@
 			"label": "What to show",
 			"hint": "Kinds you switch off are hidden in the calendar and in the list.",
 			"all": "Show everything",
-			"customised": "Some kinds are hidden."
+			"customised": "Some kinds are hidden.",
+			"blocker": "Blocked and busy times"
 		},
 		"monthMenu": {
 			"label": "Enter for this day",
@@ -7152,7 +7180,12 @@
 			"bar": "People in the calendar",
 			"hint": "Pointing highlights, a click hides",
 			"label": "Show calendars",
+			"alwaysMine": "You always see your own dates.",
+			"sameTenant": "same organisation",
+			"wholeAgency": "Show the whole counselling centre",
+			"split": "View side by side",
 			"me": "Me",
+			"meAvatar": "me",
 			"more": "More …"
 		},
 		"proposal": {
@@ -7189,29 +7222,39 @@
 			"close": "Close quick entry",
 			"date": "Day",
 			"duration": "Duration",
-			"freeHalf": "Next free half hour",
-			"freeHours": "Next free hour",
 			"gaps": {
-				"when": "day and time",
-				"kind": "kind",
-				"who": "conversation"
+				"when": "day and start",
+				"kind": "which kind",
+				"who": "with whom"
 			},
 			"halfHour": "30 min",
-			"hint": "Type a day and time, pick the kind.",
+			"hint": "Pick a kind, set day and start, or tap a free time.",
 			"hour": "1 h",
 			"kind": "Kind",
-			"minutes": "{{count}} min",
-			"missing": "Still missing: {{list}}",
+			"missing": "Still missing: {{list}}.",
 			"more": "More details …",
-			"placeholder": "e.g. Thu 2pm video",
+			"placeholder": "With whom? e.g. “mutige_eule” or “Thu 2pm”",
 			"save": "Add",
 			"slot": "Length of the free time",
 			"time": "Start",
 			"title": "Quick entry",
-			"who": "With whom"
+			"who": "With whom",
+			"freeNext": "Next free",
+			"lengthHours": "{{hours}} h",
+			"lengthMinutes": "{{minutes}} min",
+			"lengthBoth": "{{hours}} h {{minutes}} min",
+			"lengths": {
+				"30": "30 min",
+				"45": "45 min",
+				"60": "1 h",
+				"90": "1½ h",
+				"120": "2 h"
+			},
+			"ready": "{{noun}} with {{name}}",
+			"outsideHours": "outside working hours"
 		},
 		"search": {
-			"placeholder": "Search appointments",
+			"placeholder": "Search",
 			"clear": "Clear search",
 			"empty": "Nothing found.",
 			"results": "Search results"
@@ -7225,14 +7268,21 @@
 			"switcherMenu": "as a menu",
 			"switcherDigits": "as buttons",
 			"switcherHint": "Saved for you.",
-			"sync": "Connect Outlook or Google"
+			"grips": "Drag working hours and break",
+			"gripsSub": "Show the grips in the calendar",
+			"sync": "Connect Outlook or Google",
+			"repeatBlocker": "Repeating blocked time",
+			"switcherMenuSub": "One button, the views in its menu",
+			"switcherDigitsSub": "All views side by side"
 		},
 		"side": {
 			"resize": "Drag to make the list wider or narrower; double-click folds it in or out, Up and Down scroll it",
-			"label": "Appointments: search and lists"
+			"label": "Appointments: search and lists",
+			"now": "Now"
 		},
 		"split": {
 			"empty": "Show colleagues' calendars to see your day next to theirs.",
+			"choose": "Choose colleagues",
 			"free": "all free",
 			"label": "Your day next to colleagues",
 			"oneDay": "1 day",
@@ -7240,6 +7290,11 @@
 			"threeDays": "3 days"
 		},
 		"viewMenu": "View: {{view}}",
+		"header": {
+			"new": "New",
+			"newEntry": "New entry",
+			"shared": "Dates"
+		},
 		"when": {
 			"running": "now",
 			"inMinutes": "in {{count}} min",
@@ -7267,7 +7322,8 @@
 			"summary": "Working hours {{hours}}",
 			"title": "Set working hours",
 			"to": "End on {{day}}",
-			"tooMany": "Working hours hold at most {{max}} time windows a week; this change was not saved."
+			"tooMany": "Working hours hold at most {{max}} time windows a week; this change was not saved.",
+			"copyMonday": "Use Monday's hours and pause for all working days"
 		},
 		"grip": {
 			"weekOnly": "Only partly saved: the hours for {{weekdays}} changed, but {{date}} did not.",
@@ -7371,6 +7427,28 @@
 			"keys": "Enter changes the height; the arrow keys pull the list up or down. Dragging works too.",
 			"open": "Pull up the list"
 		},
-		"conversationsFailed": "The conversations could not be loaded, so appointments cannot be linked to one."
+		"conversationsFailed": "The conversations could not be loaded, so appointments cannot be linked to one.",
+		"nouns": {
+			"video": "Video appointment",
+			"phone": "Phone appointment",
+			"onsite": "On-site appointment",
+			"chat": "Chat appointment",
+			"group": "Group appointment",
+			"blocker": "Blocked time",
+			"busy": "Busy"
+		},
+		"viewSettings": {
+			"title": "View · Calendar",
+			"description": "Which appointment kinds the calendar shows, which get a button in the kind row and when you receive e-mails.",
+			"kindsHeading": "Appointment kinds",
+			"showColumn": "In calendar",
+			"legendShow": "Appointments of this kind appear in the calendar and in the list.",
+			"pillColumn": "As button",
+			"legendPill": "The kind has a button in the row above “Up next”.",
+			"legendEmail": "E-mail for booked, moved and cancelled appointments. Applies to all appointment kinds together, as in your profile.",
+			"showKind": "In calendar: {{kind}}",
+			"pillKind": "As button: {{kind}}",
+			"pillMenu": "Choose button: {{kind}}"
+		}
 	}
 }

@@ -6,6 +6,25 @@
 // it as a 4px stripe on the left. The per-kind properties stay, so a kind
 // could get its own colour again in one place.
 
+// --- The chosen kind: sidebar chips, quick entry, dialog tiles and tabs ---
+// One place for the v17 maroon (review 4589304546). m3Sweep allows no
+// text role such as --m3-on-primary-fixed as a background and no M3
+// surface role has this colour, so the ORISO brand token stands in, as in
+// the navigation.
+@mixin calendar-chosen($border: false, $icons: false) {
+	@if $border {
+		border-color: var(--oriso-on-primary-fixed, #410001);
+	}
+	background: var(--oriso-on-primary-fixed, #410001);
+	color: #ffffff;
+
+	@if $icons {
+		svg {
+			color: #ffffff;
+		}
+	}
+}
+
 // --- Kind colours, for the grid, the menus and the peek cards ---
 .calendarPage,
 .calendarView,
@@ -73,9 +92,13 @@
 		transparent
 	);
 
-	// Today is marked by the now line, not a fill: the fill is for the
-	// time outside the working hours.
-	--fc-classic-today: transparent;
+	// Today gets a faint pink tint (prototype v17); the time outside the
+	// working hours is hatched, so the two never look alike.
+	--fc-classic-today: color-mix(
+		in srgb,
+		var(--m3-primary, #a5000a) 3.5%,
+		transparent
+	);
 	--fc-classic-now: var(--m3-primary, #a5000a);
 	--fc-classic-background: var(--m3-surface-container-lowest, #ffffff);
 	--fc-classic-faint: var(--m3-surface-container-low, #f6f3f3);
@@ -84,7 +107,9 @@
 	--fc-classic-foreground: var(--m3-on-surface, #1b1b1c);
 	--fc-classic-faint-foreground: var(--m3-outline, #747878);
 	--fc-classic-muted-foreground: var(--m3-on-surface-variant, #444748);
-	--fc-classic-border: var(--m3-outline-variant, #c4c7c8);
+
+	// Light lines (prototype v17).
+	--fc-classic-border: var(--m3-surface-container-highest, #e4e2e2);
 	--fc-classic-strong-border: var(--m3-outline, #747878);
 	display: flex;
 	flex-direction: column;
@@ -100,22 +125,110 @@
 	}
 }
 
-// Outside the working hours: shaded background events, still clickable
-// (a day exception first, then a holiday of the region, then the week).
+// Outside the working hours and the pause: hatched background events,
+// still clickable (a day exception first, then a holiday of the region,
+// then the week). Prototype v17.
+$cal-off-hatch: repeating-linear-gradient(
+	135deg,
+	color-mix(in srgb, var(--m3-outline-variant, #c4c7c8) 20%, transparent) 0
+		6px,
+	color-mix(in srgb, var(--m3-outline, #747878) 11%, transparent) 6px 7px
+);
+
 .calendarView__offHours {
-	background: var(--m3-surface-container, #f0edee) !important;
+	background: $cal-off-hatch !important;
 	opacity: 1 !important;
 }
 
-.calendarView__breakLabel {
-	display: block;
+// The grid: rounded corners, bold day heads, today's head in red.
+.calendarView__frame {
 	overflow: hidden;
-	padding: 2px 6px;
+	border-radius: 14px;
+}
+
+.calendarView__dayHead {
+	color: var(--m3-on-surface, #1b1b1c);
+	font-weight: 600;
+
+	&--today {
+		color: var(--m3-primary, #a5000a);
+	}
+}
+
+// The month: today's number in a pink circle, "+2 weitere" in red, a tint
+// under the pointer.
+.calendarView__monthDay:hover {
+	background: var(--m3-hover-layer, #f9eff0);
+	cursor: pointer;
+}
+
+.calendarView__dayNumber {
 	color: var(--m3-on-surface-variant, #444748);
-	font-size: 11px;
+	font-variant-numeric: tabular-nums;
+
+	&--today {
+		display: grid;
+		place-items: center;
+		min-width: 26px;
+		height: 26px;
+		margin: 3px;
+		padding: 0;
+		border-radius: 50%;
+		background: var(--m3-primary-fixed-dim, #ffb4aa);
+		color: var(--m3-on-primary-fixed, #410001);
+		font-weight: 600;
+	}
+}
+
+.calendarView__more {
+	color: var(--m3-primary, #a5000a) !important;
 	font-weight: 500;
+}
+
+// The list: plain rows without the dot, a light head per day.
+.calendarView__listDot {
+	display: none !important;
+}
+
+.calendarView__listDay {
+	background: var(--m3-surface-container-low, #f6f3f3) !important;
+}
+
+// "Pause" sits in the middle of the band, between the grips at its top
+// and bottom edge (Frank *7.3).
+.calendarView__breakLabel {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	overflow: hidden;
+	pointer-events: none;
+}
+
+.calendarView__breakPill {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	max-width: calc(100% - 8px);
+	overflow: hidden;
+	padding: 1px 10px 1px 8px;
+	border-radius: 999px;
+	background: rgba(255, 255, 255, 0.85);
+	color: var(--m3-on-surface-variant, #444748);
+	font-size: 12px;
+	font-style: italic;
+	font-weight: 500;
+	letter-spacing: 0.02em;
+	line-height: 18px;
 	text-overflow: ellipsis;
 	white-space: nowrap;
+
+	svg {
+		flex: none;
+		width: 14px;
+		height: 14px;
+	}
 }
 
 // Colleagues in the time grid: one grey band per stretch, "k von n
@@ -129,6 +242,7 @@
 		var(--m3-outline, #747878) 13%,
 		transparent
 	) !important;
+	box-shadow: inset 3px 0 0 var(--m3-outline, #747878);
 	opacity: 1 !important;
 
 	&--all {
@@ -140,22 +254,138 @@
 	}
 }
 
+// The band measures itself: who is busy shows only where there is room
+// (Frank *16).
 .calendarView__bandFill {
 	position: absolute;
 	inset: 0;
 	display: block;
 	overflow: hidden;
+	container-type: size;
 }
 
 .calendarView__bandLabel {
-	display: block;
+	display: flex;
+	align-items: center;
+	gap: 4px;
 	overflow: hidden;
 	padding: 2px 6px;
 	color: var(--m3-on-surface-variant, #444748);
 	font-size: 11px;
 	font-weight: 500;
-	text-overflow: ellipsis;
 	white-space: nowrap;
+}
+
+.calendarView__bandText {
+	overflow: hidden;
+	min-width: 0;
+	text-overflow: ellipsis;
+}
+
+// Who is busy (Frank *16), only where there is room. From an hour at the
+// usual zoom one line: the faces first, so nobody drops off, then the
+// names, cut at the end. From two hours one chip per person, as in the
+// people bar. A narrow column keeps the faces and drops the names.
+.calendarView__bandPeople {
+	display: none;
+	align-items: center;
+	gap: 3px;
+	overflow: hidden;
+	padding: 0 6px 4px;
+	color: var(--m3-on-surface, #1b1b1c);
+	font-size: 11px;
+	font-weight: 500;
+	white-space: nowrap;
+}
+
+.calendarView__bandPerson {
+	display: contents;
+}
+
+.calendarView__bandAvatar {
+	display: inline-flex;
+	flex: none;
+	align-items: center;
+	justify-content: center;
+	width: 16px;
+	height: 16px;
+	border-radius: 50%;
+	font-size: 8px;
+	font-weight: 600;
+	letter-spacing: 0.02em;
+}
+
+.calendarView__bandName {
+	flex: 0 1 auto;
+	order: 1;
+	overflow: hidden;
+	min-width: 0;
+	text-overflow: ellipsis;
+}
+
+.calendarView__bandPerson:not(:last-child) > .calendarView__bandName::after {
+	content: ',';
+}
+
+@container (min-height: 40px) {
+	.calendarView__bandPeople {
+		display: flex;
+	}
+}
+
+@container (min-height: 84px) {
+	.calendarView__bandPeople {
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 4px;
+	}
+
+	.calendarView__bandPerson {
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+		box-sizing: border-box;
+		max-width: 100%;
+		height: 20px;
+		padding: 0 8px 0 1px;
+		border: 1px solid var(--m3-outline-variant, #c4c7c8);
+		border-radius: 999px;
+		background: var(--m3-surface-container-lowest, #ffffff);
+	}
+
+	.calendarView__bandName::after {
+		content: none !important;
+	}
+}
+
+@container (max-width: 89px) {
+	.calendarView__bandPerson {
+		padding: 0 1px;
+	}
+
+	.calendarView__bandName {
+		display: none;
+	}
+}
+
+// On one line, cut names say less than the faces: below about 60px a
+// person the line keeps the faces only.
+@container (max-height: 83px) and (max-width: 149px) {
+	.calendarView__bandPeople[data-count='2'] .calendarView__bandName {
+		display: none;
+	}
+}
+
+@container (max-height: 83px) and (max-width: 209px) {
+	.calendarView__bandPeople[data-count='3'] .calendarView__bandName {
+		display: none;
+	}
+}
+
+@container (max-height: 83px) and (max-width: 269px) {
+	.calendarView__bandPeople[data-count='many'] .calendarView__bandName {
+		display: none;
+	}
 }
 
 // A public holiday: labelled once, in the all-day row (and the month cell).
@@ -217,7 +447,13 @@
 		border-radius: 999px;
 		background: var(--m3-surface-container-lowest, #ffffff);
 		content: '';
-		opacity: 0.85;
+		opacity: 0.75;
+	}
+
+	// Full strength while the pointer is over its day (prototype v17).
+	[role='cell']:hover > &::after,
+	.calendarSplit__body:hover &::after {
+		opacity: 1;
 	}
 
 	// Two lines on it: something to take hold of, not only a colour.
@@ -249,20 +485,15 @@
 		@include control-focus-ring(0);
 	}
 
-	// This date has its own hours: filled, not only tinted.
+	// This date has its own hours: a red edge and red lines (prototype
+	// v17), not a filled pill.
 	&--exception {
-		&::after,
-		&:hover::after,
-		&:focus-visible::after {
+		&::after {
 			border-color: var(--m3-primary, #a5000a);
-			background: var(--m3-primary, #a5000a);
-			opacity: 1;
 		}
 
-		&::before,
-		&:hover::before,
-		&:focus-visible::before {
-			border-color: var(--m3-on-primary, #ffffff);
+		&::before {
+			border-color: var(--m3-primary, #a5000a);
 		}
 	}
 }
@@ -305,9 +536,13 @@
 // keeps a row at least as tall as its label, which is taller than the
 // closest-out steps; a 1px label box lets the text run into the unlabelled
 // half hour below and leaves the height to the zoom.
+// "07:00" in a smaller grey (prototype v17).
 .calendarView__slotLabel {
 	height: 1px;
 	overflow: visible;
+	color: var(--m3-on-surface-variant, #444748);
+	font-size: 12px;
+	font-variant-numeric: tabular-nums;
 }
 
 // --- One entry ---
@@ -315,7 +550,7 @@
 .calEntry {
 	border: 1px solid transparent !important;
 	border-radius: 8px !important;
-	background: var(--m3-surface-container-highest, #dcdfe3) !important;
+	background: var(--m3-surface-container-highest, #e4e2e2) !important;
 	color: var(--m3-on-surface, #1b1b1c) !important;
 	cursor: pointer;
 	overflow: hidden;
@@ -325,43 +560,92 @@
 		@include control-focus-ring(1px);
 	}
 
-	// The next appointment, from 15 minutes before its start.
-	&--soon {
+	// One's own appointment in light pink; a group stays grey (prototype
+	// v17).
+	&--appointment:not(.calEntry--k-group) {
+		background: var(--m3-primary-fixed, #ffdad5) !important;
+	}
+
+	// The next appointment, from 15 minutes before its start. Doubled class:
+	// it has to beat the pink of `&--appointment:not(…)` above (two classes).
+	&#{&}--soon {
 		background: var(--m3-primary, #a5000a) !important;
 		color: var(--m3-on-primary, #ffffff) !important;
 
 		.calEntry__inner,
-		.calEntry__icon {
+		.calEntry__icon,
+		.calEntry__range {
 			color: var(--m3-on-primary, #ffffff);
 		}
 	}
 
-	// Blocked time and imported busy time: hatched, no fill colour.
+	// Blocked time and imported busy time: hatched with a thin edge.
 	&--blocker,
 	&--busy {
+		border-color: var(--m3-outline-variant, #c4c7c8) !important;
 		background: repeating-linear-gradient(
 			135deg,
-			var(--m3-surface-container, #f0edee) 0 6px,
-			var(--m3-surface-container-high, #eae7e8) 6px 12px
+			var(--m3-surface-container-low, #f6f3f3) 0 6px,
+			var(--m3-surface-container-highest, #e4e2e2) 6px 8px
 		) !important;
 		color: var(--m3-on-surface-variant, #444748) !important;
 	}
 
-	// A colleague's entry: white with the kind stripe, so one's own day
-	// stays readable.
+	// A colleague's entry: white, dashed, with the kind stripe, so one's
+	// own day stays readable.
 	&--colleague {
-		border-color: var(--m3-outline-variant, #c4c7c8) !important;
+		border: 1px dashed var(--m3-outline, #747878) !important;
 		border-left: 4px solid var(--cal-kind) !important;
 		background: var(--m3-surface-container-lowest, #ffffff) !important;
 		color: var(--m3-on-surface-variant, #444748) !important;
 	}
 
-	// A move proposal: dashed at the proposed time until it is confirmed.
+	// A move proposal: hatched pink and dashed red at the proposed time
+	// until it is confirmed (prototype v17).
 	&--proposal {
-		border: 1px dashed var(--cal-kind) !important;
+		border: 1px dashed var(--m3-primary, #a5000a) !important;
 		border-left: 4px solid var(--cal-kind) !important;
-		background: var(--m3-surface-container-lowest, #ffffff) !important;
-		color: var(--m3-on-surface-variant, #444748) !important;
+		background: repeating-linear-gradient(
+			135deg,
+			var(--m3-surface-container-lowest, #ffffff) 0 6px,
+			var(--m3-selected-layer, #f5e6e7) 6px 8px
+		) !important;
+		color: var(--m3-on-surface, #1b1b1c) !important;
+	}
+
+	// The list: plain rows, a tint under the pointer; "Beginnt gleich"
+	// keeps its words, in red.
+	&--listRow {
+		border: none !important;
+		border-radius: 0 !important;
+		background: transparent !important;
+		color: var(--m3-on-surface, #1b1b1c) !important;
+
+		&:hover {
+			background: var(--m3-hover-layer, #f9eff0) !important;
+		}
+
+		.calEntry__inner,
+		.calEntry__icon {
+			color: inherit;
+		}
+
+		.calEntry__icon {
+			color: var(--cal-kind);
+		}
+
+		.calendarSoon {
+			color: var(--m3-primary, #a5000a);
+		}
+	}
+
+	// Just created: a red ring pulses twice (prototype v17).
+	&--flash {
+		animation: calEntryFlash 1.4s ease 2;
+
+		@media (prefers-reduced-motion: reduce) {
+			animation: none;
+		}
 	}
 
 	// Pointer on a person or a kind: everything else steps back.
@@ -376,40 +660,52 @@
 	}
 }
 
+@keyframes calEntryFlash {
+	50% {
+		box-shadow: 0 0 0 3px var(--m3-primary, #a5000a);
+	}
+}
+
 .calEntry__inner {
 	display: flex;
-	align-items: flex-start;
-	gap: 6px;
+	flex-direction: column;
+	gap: 1px;
 	min-width: 0;
-	padding: 3px 6px;
+	padding: 2px 5px;
 }
 
-.calEntry__initials {
+// Avatar, kind icon, (time,) title, "Beginnt gleich".
+.calEntry__line {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	min-width: 0;
+	overflow: hidden;
+	white-space: nowrap;
+}
+
+// The advice seeker of one's own appointment or the colleague, 18 px in
+// the person's colour.
+.calEntry__avatar {
+	display: inline-flex;
 	flex: none;
-	padding: 0 4px;
-	border-radius: 4px;
-	background: var(--m3-surface-container-high, #eae7e8);
-	font-size: 10px;
-	font-weight: 600;
-	line-height: 16px;
+	align-items: center;
+	justify-content: center;
+	width: 18px;
+	height: 18px;
+	border-radius: 50%;
+	font-size: 8px;
+	font-weight: 700;
+	letter-spacing: 0;
 }
 
-// The advice seeker of one's own appointment, round like ORISO's avatars.
-.calEntry__initials--asker {
-	min-width: 16px;
-	padding: 0 2px;
-	border-radius: 8px;
-	background: var(--m3-secondary-container, #dce3ec);
-	color: var(--m3-on-secondary-container, #1b1b1c);
-	text-align: center;
-}
-
-// Entry menu: who it is with, then the header.
+// Entry menu (prototype v17): who it is with or the kind, then the header;
+// the kind as a tag and, for one's own appointment, "Sie und <Name>".
 .calendarMenu__head {
 	display: flex;
 	align-items: center;
-	gap: 8px;
-	padding-left: 12px;
+	gap: 10px;
+	padding-left: 8px;
 
 	.chatMenuDropdown__header {
 		flex: 1;
@@ -418,36 +714,101 @@
 	}
 }
 
-.calendarMenu__avatar {
+.calendarMenu__avatar,
+.calendarMenu__kdot {
 	display: inline-flex;
 	flex: none;
 	align-items: center;
 	justify-content: center;
-	width: 32px;
-	height: 32px;
+	width: 40px;
+	height: 40px;
 	border-radius: 50%;
+}
+
+.calendarMenu__avatar {
 	background: var(--m3-secondary-container, #dce3ec);
 	color: var(--m3-on-secondary-container, #1b1b1c);
-	font-size: 12px;
-	font-weight: 600;
+	font-size: 13px;
+	font-weight: 700;
+	letter-spacing: 0.02em;
+}
 
-	&--me {
-		background: var(--m3-primary-container, #ffdad5);
-		color: var(--m3-on-primary-container, #410001);
+.calendarMenu__kdot {
+	background: var(--m3-surface-container, #f0eded);
+	color: var(--cal-kind);
+
+	svg {
+		width: 20px;
+		height: 20px;
+	}
+}
+
+.calendarMenu__tagRow {
+	margin: 0;
+	padding: 0 8px 8px;
+}
+
+.calendarMenu__tag {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	padding: 2px 8px 2px 6px;
+	border-radius: 8px;
+
+	// Grey like every kind: kinds differ by icon, not colour (A2); red on
+	// red was hard to read (Frank, 2026-11-16).
+	background: var(--m3-surface-container-high, #ebe7e7);
+	color: var(--m3-on-surface-variant, #444748);
+	font-size: 12.5px;
+	font-weight: 600;
+	letter-spacing: 0.01em;
+
+	svg {
+		width: 16px;
+		height: 16px;
+	}
+}
+
+.calendarMenu__who {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin: 0;
+	padding: 0 8px 8px;
+	color: var(--m3-on-surface-variant, #444748);
+	font-size: 12.5px;
+}
+
+.calendarMenu__stack {
+	display: flex;
+}
+
+.calendarMenu__mini {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 22px;
+	height: 22px;
+	border-radius: 50%;
+	box-shadow: 0 0 0 2px var(--m3-surface-container-lowest, #ffffff);
+	font-size: 9px;
+	font-weight: 700;
+
+	& + & {
+		margin-left: -6px;
 	}
 }
 
 .calEntry__icon {
 	display: inline-flex;
 	flex: none;
-	width: 16px;
-	height: 16px;
-	margin-top: 1px;
+	width: 15px;
+	height: 15px;
 	color: var(--cal-kind);
 
 	svg {
-		width: 16px;
-		height: 16px;
+		width: 15px;
+		height: 15px;
 	}
 
 	path {
@@ -462,7 +823,8 @@
 }
 
 .calEntry__time {
-	font-size: 12px;
+	flex: none;
+	font-size: 11.5px;
 	font-weight: 500;
 	font-variant-numeric: tabular-nums;
 	line-height: 16px;
@@ -470,8 +832,32 @@
 
 .calEntry__title {
 	overflow: hidden;
+	min-width: 0;
 	font-size: 12px;
+	font-weight: 500;
 	line-height: 16px;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+// "10:00–11:00" under the title in the wide time grids.
+.calEntry__range {
+	overflow: hidden;
+	color: var(--m3-on-surface-variant, #444748);
+	font-size: 11.5px;
+	font-variant-numeric: tabular-nums;
+	line-height: 15px;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+// Under a proposal: whom it waits for, in red.
+.calEntry__status {
+	overflow: hidden;
+	color: var(--m3-primary, #a5000a);
+	font-size: 10.5px;
+	font-weight: 600;
+	line-height: 14px;
 	text-overflow: ellipsis;
 	white-space: nowrap;
 }
@@ -507,18 +893,60 @@
 .calendarPeek {
 	display: flex;
 	flex-direction: column;
-	gap: 4px;
+	gap: 6px;
 	box-sizing: border-box;
-	width: 260px;
+	width: 280px;
 	padding: 12px;
-	border: 1px solid var(--m3-outline-variant, #c4c7c8);
-	border-radius: 12px;
+	border-radius: 18px;
 	background: var(--m3-surface-container-lowest, #ffffff);
-	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+	box-shadow:
+		0 4px 16px rgba(26, 28, 30, 0.14),
+		0 1px 3px rgba(26, 28, 30, 0.12);
 	color: var(--m3-on-surface, #1b1b1c);
 	font-family: var(--oriso-body-font-family, #{$font-family-sans-serif});
 	font-size: 13px;
 	line-height: 18px;
+}
+
+// Over the grid: a dark tip (prototype v17).
+.calendarPeek--tip {
+	gap: 2px;
+	width: auto;
+	max-width: 280px;
+	padding: 8px 10px;
+	border-radius: 10px;
+	background: var(--m3-inverse-surface, #303031);
+	color: var(--m3-inverse-on-surface, #f3f0f0);
+	font-size: 12.5px;
+	line-height: 1.4;
+
+	.calendarPeek__tag {
+		padding: 0;
+		background: none;
+		color: inherit;
+		font-size: 12px;
+	}
+
+	.calendarPeek__person {
+		margin-top: 0;
+	}
+
+	.calendarPeek__avatar {
+		width: 22px;
+		height: 22px;
+		font-size: 9px;
+	}
+
+	.calendarPeek__agencyShort {
+		background: rgba(255, 255, 255, 0.14);
+		color: inherit;
+	}
+
+	.calendarPeek__line,
+	.calendarPeek__hint {
+		color: inherit;
+		opacity: 0.85;
+	}
 }
 
 .calendarPeek__tag {
@@ -571,6 +999,35 @@
 	font-weight: 600;
 }
 
+.calendarPeek__avatar {
+	width: 40px;
+	height: 40px;
+	font-size: 13px;
+	font-weight: 700;
+}
+
+.calendarPeek__name strong {
+	font-size: 14px;
+	font-weight: 600;
+}
+
+// One of six deep tones per person, chosen from the name (calendarAvatar.ts),
+// and the primary colour for "ich" (prototype v17). After the base rules
+// above, so the tone wins on any calendar avatar it is added to.
+$cal-avatar-tones: (#2f5d5a, #7a0e2a, #4b4f7a, #6d3d63, #7a5a1e, #36576e);
+
+@for $i from 1 through length($cal-avatar-tones) {
+	.calAvatar--tone-#{$i - 1} {
+		background: nth($cal-avatar-tones, $i) !important;
+		color: #ffffff !important;
+	}
+}
+
+.calAvatar--me {
+	background: var(--m3-primary, #a5000a) !important;
+	color: var(--m3-on-primary, #ffffff) !important;
+}
+
 .calendarPeek__name {
 	display: flex;
 	align-items: center;
@@ -579,8 +1036,7 @@
 }
 
 .calendarPeek__agencyShort,
-.calendarSplit__agency,
-.calendarStage__agency {
+.calendarSplit__agency {
 	padding: 0 6px;
 	border-radius: 8px;
 	background: var(--m3-surface-container-high, #eae7e8);
@@ -612,6 +1068,70 @@
 	path {
 		fill: currentColor;
 	}
+}
+
+// "Was anzeigen": a box on the left, the count on the right (prototype v17).
+.calendarMenu__checkItem {
+	align-items: center;
+}
+
+.calendarMenu__box {
+	display: inline-flex;
+	flex: none;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+	width: 20px;
+	height: 20px;
+	border: 2px solid var(--m3-outline, #747878);
+	border-radius: 4px;
+	color: var(--m3-on-primary, #ffffff);
+
+	svg {
+		width: 16px;
+		height: 16px;
+	}
+
+	[aria-checked='true'] > & {
+		border-color: var(--m3-primary, #a5000a);
+		background: var(--m3-primary, #a5000a);
+	}
+}
+
+.calendarMenu__checkItem .chatMenuDropdown__itemShortcut {
+	font-variant-numeric: tabular-nums;
+}
+
+// Slot menu, second step: "Mit wem?" and the conversations.
+.calendarMenu__search {
+	box-sizing: border-box;
+	width: 100%;
+	height: 40px;
+	margin: 0 0 6px;
+	padding: 0 12px;
+	border: 1px solid var(--m3-outline-variant, #c4c7c8);
+	border-radius: 12px;
+	background: var(--m3-surface-container-lowest, #ffffff);
+	color: var(--m3-on-surface, #1b1b1c);
+	font: inherit;
+	font-size: 14px;
+
+	&:focus-visible {
+		border-color: var(--m3-primary, #a5000a);
+
+		@include control-focus-ring(0);
+	}
+}
+
+.calendarMenu__people {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+}
+
+.calendarMenu__person {
+	align-items: center;
+	padding-block: 6px;
 }
 
 .calendarMenuForm {
@@ -739,21 +1259,33 @@
 	}
 }
 
+// No card of its own (prototype v17): the list lies on the grey page, as
+// in "Gespräche". The pink grip beside it is its scroll thumb.
 .calendarSide {
 	display: flex;
 	flex: none;
 	flex-direction: column;
-	gap: 16px;
+	gap: 12px;
 	box-sizing: border-box;
 	width: 320px;
-	padding: 16px 16px 20px;
-	border-radius: 24px;
-	background: var(--m3-surface-container-lowest, #ffffff);
+	padding: 0 2px 0 6px;
+	background: transparent;
 	overflow-y: auto;
+	scrollbar-width: none;
+
+	&::-webkit-scrollbar {
+		display: none;
+	}
 }
 
 .calendarSide__search {
 	flex: none;
+
+	// The shared toolbar classes carry the Gespräche page margins; in the
+	// side column the column gap alone spaces them (Frank, 2026-11-16).
+	.calendarSide > & {
+		margin-bottom: 0;
+	}
 }
 
 // Phone and tablet: the search at the very top of the calendar; its
@@ -782,7 +1314,12 @@
 // rail 80 / compact 220 / 397–500. The page gap is the pane gap, so the grip
 // sits in its middle.
 .calendarSide__frame {
+	// The grip sits on the middle of the 12 px gap to the stage, as in
+	// "Gespräche". The app shell's `.contentWrapper` declares a 12 px
+	// `--pane-inner-gutter` for the sessions list; the calendar column has
+	// none, and inheriting it moved the grip 12 px left of the gap (Frank *2).
 	--pane-gap: 12px;
+	--pane-inner-gutter: 0px;
 
 	position: relative;
 	display: flex;
@@ -794,14 +1331,14 @@
 	}
 }
 
-// Rail: who and when per appointment, the display filter on top.
+// Rail: who and when per appointment, the display filter on top, a small
+// "Jetzt" with the "+" under them.
 .calendarSide--rail {
 	align-items: center;
-	padding: 16px 8px;
+	padding: 0;
 
 	.calendarSide__title,
 	.calendarSide__muted,
-	.calendarSide__rowIcon,
 	.calendarSide__rowName,
 	.calendarSide__rowText,
 	.calendarSide__rowTime {
@@ -818,28 +1355,47 @@
 		gap: 3px;
 		width: 56px;
 		padding: 5px 0;
-		border-radius: 16px;
 	}
 
-	.calendarSide__quickRow {
-		justify-content: center;
+	.calendarSide__now {
+		flex-direction: column;
+		gap: 6px;
+
+		&::before,
+		&::after {
+			display: none;
+		}
+	}
+
+	.calendarSide__nowLabel {
+		padding: 3px 10px;
+		font-size: 12px;
+	}
+
+	.calendarSide__nowAdd {
+		margin: 0;
 	}
 }
 
-.calendarSide__railAvatar {
-	display: grid;
-	place-items: center;
-	width: 32px;
-	height: 32px;
-	border-radius: 50%;
-	background: var(--m3-surface-container-high, #ebe8e8);
-	color: var(--m3-on-surface, #1b1b1c);
-	font-size: 12px;
-	font-weight: 600;
+.calendarSide--compact,
+.calendarSide--rail {
+	.calendarSide__list {
+		gap: 6px;
+	}
+}
+
+.calendarSide--compact {
+	.calendarSide__rowName {
+		font-size: 14px;
+	}
+
+	.calendarSide__rowTime {
+		font-size: 12px;
+	}
 }
 
 .calendarSide__railClock {
-	color: var(--m3-on-surface-variant, #444748);
+	color: inherit;
 	font-size: 11px;
 	font-weight: 600;
 	font-variant-numeric: tabular-nums;
@@ -847,14 +1403,116 @@
 
 .calendarSide__chips {
 	flex: none;
+
+	.sessionsListToolbar__chipsScroll {
+		margin-bottom: 0;
+	}
+
+	// 2px keeps the chips' focus ring inside the scroll box.
+	.sessionsListToolbar__chipsRow {
+		padding: 2px 0;
+	}
 }
 
-.calendarSide__chip {
-	display: contents;
+// The kind chips (prototype v17): round white icon buttons; the chosen one
+// is dark and names the kind with the number still ahead.
+.calendarSide__kindChip {
+	position: relative;
+	display: inline-flex;
+	flex: none;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	box-sizing: border-box;
+	min-width: 46px;
+	height: 46px;
+	padding: 0 12px;
+	border: 0;
+	border-radius: 999px;
+	background: var(--m3-surface-container-lowest, #ffffff);
+	color: #2f3336;
+	font: inherit;
+	font-size: 14px;
+	cursor: pointer;
+
+	svg {
+		flex: none;
+		width: 22px;
+		height: 22px;
+		color: var(--cal-kind);
+	}
+
+	path {
+		fill: currentColor;
+	}
+
+	&:hover {
+		background: var(--m3-surface-container-low, #f6f3f3);
+	}
+
+	&:focus-visible {
+		@include control-focus-ring(1px);
+	}
+
+	&[aria-pressed='true'] {
+		padding: 0 14px 0 12px;
+
+		@include calendar-chosen($icons: true);
+	}
+
+	// On the phone the chips sit on the white stage.
+	.calendarPage--compact & {
+		min-width: 40px;
+		height: 40px;
+		background: var(--m3-surface-container-low, #f6f3f3);
+	}
+
+	.calendarPage--compact &[aria-pressed='true'] {
+		@include calendar-chosen;
+	}
+}
+
+// Read out on every chip, shown on the chosen one only.
+.calendarSide__kindChipLabel {
+	font-weight: 500;
+	white-space: nowrap;
+
+	.calendarSide__kindChip:not([aria-pressed='true']) & {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip-path: inset(50%);
+		white-space: nowrap;
+	}
+}
+
+.calendarSide__kindChipCount {
+	display: grid;
+	place-items: center;
+	box-sizing: border-box;
+	min-width: 18px;
+	height: 18px;
+	padding: 0 5px;
+	border-radius: 9px;
+	background: #b0124f;
+	color: #ffffff;
+	font-size: 11px;
+	font-weight: 600;
 }
 
 .calendarSide__kindsAnchor {
 	display: inline-flex;
+
+	// The dot on "Was anzeigen" while kinds are hidden: 8 px with a ring in
+	// the search pill's colour, as in prototype v17 (diff row 48).
+	.displayFilterButton__dot {
+		top: 3px;
+		right: 3px;
+		width: 8px;
+		height: 8px;
+		box-shadow: 0 0 0 2px var(--m3-surface-container-low, #f6f3f3);
+	}
 }
 
 // Only there to make the grid inert under the error; no box of its own.
@@ -869,15 +1527,15 @@
 }
 
 .calendarSide__title {
-	margin: 0;
+	margin: 2px 6px 4px;
 	color: var(--m3-on-surface-variant, #444748);
-	font-size: 14px;
-	font-weight: 500;
-	line-height: 20px;
+	font-size: 13px;
+	font-weight: 600;
+	line-height: 18px;
 }
 
 .calendarSide__muted {
-	margin: 0;
+	margin: 0 6px;
 	color: var(--m3-on-surface-variant, #444748);
 	font-size: 13px;
 	line-height: 18px;
@@ -886,79 +1544,134 @@
 .calendarSide__list {
 	display: flex;
 	flex-direction: column;
-	gap: 2px;
+	gap: 12px;
 	margin: 0;
 	padding: 0;
 	list-style: none;
 }
 
-// "Als Nächstes": the row opens the entry's actions, the speech bubble
+// "Als Nächstes": the card opens the entry's actions, the speech bubble
 // beside it goes straight to the conversation.
 .calendarSide__upcoming {
 	display: flex;
 	align-items: center;
-	gap: 2px;
+	gap: 4px;
+	min-width: 0;
+
+	> .calendarSide__row {
+		flex: 1;
+		min-width: 0;
+	}
+
+	.calendarSide--rail & {
+		justify-content: center;
+
+		> .calendarSide__row {
+			flex: none;
+		}
+	}
 }
 
-.calendarSide__chat {
-	display: inline-grid;
+// A pill card (prototype v17): the shared list-entry pill in the grey card
+// tone with a white edge, the person's avatar, name and a short time.
+.calendarSide__row {
+	@include list-entry-pill;
+
+	gap: 10px;
+	padding: 5px 14px 5px 5px;
+	border-color: rgba(255, 255, 255, 0.7);
+	border-radius: 999px;
+	background: #f4f2f2;
+	font-size: 14px;
+
+	&:hover {
+		background: var(--m3-surface-container-lowest, #ffffff);
+	}
+
+	// The next one within 15 minutes is filled (prototype v17).
+	&--soon {
+		border-color: var(--m3-primary, #a5000a);
+		background: var(--m3-primary, #a5000a);
+		color: #ffffff;
+
+		&:hover {
+			background: var(--m3-primary-hover, #820006);
+		}
+
+		.calendarSide__rowTime {
+			color: #ffe2de;
+		}
+
+		.calendarSide__kdot {
+			background: rgba(255, 255, 255, 0.18);
+			color: #ffffff;
+		}
+
+		.calendarSide__leadKind {
+			box-shadow: 0 0 0 1.5px var(--m3-primary, #a5000a);
+		}
+	}
+
+	// Requests: the same pill, dashed and on the lighter grey.
+	&--proposal,
+	&--received {
+		border: 1px dashed var(--m3-outline, #747878);
+		background: var(--m3-surface-container-low, #f6f3f3);
+	}
+}
+
+// Who it is with: the avatar in the person's tone (calendarAvatar.ts) with
+// a small kind badge, or the kind's icon in a white dot.
+.calendarSide__lead {
+	position: relative;
+	display: grid;
+	flex: none;
+}
+
+.calendarSide__avatar {
+	display: grid;
+	place-items: center;
+	width: 32px;
+	height: 32px;
+	border-radius: 50%;
+	background: var(--m3-surface-container-high, #eae7e8);
+	color: var(--m3-on-surface, #1b1b1c);
+	font-size: 11.5px;
+	font-weight: 600;
+	letter-spacing: 0.02em;
+}
+
+.calendarSide__leadKind {
+	position: absolute;
+	right: -4px;
+	bottom: -4px;
+	display: grid;
+	place-items: center;
+	width: 17px;
+	height: 17px;
+	border-radius: 50%;
+	background: var(--m3-surface-container-lowest, #ffffff);
+	box-shadow: 0 0 0 1.5px #f4f2f2;
+	color: var(--cal-kind);
+
+	svg {
+		width: 11px;
+		height: 11px;
+	}
+
+	path {
+		fill: currentColor;
+	}
+}
+
+.calendarSide__kdot {
+	display: grid;
 	flex: none;
 	place-items: center;
-	width: 36px;
-	height: 36px;
-	padding: 0;
-	border: 0;
+	width: 32px;
+	height: 32px;
 	border-radius: 50%;
-	background: transparent;
-	color: var(--m3-on-surface-variant, #444748);
-	cursor: pointer;
-
-	&:hover {
-		background: var(--oriso-menu-hover-surface, rgba(27, 27, 28, 0.08));
-	}
-
-	&:focus-visible {
-		@include control-focus-ring;
-	}
-}
-
-// A compact row: tinted kind icon, name, short time.
-.calendarSide__row {
-	display: flex;
-	align-items: center;
-	gap: 8px;
-	box-sizing: border-box;
-	width: 100%;
-	min-height: 36px;
-	padding: 4px 10px;
-	border: none;
-	border-radius: 18px;
-	background: transparent;
-	color: var(--m3-on-surface, #1b1b1c);
-	font: inherit;
-	font-size: 14px;
-	text-align: left;
-	cursor: pointer;
-
-	&:hover {
-		background: var(--oriso-menu-hover-surface, rgba(27, 27, 28, 0.08));
-	}
-
-	&:focus-visible {
-		@include control-focus-ring(1px);
-	}
-
-	&--proposal {
-		align-items: flex-start;
-		border: 1px dashed var(--cal-kind);
-		border-left: 4px solid var(--cal-kind);
-		border-radius: 12px;
-	}
-}
-
-.calendarSide__rowIcon {
-	display: inline-flex;
-	flex: none;
+	background: var(--m3-surface-container-lowest, #ffffff);
 	color: var(--cal-kind);
 
 	svg {
@@ -973,66 +1686,108 @@
 
 .calendarSide__rowText {
 	@include list-entry-pill-text;
+
+	flex: 1;
 }
 
 .calendarSide__rowName {
 	flex: 1;
 	min-width: 0;
 	overflow: hidden;
+	font-size: 15px;
+	font-weight: 500;
 	text-overflow: ellipsis;
 	white-space: nowrap;
 }
 
 .calendarSide__rowMeta {
+	overflow: hidden;
 	color: var(--m3-on-surface-variant, #444748);
 	font-size: 12px;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .calendarSide__rowTime {
 	flex: none;
+	margin-left: auto;
 	color: var(--m3-on-surface-variant, #444748);
-	font-size: 13px;
+	font-size: 12.5px;
 	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+}
+
+// Search results: kind icon, name and range, in the column or floating.
+.calendarSide__results {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.calendarSide__result {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	box-sizing: border-box;
+	width: 100%;
+	min-height: 44px;
+	padding: 4px 12px;
+	border: 0;
+	border-radius: 12px;
+	background: transparent;
+	color: var(--m3-on-surface, #1b1b1c);
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
+
+	.calendarSide__rowName {
+		font-size: 14px;
+	}
+
+	&:hover {
+		background: var(--m3-hover-layer, #f9eff0);
+	}
+
+	&:focus-visible {
+		@include control-focus-ring(1px);
+	}
+}
+
+.calendarSide__resultIcon {
+	display: inline-flex;
+	flex: none;
+	color: var(--m3-on-surface-variant, #444748);
+
+	svg {
+		width: 20px;
+		height: 20px;
+	}
+
+	path {
+		fill: currentColor;
+	}
 }
 
 .calendarSide__request {
 	display: flex;
 	flex-direction: column;
 	align-items: flex-end;
-	gap: 2px;
-}
+	gap: 4px;
 
-// A proposal waiting for one's own answer: who, from → to, and the two
-// answers in words (nothing by colour alone).
-.calendarSide__request--received {
-	align-items: stretch;
-	padding: 4px 4px 6px;
-	border: 1px solid var(--m3-outline-variant, #c4c7c8);
-	border-radius: 12px;
-	background: var(--m3-surface-container-low, #f6f3f3);
+	> .calendarSide__row {
+		align-self: stretch;
+	}
 
 	.calendarSide--rail & {
-		padding: 0;
-		border: 0;
-		background: transparent;
+		align-items: center;
+
+		> .calendarSide__row {
+			align-self: center;
+		}
 	}
-}
-
-.calendarSide__row--received {
-	align-items: flex-start;
-}
-
-.calendarSide__requestAvatar {
-	display: grid;
-	flex: none;
-	place-items: center;
-	width: 32px;
-	height: 32px;
-	border-radius: 50%;
-	background: var(--m3-surface-container-high, #ebe8e8);
-	color: var(--m3-on-surface, #1b1b1c);
-	font-size: 12px;
-	font-weight: 600;
 }
 
 .calendarSide__requestChange {
@@ -1040,6 +1795,8 @@
 	white-space: normal;
 }
 
+// A proposal waiting for one's own answer: who, from → to, and the two
+// answers in words under the card (nothing by colour alone).
 .calendarSide__requestActions {
 	display: flex;
 	justify-content: flex-end;
@@ -1082,44 +1839,135 @@
 	}
 }
 
-.calendarSide__hours {
+// "Jetzt" between what is next and quick entry (prototype v17): a pink
+// hairline with a pink pill; the "+" beside it opens quick entry where it
+// is folded away (phone sheet, narrow column).
+.calendarSide__now {
 	display: flex;
+	flex: none;
 	align-items: center;
-	justify-content: space-between;
-	gap: 8px;
-	margin-top: auto;
-	padding: 8px 10px;
-	border: none;
-	border-radius: 12px;
-	background: var(--m3-surface-container-low, #f6f3f3);
-	color: var(--m3-on-surface-variant, #444748);
-	font: inherit;
+
+	&::before,
+	&::after {
+		content: '';
+		flex: 1;
+		height: 1px;
+		background: var(--m3-primary-fixed-dim, #ffb4aa);
+	}
+}
+
+.calendarSide__nowLabel {
+	padding: 4px 16px;
+	border-radius: 999px;
+	background: var(--m3-primary-fixed-dim, #ffb4aa);
+	color: #410001;
 	font-size: 13px;
-	text-align: left;
+	font-weight: 600;
+	line-height: 18px;
+}
+
+.calendarSide__nowAdd {
+	display: inline-grid;
+	flex: none;
+	place-items: center;
+	width: 32px;
+	height: 32px;
+	margin: 0 8px;
+	padding: 0;
+	border: none;
+	border-radius: 50%;
+	background: var(--m3-primary, #a5000a);
+	color: var(--m3-on-primary, #ffffff);
 	cursor: pointer;
+
+	svg {
+		width: 20px;
+		height: 20px;
+		transition: transform 0.2s ease;
+	}
+
+	&[aria-expanded='true'] svg {
+		transform: rotate(45deg);
+	}
+
+	&:focus-visible {
+		@include control-focus-ring(2px);
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		svg {
+			transition: none;
+		}
+	}
+}
+
+// The working hours: plain text on the grey page with a clock and the
+// change in words (prototype v17).
+.calendarSide__work {
+	display: flex;
+	flex: none;
+	align-items: center;
+	gap: 6px;
+	margin: auto 0 0;
+	padding: 0 6px;
+	color: var(--m3-on-surface-variant, #444748);
+	font-size: 12.5px;
+	line-height: 18px;
+}
+
+.calendarSide__workIcon {
+	flex: none;
+	width: 16px !important;
+	height: 16px !important;
+}
+
+.calendarSide__workText {
+	min-width: 0;
+}
+
+.calendarSide__workButton {
+	flex: none;
+	padding: 2px 4px;
+	border: 0;
+	border-radius: 6px;
+	background: none;
+	color: var(--m3-primary, #a5000a);
+	font: inherit;
+	font-weight: 600;
+	cursor: pointer;
+
+	&:hover {
+		background: var(--m3-hover-layer, #f9eff0);
+	}
 
 	&:focus-visible {
 		@include control-focus-ring(0);
 	}
 }
 
-.calendarSide__hoursAction {
-	flex: none;
-	color: var(--m3-primary, #a5000a);
-	font-weight: 500;
-}
-
 // --- Quick entry ---
 
+// Its own white box on the grey list, no heading (prototype v17).
 .calendarQuick {
-	// A little more air above and below the box (Frank, prototype v15).
-	padding-block: 12px 10px;
+	flex: none;
+	padding: 18px 12px 16px;
+	border-radius: 22px;
+	background: var(--m3-surface-container-lowest, #ffffff);
 }
 
 .calendarQuick__form {
 	display: flex;
 	flex-direction: column;
-	gap: 8px;
+	gap: 12px;
+}
+
+// Until it is used: no status, no people, no buttons (prototype v17).
+.calendarQuick--idle {
+	.calendarQuick__status,
+	.calendarQuick__who,
+	.calendarQuick__actions {
+		display: none;
+	}
 }
 
 // Tag on its own row, then Beginn and Dauer side by side, right under the
@@ -1129,7 +1977,7 @@
 	display: grid;
 	grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 	gap: 16px 8px;
-	padding-top: 8px;
+	padding-top: 6px;
 
 	> .calendarQuick__day {
 		grid-column: 1 / -1;
@@ -1138,14 +1986,80 @@
 	.MuiFormControl-root {
 		margin: 0;
 	}
+
+	// 44 px as the line above (prototype v17), here only: elsewhere the
+	// shared date, time and select fields keep their 56 px.
+	.MuiFormControl-root .MuiOutlinedInput-root {
+		min-height: 44px;
+		font-size: 14px;
+		line-height: 20px;
+		letter-spacing: 0.25px;
+	}
+
+	.MuiFormControl-root .MuiInputBase-input,
+	.MuiFormControl-root .MuiSelect-select {
+		height: 20px;
+		min-height: 20px;
+		padding-top: 12px;
+		padding-bottom: 12px;
+		line-height: 20px;
+	}
+
+	.MuiFormControl-root .MuiInputLabel-root:not(.MuiInputLabel-shrink) {
+		font-size: 14px;
+		line-height: 20px;
+		transform: translate(12px, 12px) scale(1);
+	}
+
+	.MuiFormControl-root
+		.MuiOutlinedInput-root:not(.Mui-focused, .Mui-error)
+		fieldset {
+		border-color: var(--m3-outline, #747878);
+	}
 }
 
-.calendarQuick__kinds,
-.calendarQuick__who,
-.calendarQuick__freeRow {
+.calendarQuick__who {
 	display: flex;
 	flex-wrap: wrap;
+	gap: 4px;
+}
+
+// The kind chips lead the box in one row (Frank *5.1): they share the width
+// and a long name shortens instead of wrapping.
+.calendarQuick__kinds {
+	display: flex;
+	flex-wrap: nowrap;
+	gap: 4px;
+	min-width: 0;
+
+	.calendarQuick__kind {
+		flex: 1 1 auto;
+		justify-content: center;
+		min-width: 0;
+		padding: 4px 6px;
+
+		span {
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
+
+		svg {
+			flex: none;
+		}
+	}
+}
+
+.calendarQuick__freeRow {
+	display: flex;
+	flex-wrap: nowrap;
 	gap: 6px;
+	overflow-x: auto;
+	scrollbar-width: none;
+
+	&::-webkit-scrollbar {
+		display: none;
+	}
 }
 
 // This week's entries are not in: no free hours are offered, so none that
@@ -1174,24 +2088,27 @@
 	}
 }
 
+// Kind and person chips: white pills with a thin line; the chosen kind is
+// dark with white text (prototype v17).
 .calendarQuick__kind,
 .calendarQuick__person {
 	display: inline-flex;
 	align-items: center;
 	gap: 4px;
-	height: 28px;
-	padding: 0 10px 0 8px;
+	box-sizing: border-box;
+	padding: 4px 9px 4px 7px;
 	border: 1px solid var(--m3-outline-variant, #c4c7c8);
-	border-radius: 14px;
-	background: transparent;
+	border-radius: 999px;
+	background: var(--m3-surface-container-lowest, #ffffff);
 	color: var(--m3-on-surface, #1b1b1c);
 	font: inherit;
-	font-size: 12px;
+	font-size: 12.5px;
+	line-height: 18px;
 	cursor: pointer;
 
 	svg {
-		width: 14px;
-		height: 14px;
+		width: 16px;
+		height: 16px;
 		color: var(--cal-kind);
 	}
 
@@ -1199,54 +2116,69 @@
 		fill: currentColor;
 	}
 
-	&[aria-pressed='true'] {
-		border-color: var(--cal-kind);
-		background: color-mix(in srgb, var(--cal-kind) 12%, transparent);
-	}
-
 	&:focus-visible {
 		@include control-focus-ring(0);
 	}
+}
+
+.calendarQuick__kind[aria-pressed='true'] {
+	@include calendar-chosen($border: true, $icons: true);
+}
+
+.calendarQuick__person {
+	gap: 6px;
+	padding: 3px 10px 3px 3px;
+
+	&:hover {
+		background: var(--m3-hover-layer, #f9eff0);
+	}
+}
+
+.calendarQuick__personAvatar {
+	display: grid;
+	flex: none;
+	place-items: center;
+	width: 28px;
+	height: 28px;
+	border-radius: 50%;
+	font-size: 10.5px;
+	font-weight: 600;
 }
 
 .calendarQuick__free {
 	display: flex;
 	flex-direction: column;
-	gap: 4px;
+	gap: 6px;
 }
 
+// "1 Std | 30 Min": a small filled segmented button.
 .calendarQuick__slot {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 4px;
+	display: inline-flex;
+	flex: none;
+	padding: 2px;
+	border-radius: 999px;
+	background: var(--m3-surface-container, #f0edee);
 }
 
 .calendarQuick__slotButton {
-	height: 28px;
-	padding: 0 10px;
-	border: 1px solid var(--m3-outline-variant, #c4c7c8);
-	border-radius: 14px;
+	height: 24px;
+	padding: 0 9px;
+	border: 0;
+	border-radius: 999px;
 	background: transparent;
 	color: var(--m3-on-surface-variant, #444748);
 	font: inherit;
 	font-size: 12px;
+	font-weight: 600;
 	cursor: pointer;
 
 	&[aria-pressed='true'] {
-		border-color: transparent;
-		background: var(--m3-secondary-container, #dce3ec);
-		color: var(--m3-on-secondary-container, #1b1b1c);
+		@include calendar-chosen;
 	}
 
 	&:focus-visible {
 		@include control-focus-ring(0);
 	}
-}
-
-.calendarQuick__slotButton {
-	height: 24px;
-	padding: 0 8px;
-	font-size: 11px;
 }
 
 .calendarQuick__freeHead {
@@ -1259,21 +2191,32 @@
 .calendarQuick__freeLabel {
 	color: var(--m3-on-surface-variant, #444748);
 	font-size: 12px;
+	font-weight: 600;
 }
 
 // Free time is the light secondary blue (Frank, 2026-11-14: not green),
-// here and in the side-by-side view.
+// here and in the side-by-side view, with a clock (prototype v17).
 .calendarQuick__freePill {
-	height: 28px;
-	padding: 0 12px;
+	display: inline-flex;
+	flex: none;
+	align-items: center;
+	gap: 6px;
+	padding: 4px 11px;
 	border: 1px solid var(--m3-secondary, #4c555f);
-	border-radius: 14px;
+	border-radius: 999px;
 	background: var(--m3-secondary-fixed, #dae3f0);
 	color: var(--m3-secondary, #4c555f);
 	font: inherit;
-	font-size: 12px;
-	font-weight: 600;
+	font-size: 12.5px;
+	font-weight: 500;
+	font-variant-numeric: tabular-nums;
+	line-height: 18px;
 	cursor: pointer;
+
+	svg {
+		width: 16px;
+		height: 16px;
+	}
 
 	&:hover {
 		background: var(--m3-secondary-fixed-dim, #bec7d4);
@@ -1285,10 +2228,34 @@
 }
 
 .calendarQuick__status {
+	display: flex;
+	align-items: flex-start;
+	gap: 6px;
+	min-height: 20px;
 	margin: 0;
 	color: var(--m3-on-surface-variant, #444748);
-	font-size: 12px;
-	line-height: 16px;
+	font-size: 13px;
+	line-height: 1.4;
+
+	strong {
+		color: var(--m3-on-surface, #1b1b1c);
+		font-weight: 600;
+	}
+
+	svg {
+		flex: none;
+		width: 16px;
+		height: 16px;
+		margin-top: 1px;
+	}
+
+	path {
+		fill: currentColor;
+	}
+
+	&--ready {
+		color: var(--m3-on-surface, #1b1b1c);
+	}
 }
 
 .calendarQuick__actions {
@@ -1297,29 +2264,57 @@
 	gap: 6px;
 }
 
+.calendarQuick__more,
 .calendarQuick__save {
-	height: 32px;
-	padding: 0 16px;
+	padding: 9px 18px;
 	border: none;
-	border-radius: 16px;
-	background: var(--m3-primary, #a5000a);
-	color: var(--m3-on-primary, #ffffff);
+	border-radius: 999px;
 	font: inherit;
-	font-size: 13px;
-	font-weight: 500;
+	font-size: 14px;
+	font-weight: 600;
+	line-height: 20px;
+	white-space: nowrap;
 	cursor: pointer;
-
-	&:disabled {
-		opacity: 0.38;
-		cursor: default;
-	}
 
 	&:focus-visible {
 		@include control-focus-ring(2px);
 	}
 }
 
+.calendarQuick__more {
+	padding: 9px 12px;
+	background: transparent;
+	color: var(--m3-primary, #a5000a);
+
+	&:hover {
+		background: var(--m3-hover-layer, #f9eff0);
+	}
+}
+
+.calendarQuick__save {
+	background: var(--m3-primary, #a5000a);
+	color: var(--m3-on-primary, #ffffff);
+
+	&:hover {
+		background: var(--m3-primary-hover, #820006);
+	}
+
+	&:disabled {
+		background: var(--m3-surface-container-highest, #e4e2e2);
+		color: var(--m3-outline, #747878);
+		cursor: default;
+	}
+}
+
 // --- Stage: header, toolbar, people bar, grid ---
+
+// The stage card's light pink edge (prototype v17 `--stage-border`); no
+// M3 token has this tone.
+$cal-stage-border: #f3d9d5;
+
+// The dark grey of "+ Neu" (prototype v17 `.addpill`).
+$cal-new-pill: #5f6365;
+$cal-new-pill-hover: #4b4f51;
 
 .calendarStage {
 	display: flex;
@@ -1329,13 +2324,15 @@
 	box-sizing: border-box;
 	min-width: 0;
 	min-height: 0;
-	padding: 16px 20px 20px;
-	border-radius: 24px;
+	padding: 14px 18px;
+	border: 1.5px solid $cal-stage-border;
+	border-radius: 32px;
 	background: var(--m3-surface-container-lowest, #ffffff);
 
+	// Phone and tablet: the stage fills the screen, still a card.
 	.calendarPage--compact & {
-		padding: 12px;
-		border-radius: 0;
+		padding: 10px;
+		border-radius: 24px;
 	}
 
 	// Room under the grid for the sheet when it peeks; the sheet is only
@@ -1345,101 +2342,196 @@
 	}
 }
 
+// "+ Neu", who is shown with the title, then the view and the round
+// buttons; a thin line below (prototype v17).
+// `flex: none`: on the phone the buttons wrap to a second row, and the
+// stage column must not squeeze the header back to one row's height.
 .calendarStage__header {
 	display: flex;
+	flex: none;
+	flex-wrap: wrap;
 	align-items: center;
 	gap: 10px;
 	min-height: 48px;
+	padding-bottom: 10px;
+	border-bottom: 1px solid var(--m3-outline-variant, #c4c7c8);
+}
+
+// "+ Neu": a dark grey pill, first in the header.
+.calendarStage__create {
+	display: inline-flex;
+	flex: none;
+	align-items: center;
+	gap: 6px;
+	height: 48px;
+	padding: 0 14px 0 12px;
+	border: none;
+	border-radius: 999px;
+	background: $cal-new-pill;
+	color: #ffffff;
+	font: inherit;
+	font-weight: 600;
+	cursor: pointer;
+
+	&:hover {
+		background: $cal-new-pill-hover;
+	}
+
+	&:focus-visible {
+		@include control-focus-ring(2px);
+	}
+}
+
+.calendarStage__heading {
+	display: flex;
+	min-width: 0;
+	margin: 0;
+	font: inherit;
+}
+
+// "ich", the shown colleagues, the title and ▾: one button that opens
+// "Kalender anzeigen".
+.calendarStage__who {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	min-width: 0;
+	padding: 4px 10px 4px 4px;
+	border: none;
+	border-radius: 16px;
+	background: none;
+	color: var(--m3-on-surface, #1b1b1c);
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
+
+	&:hover,
+	&[aria-expanded='true'] {
+		background: var(--m3-hover-layer, #f9eff0);
+	}
+
+	&:focus-visible {
+		@include control-focus-ring(0);
+	}
 }
 
 .calendarStage__avatars {
 	display: inline-flex;
 	flex-shrink: 0;
-	padding: 0;
-	border: none;
-	background: transparent;
-	cursor: pointer;
 
 	.calendarStage__avatar {
-		box-shadow: 0 0 0 2px var(--m3-surface-container-lowest, #ffffff);
+		width: 52px;
+		height: 52px;
+		box-shadow: 0 0 0 3px var(--m3-surface-container-lowest, #ffffff);
+		font-size: 15px;
+		font-weight: 700;
+		letter-spacing: 0.02em;
 
 		& + .calendarStage__avatar {
-			margin-left: -6px;
+			margin-left: -14px;
 		}
-	}
-
-	&:focus-visible {
-		@include control-focus-ring(0);
-		border-radius: 12px;
 	}
 }
 
 .calendarStage__title {
 	overflow: hidden;
 	min-width: 0;
-	margin: 0;
-	font-size: 22px;
+	font-size: 26px;
 	font-weight: 500;
-	line-height: 28px;
+	letter-spacing: -0.01em;
+	line-height: 32px;
 	text-overflow: ellipsis;
 	white-space: nowrap;
 
+	.calendarStage--narrow & {
+		font-size: 22px;
+		line-height: 28px;
+	}
+
 	.calendarPage--compact & {
-		font-size: 18px;
+		font-size: 20px;
+		line-height: 26px;
 	}
 }
 
-// The grey "+" next to the title, as in "Gespräche".
-.calendarStage__create,
+.calendarStage__caret {
+	flex: none;
+	color: var(--m3-on-surface-variant, #444748);
+}
+
+// Full screen and ⋮: white, round, 48 px, a thin edge.
 .calendarStage__round {
 	display: inline-flex;
 	flex: none;
 	align-items: center;
 	justify-content: center;
-	width: 40px;
-	height: 40px;
+	box-sizing: border-box;
+	width: 48px;
+	height: 48px;
 	padding: 0;
-	border: none;
+	border: 1px solid var(--m3-outline-variant, #c4c7c8);
 	border-radius: 50%;
-	background: var(--m3-surface-container-high, #eae7e8);
-	color: var(--m3-on-surface-variant, #444748);
+	background: var(--m3-surface-container-lowest, #ffffff);
+	color: var(--m3-on-surface, #1b1b1c);
 	cursor: pointer;
 
 	&:hover {
-		background: var(--m3-surface-container-highest, #dcdfe3);
+		background: var(--m3-surface-container-low, #f6f3f3);
 	}
 
 	&:focus-visible {
 		@include control-focus-ring(2px);
 	}
 
-	&[aria-pressed='true'] {
-		background: var(--m3-secondary-container, #dce3ec);
-		color: var(--m3-on-secondary-container, #1b1b1c);
+	&[aria-pressed='true'],
+	&[aria-expanded='true'] {
+		background: var(--m3-selected-layer, #f5e6e7);
+		color: var(--m3-primary, #a5000a);
 	}
-}
-
-.calendarStage__round {
-	background: transparent;
 }
 
 .calendarStage__headerEnd {
 	display: flex;
 	flex-shrink: 0;
 	align-items: center;
-	gap: 6px;
+	gap: 8px;
 	margin-left: auto;
 }
 
-// Phone: the people bar right below already shows who is on; the header
-// keeps the title, "+", the view pill and ⋮ on one line.
+// Phone and tablet: smaller buttons, "Neu" and the view's name give way to
+// their icons, the avatars shrink to 40 px.
 .calendarPage--compact {
-	.calendarStage__avatars {
+	.calendarStage__header {
+		gap: 8px;
+	}
+
+	.calendarStage__create {
+		height: 42px;
+		padding: 0 12px;
+	}
+
+	.calendarStage__createLabel,
+	.calendarStage__viewLabel {
 		display: none;
 	}
 
-	.calendarStage__header {
-		gap: 6px;
+	.calendarStage__round,
+	.calendarStage__viewButton {
+		height: 42px;
+	}
+
+	.calendarStage__round {
+		width: 42px;
+	}
+
+	.calendarStage__viewButton {
+		padding: 0 6px 0 12px;
+	}
+
+	.calendarStage__avatars .calendarStage__avatar {
+		width: 40px;
+		height: 40px;
+		font-size: 13px;
 	}
 }
 
@@ -1468,7 +2560,9 @@
 	height: 46%;
 	padding: 0 12px 12px;
 	border-radius: 24px 24px 0 0;
-	background: var(--m3-surface-container-lowest, #ffffff);
+
+	// The page grey, so quick entry's white box stands out (prototype v17).
+	background: var(--m3-surface-container-high, #eae7e8);
 	box-shadow: 0 -6px 18px rgba(26, 28, 30, 0.16);
 	overflow-y: auto;
 	overscroll-behavior: contain;
@@ -1511,7 +2605,7 @@
 	margin: 0 -12px;
 	padding: 10px 0 8px;
 	border: none;
-	background: var(--m3-surface-container-lowest, #ffffff);
+	background: var(--m3-surface-container-high, #eae7e8);
 	cursor: grab;
 	touch-action: none;
 
@@ -1541,46 +2635,6 @@
 	overflow: visible;
 }
 
-// Sheet: quick entry folds behind a "+" (Frank, 2026-11-14).
-.calendarSide__quickRow {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: 8px;
-}
-
-.calendarSide__quickToggle {
-	display: inline-grid;
-	flex: none;
-	place-items: center;
-	width: 36px;
-	height: 36px;
-	padding: 0;
-	border: none;
-	border-radius: 50%;
-	background: var(--m3-primary, #a5000a);
-	color: var(--m3-on-primary, #ffffff);
-	cursor: pointer;
-
-	svg {
-		transition: transform 0.2s ease;
-	}
-
-	&[aria-expanded='true'] svg {
-		transform: rotate(45deg);
-	}
-
-	&:focus-visible {
-		@include control-focus-ring(2px);
-	}
-
-	@media (prefers-reduced-motion: reduce) {
-		svg {
-			transition: none;
-		}
-	}
-}
-
 @keyframes calendarQuickSlideDown {
 	from {
 		opacity: 0;
@@ -1596,25 +2650,31 @@
 	}
 }
 
-.calendarStage__pillButton {
+// The view: a white pill with the view's icon, its name and ▾.
+.calendarStage__viewButton {
 	display: inline-flex;
 	flex-shrink: 0;
 	align-items: center;
-	gap: 2px;
-	white-space: nowrap;
-	height: 36px;
-	padding: 0 8px 0 14px;
+	gap: 6px;
+	box-sizing: border-box;
+	height: 48px;
+	padding: 0 10px 0 14px;
 	border: 1px solid var(--m3-outline-variant, #c4c7c8);
-	border-radius: 18px;
-	background: transparent;
+	border-radius: 999px;
+	background: var(--m3-surface-container-lowest, #ffffff);
 	color: var(--m3-on-surface, #1b1b1c);
 	font: inherit;
 	font-size: 14px;
 	font-weight: 500;
+	white-space: nowrap;
 	cursor: pointer;
 
 	&:hover {
-		background: var(--oriso-menu-hover-surface, rgba(27, 27, 28, 0.08));
+		background: var(--m3-surface-container-low, #f6f3f3);
+	}
+
+	&[aria-expanded='true'] {
+		background: var(--m3-selected-layer, #f5e6e7);
 	}
 
 	&:focus-visible {
@@ -1622,37 +2682,53 @@
 	}
 }
 
+.calendarStage__viewIcon {
+	display: inline-flex;
+
+	svg {
+		width: 18px;
+		height: 18px;
+	}
+}
+
+// "als Schalter": the same filled segments as the zoom.
 .calendarStage__digits {
 	display: inline-flex;
-	padding: 2px;
-	border: 1px solid var(--m3-outline-variant, #c4c7c8);
-	border-radius: 18px;
+	gap: 2px;
+	padding: 4px;
+	border-radius: 999px;
+	background: var(--m3-surface-container, #f0edee);
 }
 
 .calendarStage__digit {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	min-width: 32px;
-	height: 30px;
-	padding: 0 6px;
+	min-width: 34px;
+	height: 36px;
+	padding: 0 8px;
 	border: none;
-	border-radius: 15px;
+	border-radius: 999px;
 	background: transparent;
 	color: var(--m3-on-surface-variant, #444748);
 	font: inherit;
-	font-size: 14px;
+	font-size: 13px;
 	font-weight: 600;
 	font-variant-numeric: tabular-nums;
 	cursor: pointer;
 
-	&[aria-checked='true'] {
-		background: var(--m3-secondary-container, #dce3ec);
-		color: var(--m3-on-secondary-container, #1b1b1c);
+	svg {
+		width: 18px;
+		height: 18px;
 	}
 
 	&:hover:not([aria-checked='true']) {
-		background: var(--oriso-menu-hover-surface, rgba(27, 27, 28, 0.08));
+		color: var(--m3-on-surface, #1b1b1c);
+	}
+
+	&[aria-checked='true'] {
+		background: var(--m3-inverse-surface, #2f3133);
+		color: #ffffff;
 	}
 
 	&:focus-visible {
@@ -1664,36 +2740,68 @@
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
-	gap: 8px 16px;
+	gap: 10px;
 }
 
-// One pill: previous · Heute (with the jump list) · next.
+// One filled pill: previous · Heute ▾ · next, "Heute" in light pink.
 .calendarStage__nav {
 	display: inline-flex;
+	flex: none;
 	align-items: center;
-	height: 36px;
-	border: 1px solid var(--m3-outline-variant, #c4c7c8);
-	border-radius: 18px;
-	overflow: hidden;
+	gap: 2px;
+	box-sizing: border-box;
+	height: 40px;
+	padding: 3px;
+	border-radius: 999px;
+	background: var(--m3-surface-container, #f0edee);
 }
 
-.calendarStage__navButton,
-.calendarStage__today {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	height: 100%;
-	padding: 0 10px;
+.calendarStage__navButton {
+	display: grid;
+	place-items: center;
+	min-width: 34px;
+	height: 34px;
+	padding: 0;
 	border: none;
-	background: transparent;
+	border-radius: 999px;
+	background: none;
 	color: var(--m3-on-surface, #1b1b1c);
-	font: inherit;
-	font-size: 14px;
-	font-weight: 500;
 	cursor: pointer;
 
 	&:hover {
-		background: var(--oriso-menu-hover-surface, rgba(27, 27, 28, 0.08));
+		background: var(--m3-surface-container-highest, #e4e2e2);
+	}
+
+	&:focus-visible {
+		@include control-focus-ring(0);
+	}
+}
+
+.calendarStage__todayPair {
+	display: inline-flex;
+	height: 34px;
+	overflow: hidden;
+	border-radius: 999px;
+	background: var(--m3-primary-fixed-dim, #ffb4aa);
+	color: var(--m3-on-primary-fixed, #410001);
+}
+
+.calendarStage__today,
+.calendarStage__jump {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	height: 34px;
+	border: none;
+	background: none;
+	color: inherit;
+	font: inherit;
+	font-size: 14px;
+	font-weight: 600;
+	cursor: pointer;
+
+	&:hover {
+		background: rgba(65, 0, 1, 0.08);
 	}
 
 	&:focus-visible {
@@ -1702,90 +2810,105 @@
 }
 
 .calendarStage__today {
-	padding: 0 4px 0 12px;
-	border-left: 1px solid var(--m3-outline-variant, #c4c7c8);
+	padding: 0 12px;
 }
 
-.calendarStage__navButton--drop {
-	padding: 0 6px 0 0;
-	border-right: 1px solid var(--m3-outline-variant, #c4c7c8);
+.calendarStage__jump {
+	padding: 0 6px;
+	border-left: 1px solid rgba(65, 0, 1, 0.2);
 }
 
+// "16.–20. November 2026"; on phone and tablet on a line of its own.
 .calendarStage__range {
-	margin: 0;
+	flex: 1 1 auto;
+	overflow: hidden;
+	min-width: 0;
+	margin: 0 6px;
 	font-size: 18px;
-	font-weight: 500;
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
 	line-height: 24px;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 
 	.calendarPage--compact & {
-		font-size: 15px;
+		flex-basis: 100%;
+		order: 5;
+		margin: 2px 2px 0;
+		font-size: 16px;
 	}
 }
 
-// − and + at the right end of the date bar: the zoom of the time grid.
-.calendarStage__zoom {
-	margin-left: auto;
-
-	.calendarStage__segmented + & {
-		margin-left: 0;
-	}
-
-	.calendarStage__navButton {
-		min-width: 36px;
-
-		&:disabled {
-			opacity: 0.38;
-			cursor: default;
-			background: transparent;
-		}
-
-		& + .calendarStage__navButton,
-		.calendarStage__zoomTip + .calendarStage__zoomTip & {
-			border-left: 1px solid var(--m3-outline-variant, #c4c7c8);
-		}
-	}
-}
-
-.calendarStage__zoomTip {
-	display: inline-flex;
-	height: 100%;
-}
-
-// "1 Tag | 3 Tage" next to the range title in "Nebeneinander".
+// − and + (the zoom of the time grid) and "1 Tag | 3 Tage" in
+// "Nebeneinander": small filled segments at the end of the date bar.
 .calendarStage__segmented {
 	display: inline-flex;
+	flex: none;
 	gap: 2px;
 	margin-left: auto;
-	padding: 2px;
-	border: 1px solid var(--m3-outline-variant, #c4c7c8);
-	border-radius: 18px;
+	padding: 3px;
+	border-radius: 999px;
+	background: var(--m3-surface-container, #f0edee);
+
+	& + & {
+		margin-left: 0;
+	}
 }
 
 .calendarStage__segment {
-	height: 30px;
-	padding: 0 12px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	height: 28px;
+	padding: 0 10px;
 	border: none;
-	border-radius: 15px;
+	border-radius: 999px;
 	background: transparent;
 	color: var(--m3-on-surface-variant, #444748);
 	font: inherit;
-	font-size: 13px;
-	font-weight: 500;
+	font-size: 12.5px;
+	font-weight: 600;
 	white-space: nowrap;
 	cursor: pointer;
 
-	&[aria-pressed='true'] {
-		background: var(--m3-secondary-container, #dce3ec);
-		color: var(--m3-on-secondary-container, #1b1b1c);
+	&:hover:not(:disabled, [aria-pressed='true']) {
+		color: var(--m3-on-surface, #1b1b1c);
 	}
 
-	&:hover:not([aria-pressed='true']) {
-		background: var(--oriso-menu-hover-surface, rgba(27, 27, 28, 0.08));
+	&[aria-pressed='true'] {
+		background: var(--m3-inverse-surface, #2f3133);
+		color: #ffffff;
 	}
 
 	&:focus-visible {
 		@include control-focus-ring(0);
 	}
+}
+
+.calendarStage__zoomButton {
+	min-width: 36px;
+	padding: 0 8px;
+	font-size: 18px;
+	font-weight: 500;
+
+	&:disabled {
+		opacity: 0.38;
+		cursor: default;
+	}
+}
+
+.calendarStage__zoomTip {
+	display: inline-flex;
+}
+
+// A menu row's right end: the check of the chosen view, the date of a jump.
+.calendarMenuMeta {
+	display: inline-flex;
+	flex: none;
+	align-items: center;
+	margin-left: auto;
+	font-size: 12px;
+	font-variant-numeric: tabular-nums;
 }
 
 .calendarStage__people {
@@ -1809,58 +2932,136 @@
 	}
 }
 
+// A white chip per person: tone avatar, name, the agency's short name in
+// small grey (prototype v17).
 .calendarStage__person {
 	display: inline-flex;
 	flex: none;
 	align-items: center;
 	gap: 6px;
-	height: 32px;
-	padding: 0 10px 0 4px;
+	box-sizing: border-box;
+	height: 34px;
+	padding: 0 12px 0 3px;
 	border: 1px solid var(--m3-outline-variant, #c4c7c8);
-	border-radius: 16px;
-	background: transparent;
+	border-radius: 999px;
+	background: var(--m3-surface-container-lowest, #ffffff);
 	color: var(--m3-on-surface, #1b1b1c);
 	font: inherit;
 	font-size: 13px;
+	font-weight: 500;
 	white-space: nowrap;
 	cursor: pointer;
 
-	// Shown colleagues are pressed; one's own calendar unpressed is muted.
-	&[aria-pressed='true']:not(:first-child) {
-		border-color: transparent;
-		background: var(--m3-secondary-container, #dce3ec);
-		color: var(--m3-on-secondary-container, #1b1b1c);
-	}
-
-	&[aria-pressed='false']:first-child {
-		opacity: 0.5;
-		text-decoration: line-through;
-	}
-
-	// Recently shown, now hidden: one click shows them again.
-	&--off {
-		color: var(--m3-on-surface-variant, #444748);
-	}
-
-	&--more {
-		padding: 0 12px;
-		border-style: dashed;
-		color: var(--m3-on-surface-variant, #444748);
-	}
-
 	&:hover {
-		background: var(--oriso-menu-hover-surface, rgba(27, 27, 28, 0.08));
+		background: var(--m3-surface-container-low, #f6f3f3);
 	}
 
 	&:focus-visible {
 		@include control-focus-ring(0);
 	}
+
+	// One's own calendar, muted with a click.
+	&--me[aria-pressed='false'] {
+		opacity: 0.5;
+		text-decoration: line-through;
+	}
+
+	// Shown lately, hidden now: dashed and grey, one click shows it again.
+	&--off {
+		border-style: dashed;
+		border-color: var(--m3-outline-variant, #c4c7c8);
+		color: var(--m3-on-surface-variant, #444748);
+
+		.calendarStage__personAvatar {
+			opacity: 0.6;
+			filter: grayscale(1);
+		}
+	}
+
+	&--more {
+		padding: 0 12px;
+		color: var(--m3-primary, #a5000a);
+		font-weight: 600;
+	}
 }
 
-.calendarStage__personAvatar--me,
-.calendarSplit__avatar--me {
-	background: var(--m3-primary-container, #ffdad5);
-	color: var(--m3-on-primary-container, #410001);
+.calendarStage__personAvatar {
+	width: 28px;
+	height: 28px;
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 0.02em;
+}
+
+.calendarStage__agency {
+	color: var(--m3-on-surface-variant, #444748);
+	font-size: 11px;
+	font-weight: 500;
+}
+
+// "Kalender anzeigen": a head, then a tick box, an avatar and a name per
+// person (prototype v17).
+.calendarPeopleMenu__head {
+	display: flex;
+	flex-direction: column;
+	padding: 6px 8px 12px;
+	color: var(--m3-on-surface-variant, #444748);
+	font-size: 14px;
+	line-height: 20px;
+
+	strong {
+		color: var(--m3-on-surface, #1b1b1c);
+		font-size: 16px;
+		font-weight: 600;
+		line-height: 22px;
+	}
+}
+
+.calendarPeopleMenu__check {
+	display: grid;
+	flex: none;
+	place-items: center;
+	box-sizing: border-box;
+	width: 20px;
+	height: 20px;
+	border: 2px solid var(--m3-outline, #747878);
+	border-radius: 4px;
+
+	svg {
+		width: 16px;
+		height: 16px;
+	}
+
+	&--on {
+		border-color: var(--m3-primary, #a5000a);
+		background: var(--m3-primary, #a5000a);
+		color: var(--m3-on-primary, #ffffff);
+	}
+}
+
+.calendarPeopleMenu__avatar {
+	display: inline-flex;
+	flex: none;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	height: 28px;
+	border-radius: 50%;
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 0.02em;
+}
+
+.chatMenuDropdown__item:has(.calendarPeopleMenu__check) {
+	align-items: center;
+	gap: 12px;
+}
+
+.calendarSplit__avatar {
+	width: 28px;
+	height: 28px;
+	font-size: 11px;
+	font-weight: 700;
 }
 
 .calendarStage__grid {
@@ -2076,11 +3277,12 @@
 	pointer-events: none;
 }
 
+// Hatched, as in the time grid (prototype v17).
 .calendarSplit__offHours {
 	position: absolute;
 	right: 0;
 	left: 0;
-	background: var(--m3-surface-container, #f0edee);
+	background: $cal-off-hatch;
 	pointer-events: none;
 }
 
@@ -2129,10 +3331,41 @@
 	font: inherit;
 }
 
+// Nobody shown yet: a sentence and "Kolleg:innen wählen" (prototype v17).
 .calendarSplit__empty {
-	margin: 8px 0 0;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 10px;
+	padding: 18px;
 	color: var(--m3-on-surface-variant, #444748);
 	font-size: 13px;
+
+	p {
+		max-width: 46ch;
+		margin: 0;
+		line-height: 1.45;
+	}
+}
+
+.calendarSplit__choose {
+	padding: 9px 18px;
+	border: none;
+	border-radius: 999px;
+	background: var(--m3-surface-container-high, #eae7e8);
+	color: var(--m3-on-surface, #1b1b1c);
+	font: inherit;
+	font-weight: 600;
+	white-space: nowrap;
+	cursor: pointer;
+
+	&:hover {
+		background: var(--m3-surface-container-highest, #e4e2e2);
+	}
+
+	&:focus-visible {
+		@include control-focus-ring(2px);
+	}
 }
 
 // --- Working hours dialog ---
@@ -2140,14 +3373,17 @@
 .calendarHours {
 	display: flex;
 	flex-direction: column;
-	gap: 6px;
+	gap: 0;
 }
 
+// Each day is a block: the day with its hours, its pause under it, a
+// hairline below (prototype v17 `.whday`; Frank *10: more air).
 .calendarHours__row {
 	display: grid;
-	grid-template-columns: auto 1fr auto auto auto;
+	grid-template-columns: auto minmax(88px, 1fr) auto auto auto;
 	align-items: center;
-	gap: 10px;
+	gap: 12px;
+	padding-top: 10px;
 
 	&--off .calendarHours__day {
 		color: var(--m3-on-surface-variant, #444748);
@@ -2163,8 +3399,10 @@
 // the day (Frank, prototype v15).
 .calendarHours__row--pause {
 	grid-template-columns: 1fr auto auto auto;
-	margin-top: -6px;
-	padding-left: 52px;
+	padding-top: 6px;
+	padding-bottom: 10px;
+	padding-left: 64px;
+	border-bottom: 1px solid var(--m3-outline-variant, #c4c7c8);
 	color: var(--m3-on-surface-variant, #444748);
 	font-size: 13px;
 }
@@ -2180,6 +3418,16 @@
 		margin: 0;
 		accent-color: var(--m3-primary, #a5000a);
 	}
+}
+
+.calendarHours__holidayBox {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	margin-top: 8px;
+	padding: 4px 16px 14px;
+	border-radius: 16px;
+	background: var(--m3-surface-container-low, #f6f3f3);
 }
 
 .calendarHours__row--holidays {
@@ -2200,17 +3448,15 @@
 .calendarHours__region {
 	display: flex;
 	flex-wrap: wrap;
-	align-items: center;
-	gap: 6px 12px;
-	padding-left: 4px;
+	align-items: flex-end;
+	gap: 8px 16px;
+	padding-left: 64px;
 }
 
 .calendarHours__select {
-	display: flex;
-	flex-direction: column;
-	gap: 2px;
-	color: var(--m3-on-surface-variant, #444748);
-	font-size: 12px;
+	flex: 1 1 240px;
+	min-width: 0;
+	max-width: 360px;
 }
 
 .calendarHours__next {
@@ -2222,8 +3468,8 @@
 .calendarHours__time input,
 .calendarHours__time select {
 	box-sizing: border-box;
-	height: 36px;
-	padding: 0 8px;
+	height: 40px;
+	padding: 0 10px;
 	border: 1px solid var(--m3-outline, #747878);
 	border-radius: 8px;
 	background: var(--m3-surface-container-lowest, #ffffff);
@@ -2346,6 +3592,54 @@
 	line-height: 16px;
 }
 
+// "Art": four tiles, two per row on a narrow dialog (prototype v17
+// `.kindgrid`; Frank *1, test C7).
+.calendarDialog__kinds {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 6px;
+
+	@include breakpoint($fromMedium) {
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+	}
+}
+
+.calendarDialog__kindTile {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 4px;
+	min-width: 0;
+	min-height: 64px;
+	padding: 10px 4px;
+	border: 1px solid var(--m3-outline-variant, #c4c7c8);
+	border-radius: 14px;
+	background: var(--m3-surface-container-lowest, #ffffff);
+	color: var(--m3-on-surface, #1b1b1c);
+	font: inherit;
+	font-size: 13px;
+	cursor: pointer;
+
+	span {
+		max-width: 100%;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	&:hover {
+		background: var(--m3-surface-container-low, #f6f3f3);
+	}
+
+	&[aria-pressed='true'] {
+		@include calendar-chosen($border: true);
+	}
+
+	&:focus-visible {
+		@include control-focus-ring(0);
+	}
+}
+
 .calendarDialog__weekdays {
 	display: flex;
 	flex-wrap: wrap;
@@ -2358,6 +3652,100 @@
 	color: var(--m3-on-surface-variant, #444748);
 	font-size: 13px;
 	line-height: 18px;
+}
+
+// "Neuer Eintrag": the tabs Termin | Sperrzeit above the form (prototype
+// v17), a filled segmented button.
+.calendarNewEntry {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.calendarNewEntry__tabs {
+	display: inline-flex;
+	align-self: flex-start;
+	gap: 2px;
+	padding: 4px;
+	border-radius: 999px;
+	background: var(--m3-surface-container, #f0edee);
+}
+
+.calendarNewEntry__tab {
+	height: 36px;
+	padding: 0 16px;
+	border: 0;
+	border-radius: 999px;
+	background: transparent;
+	color: var(--m3-on-surface-variant, #444748);
+	font: inherit;
+	font-size: 13px;
+	font-weight: 600;
+	cursor: pointer;
+
+	&:hover {
+		color: var(--m3-on-surface, #1b1b1c);
+	}
+
+	&[aria-pressed='true'] {
+		@include calendar-chosen;
+	}
+
+	&:focus-visible {
+		@include control-focus-ring(0);
+	}
+}
+
+// Under the blocker form: the same times every week are working hours.
+.calendarDialog__work {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px;
+	margin: 0;
+	color: var(--m3-on-surface-variant, #444748);
+	font-size: 12.5px;
+	line-height: 18px;
+}
+
+.calendarDialog__workIcon {
+	flex: none;
+	width: 16px !important;
+	height: 16px !important;
+}
+
+.calendarDialog__workButton,
+.calendarHours__copy {
+	padding: 2px 4px;
+	border: 0;
+	border-radius: 6px;
+	background: none;
+	color: var(--m3-primary, #a5000a);
+	font: inherit;
+	font-weight: 600;
+	cursor: pointer;
+
+	&:hover {
+		background: var(--m3-hover-layer, #f9eff0);
+	}
+
+	&:focus-visible {
+		@include control-focus-ring(0);
+	}
+}
+
+// "Vom Montag übernehmen" under the days (prototype v17).
+.calendarHours__copy {
+	align-self: flex-start;
+	margin: 8px 0 0;
+	padding: 6px 8px;
+	font-size: 13px;
+	text-align: left;
+
+	&:disabled {
+		color: var(--m3-outline, #747878);
+		cursor: default;
+	}
 }
 
 .calendarDialog__error {
@@ -2447,9 +3835,9 @@
 	line-height: 16px;
 }
 
-// In the side list the row is not filled, so the cue takes the accent.
+// In the side list it sits on the filled card (prototype v17).
 .calendarSide__row .calendarSoon {
 	flex: none;
-	color: var(--m3-primary, #a5000a);
+	color: inherit;
 	font-size: 12px;
 }

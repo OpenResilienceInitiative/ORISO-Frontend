@@ -47,6 +47,16 @@ export const readSwitcherStyle = (
 export const writeSwitcherStyle = (ownerId: string, style: ViewSwitcherStyle) =>
 	write(key(ownerId, 'switcher'), style);
 
+/**
+ * Whether the working-hours and pause grips show in one's own calendar
+ * (Frank *7.2: switchable in ⋮, so they do not distract). On by default.
+ */
+export const readShowGrips = (ownerId: string): boolean =>
+	read(key(ownerId, 'grips')) !== 'off';
+
+export const writeShowGrips = (ownerId: string, show: boolean) =>
+	write(key(ownerId, 'grips'), show ? 'on' : 'off');
+
 /** How many recently shown colleagues get their own pill. */
 export const MAX_RECENT_COLLEAGUES = 5;
 /** Without a history, the first colleagues of the list fill the pills. */

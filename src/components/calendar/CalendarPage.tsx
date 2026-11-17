@@ -29,13 +29,9 @@ import AddIcon from '@mui/icons-material/Add';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
-import FullscreenIcon from '@mui/icons-material/Fullscreen';
-import FullscreenExitIcon from '@mui/icons-material/FullscreenExit';
+import OpenInFullIcon from '@mui/icons-material/OpenInFull';
+import CloseFullscreenIcon from '@mui/icons-material/CloseFullscreen';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import RemoveIcon from '@mui/icons-material/Remove';
-import CalendarMonthOutlinedIcon from '@mui/icons-material/CalendarMonthOutlined';
-import ViewAgendaOutlinedIcon from '@mui/icons-material/ViewAgendaOutlined';
-import ViewWeekOutlinedIcon from '@mui/icons-material/ViewWeekOutlined';
 import { M3Snackbar } from '../m3Snackbar/M3Snackbar';
 import {
 	DEFAULT_VISIBILITY,
@@ -50,12 +46,17 @@ import {
 	type CalendarVisibility,
 	type Colleague
 } from './calendarModel';
-import { facetOf, type CalendarEntryFacet } from './CalendarEntryGlyph';
+import {
+	facetOf,
+	facetShown,
+	type CalendarEntryFacet
+} from './CalendarEntryGlyph';
 import {
 	entryActions,
 	openProposals,
 	ProposalNoLongerValid,
 	receivedBy,
+	type EntryAction,
 	type MoveProposal
 } from './calendarActions';
 import {
@@ -63,6 +64,7 @@ import {
 	DESKTOP_VIEWS,
 	FC_VIEW,
 	VIEW_DIGIT,
+	rangeTitleOf,
 	type CalendarViewName,
 	type ViewSwitcherStyle
 } from './calendarViews';
@@ -104,6 +106,8 @@ import {
 	rememberColleague,
 	writeRecentColleagues,
 	writeSwitcherStyle,
+	readShowGrips,
+	writeShowGrips,
 	DEFAULT_LIST_WIDTH,
 	LIST_RAIL_WIDTH,
 	listModeOf,
@@ -140,6 +144,10 @@ import {
 	type CalendarSidebarProps,
 	type FreeHoursState
 } from './CalendarSidebar';
+import {
+	CalendarSettingsDialog,
+	CALENDAR_CHIP_FACETS
+} from './CalendarSettingsDialog';
 import { CalendarMenu } from './CalendarMenu';
 import {
 	EdgeMenuContent,
@@ -147,7 +155,6 @@ import {
 	type PauseAction,
 	EntryMenuContent,
 	JumpMenuContent,
-	KindsMenuContent,
 	MonthDayMenuContent,
 	PeopleMenuContent,
 	ProposalMenuContent,
@@ -155,12 +162,15 @@ import {
 	SettingsMenuContent,
 	SlotMenuContent,
 	ViewMenuContent,
+	VIEW_ICON,
 	type SlotChoice
 } from './calendarMenus';
 import { initialsOf } from './CalendarEntryPeek';
+import { avatarToneClass } from './calendarAvatar';
+import { useCreatedFlash } from './useCreatedFlash';
 import { HoverScrollArrows } from '../hoverScrollArrows/HoverScrollArrows';
-import { AppointmentDialog } from './AppointmentDialog';
-import { BlockerDialog } from './BlockerDialog';
+import { NewEntryDialog } from './NewEntryDialog';
+import { BlockerCreatedMessage } from './BlockerDialog';
 import { MoveConflictDialog } from './MoveConflictDialog';
 import {
 	WorkingHoursDialog,
@@ -172,6 +182,7 @@ import {
 	type CalendarImport
 } from './CalendarSyncDialog';
 import { useEntryLabel, useRangeFormat } from './useEntryLabel';
+import { M3Dialog } from '../m3Dialog/M3Dialog';
 import type { QuickKind } from './calendarQuickEntry';
 import { useLiveNow } from './useLiveNow';
 import '../sessionsList/sessionsList.styles.scss';
@@ -336,19 +347,44 @@ type Dialog =
 			slot?: { start: Date; end: Date; kind: AppointmentKind };
 			sessionId?: number;
 	  }
-	| { type: 'blocker'; slot?: { start: Date; end: Date } }
+	| {
+			type: 'blocker';
+			slot?: { start: Date; end: Date };
+			/** Ticked already: "Wöchentlich …" after a single blocker. */
+			weekdays?: number[];
+			/** "Wöchentlich …": the single blocker's all-day state and note. */
+			allDay?: boolean;
+			note?: string;
+			/**
+			 * "Wöchentlich …": the single blocker the series replaces. It
+			 * stays until the series is saved (reviews 4589304582,
+			 * 4589304593, 4589150206).
+			 */
+			replaces?: { entry: CalendarEntry; draft: AppointmentDraft };
+	  }
 	| { type: 'workingHours' }
 	| { type: 'sync' }
 	| null;
 
 type Menu =
-	| { type: 'slot'; anchor: MenuAnchor; range: { start: Date; end: Date } }
+	| {
+			type: 'slot';
+			anchor: MenuAnchor;
+			range: { start: Date; end: Date };
+			/** Chosen in the first step: the card asks "Mit wem?". */
+			kind?: AppointmentKind;
+	  }
 	| { type: 'month'; anchor: MenuAnchor; start: Date; days: number }
 	| {
 			type: 'entry';
 			anchor: MenuAnchor;
 			entry: CalendarEntry;
 			mode: 'list' | 'move' | 'propose';
+			/**
+			 * Opened from "Als Nächstes" or the rail, not from the grid:
+			 * "Zum Termin" leads there (Frank, 2026-11-16).
+			 */
+			outside?: boolean;
 	  }
 	| {
 			/** `proposal`: one's own, sent; `request`: one received. */
@@ -358,7 +394,7 @@ type Menu =
 			entry: CalendarEntry;
 	  }
 	| {
-			type: 'settings' | 'view' | 'jump' | 'people' | 'kinds';
+			type: 'settings' | 'view' | 'jump' | 'people';
 			anchor: HTMLElement;
 	  }
 	| {
@@ -381,6 +417,8 @@ interface Notice {
 	undo?: () => ChangeResult;
 	/** Nothing (or not all) was stored: try the same change again. */
 	retry?: () => void;
+	/** One blocker entered: "Wöchentlich …" turns it into a series. */
+	weekly?: { entry: CalendarEntry; draft: AppointmentDraft };
 }
 
 /**
@@ -410,6 +448,9 @@ const addDays = (date: Date, days: number) => {
 	return next;
 };
 
+/** Below this stage width the header title shrinks from 26 to 22 px. */
+const NARROW_STAGE_PX = 640;
+
 /** Tooltips of the switch and the arrows show at once (Frank). */
 const QuickTip = ({
 	title,
@@ -422,12 +463,6 @@ const QuickTip = ({
 		{children}
 	</Tooltip>
 );
-
-const VIEW_ICON: Partial<Record<CalendarViewName, React.ReactNode>> = {
-	month: <CalendarMonthOutlinedIcon fontSize="small" />,
-	list: <ViewAgendaOutlinedIcon fontSize="small" />,
-	split: <ViewWeekOutlinedIcon fontSize="small" />
-};
 
 export const CalendarPage = ({
 	role,
@@ -492,8 +527,10 @@ export const CalendarPage = ({
 	const views = phone ? COMPACT_VIEWS : DESKTOP_VIEWS;
 	const controller = useCalendarController();
 
+	// A phone opens on three days, a wider screen on the work week
+	// (prototype v17).
 	const [view, setView] = useState<CalendarViewName>(
-		initialView ?? (phone ? 'list' : 'workWeek')
+		initialView ?? (phone ? 'threeDays' : 'workWeek')
 	);
 	const [title, setTitle] = useState('');
 	/** The day the grid stands on; the split view starts on this day. */
@@ -527,14 +564,27 @@ export const CalendarPage = ({
 		)
 	]);
 	const [muted, setMuted] = useState<string[]>([]);
+	const { flashIds, expectCreated, flash } = useCreatedFlash(
+		entries,
+		ownerId
+	);
 	const [highlight, setHighlight] = useState<CalendarHighlight | null>(null);
 	// Like the session list chips: none selected shows everything, selected
 	// chips narrow to those kinds. "Was anzeigen" hides kinds altogether.
 	const [onlyFacets, setOnlyFacets] = useState<CalendarEntryFacet[]>([]);
 	const [hiddenFacets, setHiddenFacets] = useState<CalendarEntryFacet[]>([]);
+	// "Ansicht · Kalender" (Frank *14): which kinds get a button in the row.
+	const [chipFacets, setChipFacets] =
+		useState<CalendarEntryFacet[]>(CALENDAR_CHIP_FACETS);
+	const [settingsOpen, setSettingsOpen] = useState(false);
+	const viewCustomised =
+		hiddenFacets.length > 0 ||
+		chipFacets.length !== CALENDAR_CHIP_FACETS.length;
 	const [menu, setMenu] = useState<Menu>(null);
 	const [dialog, setDialog] = useState<Dialog>(null);
 	const creating = useRef(false);
+	/** "Wöchentlich …" from removing the single blocker to its restore. */
+	const replacing = useRef(false);
 	const [notice, setNotice] = useState<Notice | null>(null);
 	/** A move onto other entries waits for this answer. */
 	const [moveAsk, setMoveAsk] = useState<{
@@ -542,6 +592,8 @@ export const CalendarPage = ({
 		answer: (go: boolean) => void;
 	} | null>(null);
 	/** A new entry onto other entries, made outside a dialog, waits too. */
+	/** "Absagen" asks first: the advice seeker is told at once (test C10). */
+	const [cancelAsk, setCancelAsk] = useState<CalendarEntry | null>(null);
 	const [createAsk, setCreateAsk] = useState<{
 		conflicts: CalendarEntry[];
 		blocker: boolean;
@@ -584,8 +636,7 @@ export const CalendarPage = ({
 		.map((id) => colleagueById[id])
 		.filter(Boolean) as Colleague[];
 	const facetVisible = (facet: CalendarEntryFacet) =>
-		!hiddenFacets.includes(facet) &&
-		(onlyFacets.length === 0 || onlyFacets.includes(facet));
+		facetShown(facet, onlyFacets, hiddenFacets);
 	const visible = useMemo(
 		() =>
 			entries.filter(
@@ -670,6 +721,21 @@ export const CalendarPage = ({
 		} else setMuted((all) => all.filter((x) => x !== id));
 	};
 
+	/** "Ganze Beratungsstelle zeigen": shows them all, remembers each. */
+	const showColleagues = (ids: string[]) => {
+		const added = ids.filter((id) => !shownColleagues.includes(id));
+		if (added.length === 0) return;
+		const next = [...shownColleagues, ...added];
+		setShownColleagues(next);
+		onShownColleaguesChange?.(next);
+		const remembered = added.reduce(
+			(all, id) => rememberColleague(all, id),
+			recent
+		);
+		setRecent(remembered);
+		writeRecentColleagues(ownerId, remembered);
+	};
+
 	useEffect(() => {
 		if (initialShownColleagues.length > 0)
 			onShownColleaguesChange?.(initialShownColleagues);
@@ -735,6 +801,41 @@ export const CalendarPage = ({
 		setAnchorDate(day);
 		if (!split) controller.gotoDate(day);
 	};
+	// A search result moves the calendar to its day and scrolls to an hour
+	// before it (prototype v17); month, list and "Nebeneinander" give way to
+	// the days with times. The work week hides Saturday and Sunday, so an
+	// entry on a weekend opens the whole week (review 4589150187).
+	const showEntry = (entry: CalendarEntry) => {
+		// A kind filter may hide the result: show its kind first, or the
+		// calendar lands on nothing (review 4589150199).
+		const facet = facetOf(entry);
+		if (!facetVisible(facet)) {
+			setHiddenFacets((all) => all.filter((f) => f !== facet));
+			setOnlyFacets((all) =>
+				all.length && !all.includes(facet) ? [...all, facet] : all
+			);
+		}
+		const start = new Date(entry.start);
+		const weekend = start.getDay() === 0 || start.getDay() === 6;
+		if (view === 'month' || view === 'list' || split)
+			changeView(phone ? 'threeDays' : weekend ? 'week' : 'workWeek');
+		else if (view === 'workWeek' && weekend) changeView('week');
+		goTo(start);
+		// The eye finds it where the calendar lands (Frank *7).
+		flash([entry.id]);
+		const before = new Date(
+			Math.max(start.getTime() - 3600000, startOfDay(start).getTime())
+		);
+		const time = `${String(before.getHours()).padStart(2, '0')}:${String(before.getMinutes()).padStart(2, '0')}:00`;
+		// The controller has no scrollToTime; its calendar does.
+		window.setTimeout(() =>
+			(
+				controller as unknown as {
+					calendarApi?: { scrollToTime(time: string): void };
+				}
+			).calendarApi?.scrollToTime(time)
+		);
+	};
 
 	// Turned into a phone, five or seven days become three; back on a
 	// wider screen, three become the work week (prototype v15).
@@ -790,18 +891,12 @@ export const CalendarPage = ({
 	const locale = calendarLocale(i18n.language);
 	const rangeTitle = !split
 		? title
-		: splitDays === 1
-			? new Intl.DateTimeFormat(locale, {
-					weekday: 'long',
-					day: 'numeric',
-					month: 'long',
-					year: 'numeric'
-				}).format(anchorDate)
-			: new Intl.DateTimeFormat(locale, {
-					day: 'numeric',
-					month: 'long',
-					year: 'numeric'
-				}).formatRange(anchorDate, addDays(anchorDate, splitDays - 1));
+		: rangeTitleOf(
+				splitDays === 1 ? 'day' : 'threeDays',
+				anchorDate,
+				addDays(anchorDate, splitDays),
+				locale
+			);
 
 	// --- Fullscreen: Escape leaves it, unless a menu or dialog takes it ---
 	useEffect(() => {
@@ -843,6 +938,13 @@ export const CalendarPage = ({
 				onRemoveBlocker &&
 				createdEntries.length > 0
 					? () => allStored(createdEntries.map(onRemoveBlocker))
+					: undefined,
+			weekly:
+				first.type === 'blocker' &&
+				drafts.length === 1 &&
+				onRemoveBlocker &&
+				createdEntries.length === 1
+					? { entry: createdEntries[0], draft: first }
 					: undefined
 		};
 	};
@@ -880,6 +982,7 @@ export const CalendarPage = ({
 		const origin = dialog;
 		const closeOrigin = () =>
 			setDialog((current) => (current === origin ? null : current));
+		expectCreated(drafts);
 		const outcome = run(onCreate?.(drafts), createNotice(drafts));
 		if (outcome === true) closeOrigin();
 		if (typeof outcome === 'boolean') return outcome;
@@ -915,14 +1018,43 @@ export const CalendarPage = ({
 	const chooseSlot = (choice: SlotChoice) => {
 		if (menu?.type !== 'slot') return;
 		const range = menu.range;
-		setMenu(null);
-		if (choice === 'blocker')
+		if (choice === 'blocker') {
+			setMenu(null);
 			create([{ type: 'blocker', start: range.start, end: range.end }]);
-		else
-			setDialog({
+		}
+		// An appointment asks "Mit wem?" in the same card (prototype v17).
+		else setMenu({ ...menu, kind: choice });
+	};
+
+	/** "Mit wem?" answered: the appointment is entered at once. */
+	const pickSlotPerson = (sessionId: number) => {
+		if (menu?.type !== 'slot' || !menu.kind) return;
+		const { range, kind } = menu;
+		setMenu(null);
+		if (range.start.getTime() < now.getTime()) {
+			setNotice({ message: t('calendar.dialog.error.past') });
+			return;
+		}
+		create([
+			{
 				type: 'appointment',
-				slot: { ...range, kind: choice }
-			});
+				start: range.start,
+				end: range.end,
+				kind,
+				sessionId
+			}
+		]);
+	};
+
+	/** "Mehr Angaben …" in the slot card: the full dialog, prefilled. */
+	const moreSlotDetails = () => {
+		if (menu?.type !== 'slot') return;
+		const { range, kind } = menu;
+		setMenu(null);
+		setDialog({
+			type: 'appointment',
+			slot: { ...range, kind: kind ?? 'video' }
+		});
 	};
 
 	/**
@@ -995,6 +1127,95 @@ export const CalendarPage = ({
 				},
 				() => setNotice({ message: t('calendar.saveFailed') })
 			);
+	};
+
+	/**
+	 * "Wöchentlich …" (prototype v17): the blocker form opens with the single
+	 * blocker's time and its weekday ticked. The single blocker stays until
+	 * the series is saved, so closing the form loses nothing.
+	 */
+	const weekly = (current: Notice) => {
+		if (!current.weekly) return;
+		const { draft } = current.weekly;
+		setNotice(null);
+		setDialog({
+			type: 'blocker',
+			slot: { start: draft.start, end: draft.end },
+			weekdays: [draft.start.getDay()],
+			allDay: !!draft.allDay,
+			note: draft.note,
+			replaces: current.weekly
+		});
+	};
+
+	/**
+	 * The series failed after the single blocker went: put it back. The
+	 * open form then replaces the restored one, or nothing if that failed.
+	 * A failed restore says so: the single blocker is gone, and saving the
+	 * form again blocks the time (review 4589615832).
+	 */
+	const restoreBlocker = (replaces: {
+		entry: CalendarEntry;
+		draft: AppointmentDraft;
+	}): Promise<void> => {
+		const follow = (restored: unknown) => {
+			if (restored === false || restored === undefined)
+				setNotice({ message: t('calendar.restoreFailed') });
+			const again =
+				Array.isArray(restored) && restored.length === 1
+					? (restored[0] as CalendarEntry)
+					: undefined;
+			setDialog((current) =>
+				current?.type === 'blocker' && current.replaces === replaces
+					? {
+							...current,
+							replaces: again
+								? { entry: again, draft: replaces.draft }
+								: undefined
+						}
+					: current
+			);
+		};
+		return Promise.resolve()
+			.then(() => onCreate?.([replaces.draft]))
+			.then(follow, () => follow(undefined));
+	};
+
+	/**
+	 * Saving the series: the single blocker goes first, and only once it is
+	 * gone is the series created, so the first date is never blocked twice.
+	 * A refused or failed removal creates nothing and keeps the form open;
+	 * a failed series puts the single blocker back. A second save waits
+	 * until that restore has settled (review 4589615841).
+	 */
+	const replaceBlocker = (
+		replaces: { entry: CalendarEntry; draft: AppointmentDraft },
+		drafts: AppointmentDraft[]
+	): Promise<boolean> | boolean => {
+		if (creating.current || replacing.current) return false;
+		creating.current = true;
+		replacing.current = true;
+		return Promise.resolve()
+			.then(() => onRemoveBlocker?.(replaces.entry))
+			.then(
+				(value) => value !== false,
+				() => false
+			)
+			.then((removed) => {
+				creating.current = false;
+				if (!removed) {
+					setNotice({ message: t('calendar.saveFailed') });
+					return false;
+				}
+				return Promise.resolve(create(drafts, true)).then((stored) =>
+					stored
+						? stored
+						: restoreBlocker(replaces).then(() => stored)
+				);
+			})
+			.finally(() => {
+				replacing.current = false;
+			});
 	};
 
 	const propose = (entry: CalendarEntry, start: Date, end: Date) => {
@@ -1072,7 +1293,10 @@ export const CalendarPage = ({
 
 	// --- Working-hours grips (own calendar) ---
 	const editHours = workingHoursLoaded && !!onSaveWorkingHours;
-	const gripsOn = consultant && editHours && !!onSaveDayException;
+	const gripsAvailable = consultant && editHours && !!onSaveDayException;
+	// Switchable in ⋮ and kept in this browser (Frank *7.2).
+	const [showGrips, setShowGrips] = useState(() => readShowGrips(ownerId));
+	const gripsOn = gripsAvailable && showGrips;
 	const gripDate = (day: Date) =>
 		new Intl.DateTimeFormat(calendarLocale(i18n.language), {
 			weekday: 'short',
@@ -1411,7 +1635,8 @@ export const CalendarPage = ({
 	const openEntry = (
 		shown: CalendarEntry,
 		anchor: MenuAnchor,
-		mode: 'list' | 'move' = 'list'
+		mode: 'list' | 'move' = 'list',
+		outside = false
 	) => {
 		// Co-access: the colleague's appointment is in one's own calendar
 		// too, with the same id. UserService lets a co-access holder move
@@ -1432,21 +1657,19 @@ export const CalendarPage = ({
 						? 'propose'
 						: 'list'
 				: 'list';
-		setMenu({ type: 'entry', entry, anchor, mode: formMode });
+		setMenu({ type: 'entry', entry, anchor, mode: formMode, outside });
 	};
 
 	const entryAction = (
 		entry: CalendarEntry,
-		action: 'start' | 'chat' | 'join' | 'cancel' | 'remove'
+		action: 'show' | 'start' | 'chat' | 'join' | 'cancel' | 'remove'
 	) => {
 		setMenu(null);
-		if (action === 'start') openRoom(onStart, entry);
+		if (action === 'show') showEntry(entry);
+		else if (action === 'start') openRoom(onStart, entry);
 		else if (action === 'chat') openRoom(onOpenChat, entry);
 		else if (action === 'join') onJoin?.(entry);
-		else if (action === 'cancel')
-			run(onCancelAppointment?.(entry), {
-				message: t('calendar.cancelled')
-			});
+		else if (action === 'cancel') setCancelAsk(entry);
 		else
 			run(onRemoveBlocker?.(entry), {
 				message: t('calendar.blockerRemoved')
@@ -1479,6 +1702,8 @@ export const CalendarPage = ({
 	let menuAlign: 'start' | 'end' = 'start';
 	if (menu?.type === 'slot') {
 		menuLabel = t('calendar.slotMenu.label');
+		// The second step has a search field: a dialog, not a menu.
+		if (menu.kind) menuRole = 'dialog';
 		menuContent = (
 			<SlotMenuContent
 				range={menu.range}
@@ -1490,6 +1715,10 @@ export const CalendarPage = ({
 					)
 				}
 				onChoose={chooseSlot}
+				kind={menu.kind}
+				conversations={conversations}
+				onPick={pickSlotPerson}
+				onMore={moreSlotDetails}
 			/>
 		);
 	} else if (menu?.type === 'month') {
@@ -1526,7 +1755,10 @@ export const CalendarPage = ({
 		);
 	} else if (menu?.type === 'entry') {
 		const { entry } = menu;
-		const actions = entryActions(entry, { ownerId, role, can });
+		const actions: EntryAction[] = [
+			...(menu.outside ? (['show'] as const) : []),
+			...entryActions(entry, { ownerId, role, can })
+		];
 		const colleague =
 			entry.ownerId !== ownerId
 				? colleagueById[entry.ownerId]
@@ -1636,12 +1868,29 @@ export const CalendarPage = ({
 				workingHoursSummary={summary}
 				rememberedEdge={gripsOn ? edgeChoice : null}
 				onForgetEdge={forgetEdge}
+				showGrips={showGrips}
+				onShowGrips={
+					gripsAvailable
+						? (show) => {
+								setShowGrips(show);
+								writeShowGrips(ownerId, show);
+							}
+						: undefined
+				}
 				switcherStyle={switcherStyle}
 				onWorkingHours={
 					editHours
 						? () => {
 								setMenu(null);
 								setDialog({ type: 'workingHours' });
+							}
+						: undefined
+				}
+				onRepeatBlocker={
+					onCreate
+						? () => {
+								setMenu(null);
+								setDialog({ type: 'blocker' });
 							}
 						: undefined
 				}
@@ -1694,30 +1943,25 @@ export const CalendarPage = ({
 		menuContent = <JumpMenuContent now={now} onJump={goTo} />;
 	} else if (menu?.type === 'people') {
 		menuLabel = t('calendar.people.label');
+		menuWidth = 300;
 		menuContent = (
 			<PeopleMenuContent
 				colleagues={colleagues}
 				shown={shownColleagues}
 				scopeHint={t(`calendar.scopeHint.${visibility.scope}`)}
 				onToggle={toggleColleague}
-			/>
-		);
-	} else if (menu?.type === 'kinds') {
-		menuLabel = t('calendar.kindsMenu.label');
-		menuAlign = 'end';
-		menuContent = (
-			<KindsMenuContent
-				hidden={hiddenFacets}
-				onToggle={(facet) =>
-					setHiddenFacets((all) => toggle(all, facet))
+				onShowAll={showColleagues}
+				onSideBySide={
+					views.includes('split')
+						? () => changeView('split')
+						: undefined
 				}
-				onShowAll={() => setHiddenFacets([])}
 			/>
 		);
 	}
 
 	const openAt =
-		(type: 'settings' | 'view' | 'jump' | 'people' | 'kinds') =>
+		(type: 'settings' | 'view' | 'jump' | 'people') =>
 		(event: React.MouseEvent<HTMLElement>) =>
 			setMenu({ type, anchor: event.currentTarget });
 
@@ -1746,9 +1990,11 @@ export const CalendarPage = ({
 				))}
 			</div>
 		) : (
+			// A white pill: the view's icon, its name and ▾ (prototype v17);
+			// on the phone and the tablet the icon alone.
 			<button
 				type="button"
-				className="calendarStage__pillButton"
+				className="calendarStage__viewButton"
 				aria-haspopup="menu"
 				aria-expanded={menu?.type === 'view'}
 				aria-label={t('calendar.viewMenu', {
@@ -1757,77 +2003,111 @@ export const CalendarPage = ({
 				onClick={openAt('view')}
 				data-cy="calendar-view-menu"
 			>
-				{t(`calendar.views.${view}`)}
-				<ArrowDropDownIcon fontSize="small" />
+				<span className="calendarStage__viewIcon" aria-hidden="true">
+					{VIEW_ICON[view]}
+				</span>
+				<span className="calendarStage__viewLabel">
+					{t(`calendar.views.${view}`)}
+				</span>
+				<ArrowDropDownIcon fontSize="small" aria-hidden />
 			</button>
 		);
 
+	// "Meine Termine", or "Termine" once colleagues are shown; with "ich"
+	// and every shown colleague as avatars in front and ▾ after it, one
+	// button that opens "Kalender anzeigen" (prototype v17).
+	const headerTitle =
+		shown.length > 0
+			? t('calendar.header.shared')
+			: t('navigation.booking.events');
 	const header = (
 		<header className="calendarStage__header">
-			{shown.length > 0 && (
-				<button
-					type="button"
-					className="calendarStage__avatars"
-					aria-label={t('calendar.people.label')}
-					onClick={openAt('people')}
-				>
-					{shown.slice(0, 4).map((c) => (
-						<span
-							key={c.id}
-							className="calendarStage__avatar"
-							aria-hidden="true"
-						>
-							{initialsOf(c.displayName)}
-						</span>
-					))}
-				</button>
-			)}
-			<h1 className="calendarStage__title">
-				{t('navigation.booking.events')}
-			</h1>
 			{consultant && onCreate && (
-				<QuickTip title={t('calendar.create')}>
+				<QuickTip title={t('calendar.header.newEntry')}>
 					<button
 						type="button"
 						className="calendarStage__create"
-						aria-label={t('calendar.create')}
+						aria-label={t('calendar.header.newEntry')}
 						onClick={() => setDialog({ type: 'appointment' })}
 						data-cy="calendar-create"
 					>
-						<AddIcon fontSize="small" />
+						<AddIcon aria-hidden />
+						<span
+							className="calendarStage__createLabel"
+							aria-hidden="true"
+						>
+							{t('calendar.header.new')}
+						</span>
 					</button>
 				</QuickTip>
 			)}
+			<h1 className="calendarStage__heading">
+				{consultant ? (
+					<button
+						type="button"
+						className="calendarStage__who"
+						aria-haspopup="menu"
+						aria-expanded={menu?.type === 'people'}
+						aria-label={`${headerTitle}, ${t('calendar.people.label')}`}
+						onClick={openAt('people')}
+						data-cy="calendar-who"
+					>
+						<span
+							className="calendarStage__avatars"
+							aria-hidden="true"
+						>
+							<span className="calendarStage__avatar calAvatar--me">
+								{t('calendar.people.meAvatar')}
+							</span>
+							{shown.map((c) => (
+								<span
+									key={c.id}
+									className={`calendarStage__avatar ${avatarToneClass(c.displayName)}`}
+								>
+									{initialsOf(c.displayName)}
+								</span>
+							))}
+						</span>
+						<span className="calendarStage__title">
+							{headerTitle}
+						</span>
+						<ArrowDropDownIcon
+							className="calendarStage__caret"
+							aria-hidden
+						/>
+					</button>
+				) : (
+					<span className="calendarStage__title">{headerTitle}</span>
+				)}
+			</h1>
 			<div className="calendarStage__headerEnd">
 				{viewSwitch}
-				{!compact && (
-					<QuickTip
-						title={
+				<QuickTip
+					title={
+						fullscreen
+							? t('calendar.fullscreenExit')
+							: t('calendar.fullscreen')
+					}
+				>
+					<button
+						type="button"
+						className="calendarStage__round"
+						aria-label={
 							fullscreen
 								? t('calendar.fullscreenExit')
 								: t('calendar.fullscreen')
 						}
+						aria-pressed={fullscreen}
+						onClick={() => setFullscreen((on) => !on)}
+						data-cy="calendar-fullscreen"
 					>
-						<button
-							type="button"
-							className="calendarStage__round"
-							aria-label={
-								fullscreen
-									? t('calendar.fullscreenExit')
-									: t('calendar.fullscreen')
-							}
-							aria-pressed={fullscreen}
-							onClick={() => setFullscreen((on) => !on)}
-							data-cy="calendar-fullscreen"
-						>
-							{fullscreen ? (
-								<FullscreenExitIcon />
-							) : (
-								<FullscreenIcon />
-							)}
-						</button>
-					</QuickTip>
-				)}
+						{fullscreen ? (
+							<CloseFullscreenIcon />
+						) : (
+							<OpenInFullIcon />
+						)}
+					</button>
+				</QuickTip>
 				{consultant && (
 					<QuickTip title={t('calendar.settings.label')}>
 						<button
@@ -1847,6 +2127,8 @@ export const CalendarPage = ({
 		</header>
 	);
 
+	// The date bar: a filled pill (‹ · Heute ▾ · ›) with "Heute" in light
+	// pink, the range title, then − and + (prototype v17).
 	const toolbar = (
 		<div className="calendarStage__toolbar">
 			<div className="calendarStage__nav" role="group">
@@ -1861,27 +2143,29 @@ export const CalendarPage = ({
 						<ChevronLeftIcon fontSize="small" />
 					</button>
 				</QuickTip>
-				<button
-					type="button"
-					className="calendarStage__today"
-					onClick={() => goTo(now)}
-					data-cy="calendar-today"
-				>
-					{t('calendar.today')}
-				</button>
-				<QuickTip title={t('calendar.jump.label')}>
+				<span className="calendarStage__todayPair">
 					<button
 						type="button"
-						className="calendarStage__navButton calendarStage__navButton--drop"
-						aria-label={t('calendar.jump.label')}
-						aria-haspopup="dialog"
-						aria-expanded={menu?.type === 'jump'}
-						onClick={openAt('jump')}
-						data-cy="calendar-jump"
+						className="calendarStage__today"
+						onClick={() => goTo(now)}
+						data-cy="calendar-today"
 					>
-						<ArrowDropDownIcon fontSize="small" />
+						{t('calendar.today')}
 					</button>
-				</QuickTip>
+					<QuickTip title={t('calendar.jump.label')}>
+						<button
+							type="button"
+							className="calendarStage__jump"
+							aria-label={t('calendar.jump.label')}
+							aria-haspopup="dialog"
+							aria-expanded={menu?.type === 'jump'}
+							onClick={openAt('jump')}
+							data-cy="calendar-jump"
+						>
+							<ArrowDropDownIcon fontSize="small" />
+						</button>
+					</QuickTip>
+				</span>
 				<QuickTip title={t('calendar.next')}>
 					<button
 						type="button"
@@ -1897,6 +2181,49 @@ export const CalendarPage = ({
 			<h2 className="calendarStage__range" aria-live="polite">
 				{rangeTitle}
 			</h2>
+			{timeGridShown && (
+				<div
+					className="calendarStage__segmented calendarStage__zoom"
+					role="group"
+					aria-label={t('calendar.zoomLabel')}
+					data-cy="calendar-zoom"
+				>
+					{(
+						[
+							[-1, 'calendar.zoomOut', '\u2212'],
+							[1, 'calendar.zoomIn', '+']
+						] as const
+					).map(([direction, key, glyph]) => {
+						const atBound =
+							direction < 0
+								? slotPx <= ZOOM_MIN
+								: slotPx >= ZOOM_MAX;
+						return (
+							<QuickTip key={key} title={t(key)}>
+								{/* A disabled button gets no hover: the tip sits on the span. */}
+								<span className="calendarStage__zoomTip">
+									<button
+										type="button"
+										className="calendarStage__segment calendarStage__zoomButton"
+										aria-label={t(key)}
+										disabled={atBound}
+										onClick={() =>
+											zoomTo(zoomStep(slotPx, direction))
+										}
+										data-cy={
+											direction < 0
+												? 'calendar-zoom-out'
+												: 'calendar-zoom-in'
+										}
+									>
+										<span aria-hidden="true">{glyph}</span>
+									</button>
+								</span>
+							</QuickTip>
+						);
+					})}
+				</div>
+			)}
 			{split && (
 				<div
 					className="calendarStage__segmented"
@@ -1919,49 +2246,6 @@ export const CalendarPage = ({
 					))}
 				</div>
 			)}
-			{timeGridShown && (
-				<div
-					className="calendarStage__nav calendarStage__zoom"
-					role="group"
-					aria-label={t('calendar.zoomLabel')}
-					data-cy="calendar-zoom"
-				>
-					{(
-						[
-							[-1, 'calendar.zoomOut', <RemoveIcon key="out" />],
-							[1, 'calendar.zoomIn', <AddIcon key="in" />]
-						] as const
-					).map(([direction, key, icon]) => {
-						const atBound =
-							direction < 0
-								? slotPx <= ZOOM_MIN
-								: slotPx >= ZOOM_MAX;
-						return (
-							<QuickTip key={key} title={t(key)}>
-								{/* A disabled button gets no hover: the tip sits on the span. */}
-								<span className="calendarStage__zoomTip">
-									<button
-										type="button"
-										className="calendarStage__navButton"
-										aria-label={t(key)}
-										disabled={atBound}
-										onClick={() =>
-											zoomTo(zoomStep(slotPx, direction))
-										}
-										data-cy={
-											direction < 0
-												? 'calendar-zoom-out'
-												: 'calendar-zoom-in'
-										}
-									>
-										{icon}
-									</button>
-								</span>
-							</QuickTip>
-						);
-					})}
-				</div>
-			)}
 		</div>
 	);
 
@@ -1976,6 +2260,9 @@ export const CalendarPage = ({
 		.map((id) => colleagueById[id])
 		.filter(Boolean)
 		.slice(0, MAX_RECENT_COLLEAGUES) as Colleague[];
+	// White chips: "ich" first, then who is shown; who was shown lately
+	// stays as a dashed chip; "Weitere …" in red opens the people menu
+	// (prototype v17).
 	const personChip = (
 		id: string,
 		name: string,
@@ -1986,7 +2273,7 @@ export const CalendarPage = ({
 		<button
 			key={id}
 			type="button"
-			className={`calendarStage__person${colleague && !pressed ? ' calendarStage__person--off' : ''}`}
+			className={`calendarStage__person${colleague && !pressed ? ' calendarStage__person--off' : ''}${colleague ? '' : ' calendarStage__person--me'}`}
 			aria-pressed={pressed}
 			title={colleague?.agencyName}
 			onMouseEnter={() => pressed && setHighlight({ owner: id })}
@@ -1996,12 +2283,12 @@ export const CalendarPage = ({
 			data-cy={`calendar-person-${id}`}
 		>
 			<span
-				className={`calendarStage__personAvatar${colleague ? '' : ' calendarStage__personAvatar--me'}`}
+				className={`calendarStage__personAvatar ${colleague ? avatarToneClass(name) : avatarToneClass('', true)}`}
 				aria-hidden="true"
 			>
-				{colleague ? initialsOf(name) : t('calendar.people.me')}
+				{colleague ? initialsOf(name) : t('calendar.people.meAvatar')}
 			</span>
-			<span>{colleague ? name : t('calendar.myCalendar')}</span>
+			<span>{colleague ? name : t('calendar.people.me')}</span>
 			{colleague?.agencyShort && (
 				<span className="calendarStage__agency">
 					{colleague.agencyShort}
@@ -2009,14 +2296,16 @@ export const CalendarPage = ({
 			)}
 		</button>
 	);
+	// Only while someone is shown or was shown lately (prototype v17).
 	const peopleBar = consultant &&
-		(colleagues.length > 0 || shown.length > 0) && (
+		(shown.length > 0 || hiddenRecent.length > 0) && (
 			<div
 				className="calendarStage__people"
 				role="group"
 				aria-label={t('calendar.people.bar')}
 				title={t('calendar.people.hint')}
 				onMouseLeave={() => setHighlight(null)}
+				data-cy="calendar-people-bar"
 			>
 				<HoverScrollArrows
 					targetRef={peopleRef}
@@ -2071,11 +2360,11 @@ export const CalendarPage = ({
 			now={now}
 			entries={entries}
 			onlyFacets={onlyFacets}
-			hiddenFacets={hiddenFacets}
 			onToggleFacet={(facet) =>
 				setOnlyFacets((all) => toggle(all, facet))
 			}
 			onHighlightFacet={(facet) => setHighlight(facet ? { facet } : null)}
+			facets={chipFacets}
 			className="calendarStage__kinds"
 		/>
 	);
@@ -2180,6 +2469,11 @@ export const CalendarPage = ({
 							role={role}
 							ownerId={ownerId}
 							colleagues={shown}
+							onChoosePeople={
+								consultant && colleagues.length > 0
+									? openAt('people')
+									: undefined
+							}
 							entries={visible}
 							busyEntries={busyEntries}
 							unavailable={unknown}
@@ -2197,6 +2491,7 @@ export const CalendarPage = ({
 							proposals={gridProposals}
 							highlight={highlight}
 							muted={muted}
+							flashIds={flashIds}
 							onSelectRange={(range, anchor) =>
 								setMenu({ type: 'slot', range, anchor })
 							}
@@ -2227,6 +2522,7 @@ export const CalendarPage = ({
 							proposals={gridProposals}
 							highlight={highlight}
 							muted={muted}
+							flashIds={flashIds}
 							onSelectRange={(range, anchor) =>
 								setMenu({ type: 'slot', range, anchor })
 							}
@@ -2294,8 +2590,10 @@ export const CalendarPage = ({
 		hiddenFacets,
 		onToggleFacet: (facet) => setOnlyFacets((all) => toggle(all, facet)),
 		onHighlightFacet: (facet) => setHighlight(facet ? { facet } : null),
-		kindsMenuOpen: menu?.type === 'kinds',
-		onOpenKinds: (anchor) => setMenu({ type: 'kinds', anchor }),
+		kindsMenuOpen: settingsOpen,
+		onOpenKinds: () => setSettingsOpen(true),
+		kindsCustomised: viewCustomised,
+		chipFacets,
 		openProposals: allPending,
 		onOpenProposal: (proposal, entry, anchor) =>
 			setMenu({ type: 'proposal', proposal, entry, anchor }),
@@ -2310,10 +2608,8 @@ export const CalendarPage = ({
 			setMenu({ type: 'request', proposal, entry, anchor }),
 		onAcceptRequest: onAcceptProposal ? accept : undefined,
 		onDeclineRequest: onDeclineProposal ? decline : undefined,
-		onOpenEntry: (entry, anchor) => openEntry(entry, anchor),
-		onOpenChat: onOpenChat
-			? (entry) => openRoom(onOpenChat, entry)
-			: undefined,
+		onOpenEntry: (entry, anchor) => openEntry(entry, anchor, 'list', true),
+		onShowEntry: showEntry,
 		shownColleagues,
 		onCreate: onCreate ? create : undefined,
 		freeHoursState,
@@ -2367,7 +2663,13 @@ export const CalendarPage = ({
 			)}
 			<section
 				ref={stageRef}
-				className="calendarStage"
+				className={
+					// A narrow stage next to the list takes a smaller title
+					// (prototype v17: 22 px under an 1100 px wide app).
+					!compact && stageWidth > 0 && stageWidth < NARROW_STAGE_PX
+						? 'calendarStage calendarStage--narrow'
+						: 'calendarStage'
+				}
 				aria-label={t('navigation.booking.events')}
 				data-split={split || undefined}
 				// The sheet all the way up works like a dialog: what it
@@ -2381,16 +2683,14 @@ export const CalendarPage = ({
 							entries={entries}
 							colleagues={colleagues}
 							shownColleagues={shownColleagues}
-							onOpenEntry={(entry, anchor) =>
-								openEntry(entry, anchor)
-							}
+							onlyFacets={onlyFacets}
+							hiddenFacets={hiddenFacets}
+							onShowEntry={showEntry}
 							leading={
 								<CalendarKindsButton
-									customised={hiddenFacets.length > 0}
-									open={menu?.type === 'kinds'}
-									onOpen={(anchor) =>
-										setMenu({ type: 'kinds', anchor })
-									}
+									customised={viewCustomised}
+									open={settingsOpen}
+									onOpen={() => setSettingsOpen(true)}
 								/>
 							}
 							floating
@@ -2450,36 +2750,74 @@ export const CalendarPage = ({
 				role={menuRole}
 				width={menuWidth}
 				align={menuAlign}
-				focusKey={menu?.type === 'entry' ? menu.mode : menu?.type}
+				focusKey={
+					menu?.type === 'entry'
+						? menu.mode
+						: menu?.type === 'slot'
+							? (menu.kind ?? 'slot')
+							: menu?.type
+				}
 				onClose={() => setMenu(null)}
 				data-cy={menu ? `calendar-menu-${menu.type}` : undefined}
 			>
 				{menuContent}
 			</CalendarMenu>
 
-			{dialog?.type === 'appointment' && (
-				<AppointmentDialog
+			{/* "Neu" and every other way in: one "Neuer Eintrag" with the
+			    tabs Termin | Sperrzeit (prototype v17). */}
+			{/* Mounted only while open: it reads the profile's e-mail settings. */}
+			{settingsOpen && (
+				<CalendarSettingsDialog
 					open
-					slot={dialog.slot}
-					initialSessionId={dialog.sessionId}
-					conversations={conversations}
-					entries={entries}
-					ownerId={ownerId}
-					now={now}
+					onClose={() => setSettingsOpen(false)}
+					hiddenFacets={hiddenFacets}
+					onHiddenChange={setHiddenFacets}
+					chipFacets={chipFacets}
+					onChipsChange={setChipFacets}
 					fullScreen={compact}
-					onSave={(draft) => create([draft], true)}
-					onClose={() => setDialog(null)}
 				/>
 			)}
-			{dialog?.type === 'blocker' && (
-				<BlockerDialog
+			{(dialog?.type === 'appointment' || dialog?.type === 'blocker') && (
+				<NewEntryDialog
 					open
+					initialTab={dialog.type}
 					slot={dialog.slot}
-					entries={entries}
+					initialSessionId={
+						dialog.type === 'appointment'
+							? dialog.sessionId
+							: undefined
+					}
+					initialWeekdays={
+						dialog.type === 'blocker' ? dialog.weekdays : undefined
+					}
+					initialAllDay={
+						dialog.type === 'blocker' ? dialog.allDay : undefined
+					}
+					initialNote={
+						dialog.type === 'blocker' ? dialog.note : undefined
+					}
+					conversations={conversations}
+					entries={
+						dialog.type === 'blocker' && dialog.replaces
+							? entries.filter(
+									(e) => e.id !== dialog.replaces?.entry.id
+								)
+							: entries
+					}
 					ownerId={ownerId}
 					now={now}
 					fullScreen={compact}
-					onSave={(drafts) => create(drafts, true)}
+					onSaveAppointment={(draft) => create([draft], true)}
+					onSaveBlocker={(drafts) =>
+						dialog.type === 'blocker' && dialog.replaces
+							? replaceBlocker(dialog.replaces, drafts)
+							: create(drafts, true)
+					}
+					onWorkingHours={
+						editHours
+							? () => setDialog({ type: 'workingHours' })
+							: undefined
+					}
 					onClose={() => setDialog(null)}
 				/>
 			)}
@@ -2515,6 +2853,39 @@ export const CalendarPage = ({
 					onSaveImport={(url) => onSaveImport?.(url)}
 					onRemoveImport={() => onRemoveImport?.()}
 					onClose={() => setDialog(null)}
+				/>
+			)}
+			{cancelAsk && (
+				<M3Dialog
+					open
+					data-testid="calendar-cancel-dialog"
+					title={t('calendar.cancelAsk.title')}
+					description={t('calendar.cancelAsk.description', {
+						name: label(cancelAsk),
+						time: format(cancelAsk.start, cancelAsk.end)
+					})}
+					severity="error"
+					fullScreen={false}
+					onClose={() => setCancelAsk(null)}
+					closeLabel={t('app.close')}
+					actions={[
+						{
+							label: t('calendar.cancelAsk.keep'),
+							onClick: () => setCancelAsk(null)
+						},
+						{
+							label: t('calendar.cancelAsk.confirm'),
+							primary: true,
+							onClick: () => {
+								const entry = cancelAsk;
+								setCancelAsk(null);
+								run(onCancelAppointment?.(entry), {
+									message: t('calendar.cancelled')
+								});
+							},
+							testId: 'calendar-cancel-confirm'
+						}
+					]}
 				/>
 			)}
 			{createAsk && (
@@ -2554,7 +2925,16 @@ export const CalendarPage = ({
 			)}
 			{notice && (
 				<M3Snackbar
-					message={notice.message}
+					message={
+						notice.weekly ? (
+							<BlockerCreatedMessage
+								message={notice.message}
+								onWeekly={() => weekly(notice)}
+							/>
+						) : (
+							notice.message
+						)
+					}
 					action={
 						notice.undo
 							? {
