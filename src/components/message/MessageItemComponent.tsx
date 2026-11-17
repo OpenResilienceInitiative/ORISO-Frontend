@@ -49,6 +49,8 @@ import type { CallLifecycleMessage } from '../../utils/callLifecycleMessage';
 import { shouldShowDeviceCheck } from '../call/prejoin/callPrejoin';
 import type { CallJoinHooks } from '../directLinkEntry/callMessageKnock';
 import { CallTimelineMessage } from './CallTimelineMessage';
+import { AppointmentNoticeCard } from './AppointmentNoticeMessage';
+import { recognizeLegacyAppointmentNotice } from './appointmentNotice';
 import { apiCallStateRead } from '../../api/apiCallState';
 import { callManager } from '../../services/CallManager';
 import {
@@ -85,6 +87,7 @@ import {
 	consultantRenamedNoticeText,
 	SYSTEM_NOTIFICATION_CONSULTANT_RENAMED
 } from './consultantRenamedNotice';
+import { directInvitationRenewedNoticeText } from './directInvitationRenewedNotice';
 import { ERROR_LEVEL_WARN, TError } from '../../api/apiPostError';
 import { ReactComponent as DeletedIcon } from '../../resources/img/icons/deleted.svg';
 import { ReactComponent as AgencyIcon } from '../../resources/img/icons/chat-agency-house-heart.svg';
@@ -429,7 +432,7 @@ export const MessageItemComponent = ({
 	encryptionBroke,
 	previewMode
 }: MessageItemComponentProps) => {
-	const { t: translate } = useTranslation();
+	const { t: translate, i18n } = useTranslation();
 	const inPreview = previewMode !== undefined;
 	const readOnly = previewMode === 'read';
 	// Nothing in the preview may lead out of the Timeline (#1824).
@@ -1341,11 +1344,53 @@ export const MessageItemComponent = ({
 	const isRejectedConsultantRenamedEvent =
 		parsedMessage.systemNotificationType ===
 			SYSTEM_NOTIFICATION_CONSULTANT_RENAMED && !consultantRenamedText;
+	/* #2252: the "new link" notice carries the link and its end only; it is
+	   worded here and drawn as a notice card with the link. */
+	const parsedRenewedNotice =
+		parsedMessage.systemNotificationDirectInvitationRenewed;
+	/* The backend posts it as the conversation's counsellor; from anyone
+	   else it would be a system-styled card with a foreign link. */
+	const isUntrustedRenewedNotice =
+		Boolean(parsedRenewedNotice) &&
+		!isTrustedRecommendationSender({
+			senderId: userId,
+			consultantMatrixUserId: activeSession?.item?.consultantMatrixUserId
+		});
+	const renewedNotice = isUntrustedRenewedNotice
+		? undefined
+		: parsedRenewedNotice;
+	const renewedText = renewedNotice
+		? directInvitationRenewedNoticeText(
+				renewedNotice,
+				translate,
+				i18n?.language || 'de'
+			)
+		: null;
+	const renewedBody =
+		renewedNotice && renewedText ? (
+			<>
+				{renewedText.description}{' '}
+				{/* A Timeline preview opens nothing: the link is plain text there. */}
+				{blocksLeavingActions ? (
+					<span>{renewedNotice.url}</span>
+				) : (
+					<a
+						href={renewedNotice.url}
+						target="_blank"
+						rel="noopener noreferrer"
+					>
+						{renewedNotice.url}
+					</a>
+				)}
+			</>
+		) : null;
 	const systemNotificationTitle =
+		renewedText?.title ||
 		consultantRenamedText?.title ||
 		parsedMessage.systemNotificationTitle ||
 		translate('message.systemNotificationTitle');
 	const systemNotificationDescription =
+		renewedText?.description ||
 		consultantRenamedText?.description ||
 		parsedMessage.systemNotificationDescription ||
 		parsedMessage.cleanedMessage;
@@ -2417,7 +2462,8 @@ export const MessageItemComponent = ({
 										) : (
 											systemNotificationBody && (
 												<p className="messageItem__systemNotificationDescription">
-													{systemNotificationBody}
+													{renewedBody ??
+														systemNotificationBody}
 												</p>
 											)
 										)}
@@ -2450,16 +2496,11 @@ export const MessageItemComponent = ({
 												))
 										}
 										// FE#2251: a live-chat person converts the account first.
-										viewerIsAnonymous={
-											!hasUserAuthority(
-												AUTHORITIES.ASKER_DEFAULT,
-												userData
-											) &&
-											hasUserAuthority(
-												AUTHORITIES.ANONYMOUS_DEFAULT,
-												userData
-											)
-										}
+										// Decided by the conversation, as SessionItemComponent does:
+										// a guest from a live chat link is a plain user
+										// (ASKER_DEFAULT), never ANONYMOUS_DEFAULT. An account that
+										// is already converted skips the form on the convert page.
+										viewerIsAnonymous={isLiveChatModality}
 										messageId={_id}
 									/>
 								)}
@@ -2469,7 +2510,8 @@ export const MessageItemComponent = ({
 								!isFurtherCounsellingNotice &&
 								systemNotificationDescription && (
 									<div className="messageItem__systemNotificationDescription">
-										{systemNotificationDescription}
+										{renewedBody ??
+											systemNotificationDescription}
 									</div>
 								)}
 							{Boolean(passageReplies?.length) &&
@@ -2957,6 +2999,44 @@ export const MessageItemComponent = ({
 		);
 	}
 
+	/* A 1:1 appointment change (FE#1960 notice): its own card, booked / moved
+	   / cancelled, with the shortcuts this viewer may use. Only from the
+	   conversation's counsellor (or one's own as a counsellor): anyone else
+	   writing the same words keeps an ordinary bubble. Notices from before the
+	   payload are recognised by their sentence. */
+	const appointmentNoticeTrusted =
+		(isOwnEvent &&
+			hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)) ||
+		isTrustedRecommendationSender({
+			senderId: userId,
+			consultantMatrixUserId: activeSession?.item?.consultantMatrixUserId
+		});
+	const appointmentNotice = !appointmentNoticeTrusted
+		? null
+		: parsedMessage.isSystemNotification
+			? parsedMessage.systemNotificationAppointment
+			: attachments?.length
+				? null
+				: recognizeLegacyAppointmentNotice(
+						parsedMessage.cleanedMessage
+					);
+	if (appointmentNotice) {
+		return (
+			<div className="messageItem" data-message-id={_id}>
+				{getMessageDate()}
+				<AppointmentNoticeCard
+					notice={appointmentNotice}
+					sessionId={activeSession?.item?.id}
+					byName={formattedName || undefined}
+					timestamp={
+						messageTime ? formatToHHMM(messageTime) : undefined
+					}
+					readOnly={blocksLeavingActions}
+				/>
+			</div>
+		);
+	}
+
 	/* ADR-018: the Erstantwort is one persisted [SYSTEM_NOTIFICATION] event
 	   carrying a versioned Baustein payload, not a message body. It returns
 	   early — before the generic system-notification chrome — because it renders
@@ -3025,7 +3105,11 @@ export const MessageItemComponent = ({
 		);
 	}
 
-	if (isUntrustedRecommendation || isRejectedConsultantRenamedEvent) {
+	if (
+		isUntrustedRecommendation ||
+		isRejectedConsultantRenamedEvent ||
+		isUntrustedRenewedNotice
+	) {
 		return null;
 	}
 

@@ -722,6 +722,8 @@
 				"notJoined": "Nur lesen, bis dein Beitritt bestätigt und der Raum geladen ist.",
 				"supervisorNoComposer": "Als Supervisor:in kannst du hier reagieren, aber nicht schreiben.",
 				"curtained": "Dieser Fall ist für dich gerade nicht einsehbar.",
+				"hiddenNotYours": "Diese Unterhaltung gehört nicht zu deinen Fällen. Darum zeigt die Aktivität sie hier nicht.",
+				"hiddenNotJoined": "Du bist dieser Unterhaltung nicht beigetreten. Darum zeigt die Aktivität sie hier nicht.",
 				"enquiryOpenToAccept": "Diese Anfrage ist noch nicht angenommen. Öffne die Unterhaltung, um sie anzunehmen.",
 				"consentOpenToContinue": "Bitte bestätige zuerst im Chat, wie es weitergeht. Öffne dazu die Unterhaltung.",
 				"actionFailed": "Das hat nicht geklappt. Bitte versuche es erneut."
@@ -778,11 +780,14 @@
 			"callKnockRequested": {
 				"text": "Eine Person möchte in deinen Anruf. Tritt dem Anruf bei, um sie einzulassen.",
 				"video": {
-					"text": "Eine Person möchte über deinen Direktlink in deinen Videoanruf. Tritt dem Anruf bei, um sie einzulassen."
+					"text": "Eine Person möchte über deine Direkteinladung in deinen Videoanruf. Tritt dem Anruf bei, um sie einzulassen."
 				},
 				"audio": {
-					"text": "Eine Person möchte über deinen Direktlink in deinen Audioanruf. Tritt dem Anruf bei, um sie einzulassen."
+					"text": "Eine Person möchte über deine Direkteinladung in deinen Audioanruf. Tritt dem Anruf bei, um sie einzulassen."
 				}
+			},
+			"directInvitationRenewalRequested": {
+				"text": "Eine Person möchte einen neuen Link zu deinem Termin."
 			}
 		}
 	},
@@ -854,6 +859,14 @@
 			"registerSuccess": {
 				"overlay": {
 					"headline": "Du hast Dich erfolgreich für ein neues Themenfeld registriert."
+				}
+			},
+			"agency": {
+				"contactPerson": {
+					"support": {
+						"text": "Bitte wende dich an den Support:",
+						"none": "Bitte wende dich an die Plattformverwaltung."
+					}
 				}
 			}
 		},
@@ -2903,16 +2916,18 @@
 			"scheduledAtIncomplete": "Bitte gib Datum und Uhrzeit vollständig ein oder leere das Feld."
 		},
 		"share": {
-			"title": "Dein Direktlink ist bereit",
-			"description": "Teile Link oder QR-Code. Jede Person bekommt ein eigenes Gespräch mit dir."
+			"title": "Deine Direkteinladung ist bereit",
+			"description": "Teile Link oder QR-Code. Jede Person bekommt ein eigenes Gespräch mit dir.",
+			"descriptionAppointment": "Teile Link oder QR-Code. Alle, die ihn öffnen, treffen sich mit dir in einem gemeinsamen Gespräch zum Termin.",
+			"descriptionJoin": "Teile Link oder QR-Code. Wer ihn öffnet, kommt in dieses Gespräch dazu."
 		},
 		"entry": {
 			"haveAccount": "Du hast schon ein Konto? Anmelden",
 			"joinFailed": "Das hat nicht geklappt. Bitte versuche es erneut."
 		},
 		"page": {
-			"loadFailed": "Deine Direktlinks konnten nicht geladen werden.",
-			"emptyText": "Einen Direktlink erstellst du unter „Chat erstellen“. Er erscheint danach hier.",
+			"loadFailed": "Deine Direkteinladungen konnten nicht geladen werden.",
+			"emptyText": "Eine Direkteinladung erstellst du unter „Chat erstellen“. Sie erscheint danach hier.",
 			"toggleFailed": "Der Link konnte nicht umgeschaltet werden. Bitte versuche es erneut."
 		},
 		"edit": {
@@ -2939,6 +2954,42 @@
 		"lookupFailed": {
 			"title": "Wir konnten dein Konto nicht prüfen",
 			"text": "Deine Nachricht ist noch nicht gesendet und bleibt im Eingabefeld. Bitte prüfe deine Verbindung und sende sie erneut."
+		}
+	},
+	"directInvitation": {
+		"dialog": {
+			"description": "Wer den Link öffnet, kommt direkt zu dir. Ein Termin ist optional.",
+			"withoutAppointmentHint": "Ohne Termin bekommt jede Person ein eigenes Gespräch. Der Link gilt, bis du ihn löschst.",
+			"knockHint": "Du lässt jede Person selbst herein. Das lässt sich im Anruf ändern."
+		},
+		"overview": {
+			"emptyText": "Erstelle eine Direkteinladung – mit oder ohne Termin. Sie erscheint danach hier.",
+			"noUpcoming": "Keine anstehenden Termine. Gib einer Direkteinladung ein Datum, oder lege in einem Gespräch über ⋮ einen Termin an."
+		},
+		"entry": {
+			"beforeStart": {
+				"title": "Dein Termin",
+				"chatNow": "Schreiben kannst du schon jetzt."
+			},
+			"expired": {
+				"text": "Dieser Link gilt nicht mehr. Frag einen neuen an – deine Beratungsperson wird benachrichtigt.",
+				"sent": "Anfrage gesendet. Du bekommst einen neuen Link, sobald deine Beratungsperson ihn schickt.",
+				"failed": "Die Anfrage hat nicht geklappt. Bitte versuch es erneut.",
+				"signedOut": "Dieser Link gilt nicht mehr. Einen neuen Link kannst du anfragen, wenn du angemeldet bist. Ohne Anmeldung wende dich bitte direkt an deine Beratungsperson."
+			},
+			"access": {
+				"guestsOnly": "Dieser Link ist nur für Gäste. Bitte öffne ihn in einem Fenster, in dem du nicht angemeldet bist.",
+				"accountsOnly": "Für diesen Link brauchst du ein Konto. Bitte melde dich an oder registriere dich."
+			},
+			"roomNotEncrypted": "Diese Einladung kann gerade nicht genutzt werden, weil das Gespräch nicht verschlüsselt ist. Bitte wende dich an die Beraterin oder den Berater.",
+			"roomUnavailable": "Die Unterhaltung ist gerade nicht erreichbar. Bitte versuch es gleich noch einmal.",
+			"consent": {
+				"description": "Bitte stimme der Datenschutzerklärung der Beratungsstelle zu, bevor du das Gespräch betrittst. Jede Person stimmt für sich selbst zu.",
+				"rejected": "Ohne deine Zustimmung kannst du dieses Gespräch nicht betreten. Du kannst jederzeit noch zustimmen."
+			}
+		},
+		"notice": {
+			"failed": "Der neue Link konnte nicht erstellt werden. Bitte versuche es erneut."
 		}
 	},
 	"calendar": {

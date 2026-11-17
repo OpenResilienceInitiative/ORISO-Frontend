@@ -38,11 +38,15 @@ const WRITE_HANDLING = [
 	FETCH_ERRORS.CATCH_ALL_EXCEPT_UNAUTHORIZED
 ];
 
+/**
+ * Rejects with `NO_MATCH` when the backend has no such endpoint (404), so
+ * the caller can tell an older backend from a failed read.
+ */
 export const apiGetUpcomingAppointments = (): Promise<SessionAppointment[]> =>
 	fetchData({
 		url: endpoints.upcomingAppointments,
 		method: FETCH_METHODS.GET,
-		responseHandling: READ_HANDLING
+		responseHandling: [FETCH_ERRORS.NO_MATCH, ...READ_HANDLING]
 	});
 
 export const apiGetSessionAppointments = (

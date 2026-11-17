@@ -106,6 +106,8 @@ const EXPECTED_TARGET_KIND: Record<string, string> = {
 	'call.invited': 'conversation',
 	// FE#1952: a knock on a direct-link call opens its conversation.
 	'call.knock.requested': 'callRoom',
+	// FE#2252: "Neuen Link anfragen" opens the invitation's conversation.
+	'direct_invitation.renewal_requested': 'conversation',
 	'group_chat.reminder': 'conversation',
 	'group_chat.opened': 'groupChatJoin',
 	'group_chat.cancelled': 'conversation',
@@ -142,7 +144,7 @@ describe('WP-06 event-descriptor registry', () => {
 		// + 3 group-chat lifecycle + 4 appointments
 		// + team discussion + first response + conversation finished
 		// + service notice, three offer events, deleted advice seeker and topic duplicate = 41.
-		expect(KNOWN_EVENT_TYPES.length).toBe(41);
+		expect(KNOWN_EVENT_TYPES.length).toBe(42);
 		[
 			'request.new',
 			'request.denied',

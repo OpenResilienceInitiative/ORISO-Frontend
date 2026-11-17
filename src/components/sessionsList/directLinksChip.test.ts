@@ -39,7 +39,7 @@ const row = (overrides: Record<string, unknown> = {}) => {
 const matches = (pair: ReturnType<typeof row>, chip: any) =>
 	sessionMatchesToolbar(pair.raw, pair.extended, '', chip, [], [], ME);
 
-describe('the "Direktlinks" chip (FE#1952)', () => {
+describe('the "Direkteinladungen" chip (FE#1952, renamed in #2252)', () => {
 	const video = row({ directLinkMedium: 'VIDEO' });
 	const chat = row({ directLinkMedium: 'CHAT' });
 	const mail = row();
@@ -106,12 +106,12 @@ describe('the "Direktlinks" chip (FE#1952)', () => {
 	});
 
 	it.each([
-		['de', de, 'Direktlinks'],
-		['en', en, 'Direct links'],
-		['fr', fr, 'Liens directs'],
-		['ru', ru, 'Прямые ссылки'],
+		['de', de, 'Direkteinladungen'],
+		['en', en, 'Direct invitations'],
+		['fr', fr, 'Invitations directes'],
+		['ru', ru, 'Прямые приглашения'],
 		['ti', ti, undefined],
-		['tr', tr, 'Doğrudan bağlantılar']
+		['tr', tr, 'Doğrudan davetler']
 	])('is named in %s', (_lng, catalogue, expected) => {
 		const label = (catalogue as any).sessionList.toolbar.chips.directLinks;
 		expect(typeof label).toBe('string');

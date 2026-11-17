@@ -462,6 +462,20 @@ export const CalendarSidebar = ({
 													change
 												)}
 											</span>
+											{/* Why the colleague asks (UserService#1663). */}
+											{proposal.reason && (
+												<span
+													className="calendarSide__rowMeta calendarSide__requestReason"
+													data-cy={`calendar-received-reason-${proposal.id}`}
+												>
+													{t(
+														'calendar.proposal.reason',
+														{
+															reason: proposal.reason
+														}
+													)}
+												</span>
+											)}
 										</span>
 									</button>
 									{!rail &&

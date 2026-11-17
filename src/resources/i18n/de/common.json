@@ -2275,6 +2275,20 @@
 		},
 		"deliveryStatus": {
 			"sent": "Gesendet"
+		},
+		"appointmentNotice": {
+			"title": {
+				"created": "Termin vereinbart",
+				"moved": "Termin verschoben",
+				"cancelled": "Termin abgesagt"
+			},
+			"by": "von {{name}}",
+			"before": "Vorher:",
+			"after": "Neu:",
+			"action": {
+				"createNew": "Neuen Termin anlegen",
+				"openCalendar": "Im Kalender öffnen"
+			}
 		}
 	},
 	"navigation": {
@@ -2304,7 +2318,7 @@
 				"nav": "Gespräch",
 				"small": "Nachrichten"
 			},
-			"directLinks": "Meine Direktlinks"
+			"directLinks": "Termine & Direkteinladungen"
 		},
 		"activity": "Zeitstrahl",
 		"language": "Sprache",
@@ -2609,11 +2623,11 @@
 				"text": "Eine Person möchte in Ihren Anruf. Treten Sie dem Anruf bei, um sie einzulassen.",
 				"video": {
 					"title": "Jemand klopft an – Videoanruf",
-					"text": "Eine Person möchte über Ihren Direktlink in Ihren Videoanruf. Treten Sie dem Anruf bei, um sie einzulassen."
+					"text": "Eine Person möchte über Ihre Direkteinladung in Ihren Videoanruf. Treten Sie dem Anruf bei, um sie einzulassen."
 				},
 				"audio": {
 					"title": "Jemand klopft an – Audioanruf",
-					"text": "Eine Person möchte über Ihren Direktlink in Ihren Audioanruf. Treten Sie dem Anruf bei, um sie einzulassen."
+					"text": "Eine Person möchte über Ihre Direkteinladung in Ihren Audioanruf. Treten Sie dem Anruf bei, um sie einzulassen."
 				}
 			},
 			"appointmentRequested": {
@@ -2651,6 +2665,10 @@
 			"sessionAskerDeleted": {
 				"title": "Gelöschte:r Ratsuchende:r",
 				"text": "Ein Chat mit einer ratsuchenden Person wurde gelöscht. Persönliche Daten und Nachrichten sind nicht mehr verfügbar."
+			},
+			"directInvitationRenewalRequested": {
+				"title": "Neuer Link angefragt",
+				"text": "Eine Person möchte einen neuen Link zu Ihrem Termin."
 			}
 		},
 		"error": "Fehlgeschlagen",
@@ -2680,6 +2698,8 @@
 			"systemTag": "Systembenachrichtigung",
 			"messageTag": "Nachrichtenbenachrichtigung",
 			"unreadFilter": "Ungelesen",
+			"mentionsFilter": "Erwähnungen",
+			"openCalendar": "Zum Kalender",
 			"showPreview": "Chat-Vorschau anzeigen",
 			"showDetails": "Details anzeigen",
 			"next": "Nächste Benachrichtigung",
@@ -2714,6 +2734,8 @@
 				"supervisorNoComposer": "Als Supervisor:in können Sie hier reagieren, aber nicht schreiben.",
 				"teamClosed": "Die Teamberatung ist geschlossen.",
 				"curtained": "Dieser Fall ist für Sie gerade nicht einsehbar.",
+				"hiddenNotYours": "Diese Unterhaltung gehört nicht zu Ihren Fällen. Darum zeigt die Aktivität sie hier nicht.",
+				"hiddenNotJoined": "Sie sind dieser Unterhaltung nicht beigetreten. Darum zeigt die Aktivität sie hier nicht.",
 				"backToConversation": "Zurück zur Unterhaltung",
 				"enquiryOpenToAccept": "Diese Anfrage ist noch nicht angenommen. Öffnen Sie die Unterhaltung, um sie anzunehmen.",
 				"consentOpenToContinue": "Bitte bestätigen Sie zuerst im Chat, wie es weitergeht. Öffnen Sie dazu die Unterhaltung.",
@@ -2809,12 +2831,27 @@
 		},
 		"data": {
 			"agency": {
-				"adminContact": {
-					"error": "Die Admins dieser Beratungsstelle konnten nicht geladen werden. Bitte später erneut versuchen.",
-					"fallbackName": "Beratungsstellen-Admin",
-					"link": "Beratungsstellen-Admin kontaktieren",
-					"none": "Kein Admin per Chat erreichbar – bitte wende dich an die Plattformverwaltung.",
-					"supportEmail": "Support-Adresse:"
+				"contactPerson": {
+					"title": "Ansprechperson",
+					"deputy": "Vertretung",
+					"traegerDefault": "Standard-Ansprechperson des Trägers",
+					"alsoCounsellor": "auch Beratende*r",
+					"startChat": "Chat starten",
+					"startChatWith": "Chat mit {{name}} starten",
+					"fallback": {
+						"heading": "Noch keine Ansprechperson festgelegt — diese Admins sind zuständig:",
+						"agencyAdmins": "Admins der Beratungsstelle",
+						"tenantAdmins": "Admins des Trägers"
+					},
+					"support": {
+						"heading": "Noch keine Ansprechperson festgelegt.",
+						"text": "Bitte wenden Sie sich an den Support:",
+						"none": "Bitte wenden Sie sich an die Plattformverwaltung."
+					},
+					"traegerContactEmail": "Allgemeine Kontaktadresse des Trägers",
+					"loading": "Ansprechperson wird geladen …",
+					"loadError": "Die Ansprechperson konnte gerade nicht geladen werden.",
+					"chatFallbackName": "Ansprechperson der Beratungsstelle"
 				},
 				"label": "Beratungsstelle",
 				"registrationLink": {
@@ -4606,7 +4643,7 @@
 				"team": "Team Beratung",
 				"directLinkVideo": "Videoanruf",
 				"directLinkAudio": "Audioanruf",
-				"directLinkChat": "Direktlink"
+				"directLinkChat": "Direkteinladung"
 			},
 			"waiting": {
 				"minutes": "wartet seit {{count}} Min.",
@@ -4707,7 +4744,7 @@
 				"unread": "Ungelesen",
 				"drafts": "Entwürfe",
 				"nearby": "Mail",
-				"directLinks": "Direktlinks",
+				"directLinks": "Direkteinladungen",
 				"other": "Weitere",
 				"create": "Erstellen",
 				"group": "Filter",
@@ -6480,6 +6517,7 @@
 		},
 		"share": {
 			"signInToJoin": "Melden Sie sich an, um diesem Anruf beizutreten.",
+			"guestCallTitle": "Gespräch",
 			"conversationMember": "Sie gehören bereits zu diesem Gespräch. Treten Sie dem Anruf im zugehörigen Chat bei.",
 			"openConversations": "Meine Gespräche öffnen",
 			"joinForbidden": "Sie können diesem Anruf über diesen Link nicht beitreten.",
@@ -6779,7 +6817,7 @@
 			"invalid": "Bitte geben Sie Ihre fünfstellige Postleitzahl ein."
 		},
 		"card": {
-			"title": "Direktlink",
+			"title": "Direkteinladung",
 			"subtitle": "Für Ratsuchende",
 			"headline": "Ein Link direkt zu Ihnen",
 			"text": "Wer den Link öffnet, landet ohne Umweg bei Ihnen – im Chat, im Audio- oder im Videoanruf.",
@@ -6803,16 +6841,18 @@
 		"temporary": "Temporär",
 		"copy": "Link kopieren",
 		"share": {
-			"title": "Ihr Direktlink ist bereit",
+			"title": "Ihre Direkteinladung ist bereit",
 			"description": "Teilen Sie Link oder QR-Code. Jede Person bekommt ein eigenes Gespräch mit Ihnen.",
+			"descriptionAppointment": "Teilen Sie Link oder QR-Code. Alle, die ihn öffnen, treffen sich mit Ihnen in einem gemeinsamen Gespräch zum Termin.",
+			"descriptionJoin": "Teilen Sie Link oder QR-Code. Wer ihn öffnet, kommt in dieses Gespräch dazu.",
 			"copied": "Kopiert",
 			"share": "Teilen",
-			"qrAlt": "QR-Code zum Direktlink",
+			"qrAlt": "QR-Code zur Direkteinladung",
 			"done": "Fertig",
-			"linkLabel": "Direktlink"
+			"linkLabel": "Direkteinladung"
 		},
 		"list": {
-			"title": "Meine Direktlinks",
+			"title": "Meine Direkteinladungen",
 			"qr": "QR-Code zeigen",
 			"active": "{{name}} aktiv",
 			"edit": "{{name}} bearbeiten"
@@ -6824,16 +6864,17 @@
 			"joinFailed": "Das hat nicht geklappt. Bitte versuchen Sie es erneut."
 		},
 		"page": {
-			"loadFailed": "Ihre Direktlinks konnten nicht geladen werden.",
-			"create": "Neuen Direktlink in „Chat erstellen“ anlegen",
-			"emptyHeadline": "Aktuell gibt es keine Direktlinks",
-			"emptyText": "Einen Direktlink erstellen Sie unter „Chat erstellen“. Er erscheint danach hier.",
-			"loading": "Direktlinks werden geladen",
+			"loadFailed": "Ihre Direkteinladungen konnten nicht geladen werden.",
+			"create": "Neue Direkteinladung in „Chat erstellen“ anlegen",
+			"emptyHeadline": "Aktuell gibt es keine Direkteinladungen",
+			"emptyText": "Eine Direkteinladung erstellen Sie unter „Chat erstellen“. Sie erscheint danach hier.",
+			"loading": "Direkteinladungen werden geladen",
 			"retry": "Erneut versuchen",
-			"toggleFailed": "Der Link konnte nicht umgeschaltet werden. Bitte versuchen Sie es erneut."
+			"toggleFailed": "Der Link konnte nicht umgeschaltet werden. Bitte versuchen Sie es erneut.",
+			"toggleFailedTitle": "Nicht umgeschaltet"
 		},
 		"edit": {
-			"title": "Direktlink bearbeiten",
+			"title": "Direkteinladung bearbeiten",
 			"cancel": "Abbrechen",
 			"save": "Speichern",
 			"name": "Name",
@@ -6889,6 +6930,114 @@
 		"lookupFailed": {
 			"title": "Wir konnten Ihr Konto nicht prüfen",
 			"text": "Ihre Nachricht ist noch nicht gesendet und bleibt im Eingabefeld. Bitte prüfen Sie Ihre Verbindung und senden Sie erneut."
+		}
+	},
+	"directInvitation": {
+		"dialog": {
+			"roomNotEncrypted": "Für dieses Gespräch kann kein Einladungslink erstellt werden, weil es nicht verschlüsselt ist.",
+			"createTitle": "Direkteinladung erstellen",
+			"editTitle": "Direkteinladung bearbeiten",
+			"description": "Wer den Link öffnet, kommt direkt zu Ihnen. Ein Termin ist optional.",
+			"createAction": "Erstellen",
+			"saveAction": "Speichern",
+			"withAppointment": "Mit Termin",
+			"withAppointmentHint": "Alle, die den Link öffnen, treffen sich in einem gemeinsamen Gespräch.",
+			"withoutAppointmentHint": "Ohne Termin bekommt jede Person ein eigenes Gespräch. Der Link gilt, bis Sie ihn löschen.",
+			"inviteOthers": "Weitere Personen per Link einladen",
+			"inviteOthersHint": "Zum Beispiel eine Dolmetscherin. Eingeladene sehen nur Nachrichten ab ihrem Beitritt.",
+			"validity": {
+				"label": "Gültig nach Terminende",
+				"hint": "Danach verlieren Gäste den Zugang, und das Gespräch wird archiviert.",
+				"end": "Bis zum Ende des Termins",
+				"minutes_one": "{{count}} Minute",
+				"minutes_other": "{{count}} Minuten",
+				"hours_one": "{{count}} Stunde",
+				"hours_other": "{{count}} Stunden",
+				"less": "Kürzer",
+				"more": "Länger"
+			},
+			"access": {
+				"label": "Wer darf hinein?",
+				"guests": "Nur Gäste",
+				"accounts": "Nur mit Konto",
+				"both": "Beides"
+			},
+			"knock": "Anklopfen",
+			"knockHint": "Sie lassen jede Person selbst herein. Das lässt sich im Anruf ändern."
+		},
+		"overview": {
+			"title": "Termine & Direkteinladungen",
+			"upcoming": "Anstehende Termine",
+			"withoutAppointment": "Direkteinladungen ohne Termin",
+			"today": "Heute",
+			"tomorrow": "Morgen",
+			"time": "{{start}}–{{end}} Uhr",
+			"validUntil": "Link gültig bis {{date}}",
+			"knockOn": "Mit Anklopfen",
+			"knockOff": "Direkt hinein",
+			"oneToOne": "1:1-Gespräch mit {{name}}",
+			"copy": "Link zu {{name}} kopieren",
+			"copied": "Kopiert",
+			"qr": "QR-Code zu {{name}} zeigen",
+			"edit": "{{name}} bearbeiten",
+			"copyFailed": "Der Link konnte nicht kopiert werden.",
+			"emptyHeadline": "Noch keine Termine und Direkteinladungen",
+			"emptyText": "Erstellen Sie eine Direkteinladung – mit oder ohne Termin. Sie erscheint danach hier.",
+			"create": "Direkteinladung erstellen",
+			"noUpcoming": "Keine anstehenden Termine. Geben Sie einer Direkteinladung ein Datum, oder legen Sie in einem Gespräch über ⋮ einen Termin an.",
+			"noLinks": "Keine Direkteinladungen ohne Termin.",
+			"appointmentName": "Termin",
+			"copyFailedTitle": "Nicht kopiert",
+			"expired": "Abgelaufene Einladungen",
+			"sendNewLink": "Neuen Link senden für {{name}}",
+			"appointmentsFailed": "Die Termine konnten nicht geladen werden.",
+			"appointmentsRetry": "Erneut laden"
+		},
+		"entry": {
+			"beforeStart": {
+				"title": "Ihr Termin",
+				"with": "mit {{name}}",
+				"time": "{{start}}–{{end}} Uhr",
+				"waitingRoom": "Der Warteraum öffnet um {{time}} Uhr, 15 Minuten vor Beginn.",
+				"chatNow": "Schreiben können Sie schon jetzt.",
+				"openChat": "Zum Chat"
+			},
+			"expired": {
+				"title": "Link abgelaufen",
+				"text": "Dieser Link gilt nicht mehr. Fragen Sie einen neuen an – Ihre Beratungsperson wird benachrichtigt.",
+				"request": "Neuen Link anfragen",
+				"sent": "Anfrage gesendet. Sie bekommen einen neuen Link, sobald Ihre Beratungsperson ihn schickt.",
+				"failed": "Die Anfrage hat nicht geklappt. Bitte versuchen Sie es erneut.",
+				"failedTitle": "Anfrage nicht gesendet",
+				"signedOut": "Dieser Link gilt nicht mehr. Einen neuen Link können Sie anfragen, wenn Sie angemeldet sind. Ohne Anmeldung wenden Sie sich bitte direkt an Ihre Beratungsperson.",
+				"signIn": "Anmelden und neuen Link anfragen"
+			},
+			"access": {
+				"guestsOnly": "Dieser Link ist nur für Gäste. Bitte öffnen Sie ihn in einem Fenster, in dem Sie nicht angemeldet sind.",
+				"accountsOnly": "Für diesen Link brauchen Sie ein Konto. Bitte melden Sie sich an oder registrieren Sie sich."
+			},
+			"roomNotEncrypted": "Diese Einladung kann gerade nicht genutzt werden, weil das Gespräch nicht verschlüsselt ist. Bitte wenden Sie sich an die Beraterin oder den Berater.",
+			"roomUnavailable": "Die Unterhaltung ist gerade nicht erreichbar. Bitte versuchen Sie es in einem Moment erneut.",
+			"consent": {
+				"description": "Bitte stimmen Sie der Datenschutzerklärung der Beratungsstelle zu, bevor Sie das Gespräch betreten. Jede Person stimmt für sich selbst zu.",
+				"rejected": "Ohne Ihre Zustimmung können Sie dieses Gespräch nicht betreten. Sie können jederzeit noch zustimmen."
+			}
+		},
+		"notice": {
+			"title": "Neuer Link angefragt",
+			"text": "{{name}} möchte einen neuen Link für „{{invitation}}“.",
+			"someone": "Eine Person",
+			"send": "Neuen Link senden",
+			"failed": "Der neue Link konnte nicht erstellt werden. Bitte versuchen Sie es erneut.",
+			"failedTitle": "Neuer Link nicht erstellt"
+		},
+		"conversation": {
+			"sendNewLink": "Neuen Link senden"
+		},
+		"renewed": {
+			"title": "Neuer Link",
+			"text": "Hier ist der neue Link zum Termin:",
+			"validUntil": "Der neue Link zum Termin gilt bis {{date}}:"
 		}
 	},
 	"calendar": {
@@ -7103,7 +7252,8 @@
 			"joinSub": "Videokonferenz öffnen",
 			"moveSub": "Tag und Uhrzeit ändern",
 			"proposeSub": "{{name}} muss bestätigen",
-			"cancelSub": "{{name}} bekommt eine Nachricht"
+			"cancelSub": "{{name}} bekommt eine Nachricht",
+			"reason": "Grund (optional)"
 		},
 		"fullscreen": "Vollbild",
 		"fullscreenExit": "Vollbild beenden (Esc)",
@@ -7174,7 +7324,8 @@
 			"declined": "Vorschlag abgelehnt. Der Termin bleibt {{date}}.",
 			"noLongerValid": "Dieser Vorschlag gilt nicht mehr. Der Termin hat sich geändert oder ist vorbei.",
 			"navCount": "{{count}} offene Verschiebungen",
-			"navCount_one": "{{count}} offene Verschiebung"
+			"navCount_one": "{{count}} offene Verschiebung",
+			"reason": "Grund: {{reason}}"
 		},
 		"quick": {
 			"freeUnavailable": "Freie Zeiten gerade nicht verfügbar.",

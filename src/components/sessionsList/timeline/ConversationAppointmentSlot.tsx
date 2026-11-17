@@ -18,15 +18,38 @@ import {
 	apiGetSessionAppointments,
 	type SessionAppointment
 } from '../../../api/apiSessionAppointments';
-import { AppointmentDateDialog } from './AppointmentDateDialog';
+import {
+	AppointmentDateDialog,
+	type AppointmentDateDialogProps
+} from './AppointmentDateDialog';
+import { useDirectLinksAllowed } from '../../directLinks/useDirectLinksAllowed';
+import { useResponsive } from '../../../hooks/useResponsive';
 import { RoomNextAppointment } from './AppointmentSplitButton';
 import {
 	appointmentToBooking,
 	onAppointmentsChanged,
 	upcomingAppointments
 } from './conversationAppointments';
+import { lendAppointmentCreate } from './appointmentCreateBridge';
 import { buildFutureEntries, type FutureEntry } from './timelineModel';
 import { useAppointmentActions } from './useAppointmentActions';
+
+/* #2252: "Weitere Personen per Link einladen" only where "Direkteinladung
+   erlauben" allows a medium. Mounted with the dialog, so the agencies'
+   settings are read only when a counsellor opens it. */
+const CreateOrMoveDialog = (
+	props: Omit<AppointmentDateDialogProps, 'allowGuestInvite' | 'fullScreen'>
+) => {
+	const allowGuestInvite = useDirectLinksAllowed(!props.entry);
+	const { fromL } = useResponsive();
+	return (
+		<AppointmentDateDialog
+			{...props}
+			allowGuestInvite={allowGuestInvite}
+			fullScreen={!fromL}
+		/>
+	);
+};
 
 export const ConversationAppointmentSlot = ({
 	canChange,
@@ -77,9 +100,21 @@ export const ConversationAppointmentSlot = ({
 		onCreateChange(canCreate ? openCreate : undefined);
 		return () => onCreateChange(undefined);
 	}, [canCreate, onCreateChange, openCreate]);
+	const next = Array.isArray(appointments)
+		? upcomingAppointments(appointments, new Date())[0]
+		: undefined;
+	/* The chat's cancelled-appointment card offers "Neuen Termin anlegen"
+	   with this same opener, so it follows the same rule. */
+	const hasUpcoming = next !== undefined;
+	useEffect(() => {
+		if (!canCreate || sessionId === undefined) return undefined;
+		return lendAppointmentCreate(sessionId, {
+			open: openCreate,
+			hasUpcoming
+		});
+	}, [canCreate, sessionId, openCreate, hasUpcoming]);
 	if (sessionId === undefined || !Array.isArray(appointments)) return null;
 
-	const next = upcomingAppointments(appointments, new Date())[0];
 	const entry = next
 		? buildFutureEntries({
 				now: new Date(),
@@ -113,7 +148,7 @@ export const ConversationAppointmentSlot = ({
 				onAction={onAction}
 			/>
 			{dialog && (
-				<AppointmentDateDialog
+				<CreateOrMoveDialog
 					sessionId={sessionId}
 					matrixRoomId={matrixRoomId}
 					entry={dialog.entry}

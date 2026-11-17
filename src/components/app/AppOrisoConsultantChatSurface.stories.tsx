@@ -428,6 +428,8 @@ const findRuntimeSession = (id: number) =>
  * counsellor has one 1:1 booking. Off for every other story.
  */
 let runtimeTimelineFixtures = false;
+/** No open enquiries: the "Anfragen" list is empty. Off for every other story. */
+let runtimeNoEnquiries = false;
 const inDays = (days: number, hour: number) => {
 	const date = new Date();
 	date.setDate(date.getDate() + days);
@@ -486,6 +488,24 @@ const installAppOrisoRoutingFetchMocks = () => {
 
 		const parsed = new URL(url);
 		const { pathname } = parsed;
+
+		// The Anfragen list also asks for anonymous live-chat enquiries; none
+		// here, answered like the backend answers an empty feed (204). Unanswered
+		// it logged a console error, which fails the Storybook verification.
+		if (
+			pathname ===
+			'/service/conversations/consultants/enquiries/anonymous'
+		) {
+			return new Response(null, { status: 204 });
+		}
+
+		if (
+			runtimeNoEnquiries &&
+			pathname ===
+				'/service/conversations/consultants/enquiries/registered'
+		) {
+			return storybookJsonResponse({ sessions: [], total: 0 });
+		}
 
 		if (
 			pathname === '/service/users/sessions/consultants' ||
@@ -1535,6 +1555,94 @@ export const RuntimeRoutingShell: Story = {
 		)
 	],
 	render: () => <AppOrisoRoutingRuntimeShell />
+};
+
+/**
+ * Frank, 2026-11-17: the collapsed list of "Anfragen" set "Aktuell liegen
+ * keine Erstanfragen vor" one letter per line. The rail now keeps the search
+ * (as the rail of "Meine Termine" does): one press opens the column with the
+ * cursor in the search field. Gespräche shows the same button.
+ */
+export const RailKeepsTheSearch: Story = {
+	name: 'Runtime Routing Shell — rail keeps the search, no empty text',
+	globals: { viewport: { value: 'desktop1024', isRotated: false } },
+	decorators: [
+		(Story) => (
+			<AppOrisoRoutingFetchMockDecorator>
+				<Story />
+			</AppOrisoRoutingFetchMockDecorator>
+		)
+	],
+	beforeEach: () => {
+		runtimeNoEnquiries = true;
+		return () => {
+			runtimeNoEnquiries = false;
+		};
+	},
+	render: () => <AppOrisoRoutingRuntimeShell />,
+	play: async ({ canvasElement }) => {
+		const wrapper = () =>
+			canvasElement.querySelector<HTMLElement>('.sessionsList__wrapper');
+		const handle = await waitFor(() => {
+			const found = canvasElement.querySelector<HTMLElement>(
+				'.sessionsList__wrapper .sessionsList__resizeHandle'
+			);
+			if (!found) throw new Error('list not mounted yet');
+			return found;
+		});
+		handle.focus();
+		handle.dispatchEvent(
+			new KeyboardEvent('keydown', { key: 'Home', bubbles: true })
+		);
+		await waitFor(() =>
+			expect(wrapper()!.getBoundingClientRect().width).toBe(80)
+		);
+		// Gespräche: the rail starts with the search button.
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector(
+					'[data-cy="session-list-rail-search"]'
+				)
+			).not.toBeNull()
+		);
+
+		canvasElement
+			.querySelector<HTMLAnchorElement>(
+				'a[href="/sessions/consultant/sessionPreview"]'
+			)!
+			.click();
+		// Anfragen, empty: the search button, never the sentence.
+		const railSearch = await waitFor(() => {
+			const found = canvasElement.querySelector<HTMLButtonElement>(
+				'[data-cy="session-list-rail-search"]'
+			);
+			if (!found) throw new Error('enquiry rail not mounted yet');
+			return found;
+		});
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector(
+					'[data-tour-target="consultant-enquiries-list"]'
+				)
+			).not.toBeNull()
+		);
+		await new Promise((resolve) => setTimeout(resolve, 500));
+		await expect(
+			canvasElement.querySelector('.sessionsList__emptyState')
+		).toBeNull();
+
+		railSearch.click();
+		await waitFor(() =>
+			expect(wrapper()!.getBoundingClientRect().width).toBe(420)
+		);
+		await waitFor(
+			() =>
+				expect(document.activeElement?.className).toContain(
+					'sessionsListToolbar__searchInput'
+				),
+			{ timeout: 3000 }
+		);
+	}
 };
 
 const styles = {

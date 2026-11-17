@@ -68,7 +68,7 @@ import { callKnockScopeOf } from './knockNotice/callKnockModel';
 import { useCallKnocks } from './knockNotice/useCallKnocks';
 import { useCallShareLinkKnock } from './knockNotice/useCallShareLinkKnock';
 import { type CallConversation, callPartyOf, counterpartOf } from './callParty';
-import { callConversationParamsOf } from './callHostContext';
+import { callWidgetEntryOf } from './callHostContext';
 import { TopicsContext } from '../../globalState/provider/TopicsProvider';
 import { IncomingCallCard } from './states/IncomingCallCard';
 import { DockedCall } from './states/DockedCall';
@@ -377,11 +377,12 @@ export const GroupCallWidget: React.FC = () => {
 	 * it was built with for the whole call.
 	 */
 	const conversationParams = callData
-		? callConversationParamsOf(
-				!!callData.isGroup,
+		? callWidgetEntryOf(
+				callData,
 				conversation,
 				topics,
-				i18n?.language
+				i18n?.language,
+				t('calls.share.guestCallTitle')
 			)
 		: null;
 	const hostContextPending =
@@ -392,8 +393,9 @@ export const GroupCallWidget: React.FC = () => {
 		{
 			roomId: shouldPrepareWidget ? callRoomId : null,
 			isVideo: callData?.isVideo ?? true,
-			// Let the guest confirm devices in the iframe before it publishes media.
-			skipLobby: !callData?.sharedCallGuest,
+			// FE#2209: nobody meets Element Call's own lobby; a guest's device
+			// choice arrives as the call's start parameters (`callStart`).
+			skipLobby: conversationParams?.skipLobby ?? true,
 			onClose: closeCallSurface,
 			knockState,
 			onSetKnock: shareLinkKnock.setKnock,

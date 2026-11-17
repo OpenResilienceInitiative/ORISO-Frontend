@@ -2254,6 +2254,20 @@
 		},
 		"deliveryStatus": {
 			"sent": "Gönderildi"
+		},
+		"appointmentNotice": {
+			"title": {
+				"created": "Randevu belirlendi",
+				"moved": "Randevu ertelendi",
+				"cancelled": "Randevu iptal edildi"
+			},
+			"by": "{{name}} tarafından",
+			"before": "Önce:",
+			"after": "Yeni:",
+			"action": {
+				"createNew": "Yeni randevu oluştur",
+				"openCalendar": "Takvimde aç"
+			}
 		}
 	},
 	"navigation": {
@@ -2274,7 +2288,7 @@
 				"nav": "Sohbetler",
 				"small": "Haberler"
 			},
-			"directLinks": "Doğrudan bağlantılarım",
+			"directLinks": "Randevular ve doğrudan davetler",
 			"inboxState": {
 				"empty": "Talep yok",
 				"allOpened": "Tüm talepler açıldı",
@@ -2588,11 +2602,11 @@
 				"text": "Biri aramanıza katılmak istiyor. İçeri almak için aramaya katılın.",
 				"video": {
 					"title": "Biri kapıyı çalıyor – görüntülü arama",
-					"text": "Biri doğrudan bağlantınız üzerinden görüntülü aramanıza katılmak istiyor. İçeri almak için aramaya katılın."
+					"text": "Biri doğrudan davetiniz üzerinden görüntülü aramanıza katılmak istiyor. İçeri almak için aramaya katılın."
 				},
 				"audio": {
 					"title": "Biri kapıyı çalıyor – sesli arama",
-					"text": "Biri doğrudan bağlantınız üzerinden sesli aramanıza katılmak istiyor. İçeri almak için aramaya katılın."
+					"text": "Biri doğrudan davetiniz üzerinden sesli aramanıza katılmak istiyor. İçeri almak için aramaya katılın."
 				}
 			},
 			"appointmentRequested": {
@@ -2630,6 +2644,10 @@
 			"sessionAskerDeleted": {
 				"title": "Silinmiş danışan",
 				"text": "Bir danışanla yapılan sohbet silindi. Kişisel veriler ve mesajlar artık mevcut değil."
+			},
+			"directInvitationRenewalRequested": {
+				"title": "Yeni bağlantı istendi",
+				"text": "Birisi randevunuz için yeni bir bağlantı istiyor."
 			}
 		},
 		"error": "Başarısız",
@@ -2659,6 +2677,8 @@
 			"systemTag": "Sistem bildirimi",
 			"messageTag": "Mesaj bildirimi",
 			"unreadFilter": "Okunmamış",
+			"mentionsFilter": "Bahsedilenler",
+			"openCalendar": "Takvime git",
 			"next": "Sonraki bildirim",
 			"cardMenu": "Bildirim işlemleri",
 			"markRead": "Okundu olarak işaretle",
@@ -2693,6 +2713,8 @@
 				"supervisorNoComposer": "Süpervizör olarak burada tepki verebilirsiniz ama yazamazsınız.",
 				"teamClosed": "Ekip görüşmesi kapandı.",
 				"curtained": "Bu vaka şu anda sizin için görünür değil.",
+				"hiddenNotYours": "Bu görüşme sizin vakalarınızdan biri değil; bu yüzden etkinlik burada göstermiyor.",
+				"hiddenNotJoined": "Bu görüşmeye katılmadınız; bu yüzden etkinlik burada göstermiyor.",
 				"backToConversation": "Görüşmeye dön",
 				"enquiryOpenToAccept": "Bu talep henüz kabul edilmedi. Kabul etmek için görüşmeyi açın.",
 				"consentOpenToContinue": "Lütfen önce sohbette nasıl devam edileceğini onaylayın. Bunun için görüşmeyi açın.",
@@ -2788,12 +2810,27 @@
 		},
 		"data": {
 			"agency": {
-				"adminContact": {
-					"error": "Bu danışma merkezinin yöneticileri yüklenemedi. Lütfen daha sonra tekrar deneyin.",
-					"fallbackName": "Merkez yöneticisi",
-					"link": "Danışma merkezi yöneticisiyle iletişime geç",
-					"none": "Sohbet üzerinden ulaşılabilen bir yönetici yok – lütfen platform yönetimiyle iletişime geçin.",
-					"supportEmail": "Destek adresi:"
+				"contactPerson": {
+					"title": "İrtibat kişisi",
+					"deputy": "Vekil",
+					"traegerDefault": "Kuruluşun varsayılan irtibat kişisi",
+					"alsoCounsellor": "aynı zamanda danışman",
+					"startChat": "Sohbet başlat",
+					"startChatWith": "{{name}} ile sohbet başlat",
+					"fallback": {
+						"heading": "Henüz irtibat kişisi belirlenmedi — bu yöneticiler sorumludur:",
+						"agencyAdmins": "Danışma merkezinin yöneticileri",
+						"tenantAdmins": "Kuruluşun yöneticileri"
+					},
+					"support": {
+						"heading": "Henüz irtibat kişisi belirlenmedi.",
+						"text": "Lütfen destek ekibine başvurun:",
+						"none": "Lütfen platform yönetimine başvurun."
+					},
+					"traegerContactEmail": "Kuruluşun genel iletişim adresi",
+					"loading": "İrtibat kişisi yükleniyor …",
+					"loadError": "İrtibat kişisi şu anda yüklenemedi.",
+					"chatFallbackName": "Danışma merkezi irtibat kişisi"
 				},
 				"label": "Danışma Merkezi",
 				"registrationLink": {
@@ -4673,7 +4710,7 @@
 				"unread": "Okunmamış",
 				"drafts": "Taslaklar",
 				"nearby": "Mail",
-				"directLinks": "Doğrudan bağlantılar",
+				"directLinks": "Doğrudan davetler",
 				"other": "Diğer",
 				"create": "Oluştur",
 				"group": "Filtreler",
@@ -4700,7 +4737,7 @@
 				"team": "Ekip danışmanlığı",
 				"directLinkVideo": "Görüntülü arama",
 				"directLinkAudio": "Sesli arama",
-				"directLinkChat": "Doğrudan bağlantı"
+				"directLinkChat": "Doğrudan davet"
 			},
 			"waiting": {
 				"minutes": "Bekleme: {{count}} dk.",
@@ -6490,6 +6527,7 @@
 		},
 		"share": {
 			"signInToJoin": "Bu aramaya katılmak için oturum açın.",
+			"guestCallTitle": "Görüşme",
 			"conversationMember": "Bu görüşmenin zaten bir katılımcısısınız. Aramaya görüşmenin sohbetinden katılın.",
 			"openConversations": "Görüşmelerimi aç",
 			"joinForbidden": "Bu bağlantıyla aramaya katılamazsınız.",
@@ -6789,7 +6827,7 @@
 			"invalid": "Lütfen beş haneli posta kodunuzu girin."
 		},
 		"card": {
-			"title": "Doğrudan bağlantı",
+			"title": "Doğrudan davet",
 			"subtitle": "Danışmanlık arayanlar için",
 			"headline": "Doğrudan size ulaşan bir bağlantı",
 			"text": "Bağlantıyı açan kişi size doğrudan ulaşır – sohbette, sesli veya görüntülü aramada.",
@@ -6813,16 +6851,18 @@
 		"temporary": "Geçici",
 		"copy": "Bağlantıyı kopyala",
 		"share": {
-			"title": "Doğrudan bağlantınız hazır",
+			"title": "Doğrudan davetiniz hazır",
 			"description": "Bağlantıyı veya QR kodunu paylaşın. Her kişi sizinle kendi görüşmesini alır.",
+			"descriptionAppointment": "Bağlantıyı veya QR kodunu paylaşın. Açan herkes randevu için sizinle tek bir ortak görüşmede buluşur.",
+			"descriptionJoin": "Bağlantıyı veya QR kodunu paylaşın. Açan kişi bu görüşmeye katılır.",
 			"copied": "Kopyalandı",
 			"share": "Paylaş",
-			"qrAlt": "Doğrudan bağlantının QR kodu",
+			"qrAlt": "Doğrudan davetin QR kodu",
 			"done": "Tamam",
-			"linkLabel": "Doğrudan bağlantı"
+			"linkLabel": "Doğrudan davet"
 		},
 		"list": {
-			"title": "Doğrudan bağlantılarım",
+			"title": "Doğrudan davetlerim",
 			"qr": "QR kodunu göster",
 			"active": "{{name}} etkin",
 			"edit": "{{name}} düzenle"
@@ -6834,16 +6874,17 @@
 			"joinFailed": "Bu işe yaramadı. Lütfen tekrar deneyin."
 		},
 		"page": {
-			"loadFailed": "Doğrudan bağlantılarınız yüklenemedi.",
-			"create": "“Sohbet oluştur” bölümünde yeni doğrudan bağlantı oluştur",
-			"emptyHeadline": "Henüz doğrudan bağlantı yok",
-			"emptyText": "Doğrudan bağlantıyı “Sohbet oluştur” bölümünde oluşturursunuz. Ardından burada görünür.",
-			"loading": "Doğrudan bağlantılar yükleniyor",
+			"loadFailed": "Doğrudan davetleriniz yüklenemedi.",
+			"create": "“Sohbet oluştur” bölümünde yeni doğrudan davet oluştur",
+			"emptyHeadline": "Henüz doğrudan davet yok",
+			"emptyText": "Doğrudan daveti “Sohbet oluştur” bölümünde oluşturursunuz. Ardından burada görünür.",
+			"loading": "Doğrudan davetler yükleniyor",
 			"retry": "Tekrar dene",
-			"toggleFailed": "Bağlantı açılıp kapatılamadı. Lütfen tekrar deneyin."
+			"toggleFailed": "Bağlantı açılıp kapatılamadı. Lütfen tekrar deneyin.",
+			"toggleFailedTitle": "Değiştirilemedi"
 		},
 		"edit": {
-			"title": "Doğrudan bağlantıyı düzenle",
+			"title": "Doğrudan daveti düzenle",
 			"cancel": "İptal",
 			"save": "Kaydet",
 			"name": "Ad",
@@ -6899,6 +6940,114 @@
 		"lookupFailed": {
 			"title": "Hesabınız kontrol edilemedi",
 			"text": "Mesajınız henüz gönderilmedi ve yazı alanında duruyor. Lütfen bağlantınızı kontrol edip yeniden gönderin."
+		}
+	},
+	"directInvitation": {
+		"dialog": {
+			"roomNotEncrypted": "Bu görüşme şifreli olmadığı için davet bağlantısı oluşturulamıyor.",
+			"createTitle": "Doğrudan davet oluştur",
+			"editTitle": "Doğrudan daveti düzenle",
+			"description": "Bağlantıyı açan herkes doğrudan size ulaşır. Randevu isteğe bağlıdır.",
+			"createAction": "Oluştur",
+			"saveAction": "Kaydet",
+			"withAppointment": "Randevulu",
+			"withAppointmentHint": "Bağlantıyı açan herkes ortak bir görüşmede buluşur.",
+			"withoutAppointmentHint": "Randevu olmadan her kişi kendi görüşmesini alır. Bağlantı siz silene kadar çalışır.",
+			"inviteOthers": "Bağlantıyla başka kişileri davet et",
+			"inviteOthersHint": "Örneğin bir tercüman. Davet edilen kişiler yalnızca katıldıktan sonra yazılan mesajları görür.",
+			"validity": {
+				"label": "Randevu bittikten sonra geçerlilik",
+				"hint": "Ardından misafirler erişimi kaybeder ve görüşme arşivlenir.",
+				"end": "Randevu bitene kadar",
+				"minutes_one": "{{count}} dakika",
+				"minutes_other": "{{count}} dakika",
+				"hours_one": "{{count}} saat",
+				"hours_other": "{{count}} saat",
+				"less": "Daha kısa",
+				"more": "Daha uzun"
+			},
+			"access": {
+				"label": "Kimler girebilir?",
+				"guests": "Yalnızca misafirler",
+				"accounts": "Yalnızca hesabı olanlar",
+				"both": "Her ikisi"
+			},
+			"knock": "Önce kapıyı çal",
+			"knockHint": "Her kişiyi içeri siz alırsınız. Bunu görüşme sırasında değiştirebilirsiniz."
+		},
+		"overview": {
+			"title": "Randevular ve doğrudan davetler",
+			"upcoming": "Yaklaşan randevular",
+			"withoutAppointment": "Randevusuz doğrudan davetler",
+			"today": "Bugün",
+			"tomorrow": "Yarın",
+			"time": "{{start}} ile {{end}} arası",
+			"validUntil": "Bağlantı {{date}} tarihine kadar geçerli",
+			"knockOn": "Önce kapıyı çal",
+			"knockOff": "Doğrudan giriş",
+			"oneToOne": "{{name}} ile birebir görüşme",
+			"copy": "{{name}} için bağlantıyı kopyala",
+			"copied": "Kopyalandı",
+			"qr": "{{name}} için QR kodunu göster",
+			"edit": "{{name}} öğesini düzenle",
+			"copyFailed": "Bağlantı kopyalanamadı.",
+			"emptyHeadline": "Henüz randevu veya doğrudan davet yok",
+			"emptyText": "Randevulu ya da randevusuz bir doğrudan davet oluşturun. Ardından burada görünür.",
+			"create": "Doğrudan davet oluştur",
+			"noUpcoming": "Yaklaşan randevu yok. Bir doğrudan davete tarih verin ya da bir görüşmede ⋮ üzerinden randevu ekleyin.",
+			"noLinks": "Randevusuz doğrudan davet yok.",
+			"appointmentName": "Randevu",
+			"copyFailedTitle": "Kopyalanamadı",
+			"expired": "Süresi dolan davetler",
+			"sendNewLink": "{{name}} için yeni bağlantı gönder",
+			"appointmentsFailed": "Randevular yüklenemedi.",
+			"appointmentsRetry": "Yeniden yükle"
+		},
+		"entry": {
+			"beforeStart": {
+				"title": "Randevunuz",
+				"with": "{{name}} ile",
+				"time": "{{start}} ile {{end}} arası",
+				"waitingRoom": "Bekleme odası, başlangıçtan 15 dakika önce saat {{time}} itibarıyla açılır.",
+				"chatNow": "Şimdiden yazabilirsiniz.",
+				"openChat": "Sohbeti aç"
+			},
+			"expired": {
+				"title": "Bağlantının süresi doldu",
+				"text": "Bu bağlantı artık geçerli değil. Yeni bir bağlantı isteyin; danışmanınız bilgilendirilir.",
+				"request": "Yeni bağlantı iste",
+				"sent": "İstek gönderildi. Danışmanınız gönderir göndermez yeni bir bağlantı alacaksınız.",
+				"failed": "İstek iletilemedi. Lütfen tekrar deneyin.",
+				"failedTitle": "İstek gönderilmedi",
+				"signedOut": "Bu bağlantı artık geçerli değil. Giriş yaptıktan sonra yeni bir bağlantı isteyebilirsiniz. Giriş yapmadan lütfen doğrudan danışmanınızla iletişime geçin.",
+				"signIn": "Yeni bağlantı istemek için giriş yap"
+			},
+			"access": {
+				"guestsOnly": "Bu bağlantı yalnızca misafirler içindir. Lütfen giriş yapmadığınız bir pencerede açın.",
+				"accountsOnly": "Bu bağlantı için bir hesaba ihtiyacınız var. Lütfen giriş yapın veya kaydolun."
+			},
+			"roomNotEncrypted": "Görüşme şifreli olmadığı için bu davet şu anda kullanılamıyor. Lütfen danışmanınızla iletişime geçin.",
+			"roomUnavailable": "Görüşmeye şu anda ulaşılamıyor. Lütfen birazdan tekrar deneyin.",
+			"consent": {
+				"description": "Görüşmeye girmeden önce lütfen danışma merkezinin gizlilik politikasını onaylayın. Herkes kendi adına onay verir.",
+				"rejected": "Onayınız olmadan bu görüşmeye giremezsiniz. Dilediğiniz zaman onay verebilirsiniz."
+			}
+		},
+		"notice": {
+			"title": "Yeni bağlantı istendi",
+			"text": "{{name}}, “{{invitation}}” için yeni bir bağlantı istiyor.",
+			"someone": "Birisi",
+			"send": "Yeni bağlantı gönder",
+			"failed": "Yeni bağlantı oluşturulamadı. Lütfen tekrar deneyin.",
+			"failedTitle": "Yeni bağlantı oluşturulmadı"
+		},
+		"conversation": {
+			"sendNewLink": "Yeni bağlantı gönder"
+		},
+		"renewed": {
+			"title": "Yeni bağlantı",
+			"text": "Randevunun yeni bağlantısı:",
+			"validUntil": "Randevunun yeni bağlantısı {{date}} tarihine kadar geçerli:"
 		}
 	},
 	"calendar": {
@@ -7113,7 +7262,8 @@
 			"joinSub": "Video konferansı aç",
 			"moveSub": "Günü ve saati değiştir",
 			"proposeSub": "{{name}} onaylamalı",
-			"cancelSub": "{{name}} bir mesaj alır"
+			"cancelSub": "{{name}} bir mesaj alır",
+			"reason": "Neden (isteğe bağlı)"
 		},
 		"fullscreen": "Tam ekran",
 		"fullscreenExit": "Tam ekrandan çık (Esc)",
@@ -7184,7 +7334,8 @@
 			"declined": "Öneri reddedildi. Randevu {{date}} olarak kalır.",
 			"noLongerValid": "Bu öneri artık geçerli değil. Randevu değişti ya da geçti.",
 			"navCount": "{{count}} açık talep",
-			"navCount_one": "{{count}} açık talep"
+			"navCount_one": "{{count}} açık talep",
+			"reason": "Neden: {{reason}}"
 		},
 		"quick": {
 			"freeUnavailable": "Boş zamanlar şu anda kullanılamıyor.",

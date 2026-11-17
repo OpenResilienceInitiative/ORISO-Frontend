@@ -52,6 +52,12 @@ interface DirectLinkCardProps {
 	/** The topics did not load; shown with a retry instead of the picker. */
 	topicsLoadFailed?: boolean;
 	onRetryTopics?: () => void;
+	/**
+	 * #2252: the shared Direkteinladung dialog asks for the appointment and
+	 * who may come in, so the card leaves out its own date and temporary
+	 * switch. Off: the card of #2142 with both (default).
+	 */
+	settingsInDialog?: boolean;
 }
 
 /**
@@ -67,7 +73,8 @@ export const DirectLinkCard = ({
 	isSubmitting = false,
 	errorMessage,
 	topicsLoadFailed = false,
-	onRetryTopics
+	onRetryTopics,
+	settingsInDialog = false
 }: DirectLinkCardProps) => {
 	const { t } = useTranslation();
 	const id = useId();
@@ -194,7 +201,7 @@ export const DirectLinkCard = ({
 						</button>
 					))}
 				</div>
-				{medium && (
+				{medium && !settingsInDialog && (
 					<div className="directLinkCard__temporary">
 						<span className="directLinkCard__temporaryText">
 							<span id={`${id}-temp`}>
@@ -229,28 +236,30 @@ export const DirectLinkCard = ({
 							size="small"
 							fullWidth
 						/>
-						<OrisoTextField
-							id={`${id}-scheduled`}
-							type="datetime-local"
-							label={t('directLink.card.scheduledAt')}
-							value={scheduledLocal}
-							inputRef={scheduledRef}
-							onChange={(event) => {
-								setScheduledLocal(event.target.value);
-								setScheduledIncomplete(
-									Boolean(event.target.validity?.badInput)
-								);
-							}}
-							error={scheduledIncomplete}
-							helperText={t(
-								scheduledIncomplete
-									? 'directLink.card.scheduledAtIncomplete'
-									: 'directLink.card.scheduledAtHint'
-							)}
-							InputLabelProps={{ shrink: true }}
-							size="small"
-							fullWidth
-						/>
+						{!settingsInDialog && (
+							<OrisoTextField
+								id={`${id}-scheduled`}
+								type="datetime-local"
+								label={t('directLink.card.scheduledAt')}
+								value={scheduledLocal}
+								inputRef={scheduledRef}
+								onChange={(event) => {
+									setScheduledLocal(event.target.value);
+									setScheduledIncomplete(
+										Boolean(event.target.validity?.badInput)
+									);
+								}}
+								error={scheduledIncomplete}
+								helperText={t(
+									scheduledIncomplete
+										? 'directLink.card.scheduledAtIncomplete'
+										: 'directLink.card.scheduledAtHint'
+								)}
+								InputLabelProps={{ shrink: true }}
+								size="small"
+								fullWidth
+							/>
+						)}
 					</div>
 				)}
 				<button
