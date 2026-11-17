@@ -7275,7 +7275,8 @@
 			"joinSub": "Открыть видеоконференцию",
 			"moveSub": "Изменить день и время",
 			"proposeSub": "Нужно подтверждение от {{name}}",
-			"cancelSub": "{{name}} получит сообщение"
+			"cancelSub": "{{name}} получит сообщение",
+			"reason": "Причина (необязательно)"
 		},
 		"fullscreen": "Полный экран",
 		"fullscreenExit": "Выйти из полноэкранного режима (Esc)",
@@ -7348,7 +7349,8 @@
 			"navCount": "{{count}} открытых запросов",
 			"navCount_one": "{{count}} открытый запрос",
 			"navCount_few": "{{count}} открытых запроса",
-			"navCount_many": "{{count}} открытых запросов"
+			"navCount_many": "{{count}} открытых запросов",
+			"reason": "Причина: {{reason}}"
 		},
 		"quick": {
 			"freeUnavailable": "Свободное время сейчас недоступно.",

@@ -7238,7 +7238,8 @@
 			"joinSub": "Videokonferenz öffnen",
 			"moveSub": "Tag und Uhrzeit ändern",
 			"proposeSub": "{{name}} muss bestätigen",
-			"cancelSub": "{{name}} bekommt eine Nachricht"
+			"cancelSub": "{{name}} bekommt eine Nachricht",
+			"reason": "Grund (optional)"
 		},
 		"fullscreen": "Vollbild",
 		"fullscreenExit": "Vollbild beenden (Esc)",
@@ -7309,7 +7310,8 @@
 			"declined": "Vorschlag abgelehnt. Der Termin bleibt {{date}}.",
 			"noLongerValid": "Dieser Vorschlag gilt nicht mehr. Der Termin hat sich geändert oder ist vorbei.",
 			"navCount": "{{count}} offene Verschiebungen",
-			"navCount_one": "{{count}} offene Verschiebung"
+			"navCount_one": "{{count}} offene Verschiebung",
+			"reason": "Grund: {{reason}}"
 		},
 		"quick": {
 			"freeUnavailable": "Freie Zeiten gerade nicht verfügbar.",

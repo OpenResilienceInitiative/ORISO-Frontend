@@ -7248,7 +7248,8 @@
 			"joinSub": "Video konferansı aç",
 			"moveSub": "Günü ve saati değiştir",
 			"proposeSub": "{{name}} onaylamalı",
-			"cancelSub": "{{name}} bir mesaj alır"
+			"cancelSub": "{{name}} bir mesaj alır",
+			"reason": "Neden (isteğe bağlı)"
 		},
 		"fullscreen": "Tam ekran",
 		"fullscreenExit": "Tam ekrandan çık (Esc)",
@@ -7319,7 +7320,8 @@
 			"declined": "Öneri reddedildi. Randevu {{date}} olarak kalır.",
 			"noLongerValid": "Bu öneri artık geçerli değil. Randevu değişti ya da geçti.",
 			"navCount": "{{count}} açık talep",
-			"navCount_one": "{{count}} açık talep"
+			"navCount_one": "{{count}} açık talep",
+			"reason": "Neden: {{reason}}"
 		},
 		"quick": {
 			"freeUnavailable": "Boş zamanlar şu anda kullanılamıyor.",
