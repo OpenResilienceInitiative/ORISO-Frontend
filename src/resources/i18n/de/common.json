@@ -2275,6 +2275,20 @@
 		},
 		"deliveryStatus": {
 			"sent": "Gesendet"
+		},
+		"appointmentNotice": {
+			"title": {
+				"created": "Termin vereinbart",
+				"moved": "Termin verschoben",
+				"cancelled": "Termin abgesagt"
+			},
+			"by": "von {{name}}",
+			"before": "Vorher:",
+			"after": "Neu:",
+			"action": {
+				"createNew": "Neuen Termin anlegen",
+				"openCalendar": "Im Kalender öffnen"
+			}
 		}
 	},
 	"navigation": {
@@ -3320,26 +3334,35 @@
 					"label": "Download Excel Datei"
 				},
 				"filename": "Statistik Online-Beratung",
-				"title": "Ihre Statistik über Ihren gewählten Beratungszeitraum können Sie hier herunterladen:"
+				"title": "Ihre Statistik über Ihren gewählten Beratungszeitraum können Sie hier herunterladen:",
+				"total": "Gesamt"
 			},
 			"csvHeader": {
-				"numberOfAppointments": "Termine gebucht",
+				"numberOfAppointments": "Termine stattgefunden",
 				"numberOfAssignedSessions": "Beratungen angenommen",
+				"numberOfCancelledAppointments": "Termine abgesagt",
+				"numberOfChatAppointments": "davon Chat",
+				"numberOfOnsiteAppointments": "davon vor Ort",
+				"numberOfPhoneAppointments": "davon Telefon",
 				"numberOfSentMessages": "Nachrichten geschrieben",
 				"numberOfSessionsWhereConsultantWasActive": "Aktive Beratungen",
+				"numberOfVideoAppointments": "davon Video",
+				"period": "Zeitraum",
 				"videoCallDuration": "Dauer von Video-Calls in Minuten:Sekunden"
 			},
 			"period": {
-				"currentMonth": "aktuellen Monats",
-				"currentYear": "aktuellen Jahres",
+				"currentMonth": "diesen Monat",
+				"currentWeek": "diese Woche",
+				"currentYear": "dieses Jahr",
 				"display": {
 					"default": "DD.MM.JJJJ - DD.MM.JJJJ",
 					"prefix": "Im Zeitraum vom ",
 					"suffix": " haben Sie:"
 				},
-				"lastMonth": "letzten Monats",
-				"lastYear": "vergangenen Jahres",
-				"prefix": "Ihre Zahlen des"
+				"lastMonth": "letzten Monat",
+				"lastWeek": "letzte Woche",
+				"lastYear": "letztes Jahr",
+				"prefix": "Ihre Zahlen für"
 			},
 			"title": "Meine Statistik"
 		},
@@ -6927,10 +6950,11 @@
 			"createAction": "Erstellen",
 			"saveAction": "Speichern",
 			"withAppointment": "Mit Termin",
-			"withAppointmentHint": "Alle, die den Link öffnen, treffen sich in einem gemeinsamen Gespräch.",
+			"withAppointmentHint": "Alle, die den Link öffnen, treffen sich in einem gemeinsamen Gespräch. Der Termin steht auch in Ihrem Kalender.",
 			"withoutAppointmentHint": "Ohne Termin bekommt jede Person ein eigenes Gespräch. Der Link gilt, bis Sie ihn löschen.",
 			"inviteOthers": "Weitere Personen per Link einladen",
 			"inviteOthersHint": "Zum Beispiel eine Dolmetscherin. Eingeladene sehen nur Nachrichten ab ihrem Beitritt.",
+			"inviteOthersMediumOff": "Für diese Art sind Direkteinladungen nicht freigegeben. Wählen Sie eine andere Art, um weitere Personen einzuladen.",
 			"validity": {
 				"label": "Gültig nach Terminende",
 				"hint": "Danach verlieren Gäste den Zugang, und das Gespräch wird archiviert.",
@@ -6949,7 +6973,15 @@
 				"both": "Beides"
 			},
 			"knock": "Anklopfen",
-			"knockHint": "Sie lassen jede Person selbst herein. Das lässt sich im Anruf ändern."
+			"knockHint": "Sie lassen jede Person selbst herein. Das lässt sich im Anruf ändern.",
+			"newPerson": {
+				"option": "Neue Person per Direkteinladung …",
+				"hint": "Diese Person hat noch kein Gespräch mit Ihnen. Im nächsten Schritt erstellen Sie eine Direkteinladung mit diesem Termin.",
+				"action": "Weiter zur Direkteinladung"
+			},
+			"linkFailedTitle": "Einladungslink nicht erstellt",
+			"linkFailedAfterAppointment": "Der Termin ist angelegt, der Einladungslink aber nicht. Bitte versuchen Sie es erneut.",
+			"appointmentSaved": "Der Termin ist angelegt."
 		},
 		"overview": {
 			"title": "Termine & Direkteinladungen",
@@ -7024,7 +7056,8 @@
 			"title": "Neuer Link",
 			"text": "Hier ist der neue Link zum Termin:",
 			"validUntil": "Der neue Link zum Termin gilt bis {{date}}:"
-		}
+		},
+		"fromCalendar": "Termin aus dem Kalender: {{range}}. Wählen Sie Thema und Medium, dann erstellen Sie die Direkteinladung."
 	},
 	"calendar": {
 		"bandLoading": "Wird geladen: {{names}}",
@@ -7114,7 +7147,8 @@
 			"withColleague": "Kolleg:in",
 			"colleague": "Kolleg:in",
 			"colleagueHint": "Der Termin kommt in den internen Chat von Ihnen beiden. Gibt es den noch nicht, wird er angelegt.",
-			"onsiteOnly": "Mit dieser Kollegin oder diesem Kollegen ist kein interner Chat erlaubt. Möglich ist nur ein Termin vor Ort."
+			"onsiteOnly": "Mit dieser Kollegin oder diesem Kollegen ist kein interner Chat erlaubt. Möglich ist nur ein Termin vor Ort.",
+			"colleagueDescription": "Wählen Sie Tag, Uhrzeit, Art und die Kollegin oder den Kollegen."
 		},
 		"details": {
 			"start": {
@@ -7245,7 +7279,8 @@
 			"joinSub": "Videokonferenz öffnen",
 			"moveSub": "Tag und Uhrzeit ändern",
 			"proposeSub": "{{name}} muss bestätigen",
-			"cancelSub": "{{name}} bekommt eine Nachricht"
+			"cancelSub": "{{name}} bekommt eine Nachricht",
+			"reason": "Grund (optional)"
 		},
 		"fullscreen": "Vollbild",
 		"fullscreenExit": "Vollbild beenden (Esc)",
@@ -7316,7 +7351,8 @@
 			"declined": "Vorschlag abgelehnt. Der Termin bleibt {{date}}.",
 			"noLongerValid": "Dieser Vorschlag gilt nicht mehr. Der Termin hat sich geändert oder ist vorbei.",
 			"navCount": "{{count}} offene Verschiebungen",
-			"navCount_one": "{{count}} offene Verschiebung"
+			"navCount_one": "{{count}} offene Verschiebung",
+			"reason": "Grund: {{reason}}"
 		},
 		"quick": {
 			"freeUnavailable": "Freie Zeiten gerade nicht verfügbar.",
@@ -7580,6 +7616,85 @@
 			"hint": "Termine von allen anderen warten, bis Sie sie annehmen.",
 			"save": "Speichern",
 			"saved": "Liste gespeichert."
+		}
+	},
+	"managePeople": {
+		"self": "(Sie)",
+		"loading": "Wird geladen …",
+		"working": "Wird ausgeführt …",
+		"retry": "Erneut versuchen",
+		"cancel": "Abbrechen",
+		"search": "Nach Name oder Organisation suchen",
+		"noMatches": "Niemand passt zu dieser Suche.",
+		"otherPerson": "Andere Person wählen",
+		"since": "Seit {{date}}",
+		"role": {
+			"owner": "Besitzer:in",
+			"coModerator": "Co-Moderation"
+		},
+		"standing": {
+			"badge": "Fest zugewiesen",
+			"hint": "Vom Admin der Beratungsstelle festgelegt. Supervision bleibt immer an: Sie können die Person wechseln, aber nicht ersatzlos entfernen.",
+			"noReplacement": "Vom Admin der Beratungsstelle festgelegt. Gerade kann niemand sonst an dieser Beratungsstelle übernehmen."
+		},
+		"add": {
+			"action": "Hinzufügen",
+			"labelFor": "{{name}} hinzufügen",
+			"confirm": "{{name}} hinzufügen"
+		},
+		"remove": {
+			"action": "Entfernen",
+			"labelFor": "{{name}} entfernen",
+			"confirm": "Wirklich entfernen?"
+		},
+		"replace": {
+			"action": "Wechseln",
+			"labelFor": "{{name}} wechseln",
+			"title": "Wer soll {{name}} ablösen?",
+			"confirm": "Zu {{name}} wechseln",
+			"pick": "Auswählen",
+			"pickLabelFor": "{{name}} auswählen"
+		},
+		"error": {
+			"members": "Die Liste konnte nicht geladen werden.",
+			"candidates": "Die verfügbaren Personen konnten nicht geladen werden.",
+			"add": "Die Person konnte nicht hinzugefügt werden. Bitte versuchen Sie es erneut.",
+			"remove": "Die Person konnte nicht entfernt werden. Bitte versuchen Sie es erneut.",
+			"replace": "Der Wechsel hat nicht geklappt. Bitte versuchen Sie es erneut.",
+			"refused": "Diese Person kann hier nicht mehr hinzugefügt werden. Ihre Organisation oder dieser Chat lässt es nicht zu. Die Liste ist aktualisiert."
+		},
+		"supervision": {
+			"title": "Supervision verwalten",
+			"description": "Supervisor:innen lesen in diesem Fall mit und sprechen mit Ihnen im Supervisions-Chat.",
+			"membersTitle": "Aktuelle Supervision",
+			"emptyMembers": "Dieser Fall hat noch keine Supervisor:in.",
+			"addTitle": "Supervisor:in hinzufügen",
+			"emptyCandidates": "An dieser Beratungsstelle ist sonst niemand als Supervisor:in markiert. Das legt der Admin der Beratungsstelle fest.",
+			"reasonLabel": "Grund für die Supervision",
+			"reasonPlaceholder": "Warum soll diese Person den Fall supervidieren?",
+			"reasonMissing": "Bitte geben Sie einen Grund an.",
+			"added": "{{name}} supervidiert jetzt diesen Fall."
+		},
+		"internalChat": {
+			"title": "Personen verwalten",
+			"description": "Alle in diesem internen Chat können Kolleg:innen dazuholen.",
+			"membersTitle": "In diesem Chat",
+			"emptyMembers": "In diesem Chat ist noch niemand.",
+			"addTitle": "Kolleg:in hinzufügen",
+			"addNote": "Neue Personen sehen Nachrichten erst ab ihrem Beitritt, nicht die früheren.",
+			"emptyCandidates": "Es können keine weiteren Kolleg:innen zu diesem Chat hinzugefügt werden.",
+			"added": "{{name}} ist jetzt in diesem Chat."
+		},
+		"groupChat": {
+			"title": "Personen verwalten",
+			"description": "Sehen Sie, wer diese Gruppe leitet, und teilen Sie den Link mit allen, die teilnehmen möchten.",
+			"membersTitle": "Moderation",
+			"emptyMembers": "Diese Gruppe hat noch keine Moderation.",
+			"addTitle": "Co-Moderation hinzufügen",
+			"emptyCandidates": "Es können keine weiteren Kolleg:innen zu dieser Gruppe hinzugefügt werden.",
+			"inviteTitle": "Personen einladen",
+			"inviteDescription": "Ratsuchende treten über diesen Link oder QR-Code bei.",
+			"added": "{{name}} moderiert jetzt diese Gruppe mit."
 		}
 	}
 }

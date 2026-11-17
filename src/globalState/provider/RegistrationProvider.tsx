@@ -53,6 +53,8 @@ export interface RegistrationData extends SessionStorageData {
 	agency: AgencyDataInterface;
 	mainTopic: TopicsDataInterface;
 	topic?: TopicsDataInterface;
+	/** The picture the chosen placement showed, so the summary keeps the category-specific one. */
+	topicIcon?: string;
 }
 
 interface RegistrationContextInterface {
@@ -316,7 +318,13 @@ export function RegistrationProvider({ children }: PropsWithChildren<{}>) {
 		updateRegistrationData({
 			...(directLinkZipcode ? { zipcode: directLinkZipcode } : {}),
 			...(directLinkAgency ? { agency: directLinkAgency } : {}),
-			...(preselectedTopic ? { mainTopic: preselectedTopic } : {})
+			// The same topic in another language (refreshed after a language
+			// switch) stays; only a different topic is replaced by the link's.
+			...(preselectedTopic &&
+			registrationData?.mainTopic?.id !== preselectedTopic.id
+				? // A picture from an earlier pick belongs to that other topic.
+					{ mainTopic: preselectedTopic, topicIcon: undefined }
+				: {})
 		});
 
 		setPreselectedSteps(
@@ -418,7 +426,8 @@ export function RegistrationProvider({ children }: PropsWithChildren<{}>) {
 				? {
 						mainTopic: undefined,
 						mainTopicId: undefined,
-						topicGroupId: undefined
+						topicGroupId: undefined,
+						topicIcon: undefined
 					}
 				: {}),
 			...(clearTopic ? { topic: undefined, topicId: undefined } : {})

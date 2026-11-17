@@ -127,6 +127,56 @@ describe('useSendNewLink', () => {
 		expect(dismiss).toHaveBeenCalledWith('new-link-request-9');
 	});
 
+	it('consumes a request that arrived while the renewal was running', async () => {
+		let resolve: (link: typeof renewed) => void = () => undefined;
+		vi.mocked(apiRenewDirectInvitation).mockReturnValue(
+			new Promise((done) => {
+				resolve = done;
+			})
+		);
+		const markNotificationAsRead = vi.fn();
+		const request = (id: string) => ({
+			id,
+			eventType: DIRECT_INVITATION_RENEWAL_REQUESTED,
+			params: { linkId: 9 }
+		});
+		let feed = [request('a')];
+		const wrapper = ({ children }: { children: React.ReactNode }) => (
+			<NotificationsContext.Provider
+				value={
+					{
+						notificationFeed: feed,
+						markNotificationAsRead
+					} as unknown as React.ContextType<
+						typeof NotificationsContext
+					>
+				}
+			>
+				{children}
+			</NotificationsContext.Provider>
+		);
+		const { result, rerender } = renderHook(
+			() => useSendNewLink(createSnackbarStack()),
+			{ wrapper }
+		);
+
+		let sent: Promise<boolean> = Promise.resolve(true);
+		act(() => {
+			sent = result.current.send('9');
+		});
+		/* The next poll brings another request while the renewal runs. */
+		feed = [request('a'), request('e')];
+		rerender();
+		await act(async () => {
+			resolve(renewed);
+			await sent;
+		});
+
+		/* Left unread, its pop-up would renew once more and expire the link
+		   just sent. */
+		expect(markNotificationAsRead.mock.calls).toEqual([['a'], ['e']]);
+	});
+
 	it('keeps a link pending until its own renewal has finished', async () => {
 		const done: Record<string, (link: typeof renewed) => void> = {};
 		vi.mocked(apiRenewDirectInvitation).mockImplementation(

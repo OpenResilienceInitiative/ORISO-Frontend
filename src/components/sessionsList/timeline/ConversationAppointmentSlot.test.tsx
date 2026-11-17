@@ -13,6 +13,8 @@ import {
 	UserDataContext
 } from '../../../globalState';
 import { ConversationAppointmentSlot } from './ConversationAppointmentSlot';
+import { notifyAppointmentsChanged } from './conversationAppointments';
+import { useAppointmentCreate } from './appointmentCreateBridge';
 
 const { getAppointments } = vi.hoisted(() => ({ getAppointments: vi.fn() }));
 vi.mock('../../../api/apiSessionAppointments', () => ({
@@ -41,6 +43,16 @@ const upcoming = () => {
 		status: 'SCHEDULED',
 		counterpart: { username: 'ruhiges_yak_kim' }
 	};
+};
+
+/** What a chat card in this conversation borrows. */
+const Borrower = () => {
+	const loan = useAppointmentCreate(4401);
+	return (
+		<div data-testid="loan">
+			{loan ? (loan.hasUpcoming ? 'upcoming' : 'free') : 'none'}
+		</div>
+	);
 };
 
 const renderSlot = (
@@ -72,6 +84,7 @@ const renderSlot = (
 					canChange={canChange}
 					onCreateChange={onCreateChange}
 				/>
+				<Borrower />
 			</ActiveSessionContext.Provider>
 		</UserDataContext.Provider>
 	);
@@ -114,6 +127,25 @@ describe('ConversationAppointmentSlot', () => {
 		expect(screen.getByTestId('appointment-date-dialog')).toBeTruthy();
 	});
 
+	it('keeps the open dialog when a refresh after saving fails (FE#2279 review)', async () => {
+		// A refused link keeps the saved appointment in the dialog for the
+		// retry and asks for a refresh; a failed refresh must not unmount it.
+		getAppointments.mockResolvedValue([]);
+		const onCreateChange = vi.fn();
+		renderSlot(onCreateChange);
+		await waitFor(() =>
+			expect(onCreateChange).toHaveBeenLastCalledWith(
+				expect.any(Function)
+			)
+		);
+		act(() => onCreateChange.mock.lastCall![0]());
+		getAppointments.mockRejectedValue(new Error('503'));
+		await act(async () => notifyAppointmentsChanged());
+		expect(getAppointments).toHaveBeenCalledTimes(2);
+		expect(screen.getByTestId('appointment-date-dialog')).toBeTruthy();
+		expect(onCreateChange).toHaveBeenLastCalledWith(expect.any(Function));
+	});
+
 	it('shows the next appointment without a create button beside it', async () => {
 		getAppointments.mockResolvedValue([upcoming()]);
 		const { container } = renderSlot(vi.fn());
@@ -143,5 +175,37 @@ describe('ConversationAppointmentSlot', () => {
 		renderSlot(onCreateChange, false);
 		await act(async () => undefined);
 		expect(onCreateChange).not.toHaveBeenCalledWith(expect.any(Function));
+	});
+
+	it('lends the chat cards its create dialog, saying whether one is booked', async () => {
+		getAppointments.mockResolvedValue([]);
+		renderSlot(vi.fn());
+		await waitFor(() =>
+			expect(screen.getByTestId('loan').textContent).toBe('free')
+		);
+		cleanup();
+		getAppointments.mockResolvedValue([upcoming()]);
+		renderSlot(vi.fn());
+		await waitFor(() =>
+			expect(screen.getByTestId('loan').textContent).toBe('upcoming')
+		);
+	});
+
+	it('lends nothing to someone who may not change appointments', async () => {
+		getAppointments.mockResolvedValue([]);
+		renderSlot(vi.fn(), false);
+		await act(async () => undefined);
+		expect(screen.getByTestId('loan').textContent).toBe('none');
+	});
+
+	it('takes the dialog back when the room closes', async () => {
+		getAppointments.mockResolvedValue([]);
+		renderSlot(vi.fn());
+		await waitFor(() =>
+			expect(screen.getByTestId('loan').textContent).toBe('free')
+		);
+		cleanup();
+		render(<Borrower />);
+		expect(screen.getByTestId('loan').textContent).toBe('none');
 	});
 });

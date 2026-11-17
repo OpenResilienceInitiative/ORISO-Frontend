@@ -152,4 +152,51 @@ describe('DirectLinkCreateCard', () => {
 			})
 		);
 	});
+
+	/* One invitation flow: the calendar's "Neue Person per Direkteinladung …"
+	   opens this card with its slot and Art. */
+	it("opens with the calendar's slot as appointment and its Art as medium", () => {
+		const start = new Date('2026-11-20T14:00:00Z');
+		const end = new Date('2026-11-20T15:00:00Z');
+		render(
+			<DirectLinkCreateCard
+				topics={[{ value: '4', label: 'Sucht' }]}
+				agencies={[{ id: 11, topicIds: [4] }]}
+				media={['CHAT', 'AUDIO', 'VIDEO']}
+				onDone={vi.fn()}
+				initialMedium="AUDIO"
+				preset={{ start, end, kind: 'phone' }}
+			/>
+		);
+		expect(
+			screen
+				.getByRole('button', { name: 'directLink.medium.audio' })
+				.getAttribute('aria-pressed')
+		).toBe('true');
+		fireEvent.click(
+			screen.getByRole('button', { name: /directLink.card.create/ })
+		);
+		expect(dialog.props.initial).toEqual({
+			start,
+			end,
+			withAppointment: true
+		});
+	});
+
+	it('ignores a preselected medium the counsellor may not use', () => {
+		render(
+			<DirectLinkCreateCard
+				topics={[{ value: '4', label: 'Sucht' }]}
+				agencies={[{ id: 11, topicIds: [4] }]}
+				media={['CHAT']}
+				onDone={vi.fn()}
+				initialMedium="VIDEO"
+			/>
+		);
+		expect(
+			screen
+				.getByRole('button', { name: 'directLink.medium.chat' })
+				.getAttribute('aria-pressed')
+		).not.toBe('true');
+	});
 });

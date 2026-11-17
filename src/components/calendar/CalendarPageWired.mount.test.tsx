@@ -34,6 +34,10 @@ vi.mock('react-i18next', () => ({
 }));
 const user = vi.hoisted(() => ({ consultant: true, navigate: vi.fn() }));
 vi.mock('react-router-dom', () => ({ useNavigate: () => user.navigate }));
+/* "Direkteinladung erlauben" needs the tenant and agencies; off here. */
+vi.mock('../directLinks/useDirectLinksAllowed', () => ({
+	useDirectLinkMedia: () => []
+}));
 vi.mock('../../hooks/useResponsive', () => ({
 	useResponsive: () => ({ untilM: false })
 }));

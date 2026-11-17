@@ -2,6 +2,8 @@ import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { expect, fn, userEvent, within } from 'storybook/test';
 import type { DirectLink } from '../conversationCreate/directLink/directLink';
+import type { SessionAppointment } from '../../api/apiSessionAppointments';
+import { overviewSections } from '../directLinks/invitationsOverviewData';
 import {
 	desktop1440Globals,
 	phone390Globals
@@ -251,5 +253,46 @@ export const AppointmentsFailedPhone: Story = {
 		links: [],
 		appointmentsFailed: true,
 		onRetryAppointments: fn()
+	}
+};
+
+/* #2285 (review of #2252): 1:1 appointments come from the calendar with a
+   kind. Built through `overviewSections`, as on the clock page, so each row
+   shows how it takes place: chat, phone, video, on site. */
+const oneToOne = (
+	id: string,
+	hour: number,
+	kind: SessionAppointment['kind'],
+	displayName: string
+): SessionAppointment => ({
+	id,
+	sessionId: 40,
+	startTime: at(20, hour).toISOString(),
+	endTime: at(20, hour + 1).toISOString(),
+	status: 'SCHEDULED',
+	kind,
+	counterpart: { displayName }
+});
+
+export const OneToOneKinds: Story = {
+	name: '1:1 appointment kinds · 1440',
+	globals: desktop1440Globals,
+	args: {
+		links: [],
+		appointments: overviewSections(
+			[],
+			[
+				oneToOne('chat', 10, 'CHAT', 'Chat-Termin'),
+				oneToOne('phone', 12, 'PHONE', 'Telefon-Termin'),
+				oneToOne('video', 14, 'VIDEO', 'Video-Termin'),
+				oneToOne('onsite', 16, 'ONSITE', 'Vor-Ort-Termin')
+			],
+			'Termin'
+		).appointments
+	},
+	play: async () => {
+		await expect(body().getAllByTestId('upcoming-invitation')).toHaveLength(
+			4
+		);
 	}
 };

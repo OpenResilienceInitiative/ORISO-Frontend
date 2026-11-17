@@ -513,10 +513,12 @@ export const StepClosedMobile: StoryObj = {
 	parameters: { layout: 'fullscreen' }
 };
 
-/* Hover arrows (2026-11-11): hover the right edge of the cards on desktop. */
+/* Hover arrows (2026-11-11): hover the right edge of the cards with a mouse.
+   In a narrow window: from `sm` up the fluid cards fit side by side
+   (2026-11-13), so there is nothing to scroll and no arrow. */
 export const StepWaitingHoverArrows: StoryObj = {
-	globals: desktop1440Globals,
-	name: 'B — Warteraum: Pfeile beim Darüberfahren (Desktop, Maus)',
+	globals: phone390Globals,
+	name: 'B — Warteraum: Pfeile beim Darüberfahren (schmales Fenster, Maus)',
 	render: () => <Waiting />,
 	play: async ({ canvasElement }) => {
 		await expectWaitingRoomLayout(canvasElement, { cards: true });

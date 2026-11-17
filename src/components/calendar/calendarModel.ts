@@ -8,6 +8,7 @@
  * backend.
  */
 import type { EntryModality } from '../sessionsList/timeline/timelineModel';
+import type { InvitationLinkSettings } from '../directInvitation/invitationModel';
 
 /** ADR-032 §2a: the four kinds of a 1:1 appointment. */
 export type AppointmentKind = 'onsite' | 'video' | 'phone' | 'chat';
@@ -153,6 +154,11 @@ export interface Colleague {
 	 * send one yet; without it the full name is shown.
 	 */
 	agencyShort?: string;
+	/**
+	 * The username, which tells two of the same name apart (UserService#1663).
+	 * Only colleagues of the own Träger carry it.
+	 */
+	secondaryLabel?: string;
 	relation: ColleagueRelation;
 	/**
 	 * False: the Träger allows no internal chat with this colleague, so an
@@ -366,6 +372,11 @@ export interface AppointmentDraft {
 	repeat?: BlockerRepeat;
 	/** Blockers only: the whole day(s). */
 	allDay?: boolean;
+	/**
+	 * Appointments only: "Weitere Personen per Link einladen" — the
+	 * invitation that meets at this appointment (one flow with the 1:1).
+	 */
+	link?: InvitationLinkSettings;
 }
 
 /**

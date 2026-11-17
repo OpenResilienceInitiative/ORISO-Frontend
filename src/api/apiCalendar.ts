@@ -26,6 +26,8 @@ export interface CalendarEntryDTO {
 	title?: string | null;
 	sessionId?: number | null;
 	seriesId?: string | null;
+	/** Own blockers only: entered as whole days (UserService#1663). */
+	allDay?: boolean | null;
 	movable?: boolean;
 	/** Own view, appointments with a colleague only (FE#2305). */
 	colleagueId?: string | null;
@@ -40,6 +42,11 @@ export interface CalendarColleagueDTO {
 	id: string;
 	displayName: string;
 	agencyName?: string | null;
+	/**
+	 * Tells colleagues of one name apart: their ORISO username, sent for
+	 * colleagues of the own Träger only (UserService#1663).
+	 */
+	secondaryLabel?: string | null;
 	relation: 'SAME_AGENCY' | 'SAME_TENANT' | 'OTHER_TENANT';
 	/** FE#2305: false = no internal chat possible, on-site appointments only. */
 	internalChat?: boolean | null;
@@ -306,6 +313,8 @@ export interface CalendarProposalDTO {
 	/** The appointment's owner, who accepts or declines. */
 	approverId: string;
 	approverName?: string | null;
+	/** Why the proposer asks, at most 500 characters (UserService#1663). */
+	reason?: string | null;
 	createdAt?: string | null;
 }
 
@@ -334,6 +343,7 @@ export const apiCreateCalendarProposal = (proposal: {
 	entryId: string;
 	start: string;
 	end: string;
+	reason?: string;
 }): Promise<CalendarProposalDTO> =>
 	fetchData({
 		url: proposalUrl(),
