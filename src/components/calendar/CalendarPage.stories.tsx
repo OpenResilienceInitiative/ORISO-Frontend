@@ -2047,6 +2047,39 @@ export const FilterKinds: Story = {
 	}
 };
 
+/** Review 4594645452: a chip that leaves the row takes its filter along. */
+export const ChipRemovedClearsFilter: Story = {
+	name: 'Settings — removing a chosen kind button clears its filter',
+	play: async ({ canvasElement }) => {
+		const canvas = canvasOf(canvasElement);
+		await canvas.findByTestId('calendar-view');
+		const count = () =>
+			canvasElement.querySelectorAll('.calendarView .calEntry').length;
+		await waitFor(() => expect(count()).toBeGreaterThan(0));
+		const all = count();
+		await userEvent.click(
+			canvasElement.querySelector<HTMLElement>(
+				'[data-cy="calendar-filter-phone"]'
+			)!
+		);
+		await waitFor(() => expect(count()).toBeLessThan(all));
+		await userEvent.click(
+			canvasElement.querySelector<HTMLElement>(
+				'[data-cy="calendar-kinds-button"]'
+			)!
+		);
+		await userEvent.click(
+			await body().findByRole('button', {
+				name: 'Als Knopf wählen: Telefon'
+			})
+		);
+		await userEvent.click(
+			await body().findByRole('menuitemradio', { name: /^Aus/ })
+		);
+		await waitFor(() => expect(count()).toBe(all));
+	}
+};
+
 /** Frank *14: the filter button opens "Ansicht · Kalender", as in Gespräche. */
 export const ViewSettings: Story = {
 	name: 'Settings — "Ansicht · Kalender" dialog',

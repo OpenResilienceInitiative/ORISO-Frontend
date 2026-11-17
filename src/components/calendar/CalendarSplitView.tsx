@@ -159,6 +159,11 @@ export interface SplitPerson {
 export interface CalendarSplitViewProps {
 	/** The first day shown. */
 	day: Date;
+	/**
+	 * Scroll so this time is near the top: an entry chosen in search or
+	 * "Als Nächstes" (review 4594744890). Without it the day starts at 08:00.
+	 */
+	focusTime?: Date;
 	/** How many days side by side; 1 keeps one's own column sticky. */
 	days?: SplitDays;
 	role: CalendarRole;
@@ -254,6 +259,7 @@ const measureBody =
 
 export const CalendarSplitView = ({
 	day: dayInput,
+	focusTime,
 	days = 1,
 	role,
 	ownerId,
@@ -418,13 +424,15 @@ export const CalendarSplitView = ({
 		};
 	}, [grouped]);
 
-	// Start the day at 08:00, like the time grid, or where a band asked
-	// for; a marked colleague's column comes into view next to one's own.
+	// Start the day at 08:00, like the time grid, or at the chosen time (an
+	// entry from search or "Als Nächstes", or a band); a marked colleague's
+	// column comes into view next to one's own.
+	const focusMinutes = focusTime
+		? focusTime.getHours() * 60 + focusTime.getMinutes()
+		: (startMinutes ?? 8 * 60);
 	useEffect(() => {
 		const track = scrollRef.current;
-		track?.scrollTo({
-			top: Math.max(0, toPx(startMinutes ?? 8 * 60))
-		});
+		track?.scrollTo({ top: Math.max(0, toPx(focusMinutes)) });
 		const marked = track?.querySelector<HTMLElement>(
 			'.calendarSplit__column--marked'
 		);
@@ -439,9 +447,9 @@ export const CalendarSplitView = ({
 			left + marked.offsetWidth <=
 				track.scrollLeft + track.clientWidth - sticky;
 		if (!shown) track.scrollTo({ left: Math.max(0, left) });
-		// Only on mount; zooming keeps its own place.
+		// Only on mount and for a new focus; zooming keeps its own place.
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	}, [focusTime?.getTime()]);
 
 	const step = (direction: ScrollDirection) => {
 		const track = scrollRef.current;

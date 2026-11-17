@@ -585,7 +585,7 @@ export const CalendarPage = ({
 		if (!bandInSide) setSideBand(null);
 	}, [bandInSide]);
 	/** "Kalender ansehen" from a band: where the split view starts. */
-	const [splitFocus, setSplitFocus] = useState<{
+	const [bandSplit, setBandSplit] = useState<{
 		minutes: number;
 		owner?: string;
 	} | null>(null);
@@ -613,6 +613,8 @@ export const CalendarPage = ({
 		)
 	]);
 	const [muted, setMuted] = useState<string[]>([]);
+	/** Where "Nebeneinander" scrolls to after an entry was chosen. */
+	const [splitFocus, setSplitFocus] = useState<Date | undefined>();
 	const { flashIds, expectCreated, flash } = useCreatedFlash(
 		entries,
 		ownerId
@@ -855,7 +857,7 @@ export const CalendarPage = ({
 		// Bands are only in the time grid; the split view starts at 08:00
 		// unless a band asked for its time.
 		setSideBand(null);
-		if (next !== 'split') setSplitFocus(null);
+		if (next !== 'split') setBandSplit(null);
 		if (next !== 'split' && view !== 'split')
 			controller.changeView(FC_VIEW[next]);
 		setView(next);
@@ -894,7 +896,14 @@ export const CalendarPage = ({
 		);
 		const start = new Date(entry.start);
 		const weekend = start.getDay() === 0 || start.getDay() === 6;
-		if (view === 'month' || view === 'list' || split)
+		// A colleague's entry is only a band in one's own grid; side by
+		// side draws it on its own, with its actions (review 4594535280).
+		const colleagueOnly =
+			entry.ownerId !== ownerId &&
+			!entries.some((e) => e.id === entry.id && e.ownerId === ownerId);
+		if (colleagueOnly) {
+			if (!split) changeView('split');
+		} else if (view === 'month' || view === 'list' || split)
 			changeView(phone ? 'threeDays' : weekend ? 'week' : 'workWeek');
 		else if (view === 'workWeek' && weekend) changeView('week');
 		goTo(start);
@@ -903,6 +912,9 @@ export const CalendarPage = ({
 		const before = new Date(
 			Math.max(start.getTime() - 3600000, startOfDay(start).getTime())
 		);
+		// Side by side has its own scroll box (review 4594744890).
+		setSplitFocus(before);
+		setBandSplit(null);
 		const time = `${String(before.getHours()).padStart(2, '0')}:${String(before.getMinutes()).padStart(2, '0')}:00`;
 		// The controller has no scrollToTime; its calendar does.
 		window.setTimeout(() =>
@@ -1755,7 +1767,9 @@ export const CalendarPage = ({
 	/** "Kalender ansehen" or "Alle nebeneinander": an hour before the band. */
 	const showSideBySide = (band: ColleagueBand, owner: string | null) => {
 		const start = band.start;
-		setSplitFocus({
+		// The band's time, not an entry chosen earlier.
+		setSplitFocus(undefined);
+		setBandSplit({
 			minutes: Math.max(
 				0,
 				start.getHours() * 60 + start.getMinutes() - 60
@@ -2670,6 +2684,7 @@ export const CalendarPage = ({
 					{split ? (
 						<CalendarSplitView
 							day={anchorDate}
+							focusTime={splitFocus}
 							days={splitDays}
 							role={role}
 							ownerId={ownerId}
@@ -2702,8 +2717,8 @@ export const CalendarPage = ({
 							}
 							onEntryOpen={openEntry}
 							onProposalOpen={openProposal}
-							startMinutes={splitFocus?.minutes}
-							markedOwner={splitFocus?.owner}
+							startMinutes={bandSplit?.minutes}
+							markedOwner={bandSplit?.owner}
 						/>
 					) : (
 						<CalendarView
@@ -3002,7 +3017,15 @@ export const CalendarPage = ({
 					hiddenFacets={hiddenFacets}
 					onHiddenChange={setHiddenFacets}
 					chipFacets={chipFacets}
-					onChipsChange={setChipFacets}
+					onChipsChange={(next) => {
+						setChipFacets(next);
+						// A chosen kind whose button leaves the row would stay
+						// filtered with no way back: clear it (review
+						// 4594645452).
+						setOnlyFacets((all) =>
+							all.filter((facet) => next.includes(facet))
+						);
+					}}
 					chipView={chipView}
 					onChipViewChange={setChipView}
 					fullScreen={compact}
