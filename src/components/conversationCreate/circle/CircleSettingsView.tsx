@@ -43,6 +43,8 @@ import {
 	loadCircleDefaults,
 	saveCircleDefaults
 } from './circleDefaults';
+import { GuestAccountModeSelect } from '../../guestAccountMode/GuestAccountModeSelect';
+import type { GuestAccountMode } from '../../guestAccountMode/guestAccountMode';
 import '../../groupChat/createChat.styles.scss';
 
 /**
@@ -69,6 +71,8 @@ export interface CircleSettingsPrefill {
 	consultantIds?: string[];
 	/** Edit mode: the agency the persisted series belongs to. */
 	agencyId?: number | null;
+	/** Edit mode: the circle's guest account mode (UserService#1662). */
+	guestAccountMode?: GuestAccountMode;
 }
 
 interface CircleSettingsViewProps {
@@ -154,6 +158,12 @@ export const CircleSettingsView = ({
 		);
 	const [consultantIds, setConsultantIds] = useState<string[]>(
 		() => prefill?.consultantIds ?? []
+	);
+	/* UserService#1662: which account a guest without one gets through the
+	   invite link. The server's default is that the guest chooses — the
+	   "Ohne Konto beitreten" / "Konto anlegen" entry of #1289. */
+	const [guestAccountMode, setGuestAccountMode] = useState<GuestAccountMode>(
+		() => prefill?.guestAccountMode ?? 'GUEST_CHOOSES'
 	);
 	const [moderatorMenuOpen, setModeratorMenuOpen] = useState(false);
 	const [moderatorHelpOpen, setModeratorHelpOpen] = useState(false);
@@ -259,7 +269,8 @@ export const CircleSettingsView = ({
 				hintMessageTranslations: authorContent.hintMessageTranslations,
 				groupChatRulesTranslations:
 					authorContent.groupChatRulesTranslations,
-				consultantIds
+				consultantIds,
+				guestAccountMode
 			}),
 			{
 				groupChatId: editChatId ?? undefined,
@@ -422,6 +433,16 @@ export const CircleSettingsView = ({
 						/>
 					)}
 					{scheduleRows}
+					<GuestAccountModeSelect
+						className="circleSettings__guestAccount"
+						value={guestAccountMode}
+						onChange={setGuestAccountMode}
+						note={
+							isEditMode
+								? translate('guestAccountMode.newGuestsOnly')
+								: undefined
+						}
+					/>
 					<div className="circleSettings__moderators">
 						<p>{translate('groupChat.circle.moderatorsLabel')}</p>
 						<PersonChipGrid

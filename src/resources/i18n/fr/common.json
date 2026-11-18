@@ -6551,11 +6551,6 @@
 				"on": "Les invités attendent que vous les fassiez entrer. Si vous le désactivez, toutes les personnes en attente entrent aussitôt.",
 				"off": "Les invités rejoignent l’appel directement, sans attendre."
 			},
-			"temporaryAccount": {
-				"label": "Compte temporaire",
-				"on": "Les invités reçoivent un compte invité supprimé après l’appel.",
-				"off": "Les invités se connectent avec leur propre compte ou en créent un."
-			},
 			"linkLabel": "Lien vers l’appel",
 			"copy": "Copier",
 			"copied": "Copié",
@@ -6844,7 +6839,6 @@
 			"text": "Toute personne qui ouvre le lien vous rejoint directement – par chat, appel audio ou appel vidéo.",
 			"topicLabel": "Choisir un thème",
 			"mediumLabel": "Type de contact",
-			"temporary": "Compte temporaire",
 			"temporaryHint": "Le compte est supprimé après l’entretien.",
 			"create": "Créer le lien",
 			"createFailed": "Le lien n'a pas pu être créé. Veuillez réessayer.",
@@ -6902,7 +6896,6 @@
 			"nameRequired": "Veuillez saisir un nom.",
 			"topic": "Thème",
 			"mediumFixed": "Le type de contact ne peut pas être modifié",
-			"temporaryHint": "S’applique uniquement aux personnes qui ouvrent le lien à partir de maintenant.",
 			"failed": "La modification n’a pas pu être enregistrée. Veuillez réessayer.",
 			"scheduledAt": "Date et heure",
 			"clearScheduledAt": "Supprimer"
@@ -7608,6 +7601,48 @@
 		"links": {
 			"title": "Liens sans rendez-vous",
 			"hint": "Liens d’invitation à partager : copiez-les ou affichez un code QR."
+		}
+	},
+	"guestAccountMode": {
+		"label": "Compte invité",
+		"menuLabel": "Choisir le compte invité",
+		"option": {
+			"TEMPORARY": "Supprimer après la séance",
+			"GUEST_CHOOSES": "L’invité choisit",
+			"PERMANENT": "Durable"
+		},
+		"hint": {
+			"TEMPORARY": "Les nouveaux invités reçoivent un compte supprimé après l’entretien.",
+			"GUEST_CHOOSES": "Les nouveaux invités choisissent en entrant : sans compte ou avec leur propre compte.",
+			"PERMANENT": "Les nouveaux invités créent leur propre compte."
+		},
+		"newGuestsOnly": "Ne s’applique qu’aux personnes qui ouvrent le lien désormais.",
+		"entry": {
+			"withoutAccount": "Rejoindre sans compte",
+			"withAccount": "Créer un compte",
+			"temporaryNote": "Votre accès est supprimé après l’entretien. Vous pourrez encore le conserver plus tard.",
+			"accountNote": "Avec votre propre compte, vous pourrez revenir plus tard."
+		},
+		"keep": {
+			"action": "Conserver le compte",
+			"actionDescription": "Sinon, votre compte est supprimé après l’entretien.",
+			"title": "Conserver le compte",
+			"text": "Sinon, votre compte est supprimé après l’entretien. Définissez un mot de passe : il est conservé et vous pourrez vous reconnecter plus tard.",
+			"loginName": "Votre nom d’utilisateur : {{name}}",
+			"password": "Mot de passe",
+			"repeat": "Répéter le mot de passe",
+			"mismatch": "Les mots de passe ne correspondent pas.",
+			"submit": "Conserver le compte",
+			"cancel": "Annuler",
+			"success": "Votre compte est conservé.",
+			"recoveryPending": "Votre compte est conservé. Pour lire vos messages sur un autre appareil, il vous faut votre clé de récupération.",
+			"error": {
+				"badRequest": "Le mot de passe ne remplit pas les conditions.",
+				"forbidden": "Cette invitation ne permet pas de conserver le compte.",
+				"notFound": "Votre compte est introuvable. Veuillez vous reconnecter.",
+				"conflict": "Votre compte est en cours de suppression ou est déjà durable.",
+				"generic": "Cela n’a pas fonctionné. Veuillez réessayer."
+			}
 		}
 	},
 	"managePeople": {

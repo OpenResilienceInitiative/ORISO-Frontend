@@ -100,6 +100,7 @@ import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import PlaceRoundedIcon from '@mui/icons-material/PlaceRounded';
 import { GroupInviteEntry } from './groupInviteEntry/GroupInviteEntry';
+import { useGroupInviteGuestAccountMode } from './groupInviteEntry/useGroupInviteGuestAccountMode';
 import { useGroupJoinHandoverCopy } from '../groupChat/groupJoinHandoverCopy';
 import {
 	GroupInviteInvalid,
@@ -228,11 +229,21 @@ export const Registration = () => {
 	const groupChatId = getPostRegistrationGroupChatId(location.search);
 	const inviteAgencyId = new URLSearchParams(location.search).get('aid');
 	const isAccountDataStep = step === 'account-data';
+	/* UserService#1662: the circle's guest account mode decides which way in
+	   is offered: TEMPORARY only without an account, PERMANENT only with
+	   one, GUEST_CHOOSES both. `undefined` while it loads. */
+	const circleGuestAccountMode = useGroupInviteGuestAccountMode(
+		groupChatId,
+		inviteAgencyId
+	);
+	const circleGuestChooses = circleGuestAccountMode === 'GUEST_CHOOSES';
 	/* The backend accepts `temporary` only with a valid group invite
 	   (UserService#1247): no `aid`, or another agency, is an ordinary
 	   registration without this way on. */
 	const canJoinTemporarily =
 		isAccountDataStep &&
+		circleGuestAccountMode !== undefined &&
+		circleGuestAccountMode !== 'PERMANENT' &&
 		Boolean(
 			getGroupJoin({
 				gcid: groupChatId,
@@ -248,11 +259,14 @@ export const Registration = () => {
 		isAccountDataStep &&
 		Boolean(parseGroupChatInviteId(groupChatId)) &&
 		!inviteAgencyId?.trim();
-	const showTemporaryToggle = canJoinTemporarily || inviteLinkIncomplete;
+	const showTemporaryToggle =
+		(canJoinTemporarily && circleGuestChooses) || inviteLinkIncomplete;
 	const [temporaryJoinChosen, setTemporaryJoinChosen] =
 		useState<boolean>(false);
 	const temporaryJoin =
-		canJoinTemporarily && !inviteLinkIncomplete && temporaryJoinChosen;
+		canJoinTemporarily &&
+		!inviteLinkIncomplete &&
+		(circleGuestAccountMode === 'TEMPORARY' || temporaryJoinChosen);
 	const temporaryToggleLabel = temporaryJoin
 		? t('registration.account.temporary.toggleOff')
 		: t('registration.account.temporary.toggleOn');
@@ -297,8 +311,11 @@ export const Registration = () => {
 	/* The minted password is never shown, so nobody can log in again once the
 	   browser is closed; the backend deletes such an account later
 	   (ORISO-UserService#1001). */
+	const entryTemporary =
+		circleGuestAccountMode === 'TEMPORARY' ||
+		(circleGuestChooses && !inviteWithAccount);
 	const joinsTemporarily =
-		inviteEntry === 'entry' ? !inviteWithAccount : temporaryJoin;
+		inviteEntry === 'entry' ? entryTemporary : temporaryJoin;
 	const toggleInviteWithAccount = useCallback(
 		() => setInviteWithAccount((withAccount) => !withAccount),
 		[]
@@ -1011,8 +1028,13 @@ export const Registration = () => {
 		);
 	}
 
-	if (inviteEntry === 'pending') {
-		return hasRegistrationDataError && retryRegistrationData ? (
+	if (
+		inviteEntry === 'pending' ||
+		(inviteEntry === 'entry' && circleGuestAccountMode === undefined)
+	) {
+		return inviteEntry === 'pending' &&
+			hasRegistrationDataError &&
+			retryRegistrationData ? (
 			<GroupInviteLoadError
 				stage={<Stage hasAnimation={isFirstVisit} />}
 				gcid={groupChatId}
@@ -1034,8 +1056,10 @@ export const Registration = () => {
 				stage={<Stage hasAnimation={isFirstVisit} />}
 				gcid={groupChatId}
 				aid={inviteAgencyId}
-				temporary={!inviteWithAccount}
-				onToggleTemporary={toggleInviteWithAccount}
+				temporary={entryTemporary}
+				onToggleTemporary={
+					circleGuestChooses ? toggleInviteWithAccount : undefined
+				}
 				onChange={setStepData}
 				onJoin={onRegisterClick}
 				joinDisabled={Boolean(disabledNextButton) || isRegistering}

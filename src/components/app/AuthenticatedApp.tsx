@@ -125,7 +125,13 @@ export const AuthenticatedApp = ({
 	// 2026-08-19). Withheld until the profile says the account is the counsellor's
 	// own: an account that still owes its password or second factor takes no calls,
 	// and the dialog would land over the setup gate. Unknown counts as pending here.
-	useNotificationPermission(!!userData && !isAccountSetupPending(userData));
+	/* UserService#1662: a temporary account is never asked for browser
+	   notifications; it may be once it is kept. */
+	useNotificationPermission(
+		!!userData &&
+			!isAccountSetupPending(userData) &&
+			!userData.temporaryAccount
+	);
 	const mounted = useRef(true);
 	const [mountedSession] = useState(getAppSessionScope);
 	const [peerExitPath, setPeerExitPath] = useState<string | null>(null);

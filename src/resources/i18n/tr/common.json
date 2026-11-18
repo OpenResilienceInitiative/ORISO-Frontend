@@ -6551,11 +6551,6 @@
 				"on": "Misafirler siz içeri alana kadar bekler. Kapatırsanız bekleyen herkes hemen içeri girer.",
 				"off": "Misafirler beklemeden doğrudan aramaya katılır."
 			},
-			"temporaryAccount": {
-				"label": "Geçici hesap",
-				"on": "Misafirler aramadan sonra silinen bir misafir hesabı alır.",
-				"off": "Misafirler kendi hesaplarıyla giriş yapar veya hesap oluşturur."
-			},
 			"linkLabel": "Aramanın bağlantısı",
 			"copy": "Kopyala",
 			"copied": "Kopyalandı",
@@ -6844,7 +6839,6 @@
 			"text": "Bağlantıyı açan kişi size doğrudan ulaşır – sohbette, sesli veya görüntülü aramada.",
 			"topicLabel": "Konu seçin",
 			"mediumLabel": "İletişim türü",
-			"temporary": "Geçici hesap",
 			"temporaryHint": "Hesap görüşmeden sonra silinir.",
 			"create": "Bağlantı oluştur",
 			"createFailed": "Bağlantı oluşturulamadı. Lütfen tekrar deneyin.",
@@ -6902,7 +6896,6 @@
 			"nameRequired": "Lütfen bir ad girin.",
 			"topic": "Konu",
 			"mediumFixed": "İletişim türü değiştirilemez",
-			"temporaryHint": "Yalnızca bağlantıyı bundan sonra açan kişiler için geçerlidir.",
 			"failed": "Değişiklik kaydedilemedi. Lütfen tekrar deneyin.",
 			"scheduledAt": "Tarih ve saat",
 			"clearScheduledAt": "Kaldır"
@@ -7608,6 +7601,48 @@
 		"links": {
 			"title": "Randevusuz bağlantılar",
 			"hint": "Paylaşabileceğiniz davet bağlantıları: kopyalayın veya QR kodu gösterin."
+		}
+	},
+	"guestAccountMode": {
+		"label": "Misafir hesabı",
+		"menuLabel": "Misafir hesabını seç",
+		"option": {
+			"TEMPORARY": "Oturumdan sonra sil",
+			"GUEST_CHOOSES": "Misafir seçer",
+			"PERMANENT": "Kalıcı"
+		},
+		"hint": {
+			"TEMPORARY": "Yeni misafirler, görüşmeden sonra silinen bir hesap alır.",
+			"GUEST_CHOOSES": "Yeni misafirler katılırken seçer: hesapsız veya kendi hesabıyla.",
+			"PERMANENT": "Yeni misafirler kendi hesabını oluşturur."
+		},
+		"newGuestsOnly": "Yalnızca bağlantıyı bundan sonra açan kişiler için geçerlidir.",
+		"entry": {
+			"withoutAccount": "Hesapsız katıl",
+			"withAccount": "Hesap oluştur",
+			"temporaryNote": "Erişiminiz görüşmeden sonra silinir. Daha sonra yine de saklayabilirsiniz.",
+			"accountNote": "Kendi hesabınızla daha sonra geri gelebilirsiniz."
+		},
+		"keep": {
+			"action": "Hesabı sakla",
+			"actionDescription": "Aksi halde hesabınız görüşmeden sonra silinir.",
+			"title": "Hesabı sakla",
+			"text": "Aksi halde hesabınız görüşmeden sonra silinir. Bir şifre belirleyin; hesabınız kalır ve daha sonra yeniden giriş yapabilirsiniz.",
+			"loginName": "Kullanıcı adınız: {{name}}",
+			"password": "Şifre",
+			"repeat": "Şifreyi tekrarlayın",
+			"mismatch": "Şifreler eşleşmiyor.",
+			"submit": "Hesabı sakla",
+			"cancel": "İptal",
+			"success": "Hesabınız saklanıyor.",
+			"recoveryPending": "Hesabınız saklanıyor. Mesajlarınızı başka bir cihazda okumak için kurtarma anahtarınıza ihtiyacınız var.",
+			"error": {
+				"badRequest": "Şifre gereksinimleri karşılamıyor.",
+				"forbidden": "Bu davet hesabı saklamaya izin vermiyor.",
+				"notFound": "Hesabınız bulunamadı. Lütfen yeniden giriş yapın.",
+				"conflict": "Hesabınız siliniyor veya zaten kalıcı.",
+				"generic": "Bu işe yaramadı. Lütfen tekrar deneyin."
+			}
 		}
 	},
 	"managePeople": {

@@ -3056,6 +3056,24 @@
 			"withYou": "Du und {{name}}"
 		}
 	},
+	"guestAccountMode": {
+		"entry": {
+			"temporaryNote": "Dein Zugang wird nach dem Gespräch gelöscht. Du kannst ihn später noch behalten.",
+			"accountNote": "Mit einem eigenen Konto kannst du später wiederkommen."
+		},
+		"keep": {
+			"actionDescription": "Dein Konto wird sonst nach dem Gespräch gelöscht.",
+			"text": "Dein Konto wird sonst nach dem Gespräch gelöscht. Leg ein Passwort fest, dann bleibt es erhalten und du kannst dich später wieder anmelden.",
+			"loginName": "Dein Benutzername: {{name}}",
+			"success": "Dein Konto bleibt erhalten.",
+			"recoveryPending": "Dein Konto bleibt erhalten. Um deine Nachrichten auf einem anderen Gerät zu lesen, brauchst du deinen Wiederherstellungsschlüssel.",
+			"error": {
+				"notFound": "Dein Konto wurde nicht gefunden. Bitte melde dich neu an.",
+				"conflict": "Dein Konto wird gerade gelöscht oder ist bereits dauerhaft.",
+				"generic": "Das hat nicht geklappt. Bitte versuch es erneut."
+			}
+		}
+	},
 	"managePeople": {
 		"self": "(du)",
 		"standing": {
