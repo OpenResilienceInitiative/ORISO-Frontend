@@ -30,8 +30,14 @@ vi.mock('../../resources/scripts/endpoints', () => ({
 	}
 }));
 
+const rawSendEvent = vi.hoisted(() => vi.fn());
+
 vi.mock('matrix-js-sdk', () => ({
-	createClient: vi.fn((config) => ({ config }))
+	createClient: vi.fn((config) => ({
+		config,
+		getRoom: vi.fn(() => null),
+		sendEvent: rawSendEvent
+	}))
 }));
 
 vi.mock('../../resources/scripts/runtimeConfig', () => ({
@@ -693,6 +699,31 @@ describe('getMatrixAccessToken', () => {
 		expect([...storage.values()]).not.toContain('must-stay-in-memory');
 	});
 
+	it('guards every client it creates against plaintext sends into an unsynced room (P0)', async () => {
+		vi.useFakeTimers();
+		try {
+			const client = createMatrixClient({
+				accessToken: 'matrix-token',
+				deviceId: 'ORISO_WEB_FRESH_DEVICE',
+				homeserverUrl: 'https://matrix.example.test',
+				userId: '@consultant:matrix.example.test'
+			});
+			const send = client.sendEvent(
+				'!livechat:matrix.example.test',
+				'm.room.message' as any,
+				{ msgtype: 'm.text', body: 'synthetic' } as any
+			);
+			const outcome = expect(send).rejects.toThrow(
+				'has not synced this room yet'
+			);
+			await vi.advanceTimersByTimeAsync(20_000);
+			await outcome;
+			expect(rawSendEvent).not.toHaveBeenCalled();
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
 	it('creates a Matrix client from stored credentials', async () => {
 		const client = createMatrixClient({
 			accessToken: 'matrix-token',
@@ -723,7 +754,8 @@ describe('getMatrixAccessToken', () => {
 				getSecretStorageKey: expect.any(Function)
 			}
 		});
-		expect(client).toEqual({
+		// Only the SDK config is under test here; the send guard has its own test.
+		expect({ config: (client as any).config }).toEqual({
 			config: {
 				baseUrl: 'https://matrix.example.test',
 				accessToken: 'matrix-token',

@@ -17,6 +17,7 @@ import {
 	MATRIX_USER_ID_STORAGE_KEY
 } from '../../utils/matrixStorageKeys';
 import { registerDeviceSigningPassword } from '../../services/matrixInteractiveAuth';
+import { installSendRoomGuard } from '../../services/matrixSendRoomGuard';
 import { MatrixBootstrapThrottledError } from '../../services/matrixBootstrapRetry';
 
 export interface MatrixLoginData {
@@ -420,6 +421,10 @@ export const createMatrixClient = (
 				secretStorageKeyCallback(client, keys, name)
 		}
 	});
+	// P0: the SDK sends in the clear into a room its store does not hold yet
+	// (fresh client after a token refresh / device recovery, or before the
+	// first sync). Every client must wait for the synced room or refuse.
+	installSendRoomGuard(client);
 
 	if (
 		!loginData.isAnonymous &&

@@ -13,6 +13,7 @@ import {
 	persistMatrixLoginData
 } from '../components/sessionCookie/getMatrixAccessToken';
 import { matrixCallService } from './matrixCallService';
+import { SendRoomWaitOptions, waitForJoinedRoom } from './matrixSendRoomGuard';
 import { buildMatrixCryptoStorePrefix } from './matrixCrypto';
 import {
 	canSubmitRustKeysQuery,
@@ -208,6 +209,7 @@ export class MatrixClientService {
 		Map<string, Promise<boolean>>
 	>();
 	private syncStateListeners = new Set<(state: string | null) => void>();
+	private readonly sendRoomWaitOptions: SendRoomWaitOptions = {};
 	private clientChangeListeners = new Set<
 		(client: MatrixClient | null) => void
 	>();
@@ -633,6 +635,24 @@ export class MatrixClientService {
 		}
 	}
 
+	/**
+	 * P0: `joinRoom()` does not put the room into the client's store, and
+	 * matrix-js-sdk sends in the clear into a room it does not hold. After a
+	 * join (an accepted Live Chat, or a fresh client generation after a token
+	 * refresh) wait for sync to deliver the room before anything is sent.
+	 * The client-level guard (installSendRoomGuard) refuses the send otherwise.
+	 */
+	private async ensureSyncedRoom(
+		client: MatrixClient,
+		roomId: string
+	): Promise<void> {
+		if (client.getRoom(roomId)) {
+			return;
+		}
+		await client.joinRoom(roomId);
+		await waitForJoinedRoom(client, roomId, this.sendRoomWaitOptions);
+	}
+
 	// Send message to a room
 	public async sendMessage(
 		roomId: string,
@@ -650,9 +670,7 @@ export class MatrixClientService {
 			if (!client) {
 				throw new Error('Matrix client not initialized');
 			}
-			if (!client.getRoom(roomId)) {
-				await client.joinRoom(roomId);
-			}
+			await this.ensureSyncedRoom(client, roomId);
 			await this.refreshTrackedRoomMemberDevices(client, roomId);
 			// Every real matrix-js-sdk client provides makeTxnId(). The guard also
 			// keeps deliberately minimal test doubles and adapters compatible.
@@ -867,9 +885,7 @@ export class MatrixClientService {
 			if (!client) {
 				throw new Error('Matrix client not initialized');
 			}
-			if (!client.getRoom(roomId)) {
-				await client.joinRoom(roomId);
-			}
+			await this.ensureSyncedRoom(client, roomId);
 			await this.refreshTrackedRoomMemberDevices(client, roomId);
 			const items: PassageReplyContentItem[] = [];
 			for (const { voice, ...reply } of replies) {
