@@ -12,12 +12,12 @@ describe('OrisoTextarea', () => {
 
 	it('keeps a fixed box when rows is given, without the default minRows', () => {
 		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-		render(<OrisoTextarea label="Note" rows={3} />);
+		render(<OrisoTextarea label="Note" rows={3} maxRows={6} />);
 		expect(screen.getByRole('textbox').getAttribute('rows')).toBe('3');
 		// MUI warns when minRows and rows are combined (the box would grow).
 		expect(
 			warn.mock.calls.some(([message]) =>
-				String(message).includes('minRows')
+				/minRows|maxRows/.test(String(message))
 			)
 		).toBe(false);
 	});

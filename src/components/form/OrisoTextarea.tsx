@@ -11,6 +11,7 @@ export type OrisoTextareaProps = TextFieldProps;
  */
 export const OrisoTextarea = ({
 	minRows,
+	maxRows,
 	rows,
 	...props
 }: OrisoTextareaProps) => (
@@ -18,6 +19,8 @@ export const OrisoTextarea = ({
 		{...props}
 		multiline
 		rows={rows}
+		// Fixed rows take no bounds; MUI warns when either is combined.
 		minRows={rows === undefined ? (minRows ?? 4) : undefined}
+		maxRows={rows === undefined ? maxRows : undefined}
 	/>
 );

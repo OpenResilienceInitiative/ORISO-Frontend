@@ -92,6 +92,17 @@ export const GroupChatRoleManager = ({
 	const [refocusId, setRefocusId] = React.useState<string | null>(null);
 	React.useEffect(() => {
 		if (pendingId !== null || refocusId === null) return;
+		setRefocusId(null);
+		// Only when focus fell out (the disabled picker dropped it); a user who
+		// moved on keeps their place.
+		const active = document.activeElement;
+		const lost =
+			!active ||
+			active === document.body ||
+			!active.isConnected ||
+			// still on the role menu that is closing
+			!!active.closest('.MuiMenu-root, [role="listbox"]');
+		if (!lost) return;
 		Array.from(
 			listRef.current?.querySelectorAll<HTMLElement>(
 				'[data-role-picker]'
@@ -99,7 +110,6 @@ export const GroupChatRoleManager = ({
 		)
 			.find((node) => node.dataset.rolePicker === refocusId)
 			?.focus();
-		setRefocusId(null);
 	}, [pendingId, refocusId]);
 
 	const updateRole = async (

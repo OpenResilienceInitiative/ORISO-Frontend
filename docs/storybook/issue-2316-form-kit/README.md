@@ -7,13 +7,18 @@ a local static Storybook build (`storybook build --test`) with Playwright.
 Local proof only, not a hosted deployment.
 
 **Where the `before-*` captures come from.** The four
-`Components/Form/Kit adoption` stories are new in this branch. They were
-written first, then one static Storybook was built with that story file on
-top of unchanged `a12d9939a` components (no component edits yet) and
-captured as `before-*`; the components were changed afterwards and the same
-stories captured as `after-*`. All other rows use stories that already exist
-on `a12d9939a`, rendered unchanged. `display-filter` is scrolled to the view
-switch (`[data-cy="display-filter-view"]`) before capture.
+`Components/Form/Kit adoption` stories are new in this branch. The
+`before-*` set was built from the story file as first committed in
+`3672514ee` (`git show 3672514ee:src/components/form/FormKitAdoption.stories.tsx`),
+placed on top of unchanged `a12d9939a` components. That first version renders
+`<BreathingCompanion onClose reducedMotion />` without the later `toggle`
+prop and opens the options with a plain `querySelector` click; it imports
+nothing that `a12d9939a` lacks. The `after-*` set uses the same stories on
+this branch. All other rows use stories that already exist on `a12d9939a`,
+rendered unchanged. `display-filter` is scrolled to the view switch
+(`[data-cy="display-filter-view"]`) before capture. Later review fixes
+(radio semantics and a check mark on the view switch, the injected
+breathing toggle) are not in these captures.
 
 | Folder                    | Story                                                                 | Change                                                                                                      |
 | ------------------------- | --------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |

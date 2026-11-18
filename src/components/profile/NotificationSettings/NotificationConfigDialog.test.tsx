@@ -407,25 +407,36 @@ describe('NotificationConfigView', () => {
 		expect(options[2].getAttribute('data-value')).toBe('ton-1');
 	});
 
-	it("shows a stored 'default' tone as inheriting, not as a blank field", () => {
+	const toneWith = (sound: string) => {
 		const config = {
 			...DEFAULT_NOTIFICATION_CONFIG,
 			requests: {
 				...DEFAULT_NOTIFICATION_CONFIG.requests,
-				new: {
-					...DEFAULT_NOTIFICATION_CONFIG.requests.new,
-					sound: 'default'
-				}
+				new: { ...DEFAULT_NOTIFICATION_CONFIG.requests.new, sound }
 			}
+		} satisfies {
+			requests: { new: { sound: string } };
 		};
 		render(
-			<NotificationConfigView {...baseProps} config={config as never} />
+			<NotificationConfigView
+				{...baseProps}
+				config={config as typeof DEFAULT_NOTIFICATION_CONFIG}
+			/>
 		);
-		const tone = within(
+		return within(
 			screen.getByTestId('notif-row-requests-new')
 		).getAllByRole('combobox')[0];
-		expect(tone.textContent).toBe(
-			'profile.notifications.config.inheritSound'
+	};
+
+	it("shows a stored 'default' tone as Standard, not as a blank field", () => {
+		expect(toneWith('default').textContent).toBe(
+			'profile.notifications.config.defaultSound'
+		);
+	});
+
+	it('shows a stored tone that is no longer offered as an earlier tone', () => {
+		expect(toneWith('ton-13').textContent).toBe(
+			'profile.notifications.config.legacySound'
 		);
 	});
 

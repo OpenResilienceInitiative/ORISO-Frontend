@@ -22,6 +22,13 @@ import './notificationConfigDialog.styles.scss';
  * of one notification row, shared by the config dialog rows and the system
  * notice picker so both behave alike.
  */
+/** The tones the picker offers as choices. */
+const OFFERED_SOUNDS: ReadonlyArray<string> = [
+	'none',
+	'ring',
+	...NOTIFICATION_TONE_IDS
+];
+
 export const ToneControls = ({
 	sound,
 	volume,
@@ -91,18 +98,21 @@ export const ToneControls = ({
 				}}
 				onChange={(e) => onSoundChange(e.target.value as SoundId)}
 				options={[
-					// A stored 'default' inherits the message sound. It is not
-					// offered as a new choice, but must not show as a blank field.
-					...(sound === 'default'
-						? [
+					// A stored value the picker does not offer (the legacy
+					// 'default', an older or unknown tone) stays selected and
+					// named until the person picks a current tone.
+					...(OFFERED_SOUNDS.includes(sound)
+						? []
+						: [
 								{
-									value: 'default',
+									value: sound,
 									label: t(
-										'profile.notifications.config.inheritSound'
+										sound === 'default'
+											? 'profile.notifications.config.defaultSound'
+											: 'profile.notifications.config.legacySound'
 									)
 								}
-							]
-						: []),
+							]),
 					{
 						value: 'none',
 						label: t('profile.notifications.config.noSound')

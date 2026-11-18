@@ -83,6 +83,35 @@ describe('GroupChatRoleManager', () => {
 		);
 	});
 
+	it('leaves focus where the user moved it while a change was running', async () => {
+		let settle: () => void = () => undefined;
+		vi.mocked(apiChangeGroupChatParticipantRole).mockReturnValueOnce(
+			new Promise<void>((resolve) => {
+				settle = resolve;
+			})
+		);
+		render(
+			<>
+				<GroupChatRoleManager
+					seriesId={42}
+					currentUserId="owner"
+					participants={participants}
+				/>
+				<button type="button">elsewhere</button>
+			</>
+		);
+		chooseRole('Bob', 'CO_MODERATOR');
+		const elsewhere = screen.getByRole('button', { name: 'elsewhere' });
+		elsewhere.focus();
+		settle();
+		await waitFor(() =>
+			expect(roleSelect('Bob').textContent).toBe(
+				'groupChat.roles.CO_MODERATOR'
+			)
+		);
+		expect(document.activeElement).toBe(elsewhere);
+	});
+
 	it('offers only co-moderator and participant, never owner', () => {
 		render(
 			<GroupChatRoleManager

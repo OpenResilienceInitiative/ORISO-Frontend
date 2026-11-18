@@ -231,7 +231,7 @@ export const WaitingForSync: Story = {
 			dialog.queryByText(SESSION_STORY_LABELS.readOnlyHint)
 		).not.toBeInTheDocument();
 		await expect(
-			dialog.getByRole('button', { name: 'Icons' })
+			dialog.getByRole('radio', { name: 'Icons' })
 		).toBeDisabled();
 		await expect(dialog.getByTestId('display-filter-reset')).toBeDisabled();
 		await expect(dialog.getByTestId('display-filter-done')).toBeEnabled();

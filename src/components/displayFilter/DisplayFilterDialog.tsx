@@ -2,6 +2,7 @@ import * as React from 'react';
 import { useId } from 'react';
 import TuneIcon from '@mui/icons-material/Tune';
 import { ToggleButton, ToggleButtonGroup } from '@mui/material';
+import CheckIcon from '@mui/icons-material/Check';
 import { M3Dialog } from '../m3Dialog/M3Dialog';
 import { Switch } from '../Switch';
 import {
@@ -382,9 +383,13 @@ export const DisplayFilterDialog = ({
 							<legend className="sr-only">
 								{labels.viewTitle}
 							</legend>
-							{/* M3 single-select segmented button (MUI ToggleButtonGroup). */}
+							{/* M3 single-select segmented button (MUI ToggleButtonGroup)
+							    with the radio-group semantics, roving focus and arrow
+							    keys of the radios it replaced; the chosen segment
+							    carries a check (M3), not colour alone. */}
 							<ToggleButtonGroup
 								exclusive
+								role="radiogroup"
 								size="small"
 								className="displayFilterDialog__viewOptions"
 								aria-label={labels.viewTitle}
@@ -429,8 +434,26 @@ export const DisplayFilterDialog = ({
 										key={view}
 										value={view}
 										disableRipple
+										role="radio"
+										aria-pressed={undefined}
+										aria-checked={
+											presentation.view === view
+										}
+										tabIndex={
+											presentation.view === view ? 0 : -1
+										}
 										data-cy={`display-filter-view-${view}`}
 									>
+										{presentation.view === view && (
+											<CheckIcon
+												aria-hidden
+												sx={{
+													fontSize: 18,
+													mr: 0.5,
+													ml: -0.5
+												}}
+											/>
+										)}
 										{view === 'icons'
 											? labels.viewIcons
 											: view === 'labels'
