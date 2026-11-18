@@ -42,6 +42,8 @@ import {
 import {
 	desktop1440Globals,
 	mobileParameters,
+	phone320Globals,
+	tablet820Globals,
 	phone390Globals,
 	tablet834Globals
 } from './messageStoryShell';
@@ -1289,6 +1291,97 @@ export const KebabActiveState: Story = {
 	}
 };
 
+/** The six recent reactions and the more button remain visible in one line. */
+const checkQuickReactionRow = async ({
+	canvasElement
+}: {
+	canvasElement: HTMLElement;
+}) => {
+	const trigger = canvasElement.querySelector(
+		'.messageItem__kebabButton'
+	) as HTMLElement;
+	expect(trigger).toBeTruthy();
+	await userEvent.click(trigger);
+	const row = await waitFor(() => {
+		const found = document.querySelector(
+			'.messageItem__actionMenuReactions'
+		) as HTMLElement;
+		expect(found).toBeTruthy();
+		expect(found.getBoundingClientRect().top).toBeGreaterThan(0);
+		return found;
+	});
+	const controls = [...row.querySelectorAll('button')];
+	expect(controls).toHaveLength(7);
+	const rowRect = row.getBoundingClientRect();
+	const menuRect = (
+		row.closest('.messageItem__actionMenu') as HTMLElement
+	).getBoundingClientRect();
+	expect(menuRect.left).toBeGreaterThanOrEqual(0);
+	expect(menuRect.right).toBeLessThanOrEqual(window.innerWidth);
+	const triggerRect = trigger.getBoundingClientRect();
+	expect(
+		menuRect.right <= triggerRect.left ||
+			menuRect.left >= triggerRect.right ||
+			menuRect.bottom <= triggerRect.top ||
+			menuRect.top >= triggerRect.bottom
+	).toBe(true);
+	const rects = controls.map((control) => control.getBoundingClientRect());
+	for (let index = 0; index < rects.length; index += 1) {
+		const rect = rects[index];
+		expect(Math.abs(rect.top - rects[0].top)).toBeLessThan(1);
+		expect(rect.width).toBeGreaterThanOrEqual(24);
+		expect(rect.height).toBeGreaterThanOrEqual(24);
+		expect(rect.left).toBeGreaterThanOrEqual(rowRect.left - 0.5);
+		expect(rect.right).toBeLessThanOrEqual(rowRect.right + 0.5);
+		if (index > 0)
+			expect(rect.left).toBeGreaterThanOrEqual(
+				rects[index - 1].right - 0.5
+			);
+	}
+	const more = row.querySelector(
+		'.messageItem__actionMenuReactionMore'
+	) as HTMLElement;
+	more.focus();
+	expect(document.activeElement).toBe(more);
+	await userEvent.keyboard('{Enter}');
+	await waitFor(() =>
+		expect(
+			document.querySelector('[data-testid="emoji-picker-popup"]')
+		).toBeTruthy()
+	);
+	await userEvent.click(more);
+	await waitFor(() =>
+		expect(
+			document.querySelector('[data-testid="emoji-picker-popup"]')
+		).toBeNull()
+	);
+};
+
+export const QuickReactionsDesktop: Story = {
+	...KebabActiveState,
+	name: 'Quick reactions — one row desktop',
+	globals: desktop1440Globals,
+	play: checkQuickReactionRow
+};
+export const QuickReactionsTablet: Story = {
+	...KebabActiveState,
+	name: 'Quick reactions — one row tablet',
+	globals: tablet820Globals,
+	play: checkQuickReactionRow
+};
+export const QuickReactionsMobile: Story = {
+	...KebabActiveState,
+	name: 'Quick reactions — one row mobile',
+	globals: phone390Globals,
+	play: checkQuickReactionRow
+};
+export const QuickReactionsNarrow: Story = {
+	...KebabActiveState,
+	name: 'Quick reactions — one row narrow',
+	globals: phone320Globals,
+	play: checkQuickReactionRow
+};
+
 /**
  * Same pins as `KebabActiveState`, but for the **outgoing** side: the kebab
  * lives in the right side column (`--right`) and the menu is positioned from
@@ -1390,6 +1483,14 @@ export const KebabActiveStateOutgoing: Story = {
 			expect(pickerRect.right).toBeLessThanOrEqual(window.innerWidth);
 		});
 	}
+};
+
+/** The outgoing trigger also remains accessible at the narrowest supported width. */
+export const QuickReactionsOutgoingNarrow: Story = {
+	...KebabActiveStateOutgoing,
+	name: 'Quick reactions — outgoing one row narrow',
+	globals: phone320Globals,
+	play: checkQuickReactionRow
 };
 
 /**

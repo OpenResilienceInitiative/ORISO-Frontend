@@ -1752,11 +1752,26 @@ export const MessageItemComponent = ({
 			computePosition(actionMenuAnchor, menuEl, {
 				strategy: 'fixed',
 				placement: actionMenuPlacement,
-				middleware: [offset(10), flip(), shift({ padding: 12 })]
+				middleware: [
+					offset(10),
+					flip({
+						padding: 12,
+						fallbackPlacements: actionMenuPlacement.startsWith(
+							'left'
+						)
+							? ['right-start', 'bottom-end', 'top-end']
+							: ['left-start', 'bottom-start', 'top-start']
+					}),
+					shift({ padding: 12, crossAxis: true })
+				]
 			}).then(({ x, y, placement }) => {
 				setActionMenuPosition({ left: x, top: y });
 				setActionMenuOrigin(
-					placement.startsWith('left') ? 'right top' : 'left top'
+					placement.startsWith('left')
+						? 'right top'
+						: placement.startsWith('top')
+							? 'left bottom'
+							: 'left top'
 				);
 			});
 		});
