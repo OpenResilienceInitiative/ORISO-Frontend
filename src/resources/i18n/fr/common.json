@@ -2272,6 +2272,20 @@
 		},
 		"deliveryStatus": {
 			"sent": "Envoyé"
+		},
+		"appointmentNotice": {
+			"title": {
+				"created": "Rendez-vous fixé",
+				"moved": "Rendez-vous déplacé",
+				"cancelled": "Rendez-vous annulé"
+			},
+			"by": "par {{name}}",
+			"before": "Avant :",
+			"after": "Nouveau :",
+			"action": {
+				"createNew": "Créer un nouveau rendez-vous",
+				"openCalendar": "Ouvrir dans le calendrier"
+			}
 		}
 	},
 	"navigation": {
@@ -2981,7 +2995,13 @@
 					"label": "Désactivez votre absence pour déposer un message ou le modifier."
 				},
 				"label": "Déposer un message d'absence",
-				"title": "Mon absence"
+				"title": "Mon absence",
+				"from": "Absent·e du (facultatif)",
+				"until": "Absent·e jusqu'au (facultatif)",
+				"dateHint": "Sans date, l'absence dure jusqu'à nouvel ordre, jusqu'à ce que vous la désactiviez. Après la date de fin, vous êtes automatiquement de nouveau présent·e.",
+				"planned": "Prévue à partir du {{start}}",
+				"activeUntil": "Absent·e jusqu'au {{end}} inclus",
+				"invalidRange": "La date de fin est antérieure à la date de début."
 			},
 			"liveChat": {
 				"title": "Ma disponibilité Live-Chat",
@@ -3321,17 +3341,25 @@
 					"label": "Télécharger le fichier Excel"
 				},
 				"filename": "Statistiques de la consultation en ligne",
-				"title": "Vous pouvez télécharger ici vos statistiques sur la période de consultation que vous avez choisie :"
+				"title": "Vous pouvez télécharger ici vos statistiques sur la période de consultation que vous avez choisie :",
+				"total": "Ensemble"
 			},
 			"csvHeader": {
-				"numberOfAppointments": "Dates réservées",
+				"numberOfAppointments": "Rendez-vous tenus",
 				"numberOfAssignedSessions": "Délibérations adoptées",
+				"numberOfCancelledAppointments": "Rendez-vous annulés",
+				"numberOfChatAppointments": "dont chat",
+				"numberOfOnsiteAppointments": "dont sur place",
+				"numberOfPhoneAppointments": "dont téléphone",
 				"numberOfSentMessages": "Nouvelles écrites",
 				"numberOfSessionsWhereConsultantWasActive": "Consultations actives",
+				"numberOfVideoAppointments": "dont vidéo",
+				"period": "Période",
 				"videoCallDuration": "Durée des appels vidéo en minutes:secondes"
 			},
 			"period": {
 				"currentMonth": "mois en cours",
+				"currentWeek": "semaine en cours",
 				"currentYear": "année en cours",
 				"display": {
 					"default": "JJ.MM.AAAA - JJ.MM.AAAA",
@@ -3339,6 +3367,7 @@
 					"suffix": " vous avez"
 				},
 				"lastMonth": "dernier mois",
+				"lastWeek": "semaine dernière",
 				"lastYear": "l'année dernière",
 				"prefix": "Vos chiffres du"
 			},
@@ -4812,7 +4841,9 @@
 		},
 		"deletedAsker": {
 			"title": "Personne en quête de conseil supprimée",
-			"hint": "Ce chat a été supprimé. Les données personnelles et les messages ne sont plus disponibles."
+			"hint": "Ce chat a été supprimé. Les données personnelles et les messages ne sont plus disponibles.",
+			"preview": "Le chat a été supprimé",
+			"previewArchived": "Supprimé · aux archives"
 		}
 	},
 	"statusOverlay": {
@@ -6548,11 +6579,6 @@
 				"on": "Les invités attendent que vous les fassiez entrer. Si vous le désactivez, toutes les personnes en attente entrent aussitôt.",
 				"off": "Les invités rejoignent l’appel directement, sans attendre."
 			},
-			"temporaryAccount": {
-				"label": "Compte temporaire",
-				"on": "Les invités reçoivent un compte invité supprimé après l’appel.",
-				"off": "Les invités se connectent avec leur propre compte ou en créent un."
-			},
 			"linkLabel": "Lien vers l’appel",
 			"copy": "Copier",
 			"copied": "Copié",
@@ -6841,7 +6867,6 @@
 			"text": "Toute personne qui ouvre le lien vous rejoint directement – par chat, appel audio ou appel vidéo.",
 			"topicLabel": "Choisir un thème",
 			"mediumLabel": "Type de contact",
-			"temporary": "Compte temporaire",
 			"temporaryHint": "Le compte est supprimé après l’entretien.",
 			"create": "Créer le lien",
 			"createFailed": "Le lien n'a pas pu être créé. Veuillez réessayer.",
@@ -6899,7 +6924,6 @@
 			"nameRequired": "Veuillez saisir un nom.",
 			"topic": "Thème",
 			"mediumFixed": "Le type de contact ne peut pas être modifié",
-			"temporaryHint": "S’applique uniquement aux personnes qui ouvrent le lien à partir de maintenant.",
 			"failed": "La modification n’a pas pu être enregistrée. Veuillez réessayer.",
 			"scheduledAt": "Date et heure",
 			"clearScheduledAt": "Supprimer"
@@ -6959,10 +6983,11 @@
 			"createAction": "Créer",
 			"saveAction": "Enregistrer",
 			"withAppointment": "Avec rendez-vous",
-			"withAppointmentHint": "Toutes les personnes qui ouvrent le lien se retrouvent dans une conversation commune.",
+			"withAppointmentHint": "Toutes les personnes qui ouvrent le lien se retrouvent dans une conversation commune. Le rendez-vous apparaît aussi dans votre calendrier.",
 			"withoutAppointmentHint": "Sans rendez-vous, chaque personne a sa propre conversation. Le lien fonctionne jusqu’à ce que vous le supprimiez.",
 			"inviteOthers": "Inviter d’autres personnes par lien",
 			"inviteOthersHint": "Par exemple un ou une interprète. Les personnes invitées ne voient que les messages écrits après leur arrivée.",
+			"inviteOthersMediumOff": "Les invitations directes ne sont pas activées pour ce type. Choisissez un autre type pour inviter d'autres personnes.",
 			"validity": {
 				"label": "Validité après la fin du rendez-vous",
 				"hint": "Ensuite, les invités perdent l’accès et la conversation est archivée.",
@@ -6981,7 +7006,15 @@
 				"both": "Les deux"
 			},
 			"knock": "Frapper avant d’entrer",
-			"knockHint": "Vous faites entrer chaque personne vous-même. Vous pouvez modifier ce réglage pendant l’appel."
+			"knockHint": "Vous faites entrer chaque personne vous-même. Vous pouvez modifier ce réglage pendant l’appel.",
+			"newPerson": {
+				"option": "Nouvelle personne par invitation directe …",
+				"hint": "Cette personne n'a pas encore de conversation avec vous. À l'étape suivante, vous créez une invitation directe avec ce rendez-vous.",
+				"action": "Continuer vers l'invitation directe"
+			},
+			"linkFailedTitle": "Lien d'invitation non créé",
+			"linkFailedAfterAppointment": "Le rendez-vous est enregistré, mais pas le lien d'invitation. Veuillez réessayer.",
+			"appointmentSaved": "Le rendez-vous est enregistré."
 		},
 		"overview": {
 			"title": "Rendez-vous et invitations directes",
@@ -7056,7 +7089,8 @@
 			"title": "Nouveau lien",
 			"text": "Voici le nouveau lien pour le rendez-vous :",
 			"validUntil": "Le nouveau lien pour le rendez-vous est valable jusqu’au {{date}} :"
-		}
+		},
+		"fromCalendar": "Rendez-vous du calendrier : {{range}}. Choisissez le thème et le média, puis créez l'invitation directe."
 	},
 	"calendar": {
 		"bandLoading": "Chargement : {{names}}",
@@ -7109,7 +7143,8 @@
 			"group": "Rendez-vous de groupe",
 			"blocker": "Plage bloquée",
 			"busy": "Occupé",
-			"colleague": "Occupé"
+			"colleague": "Occupé",
+			"absence": "Absent·e"
 		},
 		"noEvents": "Aucun rendez-vous sur cette période",
 		"loading": "Chargement des rendez-vous",
@@ -7138,7 +7173,8 @@
 			"entryKind": "Type d’entrée",
 			"tabs": {
 				"appointment": "Rendez-vous",
-				"blocker": "Plage bloquée"
+				"blocker": "Plage bloquée",
+				"absence": "Absence prévue"
 			}
 		},
 		"details": {
@@ -7270,7 +7306,8 @@
 			"joinSub": "Ouvrir la visioconférence",
 			"moveSub": "Modifier le jour et l’heure",
 			"proposeSub": "{{name}} doit confirmer",
-			"cancelSub": "{{name}} reçoit un message"
+			"cancelSub": "{{name}} reçoit un message",
+			"reason": "Motif (facultatif)"
 		},
 		"fullscreen": "Plein écran",
 		"fullscreenExit": "Quitter le plein écran (Échap)",
@@ -7341,7 +7378,8 @@
 			"declined": "Proposition refusée. Le rendez-vous reste le {{date}}.",
 			"noLongerValid": "Cette proposition n’est plus valable. Le rendez-vous a changé ou est passé.",
 			"navCount": "{{count}} demandes en attente",
-			"navCount_one": "{{count}} demande en attente"
+			"navCount_one": "{{count}} demande en attente",
+			"reason": "Motif : {{reason}}"
 		},
 		"quick": {
 			"freeUnavailable": "Créneaux libres indisponibles pour le moment.",
@@ -7578,9 +7616,164 @@
 			"pillKind": "Comme bouton : {{kind}}",
 			"pillMenu": "Choisir le bouton : {{kind}}"
 		},
+		"bandCard": {
+			"label": "Qui est occupé·e",
+			"back": "Retour à la liste",
+			"busy": "Occupé·es",
+			"free": "Libres",
+			"nobodyFree": "Personne n’est libre.",
+			"show": "Voir le calendrier",
+			"showLabel": "Voir le calendrier de {{name}}",
+			"ownerOnly": "Seul·e {{name}} peut modifier cela.",
+			"all": "Tout le monde côte à côte",
+			"create": "Ajouter à cette heure"
+		},
 		"links": {
 			"title": "Liens sans rendez-vous",
 			"hint": "Liens d’invitation à partager : copiez-les ou affichez un code QR."
+		},
+		"absence": {
+			"description": "Choisissez les jours de votre absence. Pendant cette période, les personnes qui demandent conseil voient votre message d'absence.",
+			"from": "Du",
+			"until": "Au",
+			"message": "Message d'absence",
+			"messageHint": "Les personnes qui demandent conseil voient ce message mais peuvent toujours vous écrire.",
+			"effect": "Après le dernier jour, vous êtes automatiquement de nouveau présent·e. La même absence figure dans votre profil.",
+			"save": "Enregistrer l'absence",
+			"conflicts": "{{count}} rendez-vous tombent pendant cette période. Ils sont maintenus – annulez-les ou déplacez-les vous-même si nécessaire.",
+			"conflicts_one": "{{count}} rendez-vous tombe pendant cette période. Il est maintenu – annulez-le ou déplacez-le vous-même si nécessaire.",
+			"saved": "Absence enregistrée. Elle figure aussi dans votre profil."
 		}
+	},
+	"guestAccountMode": {
+		"label": "Compte invité",
+		"menuLabel": "Choisir le compte invité",
+		"option": {
+			"TEMPORARY": "Supprimer après la séance",
+			"GUEST_CHOOSES": "L’invité choisit",
+			"PERMANENT": "Durable"
+		},
+		"hint": {
+			"TEMPORARY": "Les nouveaux invités reçoivent un compte supprimé après l’entretien.",
+			"GUEST_CHOOSES": "Les nouveaux invités choisissent en entrant : sans compte ou avec leur propre compte.",
+			"PERMANENT": "Les nouveaux invités créent leur propre compte."
+		},
+		"newGuestsOnly": "Ne s’applique qu’aux personnes qui ouvrent le lien désormais.",
+		"entry": {
+			"withoutAccount": "Rejoindre sans compte",
+			"withAccount": "Créer un compte",
+			"temporaryNote": "Votre accès est supprimé après l’entretien. Vous pourrez encore le conserver plus tard.",
+			"accountNote": "Avec votre propre compte, vous pourrez revenir plus tard."
+		},
+		"keep": {
+			"action": "Conserver le compte",
+			"actionDescription": "Sinon, votre compte est supprimé après l’entretien.",
+			"title": "Conserver le compte",
+			"text": "Sinon, votre compte est supprimé après l’entretien. Définissez un mot de passe : il est conservé et vous pourrez vous reconnecter plus tard.",
+			"loginName": "Votre nom d’utilisateur : {{name}}",
+			"password": "Mot de passe",
+			"repeat": "Répéter le mot de passe",
+			"mismatch": "Les mots de passe ne correspondent pas.",
+			"submit": "Conserver le compte",
+			"cancel": "Annuler",
+			"success": "Votre compte est conservé.",
+			"recoveryPending": "Votre compte est conservé. Pour lire vos messages sur un autre appareil, il vous faut votre clé de récupération.",
+			"error": {
+				"badRequest": "Le mot de passe ne remplit pas les conditions.",
+				"forbidden": "Cette invitation ne permet pas de conserver le compte.",
+				"notFound": "Votre compte est introuvable. Veuillez vous reconnecter.",
+				"conflict": "Votre compte est en cours de suppression ou est déjà durable.",
+				"generic": "Cela n’a pas fonctionné. Veuillez réessayer."
+			}
+		}
+	},
+	"managePeople": {
+		"self": "(vous)",
+		"loading": "Chargement…",
+		"working": "En cours…",
+		"retry": "Réessayer",
+		"cancel": "Annuler",
+		"search": "Rechercher par nom ou organisation",
+		"noMatches": "Personne ne correspond à cette recherche.",
+		"otherPerson": "Choisir une autre personne",
+		"since": "Depuis le {{date}}",
+		"role": {
+			"owner": "Propriétaire",
+			"coModerator": "Co-modération"
+		},
+		"standing": {
+			"badge": "Affectation permanente",
+			"hint": "Défini par l’administration du centre. La supervision reste toujours active : vous pouvez remplacer cette personne, mais pas simplement la retirer.",
+			"noReplacement": "Défini par l’administration du centre. Personne d’autre dans ce centre ne peut reprendre pour le moment."
+		},
+		"add": {
+			"action": "Ajouter",
+			"labelFor": "Ajouter {{name}}",
+			"confirm": "Ajouter {{name}}"
+		},
+		"remove": {
+			"action": "Retirer",
+			"labelFor": "Retirer {{name}}",
+			"confirm": "Vraiment retirer ?"
+		},
+		"replace": {
+			"action": "Remplacer",
+			"labelFor": "Remplacer {{name}}",
+			"title": "Qui doit prendre la relève de {{name}} ?",
+			"confirm": "Remplacer par {{name}}",
+			"pick": "Choisir",
+			"pickLabelFor": "Choisir {{name}}"
+		},
+		"error": {
+			"members": "La liste n’a pas pu être chargée.",
+			"candidates": "Les personnes disponibles n’ont pas pu être chargées.",
+			"add": "Cette personne n’a pas pu être ajoutée. Veuillez réessayer.",
+			"remove": "Cette personne n’a pas pu être retirée. Veuillez réessayer.",
+			"replace": "Le remplacement a échoué. Veuillez réessayer.",
+			"refused": "Cette personne ne peut plus être ajoutée ici. Son organisation ou ce chat ne l'autorise pas. La liste a été mise à jour."
+		},
+		"supervision": {
+			"title": "Gérer la supervision",
+			"description": "Les superviseurs lisent ce dossier et échangent avec vous dans le chat de supervision.",
+			"membersTitle": "Supervision actuelle",
+			"emptyMembers": "Ce dossier n’a pas encore de superviseur.",
+			"addTitle": "Ajouter un superviseur",
+			"emptyCandidates": "Personne d’autre dans ce centre n’est désigné comme superviseur. L’administration du centre en décide.",
+			"reasonLabel": "Motif de la supervision",
+			"reasonPlaceholder": "Pourquoi cette personne doit-elle superviser ce dossier ?",
+			"reasonMissing": "Veuillez indiquer un motif.",
+			"added": "{{name}} supervise désormais ce dossier."
+		},
+		"internalChat": {
+			"title": "Gérer les personnes",
+			"description": "Tous les membres de ce chat interne peuvent inviter des collègues.",
+			"membersTitle": "Dans ce chat",
+			"emptyMembers": "Personne n’est encore dans ce chat.",
+			"addTitle": "Ajouter un collègue",
+			"addNote": "Les nouvelles personnes voient les messages à partir de leur arrivée, pas les précédents.",
+			"emptyCandidates": "Aucun autre collègue ne peut être ajouté à ce chat.",
+			"added": "{{name}} a été ajouté·e à ce chat."
+		},
+		"groupChat": {
+			"title": "Gérer les personnes",
+			"description": "Voyez qui anime ce groupe et partagez le lien avec celles et ceux qui souhaitent participer.",
+			"membersTitle": "Modération",
+			"emptyMembers": "Ce groupe n’a pas encore de modération.",
+			"addTitle": "Ajouter une co-modération",
+			"emptyCandidates": "Aucun autre collègue ne peut être ajouté à ce groupe.",
+			"inviteTitle": "Inviter des personnes",
+			"inviteDescription": "Les personnes en recherche de conseil rejoignent via ce lien ou ce code QR.",
+			"added": "{{name}} co-modère désormais ce groupe."
+		}
+	},
+	"deletedAskerSession": {
+		"notice": {
+			"title": "Ce chat a été supprimé",
+			"deletedOn": "Supprimé le {{date}}",
+			"text": "Les données personnelles et les messages de la personne en quête de conseil ne sont plus disponibles."
+		},
+		"archiveHint": "Déplacez l'entrée vers les archives pour qu'elle disparaisse de votre liste et de vos activités.",
+		"archived": "Cette entrée se trouve dans les archives.",
+		"archiveFailed": "L'archivage n'a pas fonctionné. Veuillez réessayer."
 	}
 }

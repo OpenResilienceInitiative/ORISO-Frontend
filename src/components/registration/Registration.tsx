@@ -54,6 +54,7 @@ import {
 } from '../../components/registration/autoLogin';
 import { PreselectionBox } from './preselectionBox/PreselectionBox';
 import { endpoints } from '../../resources/scripts/endpoints';
+import { apiGetTopicsData } from '../../api/apiGetTopicsData';
 import {
 	accountExistsAfterTimeout,
 	apiGetAskerSessionList,
@@ -99,6 +100,7 @@ import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import PlaceRoundedIcon from '@mui/icons-material/PlaceRounded';
 import { GroupInviteEntry } from './groupInviteEntry/GroupInviteEntry';
+import { useGroupInviteGuestAccountMode } from './groupInviteEntry/useGroupInviteGuestAccountMode';
 import { useGroupJoinHandoverCopy } from '../groupChat/groupJoinHandoverCopy';
 import {
 	GroupInviteInvalid,
@@ -227,11 +229,21 @@ export const Registration = () => {
 	const groupChatId = getPostRegistrationGroupChatId(location.search);
 	const inviteAgencyId = new URLSearchParams(location.search).get('aid');
 	const isAccountDataStep = step === 'account-data';
+	/* UserService#1662: the circle's guest account mode decides which way in
+	   is offered: TEMPORARY only without an account, PERMANENT only with
+	   one, GUEST_CHOOSES both. `undefined` while it loads. */
+	const circleGuestAccountMode = useGroupInviteGuestAccountMode(
+		groupChatId,
+		inviteAgencyId
+	);
+	const circleGuestChooses = circleGuestAccountMode === 'GUEST_CHOOSES';
 	/* The backend accepts `temporary` only with a valid group invite
 	   (UserService#1247): no `aid`, or another agency, is an ordinary
 	   registration without this way on. */
 	const canJoinTemporarily =
 		isAccountDataStep &&
+		circleGuestAccountMode !== undefined &&
+		circleGuestAccountMode !== 'PERMANENT' &&
 		Boolean(
 			getGroupJoin({
 				gcid: groupChatId,
@@ -247,11 +259,14 @@ export const Registration = () => {
 		isAccountDataStep &&
 		Boolean(parseGroupChatInviteId(groupChatId)) &&
 		!inviteAgencyId?.trim();
-	const showTemporaryToggle = canJoinTemporarily || inviteLinkIncomplete;
+	const showTemporaryToggle =
+		(canJoinTemporarily && circleGuestChooses) || inviteLinkIncomplete;
 	const [temporaryJoinChosen, setTemporaryJoinChosen] =
 		useState<boolean>(false);
 	const temporaryJoin =
-		canJoinTemporarily && !inviteLinkIncomplete && temporaryJoinChosen;
+		canJoinTemporarily &&
+		!inviteLinkIncomplete &&
+		(circleGuestAccountMode === 'TEMPORARY' || temporaryJoinChosen);
 	const temporaryToggleLabel = temporaryJoin
 		? t('registration.account.temporary.toggleOff')
 		: t('registration.account.temporary.toggleOn');
@@ -296,8 +311,11 @@ export const Registration = () => {
 	/* The minted password is never shown, so nobody can log in again once the
 	   browser is closed; the backend deletes such an account later
 	   (ORISO-UserService#1001). */
+	const entryTemporary =
+		circleGuestAccountMode === 'TEMPORARY' ||
+		(circleGuestChooses && !inviteWithAccount);
 	const joinsTemporarily =
-		inviteEntry === 'entry' ? !inviteWithAccount : temporaryJoin;
+		inviteEntry === 'entry' ? entryTemporary : temporaryJoin;
 	const toggleInviteWithAccount = useCallback(
 		() => setInviteWithAccount((withAccount) => !withAccount),
 		[]
@@ -420,6 +438,47 @@ export const Registration = () => {
 		}),
 		[registrationData, stepData]
 	);
+
+	/* A catalogue topic (one with an `icon`) arrives in the language it was
+	   fetched in. When the visitor switches language, fetch it again so the
+	   summary follows the switch. Only a fetched match counts as done; a failed
+	   fetch keeps the old copy and is tried again on the next step. */
+	const catalogueTopicId = mergedRegistrationData.mainTopic?.icon
+		? mergedRegistrationData.mainTopic.id
+		: undefined;
+	const [topicCopyLocale, setTopicCopyLocale] = useState(locale);
+	useEffect(() => {
+		if (catalogueTopicId === undefined || topicCopyLocale === locale) {
+			return undefined;
+		}
+		let cancelled = false;
+		(async () => {
+			// LocaleProvider writes the `lang` cookie in its own effect, after this one.
+			await Promise.resolve();
+			const topics = await apiGetTopicsData().catch(() => undefined);
+			const fresh = topics?.find(
+				(topic) => topic.id === catalogueTopicId
+			);
+			if (cancelled || !fresh) return;
+			setTopicCopyLocale(locale);
+			updateRegistrationData?.({ mainTopic: fresh });
+			// A pick not yet committed lives in stepData, which wins the merge.
+			setStepData((pending) =>
+				pending.mainTopic?.id === fresh.id
+					? { ...pending, mainTopic: fresh }
+					: pending
+			);
+		})();
+		return () => {
+			cancelled = true;
+		};
+	}, [
+		catalogueTopicId,
+		currStepIndex,
+		locale,
+		topicCopyLocale,
+		updateRegistrationData
+	]);
 	// Same data the payload reads, so the copy and the request agree.
 	const joinsTheGroup =
 		getGroupJoin({
@@ -442,7 +501,8 @@ export const Registration = () => {
 		selectedTopic?.name ||
 		null;
 	const selectedTopicIcon = selectedTopic
-		? getRegistrationTopicIconForGroup(
+		? mergedRegistrationData.topicIcon ||
+			getRegistrationTopicIconForGroup(
 				selectedTopic,
 				mergedRegistrationData.topicGroupId
 			)
@@ -483,6 +543,7 @@ export const Registration = () => {
 			topic: undefined,
 			topicId: undefined,
 			topicGroupId: undefined,
+			topicIcon: undefined,
 			agency: undefined,
 			agencyId: undefined,
 			registrationRef: undefined,
@@ -969,8 +1030,13 @@ export const Registration = () => {
 		);
 	}
 
-	if (inviteEntry === 'pending') {
-		return hasRegistrationDataError && retryRegistrationData ? (
+	if (
+		inviteEntry === 'pending' ||
+		(inviteEntry === 'entry' && circleGuestAccountMode === undefined)
+	) {
+		return inviteEntry === 'pending' &&
+			hasRegistrationDataError &&
+			retryRegistrationData ? (
 			<GroupInviteLoadError
 				stage={<Stage hasAnimation={isFirstVisit} />}
 				gcid={groupChatId}
@@ -992,8 +1058,10 @@ export const Registration = () => {
 				stage={<Stage hasAnimation={isFirstVisit} />}
 				gcid={groupChatId}
 				aid={inviteAgencyId}
-				temporary={!inviteWithAccount}
-				onToggleTemporary={toggleInviteWithAccount}
+				temporary={entryTemporary}
+				onToggleTemporary={
+					circleGuestChooses ? toggleInviteWithAccount : undefined
+				}
 				onChange={setStepData}
 				onJoin={onRegisterClick}
 				joinDisabled={Boolean(disabledNextButton) || isRegistering}

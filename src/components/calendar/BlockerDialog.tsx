@@ -30,7 +30,7 @@ import { m3SnackbarActionSx } from '../m3Snackbar/M3Snackbar';
 import { FacetIcon } from './CalendarEntryGlyph';
 import { useDayLabels } from './useEntryLabel';
 import { calendarLocale } from './calendarLocale';
-import type { DialogForm } from './AppointmentDialog';
+import type { DialogForm } from './dialogForm';
 
 /** Monday first, JavaScript weekday numbers. */
 const WEEKDAYS = [1, 2, 3, 4, 5, 6, 0];
@@ -154,7 +154,7 @@ export const useBlockerForm = ({
 		.filter((r) => r.end.getTime() > r.start.getTime())
 		.flatMap((r) =>
 			findConflicts(r, entries, ownerId).filter(
-				(e) => e.type !== 'blocker'
+				(e) => e.type !== 'blocker' && e.type !== 'absence'
 			)
 		);
 	// A whole day counts by its date, so today stays possible after 00:00.

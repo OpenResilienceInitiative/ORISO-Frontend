@@ -202,6 +202,60 @@ describe('InvitationDialog (#2252)', () => {
 			});
 		});
 
+		describe('an appointment over midnight (23:00 to 00:00)', () => {
+			const overnight = {
+				start: local(5, 23),
+				end: local(6, 0),
+				withAppointment: true,
+				validityMinutes: 1440,
+				access: 'both' as const,
+				knock: true
+			};
+
+			it('stays editable: changing only the link keeps its end on the next day', async () => {
+				open({ mode: 'edit', initial: overnight });
+				toggle(`${KEYS}.knock`);
+				await click(`${KEYS}.saveAction`);
+
+				expect(screen.queryByRole('alert')).toBeNull();
+				expect(onSubmit).toHaveBeenCalledWith(
+					expect.objectContaining({
+						appointment: { start: local(5, 23), end: local(6, 0) },
+						changed: expect.objectContaining({
+							appointment: false,
+							knock: true
+						})
+					})
+				);
+			});
+
+			it('comes from the calendar as it is (Chat erstellen with the slot)', async () => {
+				open({ initial: overnight });
+				await click(`${KEYS}.createAction`);
+
+				expect(onSubmit).toHaveBeenCalledWith(
+					expect.objectContaining({
+						appointment: { start: local(5, 23), end: local(6, 0) }
+					})
+				);
+			});
+
+			it('ends on the start day again once the end time is after the start', async () => {
+				open({ mode: 'edit', initial: overnight });
+				setField('end', '23:30');
+				await click(`${KEYS}.saveAction`);
+
+				expect(onSubmit).toHaveBeenCalledWith(
+					expect.objectContaining({
+						appointment: {
+							start: local(5, 23),
+							end: new Date(2026, 10, 5, 23, 30)
+						}
+					})
+				);
+			});
+		});
+
 		it('refuses moving a started appointment to another past start', async () => {
 			open({
 				mode: 'edit',

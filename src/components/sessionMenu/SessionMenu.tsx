@@ -95,6 +95,8 @@ import { Button, BUTTON_TYPES, ButtonItem } from '../button/Button';
 import { useSearchParam } from '../../hooks/useSearchParams';
 import { useTranslation } from 'react-i18next';
 import EventOutlinedIcon from '@mui/icons-material/EventOutlined';
+import VerifiedUserOutlinedIcon from '@mui/icons-material/VerifiedUserOutlined';
+import { useKeepAccountDialog } from '../temporaryAccount/KeepAccountEntry';
 import AddLinkOutlinedIcon from '@mui/icons-material/AddLinkOutlined';
 import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider';
 import { useMatrixRoomUsers } from '../../hooks/useMatrixRoomUsers';
@@ -256,6 +258,8 @@ export const SessionMenu = (props: SessionMenuProps) => {
 	// conversation menu — same component as in the profile settings, wrapped
 	// in the dialog so the user is NOT thrown out of the current room.
 	const [notifConfigOpen, setNotifConfigOpen] = useState(false);
+	/* UserService#1662: a guest without an account can keep it from here. */
+	const keepAccount = useKeepAccountDialog();
 	const { settings: notifSettings, updateSettings: updateNotifSettings } =
 		useNotificationSettings();
 	const appConfig = useAppConfig();
@@ -934,6 +938,25 @@ export const SessionMenu = (props: SessionMenuProps) => {
 								</button>
 							)}
 
+							{keepAccount.available && (
+								<button
+									type="button"
+									className="sessionMenu__item chatMenuDropdown__item"
+									onClick={() => {
+										closeMenu();
+										keepAccount.openDialog();
+									}}
+									data-cy="session-menu-keep-account"
+								>
+									<SessionMenuItemContent
+										icon={<VerifiedUserOutlinedIcon />}
+										title={translate(
+											'guestAccountMode.keep.action'
+										)}
+									/>
+								</button>
+							)}
+
 							{props.onSendNewLink && (
 								<button
 									type="button"
@@ -1426,6 +1449,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 					presentation="dialog"
 				/>
 			)}
+			{keepAccount.dialog}
 			<NotificationConfigDialog
 				open={notifConfigOpen}
 				config={notifSettings.notificationConfig}

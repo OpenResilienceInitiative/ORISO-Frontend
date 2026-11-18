@@ -70,6 +70,11 @@ import {
 	useDirectInvitationSetup
 } from './directLink/DirectLinkCreateCard';
 import { DirectLinkShareDialog } from './directLink/DirectLinkShareDialog';
+import {
+	formatPresetRange,
+	fromInvitationPresetState,
+	MEDIUM_FOR_KIND
+} from '../directInvitation/invitationModel';
 import { DirectLink } from './directLink/directLink';
 import { getDirectLinkMedia } from './directLink/directLinkAvailability';
 import { RowMenu } from './RowMenu';
@@ -148,6 +153,13 @@ const CreateConversationFlow = ({
 			};
 		} | null
 	)?.duplicateOccurrence;
+	/* The calendar's "Neue Person per Direkteinladung …" hands over its slot
+	   and Art: the Direkteinladung opens with that appointment (one
+	   invitation flow, door A from the calendar). */
+	const invitationPreset = useMemo(
+		() => fromInvitationPresetState(location.state),
+		[location.state]
+	);
 
 	const availability = getConversationFormatAvailability(
 		tenantData,
@@ -217,7 +229,8 @@ const CreateConversationFlow = ({
 				consultantIds: draft.consultantIds.filter(
 					(consultantId) => consultantId !== userData?.userId
 				),
-				agencyId: draft.agencyId
+				agencyId: draft.agencyId,
+				guestAccountMode: draft.guestAccountMode
 			};
 		} catch {
 			// Invalid persisted start etc. — keep the form gated (no prefill).
@@ -228,15 +241,17 @@ const CreateConversationFlow = ({
 	const [step, setStep] = useState<CreateStep>(() =>
 		isEditMode
 			? 'circle'
-			: withDirectLink(
-					resolveInitialStep(
-						availability,
+			: invitationPreset && directLinkOffered
+				? 'directLink'
+				: withDirectLink(
+						resolveInitialStep(
+							availability,
+							availableFormats,
+							Boolean(duplicateOccurrence)
+						),
 						availableFormats,
-						Boolean(duplicateOccurrence)
-					),
-					availableFormats,
-					Boolean(duplicateOccurrence) && availability.circle
-				)
+						Boolean(duplicateOccurrence) && availability.circle
+					)
 	);
 
 	useEffect(() => {
@@ -568,7 +583,8 @@ const CreateConversationFlow = ({
 		topics: directLinkTopics,
 		agencies: directLinkAgencies,
 		compact: !fromL,
-		onCreated: setCreatedDirectLink
+		onCreated: setCreatedDirectLink,
+		preset: invitationPreset
 	});
 	const renderDirectLinkCard = () => (
 		<DirectLinkCreateCard
@@ -580,6 +596,11 @@ const CreateConversationFlow = ({
 			compact={!fromL}
 			topicsLoadFailed={topicsLoadFailed}
 			onRetryTopics={loadTopics}
+			initialMedium={
+				invitationPreset?.kind
+					? MEDIUM_FOR_KIND[invitationPreset.kind]
+					: undefined
+			}
 			/* "Fertig": the link now lives in "Gespräche". */
 			onDone={() => navigate('/sessions/consultant/sessionView')}
 		/>
@@ -851,6 +872,20 @@ const CreateConversationFlow = ({
 						fromL ? '' : ' conversationCreate__single--compact'
 					}`}
 				>
+					{invitationPreset && (
+						<p
+							className="conversationCreate__cardText"
+							role="status"
+							data-testid="invitation-preset-note"
+						>
+							{translate('directInvitation.fromCalendar', {
+								range: formatPresetRange(
+									invitationPreset,
+									i18n.language
+								)
+							})}
+						</p>
+					)}
 					{renderDirectLinkCard()}
 				</div>
 			) : step === 'internal' ? (

@@ -33,6 +33,9 @@ import { SessionMenu } from '../../sessionMenu/SessionMenu';
 import { getModality, Modality } from '../../session/getModality';
 import { RoomNextAppointmentSlot } from '../../sessionsList/timeline/RoomNextAppointmentSlot';
 import { getGroupChatInfoLink } from '../../groupChat/groupChatInfoLink';
+import { ManagePeopleDialog } from '../../managePeople/ManagePeopleDialog';
+import { createInternalChatPeopleSource } from '../../managePeople/internalChatPeopleSource';
+import { canInviteToInternalChat } from './internalChatInvite';
 
 // Width of the title row taken by the type pill (incl. "+" button), the flex
 // gaps and a minimum for the room title; the avatar stack gets the rest.
@@ -180,6 +183,26 @@ export const GroupChatHeader = ({
 	const isConsultant = hasUserAuthority(
 		AUTHORITIES.CONSULTANT_DEFAULT,
 		userData
+	);
+
+	// ORISO-Frontend#2023: the "+" brings colleagues into a running internal chat.
+	const [isManagePeopleOpen, setIsManagePeopleOpen] = useState(false);
+	const canInvite = canInviteToInternalChat({
+		isInternalGroup: getModality(activeSession) === Modality.INTERNAL_GROUP,
+		isConsultant,
+		isActive: Boolean(activeSession.item.active),
+		isJoinView: isJoinGroupChatView
+	});
+	const participantsRef = useRef(activeSession.item.participants);
+	participantsRef.current = activeSession.item.participants;
+	const internalChatPeopleSource = useMemo(
+		() =>
+			createInternalChatPeopleSource({
+				chatId: activeSession.item.id,
+				getParticipants: () => participantsRef.current,
+				currentConsultantId: userData?.userId
+			}),
+		[activeSession.item.id, userData?.userId]
 	);
 
 	// Use CallManager for group calls (same as SessionMenu)
@@ -357,10 +380,24 @@ export const GroupChatHeader = ({
 								type="internal"
 								showAddIcon={isActive && !isJoinGroupChatView}
 								addLabel={t(
-									'sessionHeader.supervisor.add.disabledUnavailable'
+									canInvite
+										? 'managePeople.internalChat.title'
+										: 'sessionHeader.supervisor.add.disabledUnavailable'
 								)}
 								addTooltip={false}
+								onAddClick={
+									canInvite
+										? () => setIsManagePeopleOpen(true)
+										: undefined
+								}
 							/>
+							{canInvite && isManagePeopleOpen && (
+								<ManagePeopleDialog
+									open
+									onClose={() => setIsManagePeopleOpen(false)}
+									source={internalChatPeopleSource}
+								/>
+							)}
 							<MemberAvatarStack
 								members={stackMembers}
 								measureRef={titleRowRef}

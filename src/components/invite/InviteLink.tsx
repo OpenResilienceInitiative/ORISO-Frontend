@@ -3,6 +3,7 @@ import React, {
 	useCallback,
 	useContext,
 	useEffect,
+	useMemo,
 	useRef,
 	useState
 } from 'react';
@@ -85,6 +86,10 @@ import {
 	openDirectLinkConversation
 } from '../directLinkEntry/directLinkEntryFlow';
 import { DirectLinkCallEntry } from '../directLinkEntry/DirectLinkCallEntry';
+import {
+	entryGuestAccountMode,
+	withChosenAccount
+} from '../guestAccountMode/guestAccountMode';
 import { DirectLinkJoinConsent } from '../directLinkEntry/DirectLinkJoinConsent';
 import { directLinkRegistration } from '../directLinkEntry/directLinkRegistration';
 import {
@@ -259,15 +264,30 @@ export const InviteLink = () => {
 	   identity stays on screen as it was — it is now the account's — and
 	   "continue" only tries the login again. */
 	const [loginRetry, setLoginRetry] = useState(false);
+	/* UserService#1662: under GUEST_CHOOSES the guest picks the account
+	   here ("Ohne Konto beitreten" is the default); TEMPORARY and PERMANENT
+	   fix it. Password field, postcode and registration read the choice. */
+	const [temporaryChosen, setTemporaryChosen] = useState(true);
+	const guestChooses = Boolean(
+		directLink &&
+			!loginRetry &&
+			entryGuestAccountMode(directLink.context) === 'GUEST_CHOOSES'
+	);
+	const accountContext = useMemo(
+		() =>
+			directLink
+				? withChosenAccount(directLink.context, temporaryChosen)
+				: null,
+		[directLink, temporaryChosen]
+	);
 	const hidePasswordField = Boolean(
-		directLink?.context.temporaryAccount &&
-			directLink.context.hidePasswordField
+		accountContext?.temporaryAccount && accountContext.hidePasswordField
 	);
 	/* #1795: a registered direct-link account enters a postcode (statistics
 	   only); a temporary one keeps the placeholder. After the account exists
 	   the step only retries the login. */
 	const askPostcode = Boolean(
-		directLink && !loginRetry && asksDirectLinkPostcode(directLink.context)
+		accountContext && !loginRetry && asksDirectLinkPostcode(accountContext)
 	);
 	const hasRunRef = useRef(false);
 	/* Whether the page is still on screen. The lookups before a redeem can take
@@ -591,9 +611,9 @@ export const InviteLink = () => {
 				/* ORISO-UserService#1486: a direct-link registration carries the
 				   link and its temporary flag (one builder for chat and call);
 				   the server then creates no enquiry. */
-				(directLink && token
+				(accountContext && token
 					? directLinkRegistration(
-							directLink.context,
+							accountContext,
 							{ username, password, postcode },
 							locale,
 							token
@@ -668,6 +688,7 @@ export const InviteLink = () => {
 		t,
 		registerThenLogin,
 		directLink,
+		accountContext,
 		token,
 		askPostcode,
 		postcode,
@@ -925,6 +946,43 @@ export const InviteLink = () => {
 									readOnly: true
 								}}
 							/>
+						)}
+						{guestChooses && (
+							<Box
+								data-testid="invite-account-choice"
+								sx={{ mt: 2 }}
+							>
+								<Typography sx={registrationScreenIntroSx}>
+									{t(
+										temporaryChosen
+											? 'guestAccountMode.entry.temporaryNote'
+											: 'guestAccountMode.entry.accountNote'
+									)}
+								</Typography>
+								<Button
+									variant="text"
+									onClick={() =>
+										setTemporaryChosen(
+											(current) => !current
+										)
+									}
+									sx={{
+										'mt': 1,
+										'textTransform': 'none',
+										'color': registrationMd3.primary,
+										'&:focus-visible': {
+											outline: `2px solid ${registrationMd3.focus}`,
+											outlineOffset: 2
+										}
+									}}
+								>
+									{t(
+										temporaryChosen
+											? 'guestAccountMode.entry.withAccount'
+											: 'guestAccountMode.entry.withoutAccount'
+									)}
+								</Button>
+							</Box>
 						)}
 						{askPostcode && (
 							<DirectLinkPostcodeField

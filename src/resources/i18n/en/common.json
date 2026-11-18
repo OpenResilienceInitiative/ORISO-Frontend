@@ -2271,6 +2271,20 @@
 		},
 		"deliveryStatus": {
 			"sent": "Sent"
+		},
+		"appointmentNotice": {
+			"title": {
+				"created": "Appointment scheduled",
+				"moved": "Appointment moved",
+				"cancelled": "Appointment cancelled"
+			},
+			"by": "by {{name}}",
+			"before": "Before:",
+			"after": "New:",
+			"action": {
+				"createNew": "Add new appointment",
+				"openCalendar": "Open in calendar"
+			}
 		}
 	},
 	"navigation": {
@@ -2977,7 +2991,13 @@
 					"label": "Deactivate your absence to leave a message or edit it."
 				},
 				"label": "Deposit an out of office message",
-				"title": "My absence"
+				"title": "My absence",
+				"from": "Absent from (optional)",
+				"until": "Absent until (optional)",
+				"dateHint": "Without a date the absence lasts until further notice, until you switch it off. After the end date you are present again automatically.",
+				"planned": "Planned from {{start}}",
+				"activeUntil": "Absent up to and including {{end}}",
+				"invalidRange": "The end date is before the start date."
 			},
 			"liveChat": {
 				"title": "My Live-Chat availability",
@@ -3304,26 +3324,35 @@
 					"label": "Download Excel file"
 				},
 				"filename": "Statistics online consulting",
-				"title": "You can download your statistics for your selected consulting period here:"
+				"title": "You can download your statistics for your selected consulting period here:",
+				"total": "Total"
 			},
 			"csvHeader": {
-				"numberOfAppointments": "Appointments booked",
+				"numberOfAppointments": "Appointments held",
 				"numberOfAssignedSessions": "Consultations accepted",
+				"numberOfCancelledAppointments": "Appointments cancelled",
+				"numberOfChatAppointments": "of which chat",
+				"numberOfOnsiteAppointments": "of which on site",
+				"numberOfPhoneAppointments": "of which phone",
 				"numberOfSentMessages": "Messages written",
 				"numberOfSessionsWhereConsultantWasActive": "Active consulting",
+				"numberOfVideoAppointments": "of which video",
+				"period": "Period",
 				"videoCallDuration": "Duration of video calls in minutes:seconds"
 			},
 			"period": {
-				"currentMonth": "current month",
-				"currentYear": "current year",
+				"currentMonth": "this month",
+				"currentWeek": "this week",
+				"currentYear": "this year",
 				"display": {
 					"default": "DD.MM.JJJJ - DD.MM.JJJJ",
 					"prefix": "In the period from ",
 					"suffix": " you have:"
 				},
 				"lastMonth": "last month",
-				"lastYear": "past year",
-				"prefix": "Your numbers of the"
+				"lastWeek": "last week",
+				"lastYear": "last year",
+				"prefix": "Your numbers for"
 			},
 			"title": "My statistics"
 		},
@@ -4778,7 +4807,9 @@
 		},
 		"deletedAsker": {
 			"title": "Deleted advice seeker",
-			"hint": "This chat was deleted. Personal data and messages are no longer available."
+			"hint": "This chat was deleted. Personal data and messages are no longer available.",
+			"preview": "Chat was deleted",
+			"previewArchived": "Deleted · in archive"
 		}
 	},
 	"statusOverlay": {
@@ -6463,11 +6494,6 @@
 				"on": "Guests wait until you let them in. Switching it off lets everyone waiting in at once.",
 				"off": "Guests enter the call directly, without waiting."
 			},
-			"temporaryAccount": {
-				"label": "Temporary account",
-				"on": "Guests get a guest account that is deleted after the call.",
-				"off": "Guests sign in with their own account or create one."
-			},
 			"linkLabel": "Link to the call",
 			"copy": "Copy",
 			"copied": "Copied",
@@ -6756,7 +6782,6 @@
 			"text": "Whoever opens the link reaches you directly – in a chat, an audio call or a video call.",
 			"topicLabel": "Choose topic",
 			"mediumLabel": "Kind of contact",
-			"temporary": "Temporary account",
 			"temporaryHint": "The account is deleted after the conversation.",
 			"create": "Create link",
 			"createFailed": "The link could not be created. Please try again.",
@@ -6814,7 +6839,6 @@
 			"nameRequired": "Please enter a name.",
 			"topic": "Topic",
 			"mediumFixed": "The type of contact cannot be changed",
-			"temporaryHint": "Applies only to people who open the link from now on.",
 			"failed": "The change could not be saved. Please try again.",
 			"scheduledAt": "Date and time",
 			"clearScheduledAt": "Remove"
@@ -6874,10 +6898,11 @@
 			"createAction": "Create",
 			"saveAction": "Save",
 			"withAppointment": "With appointment",
-			"withAppointmentHint": "Everyone who opens the link meets in one shared conversation.",
+			"withAppointmentHint": "Everyone who opens the link meets in one shared conversation. The appointment also appears in your calendar.",
 			"withoutAppointmentHint": "Without an appointment, each person gets their own conversation. The link works until you delete it.",
 			"inviteOthers": "Invite more people by link",
 			"inviteOthersHint": "For example an interpreter. Invited people only see messages written after they joined.",
+			"inviteOthersMediumOff": "Direct invitations are not enabled for this type. Choose another type to invite more people.",
 			"validity": {
 				"label": "Valid after the appointment ends",
 				"hint": "After that, guests lose access and the conversation is archived.",
@@ -6896,7 +6921,15 @@
 				"both": "Both"
 			},
 			"knock": "Knock first",
-			"knockHint": "You let each person in yourself. You can change this during the call."
+			"knockHint": "You let each person in yourself. You can change this during the call.",
+			"newPerson": {
+				"option": "New person by direct invitation …",
+				"hint": "This person has no conversation with you yet. In the next step you create a direct invitation with this appointment.",
+				"action": "Continue to direct invitation"
+			},
+			"linkFailedTitle": "Invitation link not created",
+			"linkFailedAfterAppointment": "The appointment is saved, but the invitation link is not. Please try again.",
+			"appointmentSaved": "The appointment is saved."
 		},
 		"overview": {
 			"title": "Appointments & direct invitations",
@@ -6971,7 +7004,8 @@
 			"title": "New link",
 			"text": "Here is the new link to the appointment:",
 			"validUntil": "The new link to the appointment works until {{date}}:"
-		}
+		},
+		"fromCalendar": "Appointment from the calendar: {{range}}. Choose topic and medium, then create the direct invitation."
 	},
 	"calendar": {
 		"bandLoading": "Loading: {{names}}",
@@ -7024,7 +7058,8 @@
 			"group": "Group date",
 			"blocker": "Blocked",
 			"busy": "Busy",
-			"colleague": "Busy"
+			"colleague": "Busy",
+			"absence": "Absent"
 		},
 		"noEvents": "No appointments in this period",
 		"loading": "Loading appointments",
@@ -7053,7 +7088,8 @@
 			"entryKind": "Kind of entry",
 			"tabs": {
 				"appointment": "Appointment",
-				"blocker": "Blocked time"
+				"blocker": "Blocked time",
+				"absence": "Absence"
 			}
 		},
 		"details": {
@@ -7185,7 +7221,8 @@
 			"joinSub": "Open the video conference",
 			"moveSub": "Change day and time",
 			"proposeSub": "{{name}} has to confirm",
-			"cancelSub": "{{name}} gets a message"
+			"cancelSub": "{{name}} gets a message",
+			"reason": "Reason (optional)"
 		},
 		"fullscreen": "Full screen",
 		"fullscreenExit": "Exit full screen (Esc)",
@@ -7256,7 +7293,8 @@
 			"declined": "Proposal declined. The appointment stays at {{date}}.",
 			"noLongerValid": "This proposal no longer applies. The appointment has changed or is over.",
 			"navCount": "{{count}} open requests",
-			"navCount_one": "{{count}} open request"
+			"navCount_one": "{{count}} open request",
+			"reason": "Reason: {{reason}}"
 		},
 		"quick": {
 			"freeUnavailable": "Free times are not available right now.",
@@ -7493,9 +7531,164 @@
 			"pillKind": "As button: {{kind}}",
 			"pillMenu": "Choose button: {{kind}}"
 		},
+		"bandCard": {
+			"label": "Who is busy",
+			"back": "Back to the list",
+			"busy": "Busy",
+			"free": "Free",
+			"nobodyFree": "Nobody is free.",
+			"show": "View calendar",
+			"showLabel": "View the calendar of {{name}}",
+			"ownerOnly": "Only {{name}} can change this.",
+			"all": "Everyone side by side",
+			"create": "Add at this time"
+		},
 		"links": {
 			"title": "Links without an appointment",
 			"hint": "Invitation links you can share: copy them or show a QR code."
+		},
+		"absence": {
+			"description": "Choose the days you are away. During that time advice seekers see your absence message.",
+			"from": "From",
+			"until": "Until",
+			"message": "Absence message",
+			"messageHint": "Advice seekers see this message but can still write to you.",
+			"effect": "After the last day you are present again automatically. The same absence shows in your profile.",
+			"save": "Add absence",
+			"conflicts": "{{count}} appointments fall in this period. They stay in place – cancel or move them yourself if needed.",
+			"conflicts_one": "{{count}} appointment falls in this period. It stays in place – cancel or move it yourself if needed.",
+			"saved": "Absence added. It also shows in your profile."
 		}
+	},
+	"guestAccountMode": {
+		"label": "Guest account",
+		"menuLabel": "Choose guest account",
+		"option": {
+			"TEMPORARY": "Delete after the session",
+			"GUEST_CHOOSES": "Guest chooses",
+			"PERMANENT": "Permanent"
+		},
+		"hint": {
+			"TEMPORARY": "New guests get an account that is deleted after the conversation.",
+			"GUEST_CHOOSES": "New guests choose when they join: without an account or with their own account.",
+			"PERMANENT": "New guests create their own account."
+		},
+		"newGuestsOnly": "Applies only to people who open the link from now on.",
+		"entry": {
+			"withoutAccount": "Join without an account",
+			"withAccount": "Create an account",
+			"temporaryNote": "Your access is deleted after the conversation. You can still keep it later.",
+			"accountNote": "With your own account you can come back later."
+		},
+		"keep": {
+			"action": "Keep account",
+			"actionDescription": "Otherwise your account is deleted after the conversation.",
+			"title": "Keep account",
+			"text": "Otherwise your account is deleted after the conversation. Set a password and it stays, and you can sign in again later.",
+			"loginName": "Your username: {{name}}",
+			"password": "Password",
+			"repeat": "Repeat password",
+			"mismatch": "The passwords do not match.",
+			"submit": "Keep account",
+			"cancel": "Cancel",
+			"success": "Your account stays.",
+			"recoveryPending": "Your account stays. To read your messages on another device, you need your recovery key.",
+			"error": {
+				"badRequest": "The password does not meet the requirements.",
+				"forbidden": "This invitation does not let you keep the account.",
+				"notFound": "Your account was not found. Please sign in again.",
+				"conflict": "Your account is being deleted or is already permanent.",
+				"generic": "That did not work. Please try again."
+			}
+		}
+	},
+	"managePeople": {
+		"self": "(you)",
+		"loading": "Loading…",
+		"working": "Working…",
+		"retry": "Try again",
+		"cancel": "Cancel",
+		"search": "Search by name or organisation",
+		"noMatches": "Nobody matches this search.",
+		"otherPerson": "Choose someone else",
+		"since": "Since {{date}}",
+		"role": {
+			"owner": "Owner",
+			"coModerator": "Co-moderator"
+		},
+		"standing": {
+			"badge": "Permanently assigned",
+			"hint": "Set by the agency admin. Supervision stays on, so this person can be replaced but not simply removed.",
+			"noReplacement": "Set by the agency admin. Nobody else at this counselling centre can take over at the moment."
+		},
+		"add": {
+			"action": "Add",
+			"labelFor": "Add {{name}}",
+			"confirm": "Add {{name}}"
+		},
+		"remove": {
+			"action": "Remove",
+			"labelFor": "Remove {{name}}",
+			"confirm": "Really remove?"
+		},
+		"replace": {
+			"action": "Replace",
+			"labelFor": "Replace {{name}}",
+			"title": "Who should take over from {{name}}?",
+			"confirm": "Replace with {{name}}",
+			"pick": "Choose",
+			"pickLabelFor": "Choose {{name}}"
+		},
+		"error": {
+			"members": "The list could not be loaded.",
+			"candidates": "The available people could not be loaded.",
+			"add": "This person could not be added. Please try again.",
+			"remove": "This person could not be removed. Please try again.",
+			"replace": "The replacement did not work. Please try again.",
+			"refused": "This person can no longer be added here. Their organisation or this chat does not allow it. The list has been updated."
+		},
+		"supervision": {
+			"title": "Manage supervision",
+			"description": "Supervisors read along in this case and talk to you in the supervision chat.",
+			"membersTitle": "Current supervision",
+			"emptyMembers": "This case has no supervisor yet.",
+			"addTitle": "Add a supervisor",
+			"emptyCandidates": "Nobody else at this counselling centre is marked as a supervisor. The agency admin decides who is.",
+			"reasonLabel": "Reason for supervision",
+			"reasonPlaceholder": "Why should this person supervise the case?",
+			"reasonMissing": "Please enter a reason.",
+			"added": "{{name}} now supervises this case."
+		},
+		"internalChat": {
+			"title": "Manage people",
+			"description": "Everyone in this internal chat can bring in colleagues.",
+			"membersTitle": "In this chat",
+			"emptyMembers": "Nobody is in this chat yet.",
+			"addTitle": "Add a colleague",
+			"addNote": "New people see messages from the moment they join, not the earlier ones.",
+			"emptyCandidates": "No other colleagues can be added to this chat.",
+			"added": "{{name}} was added to this chat."
+		},
+		"groupChat": {
+			"title": "Manage people",
+			"description": "See who runs this group, and share the link with people who want to join.",
+			"membersTitle": "Moderation",
+			"emptyMembers": "Nobody moderates this group yet.",
+			"addTitle": "Add a co-moderator",
+			"emptyCandidates": "No other colleagues can be added to this group.",
+			"inviteTitle": "Invite people",
+			"inviteDescription": "Advice seekers join through this link or QR code.",
+			"added": "{{name}} now co-moderates this group."
+		}
+	},
+	"deletedAskerSession": {
+		"notice": {
+			"title": "This chat was deleted",
+			"deletedOn": "Deleted on {{date}}",
+			"text": "The advice seeker's personal data and messages are no longer available."
+		},
+		"archiveHint": "Move the entry to the archive so it leaves your list and your activity.",
+		"archived": "This entry is in the archive.",
+		"archiveFailed": "Archiving did not work. Please try again."
 	}
 }

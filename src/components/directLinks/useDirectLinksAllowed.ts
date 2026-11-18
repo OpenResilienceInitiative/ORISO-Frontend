@@ -3,6 +3,9 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useTenant } from '../../globalState';
 import { useCounsellorAgencyFormats } from '../../hooks/useCounsellorAgencyFormats';
 import { getDirectLinkMedia } from '../conversationCreate/directLink/directLinkAvailability';
+import type { DirectLinkMedium } from '../conversationCreate/directLink/directLink';
+
+const NO_MEDIA: readonly DirectLinkMedium[] = [];
 
 /** Where a counsellor lands when direct links are off (Routing's default). */
 export const COUNSELLOR_START_PATH = '/sessions/consultant/sessionPreview';
@@ -19,16 +22,25 @@ export const SETTINGS_OVERVIEW_PATH = '/profile/einstellungen';
 export const useDirectLinksAvailability = (enabled: boolean) => {
 	const tenant = useTenant();
 	const { agencies, isLoading } = useCounsellorAgencyFormats(enabled);
-	return useMemo(
-		() => ({
-			allowed:
-				enabled &&
-				getDirectLinkMedia(tenant as never, agencies).length > 0,
+	return useMemo(() => {
+		const media = enabled
+			? getDirectLinkMedia(tenant as never, agencies)
+			: NO_MEDIA;
+		return {
+			allowed: media.length > 0,
+			media,
 			ready: !enabled || (Boolean(tenant) && !isLoading)
-		}),
-		[enabled, tenant, agencies, isLoading]
-	);
+		};
+	}, [enabled, tenant, agencies, isLoading]);
 };
+
+/**
+ * #2279: the media themselves. An invitation bound to an appointment takes
+ * the Art's medium, which "Direkteinladung erlauben" may not allow.
+ */
+export const useDirectLinkMedia = (
+	enabled: boolean
+): readonly DirectLinkMedium[] => useDirectLinksAvailability(enabled).media;
 
 /** For hiding entries: the short show-then-hide while loading is accepted. */
 export const useDirectLinksAllowed = (enabled: boolean): boolean =>

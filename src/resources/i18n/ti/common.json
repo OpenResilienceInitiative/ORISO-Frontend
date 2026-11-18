@@ -2246,6 +2246,20 @@
 		},
 		"deliveryStatus": {
 			"sent": "ተላኢኹ"
+		},
+		"appointmentNotice": {
+			"title": {
+				"created": "ቆጸራ ተሓዚ",
+				"moved": "ቆጸራ ተቐይሩ",
+				"cancelled": "ቆጸራ ተሰሪዙ"
+			},
+			"by": "ብ {{name}}",
+			"before": "ቅድሚ፦",
+			"after": "ሓድሽ፦",
+			"action": {
+				"createNew": "ሓድሽ ቆጸራ ፍጠር",
+				"openCalendar": "ኣብ ዓውደ-ኣዋርሕ ክፈት"
+			}
 		}
 	},
 	"navigation": {
@@ -2955,7 +2969,13 @@
 					"label": "መልእኽቲ ንምግዳፍ ወይ ንምእራም ዘይምህላውካ ኣጥፍእ ።"
 				},
 				"label": "ካብ ቤት ጽሕፈት ወጻኢ መልእኽቲ ግደፉ",
-				"title": "ዘይምህላወይ"
+				"title": "ዘይምህላወይ",
+				"from": "ዘይምህላው ካብ (ኣማራጺ)",
+				"until": "ዘይምህላው ክሳብ (ኣማራጺ)",
+				"dateHint": "ዕለት እንተ ዘይብሉ ዘይምህላው ክሳብ ዘጥፍእዎ ይቕጽል። ድሕሪ ዕለት መወዳእታ ብኣውቶማቲክ ተመሊስኩም ኣለኹም።",
+				"planned": "ካብ {{start}} ተወጢኑ",
+				"activeUntil": "ክሳብ {{end}} የለን",
+				"invalidRange": "ዕለት መወዳእታ ቅድሚ ዕለት መጀመርታ እዩ።"
 			},
 			"liveChat": {
 				"title": "ናተይ ናይ ላይቭ ቻት ምህላው",
@@ -3295,17 +3315,25 @@
 					"label": "ናይ ኤክሰል ፋይል ኣውርድ"
 				},
 				"filename": "ስታቲስቲክስ ብኢንተርነት ዝወሃብ ምኽሪ",
-				"title": "ንዝመረጽኩሞ ናይ ምምኽኻር ግዜ ስታቲስቲክስኩም ኣብዚ ክትረኽብዎ ትኽእሉ ኢኹም፤"
+				"title": "ንዝመረጽኩሞ ናይ ምምኽኻር ግዜ ስታቲስቲክስኩም ኣብዚ ክትረኽብዎ ትኽእሉ ኢኹም፤",
+				"total": "ጠቕላላ"
 			},
 			"csvHeader": {
-				"numberOfAppointments": "ቆጸራታት ተሓዚኡ",
+				"numberOfAppointments": "ዝተኻየዱ ቆጸራታት",
 				"numberOfAssignedSessions": "ምምኽኻር ተቐባልነት ረኺቡ።",
+				"numberOfCancelledAppointments": "ዝተሰረዙ ቆጸራታት",
+				"numberOfChatAppointments": "ካብዚ ቻት",
+				"numberOfOnsiteAppointments": "ካብዚ ኣብ ቦታ",
+				"numberOfPhoneAppointments": "ካብዚ ተሌፎን",
 				"numberOfSentMessages": "ዝተጻሕፈ መልእኽትታት",
 				"numberOfSessionsWhereConsultantWasActive": "ንጡፍ ምምኽኻር",
+				"numberOfVideoAppointments": "ካብዚ ቪድዮ",
+				"period": "እዋን",
 				"videoCallDuration": "ንውሓት ግዜ ቪድዮ ጻውዒት ብደቒቕ:ካልኢት"
 			},
 			"period": {
 				"currentMonth": "ናይ ሕጂ ወርሒ",
+				"currentWeek": "ናይ ሕጂ ሰሙን",
 				"currentYear": "ናይ ሕጂ ዓመት",
 				"display": {
 					"default": "ዲ.ዲ.ኤም.ኤም.ይይይይ - ዲ.ኤም.ኤም.ይይይይ",
@@ -3313,6 +3341,7 @@
 					"suffix": " ኣለካ ድዩ፤"
 				},
 				"lastMonth": "ዝሓለፈ ወርሒ",
+				"lastWeek": "ዝሓለፈ ሰሙን",
 				"lastYear": "ዝሓለፈ ዓመት",
 				"prefix": "ቁጽርታትኩም"
 			},
@@ -4786,7 +4815,9 @@
 		},
 		"deletedAsker": {
 			"title": "ዝተሰረዘ ደላዪ ምኽሪ",
-			"hint": "እዚ ቻት ተሰሪዙ። ውልቃዊ ሓበሬታን መልእኽትታትን ድሕሪ ሕጂ ኣይርከቡን።"
+			"hint": "እዚ ቻት ተሰሪዙ። ውልቃዊ ሓበሬታን መልእኽትታትን ድሕሪ ሕጂ ኣይርከቡን።",
+			"preview": "ቻት ተሰሪዙ",
+			"previewArchived": "ተሰሪዙ · ኣብ መዝገብ"
 		}
 	},
 	"statusOverlay": {
@@ -6522,11 +6553,6 @@
 				"on": "ጋሻ ክሳብ ተእትዎም ይጸበዩ። እንተ ኣጥፊእኩሞ፡ ኩሎም ዝጽበዩ ዘለዉ ብቕጽበት ይኣትዉ።",
 				"off": "ጋሻ ከይተጸበዩ ብቐጥታ ናብ ጻውዒት ይኣትዉ።"
 			},
-			"temporaryAccount": {
-				"label": "ግዝያዊ ሕሳብ",
-				"on": "ጋሻ ድሕሪ ጻውዒት ዝድምሰስ ናይ ጋሻ ሕሳብ ይረኽቡ።",
-				"off": "ጋሻ ብናይ ገዛእ ርእሶም ሕሳብ ይኣትዉ ወይ ሓድሽ ይኸፍቱ።"
-			},
 			"linkLabel": "ሊንክ ናብ ጻውዒት",
 			"copy": "ቅዳሕ",
 			"copied": "ተቐዲሑ",
@@ -6808,7 +6834,6 @@
 			"text": "ነዚ ሊንክ ዝኸፍት ብቐጥታ ናባኻ ይበጽሕ – ብቻት፡ ብድምጺ ወይ ብቪድዮ ጻውዒት።",
 			"topicLabel": "ኣርእስቲ ምረጽ",
 			"mediumLabel": "ዓይነት ርክብ",
-			"temporary": "ግዝያዊ ሕሳብ",
 			"temporaryHint": "እቲ ሕሳብ ድሕሪ ዝርርብ ይድምሰስ።",
 			"create": "ሊንክ ፍጠር",
 			"createFailed": "እቲ ሊንክ ክፍጠር ኣይከኣለን። በጃኻ እንደገና ፈትን።",
@@ -6866,7 +6891,6 @@
 			"nameRequired": "በጃኹም ስም ኣእትዉ።",
 			"topic": "ኣርእስቲ",
 			"mediumFixed": "ዓይነት ርክብ ክቕየር ኣይክእልን",
-			"temporaryHint": "ነቶም ካብ ሕጂ ንደሓር ነቲ መላግቦ ዝኸፍቱ ሰባት ጥራይ ይምልከት።",
 			"failed": "እቲ ለውጢ ክዕቀብ ኣይከኣለን። በጃኹም እንደገና ፈትኑ።",
 			"scheduledAt": "ዕለትን ሰዓትን",
 			"clearScheduledAt": "ኣልግስ"
@@ -6926,10 +6950,11 @@
 			"createAction": "ፍጠር",
 			"saveAction": "ዓቅብ",
 			"withAppointment": "ምስ ቆጸራ",
-			"withAppointmentHint": "ነቲ ሊንክ ዝኸፈቱ ኩሎም ኣብ ሓደ ሓባራዊ ዝርርብ ይራኸቡ።",
+			"withAppointmentHint": "ነቲ ሊንክ ዝኸፈቱ ኩሎም ኣብ ሓደ ሓባራዊ ዝርርብ ይራኸቡ። እቲ ቆጸራ ኣብ ካላንደርኩም እውን ይርአ።",
 			"withoutAppointmentHint": "ብዘይ ቆጸራ ነፍሲ ወከፍ ሰብ ናይ ባዕሉ ዝርርብ ይረክብ። እቲ ሊንክ ክሳብ ትድምሰስዎ ይሰርሕ።",
 			"inviteOthers": "ካልኦት ሰባት ብሊንክ ዓድም",
 			"inviteOthersHint": "ንኣብነት ተርጓሚ። ዝተዓደሙ ሰባት ድሕሪ ምእታዎም ዝተጻሕፉ መልእኽትታት ጥራይ ይርእዩ።",
+			"inviteOthersMediumOff": "ነዚ ዓይነት ቀጥታዊ ዕድመ ኣይተፈቕደን። ካልኦት ሰባት ንምዕዳም ካልእ ዓይነት ምረጹ።",
 			"validity": {
 				"label": "ድሕሪ ምውዳእ ቆጸራ ዝሰርሓሉ ግዜ",
 				"hint": "ድሕሪኡ ጋሻታት መእተዊ ይስእኑ፡ እቲ ዝርርብ ድማ ኣብ ማህደር ይቕመጥ።",
@@ -6948,7 +6973,15 @@
 				"both": "ክልቲኡ"
 			},
 			"knock": "ቅድም ኳሕኳሕ",
-			"knockHint": "ነፍሲ ወከፍ ሰብ ባዕልኹም ተእትውዎ። ኣብ እዋን ጻውዒት ክትቕይርዎ ትኽእሉ ኢኹም።"
+			"knockHint": "ነፍሲ ወከፍ ሰብ ባዕልኹም ተእትውዎ። ኣብ እዋን ጻውዒት ክትቕይርዎ ትኽእሉ ኢኹም።",
+			"newPerson": {
+				"option": "ሓድሽ ሰብ ብቐጥታ መላግቦ …",
+				"hint": "እዚ ሰብ ምሳኹም ገና ዝርርብ የብሉን። ኣብ ዝቕጽል ስጉምቲ ምስዚ ቆጸራ ናይ ቀጥታ መላግቦ ትፈጥሩ።",
+				"action": "ናብ ናይ ቀጥታ መላግቦ ቀጽሉ"
+			},
+			"linkFailedTitle": "ናይ መላግቦ ሊንክ ኣይተፈጥረን",
+			"linkFailedAfterAppointment": "እቲ ቆጸራ ተዓቂቡ፣ ናይ መላግቦ ሊንክ ግን ኣይተፈጥረን። በጃኹም እንደገና ፈትኑ።",
+			"appointmentSaved": "እቲ ቆጸራ ተዓቂቡ።"
 		},
 		"overview": {
 			"title": "ቆጸራታትን ናይ ቀጥታ መላግቦታትን",
@@ -7023,7 +7056,8 @@
 			"title": "ሓድሽ ሊንክ",
 			"text": "እዚ ሓድሽ ሊንክ ናይቲ ቆጸራ እዩ፦",
 			"validUntil": "እቲ ሓድሽ ሊንክ ናይቲ ቆጸራ ክሳብ {{date}} ይሰርሕ፦"
-		}
+		},
+		"fromCalendar": "ካብ ካላንደር ዝመጸ ቆጸራ፦ {{range}}። ኣርእስትን መራኸቢን ምረጹ፣ ድሕሪኡ ናይ ቀጥታ መላግቦ ፍጠሩ።"
 	},
 	"calendar": {
 		"bandLoading": "ይጽዓን ኣሎ፦ {{names}}",
@@ -7076,7 +7110,8 @@
 			"group": "ናይ ጉጅለ ቆጸራ",
 			"blocker": "ዝተዓጽወ ግዜ",
 			"busy": "ተታሒዙ",
-			"colleague": "ተታሒዙ"
+			"colleague": "ተታሒዙ",
+			"absence": "የለን"
 		},
 		"noEvents": "ኣብዚ ግዜ እዚ ቆጸራ የለን",
 		"loading": "ቆጸራታት ይጽዓኑ ኣለዉ",
@@ -7105,7 +7140,8 @@
 			"entryKind": "ዓይነት ምዝገባ",
 			"tabs": {
 				"appointment": "ቆጸራ",
-				"blocker": "ዝተዓጽወ ግዜ"
+				"blocker": "ዝተዓጽወ ግዜ",
+				"absence": "ዘይምህላው"
 			}
 		},
 		"details": {
@@ -7237,7 +7273,8 @@
 			"joinSub": "ናይ ቪድዮ ኣኼባ ክፈት",
 			"moveSub": "መዓልትን ሰዓትን ቀይር",
 			"proposeSub": "{{name}} ከረጋግጽ ኣለዎ",
-			"cancelSub": "{{name}} መልእኽቲ ይበጽሖ"
+			"cancelSub": "{{name}} መልእኽቲ ይበጽሖ",
+			"reason": "ምኽንያት (ኣማራጺ)"
 		},
 		"fullscreen": "ምሉእ ስክሪን",
 		"fullscreenExit": "ካብ ምሉእ ስክሪን ውጻእ (Esc)",
@@ -7308,7 +7345,8 @@
 			"declined": "ሓሳብ ኣይተቐበልኩምን። ቆጸራ {{date}} ይጸንሕ።",
 			"noLongerValid": "እዚ ሓሳብ ድሕሪ ሕጂ ኣይሰርሕን። እቲ ቆጸራ ተቐይሩ ወይ ሓሊፉ እዩ።",
 			"navCount": "{{count}} ክፉታት ሕቶታት",
-			"navCount_one": "{{count}} ክፉት ሕቶ"
+			"navCount_one": "{{count}} ክፉት ሕቶ",
+			"reason": "ምኽንያት: {{reason}}"
 		},
 		"quick": {
 			"freeUnavailable": "ነጻ ግዜታት ሕጂ ኣይርከቡን።",
@@ -7545,9 +7583,164 @@
 			"pillKind": "ከም መጠወቒ: {{kind}}",
 			"pillMenu": "መጠወቒ ምረጽ: {{kind}}"
 		},
+		"bandCard": {
+			"label": "መን ተታሒዙ",
+			"back": "ናብ ዝርዝር ተመለስ",
+			"busy": "ተታሒዞም",
+			"free": "ነጻ",
+			"nobodyFree": "ነጻ ዝኾነ የለን።",
+			"show": "ካላንደር ርአ",
+			"showLabel": "ካላንደር {{name}} ርአ",
+			"ownerOnly": "{{name}} ጥራይ እዩ ክቕይሮ ዝኽእል።",
+			"all": "ኩሎም ጎን ንጎን",
+			"create": "ኣብዚ ግዜ ኣእቱ"
+		},
 		"links": {
 			"title": "ቆጸራ ዘይብሎም ሊንክታት",
 			"hint": "ክተካፍልዎም እትኽእሉ ናይ ዕድመ ሊንክታት: ቅዳሕ ወይ QR-ኮድ ኣርኢ።"
+		},
+		"absence": {
+			"description": "ዘይትህልዉሉ መዓልትታት ምረጹ። ኣብዚ ግዜ'ዚ ምኽሪ ዝደልዩ ሰባት መልእኽቲ ዘይምህላውኩም ይርእዩ።",
+			"from": "ካብ",
+			"until": "ክሳብ",
+			"message": "መልእኽቲ ዘይምህላው",
+			"messageHint": "ምኽሪ ዝደልዩ ሰባት እዚ መልእኽቲ ይርእዩ፡ ግን ሕጂ'ውን ክጽሕፉልኩም ይኽእሉ።",
+			"effect": "ድሕሪ እታ ናይ መወዳእታ መዓልቲ ብኣውቶማቲክ ተመሊስኩም ኣለኹም። ተመሳሳሊ ዘይምህላው ኣብ ፕሮፋይልኩም ይርአ።",
+			"save": "ዘይምህላው ኣእትዉ",
+			"conflicts": "ኣብዚ ግዜ'ዚ {{count}} ቆጸራታት ኣለዉ። ይቕጽሉ – እንተ ኣድለየ ባዕልኹም ሰርዝዎም ወይ ኣግሕዝዎም።",
+			"conflicts_one": "ኣብዚ ግዜ'ዚ {{count}} ቆጸራ ኣሎ። ይቕጽል – እንተ ኣድለየ ባዕልኹም ሰርዝዎ ወይ ኣግሕዝዎ።",
+			"saved": "ዘይምህላው ኣትዩ። ኣብ ፕሮፋይልኩም'ውን ይርአ።"
 		}
+	},
+	"guestAccountMode": {
+		"label": "ናይ ጋሻ ሕሳብ",
+		"menuLabel": "ናይ ጋሻ ሕሳብ ምረጽ",
+		"option": {
+			"TEMPORARY": "ድሕሪ እቲ ርክብ ደምስስ",
+			"GUEST_CHOOSES": "ጋሻ ይመርጽ",
+			"PERMANENT": "ቀዋሚ"
+		},
+		"hint": {
+			"TEMPORARY": "ሓደስቲ ጋሻታት ድሕሪ እቲ ዘተ ዝድምሰስ ሕሳብ ይረኽቡ።",
+			"GUEST_CHOOSES": "ሓደስቲ ጋሻታት ክኣትዉ ከለዉ ይመርጹ፡ ብዘይ ሕሳብ ወይ ብናይ ገዛእ ርእሶም ሕሳብ።",
+			"PERMANENT": "ሓደስቲ ጋሻታት ናይ ገዛእ ርእሶም ሕሳብ ይኸፍቱ።"
+		},
+		"newGuestsOnly": "ነቲ መላግቦ ካብ ሕጂ ንደሓር ዝኸፍቱ ሰባት ጥራይ ይምልከት።",
+		"entry": {
+			"withoutAccount": "ብዘይ ሕሳብ ተጸንበር",
+			"withAccount": "ሕሳብ ክፈት",
+			"temporaryNote": "ኣተኣታትዋኹም ድሕሪ እቲ ዘተ ይድምሰስ። ደሓር ክትዕቅብዎ ትኽእሉ ኢኹም።",
+			"accountNote": "ብናይ ገዛእ ርእስኹም ሕሳብ ደሓር ክትምለሱ ትኽእሉ ኢኹም።"
+		},
+		"keep": {
+			"action": "ሕሳብ ዓቅብ",
+			"actionDescription": "እንተዘይኮነ ሕሳብኩም ድሕሪ እቲ ዘተ ይድምሰስ።",
+			"title": "ሕሳብ ዓቅብ",
+			"text": "እንተዘይኮነ ሕሳብኩም ድሕሪ እቲ ዘተ ይድምሰስ። መሕለፊ ቃል ወስኑ፡ ሽዑ ይዕቀብ፡ ደሓር ከኣ እንደገና ክትኣትዉ ትኽእሉ።",
+			"loginName": "ናይ ተጠቃሚ ስምኩም፡ {{name}}",
+			"password": "መሕለፊ ቃል",
+			"repeat": "መሕለፊ ቃል ድገም",
+			"mismatch": "እቶም መሕለፊ ቃላት ኣይሰማምዑን።",
+			"submit": "ሕሳብ ዓቅብ",
+			"cancel": "ሰርዝ",
+			"success": "ሕሳብኩም ይዕቀብ።",
+			"recoveryPending": "ሕሳብኩም ይዕቀብ። መልእኽትታትኩም ኣብ ካልእ መሳርሒ ንምንባብ፡ መፍትሕ ምምላስ የድልየኩም።",
+			"error": {
+				"badRequest": "እቲ መሕለፊ ቃል ነቶም ረቛሒታት ኣየማልአን።",
+				"forbidden": "እዚ ዕድመ ነቲ ሕሳብ ምዕቃብ ኣየፍቅድን።",
+				"notFound": "ሕሳብኩም ኣይተረኽበን። በጃኹም እንደገና እተዉ።",
+				"conflict": "ሕሳብኩም ይድምሰስ ኣሎ ወይ ድማ ድሮ ቀዋሚ እዩ።",
+				"generic": "ኣይሰርሐን። በጃኹም እንደገና ፈትኑ።"
+			}
+		}
+	},
+	"managePeople": {
+		"self": "(ንስኹም)",
+		"loading": "ይጽዕን ኣሎ…",
+		"working": "ይስራሕ ኣሎ…",
+		"retry": "እንደገና ፈትን",
+		"cancel": "ሰርዝ",
+		"search": "ብስም ድለይ",
+		"noMatches": "ምስዚ ምድላይ ዝሰማማዕ የለን።",
+		"otherPerson": "ካልእ ሰብ ምረጽ",
+		"since": "ካብ {{date}}",
+		"role": {
+			"owner": "ወናኒ",
+			"coModerator": "ተሓጋጋዚ ኣወሃሃዲ"
+		},
+		"standing": {
+			"badge": "ቀዋሚ ምድባ",
+			"hint": "ብኣመሓዳሪ ማእከል ዝተወሰነ። ሱፐርቪዥን ኩሉ ግዜ ክፉት እዩ፡ ነዚ ሰብ ክትቅይሩ ትኽእሉ፡ ብዘይ ተክኢ ግን ከተውጽኡ ኣይትኽእሉን።",
+			"noReplacement": "ብኣመሓዳሪ ማእከል ዝተወሰነ። ሕጂ ኣብዚ ማእከል ክትክእ ዝኽእል ካልእ ሰብ የለን።"
+		},
+		"add": {
+			"action": "ወስኽ",
+			"labelFor": "{{name}} ወስኽ",
+			"confirm": "{{name}} ወስኽ"
+		},
+		"remove": {
+			"action": "ኣውጽእ",
+			"labelFor": "{{name}} ኣውጽእ",
+			"confirm": "ብሓቂ ይውጻእ?"
+		},
+		"replace": {
+			"action": "ቀይር",
+			"labelFor": "{{name}} ቀይር",
+			"title": "ኣብ ክንዲ {{name}} መን ይኹን?",
+			"confirm": "ናብ {{name}} ቀይር",
+			"pick": "ምረጽ",
+			"pickLabelFor": "{{name}} ምረጽ"
+		},
+		"error": {
+			"members": "ዝርዝር ክጽዓን ኣይከኣለን።",
+			"candidates": "ዝርከቡ ሰባት ክጽዓኑ ኣይከኣሉን።",
+			"add": "እቲ ሰብ ክውሰኽ ኣይከኣለን። በጃኹም እንደገና ፈትኑ።",
+			"remove": "እቲ ሰብ ክወጽእ ኣይከኣለን። በጃኹም እንደገና ፈትኑ።",
+			"replace": "ምቕያር ኣይተሳኽዐን። በጃኹም እንደገና ፈትኑ።",
+			"refused": "እዚ ሰብ ኣብዚ ደጊም ክውሰኽ ኣይክእልን እዩ። ትካሉ ወይ እዚ ቻት ኣይፈቕዶን። እቲ ዝርዝር ተሓዲሱ ኣሎ።"
+		},
+		"supervision": {
+			"title": "ሱፐርቪዥን ኣመሓድር",
+			"description": "ሱፐርቫይዘራት ነዚ ጉዳይ የንብቡ፡ ኣብ ናይ ሱፐርቪዥን ቻት ከኣ ምሳኹም ይዛረቡ።",
+			"membersTitle": "ናይ ሕጂ ሱፐርቪዥን",
+			"emptyMembers": "እዚ ጉዳይ ገና ሱፐርቫይዘር የብሉን።",
+			"addTitle": "ሱፐርቫይዘር ወስኽ",
+			"emptyCandidates": "ኣብዚ ማእከል ካልእ ከም ሱፐርቫይዘር ዝተመልከተ የለን። እዚ ኣመሓዳሪ ማእከል ይውስኖ።",
+			"reasonLabel": "ምኽንያት ሱፐርቪዥን",
+			"reasonPlaceholder": "እዚ ሰብ ስለምንታይ እዚ ጉዳይ ይቆጻጸር?",
+			"reasonMissing": "በጃኹም ምኽንያት ኣእትዉ።",
+			"added": "{{name}} ሕጂ ነዚ ጉዳይ ይቆጻጸሮ ኣሎ።"
+		},
+		"internalChat": {
+			"title": "ሰባት ኣመሓድር",
+			"description": "ኣብዚ ውሽጣዊ ቻት ዘለዉ ኩሎም መሳርሕቲ ክውስኹ ይኽእሉ።",
+			"membersTitle": "ኣብዚ ቻት",
+			"emptyMembers": "ኣብዚ ቻት ገና ሰብ የለን።",
+			"addTitle": "መሳርሕቲ ወስኽ",
+			"addNote": "ሓደሽቲ ሰባት መልእኽትታት ካብ ዝተጸንበርሉ እዋን ጀሚሮም ይርእዩ፡ ነቶም ዝሓለፉ ኣይኮነን።",
+			"emptyCandidates": "ናብዚ ቻት ካልእ መሳርሕቲ ክውሰኽ ኣይከኣልን።",
+			"added": "{{name}} ሕጂ ኣብዚ ቻት ኣሎ።"
+		},
+		"groupChat": {
+			"title": "ሰባት ኣመሓድር",
+			"description": "ነዚ ጉጅለ መን ከም ዝመርሖ ርኣዩ፡ ነቲ ሊንክ ከኣ ክሳተፉ ምስ ዝደልዩ ኣካፍሉ።",
+			"membersTitle": "ኣወሃህዳ",
+			"emptyMembers": "እዚ ጉጅለ ገና ኣወሃሃዲ የብሉን።",
+			"addTitle": "ተሓጋጋዚ ኣወሃሃዲ ወስኽ",
+			"emptyCandidates": "ናብዚ ጉጅለ ካልእ መሳርሕቲ ክውሰኽ ኣይከኣልን።",
+			"inviteTitle": "ሰባት ዓድም",
+			"inviteDescription": "ምኽሪ ዝደልዩ ሰባት ብዚ ሊንክ ወይ QR ኮድ ይጽንበሩ።",
+			"added": "{{name}} ሕጂ ነዚ ጉጅለ ብሓባር የመሓድሮ ኣሎ።"
+		}
+	},
+	"deletedAskerSession": {
+		"notice": {
+			"title": "እዚ ቻት ተሰሪዙ",
+			"deletedOn": "ዝተሰረዘሉ {{date}}",
+			"text": "ውልቃዊ ሓበሬታን መልእኽትታትን ናይቲ ደላዪ ምኽሪ ድሕሪ ሕጂ ኣይርከቡን።"
+		},
+		"archiveHint": "ካብ ዝርዝርካን ንጥፈታትካን ምእንቲ ክእለ፡ ነቲ ኣእታዊ ናብ መዝገብ ኣሰጋግሮ።",
+		"archived": "እዚ ኣእታዊ ኣብ መዝገብ ይርከብ።",
+		"archiveFailed": "ናብ መዝገብ ምስግጋር ኣይሰለጠን። በጃኹም ደጊምኩም ፈትኑ።"
 	}
 }

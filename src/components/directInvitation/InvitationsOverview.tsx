@@ -18,6 +18,7 @@ import QrCode2OutlinedIcon from '@mui/icons-material/QrCode2Outlined';
 import AddLinkOutlinedIcon from '@mui/icons-material/AddLinkOutlined';
 import { Button, CircularProgress, IconButton } from '@mui/material';
 import { ReactComponent as WaitingIllustration } from '../../resources/img/illustrations/chat-waiting.svg';
+import { ReactComponent as OnSiteIcon } from '../../resources/img/icons/location.svg';
 import { copyTextToClipboard } from '../../utils/clipboardHelpers';
 import { MyDirectLinks } from '../conversationCreate/directLink/MyDirectLinks';
 import { DirectLinkMediumIcon } from '../conversationCreate/directLink/DirectLinkMediumIcon';
@@ -48,7 +49,8 @@ export interface UpcomingInvitation extends InvitationSlot {
 	name: string;
 	/** Share link; absent for a 1:1 appointment nobody else is invited to. */
 	url?: string;
-	medium: DirectLinkMedium;
+	/** How it takes place; a 1:1 appointment may also be on site. */
+	medium: DirectLinkMedium | 'ONSITE';
 	access?: InvitationAccess;
 	knock?: boolean;
 	/** End + validity: when the link stops working. */
@@ -150,7 +152,11 @@ const AppointmentRow = ({
 			</time>
 			<div className="invitationRow__body">
 				<span className="invitationRow__name">
-					<DirectLinkMediumIcon medium={item.medium} filled />
+					{item.medium === 'ONSITE' ? (
+						<OnSiteIcon aria-hidden focusable="false" />
+					) : (
+						<DirectLinkMediumIcon medium={item.medium} filled />
+					)}
 					{item.name}
 				</span>
 				{item.counterpart && (

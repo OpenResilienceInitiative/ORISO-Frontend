@@ -122,7 +122,7 @@ const EXPECTED_TARGET_KIND: Record<string, string> = {
 	// #876: a planned maintenance notice links out to the public status page.
 	'service.notice.planned': 'statusPage',
 	'ADDON_NOTIFICATION': 'addon',
-	// #1159: the deleted chat cannot be opened any more.
+	// #1159: without the producer's notice path there is nothing to open.
 	'session.asker_deleted': 'none'
 };
 
@@ -287,6 +287,28 @@ describe('WP-06 event-descriptor registry', () => {
 			expect(target).toEqual({
 				kind: 'groupChatJoin',
 				path: '/sessions/consultant/sessionView/chat/42'
+			});
+		});
+
+		it('a deleted advice seeker opens the deletion notice, never inline', () => {
+			const resolve = getEventDescriptor(
+				'session.asker_deleted'
+			).resolveActionTarget;
+			expect(
+				resolve({
+					actionPath: '/sessions/consultant/sessionView/deleted/77'
+				})
+			).toEqual({
+				kind: 'request',
+				path: '/sessions/consultant/sessionView/deleted/77'
+			});
+			expect(
+				resolve({
+					actionPath: '/sessions/consultant/sessionView/deleted/x'
+				})
+			).toEqual({ kind: 'none' });
+			expect(resolve({ actionPath: '/somewhere/else' })).toEqual({
+				kind: 'none'
 			});
 		});
 

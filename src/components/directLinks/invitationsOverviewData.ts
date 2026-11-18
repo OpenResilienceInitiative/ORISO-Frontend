@@ -5,11 +5,21 @@
  * invitation appears once, with the invitation's link. An expired invitation
  * is listed on its own, for "Neuen Link senden".
  */
-import type { SessionAppointment } from '../../api/apiSessionAppointments';
+import type {
+	SessionAppointment,
+	SessionAppointmentKind
+} from '../../api/apiSessionAppointments';
 import type { DirectLink } from '../conversationCreate/directLink/directLink';
 import type { UpcomingInvitation } from '../directInvitation/InvitationsOverview';
 
 export const APPOINTMENT_ROW_PREFIX = 'appointment-';
+
+const MEDIUM: Record<SessionAppointmentKind, UpcomingInvitation['medium']> = {
+	CHAT: 'CHAT',
+	PHONE: 'AUDIO',
+	VIDEO: 'VIDEO',
+	ONSITE: 'ONSITE'
+};
 
 export const invitationRow = (link: DirectLink): UpcomingInvitation | null =>
 	link.appointment
@@ -54,7 +64,10 @@ export const overviewSections = (
 			return {
 				id: `${APPOINTMENT_ROW_PREFIX}${appointment.id}`,
 				name: appointmentName,
-				medium: 'CHAT',
+				/* As on the conversation's timeline: one made before the
+				   calendar names no kind and was a video call. */
+				medium:
+					(appointment.kind && MEDIUM[appointment.kind]) || 'VIDEO',
 				start: new Date(appointment.startTime),
 				end: new Date(appointment.endTime),
 				...(counterpart ? { counterpart } : {})

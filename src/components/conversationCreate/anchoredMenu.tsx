@@ -85,7 +85,17 @@ export const useAnchoredMenuLayout = (
 	return layout;
 };
 
-export const MenuPortal = ({ children }: { children: React.ReactNode }) =>
+export const MenuPortal = ({
+	children,
+	container
+}: {
+	children: React.ReactNode;
+	/**
+	 * Inside a modal surface (dialog, popover, sheet) the menu must sit in the
+	 * modal's own root: above its backdrop, and inside its focus trap.
+	 */
+	container?: Element | null;
+}) =>
 	typeof document === 'undefined'
 		? null
-		: createPortal(children, document.body);
+		: createPortal(children, container ?? document.body);

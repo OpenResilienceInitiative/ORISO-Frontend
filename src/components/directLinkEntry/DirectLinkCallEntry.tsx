@@ -41,6 +41,10 @@ import { isAskerDisplayNameTypingAllowed } from '../../utils/askerAccountPolicy'
 import { apiPatchUserData } from '../../api/apiPatchUserData';
 import { avatarIdOfFile } from '../../utils/avatarChoice';
 import type { DeviceChoice } from '../call/prejoin/callPrejoin';
+import {
+	entryGuestAccountMode,
+	withChosenAccount
+} from '../guestAccountMode/guestAccountMode';
 
 const AuthenticatedApp = lazyWithReload(loadAuthenticatedApp);
 
@@ -150,6 +154,14 @@ const DirectLinkCallEntryForm = ({
 	const latestDevices = useRef({ controls, live });
 	latestDevices.current = { controls, live };
 	const [joining, setJoining] = useState(false);
+	/* UserService#1662: the link's mode decides which account a new guest
+	   gets. Under GUEST_CHOOSES the guest picks, starting without an account
+	   (the Gesprächskreis entry's 0a); the context then reads as that choice
+	   for password field, postcode and registration. */
+	const guestChooses =
+		!signedIn && entryGuestAccountMode(context) === 'GUEST_CHOOSES';
+	const [temporaryChosen, setTemporaryChosen] = useState(true);
+	const accountContext = withChosenAccount(context, temporaryChosen);
 	const isSharedCall = context.linkKind === 'CALL';
 	const agencyId = context.agencyId;
 	const topicId = context.topicId;
@@ -193,7 +205,7 @@ const DirectLinkCallEntryForm = ({
 		((account: CallEntryAccount) =>
 			registerThenLogin.submit(
 				directLinkRegistration(
-					context,
+					accountContext,
 					account,
 					locale,
 					token
@@ -307,9 +319,19 @@ const DirectLinkCallEntryForm = ({
 			}
 			onJoin={handleJoin}
 			hidePassword={Boolean(
-				context.temporaryAccount && context.hidePasswordField
+				accountContext.temporaryAccount &&
+					accountContext.hidePasswordField
 			)}
-			askPostcode={!signedIn && asksDirectLinkPostcode(context)}
+			askPostcode={!signedIn && asksDirectLinkPostcode(accountContext)}
+			accountChoice={
+				guestChooses
+					? {
+							temporary: temporaryChosen,
+							onToggle: () =>
+								setTemporaryChosen((value) => !value)
+						}
+					: undefined
+			}
 			usernameEditable={isAskerDisplayNameTypingAllowed(
 				tenant?.settings,
 				'AGENCY_COUNSELLING'

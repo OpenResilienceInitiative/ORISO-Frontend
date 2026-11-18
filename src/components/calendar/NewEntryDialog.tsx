@@ -1,15 +1,25 @@
 /**
  * "Neuer Eintrag" (prototype v17): one dialog for "Neu" and every other way
- * to enter something, with the tabs Termin | Sperrzeit. Each tab is the
- * form of the appointment or the blocker dialog; switching keeps what was
- * entered in the other.
+ * to enter something, with the tabs Termin | Sperrzeit. "Termin" is the
+ * shared invitation form (one flow with "Chat erstellen" and the 1:1's
+ * "Termin anlegen"), "Sperrzeit" the blocker form; switching keeps what was
+ * entered in the other. A counsellor also gets "Abwesenheit", a planned
+ * absence over whole days (ORISO-Frontend#2303).
+ *
+ * The switch is a WAI-ARIA tab list, since it changes the form below: one
+ * Tab stop on the selected tab, the arrow keys (wrapping), Home and End
+ * move and select, and the form sits in the tab panel the tabs control
+ * (review 4595635797).
  */
 import * as React from 'react';
-import { useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { M3Dialog } from '../m3Dialog/M3Dialog';
-import { useAppointmentForm } from './AppointmentDialog';
+import { useCalendarInvitationForm } from './useCalendarInvitationForm';
 import { useBlockerForm } from './BlockerDialog';
+import { useAbsenceForm, type AbsenceDraft } from './AbsenceForm';
+import type { InvitationPreset } from '../directInvitation/invitationModel';
+import type { DirectLinkMedium } from '../conversationCreate/directLink/directLink';
 import type {
 	AppointmentDraft,
 	AppointmentKind,
@@ -17,7 +27,7 @@ import type {
 	CalendarEntry
 } from './calendarModel';
 
-export type NewEntryTab = 'appointment' | 'blocker';
+export type NewEntryTab = 'appointment' | 'blocker' | 'absence';
 
 export interface NewEntryDialogProps {
 	open: boolean;
@@ -39,10 +49,32 @@ export interface NewEntryDialogProps {
 	onSaveBlocker: (drafts: AppointmentDraft[]) => void;
 	/** "Arbeitszeit festlegen" under the blocker form. */
 	onWorkingHours?: () => void;
+	/**
+	 * Saves a planned absence; without it there is no "Abwesenheit" tab
+	 * (ORISO-Frontend#2303).
+	 */
+	onSaveAbsence?: (draft: AbsenceDraft) => void;
+	/** The absence the profile holds already, to edit it here. */
+	initialAbsence?: Partial<AbsenceDraft>;
+	/** Termin: "Weitere Personen per Link einladen", as in the 1:1. */
+	allowGuestInvite?: boolean;
+	/** Termin: the media "Direkteinladung erlauben" allows (the Art's medium). */
+	inviteMedia?: readonly DirectLinkMedium[];
+	/** Termin: "Neue Person per Direkteinladung …" opens "Chat erstellen". */
+	onInviteNewPerson?: (preset: InvitationPreset) => void;
 	onClose: () => void;
 }
 
-const TABS: NewEntryTab[] = ['appointment', 'blocker'];
+const TABS: NewEntryTab[] = ['appointment', 'blocker', 'absence'];
+
+/** Which tab a key moves to, from the index of the selected one among `count`. */
+const TAB_KEYS: Partial<Record<string, (at: number, count: number) => number>> =
+	{
+		ArrowRight: (at, count) => (at + 1) % count,
+		ArrowLeft: (at, count) => (at - 1 + count) % count,
+		Home: () => 0,
+		End: (_at, count) => count - 1
+	};
 
 export const NewEntryDialog = ({
 	open,
@@ -60,11 +92,32 @@ export const NewEntryDialog = ({
 	onSaveAppointment,
 	onSaveBlocker,
 	onWorkingHours,
+	onSaveAbsence,
+	initialAbsence,
+	allowGuestInvite,
+	inviteMedia,
+	onInviteNewPerson,
 	onClose
 }: NewEntryDialogProps) => {
 	const { t } = useTranslation();
 	const [tab, setTab] = useState<NewEntryTab>(initialTab);
-	const appointment = useAppointmentForm({
+	const ids = useId();
+	const tabId = (value: NewEntryTab) => `${ids}-tab-${value}`;
+	const panelId = `${ids}-panel`;
+	const tabRefs = useRef<Partial<Record<NewEntryTab, HTMLButtonElement>>>({});
+	// "Abwesenheit" only where an absence can be stored (#2303).
+	const tabs = TABS.filter((value) => value !== 'absence' || onSaveAbsence);
+	const shown = tabs.includes(tab) ? tab : 'appointment';
+	const onTabKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>) => {
+		const step = TAB_KEYS[event.key];
+		if (!step) return;
+		event.preventDefault();
+		const next = tabs[step(tabs.indexOf(shown), tabs.length)];
+		setTab(next);
+		tabRefs.current[next]?.focus();
+	};
+	/* The shared invitation form of "Chat erstellen" and the 1:1. */
+	const appointment = useCalendarInvitationForm({
 		slot,
 		initialSessionId,
 		conversations,
@@ -72,6 +125,9 @@ export const NewEntryDialog = ({
 		ownerId,
 		now,
 		onSave: onSaveAppointment,
+		allowGuestInvite,
+		inviteMedia,
+		onInviteNewPerson,
 		onClose
 	});
 	const blocker = useBlockerForm({
@@ -86,7 +142,21 @@ export const NewEntryDialog = ({
 		onSave: onSaveBlocker,
 		onClose
 	});
-	const form = tab === 'appointment' ? appointment : blocker;
+	const absence = useAbsenceForm({
+		slot: slot && { start: slot.start, end: slot.end },
+		initialAbsence,
+		entries,
+		ownerId,
+		now,
+		onSave: (draft) => onSaveAbsence?.(draft),
+		onClose
+	});
+	const form =
+		shown === 'appointment'
+			? appointment
+			: shown === 'blocker'
+				? blocker
+				: absence;
 
 	return (
 		<M3Dialog
@@ -104,23 +174,38 @@ export const NewEntryDialog = ({
 			<div className="calendarNewEntry">
 				<div
 					className="calendarNewEntry__tabs"
-					role="group"
+					role="tablist"
 					aria-label={t('calendar.dialog.entryKind')}
 				>
-					{TABS.map((value) => (
+					{tabs.map((value) => (
 						<button
 							key={value}
+							ref={(el) => {
+								if (el) tabRefs.current[value] = el;
+								else delete tabRefs.current[value];
+							}}
 							type="button"
+							role="tab"
+							id={tabId(value)}
 							className="calendarNewEntry__tab"
-							aria-pressed={tab === value}
+							aria-selected={shown === value}
+							aria-controls={panelId}
+							tabIndex={shown === value ? 0 : -1}
 							onClick={() => setTab(value)}
+							onKeyDown={onTabKeyDown}
 							data-cy={`calendar-new-tab-${value}`}
 						>
 							{t(`calendar.dialog.tabs.${value}`)}
 						</button>
 					))}
 				</div>
-				{form.content}
+				<div
+					role="tabpanel"
+					id={panelId}
+					aria-labelledby={tabId(shown)}
+				>
+					{form.content}
+				</div>
 			</div>
 		</M3Dialog>
 	);

@@ -58,18 +58,36 @@ import {
 } from '../../api/apiCalendar';
 import {
 	apiCancelSessionAppointment,
-	apiCreateSessionAppointment,
 	apiMoveSessionAppointment
 } from '../../api/apiSessionAppointments';
 import { apiGetConsultantSessionList } from '../../api/apiGetConsultantSessionList';
 import { apiGetAskerSessionList } from '../../api/apiGetAskerSessionList';
 import { FETCH_ERRORS } from '../../api/fetchData';
+import { apiSetAbsence } from '../../api/apiSetAbsence';
+import type { AbsenceDraft } from './AbsenceForm';
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import {
 	notifyAppointmentsChanged,
 	onAppointmentsChanged
 } from '../sessionsList/timeline/conversationAppointments';
 import { useAppointmentNotice } from '../sessionsList/timeline/useAppointmentNotice';
+import { useTranslation } from 'react-i18next';
+import { notifyDirectLinksChanged } from '../../api/apiDirectLinks';
+import { CREATE_CHAT_PATH } from '../app/routePaths';
+import type { DirectLink } from '../conversationCreate/directLink/directLink';
+import { DirectLinkShareDialog } from '../conversationCreate/directLink/DirectLinkShareDialog';
+import { useDirectLinkMedia } from '../directLinks/useDirectLinksAllowed';
+import {
+	toInvitationPresetState,
+	type InvitationPreset
+} from '../directInvitation/invitationModel';
+import { invitationErrorEntry } from '../directInvitation/invitationErrorSnackbar';
+import {
+	InvitationAfterAppointmentError,
+	saveAppointmentInvitation
+} from '../directInvitation/saveAppointmentInvitation';
+import { appSnackbarStack } from '../m3Snackbar/snackbarStack';
+import { parseCalendarDayParam } from '../message/appointmentNotice';
 import { CalendarPage, type CalendarLoadState } from './CalendarPage';
 import type { FreeHoursState } from './CalendarSidebar';
 import {
@@ -78,7 +96,6 @@ import {
 	entryFromApi,
 	feedFromApi,
 	importFromApi,
-	kindToApi,
 	loadWindow,
 	normalizeImportUrl,
 	proposalFromApi,
@@ -187,7 +204,7 @@ export const CalendarPageWired = () => {
 	// shared $fromMedium (600 px) it is a phone with at most three days.
 	const compact = useMediaQuery({ maxWidth: COMPACT_MAX_WIDTH });
 	const { untilS: phone } = useResponsive();
-	const { userData } = useContext(UserDataContext);
+	const { userData, reloadUserData } = useContext(UserDataContext);
 	const consultant = hasUserAuthority(
 		AUTHORITIES.CONSULTANT_DEFAULT,
 		userData
@@ -195,6 +212,19 @@ export const CalendarPageWired = () => {
 	// "Meine Direktlinks" lives under the list now (Frank, 2026-11-17).
 	const ownerId = userData?.userId ?? '';
 	const sendNotice = useAppointmentNotice();
+	const { t } = useTranslation();
+	/* One invitation flow with "Chat erstellen" and the 1:1: the same
+	   "Direkteinladung erlauben" gate, the same share dialog. */
+	const inviteMedia = useDirectLinkMedia(consultant);
+	const allowGuestInvite = inviteMedia.length > 0;
+	const [sharedInvitation, setSharedInvitation] = useState<DirectLink>();
+	/* "Im Kalender öffnen" on an appointment's card in the chat: the page
+	   mounts fresh from that link, so the first address is the one meant. */
+	const [openOnDay] = useState(() =>
+		parseCalendarDayParam(
+			new URLSearchParams(window.location.search).get('date')
+		)
+	);
 
 	const [state, setState] = useState<CalendarLoadState>('loading');
 	const [own, setOwn] = useState<CalendarEntry[]>([]);
@@ -559,14 +589,20 @@ export const CalendarPageWired = () => {
 		kind: 'created' | 'moved' | 'cancelled',
 		sessionId: number,
 		start: Date,
-		end: Date
+		end: Date,
+		/** A move: where it stood, for the chat card's old → new. */
+		previous?: { start: string | Date; end: string | Date }
 	) =>
 		sendNotice({
 			kind,
 			start,
 			end,
 			sessionId,
-			matrixRoomId: conversationOf(sessionId)?.matrixRoomId
+			matrixRoomId: conversationOf(sessionId)?.matrixRoomId,
+			...(previous && {
+				previousStart: new Date(previous.start),
+				previousEnd: new Date(previous.end)
+			})
 		});
 
 	const afterChange = () => {
@@ -584,14 +620,44 @@ export const CalendarPageWired = () => {
 			return (created ?? []).map(entryFromApi);
 		}
 		if (first.sessionId === undefined) throw new Error('conversation');
-		await apiCreateSessionAppointment(first.sessionId, {
-			startTime: first.start.toISOString(),
-			endTime: first.end.toISOString(),
-			...(first.kind && { kind: kindToApi(first.kind) })
-		});
+		/* The 1:1's save path: the appointment with its Art, then the
+		   invitation that meets at it ("Weitere Personen per Link"). */
+		let invitation: DirectLink | undefined;
+		try {
+			invitation = (
+				await saveAppointmentInvitation({
+					sessionId: first.sessionId,
+					slot: { start: first.start, end: first.end },
+					kind: first.kind,
+					link: first.link ?? null
+				})
+			).invitation;
+		} catch (cause) {
+			if (!(cause instanceof InvitationAfterAppointmentError))
+				throw cause;
+			// The appointment stands; only the link is missing.
+			appSnackbarStack.enqueue(
+				invitationErrorEntry({
+					id: `calendar-invitation-failed-${cause.appointmentId}`,
+					title: t('directInvitation.dialog.linkFailedTitle'),
+					text: t(
+						'directInvitation.dialog.linkFailedAfterAppointment'
+					),
+					t
+				})
+			);
+		}
 		afterChange();
+		if (invitation) {
+			notifyDirectLinksChanged();
+			setSharedInvitation(invitation);
+		}
 		await notice('created', first.sessionId, first.start, first.end);
 	};
+
+	/* "Neue Person per Direkteinladung …": door A with the calendar's slot. */
+	const inviteNewPerson = (preset: InvitationPreset) =>
+		navigate(CREATE_CHAT_PATH, { state: toInvitationPresetState(preset) });
 
 	const move = async (entry: CalendarEntry, start: Date, end: Date) => {
 		const slot = {
@@ -619,7 +685,7 @@ export const CalendarPageWired = () => {
 					entry.id,
 					slot
 				);
-				await notice('moved', entry.sessionId, start, end);
+				await notice('moved', entry.sessionId, start, end, entry);
 			}
 		} finally {
 			afterChange();
@@ -647,12 +713,14 @@ export const CalendarPageWired = () => {
 	const proposeMove = async (
 		entry: CalendarEntry,
 		start: Date,
-		end: Date
+		end: Date,
+		reason?: string
 	) => {
 		const created = await apiCreateCalendarProposal({
 			entryId: entry.id,
 			start: start.toISOString(),
-			end: end.toISOString()
+			end: end.toISOString(),
+			...(reason && { reason })
 		});
 		if (created?.id)
 			setSentProposals((all) =>
@@ -700,7 +768,17 @@ export const CalendarPageWired = () => {
 		afterChange();
 		const sessionId = moved?.sessionId ?? before?.sessionId;
 		if (sessionId !== undefined)
-			await notice('moved', sessionId, new Date(start), new Date(end));
+			await notice(
+				'moved',
+				sessionId,
+				new Date(start),
+				new Date(end),
+				// The loaded entry, else its time when it was proposed.
+				before ??
+					(proposal.entryStart && proposal.entryEnd
+						? { start: proposal.entryStart, end: proposal.entryEnd }
+						: undefined)
+			);
 	};
 
 	const declineProposal = async (proposal: MoveProposal) => {
@@ -930,6 +1008,28 @@ export const CalendarPageWired = () => {
 		if (range.current) load();
 	};
 
+	/**
+	 * "Abwesenheit" (ORISO-Frontend#2303): the profile's absence, switched on
+	 * for these days. The profile and the calendar both read it back.
+	 */
+	const saveAbsence = (draft: AbsenceDraft) =>
+		apiSetAbsence(true, draft.message, {
+			start: draft.start,
+			end: draft.end
+		})
+			.then(() => reloadUserData?.())
+			.then(() => reloadEntries());
+	const absence =
+		consultant && (userData?.absenceStart || userData?.absenceEnd)
+			? {
+					start: userData.absenceStart ?? undefined,
+					end: userData.absenceEnd ?? undefined,
+					message: userData.absenceMessage ?? ''
+				}
+			: consultant
+				? { message: userData?.absenceMessage ?? '' }
+				: undefined;
+
 	// CalendarPage shows only the colleagues switched on.
 	const entries = [
 		...mergeEntries(own, nearby),
@@ -937,84 +1037,108 @@ export const CalendarPageWired = () => {
 	];
 
 	return (
-		<CalendarPage
-			linksPanel={consultant ? <CalendarLinksSection /> : undefined}
-			role={consultant ? 'consultant' : 'asker'}
-			ownerId={ownerId}
-			state={state}
-			entries={entries}
-			colleagues={colleagues}
-			visibility={visibility}
-			conversations={conversations}
-			feed={sync ? feedFromApi(sync) : undefined}
-			busyImport={sync ? importFromApi(sync) : {}}
-			compact={compact}
-			phone={phone}
-			workingHours={consultant ? plan?.hours : undefined}
-			workingHoursLoaded={consultant && planLoaded}
-			dayExceptions={consultant ? plan?.exceptions : undefined}
-			holidayRegion={consultant ? (plan?.holidayRegion ?? null) : null}
-			onRangeChange={changeRange}
-			onShownColleaguesChange={showColleagues}
-			conversationsFailed={conversationsFailed}
-			onRetryConversations={loadConversations}
-			failedColleagues={failedColleagues}
-			loadingCalendars={
-				ownLoading ? [ownerId, ...loadingColleagues] : loadingColleagues
-			}
-			onRetryColleagues={() =>
-				failedColleagues.forEach((id) => loadColleague(id))
-			}
-			freeHoursState={freeHours}
-			onRetryFreeHours={() => {
-				if (planFailed) loadPlan();
-				if (freeHoursFailed.current) loadNearby();
-			}}
-			onRetry={() => {
-				setState('loading');
-				load();
-				if (conversationsFailed) loadConversations();
-			}}
-			onCreate={consultant ? create : undefined}
-			onMove={consultant ? move : undefined}
-			onCancelAppointment={consultant ? cancel : undefined}
-			onRemoveBlocker={consultant ? removeBlocker : undefined}
-			proposals={consultant ? sentProposals : undefined}
-			receivedProposals={consultant ? receivedProposals : undefined}
-			onProposeMove={consultant ? proposeMove : undefined}
-			onWithdrawProposal={consultant ? withdrawMove : undefined}
-			onAcceptProposal={consultant ? acceptProposal : undefined}
-			onDeclineProposal={consultant ? declineProposal : undefined}
-			onSaveWorkingHours={consultant ? saveWorkingHours : undefined}
-			onSaveDayException={consultant ? saveDayException : undefined}
-			onDeleteDayException={consultant ? deleteDayException : undefined}
-			onStart={start}
-			onOpenChat={(entry) => openConversation(entry)}
-			onCopyFeed={(url) => navigator.clipboard?.writeText(url)}
-			// Each sync action rejects on failure, so the dialog can say so.
-			onResetFeed={() => apiResetCalendarFeed().then(setSync)}
-			onSaveImport={(url) =>
-				apiSaveCalendarImport(normalizeImportUrl(url)).then(
-					(dto) => {
+		<>
+			<CalendarPage
+				linksPanel={consultant ? <CalendarLinksSection /> : undefined}
+				role={consultant ? 'consultant' : 'asker'}
+				ownerId={ownerId}
+				initialDate={openOnDay}
+				state={state}
+				entries={entries}
+				colleagues={colleagues}
+				visibility={visibility}
+				conversations={conversations}
+				feed={sync ? feedFromApi(sync) : undefined}
+				busyImport={sync ? importFromApi(sync) : {}}
+				compact={compact}
+				phone={phone}
+				workingHours={consultant ? plan?.hours : undefined}
+				workingHoursLoaded={consultant && planLoaded}
+				dayExceptions={consultant ? plan?.exceptions : undefined}
+				holidayRegion={
+					consultant ? (plan?.holidayRegion ?? null) : null
+				}
+				onRangeChange={changeRange}
+				onShownColleaguesChange={showColleagues}
+				conversationsFailed={conversationsFailed}
+				onRetryConversations={loadConversations}
+				failedColleagues={failedColleagues}
+				loadingCalendars={
+					ownLoading
+						? [ownerId, ...loadingColleagues]
+						: loadingColleagues
+				}
+				onRetryColleagues={() =>
+					failedColleagues.forEach((id) => loadColleague(id))
+				}
+				freeHoursState={freeHours}
+				onRetryFreeHours={() => {
+					if (planFailed) loadPlan();
+					if (freeHoursFailed.current) loadNearby();
+				}}
+				onRetry={() => {
+					setState('loading');
+					load();
+					if (conversationsFailed) loadConversations();
+				}}
+				onCreate={consultant ? create : undefined}
+				onSaveAbsence={consultant ? saveAbsence : undefined}
+				absence={absence}
+				allowGuestInvite={consultant && allowGuestInvite}
+				inviteMedia={inviteMedia}
+				onInviteNewPerson={
+					consultant && allowGuestInvite ? inviteNewPerson : undefined
+				}
+				onMove={consultant ? move : undefined}
+				onCancelAppointment={consultant ? cancel : undefined}
+				onRemoveBlocker={consultant ? removeBlocker : undefined}
+				proposals={consultant ? sentProposals : undefined}
+				receivedProposals={consultant ? receivedProposals : undefined}
+				onProposeMove={consultant ? proposeMove : undefined}
+				onWithdrawProposal={consultant ? withdrawMove : undefined}
+				onAcceptProposal={consultant ? acceptProposal : undefined}
+				onDeclineProposal={consultant ? declineProposal : undefined}
+				onSaveWorkingHours={consultant ? saveWorkingHours : undefined}
+				onSaveDayException={consultant ? saveDayException : undefined}
+				onDeleteDayException={
+					consultant ? deleteDayException : undefined
+				}
+				onStart={start}
+				onOpenChat={(entry) => openConversation(entry)}
+				onCopyFeed={(url) => navigator.clipboard?.writeText(url)}
+				// Each sync action rejects on failure, so the dialog can say so.
+				onResetFeed={() => apiResetCalendarFeed().then(setSync)}
+				onSaveImport={(url) =>
+					apiSaveCalendarImport(normalizeImportUrl(url)).then(
+						(dto) => {
+							setSync(dto);
+							reloadEntries();
+						},
+						(error) => {
+							setSync((current) =>
+								current
+									? { ...current, importError: 'INVALID_URL' }
+									: current
+							);
+							throw error;
+						}
+					)
+				}
+				onRemoveImport={() =>
+					apiRemoveCalendarImport().then((dto) => {
 						setSync(dto);
 						reloadEntries();
-					},
-					(error) => {
-						setSync((current) =>
-							current
-								? { ...current, importError: 'INVALID_URL' }
-								: current
-						);
-						throw error;
-					}
-				)
-			}
-			onRemoveImport={() =>
-				apiRemoveCalendarImport().then((dto) => {
-					setSync(dto);
-					reloadEntries();
-				})
-			}
-		/>
+					})
+				}
+			/>
+			{sharedInvitation && (
+				<DirectLinkShareDialog
+					open
+					link={sharedInvitation}
+					fullScreen={compact}
+					onClose={() => setSharedInvitation(undefined)}
+				/>
+			)}
+		</>
 	);
 };
