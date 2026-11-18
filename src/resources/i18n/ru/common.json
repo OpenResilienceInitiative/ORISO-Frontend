@@ -1,4 +1,22 @@
 {
+	"addons": {
+		"loadError": "Не удалось загрузить это дополнение.",
+		"notAvailable": "Это дополнение недоступно.",
+		"panel": {
+			"region": "Боковая панель: {{title}}",
+			"close": "Закрыть"
+		},
+		"calendar": {
+			"source": "Из расширения «{{title}}»",
+			"allDay": "Весь день",
+			"kind": {
+				"appointment": "Встреча",
+				"deadline": "Срок",
+				"reminder": "Напоминание"
+			}
+		},
+		"badge": "Новое: {{count}}"
+	},
 	"askerInfo": {
 		"noPrivacyNotice": {
 			"title": "Политика конфиденциальности не размещена",
@@ -2660,6 +2678,10 @@
 			"sessionAskerDeleted": {
 				"title": "Удалённый клиент",
 				"text": "Чат с клиентом был удалён. Личные данные и сообщения больше недоступны."
+			},
+			"addonNotification": {
+				"title": "Новое сообщение от расширения",
+				"text": "У расширения есть новое сообщение."
 			},
 			"directInvitationRenewalRequested": {
 				"title": "Запрошена новая ссылка",

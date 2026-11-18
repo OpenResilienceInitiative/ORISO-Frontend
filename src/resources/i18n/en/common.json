@@ -1,4 +1,22 @@
 {
+	"addons": {
+		"loadError": "This add-on could not be loaded.",
+		"notAvailable": "This add-on is not available.",
+		"panel": {
+			"region": "Side panel: {{title}}",
+			"close": "Close"
+		},
+		"calendar": {
+			"source": "From the add-on “{{title}}”",
+			"allDay": "All day",
+			"kind": {
+				"appointment": "Appointment",
+				"deadline": "Deadline",
+				"reminder": "Reminder"
+			}
+		},
+		"badge": "Updates: {{count}}"
+	},
 	"askerInfo": {
 		"noPrivacyNotice": {
 			"title": "No privacy notice stored",
@@ -2652,6 +2670,10 @@
 			"sessionAskerDeleted": {
 				"title": "Deleted advice seeker",
 				"text": "A chat with an advice seeker was deleted. Personal data and messages are no longer available."
+			},
+			"addonNotification": {
+				"title": "New add-on notice",
+				"text": "An add-on has a new notice."
 			},
 			"directInvitationRenewalRequested": {
 				"title": "New link requested",

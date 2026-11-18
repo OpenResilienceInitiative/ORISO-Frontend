@@ -244,6 +244,12 @@ import liveChatClosedIllustration from '../../resources/img/illustrations/live-c
 import NorthEastIcon from '@mui/icons-material/NorthEast';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { ReactComponent as CloseIcon } from '../../resources/img/icons/close.svg';
+import {
+	parseAddonPanel,
+	useOpenAddonPanel,
+	withAddonPanel
+} from '../../addons/addonPanel';
+import { AddonSessionPanel } from '../../addons/AddonSessionPanel';
 import { canRenderClientComposer } from './clientComposerPolicy';
 import { SelectionReplyLayer } from '../selectionReply/SelectionReplyLayer';
 import { useSessionPassageReplies } from '../selectionReply/useSessionPassageReplies';
@@ -2389,7 +2395,15 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	// The panel the URL asks for, resolved against what exists. A thread
 	// whose root is not in the loaded history keeps the main chat open
 	// while its authorized history is loading.
-	const openPanel: 'supervision' | 'team' | 'thread' | null =
+	const openAddonPanel = useOpenAddonPanel(
+		location.search,
+		{
+			agencyId: activeSession.item?.agencyId,
+			sessionId: activeSession.item?.id
+		},
+		isConsultantUser ? 'consultant' : 'asker'
+	);
+	const openPanel: 'supervision' | 'team' | 'thread' | 'addon' | null =
 		routeChannel?.kind === 'supervision'
 			? hasSupervisionSideRoom
 				? 'supervision'
@@ -2400,7 +2414,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					: null
 				: activeThreadRootId && activeThreadRootMessage
 					? 'thread'
-					: null;
+					: openAddonPanel
+						? 'addon'
+						: null;
 	const shownChannelId =
 		openPanel === 'supervision'
 			? channelId({ kind: 'supervision' })
@@ -2472,6 +2488,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	// Practice (FE#1622): the tour teaches opening the team discussion; a panel
 	// opening by itself would remove the button its step points at.
 	const isPracticing = usePracticeActive();
+	const addonPanelRequested = parseAddonPanel(location.search) !== null;
 	useEffect(() => {
 		const sessionId = activeSession.item?.id;
 		if (!sessionId || !isSupervisionPanelViewer) {
@@ -2490,7 +2507,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			canStartTeamDiscussion:
 				Boolean(activeSession.isEnquiry) &&
 				canOpenTeamSideRoom &&
-				!isPracticing
+				!isPracticing,
+			addonPanelRequested
 		});
 		if (decision.settle) {
 			autoOpenedForSessionRef.current = sessionId;
@@ -2509,7 +2527,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		canOpenTeamSideRoom,
 		isPracticing,
 		messages,
-		setChannelRoute
+		setChannelRoute,
+		addonPanelRequested
 	]);
 
 	// Unread side-room messages: foreign items newer than the last time the
@@ -4885,7 +4904,25 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			/>
 		) : null;
 
-	const sidePanel = threadPanel ?? supervisionPanel ?? teamPanel;
+	const addonPanel =
+		openPanel === 'addon' && openAddonPanel ? (
+			<AddonSessionPanel
+				{...openAddonPanel}
+				variant={panelVariant}
+				className={`chatStage__panel--${panelVariant}`}
+				agencyId={activeSession.item?.agencyId}
+				sessionId={activeSession.item?.id}
+				onClose={() =>
+					navigate({
+						pathname: location.pathname,
+						search: withAddonPanel(location.search, null)
+					})
+				}
+			/>
+		) : null;
+
+	const sidePanel =
+		threadPanel ?? supervisionPanel ?? teamPanel ?? addonPanel;
 
 	// Desktop: the panel joins the card (`.chatStage__card--split`) behind
 	// the real `ResizableHandle` (T2). Phone: the panel fills the screen

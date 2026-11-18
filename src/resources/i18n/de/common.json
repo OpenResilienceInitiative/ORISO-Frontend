@@ -1,4 +1,22 @@
 {
+	"addons": {
+		"loadError": "Diese Erweiterung konnte nicht geladen werden.",
+		"notAvailable": "Diese Erweiterung ist nicht verfügbar.",
+		"panel": {
+			"region": "Seitenbereich: {{title}}",
+			"close": "Schließen"
+		},
+		"calendar": {
+			"source": "Aus der Erweiterung „{{title}}“",
+			"allDay": "Ganztägig",
+			"kind": {
+				"appointment": "Termin",
+				"deadline": "Frist",
+				"reminder": "Erinnerung"
+			}
+		},
+		"badge": "Neuigkeiten: {{count}}"
+	},
 	"askerInfo": {
 		"noPrivacyNotice": {
 			"title": "Keine Datenschutzerklärung hinterlegt",
@@ -2676,6 +2694,10 @@
 			"sessionAskerDeleted": {
 				"title": "Gelöschte:r Ratsuchende:r",
 				"text": "Ein Chat mit einer ratsuchenden Person wurde gelöscht. Persönliche Daten und Nachrichten sind nicht mehr verfügbar."
+			},
+			"addonNotification": {
+				"title": "Neue Mitteilung einer Erweiterung",
+				"text": "Eine Erweiterung hat eine neue Mitteilung."
 			},
 			"directInvitationRenewalRequested": {
 				"title": "Neuer Link angefragt",

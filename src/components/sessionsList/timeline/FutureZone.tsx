@@ -18,7 +18,12 @@ import { ResizableHandle } from '../ResizableHandle';
 import { revealSnapPoints, stepSnap, clampReveal } from '../verticalHandleMath';
 import type { AppointmentAction } from './AppointmentSplitButton';
 import { FutureEntryPill } from './FutureEntryPill';
-import { isGone, type FutureEntry, type TimelineRole } from './timelineModel';
+import {
+	hasEnded,
+	isGone,
+	type FutureEntry,
+	type TimelineRole
+} from './timelineModel';
 import './futureZone.styles.scss';
 
 /** How far the zone opens on first show (display setting). */
@@ -43,9 +48,22 @@ export interface FutureZoneHandle {
 	stepOpen: () => void;
 }
 
+/** A row from another source (an add-on), placed by time between the entries. */
+export interface FutureZoneExtraRow {
+	key: string;
+	start: Date;
+	end?: Date;
+	render: (now: Date) => React.ReactNode;
+}
+
+type ZoneRow =
+	| { key: string; start: Date; entry: FutureEntry }
+	| { key: string; start: Date; extra: FutureZoneExtraRow };
+
 export interface FutureZoneProps {
 	/** Next appointment first (as `buildFutureEntries` returns them). */
 	entries: FutureEntry[];
+	extraRows?: FutureZoneExtraRow[];
 	role: TimelineRole;
 	/** Height of the list below the handle: half / almost all of it are stops. */
 	listHeight: number;
@@ -89,6 +107,7 @@ export const FutureZone = forwardRef<FutureZoneHandle, FutureZoneProps>(
 	(
 		{
 			entries,
+			extraRows,
 			role,
 			listHeight,
 			selectedKey,
@@ -136,10 +155,28 @@ export const FutureZone = forwardRef<FutureZoneHandle, FutureZoneProps>(
 		);
 
 		// Furthest appointment first: the next one sits right above "Jetzt".
-		const shownEntries = useMemo(
-			// A request leaves at its start, every other entry at its end.
-			() => entries.filter((entry) => !isGone(entry, now)).reverse(),
-			[entries, now]
+		// A request leaves at its start, every other entry (and add-on row) at its end.
+		const shownEntries = useMemo<ZoneRow[]>(
+			() =>
+				[
+					...entries
+						.filter((entry) => !isGone(entry, now))
+						.map((entry) => ({
+							key: entry.key,
+							start: entry.start,
+							entry
+						})),
+					...(extraRows ?? [])
+						.filter((extra) => !hasEnded(extra, now))
+						.map((extra) => ({
+							key: extra.key,
+							start: extra.start,
+							extra
+						}))
+				]
+					.sort((a, b) => a.start.getTime() - b.start.getTime())
+					.reverse(),
+			[entries, extraRows, now]
 		);
 
 		// Snap stops come from the real pills' height, not from a constant.
@@ -236,24 +273,28 @@ export const FutureZone = forwardRef<FutureZoneHandle, FutureZoneProps>(
 						role="list"
 						aria-label={label}
 					>
-						{shownEntries.map((entry) => (
+						{shownEntries.map((row) => (
 							<div
-								key={entry.key}
+								key={row.key}
 								className="tlp__row"
 								role="listitem"
 							>
-								<FutureEntryPill
-									entry={entry}
-									role={role}
-									now={now}
-									selected={entry.key === selectedKey}
-									unread={unreadOf?.(entry)}
-									onOpen={onOpen}
-									onAction={onAction}
-									onPick={onPick}
-									dataCy={entryDataCy?.(entry)}
-									soonLabel={soonLabelOf?.(entry)}
-								/>
+								{'entry' in row ? (
+									<FutureEntryPill
+										entry={row.entry}
+										role={role}
+										now={now}
+										selected={row.key === selectedKey}
+										unread={unreadOf?.(row.entry)}
+										onOpen={onOpen}
+										onAction={onAction}
+										onPick={onPick}
+										dataCy={entryDataCy?.(row.entry)}
+										soonLabel={soonLabelOf?.(row.entry)}
+									/>
+								) : (
+									row.extra.render(now)
+								)}
 							</div>
 						))}
 					</div>

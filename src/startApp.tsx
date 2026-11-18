@@ -6,13 +6,9 @@ import './compound.css';
 import { App } from './components/app/app';
 import { Stage } from './components/stage/stage';
 import { config, routePathNames } from './resources/scripts/config';
-import { ThemeProvider } from '@mui/material';
 import { UrlParamsProvider } from './globalState/provider/UrlParamsProvider';
 import { RegistrationProvider } from './globalState';
-import { useEffect, useState } from 'react';
 import './resources/styles/mui-variables-mapping.scss';
-import { createAppTheme } from './resources/scripts/theme';
-import { THEME_APPLIED_EVENT } from './utils/theme/applyTenantTheme';
 import { syncLocalTenantCookie } from './utils/localTenantCookie';
 import { purgeLegacyDraftStorage } from './services/clientStorageHygiene';
 import { purgeParkedRecoveryKeys } from './services/pendingRecoveryKeyStore';
@@ -23,6 +19,8 @@ import { initMeterProvider } from './utils/observability/meterProvider';
 import { initWebVitals } from './utils/observability/webVitals';
 import { initUtdTracking } from './utils/observability/utdTracker';
 import { lazyWithReload } from './utils/chunkLoadRecovery';
+import { installAddonShared } from './addons/addonShared';
+import { AppThemeProvider } from './resources/scripts/AppThemeProvider';
 
 // OBS-P8 (ORISO-Helm#62): browser-side Real User Monitoring. Register the
 // MeterProvider before anything else gets a chance to call
@@ -56,26 +54,15 @@ const NewRegistration = () => (
 	</UrlParamsProvider>
 );
 
-// Recreates the MUI theme when the runtime tenant palette lands at
-// :root (THB-05) — theme.jsx reads computed --m3-* values at creation.
-const AppThemeProvider = ({ children }: { children: React.ReactNode }) => {
-	const [theme, setTheme] = useState(() => createAppTheme());
-
-	useEffect(() => {
-		const refresh = () => setTheme(createAppTheme());
-		window.addEventListener(THEME_APPLIED_EVENT, refresh);
-		return () => window.removeEventListener(THEME_APPLIED_EVENT, refresh);
-	}, []);
-
-	return <ThemeProvider theme={theme}>{children}</ThemeProvider>;
-};
-
 // #1071: devices that ran an older build still carry counselling drafts in
 // plaintext under `oriso.chatDrafts.v1`. Drafts have been server-side and
 // room-key encrypted for a while; this drops the leftovers on first load.
 purgeLegacyDraftStorage();
 // Parked recovery keys the login password protects expire after a week.
 purgeParkedRecoveryKeys('expired');
+
+// Add-ons render with this React instead of bundling their own (ADR-034).
+installAddonShared();
 
 // React 19 uses createRoot API
 syncLocalTenantCookie();

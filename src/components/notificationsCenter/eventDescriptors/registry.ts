@@ -15,6 +15,7 @@
  */
 
 import { generatePath } from 'react-router-dom';
+import { addonLinkPath } from '../../../addons/addonLink';
 import { DIRECT_INVITATION_RENEWAL_REQUESTED } from './directInvitationEvents';
 import { rewriteLegacyChannelPath } from '../../../utils/channelRoute';
 import {
@@ -48,6 +49,8 @@ const TOPIC_DUPLICATE_STARTED_EVENT = 'topic_duplicate.started';
 /** An invalid target for these events must not turn into a generic list link. */
 export const requiresExactActionPath = (eventType: string | null | undefined) =>
 	eventType === TOPIC_DUPLICATE_STARTED_EVENT;
+
+export const ADDON_NOTIFICATION_EVENT_TYPE = 'ADDON_NOTIFICATION';
 
 /** i18n key for a family's filter-chip / tag label. */
 export const familyLabelKey = (family: EventFamily): string =>
@@ -192,6 +195,22 @@ const joinTarget = (params: EventActionParams): EventActionTarget => ({
 const statusPageTarget = (params: EventActionParams): EventActionTarget => ({
 	kind: 'statusPage',
 	url: params.statusUrl ?? null
+});
+
+const addonTarget = (params: EventActionParams): EventActionTarget => ({
+	kind: 'addon',
+	path:
+		addonLinkPath(
+			{
+				addon: params.addon,
+				appId: params.appId,
+				slot: params.slot,
+				sessionId: params.sourceSessionId
+			},
+			params.sessionsBasePath || DEFAULT_SESSIONS_BASE_PATH
+		) ??
+		params.actionPath ??
+		null
 });
 
 // #1159: a deleted advice-seeker chat opens its deletion notice, where the
@@ -606,6 +625,17 @@ const seeds: EventDescriptor[] = [
 		icon: 'system',
 		i18nKey: 'sessionAskerDeleted',
 		resolveActionTarget: deletedAskerTarget
+	}),
+
+	// ----- Add-ons (oriso-addon/v1) -----
+	// Title and text come from the add-on per locale (`addonTitle`/`addonText`
+	// params); the templates are the generic wording for OS banners.
+	descriptor(ADDON_NOTIFICATION_EVENT_TYPE, {
+		family: 'system',
+		category: 'system',
+		icon: 'addon',
+		i18nKey: 'addonNotification',
+		resolveActionTarget: addonTarget
 	})
 ];
 

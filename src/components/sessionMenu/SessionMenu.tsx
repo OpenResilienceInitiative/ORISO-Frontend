@@ -136,6 +136,7 @@ import { useCaseHandoverOffer } from '../caseHandover/useCaseHandoverOffer';
 import { CaseHandoverOffer } from '../caseHandover/CaseHandoverOffer';
 import { useRecommendAllowedInModality } from '../furtherCounselling/useRecommendAllowedInModality';
 import { getGroupChatInfoLink } from '../groupChat/groupChatInfoLink';
+import { AddonSessionMenuItems } from '../../addons/AddonSessionMenuItems';
 import { useOwnTemporaryAccount } from '../temporaryAccount/temporaryAccountStore';
 import { isAnonymousAsker } from '../termsandconditions/isAnonymousAsker';
 
@@ -1080,6 +1081,10 @@ export const SessionMenu = (props: SessionMenuProps) => {
 										shortcut="⇧P"
 									/>
 								</Link>
+							)}
+
+							{!activeSession.isGroup && (
+								<AddonSessionMenuItems onSelect={closeMenu} />
 							)}
 
 							<div

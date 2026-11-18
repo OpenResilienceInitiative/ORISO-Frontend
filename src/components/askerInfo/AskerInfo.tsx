@@ -24,12 +24,16 @@ import { generateAvatarForUser } from '../../utils/pseudonymGenerator';
 
 export const AskerInfo = () => {
 	const { t: translate } = useTranslation();
-	const { groupId: groupIdFromParam } = useParams<{ groupId: string }>();
+	const { groupId: groupIdFromParam, sessionId: sessionIdFromParam } =
+		useParams<{ groupId: string; sessionId: string }>();
 	const navigate = useNavigate();
 
 	const { path: listPath } = useContext(SessionTypeContext);
 
-	const { session: activeSession, ready } = useSession(groupIdFromParam);
+	const { session: activeSession, ready } = useSession(
+		groupIdFromParam ?? null,
+		sessionIdFromParam ? parseInt(sessionIdFromParam) : undefined
+	);
 
 	const sessionListTab = useSearchParam<SESSION_LIST_TAB>('sessionListTab');
 

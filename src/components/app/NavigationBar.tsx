@@ -437,26 +437,45 @@ export const NavigationBar = ({
 								const isActive =
 									location.pathname.indexOf(item.to) !== -1;
 								const isHovered = hoveredNavItem === item.to;
-								const unreadCount = Number(
-									pathsToShowUnreadMessageNotification[
-										item.to
-									] || 0
+								const addonBadge = Math.max(
+									0,
+									Number(item.badge) || 0
 								);
-								const showUnreadNav =
-									Object.keys(
-										pathsToShowUnreadMessageNotification
-									).includes(item.to) && unreadCount > 0;
-								const label = translate(item.titleKeys.large);
+								const messageCount = Object.keys(
+									pathsToShowUnreadMessageNotification
+								).includes(item.to)
+									? Number(
+											pathsToShowUnreadMessageNotification[
+												item.to
+											] || 0
+										)
+									: 0;
+								// Unread messages win over an add-on badge on the same item.
+								const showsAddonBadge =
+									messageCount === 0 && addonBadge > 0;
+								const unreadCount = showsAddonBadge
+									? addonBadge
+									: messageCount;
+								const showUnreadNav = unreadCount > 0;
+								const label =
+									item.title ??
+									translate(item.titleKeys.large);
 								const unreadLabel = showUnreadNav
-									? translate(countKey(item.to), {
-											count: unreadCount
-										})
+									? translate(
+											showsAddonBadge
+												? 'addons.badge'
+												: countKey(item.to),
+											{
+												count: unreadCount
+											}
+										)
 									: '';
 								// The Link's aria-label is its whole accessible
 								// name, so the count has to be part of it.
-								const unreadTitle = showUnreadNav
-									? unreadNavTitle(item.to)
-									: undefined;
+								const unreadTitle =
+									showUnreadNav && !showsAddonBadge
+										? unreadNavTitle(item.to)
+										: undefined;
 								const linkLabel = showUnreadNav
 									? [label, unreadLabel, unreadTitle]
 											.filter(Boolean)
@@ -566,7 +585,16 @@ export const NavigationBar = ({
 											handleKeyDownMenu(e, index)
 										}
 										ref={(el) => {
-											ref_menu.current[index] = el;
+											if (el) {
+												ref_menu.current[index] = el;
+											} else {
+												// Items can disappear (add-on apps); keep no stale entries at the end.
+												ref_menu.current.length =
+													Math.min(
+														ref_menu.current.length,
+														index
+													);
+											}
 										}}
 										tabIndex={index === 0 ? 0 : -1}
 									>
