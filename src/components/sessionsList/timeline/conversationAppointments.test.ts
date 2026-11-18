@@ -2,6 +2,11 @@ import { describe, expect, it } from 'vite-plus/test';
 import type { SessionAppointment } from '../../../api/apiSessionAppointments';
 import {
 	appointmentNoticeKey,
+	appointmentsEpoch,
+	forgetKnownAppointments,
+	knownSessionAppointments,
+	rememberSessionAppointments,
+	rememberUpcomingAppointments,
 	appointmentSlotError,
 	appointmentToBooking,
 	pendingRequests,
@@ -216,5 +221,46 @@ describe('conversation appointments', () => {
 		expect(appointmentNoticeKey('declined')).toBe(
 			'sessionList.timeline.appointment.notice.declined'
 		);
+	});
+
+	describe('known appointments across a logout (review: epoch fence)', () => {
+		const known = appointment(
+			'k',
+			'2026-11-03T10:00:00Z',
+			'2026-11-03T11:00:00Z'
+		);
+
+		it('drops a write from a request that started before the logout', () => {
+			forgetKnownAppointments();
+			const startedAt = appointmentsEpoch();
+			forgetKnownAppointments(); // logout while the request is in flight
+			rememberSessionAppointments(4, [known], startedAt);
+			rememberUpcomingAppointments([known], startedAt);
+			expect(knownSessionAppointments(4)).toBeUndefined();
+		});
+
+		it('orders writes by when their request started, not when it answered (review)', () => {
+			forgetKnownAppointments();
+			const upcomingStarted = appointmentsEpoch();
+			const refreshStarted = appointmentsEpoch();
+			rememberSessionAppointments(4, [], refreshStarted);
+			// The older upcoming read lands last; it must not win.
+			rememberUpcomingAppointments(
+				[{ ...known, sessionId: 4 }],
+				upcomingStarted
+			);
+			expect(knownSessionAppointments(4)).toEqual([]);
+			// Nor may an older read of the same source replace a newer one.
+			rememberSessionAppointments(4, [known], upcomingStarted);
+			expect(knownSessionAppointments(4)).toEqual([]);
+			forgetKnownAppointments();
+		});
+
+		it('keeps a write from a request of the current session', () => {
+			forgetKnownAppointments();
+			rememberSessionAppointments(4, [known], appointmentsEpoch());
+			expect(knownSessionAppointments(4)).toEqual([known]);
+			forgetKnownAppointments();
+		});
 	});
 });

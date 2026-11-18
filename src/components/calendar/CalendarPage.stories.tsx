@@ -2219,6 +2219,18 @@ export const FilterKinds: Story = {
 				canvasElement.querySelectorAll('.calendarView .calEntry').length
 			).toBe(all)
 		);
+		// The accessibility audit runs after this: let a reload the filter
+		// started finish first, or axe sees the busy overlay over an empty
+		// all-day row (FE#2298 CI, 18 Nov).
+		await waitFor(
+			() =>
+				expect(
+					canvasElement.querySelector(
+						'[data-testid="calendar-loading"]'
+					)
+				).toBeNull(),
+			{ timeout: 5000 }
+		);
 	}
 };
 
