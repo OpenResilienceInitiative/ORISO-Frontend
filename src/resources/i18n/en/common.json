@@ -4779,7 +4779,9 @@
 		},
 		"deletedAsker": {
 			"title": "Deleted advice seeker",
-			"hint": "This chat was deleted. Personal data and messages are no longer available."
+			"hint": "This chat was deleted. Personal data and messages are no longer available.",
+			"preview": "Chat was deleted",
+			"previewArchived": "Deleted · in archive"
 		}
 	},
 	"statusOverlay": {
@@ -7601,5 +7603,15 @@
 			"inviteDescription": "Advice seekers join through this link or QR code.",
 			"added": "{{name}} now co-moderates this group."
 		}
+	},
+	"deletedAskerSession": {
+		"notice": {
+			"title": "This chat was deleted",
+			"deletedOn": "Deleted on {{date}}",
+			"text": "The advice seeker's personal data and messages are no longer available."
+		},
+		"archiveHint": "Move the entry to the archive so it leaves your list and your activity.",
+		"archived": "This entry is in the archive.",
+		"archiveFailed": "Archiving did not work. Please try again."
 	}
 }

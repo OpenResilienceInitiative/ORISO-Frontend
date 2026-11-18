@@ -3073,5 +3073,9 @@
 		"groupChat": {
 			"description": "Sieh, wer diese Gruppe leitet, und teile den Link mit allen, die teilnehmen möchten."
 		}
+	},
+	"deletedAskerSession": {
+		"archiveHint": "Verschiebe den Eintrag ins Archiv, damit er aus deiner Liste und den Aktivitäten verschwindet.",
+		"archiveFailed": "Archivieren hat nicht geklappt. Bitte versuche es erneut."
 	}
 }
