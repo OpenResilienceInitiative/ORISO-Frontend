@@ -335,12 +335,10 @@
 			},
 			{
 				"files": [
-					"src/**/*.tsx",
-					"src/**/*.jsx"
+					"src/**/*.tsx"
 				],
 				"excludedFiles": [
 					"src/**/*.test.tsx",
-					"src/**/*.test.jsx",
 					"src/**/*.spec.tsx",
 					"src/**/*.stories.tsx",
 					"src/components/form/**",
