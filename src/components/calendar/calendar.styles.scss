@@ -2109,6 +2109,20 @@ $cal-page-gap: 12px;
 	}
 }
 
+// The top row: "Termin | Sperrzeit" and, for a Termin, "Ratsuchende
+// Person | Kolleg:in" on one line (FE#2305, Frank: "alles in eine Linie").
+.calendarNewEntry__head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px 32px;
+}
+
+.calendarDialog__with .calendarNewEntry__tab {
+	white-space: nowrap;
+}
+
 .calendarQuick__freeHead {
 	display: flex;
 	align-items: center;
@@ -3512,6 +3526,7 @@ $cal-new-pill-hover: #4b4f51;
 		@include breakpoint($fromMedium) {
 			flex-direction: row;
 			align-items: flex-start;
+			gap: 32px;
 		}
 	}
 }
@@ -3596,7 +3611,8 @@ $cal-new-pill-hover: #4b4f51;
 		color: var(--m3-on-surface, #1b1b1c);
 	}
 
-	&[aria-selected='true'] {
+	&[aria-selected='true'],
+	&[aria-checked='true'] {
 		@include calendar-chosen;
 	}
 

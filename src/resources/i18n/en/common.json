@@ -7066,14 +7066,22 @@
 				"incomplete": "Please choose a date and time.",
 				"past": "The entry must be in the future.",
 				"order": "The end must be after the start.",
-				"conversation": "Please choose the conversation this appointment belongs to."
+				"conversation": "Please choose the conversation this appointment belongs to.",
+				"colleague": "Please choose a colleague."
 			},
 			"entryKind": "Kind of entry",
 			"tabs": {
 				"appointment": "Appointment",
 				"blocker": "Blocked time",
 				"absence": "Absence"
-			}
+			},
+			"withWhom": "Appointment with",
+			"withConversation": "Advice seeker",
+			"withColleague": "Colleague",
+			"colleague": "Colleague",
+			"colleagueHint": "The appointment goes into the internal chat of the two of you. If there is none yet, it is created.",
+			"colleagueDescription": "Choose the day, time, kind and the colleague.",
+			"onsiteOnly": "No internal chat is allowed with this colleague. Only an on-site appointment is possible."
 		},
 		"details": {
 			"start": {
@@ -7541,6 +7549,30 @@
 			"conflicts": "{{count}} appointments fall in this period. They stay in place – cancel or move them yourself if needed.",
 			"conflicts_one": "{{count}} appointment falls in this period. It stays in place – cancel or move it yourself if needed.",
 			"saved": "Absence added. It also shows in your profile."
+		},
+		"meeting": {
+			"accept": "Accept",
+			"decline": "Decline",
+			"accepted": "Appointment accepted.",
+			"declined": "Appointment declined.",
+			"cancelled": "Appointment cancelled.",
+			"cancelAsk": "{{name}}, {{time}}. The appointment leaves both calendars.",
+			"cancelSub": "Also leaves {{name}}'s calendar",
+			"chatSub": "Internal chat with {{name}}",
+			"pendingInvited": "{{name}} invites you. Please accept or decline.",
+			"pendingSent": "Requested. Waiting for {{name}}.",
+			"confirmed": "Confirmed with {{name}}."
+		},
+		"autoAccept": {
+			"menu": "Accept appointments automatically …",
+			"menuHint": "From which colleagues",
+			"title": "Accept appointments automatically",
+			"description": "Appointments from these colleagues are fixed in your calendar at once.",
+			"colleagues": "Colleagues",
+			"search": "Search names",
+			"hint": "Appointments from everyone else wait until you accept them.",
+			"save": "Save",
+			"saved": "List saved."
 		}
 	},
 	"guestAccountMode": {

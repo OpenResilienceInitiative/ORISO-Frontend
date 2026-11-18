@@ -39,6 +39,12 @@ import {
 	apiDeleteCalendarBlocker,
 	apiDeleteWorkingDayException,
 	apiAcceptCalendarProposal,
+	apiAcceptColleagueAppointment,
+	apiCancelColleagueAppointment,
+	apiCreateColleagueAppointment,
+	apiDeclineColleagueAppointment,
+	apiGetCalendarAutoAccept,
+	apiSetCalendarAutoAccept,
 	apiCreateCalendarProposal,
 	apiDeclineCalendarProposal,
 	apiGetCalendarColleagues,
@@ -65,6 +71,7 @@ import { apiGetAskerSessionList } from '../../api/apiGetAskerSessionList';
 import { FETCH_ERRORS } from '../../api/fetchData';
 import { apiSetAbsence } from '../../api/apiSetAbsence';
 import type { AbsenceDraft } from './AbsenceForm';
+import { getSessionNavigationPath } from '../sessionsListItem/sessionsListItemHelpers';
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import {
 	notifyAppointmentsChanged,
@@ -96,6 +103,7 @@ import {
 	entryFromApi,
 	feedFromApi,
 	importFromApi,
+	kindToApi,
 	loadWindow,
 	normalizeImportUrl,
 	proposalFromApi,
@@ -234,6 +242,8 @@ export const CalendarPageWired = () => {
 		Record<string, CalendarEntry[]>
 	>({});
 	const [colleagues, setColleagues] = useState<Colleague[]>([]);
+	/** Undefined until read; a backend without FE#2305 keeps it so. */
+	const [autoAcceptIds, setAutoAcceptIds] = useState<string[]>();
 	const [visibility, setVisibility] =
 		useState<CalendarVisibility>(DEFAULT_VISIBILITY);
 	const [conversations, setConversations] = useState<ConversationRef[]>([]);
@@ -555,6 +565,11 @@ export const CalendarPageWired = () => {
 				},
 				() => undefined
 			);
+			// A backend without FE#2305 answers 404: no list, no menu item.
+			apiGetCalendarAutoAccept().then(
+				(dto) => !cancelled && setAutoAcceptIds(dto.colleagueIds ?? []),
+				() => undefined
+			);
 			apiGetCalendarSync().then(
 				(dto) => !cancelled && setSync(dto),
 				() => undefined
@@ -618,6 +633,26 @@ export const CalendarPageWired = () => {
 			afterChange();
 			// The page offers "undo" on exactly these.
 			return (created ?? []).map(entryFromApi);
+		}
+		if (first.colleagueId) {
+			// With a colleague (FE#2305): UserService opens the internal chat
+			// of the two; the notice there tells the colleague.
+			const created = await apiCreateColleagueAppointment({
+				colleagueId: first.colleagueId,
+				start: first.start.toISOString(),
+				end: first.end.toISOString(),
+				kind: kindToApi(first.kind ?? 'video')
+			});
+			afterChange();
+			if (created?.matrixRoomId && typeof created.chatId === 'number')
+				await sendNotice({
+					kind: 'created',
+					start: first.start,
+					end: first.end,
+					sessionId: created.chatId,
+					matrixRoomId: created.matrixRoomId
+				});
+			return undefined;
 		}
 		if (first.sessionId === undefined) throw new Error('conversation');
 		/* The 1:1's save path: the appointment with its Art, then the
@@ -693,6 +728,20 @@ export const CalendarPageWired = () => {
 	};
 
 	const cancel = async (entry: CalendarEntry) => {
+		const { meeting } = entry;
+		if (meeting) {
+			await apiCancelColleagueAppointment(entry.id);
+			afterChange();
+			if (meeting.matrixRoomId && meeting.chatId !== undefined)
+				await sendNotice({
+					kind: 'cancelled',
+					start: new Date(entry.start),
+					end: new Date(entry.end),
+					sessionId: meeting.chatId,
+					matrixRoomId: meeting.matrixRoomId
+				});
+			return;
+		}
 		if (entry.sessionId === undefined) return;
 		await apiCancelSessionAppointment(entry.sessionId, entry.id);
 		afterChange();
@@ -811,10 +860,48 @@ export const CalendarPageWired = () => {
 	 * With `startCall`, the conversation is asked to start that call with
 	 * the checks of its own button (FE#1050).
 	 */
+	/** The internal chat of two counsellors (FE#2305). */
+	const openMeetingChat = (entry: CalendarEntry) => {
+		const { meeting } = entry;
+		if (!meeting?.matrixRoomId || meeting.chatId === undefined)
+			return Promise.reject(new Error('meeting without chat'));
+		navigate(
+			getSessionNavigationPath({
+				listPath: '/sessions/consultant/sessionView',
+				sessionId: meeting.chatId,
+				groupId: meeting.matrixRoomId,
+				isGroup: true,
+				isAsker: false,
+				isEmptyEnquiry: false,
+				tabSuffix: ''
+			})
+		);
+		return undefined;
+	};
+
+	const answerMeeting = async (
+		entry: CalendarEntry,
+		answer: 'accept' | 'decline'
+	) => {
+		try {
+			if (answer === 'accept')
+				await apiAcceptColleagueAppointment(entry.id);
+			else await apiDeclineColleagueAppointment(entry.id);
+		} finally {
+			afterChange();
+		}
+	};
+
+	const saveAutoAccept = async (ids: string[]) => {
+		const saved = await apiSetCalendarAutoAccept({ colleagueIds: ids });
+		setAutoAcceptIds(saved?.colleagueIds ?? ids);
+	};
+
 	const openConversation = (
 		entry: CalendarEntry,
 		startCall?: CallKind
 	): Promise<void> | undefined => {
+		if (entry.meeting) return openMeetingChat(entry);
 		const { sessionId } = entry;
 		const listed = conversationOf(sessionId);
 		if (listed?.matrixRoomId) {
@@ -1091,6 +1178,11 @@ export const CalendarPageWired = () => {
 				}
 				onMove={consultant ? move : undefined}
 				onCancelAppointment={consultant ? cancel : undefined}
+				onAnswerMeeting={consultant ? answerMeeting : undefined}
+				autoAcceptIds={autoAcceptIds}
+				onSaveAutoAccept={
+					consultant && autoAcceptIds ? saveAutoAccept : undefined
+				}
 				onRemoveBlocker={consultant ? removeBlocker : undefined}
 				proposals={consultant ? sentProposals : undefined}
 				receivedProposals={consultant ? receivedProposals : undefined}

@@ -18,13 +18,15 @@ import { M3Dialog } from '../m3Dialog/M3Dialog';
 import { useCalendarInvitationForm } from './useCalendarInvitationForm';
 import { useBlockerForm } from './BlockerDialog';
 import { useAbsenceForm, type AbsenceDraft } from './AbsenceForm';
+import { useColleagueAppointmentForm } from './ColleagueAppointmentForm';
 import type { InvitationPreset } from '../directInvitation/invitationModel';
 import type { DirectLinkMedium } from '../conversationCreate/directLink/directLink';
 import type {
 	AppointmentDraft,
 	AppointmentKind,
 	CalendarConversation,
-	CalendarEntry
+	CalendarEntry,
+	Colleague
 } from './calendarModel';
 
 export type NewEntryTab = 'appointment' | 'blocker' | 'absence';
@@ -41,6 +43,11 @@ export interface NewEntryDialogProps {
 	initialAllDay?: boolean;
 	initialNote?: string;
 	conversations: CalendarConversation[];
+	/**
+	 * Colleagues one may meet instead of an advice seeker (FE#2305); with
+	 * any, "Ratsuchende Person | Kolleg:in" sits next to the tabs.
+	 */
+	colleagues?: Colleague[];
 	entries: CalendarEntry[];
 	ownerId: string;
 	now: Date;
@@ -67,6 +74,9 @@ export interface NewEntryDialogProps {
 
 const TABS: NewEntryTab[] = ['appointment', 'blocker', 'absence'];
 
+type WithWhom = 'conversation' | 'colleague';
+const WITH_WHOM: WithWhom[] = ['conversation', 'colleague'];
+
 /** Which tab a key moves to, from the index of the selected one among `count`. */
 const TAB_KEYS: Partial<Record<string, (at: number, count: number) => number>> =
 	{
@@ -85,6 +95,7 @@ export const NewEntryDialog = ({
 	initialAllDay,
 	initialNote,
 	conversations,
+	colleagues = [],
 	entries,
 	ownerId,
 	now,
@@ -101,6 +112,7 @@ export const NewEntryDialog = ({
 }: NewEntryDialogProps) => {
 	const { t } = useTranslation();
 	const [tab, setTab] = useState<NewEntryTab>(initialTab);
+	const [withWhom, setWithWhom] = useState<WithWhom>('conversation');
 	const ids = useId();
 	const tabId = (value: NewEntryTab) => `${ids}-tab-${value}`;
 	const panelId = `${ids}-panel`;
@@ -151,12 +163,42 @@ export const NewEntryDialog = ({
 		onSave: (draft) => onSaveAbsence?.(draft),
 		onClose
 	});
+	const colleague = useColleagueAppointmentForm({
+		slot,
+		colleagues,
+		entries,
+		ownerId,
+		now,
+		onSave: onSaveAppointment,
+		onClose
+	});
 	const form =
 		shown === 'appointment'
-			? appointment
+			? withWhom === 'colleague'
+				? colleague
+				: appointment
 			: shown === 'blocker'
 				? blocker
 				: absence;
+	// "Ratsuchende Person | Kolleg:in" on the line of the tabs (Frank,
+	// 2026-11-17: "alles in eine Linie").
+	const showWithWhom = shown === 'appointment' && colleagues.length > 0;
+	// A radio group: one Tab stop, the arrow keys move and select.
+	const onWithWhomKeyDown = (
+		event: React.KeyboardEvent<HTMLButtonElement>
+	) => {
+		const step = TAB_KEYS[event.key];
+		if (!step) return;
+		event.preventDefault();
+		const next =
+			WITH_WHOM[step(WITH_WHOM.indexOf(withWhom), WITH_WHOM.length)];
+		setWithWhom(next);
+		event.currentTarget.parentElement
+			?.querySelector<HTMLButtonElement>(
+				`[data-cy="calendar-dialog-with-${next}"]`
+			)
+			?.focus();
+	};
 
 	return (
 		<M3Dialog
@@ -172,32 +214,61 @@ export const NewEntryDialog = ({
 			actions={form.actions}
 		>
 			<div className="calendarNewEntry">
-				<div
-					className="calendarNewEntry__tabs"
-					role="tablist"
-					aria-label={t('calendar.dialog.entryKind')}
-				>
-					{tabs.map((value) => (
-						<button
-							key={value}
-							ref={(el) => {
-								if (el) tabRefs.current[value] = el;
-								else delete tabRefs.current[value];
-							}}
-							type="button"
-							role="tab"
-							id={tabId(value)}
-							className="calendarNewEntry__tab"
-							aria-selected={shown === value}
-							aria-controls={panelId}
-							tabIndex={shown === value ? 0 : -1}
-							onClick={() => setTab(value)}
-							onKeyDown={onTabKeyDown}
-							data-cy={`calendar-new-tab-${value}`}
+				<div className="calendarNewEntry__head">
+					<div
+						className="calendarNewEntry__tabs"
+						role="tablist"
+						aria-label={t('calendar.dialog.entryKind')}
+					>
+						{tabs.map((value) => (
+							<button
+								key={value}
+								ref={(el) => {
+									if (el) tabRefs.current[value] = el;
+									else delete tabRefs.current[value];
+								}}
+								type="button"
+								role="tab"
+								id={tabId(value)}
+								className="calendarNewEntry__tab"
+								aria-selected={shown === value}
+								aria-controls={panelId}
+								tabIndex={shown === value ? 0 : -1}
+								onClick={() => setTab(value)}
+								onKeyDown={onTabKeyDown}
+								data-cy={`calendar-new-tab-${value}`}
+							>
+								{t(`calendar.dialog.tabs.${value}`)}
+							</button>
+						))}
+					</div>
+					{showWithWhom && (
+						<div
+							className="calendarNewEntry__tabs calendarDialog__with"
+							role="radiogroup"
+							aria-label={t('calendar.dialog.withWhom')}
 						>
-							{t(`calendar.dialog.tabs.${value}`)}
-						</button>
-					))}
+							{WITH_WHOM.map((value) => (
+								<button
+									key={value}
+									type="button"
+									role="radio"
+									className="calendarNewEntry__tab"
+									aria-checked={withWhom === value}
+									tabIndex={withWhom === value ? 0 : -1}
+									onClick={() => setWithWhom(value)}
+									onKeyDown={onWithWhomKeyDown}
+									data-cy={`calendar-dialog-with-${value}`}
+								>
+									{t(
+										value === 'colleague'
+											? 'calendar.dialog.withColleague'
+											: 'calendar.dialog.withConversation'
+									)}
+								</button>
+							))}
+						</div>
+					)}
 				</div>
 				<div
 					role="tabpanel"

@@ -7151,14 +7151,22 @@
 				"incomplete": "Lütfen tarih ve saat seçin.",
 				"past": "Kayıt gelecekte olmalıdır.",
 				"order": "Bitiş, başlangıçtan sonra olmalıdır.",
-				"conversation": "Lütfen randevunun ait olduğu danışmanlığı seçin."
+				"conversation": "Lütfen randevunun ait olduğu danışmanlığı seçin.",
+				"colleague": "Lütfen bir meslektaş seçin."
 			},
 			"entryKind": "Kayıt türü",
 			"tabs": {
 				"appointment": "Randevu",
 				"blocker": "Engellenmiş zaman",
 				"absence": "Yokluk"
-			}
+			},
+			"withWhom": "Randevu",
+			"withConversation": "Danışan kişi",
+			"withColleague": "Meslektaş",
+			"colleague": "Meslektaş",
+			"colleagueHint": "Randevu ikinizin dahili sohbetine eklenir. Henüz yoksa oluşturulur.",
+			"colleagueDescription": "Gün, saat, tür ve meslektaşı seçin.",
+			"onsiteOnly": "Bu meslektaşla dahili sohbete izin verilmiyor. Yalnızca yüz yüze randevu mümkün."
 		},
 		"details": {
 			"start": {
@@ -7626,6 +7634,30 @@
 			"conflicts": "Bu dönemde {{count}} randevu var. Randevular yerinde kalır – gerekirse kendiniz iptal edin veya erteleyin.",
 			"conflicts_one": "Bu dönemde {{count}} randevu var. Randevu yerinde kalır – gerekirse kendiniz iptal edin veya erteleyin.",
 			"saved": "Yokluk kaydedildi. Profilinizde de görünür."
+		},
+		"meeting": {
+			"accept": "Kabul et",
+			"decline": "Reddet",
+			"accepted": "Randevu kabul edildi.",
+			"declined": "Randevu reddedildi.",
+			"cancelled": "Randevu iptal edildi.",
+			"cancelAsk": "{{name}}, {{time}}. Randevu her iki takvimden de kalkar.",
+			"cancelSub": "{{name}} takviminden de kalkar",
+			"chatSub": "{{name}} ile dahili sohbet",
+			"pendingInvited": "{{name}} sizi davet ediyor. Lütfen kabul edin veya reddedin.",
+			"pendingSent": "İstendi. {{name}} bekleniyor.",
+			"confirmed": "{{name}} ile kesinleşti."
+		},
+		"autoAccept": {
+			"menu": "Randevuları otomatik kabul et …",
+			"menuHint": "Hangi meslektaşlardan",
+			"title": "Randevuları otomatik kabul et",
+			"description": "Bu meslektaşlardan gelen randevular takviminize hemen kesin olarak girer.",
+			"colleagues": "Meslektaşlar",
+			"search": "İsim ara",
+			"hint": "Diğer herkesin randevuları siz kabul edene kadar bekler.",
+			"save": "Kaydet",
+			"saved": "Liste kaydedildi."
 		}
 	},
 	"guestAccountMode": {
