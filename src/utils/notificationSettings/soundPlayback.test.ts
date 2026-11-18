@@ -122,6 +122,58 @@ describe('playNotificationSound (config-driven)', () => {
 		expect(played[0].src).toContain('ton-2');
 	});
 
+	// FE#1211 (Frank, 18 Nov): the incoming-call ring is for a call you can
+	// still take; an ended or missed call closes with a short tone.
+	it.each(['call.ended', 'call.missed'])(
+		'%s closes with the short closing tone, not the ring',
+		(eventType) => {
+			playNotificationSound(
+				DEFAULT_NOTIFICATION_SETTINGS,
+				DEFAULT_LOCAL_DEVICE_SETTINGS,
+				'calls',
+				eventType,
+				false,
+				nextNow()
+			);
+			expect(played).toHaveLength(1);
+			expect(played[0].src).toContain('ton-10');
+		}
+	);
+
+	it('an invitation to a call still rings', () => {
+		playNotificationSound(
+			DEFAULT_NOTIFICATION_SETTINGS,
+			DEFAULT_LOCAL_DEVICE_SETTINGS,
+			'calls',
+			'call.invited',
+			false,
+			nextNow()
+		);
+		expect(played[0].src).toMatch(/incomingCall/i);
+	});
+
+	it('an ended call keeps a call tone the user chose', () => {
+		const chosen = {
+			...DEFAULT_NOTIFICATION_SETTINGS,
+			notificationConfig: setKindField(
+				DEFAULT_NOTIFICATION_SETTINGS.notificationConfig,
+				'timeCritical',
+				'call',
+				'sound',
+				'ton-5' as never
+			)
+		};
+		playNotificationSound(
+			chosen,
+			DEFAULT_LOCAL_DEVICE_SETTINGS,
+			'calls',
+			'call.ended',
+			false,
+			nextNow()
+		);
+		expect(played[0].src).toContain('ton-5');
+	});
+
 	it('a mention uses the mention row of the conversations area', () => {
 		playNotificationSound(
 			settingsWith('conversations', 'mention', 'ton-9', 1),

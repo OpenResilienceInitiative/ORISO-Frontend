@@ -6,6 +6,7 @@ import {
 	browserNotificationsSettings,
 	isSupported
 } from '../../utils/notificationHelpers';
+import { effectiveBrowserNotificationsEnabled } from '../../utils/notificationSettings/browserMasterSwitch';
 
 /** Account/device capability shared by automatic invitations and manual setup.
  * An address alone is not an active channel; a silenced browser is not reachable.
@@ -35,10 +36,13 @@ export const useNotificationChannels = (
 	const browserSupported = isBrowserEnabled && Boolean(isSupported());
 	const browserActive = Boolean(
 		browserSupported &&
-			Notification.permission === 'granted' &&
-			(appConfig?.releaseToggles?.enableNewNotifications === true
-				? settings.browserNotifications?.enabled
-				: browserNotificationsSettings().enabled)
+			effectiveBrowserNotificationsEnabled(
+				Boolean(
+					appConfig?.releaseToggles?.enableNewNotifications === true
+						? settings.browserNotifications?.enabled
+						: browserNotificationsSettings().enabled
+				)
+			)
 	);
 	const browserSilenced = isSuppressed('messages');
 	return {

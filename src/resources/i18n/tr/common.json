@@ -2597,8 +2597,8 @@
 				"text": "Bir danışan bekleme odasına katıldı."
 			},
 			"callInvited": {
-				"title": "Dahili grup aramasına davet",
-				"text": "Dahili bir grup aramasına davet edildiniz."
+				"title": "Arama daveti",
+				"text": "Bir aramaya davet edildiniz."
 			},
 			"callKnockRequested": {
 				"title": "Biri kapıyı çalıyor",
