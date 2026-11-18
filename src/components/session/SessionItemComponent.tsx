@@ -245,6 +245,11 @@ import NorthEastIcon from '@mui/icons-material/NorthEast';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { ReactComponent as CloseIcon } from '../../resources/img/icons/close.svg';
 import { canRenderClientComposer } from './clientComposerPolicy';
+import { SelectionReplyLayer } from '../selectionReply/SelectionReplyLayer';
+import { useSessionPassageReplies } from '../selectionReply/useSessionPassageReplies';
+import { jumpToPassage } from '../selectionReply/passageRange';
+import type { PassageReply } from '../selectionReply/PassageReplyBlocks';
+import { useSessionPassageBlur } from '../selectionReply/useSessionPassageBlur';
 import { isCaseHandoverCoAccess } from './caseHandoverHelpers';
 import { CaseHandoverReadOnlyNotice } from './CaseHandoverReadOnlyNotice';
 import {
@@ -275,6 +280,8 @@ interface SessionItemProps {
 	messages?: MessageItem[];
 	/** Reactions (m.annotation, #435): raw reaction events for the loaded window. */
 	reactionEvents?: ReactionEvent[];
+	/** Moderator blurs (#2229): blur event id → Matrix id of who blurred. */
+	passageBlurSenders?: Map<string, string>;
 	/**
 	 * WP-B2 (ADR-008): the supervision side room's own timeline. Never part
 	 * of `messages`; rendered in the SupervisionPanel next to the chat.
@@ -3057,9 +3064,74 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			if (!target) {
 				return null;
 			}
-			return buildReplyQuotePreview(target);
+			const quote = buildReplyQuotePreview(target);
+			// A blurred passage (#2229) must not come back in a quote.
+			return target.passageBlurs?.length
+				? {
+						...quote,
+						text: translate('message.selectionReply.blurredLabel')
+					}
+				: quote;
 		},
+		[messages, translate]
+	);
+
+	// Selection reply (#2202): mark a passage in a message, answer it, and
+	// send the collected answers as one message. Only where this person can
+	// write in the conversation: never for supervisors or a read-only
+	// co-access view.
+	const passageReplies = useSessionPassageReplies({
+		matrixRoomId: resolvedMatrixRoomId,
+		canReply:
+			!isRejectedSession &&
+			!isCoAccessViewer &&
+			!isSupervisorView &&
+			canRenderClientComposer({
+				canWriteMessage,
+				isSupervisor: isSupervisorView,
+				shouldBlockAnonymousInquiryChat: blocksConversation
+			}),
+		isSupervisor,
+		senderDisplayName: userData?.displayName || userData?.userName || null
+	});
+	const authorForPassage = useCallback(
+		(eventId: string) =>
+			(messages || []).find(
+				(candidate: MessageItem) => candidate._id === eventId
+			)?.displayName || '',
 		[messages]
+	);
+	const handleJumpToPassage = useCallback((reply: PassageReply) => {
+		if (scrollContainerRef.current) {
+			jumpToPassage(
+				scrollContainerRef.current,
+				reply.eventId,
+				reply.excerpt,
+				reply.start
+			);
+		}
+	}, []);
+	// Moderator blur (#2229): only the room's moderators blur a passage or
+	// lift a blur; everyone in the chat sees it.
+	const passageBlur = useSessionPassageBlur({
+		matrixRoomId: resolvedMatrixRoomId,
+		blurSenders: props.passageBlurSenders,
+		activeSession,
+		userData,
+		isConsultant: isConsultantUser,
+		isSupervisorView,
+		isReadOnly: isRejectedSession || isCoAccessViewer
+	});
+	const handleThreadFromPassage = useCallback(
+		(passage: { eventId: string }) => {
+			const root = (messages || []).find(
+				(candidate: MessageItem) => candidate._id === passage.eventId
+			);
+			if (root) {
+				handleOpenThread(root);
+			}
+		},
+		[messages, handleOpenThread]
 	);
 
 	// If threads become disabled while a thread panel is open, close it immediately.
@@ -3530,90 +3602,121 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							{!messages && props.mainTimelineSupplement}
 							{/* MATRIX MIGRATION: For Matrix sessions (no rid), skip E2EE ready check */}
 							{messages && (ready || !activeSession.rid) && (
-								<MessageTimeline
-									messages={messages}
-									renderMode="main"
-									supplement={props.mainTimelineSupplement}
-									supplementTime={
-										props.mainTimelineSupplementTime
+								<SelectionReplyLayer
+									enabled={
+										passageReplies.enabled ||
+										passageBlur.canBlur
 									}
-									clientName={
-										getContact(activeSession)?.username ||
-										translate(
-											'sessionList.user.consultantUnknown'
-										)
-									}
-									askerMatrixUserIdFor={() =>
-										activeSession.item.askerMatrixUserId
-									}
-									isOnlyEnquiry={isOnlyEnquiry}
-									hideSystemMessages={
-										isConsultantUser &&
-										(isOnlyEnquiry ||
-											Boolean(activeSession.isEnquiry))
-									}
-									showFullContent={
-										isOnlyEnquiry ||
-										Boolean(activeSession.isEnquiry)
-									}
-									isMyMessage={isMyMessageMatrix}
-									isUserBanned={(username) =>
-										props.bannedUsers.includes(username)
-									}
-									handleDecryptionErrors={
-										handleDecryptionErrors
-									}
-									handleDecryptionSuccess={
-										handleDecryptionSuccess
-									}
-									e2eeParams={{
-										key,
-										keyID,
-										encrypted,
-										subscriptionKeyLost
-									}}
-									decryptionFailures={decryptionFailures}
-									showDecryptionCardFor={(message) =>
-										!isThreadsEnabled ||
-										!message.threadRootEventId
-									}
-									threadsEnabled={isThreadsEnabled}
-									threadSummaryFor={(id) =>
-										threadSummaries.get(id)
-									}
-									onOpenThread={
+									authorFor={authorForPassage}
+									onAddToComposer={passageReplies.collect}
+									onSendNow={passageReplies.sendNow}
+									onStartThread={
 										isThreadsEnabled
-											? handleOpenThread
+											? handleThreadFromPassage
 											: undefined
 									}
-									resolveReplyQuote={resolveReplyQuote}
-									onReplyDirect={
-										isRejectedSession || isCoAccessViewer
-											? undefined
-											: handleReplyDirect
-									}
-									onEditDirect={
-										isRejectedSession
-											? undefined
-											: handleEditDirect
-									}
-									onDeleteDirect={
-										isRejectedSession
-											? undefined
-											: handleDeleteDirect
-									}
-									reactionsFor={getReactionsFor}
-									onReact={
-										isRejectedSession || isCoAccessViewer
-											? undefined
-											: handleReact
-									}
-									onUnreact={
-										isRejectedSession || isCoAccessViewer
-											? undefined
-											: handleUnreact
-									}
-								/>
+									recorder={passageReplies.recorder}
+									onBlurPassage={passageBlur.onBlurPassage}
+									onRemoveBlur={passageBlur.onRemoveBlur}
+									blurredByFor={passageBlur.blurredByFor}
+								>
+									<MessageTimeline
+										messages={messages}
+										renderMode="main"
+										supplement={
+											props.mainTimelineSupplement
+										}
+										supplementTime={
+											props.mainTimelineSupplementTime
+										}
+										clientName={
+											getContact(activeSession)
+												?.username ||
+											translate(
+												'sessionList.user.consultantUnknown'
+											)
+										}
+										askerMatrixUserIdFor={() =>
+											activeSession.item.askerMatrixUserId
+										}
+										isOnlyEnquiry={isOnlyEnquiry}
+										hideSystemMessages={
+											isConsultantUser &&
+											(isOnlyEnquiry ||
+												Boolean(
+													activeSession.isEnquiry
+												))
+										}
+										showFullContent={
+											isOnlyEnquiry ||
+											Boolean(activeSession.isEnquiry)
+										}
+										isMyMessage={isMyMessageMatrix}
+										isUserBanned={(username) =>
+											props.bannedUsers.includes(username)
+										}
+										handleDecryptionErrors={
+											handleDecryptionErrors
+										}
+										handleDecryptionSuccess={
+											handleDecryptionSuccess
+										}
+										e2eeParams={{
+											key,
+											keyID,
+											encrypted,
+											subscriptionKeyLost
+										}}
+										decryptionFailures={decryptionFailures}
+										showDecryptionCardFor={(message) =>
+											!isThreadsEnabled ||
+											!message.threadRootEventId
+										}
+										threadsEnabled={isThreadsEnabled}
+										threadSummaryFor={(id) =>
+											threadSummaries.get(id)
+										}
+										onOpenThread={
+											isThreadsEnabled
+												? handleOpenThread
+												: undefined
+										}
+										resolveReplyQuote={resolveReplyQuote}
+										onReplyDirect={
+											isRejectedSession ||
+											isCoAccessViewer
+												? undefined
+												: handleReplyDirect
+										}
+										onEditDirect={
+											isRejectedSession
+												? undefined
+												: handleEditDirect
+										}
+										onDeleteDirect={
+											isRejectedSession
+												? undefined
+												: handleDeleteDirect
+										}
+										reactionsFor={getReactionsFor}
+										onReact={
+											isRejectedSession ||
+											isCoAccessViewer
+												? undefined
+												: handleReact
+										}
+										onUnreact={
+											isRejectedSession ||
+											isCoAccessViewer
+												? undefined
+												: handleUnreact
+										}
+										onJumpToPassage={handleJumpToPassage}
+										canRemovePassageBlur={
+											passageBlur.canBlur
+										}
+									/>
+								</SelectionReplyLayer>
 							)}
 							{/* "Sending message failed" cards for sends that never
 						    reached the server (Figma 7086-57415). */}
@@ -3943,6 +4046,19 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 											}
 											replyTo={replyTo}
 											onCancelReply={handleCancelReply}
+											pendingQuotes={
+												passageReplies.enabled
+													? passageReplies.pending
+													: undefined
+											}
+											onRemovePendingQuote={
+												passageReplies.remove
+											}
+											onSendPendingQuotes={
+												passageReplies.enabled
+													? passageReplies.sendCollected
+													: undefined
+											}
 											editingMessage={editingMessage}
 											onCancelEdit={handleCancelEdit}
 											mobileUnreadCount={newMessages}

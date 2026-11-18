@@ -401,3 +401,76 @@ describe('SelectionReplyLayer moderator blur bar on scroll', () => {
 		expect(blurBar()).toBeNull();
 	});
 });
+
+describe('SelectionReplyLayer selection bar on scroll', () => {
+	let passageTop = 100;
+	beforeEach(() => {
+		passageTop = 100;
+		vi.spyOn(Range.prototype, 'getBoundingClientRect').mockImplementation(
+			() => new DOMRect(40, passageTop, 80, 20)
+		);
+		vi.spyOn(Range.prototype, 'getClientRects').mockImplementation(
+			() => [new DOMRect(40, passageTop, 80, 20)] as any
+		);
+	});
+	afterEach(() => {
+		cleanup();
+		vi.restoreAllMocks();
+		window.getSelection()?.removeAllRanges();
+	});
+
+	const markFreiburg = async () => {
+		render(
+			<SelectionReplyLayer
+				authorFor={() => 'Anna'}
+				onAddToComposer={() => {}}
+				onSendNow={() => {}}
+			>
+				<div data-message-id="$1">
+					<div className="messageItem__message">
+						<p data-testid="body">Ich wohne in Freiburg.</p>
+					</div>
+				</div>
+			</SelectionReplyLayer>
+		);
+		const text = screen.getByTestId('body').firstChild!;
+		const range = document.createRange();
+		range.setStart(text, 13);
+		range.setEnd(text, 21);
+		window.getSelection()!.removeAllRanges();
+		window.getSelection()!.addRange(range);
+		await act(async () => {
+			fireEvent.mouseUp(
+				document.querySelector('[data-cy="selection-reply-layer"]')!
+			);
+			// The layer reads the selection once the browser settled it.
+			await new Promise((resolve) => setTimeout(resolve, 0));
+		});
+	};
+	const bar = () =>
+		document.querySelector('[data-cy="selection-reply-toolbar"]');
+
+	it('stays open when the chat scrolls by itself and the passage stays in view', async () => {
+		await markFreiburg();
+		expect(bar()).not.toBeNull();
+
+		passageTop = 140;
+		act(() => {
+			document.dispatchEvent(new Event('scroll'));
+		});
+
+		expect(bar()).not.toBeNull();
+	});
+
+	it('closes once a scroll moves the passage out of view', async () => {
+		await markFreiburg();
+		expect(bar()).not.toBeNull();
+
+		passageTop = window.innerHeight + 200;
+		act(() => {
+			document.dispatchEvent(new Event('scroll'));
+		});
+
+		expect(bar()).toBeNull();
+	});
+});

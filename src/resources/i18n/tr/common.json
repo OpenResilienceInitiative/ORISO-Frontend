@@ -345,7 +345,10 @@
 			"pickDay": "Lütfen önce takvimden bir gün seçin.",
 			"subline": "Önce bir gün, sonra bir saat seçin.",
 			"times": "Boş saatler",
-			"weekdays": "P,P,S,Ç,P,C,C"
+			"weekdays": "P,P,S,Ç,P,C,C",
+			"legendInstant": "Hemen alınır",
+			"legendRequest": "Talep – randevuyu danışmanınız onaylar",
+			"requestTime": "Talep"
 		},
 		"availability": {
 			"description": "Tavsiye almak isteyen kişilerin sizden randevu alabilmeleri için genel uygunluk durumunuzu buraya girin.",
@@ -743,7 +746,7 @@
 	},
 	"enquiry": {
 		"teamDiscussion": {
-			"open": "Ekip görüşmesini aç"
+			"open": "Ekip sohbetini aç"
 		},
 		"acceptButton": {
 			"anonymous": "Sohbet başlat",
@@ -2239,7 +2242,15 @@
 			"pendingLead": "{{number}} · {{author}}",
 			"pendingStatus": "{{author}} için {{number}}. yanıt, sonraki mesaj için toplandı",
 			"remove": "{{number}}. yanıtı kaldır",
-			"voiceDuration": "Sesli mesaj {{duration}}"
+			"voiceDuration": "Sesli mesaj {{duration}}",
+			"sendFailed": {
+				"title": "Yanıtlar gönderilmedi",
+				"text": "İşaretlenen bölümlere verdiğiniz yanıtlar hâlâ toplanmış durumda. Lütfen yeniden gönderin."
+			},
+			"blurFailed": {
+				"title": "Bulanıklaştırma kaydedilmedi",
+				"text": "Bölüm bulanıklaştırılamadı veya bulanıklaştırma kaldırılamadı. Lütfen tekrar deneyin."
+			}
 		},
 		"thread": {
 			"unknownRoot": "Önceki mesaj",
@@ -2325,10 +2336,10 @@
 				"open": "Sohbeti aç"
 			},
 			"mention": {
-				"title": "Ekip görüşmesinde anıldınız",
+				"title": "Ekip sohbetinde anıldınız",
 				"from": "Gönderen: {{name}}",
 				"several": "{{count}} yeni anma",
-				"open": "Ekip görüşmesini aç"
+				"open": "Ekip sohbetini aç"
 			},
 			"handover": {
 				"title": "Yeni vaka devri",
@@ -2594,8 +2605,8 @@
 				"text": "Bir danışan bekleme odasına katıldı."
 			},
 			"callInvited": {
-				"title": "Dahili grup aramasına davet",
-				"text": "Dahili bir grup aramasına davet edildiniz."
+				"title": "Arama daveti",
+				"text": "Bir aramaya davet edildiniz."
 			},
 			"callKnockRequested": {
 				"title": "Biri kapıyı çalıyor",
@@ -2626,8 +2637,8 @@
 				"text": "Yaklaşan randevularınızın bir özeti hazır."
 			},
 			"teamDiscussionNew": {
-				"title": "Ekip görüşmesi",
-				"text": "{{senderDisplayName}} ekip görüşmesinde bir mesaj yazdı"
+				"title": "Ekip sohbeti",
+				"text": "{{senderDisplayName}} ekip sohbetinde bir mesaj yazdı"
 			},
 			"firstResponseReceived": {
 				"title": "İlk adımlarınız",
@@ -2711,7 +2722,7 @@
 				"archivedOpenToReply": "Bu görüşme arşivlendi. Yanıtlamak için görüşmeyi açın.",
 				"notJoined": "Katılımınız onaylanana ve oda yüklenene kadar salt okunur.",
 				"supervisorNoComposer": "Süpervizör olarak burada tepki verebilirsiniz ama yazamazsınız.",
-				"teamClosed": "Ekip görüşmesi kapandı.",
+				"teamClosed": "Ekip sohbeti kapandı.",
 				"curtained": "Bu vaka şu anda sizin için görünür değil.",
 				"hiddenNotYours": "Bu görüşme sizin vakalarınızdan biri değil; bu yüzden etkinlik burada göstermiyor.",
 				"hiddenNotJoined": "Bu görüşmeye katılmadınız; bu yüzden etkinlik burada göstermiyor.",
@@ -2973,7 +2984,13 @@
 					"label": "Mesaj bırakmak veya düzenlemek için devamsızlığınızı devre dışı bırakın."
 				},
 				"label": "Ofis dışı bir mesajı saklayın",
-				"title": "Benim yokluğum"
+				"title": "Benim yokluğum",
+				"from": "Yokluk başlangıcı (isteğe bağlı)",
+				"until": "Yokluk bitişi (isteğe bağlı)",
+				"dateHint": "Tarih olmadan yokluk, siz kapatana kadar süresiz geçerlidir. Bitiş tarihinden sonra otomatik olarak yeniden mevcut olursunuz.",
+				"planned": "{{start}} tarihinden itibaren planlandı",
+				"activeUntil": "{{end}} dahil yok",
+				"invalidRange": "Bitiş tarihi başlangıç tarihinden önce."
 			},
 			"liveChat": {
 				"title": "Live-Chat uygunluğum",
@@ -3142,7 +3159,7 @@
 				},
 				"kind": {
 					"new": "Yeni talep",
-					"teamDiscussion": "Ekip görüşmesi",
+					"teamDiscussion": "Ekip sohbeti",
 					"standard": "Standart bildirim",
 					"liveChat": "Canlı sohbet mesajı",
 					"mention": "@ Bahsetme",
@@ -3496,7 +3513,7 @@
 		"names": {
 			"agency": "Alıştırma danışma merkezi",
 			"topic": "Alıştırma",
-			"teamRoom": "Ekip görüşmesi (alıştırma)",
+			"teamRoom": "Ekip sohbeti (alıştırma)",
 			"supervisionRoom": "Süpervizyon (alıştırma)"
 		}
 	},
@@ -4646,7 +4663,8 @@
 			},
 			"registered": {
 				"tab": "İlk sorgulamalar"
-			}
+			},
+			"blurred": "Bulanıklaştırılmış bölüm içeren mesaj"
 		},
 		"reloadButton": {
 			"label": "Yeniden Yükle"
@@ -4799,7 +4817,12 @@
 				"notice": {
 					"created": "Randevu belirlendi: {{date}}",
 					"moved": "Randevu şu tarihe ertelendi: {{date}}",
-					"cancelled": "Randevu iptal edildi: {{date}}"
+					"cancelled": "Randevu iptal edildi: {{date}}",
+					"requested": "Randevu talep edildi: {{date}} – onay bekleniyor",
+					"confirmed": "Randevu onaylandı: {{date}}",
+					"declined": "Randevu talebi reddedildi: {{date}}",
+					"withdrawn": "Randevu talebi geri çekildi: {{date}}",
+					"expired": "Randevu talebinin süresi doldu: {{date}} – başlangıca kadar yanıtlanmadı"
 				},
 				"noticeFailed": {
 					"title": "Bildirim gönderilmedi",
@@ -4808,12 +4831,20 @@
 				"cancelFailed": {
 					"title": "Randevu iptal edilmedi",
 					"text": "Randevu iptal edilemedi. Lütfen tekrar deneyin."
+				},
+				"request": {
+					"marker": "Talep edildi",
+					"failedTitle": "Talep yanıtlanmadı",
+					"taken": "Bu zaman artık dolu. Talebi reddedin veya sohbette başka bir zaman önerin.",
+					"failed": "Bu işe yaramadı. Lütfen tekrar deneyin."
 				}
 			}
 		},
 		"deletedAsker": {
 			"title": "Silinmiş danışan",
-			"hint": "Bu sohbet silindi. Kişisel veriler ve mesajlar artık mevcut değil."
+			"hint": "Bu sohbet silindi. Kişisel veriler ve mesajlar artık mevcut değil.",
+			"preview": "Sohbet silindi",
+			"previewArchived": "Silindi · arşivde"
 		}
 	},
 	"statusOverlay": {
@@ -5326,6 +5357,12 @@
 		"timeline": {
 			"join": "Aramaya katıl",
 			"joinFailed": "Şu anda katılınamıyor. Diğer etkin aramanızı sonlandırıp tekrar deneyin.",
+			"counsellorCallPending": "Görüşme henüz başlamadı",
+			"counsellorCallPendingText": "Görüşmeyi yalnızca danışmanınız başlatabilir. Danışmanınız sizi aradığında katılabilirsiniz. Lütfen aramayı bekleyin.",
+			"leaveRunningCallTitle": "Devam eden görüşme sonlandırılıp katılınsın mı?",
+			"leaveRunningCallText": "Danışmanınız sizi arıyor. Hâlâ başka bir görüşmedesiniz; katıldığınızda bu görüşme sona erer.",
+			"leaveRunningCallStay": "Görüşmede kal",
+			"leaveRunningCallJoin": "Sonlandır ve katıl",
 			"endedElsewhere": "Bu arama zaten sona erdi.",
 			"video": {
 				"running": "Görüntülü arama sürüyor",
@@ -5345,6 +5382,43 @@
 			"rejectCall": "Görüntülü aramayı reddetme",
 			"startCall": "Sesli aramayı başlat",
 			"startVideoCall": "Görüntülü aramayı başlat"
+		},
+		"askerInfo": {
+			"title": "Aramaları danışmanınız başlatır",
+			"description": "Burada arama başlatamazsınız. Danışmanınız sizi kararlaştırılan randevuda bu görüşmede arayacaktır.",
+			"next": "Bir sonraki randevunuz",
+			"medium": {
+				"video": "Görüntülü arama",
+				"phone": "Telefon araması",
+				"onsite": "Yüz yüze",
+				"chat": "Sohbet"
+			},
+			"none": "Bu görüşme için henüz bir randevu belirlenmedi.",
+			"requestHint": "Size ne zaman uygun olduğunu danışmanınıza sohbette yazın.",
+			"requestHintBooking": "Danışmanınızın boş bir zamanını seçin ve randevuyu doğrudan alın.",
+			"request": "Randevu iste",
+			"loading": "Randevu yükleniyor …",
+			"error": "Randevu şu anda yüklenemedi. Lütfen daha sonra tekrar deneyin.",
+			"booking": {
+				"title": "Randevu al",
+				"description": {
+					"video": "Görüntülü arama için danışmanınızın boş bir zamanını seçin. „Hemen alınır“ işaretli zamanlar hemen kesinleşir; talepleri danışmanınız onaylar.",
+					"phone": "Telefon görüşmesi için danışmanınızın boş bir zamanını seçin. „Hemen alınır“ işaretli zamanlar hemen kesinleşir; talepleri danışmanınız onaylar."
+				},
+				"loading": "Boş zamanlar yükleniyor …",
+				"error": "Boş zamanlar şu anda yüklenemedi. Lütfen daha sonra tekrar deneyin.",
+				"none": "Danışmanınızın önümüzdeki iki hafta içinde boş zamanı yok.",
+				"writeInChat": "Sohbete yaz",
+				"back": "Geri",
+				"confirm": "Randevu al",
+				"taken": "Bu zaman az önce alındı. Lütfen başka bir zaman seçin.",
+				"failed": "Randevu alınamadı. Lütfen tekrar deneyin.",
+				"booked": "Randevunuz alındı. Danışmanınız sohbette bilgilendirilir.",
+				"limit": "Bu görüşme için zaten bir randevu alınmış.",
+				"confirmRequest": "Randevu talep et",
+				"requested": "Talebiniz gönderildi. Danışmanınızın onayını bekliyor."
+			},
+			"nextRequested": "Talep ettiğiniz randevu"
 		},
 		"incomingCall": {
 			"description": "arar.",
@@ -5704,6 +5778,11 @@
 			"status": {
 				"on": "Süpervizyon açık",
 				"off": "Süpervizyon kapalı"
+			},
+			"plusMenu": {
+				"menuLabel": "Ekle veya devret",
+				"supervisionHint": "Bir meslektaşınız görüşmeyi izler. Vaka sizde kalır.",
+				"handoverHint": "Vaka tamamen bir meslektaşınıza geçer. Vakayı siz devredersiniz."
 			}
 		}
 	},
@@ -5853,7 +5932,7 @@
 		}
 	},
 	"teamDiscussion": {
-		"title": "Ekip görüşmesi",
+		"title": "Ekip sohbeti",
 		"startHint": "Görüşmeyi başlat",
 		"postCount": "{{count}} gönderi",
 		"postCount_one": "1 gönderi",
@@ -5864,7 +5943,7 @@
 		"placeholder": "Ekibe mesaj …",
 		"send": "Gönder",
 		"error": {
-			"open": "Ekip görüşmesi açılamadı.",
+			"open": "Ekip sohbeti açılamadı.",
 			"send": "Mesaj gönderilemedi."
 		}
 	},
@@ -6224,12 +6303,12 @@
 					"intro": "Listede sizi bir alıştırma talebi bekliyor. Açmak için üzerine tıklayın."
 				},
 				"openTeam": {
-					"title": "Ekip görüşmesini açın",
-					"intro": "Ekip görüşmesi sizde etkin: kabul etmeden önce ekibinizle konuşmanızı sağlar. “Ekip görüşmesini aç” düğmesine tıklayın."
+					"title": "Ekip sohbetini açın",
+					"intro": "Ekip sohbeti sizde etkin: kabul etmeden önce ekibinizle konuşmanızı sağlar. “Ekip sohbetini aç” düğmesine tıklayın."
 				},
 				"teamReply": {
 					"title": "Ekibe yanıt verin",
-					"intro": "Ekipten gelen mesajı okuyun ve bir yanıt yazın. Talebi kabul ettiğinizde ekip görüşmesi kapanır."
+					"intro": "Ekipten gelen mesajı okuyun ve bir yanıt yazın. Talebi kabul ettiğinizde ekip sohbeti kapanır."
 				},
 				"accept": {
 					"title": "Talebi kabul edin",
@@ -6549,11 +6628,6 @@
 				"on": "Misafirler siz içeri alana kadar bekler. Kapatırsanız bekleyen herkes hemen içeri girer.",
 				"off": "Misafirler beklemeden doğrudan aramaya katılır."
 			},
-			"temporaryAccount": {
-				"label": "Geçici hesap",
-				"on": "Misafirler aramadan sonra silinen bir misafir hesabı alır.",
-				"off": "Misafirler kendi hesaplarıyla giriş yapar veya hesap oluşturur."
-			},
 			"linkLabel": "Aramanın bağlantısı",
 			"copy": "Kopyala",
 			"copied": "Kopyalandı",
@@ -6842,7 +6916,6 @@
 			"text": "Bağlantıyı açan kişi size doğrudan ulaşır – sohbette, sesli veya görüntülü aramada.",
 			"topicLabel": "Konu seçin",
 			"mediumLabel": "İletişim türü",
-			"temporary": "Geçici hesap",
 			"temporaryHint": "Hesap görüşmeden sonra silinir.",
 			"create": "Bağlantı oluştur",
 			"createFailed": "Bağlantı oluşturulamadı. Lütfen tekrar deneyin.",
@@ -6900,7 +6973,6 @@
 			"nameRequired": "Lütfen bir ad girin.",
 			"topic": "Konu",
 			"mediumFixed": "İletişim türü değiştirilemez",
-			"temporaryHint": "Yalnızca bağlantıyı bundan sonra açan kişiler için geçerlidir.",
 			"failed": "Değişiklik kaydedilemedi. Lütfen tekrar deneyin.",
 			"scheduledAt": "Tarih ve saat",
 			"clearScheduledAt": "Kaldır"
@@ -7120,7 +7192,8 @@
 			"group": "Grup randevusu",
 			"blocker": "Kapalı",
 			"busy": "Meşgul",
-			"colleague": "Meşgul"
+			"colleague": "Meşgul",
+			"absence": "Yok"
 		},
 		"noEvents": "Bu dönemde randevu yok",
 		"loading": "Randevular yükleniyor",
@@ -7144,13 +7217,22 @@
 				"incomplete": "Lütfen tarih ve saat seçin.",
 				"past": "Kayıt gelecekte olmalıdır.",
 				"order": "Bitiş, başlangıçtan sonra olmalıdır.",
-				"conversation": "Lütfen randevunun ait olduğu danışmanlığı seçin."
+				"conversation": "Lütfen randevunun ait olduğu danışmanlığı seçin.",
+				"colleague": "Lütfen bir meslektaş seçin."
 			},
 			"entryKind": "Kayıt türü",
 			"tabs": {
 				"appointment": "Randevu",
-				"blocker": "Engellenmiş zaman"
-			}
+				"blocker": "Engellenmiş zaman",
+				"absence": "Yokluk"
+			},
+			"withWhom": "Randevu",
+			"withConversation": "Danışan kişi",
+			"withColleague": "Meslektaş",
+			"colleague": "Meslektaş",
+			"colleagueHint": "Randevu ikinizin dahili sohbetine eklenir. Henüz yoksa oluşturulur.",
+			"colleagueDescription": "Gün, saat, tür ve meslektaşı seçin.",
+			"onsiteOnly": "Bu meslektaşla dahili sohbete izin verilmiyor. Yalnızca yüz yüze randevu mümkün."
 		},
 		"details": {
 			"start": {
@@ -7606,6 +7688,116 @@
 		"links": {
 			"title": "Randevusuz bağlantılar",
 			"hint": "Paylaşabileceğiniz davet bağlantıları: kopyalayın veya QR kodu gösterin."
+		},
+		"consultationHours": {
+			"title": "Görüşme saatleri",
+			"description": "Bu saatlerde danışanlar sizinle kendileri randevu alabilir. Çalışma saatlerinizden bağımsızdır.",
+			"save": "Görüşme saatlerini kaydet",
+			"saved": "Görüşme saatleri kaydedildi",
+			"empty": "Görüşme saatleri olmadan kimse randevu alamaz.",
+			"none": "Görüşme saati belirlenmedi",
+			"autoAccept": "Rezervasyonları otomatik onayla",
+			"autoAcceptOn": "Ön bildirim süresinden sonra randevu hemen alınır; kısa süreli rezervasyonlar taleptir.",
+			"autoAcceptOff": "Her rezervasyon, sizin onayladığınız bir taleptir.",
+			"noticeDays": "Ön bildirim süresi",
+			"noticeDaysHint": "Randevudan önceki bu günler içinde rezervasyon talebe dönüşür.",
+			"noticeDaysOption": "{{count}} gün",
+			"noticeDaysOption_one": "{{count}} gün",
+			"slotMinutes": "Randevu süresi",
+			"minutes": "{{count}} dk",
+			"invalid": "Bitiş, başlangıçtan sonra olmalıdır.",
+			"loadFailed": "Yüklenemedi. Tekrar dene",
+			"overlaps": "Saatler bu gündeki başka bir görüşme saatiyle çakışıyor."
+		},
+		"appointmentRequest": {
+			"status": "Talep edildi · yanıtınızı bekliyor",
+			"from": "{{name}} adlı kişiden talep",
+			"menu": "Randevu talep edildi",
+			"hint": "Siz yanıtlayana kadar zaman ayrılmıştır. Başlangıca kadar yanıt verilmezse talep geçersiz olur.",
+			"confirm": "Onayla",
+			"confirmHint": "Randevu kesinleşir",
+			"decline": "Reddet",
+			"declineHint": "Zaman yeniden boşa çıkar",
+			"confirmed": "Randevu onaylandı: {{date}}.",
+			"declined": "Randevu talebi reddedildi: {{date}}."
+		},
+		"absence": {
+			"description": "Uzakta olacağınız günleri seçin. Bu süre boyunca danışanlar yokluk mesajınızı görür.",
+			"from": "Başlangıç",
+			"until": "Bitiş",
+			"message": "Yokluk mesajı",
+			"messageHint": "Danışanlar bu mesajı görür ama size yine de yazabilir.",
+			"effect": "Son günden sonra otomatik olarak yeniden mevcut olursunuz. Aynı yokluk profilinizde de görünür.",
+			"save": "Yokluğu kaydet",
+			"conflicts": "Bu dönemde {{count}} randevu var. Randevular yerinde kalır – gerekirse kendiniz iptal edin veya erteleyin.",
+			"conflicts_one": "Bu dönemde {{count}} randevu var. Randevu yerinde kalır – gerekirse kendiniz iptal edin veya erteleyin.",
+			"saved": "Yokluk kaydedildi. Profilinizde de görünür."
+		},
+		"meeting": {
+			"accept": "Kabul et",
+			"decline": "Reddet",
+			"accepted": "Randevu kabul edildi.",
+			"declined": "Randevu reddedildi.",
+			"cancelled": "Randevu iptal edildi.",
+			"cancelAsk": "{{name}}, {{time}}. Randevu her iki takvimden de kalkar.",
+			"cancelSub": "{{name}} takviminden de kalkar",
+			"chatSub": "{{name}} ile dahili sohbet",
+			"pendingInvited": "{{name}} sizi davet ediyor. Lütfen kabul edin veya reddedin.",
+			"pendingSent": "İstendi. {{name}} bekleniyor.",
+			"confirmed": "{{name}} ile kesinleşti."
+		},
+		"autoAccept": {
+			"menu": "Randevuları otomatik kabul et …",
+			"menuHint": "Hangi meslektaşlardan",
+			"title": "Randevuları otomatik kabul et",
+			"description": "Bu meslektaşlardan gelen randevular takviminize hemen kesin olarak girer.",
+			"colleagues": "Meslektaşlar",
+			"search": "İsim ara",
+			"hint": "Diğer herkesin randevuları siz kabul edene kadar bekler.",
+			"save": "Kaydet",
+			"saved": "Liste kaydedildi."
+		}
+	},
+	"guestAccountMode": {
+		"label": "Misafir hesabı",
+		"menuLabel": "Misafir hesabını seç",
+		"option": {
+			"TEMPORARY": "Oturumdan sonra sil",
+			"GUEST_CHOOSES": "Misafir seçer",
+			"PERMANENT": "Kalıcı"
+		},
+		"hint": {
+			"TEMPORARY": "Yeni misafirler, görüşmeden sonra silinen bir hesap alır.",
+			"GUEST_CHOOSES": "Yeni misafirler katılırken seçer: hesapsız veya kendi hesabıyla.",
+			"PERMANENT": "Yeni misafirler kendi hesabını oluşturur."
+		},
+		"newGuestsOnly": "Yalnızca bağlantıyı bundan sonra açan kişiler için geçerlidir.",
+		"entry": {
+			"withoutAccount": "Hesapsız katıl",
+			"withAccount": "Hesap oluştur",
+			"temporaryNote": "Erişiminiz görüşmeden sonra silinir. Daha sonra yine de saklayabilirsiniz.",
+			"accountNote": "Kendi hesabınızla daha sonra geri gelebilirsiniz."
+		},
+		"keep": {
+			"action": "Hesabı sakla",
+			"actionDescription": "Aksi halde hesabınız görüşmeden sonra silinir.",
+			"title": "Hesabı sakla",
+			"text": "Aksi halde hesabınız görüşmeden sonra silinir. Bir şifre belirleyin; hesabınız kalır ve daha sonra yeniden giriş yapabilirsiniz.",
+			"loginName": "Kullanıcı adınız: {{name}}",
+			"password": "Şifre",
+			"repeat": "Şifreyi tekrarlayın",
+			"mismatch": "Şifreler eşleşmiyor.",
+			"submit": "Hesabı sakla",
+			"cancel": "İptal",
+			"success": "Hesabınız saklanıyor.",
+			"recoveryPending": "Hesabınız saklanıyor. Mesajlarınızı başka bir cihazda okumak için kurtarma anahtarınıza ihtiyacınız var.",
+			"error": {
+				"badRequest": "Şifre gereksinimleri karşılamıyor.",
+				"forbidden": "Bu davet hesabı saklamaya izin vermiyor.",
+				"notFound": "Hesabınız bulunamadı. Lütfen yeniden giriş yapın.",
+				"conflict": "Hesabınız siliniyor veya zaten kalıcı.",
+				"generic": "Bu işe yaramadı. Lütfen tekrar deneyin."
+			}
 		}
 	},
 	"managePeople": {
@@ -7686,5 +7878,15 @@
 			"inviteDescription": "Danışanlar bu bağlantı veya QR kod ile katılır.",
 			"added": "{{name}} artık bu grubun ortak moderatörü."
 		}
+	},
+	"deletedAskerSession": {
+		"notice": {
+			"title": "Bu sohbet silindi",
+			"deletedOn": "Silinme tarihi: {{date}}",
+			"text": "Danışanın kişisel verileri ve mesajları artık mevcut değil."
+		},
+		"archiveHint": "Listenizden ve etkinliklerinizden kalkması için kaydı arşive taşıyın.",
+		"archived": "Bu kayıt arşivde.",
+		"archiveFailed": "Arşivleme başarısız oldu. Lütfen tekrar deneyin."
 	}
 }

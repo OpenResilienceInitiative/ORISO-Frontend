@@ -57,6 +57,24 @@ vi.mock('../../globalState', async () => {
 	};
 });
 vi.mock('../../api/apiCalendar', () => ({
+	apiCreateColleagueAppointment: vi.fn(() =>
+		Promise.resolve({
+			id: 'm1',
+			type: 'APPOINTMENT',
+			start: '2026-11-19T09:00:00Z',
+			end: '2026-11-19T10:00:00Z',
+			ownerId: 'me',
+			matrixRoomId: '!pair:oriso',
+			chatId: 77
+		})
+	),
+	apiAcceptColleagueAppointment: vi.fn(() => Promise.resolve({})),
+	apiDeclineColleagueAppointment: vi.fn(() => Promise.resolve()),
+	apiCancelColleagueAppointment: vi.fn(() => Promise.resolve()),
+	apiGetCalendarAutoAccept: vi.fn(() =>
+		Promise.resolve({ colleagueIds: [] })
+	),
+	apiSetCalendarAutoAccept: vi.fn((dto) => Promise.resolve(dto)),
 	apiGetCalendarEntries: vi.fn(),
 	apiGetCalendarColleagues: vi.fn(() =>
 		Promise.resolve({
@@ -70,6 +88,9 @@ vi.mock('../../api/apiCalendar', () => ({
 		Promise.resolve({ feedUrl: '', importConfigured: false })
 	),
 	apiGetCalendarWorkingHours: vi.fn(() => Promise.resolve({ windows: [] })),
+	apiGetCalendarConsultationHours: vi.fn(() =>
+		Promise.resolve({ windows: [] })
+	),
 	apiSetCalendarWorkingHours: vi.fn(),
 	apiPutWorkingDayException: vi.fn(),
 	apiDeleteWorkingDayException: vi.fn(),

@@ -7,6 +7,11 @@ import {
 } from './messageRelations';
 import { getMentionedUserIdsFromContent } from './messageMentions';
 import { parseCallLifecycleMessage } from './callLifecycleMessage';
+import {
+	getPassageReplies,
+	getPassageRepliesText,
+	type PassageReplyAudio
+} from '../components/selectionReply/passageReplyContent';
 import { getScannedMediaDownloadPath } from '../services/mediaContentScanner';
 import type {
 	ChatAttachment,
@@ -45,6 +50,40 @@ const getMatrixMediaRoute = (
 	}
 
 	return { downloadUrl: '', mxcUrl: contentUrl };
+};
+
+/**
+ * A voice clip inside answered passages (ADR-022) as an ordinary encrypted
+ * attachment, so it takes the same media route, scanner gate and player as a
+ * voice note sent on its own. The recorder's file-name convention carries the
+ * length (see voiceMessageFileName.ts).
+ */
+export const passageReplyAudioAttachment = (
+	audio: PassageReplyAudio
+): { attachment: ChatAttachment; file: ChatFile } => {
+	const mediaRoute = getMatrixMediaRoute(audio.file.url);
+	const seconds = Math.max(1, Math.round(audio.durationMs / 1000));
+	const extension = audio.mimetype.includes('ogg')
+		? 'ogg'
+		: audio.mimetype.includes('mp4')
+			? 'm4a'
+			: 'webm';
+	const name = `voice-message-0-s${seconds}-ms${Math.max(
+		1000,
+		Math.round(audio.durationMs)
+	)}.${extension}`;
+	return {
+		attachment: {
+			title: name,
+			downloadUrl: mediaRoute.downloadUrl,
+			type: 'file',
+			mediaType: audio.mimetype,
+			size: audio.size,
+			encryptedFile: audio.file,
+			...(mediaRoute.mxcUrl ? { mxcUrl: mediaRoute.mxcUrl } : {})
+		},
+		file: { name, type: audio.mimetype }
+	};
 };
 
 export const formatMatrixTimelineEvent = (
@@ -97,9 +136,17 @@ export const formatMatrixTimelineEvent = (
 		: content?.msgtype === 'm.text'
 			? formattedBody || body
 			: body;
-	const textMessageContent = replyToEventId
-		? stripReplyFallback(rawTextContent)
-		: rawTextContent;
+	// ADR-022: several answered passages in one message. The blocks are
+	// rendered from the list; the `body` fallback would repeat them, so the
+	// message text is only what was typed beside them.
+	const passageReplies = isUndecryptedEvent
+		? null
+		: getPassageReplies(content);
+	const textMessageContent = passageReplies
+		? getPassageRepliesText(content)
+		: replyToEventId
+			? stripReplyFallback(rawTextContent)
+			: rawTextContent;
 	const baseMessage: any = {
 		_id:
 			event?.getId?.() || `${senderId}-${event?.getTs?.() || Date.now()}`,
@@ -113,6 +160,9 @@ export const formatMatrixTimelineEvent = (
 	};
 	if (replyToEventId) {
 		baseMessage.replyToEventId = replyToEventId;
+	}
+	if (passageReplies) {
+		baseMessage.passageReplies = passageReplies;
 	}
 	if (isUndecryptedEvent && isMissingKeyDecryptionFailure(event)) {
 		// #1827: lets the timeline show an honest "not on this device" notice

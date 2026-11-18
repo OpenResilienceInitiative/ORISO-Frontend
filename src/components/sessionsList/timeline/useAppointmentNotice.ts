@@ -15,7 +15,10 @@ import {
 	NotificationsContext,
 	UserDataContext
 } from '../../../globalState';
-import { buildAppointmentNoticePayload } from '../../message/appointmentNotice';
+import {
+	buildAppointmentNoticePayload,
+	isCardNoticeKind
+} from '../../message/appointmentNotice';
 import { SYSTEM_NOTIFICATION_PREFIX } from '../../message/messageConstants';
 import { normalizeTimelineLocale } from '../futureTimelineTime';
 import {
@@ -55,16 +58,23 @@ export const useAppointmentNotice = () => {
 				{ start, end },
 				normalizeTimelineLocale(i18n.resolvedLanguage, i18n.language)
 			);
-			const payload = buildAppointmentNoticePayload({
-				kind,
-				start,
-				end,
-				previousStart,
-				previousEnd,
-				description: t(appointmentNoticeKey(kind), { date })
-			});
+			const sentence = t(appointmentNoticeKey(kind), { date });
+			// A request and its answer (FE#2287) have no card yet: they stay
+			// the plain sentence they were before the card existed.
+			const message = isCardNoticeKind(kind)
+				? `${SYSTEM_NOTIFICATION_PREFIX}${buildAppointmentNoticePayload(
+						{
+							kind,
+							start,
+							end,
+							previousStart,
+							previousEnd,
+							description: sentence
+						}
+					)}`
+				: sentence;
 			return apiSendMessage(
-				`${SYSTEM_NOTIFICATION_PREFIX}${payload}`,
+				message,
 				matrixRoomId ?? sessionId,
 				false,
 				false,

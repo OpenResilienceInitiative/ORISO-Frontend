@@ -942,6 +942,55 @@ export const PlannedServiceNoticeWithoutStatusLink: Story = {
 };
 
 /**
+ * #1159: a deleted advice seeker's chat in the activity stream. The entry
+ * opens the deletion notice in the conversations, where the counsellor moves
+ * it into the archive; that also takes the entry out of this stream.
+ */
+const deletedAskerEvent = feedItem({
+	id: 'asker-deleted-77',
+	eventType: 'session.asker_deleted',
+	createdAt: minutesAgo(6),
+	title: 'Deleted advice seeker',
+	text: "An advice seeker's chat was deleted. Their data is no longer available.",
+	actionPath: '/sessions/consultant/sessionView/deleted/77'
+});
+
+export const DeletedAdviceSeeker: Story = {
+	globals: { viewport: { value: 'desktop1440' } },
+	decorators: [
+		withTimelineData([deletedAskerEvent, ...mockFeed.slice(0, 2)])
+	],
+	render: () => (
+		<>
+			<NotificationsCenter />
+			<ConsentRouteProbe />
+		</>
+	),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const title = await waitFor(() => {
+			const match = canvas.getAllByText(
+				/Gelöschte:r Ratsuchende:r|Deleted advice seeker/
+			);
+			expect(match.length).toBeGreaterThan(0);
+			return match[0];
+		});
+		await userEvent.click(title);
+		const open = await waitFor(() => {
+			const button = canvasElement.querySelector<HTMLButtonElement>(
+				'.notificationsCenter__detailActions .notificationsCenter__openButton'
+			);
+			expect(button).toBeVisible();
+			return button!;
+		});
+		await userEvent.click(open);
+		await expect(
+			canvas.getByTestId('consent-destination')
+		).toHaveTextContent('/sessions/consultant/sessionView/deleted/77');
+	}
+};
+
+/**
  * #1535: an unsent draft loaded from the server sits in the timeline next to
  * the two events that used to show as a bare "Activity" card — the asker's
  * first reply ("Ihre ersten Schritte") and the end of an anonymous chat.
@@ -1328,9 +1377,7 @@ export const InvitationFromColleaguesCase: Story = {
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
 		await userEvent.click(
-			await canvas.findByText(
-				'Sie wurden zu einem internen Gruppenanruf eingeladen.'
-			)
+			await canvas.findByText('Sie wurden zu einem Anruf eingeladen.')
 		);
 		await waitFor(() =>
 			expect(

@@ -177,8 +177,13 @@ import {
 import { DeletedAskerListItem } from './DeletedAskerListItem';
 import {
 	buildDeletedAskerRows,
+	type DeletedAskerRow,
 	placeDeletedAskerRows
 } from './deletedAskerRows';
+import {
+	DELETED_ASKER_ARCHIVED_EVENT,
+	deletedAskerPath
+} from './deletedAskerPath';
 
 /** Keep paging while the display filter hides rows and fewer than this are visible (§5.2). */
 const MIN_VISIBLE_SESSION_ROWS = 10;
@@ -2094,27 +2099,54 @@ export const SessionsList = ({
 	 * deleted advice-seeker chat used to be. Only in the counsellor's unfiltered
 	 * list: a placeholder matches no chip, search, person, centre or topic.
 	 */
-	// Not in the rail: its pills are tabs, and a placeholder is no tab.
-	const showDeletedAskerRows =
-		showConsultantToolbarActions &&
-		!isRail &&
-		sessionListTab !== SESSION_LIST_TAB_ARCHIVE;
+	// Not in the rail: its pills are tabs, and a placeholder is no tab. The
+	// archive tab lists the placeholders the counsellor moved there.
+	const showDeletedAskerRows = showConsultantToolbarActions && !isRail;
+	const showArchivedDeletedAskers =
+		sessionListTab === SESSION_LIST_TAB_ARCHIVE;
 	const [deletedAskerPlaceholders, setDeletedAskerPlaceholders] = useState<
 		DeletedAskerSession[]
 	>([]);
+	// Former sessions already in the archive: a chat whose advice seeker is
+	// only marked for deletion stays out of the active list once archived.
+	const [archivedDeletedAskerIds, setArchivedDeletedAskerIds] = useState<
+		ReadonlySet<number>
+	>(() => new Set());
+	const [deletedAskerReload, setDeletedAskerReload] = useState(0);
+	useEffect(() => {
+		const reload = () => setDeletedAskerReload((count) => count + 1);
+		window.addEventListener(DELETED_ASKER_ARCHIVED_EVENT, reload);
+		return () =>
+			window.removeEventListener(DELETED_ASKER_ARCHIVED_EVENT, reload);
+	}, []);
 	useEffect(() => {
 		if (!showDeletedAskerRows) {
 			setDeletedAskerPlaceholders([]);
+			setArchivedDeletedAskerIds(new Set());
 			return undefined;
 		}
 		const controller = new AbortController();
-		apiGetDeletedAskerSessions(controller.signal).then((placeholders) => {
-			if (!controller.signal.aborted) {
-				setDeletedAskerPlaceholders(placeholders);
-			}
+		Promise.all([
+			showArchivedDeletedAskers
+				? Promise.resolve([])
+				: apiGetDeletedAskerSessions(controller.signal),
+			apiGetDeletedAskerSessions(controller.signal, { archived: true })
+		]).then(([active, archived]) => {
+			if (controller.signal.aborted) return;
+			setDeletedAskerPlaceholders(
+				showArchivedDeletedAskers ? archived : active
+			);
+			setArchivedDeletedAskerIds(
+				new Set(archived.map((entry) => entry.formerSessionId))
+			);
 		});
 		return () => controller.abort();
-	}, [showDeletedAskerRows]);
+	}, [showDeletedAskerRows, showArchivedDeletedAskers, deletedAskerReload]);
+	const openDeletedAsker = useCallback(
+		(row: DeletedAskerRow) =>
+			navigate(deletedAskerPath(row.formerSessionId)),
+		[navigate]
+	);
 	const toolbarNarrowsList =
 		!!sessionToolbarChip ||
 		!!listSearchQuery ||
@@ -2130,7 +2162,9 @@ export const SessionsList = ({
 				(raw: ListItemInterface) =>
 					!raw?.chat &&
 					raw?.user?.deleted &&
-					typeof raw?.session?.id === 'number'
+					typeof raw?.session?.id === 'number' &&
+					(showArchivedDeletedAskers ||
+						!archivedDeletedAskerIds.has(raw.session.id))
 			)
 			.map((raw: ListItemInterface) => ({
 				sessionId: raw.session.id,
@@ -2149,15 +2183,17 @@ export const SessionsList = ({
 				deletedAskerPlaceholders,
 				markedForDeletion,
 				shownSessionIds
-			),
+			).map((row) => ({ ...row, archived: showArchivedDeletedAskers })),
 			totalItems > currentOffset + SESSION_COUNT
 		);
 	}, [
+		archivedDeletedAskerIds,
 		currentOffset,
 		deletedAskerPlaceholders,
 		getLastInteractionTimestamp,
 		groupIdFromParam,
 		sessions,
+		showArchivedDeletedAskers,
 		showDeletedAskerRows,
 		sortedSessions,
 		toolbarNarrowsList,
@@ -3203,6 +3239,13 @@ export const SessionsList = ({
 												row={row}
 												locale={defaultLanguage}
 												translate={translate}
+												isActive={
+													location.pathname ===
+													deletedAskerPath(
+														row.formerSessionId
+													)
+												}
+												onOpen={openDeletedAsker}
 											/>
 										)
 									)}
@@ -3346,6 +3389,11 @@ export const SessionsList = ({
 								row={row}
 								locale={defaultLanguage}
 								translate={translate}
+								isActive={
+									location.pathname ===
+									deletedAskerPath(row.formerSessionId)
+								}
+								onOpen={openDeletedAsker}
 							/>
 						))}
 

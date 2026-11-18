@@ -697,7 +697,9 @@ export const CalendarView = ({
 				`calEntry--${entry.type}`,
 				`calEntry--k-${facet}`,
 				colleague && 'calEntry--colleague',
-				proposal && 'calEntry--proposal',
+				// An advice seeker's request is drawn like a proposal (FE#2287).
+				(proposal || entry.requested) && 'calEntry--proposal',
+				!proposal && entry.requested && 'calEntry--requested',
 				!proposal && entry.id === soonId && 'calEntry--soon',
 				// The list is plain rows, not filled blocks (prototype v17).
 				info.view.type.startsWith('list') && 'calEntry--listRow',
@@ -789,6 +791,11 @@ export const CalendarView = ({
 				{proposal && (
 					<span className="calEntry__status">
 						{proposalStatus(proposal)}
+					</span>
+				)}
+				{!proposal && entry.requested && (
+					<span className="calEntry__status">
+						{t('calendar.appointmentRequest.status')}
 					</span>
 				)}
 				{rangeShown && !proposal && (
@@ -883,7 +890,9 @@ export const CalendarView = ({
 		return [
 			proposal
 				? `${t('calendar.proposal.label')} · ${proposalStatus(proposal)}`
-				: label(entry, !own),
+				: entry.requested
+					? `${label(entry, !own)} · ${t('calendar.appointmentRequest.status')}`
+					: label(entry, !own),
 			own ? '' : colleagues[entry.ownerId]?.displayName,
 			entry.allDay
 				? t('calendar.allDay')

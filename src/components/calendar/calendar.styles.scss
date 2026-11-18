@@ -2109,6 +2109,20 @@ $cal-page-gap: 12px;
 	}
 }
 
+// The top row: "Termin | Sperrzeit" and, for a Termin, "Ratsuchende
+// Person | Kolleg:in" on one line (FE#2305, Frank: "alles in eine Linie").
+.calendarNewEntry__head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px 32px;
+}
+
+.calendarDialog__with .calendarNewEntry__tab {
+	white-space: nowrap;
+}
+
 .calendarQuick__freeHead {
 	display: flex;
 	align-items: center;
@@ -3463,6 +3477,37 @@ $cal-new-pill-hover: #4b4f51;
 	}
 }
 
+/* Sprechstunden (FE#2287): a day wraps its times under it where the dialog
+   is narrow (390 px). */
+.calendarConsultation__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px 12px;
+	padding-top: 10px;
+
+	.calendarHours__day {
+		flex: 1 1 88px;
+	}
+
+	&--off .calendarHours__day {
+		color: var(--m3-on-surface-variant, #444748);
+	}
+}
+
+.calendarConsultation__times {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-left: auto;
+}
+
+.calendarConsultation__hint {
+	margin: 4px 0 0;
+	color: var(--m3-on-surface-variant, #444748);
+	font-size: 12px;
+}
+
 .calendarHours__region {
 	display: flex;
 	flex-wrap: wrap;
@@ -3576,6 +3621,7 @@ $cal-new-pill-hover: #4b4f51;
 		@include breakpoint($fromMedium) {
 			flex-direction: row;
 			align-items: flex-start;
+			gap: 32px;
 		}
 	}
 }
@@ -3660,7 +3706,8 @@ $cal-new-pill-hover: #4b4f51;
 		color: var(--m3-on-surface, #1b1b1c);
 	}
 
-	&[aria-selected='true'] {
+	&[aria-selected='true'],
+	&[aria-checked='true'] {
 		@include calendar-chosen;
 	}
 
@@ -4003,4 +4050,32 @@ $cal-new-pill-hover: #4b4f51;
 	padding: 12px 0 0;
 	border-top: 1px solid var(--m3-outline-variant, #c4c7c7);
 	overflow-y: auto;
+}
+
+/* Planned absence tab (ORISO-Frontend#2303): the appointments it covers. */
+.calendarAbsence__conflicts {
+	padding: 12px 16px;
+	border-radius: 12px;
+	border-left: 4px solid var(--m3-error, #b3261e);
+	background: var(--m3-surface-container-high, #ece6f0);
+	color: var(--m3-on-surface, #1d1b20);
+	font-size: 14px;
+
+	p {
+		margin: 0 0 4px;
+	}
+
+	ul {
+		margin: 0;
+		padding-left: 18px;
+	}
+}
+
+/* Full dates do not fit two side by side on a phone. */
+.calendarAbsence .calendarDialog__times {
+	flex-direction: column;
+
+	@include breakpoint($fromMedium) {
+		flex-direction: row;
+	}
 }

@@ -10,6 +10,11 @@ import {
 	UserDataContext
 } from '../../../globalState';
 import { ConversationAppointmentSlot } from './ConversationAppointmentSlot';
+import {
+	appointmentsEpoch,
+	forgetKnownAppointments,
+	rememberUpcomingAppointments
+} from './conversationAppointments';
 
 /**
  * The next 1:1 appointment below the conversation header (FE#1960).
@@ -30,16 +35,32 @@ const appointment = {
 	status: 'SCHEDULED',
 	counterpart: { username: 'ruhiges_yak_kim' }
 };
-type Route = { get: unknown[] | number; write?: number };
+const request = {
+	...appointment,
+	id: '6f1c1a70-0000-4000-8000-000000000002',
+	startTime: inDays(3, 10),
+	endTime: inDays(3, 11),
+	status: 'REQUESTED'
+};
+/** `hang`: the conversation's own load never answers (a slow network). */
+type Route = {
+	get: unknown[] | number | 'hang';
+	write?: number;
+	reason?: string;
+};
 
-const installFetch = ({ get, write = 200 }: Route) => {
+const installFetch = ({ get, write = 200, reason }: Route) => {
 	const previous = window.fetch;
 	window.fetch = async (input, init) => {
 		const url = typeof input === 'string' ? input : (input as Request).url;
 		const method = init?.method ?? (input as Request).method ?? 'GET';
 		if (!/\/appointments/.test(url)) return previous(input, init);
 		if (method !== 'GET')
-			return new Response(JSON.stringify(appointment), { status: write });
+			return new Response(JSON.stringify(appointment), {
+				status: write,
+				headers: reason ? { 'X-Reason': reason } : undefined
+			});
+		if (get === 'hang') return new Promise<Response>(() => undefined);
 		return typeof get === 'number'
 			? new Response('', { status: get })
 			: new Response(JSON.stringify(get), { status: 200 });
@@ -52,13 +73,21 @@ const installFetch = ({ get, write = 200 }: Route) => {
 const Slot = ({
 	route,
 	role,
-	canChange
+	canChange,
+	known
 }: {
 	route: Route;
 	role: 'asker' | 'consultant';
 	canChange: boolean;
+	/** What the list already loaded ("my upcoming appointments"). */
+	known?: unknown[];
 }) => {
-	const [restore] = useState(() => installFetch(route));
+	const [restore] = useState(() => {
+		forgetKnownAppointments();
+		if (known)
+			rememberUpcomingAppointments(known as never, appointmentsEpoch());
+		return installFetch(route);
+	});
 	React.useEffect(() => restore, [restore]);
 	const [openCreate, setOpenCreate] = useState<() => void>();
 	const onCreateChange = React.useCallback(
@@ -184,6 +213,9 @@ export const MoveConflict: Story = {
 		canChange: true
 	},
 	play: async ({ canvasElement }) => {
+		// CI runs this on a busy shared runner: every step waits for the
+		// real ready state, not the default 1 s (FE#2298 CI, 18 Nov).
+		const ready = { timeout: 5000 };
 		const body = within(document.body);
 		const bar = await waitFor(() => {
 			const found = canvasElement.querySelector<HTMLElement>(
@@ -191,13 +223,87 @@ export const MoveConflict: Story = {
 			);
 			expect(found).not.toBeNull();
 			return found!;
-		});
+		}, ready);
 		await userEvent.click(bar);
-		await userEvent.click(await body.findByText('Termin verschieben'));
-		const dialog = await body.findByTestId('invitation-dialog');
 		await userEvent.click(
-			within(dialog).getByRole('button', { name: 'Verschieben' })
+			await body.findByText('Termin verschieben', {}, ready)
 		);
-		await expect(await within(dialog).findByRole('alert')).toBeVisible();
+		const dialog = await body.findByTestId('invitation-dialog', {}, ready);
+		const move = await within(dialog).findByRole(
+			'button',
+			{ name: 'Verschieben' },
+			ready
+		);
+		await waitFor(() => expect(move).toBeEnabled(), ready);
+		await userEvent.click(move);
+		await expect(
+			await within(dialog).findByRole('alert', {}, ready)
+		).toBeVisible();
+	}
+};
+
+const openSlotMenu = async (canvasElement: HTMLElement) => {
+	const main = await waitFor(() => {
+		const found = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="room-next-appointment"] .splitButton__main'
+		);
+		expect(found).not.toBeNull();
+		return found!;
+	});
+	await expect(main).toHaveTextContent(/^Angefragt · /);
+	await userEvent.click(main);
+	return within(document.body);
+};
+
+/**
+ * FE#2287: the advice seeker asked for a time outside instant booking. It
+ * shows in the same split button, marked "angefragt"; the counsellor answers
+ * it from the button's menu, and the advice seeker gets a chat notice.
+ */
+export const CounsellorDecidesRequest: Story = {
+	args: { route: { get: [request] }, role: 'consultant', canChange: true },
+	play: async ({ canvasElement }) => {
+		const body = await openSlotMenu(canvasElement);
+		await expect(
+			await body.findByRole('menuitem', { name: /Termin bestätigen/ })
+		).toBeEnabled();
+		await expect(
+			body.getByRole('menuitem', { name: /Termin ablehnen/ })
+		).toBeEnabled();
+	}
+};
+
+/** The advice seeker withdraws the request through the cancel entry. */
+export const AskerRequestWaiting: Story = {
+	args: { route: { get: [request] }, role: 'asker', canChange: false },
+	play: async ({ canvasElement }) => {
+		const body = await openSlotMenu(canvasElement);
+		await expect(
+			await body.findByRole('menuitem', { name: /Anfrage zurückziehen/ })
+		).toBeEnabled();
+		await expect(
+			body.queryByRole('menuitem', { name: /Termin bestätigen/ })
+		).toBeNull();
+	}
+};
+
+/**
+ * The jumping appointment button (Frank, 17.11.2026): the row used to appear
+ * 100–250 ms after the header on every conversation switch and push the
+ * messages down. With the list's appointments already known, the row is in
+ * the header's first frame although the conversation's own load is still
+ * running.
+ */
+export const KnownAppointmentInFirstFrame: Story = {
+	args: {
+		route: { get: 'hang' },
+		role: 'consultant',
+		canChange: true,
+		known: [appointment]
+	},
+	play: async ({ canvasElement }) => {
+		await expect(
+			canvasElement.querySelector('[data-cy="room-next-appointment"]')
+		).not.toBeNull();
 	}
 };

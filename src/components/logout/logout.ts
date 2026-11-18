@@ -11,6 +11,7 @@ import {
 	removeAllCookies
 } from '../sessionCookie/accessSessionCookie';
 import { sessionKindRegistry } from '../../utils/displayFilter/sessionKindRegistry';
+import { forgetKnownAppointments } from '../sessionsList/timeline/conversationAppointments';
 import { removeTokenExpiryFromLocalStorage } from '../sessionCookie/accessSessionLocalStorage';
 import {
 	getAppSessionScope,
@@ -177,6 +178,7 @@ const clearTabSessionRuntime = () => {
 	setMatrixClientServiceRef(null);
 	// User-scoped state must not survive in the next authenticated view.
 	sessionKindRegistry.reset();
+	forgetKnownAppointments();
 	appSnackbarStack.clear();
 };
 

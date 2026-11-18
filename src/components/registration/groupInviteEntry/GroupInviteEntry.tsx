@@ -14,7 +14,9 @@ import { GroupHeading } from '../../groupChat/entryRoom/GroupHeading';
  * The newcomer entry of a self-help group link, as designed in Storybook
  * ("Group chat/Self-help entry room" 0a/0b): no steps, no chips, no agency
  * box — the link already carries all three. Only the name is asked, and by
- * default without a password (temporary join).
+ * default without a password (temporary join). Without `onToggleTemporary`
+ * the circle fixes the account kind (UserService#1662) and there is no
+ * switch.
  */
 export const GroupInviteEntry = ({
 	stage,
@@ -33,7 +35,8 @@ export const GroupInviteEntry = ({
 	gcid: string;
 	aid: string;
 	temporary: boolean;
-	onToggleTemporary: () => void;
+	/** Only while the guest may choose (GUEST_CHOOSES). */
+	onToggleTemporary?: () => void;
 	onChange: Dispatch<SetStateAction<Partial<RegistrationData>>>;
 	onJoin: () => void;
 	joinDisabled: boolean;
@@ -104,7 +107,7 @@ export const GroupInviteEntry = ({
 					)}
 					<RegistrationFooter
 						secondary={
-							loginRetry
+							loginRetry || !onToggleTemporary
 								? undefined
 								: {
 										compact: true,

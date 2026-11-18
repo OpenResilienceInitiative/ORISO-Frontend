@@ -5,11 +5,16 @@ import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import { M3Dialog } from '../m3Dialog/M3Dialog';
 import { OrisoTextField } from '../form/OrisoTextField';
 import { OrisoSelect, OrisoSelectOption } from '../form/OrisoSelect';
-import { Switch } from '../Switch';
 import {
 	DirectLink,
-	DIRECT_LINK_NAME_MAX
+	DIRECT_LINK_NAME_MAX,
+	directLinkGuestAccountMode
 } from '../conversationCreate/directLink/directLink';
+import { GuestAccountModeSelect } from '../guestAccountMode/GuestAccountModeSelect';
+import {
+	GuestAccountMode,
+	offersTemporaryAccount
+} from '../guestAccountMode/guestAccountMode';
 import {
 	toLocalInputValue,
 	toScheduledAt
@@ -32,7 +37,8 @@ interface DirectLinkEditDialogProps {
 }
 
 /**
- * #1894: edit name, topic and the temporary switch of a direct link;
+ * #1894: edit name, topic and the guest account mode (UserService#1662)
+ * of a direct link;
  * #2142: and its optional, informational date and time.
  * The medium is fixed after creation (UserService#1479), so it only shows.
  */
@@ -49,7 +55,8 @@ export const DirectLinkEditDialog = ({
 	const id = useId();
 	const [name, setName] = useState('');
 	const [topicId, setTopicId] = useState('');
-	const [temporary, setTemporary] = useState(false);
+	const [guestAccountMode, setGuestAccountMode] =
+		useState<GuestAccountMode>('PERMANENT');
 	const [scheduledLocal, setScheduledLocal] = useState('');
 	/* A half-typed datetime-local reads as '' with `validity.badInput`;
 	   that must not count as removing the date. */
@@ -60,7 +67,7 @@ export const DirectLinkEditDialog = ({
 		if (!link) return;
 		setName(link.name);
 		setTopicId(link.topicId != null ? String(link.topicId) : '');
-		setTemporary(link.temporary);
+		setGuestAccountMode(directLinkGuestAccountMode(link));
 		setScheduledLocal(toLocalInputValue(link.scheduledAt));
 		setScheduledIncomplete(false);
 	}, [link]);
@@ -72,7 +79,11 @@ export const DirectLinkEditDialog = ({
 	if (trimmed !== link.name) update.name = trimmed;
 	if (topicId && topicId !== String(link.topicId ?? ''))
 		update.topicId = Number(topicId);
-	if (temporary !== link.temporary) update.temporary = temporary;
+	if (guestAccountMode !== directLinkGuestAccountMode(link)) {
+		update.guestAccountMode = guestAccountMode;
+		// The old switch for a server from before #1662; the mode wins.
+		update.temporary = offersTemporaryAccount(guestAccountMode);
+	}
 	// #2142: an emptied field removes the date; an unchanged one sends nothing.
 	if (scheduledLocal !== toLocalInputValue(link.scheduledAt)) {
 		const scheduledAt = toScheduledAt(scheduledLocal);
@@ -181,28 +192,11 @@ export const DirectLinkEditDialog = ({
 						onChange={(event) => setTopicId(event.target.value)}
 					/>
 				)}
-				<div className="directLinkEditDialog__switchRow">
-					<div>
-						<span
-							id={`${id}-temp`}
-							className="directLinkEditDialog__switchLabel"
-						>
-							{t('directLink.card.temporary')}
-						</span>
-						<span
-							id={`${id}-temp-hint`}
-							className="directLinkEditDialog__hint"
-						>
-							{t('directLink.edit.temporaryHint')}
-						</span>
-					</div>
-					<Switch
-						checked={temporary}
-						onChange={setTemporary}
-						aria-labelledby={`${id}-temp`}
-						aria-describedby={`${id}-temp-hint`}
-					/>
-				</div>
+				<GuestAccountModeSelect
+					value={guestAccountMode}
+					onChange={setGuestAccountMode}
+					note={t('guestAccountMode.newGuestsOnly')}
+				/>
 				{failed && (
 					<p role="alert" className="directLinkEditDialog__error">
 						{t('directLink.edit.failed')}

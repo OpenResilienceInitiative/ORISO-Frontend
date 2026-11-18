@@ -14,8 +14,10 @@ import {
 import { getMatrixClientService } from './matrixClientRegistry';
 import type {
 	MatrixClientService,
-	MatrixFileMessageOptions
+	MatrixFileMessageOptions,
+	OutgoingPassageReply
 } from './matrixClientService';
+import type { PassageRepliesFallbackLabels } from '../components/selectionReply/passageReplyContent';
 
 // A failed decrypt has synthetic clear type m.room.message, while its wire
 // event remains encrypted. It still needs a refresh after a later key restore.
@@ -60,6 +62,18 @@ export interface SendTextMessageOptions {
 	matrixClientServiceOverride?: MatrixClientService | null;
 }
 
+export interface SendPassageRepliesOptions {
+	matrixRoomId: string;
+	replies: OutgoingPassageReply[];
+	/** Composer text sent beside the answers (markdown, '' when none). */
+	typedText: string;
+	labels: PassageRepliesFallbackLabels;
+	supervisorMessage?: boolean;
+	senderDisplayName?: string | null;
+	teamDiscussion?: boolean;
+	matrixClientServiceOverride?: MatrixClientService | null;
+}
+
 export interface EditTextMessageOptions {
 	matrixRoomId: string;
 	targetEventId: string;
@@ -77,6 +91,14 @@ export interface SendReactionOptions {
 export interface RemoveReactionOptions {
 	matrixRoomId: string;
 	reactionEventId: string;
+	matrixClientServiceOverride?: MatrixClientService | null;
+}
+
+export interface SendPassageBlurOptions {
+	matrixRoomId: string;
+	targetEventId: string;
+	start: number;
+	length: number;
 	matrixClientServiceOverride?: MatrixClientService | null;
 }
 
@@ -211,6 +233,47 @@ class ChatTransportService {
 		return { success: true, event_id: response.event_id };
 	}
 
+	/**
+	 * Answers to several marked passages as one message (ADR-022). Announced
+	 * like any other message: metadata only, never the content (FE-H01).
+	 */
+	public async sendPassageReplies({
+		matrixRoomId,
+		replies,
+		typedText,
+		labels,
+		supervisorMessage,
+		senderDisplayName,
+		teamDiscussion,
+		matrixClientServiceOverride
+	}: SendPassageRepliesOptions): Promise<any> {
+		const matrixClientService =
+			matrixClientServiceOverride || getMatrixClientService();
+		if (!matrixClientService?.getClient()) {
+			return Promise.reject(new Error('Matrix client not initialized'));
+		}
+
+		const response = await matrixClientService.sendPassageReplies(
+			matrixRoomId,
+			replies,
+			typedText,
+			labels
+		);
+
+		apiPostMessageEventNotification({
+			roomId: matrixRoomId,
+			matrixRoom: true,
+			threadRootId: null,
+			supervisorMessage: !!supervisorMessage,
+			senderDisplayName: senderDisplayName || null,
+			teamDiscussion: !!teamDiscussion,
+			mentionedUserIds: null,
+			matrixEventId: response?.event_id || null
+		}).catch(() => undefined);
+
+		return { success: true, event_id: response?.event_id };
+	}
+
 	/** Edit a previously sent message (m.replace), same relations mechanic as reply/thread. */
 	public async editTextMessage({
 		matrixRoomId,
@@ -273,6 +336,29 @@ class ChatTransportService {
 		);
 
 		return { success: true, event_id: response.event_id };
+	}
+
+	/** Blur a passage of a message (#2229); lift it with redactMessage. */
+	public async sendPassageBlur({
+		matrixRoomId,
+		targetEventId,
+		start,
+		length,
+		matrixClientServiceOverride
+	}: SendPassageBlurOptions): Promise<any> {
+		const matrixClientService =
+			matrixClientServiceOverride || getMatrixClientService();
+		if (!matrixClientService?.getClient()) {
+			return Promise.reject(new Error('Matrix client not initialized'));
+		}
+
+		const response = await matrixClientService.sendPassageBlur(
+			matrixRoomId,
+			targetEventId,
+			{ start, length }
+		);
+
+		return { success: true, event_id: response?.event_id };
 	}
 
 	/** Delete a message by redacting the Matrix event (#827). */

@@ -38,6 +38,23 @@ describe('calendarApiMapping', () => {
 		});
 	});
 
+	it('marks an advice seeker’s request waiting for confirmation (FE#2287)', () => {
+		const request = entryFromApi({
+			id: 'r1',
+			type: 'APPOINTMENT',
+			start: '2026-11-16T09:00:00Z',
+			end: '2026-11-16T10:00:00Z',
+			ownerId: 'me',
+			kind: 'VIDEO',
+			title: 'ruhiges_yak',
+			sessionId: 4401,
+			movable: false,
+			requested: true
+		});
+		expect(request.requested).toBe(true);
+		expect(request.movable).toBe(false);
+	});
+
 	it('treats an appointment from before the calendar as a video call', () => {
 		const entry = entryFromApi({
 			id: 'a2',
@@ -285,5 +302,28 @@ describe('proposalFromApi (move proposals v1)', () => {
 		expect(mapped).toEqual(bare);
 		expect('proposerName' in mapped).toBe(false);
 		expect('approverName' in mapped).toBe(false);
+	});
+});
+
+describe('entryFromApi — planned absence (ORISO-Frontend#2303)', () => {
+	it('reads ABSENCE as an all-day absence entry, never movable', () => {
+		expect(
+			entryFromApi({
+				id: 'absence-me',
+				type: 'ABSENCE',
+				start: '2026-12-20T23:00:00Z',
+				end: '2027-01-03T23:00:00Z',
+				ownerId: 'me',
+				movable: false
+			})
+		).toEqual({
+			id: 'absence-me',
+			type: 'absence',
+			start: '2026-12-20T23:00:00Z',
+			end: '2027-01-03T23:00:00Z',
+			ownerId: 'me',
+			allDay: true,
+			movable: false
+		});
 	});
 });

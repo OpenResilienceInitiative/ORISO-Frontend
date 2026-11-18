@@ -261,7 +261,8 @@ const toDirectLink = (draft: DirectLinkDraft, index: number): DirectLink => ({
 	name: draft.topic,
 	topic: draft.topic,
 	medium: draft.medium,
-	temporary: draft.temporary,
+	temporary: draft.guestAccountMode !== 'PERMANENT',
+	guestAccountMode: draft.guestAccountMode,
 	active: true,
 	url: `https://app.oriso.org/l/${['k7m2qx', 'p4tz9a', 'w3nd8r'][index % 3]}`
 });
@@ -611,10 +612,10 @@ const createVideoLink = async (canvasElement: HTMLElement) => {
 		await body.findByRole('option', { name: 'Schulden' })
 	);
 	await userEvent.click(card.getByRole('button', { name: /Videoanruf/ }));
-	// Calls default to a temporary account.
+	// Calls default to the guest choosing the account (UserService#1662).
 	await expect(
-		card.getByRole('switch', { name: 'Temporäres Konto' })
-	).toBeChecked();
+		card.getByRole('button', { name: 'Gast wählt' })
+	).toBeInTheDocument();
 	await userEvent.click(card.getByRole('button', { name: 'Link erstellen' }));
 	const dialog = await body.findByTestId('direct-link-share-dialog');
 	await expect(

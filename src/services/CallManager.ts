@@ -86,6 +86,9 @@ const CALL_INVITE_EVENT = 'org.oriso.call.invite';
 const CALL_INVITE_LIFETIME_MS = 60_000;
 const CALL_INVITE_RETRY_WINDOW_MS = 10_000;
 const CALL_INVITE_FALLBACK_DELAYS_MS = [2_000, 4_000];
+/** How long a fresh call-room join waits for sync to bring its state. */
+const JOIN_HYDRATION_TIMEOUT_MS = 12_000;
+const JOIN_HYDRATION_POLL_MS = 250;
 
 // #2166: retries of a failed observation registration, well inside the ~45 s
 // after which a call card the server does not know settles as ended.
@@ -246,11 +249,22 @@ class CallManager {
 	): Promise<'joined' | 'busy' | 'ended' | 'unavailable'> {
 		if (call.state !== 'running') return 'ended';
 		if (this.hasActiveCall()) {
-			return this.currentCall?.callId === call.callId &&
-				this.currentCall.signalRoomId === call.roomRef &&
-				this.currentCall.roomId === call.callRoomId
-				? 'joined'
-				: 'busy';
+			const current = this.currentCall;
+			const sameCall =
+				current?.callId === call.callId &&
+				current.signalRoomId === call.roomRef &&
+				current.roomId === call.callRoomId;
+			if (!sameCall) return 'busy';
+			/*
+			 * "Beitreten" while this very call still rings here (dev.oriso.org,
+			 * 17 Nov 2026): reporting 'joined' without answering left the
+			 * advice seeker outside the call, with the ringing card on screen
+			 * and the button doing nothing. Joining a ringing call is
+			 * answering it.
+			 */
+			if (current.isIncoming && current.state === 'ringing')
+				this.answerCall();
+			return 'joined';
 		}
 		if (this.pendingStart || this.pendingJoin) return 'busy';
 		let client = getMatrixClientService()?.getClient?.();
@@ -365,6 +379,40 @@ class CallManager {
 				}
 			}
 			if (this.pendingJoin !== join) return 'unavailable';
+			/*
+			 * A room this attempt has just entered is not synced yet:
+			 * `joinRoom` returns before the encryption state and the RTC
+			 * memberships arrive, so checking at once refused a first-time
+			 * joiner and gave the seat back — and every new press repeated
+			 * the race. Wait for the sync, as the call-link guest path does.
+			 */
+			if (joinedHere) {
+				const joinedClient = client;
+				const deadline = Date.now() + JOIN_HYDRATION_TIMEOUT_MS;
+				const hydrated = () => {
+					const synced = joinedClient.getRoom(call.callRoomId);
+					return Boolean(
+						synced?.getMyMembership() === 'join' &&
+							isMatrixRoomEncrypted(
+								joinedClient,
+								call.callRoomId
+							) &&
+							joinedClient.matrixRTC?.getRoomSession(synced)
+								.memberships.length
+					);
+				};
+				while (!hydrated() && Date.now() < deadline) {
+					await new Promise((resolve) =>
+						setTimeout(resolve, JOIN_HYDRATION_POLL_MS)
+					);
+					if (
+						this.pendingJoin !== join ||
+						liveClient() !== joinedClient
+					)
+						return 'unavailable';
+				}
+				room = joinedClient.getRoom(call.callRoomId) ?? room;
+			}
 			// Membership may have changed while the server processed the room join.
 			if (client.getRoom(call.roomRef)?.getMyMembership() !== 'join')
 				return 'unavailable';
@@ -1479,6 +1527,7 @@ class CallManager {
 			 * call's own invite never rings twice.
 			 */
 			if (this.currentCall.callId === callId || this.waitingCall) return;
+			this.expireRingingAfterLifetime(callId);
 			this.waitingCall = {
 				callId,
 				roomId: callRoomId,
@@ -1497,6 +1546,7 @@ class CallManager {
 
 		this.pendingStart = null;
 		this.pendingJoin = null;
+		this.expireRingingAfterLifetime(callId);
 		this.currentCall = {
 			callId,
 			roomId: callRoomId,
@@ -1514,6 +1564,39 @@ class CallManager {
 		// console.log("═══════════════════════════════════════════════");
 
 		this.notifyListeners();
+	}
+
+	/**
+	 * Stop ringing once the invite's lifetime has run out.
+	 *
+	 * An unanswered ring used to stay for good (dev.oriso.org, 17 Nov 2026:
+	 * the card still rang after 65 s). A hangup the caller sends more than
+	 * ten seconds before this browser reads it is ignored as stale, so a
+	 * missed one left a ringing call behind that made this person "busy":
+	 * the next call's card waited behind it and never showed. The caller's
+	 * side settles its own unanswered call; here only the ring goes.
+	 */
+	private expireRingingAfterLifetime(callId: string): void {
+		setTimeout(() => {
+			if (
+				this.waitingCall?.callId === callId &&
+				this.waitingCall.state === 'ringing'
+			) {
+				this.waitingCall = null;
+				this.notifyListeners();
+				return;
+			}
+			const current = this.currentCall;
+			if (
+				current?.callId !== callId ||
+				!current.isIncoming ||
+				current.state !== 'ringing'
+			)
+				return;
+			this.currentCall = null;
+			this.promoteWaitingCall();
+			this.notifyListeners();
+		}, CALL_INVITE_LIFETIME_MS);
 	}
 
 	/**

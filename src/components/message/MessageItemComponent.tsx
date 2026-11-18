@@ -66,7 +66,9 @@ import { ErstantwortSequence } from '../erstantwort/ErstantwortSequence';
 import { isErstantwortMessage } from '../erstantwort/erstantwortPayload';
 import { getErstantwortRenderModeForSession } from '../erstantwort/erstantwortRoomGate';
 import { MessageAttachment } from './MessageAttachment';
+import { MessageHtml } from './MessageHtml';
 import type { MediaCheckState } from './MessageAttachment';
+import { passageReplyAudioAttachment } from '../../utils/matrixTimelineEventFormatter';
 import type { ChatAttachment, ChatFile } from './chatAttachmentTypes';
 import { getModality, Modality } from '../session/getModality';
 import {
@@ -1271,7 +1273,8 @@ export const MessageItemComponent = ({
 	);
 	const grantNotificationPolicy = emailCollectionSetupPolicy(
 		tenant?.settings,
-		erstantwortModality
+		erstantwortModality,
+		userData
 	);
 	useEffect(
 		() => setShowGrantNotifications(false),
@@ -2520,6 +2523,31 @@ export const MessageItemComponent = ({
 										replies={passageReplies!}
 										isMyMessage={isMyMessage}
 										onJump={onJumpToPassage}
+										renderAudio={(audio, index) => {
+											const voice =
+												passageReplyAudioAttachment(
+													audio
+												);
+											return (
+												<MessageAttachment
+													key={`passage-audio-${index}`}
+													attachment={
+														voice.attachment
+													}
+													rid={rid}
+													file={voice.file}
+													t="matrix-e2e-file"
+													hasRenderedMessage
+													mediaCheckState={getAttachmentMediaCheckState(
+														voice.attachment
+													)}
+													inlineDisplayEnabled={
+														attachmentInlineDisplayEnabled
+													}
+													isOwnMessage={isMyMessage}
+												/>
+											);
+										}}
 									/>
 								)}
 							{/* Relations foundation (#435): quote of the replied-to
@@ -2761,10 +2789,8 @@ export const MessageItemComponent = ({
 
 									return (
 										<>
-											<span
-												dangerouslySetInnerHTML={{
-													__html: displayMessage
-												}}
+											<MessageHtml
+												html={displayMessage}
 											/>
 											{isLongMessage && (
 												<button
@@ -2814,11 +2840,9 @@ export const MessageItemComponent = ({
 								(attachment) => attachment.hasCaption
 							) &&
 								renderedMessageWithoutPrefix && (
-									<span
+									<MessageHtml
 										className="messageItem__attachmentCaption"
-										dangerouslySetInnerHTML={{
-											__html: renderedMessageWithoutPrefix
-										}}
+										html={renderedMessageWithoutPrefix}
 									/>
 								)}
 							{/*

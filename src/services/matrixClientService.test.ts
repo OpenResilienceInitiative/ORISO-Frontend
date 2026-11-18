@@ -1128,6 +1128,131 @@ describe('MatrixClientService', () => {
 		expect(cancelPendingEvent).toHaveBeenCalledWith(failedLocalEcho);
 	});
 
+	it('sends answered passages as one event, uploading each clip encrypted first (ADR-022)', async () => {
+		const uploadContent = vi
+			.fn()
+			.mockResolvedValue({ content_uri: 'mxc://server/clip' });
+		const sendMessage = vi.fn().mockResolvedValue({ event_id: '$answer' });
+		const { client } = createRefreshableClient({
+			uploadContent,
+			sendMessage,
+			makeTxnId: () => 'txn-passages'
+		});
+		const service = new MatrixClientService();
+		setClient(service, client);
+		const clip = new File(['abc'], 'voice.webm', { type: 'audio/webm' });
+
+		await service.sendPassageReplies(
+			'!room:matrix.localhost',
+			[
+				{
+					eventId: '$m1',
+					author: 'Lena',
+					excerpt: 'drei Mahnungen',
+					text: 'Schauen wir an.'
+				},
+				{
+					eventId: '$m1',
+					author: 'Lena',
+					excerpt: 'Amtsgericht',
+					voice: { file: clip, durationMs: 4000 }
+				}
+			],
+			'Bis morgen.',
+			{ voice: (sec) => `[voice ${sec}]` }
+		);
+
+		expect(uploadContent).toHaveBeenCalledOnce();
+		expect(uploadContent.mock.calls[0][0]).toBe('encrypted-blob');
+		expect(sendMessage).toHaveBeenCalledOnce();
+		const [roomId, content, txnId] = sendMessage.mock.calls[0];
+		expect(roomId).toBe('!room:matrix.localhost');
+		expect(txnId).toBe('txn-passages');
+		expect(content['org.oriso.passage_replies']).toEqual([
+			{
+				event_id: '$m1',
+				author: 'Lena',
+				excerpt: 'drei Mahnungen',
+				text: 'Schauen wir an.'
+			},
+			{
+				event_id: '$m1',
+				author: 'Lena',
+				excerpt: 'Amtsgericht',
+				audio: {
+					file: {
+						key: {},
+						iv: 'iv',
+						hashes: {},
+						v: 'v2',
+						url: 'mxc://server/clip'
+					},
+					mimetype: 'audio/webm',
+					duration_ms: 4000,
+					size: 3
+				}
+			}
+		]);
+		expect(content['org.oriso.passage_replies_text']).toBe('Bis morgen.');
+	});
+
+	it('sends no passage answers when a clip upload fails', async () => {
+		const sendMessage = vi.fn();
+		const { client } = createRefreshableClient({
+			uploadContent: vi.fn().mockRejectedValue(new Error('upload')),
+			sendMessage
+		});
+		const service = new MatrixClientService();
+		setClient(service, client);
+
+		await expect(
+			service.sendPassageReplies(
+				'!room:matrix.localhost',
+				[
+					{
+						eventId: '$m1',
+						author: 'Lena',
+						excerpt: 'x',
+						voice: {
+							file: new File(['a'], 'v.webm', {
+								type: 'audio/webm'
+							}),
+							durationMs: 1000
+						}
+					}
+				],
+				'',
+				{ voice: () => '' }
+			)
+		).rejects.toThrow('upload');
+		expect(sendMessage).not.toHaveBeenCalled();
+	});
+
+	it('blurs a passage as an org.oriso.passage_blur event holding only the position (#2229)', async () => {
+		const sendEvent = vi.fn().mockResolvedValue({ event_id: '$blur' });
+		const client = { sendEvent };
+		const service = new MatrixClientService();
+		setClient(service, client);
+
+		await service.sendPassageBlur('!room:matrix.localhost', '$msg', {
+			start: 4,
+			length: 12
+		});
+
+		expect(sendEvent).toHaveBeenCalledWith(
+			'!room:matrix.localhost',
+			'org.oriso.passage_blur',
+			{
+				'm.relates_to': {
+					rel_type: 'org.oriso.passage_blur',
+					event_id: '$msg'
+				},
+				'start': 4,
+				'length': 12
+			}
+		);
+	});
+
 	it('edits a message via m.replace, targeting the original event', async () => {
 		const sendMessage = vi.fn(() =>
 			Promise.resolve({ event_id: '$edit:example.org' })

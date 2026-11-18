@@ -1686,42 +1686,10 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 	}
 }
 
-// ORISO-Frontend#1159: placeholder for a deleted advice-seeker chat. Greyed
-// out and inert — there is nothing left to open.
-.sessionsListDeletedAskerItem {
-	width: calc(100% - 24px);
-	margin: 0 12px 8px;
-	padding: 12px 14px;
-	box-sizing: border-box;
-	border: 1px dashed var(--m3-outline-variant, #e1e6ee);
-	border-radius: 16px;
-	background: var(--m3-surface-container-low, #f4f6f9);
-	color: var(--m3-on-surface-variant, #4c555f);
-	font-family: $font-family-sans-serif;
-	display: grid;
-	grid-template-columns: 1fr auto;
-	gap: 4px 12px;
-	cursor: default;
-
-	&__title {
-		min-width: 0;
-		font-size: 16px;
-		line-height: 24px;
-		font-weight: $font-weight-medium;
-		color: var(--m3-on-surface-variant, #4c555f);
-	}
-
-	&__meta {
-		font-size: 12px;
-		line-height: 24px;
-		white-space: nowrap;
-	}
-
-	&__hint {
-		grid-column: 1 / -1;
-		font-size: 12px;
-		line-height: 16px;
-	}
+// ORISO-Frontend#1159: the card of a deleted advice-seeker chat is an ordinary
+// session card (sessionsListItem); its avatar styles live with DeletedAskerAvatar.
+.sessionsListItem--deletedAsker .sessionsListItem__deletedAskerPreview {
+	color: var(--m3-on-surface-variant, #534341);
 }
 
 // ADR-021: the future zone above "Jetzt" sits on the cards' gutter.

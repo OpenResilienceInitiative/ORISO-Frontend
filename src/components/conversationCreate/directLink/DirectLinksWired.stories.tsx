@@ -112,7 +112,8 @@ export const CreateAndShare: Story = {
 			(request) => request.method === 'POST'
 		);
 		// One Beratungsstelle: no agency id. Guests may come in by default,
-		// so the link makes a temporary account.
+		// so the link makes a temporary account. The dialog's access is the
+		// mode (BOTH = GUEST_CHOOSES, UserService#1662); no separate field.
 		await expect(create?.body).toEqual({
 			medium: 'VIDEO',
 			topicId: 4,

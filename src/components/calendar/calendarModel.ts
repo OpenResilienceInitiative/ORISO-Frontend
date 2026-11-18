@@ -26,7 +26,13 @@ export const APPOINTMENT_KINDS: AppointmentKind[] = [
  * - `blocker`: time the counsellor blocked in ORISO.
  * - `busy`: busy time imported from the counsellor's own calendar (§5).
  */
-export type CalendarEntryType = 'appointment' | 'group' | 'blocker' | 'busy';
+/** 'absence': the counsellor's planned absence, whole days (ORISO-Frontend#2303). */
+export type CalendarEntryType =
+	| 'appointment'
+	| 'group'
+	| 'blocker'
+	| 'busy'
+	| 'absence';
 
 export interface CalendarEntry {
 	id: string;
@@ -55,6 +61,30 @@ export interface CalendarEntry {
 	movable?: boolean;
 	/** Whole day(s): shown in the all-day row, not across the time grid. */
 	allDay?: boolean;
+	/**
+	 * FE#2287: an advice seeker's request waiting for this counsellor's
+	 * confirmation. Drawn dashed like a move proposal and answered the same
+	 * way; never moved.
+	 */
+	requested?: boolean;
+	/**
+	 * Own view only: an appointment with a colleague instead of an advice
+	 * seeker (FE#2305). It has no conversation; it belongs to the private
+	 * internal chat of the two.
+	 */
+	meeting?: ColleagueMeeting;
+}
+
+/** The other side of an appointment between two counsellors. */
+export interface ColleagueMeeting {
+	colleagueId: string;
+	colleagueName: string;
+	/** `pending` until the invited counsellor accepts. */
+	status: 'pending' | 'confirmed';
+	/** The calendar's owner was invited and may accept or decline. */
+	invited: boolean;
+	matrixRoomId?: string;
+	chatId?: number;
 }
 
 /** Appointments made before the kind existed were video calls. */
@@ -142,6 +172,12 @@ export interface Colleague {
 	 */
 	secondaryLabel?: string;
 	relation: ColleagueRelation;
+	/**
+	 * False: the Träger allows no internal chat with this colleague, so an
+	 * appointment with them can only be on site (FE#2305). Absent: unknown,
+	 * every kind is offered and UserService decides.
+	 */
+	internalChat?: boolean;
 }
 
 const RELATIONS_IN_SCOPE: Record<CalendarVisibilityScope, ColleagueRelation[]> =
@@ -341,6 +377,8 @@ export interface AppointmentDraft {
 	end: Date;
 	kind?: AppointmentKind;
 	sessionId?: number;
+	/** An appointment with this colleague instead of a conversation (FE#2305). */
+	colleagueId?: string;
 	note?: string;
 	/** Blockers only. */
 	repeat?: BlockerRepeat;
@@ -454,7 +492,11 @@ export const draftError = (
 	if (!draft.start || !draft.end) return 'incomplete';
 	if (draft.end.getTime() <= draft.start.getTime()) return 'order';
 	if (draft.start.getTime() < now.getTime()) return 'past';
-	if (draft.type === 'appointment' && draft.sessionId === undefined)
+	if (
+		draft.type === 'appointment' &&
+		draft.sessionId === undefined &&
+		!draft.colleagueId
+	)
 		return 'conversation';
 	return undefined;
 };

@@ -242,26 +242,32 @@ export const SelectionReplyLayer = ({
 			document.removeEventListener('selectionchange', onSelectionChange);
 	}, [mode, clear, initialSelection]);
 
-	// Scrolling the timeline: the bar closes, the field follows the passage.
+	// Scrolling the timeline: the bar and the field follow the passage. The
+	// bar closes once its passage leaves the visible band. It must not close
+	// on any scroll: the real chat scrolls by itself right after a selection
+	// (new rows, receipts keep it pinned to the newest message), which made
+	// the bar flash and vanish.
 	useEffect(() => {
 		const layer = layerRef.current;
 		if (!layer || mode === 'none' || !active) {
 			return undefined;
 		}
 		const onScroll = () => {
-			if (mode === 'toolbar' && !initialSelection) {
+			const range =
+				livePassageRange(layer, active.passage, active.range) ||
+				active.range;
+			const anchor = anchorFor(range.getBoundingClientRect(), layer);
+			if (
+				mode === 'toolbar' &&
+				!initialSelection &&
+				(anchor.bottom < anchor.visibleTop ||
+					anchor.top > anchor.visibleBottom)
+			) {
 				setMode('none');
 				clear();
 				return;
 			}
-			const range =
-				livePassageRange(layer, active.passage, active.range) ||
-				active.range;
-			setSelection({
-				...active,
-				range,
-				anchor: anchorFor(range.getBoundingClientRect(), layer)
-			});
+			setSelection({ ...active, range, anchor });
 		};
 		// Captured on the document: the timeline may scroll in the layer or
 		// in an ancestor (anchorFor measures against scrollParentOf(layer)).

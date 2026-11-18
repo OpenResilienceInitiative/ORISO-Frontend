@@ -253,19 +253,19 @@ export const GroupCallWidget: React.FC = () => {
 	});
 	// The call link's "Anklopfen" (UserService#1488), for the switch in the
 	// call (ElementCall#109). Every counsellor in the call may change it.
-	// Only a 1:1 session call has a link (UserService
-	// `CallShareLinkService.requireCounsellorCall`): a group chat or a
-	// Gesprächskreis answers 404 to every request, so it is never asked.
-	const isGroupCall = !!callData?.isGroup;
+	// UserService#1662: group calls and Gesprächskreise have a link too. The
+	// server binds an encrypted group call from its creator's registration
+	// (CallManager's observation request) and registers guests under the
+	// creator's Beratungsstelle.
 	const shareLinkCall = useMemo(
 		() =>
-			!isGroupCall && callData?.signalRoomId && callData.callId
+			callData?.signalRoomId && callData.callId
 				? {
 						sourceRoomId: callData.signalRoomId,
 						callId: callData.callId
 					}
 				: null,
-		[isGroupCall, callData?.signalRoomId, callData?.callId]
+		[callData?.signalRoomId, callData?.callId]
 	);
 	const shareLinkKnock = useCallShareLinkKnock({
 		// Hung up: stop once the call surface closes, whatever the call manager still holds.
@@ -349,8 +349,15 @@ export const GroupCallWidget: React.FC = () => {
 	 */
 	const canInvite =
 		isConsultantUser && !!shareLinkCall && !callData?.sharedCallGuest;
+	/* UserService#1662 (Frank, 17 Nov): a group call a plain member or an
+	   advice seeker started has no binding, so no link. Once the server has
+	   said so the bounded number of times, nothing here offers or creates
+	   one. "Link teilen" inside the running call is on its address, which is
+	   built once; changing it would reload the call, so the call is told
+	   live (`inviteAvailable`) and drops its link entries. */
+	const linkShareable = shareLinkKnock.shareable;
 	const onInviteLink = useCallback(async (): Promise<string | null> => {
-		if (!shareLinkCall) return null;
+		if (!shareLinkCall || !linkShareable) return null;
 		const created = await apiCreateCallShareLink(shareLinkCall);
 		if (created) return created.url;
 		// Right after joining the server may not see this person in the call
@@ -359,7 +366,7 @@ export const GroupCallWidget: React.FC = () => {
 			setTimeout(resolve, INVITE_LINK_RETRY_MS)
 		);
 		return (await apiCreateCallShareLink(shareLinkCall))?.url ?? null;
-	}, [shareLinkCall]);
+	}, [shareLinkCall, linkShareable]);
 
 	/*
 	 * Call design S1: who may be labelled "Beratung" in the call. From the
@@ -414,6 +421,7 @@ export const GroupCallWidget: React.FC = () => {
 			hostContextPending,
 			invite: canInvite,
 			onInviteLink,
+			inviteAvailable: linkShareable,
 			counsellors
 		}
 	);
@@ -1496,18 +1504,25 @@ export const GroupCallWidget: React.FC = () => {
 						 * link twice — except where the link may create a
 						 * temporary account: that switch exists only here.
 						 */}
-						{isConsultantUser && widget.ready && shareLinkCall && (
-							<div className="element-call-share">
-								<CallShareForCall
-									sourceRoomId={shareLinkCall.sourceRoomId}
-									callId={shareLinkCall.callId}
-									layout={isMobileView ? 'phone' : 'desktop'}
-									onlyForTemporaryAccounts={
-										hostChrome && canInvite
-									}
-								/>
-							</div>
-						)}
+						{isConsultantUser &&
+							widget.ready &&
+							shareLinkCall &&
+							linkShareable && (
+								<div className="element-call-share">
+									<CallShareForCall
+										sourceRoomId={
+											shareLinkCall.sourceRoomId
+										}
+										callId={shareLinkCall.callId}
+										layout={
+											isMobileView ? 'phone' : 'desktop'
+										}
+										onlyForTemporaryAccounts={
+											hostChrome && canInvite
+										}
+									/>
+								</div>
+							)}
 						{/*
 						 * Somebody knocking on a direct-link call (#1892):
 						 * let them in without leaving the call. Docked

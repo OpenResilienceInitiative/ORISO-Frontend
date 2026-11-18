@@ -85,26 +85,10 @@ export const MatrixCallView: React.FC<MatrixCallViewProps> = ({
 					// console.error('❌ Failed to answer:', err);
 					setError(err.message);
 				});
-		} else if (!isAnswering) {
-			// START MODE: Start new outgoing call
-			// console.log('✅ STARTING new outgoing call');
-
-			matrixCallService
-				.startCall({
-					roomId,
-					isVideoCall,
-					localVideoElement: localVideoRef.current || undefined,
-					remoteVideoElement: remoteVideoRef.current || undefined
-				})
-				.then((call) => {
-					setActiveCall(call);
-				})
-				.catch((err) => {
-					// console.error('❌ Failed to start call:', err);
-					setError(err.message);
-				});
 		} else {
-			// ANSWER MODE but no incoming call
+			/* Only counsellors start calls (Frank, 17 Nov 2026), and only through
+			   the call policy: this native call never reaches it, so the view
+			   only answers a call that rings and never starts one. */
 			setError('No incoming call found to answer');
 		}
 

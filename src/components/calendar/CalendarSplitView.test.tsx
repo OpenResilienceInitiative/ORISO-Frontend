@@ -608,6 +608,38 @@ describe('CalendarSplitView — the time in the entry name (review 4589304613)',
 		expect(name).toContain('10:00');
 		expect(name).toContain('10:30');
 	});
+
+	it('says a waiting request is one in its name, as the day grid does (FE#2287)', () => {
+		const request: CalendarEntry = {
+			id: 'q1',
+			type: 'appointment',
+			kind: 'video',
+			title: 'leise_lerche',
+			start: new Date(2026, 10, 16, 11).toISOString(),
+			end: new Date(2026, 10, 16, 12).toISOString(),
+			ownerId: 'me',
+			requested: true
+		};
+		const { container } = render(
+			<CalendarSplitView
+				day={MONDAY}
+				role="consultant"
+				ownerId="me"
+				colleagues={[]}
+				entries={[request]}
+				now={new Date(2026, 10, 16, 7)}
+			/>
+		);
+		const name =
+			container
+				.querySelector<HTMLElement>(
+					'[data-cy="calendar-split-entry-q1"]'
+				)!
+				.getAttribute('aria-label') ?? '';
+		expect(name).toContain('leise_lerche');
+		expect(name).toContain('calendar.appointmentRequest.status');
+		expect(name).toContain('11:00');
+	});
 });
 
 describe('CalendarSplitView — opened from a band (Frank *16.2)', () => {

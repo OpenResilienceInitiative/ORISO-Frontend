@@ -386,3 +386,22 @@ export const STORY_REQUESTS: MoveProposal[] = [
 		approverId: ME
 	}
 ];
+
+/**
+ * FE#2287: an advice seeker's request waiting for this counsellor, the day
+ * after tomorrow at 11:00, booked inside the notice period.
+ */
+export const STORY_APPOINTMENT_REQUESTS: CalendarEntry[] = [
+	{
+		id: 'q1',
+		type: 'appointment',
+		kind: 'video',
+		ownerId: ME,
+		sessionId: 4407,
+		title: 'leise_lerche',
+		start: at(1, 11),
+		end: at(1, 12),
+		movable: false,
+		requested: true
+	}
+];

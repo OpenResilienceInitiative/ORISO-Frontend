@@ -123,6 +123,8 @@ const i18nMock = vi.hoisted(() => {
 		'directLink.entry.haveAccount': 'Sie haben schon ein Konto? Anmelden',
 		'inviteLink.resume.retry': 'Erneut versuchen',
 		'registration.zipcode.label': 'Ihre Postleitzahl',
+		'guestAccountMode.entry.withAccount': 'Konto anlegen',
+		'guestAccountMode.entry.withoutAccount': 'Ohne Konto beitreten',
 		'registration.accountCreated.retry':
 			'Ihr Zugang wurde angelegt, aber die Anmeldung hat nicht geklappt. Bitte versuchen Sie es noch einmal.'
 	};
@@ -441,6 +443,79 @@ describe('InviteLink with a counsellor direct link (#1795)', () => {
 			temporary: true
 		});
 		expect(body.password.length).toBeGreaterThan(8);
+	});
+
+	describe('guest account mode (UserService#1662)', () => {
+		const startChat = () =>
+			vi.mocked(apiStartDirectLinkConversation).mockResolvedValueOnce({
+				sessionId: 47,
+				medium: 'CHAT',
+				admission: 'DIRECT',
+				created: true
+			});
+
+		it('lets the guest choose: no account by default, an account after the toggle', async () => {
+			vi.mocked(apiGetInviteLinkContext).mockResolvedValueOnce({
+				...directContext('CHAT'),
+				guestAccountMode: 'GUEST_CHOOSES'
+			} as any);
+			startChat();
+			renderInvite();
+			await screen.findByLabelText('User-ID');
+			expect(screen.queryByLabelText('Ihre Postleitzahl')).toBeNull();
+			fireEvent.click(
+				screen.getByRole('button', { name: 'Konto anlegen' })
+			);
+			expect(
+				screen.getByRole('button', { name: 'Ohne Konto beitreten' })
+			).toBeTruthy();
+			typePostcode('10115');
+			fireEvent.click(
+				screen.getByRole('button', { name: 'Weiter mit Auswahl' })
+			);
+			await waitFor(() => expect(apiPostRegistration).toHaveBeenCalled());
+			expect(
+				vi.mocked(apiPostRegistration).mock.calls[0][1]
+			).toMatchObject({ postcode: '10115', temporary: false });
+		});
+
+		it('registers a temporary account when the guest keeps the default', async () => {
+			vi.mocked(apiGetInviteLinkContext).mockResolvedValueOnce({
+				...directContext('CHAT'),
+				guestAccountMode: 'GUEST_CHOOSES'
+			} as any);
+			startChat();
+			renderInvite();
+			await screen.findByLabelText('User-ID');
+			fireEvent.click(
+				screen.getByRole('button', { name: 'Weiter mit Auswahl' })
+			);
+			await waitFor(() => expect(apiPostRegistration).toHaveBeenCalled());
+			expect(
+				vi.mocked(apiPostRegistration).mock.calls[0][1]
+			).toMatchObject({ postcode: '00000', temporary: true });
+		});
+
+		it.each(['TEMPORARY', 'PERMANENT'])(
+			'offers no choice under %s',
+			async (guestAccountMode) => {
+				vi.mocked(apiGetInviteLinkContext).mockResolvedValueOnce({
+					...directContext('CHAT'),
+					temporaryAccount: guestAccountMode === 'TEMPORARY',
+					guestAccountMode
+				} as any);
+				renderInvite();
+				await screen.findByLabelText('User-ID');
+				expect(
+					screen.queryByRole('button', { name: 'Konto anlegen' })
+				).toBeNull();
+				expect(
+					screen.queryByRole('button', {
+						name: 'Ohne Konto beitreten'
+					})
+				).toBeNull();
+			}
+		);
 	});
 
 	it('sends a chat link the same registration as a call link', async () => {

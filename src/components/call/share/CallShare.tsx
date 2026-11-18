@@ -11,6 +11,7 @@ import {
 	effectiveCallShareSettings,
 	WebShare
 } from './callShareSettings';
+import type { GuestAccountMode } from '../../guestAccountMode/guestAccountMode';
 import './callShare.scss';
 
 /** Above `.group-call-widget` (10000): the surfaces are portalled to the body. */
@@ -35,8 +36,8 @@ export interface CallShareProps {
 	/** Omitted: the browser's own `navigator.share`, if any. `null`: hidden. */
 	webShare?: WebShare | null;
 	defaultQrOpen?: boolean;
-	/** `false` when the platform or Träger forbids temporary accounts. */
-	temporaryAccountAllowed?: boolean;
+	/** UserService#1662: the modes platform and Träger allow; absent: all. */
+	allowedGuestAccountModes?: readonly GuestAccountMode[];
 }
 
 /**
@@ -54,7 +55,7 @@ export const CallShare = ({
 	onCopy,
 	webShare,
 	defaultQrOpen,
-	temporaryAccountAllowed = true
+	allowedGuestAccountModes
 }: CallShareProps) => {
 	const { t } = useTranslation();
 	const [anchor, setAnchor] = useState<HTMLButtonElement | null>(null);
@@ -70,7 +71,7 @@ export const CallShare = ({
 	}
 	const settings = effectiveCallShareSettings(
 		controlled ?? stored,
-		temporaryAccountAllowed
+		allowedGuestAccountModes
 	);
 	const [share] = useState<WebShare | null>(() =>
 		webShare === undefined ? detectWebShare() : webShare
@@ -106,7 +107,7 @@ export const CallShare = ({
 			onSettingsChange={(next) => {
 				const effective = effectiveCallShareSettings(
 					next,
-					temporaryAccountAllowed
+					allowedGuestAccountModes
 				);
 				setStored(effective);
 				onSettingsChange?.(effective);
@@ -115,7 +116,7 @@ export const CallShare = ({
 			webShare={share}
 			onCopy={onCopy}
 			defaultQrOpen={defaultQrOpen}
-			temporaryAccountAllowed={temporaryAccountAllowed}
+			allowedGuestAccountModes={allowedGuestAccountModes}
 			onContentResize={layout === 'desktop' ? reanchor : undefined}
 		/>
 	);

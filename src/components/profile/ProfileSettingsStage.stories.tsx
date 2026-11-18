@@ -27,6 +27,21 @@ const asker = {
 	agencies: []
 };
 
+/** UserService#1662: joined through an invitation without an account. */
+const temporaryAsker = {
+	...asker,
+	userName: 'eule_mika_4821',
+	temporaryAccount: true,
+	/* The server says keeping it will succeed (guest chooses). */
+	temporaryAccountKeepAllowed: true
+};
+
+/** UserService#1662: a temporary account that may not be kept (TEMPORARY). */
+const temporaryAskerNoKeep = {
+	...temporaryAsker,
+	temporaryAccountKeepAllowed: false
+};
+
 const consultant = {
 	userId: 'storybook-consultant',
 	userName: 'blink.fish',
@@ -159,6 +174,85 @@ export const AskerMobile390Security: Story = {
 		router: { initialPath: '/profile/einstellungen/sicherheit' }
 	},
 	play: ({ canvasElement }) => noSettingsAvatarChooser(canvasElement)
+};
+
+/**
+ * UserService#1662: a temporary account is offered "Konto behalten";
+ * display names, e-mail and browser notifications stay hidden until then.
+ */
+const keepOfferedWithoutDisplayNames = async (canvasElement: HTMLElement) => {
+	const canvas = within(canvasElement);
+	await expect(
+		await canvas.findByRole('button', { name: 'Konto behalten' })
+	).toBeVisible();
+	await expect(
+		canvasElement.querySelector('.askerDisplayNameSettings')
+	).toBeNull();
+	await expectNoPasswordCard(canvasElement);
+};
+
+/* A temporary account has no password of its own to change. */
+const expectNoPasswordCard = async (canvasElement: HTMLElement) =>
+	expect(
+		within(canvasElement).queryByRole('heading', { name: 'Passwort' })
+	).toBeNull();
+
+export const TemporaryAskerDesktop1440: Story = {
+	name: 'Temporary asker · security · 1440 (#1662)',
+	decorators: [withStage(temporaryAsker)],
+	globals: desktop1440,
+	play: ({ canvasElement }) => keepOfferedWithoutDisplayNames(canvasElement)
+};
+
+export const TemporaryAskerMobile390Security: Story = {
+	name: 'Temporary asker · security · 390 (#1662)',
+	decorators: [withStage(temporaryAsker)],
+	globals: phone390,
+	parameters: {
+		router: { initialPath: '/profile/einstellungen/sicherheit' }
+	},
+	play: ({ canvasElement }) => keepOfferedWithoutDisplayNames(canvasElement)
+};
+
+/** Neither "Konto behalten" nor a password card when keeping would fail. */
+export const TemporaryAskerNoKeepMobile390Security: Story = {
+	name: 'Temporary asker · may not keep · security · 390 (#1662)',
+	decorators: [withStage(temporaryAskerNoKeep)],
+	globals: phone390,
+	parameters: {
+		router: { initialPath: '/profile/einstellungen/sicherheit' }
+	},
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await waitFor(
+			() =>
+				expect(canvas.getAllByRole('heading').length).toBeGreaterThan(
+					0
+				),
+			{ timeout: 8000 }
+		);
+		await expect(
+			canvas.queryByRole('button', { name: 'Konto behalten' })
+		).toBeNull();
+		await expectNoPasswordCard(canvasElement);
+	}
+};
+
+export const TemporaryAskerGeneral1440: Story = {
+	name: 'Temporary asker · about me without e-mail · 1440 (#1662)',
+	decorators: [withStage(temporaryAsker)],
+	globals: desktop1440,
+	parameters: { router: { initialPath: '/profile/allgemeines' } },
+	play: async ({ canvasElement }) => {
+		await expect(
+			await within(canvasElement).findByRole('heading', {
+				name: 'Über mich'
+			})
+		).toBeVisible();
+		await expect(
+			canvasElement.querySelector('input[type="email"]')
+		).toBeNull();
+	}
 };
 
 /** #1540: the other tabs share the card layout. */

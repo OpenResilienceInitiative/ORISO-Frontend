@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, waitFor } from 'storybook/test';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { SessionsListToolbar } from '../sessionsList/SessionsListToolbar';
 import { ResizableHandle } from '../sessionsList/ResizableHandle';
 import type { SessionToolbarChipFilter } from '../sessionsList/sessionToolbarFilters';
@@ -137,6 +137,26 @@ const mockUserData = {
 		qrCode: ''
 	}
 } as any;
+
+/** The advice seeker of the open conversation (FE#2287 page stories). */
+const mockAskerUserData = {
+	...mockUserData,
+	userId: 'asker-storybook',
+	userName: 'sanftes.alpaka.kala@oriso.invalid',
+	displayName: 'Sanftes Alpaka Kala',
+	grantedAuthorities: [AUTHORITIES.ASKER_DEFAULT]
+} as any;
+
+/**
+ * FE#2287 page stories: who looks at the conversation, and what its
+ * appointment API answers (`null`: no answer mocked, as before). Set in a
+ * story's `beforeEach`; every other story keeps the counsellor without them.
+ */
+let surfaceRole: 'consultant' | 'asker' = 'consultant';
+let surfaceAppointments: unknown[] | null = null;
+let surfaceSlots: unknown[] | null = null;
+const surfaceUserData = () =>
+	surfaceRole === 'asker' ? mockAskerUserData : mockUserData;
 
 const appOrisoRouterSettings = {
 	...config,
@@ -899,7 +919,7 @@ function AppOrisoRoutingRuntimeShell() {
 function RuntimeSidebar() {
 	return (
 		<NavigationStoryShell
-			role="consultant"
+			role={surfaceRole}
 			className="appOrisoRuntimeRail"
 			onLogout={() => {}}
 		/>
@@ -916,15 +936,18 @@ function AppOrisoRuntimeProviders({
 	return (
 		<UserDataContext.Provider
 			value={{
-				userData: mockUserData,
-				reloadUserData: async () => mockUserData,
+				userData: surfaceUserData(),
+				reloadUserData: async () => surfaceUserData(),
 				setUserData: () => {}
 			}}
 		>
 			<SessionTypeContext.Provider
 				value={{
 					type: SESSION_LIST_TYPES.MY_SESSION,
-					path: '/sessions/consultant/sessionView'
+					path:
+						surfaceRole === 'asker'
+							? '/sessions/user/view'
+							: '/sessions/consultant/sessionView'
 				}}
 			>
 				<ConsultingTypesContext.Provider
@@ -1028,10 +1051,15 @@ function SessionListPanel({
 	const [selectedPeople, setSelectedPeople] = useState<string[]>([]);
 	const [chip, setChip] = useState<SessionToolbarChipFilter | null>('drafts');
 	const listScrollRef = useRef<HTMLDivElement | null>(null);
+	// An advice seeker lists only their own conversation.
+	const consultant = surfaceRole === 'consultant';
+	const listSessions = consultant
+		? consultantChatSessions
+		: [consultantChatListItem];
 
 	return (
 		<aside style={styles.listPanel}>
-			<AppOrisoRuntimeProviders sessions={consultantChatSessions}>
+			<AppOrisoRuntimeProviders sessions={listSessions}>
 				<div className="sessionsList__innerWrapper">
 					<SessionsListToolbar
 						translate={translate}
@@ -1046,13 +1074,13 @@ function SessionListPanel({
 								previousChip === nextChip ? null : nextChip
 							)
 						}
-						showConsultantActions
-						showCreateGroupChatAction
-						showSupervisionChip
-						showLiveChatChip
-						showGroupChip
-						showInternalGroupChip
 						{...productionToolbarProps}
+						showConsultantActions={consultant}
+						showCreateGroupChatAction={consultant}
+						showSupervisionChip={consultant}
+						showLiveChatChip={consultant}
+						showGroupChip={consultant}
+						showInternalGroupChip={consultant}
 						createGroupChatPath="/sessions/consultant/sessionView/createGroupChat"
 						archiveTabPath="/sessions/consultant/sessionView?sessionListTab=archive"
 						archiveTabActive={false}
@@ -1073,7 +1101,7 @@ function SessionListPanel({
 							role="list"
 							aria-label="Conversations"
 						>
-							{consultantChatSessions.map((session, index) => (
+							{listSessions.map((session, index) => (
 								<RealSessionListItem
 									key={
 										session.session?.id ??
@@ -1083,28 +1111,27 @@ function SessionListPanel({
 									session={session}
 									index={index}
 									isBeforeActive={
-										!!consultantChatSessions[index + 1] &&
+										!!listSessions[index + 1] &&
 										isRuntimeSessionActive(
-											consultantChatSessions[index + 1]
+											listSessions[index + 1]
 										)
 									}
 									isAfterActive={
-										!!consultantChatSessions[index - 1] &&
+										!!listSessions[index - 1] &&
 										isRuntimeSessionActive(
-											consultantChatSessions[index - 1]
+											listSessions[index - 1]
 										)
 									}
 									isGroupStart={
 										index === 0 ||
 										isRuntimeSessionActive(
-											consultantChatSessions[index - 1]
+											listSessions[index - 1]
 										)
 									}
 									isGroupEnd={
-										index ===
-											consultantChatSessions.length - 1 ||
+										index === listSessions.length - 1 ||
 										isRuntimeSessionActive(
-											consultantChatSessions[index + 1]
+											listSessions[index + 1]
 										)
 									}
 								/>
@@ -1154,7 +1181,10 @@ const chatRoomMembers = [
 	{ userId: consultantMatrixId, name: storybookConsultant.displayName }
 ];
 const chatMatrixService = buildStageMatrixClientService({}, chatRoomMembers);
-chatMatrixService.getClient().getUserId = () => consultantMatrixId;
+chatMatrixService.getClient().getUserId = () =>
+	surfaceRole === 'asker'
+		? consultantChatSession.item.askerMatrixUserId
+		: consultantMatrixId;
 const chatEmptyDraftScopes = [
 	`scope:${consultantChatSession.item.id}|thread:main`,
 	`scope:${consultantChatSession.rid}|thread:main`
@@ -1207,7 +1237,13 @@ const noop = () => {};
 /** One identity/provider scope for the production header, timeline and composer. */
 function ConsultantChatProviders({ children }: { children: React.ReactNode }) {
 	return (
-		<AppOrisoRuntimeProviders sessions={consultantChatSessions}>
+		<AppOrisoRuntimeProviders
+			sessions={
+				surfaceRole === 'asker'
+					? [consultantChatListItem]
+					: consultantChatSessions
+			}
+		>
 			<ServerSettingsContext.Provider
 				value={{
 					settings: [],
@@ -1220,7 +1256,7 @@ function ConsultantChatProviders({ children }: { children: React.ReactNode }) {
 				>
 					<ComposerStoryDecorator
 						activeSession={consultantChatSession}
-						userData={mockUserData}
+						userData={surfaceUserData()}
 						roomMembers={chatRoomMembers}
 						emptyDraftScopes={chatEmptyDraftScopes}
 						emptyDraftIndex
@@ -1269,7 +1305,8 @@ function ChatPanel() {
 								messages={chatMessages}
 								clientName="Sanftes Alpaka Kala"
 								isMyMessage={(userId) =>
-									userId === consultantMatrixId
+									userId ===
+									chatMatrixService.getClient().getUserId()
 								}
 								handleDecryptionErrors={noop}
 								handleDecryptionSuccess={noop}
@@ -1279,7 +1316,11 @@ function ChatPanel() {
 					</div>
 					<MessageSubmitInterfaceComponent
 						className="session__submit-interface"
-						placeholder="Nachricht an Klient:in schreiben"
+						placeholder={
+							surfaceRole === 'asker'
+								? 'Nachricht schreiben'
+								: 'Nachricht an Klient:in schreiben'
+						}
 						onSendButton={noop}
 						isTyping={noop}
 						language="de"
@@ -1320,6 +1361,150 @@ function AppOrisoRoutingFetchMockDecorator({
 	useLayoutEffect(() => installAppOrisoRoutingFetchMocks(), []);
 	return <>{children}</>;
 }
+
+/**
+ * FE#2287: the open conversation's appointment API (GET appointments, free
+ * times, answers). Installed outermost, so it wraps the composer's mocks.
+ */
+function SurfaceAppointmentsFetchMock({
+	children
+}: {
+	children: React.ReactNode;
+}) {
+	useLayoutEffect(() => {
+		const previous = globalThis.fetch;
+		globalThis.fetch = async (
+			input: RequestInfo | URL,
+			init?: RequestInit
+		) => {
+			const url = requestUrl(input);
+			const method = (
+				init?.method ??
+				(input instanceof Request ? input.method : 'GET')
+			).toUpperCase();
+			const path = url.split('?')[0];
+			if (/\/sessions\/3363\/appointment-slots$/.test(path))
+				return storybookJsonResponse(surfaceSlots ?? []);
+			if (
+				/\/sessions\/3363\/appointments$/.test(path) &&
+				method === 'GET'
+			)
+				return storybookJsonResponse(surfaceAppointments ?? []);
+			if (/\/sessions\/3363\/appointment/.test(path))
+				return storybookJsonResponse(
+					(surfaceAppointments ?? [])[0] ?? {}
+				);
+			return previous(input, init);
+		};
+		return () => {
+			globalThis.fetch = previous;
+		};
+	}, []);
+	return <>{children}</>;
+}
+
+const surfaceInDays = (days: number, hour: number) => {
+	const date = new Date();
+	date.setDate(date.getDate() + days);
+	date.setHours(hour, 0, 0, 0);
+	return date.toISOString();
+};
+/** Requested by the advice seeker in three days, waiting for the counsellor. */
+const surfaceRequest = {
+	id: 'storybook-request-3363',
+	sessionId: 3363,
+	startTime: surfaceInDays(3, 10),
+	endTime: surfaceInDays(3, 11),
+	status: 'REQUESTED',
+	kind: 'VIDEO',
+	counterpart: { displayName: 'Sanftes Alpaka Kala' }
+};
+/** Free times two to five days ahead; the first morning only on request. */
+const surfaceFreeTimes = [2, 3, 5].flatMap((days, dayIndex) =>
+	[9, 10, 14].map((hour) => ({
+		startTime: surfaceInDays(days, hour),
+		endTime: surfaceInDays(days, hour + 1),
+		bookingMode: dayIndex === 0 && hour < 12 ? 'REQUEST' : 'INSTANT'
+	}))
+);
+
+const surfaceStory = (
+	role: 'consultant' | 'asker',
+	appointments: unknown[],
+	slots: unknown[] = []
+) => ({
+	decorators: [
+		(Story: React.ComponentType) => (
+			<SurfaceAppointmentsFetchMock>
+				<Story />
+			</SurfaceAppointmentsFetchMock>
+		)
+	],
+	beforeEach: () => {
+		surfaceRole = role;
+		surfaceAppointments = appointments;
+		surfaceSlots = slots;
+		return () => {
+			surfaceRole = 'consultant';
+			surfaceAppointments = null;
+			surfaceSlots = null;
+		};
+	},
+	render: () => <AppOrisoConsultantChatSurface />
+});
+
+/** The split button below the header, once the appointments are read. */
+const SPLIT_BUTTON = '[data-cy="room-next-appointment"] .splitButton__main';
+const splitButtonShown = (canvasElement: HTMLElement) => () => {
+	const found = canvasElement.querySelector<HTMLElement>(SPLIT_BUTTON);
+	if (!found) throw new Error('appointment not shown yet');
+	return found;
+};
+
+/** The visible ⋮ of the conversation header (desktop or phone button). */
+const openHeaderMenu = async (canvasElement: HTMLElement) => {
+	const trigger = await waitFor(
+		() => {
+			const found = Array.from(
+				canvasElement.querySelectorAll<HTMLElement>(
+					'.sessionMenu__icon'
+				)
+			).find((button) => button.getBoundingClientRect().width > 0);
+			if (!found) throw new Error('header menu not shown yet');
+			return found;
+		},
+		{ timeout: 5000 }
+	);
+	await userEvent.click(trigger);
+};
+
+/** The video button: in the header on desktop, a row of ⋮ on phones. */
+const pressVideoButton = async (canvasElement: HTMLElement) => {
+	const inHeader = await waitFor(
+		() => {
+			const header = canvasElement.querySelector('.sessionMenu__icon');
+			if (!header) throw new Error('header not shown yet');
+			return canvasElement.querySelector<HTMLElement>(
+				'[data-cy="session-header-start-video-call"]'
+			);
+		},
+		{ timeout: 5000 }
+	);
+	if (inHeader) {
+		await userEvent.click(inHeader);
+		return;
+	}
+	await openHeaderMenu(canvasElement);
+	await userEvent.click(
+		await waitFor(() => {
+			const row = document.querySelector<HTMLElement>(
+				'[data-cy="session-menu-start-video-call"]'
+			);
+			if (!row) throw new Error('video row not shown yet');
+			return row;
+		})
+	);
+};
 
 const meta = {
 	title: 'App.Oriso/Consultant chat surface',
@@ -1485,6 +1670,96 @@ export const ConsultantChat: Story = {
 				chat!.getBoundingClientRect().bottom
 			).toBeLessThanOrEqual(bounds.top);
 		}
+	}
+};
+
+/**
+ * FE#2287, whole page: the advice seeker's request sits in the split button
+ * below the header, marked "angefragt"; its menu answers it.
+ */
+export const CounsellorAppointmentRequest: Story = {
+	name: 'Appointment request — counsellor answers from the split button',
+	...surfaceStory('consultant', [surfaceRequest]),
+	play: async ({ canvasElement }) => {
+		const button = await waitFor(splitButtonShown(canvasElement), {
+			timeout: 5000
+		});
+		await expect(button).toHaveTextContent(/^Angefragt · /);
+		await userEvent.click(button);
+		const body = within(document.body);
+		await expect(
+			await body.findByRole('menuitem', { name: /Termin bestätigen/ })
+		).toBeVisible();
+		await expect(
+			body.getByRole('menuitem', { name: /Termin ablehnen/ })
+		).toBeVisible();
+	}
+};
+
+/** FE#2287, whole page: the advice seeker withdraws through the same menu. */
+export const AskerAppointmentRequest: Story = {
+	name: 'Appointment request — advice seeker sees it in the split button',
+	...surfaceStory('asker', [surfaceRequest]),
+	play: async ({ canvasElement }) => {
+		const button = await waitFor(splitButtonShown(canvasElement), {
+			timeout: 5000
+		});
+		await expect(button).toHaveTextContent(/^Angefragt · /);
+		await userEvent.click(button);
+		await expect(
+			await within(document.body).findByRole('menuitem', {
+				name: /Anfrage zurückziehen/
+			})
+		).toBeVisible();
+	}
+};
+
+/** "Termin anlegen" stays a row of the header's ⋮ menu. */
+export const CounsellorCreateAppointmentInMenu: Story = {
+	name: 'Appointment — "Termin anlegen" in the header menu',
+	...surfaceStory('consultant', []),
+	play: async ({ canvasElement }) => {
+		await openHeaderMenu(canvasElement);
+		// The menu fades in: wait until the row is visible, not only mounted.
+		await waitFor(() =>
+			expect(
+				document.querySelector(
+					'[data-cy="session-menu-create-appointment"]'
+				)
+			).toBeVisible()
+		);
+	}
+};
+
+/** The advice seeker's video button shows the request instead of calling. */
+export const AskerCallInfoOverConversation: Story = {
+	name: 'Advice seeker — call information over the conversation',
+	...surfaceStory('asker', [surfaceRequest]),
+	play: async ({ canvasElement }) => {
+		await waitFor(splitButtonShown(canvasElement), {
+			timeout: 5000
+		});
+		await pressVideoButton(canvasElement);
+		const dialog = await within(document.body).findByTestId(
+			'asker-call-info'
+		);
+		await waitFor(() => expect(dialog).toBeVisible());
+		await expect(dialog).toHaveTextContent(/Angefragt · /);
+	}
+};
+
+/** Without an appointment, "Termin anfragen" opens the free times. */
+export const AskerSelfBookingOverConversation: Story = {
+	name: 'Advice seeker — free times over the conversation',
+	...surfaceStory('asker', [], surfaceFreeTimes),
+	play: async ({ canvasElement }) => {
+		await pressVideoButton(canvasElement);
+		const body = within(document.body);
+		await userEvent.click(
+			await body.findByTestId('asker-call-info-request')
+		);
+		const dialog = await body.findByRole('dialog', { name: /Termin/ });
+		await waitFor(() => expect(dialog).toBeVisible());
 	}
 };
 

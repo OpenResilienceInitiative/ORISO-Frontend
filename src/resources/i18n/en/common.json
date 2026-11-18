@@ -342,7 +342,10 @@
 			"pickDay": "Please choose a day in the calendar first.",
 			"subline": "Choose a day and then a time.",
 			"times": "Available times",
-			"weekdays": "S,M,T,W,T,F,S"
+			"weekdays": "S,M,T,W,T,F,S",
+			"legendInstant": "Booked at once",
+			"legendRequest": "Request – your counsellor confirms the appointment",
+			"requestTime": "Request"
 		},
 		"availability": {
 			"description": "Indicate your general availability here so that people seeking advice can book appointments with you.",
@@ -726,7 +729,7 @@
 	},
 	"enquiry": {
 		"teamDiscussion": {
-			"open": "Open team discussion"
+			"open": "Open team chat"
 		},
 		"acceptButton": {
 			"anonymous": "Start chat",
@@ -2238,7 +2241,15 @@
 			"pendingLead": "{{number}} · {{author}}",
 			"pendingStatus": "Reply {{number}} to {{author}}, collected for the next message",
 			"remove": "Remove reply {{number}}",
-			"voiceDuration": "Voice message {{duration}}"
+			"voiceDuration": "Voice message {{duration}}",
+			"sendFailed": {
+				"title": "Answers not sent",
+				"text": "Your answers to the marked passages are still collected. Please send them again."
+			},
+			"blurFailed": {
+				"title": "Blur not saved",
+				"text": "The passage could not be blurred, or the blur could not be removed. Please try again."
+			}
 		},
 		"thread": {
 			"unknownRoot": "Earlier message",
@@ -2322,10 +2333,10 @@
 				"open": "Open chat"
 			},
 			"mention": {
-				"title": "Mention in the team discussion",
+				"title": "Mention in the team chat",
 				"from": "From {{name}}",
 				"several": "{{count}} new mentions",
-				"open": "Open team discussion"
+				"open": "Open team chat"
 			},
 			"handover": {
 				"title": "New case handover",
@@ -2591,8 +2602,8 @@
 				"text": "A client has joined the waiting room."
 			},
 			"callInvited": {
-				"title": "Invitation to internal group call",
-				"text": "You have been invited to an internal group call."
+				"title": "Call invitation",
+				"text": "You have been invited to a call."
 			},
 			"callKnockRequested": {
 				"title": "Someone is knocking",
@@ -2623,8 +2634,8 @@
 				"text": "A briefing of your upcoming appointments is ready."
 			},
 			"teamDiscussionNew": {
-				"title": "Team discussion",
-				"text": "{{senderDisplayName}} posted in the team discussion"
+				"title": "Team chat",
+				"text": "{{senderDisplayName}} posted in the team chat"
 			},
 			"firstResponseReceived": {
 				"title": "Your first steps",
@@ -2708,7 +2719,7 @@
 				"archivedOpenToReply": "This conversation is archived. Open the conversation to reply.",
 				"notJoined": "Read only until your join is confirmed and the room has loaded.",
 				"supervisorNoComposer": "As supervisor you can react here, but not write.",
-				"teamClosed": "The team discussion is closed.",
+				"teamClosed": "The team chat is closed.",
 				"curtained": "This case is not visible to you right now.",
 				"hiddenNotYours": "This conversation is not one of your cases, so Activity does not show it here.",
 				"hiddenNotJoined": "You have not joined this conversation, so Activity does not show it here.",
@@ -2969,7 +2980,13 @@
 					"label": "Deactivate your absence to leave a message or edit it."
 				},
 				"label": "Deposit an out of office message",
-				"title": "My absence"
+				"title": "My absence",
+				"from": "Absent from (optional)",
+				"until": "Absent until (optional)",
+				"dateHint": "Without a date the absence lasts until further notice, until you switch it off. After the end date you are present again automatically.",
+				"planned": "Planned from {{start}}",
+				"activeUntil": "Absent up to and including {{end}}",
+				"invalidRange": "The end date is before the start date."
 			},
 			"liveChat": {
 				"title": "My Live-Chat availability",
@@ -3156,7 +3173,7 @@
 				},
 				"kind": {
 					"new": "New request",
-					"teamDiscussion": "Team discussion",
+					"teamDiscussion": "Team chat",
 					"standard": "Standard notification",
 					"liveChat": "Live chat message",
 					"mention": "@ Mention",
@@ -3479,7 +3496,7 @@
 		"names": {
 			"agency": "Practice agency",
 			"topic": "Practice",
-			"teamRoom": "Team discussion (practice)",
+			"teamRoom": "Team chat (practice)",
 			"supervisionRoom": "Supervision (practice)"
 		}
 	},
@@ -4629,7 +4646,8 @@
 			},
 			"registered": {
 				"tab": "Initial inquiries"
-			}
+			},
+			"blurred": "Message with a blurred passage"
 		},
 		"reloadButton": {
 			"label": "Reload"
@@ -4765,7 +4783,12 @@
 				"notice": {
 					"created": "Appointment scheduled: {{date}}",
 					"moved": "Appointment moved to: {{date}}",
-					"cancelled": "Appointment cancelled: {{date}}"
+					"cancelled": "Appointment cancelled: {{date}}",
+					"requested": "Appointment requested: {{date}} – waiting for confirmation",
+					"confirmed": "Appointment confirmed: {{date}}",
+					"declined": "Appointment request declined: {{date}}",
+					"withdrawn": "Appointment request withdrawn: {{date}}",
+					"expired": "Appointment request expired: {{date}} – it was not answered before it began"
 				},
 				"noticeFailed": {
 					"title": "Notice not sent",
@@ -4774,12 +4797,20 @@
 				"cancelFailed": {
 					"title": "Appointment not cancelled",
 					"text": "The appointment could not be cancelled. Please try again."
+				},
+				"request": {
+					"marker": "Requested",
+					"failedTitle": "Request not answered",
+					"taken": "This time is no longer free. Decline the request or suggest another time in the chat.",
+					"failed": "That did not work. Please try again."
 				}
 			}
 		},
 		"deletedAsker": {
 			"title": "Deleted advice seeker",
-			"hint": "This chat was deleted. Personal data and messages are no longer available."
+			"hint": "This chat was deleted. Personal data and messages are no longer available.",
+			"preview": "Chat was deleted",
+			"previewArchived": "Deleted · in archive"
 		}
 	},
 	"statusOverlay": {
@@ -5291,6 +5322,12 @@
 		"timeline": {
 			"join": "Join call",
 			"joinFailed": "Unable to join right now. End any other active call and try again.",
+			"counsellorCallPending": "The call has not started yet",
+			"counsellorCallPendingText": "Only your counsellor can start the call. You can join as soon as they call you. Please wait for the call.",
+			"leaveRunningCallTitle": "End the current call and join?",
+			"leaveRunningCallText": "Your counsellor is calling you. You are still in another call; it ends when you join.",
+			"leaveRunningCallStay": "Stay in the call",
+			"leaveRunningCallJoin": "End and join",
 			"endedElsewhere": "This call has already ended.",
 			"video": {
 				"running": "Video call in progress",
@@ -5310,6 +5347,43 @@
 			"rejectCall": "Reject call",
 			"startCall": "Start audio call",
 			"startVideoCall": "Start video call"
+		},
+		"askerInfo": {
+			"title": "Your counsellor starts calls",
+			"description": "You cannot start a call here. Your counsellor will call you in this conversation at the agreed appointment.",
+			"next": "Your next appointment",
+			"medium": {
+				"video": "Video call",
+				"phone": "Phone call",
+				"onsite": "On site",
+				"chat": "Chat"
+			},
+			"none": "No appointment has been set up for this conversation yet.",
+			"requestHint": "Write to your counsellor in the chat when it suits you.",
+			"requestHintBooking": "Choose a free time of your counsellor and book the appointment directly.",
+			"request": "Request an appointment",
+			"loading": "Loading the appointment …",
+			"error": "The appointment could not be loaded right now. Please try again later.",
+			"booking": {
+				"title": "Book an appointment",
+				"description": {
+					"video": "Choose a free time of your counsellor for a video call. Times marked \"Booked at once\" are fixed straight away; your counsellor confirms requests.",
+					"phone": "Choose a free time of your counsellor for a phone call. Times marked \"Booked at once\" are fixed straight away; your counsellor confirms requests."
+				},
+				"loading": "Loading free times …",
+				"error": "The free times could not be loaded right now. Please try again later.",
+				"none": "Your counsellor has no free time in the next two weeks.",
+				"writeInChat": "Write in the chat",
+				"back": "Back",
+				"confirm": "Book appointment",
+				"taken": "This time has just been taken. Please choose another one.",
+				"failed": "The appointment could not be booked. Please try again.",
+				"booked": "Your appointment is booked. Your counsellor is notified in the chat.",
+				"limit": "An appointment is already booked for this conversation.",
+				"confirmRequest": "Request appointment",
+				"requested": "Your request has been sent. It is waiting for your counsellor to confirm it."
+			},
+			"nextRequested": "Your requested appointment"
 		},
 		"incomingCall": {
 			"description": "calls...",
@@ -5651,6 +5725,11 @@
 			"status": {
 				"on": "Supervision on",
 				"off": "Supervision off"
+			},
+			"plusMenu": {
+				"menuLabel": "Add or hand over",
+				"supervisionHint": "A colleague watches along. The case stays with you.",
+				"handoverHint": "The case moves to a colleague. You hand it over completely."
 			}
 		}
 	},
@@ -5800,7 +5879,7 @@
 		}
 	},
 	"teamDiscussion": {
-		"title": "Team discussion",
+		"title": "Team chat",
 		"startHint": "Start discussion",
 		"postCount": "{{count}} posts",
 		"postCount_one": "1 post",
@@ -5811,7 +5890,7 @@
 		"placeholder": "Message to the team …",
 		"send": "Send",
 		"error": {
-			"open": "The team discussion could not be opened.",
+			"open": "The team chat could not be opened.",
 			"send": "The message could not be sent."
 		}
 	},
@@ -6139,12 +6218,12 @@
 					"intro": "A practice request is waiting in the list. Click it to open it."
 				},
 				"openTeam": {
-					"title": "Open the team discussion",
-					"intro": "The team discussion is switched on for you: use it to check with your team before you accept. Click “Open team discussion”."
+					"title": "Open the team chat",
+					"intro": "The team chat is switched on for you: use it to check with your team before you accept. Click “Open team chat”."
 				},
 				"teamReply": {
 					"title": "Reply in the team",
-					"intro": "Read the message from your team and write a reply. When you accept the request, the team discussion is closed."
+					"intro": "Read the message from your team and write a reply. When you accept the request, the team chat is closed."
 				},
 				"accept": {
 					"title": "Accept the request",
@@ -6464,11 +6543,6 @@
 				"on": "Guests wait until you let them in. Switching it off lets everyone waiting in at once.",
 				"off": "Guests enter the call directly, without waiting."
 			},
-			"temporaryAccount": {
-				"label": "Temporary account",
-				"on": "Guests get a guest account that is deleted after the call.",
-				"off": "Guests sign in with their own account or create one."
-			},
 			"linkLabel": "Link to the call",
 			"copy": "Copy",
 			"copied": "Copied",
@@ -6757,7 +6831,6 @@
 			"text": "Whoever opens the link reaches you directly – in a chat, an audio call or a video call.",
 			"topicLabel": "Choose topic",
 			"mediumLabel": "Kind of contact",
-			"temporary": "Temporary account",
 			"temporaryHint": "The account is deleted after the conversation.",
 			"create": "Create link",
 			"createFailed": "The link could not be created. Please try again.",
@@ -6815,7 +6888,6 @@
 			"nameRequired": "Please enter a name.",
 			"topic": "Topic",
 			"mediumFixed": "The type of contact cannot be changed",
-			"temporaryHint": "Applies only to people who open the link from now on.",
 			"failed": "The change could not be saved. Please try again.",
 			"scheduledAt": "Date and time",
 			"clearScheduledAt": "Remove"
@@ -7035,7 +7107,8 @@
 			"group": "Group date",
 			"blocker": "Blocked",
 			"busy": "Busy",
-			"colleague": "Busy"
+			"colleague": "Busy",
+			"absence": "Absent"
 		},
 		"noEvents": "No appointments in this period",
 		"loading": "Loading appointments",
@@ -7059,13 +7132,22 @@
 				"incomplete": "Please choose a date and time.",
 				"past": "The entry must be in the future.",
 				"order": "The end must be after the start.",
-				"conversation": "Please choose the conversation this appointment belongs to."
+				"conversation": "Please choose the conversation this appointment belongs to.",
+				"colleague": "Please choose a colleague."
 			},
 			"entryKind": "Kind of entry",
 			"tabs": {
 				"appointment": "Appointment",
-				"blocker": "Blocked time"
-			}
+				"blocker": "Blocked time",
+				"absence": "Absence"
+			},
+			"withWhom": "Appointment with",
+			"withConversation": "Advice seeker",
+			"withColleague": "Colleague",
+			"colleague": "Colleague",
+			"colleagueHint": "The appointment goes into the internal chat of the two of you. If there is none yet, it is created.",
+			"colleagueDescription": "Choose the day, time, kind and the colleague.",
+			"onsiteOnly": "No internal chat is allowed with this colleague. Only an on-site appointment is possible."
 		},
 		"details": {
 			"start": {
@@ -7521,6 +7603,116 @@
 		"links": {
 			"title": "Links without an appointment",
 			"hint": "Invitation links you can share: copy them or show a QR code."
+		},
+		"consultationHours": {
+			"title": "Consultation hours",
+			"description": "In these hours advice seekers can book an appointment with you themselves. They are separate from your working hours.",
+			"save": "Save consultation hours",
+			"saved": "Consultation hours saved",
+			"empty": "Without consultation hours, advice seekers cannot book an appointment.",
+			"none": "No consultation hours set",
+			"autoAccept": "Confirm bookings automatically",
+			"autoAcceptOn": "After the notice period an appointment is booked at once; short-notice bookings are requests.",
+			"autoAcceptOff": "Every booking is a request that you confirm.",
+			"noticeDays": "Notice",
+			"noticeDaysHint": "Within these days before the appointment a booking becomes a request.",
+			"noticeDaysOption": "{{count}} days",
+			"noticeDaysOption_one": "{{count}} day",
+			"slotMinutes": "Length of an appointment",
+			"minutes": "{{count}} min",
+			"invalid": "The end must be after the start.",
+			"loadFailed": "Could not be loaded. Try again",
+			"overlaps": "The times overlap another consultation window on this day."
+		},
+		"appointmentRequest": {
+			"status": "Requested · waiting for you",
+			"from": "Request from {{name}}",
+			"menu": "Appointment requested",
+			"hint": "Until you answer, the time is held. Without an answer by its start, the request expires.",
+			"confirm": "Confirm",
+			"confirmHint": "The appointment is booked",
+			"decline": "Decline",
+			"declineHint": "The time becomes free again",
+			"confirmed": "Appointment confirmed: {{date}}.",
+			"declined": "Appointment request declined: {{date}}."
+		},
+		"absence": {
+			"description": "Choose the days you are away. During that time advice seekers see your absence message.",
+			"from": "From",
+			"until": "Until",
+			"message": "Absence message",
+			"messageHint": "Advice seekers see this message but can still write to you.",
+			"effect": "After the last day you are present again automatically. The same absence shows in your profile.",
+			"save": "Add absence",
+			"conflicts": "{{count}} appointments fall in this period. They stay in place – cancel or move them yourself if needed.",
+			"conflicts_one": "{{count}} appointment falls in this period. It stays in place – cancel or move it yourself if needed.",
+			"saved": "Absence added. It also shows in your profile."
+		},
+		"meeting": {
+			"accept": "Accept",
+			"decline": "Decline",
+			"accepted": "Appointment accepted.",
+			"declined": "Appointment declined.",
+			"cancelled": "Appointment cancelled.",
+			"cancelAsk": "{{name}}, {{time}}. The appointment leaves both calendars.",
+			"cancelSub": "Also leaves {{name}}'s calendar",
+			"chatSub": "Internal chat with {{name}}",
+			"pendingInvited": "{{name}} invites you. Please accept or decline.",
+			"pendingSent": "Requested. Waiting for {{name}}.",
+			"confirmed": "Confirmed with {{name}}."
+		},
+		"autoAccept": {
+			"menu": "Accept appointments automatically …",
+			"menuHint": "From which colleagues",
+			"title": "Accept appointments automatically",
+			"description": "Appointments from these colleagues are fixed in your calendar at once.",
+			"colleagues": "Colleagues",
+			"search": "Search names",
+			"hint": "Appointments from everyone else wait until you accept them.",
+			"save": "Save",
+			"saved": "List saved."
+		}
+	},
+	"guestAccountMode": {
+		"label": "Guest account",
+		"menuLabel": "Choose guest account",
+		"option": {
+			"TEMPORARY": "Delete after the session",
+			"GUEST_CHOOSES": "Guest chooses",
+			"PERMANENT": "Permanent"
+		},
+		"hint": {
+			"TEMPORARY": "New guests get an account that is deleted after the conversation.",
+			"GUEST_CHOOSES": "New guests choose when they join: without an account or with their own account.",
+			"PERMANENT": "New guests create their own account."
+		},
+		"newGuestsOnly": "Applies only to people who open the link from now on.",
+		"entry": {
+			"withoutAccount": "Join without an account",
+			"withAccount": "Create an account",
+			"temporaryNote": "Your access is deleted after the conversation. You can still keep it later.",
+			"accountNote": "With your own account you can come back later."
+		},
+		"keep": {
+			"action": "Keep account",
+			"actionDescription": "Otherwise your account is deleted after the conversation.",
+			"title": "Keep account",
+			"text": "Otherwise your account is deleted after the conversation. Set a password and it stays, and you can sign in again later.",
+			"loginName": "Your username: {{name}}",
+			"password": "Password",
+			"repeat": "Repeat password",
+			"mismatch": "The passwords do not match.",
+			"submit": "Keep account",
+			"cancel": "Cancel",
+			"success": "Your account stays.",
+			"recoveryPending": "Your account stays. To read your messages on another device, you need your recovery key.",
+			"error": {
+				"badRequest": "The password does not meet the requirements.",
+				"forbidden": "This invitation does not let you keep the account.",
+				"notFound": "Your account was not found. Please sign in again.",
+				"conflict": "Your account is being deleted or is already permanent.",
+				"generic": "That did not work. Please try again."
+			}
 		}
 	},
 	"managePeople": {
@@ -7601,5 +7793,15 @@
 			"inviteDescription": "Advice seekers join through this link or QR code.",
 			"added": "{{name}} now co-moderates this group."
 		}
+	},
+	"deletedAskerSession": {
+		"notice": {
+			"title": "This chat was deleted",
+			"deletedOn": "Deleted on {{date}}",
+			"text": "The advice seeker's personal data and messages are no longer available."
+		},
+		"archiveHint": "Move the entry to the archive so it leaves your list and your activity.",
+		"archived": "This entry is in the archive.",
+		"archiveFailed": "Archiving did not work. Please try again."
 	}
 }

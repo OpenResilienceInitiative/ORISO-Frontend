@@ -171,14 +171,15 @@ const waitOn = (
  * - `storedJoin`: the card's own join is still in memory.
  * - `joinRunningCall`: after a reload, the call recorded with the knock,
  *   when its group mode is on record too (never guessed: see `isGroup`).
- * - `startCall`: a knock from the direct link itself starts the call.
+ * - `joinCounsellorsCall`: a knock from the direct link itself joins the
+ *   call the counsellor starts (only counsellors start calls).
  * - `none`: from the card, with nothing on record; the card's next tap joins.
  */
 export const admissionAction = (
 	knock: PendingKnock,
 	storedJoin: (() => void) | undefined
-): 'storedJoin' | 'joinRunningCall' | 'startCall' | 'none' => {
-	if (!knock.joinExisting) return 'startCall';
+): 'storedJoin' | 'joinRunningCall' | 'joinCounsellorsCall' | 'none' => {
+	if (!knock.joinExisting) return 'joinCounsellorsCall';
 	if (storedJoin) return 'storedJoin';
 	return knock.joinCall?.isGroup === undefined ? 'none' : 'joinRunningCall';
 };
