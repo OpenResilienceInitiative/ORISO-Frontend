@@ -16,7 +16,9 @@ import {
 import { toSeriesApiTimestamp } from '../futureTimelineTime';
 import {
 	appointmentToBooking,
-	onAppointmentsChanged
+	appointmentsEpoch,
+	onAppointmentsChanged,
+	rememberUpcomingAppointments
 } from './conversationAppointments';
 import {
 	buildFutureEntries,
@@ -77,16 +79,24 @@ export const useFutureEntries = ({
 				).catch(() => [] as ChatOccurrence[])
 			)
 		).then((results) => active && setOccurrences(results.flat()));
+		const epoch = appointmentsEpoch();
 		apiGetUpcomingAppointments()
-			.catch(() => [] as SessionAppointment[])
 			.then(
-				(items) =>
-					active &&
-					Array.isArray(items) &&
-					setAppointments(
-						items.filter((a) => new Date(a.startTime) < to)
-					)
-			);
+				(items) => {
+					// Only a successful, still current answer is shared with
+					// the room header; a superseded one must not replace it.
+					if (active && Array.isArray(items))
+						rememberUpcomingAppointments(items, epoch);
+					return items;
+				},
+				() => [] as SessionAppointment[]
+			)
+			.then((items) => {
+				if (!active || !Array.isArray(items)) return;
+				setAppointments(
+					items.filter((a) => new Date(a.startTime) < to)
+				);
+			});
 		return () => {
 			active = false;
 		};

@@ -5712,6 +5712,11 @@
 			"status": {
 				"on": "Süpervizyon açık",
 				"off": "Süpervizyon kapalı"
+			},
+			"plusMenu": {
+				"menuLabel": "Ekle veya devret",
+				"supervisionHint": "Bir meslektaşınız görüşmeyi izler. Vaka sizde kalır.",
+				"handoverHint": "Vaka tamamen bir meslektaşınıza geçer. Vakayı siz devredersiniz."
 			}
 		}
 	},

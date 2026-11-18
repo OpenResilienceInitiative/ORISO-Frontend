@@ -13,7 +13,13 @@ import {
 	UserDataContext
 } from '../../../globalState';
 import { ConversationAppointmentSlot } from './ConversationAppointmentSlot';
-import { notifyAppointmentsChanged } from './conversationAppointments';
+import {
+	appointmentsEpoch,
+	forgetKnownAppointments,
+	notifyAppointmentsChanged,
+	rememberSessionAppointments,
+	rememberUpcomingAppointments
+} from './conversationAppointments';
 import { useAppointmentCreate } from './appointmentCreateBridge';
 
 const { getAppointments } = vi.hoisted(() => ({ getAppointments: vi.fn() }));
@@ -92,6 +98,7 @@ const renderSlot = (
 afterEach(() => {
 	cleanup();
 	getAppointments.mockReset();
+	forgetKnownAppointments();
 });
 
 describe('ConversationAppointmentSlot', () => {
@@ -175,6 +182,92 @@ describe('ConversationAppointmentSlot', () => {
 		renderSlot(onCreateChange, false);
 		await act(async () => undefined);
 		expect(onCreateChange).not.toHaveBeenCalledWith(expect.any(Function));
+	});
+
+	describe('no layout jump on a conversation switch', () => {
+		const row = (container: HTMLElement) =>
+			container.querySelector('[data-cy="room-next-appointment"]');
+
+		it('draws a known appointment in the first frame, before its own load', () => {
+			getAppointments.mockReturnValue(new Promise(() => undefined));
+			rememberUpcomingAppointments(
+				[upcoming() as never],
+				appointmentsEpoch()
+			);
+			const { container } = renderSlot(vi.fn());
+			expect(row(container)).not.toBeNull();
+		});
+
+		it('draws no row in the first frame for a conversation the list knows has none', () => {
+			getAppointments.mockReturnValue(new Promise(() => undefined));
+			rememberUpcomingAppointments(
+				[{ ...upcoming(), sessionId: 9999 } as never],
+				appointmentsEpoch()
+			);
+			const { container } = renderSlot(vi.fn());
+			expect(row(container)).toBeNull();
+		});
+
+		it("lets the conversation's own load replace the guess", async () => {
+			rememberUpcomingAppointments(
+				[upcoming() as never],
+				appointmentsEpoch()
+			);
+			getAppointments.mockResolvedValue([]);
+			const { container } = renderSlot(vi.fn());
+			expect(row(container)).not.toBeNull();
+			await waitFor(() => expect(row(container)).toBeNull());
+		});
+
+		it('prefers the newer of the two sources', async () => {
+			rememberUpcomingAppointments(
+				[upcoming() as never],
+				appointmentsEpoch()
+			);
+			rememberSessionAppointments(4401, [], appointmentsEpoch());
+			getAppointments.mockReturnValue(new Promise(() => undefined));
+			const { container } = renderSlot(vi.fn());
+			expect(row(container)).toBeNull();
+		});
+
+		it("does not reuse an earlier visit's load when coming back (review)", async () => {
+			const Slot = ({ id }: { id: number }) => (
+				<UserDataContext.Provider
+					value={
+						{
+							userData: {
+								userId: 'c1',
+								grantedAuthorities: [
+									AUTHORITIES.CONSULTANT_DEFAULT
+								]
+							}
+						} as never
+					}
+				>
+					<ActiveSessionContext.Provider
+						value={
+							{
+								activeSession: {
+									item: { id, matrixRoomId: `!r${id}:x` },
+									rid: `!r${id}:x`
+								}
+							} as never
+						}
+					>
+						<ConversationAppointmentSlot canChange />
+					</ActiveSessionContext.Provider>
+				</UserDataContext.Provider>
+			);
+			getAppointments.mockResolvedValueOnce([upcoming()]);
+			const { container, rerender } = render(<Slot id={4401} />);
+			await waitFor(() => expect(row(container)).not.toBeNull());
+
+			getAppointments.mockReturnValue(new Promise(() => undefined));
+			rerender(<Slot id={5502} />);
+			rememberUpcomingAppointments([], appointmentsEpoch());
+			rerender(<Slot id={4401} />);
+			expect(row(container)).toBeNull();
+		});
 	});
 
 	it('lends the chat cards its create dialog, saying whether one is booked', async () => {

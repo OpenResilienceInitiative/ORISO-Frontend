@@ -86,3 +86,65 @@ export const onAppointmentsChanged = (listener: () => void) => {
 	window.addEventListener(CHANGED_EVENT, listener);
 	return () => window.removeEventListener(CHANGED_EVENT, listener);
 };
+
+/*
+ * What is already known about a conversation's appointments, so its header
+ * draws the appointment row in the same frame as itself. Without it the row
+ * appeared 100–250 ms later on every conversation switch and pushed the
+ * messages down (the "jumping" appointment button). The header still loads
+ * the conversation's own list and replaces this guess.
+ * Two sources, the newer one wins: the header's own load per conversation,
+ * and the list's "my upcoming appointments" (a conversation missing there
+ * has none of the viewer's upcoming ones).
+ */
+type KnownAppointments = { at: number; items: SessionAppointment[] };
+const knownBySession = new Map<number, KnownAppointments>();
+let knownUpcoming: KnownAppointments | undefined;
+/* One clock for request starts. A read takes its ticket when it starts and
+   its answer is stored under that ticket, so a read that started earlier can
+   never replace one that started later, whichever answers last. */
+let knownClock = 0;
+/* Every ticket up to here belongs to a session that was logged out: an answer
+   that lands after the logout cannot refill the store for the next user,
+   whatever the timing of React's effect cleanup. */
+let forgottenUpTo = 0;
+
+/** Take when a read starts; hand back with its answer. */
+export const appointmentsEpoch = () => ++knownClock;
+
+const accepts = (startedAt: number, current?: KnownAppointments) =>
+	startedAt > forgottenUpTo && (!current || startedAt > current.at);
+
+export const rememberSessionAppointments = (
+	sessionId: number,
+	items: SessionAppointment[],
+	startedAt: number
+) => {
+	if (!accepts(startedAt, knownBySession.get(sessionId))) return;
+	knownBySession.set(sessionId, { at: startedAt, items });
+};
+
+/** Only a successful read: a failed one says nothing about appointments. */
+export const rememberUpcomingAppointments = (
+	items: SessionAppointment[],
+	startedAt: number
+) => {
+	if (!accepts(startedAt, knownUpcoming)) return;
+	knownUpcoming = { at: startedAt, items };
+};
+
+export const knownSessionAppointments = (
+	sessionId: number | undefined
+): SessionAppointment[] | undefined => {
+	if (sessionId === undefined) return undefined;
+	const own = knownBySession.get(sessionId);
+	if (own && (!knownUpcoming || own.at > knownUpcoming.at)) return own.items;
+	return knownUpcoming?.items.filter((a) => a.sessionId === sessionId);
+};
+
+/** Logout (and tests): start from nothing known; in-flight answers are void. */
+export const forgetKnownAppointments = () => {
+	forgottenUpTo = knownClock;
+	knownBySession.clear();
+	knownUpcoming = undefined;
+};

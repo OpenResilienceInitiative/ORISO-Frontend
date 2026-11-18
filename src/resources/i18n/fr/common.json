@@ -5712,6 +5712,11 @@
 			"status": {
 				"on": "Supervision activée",
 				"off": "Supervision désactivée"
+			},
+			"plusMenu": {
+				"menuLabel": "Ajouter ou transmettre",
+				"supervisionHint": "Une ou un collègue suit l’échange. Le dossier reste chez vous.",
+				"handoverHint": "Le dossier passe entièrement à une ou un collègue. Vous le transmettez."
 			}
 		}
 	},
