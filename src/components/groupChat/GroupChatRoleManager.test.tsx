@@ -77,9 +77,32 @@ describe('GroupChatRoleManager', () => {
 				'CO_MODERATOR'
 			)
 		);
+		// Focus comes back to the row's picker once the change settles.
+		await waitFor(() =>
+			expect(document.activeElement).toBe(roleSelect('Bob'))
+		);
+	});
+
+	it('offers only co-moderator and participant, never owner', () => {
+		render(
+			<GroupChatRoleManager
+				seriesId={42}
+				currentUserId="owner"
+				participants={participants}
+			/>
+		);
 		fireEvent.mouseDown(roleSelect('Charlie'));
+		const listbox = within(screen.getByRole('listbox'));
 		expect(
-			screen.queryAllByRole('option', { name: 'groupChat.roles.OWNER' })
+			listbox.getByRole('option', { name: 'groupChat.roles.PARTICIPANT' })
+		).toBeTruthy();
+		expect(
+			listbox.getByRole('option', {
+				name: 'groupChat.roles.CO_MODERATOR'
+			})
+		).toBeTruthy();
+		expect(
+			listbox.queryAllByRole('option', { name: 'groupChat.roles.OWNER' })
 		).toHaveLength(0);
 	});
 
@@ -124,6 +147,9 @@ describe('GroupChatRoleManager', () => {
 		chooseRole('Bob', 'CO_MODERATOR');
 
 		await screen.findByRole('alert');
+		await waitFor(() =>
+			expect(document.activeElement).toBe(roleSelect('Bob'))
+		);
 		expect(roleSelect('Bob').textContent).toBe(
 			'groupChat.roles.PARTICIPANT'
 		);

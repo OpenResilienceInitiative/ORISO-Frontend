@@ -279,6 +279,26 @@ describe('DisplayFilterDialog chip presentation + Träger switch (Frank 2026-09-
 		).toBe(false);
 	});
 
+	it('moves the chip view with the arrow keys, like a radio group', () => {
+		const onValue = vi.fn();
+		render(<Harness onValue={onValue} />);
+		const iconsView = screen.getByRole('button', { name: 'Icons' });
+		iconsView.focus();
+		fireEvent.keyDown(iconsView, { key: 'ArrowRight' });
+		const next = (onValue.mock.calls.at(-1)?.[0] as DisplayFilterValue)
+			.view;
+		expect(next).not.toBe('icons');
+		expect(document.activeElement?.getAttribute('aria-pressed')).toBe(
+			'true'
+		);
+		fireEvent.keyDown(document.activeElement as HTMLElement, {
+			key: 'ArrowLeft'
+		});
+		expect(
+			(onValue.mock.calls.at(-1)?.[0] as DisplayFilterValue).view
+		).toBe('icons');
+	});
+
 	it('locks a deactivated kind (format off, rows exist) and explains why', () => {
 		render(
 			<DisplayFilterDialog

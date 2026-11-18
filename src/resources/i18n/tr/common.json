@@ -3143,6 +3143,7 @@
 				"intro": "Bildirim seslerinizi her alan için ayrı ayrı seçin.",
 				"emailNote": "E-postalar yalnızca olaydan sonraki beş dakika içinde yanıt vermezseniz gönderilir.",
 				"noSound": "Ses seçilmedi",
+				"inheritSound": "Mesajlarla aynı",
 				"tone": "Ses #{{number}}",
 				"sendByEmail": "E-posta ile gönder",
 				"confirm": "Onayla",

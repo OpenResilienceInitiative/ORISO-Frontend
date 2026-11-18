@@ -355,7 +355,9 @@ describe('NotificationConfigView', () => {
 		render(<NotificationConfigView {...baseProps} onChange={onChange} />);
 		openTone('requests-new');
 		fireEvent.click(
-			within(screen.getByRole('listbox')).getAllByRole('option')[4]
+			within(screen.getByRole('listbox')).getByRole('option', {
+				name: 'profile.notifications.config.tone:3'
+			})
 		);
 		expect(onChange).toHaveBeenCalledWith(
 			'requests',
@@ -403,6 +405,28 @@ describe('NotificationConfigView', () => {
 		expect(options[0].getAttribute('data-value')).toBe('none');
 		expect(options[1].getAttribute('data-value')).toBe('ring');
 		expect(options[2].getAttribute('data-value')).toBe('ton-1');
+	});
+
+	it("shows a stored 'default' tone as inheriting, not as a blank field", () => {
+		const config = {
+			...DEFAULT_NOTIFICATION_CONFIG,
+			requests: {
+				...DEFAULT_NOTIFICATION_CONFIG.requests,
+				new: {
+					...DEFAULT_NOTIFICATION_CONFIG.requests.new,
+					sound: 'default'
+				}
+			}
+		};
+		render(
+			<NotificationConfigView {...baseProps} config={config as never} />
+		);
+		const tone = within(
+			screen.getByTestId('notif-row-requests-new')
+		).getAllByRole('combobox')[0];
+		expect(tone.textContent).toBe(
+			'profile.notifications.config.inheritSound'
+		);
 	});
 
 	it('shows the muted icon and no play button when no sound is chosen', () => {

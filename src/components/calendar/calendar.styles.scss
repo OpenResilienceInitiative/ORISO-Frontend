@@ -3388,7 +3388,7 @@ $cal-new-pill-hover: #4b4f51;
 // ran off the dialog. The day keeps its switch and name on top; the times
 // move to their own line under the name, the pause row lines up with them.
 @container calendar-hours (max-width: 480px) {
-	.calendarHours__row {
+	.calendarHours__row:not(.calendarHours__row--holidays) {
 		grid-template-columns: 52px minmax(0, 1fr) auto minmax(0, 1fr);
 		grid-template-areas:
 			'switch day day day'
@@ -3447,7 +3447,8 @@ $cal-new-pill-hover: #4b4f51;
 		}
 	}
 
-	.calendarHours__region {
+	// Two classes: the base rule further down would win a tie.
+	.calendarHours .calendarHours__region {
 		padding-left: 0;
 	}
 }

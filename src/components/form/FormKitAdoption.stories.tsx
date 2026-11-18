@@ -1,6 +1,6 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { fn } from 'storybook/test';
+import { expect, fn, userEvent, within } from 'storybook/test';
 import { WorkingHoursDialog } from '../calendar/WorkingHoursDialog';
 import { MoveForm } from '../calendar/calendarMenus';
 import {
@@ -11,7 +11,10 @@ import {
 } from '../calendar/calendarStoryData';
 import '../calendar/calendar.styles.scss';
 import { GroupChatRoleManager } from '../groupChat/GroupChatRoleManager';
-import BreathingCompanion from '../pseudonym/breathingCompanion/BreathingCompanion';
+import BreathingCompanion, {
+	BREATHING_COPY
+} from '../pseudonym/breathingCompanion/BreathingCompanion';
+import { BreathingKitToggle } from '../pseudonym/breathingCompanion/BreathingCompanionHost';
 
 /**
  * Screens whose form controls moved from raw HTML (`<select>`, `<textarea>`,
@@ -93,13 +96,23 @@ export const BreathingOptions: Story = {
 	parameters: { layout: 'fullscreen' },
 	render: () => (
 		<div style={{ height: '100vh' }}>
-			<BreathingCompanion onClose={fn()} reducedMotion />
+			<BreathingCompanion
+				onClose={fn()}
+				reducedMotion
+				toggle={BreathingKitToggle}
+			/>
 		</div>
 	),
 	play: async ({ canvasElement }) => {
-		const toggle = canvasElement.querySelector<HTMLButtonElement>(
-			'button[aria-controls][aria-expanded="false"]'
+		const canvas = within(canvasElement);
+		await userEvent.click(
+			canvas.getByRole('button', { name: BREATHING_COPY.soundOptions })
 		);
-		toggle?.click();
+		// The kit input itself is transparent; its label is what people see.
+		await expect(
+			canvas
+				.getByRole('checkbox', { name: BREATHING_COPY.wind })
+				.closest('label')
+		).toBeVisible();
 	}
 };

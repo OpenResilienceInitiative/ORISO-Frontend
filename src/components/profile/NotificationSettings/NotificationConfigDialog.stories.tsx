@@ -73,7 +73,7 @@ export const UnsavedEmailNavigation: DialogStory = {
 		await userEvent.click(banner);
 		await userEvent.click(
 			await within(doc.body).findByRole('option', {
-				name: /Bleibt bis zum Wegklicken|persistent/
+				name: /Bleibt bis zum Wegklicken|Stays until dismissed|persistent/
 			})
 		);
 		await userEvent.click(
@@ -110,14 +110,22 @@ export const DialogMobile: DialogStory = {
 		const bodyOverflows = body.scrollHeight > body.clientHeight;
 		await expect(getComputedStyle(surface).overflowY).toBe('hidden');
 		await expect(getComputedStyle(body).overflowY).toBe('auto');
-		// The tone picker is the kit select: focus shows the M3 outlined state.
+		// The tone picker is the kit select: focus draws the M3 outlined state,
+		// a visibly thicker outline than at rest.
 		const soundSelect = within(body).getAllByRole('combobox')[0];
+		const outline = soundSelect
+			.closest('.MuiOutlinedInput-root')!
+			.querySelector<HTMLElement>('.MuiOutlinedInput-notchedOutline')!;
+		const restWidth = parseFloat(getComputedStyle(outline).borderTopWidth);
 		soundSelect.focus();
 		await waitFor(() =>
 			expect(soundSelect.closest('.MuiOutlinedInput-root')).toHaveClass(
 				'Mui-focused'
 			)
 		);
+		await expect(
+			parseFloat(getComputedStyle(outline).borderTopWidth)
+		).toBeGreaterThan(restWidth);
 		if (bodyOverflows) {
 			body.scrollTop = body.scrollHeight;
 			await expect(body.scrollTop).toBeGreaterThan(0);

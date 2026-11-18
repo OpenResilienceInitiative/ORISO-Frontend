@@ -3195,6 +3195,7 @@
 				"intro": "Wählen Sie Ihre Benachrichtigungstöne für jeden Bereich getrennt.",
 				"emailNote": "E-Mails werden nur gesendet, wenn Sie nicht innerhalb von fünf Minuten nach dem Ereignis reagieren.",
 				"noSound": "Kein Ton gewählt",
+				"inheritSound": "Wie Nachrichten",
 				"tone": "Ton #{{number}}",
 				"sendByEmail": "Per E-Mail senden",
 				"confirm": "Bestätigen",

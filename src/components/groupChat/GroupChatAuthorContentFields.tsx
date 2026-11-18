@@ -271,7 +271,9 @@ export const GroupChatAuthorContentFields = ({
 				aria-labelledby={tabId}
 			>
 				<OrisoTextarea
-					minRows={2}
+					// Fixed box: 120px on a phone, the column on
+					// desktop; longer text scrolls inside.
+					rows={2}
 					className="createChat__welcomeInput"
 					fullWidth
 					inputProps={{

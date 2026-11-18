@@ -86,10 +86,27 @@ export const GroupChatRoleManager = ({
 		(item) => item.consultantId === currentUserId && item.role === 'OWNER'
 	);
 
+	// The picker is disabled while its change runs, so focus would fall out
+	// of the row; it returns to the same picker once the request settles.
+	const listRef = React.useRef<HTMLUListElement>(null);
+	const [refocusId, setRefocusId] = React.useState<string | null>(null);
+	React.useEffect(() => {
+		if (pendingId !== null || refocusId === null) return;
+		Array.from(
+			listRef.current?.querySelectorAll<HTMLElement>(
+				'[data-role-picker]'
+			) ?? []
+		)
+			.find((node) => node.dataset.rolePicker === refocusId)
+			?.focus();
+		setRefocusId(null);
+	}, [pendingId, refocusId]);
+
 	const updateRole = async (
 		consultantId: string,
 		role: GroupChatParticipantRole
 	) => {
+		setRefocusId(consultantId);
 		setPendingId(consultantId);
 		setError(null);
 		try {
@@ -157,7 +174,7 @@ export const GroupChatRoleManager = ({
 	return (
 		<div className="groupChatInfo__roles">
 			{!hideHeadline && <h4>{translate('groupChat.roles.headline')}</h4>}
-			<List disablePadding>
+			<List disablePadding ref={listRef}>
 				{items.map((participant) => {
 					const isSelf = participant.consultantId === currentUserId;
 					const canManageParticipant =
@@ -205,6 +222,12 @@ export const GroupChatRoleManager = ({
 										variant="standard"
 										disableUnderline
 										MenuProps={orisoSelectMenuProps}
+										SelectDisplayProps={
+											{
+												'data-role-picker':
+													participant.consultantId
+											} as React.HTMLAttributes<HTMLDivElement>
+										}
 										value={participant.role}
 										disabled={pendingId !== null}
 										inputProps={{

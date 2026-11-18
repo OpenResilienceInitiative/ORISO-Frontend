@@ -243,6 +243,7 @@ export const MentionList = forwardRef<MentionListRef, MentionListProps>(
 							<span className="mentionList__check">
 								<M3Checkbox
 									checked={isChecked(item)}
+									fill
 									hideLabel
 									label={
 										getCheckLabel?.(item.displayName) ??

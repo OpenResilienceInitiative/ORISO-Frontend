@@ -127,7 +127,9 @@ export const RuleChipsEditor = ({
 	return (
 		<div className="ruleChipsEditor">
 			<OrisoTextarea
-				minRows={2}
+				// Fixed box: 120px on a phone, the column on
+				// desktop; longer text scrolls inside.
+				rows={2}
 				inputRef={inputRef}
 				className="ruleChipsEditor__input"
 				fullWidth

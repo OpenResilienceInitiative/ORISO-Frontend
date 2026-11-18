@@ -701,15 +701,13 @@
 	}
 
 	/* No tinted card per kind (Frank 2026-11-17: the light boxes were
-	   removed everywhere else); a hairline between kinds, as on desktop. */
+	   removed everywhere else); the table row's hairline stays the divider. */
 	.displayFilterDialog__table .displayFilterDialog__row {
 		display: flex;
 		flex-direction: column;
 		gap: 8px;
 		margin: 0;
 		padding: 12px 0;
-		border: 0;
-		border-bottom: 1px solid var(--m3-outline-variant, #c4c7c7);
 	}
 
 	.displayFilterDialog__table
@@ -780,7 +778,6 @@
 		padding: 4px 0;
 		border-radius: 0;
 		background: transparent;
-		border-bottom: 1px solid var(--m3-outline-variant, #c4c7c7);
 	}
 
 	.displayFilterDialog__table--quick

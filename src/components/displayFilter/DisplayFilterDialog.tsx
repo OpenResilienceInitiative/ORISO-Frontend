@@ -393,6 +393,35 @@ export const DisplayFilterDialog = ({
 								onChange={(_, view: ChipView | null) => {
 									if (view) setView(view);
 								}}
+								// The radios it replaced moved with the arrow keys;
+								// MUI's group does not, so keep that here.
+								onKeyDown={(event) => {
+									if (controlsDisabled) return;
+									const step =
+										event.key === 'ArrowRight' ||
+										event.key === 'ArrowDown'
+											? 1
+											: event.key === 'ArrowLeft' ||
+												  event.key === 'ArrowUp'
+												? -1
+												: 0;
+									if (!step) return;
+									event.preventDefault();
+									const index = CHIP_VIEWS.indexOf(
+										presentation.view
+									);
+									const next =
+										CHIP_VIEWS[
+											(index + step + CHIP_VIEWS.length) %
+												CHIP_VIEWS.length
+										];
+									setView(next);
+									event.currentTarget
+										.querySelector<HTMLElement>(
+											`[data-cy="display-filter-view-${next}"]`
+										)
+										?.focus();
+								}}
 								sx={segmentedSx}
 							>
 								{CHIP_VIEWS.map((view) => (

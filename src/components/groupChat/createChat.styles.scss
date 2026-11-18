@@ -230,20 +230,9 @@ $inputSpacing: 32px;
 		gap: $grid-base-two;
 	}
 
-	/* OrisoTextarea draws the outlined field; the box keeps the 120px of
-	   the design (phone) and fills its column on desktop. */
+	/* OrisoTextarea with fixed rows: 120px on a phone, the column on desktop. */
 	&__welcomeInput {
-		display: flex;
-		flex-direction: column;
-		width: 100%;
-		min-height: 120px;
-
-		.MuiInputBase-root {
-			flex: 1 1 auto;
-			align-items: flex-start;
-			box-sizing: border-box;
-			min-height: 120px;
-		}
+		@include fixed-textarea-box;
 	}
 
 	&__languageTabs {

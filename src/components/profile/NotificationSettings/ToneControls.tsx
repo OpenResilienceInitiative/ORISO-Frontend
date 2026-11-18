@@ -91,6 +91,18 @@ export const ToneControls = ({
 				}}
 				onChange={(e) => onSoundChange(e.target.value as SoundId)}
 				options={[
+					// A stored 'default' inherits the message sound. It is not
+					// offered as a new choice, but must not show as a blank field.
+					...(sound === 'default'
+						? [
+								{
+									value: 'default',
+									label: t(
+										'profile.notifications.config.inheritSound'
+									)
+								}
+							]
+						: []),
 					{
 						value: 'none',
 						label: t('profile.notifications.config.noSound')
