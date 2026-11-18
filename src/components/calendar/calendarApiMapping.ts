@@ -78,6 +78,7 @@ export const entryFromApi = (dto: CalendarEntryDTO): CalendarEntry => {
 		// A planned absence is whole days by definition (ORISO-Frontend#2303).
 		...(type === 'absence' && { allDay: true }),
 		movable: dto.movable === true,
+		...(dto.requested === true && { requested: true }),
 		...(type === 'appointment' &&
 			dto.colleagueId && {
 				meeting: {

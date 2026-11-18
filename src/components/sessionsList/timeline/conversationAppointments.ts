@@ -30,7 +30,8 @@ export const appointmentToBooking = (
 	location: (appointment.kind && LOCATION[appointment.kind]) || 'VIDEO_CALL',
 	askerName:
 		appointment.counterpart?.displayName ||
-		appointment.counterpart?.username
+		appointment.counterpart?.username,
+	...(appointment.status === 'REQUESTED' ? { requested: true as const } : {})
 });
 
 /** Scheduled and not over, nearest first. */
@@ -49,6 +50,45 @@ export const upcomingAppointments = (
 				new Date(a.startTime).getTime() -
 				new Date(b.startTime).getTime()
 		);
+
+/**
+ * FE#2287: an advice seeker's requests waiting for the counsellor, not over,
+ * nearest first. They are no appointment yet: `upcomingAppointments` leaves
+ * them out.
+ */
+export const pendingRequests = (
+	appointments: SessionAppointment[],
+	now: Date
+): SessionAppointment[] =>
+	appointments
+		.filter(
+			(a) =>
+				a.status === 'REQUESTED' &&
+				// Unanswered by its start, a request has expired (Frank, 17 Nov).
+				new Date(a.startTime).getTime() > now.getTime()
+		)
+		.sort(
+			(a, b) =>
+				new Date(a.startTime).getTime() -
+				new Date(b.startTime).getTime()
+		);
+
+/**
+ * What the split button of a conversation shows (ADR-021 §5): the nearest of
+ * its scheduled appointments and its requests (FE#2287), like the list's
+ * next-appointment rule.
+ */
+export const nextConversationAppointment = (
+	appointments: SessionAppointment[],
+	now: Date
+): SessionAppointment | undefined =>
+	[
+		...upcomingAppointments(appointments, now),
+		...pendingRequests(appointments, now)
+	].sort(
+		(a, b) =>
+			new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+	)[0];
 
 export type AppointmentSlotError = 'incomplete' | 'past' | 'order';
 
@@ -70,7 +110,21 @@ export const toAppointmentSlot = (
 	endTime: end.toISOString()
 });
 
-export type AppointmentNoticeKind = 'created' | 'moved' | 'cancelled';
+/**
+ * `requested`: the asker asked for a time (FE#2287); `confirmed` and
+ * `declined`: the counsellor's answer; `withdrawn`: the asker took it back;
+ * `expired`: nobody answered it by its start, so it was declined
+ * automatically.
+ */
+export type AppointmentNoticeKind =
+	| 'created'
+	| 'moved'
+	| 'cancelled'
+	| 'requested'
+	| 'confirmed'
+	| 'declined'
+	| 'withdrawn'
+	| 'expired';
 
 export const appointmentNoticeKey = (kind: AppointmentNoticeKind) =>
 	`sessionList.timeline.appointment.notice.${kind}`;

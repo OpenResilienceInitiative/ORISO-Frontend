@@ -15,6 +15,8 @@ import {
 	ChatMenuDropdownItem
 } from '../../chatMenuDropdown/ChatMenuDropdown';
 import { ReactComponent as EventBusyIcon } from '../../../resources/img/icons/timeline-event-busy.svg';
+import CheckIcon from '@mui/icons-material/Check';
+import CloseIcon from '@mui/icons-material/Close';
 import ContentCopyOutlinedIcon from '@mui/icons-material/ContentCopyOutlined';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import EventRepeatOutlinedIcon from '@mui/icons-material/EventRepeatOutlined';
@@ -32,6 +34,9 @@ const MENU_ICON: Record<string, React.ElementType> = {
 	edit: EditOutlinedIcon,
 	reschedule: EventRepeatOutlinedIcon,
 	cancel: EventBusyIcon,
+	// Answering a request: the same icons as answering a move proposal in the calendar.
+	confirm: CheckIcon,
+	decline: CloseIcon,
 	duplicate: ContentCopyOutlinedIcon,
 	configure: SettingsOutlinedIcon,
 	reminder: NotificationsOutlinedIcon
@@ -84,11 +89,14 @@ export const EntryMenu = ({
 	anchor,
 	opener,
 	onClose,
-	onAction
+	onAction,
+	id
 }: {
 	entry: FutureEntry;
 	role: TimelineRole;
 	anchor: MenuAnchor;
+	/** The id the opener's `aria-controls` names. */
+	id?: string;
 	/** The control that toggles the menu: a press on it is not "outside". */
 	opener?: React.RefObject<HTMLElement | null>;
 	onClose: () => void;
@@ -128,6 +136,7 @@ export const EntryMenu = ({
 		>
 			<ChatMenuDropdown
 				ref={ref}
+				id={id}
 				role="menu"
 				ariaLabel="Termin"
 				data-cy="timeline-entry-menu"
@@ -183,11 +192,16 @@ export const AppointmentSplitButton = ({
 	onOpen,
 	onAction
 }: AppointmentSplitButtonProps) => {
-	const { i18n } = useTranslation();
+	const { t, i18n } = useTranslation();
 	const locale = normalizeTimelineLocale(
 		i18n.resolvedLanguage,
 		i18n.language
 	);
+	// FE#2287: "Angefragt · <time>". The state comes first, so a phone that
+	// cuts the label short still says it is only a request.
+	const label = entry.requested
+		? `${t('sessionList.timeline.appointment.request.marker')} · ${formatEntrySlot(entry, locale)}`
+		: formatEntrySlot(entry, locale);
 	const [menuAnchor, setMenuAnchor] = useState<MenuAnchor | null>(null);
 	const toggleRef = useRef<HTMLButtonElement | null>(null);
 	const menuId = useId();
@@ -214,7 +228,7 @@ export const AppointmentSplitButton = ({
 				size={size}
 				fullWidth={fullWidth}
 				variant={active ? 'primary' : 'tonal'}
-				label={formatEntrySlot(entry, locale)}
+				label={label}
 				icon={<Icon />}
 				mainOpensMenu={!onOpen}
 				onClick={onOpen ?? toggleMenu}
@@ -227,6 +241,7 @@ export const AppointmentSplitButton = ({
 			/>
 			{menuAnchor && (
 				<EntryMenu
+					id={menuId}
 					entry={entry}
 					role={role}
 					anchor={menuAnchor}

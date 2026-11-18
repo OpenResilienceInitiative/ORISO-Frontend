@@ -3413,6 +3413,37 @@ $cal-new-pill-hover: #4b4f51;
 	}
 }
 
+/* Sprechstunden (FE#2287): a day wraps its times under it where the dialog
+   is narrow (390 px). */
+.calendarConsultation__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px 12px;
+	padding-top: 10px;
+
+	.calendarHours__day {
+		flex: 1 1 88px;
+	}
+
+	&--off .calendarHours__day {
+		color: var(--m3-on-surface-variant, #444748);
+	}
+}
+
+.calendarConsultation__times {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-left: auto;
+}
+
+.calendarConsultation__hint {
+	margin: 4px 0 0;
+	color: var(--m3-on-surface-variant, #444748);
+	font-size: 12px;
+}
+
 .calendarHours__region {
 	display: flex;
 	flex-wrap: wrap;

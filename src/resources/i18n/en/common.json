@@ -342,7 +342,10 @@
 			"pickDay": "Please choose a day in the calendar first.",
 			"subline": "Choose a day and then a time.",
 			"times": "Available times",
-			"weekdays": "S,M,T,W,T,F,S"
+			"weekdays": "S,M,T,W,T,F,S",
+			"legendInstant": "Booked at once",
+			"legendRequest": "Request – your counsellor confirms the appointment",
+			"requestTime": "Request"
 		},
 		"availability": {
 			"description": "Indicate your general availability here so that people seeking advice can book appointments with you.",
@@ -4771,7 +4774,12 @@
 				"notice": {
 					"created": "Appointment scheduled: {{date}}",
 					"moved": "Appointment moved to: {{date}}",
-					"cancelled": "Appointment cancelled: {{date}}"
+					"cancelled": "Appointment cancelled: {{date}}",
+					"requested": "Appointment requested: {{date}} – waiting for confirmation",
+					"confirmed": "Appointment confirmed: {{date}}",
+					"declined": "Appointment request declined: {{date}}",
+					"withdrawn": "Appointment request withdrawn: {{date}}",
+					"expired": "Appointment request expired: {{date}} – it was not answered before it began"
 				},
 				"noticeFailed": {
 					"title": "Notice not sent",
@@ -4780,6 +4788,12 @@
 				"cancelFailed": {
 					"title": "Appointment not cancelled",
 					"text": "The appointment could not be cancelled. Please try again."
+				},
+				"request": {
+					"marker": "Requested",
+					"failedTitle": "Request not answered",
+					"taken": "This time is no longer free. Decline the request or suggest another time in the chat.",
+					"failed": "That did not work. Please try again."
 				}
 			}
 		},
@@ -5299,6 +5313,12 @@
 		"timeline": {
 			"join": "Join call",
 			"joinFailed": "Unable to join right now. End any other active call and try again.",
+			"counsellorCallPending": "The call has not started yet",
+			"counsellorCallPendingText": "Only your counsellor can start the call. You can join as soon as they call you. Please wait for the call.",
+			"leaveRunningCallTitle": "End the current call and join?",
+			"leaveRunningCallText": "Your counsellor is calling you. You are still in another call; it ends when you join.",
+			"leaveRunningCallStay": "Stay in the call",
+			"leaveRunningCallJoin": "End and join",
 			"endedElsewhere": "This call has already ended.",
 			"video": {
 				"running": "Video call in progress",
@@ -5318,6 +5338,43 @@
 			"rejectCall": "Reject call",
 			"startCall": "Start audio call",
 			"startVideoCall": "Start video call"
+		},
+		"askerInfo": {
+			"title": "Your counsellor starts calls",
+			"description": "You cannot start a call here. Your counsellor will call you in this conversation at the agreed appointment.",
+			"next": "Your next appointment",
+			"medium": {
+				"video": "Video call",
+				"phone": "Phone call",
+				"onsite": "On site",
+				"chat": "Chat"
+			},
+			"none": "No appointment has been set up for this conversation yet.",
+			"requestHint": "Write to your counsellor in the chat when it suits you.",
+			"requestHintBooking": "Choose a free time of your counsellor and book the appointment directly.",
+			"request": "Request an appointment",
+			"loading": "Loading the appointment …",
+			"error": "The appointment could not be loaded right now. Please try again later.",
+			"booking": {
+				"title": "Book an appointment",
+				"description": {
+					"video": "Choose a free time of your counsellor for a video call. Times marked \"Booked at once\" are fixed straight away; your counsellor confirms requests.",
+					"phone": "Choose a free time of your counsellor for a phone call. Times marked \"Booked at once\" are fixed straight away; your counsellor confirms requests."
+				},
+				"loading": "Loading free times …",
+				"error": "The free times could not be loaded right now. Please try again later.",
+				"none": "Your counsellor has no free time in the next two weeks.",
+				"writeInChat": "Write in the chat",
+				"back": "Back",
+				"confirm": "Book appointment",
+				"taken": "This time has just been taken. Please choose another one.",
+				"failed": "The appointment could not be booked. Please try again.",
+				"booked": "Your appointment is booked. Your counsellor is notified in the chat.",
+				"limit": "An appointment is already booked for this conversation.",
+				"confirmRequest": "Request appointment",
+				"requested": "Your request has been sent. It is waiting for your counsellor to confirm it."
+			},
+			"nextRequested": "Your requested appointment"
 		},
 		"incomingCall": {
 			"description": "calls...",
@@ -7537,6 +7594,38 @@
 		"links": {
 			"title": "Links without an appointment",
 			"hint": "Invitation links you can share: copy them or show a QR code."
+		},
+		"consultationHours": {
+			"title": "Consultation hours",
+			"description": "In these hours advice seekers can book an appointment with you themselves. They are separate from your working hours.",
+			"save": "Save consultation hours",
+			"saved": "Consultation hours saved",
+			"empty": "Without consultation hours, advice seekers cannot book an appointment.",
+			"none": "No consultation hours set",
+			"autoAccept": "Confirm bookings automatically",
+			"autoAcceptOn": "After the notice period an appointment is booked at once; short-notice bookings are requests.",
+			"autoAcceptOff": "Every booking is a request that you confirm.",
+			"noticeDays": "Notice",
+			"noticeDaysHint": "Within these days before the appointment a booking becomes a request.",
+			"noticeDaysOption": "{{count}} days",
+			"noticeDaysOption_one": "{{count}} day",
+			"slotMinutes": "Length of an appointment",
+			"minutes": "{{count}} min",
+			"invalid": "The end must be after the start.",
+			"loadFailed": "Could not be loaded. Try again",
+			"overlaps": "The times overlap another consultation window on this day."
+		},
+		"appointmentRequest": {
+			"status": "Requested · waiting for you",
+			"from": "Request from {{name}}",
+			"menu": "Appointment requested",
+			"hint": "Until you answer, the time is held. Without an answer by its start, the request expires.",
+			"confirm": "Confirm",
+			"confirmHint": "The appointment is booked",
+			"decline": "Decline",
+			"declineHint": "The time becomes free again",
+			"confirmed": "Appointment confirmed: {{date}}.",
+			"declined": "Appointment request declined: {{date}}."
 		},
 		"absence": {
 			"description": "Choose the days you are away. During that time advice seekers see your absence message.",

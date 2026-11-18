@@ -62,6 +62,12 @@ export interface CalendarEntry {
 	/** Whole day(s): shown in the all-day row, not across the time grid. */
 	allDay?: boolean;
 	/**
+	 * FE#2287: an advice seeker's request waiting for this counsellor's
+	 * confirmation. Drawn dashed like a move proposal and answered the same
+	 * way; never moved.
+	 */
+	requested?: boolean;
+	/**
 	 * Own view only: an appointment with a colleague instead of an advice
 	 * seeker (FE#2305). It has no conversation; it belongs to the private
 	 * internal chat of the two.

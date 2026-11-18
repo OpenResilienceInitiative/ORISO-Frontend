@@ -130,6 +130,29 @@ describe('CalendarView — one entry (prototype v17)', () => {
 		expect(entry.querySelector('.calEntry__time')).not.toBeNull();
 	});
 
+	it('draws an advice seeker’s request dashed like a move proposal, with its status (FE#2287)', async () => {
+		const request: CalendarEntry = {
+			...OWN,
+			id: 'req',
+			start: at(16),
+			end: at(17),
+			requested: true,
+			movable: false
+		};
+		render(<Grid view="workWeek" entries={[OWN, request]} />);
+		await waitFor(() => expect(shown('req')).not.toBeNull());
+		const entry = shown('req')!;
+		expect(entry.className).toContain('calEntry--proposal');
+		expect(entry.className).toContain('calEntry--requested');
+		expect(entry.querySelector('.calEntry__status')!.textContent).toBe(
+			'calendar.appointmentRequest.status'
+		);
+		expect(entry.getAttribute('aria-label')).toContain(
+			'calendar.appointmentRequest.status'
+		);
+		expect(shown('own')!.className).not.toContain('calEntry--proposal');
+	});
+
 	it('draws the list as plain rows', async () => {
 		render(<Grid view="list" />);
 		await waitFor(() => expect(shown('own')).not.toBeNull());

@@ -153,6 +153,10 @@ export const endpoints = {
 	sessionBase: userServiceOrigin + '/service/users/sessions',
 	sessionAppointments: (sessionId: number) =>
 		userServiceOrigin + `/service/users/sessions/${sessionId}/appointments`,
+	/** FE#1050: the free slots an asker may book in this conversation. */
+	sessionAppointmentSlots: (sessionId: number) =>
+		userServiceOrigin +
+		`/service/users/sessions/${sessionId}/appointment-slots`,
 	/** #2252: invite more people by link into a 1:1, for an appointment. */
 	sessionDirectInvitations: (sessionId: number) =>
 		userServiceOrigin +

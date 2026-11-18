@@ -115,6 +115,8 @@ vi.mock('../../api/apiCalendar', () => ({
 	apiGetCalendarSync: vi.fn(),
 	apiGetCalendarWorkingHours: vi.fn(),
 	apiSetCalendarWorkingHours: vi.fn(),
+	apiGetCalendarConsultationHours: vi.fn(),
+	apiSetCalendarConsultationHours: vi.fn(),
 	apiPutWorkingDayException: vi.fn(),
 	apiDeleteWorkingDayException: vi.fn(),
 	apiCreateCalendarBlocker: vi.fn(),
@@ -214,6 +216,7 @@ beforeEach(() => {
 			{ weekday: 1, start: '08:00', end: '18:00' }
 		]
 	});
+	api.apiGetCalendarConsultationHours.mockResolvedValue({ windows: [] });
 });
 
 describe('CalendarPageWired — phone and tablet layout (prototype v15)', () => {
@@ -2163,5 +2166,44 @@ describe('CalendarPageWired — which conversations can be booked (C1, C6)', () 
 			[2, false],
 			[3, false]
 		]);
+	});
+});
+
+describe('CalendarPageWired — Sprechstunden (FE#2287)', () => {
+	it('loads them for a counsellor and saves the whole set', async () => {
+		api.apiGetCalendarConsultationHours.mockResolvedValue({
+			windows: [{ weekday: 2, start: '09:00', end: '12:00' }],
+			autoAccept: false,
+			noticeDays: 2,
+			slotMinutes: 30
+		});
+		render(<CalendarPageWired />);
+		await waitFor(() =>
+			expect(props.consultationHours).toEqual({
+				windows: [{ weekday: 2, start: '09:00', end: '12:00' }],
+				autoAccept: false,
+				noticeDays: 2,
+				slotMinutes: 30
+			})
+		);
+		const next = {
+			windows: [{ weekday: 4, start: '14:00', end: '16:00' }],
+			autoAccept: true,
+			noticeDays: 1,
+			slotMinutes: 60 as const
+		};
+		api.apiSetCalendarConsultationHours.mockResolvedValue(next);
+		await act(() => props.onSaveConsultationHours?.(next));
+		expect(api.apiSetCalendarConsultationHours).toHaveBeenCalledWith(next);
+		expect(props.consultationHours).toEqual(next);
+	});
+
+	it('offers none to edit when they could not be read', async () => {
+		api.apiGetCalendarConsultationHours.mockRejectedValue(new Error('404'));
+		render(<CalendarPageWired />);
+		await waitFor(() =>
+			expect(api.apiGetCalendarConsultationHours).toHaveBeenCalled()
+		);
+		expect(props.consultationHours).toBeUndefined();
 	});
 });

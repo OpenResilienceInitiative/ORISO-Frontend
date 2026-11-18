@@ -4,7 +4,10 @@
  * the series API, duplicate into the create-group form (kept from the old
  * future strip), configure the group. 1:1 appointments: cancel through the
  * conversation's API and leave a notice in it; moving opens the caller's date
- * dialog (FE#1960). Entries marked "kommt bald" never reach this.
+ * dialog (FE#1960). A request (FE#2287): the counsellor confirms or
+ * declines it, the advice seeker withdraws it through cancel; each leaves its
+ * notice in the conversation, and a refusal is said through the app's
+ * notifications. Entries marked "kommt bald" never reach this.
  */
 import { useCallback, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -15,12 +18,22 @@ import {
 	SessionTypeContext
 } from '../../../globalState';
 import { apiSkipChatOccurrence } from '../../../api/apiGetChatOccurrences';
-import { apiCancelSessionAppointment } from '../../../api/apiSessionAppointments';
+import {
+	apiCancelSessionAppointment,
+	apiConfirmSessionAppointment,
+	apiDeclineSessionAppointment
+} from '../../../api/apiSessionAppointments';
 import { useSearchParam } from '../../../hooks/useSearchParams';
 import { buildCreateGroupChatPath } from '../SessionsListToolbar';
 import { notifyAppointmentsChanged } from './conversationAppointments';
 import type { FutureEntry } from './timelineModel';
 import { useAppointmentNotice } from './useAppointmentNotice';
+
+/** The `X-Reason` of a refused answer; `null` for another failure. */
+const refusalReason = (cause: unknown): string | null =>
+	cause instanceof Response && cause.status === 409
+		? (cause.headers.get('X-Reason') ?? '')
+		: null;
 
 export interface AppointmentActionsOptions {
 	/** A date was cancelled: drop it from what is shown. */
@@ -79,7 +92,9 @@ export const useAppointmentActions = ({
 								onCancelled?.(entry);
 								notifyAppointmentsChanged();
 								return sendNotice({
-									kind: 'cancelled',
+									kind: entry.requested
+										? 'withdrawn'
+										: 'cancelled',
 									start: entry.start,
 									end: entry.end,
 									sessionId,
@@ -95,6 +110,56 @@ export const useAppointmentActions = ({
 									),
 									text: t(
 										'sessionList.timeline.appointment.cancelFailed.text'
+									)
+								});
+							}
+						);
+					}
+					return;
+				case 'confirm':
+				case 'decline':
+					if (
+						entry.requested &&
+						booking?.appointmentId &&
+						entry.sessionId !== undefined
+					) {
+						const { sessionId } = entry;
+						// The backend checks the time again under locks.
+						(key === 'confirm'
+							? apiConfirmSessionAppointment
+							: apiDeclineSessionAppointment)(
+							sessionId,
+							booking.appointmentId
+						).then(
+							() => {
+								notifyAppointmentsChanged();
+								return sendNotice({
+									kind:
+										key === 'confirm'
+											? 'confirmed'
+											: 'declined',
+									start: entry.start,
+									end: entry.end,
+									sessionId,
+									matrixRoomId: entry.matrixRoomId
+								});
+							},
+							(cause: unknown) => {
+								const taken =
+									refusalReason(cause) ===
+									'REQUESTED_TIME_TAKEN';
+								// A taken or answered request changed: show what is.
+								if (refusalReason(cause) !== null)
+									notifyAppointmentsChanged();
+								addNotification?.({
+									notificationType: NOTIFICATION_TYPE_ERROR,
+									title: t(
+										'sessionList.timeline.appointment.request.failedTitle'
+									),
+									text: t(
+										taken
+											? 'sessionList.timeline.appointment.request.taken'
+											: 'sessionList.timeline.appointment.request.failed'
 									)
 								});
 							}

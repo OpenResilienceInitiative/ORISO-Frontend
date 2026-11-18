@@ -5,7 +5,14 @@
  * without one, the header stays as it was.
  */
 import * as React from 'react';
-import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
+import {
+	act,
+	cleanup,
+	fireEvent,
+	render,
+	screen,
+	waitFor
+} from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import {
 	ActiveSessionContext,
@@ -22,15 +29,26 @@ import {
 } from './conversationAppointments';
 import { useAppointmentCreate } from './appointmentCreateBridge';
 
-const { getAppointments } = vi.hoisted(() => ({ getAppointments: vi.fn() }));
+const { getAppointments, onAction, claimNotice, sendNotice } = vi.hoisted(
+	() => ({
+		getAppointments: vi.fn(),
+		onAction: vi.fn(),
+		claimNotice: vi.fn(),
+		sendNotice: vi.fn()
+	})
+);
 vi.mock('../../../api/apiSessionAppointments', () => ({
-	apiGetSessionAppointments: getAppointments
+	apiGetSessionAppointments: getAppointments,
+	apiClaimSessionAppointmentExpiryNotice: claimNotice
+}));
+vi.mock('./useAppointmentNotice', () => ({
+	useAppointmentNotice: () => sendNotice
 }));
 vi.mock('./AppointmentDateDialog', () => ({
 	AppointmentDateDialog: () => <div data-testid="appointment-date-dialog" />
 }));
 vi.mock('./useAppointmentActions', () => ({
-	useAppointmentActions: () => vi.fn()
+	useAppointmentActions: () => onAction
 }));
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({
@@ -39,8 +57,8 @@ vi.mock('react-i18next', () => ({
 	})
 }));
 
-const upcoming = () => {
-	const start = new Date(Date.now() + 2 * 24 * 3600 * 1000);
+const upcoming = (days = 2) => {
+	const start = new Date(Date.now() + days * 24 * 3600 * 1000);
 	return {
 		id: 'a1',
 		sessionId: 4401,
@@ -49,6 +67,24 @@ const upcoming = () => {
 		status: 'SCHEDULED',
 		counterpart: { username: 'ruhiges_yak_kim' }
 	};
+};
+
+const requested = (days = 2) => ({
+	...upcoming(days),
+	id: 'r1',
+	status: 'REQUESTED'
+});
+
+const MARKER = 'sessionList.timeline.appointment.request.marker';
+const splitButtonLabel = async (container: HTMLElement) => {
+	const main = await waitFor(() => {
+		const found = container.querySelector<HTMLElement>(
+			'[data-cy="room-next-appointment"] .splitButton__main'
+		);
+		expect(found).not.toBeNull();
+		return found!;
+	});
+	return main;
 };
 
 /** What a chat card in this conversation borrows. */
@@ -63,7 +99,8 @@ const Borrower = () => {
 
 const renderSlot = (
 	onCreateChange: (open?: () => void) => void,
-	canChange = true
+	canChange = true,
+	authority: string = AUTHORITIES.CONSULTANT_DEFAULT
 ) =>
 	render(
 		<UserDataContext.Provider
@@ -71,7 +108,7 @@ const renderSlot = (
 				{
 					userData: {
 						userId: 'c1',
-						grantedAuthorities: [AUTHORITIES.CONSULTANT_DEFAULT]
+						grantedAuthorities: [authority]
 					}
 				} as never
 			}
@@ -98,6 +135,9 @@ const renderSlot = (
 afterEach(() => {
 	cleanup();
 	getAppointments.mockReset();
+	onAction.mockReset();
+	claimNotice.mockReset();
+	sendNotice.mockReset();
 	forgetKnownAppointments();
 });
 
@@ -300,5 +340,189 @@ describe('ConversationAppointmentSlot', () => {
 		cleanup();
 		render(<Borrower />);
 		expect(screen.getByTestId('loan').textContent).toBe('none');
+	});
+
+	describe('a request nobody answered by its start (FE#2287, Frank 17 Nov)', () => {
+		const expired = () => ({
+			...requested(-1),
+			id: 'x1',
+			status: 'DECLINED',
+			expired: true,
+			noticePending: true
+		});
+
+		it('claims its notice and posts it into the conversation once', async () => {
+			getAppointments.mockResolvedValue([expired()]);
+			claimNotice.mockResolvedValue(undefined);
+			sendNotice.mockResolvedValue(undefined);
+			renderSlot(vi.fn(), false, AUTHORITIES.ASKER_DEFAULT);
+			await waitFor(() => expect(sendNotice).toHaveBeenCalledTimes(1));
+			expect(claimNotice).toHaveBeenCalledWith(4401, 'x1');
+			expect(sendNotice).toHaveBeenCalledWith(
+				expect.objectContaining({
+					kind: 'expired',
+					sessionId: 4401,
+					matrixRoomId: '!r:x'
+				})
+			);
+		});
+
+		it('posts nothing when the other side claimed it first', async () => {
+			getAppointments.mockResolvedValue([expired()]);
+			claimNotice.mockRejectedValue(new Error('409'));
+			renderSlot(vi.fn());
+			await waitFor(() => expect(claimNotice).toHaveBeenCalled());
+			await act(async () => undefined);
+			expect(sendNotice).not.toHaveBeenCalled();
+		});
+
+		it('claims nothing for an expired request whose notice is out', async () => {
+			getAppointments.mockResolvedValue([
+				{ ...expired(), noticePending: undefined }
+			]);
+			renderSlot(vi.fn());
+			await act(async () => undefined);
+			expect(claimNotice).not.toHaveBeenCalled();
+		});
+	});
+
+	describe('a request waiting for the counsellor (FE#2287)', () => {
+		it('shows in the same split button, marked as requested', async () => {
+			getAppointments.mockResolvedValue([requested()]);
+			const { container } = renderSlot(vi.fn());
+			const main = await splitButtonLabel(container);
+			expect(main.textContent).toMatch(new RegExp(`^${MARKER} · `));
+			expect(
+				container.querySelector(
+					'[data-testid="appointment-request-card"]'
+				)
+			).toBeNull();
+			expect(
+				container.querySelectorAll(
+					'[data-cy="room-next-appointment"] button'
+				)
+			).toHaveLength(2);
+		});
+
+		it('leaves the split button when its start passes, without a reload', async () => {
+			vi.useFakeTimers({ shouldAdvanceTime: true });
+			try {
+				const soon = new Date(Date.now() + 5_000);
+				getAppointments.mockResolvedValue([
+					{
+						...requested(),
+						startTime: soon.toISOString(),
+						endTime: new Date(
+							soon.getTime() + 3600_000
+						).toISOString()
+					}
+				]);
+				const { container } = renderSlot(vi.fn());
+				await splitButtonLabel(container);
+
+				await act(async () => {
+					await vi.advanceTimersByTimeAsync(6_000);
+				});
+
+				expect(
+					container.querySelector('[data-cy="room-next-appointment"]')
+				).toBeNull();
+				expect(getAppointments).toHaveBeenCalledTimes(1);
+			} finally {
+				vi.useRealTimers();
+			}
+		});
+
+		it('never sets a timer browsers fire at once for a request weeks ahead', async () => {
+			// Browsers run any delay above 2^31 - 1 ms (24.8 days) immediately:
+			// the slot would render, set the timer again and loop.
+			vi.useFakeTimers({ shouldAdvanceTime: true });
+			const setTimeoutSpy = vi.spyOn(window, 'setTimeout');
+			try {
+				getAppointments.mockResolvedValue([requested(30)]);
+				const { container } = renderSlot(vi.fn());
+				const main = await splitButtonLabel(container);
+
+				const delays = setTimeoutSpy.mock.calls
+					.map(([, delay]) => delay ?? 0)
+					.filter((delay) => delay > 24 * 3600_000);
+				expect(delays.length).toBeGreaterThan(0);
+				delays.forEach((delay) =>
+					expect(delay).toBeLessThanOrEqual(2_147_483_647)
+				);
+				const scheduled = setTimeoutSpy.mock.calls.length;
+				await act(async () => {
+					await vi.advanceTimersByTimeAsync(1_000);
+				});
+				expect(
+					setTimeoutSpy.mock.calls.filter(
+						([, delay]) => (delay ?? 0) > 24 * 3600_000
+					).length
+				).toBe(delays.length);
+				expect(
+					setTimeoutSpy.mock.calls.length - scheduled
+				).toBeLessThan(5);
+				expect(main.textContent).toMatch(new RegExp(`^${MARKER} · `));
+			} finally {
+				setTimeoutSpy.mockRestore();
+				vi.useRealTimers();
+			}
+		});
+
+		it('lets the counsellor confirm or decline it from the menu', async () => {
+			getAppointments.mockResolvedValue([requested()]);
+			const { container } = renderSlot(vi.fn());
+			fireEvent.click(await splitButtonLabel(container));
+			const items = screen.getAllByRole('menuitem');
+			expect(items.map((item) => item.textContent)).toEqual([
+				expect.stringContaining('Termin bestätigen'),
+				expect.stringContaining('Termin ablehnen')
+			]);
+			fireEvent.click(items[0]);
+			expect(onAction).toHaveBeenCalledWith(
+				'confirm',
+				expect.objectContaining({
+					requested: true,
+					sessionId: 4401,
+					booking: expect.objectContaining({ appointmentId: 'r1' })
+				})
+			);
+		});
+
+		it('lets the advice seeker withdraw it from the menu', async () => {
+			getAppointments.mockResolvedValue([requested()]);
+			const { container } = renderSlot(
+				vi.fn(),
+				false,
+				AUTHORITIES.ASKER_DEFAULT
+			);
+			const main = await splitButtonLabel(container);
+			expect(main.textContent).toContain(MARKER);
+			fireEvent.click(main);
+			const items = screen.getAllByRole('menuitem');
+			expect(items.map((item) => item.textContent)).toEqual([
+				expect.stringContaining('Anfrage zurückziehen')
+			]);
+			fireEvent.click(items[0]);
+			expect(onAction).toHaveBeenCalledWith(
+				'cancel',
+				expect.objectContaining({ requested: true })
+			);
+		});
+
+		it('shows the nearer of a confirmed appointment and a request', async () => {
+			getAppointments.mockResolvedValue([upcoming(2), requested(3)]);
+			const first = renderSlot(vi.fn());
+			expect(
+				(await splitButtonLabel(first.container)).textContent
+			).not.toContain(MARKER);
+			cleanup();
+
+			getAppointments.mockResolvedValue([upcoming(2), requested(1)]);
+			const second = renderSlot(vi.fn());
+			expect(
+				(await splitButtonLabel(second.container)).textContent
+			).toContain(MARKER);
+		});
 	});
 });

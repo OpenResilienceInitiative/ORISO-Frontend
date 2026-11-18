@@ -345,7 +345,10 @@
 			"pickDay": "Lütfen önce takvimden bir gün seçin.",
 			"subline": "Önce bir gün, sonra bir saat seçin.",
 			"times": "Boş saatler",
-			"weekdays": "P,P,S,Ç,P,C,C"
+			"weekdays": "P,P,S,Ç,P,C,C",
+			"legendInstant": "Hemen alınır",
+			"legendRequest": "Talep – randevuyu danışmanınız onaylar",
+			"requestTime": "Talep"
 		},
 		"availability": {
 			"description": "Tavsiye almak isteyen kişilerin sizden randevu alabilmeleri için genel uygunluk durumunuzu buraya girin.",
@@ -4805,7 +4808,12 @@
 				"notice": {
 					"created": "Randevu belirlendi: {{date}}",
 					"moved": "Randevu şu tarihe ertelendi: {{date}}",
-					"cancelled": "Randevu iptal edildi: {{date}}"
+					"cancelled": "Randevu iptal edildi: {{date}}",
+					"requested": "Randevu talep edildi: {{date}} – onay bekleniyor",
+					"confirmed": "Randevu onaylandı: {{date}}",
+					"declined": "Randevu talebi reddedildi: {{date}}",
+					"withdrawn": "Randevu talebi geri çekildi: {{date}}",
+					"expired": "Randevu talebinin süresi doldu: {{date}} – başlangıca kadar yanıtlanmadı"
 				},
 				"noticeFailed": {
 					"title": "Bildirim gönderilmedi",
@@ -4814,6 +4822,12 @@
 				"cancelFailed": {
 					"title": "Randevu iptal edilmedi",
 					"text": "Randevu iptal edilemedi. Lütfen tekrar deneyin."
+				},
+				"request": {
+					"marker": "Talep edildi",
+					"failedTitle": "Talep yanıtlanmadı",
+					"taken": "Bu zaman artık dolu. Talebi reddedin veya sohbette başka bir zaman önerin.",
+					"failed": "Bu işe yaramadı. Lütfen tekrar deneyin."
 				}
 			}
 		},
@@ -5334,6 +5348,12 @@
 		"timeline": {
 			"join": "Aramaya katıl",
 			"joinFailed": "Şu anda katılınamıyor. Diğer etkin aramanızı sonlandırıp tekrar deneyin.",
+			"counsellorCallPending": "Görüşme henüz başlamadı",
+			"counsellorCallPendingText": "Görüşmeyi yalnızca danışmanınız başlatabilir. Danışmanınız sizi aradığında katılabilirsiniz. Lütfen aramayı bekleyin.",
+			"leaveRunningCallTitle": "Devam eden görüşme sonlandırılıp katılınsın mı?",
+			"leaveRunningCallText": "Danışmanınız sizi arıyor. Hâlâ başka bir görüşmedesiniz; katıldığınızda bu görüşme sona erer.",
+			"leaveRunningCallStay": "Görüşmede kal",
+			"leaveRunningCallJoin": "Sonlandır ve katıl",
 			"endedElsewhere": "Bu arama zaten sona erdi.",
 			"video": {
 				"running": "Görüntülü arama sürüyor",
@@ -5353,6 +5373,43 @@
 			"rejectCall": "Görüntülü aramayı reddetme",
 			"startCall": "Sesli aramayı başlat",
 			"startVideoCall": "Görüntülü aramayı başlat"
+		},
+		"askerInfo": {
+			"title": "Aramaları danışmanınız başlatır",
+			"description": "Burada arama başlatamazsınız. Danışmanınız sizi kararlaştırılan randevuda bu görüşmede arayacaktır.",
+			"next": "Bir sonraki randevunuz",
+			"medium": {
+				"video": "Görüntülü arama",
+				"phone": "Telefon araması",
+				"onsite": "Yüz yüze",
+				"chat": "Sohbet"
+			},
+			"none": "Bu görüşme için henüz bir randevu belirlenmedi.",
+			"requestHint": "Size ne zaman uygun olduğunu danışmanınıza sohbette yazın.",
+			"requestHintBooking": "Danışmanınızın boş bir zamanını seçin ve randevuyu doğrudan alın.",
+			"request": "Randevu iste",
+			"loading": "Randevu yükleniyor …",
+			"error": "Randevu şu anda yüklenemedi. Lütfen daha sonra tekrar deneyin.",
+			"booking": {
+				"title": "Randevu al",
+				"description": {
+					"video": "Görüntülü arama için danışmanınızın boş bir zamanını seçin. „Hemen alınır“ işaretli zamanlar hemen kesinleşir; talepleri danışmanınız onaylar.",
+					"phone": "Telefon görüşmesi için danışmanınızın boş bir zamanını seçin. „Hemen alınır“ işaretli zamanlar hemen kesinleşir; talepleri danışmanınız onaylar."
+				},
+				"loading": "Boş zamanlar yükleniyor …",
+				"error": "Boş zamanlar şu anda yüklenemedi. Lütfen daha sonra tekrar deneyin.",
+				"none": "Danışmanınızın önümüzdeki iki hafta içinde boş zamanı yok.",
+				"writeInChat": "Sohbete yaz",
+				"back": "Geri",
+				"confirm": "Randevu al",
+				"taken": "Bu zaman az önce alındı. Lütfen başka bir zaman seçin.",
+				"failed": "Randevu alınamadı. Lütfen tekrar deneyin.",
+				"booked": "Randevunuz alındı. Danışmanınız sohbette bilgilendirilir.",
+				"limit": "Bu görüşme için zaten bir randevu alınmış.",
+				"confirmRequest": "Randevu talep et",
+				"requested": "Talebiniz gönderildi. Danışmanınızın onayını bekliyor."
+			},
+			"nextRequested": "Talep ettiğiniz randevu"
 		},
 		"incomingCall": {
 			"description": "arar.",
@@ -7622,6 +7679,38 @@
 		"links": {
 			"title": "Randevusuz bağlantılar",
 			"hint": "Paylaşabileceğiniz davet bağlantıları: kopyalayın veya QR kodu gösterin."
+		},
+		"consultationHours": {
+			"title": "Görüşme saatleri",
+			"description": "Bu saatlerde danışanlar sizinle kendileri randevu alabilir. Çalışma saatlerinizden bağımsızdır.",
+			"save": "Görüşme saatlerini kaydet",
+			"saved": "Görüşme saatleri kaydedildi",
+			"empty": "Görüşme saatleri olmadan kimse randevu alamaz.",
+			"none": "Görüşme saati belirlenmedi",
+			"autoAccept": "Rezervasyonları otomatik onayla",
+			"autoAcceptOn": "Ön bildirim süresinden sonra randevu hemen alınır; kısa süreli rezervasyonlar taleptir.",
+			"autoAcceptOff": "Her rezervasyon, sizin onayladığınız bir taleptir.",
+			"noticeDays": "Ön bildirim süresi",
+			"noticeDaysHint": "Randevudan önceki bu günler içinde rezervasyon talebe dönüşür.",
+			"noticeDaysOption": "{{count}} gün",
+			"noticeDaysOption_one": "{{count}} gün",
+			"slotMinutes": "Randevu süresi",
+			"minutes": "{{count}} dk",
+			"invalid": "Bitiş, başlangıçtan sonra olmalıdır.",
+			"loadFailed": "Yüklenemedi. Tekrar dene",
+			"overlaps": "Saatler bu gündeki başka bir görüşme saatiyle çakışıyor."
+		},
+		"appointmentRequest": {
+			"status": "Talep edildi · yanıtınızı bekliyor",
+			"from": "{{name}} adlı kişiden talep",
+			"menu": "Randevu talep edildi",
+			"hint": "Siz yanıtlayana kadar zaman ayrılmıştır. Başlangıca kadar yanıt verilmezse talep geçersiz olur.",
+			"confirm": "Onayla",
+			"confirmHint": "Randevu kesinleşir",
+			"decline": "Reddet",
+			"declineHint": "Zaman yeniden boşa çıkar",
+			"confirmed": "Randevu onaylandı: {{date}}.",
+			"declined": "Randevu talebi reddedildi: {{date}}."
 		},
 		"absence": {
 			"description": "Uzakta olacağınız günleri seçin. Bu süre boyunca danışanlar yokluk mesajınızı görür.",

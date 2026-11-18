@@ -12,6 +12,9 @@ import {
 } from '../chatStage/__storybook__/chatStageFixtures';
 import { phone390Globals } from '../message/messageStoryShell';
 import { SupervisionPanelContext } from '../supervisionPanel/SupervisionPanelContext';
+import { AUTHORITIES, UserDataContext } from '../../globalState';
+import { counsellorUserData } from '../chatStage/__storybook__/chatStageFixtures';
+import type { UserDataInterface } from '../../globalState/interfaces';
 import './sessionMenu.styles.scss';
 
 const hasUserInitiatedStopOrLeaveRequest = {
@@ -412,5 +415,95 @@ export const CaseHandoverBelowRecommend: Story = {
 		await expect(rows[recommendAt + 1]?.textContent).toContain(
 			'Beratung übergeben'
 		);
+	}
+};
+
+const askerUserData = {
+	...counsellorUserData,
+	userId: 'asker-storybook',
+	userName: 'sonnenblume',
+	displayName: '',
+	grantedAuthorities: [AUTHORITIES.ASKER_DEFAULT],
+	userRoles: ['USER']
+} as unknown as UserDataInterface;
+
+const askerUserDataValue = {
+	userData: askerUserData,
+	setUserData: () => {},
+	reloadUserData: async () => askerUserData
+};
+
+/** The stage, seen by the advice seeker of the conversation. */
+const withAskerStage = (Story: React.ComponentType) => (
+	<ChatStageProviders>
+		<UserDataContext.Provider value={askerUserDataValue}>
+			{stageFrame(Story)}
+		</UserDataContext.Provider>
+	</ChatStageProviders>
+);
+
+/** Tomorrow, 15:00–16:00: always upcoming, whatever day the story runs. */
+const tomorrowAt = (hour: number) => {
+	const date = new Date();
+	date.setDate(date.getDate() + 1);
+	date.setHours(hour, 0, 0, 0);
+	return date.toISOString();
+};
+
+/**
+ * Only counsellors start calls (product owner, 17 Nov 2026). The advice
+ * seeker sees the same video and audio buttons, but a click opens the
+ * conversation's next appointment instead of a call. The appointment read is
+ * served by a fixture.
+ */
+export const AdviceSeekerCallButtonsShowAppointment: Story = {
+	name: 'Advice seeker — call buttons show the appointment',
+	tags: ['autodocs', '!needs-data'],
+	parameters: { router: { initialPath: stageRoute } },
+	args: {
+		hasUserInitiatedStopOrLeaveRequest,
+		isAskerInfoAvailable: false
+	},
+	decorators: [withAskerStage],
+	beforeEach: () => {
+		const originalFetch = globalThis.fetch;
+		const fixture: typeof fetch = async (input, init) => {
+			const url = new URL(new Request(input, init).url);
+			if (/\/users\/sessions\/-?\d+\/appointments$/.test(url.pathname)) {
+				return Response.json([
+					{
+						id: 'storybook-appointment',
+						sessionId: 1,
+						startTime: tomorrowAt(15),
+						endTime: tomorrowAt(16),
+						status: 'SCHEDULED',
+						kind: 'VIDEO'
+					}
+				]);
+			}
+			return originalFetch(input, init);
+		};
+		globalThis.fetch = fixture;
+		return () => {
+			if (globalThis.fetch === fixture) globalThis.fetch = originalFetch;
+		};
+	},
+	play: async ({ canvasElement }) => {
+		const video = await waitFor(() => {
+			const button = canvasElement.querySelector<HTMLElement>(
+				'[data-cy="session-header-start-video-call"]'
+			);
+			expect(button).not.toBeNull();
+			return button!;
+		});
+		await userEvent.click(video);
+		const card = await waitFor(() => {
+			const found = document.querySelector<HTMLElement>(
+				'[data-testid="asker-call-info-appointment"]'
+			);
+			expect(found).not.toBeNull();
+			return found!;
+		});
+		await expect(card.textContent).toMatch(/Videoanruf|Video call/);
 	}
 };

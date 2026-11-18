@@ -52,6 +52,8 @@ import {
 	apiGetCalendarProposals,
 	apiGetCalendarSync,
 	apiGetCalendarWorkingHours,
+	apiGetCalendarConsultationHours,
+	apiSetCalendarConsultationHours,
 	apiGetColleagueCalendarEntries,
 	apiMoveCalendarBlocker,
 	apiPutWorkingDayException,
@@ -64,6 +66,8 @@ import {
 } from '../../api/apiCalendar';
 import {
 	apiCancelSessionAppointment,
+	apiConfirmSessionAppointment,
+	apiDeclineSessionAppointment,
 	apiMoveSessionAppointment
 } from '../../api/apiSessionAppointments';
 import { apiGetConsultantSessionList } from '../../api/apiGetConsultantSessionList';
@@ -112,6 +116,7 @@ import {
 import {
 	addProposal,
 	ProposalNoLongerValid,
+	RequestedTimeTaken,
 	withdrawProposal,
 	type MoveProposal
 } from './calendarActions';
@@ -141,6 +146,10 @@ import {
 	type WorkingHours,
 	type WorkingPlan
 } from './calendarWorkingHours';
+import {
+	consultationHoursFromApi,
+	type ConsultationHours
+} from './calendarConsultationHours';
 import type { HolidayRegion } from './calendarHolidays';
 
 /** Page size of the conversation lookup; every page is loaded. */
@@ -250,6 +259,25 @@ export const CalendarPageWired = () => {
 	const [conversationsFailed, setConversationsFailed] = useState(false);
 	const [sync, setSync] = useState<CalendarSyncDTO>();
 	const [plan, setPlan] = useState<WorkingPlan>();
+	/* Sprechstunden (FE#2287): undefined until read, so unread ones are
+	   never offered for editing and saved as empty. */
+	const [consultationHours, setConsultationHours] =
+		useState<ConsultationHours>();
+	const [consultationHoursFailed, setConsultationHoursFailed] =
+		useState(false);
+	/** Read once on mount; again from ⋮ when that failed. */
+	const loadConsultationHours = useCallback(
+		(cancelled: () => boolean = () => false) => {
+			setConsultationHoursFailed(false);
+			apiGetCalendarConsultationHours().then(
+				(dto) =>
+					!cancelled() &&
+					setConsultationHours(consultationHoursFromApi(dto)),
+				() => !cancelled() && setConsultationHoursFailed(true)
+			);
+		},
+		[]
+	);
 	/** The saved schedule has loaded: until then it cannot be edited. */
 	const [planLoaded, setPlanLoaded] = useState(false);
 	/**
@@ -574,6 +602,7 @@ export const CalendarPageWired = () => {
 				(dto) => !cancelled && setSync(dto),
 				() => undefined
 			);
+			loadConsultationHours(() => cancelled);
 			loadPlan();
 		}
 		return () => {
@@ -581,7 +610,7 @@ export const CalendarPageWired = () => {
 			// Unmounted: a late plan answer changes nothing.
 			planRequest.current += 1;
 		};
-	}, [consultant, loadPlan]);
+	}, [consultant, loadPlan, loadConsultationHours]);
 
 	/**
 	 * Free time needs this week's entries and the saved schedule. Without
@@ -601,7 +630,7 @@ export const CalendarPageWired = () => {
 		conversations.find((c) => c.sessionId === sessionId);
 
 	const notice = (
-		kind: 'created' | 'moved' | 'cancelled',
+		kind: 'created' | 'moved' | 'cancelled' | 'confirmed' | 'declined',
 		sessionId: number,
 		start: Date,
 		end: Date,
@@ -752,6 +781,46 @@ export const CalendarPageWired = () => {
 			new Date(entry.end)
 		);
 	};
+
+	/**
+	 * FE#2287: the counsellor answers an advice seeker's request from the
+	 * calendar, with the same calls and the same conversation notice as from
+	 * the appointment button under the chat header. A refused answer reloads
+	 * the calendar; `REQUESTED_TIME_TAKEN` says the time is no longer free.
+	 */
+	const answerRequest = async (
+		entry: CalendarEntry,
+		decision: 'confirmed' | 'declined'
+	) => {
+		if (entry.sessionId === undefined) return;
+		try {
+			await (
+				decision === 'confirmed'
+					? apiConfirmSessionAppointment
+					: apiDeclineSessionAppointment
+			)(entry.sessionId, entry.id);
+		} catch (error) {
+			reloadEntries();
+			if (
+				error instanceof Response &&
+				error.headers.get('X-Reason') === 'REQUESTED_TIME_TAKEN'
+			)
+				throw new RequestedTimeTaken();
+			throw error;
+		}
+		reloadEntries();
+		afterChange();
+		await notice(
+			decision,
+			entry.sessionId,
+			new Date(entry.start),
+			new Date(entry.end)
+		);
+	};
+	const confirmRequest = (entry: CalendarEntry) =>
+		answerRequest(entry, 'confirmed');
+	const declineRequest = (entry: CalendarEntry) =>
+		answerRequest(entry, 'declined');
 
 	const removeBlocker = async (entry: CalendarEntry) => {
 		await apiDeleteCalendarBlocker(entry.id);
@@ -953,6 +1022,12 @@ export const CalendarPageWired = () => {
 		const { sent, settled } = after(dateChains.current[date], request);
 		dateChains.current[date] = settled;
 		return sent;
+	};
+
+	/** The whole set at once; the answer is what UserService stored. */
+	const saveConsultationHours = async (hours: ConsultationHours) => {
+		const saved = await apiSetCalendarConsultationHours(hours);
+		setConsultationHours(consultationHoursFromApi(saved));
 	};
 
 	const saveWorkingHours = async (
@@ -1190,7 +1265,17 @@ export const CalendarPageWired = () => {
 				onWithdrawProposal={consultant ? withdrawMove : undefined}
 				onAcceptProposal={consultant ? acceptProposal : undefined}
 				onDeclineProposal={consultant ? declineProposal : undefined}
+				onConfirmRequest={consultant ? confirmRequest : undefined}
+				onDeclineRequest={consultant ? declineRequest : undefined}
 				onSaveWorkingHours={consultant ? saveWorkingHours : undefined}
+				consultationHours={consultant ? consultationHours : undefined}
+				consultationHoursFailed={consultant && consultationHoursFailed}
+				onRetryConsultationHours={
+					consultant ? () => loadConsultationHours() : undefined
+				}
+				onSaveConsultationHours={
+					consultant ? saveConsultationHours : undefined
+				}
 				onSaveDayException={consultant ? saveDayException : undefined}
 				onDeleteDayException={
 					consultant ? deleteDayException : undefined

@@ -340,7 +340,10 @@
 			"pickDay": "Bitte wählen Sie zuerst einen Tag im Kalender.",
 			"subline": "Wählen Sie einen Tag und danach eine Uhrzeit.",
 			"times": "Freie Zeiten",
-			"weekdays": "S,M,D,M,D,F,S"
+			"weekdays": "S,M,D,M,D,F,S",
+			"legendInstant": "Sofort gebucht",
+			"legendRequest": "Anfrage – Ihre Beratungsperson bestätigt den Termin",
+			"requestTime": "Anfrage"
 		},
 		"availability": {
 			"description": "Geben Sie hier Ihre allgemeine Verfügbarkeit an, damit Ratsuchende Termine bei Ihnen buchen können.",
@@ -4822,7 +4825,12 @@
 				"notice": {
 					"created": "Termin vereinbart: {{date}}",
 					"moved": "Termin verschoben auf: {{date}}",
-					"cancelled": "Termin abgesagt: {{date}}"
+					"cancelled": "Termin abgesagt: {{date}}",
+					"requested": "Termin angefragt: {{date}} – wartet auf Bestätigung",
+					"confirmed": "Termin bestätigt: {{date}}",
+					"declined": "Terminanfrage abgelehnt: {{date}}",
+					"withdrawn": "Terminanfrage zurückgezogen: {{date}}",
+					"expired": "Terminanfrage abgelaufen: {{date}} – sie wurde bis zum Beginn nicht beantwortet"
 				},
 				"noticeFailed": {
 					"title": "Hinweis nicht gesendet",
@@ -4831,6 +4839,12 @@
 				"cancelFailed": {
 					"title": "Termin nicht abgesagt",
 					"text": "Der Termin konnte nicht abgesagt werden. Bitte versuchen Sie es erneut."
+				},
+				"request": {
+					"marker": "Angefragt",
+					"failedTitle": "Terminanfrage nicht beantwortet",
+					"taken": "Diese Zeit ist inzwischen belegt. Lehnen Sie die Anfrage ab oder schlagen Sie im Chat eine andere Zeit vor.",
+					"failed": "Das hat nicht geklappt. Bitte versuchen Sie es noch einmal."
 				}
 			}
 		},
@@ -5351,6 +5365,12 @@
 		"timeline": {
 			"join": "Beitreten",
 			"joinFailed": "Der Beitritt ist gerade nicht möglich. Beenden Sie gegebenenfalls Ihren anderen Anruf und versuchen Sie es erneut.",
+			"counsellorCallPending": "Der Anruf hat noch nicht begonnen",
+			"counsellorCallPendingText": "Nur Ihre Beraterin oder Ihr Berater kann den Anruf starten. Sie können beitreten, sobald sie oder er Sie anruft. Bitte warten Sie auf den Anruf.",
+			"leaveRunningCallTitle": "Laufenden Anruf beenden und beitreten?",
+			"leaveRunningCallText": "Ihre Beraterin oder Ihr Berater ruft Sie an. Sie sind noch in einem anderen Anruf; er wird beendet, wenn Sie beitreten.",
+			"leaveRunningCallStay": "Im Anruf bleiben",
+			"leaveRunningCallJoin": "Beenden und beitreten",
 			"endedElsewhere": "Dieser Anruf ist bereits beendet.",
 			"video": {
 				"running": "Videoanruf läuft",
@@ -5370,6 +5390,43 @@
 			"rejectCall": "Video-Call ablehnen",
 			"startCall": "Audio-Call starten",
 			"startVideoCall": "Video-Call starten"
+		},
+		"askerInfo": {
+			"title": "Anrufe startet Ihre Beratungsperson",
+			"description": "Sie können hier keinen Anruf starten. Ihre Beratungsperson ruft Sie zum vereinbarten Termin hier im Gespräch an.",
+			"next": "Ihr nächster Termin",
+			"medium": {
+				"video": "Videoanruf",
+				"phone": "Telefonanruf",
+				"onsite": "Vor Ort",
+				"chat": "Chat"
+			},
+			"none": "Für dieses Gespräch ist noch kein Termin vereinbart.",
+			"requestHint": "Schreiben Sie Ihrer Beratungsperson im Chat, wann es Ihnen passt.",
+			"requestHintBooking": "Wählen Sie eine freie Zeit Ihrer Beratungsperson und buchen Sie den Termin direkt.",
+			"request": "Termin anfragen",
+			"loading": "Der Termin wird geladen …",
+			"error": "Der Termin konnte gerade nicht geladen werden. Bitte versuchen Sie es später noch einmal.",
+			"booking": {
+				"title": "Termin buchen",
+				"description": {
+					"video": "Wählen Sie eine freie Zeit Ihrer Beratungsperson für einen Videoanruf. Mit „Sofort gebucht“ markierte Zeiten stehen gleich fest, Anfragen bestätigt Ihre Beratungsperson.",
+					"phone": "Wählen Sie eine freie Zeit Ihrer Beratungsperson für einen Telefonanruf. Mit „Sofort gebucht“ markierte Zeiten stehen gleich fest, Anfragen bestätigt Ihre Beratungsperson."
+				},
+				"loading": "Freie Zeiten werden geladen …",
+				"error": "Die freien Zeiten konnten gerade nicht geladen werden. Bitte versuchen Sie es später noch einmal.",
+				"none": "Ihre Beratungsperson hat in den nächsten zwei Wochen keine freie Zeit.",
+				"writeInChat": "Im Chat schreiben",
+				"back": "Zurück",
+				"confirm": "Termin buchen",
+				"taken": "Diese Zeit ist gerade vergeben worden. Bitte wählen Sie eine andere.",
+				"failed": "Der Termin konnte nicht gebucht werden. Bitte versuchen Sie es noch einmal.",
+				"booked": "Ihr Termin ist gebucht. Ihre Beratungsperson wird im Chat benachrichtigt.",
+				"limit": "Für dieses Gespräch ist schon ein Termin gebucht.",
+				"confirmRequest": "Termin anfragen",
+				"requested": "Ihre Anfrage ist gesendet. Sie wartet auf die Bestätigung Ihrer Beratungsperson."
+			},
+			"nextRequested": "Ihr angefragter Termin"
 		},
 		"incomingCall": {
 			"description": "ruft an...",
@@ -7612,6 +7669,38 @@
 		"links": {
 			"title": "Links ohne Termin",
 			"hint": "Einladungslinks, die Sie teilen können: kopieren oder als QR-Code zeigen."
+		},
+		"consultationHours": {
+			"title": "Sprechstunden",
+			"description": "In diesen Zeiten können Ratsuchende selbst einen Termin bei Ihnen buchen. Sie gelten unabhängig von Ihrer Arbeitszeit.",
+			"save": "Sprechstunden speichern",
+			"saved": "Sprechstunden gespeichert",
+			"empty": "Ohne Sprechstunden können Ratsuchende keinen Termin buchen.",
+			"none": "Keine Sprechstunden festgelegt",
+			"autoAccept": "Buchungen automatisch bestätigen",
+			"autoAcceptOn": "Nach der Vorlaufzeit ist ein Termin sofort gebucht; kurzfristige Buchungen sind Anfragen.",
+			"autoAcceptOff": "Jede Buchung ist eine Anfrage, die Sie bestätigen.",
+			"noticeDays": "Vorlaufzeit",
+			"noticeDaysHint": "Innerhalb dieser Tage vor dem Termin wird eine Buchung zur Anfrage.",
+			"noticeDaysOption": "{{count}} Tage",
+			"noticeDaysOption_one": "{{count}} Tag",
+			"slotMinutes": "Dauer eines Termins",
+			"minutes": "{{count}} Min.",
+			"invalid": "Das Ende muss nach dem Beginn liegen.",
+			"loadFailed": "Konnten nicht geladen werden. Erneut versuchen",
+			"overlaps": "Die Zeiten überschneiden sich mit einer weiteren Sprechstunde an diesem Tag."
+		},
+		"appointmentRequest": {
+			"status": "Angefragt · wartet auf Sie",
+			"from": "Anfrage von {{name}}",
+			"menu": "Termin angefragt",
+			"hint": "Bis Sie antworten, ist die Zeit vorgemerkt. Ohne Antwort bis zum Beginn verfällt die Anfrage.",
+			"confirm": "Bestätigen",
+			"confirmHint": "Der Termin wird fest eingetragen",
+			"decline": "Ablehnen",
+			"declineHint": "Die Zeit wird wieder frei",
+			"confirmed": "Termin bestätigt: {{date}}.",
+			"declined": "Terminanfrage abgelehnt: {{date}}."
 		},
 		"absence": {
 			"description": "Wählen Sie die Tage, an denen Sie abwesend sind. Ratsuchende sehen in dieser Zeit Ihre Abwesenheitsnachricht.",

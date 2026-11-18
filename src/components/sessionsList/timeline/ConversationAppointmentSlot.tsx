@@ -4,7 +4,8 @@
  * header stays as it was: creating one is a ⋮ menu entry, which this slot
  * offers through `onCreateChange` and answers with its date dialog.
  * A backend without the endpoint offers nothing: there would be nowhere to
- * store the appointment.
+ * store the appointment. An advice seeker's request (FE#2287) shows in the
+ * same button, marked "angefragt"; its menu answers or withdraws it.
  */
 import * as React from 'react';
 import { useCallback, useContext, useEffect, useState } from 'react';
@@ -15,9 +16,11 @@ import {
 	UserDataContext
 } from '../../../globalState';
 import {
+	apiClaimSessionAppointmentExpiryNotice,
 	apiGetSessionAppointments,
 	type SessionAppointment
 } from '../../../api/apiSessionAppointments';
+import { useAppointmentNotice } from './useAppointmentNotice';
 import {
 	AppointmentDateDialog,
 	type AppointmentDateDialogProps
@@ -29,6 +32,7 @@ import {
 	appointmentToBooking,
 	appointmentsEpoch,
 	knownSessionAppointments,
+	nextConversationAppointment,
 	onAppointmentsChanged,
 	rememberSessionAppointments,
 	upcomingAppointments
@@ -36,6 +40,7 @@ import {
 import { lendAppointmentCreate } from './appointmentCreateBridge';
 import { buildFutureEntries, type FutureEntry } from './timelineModel';
 import { useAppointmentActions } from './useAppointmentActions';
+import { useRequestExpiryTick } from './useRequestExpiryTick';
 
 /* #2252: "Weitere Personen per Link einladen" only where "Direkteinladung
    erlauben" allows a medium. Mounted with the dialog, so the agencies'
@@ -127,6 +132,34 @@ export const ConversationAppointmentSlot = ({
 		};
 	}, [sessionId, reload]);
 
+	/*
+	 * FE#2287: a request nobody answered by its start was declined by
+	 * UserService, which cannot write into the encrypted room. Whoever opens
+	 * the conversation first claims the notice and posts it, the way a
+	 * counsellor's decline is posted; a lost claim posts nothing.
+	 */
+	const sendNotice = useAppointmentNotice();
+	useEffect(() => {
+		if (sessionId === undefined || !Array.isArray(appointments)) return;
+		appointments
+			.filter((a) => a.expired && a.noticePending)
+			.forEach((a) => {
+				apiClaimSessionAppointmentExpiryNotice(sessionId, a.id).then(
+					() =>
+						sendNotice({
+							kind: 'expired',
+							start: new Date(a.startTime),
+							end: new Date(a.endTime),
+							sessionId,
+							matrixRoomId
+						}),
+					() => undefined
+				);
+			});
+		// Once per load of the list.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [appointments]);
+
 	const onAction = useAppointmentActions({
 		onMove: (entry) => setDialog({ entry })
 	});
@@ -138,12 +171,17 @@ export const ConversationAppointmentSlot = ({
 		onCreateChange(canCreate ? openCreate : undefined);
 		return () => onCreateChange(undefined);
 	}, [canCreate, onCreateChange, openCreate]);
+	/* A request expires at its start (FE#2287): the slot renders again then. */
+	useRequestExpiryTick(appointments);
+	/* The split button shows the nearest appointment or request (FE#2287). */
 	const next = Array.isArray(appointments)
-		? upcomingAppointments(appointments, new Date())[0]
+		? nextConversationAppointment(appointments, new Date())
 		: undefined;
 	/* The chat's cancelled-appointment card offers "Neuen Termin anlegen"
 	   with this same opener, so it follows the same rule. */
-	const hasUpcoming = next !== undefined;
+	const hasUpcoming = Array.isArray(appointments)
+		? upcomingAppointments(appointments, new Date()).length > 0
+		: false;
 	useEffect(() => {
 		if (!canCreate || sessionId === undefined) return undefined;
 		return lendAppointmentCreate(sessionId, {
