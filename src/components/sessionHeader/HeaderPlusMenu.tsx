@@ -70,8 +70,18 @@ export const HeaderPlusMenu = ({
 			!menuRef.current?.contains(e.target as Node) &&
 			!opener.current?.contains(e.target as Node) &&
 			onClose();
+		// A press outside the menu and the "+" closes it, also with menu
+		// effects off, when there is no backdrop to take that press.
+		const onPress = (e: MouseEvent) =>
+			!menuRef.current?.contains(e.target as Node) &&
+			!opener.current?.contains(e.target as Node) &&
+			onClose();
 		document.addEventListener('focusin', onFocus);
-		return () => document.removeEventListener('focusin', onFocus);
+		document.addEventListener('mousedown', onPress);
+		return () => {
+			document.removeEventListener('focusin', onFocus);
+			document.removeEventListener('mousedown', onPress);
+		};
 	}, [onClose, opener]);
 
 	return (

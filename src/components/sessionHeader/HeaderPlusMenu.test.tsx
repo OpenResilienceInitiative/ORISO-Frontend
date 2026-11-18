@@ -165,4 +165,12 @@ describe('HeaderPlusMenu', () => {
 		fireEvent.click(item('caseHandover.offer.open'));
 		expect(focusedOnOpen).toBe(second.opener);
 	});
+
+	it('closes on a press outside the menu and the "+", not on the "+" (review)', async () => {
+		const { onClose, opener } = await renderMenu();
+		fireEvent.mouseDown(opener);
+		expect(onClose).not.toHaveBeenCalled();
+		fireEvent.mouseDown(document.body);
+		expect(onClose).toHaveBeenCalledTimes(1);
+	});
 });

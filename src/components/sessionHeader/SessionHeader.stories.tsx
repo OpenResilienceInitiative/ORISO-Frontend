@@ -47,6 +47,7 @@ import {
 } from '../message/messageStoryShell';
 import { RoomNextAppointment } from '../sessionsList/timeline/AppointmentSplitButton';
 import type { FutureEntry } from '../sessionsList/timeline/timelineModel';
+import { saveMenuEffects } from '../../features/menu-effects/useMenuEffects';
 import './sessionHeader.styles.scss';
 
 const APP_ORISO_CHAT_HEADER_FIGMA_URL =
@@ -970,6 +971,45 @@ export const PlusMenuSecondPressOnPlus: Story = {
 		);
 		await expect(beside).not.toBeNull();
 		await expect(beside!.closest('.MuiPopover-root')).toBeNull();
+	}
+};
+
+/** Review: with menu effects off there is no backdrop. A press on a plain,
+ *  non-focusable spot outside the menu still closes it. */
+export const PlusMenuOutsidePressWithoutEffects: Story = {
+	globals: { viewport: { value: 'desktop1366', isRotated: false } },
+	render: () => renderSessionHeader(mockActiveConversation()),
+	play: async ({ canvasElement }) => {
+		saveMenuEffects(false, CONSULTANT_ID);
+		try {
+			const plus = await waitFor(() => {
+				const button = canvasElement.querySelector<HTMLButtonElement>(
+					'.chatroomMainInteractionIcon__add--interactive'
+				);
+				expect(button).not.toBeNull();
+				return button!;
+			});
+			await userEvent.click(plus);
+			await within(document.body).findByRole('menu');
+			await expect(
+				document.querySelector('.orisoMenuBackdrop')
+			).toBeNull();
+			const spot = document.elementFromPoint(
+				window.innerWidth - 4,
+				window.innerHeight - 4
+			) as HTMLElement;
+			await expect(spot.closest('[role="menu"]')).toBeNull();
+			await expect(
+				spot.closest('button, a, input, [tabindex]')
+			).toBeNull();
+			await userEvent.click(spot);
+			await waitFor(() =>
+				expect(within(document.body).queryByRole('menu')).toBeNull()
+			);
+			await expect(plus).toHaveAttribute('aria-expanded', 'false');
+		} finally {
+			saveMenuEffects(true, CONSULTANT_ID);
+		}
 	}
 };
 
