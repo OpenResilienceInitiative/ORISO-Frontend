@@ -885,7 +885,8 @@
 				"activated": {
 					"label": "Deaktiviere Deine Abwesenheit, um eine Nachricht zu hinterlegen oder sie zu bearbeiten."
 				},
-				"label": "Hinterlege eine Abwesenheitsnachricht"
+				"label": "Hinterlege eine Abwesenheitsnachricht",
+				"dateHint": "Ohne Datum gilt die Abwesenheit bis auf Weiteres, bis du sie ausschaltest. Nach dem Bis-Datum bist du automatisch wieder anwesend."
 			},
 			"liveChat": {
 				"title": "Meine Live-Chat Verfügbarkeit",
@@ -3054,6 +3055,14 @@
 		},
 		"entryMenu": {
 			"withYou": "Du und {{name}}"
+		},
+		"absence": {
+			"description": "Wähle die Tage, an denen du abwesend bist. Ratsuchende sehen in dieser Zeit deine Abwesenheitsnachricht.",
+			"messageHint": "Ratsuchende sehen diese Nachricht, können dir aber weiterhin schreiben.",
+			"effect": "Nach dem letzten Tag bist du automatisch wieder anwesend. Dieselbe Abwesenheit steht in deinem Profil.",
+			"conflicts": "In diesem Zeitraum liegen {{count}} Termine. Sie bleiben bestehen – sag sie bei Bedarf selbst ab oder verschiebe sie.",
+			"conflicts_one": "In diesem Zeitraum liegt {{count}} Termin. Er bleibt bestehen – sag ihn bei Bedarf selbst ab oder verschiebe ihn.",
+			"saved": "Abwesenheit eingetragen. Sie steht auch in deinem Profil."
 		}
 	},
 	"guestAccountMode": {

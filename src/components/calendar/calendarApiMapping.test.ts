@@ -287,3 +287,26 @@ describe('proposalFromApi (move proposals v1)', () => {
 		expect('approverName' in mapped).toBe(false);
 	});
 });
+
+describe('entryFromApi — planned absence (ORISO-Frontend#2303)', () => {
+	it('reads ABSENCE as an all-day absence entry, never movable', () => {
+		expect(
+			entryFromApi({
+				id: 'absence-me',
+				type: 'ABSENCE',
+				start: '2026-12-20T23:00:00Z',
+				end: '2027-01-03T23:00:00Z',
+				ownerId: 'me',
+				movable: false
+			})
+		).toEqual({
+			id: 'absence-me',
+			type: 'absence',
+			start: '2026-12-20T23:00:00Z',
+			end: '2027-01-03T23:00:00Z',
+			ownerId: 'me',
+			allDay: true,
+			movable: false
+		});
+	});
+});

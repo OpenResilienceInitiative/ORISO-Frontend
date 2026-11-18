@@ -10,6 +10,13 @@ export interface UserDataInterface {
 	chatRecoveryPolicyRevision?: number | null;
 	absenceMessage?: string;
 	absent?: boolean;
+	/**
+	 * Planned absence (ORISO-Frontend#2303), YYYY-MM-DD, inclusive. Set only
+	 * while the absence is on and not over; absent=false with a start means
+	 * planned, not begun.
+	 */
+	absenceStart?: string | null;
+	absenceEnd?: string | null;
 	agencies: AgencyDataInterface[];
 	appointmentFeatureEnabled?: boolean;
 	available?: boolean;

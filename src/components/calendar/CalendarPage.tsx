@@ -175,6 +175,7 @@ import { HoverScrollArrows } from '../hoverScrollArrows/HoverScrollArrows';
 import type { InvitationPreset } from '../directInvitation/invitationModel';
 import type { DirectLinkMedium } from '../conversationCreate/directLink/directLink';
 import { NewEntryDialog } from './NewEntryDialog';
+import type { AbsenceDraft } from './AbsenceForm';
 import { BlockerCreatedMessage } from './BlockerDialog';
 import { MoveConflictDialog } from './MoveConflictDialog';
 import {
@@ -286,6 +287,13 @@ export interface CalendarPageProps {
 	 * that was entered at once.
 	 */
 	onCreate?: (drafts: AppointmentDraft[]) => ChangeResult;
+	/**
+	 * "Neuer Eintrag" → "Abwesenheit": stores the planned absence the
+	 * profile holds (ORISO-Frontend#2303). Without it there is no such tab.
+	 */
+	onSaveAbsence?: (draft: AbsenceDraft) => ChangeResult;
+	/** The absence the profile holds already, to edit it there. */
+	absence?: Partial<AbsenceDraft>;
 	/**
 	 * "Termin": "Weitere Personen per Link einladen" where "Direkteinladung
 	 * erlauben" allows it (as "Termin anlegen" in a 1:1).
@@ -538,6 +546,8 @@ export const CalendarPage = ({
 	initialSplitDays = 1,
 	now: fixedNow,
 	onCreate,
+	onSaveAbsence,
+	absence,
 	allowGuestInvite,
 	inviteMedia,
 	onInviteNewPerson,
@@ -903,6 +913,20 @@ export const CalendarPage = ({
 				}
 			);
 		return done(undefined);
+	};
+
+	/** The planned absence; the dialog that saved it closes once stored. */
+	const saveAbsence = (draft: AbsenceDraft) => {
+		const origin = dialog;
+		const outcome = run(onSaveAbsence?.(draft), {
+			message: t('calendar.absence.saved')
+		});
+		const close = (stored: boolean) => {
+			if (stored)
+				setDialog((current) => (current === origin ? null : current));
+		};
+		if (typeof outcome === 'boolean') close(outcome);
+		else outcome.then(close);
 	};
 
 	/** A room that cannot be opened says so instead of doing nothing. */
@@ -3181,6 +3205,8 @@ export const CalendarPage = ({
 							? () => setDialog({ type: 'workingHours' })
 							: undefined
 					}
+					onSaveAbsence={onSaveAbsence ? saveAbsence : undefined}
+					initialAbsence={absence}
 					onClose={() => setDialog(null)}
 				/>
 			)}
