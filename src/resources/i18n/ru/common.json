@@ -2247,7 +2247,11 @@
 			"pendingLead": "{{number}} · {{author}}",
 			"pendingStatus": "Ответ {{number}} для {{author}}, собран для следующего сообщения",
 			"remove": "Удалить ответ {{number}}",
-			"voiceDuration": "Голосовое сообщение {{duration}}"
+			"voiceDuration": "Голосовое сообщение {{duration}}",
+			"sendFailed": {
+				"title": "Ответы не отправлены",
+				"text": "Ваши ответы на отмеченные места всё ещё собраны. Пожалуйста, отправьте их ещё раз."
+			}
 		},
 		"thread": {
 			"unknownRoot": "Предыдущее сообщение",

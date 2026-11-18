@@ -2241,7 +2241,11 @@
 			"pendingLead": "{{number}} · {{author}}",
 			"pendingStatus": "Reply {{number}} to {{author}}, collected for the next message",
 			"remove": "Remove reply {{number}}",
-			"voiceDuration": "Voice message {{duration}}"
+			"voiceDuration": "Voice message {{duration}}",
+			"sendFailed": {
+				"title": "Answers not sent",
+				"text": "Your answers to the marked passages are still collected. Please send them again."
+			}
 		},
 		"thread": {
 			"unknownRoot": "Earlier message",

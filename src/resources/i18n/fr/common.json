@@ -2242,7 +2242,11 @@
 			"pendingLead": "{{number}} · {{author}}",
 			"pendingStatus": "Réponse {{number}} à {{author}}, réunie pour le prochain message",
 			"remove": "Retirer la réponse {{number}}",
-			"voiceDuration": "Message vocal {{duration}}"
+			"voiceDuration": "Message vocal {{duration}}",
+			"sendFailed": {
+				"title": "Réponses non envoyées",
+				"text": "Vos réponses aux passages marqués sont toujours rassemblées. Veuillez les renvoyer."
+			}
 		},
 		"thread": {
 			"unknownRoot": "Message précédent",

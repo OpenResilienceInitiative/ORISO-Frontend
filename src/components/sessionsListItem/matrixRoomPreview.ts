@@ -1,3 +1,7 @@
+import {
+	getPassageReplies,
+	getPassageRepliesText
+} from '../selectionReply/passageReplyContent';
 import { stripReplyFallback } from '../../utils/messageRelations';
 import {
 	getSystemNotificationPreview,
@@ -236,6 +240,29 @@ const toPreview = (event: MatrixPreviewEvent): MatrixRoomPreview | null => {
 	return preview;
 };
 
+/**
+ * Answers to marked passages (ADR-022): the list shows what was written —
+ * the composer text, else the first written answer — never the `>` quote
+ * fallback in `body`. Voice-only answers read as a voice message.
+ */
+const toPassageRepliesPreview = (
+	content: Record<string, any>,
+	replies: NonNullable<ReturnType<typeof getPassageReplies>>
+): MatrixRoomPreview | null => {
+	const written =
+		getPassageRepliesText(content) ||
+		replies.find((reply) => reply.text)?.text ||
+		'';
+	const text = toMessagePreviewText(written);
+	if (text) {
+		return { kind: 'text', text };
+	}
+	const clip = replies.find((reply) => reply.audio)?.audio;
+	return clip
+		? { kind: 'voice', text: null, durationMs: clip.durationMs }
+		: null;
+};
+
 const toKindPreview = (
 	content: Record<string, any>
 ): MatrixRoomPreview | null => {
@@ -259,6 +286,10 @@ const toKindPreview = (
 			}
 			if (systemNotice) {
 				return { kind: systemNotice, text: null };
+			}
+			const passageReplies = getPassageReplies(content);
+			if (passageReplies) {
+				return toPassageRepliesPreview(content, passageReplies);
 			}
 			const text = toMessagePreviewText(stripReplyFallback(body));
 			return text ? { kind: 'text', text } : null;
