@@ -560,6 +560,119 @@ describe('call manager durable timeline', () => {
 		);
 	});
 
+	it('answers the call that still rings here when the person presses Join', async () => {
+		callManager.receiveCall(
+			'!media:example',
+			true,
+			'ringing-call',
+			'@counsellor:example',
+			false,
+			'!conversation:example',
+			true
+		);
+		const result = await callManager.joinExistingCall(
+			{
+				callId: 'ringing-call',
+				roomRef: '!conversation:example',
+				callRoomId: '!media:example',
+				callType: 'video',
+				state: 'running',
+				participants: []
+			},
+			false
+		);
+		expect(result).toBe('joined');
+		expect(callManager.getCurrentCall()).toMatchObject({
+			callId: 'ringing-call',
+			isIncoming: true,
+			state: 'connecting'
+		});
+		expect(joinRoom).not.toHaveBeenCalled();
+	});
+
+	it('waits for the sync of a call room it has only just joined', async () => {
+		const source = { getMyMembership: () => 'join' };
+		const media = {
+			getMyMembership: () => 'join',
+			hasEncryptionStateEvent: () => false
+		};
+		getRoom.mockImplementation((id: string) =>
+			id === '!conversation:example' ? source : null
+		);
+		joinRoom.mockImplementation(async () => {
+			getRoom.mockImplementation((id: string) =>
+				id === '!conversation:example' ? source : media
+			);
+			// The sync brings encryption and the counsellor's membership later.
+			setTimeout(() => {
+				media.hasEncryptionStateEvent = () => true;
+				session.memberships = [{ sender: '@counsellor:example' }];
+			}, 400);
+			return media;
+		});
+		const result = await callManager.joinExistingCall(
+			{
+				callId: 'fresh-join',
+				roomRef: '!conversation:example',
+				callRoomId: '!media:example',
+				callType: 'video',
+				state: 'running',
+				participants: []
+			},
+			false
+		);
+		expect(result).toBe('joined');
+		expect(leave).not.toHaveBeenCalled();
+		expect(callManager.getCurrentCall()).toMatchObject({
+			callId: 'fresh-join',
+			state: 'connecting'
+		});
+	});
+
+	it('stops ringing once the invitation has run out', () => {
+		vi.useFakeTimers();
+		try {
+			callManager.receiveCall(
+				'!media:example',
+				true,
+				'unanswered',
+				'@counsellor:example',
+				false,
+				'!conversation:example',
+				true
+			);
+			vi.advanceTimersByTime(59_000);
+			expect(callManager.getCurrentCall()?.state).toBe('ringing');
+			vi.advanceTimersByTime(1_000);
+			expect(callManager.getCurrentCall()).toBeNull();
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
+	it('keeps an answered call when the invitation runs out', () => {
+		vi.useFakeTimers();
+		try {
+			callManager.receiveCall(
+				'!media:example',
+				true,
+				'answered',
+				'@counsellor:example',
+				false,
+				'!conversation:example',
+				true
+			);
+			callManager.answerCall();
+			vi.advanceTimersByTime(60_000);
+			expect(callManager.getCurrentCall()).toMatchObject({
+				callId: 'answered',
+				state: 'connecting'
+			});
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
 	it('does not replace a newer incoming call when an older timeline join finishes', async () => {
 		const source = { getMyMembership: () => 'join' };
 		const media = {
