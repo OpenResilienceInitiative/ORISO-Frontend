@@ -232,6 +232,11 @@ $room-header-gap-top: 2px;
 			margin-left: 0;
 		}
 
+		// Keep the title visibly separate from the adjacent call/menu controls.
+		&.sessionInfo__username {
+			margin-inline-end: 8px;
+		}
+
 		&--deactivate {
 			cursor: unset;
 		}
