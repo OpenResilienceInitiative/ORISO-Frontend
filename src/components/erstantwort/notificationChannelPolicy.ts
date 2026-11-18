@@ -33,8 +33,16 @@ export const notificationChannelPolicy = (
 /** UI solicitation requires both collection and delivery. */
 export const emailCollectionSetupPolicy = (
 	settings: Partial<TenantDataSettingsInterface> | undefined,
-	conversationType: string | null | undefined
+	conversationType: string | null | undefined,
+	/**
+	 * UserService#1662: a temporary account is offered neither e-mail nor
+	 * browser notifications until it is kept (the server refuses both).
+	 */
+	account?: { temporaryAccount?: boolean } | null
 ) => {
+	if (account?.temporaryAccount) {
+		return { emailAllowed: false, browserAllowed: false };
+	}
 	const channels = notificationChannelPolicy(settings, conversationType);
 	return {
 		...channels,

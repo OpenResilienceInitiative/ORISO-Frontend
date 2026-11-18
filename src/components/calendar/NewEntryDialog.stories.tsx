@@ -1,39 +1,54 @@
-import * as React from 'react';
-import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
+import { expect, fn, userEvent, within } from 'storybook/test';
 import { NewEntryDialog } from './NewEntryDialog';
-import { AutoAcceptDialog } from './AutoAcceptDialog';
-import {
-	COLLEAGUES,
-	CONVERSATIONS,
-	ME,
-	OWN_ENTRIES,
-	STORY_NOW
-} from './calendarStoryData';
-import './calendar.styles.scss';
+import type { CalendarEntry } from './calendarModel';
+import './calendar.styles';
 
 /**
- * "Neuer Eintrag" → Termin: with an advice seeker or with a colleague
- * (FE#2305, Frank 2026-11-17: "Was ist, wenn ich einfach mit einem Kollegen
- * sprechen will?"). With a colleague, the appointment goes into the private
- * internal chat of the two; every kind is offered.
+ * ORISO-Frontend#2303: "Neuer Eintrag" with the third tab "Abwesenheit".
+ * A planned absence over whole days; it is the same absence as in the
+ * profile. Appointments inside the range are listed, never cancelled
+ * (Frank, 2026-11-17).
  */
+const NOW = new Date(2026, 11, 14, 9, 0);
+const INSIDE: CalendarEntry = {
+	id: 'a1',
+	type: 'appointment',
+	kind: 'video',
+	ownerId: 'me',
+	title: 'mutige_eule',
+	start: new Date(2026, 11, 22, 10).toISOString(),
+	end: new Date(2026, 11, 22, 11).toISOString()
+};
+
 const meta: Meta<typeof NewEntryDialog> = {
-	title: 'Templates/Calendar/Neuer Eintrag',
+	title: 'Components/Calendar/Neuer Eintrag',
 	component: NewEntryDialog,
 	globals: { locale: 'de' },
-	parameters: { layout: 'fullscreen' },
+	parameters: {
+		layout: 'fullscreen',
+		docs: {
+			description: {
+				component:
+					'"Neuer Eintrag" with the tabs Termin | Sperrzeit | Abwesenheit. "Abwesenheit" (ORISO-Frontend#2303) sets the planned absence of the profile: from–until, inclusive, with the message advice seekers see. After the last day the counsellor is present again automatically. Appointments inside the range are listed as a warning and stay in place.'
+			}
+		}
+	},
 	args: {
 		open: true,
-		initialTab: 'appointment',
-		conversations: CONVERSATIONS,
-		colleagues: COLLEAGUES,
-		entries: OWN_ENTRIES,
-		ownerId: ME,
-		now: STORY_NOW,
+		initialTab: 'absence',
+		conversations: [{ sessionId: 7, username: 'mutige_eule' }],
+		entries: [],
+		ownerId: 'me',
+		now: NOW,
+		slot: {
+			start: new Date(2026, 11, 21),
+			end: new Date(2026, 11, 22)
+		},
+		initialAbsence: { message: 'Ich bin im Urlaub.' },
 		onSaveAppointment: fn(),
 		onSaveBlocker: fn(),
+		onSaveAbsence: fn(),
 		onClose: fn()
 	}
 };
@@ -42,123 +57,41 @@ type Story = StoryObj<typeof meta>;
 
 const body = () => within(document.body);
 
-/** As before: a counselling conversation is chosen. */
-export const WithAdviceSeeker: Story = {};
-
-/** "Kolleg:in" chosen: the colleague list replaces "Beratung". */
-export const WithColleague: Story = {
+/** The absence tab with the range preset from the selected day. */
+export const Abwesenheit: Story = {
 	play: async ({ args }) => {
-		await userEvent.click(
-			await body().findByRole('radio', { name: 'Kolleg:in' })
-		);
+		const save = await body().findByTestId('calendar-absence-save');
 		await expect(
-			body().queryByRole('combobox', { name: 'Beratung' })
+			body().queryByTestId('calendar-absence-conflicts')
 		).toBeNull();
-		await userEvent.click(
-			await body().findByRole('combobox', { name: 'Kolleg:in' })
-		);
-		await userEvent.click(
-			await body().findByRole('option', {
-				name: new RegExp(COLLEAGUES[0].displayName)
-			})
-		);
-		await userEvent.click(
-			await body().findByRole('button', { name: 'Vor Ort' })
-		);
-		await userEvent.click(
-			await body().findByTestId('calendar-appointment-save')
-		);
-		await waitFor(() =>
-			expect(args.onSaveAppointment).toHaveBeenCalledWith(
-				expect.objectContaining({
-					colleagueId: COLLEAGUES[0].id,
-					kind: 'onsite'
-				})
-			)
-		);
+		await userEvent.click(save);
+		await expect(args.onSaveAbsence).toHaveBeenCalledWith({
+			start: '2026-12-21',
+			end: '2026-12-27',
+			message: 'Ich bin im Urlaub.'
+		});
 	}
 };
 
-/** Saving without a colleague asks for one. */
-export const WithColleagueMissing: Story = {
-	play: async ({ args }) => {
-		await userEvent.click(
-			await body().findByRole('radio', { name: 'Kolleg:in' })
-		);
-		await userEvent.click(
-			await body().findByTestId('calendar-appointment-save')
-		);
-		await expect(await body().findByRole('alert')).toHaveTextContent(
-			'Bitte eine Kollegin oder einen Kollegen wählen.'
-		);
-		await expect(args.onSaveAppointment).not.toHaveBeenCalled();
-	}
-};
-
-/**
- * A colleague the Träger allows no internal chat with: only "Vor Ort"
- * (Frank, 2026-11-17).
- */
-export const WithColleagueOnSiteOnly: Story = {
-	args: {
-		colleagues: [
-			{ ...COLLEAGUES[0], internalChat: false },
-			...COLLEAGUES.slice(1)
-		]
-	},
-	play: async ({ args }) => {
-		await userEvent.click(
-			await body().findByRole('radio', { name: 'Kolleg:in' })
-		);
-		await userEvent.click(
-			await body().findByRole('combobox', { name: 'Kolleg:in' })
-		);
-		await userEvent.click(
-			await body().findByRole('option', {
-				name: new RegExp(COLLEAGUES[0].displayName)
-			})
-		);
-		await expect(
-			body().queryByRole('button', { name: 'Video' })
-		).toBeNull();
-		await expect(
-			await body().findByText(/Möglich ist nur ein Termin vor Ort/)
-		).toBeTruthy();
-		await userEvent.click(
-			await body().findByTestId('calendar-appointment-save')
-		);
-		await waitFor(() =>
-			expect(args.onSaveAppointment).toHaveBeenCalledWith(
-				expect.objectContaining({ kind: 'onsite' })
-			)
-		);
-	}
-};
-
-const AutoAcceptStory = () => {
-	const [selected, setSelected] = useState<string[]>([COLLEAGUES[1].id]);
-	return (
-		<AutoAcceptDialog
-			open
-			colleagues={COLLEAGUES}
-			selected={selected}
-			onSave={setSelected}
-			onClose={() => undefined}
-		/>
-	);
-};
-
-/** More menu → "Termine automatisch annehmen …": the colleague multi-select. */
-export const AutoAccept: StoryObj = {
-	render: () => <AutoAcceptStory />,
+/** An appointment falls in the range: listed, not cancelled. */
+export const AbwesenheitMitTermin: Story = {
+	args: { entries: [INSIDE] },
 	play: async () => {
+		const warning = await body().findByTestId('calendar-absence-conflicts');
+		await expect(warning).toHaveTextContent('mutige_eule');
 		await expect(
-			await body().findByTestId('calendar-auto-accept-dialog')
-		).toBeTruthy();
+			body().getByTestId('calendar-absence-save')
+		).toHaveTextContent('Trotzdem anlegen');
+	}
+};
+
+/** Without a way to store an absence (an asker) there is no third tab. */
+export const OhneAbwesenheit: Story = {
+	args: { initialTab: 'appointment', onSaveAbsence: undefined },
+	play: async () => {
+		await body().findByTestId('calendar-appointment-dialog');
 		await expect(
-			body().getByText(
-				'Termine von allen anderen warten, bis Sie sie annehmen.'
-			)
-		).toBeTruthy();
+			document.querySelector('[data-cy="calendar-new-tab-absence"]')
+		).toBeNull();
 	}
 };

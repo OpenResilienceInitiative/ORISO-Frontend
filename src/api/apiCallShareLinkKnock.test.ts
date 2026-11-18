@@ -43,6 +43,42 @@ describe('apiCallShareLinkKnock (#1892)', () => {
 		await expect(api.apiGetCallShareLinkKnock(CALL)).resolves.toBeNull();
 	});
 
+	/* UserService#1662: the server answers the lookup with the full response,
+	   so a call that cannot be shared is told from a call without a link yet. */
+	const answer = (status: number, reason?: string) =>
+		new Response(null, {
+			status,
+			headers: reason ? { 'X-Reason': reason } : {}
+		});
+
+	it.each([404, 403])(
+		'is null on a %s response without a reason',
+		async (status) => {
+			fetchData.mockRejectedValue(answer(status));
+			await expect(
+				api.apiGetCallShareLinkKnock(CALL)
+			).resolves.toBeNull();
+		}
+	);
+
+	it('says so when the call cannot be shared at all (UserService#1662)', async () => {
+		fetchData.mockRejectedValue(answer(404, 'CALL_SHARE_LINK_NO_CALL'));
+		const refusal = await api
+			.apiGetCallShareLinkKnock(CALL)
+			.catch((e) => e);
+		expect(api.isCallNotShareable(refusal)).toBe(true);
+		expect(api.isCallNotShareable(new Error('CATCH_ALL'))).toBe(false);
+	});
+
+	it('throws, but not as "not shareable", when the server failed', async () => {
+		fetchData.mockRejectedValue(answer(500));
+		const refusal = await api
+			.apiGetCallShareLinkKnock(CALL)
+			.catch((e) => e);
+		expect(refusal).toBeInstanceOf(Error);
+		expect(api.isCallNotShareable(refusal)).toBe(false);
+	});
+
 	it('throws when the server did not answer', async () => {
 		fetchData.mockRejectedValue(new Error('CATCH_ALL'));
 		await expect(api.apiGetCallShareLinkKnock(CALL)).rejects.toThrow();

@@ -3,7 +3,8 @@
  * to enter something, with the tabs Termin | Sperrzeit. "Termin" is the
  * shared invitation form (one flow with "Chat erstellen" and the 1:1's
  * "Termin anlegen"), "Sperrzeit" the blocker form; switching keeps what was
- * entered in the other.
+ * entered in the other. A counsellor also gets "Abwesenheit", a planned
+ * absence over whole days (ORISO-Frontend#2303).
  *
  * The switch is a WAI-ARIA tab list, since it changes the form below: one
  * Tab stop on the selected tab, the arrow keys (wrapping), Home and End
@@ -16,6 +17,7 @@ import { useTranslation } from 'react-i18next';
 import { M3Dialog } from '../m3Dialog/M3Dialog';
 import { useCalendarInvitationForm } from './useCalendarInvitationForm';
 import { useBlockerForm } from './BlockerDialog';
+import { useAbsenceForm, type AbsenceDraft } from './AbsenceForm';
 import { useColleagueAppointmentForm } from './ColleagueAppointmentForm';
 import type { InvitationPreset } from '../directInvitation/invitationModel';
 import type { DirectLinkMedium } from '../conversationCreate/directLink/directLink';
@@ -27,7 +29,7 @@ import type {
 	Colleague
 } from './calendarModel';
 
-export type NewEntryTab = 'appointment' | 'blocker';
+export type NewEntryTab = 'appointment' | 'blocker' | 'absence';
 
 export interface NewEntryDialogProps {
 	open: boolean;
@@ -54,6 +56,13 @@ export interface NewEntryDialogProps {
 	onSaveBlocker: (drafts: AppointmentDraft[]) => void;
 	/** "Arbeitszeit festlegen" under the blocker form. */
 	onWorkingHours?: () => void;
+	/**
+	 * Saves a planned absence; without it there is no "Abwesenheit" tab
+	 * (ORISO-Frontend#2303).
+	 */
+	onSaveAbsence?: (draft: AbsenceDraft) => void;
+	/** The absence the profile holds already, to edit it here. */
+	initialAbsence?: Partial<AbsenceDraft>;
 	/** Termin: "Weitere Personen per Link einladen", as in the 1:1. */
 	allowGuestInvite?: boolean;
 	/** Termin: the media "Direkteinladung erlauben" allows (the Art's medium). */
@@ -63,18 +72,19 @@ export interface NewEntryDialogProps {
 	onClose: () => void;
 }
 
-const TABS: NewEntryTab[] = ['appointment', 'blocker'];
+const TABS: NewEntryTab[] = ['appointment', 'blocker', 'absence'];
 
 type WithWhom = 'conversation' | 'colleague';
 const WITH_WHOM: WithWhom[] = ['conversation', 'colleague'];
 
-/** Which tab a key moves to, from the index of the selected one. */
-const TAB_KEYS: Partial<Record<string, (at: number) => number>> = {
-	ArrowRight: (at) => (at + 1) % TABS.length,
-	ArrowLeft: (at) => (at - 1 + TABS.length) % TABS.length,
-	Home: () => 0,
-	End: () => TABS.length - 1
-};
+/** Which tab a key moves to, from the index of the selected one among `count`. */
+const TAB_KEYS: Partial<Record<string, (at: number, count: number) => number>> =
+	{
+		ArrowRight: (at, count) => (at + 1) % count,
+		ArrowLeft: (at, count) => (at - 1 + count) % count,
+		Home: () => 0,
+		End: (_at, count) => count - 1
+	};
 
 export const NewEntryDialog = ({
 	open,
@@ -93,6 +103,8 @@ export const NewEntryDialog = ({
 	onSaveAppointment,
 	onSaveBlocker,
 	onWorkingHours,
+	onSaveAbsence,
+	initialAbsence,
 	allowGuestInvite,
 	inviteMedia,
 	onInviteNewPerson,
@@ -105,11 +117,14 @@ export const NewEntryDialog = ({
 	const tabId = (value: NewEntryTab) => `${ids}-tab-${value}`;
 	const panelId = `${ids}-panel`;
 	const tabRefs = useRef<Partial<Record<NewEntryTab, HTMLButtonElement>>>({});
+	// "Abwesenheit" only where an absence can be stored (#2303).
+	const tabs = TABS.filter((value) => value !== 'absence' || onSaveAbsence);
+	const shown = tabs.includes(tab) ? tab : 'appointment';
 	const onTabKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>) => {
 		const step = TAB_KEYS[event.key];
 		if (!step) return;
 		event.preventDefault();
-		const next = TABS[step(TABS.indexOf(tab))];
+		const next = tabs[step(tabs.indexOf(shown), tabs.length)];
 		setTab(next);
 		tabRefs.current[next]?.focus();
 	};
@@ -139,6 +154,15 @@ export const NewEntryDialog = ({
 		onSave: onSaveBlocker,
 		onClose
 	});
+	const absence = useAbsenceForm({
+		slot: slot && { start: slot.start, end: slot.end },
+		initialAbsence,
+		entries,
+		ownerId,
+		now,
+		onSave: (draft) => onSaveAbsence?.(draft),
+		onClose
+	});
 	const colleague = useColleagueAppointmentForm({
 		slot,
 		colleagues,
@@ -149,14 +173,16 @@ export const NewEntryDialog = ({
 		onClose
 	});
 	const form =
-		tab === 'blocker'
-			? blocker
-			: withWhom === 'colleague'
+		shown === 'appointment'
+			? withWhom === 'colleague'
 				? colleague
-				: appointment;
-	// "Ratsuchende Person | Kolleg:in" on the line of "Termin | Sperrzeit"
-	// (Frank, 2026-11-17: "alles in eine Linie").
-	const showWithWhom = tab === 'appointment' && colleagues.length > 0;
+				: appointment
+			: shown === 'blocker'
+				? blocker
+				: absence;
+	// "Ratsuchende Person | Kolleg:in" on the line of the tabs (Frank,
+	// 2026-11-17: "alles in eine Linie").
+	const showWithWhom = shown === 'appointment' && colleagues.length > 0;
 	// A radio group: one Tab stop, the arrow keys move and select.
 	const onWithWhomKeyDown = (
 		event: React.KeyboardEvent<HTMLButtonElement>
@@ -164,10 +190,10 @@ export const NewEntryDialog = ({
 		const step = TAB_KEYS[event.key];
 		if (!step) return;
 		event.preventDefault();
-		const next = WITH_WHOM[step(WITH_WHOM.indexOf(withWhom))];
+		const next =
+			WITH_WHOM[step(WITH_WHOM.indexOf(withWhom), WITH_WHOM.length)];
 		setWithWhom(next);
-		const group = event.currentTarget.parentElement;
-		group
+		event.currentTarget.parentElement
 			?.querySelector<HTMLButtonElement>(
 				`[data-cy="calendar-dialog-with-${next}"]`
 			)
@@ -194,7 +220,7 @@ export const NewEntryDialog = ({
 						role="tablist"
 						aria-label={t('calendar.dialog.entryKind')}
 					>
-						{TABS.map((value) => (
+						{tabs.map((value) => (
 							<button
 								key={value}
 								ref={(el) => {
@@ -205,9 +231,9 @@ export const NewEntryDialog = ({
 								role="tab"
 								id={tabId(value)}
 								className="calendarNewEntry__tab"
-								aria-selected={tab === value}
+								aria-selected={shown === value}
 								aria-controls={panelId}
-								tabIndex={tab === value ? 0 : -1}
+								tabIndex={shown === value ? 0 : -1}
 								onClick={() => setTab(value)}
 								onKeyDown={onTabKeyDown}
 								data-cy={`calendar-new-tab-${value}`}
@@ -244,7 +270,11 @@ export const NewEntryDialog = ({
 						</div>
 					)}
 				</div>
-				<div role="tabpanel" id={panelId} aria-labelledby={tabId(tab)}>
+				<div
+					role="tabpanel"
+					id={panelId}
+					aria-labelledby={tabId(shown)}
+				>
 					{form.content}
 				</div>
 			</div>

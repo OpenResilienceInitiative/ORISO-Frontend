@@ -10,8 +10,8 @@ import { CallShareStage } from './callShareStage';
  *
  * The share button sits in the call toolbar. Desktop: a popover above the
  * button. Phone: a bottom sheet. Inside, as decided by Frank (17 + 27 Oct):
- * "Anklopfen" (on by default), "Temporäres Konto" (on by default for audio
- * and video), the link with Copy, a QR code and the phone's own share menu
+ * "Anklopfen" (on by default), "Gastkonto" (UserService#1662: a split-button
+ * select, "Gast wählt" by default for calls), the link with Copy, a QR code and the phone's own share menu
  * (only where the browser has one), then one sentence on the lifetime (the
  * link dies at hang-up) and one on consent (guests confirm with one tap in
  * the existing waiting-room consent sheet — no new consent UI here).
@@ -60,7 +60,7 @@ const sharePanel = async (canvasElement: HTMLElement) => {
 	return panel;
 };
 
-/** Popover default: both toggles on, Copy, QR, Share, both sentences. */
+/** Popover default: knocking on, the guest chooses, Copy, QR, Share, both sentences. */
 export const PopoverDefault: Story = {
 	name: 'Popover – default',
 	globals: desktop1280Globals,
@@ -70,8 +70,11 @@ export const PopoverDefault: Story = {
 			panel.getByRole('switch', { name: 'Anklopfen' })
 		).toBeChecked();
 		await expect(
-			panel.getByRole('switch', { name: 'Temporäres Konto' })
-		).toBeChecked();
+			panel.getByRole('button', { name: 'Gast wählt' })
+		).toBeVisible();
+		await expect(
+			panel.queryByRole('switch', { name: 'Temporäres Konto' })
+		).not.toBeInTheDocument();
 		await expect(panel.getByRole('textbox')).toHaveValue(LINK);
 		await expect(
 			panel.getByRole('button', { name: 'Kopieren' })
@@ -93,44 +96,48 @@ export const PopoverDefault: Story = {
 export const BothTogglesOff: Story = {
 	name: 'Popover – both toggles off',
 	globals: desktop1280Globals,
-	args: { initialSettings: { knock: false, temporaryAccount: false } },
+	args: { initialSettings: { knock: false, guestAccountMode: 'PERMANENT' } },
 	play: async ({ canvasElement }) => {
 		const panel = within(await sharePanel(canvasElement));
 		await expect(
 			panel.getByRole('switch', { name: 'Anklopfen' })
 		).not.toBeChecked();
 		await expect(
-			panel.getByRole('switch', { name: 'Temporäres Konto' })
-		).not.toBeChecked();
+			panel.getByRole('button', { name: 'Dauerhaft' })
+		).toBeVisible();
 		await expect(
 			panel.getByText('Gäste kommen ohne Warten direkt in den Anruf.')
 		).toBeVisible();
 	}
 };
 
-/** Switching "Temporäres Konto" off reports the new settings. */
-export const TemporaryOff: Story = {
-	name: 'Popover – temporary account off',
+/** UserService#1662: the select opens in the popover and reports the new mode. */
+export const GuestAccountMenuOpen: Story = {
+	name: 'Popover – guest account select open',
 	globals: desktop1280Globals,
 	play: async ({ args, canvasElement }) => {
 		const panel = within(await sharePanel(canvasElement));
-		const temporary = panel.getByRole('switch', {
-			name: 'Temporäres Konto'
+		await userEvent.click(
+			panel.getByRole('button', { name: 'Gast wählt' })
+		);
+		const menu = await page(canvasElement).findByRole('listbox', {
+			name: 'Gastkonto'
 		});
-		await userEvent.click(temporary);
-		await expect(temporary).not.toBeChecked();
+		await expect(
+			within(menu)
+				.getAllByRole('option')
+				.map((option) => option.textContent)
+		).toEqual(['Nach der Sitzung löschen', 'Gast wählt', 'Dauerhaft']);
+		await userEvent.click(
+			within(menu).getByRole('option', { name: 'Dauerhaft' })
+		);
 		await expect(args.onSettingsChange).toHaveBeenCalledWith({
 			knock: true,
-			temporaryAccount: false
+			guestAccountMode: 'PERMANENT'
 		});
 		await expect(
-			panel.getByText(
-				'Gäste melden sich mit einem eigenen Konto an oder legen eines an.'
-			)
+			panel.getByRole('button', { name: 'Dauerhaft' })
 		).toBeVisible();
-		await expect(
-			panel.getByRole('switch', { name: 'Anklopfen' })
-		).toBeChecked();
 	}
 };
 
@@ -284,8 +291,8 @@ export const PhoneWebShareUnavailable: Story = {
 };
 
 /**
- * Platform or Träger forbids temporary accounts (Frank, 28 Oct): the toggle
- * is not offered at all, and the link carries no temporary account.
+ * Platform or Träger forbids temporary accounts (Frank, 28 Oct): those modes
+ * are not offered at all, and the link falls back to a permanent account.
  */
 const expectNoTemporaryToggle = async ({
 	args,
@@ -295,9 +302,14 @@ const expectNoTemporaryToggle = async ({
 	canvasElement: HTMLElement;
 }) => {
 	const panel = within(await sharePanel(canvasElement));
-	await expect(
-		panel.queryByRole('switch', { name: 'Temporäres Konto' })
-	).not.toBeInTheDocument();
+	await userEvent.click(panel.getByRole('button', { name: 'Dauerhaft' }));
+	const menu = await page(canvasElement).findByRole('listbox', {
+		name: 'Gastkonto'
+	});
+	await expect(within(menu).getAllByRole('option')).toHaveLength(1);
+	await userEvent.click(
+		within(menu).getByRole('option', { name: 'Dauerhaft' })
+	);
 	const knock = panel.getByRole('switch', { name: 'Anklopfen' });
 	await expect(knock).toBeChecked();
 	// Off and on again: the reported link settings never offer a temporary account.
@@ -305,7 +317,7 @@ const expectNoTemporaryToggle = async ({
 	await userEvent.click(knock);
 	await expect(args.onSettingsChange).toHaveBeenLastCalledWith({
 		knock: true,
-		temporaryAccount: false
+		guestAccountMode: 'PERMANENT'
 	});
 	await expect(knock).toBeChecked();
 };
@@ -313,14 +325,14 @@ const expectNoTemporaryToggle = async ({
 export const TemporaryAccountNotAllowed: Story = {
 	name: 'Popover – temporary accounts not allowed',
 	globals: desktop1280Globals,
-	args: { temporaryAccountAllowed: false },
+	args: { allowedGuestAccountModes: ['PERMANENT'] },
 	play: expectNoTemporaryToggle
 };
 
 export const PhoneSheet320TemporaryAccountNotAllowed: Story = {
 	name: 'Phone 320 – temporary accounts not allowed',
 	globals: phone320Globals,
-	args: { layout: 'phone', temporaryAccountAllowed: false },
+	args: { layout: 'phone', allowedGuestAccountModes: ['PERMANENT'] },
 	play: async (context) => {
 		await expectNoSideways(context.canvasElement);
 		await expectNoTemporaryToggle(context);

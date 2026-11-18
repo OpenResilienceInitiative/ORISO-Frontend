@@ -43,11 +43,19 @@ describe('calendar stylesheet', () => {
 		expect(calendar).not.toMatch(/\.calendarPage__entry/);
 	});
 
-	it('centres the list grip in the gap to the stage, not on the shell gutter (Frank *2)', () => {
+	it('centres the list grip in a 24 px gap as in Gespräche, not on the shell gutter (Frank *2)', () => {
+		// The column sets its own pair; the shell's 12 px gutter is the
+		// sessions list's. The stories measure 8 px either side of the pill.
 		expect(calendar).toMatch(
-			/\.calendarSide__frame \{[^}]*--pane-gap:\s*12px;[^}]*--pane-inner-gutter:\s*0px;/s
+			/\.calendarSide__frame \{[^}]*--pane-gap:\s*24px;[^}]*--pane-inner-gutter:\s*2px;/s
 		);
-		expect(calendar).toMatch(/^\.calendarPage \{[^}]*gap: 12px;/m);
+		expect(calendar).toMatch(
+			/margin-right: calc\(\s*var\(--pane-gap\) - var\(--pane-inner-gutter\) - #\{\$cal-page-gap\}\s*\);/
+		);
+		expect(calendar).toMatch(/&--rail \{\s*--pane-inner-gutter:\s*12px;/);
+		expect(calendar).toMatch(
+			/^\.calendarPage \{[^}]*gap: \$cal-page-gap;/m
+		);
 	});
 
 	it('takes its breakpoints from the shared mixin, not raw media queries', () => {

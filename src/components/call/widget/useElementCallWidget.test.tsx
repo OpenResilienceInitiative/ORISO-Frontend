@@ -1808,6 +1808,57 @@ describe('useElementCallWidget', () => {
 			expect(sends()).toHaveLength(2);
 		});
 
+		describe('UserService#1662: the call loses its link live', () => {
+			const INVITE_AVAILABLE = 'org.oriso.call.invite_available';
+			const onInviteLink = async () => 'https://app.oriso.test/c/1';
+			const sends = (api: any) =>
+				api.transport.send.mock.calls.filter(
+					(call: unknown[]) => call[0] === INVITE_AVAILABLE
+				);
+
+			it('tells the call once ready and on every change, without a new address', async () => {
+				const { api, rerender, result } = await mount({
+					invite: true,
+					onInviteLink
+				});
+				const url = result.current.url;
+				act(() => api.emit('ready', new CustomEvent('ready')));
+				expect(sends(api)).toEqual([
+					[INVITE_AVAILABLE, { available: true }]
+				]);
+
+				rerender({
+					invite: true,
+					onInviteLink,
+					inviteAvailable: false
+				});
+				expect(sends(api).at(-1)).toEqual([
+					INVITE_AVAILABLE,
+					{ available: false }
+				]);
+				expect(result.current.url).toBe(url);
+
+				rerender({
+					invite: true,
+					onInviteLink,
+					inviteAvailable: false
+				});
+				expect(sends(api)).toHaveLength(2);
+
+				rerender({ invite: true, onInviteLink, inviteAvailable: true });
+				expect(sends(api).at(-1)).toEqual([
+					INVITE_AVAILABLE,
+					{ available: true }
+				]);
+			});
+
+			it('says nothing when the call never offered a link', async () => {
+				const { api } = await mount({ inviteAvailable: false });
+				act(() => api.emit('ready', new CustomEvent('ready')));
+				expect(sends(api)).toHaveLength(0);
+			});
+		});
+
 		it('sends no counsellor list when the host gives none', async () => {
 			const { api } = await mount({});
 			act(() => api.emit('ready', new CustomEvent('ready')));

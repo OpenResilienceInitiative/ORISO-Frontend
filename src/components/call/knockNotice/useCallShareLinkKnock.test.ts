@@ -72,6 +72,77 @@ describe('useCallShareLinkKnock', () => {
 		expect(result.current.knock).toBe(false);
 	});
 
+	/* UserService#1662 (Frank, 17 Nov): a group call a plain member or an
+	   advice seeker started never gets a link. Ask a bounded number of times
+	   (the server may not have registered the call yet), then stop. */
+	describe('a call that cannot be shared', () => {
+		const notShareable = () =>
+			Object.assign(new Error('CALL_SHARE_LINK_NO_CALL'), {
+				callNotShareable: true
+			});
+
+		it('stops asking after the bounded tries and says it is not shareable', async () => {
+			vi.useFakeTimers();
+			const get = vi.fn().mockRejectedValue(notShareable());
+			const { result } = renderHook(() =>
+				useCallShareLinkKnock({
+					enabled: true,
+					call: CALL,
+					api: fakeApi({ get }),
+					intervalMs: 1000,
+					maxNotShareableTries: 3
+				})
+			);
+			await act(async () => {});
+			expect(result.current.shareable).toBe(true);
+			await act(async () => {
+				await vi.advanceTimersByTimeAsync(10_000);
+			});
+			expect(get).toHaveBeenCalledTimes(3);
+			expect(result.current.shareable).toBe(false);
+			expect(result.current.knock).toBeNull();
+		});
+
+		it('keeps asking once the server knows the call (it registered late)', async () => {
+			vi.useFakeTimers();
+			const get = vi
+				.fn()
+				.mockRejectedValueOnce(notShareable())
+				.mockRejectedValueOnce(notShareable())
+				.mockResolvedValue(null);
+			const { result } = renderHook(() =>
+				useCallShareLinkKnock({
+					enabled: true,
+					call: CALL,
+					api: fakeApi({ get }),
+					intervalMs: 1000,
+					maxNotShareableTries: 3
+				})
+			);
+			await act(async () => {
+				await vi.advanceTimersByTimeAsync(10_000);
+			});
+			expect(get.mock.calls.length).toBeGreaterThan(5);
+			expect(result.current.shareable).toBe(true);
+		});
+
+		it('bounds the default at about a minute of tries', async () => {
+			vi.useFakeTimers();
+			const get = vi.fn().mockRejectedValue(notShareable());
+			renderHook(() =>
+				useCallShareLinkKnock({
+					enabled: true,
+					call: CALL,
+					api: fakeApi({ get })
+				})
+			);
+			await act(async () => {
+				await vi.advanceTimersByTimeAsync(10 * 60_000);
+			});
+			expect(get).toHaveBeenCalledTimes(6);
+		});
+	});
+
 	it('changes the link and takes the stored value', async () => {
 		const api = fakeApi();
 		const { result } = renderHook(() =>

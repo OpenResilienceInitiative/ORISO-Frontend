@@ -105,6 +105,26 @@ const meta: Meta<typeof PageStory> = {
 export default meta;
 type Story = StoryObj<typeof PageStory>;
 
+/** UserService#1662: "Temporär" for TEMPORARY only, "Gast wählt" for GUEST_CHOOSES. */
+export const ModeChips: Story = {
+	name: 'Account chips per mode (#1662)',
+	args: { initial: SAMPLE_LINKS },
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const chipsOf = async (name: string) =>
+			Array.from(
+				(await canvas.findByText(name))
+					.closest('li')!
+					.querySelectorAll('.directLinkChip')
+			).map((chip) => chip.textContent);
+		await expect(await chipsOf('Flyer Schule')).toEqual(['Temporär']);
+		await expect(await chipsOf('Plakat Rathaus')).toEqual([]);
+		await expect(await chipsOf('Telefonsprechstunde')).toEqual([
+			'Gast wählt'
+		]);
+	}
+};
+
 export const WithLinks: Story = {
 	name: 'Links (desktop)',
 	args: { initial: SAMPLE_LINKS },
