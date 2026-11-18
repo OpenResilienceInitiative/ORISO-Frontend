@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Box, Typography } from '@mui/material';
+import { Box, Button, Typography } from '@mui/material';
 import HeadphonesRoundedIcon from '@mui/icons-material/HeadphonesRounded';
 import { EntryRoomShell } from '../../anonymousChat/entryRoom/EntryRoomShell';
 import { WaitingRoomBar } from '../WaitingRoomBar';
@@ -134,6 +134,12 @@ export interface CallEntryRoomProps {
 	/** An existing account only needs the device and consent checks. */
 	signedIn?: boolean;
 	loginLink?: React.ReactNode;
+	/**
+	 * UserService#1662: the link lets the guest choose between joining
+	 * without an account (temporary) and creating one. The caller owns the
+	 * choice; password field and postcode follow it.
+	 */
+	accountChoice?: { temporary: boolean; onToggle: () => void };
 }
 
 /**
@@ -177,9 +183,10 @@ export const CallEntryRoom = ({
 	usernameEditable = true,
 	askPostcode = false,
 	signedIn = false,
-	loginLink
+	loginLink,
+	accountChoice
 }: CallEntryRoomProps) => {
-	const { i18n } = useTranslation();
+	const { t, i18n } = useTranslation();
 	const [identity, setIdentity] = useState<Pseudonym>(
 		() =>
 			initialIdentity ?? generatePseudonym(i18n.resolvedLanguage ?? 'de')
@@ -191,6 +198,14 @@ export const CallEntryRoom = ({
 		hidePassword && !initialPassword ? generatePassword() : initialPassword
 	);
 	const [postcode, setPostcode] = useState('');
+	/* UserService#1662: when the guest switches to "without an account" and
+	   the platform hides that password, the account still needs one that
+	   meets the rules; a typed-but-weak one would block the gate unseen. */
+	useEffect(() => {
+		if (hidePassword && !allPasswordCriteriaPass(password)) {
+			setPassword(generatePassword());
+		}
+	}, [hidePassword, password]);
 	const [micOn, setMicOn] = useState(initialMicOn);
 	const [cameraOn, setCameraOn] = useState(initialCameraOn);
 	const [speakerTest, setSpeakerTest] = useState(initialSpeakerTest);
@@ -368,6 +383,42 @@ export const CallEntryRoom = ({
 							data-testid="call-entry-identity-column"
 							sx={{ gridColumn: { lg: 2 }, gridRow: { lg: 1 } }}
 						>
+							{/* UserService#1662: the choice comes first, so the fields it
+							    adds or removes appear below it and the button stays put. */}
+							{accountChoice && (
+								<Box
+									data-testid="call-entry-account-choice"
+									sx={{ mb: 2 }}
+								>
+									<Typography
+										sx={{
+											...registrationScreenIntroSx,
+											fontSize: 14
+										}}
+									>
+										{t(
+											accountChoice.temporary
+												? 'guestAccountMode.entry.temporaryNote'
+												: 'guestAccountMode.entry.accountNote'
+										)}
+									</Typography>
+									<Button
+										onClick={accountChoice.onToggle}
+										sx={{
+											mt: 0.5,
+											px: 0,
+											textTransform: 'none',
+											color: registrationMd3.primary
+										}}
+									>
+										{t(
+											accountChoice.temporary
+												? 'guestAccountMode.entry.withAccount'
+												: 'guestAccountMode.entry.withoutAccount'
+										)}
+									</Button>
+								</Box>
+							)}
 							<CallEntryIdentity
 								modality={modality}
 								identity={identity}

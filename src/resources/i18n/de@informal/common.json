@@ -759,8 +759,8 @@
 				"text": "Eine Übersicht deiner anstehenden Termine liegt bereit."
 			},
 			"teamDiscussionNew": {
-				"title": "Team-Besprechung",
-				"text": "{{senderDisplayName}} hat in der Team-Besprechung geschrieben"
+				"title": "Team-Chat",
+				"text": "{{senderDisplayName}} hat im Team-Chat geschrieben"
 			},
 			"firstResponseReceived": {
 				"title": "Deine ersten Schritte",
@@ -885,7 +885,8 @@
 				"activated": {
 					"label": "Deaktiviere Deine Abwesenheit, um eine Nachricht zu hinterlegen oder sie zu bearbeiten."
 				},
-				"label": "Hinterlege eine Abwesenheitsnachricht"
+				"label": "Hinterlege eine Abwesenheitsnachricht",
+				"dateHint": "Ohne Datum gilt die Abwesenheit bis auf Weiteres, bis du sie ausschaltest. Nach dem Bis-Datum bist du automatisch wieder anwesend."
 			},
 			"liveChat": {
 				"title": "Meine Live-Chat Verfügbarkeit",
@@ -2314,7 +2315,7 @@
 		}
 	},
 	"teamDiscussion": {
-		"title": "Team-Besprechung",
+		"title": "Team-Chat",
 		"startHint": "Besprechung starten",
 		"postCount": "{{count}} Beiträge",
 		"postCount_one": "1 Beitrag",
@@ -2325,7 +2326,7 @@
 		"placeholder": "Nachricht an das Team …",
 		"send": "Senden",
 		"error": {
-			"open": "Die Team-Besprechung konnte nicht geöffnet werden.",
+			"open": "Der Team-Chat konnte nicht geöffnet werden.",
 			"send": "Die Nachricht konnte nicht gesendet werden."
 		}
 	},
@@ -2664,10 +2665,10 @@
 					"intro": "In der Liste wartet eine Übungsanfrage. Klicke darauf, um sie zu öffnen."
 				},
 				"openTeam": {
-					"intro": "Bei dir ist die Teambesprechung aktiviert: Damit stimmst du dich mit deinem Team ab, bevor du annimmst. Klicke auf „Teambesprechung öffnen“."
+					"intro": "Bei dir ist der Team-Chat aktiviert: Damit stimmst du dich mit deinem Team ab, bevor du annimmst. Klicke auf „Team-Chat öffnen“."
 				},
 				"teamReply": {
-					"intro": "Lies die Nachricht aus dem Team und schreibe eine Antwort. Wenn du die Anfrage annimmst, wird die Teambesprechung geschlossen."
+					"intro": "Lies die Nachricht aus dem Team und schreibe eine Antwort. Wenn du die Anfrage annimmst, wird der Team-Chat geschlossen."
 				},
 				"accept": {
 					"intro": "Klicke auf „Anfrage annehmen“: Die Anfrage wandert in „Meine Beratungen“ und ist für dein Team nicht mehr in der Liste."
@@ -3054,6 +3055,32 @@
 		},
 		"entryMenu": {
 			"withYou": "Du und {{name}}"
+		},
+		"absence": {
+			"description": "Wähle die Tage, an denen du abwesend bist. Ratsuchende sehen in dieser Zeit deine Abwesenheitsnachricht.",
+			"messageHint": "Ratsuchende sehen diese Nachricht, können dir aber weiterhin schreiben.",
+			"effect": "Nach dem letzten Tag bist du automatisch wieder anwesend. Dieselbe Abwesenheit steht in deinem Profil.",
+			"conflicts": "In diesem Zeitraum liegen {{count}} Termine. Sie bleiben bestehen – sag sie bei Bedarf selbst ab oder verschiebe sie.",
+			"conflicts_one": "In diesem Zeitraum liegt {{count}} Termin. Er bleibt bestehen – sag ihn bei Bedarf selbst ab oder verschiebe ihn.",
+			"saved": "Abwesenheit eingetragen. Sie steht auch in deinem Profil."
+		}
+	},
+	"guestAccountMode": {
+		"entry": {
+			"temporaryNote": "Dein Zugang wird nach dem Gespräch gelöscht. Du kannst ihn später noch behalten.",
+			"accountNote": "Mit einem eigenen Konto kannst du später wiederkommen."
+		},
+		"keep": {
+			"actionDescription": "Dein Konto wird sonst nach dem Gespräch gelöscht.",
+			"text": "Dein Konto wird sonst nach dem Gespräch gelöscht. Leg ein Passwort fest, dann bleibt es erhalten und du kannst dich später wieder anmelden.",
+			"loginName": "Dein Benutzername: {{name}}",
+			"success": "Dein Konto bleibt erhalten.",
+			"recoveryPending": "Dein Konto bleibt erhalten. Um deine Nachrichten auf einem anderen Gerät zu lesen, brauchst du deinen Wiederherstellungsschlüssel.",
+			"error": {
+				"notFound": "Dein Konto wurde nicht gefunden. Bitte melde dich neu an.",
+				"conflict": "Dein Konto wird gerade gelöscht oder ist bereits dauerhaft.",
+				"generic": "Das hat nicht geklappt. Bitte versuch es erneut."
+			}
 		}
 	},
 	"managePeople": {
@@ -3073,5 +3100,9 @@
 		"groupChat": {
 			"description": "Sieh, wer diese Gruppe leitet, und teile den Link mit allen, die teilnehmen möchten."
 		}
+	},
+	"deletedAskerSession": {
+		"archiveHint": "Verschiebe den Eintrag ins Archiv, damit er aus deiner Liste und den Aktivitäten verschwindet.",
+		"archiveFailed": "Archivieren hat nicht geklappt. Bitte versuche es erneut."
 	}
 }

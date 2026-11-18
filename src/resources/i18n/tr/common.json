@@ -743,7 +743,7 @@
 	},
 	"enquiry": {
 		"teamDiscussion": {
-			"open": "Ekip görüşmesini aç"
+			"open": "Ekip sohbetini aç"
 		},
 		"acceptButton": {
 			"anonymous": "Sohbet başlat",
@@ -2325,10 +2325,10 @@
 				"open": "Sohbeti aç"
 			},
 			"mention": {
-				"title": "Ekip görüşmesinde anıldınız",
+				"title": "Ekip sohbetinde anıldınız",
 				"from": "Gönderen: {{name}}",
 				"several": "{{count}} yeni anma",
-				"open": "Ekip görüşmesini aç"
+				"open": "Ekip sohbetini aç"
 			},
 			"handover": {
 				"title": "Yeni vaka devri",
@@ -2626,8 +2626,8 @@
 				"text": "Yaklaşan randevularınızın bir özeti hazır."
 			},
 			"teamDiscussionNew": {
-				"title": "Ekip görüşmesi",
-				"text": "{{senderDisplayName}} ekip görüşmesinde bir mesaj yazdı"
+				"title": "Ekip sohbeti",
+				"text": "{{senderDisplayName}} ekip sohbetinde bir mesaj yazdı"
 			},
 			"firstResponseReceived": {
 				"title": "İlk adımlarınız",
@@ -2711,7 +2711,7 @@
 				"archivedOpenToReply": "Bu görüşme arşivlendi. Yanıtlamak için görüşmeyi açın.",
 				"notJoined": "Katılımınız onaylanana ve oda yüklenene kadar salt okunur.",
 				"supervisorNoComposer": "Süpervizör olarak burada tepki verebilirsiniz ama yazamazsınız.",
-				"teamClosed": "Ekip görüşmesi kapandı.",
+				"teamClosed": "Ekip sohbeti kapandı.",
 				"curtained": "Bu vaka şu anda sizin için görünür değil.",
 				"hiddenNotYours": "Bu görüşme sizin vakalarınızdan biri değil; bu yüzden etkinlik burada göstermiyor.",
 				"hiddenNotJoined": "Bu görüşmeye katılmadınız; bu yüzden etkinlik burada göstermiyor.",
@@ -2973,7 +2973,13 @@
 					"label": "Mesaj bırakmak veya düzenlemek için devamsızlığınızı devre dışı bırakın."
 				},
 				"label": "Ofis dışı bir mesajı saklayın",
-				"title": "Benim yokluğum"
+				"title": "Benim yokluğum",
+				"from": "Yokluk başlangıcı (isteğe bağlı)",
+				"until": "Yokluk bitişi (isteğe bağlı)",
+				"dateHint": "Tarih olmadan yokluk, siz kapatana kadar süresiz geçerlidir. Bitiş tarihinden sonra otomatik olarak yeniden mevcut olursunuz.",
+				"planned": "{{start}} tarihinden itibaren planlandı",
+				"activeUntil": "{{end}} dahil yok",
+				"invalidRange": "Bitiş tarihi başlangıç tarihinden önce."
 			},
 			"liveChat": {
 				"title": "Live-Chat uygunluğum",
@@ -3142,7 +3148,7 @@
 				},
 				"kind": {
 					"new": "Yeni talep",
-					"teamDiscussion": "Ekip görüşmesi",
+					"teamDiscussion": "Ekip sohbeti",
 					"standard": "Standart bildirim",
 					"liveChat": "Canlı sohbet mesajı",
 					"mention": "@ Bahsetme",
@@ -3496,7 +3502,7 @@
 		"names": {
 			"agency": "Alıştırma danışma merkezi",
 			"topic": "Alıştırma",
-			"teamRoom": "Ekip görüşmesi (alıştırma)",
+			"teamRoom": "Ekip sohbeti (alıştırma)",
 			"supervisionRoom": "Süpervizyon (alıştırma)"
 		}
 	},
@@ -4813,7 +4819,9 @@
 		},
 		"deletedAsker": {
 			"title": "Silinmiş danışan",
-			"hint": "Bu sohbet silindi. Kişisel veriler ve mesajlar artık mevcut değil."
+			"hint": "Bu sohbet silindi. Kişisel veriler ve mesajlar artık mevcut değil.",
+			"preview": "Sohbet silindi",
+			"previewArchived": "Silindi · arşivde"
 		}
 	},
 	"statusOverlay": {
@@ -5853,7 +5861,7 @@
 		}
 	},
 	"teamDiscussion": {
-		"title": "Ekip görüşmesi",
+		"title": "Ekip sohbeti",
 		"startHint": "Görüşmeyi başlat",
 		"postCount": "{{count}} gönderi",
 		"postCount_one": "1 gönderi",
@@ -5864,7 +5872,7 @@
 		"placeholder": "Ekibe mesaj …",
 		"send": "Gönder",
 		"error": {
-			"open": "Ekip görüşmesi açılamadı.",
+			"open": "Ekip sohbeti açılamadı.",
 			"send": "Mesaj gönderilemedi."
 		}
 	},
@@ -6224,12 +6232,12 @@
 					"intro": "Listede sizi bir alıştırma talebi bekliyor. Açmak için üzerine tıklayın."
 				},
 				"openTeam": {
-					"title": "Ekip görüşmesini açın",
-					"intro": "Ekip görüşmesi sizde etkin: kabul etmeden önce ekibinizle konuşmanızı sağlar. “Ekip görüşmesini aç” düğmesine tıklayın."
+					"title": "Ekip sohbetini açın",
+					"intro": "Ekip sohbeti sizde etkin: kabul etmeden önce ekibinizle konuşmanızı sağlar. “Ekip sohbetini aç” düğmesine tıklayın."
 				},
 				"teamReply": {
 					"title": "Ekibe yanıt verin",
-					"intro": "Ekipten gelen mesajı okuyun ve bir yanıt yazın. Talebi kabul ettiğinizde ekip görüşmesi kapanır."
+					"intro": "Ekipten gelen mesajı okuyun ve bir yanıt yazın. Talebi kabul ettiğinizde ekip sohbeti kapanır."
 				},
 				"accept": {
 					"title": "Talebi kabul edin",
@@ -6549,11 +6557,6 @@
 				"on": "Misafirler siz içeri alana kadar bekler. Kapatırsanız bekleyen herkes hemen içeri girer.",
 				"off": "Misafirler beklemeden doğrudan aramaya katılır."
 			},
-			"temporaryAccount": {
-				"label": "Geçici hesap",
-				"on": "Misafirler aramadan sonra silinen bir misafir hesabı alır.",
-				"off": "Misafirler kendi hesaplarıyla giriş yapar veya hesap oluşturur."
-			},
 			"linkLabel": "Aramanın bağlantısı",
 			"copy": "Kopyala",
 			"copied": "Kopyalandı",
@@ -6842,7 +6845,6 @@
 			"text": "Bağlantıyı açan kişi size doğrudan ulaşır – sohbette, sesli veya görüntülü aramada.",
 			"topicLabel": "Konu seçin",
 			"mediumLabel": "İletişim türü",
-			"temporary": "Geçici hesap",
 			"temporaryHint": "Hesap görüşmeden sonra silinir.",
 			"create": "Bağlantı oluştur",
 			"createFailed": "Bağlantı oluşturulamadı. Lütfen tekrar deneyin.",
@@ -6900,7 +6902,6 @@
 			"nameRequired": "Lütfen bir ad girin.",
 			"topic": "Konu",
 			"mediumFixed": "İletişim türü değiştirilemez",
-			"temporaryHint": "Yalnızca bağlantıyı bundan sonra açan kişiler için geçerlidir.",
 			"failed": "Değişiklik kaydedilemedi. Lütfen tekrar deneyin.",
 			"scheduledAt": "Tarih ve saat",
 			"clearScheduledAt": "Kaldır"
@@ -7120,7 +7121,8 @@
 			"group": "Grup randevusu",
 			"blocker": "Kapalı",
 			"busy": "Meşgul",
-			"colleague": "Meşgul"
+			"colleague": "Meşgul",
+			"absence": "Yok"
 		},
 		"noEvents": "Bu dönemde randevu yok",
 		"loading": "Randevular yükleniyor",
@@ -7149,7 +7151,8 @@
 			"entryKind": "Kayıt türü",
 			"tabs": {
 				"appointment": "Randevu",
-				"blocker": "Engellenmiş zaman"
+				"blocker": "Engellenmiş zaman",
+				"absence": "Yokluk"
 			}
 		},
 		"details": {
@@ -7606,6 +7609,60 @@
 		"links": {
 			"title": "Randevusuz bağlantılar",
 			"hint": "Paylaşabileceğiniz davet bağlantıları: kopyalayın veya QR kodu gösterin."
+		},
+		"absence": {
+			"description": "Uzakta olacağınız günleri seçin. Bu süre boyunca danışanlar yokluk mesajınızı görür.",
+			"from": "Başlangıç",
+			"until": "Bitiş",
+			"message": "Yokluk mesajı",
+			"messageHint": "Danışanlar bu mesajı görür ama size yine de yazabilir.",
+			"effect": "Son günden sonra otomatik olarak yeniden mevcut olursunuz. Aynı yokluk profilinizde de görünür.",
+			"save": "Yokluğu kaydet",
+			"conflicts": "Bu dönemde {{count}} randevu var. Randevular yerinde kalır – gerekirse kendiniz iptal edin veya erteleyin.",
+			"conflicts_one": "Bu dönemde {{count}} randevu var. Randevu yerinde kalır – gerekirse kendiniz iptal edin veya erteleyin.",
+			"saved": "Yokluk kaydedildi. Profilinizde de görünür."
+		}
+	},
+	"guestAccountMode": {
+		"label": "Misafir hesabı",
+		"menuLabel": "Misafir hesabını seç",
+		"option": {
+			"TEMPORARY": "Oturumdan sonra sil",
+			"GUEST_CHOOSES": "Misafir seçer",
+			"PERMANENT": "Kalıcı"
+		},
+		"hint": {
+			"TEMPORARY": "Yeni misafirler, görüşmeden sonra silinen bir hesap alır.",
+			"GUEST_CHOOSES": "Yeni misafirler katılırken seçer: hesapsız veya kendi hesabıyla.",
+			"PERMANENT": "Yeni misafirler kendi hesabını oluşturur."
+		},
+		"newGuestsOnly": "Yalnızca bağlantıyı bundan sonra açan kişiler için geçerlidir.",
+		"entry": {
+			"withoutAccount": "Hesapsız katıl",
+			"withAccount": "Hesap oluştur",
+			"temporaryNote": "Erişiminiz görüşmeden sonra silinir. Daha sonra yine de saklayabilirsiniz.",
+			"accountNote": "Kendi hesabınızla daha sonra geri gelebilirsiniz."
+		},
+		"keep": {
+			"action": "Hesabı sakla",
+			"actionDescription": "Aksi halde hesabınız görüşmeden sonra silinir.",
+			"title": "Hesabı sakla",
+			"text": "Aksi halde hesabınız görüşmeden sonra silinir. Bir şifre belirleyin; hesabınız kalır ve daha sonra yeniden giriş yapabilirsiniz.",
+			"loginName": "Kullanıcı adınız: {{name}}",
+			"password": "Şifre",
+			"repeat": "Şifreyi tekrarlayın",
+			"mismatch": "Şifreler eşleşmiyor.",
+			"submit": "Hesabı sakla",
+			"cancel": "İptal",
+			"success": "Hesabınız saklanıyor.",
+			"recoveryPending": "Hesabınız saklanıyor. Mesajlarınızı başka bir cihazda okumak için kurtarma anahtarınıza ihtiyacınız var.",
+			"error": {
+				"badRequest": "Şifre gereksinimleri karşılamıyor.",
+				"forbidden": "Bu davet hesabı saklamaya izin vermiyor.",
+				"notFound": "Hesabınız bulunamadı. Lütfen yeniden giriş yapın.",
+				"conflict": "Hesabınız siliniyor veya zaten kalıcı.",
+				"generic": "Bu işe yaramadı. Lütfen tekrar deneyin."
+			}
 		}
 	},
 	"managePeople": {
@@ -7686,5 +7743,15 @@
 			"inviteDescription": "Danışanlar bu bağlantı veya QR kod ile katılır.",
 			"added": "{{name}} artık bu grubun ortak moderatörü."
 		}
+	},
+	"deletedAskerSession": {
+		"notice": {
+			"title": "Bu sohbet silindi",
+			"deletedOn": "Silinme tarihi: {{date}}",
+			"text": "Danışanın kişisel verileri ve mesajları artık mevcut değil."
+		},
+		"archiveHint": "Listenizden ve etkinliklerinizden kalkması için kaydı arşive taşıyın.",
+		"archived": "Bu kayıt arşivde.",
+		"archiveFailed": "Arşivleme başarısız oldu. Lütfen tekrar deneyin."
 	}
 }

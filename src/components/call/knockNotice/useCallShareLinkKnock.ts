@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import {
 	apiGetCallShareLinkKnock,
 	apiSetCallShareLinkKnock,
+	isCallNotShareable,
 	type CallShareLinkCall,
 	type CallShareLinkKnock
 } from '../../../api/apiCallShareLinkKnock';
@@ -23,6 +24,13 @@ export interface UseCallShareLinkKnockOptions {
 	api?: CallShareLinkKnockApi;
 	/** The share popover may create the link at any time: ask again this often. */
 	intervalMs?: number;
+	/**
+	 * UserService#1662: how often to ask while the server says the call cannot
+	 * be shared at all (no binding: a group call a plain member or an advice
+	 * seeker started). The first answers may come before the server has
+	 * registered the call, so a few tries; then it stops for this call.
+	 */
+	maxNotShareableTries?: number;
 }
 
 export interface CallShareLinkKnockState {
@@ -30,6 +38,11 @@ export interface CallShareLinkKnockState {
 	knock: boolean | null;
 	/** Resolves with the stored setting; rejects when there is no link or the change did not land. */
 	setKnock: (knock: boolean) => Promise<boolean>;
+	/**
+	 * `false` once the server said, the bounded number of times, that the call
+	 * cannot be shared: then nothing offers its link (UserService#1662).
+	 */
+	shareable: boolean;
 }
 
 /**
@@ -42,9 +55,11 @@ export const useCallShareLinkKnock = ({
 	enabled,
 	call,
 	api = userServiceApi,
-	intervalMs = 10_000
+	intervalMs = 10_000,
+	maxNotShareableTries = 6
 }: UseCallShareLinkKnockOptions): CallShareLinkKnockState => {
 	const [link, setLink] = useState<CallShareLinkKnock | null>(null);
+	const [shareable, setShareable] = useState(true);
 	const linkRef = useRef<CallShareLinkKnock | null>(null);
 	// Bumped by every change: an older change's answer is stale.
 	const version = useRef(0);
@@ -65,14 +80,18 @@ export const useCallShareLinkKnock = ({
 
 	useEffect(() => {
 		store(null);
+		setShareable(true);
 		if (!enabled || !sourceRoomId || !callId) return undefined;
 		let stopped = false;
+		let notShareable = 0;
 		let timer: ReturnType<typeof setTimeout> | undefined;
 		const tick = () => {
 			const asked = landed.current;
 			apiRef.current
 				.get({ sourceRoomId, callId })
 				.then((next) => {
+					notShareable = 0;
+					if (!stopped) setShareable(true);
 					if (
 						!stopped &&
 						!writing.current &&
@@ -80,11 +99,19 @@ export const useCallShareLinkKnock = ({
 					)
 						store(next);
 				})
-				.catch(() => {
-					// The server did not answer: keep what we knew.
+				.catch((error) => {
+					// The server did not answer: keep what we knew. A call it
+					// cannot share counts towards the bound.
+					if (isCallNotShareable(error)) notShareable += 1;
 				})
 				.finally(() => {
-					if (!stopped) timer = setTimeout(tick, intervalMs);
+					if (stopped) return;
+					if (notShareable >= maxNotShareableTries) {
+						store(null);
+						setShareable(false);
+						return;
+					}
+					timer = setTimeout(tick, intervalMs);
 				});
 		};
 		tick();
@@ -92,7 +119,7 @@ export const useCallShareLinkKnock = ({
 			stopped = true;
 			if (timer) clearTimeout(timer);
 		};
-	}, [enabled, sourceRoomId, callId, intervalMs]);
+	}, [enabled, sourceRoomId, callId, intervalMs, maxNotShareableTries]);
 
 	const setKnock = useCallback(async (knock: boolean) => {
 		const current = linkRef.current;
@@ -114,5 +141,5 @@ export const useCallShareLinkKnock = ({
 		}
 	}, []);
 
-	return { knock: link ? link.knock : null, setKnock };
+	return { knock: link ? link.knock : null, setKnock, shareable };
 };

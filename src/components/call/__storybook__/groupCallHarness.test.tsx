@@ -1023,13 +1023,13 @@ describe('what the host adds around the call', () => {
 		expect(knockApi.shareLink).toHaveBeenCalled();
 	});
 
-	it("never asks for a group call's share link: it has none", async () => {
+	it("asks for a group call's share link too (UserService#1662)", async () => {
 		knockApi.pending.mockClear();
 		knockApi.shareLink.mockClear();
 		activeCall();
 		withUser(counsellor, makeFakeMatrixClientService('active'));
 		await waitFor(() => expect(knockApi.pending).toHaveBeenCalled());
-		expect(knockApi.shareLink).not.toHaveBeenCalled();
+		await waitFor(() => expect(knockApi.shareLink).toHaveBeenCalled());
 	});
 
 	describe('call design: "Link teilen" in the call (S8)', () => {
@@ -1077,8 +1077,13 @@ describe('what the host adds around the call', () => {
 			shareLinkApi.create.mockResolvedValue({
 				id: 7,
 				url: 'https://app.oriso.test/c/abc',
-				settings: { knock: true, temporaryAccount: true },
-				temporaryAccountAllowed: true
+				settings: { knock: true, guestAccountMode: 'GUEST_CHOOSES' },
+				temporaryAccountAllowed: true,
+				allowedGuestAccountModes: [
+					'TEMPORARY',
+					'GUEST_CHOOSES',
+					'PERMANENT'
+				]
 			});
 			activeSessionCall();
 			const view = withUser(
@@ -1118,15 +1123,13 @@ describe('what the host adds around the call', () => {
 			);
 		});
 
-		it('offers no link in a group call: it has none', async () => {
-			shareLinkApi.create.mockReset();
+		it('offers the link in a group call as well (UserService#1662)', async () => {
 			activeCall();
 			const view = withUser(
 				counsellor,
 				makeFakeMatrixClientService('active')
 			);
-			expect((await iframeUrl(view)).has('orisoInvite')).toBe(false);
-			expect(shareLinkApi.create).not.toHaveBeenCalled();
+			expect((await iframeUrl(view)).get('orisoInvite')).toBe('1');
 		});
 
 		it('offers an advice seeker no link', async () => {

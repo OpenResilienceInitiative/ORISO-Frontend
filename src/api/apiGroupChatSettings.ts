@@ -6,6 +6,7 @@ import {
 	FETCH_SUCCESS
 } from './fetchData';
 import { GROUP_CHAT_API } from './apiPutGroupChat';
+import type { GuestAccountMode } from '../components/guestAccountMode/guestAccountMode';
 
 export interface groupChatSettings {
 	topic: string;
@@ -29,6 +30,8 @@ export interface groupChatSettings {
 	modality?: 'TEXT' | 'AUDIO' | 'VIDEO';
 	timezone?: string;
 	consultantIds?: string[];
+	/** Gesprächskreis (UserService#1662): which account a guest without one gets. */
+	guestAccountMode?: GuestAccountMode;
 	featureGroupChatV2Enabled?: boolean;
 }
 

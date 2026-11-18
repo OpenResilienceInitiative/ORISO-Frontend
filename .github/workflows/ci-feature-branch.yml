@@ -58,9 +58,10 @@ jobs:
         if: needs.gate.outputs.run == 'true'
         name: lint, type-check, build and test frontend
         runs-on: ubuntu-latest
-        # Success median is ~8 min. Without a cap, a hung vitest process runs into
-        # GitHub's 6 h job limit and reports no test result at all.
-        timeout-minutes: 20
+        # The unit tests alone take ~16 min (Nov 2026); 20 min cancelled green
+        # runs. Without a cap, a hung vitest process runs into GitHub's 6 h job
+        # limit and reports no test result at all.
+        timeout-minutes: 30
 
         steps:
             - name: Checkout repository

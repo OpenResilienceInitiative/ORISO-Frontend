@@ -328,10 +328,12 @@ describe('My direct links (#1894)', () => {
 		).toBeTruthy();
 	});
 
-	it('changes the temporary switch for new people only', async () => {
+	/* UserService#1662: the guest account select replaces the switch. */
+	it('changes the guest account mode for new people only', async () => {
 		vi.mocked(apiUpdateDirectLink).mockResolvedValue({
 			...flyer,
-			temporary: false
+			temporary: false,
+			guestAccountMode: 'PERMANENT'
 		});
 		renderPage();
 		await screen.findByText('Flyer Schule');
@@ -341,19 +343,26 @@ describe('My direct links (#1894)', () => {
 			})
 		);
 		const dialog = await screen.findByTestId('direct-link-edit-dialog');
+		expect(within(dialog).queryByRole('switch')).toBeNull();
 		expect(
-			within(dialog).getByText('directLink.edit.temporaryHint')
+			within(dialog).getByText(/guestAccountMode.newGuestsOnly/)
 		).toBeTruthy();
 
 		fireEvent.click(
-			within(dialog).getByRole('switch', {
-				name: 'directLink.card.temporary'
+			within(dialog).getByRole('button', {
+				name: 'guestAccountMode.option.GUEST_CHOOSES'
+			})
+		);
+		fireEvent.click(
+			screen.getByRole('option', {
+				name: 'guestAccountMode.option.PERMANENT'
 			})
 		);
 		fireEvent.click(within(dialog).getByTestId('direct-link-edit-save'));
 
 		await waitFor(() =>
 			expect(apiUpdateDirectLink).toHaveBeenCalledWith('7', {
+				guestAccountMode: 'PERMANENT',
 				temporary: false
 			})
 		);

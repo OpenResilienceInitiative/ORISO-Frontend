@@ -3,7 +3,11 @@ import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DirectLinkCard, DirectLinkDraft } from './DirectLinkCard';
 import { DirectLinkShareDialog } from './DirectLinkShareDialog';
-import { defaultTemporary, DirectLink, DirectLinkMedium } from './directLink';
+import {
+	defaultGuestAccountMode,
+	offersTemporaryAccount
+} from '../../guestAccountMode/guestAccountMode';
+import { DirectLink, DirectLinkMedium } from './directLink';
 import { agencyForTopic } from './directLinkAvailability';
 import { useDirectLinks } from './useDirectLinks';
 import { InvitationDialog } from '../../directInvitation/InvitationDialog';
@@ -101,7 +105,9 @@ export const useDirectInvitationSetup = ({
 				temporary:
 					settings.accessMode === 'GUESTS_ONLY' ||
 					(settings.accessMode !== 'ACCOUNTS_ONLY' &&
-						defaultTemporary(medium)),
+						offersTemporaryAccount(
+							defaultGuestAccountMode(medium)
+						)),
 				...(label ? { name: label } : {}),
 				...settings,
 				...(agencyId !== undefined ? { agencyId } : {})

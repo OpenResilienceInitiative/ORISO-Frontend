@@ -1,4 +1,8 @@
 import { groupChatSettings } from '../../api/apiGroupChatSettings';
+import {
+	GuestAccountMode,
+	isGuestAccountMode
+} from '../guestAccountMode/guestAccountMode';
 
 export type GroupChatInterval = NonNullable<groupChatSettings['chatInterval']>;
 export type GroupChatModality = NonNullable<groupChatSettings['modality']>;
@@ -18,6 +22,8 @@ export interface GroupChatSeriesFormValue {
 	hintMessageTranslations?: Record<string, string>;
 	groupChatRulesTranslations?: Record<string, string[]>;
 	consultantIds: string[];
+	/** Gesprächskreis (UserService#1662). */
+	guestAccountMode?: GuestAccountMode;
 }
 
 export const isGroupChatFeatureEnabled = (
@@ -165,6 +171,8 @@ export interface GroupChatEditSource {
 	groupChatRulesTranslations?: Record<string, string[]>;
 	participants?: { consultantId: string }[];
 	assignedAgencies?: { id: number }[];
+	/** UserService#1662; absent from an older server. */
+	guestAccountMode?: string | null;
 }
 
 export interface GroupChatEditDraft {
@@ -186,6 +194,8 @@ export interface GroupChatEditDraft {
 		groupChatRulesTranslations: Record<string, string[]>;
 	};
 	consultantIds: string[];
+	/** The server's default for a circle without one: the guest chooses. */
+	guestAccountMode: GuestAccountMode;
 }
 
 const DATE_PART = /^(\d{4}-\d{2}-\d{2})/;
@@ -285,6 +295,9 @@ export const buildGroupChatEditDraft = (
 		},
 		consultantIds: (source.participants || []).map(
 			(participant) => participant.consultantId
-		)
+		),
+		guestAccountMode: isGuestAccountMode(source.guestAccountMode)
+			? source.guestAccountMode
+			: 'GUEST_CHOOSES'
 	};
 };

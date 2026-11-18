@@ -9,6 +9,8 @@ export const SAMPLE_DIRECT_LINKS: DirectLink[] = [
 		topicId: 3,
 		medium: 'VIDEO',
 		temporary: true,
+		// UserService#1662: the chip names the mode ("Temporär").
+		guestAccountMode: 'TEMPORARY',
 		active: true,
 		url: 'https://app.oriso.org/invite/Ab3dE6gH'
 	},
@@ -19,6 +21,7 @@ export const SAMPLE_DIRECT_LINKS: DirectLink[] = [
 		topicId: 4,
 		medium: 'CHAT',
 		temporary: false,
+		guestAccountMode: 'PERMANENT',
 		active: true,
 		url: 'https://app.oriso.org/invite/Zy8xW6vU',
 		// #2142: the date and time the counsellor noted.
@@ -31,6 +34,8 @@ export const SAMPLE_DIRECT_LINKS: DirectLink[] = [
 		topicId: 3,
 		medium: 'AUDIO',
 		temporary: true,
+		// "Gast wählt", no longer "Temporär".
+		guestAccountMode: 'GUEST_CHOOSES',
 		active: false,
 		url: 'https://app.oriso.org/invite/Qr5sT2uV'
 	}

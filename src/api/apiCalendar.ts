@@ -12,7 +12,12 @@ import {
 	fetchData
 } from './fetchData';
 
-export type CalendarEntryTypeDTO = 'APPOINTMENT' | 'GROUP' | 'BLOCKER' | 'BUSY';
+export type CalendarEntryTypeDTO =
+	| 'APPOINTMENT'
+	| 'GROUP'
+	| 'BLOCKER'
+	| 'BUSY'
+	| 'ABSENCE';
 export type AppointmentKindDTO = 'ONSITE' | 'VIDEO' | 'PHONE' | 'CHAT';
 
 export interface CalendarEntryDTO {
