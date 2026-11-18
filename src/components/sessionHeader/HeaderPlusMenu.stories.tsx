@@ -4,30 +4,37 @@
  * case moves to a colleague). Desktop only, for the assigned counsellor.
  */
 import * as React from 'react';
+import { useRef } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, fn, within } from 'storybook/test';
 import { HeaderPlusMenu } from './HeaderPlusMenu';
 import { ChatroomMainInteractionIcon } from './ChatroomMainInteractionIcon';
 import './sessionHeader.styles.scss';
 
-const Frame = (props: React.ComponentProps<typeof HeaderPlusMenu>) => (
-	<div style={{ padding: 16, minHeight: 260 }}>
-		<ChatroomMainInteractionIcon
-			type="nearby"
-			showAddIcon
-			addLabel="Hinzufügen oder übergeben"
-			addExpanded
-			onAddClick={() => undefined}
-		/>
-		<HeaderPlusMenu {...props} />
-	</div>
-);
+const Frame = (
+	props: Omit<React.ComponentProps<typeof HeaderPlusMenu>, 'opener'>
+) => {
+	const opener = useRef<HTMLDivElement>(null);
+	return (
+		<div style={{ padding: 16, minHeight: 260 }}>
+			<div ref={opener}>
+				<ChatroomMainInteractionIcon
+					type="nearby"
+					showAddIcon
+					addLabel="Hinzufügen oder übergeben"
+					addExpanded
+					onAddClick={() => undefined}
+				/>
+			</div>
+			<HeaderPlusMenu {...props} opener={opener} />
+		</div>
+	);
+};
 
 const meta = {
 	title: 'Components/Session/HeaderPlusMenu',
 	component: Frame,
 	args: {
-		anchor: { left: 24, bottom: 64 },
 		supervisionAvailable: true,
 		onSupervision: fn(),
 		onHandover: fn(),

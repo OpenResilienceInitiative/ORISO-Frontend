@@ -4,10 +4,14 @@
  * the ⋮ menu and the profile button open (FE#2250). Each entry says in one
  * line what happens to the case, because the two are easy to mix up: a
  * supervisor only watches along, a handover moves the case away.
+ *
+ * CompactActionMenu owns its own trigger, so it cannot replace the header "+"
+ * (pending state, avatar overlay, practice tour). This menu uses the same
+ * shared atoms: useChatMenuPosition, MenuBackdrop, and Popover.
  */
 import * as React from 'react';
 import { useEffect, useRef } from 'react';
-import { createPortal } from 'react-dom';
+import { Popover } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import SupervisorAccountOutlinedIcon from '@mui/icons-material/SupervisorAccountOutlined';
 import {
@@ -15,30 +19,15 @@ import {
 	ChatMenuDropdownItem,
 	handleMenuKeyDown
 } from '../chatMenuDropdown/ChatMenuDropdown';
+import { MenuBackdrop } from '../chatMenuDropdown/MenuBackdrop';
+import { useChatMenuPosition } from '../chatMenuDropdown/useChatMenuPosition';
 import { ReactComponent as HandoverIcon } from '../../resources/img/icons/case_handover_200_24px.svg';
 
 const MENU_WIDTH = 320;
-const GAP = 8;
-const INSET = 8;
-
-export type PlusMenuAnchor = Pick<DOMRect, 'left' | 'bottom'>;
-
-/** Below the "+", left-aligned with it, never outside the window. */
-export const plusMenuPosition = (
-	anchor: PlusMenuAnchor,
-	viewportWidth: number
-) => ({
-	top: anchor.bottom + GAP,
-	left: Math.max(
-		INSET,
-		Math.min(anchor.left, viewportWidth - MENU_WIDTH - INSET)
-	)
-});
 
 export interface HeaderPlusMenuProps {
-	anchor: PlusMenuAnchor;
-	/** The "+" itself: pressing it again is not an outside press. */
-	opener?: React.RefObject<HTMLElement | null>;
+	/** The "+" itself: the menu anchors to it, and pressing it again is not an outside press. */
+	opener: React.RefObject<HTMLElement | null>;
 	/** Supervision can be managed here (`getSupervisorAddState` interactive). */
 	supervisionAvailable: boolean;
 	/** Why supervision cannot be managed here, shown on the disabled entry. */
@@ -49,7 +38,6 @@ export interface HeaderPlusMenuProps {
 }
 
 export const HeaderPlusMenu = ({
-	anchor,
 	opener,
 	supervisionAvailable,
 	supervisionUnavailableLabel,
@@ -58,105 +46,121 @@ export const HeaderPlusMenu = ({
 	onClose
 }: HeaderPlusMenuProps) => {
 	const { t: translate } = useTranslation();
-	const ref = useRef<HTMLDivElement>(null);
+	const menuRef = useRef<HTMLDivElement>(null);
+	const style = useChatMenuPosition({
+		open: true,
+		anchorRef: opener,
+		menuRef,
+		width: MENU_WIDTH
+	});
 
 	useEffect(() => {
-		ref.current
+		if (style.visibility !== 'visible') return;
+		menuRef.current
 			?.querySelector<HTMLElement>(
 				'[role="menuitem"]:not([aria-disabled="true"]):not(:disabled)'
 			)
 			?.focus();
-	}, []);
+	}, [style.visibility]);
 
 	useEffect(() => {
-		const onKey = (e: KeyboardEvent) => {
-			if (e.key !== 'Escape') return;
-			onClose();
-			opener?.current?.focus();
-		};
-		const onDown = (e: MouseEvent) =>
-			!ref.current?.contains(e.target as Node) &&
-			!opener?.current?.contains(e.target as Node) &&
-			onClose();
 		// Focus landing anywhere but the menu or the "+" closes it, also when
 		// it got there through the "+" (menu → "+" → next control).
 		const onFocus = (e: FocusEvent) =>
-			!ref.current?.contains(e.target as Node) &&
-			!opener?.current?.contains(e.target as Node) &&
+			!menuRef.current?.contains(e.target as Node) &&
+			!opener.current?.contains(e.target as Node) &&
 			onClose();
-		document.addEventListener('keydown', onKey, true);
-		document.addEventListener('mousedown', onDown);
 		document.addEventListener('focusin', onFocus);
-		return () => {
-			document.removeEventListener('keydown', onKey, true);
-			document.removeEventListener('mousedown', onDown);
-			document.removeEventListener('focusin', onFocus);
-		};
+		return () => document.removeEventListener('focusin', onFocus);
 	}, [onClose, opener]);
 
-	return createPortal(
-		<div
-			style={{
-				position: 'fixed',
-				zIndex: 1400,
-				...plusMenuPosition(anchor, window.innerWidth)
-			}}
-		>
-			<ChatMenuDropdown
-				ref={ref}
-				role="menu"
-				ariaLabel={translate(
-					'sessionHeader.supervisor.plusMenu.menuLabel'
-				)}
-				data-cy="session-header-plus-menu"
-				style={{ width: MENU_WIDTH }}
-				onKeyDown={handleMenuKeyDown}
-				onBlur={(e) => {
-					// Tab out of the menu closes it; moving between its items,
-					// back to the "+" or out of the window does not.
-					const next = e.relatedTarget as Node | null;
-					if (
-						next &&
-						!ref.current?.contains(next) &&
-						!opener?.current?.contains(next)
-					)
-						onClose();
+	return (
+		<>
+			<MenuBackdrop
+				open
+				onClose={onClose}
+				spotlightRef={opener}
+				zIndex={1399}
+			/>
+			<Popover
+				open
+				anchorReference="none"
+				hideBackdrop
+				disableAutoFocus
+				disableEnforceFocus
+				disableRestoreFocus
+				transitionDuration={0}
+				sx={{ zIndex: 1400 }}
+				onClose={(_, reason) => {
+					onClose();
+					if (reason === 'escapeKeyDown') opener.current?.focus();
+				}}
+				PaperProps={{
+					ref: menuRef,
+					style,
+					sx: {
+						background: 'transparent',
+						boxShadow: 'none',
+						overflow: 'visible'
+					}
 				}}
 			>
-				<ChatMenuDropdownItem
-					role="menuitem"
-					data-cy="session-header-plus-supervision"
-					icon={<SupervisorAccountOutlinedIcon />}
-					title={translate('sessionHeader.supervisor.modal.title')}
-					description={
-						supervisionAvailable
-							? translate(
-									'sessionHeader.supervisor.plusMenu.supervisionHint'
-								)
-							: supervisionUnavailableLabel
-					}
-					disabled={!supervisionAvailable}
-					onClick={() => {
-						if (!supervisionAvailable) return;
-						onClose();
-						onSupervision();
-					}}
-				/>
-				<ChatMenuDropdownItem
-					role="menuitem"
-					data-cy="session-header-plus-handover"
-					icon={<HandoverIcon aria-hidden="true" />}
-					title={translate('caseHandover.offer.open')}
-					description={translate(
-						'sessionHeader.supervisor.plusMenu.handoverHint'
+				<ChatMenuDropdown
+					role="menu"
+					ariaLabel={translate(
+						'sessionHeader.supervisor.plusMenu.menuLabel'
 					)}
-					onClick={() => {
-						onClose();
-						onHandover();
+					data-cy="session-header-plus-menu"
+					style={{ width: '100%' }}
+					onKeyDown={handleMenuKeyDown}
+					onBlur={(e) => {
+						// Tab out of the menu closes it; moving between its items,
+						// back to the "+" or out of the window does not.
+						const next = e.relatedTarget as Node | null;
+						if (
+							next &&
+							!menuRef.current?.contains(next) &&
+							!opener.current?.contains(next)
+						)
+							onClose();
 					}}
-				/>
-			</ChatMenuDropdown>
-		</div>,
-		document.body
+				>
+					<ChatMenuDropdownItem
+						role="menuitem"
+						data-cy="session-header-plus-supervision"
+						icon={<SupervisorAccountOutlinedIcon />}
+						title={translate(
+							'sessionHeader.supervisor.modal.title'
+						)}
+						description={
+							supervisionAvailable
+								? translate(
+										'sessionHeader.supervisor.plusMenu.supervisionHint'
+									)
+								: supervisionUnavailableLabel
+						}
+						disabled={!supervisionAvailable}
+						onClick={() => {
+							if (!supervisionAvailable) return;
+							onClose();
+							onSupervision();
+						}}
+					/>
+					<ChatMenuDropdownItem
+						role="menuitem"
+						data-cy="session-header-plus-handover"
+						icon={<HandoverIcon aria-hidden="true" />}
+						title={translate('caseHandover.offer.open')}
+						description={translate(
+							'sessionHeader.supervisor.plusMenu.handoverHint'
+						)}
+						onClick={() => {
+							onClose();
+							onHandover();
+						}}
+					/>
+				</ChatMenuDropdown>
+			</Popover>
+		</>
 	);
 };

@@ -4,15 +4,21 @@
  * "Beratung übergeben", each with one line on what happens to the case.
  */
 import * as React from 'react';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import {
+	act,
+	cleanup,
+	fireEvent,
+	render,
+	screen
+} from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
-import { HeaderPlusMenu, plusMenuPosition } from './HeaderPlusMenu';
+import { HeaderPlusMenu } from './HeaderPlusMenu';
 
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({ t: (key: string) => key })
 }));
 
-const renderMenu = (
+const renderMenu = async (
 	props: Partial<React.ComponentProps<typeof HeaderPlusMenu>> = {}
 ) => {
 	const handlers = {
@@ -20,25 +26,37 @@ const renderMenu = (
 		onHandover: vi.fn(),
 		onClose: vi.fn()
 	};
+	const opener = document.createElement('button');
+	document.body.append(opener);
 	render(
 		<HeaderPlusMenu
-			anchor={{ left: 100, bottom: 60 }}
+			opener={{ current: opener }}
 			supervisionAvailable
 			{...handlers}
 			{...props}
 		/>
 	);
-	return handlers;
+	await act(async () => {
+		await new Promise((resolve) =>
+			requestAnimationFrame(() => resolve(undefined))
+		);
+	});
+	return { ...handlers, opener };
 };
 
 const item = (name: string) =>
 	screen.getByRole('menuitem', { name: new RegExp(name) });
 
 describe('HeaderPlusMenu', () => {
-	afterEach(cleanup);
+	afterEach(() => {
+		cleanup();
+		document.body.querySelectorAll('button').forEach((node) => {
+			if (!node.closest('[role="menu"]')) node.remove();
+		});
+	});
 
-	it('offers supervision and handover, each saying what happens to the case', () => {
-		renderMenu();
+	it('offers supervision and handover, each saying what happens to the case', async () => {
+		await renderMenu();
 		expect(screen.getByRole('menu').getAttribute('aria-label')).toBe(
 			'sessionHeader.supervisor.plusMenu.menuLabel'
 		);
@@ -50,22 +68,22 @@ describe('HeaderPlusMenu', () => {
 		);
 	});
 
-	it('opens the handover and closes itself', () => {
-		const { onHandover, onClose, onSupervision } = renderMenu();
+	it('opens the handover and closes itself', async () => {
+		const { onHandover, onClose, onSupervision } = await renderMenu();
 		fireEvent.click(item('caseHandover.offer.open'));
 		expect(onClose).toHaveBeenCalledTimes(1);
 		expect(onHandover).toHaveBeenCalledTimes(1);
 		expect(onSupervision).not.toHaveBeenCalled();
 	});
 
-	it('opens supervision when it is available here', () => {
-		const { onSupervision } = renderMenu();
+	it('opens supervision when it is available here', async () => {
+		const { onSupervision } = await renderMenu();
 		fireEvent.click(item('sessionHeader.supervisor.modal.title'));
 		expect(onSupervision).toHaveBeenCalledTimes(1);
 	});
 
-	it('greys supervision with its reason when it is not available, handover stays', () => {
-		const { onSupervision } = renderMenu({
+	it('greys supervision with its reason when it is not available, handover stays', async () => {
+		const { onSupervision } = await renderMenu({
 			supervisionAvailable: false,
 			supervisionUnavailableLabel:
 				'Supervisor hinzufügen – hier nicht verfügbar'
@@ -80,18 +98,20 @@ describe('HeaderPlusMenu', () => {
 		);
 	});
 
-	it('closes on Escape and on a press outside', () => {
-		const { onClose } = renderMenu();
-		fireEvent.keyDown(document, { key: 'Escape' });
-		fireEvent.mouseDown(document.body);
+	it('closes on Escape and on a press outside', async () => {
+		const { onClose } = await renderMenu();
+		fireEvent.keyDown(screen.getByRole('presentation'), { key: 'Escape' });
+		const backdrop = document.querySelector('.orisoMenuBackdrop');
+		expect(backdrop).toBeTruthy();
+		fireEvent.mouseDown(backdrop!);
 		expect(onClose).toHaveBeenCalledTimes(2);
 	});
 
-	it('closes when keyboard focus leaves it, not when it moves inside (review)', () => {
+	it('closes when keyboard focus leaves it, not when it moves inside (review)', async () => {
 		const outside = document.createElement('button');
 		const opener = document.createElement('button');
 		document.body.append(outside, opener);
-		const { onClose } = renderMenu({ opener: { current: opener } });
+		const { onClose } = await renderMenu({ opener: { current: opener } });
 		const [supervision, handover] = screen.getAllByRole('menuitem');
 		fireEvent.blur(supervision, { relatedTarget: handover });
 		fireEvent.blur(handover, { relatedTarget: opener });
@@ -104,11 +124,11 @@ describe('HeaderPlusMenu', () => {
 		opener.remove();
 	});
 
-	it('closes when focus goes from the menu to the "+" and then elsewhere (review)', () => {
+	it('closes when focus goes from the menu to the "+" and then elsewhere (review)', async () => {
 		const outside = document.createElement('button');
 		const opener = document.createElement('button');
 		document.body.append(outside, opener);
-		const { onClose } = renderMenu({ opener: { current: opener } });
+		const { onClose } = await renderMenu({ opener: { current: opener } });
 		const [, handover] = screen.getAllByRole('menuitem');
 		fireEvent.blur(handover, { relatedTarget: opener });
 		fireEvent.focusIn(opener);
@@ -118,15 +138,5 @@ describe('HeaderPlusMenu', () => {
 		expect(onClose).toHaveBeenCalled();
 		outside.remove();
 		opener.remove();
-	});
-
-	it('sits below the "+" and stays inside the window', () => {
-		expect(plusMenuPosition({ left: 100, bottom: 60 }, 1440)).toEqual({
-			top: 68,
-			left: 100
-		});
-		expect(plusMenuPosition({ left: 1300, bottom: 60 }, 1440).left).toBe(
-			1440 - 320 - 8
-		);
 	});
 });

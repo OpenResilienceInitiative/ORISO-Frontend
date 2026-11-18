@@ -129,7 +129,7 @@ import {
 } from './SupervisorConsultantPicker';
 import { useSupervisorConsultantDirectory } from './useSupervisorConsultantDirectory';
 import { resolveRoomHeaderDensity } from './roomHeaderDensity';
-import { HeaderPlusMenu, type PlusMenuAnchor } from './HeaderPlusMenu';
+import { HeaderPlusMenu } from './HeaderPlusMenu';
 import { canRecommendFurtherCounselling } from '../furtherCounselling/furtherCounsellingRules';
 import { useCaseHandoverOffer } from '../caseHandover/useCaseHandoverOffer';
 import { CaseHandoverOffer } from '../caseHandover/CaseHandoverOffer';
@@ -281,8 +281,8 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 	// entry (FE#2250). The phone keeps its grey "+" and the ⋮ entry.
 	const caseHandover = useCaseHandoverOffer();
 	const plusButtonRef = useRef<HTMLElement | null>(null);
-	const [plusMenuAnchor, setPlusMenuAnchor] = useState<PlusMenuAnchor>();
-	const closePlusMenu = useCallback(() => setPlusMenuAnchor(undefined), []);
+	const [plusMenuOpen, setPlusMenuOpen] = useState(false);
+	const closePlusMenu = useCallback(() => setPlusMenuOpen(false), []);
 	// FE#1960: "Termin anlegen" is a ⋮ menu entry; the appointment slot
 	// below the header owns the dialog and hands its opener up while
 	// creating is possible.
@@ -1255,25 +1255,18 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 										supervisorAddState.mode === 'pending'
 									}
 									addExpanded={
-										plusOpensMenu
-											? Boolean(plusMenuAnchor)
-											: undefined
+										plusOpensMenu ? plusMenuOpen : undefined
 									}
 									onAddClick={
 										plusOpensMenu
 											? (event) => {
-													if (plusMenuAnchor) {
+													if (plusMenuOpen) {
 														closePlusMenu();
 														return;
 													}
 													plusButtonRef.current =
 														event.currentTarget;
-													const rect =
-														event.currentTarget.getBoundingClientRect();
-													setPlusMenuAnchor({
-														left: rect.left,
-														bottom: rect.bottom
-													});
+													setPlusMenuOpen(true);
 												}
 											: canOpenSupervisorModal
 												? () =>
@@ -1283,9 +1276,8 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 												: undefined
 									}
 								/>
-								{plusOpensMenu && plusMenuAnchor && (
+								{plusOpensMenu && plusMenuOpen && (
 									<HeaderPlusMenu
-										anchor={plusMenuAnchor}
 										opener={plusButtonRef}
 										supervisionAvailable={
 											canOpenSupervisorModal
