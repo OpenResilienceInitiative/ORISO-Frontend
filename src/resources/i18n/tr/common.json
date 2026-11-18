@@ -743,7 +743,7 @@
 	},
 	"enquiry": {
 		"teamDiscussion": {
-			"open": "Ekip görüşmesini aç"
+			"open": "Ekip sohbetini aç"
 		},
 		"acceptButton": {
 			"anonymous": "Sohbet başlat",
@@ -2325,10 +2325,10 @@
 				"open": "Sohbeti aç"
 			},
 			"mention": {
-				"title": "Ekip görüşmesinde anıldınız",
+				"title": "Ekip sohbetinde anıldınız",
 				"from": "Gönderen: {{name}}",
 				"several": "{{count}} yeni anma",
-				"open": "Ekip görüşmesini aç"
+				"open": "Ekip sohbetini aç"
 			},
 			"handover": {
 				"title": "Yeni vaka devri",
@@ -2626,8 +2626,8 @@
 				"text": "Yaklaşan randevularınızın bir özeti hazır."
 			},
 			"teamDiscussionNew": {
-				"title": "Ekip görüşmesi",
-				"text": "{{senderDisplayName}} ekip görüşmesinde bir mesaj yazdı"
+				"title": "Ekip sohbeti",
+				"text": "{{senderDisplayName}} ekip sohbetinde bir mesaj yazdı"
 			},
 			"firstResponseReceived": {
 				"title": "İlk adımlarınız",
@@ -2711,7 +2711,7 @@
 				"archivedOpenToReply": "Bu görüşme arşivlendi. Yanıtlamak için görüşmeyi açın.",
 				"notJoined": "Katılımınız onaylanana ve oda yüklenene kadar salt okunur.",
 				"supervisorNoComposer": "Süpervizör olarak burada tepki verebilirsiniz ama yazamazsınız.",
-				"teamClosed": "Ekip görüşmesi kapandı.",
+				"teamClosed": "Ekip sohbeti kapandı.",
 				"curtained": "Bu vaka şu anda sizin için görünür değil.",
 				"hiddenNotYours": "Bu görüşme sizin vakalarınızdan biri değil; bu yüzden etkinlik burada göstermiyor.",
 				"hiddenNotJoined": "Bu görüşmeye katılmadınız; bu yüzden etkinlik burada göstermiyor.",
@@ -3148,7 +3148,7 @@
 				},
 				"kind": {
 					"new": "Yeni talep",
-					"teamDiscussion": "Ekip görüşmesi",
+					"teamDiscussion": "Ekip sohbeti",
 					"standard": "Standart bildirim",
 					"liveChat": "Canlı sohbet mesajı",
 					"mention": "@ Bahsetme",
@@ -3502,7 +3502,7 @@
 		"names": {
 			"agency": "Alıştırma danışma merkezi",
 			"topic": "Alıştırma",
-			"teamRoom": "Ekip görüşmesi (alıştırma)",
+			"teamRoom": "Ekip sohbeti (alıştırma)",
 			"supervisionRoom": "Süpervizyon (alıştırma)"
 		}
 	},
@@ -5861,7 +5861,7 @@
 		}
 	},
 	"teamDiscussion": {
-		"title": "Ekip görüşmesi",
+		"title": "Ekip sohbeti",
 		"startHint": "Görüşmeyi başlat",
 		"postCount": "{{count}} gönderi",
 		"postCount_one": "1 gönderi",
@@ -5872,7 +5872,7 @@
 		"placeholder": "Ekibe mesaj …",
 		"send": "Gönder",
 		"error": {
-			"open": "Ekip görüşmesi açılamadı.",
+			"open": "Ekip sohbeti açılamadı.",
 			"send": "Mesaj gönderilemedi."
 		}
 	},
@@ -6232,12 +6232,12 @@
 					"intro": "Listede sizi bir alıştırma talebi bekliyor. Açmak için üzerine tıklayın."
 				},
 				"openTeam": {
-					"title": "Ekip görüşmesini açın",
-					"intro": "Ekip görüşmesi sizde etkin: kabul etmeden önce ekibinizle konuşmanızı sağlar. “Ekip görüşmesini aç” düğmesine tıklayın."
+					"title": "Ekip sohbetini açın",
+					"intro": "Ekip sohbeti sizde etkin: kabul etmeden önce ekibinizle konuşmanızı sağlar. “Ekip sohbetini aç” düğmesine tıklayın."
 				},
 				"teamReply": {
 					"title": "Ekibe yanıt verin",
-					"intro": "Ekipten gelen mesajı okuyun ve bir yanıt yazın. Talebi kabul ettiğinizde ekip görüşmesi kapanır."
+					"intro": "Ekipten gelen mesajı okuyun ve bir yanıt yazın. Talebi kabul ettiğinizde ekip sohbeti kapanır."
 				},
 				"accept": {
 					"title": "Talebi kabul edin",

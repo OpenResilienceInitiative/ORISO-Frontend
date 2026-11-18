@@ -743,7 +743,7 @@
 	},
 	"enquiry": {
 		"teamDiscussion": {
-			"open": "Ouvrir la discussion d’équipe"
+			"open": "Ouvrir le chat d’équipe"
 		},
 		"acceptButton": {
 			"anonymous": "Démarrer le chat",
@@ -2325,10 +2325,10 @@
 				"open": "Ouvrir la discussion"
 			},
 			"mention": {
-				"title": "Mention dans la discussion d’équipe",
+				"title": "Mention dans le chat d’équipe",
 				"from": "De {{name}}",
 				"several": "{{count}} nouvelles mentions",
-				"open": "Ouvrir la discussion d’équipe"
+				"open": "Ouvrir le chat d’équipe"
 			},
 			"handover": {
 				"title": "Nouveau transfert de dossier",
@@ -2626,8 +2626,8 @@
 				"text": "Un aperçu de vos prochains rendez-vous est disponible."
 			},
 			"teamDiscussionNew": {
-				"title": "Réunion d'équipe",
-				"text": "{{senderDisplayName}} a écrit dans la réunion d'équipe"
+				"title": "Chat d'équipe",
+				"text": "{{senderDisplayName}} a écrit dans le chat d'équipe"
 			},
 			"firstResponseReceived": {
 				"title": "Vos premiers pas",
@@ -2711,7 +2711,7 @@
 				"archivedOpenToReply": "Cette conversation est archivée. Ouvrez la conversation pour répondre.",
 				"notJoined": "Lecture seule jusqu’à la confirmation de votre adhésion et le chargement du salon.",
 				"supervisorNoComposer": "En tant que superviseur·e, vous pouvez réagir ici, mais pas écrire.",
-				"teamClosed": "La discussion d’équipe est close.",
+				"teamClosed": "Le chat d’équipe est fermé.",
 				"curtained": "Ce dossier ne vous est pas visible pour le moment.",
 				"hiddenNotYours": "Cette conversation ne fait pas partie de vos dossiers ; l’activité ne l’affiche donc pas ici.",
 				"hiddenNotJoined": "Vous n’avez pas rejoint cette conversation ; l’activité ne l’affiche donc pas ici.",
@@ -3148,7 +3148,7 @@
 				},
 				"kind": {
 					"new": "Nouvelle demande",
-					"teamDiscussion": "Discussion d'équipe",
+					"teamDiscussion": "Chat d'équipe",
 					"standard": "Notification standard",
 					"liveChat": "Message du chat en direct",
 					"mention": "Mention @",
@@ -3502,7 +3502,7 @@
 		"names": {
 			"agency": "Service d’exercice",
 			"topic": "Exercice",
-			"teamRoom": "Réunion d’équipe (exercice)",
+			"teamRoom": "Chat d’équipe (exercice)",
 			"supervisionRoom": "Supervision (exercice)"
 		}
 	},
@@ -5861,7 +5861,7 @@
 		}
 	},
 	"teamDiscussion": {
-		"title": "Réunion d'équipe",
+		"title": "Chat d'équipe",
 		"startHint": "Démarrer la réunion",
 		"postCount": "{{count}} contributions",
 		"postCount_one": "1 contribution",
@@ -5872,7 +5872,7 @@
 		"placeholder": "Message à l'équipe …",
 		"send": "Envoyer",
 		"error": {
-			"open": "La réunion d'équipe n'a pas pu être ouverte.",
+			"open": "Le chat d'équipe n'a pas pu être ouvert.",
 			"send": "Le message n'a pas pu être envoyé."
 		}
 	},
@@ -6232,12 +6232,12 @@
 					"intro": "Une demande d’exercice vous attend dans la liste. Cliquez dessus pour l’ouvrir."
 				},
 				"openTeam": {
-					"title": "Ouvrir la discussion d’équipe",
-					"intro": "La discussion d’équipe est activée chez vous : elle permet de vous concerter avec votre équipe avant d’accepter. Cliquez sur « Ouvrir la discussion d’équipe »."
+					"title": "Ouvrir le chat d’équipe",
+					"intro": "Le chat d’équipe est activé chez vous : il permet de vous concerter avec votre équipe avant d’accepter. Cliquez sur « Ouvrir le chat d’équipe »."
 				},
 				"teamReply": {
 					"title": "Répondre à l’équipe",
-					"intro": "Lisez le message de l’équipe et écrivez une réponse. Quand vous acceptez la demande, la discussion d’équipe se ferme."
+					"intro": "Lisez le message de l’équipe et écrivez une réponse. Quand vous acceptez la demande, le chat d’équipe se ferme."
 				},
 				"accept": {
 					"title": "Accepter la demande",
