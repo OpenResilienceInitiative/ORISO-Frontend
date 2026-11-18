@@ -546,6 +546,7 @@ export const Registration = () => {
 			topicIcon: undefined,
 			agency: undefined,
 			agencyId: undefined,
+			registrationRef: undefined,
 			age: undefined,
 			state: undefined
 		});
@@ -559,6 +560,7 @@ export const Registration = () => {
 			zipcode: undefined,
 			agency: undefined,
 			agencyId: undefined,
+			registrationRef: undefined,
 			age: undefined,
 			state: undefined
 		});
@@ -1213,6 +1215,12 @@ export const Registration = () => {
 																}
 																nextStepUrl={
 																	nextStepUrl
+																}
+																prevStepUrl={
+																	currStepIndex >
+																	0
+																		? prevStepUrl
+																		: null
 																}
 																conversationType={
 																	getGroupJoin(

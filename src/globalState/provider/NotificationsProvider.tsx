@@ -71,7 +71,11 @@ import {
 	playNotificationSound
 } from '../../utils/notificationSettings/soundPlayback';
 import { notificationSettingsStore } from '../../utils/notificationSettings/store';
-import { getEventDescriptor } from '../../components/notificationsCenter/eventDescriptors';
+import {
+	ADDON_NOTIFICATION_EVENT_TYPE,
+	getEventDescriptor
+} from '../../components/notificationsCenter/eventDescriptors';
+import { refreshAddonRegistries } from '../../addons/addonRegistry';
 import { displayFilterStore } from '../../utils/displayFilter/store';
 import {
 	isEventMutedByKind,
@@ -560,6 +564,9 @@ export function NotificationsProvider(props) {
 			// A chat-mention row is marked after the plain row arrived.
 			const markedLate = observed.has(event.id);
 			observed.add(eventKey);
+			if (event.eventType === ADDON_NOTIFICATION_EVENT_TYPE) {
+				refreshAddonRegistries();
+			}
 			const pendingLive = pendingLiveEventIdsRef.current.delete(
 				event.params?.matrixEventId
 			);

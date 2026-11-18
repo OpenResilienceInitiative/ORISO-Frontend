@@ -1,4 +1,22 @@
 {
+	"addons": {
+		"loadError": "Ce module complémentaire n'a pas pu être chargé.",
+		"notAvailable": "Ce module complémentaire n'est pas disponible.",
+		"panel": {
+			"region": "Panneau latéral : {{title}}",
+			"close": "Fermer"
+		},
+		"calendar": {
+			"source": "De l'extension « {{title}} »",
+			"allDay": "Toute la journée",
+			"kind": {
+				"appointment": "Rendez-vous",
+				"deadline": "Échéance",
+				"reminder": "Rappel"
+			}
+		},
+		"badge": "Nouveautés : {{count}}"
+	},
 	"askerInfo": {
 		"noPrivacyNotice": {
 			"title": "Aucune politique de confidentialité enregistrée",
@@ -2655,6 +2673,10 @@
 			"sessionAskerDeleted": {
 				"title": "Personne en quête de conseil supprimée",
 				"text": "Un chat avec une personne en quête de conseil a été supprimé. Les données personnelles et les messages ne sont plus disponibles."
+			},
+			"addonNotification": {
+				"title": "Nouvelle communication d'une extension",
+				"text": "Une extension a une nouvelle communication."
 			},
 			"directInvitationRenewalRequested": {
 				"title": "Nouveau lien demandé",

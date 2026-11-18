@@ -1,4 +1,22 @@
 {
+	"addons": {
+		"loadError": "Bu eklenti yüklenemedi.",
+		"notAvailable": "Bu eklenti kullanılamıyor.",
+		"panel": {
+			"region": "Yan panel: {{title}}",
+			"close": "Kapat"
+		},
+		"calendar": {
+			"source": "“{{title}}” eklentisinden",
+			"allDay": "Tüm gün",
+			"kind": {
+				"appointment": "Randevu",
+				"deadline": "Son tarih",
+				"reminder": "Hatırlatma"
+			}
+		},
+		"badge": "Yenilikler: {{count}}"
+	},
 	"askerInfo": {
 		"noPrivacyNotice": {
 			"title": "Gizlilik bildirimi kayıtlı değil",
@@ -2655,6 +2673,10 @@
 			"sessionAskerDeleted": {
 				"title": "Silinmiş danışan",
 				"text": "Bir danışanla yapılan sohbet silindi. Kişisel veriler ve mesajlar artık mevcut değil."
+			},
+			"addonNotification": {
+				"title": "Bir eklentiden yeni bildirim",
+				"text": "Bir eklentinin yeni bir bildirimi var."
 			},
 			"directInvitationRenewalRequested": {
 				"title": "Yeni bağlantı istendi",
