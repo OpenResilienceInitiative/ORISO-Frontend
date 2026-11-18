@@ -16,7 +16,6 @@ import EventAvailableOutlinedIcon from '@mui/icons-material/EventAvailableOutlin
 import EventRepeatOutlinedIcon from '@mui/icons-material/EventRepeatOutlined';
 import UndoOutlinedIcon from '@mui/icons-material/UndoOutlined';
 import WbSunnyOutlinedIcon from '@mui/icons-material/WbSunnyOutlined';
-import EventAvailableOutlinedIcon from '@mui/icons-material/EventAvailableOutlined';
 import WorkHistoryOutlinedIcon from '@mui/icons-material/WorkHistoryOutlined';
 import SyncOutlinedIcon from '@mui/icons-material/SyncOutlined';
 import LoginOutlinedIcon from '@mui/icons-material/LoginOutlined';
