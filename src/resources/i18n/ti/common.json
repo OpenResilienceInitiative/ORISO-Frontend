@@ -7175,14 +7175,22 @@
 				"incomplete": "በጃኹም ዕለትን ሰዓትን ምረጹ።",
 				"past": "እቲ ምዝገባ ኣብ መጻኢ ክኸውን ኣለዎ።",
 				"order": "እቲ መወዳእታ ድሕሪ እቲ መጀመሪ ክኸውን ኣለዎ።",
-				"conversation": "በጃኹም እቲ ቆጸራ ዝምልከቶ ምኽሪ ምረጹ።"
+				"conversation": "በጃኹም እቲ ቆጸራ ዝምልከቶ ምኽሪ ምረጹ።",
+				"colleague": "በጃኹም መሳርሕቲ ምረጹ።"
 			},
 			"entryKind": "ዓይነት ምዝገባ",
 			"tabs": {
 				"appointment": "ቆጸራ",
 				"blocker": "ዝተዓጽወ ግዜ",
 				"absence": "ዘይምህላው"
-			}
+			},
+			"withWhom": "ቆጸራ ምስ",
+			"withConversation": "ምኽሪ ዝደሊ ሰብ",
+			"withColleague": "መሳርሕቲ",
+			"colleague": "መሳርሕቲ",
+			"colleagueHint": "እቲ ቆጸራ ናብ ናይ ክልቴኹም ውሽጣዊ ቻት ይኣቱ። እንተዘይሃልዩ ይፍጠር።",
+			"colleagueDescription": "መዓልቲ፡ ሰዓት፡ ዓይነትን መሳርሕትን ምረጹ።",
+			"onsiteOnly": "ምስዚ መሳርሕቲ ውሽጣዊ ቻት ኣይፍቀድን። ኣብ ቦታ ዝግበር ቆጸራ ጥራይ ይከኣል።"
 		},
 		"details": {
 			"start": {
@@ -7682,6 +7690,30 @@
 			"conflicts": "ኣብዚ ግዜ'ዚ {{count}} ቆጸራታት ኣለዉ። ይቕጽሉ – እንተ ኣድለየ ባዕልኹም ሰርዝዎም ወይ ኣግሕዝዎም።",
 			"conflicts_one": "ኣብዚ ግዜ'ዚ {{count}} ቆጸራ ኣሎ። ይቕጽል – እንተ ኣድለየ ባዕልኹም ሰርዝዎ ወይ ኣግሕዝዎ።",
 			"saved": "ዘይምህላው ኣትዩ። ኣብ ፕሮፋይልኩም'ውን ይርአ።"
+		},
+		"meeting": {
+			"accept": "ተቐበል",
+			"decline": "ኣይትቐበል",
+			"accepted": "ቆጸራ ተቐቢልኩም።",
+			"declined": "ቆጸራ ኣይተቐበልኩምን።",
+			"cancelled": "ቆጸራ ተሰሪዙ።",
+			"cancelAsk": "{{name}}, {{time}}። እቲ ቆጸራ ካብ ክልቲኡ ካላንዳር ይጠፍእ።",
+			"cancelSub": "ኣብ {{name}} እውን ይጠፍእ",
+			"chatSub": "ውሽጣዊ ቻት ምስ {{name}}",
+			"pendingInvited": "{{name}} ይዕድመኩም ኣሎ። በጃኹም ተቐበሉ ወይ ኣይትቐበሉ።",
+			"pendingSent": "ተሓቲቱ። ን{{name}} ይጽበ ኣሎ።",
+			"confirmed": "ምስ {{name}} ተረጋጊጹ።"
+		},
+		"autoAccept": {
+			"menu": "ቆጸራታት ብኣውቶማቲክ ተቐበል …",
+			"menuHint": "ካብ ኣየኖት መሳርሕቲ",
+			"title": "ቆጸራታት ብኣውቶማቲክ ተቐበል",
+			"description": "ካብዞም መሳርሕቲ ዝመጽእ ቆጸራታት ብቐጥታ ኣብ ካላንዳርኩም ይጸንዕ።",
+			"colleagues": "መሳርሕቲ",
+			"search": "ስም ድለ",
+			"hint": "ናይ ካልኦት ኩሎም ቆጸራታት ክሳብ እትቕበልዎ ይጽበዩ።",
+			"save": "ዓቅብ",
+			"saved": "ዝርዝር ተዓቂቡ።"
 		}
 	},
 	"guestAccountMode": {

@@ -36,6 +36,13 @@ export interface CalendarEntryDTO {
 	movable?: boolean;
 	/** FE#2287: own view only, an advice seeker's request waiting for confirmation. */
 	requested?: boolean;
+	/** Own view, appointments with a colleague only (FE#2305). */
+	colleagueId?: string | null;
+	colleagueName?: string | null;
+	colleagueStatus?: 'PENDING' | 'CONFIRMED' | null;
+	invited?: boolean | null;
+	matrixRoomId?: string | null;
+	chatId?: number | null;
 }
 
 export interface CalendarColleagueDTO {
@@ -48,6 +55,8 @@ export interface CalendarColleagueDTO {
 	 */
 	secondaryLabel?: string | null;
 	relation: 'SAME_AGENCY' | 'SAME_TENANT' | 'OTHER_TENANT';
+	/** FE#2305: false = no internal chat possible, on-site appointments only. */
+	internalChat?: boolean | null;
 }
 
 export interface CalendarColleaguesDTO {
@@ -414,5 +423,82 @@ export const apiDeclineCalendarProposal = (id: string): Promise<void> =>
 	fetchData({
 		url: proposalUrl(id, 'decline'),
 		method: FETCH_METHODS.POST,
+		responseHandling: WRITE_HANDLING
+	});
+
+// --- Appointments with a colleague (FE#2305) ---
+
+const meetingUrl = (id?: string, action?: 'accept' | 'decline') =>
+	`${base()}/colleague-appointments${id ? `/${encodeURIComponent(id)}` : ''}${action ? `/${action}` : ''}`;
+
+export interface ColleagueAppointmentCreateDTO {
+	colleagueId: string;
+	start: string;
+	end: string;
+	kind: AppointmentKindDTO;
+}
+
+/**
+ * Makes an appointment with a colleague and opens (or reuses) the private
+ * internal chat of the two. Comes back as the caller's calendar shows it:
+ * `colleagueStatus` PENDING until the colleague accepts, CONFIRMED when the
+ * colleague accepts the caller automatically.
+ */
+export const apiCreateColleagueAppointment = (
+	request: ColleagueAppointmentCreateDTO
+): Promise<CalendarEntryDTO> =>
+	fetchData({
+		url: meetingUrl(),
+		method: FETCH_METHODS.POST,
+		bodyData: JSON.stringify(request),
+		responseHandling: WRITE_HANDLING
+	});
+
+/** The invited counsellor accepts; 409 when it no longer waits. */
+export const apiAcceptColleagueAppointment = (
+	id: string
+): Promise<CalendarEntryDTO> =>
+	fetchData({
+		url: meetingUrl(id, 'accept'),
+		method: FETCH_METHODS.POST,
+		responseHandling: WRITE_HANDLING
+	});
+
+/** The invited counsellor declines; it leaves both calendars (204). */
+export const apiDeclineColleagueAppointment = (id: string): Promise<void> =>
+	fetchData({
+		url: meetingUrl(id, 'decline'),
+		method: FETCH_METHODS.POST,
+		responseHandling: WRITE_HANDLING
+	});
+
+/** Either of the two cancels; it leaves both calendars (204). */
+export const apiCancelColleagueAppointment = (id: string): Promise<void> =>
+	fetchData({
+		url: meetingUrl(id),
+		method: FETCH_METHODS.DELETE,
+		responseHandling: WRITE_HANDLING
+	});
+
+export interface CalendarAutoAcceptDTO {
+	colleagueIds: string[];
+}
+
+/** The colleagues whose appointments the caller accepts automatically. */
+export const apiGetCalendarAutoAccept = (): Promise<CalendarAutoAcceptDTO> =>
+	fetchData({
+		url: `${base()}/auto-accept`,
+		method: FETCH_METHODS.GET,
+		responseHandling: READ_HANDLING
+	});
+
+/** Replaces the auto-accept list; colleagues outside the reach are refused. */
+export const apiSetCalendarAutoAccept = (
+	request: CalendarAutoAcceptDTO
+): Promise<CalendarAutoAcceptDTO> =>
+	fetchData({
+		url: `${base()}/auto-accept`,
+		method: FETCH_METHODS.PUT,
+		bodyData: JSON.stringify(request),
 		responseHandling: WRITE_HANDLING
 	});

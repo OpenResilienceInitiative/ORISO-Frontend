@@ -12,6 +12,7 @@ import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
 import EventOutlinedIcon from '@mui/icons-material/EventOutlined';
 import ScheduleOutlinedIcon from '@mui/icons-material/ScheduleOutlined';
+import EventAvailableOutlinedIcon from '@mui/icons-material/EventAvailableOutlined';
 import EventRepeatOutlinedIcon from '@mui/icons-material/EventRepeatOutlined';
 import UndoOutlinedIcon from '@mui/icons-material/UndoOutlined';
 import WbSunnyOutlinedIcon from '@mui/icons-material/WbSunnyOutlined';
@@ -507,15 +508,32 @@ export interface EntryMenuContentProps {
 	ownerId: string;
 	onMode: (mode: 'list' | 'move' | 'propose') => void;
 	onAction: (
-		action: 'show' | 'start' | 'chat' | 'join' | 'cancel' | 'remove'
+		action:
+			| 'show'
+			| 'start'
+			| 'chat'
+			| 'join'
+			| 'cancel'
+			| 'remove'
+			| 'accept'
+			| 'decline'
 	) => void;
 	onMove: (start: Date, end: Date, reason?: string) => void;
 }
 
 const ACTION_ICON: Record<
-	'show' | 'start' | 'chat' | 'join' | 'cancel' | 'remove',
+	| 'show'
+	| 'start'
+	| 'chat'
+	| 'join'
+	| 'cancel'
+	| 'remove'
+	| 'accept'
+	| 'decline',
 	React.ReactNode
 > = {
+	accept: <EventAvailableOutlinedIcon fontSize="small" />,
+	decline: <EventBusyOutlinedIcon fontSize="small" />,
 	show: <EventOutlinedIcon fontSize="small" />,
 	start: <PlayArrowOutlinedIcon fontSize="small" />,
 	chat: <ChatBubbleOutlineIcon fontSize="small" />,
@@ -640,6 +658,10 @@ export const EntryMenuContent = ({
 				return t('calendar.entryMenu.propose');
 			case 'cancel':
 				return t('calendar.entryMenu.cancel');
+			case 'accept':
+				return t('calendar.meeting.accept');
+			case 'decline':
+				return t('calendar.meeting.decline');
 			default:
 				return t('calendar.entryMenu.remove');
 		}
@@ -656,6 +678,8 @@ export const EntryMenuContent = ({
 					? t('calendar.entryMenu.startSub', { name })
 					: undefined;
 			case 'chat':
+				if (entry.meeting)
+					return t('calendar.meeting.chatSub', { name });
 				return name
 					? t('calendar.entryMenu.chatSub', { name })
 					: undefined;
@@ -670,6 +694,8 @@ export const EntryMenuContent = ({
 						})
 					: undefined;
 			case 'cancel':
+				if (entry.meeting)
+					return t('calendar.meeting.cancelSub', { name });
 				return name
 					? t('calendar.entryMenu.cancelSub', { name })
 					: undefined;
@@ -683,6 +709,20 @@ export const EntryMenuContent = ({
 			{header}
 			{entry.address && (
 				<ChatMenuDropdownNote>{entry.address}</ChatMenuDropdownNote>
+			)}
+			{entry.meeting && (
+				<ChatMenuDropdownNote>
+					{entry.meeting.status === 'pending'
+						? t(
+								entry.meeting.invited
+									? 'calendar.meeting.pendingInvited'
+									: 'calendar.meeting.pendingSent',
+								{ name: entry.meeting.colleagueName }
+							)
+						: t('calendar.meeting.confirmed', {
+								name: entry.meeting.colleagueName
+							})}
+				</ChatMenuDropdownNote>
 			)}
 			{entry.type === 'group' && (
 				<ChatMenuDropdownNote>
@@ -970,6 +1010,11 @@ export interface SettingsMenuContentProps {
 	onFreeDays?: () => void;
 	onSwitcherStyle: (style: ViewSwitcherStyle) => void;
 	onSync?: () => void;
+	/**
+	 * "Termine von Kolleg:innen automatisch annehmen …" (FE#2305): opens the
+	 * dialog with the colleague multi-select.
+	 */
+	onAutoAccept?: () => void;
 	/** The remembered answer after dragging a grip, if any. */
 	rememberedEdge?: EdgeChoice | null;
 	/** "Gemerkte Auswahl vergessen": ask again next time. */
@@ -992,6 +1037,7 @@ export const SettingsMenuContent = ({
 	onFreeDays,
 	onSwitcherStyle,
 	onSync,
+	onAutoAccept,
 	rememberedEdge,
 	onForgetEdge,
 	showGrips = true,
@@ -1007,6 +1053,7 @@ export const SettingsMenuContent = ({
 		onRepeatBlocker ||
 		onFreeDays ||
 		onSync ||
+		onAutoAccept ||
 		forget;
 	return (
 		<>
@@ -1054,6 +1101,16 @@ export const SettingsMenuContent = ({
 					title={t('calendar.settings.repeatBlocker')}
 					onClick={onRepeatBlocker}
 					data-cy="calendar-settings-repeat-blocker"
+				/>
+			)}
+			{onAutoAccept && (
+				<ChatMenuDropdownItem
+					role="menuitem"
+					icon={<EventAvailableOutlinedIcon fontSize="small" />}
+					title={t('calendar.autoAccept.menu')}
+					description={t('calendar.autoAccept.menuHint')}
+					onClick={onAutoAccept}
+					data-cy="calendar-settings-auto-accept"
 				/>
 			)}
 			{onFreeDays && (

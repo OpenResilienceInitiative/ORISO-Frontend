@@ -7198,14 +7198,22 @@
 				"incomplete": "Bitte Datum und Uhrzeit wählen.",
 				"past": "Der Eintrag muss in der Zukunft liegen.",
 				"order": "Das Ende muss nach dem Beginn liegen.",
-				"conversation": "Bitte die Beratung wählen, zu der der Termin gehört."
+				"conversation": "Bitte die Beratung wählen, zu der der Termin gehört.",
+				"colleague": "Bitte eine Kollegin oder einen Kollegen wählen."
 			},
 			"entryKind": "Art des Eintrags",
 			"tabs": {
 				"appointment": "Termin",
 				"blocker": "Sperrzeit",
 				"absence": "Abwesenheit"
-			}
+			},
+			"withWhom": "Termin mit",
+			"withConversation": "Ratsuchende Person",
+			"withColleague": "Kolleg:in",
+			"colleague": "Kolleg:in",
+			"colleagueHint": "Der Termin kommt in den internen Chat von Ihnen beiden. Gibt es den noch nicht, wird er angelegt.",
+			"colleagueDescription": "Wählen Sie Tag, Uhrzeit, Art und die Kollegin oder den Kollegen.",
+			"onsiteOnly": "Mit dieser Kollegin oder diesem Kollegen ist kein interner Chat erlaubt. Möglich ist nur ein Termin vor Ort."
 		},
 		"details": {
 			"start": {
@@ -7705,6 +7713,30 @@
 			"conflicts": "In diesem Zeitraum liegen {{count}} Termine. Sie bleiben bestehen – sagen Sie sie bei Bedarf selbst ab oder verschieben Sie sie.",
 			"conflicts_one": "In diesem Zeitraum liegt {{count}} Termin. Er bleibt bestehen – sagen Sie ihn bei Bedarf selbst ab oder verschieben Sie ihn.",
 			"saved": "Abwesenheit eingetragen. Sie steht auch in Ihrem Profil."
+		},
+		"meeting": {
+			"accept": "Annehmen",
+			"decline": "Ablehnen",
+			"accepted": "Termin angenommen.",
+			"declined": "Termin abgelehnt.",
+			"cancelled": "Termin abgesagt.",
+			"cancelAsk": "{{name}}, {{time}}. Der Termin verschwindet aus beiden Kalendern.",
+			"cancelSub": "Verschwindet auch bei {{name}}",
+			"chatSub": "Interner Chat mit {{name}}",
+			"pendingInvited": "{{name}} lädt Sie ein. Bitte annehmen oder ablehnen.",
+			"pendingSent": "Angefragt. Wartet auf {{name}}.",
+			"confirmed": "Fest vereinbart mit {{name}}."
+		},
+		"autoAccept": {
+			"menu": "Termine automatisch annehmen …",
+			"menuHint": "Von welchen Kolleg:innen",
+			"title": "Termine automatisch annehmen",
+			"description": "Termine von diesen Kolleg:innen stehen sofort fest in Ihrem Kalender.",
+			"colleagues": "Kolleg:innen",
+			"search": "Namen suchen",
+			"hint": "Termine von allen anderen warten, bis Sie sie annehmen.",
+			"save": "Speichern",
+			"saved": "Liste gespeichert."
 		}
 	},
 	"guestAccountMode": {

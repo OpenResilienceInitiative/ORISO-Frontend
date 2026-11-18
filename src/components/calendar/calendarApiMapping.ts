@@ -78,7 +78,23 @@ export const entryFromApi = (dto: CalendarEntryDTO): CalendarEntry => {
 		// A planned absence is whole days by definition (ORISO-Frontend#2303).
 		...(type === 'absence' && { allDay: true }),
 		movable: dto.movable === true,
-		...(dto.requested === true && { requested: true })
+		...(dto.requested === true && { requested: true }),
+		...(type === 'appointment' &&
+			dto.colleagueId && {
+				meeting: {
+					colleagueId: dto.colleagueId,
+					colleagueName: dto.colleagueName ?? dto.title ?? '',
+					status:
+						dto.colleagueStatus === 'CONFIRMED'
+							? ('confirmed' as const)
+							: ('pending' as const),
+					invited: dto.invited === true,
+					...(dto.matrixRoomId && { matrixRoomId: dto.matrixRoomId }),
+					...(typeof dto.chatId === 'number' && {
+						chatId: dto.chatId
+					})
+				}
+			})
 	};
 };
 
@@ -106,7 +122,10 @@ export const colleagueFromApi = (dto: CalendarColleagueDTO): Colleague => ({
 	displayName: dto.displayName,
 	agencyName: dto.agencyName ?? '',
 	...(dto.secondaryLabel && { secondaryLabel: dto.secondaryLabel }),
-	relation: RELATION[dto.relation] ?? 'otherTenant'
+	relation: RELATION[dto.relation] ?? 'otherTenant',
+	...(typeof dto.internalChat === 'boolean' && {
+		internalChat: dto.internalChat
+	})
 });
 
 export const visibilityFromApi = (

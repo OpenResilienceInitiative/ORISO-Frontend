@@ -14,11 +14,14 @@ import './appointmentKindTiles.styles.scss';
 export interface AppointmentKindTilesProps {
 	value: AppointmentKind;
 	onChange: (kind: AppointmentKind) => void;
+	/** The kinds offered; all four unless narrowed (FE#2305: on site only). */
+	kinds?: readonly AppointmentKind[];
 }
 
 export const AppointmentKindTiles = ({
 	value,
-	onChange
+	onChange,
+	kinds = APPOINTMENT_KINDS
 }: AppointmentKindTilesProps) => {
 	const { t } = useTranslation();
 	const id = useId();
@@ -33,7 +36,7 @@ export const AppointmentKindTiles = ({
 				{t('calendar.dialog.kind')}
 			</span>
 			<div className="calendarDialog__kinds">
-				{APPOINTMENT_KINDS.map((kind) => (
+				{kinds.map((kind) => (
 					<button
 						key={kind}
 						type="button"

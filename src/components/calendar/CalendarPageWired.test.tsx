@@ -91,6 +91,24 @@ vi.mock('../../globalState', async () => {
 	};
 });
 vi.mock('../../api/apiCalendar', () => ({
+	apiCreateColleagueAppointment: vi.fn(() =>
+		Promise.resolve({
+			id: 'm1',
+			type: 'APPOINTMENT',
+			start: '2026-11-19T09:00:00Z',
+			end: '2026-11-19T10:00:00Z',
+			ownerId: 'me',
+			matrixRoomId: '!pair:oriso',
+			chatId: 77
+		})
+	),
+	apiAcceptColleagueAppointment: vi.fn(() => Promise.resolve({})),
+	apiDeclineColleagueAppointment: vi.fn(() => Promise.resolve()),
+	apiCancelColleagueAppointment: vi.fn(() => Promise.resolve()),
+	apiGetCalendarAutoAccept: vi.fn(() =>
+		Promise.resolve({ colleagueIds: [] })
+	),
+	apiSetCalendarAutoAccept: vi.fn((dto) => Promise.resolve(dto)),
 	apiGetCalendarEntries: vi.fn(),
 	apiGetCalendarColleagues: vi.fn(),
 	apiGetColleagueCalendarEntries: vi.fn(),
@@ -302,6 +320,84 @@ describe('CalendarPageWired', () => {
 				sessionId: 4401,
 				matrixRoomId: '!room:oriso'
 			})
+		);
+	});
+
+	it('makes an appointment with a colleague and tells them in the internal chat (FE#2305)', async () => {
+		render(<CalendarPageWired />);
+		await showWeek();
+		const start = new Date('2026-11-19T09:00:00Z');
+		const end = new Date('2026-11-19T10:00:00Z');
+		await act(() =>
+			props.onCreate?.([
+				{
+					type: 'appointment',
+					start,
+					end,
+					kind: 'onsite',
+					colleagueId: 'kai'
+				}
+			])
+		);
+		expect(api.apiCreateColleagueAppointment).toHaveBeenCalledWith({
+			colleagueId: 'kai',
+			start: start.toISOString(),
+			end: end.toISOString(),
+			kind: 'ONSITE'
+		});
+		expect(appointments.apiCreateSessionAppointment).not.toHaveBeenCalled();
+		expect(sendNotice).toHaveBeenCalledWith(
+			expect.objectContaining({
+				kind: 'created',
+				sessionId: 77,
+				matrixRoomId: '!pair:oriso'
+			})
+		);
+	});
+
+	it('answers and cancels an appointment with a colleague (FE#2305)', async () => {
+		render(<CalendarPageWired />);
+		await showWeek();
+		const entry = {
+			id: 'm1',
+			type: 'appointment' as const,
+			start: '2026-11-19T09:00:00Z',
+			end: '2026-11-19T10:00:00Z',
+			ownerId: 'me',
+			kind: 'video' as const,
+			meeting: {
+				colleagueId: 'kai',
+				colleagueName: 'Kai',
+				status: 'pending' as const,
+				invited: true,
+				matrixRoomId: '!pair:oriso',
+				chatId: 77
+			}
+		};
+		await act(() => props.onAnswerMeeting?.(entry, 'accept'));
+		expect(api.apiAcceptColleagueAppointment).toHaveBeenCalledWith('m1');
+		await act(() => props.onAnswerMeeting?.(entry, 'decline'));
+		expect(api.apiDeclineColleagueAppointment).toHaveBeenCalledWith('m1');
+		await act(() => props.onCancelAppointment?.(entry));
+		expect(api.apiCancelColleagueAppointment).toHaveBeenCalledWith('m1');
+		expect(appointments.apiCancelSessionAppointment).not.toHaveBeenCalled();
+		expect(sendNotice).toHaveBeenCalledWith(
+			expect.objectContaining({ kind: 'cancelled', sessionId: 77 })
+		);
+	});
+
+	it('reads and saves the auto-accept list (FE#2305)', async () => {
+		api.apiGetCalendarAutoAccept.mockResolvedValue({
+			colleagueIds: ['kai']
+		});
+		render(<CalendarPageWired />);
+		await waitFor(() => expect(props.autoAcceptIds).toEqual(['kai']));
+		await act(() => props.onSaveAutoAccept?.(['kai', 'ada']));
+		expect(api.apiSetCalendarAutoAccept).toHaveBeenCalledWith({
+			colleagueIds: ['kai', 'ada']
+		});
+		await waitFor(() =>
+			expect(props.autoAcceptIds).toEqual(['kai', 'ada'])
 		);
 	});
 
