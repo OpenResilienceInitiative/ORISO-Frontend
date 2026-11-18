@@ -167,7 +167,7 @@ vi.mock('../dragAndDropArea/DragAndDropArea', () => ({
 	DragAndDropArea: ({ children }: any) => <div>{children}</div>
 }));
 vi.mock('../messageSubmitInterface/messageSubmitInterfaceComponent', () => ({
-	MessageSubmitInterfaceComponent: () => null
+	MessageSubmitInterfaceComponent: () => <div data-testid="composer" />
 }));
 vi.mock('../messageSubmitInterface/MessageSubmitErrorBoundary', () => ({
 	MessageSubmitErrorBoundary: ({ children }: any) => <>{children}</>
@@ -322,6 +322,31 @@ describe('SessionItemComponent — a converted Live Chat account (FE#2330)', () 
 			expect(apiPutSessionData).not.toHaveBeenCalled();
 		}
 	);
+
+	/* With the gates gone, nothing else stopped a finished Live Chat from
+	   offering the composer; the way on is a written request. */
+	it('closes a finished chat for writing and offers mail counselling', async () => {
+		conversion.state = 'PROMOTED';
+		renderSession(3);
+		await settle();
+
+		expect(history()).not.toBeNull();
+		expect(screen.queryByTestId('composer')).toBeNull();
+		expect(screen.getByText('anonymousChat.enquiryClosed')).toBeTruthy();
+		expect(
+			screen.getByRole('button', {
+				name: 'anonymousChat.noAvailability.startMailCounseling'
+			})
+		).toBeTruthy();
+	});
+
+	it('keeps the composer of an active chat', async () => {
+		conversion.state = 'PROMOTED';
+		renderSession(2);
+		await settle();
+
+		expect(screen.getByTestId('composer')).toBeTruthy();
+	});
 
 	it('keeps the chat open when the converted account signs out', async () => {
 		conversion.state = 'PROMOTED';

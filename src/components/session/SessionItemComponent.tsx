@@ -156,6 +156,7 @@ import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 import {
 	STATUS_EMPTY,
 	STATUS_ENQUIRY,
+	STATUS_FINISHED,
 	STATUS_REJECTED
 } from '../../globalState/interfaces/SessionsDataInterface';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -593,6 +594,11 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const isAnonymousBreathingGameAvailable = isAnonymousAskerExperience;
 	const sessionStatusNum = Number(activeSession.item?.status);
 	const isRejectedSession = sessionStatusNum === STATUS_REJECTED;
+	/* FE#2330: a converted account sees its finished Live Chat without the
+	   guest gates, so the closed state has to be said here: no composer, the
+	   closed notice and the way on to mail counselling. */
+	const isFinishedLiveChatOfLastingAccount =
+		isLastingLiveChatAccount && sessionStatusNum === STATUS_FINISHED;
 	const privacyAcceptanceRecorded = Boolean(
 		userData?.dataPrivacyConfirmation &&
 			String(userData.dataPrivacyConfirmation).trim() !== ''
@@ -3926,6 +3932,17 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					</div>
 				)}
 
+				{isFinishedLiveChatOfLastingAccount && (
+					<div className="session__pseudonymActionBarSlot">
+						<div
+							className="session__anonymousEnquiryClosedNote"
+							role="status"
+						>
+							{translate('anonymousChat.enquiryClosed')}
+						</div>
+					</div>
+				)}
+
 				{shouldShowPseudonymGate &&
 					pseudonymConfirmed &&
 					enquiryClosed && (
@@ -4016,6 +4033,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					/>
 				)}
 				{!isRejectedSession &&
+					!isFinishedLiveChatOfLastingAccount &&
 					canRenderClientComposer({
 						canWriteMessage,
 						isSupervisor: isSupervisorView,
