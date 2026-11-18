@@ -202,6 +202,18 @@ export const previewNotificationSound = (
  * per-conversation level, mute, family-off), and rate-limited so bursts
  * don't rattle.
  */
+/**
+ * FE#1211 (Frank, 18 Nov): the call row rings, which is right for a call you
+ * can still take. An ended or missed call closes with a short tone instead
+ * (`ton-10`, react-sounds "ui/popup_close", MIT, see audio/notifications/
+ * CREDITS.md). A tone the user picked for the call row is kept.
+ */
+const CLOSING_CALL_EVENTS = new Set(['call.ended', 'call.missed']);
+const closingToneFor = (eventType: string, configured: SoundId): SoundId =>
+	CLOSING_CALL_EVENTS.has(eventType) && configured === 'ring'
+		? 'ton-10'
+		: configured;
+
 export const playNotificationSound = (
 	settings: OrisoNotificationSettings,
 	device: LocalDeviceNotificationSettings,
@@ -237,7 +249,9 @@ export const playNotificationSound = (
 		family === 'system'
 			? settings.systemTone
 			: settings.notificationConfig[area][kind];
-	const asset = soundAssetFor(override ?? kindConfig.sound);
+	const asset = soundAssetFor(
+		override ?? closingToneFor(eventType, kindConfig.sound)
+	);
 	const volume = kindConfig.volume;
 	if (!asset || !('Audio' in window)) {
 		return;
