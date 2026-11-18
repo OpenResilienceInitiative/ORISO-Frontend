@@ -47,7 +47,7 @@ type Story = StoryObj<typeof meta>;
 /** Supervision can be managed here: both entries active. */
 export const SupervisionAndHandover: Story = {
 	play: async () => {
-		const menu = within(document.body).getByRole('menu');
+		const menu = await within(document.body).findByRole('menu');
 		await expect(
 			within(menu)
 				.getAllByRole('menuitem')
@@ -64,7 +64,7 @@ export const SupervisionUnavailable: Story = {
 			'Supervisor hinzufügen – hier nicht verfügbar'
 	},
 	play: async () => {
-		const menu = within(document.body).getByRole('menu');
+		const menu = await within(document.body).findByRole('menu');
 		const [supervision, handover] = within(menu).getAllByRole('menuitem');
 		await expect(supervision).toBeDisabled();
 		await expect(handover).toBeEnabled();
