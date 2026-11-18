@@ -35,6 +35,13 @@ import { STATUS_REJECTED } from '../../globalState/interfaces/SessionsDataInterf
 import { startRoomCall } from '../call/startRoomCall';
 import { StartCallRequest, type CallKind } from '../call/startCallIntent';
 import { callRoomName } from '../call/callRoomName';
+import { canAskerSeeCallInfo } from '../call/askerCallInfo/askerCallInfo';
+import { AskerCallInfo } from '../call/askerCallInfo/AskerCallInfoDialog';
+import { focusChatComposer } from '../call/askerCallInfo/focusChatComposer';
+import { mediumOfCall } from '../call/askerCallInfo/askerSelfBooking';
+import type { SelfBookingMedium } from '../../api/apiSessionAppointments';
+import { useAppointmentNotice } from '../sessionsList/timeline/useAppointmentNotice';
+import { notifyAppointmentsChanged } from '../sessionsList/timeline/conversationAppointments';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import { resolveCallFeatureGates } from '../call/callFeatureGates';
 import {
@@ -130,6 +137,8 @@ import { CaseHandoverOffer } from '../caseHandover/CaseHandoverOffer';
 import { useRecommendAllowedInModality } from '../furtherCounselling/useRecommendAllowedInModality';
 import { getGroupChatInfoLink } from '../groupChat/groupChatInfoLink';
 import { AddonSessionMenuItems } from '../../addons/AddonSessionMenuItems';
+import { useOwnTemporaryAccount } from '../temporaryAccount/temporaryAccountStore';
+import { isAnonymousAsker } from '../termsandconditions/isAnonymousAsker';
 
 export interface SessionMenuProps {
 	hasUserInitiatedStopOrLeaveRequest: React.MutableRefObject<boolean>;
@@ -215,6 +224,11 @@ export const SessionMenu = (props: SessionMenuProps) => {
 	 * starts.
 	 */
 	const [offeredCall, setOfferedCall] = useState<CallKind | null>(null);
+	const [askerCallInfoOpen, setAskerCallInfoOpen] = useState(false);
+	/* FE#1050: what the asker clicked — "Termin anfragen" books that medium. */
+	const [askerCallMedium, setAskerCallMedium] =
+		useState<SelfBookingMedium>('VIDEO');
+	const sendAppointmentNotice = useAppointmentNotice();
 	const closeMenu = useCallback(() => {
 		setFlyoutOpen(false);
 		setOfferedCall(null);
@@ -602,6 +616,13 @@ export const SessionMenu = (props: SessionMenuProps) => {
 				subRoute: 'userProfile'
 			});
 
+	/* FE#2287: without free time only a registered asker is pointed to the
+	   chat; a temporary (direct-link) or anonymous asker is not. Read before
+	   the redirect below so the hook order never changes. */
+	const { account: ownTemporaryAccount } = useOwnTemporaryAccount(
+		!!hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData)
+	);
+
 	if (redirectToSessionsList) {
 		mobileListView();
 		return <Navigate to={listPath + getSessionListTab()} replace />;
@@ -659,6 +680,31 @@ export const SessionMenu = (props: SessionMenuProps) => {
 	const videoCallShown = callControlsShown && isVideoCallsEnabled;
 	const audioCallShown = callControlsShown && isAudioCallsEnabled;
 
+	// Only counsellors start calls (Frank, 17 Nov 2026). An advice seeker gets
+	// the same buttons, behind the same gates, but they open the next
+	// appointment (or the way to ask for one) instead of a call.
+	const askerCallInfoShown =
+		sessionMenuOwnsCallControls(activeSession.isGroup) &&
+		!isLoadingTenantSettings &&
+		canAskerSeeCallInfo({
+			isAsker: !!hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData),
+			isConsultant: !!hasUserAuthority(
+				AUTHORITIES.CONSULTANT_DEFAULT,
+				userData
+			),
+			isSession: Boolean(activeSession.isSession),
+			isGroup: Boolean(activeSession.isGroup),
+			isEnquiryList: type === SESSION_LIST_TYPES.ENQUIRY,
+			isRejectedCase,
+			isSupervisor: Boolean(props.isSupervisor),
+			videoCallAllowed: Boolean(consultingType?.isVideoCallAllowed)
+		});
+	const askerCanWriteLater =
+		!ownTemporaryAccount && !isAnonymousAsker(userData);
+	const callButtonsShown = callControlsShown || askerCallInfoShown;
+	const videoButtonShown = callButtonsShown && isVideoCallsEnabled;
+	const audioButtonShown = callButtonsShown && isAudioCallsEnabled;
+
 	const handleStartVideoCall = async (isVideoActivated: boolean = false) => {
 		setOfferedCall(null);
 		if (isRejectedCase) return;
@@ -676,6 +722,17 @@ export const SessionMenu = (props: SessionMenuProps) => {
 			// #2170: the call is called what the direct link was called.
 			roomName: callRoomName(activeSession.item)
 		});
+	};
+
+	/** A call button: the counsellor's call, or the advice seeker's information. */
+	const handleCallButton = (isVideoActivated: boolean) => {
+		if (askerCallInfoShown) {
+			setOfferedCall(null);
+			setAskerCallMedium(mediumOfCall(isVideoActivated));
+			setAskerCallInfoOpen(true);
+			return;
+		}
+		handleStartVideoCall(isVideoActivated);
 	};
 
 	/** Without a live gesture: the own start control, focused and marked. */
@@ -738,6 +795,39 @@ export const SessionMenu = (props: SessionMenuProps) => {
 					}
 				}}
 			/>
+			{askerCallInfoShown && (
+				<AskerCallInfo
+					sessionId={activeSession.item.id}
+					open={askerCallInfoOpen}
+					medium={askerCallMedium}
+					onClose={() => setAskerCallInfoOpen(false)}
+					onBooked={(appointment) => {
+						notifyAppointmentsChanged();
+						/* The counsellor learns of it as the asker learns of
+						   a counsellor's appointment: a line in the chat. */
+						void sendAppointmentNotice({
+							/* FE#2287: a request waits for the counsellor. */
+							kind:
+								appointment.status === 'REQUESTED'
+									? 'requested'
+									: 'created',
+							start: new Date(appointment.startTime),
+							end: new Date(appointment.endTime),
+							sessionId: activeSession.item.id,
+							matrixRoomId: activeSession.item.matrixRoomId
+						});
+					}}
+					onRequestTime={
+						askerCanWriteLater
+							? () => {
+									setAskerCallInfoOpen(false);
+									// After the dialog has handed focus back to its trigger.
+									window.setTimeout(focusChatComposer, 0);
+								}
+							: undefined
+					}
+				/>
+			)}
 			<MenuBackdrop
 				open={Boolean(flyoutOpen) && !legalModal}
 				onClose={() => {
@@ -745,7 +835,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 					menuTriggerRef.current?.focus();
 				}}
 			/>
-			{callControlsShown &&
+			{callButtonsShown &&
 				!props.callsInMenu &&
 				(isAudioCallsEnabled || isVideoCallsEnabled) && (
 					<div
@@ -753,9 +843,9 @@ export const SessionMenu = (props: SessionMenuProps) => {
 						data-cy="session-header-video-call-buttons"
 						onBlur={() => setOfferedCall(null)}
 					>
-						{videoCallShown && (
+						{videoButtonShown && (
 							<Button
-								buttonHandle={() => handleStartVideoCall(true)}
+								buttonHandle={() => handleCallButton(true)}
 								item={buttonStartVideoCall}
 								testingAttribute={CALL_HEADER_BUTTON.video}
 								className={
@@ -765,9 +855,9 @@ export const SessionMenu = (props: SessionMenuProps) => {
 								}
 							/>
 						)}
-						{audioCallShown && (
+						{audioButtonShown && (
 							<Button
-								buttonHandle={() => handleStartVideoCall(false)}
+								buttonHandle={() => handleCallButton(false)}
 								item={buttonStartCall}
 								testingAttribute={CALL_HEADER_BUTTON.audio}
 								className={
@@ -859,7 +949,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 							    are rows of this menu instead of header buttons —
 							    the organism's rows (icon · title), same handlers
 							    as the buttons, same feature gates. */}
-							{props.callsInMenu && callControlsShown && (
+							{props.callsInMenu && callButtonsShown && (
 								<>
 									{/* Review v10: real controls — native buttons
 										    (role button, keyboard by default) inside the
@@ -868,7 +958,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 										    role needs the organism's container to be a
 										    `role="menu"` — that is the organism-wide
 										    keyboard ticket, not this row. */}
-									{videoCallShown && (
+									{videoButtonShown && (
 										<button
 											type="button"
 											className={`sessionMenu__item chatMenuDropdown__item${
@@ -878,7 +968,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 											}`}
 											onClick={() => {
 												closeMenu();
-												handleStartVideoCall(true);
+												handleCallButton(true);
 											}}
 											data-cy={CALL_MENU_ROW.video}
 										>
@@ -892,7 +982,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 											/>
 										</button>
 									)}
-									{audioCallShown && (
+									{audioButtonShown && (
 										<button
 											type="button"
 											className={`sessionMenu__item chatMenuDropdown__item${
@@ -902,7 +992,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 											}`}
 											onClick={() => {
 												closeMenu();
-												handleStartVideoCall(false);
+												handleCallButton(false);
 											}}
 											data-cy={CALL_MENU_ROW.audio}
 										>

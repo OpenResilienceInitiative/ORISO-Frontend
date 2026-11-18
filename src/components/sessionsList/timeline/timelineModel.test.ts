@@ -9,7 +9,8 @@ import {
 	filterEntries,
 	formatEntryDate,
 	nextEntryBySession,
-	type TimelineSession
+	type TimelineSession,
+	isGone
 } from './timelineModel';
 
 const NOW = new Date('2026-10-28T10:00:00');
@@ -253,6 +254,89 @@ describe('entries in the real list', () => {
 			'counsellor'
 		);
 		expect(items.map((i) => i.key)).toEqual(['reminder']);
+	});
+
+	describe('a request waiting for the counsellor (FE#2287)', () => {
+		const request = {
+			kind: 'one-to-one' as const,
+			canDuplicate: false,
+			canModerate: true,
+			requested: true as const
+		};
+
+		it('lets the counsellor confirm or decline it, nothing else', () => {
+			const items = entryMenu(request, 'counsellor');
+			expect(items.map((i) => [i.key, i.title, i.disabled])).toEqual([
+				['confirm', 'Termin bestätigen', false],
+				['decline', 'Termin ablehnen', false]
+			]);
+		});
+
+		it('lets the advice seeker withdraw it through the cancel entry', () => {
+			const items = entryMenu(request, 'asker');
+			expect(items.map((i) => [i.key, i.title, i.disabled])).toEqual([
+				['cancel', 'Anfrage zurückziehen', false]
+			]);
+		});
+
+		it('carries the request from the booking to its entry', () => {
+			const [twin] = buildFutureEntries({
+				now: new Date('2026-10-28T10:00:00Z'),
+				occurrences: [],
+				seriesToSession: {},
+				sessions: [],
+				bookings: [
+					{
+						id: 'r-1',
+						appointmentId: 'r-1',
+						startTime: '2026-10-29T10:00:00Z',
+						location: 'VIDEO_CALL',
+						requested: true
+					}
+				]
+			});
+			expect(twin.requested).toBe(true);
+		});
+
+		it('counts a request as gone from its start, an appointment from its end', () => {
+			const start = new Date('2026-10-29T10:00:00Z');
+			const end = new Date('2026-10-29T11:00:00Z');
+			const during = new Date('2026-10-29T10:30:00Z');
+			const before = new Date('2026-10-29T09:59:00Z');
+			expect(isGone({ start, end, requested: true }, during)).toBe(true);
+			expect(isGone({ start, end, requested: true }, before)).toBe(false);
+			expect(isGone({ start, end }, during)).toBe(false);
+			expect(isGone({ start, end }, end)).toBe(true);
+		});
+
+		it('drops a request once its start has passed: it has expired', () => {
+			const entries = buildFutureEntries({
+				now: new Date('2026-10-29T10:00:00Z'),
+				occurrences: [],
+				seriesToSession: {},
+				sessions: [],
+				bookings: [
+					{
+						id: 'started',
+						appointmentId: 'started',
+						startTime: '2026-10-29T10:00:00Z',
+						endTime: '2026-10-29T11:00:00Z',
+						location: 'VIDEO_CALL',
+						requested: true
+					},
+					{
+						id: 'booked',
+						appointmentId: 'booked',
+						startTime: '2026-10-29T09:30:00Z',
+						endTime: '2026-10-29T10:30:00Z',
+						location: 'VIDEO_CALL'
+					}
+				]
+			});
+			expect(entries.map((entry) => entry.key)).toEqual([
+				'booking-booked'
+			]);
+		});
 	});
 });
 

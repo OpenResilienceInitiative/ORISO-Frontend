@@ -19,6 +19,7 @@ import {
 	groupAudienceOptions,
 	resolveMentionCandidates,
 	roomMentionMemberIds,
+	roomMemberMentionDirectory,
 	type AudienceOption
 } from './audienceOptions';
 import { encodeUsername } from '../../utils/encryptionHelpers';
@@ -26,7 +27,11 @@ import { encodeUsername } from '../../utils/encryptionHelpers';
 const option = (
 	value: string,
 	kind: AudienceOption['kind'] = 'person'
-): AudienceOption => ({ value, label: value, kind });
+): AudienceOption => ({
+	value,
+	label: value,
+	kind
+});
 
 const withAll = (...rest: AudienceOption[]): AudienceOption[] => [
 	{ value: AUDIENCE_ALL, label: 'Send to all', kind: 'all' },
@@ -843,5 +848,93 @@ describe('resolveMentionCandidates', () => {
 		expect(() =>
 			resolveMentionCandidates(directory, ['enc.bad1'])
 		).not.toThrow();
+	});
+});
+
+describe('roomMemberMentionDirectory (FE#1211 internal colleague chat)', () => {
+	// An internal colleague chat has no counselling centre, so the agency
+	// list cannot name its people. Every member of that room is a colleague,
+	// so the room itself is the directory.
+	const room = {
+		getMembers: () => [
+			{
+				userId: '@marge:dev.example',
+				name: 'Marge Simpson',
+				membership: 'join'
+			},
+			{ userId: '@patty:dev.example', name: '', membership: 'invite' },
+			{
+				userId: '@selma:dev.example',
+				name: 'Selma',
+				membership: 'leave'
+			},
+			{
+				userId: '@system:dev.example',
+				name: 'System',
+				membership: 'join'
+			},
+			{
+				userId: '@clancy:dev.example',
+				name: 'Clancy',
+				membership: 'join'
+			}
+		]
+	};
+
+	it('names every joined or invited colleague except the author', () => {
+		const directory = roomMemberMentionDirectory(
+			room,
+			'@clancy:dev.example'
+		);
+		expect(Array.from(directory.entries())).toEqual([
+			[
+				'@marge:dev.example',
+				{
+					displayName: 'Marge Simpson',
+					username: 'marge',
+					matrixUserId: '@marge:dev.example'
+				}
+			],
+			[
+				'@patty:dev.example',
+				{
+					displayName: 'patty',
+					username: 'patty',
+					matrixUserId: '@patty:dev.example'
+				}
+			]
+		]);
+	});
+
+	it('lets every listed colleague be mentioned with their own id', () => {
+		const self = '@clancy:dev.example';
+		const candidates = resolveMentionCandidates(
+			roomMemberMentionDirectory(room, self),
+			roomMentionMemberIds(room, self)
+		);
+		expect(
+			candidates.map(({ displayName, matrixUserId, isInRoom }) => ({
+				displayName,
+				matrixUserId,
+				isInRoom
+			}))
+		).toEqual([
+			{
+				displayName: 'Marge Simpson',
+				matrixUserId: '@marge:dev.example',
+				isInRoom: true
+			},
+			{
+				displayName: 'patty',
+				matrixUserId: '@patty:dev.example',
+				isInRoom: true
+			}
+		]);
+	});
+
+	it('is empty when the room is not loaded yet', () => {
+		expect(
+			roomMemberMentionDirectory(undefined, '@clancy:dev.example').size
+		).toBe(0);
 	});
 });

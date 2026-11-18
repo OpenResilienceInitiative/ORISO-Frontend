@@ -18,7 +18,12 @@ import { ResizableHandle } from '../ResizableHandle';
 import { revealSnapPoints, stepSnap, clampReveal } from '../verticalHandleMath';
 import type { AppointmentAction } from './AppointmentSplitButton';
 import { FutureEntryPill } from './FutureEntryPill';
-import { hasEnded, type FutureEntry, type TimelineRole } from './timelineModel';
+import {
+	hasEnded,
+	isGone,
+	type FutureEntry,
+	type TimelineRole
+} from './timelineModel';
 import './futureZone.styles.scss';
 
 /** How far the zone opens on first show (display setting). */
@@ -150,27 +155,25 @@ export const FutureZone = forwardRef<FutureZoneHandle, FutureZoneProps>(
 		);
 
 		// Furthest appointment first: the next one sits right above "Jetzt".
+		// A request leaves at its start, every other entry (and add-on row) at its end.
 		const shownEntries = useMemo<ZoneRow[]>(
 			() =>
 				[
-					...entries.map((entry) => ({
-						key: entry.key,
-						start: entry.start,
-						entry
-					})),
-					...(extraRows ?? []).map((extra) => ({
-						key: extra.key,
-						start: extra.start,
-						extra
-					}))
+					...entries
+						.filter((entry) => !isGone(entry, now))
+						.map((entry) => ({
+							key: entry.key,
+							start: entry.start,
+							entry
+						})),
+					...(extraRows ?? [])
+						.filter((extra) => !hasEnded(extra, now))
+						.map((extra) => ({
+							key: extra.key,
+							start: extra.start,
+							extra
+						}))
 				]
-					.filter(
-						(row) =>
-							!hasEnded(
-								'entry' in row ? row.entry : row.extra,
-								now
-							)
-					)
 					.sort((a, b) => a.start.getTime() - b.start.getTime())
 					.reverse(),
 			[entries, extraRows, now]

@@ -21,10 +21,15 @@ import {
 	wasAdmittedTo
 } from './callMessageKnock';
 import { DirectLinkCallEntry } from './DirectLinkCallEntry';
-import { DirectLinkKnock, DirectLinkKnockGate } from './DirectLinkKnockGate';
+import {
+	DirectLinkKnock,
+	DirectLinkKnockGate,
+	type ConfirmLeaveRunningCall
+} from './DirectLinkKnockGate';
 import {
 	forgetPendingKnock,
 	rememberDirectLinkSession,
+	rememberPendingKnock,
 	type PendingKnock
 } from './directLinkEntryFlow';
 import {
@@ -309,7 +314,7 @@ export const KnockWithdrawn: Story = {
 /* ---------- Running call's card in a direct-link conversation ---------- */
 
 const joinRunningCall = fn(async () => 'joined' as const);
-const startNewCall = fn(async () => undefined);
+const joinCounsellorsCall = fn(async () => 'joined' as const);
 
 export const KnockFromCallMessage: Story = {
 	name: "5 · Running call's card → knock → let in → joins that call",
@@ -318,7 +323,7 @@ export const KnockFromCallMessage: Story = {
 	decorators: [(Story) => withMessageShell(Story, { parameters: {} })],
 	beforeEach: () => {
 		joinRunningCall.mockClear();
-		startNewCall.mockClear();
+		joinCounsellorsCall.mockClear();
 		forgetPendingKnock();
 		localStorage.removeItem(DIRECT_LINK_ADMITTED_KEY);
 		rememberDirectLinkSession(4711, { token: 'tok7', medium: 'VIDEO' });
@@ -348,7 +353,7 @@ export const KnockFromCallMessage: Story = {
 				pollMs={400}
 				deps={{
 					mediaDevices: scriptedDevices(),
-					startCall: startNewCall
+					joinCounsellorsCall
 				}}
 			/>
 		</>
@@ -379,7 +384,7 @@ export const KnockFromCallMessage: Story = {
 		await waitFor(() => expect(joinRunningCall).toHaveBeenCalledOnce(), {
 			timeout: 4000
 		});
-		await expect(startNewCall).not.toHaveBeenCalled();
+		await expect(joinCounsellorsCall).not.toHaveBeenCalled();
 		// Let in once: the next call in this conversation joins directly.
 		await expect(wasAdmittedTo(4711)).toBe(true);
 	}
@@ -469,5 +474,66 @@ export const CallMessageAdmittedElsewhere: Story = {
 				(request) => request.method + ' ' + request.path
 			)
 		).toEqual([expect.stringMatching(/^GET .*\/call-knocks\/mine$/)]);
+	}
+};
+
+/* ---------- Let in while still in another call ---------- */
+
+/* The counsellor's call waits behind the running one: the join asks first. */
+const joinBehindRunningCall = fn(
+	async (
+		_: PendingKnock,
+		options?: { confirmLeaveRunningCall?: ConfirmLeaveRunningCall }
+	) =>
+		(await options?.confirmLeaveRunningCall?.(new AbortController().signal))
+			? ('joined' as const)
+			: ('unavailable' as const)
+);
+
+export const LetInDuringAnotherCall: Story = {
+	name: "8 · Let in while in another call → asked before the counsellor's call",
+	globals: desktop1440Globals,
+	parameters: { router: { initialPath: '/sessions/user/view/4711' } },
+	decorators: [(Story) => withMessageShell(Story, { parameters: {} })],
+	beforeEach: () => {
+		joinBehindRunningCall.mockClear();
+		localStorage.removeItem(DIRECT_LINK_ADMITTED_KEY);
+		rememberPendingKnock({ ...knock, sessionId: 4711 });
+		const restore = installDirectLinkMockApi({
+			knockAnswers: ['ADMITTED']
+		});
+		return () => {
+			restore();
+			forgetPendingKnock();
+			localStorage.removeItem(DIRECT_LINK_ADMITTED_KEY);
+		};
+	},
+	render: () => (
+		<>
+			<RunningCallCard />
+			<DirectLinkKnockGate
+				pollMs={400}
+				deps={{
+					mediaDevices: scriptedDevices(),
+					joinCounsellorsCall: joinBehindRunningCall
+				}}
+			/>
+		</>
+	),
+	play: async ({ canvasElement }) => {
+		const body = dialog(canvasElement);
+		await waitFor(
+			() =>
+				expect(
+					body.getByText('Laufenden Anruf beenden und beitreten?')
+				).toBeVisible(),
+			{ timeout: 6000 }
+		);
+		await expect(
+			body.getByRole('button', { name: 'Beenden und beitreten' })
+		).toBeVisible();
+		await expect(
+			body.getByRole('button', { name: 'Im Anruf bleiben' })
+		).toBeVisible();
 	}
 };

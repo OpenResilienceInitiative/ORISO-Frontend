@@ -91,12 +91,32 @@ vi.mock('../../globalState', async () => {
 	};
 });
 vi.mock('../../api/apiCalendar', () => ({
+	apiCreateColleagueAppointment: vi.fn(() =>
+		Promise.resolve({
+			id: 'm1',
+			type: 'APPOINTMENT',
+			start: '2026-11-19T09:00:00Z',
+			end: '2026-11-19T10:00:00Z',
+			ownerId: 'me',
+			matrixRoomId: '!pair:oriso',
+			chatId: 77
+		})
+	),
+	apiAcceptColleagueAppointment: vi.fn(() => Promise.resolve({})),
+	apiDeclineColleagueAppointment: vi.fn(() => Promise.resolve()),
+	apiCancelColleagueAppointment: vi.fn(() => Promise.resolve()),
+	apiGetCalendarAutoAccept: vi.fn(() =>
+		Promise.resolve({ colleagueIds: [] })
+	),
+	apiSetCalendarAutoAccept: vi.fn((dto) => Promise.resolve(dto)),
 	apiGetCalendarEntries: vi.fn(),
 	apiGetCalendarColleagues: vi.fn(),
 	apiGetColleagueCalendarEntries: vi.fn(),
 	apiGetCalendarSync: vi.fn(),
 	apiGetCalendarWorkingHours: vi.fn(),
 	apiSetCalendarWorkingHours: vi.fn(),
+	apiGetCalendarConsultationHours: vi.fn(),
+	apiSetCalendarConsultationHours: vi.fn(),
 	apiPutWorkingDayException: vi.fn(),
 	apiDeleteWorkingDayException: vi.fn(),
 	apiCreateCalendarBlocker: vi.fn(),
@@ -196,6 +216,7 @@ beforeEach(() => {
 			{ weekday: 1, start: '08:00', end: '18:00' }
 		]
 	});
+	api.apiGetCalendarConsultationHours.mockResolvedValue({ windows: [] });
 });
 
 describe('CalendarPageWired — phone and tablet layout (prototype v15)', () => {
@@ -299,6 +320,84 @@ describe('CalendarPageWired', () => {
 				sessionId: 4401,
 				matrixRoomId: '!room:oriso'
 			})
+		);
+	});
+
+	it('makes an appointment with a colleague and tells them in the internal chat (FE#2305)', async () => {
+		render(<CalendarPageWired />);
+		await showWeek();
+		const start = new Date('2026-11-19T09:00:00Z');
+		const end = new Date('2026-11-19T10:00:00Z');
+		await act(() =>
+			props.onCreate?.([
+				{
+					type: 'appointment',
+					start,
+					end,
+					kind: 'onsite',
+					colleagueId: 'kai'
+				}
+			])
+		);
+		expect(api.apiCreateColleagueAppointment).toHaveBeenCalledWith({
+			colleagueId: 'kai',
+			start: start.toISOString(),
+			end: end.toISOString(),
+			kind: 'ONSITE'
+		});
+		expect(appointments.apiCreateSessionAppointment).not.toHaveBeenCalled();
+		expect(sendNotice).toHaveBeenCalledWith(
+			expect.objectContaining({
+				kind: 'created',
+				sessionId: 77,
+				matrixRoomId: '!pair:oriso'
+			})
+		);
+	});
+
+	it('answers and cancels an appointment with a colleague (FE#2305)', async () => {
+		render(<CalendarPageWired />);
+		await showWeek();
+		const entry = {
+			id: 'm1',
+			type: 'appointment' as const,
+			start: '2026-11-19T09:00:00Z',
+			end: '2026-11-19T10:00:00Z',
+			ownerId: 'me',
+			kind: 'video' as const,
+			meeting: {
+				colleagueId: 'kai',
+				colleagueName: 'Kai',
+				status: 'pending' as const,
+				invited: true,
+				matrixRoomId: '!pair:oriso',
+				chatId: 77
+			}
+		};
+		await act(() => props.onAnswerMeeting?.(entry, 'accept'));
+		expect(api.apiAcceptColleagueAppointment).toHaveBeenCalledWith('m1');
+		await act(() => props.onAnswerMeeting?.(entry, 'decline'));
+		expect(api.apiDeclineColleagueAppointment).toHaveBeenCalledWith('m1');
+		await act(() => props.onCancelAppointment?.(entry));
+		expect(api.apiCancelColleagueAppointment).toHaveBeenCalledWith('m1');
+		expect(appointments.apiCancelSessionAppointment).not.toHaveBeenCalled();
+		expect(sendNotice).toHaveBeenCalledWith(
+			expect.objectContaining({ kind: 'cancelled', sessionId: 77 })
+		);
+	});
+
+	it('reads and saves the auto-accept list (FE#2305)', async () => {
+		api.apiGetCalendarAutoAccept.mockResolvedValue({
+			colleagueIds: ['kai']
+		});
+		render(<CalendarPageWired />);
+		await waitFor(() => expect(props.autoAcceptIds).toEqual(['kai']));
+		await act(() => props.onSaveAutoAccept?.(['kai', 'ada']));
+		expect(api.apiSetCalendarAutoAccept).toHaveBeenCalledWith({
+			colleagueIds: ['kai', 'ada']
+		});
+		await waitFor(() =>
+			expect(props.autoAcceptIds).toEqual(['kai', 'ada'])
 		);
 	});
 
@@ -2067,5 +2166,44 @@ describe('CalendarPageWired — which conversations can be booked (C1, C6)', () 
 			[2, false],
 			[3, false]
 		]);
+	});
+});
+
+describe('CalendarPageWired — Sprechstunden (FE#2287)', () => {
+	it('loads them for a counsellor and saves the whole set', async () => {
+		api.apiGetCalendarConsultationHours.mockResolvedValue({
+			windows: [{ weekday: 2, start: '09:00', end: '12:00' }],
+			autoAccept: false,
+			noticeDays: 2,
+			slotMinutes: 30
+		});
+		render(<CalendarPageWired />);
+		await waitFor(() =>
+			expect(props.consultationHours).toEqual({
+				windows: [{ weekday: 2, start: '09:00', end: '12:00' }],
+				autoAccept: false,
+				noticeDays: 2,
+				slotMinutes: 30
+			})
+		);
+		const next = {
+			windows: [{ weekday: 4, start: '14:00', end: '16:00' }],
+			autoAccept: true,
+			noticeDays: 1,
+			slotMinutes: 60 as const
+		};
+		api.apiSetCalendarConsultationHours.mockResolvedValue(next);
+		await act(() => props.onSaveConsultationHours?.(next));
+		expect(api.apiSetCalendarConsultationHours).toHaveBeenCalledWith(next);
+		expect(props.consultationHours).toEqual(next);
+	});
+
+	it('offers none to edit when they could not be read', async () => {
+		api.apiGetCalendarConsultationHours.mockRejectedValue(new Error('404'));
+		render(<CalendarPageWired />);
+		await waitFor(() =>
+			expect(api.apiGetCalendarConsultationHours).toHaveBeenCalled()
+		);
+		expect(props.consultationHours).toBeUndefined();
 	});
 });

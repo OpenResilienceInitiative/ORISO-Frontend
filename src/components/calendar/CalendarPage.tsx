@@ -55,6 +55,7 @@ import {
 	entryActions,
 	openProposals,
 	ProposalNoLongerValid,
+	RequestedTimeTaken,
 	receivedBy,
 	type EntryAction,
 	type MoveProposal
@@ -161,6 +162,7 @@ import {
 	MonthDayMenuContent,
 	PeopleMenuContent,
 	ProposalMenuContent,
+	AppointmentRequestMenuContent,
 	RequestMenuContent,
 	SettingsMenuContent,
 	SlotMenuContent,
@@ -175,6 +177,7 @@ import { HoverScrollArrows } from '../hoverScrollArrows/HoverScrollArrows';
 import type { InvitationPreset } from '../directInvitation/invitationModel';
 import type { DirectLinkMedium } from '../conversationCreate/directLink/directLink';
 import { NewEntryDialog } from './NewEntryDialog';
+import { AutoAcceptDialog } from './AutoAcceptDialog';
 import type { AbsenceDraft } from './AbsenceForm';
 import { BlockerCreatedMessage } from './BlockerDialog';
 import { MoveConflictDialog } from './MoveConflictDialog';
@@ -182,6 +185,8 @@ import {
 	WorkingHoursDialog,
 	useWorkingHoursSummary
 } from './WorkingHoursDialog';
+import { ConsultationHoursDialog } from './ConsultationHoursDialog';
+import type { ConsultationHours } from './calendarConsultationHours';
 import {
 	CalendarSyncDialog,
 	type CalendarFeed,
@@ -239,6 +244,17 @@ export interface CalendarPageProps {
 	busyImport?: CalendarImport;
 	/** Weekly working hours; empty = none set, nothing shaded. */
 	workingHours?: WorkingHours;
+	/**
+	 * Sprechstunden and booking settings (FE#2287); absent until loaded,
+	 * and then not offered, so unloaded ones are never saved as empty.
+	 */
+	consultationHours?: ConsultationHours;
+	onSaveConsultationHours?: (
+		hours: ConsultationHours
+	) => void | Promise<unknown>;
+	/** Loading them failed: ⋮ says so and loads them again on a click. */
+	consultationHoursFailed?: boolean;
+	onRetryConsultationHours?: () => void;
 	/**
 	 * The saved schedule has loaded. Until then (or when loading failed)
 	 * neither the dialog nor the grips edit it, so an unloaded schedule is
@@ -348,6 +364,27 @@ export interface CalendarPageProps {
 		reason?: string
 	) => void | Promise<unknown>;
 	onWithdrawProposal?: (proposal: MoveProposal) => void | Promise<unknown>;
+	/**
+	 * FE#2287: "Bestätigen" an advice seeker's request. A rejection with
+	 * `RequestedTimeTaken` says the time is no longer free.
+	 */
+	onConfirmRequest?: (entry: CalendarEntry) => ChangeResult;
+	/** FE#2287: "Ablehnen" an advice seeker's request; the time is free. */
+	onDeclineRequest?: (entry: CalendarEntry) => ChangeResult;
+	/**
+	 * An appointment with a colleague (FE#2305): the invited counsellor
+	 * accepts or declines it.
+	 */
+	onAnswerMeeting?: (
+		entry: CalendarEntry,
+		answer: 'accept' | 'decline'
+	) => ChangeResult;
+	/**
+	 * The colleagues whose appointments are accepted automatically; with
+	 * `onSaveAutoAccept` the more menu offers to change the list (FE#2305).
+	 */
+	autoAcceptIds?: string[];
+	onSaveAutoAccept?: (colleagueIds: string[]) => ChangeResult;
 	/** Team meetings and group dates (no backend yet). */
 	onJoin?: (entry: CalendarEntry) => void;
 	/** The visible range changed: load entries for it. */
@@ -413,7 +450,9 @@ type Dialog =
 			replaces?: { entry: CalendarEntry; draft: AppointmentDraft };
 	  }
 	| { type: 'workingHours' }
+	| { type: 'consultationHours' }
 	| { type: 'sync' }
+	| { type: 'autoAccept' }
 	| null;
 
 type Menu =
@@ -441,6 +480,12 @@ type Menu =
 			type: 'proposal' | 'request';
 			anchor: MenuAnchor;
 			proposal: MoveProposal;
+			entry: CalendarEntry;
+	  }
+	| {
+			/** FE#2287: an advice seeker's request, answered like a proposal. */
+			type: 'appointmentRequest';
+			anchor: MenuAnchor;
 			entry: CalendarEntry;
 	  }
 	| {
@@ -531,6 +576,10 @@ export const CalendarPage = ({
 	feed,
 	busyImport = {},
 	workingHours = [],
+	consultationHours,
+	onSaveConsultationHours,
+	consultationHoursFailed = false,
+	onRetryConsultationHours,
 	workingHoursLoaded = true,
 	dayExceptions,
 	holidayRegion = null,
@@ -553,6 +602,9 @@ export const CalendarPage = ({
 	onInviteNewPerson,
 	onMove,
 	onCancelAppointment,
+	onAnswerMeeting,
+	autoAcceptIds,
+	onSaveAutoAccept,
 	onRemoveBlocker,
 	onSaveWorkingHours,
 	onSaveDayException,
@@ -563,6 +615,8 @@ export const CalendarPage = ({
 	onWithdrawProposal,
 	onAcceptProposal,
 	onDeclineProposal,
+	onConfirmRequest,
+	onDeclineRequest,
 	onJoin,
 	onStart,
 	onOpenChat,
@@ -892,6 +946,8 @@ export const CalendarPage = ({
 	 * fails. Says whether it went through: `false` for a refusal or a
 	 * failure, so a moved entry goes back and quick entry keeps its draft.
 	 */
+	const [savingConsultationHours, setSavingConsultationHours] =
+		useState(false);
 	const run = (
 		result: ChangeResult | undefined,
 		success: Notice | ((value: unknown) => Notice),
@@ -1492,6 +1548,41 @@ export const CalendarPage = ({
 		);
 	};
 
+	/** FE#2287: one answer per request, as for a proposal. */
+	const answerRequest = (
+		entry: CalendarEntry,
+		send: ((entry: CalendarEntry) => ChangeResult) | undefined,
+		success: Notice
+	) => {
+		setMenu(null);
+		if (!send || answeringIds.includes(entry.id)) return;
+		setAnsweringIds((all) => [...all, entry.id]);
+		void Promise.resolve(
+			run(send(entry), success, (error) => ({
+				message:
+					error instanceof RequestedTimeTaken
+						? t('sessionList.timeline.appointment.request.taken')
+						: t('calendar.saveFailed')
+			}))
+		).finally(() =>
+			setAnsweringIds((all) => all.filter((id) => id !== entry.id))
+		);
+	};
+
+	const confirmRequest = (entry: CalendarEntry) =>
+		answerRequest(entry, onConfirmRequest, {
+			message: t('calendar.appointmentRequest.confirmed', {
+				date: format(entry.start, entry.end)
+			})
+		});
+
+	const declineRequest = (entry: CalendarEntry) =>
+		answerRequest(entry, onDeclineRequest, {
+			message: t('calendar.appointmentRequest.declined', {
+				date: format(entry.start, entry.end)
+			})
+		});
+
 	const withdraw = (proposal: MoveProposal) => {
 		setMenu(null);
 		run(onWithdrawProposal?.(proposal), {
@@ -1501,6 +1592,13 @@ export const CalendarPage = ({
 
 	// --- Working-hours grips (own calendar) ---
 	const editHours = workingHoursLoaded && !!onSaveWorkingHours;
+	const editConsultationHours =
+		consultant && !!consultationHours && !!onSaveConsultationHours;
+	const retryConsultationHours =
+		consultant &&
+		!consultationHours &&
+		consultationHoursFailed &&
+		!!onRetryConsultationHours;
 	const gripsAvailable = consultant && editHours && !!onSaveDayException;
 	// Switchable in ⋮ and kept in this browser (Frank *7.2).
 	const [showGrips, setShowGrips] = useState(() => readShowGrips(ownerId));
@@ -1837,7 +1935,9 @@ export const CalendarPage = ({
 		move: !!onMove,
 		propose: !!onProposeMove,
 		cancel: !!onCancelAppointment,
-		remove: !!onRemoveBlocker
+		remove: !!onRemoveBlocker,
+		accept: !!onAnswerMeeting,
+		decline: !!onAnswerMeeting
 	};
 
 	const openEntry = (
@@ -1856,6 +1956,11 @@ export const CalendarPage = ({
 						(e) => e.id === shown.id && e.ownerId === ownerId
 					) ?? shown)
 				: shown;
+		// FE#2287: one's own request is answered, like a proposal.
+		if (entry.requested && entry.ownerId === ownerId) {
+			setMenu({ type: 'appointmentRequest', entry, anchor });
+			return;
+		}
 		const actions = entryActions(entry, { ownerId, role, can });
 		const formMode =
 			mode === 'move'
@@ -1982,10 +2087,26 @@ export const CalendarPage = ({
 
 	const entryAction = (
 		entry: CalendarEntry,
-		action: 'show' | 'start' | 'chat' | 'join' | 'cancel' | 'remove'
+		action:
+			| 'show'
+			| 'start'
+			| 'chat'
+			| 'join'
+			| 'cancel'
+			| 'remove'
+			| 'accept'
+			| 'decline'
 	) => {
 		setMenu(null);
-		if (action === 'show') showEntry(entry);
+		if (action === 'accept' || action === 'decline')
+			run(onAnswerMeeting?.(entry, action), {
+				message: t(
+					action === 'accept'
+						? 'calendar.meeting.accepted'
+						: 'calendar.meeting.declined'
+				)
+			});
+		else if (action === 'show') showEntry(entry);
 		else if (action === 'start') openRoom(onStart, entry);
 		else if (action === 'chat') openRoom(onOpenChat, entry);
 		else if (action === 'join') onJoin?.(entry);
@@ -2147,6 +2268,21 @@ export const CalendarPage = ({
 				}
 			/>
 		);
+	} else if (menu?.type === 'appointmentRequest') {
+		const { entry } = menu;
+		menuLabel = t('calendar.appointmentRequest.menu');
+		menuContent = (
+			<AppointmentRequestMenuContent
+				entry={entry}
+				busy={answeringIds.includes(entry.id)}
+				onConfirm={
+					onConfirmRequest ? () => confirmRequest(entry) : undefined
+				}
+				onDecline={
+					onDeclineRequest ? () => declineRequest(entry) : undefined
+				}
+			/>
+		);
 	} else if (menu?.type === 'edge') {
 		const { change } = menu;
 		menuLabel = t('calendar.grip.menuLabel', {
@@ -2216,6 +2352,26 @@ export const CalendarPage = ({
 							}
 						: undefined
 				}
+				consultationHoursSummary={
+					consultationHours
+						? summarise(consultationHours.windows)
+						: retryConsultationHours
+							? t('calendar.consultationHours.loadFailed')
+							: undefined
+				}
+				onConsultationHours={
+					editConsultationHours
+						? () => {
+								setMenu(null);
+								setDialog({ type: 'consultationHours' });
+							}
+						: retryConsultationHours
+							? () => {
+									setMenu(null);
+									onRetryConsultationHours?.();
+								}
+							: undefined
+				}
 				onRepeatBlocker={
 					onCreate
 						? () => {
@@ -2250,6 +2406,14 @@ export const CalendarPage = ({
 						? () => {
 								setMenu(null);
 								setDialog({ type: 'sync' });
+							}
+						: undefined
+				}
+				onAutoAccept={
+					onSaveAutoAccept && colleagues.length > 0
+						? () => {
+								setMenu(null);
+								setDialog({ type: 'autoAccept' });
 							}
 						: undefined
 				}
@@ -3175,6 +3339,7 @@ export const CalendarPage = ({
 						dialog.type === 'blocker' ? dialog.note : undefined
 					}
 					conversations={bookable}
+					colleagues={onCreate ? colleagues : undefined}
 					entries={
 						dialog.type === 'blocker' && dialog.replaces
 							? entries.filter(
@@ -3210,6 +3375,23 @@ export const CalendarPage = ({
 					onClose={() => setDialog(null)}
 				/>
 			)}
+			{dialog?.type === 'autoAccept' && onSaveAutoAccept && (
+				<AutoAcceptDialog
+					open
+					colleagues={colleagues}
+					selected={autoAcceptIds ?? []}
+					fullScreen={compact}
+					onSave={(ids) => {
+						setDialog(null);
+						run(onSaveAutoAccept(ids), {
+							message: t('calendar.autoAccept.saved', {
+								count: ids.length
+							})
+						});
+					}}
+					onClose={() => setDialog(null)}
+				/>
+			)}
 			{dialog?.type === 'workingHours' && editHours && (
 				<WorkingHoursDialog
 					open
@@ -3231,6 +3413,41 @@ export const CalendarPage = ({
 					onClose={() => setDialog(null)}
 				/>
 			)}
+			{dialog?.type === 'consultationHours' &&
+				editConsultationHours &&
+				consultationHours && (
+					<ConsultationHoursDialog
+						open
+						hours={consultationHours}
+						fullScreen={compact}
+						saving={savingConsultationHours}
+						onSave={(hours) => {
+							/* Open until the save settles: reopened meanwhile, the
+							   dialog would show the old set and save it back over
+							   this one. A failed save keeps the draft for a retry. */
+							const saved = run(
+								onSaveConsultationHours?.(hours),
+								{
+									message: t(
+										'calendar.consultationHours.saved'
+									)
+								}
+							);
+							if (typeof saved === 'boolean') {
+								if (saved) setDialog(null);
+								return;
+							}
+							setSavingConsultationHours(true);
+							void saved.then((ok) => {
+								setSavingConsultationHours(false);
+								if (ok) setDialog(null);
+							});
+						}}
+						onClose={() => {
+							if (!savingConsultationHours) setDialog(null);
+						}}
+					/>
+				)}
 			{dialog?.type === 'sync' && feed && (
 				<CalendarSyncDialog
 					open
@@ -3249,10 +3466,15 @@ export const CalendarPage = ({
 					open
 					data-testid="calendar-cancel-dialog"
 					title={t('calendar.cancelAsk.title')}
-					description={t('calendar.cancelAsk.description', {
-						name: label(cancelAsk),
-						time: format(cancelAsk.start, cancelAsk.end)
-					})}
+					description={t(
+						cancelAsk.meeting
+							? 'calendar.meeting.cancelAsk'
+							: 'calendar.cancelAsk.description',
+						{
+							name: label(cancelAsk),
+							time: format(cancelAsk.start, cancelAsk.end)
+						}
+					)}
 					severity="error"
 					fullScreen={false}
 					onClose={() => setCancelAsk(null)}
@@ -3269,7 +3491,11 @@ export const CalendarPage = ({
 								const entry = cancelAsk;
 								setCancelAsk(null);
 								run(onCancelAppointment?.(entry), {
-									message: t('calendar.cancelled')
+									message: t(
+										entry.meeting
+											? 'calendar.meeting.cancelled'
+											: 'calendar.cancelled'
+									)
 								});
 							},
 							testId: 'calendar-cancel-confirm'

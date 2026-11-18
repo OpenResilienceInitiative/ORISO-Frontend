@@ -1,4 +1,5 @@
 import * as React from 'react';
+import type { ConsultationHours } from './calendarConsultationHours';
 import { useEffect, useRef, useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { a11yExcept } from '../../../.storybook/a11yExceptions';
@@ -53,6 +54,7 @@ import {
 	ME,
 	OWN_ENTRIES,
 	STORY_NOW,
+	STORY_APPOINTMENT_REQUESTS,
 	STORY_PROPOSALS,
 	STORY_REQUESTS,
 	STORY_WORKING_HOURS
@@ -79,6 +81,8 @@ interface HarnessProps {
 	proposals?: MoveProposal[];
 	/** Proposals colleagues sent for one's own appointments. */
 	requests?: MoveProposal[];
+	/** FE#2287: advice seekers' requests waiting for confirmation. */
+	appointmentRequests?: CalendarEntry[];
 	withProposals?: boolean;
 	workingHours?: WorkingHours;
 	holidayRegion?: HolidayRegion | null;
@@ -157,6 +161,7 @@ const Scenario = ({
 	switcherStyle = 'menu',
 	proposals: initialProposals = [],
 	requests: initialRequests = [],
+	appointmentRequests = [],
 	withProposals = true,
 	workingHours: initialHours = STORY_WORKING_HOURS,
 	holidayRegion: initialRegion = null,
@@ -169,9 +174,25 @@ const Scenario = ({
 	const colleagues =
 		role === 'consultant' ? colleaguesInScope(COLLEAGUES, scope) : [];
 	const [own, setOwn] = useState<CalendarEntry[]>(
-		empty ? [] : role === 'asker' ? ASKER_ENTRIES : OWN_ENTRIES
+		empty
+			? []
+			: role === 'asker'
+				? ASKER_ENTRIES
+				: [...OWN_ENTRIES, ...appointmentRequests]
 	);
 	const [hours, setHours] = useState<WorkingHours>(initialHours);
+	/* Sprechstunden (FE#2287): Tuesday and Thursday mornings, requests
+	   inside two days. */
+	const [consultationHours, setConsultationHours] =
+		React.useState<ConsultationHours>({
+			windows: [
+				{ weekday: 2, start: '09:00', end: '12:00' },
+				{ weekday: 4, start: '14:00', end: '17:00' }
+			],
+			autoAccept: true,
+			noticeDays: 2,
+			slotMinutes: 60
+		});
 	const [region, setRegion] = useState<HolidayRegion | null>(initialRegion);
 	const [exceptions, setExceptions] =
 		useState<DayExceptions>(initialExceptions);
@@ -285,6 +306,10 @@ const Scenario = ({
 				setHours(next);
 				setRegion(nextRegion);
 			}}
+			consultationHours={
+				role === 'consultant' ? consultationHours : undefined
+			}
+			onSaveConsultationHours={setConsultationHours}
 			onSaveDayException={(date, windows) =>
 				setExceptions((all) => ({ ...all, [date]: windows }))
 			}
@@ -345,6 +370,32 @@ const Scenario = ({
 					? (proposal) =>
 							setRequests((all) =>
 								all.filter((p) => p.id !== proposal.id)
+							)
+					: undefined
+			}
+			onConfirmRequest={
+				role === 'consultant'
+					? (entry) =>
+							// Like UserService: the request becomes an
+							// ordinary appointment.
+							setOwn((all) =>
+								all.map((e) =>
+									e.id === entry.id
+										? {
+												...e,
+												requested: undefined,
+												movable: true
+											}
+										: e
+								)
+							)
+					: undefined
+			}
+			onDeclineRequest={
+				role === 'consultant'
+					? (entry) =>
+							setOwn((all) =>
+								all.filter((e) => e.id !== entry.id)
 							)
 					: undefined
 			}
@@ -1477,6 +1528,104 @@ export const DeclineRequest: Story = {
 	}
 };
 
+/** FE#2287: an advice seeker's request in the grid. */
+const appointmentRequestEl = async (canvasElement: HTMLElement) => {
+	let el: HTMLElement | null = null;
+	await waitFor(() => {
+		el = canvasElement.querySelector<HTMLElement>('[data-entry-id="q1"]');
+		expect(el).toBeTruthy();
+	});
+	return el as unknown as HTMLElement;
+};
+
+export const AppointmentRequest: Story = {
+	name: 'Appointment request — advice seeker asked, dashed until answered (FE#2287)',
+	args: { appointmentRequests: STORY_APPOINTMENT_REQUESTS },
+	play: async ({ canvasElement }) => {
+		const dashed = await appointmentRequestEl(canvasElement);
+		await expect(dashed.className).toContain('calEntry--proposal');
+		await expect(dashed.className).toContain('calEntry--requested');
+		await expect(dashed.textContent).toContain(
+			'Angefragt · wartet auf Sie'
+		);
+		await expect(dashed.getAttribute('aria-label')).toMatch(
+			/leise_lerche · Angefragt · wartet auf Sie, .*11:00–12:00$/
+		);
+	}
+};
+
+export const AppointmentRequestMenu: Story = {
+	name: 'Appointment request — "Bestätigen" / "Ablehnen" like a move proposal',
+	args: { appointmentRequests: STORY_APPOINTMENT_REQUESTS },
+	play: async ({ canvasElement }) => {
+		await userEvent.click(await appointmentRequestEl(canvasElement));
+		const menu = within(await findCy('calendar-menu-appointmentRequest'));
+		await expect(menu.getByText('Termin angefragt')).toBeTruthy();
+		await expect(menu.getByText('Anfrage von leise_lerche')).toBeTruthy();
+		await expect(
+			menu.getByRole('menuitem', { name: /^Bestätigen/ })
+		).toBeTruthy();
+		await expect(
+			menu.getByRole('menuitem', { name: /^Ablehnen/ })
+		).toBeTruthy();
+	}
+};
+
+export const AppointmentRequestConfirm: Story = {
+	name: 'Appointment request — confirmed, an ordinary appointment',
+	args: { appointmentRequests: STORY_APPOINTMENT_REQUESTS },
+	play: async ({ canvasElement }) => {
+		await userEvent.click(await appointmentRequestEl(canvasElement));
+		const menu = within(await findCy('calendar-menu-appointmentRequest'));
+		await userEvent.click(
+			menu.getByRole('menuitem', { name: /^Bestätigen/ })
+		);
+		await expect(
+			await body().findByText(/^Termin bestätigt: .*11:00–12:00\.$/)
+		).toBeTruthy();
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector('[data-entry-id="q1"]')?.className
+			).not.toContain('calEntry--proposal')
+		);
+	}
+};
+
+export const AppointmentRequestDecline: Story = {
+	name: 'Appointment request — declined, the time is free',
+	args: { appointmentRequests: STORY_APPOINTMENT_REQUESTS },
+	play: async ({ canvasElement }) => {
+		await userEvent.click(await appointmentRequestEl(canvasElement));
+		const menu = within(await findCy('calendar-menu-appointmentRequest'));
+		await userEvent.click(
+			menu.getByRole('menuitem', { name: /^Ablehnen/ })
+		);
+		await expect(
+			await body().findByText(
+				/^Terminanfrage abgelehnt: .*11:00–12:00\.$/
+			)
+		).toBeTruthy();
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector('[data-entry-id="q1"]')
+			).toBeNull()
+		);
+	}
+};
+
+export const AppointmentRequestPhone: Story = {
+	name: 'Appointment request — phone 390 px',
+	globals: phone390Globals,
+	args: {
+		compact: true,
+		phone: true,
+		appointmentRequests: STORY_APPOINTMENT_REQUESTS
+	},
+	play: async ({ canvasElement }) => {
+		await appointmentRequestEl(canvasElement);
+	}
+};
+
 export const PhoneRequests: Story = {
 	name: 'Move proposal — received, phone 390 px (the sheet holds it)',
 	globals: phone390Globals,
@@ -2070,6 +2219,18 @@ export const FilterKinds: Story = {
 				canvasElement.querySelectorAll('.calendarView .calEntry').length
 			).toBe(all)
 		);
+		// The accessibility audit runs after this: let a reload the filter
+		// started finish first, or axe sees the busy overlay over an empty
+		// all-day row (FE#2298 CI, 18 Nov).
+		await waitFor(
+			() =>
+				expect(
+					canvasElement.querySelector(
+						'[data-testid="calendar-loading"]'
+					)
+				).toBeNull(),
+			{ timeout: 5000 }
+		);
 	}
 };
 
@@ -2107,6 +2268,58 @@ export const ChipRemovedClearsFilter: Story = {
 };
 
 /** Frank *14: the filter button opens "Ansicht · Kalender", as in Gespräche. */
+/**
+ * FE#2287: "Sprechstunden" sits under the working hours in ⋮. Advice
+ * seekers book only inside these windows; outside the notice days a
+ * booking is confirmed at once when "Automatisch bestätigen" is on.
+ */
+export const SettingsMenuWithConsultationHours: Story = {
+	name: 'Settings — ⋮ menu with Sprechstunden',
+	play: async ({ canvasElement }) => {
+		const canvas = canvasOf(canvasElement);
+		await userEvent.click(
+			await canvas.findByRole('button', {
+				name: 'Kalender-Einstellungen'
+			})
+		);
+		const menu = within(await body().findByRole('menu'));
+		await expect(
+			menu.getByRole('menuitem', { name: /Sprechstunden/ })
+		).toBeTruthy();
+	}
+};
+
+export const ConsultationHoursSettings: Story = {
+	name: 'Settings — Sprechstunden dialog',
+	play: async ({ canvasElement }) => {
+		const canvas = canvasOf(canvasElement);
+		await userEvent.click(
+			await canvas.findByRole('button', {
+				name: 'Kalender-Einstellungen'
+			})
+		);
+		await userEvent.click(
+			within(await body().findByRole('menu')).getByRole('menuitem', {
+				name: /Sprechstunden/
+			})
+		);
+		const dialog = within(
+			await body().findByTestId('calendar-consultation-hours-dialog')
+		);
+		// The design system's select, like "Bundesland" in the working hours.
+		await expect(
+			dialog.getByRole('combobox', { name: 'Dauer eines Termins' })
+		).toHaveTextContent('60 Min.');
+		await expect(
+			dialog.getByRole('combobox', { name: 'Vorlaufzeit' })
+		).toHaveTextContent('2 Tage');
+		// Show the settings at the end of the dialog, as after scrolling down.
+		dialog
+			.getByRole('combobox', { name: 'Dauer eines Termins' })
+			.scrollIntoView({ block: 'center' });
+	}
+};
+
 export const ViewSettings: Story = {
 	name: 'Settings — "Ansicht · Kalender" dialog',
 	play: async ({ canvasElement }) => {

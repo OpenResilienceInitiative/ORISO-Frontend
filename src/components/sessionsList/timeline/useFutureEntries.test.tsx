@@ -2,14 +2,25 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vite-plus/test';
 import { useFutureEntries } from './useFutureEntries';
+import {
+	appointmentsEpoch,
+	forgetKnownAppointments,
+	knownSessionAppointments,
+	notifyAppointmentsChanged,
+	rememberSessionAppointments
+} from './conversationAppointments';
+import { act, cleanup } from '@testing-library/react';
 import type { TimelineSession } from './timelineModel';
 
-const { occurrences } = vi.hoisted(() => ({ occurrences: vi.fn() }));
+const { occurrences, upcoming } = vi.hoisted(() => ({
+	occurrences: vi.fn(),
+	upcoming: vi.fn(() => Promise.resolve([] as unknown[]))
+}));
 vi.mock('../../../api/apiGetChatOccurrences', () => ({
 	apiGetChatOccurrences: occurrences
 }));
 vi.mock('../../../api/apiSessionAppointments', () => ({
-	apiGetUpcomingAppointments: () => Promise.resolve([])
+	apiGetUpcomingAppointments: upcoming
 }));
 
 const group = (canConfigure: boolean): TimelineSession => ({
@@ -48,5 +59,61 @@ describe('useFutureEntries', () => {
 		rerender({ series: [group(false)] });
 		expect(result.current.entries[0].canConfigure).toBe(false);
 		expect(occurrences).toHaveBeenCalledTimes(1);
+	});
+
+	it('does not record a failed upcoming read as "no appointments" (review)', async () => {
+		forgetKnownAppointments();
+		const start = new Date(Date.now() + 86400000).toISOString();
+		const known = {
+			id: 'k',
+			sessionId: 7,
+			startTime: start,
+			endTime: start,
+			status: 'SCHEDULED' as const
+		};
+		rememberSessionAppointments(7, [known], appointmentsEpoch());
+		let rejected = false;
+		upcoming.mockImplementationOnce(() => {
+			rejected = true;
+			return Promise.reject(new Error('503'));
+		});
+		occurrences.mockResolvedValue([]);
+		renderHook(() =>
+			useFutureEntries({ series: [], conversations: [], enabled: true })
+		);
+		await waitFor(() => expect(rejected).toBe(true));
+		await new Promise((resolve) => setTimeout(resolve, 0));
+		expect(knownSessionAppointments(7)).toEqual([known]);
+		forgetKnownAppointments();
+	});
+
+	it('lets a superseded upcoming read not overwrite a newer one (review)', async () => {
+		cleanup();
+		forgetKnownAppointments();
+		upcoming.mockClear();
+		const start = new Date(Date.now() + 86400000).toISOString();
+		const stale = {
+			id: 'old',
+			sessionId: 7,
+			startTime: start,
+			endTime: start,
+			status: 'SCHEDULED' as const
+		};
+		let answerA: (items: unknown[]) => void = () => undefined;
+		upcoming.mockImplementationOnce(
+			() => new Promise<unknown[]>((resolve) => (answerA = resolve))
+		);
+		upcoming.mockImplementationOnce(() => Promise.resolve([]));
+		occurrences.mockResolvedValue([]);
+		renderHook(() =>
+			useFutureEntries({ series: [], conversations: [], enabled: true })
+		);
+		await waitFor(() => expect(upcoming).toHaveBeenCalledTimes(1));
+		act(() => notifyAppointmentsChanged());
+		await waitFor(() => expect(upcoming).toHaveBeenCalledTimes(2));
+		await waitFor(() => expect(knownSessionAppointments(7)).toEqual([]));
+		await act(async () => answerA([stale]));
+		expect(knownSessionAppointments(7)).toEqual([]);
+		forgetKnownAppointments();
 	});
 });

@@ -181,8 +181,9 @@ const draftTarget = (params: EventActionParams): EventActionTarget => ({
 	path: params.actionPath ?? null
 });
 
-// The consumer routes native ORISO calls through
-// `callManager.startCall(callRoomId, isVideo, true)`. This factory only
+// The consumer joins the running call through
+// `callManager.joinExistingCall` (NotificationsCenter); it never starts a
+// call, which only counsellors do (Frank, 17 Nov 2026). This factory only
 // describes the action; provider-specific video integrations must use their
 // own adapter and must not be introduced as an implicit fallback here.
 const joinTarget = (params: EventActionParams): EventActionTarget => ({
@@ -522,7 +523,8 @@ const seeds: EventDescriptor[] = [
 		i18nKey: 'callMissed',
 		resolveActionTarget: conversationTarget
 	}),
-	// Invitation to an internal (team) group call — Figma 2026-07-12.
+	// Invitation to a call: one-to-one counselling (sessionId) or group
+	// (seriesId). FE#1211: the wording names neither, so it is true for both.
 	descriptor('call.invited', {
 		family: 'calls',
 		category: 'system',

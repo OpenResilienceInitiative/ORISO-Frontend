@@ -16,6 +16,10 @@ export type AppointmentNoticeKind = 'created' | 'moved' | 'cancelled';
 
 const KINDS: AppointmentNoticeKind[] = ['created', 'moved', 'cancelled'];
 
+/** The kinds the appointment card draws; others travel as plain sentences. */
+export const isCardNoticeKind = (kind: string): kind is AppointmentNoticeKind =>
+	(KINDS as string[]).includes(kind);
+
 export interface AppointmentNoticeSlot {
 	start: Date;
 	end?: Date;

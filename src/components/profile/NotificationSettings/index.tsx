@@ -29,6 +29,10 @@ import { useTenant } from '../../../globalState/provider/TenantProvider';
 import { useAppConfig } from '../../../hooks/useAppConfig';
 import { hasEmailSettingsPanel } from '../EmailNotifications/emailNotificationAccess';
 import './notificationSettingsPanel.styles.scss';
+import {
+	effectiveBrowserNotificationsEnabled,
+	recordBrowserNotificationsChoice
+} from '../../../utils/notificationSettings/browserMasterSwitch';
 
 /**
  * WP-06 Slice 6b — cross-device notification settings panel.
@@ -63,6 +67,7 @@ export const NotificationSettingsPanel = () => {
 
 	const onBrowserToggle = useCallback(
 		(enabled: boolean) => {
+			recordBrowserNotificationsChoice(enabled);
 			if (!enabled) {
 				updateSettings({ browserNotifications: { enabled: false } });
 				return;
@@ -133,7 +138,9 @@ export const NotificationSettingsPanel = () => {
 						<Switch
 							titleKey="profile.notificationSettings.browser.title"
 							descriptionKey="profile.notificationSettings.browser.description"
-							checked={settings.browserNotifications.enabled}
+							checked={effectiveBrowserNotificationsEnabled(
+								settings.browserNotifications.enabled
+							)}
 							onChange={onBrowserToggle}
 						/>
 					)}

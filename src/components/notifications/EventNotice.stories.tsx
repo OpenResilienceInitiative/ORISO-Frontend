@@ -91,7 +91,7 @@ const meta = {
 		docs: {
 			description: {
 				component:
-					'Das In-App-Pop-up für eine Erwähnung in der Team-Besprechung, ein Fallangebot an die Beraterin und für eine Übergabe, die auf die Zustimmung der ratsuchenden Person wartet (ORISO-Frontend#779). Es erscheint im bestehenden Hinweis-Stapel oben rechts (mobil oben über die volle Breite), zeigt höchstens den Namen der handelnden Person (bei der Zustimmung niemanden: Grund und Beratungsperson bleiben intern) und nie den Nachrichtentext. Weitere Ereignisse derselben Art im selben Gespräch zählen auf derselben Karte hoch; je Gespräch und Art gibt es höchstens eine Karte. Die Karte bleibt stehen, bis die Beraterin das Gespräch öffnet oder sie schließt, und gehorcht der Spalte „Pop-up“ der Zeile „Erwähnung“ bzw. „Übergabe“. Normale Nachrichten bekommen keine Karte. Ist das Ziel schon offen und sichtbar, bleibt alles still.'
+					'Das In-App-Pop-up für eine Erwähnung im Team-Chat, ein Fallangebot an die Beraterin und für eine Übergabe, die auf die Zustimmung der ratsuchenden Person wartet (ORISO-Frontend#779). Es erscheint im bestehenden Hinweis-Stapel oben rechts (mobil oben über die volle Breite), zeigt höchstens den Namen der handelnden Person (bei der Zustimmung niemanden: Grund und Beratungsperson bleiben intern) und nie den Nachrichtentext. Weitere Ereignisse derselben Art im selben Gespräch zählen auf derselben Karte hoch; je Gespräch und Art gibt es höchstens eine Karte. Die Karte bleibt stehen, bis die Beraterin das Gespräch öffnet oder sie schließt, und gehorcht der Spalte „Pop-up“ der Zeile „Erwähnung“ bzw. „Übergabe“. Normale Nachrichten bekommen keine Karte. Ist das Ziel schon offen und sichtbar, bleibt alles still.'
 			}
 		}
 	},
@@ -107,12 +107,10 @@ export const Mention: Story = {
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
 		const card = await canvas.findByRole('status');
-		await expect(card).toHaveTextContent(
-			'Erwähnung in der Team-Besprechung'
-		);
+		await expect(card).toHaveTextContent('Erwähnung im Team-Chat');
 		await expect(card).toHaveTextContent('Von Kollegin Weber');
 		await userEvent.click(
-			canvas.getByRole('button', { name: 'Team-Besprechung öffnen' })
+			canvas.getByRole('button', { name: 'Team-Chat öffnen' })
 		);
 		await waitFor(() => expect(canvas.queryByRole('status')).toBeNull());
 	}

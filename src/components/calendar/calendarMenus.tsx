@@ -12,6 +12,7 @@ import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
 import EventOutlinedIcon from '@mui/icons-material/EventOutlined';
 import ScheduleOutlinedIcon from '@mui/icons-material/ScheduleOutlined';
+import EventAvailableOutlinedIcon from '@mui/icons-material/EventAvailableOutlined';
 import EventRepeatOutlinedIcon from '@mui/icons-material/EventRepeatOutlined';
 import UndoOutlinedIcon from '@mui/icons-material/UndoOutlined';
 import WbSunnyOutlinedIcon from '@mui/icons-material/WbSunnyOutlined';
@@ -506,15 +507,32 @@ export interface EntryMenuContentProps {
 	ownerId: string;
 	onMode: (mode: 'list' | 'move' | 'propose') => void;
 	onAction: (
-		action: 'show' | 'start' | 'chat' | 'join' | 'cancel' | 'remove'
+		action:
+			| 'show'
+			| 'start'
+			| 'chat'
+			| 'join'
+			| 'cancel'
+			| 'remove'
+			| 'accept'
+			| 'decline'
 	) => void;
 	onMove: (start: Date, end: Date, reason?: string) => void;
 }
 
 const ACTION_ICON: Record<
-	'show' | 'start' | 'chat' | 'join' | 'cancel' | 'remove',
+	| 'show'
+	| 'start'
+	| 'chat'
+	| 'join'
+	| 'cancel'
+	| 'remove'
+	| 'accept'
+	| 'decline',
 	React.ReactNode
 > = {
+	accept: <EventAvailableOutlinedIcon fontSize="small" />,
+	decline: <EventBusyOutlinedIcon fontSize="small" />,
 	show: <EventOutlinedIcon fontSize="small" />,
 	start: <PlayArrowOutlinedIcon fontSize="small" />,
 	chat: <ChatBubbleOutlineIcon fontSize="small" />,
@@ -639,6 +657,10 @@ export const EntryMenuContent = ({
 				return t('calendar.entryMenu.propose');
 			case 'cancel':
 				return t('calendar.entryMenu.cancel');
+			case 'accept':
+				return t('calendar.meeting.accept');
+			case 'decline':
+				return t('calendar.meeting.decline');
 			default:
 				return t('calendar.entryMenu.remove');
 		}
@@ -655,6 +677,8 @@ export const EntryMenuContent = ({
 					? t('calendar.entryMenu.startSub', { name })
 					: undefined;
 			case 'chat':
+				if (entry.meeting)
+					return t('calendar.meeting.chatSub', { name });
 				return name
 					? t('calendar.entryMenu.chatSub', { name })
 					: undefined;
@@ -669,6 +693,8 @@ export const EntryMenuContent = ({
 						})
 					: undefined;
 			case 'cancel':
+				if (entry.meeting)
+					return t('calendar.meeting.cancelSub', { name });
 				return name
 					? t('calendar.entryMenu.cancelSub', { name })
 					: undefined;
@@ -682,6 +708,20 @@ export const EntryMenuContent = ({
 			{header}
 			{entry.address && (
 				<ChatMenuDropdownNote>{entry.address}</ChatMenuDropdownNote>
+			)}
+			{entry.meeting && (
+				<ChatMenuDropdownNote>
+					{entry.meeting.status === 'pending'
+						? t(
+								entry.meeting.invited
+									? 'calendar.meeting.pendingInvited'
+									: 'calendar.meeting.pendingSent',
+								{ name: entry.meeting.colleagueName }
+							)
+						: t('calendar.meeting.confirmed', {
+								name: entry.meeting.colleagueName
+							})}
+				</ChatMenuDropdownNote>
 			)}
 			{entry.type === 'group' && (
 				<ChatMenuDropdownNote>
@@ -778,8 +818,89 @@ export const ProposalMenuContent = ({
 };
 
 /* ------------------------------------------------------------------ */
-/* A proposal waiting for one's own answer ("Offene Verschiebungen")    */
+/* Something waiting for one's own answer: yes or no                    */
 /* ------------------------------------------------------------------ */
+
+interface AnswerMenuContentProps {
+	/** Who asks: avatar and "… von {name}". */
+	name: string;
+	subtitle: string;
+	title: string;
+	/** Falsy entries are left out. */
+	notes: React.ReactNode[];
+	acceptTitle: string;
+	acceptHint: string;
+	declineTitle: string;
+	declineHint: string;
+	/** The answer is on its way. */
+	busy?: boolean;
+	onAccept?: () => void;
+	onDecline?: () => void;
+}
+
+/**
+ * The one answer menu of the calendar: a colleague's move proposal and an
+ * advice seeker's appointment request (FE#2287) look and work alike.
+ */
+const AnswerMenuContent = ({
+	name,
+	subtitle,
+	title,
+	notes,
+	acceptTitle,
+	acceptHint,
+	declineTitle,
+	declineHint,
+	busy,
+	onAccept,
+	onDecline
+}: AnswerMenuContentProps) => (
+	<>
+		<div className="calendarMenu__head">
+			<span
+				className={`calendarMenu__avatar ${avatarToneClass(name)}`}
+				aria-hidden="true"
+			>
+				{initialsOf(name)}
+			</span>
+			<ChatMenuDropdownHeader
+				subtitle={subtitle}
+				title={title}
+				titleAs="p"
+			/>
+		</div>
+		{notes.filter(Boolean).map((note, index) => (
+			// The notes never reorder while the menu is open.
+			// eslint-disable-next-line react/no-array-index-key
+			<ChatMenuDropdownNote key={index}>{note}</ChatMenuDropdownNote>
+		))}
+		{(onAccept || onDecline) && <ChatMenuDropdownDivider />}
+		{onAccept && (
+			<ChatMenuDropdownItem
+				role="menuitem"
+				icon={<CheckIcon fontSize="small" />}
+				title={acceptTitle}
+				description={acceptHint}
+				disabled={busy}
+				onClick={onAccept}
+				data-cy="calendar-request-accept"
+			/>
+		)}
+		{onDecline && (
+			<ChatMenuDropdownItem
+				role="menuitem"
+				icon={<CloseIcon fontSize="small" />}
+				title={declineTitle}
+				description={declineHint}
+				disabled={busy}
+				onClick={onDecline}
+				data-cy="calendar-request-decline"
+			/>
+		)}
+	</>
+);
+
+/* A proposal waiting for one's own answer ("Offene Verschiebungen") */
 
 export interface RequestMenuContentProps {
 	proposal: MoveProposal;
@@ -802,62 +923,70 @@ export const RequestMenuContent = ({
 	const format = useRangeFormat();
 	const name = proposal.proposerName ?? t('calendar.proposal.someone');
 	return (
-		<>
-			<div className="calendarMenu__head">
-				<span
-					className={`calendarMenu__avatar ${avatarToneClass(name)}`}
-					aria-hidden="true"
-				>
-					{initialsOf(name)}
-				</span>
-				<ChatMenuDropdownHeader
-					subtitle={t('calendar.proposal.from', { name })}
-					title={t('calendar.proposal.requestMenu')}
-					titleAs="p"
-				/>
-			</div>
-			<ChatMenuDropdownNote>
-				{t('calendar.proposal.change', {
+		<AnswerMenuContent
+			name={name}
+			subtitle={t('calendar.proposal.from', { name })}
+			title={t('calendar.proposal.requestMenu')}
+			notes={[
+				t('calendar.proposal.change', {
 					from: format(from.start, from.end),
 					to: format(proposal.start, proposal.end)
-				})}
-			</ChatMenuDropdownNote>
-			{proposal.reason && (
-				<ChatMenuDropdownNote>
+				}),
+				proposal.reason && (
 					<span data-cy="calendar-request-reason">
 						{t('calendar.proposal.reason', {
 							reason: proposal.reason
 						})}
 					</span>
-				</ChatMenuDropdownNote>
-			)}
-			<ChatMenuDropdownNote>
-				{t('calendar.proposal.requestHint')}
-			</ChatMenuDropdownNote>
-			{(onAccept || onDecline) && <ChatMenuDropdownDivider />}
-			{onAccept && (
-				<ChatMenuDropdownItem
-					role="menuitem"
-					icon={<CheckIcon fontSize="small" />}
-					title={t('calendar.proposal.accept')}
-					description={t('calendar.proposal.acceptHint')}
-					disabled={busy}
-					onClick={onAccept}
-					data-cy="calendar-request-accept"
-				/>
-			)}
-			{onDecline && (
-				<ChatMenuDropdownItem
-					role="menuitem"
-					icon={<CloseIcon fontSize="small" />}
-					title={t('calendar.proposal.decline')}
-					description={t('calendar.proposal.declineHint')}
-					disabled={busy}
-					onClick={onDecline}
-					data-cy="calendar-request-decline"
-				/>
-			)}
-		</>
+				),
+				t('calendar.proposal.requestHint')
+			]}
+			acceptTitle={t('calendar.proposal.accept')}
+			acceptHint={t('calendar.proposal.acceptHint')}
+			declineTitle={t('calendar.proposal.decline')}
+			declineHint={t('calendar.proposal.declineHint')}
+			busy={busy}
+			onAccept={onAccept}
+			onDecline={onDecline}
+		/>
+	);
+};
+
+/* An advice seeker's appointment request (FE#2287) */
+
+export interface AppointmentRequestMenuContentProps {
+	entry: CalendarEntry;
+	busy?: boolean;
+	onConfirm?: () => void;
+	onDecline?: () => void;
+}
+
+export const AppointmentRequestMenuContent = ({
+	entry,
+	busy,
+	onConfirm,
+	onDecline
+}: AppointmentRequestMenuContentProps) => {
+	const { t } = useTranslation();
+	const format = useRangeFormat();
+	const name = entry.title ?? t('calendar.proposal.someone');
+	return (
+		<AnswerMenuContent
+			name={name}
+			subtitle={t('calendar.appointmentRequest.from', { name })}
+			title={t('calendar.appointmentRequest.menu')}
+			notes={[
+				`${t(`calendar.kinds.${entry.kind ?? 'video'}`)} · ${format(entry.start, entry.end)}`,
+				t('calendar.appointmentRequest.hint')
+			]}
+			acceptTitle={t('calendar.appointmentRequest.confirm')}
+			acceptHint={t('calendar.appointmentRequest.confirmHint')}
+			declineTitle={t('calendar.appointmentRequest.decline')}
+			declineHint={t('calendar.appointmentRequest.declineHint')}
+			busy={busy}
+			onAccept={onConfirm}
+			onDecline={onDecline}
+		/>
 	);
 };
 
@@ -870,12 +999,21 @@ export interface SettingsMenuContentProps {
 	workingHoursSummary?: string;
 	switcherStyle: ViewSwitcherStyle;
 	onWorkingHours?: () => void;
+	/** Sprechstunden as one line (FE#2287); absent = none set. */
+	consultationHoursSummary?: string;
+	/** "Sprechstunden": the times advice seekers can book. */
+	onConsultationHours?: () => void;
 	/** "Sperrzeit mit Wiederholung": the blocker form, for a series. */
 	onRepeatBlocker?: () => void;
 	/** "Freie Tage eintragen …": an all-day blocker from tomorrow. */
 	onFreeDays?: () => void;
 	onSwitcherStyle: (style: ViewSwitcherStyle) => void;
 	onSync?: () => void;
+	/**
+	 * "Termine von Kolleg:innen automatisch annehmen …" (FE#2305): opens the
+	 * dialog with the colleague multi-select.
+	 */
+	onAutoAccept?: () => void;
 	/** The remembered answer after dragging a grip, if any. */
 	rememberedEdge?: EdgeChoice | null;
 	/** "Gemerkte Auswahl vergessen": ask again next time. */
@@ -892,10 +1030,13 @@ export const SettingsMenuContent = ({
 	workingHoursSummary,
 	switcherStyle,
 	onWorkingHours,
+	consultationHoursSummary,
+	onConsultationHours,
 	onRepeatBlocker,
 	onFreeDays,
 	onSwitcherStyle,
 	onSync,
+	onAutoAccept,
 	rememberedEdge,
 	onForgetEdge,
 	showGrips = true,
@@ -906,10 +1047,12 @@ export const SettingsMenuContent = ({
 	// Prototype v17: what to set up first, then how the views are chosen.
 	const anyAbove =
 		onWorkingHours ||
+		onConsultationHours ||
 		onShowGrips ||
 		onRepeatBlocker ||
 		onFreeDays ||
 		onSync ||
+		onAutoAccept ||
 		forget;
 	return (
 		<>
@@ -923,6 +1066,19 @@ export const SettingsMenuContent = ({
 					}
 					onClick={onWorkingHours}
 					data-cy="calendar-settings-working-hours"
+				/>
+			)}
+			{onConsultationHours && (
+				<ChatMenuDropdownItem
+					role="menuitem"
+					icon={<EventAvailableOutlinedIcon fontSize="small" />}
+					title={t('calendar.consultationHours.title')}
+					description={
+						consultationHoursSummary ??
+						t('calendar.consultationHours.none')
+					}
+					onClick={onConsultationHours}
+					data-cy="calendar-settings-consultation-hours"
 				/>
 			)}
 			{onShowGrips && (
@@ -944,6 +1100,16 @@ export const SettingsMenuContent = ({
 					title={t('calendar.settings.repeatBlocker')}
 					onClick={onRepeatBlocker}
 					data-cy="calendar-settings-repeat-blocker"
+				/>
+			)}
+			{onAutoAccept && (
+				<ChatMenuDropdownItem
+					role="menuitem"
+					icon={<EventAvailableOutlinedIcon fontSize="small" />}
+					title={t('calendar.autoAccept.menu')}
+					description={t('calendar.autoAccept.menuHint')}
+					onClick={onAutoAccept}
+					data-cy="calendar-settings-auto-accept"
 				/>
 			)}
 			{onFreeDays && (

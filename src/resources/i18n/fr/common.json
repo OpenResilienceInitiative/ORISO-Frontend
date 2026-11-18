@@ -363,7 +363,10 @@
 			"pickDay": "Veuillez d’abord choisir un jour dans le calendrier.",
 			"subline": "Choisissez un jour, puis une heure.",
 			"times": "Horaires libres",
-			"weekdays": "D,L,M,M,J,V,S"
+			"weekdays": "D,L,M,M,J,V,S",
+			"legendInstant": "Réservé immédiatement",
+			"legendRequest": "Demande – votre conseiller ou conseillère confirme le rendez-vous",
+			"requestTime": "Demande"
 		},
 		"availability": {
 			"description": "Indiquez ici votre disponibilité générale afin que les personnes en quête de conseils puissent réserver des rendez-vous chez vous.",
@@ -761,7 +764,7 @@
 	},
 	"enquiry": {
 		"teamDiscussion": {
-			"open": "Ouvrir la discussion d’équipe"
+			"open": "Ouvrir le chat d’équipe"
 		},
 		"acceptButton": {
 			"anonymous": "Démarrer le chat",
@@ -2343,10 +2346,10 @@
 				"open": "Ouvrir la discussion"
 			},
 			"mention": {
-				"title": "Mention dans la discussion d’équipe",
+				"title": "Mention dans le chat d’équipe",
 				"from": "De {{name}}",
 				"several": "{{count}} nouvelles mentions",
-				"open": "Ouvrir la discussion d’équipe"
+				"open": "Ouvrir le chat d’équipe"
 			},
 			"handover": {
 				"title": "Nouveau transfert de dossier",
@@ -2612,8 +2615,8 @@
 				"text": "Un·e client·e a rejoint la salle d'attente."
 			},
 			"callInvited": {
-				"title": "Invitation à un appel de groupe interne",
-				"text": "Vous avez été invité·e à un appel de groupe interne."
+				"title": "Invitation à un appel",
+				"text": "Vous avez été invité·e à un appel."
 			},
 			"callKnockRequested": {
 				"title": "Une personne frappe",
@@ -2644,8 +2647,8 @@
 				"text": "Un aperçu de vos prochains rendez-vous est disponible."
 			},
 			"teamDiscussionNew": {
-				"title": "Réunion d'équipe",
-				"text": "{{senderDisplayName}} a écrit dans la réunion d'équipe"
+				"title": "Chat d'équipe",
+				"text": "{{senderDisplayName}} a écrit dans le chat d'équipe"
 			},
 			"firstResponseReceived": {
 				"title": "Vos premiers pas",
@@ -2733,7 +2736,7 @@
 				"archivedOpenToReply": "Cette conversation est archivée. Ouvrez la conversation pour répondre.",
 				"notJoined": "Lecture seule jusqu’à la confirmation de votre adhésion et le chargement du salon.",
 				"supervisorNoComposer": "En tant que superviseur·e, vous pouvez réagir ici, mais pas écrire.",
-				"teamClosed": "La discussion d’équipe est close.",
+				"teamClosed": "Le chat d’équipe est fermé.",
 				"curtained": "Ce dossier ne vous est pas visible pour le moment.",
 				"hiddenNotYours": "Cette conversation ne fait pas partie de vos dossiers ; l’activité ne l’affiche donc pas ici.",
 				"hiddenNotJoined": "Vous n’avez pas rejoint cette conversation ; l’activité ne l’affiche donc pas ici.",
@@ -3170,7 +3173,7 @@
 				},
 				"kind": {
 					"new": "Nouvelle demande",
-					"teamDiscussion": "Discussion d'équipe",
+					"teamDiscussion": "Chat d'équipe",
 					"standard": "Notification standard",
 					"liveChat": "Message du chat en direct",
 					"mention": "Mention @",
@@ -3524,7 +3527,7 @@
 		"names": {
 			"agency": "Service d’exercice",
 			"topic": "Exercice",
-			"teamRoom": "Réunion d’équipe (exercice)",
+			"teamRoom": "Chat d’équipe (exercice)",
 			"supervisionRoom": "Supervision (exercice)"
 		}
 	},
@@ -4827,7 +4830,12 @@
 				"notice": {
 					"created": "Rendez-vous fixé : {{date}}",
 					"moved": "Rendez-vous déplacé au : {{date}}",
-					"cancelled": "Rendez-vous annulé : {{date}}"
+					"cancelled": "Rendez-vous annulé : {{date}}",
+					"requested": "Rendez-vous demandé : {{date}} – en attente de confirmation",
+					"confirmed": "Rendez-vous confirmé : {{date}}",
+					"declined": "Demande de rendez-vous refusée : {{date}}",
+					"withdrawn": "Demande de rendez-vous retirée : {{date}}",
+					"expired": "Demande de rendez-vous expirée : {{date}} – sans réponse avant le début"
 				},
 				"noticeFailed": {
 					"title": "Avis non envoyé",
@@ -4836,6 +4844,12 @@
 				"cancelFailed": {
 					"title": "Rendez-vous non annulé",
 					"text": "Le rendez-vous n’a pas pu être annulé. Veuillez réessayer."
+				},
+				"request": {
+					"marker": "Demandé",
+					"failedTitle": "Demande sans réponse",
+					"taken": "Ce créneau n’est plus libre. Refusez la demande ou proposez un autre horaire dans le chat.",
+					"failed": "Cela n’a pas fonctionné. Veuillez réessayer."
 				}
 			}
 		},
@@ -5356,6 +5370,12 @@
 		"timeline": {
 			"join": "Rejoindre l’appel",
 			"joinFailed": "Impossible de rejoindre l’appel pour le moment. Terminez tout autre appel actif et réessayez.",
+			"counsellorCallPending": "L’appel n’a pas encore commencé",
+			"counsellorCallPendingText": "Seul·e votre conseiller·ère peut lancer l’appel. Vous pourrez le rejoindre dès qu’il ou elle vous appellera. Veuillez attendre l’appel.",
+			"leaveRunningCallTitle": "Mettre fin à l’appel en cours et rejoindre ?",
+			"leaveRunningCallText": "Votre conseiller·ère vous appelle. Vous êtes encore dans un autre appel ; il prendra fin si vous rejoignez.",
+			"leaveRunningCallStay": "Rester dans l’appel",
+			"leaveRunningCallJoin": "Terminer et rejoindre",
 			"endedElsewhere": "Cet appel est déjà terminé.",
 			"video": {
 				"running": "Appel vidéo en cours",
@@ -5375,6 +5395,43 @@
 			"rejectCall": "Refuser un appel vidéo",
 			"startCall": "Démarrer un appel audio",
 			"startVideoCall": "Démarrer un appel vidéo"
+		},
+		"askerInfo": {
+			"title": "C’est votre conseiller ou conseillère qui lance les appels",
+			"description": "Vous ne pouvez pas lancer d’appel ici. Votre conseiller ou conseillère vous appellera dans cette conversation au rendez-vous convenu.",
+			"next": "Votre prochain rendez-vous",
+			"medium": {
+				"video": "Appel vidéo",
+				"phone": "Appel téléphonique",
+				"onsite": "Sur place",
+				"chat": "Discussion"
+			},
+			"none": "Aucun rendez-vous n’a encore été fixé pour cette conversation.",
+			"requestHint": "Écrivez dans le chat à votre conseiller ou conseillère quand cela vous convient.",
+			"requestHintBooking": "Choisissez un créneau libre de votre conseiller ou conseillère et réservez directement le rendez-vous.",
+			"request": "Demander un rendez-vous",
+			"loading": "Chargement du rendez-vous …",
+			"error": "Le rendez-vous n’a pas pu être chargé. Veuillez réessayer plus tard.",
+			"booking": {
+				"title": "Réserver un rendez-vous",
+				"description": {
+					"video": "Choisissez un créneau libre de votre conseiller ou conseillère pour un appel vidéo. Les créneaux « Réservé immédiatement » sont fixés tout de suite ; les demandes sont confirmées par votre conseiller ou conseillère.",
+					"phone": "Choisissez un créneau libre de votre conseiller ou conseillère pour un appel téléphonique. Les créneaux « Réservé immédiatement » sont fixés tout de suite ; les demandes sont confirmées par votre conseiller ou conseillère."
+				},
+				"loading": "Chargement des créneaux libres …",
+				"error": "Les créneaux libres n'ont pas pu être chargés. Veuillez réessayer plus tard.",
+				"none": "Votre conseiller ou conseillère n'a pas de créneau libre dans les deux prochaines semaines.",
+				"writeInChat": "Écrire dans le chat",
+				"back": "Retour",
+				"confirm": "Réserver le rendez-vous",
+				"taken": "Ce créneau vient d'être pris. Veuillez en choisir un autre.",
+				"failed": "Le rendez-vous n'a pas pu être réservé. Veuillez réessayer.",
+				"booked": "Votre rendez-vous est réservé. Votre conseiller ou conseillère est informé(e) dans le chat.",
+				"limit": "Un rendez-vous est déjà réservé pour cette conversation.",
+				"confirmRequest": "Demander le rendez-vous",
+				"requested": "Votre demande a été envoyée. Elle attend la confirmation de votre conseiller ou conseillère."
+			},
+			"nextRequested": "Votre rendez-vous demandé"
 		},
 		"incomingCall": {
 			"description": "appelle...",
@@ -5734,6 +5791,11 @@
 			"status": {
 				"on": "Supervision activée",
 				"off": "Supervision désactivée"
+			},
+			"plusMenu": {
+				"menuLabel": "Ajouter ou transmettre",
+				"supervisionHint": "Une ou un collègue suit l’échange. Le dossier reste chez vous.",
+				"handoverHint": "Le dossier passe entièrement à une ou un collègue. Vous le transmettez."
 			}
 		}
 	},
@@ -5883,7 +5945,7 @@
 		}
 	},
 	"teamDiscussion": {
-		"title": "Réunion d'équipe",
+		"title": "Chat d'équipe",
 		"startHint": "Démarrer la réunion",
 		"postCount": "{{count}} contributions",
 		"postCount_one": "1 contribution",
@@ -5894,7 +5956,7 @@
 		"placeholder": "Message à l'équipe …",
 		"send": "Envoyer",
 		"error": {
-			"open": "La réunion d'équipe n'a pas pu être ouverte.",
+			"open": "Le chat d'équipe n'a pas pu être ouvert.",
 			"send": "Le message n'a pas pu être envoyé."
 		}
 	},
@@ -6254,12 +6316,12 @@
 					"intro": "Une demande d’exercice vous attend dans la liste. Cliquez dessus pour l’ouvrir."
 				},
 				"openTeam": {
-					"title": "Ouvrir la discussion d’équipe",
-					"intro": "La discussion d’équipe est activée chez vous : elle permet de vous concerter avec votre équipe avant d’accepter. Cliquez sur « Ouvrir la discussion d’équipe »."
+					"title": "Ouvrir le chat d’équipe",
+					"intro": "Le chat d’équipe est activé chez vous : il permet de vous concerter avec votre équipe avant d’accepter. Cliquez sur « Ouvrir le chat d’équipe »."
 				},
 				"teamReply": {
 					"title": "Répondre à l’équipe",
-					"intro": "Lisez le message de l’équipe et écrivez une réponse. Quand vous acceptez la demande, la discussion d’équipe se ferme."
+					"intro": "Lisez le message de l’équipe et écrivez une réponse. Quand vous acceptez la demande, le chat d’équipe se ferme."
 				},
 				"accept": {
 					"title": "Accepter la demande",
@@ -7168,14 +7230,22 @@
 				"incomplete": "Veuillez choisir une date et une heure.",
 				"past": "L’entrée doit se situer dans le futur.",
 				"order": "La fin doit être postérieure au début.",
-				"conversation": "Veuillez choisir la consultation à laquelle le rendez-vous se rattache."
+				"conversation": "Veuillez choisir la consultation à laquelle le rendez-vous se rattache.",
+				"colleague": "Veuillez choisir un ou une collègue."
 			},
 			"entryKind": "Type d’entrée",
 			"tabs": {
 				"appointment": "Rendez-vous",
 				"blocker": "Plage bloquée",
 				"absence": "Absence prévue"
-			}
+			},
+			"withWhom": "Rendez-vous avec",
+			"withConversation": "Personne conseillée",
+			"withColleague": "Collègue",
+			"colleague": "Collègue",
+			"colleagueHint": "Le rendez-vous est placé dans votre chat interne commun. S'il n'existe pas encore, il est créé.",
+			"colleagueDescription": "Choisissez le jour, l'heure, le type et le ou la collègue.",
+			"onsiteOnly": "Aucun chat interne n'est autorisé avec ce ou cette collègue. Seul un rendez-vous sur place est possible."
 		},
 		"details": {
 			"start": {
@@ -7632,6 +7702,38 @@
 			"title": "Liens sans rendez-vous",
 			"hint": "Liens d’invitation à partager : copiez-les ou affichez un code QR."
 		},
+		"consultationHours": {
+			"title": "Heures de consultation",
+			"description": "Pendant ces heures, les personnes en recherche de conseil peuvent réserver elles-mêmes un rendez-vous avec vous. Elles sont indépendantes de vos heures de travail.",
+			"save": "Enregistrer les heures de consultation",
+			"saved": "Heures de consultation enregistrées",
+			"empty": "Sans heures de consultation, personne ne peut réserver de rendez-vous.",
+			"none": "Aucune heure de consultation définie",
+			"autoAccept": "Confirmer les réservations automatiquement",
+			"autoAcceptOn": "Après le délai de prévenance, un rendez-vous est réservé immédiatement ; les réservations à court terme sont des demandes.",
+			"autoAcceptOff": "Chaque réservation est une demande que vous confirmez.",
+			"noticeDays": "Délai de préavis",
+			"noticeDaysHint": "Dans ces jours précédant le rendez-vous, une réservation devient une demande.",
+			"noticeDaysOption": "{{count}} jours",
+			"noticeDaysOption_one": "{{count}} jour",
+			"slotMinutes": "Durée d’un rendez-vous",
+			"minutes": "{{count}} minutes",
+			"invalid": "La fin doit être après le début.",
+			"loadFailed": "Chargement impossible. Réessayer",
+			"overlaps": "Les horaires chevauchent une autre plage de consultation ce jour-là."
+		},
+		"appointmentRequest": {
+			"status": "Demandé · attend votre réponse",
+			"from": "Demande de {{name}}",
+			"menu": "Rendez-vous demandé",
+			"hint": "Jusqu'à votre réponse, le créneau est réservé. Sans réponse avant le début, la demande expire.",
+			"confirm": "Confirmer",
+			"confirmHint": "Le rendez-vous est fixé",
+			"decline": "Refuser",
+			"declineHint": "Le créneau redevient libre",
+			"confirmed": "Rendez-vous confirmé : {{date}}.",
+			"declined": "Demande de rendez-vous refusée : {{date}}."
+		},
 		"absence": {
 			"description": "Choisissez les jours de votre absence. Pendant cette période, les personnes qui demandent conseil voient votre message d'absence.",
 			"from": "Du",
@@ -7643,6 +7745,30 @@
 			"conflicts": "{{count}} rendez-vous tombent pendant cette période. Ils sont maintenus – annulez-les ou déplacez-les vous-même si nécessaire.",
 			"conflicts_one": "{{count}} rendez-vous tombe pendant cette période. Il est maintenu – annulez-le ou déplacez-le vous-même si nécessaire.",
 			"saved": "Absence enregistrée. Elle figure aussi dans votre profil."
+		},
+		"meeting": {
+			"accept": "Accepter",
+			"decline": "Refuser",
+			"accepted": "Rendez-vous accepté.",
+			"declined": "Rendez-vous refusé.",
+			"cancelled": "Rendez-vous annulé.",
+			"cancelAsk": "{{name}}, {{time}}. Le rendez-vous disparaît des deux calendriers.",
+			"cancelSub": "Disparaît aussi chez {{name}}",
+			"chatSub": "Chat interne avec {{name}}",
+			"pendingInvited": "{{name}} vous invite. Veuillez accepter ou refuser.",
+			"pendingSent": "Demandé. En attente de {{name}}.",
+			"confirmed": "Confirmé avec {{name}}."
+		},
+		"autoAccept": {
+			"menu": "Accepter les rendez-vous automatiquement …",
+			"menuHint": "De quels collègues",
+			"title": "Accepter les rendez-vous automatiquement",
+			"description": "Les rendez-vous de ces collègues sont fixés immédiatement dans votre calendrier.",
+			"colleagues": "Collègues",
+			"search": "Rechercher un nom",
+			"hint": "Les rendez-vous de toutes les autres personnes attendent votre accord.",
+			"save": "Enregistrer",
+			"saved": "Liste enregistrée."
 		}
 	},
 	"guestAccountMode": {

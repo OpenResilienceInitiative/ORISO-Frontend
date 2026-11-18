@@ -103,7 +103,8 @@
 		"appointment": {
 			"noTimes": "An diesem Tag ist keine Zeit frei. Bitte wähle einen anderen Tag.",
 			"pickDay": "Bitte wähle zuerst einen Tag im Kalender.",
-			"subline": "Wähle einen Tag und danach eine Uhrzeit."
+			"subline": "Wähle einen Tag und danach eine Uhrzeit.",
+			"legendRequest": "Anfrage – deine Beratungsperson bestätigt den Termin"
 		},
 		"availability": {
 			"description": "Gib hier Deine allgemeine Verfügbarkeit an, damit Ratsuchende Termine bei Dir buchen können.",
@@ -739,8 +740,8 @@
 				"text": "Eine Klient:in ist dem Warteraum beigetreten."
 			},
 			"callInvited": {
-				"title": "Einladung zu internem Gruppenanruf",
-				"text": "Du wurdest zu einem internen Gruppenanruf eingeladen."
+				"title": "Einladung zum Anruf",
+				"text": "Du wurdest zu einem Anruf eingeladen."
 			},
 			"appointmentRequested": {
 				"title": "Termin für einen Anruf angefragt",
@@ -759,8 +760,8 @@
 				"text": "Eine Übersicht deiner anstehenden Termine liegt bereit."
 			},
 			"teamDiscussionNew": {
-				"title": "Team-Besprechung",
-				"text": "{{senderDisplayName}} hat in der Team-Besprechung geschrieben"
+				"title": "Team-Chat",
+				"text": "{{senderDisplayName}} hat im Team-Chat geschrieben"
 			},
 			"firstResponseReceived": {
 				"title": "Deine ersten Schritte",
@@ -1693,6 +1694,14 @@
 		},
 		"supervision": {
 			"badge": "Supervision – Du liest in diesem Chat mit"
+		},
+		"timeline": {
+			"appointment": {
+				"request": {
+					"taken": "Diese Zeit ist inzwischen belegt. Lehne die Anfrage ab oder schlage im Chat eine andere Zeit vor.",
+					"failed": "Das hat nicht geklappt. Bitte versuche es noch einmal."
+				}
+			}
 		}
 	},
 	"statusOverlay": {
@@ -1945,6 +1954,31 @@
 				"action": "Bitte schließe diesen Tab, um zu Beratung & Hilfe zurückzukehren.",
 				"reason": "Leider bist Du nicht berechtigt diese Seite einzusehen."
 			}
+		},
+		"askerInfo": {
+			"title": "Anrufe startet deine Beratungsperson",
+			"description": "Du kannst hier keinen Anruf starten. Deine Beratungsperson ruft dich zum vereinbarten Termin hier im Gespräch an.",
+			"next": "Dein nächster Termin",
+			"requestHint": "Schreib deiner Beratungsperson im Chat, wann es dir passt.",
+			"requestHintBooking": "Wähle eine freie Zeit deiner Beratungsperson und buch den Termin direkt.",
+			"error": "Der Termin konnte gerade nicht geladen werden. Bitte versuch es später noch einmal.",
+			"booking": {
+				"description": {
+					"video": "Wähle eine freie Zeit deiner Beratungsperson für einen Videoanruf. Mit „Sofort gebucht“ markierte Zeiten stehen gleich fest, Anfragen bestätigt deine Beratungsperson.",
+					"phone": "Wähle eine freie Zeit deiner Beratungsperson für einen Telefonanruf. Mit „Sofort gebucht“ markierte Zeiten stehen gleich fest, Anfragen bestätigt deine Beratungsperson."
+				},
+				"error": "Die freien Zeiten konnten gerade nicht geladen werden. Bitte versuch es später noch einmal.",
+				"none": "Deine Beratungsperson hat in den nächsten zwei Wochen keine freie Zeit.",
+				"taken": "Diese Zeit ist gerade vergeben worden. Bitte wähle eine andere.",
+				"failed": "Der Termin konnte nicht gebucht werden. Bitte versuch es noch einmal.",
+				"booked": "Dein Termin ist gebucht. Deine Beratungsperson wird im Chat benachrichtigt.",
+				"requested": "Deine Anfrage ist gesendet. Sie wartet auf die Bestätigung deiner Beratungsperson."
+			},
+			"nextRequested": "Dein angefragter Termin"
+		},
+		"timeline": {
+			"counsellorCallPendingText": "Nur deine Beraterin oder dein Berater kann den Anruf starten. Du kannst beitreten, sobald sie oder er dich anruft. Bitte warte auf den Anruf.",
+			"leaveRunningCallText": "Deine Beraterin oder dein Berater ruft dich an. Du bist noch in einem anderen Anruf; er wird beendet, wenn du beitrittst."
 		}
 	},
 	"voice": {
@@ -2185,6 +2219,10 @@
 				"disabledAsker": "Supervision wird vom Beratungsteam verwaltet",
 				"disabledMobile": "Supervisor hinzufügen – am Desktop verfügbar",
 				"disabledUnavailable": "Supervisor hinzufügen – hier nicht verfügbar"
+			},
+			"plusMenu": {
+				"supervisionHint": "Eine Kollegin oder ein Kollege schaut mit. Der Fall bleibt bei dir.",
+				"handoverHint": "Der Fall geht ganz an eine Kollegin oder einen Kollegen. Du gibst ihn ab."
 			}
 		}
 	},
@@ -2315,7 +2353,7 @@
 		}
 	},
 	"teamDiscussion": {
-		"title": "Team-Besprechung",
+		"title": "Team-Chat",
 		"startHint": "Besprechung starten",
 		"postCount": "{{count}} Beiträge",
 		"postCount_one": "1 Beitrag",
@@ -2326,7 +2364,7 @@
 		"placeholder": "Nachricht an das Team …",
 		"send": "Senden",
 		"error": {
-			"open": "Die Team-Besprechung konnte nicht geöffnet werden.",
+			"open": "Der Team-Chat konnte nicht geöffnet werden.",
 			"send": "Die Nachricht konnte nicht gesendet werden."
 		}
 	},
@@ -2665,10 +2703,10 @@
 					"intro": "In der Liste wartet eine Übungsanfrage. Klicke darauf, um sie zu öffnen."
 				},
 				"openTeam": {
-					"intro": "Bei dir ist die Teambesprechung aktiviert: Damit stimmst du dich mit deinem Team ab, bevor du annimmst. Klicke auf „Teambesprechung öffnen“."
+					"intro": "Bei dir ist der Team-Chat aktiviert: Damit stimmst du dich mit deinem Team ab, bevor du annimmst. Klicke auf „Team-Chat öffnen“."
 				},
 				"teamReply": {
-					"intro": "Lies die Nachricht aus dem Team und schreibe eine Antwort. Wenn du die Anfrage annimmst, wird die Teambesprechung geschlossen."
+					"intro": "Lies die Nachricht aus dem Team und schreibe eine Antwort. Wenn du die Anfrage annimmst, wird der Team-Chat geschlossen."
 				},
 				"accept": {
 					"intro": "Klicke auf „Anfrage annehmen“: Die Anfrage wandert in „Meine Beratungen“ und ist für dein Team nicht mehr in der Liste."
@@ -3055,6 +3093,14 @@
 		},
 		"entryMenu": {
 			"withYou": "Du und {{name}}"
+		},
+		"consultationHours": {
+			"description": "In diesen Zeiten können Ratsuchende selbst einen Termin bei dir buchen. Sie gelten unabhängig von deiner Arbeitszeit.",
+			"autoAcceptOff": "Jede Buchung ist eine Anfrage, die du bestätigst."
+		},
+		"appointmentRequest": {
+			"status": "Angefragt · wartet auf dich",
+			"hint": "Bis du antwortest, ist die Zeit vorgemerkt. Ohne Antwort bis zum Beginn verfällt die Anfrage."
 		},
 		"absence": {
 			"description": "Wähle die Tage, an denen du abwesend bist. Ratsuchende sehen in dieser Zeit deine Abwesenheitsnachricht.",

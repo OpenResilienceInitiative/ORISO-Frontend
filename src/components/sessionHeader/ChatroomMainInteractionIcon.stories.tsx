@@ -26,6 +26,22 @@ export const InteractiveDesktopConsultant: Story = {
 	}
 };
 
+/**
+ * The conversation's agency has not answered yet (first ~100–200 ms after a
+ * conversation switch). The "+" keeps the active look — it used to flash grey
+ * ("hier nicht verfügbar") and back on every switch — and ignores clicks.
+ */
+export const PendingDesktopConsultant: Story = {
+	name: 'Pending — agency answer still loading (no grey flash)',
+	args: {
+		type: 'nearby',
+		showAddIcon: true,
+		addPending: true,
+		addLabel: 'Supervisor verwalten',
+		onAddClick: () => {}
+	}
+};
+
 export const DisabledAsker: Story = {
 	name: 'Disabled — asker (grey out, never hide)',
 	args: {

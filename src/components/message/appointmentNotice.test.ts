@@ -135,9 +135,14 @@ describe('notices sent as plain sentences', () => {
 	it('knows every sentence the app shipped', () => {
 		const shipped = { de, en, fr, ru, ti, tr } as Record<string, any>;
 		for (const [lang, bundle] of Object.entries(shipped)) {
-			expect(LEGACY_NOTICE_SENTENCES[lang]).toEqual(
-				bundle.sessionList.timeline.appointment.notice
-			);
+			// The card's kinds; a request's notices (FE#2287) stay sentences.
+			const { created, moved, cancelled } =
+				bundle.sessionList.timeline.appointment.notice;
+			expect(LEGACY_NOTICE_SENTENCES[lang]).toEqual({
+				created,
+				moved,
+				cancelled
+			});
 		}
 	});
 });
