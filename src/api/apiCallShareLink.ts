@@ -6,15 +6,36 @@ import {
 	FETCH_SUCCESS
 } from './fetchData';
 import type { CallShareSettings } from '../components/call/share/callShareSettings';
+import {
+	GUEST_ACCOUNT_MODES,
+	GuestAccountMode,
+	isGuestAccountMode,
+	offersTemporaryAccount,
+	readGuestAccountMode
+} from '../components/guestAccountMode/guestAccountMode';
 
 /** The share link of one running call (UserService#1487). */
 export interface CallShareLink {
 	id: number;
 	url: string;
-	/** Effective on the server: a forbidden temporary account reads `false`. */
+	/** Effective on the server: a forbidden mode reads as its fallback. */
 	settings: CallShareSettings;
+	/** Some mode the counsellor may choose creates a temporary account. */
 	temporaryAccountAllowed: boolean;
+	/** UserService#1662: the select's options. */
+	allowedGuestAccountModes: GuestAccountMode[];
 }
+
+/* A server from before #1662 knows only whether temporary accounts are allowed. */
+const allowedModes = (
+	data: Record<string, unknown>,
+	temporaryAccountAllowed: boolean
+): GuestAccountMode[] =>
+	Array.isArray(data.allowedGuestAccountModes)
+		? data.allowedGuestAccountModes.filter(isGuestAccountMode)
+		: temporaryAccountAllowed
+			? GUEST_ACCOUNT_MODES
+			: ['PERMANENT'];
 
 const parse = (value: unknown): CallShareLink | null => {
 	if (!value || typeof value !== 'object') return null;
@@ -34,9 +55,16 @@ const parse = (value: unknown): CallShareLink | null => {
 		url: data.url,
 		settings: {
 			knock: data.knock,
-			temporaryAccount: data.temporaryAccount
+			guestAccountMode: readGuestAccountMode(
+				data.guestAccountMode,
+				data.temporaryAccount
+			)
 		},
-		temporaryAccountAllowed: data.temporaryAccountAllowed
+		temporaryAccountAllowed: data.temporaryAccountAllowed,
+		allowedGuestAccountModes: allowedModes(
+			data,
+			data.temporaryAccountAllowed
+		)
 	};
 };
 
@@ -79,7 +107,13 @@ export async function apiUpdateCallShareLink(
 		await fetchData({
 			url: `${endpoints.matrixCallShareLinks}/${id}`,
 			method: FETCH_METHODS.PATCH,
-			bodyData: JSON.stringify(settings),
+			// The old switch for a server from before #1662; the mode wins.
+			bodyData: JSON.stringify({
+				...settings,
+				temporaryAccount: offersTemporaryAccount(
+					settings.guestAccountMode
+				)
+			}),
 			responseHandling: [
 				FETCH_SUCCESS.CONTENT,
 				FETCH_ERRORS.NO_MATCH,

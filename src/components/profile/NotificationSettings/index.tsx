@@ -46,6 +46,9 @@ export const NotificationSettingsPanel = () => {
 		useNotificationSettings();
 	const { userData } = useContext(UserDataContext);
 	const notificationRole = notificationRoleFor(userData);
+	/* UserService#1662: a temporary account gets no browser pop-ups and no
+	   e-mail until it is kept (the server refuses both). */
+	const temporary = Boolean(userData?.temporaryAccount);
 	const appConfig = useAppConfig();
 	const tenant = useTenant();
 
@@ -122,29 +125,35 @@ export const NotificationSettingsPanel = () => {
 
 			<hr />
 
-			{permission === 'denied' ? (
-				<NotificationDenied />
-			) : (
-				<Switch
-					titleKey="profile.notificationSettings.browser.title"
-					descriptionKey="profile.notificationSettings.browser.description"
-					checked={settings.browserNotifications.enabled}
-					onChange={onBrowserToggle}
-				/>
-			)}
-			<Switch
-				titleKey="profile.notificationSettings.preview.title"
-				descriptionKey="profile.notificationSettings.preview.description"
-				checked={settings.browserNotifications.showMessagePreview}
-				onChange={(checked) =>
-					updateSettings({
-						browserNotifications: {
-							showMessagePreview: checked
+			{!temporary && (
+				<>
+					{permission === 'denied' ? (
+						<NotificationDenied />
+					) : (
+						<Switch
+							titleKey="profile.notificationSettings.browser.title"
+							descriptionKey="profile.notificationSettings.browser.description"
+							checked={settings.browserNotifications.enabled}
+							onChange={onBrowserToggle}
+						/>
+					)}
+					<Switch
+						titleKey="profile.notificationSettings.preview.title"
+						descriptionKey="profile.notificationSettings.preview.description"
+						checked={
+							settings.browserNotifications.showMessagePreview
 						}
-					})
-				}
-			/>
-			<hr />
+						onChange={(checked) =>
+							updateSettings({
+								browserNotifications: {
+									showMessagePreview: checked
+								}
+							})
+						}
+					/>
+					<hr />
+				</>
+			)}
 
 			{/* Harmonised model (2026-07-22): the config tabs live INLINE here
 			    and replace the old flat per-family toggle list. Changes save
@@ -168,11 +177,14 @@ export const NotificationSettingsPanel = () => {
 				onPreview={previewNotificationSound}
 				role={notificationRole}
 				// #1979: no link to an e-mail panel the permissions hide.
-				showEmailLink={hasEmailSettingsPanel(
-					appConfig,
-					tenant?.settings,
-					notificationRole === 'consultant'
-				)}
+				showEmailLink={
+					!temporary &&
+					hasEmailSettingsPanel(
+						appConfig,
+						tenant?.settings,
+						notificationRole === 'consultant'
+					)
+				}
 			/>
 
 			<hr />

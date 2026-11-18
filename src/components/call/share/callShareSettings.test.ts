@@ -8,10 +8,10 @@ import {
 } from './callShareSettings';
 
 describe('defaultCallShareSettings (#1794)', () => {
-	it('starts with knocking and a temporary account switched on', () => {
+	it('starts with knocking on and the guest choosing the account (#1662)', () => {
 		expect(defaultCallShareSettings()).toEqual({
 			knock: true,
-			temporaryAccount: true
+			guestAccountMode: 'GUEST_CHOOSES'
 		});
 	});
 });
@@ -66,18 +66,30 @@ describe('copyLinkToClipboard (review on #1910)', () => {
 	});
 });
 
-describe('effectiveCallShareSettings (review on #1910)', () => {
-	it('drops the temporary account when it is not allowed', () => {
+describe('effectiveCallShareSettings (UserService#1662)', () => {
+	it('falls back like the server when the chosen mode is not allowed', () => {
 		expect(
 			effectiveCallShareSettings(
-				{ knock: false, temporaryAccount: true },
-				false
+				{ knock: false, guestAccountMode: 'TEMPORARY' },
+				['GUEST_CHOOSES', 'PERMANENT']
 			)
-		).toEqual({ knock: false, temporaryAccount: false });
+		).toEqual({ knock: false, guestAccountMode: 'PERMANENT' });
+		expect(
+			effectiveCallShareSettings(
+				{ knock: false, guestAccountMode: 'PERMANENT' },
+				['TEMPORARY', 'GUEST_CHOOSES']
+			)
+		).toEqual({ knock: false, guestAccountMode: 'GUEST_CHOOSES' });
 	});
 
-	it('keeps the settings when it is allowed', () => {
-		const settings = { knock: true, temporaryAccount: true };
-		expect(effectiveCallShareSettings(settings, true)).toBe(settings);
+	it('keeps the settings when the mode is allowed, or nothing is known', () => {
+		const settings = {
+			knock: true,
+			guestAccountMode: 'TEMPORARY' as const
+		};
+		expect(effectiveCallShareSettings(settings, ['TEMPORARY'])).toBe(
+			settings
+		);
+		expect(effectiveCallShareSettings(settings, undefined)).toBe(settings);
 	});
 });

@@ -120,6 +120,14 @@ export interface ElementCallWidgetOptions {
 	 */
 	onInviteLink?: () => Promise<string | null>;
 	/**
+	 * `org.oriso.call.invite_available` (UserService#1662): whether the call
+	 * may still offer its link. `invite` is on the address, which is built
+	 * once; this switches "Link teilen" and "Einladelink senden" off (and on
+	 * again) in the running call without reloading it. Sent once the call is
+	 * ready and on every change, only while `invite` offers a link.
+	 */
+	inviteAvailable?: boolean;
+	/**
 	 * `org.oriso.call.counsellors`: the Matrix ids of the conversation's
 	 * counsellors, from the userservice. The call labels only these
 	 * "Beratung"; a role in a call identity record can be faked. Sent once
@@ -189,7 +197,9 @@ export const ORISO_WIDGET_ACTIONS = {
 	/** fromWidget `{}`, answered `{ url }` or `{ error }` (call design S8). */
 	inviteLink: 'org.oriso.call.invite_link',
 	/** toWidget `{ userIds }`, answered `{}` (call design S1). */
-	counsellors: 'org.oriso.call.counsellors'
+	counsellors: 'org.oriso.call.counsellors',
+	/** toWidget `{ available }`, answered `{}` (UserService#1662). */
+	inviteAvailable: 'org.oriso.call.invite_available'
 } as const;
 
 export interface OrisoKnockState {
@@ -355,6 +365,14 @@ const sendCounsellors = (api: ClientWidgetApi, userIds: string[]) => {
 		});
 };
 
+const sendInviteAvailable = (api: ClientWidgetApi, available: boolean) => {
+	void api.transport
+		.send(ORISO_WIDGET_ACTIONS.inviteAvailable, { available })
+		.catch(() => {
+			/* an older call that keeps its link entries, or it went away */
+		});
+};
+
 const sendKnockState = (api: ClientWidgetApi, state: OrisoKnockState) => {
 	void api.transport
 		.send(ORISO_WIDGET_ACTIONS.knockState, {
@@ -386,6 +404,7 @@ export const useElementCallWidget = (
 		hostContextPending = false,
 		invite = false,
 		onInviteLink,
+		inviteAvailable = true,
 		counsellors = null
 	}: ElementCallWidgetOptions
 ): ElementCallWidget => {
@@ -877,6 +896,13 @@ export const useElementCallWidget = (
 		if (!ready || !api || windowFullscreen === undefined) return;
 		sendWindowState(api, { fullscreen: windowFullscreen });
 	}, [ready, windowFullscreen]);
+
+	// Not part of the address: the call switches its link entries live.
+	useEffect(() => {
+		const api = apiRef.current;
+		if (!ready || !api || !offersInvite) return;
+		sendInviteAvailable(api, inviteAvailable);
+	}, [ready, offersInvite, inviteAvailable]);
 
 	// By value: the same people in a new array are not a change.
 	const counsellorsKey = counsellors ? JSON.stringify(counsellors) : null;

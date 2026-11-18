@@ -307,3 +307,87 @@ export const BrokenLinkMobile: Story = {
 	parameters: { router: { initialPath: BROKEN_LINK } },
 	play: async ({ canvasElement }) => expectBrokenLinkExplained(canvasElement)
 };
+
+/* UserService#1662: a signed circle invite reads the circle's guest account
+   mode (GET /users/chat/{id}/invite-context) before the entry shows. The
+   stub answers that request only; everything else goes on as before. */
+const SIGNED_LINK = '/login?gcid=15.q2Vx8mK4TzJ1bR7n&aid=88';
+
+const answerCircleMode = (mode: string) => () => {
+	const originalFetch = globalThis.fetch;
+	globalThis.fetch = async (input, init) => {
+		const url =
+			input instanceof Request
+				? input.url
+				: typeof input === 'string'
+					? input
+					: input.toString();
+		if (url.includes('/users/chat/15/invite-context')) {
+			return new Response(JSON.stringify({ guestAccountMode: mode }), {
+				status: 200,
+				headers: { 'Content-Type': 'application/json' }
+			});
+		}
+		return originalFetch(input, init);
+	};
+	return () => {
+		globalThis.fetch = originalFetch;
+	};
+};
+
+const expectCircleEntry = async (
+	canvasElement: HTMLElement,
+	{ join, passwords }: { join: string; passwords: number }
+) => {
+	await expect(await joinButton(canvasElement)).toHaveTextContent(join);
+	/* The circle fixes the account kind: no switch to the other way. */
+	await expect(
+		page(canvasElement).queryByTestId('registration-footer-secondary')
+	).toBeNull();
+	await expect(
+		canvasElement.ownerDocument.querySelectorAll('input[type="password"]')
+			.length
+	).toBe(passwords);
+};
+
+/** TEMPORARY: only "Der Gruppe beitreten" without an account. */
+export const CircleTemporaryDesktop: Story = {
+	name: 'Gesprächskreis TEMPORARY → nur ohne Konto · 1440',
+	globals: desktop1440Globals,
+	parameters: { router: { initialPath: SIGNED_LINK } },
+	beforeEach: answerCircleMode('TEMPORARY'),
+	play: async ({ canvasElement }) =>
+		expectCircleEntry(canvasElement, {
+			join: 'Der Gruppe beitreten',
+			passwords: 0
+		})
+};
+
+/** PERMANENT: only an account with a password. */
+export const CirclePermanentDesktop: Story = {
+	name: 'Gesprächskreis PERMANENT → nur mit Konto · 1440',
+	globals: desktop1440Globals,
+	parameters: { router: { initialPath: SIGNED_LINK } },
+	beforeEach: answerCircleMode('PERMANENT'),
+	play: async ({ canvasElement }) =>
+		expectCircleEntry(canvasElement, {
+			join: 'Registrieren',
+			passwords: 2
+		})
+};
+
+/** GUEST_CHOOSES: both ways, as before (0a with "Konto anlegen"). */
+export const CircleGuestChoosesDesktop: Story = {
+	name: 'Gesprächskreis GUEST_CHOOSES → Gast wählt · 1440',
+	globals: desktop1440Globals,
+	parameters: { router: { initialPath: SIGNED_LINK } },
+	beforeEach: answerCircleMode('GUEST_CHOOSES'),
+	play: async ({ canvasElement }) => {
+		await expect(await joinButton(canvasElement)).toHaveTextContent(
+			'Der Gruppe beitreten'
+		);
+		await expect(
+			page(canvasElement).getByTestId('registration-footer-secondary')
+		).toHaveTextContent('Konto anlegen');
+	}
+};

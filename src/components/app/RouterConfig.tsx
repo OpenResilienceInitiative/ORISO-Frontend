@@ -13,6 +13,8 @@ import { Profile } from '../profile/Profile';
 import { SessionViewEmpty } from '../session/SessionViewEmpty';
 import { CreateConversationView } from '../conversationCreate/CreateConversationView';
 import { GroupChatInfo } from '../groupChat/GroupChatInfo';
+import { DeletedAskerSessionView } from '../deletedAskerSession/DeletedAskerSessionView';
+import { DELETED_ASKER_ROUTE } from '../sessionsList/deletedAskerPath';
 import {
 	ASKER_GROUP_CHAT_ROUTE,
 	CONSULTANT_GROUP_CHAT_ROUTE
@@ -358,6 +360,12 @@ export const RouterConfigConsultant = (settings: AppConfigInterface): any => {
 			{
 				path: CONSULTANT_GROUP_CHAT_ROUTE,
 				component: SessionView,
+				type: SESSION_LIST_TYPES.MY_SESSION
+			},
+			// #1159: the notice of a deleted advice-seeker chat
+			{
+				path: DELETED_ASKER_ROUTE,
+				component: DeletedAskerSessionView,
 				type: SESSION_LIST_TYPES.MY_SESSION
 			},
 			// Sessions addressed by their Matrix group id

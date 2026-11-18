@@ -143,6 +143,41 @@ afterEach(() => {
 });
 
 describe('AskerAboutMeData', () => {
+	describe('a temporary account (UserService#1662)', () => {
+		const renderAs = (temporaryAccount: boolean) =>
+			render(
+				<UserDataContext.Provider
+					value={
+						{
+							userData: {
+								userName: 'eule_mika_4821',
+								twoFactorAuth: { isActive: false, type: null },
+								temporaryAccount
+							},
+							reloadUserData: vi.fn()
+						} as never
+					}
+				>
+					<AskerAboutMeData />
+				</UserDataContext.Provider>
+			);
+
+		it('hides the e-mail address and its invitation to add one', () => {
+			renderAs(true);
+			expect(screen.getByText('profile.data.userName')).toBeTruthy();
+			expect(screen.queryByText('profile.data.email')).toBeNull();
+			expect(screen.queryByText('profile.data.emailInfo')).toBeNull();
+		});
+
+		it('offers the e-mail address again once the account is kept', () => {
+			renderAs(false);
+			expect(screen.getByText('profile.data.email')).toBeTruthy();
+			expect(
+				screen.getByRole('button', { name: 'edit email' })
+			).toBeTruthy();
+		});
+	});
+
 	it('keeps safe deletion but offers no edit or solicitation when collection is forbidden', async () => {
 		policy.featureAskerEmailEnabled = false;
 		render(<AskerAboutMeData />);

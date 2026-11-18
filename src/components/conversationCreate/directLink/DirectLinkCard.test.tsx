@@ -90,7 +90,7 @@ describe('DirectLinkCard', () => {
 		expect(onCreate).toHaveBeenCalledWith({
 			topic: '4',
 			medium: 'VIDEO',
-			temporary: true,
+			guestAccountMode: 'GUEST_CHOOSES',
 			name: 'Termin Frau M.',
 			scheduledAt: new Date('2026-11-20T14:30').toISOString()
 		});
@@ -111,7 +111,38 @@ describe('DirectLinkCard', () => {
 		expect(onCreate).toHaveBeenCalledWith({
 			topic: '4',
 			medium: 'CHAT',
-			temporary: false
+			guestAccountMode: 'PERMANENT'
+		});
+	});
+
+	/* UserService#1662: the guest account select replaces the switch. */
+	it('creates the link with the guest account mode the counsellor picks', () => {
+		const onCreate = vi.fn();
+		render(
+			<DirectLinkCard
+				topics={[{ value: '4', label: 'Sucht' }]}
+				onCreate={onCreate}
+			/>
+		);
+		fireEvent.click(
+			screen.getByRole('button', { name: 'directLink.medium.chat' })
+		);
+		expect(screen.queryByRole('switch')).toBeNull();
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'guestAccountMode.option.PERMANENT'
+			})
+		);
+		fireEvent.click(
+			screen.getByRole('option', {
+				name: 'guestAccountMode.option.TEMPORARY'
+			})
+		);
+		fireEvent.click(create());
+		expect(onCreate).toHaveBeenCalledWith({
+			topic: '4',
+			medium: 'CHAT',
+			guestAccountMode: 'TEMPORARY'
 		});
 	});
 

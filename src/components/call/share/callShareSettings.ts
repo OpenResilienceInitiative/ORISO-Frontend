@@ -1,25 +1,36 @@
 /**
- * #1794: sharing a running call by link. Storybook design only — the link,
- * its settings and their lifetime come from the backend later
- * (UserService AgencyInviteLink, see the issue's developer block).
+ * #1794: sharing a running call by link (UserService#1487): knocking and
+ * the guest account mode (UserService#1662).
  */
+
+import {
+	defaultGuestAccountMode,
+	GuestAccountMode
+} from '../../guestAccountMode/guestAccountMode';
 
 export interface CallShareSettings {
 	/** Guests knock and wait until the counsellor lets them in. */
 	knock: boolean;
-	/** Guests get a temporary account, deleted after the call. */
-	temporaryAccount: boolean;
+	/** UserService#1662: which account a new guest gets. */
+	guestAccountMode: GuestAccountMode;
 }
 
 /**
- * Frank, 17 + 27 Oct: knocking is on by default, and so is the temporary
- * account for audio and video calls (only the chat direct link of #1795
- * starts with it off).
+ * Frank, 17 + 27 Oct: knocking is on by default. The account follows the
+ * server's default for calls (UserService#1662): the guest chooses, which
+ * keeps the temporary account of the old default on offer.
  */
 export const defaultCallShareSettings = (): CallShareSettings => ({
 	knock: true,
-	temporaryAccount: true
+	guestAccountMode: defaultGuestAccountMode('VIDEO')
 });
+
+/** The server's fallback order when a mode is not allowed (UserService#1662). */
+const FALLBACK_ORDER: GuestAccountMode[] = [
+	'PERMANENT',
+	'GUEST_CHOOSES',
+	'TEMPORARY'
+];
 
 export type WebShare = (data: ShareData) => Promise<void>;
 
@@ -40,16 +51,20 @@ export const detectWebShare = (
 };
 
 /**
- * Not allowed means not offered: the link carries no temporary account, also
- * when the policy changes while the share surface is open.
+ * Not allowed means not offered: a mode the platform or the Träger does not
+ * allow falls back like the server does, also when the policy changes while
+ * the share surface is open. Without a list nothing is changed.
  */
 export const effectiveCallShareSettings = (
 	settings: CallShareSettings,
-	temporaryAccountAllowed: boolean
-): CallShareSettings =>
-	temporaryAccountAllowed
-		? settings
-		: { ...settings, temporaryAccount: false };
+	allowed: readonly GuestAccountMode[] | null | undefined
+): CallShareSettings => {
+	if (!allowed || allowed.includes(settings.guestAccountMode)) {
+		return settings;
+	}
+	const fallback = FALLBACK_ORDER.find((mode) => allowed.includes(mode));
+	return fallback ? { ...settings, guestAccountMode: fallback } : settings;
+};
 
 /**
  * Plain-text copy that rejects when nothing reached the clipboard, so the

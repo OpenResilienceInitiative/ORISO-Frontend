@@ -2994,7 +2994,13 @@
 					"label": "Deaktivieren Sie Ihre Abwesenheit, um eine Nachricht zu hinterlegen oder sie zu bearbeiten."
 				},
 				"label": "Hinterlegen Sie eine Abwesenheitsnachricht",
-				"title": "Meine Abwesenheit"
+				"title": "Meine Abwesenheit",
+				"from": "Abwesend von (optional)",
+				"until": "Abwesend bis (optional)",
+				"dateHint": "Ohne Datum gilt die Abwesenheit bis auf Weiteres, bis Sie sie ausschalten. Nach dem Bis-Datum sind Sie automatisch wieder anwesend.",
+				"planned": "Geplant ab {{start}}",
+				"activeUntil": "Abwesend bis einschließlich {{end}}",
+				"invalidRange": "Das Bis-Datum liegt vor dem Von-Datum."
 			},
 			"liveChat": {
 				"title": "Meine Live-Chat Verfügbarkeit",
@@ -4830,7 +4836,9 @@
 		},
 		"deletedAsker": {
 			"title": "Gelöschte:r Ratsuchende:r",
-			"hint": "Dieser Chat wurde gelöscht. Persönliche Daten und Nachrichten sind nicht mehr verfügbar."
+			"hint": "Dieser Chat wurde gelöscht. Persönliche Daten und Nachrichten sind nicht mehr verfügbar.",
+			"preview": "Chat wurde gelöscht",
+			"previewArchived": "Gelöscht · im Archiv"
 		}
 	},
 	"statusOverlay": {
@@ -6544,11 +6552,6 @@
 				"on": "Gäste warten, bis Sie sie einlassen. Schalten Sie es aus, kommen alle Wartenden sofort herein.",
 				"off": "Gäste kommen ohne Warten direkt in den Anruf."
 			},
-			"temporaryAccount": {
-				"label": "Temporäres Konto",
-				"on": "Gäste bekommen ein Gastkonto, das nach dem Anruf gelöscht wird.",
-				"off": "Gäste melden sich mit einem eigenen Konto an oder legen eines an."
-			},
 			"linkLabel": "Link zum Anruf",
 			"copy": "Kopieren",
 			"copied": "Kopiert",
@@ -6837,7 +6840,6 @@
 			"text": "Wer den Link öffnet, landet ohne Umweg bei Ihnen – im Chat, im Audio- oder im Videoanruf.",
 			"topicLabel": "Thema wählen",
 			"mediumLabel": "Art des Kontakts",
-			"temporary": "Temporäres Konto",
 			"temporaryHint": "Das Konto wird nach dem Gespräch gelöscht.",
 			"create": "Link erstellen",
 			"createFailed": "Der Link konnte nicht erstellt werden. Bitte versuchen Sie es erneut.",
@@ -6895,7 +6897,6 @@
 			"nameRequired": "Bitte geben Sie einen Namen ein.",
 			"topic": "Thema",
 			"mediumFixed": "Art des Kontakts lässt sich nicht ändern",
-			"temporaryHint": "Gilt nur für Personen, die den Link neu öffnen.",
 			"failed": "Die Änderung konnte nicht gespeichert werden. Bitte versuchen Sie es erneut.",
 			"scheduledAt": "Datum und Uhrzeit",
 			"clearScheduledAt": "Entfernen"
@@ -7115,7 +7116,8 @@
 			"group": "Gruppentermin",
 			"blocker": "Sperrzeit",
 			"busy": "Belegt",
-			"colleague": "Belegt"
+			"colleague": "Belegt",
+			"absence": "Abwesend"
 		},
 		"noEvents": "Keine Termine in diesem Zeitraum",
 		"loading": "Termine werden geladen",
@@ -7144,7 +7146,8 @@
 			"entryKind": "Art des Eintrags",
 			"tabs": {
 				"appointment": "Termin",
-				"blocker": "Sperrzeit"
+				"blocker": "Sperrzeit",
+				"absence": "Abwesenheit"
 			}
 		},
 		"details": {
@@ -7586,9 +7589,75 @@
 			"pillKind": "Als Knopf: {{kind}}",
 			"pillMenu": "Als Knopf wählen: {{kind}}"
 		},
+		"bandCard": {
+			"label": "Wer ist belegt",
+			"back": "Zurück zur Liste",
+			"busy": "Belegt",
+			"free": "Frei",
+			"nobodyFree": "Niemand frei.",
+			"show": "Kalender ansehen",
+			"showLabel": "Kalender von {{name}} ansehen",
+			"ownerOnly": "Nur {{name}} kann das ändern.",
+			"all": "Alle nebeneinander",
+			"create": "Zu dieser Zeit eintragen"
+		},
 		"links": {
 			"title": "Links ohne Termin",
 			"hint": "Einladungslinks, die Sie teilen können: kopieren oder als QR-Code zeigen."
+		},
+		"absence": {
+			"description": "Wählen Sie die Tage, an denen Sie abwesend sind. Ratsuchende sehen in dieser Zeit Ihre Abwesenheitsnachricht.",
+			"from": "Von",
+			"until": "Bis",
+			"message": "Abwesenheitsnachricht",
+			"messageHint": "Ratsuchende sehen diese Nachricht, können Ihnen aber weiterhin schreiben.",
+			"effect": "Nach dem letzten Tag sind Sie automatisch wieder anwesend. Dieselbe Abwesenheit steht in Ihrem Profil.",
+			"save": "Abwesenheit eintragen",
+			"conflicts": "In diesem Zeitraum liegen {{count}} Termine. Sie bleiben bestehen – sagen Sie sie bei Bedarf selbst ab oder verschieben Sie sie.",
+			"conflicts_one": "In diesem Zeitraum liegt {{count}} Termin. Er bleibt bestehen – sagen Sie ihn bei Bedarf selbst ab oder verschieben Sie ihn.",
+			"saved": "Abwesenheit eingetragen. Sie steht auch in Ihrem Profil."
+		}
+	},
+	"guestAccountMode": {
+		"label": "Gastkonto",
+		"menuLabel": "Gastkonto wählen",
+		"option": {
+			"TEMPORARY": "Nach der Sitzung löschen",
+			"GUEST_CHOOSES": "Gast wählt",
+			"PERMANENT": "Dauerhaft"
+		},
+		"hint": {
+			"TEMPORARY": "Neue Gäste bekommen ein Konto, das nach dem Gespräch gelöscht wird.",
+			"GUEST_CHOOSES": "Neue Gäste wählen beim Beitreten: ohne Konto oder mit eigenem Konto.",
+			"PERMANENT": "Neue Gäste legen ein eigenes Konto an."
+		},
+		"newGuestsOnly": "Gilt nur für Personen, die den Link neu öffnen.",
+		"entry": {
+			"withoutAccount": "Ohne Konto beitreten",
+			"withAccount": "Konto anlegen",
+			"temporaryNote": "Ihr Zugang wird nach dem Gespräch gelöscht. Sie können ihn später noch behalten.",
+			"accountNote": "Mit einem eigenen Konto können Sie später wiederkommen."
+		},
+		"keep": {
+			"action": "Konto behalten",
+			"actionDescription": "Ihr Konto wird sonst nach dem Gespräch gelöscht.",
+			"title": "Konto behalten",
+			"text": "Ihr Konto wird sonst nach dem Gespräch gelöscht. Legen Sie ein Passwort fest, dann bleibt es erhalten und Sie können sich später wieder anmelden.",
+			"loginName": "Ihr Benutzername: {{name}}",
+			"password": "Passwort",
+			"repeat": "Passwort wiederholen",
+			"mismatch": "Die Passwörter stimmen nicht überein.",
+			"submit": "Konto behalten",
+			"cancel": "Abbrechen",
+			"success": "Ihr Konto bleibt erhalten.",
+			"recoveryPending": "Ihr Konto bleibt erhalten. Um Ihre Nachrichten auf einem anderen Gerät zu lesen, brauchen Sie Ihren Wiederherstellungsschlüssel.",
+			"error": {
+				"badRequest": "Das Passwort erfüllt die Anforderungen nicht.",
+				"forbidden": "Über diese Einladung lässt sich das Konto nicht behalten.",
+				"notFound": "Ihr Konto wurde nicht gefunden. Bitte melden Sie sich neu an.",
+				"conflict": "Ihr Konto wird gerade gelöscht oder ist bereits dauerhaft.",
+				"generic": "Das hat nicht geklappt. Bitte versuchen Sie es erneut."
+			}
 		}
 	},
 	"managePeople": {
@@ -7669,5 +7738,15 @@
 			"inviteDescription": "Ratsuchende treten über diesen Link oder QR-Code bei.",
 			"added": "{{name}} moderiert jetzt diese Gruppe mit."
 		}
+	},
+	"deletedAskerSession": {
+		"notice": {
+			"title": "Dieser Chat wurde gelöscht",
+			"deletedOn": "Gelöscht am {{date}}",
+			"text": "Persönliche Daten und Nachrichten der ratsuchenden Person sind nicht mehr verfügbar."
+		},
+		"archiveHint": "Verschieben Sie den Eintrag ins Archiv, damit er aus Ihrer Liste und den Aktivitäten verschwindet.",
+		"archived": "Dieser Eintrag ist im Archiv.",
+		"archiveFailed": "Archivieren hat nicht geklappt. Bitte versuchen Sie es erneut."
 	}
 }

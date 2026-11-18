@@ -19,6 +19,7 @@ export const useEntryLabel = () => {
 	return useCallback(
 		(entry: CalendarEntry, colleague = false) => {
 			if (entry.type === 'busy') return t('calendar.types.busy');
+			if (entry.type === 'absence') return t('calendar.types.absence');
 			if (entry.type === 'blocker')
 				return colleague || !entry.title
 					? t('calendar.types.blocker')

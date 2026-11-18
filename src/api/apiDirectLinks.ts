@@ -10,6 +10,11 @@ import {
 	DirectLink,
 	DirectLinkMedium
 } from '../components/conversationCreate/directLink/directLink';
+import {
+	GuestAccountMode,
+	offersTemporaryAccount,
+	readGuestAccountMode
+} from '../components/guestAccountMode/guestAccountMode';
 import type { InvitationAccess } from '../components/directInvitation/invitationModel';
 
 /**
@@ -29,6 +34,8 @@ export interface DirectLinkDTO {
 	agencyId?: number | null;
 	medium: string;
 	temporary: boolean;
+	/** UserService#1662; wins over `temporary`. */
+	guestAccountMode?: string | null;
 	active: boolean;
 	admission?: 'DIRECT' | 'KNOCK';
 	createDate?: string;
@@ -93,7 +100,10 @@ export interface CreateDirectLinkBody extends DirectInvitationSettings {
 	medium: DirectLinkMedium;
 	topicId: number;
 	name?: string;
+	/** Mirror of the mode for a server from before #1662. */
 	temporary?: boolean;
+	/** UserService#1662: wins over `temporary`. */
+	guestAccountMode?: GuestAccountMode;
 	/** Only needed when the counsellor works for more than one Beratungsstelle. */
 	agencyId?: number;
 	/** #2142: informational date and time, ISO instant. */
@@ -104,7 +114,10 @@ export interface CreateDirectLinkBody extends DirectInvitationSettings {
 export interface DirectLinkUpdate extends DirectInvitationSettings {
 	name?: string;
 	topicId?: number;
+	/** Mirror of the mode for a server from before #1662. */
 	temporary?: boolean;
+	/** UserService#1662: wins over `temporary`; 403 when not allowed. */
+	guestAccountMode?: GuestAccountMode;
 	active?: boolean;
 	/** #2142: a new date and time; absent keeps the old one. */
 	scheduledAt?: string;
@@ -246,6 +259,10 @@ export const toDirectLink = (dto: DirectLinkDTO): DirectLink | null => {
 		return null;
 	}
 	const topic = dto.topicName ?? '';
+	const guestAccountMode = readGuestAccountMode(
+		dto.guestAccountMode,
+		dto.temporary
+	);
 	return {
 		id: String(dto.id),
 		name: dto.name?.trim() || topic,
@@ -253,7 +270,8 @@ export const toDirectLink = (dto: DirectLinkDTO): DirectLink | null => {
 		topicId: dto.topicId,
 		agencyId: dto.agencyId ?? undefined,
 		medium: dto.medium as DirectLinkMedium,
-		temporary: !!dto.temporary,
+		temporary: offersTemporaryAccount(guestAccountMode),
+		guestAccountMode,
 		active: !!dto.active,
 		url: absoluteUrl(dto.url),
 		...(dto.scheduledAt ? { scheduledAt: dto.scheduledAt } : {}),

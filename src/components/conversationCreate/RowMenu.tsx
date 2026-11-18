@@ -26,6 +26,8 @@ interface RowMenuProps {
 	/** Free-form content instead of an option list (e.g. the calendar). */
 	children?: React.ReactNode;
 	preferredHeight?: number;
+	/** Portal target inside a modal surface; default the body. */
+	container?: Element | null;
 }
 
 const DEFAULT_MENU_HEIGHT = 320;
@@ -62,7 +64,8 @@ export const RowMenu = ({
 	labelledBy,
 	label,
 	children,
-	preferredHeight = DEFAULT_MENU_HEIGHT
+	preferredHeight = DEFAULT_MENU_HEIGHT,
+	container
 }: RowMenuProps) => {
 	const menuRef = useRef<HTMLDivElement | null>(null);
 	const [keyboardUse, setKeyboardUse] = useState(lastInputWasKeyboard);
@@ -135,6 +138,8 @@ export const RowMenu = ({
 		}
 		event.preventDefault();
 		if (result === 'close') {
+			// Escape closes only the menu, not a dialog or popover around it.
+			event.stopPropagation();
 			onClose();
 			(
 				anchorRef.current?.querySelector('button') as HTMLButtonElement
@@ -145,7 +150,7 @@ export const RowMenu = ({
 	};
 
 	return (
-		<MenuPortal>
+		<MenuPortal container={container}>
 			<div
 				ref={menuRef}
 				className={`rowMenu rowMenu--${direction}${

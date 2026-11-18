@@ -4,6 +4,10 @@
  * one-to-one conversation. Storybook design only, no API yet.
  */
 
+import {
+	GuestAccountMode,
+	readGuestAccountMode
+} from '../../guestAccountMode/guestAccountMode';
 import type { InvitationAccess } from '../../directInvitation/invitationModel';
 
 export type DirectLinkMedium = 'CHAT' | 'AUDIO' | 'VIDEO';
@@ -23,8 +27,13 @@ export interface DirectLink {
 	agencyId?: number;
 	/** Fixed after creation. */
 	medium: DirectLinkMedium;
-	/** New people get a temporary account. Applies to new people only. */
+	/**
+	 * New people can get a temporary account (mode is not PERMANENT).
+	 * Applies to new people only. Mirror of `guestAccountMode`.
+	 */
 	temporary: boolean;
+	/** UserService#1662; absent from an older server, then read from `temporary`. */
+	guestAccountMode?: GuestAccountMode;
 	active: boolean;
 	url: string;
 	/** #2142: optional, informational date and time (ISO instant). */
@@ -48,5 +57,8 @@ export interface DirectLink {
 	joinsExistingSession?: boolean;
 }
 
-/** Grilling 2026-10-27: off for chat, on for calls; the counsellor can change it. */
-export const defaultTemporary = (medium: DirectLinkMedium) => medium !== 'CHAT';
+/** The link's guest account mode, also for a link from an older server. */
+export const directLinkGuestAccountMode = (
+	link: Pick<DirectLink, 'guestAccountMode' | 'temporary'>
+): GuestAccountMode =>
+	readGuestAccountMode(link.guestAccountMode, link.temporary);

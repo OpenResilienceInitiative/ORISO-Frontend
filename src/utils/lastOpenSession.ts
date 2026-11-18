@@ -37,8 +37,9 @@ const parseEntry = (raw: string | null | undefined): StoredEntry | null => {
  * `sessionPreview` (enquiries) is deliberately excluded: those move away once
  * accepted and would resume into a dead end.
  */
+// `deleted/:id` (#1159) is a notice, not a conversation to resume.
 const SESSION_VIEW_PATH =
-	/^\/sessions\/consultant\/sessionView\/(?:session\/\d+|[^/?#\\]+\/\d+)\/?$/;
+	/^\/sessions\/consultant\/sessionView\/(?:session\/\d+|(?!deleted\/)[^/?#\\]+\/\d+)\/?$/;
 
 export const isRestorableSessionPath = (path: unknown): path is string =>
 	typeof path === 'string' && SESSION_VIEW_PATH.test(path);

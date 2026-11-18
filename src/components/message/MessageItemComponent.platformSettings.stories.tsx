@@ -205,9 +205,14 @@ export const CollapsedThenExpanded: Story = {
 		await waitFor(() =>
 			expect(canvas.queryByText(new RegExp(LAST_WORDS))).toBeNull()
 		);
-		await expect(
-			canvas.getByRole('button', { name: showMoreName })
-		).toBeVisible();
+		// Wait like `expectShowMoreVisible`: on a slow CI runner the button can
+		// still be fading in once the text is gone (#2301). Query inside
+		// `waitFor`, so a re-rendered button is found again.
+		await waitFor(() =>
+			expect(
+				canvas.getByRole('button', { name: showMoreName })
+			).toBeVisible()
+		);
 	}
 };
 

@@ -127,7 +127,8 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 		acceptedNotification?.scope === emailScope;
 	const channels = emailCollectionSetupPolicy(
 		tenant?.settings,
-		conversationType
+		conversationType,
+		userData
 	);
 	const accountEmailAllowed = useAccountEmailCollectionAllowed();
 	const emailAllowed =
