@@ -91,6 +91,11 @@ export const HeaderPlusMenu = ({
 				disableRestoreFocus
 				transitionDuration={0}
 				sx={{ zIndex: 1400 }}
+				onClick={(event) => {
+					// The popover root covers the window above the backdrop:
+					// a press on it is a press outside the menu.
+					if (event.target === event.currentTarget) onClose();
+				}}
 				onClose={(_, reason) => {
 					onClose();
 					if (reason === 'escapeKeyDown') opener.current?.focus();
@@ -142,6 +147,9 @@ export const HeaderPlusMenu = ({
 						disabled={!supervisionAvailable}
 						onClick={() => {
 							if (!supervisionAvailable) return;
+							// The dialog returns focus to whatever had it when it
+							// opened: that must be the "+", not this item.
+							opener.current?.focus();
 							onClose();
 							onSupervision();
 						}}
@@ -155,6 +163,7 @@ export const HeaderPlusMenu = ({
 							'sessionHeader.supervisor.plusMenu.handoverHint'
 						)}
 						onClick={() => {
+							opener.current?.focus();
 							onClose();
 							onHandover();
 						}}

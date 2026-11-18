@@ -153,6 +153,23 @@ describe('conversation appointments', () => {
 			expect(knownSessionAppointments(4)).toBeUndefined();
 		});
 
+		it('orders writes by when their request started, not when it answered (review)', () => {
+			forgetKnownAppointments();
+			const upcomingStarted = appointmentsEpoch();
+			const refreshStarted = appointmentsEpoch();
+			rememberSessionAppointments(4, [], refreshStarted);
+			// The older upcoming read lands last; it must not win.
+			rememberUpcomingAppointments(
+				[{ ...known, sessionId: 4 }],
+				upcomingStarted
+			);
+			expect(knownSessionAppointments(4)).toEqual([]);
+			// Nor may an older read of the same source replace a newer one.
+			rememberSessionAppointments(4, [known], upcomingStarted);
+			expect(knownSessionAppointments(4)).toEqual([]);
+			forgetKnownAppointments();
+		});
+
 		it('keeps a write from a request of the current session', () => {
 			forgetKnownAppointments();
 			rememberSessionAppointments(4, [known], appointmentsEpoch());

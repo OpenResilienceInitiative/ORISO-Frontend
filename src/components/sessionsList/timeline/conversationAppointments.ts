@@ -100,30 +100,37 @@ export const onAppointmentsChanged = (listener: () => void) => {
 type KnownAppointments = { at: number; items: SessionAppointment[] };
 const knownBySession = new Map<number, KnownAppointments>();
 let knownUpcoming: KnownAppointments | undefined;
+/* One clock for request starts. A read takes its ticket when it starts and
+   its answer is stored under that ticket, so a read that started earlier can
+   never replace one that started later, whichever answers last. */
 let knownClock = 0;
-/* Bumped by every forget (logout). A request captures it when it starts, so
-   an answer that lands after the logout cannot refill the store for the
-   next user, whatever the timing of React's effect cleanup. */
-let knownEpoch = 0;
+/* Every ticket up to here belongs to a session that was logged out: an answer
+   that lands after the logout cannot refill the store for the next user,
+   whatever the timing of React's effect cleanup. */
+let forgottenUpTo = 0;
 
-export const appointmentsEpoch = () => knownEpoch;
+/** Take when a read starts; hand back with its answer. */
+export const appointmentsEpoch = () => ++knownClock;
+
+const accepts = (startedAt: number, current?: KnownAppointments) =>
+	startedAt > forgottenUpTo && (!current || startedAt > current.at);
 
 export const rememberSessionAppointments = (
 	sessionId: number,
 	items: SessionAppointment[],
-	startedInEpoch: number
+	startedAt: number
 ) => {
-	if (startedInEpoch !== knownEpoch) return;
-	knownBySession.set(sessionId, { at: ++knownClock, items });
+	if (!accepts(startedAt, knownBySession.get(sessionId))) return;
+	knownBySession.set(sessionId, { at: startedAt, items });
 };
 
 /** Only a successful read: a failed one says nothing about appointments. */
 export const rememberUpcomingAppointments = (
 	items: SessionAppointment[],
-	startedInEpoch: number
+	startedAt: number
 ) => {
-	if (startedInEpoch !== knownEpoch) return;
-	knownUpcoming = { at: ++knownClock, items };
+	if (!accepts(startedAt, knownUpcoming)) return;
+	knownUpcoming = { at: startedAt, items };
 };
 
 export const knownSessionAppointments = (
@@ -137,7 +144,7 @@ export const knownSessionAppointments = (
 
 /** Logout (and tests): start from nothing known; in-flight answers are void. */
 export const forgetKnownAppointments = () => {
-	knownEpoch += 1;
+	forgottenUpTo = knownClock;
 	knownBySession.clear();
 	knownUpcoming = undefined;
 };
