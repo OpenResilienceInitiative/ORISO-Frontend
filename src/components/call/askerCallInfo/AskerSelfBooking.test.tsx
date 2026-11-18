@@ -128,6 +128,40 @@ describe('AskerCallInfo self-booking (FE#1050)', () => {
 		expect(onBooked).toHaveBeenCalledWith(booked);
 	});
 
+	it('keeps a booking made after a conversation change when the older read of that conversation answers later', async () => {
+		let answerRead: (items: SessionAppointment[]) => void = () => undefined;
+		const load = vi.fn((sessionId: number) =>
+			sessionId === 7
+				? Promise.resolve([])
+				: new Promise<SessionAppointment[]>((resolve) => {
+						answerRead = resolve;
+					})
+		);
+		const bookedInEight = { ...booked, sessionId: 8 };
+		const props = {
+			open: true,
+			onClose: vi.fn(),
+			medium: 'VIDEO' as const,
+			load,
+			loadSlots: vi.fn().mockResolvedValue([free]),
+			bookSlot: vi.fn().mockResolvedValue(bookedInEight)
+		};
+		const { rerender } = render(<AskerCallInfo sessionId={7} {...props} />);
+		fireEvent.click(await screen.findByTestId('asker-call-info-request'));
+		rerender(<AskerCallInfo sessionId={8} {...props} />);
+		await waitFor(() => expect(load).toHaveBeenLastCalledWith(8));
+		await pickFirstTime();
+		fireEvent.click(screen.getByTestId('asker-self-booking-confirm'));
+		await screen.findByTestId('asker-call-info-appointment');
+
+		await act(async () => answerRead([]));
+
+		expect(screen.getByTestId('asker-call-info-appointment')).toBeTruthy();
+		expect(
+			screen.getByText('videoCall.askerInfo.booking.booked')
+		).toBeTruthy();
+	});
+
 	it('forgets the chosen time when the conversation changes', async () => {
 		const loadSlots = vi.fn().mockResolvedValue([free]);
 		const bookSlot = vi.fn().mockResolvedValue(booked);

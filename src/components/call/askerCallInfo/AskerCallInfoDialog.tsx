@@ -21,6 +21,7 @@ import { MODALITY_ICON } from '../../sessionsList/timeline/AppointmentKindGlyph'
 import { formatEntrySlot } from '../../sessionsList/timeline/timelineModel';
 import type { EntryModality } from '../../sessionsList/timeline/timelineModel';
 import { normalizeTimelineLocale } from '../../sessionsList/futureTimelineTime';
+import { useRequestExpiryTick } from '../../sessionsList/timeline/useRequestExpiryTick';
 import {
 	askerCallInfoState,
 	type AskerCallInfoState,
@@ -223,6 +224,11 @@ export const AskerCallInfo = ({
 	const [notice, setNotice] = useState<AskerBookingNotice>();
 	/* Counts the reads; a refused booking reads the appointments again. */
 	const [reads, setReads] = useState(0);
+	/* A booking that succeeds outdates every read still on its way: its
+	   answer would replace the appointment just made. */
+	const readGeneration = useRef(0);
+	/* A request shown here leaves the dialog at its start (FE#2287). */
+	useRequestExpiryTick(appointments);
 	useEffect(() => {
 		if (!open) {
 			setBooking(false);
@@ -230,10 +236,12 @@ export const AskerCallInfo = ({
 			return undefined;
 		}
 		let active = true;
+		const generation = ++readGeneration.current;
+		const current = () => active && readGeneration.current === generation;
 		setAppointments(undefined);
 		load(sessionId).then(
-			(items) => active && setAppointments(items),
-			() => active && setAppointments('error')
+			(items) => current() && setAppointments(items),
+			() => current() && setAppointments('error')
 		);
 		return () => {
 			active = false;
@@ -262,6 +270,7 @@ export const AskerCallInfo = ({
 					/* The server made it: the conversation it was made in
 					   learns of it either way (this render's `onBooked`). */
 					if (stillOpen()) {
+						readGeneration.current += 1;
 						setAppointments((known) => [
 							...(Array.isArray(known) ? known : []),
 							appointment

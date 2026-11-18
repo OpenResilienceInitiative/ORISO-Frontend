@@ -34,6 +34,33 @@ describe('askerCallInfoState', () => {
 		});
 	});
 
+	it('names the nearest of a scheduled appointment and a request, like the split button', () => {
+		expect(
+			askerCallInfoState(
+				[
+					appointment({
+						id: 's',
+						startTime: '2026-11-19T14:00:00Z',
+						endTime: '2026-11-19T15:00:00Z'
+					}),
+					appointment({
+						id: 'r',
+						status: 'REQUESTED',
+						startTime: '2026-11-18T09:00:00Z',
+						endTime: '2026-11-18T10:00:00Z'
+					})
+				],
+				now
+			)
+		).toEqual({
+			status: 'appointment',
+			start: new Date('2026-11-18T09:00:00Z'),
+			end: new Date('2026-11-18T10:00:00Z'),
+			medium: 'video',
+			requested: true
+		});
+	});
+
 	it('ignores a declined request (FE#2287)', () => {
 		expect(
 			askerCallInfoState([appointment({ status: 'DECLINED' })], now)

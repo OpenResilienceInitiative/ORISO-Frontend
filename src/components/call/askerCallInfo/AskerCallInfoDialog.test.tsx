@@ -129,6 +129,30 @@ describe('AskerCallInfo', () => {
 		expect(load).not.toHaveBeenCalled();
 	});
 
+	it('drops a request from the dialog once its start has passed', async () => {
+		const load = vi.fn().mockResolvedValue([
+			{
+				id: 'r',
+				sessionId: 7,
+				startTime: new Date(Date.now() + 300).toISOString(),
+				endTime: new Date(Date.now() + 3_600_000).toISOString(),
+				status: 'REQUESTED',
+				kind: 'VIDEO'
+			}
+		]);
+		render(
+			<AskerCallInfo sessionId={7} open onClose={vi.fn()} load={load} />
+		);
+		await screen.findByTestId('asker-call-info-appointment');
+		await waitFor(
+			() =>
+				expect(
+					screen.getByText('videoCall.askerInfo.none')
+				).toBeTruthy(),
+			{ timeout: 2000 }
+		);
+	});
+
 	it('shows the error state when the read fails', async () => {
 		const load = vi.fn().mockRejectedValue(new Error('down'));
 		render(

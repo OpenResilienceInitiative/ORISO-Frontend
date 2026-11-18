@@ -7,10 +7,7 @@ import type {
 	SessionAppointment,
 	SessionAppointmentKind
 } from '../../../api/apiSessionAppointments';
-import {
-	pendingRequests,
-	upcomingAppointments
-} from '../../sessionsList/timeline/conversationAppointments';
+import { nextConversationAppointment } from '../../sessionsList/timeline/conversationAppointments';
 
 export type AskerCallMedium = 'video' | 'phone' | 'onsite' | 'chat';
 
@@ -45,17 +42,17 @@ export const askerCallInfoState = (
 ): AskerCallInfoState => {
 	if (appointments === undefined) return { status: 'loading' };
 	if (appointments === 'error') return { status: 'error' };
-	/* A conversation has one at a time: a scheduled appointment, or else a
-	   request waiting for the counsellor (FE#2287). */
-	const scheduled = upcomingAppointments(appointments, now)[0];
-	const next = scheduled ?? pendingRequests(appointments, now)[0];
+	/* The same rule as the split button below the header: the nearest of
+	   the scheduled appointments and the requests waiting for the
+	   counsellor (FE#2287). */
+	const next = nextConversationAppointment(appointments, now);
 	if (!next) return { status: 'none' };
 	return {
 		status: 'appointment',
 		start: new Date(next.startTime),
 		end: new Date(next.endTime),
 		medium: (next.kind && MEDIUM[next.kind]) || 'video',
-		...(scheduled ? {} : { requested: true as const })
+		...(next.status === 'REQUESTED' ? { requested: true as const } : {})
 	};
 };
 

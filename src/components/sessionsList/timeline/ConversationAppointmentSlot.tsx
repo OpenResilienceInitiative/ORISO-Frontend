@@ -34,13 +34,13 @@ import {
 	knownSessionAppointments,
 	nextConversationAppointment,
 	onAppointmentsChanged,
-	pendingRequests,
 	rememberSessionAppointments,
 	upcomingAppointments
 } from './conversationAppointments';
 import { lendAppointmentCreate } from './appointmentCreateBridge';
 import { buildFutureEntries, type FutureEntry } from './timelineModel';
 import { useAppointmentActions } from './useAppointmentActions';
+import { useRequestExpiryTick } from './useRequestExpiryTick';
 
 /* #2252: "Weitere Personen per Link einladen" only where "Direkteinladung
    erlauben" allows a medium. Mounted with the dialog, so the agencies'
@@ -62,9 +62,6 @@ const CreateOrMoveDialog = (
 		/>
 	);
 };
-
-/** The longest delay `setTimeout` honours (2^31 - 1 ms). */
-const MAX_TIMER_DELAY_MS = 2_147_483_647;
 
 export const ConversationAppointmentSlot = ({
 	canChange,
@@ -174,25 +171,8 @@ export const ConversationAppointmentSlot = ({
 		onCreateChange(canCreate ? openCreate : undefined);
 		return () => onCreateChange(undefined);
 	}, [canCreate, onCreateChange, openCreate]);
-	/* A request expires at its start (FE#2287): the slot renders again then,
-	   without waiting for another update. */
-	const [expiryTick, setExpiryTick] = useState(0);
-	useEffect(() => {
-		if (!Array.isArray(appointments)) return undefined;
-		const now = Date.now();
-		const nextStart = pendingRequests(appointments, new Date(now))
-			.map((a) => new Date(a.startTime).getTime())
-			.sort((a, b) => a - b)[0];
-		if (nextStart === undefined) return undefined;
-		/* Browsers fire a delay above 2^31 - 1 ms (24.8 days) at once. A capped
-		   wake-up only renders again, which sets the timer for what is left;
-		   whether the request expired is always read from the clock. */
-		const timer = window.setTimeout(
-			() => setExpiryTick((n) => n + 1),
-			Math.min(nextStart - now + 1, MAX_TIMER_DELAY_MS)
-		);
-		return () => window.clearTimeout(timer);
-	}, [appointments, expiryTick]);
+	/* A request expires at its start (FE#2287): the slot renders again then. */
+	useRequestExpiryTick(appointments);
 	/* The split button shows the nearest appointment or request (FE#2287). */
 	const next = Array.isArray(appointments)
 		? nextConversationAppointment(appointments, new Date())
