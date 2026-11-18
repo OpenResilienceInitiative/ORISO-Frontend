@@ -2245,6 +2245,10 @@
 			"sendFailed": {
 				"title": "Answers not sent",
 				"text": "Your answers to the marked passages are still collected. Please send them again."
+			},
+			"blurFailed": {
+				"title": "Blur not saved",
+				"text": "The passage could not be blurred, or the blur could not be removed. Please try again."
 			}
 		},
 		"thread": {
@@ -4642,7 +4646,8 @@
 			},
 			"registered": {
 				"tab": "Initial inquiries"
-			}
+			},
+			"blurred": "Message with a blurred passage"
 		},
 		"reloadButton": {
 			"label": "Reload"

@@ -679,6 +679,9 @@
 		"selectionReply": {
 			"sendFailed": {
 				"text": "Deine Antworten auf die markierten Stellen sind noch gesammelt. Bitte sende sie erneut."
+			},
+			"blurFailed": {
+				"text": "Die Stelle konnte nicht geschwärzt oder die Schwärzung nicht aufgehoben werden. Bitte versuche es erneut."
 			}
 		}
 	},

@@ -1228,6 +1228,31 @@ describe('MatrixClientService', () => {
 		expect(sendMessage).not.toHaveBeenCalled();
 	});
 
+	it('blurs a passage as an org.oriso.passage_blur event holding only the position (#2229)', async () => {
+		const sendEvent = vi.fn().mockResolvedValue({ event_id: '$blur' });
+		const client = { sendEvent };
+		const service = new MatrixClientService();
+		setClient(service, client);
+
+		await service.sendPassageBlur('!room:matrix.localhost', '$msg', {
+			start: 4,
+			length: 12
+		});
+
+		expect(sendEvent).toHaveBeenCalledWith(
+			'!room:matrix.localhost',
+			'org.oriso.passage_blur',
+			{
+				'm.relates_to': {
+					rel_type: 'org.oriso.passage_blur',
+					event_id: '$msg'
+				},
+				'start': 4,
+				'length': 12
+			}
+		);
+	});
+
 	it('edits a message via m.replace, targeting the original event', async () => {
 		const sendMessage = vi.fn(() =>
 			Promise.resolve({ event_id: '$edit:example.org' })

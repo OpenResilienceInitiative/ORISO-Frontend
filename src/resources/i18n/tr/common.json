@@ -2246,6 +2246,10 @@
 			"sendFailed": {
 				"title": "Yanıtlar gönderilmedi",
 				"text": "İşaretlenen bölümlere verdiğiniz yanıtlar hâlâ toplanmış durumda. Lütfen yeniden gönderin."
+			},
+			"blurFailed": {
+				"title": "Bulanıklaştırma kaydedilmedi",
+				"text": "Bölüm bulanıklaştırılamadı veya bulanıklaştırma kaldırılamadı. Lütfen tekrar deneyin."
 			}
 		},
 		"thread": {
@@ -4659,7 +4663,8 @@
 			},
 			"registered": {
 				"tab": "İlk sorgulamalar"
-			}
+			},
+			"blurred": "Bulanıklaştırılmış bölüm içeren mesaj"
 		},
 		"reloadButton": {
 			"label": "Yeniden Yükle"

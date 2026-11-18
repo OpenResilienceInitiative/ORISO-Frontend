@@ -627,3 +627,50 @@ describe('answers to marked passages in the list preview (#2202)', () => {
 		).toEqual({ kind: 'voice', text: null, durationMs: 48000 });
 	});
 });
+
+describe('moderator blur in the list preview (#2229)', () => {
+	const message = {
+		...event(
+			'm.room.message',
+			{ msgtype: 'm.text', body: 'Ich wohne in der Hauptstraße 5' },
+			10
+		),
+		getId: () => '$msg'
+	};
+	const blur = (redacted = false) => ({
+		...event(
+			'org.oriso.passage_blur',
+			{
+				'm.relates_to': {
+					rel_type: 'org.oriso.passage_blur',
+					event_id: '$msg'
+				},
+				'start': 13,
+				'length': 17
+			},
+			20,
+			'@mod:example.org'
+		),
+		getId: () => '$blur',
+		isRedacted: () => redacted
+	});
+
+	it('never shows the text of a message that has a blur', () => {
+		const preview = getLatestMatrixRoomPreview([message, blur()]);
+		expect(preview).toEqual({ kind: 'blurred', text: null });
+		expect(
+			toListPreviewLine(preview, (key) =>
+				key === 'sessionList.preview.blurred'
+					? 'Nachricht mit geschwärzter Stelle'
+					: key
+			).text
+		).toBe('Nachricht mit geschwärzter Stelle');
+	});
+
+	it('shows the text again once the blur was lifted', () => {
+		expect(getLatestMatrixRoomPreview([message, blur(true)])).toEqual({
+			kind: 'text',
+			text: 'Ich wohne in der Hauptstraße 5'
+		});
+	});
+});

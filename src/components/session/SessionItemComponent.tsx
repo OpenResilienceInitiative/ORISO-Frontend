@@ -249,6 +249,7 @@ import { SelectionReplyLayer } from '../selectionReply/SelectionReplyLayer';
 import { useSessionPassageReplies } from '../selectionReply/useSessionPassageReplies';
 import { jumpToPassage } from '../selectionReply/passageRange';
 import type { PassageReply } from '../selectionReply/PassageReplyBlocks';
+import { useSessionPassageBlur } from '../selectionReply/useSessionPassageBlur';
 import { isCaseHandoverCoAccess } from './caseHandoverHelpers';
 import { CaseHandoverReadOnlyNotice } from './CaseHandoverReadOnlyNotice';
 import {
@@ -279,6 +280,8 @@ interface SessionItemProps {
 	messages?: MessageItem[];
 	/** Reactions (m.annotation, #435): raw reaction events for the loaded window. */
 	reactionEvents?: ReactionEvent[];
+	/** Moderator blurs (#2229): blur event id → Matrix id of who blurred. */
+	passageBlurSenders?: Map<string, string>;
 	/**
 	 * WP-B2 (ADR-008): the supervision side room's own timeline. Never part
 	 * of `messages`; rendered in the SupervisionPanel next to the chat.
@@ -3061,9 +3064,16 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			if (!target) {
 				return null;
 			}
-			return buildReplyQuotePreview(target);
+			const quote = buildReplyQuotePreview(target);
+			// A blurred passage (#2229) must not come back in a quote.
+			return target.passageBlurs?.length
+				? {
+						...quote,
+						text: translate('message.selectionReply.blurredLabel')
+					}
+				: quote;
 		},
-		[messages]
+		[messages, translate]
 	);
 
 	// Selection reply (#2202): mark a passage in a message, answer it, and
@@ -3101,6 +3111,17 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			);
 		}
 	}, []);
+	// Moderator blur (#2229): only the room's moderators blur a passage or
+	// lift a blur; everyone in the chat sees it.
+	const passageBlur = useSessionPassageBlur({
+		matrixRoomId: resolvedMatrixRoomId,
+		blurSenders: props.passageBlurSenders,
+		activeSession,
+		userData,
+		isConsultant: isConsultantUser,
+		isSupervisorView,
+		isReadOnly: isRejectedSession || isCoAccessViewer
+	});
 	const handleThreadFromPassage = useCallback(
 		(passage: { eventId: string }) => {
 			const root = (messages || []).find(
@@ -3582,7 +3603,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							{/* MATRIX MIGRATION: For Matrix sessions (no rid), skip E2EE ready check */}
 							{messages && (ready || !activeSession.rid) && (
 								<SelectionReplyLayer
-									enabled={passageReplies.enabled}
+									enabled={
+										passageReplies.enabled ||
+										passageBlur.canBlur
+									}
 									authorFor={authorForPassage}
 									onAddToComposer={passageReplies.collect}
 									onSendNow={passageReplies.sendNow}
@@ -3592,6 +3616,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 											: undefined
 									}
 									recorder={passageReplies.recorder}
+									onBlurPassage={passageBlur.onBlurPassage}
+									onRemoveBlur={passageBlur.onRemoveBlur}
+									blurredByFor={passageBlur.blurredByFor}
 								>
 									<MessageTimeline
 										messages={messages}
@@ -3685,6 +3712,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 												: handleUnreact
 										}
 										onJumpToPassage={handleJumpToPassage}
+										canRemovePassageBlur={
+											passageBlur.canBlur
+										}
 									/>
 								</SelectionReplyLayer>
 							)}
