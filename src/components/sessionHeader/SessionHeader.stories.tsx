@@ -927,6 +927,52 @@ export const PlusMenuSupervisionOrHandover: Story = {
 	}
 };
 
+/** Review: with the menu open, presses outside it reach the page. A second
+ *  press on "+" hits the "+" itself (browser hit-testing), closes the menu and
+ *  leaves focus on the "+"; a press beside the menu hits the backdrop. */
+export const PlusMenuSecondPressOnPlus: Story = {
+	globals: { viewport: { value: 'desktop1366', isRotated: false } },
+	render: () => renderSessionHeader(mockActiveConversation()),
+	play: async ({ canvasElement }) => {
+		const plus = await waitFor(() => {
+			const button = canvasElement.querySelector<HTMLButtonElement>(
+				'.chatroomMainInteractionIcon__add--interactive'
+			);
+			expect(button).not.toBeNull();
+			return button!;
+		});
+		const hitAt = (el: Element) => {
+			const box = el.getBoundingClientRect();
+			return document.elementFromPoint(
+				box.left + box.width / 2,
+				box.top + box.height / 2
+			);
+		};
+		await userEvent.click(plus);
+		const menu = await within(document.body).findByRole('menu');
+		await waitFor(() =>
+			expect(menu.contains(document.activeElement)).toBe(true)
+		);
+		await expect(plus.contains(hitAt(plus))).toBe(true);
+		await userEvent.click(hitAt(plus) as HTMLElement);
+		await waitFor(() =>
+			expect(within(document.body).queryByRole('menu')).toBeNull()
+		);
+		await expect(plus).toHaveAttribute('aria-expanded', 'false');
+		await expect(document.activeElement).toBe(plus);
+
+		await userEvent.click(plus);
+		const reopened = await within(document.body).findByRole('menu');
+		const box = reopened.getBoundingClientRect();
+		const beside = document.elementFromPoint(
+			Math.min(box.right + 40, window.innerWidth - 4),
+			box.bottom - 4
+		);
+		await expect(beside).not.toBeNull();
+		await expect(beside!.closest('.MuiPopover-root')).toBeNull();
+	}
+};
+
 /* The topic tag under the title is small text on a tinted fill: it must reach
    4.5:1 for every Träger, also a light one (#1499, Träger 2 = #b4ddee). */
 const expectLegibleTopicTag = async (canvasElement: HTMLElement) => {

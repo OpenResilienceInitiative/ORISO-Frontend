@@ -140,16 +140,14 @@ describe('HeaderPlusMenu', () => {
 		opener.remove();
 	});
 
-	it('closes on a press outside the menu that lands on the popover root (review)', async () => {
-		const { onClose } = await renderMenu();
+	it('lets presses outside the menu through its popover root (review)', async () => {
+		await renderMenu();
 		const root = screen
 			.getByRole('menu')
 			.closest('.MuiPopover-root') as HTMLElement;
-		fireEvent.click(root);
-		expect(onClose).toHaveBeenCalled();
-		onClose.mockClear();
-		fireEvent.click(item('caseHandover.offer.open'));
-		expect(onClose).toHaveBeenCalledTimes(1);
+		expect(getComputedStyle(root).pointerEvents).toBe('none');
+		const paper = root.querySelector('.MuiPaper-root') as HTMLElement;
+		expect(getComputedStyle(paper).pointerEvents).toBe('auto');
 	});
 
 	it('hands focus back to the "+" before opening a dialog, so it can return there (review)', async () => {

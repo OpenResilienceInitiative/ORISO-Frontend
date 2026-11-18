@@ -90,12 +90,11 @@ export const HeaderPlusMenu = ({
 				disableEnforceFocus
 				disableRestoreFocus
 				transitionDuration={0}
-				sx={{ zIndex: 1400 }}
-				onClick={(event) => {
-					// The popover root covers the window above the backdrop:
-					// a press on it is a press outside the menu.
-					if (event.target === event.currentTarget) onClose();
-				}}
+				// The popover root covers the window above the backdrop. It lets
+				// presses through, so a press beside the menu reaches the
+				// backdrop and a second press on "+" reaches the "+" (which
+				// takes focus and closes the menu); only the menu takes presses.
+				sx={{ zIndex: 1400, pointerEvents: 'none' }}
 				onClose={(_, reason) => {
 					onClose();
 					if (reason === 'escapeKeyDown') opener.current?.focus();
@@ -104,6 +103,7 @@ export const HeaderPlusMenu = ({
 					ref: menuRef,
 					style,
 					sx: {
+						pointerEvents: 'auto',
 						background: 'transparent',
 						boxShadow: 'none',
 						overflow: 'visible'
