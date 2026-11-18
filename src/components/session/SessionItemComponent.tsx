@@ -202,6 +202,7 @@ import {
 	ensureAnonymousChatPreLogoutCleanup,
 	registerAnonymousChatSessionForCleanup
 } from '../../utils/anonymousChatSessionCleanup';
+import { useLastingLiveChatAccount } from '../liveChatConversion/lastingLiveChatAccount';
 import { parseMessagePrefixes } from '../message/messageConstants';
 import { decodeUsername } from '../../utils/encryptionHelpers';
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
@@ -580,6 +581,15 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		(userData?.userRoles || []).includes('USER');
 	const isAnonymousAskerExperience =
 		isAnonymousChat && isAskerUser && !isConsultantUser;
+	/* US#1601 (FE#2330): a guest who converted to a lasting account signs in
+	   again with an empty sessionStorage. The guest gates below must not come
+	   back for them: they hid the history (with no way out once the chat was
+	   finished) and stored a new random display name. */
+	const isLastingLiveChatAccount =
+		useLastingLiveChatAccount(
+			isAnonymousAskerExperience,
+			userData?.userId
+		) === true;
 	const isAnonymousBreathingGameAvailable = isAnonymousAskerExperience;
 	const sessionStatusNum = Number(activeSession.item?.status);
 	const isRejectedSession = sessionStatusNum === STATUS_REJECTED;
@@ -1272,6 +1282,18 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		}
 	}, [isAnonymousAskerExperience, pseudonymStorageKey]);
 
+	/* Declared after the sessionStorage read above so it wins on a session
+	   switch: a lasting account has passed the guest gates for good. */
+	useEffect(() => {
+		if (!isLastingLiveChatAccount) return;
+		setPseudonymConfirmed(true);
+		setWaitingGateDismissed(true);
+	}, [
+		isLastingLiveChatAccount,
+		activeSession.item.id,
+		setWaitingGateDismissed
+	]);
+
 	/**
 	 * Confirm the chosen display-name pseudonym for this live-chat session.
 	 * The login User-ID is left unchanged so room membership and keys stay intact.
@@ -1430,7 +1452,11 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	useEffect(() => {
 		ensureAnonymousChatPreLogoutCleanup();
 
-		if (!isAnonymousAskerExperience || !activeSession.item?.id) {
+		if (
+			!isAnonymousAskerExperience ||
+			isLastingLiveChatAccount ||
+			!activeSession.item?.id
+		) {
 			registerAnonymousChatSessionForCleanup(null);
 			return;
 		}
@@ -1445,6 +1471,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		);
 	}, [
 		isAnonymousAskerExperience,
+		isLastingLiveChatAccount,
 		activeSession.item?.id,
 		activeSession.item?.status,
 		activeSession.item?.matrixRoomId,
