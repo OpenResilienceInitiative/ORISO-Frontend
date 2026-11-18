@@ -36,6 +36,10 @@ import {
 	parseTopicDuplicateRoomPath,
 	TOPIC_DUPLICATE_SEARCH
 } from '../../session/topicDuplicateRoomRoute';
+import {
+	DELETED_ASKER_BASE_PATH,
+	parseFormerSessionId
+} from '../../sessionsList/deletedAskerPath';
 
 /** Default conversation list base when the consumer does not pass one. */
 const DEFAULT_SESSIONS_BASE_PATH = '/sessions/consultant/sessionView';
@@ -190,9 +194,17 @@ const statusPageTarget = (params: EventActionParams): EventActionTarget => ({
 	url: params.statusUrl ?? null
 });
 
-// An entry with nothing left to open (#1159). Named, so the exclusion set
-// below recognises it (#2275 review).
-const noActionTarget = (): EventActionTarget => ({ kind: 'none' });
+// #1159: a deleted advice-seeker chat opens its deletion notice, where the
+// counsellor archives it. Navigates like a request: never shown inline, there
+// is no conversation left. Entries from before the notice existed carry no
+// path and stay inert. Named, so the exclusion set below recognises it.
+const deletedAskerTarget = (params: EventActionParams): EventActionTarget =>
+	params.actionPath?.startsWith(`${DELETED_ASKER_BASE_PATH}/`) &&
+	parseFormerSessionId(
+		params.actionPath.slice(DELETED_ASKER_BASE_PATH.length + 1)
+	) !== null
+		? { kind: 'request', path: params.actionPath }
+		: { kind: 'none' };
 
 // --- Descriptor factory --------------------------------------------------
 
@@ -209,7 +221,7 @@ const NO_CONVERSATION_TARGETS = new Set<EventDescriptor['resolveActionTarget']>(
 		requestDeniedTarget,
 		draftTarget,
 		statusPageTarget,
-		noActionTarget
+		deletedAskerTarget
 	]
 );
 
@@ -585,14 +597,14 @@ const seeds: EventDescriptor[] = [
 		i18nKey: 'serviceNoticePlanned',
 		resolveActionTarget: statusPageTarget
 	}),
-	// #1159: an advice seeker's chat was deleted. Nothing is left to open, so
-	// the row informs and has no action.
+	// #1159: an advice seeker's chat was deleted. The row opens the deletion
+	// notice, from where the counsellor archives it.
 	descriptor('session.asker_deleted', {
 		family: 'system',
 		category: 'system',
 		icon: 'system',
 		i18nKey: 'sessionAskerDeleted',
-		resolveActionTarget: noActionTarget
+		resolveActionTarget: deletedAskerTarget
 	})
 ];
 

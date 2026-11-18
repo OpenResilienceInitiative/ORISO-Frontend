@@ -26,7 +26,13 @@ export const APPOINTMENT_KINDS: AppointmentKind[] = [
  * - `blocker`: time the counsellor blocked in ORISO.
  * - `busy`: busy time imported from the counsellor's own calendar (§5).
  */
-export type CalendarEntryType = 'appointment' | 'group' | 'blocker' | 'busy';
+/** 'absence': the counsellor's planned absence, whole days (ORISO-Frontend#2303). */
+export type CalendarEntryType =
+	| 'appointment'
+	| 'group'
+	| 'blocker'
+	| 'busy'
+	| 'absence';
 
 export interface CalendarEntry {
 	id: string;

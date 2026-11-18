@@ -98,8 +98,8 @@ const open = (
 		/>
 	);
 
-const tab = (name: 'appointment' | 'blocker') =>
-	screen.getByRole('tab', { name: `calendar.dialog.tabs.${name}` });
+const tab = (name: 'appointment' | 'blocker' | 'absence') =>
+	screen.queryByRole('tab', { name: `calendar.dialog.tabs.${name}` })!;
 
 describe('NewEntryDialog — "Neuer Eintrag" with Termin | Sperrzeit (prototype v17)', () => {
 	it('opens on the tab it is given, under one title', () => {
@@ -254,5 +254,90 @@ describe('NewEntryDialog — "Neuer Eintrag" with Termin | Sperrzeit (prototype 
 	it('shows no kind tiles when the slot already has its kind', () => {
 		open({ slot: { ...SLOT, kind: 'phone' } });
 		expect(document.querySelector('.calendarDialog__kinds')).toBeNull();
+	});
+});
+
+describe('NewEntryDialog — planned absence tab (ORISO-Frontend#2303)', () => {
+	const APPOINTMENT_INSIDE = {
+		id: 'a1',
+		type: 'appointment' as const,
+		kind: 'video' as const,
+		ownerId: 'me',
+		title: 'mutige_eule',
+		start: new Date(2026, 11, 22, 10).toISOString(),
+		end: new Date(2026, 11, 22, 11).toISOString()
+	};
+
+	it('offers "Abwesenheit" only where an absence can be saved', () => {
+		open();
+		expect(tab('absence')).toBeNull();
+		cleanup();
+		open({ onSaveAbsence: () => undefined });
+		expect(tab('absence')).toBeTruthy();
+		fireEvent.click(tab('absence'));
+		expect(screen.getByTestId('calendar-absence-dialog')).toBeTruthy();
+	});
+
+	it('lets the arrow keys wrap over the tabs that are there', () => {
+		open({ onSaveAbsence: () => undefined });
+		fireEvent.keyDown(tab('appointment'), { key: 'ArrowLeft' });
+		expect(tab('absence').getAttribute('aria-selected')).toBe('true');
+		cleanup();
+		open();
+		fireEvent.keyDown(tab('appointment'), { key: 'ArrowLeft' });
+		expect(tab('blocker').getAttribute('aria-selected')).toBe('true');
+	});
+
+	it('saves the date range and message as the absence', () => {
+		const onSaveAbsence = vi.fn();
+		open({ initialTab: 'absence', onSaveAbsence });
+		fireEvent.change(screen.getByLabelText('calendar.absence.from'), {
+			target: { value: '2026-12-21' }
+		});
+		fireEvent.change(screen.getByLabelText('calendar.absence.until'), {
+			target: { value: '2027-01-03' }
+		});
+		fireEvent.change(screen.getByLabelText('calendar.absence.message'), {
+			target: { value: 'Im Urlaub' }
+		});
+		fireEvent.click(screen.getByTestId('calendar-absence-save'));
+		expect(onSaveAbsence).toHaveBeenCalledWith({
+			start: '2026-12-21',
+			end: '2027-01-03',
+			message: 'Im Urlaub'
+		});
+	});
+
+	it('refuses a range that ends before it starts', () => {
+		open({ initialTab: 'absence', onSaveAbsence: () => undefined });
+		fireEvent.change(screen.getByLabelText('calendar.absence.from'), {
+			target: { value: '2026-12-21' }
+		});
+		fireEvent.change(screen.getByLabelText('calendar.absence.until'), {
+			target: { value: '2026-12-20' }
+		});
+		expect(
+			(screen.getByTestId('calendar-absence-save') as HTMLButtonElement)
+				.disabled
+		).toBe(true);
+	});
+
+	it('warns about own appointments inside the range and does not cancel them (Frank 2026-11-17)', () => {
+		const onSaveAbsence = vi.fn();
+		open({
+			initialTab: 'absence',
+			entries: [APPOINTMENT_INSIDE],
+			onSaveAbsence
+		});
+		fireEvent.change(screen.getByLabelText('calendar.absence.from'), {
+			target: { value: '2026-12-21' }
+		});
+		fireEvent.change(screen.getByLabelText('calendar.absence.until'), {
+			target: { value: '2027-01-03' }
+		});
+		const warning = screen.getByTestId('calendar-absence-conflicts');
+		expect(warning.textContent).toContain('mutige_eule');
+		fireEvent.click(screen.getByTestId('calendar-absence-save'));
+		expect(onSaveAbsence).toHaveBeenCalledTimes(1);
 	});
 });

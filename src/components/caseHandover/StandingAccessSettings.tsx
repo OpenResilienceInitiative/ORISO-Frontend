@@ -41,7 +41,8 @@ export const StandingAccessSettings = ({
 	const { userData } = useContext(UserDataContext);
 	const policy = emailCollectionSetupPolicy(
 		tenant?.settings,
-		conversationType
+		conversationType,
+		userData
 	);
 	const { consentEmailActive } = useNotificationChannels(
 		policy.emailAllowed,

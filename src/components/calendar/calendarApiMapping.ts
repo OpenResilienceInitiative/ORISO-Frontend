@@ -29,7 +29,8 @@ const TYPE: Record<CalendarEntryDTO['type'], CalendarEntryType> = {
 	APPOINTMENT: 'appointment',
 	GROUP: 'group',
 	BLOCKER: 'blocker',
-	BUSY: 'busy'
+	BUSY: 'busy',
+	ABSENCE: 'absence'
 };
 
 const KIND: Record<SessionAppointmentKind, AppointmentKind> = {
@@ -74,6 +75,8 @@ export const entryFromApi = (dto: CalendarEntryDTO): CalendarEntry => {
 			(typeof dto.allDay === 'boolean'
 				? dto.allDay
 				: isAllDayRange(dto.start, dto.end)) && { allDay: true }),
+		// A planned absence is whole days by definition (ORISO-Frontend#2303).
+		...(type === 'absence' && { allDay: true }),
 		movable: dto.movable === true,
 		...(dto.requested === true && { requested: true })
 	};

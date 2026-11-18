@@ -186,6 +186,11 @@
 		line-height: 16px;
 	}
 
+	/* UserService#1662: the guest account select under the knock toggle. */
+	&__guestAccount {
+		margin: 0 0 8px;
+	}
+
 	&__settingsHint {
 		color: var(--m3-on-surface-variant, #444748);
 		font-size: 12px;
