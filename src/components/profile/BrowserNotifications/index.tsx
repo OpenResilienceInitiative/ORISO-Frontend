@@ -15,14 +15,16 @@ import {
 	hasUserAuthority,
 	UserDataContext
 } from '../../../globalState';
+import { effectiveBrowserNotificationsEnabled } from '../../../utils/notificationSettings/browserMasterSwitch';
 
 export const BrowserNotification = () => {
 	const isFirstVisit = useIsFirstVisit();
 	const [localBrowserSettings, setNotificationsSettings] = useState(
 		browserNotificationsSettings()
 	);
-	const isEnabled =
-		localBrowserSettings.enabled && Notification.permission === 'granted';
+	const isEnabled = effectiveBrowserNotificationsEnabled(
+		localBrowserSettings.enabled
+	);
 	const { t } = useTranslation();
 	// Enquiry rows and "your counselees" copy only apply to counsellors.
 	const { userData } = useContext(UserDataContext);
@@ -92,7 +94,9 @@ export const BrowserNotification = () => {
 					{isConsultant && (
 						<Switch
 							titleKey="profile.browserNotifications.initialEnquiry.title"
-							checked={!!localBrowserSettings.initialEnquiry}
+							checked={
+								localBrowserSettings.initialEnquiry !== false
+							}
 							onChange={(checked) =>
 								onChangeSetting('initialEnquiry', checked)
 							}
@@ -105,7 +109,7 @@ export const BrowserNotification = () => {
 								? 'profile.browserNotifications.newMessage.description'
 								: undefined
 						}
-						checked={!!localBrowserSettings.newMessage}
+						checked={localBrowserSettings.newMessage !== false}
 						onChange={(checked) =>
 							onChangeSetting('newMessage', checked)
 						}
