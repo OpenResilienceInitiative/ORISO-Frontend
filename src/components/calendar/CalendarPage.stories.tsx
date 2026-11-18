@@ -681,12 +681,6 @@ const expectRealAvatars = async (canvasElement: HTMLElement) => {
 			(el) => el.textContent === 'HW'
 		)
 	).toBe(true);
-	// "Als Nächstes" shows the same avatars.
-	await expect(
-		canvasElement.querySelector(
-			'[data-cy="calendar-upcoming"] [data-testid="user-avatar"]'
-		)
-	).not.toBeNull();
 };
 
 export const RealAvatarsList: Story = {

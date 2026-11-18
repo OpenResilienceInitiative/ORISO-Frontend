@@ -612,7 +612,7 @@ export const EntryMenuContent = ({
 				</span>
 			</p>
 			{partner && (
-				<p className="calendarMenu__who" data-cy="calendar-entry-who">
+				<div className="calendarMenu__who" data-cy="calendar-entry-who">
 					<span className="calendarMenu__stack" aria-hidden="true">
 						<span
 							className={`calendarMenu__mini ${avatarToneClass('', true)}`}
@@ -627,7 +627,7 @@ export const EntryMenuContent = ({
 						/>
 					</span>
 					{t('calendar.entryMenu.withYou', { name: partner })}
-				</p>
+				</div>
 			)}
 		</>
 	);
