@@ -3416,7 +3416,11 @@ $cal-new-pill-hover: #4b4f51;
 		}
 	}
 
-	.calendarHours__row--pause {
+	// Same weight as the weekday rule above plus one class, so the pause
+	// row's own areas win.
+	.calendarHours__row.calendarHours__row--pause:not(
+			.calendarHours__row--holidays
+		) {
 		grid-template-areas:
 			'. day day day'
 			'. from dash to';
