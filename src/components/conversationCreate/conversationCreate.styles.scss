@@ -1129,7 +1129,17 @@ body.conversationCreate--active .navigation__wrapper {
 
 	/* OrisoTextarea draws the same outlined field as the welcome text. */
 	&__input {
+		display: flex;
+		flex-direction: column;
 		width: 100%;
+		min-height: 120px;
+
+		.MuiInputBase-root {
+			flex: 1 1 auto;
+			align-items: flex-start;
+			box-sizing: border-box;
+			min-height: 120px;
+		}
 	}
 
 	&__row {

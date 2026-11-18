@@ -127,6 +127,7 @@ export const RuleChipsEditor = ({
 	return (
 		<div className="ruleChipsEditor">
 			<OrisoTextarea
+				minRows={2}
 				inputRef={inputRef}
 				className="ruleChipsEditor__input"
 				fullWidth

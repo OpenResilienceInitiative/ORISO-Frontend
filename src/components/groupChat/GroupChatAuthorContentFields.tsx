@@ -271,6 +271,7 @@ export const GroupChatAuthorContentFields = ({
 				aria-labelledby={tabId}
 			>
 				<OrisoTextarea
+					minRows={2}
 					className="createChat__welcomeInput"
 					fullWidth
 					inputProps={{
