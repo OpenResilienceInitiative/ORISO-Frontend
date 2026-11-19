@@ -18,6 +18,7 @@ export const ProfileCardList = ({ elements }: ProfileCardListProps) => (
 					icon={element.icon}
 					boxed={element.boxed}
 					fullWidth={element.fullWidth}
+					tourTarget={element.tourTarget}
 				>
 					<element.component />
 				</ProfileCard>

@@ -6449,6 +6449,44 @@
 					"intro": "Sohbet çemberleriniz danışmanlık listenizde görünür. Orada açar, ayarları düzenler ve bağlantıyı yeniden paylaşırsınız."
 				}
 			}
+		},
+		"profile": {
+			"title": "Profiliniz",
+			"summary": "Profil, yokluk, bildirimler, güvenlik ve ekran ayarları artık nerede.",
+			"step": {
+				"overview": {
+					"title": "Profiliniz",
+					"intro": "Profilinizde verileriniz ve ayarlarınız Genel, Etkinliklerim, Ayarlar ve Yardım bölümlerinde yer alır. Bu tur en önemli kartları gösterir."
+				},
+				"public": {
+					"title": "Kamu verileri",
+					"intro": "Danışanlar bu bilgileri görür: adınız, dilleriniz ve danışma merkezleriniz. Bunları güncel tutun."
+				},
+				"absence": {
+					"title": "Yokluğum",
+					"intro": "Yokluğunuzu buraya girin. Danışanlar o zaman yokluk mesajınızı görür."
+				},
+				"notifications": {
+					"title": "Bildirimler",
+					"intro": "E-posta ve tarayıcıda neler hakkında bilgilendirileceğinizi burada seçersiniz."
+				},
+				"security": {
+					"title": "Güvenlik",
+					"intro": "„Giriş ve hesap“ altında şifrenizi değiştirir ve iki faktörlü doğrulamayı yönetirsiniz. Yeni: eski mesajları kurtarma – şifreli mesajları yeni bir cihazda da okuyabilmek için bunu kurun."
+				},
+				"display": {
+					"title": "Ekran",
+					"intro": "Burada efektleri, zaman çizelgesini ve arayüz dilini ayarlarsınız."
+				},
+				"shortcuts": {
+					"title": "Klavye kısayolları",
+					"intro": "Yeni: birçok işlem klavyeyle yapılabilir. Tüm kısayollar burada."
+				},
+				"helpTours": {
+					"title": "Turlar",
+					"intro": "Herhangi bir turu buradan yeniden başlatın. „Tur düğmesini göster“ sağ alttaki „?“ düğmesini gösterir veya gizler."
+				}
+			}
 		}
 	},
 	"weekday": {

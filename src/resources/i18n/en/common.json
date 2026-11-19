@@ -6364,6 +6364,44 @@
 					"intro": "Your conversation circles appear in your consultation list. Open them there to edit the settings or share the link again."
 				}
 			}
+		},
+		"profile": {
+			"title": "Your profile",
+			"summary": "Where profile, absence, notifications, security and display live now.",
+			"step": {
+				"overview": {
+					"title": "Your profile",
+					"intro": "Your profile holds your data and settings, split into General, My activities, Settings and Help. This tour shows the most important cards."
+				},
+				"public": {
+					"title": "Public data",
+					"intro": "Help seekers see these details: your name, your languages and your counselling centres. Keep them up to date."
+				},
+				"absence": {
+					"title": "My absence",
+					"intro": "Enter your absence here. Help seekers then see your absence message."
+				},
+				"notifications": {
+					"title": "Notifications",
+					"intro": "Choose here what you are told about by e-mail and in the browser."
+				},
+				"security": {
+					"title": "Security",
+					"intro": "Under \"Sign-in & account\" you change your password and manage two-factor authentication. New: recovering old messages – set it up so you can read encrypted messages on a new device too."
+				},
+				"display": {
+					"title": "Display",
+					"intro": "Under \"Display\" you set effects, the timeline and the interface language."
+				},
+				"shortcuts": {
+					"title": "Keyboard shortcuts",
+					"intro": "New: many actions work from the keyboard. All shortcuts are listed here."
+				},
+				"helpTours": {
+					"title": "Tours",
+					"intro": "Restart any tour here. \"Show the tour button\" shows or hides the \"?\" button at the bottom right."
+				}
+			}
 		}
 	},
 	"weekday": {

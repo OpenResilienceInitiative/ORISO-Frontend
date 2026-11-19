@@ -159,6 +159,7 @@ describe('frontendTours registry', () => {
 			'consultant-walkthrough',
 			'consultant-case-handover',
 			'consultant-group-circle',
+			'consultant-profile',
 			'consultant-mail-counselling'
 		]);
 		expect(new Set(ids).size).toBe(ids.length);

@@ -106,6 +106,42 @@ const anchorContract: Array<{
 		sourceFile: 'conversationCreate/CreateConversationView.tsx',
 		expected: /tourTarget="groupchat-topic-picker"/
 	},
+	// Profile section cards: `tourTarget` in the route files.
+	{
+		anchor: 'profile-public',
+		sourceFile: 'profile/profile.routes.ts',
+		expected: /tourTarget: 'profile-public'/
+	},
+	{
+		anchor: 'profile-absence',
+		sourceFile: 'profile/profile.routes.ts',
+		expected: /tourTarget: 'profile-absence'/
+	},
+	{
+		anchor: 'profile-notifications',
+		sourceFile: 'profile/profileSettings.routes.ts',
+		expected: /tourTarget: 'profile-notifications'/
+	},
+	{
+		anchor: 'profile-security',
+		sourceFile: 'profile/profileSettings.routes.ts',
+		expected: /tourTarget: 'profile-security'/
+	},
+	{
+		anchor: 'profile-display',
+		sourceFile: 'profile/profileSettings.routes.ts',
+		expected: /tourTarget: 'profile-display'/
+	},
+	{
+		anchor: 'profile-shortcuts',
+		sourceFile: 'profile/profileSettings.routes.ts',
+		expected: /tourTarget: 'profile-shortcuts'/
+	},
+	{
+		anchor: 'profile-help-tours',
+		sourceFile: 'profile/profileHelp.routes.ts',
+		expected: /tourTarget: 'profile-help-tours'/
+	},
 	{
 		anchor: 'supervision-panel',
 		sourceFile: 'session/SessionItemComponent.tsx',
@@ -134,6 +170,14 @@ const passThroughContract: Array<{ sourceFile: string; expected: RegExp }> = [
 	{
 		sourceFile: 'conversationCreate/FormatCard.tsx',
 		expected: /data-tour-target=\{tourTarget\}/
+	},
+	{
+		sourceFile: 'profile/ProfileCard.tsx',
+		expected: /data-tour-target=\{tourTarget\}/
+	},
+	{
+		sourceFile: 'profile/ProfileCardList.tsx',
+		expected: /tourTarget=\{element\.tourTarget\}/
 	}
 ];
 

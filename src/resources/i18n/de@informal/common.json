@@ -2793,6 +2793,36 @@
 					"intro": "Deine Gesprächskreise erscheinen in deiner Beratungsliste. Dort öffnest du sie, bearbeitest die Einstellungen und teilst den Link erneut."
 				}
 			}
+		},
+		"profile": {
+			"title": "Dein Profil",
+			"step": {
+				"overview": {
+					"title": "Dein Profil",
+					"intro": "Im Profil liegen deine Daten und Einstellungen, verteilt auf die Bereiche Allgemeines, Meine Aktivitäten, Einstellungen und Hilfe. Der Rundgang zeigt die wichtigsten Karten."
+				},
+				"public": {
+					"intro": "Diese Angaben sehen Ratsuchende: dein Name, deine Sprachen und deine Beratungsstellen. Halte sie aktuell."
+				},
+				"absence": {
+					"intro": "Hier trägst du deine Abwesenheit ein. Ratsuchende sehen dann deine Abwesenheitsnachricht."
+				},
+				"notifications": {
+					"intro": "Hier legst du fest, worüber du per E-Mail und im Browser informiert wirst."
+				},
+				"security": {
+					"intro": "Unter „Anmeldung & Konto“ änderst du dein Passwort und verwaltest die Zwei-Faktor-Authentifizierung. Neu: die Wiederherstellung alter Nachrichten – richte sie ein, damit du verschlüsselte Nachrichten auch auf einem neuen Gerät lesen kannst."
+				},
+				"display": {
+					"intro": "Unter „Anzeige“ stellst du Effekte, den Zeitstrahl und die Sprache der Oberfläche ein."
+				},
+				"shortcuts": {
+					"intro": "Neu: Viele Aktionen erreichst du per Tastatur. Hier findest du alle Kürzel."
+				},
+				"helpTours": {
+					"intro": "Hier startest du jeden Rundgang erneut. Mit „Rundgang-Knopf anzeigen“ blendest du den Knopf „?“ unten rechts ein oder aus."
+				}
+			}
 		}
 	},
 	"liveChat": {
