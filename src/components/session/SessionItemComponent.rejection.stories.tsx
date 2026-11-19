@@ -23,6 +23,7 @@ import {
 import type { ListItemInterface } from '../../globalState/interfaces';
 
 const ROOM = '!enquiry-rejection:storybook.invalid';
+const TEAM_ROOM = '!enquiry-rejection-team:storybook.invalid';
 const sessionFor = (status: number) => {
 	const original = stageSession();
 	return buildExtendedSession({
@@ -63,9 +64,16 @@ const room = {
 	currentState: { getStateEvents: () => null, maySendEvent: () => true },
 	getUnreadNotificationCount: () => 0
 };
+const teamRoom = {
+	...room,
+	roomId: TEAM_ROOM,
+	timeline: [],
+	getLiveTimeline: () => ({ getEvents: () => [] })
+};
+const rooms = [room, teamRoom];
 const client = {
-	getRoom: (id: string) => (id === ROOM ? room : null),
-	getRooms: () => [room],
+	getRoom: (id: string) => rooms.find(({ roomId }) => roomId === id) ?? null,
+	getRooms: () => rooms,
 	getUserId: () => '@consultant:storybook.invalid',
 	getSyncState: () => SyncState.Prepared,
 	getAccountData: () => null,
@@ -77,12 +85,14 @@ const client = {
 };
 const matrix = {
 	getClient: () => client,
-	getRoom: () => room,
-	getRoomMessages: () => timeline,
+	getRoom: client.getRoom,
+	getRoomMessages: (id: string) => client.getRoom(id)?.timeline ?? [],
 	onClientChange: () => () => {},
 	sendTyping: async () => {}
 } as any;
 type Scenario =
+	| 'actions'
+	| 'team-actions'
 	| 'confirmation'
 	| 'pending'
 	| 'incomplete'
@@ -100,6 +110,7 @@ function EnquiryRejectionStory({ scenario }: { scenario: Scenario }) {
 	const { pathname } = useLocation();
 	React.useLayoutEffect(() => {
 		const previous = window.fetch;
+		let teamCreated = false;
 		setMatrixClientServiceRef(matrix);
 		window.fetch = async (input, init) => {
 			const url =
@@ -139,8 +150,14 @@ function EnquiryRejectionStory({ scenario }: { scenario: Scenario }) {
 				});
 			if (/\/supervisors$/.test(url) || /\/consultants(?:\?|$)/.test(url))
 				return json([]);
-			if (/\/team-discussion/.test(url))
-				return new Response(null, { status: 204 });
+			if (/\/team-discussion/.test(url)) {
+				if (scenario === 'team-actions' && method === 'POST') {
+					teamCreated = true;
+				}
+				return teamCreated
+					? json({ matrixRoomId: TEAM_ROOM, status: 'OPEN' })
+					: new Response(null, { status: 204 });
+			}
 			// #1338: opening the session registers its room for the sync listener.
 			if (/\/matrix\/sync\/register\/4711$/.test(url))
 				return new Response(null, { status: 204 });
@@ -194,6 +211,8 @@ function EnquiryRejectionStory({ scenario }: { scenario: Scenario }) {
 								style={{
 									height: 'calc(100vh - 40px)',
 									minHeight: 400,
+									display: 'flex',
+									flexDirection: 'column',
 									padding: 12
 								}}
 							>
@@ -202,9 +221,12 @@ function EnquiryRejectionStory({ scenario }: { scenario: Scenario }) {
 									bannedUsers={[]}
 									checkMutedUserForThisSession={() => {}}
 								/>
-								<output data-testid="rejection-proof">
-									{requestCount}:{pathname}
-								</output>
+								{scenario !== 'actions' &&
+									scenario !== 'team-actions' && (
+										<output data-testid="rejection-proof">
+											{requestCount}:{pathname}
+										</output>
+									)}
 								{pathname ===
 									'/sessions/consultant/sessionPreview' &&
 									requestCount > 0 && (
@@ -251,6 +273,28 @@ const openConfirmation: NonNullable<Story['play']> = async ({
 		document.getByRole('dialog').querySelector('textarea')
 	).toBeNull();
 };
+export const AvailableActions: Story = {
+	args: { scenario: 'actions' },
+	globals: { viewport: { value: 'phone390' } },
+	play: async ({ canvas }) => {
+		const accept = await canvas.findByRole('button', {
+			name: /Anfrage annehmen|Accept request/
+		});
+		const decline = canvas.getByRole('button', {
+			name: /Anfrage ablehnen|Decline request/
+		});
+		const acceptBounds = accept.getBoundingClientRect();
+		const declineBounds = decline.getBoundingClientRect();
+		expect(Math.abs(acceptBounds.top - declineBounds.top)).toBeLessThan(2);
+		expect(
+			Math.max(
+				declineBounds.left - acceptBounds.right,
+				acceptBounds.left - declineBounds.right
+			)
+		).toBeGreaterThan(0);
+	}
+};
+
 export const Confirmation: Story = {
 	args: { scenario: 'confirmation' },
 	play: openConfirmation

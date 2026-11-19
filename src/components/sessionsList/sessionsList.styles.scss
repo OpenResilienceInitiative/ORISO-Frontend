@@ -672,15 +672,15 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 	}
 }
 
-// The list↔chat divider only while BOTH panes are empty, desktop only
-// (Frank 2026-09-21): next to an open chat or the create card there is no
-// line. The resize handle draws it: full column height, above the toolbar
-// (whose background hid a border on the empty state), centred under the pill.
+// Empty split views use the same full-height divider, centred under the
+// grip. List emptiness is independent of the illustration hidden in the rail.
 @include breakpoint($fromLarge) {
-	.contentWrapper:has(.contentWrapper__detail .session--empty):has(
-			.sessionsList__emptyState
-		)
-		.sessionsList__resizeHandle--end::before {
+	.contentWrapper:has(.contentWrapper__detail .session--empty)
+		.sessionsList__wrapper:has([data-list-empty='true'])
+		> .sessionsList__resizeHandle--end::before,
+	.notificationsCenter--emptySplit
+		.notificationsCenter__listColumn
+		> .sessionsList__resizeHandle--end::before {
 		content: '';
 		position: absolute;
 		top: 0;
