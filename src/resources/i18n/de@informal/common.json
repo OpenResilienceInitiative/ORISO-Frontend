@@ -2823,6 +2823,28 @@
 					"intro": "Hier startest du jeden Rundgang erneut. Mit „Rundgang-Knopf anzeigen“ blendest du den Knopf „?“ unten rechts ein oder aus."
 				}
 			}
+		},
+		"calendar": {
+			"step": {
+				"nav": {
+					"intro": "Neu: Dein Kalender ist Teil der Plattform. Hier siehst du alle Termine mit Ratsuchenden – und auf Wunsch die deiner Kolleg:innen."
+				},
+				"create": {
+					"intro": "Über „Neu“ trägst du einen Termin, eine Sperrzeit oder eine Abwesenheit ein – drei Reiter in einem Dialog."
+				},
+				"viewSwitch": {
+					"intro": "Wechsle zwischen Tag, Woche, Monat und Liste. Die Liste zeigt außerdem deine Links ohne Termin."
+				},
+				"workingHours": {
+					"intro": "Deine Arbeitszeit bestimmt, wann Ratsuchende Termine buchen können. Mit „Ändern“ passt du sie an."
+				},
+				"settings": {
+					"intro": "Unter ⋮ legst du Arbeitszeit und Sprechstunden fest, trägst Sperrzeiten mit Wiederholung und freie Tage ein und verbindest Outlook oder Google."
+				},
+				"links": {
+					"intro": "Deine Direktlinks liegen jetzt hier in der Liste: kopieren, als QR-Code teilen oder bearbeiten."
+				}
+			}
 		}
 	},
 	"liveChat": {

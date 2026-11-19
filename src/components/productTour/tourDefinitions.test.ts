@@ -158,6 +158,7 @@ describe('frontendTours registry', () => {
 		expect(ids).toEqual([
 			'consultant-walkthrough',
 			'consultant-case-handover',
+			'consultant-calendar',
 			'consultant-group-circle',
 			'consultant-profile',
 			'consultant-mail-counselling'

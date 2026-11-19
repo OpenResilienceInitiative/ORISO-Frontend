@@ -6402,6 +6402,40 @@
 					"intro": "Restart any tour here. \"Show the tour button\" shows or hides the \"?\" button at the bottom right."
 				}
 			}
+		},
+		"calendar": {
+			"title": "Calendar",
+			"summary": "Add appointments, blocked time and absences, set working hours, connect calendars.",
+			"step": {
+				"nav": {
+					"title": "My dates",
+					"intro": "New: your calendar is part of the platform. It shows all appointments with help seekers – and, if you like, your colleagues' too."
+				},
+				"create": {
+					"title": "Add an entry",
+					"intro": "\"New\" adds an appointment, blocked time or an absence – three tabs in one dialog."
+				},
+				"viewSwitch": {
+					"title": "View",
+					"intro": "Switch between day, week, month and list. The list also shows your links without an appointment."
+				},
+				"quickEntry": {
+					"title": "Quick entry",
+					"intro": "An entry without a dialog: choose the kind and person, set day and start or tap a free slot, then save."
+				},
+				"workingHours": {
+					"title": "Working hours",
+					"intro": "Your working hours decide when help seekers can book. Adjust them with \"Change\"."
+				},
+				"settings": {
+					"title": "Calendar settings",
+					"intro": "Under ⋮ you set working and consultation hours, add repeating blocked time and days off, and connect Outlook or Google."
+				},
+				"links": {
+					"title": "Links without an appointment",
+					"intro": "Your direct links now live here in the list: copy them, share them as a QR code or edit them."
+				}
+			}
 		}
 	},
 	"weekday": {
