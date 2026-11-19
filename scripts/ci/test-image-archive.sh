@@ -38,6 +38,18 @@ require_line "$action" 'push: false'
 require_line "$action" 'outputs: type=oci,'
 require_line "$action" 'provenance: mode=max'
 require_line "$action" 'sbom: true'
+require_line "$action" "no-cache-filters: \${{ inputs.dockerfile == 'Dockerfile.storybook' && 'alpine-packages' || '' }}"
+if grep -Eq '^[[:space:]]*no-cache:' "$action"; then
+  fail 'The alpine-packages stage is the only cache bypass'
+fi
+grep -Eq '^FROM nginx:[^[:space:]]+@sha256:[a-f0-9]{64} AS alpine-packages$' Dockerfile.storybook ||
+  fail 'Storybook must refresh packages from a pinned Nginx base'
+package_stage=$(line_number Dockerfile.storybook ' AS alpine-packages')
+package_upgrade=$(line_number Dockerfile.storybook 'RUN apk upgrade --no-cache')
+storybook_runtime=$(line_number Dockerfile.storybook 'FROM alpine-packages')
+storybook_copy=$(line_number Dockerfile.storybook 'COPY storybook-static')
+((package_stage < package_upgrade && package_upgrade < storybook_runtime && storybook_runtime < storybook_copy)) ||
+  fail 'Storybook must install patches in its package stage before assembling the runtime'
 require_line "$action" 'EXPECTED_ARCHIVE_SHA256: ${{ steps.scan.outputs.archive_sha256 }}'
 for step in 'Login to GitHub Container Registry' 'Publish the scanned archive without rebuilding'; do
   grep -A 3 -F -- "- name: $step" "$action" |
