@@ -31,6 +31,7 @@ export const TourLauncherSwitch = () => {
 		<div
 			className="helpTours__preference"
 			data-testid="tour-launcher-switch"
+			data-tour-target="help-tour-switch"
 		>
 			<Text
 				text={title}

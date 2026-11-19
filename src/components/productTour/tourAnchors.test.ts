@@ -21,6 +21,12 @@ const anchorContract: Array<{
 	expected?: RegExp;
 }> = [
 	{
+		// "Where your tours live": the launcher switch in Help → Rundgänge
+		// (the whole Help card is taller than a phone screen).
+		anchor: 'help-tour-switch',
+		sourceFile: 'profile/TourLauncherSwitch.tsx'
+	},
+	{
 		anchor: 'session-composer',
 		sourceFile: 'messageSubmitInterface/TipTapComposer.tsx'
 	},

@@ -51,6 +51,12 @@ export const bringTargetIntoView = (target: Element | null): void => {
 		rect.bottom > window.innerHeight ||
 		rect.right > window.innerWidth;
 	if (outside) {
-		target.scrollIntoView({ block: 'center', inline: 'nearest' });
+		// A target taller than the screen is shown from its top; centring it
+		// would push its start (and the tooltip's anchor) out of view.
+		const tall = rect.bottom - rect.top > window.innerHeight;
+		target.scrollIntoView({
+			block: tall ? 'start' : 'center',
+			inline: 'nearest'
+		});
 	}
 };

@@ -78,6 +78,15 @@ describe('bringTargetIntoView', () => {
 		});
 	});
 
+	it('shows a target taller than the screen from its top', () => {
+		const element = target({ top: -300, bottom: window.innerHeight * 3 });
+		bringTargetIntoView(element);
+		expect(element.scrollIntoView).toHaveBeenCalledWith({
+			block: 'start',
+			inline: 'nearest'
+		});
+	});
+
 	it('ignores a missing target', () => {
 		expect(() => bringTargetIntoView(null)).not.toThrow();
 	});
