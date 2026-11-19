@@ -67,8 +67,8 @@ export interface LiveChatEntryRoomProps {
 		topicId?: number;
 		tenantId?: number | null;
 		consultingTypeId?: number;
-		/** Redeems the link, sets its tokens, and returns the new session. */
-		/** Creates the guest under `userId`, the User-ID on the chosen card. */
+		/** Redeems the link under `userId` — the User-ID on the chosen card
+		 *  becomes the login — sets its tokens, and returns the new session. */
 		redeem: (userId: string) => Promise<number>;
 	};
 	/** The topic slug from the link, for the heading. */
