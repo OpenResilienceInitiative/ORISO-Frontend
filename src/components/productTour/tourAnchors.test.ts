@@ -101,10 +101,6 @@ const anchorContract: Array<{
 		anchor: 'profile-overview',
 		sourceFile: 'profile/Profile.tsx'
 	},
-	{
-		anchor: 'help-tours',
-		sourceFile: 'profile/HelpToursSection.tsx'
-	},
 	// Settings cards: anchored inside each card's own component, so the
 	// card shell stays untouched. The three notification variants share one
 	// anchor; only one of them renders the first match.

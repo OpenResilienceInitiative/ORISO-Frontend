@@ -71,7 +71,7 @@ export const askerFirstStepsTour: TourDefinition = {
 			// lower on the page at desktop width, hence `auto`.
 			id: 'help-tours',
 			route: '/profile/hilfe/rundgaenge',
-			target: 'help-tours',
+			target: 'help-tour-switch',
 			placement: 'auto',
 			optional: true,
 			titleKey: 'tour.askerFirstSteps.step.helpTours.title',
