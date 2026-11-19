@@ -6477,6 +6477,40 @@
 					"intro": "Hier starten Sie jeden Rundgang erneut. Mit „Rundgang-Knopf anzeigen“ blenden Sie den Knopf „?“ unten rechts ein oder aus."
 				}
 			}
+		},
+		"calendar": {
+			"title": "Kalender",
+			"summary": "Termine, Sperrzeiten und Abwesenheiten eintragen, Arbeitszeiten festlegen, Kalender verbinden.",
+			"step": {
+				"nav": {
+					"title": "Meine Termine",
+					"intro": "Neu: Ihr Kalender ist Teil der Plattform. Hier sehen Sie alle Termine mit Ratsuchenden – und auf Wunsch die Ihrer Kolleg:innen."
+				},
+				"create": {
+					"title": "Neu eintragen",
+					"intro": "Über „Neu“ tragen Sie einen Termin, eine Sperrzeit oder eine Abwesenheit ein – drei Reiter in einem Dialog."
+				},
+				"viewSwitch": {
+					"title": "Ansicht",
+					"intro": "Wechseln Sie zwischen Tag, Woche, Monat und Liste. Die Liste zeigt außerdem Ihre Links ohne Termin."
+				},
+				"quickEntry": {
+					"title": "Schnell eintragen",
+					"intro": "Ein Eintrag ohne Dialog: Art und Person wählen, Tag und Beginn setzen oder eine freie Zeit antippen, dann „Eintragen“."
+				},
+				"workingHours": {
+					"title": "Arbeitszeit",
+					"intro": "Ihre Arbeitszeit bestimmt, wann Ratsuchende Termine buchen können. Mit „Ändern“ passen Sie sie an."
+				},
+				"settings": {
+					"title": "Kalender-Einstellungen",
+					"intro": "Unter ⋮ legen Sie Arbeitszeit und Sprechstunden fest, tragen Sperrzeiten mit Wiederholung und freie Tage ein und verbinden Outlook oder Google."
+				},
+				"links": {
+					"title": "Links ohne Termin",
+					"intro": "Ihre Direktlinks liegen jetzt hier in der Liste: kopieren, als QR-Code teilen oder bearbeiten."
+				}
+			}
 		}
 	},
 	"weekday": {

@@ -142,6 +142,36 @@ const anchorContract: Array<{
 		sourceFile: 'profile/profileHelp.routes.ts',
 		expected: /tourTarget: 'profile-help-tours'/
 	},
+	// Calendar (keep edits to the attribute; FE#2326 touches the sidebar).
+	{
+		anchor: 'calendar-create',
+		sourceFile: 'calendar/CalendarPage.tsx'
+	},
+	{
+		anchor: 'calendar-settings',
+		sourceFile: 'calendar/CalendarPage.tsx'
+	},
+	{
+		// Digits and the pill menu never render together; both carry it.
+		anchor: 'calendar-view-switch',
+		sourceFile: 'calendar/CalendarPage.tsx',
+		expected:
+			/data-tour-target="calendar-view-switch"[\s\S]*data-tour-target="calendar-view-switch"/
+	},
+	{
+		// Only while the quick panel is not hidden.
+		anchor: 'calendar-quick-entry',
+		sourceFile: 'calendar/CalendarSidebar.tsx',
+		expected: /\?\s*undefined\s*:\s*'calendar-quick-entry'/
+	},
+	{
+		anchor: 'calendar-working-hours',
+		sourceFile: 'calendar/CalendarSidebar.tsx'
+	},
+	{
+		anchor: 'calendar-links',
+		sourceFile: 'calendar/CalendarLinksSection.tsx'
+	},
 	{
 		anchor: 'supervision-panel',
 		sourceFile: 'session/SessionItemComponent.tsx',

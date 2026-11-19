@@ -6487,6 +6487,40 @@
 					"intro": "Relancez ici n'importe quelle visite. « Afficher le bouton des visites guidées » affiche ou masque le bouton « ? » en bas à droite."
 				}
 			}
+		},
+		"calendar": {
+			"title": "Calendrier",
+			"summary": "Saisir rendez-vous, plages bloquées et absences, définir ses horaires, connecter un agenda.",
+			"step": {
+				"nav": {
+					"title": "Mes rendez-vous",
+					"intro": "Nouveau : votre calendrier fait partie de la plateforme. Il montre tous vos rendez-vous avec les personnes accompagnées – et, si vous le souhaitez, ceux de vos collègues."
+				},
+				"create": {
+					"title": "Nouvelle saisie",
+					"intro": "« Nouveau » ajoute un rendez-vous, une plage bloquée ou une absence – trois onglets dans une seule fenêtre."
+				},
+				"viewSwitch": {
+					"title": "Affichage",
+					"intro": "Passez du jour à la semaine, au mois ou à la liste. La liste affiche aussi vos liens sans rendez-vous."
+				},
+				"quickEntry": {
+					"title": "Saisie rapide",
+					"intro": "Une saisie sans fenêtre : choisissez le type et la personne, fixez le jour et l'heure ou touchez un créneau libre, puis enregistrez."
+				},
+				"workingHours": {
+					"title": "Horaires de travail",
+					"intro": "Vos horaires déterminent quand les personnes accompagnées peuvent réserver. « Modifier » les ajuste."
+				},
+				"settings": {
+					"title": "Paramètres du calendrier",
+					"intro": "Sous ⋮, vous définissez horaires de travail et heures de consultation, saisissez des plages bloquées récurrentes et des jours libres, et connectez Outlook ou Google."
+				},
+				"links": {
+					"title": "Liens sans rendez-vous",
+					"intro": "Vos liens directs se trouvent désormais ici dans la liste : copiez-les, partagez-les en QR code ou modifiez-les."
+				}
+			}
 		}
 	},
 	"weekday": {

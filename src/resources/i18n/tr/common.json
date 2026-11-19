@@ -6487,6 +6487,40 @@
 					"intro": "Herhangi bir turu buradan yeniden başlatın. „Tur düğmesini göster“ sağ alttaki „?“ düğmesini gösterir veya gizler."
 				}
 			}
+		},
+		"calendar": {
+			"title": "Takvim",
+			"summary": "Randevu, kapalı zaman ve yokluk girin, çalışma saatlerini belirleyin, takvim bağlayın.",
+			"step": {
+				"nav": {
+					"title": "Randevularım",
+					"intro": "Yeni: takviminiz platformun bir parçası. Danışanlarla tüm randevularınızı – isterseniz meslektaşlarınızınkileri de – burada görürsünüz."
+				},
+				"create": {
+					"title": "Yeni kayıt",
+					"intro": "„Yeni“ ile randevu, engellenmiş zaman veya yokluk girersiniz – tek pencerede üç sekme."
+				},
+				"viewSwitch": {
+					"title": "Görünüm",
+					"intro": "Gün, hafta, ay ve liste arasında geçiş yapın. Liste ayrıca randevusuz bağlantılarınızı da gösterir."
+				},
+				"quickEntry": {
+					"title": "Hızlı kayıt",
+					"intro": "Pencere açmadan kayıt: türü ve kişiyi seçin, gün ve başlangıcı girin ya da boş bir zamana dokunun, sonra kaydedin."
+				},
+				"workingHours": {
+					"title": "Çalışma saatleri",
+					"intro": "Çalışma saatleriniz danışanların ne zaman randevu alabileceğini belirler. „Değiştir“ ile ayarlayın."
+				},
+				"settings": {
+					"title": "Takvim ayarları",
+					"intro": "⋮ altında çalışma ve görüşme saatlerini belirler, tekrarlanan kapalı zaman ve boş günler girer, Outlook veya Google bağlarsınız."
+				},
+				"links": {
+					"title": "Randevusuz bağlantılar",
+					"intro": "Doğrudan bağlantılarınız artık burada, listede: kopyalayın, QR kod olarak paylaşın veya düzenleyin."
+				}
+			}
 		}
 	},
 	"weekday": {

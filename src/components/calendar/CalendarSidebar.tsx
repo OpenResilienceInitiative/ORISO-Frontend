@@ -776,6 +776,11 @@ export const CalendarSidebar = ({
 					id="calendar-quick-panel"
 					className="calendarSide__quick"
 					hidden={(sheet && !quickOpen) || narrow}
+					data-tour-target={
+						(sheet && !quickOpen) || narrow
+							? undefined
+							: 'calendar-quick-entry'
+					}
 				>
 					<QuickEntry
 						ownerId={ownerId}
@@ -796,7 +801,10 @@ export const CalendarSidebar = ({
 			{/* On the phone and the tablet the hours live in ⋮. Plain text on
 			    the grey page with a clock and "Ändern" (prototype v17). */}
 			{consultant && onWorkingHours && !narrow && !sheet && (
-				<p className="calendarSide__work">
+				<p
+					className="calendarSide__work"
+					data-tour-target="calendar-working-hours"
+				>
 					<ScheduleIcon
 						className="calendarSide__workIcon"
 						aria-hidden
