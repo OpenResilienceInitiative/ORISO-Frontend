@@ -51,7 +51,7 @@
 		"@vector-im/compound-design-tokens": "^6.3.0",
 		"@vector-im/compound-web": "^8.2.5",
 		"@vitejs/plugin-react": "6.3.0",
-		"bfj": "^8.0.0",
+		"bfj": "^9.1.4",
 		"browserslist": "^4.22.2",
 		"classnames": "^2.5.1",
 		"clsx": "^1.2.1",
