@@ -6419,6 +6419,36 @@
 					"intro": "Kendi vakalarınızı danışmanlıkta „+“ → „Danışmanlığı devret“ ile önerin. Meslektaşlarınızın vakalarını kişi aramasıyla talep edin. Durumu zaman çizelgesinde izleyin."
 				}
 			}
+		},
+		"groupCircle": {
+			"title": "Sohbet çemberi oluşturmak",
+			"summary": "Moderasyonlu bir sohbet çemberi oluşturun, paylaşın ve başlatın.",
+			"step": {
+				"intro": {
+					"title": "Sohbet çemberleri",
+					"intro": "Sohbet çemberi, danışmanların yönettiği anonim bir gruptur – tek seferlik ya da düzenli. Bu tur nerede oluşturulduğunu gösterir. Hiçbir şey oluşturulmaz."
+				},
+				"create": {
+					"title": "Oluştur",
+					"intro": "Danışmanlık listenizdeki „Oluştur“ ile yeni sohbetler başlatırsınız. Hangi formatları göreceğinizi kurum ve danışma merkezi belirler."
+				},
+				"format": {
+					"title": "„Sohbet çemberi“ formatı",
+					"intro": "„Görüşme formatını seçin“ altında çember diğer formatların yanında yer alır. Yalnızca bir format açıksa bu seçim atlanır."
+				},
+				"topic": {
+					"title": "Konu seçmek",
+					"intro": "Önce „Konu / uzmanlık alanı“ seçin. Ardından çemberin ayarları açılır."
+				},
+				"settings": {
+					"title": "Ayarla, paylaş, başlat",
+					"intro": "Ayarlarda tarih, tekrar, ortam ve dili belirler, „Ek moderasyon“ altında yardımcı moderatör eklersiniz. Ardından davet bağlantısını veya QR kodunu paylaşın. Katılımcılar siz „Sohbet başlat“ ile başlayıp onları içeri alana kadar bekleme odasında bekler."
+				},
+				"done": {
+					"title": "Hazır",
+					"intro": "Sohbet çemberleriniz danışmanlık listenizde görünür. Orada açar, ayarları düzenler ve bağlantıyı yeniden paylaşırsınız."
+				}
+			}
 		}
 	},
 	"weekday": {

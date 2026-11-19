@@ -6419,6 +6419,36 @@
 					"intro": "Proposez vos dossiers dans la consultation via « + » → « Transférer la consultation ». Demandez ceux de vos collègues via la recherche de personnes. Suivez l'état dans la chronologie."
 				}
 			}
+		},
+		"groupCircle": {
+			"title": "Créer un cercle de parole",
+			"summary": "Créer, partager et lancer un cercle de parole modéré.",
+			"step": {
+				"intro": {
+					"title": "Cercles de parole",
+					"intro": "Un cercle de parole est un groupe anonyme animé par des conseiller·ères – ponctuel ou régulier. Cette visite montre où le créer. Rien n'est créé."
+				},
+				"create": {
+					"title": "Créer",
+					"intro": "« Créer » dans votre liste de consultations lance de nouvelles conversations. Les formats proposés dépendent de l'organisme et du centre de conseil."
+				},
+				"format": {
+					"title": "Le format « Cercle de parole »",
+					"intro": "Sous « Choisir le format d'entretien », le cercle figure à côté des autres formats. Si un seul format est activé, ce choix est sauté."
+				},
+				"topic": {
+					"title": "Choisir un sujet",
+					"intro": "Choisissez d'abord « Sujet / domaine spécialisé ». Les réglages du cercle s'ouvrent ensuite."
+				},
+				"settings": {
+					"title": "Régler, partager, lancer",
+					"intro": "Dans les réglages, vous fixez date, répétitions, média et langue, et ajoutez des co-modérateur·rices sous « Modération supplémentaire ». Partagez ensuite le lien d'invitation ou le QR code. Les participant·es attendent en salle d'attente jusqu'à ce que vous commenciez avec « Démarrer le chat » et les fassiez entrer."
+				},
+				"done": {
+					"title": "Prêt",
+					"intro": "Vos cercles de parole apparaissent dans votre liste de consultations. Ouvrez-les pour modifier les réglages ou repartager le lien."
+				}
+			}
 		}
 	},
 	"weekday": {

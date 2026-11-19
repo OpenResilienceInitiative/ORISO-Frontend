@@ -6334,6 +6334,36 @@
 					"intro": "Offer your own cases in the consultation via \"+\" → \"Hand over consultation\". Request colleagues' cases through the people search. Follow the status in the timeline."
 				}
 			}
+		},
+		"groupCircle": {
+			"title": "Setting up a conversation circle",
+			"summary": "Create, share and start a moderated conversation circle.",
+			"step": {
+				"intro": {
+					"title": "Conversation circles",
+					"intro": "A conversation circle is an anonymous group moderated by counsellors – one-off or recurring. This tour shows where to set one up. Nothing is created."
+				},
+				"create": {
+					"title": "Create",
+					"intro": "Use \"Create\" in your consultation list to start new conversations. Which formats you see is set by your organisation and counselling centre."
+				},
+				"format": {
+					"title": "The \"Conversation circle\" format",
+					"intro": "Under \"Choose conversation format\" the circle sits next to the other formats. If only one format is enabled, this choice is skipped."
+				},
+				"topic": {
+					"title": "Choose a topic",
+					"intro": "First choose \"Topic / subject area\". The circle's settings open next."
+				},
+				"settings": {
+					"title": "Set up, share, start",
+					"intro": "In the settings you choose date, repeats, medium and language, and add co-moderators under \"Additional moderation\". Then share the invitation link or QR code. Participants wait in the waiting room until you begin with \"Start chat\" and let them in."
+				},
+				"done": {
+					"title": "Ready",
+					"intro": "Your conversation circles appear in your consultation list. Open them there to edit the settings or share the link again."
+				}
+			}
 		}
 	},
 	"weekday": {
