@@ -1,3 +1,9 @@
+import { EventEmitter } from 'node:events';
+import {
+	CallEvent,
+	CallState,
+	type MatrixCall
+} from 'matrix-js-sdk/lib/webrtc/call';
 import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import { DeviceIsolationModeKind } from 'matrix-js-sdk/lib/crypto-api';
 import {
@@ -578,6 +584,94 @@ describe('MatrixClientService', () => {
 			vi.useRealTimers();
 		}
 	});
+
+	it.each(['before', 'after'])(
+		'ends only the outgoing call when logout occurs %s replacement PREPARED',
+		async (timing) => {
+			const createSdkClient = () => ({
+				...mockedMatrixClient,
+				on: vi.fn<
+					(event: string, listener: (state: string) => void) => void
+				>(),
+				getRoom: vi.fn().mockReturnValue({
+					hasEncryptionStateEvent: () => true
+				})
+			});
+			const prepareClient = (
+				client: ReturnType<typeof createSdkClient>
+			) => {
+				const sync = client.on.mock.calls.find(
+					([name]) => name === 'sync'
+				);
+				if (!sync) throw new Error('Expected a Matrix sync listener');
+				sync[1]('PREPARED');
+			};
+			const createCall = () => {
+				const stopTrack = vi.fn();
+				const call = Object.assign(new EventEmitter(), {
+					roomId: '!room:matrix.localhost',
+					answer: vi.fn().mockResolvedValue(undefined),
+					hangup: vi.fn(),
+					localUsermediaFeed: {
+						stream: { getTracks: () => [{ stop: stopTrack }] }
+					}
+				});
+				return { call, stopTrack };
+			};
+			const outgoingClient = createSdkClient();
+			const replacementClient = createSdkClient();
+			vi.mocked(createMatrixClient)
+				.mockReturnValueOnce(
+					outgoingClient as unknown as ReturnType<
+						typeof createMatrixClient
+					>
+				)
+				.mockReturnValueOnce(
+					replacementClient as unknown as ReturnType<
+						typeof createMatrixClient
+					>
+				);
+			const outgoing = new MatrixClientService();
+			const replacement = new MatrixClientService();
+			const oldCall = createCall();
+			const newCall = createCall();
+
+			try {
+				await outgoing.initializeClient(lifecycleLogin);
+				prepareClient(outgoingClient);
+				await matrixCallService.answerCall(
+					oldCall.call as unknown as MatrixCall,
+					false
+				);
+				await replacement.initializeClient({
+					...lifecycleLogin,
+					userId: '@other:matrix.localhost'
+				});
+
+				if (timing === 'before') {
+					await outgoing.logout();
+					expect(oldCall.stopTrack).toHaveBeenCalledOnce();
+				}
+				prepareClient(replacementClient);
+				await matrixCallService.answerCall(
+					newCall.call as unknown as MatrixCall,
+					false
+				);
+				if (timing === 'after') await outgoing.logout();
+
+				expect(oldCall.call.hangup).toHaveBeenCalledOnce();
+				expect(oldCall.stopTrack).toHaveBeenCalledOnce();
+				oldCall.call.emit(CallEvent.State, CallState.Ended);
+				oldCall.call.emit(CallEvent.Hangup);
+				expect(newCall.call.hangup).not.toHaveBeenCalled();
+				expect(newCall.stopTrack).not.toHaveBeenCalled();
+				expect(matrixCallService.getActiveCall()).toBe(newCall.call);
+			} finally {
+				outgoing.stopAndCleanup();
+				replacement.stopAndCleanup();
+			}
+		}
+	);
 
 	it('does not deadlock when a held operation checks its token', async () => {
 		const service = new MatrixClientService();

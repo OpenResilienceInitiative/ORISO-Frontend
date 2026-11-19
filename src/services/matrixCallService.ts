@@ -41,7 +41,7 @@ class MatrixCallService {
 		handlers: MatrixCallEventHandlers = {}
 	): void {
 		if (this.client && this.client !== client) {
-			this.client.removeAllListeners('Call.incoming' as any);
+			this.detach();
 		}
 
 		this.client = client;
@@ -211,15 +211,14 @@ class MatrixCallService {
 	 * Hangup the active call
 	 */
 	public hangupCall(): void {
-		if (this.activeCall) {
-			// console.log('📞 Hanging up call...');
-			try {
-				this.activeCall.hangup('user_hangup' as any, false);
-				this.cleanup();
-				// console.log('✅ Call ended');
-			} catch (error) {
-				// console.error('❌ Error hanging up call:', error);
-			}
+		const call = this.activeCall;
+		if (!call) return;
+		try {
+			call.hangup('user_hangup' as any, false);
+		} catch {
+			// Local media still needs to be released if signaling fails.
+		} finally {
+			this.cleanup(call);
 		}
 	}
 
@@ -287,6 +286,7 @@ class MatrixCallService {
 
 		// Call state changed
 		call.on(CallEvent.State as any, (state: CallState) => {
+			if (this.activeCall !== call) return;
 			// console.log('📞 Call state changed:', state);
 
 			if (this.eventHandlers.onCallStateChanged) {
@@ -299,18 +299,20 @@ class MatrixCallService {
 				if (this.eventHandlers.onCallEnded) {
 					this.eventHandlers.onCallEnded();
 				}
-				this.cleanup();
+				this.cleanup(call);
 			}
 		});
 
 		// Feeds changed (local/remote streams)
 		call.on(CallEvent.FeedsChanged as any, () => {
+			if (this.activeCall !== call) return;
 			// console.log('📞 Feeds changed');
 			this.bindFeedStreamListeners(call, options);
 			this.handleFeedsChanged(call, options);
 		});
 
 		call.on(CallEvent.PeerConnectionCreated as any, () => {
+			if (this.activeCall !== call) return;
 			this.bindPeerConnectionListeners(call, options);
 		});
 
@@ -319,6 +321,7 @@ class MatrixCallService {
 
 		// Call error
 		call.on(CallEvent.Error as any, (error: Error) => {
+			if (this.activeCall !== call) return;
 			// console.error('📞 Call error:', error);
 			if (this.eventHandlers.onCallError) {
 				this.eventHandlers.onCallError(error);
@@ -327,11 +330,12 @@ class MatrixCallService {
 
 		// Call hangup
 		call.on(CallEvent.Hangup as any, () => {
+			if (this.activeCall !== call) return;
 			// console.log('📞 Call hangup event');
 			if (this.eventHandlers.onCallEnded) {
 				this.eventHandlers.onCallEnded();
 			}
-			this.cleanup();
+			this.cleanup(call);
 		});
 	}
 
@@ -476,34 +480,30 @@ class MatrixCallService {
 	/**
 	 * Cleanup call resources
 	 */
-	private cleanup(): void {
+	private cleanup(call: MatrixCall): void {
+		if (this.activeCall !== call) return;
+
 		this.detachFeedListeners.forEach((detach) => detach());
 		this.detachFeedListeners = [];
-
-		if (this.activeCall) {
-			// Stop all media tracks
-			try {
-				const localFeed = this.activeCall.localUsermediaFeed;
-				if (localFeed) {
-					localFeed.stream
-						?.getTracks()
-						.forEach((track) => track.stop());
-				}
-			} catch (error) {
-				// console.error('Error stopping media tracks:', error);
-			}
-
-			this.activeCall = null;
+		try {
+			call.localUsermediaFeed?.stream
+				?.getTracks()
+				.forEach((track) => track.stop());
+		} catch {
+			// The SDK may already have released the local feed.
 		}
+
+		this.activeCall = null;
 		this.activeMediaOptions = null;
 	}
 
-	public detach(): void {
-		if (this.client) {
-			this.client.removeAllListeners('Call.incoming' as any);
-		}
-		this.hangupCall();
+	public detach(expectedClient?: MatrixClient): void {
+		const client = this.client;
+		if (expectedClient && client !== expectedClient) return;
+
 		this.client = null;
+		client?.removeAllListeners('Call.incoming' as any);
+		this.hangupCall();
 	}
 
 	/**

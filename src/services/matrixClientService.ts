@@ -1188,10 +1188,13 @@ export class MatrixClientService {
 		this.syncState = null;
 		this.initializedServicesClient = null;
 		this.clearRefreshTimer();
-		if (client) this.stopSdkClient(client);
+		if (client) {
+			// Call ownership changes on PREPARED, after the shared runtime owner.
+			matrixCallService.detach(client);
+			this.stopSdkClient(client);
+		}
 		if (this.runtimeAttached && MatrixClientService.runtimeOwner === this) {
 			matrixLiveEventBridge.detach();
-			matrixCallService.detach();
 			matrixRoomHistoryKeyTransfer.detach();
 			matrixDecryptionRetry.detach();
 		}
