@@ -67,6 +67,7 @@ const renderHelp = ({
 	const Stage = () => {
 		const [ownSwitch, setOwnSwitch] = React.useState(false);
 		const userData = {
+			userId: 'help-user',
 			grantedAuthorities: authorities,
 			isWalkThroughEnabled: ownSwitch
 		};
@@ -155,8 +156,8 @@ describe('Help learning card', () => {
 			within(cards[0]).getByRole('heading', { name: 'Meine Rundgänge' })
 		).toBeTruthy();
 		expect(
-			within(cards[0]).getByRole('button', { name: 'Starten' })
-		).toBeTruthy();
+			within(cards[0]).getAllByRole('button', { name: 'Starten' })
+		).not.toHaveLength(0);
 		expect(
 			within(cards[1]).getByRole('heading', { name: 'Video-Call' })
 		).toBeTruthy();
@@ -206,21 +207,70 @@ describe('Help learning card', () => {
 		).toHaveLength(2);
 		expect(
 			content.getAllByRole('button', { name: 'Starten' })
-		).toHaveLength(1);
+		).toHaveLength(2);
 		expect(
-			content.queryByRole('heading', { name: 'Mail-Beratung' })
+			content.getByRole('heading', { name: 'Mail-Beratung' })
+		).toBeTruthy();
+		expect(
+			content.getByRole('switch', { name: 'Rundgang-Knopf anzeigen' })
+		).toBeTruthy();
+	});
+
+	it('gives advice seekers the launcher switch without counsellor-only parts', async () => {
+		renderHelp({ authorities: [AUTHORITIES.ASKER_DEFAULT] });
+		const card = (
+			await screen.findByRole('heading', { name: 'Meine Rundgänge' })
+		).closest('section')!;
+		const content = within(card);
+		expect(
+			content.getByRole('switch', { name: 'Rundgang-Knopf anzeigen' })
+		).toBeTruthy();
+		expect(
+			content.queryByRole('switch', {
+				name: 'Einführung automatisch starten'
+			})
 		).toBeNull();
+		expect(
+			content.queryByRole('heading', { name: 'Einführung' })
+		).toBeNull();
+		expect(
+			content.queryByRole('button', { name: 'Übung starten' })
+		).toBeNull();
+	});
+
+	it('hides the "?" launcher for this user when the switch is turned off', async () => {
+		renderHelp();
+		const toggle = await screen.findByRole('switch', {
+			name: 'Rundgang-Knopf anzeigen'
+		});
+		expect(
+			toggle.getAttribute('aria-checked') ??
+				(toggle as HTMLInputElement).checked.toString()
+		).toBe('true');
+		fireEvent.click(toggle);
+		await waitFor(() =>
+			expect(
+				window.localStorage.getItem(
+					'oriso.tourLauncher.hidden.help-user'
+				)
+			).toBe('true')
+		);
+		fireEvent.click(toggle);
+		await waitFor(() =>
+			expect(
+				window.localStorage.getItem(
+					'oriso.tourLauncher.hidden.help-user'
+				)
+			).toBeNull()
+		);
 	});
 
 	it('offers only the introduction when the practice release flag is off', async () => {
 		renderHelp({ practiceArea: false });
-		await screen.findByRole('button', { name: 'Starten' });
+		await screen.findAllByRole('button', { name: 'Starten' });
 		expect(
 			screen.getByRole('heading', { name: 'Einführung' })
 		).toBeTruthy();
-		expect(
-			screen.queryByRole('heading', { name: 'Mail-Beratung' })
-		).toBeNull();
 		expect(
 			screen.queryByRole('heading', { name: 'Übungsbereich' })
 		).toBeNull();
@@ -303,9 +353,9 @@ describe('Help learning card', () => {
 
 	it.each([
 		{ platformTours: false },
-		{ authorities: [AUTHORITIES.ASKER_DEFAULT] }
+		{ authorities: [AUTHORITIES.ANONYMOUS_DEFAULT] }
 	])(
-		'hides the whole learning card without platform or counsellor access: %j',
+		'hides the whole learning card without platform access or a tour audience: %j',
 		(scenario) => {
 			renderHelp(scenario);
 			expect(
