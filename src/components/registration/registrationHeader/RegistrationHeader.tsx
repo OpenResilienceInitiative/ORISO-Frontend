@@ -8,6 +8,7 @@ import HowToRegRoundedIcon from '@mui/icons-material/HowToRegRounded';
 import ChatBubbleRoundedIcon from '@mui/icons-material/ChatBubbleRounded';
 import CakeRoundedIcon from '@mui/icons-material/CakeRounded';
 import PublicRoundedIcon from '@mui/icons-material/PublicRounded';
+import QuizRoundedIcon from '@mui/icons-material/QuizRounded';
 import { SvgIconComponent } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { IconStepper } from '../../stepper/molecules/IconStepper';
@@ -93,7 +94,15 @@ export interface RegistrationHeaderProps {
 	 * moves up instead of jumping.
 	 */
 	collapsed?: boolean;
+	/**
+	 * Steps of a journey's check-in that are not platform steps (questions, ratings): their name
+	 * and the label to show (ORISO-Frontend#2333). They take their place from `visibleStepNames`.
+	 */
+	customSteps?: { name: string; label: string }[];
 }
+
+/** Above this many steps the desktop stepper folds the far ones into one marker per side. */
+export const MAX_VISIBLE_STEPS = 5;
 
 /**
  * Sticky registration header.
@@ -116,7 +125,8 @@ export const RegistrationHeader = ({
 	fullBleed = true,
 	layout = 'auto',
 	completed = false,
-	collapsed = false
+	collapsed = false,
+	customSteps = []
 }: RegistrationHeaderProps) => {
 	const { t } = useTranslation();
 	const reducedMotion = useReducedMotion();
@@ -125,17 +135,35 @@ export const RegistrationHeader = ({
 		if (!visibleStepNames?.length) {
 			return CANONICAL_STEPS;
 		}
-
-		const wanted = new Set(visibleStepNames);
-		return CANONICAL_STEPS.filter(({ name }) => wanted.has(name));
-	}, [visibleStepNames]);
+		// The caller's order wins: a journey places its own steps between the platform's.
+		return visibleStepNames.flatMap((name) => {
+			const canonical = CANONICAL_STEPS.find(
+				(step) => step.name === name
+			);
+			if (canonical) return [canonical];
+			const custom = customSteps.find((step) => step.name === name);
+			// The label is the editor's text already: never a translation key.
+			return custom
+				? [
+						{
+							name,
+							labelKey: '',
+							label: custom.label,
+							Icon: QuizRoundedIcon
+						}
+					]
+				: [];
+		});
+	}, [visibleStepNames, customSteps]);
 
 	const steps = useMemo(
 		() =>
-			visibleSteps.map(({ name, labelKey, Icon }) => ({
-				name,
-				label: t(labelKey),
-				icon: <Icon />
+			visibleSteps.map((step) => ({
+				name: step.name,
+				label: ('label' in step && step.label
+					? step.label
+					: t(step.labelKey)) as string,
+				icon: <step.Icon />
 			})),
 		[visibleSteps, t]
 	);
@@ -287,6 +315,10 @@ export const RegistrationHeader = ({
 							ariaLabel={t('registration.headline')}
 							stateLabel={(state) =>
 								t(`registration.stepState.${state}`)
+							}
+							maxVisible={MAX_VISIBLE_STEPS}
+							foldedLabel={(side, count) =>
+								t(`registration.stepFolded.${side}`, { count })
 							}
 						/>
 					</Box>

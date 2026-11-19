@@ -5,6 +5,7 @@ import { StepDot, StepDotSize } from '../atoms/StepDot';
 import { StepConnector } from '../atoms/StepConnector';
 import { StepLabel } from '../atoms/StepLabel';
 import { stepperColors } from '../stepperDesign';
+import { stepperWindow } from '../stepperWindow';
 
 export interface IconStepperItem {
 	/** Stable id used for React keys, click callbacks and `data-cy`. */
@@ -33,6 +34,13 @@ export interface IconStepperProps {
 	 * the `t` instance, hence the injection.
 	 */
 	stateLabel?: (state: 'done' | 'active' | 'pending') => string;
+	/**
+	 * Above this many steps the row folds: the steps around the current one stay, the rest
+	 * becomes one marker per side ("3 erledigt", "+4"). Without it every step shows.
+	 */
+	maxVisible?: number;
+	/** Caption of a folded marker, e.g. "3 erledigt" / "4 weitere". */
+	foldedLabel?: (side: 'before' | 'after', count: number) => string;
 }
 
 /**
@@ -50,7 +58,10 @@ export const IconStepper = ({
 	completed = false,
 	emphasizeActive = true,
 	ariaLabel,
-	stateLabel
+	stateLabel,
+	maxVisible,
+	foldedLabel = (side, count) =>
+		side === 'before' ? `${count} ✓` : `+${count}`
 }: IconStepperProps) => {
 	const activeRef = useRef<HTMLDivElement>(null);
 	const clickable = useMemo(
@@ -94,7 +105,66 @@ export const IconStepper = ({
 				'&::-webkit-scrollbar': { display: 'none' }
 			}}
 		>
-			{steps.map(({ name, label, icon }, index) => {
+			{stepperWindow(
+				steps.length,
+				currentIndex,
+				maxVisible ?? steps.length
+			).map((slot, position, slots) => {
+				const isLast = position === slots.length - 1;
+				if (slot.kind === 'folded') {
+					const folded = foldedLabel(slot.side, slot.count);
+					const state = slot.side === 'before' ? 'done' : 'pending';
+					return (
+						<React.Fragment key={`folded-${slot.side}`}>
+							<Box
+								data-cy={`icon-stepper-folded-${slot.side}`}
+								aria-label={folded}
+								role="img"
+								sx={{
+									display: 'flex',
+									flexDirection: 'column',
+									alignItems: 'center',
+									gap: 0.5,
+									width: size === 'sm' ? 72 : 112,
+									flexShrink: 0
+								}}
+							>
+								<StepDot
+									state={state}
+									size={size}
+									emphasizeActive={false}
+									icon={
+										<Box
+											component="span"
+											aria-hidden
+											sx={{
+												fontSize:
+													size === 'sm' ? 12 : 14,
+												fontWeight: 700,
+												lineHeight: 1
+											}}
+										>
+											{slot.side === 'before'
+												? slot.count
+												: `+${slot.count}`}
+										</Box>
+									}
+								/>
+								<StepLabel state={state} size={size}>
+									{folded}
+								</StepLabel>
+							</Box>
+							{!isLast && (
+								<StepConnector
+									done={slot.side === 'before'}
+									size={size}
+								/>
+							)}
+						</React.Fragment>
+					);
+				}
+				const index = slot.index;
+				const { name, label, icon } = steps[index];
 				const state =
 					index < currentIndex
 						? 'done'
@@ -165,7 +235,7 @@ export const IconStepper = ({
 								{label}
 							</StepLabel>
 						</Box>
-						{index < steps.length - 1 && (
+						{!isLast && (
 							<StepConnector
 								done={index < currentIndex}
 								size={size}
