@@ -5,8 +5,10 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { MatrixClient } from 'matrix-js-sdk';
 import { callManager, CallData } from '../../services/CallManager';
 import { matrixCallService } from '../../services/matrixCallService';
+import { getMatrixClientService } from '../../services/matrixClientRegistry';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 import {
 	getAutoFitStageSize,
@@ -27,6 +29,14 @@ const FLOATING_DEFAULT_WIDTH = 460;
 const FLOATING_DEFAULT_HEIGHT = 560;
 const FLOATING_MIN = { width: 300, height: 400 };
 const DEFAULT_VIDEO_ASPECT = 16 / 9;
+
+const getCallClient = () => getMatrixClientService()?.getClient() ?? null;
+
+// The manager can move to another call without replacing the SDK, and the
+// SDK can be replaced while the manager still points at the same call.
+const isCurrentCall = (callId: string, client: MatrixClient | null) =>
+	callManager.getCurrentCall()?.callId === callId &&
+	getCallClient() === client;
 
 export const FloatingCallWidget: React.FC = () => {
 	const { t } = useTranslation();
@@ -213,6 +223,9 @@ export const FloatingCallWidget: React.FC = () => {
 			return;
 		}
 
+		const { callId } = callData;
+		const client = getCallClient();
+		if (!isCurrentCall(callId, client)) return;
 		callInitiatedRef.current = true;
 
 		// The call button pre-requests camera/mic to keep the mobile user
@@ -230,6 +243,11 @@ export const FloatingCallWidget: React.FC = () => {
 				remoteVideoElement: remoteVideoRef.current || undefined
 			})
 			.then((matrixCall) => {
+				if (
+					!isCurrentCall(callId, client) ||
+					matrixCallService.getActiveCall() !== matrixCall
+				)
+					return;
 				matrixCallService.attachMediaElements(
 					localVideoRef.current,
 					remoteVideoRef.current
@@ -237,6 +255,7 @@ export const FloatingCallWidget: React.FC = () => {
 				callManager.setMatrixCall(matrixCall);
 			})
 			.catch((err) => {
+				if (!isCurrentCall(callId, client)) return;
 				// console.error("Failed to start call:", err);
 				alert(
 					t('calls.widget.startFailed', {
@@ -353,20 +372,23 @@ export const FloatingCallWidget: React.FC = () => {
 	// Handlers
 	const handleAnswer = async () => {
 		if (!callData || !callData.isIncoming) return;
+		const { callId } = callData;
+		const client = getCallClient();
+		if (!isCurrentCall(callId, client)) return;
 		try {
-			const client = matrixClientService?.getClient();
 			if (!client) throw new Error('Matrix client not available');
 
 			const calls = client.callEventHandler?.calls;
 			if (!calls) throw new Error('Call handler not available');
 
-			const incomingCall = Array.from(calls.values()).find(
-				(call: any) =>
-					call.roomId === callData.roomId &&
-					call.direction === 'inbound' &&
-					call.state === 'ringing'
-			);
-			if (!incomingCall) throw new Error('No incoming call found');
+			const incomingCall = calls.get(callId);
+			if (
+				!incomingCall ||
+				incomingCall.roomId !== callData.roomId ||
+				incomingCall.direction !== 'inbound' ||
+				incomingCall.state !== 'ringing'
+			)
+				throw new Error('No incoming call found');
 
 			// Request permission within this click gesture (needed on mobile),
 			// then release it immediately — matrixCallService.answerCall() opens
@@ -376,23 +398,38 @@ export const FloatingCallWidget: React.FC = () => {
 				audio: true
 			});
 			stopMediaStreamTracks(stream);
+			if (
+				!isCurrentCall(callId, client) ||
+				client.callEventHandler?.calls.get(callId) !== incomingCall ||
+				incomingCall.state !== 'ringing'
+			)
+				return;
 
 			callManager.answerCall();
 			await matrixCallService.answerCall(
-				incomingCall as any,
+				incomingCall,
 				callData.isVideo,
 				localVideoRef.current || undefined,
 				remoteVideoRef.current || undefined
 			);
+			if (
+				!isCurrentCall(callId, client) ||
+				matrixCallService.getActiveCall() !== incomingCall
+			)
+				return;
 			matrixCallService.attachMediaElements(
 				localVideoRef.current,
 				remoteVideoRef.current
 			);
-			callManager.setMatrixCall(incomingCall as any);
+			callManager.setMatrixCall(incomingCall);
 
 			// 🔥 Force UI re-render to hide Answer/Decline buttons and show call controls
-			setTimeout(() => forceUpdate((prev) => prev + 1), 100);
+			setTimeout(() => {
+				if (isCurrentCall(callId, client))
+					forceUpdate((prev) => prev + 1);
+			}, 100);
 		} catch (err) {
+			if (!isCurrentCall(callId, client)) return;
 			// console.error("Failed to answer:", err);
 			alert(
 				t('calls.widget.answerFailed', {
