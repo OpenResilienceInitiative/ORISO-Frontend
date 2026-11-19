@@ -6409,6 +6409,36 @@
 					"intro": "Ist das Gespräch vorbei, beenden Sie es über das Menü ⋮ mit „Chat beenden“. Danach geht es zurück zur Warteschlange."
 				}
 			}
+		},
+		"timeline": {
+			"title": "Zeitstrahl und Entwürfe",
+			"summary": "Wo Sie alle Ereignisse an einem Ort sehen und wo Ihre ungesendeten Nachrichten liegen.",
+			"step": {
+				"activityNav": {
+					"title": "Ihr Zeitstrahl",
+					"intro": "Unter „Zeitstrahl“ laufen die Ereignisse aus all Ihren Chats zusammen. Sie müssen nicht mehr jede Beratung einzeln öffnen, um zu sehen, was neu ist."
+				},
+				"timeline": {
+					"title": "Alles an einem Ort",
+					"intro": "Links die Liste der Ereignisse, rechts die Details zum gewählten Eintrag. Von dort springen Sie direkt in den passenden Chat."
+				},
+				"filters": {
+					"title": "Suchen und filtern",
+					"intro": "Suchen Sie im Zeitstrahl oder filtern Sie nach Art, zum Beispiel „Ungelesen“ oder „Erwähnungen“. Die Anzeige passen Sie über den Filter-Knopf links an."
+				},
+				"markAllRead": {
+					"title": "Alle als gelesen markieren",
+					"intro": "Ein Klick markiert alle Einträge im Zeitstrahl als gelesen. Die Nachrichten in Ihren Chats bleiben davon unberührt."
+				},
+				"draftsChip": {
+					"title": "Entwürfe in den Beratungen",
+					"intro": "Ungesendete Nachrichten gehen nicht verloren. Der Filter „Entwürfe“ zeigt die Beratungen, in denen noch ein Entwurf liegt."
+				},
+				"draftsCenter": {
+					"title": "Alle Entwürfe",
+					"intro": "Hier stehen alle Entwürfe, gespeichert pro Chat und Thread. Öffnen Sie einen Entwurf, um weiterzuschreiben, oder löschen Sie ihn."
+				}
+			}
 		}
 	},
 	"weekday": {

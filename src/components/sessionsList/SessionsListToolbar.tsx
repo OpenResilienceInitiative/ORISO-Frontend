@@ -252,7 +252,8 @@ const FILTER_CHIPS: FilterChipConfig[] = [
 		id: 'drafts',
 		labelKey: 'sessionList.toolbar.chips.drafts',
 		Icon: DraftFilterIcon,
-		dataCy: 'sessions-list-chip-drafts'
+		dataCy: 'sessions-list-chip-drafts',
+		tourTarget: 'sessions-drafts-chip'
 	},
 	{
 		id: 'nearby',

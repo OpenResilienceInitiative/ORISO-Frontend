@@ -6419,6 +6419,36 @@
 					"intro": "Görüşme bitince ⋮ menüsünden “Sohbeti bitir” ile sonlandırın. Ardından sıraya geri dönersiniz."
 				}
 			}
+		},
+		"timeline": {
+			"title": "Zaman çizelgesi ve taslaklar",
+			"summary": "Tüm olayları tek yerde nerede gördüğünüz ve gönderilmemiş mesajlarınızın nerede durduğu.",
+			"step": {
+				"activityNav": {
+					"title": "Zaman çizelgeniz",
+					"intro": "“Zaman çizelgesi” tüm sohbetlerinizdeki olayları bir araya getirir. Yenilikleri görmek için artık her görüşmeyi tek tek açmanız gerekmez."
+				},
+				"timeline": {
+					"title": "Her şey tek yerde",
+					"intro": "Solda olayların listesi, sağda seçilen kaydın ayrıntıları. Oradan doğrudan ilgili sohbete geçersiniz."
+				},
+				"filters": {
+					"title": "Ara ve filtrele",
+					"intro": "Zaman çizelgesinde arayın ya da türe göre filtreleyin, örneğin “Okunmamış” veya “Bahsetmeler”. Soldaki filtre düğmesi görünümü ayarlar."
+				},
+				"markAllRead": {
+					"title": "Tümünü okundu işaretle",
+					"intro": "Tek tıkla zaman çizelgesindeki tüm kayıtlar okundu olarak işaretlenir. Sohbetlerinizdeki mesajlar bundan etkilenmez."
+				},
+				"draftsChip": {
+					"title": "Görüşmelerdeki taslaklar",
+					"intro": "Gönderilmemiş mesajlar kaybolmaz. “Taslaklar” filtresi hâlâ taslak bulunan görüşmeleri gösterir."
+				},
+				"draftsCenter": {
+					"title": "Tüm taslaklar",
+					"intro": "Tüm taslaklar burada, sohbet ve konu başına kayıtlı. Yazmaya devam etmek için bir taslağı açın ya da silin."
+				}
+			}
 		}
 	},
 	"weekday": {
