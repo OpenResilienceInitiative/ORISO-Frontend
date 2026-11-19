@@ -435,6 +435,38 @@ describe('effectivePlacement', () => {
 		).toBe('center');
 	});
 
+	it('centers a tall target with no room above or below (auto, top, bottom)', () => {
+		for (const placement of ['auto', 'top', 'bottom'] as const) {
+			expect(
+				effectivePlacement(
+					placement,
+					{ width: 1280, height: 700 },
+					{ width: 1440, height: 900 }
+				)
+			).toBe('center');
+		}
+	});
+
+	it('keeps a side placement next to a tall but narrow target', () => {
+		expect(
+			effectivePlacement(
+				'right',
+				{ width: 300, height: 700 },
+				{ width: 1440, height: 900 }
+			)
+		).toBe('right');
+	});
+
+	it('keeps auto for a target of moderate height', () => {
+		expect(
+			effectivePlacement(
+				'auto',
+				{ width: 1280, height: 400 },
+				{ width: 1440, height: 900 }
+			)
+		).toBe('auto');
+	});
+
 	it('keeps center as center', () => {
 		expect(
 			effectivePlacement(

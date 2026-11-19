@@ -112,8 +112,18 @@ export const effectivePlacement = (
 	} else {
 		coverage = Math.min(widthCoverage, heightCoverage);
 	}
-	return coverage >= 0.85 ? 'center' : placement;
+	// A tall target leaves no room above or below it, so a top/bottom/auto
+	// tooltip lands off-screen (seen on Dev with the profile and settings
+	// cards, FE#2340): show it centred over the target instead.
+	const tall =
+		placement !== 'left' &&
+		placement !== 'right' &&
+		heightCoverage >= TALL_TARGET_HEIGHT_SHARE;
+	return coverage >= 0.85 || tall ? 'center' : placement;
 };
+
+/** Share of the viewport height above which a target counts as tall. */
+export const TALL_TARGET_HEIGHT_SHARE = 0.6;
 
 export interface TourRunState {
 	status: TourStatus;
