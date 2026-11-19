@@ -2752,6 +2752,32 @@
 					"intro": "Du hast eine Supervisor:in hinzugefügt und ihre Antwort gelesen. Mit der Schaltfläche unten beendest du die Übung."
 				}
 			}
+		},
+		"askerFirstSteps": {
+			"summary": "Wo du deine Nachrichten, Termine und dein Profil findest.",
+			"step": {
+				"welcome": {
+					"intro": "Schön, dass du da bist. Dieser kurze Rundgang zeigt dir, wo du alles Wichtige findest. Mit „Weiter“ geht es zum nächsten Schritt."
+				},
+				"sessions": {
+					"intro": "Hier findest du deine Gespräche mit der Beratung. Ein Klick auf ein Gespräch öffnet es."
+				},
+				"composer": {
+					"intro": "Hier schreibst du deine Nachricht an die Beratung. Nimm dir ruhig Zeit. Die Antwort erscheint im selben Gespräch."
+				},
+				"appointments": {
+					"intro": "Hier findest du deine Termine mit der Beratung, zum Beispiel für ein Video-Gespräch."
+				},
+				"tools": {
+					"intro": "Hier findest du Hilfsmittel, die deine Beratungsstelle für dich bereitstellt."
+				},
+				"profile": {
+					"intro": "In deinem Profil änderst du deine Angaben und Einstellungen, zum Beispiel Passwort, Benachrichtigungen und Sprache."
+				},
+				"helpTours": {
+					"intro": "Unter Profil → Hilfe → Rundgänge kannst du jeden Rundgang noch einmal starten. Schneller geht es mit dem Knopf „?“ unten rechts."
+				}
+			}
 		}
 	},
 	"liveChat": {

@@ -26,7 +26,7 @@ export const HelpToursSection = () => {
 		userData
 	);
 	return (
-		<div className="helpTours">
+		<div className="helpTours" data-tour-target="help-tours">
 			<div className="profile__content__title">
 				<Headline
 					text={translate('walkthrough.overview.title')}
