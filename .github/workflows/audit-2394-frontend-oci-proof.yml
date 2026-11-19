@@ -1,0 +1,55 @@
+name: Verify Frontend and Storybook dual-platform OCI archives
+
+on:
+    push:
+        branches:
+            - evidence/2394-frontend-oci-gate
+
+permissions:
+    contents: read
+
+env:
+    REGISTRY: ghcr.io
+    ORG: openresilienceinitiative
+
+jobs:
+    scan:
+        name: ${{ matrix.image }} amd64 and arm64 without upload
+        runs-on: ubuntu-latest
+        timeout-minutes: 55
+        strategy:
+            fail-fast: false
+            matrix:
+                include:
+                    - image: oriso-frontend
+                      dockerfile: Dockerfile
+                    - image: oriso-storybook
+                      dockerfile: Dockerfile.storybook
+
+        steps:
+            - uses: actions/checkout@v6
+              with:
+                  persist-credentials: false
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: '22.23.3'
+                  cache: npm
+            - name: Install build dependencies
+              run: npm ci --ignore-scripts --legacy-peer-deps
+            - name: Build Frontend static output
+              if: matrix.image == 'oriso-frontend'
+              shell: bash
+              run: |
+                  set -euo pipefail
+                  export REACT_APP_BUILD_COMMIT="$(git rev-parse --verify HEAD^{commit})"
+                  CI=false npm run build
+            - name: Build Storybook static output
+              if: matrix.image == 'oriso-storybook'
+              run: npm run build-storybook
+            - name: Scan the native and arm64 manifests from the same OCI archive
+              uses: ./.github/actions/docker-build-push
+              with:
+                  push_to_ghcr: false
+                  image_name: ${{ matrix.image }}
+                  dockerfile: ${{ matrix.dockerfile }}
+                  platforms: linux/amd64,linux/arm64
