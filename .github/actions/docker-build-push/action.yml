@@ -1,15 +1,17 @@
-name: Reusable Docker build and publish steps
+name: Reusable Docker build, scan and publish steps
+description: Scan each platform before publishing the same OCI image.
 
 inputs:
   push_to_ghcr:
-    description: Whether to push the built image to GHCR
+    description: Whether to publish the scanned image to GHCR
     required: true
   image_name:
     description: GHCR image name without registry or organization
     required: true
   github_token:
     description: GitHub token used only when publishing is enabled
-    required: true
+    required: false
+    default: ''
   dockerfile:
     description: Dockerfile path relative to the repository root
     required: false
@@ -18,25 +20,28 @@ inputs:
     description: Comma-separated OCI target platforms
     required: false
     default: linux/amd64,linux/arm64
-  scan_before_push:
-    description: >-
-      Scan the image with Trivy before anything is published and fail on
-      fixable HIGH/CRITICAL findings. Must be enabled wherever this action
-      publishes: a scan that runs after the push cannot keep a vulnerable
-      image out of the registry (OpenResilienceInitiative/ORISO-Docs#88).
+  release_labels:
+    description: Labels for a versioned release, which uses the existing release cache
     required: false
-    default: 'false'
+    default: ''
 
 outputs:
-  digest:
-    description: Immutable multi-platform image digest
+  archive:
+    description: Path to the scanned OCI archive in the current job
+    value: ${{ steps.scan.outputs.archive }}
+  archive_digest:
+    description: Immutable index digest of the scanned image
     value: ${{ steps.build.outputs.digest }}
+  archive_sha256:
+    description: Scan receipt binding publication to the archive bytes
+    value: ${{ steps.scan.outputs.archive_sha256 }}
+  digest:
+    description: Immutable digest of the scanned and published image
+    value: ${{ steps.publish.outputs.digest }}
 
 runs:
-  using: 'composite'
+  using: composite
   steps:
-  # QEMU is only needed to emulate a foreign architecture. Single-platform
-  # amd64 builds run natively on the runner and must not pay for the emulator.
   - name: Set up QEMU
     if: ${{ inputs.platforms != 'linux/amd64' }}
     uses: docker/setup-qemu-action@v4
@@ -44,16 +49,9 @@ runs:
   - name: Set up Docker Buildx
     uses: docker/setup-buildx-action@v4
 
-  - name: Login to GitHub Container Registry
-    if: ${{ inputs.push_to_ghcr == 'true' }}
-    uses: docker/login-action@v4
-    with:
-      registry: ${{ env.REGISTRY }}
-      username: ${{ github.actor }}
-      password: ${{ inputs.github_token }}
-
   - name: Extract Metadata
     id: meta
+    if: ${{ inputs.release_labels == '' }}
     uses: docker/metadata-action@v6
     with:
       images: ${{ env.REGISTRY }}/${{ env.ORG }}/${{ inputs.image_name }}
@@ -63,65 +61,62 @@ runs:
         type=raw,value=dev,enable=${{ github.ref == 'refs/heads/dev' }}
         type=raw,value=pre-dev,enable=${{ github.ref == 'refs/heads/pre-dev' }}
 
-  # The vulnerability gate only works ahead of the push. Scanning the image
-  # after `push: true` turns the run red but leaves the vulnerable image in
-  # GHCR under its branch tag and its sha tag, where the deploy scripts
-  # resolve it to a digest and roll it out without ever consulting the
-  # workflow result (OpenResilienceInitiative/ORISO-Docs#88).
-  #
-  # `load: true` hands the result to the runner's Docker daemon and only
-  # supports one platform, so the scanned image is amd64. That matches what
-  # was effectively scanned before: given a multi-platform index, Trivy picks
-  # the host platform anyway. The publish build below still produces the full
-  # multi-platform manifest and reuses this build's amd64 layers straight
-  # from the buildx builder's own cache, so only the arm64 half is new work.
-  # No `cache-to` here on purpose: the publish build stays the single
-  # exporter for the GHA cache scope.
-  - name: Build amd64 image locally for scanning
-    if: ${{ inputs.scan_before_push == 'true' }}
-    uses: docker/build-push-action@v7
-    with:
-      context: .
-      file: ${{ inputs.dockerfile }}
-      platforms: linux/amd64
-      push: false
-      load: true
-      # The docker exporter cannot carry attestations, and an image that is
-      # thrown away after the scan has no use for them either.
-      provenance: false
-      sbom: false
-      tags: ${{ inputs.image_name }}:ci-scan
-      labels: ${{ steps.meta.outputs.labels }}
-      cache-from: type=gha,scope=${{ inputs.image_name }}
-
-  - name: Reject fixable high or critical image vulnerabilities
-    if: ${{ inputs.scan_before_push == 'true' }}
-    uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
-    with:
-      image-ref: ${{ inputs.image_name }}:ci-scan
-      format: table
-      exit-code: '1'
-      ignore-unfixed: true
-      vuln-type: os,library
-      severity: CRITICAL,HIGH
-
-  - name: Build Docker image and publish when enabled
+  - name: Build the complete image without publishing
     id: build
     uses: docker/build-push-action@v7
     with:
       context: .
       file: ${{ inputs.dockerfile }}
       platforms: ${{ inputs.platforms }}
-      push: ${{ inputs.push_to_ghcr }}
-      # Provenance and SBOM attestations are only meaningful on an image that
-      # gets pushed — on a validation build they are computed and discarded.
-      provenance: ${{ inputs.push_to_ghcr == 'true' && 'mode=max' || 'false' }}
-      sbom: ${{ inputs.push_to_ghcr == 'true' }}
-      tags: ${{ steps.meta.outputs.tags }}
-      labels: ${{ steps.meta.outputs.labels }}
-      # Scope the GHA cache per image so images built from this shared action
-      # (here oriso-frontend and oriso-storybook) can't collide on one cache
-      # namespace and restore each other's layers — root cause of
-      # OpenResilienceInitiative/ORISO-Admin#424.
-      cache-from: type=gha,scope=${{ inputs.image_name }}
-      cache-to: type=gha,mode=max,scope=${{ inputs.image_name }}
+      push: false
+      outputs: type=oci,dest=${{ runner.temp }}/${{ inputs.image_name }}.tar
+      provenance: mode=max
+      sbom: true
+      labels: ${{ inputs.release_labels || steps.meta.outputs.labels }}
+      # Branch and PR caches remain separate for the app and Storybook.
+      cache-from: ${{ inputs.release_labels == '' && format('type=gha,scope={0}', inputs.image_name) || 'type=gha' }}
+      cache-to: ${{ inputs.release_labels == '' && format('type=gha,mode=max,scope={0}', inputs.image_name) || 'type=gha,mode=max' }}
+
+  - name: Install OCI transport
+    shell: bash
+    run: |
+      if ! command -v skopeo >/dev/null; then
+        sudo apt-get update
+        sudo apt-get install -y --no-install-recommends skopeo
+      fi
+
+  - name: Install Trivy
+    uses: aquasecurity/setup-trivy@3fb12ec12f41e471780db15c232d5dd185dcb514 # v0.2.6
+    with:
+      version: v0.70.0
+      cache: true
+
+  - name: Reject fixable high or critical vulnerabilities on every platform
+    id: scan
+    shell: bash
+    env:
+      IMAGE_ARCHIVE: ${{ runner.temp }}/${{ inputs.image_name }}.tar
+      IMAGE_PLATFORMS: ${{ inputs.platforms }}
+      EXPECTED_DIGEST: ${{ steps.build.outputs.digest }}
+    run: |
+      bash scripts/ci/scan-image-archive.sh "$IMAGE_ARCHIVE" "$IMAGE_PLATFORMS" "$EXPECTED_DIGEST"
+      printf 'archive=%s\n' "$IMAGE_ARCHIVE" >> "$GITHUB_OUTPUT"
+
+  - name: Login to GitHub Container Registry
+    if: ${{ inputs.push_to_ghcr == 'true' }}
+    uses: docker/login-action@v4
+    with:
+      registry: ${{ env.REGISTRY }}
+      username: ${{ github.actor }}
+      password: ${{ inputs.github_token }}
+
+  - name: Publish the scanned archive without rebuilding
+    id: publish
+    if: ${{ inputs.push_to_ghcr == 'true' }}
+    shell: bash
+    env:
+      IMAGE_ARCHIVE: ${{ steps.scan.outputs.archive }}
+      IMAGE_TAGS: ${{ steps.meta.outputs.tags }}
+      EXPECTED_DIGEST: ${{ steps.build.outputs.digest }}
+      EXPECTED_ARCHIVE_SHA256: ${{ steps.scan.outputs.archive_sha256 }}
+    run: bash scripts/ci/publish-image-archive.sh "$IMAGE_ARCHIVE" "$EXPECTED_DIGEST" "$EXPECTED_ARCHIVE_SHA256"

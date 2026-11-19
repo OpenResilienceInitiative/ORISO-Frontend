@@ -38,11 +38,10 @@ jobs:
             - name: Build Storybook static output
               run: npm run build-storybook
 
-            - name: Storybook Docker build validation without publishing
+            - name: Build and scan Storybook image without publishing
               uses: ./.github/actions/docker-build-push
               with:
                   push_to_ghcr: false
                   image_name: oriso-storybook
                   dockerfile: Dockerfile.storybook
                   platforms: linux/amd64
-                  github_token: ${{ secrets.GITHUB_TOKEN }}
