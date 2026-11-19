@@ -3,10 +3,15 @@
 // (`floatingSurfaces`), so two FABs never lie on top of each other. On the
 // phone it sits above the bottom navigation, like the call dock.
 
+$tour-launcher-footer-clearance: 40px;
+
 .tourLauncher {
 	position: fixed;
 	right: $fab-edge-gap;
-	bottom: $fab-edge-gap;
+
+	// Above the 40 px app footer (privacy, imprint, version) — the FAB must
+	// not cover its links (seen on Dev, FE#2340).
+	bottom: calc(#{$fab-edge-gap} + #{$tour-launcher-footer-clearance});
 
 	// Above the page and the session list, below the composer (1000), MUI
 	// dialogs (1300) and call surfaces (1250+); above Joyride (53) is moot —
