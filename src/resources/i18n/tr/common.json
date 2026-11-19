@@ -6389,6 +6389,40 @@
 			"open": "Turları aç",
 			"close": "Turları kapat",
 			"manage": "Turları yönet"
+		},
+		"askerFirstSteps": {
+			"title": "İlk adımlar",
+			"summary": "Mesajlarınızı, randevularınızı ve profilinizi nerede bulacağınız.",
+			"step": {
+				"welcome": {
+					"title": "Hoş geldiniz!",
+					"intro": "Burada olmanıza sevindik. Bu kısa tur size önemli her şeyi nerede bulacağınızı gösterir. „Daha ileri“ ile bir sonraki adıma geçersiniz."
+				},
+				"sessions": {
+					"title": "İstişarelerim",
+					"intro": "Danışmanlıkla yaptığınız görüşmeleri burada bulursunuz. Bir görüşmeye tıklayınca açılır."
+				},
+				"composer": {
+					"title": "Mesaj yazın",
+					"intro": "Danışmanlığa mesajınızı buraya yazarsınız. Acele etmeyin. Yanıt aynı görüşmede görünür."
+				},
+				"appointments": {
+					"title": "Randevularım",
+					"intro": "Danışmanlıkla randevularınızı burada bulursunuz, örneğin bir görüntülü görüşme için."
+				},
+				"tools": {
+					"title": "Aletlerim",
+					"intro": "Danışmanlık merkezinizin sizin için sunduğu yardımcı araçları burada bulursunuz."
+				},
+				"profile": {
+					"title": "Profil",
+					"intro": "Profilinizde bilgilerinizi ve ayarlarınızı değiştirirsiniz, örneğin şifre, bildirimler ve dil."
+				},
+				"helpTours": {
+					"title": "Turlar",
+					"intro": "Profil → Yardım → Turlar altında her turu yeniden başlatabilirsiniz. Sağ alttaki „?“ düğmesiyle daha da hızlı."
+				}
+			}
 		}
 	},
 	"weekday": {

@@ -6389,6 +6389,40 @@
 			"open": "Ouvrir les visites guidées",
 			"close": "Fermer les visites guidées",
 			"manage": "Gérer les visites guidées"
+		},
+		"askerFirstSteps": {
+			"title": "Premiers pas",
+			"summary": "Où trouver vos messages, vos rendez-vous et votre profil.",
+			"step": {
+				"welcome": {
+					"title": "Bienvenue !",
+					"intro": "Nous sommes heureux de vous accueillir. Cette courte visite vous montre où trouver l’essentiel. Avec « Continuer », vous passez à l’étape suivante."
+				},
+				"sessions": {
+					"title": "Mes consultations",
+					"intro": "Vous trouvez ici vos conversations avec le service de conseil. Un clic sur une conversation l’ouvre."
+				},
+				"composer": {
+					"title": "Écrire un message",
+					"intro": "Écrivez ici votre message au service de conseil. Prenez votre temps. La réponse apparaît dans la même conversation."
+				},
+				"appointments": {
+					"title": "Mes rendez-vous",
+					"intro": "Vous trouvez ici vos rendez-vous avec le service de conseil, par exemple pour un appel vidéo."
+				},
+				"tools": {
+					"title": "Mes outils",
+					"intro": "Vous trouvez ici des outils utiles que votre centre de conseil met à votre disposition."
+				},
+				"profile": {
+					"title": "Profil",
+					"intro": "Dans votre profil, vous modifiez vos données et vos réglages, par exemple le mot de passe, les notifications et la langue."
+				},
+				"helpTours": {
+					"title": "Visites guidées",
+					"intro": "Sous Profil → Aide → Visites guidées, vous pouvez relancer chaque visite. Le bouton « ? » en bas à droite est encore plus rapide."
+				}
+			}
 		}
 	},
 	"weekday": {

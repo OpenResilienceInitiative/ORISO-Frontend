@@ -6304,6 +6304,40 @@
 			"open": "Open tours",
 			"close": "Close tours",
 			"manage": "Manage tours"
+		},
+		"askerFirstSteps": {
+			"title": "First steps",
+			"summary": "Where to find your messages, appointments and profile.",
+			"step": {
+				"welcome": {
+					"title": "Welcome!",
+					"intro": "Good to have you here. This short tour shows you where to find everything important. Press “Next” to go to the next step."
+				},
+				"sessions": {
+					"title": "My consultations",
+					"intro": "Here you find your conversations with the counselling service. Click a conversation to open it."
+				},
+				"composer": {
+					"title": "Write a message",
+					"intro": "Write your message to the counselling service here. Take your time. The reply appears in the same conversation."
+				},
+				"appointments": {
+					"title": "My dates",
+					"intro": "Here you find your appointments with the counselling service, for example for a video call."
+				},
+				"tools": {
+					"title": "My tools",
+					"intro": "Here you find helpful tools that your counselling centre provides for you."
+				},
+				"profile": {
+					"title": "Profile",
+					"intro": "In your profile you change your details and settings, for example password, notifications and language."
+				},
+				"helpTours": {
+					"title": "Tours",
+					"intro": "Under Profile → Help → Tours you can start any tour again. The “?” button at the bottom right is even quicker."
+				}
+			}
 		}
 	},
 	"weekday": {

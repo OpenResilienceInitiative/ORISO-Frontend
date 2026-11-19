@@ -6379,6 +6379,40 @@
 			"open": "Rundgänge öffnen",
 			"close": "Rundgänge schließen",
 			"manage": "Rundgänge verwalten"
+		},
+		"askerFirstSteps": {
+			"title": "Erste Schritte",
+			"summary": "Wo Sie Ihre Nachrichten, Termine und Ihr Profil finden.",
+			"step": {
+				"welcome": {
+					"title": "Willkommen!",
+					"intro": "Schön, dass Sie da sind. Dieser kurze Rundgang zeigt Ihnen, wo Sie alles Wichtige finden. Mit „Weiter“ geht es zum nächsten Schritt."
+				},
+				"sessions": {
+					"title": "Meine Beratungen",
+					"intro": "Hier finden Sie Ihre Gespräche mit der Beratung. Ein Klick auf ein Gespräch öffnet es."
+				},
+				"composer": {
+					"title": "Nachricht schreiben",
+					"intro": "Hier schreiben Sie Ihre Nachricht an die Beratung. Nehmen Sie sich ruhig Zeit. Die Antwort erscheint im selben Gespräch."
+				},
+				"appointments": {
+					"title": "Meine Termine",
+					"intro": "Hier finden Sie Ihre Termine mit der Beratung, zum Beispiel für ein Video-Gespräch."
+				},
+				"tools": {
+					"title": "Meine Tools",
+					"intro": "Hier finden Sie Hilfsmittel, die Ihre Beratungsstelle für Sie bereitstellt."
+				},
+				"profile": {
+					"title": "Profil",
+					"intro": "In Ihrem Profil ändern Sie Ihre Angaben und Einstellungen, zum Beispiel Passwort, Benachrichtigungen und Sprache."
+				},
+				"helpTours": {
+					"title": "Rundgänge",
+					"intro": "Unter Profil → Hilfe → Rundgänge können Sie jeden Rundgang noch einmal starten. Schneller geht es mit dem Knopf „?“ unten rechts."
+				}
+			}
 		}
 	},
 	"weekday": {

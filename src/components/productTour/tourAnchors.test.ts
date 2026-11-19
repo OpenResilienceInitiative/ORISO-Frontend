@@ -82,6 +82,22 @@ const anchorContract: Array<{
 		anchor: 'supervision-panel',
 		sourceFile: 'session/SessionItemComponent.tsx',
 		expected: /data-tour-target="supervision-panel"/
+	},
+	// Asker tours (FE#2343). The list wrapper keeps the counsellor anchor and
+	// renders the neutral alias for advice seekers.
+	{
+		anchor: 'sessions-list',
+		sourceFile: 'sessionsList/SessionsList.tsx',
+		expected:
+			/AUTHORITIES\.ASKER_DEFAULT, userData\)\s*\?\s*'sessions-list'\s*:\s*'consultant-sessions-list'/
+	},
+	{
+		anchor: 'profile-overview',
+		sourceFile: 'profile/Profile.tsx'
+	},
+	{
+		anchor: 'help-tours',
+		sourceFile: 'profile/HelpToursSection.tsx'
 	}
 ];
 
