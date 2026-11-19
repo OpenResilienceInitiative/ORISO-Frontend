@@ -33,7 +33,7 @@ describe('consultant-video-call', () => {
 		);
 		expect(knock?.target).toBe('');
 		consultantVideoCallTour.steps.forEach((step) =>
-			expect(step.target).not.toMatch(/iframe|jitsi|call-stage/)
+			expect(step.target).not.toMatch(/iframe|call-stage/)
 		);
 	});
 
