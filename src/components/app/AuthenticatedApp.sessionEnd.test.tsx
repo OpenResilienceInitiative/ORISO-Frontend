@@ -23,7 +23,10 @@ import { UserDataContext } from '../../globalState';
 import { ModalProvider } from '../../globalState/provider/ModalProvider';
 import { UserDataProvider } from '../../globalState/provider/UserDataProvider';
 import type { UserDataInterface } from '../../globalState/interfaces/UserDataInterface';
+import { MatrixBootstrapThrottledError } from '../../services/matrixBootstrapRetry';
+import type { MatrixClientService } from '../../services/matrixClientService';
 import {
+	AUTH_SESSION_CHANGE_EVENT,
 	removeAllCookies,
 	setValueInCookie
 } from '../sessionCookie/accessSessionCookie';
@@ -43,6 +46,9 @@ const mocks = vi.hoisted(() => ({
 	localTeardown: vi.fn(),
 	setMatrix: vi.fn(),
 	getUserData: vi.fn(),
+	getAuthSubject: vi.fn(),
+	getMatrixAccessToken: vi.fn(),
+	createMatrixClient: vi.fn(),
 	updatePassword: vi.fn().mockResolvedValue(undefined)
 }));
 
@@ -121,8 +127,10 @@ vi.mock('../logout/logout', () => ({
 	teardownPeerLocalSession: mocks.peerTeardown
 }));
 vi.mock('../sessionCookie/getMatrixAccessToken', () => ({
-	getCurrentAuthSubject: () => 'synthetic-user',
-	getMatrixAccessToken: vi.fn().mockResolvedValue({ homeserverUrl: null }),
+	getCurrentAuthSubject: mocks.getAuthSubject,
+	getMatrixAccessToken: mocks.getMatrixAccessToken,
+	createMatrixClient: mocks.createMatrixClient,
+	clearPersistedMatrixDeviceId: vi.fn(),
 	persistMatrixLoginData: vi.fn()
 }));
 vi.mock('../../globalState/context/MatrixClientContext', () => ({
@@ -204,6 +212,12 @@ const profile = {
 	userId: 'synthetic-user',
 	appointmentFeatureEnabled: true
 } as UserDataInterface;
+const matrixLogin = {
+	homeserverUrl: 'https://matrix.example.test',
+	userId: '@synthetic-user:matrix.example.test',
+	accessToken: 'synthetic-token',
+	deviceId: 'TEST_DEVICE'
+};
 const reloadUserData = vi.fn().mockResolvedValue(profile);
 const onAppReady = vi.fn();
 const onLogout = vi.fn();
@@ -221,6 +235,8 @@ const shell = (userData: UserDataInterface | null) => (
 describe('authenticated shell sign-out', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		mocks.getAuthSubject.mockReturnValue('synthetic-user');
+		mocks.getMatrixAccessToken.mockResolvedValue({ homeserverUrl: null });
 		const claims = btoa(
 			JSON.stringify({
 				sub: profile.userId,
@@ -263,6 +279,84 @@ describe('authenticated shell sign-out', () => {
 		rerender(shell(null));
 		expect(screen.queryByText('Private profile: true')).toBeNull();
 		expect(screen.getByText('Loading session')).toBeTruthy();
+	});
+
+	it.each(['logout', 'auth subject change', 'unmount'])(
+		'releases the unpublished Matrix client on %s while crypto is pending',
+		async (reason) => {
+			const crypto = Promise.withResolvers<void>();
+			const client = {
+				initRustCrypto: vi.fn(() => crypto.promise),
+				stopClient: vi.fn(),
+				removeAllListeners: vi.fn(),
+				startClient: vi.fn()
+			};
+			if (reason === 'logout') {
+				// The fallback shell offers sign-out while the chat retry runs.
+				mocks.getMatrixAccessToken.mockRejectedValueOnce(
+					new MatrixBootstrapThrottledError(0)
+				);
+			}
+			mocks.getMatrixAccessToken.mockResolvedValueOnce(matrixLogin);
+			mocks.createMatrixClient.mockReturnValueOnce(client);
+			const { unmount } = render(shell(profile));
+
+			try {
+				await waitFor(() =>
+					expect(client.initRustCrypto).toHaveBeenCalledTimes(1)
+				);
+				act(() => {
+					if (reason === 'logout') {
+						screen
+							.getByRole('button', { name: 'Sign out' })
+							.click();
+						return;
+					}
+					if (reason === 'unmount') {
+						unmount();
+						return;
+					}
+					mocks.getAuthSubject.mockReturnValue('replacement-user');
+					window.dispatchEvent(new Event(AUTH_SESSION_CHANGE_EVENT));
+				});
+				expect(client.stopClient).toHaveBeenCalledTimes(1);
+				expect(client.removeAllListeners).toHaveBeenCalledTimes(1);
+			} finally {
+				await act(async () => crypto.resolve());
+			}
+
+			expect(client.stopClient).toHaveBeenCalledTimes(2);
+			expect(client.startClient).not.toHaveBeenCalled();
+			expect(mocks.setMatrix).not.toHaveBeenCalled();
+		}
+	);
+
+	it('keeps the published Matrix client available for normal logout', async () => {
+		const client = {
+			initRustCrypto: vi.fn().mockResolvedValue(undefined),
+			startClient: vi.fn().mockResolvedValue(undefined),
+			stopClient: vi.fn(),
+			removeAllListeners: vi.fn(),
+			removeListener: vi.fn(),
+			on: vi.fn(),
+			off: vi.fn()
+		};
+		mocks.getMatrixAccessToken.mockResolvedValueOnce(matrixLogin);
+		mocks.createMatrixClient.mockReturnValueOnce(client);
+		render(shell(profile));
+
+		try {
+			fireEvent.click(
+				await screen.findByRole('button', { name: 'Sign out' })
+			);
+			expect(mocks.setMatrix).toHaveBeenCalledTimes(1);
+			expect(mocks.logout).toHaveBeenCalledTimes(1);
+			expect(client.stopClient).not.toHaveBeenCalled();
+		} finally {
+			const service: MatrixClientService | undefined =
+				mocks.setMatrix.mock.calls[0]?.[0];
+			service?.stopAndCleanup();
+		}
 	});
 
 	it('keeps the password-change confirmation through sign-out and takes its button to sign-in', async () => {

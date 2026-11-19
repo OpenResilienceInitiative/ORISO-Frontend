@@ -308,9 +308,9 @@ export const AuthenticatedApp = ({
 								mounted.current &&
 								!controller.signal.aborted &&
 								getCurrentAuthSubject() === subject;
-							const startMatrix = async (
-								isActive: () => boolean
-							) => {
+							const startMatrix = async (signal: AbortSignal) => {
+								const isActive = () =>
+									!signal.aborted && isCurrent();
 								const loginData = await getMatrixAccessToken();
 								if (!isActive()) return;
 								persistMatrixLoginData(loginData);
@@ -320,16 +320,31 @@ export const AuthenticatedApp = ({
 								);
 								if (!isActive()) return;
 								const clientService = new MatrixClientService();
-								await clientService.initializeClient(
-									withAuthenticatedSessionContext(
-										loginData,
-										hasUserAuthority(
-											AUTHORITIES.ANONYMOUS_DEFAULT,
-											userProfileData
-										)
-									),
-									isActive
+								// Until publication, logout has no registered client to stop.
+								const stopPendingClient = () =>
+									clientService.stopAndCleanup();
+								signal.addEventListener(
+									'abort',
+									stopPendingClient,
+									{ once: true }
 								);
+								try {
+									await clientService.initializeClient(
+										withAuthenticatedSessionContext(
+											loginData,
+											hasUserAuthority(
+												AUTHORITIES.ANONYMOUS_DEFAULT,
+												userProfileData
+											)
+										),
+										isActive
+									);
+								} finally {
+									signal.removeEventListener(
+										'abort',
+										stopPendingClient
+									);
+								}
 								if (!isActive()) {
 									clientService.stopAndCleanup();
 									return;
@@ -362,17 +377,25 @@ export const AuthenticatedApp = ({
 							};
 							const connect = async () => {
 								if (!isCurrent()) return;
-								let active = true;
+								const attempt = new AbortController();
+								const cancelAttempt = () => attempt.abort();
+								controller.signal.addEventListener(
+									'abort',
+									cancelAttempt,
+									{ once: true }
+								);
 								try {
 									await withTimeout(
-										startMatrix(
-											() => active && isCurrent()
-										),
+										startMatrix(attempt.signal),
 										15_000,
 										'Matrix bootstrap timed out'
 									);
 								} finally {
-									active = false;
+									controller.signal.removeEventListener(
+										'abort',
+										cancelAttempt
+									);
+									cancelAttempt();
 								}
 							};
 							const reportMatrixFailure = (error: unknown) => {
