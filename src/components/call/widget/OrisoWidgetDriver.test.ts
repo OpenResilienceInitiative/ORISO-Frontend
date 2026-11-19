@@ -1,6 +1,7 @@
 import {
 	OpenIDRequestState,
 	SimpleObservable,
+	UpdateDelayedEventAction,
 	type IOpenIDUpdate
 } from 'matrix-widget-api';
 import {
@@ -11,7 +12,7 @@ import {
 	it,
 	vi
 } from 'vite-plus/test';
-import type { MatrixClient } from 'matrix-js-sdk';
+import { MatrixError, type MatrixClient } from 'matrix-js-sdk';
 
 import { OrisoWidgetDriver } from './OrisoWidgetDriver';
 
@@ -463,6 +464,72 @@ describe('OrisoWidgetDriver', () => {
 				'delay-1',
 				'restart'
 			);
+		});
+
+		it.each(Object.values(UpdateDelayedEventAction))(
+			'reports only a sanitized Matrix absence for a missing delayed event on %s',
+			async (action) => {
+				const delayId = 'private-delay-fixture';
+				const upstream = new MatrixError(
+					{
+						errcode: 'M_NOT_FOUND',
+						error: 'Private upstream detail'
+					},
+					404,
+					'https://matrix.example/delayed_events/' + delayId,
+					undefined,
+					new Headers({
+						'x-private-fixture': 'private response header'
+					})
+				);
+				const update = vi.fn().mockRejectedValue(upstream);
+				const d = new OrisoWidgetDriver(
+					createClient({ _unstable_updateDelayedEvent: update }),
+					CALL_ROOM
+				);
+
+				const error: unknown = await d
+					.updateDelayedEvent(delayId, action)
+					.catch((reason: unknown) => reason);
+
+				expect(update).toHaveBeenCalledExactlyOnceWith(delayId, action);
+				expect(error).toBeInstanceOf(Error);
+				expect(error).not.toBe(upstream);
+				expect(error).not.toHaveProperty('cause');
+				expect(String(error)).not.toMatch(/private|matrix\.example/i);
+				expect(d.processError(error)).toEqual({
+					matrix_api_error: {
+						http_status: 404,
+						http_headers: {},
+						url: '',
+						response: {
+							errcode: 'M_NOT_FOUND',
+							error: 'Delayed event not found'
+						}
+					}
+				});
+				expect(d.processError(upstream)).toBeUndefined();
+			}
+		);
+
+		it.each([
+			new MatrixError({ errcode: 'M_NOT_FOUND' }, 403),
+			new MatrixError({ errcode: 'M_UNKNOWN' }, 404),
+			new Error('Network reply lost')
+		])('preserves other delayed event errors', async (upstream) => {
+			const d = new OrisoWidgetDriver(
+				createClient({
+					_unstable_updateDelayedEvent: vi
+						.fn()
+						.mockRejectedValue(upstream)
+				}),
+				CALL_ROOM
+			);
+
+			await expect(
+				d.updateDelayedEvent('delay-1', UpdateDelayedEventAction.Cancel)
+			).rejects.toBe(upstream);
+			expect(d.processError(upstream)).toBeUndefined();
 		});
 	});
 

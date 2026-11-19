@@ -32,6 +32,7 @@ import {
 	Capability,
 	type IOpenIDCredentials,
 	type IOpenIDUpdate,
+	type IWidgetApiErrorResponseDataDetails,
 	IRoomEvent,
 	ISendDelayedEventDetails,
 	ISendEventDetails,
@@ -41,7 +42,12 @@ import {
 	UpdateDelayedEventAction,
 	WidgetDriver
 } from 'matrix-widget-api';
-import { EventTimeline, MatrixClient, MatrixEvent } from 'matrix-js-sdk';
+import {
+	EventTimeline,
+	MatrixClient,
+	MatrixError,
+	MatrixEvent
+} from 'matrix-js-sdk';
 import type { SendToDeviceContentMap } from 'matrix-js-sdk/lib/client';
 import type { ToDeviceBatch } from 'matrix-js-sdk/lib/models/ToDeviceMessage';
 
@@ -80,6 +86,15 @@ const isValidOpenIDToken = (token: unknown): token is IOpenIDCredentials => {
 		expires_in > 0
 	);
 };
+
+class MissingDelayedEventError extends MatrixError {
+	constructor() {
+		super(
+			{ errcode: 'M_NOT_FOUND', error: 'Delayed event not found' },
+			404
+		);
+	}
+}
 
 export class OrisoWidgetDriver extends WidgetDriver {
 	public constructor(
@@ -257,7 +272,28 @@ export class OrisoWidgetDriver extends WidgetDriver {
 		delayId: string,
 		action: UpdateDelayedEventAction
 	): Promise<void> {
-		await this.client._unstable_updateDelayedEvent(delayId, action);
+		try {
+			await this.client._unstable_updateDelayedEvent(delayId, action);
+		} catch (error) {
+			if (
+				error instanceof MatrixError &&
+				error.httpStatus === 404 &&
+				error.errcode === 'M_NOT_FOUND'
+			) {
+				// The host widget library logs the error before serializing it.
+				throw new MissingDelayedEventError();
+			}
+			throw error;
+		}
+	}
+
+	public override processError(
+		error: unknown
+	): IWidgetApiErrorResponseDataDetails | undefined {
+		if (error instanceof MissingDelayedEventError) {
+			return { matrix_api_error: error.asWidgetApiErrorData() };
+		}
+		return super.processError(error);
 	}
 
 	/**
