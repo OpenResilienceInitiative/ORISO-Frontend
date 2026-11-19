@@ -7,6 +7,7 @@
 	position: fixed;
 	right: $fab-edge-gap;
 	bottom: $fab-edge-gap;
+
 	// Above the page and the session list, below the composer (1000), MUI
 	// dialogs (1300) and call surfaces (1250+); above Joyride (53) is moot —
 	// the launcher hides while a tour runs.
@@ -21,7 +22,7 @@
 		pointer-events: auto;
 	}
 
-	@media (max-width: 899px) {
+	@media (width <= 899px) {
 		bottom: calc(
 			env(safe-area-inset-bottom, 0px) + 76px + #{$fab-edge-gap}
 		);
