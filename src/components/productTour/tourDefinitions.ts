@@ -1,5 +1,6 @@
 import type { TourDefinition } from './types';
 import { askerFirstStepsTour } from './tours/askerFirstStepsTour';
+import { askerSettingsTour } from './tours/askerSettingsTour';
 
 /**
  * Direct migration of the legacy intro.js consultant walkthrough: same five
@@ -129,7 +130,8 @@ export const consultantMailCounsellingTour: TourDefinition = {
  */
 export const frontendTopicTours: TourDefinition[] = [
 	consultantMailCounsellingTour,
-	askerFirstStepsTour
+	askerFirstStepsTour,
+	askerSettingsTour
 ];
 
 export const frontendTours: TourDefinition[] = [

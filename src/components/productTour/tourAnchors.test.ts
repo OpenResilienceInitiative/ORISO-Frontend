@@ -104,6 +104,41 @@ const anchorContract: Array<{
 	{
 		anchor: 'help-tours',
 		sourceFile: 'profile/HelpToursSection.tsx'
+	},
+	// Settings cards: anchored inside each card's own component, so the
+	// card shell stays untouched. The three notification variants share one
+	// anchor; only one of them renders the first match.
+	{
+		anchor: 'settings-password',
+		sourceFile: 'passwordReset/PasswordReset.tsx'
+	},
+	{
+		anchor: 'settings-2fa',
+		sourceFile: 'twoFactorAuth/TwoFactorAuth.tsx'
+	},
+	{
+		anchor: 'settings-recovery',
+		sourceFile: 'profile/SecurityPrivacySettings.tsx'
+	},
+	{
+		anchor: 'settings-delete-account',
+		sourceFile: 'profile/DeleteAccount.tsx'
+	},
+	{
+		anchor: 'settings-notifications',
+		sourceFile: 'profile/EmailNotifications/index.tsx'
+	},
+	{
+		anchor: 'settings-notifications',
+		sourceFile: 'profile/NotificationSettings/index.tsx'
+	},
+	{
+		anchor: 'settings-notifications',
+		sourceFile: 'profile/BrowserNotifications/index.tsx'
+	},
+	{
+		anchor: 'settings-display',
+		sourceFile: '../features/menu-effects/MenuEffectsSettings.tsx'
 	}
 ];
 

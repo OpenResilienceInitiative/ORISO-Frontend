@@ -158,7 +158,8 @@ describe('frontendTours registry', () => {
 		expect(ids).toEqual([
 			'consultant-walkthrough',
 			'consultant-mail-counselling',
-			'asker-first-steps'
+			'asker-first-steps',
+			'asker-settings'
 		]);
 		expect(new Set(ids).size).toBe(ids.length);
 	});
