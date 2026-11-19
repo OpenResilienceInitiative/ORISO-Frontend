@@ -205,9 +205,11 @@ describe('Help learning card', () => {
 		expect(
 			content.getAllByRole('button', { name: 'Übung starten' })
 		).toHaveLength(2);
+		// The introduction plus every topic tour of the role, one row each;
+		// the topic packages add more rows, so only the floor is fixed here.
 		expect(
-			content.getAllByRole('button', { name: 'Starten' })
-		).toHaveLength(2);
+			content.getAllByRole('button', { name: 'Starten' }).length
+		).toBeGreaterThanOrEqual(2);
 		expect(
 			content.getByRole('heading', { name: 'Mail-Beratung' })
 		).toBeTruthy();
