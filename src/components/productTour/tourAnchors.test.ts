@@ -46,6 +46,31 @@ const anchorContract: Array<{
 		sourceFile: 'profile/LiveChatAvailability.tsx'
 	},
 	{
+		// On every root: phone empty, desktop empty split, filled list.
+		anchor: 'timeline-page',
+		sourceFile: 'notificationsCenter/NotificationsCenter.tsx',
+		expected: /(data-tour-target="timeline-page"[\s\S]*){3}/
+	},
+	{
+		anchor: 'timeline-filters',
+		sourceFile: 'notificationsCenter/NotificationsCenter.tsx',
+		expected: /'timeline-filters'/
+	},
+	{
+		anchor: 'timeline-mark-all-read',
+		sourceFile: 'notificationsCenter/NotificationsCenter.tsx',
+		expected: /'timeline-mark-all-read'/
+	},
+	{
+		anchor: 'sessions-drafts-chip',
+		sourceFile: 'sessionsList/SessionsListToolbar.tsx',
+		expected: /tourTarget: 'sessions-drafts-chip'/
+	},
+	{
+		anchor: 'drafts-center',
+		sourceFile: 'draftsCenter/DraftsCenter.tsx'
+	},
+	{
 		anchor: 'groupchat-create-button',
 		sourceFile: 'sessionsList/SessionsListToolbar.tsx'
 	},
@@ -106,6 +131,10 @@ const passThroughContract: Array<{ sourceFile: string; expected: RegExp }> = [
 	},
 	{
 		sourceFile: 'chatStage/SidePanel.tsx',
+		expected: /data-tour-target=\{tourTarget\}/
+	},
+	{
+		sourceFile: 'notificationsCenter/MarkAllReadButton.tsx',
 		expected: /data-tour-target=\{tourTarget\}/
 	},
 	{

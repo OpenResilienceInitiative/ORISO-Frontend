@@ -158,6 +158,7 @@ describe('frontendTours registry', () => {
 		expect(ids).toEqual([
 			'consultant-walkthrough',
 			'consultant-live-chat',
+			'consultant-timeline',
 			'consultant-mail-counselling'
 		]);
 		expect(new Set(ids).size).toBe(ids.length);

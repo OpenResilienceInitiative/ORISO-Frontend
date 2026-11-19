@@ -6419,6 +6419,36 @@
 					"intro": "Une fois la conversation finie, terminez-la dans le menu ⋮ avec « Terminer le chat ». Vous revenez ensuite à la file d'attente."
 				}
 			}
+		},
+		"timeline": {
+			"title": "Chronologie et brouillons",
+			"summary": "Où vous voyez tous les événements au même endroit et où se trouvent vos messages non envoyés.",
+			"step": {
+				"activityNav": {
+					"title": "Votre chronologie",
+					"intro": "La « Chronologie » rassemble les événements de tous vos chats. Vous n'avez plus besoin d'ouvrir chaque conversation pour voir ce qui est nouveau."
+				},
+				"timeline": {
+					"title": "Tout au même endroit",
+					"intro": "À gauche la liste des événements, à droite les détails de l'entrée choisie. De là, vous passez directement au chat correspondant."
+				},
+				"filters": {
+					"title": "Rechercher et filtrer",
+					"intro": "Cherchez dans la chronologie ou filtrez par type, par exemple « Non lus » ou « Mentions ». Le bouton de filtre à gauche règle l'affichage."
+				},
+				"markAllRead": {
+					"title": "Tout marquer comme lu",
+					"intro": "Un clic marque toutes les entrées de la chronologie comme lues. Les messages de vos chats ne changent pas."
+				},
+				"draftsChip": {
+					"title": "Brouillons dans vos conversations",
+					"intro": "Les messages non envoyés ne sont pas perdus. Le filtre « Brouillons » montre les conversations qui contiennent encore un brouillon."
+				},
+				"draftsCenter": {
+					"title": "Tous les brouillons",
+					"intro": "Tous les brouillons sont ici, enregistrés par chat et par fil. Ouvrez un brouillon pour continuer à écrire, ou supprimez-le."
+				}
+			}
 		}
 	},
 	"weekday": {

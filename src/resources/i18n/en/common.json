@@ -6334,6 +6334,36 @@
 					"intro": "When the conversation is over, end it in the ⋮ menu with “End chat”. You then return to the queue."
 				}
 			}
+		},
+		"timeline": {
+			"title": "Timeline and drafts",
+			"summary": "Where you see every event in one place and where your unsent messages are kept.",
+			"step": {
+				"activityNav": {
+					"title": "Your timeline",
+					"intro": "The “Timeline” collects the events from all your chats. You no longer need to open each conversation to see what is new."
+				},
+				"timeline": {
+					"title": "Everything in one place",
+					"intro": "The list of events is on the left, the details of the selected entry on the right. From there you jump straight into the matching chat."
+				},
+				"filters": {
+					"title": "Search and filter",
+					"intro": "Search the timeline or filter by kind, for example “Unread” or “Mentions”. The filter button on the left adjusts what is shown."
+				},
+				"markAllRead": {
+					"title": "Mark all as read",
+					"intro": "One click marks every timeline entry as read. The messages in your chats are not affected."
+				},
+				"draftsChip": {
+					"title": "Drafts in your conversations",
+					"intro": "Unsent messages are not lost. The “Drafts” filter shows the conversations that still hold a draft."
+				},
+				"draftsCenter": {
+					"title": "All drafts",
+					"intro": "All drafts are listed here, saved per chat and thread. Open a draft to keep writing, or delete it."
+				}
+			}
 		}
 	},
 	"weekday": {

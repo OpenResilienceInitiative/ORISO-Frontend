@@ -910,7 +910,10 @@ export const NotificationsCenter = () => {
 	if (notificationFeed.length === 0) {
 		if (isSinglePane) {
 			return (
-				<div className="notificationsCenter notificationsCenter--empty">
+				<div
+					className="notificationsCenter notificationsCenter--empty"
+					data-tour-target="timeline-page"
+				>
 					<ActivityTimelineEmptyState />
 				</div>
 			);
@@ -918,7 +921,10 @@ export const NotificationsCenter = () => {
 		// Desktop: the same two panes as Conversations, with the white
 		// divider that only an empty page shows (Frank, 2026-11-16).
 		return (
-			<div className="notificationsCenter notificationsCenter--emptySplit">
+			<div
+				className="notificationsCenter notificationsCenter--emptySplit"
+				data-tour-target="timeline-page"
+			>
 				<div
 					className="notificationsCenter__listColumn"
 					style={{ width: `${listWidth}px` }}
@@ -950,6 +956,7 @@ export const NotificationsCenter = () => {
 					? 'notificationsCenter--detailFocused'
 					: ''
 			}`}
+			data-tour-target="timeline-page"
 		>
 			{messagePreviewSources.map((source) => (
 				<MatrixActivityPreviewHydrator
@@ -967,6 +974,11 @@ export const NotificationsCenter = () => {
 				<div
 					className="sessionsListToolbar notificationsCenter__toolbar"
 					hidden={isIconRail}
+					// No anchor while the icon rail hides the toolbar: the
+					// tour would point at an invisible element.
+					data-tour-target={
+						isIconRail ? undefined : 'timeline-filters'
+					}
 				>
 					<ListSearchField
 						leading={
@@ -1117,6 +1129,11 @@ export const NotificationsCenter = () => {
 								label={translate(
 									'notifications.center.markAllRead'
 								)}
+								tourTarget={
+									isIconRail
+										? undefined
+										: 'timeline-mark-all-read'
+								}
 							/>
 						</FilterChipRow>
 					)}
