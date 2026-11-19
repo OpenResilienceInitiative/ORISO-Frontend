@@ -6389,6 +6389,36 @@
 			"open": "Turları aç",
 			"close": "Turları kapat",
 			"manage": "Turları yönet"
+		},
+		"caseHandover": {
+			"title": "Vakaları devretmek",
+			"summary": "Kendi danışmanlığınızı bir meslektaşa devredin ya da onun vakalarına erişim talep edin.",
+			"step": {
+				"intro": {
+					"title": "İki yönlü devir",
+					"intro": "Yeni: vakaların sorumluluğu doğrudan platformda değişir. Kendi danışmanlığınızı önerebilir ya da bir meslektaşınızın vakasına erişim talep edebilirsiniz. Bu tur iki yolu da gösterir, hiçbir işlem başlatmaz."
+				},
+				"offer": {
+					"title": "Kendi danışmanlığınızı devretmek",
+					"intro": "Açık bir danışmanlıkta başlıktaki „+“ simgesini ve ardından „Danışmanlığı devret“i seçin. Yetkili bir meslektaş seçip bir gerekçe yazın. Gerekli tüm onaylar gelene kadar sorumluluk sizde kalır."
+				},
+				"search": {
+					"title": "Meslektaş aramak",
+					"intro": "Burada „Kişiler“ altında bir meslektaş arayın. Liste, biriminize ve konularınıza göre devralabileceğiniz vakalarını gösterir."
+				},
+				"requestAccess": {
+					"title": "Erişim talep etmek",
+					"intro": "„Erişim talep et“ ile bir vakayı gerekçesiyle istersiniz. ▾ ve „Birden fazla vaka seç“ ile birkaç vakayı aynı anda talep edersiniz."
+				},
+				"status": {
+					"title": "Durumu takip etmek",
+					"intro": "Vakada durum görünür, örneğin „Onay bekleniyor“. Meslektaşınızın yanıtı ve kural gerektiriyorsa danışanın onayı zaman çizelgesinde görünür."
+				},
+				"done": {
+					"title": "Kısaca",
+					"intro": "Kendi vakalarınızı danışmanlıkta „+“ → „Danışmanlığı devret“ ile önerin. Meslektaşlarınızın vakalarını kişi aramasıyla talep edin. Durumu zaman çizelgesinde izleyin."
+				}
+			}
 		}
 	},
 	"weekday": {

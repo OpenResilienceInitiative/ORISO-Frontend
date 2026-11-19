@@ -6389,6 +6389,36 @@
 			"open": "Ouvrir les visites guidées",
 			"close": "Fermer les visites guidées",
 			"manage": "Gérer les visites guidées"
+		},
+		"caseHandover": {
+			"title": "Transférer des dossiers",
+			"summary": "Transférer une de vos consultations à un·e collègue ou demander l'accès à ses dossiers.",
+			"step": {
+				"intro": {
+					"title": "Un transfert dans les deux sens",
+					"intro": "Nouveau : les dossiers changent de responsable directement dans la plateforme. Vous proposez une de vos consultations ou demandez l'accès au dossier d'un·e collègue. Cette visite montre les deux voies sans rien déclencher."
+				},
+				"offer": {
+					"title": "Transférer votre consultation",
+					"intro": "Dans une consultation ouverte, choisissez « + » dans l'en-tête, puis « Transférer la consultation ». Choisissez un·e collègue habilité·e et indiquez un motif. Vous restez responsable jusqu'à ce que toutes les autorisations nécessaires soient réunies."
+				},
+				"search": {
+					"title": "Chercher un·e collègue",
+					"intro": "Cherchez ici un·e collègue sous « Personnes ». La liste affiche alors ses dossiers que vous pouvez reprendre – selon votre service et vos thèmes."
+				},
+				"requestAccess": {
+					"title": "Demander l'accès",
+					"intro": "« Demander l'accès » sollicite un dossier avec un motif. Avec ▾ et « Sélectionner plusieurs dossiers », vous en demandez plusieurs à la fois."
+				},
+				"status": {
+					"title": "Suivre l'état",
+					"intro": "Le dossier affiche son état, par exemple « En attente d'autorisation ». La réponse de votre collègue et, si la règle l'exige, l'accord de la personne accompagnée apparaissent dans la chronologie."
+				},
+				"done": {
+					"title": "En bref",
+					"intro": "Proposez vos dossiers dans la consultation via « + » → « Transférer la consultation ». Demandez ceux de vos collègues via la recherche de personnes. Suivez l'état dans la chronologie."
+				}
+			}
 		}
 	},
 	"weekday": {

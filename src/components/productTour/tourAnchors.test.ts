@@ -84,6 +84,18 @@ const anchorContract: Array<{
 		anchor: 'session-supervisor-add',
 		sourceFile: 'sessionHeader/ChatroomMainInteractionIcon.tsx'
 	},
+	// Use-case tours (FE#2339).
+	{
+		anchor: 'sessions-search',
+		sourceFile: 'sessionsList/SessionsListToolbar.tsx'
+	},
+	{
+		// The first card of the list; the split button forwards it.
+		anchor: 'case-handover-request-access',
+		sourceFile: 'sessionsListItem/SessionListItemComponent.tsx',
+		expected:
+			/index === 0\s*\?\s*'case-handover-request-access'\s*:\s*undefined/
+	},
 	{
 		anchor: 'supervision-panel',
 		sourceFile: 'session/SessionItemComponent.tsx',
@@ -100,6 +112,14 @@ const passThroughContract: Array<{ sourceFile: string; expected: RegExp }> = [
 	{
 		sourceFile: 'chatStage/SidePanel.tsx',
 		expected: /data-tour-target=\{tourTarget\}/
+	},
+	{
+		sourceFile: 'splitButton/SplitButton.tsx',
+		expected: /data-tour-target=\{tourTarget\}/
+	},
+	{
+		sourceFile: 'sessionsListItem/CaseHandoverActionButton.tsx',
+		expected: /tourTarget=\{tourTarget\}/
 	}
 ];
 

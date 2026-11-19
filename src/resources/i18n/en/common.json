@@ -6304,6 +6304,36 @@
 			"open": "Open tours",
 			"close": "Close tours",
 			"manage": "Manage tours"
+		},
+		"caseHandover": {
+			"title": "Handing over cases",
+			"summary": "Hand one of your consultations over to a colleague, or request access to theirs.",
+			"step": {
+				"intro": {
+					"title": "Handover in both directions",
+					"intro": "New: cases change hands directly in the platform. You can offer one of your consultations or request access to a colleague's case. This tour shows both ways without triggering anything."
+				},
+				"offer": {
+					"title": "Hand over your own consultation",
+					"intro": "In an open consultation, choose \"+\" in the header and then \"Hand over consultation\". Pick an eligible colleague and give a reason. You stay responsible until every required approval is in."
+				},
+				"search": {
+					"title": "Find a colleague",
+					"intro": "Search for a colleague here under \"People\". The list then shows the cases of theirs you may take over – depending on your department and topics."
+				},
+				"requestAccess": {
+					"title": "Request access",
+					"intro": "\"Request access\" asks for one case and a reason. Use ▾ and \"Select multiple cases\" to ask for several cases at once."
+				},
+				"status": {
+					"title": "Follow the status",
+					"intro": "The case shows its status, for example \"Awaiting approval\". Your colleague's answer and – if the policy requires it – the help seeker's consent appear in the timeline."
+				},
+				"done": {
+					"title": "In short",
+					"intro": "Offer your own cases in the consultation via \"+\" → \"Hand over consultation\". Request colleagues' cases through the people search. Follow the status in the timeline."
+				}
+			}
 		}
 	},
 	"weekday": {
