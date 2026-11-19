@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useCallback, useContext, useMemo, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { UserDataContext, useTenant } from '../../../globalState';
@@ -94,6 +94,12 @@ export const TourLauncherFab = () => {
 			// Without progress every tour is offered as not started.
 			.catch(() => setProgress([]));
 	}, []);
+
+	// Load once the "?" shows, so the card opens with the real status; the
+	// card refreshes it again on every open.
+	useEffect(() => {
+		if (shown) refreshProgress();
+	}, [shown, refreshProgress]);
 
 	const startTour = useCallback(
 		(tour: TourDefinition, mode: TourStartMode) =>
