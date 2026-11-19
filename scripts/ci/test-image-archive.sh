@@ -30,6 +30,21 @@ done
 for workflow in ci-pull-request.yml ci-storybook-pull-request.yml; do
   require_line "$workflows/$workflow" 'push_to_ghcr: false'
   require_line "$workflows/$workflow" 'platforms: linux/amd64'
+  validation=$(awk '
+    /^    validate:$/ { printing = 1; next }
+    printing && /^    [[:alnum:]_-]+:/ { exit }
+    printing { print }
+  ' "$workflows/$workflow")
+  permissions=$(awk '
+    /^        permissions:$/ { printing = 1; next }
+    printing && /^        [[:alnum:]_-]+:/ { exit }
+    printing { print }
+  ' <<< "$validation")
+  [[ "$permissions" == '            contents: read' ]] ||
+    fail "$workflow must grant only read access to the validate job"
+  grep -A 3 -F -- '- name: Checkout repository' <<< "$validation" |
+    grep -Fq 'persist-credentials: false' ||
+    fail "$workflow must not persist checkout credentials in the validate job"
   if grep -Eq 'packages: write|github_token:|push_to_ghcr: true|actions/attest|docker/login-action' "$workflows/$workflow"; then
     fail "$workflow must not publish or supply registry credentials"
   fi

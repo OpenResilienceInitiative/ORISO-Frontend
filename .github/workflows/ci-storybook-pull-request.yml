@@ -16,10 +16,14 @@ jobs:
         name: Storybook Docker validation
         runs-on: ubuntu-latest
         timeout-minutes: 25
+        permissions:
+            contents: read
 
         steps:
             - name: Checkout repository
               uses: actions/checkout@v6
+              with:
+                  persist-credentials: false
 
             # Still no node-build step: lint, type-check and unit tests already run in
             # "Frontend PR Validation" on the same commit, so the app build would only
