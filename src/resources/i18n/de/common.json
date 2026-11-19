@@ -6439,6 +6439,36 @@
 					"intro": "Hier stehen alle Entwürfe, gespeichert pro Chat und Thread. Öffnen Sie einen Entwurf, um weiterzuschreiben, oder löschen Sie ihn."
 				}
 			}
+		},
+		"videoCall": {
+			"title": "Video-Call",
+			"summary": "Wie Sie aus einem Gespräch heraus anrufen und wartende Personen einlassen.",
+			"step": {
+				"intro": {
+					"title": "Anrufe im Gespräch",
+					"intro": "Video- und Audio-Calls starten Sie direkt in der Beratung, im Kopf des Gesprächs. Die ratsuchende Person bekommt den Anruf in ihrem Chat angezeigt."
+				},
+				"sessionCallButton": {
+					"title": "Anruf starten",
+					"intro": "Im Kopf eines geöffneten Gesprächs stehen „Video-Call starten“ und „Audio-Call starten“. Auf schmalen Bildschirmen finden Sie beide im Menü ⋮."
+				},
+				"groupCallButton": {
+					"title": "Anruf im Gruppenchat",
+					"intro": "Auch im Gruppenchat starten Sie den Anruf oben im Kopf des Chats."
+				},
+				"knock": {
+					"title": "Wartende Personen einlassen",
+					"intro": "Wer später dazukommt, klopft an und wartet. Im laufenden Anruf erscheint „Wartende Personen“: Mit „Einlassen“ holen Sie eine Person herein, mit „Ablehnen“ nicht, mit „Alle einlassen“ alle auf einmal."
+				},
+				"help": {
+					"title": "Hilfe zu Video-Calls",
+					"intro": "Unter „Hilfe“ → „Video-Call“ steht, welche Browser Video-Calls unterstützen. Den Anmelde-Link können Sie hier kopieren und an Ratsuchende weitergeben."
+				},
+				"done": {
+					"title": "Bereit für den ersten Anruf",
+					"intro": "Öffnen Sie ein Gespräch und starten Sie den Anruf, wenn es passt. Nach dem Anruf geht das Gespräch im Chat normal weiter."
+				}
+			}
 		}
 	},
 	"weekday": {

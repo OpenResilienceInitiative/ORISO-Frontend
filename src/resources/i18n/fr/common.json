@@ -6449,6 +6449,36 @@
 					"intro": "Tous les brouillons sont ici, enregistrés par chat et par fil. Ouvrez un brouillon pour continuer à écrire, ou supprimez-le."
 				}
 			}
+		},
+		"videoCall": {
+			"title": "Appel vidéo",
+			"summary": "Comment appeler depuis une conversation et laisser entrer les personnes en attente.",
+			"step": {
+				"intro": {
+					"title": "Les appels dans la conversation",
+					"intro": "Vous lancez les appels vidéo et audio directement dans la conversation, depuis son en-tête. La personne en recherche de conseil voit l'appel dans son chat."
+				},
+				"sessionCallButton": {
+					"title": "Lancer un appel",
+					"intro": "L'en-tête d'une conversation ouverte affiche « Démarrer un appel vidéo » et « Démarrer un appel audio ». Sur les écrans étroits, les deux se trouvent dans le menu ⋮."
+				},
+				"groupCallButton": {
+					"title": "Appel dans un chat de groupe",
+					"intro": "Dans un chat de groupe aussi, vous lancez l'appel depuis l'en-tête du chat."
+				},
+				"knock": {
+					"title": "Laisser entrer les personnes en attente",
+					"intro": "Qui arrive plus tard frappe et attend. Pendant l'appel apparaît « Personnes en attente » : « Laisser entrer » fait entrer une personne, « Refuser » non, « Laisser entrer tout le monde » toutes à la fois."
+				},
+				"help": {
+					"title": "Aide aux appels vidéo",
+					"intro": "« Aide » → « Appel vidéo » indique les navigateurs compatibles. Vous pouvez y copier le lien de connexion et le transmettre aux personnes en recherche de conseil."
+				},
+				"done": {
+					"title": "Prêt pour le premier appel",
+					"intro": "Ouvrez une conversation et lancez l'appel au bon moment. Après l'appel, la conversation par chat continue normalement."
+				}
+			}
 		}
 	},
 	"weekday": {

@@ -65,6 +65,16 @@ const anchorContract: Array<{
 		sourceFile: 'draftsCenter/DraftsCenter.tsx'
 	},
 	{
+		// Header video button only; never the ⋮ triggers or the call itself.
+		anchor: 'session-video-call-button',
+		sourceFile: 'sessionMenu/SessionMenu.tsx',
+		expected: /tourTarget="session-video-call-button"/
+	},
+	{
+		anchor: 'help-video-call',
+		sourceFile: 'help/Help.tsx'
+	},
+	{
 		anchor: 'groupchat-create-button',
 		sourceFile: 'sessionsList/SessionsListToolbar.tsx'
 	},
