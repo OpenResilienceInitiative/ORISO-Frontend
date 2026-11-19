@@ -6449,6 +6449,44 @@
 					"intro": "Vos cercles de parole apparaissent dans votre liste de consultations. Ouvrez-les pour modifier les réglages ou repartager le lien."
 				}
 			}
+		},
+		"profile": {
+			"title": "Votre profil",
+			"summary": "Où se trouvent désormais profil, absence, notifications, sécurité et affichage.",
+			"step": {
+				"overview": {
+					"title": "Votre profil",
+					"intro": "Votre profil regroupe vos données et réglages, répartis entre Général, Mes activités, Paramètres et Aide. Cette visite montre les cartes essentielles."
+				},
+				"public": {
+					"title": "Données publiques",
+					"intro": "Les personnes accompagnées voient ces informations : votre nom, vos langues et vos centres de conseil. Tenez-les à jour."
+				},
+				"absence": {
+					"title": "Mon absence",
+					"intro": "Indiquez ici votre absence. Les personnes accompagnées voient alors votre message d'absence."
+				},
+				"notifications": {
+					"title": "Mes notifications",
+					"intro": "Choisissez ici ce qui vous est signalé par e-mail et dans le navigateur."
+				},
+				"security": {
+					"title": "Sécurité",
+					"intro": "Sous « Connexion et compte », vous changez votre mot de passe et gérez l'authentification à deux facteurs. Nouveau : la récupération des anciens messages – configurez-la pour lire vos messages chiffrés aussi sur un nouvel appareil."
+				},
+				"display": {
+					"title": "Affichage",
+					"intro": "Ici, vous réglez les effets, la chronologie et la langue de l'interface."
+				},
+				"shortcuts": {
+					"title": "Raccourcis clavier",
+					"intro": "Nouveau : de nombreuses actions se font au clavier. Tous les raccourcis sont listés ici."
+				},
+				"helpTours": {
+					"title": "Visites guidées",
+					"intro": "Relancez ici n'importe quelle visite. « Afficher le bouton des visites guidées » affiche ou masque le bouton « ? » en bas à droite."
+				}
+			}
 		}
 	},
 	"weekday": {

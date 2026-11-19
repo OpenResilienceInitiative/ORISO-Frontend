@@ -30,6 +30,7 @@ export const profileRoutesHelp = (
 		elements: [
 			{
 				component: HelpToursSection,
+				tourTarget: 'profile-help-tours',
 				icon: ExploreOutlinedIcon,
 				column: COLUMN_LEFT,
 				condition: (userData) => showsTours(settings, userData)

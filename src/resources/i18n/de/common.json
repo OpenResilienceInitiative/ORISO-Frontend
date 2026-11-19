@@ -6439,6 +6439,44 @@
 					"intro": "Ihre Gesprächskreise erscheinen in Ihrer Beratungsliste. Dort öffnen Sie sie, bearbeiten die Einstellungen und teilen den Link erneut."
 				}
 			}
+		},
+		"profile": {
+			"title": "Ihr Profil",
+			"summary": "Wo Profil, Abwesenheit, Benachrichtigungen, Sicherheit und Anzeige jetzt liegen.",
+			"step": {
+				"overview": {
+					"title": "Ihr Profil",
+					"intro": "Im Profil liegen Ihre Daten und Einstellungen, verteilt auf die Bereiche Allgemeines, Meine Aktivitäten, Einstellungen und Hilfe. Der Rundgang zeigt die wichtigsten Karten."
+				},
+				"public": {
+					"title": "Öffentliche Daten",
+					"intro": "Diese Angaben sehen Ratsuchende: Ihr Name, Ihre Sprachen und Ihre Beratungsstellen. Halten Sie sie aktuell."
+				},
+				"absence": {
+					"title": "Meine Abwesenheit",
+					"intro": "Hier tragen Sie Ihre Abwesenheit ein. Ratsuchende sehen dann Ihre Abwesenheitsnachricht."
+				},
+				"notifications": {
+					"title": "Benachrichtigungen",
+					"intro": "Hier legen Sie fest, worüber Sie per E-Mail und im Browser informiert werden."
+				},
+				"security": {
+					"title": "Sicherheit",
+					"intro": "Unter „Anmeldung & Konto“ ändern Sie Ihr Passwort und verwalten die Zwei-Faktor-Authentifizierung. Neu: die Wiederherstellung alter Nachrichten – richten Sie sie ein, damit Sie verschlüsselte Nachrichten auch auf einem neuen Gerät lesen können."
+				},
+				"display": {
+					"title": "Anzeige",
+					"intro": "Unter „Anzeige“ stellen Sie Effekte, den Zeitstrahl und die Sprache der Oberfläche ein."
+				},
+				"shortcuts": {
+					"title": "Tastaturkürzel",
+					"intro": "Neu: Viele Aktionen erreichen Sie per Tastatur. Hier finden Sie alle Kürzel."
+				},
+				"helpTours": {
+					"title": "Rundgänge",
+					"intro": "Hier starten Sie jeden Rundgang erneut. Mit „Rundgang-Knopf anzeigen“ blenden Sie den Knopf „?“ unten rechts ein oder aus."
+				}
+			}
 		}
 	},
 	"weekday": {

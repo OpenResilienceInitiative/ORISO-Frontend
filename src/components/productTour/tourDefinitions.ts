@@ -4,6 +4,7 @@ import {
 	consultantGroupCircleTour,
 	isGroupCircleTourAvailable
 } from './tours/groupCircleTour';
+import { consultantProfileTour } from './tours/profileTour';
 import type { TourDefinition } from './types';
 
 /**
@@ -135,6 +136,7 @@ export const consultantMailCounsellingTour: TourDefinition = {
 export const frontendTopicTours: TourDefinition[] = [
 	consultantCaseHandoverTour,
 	consultantGroupCircleTour,
+	consultantProfileTour,
 	consultantMailCounsellingTour
 ];
 
