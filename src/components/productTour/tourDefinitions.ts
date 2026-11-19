@@ -1,4 +1,5 @@
 import type { TourDefinition } from './types';
+import { consultantLiveChatTour } from './tours/liveChatTour';
 
 /**
  * Direct migration of the legacy intro.js consultant walkthrough: same five
@@ -127,6 +128,7 @@ export const consultantMailCounsellingTour: TourDefinition = {
  * sees its own (`getAvailableTours`).
  */
 export const frontendTopicTours: TourDefinition[] = [
+	consultantLiveChatTour,
 	consultantMailCounsellingTour
 ];
 

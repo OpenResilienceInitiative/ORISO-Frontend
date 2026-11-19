@@ -6389,6 +6389,36 @@
 			"open": "Ouvrir les visites guidées",
 			"close": "Fermer les visites guidées",
 			"manage": "Gérer les visites guidées"
+		},
+		"liveChat": {
+			"title": "Chat en direct",
+			"summary": "Comment arrivent les chats en direct anonymes, comment vous signaler disponible et prendre en charge un chat.",
+			"step": {
+				"intro": {
+					"title": "Chat en direct : ce qui change",
+					"intro": "Les chats en direct arrivent par un lien, sans inscription. Les personnes en recherche de conseil écrivent de façon anonyme, sur un thème précis. Tous les conseillers disponibles pour ce thème partagent une seule file d'attente."
+				},
+				"availabilitySettings": {
+					"title": "Votre disponibilité",
+					"intro": "Activez ou désactivez ici « Je suis disponible ». Seules les personnes disponibles reçoivent des chats en direct. Si vous le souhaitez, placez l'interrupteur dans la barre de menu."
+				},
+				"availabilityToggle": {
+					"title": "Interrupteur dans la barre de menu",
+					"intro": "Avec « Activer le Live-Chat depuis la barre de menu », cet interrupteur apparaît. Un clic vous rend disponible ou indisponible — sans ouvrir les paramètres."
+				},
+				"queue": {
+					"title": "La file d'attente commune",
+					"intro": "Le filtre « Chat en direct » affiche tous les chats en attente. Vos collègues voient la même liste."
+				},
+				"accept": {
+					"title": "Démarrer le chat",
+					"intro": "« Démarrer le chat » vous attribue le chat. Seul le chat en tête de la file peut être accepté."
+				},
+				"done": {
+					"title": "Terminer le chat",
+					"intro": "Une fois la conversation finie, terminez-la dans le menu ⋮ avec « Terminer le chat ». Vous revenez ensuite à la file d'attente."
+				}
+			}
 		}
 	},
 	"weekday": {
