@@ -34,3 +34,23 @@ export const waitForTarget = (
 		};
 		check();
 	});
+
+/**
+ * Scrolls a target into its scroll container when it lies outside the
+ * viewport (FE#2340: the long profile and settings pages render every card
+ * of a tab, so a tour target can sit below the fold). Joyride's own scroll
+ * stays off (`skipScroll`): it scrolls the window, which would break the
+ * fixed app shell; `scrollIntoView` moves the nearest scrolling pane.
+ */
+export const bringTargetIntoView = (target: Element | null): void => {
+	if (!target) return;
+	const rect = target.getBoundingClientRect();
+	const outside =
+		rect.top < 0 ||
+		rect.left < 0 ||
+		rect.bottom > window.innerHeight ||
+		rect.right > window.innerWidth;
+	if (outside) {
+		target.scrollIntoView({ block: 'center', inline: 'nearest' });
+	}
+};

@@ -111,8 +111,8 @@ export const Routing = (props: RoutingProps) => {
 				element={
 					<>
 						<Walkthrough />
-						<TourLauncherFab />
 						<PracticeBanner />
+						<TourLauncherFab />
 						<E2EEProvider>
 							<div
 								className={`app__wrapper ${
