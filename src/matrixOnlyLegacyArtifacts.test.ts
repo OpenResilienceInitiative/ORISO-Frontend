@@ -60,7 +60,9 @@ describe('Matrix-only active frontend artifacts', () => {
 		const storybookWorkflow = readSource(
 			'.github/workflows/ci-storybook-main.yml'
 		);
-		const releaseWorkflow = readSource('.github/workflows/release-image.yml');
+		const releaseWorkflow = readSource(
+			'.github/workflows/release-image.yml'
+		);
 		const scanScript = readSource('scripts/ci/scan-image-archive.sh');
 		const publishScript = readSource('scripts/ci/publish-image-archive.sh');
 		const composite = 'uses: ./.github/actions/docker-build-push';
@@ -74,10 +76,14 @@ describe('Matrix-only active frontend artifacts', () => {
 		);
 		expect(buildAction).toMatch(/^\s*provenance: mode=max$/m);
 		expect(buildAction).toMatch(/^\s*sbom: true$/m);
-		expect(buildAction).toContain('value: ${{ steps.publish.outputs.digest }}');
-		expect(buildAction).toContain('IMAGE_ARCHIVE: ${{ steps.scan.outputs.archive }}');
-		expect(buildAction).toContain(
-			'EXPECTED_ARCHIVE_SHA256: ${{ steps.scan.outputs.archive_sha256 }}'
+		expect(buildAction).toMatch(
+			/value: \$\{\{ steps\.publish\.outputs\.digest \}\}/
+		);
+		expect(buildAction).toMatch(
+			/IMAGE_ARCHIVE: \$\{\{ steps\.scan\.outputs\.archive \}\}/
+		);
+		expect(buildAction).toMatch(
+			/EXPECTED_ARCHIVE_SHA256: \$\{\{ steps\.scan\.outputs\.archive_sha256 \}\}/
 		);
 		expect(buildAction).toContain(
 			'aquasecurity/setup-trivy@3fb12ec12f41e471780db15c232d5dd185dcb514'
@@ -86,7 +92,9 @@ describe('Matrix-only active frontend artifacts', () => {
 			'trivy image --input "$scan_root/$arch" --platform "$platform"'
 		);
 		expect(scanScript).toContain('--exit-code 1 --ignore-unfixed');
-		expect(scanScript).toContain('--vuln-type os,library --severity CRITICAL,HIGH');
+		expect(scanScript).toContain(
+			'--vuln-type os,library --severity CRITICAL,HIGH'
+		);
 		expectOrder(
 			buildAction,
 			'uses: docker/build-push-action@v7',
@@ -102,7 +110,12 @@ describe('Matrix-only active frontend artifacts', () => {
 			"printf 'digest=%s"
 		);
 
-		for (const tag of ['type=sha', 'value=latest', 'value=dev', 'value=pre-dev']) {
+		for (const tag of [
+			'type=sha',
+			'value=latest',
+			'value=dev',
+			'value=pre-dev'
+		]) {
 			expect(buildAction).toContain(tag);
 		}
 		for (const workflow of [mainWorkflow, storybookWorkflow]) {
@@ -120,16 +133,20 @@ describe('Matrix-only active frontend artifacts', () => {
 			);
 			expect(workflow).toContain('push-to-registry: true');
 		}
-		expect(mainWorkflow).toContain(
-			'subject-digest: ${{ steps.image.outputs.digest }}'
+		expect(mainWorkflow).toMatch(
+			/subject-digest: \$\{\{ steps\.image\.outputs\.digest \}\}/
 		);
 
 		expect(
-			releaseWorkflow.match(/uses: \.\/\.github\/actions\/docker-build-push/g)
+			releaseWorkflow.match(
+				/uses: \.\/\.github\/actions\/docker-build-push/g
+			)
 		).toHaveLength(2);
 		expect(releaseWorkflow.match(/push_to_ghcr: false/g)).toHaveLength(2);
 		expect(
-			releaseWorkflow.match(/bash scripts\/ci\/publish-image-archive\.sh/g)
+			releaseWorkflow.match(
+				/bash scripts\/ci\/publish-image-archive\.sh/g
+			)
 		).toHaveLength(2);
 		expect(releaseWorkflow).not.toMatch(
 			/docker\/build-push-action|^\s*(?:push: true$|platforms:)/m
@@ -144,7 +161,9 @@ describe('Matrix-only active frontend artifacts', () => {
 					'_archive.outputs.archive_sha256 }}'
 			);
 			expect(releaseWorkflow).toContain(
-				'subject-digest: ${{ steps.' + image + '_image.outputs.digest }}'
+				'subject-digest: ${{ steps.' +
+					image +
+					'_image.outputs.digest }}'
 			);
 		}
 		expectOrder(
