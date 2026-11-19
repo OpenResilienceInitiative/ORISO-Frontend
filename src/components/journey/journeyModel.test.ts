@@ -6,7 +6,8 @@ import {
 	emptyAnswers,
 	isQuestionAnswered,
 	missingRequired,
-	textIn
+	textIn,
+	toAnswerRecords
 } from './journeyModel';
 import {
 	arrivalStep,
@@ -100,6 +101,19 @@ describe('answering a journey step', () => {
 				value: '★★★☆☆'
 			},
 			{ id: 'feeling', label: 'Wie geht es Ihnen jetzt?', value: '-2' }
+		]);
+	});
+});
+
+describe('answers leaving the Frontend', () => {
+	it('carry the id and version of what they answer, and only what was answered', () => {
+		const records = toAnswerRecords(arrivalStep, {
+			questions: { note: { text: '  Danke  ' } },
+			ratings: { satisfaction: 5 }
+		});
+		expect(records).toEqual([
+			{ itemId: 'note', kind: 'question', version: 1, text: 'Danke' },
+			{ itemId: 'satisfaction', kind: 'rating', version: 1, value: 5 }
 		]);
 	});
 });

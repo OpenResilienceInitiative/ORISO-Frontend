@@ -1,10 +1,13 @@
 import * as React from 'react';
 import { useEffect, useId, useRef } from 'react';
-import { Box, MenuItem, TextField, Typography } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { useTranslation } from 'react-i18next';
-import { orisoInputColors, orisoTextFieldSx } from '../form/orisoInputDesign';
+import { orisoInputColors } from '../form/orisoInputDesign';
+import { OrisoSelect } from '../form/OrisoSelect';
+import { OrisoTextField } from '../form/OrisoTextField';
+import { OrisoTextarea } from '../form/OrisoTextarea';
 import {
 	OTHER_OPTION,
 	choose,
@@ -291,16 +294,19 @@ export const JourneyQuestionField = ({
 
 	if (question.type === 'text') {
 		return (
-			<Box data-cy="journey-question" data-question-type="text">
+			<Box
+				data-cy="journey-question"
+				data-question-id={question.id}
+				data-question-type="text"
+			>
 				<QuestionHead
 					id={headId}
 					question={question}
 					language={language}
 					as="label"
 				/>
-				<TextField
+				<OrisoTextarea
 					fullWidth
-					multiline
 					minRows={3}
 					disabled={disabled}
 					value={answer?.text ?? ''}
@@ -316,7 +322,7 @@ export const JourneyQuestionField = ({
 						'aria-invalid': Boolean(missingText),
 						'aria-describedby': missingText ? errorId : undefined
 					}}
-					sx={{ ...orisoTextFieldSx, '&': { marginTop: 0 } }}
+					sx={{ '&': { marginTop: 0 } }}
 				/>
 				{missing}
 			</Box>
@@ -329,7 +335,7 @@ export const JourneyQuestionField = ({
 			sx={{ px: 2, pb: 1.5 }}
 			onClick={(event) => event.preventDefault()}
 		>
-			<TextField
+			<OrisoTextField
 				inputRef={otherRef}
 				fullWidth
 				size="small"
@@ -345,50 +351,48 @@ export const JourneyQuestionField = ({
 				inputProps={{
 					'aria-label': t('journey.question.otherPlaceholder')
 				}}
-				sx={{ ...orisoTextFieldSx, '&': { marginTop: 0 } }}
+				sx={{ '&': { marginTop: 0 } }}
 			/>
 		</Box>
 	);
 
 	if (question.type === 'single' && question.display === 'dropdown') {
 		return (
-			<Box data-cy="journey-question" data-question-type="dropdown">
+			<Box
+				data-cy="journey-question"
+				data-question-id={question.id}
+				data-question-type="dropdown"
+			>
 				<QuestionHead
 					id={headId}
 					question={question}
 					language={language}
 					as="label"
 				/>
-				<TextField
-					select
-					fullWidth
+				<OrisoSelect
+					label={t('journey.question.choose')}
 					disabled={disabled}
 					value={choices[0] ?? ''}
 					onChange={(event) =>
 						onChange(choose(question, answer, event.target.value))
 					}
-					SelectProps={{
-						displayEmpty: true,
-						// The visible combobox carries the name; the hidden input only holds the value.
-						SelectDisplayProps: {
-							'aria-labelledby': headId,
-							'aria-required': question.required
+					required={question.required}
+					// The question above names the field; "Bitte auswählen" only floats in it.
+					SelectDisplayProps={
+						{
+							'aria-labelledby': headId
 						} as React.HTMLAttributes<HTMLDivElement>
-					}}
-					sx={{ ...orisoTextFieldSx, '&': { marginTop: 0 } }}
-				>
-					<MenuItem value="" disabled>
-						{t('journey.question.choose')}
-					</MenuItem>
-					{question.options.map((option) => (
-						<MenuItem key={option.id} value={option.id}>
-							{textIn(option.label, language)}
-						</MenuItem>
-					))}
-					{question.other && (
-						<MenuItem value={OTHER_OPTION}>{otherLabel}</MenuItem>
-					)}
-				</TextField>
+					}
+					options={[
+						...question.options.map((option) => ({
+							value: option.id,
+							label: textIn(option.label, language)
+						})),
+						...(question.other
+							? [{ value: OTHER_OPTION, label: otherLabel }]
+							: [])
+					]}
+				/>
 				{otherChosen && (
 					<Box sx={{ mt: 1.5, mx: -2 }}>{otherField}</Box>
 				)}
@@ -402,6 +406,7 @@ export const JourneyQuestionField = ({
 		<Box
 			component="fieldset"
 			data-cy="journey-question"
+			data-question-id={question.id}
 			data-question-type={question.type}
 			aria-describedby={missingText ? errorId : undefined}
 			sx={{ border: 0, m: 0, p: 0, minWidth: 0 }}

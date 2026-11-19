@@ -257,7 +257,11 @@ export const JourneyRatingField = ({
 	const labelId = useId();
 	const name = useId();
 	return (
-		<Box data-cy="journey-rating" data-rating-type={rating.type}>
+		<Box
+			data-cy="journey-rating"
+			data-question-id={rating.id}
+			data-rating-type={rating.type}
+		>
 			<Label id={labelId} rating={rating} language={language} />
 			{rating.type === 'stars' ? (
 				<Stars

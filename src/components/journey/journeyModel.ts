@@ -266,3 +266,51 @@ export const answerSummary = (
 /** Steps of a phase the person answers (questions and ratings); messages and panels are read only. */
 export const isAnswerable = (step: JourneyStep) =>
 	step.kind === 'question' || step.kind === 'rating';
+
+/**
+ * The answers as they leave the Frontend: each with the id **and version** of what it answers, so
+ * a later edit of a question never changes what an old answer meant (ADR-036 decision 9). Only
+ * answered items travel; "something else" travels as its text.
+ */
+export interface AnswerRecord {
+	itemId: string;
+	kind: 'question' | 'rating';
+	version: number;
+	choices?: string[];
+	text?: string;
+	value?: number;
+}
+
+export const toAnswerRecords = (
+	step: JourneyStep,
+	answers: StepAnswers
+): AnswerRecord[] => [
+	...(step.questions ?? [])
+		.filter(
+			(question) =>
+				question.type !== 'hint' &&
+				isQuestionAnswered(question, answers.questions[question.id])
+		)
+		.map((question): AnswerRecord => {
+			const answer = answers.questions[question.id]!;
+			return {
+				itemId: question.id,
+				kind: 'question',
+				version: question.version,
+				...(question.type === 'text'
+					? {}
+					: { choices: answer.choices }),
+				...(answer.text?.trim() ? { text: answer.text.trim() } : {})
+			};
+		}),
+	...(step.ratings ?? [])
+		.filter((rating) => answers.ratings[rating.id] !== undefined)
+		.map(
+			(rating): AnswerRecord => ({
+				itemId: rating.id,
+				kind: 'rating',
+				version: rating.version,
+				value: answers.ratings[rating.id]
+			})
+		)
+];

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Box, Button, CircularProgress, Typography } from '@mui/material';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import { useTranslation } from 'react-i18next';
@@ -12,7 +12,7 @@ import { JourneyStepForm } from './JourneyStepForm';
 import {
 	answerSummary,
 	emptyAnswers,
-	isStepComplete,
+	missingRequired,
 	textIn,
 	type JourneyPhase,
 	type JourneyStep,
@@ -54,9 +54,17 @@ export const JourneyChatCard = ({
 	const description = textIn(step.description, language);
 	const otherLabel = t('journey.question.other');
 
+	const formRef = useRef<HTMLDivElement>(null);
 	const submit = async () => {
-		if (!isStepComplete(step, answers)) {
+		const open = missingRequired(step, answers);
+		if (open.length > 0) {
 			setShowMissing(true);
+			// Straight to the first open question, so the person sees what is missing.
+			formRef.current
+				?.querySelector<HTMLElement>(
+					`[data-question-id="${open[0]}"] :is(input, textarea, [role="combobox"])`
+				)
+				?.focus();
 			return;
 		}
 		setBusy(true);
@@ -164,14 +172,16 @@ export const JourneyChatCard = ({
 						</Box>
 					) : (
 						<>
-							<JourneyStepForm
-								step={step}
-								answers={answers}
-								language={language}
-								showMissing={showMissing}
-								disabled={busy}
-								onChange={setAnswers}
-							/>
+							<Box ref={formRef}>
+								<JourneyStepForm
+									step={step}
+									answers={answers}
+									language={language}
+									showMissing={showMissing}
+									disabled={busy}
+									onChange={setAnswers}
+								/>
+							</Box>
 							{phase === 'arrival' && anonymous && (
 								<Typography
 									sx={{
