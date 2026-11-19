@@ -162,7 +162,11 @@ export const getPassageReplies = (
 			}
 			const audio = readAudio(entry.audio);
 			const text = isString(entry.text) ? entry.text : undefined;
-			if (!audio && !text) {
+			// A bare quote is intentional when its answer is typed in the main
+			// composer. Explicitly invalid audio/text is still not a bare quote.
+			const quoteOnly =
+				entry.text === undefined && entry.audio === undefined;
+			if (!audio && !text && !quoteOnly) {
 				return null;
 			}
 			return {
