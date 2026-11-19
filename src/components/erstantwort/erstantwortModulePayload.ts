@@ -73,6 +73,8 @@ export interface ErstantwortQuestion {
 	label: string;
 	help?: string;
 	options: ErstantwortQuestionOption[];
+	/** Single and multiple choice: also offer "Etwas anderes" with a text of its own. */
+	other?: boolean;
 }
 
 interface SectionBase {
@@ -176,6 +178,7 @@ const normaliseQuestion = (raw: unknown): ErstantwortQuestion | null => {
 	}
 	const help = text(source.help);
 	if (help) question.help = help;
+	if (isChoice && source.other === true) question.other = true;
 	return question;
 };
 

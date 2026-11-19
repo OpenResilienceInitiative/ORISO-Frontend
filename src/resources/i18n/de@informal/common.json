@@ -2465,7 +2465,8 @@
 		},
 		"questions": {
 			"required": "Bitte beantworte diese Frage.",
-			"thanks": "Danke für deine Antworten."
+			"thanks": "Danke für deine Antworten.",
+			"failed": "Das hat nicht geklappt. Deine Antworten sind noch da – versuch es bitte gleich noch einmal."
 		}
 	},
 	"caseHandover": {

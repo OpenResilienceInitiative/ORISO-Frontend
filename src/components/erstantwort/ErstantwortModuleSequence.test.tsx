@@ -217,7 +217,7 @@ describe('ErstantwortModuleSequence (ADR-036, version-2 payload)', () => {
 		).toBeTruthy();
 	});
 
-	it('sends the answers with each question id and version, then thanks the person', () => {
+	it('sends the answers with each question id and version, then thanks the person', async () => {
 		const onAnswer = vi.fn();
 		render(
 			<ErstantwortModuleSequence
@@ -239,10 +239,36 @@ describe('ErstantwortModuleSequence (ADR-036, version-2 payload)', () => {
 			{ questionId: 'state', version: 2, value: 'be' },
 			{ questionId: 'topics', version: 1, value: ['family'] }
 		]);
-		expect(screen.getByText('Danke für Ihre Antworten.')).toBeTruthy();
+		// Thanks only once the send went through.
+		expect(
+			await screen.findByText('Danke für Ihre Antworten.')
+		).toBeTruthy();
 		expect(
 			screen.queryByRole('button', { name: 'Antworten senden' })
 		).toBeNull();
+	});
+
+	it('keeps the answers and says so when sending fails', async () => {
+		const onAnswer = vi.fn().mockRejectedValue(new Error('offline'));
+		render(
+			<ErstantwortModuleSequence
+				sections={[questions]}
+				onAnswer={onAnswer}
+			/>
+		);
+		fireEvent.click(screen.getByRole('radio', { name: '18 oder älter' }));
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Antworten senden' })
+		);
+		expect(await screen.findByRole('alert')).toBeTruthy();
+		expect(screen.queryByText('Danke für Ihre Antworten.')).toBeNull();
+		expect(
+			(
+				screen.getByRole('radio', {
+					name: '18 oder älter'
+				}) as HTMLInputElement
+			).checked
+		).toBe(true);
 	});
 
 	it('offers no send button without a handler, and shows answered blocks as done', () => {

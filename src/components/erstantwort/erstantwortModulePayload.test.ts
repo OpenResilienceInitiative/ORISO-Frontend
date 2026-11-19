@@ -179,6 +179,39 @@ describe('parseErstantwortModule (ADR-036 decision 8)', () => {
 		expect(block.questions[2].display).toBeUndefined();
 	});
 
+	it('keeps "Etwas anderes" for choices only', () => {
+		const parsed = parseErstantwortModule(
+			v2([
+				{
+					id: 'q',
+					kind: 'questions',
+					questions: [
+						{
+							id: 'choice',
+							type: 'single',
+							label: 'Lage',
+							other: true,
+							options: [
+								{ id: 'a', label: 'A' },
+								{ id: 'b', label: 'B' }
+							]
+						},
+						{
+							id: 'text',
+							type: 'text',
+							label: 'Freitext',
+							other: true
+						}
+					]
+				}
+			])
+		);
+		const block = parsed.sections[0];
+		if (block.kind !== 'questions') throw new Error('expected questions');
+		expect(block.questions[0].other).toBe(true);
+		expect(block.questions[1].other).toBeUndefined();
+	});
+
 	it('marks a safety panel, so the renderer can draw it as the emergency row', () => {
 		const parsed = parseErstantwortModule(
 			v2([
