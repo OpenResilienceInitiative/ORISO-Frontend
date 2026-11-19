@@ -2752,6 +2752,27 @@
 					"intro": "Du hast eine Supervisor:in hinzugefügt und ihre Antwort gelesen. Mit der Schaltfläche unten beendest du die Übung."
 				}
 			}
+		},
+		"liveChat": {
+			"summary": "Wie anonyme Live-Chats ankommen, wie du dich verfügbar meldest und einen Chat übernimmst.",
+			"step": {
+				"availabilitySettings": {
+					"title": "Deine Verfügbarkeit",
+					"intro": "Hier schaltest du „Bin verfügbar“ ein oder aus. Nur wer verfügbar ist, bekommt Live-Chats angeboten. Auf Wunsch legst du den Schalter in die Menüleiste."
+				},
+				"availabilityToggle": {
+					"intro": "Mit „Live Chat über Menü Leiste aktivieren“ erscheint dieser Schalter. Ein Klick meldet dich verfügbar oder nicht verfügbar — ohne die Einstellungen zu öffnen."
+				},
+				"queue": {
+					"intro": "Der Filter „Live-Chat“ zeigt alle wartenden Live-Chats. Deine Kolleginnen und Kollegen sehen dieselbe Liste."
+				},
+				"accept": {
+					"intro": "Mit „Chat starten“ übernimmst du den Chat. Angenommen werden kann nur der Chat, der vorne in der Warteschlange steht."
+				},
+				"done": {
+					"intro": "Ist das Gespräch vorbei, beendest du es über das Menü ⋮ mit „Chat beenden“. Danach geht es zurück zur Warteschlange."
+				}
+			}
 		}
 	},
 	"liveChat": {

@@ -39,7 +39,11 @@ export const LiveChatAvailability = () => {
 	);
 
 	return (
-		<div id="liveChatAvailability" className="absenceForm">
+		<div
+			id="liveChatAvailability"
+			className="absenceForm"
+			data-tour-target="livechat-availability-settings"
+		>
 			<div className="profile__content__title">
 				<Headline
 					text={translate('profile.functions.liveChat.title')}

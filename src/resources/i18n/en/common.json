@@ -6304,6 +6304,36 @@
 			"open": "Open tours",
 			"close": "Close tours",
 			"manage": "Manage tours"
+		},
+		"liveChat": {
+			"title": "Live chat",
+			"summary": "How anonymous live chats arrive, how you mark yourself available and take over a chat.",
+			"step": {
+				"intro": {
+					"title": "Live chat: what is different",
+					"intro": "Live chats arrive through a link, without registration. Advice seekers write anonymously and on a specific topic. All available counsellors for the topic share one queue."
+				},
+				"availabilitySettings": {
+					"title": "Your availability",
+					"intro": "Switch “I'm available” on or off here. Only available counsellors are offered live chats. If you like, move the switch into the menu bar."
+				},
+				"availabilityToggle": {
+					"title": "Switch in the menu bar",
+					"intro": "With “Activate Live Chat via the menu bar” this switch appears. One click marks you available or unavailable — without opening the settings."
+				},
+				"queue": {
+					"title": "The shared queue",
+					"intro": "The “Live chat” filter shows every waiting live chat. Your colleagues see the same list."
+				},
+				"accept": {
+					"title": "Start chat",
+					"intro": "“Start chat” takes the chat over. Only the chat at the front of the queue can be accepted."
+				},
+				"done": {
+					"title": "End chat",
+					"intro": "When the conversation is over, end it in the ⋮ menu with “End chat”. You then return to the queue."
+				}
+			}
 		}
 	},
 	"weekday": {

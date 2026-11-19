@@ -6379,6 +6379,36 @@
 			"open": "Rundgänge öffnen",
 			"close": "Rundgänge schließen",
 			"manage": "Rundgänge verwalten"
+		},
+		"liveChat": {
+			"title": "Live-Chat",
+			"summary": "Wie anonyme Live-Chats ankommen, wie Sie sich verfügbar melden und einen Chat übernehmen.",
+			"step": {
+				"intro": {
+					"title": "Live-Chat: was anders ist",
+					"intro": "Live-Chats kommen ohne Registrierung über einen Link. Ratsuchende schreiben anonym und zu einem bestimmten Thema. Alle verfügbaren Beratenden des Themas teilen sich eine gemeinsame Warteschlange."
+				},
+				"availabilitySettings": {
+					"title": "Ihre Verfügbarkeit",
+					"intro": "Hier schalten Sie „Bin verfügbar“ ein oder aus. Nur wer verfügbar ist, bekommt Live-Chats angeboten. Auf Wunsch legen Sie den Schalter in die Menüleiste."
+				},
+				"availabilityToggle": {
+					"title": "Schalter in der Menüleiste",
+					"intro": "Mit „Live Chat über Menü Leiste aktivieren“ erscheint dieser Schalter. Ein Klick meldet Sie verfügbar oder nicht verfügbar — ohne die Einstellungen zu öffnen."
+				},
+				"queue": {
+					"title": "Die gemeinsame Warteschlange",
+					"intro": "Der Filter „Live-Chat“ zeigt alle wartenden Live-Chats. Ihre Kolleginnen und Kollegen sehen dieselbe Liste."
+				},
+				"accept": {
+					"title": "Chat starten",
+					"intro": "Mit „Chat starten“ übernehmen Sie den Chat. Angenommen werden kann nur der Chat, der vorne in der Warteschlange steht."
+				},
+				"done": {
+					"title": "Chat beenden",
+					"intro": "Ist das Gespräch vorbei, beenden Sie es über das Menü ⋮ mit „Chat beenden“. Danach geht es zurück zur Warteschlange."
+				}
+			}
 		}
 	},
 	"weekday": {

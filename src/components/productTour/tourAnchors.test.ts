@@ -29,8 +29,15 @@ const anchorContract: Array<{
 		sourceFile: 'app/NavigationBar.tsx'
 	},
 	{
+		// Moved off the unmounted EnquiryFilterChips onto the live-chat chip
+		// of the conversations toolbar (FE#2342).
 		anchor: 'livechat-queue',
-		sourceFile: 'sessionsList/EnquiryFilterChips.tsx'
+		sourceFile: 'sessionsList/SessionsListToolbar.tsx',
+		expected: /tourTarget: 'livechat-queue'/
+	},
+	{
+		anchor: 'livechat-availability-settings',
+		sourceFile: 'profile/LiveChatAvailability.tsx'
 	},
 	{
 		anchor: 'groupchat-create-button',
@@ -94,6 +101,15 @@ const passThroughContract: Array<{ sourceFile: string; expected: RegExp }> = [
 	{
 		sourceFile: 'chatStage/SidePanel.tsx',
 		expected: /data-tour-target=\{tourTarget\}/
+	},
+	{
+		sourceFile: 'displayFilter/FilterChip.tsx',
+		expected: /data-tour-target=\{tourTarget\}/
+	},
+	{
+		// The toolbar binds each chip's configured anchor to the shared chip.
+		sourceFile: 'sessionsList/SessionsListToolbar.tsx',
+		expected: /tourTarget=\{chip\.tourTarget\}/
 	}
 ];
 
