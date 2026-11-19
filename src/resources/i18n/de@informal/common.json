@@ -2774,6 +2774,25 @@
 					"intro": "Eigene Fälle bietest du in der Beratung über „+“ → „Beratung übergeben“ an. Fälle von Kolleg:innen fragst du über die Personensuche an. Den Stand findest du im Zeitstrahl."
 				}
 			}
+		},
+		"groupCircle": {
+			"step": {
+				"intro": {
+					"intro": "Ein Gesprächskreis ist eine anonyme, von Berater:innen moderierte Gruppe – einmalig oder regelmäßig. Der Rundgang zeigt, wo du ihn anlegst. Angelegt wird dabei nichts."
+				},
+				"create": {
+					"intro": "Über „Erstellen“ in deiner Beratungsliste legst du neue Unterhaltungen an. Welche Formate du siehst, legen Träger und Beratungsstelle fest."
+				},
+				"topic": {
+					"intro": "Zuerst wählst du „Thema / Fachbereich“. Danach öffnen sich die Einstellungen für den Gesprächskreis."
+				},
+				"settings": {
+					"intro": "In den Einstellungen legst du Termin, Wiederholungen, Medium und Sprache fest und fügst unter „Weitere Moderation“ Co-Moderator:innen hinzu. Danach teilst du den Einladungs-Link oder QR-Code. Teilnehmende warten im Warteraum, bis du mit „Chat starten“ beginnst und sie hereinlässt."
+				},
+				"done": {
+					"intro": "Deine Gesprächskreise erscheinen in deiner Beratungsliste. Dort öffnest du sie, bearbeitest die Einstellungen und teilst den Link erneut."
+				}
+			}
 		}
 	},
 	"liveChat": {

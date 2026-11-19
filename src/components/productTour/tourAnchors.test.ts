@@ -91,6 +91,16 @@ const anchorContract: Array<{
 			/index === 0\s*\?\s*'case-handover-request-access'\s*:\s*undefined/
 	},
 	{
+		anchor: 'groupchat-format-circle',
+		sourceFile: 'conversationCreate/CreateConversationView.tsx',
+		expected: /tourTarget="groupchat-format-circle"/
+	},
+	{
+		anchor: 'groupchat-topic-picker',
+		sourceFile: 'conversationCreate/CreateConversationView.tsx',
+		expected: /tourTarget="groupchat-topic-picker"/
+	},
+	{
 		anchor: 'supervision-panel',
 		sourceFile: 'session/SessionItemComponent.tsx',
 		expected: /data-tour-target="supervision-panel"/
@@ -114,6 +124,10 @@ const passThroughContract: Array<{ sourceFile: string; expected: RegExp }> = [
 	{
 		sourceFile: 'sessionsListItem/CaseHandoverActionButton.tsx',
 		expected: /tourTarget=\{tourTarget\}/
+	},
+	{
+		sourceFile: 'conversationCreate/FormatCard.tsx',
+		expected: /data-tour-target=\{tourTarget\}/
 	}
 ];
 

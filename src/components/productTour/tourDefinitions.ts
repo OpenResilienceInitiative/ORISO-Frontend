@@ -1,4 +1,9 @@
+import { tourAvailability } from './tourCatalogue';
 import { consultantCaseHandoverTour } from './tours/caseHandoverTour';
+import {
+	consultantGroupCircleTour,
+	isGroupCircleTourAvailable
+} from './tours/groupCircleTour';
 import type { TourDefinition } from './types';
 
 /**
@@ -129,8 +134,12 @@ export const consultantMailCounsellingTour: TourDefinition = {
  */
 export const frontendTopicTours: TourDefinition[] = [
 	consultantCaseHandoverTour,
+	consultantGroupCircleTour,
 	consultantMailCounsellingTour
 ];
+
+// Gates beyond a tenant flag (`tourCatalogue.ts`).
+tourAvailability[consultantGroupCircleTour.id] = isGroupCircleTourAvailable;
 
 export const frontendTours: TourDefinition[] = [
 	consultantWalkthroughTour,
