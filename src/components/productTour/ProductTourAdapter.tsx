@@ -10,6 +10,7 @@ import {
 	reduceTourCallback,
 	resolveTourSteps,
 	routeMatches,
+	targetWaitMs,
 	tourTargetSelector,
 	TourCallbackInput,
 	TourRunState
@@ -254,18 +255,26 @@ export const ProductTourAdapter = ({
 			/* eslint-disable no-await-in-loop, no-continue -- steps are prepared strictly sequentially; a skipped target falls through to the neighboring step */
 			for (let i = index; i >= 0 && i < steps.length; i += direction) {
 				const step = steps[i];
+				let navigated = false;
 				if (step.route) {
 					const current =
 						locationRef.current.pathname +
 						locationRef.current.search;
 					if (current !== step.route) {
 						navigate(step.route);
+						navigated = true;
 					}
 				}
 				if (step.target) {
 					const found = await waitForTarget(
 						tourTargetSelector(step.target),
-						{ timeoutMs: targetTimeoutMs }
+						{
+							timeoutMs: targetWaitMs(
+								step,
+								navigated,
+								targetTimeoutMs
+							)
+						}
 					);
 					if (
 						!mountedRef.current ||
