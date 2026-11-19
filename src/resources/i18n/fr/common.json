@@ -6423,6 +6423,44 @@
 					"intro": "Sous Profil → Aide → Visites guidées, vous pouvez relancer chaque visite. Le bouton « ? » en bas à droite est encore plus rapide."
 				}
 			}
+		},
+		"askerSettings": {
+			"title": "Réglages",
+			"summary": "Mot de passe, clé de secours, notifications et affichage — expliqués en bref.",
+			"step": {
+				"intro": {
+					"title": "Vos réglages",
+					"intro": "Ici, vous adaptez l’application à vos besoins. Nous vous montrons les points les plus importants. Rien n’est modifié en chemin."
+				},
+				"password": {
+					"title": "Modifier le mot de passe",
+					"intro": "Ici, vous pouvez modifier votre mot de passe. Choisissez un mot de passe que vous seul connaissez."
+				},
+				"twoFactor": {
+					"title": "Authentification à deux facteurs",
+					"intro": "Elle protège davantage votre connexion. En plus du mot de passe, il vous faut alors un code, par exemple d’une application."
+				},
+				"recovery": {
+					"title": "Récupération des anciens messages",
+					"intro": "Vos messages sont chiffrés. Avec une clé de secours, vous pouvez aussi les lire sur un nouvel appareil. Conservez-la bien."
+				},
+				"deleteAccount": {
+					"title": "Supprimer un compte",
+					"intro": "Ici, vous pouvez supprimer votre compte si vous n’en avez plus besoin. L’application vous redemande d’abord — rien ne se passe sans votre confirmation."
+				},
+				"notifications": {
+					"title": "Mes notifications",
+					"intro": "Ici, vous choisissez comment vous êtes informé des nouveaux messages, par exemple par e-mail."
+				},
+				"display": {
+					"title": "Affichage",
+					"intro": "Ici, vous changez l’apparence de l’application, par exemple l’affichage des menus ou la langue."
+				},
+				"done": {
+					"title": "C’est fait !",
+					"intro": "Vous connaissez maintenant vos réglages. Vous les trouvez à tout moment sous Profil → Réglages."
+				}
+			}
 		}
 	},
 	"weekday": {

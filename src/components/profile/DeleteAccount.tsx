@@ -118,7 +118,10 @@ export const DeleteAccount = () => {
 
 	return (
 		<>
-			<div className="deleteAccount">
+			<div
+				className="deleteAccount"
+				data-tour-target="settings-delete-account"
+			>
 				<Button
 					item={deleteAccountButton}
 					buttonHandle={() => setIsOverlayActive(true)}
