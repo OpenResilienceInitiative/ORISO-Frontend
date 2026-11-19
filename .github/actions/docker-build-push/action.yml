@@ -73,6 +73,8 @@ runs:
       provenance: mode=max
       sbom: true
       labels: ${{ inputs.release_labels || steps.meta.outputs.labels }}
+      # The pinned Storybook base can otherwise reuse an outdated APK upgrade.
+      no-cache-filters: ${{ inputs.dockerfile == 'Dockerfile.storybook' && 'alpine-packages' || '' }}
       # Branch and PR caches remain separate for the app and Storybook.
       cache-from: ${{ inputs.release_labels == '' && format('type=gha,scope={0}', inputs.image_name) || 'type=gha' }}
       cache-to: ${{ inputs.release_labels == '' && format('type=gha,mode=max,scope={0}', inputs.image_name) || 'type=gha,mode=max' }}
