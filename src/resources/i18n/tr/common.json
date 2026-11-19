@@ -6449,6 +6449,36 @@
 					"intro": "Tüm taslaklar burada, sohbet ve konu başına kayıtlı. Yazmaya devam etmek için bir taslağı açın ya da silin."
 				}
 			}
+		},
+		"videoCall": {
+			"title": "Görüntülü arama",
+			"summary": "Bir görüşmenin içinden nasıl arama yaptığınız ve bekleyenleri nasıl içeri aldığınız.",
+			"step": {
+				"intro": {
+					"title": "Görüşme içinde aramalar",
+					"intro": "Görüntülü ve sesli aramaları doğrudan görüşmenin başlığından başlatırsınız. Danışan aramayı kendi sohbetinde görür."
+				},
+				"sessionCallButton": {
+					"title": "Arama başlat",
+					"intro": "Açık bir görüşmenin başlığında “Görüntülü aramayı başlat” ve “Sesli aramayı başlat” bulunur. Dar ekranlarda ikisi de ⋮ menüsündedir."
+				},
+				"groupCallButton": {
+					"title": "Grup sohbetinde arama",
+					"intro": "Grup sohbetinde de aramayı sohbetin başlığından başlatırsınız."
+				},
+				"knock": {
+					"title": "Bekleyenleri içeri almak",
+					"intro": "Sonradan katılan kapıyı çalar ve bekler. Arama sırasında “Bekleyen kişiler” görünür: “İçeri al” bir kişiyi alır, “Reddet” almaz, “Herkesi içeri al” hepsini birden alır."
+				},
+				"help": {
+					"title": "Görüntülü arama yardımı",
+					"intro": "“Yardım” → “Görüntülü arama” hangi tarayıcıların görüntülü aramayı desteklediğini gösterir. Giriş bağlantısını buradan kopyalayıp danışanlara iletebilirsiniz."
+				},
+				"done": {
+					"title": "İlk aramaya hazırsınız",
+					"intro": "Bir görüşme açın ve uygun olduğunda aramayı başlatın. Aramadan sonra sohbet her zamanki gibi devam eder."
+				}
+			}
 		}
 	},
 	"weekday": {

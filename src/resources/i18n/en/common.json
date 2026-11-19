@@ -6364,6 +6364,36 @@
 					"intro": "All drafts are listed here, saved per chat and thread. Open a draft to keep writing, or delete it."
 				}
 			}
+		},
+		"videoCall": {
+			"title": "Video call",
+			"summary": "How you call from within a conversation and let waiting people in.",
+			"step": {
+				"intro": {
+					"title": "Calls inside the conversation",
+					"intro": "You start video and audio calls right in the conversation, from its header. The advice seeker sees the call in their chat."
+				},
+				"sessionCallButton": {
+					"title": "Start a call",
+					"intro": "An open conversation shows “Start video call” and “Start audio call” in its header. On narrow screens both are in the ⋮ menu."
+				},
+				"groupCallButton": {
+					"title": "Calls in a group chat",
+					"intro": "In a group chat, too, you start the call from the chat header."
+				},
+				"knock": {
+					"title": "Letting waiting people in",
+					"intro": "Anyone who joins later knocks and waits. During the call, “People waiting” appears: “Let in” admits one person, “Decline” does not, “Let everyone in” admits all at once."
+				},
+				"help": {
+					"title": "Help with video calls",
+					"intro": "“Help” → “Video-Call” lists the browsers that support video calls. You can copy the login link here and pass it on to advice seekers."
+				},
+				"done": {
+					"title": "Ready for your first call",
+					"intro": "Open a conversation and start the call when it suits. After the call, the chat conversation carries on as usual."
+				}
+			}
 		}
 	},
 	"weekday": {

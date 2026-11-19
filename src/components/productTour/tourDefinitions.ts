@@ -1,6 +1,7 @@
 import type { TourDefinition } from './types';
 import { consultantLiveChatTour } from './tours/liveChatTour';
 import { consultantTimelineTour } from './tours/timelineTour';
+import { consultantVideoCallTour } from './tours/videoCallTour';
 
 /**
  * Direct migration of the legacy intro.js consultant walkthrough: same five
@@ -131,6 +132,7 @@ export const consultantMailCounsellingTour: TourDefinition = {
 export const frontendTopicTours: TourDefinition[] = [
 	consultantLiveChatTour,
 	consultantTimelineTour,
+	consultantVideoCallTour,
 	consultantMailCounsellingTour
 ];
 
