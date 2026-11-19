@@ -10,6 +10,7 @@ import {
 	CallState
 } from 'matrix-js-sdk/lib/webrtc/call';
 import { CallFeedEvent } from 'matrix-js-sdk/lib/webrtc/callFeed';
+import { MediaHandlerEvent } from 'matrix-js-sdk/lib/webrtc/mediaHandler';
 import { assertMatrixRoomEncrypted } from '../utils/matrixRoomEncryption';
 
 export interface MatrixCallOptions {
@@ -64,7 +65,8 @@ class MatrixCallService {
 	 * Start a voice or video call
 	 */
 	public async startCall(options: MatrixCallOptions): Promise<MatrixCall> {
-		if (!this.client) {
+		const client = this.client;
+		if (!client) {
 			throw new Error('Matrix client not initialized');
 		}
 
@@ -91,7 +93,7 @@ class MatrixCallService {
 
 			// Wait for Matrix client to sync and find the room
 			// console.log('🔍 Looking for room:', options.roomId);
-			let room = this.client.getRoom(options.roomId);
+			let room = client.getRoom(options.roomId);
 
 			if (!room) {
 				// console.log('⏳ Room not found yet, waiting for sync...');
@@ -99,7 +101,12 @@ class MatrixCallService {
 				// Wait up to 10 seconds for room to appear
 				for (let i = 0; i < 20; i++) {
 					await new Promise((resolve) => setTimeout(resolve, 500));
-					room = this.client.getRoom(options.roomId);
+					if (this.client !== client) {
+						throw new Error(
+							'Matrix client changed before starting the call'
+						);
+					}
+					room = client.getRoom(options.roomId);
 					if (room) {
 						// console.log('✅ Room found after waiting!');
 						break;
@@ -108,7 +115,7 @@ class MatrixCallService {
 
 				if (!room) {
 					// console.error('❌ Room still not found after 10 seconds');
-					// console.error('❌ Available rooms:', this.client.getRooms().map((r: any) => r.roomId));
+					// console.error('❌ Available rooms:', client.getRooms().map((r: any) => r.roomId));
 					throw new Error(
 						'Room not found. The Matrix client may not have finished syncing, or you may not be a member of this room.'
 					);
@@ -117,9 +124,9 @@ class MatrixCallService {
 				// console.log('✅ Room found immediately!');
 			}
 
-			assertMatrixRoomEncrypted(this.client, options.roomId);
+			assertMatrixRoomEncrypted(client, options.roomId);
 
-			const call = this.client.createCall(options.roomId) as MatrixCall;
+			const call = client.createCall(options.roomId) as MatrixCall;
 
 			if (!call) {
 				throw new Error('Failed to create call');
@@ -129,9 +136,8 @@ class MatrixCallService {
 			this.setupCallEventListeners(call, options);
 
 			// Place the call (matrix-js-sdk will request media permissions internally)
-			await call.placeCall(
-				true, // audio
-				options.isVideoCall // video
+			await this.withCallMedia(client, () =>
+				call.placeCall(true, options.isVideoCall)
 			);
 
 			// console.log('✅ Call placed successfully');
@@ -139,7 +145,7 @@ class MatrixCallService {
 			return call;
 		} catch (error) {
 			// console.error('❌ Failed to start call:', error);
-			if (this.eventHandlers.onCallError) {
+			if (this.client === client && this.eventHandlers.onCallError) {
 				this.eventHandlers.onCallError(error as Error);
 			}
 			throw error;
@@ -155,10 +161,12 @@ class MatrixCallService {
 		localVideoElement?: HTMLVideoElement,
 		remoteVideoElement?: HTMLVideoElement
 	): Promise<void> {
+		const client = this.client;
 		try {
 			// console.log('📞 Answering call...');
 
-			assertMatrixRoomEncrypted(this.client, call.roomId);
+			if (!client) throw new Error('Matrix client not initialized');
+			assertMatrixRoomEncrypted(client, call.roomId);
 
 			this.activeCall = call;
 			this.setupCallEventListeners(call, {
@@ -169,18 +177,40 @@ class MatrixCallService {
 			});
 
 			// Answer the call (matrix-js-sdk will request media permissions internally)
-			await call.answer(
-				true, // audio
-				isVideoCall // video
+			await this.withCallMedia(client, () =>
+				call.answer(true, isVideoCall)
 			);
 
 			// console.log('✅ Call answered successfully');
 		} catch (error) {
 			// console.error('❌ Failed to answer call:', error);
-			if (this.eventHandlers.onCallError) {
+			if (this.client === client && this.eventHandlers.onCallError) {
 				this.eventHandlers.onCallError(error as Error);
 			}
 			throw error;
+		}
+	}
+
+	private async withCallMedia(
+		client: MatrixClient,
+		connect: () => Promise<void>
+	): Promise<void> {
+		const media = client.getMediaHandler();
+		const event = MediaHandlerEvent.LocalStreamsChanged;
+		// SDK 38 can register media after the call has ended without ever
+		// attaching that stream as a call feed. Drain only the displaced client.
+		const releaseDisplacedMedia = () => {
+			if (this.client === client || media.userMediaStreams.length === 0)
+				return;
+			media.off(event, releaseDisplacedMedia);
+			media.stopAllStreams();
+		};
+		media.on(event, releaseDisplacedMedia);
+		try {
+			await connect();
+		} finally {
+			media.off(event, releaseDisplacedMedia);
+			releaseDisplacedMedia();
 		}
 	}
 

@@ -595,7 +595,9 @@ describe('MatrixClientService', () => {
 				>(),
 				getRoom: vi.fn().mockReturnValue({
 					hasEncryptionStateEvent: () => true
-				})
+				}),
+				getMediaHandler: () =>
+					Object.assign(new EventEmitter(), { userMediaStreams: [] })
 			});
 			const prepareClient = (
 				client: ReturnType<typeof createSdkClient>
