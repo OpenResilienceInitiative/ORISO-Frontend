@@ -68,6 +68,8 @@ interface CaseHandoverActionButtonProps {
 	 */
 	surfaceRef?: React.RefObject<HTMLElement | null>;
 	onRequestAccess?: () => void;
+	/** Product-tour anchor on the split button (first card only). */
+	tourTarget?: string;
 	onToggleSelect?: () => void;
 	onSelectMultiple?: () => void;
 	onConfirmSelection?: () => void;
@@ -143,6 +145,7 @@ export const CaseHandoverActionButton = ({
 	describedBy,
 	surfaceRef,
 	onRequestAccess,
+	tourTarget,
 	onToggleSelect,
 	onSelectMultiple,
 	onConfirmSelection,
@@ -299,6 +302,7 @@ export const CaseHandoverActionButton = ({
 				trailingRef={toggleRef}
 				mainDataCy="case-handover-action-primary"
 				trailingDataCy="case-handover-action-menu-toggle"
+				tourTarget={tourTarget}
 			/>
 			{menuOpen &&
 				createPortal(

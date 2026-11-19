@@ -6379,6 +6379,36 @@
 			"open": "Rundgänge öffnen",
 			"close": "Rundgänge schließen",
 			"manage": "Rundgänge verwalten"
+		},
+		"caseHandover": {
+			"title": "Fälle übergeben",
+			"summary": "Eine eigene Beratung an Kolleg:innen übergeben oder Zugriff auf deren Fälle anfragen.",
+			"step": {
+				"intro": {
+					"title": "Übergabe in zwei Richtungen",
+					"intro": "Neu: Fälle wechseln die Zuständigkeit direkt in der Plattform. Sie bieten eine eigene Beratung an oder fragen bei Kolleg:innen Zugriff auf einen Fall an. Der Rundgang zeigt beide Wege, ausgelöst wird dabei nichts."
+				},
+				"offer": {
+					"title": "Eigene Beratung übergeben",
+					"intro": "Über „+“ im Kopf einer geöffneten Beratung wählen Sie „Beratung übergeben“. Sie wählen eine berechtigte Kolleg:in und nennen einen Grund. Bis alle nötigen Zustimmungen vorliegen, bleiben Sie zuständig."
+				},
+				"search": {
+					"title": "Kolleg:in suchen",
+					"intro": "Suchen Sie hier unter „Personen“ nach einer Kolleg:in. Die Liste zeigt dann deren Fälle, die Sie übernehmen dürfen – abhängig von Ihrer Abteilung und Ihren Themen."
+				},
+				"requestAccess": {
+					"title": "Zugriff anfragen",
+					"intro": "Mit „Zugriff anfragen“ bitten Sie um einen Fall und nennen einen Grund. Über ▾ und „Mehrere Fälle auswählen“ fragen Sie mehrere Fälle auf einmal an."
+				},
+				"status": {
+					"title": "Stand verfolgen",
+					"intro": "Am Fall steht der Stand, etwa „Warten auf Freigabe“. Die Antwort der Kolleg:in und – falls die Richtlinie es verlangt – die Zustimmung der ratsuchenden Person sehen Sie im Zeitstrahl."
+				},
+				"done": {
+					"title": "Kurz gesagt",
+					"intro": "Eigene Fälle bieten Sie in der Beratung über „+“ → „Beratung übergeben“ an. Fälle von Kolleg:innen fragen Sie über die Personensuche an. Den Stand finden Sie im Zeitstrahl."
+				}
+			}
 		}
 	},
 	"weekday": {

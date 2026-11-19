@@ -1994,6 +1994,11 @@ export const SessionListItemComponent = ({
 									!canBatchSelectCaseHandover
 								}
 								onRequestAccess={handleOnClick}
+								tourTarget={
+									index === 0
+										? 'case-handover-request-access'
+										: undefined
+								}
 								onToggleSelect={() =>
 									onCaseHandoverSelect?.(
 										activeSession.item.id

@@ -2752,6 +2752,28 @@
 					"intro": "Du hast eine Supervisor:in hinzugefügt und ihre Antwort gelesen. Mit der Schaltfläche unten beendest du die Übung."
 				}
 			}
+		},
+		"caseHandover": {
+			"step": {
+				"intro": {
+					"intro": "Neu: Fälle wechseln die Zuständigkeit direkt in der Plattform. Du bietest eine eigene Beratung an oder fragst bei Kolleg:innen Zugriff auf einen Fall an. Der Rundgang zeigt beide Wege, ausgelöst wird dabei nichts."
+				},
+				"offer": {
+					"intro": "Über „+“ im Kopf einer geöffneten Beratung wählst du „Beratung übergeben“. Du wählst eine berechtigte Kolleg:in und nennst einen Grund. Bis alle nötigen Zustimmungen vorliegen, bleibst du zuständig."
+				},
+				"search": {
+					"intro": "Suche hier unter „Personen“ nach einer Kolleg:in. Die Liste zeigt dann deren Fälle, die du übernehmen darfst – abhängig von deiner Abteilung und deinen Themen."
+				},
+				"requestAccess": {
+					"intro": "Mit „Zugriff anfragen“ bittest du um einen Fall und nennst einen Grund. Über ▾ und „Mehrere Fälle auswählen“ fragst du mehrere Fälle auf einmal an."
+				},
+				"status": {
+					"intro": "Am Fall steht der Stand, etwa „Warten auf Freigabe“. Die Antwort der Kolleg:in und – falls die Richtlinie es verlangt – die Zustimmung der ratsuchenden Person siehst du im Zeitstrahl."
+				},
+				"done": {
+					"intro": "Eigene Fälle bietest du in der Beratung über „+“ → „Beratung übergeben“ an. Fälle von Kolleg:innen fragst du über die Personensuche an. Den Stand findest du im Zeitstrahl."
+				}
+			}
 		}
 	},
 	"liveChat": {

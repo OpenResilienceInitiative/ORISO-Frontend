@@ -1,3 +1,4 @@
+import { consultantCaseHandoverTour } from './tours/caseHandoverTour';
 import type { TourDefinition } from './types';
 
 /**
@@ -127,6 +128,7 @@ export const consultantMailCounsellingTour: TourDefinition = {
  * sees its own (`getAvailableTours`).
  */
 export const frontendTopicTours: TourDefinition[] = [
+	consultantCaseHandoverTour,
 	consultantMailCounsellingTour
 ];
 
