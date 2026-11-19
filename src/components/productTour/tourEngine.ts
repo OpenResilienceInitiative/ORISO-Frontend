@@ -249,3 +249,20 @@ export const reduceTourCallback = (
 
 	return { state: next, events };
 };
+
+/**
+ * How long to wait for a step's target. An optional step on a page that is
+ * already there (no navigation for this step) gets a short wait: its target
+ * either rendered already or does not exist for this account or viewport, so
+ * several skipped steps in a row must not each cost the full timeout.
+ */
+export const OPTIONAL_SETTLED_TIMEOUT_MS = 600;
+
+export const targetWaitMs = (
+	step: Pick<TourStep, 'optional'>,
+	navigated: boolean,
+	baseMs: number
+): number =>
+	step.optional && !navigated
+		? Math.min(baseMs, OPTIONAL_SETTLED_TIMEOUT_MS)
+		: baseMs;
