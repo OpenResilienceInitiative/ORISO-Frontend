@@ -44,7 +44,9 @@ export const TourStepGallery = ({ tour }: { tour: TourDefinition }) => {
 								skip: () => {},
 								close: () => {}
 							}
-						} as never)}
+						} as unknown as React.ComponentProps<
+							typeof ProductTourTooltip
+						>)}
 					/>
 				</li>
 			))}
