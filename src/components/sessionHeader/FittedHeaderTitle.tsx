@@ -13,7 +13,8 @@ export const FittedHeaderTitle = ({
 	useEffect(() => {
 		const heading = headingRef.current;
 		const measure = measureRef.current;
-		if (!heading || !measure) return undefined;
+		if (!heading || !measure || typeof ResizeObserver !== 'function')
+			return undefined;
 		let frame = 0;
 		let active = true;
 		const update = () => {
