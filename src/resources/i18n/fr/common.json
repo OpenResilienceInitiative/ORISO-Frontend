@@ -1262,6 +1262,12 @@
 		"format": {
 			"panelTitle": "Créer une nouvelle conversation",
 			"panelMenu": "Plus d’options",
+			"discard": {
+				"title": "Abandonner la saisie ?",
+				"description": "Votre saisie dans cette carte n’est pas enregistrée. Si vous fermez cette vue, elle sera perdue.",
+				"keepEditing": "Continuer la saisie",
+				"confirm": "Abandonner et fermer"
+			},
 			"cardsPrevious": "Format de conversation précédent",
 			"cardsNext": "Format de conversation suivant",
 			"back": "Retour",

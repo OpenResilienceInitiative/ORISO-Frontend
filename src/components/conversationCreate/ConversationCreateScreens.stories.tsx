@@ -30,6 +30,8 @@ import {
 } from './internal/InternalChatCreateCard';
 import { DirectLinkCard, DirectLinkDraft } from './directLink/DirectLinkCard';
 import { DirectLinkShareDialog } from './directLink/DirectLinkShareDialog';
+import { actWarnings, suspendedInAct } from '../../../.storybook/actWarnings';
+import { useCreateViewExit } from './useCreateViewExit';
 import {
 	CounsellorDashboard,
 	DashboardCircle,
@@ -736,6 +738,184 @@ export const FormatCardsScrollPhone: Story = {
 			<FormatPicker compact={false} />
 		</div>
 	)
+};
+
+const STORY_TRIGGER = '[data-testid="story-create-trigger"]';
+
+/** The open create view: it owns the exit hook, like the app's route does. */
+const OpenCreateView = ({
+	compact,
+	onLeave
+}: {
+	compact: boolean;
+	onLeave: () => void;
+}) => {
+	const { t } = useTranslation();
+	const { surfaceRef, onInput, discardDialog } = useCreateViewExit({
+		onLeave,
+		triggerSelector: STORY_TRIGGER
+	});
+	return (
+		<div className="conversationCreate" ref={surfaceRef} onInput={onInput}>
+			<PanelHeader
+				title={t('groupChat.format.panelTitle')}
+				menuLabel={t('groupChat.format.panelMenu')}
+				menuDisabled
+			/>
+			<div
+				className={`conversationCreate__picker${
+					compact ? ' conversationCreate__picker--compact' : ''
+				}`}
+			>
+				<ScreenIntro
+					title={t('groupChat.format.title')}
+					subtitle={t('groupChat.format.subtitle')}
+				/>
+				<div className="conversationCreate__selection">
+					<FormatCardCarousel>
+						<InternaCard preset="empty" />
+						<CircleCard />
+					</FormatCardCarousel>
+				</div>
+			</div>
+			{discardDialog}
+		</div>
+	);
+};
+
+/**
+ * The create view beside the list: "Erstellen" opens it, a click into empty
+ * space or Escape closes it again, typed input asks first, the list and its
+ * buttons keep working and focus returns to "Erstellen".
+ */
+const CloseFromOutsideHarness = ({ compact }: { compact: boolean }) => {
+	const { t } = useTranslation();
+	const [open, setOpen] = useState(true);
+	const [searches, setSearches] = useState(0);
+	return (
+		<div style={{ display: 'flex', gap: 16, padding: 16, minHeight: 640 }}>
+			<aside
+				data-testid="story-list"
+				style={{
+					display: 'flex',
+					flex: compact ? '0 0 72px' : '0 0 300px',
+					flexDirection: 'column',
+					gap: 12
+				}}
+			>
+				<button type="button" onClick={() => setSearches((n) => n + 1)}>
+					Suche ({searches})
+				</button>
+				<button
+					type="button"
+					data-testid="story-create-trigger"
+					data-tour-target="groupchat-create-button"
+					onClick={() => setOpen(true)}
+				>
+					{t('sessionList.toolbar.chips.create')}
+				</button>
+				<span data-testid="story-list-gap" style={{ flex: 1 }} />
+			</aside>
+			<div style={{ flex: 1, minWidth: 0 }}>
+				{open && (
+					<OpenCreateView
+						compact={compact}
+						onLeave={() => setOpen(false)}
+					/>
+				)}
+			</div>
+		</div>
+	);
+};
+
+const playCloseFromOutside = async (canvasElement: HTMLElement) => {
+	const canvas = within(canvasElement);
+	const body = within(document.body);
+	const trigger = await canvas.findByTestId('story-create-trigger');
+	const surface = () =>
+		canvasElement.querySelector<HTMLElement>('.conversationCreate');
+	await waitFor(() => expect(surface()).not.toBeNull());
+
+	// 1. A click into empty space around the cards closes the view and hands
+	// focus back to "Erstellen" (WCAG 2.4.3).
+	await userEvent.click(surface()!);
+	await waitFor(() => expect(surface()).toBeNull());
+	await waitFor(() => expect(trigger).toHaveFocus());
+
+	// 2. The list behind it works: a button there is clicked, not swallowed.
+	await userEvent.click(trigger);
+	await waitFor(() => expect(surface()).not.toBeNull());
+	await userEvent.click(canvas.getByRole('button', { name: /Suche/ }));
+	await expect(
+		canvas.getByRole('button', { name: /Suche \(1\)/ })
+	).toBeVisible();
+	await expect(surface()).not.toBeNull();
+
+	// 3. Empty space outside the panel closes it as well.
+	await userEvent.click(canvas.getByTestId('story-list-gap'));
+	await waitFor(() => expect(surface()).toBeNull());
+
+	// 4. Escape closes it.
+	await userEvent.click(trigger);
+	await waitFor(() => expect(surface()).not.toBeNull());
+	await userEvent.keyboard('{Escape}');
+	await waitFor(() => expect(surface()).toBeNull());
+	await waitFor(() => expect(trigger).toHaveFocus());
+
+	// 5. Typed input is not lost silently: Escape asks first.
+	await userEvent.click(trigger);
+	const name = await canvas.findByRole('textbox', { name: 'Name Interna' });
+	await userEvent.type(name, 'Wochenplanung');
+	await userEvent.keyboard('{Escape}');
+	const dialog = await body.findByRole('dialog', {
+		name: 'Eingaben verwerfen?'
+	});
+	await expect(surface()).not.toBeNull();
+	await userEvent.click(
+		within(dialog).getByRole('button', { name: 'Weiter bearbeiten' })
+	);
+	await waitFor(() =>
+		expect(
+			body.queryByRole('dialog', { name: 'Eingaben verwerfen?' })
+		).toBeNull()
+	);
+	// Nothing was lost.
+	await expect(name).toHaveValue('Wochenplanung');
+	await userEvent.click(surface()!);
+	const again = await body.findByRole('dialog', {
+		name: 'Eingaben verwerfen?'
+	});
+	await userEvent.click(
+		within(again).getByRole('button', { name: 'Verwerfen und schließen' })
+	);
+	await waitFor(() => expect(surface()).toBeNull());
+	await waitFor(() => expect(trigger).toHaveFocus());
+};
+
+/* The dialog takes focus from the typed field: MUI's FormControl then updates
+   its focus state outside act's queue (a harness artefact, see actWarnings). */
+const closeFromOutsideVerification = (suspended: number) => ({
+	verification: {
+		expectedErrors: [
+			...actWarnings({ 'ForwardRef(FormControl)': 3 }),
+			...(suspended ? suspendedInAct(suspended) : [])
+		]
+	}
+});
+
+export const CloseFromOutsideDesktop: Story = {
+	name: 'Close view — empty space, Escape, unsaved input (desktop)',
+	parameters: closeFromOutsideVerification(1),
+	render: () => <CloseFromOutsideHarness compact={false} />,
+	play: ({ canvasElement }) => playCloseFromOutside(canvasElement)
+};
+
+export const CloseFromOutsidePhone: Story = {
+	name: 'Close view — empty space, Escape, unsaved input (phone, 390px)',
+	globals: { viewport: { value: 'phone390' } },
+	parameters: closeFromOutsideVerification(0),
+	render: () => <CloseFromOutsideHarness compact />,
+	play: ({ canvasElement }) => playCloseFromOutside(canvasElement)
 };
 
 export const DirectLinkFlowDesktop: Story = {

@@ -1262,6 +1262,12 @@
 		"format": {
 			"panelTitle": "Yeni görüşme oluştur",
 			"panelMenu": "Diğer seçenekler",
+			"discard": {
+				"title": "Girdiğiniz bilgiler silinsin mi?",
+				"description": "Bu karttaki bilgiler henüz kaydedilmedi. Bu görünümü kapatırsanız kaybolacaklar.",
+				"keepEditing": "Düzenlemeye devam et",
+				"confirm": "Sil ve kapat"
+			},
 			"cardsPrevious": "Önceki görüşme formatı",
 			"cardsNext": "Sonraki görüşme formatı",
 			"back": "Geri",
