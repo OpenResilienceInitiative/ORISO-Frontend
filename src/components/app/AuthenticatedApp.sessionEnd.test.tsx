@@ -243,14 +243,23 @@ describe('authenticated shell sign-out', () => {
 	});
 
 	it('keeps the current view while logout is pending and withdraws routing when the profile is cleared', async () => {
+		let finishSignOut: () => void;
+		mocks.logout.mockImplementationOnce(
+			(_redirect, _path, onLocalSessionEnded) => {
+				finishSignOut = onLocalSessionEnded;
+			}
+		);
 		const user = userEvent.setup();
 		const { rerender } = render(shell(profile));
 		expect(await screen.findByText('Private profile: true')).toBeTruthy();
 
 		await user.click(screen.getByRole('button', { name: 'Sign out' }));
 		expect(mocks.logout).toHaveBeenCalledTimes(1);
+		expect(mocks.setMatrix).not.toHaveBeenCalled();
 		expect(screen.getByText('Private profile: true')).toBeTruthy();
 
+		act(() => finishSignOut());
+		expect(mocks.setMatrix).toHaveBeenCalledExactlyOnceWith(null);
 		rerender(shell(null));
 		expect(screen.queryByText('Private profile: true')).toBeNull();
 		expect(screen.getByText('Loading session')).toBeTruthy();

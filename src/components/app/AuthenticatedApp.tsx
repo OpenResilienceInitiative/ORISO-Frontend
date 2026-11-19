@@ -217,8 +217,8 @@ export const AuthenticatedApp = ({
 		if (!mounted.current) return;
 		matrixBootstrap.current?.controller.abort();
 		displayFilterStore.detachClient();
-		setMatrixClientService(null);
 		teardownLocalSession();
+		setMatrixClientService(null);
 		setLoading(false);
 	}, [setMatrixClientService]);
 	const [userDataRequested, setUserDataRequested] = useState<boolean>(false);
@@ -326,7 +326,8 @@ export const AuthenticatedApp = ({
 											AUTHORITIES.ANONYMOUS_DEFAULT,
 											userProfileData
 										)
-									)
+									),
+									isActive
 								);
 								if (!isActive()) {
 									clientService.stopAndCleanup();
@@ -461,11 +462,9 @@ export const AuthenticatedApp = ({
 		// mirror afterwards (#1377 §7.5). The effect cleanup detaches again.
 		displayFilterStore.detachClient();
 		onLogout();
-		// Clear the React context's Matrix client reference on sign-out so a
-		// stale authenticated client cannot survive into a subsequent session
-		// (logout() also resets the module-level registry).
-		setMatrixClientService(null);
-		logout();
+		// Logout needs the registered client until it has flushed pending work
+		// and stopped that client. Then the React context can release it too.
+		void logout(true, undefined, () => setMatrixClientService(null));
 	}, [onLogout, setMatrixClientService]);
 
 	/* The gate opens itself after SLOW_AFTER_MS as an escape hatch, so the
