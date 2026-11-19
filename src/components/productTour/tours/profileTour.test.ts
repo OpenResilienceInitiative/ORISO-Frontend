@@ -27,7 +27,7 @@ describe('consultant-profile', () => {
 			['/profile/einstellungen/sicherheit', 'profile-security'],
 			['/profile/einstellungen/anzeige', 'profile-display'],
 			['/profile/einstellungen/tastatur', 'profile-shortcuts'],
-			['/profile/hilfe/rundgaenge', 'profile-help-tours']
+			['/profile/hilfe/rundgaenge', 'help-tour-switch']
 		]);
 	});
 

@@ -80,7 +80,7 @@ export const consultantProfileTour: TourDefinition = {
 		{
 			id: 'help-tours',
 			route: '/profile/hilfe/rundgaenge',
-			target: 'profile-help-tours',
+			target: 'help-tour-switch',
 			placement: 'auto',
 			titleKey: 'tour.profile.step.helpTours.title',
 			contentKey: 'tour.profile.step.helpTours.intro'
