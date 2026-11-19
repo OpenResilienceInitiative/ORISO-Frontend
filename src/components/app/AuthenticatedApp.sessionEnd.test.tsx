@@ -350,6 +350,7 @@ describe('authenticated shell sign-out', () => {
 		expect(screen.queryByText('Private profile: true')).toBeNull();
 		expect(screen.queryByLabelText(oldPasswordLabel)).toBeNull();
 		expect(screen.getByText(confirmation)).toBeTruthy();
+		expect(mocks.setMatrix).toHaveBeenCalledExactlyOnceWith(null);
 		act(() => window.dispatchEvent(new Event('pageshow')));
 		expect(location.replace).not.toHaveBeenCalled();
 		expect(mocks.peerTeardown).not.toHaveBeenCalled();

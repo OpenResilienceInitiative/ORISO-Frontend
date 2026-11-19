@@ -8,6 +8,8 @@ import {
 	persistMatrixLoginData
 } from '../components/sessionCookie/getMatrixAccessToken';
 import { buildMatrixCryptoStorePrefix } from './matrixCrypto';
+import { matrixCallService } from './matrixCallService';
+import { matrixLiveEventBridge } from './matrixLiveEventBridge';
 import {
 	MatrixClientService,
 	isMatrixExpiredTokenError
@@ -26,6 +28,7 @@ const mockedMatrixClient = vi.hoisted(() => ({
 	getRoom: vi.fn(),
 	getCrypto: vi.fn(),
 	joinRoom: vi.fn(),
+	logout: vi.fn().mockResolvedValue({}),
 	sendMessage: vi.fn(),
 	startClient: vi.fn(),
 	stopClient: vi.fn()
@@ -338,6 +341,134 @@ describe('MatrixClientService', () => {
 		expect(service.getClient()).toBeNull();
 	});
 
+	it('arms refresh at the original deadline after a slow crypto startup', async () => {
+		vi.useFakeTimers({ toFake: ['Date'] });
+		const timer = vi.spyOn(window, 'setTimeout').mockReturnValue(1);
+		try {
+			vi.setSystemTime(new Date('2026-11-18T12:00:00Z'));
+			const crypto = Promise.withResolvers<void>();
+			mockedMatrixClient.initRustCrypto.mockReturnValueOnce(
+				crypto.promise
+			);
+			const service = new MatrixClientService();
+			const initialization = service.initializeClient({
+				...lifecycleLogin,
+				expiresInMs: 130_000
+			});
+
+			vi.setSystemTime(new Date('2026-11-18T12:00:12Z'));
+			crypto.resolve();
+			await initialization;
+
+			expect(timer).toHaveBeenCalledExactlyOnceWith(
+				expect.any(Function),
+				0
+			);
+			service.stopAndCleanup();
+		} finally {
+			timer.mockRestore();
+			vi.useRealTimers();
+		}
+	});
+
+	it('releases a refresh blocked on a crypto hold when the session ends', async () => {
+		const service = new MatrixClientService();
+		await service.initializeClient(lifecycleLogin);
+		const releaseHold = Promise.withResolvers<void>();
+		const holdStarted = Promise.withResolvers<void>();
+		const held = service.holdTokenRefreshDuring(() => {
+			holdStarted.resolve();
+			return releaseHold.promise;
+		});
+		await holdStarted.promise;
+		const refreshFinished = vi.fn();
+		const refresh = service.refreshMatrixToken().then(refreshFinished);
+
+		try {
+			service.stopAndCleanup();
+			await vi.waitFor(
+				() => expect(refreshFinished).toHaveBeenCalledOnce(),
+				{ timeout: 100 }
+			);
+			expect(getMatrixAccessToken).not.toHaveBeenCalled();
+		} finally {
+			releaseHold.resolve();
+			await held;
+			await refresh;
+		}
+	});
+
+	it('destroys owned event handlers when logout interrupts a client replacement', async () => {
+		const service = new MatrixClientService();
+		await service.initializeClient(lifecycleLogin);
+		const bridgeDestroy = vi.spyOn(matrixLiveEventBridge, 'destroy');
+		const callsDestroy = vi.spyOn(matrixCallService, 'destroy');
+		const crypto = Promise.withResolvers<void>();
+		mockedMatrixClient.initRustCrypto.mockReturnValueOnce(crypto.promise);
+		vi.mocked(getMatrixAccessToken).mockResolvedValueOnce(lifecycleLogin);
+		const refresh = service.refreshMatrixToken();
+		try {
+			await vi.waitFor(() =>
+				expect(mockedMatrixClient.initRustCrypto).toHaveBeenCalledTimes(
+					2
+				)
+			);
+			await service.logout();
+			expect(bridgeDestroy).toHaveBeenCalledOnce();
+			expect(callsDestroy).toHaveBeenCalledOnce();
+		} finally {
+			crypto.resolve();
+			await refresh;
+			bridgeDestroy.mockRestore();
+			callsDestroy.mockRestore();
+		}
+	});
+
+	it('tears down the current client and surfaces an SDK startup failure', async () => {
+		mockedMatrixClient.startClient.mockRejectedValueOnce(
+			new Error('SDK could not start')
+		);
+		const service = new MatrixClientService();
+
+		await expect(service.initializeClient(lifecycleLogin)).rejects.toThrow(
+			'SDK could not start'
+		);
+		expect(service.getClient()).toBeNull();
+		expect(mockedMatrixClient.stopClient).toHaveBeenCalled();
+	});
+
+	it('does not clear the new session handlers when the outgoing client stops', async () => {
+		const outgoing = new MatrixClientService();
+		await outgoing.initializeClient(lifecycleLogin);
+		const replacementSdk = {
+			...mockedMatrixClient,
+			stopClient: vi.fn(),
+			removeAllListeners: vi.fn()
+		};
+		vi.mocked(createMatrixClient).mockReturnValueOnce(
+			replacementSdk as unknown as ReturnType<typeof createMatrixClient>
+		);
+		const replacement = new MatrixClientService();
+		await replacement.initializeClient({
+			...lifecycleLogin,
+			userId: '@other:matrix.localhost'
+		});
+		const bridgeDestroy = vi.spyOn(matrixLiveEventBridge, 'destroy');
+		const callsDestroy = vi.spyOn(matrixCallService, 'destroy');
+
+		try {
+			await outgoing.logout();
+			expect(replacement.getClient()).toBe(replacementSdk);
+			expect(replacementSdk.stopClient).not.toHaveBeenCalled();
+			expect(bridgeDestroy).not.toHaveBeenCalled();
+			expect(callsDestroy).not.toHaveBeenCalled();
+		} finally {
+			bridgeDestroy.mockRestore();
+			callsDestroy.mockRestore();
+			replacement.stopAndCleanup();
+		}
+	});
+
 	/**
 	 * A crypto reset spans deleting the backup, the UIA round-trip and new
 	 * keys. A token refresh in that window stops the client under it and
@@ -591,7 +722,8 @@ describe('MatrixClientService', () => {
 		);
 		expect(createMatrixClient).toHaveBeenLastCalledWith(
 			expect.objectContaining({ deviceId: 'DEVICE_TWO' }),
-			expect.any(Function)
+			expect.any(Function),
+			undefined
 		);
 	});
 

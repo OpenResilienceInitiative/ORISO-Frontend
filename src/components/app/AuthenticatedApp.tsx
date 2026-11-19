@@ -203,10 +203,11 @@ export const AuthenticatedApp = ({
 			void logout(false, loginPath, () => {
 				// Revalidation must not mistake this document's sign-out for a peer's.
 				mounted.current = false;
+				setMatrixClientService(null);
 				setPasswordChangeStatus('signed-out');
 			});
 		},
-		[mountedSession]
+		[mountedSession, setMatrixClientService]
 	);
 	/* Every path that ends in `<Navigate to="/login">` below goes through
 	   here: the old session is torn down *before* the login form renders,
