@@ -205,7 +205,7 @@
 		"prettier-eslint-cli": "^8.0.1",
 		"sass": "^1.70.0",
 		"sass-loader": "^14.0.0",
-		"serve": "^14.2.6",
+		"serve": "^14.2.8",
 		"standard-version": "^9.5.0",
 		"storybook": "10.6.7",
 		"style-loader": "^3.3.4",
