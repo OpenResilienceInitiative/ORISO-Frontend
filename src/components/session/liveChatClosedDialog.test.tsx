@@ -121,6 +121,8 @@ vi.mock('../../globalState/context/MatrixClientContext', () => ({
 		matrixClientService: conversionFlow.enabled
 			? {
 					getClient: () => conversionFlow.client,
+					getReadyClient: async () => conversionFlow.client,
+					getStaleDeviceRecoveryVersion: () => 0,
 					getAuthenticatedSubject: () => 'asker-1',
 					holdTokenRefreshDuring: (f: () => Promise<unknown>) => f()
 				}
