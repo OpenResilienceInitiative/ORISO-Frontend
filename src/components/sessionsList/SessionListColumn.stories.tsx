@@ -12,7 +12,6 @@ import {
 	STAGE_LAYOUT
 } from '../chatStage/stageLayout';
 import type { SessionToolbarChipFilter } from './sessionToolbarFilters';
-import { SessionListCreateChat } from './SessionListCreateChat';
 import { EmptyState } from '../emptyState/EmptyState';
 import { MenuVerticalIcon } from '../../resources/img/icons';
 import { MessageAvatar } from '../message/MessageAvatar';
@@ -47,7 +46,9 @@ function DemoCard({
 	postcode,
 	user,
 	subject,
-	team = false
+	team = false,
+	groupStart = true,
+	groupEnd = true
 }: {
 	active?: boolean;
 	beforeActive?: boolean;
@@ -57,6 +58,10 @@ function DemoCard({
 	user: string;
 	subject: string;
 	team?: boolean;
+	/** Grouping flags `SessionsList` sets outside the rail: inactive rows
+	 *  join into one block, the active row stands out as its own card. */
+	groupStart?: boolean;
+	groupEnd?: boolean;
 }) {
 	const displayName = formatMessagePersonName(undefined, user);
 
@@ -66,7 +71,10 @@ function DemoCard({
 				'sessionsListItem',
 				active && 'sessionsListItem--active',
 				beforeActive && 'sessionsListItem--beforeActive',
-				afterActive && 'sessionsListItem--afterActive'
+				afterActive && 'sessionsListItem--afterActive',
+				'sessionsListItem--grouped',
+				groupStart && 'sessionsListItem--groupStart',
+				groupEnd && 'sessionsListItem--groupEnd'
 			]
 				.filter(Boolean)
 				.join(' ')}
@@ -130,10 +138,14 @@ function DemoCard({
 						</div>
 					) : (
 						<div className="sessionsListItem__consultingTypeIcon sessionsListItem__consultingTypeIcon--nearby">
-							<img
-								src={nearbyConversationIcon}
-								alt="Mail"
-								className="sessionsListItem__consultingTypeIcon--nearbyIcon"
+							<span
+								className="sessionsListItem__consultingTypeIcon--kindIcon"
+								aria-hidden="true"
+								style={
+									{
+										'--kind-icon-url': `url("${nearbyConversationIcon}")`
+									} as React.CSSProperties
+								}
 							/>
 							<span className="sessionsListItem__consultingTypeIcon--nearbyLabel">
 								Mail
@@ -195,6 +207,8 @@ function FullColumnPlayground() {
 				/>
 				<DemoCard
 					active
+					groupStart={false}
+					groupEnd={false}
 					topic="Familienberatung"
 					postcode="12345"
 					user="testuser@example.invalid"
@@ -215,9 +229,9 @@ function FullColumnPlayground() {
 const meta: Meta = {
 	title: 'Components/Session/List/Session list column',
 	tags: ['autodocs'],
+	globals: { backgrounds: { value: 'gray' } },
 	parameters: {
 		layout: 'fullscreen',
-		backgrounds: { default: 'gray' },
 		design: [
 			{
 				type: 'figma',
@@ -268,9 +282,7 @@ function ToolbarCreateChatColumn() {
 				createGroupChatActive
 			/>
 			<CardScroll>
-				<SessionListCreateChat />
 				<DemoCard
-					afterActive
 					topic="Familienberatung"
 					postcode="10115"
 					user="other.user"
@@ -282,7 +294,28 @@ function ToolbarCreateChatColumn() {
 }
 
 export const ToolbarCreateChatAndCards: Story = {
-	render: () => <ToolbarCreateChatColumn />
+	render: () => <ToolbarCreateChatColumn />,
+	play: async ({ canvasElement }) => {
+		const createActions = canvasElement.querySelectorAll(
+			'a[href="/sessions/consultant/sessionView/createGroupChat"]'
+		);
+		await expect(createActions).toHaveLength(1);
+		await expect(createActions[0]).toBeVisible();
+		await expect(
+			canvasElement
+				.querySelector('.sessionsList__scrollContainer')!
+				.getBoundingClientRect().height
+		).toBeGreaterThan(0);
+		await expect(canvasElement.querySelector('.createChatItem')).toBeNull();
+		const card = canvasElement.querySelector('.sessionsListItem')!;
+		await waitFor(() => expect(getComputedStyle(card).opacity).toBe('1'));
+		await expect(card).toBeVisible();
+	}
+};
+
+export const ToolbarCreateChatOnPhone: Story = {
+	...ToolbarCreateChatAndCards,
+	globals: { viewport: { value: 'phone390', isRotated: false } }
 };
 
 /**
@@ -350,6 +383,10 @@ const RAIL_DEMO_COPY = {
 	thread: 'Thread',
 	supervision: 'Supervision',
 	mail: 'Mail',
+	videoCall: 'Videoanruf',
+	audioCall: 'Audioanruf',
+	directLink: 'Direktlink',
+	appointment: 'Nächster Termin: Fr 30. Okt 18:00',
 	unread: 'Ungelesen'
 };
 
@@ -452,12 +489,14 @@ function SnapDemo({ panelOpen }: { panelOpen: boolean }) {
 					) : (
 						<>
 							<DemoCard
+								groupEnd={false}
 								topic="Schuldnerberatung"
 								postcode="55116"
 								user="sonnenblume_47"
 								subject="Mein Vertrag läuft im Oktober aus."
 							/>
 							<DemoCard
+								groupStart={false}
 								topic="Suchtberatung"
 								postcode="80331"
 								user="stiller_fuchs_ali"

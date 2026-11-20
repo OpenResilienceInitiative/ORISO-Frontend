@@ -22,6 +22,8 @@ export interface EditableDataProps {
 	onSingleClear?: Function;
 	onSingleFocus?: Function;
 	onBeforeRemoveButtonClick?: (callback) => void;
+	/** Native input limit; validation must still check pasted or loaded values. */
+	maxLength?: number;
 }
 
 export const EditableData = ({
@@ -36,7 +38,8 @@ export const EditableData = ({
 	label: initialLabel,
 	type,
 	onSingleFocus,
-	onBeforeRemoveButtonClick
+	onBeforeRemoveButtonClick,
+	maxLength
 }: EditableDataProps) => {
 	const { t: translate } = useTranslation();
 	const [inputValue, setInputValue] = useState<string>(initialValue ?? '');
@@ -140,10 +143,13 @@ export const EditableData = ({
 				type={type}
 				onFocus={handleFocus}
 				id={initialLabel}
+				// #1338: the visible label stays empty while editing; keep the field named
+				aria-label={label || initialLabel}
 				name={initialLabel}
 				value={inputValue}
 				onChange={handleInputValueChange}
 				disabled={isDisabled}
+				maxLength={maxLength}
 			/>
 			{!isDisabled && (
 				<span

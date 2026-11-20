@@ -5,6 +5,21 @@ import {
 	IncomingVideoCallProps,
 	NOTIFICATION_TYPE_CALL
 } from '../incomingVideoCall/IncomingVideoCall';
+import {
+	EventNotice,
+	EventNoticeProps,
+	NOTIFICATION_TYPE_EVENT_NOTICE
+} from './EventNotice';
+import {
+	NewEnquiryNotice,
+	NewEnquiryNoticeProps,
+	NOTIFICATION_TYPE_NEW_ENQUIRY
+} from './NewEnquiryNotice';
+import {
+	LiveChatMessageNotice,
+	LiveChatMessageNoticeProps,
+	NOTIFICATION_TYPE_LIVE_CHAT_MESSAGE
+} from './LiveChatMessageNotice';
 import './notification.styles';
 
 import {
@@ -36,6 +51,20 @@ export const Notification = ({ notification }: NotificationProps) => {
 					{...(notification as IncomingVideoCallProps)}
 				/>
 			);
+		case NOTIFICATION_TYPE_LIVE_CHAT_MESSAGE:
+			return (
+				<LiveChatMessageNotice
+					{...(notification as LiveChatMessageNoticeProps)}
+				/>
+			);
+		case NOTIFICATION_TYPE_NEW_ENQUIRY:
+			return (
+				<NewEnquiryNotice
+					{...(notification as NewEnquiryNoticeProps)}
+				/>
+			);
+		case NOTIFICATION_TYPE_EVENT_NOTICE:
+			return <EventNotice {...(notification as EventNoticeProps)} />;
 		case NOTIFICATION_TYPE_INFO:
 		case NOTIFICATION_TYPE_WARNING:
 		case NOTIFICATION_TYPE_SUCCESS:

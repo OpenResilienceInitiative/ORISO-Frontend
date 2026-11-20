@@ -1,7 +1,7 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import * as React from 'react';
 import { cleanup, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { MessageDisplayName } from './MessageDisplayName';
 
 vi.mock('react-i18next', () => ({
@@ -30,9 +30,7 @@ describe('MessageDisplayName', () => {
 			/>
 		);
 
-		const identity = container.querySelector(
-			'.messageItem__nameBlock'
-		);
+		const identity = container.querySelector('.messageItem__nameBlock');
 		expect(identity).toBeTruthy();
 		expect(identity?.children).toHaveLength(2);
 		expect(identity?.children[0]?.textContent).toBe('spider pig');
@@ -46,9 +44,7 @@ describe('MessageDisplayName', () => {
 			<MessageDisplayName {...baseProps} type="user" subtitle="" />
 		);
 
-		const identity = container.querySelector(
-			'.messageItem__nameBlock'
-		);
+		const identity = container.querySelector('.messageItem__nameBlock');
 		expect(identity).toBeTruthy();
 		expect(identity?.children).toHaveLength(1);
 		expect(screen.queryByText(/Caritasverband/)).toBeNull();

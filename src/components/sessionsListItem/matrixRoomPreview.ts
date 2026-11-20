@@ -1,7 +1,19 @@
+import {
+	getPassageReplies,
+	getPassageRepliesText
+} from '../selectionReply/passageReplyContent';
+import { extractPassageBlurEvents } from '../selectionReply/passageBlurEvents';
 import { stripReplyFallback } from '../../utils/messageRelations';
-import { toMessagePreviewText } from '../../utils/messagePreviewText';
+import {
+	getSystemNotificationPreview,
+	toMessagePreviewText
+} from '../../utils/messagePreviewText';
 import { isErstantwortMessage } from '../erstantwort/erstantwortPayload';
-import { parseMessagePrefixes } from '../message/messageConstants';
+import {
+	type ChatEndedBy,
+	chatEndedTextKey,
+	parseMessagePrefixes
+} from '../message/messageConstants';
 import {
 	isVoiceMessageFileName,
 	voiceDurationMsFromFileName
@@ -15,7 +27,12 @@ export type MatrixRoomPreviewKind =
 	| 'video'
 	| 'file'
 	| 'encrypted'
-	| 'first_response';
+	| 'first_response'
+	| 'user_left_chat'
+	| 'inquiry_accepted'
+	| 'case_handover_taken_over'
+	| 'system_notification'
+	| 'blurred';
 
 /**
  * B2 / T24 (Frank: preview prefix): the secondary channel the newest message
@@ -36,6 +53,8 @@ export interface MatrixRoomPreview {
 	 * client did not record it.
 	 */
 	durationMs?: number;
+	/** USER_LEFT_CHAT only: who ended the chat, when the event says so. */
+	endedBy?: ChatEndedBy | null;
 }
 
 /** A glyph that stands in for a word on the list card's preview line. */
@@ -61,12 +80,38 @@ export const formatVoiceDuration = (durationMs: number): string => {
 };
 
 /**
+ * The words for a preview without text of its own. A system notice reads as
+ * the chat words it (MessageItemComponent); the rest use their list label.
+ */
+export const toPreviewKindText = (
+	kind: MatrixRoomPreviewKind,
+	translate: (key: string, fallback?: string) => string,
+	isConsultant: boolean,
+	endedBy: ChatEndedBy | null = null
+): string => {
+	if (kind === 'user_left_chat') {
+		return translate(chatEndedTextKey(endedBy, isConsultant));
+	}
+	if (kind === 'system_notification') {
+		return translate('message.systemNotificationTitle');
+	}
+	if (kind === 'inquiry_accepted') {
+		return translate('notifications.events.inquiryAccepted.text');
+	}
+	if (kind === 'case_handover_taken_over') {
+		return translate('caseHandover.systemMessage.tookOverTitle');
+	}
+	return translate(`sessionList.preview.${kind}`, kind);
+};
+
+/**
  * The list card's preview line: thread and voice use the chat's glyphs, since a word prefix
  * crowds the line; voice reads as glyph plus length, other channels keep their word prefix.
  */
 export const toListPreviewLine = (
 	preview: MatrixRoomPreview | null,
-	translate: (key: string, fallback?: string) => string
+	translate: (key: string, fallback?: string) => string,
+	isConsultant = false
 ): ListPreviewLine => {
 	if (!preview || preview.kind === 'encrypted') {
 		return {
@@ -88,7 +133,12 @@ export const toListPreviewLine = (
 	} else if (preview.kind === 'text') {
 		text = preview.text || '';
 	} else {
-		text = translate(`sessionList.preview.${preview.kind}`, preview.kind);
+		text = toPreviewKindText(
+			preview.kind,
+			translate,
+			isConsultant,
+			preview.endedBy
+		);
 	}
 	if (preview.channel === 'supervision') {
 		text = `${translate('sessionList.preview.channel.supervision')} ${text}`;
@@ -104,6 +154,8 @@ export const getPreviewLastMessageType = (
 
 export interface MatrixPreviewEvent {
 	getType?: () => string;
+	getId?: () => string | undefined;
+	isRedacted?: () => boolean;
 	getClearContent?: () => Record<string, any>;
 	getContent?: () => Record<string, any>;
 	getSender?: () => string;
@@ -169,7 +221,29 @@ export const filterVisibleMatrixPreviewEvents = (
 	});
 };
 
-const toPreview = (event: MatrixPreviewEvent): MatrixRoomPreview | null => {
+/**
+ * Messages with a live moderator blur (#2229). Their preview never shows
+ * text: the blur positions refer to the rendered message, and a preview that
+ * guessed wrong would show the hidden words in the chat list.
+ */
+const blurredMessageIds = (events: MatrixPreviewEvent[]): Set<string> =>
+	new Set(extractPassageBlurEvents(events).map((blur) => blur.targetEventId));
+
+const toPreview = (
+	event: MatrixPreviewEvent,
+	blurred: Set<string> = new Set()
+): MatrixRoomPreview | null => {
+	const preview = toUnblurredPreview(event);
+	const eventId = event.getId?.();
+	if (preview?.text && eventId && blurred.has(eventId)) {
+		return { ...preview, kind: 'blurred', text: null };
+	}
+	return preview;
+};
+
+const toUnblurredPreview = (
+	event: MatrixPreviewEvent
+): MatrixRoomPreview | null => {
 	const eventType = event.getType?.();
 	if (eventType === 'm.room.encrypted') {
 		const clearContent = event.getClearContent?.();
@@ -192,10 +266,40 @@ const toPreview = (event: MatrixPreviewEvent): MatrixRoomPreview | null => {
 	return preview;
 };
 
+/**
+ * Answers to marked passages (ADR-022): the list shows what was written —
+ * the composer text, else the first written answer — never the `>` quote
+ * fallback in `body`. Voice-only answers read as a voice message.
+ */
+const toPassageRepliesPreview = (
+	content: Record<string, any>,
+	replies: NonNullable<ReturnType<typeof getPassageReplies>>
+): MatrixRoomPreview | null => {
+	const written =
+		getPassageRepliesText(content) ||
+		replies.find((reply) => reply.text)?.text ||
+		'';
+	const text = toMessagePreviewText(written);
+	if (text) {
+		return { kind: 'text', text };
+	}
+	const clip = replies.find((reply) => reply.audio)?.audio;
+	if (clip) {
+		return { kind: 'voice', text: null, durationMs: clip.durationMs };
+	}
+	// A quote may be collected without its own answer; it is still the latest
+	// message and must not make the list fall back to an older conversation.
+	// Excerpts are plain text. Parsing them as HTML could load remote resources.
+	const quote = (replies[0]?.excerpt || '').replace(/\s+/g, ' ').trim();
+	return quote ? { kind: 'text', text: quote } : null;
+};
+
 const toKindPreview = (
 	content: Record<string, any>
 ): MatrixRoomPreview | null => {
 	const body = `${content.body || ''}`.trim();
+	// MSC2530: with a caption, `body` is the caption and `filename` the name.
+	const fileName = `${content.filename || content.body || ''}`.trim();
 	switch (content.msgtype) {
 		case 'm.text':
 		case 'm.notice':
@@ -203,19 +307,34 @@ const toKindPreview = (
 			if (isErstantwortMessage(body)) {
 				return { kind: 'first_response', text: null };
 			}
+			const systemNotice = getSystemNotificationPreview(body);
+			if (systemNotice === 'user_left_chat') {
+				const endedBy =
+					parseMessagePrefixes(body).systemNotificationEndedBy;
+				return endedBy
+					? { kind: systemNotice, text: null, endedBy }
+					: { kind: systemNotice, text: null };
+			}
+			if (systemNotice) {
+				return { kind: systemNotice, text: null };
+			}
+			const passageReplies = getPassageReplies(content);
+			if (passageReplies) {
+				return toPassageRepliesPreview(content, passageReplies);
+			}
 			const text = toMessagePreviewText(stripReplyFallback(body));
 			return text ? { kind: 'text', text } : null;
 		}
 		case 'm.audio': {
 			const duration = content.info?.duration;
-			const recorded = isVoiceMessageFileName(body);
+			const recorded = isVoiceMessageFileName(fileName);
 			const durationMs =
 				typeof duration === 'number' &&
 				Number.isFinite(duration) &&
 				duration >= 0
 					? duration
 					: recorded
-						? voiceDurationMsFromFileName(body)
+						? voiceDurationMsFromFileName(fileName)
 						: null;
 			return {
 				kind:
@@ -235,7 +354,7 @@ const toKindPreview = (
 		case 'm.video':
 			return { kind: 'video', text: null };
 		case 'm.file':
-			return { kind: 'file', text: body || null };
+			return { kind: 'file', text: fileName || null };
 		default:
 			return null;
 	}
@@ -247,8 +366,9 @@ export const getLatestMatrixRoomPreview = (
 	const newestFirst = [...events].sort(
 		(a, b) => (b.getTs?.() || 0) - (a.getTs?.() || 0)
 	);
+	const blurred = blurredMessageIds(events);
 	for (const event of newestFirst) {
-		const preview = toPreview(event);
+		const preview = toPreview(event, blurred);
 		if (preview) {
 			return preview;
 		}
@@ -268,8 +388,9 @@ export const getLatestTimedMatrixRoomPreview = (
 	const newestFirst = [...events].sort(
 		(a, b) => (b.getTs?.() || 0) - (a.getTs?.() || 0)
 	);
+	const blurred = blurredMessageIds(events);
 	for (const event of newestFirst) {
-		const preview = toPreview(event);
+		const preview = toPreview(event, blurred);
 		if (preview) {
 			return { ...preview, ts: event.getTs?.() || 0 };
 		}
@@ -303,11 +424,12 @@ export const getRoomPreviewsByChannel = (
 	);
 	let main: TimedRoomPreview | null = null;
 	let thread: TimedRoomPreview | null = null;
+	const blurred = blurredMessageIds(events);
 	for (const event of newestFirst) {
 		if (main && thread) {
 			break;
 		}
-		const preview = toPreview(event);
+		const preview = toPreview(event, blurred);
 		if (!preview) {
 			continue;
 		}

@@ -1,6 +1,9 @@
+export const ACCESS_TOKEN_VALID_UNTIL_KEY = 'auth.access_token_valid_until';
+export const REFRESH_TOKEN_VALID_UNTIL_KEY = 'auth.refresh_token_valid_until';
+
 export type LocalStorageKey =
-	| 'auth.access_token_valid_until'
-	| 'auth.refresh_token_valid_until';
+	| typeof ACCESS_TOKEN_VALID_UNTIL_KEY
+	| typeof REFRESH_TOKEN_VALID_UNTIL_KEY;
 
 export const getLocalStorageItem = (key: LocalStorageKey): string => {
 	return localStorage.getItem(key);
@@ -21,15 +24,15 @@ export const setTokenExpiryInLocalStorage = (
 export const getTokenExpiryFromLocalStorage = () => {
 	return {
 		accessTokenValidUntilTime: parseInt(
-			getLocalStorageItem('auth.access_token_valid_until') ?? '0'
+			getLocalStorageItem(ACCESS_TOKEN_VALID_UNTIL_KEY) ?? '0'
 		),
 		refreshTokenValidUntilTime: parseInt(
-			getLocalStorageItem('auth.refresh_token_valid_until') ?? '0'
+			getLocalStorageItem(REFRESH_TOKEN_VALID_UNTIL_KEY) ?? '0'
 		)
 	};
 };
 
 export const removeTokenExpiryFromLocalStorage = () => {
-	removeLocalStorageItem('auth.access_token_valid_until');
-	removeLocalStorageItem('auth.refresh_token_valid_until');
+	removeLocalStorageItem(ACCESS_TOKEN_VALID_UNTIL_KEY);
+	removeLocalStorageItem(REFRESH_TOKEN_VALID_UNTIL_KEY);
 };

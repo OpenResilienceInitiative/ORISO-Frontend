@@ -1,4 +1,5 @@
 import { parseGroupChatInviteId } from '../../groupChat/groupChatInviteLink';
+import { getCounsellingDpaFailure } from '../../../api/counsellingDpaFailure';
 /**
  * Self-help group invite entry (#1499, FE#1289): `/login?gcid=<id>&aid=<agency>`
  * brings a newcomer to the designed entry screen (Storybook "0a — Eintritt:
@@ -16,6 +17,20 @@ const INVITE_ENTRY_STEP_NAMES = [
 
 /** Router state of the entry's "Einloggen": show the form, do not bounce back. */
 export const INVITE_LOGIN_STATE = { inviteLogin: true } as const;
+
+export const getGroupInviteLoginProps = (
+	gcid?: string | null,
+	aid?: string | null
+) => {
+	const inviteId = gcid?.trim();
+	if (!inviteId || !parseGroupChatInviteId(inviteId)) return {};
+
+	const params = new URLSearchParams({ gcid: inviteId });
+	const agencyId = aid?.trim();
+	if (agencyId) params.set('aid', agencyId);
+
+	return { loginParams: params.toString(), loginState: INVITE_LOGIN_STATE };
+};
 
 export const isInviteLoginState = (state: unknown): boolean =>
 	Boolean(
@@ -51,7 +66,12 @@ export const getGroupInviteTopicId = (
 	return ids.length === 1 ? ids[0] : null;
 };
 
-export type GroupInviteEntryState = 'none' | 'pending' | 'entry' | 'steps';
+export type GroupInviteEntryState =
+	| 'none'
+	| 'invalid'
+	| 'pending'
+	| 'entry'
+	| 'steps';
 
 export const resolveGroupInviteEntry = ({
 	gcid,
@@ -70,6 +90,10 @@ export const resolveGroupInviteEntry = ({
 }): GroupInviteEntryState => {
 	if (!present(gcid) || !present(aid)) {
 		return 'none';
+	}
+	// Otherwise the join would register an ordinary account with a password nobody saw (#921).
+	if (!parseGroupChatInviteId(gcid)) {
+		return 'invalid';
 	}
 	if (!agency) {
 		return 'steps';
@@ -111,4 +135,21 @@ export const getGroupJoin = ({
 	return invite.inviteToken
 		? { chatId: Number(invite.seriesId), inviteToken: invite.inviteToken }
 		: { chatId: Number(invite.seriesId) };
+};
+
+/**
+ * The server refused the group the registration names: 403 wrong invite token,
+ * 404 unknown group (UserService `GroupInviteRegistration`). A 400 counts only
+ * with its reason, because plain validation errors are 400 too.
+ */
+export const GROUP_INVITE_INVALID_REASON = 'GROUP_INVITE_INVALID';
+
+export const isGroupInviteRefusal = (error: unknown): boolean => {
+	if (!(error instanceof Response) || getCounsellingDpaFailure(error)) {
+		return false;
+	}
+	if (error.status === 400) {
+		return error.headers.get('X-Reason') === GROUP_INVITE_INVALID_REASON;
+	}
+	return error.status === 403 || error.status === 404;
 };

@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * #1189 — reachability tests for the "Chat settings" entry in the group-chat
  * list-row menu. These tests MUST fail if the <SessionListItemMenu> is removed
@@ -6,8 +6,14 @@
  * cannot be reintroduced silently.
  */
 import * as React from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
+import {
+	cleanup,
+	fireEvent,
+	render,
+	screen,
+	waitFor
+} from '@testing-library/react';
 import { generatePath, MemoryRouter } from 'react-router-dom';
 import {
 	UserDataContext,
@@ -22,17 +28,35 @@ import { STATUS_ACTIVE } from '../../globalState/interfaces';
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import { SessionListItemComponent } from './SessionListItemComponent';
 import { SessionListRailProvider } from '../sessionsList/SessionListRailContext';
+import { buildCallLifecycleContent } from '../../utils/callLifecycleMessage';
 
-const { matrixPreviewMock, roomUnreadCountMock } = vi.hoisted(() => ({
+const {
+	matrixPreviewMock,
+	roomUnreadCountMock,
+	groupMembersMock,
+	localeState,
+	apiPutArchiveMock
+} = vi.hoisted(() => ({
+	apiPutArchiveMock: vi.fn(),
+	groupMembersMock: vi.fn(() => ({
+		status: 'ready',
+		members: [] as any[]
+	})),
 	matrixPreviewMock: vi.fn(),
-	roomUnreadCountMock: vi.fn(() => 0)
+	localeState: { realEnglish: false },
+	roomUnreadCountMock: vi.fn<(roomId?: string) => number>(() => 0)
 }));
 
 afterEach(() => {
 	cleanup();
+	localeState.realEnglish = false;
 	matrixPreviewMock.mockReset();
+	groupMembersMock.mockReset();
+	groupMembersMock.mockReturnValue({ status: 'ready', members: [] });
 	roomUnreadCountMock.mockReset();
 	roomUnreadCountMock.mockReturnValue(0);
+	apiPutArchiveMock.mockReset();
+	sessionsDispatch.mockClear();
 });
 
 // ---------------------------------------------------------------------------
@@ -56,9 +80,21 @@ vi.mock('../../hooks/useE2EE', () => ({
 	})
 }));
 
+vi.mock('../../hooks/useGroupCardMembers', () => ({
+	useGroupCardMembers: groupMembersMock
+}));
+
 vi.mock('../../hooks/useMatrixSessionPreview', () => ({
 	useMatrixSessionPreview: matrixPreviewMock,
 	useMatrixSessionEvents: (roomId: string) => matrixPreviewMock(roomId) || []
+}));
+
+vi.mock('../../services/matrixClientRegistry', () => ({
+	getMatrixClientService: () => ({
+		getRoom: (roomId: string) => ({
+			getUnreadNotificationCount: () => roomUnreadCountMock(roomId)
+		})
+	})
 }));
 
 vi.mock('../../utils/sessionUnread', async (importOriginal) => ({
@@ -80,7 +116,7 @@ vi.mock('../../hooks/useActiveListItem', () => ({
 vi.mock('../../api', async (importOriginal) => ({
 	...(await importOriginal<any>()),
 	apiGetCaseHandoverStatus: () => Promise.resolve(null),
-	apiPutArchive: () => Promise.resolve(),
+	apiPutArchive: (...args: unknown[]) => apiPutArchiveMock(...args),
 	apiPutDearchive: () => Promise.resolve()
 }));
 
@@ -94,18 +130,38 @@ vi.mock('../../utils/tenantSettingsHelper', () => ({
 // ---------------------------------------------------------------------------
 // i18n
 // ---------------------------------------------------------------------------
-vi.mock('react-i18next', () => ({
-	useTranslation: () => ({
-		t: (k: string, opts?: any) =>
-			opts && typeof opts === 'object' && opts.name
-				? `${k}:${opts.name}`
-				: k
-	})
-}));
+vi.mock('react-i18next', async () => {
+	const catalogue = (await import('../../resources/i18n/en/common.json'))
+		.default;
+	return {
+		useTranslation: () => ({
+			t: (k: string, opts?: any) => {
+				if (localeState.realEnglish) {
+					const value = k
+						.split('.')
+						.reduce(
+							(current: any, key) => current?.[key],
+							catalogue
+						);
+					if (typeof value === 'string') return value;
+				}
+				return opts && typeof opts === 'object' && opts.name
+					? `${k}:${opts.name}`
+					: k;
+			}
+		})
+	};
+});
 
 // ---------------------------------------------------------------------------
 // Lottie — imported transitively through AnimatedIllustration; crashes in jsdom
 // ---------------------------------------------------------------------------
+vi.mock('../../api/apiCallState', () => ({
+	// Never answers: the card's own word stands (see `useRunningCall`).
+	apiCallState: () => new Promise(() => undefined),
+	apiCallStateRead: () => new Promise(() => undefined)
+}));
+
 vi.mock('lottie-react', () => ({ default: () => null }));
 vi.mock('lottie-web', () => ({ default: {} }));
 
@@ -169,7 +225,13 @@ vi.mock('../sessionHeader/ConsultantSearchLoader', () => ({
 	ConsultantSearchLoader: () => <span />
 }));
 vi.mock('../teamDiscussion/TeamDiscussionBadge', () => ({
-	TeamDiscussionBadge: () => <span />,
+	TeamDiscussionBadge: ({ onOpen }: { onOpen?: () => void }) => (
+		<button
+			data-testid="team-discussion-badge"
+			disabled={!onOpen}
+			onClick={onOpen}
+		/>
+	),
 	getCachedTeamDiscussion: () => Promise.resolve(null)
 }));
 vi.mock('./SessionListItemLastMessage', () => ({
@@ -186,18 +248,36 @@ vi.mock('./SessionListItemVideoCall', () => ({
 vi.mock('./CaseHandoverActionButton', () => ({
 	CaseHandoverActionButton: () => <span data-testid="case-handover-action" />
 }));
-vi.mock('../session/DeleteSession', () => ({
-	default: ({
-		children
-	}: {
-		children: (fn: () => void) => React.ReactNode;
-	}) => {
-		return <>{children(vi.fn())}</>;
-	}
-}));
 vi.mock('../overlay/Overlay', () => ({
-	Overlay: () => <span />,
-	OVERLAY_FUNCTIONS: { CLOSE: 'CLOSE', ARCHIVE: 'ARCHIVE' }
+	Overlay: ({
+		item,
+		handleOverlay
+	}: {
+		item: { copy?: string; headline?: string; buttonSet?: any[] };
+		handleOverlay: (fn: string) => void;
+	}) => (
+		<div data-testid="overlay">
+			<span>{item.copy ?? item.headline}</span>
+			{(item.buttonSet ?? []).map((b) => (
+				<button
+					key={b.function}
+					onClick={() => handleOverlay(b.function)}
+				>
+					{b.label}
+				</button>
+			))}
+			<button onClick={() => handleOverlay('CLOSE')}>
+				close-overlay
+			</button>
+		</div>
+	),
+	OVERLAY_FUNCTIONS: {
+		CLOSE: 'CLOSE',
+		ARCHIVE: 'ARCHIVE',
+		LEAVE_GROUP_CHAT: 'LEAVE_GROUP_CHAT',
+		REDIRECT: 'REDIRECT',
+		LOGOUT: 'LOGOUT'
+	}
 }));
 vi.mock('../legalLinks/LegalLinkModal', () => ({
 	LegalLinkModal: () => <span />
@@ -243,7 +323,9 @@ const makeUserData = (userId = OWNER_USER_ID) => ({
 const makeGroupSession = ({
 	consultantId = OWNER_USER_ID,
 	active = false,
-	matrixRoomId = '!abc:matrix.example.org'
+	matrixRoomId = '!abc:matrix.example.org',
+	topic = 'Test group chat',
+	repetitive = false
 } = {}) => ({
 	item: {
 		id: 101,
@@ -251,11 +333,11 @@ const makeGroupSession = ({
 		active,
 		messageDate: 1700000000,
 		createDate: '2023-11-14T12:00:00Z',
-		topic: 'Test group chat',
+		topic,
 		moderators: [],
 		consultingType: 1,
 		subscribed: true,
-		repetitive: false,
+		repetitive,
 		startDate: '2023-11-14',
 		startTime: '12:00',
 		createdAt: '2023-11-14T12:00:00Z',
@@ -288,7 +370,8 @@ const makeGroupSession = ({
 const makeSession = ({
 	consultantId = OWNER_USER_ID,
 	supervision = undefined as any,
-	matrixRoomId = '!session:matrix.example.org'
+	matrixRoomId = '!session:matrix.example.org',
+	directLinkMedium = undefined as 'CHAT' | 'AUDIO' | 'VIDEO' | undefined
 } = {}) => ({
 	item: {
 		id: 202,
@@ -306,7 +389,8 @@ const makeSession = ({
 		attachment: null,
 		videoCallMessageDTO: null,
 		topic: { id: 1, name: 'Topic', description: '' },
-		...(supervision !== undefined ? { supervision } : {})
+		...(supervision !== undefined ? { supervision } : {}),
+		...(directLinkMedium !== undefined ? { directLinkMedium } : {})
 	},
 	rid: matrixRoomId,
 	type: 'singleChat' as const,
@@ -386,7 +470,7 @@ describe('SessionListItemComponent — group-chat Chat settings reachability (#1
 	});
 
 	it('test 1: group-chat owner sees the three-dot trigger and can open "Chat settings"', async () => {
-		renderItem(makeGroupSession());
+		renderItem(makeGroupSession({ repetitive: true }));
 
 		// The trigger button must be present in the group-chat early-return branch
 		const trigger = screen.getByRole('button', {
@@ -406,7 +490,7 @@ describe('SessionListItemComponent — group-chat Chat settings reachability (#1
 
 	it('test 2: clicking "Chat settings" navigates to the editGroupChat route with correct state', async () => {
 		const matrixRoomId = '!abc:matrix.example.org';
-		const session = makeGroupSession({ matrixRoomId });
+		const session = makeGroupSession({ matrixRoomId, repetitive: true });
 		renderItem(session);
 
 		// Open the flyout
@@ -444,7 +528,8 @@ describe('SessionListItemComponent — group-chat Chat settings reachability (#1
 
 	it('test 3: non-owner consultant sees NO three-dot trigger', () => {
 		const session = makeGroupSession({
-			consultantId: 'other-consultant-99'
+			consultantId: 'other-consultant-99',
+			repetitive: true
 		});
 		renderItem(session, makeUserData(OWNER_USER_ID));
 
@@ -455,13 +540,23 @@ describe('SessionListItemComponent — group-chat Chat settings reachability (#1
 	});
 
 	it('test 4: owner of a RUNNING group chat sees NO three-dot trigger', () => {
-		const session = makeGroupSession({ active: true });
+		const session = makeGroupSession({ active: true, repetitive: true });
 		renderItem(session);
 
 		const trigger = screen.queryByRole('button', {
 			name: 'groupChat.info.settings.headline'
 		});
 		expect(trigger).toBeNull();
+	});
+
+	it('hides the circle settings entry for an internal group owner', () => {
+		renderItem(makeGroupSession());
+
+		expect(
+			screen.queryByRole('button', {
+				name: 'groupChat.info.settings.headline'
+			})
+		).toBeNull();
 	});
 });
 
@@ -476,6 +571,30 @@ describe('SessionListItemComponent — supervision list marker (ADR-008)', () =>
 		expect(await screen.findByTestId('case-handover-action')).toBeTruthy();
 		expect(screen.queryByTestId('supervision-badge')).toBeNull();
 	});
+
+	it.each([
+		{ mainUnread: 0, sideUnread: 2, supervisedByMe: true, unread: true },
+		{ mainUnread: 3, sideUnread: 0, supervisedByMe: true, unread: true },
+		{ mainUnread: 0, sideUnread: 0, supervisedByMe: true, unread: false },
+		{ mainUnread: 0, sideUnread: 2, supervisedByMe: false, unread: false }
+	])(
+		'expanded row unread state agrees with authorized rooms: %j',
+		({ mainUnread, sideUnread, supervisedByMe, unread }) => {
+			const sideRoomId = '!supervision:matrix.example.org';
+			roomUnreadCountMock.mockImplementation((roomId: string) =>
+				roomId === sideRoomId ? sideUnread : mainUnread
+			);
+			const { container } = renderItem(
+				makeSession({ supervision: { supervisedByMe, sideRoomId } }),
+				makeUserData(ME)
+			);
+			const row = container.querySelector('.sessionsListItem');
+			expect(row).not.toBeNull();
+			expect(row.classList.contains('sessionsListItem--read')).toBe(
+				!unread
+			);
+		}
+	);
 
 	it('supervisedByMe → supervision badge, no eye, no handover action', async () => {
 		renderItem(
@@ -534,6 +653,172 @@ describe('SessionListItemComponent — supervision list marker (ADR-008)', () =>
 		await nextTick();
 		expect(screen.queryByTestId('supervision-indicator')).toBeNull();
 	});
+
+	/*
+	 * #1306. The badge above is icon-only — the word "Supervision" lives in
+	 * `title`/`aria-label` — so before this the only VISIBLE word on a
+	 * supervisor's row was "Mail", and the row read as mail counselling to the
+	 * one person it is not. Measured on dev 14.09.2026, the row rendered
+	 * "Migration | 12042 | Heute | harry_braucht_rat_sep14 | Audionachricht |
+	 * Mail" while `supervision-badge` was present.
+	 */
+	it('supervisedByMe → the modality slot reads Supervision, not Mail', async () => {
+		renderItem(
+			makeSession({
+				supervision: {
+					supervisedByMe: true,
+					supervisorConsultantIds: [ME]
+				}
+			}),
+			makeUserData(ME)
+		);
+		await nextTick();
+		const modality = screen.getByTestId('supervision-modality');
+		expect(modality.textContent).toContain(
+			'sessionList.toolbar.chips.supervision'
+		);
+		// The consulting type is not shown twice and not shown at all here —
+		// it is one panel to the right, in the client chat the supervisor
+		// reads along with.
+		expect(
+			document.querySelector(
+				'.sessionsListItem__consultingTypeIcon--nearbyLabel'
+			)
+		).toBeNull();
+	});
+
+	it('uses the real short English modality label while retaining its explanatory tooltip', async () => {
+		localeState.realEnglish = true;
+		renderItem(
+			makeSession({
+				supervision: {
+					supervisedByMe: true,
+					supervisorConsultantIds: [ME]
+				}
+			}),
+			makeUserData(ME)
+		);
+		await nextTick();
+		const label = screen
+			.getByTestId('supervision-modality')
+			.querySelector(
+				'.sessionsListItem__consultingTypeIcon--supervisionLabel'
+			);
+		expect(label?.textContent).toBe('Supervision');
+		expect(label?.getAttribute('title')).toBe(
+			'Supervision – you read along in this chat'
+		);
+	});
+
+	it('shows one team discussion badge on a normal counsellor enquiry', async () => {
+		renderItem(
+			{ ...makeSession(), isEnquiry: true, isSession: false },
+			makeUserData()
+		);
+		await nextTick();
+		expect(screen.getAllByTestId('team-discussion-badge')).toHaveLength(1);
+		const badge = screen.getByTestId('team-discussion-badge');
+		expect(badge.hasAttribute('disabled')).toBe(false);
+		mockNavigate.mockClear();
+		fireEvent.click(badge);
+		expect(mockNavigate).toHaveBeenCalledWith(
+			expect.stringContaining('teamDiscussion=1')
+		);
+	});
+
+	it('keeps the existing team discussion badge on a supervised enquiry', async () => {
+		const session = {
+			...makeSession({
+				supervision: {
+					supervisedByMe: true,
+					supervisorConsultantIds: [ME]
+				}
+			}),
+			isEnquiry: true,
+			isSession: false
+		};
+		renderItem(session, makeUserData(ME));
+		await nextTick();
+		expect(screen.getAllByTestId('team-discussion-badge')).toHaveLength(1);
+		expect(
+			screen.getByTestId('team-discussion-badge').hasAttribute('disabled')
+		).toBe(true);
+	});
+
+	it('supervisedByMe → the icon travels with the word', async () => {
+		renderItem(
+			makeSession({
+				supervision: {
+					supervisedByMe: true,
+					supervisorConsultantIds: [ME]
+				}
+			}),
+			makeUserData(ME)
+		);
+		await nextTick();
+		// Frank, 14.09.2026: "Hauptsache, das Icon ist dabei."
+		expect(
+			screen.getByTestId('supervision-modality').querySelector('svg')
+		).toBeTruthy();
+	});
+
+	it('supervisedByMe → the full word stays reachable when the label truncates', async () => {
+		renderItem(
+			makeSession({
+				supervision: {
+					supervisedByMe: true,
+					supervisorConsultantIds: [ME]
+				}
+			}),
+			makeUserData(ME)
+		);
+		await nextTick();
+		// Truncation itself is CSS (`text-overflow: ellipsis`), which jsdom
+		// does not apply — what must not regress is the `title`, because it is
+		// the only way back to the full word once the label is cut.
+		const label = screen
+			.getByTestId('supervision-modality')
+			.querySelector(
+				'.sessionsListItem__consultingTypeIcon--supervisionLabel'
+			);
+		expect(label?.getAttribute('title')).toBe(
+			'sessionList.supervision.badge'
+		);
+	});
+
+	it('the OWNER of a supervised case keeps the consulting type', async () => {
+		renderItem(
+			makeSession({
+				consultantId: OWNER_USER_ID,
+				supervision: {
+					supervisedByMe: false,
+					supervisorConsultantIds: ['sup-1'],
+					supervisorDisplayNames: ['Sabine Supervisor']
+				}
+			}),
+			makeUserData(OWNER_USER_ID)
+		);
+		await nextTick();
+		// Only the supervisor's own row is relabelled. The owning consultant
+		// still needs to know this is mail counselling.
+		expect(screen.queryByTestId('supervision-modality')).toBeNull();
+		expect(
+			document.querySelector(
+				'.sessionsListItem__consultingTypeIcon--nearbyLabel'
+			)
+		).toBeTruthy();
+	});
+
+	it('a row with no supervision marker at all keeps the consulting type', async () => {
+		renderItem(makeSession(), makeUserData(ME));
+		await nextTick();
+		expect(screen.queryByTestId('supervision-modality')).toBeNull();
+		expect(
+			document.querySelector(
+				'.sessionsListItem__consultingTypeIcon--nearbyLabel'
+			)
+		).toBeTruthy();
+	});
 });
 
 /**
@@ -580,6 +865,64 @@ describe('SessionListItemComponent — collapsed rail row', () => {
 				name: 'sessionList.toolbar.chips.nearby'
 			})
 		).toBeTruthy();
+	});
+
+	// FE#1952: a conversation opened through a direct link said "Mail".
+	it.each([
+		['VIDEO', 'videoCall', 'sessionList.item.sessionType.directLinkVideo'],
+		['AUDIO', 'audioCall', 'sessionList.item.sessionType.directLinkAudio'],
+		['CHAT', 'directLink', 'sessionList.item.sessionType.directLinkChat']
+	] as const)(
+		'marks a %s direct-link conversation by its medium instead of mail',
+		(directLinkMedium, mark, label) => {
+			renderItem(makeSession({ directLinkMedium }), makeUserData(), {
+				rail: true
+			});
+			const marks = Array.from(
+				document.querySelectorAll('.sessionRailPill__mark')
+			).map((element) => (element as HTMLElement).dataset.mark);
+			expect(marks).toEqual([mark]);
+			expect(screen.getByRole('img', { name: label })).toBeTruthy();
+			expect(
+				screen.queryByRole('img', {
+					name: 'sessionList.toolbar.chips.nearby'
+				})
+			).toBeNull();
+		}
+	);
+
+	it.each([
+		['VIDEO', 'sessionList.item.sessionType.directLinkVideo'],
+		['AUDIO', 'sessionList.item.sessionType.directLinkAudio'],
+		['CHAT', 'sessionList.item.sessionType.directLinkChat']
+	] as const)(
+		'labels a %s direct-link conversation by its medium on the card',
+		(directLinkMedium, label) => {
+			renderItem(makeSession({ directLinkMedium }));
+			const chip = document.querySelector(
+				'.sessionsListItem__consultingTypeIcon--directLink'
+			);
+			expect(chip?.textContent).toBe(label);
+			expect(
+				document.querySelector(
+					'.sessionsListItem__consultingTypeIcon--nearby'
+				)
+			).toBeNull();
+		}
+	);
+
+	it('keeps the mail chip on the card for a conversation without a direct link', () => {
+		renderItem(makeSession());
+		expect(
+			document.querySelector(
+				'.sessionsListItem__consultingTypeIcon--nearby'
+			)?.textContent
+		).toBe('sessionList.toolbar.chips.nearby');
+		expect(
+			document.querySelector(
+				'.sessionsListItem__consultingTypeIcon--directLink'
+			)
+		).toBeNull();
 	});
 
 	it('adds the supervision mark only when the DTO carries the ADR-008 marker', () => {
@@ -685,5 +1028,181 @@ describe('SessionListItemComponent — product-tour anchor (FE#1622)', () => {
 		renderItem(makeSession());
 
 		expect(card()?.hasAttribute('data-tour-target')).toBe(false);
+	});
+});
+
+describe('SessionListItemComponent — real group participants (#1806)', () => {
+	it('renders actual eligible members and derives overflow instead of the dummy +1', () => {
+		groupMembersMock.mockReturnValue({
+			status: 'ready',
+			members: [
+				...Array.from({ length: 5 }, (_, i) => ({
+					userId: `@person-${i}:example.org`,
+					name: `Person ${i}`,
+					membership: 'join'
+				})),
+				{
+					userId: '@group-chat-system-40:example.org',
+					name: 'Technical owner',
+					membership: 'join'
+				}
+			]
+		});
+		const { container } = renderItem(makeGroupSession());
+		// Five people: the count circle, not the technical owner as a sixth.
+		expect(
+			container.querySelector('[data-cy="group-card-crowd"]')?.textContent
+		).toBe('5');
+		expect(
+			container.querySelector('[data-user-id^="placeholder-"]')
+		).toBeNull();
+		expect(
+			container.querySelector('[data-user-id^="@group-chat-system-"]')
+		).toBeNull();
+	});
+
+	it('renders the pending state until membership has loaded, with no invented overflow', () => {
+		groupMembersMock.mockReturnValue({ status: 'loading', members: [] });
+		const { container } = renderItem(makeGroupSession());
+		expect(
+			container.querySelector('[data-cy="group-card-members-loading"]')
+		).not.toBeNull();
+		expect(
+			container.querySelector('[data-cy="participant-overflow"]')
+		).toBeNull();
+	});
+});
+
+describe('SessionListItemComponent — group card topic chip (#1913)', () => {
+	const chip = (container: HTMLElement) =>
+		container.querySelector('.sessionsListItem__topic');
+
+	it('shows the topic of a Gesprächskreis instead of "no topic"', () => {
+		const { container } = renderItem(
+			makeGroupSession({ topic: 'Schulden', repetitive: true })
+		);
+		expect(chip(container)?.textContent).toBe('Schulden');
+	});
+
+	it('falls back to "no topic" for a Gesprächskreis without a topic', () => {
+		const { container } = renderItem(
+			makeGroupSession({ topic: '', repetitive: true })
+		);
+		expect(chip(container)?.textContent).toBe('groupChat.noTopicSpecified');
+	});
+
+	it('shows no topic chip on an Interna card', () => {
+		const { container } = renderItem(
+			makeGroupSession({ topic: 'Teamrunde', repetitive: false })
+		);
+		expect(chip(container)).toBeNull();
+	});
+});
+
+describe('SessionListItemComponent — list-card archive', () => {
+	const archivedIds = {
+		type: 'REMOVE_SESSIONS',
+		ids: ['!session:matrix.example.org']
+	};
+
+	const clickArchive = () => {
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'groupChat.info.settings.headline'
+			})
+		);
+		fireEvent.click(
+			document.querySelector(
+				'[data-cy="session-list-menu-archive"]'
+			) as HTMLElement
+		);
+	};
+
+	it('shows the confirmation first and removes the card only after the user leaves it', async () => {
+		apiPutArchiveMock.mockResolvedValue({});
+		renderItem(makeSession());
+
+		clickArchive();
+
+		const overlay = await screen.findByTestId('overlay');
+		expect(overlay.textContent).toContain(
+			'archive.overlay.session.success.copy'
+		);
+		expect(sessionsDispatch).not.toHaveBeenCalled();
+
+		fireEvent.click(
+			screen.getByText('archive.overlay.session.success.button')
+		);
+
+		expect(sessionsDispatch).toHaveBeenCalledWith(archivedIds);
+		expect(screen.queryByTestId('overlay')).toBeNull();
+	});
+
+	it('still removes the archived chat when the confirmation is closed', async () => {
+		apiPutArchiveMock.mockResolvedValue({});
+		renderItem(makeSession());
+
+		clickArchive();
+		await screen.findByTestId('overlay');
+		fireEvent.click(screen.getByText('close-overlay'));
+
+		expect(sessionsDispatch).toHaveBeenCalledWith(archivedIds);
+	});
+
+	it('shows the error and keeps the chat when the server refuses', async () => {
+		apiPutArchiveMock.mockRejectedValue(new Error('500'));
+		renderItem(makeSession());
+
+		clickArchive();
+
+		const overlay = await screen.findByTestId('overlay');
+		await waitFor(() =>
+			expect(overlay.textContent).toContain(
+				'groupChat.createError.overlay.headline'
+			)
+		);
+		fireEvent.click(screen.getByText('close-overlay'));
+		expect(sessionsDispatch).not.toHaveBeenCalled();
+	});
+});
+
+describe('SessionListItemComponent — a running call on the list (call design S10)', () => {
+	const ROOM = '!session:matrix.example.org';
+	const lifecycleEvent = (state: 'running' | 'ended') => ({
+		getType: () => 'm.room.message',
+		getContent: () =>
+			buildCallLifecycleContent({
+				callId: 'call-1',
+				roomRef: ROOM,
+				callRoomId: '!call:matrix.example.org',
+				state,
+				callType: 'video',
+				participants: [{ userId: '@b:x', displayName: 'Beratung' }],
+				present: [
+					{ userId: '@b:x', displayName: 'Beratung' },
+					{ userId: '@a:x', displayName: 'Fuchs' }
+				]
+			}),
+		getSender: () => '@b:x',
+		getTs: () => 1700000000000,
+		getId: () => '$card',
+		isRedacted: () => false
+	});
+
+	it('shows the running call instead of the last message', () => {
+		matrixPreviewMock.mockImplementation((roomId: string) =>
+			roomId === ROOM ? [lifecycleEvent('running')] : []
+		);
+		renderItem(makeSession());
+		const line = screen.getByTestId('session-list-running-call');
+		expect(line.textContent).toContain('calls.list.runningWithCount');
+	});
+
+	it('shows nothing of a call that ended', () => {
+		matrixPreviewMock.mockImplementation((roomId: string) =>
+			roomId === ROOM ? [lifecycleEvent('ended')] : []
+		);
+		renderItem(makeSession());
+		expect(screen.queryByTestId('session-list-running-call')).toBeNull();
 	});
 });

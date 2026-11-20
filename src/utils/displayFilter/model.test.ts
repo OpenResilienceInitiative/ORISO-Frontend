@@ -2,7 +2,7 @@
  * #1377 slice 2 — display-filter model (spec §4/§7).
  */
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import {
 	DEFAULT_DISPLAY_FILTER,
 	DEFAULT_DISPLAY_FILTERS,

@@ -1,8 +1,7 @@
 import * as React from 'react';
-import { useMemo, useRef, useState } from 'react';
+import { useId, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ReactComponent as InternalIcon } from '../../../resources/img/icons/internal-conversation.svg';
-import internalTeamImage from '../../../resources/img/illustrations/conversation/internal-team.png';
 import { OrisoTextField } from '../../form/OrisoTextField';
 import { OrisoSelect } from '../../form/OrisoSelect';
 import {
@@ -10,9 +9,14 @@ import {
 	TOPIC_LENGTHS
 } from '../../groupChat/createChatHelpers';
 import { FormatCard } from '../FormatCard';
+import { ArtworkImage } from '../ArtworkImage';
+import { INTERNAL_CHAT_ARTWORK } from '../../../resources/img/topics';
 import { SplitButton } from '../../splitButton/SplitButton';
 import { PersonChipGrid } from './PersonChipGrid';
 import { PersonOption, PersonSelectMenu } from './PersonSelectMenu';
+import { INTERNAL_SUBSET_MAX_RECIPIENTS } from '../../../api/apiCreateInternalSubsetChat';
+import { recipientScopeHintKey } from './internalSubsetMessages';
+import type { InternalChatRecipientScope } from './recipientScope';
 
 /**
  * "Interna besprechen" create card (Figma node 8480-27986). The whole
@@ -23,6 +27,11 @@ import { PersonOption, PersonSelectMenu } from './PersonSelectMenu';
  * 3. menu open: person list with selected / selectable / vacated rows
  * 4. several people: chips split the media rows evenly, labels truncate
  * 5. name + people: focused MUI name field, create button enabled
+ *
+ * The selection IS the recipient list (#1772): the card adds nobody, and a
+ * chat with chosen people becomes a dedicated room for exactly them. `people`
+ * is already narrowed to the Träger's recipient scope by the caller; the card
+ * only names that scope so the counsellor knows who can be picked.
  */
 
 export interface InternalChatPerson {
@@ -46,21 +55,16 @@ interface InternalChatCreateCardProps {
 	agencyOptions?: { value: string; label: string }[];
 	selectedAgency?: string;
 	onAgencyChange?: (value: string) => void;
+	/** Who can be picked, from the Träger's setting. Defaults to the counselling centre. */
+	scope?: InternalChatRecipientScope;
+	/** Plain-language refusal of the last create attempt; announced as an alert. */
+	errorMessage?: string;
 }
 
 const PersonAddIcon = () => (
 	<svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden>
 		<path
 			d="M15 12C17.21 12 19 10.21 19 8C19 5.79 17.21 4 15 4C12.79 4 11 5.79 11 8C11 10.21 12.79 12 15 12ZM15 6C16.1 6 17 6.9 17 8C17 9.1 16.1 10 15 10C13.9 10 13 9.1 13 8C13 6.9 13.9 6 15 6ZM15 14C12.33 14 7 15.34 7 18V20H23V18C23 15.34 17.67 14 15 14ZM9 18C9.22 17.28 12.31 16 15 16C17.7 16 20.8 17.29 21 18H9ZM6 15V12H9V10H6V7H4V10H1V12H4V15H6Z"
-			fill="currentColor"
-		/>
-	</svg>
-);
-
-const PlusIcon = () => (
-	<svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden>
-		<path
-			d="M11 13H5V11H11V5H13V11H19V13H13V19H11V13Z"
 			fill="currentColor"
 		/>
 	</svg>
@@ -74,16 +78,22 @@ export const InternalChatCreateCard = ({
 	isSubmitting = false,
 	agencyOptions,
 	selectedAgency,
-	onAgencyChange
+	onAgencyChange,
+	scope = 'AGENCY',
+	errorMessage
 }: InternalChatCreateCardProps) => {
 	const { t: translate } = useTranslation();
+	// Unique per card, so several cards on one page keep their ARIA references apart (#1338).
+	const id = useId();
 	const [menuOpen, setMenuOpen] = useState(false);
 	const splitButtonRef = useRef<HTMLDivElement | null>(null);
 
 	const { name, selectedIds } = draft;
 	const selectedCount = selectedIds.length;
 	const isNameValid = isGroupChatTopicLengthValid(name);
-	const isReady = isNameValid && selectedCount > 0 && !isSubmitting;
+	const isTooMany = selectedCount > INTERNAL_SUBSET_MAX_RECIPIENTS;
+	const isReady =
+		isNameValid && selectedCount > 0 && !isTooMany && !isSubmitting;
 
 	const peopleById = useMemo(
 		() => new Map(people.map((person) => [person.id, person])),
@@ -141,13 +151,9 @@ export const InternalChatCreateCard = ({
 			subtitle={translate('groupChat.internal.subtitle')}
 			avatar={<InternalIcon />}
 			media={
-				<img
-					className="formatCard__mediaImage"
-					src={internalTeamImage}
+				<ArtworkImage
+					artwork={INTERNAL_CHAT_ARTWORK}
 					alt={translate('groupChat.internal.title')}
-					width={360}
-					height={188}
-					loading="lazy"
 				/>
 			}
 			mediaDimmed={selectedCount > 0}
@@ -165,7 +171,7 @@ export const InternalChatCreateCard = ({
 		>
 			{agencyOptions && agencyOptions.length > 1 && onAgencyChange && (
 				<OrisoSelect
-					id="internalChatAgency"
+					id={`${id}-agency`}
 					label={translate('groupChat.create.agencySelect.label')}
 					options={agencyOptions}
 					value={selectedAgency || ''}
@@ -173,7 +179,7 @@ export const InternalChatCreateCard = ({
 				/>
 			)}
 			<OrisoTextField
-				id="internalChatName"
+				id={`${id}-name`}
 				label={translate('groupChat.internal.nameLabel')}
 				value={name}
 				fullWidth
@@ -197,11 +203,28 @@ export const InternalChatCreateCard = ({
 			<p className="internalChatCreateCard__supportText">
 				{translate('groupChat.internal.supportText')}
 			</p>
+			<p className="internalChatCreateCard__hint" id={`${id}-scopeHint`}>
+				{translate(recipientScopeHintKey(scope))}{' '}
+				{translate('groupChat.internal.privateRoomHint')}
+			</p>
+			{isTooMany && (
+				<p role="alert" className="internalChatCreateCard__error">
+					{translate('groupChat.internal.tooMany', {
+						max: INTERNAL_SUBSET_MAX_RECIPIENTS
+					})}
+				</p>
+			)}
+			{errorMessage && (
+				<p role="alert" className="internalChatCreateCard__error">
+					{errorMessage}
+				</p>
+			)}
 			<div className="internalChatCreateCard__actions">
 				<div className="internalChatCreateCard__splitButtonWrap">
 					<SplitButton
 						ref={splitButtonRef}
-						id="internalChatPersonButton"
+						id={`${id}-personButton`}
+						describedBy={`${id}-scopeHint`}
 						label={splitButtonLabel}
 						icon={<PersonAddIcon />}
 						variant={
@@ -222,10 +245,19 @@ export const InternalChatCreateCard = ({
 					{menuOpen && (
 						<PersonSelectMenu
 							options={menuOptions}
+							searchLabel={translate(
+								'groupChat.internal.searchPeople'
+							)}
+							noMatchesLabel={translate(
+								'groupChat.internal.noMatchingPeople'
+							)}
 							onToggle={toggle}
 							anchorRef={splitButtonRef}
 							onClose={() => setMenuOpen(false)}
-							labelledBy="internalChatPersonButton"
+							labelledBy={`${id}-personButton`}
+							emptyLabel={translate(
+								'groupChat.internal.noColleagues'
+							)}
 							vacatedHint={translate(
 								'groupChat.internal.vacatedHint'
 							)}
@@ -245,9 +277,8 @@ export const InternalChatCreateCard = ({
 					className="internalChatCreateCard__createButton"
 					disabled={!isReady}
 					onClick={onCreate}
-					aria-label={translate('groupChat.internal.createLabel')}
 				>
-					<PlusIcon />
+					{translate('groupChat.internal.createLabel')}
 				</button>
 			</div>
 		</FormatCard>

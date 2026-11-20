@@ -5,6 +5,7 @@ import {
 import { getKeycloakAccessToken } from '../sessionCookie/getKeycloakAccessToken';
 import { isRestorableSessionPath } from '../../utils/lastOpenSession';
 import { emailPreferencesReturnPath } from '../../utils/emailPreferencesReturn';
+import { directLinkReturnPath } from '../../utils/directLinkReturn';
 import { encodeUsername } from '../../utils/encryptionHelpers';
 import { setTokens } from '../auth/auth';
 import { FETCH_ERRORS } from '../../api';
@@ -38,6 +39,12 @@ interface AutoLoginProps {
 	otp?: string;
 	useOldUser?: boolean;
 	tenantData?: TenantDataInterface;
+	/**
+	 * Called once Keycloak accepted the credentials and the token passed the
+	 * checks below, before the Matrix token and staging run. The login page
+	 * uses it to show its handover screen and start loading in parallel.
+	 */
+	onCredentialsAccepted?: () => void;
 }
 
 const loginKeycloak = async (
@@ -68,6 +75,7 @@ const loginKeycloak = async (
 
 export const autoLogin = async ({
 	password,
+	onCredentialsAccepted,
 	...autoLoginProps
 }: AutoLoginProps): Promise<any> => {
 	clearLoginRecoveryPassword();
@@ -128,6 +136,8 @@ export const autoLogin = async ({
 			throw new Error(FETCH_ERRORS.UNAUTHORIZED);
 		}
 	}
+
+	onCredentialsAccepted?.();
 
 	// Matrix is the only chat backend: fetch and persist the Matrix login
 	// data. The Matrix client itself is created once by AuthenticatedApp.
@@ -224,6 +234,9 @@ export const buildAppRedirectPath = (
 	if (!value) {
 		const emailSettings = emailPreferencesReturnPath(returnTo);
 		if (emailSettings) return emailSettings;
+		/* #1795: signed in from a direct link, back to that link. */
+		const directLink = directLinkReturnPath(returnTo);
+		if (directLink) return directLink;
 	}
 
 	if (isRestorableSessionPath(restorePath)) {

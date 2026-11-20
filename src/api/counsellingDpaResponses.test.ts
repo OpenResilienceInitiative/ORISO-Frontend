@@ -1,5 +1,12 @@
-// @vitest-environment jsdom
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+// @vitest-environment oriso-jsdom
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import { apiEnquiryAcceptance } from './apiEnquiryAcceptance';
 import { apiAcceptAnonymousEnquiry } from './apiAcceptAnonymousEnquiry';
 import { apiSessionAssign } from './apiSessionAssign';
@@ -100,4 +107,21 @@ describe('AVV failures at counselling HTTP entry points', () => {
 			'Invitation expired'
 		);
 	});
+});
+
+/*
+ * UserService#1646: the new-request dialog explains a refusal by its status,
+ * so a plain 400 must reach it as the Response, not as a bare CATCH_ALL error.
+ */
+describe('new request refusals keep their HTTP status', () => {
+	it.each([400, 403, 500])(
+		'rejects a %s with the response',
+		async (status) => {
+			const response = new Response('', { status });
+			vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response));
+			await expect(
+				apiPostAdditionalEnquiry(1, 2, '12345', 3)
+			).rejects.toBe(response);
+		}
+	);
 });

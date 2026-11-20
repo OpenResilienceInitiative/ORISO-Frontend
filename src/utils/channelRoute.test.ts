@@ -6,7 +6,7 @@
  * The legacy `threadRootId` / `threadMessageId` pair is a hard cut: it is
  * mapped once on entry and never written again.
  */
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import {
 	buildSessionChannelPath,
 	channelFromId,
@@ -143,6 +143,14 @@ describe('parseChannel(search)', () => {
 });
 
 describe('withChannel / stripChannelParams', () => {
+	it('closes an open add-on panel when a channel opens', () => {
+		expect(
+			withChannel('?addon=digisucht-tools%2Fgoals&tab=1', {
+				kind: 'team'
+			})
+		).toBe('?tab=1&channel=team');
+	});
+
 	it('sets the channel and keeps unrelated params', () => {
 		expect(
 			withChannel('?sessionListTab=archive', { kind: 'supervision' })
@@ -488,6 +496,19 @@ describe('decideAutoOpen (review B2 D-3: Back after a deep link must not re-open
 				remembered: undefined,
 				loadedRootIds: null,
 				hasSupervisionSideRoom: true
+			})
+		).toEqual({ settle: true, open: null });
+	});
+
+	it('settles the session without opening a channel when the URL opens an add-on panel', () => {
+		expect(
+			decideAutoOpen({
+				routeChannel: null,
+				alreadySettled: false,
+				remembered: supervision,
+				loadedRootIds: null,
+				hasSupervisionSideRoom: true,
+				addonPanelRequested: true
 			})
 		).toEqual({ settle: true, open: null });
 	});

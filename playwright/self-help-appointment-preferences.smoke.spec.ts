@@ -13,7 +13,7 @@ test('counsellor self-help footer selects the saved appointment preference', asy
 	const toggle = row.getByRole('switch');
 	await expect(row).toHaveClass(/notifications__row--highlighted/);
 	await expect(toggle).toBeChecked();
-	await expect(page.getByRole('switch')).toHaveCount(9);
+	await expect(page.getByRole('switch')).toHaveCount(10);
 	const evidence = process.env.ORISO_LOCAL_EVIDENCE_DIR;
 	if (evidence) {
 		mkdirSync(evidence, { recursive: true });

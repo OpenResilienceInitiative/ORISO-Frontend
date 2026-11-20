@@ -29,6 +29,31 @@
 		/>
 		<meta name="theme-color" content="#cc1e1c" />
 
+		<!-- Login handover: the login page marks a sign-in right before its
+		     document load to the app. Before any script or stylesheet arrives,
+		     paint the background that the loading screen had, so the reload
+		     does not flash white between the login and the app. The app's
+		     LoginHandoverGate takes over on its first frame and ends it. -->
+		<script>
+			(function () {
+				try {
+					var raw = sessionStorage.getItem('oriso.loginHandover');
+					if (!raw) return;
+					var mark = JSON.parse(raw);
+					var age = Date.now() - (mark && mark.at);
+					if (!(age >= 0 && age < 30000)) {
+						sessionStorage.removeItem('oriso.loginHandover');
+						return;
+					}
+					var html = document.documentElement;
+					html.className += ' oriso-login-handover';
+					html.style.background =
+						(mark && mark.background) || '#fcf9f9';
+					window.__orisoLoginHandover = mark;
+				} catch (e) {}
+			})();
+		</script>
+
 		<link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
 		<link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
 		<!-- <link rel="manifest" href="%PUBLIC_URL%/manifest.json" /> -->
@@ -45,6 +70,59 @@
 	</head>
 
 	<body role="document">
+		<!-- Login handover, continued: a still of the loading animation and
+		     its label at the exact spot the login page left them, until the
+		     app's own screen is up (LoginHandoverGate removes it). -->
+		<script>
+			(function () {
+				var mark = window.__orisoLoginHandover;
+				if (!mark) return;
+				try {
+					var splash = document.createElement('div');
+					splash.id = 'loginHandoverSplash';
+					splash.setAttribute('aria-hidden', 'true');
+					splash.style.cssText =
+						'position:fixed;inset:0;z-index:10001;pointer-events:none;background:' +
+						(mark.background || '#fcf9f9');
+					var place = function (el, rect) {
+						el.style.position = 'absolute';
+						el.style.left = rect.x + 'px';
+						el.style.top = rect.y + 'px';
+						el.style.width = rect.w + 'px';
+						el.style.height = rect.h + 'px';
+						el.style.margin = '0';
+					};
+					if (
+						mark.animation &&
+						typeof mark.animation.src === 'string' &&
+						mark.animation.src.indexOf('data:image/png;base64,') ===
+							0
+					) {
+						var img = document.createElement('img');
+						img.alt = '';
+						img.src = mark.animation.src;
+						place(img, mark.animation.rect);
+						splash.appendChild(img);
+					}
+					if (mark.label && mark.label.text) {
+						var label = document.createElement('span');
+						label.textContent = mark.label.text;
+						place(label, mark.label.rect);
+						label.style.font = mark.label.font;
+						label.style.color = mark.label.color;
+						label.style.textAlign = 'center';
+						label.style.whiteSpace = 'nowrap';
+						splash.appendChild(label);
+					}
+					document.body.appendChild(splash);
+					// Never outlive a failed boot.
+					setTimeout(function () {
+						if (splash.parentNode)
+							splash.parentNode.removeChild(splash);
+					}, 30000);
+				} catch (e) {}
+			})();
+		</script>
 		<script src="%PUBLIC_URL%/config.js"></script>
 		<div class="app__container">
 			<div id="banner" class="banner"></div>

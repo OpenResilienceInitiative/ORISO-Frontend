@@ -336,7 +336,22 @@ const meta = {
 			...TENANT_FLAGS,
 			featureTeamDiscussionEnabled: args.teamDiscussion
 		});
+		// #1338: the tour (react-joyride and its floating-ui positioning)
+		// re-measures inside ResizeObserver callbacks, and Chrome reports the
+		// harmless "loop completed with undelivered notifications", once or twice
+		// per run. While these stories run, callbacks arrive on the next frame, as
+		// the browser would deliver them anyway; observers created meanwhile keep
+		// that through the story's unmount.
+		const NativeResizeObserver = window.ResizeObserver;
+		window.ResizeObserver = class extends NativeResizeObserver {
+			constructor(callback: ResizeObserverCallback) {
+				super((entries, observer) =>
+					requestAnimationFrame(() => callback(entries, observer))
+				);
+			}
+		};
 		return () => {
+			window.ResizeObserver = NativeResizeObserver;
 			replaceTenantSettings({});
 		};
 	}
@@ -638,14 +653,14 @@ export const AddASupervisor: Story = {
 			'2: Read the supervisor reply in the side thread',
 			async () => {
 				await expectStep(2, 4);
-				const panel = await target('supervision-panel');
-				await waitFor(
-					() =>
-						expect(panel.textContent).toContain(
-							'Das klingt gut so.'
-						),
-					SLOW
-				);
+				await target('supervision-panel');
+				await waitFor(async () => {
+					await expect(
+						document.querySelector(
+							'[data-tour-target="supervision-panel"]'
+						)?.textContent
+					).toContain('Das klingt gut so.');
+				}, SLOW);
 				await expect(
 					document.querySelector('.chatStage__mainPane')?.textContent
 				).not.toContain('Das klingt gut so.');

@@ -1,5 +1,6 @@
+import { useConversationFeatureSettings } from '../../../hooks/useConversationFeatureSettings';
 import React, { useContext, useMemo, useRef, useState, useEffect } from 'react';
-import { Link, generatePath } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import {
 	AUTHORITIES,
 	SessionTypeContext,
@@ -10,7 +11,7 @@ import {
 import { useSearchParam } from '../../../hooks/useSearchParams';
 import { SESSION_LIST_TAB } from '../../session/sessionHelpers';
 import { mobileListView } from '../../app/navigationHandler';
-import { BackIcon, GroupChatInfoIcon } from '../../../resources/img/icons';
+import { BackIcon } from '../../../resources/img/icons';
 import { useTranslation } from 'react-i18next';
 import { decodeUsername } from '../../../utils/encryptionHelpers';
 import { BUTTON_TYPES, Button, ButtonItem } from '../../button/Button';
@@ -21,7 +22,7 @@ import { chatTransportService } from '../../../services/chatTransportService';
 import {
 	ActivityMap,
 	getLastActivityByUserId,
-	sortMembersByActivity
+	getVisibleGroupMembers
 } from './memberActivity';
 import { getTenantSettings } from '../../../utils/tenantSettingsHelper';
 import { stopMediaStreamTracks } from '../../../utils/callMediaStreamCleanup';
@@ -29,9 +30,12 @@ import { callMediaErrorMessage } from '../../../utils/callMediaErrorMessage';
 import { ChatroomMainInteractionIcon } from '../ChatroomMainInteractionIcon';
 import { groupChatCallCapabilities } from './groupChatCallCapabilities';
 import { SessionMenu } from '../../sessionMenu/SessionMenu';
-import { shouldShowGroupChatMenu } from './groupChatHeaderMenu';
 import { getModality, Modality } from '../../session/getModality';
-import { isSystemMatrixUser } from '../../../utils/systemMatrixUsers';
+import { RoomNextAppointmentSlot } from '../../sessionsList/timeline/RoomNextAppointmentSlot';
+import { getGroupChatInfoLink } from '../../groupChat/groupChatInfoLink';
+import { ManagePeopleDialog } from '../../managePeople/ManagePeopleDialog';
+import { createInternalChatPeopleSource } from '../../managePeople/internalChatPeopleSource';
+import { canInviteToInternalChat } from './internalChatInvite';
 
 // Width of the title row taken by the type pill (incl. "+" button), the flex
 // gaps and a minimum for the room title; the avatar stack gets the rest.
@@ -47,13 +51,20 @@ interface GroupChatHeaderProps {
 	 * someone who has not yet agreed (#1499). Hidden, not dimmed.
 	 */
 	hideTopic?: boolean;
+	/**
+	 * D7 (Frank, 05.09.2026): on the phone the composer's action bar leads
+	 * with the back arrow (T16), so the header renders no second one — the
+	 * same rule as the 1:1 header in `SessionHeaderComponent`.
+	 */
+	hideBackButton?: boolean;
 }
 
 export const GroupChatHeader = ({
 	hasUserInitiatedStopOrLeaveRequest,
 	isJoinGroupChatView,
 	bannedUsers,
-	hideTopic = false
+	hideTopic = false,
+	hideBackButton = false
 }: GroupChatHeaderProps) => {
 	const { t } = useTranslation(['common', 'consultingTypes', 'agencies']);
 	const { activeSession } = useContext(ActiveSessionContext);
@@ -174,6 +185,26 @@ export const GroupChatHeader = ({
 		userData
 	);
 
+	// ORISO-Frontend#2023: the "+" brings colleagues into a running internal chat.
+	const [isManagePeopleOpen, setIsManagePeopleOpen] = useState(false);
+	const canInvite = canInviteToInternalChat({
+		isInternalGroup: getModality(activeSession) === Modality.INTERNAL_GROUP,
+		isConsultant,
+		isActive: Boolean(activeSession.item.active),
+		isJoinView: isJoinGroupChatView
+	});
+	const participantsRef = useRef(activeSession.item.participants);
+	participantsRef.current = activeSession.item.participants;
+	const internalChatPeopleSource = useMemo(
+		() =>
+			createInternalChatPeopleSource({
+				chatId: activeSession.item.id,
+				getParticipants: () => participantsRef.current,
+				currentConsultantId: userData?.userId
+			}),
+		[activeSession.item.id, userData?.userId]
+	);
+
 	// Use CallManager for group calls (same as SessionMenu)
 	const handleStartVideoCall = async (isVideoActivated: boolean = true) => {
 		// console.log("═══════════════════════════════════════════════");
@@ -251,6 +282,19 @@ export const GroupChatHeader = ({
 		sessionListTab ? `?sessionListTab=${sessionListTab}` : ''
 	}`;
 
+	// #107: the member row opens the member view — for everyone who may open
+	// the Chat-Info from the menu (not before joining, never when banned).
+	const membersLink =
+		!isJoinGroupChatView &&
+		(isConsultant || !bannedUsers?.includes(userData.userName))
+			? getGroupChatInfoLink(
+					listPath,
+					matrixRoomId,
+					activeSession.item.id,
+					sessionTabPath
+				)
+			: '';
+
 	// Voice call button
 	const buttonStartCall: ButtonItem = {
 		type: BUTTON_TYPES.SMALL_ICON,
@@ -273,7 +317,7 @@ export const GroupChatHeader = ({
 		featureAudioCallsGroupChatsEnabled = true,
 		featureVideoCallsEnabled = true,
 		featureVideoCallsGroupChatsEnabled = true
-	} = getTenantSettings();
+	} = useConversationFeatureSettings(getTenantSettings());
 
 	const isCallsEnabled = featureCallsEnabled !== false;
 	const modalityCalls = groupChatCallCapabilities(
@@ -292,24 +336,10 @@ export const GroupChatHeader = ({
 		featureVideoCallsGroupChatsEnabled !== false;
 
 	const isActive = activeSession.item.active;
-	const getSessionListTab = () =>
-		`${sessionListTab ? `?sessionListTab=${sessionListTab}` : ''}`;
-	const baseUrl = `${listPath}/:groupId/:id/:subRoute?/:extraPath?${getSessionListTab()}`;
-	const groupChatInfoLink = generatePath(baseUrl, {
-		groupId: activeSession.item.matrixRoomId,
-		id: String(activeSession.item.id),
-		subRoute: 'groupChatInfo'
-	});
 	// #1193 Job 1: latest-active participant first. Job 2 (overlap + "+N")
 	// is handled by MemberAvatarStack; Figma #430 caps the visible avatars at 4.
 	const visibleMembers = useMemo(
-		() =>
-			sortMembersByActivity(
-				matrixMembers.filter(
-					(member) => !isSystemMatrixUser(member.userId)
-				),
-				memberActivity
-			),
+		() => getVisibleGroupMembers(matrixMembers, memberActivity),
 		[matrixMembers, memberActivity]
 	);
 	const stackMembers: StackMember[] = useMemo(
@@ -330,29 +360,50 @@ export const GroupChatHeader = ({
 	return (
 		<div className="sessionInfo">
 			<div className="sessionInfo__headerWrapper">
-				<Link
-					to={listPath + sessionTabPath}
-					onClick={mobileListView}
-					className="sessionInfo__backButton"
-				>
-					<BackIcon />
-				</Link>
+				{!hideBackButton && (
+					<Link
+						to={listPath + sessionTabPath}
+						onClick={mobileListView}
+						className="sessionInfo__backButton"
+						aria-label={t('app.back')}
+					>
+						<BackIcon />
+					</Link>
+				)}
 				<div className="sessionInfo__username sessionInfo__username--deactivate sessionInfo__username--groupChat">
 					<div className="sessionInfo__titleRow" ref={titleRowRef}>
 						<div className="sessionInfo__memberStack">
+							{/* #1338: the disabled "+" needs a name; supervision
+							    is not available in a group chat. Screen readers
+							    only: the header keeps its look (product decision). */}
 							<ChatroomMainInteractionIcon
 								type="internal"
 								showAddIcon={isActive && !isJoinGroupChatView}
+								addLabel={t(
+									canInvite
+										? 'managePeople.internalChat.title'
+										: 'sessionHeader.supervisor.add.disabledUnavailable'
+								)}
+								addTooltip={false}
+								onAddClick={
+									canInvite
+										? () => setIsManagePeopleOpen(true)
+										: undefined
+								}
 							/>
+							{canInvite && isManagePeopleOpen && (
+								<ManagePeopleDialog
+									open
+									onClose={() => setIsManagePeopleOpen(false)}
+									source={internalChatPeopleSource}
+								/>
+							)}
 							<MemberAvatarStack
 								members={stackMembers}
 								measureRef={titleRowRef}
 								reservedWidth={TITLE_ROW_RESERVED_WIDTH}
-								countLabel={(hidden) =>
-									`+${t('message.audience.multiCount', {
-										count: hidden
-									})}`
-								}
+								to={membersLink || undefined}
+								label={t('groupChat.info.subscribers.headline')}
 							/>
 						</div>
 						{!hideTopic && (
@@ -363,46 +414,12 @@ export const GroupChatHeader = ({
 							</h3>
 						)}
 					</div>
-					{/* Matrix room participants */}
-					{isLoadingMembers ? (
+					{isLoadingMembers && (
 						<div className="sessionInfo__participants sessionInfo__participants--loading">
 							<div className="sessionInfo__participants__skeleton"></div>
 						</div>
-					) : visibleMembers.length > 0 ? (
-						<div className="sessionInfo__participants">
-							{visibleMembers.map((member, index) => {
-								// Extract username from userId (format: @username:domain)
-								// Always use username from userId, ignore member.name to ensure consistency
-								const userId = member.userId || '';
-								const username =
-									userId.split(':')[0]?.replace('@', '') ||
-									userId;
-								return (
-									<span
-										key={member.userId || index}
-										className="sessionInfo__participant"
-									>
-										{decodeUsername(username)}
-										{index < visibleMembers.length - 1 &&
-											', '}
-									</span>
-								);
-							})}
-						</div>
-					) : null}
+					)}
 				</div>
-
-				{(!isActive || isJoinGroupChatView) && isConsultant && (
-					<Link
-						to={groupChatInfoLink}
-						className="sessionMenu__item--desktop sessionMenu__button"
-					>
-						<span className="sessionMenu__icon">
-							<GroupChatInfoIcon />
-							{t('chatFlyout.groupChatInfo')}
-						</span>
-					</Link>
-				)}
 
 				{isActive &&
 					!isJoinGroupChatView &&
@@ -432,20 +449,18 @@ export const GroupChatHeader = ({
 						</div>
 					)}
 
-				{shouldShowGroupChatMenu({
-					isActive,
-					isJoinGroupChatView
-				}) && (
-					<SessionMenu
-						hasUserInitiatedStopOrLeaveRequest={
-							hasUserInitiatedStopOrLeaveRequest
-						}
-						isAskerInfoAvailable={false}
-						isJoinGroupChatView={isJoinGroupChatView}
-						bannedUsers={bannedUsers}
-					/>
-				)}
+				{/* Chat-Info, legal links and moderator actions for every role. */}
+				<SessionMenu
+					hasUserInitiatedStopOrLeaveRequest={
+						hasUserInitiatedStopOrLeaveRequest
+					}
+					isAskerInfoAvailable={false}
+					isJoinGroupChatView={isJoinGroupChatView}
+					bannedUsers={bannedUsers}
+				/>
 			</div>
+			{/* ADR-021: the next date of the series, below the header line. */}
+			<RoomNextAppointmentSlot />
 		</div>
 	);
 };

@@ -1,4 +1,5 @@
-import type { Meta, StoryObj } from '@storybook/react';
+/** Story-only historical tutorial; production waiting sessions mount BreathingCompanionHost. */
+import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { BreathingTutorialCard } from './BreathingTutorialCard';
 import { phone390Globals } from '../message/messageStoryShell';
@@ -16,7 +17,8 @@ import { phone390Globals } from '../message/messageStoryShell';
  * nothing in these stories corresponds to a room member.
  */
 const meta = {
-	title: 'Components/Chat/BreathingTutorialCard',
+	id: 'components-chat-breathingtutorialcard',
+	title: 'Chat/System messages/Archived breathing tutorial',
 	component: BreathingTutorialCard,
 	tags: ['autodocs'],
 	parameters: {
@@ -24,7 +26,7 @@ const meta = {
 		docs: {
 			description: {
 				component:
-					'Carimat’s breathing tutorial, one story per phase. Shown in the anonymous waiting queue only.'
+					'Historical Carimat breathing tutorial, one story per phase. Story-only: production waiting sessions mount BreathingCompanionHost.'
 			}
 		}
 	},

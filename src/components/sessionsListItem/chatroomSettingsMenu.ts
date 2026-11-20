@@ -26,20 +26,22 @@ export interface ChatroomSettingsMenuInput {
 	isAgencyCounselling: boolean;
 	teamDiscussionFeatureEnabled: boolean;
 	hasExistingTeamDiscussion: boolean;
-	/** Group-chat owner per `groupChatHelpers.isGroupChatOwner`. */
-	isGroupChatOwner: boolean;
+	/** Eligibility for the same editor the header menu opens. */
+	canEditGroupChatSettings: boolean;
 	/** The group chat is currently running (`session.item.active`). */
 	isGroupChatActive: boolean;
 	/** A materialized Matrix room exists, so the settings route is reachable. */
 	hasMatrixRoom: boolean;
+	/** The caller has joined the group (`session.item.subscribed`). */
+	isGroupChatSubscribed: boolean;
 }
 
 export interface ChatroomSettingsMenuVisibility {
 	showArchive: boolean;
 	showDearchive: boolean;
-	showDelete: boolean;
 	showRequestHelp: boolean;
 	showChatSettings: boolean;
+	showLeaveGroup: boolean;
 }
 
 export const getChatroomSettingsMenuVisibility = ({
@@ -54,21 +56,21 @@ export const getChatroomSettingsMenuVisibility = ({
 	isAgencyCounselling,
 	teamDiscussionFeatureEnabled,
 	hasExistingTeamDiscussion,
-	isGroupChatOwner,
+	canEditGroupChatSettings,
 	isGroupChatActive,
-	hasMatrixRoom
+	hasMatrixRoom,
+	isGroupChatSubscribed
 }: ChatroomSettingsMenuInput): ChatroomSettingsMenuVisibility => {
 	// Mirrors the header menu's gates in SessionMenu.tsx so both entry points
 	// stay in lockstep. A supervisor only observes a colleague's session, so it
-	// is neither theirs to archive (SessionMenu gates archive on
-	// `!props.isSupervisor` too) nor to delete.
+	// is not theirs to archive (SessionMenu gates archive on
+	// `!props.isSupervisor` too). There is no delete: it removed the chat for
+	// the advice seeker too (ORISO-Admin#1518); counsellors archive instead.
 	const isOwnEditableSession =
 		!isAsker &&
 		listType !== SESSION_LIST_TYPES.ENQUIRY &&
 		isSession &&
 		!isSupervisorView;
-
-	const showDelete = isOwnEditableSession && isConsultant;
 
 	// ADR-016: the Team-Besprechung is an agency-counselling, consultant-only
 	// side room. Creating one is only possible while the enquiry is open; after
@@ -86,25 +88,21 @@ export const getChatroomSettingsMenuVisibility = ({
 			hasExistingDiscussion: hasExistingTeamDiscussion
 		});
 
-	// #1189 — the header menu's conditions for its edit entry
-	// (SessionMenu.tsx:1007-1008, inside the `isGroup` block at :822): the owner
-	// may change topic, schedule and moderators only while the room is not
-	// running. `hasMatrixRoom` is stricter on purpose — the header still renders
-	// its entry with an empty `to` when no room exists (SessionMenu.tsx:316-322),
-	// which navigates nowhere; there is no route to reach without a room id.
+	// #1189: both the row and header open the same room-scoped editor.
 	const showChatSettings =
-		!isAsker &&
-		isGroup &&
-		isGroupChatOwner &&
-		!isGroupChatActive &&
-		hasMatrixRoom;
+		!isAsker && isGroup && canEditGroupChatSettings && hasMatrixRoom;
+
+	// #1923: counsellors keep leaving from the chat header, where the
+	// moderator count is known and a sole moderator cannot leave.
+	const showLeaveGroup =
+		isAsker && isGroup && isGroupChatActive && isGroupChatSubscribed;
 
 	return {
 		showArchive: isOwnEditableSession && !isArchiveTab,
 		showDearchive: isOwnEditableSession && isArchiveTab,
-		showDelete,
 		showRequestHelp,
-		showChatSettings
+		showChatSettings,
+		showLeaveGroup
 	};
 };
 

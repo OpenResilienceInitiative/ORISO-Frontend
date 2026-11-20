@@ -1,8 +1,8 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import * as React from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { FilterChipRow } from './FilterChipRow';
+import { chipTargets, FilterChipRow } from './FilterChipRow';
 import { FilterChip } from './FilterChip';
 
 const Icon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -181,5 +181,72 @@ describe('FilterChipRow / FilterChip (#1377)', () => {
 		} finally {
 			globalThis.ResizeObserver = original;
 		}
+	});
+});
+
+/**
+ * A 300px chip row scrolled to 0, 10px from the viewport edge, whose chips
+ * span 0-90, 100-240, 250-470 and 480-580 px of its 600px content. jsdom does
+ * no layout, so geometry is stubbed.
+ */
+const stubRow = (scroller: HTMLElement) => {
+	Object.defineProperty(scroller, 'scrollWidth', { value: 600 });
+	Object.defineProperty(scroller, 'clientWidth', { value: 300 });
+	scroller.getBoundingClientRect = () => ({ left: 10 }) as DOMRect;
+	const chips = Array.from(scroller.firstElementChild?.children ?? []);
+	[
+		[0, 90],
+		[100, 240],
+		[250, 470],
+		[480, 580]
+	].forEach(([left, right], index) => {
+		if (chips[index])
+			chips[index].getBoundingClientRect = () =>
+				({ left: 10 + left, right: 10 + right }) as DOMRect;
+	});
+};
+
+describe('FilterChipRow arrows (#2390)', () => {
+	afterEach(cleanup);
+
+	const chips = ['Unread', 'Drafts', 'Mail', 'Archived'].map((label) => (
+		<FilterChip key={label} label={label} icon={Icon} count={0} />
+	));
+
+	it('targets every chip, clamped to what the row can scroll', () => {
+		render(
+			<FilterChipRow label="Filter" scrollDataCy="chips">
+				{chips}
+			</FilterChipRow>
+		);
+		const scroller = document.querySelector(
+			'[data-cy=chips]'
+		) as HTMLElement;
+		stubRow(scroller);
+		expect(chipTargets(scroller)).toEqual([0, 100, 250, 300]);
+	});
+
+	it('offers a next arrow on an overflowing row and starts the next page at the cut-off chip', () => {
+		render(
+			<FilterChipRow label="Filter" scrollDataCy="chips">
+				{chips}
+			</FilterChipRow>
+		);
+		const scroller = document.querySelector(
+			'[data-cy=chips]'
+		) as HTMLElement;
+		stubRow(scroller);
+		scroller.scrollTo = vi.fn();
+		fireEvent.scroll(scroller);
+		expect(
+			document.querySelector('[data-cy=filter-chip-row-arrows-previous]')
+		).toBeNull();
+		const next = document.querySelector(
+			'[data-cy=filter-chip-row-arrows-next]'
+		) as HTMLElement;
+		expect(next).toBeTruthy();
+		fireEvent.click(next);
+		// The third chip (250-470) is the first one cut off on the right.
+		expect(scroller.scrollTo).toHaveBeenCalledWith({ left: 250 });
 	});
 });

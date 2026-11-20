@@ -12,9 +12,11 @@ import {
 } from './__storybook__/composerStoryDecorator';
 import './messageSubmitInterface.styles.scss';
 import '../session/session.styles.scss';
+import { resetTemporaryAccount } from '../temporaryAccount/temporaryAccountStore';
 import { focusSessionChromeOnPointerDown } from '../session/focusSessionChrome';
 import {
 	phone390Globals,
+	desktop1440Globals,
 	tablet834Globals
 } from '../message/messageStoryShell';
 
@@ -44,6 +46,7 @@ function ComposerShell({
 	roomMembers,
 	userData,
 	shellHeight,
+	productionSessionFade = false,
 	...composerProps
 }: {
 	activeSession?: any;
@@ -55,7 +58,24 @@ function ComposerShell({
 	 * as tall as a real one (852 px at a 900 px window).
 	 */
 	shellHeight?: number;
+	/** Match SessionItemComponent's real transformed reveal ancestor. */
+	productionSessionFade?: boolean;
 } & Partial<React.ComponentProps<typeof MessageSubmitInterfaceComponent>>) {
+	const composer = (
+		<ComposerStoryDecorator
+			activeSession={activeSession}
+			roomMembers={roomMembers}
+			userData={userData}
+		>
+			<MessageSubmitInterfaceComponent
+				placeholder="Nachricht an Klient:in schreiben"
+				onSendButton={() => {}}
+				isTyping={() => {}}
+				language="de"
+				{...composerProps}
+			/>
+		</ComposerStoryDecorator>
+	);
 	return (
 		<div
 			className="session"
@@ -67,19 +87,13 @@ function ComposerShell({
 					: shellStyle
 			}
 		>
-			<ComposerStoryDecorator
-				activeSession={activeSession}
-				roomMembers={roomMembers}
-				userData={userData}
-			>
-				<MessageSubmitInterfaceComponent
-					placeholder="Nachricht an Klient:in schreiben"
-					onSendButton={() => {}}
-					isTyping={() => {}}
-					language="de"
-					{...composerProps}
-				/>
-			</ComposerStoryDecorator>
+			{productionSessionFade ? (
+				<div className="session__gameInputFadeTarget session__gameInputFadeTarget--reveal">
+					{composer}
+				</div>
+			) : (
+				composer
+			)}
 		</div>
 	);
 }
@@ -87,9 +101,9 @@ function ComposerShell({
 const meta = {
 	title: 'Components/Message/MessageSubmitInterface',
 	tags: ['autodocs'],
+	globals: { backgrounds: { value: 'gray' } },
 	parameters: {
 		layout: 'fullscreen',
-		backgrounds: { default: 'gray' },
 		design: [
 			{
 				type: 'figma',
@@ -152,10 +166,10 @@ export const ConsultantAbsent: Story = {
 		<ComposerShell
 			userData={mockComposerAskerData}
 			activeSession={buildMockActiveSession({
+				user: undefined,
 				consultant: {
 					consultantId: 'consultant-storybook',
-					username: 'shaziaknew',
-					displayName: 'shazia ka',
+					username: 'counsellor_at_qa.invalid',
 					absent: true,
 					absenceMessage:
 						'I am out of office, please contact me later'
@@ -166,6 +180,8 @@ export const ConsultantAbsent: Story = {
 	),
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
+		await canvas.findByText(/^Ihre Beratungsperson\s+ist abwesend$/);
+		expect(canvas.queryByText(/counsellor_at_qa/)).toBeNull();
 		const banner = await canvas.findByText(
 			'I am out of office, please contact me later'
 		);
@@ -177,7 +193,9 @@ export const ConsultantAbsent: Story = {
 			expect(bannerBox.height).toBeGreaterThan(0);
 
 			const composer = canvasElement.querySelector('form.textarea');
-			expect(composer).not.toBeNull();
+			expect(
+				composer?.querySelector('[contenteditable="true"]')
+			).not.toBeNull();
 			const composerBox = (
 				composer as HTMLElement
 			).getBoundingClientRect();
@@ -193,6 +211,33 @@ export const ConsultantAbsent: Story = {
 export const Default: Story = {
 	name: 'Default (empty)',
 	render: () => <ComposerShell />
+};
+
+/**
+ * Where the closing animation of every waiting room ends (ORISO-Frontend#1737).
+ * The rooms find it by this mark alone, so the composer has to keep carrying it
+ * around the field a person types in.
+ */
+export const MarksTheClosingFocal: Story = {
+	name: 'Marks where the closing animation ends',
+	render: () => <ComposerShell />,
+	play: async ({ canvasElement }) => {
+		const focal = await waitFor(() => {
+			const node = canvasElement.querySelector<HTMLElement>(
+				'[data-closing-focal="message-field"]'
+			);
+			if (!node || !node.getBoundingClientRect().width) {
+				throw new Error('composer focal not on screen yet');
+			}
+			return node;
+		});
+		await expect(
+			focal.querySelector('[contenteditable="true"]')
+		).not.toBeNull();
+		await expect(
+			canvasElement.querySelectorAll('[data-closing-focal]')
+		).toHaveLength(1);
+	}
 };
 
 /** Desktop chat card contract: the composer card rests on the session's inner edge. */
@@ -324,6 +369,73 @@ export const ReadyToSend: Story = {
 			});
 			await expect(sendButton).toBeEnabled();
 		});
+	}
+};
+
+/**
+ * #1869 / ORISO-UserService#1486: a temporary guest whose platform lets them
+ * decide is asked once, before the first message leaves, whether their
+ * messages stay after the guest account is deleted.
+ */
+export const TemporaryGuestAskedBeforeFirstMessage: Story = {
+	name: 'Temporary guest — asked once before the first message',
+	beforeEach: () => {
+		resetTemporaryAccount({
+			medium: 'CHAT',
+			messageRetention: 'GUEST_DECIDES',
+			keepMessages: null
+		});
+		return () => resetTemporaryAccount();
+	},
+	render: () => <ComposerShell userData={mockComposerAskerData} />,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const body = within(canvasElement.ownerDocument.body);
+		const editor = await waitFor(() => {
+			const node = canvasElement.querySelector<HTMLElement>(
+				'[contenteditable="true"]'
+			);
+			if (!node) throw new Error('composer editor not mounted yet');
+			return node;
+		});
+		await userEvent.click(editor);
+		await userEvent.type(editor, 'Hallo');
+		await userEvent.click(
+			canvas.getByRole('button', { name: /senden|send/i })
+		);
+
+		const dialog = await body.findByTestId('keep-messages-dialog');
+		// Nothing left yet: the draft waits for the answer.
+		await expect(editor).toHaveTextContent('Hallo');
+		await expect(
+			within(dialog).getByRole('button', { name: 'Weiter' })
+		).toBeDisabled();
+		await userEvent.click(
+			within(dialog).getByText('Auch nach dem Löschen behalten')
+		);
+		await expect(
+			within(dialog).getByRole('button', { name: 'Weiter' })
+		).toBeEnabled();
+
+		// Cancel sends nothing and keeps the draft; the next send asks again.
+		// (Confirm → PUT → send is covered by useGuestRetentionGate.test.)
+		await userEvent.click(
+			within(dialog).getByRole('button', { name: 'Abbrechen' })
+		);
+		await waitFor(() =>
+			expect(body.queryByTestId('keep-messages-dialog')).toBeNull()
+		);
+		await expect(editor).toHaveTextContent('Hallo');
+		await userEvent.click(
+			canvas.getByRole('button', { name: /senden|send/i })
+		);
+		const again = await body.findByTestId('keep-messages-dialog');
+		await userEvent.click(
+			within(again).getByRole('button', { name: 'Abbrechen' })
+		);
+		await waitFor(() =>
+			expect(body.queryByTestId('keep-messages-dialog')).toBeNull()
+		);
 	}
 };
 
@@ -464,7 +576,7 @@ export const ImageAttachmentPreview: Story = {
 
 		await waitFor(() => {
 			const thumb = canvasElement.querySelector(
-				'.textarea__attachmentModeThumb'
+				'.composerAttachmentCard__thumb'
 			);
 			if (!thumb) {
 				throw new Error('attachment thumbnail not rendered yet');
@@ -479,8 +591,8 @@ export const ReplyingToMessage: Story = {
 		<ComposerShell
 			replyTo={{
 				eventId: '$orig:matrix.example.org',
-				author: 'Maria K.',
-				text: 'Ich habe seit letzter Woche große Probleme mit meinem Vermieter und weiß nicht weiter.'
+				author: 'Kanguru Mika 554',
+				text: 'Ich habe seit letzter Woche große Probleme mit meinem Vermieter und weiß nicht weiter, weil er auf keinen meiner Briefe antwortet und nun auch noch die Kaution einbehalten möchte.'
 			}}
 			onCancelReply={() => {}}
 		/>
@@ -500,26 +612,85 @@ export const ReplyingToMessage: Story = {
 			?.querySelector('.textarea__input') as HTMLElement;
 		const editorRect = editor.getBoundingClientRect();
 
-		// The bar hugs the quote instead of spanning the composer — it should
-		// read like the bubble it quotes, not like a full-width banner.
-		expect(preview.getBoundingClientRect().width).toBeLessThan(
-			editorRect.width * 0.8
-		);
-		// …starting on the editor's left edge, not outside it.
+		// Figma "Reply Bar_v2": exactly as wide as the editor, one 32px line.
 		expect(Math.round(preview.getBoundingClientRect().left)).toBe(
 			Math.round(editorRect.left)
 		);
+		expect(Math.round(preview.getBoundingClientRect().right)).toBe(
+			Math.round(editorRect.right)
+		);
+		expect(Math.round(preview.getBoundingClientRect().height)).toBe(32);
 
-		// A very long quote grows to the editor's width and stops there.
+		// Inside the card, above the editor, never overlapping it.
+		expect(preview.getBoundingClientRect().bottom).toBeLessThanOrEqual(
+			editorRect.top
+		);
+
+		// A long quote ends in an ellipsis instead of growing the bar.
 		const text = preview.querySelector(
 			'.messageSubmit__replyPreviewText'
 		) as HTMLElement;
-		const original = text.textContent;
-		text.textContent = 'x'.repeat(600);
+		expect(getComputedStyle(text).textOverflow).toBe('ellipsis');
+		expect(getComputedStyle(text).whiteSpace).toBe('nowrap');
+
+		// The X is a real icon and takes the reply back.
 		expect(
-			Math.round(preview.getBoundingClientRect().right)
-		).toBeLessThanOrEqual(Math.round(editorRect.right));
-		text.textContent = original;
+			preview.querySelector('.messageSubmit__replyPreviewCancel svg')
+		).toBeTruthy();
+	}
+};
+
+/**
+ * Side panel open: the main composer is flush, and a reply still needs room.
+ * The flush field fills the shell, so without its own rule the bar would sit
+ * on top of the first line of text.
+ */
+export const ReplyingFlush: Story = {
+	name: 'Replying in a flush composer (bar above the field)',
+	globals: desktop1440Globals,
+	render: () => (
+		<ComposerShell
+			flushCorner="bottom-left"
+			replyTo={{
+				eventId: '$orig:matrix.example.org',
+				author: 'Kanguru Mika 554',
+				text: 'Ich habe seit letzter Woche große Probleme mit meinem Vermieter.'
+			}}
+			onCancelReply={() => {}}
+		/>
+	),
+	play: async ({ canvasElement }) => {
+		const bar = await waitFor(() => {
+			const found = canvasElement.querySelector(
+				'.messageSubmit__replyPreview'
+			) as HTMLElement;
+			expect(found).toBeTruthy();
+			return found;
+		});
+		const form = bar.closest('form') as HTMLElement;
+
+		// The card animates between heights, so measure everything together.
+		await waitFor(() => {
+			const barRect = bar.getBoundingClientRect();
+			const editorRect = (
+				form.querySelector('.textarea__input') as HTMLElement
+			).getBoundingClientRect();
+			const cardRect = (
+				form.querySelector(
+					'.textarea__wrapper-send-message'
+				) as HTMLElement
+			).getBoundingClientRect();
+			expect(Math.round(barRect.bottom)).toBeLessThanOrEqual(
+				Math.round(editorRect.top)
+			);
+			// The field keeps its one-line flush height (MIN_HEIGHT_FLUSH_DESKTOP).
+			expect(Math.round(editorRect.height)).toBe(106);
+			expect(Math.round(cardRect.height)).toBe(158);
+			expect(Math.round(barRect.left)).toBe(Math.round(editorRect.left));
+			expect(Math.round(barRect.right)).toBe(
+				Math.round(editorRect.right)
+			);
+		});
 	}
 };
 
@@ -573,6 +744,31 @@ const expectEditBannerMatchesFigma = async (canvasElement: HTMLElement) => {
 
 	// #978 must not come back through the newly visible preview text.
 	expect(banner.textContent).not.toMatch(/\[\[/);
+
+	// #1142: an edit replaces text; a voice note can never be sent as one.
+	// The microphone stays visible, greyed out and focusable, and says why.
+	const mic = await waitFor(() =>
+		within(canvasElement).getByRole('button', {
+			name: /Sprachaufnahme|Voice recording/
+		})
+	);
+	const reason =
+		/Sprachnachrichten sind beim Bearbeiten nicht möglich|Voice messages are not available while editing a message/;
+	expect(mic.getAttribute('aria-disabled')).toBe('true');
+	// The reason is a MUI Tooltip + aria-describedby, not a native title.
+	expect(mic.getAttribute('title')).toBeNull();
+	expect(
+		document.getElementById(mic.getAttribute('aria-describedby') ?? '')
+			?.textContent ?? ''
+	).toMatch(reason);
+	expect(Number(getComputedStyle(mic).opacity)).toBeLessThan(0.5);
+	mic.focus();
+	expect(document.activeElement).toBe(mic);
+	await userEvent.click(mic);
+	// Clicking records nothing: no recording bar with Stop appears.
+	expect(
+		within(canvasElement).queryByRole('button', { name: /Stopp|Stop/ })
+	).toBeNull();
 };
 
 export const EditingMessage: Story = {
@@ -599,6 +795,28 @@ export const EditingMessage: Story = {
  * naming a built-in preset like `mobile1` silently leaves the story at desktop
  * width — and this story's whole point is the mobile breakpoint.
  */
+export const EditingMessageEnglish: Story = {
+	name: 'Editing (m.replace preview) — English, voice note unavailable',
+	globals: { locale: 'en' },
+	render: () => (
+		<ComposerShell
+			editingMessage={{
+				eventId: '$orig:matrix.example.org',
+				text: EDITING_LONG_TEXT
+			}}
+			onCancelEdit={() => {}}
+		/>
+	),
+	play: async ({ canvasElement }) => {
+		await expectEditBannerMatchesFigma(canvasElement);
+		await expect(
+			within(canvasElement).getByRole('button', {
+				name: 'Voice recording'
+			})
+		).toBeTruthy();
+	}
+};
+
 export const EditingMessageMobile: Story = {
 	name: 'Editing (m.replace preview) — mobile',
 	globals: phone390Globals,
@@ -624,6 +842,52 @@ export const GroupChat: Story = {
 			roomMembers={storybookGroupRoomMembers}
 		/>
 	)
+};
+
+/** Production caller: both split segments must return focus after Escape. */
+export const RecipientMenuKeyboard: Story = {
+	...GroupChat,
+	name: 'Recipient menu — Escape restores keyboard focus',
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelectorAll(
+					'.textarea__audienceSelector .splitButton > button'
+				)
+			).toHaveLength(2)
+		);
+		const triggers = Array.from(
+			canvasElement.querySelectorAll<HTMLButtonElement>(
+				'.textarea__audienceSelector .splitButton > button'
+			)
+		);
+		for (const trigger of triggers) {
+			trigger.focus();
+			await userEvent.keyboard('{Enter}');
+			await waitFor(() =>
+				expect(trigger.getAttribute('aria-expanded')).toBe('true')
+			);
+			const dialog = await canvas.findByRole('dialog');
+			const popupButton =
+				dialog.querySelector<HTMLButtonElement>('button')!;
+			popupButton.focus();
+			await expect(document.activeElement).toBe(popupButton);
+			await userEvent.keyboard('{Escape}');
+			await waitFor(() =>
+				expect(trigger.getAttribute('aria-expanded')).toBe('false')
+			);
+			await expect(canvas.queryByRole('dialog')).toBeNull();
+			await expect(document.activeElement).toBe(trigger);
+		}
+		const closedEscape = new KeyboardEvent('keydown', {
+			key: 'Escape',
+			bubbles: true,
+			cancelable: true
+		});
+		document.dispatchEvent(closedEscape);
+		await expect(closedEscape.defaultPrevented).toBe(false);
+	}
 };
 
 export const Supervisor: Story = {
@@ -696,14 +960,7 @@ export const MaximisedMobileKeyboardOpen: Story = {
 		});
 		await userEvent.click(input);
 
-		const maximise = await waitFor(() =>
-			within(canvasElement).getByRole('button', {
-				// Exact: 'Ziehen, um den Editor zu vergrößern' (the drag
-				// handle) would also match a loose pattern.
-				name: 'Editor vergrößern'
-			})
-		);
-		await userEvent.click(maximise);
+		await choosePlusMenuItem(canvasElement, 'Editor vergrößern');
 
 		// The overlay portals out of `canvasElement`, so query the document.
 		const editor = await waitFor(() => {
@@ -900,16 +1157,13 @@ export const RepeatedMaximiseToggle: Story = {
 		});
 		await userEvent.click(editor);
 
-		const toggle = () =>
-			within(canvasElement).getByRole('button', {
-				name: /^Editor (vergrößern|verkleinern)$/
-			});
-
 		for (let cycle = 1; cycle <= 10; cycle += 1) {
 			// The control has to still exist — if a toggle leaves the toolbar in
 			// a state without it, the user is stranded.
-			const button = await waitFor(toggle);
-			await userEvent.click(button);
+			await choosePlusMenuItem(
+				canvasElement,
+				cycle % 2 === 1 ? 'Editor vergrößern' : 'Editor verkleinern'
+			);
 
 			// …and the editor has to still take input after every single cycle.
 			const live = await waitFor(() => {
@@ -933,6 +1187,902 @@ export const RepeatedMaximiseToggle: Story = {
 		}
 
 		// The toggle survives all ten cycles.
-		await expect(toggle()).toBeTruthy();
+		await choosePlusMenuItem(canvasElement, 'Editor vergrößern');
+		await waitFor(() =>
+			expect(
+				document.querySelector(
+					'.textarea__wrapper-send-message--expanded'
+				)
+			).not.toBeNull()
+		);
+	}
+};
+
+const LONG_RECIPIENT = 'P. BouvierMitSehrLangemNachnamen';
+const recipientLayoutMembers = [
+	...storybookGroupRoomMembers,
+	{
+		userId: '@andrea:beratung.local',
+		name: 'Patty BouvierMitSehrLangemNachnamen'
+	}
+];
+const RecipientLayoutScenario = ({
+	productionSessionFade = true
+}: {
+	productionSessionFade?: boolean;
+}) => (
+	<ComposerShell
+		productionSessionFade={productionSessionFade}
+		activeSession={buildMockGroupSession()}
+		roomMembers={recipientLayoutMembers}
+		autoFocusEditor={false}
+	/>
+);
+const overlaps = (a: DOMRect, b: DOMRect) =>
+	Math.min(a.right, b.right) - Math.max(a.left, b.left) > 0.5 &&
+	Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 0.5;
+
+async function expectRecipientClearOfComposer(
+	canvasElement: HTMLElement,
+	reserveEditor: boolean
+) {
+	await document.fonts.ready;
+	await waitFor(() => {
+		const card = canvasElement.querySelector<HTMLElement>(
+			'.textarea__wrapper-send-message'
+		)!;
+		expect(
+			card
+				.getAnimations()
+				.some((animation) => animation.playState === 'running')
+		).toBe(false);
+		const fade = card.closest<HTMLElement>('.session__gameInputFadeTarget');
+		if (fade)
+			expect(
+				fade
+					.getAnimations()
+					.some((animation) => animation.playState === 'running')
+			).toBe(false);
+		const selector = canvasElement.querySelector<HTMLElement>(
+			'.textarea__audienceSelector'
+		)!;
+		const chip = selector
+			.querySelector<HTMLElement>('.splitButton')!
+			.getBoundingClientRect();
+		expect(Math.round(chip.height)).toBe(32);
+		const cardBox = card.getBoundingClientRect();
+		expect(chip.left).toBeGreaterThanOrEqual(cardBox.left - 0.5);
+		expect(chip.right).toBeLessThanOrEqual(cardBox.right + 0.5);
+		expect(chip.bottom).toBeLessThanOrEqual(cardBox.bottom + 0.5);
+		const controls = Array.from(
+			canvasElement.querySelectorAll<HTMLElement>(
+				'.textarea__figmaToolbar button, .textarea__attachmentSelect button'
+			)
+		);
+		for (const control of controls) {
+			const box = control.getBoundingClientRect();
+			if (box.width && box.height)
+				expect(
+					overlaps(chip, box),
+					`recipient overlaps ${control.getAttribute('aria-label')}`
+				).toBe(false);
+		}
+		const editor =
+			canvasElement.querySelector<HTMLElement>('.ProseMirror')!;
+		const text = editor.querySelector<HTMLElement>('p')!;
+		expect(editor.getBoundingClientRect().height).toBeGreaterThan(0);
+		expect(
+			overlaps(
+				chip,
+				(reserveEditor ? editor : text).getBoundingClientRect()
+			),
+			'recipient overlaps editable text'
+		).toBe(false);
+	});
+}
+
+async function recipientLayoutJourney(
+	canvasElement: HTMLElement,
+	reserveEditor: boolean
+) {
+	await waitFor(() =>
+		expect(
+			canvasElement.querySelector(
+				'.textarea__audienceSelector .splitButton'
+			)
+		).not.toBeNull()
+	);
+	const canvas = within(canvasElement);
+	const toggle = () =>
+		canvasElement.querySelector<HTMLButtonElement>(
+			'.textarea__audienceSelector .splitButton__trailing'
+		)!;
+	// Explicitly choose All so per-chat memory from another scenario cannot
+	// substitute a previously narrowed audience for this geometry check.
+	await userEvent.click(toggle());
+	const allDialog = await canvas.findByRole('dialog');
+	await userEvent.click(
+		allDialog.querySelector<HTMLButtonElement>(
+			'.textarea__audienceSelectorMenuSelectAll'
+		)!
+	);
+	await userEvent.keyboard('{Escape}');
+	await waitFor(() =>
+		expect(
+			canvasElement.querySelector(
+				'.textarea__audienceSelector .splitButton__label'
+			)?.textContent
+		).toBe('Alle')
+	);
+	await expectRecipientClearOfComposer(canvasElement, reserveEditor);
+	await userEvent.click(toggle());
+	const dialog = await canvas.findByRole('dialog');
+	for (const button of Array.from(
+		dialog.querySelectorAll<HTMLButtonElement>(
+			'.textarea__audienceSelectorSectionChevron'
+		)
+	)) {
+		if (button.getAttribute('aria-expanded') === 'false')
+			await userEvent.click(button);
+	}
+	await userEvent.click(
+		within(dialog).getByRole('button', {
+			name: LONG_RECIPIENT
+		})
+	);
+	await userEvent.keyboard('{Escape}');
+	await waitFor(() =>
+		expect(
+			canvasElement.querySelector(
+				'.textarea__audienceSelector .splitButton__label'
+			)?.textContent
+		).toBe(LONG_RECIPIENT)
+	);
+	await expectRecipientClearOfComposer(canvasElement, reserveEditor);
+	const editor = canvasElement.querySelector<HTMLElement>('.ProseMirror')!;
+	await userEvent.click(editor);
+	await userEvent.keyboard('Eine Nachricht an die Gruppe.');
+	await expectRecipientClearOfComposer(canvasElement, reserveEditor);
+	const expand =
+		canvasElement.querySelector<HTMLButtonElement>(
+			'.textarea__figmaToolbar button[aria-label="Maximieren"]'
+		) ||
+		Array.from(
+			canvasElement.querySelectorAll<HTMLButtonElement>(
+				'.textarea__figmaToolbar button'
+			)
+		).find((button) =>
+			/maxim|expand|vergröß/i.test(
+				button.getAttribute('aria-label') || ''
+			)
+		);
+	// Up to 899 px the control lives in the plus menu (Frank, 03.11.).
+	if (expand) {
+		await userEvent.click(expand);
+	} else {
+		await choosePlusMenuItem(canvasElement, 'Editor vergrößern');
+	}
+	await waitFor(() =>
+		expect(
+			canvasElement.querySelector(
+				'.textarea__wrapper-send-message--expanded'
+			)
+		).not.toBeNull()
+	);
+	await expectRecipientClearOfComposer(canvasElement, reserveEditor);
+	await expect(
+		canvasElement
+			.querySelector('.textarea__wrapper-send-message--expanded')!
+			.getBoundingClientRect().height
+	).toBeGreaterThan(window.innerHeight * 0.5);
+	const viewport = window.visualViewport;
+	const viewTop = viewport?.offsetTop || 0;
+	const viewLeft = viewport?.offsetLeft || 0;
+	const viewBottom = viewTop + (viewport?.height || window.innerHeight);
+	const viewRight = viewLeft + (viewport?.width || window.innerWidth);
+	await waitFor(() => {
+		const card = canvasElement.querySelector<HTMLElement>(
+			'.textarea__wrapper-send-message--expanded'
+		)!;
+		const cardBox = card.getBoundingClientRect();
+		const recipient = canvasElement
+			.querySelector<HTMLElement>('.textarea__audienceSelector')!
+			.getBoundingClientRect();
+		expect(
+			cardBox.top,
+			'expanded composer must remain below the viewport top'
+		).toBeGreaterThanOrEqual(viewTop - 0.5);
+		expect(
+			cardBox.bottom,
+			'expanded composer must remain above the viewport bottom'
+		).toBeLessThanOrEqual(viewBottom + 0.5);
+		expect(cardBox.left).toBeGreaterThanOrEqual(viewLeft - 0.5);
+		expect(cardBox.right).toBeLessThanOrEqual(viewRight + 0.5);
+		expect(
+			recipient.bottom,
+			'recipient must remain reachable inside the visible viewport'
+		).toBeLessThanOrEqual(viewBottom + 0.5);
+	});
+	const fade = canvasElement.querySelector<HTMLElement>(
+		'.session__gameInputFadeTarget'
+	);
+	if (fade) {
+		await expect(getComputedStyle(fade).transform).toBe('none');
+		const collapse = Array.from(
+			canvasElement.querySelectorAll<HTMLButtonElement>(
+				'.textarea__figmaToolbar button'
+			)
+		).find((button) =>
+			/minim|verkleiner/i.test(button.getAttribute('aria-label') || '')
+		);
+		if (collapse) {
+			await userEvent.click(collapse);
+		} else {
+			await choosePlusMenuItem(canvasElement, 'Editor verkleinern');
+		}
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector(
+					'.textarea__wrapper-send-message--expanded'
+				)
+			).toBeNull()
+		);
+		await expect(getComputedStyle(fade).transform).not.toBe('none');
+	}
+}
+
+export const RecipientLayoutPhone: Story = {
+	name: 'Recipient layout — 390px All, long target and expanded',
+	globals: phone390Globals,
+	render: () => <RecipientLayoutScenario />,
+	play: async ({ canvasElement }) =>
+		recipientLayoutJourney(canvasElement, true)
+};
+export const RecipientLayoutTablet: Story = {
+	name: 'Recipient layout — 820px All, long target and expanded',
+	parameters: {
+		viewport: {
+			options: {
+				recipientTablet820: {
+					name: 'Recipient tablet 820',
+					styles: { width: '820px', height: '1180px' },
+					type: 'tablet'
+				}
+			}
+		}
+	},
+	globals: { viewport: { value: 'recipientTablet820' } },
+	render: () => <RecipientLayoutScenario />,
+	play: async ({ canvasElement }) =>
+		recipientLayoutJourney(canvasElement, true)
+};
+export const RecipientLayoutDesktop: Story = {
+	name: 'Recipient layout — desktop retains the shared control',
+	globals: desktop1440Globals,
+	render: () => <RecipientLayoutScenario productionSessionFade={false} />,
+	play: async ({ canvasElement }) =>
+		recipientLayoutJourney(canvasElement, false)
+};
+
+/**
+ * #1142 — voice note: record, stop, review, then discard or send.
+ *
+ * Storybook has no microphone, so a minimal `MediaRecorder` and
+ * `getUserMedia` stand in for the browser's. The composer itself is the real
+ * production component; only the capture device is faked. The fake is removed
+ * again when the story ends so it cannot leak into the next story.
+ */
+class FakeMediaRecorder {
+	static isTypeSupported = () => true;
+	state: 'inactive' | 'recording' = 'inactive';
+	mimeType = 'audio/webm';
+	ondataavailable: ((event: { data: Blob }) => void) | null = null;
+	onstop: (() => void) | null = null;
+	onerror: (() => void) | null = null;
+	start() {
+		this.state = 'recording';
+	}
+	stop() {
+		this.state = 'inactive';
+		this.ondataavailable?.({
+			data: new Blob(['recorded audio'], { type: this.mimeType })
+		});
+		this.onstop?.();
+	}
+}
+
+const installFakeMicrophone = () => {
+	const realRecorder = window.MediaRecorder;
+	const mediaDevices = navigator.mediaDevices;
+	const realGetUserMedia = mediaDevices?.getUserMedia;
+	(window as any).MediaRecorder = FakeMediaRecorder;
+	if (mediaDevices) {
+		mediaDevices.getUserMedia = (async () => ({
+			getTracks: () => [{ stop: () => {} }]
+		})) as any;
+	}
+	return () => {
+		(window as any).MediaRecorder = realRecorder;
+		if (mediaDevices && realGetUserMedia) {
+			mediaDevices.getUserMedia = realGetUserMedia;
+		}
+	};
+};
+
+const voiceMicButton = (canvas: ReturnType<typeof within>) =>
+	canvas.getByRole('button', { name: /Sprachaufnahme|Voice recording/ });
+
+async function startVoiceNote(canvasElement: HTMLElement) {
+	const canvas = within(canvasElement);
+	const mic = await waitFor(() => voiceMicButton(canvas));
+	await userEvent.click(mic);
+	await canvas.findByRole('button', { name: /^(Stopp|Stop)$/ });
+	return canvas;
+}
+
+async function recordVoiceNote(canvasElement: HTMLElement) {
+	const canvas = await startVoiceNote(canvasElement);
+	await userEvent.click(
+		canvas.getByRole('button', { name: /^(Stopp|Stop)$/ })
+	);
+	await canvas.findByRole('button', {
+		name: /Sprachnachricht verwerfen|Discard voice message/
+	});
+	return canvas;
+}
+
+export const VoiceNoteIdle: Story = {
+	name: 'Voice note — idle (nothing recording)',
+	render: () => <ComposerShell />,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const mic = await waitFor(() => voiceMicButton(canvas));
+		expect(mic.getAttribute('aria-pressed')).not.toBe('true');
+		expect(
+			canvas.queryByRole('button', { name: /^(Stopp|Stop)$/ })
+		).toBeNull();
+	}
+};
+
+export const VoiceNoteRecording: Story = {
+	name: 'Voice note — recording (Stop, Cancel; Send disabled)',
+	beforeEach: installFakeMicrophone,
+	render: () => <ComposerShell />,
+	play: async ({ canvasElement }) => {
+		const canvas = await startVoiceNote(canvasElement);
+		expect(
+			canvas.getByRole('button', { name: /Abbrechen|Cancel/ })
+		).toBeTruthy();
+		expect(
+			(
+				canvas.getByRole('button', {
+					name: /Nachricht senden|Send message/
+				}) as HTMLButtonElement
+			).disabled
+		).toBe(true);
+	}
+};
+
+export const VoiceNoteReview: Story = {
+	name: 'Voice note — review after Stop (Play, Discard, Send)',
+	beforeEach: installFakeMicrophone,
+	render: () => <ComposerShell />,
+	play: async ({ canvasElement }) => {
+		const canvas = await recordVoiceNote(canvasElement);
+		// Stop must not have sent anything: the review is still on screen and
+		// Send is an explicit, enabled choice next to Play and Discard.
+		expect(
+			canvas.getByRole('button', {
+				name: /Sprachnachricht abspielen|Play voice message/
+			})
+		).toBeTruthy();
+		expect(
+			(
+				canvas.getByRole('button', {
+					name: /Nachricht senden|Send message/
+				}) as HTMLButtonElement
+			).disabled
+		).toBe(false);
+		// Discard is a real button, reachable with the keyboard.
+		const discard = canvas.getByRole('button', {
+			name: /Sprachnachricht verwerfen|Discard voice message/
+		});
+		discard.focus();
+		expect(document.activeElement).toBe(discard);
+		discard.blur();
+
+		// The field keeps all four edges in review, and no extra red line.
+		const field = canvasElement.querySelector(
+			'.textarea__input'
+		) as HTMLElement;
+		expect(getComputedStyle(field).borderBottomStyle).toBe('solid');
+		expect(getComputedStyle(field, '::after').content).toBe('none');
+	}
+};
+
+export const VoiceNoteReviewDiscard: Story = {
+	name: 'Voice note — Discard returns to idle, re-record possible',
+	beforeEach: installFakeMicrophone,
+	render: () => <ComposerShell />,
+	play: async ({ canvasElement }) => {
+		const canvas = await recordVoiceNote(canvasElement);
+		await userEvent.click(
+			canvas.getByRole('button', {
+				name: /Sprachnachricht verwerfen|Discard voice message/
+			})
+		);
+		await waitFor(() =>
+			expect(
+				canvas.queryByRole('button', {
+					name: /Sprachnachricht verwerfen|Discard voice message/
+				})
+			).toBeNull()
+		);
+		expect(
+			(
+				canvas.getByRole('button', {
+					name: /Nachricht senden|Send message/
+				}) as HTMLButtonElement
+			).disabled
+		).toBe(true);
+		await startVoiceNote(canvasElement);
+	}
+};
+
+export const VoiceNoteReviewMobile: Story = {
+	name: 'Voice note — review at 390 px',
+	globals: phone390Globals,
+	beforeEach: installFakeMicrophone,
+	render: () => <ComposerShell />,
+	play: async ({ canvasElement }) => {
+		const canvas = await recordVoiceNote(canvasElement);
+		const review =
+			canvasElement.querySelector<HTMLElement>('.voiceNoteRow');
+		const editor =
+			canvasElement.querySelector<HTMLElement>('.textarea__input');
+		expect(review).toBeTruthy();
+		expect(editor).toBeTruthy();
+		// The whole review (player and Discard) sits inside the composer at
+		// 390 px — nothing is clipped at the top or pushed past the sides.
+		const reviewRect = review!.getBoundingClientRect();
+		const editorRect = editor!.getBoundingClientRect();
+		expect(reviewRect.top).toBeGreaterThanOrEqual(editorRect.top);
+		expect(reviewRect.bottom).toBeLessThanOrEqual(editorRect.bottom);
+		expect(reviewRect.left).toBeGreaterThanOrEqual(editorRect.left);
+		expect(reviewRect.right).toBeLessThanOrEqual(editorRect.right);
+		expect(
+			canvas.getByRole('button', {
+				name: /Sprachnachricht verwerfen|Discard voice message/
+			})
+		).toBeTruthy();
+	}
+};
+
+const ReplyExperienceShell = () => {
+	const [replying, setReplying] = React.useState(true);
+	return (
+		<>
+			<ComposerShell
+				replyTo={
+					replying
+						? {
+								eventId: '$orig:matrix.example.org',
+								author: 'Kanguru Mika 554',
+								text: 'Ich habe seit letzter Woche große Probleme mit meinem Vermieter und weiß nicht weiter, weil er auf keinen meiner Briefe antwortet und nun auch noch die Kaution einbehalten möchte.'
+							}
+						: null
+				}
+				onCancelReply={() => setReplying(false)}
+			/>
+			{!replying && (
+				<button type="button" onClick={() => setReplying(true)}>
+					Wieder antworten
+				</button>
+			)}
+		</>
+	);
+};
+
+/** X nimmt die Antwort zurück, darunter wieder der normale Composer. */
+export const ReplyExperience: Story = {
+	name: 'Erlebnis — Antworten und zurücknehmen',
+	render: () => <ReplyExperienceShell />,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await userEvent.click(
+			await canvas.findByRole('button', {
+				name: /Antwort verwerfen|discard/i
+			})
+		);
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector('.messageSubmit__replyPreview')
+			).toBeNull()
+		);
+		await userEvent.click(
+			canvas.getByRole('button', { name: 'Wieder antworten' })
+		);
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector('.messageSubmit__replyPreview')
+			).toBeTruthy()
+		);
+	}
+};
+
+/** Auf dem Telefon liegt die Leiste über der Karte, der Composer bleibt unverändert. */
+export const ReplyExperienceMobile: Story = {
+	name: 'Erlebnis — Antworten, Telefon',
+	render: () => <ReplyExperienceShell />,
+	globals: phone390Globals
+};
+
+/** Zu große Datei: die Meldung steht auf der Karte der Datei, nicht mehr als Snackbar. */
+export const AttachmentTooLargeCard: Story = {
+	name: 'Erlebnis — Datei zu groß, Meldung auf der Karte',
+	render: () => <ComposerShell />,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const input = await waitFor(() => {
+			const found = canvasElement.querySelector(
+				'.textarea__attachmentInput'
+			) as HTMLInputElement;
+			expect(found).toBeTruthy();
+			return found;
+		});
+		const tooBig = new File([new ArrayBuffer(10_000_001)], 'scan.pdf', {
+			type: 'application/pdf'
+		});
+		await userEvent.upload(input, tooBig);
+		const alert = await canvas.findByRole('alert');
+		expect(alert.closest('.composerAttachmentCard')).toBeTruthy();
+		expect(
+			canvasElement.querySelector('.messageSubmitInfoDock')
+		).toBeNull();
+		await userEvent.click(
+			canvas.getByRole('button', { name: /scan\.pdf entfernen/ })
+		);
+		await waitFor(() => expect(canvas.queryByRole('alert')).toBeNull());
+		// Leave it open for whoever looks at the story.
+		await userEvent.upload(input, tooBig);
+		await canvas.findByRole('alert');
+	}
+};
+
+/** The @ button opens the list in the real composer, ready to click through. */
+export const MentionExperience: Story = {
+	name: 'Erlebnis — @ im echten Composer',
+	render: () => <ComposerShell />,
+	parameters: {
+		a11y: {
+			// The list opens at the caret, so it lies over the toolbar until it
+			// closes. Axe reads that as a target too small to hit.
+			context: { exclude: ['.composerToolbar__button--scrollToNewest'] }
+		}
+	},
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await userEvent.click(
+			await canvas.findByRole('button', { name: /erwähnen|mention/i })
+		);
+		await waitFor(() =>
+			expect(document.querySelector('.mentionList')).toBeTruthy()
+		);
+		// Speaks from the @: right above the caret, its corner square there.
+		const list = document.querySelector('.mentionList') as HTMLElement;
+		const paragraph = canvasElement.querySelector(
+			'.ProseMirror p'
+		) as HTMLElement;
+		await waitFor(() => {
+			const gap =
+				paragraph.getBoundingClientRect().top -
+				list.getBoundingClientRect().bottom;
+			expect(gap).toBeGreaterThanOrEqual(0);
+			expect(gap).toBeLessThan(12);
+			expect(getComputedStyle(list).borderBottomLeftRadius).toBe('0px');
+		});
+	}
+};
+
+/** Several people: tick them, search in between, click beside the list. */
+export const MentionSeveralPeople: Story = {
+	name: 'Erlebnis — @ mehrere Personen auswählen',
+	render: () => <ComposerShell />,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await userEvent.click(
+			await canvas.findByRole('button', { name: /erwähnen|mention/i })
+		);
+		const body = within(document.body);
+		const boxes = await body.findAllByRole('checkbox');
+		expect(boxes.length).toBeGreaterThan(1);
+
+		await userEvent.click(boxes[0]);
+		await userEvent.click(body.getAllByRole('checkbox')[1]);
+
+		// Still open, so a second person can be ticked.
+		expect(document.querySelector('.mentionList')).toBeTruthy();
+		expect(document.querySelector('.mentionList__hint')).toBeTruthy();
+		expect(
+			body
+				.getAllByRole('checkbox')
+				.filter((box) => (box as HTMLInputElement).checked)
+		).toHaveLength(2);
+
+		// A click into nothing inserts both and closes the list.
+		await userEvent.click(document.body);
+		await waitFor(() =>
+			expect(document.querySelector('.mentionList')).toBeNull()
+		);
+		expect(
+			canvasElement.querySelectorAll('.ProseMirror .messageItem__mention')
+		).toHaveLength(2);
+	}
+};
+
+/** Up to 899 px, emoji, mention, attachment and maximize live in the plus menu. */
+async function choosePlusMenuItem(canvasElement: HTMLElement, name: string) {
+	await userEvent.click(
+		await within(canvasElement).findByRole('button', {
+			name: 'Weitere Werkzeuge'
+		})
+	);
+	await userEvent.click(
+		await within(document.body).findByRole('menuitem', { name })
+	);
+}
+
+const favouriteProps = {
+	onMobileNavigateBack: () => {},
+	mobileUnreadCount: 3
+};
+
+/** Frank (03.11.): round, calm buttons; the arrow calls when new messages wait. */
+export const FavouritePhone: Story = {
+	name: 'Favorit — Telefon, neue Nachricht',
+	globals: phone390Globals,
+	render: () => <ComposerShell {...favouriteProps} />,
+	play: async ({ canvasElement }) => {
+		const bar = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="composer-action-bar"]'
+		)!;
+		await waitFor(() =>
+			expect(bar.querySelectorAll('button')).toHaveLength(5)
+		);
+		expect(
+			bar.querySelector(
+				'.composerToolbar__button--scrollToNewest--unread'
+			)
+		).toBeTruthy();
+	}
+};
+
+export const FavouritePhoneFormatBox: Story = {
+	name: 'Favorit — Telefon, graue Format-Box',
+	globals: phone390Globals,
+	render: () => <ComposerShell onMobileNavigateBack={() => {}} />,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const toggle = await canvas.findByRole('button', {
+			name: /Zurück zu allen Werkzeugen|all tools/i
+		});
+		await userEvent.click(toggle);
+		const tray = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="composer-format-tray"]'
+		)!;
+		expect(tray).toBeTruthy();
+		// The action bar stays below the box, the T-pen lit.
+		expect(
+			canvasElement.querySelector('[data-cy="composer-action-bar"]')
+		).toBeTruthy();
+		expect(toggle.getAttribute('aria-expanded')).toBe('true');
+		expect(
+			within(tray).getByRole('button', { name: 'Textstil' })
+		).toBeTruthy();
+	}
+};
+
+export const FavouritePhoneFormatBoxOverReply: Story = {
+	name: 'Favorit — Telefon, Format-Box über der Antwort',
+	globals: phone390Globals,
+	render: () => (
+		<ComposerShell
+			onMobileNavigateBack={() => {}}
+			replyTo={{
+				eventId: '$orig:matrix.example.org',
+				author: 'Kanguru Mika 554',
+				text: 'Ich habe seit letzter Woche große Probleme mit meinem Vermieter.'
+			}}
+			onCancelReply={() => {}}
+		/>
+	),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await userEvent.click(
+			await canvas.findByRole('button', {
+				name: /Zurück zu allen Werkzeugen|all tools/i
+			})
+		);
+		const tray = canvasElement
+			.querySelector('[data-cy="composer-format-tray"]')!
+			.getBoundingClientRect();
+		const reply = canvasElement
+			.querySelector('.messageSubmit__contextBar')!
+			.getBoundingClientRect();
+		expect(tray.bottom).toBeLessThanOrEqual(reply.top);
+	}
+};
+
+export const FavouritePhonePlusMenu: Story = {
+	name: 'Favorit — Telefon, Plus-Menü',
+	globals: phone390Globals,
+	render: () => <ComposerShell onMobileNavigateBack={() => {}} />,
+	play: async ({ canvasElement }) => {
+		await userEvent.click(
+			await within(canvasElement).findByRole('button', {
+				name: 'Weitere Werkzeuge'
+			})
+		);
+		const menu = within(document.body).getByRole('menu');
+		for (const name of [
+			'Anhang hinzufügen',
+			'Emoji-Auswahl',
+			'Person erwähnen',
+			'Editor vergrößern'
+		]) {
+			expect(within(menu).getByText(name)).toBeTruthy();
+		}
+	}
+};
+
+export const FavouritePhoneMaximisedFormatBox: Story = {
+	name: 'Favorit — Telefon, Format-Box im maximierten Editor',
+	globals: phone390Globals,
+	render: () => <ComposerShell onMobileNavigateBack={() => {}} />,
+	play: async ({ canvasElement }) => {
+		await choosePlusMenuItem(canvasElement, 'Editor vergrößern');
+		await userEvent.click(
+			await within(canvasElement).findByRole('button', {
+				name: /Zurück zu allen Werkzeugen|all tools/i
+			})
+		);
+		const card = await waitFor(() => {
+			const node = document.querySelector<HTMLElement>(
+				'.textarea__wrapper-send-message--expanded'
+			);
+			if (!node) {
+				throw new Error('composer did not maximise');
+			}
+			return node;
+		});
+		const tray = card.querySelector<HTMLElement>(
+			'[data-cy="composer-format-tray"]'
+		)!;
+		expect(tray).toBeTruthy();
+		// The card clips its children: the box has to sit inside it, and the
+		// text must start below the box.
+		const cardBox = card.getBoundingClientRect();
+		const trayBox = tray.getBoundingClientRect();
+		expect(trayBox.top).toBeGreaterThanOrEqual(cardBox.top);
+		expect(trayBox.right).toBeLessThanOrEqual(cardBox.right);
+		expect(
+			card.querySelector('.ProseMirror')!.getBoundingClientRect().top
+		).toBeGreaterThanOrEqual(trayBox.bottom);
+		expect(
+			within(tray).getByRole('button', { name: 'Textstil' })
+		).toBeTruthy();
+		// Typing must not shrink the maximised card back to one line.
+		await userEvent.type(card.querySelector('.ProseMirror')!, 'Hallo');
+		await new Promise((resolve) => setTimeout(resolve, 400));
+		expect(card.getBoundingClientRect().height).toBeGreaterThan(
+			window.innerHeight * 0.5
+		);
+	}
+};
+
+export const FavouritePhoneRecording: Story = {
+	name: 'Favorit — Telefon, Aufnahme läuft',
+	globals: phone390Globals,
+	beforeEach: installFakeMicrophone,
+	render: () => <ComposerShell onMobileNavigateBack={() => {}} />,
+	play: async ({ canvasElement }) => {
+		await startVoiceNote(canvasElement);
+		expect(
+			canvasElement.querySelector('.composerToolbar__button--recording')
+		).toBeTruthy();
+	}
+};
+
+export const FavouriteDesktop: Story = {
+	name: 'Favorit — Desktop, neue Nachricht',
+	globals: desktop1440Globals,
+	render: () => <ComposerShell mobileUnreadCount={3} />
+};
+
+export const FavouriteDesktopRecording: Story = {
+	name: 'Favorit — Desktop, Aufnahme läuft',
+	globals: desktop1440Globals,
+	beforeEach: installFakeMicrophone,
+	render: () => <ComposerShell />,
+	play: async ({ canvasElement }) => {
+		await startVoiceNote(canvasElement);
+	}
+};
+
+/** The T-pen opens every format in the real composer, ready to click through. */
+export const FormatsExperience: Story = {
+	name: 'Erlebnis — Formate im echten Composer',
+	render: () => <ComposerShell />,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await userEvent.click(
+			await canvas.findByRole('button', {
+				name: /Zurück zu allen Werkzeugen|all tools/i
+			})
+		);
+		await canvas.findByRole('button', { name: 'Textstil' });
+	}
+};
+
+/**
+ * Selection reply on the phone (PR #2232 review): three queued passages plus
+ * a reply stack above the card. The form reserves the whole stack, and the
+ * format tray rests above the stack instead of on its lowest bar.
+ */
+export const PendingQuotesStackMobile: Story = {
+	name: 'Queued passage quotes — mobile stack',
+	globals: phone390Globals,
+	render: () => (
+		<ComposerShell
+			replyTo={{
+				eventId: '$reply:matrix.example.org',
+				author: 'Anna',
+				text: 'Earlier message'
+			}}
+			onCancelReply={() => {}}
+			pendingQuotes={[1, 2, 3].map((n) => ({
+				id: `q${n}`,
+				eventId: `$quote${n}:matrix.example.org`,
+				author: 'Anna',
+				excerpt: `Marked passage ${n}`
+			}))}
+			onRemovePendingQuote={() => {}}
+			onSendPendingQuotes={() => {}}
+			onMobileNavigateBack={() => {}}
+		/>
+	),
+	play: async ({ canvasElement }) => {
+		const stack = await waitFor(() => {
+			const element = canvasElement.querySelector<HTMLElement>(
+				'.messageSubmit__contextStack'
+			);
+			expect(element).toBeTruthy();
+			return element!;
+		});
+		await userEvent.click(
+			await within(canvasElement).findByRole('button', {
+				name: /Zurück zu allen Werkzeugen|all tools/i
+			})
+		);
+		const tray = await waitFor(() => {
+			const element = canvasElement.querySelector<HTMLElement>(
+				'.messageSubmit__formatTray'
+			);
+			expect(element).toBeTruthy();
+			return element!;
+		});
+		const form = canvasElement.querySelector<HTMLElement>('form.textarea')!;
+		await waitFor(() => {
+			const stackBox = stack.getBoundingClientRect();
+			const trayBox = tray.getBoundingClientRect();
+			// The tray clears the topmost bar, never covering a remove button.
+			expect(Math.round(trayBox.bottom)).toBeLessThanOrEqual(
+				Math.round(stackBox.top)
+			);
+			// The form reserves the stack and the tray above the card.
+			expect(
+				Math.round(form.getBoundingClientRect().top)
+			).toBeLessThanOrEqual(Math.round(trayBox.top));
+		});
 	}
 };

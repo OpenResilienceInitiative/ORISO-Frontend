@@ -1,6 +1,13 @@
 import * as React from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, fireEvent, userEvent, waitFor } from 'storybook/test';
 import { WaitingAreaCountdown } from './WaitingAreaCountdown';
+import {
+	expectCaptionClear,
+	expectHandsVisible,
+	expectOverdueClockOnOneRow
+} from './waitingClockStoryChecks';
+import { computeOrisoPalette } from '../../../utils/theme/orisoScheme';
 import { phone375Globals } from '../../message/messageStoryShell';
 
 const WELCOME =
@@ -61,6 +68,63 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+const expectFlipFocus: Story['play'] = async ({ canvas, canvasElement }) => {
+	const findOpen = () =>
+		canvas.findByRole('button', {
+			name: 'Uhr umdrehen, Begrüßung und Netiquette lesen'
+		});
+	const findClose = () =>
+		canvas.findByRole('button', { name: 'Zurück zur Uhr' });
+	const open = await findOpen();
+	await expect(open).not.toHaveFocus();
+	open.focus();
+	await userEvent.keyboard(' ');
+
+	const close = await findClose();
+	const focusedBack = close.ownerDocument.activeElement === close;
+	close.focus();
+	await userEvent.keyboard('{Enter}');
+
+	const reopened = await findOpen();
+	await expect({
+		focusedBack,
+		focusedFront: reopened.ownerDocument.activeElement === reopened
+	}).toEqual({ focusedBack: true, focusedFront: true });
+
+	// Dispatch clicks without keydown or pointer-down changing browser focus.
+	await fireEvent.click(reopened, { detail: 0 });
+	const syntheticClose = await findClose();
+	await expect(syntheticClose).toHaveFocus();
+	await fireEvent.click(syntheticClose, { detail: 0 });
+	const pointerOpen = await findOpen();
+	await expect(pointerOpen).toHaveFocus();
+
+	const sentinel = canvasElement.ownerDocument.createElement('button');
+	sentinel.type = 'button';
+	sentinel.textContent = 'Focus sentinel';
+	canvasElement.append(sentinel);
+	try {
+		sentinel.focus();
+		await expect(sentinel).toHaveFocus();
+		await fireEvent.click(pointerOpen, { detail: 1 });
+		const pointerClose = await findClose();
+		await expect(sentinel).toHaveFocus();
+		await fireEvent.click(pointerClose, { detail: 1 });
+		await findOpen();
+		await expect(sentinel).toHaveFocus();
+
+		const timer = canvas.getByRole('timer');
+		const timerLabel = timer.getAttribute('aria-label');
+		await waitFor(
+			() => expect(timer.getAttribute('aria-label')).not.toBe(timerLabel),
+			{ timeout: 2500 }
+		);
+		await expect(sentinel).toHaveFocus();
+	} finally {
+		sentinel.remove();
+	}
+};
+
 export const Future4a: Story = {
 	args: {
 		plannedStart: new Date(
@@ -86,7 +150,8 @@ export const Future4a: Story = {
 				Zum Kalender hinzufügen
 			</button>
 		)
-	}
+	},
+	play: expectFlipFocus
 };
 
 export const Overdue4b: Story = {
@@ -94,6 +159,114 @@ export const Overdue4b: Story = {
 		plannedStart: new Date(Date.now() - 252 * 1000),
 		welcomeText: WELCOME,
 		rules: RULES
+	}
+};
+
+/**
+ * #1499. Past 99 minutes the minutes group grows a third digit — it used to
+ * draw "99" while the timer label said the truth. The extra digit is paid for
+ * with a smaller mini-clock, never with a second row: the row sits in a flip
+ * card that is exactly one group tall, so anything that wraps lands on the
+ * caption below it.
+ */
+export const Overdue3Digits: Story = {
+	args: {
+		plannedStart: new Date(Date.now() - (140 * 60 + 7) * 1000),
+		welcomeText: WELCOME,
+		rules: RULES,
+		clockSize: 'fit',
+		spacing: 'tight'
+	},
+	play: async ({ canvasElement }) => {
+		await expectOverdueClockOnOneRow(canvasElement, 3);
+		await expectCaptionClear(canvasElement);
+		await expectHandsVisible(canvasElement);
+	}
+};
+
+export const Overdue3DigitsMobile: Story = {
+	args: {
+		...Overdue3Digits.args,
+		labelsOutside: true,
+		hideMotionToggle: true,
+		gap: 12
+	},
+	globals: phone375Globals,
+	parameters: { phoneFrame: true },
+	play: async ({ canvasElement }) => {
+		await expectOverdueClockOnOneRow(canvasElement, 3);
+		await expectCaptionClear(canvasElement);
+	}
+};
+
+/**
+ * The clock under other Träger brands (#1499). Hands and "+" are the brand
+ * colour: `--oriso-primary-text`, falling back to `--m3-primary`.
+ *
+ * Before #1528, #b4ddee had no `--oriso-primary-text` and its hands read at
+ * about 1.1:1; the palette now emits a legible tone, so no override here.
+ */
+const TRAEGER_2_SEED = '#b4ddee';
+
+const Brand = ({
+	seed,
+	children
+}: {
+	seed: string;
+	children: React.ReactNode;
+}) => {
+	const { tokens } = computeOrisoPalette({ primary: seed }, 'light');
+	return <div style={tokens as React.CSSProperties}>{children}</div>;
+};
+
+const lightBrand = (Story: React.ComponentType) => (
+	<Brand seed={TRAEGER_2_SEED}>
+		<Story />
+	</Brand>
+);
+
+export const LightBrandOverdue: Story = {
+	args: {
+		plannedStart: new Date(Date.now() - (140 * 60 + 7) * 1000),
+		welcomeText: WELCOME,
+		rules: RULES,
+		clockSize: 'fit',
+		spacing: 'tight'
+	},
+	decorators: [lightBrand],
+	play: async ({ canvasElement }) => {
+		await expectOverdueClockOnOneRow(canvasElement, 3);
+		await expectCaptionClear(canvasElement);
+		await expectHandsVisible(canvasElement);
+	}
+};
+
+export const LightBrandFuture: Story = {
+	args: {
+		plannedStart: new Date(
+			Date.now() + (2 * 86400 + 3 * 3600 + 21 * 60 + 50) * 1000
+		),
+		welcomeText: WELCOME,
+		rules: RULES
+	},
+	decorators: [lightBrand],
+	play: async ({ canvasElement }) => {
+		await expectHandsVisible(canvasElement);
+	}
+};
+
+/** A dark brand other than red: the fallback alone is enough here. */
+export const GreenBrandOverdue: Story = {
+	args: LightBrandOverdue.args,
+	decorators: [
+		(Story) => (
+			<Brand seed="#2e7d32">
+				<Story />
+			</Brand>
+		)
+	],
+	play: async ({ canvasElement }) => {
+		await expectHandsVisible(canvasElement);
 	}
 };
 
@@ -105,7 +278,8 @@ export const ReducedMotion: Story = {
 		welcomeText: WELCOME,
 		rules: RULES,
 		reducedMotion: true
-	}
+	},
+	play: expectFlipFocus
 };
 
 /**

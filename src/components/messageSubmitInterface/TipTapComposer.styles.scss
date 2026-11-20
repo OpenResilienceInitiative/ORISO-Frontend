@@ -71,35 +71,11 @@
 			caret-color: var(--m3-primary-container, #cc1e1c);
 			box-sizing: border-box;
 
-			// #1079: a task list is a checklist, not a bullet list with a box
-			// bolted on. Mirrors the rendered message so the sender and the
-			// reader see the same thing — the checkbox stays operable here,
-			// because here it is the author's own list.
-			ul[data-type='taskList'] {
-				list-style: none;
-				padding-left: 0;
-
-				li {
-					display: flex;
-					align-items: flex-start;
-					gap: 8px;
-				}
-
-				label {
-					display: inline-flex;
-					align-items: center;
-					height: 1.5em;
-					flex: 0 0 auto;
-				}
-
-				input[type='checkbox'] {
-					margin: 0;
-				}
-
-				p {
-					margin: 0;
-				}
-			}
+			// The sender sees what the reader will get: same headings, lists,
+			// task lists, quotes, rules and code as the message bubble
+			// (`_richTextContent.scss`). The checkbox stays operable here —
+			// it is the author's own list.
+			@include rich-text-content;
 
 			@media screen and (width >= 900px) {
 				top: 66px;
@@ -115,8 +91,14 @@
 			}
 
 			p {
-				margin: 0;
 				line-height: 1.4;
+			}
+
+			// #996: the voice dot would sit on top of the placeholder.
+			p.is-editor-empty:first-child:has(
+					.composerInsertionMarker
+				)::before {
+				content: none;
 			}
 
 			p.is-editor-empty:first-child::before {
@@ -133,20 +115,6 @@
 				background: #ffe69b;
 				padding: 0 2px;
 				border-radius: 3px;
-			}
-
-			blockquote {
-				margin: 8px 0;
-				padding: 4px 0 4px 10px;
-				border-left: 3px solid var(--m3-primary-container, #cc1e1c);
-				color: #4a5561;
-				background: rgba(204, 30, 28, 0.04);
-				background: color-mix(
-					in srgb,
-					var(--m3-primary, #a5000a) 4%,
-					transparent
-				);
-				border-radius: 0 6px 6px 0;
 			}
 		}
 	}

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import {
 	EVENT_PARAM_KEYS,
 	parseEventActionParams,
@@ -7,21 +7,47 @@ import {
 } from './notificationActionTarget';
 
 describe('notification action targets', () => {
-	it('opens a group-chat lifecycle event at its stable Series conversation', () => {
+	it.each([
+		'group_chat.reminder',
+		'group_chat.opened',
+		'group_chat.cancelled'
+	])('opens %s at the typed group destination for each role', (eventType) => {
 		const params = parseEventActionParams(
 			'{"seriesId":42,"occurrenceIndex":3,"roomRef":"!room:matrix.example"}'
 		);
+		const item = {
+			eventType,
+			params,
+			sourceSessionId: 42,
+			actionPath: null
+		};
 
 		expect(
 			resolveNotificationActionPath(
-				{
-					eventType: 'group_chat.opened',
-					params
-				},
+				item,
 				'/sessions/consultant/sessionView'
 			)
-		).toBe('/sessions/consultant/sessionView/session/42');
+		).toBe('/sessions/consultant/sessionView/chat/42');
+		expect(resolveNotificationActionPath(item, '/sessions/user/view')).toBe(
+			'/sessions/user/view/chat/42'
+		);
 	});
+
+	it.each([undefined, 0, -1, '1e3', '9007199254740993', '../session/42'])(
+		'does not use a same-number case for an invalid group series ID %s',
+		(seriesId) => {
+			expect(
+				resolveNotificationActionPath(
+					{
+						eventType: 'group_chat.reminder',
+						sourceSessionId: 42,
+						params: { seriesId }
+					},
+					'/sessions/user/view'
+				)
+			).toBeNull();
+		}
+	);
 
 	it('keeps a direct action path authoritative', () => {
 		expect(
@@ -35,6 +61,62 @@ describe('notification action targets', () => {
 			)
 		).toBe('/sessions/user/view/session/7');
 	});
+
+	it.each([
+		[
+			'/sessions/user/session/4711',
+			4711,
+			'/sessions/user/view/session/4711?rejectedEnquiry=1'
+		],
+		['/sessions/user/session/4711', 4712, null],
+		[
+			'/sessions/user/view/session/4711',
+			4711,
+			'/sessions/user/view/session/4711?rejectedEnquiry=1'
+		],
+		['/sessions/user/view/session/4711', 4712, null]
+	])(
+		'binds the stored rejection path %s to its source case %s',
+		(actionPath, sourceSessionId, expected) => {
+			expect(
+				resolveNotificationActionPath(
+					{
+						eventType: 'request.denied',
+						actionPath,
+						sourceSessionId,
+						params: parseEventActionParams('{}')
+					},
+					'/sessions/user/view',
+					'/sessions/user/view'
+				)
+			).toBe(expected);
+		}
+	);
+
+	it.each([
+		[
+			'/sessions/consultant/sessionPreview',
+			'/sessions/user/view',
+			'/sessions/consultant/sessionPreview'
+		],
+		[null, '/sessions/user/view', '/sessions/user/view'],
+		[null, null, null]
+	])(
+		'preserves a generic rejection action %s with list fallback %s',
+		(actionPath, requestsBasePath, expected) => {
+			expect(
+				resolveNotificationActionPath(
+					{
+						eventType: 'request.denied',
+						sourceSessionId: 4711,
+						actionPath
+					},
+					'/sessions/user/view',
+					requestsBasePath
+				)
+			).toBe(expected);
+		}
+	);
 
 	it('treats malformed params as absent instead of breaking the timeline', () => {
 		expect(parseEventActionParams('{not-json')).toEqual({});
@@ -148,6 +230,9 @@ describe('shared params contract (#846)', () => {
 				'conversationType',
 				'clientConsent',
 				'caseHandoverRequestId',
+				'requesterName',
+				'initiatorName',
+				'accessType',
 				'threadRootId',
 				'mentioned',
 				'seriesId',
@@ -162,9 +247,58 @@ describe('shared params contract (#846)', () => {
 				'maintenanceDate',
 				'maintenanceStart',
 				'maintenanceEnd',
-				'statusUrl'
+				'statusUrl',
+				// FE#1952: which call a direct-link knock is for (AUDIO / VIDEO).
+				'medium',
+				// ADDON_NOTIFICATION payload (oriso-addon/v1).
+				'addon',
+				'appId',
+				'slot',
+				'important',
+				'title',
+				'text',
+				'linkId'
 			].sort()
 		);
+	});
+
+	it('reads an add-on notification payload in the user language', () => {
+		const params = parseEventActionParams({
+			addon: 'digisucht-tools',
+			appId: 'goals',
+			slot: 'consultant.session',
+			sessionId: 42,
+			important: true,
+			title: { de: 'Neues Tool', en: 'New tool', fr: 42 },
+			text: { de: 'Freigegeben.' }
+		});
+		expect(params).toMatchObject({
+			addon: 'digisucht-tools',
+			appId: 'goals',
+			slot: 'consultant.session',
+			sourceSessionId: 42,
+			important: true,
+			addonTitle: { de: 'Neues Tool', en: 'New tool' },
+			addonText: { de: 'Freigegeben.' }
+		});
+		expect(toInterpolationValues(params, 'en')).toMatchObject({
+			addonTitle: 'New tool',
+			addonText: 'Freigegeben.'
+		});
+		expect(
+			resolveNotificationActionPath(
+				{ eventType: 'ADDON_NOTIFICATION', params },
+				'/sessions/consultant/sessionView'
+			)
+		).toBe(
+			'/sessions/consultant/sessionView/session/42?addon=digisucht-tools%2Fgoals%2Fconsultant.session'
+		);
+	});
+
+	it('ignores plain-string titles of other events', () => {
+		const params = parseEventActionParams({ title: 'x', text: 'y' });
+		expect(params.addonTitle).toBeUndefined();
+		expect(params.addonText).toBeUndefined();
 	});
 });
 

@@ -1,8 +1,13 @@
 import * as React from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import {
+	getBuildCommit,
+	getPlatformVersion
+} from '../../../resources/scripts/runtimeConfig';
 import { ReactComponent as CircleIcon } from '../../../resources/img/icons/self-help-group.svg';
-import { ReactComponent as CategorySearchIcon } from '../../../resources/img/icons/category-search.svg';
+import { useBuildIdentityOwner } from '../../app/BuildIdentity';
+import { TopicIcon } from '../TopicIcon';
 import { OrisoSelect } from '../../form/OrisoSelect';
 import { GroupChatSeriesFieldsValue } from '../../groupChat/GroupChatSeriesFields';
 import { ReactComponent as AddCircleIcon } from '../../../resources/img/icons/add-circle.svg';
@@ -38,6 +43,8 @@ import {
 	loadCircleDefaults,
 	saveCircleDefaults
 } from './circleDefaults';
+import { GuestAccountModeSelect } from '../../guestAccountMode/GuestAccountModeSelect';
+import type { GuestAccountMode } from '../../guestAccountMode/guestAccountMode';
 import '../../groupChat/createChat.styles.scss';
 
 /**
@@ -64,6 +71,8 @@ export interface CircleSettingsPrefill {
 	consultantIds?: string[];
 	/** Edit mode: the agency the persisted series belongs to. */
 	agencyId?: number | null;
+	/** Edit mode: the circle's guest account mode (UserService#1662). */
+	guestAccountMode?: GuestAccountMode;
 }
 
 interface CircleSettingsViewProps {
@@ -116,6 +125,7 @@ export const CircleSettingsView = ({
 	compact = false
 }: CircleSettingsViewProps) => {
 	const { t: translate } = useTranslation();
+	const identityOwner = useBuildIdentityOwner();
 	const { submit, leave, isSubmitting, hasError, clearError } =
 		useCreateChatSubmit();
 	/*
@@ -127,6 +137,8 @@ export const CircleSettingsView = ({
 		details: GroupChatShareDetails;
 	} | null>(null);
 	const isEditMode = editChatId != null;
+	const showBuildIdentity =
+		isEditMode && Boolean(getPlatformVersion() || getBuildCommit());
 	const storedDefaults = useMemo(
 		() => loadCircleDefaults(selectedAgency),
 		[selectedAgency]
@@ -146,6 +158,12 @@ export const CircleSettingsView = ({
 		);
 	const [consultantIds, setConsultantIds] = useState<string[]>(
 		() => prefill?.consultantIds ?? []
+	);
+	/* UserService#1662: which account a guest without one gets through the
+	   invite link. The server's default is that the guest chooses — the
+	   "Ohne Konto beitreten" / "Konto anlegen" entry of #1289. */
+	const [guestAccountMode, setGuestAccountMode] = useState<GuestAccountMode>(
+		() => prefill?.guestAccountMode ?? 'GUEST_CHOOSES'
 	);
 	const [moderatorMenuOpen, setModeratorMenuOpen] = useState(false);
 	const [moderatorHelpOpen, setModeratorHelpOpen] = useState(false);
@@ -251,7 +269,8 @@ export const CircleSettingsView = ({
 				hintMessageTranslations: authorContent.hintMessageTranslations,
 				groupChatRulesTranslations:
 					authorContent.groupChatRulesTranslations,
-				consultantIds
+				consultantIds,
+				guestAccountMode
 			}),
 			{
 				groupChatId: editChatId ?? undefined,
@@ -332,7 +351,7 @@ export const CircleSettingsView = ({
 				ref={topicButtonRef}
 				id="circleTopicRow"
 				fullWidth
-				icon={<CategorySearchIcon />}
+				icon={<TopicIcon filled={Boolean(topic)} />}
 				label={topic || translate('groupChat.circle.topicLabel')}
 				variant={
 					topicMenuOpen ? 'elevated' : topic ? 'tonal' : 'outlined'
@@ -414,6 +433,16 @@ export const CircleSettingsView = ({
 						/>
 					)}
 					{scheduleRows}
+					<GuestAccountModeSelect
+						className="circleSettings__guestAccount"
+						value={guestAccountMode}
+						onChange={setGuestAccountMode}
+						note={
+							isEditMode
+								? translate('guestAccountMode.newGuestsOnly')
+								: undefined
+						}
+					/>
 					<div className="circleSettings__moderators">
 						<p>{translate('groupChat.circle.moderatorsLabel')}</p>
 						<PersonChipGrid
@@ -536,6 +565,9 @@ export const CircleSettingsView = ({
 					</button>
 				</div>
 			</div>
+			{identityOwner && showBuildIdentity && (
+				<div ref={identityOwner.setStageTarget} />
+			)}
 			{created && (
 				<GroupChatShareDialog
 					open

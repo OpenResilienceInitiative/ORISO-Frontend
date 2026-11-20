@@ -1,12 +1,25 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 
 import React from 'react';
 import { act, render, renderHook, waitFor } from '@testing-library/react';
-import type { MatrixClient } from 'matrix-js-sdk';
+import {
+	EventType,
+	RoomEvent,
+	RoomStateEvent,
+	type MatrixClient
+} from 'matrix-js-sdk';
 import { webcrypto } from 'node:crypto';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 
 import { useElementCallWidget } from './useElementCallWidget';
+import { TenantContext } from '../../../globalState/provider/TenantProvider';
 import { setAppConfig } from '../../../utils/appConfig';
 
 const widgetApiMocks = vi.hoisted(() => ({
@@ -70,6 +83,12 @@ vi.mock('../../../resources/scripts/runtimeConfig', () => ({
 	getElementCallBaseUrl: () => 'https://call.oriso.example'
 }));
 
+// The hook reads the tenant service address for the brand's logo route; the
+// real module would need every origin helper of the mocked runtime config.
+vi.mock('../../../resources/scripts/endpoints', () => ({
+	endpoints: { tenantServiceBase: 'https://app.oriso.example/service/tenant' }
+}));
+
 const CALL_ROOM = '!call:oriso.example';
 
 type TestMatrixClient = MatrixClient & {
@@ -78,9 +97,11 @@ type TestMatrixClient = MatrixClient & {
 
 const createClient = ({
 	membership = 'join',
+	getWidgetMembership = () => membership,
 	joinRoom = vi.fn().mockResolvedValue(undefined)
 }: {
 	membership?: string;
+	getWidgetMembership?: () => string;
 	joinRoom?: ReturnType<typeof vi.fn>;
 } = {}): TestMatrixClient => {
 	const listeners = new Map<string, Set<(...args: unknown[]) => void>>();
@@ -94,7 +115,15 @@ const createClient = ({
 			getMyMembership: () => membership,
 			getLiveTimeline: () => ({
 				getState: () => ({
-					getStateEvents: () => []
+					getStateEvents: (type: string, stateKey?: string) =>
+						type === EventType.RoomMember &&
+						stateKey === '@user:oriso.example'
+							? {
+									getContent: () => ({
+										membership: getWidgetMembership()
+									})
+								}
+							: []
 				})
 			})
 		}),
@@ -125,6 +154,7 @@ describe('useElementCallWidget', () => {
 	});
 
 	afterEach(() => {
+		vi.restoreAllMocks();
 		vi.unstubAllGlobals();
 		setAppConfig(null as never);
 	});
@@ -137,7 +167,15 @@ describe('useElementCallWidget', () => {
 					finishJoin = resolve;
 				})
 		);
-		const client = createClient({ membership: 'invite', joinRoom });
+		let stateMembership = 'invite';
+		const client = createClient({
+			membership: 'invite',
+			getWidgetMembership: () => stateMembership,
+			joinRoom
+		});
+		const originalRoom = client.getRoom(CALL_ROOM);
+		const hostMembership = vi.fn().mockReturnValue('invite');
+		if (originalRoom) originalRoom.getMyMembership = hostMembership;
 
 		const { result } = renderHook(() =>
 			useElementCallWidget(client, {
@@ -149,7 +187,26 @@ describe('useElementCallWidget', () => {
 		expect(joinRoom).toHaveBeenCalledWith(CALL_ROOM);
 		expect(result.current.url).toBeNull();
 
-		act(() => finishJoin?.());
+		const digest = vi.spyOn(globalThis.crypto.subtle, 'digest');
+		await act(async () => finishJoin?.());
+		expect(digest).not.toHaveBeenCalled();
+		expect(result.current.url).toBeNull();
+
+		act(() => {
+			hostMembership.mockReturnValue('join');
+			client.emitTest(RoomEvent.MyMembership, originalRoom, 'join');
+		});
+		expect(digest).not.toHaveBeenCalled();
+		expect(result.current.url).toBeNull();
+
+		act(() => {
+			stateMembership = 'join';
+			client.emitTest(
+				RoomStateEvent.Events,
+				{ getType: () => EventType.RoomMember },
+				{ roomId: CALL_ROOM }
+			);
+		});
 		await waitFor(() => expect(result.current.url).not.toBeNull());
 
 		const url = new URL(result.current.url!);
@@ -174,6 +231,59 @@ describe('useElementCallWidget', () => {
 		expect(fragment.get('perParticipantE2EE')).toBe('true');
 	});
 
+	it('stops waiting for unsynced membership when the call is closed', async () => {
+		const client = createClient({ membership: 'invite' });
+		const { unmount, result } = renderHook(() =>
+			useElementCallWidget(client, { roomId: CALL_ROOM, isVideo: false })
+		);
+
+		await waitFor(() =>
+			expect(client.on).toHaveBeenCalledWith(
+				RoomStateEvent.Events,
+				expect.any(Function)
+			)
+		);
+		expect(result.current.url).toBeNull();
+		unmount();
+
+		expect(client.off).toHaveBeenCalledWith(
+			RoomStateEvent.Events,
+			expect.any(Function)
+		);
+		expect(client.off).toHaveBeenCalledWith(
+			RoomEvent.MyMembership,
+			expect.any(Function)
+		);
+	});
+
+	it('reports a membership timeout and stops listening without mounting the widget', async () => {
+		vi.useFakeTimers();
+		try {
+			const client = createClient({
+				getWidgetMembership: () => 'invite'
+			});
+			const { result } = renderHook(() =>
+				useElementCallWidget(client, {
+					roomId: CALL_ROOM,
+					isVideo: false
+				})
+			);
+
+			await act(() => vi.advanceTimersByTimeAsync(20_000));
+
+			expect(result.current.error?.name).toBe(
+				'CallRoomMembershipTimeoutError'
+			);
+			expect(result.current.url).toBeNull();
+			expect(client.off).toHaveBeenCalledWith(
+				RoomStateEvent.Events,
+				expect.any(Function)
+			);
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
 	it('omits media E2EE when the environment kill-switch is false', async () => {
 		// The on path alone would still pass if the parameter were always set,
 		// which would silently make the kill-switch unusable (ElementCall#35).
@@ -196,6 +306,491 @@ describe('useElementCallWidget', () => {
 		expect(fragment.get('perParticipantE2EE')).toBeNull();
 	});
 
+	it('passes the counselling centre’s backdrop, when it set one', async () => {
+		setAppConfig({ calls: { atmosphere: 'nebel' } } as never);
+		const client = createClient();
+
+		const { result } = renderHook(() =>
+			useElementCallWidget(client, {
+				roomId: CALL_ROOM,
+				isVideo: true
+			})
+		);
+		await waitFor(() => expect(result.current.url).not.toBeNull());
+
+		expect(
+			new URLSearchParams(new URL(result.current.url!).hash.slice(2)).get(
+				'orisoAtmosphere'
+			)
+		).toBe('nebel');
+	});
+
+	it('leaves the backdrop off the URL entirely when no centre set one', async () => {
+		// An empty parameter is not the same as no parameter: the call falls
+		// back to the handoff's default only when it is told nothing at all.
+		setAppConfig({} as never);
+		const client = createClient();
+
+		const { result } = renderHook(() =>
+			useElementCallWidget(client, {
+				roomId: CALL_ROOM,
+				isVideo: true
+			})
+		);
+		await waitFor(() => expect(result.current.url).not.toBeNull());
+
+		expect(
+			new URLSearchParams(new URL(result.current.url!).hash.slice(2)).has(
+				'orisoAtmosphere'
+			)
+		).toBe(false);
+	});
+
+	describe('starting with the pre-join choice (ElementCall#116)', () => {
+		const fragmentOf = (url: string) =>
+			new URLSearchParams(new URL(url).hash.slice(2));
+
+		it('puts the on/off choice and the device labels on the widget URL', async () => {
+			const client = createClient();
+			const { result } = renderHook(() =>
+				useElementCallWidget(client, {
+					roomId: CALL_ROOM,
+					isVideo: true,
+					callStart: {
+						audioEnabled: true,
+						videoEnabled: false,
+						audioInput: 'Jabra Evolve2 Headset',
+						videoInput: 'Logitech C920 & Co'
+					}
+				})
+			);
+			await waitFor(() => expect(result.current.url).not.toBeNull());
+
+			const fragment = fragmentOf(result.current.url!);
+			expect(fragment.get('audioEnabled')).toBe('true');
+			expect(fragment.get('videoEnabled')).toBe('false');
+			expect(fragment.get('audioInput')).toBe('Jabra Evolve2 Headset');
+			expect(fragment.get('videoInput')).toBe('Logitech C920 & Co');
+		});
+
+		it('leaves them off the URL without a check', async () => {
+			const client = createClient();
+			const { result } = renderHook(() =>
+				useElementCallWidget(client, {
+					roomId: CALL_ROOM,
+					isVideo: true
+				})
+			);
+			await waitFor(() => expect(result.current.url).not.toBeNull());
+
+			const fragment = fragmentOf(result.current.url!);
+			for (const name of [
+				'audioEnabled',
+				'videoEnabled',
+				'audioInput',
+				'videoInput'
+			])
+				expect(fragment.has(name)).toBe(false);
+		});
+
+		it('does not rebuild the URL for an equal choice in a new object', async () => {
+			// A rebuilt URL with any difference navigates the running call.
+			const client = createClient();
+			const { result, rerender } = renderHook(
+				({ start }) =>
+					useElementCallWidget(client, {
+						roomId: CALL_ROOM,
+						isVideo: true,
+						callStart: start
+					}),
+				{
+					initialProps: {
+						start: { audioEnabled: false, videoEnabled: false }
+					}
+				}
+			);
+			await waitFor(() => expect(result.current.url).not.toBeNull());
+			const first = result.current.url;
+			rerender({ start: { audioEnabled: false, videoEnabled: false } });
+			expect(result.current.url).toBe(first);
+		});
+	});
+
+	describe('handing the Traeger brand to the call (#2188)', () => {
+		const LOGO_ROUTE =
+			'https://app.oriso.example/service/tenant/public/branding/14/logo';
+
+		const tenantWith = (theming: Record<string, unknown>, id = 14) =>
+			({ id, theming }) as never;
+
+		const wrapperFor =
+			(read: () => unknown) =>
+			({ children }: { children: React.ReactNode }) => (
+				<TenantContext.Provider
+					value={{
+						tenant: read() as never,
+						setTenant: vi.fn(),
+						updateTenantSettings: vi.fn()
+					}}
+				>
+					{children}
+				</TenantContext.Provider>
+			);
+
+		const fragmentOf = (url: string) =>
+			new URLSearchParams(new URL(url).hash.slice(2));
+
+		const urlFor = async (tenant: unknown) => {
+			const client = createClient();
+			const { result } = renderHook(
+				() =>
+					useElementCallWidget(client, {
+						roomId: CALL_ROOM,
+						isVideo: true
+					}),
+				tenant === undefined
+					? undefined
+					: { wrapper: wrapperFor(() => tenant) }
+			);
+			await waitFor(() => expect(result.current.url).not.toBeNull());
+			return result.current.url!;
+		};
+
+		it('writes the colours and the logo route into the address', async () => {
+			const fragment = fragmentOf(
+				await urlFor(
+					tenantWith({
+						primaryColor: '#0A7A3C',
+						accent: '#646d78',
+						signal: '#b1005e',
+						logo: 'data:image/png;base64,AAAA'
+					})
+				)
+			);
+
+			expect(fragment.get('orisoPrimary')).toBe('0a7a3c');
+			expect(fragment.get('orisoAccent')).toBe('646d78');
+			expect(fragment.get('orisoSignal')).toBe('b1005e');
+			expect(fragment.get('orisoLogo')).toBe(LOGO_ROUTE);
+		});
+
+		it('sends nothing for a Traeger that set no colours and no logo', async () => {
+			const fragment = fragmentOf(
+				await urlFor(tenantWith({ primaryColor: '', logo: '' }))
+			);
+
+			for (const name of [
+				'orisoPrimary',
+				'orisoAccent',
+				'orisoSignal',
+				'orisoLogo'
+			])
+				expect(fragment.has(name)).toBe(false);
+		});
+
+		it('sends nothing while no tenant is resolved, and outside a tenant context', async () => {
+			for (const tenant of [undefined, null]) {
+				const fragment = fragmentOf(await urlFor(tenant));
+				expect(
+					[...fragment.keys()].filter((name) =>
+						/^orisoPrimary|orisoAccent|orisoSignal|orisoLogo$/.test(
+							name
+						)
+					)
+				).toEqual([]);
+			}
+		});
+
+		it('sends no colour for a pale primary, as the app keeps its default palette', async () => {
+			vi.spyOn(console, 'warn').mockImplementation(() => {});
+			const fragment = fragmentOf(
+				await urlFor(
+					tenantWith({
+						primaryColor: '#888888',
+						accent: '#646d78',
+						signal: '#b1005e',
+						logo: 'x'
+					})
+				)
+			);
+
+			for (const name of ['orisoPrimary', 'orisoAccent', 'orisoSignal'])
+				expect(fragment.has(name)).toBe(false);
+			expect(fragment.get('orisoLogo')).toBe(LOGO_ROUTE);
+		});
+
+		it('leaves the logo off for a Traeger without one, the colours stay', async () => {
+			const fragment = fragmentOf(
+				await urlFor(
+					tenantWith({ primaryColor: '#0a7a3c', logo: null })
+				)
+			);
+
+			expect(fragment.get('orisoPrimary')).toBe('0a7a3c');
+			expect(fragment.has('orisoLogo')).toBe(false);
+		});
+
+		it('leaves every existing parameter exactly as it was, in the same order', async () => {
+			setAppConfig({ calls: { atmosphere: 'nebel' } } as never);
+			const without = fragmentOf(await urlFor(undefined));
+			const withBrand = fragmentOf(
+				await urlFor(
+					tenantWith({
+						primaryColor: '#0a7a3c',
+						accent: '#646d78',
+						signal: '#b1005e',
+						logo: 'x'
+					})
+				)
+			);
+
+			const brandNames = [
+				'orisoPrimary',
+				'orisoAccent',
+				'orisoSignal',
+				'orisoLogo'
+			];
+			const existing = (fragment: URLSearchParams) =>
+				[...fragment.entries()].filter(
+					// The widget id carries a per-mount nonce.
+					([name]) =>
+						!brandNames.includes(name) && name !== 'widgetId'
+				);
+
+			expect(existing(withBrand)).toEqual(existing(without));
+			expect(existing(withBrand).map(([name]) => name)).toEqual(
+				expect.arrayContaining([
+					'header',
+					'orisoDesign',
+					'theme',
+					'orisoAtmosphere',
+					'callIntent'
+				])
+			);
+			expect(withBrand.get('header')).toBe('none');
+		});
+
+		it('does not rebuild the address when the tenant refreshes or changes mid-call', async () => {
+			// The brand is handed over at the start. A rebuilt address with any
+			// difference would navigate the running call.
+			const client = createClient();
+			let current: unknown = tenantWith({
+				primaryColor: '#0a7a3c',
+				logo: 'x'
+			});
+			const wrapper = wrapperFor(() => current);
+			const { result, rerender } = renderHook(
+				() =>
+					useElementCallWidget(client, {
+						roomId: CALL_ROOM,
+						isVideo: true
+					}),
+				{ wrapper }
+			);
+			await waitFor(() => expect(result.current.url).not.toBeNull());
+			const first = result.current.url;
+			expect(fragmentOf(first!).get('orisoPrimary')).toBe('0a7a3c');
+
+			// The same Traeger resolved again (a locale change does that) ...
+			current = tenantWith({ primaryColor: '#0a7a3c', logo: 'x' });
+			rerender();
+			expect(result.current.url).toBe(first);
+
+			// ... and even another one: the running call keeps its own.
+			current = tenantWith({ primaryColor: '#a5000a' }, 15);
+			rerender();
+			expect(result.current.url).toBe(first);
+		});
+
+		it('keeps the brand it started with through a client refresh', async () => {
+			// A token refresh rebuilds the address with a new client. The call
+			// started before the tenant resolved; adding the brand now would
+			// change the iframe's src and navigate the running call.
+			let current: unknown = null;
+			const { result, rerender } = renderHook(
+				({ c }: { c: ReturnType<typeof createClient> }) =>
+					useElementCallWidget(c, {
+						roomId: CALL_ROOM,
+						isVideo: true
+					}),
+				{
+					initialProps: { c: createClient() },
+					wrapper: wrapperFor(() => current)
+				}
+			);
+			await waitFor(() => expect(result.current.url).not.toBeNull());
+			const first = result.current.url;
+			expect(fragmentOf(first!).has('orisoPrimary')).toBe(false);
+
+			current = tenantWith({ primaryColor: '#0a7a3c', logo: 'x' });
+			rerender({ c: createClient() });
+			await waitFor(() => expect(result.current.url).not.toBeNull());
+			expect(result.current.url).toBe(first);
+		});
+	});
+
+	describe('telling the call its language, kind and topic (FE#2233)', () => {
+		const fragmentOf = (url: string) =>
+			new URLSearchParams(new URL(url).hash.slice(2));
+
+		type HostProps = {
+			c: ReturnType<typeof createClient>;
+			roomId: string | null;
+			language?: string | null;
+			callType?: 'single' | 'circle' | 'group' | null;
+			callTopic?: string | null;
+			hostContextPending?: boolean;
+		};
+
+		const mount = (initialProps: HostProps) =>
+			renderHook(
+				({ c, roomId, ...rest }: HostProps) =>
+					useElementCallWidget(c, { roomId, isVideo: true, ...rest }),
+				{ initialProps }
+			);
+
+		it('writes the app language, the kind and the topic into the address', async () => {
+			const { result } = mount({
+				c: createClient(),
+				roomId: CALL_ROOM,
+				language: 'de@informal',
+				callType: 'single',
+				callTopic: 'Schulden'
+			});
+			await waitFor(() => expect(result.current.url).not.toBeNull());
+			const fragment = fragmentOf(result.current.url!);
+			expect(fragment.get('lang')).toBe('de@informal');
+			expect(fragment.get('orisoCallType')).toBe('single');
+			expect(fragment.get('orisoTopic')).toBe('Schulden');
+		});
+
+		it('passes circle for a Gesprächskreis', async () => {
+			const { result } = mount({
+				c: createClient(),
+				roomId: CALL_ROOM,
+				callType: 'circle'
+			});
+			await waitFor(() => expect(result.current.url).not.toBeNull());
+			expect(fragmentOf(result.current.url!).get('orisoCallType')).toBe(
+				'circle'
+			);
+		});
+
+		it('leaves language and topic off the address when unknown', async () => {
+			const { result } = mount({
+				c: createClient(),
+				roomId: CALL_ROOM,
+				callType: 'single',
+				callTopic: null
+			});
+			await waitFor(() => expect(result.current.url).not.toBeNull());
+			const fragment = fragmentOf(result.current.url!);
+			expect(fragment.has('lang')).toBe(false);
+			expect(fragment.has('orisoTopic')).toBe(false);
+		});
+
+		it('builds no address while the conversation is still being looked up', async () => {
+			const client = createClient();
+			const { result, rerender } = mount({
+				c: client,
+				roomId: CALL_ROOM,
+				callType: 'group',
+				hostContextPending: true
+			});
+			// The join and membership wait run meanwhile; only the address waits.
+			await waitFor(() => expect(client.getRoom).toHaveBeenCalled());
+			await act(async () => {
+				await new Promise((resolve) => setTimeout(resolve, 20));
+			});
+			expect(result.current.url).toBeNull();
+
+			rerender({
+				c: client,
+				roomId: CALL_ROOM,
+				callType: 'circle',
+				callTopic: null,
+				hostContextPending: false
+			});
+			await waitFor(() => expect(result.current.url).not.toBeNull());
+			expect(fragmentOf(result.current.url!).get('orisoCallType')).toBe(
+				'circle'
+			);
+		});
+
+		it('does not rebuild the address when the language, kind or topic change mid-call', async () => {
+			// A different address would navigate the running call.
+			const client = createClient();
+			const { result, rerender } = mount({
+				c: client,
+				roomId: CALL_ROOM,
+				language: 'de',
+				callType: 'single',
+				callTopic: 'Schulden'
+			});
+			await waitFor(() => expect(result.current.url).not.toBeNull());
+			const first = result.current.url;
+
+			rerender({
+				c: client,
+				roomId: CALL_ROOM,
+				language: 'en',
+				callType: 'group',
+				callTopic: 'Debt'
+			});
+			expect(result.current.url).toBe(first);
+		});
+
+		it('keeps what it started with through a client refresh', async () => {
+			const { result, rerender } = mount({
+				c: createClient(),
+				roomId: CALL_ROOM,
+				language: 'de',
+				callType: 'single',
+				callTopic: 'Schulden'
+			});
+			await waitFor(() => expect(result.current.url).not.toBeNull());
+			const first = result.current.url;
+
+			rerender({
+				c: createClient(),
+				roomId: CALL_ROOM,
+				language: 'en',
+				callType: 'single',
+				callTopic: 'Debt'
+			});
+			await waitFor(() => expect(result.current.url).not.toBeNull());
+			expect(result.current.url).toBe(first);
+		});
+
+		it('takes the current values for the next call, even in the same room', async () => {
+			const client = createClient();
+			const { result, rerender } = mount({
+				c: client,
+				roomId: CALL_ROOM,
+				language: 'de',
+				callType: 'single',
+				callTopic: 'Schulden'
+			});
+			await waitFor(() => expect(result.current.url).not.toBeNull());
+
+			// The call ended: no room.
+			rerender({ c: client, roomId: null, language: 'en' });
+			expect(result.current.url).toBeNull();
+
+			rerender({
+				c: client,
+				roomId: CALL_ROOM,
+				language: 'en',
+				callType: 'single',
+				callTopic: 'Debt'
+			});
+			await waitFor(() => expect(result.current.url).not.toBeNull());
+			const fragment = fragmentOf(result.current.url!);
+			expect(fragment.get('lang')).toBe('en');
+			expect(fragment.get('orisoTopic')).toBe('Debt');
+		});
+	});
+
 	it('fails closed when the host cannot join the call room', async () => {
 		const joinRoom = vi.fn().mockRejectedValue(new Error('join denied'));
 		const client = createClient({ membership: 'invite', joinRoom });
@@ -215,14 +810,16 @@ describe('useElementCallWidget', () => {
 	});
 
 	it('uses a different opaque widget id for each mounted call surface', async () => {
+		const firstClient = createClient();
+		const secondClient = createClient();
 		const first = renderHook(() =>
-			useElementCallWidget(createClient(), {
+			useElementCallWidget(firstClient, {
 				roomId: CALL_ROOM,
 				isVideo: true
 			})
 		);
 		const second = renderHook(() =>
-			useElementCallWidget(createClient(), {
+			useElementCallWidget(secondClient, {
 				roomId: CALL_ROOM,
 				isVideo: true
 			})
@@ -313,7 +910,11 @@ describe('useElementCallWidget', () => {
 		});
 		const api = widgetApiMocks.apiInstances[0];
 
+		// Events fed before capability negotiation are dropped, so callers
+		// wait for this before sending what the widget must see.
+		expect(result.current.ready).toBe(false);
 		act(() => api.emit('ready', new CustomEvent('ready')));
+		expect(result.current.ready).toBe(true);
 		// Must match the `theme=dark` pin in the widget URL — a ready-time
 		// update to any other scheme would flip the call after launch.
 		expect(api.updateTheme).toHaveBeenCalledWith({ name: 'dark' });
@@ -395,6 +996,54 @@ describe('useElementCallWidget', () => {
 
 		await act(() => result.current.hangup());
 		expect(api.transport.send).toHaveBeenCalledWith('im.vector.hangup', {});
+	});
+
+	it('tracks the call’s microphone and camera and switches them from the host', async () => {
+		const client = createClient();
+		const { result } = renderHook(() =>
+			useElementCallWidget(client, { roomId: CALL_ROOM, isVideo: true })
+		);
+		await waitFor(() => expect(result.current.url).not.toBeNull());
+		const iframe = document.createElement('iframe');
+		iframe.src = result.current.url!;
+		act(() => result.current.attachIframe(iframe));
+		const api = widgetApiMocks.apiInstances[0];
+		expect(result.current.devices).toBeNull();
+
+		// The call reports each change of its own.
+		act(() =>
+			api.emit(
+				'action:io.element.device_mute',
+				new CustomEvent('io.element.device_mute', {
+					cancelable: true,
+					detail: {
+						action: 'io.element.device_mute',
+						requestId: 'report-1',
+						widgetId: 'widget',
+						data: { audio_enabled: true, video_enabled: true }
+					}
+				})
+			)
+		);
+		expect(result.current.devices).toEqual({
+			audio_enabled: true,
+			video_enabled: true
+		});
+
+		// The dock asks for a change; the call answers with its new state.
+		api.transport.send.mockResolvedValueOnce({
+			audio_enabled: false,
+			video_enabled: true
+		});
+		await act(() => result.current.setDevices({ audio_enabled: false }));
+		expect(api.transport.send).toHaveBeenCalledWith(
+			'io.element.device_mute',
+			{ audio_enabled: false }
+		);
+		expect(result.current.devices).toEqual({
+			audio_enabled: false,
+			video_enabled: true
+		});
 	});
 
 	it('forwards local echoes, state updates, and allowed to-device events', async () => {
@@ -502,6 +1151,67 @@ describe('useElementCallWidget', () => {
 		expect(api.feedStateUpdate).toHaveBeenCalledTimes(1);
 		expect(api.feedToDevice).toHaveBeenCalledWith(rawEvent, true);
 		expect(api.feedToDevice).toHaveBeenCalledTimes(1);
+	});
+
+	it('feeds the widget an identity it may read but not send', async () => {
+		/*
+		 * The live wire of the whole transport.
+		 *
+		 * Identity moved out of room state — which Matrix does not encrypt —
+		 * into an encrypted timeline event. The feed below filtered by the
+		 * set of types the widget may SEND, so with the transport changed and
+		 * this line left alone the event would have been dropped here: every
+		 * test green, the capability granted, and every face in the call
+		 * showing initials. It is now the RECEIVE set, which is wider by
+		 * exactly this event.
+		 */
+		const client = createClient();
+		const { result } = renderHook(() =>
+			useElementCallWidget(client, { roomId: CALL_ROOM, isVideo: true })
+		);
+		await waitFor(() => expect(result.current.url).not.toBeNull());
+		const iframe = document.createElement('iframe');
+		iframe.src = result.current.url!;
+		act(() => result.current.attachIframe(iframe));
+		const api = widgetApiMocks.apiInstances[0];
+
+		const identityRaw = {
+			type: 'org.oriso.call.identity',
+			content: {
+				kind: 'animal',
+				file: 'fox.svg',
+				bg: '#165E83',
+				ink: '#ffffff'
+			}
+		};
+		// It arrives sealed, as it must: that is the point of the move.
+		let type = 'm.room.encrypted';
+		const listeners = new Set<(event: unknown, error?: Error) => void>();
+		const identityEvent = {
+			getRoomId: () => CALL_ROOM,
+			getType: () => type,
+			getWireType: () => 'm.room.encrypted',
+			getEffectiveEvent: () => identityRaw,
+			on: (name: string, listener: (event: unknown) => void) => {
+				if (name === 'Event.decrypted') listeners.add(listener);
+			},
+			off: (name: string, listener: (event: unknown) => void) => {
+				if (name === 'Event.decrypted') listeners.delete(listener);
+			}
+		};
+
+		act(() => {
+			client.emitTest('Room.timeline', identityEvent, {}, false);
+		});
+		// Nothing is fed while it is still ciphertext.
+		expect(api.feedEvent).not.toHaveBeenCalled();
+
+		act(() => {
+			type = 'org.oriso.call.identity';
+			listeners.forEach((listener) => listener(identityEvent));
+		});
+		expect(api.feedEvent).toHaveBeenCalledWith(identityRaw, CALL_ROOM);
+		expect(api.feedEvent).toHaveBeenCalledTimes(1);
 	});
 
 	it('reports, and does not silently swallow, a call event that never decrypts', async () => {
@@ -678,6 +1388,51 @@ describe('useElementCallWidget', () => {
 		expect(replacement.src).toBe('about:blank');
 	});
 
+	it('keeps a live call running through the client refresh that blanks its URL', async () => {
+		/*
+		 * A token refresh hands this hook a new `client`, and the preparation
+		 * effect answers by setting `url` to null while it rebuilds. React
+		 * sees the ref callback's identity change, detaches with null and
+		 * re-attaches the SAME node — and the re-attachment happens while
+		 * `url` is still null.
+		 *
+		 * The re-attachment used to return before claiming the node, so the
+		 * microtask that decides whether an iframe has really gone found
+		 * nothing attached and navigated a RUNNING call to `about:blank`. The
+		 * rebuilt URL is byte-identical for the same account, so nothing
+		 * navigated it back.
+		 */
+		const client = createClient();
+		const { result, rerender } = renderHook(
+			({ c }: { c: ReturnType<typeof createClient> }) =>
+				useElementCallWidget(c, { roomId: CALL_ROOM, isVideo: true }),
+			{ initialProps: { c: client } }
+		);
+		await waitFor(() => expect(result.current.url).not.toBeNull());
+		const source = result.current.url!;
+
+		const iframe = document.createElement('iframe');
+		iframe.src = source;
+		act(() => result.current.attachIframe(iframe));
+		const detach = result.current.attachIframe;
+
+		// The refresh: same account, new client object.
+		rerender({ c: createClient() });
+		expect(result.current.url).toBeNull();
+
+		// What React does in that one commit.
+		act(() => detach(null));
+		act(() => result.current.attachIframe(iframe));
+		await act(async () => {});
+
+		expect(iframe.src).toBe(source);
+
+		// And the rebuilt URL still finds a live iframe to talk to.
+		await waitFor(() => expect(result.current.url).toBe(source));
+		act(() => result.current.attachIframe(iframe));
+		expect(iframe.src).toBe(source);
+	});
+
 	it('keeps a live call running when the same iframe is re-attached', async () => {
 		const client = createClient();
 		const { result } = renderHook(() =>
@@ -701,5 +1456,418 @@ describe('useElementCallWidget', () => {
 		act(() => result.current.attachIframe(replacement));
 		expect(iframe.src).toBe('about:blank');
 		expect(replacement.src).toBe(result.current.url);
+	});
+
+	describe('knocking in the call (ElementCall#109)', () => {
+		const KNOCK_STATE = 'org.oriso.call.knock_state';
+		const SET_KNOCK = 'org.oriso.call.set_knock';
+
+		const mount = async (initial: {
+			knockState: { waiting: number; knock: boolean | null } | null;
+			onSetKnock?: (knock: boolean) => Promise<boolean>;
+		}) => {
+			const client = createClient();
+			const hook = renderHook(
+				(props: typeof initial) =>
+					useElementCallWidget(client, {
+						roomId: CALL_ROOM,
+						isVideo: true,
+						...props
+					}),
+				{ initialProps: initial }
+			);
+			await waitFor(() => expect(hook.result.current.url).not.toBeNull());
+			const iframe = document.createElement('iframe');
+			iframe.src = hook.result.current.url!;
+			act(() => hook.result.current.attachIframe(iframe));
+			const api = widgetApiMocks.apiInstances[0];
+			return { ...hook, api };
+		};
+
+		const knockStateSends = (api: any) =>
+			api.transport.send.mock.calls.filter(
+				(call: unknown[]) => call[0] === KNOCK_STATE
+			);
+
+		const setKnock = (api: any, data: unknown) => {
+			const request = {
+				action: SET_KNOCK,
+				requestId: 'set-knock-1',
+				widgetId: 'widget',
+				data
+			};
+			const event = new CustomEvent(SET_KNOCK, {
+				cancelable: true,
+				detail: request
+			});
+			act(() => api.emit(`action:${SET_KNOCK}`, event));
+			return { request, event };
+		};
+
+		it('sends the state once the call is ready, and again when the count changes', async () => {
+			const { api, rerender } = await mount({
+				knockState: { waiting: 0, knock: true }
+			});
+			// Before capability negotiation the call would drop it.
+			expect(knockStateSends(api)).toHaveLength(0);
+
+			act(() => api.emit('ready', new CustomEvent('ready')));
+			expect(knockStateSends(api)).toEqual([
+				[KNOCK_STATE, { waiting: 0, knock: true }]
+			]);
+
+			rerender({ knockState: { waiting: 2, knock: true } });
+			expect(knockStateSends(api).at(-1)).toEqual([
+				KNOCK_STATE,
+				{ waiting: 2, knock: true }
+			]);
+
+			// Same state again: nothing new to tell.
+			rerender({ knockState: { waiting: 2, knock: true } });
+			expect(knockStateSends(api)).toHaveLength(2);
+		});
+
+		it('sends knock null when the call has no link, and refuses set_knock', async () => {
+			const onSetKnock = vi.fn();
+			const { api } = await mount({
+				knockState: { waiting: 1, knock: null },
+				onSetKnock
+			});
+			act(() => api.emit('ready', new CustomEvent('ready')));
+			expect(knockStateSends(api)).toEqual([
+				[KNOCK_STATE, { waiting: 1, knock: null }]
+			]);
+
+			const { request, event } = setKnock(api, { knock: false });
+			expect(event.defaultPrevented).toBe(true);
+			expect(onSetKnock).not.toHaveBeenCalled();
+			expect(api.transport.reply).toHaveBeenCalledWith(request, {
+				error: { message: expect.any(String) }
+			});
+		});
+
+		it('sends nothing for somebody who may not see knocks', async () => {
+			const { api } = await mount({ knockState: null });
+			act(() => api.emit('ready', new CustomEvent('ready')));
+			expect(knockStateSends(api)).toHaveLength(0);
+		});
+
+		it('changes the link on set_knock, answers, and confirms the stored state', async () => {
+			const onSetKnock = vi.fn().mockResolvedValue(false);
+			const { api } = await mount({
+				knockState: { waiting: 3, knock: true },
+				onSetKnock
+			});
+			act(() => api.emit('ready', new CustomEvent('ready')));
+
+			const { request } = setKnock(api, { knock: false });
+			expect(onSetKnock).toHaveBeenCalledWith(false);
+			await waitFor(() =>
+				expect(api.transport.reply).toHaveBeenCalledWith(request, {})
+			);
+			expect(knockStateSends(api).at(-1)).toEqual([
+				KNOCK_STATE,
+				{ waiting: 3, knock: false }
+			]);
+		});
+
+		it('answers with an error when the change did not land, so the call flips back', async () => {
+			const onSetKnock = vi
+				.fn()
+				.mockRejectedValue(new Error('CATCH_ALL'));
+			const { api } = await mount({
+				knockState: { waiting: 0, knock: true },
+				onSetKnock
+			});
+			act(() => api.emit('ready', new CustomEvent('ready')));
+
+			const { request } = setKnock(api, { knock: false });
+			await waitFor(() =>
+				expect(api.transport.reply).toHaveBeenCalledWith(request, {
+					error: { message: expect.any(String) }
+				})
+			);
+			expect(api.transport.reply).not.toHaveBeenCalledWith(request, {});
+			// And the truth again, in case the call lost track.
+			expect(knockStateSends(api).at(-1)).toEqual([
+				KNOCK_STATE,
+				{ waiting: 0, knock: true }
+			]);
+		});
+
+		it('refuses a set_knock without a boolean', async () => {
+			const onSetKnock = vi.fn();
+			const { api } = await mount({
+				knockState: { waiting: 0, knock: true },
+				onSetKnock
+			});
+			const { request } = setKnock(api, { knock: 'yes' });
+			expect(onSetKnock).not.toHaveBeenCalled();
+			expect(api.transport.reply).toHaveBeenCalledWith(request, {
+				error: { message: expect.any(String) }
+			});
+		});
+	});
+	describe('call design: the window belongs to the call (S2)', () => {
+		const WINDOW = 'org.oriso.call.window';
+		const WINDOW_STATE = 'org.oriso.call.window_state';
+
+		type Props = Parameters<typeof useElementCallWidget>[1];
+
+		const mount = async (initial: Partial<Props>) => {
+			const client = createClient();
+			const hook = renderHook(
+				(props: Partial<Props>) =>
+					useElementCallWidget(client, {
+						roomId: CALL_ROOM,
+						isVideo: true,
+						...props
+					}),
+				{ initialProps: initial }
+			);
+			await waitFor(() => expect(hook.result.current.url).not.toBeNull());
+			const iframe = document.createElement('iframe');
+			iframe.src = hook.result.current.url!;
+			act(() => hook.result.current.attachIframe(iframe));
+			const api = widgetApiMocks.apiInstances[0];
+			return { ...hook, api };
+		};
+
+		const fragment = (url: string) =>
+			new URLSearchParams(new URL(url).hash.slice(2));
+
+		let requests = 0;
+		const request = (api: any, action: string, data: unknown) => {
+			const detail = {
+				action,
+				requestId: `${action}-${++requests}`,
+				widgetId: 'widget',
+				data
+			};
+			const event = new CustomEvent(action, {
+				cancelable: true,
+				detail
+			});
+			act(() => api.emit(`action:${action}`, event));
+			return { detail, event };
+		};
+
+		it('asks the call for its own window buttons only when the host hides its own', async () => {
+			const on = await mount({ hostChrome: true });
+			expect(
+				fragment(on.result.current.url!).get('orisoHostChrome')
+			).toBe('1');
+			on.unmount();
+			widgetApiMocks.apiInstances.length = 0;
+			const off = await mount({});
+			expect(
+				fragment(off.result.current.url!).has('orisoHostChrome')
+			).toBe(false);
+		});
+
+		it('passes the kind of conversation, not its size (S6b)', async () => {
+			const group = await mount({ callType: 'group' });
+			expect(
+				fragment(group.result.current.url!).get('orisoCallType')
+			).toBe('group');
+			group.unmount();
+			const single = await mount({ callType: 'single' });
+			expect(
+				fragment(single.result.current.url!).get('orisoCallType')
+			).toBe('single');
+			single.unmount();
+			const unknown = await mount({});
+			expect(
+				fragment(unknown.result.current.url!).has('orisoCallType')
+			).toBe(false);
+		});
+
+		it('offers "Link teilen" only with somebody to make the link (S8)', async () => {
+			const withHandler = await mount({
+				invite: true,
+				onInviteLink: async () => 'https://app.oriso.test/c/1'
+			});
+			expect(
+				fragment(withHandler.result.current.url!).get('orisoInvite')
+			).toBe('1');
+			withHandler.unmount();
+			const without = await mount({ invite: true });
+			expect(
+				fragment(without.result.current.url!).has('orisoInvite')
+			).toBe(false);
+		});
+
+		it('answers invite_link with the url, or with an error string', async () => {
+			const onInviteLink = vi
+				.fn()
+				.mockResolvedValueOnce('https://app.oriso.test/c/1')
+				.mockResolvedValueOnce(null)
+				.mockRejectedValueOnce(new Error('CATCH_ALL'));
+			const { api } = await mount({ invite: true, onInviteLink });
+
+			const ok = request(api, 'org.oriso.call.invite_link', {});
+			expect(ok.event.defaultPrevented).toBe(true);
+			await waitFor(() =>
+				expect(api.transport.reply).toHaveBeenCalledWith(ok.detail, {
+					url: 'https://app.oriso.test/c/1'
+				})
+			);
+			const none = request(api, 'org.oriso.call.invite_link', {});
+			await waitFor(() =>
+				expect(api.transport.reply).toHaveBeenCalledWith(none.detail, {
+					error: expect.any(String)
+				})
+			);
+			const failed = request(api, 'org.oriso.call.invite_link', {});
+			await waitFor(() =>
+				expect(api.transport.reply).toHaveBeenCalledWith(
+					failed.detail,
+					{
+						error: expect.any(String)
+					}
+				)
+			);
+		});
+
+		it('runs minimise and toggle_fullscreen and answers {}', async () => {
+			const onWindowCommand = vi.fn();
+			const { api } = await mount({ hostChrome: true, onWindowCommand });
+
+			const minimise = request(api, WINDOW, { command: 'minimise' });
+			expect(minimise.event.defaultPrevented).toBe(true);
+			expect(onWindowCommand).toHaveBeenLastCalledWith('minimise');
+			expect(api.transport.reply).toHaveBeenCalledWith(
+				minimise.detail,
+				{}
+			);
+
+			const toggle = request(api, WINDOW, {
+				command: 'toggle_fullscreen'
+			});
+			expect(onWindowCommand).toHaveBeenLastCalledWith(
+				'toggle_fullscreen'
+			);
+			expect(api.transport.reply).toHaveBeenCalledWith(toggle.detail, {});
+		});
+
+		it('refuses an unknown window command', async () => {
+			const onWindowCommand = vi.fn();
+			const { api } = await mount({ hostChrome: true, onWindowCommand });
+			const { detail } = request(api, WINDOW, { command: 'close' });
+			expect(onWindowCommand).not.toHaveBeenCalled();
+			expect(api.transport.reply).toHaveBeenCalledWith(detail, {
+				error: { message: expect.any(String) }
+			});
+		});
+
+		it('tells the call the window state once ready and on every change', async () => {
+			const { api, rerender } = await mount({
+				hostChrome: true,
+				windowState: { fullscreen: false }
+			});
+			const sends = () =>
+				api.transport.send.mock.calls.filter(
+					(call: unknown[]) => call[0] === WINDOW_STATE
+				);
+			expect(sends()).toHaveLength(0);
+
+			act(() => api.emit('ready', new CustomEvent('ready')));
+			expect(sends()).toEqual([[WINDOW_STATE, { fullscreen: false }]]);
+
+			rerender({ hostChrome: true, windowState: { fullscreen: true } });
+			expect(sends().at(-1)).toEqual([
+				WINDOW_STATE,
+				{ fullscreen: true }
+			]);
+
+			// The same state in a new object is not a change.
+			rerender({ hostChrome: true, windowState: { fullscreen: true } });
+			expect(sends()).toHaveLength(2);
+		});
+
+		it('tells the call its counsellors once ready and whenever the list changes', async () => {
+			const COUNSELLORS = 'org.oriso.call.counsellors';
+			const { api, rerender } = await mount({ counsellors: [] });
+			const sends = () =>
+				api.transport.send.mock.calls.filter(
+					(call: unknown[]) => call[0] === COUNSELLORS
+				);
+			expect(sends()).toHaveLength(0);
+
+			act(() => api.emit('ready', new CustomEvent('ready')));
+			expect(sends()).toEqual([[COUNSELLORS, { userIds: [] }]]);
+
+			rerender({ counsellors: ['@counsellor:example'] });
+			expect(sends().at(-1)).toEqual([
+				COUNSELLORS,
+				{ userIds: ['@counsellor:example'] }
+			]);
+
+			// The same people in a new array are not a change.
+			rerender({ counsellors: ['@counsellor:example'] });
+			expect(sends()).toHaveLength(2);
+		});
+
+		describe('UserService#1662: the call loses its link live', () => {
+			const INVITE_AVAILABLE = 'org.oriso.call.invite_available';
+			const onInviteLink = async () => 'https://app.oriso.test/c/1';
+			const sends = (api: any) =>
+				api.transport.send.mock.calls.filter(
+					(call: unknown[]) => call[0] === INVITE_AVAILABLE
+				);
+
+			it('tells the call once ready and on every change, without a new address', async () => {
+				const { api, rerender, result } = await mount({
+					invite: true,
+					onInviteLink
+				});
+				const url = result.current.url;
+				act(() => api.emit('ready', new CustomEvent('ready')));
+				expect(sends(api)).toEqual([
+					[INVITE_AVAILABLE, { available: true }]
+				]);
+
+				rerender({
+					invite: true,
+					onInviteLink,
+					inviteAvailable: false
+				});
+				expect(sends(api).at(-1)).toEqual([
+					INVITE_AVAILABLE,
+					{ available: false }
+				]);
+				expect(result.current.url).toBe(url);
+
+				rerender({
+					invite: true,
+					onInviteLink,
+					inviteAvailable: false
+				});
+				expect(sends(api)).toHaveLength(2);
+
+				rerender({ invite: true, onInviteLink, inviteAvailable: true });
+				expect(sends(api).at(-1)).toEqual([
+					INVITE_AVAILABLE,
+					{ available: true }
+				]);
+			});
+
+			it('says nothing when the call never offered a link', async () => {
+				const { api } = await mount({ inviteAvailable: false });
+				act(() => api.emit('ready', new CustomEvent('ready')));
+				expect(sends(api)).toHaveLength(0);
+			});
+		});
+
+		it('sends no counsellor list when the host gives none', async () => {
+			const { api } = await mount({});
+			act(() => api.emit('ready', new CustomEvent('ready')));
+			expect(
+				api.transport.send.mock.calls.some(
+					(call: unknown[]) =>
+						call[0] === 'org.oriso.call.counsellors'
+				)
+			).toBe(false);
+		});
 	});
 });

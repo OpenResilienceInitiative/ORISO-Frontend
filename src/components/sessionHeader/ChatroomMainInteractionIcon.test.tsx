@@ -1,11 +1,11 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * FE#513 — the "+" add affordance must never render as a dead decorative
  * element: it is either an interactive button or a real disabled button with
  * an honest tooltip/label.
  */
 import * as React from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { ChatroomMainInteractionIcon } from './ChatroomMainInteractionIcon';
 
@@ -79,5 +79,26 @@ describe('ChatroomMainInteractionIcon', () => {
 	it('renders no add affordance at all when showAddIcon is false', () => {
 		render(<ChatroomMainInteractionIcon type="nearby" />);
 		expect(screen.queryByRole('button')).toBeNull();
+	});
+
+	it('keeps the active look while pending and ignores clicks', () => {
+		const onAddClick = vi.fn();
+		render(
+			<ChatroomMainInteractionIcon
+				type="nearby"
+				showAddIcon
+				addPending
+				addLabel="Supervisor verwalten"
+				onAddClick={onAddClick}
+			/>
+		);
+		const button = screen.getByRole('button', {
+			name: 'Supervisor verwalten'
+		});
+		expect(button.getAttribute('aria-disabled')).toBe('true');
+		expect(button.getAttribute('aria-busy')).toBe('true');
+		expect(button.className).not.toContain('--disabled');
+		fireEvent.click(button);
+		expect(onAddClick).not.toHaveBeenCalled();
 	});
 });

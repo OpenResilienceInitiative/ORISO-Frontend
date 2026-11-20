@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { TopicTag } from '../topicTag/TopicTag';
 import { useEffect } from 'react';
 import '../sessionsList/sessionsList.styles.scss';
 import '../sessionsListItem/sessionsListItem.styles.scss';
@@ -86,9 +87,9 @@ const DemoSessionCard = ({ session }: { session: DemoSession }) => (
 			<div className="sessionsListItem__row">
 				<div className="sessionsListItem__rowLeft">
 					<div className="sessionsListItem__topicPostcodeGroup">
-						<div className="sessionsListItem__topic">
+						<TopicTag className="sessionsListItem__topic">
 							{session.topic}
-						</div>
+						</TopicTag>
 						{session.caseId && (
 							<div className="sessionsListItem__postcode">
 								{session.caseId}

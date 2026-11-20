@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * Encrypted-media scanning (epic ORISO-Admin#366 phase 2, issue #1072).
  *
@@ -7,13 +7,22 @@
  * half of that: no verdict, nothing rendered and nothing linked.
  */
 import * as React from 'react';
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 
 import { MessageAttachment } from './MessageAttachment';
+import type { ChatAttachment } from './chatAttachmentTypes';
 import { NotificationsContext } from '../../globalState';
 
 const isMediaContentScannerEnabled = vi.fn<() => boolean>();
+const isMediaImageCheckEnabled = vi.fn<() => boolean>();
 const downloadScannedEncryptedMedia = vi.fn();
 
 vi.mock('react-i18next', () => ({
@@ -24,6 +33,7 @@ vi.mock('../../resources/scripts/endpoints', () => ({
 }));
 vi.mock('../../services/mediaContentScanner', () => ({
 	isMediaContentScannerEnabled: () => isMediaContentScannerEnabled(),
+	isMediaImageCheckEnabled: () => isMediaImageCheckEnabled(),
 	downloadScannedEncryptedMedia: (file: unknown) =>
 		downloadScannedEncryptedMedia(file)
 }));
@@ -49,10 +59,10 @@ const encryptedFile = {
 	},
 	iv: 'iv',
 	hashes: { sha256: 'hash' },
-	v: 'v2'
+	v: 'v2' as const
 };
 
-const encryptedAttachment = {
+const encryptedAttachment: ChatAttachment = {
 	title: 'photo.png',
 	// Encrypted media is located by encryptedFile.url; there is no plain URL.
 	downloadUrl: '',
@@ -61,29 +71,41 @@ const encryptedAttachment = {
 	mediaType: 'image/png',
 	size: 12,
 	encryptedFile
-} as never;
+};
 
 const imageFile = { name: 'photo.png', type: 'image/png' } as never;
 
+const attachmentElement = (extraProps: Record<string, unknown> = {}) => (
+	<NotificationsContext.Provider
+		value={{ addNotification: vi.fn() } as never}
+	>
+		<MessageAttachment
+			attachment={encryptedAttachment}
+			file={imageFile}
+			hasRenderedMessage
+			rid="room-1"
+			// eslint-disable-next-line react/jsx-props-no-spreading
+			{...extraProps}
+		/>
+	</NotificationsContext.Provider>
+);
+
 const renderAttachment = (extraProps: Record<string, unknown> = {}) =>
-	render(
-		<NotificationsContext.Provider
-			value={{ addNotification: vi.fn() } as never}
-		>
-			<MessageAttachment
-				attachment={encryptedAttachment}
-				file={imageFile}
-				hasRenderedMessage
-				rid="room-1"
-				// eslint-disable-next-line react/jsx-props-no-spreading
-				{...extraProps}
-			/>
-		</NotificationsContext.Provider>
-	);
+	render(attachmentElement(extraProps));
+
+const nextAttachment: ChatAttachment = {
+	...encryptedAttachment,
+	title: 'next.png',
+	mxcUrl: 'mxc://hs/media-2',
+	encryptedFile: { ...encryptedFile, url: 'mxc://hs/media-2' }
+};
 
 describe('MessageAttachment with a content scanner deployed', () => {
 	beforeEach(() => {
 		isMediaContentScannerEnabled.mockReturnValue(true);
+		isMediaImageCheckEnabled.mockReturnValue(false);
+		downloadScannedEncryptedMedia.mockReset();
+		window.URL.revokeObjectURL = vi.fn();
 		if (!window.URL.createObjectURL) {
 			window.URL.createObjectURL = vi.fn();
 		}
@@ -96,6 +118,30 @@ describe('MessageAttachment with a content scanner deployed', () => {
 		cleanup();
 		vi.clearAllMocks();
 		vi.restoreAllMocks();
+	});
+
+	it('names the virus scan alone while no image check is deployed', async () => {
+		downloadScannedEncryptedMedia.mockReturnValue(new Promise(() => {}));
+
+		renderAttachment({ mediaCheckState: 'safe' });
+
+		await screen.findByRole('progressbar', {
+			name: 'attachments.gate.checking'
+		});
+		expect(screen.queryByText('attachments.gate.checkImage')).toBeNull();
+	});
+
+	it('names the image analysis beside the virus scan, neither ticked', async () => {
+		isMediaImageCheckEnabled.mockReturnValue(true);
+		downloadScannedEncryptedMedia.mockReturnValue(new Promise(() => {}));
+
+		renderAttachment({ mediaCheckState: 'safe' });
+
+		const image = await screen.findByText('attachments.gate.checkImage');
+		const virus = screen.getByText('attachments.gate.checkVirus');
+		// One answer comes back for the whole file, so nothing may look finished.
+		expect(virus.className).toContain('attachmentGate__check--running');
+		expect(image.className).toContain('attachmentGate__check--running');
 	});
 
 	it('forwards the file keys to the scanner without waiting for a click', async () => {
@@ -123,6 +169,66 @@ describe('MessageAttachment with a content scanner deployed', () => {
 
 		const img = await screen.findByRole('img');
 		expect(img.getAttribute('src')).toBe('blob:scanned-photo');
+	});
+
+	it('ignores a scanner success for a replaced attachment', async () => {
+		const safe = {
+			verdict: 'safe' as const,
+			data: new Uint8Array([1, 2, 3]).buffer
+		};
+		let finishFirstScan: (outcome: typeof safe) => void;
+		downloadScannedEncryptedMedia
+			.mockReturnValueOnce(
+				new Promise<typeof safe>((resolve) => {
+					finishFirstScan = resolve;
+				})
+			)
+			.mockResolvedValueOnce(safe);
+		const view = renderAttachment({ mediaCheckState: 'safe' });
+		await waitFor(() =>
+			expect(downloadScannedEncryptedMedia).toHaveBeenCalledWith(
+				encryptedFile
+			)
+		);
+
+		view.rerender(
+			attachmentElement({
+				attachment: nextAttachment,
+				mediaCheckState: 'safe'
+			})
+		);
+		await act(async () => {
+			finishFirstScan(safe);
+		});
+
+		expect(downloadScannedEncryptedMedia).toHaveBeenLastCalledWith(
+			nextAttachment.encryptedFile
+		);
+		expect(screen.getByRole('img', { name: 'next.png' })).toBeTruthy();
+		expect(window.URL.createObjectURL).toHaveBeenCalledTimes(1);
+	});
+
+	it('revokes an owned object URL when the attachment is replaced', async () => {
+		downloadScannedEncryptedMedia
+			.mockResolvedValueOnce({
+				verdict: 'safe',
+				data: new Uint8Array([1, 2, 3]).buffer
+			})
+			.mockReturnValueOnce(new Promise(() => {}));
+		const view = renderAttachment({ mediaCheckState: 'safe' });
+		await screen.findByRole('img', { name: 'photo.png' });
+
+		view.rerender(
+			attachmentElement({
+				attachment: nextAttachment,
+				mediaCheckState: 'safe'
+			})
+		);
+
+		expect(window.URL.revokeObjectURL).toHaveBeenCalledWith(
+			'blob:scanned-photo'
+		);
+		expect(screen.queryByRole('img')).toBeNull();
 	});
 
 	it('neither renders nor links media the scanner rejected', async () => {
@@ -174,7 +280,10 @@ describe('MessageAttachment with a content scanner deployed', () => {
 
 		renderAttachment({ mediaCheckState: 'safe' });
 
-		await screen.findByText('e2ee.attachment.encrypted');
+		await screen.findByRole('button', {
+			name: /^attachments\.gate\.decrypt: .*e2ee\.attachment\.encrypted$/
+		});
+		expect(screen.getByText('attachments.gate.decrypt')).toBeTruthy();
 		expect(downloadScannedEncryptedMedia).not.toHaveBeenCalled();
 	});
 });

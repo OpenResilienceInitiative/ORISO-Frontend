@@ -1,7 +1,20 @@
+import { resolveConversationAgencyId } from '../../utils/conversationFeatureSettings';
+import { useSessionAgencyPolicy } from '../../hooks/useSessionAgencyPolicy';
 import * as React from 'react';
 import { useCallback, useContext, useEffect, useState } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import {
+	matchPath,
+	Navigate,
+	useParams,
+	useNavigate,
+	useLocation
+} from 'react-router-dom';
 import { Loading } from '../app/Loading';
+import {
+	parseTopicDuplicateRoomPath,
+	TOPIC_DUPLICATE_QUERY_PARAM,
+	TOPIC_DUPLICATE_SEARCH
+} from './topicDuplicateRoomRoute';
 import {
 	SessionTypeContext,
 	UserDataContext,
@@ -14,7 +27,7 @@ import {
 	mobileDetailView,
 	mobileListView
 } from '../app/navigationHandler';
-import { apiGetAgencyById, apiGetGroupChatInfo } from '../../api';
+import { apiGetGroupChatInfo } from '../../api';
 import { SESSION_LIST_TAB, SESSION_LIST_TYPES } from './sessionHelpers';
 import { JoinGroupChatView } from '../groupChat/JoinGroupChatView';
 import { decodeUsername } from '../../utils/encryptionHelpers';
@@ -35,6 +48,10 @@ import { knockableGroupId } from '../groupChat/joinRequest/knockableGroupId';
 import { groupInviteTokenFor } from '../groupChat/groupInviteTokenMemory';
 import { useSessionAvatarMembers } from '../../hooks/useSessionAvatarMembers';
 import { CaseHandoverOfferGate } from './CaseHandoverOfferGate';
+import {
+	ASKER_SESSION_DETAIL_PATH,
+	REJECTED_ENQUIRY_QUERY_PARAM
+} from '../app/routePaths';
 
 const positiveInteger = (value: string | null | undefined): number | null => {
 	if (!value || !/^\d+$/.test(value)) return null;
@@ -43,7 +60,8 @@ const positiveInteger = (value: string | null | undefined): number | null => {
 };
 
 export const SessionView = () => {
-	const { groupId, sessionId } = useParams<{
+	const { chatId, groupId, sessionId } = useParams<{
+		chatId: string;
 		groupId: string;
 		sessionId: string;
 	}>();
@@ -64,15 +82,41 @@ export const SessionView = () => {
 		desktopView();
 	}, [fromL]);
 
+	if (chatId !== undefined && positiveInteger(chatId) === null) {
+		return <Navigate to={sessionType.path} replace />;
+	}
+
 	const parsedSessionId = positiveInteger(sessionId);
-	const requestId = positiveInteger(
-		new URLSearchParams(search).get('caseHandoverRequestId')
-	);
+	const query = new URLSearchParams(search);
+	const requireRejectedEnquiry =
+		query.get(REJECTED_ENQUIRY_QUERY_PARAM) === '1' &&
+		matchPath(ASKER_SESSION_DETAIL_PATH, pathname) !== null;
+	if (requireRejectedEnquiry && parsedSessionId === null) {
+		return <Navigate to={sessionType.path} replace />;
+	}
+	const requestId = positiveInteger(query.get('caseHandoverRequestId'));
 	const isStableConsultantSessionRoute =
 		!groupId &&
 		parsedSessionId !== null &&
 		requestId !== null &&
 		pathname.includes('/sessions/consultant/sessionView/session/');
+
+	if (new URLSearchParams(search).has(TOPIC_DUPLICATE_QUERY_PARAM)) {
+		const exactRoom = parseTopicDuplicateRoomPath(pathname);
+		if (
+			search !== TOPIC_DUPLICATE_SEARCH ||
+			chatId !== undefined ||
+			exactRoom?.rolePath !== 'consultant/sessionView' ||
+			exactRoom.roomId !== groupId ||
+			exactRoom.caseId !== parsedSessionId ||
+			!hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
+		) {
+			return <Navigate to="/notifications" replace />;
+		}
+		return (
+			<SessionViewBody key={`${userData.userId}:${pathname}${search}`} />
+		);
+	}
 
 	if (isStableConsultantSessionRoute) {
 		return (
@@ -95,14 +139,27 @@ export const SessionView = () => {
 		);
 	}
 
-	return <SessionViewBody />;
+	return (
+		<SessionViewBody
+			key={requireRejectedEnquiry ? parsedSessionId : undefined}
+			requireRejectedEnquiry={requireRejectedEnquiry}
+		/>
+	);
 };
 
-const SessionViewBody = () => {
-	const { groupId: groupIdFromParam, sessionId: sessionIdFromParam } =
-		useParams<{ groupId: string; sessionId: string }>();
+const SessionViewBody = ({ requireRejectedEnquiry = false }) => {
+	const {
+		groupId: groupIdFromParam,
+		sessionId: sessionIdFromParam,
+		chatId: chatIdFromParam
+	} = useParams<{ groupId: string; sessionId: string; chatId: string }>();
 	const navigate = useNavigate();
-	const { pathname } = useLocation();
+	const { pathname, search } = useLocation();
+	const exactRoom =
+		search === TOPIC_DUPLICATE_SEARCH
+			? parseTopicDuplicateRoomPath(pathname)
+			: null;
+	const returnToTimeline = exactRoom !== null;
 
 	const { type, path: listPath } = useContext(SessionTypeContext);
 	const { userData } = useContext(UserDataContext);
@@ -117,17 +174,21 @@ const SessionViewBody = () => {
 		session: activeSession,
 		ready: activeSessionReady,
 		reload: reloadActiveSession,
+		refresh: refreshActiveSession,
 		read: readActiveSession
 	} = useSession(
-		groupIdFromParam,
+		exactRoom
+			? { roomId: exactRoom.roomId, caseId: exactRoom.caseId }
+			: groupIdFromParam,
 		sessionIdFromParam ? parseInt(sessionIdFromParam) : undefined,
-		undefined,
+		positiveInteger(chatIdFromParam) ?? undefined,
 		(hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) ||
 			(userData?.userRoles || []).includes('USER')) &&
 			!(
 				hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) ||
 				(userData?.userRoles || []).includes('CONSULTANT')
-			)
+			),
+		requireRejectedEnquiry
 	);
 
 	const sessionListTab = useSearchParam<SESSION_LIST_TAB>('sessionListTab');
@@ -219,8 +280,12 @@ const SessionViewBody = () => {
 	useEffect(() => {
 		if (activeSessionReady && !activeSession) {
 			navigate(
-				listPath +
-					(sessionListTab ? `?sessionListTab=${sessionListTab}` : ''),
+				returnToTimeline
+					? '/notifications'
+					: listPath +
+							(sessionListTab
+								? `?sessionListTab=${sessionListTab}`
+								: ''),
 				{ replace: true }
 			);
 			return;
@@ -242,30 +307,20 @@ const SessionViewBody = () => {
 		sessionListTab,
 		type,
 		listPath,
+		returnToTimeline,
 		navigate
 	]);
 
+	const agencyFeatures = useSessionAgencyPolicy(
+		activeSession?.item?.id,
+		resolveConversationAgencyId(activeSession?.item)
+	);
 	useEffect(() => {
-		let isCanceled = false;
-		const agencyId = activeSession?.item?.agencyId;
-		if (!agencyId) return;
-
-		(async () => {
-			try {
-				const agency = await apiGetAgencyById(agencyId);
-				if (agency?.agencyLogo && !isCanceled) {
-					setAgencyLogo(agency.agencyLogo);
-				}
-			} catch {
-				// Logo fetch is cosmetic; never break the session view.
-			}
-		})();
-
+		setAgencyLogo(agencyFeatures.agency?.agencyLogo ?? '');
 		return () => {
-			isCanceled = true;
 			setAgencyLogo('');
 		};
-	}, [activeSession?.item?.agencyId, setAgencyLogo]);
+	}, [agencyFeatures.agency?.agencyLogo, setAgencyLogo]);
 
 	if (loading || !activeSession || groupAccess === 'checking') {
 		return <Loading />;
@@ -301,6 +356,7 @@ const SessionViewBody = () => {
 	) {
 		return (
 			<ActiveSessionProvider
+				agencyFeaturePolicy={agencyFeatures.policy}
 				activeSession={activeSession}
 				reloadActiveSession={reloadActiveSession}
 			>
@@ -314,10 +370,12 @@ const SessionViewBody = () => {
 
 	return (
 		<ActiveSessionProvider
+			agencyFeaturePolicy={agencyFeatures.policy}
 			activeSession={activeSession}
 			readActiveSession={readActiveSession}
 			avatarMembers={avatarMembers}
 			reloadActiveSession={reloadActiveSession}
+			refreshActiveSession={refreshActiveSession}
 		>
 			<SessionStream
 				readonly={readonly}

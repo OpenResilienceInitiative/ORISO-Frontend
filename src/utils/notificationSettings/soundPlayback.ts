@@ -202,6 +202,18 @@ export const previewNotificationSound = (
  * per-conversation level, mute, family-off), and rate-limited so bursts
  * don't rattle.
  */
+/**
+ * FE#1211 (Frank, 18 Nov): the call row rings, which is right for a call you
+ * can still take. An ended or missed call closes with a short tone instead
+ * (`ton-10`, react-sounds "ui/popup_close", MIT, see audio/notifications/
+ * CREDITS.md). A tone the user picked for the call row is kept.
+ */
+const CLOSING_CALL_EVENTS = new Set(['call.ended', 'call.missed']);
+const closingToneFor = (eventType: string, configured: SoundId): SoundId =>
+	CLOSING_CALL_EVENTS.has(eventType) && configured === 'ring'
+		? 'ton-10'
+		: configured;
+
 export const playNotificationSound = (
 	settings: OrisoNotificationSettings,
 	device: LocalDeviceNotificationSettings,
@@ -212,7 +224,9 @@ export const playNotificationSound = (
 	/** Per-kind tone from the list's display filter (#1377 "Ton"). */
 	override?: SoundId,
 	/** Server recipient metadata classifies the occasion, never permission. */
-	recipientRole?: string | null
+	recipientRole?: string | null,
+	/** Server conversation metadata; selects the Live-Chat row (FE#1470). */
+	conversationType?: string | null
 ): void => {
 	if (isNotificationSuppressed(settings, device, family)) {
 		return;
@@ -224,11 +238,20 @@ export const playNotificationSound = (
 		recipientRole,
 		{
 			family,
-			mentioned: isMention
+			mentioned: isMention,
+			conversationType
 		}
 	).browser;
-	const kindConfig = settings.notificationConfig[area][kind];
-	const asset = soundAssetFor(override ?? kindConfig.sound);
+	// System notices have no row: the single system switch (checked by the
+	// suppression gate above) gates banner and tone, the tone is the one
+	// chosen next to that switch.
+	const kindConfig =
+		family === 'system'
+			? settings.systemTone
+			: settings.notificationConfig[area][kind];
+	const asset = soundAssetFor(
+		override ?? closingToneFor(eventType, kindConfig.sound)
+	);
 	const volume = kindConfig.volume;
 	if (!asset || !('Audio' in window)) {
 		return;
@@ -236,15 +259,33 @@ export const playNotificationSound = (
 	if (!throttleFor(family)(now)) {
 		return;
 	}
-	// Reuse the gesture-primed element when we have one (Safari) — but never
-	// while it is still playing: assigning .src would cut off an in-flight
-	// sound (e.g. a message tone killing the call ring). A fresh element is
-	// fine in Chromium/Firefox, and in Safari the ring keeps playing, which
-	// is the better failure mode.
+	playAsset(asset, volume);
+};
+
+/**
+ * Reuse the gesture-primed element when we have one (Safari) — but never
+ * while it is still playing: assigning .src would cut off an in-flight
+ * sound (e.g. a message tone killing the call ring). A fresh element is
+ * fine in Chromium/Firefox, and in Safari the ring keeps playing, which
+ * is the better failure mode.
+ */
+const playAsset = (asset: string, volume: number): void => {
 	const busy = sharedAudio && !sharedAudio.paused && !sharedAudio.ended;
 	const audio = sharedAudio && !busy ? sharedAudio : new Audio();
 	audio.src = asset;
 	audio.muted = false;
 	audio.volume = Math.max(0, Math.min(1, volume));
 	audio.play().catch(() => undefined);
+};
+
+/**
+ * One sound for an event that arrives without a click (a poll, a listener),
+ * on the gesture-primed element so Safari lets it play.
+ */
+export const playEventSound = (soundId: SoundId, volume: number): void => {
+	const asset = soundAssetFor(soundId);
+	if (!asset || !('Audio' in window)) {
+		return;
+	}
+	playAsset(asset, volume);
 };

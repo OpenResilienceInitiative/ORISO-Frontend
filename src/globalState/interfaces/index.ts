@@ -1,6 +1,5 @@
 export * from './AppConfig';
 export * from './AuthDataInterface';
-export * from './BookingsInterface';
 export * from './ConsultingSessionDataInterface';
 export * from './ConsultingTypeInterface';
 export * from './E2EEDataInterface';

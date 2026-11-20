@@ -1,11 +1,14 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import {
 	apiCreateCaseHandoverOffer,
 	apiDecideCaseHandoverRecipient,
 	apiGetCaseHandoverRecipients,
 	apiGetCaseHandoverRequestStatus,
+	apiReclaimCaseHandover,
 	apiRequestCaseHandoverAccess,
-	apiRequestCaseHandoverBatchAccess
+	apiRequestCaseHandoverBatchAccess,
+	apiWithdrawCaseHandoverOffer,
+	isPendingCaseHandoverStatus
 } from './apiCaseHandover';
 import { fetchData } from './fetchData';
 
@@ -41,6 +44,39 @@ describe('apiCaseHandover mutation contracts', () => {
 			url: 'https://api.test/service/users/sessions/41/case-handover/recipients',
 			method: 'GET',
 			responseHandling: ['FORBIDDEN']
+		});
+	});
+
+	it('withdraws one open offer of one session and reads the returned status', async () => {
+		vi.mocked(fetchData).mockResolvedValueOnce({ status: 'WITHDRAWN' });
+
+		await expect(apiWithdrawCaseHandoverOffer(41, 501)).resolves.toEqual({
+			status: 'WITHDRAWN'
+		});
+		expect(fetchData).toHaveBeenCalledWith({
+			url: 'https://api.test/service/users/sessions/41/case-handover/501/withdraw',
+			method: 'POST',
+			responseHandling: ['CONTENT', 'FORBIDDEN', 'CONFLICT']
+		});
+	});
+
+	it('treats a withdrawn offer as closed, not as still pending', () => {
+		expect(isPendingCaseHandoverStatus('WITHDRAWN')).toBe(false);
+		expect(
+			isPendingCaseHandoverStatus('PENDING_RECIPIENT_ACCEPTANCE')
+		).toBe(true);
+	});
+
+	it('takes a case back and reads the returned status (US #200)', async () => {
+		vi.mocked(fetchData).mockResolvedValueOnce({ status: 'RECLAIMED' });
+
+		await expect(apiReclaimCaseHandover(41)).resolves.toEqual({
+			status: 'RECLAIMED'
+		});
+		expect(fetchData).toHaveBeenCalledWith({
+			url: 'https://api.test/service/users/sessions/41/case-handover/reclaim',
+			method: 'POST',
+			responseHandling: ['CONTENT', 'FORBIDDEN', 'CONFLICT']
 		});
 	});
 

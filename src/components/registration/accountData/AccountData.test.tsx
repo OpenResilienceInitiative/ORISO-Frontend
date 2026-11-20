@@ -1,7 +1,13 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import * as React from 'react';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import {
+	cleanup,
+	fireEvent,
+	render,
+	screen,
+	waitFor
+} from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { AccountData } from './AccountData';
 import { clearDepartmentLegalCache } from '../../../api/apiGetDepartmentLegal';
 import { LegalLinksContext } from '../../../globalState/provider/LegalLinksProvider';
@@ -9,6 +15,13 @@ import { LocaleContext } from '../../../globalState/context/LocaleContext';
 import { RegistrationContext } from '../../../globalState/provider/RegistrationProvider';
 import { TenantContext } from '../../../globalState/provider/TenantProvider';
 import { TenantDataInterface } from '../../../globalState/interfaces';
+import {
+	clearAccountDataDraft,
+	getAccountDataDraft,
+	setAccountDataDraft
+} from './accountDataDraft';
+import { generatePseudonym } from '../../../utils/pseudonymGenerator';
+import * as pseudonyms from '../../../utils/pseudonymGenerator';
 
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({
@@ -40,7 +53,9 @@ vi.mock('../../../globalState/provider/RegistrationProvider', async () => {
 
 afterEach(() => {
 	cleanup();
+	clearAccountDataDraft();
 	clearDepartmentLegalCache();
+	vi.restoreAllMocks();
 	vi.clearAllMocks();
 });
 
@@ -58,7 +73,10 @@ const tenantWith = (
 const renderAccountData = (
 	tenant: TenantDataInterface,
 	registrationData: Record<string, unknown> = {},
-	temporary = false
+	temporary = false,
+	onChange = vi.fn(),
+	dataProtection: 'checkbox' | 'snackbar' = 'checkbox',
+	conversationType: 'AGENCY_COUNSELLING' | 'SELF_HELP' = 'AGENCY_COUNSELLING'
 ) =>
 	render(
 		<LegalLinksContext.Provider
@@ -89,7 +107,9 @@ const renderAccountData = (
 						value={{ tenant, setTenant: () => {} }}
 					>
 						<AccountData
-							onChange={() => {}}
+							onChange={onChange}
+							dataProtection={dataProtection}
+							conversationType={conversationType}
 							temporary={temporary}
 						/>
 					</TenantContext.Provider>
@@ -99,6 +119,53 @@ const renderAccountData = (
 	);
 
 describe('AccountData — configurable email field', () => {
+	it('does not collect email or offer email 2FA when account collection is forbidden', () => {
+		renderAccountData(
+			tenantWith({
+				emailVisible: true,
+				emailRequired: true,
+				featureAskerEmailEnabled: false
+			})
+		);
+		expect(
+			screen.queryByLabelText('registration.account.email.label')
+		).toBeNull();
+		expect(
+			screen.queryByLabelText('registration.account.twoFactorAuth.label')
+		).toBeNull();
+	});
+
+	it('clears a restored email and permits completion despite restored required-email and 2FA settings', async () => {
+		setAccountDataDraft({
+			identity: generatePseudonym('de'),
+			username: 'policy-asker',
+			password: 'Sichere-Passphrase9!',
+			repeatPassword: 'Sichere-Passphrase9!',
+			acceptedConsentBinding: null,
+			email: 'restored@example.test',
+			twoFactorAuthEnabled: true
+		});
+		const onChange = vi.fn();
+		renderAccountData(
+			tenantWith({
+				emailVisible: true,
+				emailRequired: true,
+				featureAskerEmailEnabled: false
+			}),
+			{},
+			false,
+			onChange,
+			'snackbar'
+		);
+		await waitFor(() =>
+			expect(onChange).toHaveBeenCalledWith({
+				username: 'policy-asker',
+				password: 'Sichere-Passphrase9!',
+				email: undefined
+			})
+		);
+	});
+
 	it('does not render an email field when the tenant has it hidden', () => {
 		renderAccountData(tenantWith({ emailVisible: false }));
 
@@ -247,4 +314,151 @@ describe('AccountData — leaving the temporary join', () => {
 		expect(passwordFields.length).toBeGreaterThan(0);
 		passwordFields.forEach((field) => expect(field.value).toBe(''));
 	});
+});
+
+it('rolling the login suggestion preserves the independently chosen avatar (#1025)', () => {
+	renderAccountData(tenantWith({}));
+	const initial = getAccountDataDraft().identity;
+	vi.spyOn(pseudonyms, 'regeneratePseudonym').mockReturnValue({
+		...initial,
+		displayName: 'freundlicher Otter Kim',
+		animalLabel: 'Otter',
+		name: 'Kim',
+		avatar: { ...initial.avatar, bg: '#000000' }
+	});
+	fireEvent.click(
+		screen.getByRole('button', {
+			name: /registration.account.suggest.username/
+		})
+	);
+	expect(getAccountDataDraft().identity.avatar).toEqual(initial.avatar);
+});
+
+describe('registration offers no display-name field (#2210)', () => {
+	it.each([
+		['AGENCY_COUNSELLING', true],
+		['AGENCY_COUNSELLING', false],
+		['SELF_HELP', true]
+	] as const)(
+		'%s with typing=%s shows no display name, dice or use-User-ID button',
+		(type, editable) => {
+			renderAccountData(
+				tenantWith({ featureDisplayNameEditable: editable }),
+				{},
+				false,
+				vi.fn(),
+				'checkbox',
+				type
+			);
+			expect(
+				screen.queryByLabelText('profile.data.displayName')
+			).toBeNull();
+			expect(
+				screen.queryByText('registration.account.displayName.optional')
+			).toBeNull();
+			expect(
+				screen.queryByRole('button', {
+					name: 'registration.account.displayName.suggest'
+				})
+			).toBeNull();
+			expect(
+				screen.queryByRole('button', {
+					name: 'registration.account.displayName.useUsername'
+				})
+			).toBeNull();
+		}
+	);
+	it('keeps the User-ID read-only when typing is disabled', () => {
+		renderAccountData(tenantWith({ featureDisplayNameEditable: false }));
+		expect(
+			screen.getByLabelText<HTMLInputElement>(
+				'registration.account.username.label'
+			).readOnly
+		).toBe(true);
+	});
+});
+
+describe('registration context collection permission', () => {
+	it.each(['AGENCY_COUNSELLING', 'SELF_HELP'] as const)(
+		'hides %s email and email2FA despite visible/required presentation',
+		(type) => {
+			renderAccountData(
+				tenantWith({
+					emailVisible: true,
+					emailRequired: true,
+					featureAskerEmailCollectionAgencyCounsellingEnabled: false,
+					featureAskerEmailCollectionSelfHelpEnabled: false
+				}),
+				{},
+				false,
+				vi.fn(),
+				'checkbox',
+				type
+			);
+			expect(
+				screen.queryByLabelText('registration.account.email.label')
+			).toBeNull();
+			expect(
+				screen.queryByLabelText(
+					'registration.account.twoFactorAuth.label'
+				)
+			).toBeNull();
+		}
+	);
+	it('does not apply the self-help collection cap to counselling signup', () => {
+		renderAccountData(
+			tenantWith({
+				emailVisible: true,
+				featureAskerEmailCollectionSelfHelpEnabled: false
+			})
+		);
+		expect(
+			screen.getByLabelText('registration.account.email.label')
+		).toBeDefined();
+	});
+});
+
+describe('registration submits no display name (#2210)', () => {
+	it.each([
+		['AGENCY_COUNSELLING', true],
+		['AGENCY_COUNSELLING', false],
+		['SELF_HELP', true]
+	] as const)(
+		'%s typing=%s ignores a display name left in an old draft',
+		async (type, editable) => {
+			const identity = generatePseudonym('de');
+			setAccountDataDraft({
+				identity,
+				generatedUsername: 'generated_login_1234',
+				username: 'fixed_login',
+				password: 'Sichere-Passphrase9!',
+				repeatPassword: 'Sichere-Passphrase9!',
+				acceptedConsentBinding: null,
+				email: '',
+				twoFactorAuthEnabled: false,
+				displayName: 'Sichere-Passphrase9!'
+			} as Parameters<typeof setAccountDataDraft>[0]);
+			const onChange = vi.fn();
+			renderAccountData(
+				tenantWith({ featureDisplayNameEditable: editable }),
+				{},
+				false,
+				onChange,
+				'snackbar',
+				type
+			);
+			await waitFor(() =>
+				expect(onChange).toHaveBeenCalledWith(
+					expect.objectContaining({
+						username: editable
+							? 'fixed_login'
+							: 'generated_login_1234'
+					})
+				)
+			);
+			for (const [data] of onChange.mock.calls) {
+				expect(data).not.toHaveProperty('displayName');
+			}
+		}
+	);
 });

@@ -1,6 +1,13 @@
 import { feedbackMailIntentQueue } from './feedbackMailIntentQueue';
-// @vitest-environment jsdom
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+// @vitest-environment oriso-jsdom
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import { chatTransportService } from './chatTransportService';
 import { setMatrixClientServiceRef } from './matrixClientRegistry';
 
@@ -99,6 +106,10 @@ const createFakeEncryptedMatrixEvent = (failed = false) => {
 			if (name === 'Event.decrypted')
 				decryptionListeners.delete(listener);
 		},
+		markDecrypted: () => {
+			eventType = 'm.room.message';
+			decryptionFailure = false;
+		},
 		emitDecrypted: (error?: Error) => {
 			if (!error) {
 				eventType = 'm.room.message';
@@ -146,6 +157,26 @@ describe('chatTransportService Matrix timeline', () => {
 
 		detach?.();
 		expect(fakeClient.listenerCount('Room.timeline')).toBe(0);
+	});
+
+	it('reports the moment a message in the watched room is actually redacted', () => {
+		const listener = vi.fn();
+		const redaction = { getType: () => 'm.room.redaction' };
+		const detach = chatTransportService.onMatrixRedaction(
+			ROOM_ID,
+			listener
+		);
+
+		// Room.redaction fires when the SDK flips the target to "redacted",
+		// including the remote echo of our OWN redaction, which never
+		// produces a second Room.timeline event.
+		fakeClient.emit('Room.redaction', redaction, { roomId: OTHER_ROOM_ID });
+		expect(listener).not.toHaveBeenCalled();
+		fakeClient.emit('Room.redaction', redaction, { roomId: ROOM_ID });
+		expect(listener).toHaveBeenCalledTimes(1);
+
+		detach?.();
+		expect(fakeClient.listenerCount('Room.redaction')).toBe(0);
 	});
 
 	it('refreshes an initial-sync historical event when decryption finishes later', () => {
@@ -253,6 +284,71 @@ describe('chatTransportService Matrix timeline', () => {
 		expect(listener).toHaveBeenCalledTimes(1);
 	});
 
+	/**
+	 * A retry after a key import, a backup restore or a sender-device update
+	 * can succeed long after the per-event watch expired, or for an event this
+	 * view never saw arrive (scrollback, a re-attached view). The client
+	 * re-emits every event's `Event.decrypted`; the chat must re-render on it,
+	 * or the message stays "Nachricht verschlüsselt" until the next reload.
+	 */
+	it('re-renders a late decryption of an untracked event in the watched room', () => {
+		const room = { roomId: ROOM_ID, timeline: [] };
+		fakeClient = createFakeMatrixClient(room);
+		setMatrixClientServiceRef({ getClient: () => fakeClient } as any);
+		const { event } = createFakeEncryptedMatrixEvent();
+		(event as any).getRoomId = () => ROOM_ID;
+		const listener = vi.fn();
+		const detach = chatTransportService.onMatrixTimeline(ROOM_ID, listener);
+
+		event.emitDecrypted();
+		fakeClient.emit('Event.decrypted', event);
+
+		expect(listener).toHaveBeenCalledOnce();
+		expect(listener).toHaveBeenCalledWith(event, room, false);
+
+		detach?.();
+		expect(fakeClient.listenerCount('Event.decrypted')).toBe(0);
+	});
+
+	it('ignores client-level decryptions of other rooms and failed retries', () => {
+		fakeClient = createFakeMatrixClient({ roomId: ROOM_ID, timeline: [] });
+		setMatrixClientServiceRef({ getClient: () => fakeClient } as any);
+		const { event: other } = createFakeEncryptedMatrixEvent();
+		(other as any).getRoomId = () => OTHER_ROOM_ID;
+		other.emitDecrypted();
+		const { event: failed } = createFakeEncryptedMatrixEvent(true);
+		(failed as any).getRoomId = () => ROOM_ID;
+		const listener = vi.fn();
+		const detach = chatTransportService.onMatrixTimeline(ROOM_ID, listener);
+
+		fakeClient.emit('Event.decrypted', other);
+		fakeClient.emit('Event.decrypted', failed);
+		fakeClient.emit('Event.decrypted', failed, new Error('no key'));
+
+		expect(listener).not.toHaveBeenCalled();
+		detach?.();
+	});
+
+	it('does not notify twice when the per-event watch already handles the decryption', () => {
+		const { event } = createFakeEncryptedMatrixEvent();
+		(event as any).getRoomId = () => ROOM_ID;
+		const room = { roomId: ROOM_ID, timeline: [] };
+		fakeClient = createFakeMatrixClient(room);
+		setMatrixClientServiceRef({ getClient: () => fakeClient } as any);
+		const listener = vi.fn();
+		const detach = chatTransportService.onMatrixTimeline(ROOM_ID, listener);
+		fakeClient.emit('Room.timeline', event, room, false);
+		listener.mockClear();
+
+		// The SDK re-emits on the client before the event's own listeners run.
+		event.markDecrypted();
+		fakeClient.emit('Event.decrypted', event);
+		event.emitDecrypted();
+
+		expect(listener).toHaveBeenCalledOnce();
+		detach?.();
+	});
+
 	it('expires a pending decryption listener after five minutes', () => {
 		vi.useFakeTimers();
 		try {
@@ -273,6 +369,65 @@ describe('chatTransportService Matrix timeline', () => {
 		} finally {
 			vi.useRealTimers();
 		}
+	});
+});
+
+describe('chatTransportService Matrix read receipts (FE#1802)', () => {
+	const ME = '@me:example.org';
+	const receipt = (userId: string) => ({
+		getType: () => 'm.receipt',
+		getContent: () => ({
+			$event: { 'm.read': { [userId]: { ts: 1 } } }
+		})
+	});
+	let fakeClient: ReturnType<typeof createFakeMatrixClient> & {
+		getUserId: () => string;
+	};
+
+	beforeEach(() => {
+		fakeClient = { ...createFakeMatrixClient(), getUserId: () => ME };
+		setMatrixClientServiceRef({ getClient: () => fakeClient } as any);
+	});
+
+	afterEach(() => setMatrixClientServiceRef(null));
+
+	it('notifies on a peer receipt in the room, not on my own or another room', () => {
+		const listener = vi.fn();
+		const detach = chatTransportService.onMatrixReadReceipt(
+			ROOM_ID,
+			listener
+		);
+
+		fakeClient.emit('Room.receipt', receipt(ME), { roomId: ROOM_ID });
+		fakeClient.emit('Room.receipt', receipt('@peer:example.org'), {
+			roomId: OTHER_ROOM_ID
+		});
+		expect(listener).not.toHaveBeenCalled();
+
+		fakeClient.emit('Room.receipt', receipt('@peer:example.org'), {
+			roomId: ROOM_ID
+		});
+		expect(listener).toHaveBeenCalledTimes(1);
+
+		detach?.();
+		expect(fakeClient.listenerCount('Room.receipt')).toBe(0);
+	});
+	it('ignores a Room.receipt that carries no m.receipt event', () => {
+		// The practice fake emits the message itself; reading its body as a
+		// receipt looped refresh → mark read → refresh.
+		const listener = vi.fn();
+		chatTransportService.onMatrixReadReceipt(ROOM_ID, listener);
+
+		fakeClient.emit(
+			'Room.receipt',
+			{
+				getType: () => 'm.room.message',
+				getContent: () => ({ msgtype: 'm.text', body: 'Hallo' })
+			},
+			{ roomId: ROOM_ID }
+		);
+
+		expect(listener).not.toHaveBeenCalled();
 	});
 });
 
@@ -646,6 +801,19 @@ describe('chatTransportService sendTextMessage (Matrix-only transport)', () => {
 describe('chatTransportService team attachment notifications', () => {
 	afterEach(() => setMatrixClientServiceRef(null));
 
+	it('rejects a file send without a Matrix service and sends no notification', async () => {
+		setMatrixClientServiceRef(null);
+		const notify = vi.fn();
+		await expect(
+			chatTransportService.sendFileMessage(
+				ROOM_ID,
+				new File(['x'], 'note.txt'),
+				{ postMessageEventNotification: notify }
+			)
+		).rejects.toThrow('Matrix client not initialized');
+		expect(notify).not.toHaveBeenCalled();
+	});
+
 	it('marks an attachment sent in the team room as teamDiscussion', async () => {
 		const postNotification = vi.fn(() => Promise.resolve({}));
 		setMatrixClientServiceRef({
@@ -721,24 +889,26 @@ describe('chatTransportService markRoomAsRead', () => {
 		};
 		setClientWithRoom(room);
 
-		await chatTransportService.markRoomAsRead(ROOM_ID);
+		await expect(
+			chatTransportService.markRoomAsRead(ROOM_ID)
+		).resolves.toBe(true);
 
 		expect(sendReadReceipt).toHaveBeenCalledTimes(1);
 		expect(sendReadReceipt).toHaveBeenCalledWith(latestEvent);
 	});
 
-	it('is a safe no-op (no throw) when the Matrix client is missing', async () => {
+	it('is a safe no-op (false, no throw) when the Matrix client is missing', async () => {
 		setMatrixClientServiceRef(null);
 		await expect(
 			chatTransportService.markRoomAsRead(ROOM_ID)
-		).resolves.toBeUndefined();
+		).resolves.toBe(false);
 	});
 
 	it('is a safe no-op when the room is unknown', async () => {
 		setClientWithRoom(null);
 		await expect(
 			chatTransportService.markRoomAsRead(ROOM_ID)
-		).resolves.toBeUndefined();
+		).resolves.toBe(false);
 	});
 
 	it('is a safe no-op when the room has no events', async () => {
@@ -751,11 +921,11 @@ describe('chatTransportService markRoomAsRead', () => {
 
 		await expect(
 			chatTransportService.markRoomAsRead(ROOM_ID)
-		).resolves.toBeUndefined();
+		).resolves.toBe(false);
 		expect(sendReadReceipt).not.toHaveBeenCalled();
 	});
 
-	it('swallows a failing read-receipt send (no throw)', async () => {
+	it('reports false for a failing read-receipt send (no throw)', async () => {
 		const room = {
 			getLiveTimeline: () => ({
 				getEvents: () => [{ id: 'latest' }]
@@ -766,7 +936,140 @@ describe('chatTransportService markRoomAsRead', () => {
 
 		await expect(
 			chatTransportService.markRoomAsRead(ROOM_ID)
-		).resolves.toBeUndefined();
+		).resolves.toBe(false);
+	});
+});
+
+describe('chatTransportService markRoomAsRead dedupe (FE#1802)', () => {
+	afterEach(() => {
+		setMatrixClientServiceRef(null);
+	});
+
+	const roomWithEvents = (events: any[], sendReadReceipt: any) => {
+		const client = {
+			getRoom: (roomId: string) =>
+				roomId === ROOM_ID
+					? {
+							getLiveTimeline: () => ({
+								getEvents: () => events
+							})
+						}
+					: null,
+			sendReadReceipt
+		};
+		currentEvents = events;
+		lastClient = client;
+		setMatrixClientServiceRef({ getClient: () => client } as any);
+	};
+	let currentEvents: any[] = [];
+	let lastClient: any = null;
+	const roomWithEventsOnSameClient = (events: any[]) => {
+		currentEvents = events;
+		lastClient.getRoom = (roomId: string) =>
+			roomId === ROOM_ID
+				? {
+						getLiveTimeline: () => ({
+							getEvents: () => currentEvents
+						})
+					}
+				: null;
+	};
+	const event = (id: string, extra: Record<string, unknown> = {}) => ({
+		getId: () => id,
+		...extra
+	});
+
+	it('sends one receipt per latest event, even when asked again while it is in flight', async () => {
+		const first = event('$first');
+		const events: any[] = [first];
+		const sendReadReceipt = vi.fn(() => Promise.resolve());
+		roomWithEvents(events, sendReadReceipt);
+
+		await Promise.all([
+			chatTransportService.markRoomAsRead(ROOM_ID),
+			chatTransportService.markRoomAsRead(ROOM_ID),
+			chatTransportService.markRoomAsRead(ROOM_ID)
+		]);
+		expect(sendReadReceipt).toHaveBeenCalledTimes(1);
+
+		const second = event('$second');
+		events.push(second);
+		await chatTransportService.markRoomAsRead(ROOM_ID);
+		expect(sendReadReceipt).toHaveBeenCalledTimes(2);
+		expect(sendReadReceipt).toHaveBeenLastCalledWith(second);
+	});
+
+	it('gives a caller that joins an in-flight send the real result of that send', async () => {
+		let failSend!: (error: Error) => void;
+		const sendReadReceipt = vi.fn(
+			() =>
+				new Promise<void>((_resolve, reject) => {
+					failSend = reject;
+				})
+		);
+		roomWithEvents([event('$latest')], sendReadReceipt);
+
+		const first = chatTransportService.markRoomAsRead(ROOM_ID);
+		const second = chatTransportService.markRoomAsRead(ROOM_ID);
+		failSend(new Error('offline'));
+
+		await expect(first).resolves.toBe(false);
+		await expect(second).resolves.toBe(false);
+		expect(sendReadReceipt).toHaveBeenCalledTimes(1);
+	});
+
+	it('sends the receipt for the newest readable event, not a later one still encrypted or failed', async () => {
+		const readable = event('$readable', {
+			getType: () => 'm.room.message',
+			isEncrypted: () => true,
+			isDecryptionFailure: () => false
+		});
+		const failed = {
+			getType: () => 'm.room.message',
+			isEncrypted: () => true,
+			isDecryptionFailure: () => true
+		};
+		const stillEncrypted = { getType: () => 'm.room.encrypted' };
+		const sendReadReceipt = vi.fn(() => Promise.resolve());
+		roomWithEvents([readable, failed, stillEncrypted], sendReadReceipt);
+
+		await expect(
+			chatTransportService.markRoomAsRead(ROOM_ID)
+		).resolves.toBe(true);
+		expect(sendReadReceipt).toHaveBeenCalledWith(readable);
+	});
+
+	it('dedupes by event id and forgets it with the Matrix client (no event kept)', async () => {
+		const sendReadReceipt = vi.fn(() => Promise.resolve());
+		roomWithEvents([event('$same')], sendReadReceipt);
+		await chatTransportService.markRoomAsRead(ROOM_ID);
+
+		// Same event id, re-read as a new object: no second receipt.
+		roomWithEventsOnSameClient([event('$same')]);
+		await chatTransportService.markRoomAsRead(ROOM_ID);
+		expect(sendReadReceipt).toHaveBeenCalledTimes(1);
+
+		// A new client (sign-in again, token refresh) starts from scratch.
+		roomWithEvents([event('$same')], sendReadReceipt);
+		await chatTransportService.markRoomAsRead(ROOM_ID);
+		expect(sendReadReceipt).toHaveBeenCalledTimes(2);
+	});
+
+	it('retries the same event after a failed send', async () => {
+		const latest = event('$latest');
+		const sendReadReceipt = vi
+			.fn()
+			.mockRejectedValueOnce(new Error('offline'))
+			.mockResolvedValueOnce(undefined);
+		roomWithEvents([latest], sendReadReceipt);
+
+		await expect(
+			chatTransportService.markRoomAsRead(ROOM_ID)
+		).resolves.toBe(false);
+		await expect(
+			chatTransportService.markRoomAsRead(ROOM_ID)
+		).resolves.toBe(true);
+		expect(sendReadReceipt).toHaveBeenCalledTimes(2);
 	});
 });
 
@@ -1097,5 +1400,91 @@ describe('explicit feedback metadata after successful Matrix delivery', () => {
 		).rejects.toThrow('Matrix unavailable');
 		expect(apiPostMessageEventNotification).not.toHaveBeenCalled();
 		expect(localStorage.length).toBe(0);
+	});
+});
+
+// ORISO-Admin#1518 follow-up: a person removed from a Gesprächskreis must leave
+// its running call even when the removal reached a freshly refreshed Matrix
+// client, whose first sync omits rooms the user was banned from.
+describe('getMyMatrixRoomMembership / onMatrixInitialSync', () => {
+	afterEach(() => setMatrixClientServiceRef(null));
+
+	const clientWith = (
+		rooms: Record<string, string>,
+		synced: boolean
+	): Record<string, unknown> & { emitSync: (state: string) => void } => {
+		const listeners = new Set<(state: string) => void>();
+		return {
+			getRoom: (id: string) =>
+				id in rooms ? { getMyMembership: () => rooms[id] } : null,
+			isInitialSyncComplete: () => synced,
+			on: (_event: string, fn: (state: string) => void) =>
+				listeners.add(fn),
+			off: (_event: string, fn: (state: string) => void) =>
+				listeners.delete(fn),
+			emitSync: (state: string) => listeners.forEach((fn) => fn(state))
+		};
+	};
+
+	it('reports the membership of a known room', () => {
+		const client = clientWith({ [ROOM_ID]: 'ban' }, true);
+		setMatrixClientServiceRef({ getClient: () => client } as any);
+		expect(chatTransportService.getMyMatrixRoomMembership(ROOM_ID)).toBe(
+			'ban'
+		);
+	});
+
+	it('treats a room missing from a completed sync as left', () => {
+		const client = clientWith({}, true);
+		setMatrixClientServiceRef({ getClient: () => client } as any);
+		expect(chatTransportService.getMyMatrixRoomMembership(ROOM_ID)).toBe(
+			'leave'
+		);
+	});
+
+	it('does not know yet before the first sync', () => {
+		const client = clientWith({}, false);
+		setMatrixClientServiceRef({ getClient: () => client } as any);
+		expect(
+			chatTransportService.getMyMatrixRoomMembership(ROOM_ID)
+		).toBeNull();
+	});
+
+	it('calls back once when the first sync completes', () => {
+		const client = clientWith({}, false);
+		setMatrixClientServiceRef({ getClient: () => client } as any);
+		const synced = vi.fn();
+		chatTransportService.onMatrixInitialSync(synced);
+
+		client.emitSync('RECONNECTING');
+		expect(synced).not.toHaveBeenCalled();
+		client.emitSync('PREPARED');
+		client.emitSync('PREPARED');
+		expect(synced).toHaveBeenCalledTimes(1);
+	});
+
+	it('also calls back when sync recovers from an error straight to SYNCING', () => {
+		const client = clientWith({}, false);
+		setMatrixClientServiceRef({ getClient: () => client } as any);
+		const synced = vi.fn(() => true);
+		chatTransportService.onMatrixInitialSync(synced);
+
+		client.emitSync('ERROR');
+		expect(synced).not.toHaveBeenCalled();
+		client.emitSync('SYNCING');
+		client.emitSync('SYNCING');
+		expect(synced).toHaveBeenCalledTimes(1);
+	});
+
+	it('keeps waiting while the callback cannot decide yet', () => {
+		const client = clientWith({}, false);
+		setMatrixClientServiceRef({ getClient: () => client } as any);
+		const synced = vi.fn().mockReturnValueOnce(false).mockReturnValue(true);
+		chatTransportService.onMatrixInitialSync(synced);
+
+		client.emitSync('PREPARED');
+		client.emitSync('SYNCING');
+		client.emitSync('SYNCING');
+		expect(synced).toHaveBeenCalledTimes(2);
 	});
 });

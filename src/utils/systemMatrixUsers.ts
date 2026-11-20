@@ -14,9 +14,9 @@
  *    4. The literal stays until every environment confirms its
  *    `server_name` and legacy accounts have been rotated.
  *
- * Callers that also need to filter agency-service bots
- * (`^@agency-<id>-service:`) extend this with their own check — that pattern
- * is domain-specific to a couple of composers and does not belong here.
+ * People lists use the additive `isTechnicalMatrixUser` predicate below
+ * for reserved group/agency service identities. The legacy predicate stays
+ * unchanged for existing transport and crypto callers.
  */
 
 /**
@@ -43,3 +43,16 @@ export const isSystemMatrixUser = (
 		userId.endsWith(LEGACY_MATRIX_HOMESERVER_SUFFIX)
 	);
 };
+
+/**
+ * Technical provisioning identities are never people in headers or recipients.
+ * `group-chat-system[-<tenant>|-default]` also arrives as a bare username from
+ * the session DTO, so the leading `@` and the homeserver part are optional.
+ */
+export const isTechnicalMatrixUser = (
+	userId: string | null | undefined
+): boolean =>
+	isSystemMatrixUser(userId) ||
+	/^@?(?:group-chat-system(?:-(?:\d+|default))?|agency-\d+-service)(?::|$)/.test(
+		userId || ''
+	);

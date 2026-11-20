@@ -52,7 +52,6 @@ export const routePathNames = {
 export const config: AppConfigInterface = {
 	budibaseUrl: '',
 	budibaseSSO: false, // Feature flag to enable SSO on budibase
-	calcomUrl: '',
 	calendarAppUrl: '',
 	enableWalkthrough: false, // Feature flag to enable walkthrough (false by default here & true in the theme repo)
 	multitenancyWithSingleDomainEnabled: false, // Feature flag to enable the multi tenancy with a single domain ex: lands

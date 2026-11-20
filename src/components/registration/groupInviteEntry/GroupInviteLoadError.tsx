@@ -4,7 +4,7 @@ import { Box, Button, Typography } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { StageLayout } from '../../stageLayout/StageLayout';
 import { Loading } from '../../app/Loading';
-import { INVITE_LOGIN_STATE } from './groupInviteEntryState';
+import { getGroupInviteLoginProps } from './groupInviteEntryState';
 import './groupInviteLoading.styles.scss';
 
 interface InviteStageProps {
@@ -26,8 +26,7 @@ const InviteStage = ({
 		showLegalLinks={true}
 		showLoginLink={true}
 		showRegistrationLink={false}
-		loginParams={new URLSearchParams({ gcid, aid }).toString()}
-		loginState={INVITE_LOGIN_STATE}
+		{...getGroupInviteLoginProps(gcid, aid)}
 		stage={stage}
 		mobileHero="bar"
 	>
@@ -90,6 +89,35 @@ export const GroupInviteLoadError = ({
 				<Button variant="contained" onClick={onRetry}>
 					{t('groupChat.loadError.retry')}
 				</Button>
+			</Box>
+		</InviteStage>
+	);
+};
+
+/** The link names no group this person can join (#921); retrying cannot help. */
+export const GroupInviteInvalid = (props: InviteStageProps) => {
+	const { t } = useTranslation();
+
+	return (
+		<InviteStage {...props}>
+			<Box
+				role="alert"
+				data-cy="group-invite-invalid"
+				sx={{
+					display: 'flex',
+					flexDirection: 'column',
+					alignItems: 'flex-start',
+					gap: 2,
+					px: { xs: 2.5, sm: 5 },
+					pt: { xs: 3, sm: 4 }
+				}}
+			>
+				<Typography variant="h5" component="h1">
+					{t('registration.groupInvite.invalid.headline')}
+				</Typography>
+				<Typography variant="body1">
+					{t('registration.groupInvite.invalid.body')}
+				</Typography>
 			</Box>
 		</InviteStage>
 	);

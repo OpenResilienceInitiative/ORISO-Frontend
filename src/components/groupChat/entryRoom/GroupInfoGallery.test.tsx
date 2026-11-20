@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 
 import * as React from 'react';
 import {
@@ -8,7 +8,7 @@ import {
 	render,
 	screen
 } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 const TRANSLATIONS: Record<string, string> = {
 	'groupChat.info.gallery.steps.formats.title': 'So findet die Gruppe statt',
@@ -101,19 +101,12 @@ describe('GroupInfoGallery', () => {
 		expect(onBack).toHaveBeenCalledTimes(1);
 	});
 
-	it('offers the calendar action only when the caller can handle it', () => {
+	it('shows only the cards — the dates have their own view (#1689)', () => {
 		stubReducedMotion(true);
-		const { rerender } = render(<GroupInfoGallery onBack={vi.fn()} />);
-		expect(screen.queryByTestId('group-info-appointments')).toBeNull();
-
-		const onOpenAppointments = vi.fn();
-		rerender(
-			<GroupInfoGallery
-				onBack={vi.fn()}
-				onOpenAppointments={onOpenAppointments}
-			/>
-		);
-		fireEvent.click(screen.getByTestId('group-info-appointments'));
-		expect(onOpenAppointments).toHaveBeenCalledTimes(1);
+		const { container } = render(<GroupInfoGallery onBack={vi.fn()} />);
+		expect(
+			container.querySelector('[data-cy="group-info-upcoming"]')
+		).toBeNull();
+		expect(screen.queryByText('Nächste Termine')).toBeNull();
 	});
 });

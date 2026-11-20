@@ -1,14 +1,15 @@
 import * as React from 'react';
-import { expect } from 'storybook/test';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { useRef, useState } from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useTranslation } from 'react-i18next';
 import { ReactComponent as AddCircleIcon } from '../../resources/img/icons/add-circle.svg';
 import { ReactComponent as CircleIcon } from '../../resources/img/icons/self-help-group.svg';
 import { ReactComponent as InternalIcon } from '../../resources/img/icons/internal-conversation.svg';
-import { ReactComponent as CategorySearchIcon } from '../../resources/img/icons/category-search.svg';
-import internalTeamImage from '../../resources/img/illustrations/conversation/internal-team.png';
-import { getTopicCardImage } from '../../resources/img/topics';
+import {
+	getTopicCardArtwork,
+	INTERNAL_CHAT_ARTWORK
+} from '../../resources/img/topics';
 import { GroupChatAuthorContentFields } from '../groupChat/GroupChatAuthorContentFields';
 import { GroupChatAuthorContentDraft } from '../groupChat/groupChatAuthorContent';
 import { GroupChatSeriesFieldsValue } from '../groupChat/GroupChatSeriesFields';
@@ -16,15 +17,27 @@ import { SplitButton } from '../splitButton/SplitButton';
 import { BackPill } from './BackPill';
 import { CompactFormatRow } from './CompactFormatRow';
 import { FormatCard } from './FormatCard';
+import { FormatCardCarousel } from './FormatCardCarousel';
 import { PanelHeader } from './PanelHeader';
 import { RowMenu } from './RowMenu';
 import { ScreenIntro } from './ScreenIntro';
+import { TopicIcon } from './TopicIcon';
 import { TopicMedia } from './TopicMedia';
 import { ScheduleRows } from './circle/ScheduleRows';
 import {
 	InternalChatCreateCard,
 	InternalChatDraft
 } from './internal/InternalChatCreateCard';
+import { DirectLinkCard, DirectLinkDraft } from './directLink/DirectLinkCard';
+import { DirectLinkShareDialog } from './directLink/DirectLinkShareDialog';
+import {
+	CounsellorDashboard,
+	DashboardCircle,
+	DashboardStats
+} from '../counsellorDashboard/CounsellorDashboard';
+import { DirectLink } from './directLink/directLink';
+import LinkOutlinedIcon from '@mui/icons-material/LinkOutlined';
+import { FORMAT_ARTWORK } from '../../resources/img/formats';
 import './conversationCreate.styles.scss';
 import '../groupChat/createChat.styles.scss';
 
@@ -155,7 +168,7 @@ const CircleCard = ({ menuOpen = false }: { menuOpen?: boolean }) => {
 					ref={anchorRef}
 					id="storyTopicButton"
 					fullWidth
-					icon={<CategorySearchIcon />}
+					icon={<TopicIcon filled={Boolean(topic)} />}
 					label={topic || t('groupChat.circle.topicLabel')}
 					variant={open ? 'elevated' : topic ? 'primary' : 'outlined'}
 					open={open}
@@ -201,67 +214,420 @@ const InternaCard = ({ preset }: { preset: 'empty' | 'filled' }) => {
 	);
 };
 
+type PickerStep = 'picker' | 'directLink' | 'links';
+
+/** Sample figures; `archivedSessions` needs a field in the statistics service. */
+const DASHBOARD_STATS: DashboardStats = {
+	assignedSessions: 3,
+	activeSessions: 18,
+	sentMessages: 124,
+	archivedSessions: 7
+};
+
+/** A counsellor who has just started: few figures, one link, no circles. */
+const SPARSE_STATS: DashboardStats = {
+	assignedSessions: 1,
+	activeSessions: 2,
+	sentMessages: 9
+};
+
+const UPCOMING_CIRCLES: DashboardCircle[] = [
+	{
+		id: 'c1',
+		topic: 'Schulden',
+		when: 'Do., 30. Okt · 19:00',
+		medium: 'VIDEO',
+		assignedCounsellors: 6
+	},
+	{
+		id: 'c2',
+		topic: 'Trauer',
+		when: 'Mo., 3. Nov · 18:00',
+		medium: 'AUDIO',
+		assignedCounsellors: 4
+	},
+	{
+		id: 'c3',
+		topic: 'Sozialberatung',
+		when: 'Mi., 5. Nov · 17:30',
+		medium: 'CHAT',
+		assignedCounsellors: 8
+	}
+];
+
+/** #1795: what the backend will hand back; story-only. */
+const toDirectLink = (draft: DirectLinkDraft, index: number): DirectLink => ({
+	id: `link-${index}`,
+	name: draft.topic,
+	topic: draft.topic,
+	medium: draft.medium,
+	temporary: draft.guestAccountMode !== 'PERMANENT',
+	guestAccountMode: draft.guestAccountMode,
+	active: true,
+	url: `https://app.oriso.org/l/${['k7m2qx', 'p4tz9a', 'w3nd8r'][index % 3]}`
+});
+
+/**
+ * Clickable: pick "Direktlink", choose topic and medium, create. The share
+ * dialog opens; "Fertig" leads to "Gespräche" with nothing selected, where
+ * the overview lists the link. Its round button leads back here.
+ */
 const FormatPicker = ({
 	compact,
-	menuOpen = false
+	menuOpen = false,
+	initialLinks = []
 }: {
 	compact: boolean;
 	menuOpen?: boolean;
+	initialLinks?: DirectLink[];
 }) => {
 	const { t } = useTranslation();
+	const [step, setStep] = useState<PickerStep>('picker');
+	const [links, setLinks] = useState<DirectLink[]>(initialLinks);
+	const [shared, setShared] = useState<DirectLink>();
+
+	const create = (draft: DirectLinkDraft) => {
+		const link = toDirectLink(draft, links.length);
+		setLinks((current) => [link, ...current]);
+		setShared(link);
+	};
+
+	const directLinkCard = <DirectLinkCard topics={TOPICS} onCreate={create} />;
+
 	return (
-		<div className="conversationCreate">
-			<PanelHeader
-				title={t('groupChat.format.panelTitle')}
-				menuLabel={t('groupChat.format.panelMenu')}
-			/>
-			<div
-				className={`conversationCreate__picker${
-					compact ? ' conversationCreate__picker--compact' : ''
-				}`}
-			>
-				<ScreenIntro
-					title={t('groupChat.format.title')}
-					subtitle={t('groupChat.format.subtitle')}
+		// The overview sits on the grey background, outside the white panel.
+		<div
+			className={step === 'links' ? undefined : 'conversationCreate'}
+			style={step === 'links' ? { height: '100vh' } : undefined}
+		>
+			{step !== 'links' && (
+				<PanelHeader
+					title={t('groupChat.format.panelTitle')}
+					menuLabel={t('groupChat.format.panelMenu')}
 				/>
+			)}
+			{step === 'links' ? (
+				<DesktopFrame
+					framed={!compact}
+					onCreate={() => setStep('picker')}
+				>
+					<CounsellorDashboard
+						stats={DASHBOARD_STATS}
+						links={links}
+						upcomingCircles={UPCOMING_CIRCLES}
+						onToggleLink={(id, active) =>
+							setLinks((current) =>
+								current.map((link) =>
+									link.id === id ? { ...link, active } : link
+								)
+							)
+						}
+						onShowQr={setShared}
+						onCopy={() => undefined}
+					/>
+				</DesktopFrame>
+			) : step === 'directLink' ? (
+				<div className="conversationCreate__single conversationCreate__single--compact">
+					{directLinkCard}
+				</div>
+			) : (
 				<div
-					className={`conversationCreate__selection${
-						compact ? ' conversationCreate__selection--rows' : ''
+					className={`conversationCreate__picker${
+						compact ? ' conversationCreate__picker--compact' : ''
 					}`}
 				>
-					{compact ? (
-						<div className="conversationCreate__rows">
-							<CompactFormatRow
-								icon={<InternalIcon />}
-								title={t('groupChat.internal.title')}
-								subtitle={t('groupChat.internal.subtitle')}
-								image={internalTeamImage}
-								onSelect={() => undefined}
-							/>
-							<CompactFormatRow
-								icon={<CircleIcon />}
-								title={t('groupChat.circle.title')}
-								subtitle={t('groupChat.circle.subtitle')}
-								image={getTopicCardImage(null)}
-								onSelect={() => undefined}
-							/>
-						</div>
-					) : (
-						<div className="conversationCreate__cards">
-							<CircleCard menuOpen={menuOpen} />
-							<InternaCard preset="empty" />
-						</div>
-					)}
+					<ScreenIntro
+						title={t('groupChat.format.title')}
+						subtitle={t('groupChat.format.subtitle')}
+					/>
+					<div
+						className={`conversationCreate__selection${
+							compact
+								? ' conversationCreate__selection--rows'
+								: ''
+						}`}
+					>
+						{compact ? (
+							<div className="conversationCreate__rows">
+								<CompactFormatRow
+									icon={<InternalIcon />}
+									title={t('groupChat.internal.title')}
+									subtitle={t('groupChat.internal.subtitle')}
+									image={INTERNAL_CHAT_ARTWORK}
+									onSelect={() => undefined}
+								/>
+								<CompactFormatRow
+									icon={<CircleIcon />}
+									title={t('groupChat.circle.title')}
+									subtitle={t('groupChat.circle.subtitle')}
+									image={getTopicCardArtwork(null)}
+									onSelect={() => undefined}
+								/>
+								<CompactFormatRow
+									icon={<LinkOutlinedIcon />}
+									title={t('directLink.card.title')}
+									subtitle={t('directLink.card.subtitle')}
+									image={FORMAT_ARTWORK.VIDEO}
+									onSelect={() => setStep('directLink')}
+								/>
+							</div>
+						) : (
+							<FormatCardCarousel>
+								<CircleCard menuOpen={menuOpen} />
+								<InternaCard preset="empty" />
+								{directLinkCard}
+							</FormatCardCarousel>
+						)}
+					</div>
 				</div>
-			</div>
-			{compact && (
+			)}
+			{compact && step !== 'links' && (
 				<BackPill
 					label={t('groupChat.format.back')}
-					onClick={() => undefined}
+					onClick={() => setStep('picker')}
+				/>
+			)}
+			{shared && (
+				<DirectLinkShareDialog
+					open
+					link={shared}
+					fullScreen={compact}
+					onCopy={() => undefined}
+					onClose={() => {
+						setShared(undefined);
+						setStep('links');
+					}}
 				/>
 			)}
 		</div>
 	);
+};
+
+/**
+ * Story-only stand-in for the desktop app: navigation rail and the
+ * conversation list, whose width can be dragged (bottom-right corner) to see
+ * the overview follow its pane. "Erstellen" is the list's create chip.
+ */
+const DesktopFrame = ({
+	children,
+	framed = true,
+	onCreate
+}: {
+	children: React.ReactNode;
+	framed?: boolean;
+	onCreate?: () => void;
+}) => {
+	const { t } = useTranslation();
+	if (!framed) return <>{children}</>;
+	const surface = 'var(--m3-surface-container-high, #eae7e8)';
+	return (
+		<div
+			style={{
+				background: surface,
+				boxSizing: 'border-box',
+				display: 'flex',
+				gap: 8,
+				height: '100vh',
+				padding: '8px 0 8px 8px'
+			}}
+		>
+			<nav
+				aria-label="Navigation"
+				style={{
+					alignItems: 'center',
+					display: 'flex',
+					flex: '0 0 72px',
+					flexDirection: 'column',
+					gap: 20,
+					paddingTop: 16
+				}}
+			>
+				{[0, 1, 2, 3].map((item) => (
+					<span
+						key={item}
+						style={{
+							background:
+								item === 0
+									? 'var(--m3-secondary-container, #646d78)'
+									: 'var(--m3-outline-variant, #c4c7c8)',
+							borderRadius: 16,
+							height: 32,
+							width: 56
+						}}
+					/>
+				))}
+			</nav>
+			<aside
+				aria-label={t('notifications.displayFilter.sections.sessions')}
+				style={{
+					background: 'var(--m3-surface-container-lowest, #ffffff)',
+					borderRadius: 24,
+					boxSizing: 'border-box',
+					display: 'flex',
+					flex: '0 0 auto',
+					flexDirection: 'column',
+					gap: 12,
+					maxWidth: 640,
+					minWidth: 300,
+					overflow: 'auto',
+					padding: 16,
+					resize: 'horizontal',
+					width: 380
+				}}
+			>
+				<button
+					type="button"
+					onClick={onCreate}
+					style={{
+						alignSelf: 'flex-start',
+						background: 'var(--m3-primary, #a5000a)',
+						border: 'none',
+						borderRadius: 8,
+						color: 'var(--m3-on-primary, #ffffff)',
+						cursor: 'pointer',
+						fontSize: 14,
+						fontWeight: 500,
+						padding: '8px 16px'
+					}}
+				>
+					+ {t('sessionList.toolbar.chips.create')}
+				</button>
+				{[0, 1, 2, 3, 4].map((row) => (
+					<span
+						key={row}
+						style={{
+							background: 'var(--m3-surface-container, #f0edee)',
+							borderRadius: 16,
+							height: 72
+						}}
+					/>
+				))}
+			</aside>
+			<div style={{ flex: 1, minWidth: 0 }}>{children}</div>
+		</div>
+	);
+};
+
+/** "Gespräche" with nothing selected: the session card holds the overview. */
+const SessionCardShell = ({ children }: { children: React.ReactNode }) => (
+	<div style={{ background: '#e9e6e6', padding: 24 }}>
+		<div
+			style={{
+				background: '#fff',
+				border: '1px solid #ffb4aa',
+				borderRadius: 28,
+				margin: '0 auto',
+				maxWidth: 960,
+				minHeight: 640
+			}}
+		>
+			{children}
+		</div>
+	</div>
+);
+
+const DashboardStory = ({
+	initial,
+	circles,
+	stats = DASHBOARD_STATS
+}: {
+	initial: DirectLink[];
+	circles: DashboardCircle[];
+	stats?: DashboardStats;
+}) => {
+	const [links, setLinks] = useState(initial);
+	const [shared, setShared] = useState<DirectLink>();
+	return (
+		<DesktopFrame>
+			<CounsellorDashboard
+				stats={stats}
+				links={links}
+				upcomingCircles={circles}
+				onToggleLink={(id, active) =>
+					setLinks((current) =>
+						current.map((link) =>
+							link.id === id ? { ...link, active } : link
+						)
+					)
+				}
+				onShowQr={setShared}
+				onCopy={() => undefined}
+			/>
+			{shared && (
+				<DirectLinkShareDialog
+					open
+					link={shared}
+					onCopy={() => undefined}
+					onClose={() => setShared(undefined)}
+				/>
+			)}
+		</DesktopFrame>
+	);
+};
+
+const SAMPLE_LINKS: DirectLink[] = [
+	{
+		id: 'a',
+		name: 'Flyer Schule',
+		topic: 'Schulden',
+		medium: 'VIDEO',
+		temporary: true,
+		active: true,
+		url: 'https://app.oriso.org/l/k7m2qx'
+	},
+	{
+		id: 'b',
+		name: 'Website Beratungsstelle',
+		topic: 'Sozialberatung',
+		medium: 'CHAT',
+		temporary: false,
+		active: true,
+		url: 'https://app.oriso.org/l/p4tz9a'
+	},
+	{
+		id: 'c',
+		name: 'Telefonsprechstunde',
+		topic: 'Kinder und Jugendliche',
+		medium: 'AUDIO',
+		temporary: true,
+		active: false,
+		url: 'https://app.oriso.org/l/w3nd8r'
+	}
+];
+
+/** Creates a video link end to end and lands in the overview. */
+const createVideoLink = async (canvasElement: HTMLElement) => {
+	const canvas = within(canvasElement);
+	const body = within(document.body);
+	// #2252: "Direktlink" is now called "Direkteinladung".
+	const heading = await canvas.findByRole('heading', {
+		name: 'Direkteinladung'
+	});
+	const card = within(heading.closest('section') as HTMLElement);
+	// The split button carries the label on both of its halves.
+	await userEvent.click(
+		card.getAllByRole('button', { name: 'Thema wählen' })[0]
+	);
+	await userEvent.click(
+		await body.findByRole('option', { name: 'Schulden' })
+	);
+	await userEvent.click(card.getByRole('button', { name: /Videoanruf/ }));
+	// Calls default to the guest choosing the account (UserService#1662).
+	await expect(
+		card.getByRole('button', { name: 'Gast wählt' })
+	).toBeInTheDocument();
+	await userEvent.click(card.getByRole('button', { name: 'Link erstellen' }));
+	const dialog = await body.findByTestId('direct-link-share-dialog');
+	await expect(
+		await within(dialog).findByAltText('QR-Code zur Direkteinladung')
+	).toBeInTheDocument();
+	await userEvent.click(
+		within(dialog).getByRole('button', { name: 'Fertig' })
+	);
+	const list = await canvas.findByRole('region', {
+		name: 'Meine Direkteinladungen'
+	});
+	await expect(within(list).getAllByText('Schulden')[0]).toBeInTheDocument();
 };
 
 export const FormatPickerDesktop: Story = {
@@ -288,11 +654,168 @@ export const FormatPickerDesktopTopicMenu: Story = {
 };
 
 export const FormatPickerMobile: Story = {
+	globals: { viewport: { value: 'phone390' } },
 	render: () => (
 		<MobileShell>
 			<FormatPicker compact />
 		</MobileShell>
+	),
+	play: async ({ canvasElement }) => {
+		// Phone: the rows render (as in the app below 900px) and the intro
+		// paragraph above them is dropped; the rows' own subtitles say it.
+		const subtitle = await waitFor(() => {
+			const found = canvasElement.querySelector<HTMLElement>(
+				'.conversationCreate__picker--compact .conversationCreate__subtitle'
+			);
+			expect(found).toBeTruthy();
+			return found!;
+		});
+		await expect(getComputedStyle(subtitle).display).toBe('none');
+	}
+};
+
+/**
+ * The cards keep their size and the row scrolls: in a pane too narrow for all
+ * three, the round arrows below move the row one card at a time and are
+ * disabled at the ends (Figma 7633-34734).
+ */
+export const FormatCardsScrollNarrow: Story = {
+	name: 'Format cards — scroll row with arrow buttons (narrow pane)',
+	render: () => (
+		<div style={{ background: '#e9e6e6', padding: 16 }}>
+			<div
+				style={{
+					background: '#fcf9f9',
+					borderRadius: 32,
+					margin: '0 auto',
+					maxWidth: 720,
+					overflow: 'hidden'
+				}}
+			>
+				<FormatPicker compact={false} />
+			</div>
+		</div>
+	),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const previous = await canvas.findByRole('button', {
+			name: /Vorheriges Gesprächsformat|Previous conversation format|cardsPrevious/
+		});
+		const next = await canvas.findByRole('button', {
+			name: /Nächstes Gesprächsformat|Next conversation format|cardsNext/
+		});
+		await expect(previous).toBeDisabled();
+		await expect(next).toBeEnabled();
+		await userEvent.click(next);
+		await waitFor(() => expect(previous).toBeEnabled());
+		const scroller = canvasElement.querySelector(
+			'.formatCardCarousel__scroller'
+		) as HTMLElement;
+		await waitFor(() => expect(scroller.scrollLeft).toBeGreaterThan(0));
+		// Keyboard: the arrow is a real button, Enter moves the row back.
+		previous.focus();
+		await userEvent.keyboard('{Enter}');
+		await waitFor(() => expect(previous).toBeDisabled());
+		// No label in the cards is cut off.
+		const cut = Array.from(
+			canvasElement.querySelectorAll<HTMLElement>(
+				'.formatCard button, .formatCard [class*="__label"]'
+			)
+		).filter((el) => el.scrollWidth > el.clientWidth);
+		await expect(cut).toHaveLength(0);
+	}
+};
+
+/** Phone width: one card plus a peek of the next one, arrows underneath. */
+export const FormatCardsScrollPhone: Story = {
+	name: 'Format cards — scroll row (phone, 390px)',
+	render: () => (
+		// Edge to edge, like the app on a phone: the panel's own 12px padding
+		// leaves 366px, enough for one 360px card.
+		<div style={{ background: '#fcf9f9', margin: '0 auto', maxWidth: 390 }}>
+			<FormatPicker compact={false} />
+		</div>
 	)
+};
+
+export const DirectLinkFlowDesktop: Story = {
+	name: 'Direct link — create, share, my links (desktop)',
+	parameters: {
+		docs: {
+			description: {
+				story: '#1795, clickable. Choose a topic and a medium, create the link, share it, then land in "Gespräche", where the overview lists the new link under "Meine Direktlinks". The temporary-account switch follows the medium (chat off, calls on) and can be changed.'
+			}
+		}
+	},
+	render: () => (
+		<DesktopShell>
+			<FormatPicker compact={false} />
+		</DesktopShell>
+	),
+	play: async ({ canvasElement }) => createVideoLink(canvasElement)
+};
+
+export const DirectLinkFlowMobile: Story = {
+	name: 'Direct link — create, share, my links (phone 390)',
+	render: () => (
+		<MobileShell>
+			<FormatPicker compact />
+		</MobileShell>
+	),
+	play: async ({ canvasElement }) => {
+		await userEvent.click(
+			await within(canvasElement).findByRole('button', {
+				name: /Direkteinladung/
+			})
+		);
+		await createVideoLink(canvasElement);
+	}
+};
+
+export const DashboardWithLinks: Story = {
+	name: 'Gespräche — overview with direct links and circles',
+	parameters: {
+		docs: {
+			description: {
+				story: 'What "Gespräche" shows while no conversation is selected, once the counsellor has a direct link or an upcoming circle. Tiles on the grey app background, no empty conversation room. Figures come from the counsellor statistics service; "Archiviert" needs a new field there. Figures and circles are sample data.'
+			}
+		}
+	},
+	render: () => (
+		<DashboardStory initial={SAMPLE_LINKS} circles={UPCOMING_CIRCLES} />
+	)
+};
+
+export const DashboardSparse: Story = {
+	name: 'Gespräche — overview, just started: one link',
+	parameters: {
+		docs: {
+			description: {
+				story: 'Little has happened yet: two figures, one direct link, no circles (most counsellors run none). A single link becomes a wide card instead of standing alone.'
+			}
+		}
+	},
+	render: () => (
+		<DashboardStory
+			initial={[SAMPLE_LINKS[0]]}
+			circles={[]}
+			stats={SPARSE_STATS}
+		/>
+	)
+};
+
+export const DashboardNothingYet: Story = {
+	name: 'Gespräche — nothing yet: the turning cup stays',
+	render: () => (
+		<SessionCardShell>
+			<DashboardStory initial={[]} circles={[]} />
+		</SessionCardShell>
+	),
+	play: async ({ canvasElement }) => {
+		await expect(
+			within(canvasElement).queryByTestId('counsellor-dashboard')
+		).toBeNull();
+	}
 };
 
 export const InternaCardStates: Story = {
@@ -399,7 +922,7 @@ const CircleSettings = ({ compact }: { compact: boolean }) => {
 							<SplitButton
 								ref={topicRef}
 								fullWidth
-								icon={<CategorySearchIcon />}
+								icon={<TopicIcon filled={Boolean(topic)} />}
 								label={
 									topic || t('groupChat.circle.topicLabel')
 								}

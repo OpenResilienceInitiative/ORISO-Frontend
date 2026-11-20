@@ -14,14 +14,24 @@
 
 import { EventFamily } from '../../components/notificationsCenter/eventDescriptors/types';
 import {
+	clampVolume,
 	DEFAULT_NOTIFICATION_CONFIG,
+	DEFAULT_VOLUME,
+	KindConfig,
 	NotificationConfig,
-	parseNotificationConfig
+	parseNotificationConfig,
+	parseStoredSound
 } from './notificationConfig';
 import { NEVER_NOTIFY_FAMILIES } from './notificationConfig';
 
 /** Per-family on/off switches — mirrors the timeline's event families. */
 export type FamilyToggles = Record<EventFamily, boolean>;
+
+/** Tone and volume of system notices (they have no row in the dialog). */
+export interface SystemTone {
+	sound: SoundId;
+	volume: number;
+}
 
 export interface OrisoNotificationSettings {
 	/** Master mute across every device (account-wide). */
@@ -47,7 +57,73 @@ export interface OrisoNotificationSettings {
 	dndUntil: string | null;
 	/** Per-area notification config (Figma dialog, #576). */
 	notificationConfig: NotificationConfig;
+	/** Chosen next to the system switch; the switch gates banner and tone. */
+	systemTone: SystemTone;
+	/**
+	 * Which one-time default upgrades this config has seen. Stored configs
+	 * hold every row explicitly, so a changed factory default needs this to
+	 * tell "never chosen" from a deliberate choice made afterwards.
+	 */
+	notificationConfigRevision: number;
 }
+
+/**
+ * 1 (FE#1435): the "Neue Anfrage" row rings by default. A config stored
+ * before carries the old silent default, upgraded once on load.
+ * 2 (FE#1211): team-discussion mentions moved from Gespräche to Anfragen →
+ * Erwähnung. The old Anfragen row never fired, so the choice made under
+ * Gespräche carries over once, unless that row holds a choice of its own.
+ * `systemTone` needs no revision: absent means ton-2 at medium volume.
+ */
+export const NOTIFICATION_SETTINGS_REVISION = 2;
+
+/**
+ * Whether the Anfragen mention row is still a default: the silent one stored
+ * before FE#1211, or today's, which a config without the row parses to.
+ */
+const isUntouchedRequestsMention = ({
+	banner,
+	sound,
+	email,
+	volume
+}: KindConfig) => {
+	const defaults = DEFAULT_NOTIFICATION_CONFIG.requests.mention;
+	return (
+		(sound === 'none' || sound === defaults.sound) &&
+		banner === defaults.banner &&
+		email === defaults.email &&
+		volume === defaults.volume
+	);
+};
+
+const upgradeNotificationConfig = (
+	config: NotificationConfig,
+	revision: number
+): NotificationConfig => {
+	let upgraded = config;
+	if (revision < 1 && upgraded.requests.new.sound === 'none') {
+		upgraded = {
+			...upgraded,
+			requests: {
+				...upgraded.requests,
+				new: {
+					...upgraded.requests.new,
+					sound: DEFAULT_NOTIFICATION_CONFIG.requests.new.sound
+				}
+			}
+		};
+	}
+	if (revision < 2 && isUntouchedRequestsMention(upgraded.requests.mention)) {
+		upgraded = {
+			...upgraded,
+			requests: {
+				...upgraded.requests,
+				mention: { ...upgraded.conversations.mention }
+			}
+		};
+	}
+	return upgraded;
+};
 
 /** A curated sound choice; 'none' is silent, 'default' inherits the message sound. */
 export type SoundId =
@@ -131,7 +207,9 @@ export const DEFAULT_NOTIFICATION_SETTINGS: OrisoNotificationSettings = {
 		enabled: false,
 		showMessagePreview: false
 	},
-	notificationConfig: DEFAULT_NOTIFICATION_CONFIG
+	notificationConfig: DEFAULT_NOTIFICATION_CONFIG,
+	systemTone: { sound: 'ton-2', volume: DEFAULT_VOLUME },
+	notificationConfigRevision: NOTIFICATION_SETTINGS_REVISION
 };
 
 /** Device-scoped state (one account-data event per device, MSC3890 pattern). */
@@ -146,6 +224,22 @@ export const DEFAULT_LOCAL_DEVICE_SETTINGS: LocalDeviceNotificationSettings = {
 
 const asBoolean = (value: unknown, fallback: boolean): boolean =>
 	typeof value === 'boolean' ? value : fallback;
+
+/** A stored value that is not a usable tone falls back to ton-2 at medium. */
+const parseSystemTone = (raw: unknown): SystemTone => {
+	const source = (raw ?? {}) as Record<string, unknown>;
+	const fallback = DEFAULT_NOTIFICATION_SETTINGS.systemTone;
+	return {
+		sound:
+			typeof source.sound === 'string'
+				? parseStoredSound(source.sound)
+				: fallback.sound,
+		volume:
+			typeof source.volume === 'number' && Number.isFinite(source.volume)
+				? clampVolume(source.volume)
+				: fallback.volume
+	};
+};
 
 /**
  * Parse untrusted content (account data / localStorage) into a full settings
@@ -183,7 +277,14 @@ export const parseNotificationSettings = (
 			)
 		},
 		dndUntil: typeof source.dndUntil === 'string' ? source.dndUntil : null,
-		notificationConfig: parseNotificationConfig(source.notificationConfig)
+		notificationConfig: upgradeNotificationConfig(
+			parseNotificationConfig(source.notificationConfig),
+			typeof source.notificationConfigRevision === 'number'
+				? source.notificationConfigRevision
+				: 0
+		),
+		systemTone: parseSystemTone(source.systemTone),
+		notificationConfigRevision: NOTIFICATION_SETTINGS_REVISION
 	};
 };
 
@@ -205,6 +306,7 @@ export type NotificationSettingsUpdate = {
 	>;
 	dndUntil?: string | null;
 	notificationConfig?: NotificationConfig;
+	systemTone?: Partial<SystemTone>;
 };
 
 /** Immutably merge a partial update into full settings. */
@@ -223,7 +325,9 @@ export const mergeNotificationSettings = (
 	notificationConfig:
 		update.notificationConfig !== undefined
 			? update.notificationConfig
-			: current.notificationConfig
+			: current.notificationConfig,
+	systemTone: { ...current.systemTone, ...(update.systemTone || {}) },
+	notificationConfigRevision: current.notificationConfigRevision
 });
 
 /**

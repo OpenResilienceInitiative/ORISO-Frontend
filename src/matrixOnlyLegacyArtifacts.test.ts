@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 const repoRoot = path.resolve(__dirname, '..');
 
@@ -38,36 +38,92 @@ const collectTextFiles = (root: string): string[] => {
 
 describe('Matrix-only active frontend artifacts', () => {
 	it('publishes immutable multi-platform images with supply-chain evidence', () => {
-		const buildAction = fs.readFileSync(
-			path.join(repoRoot, '.github/actions/docker-build-push/action.yml'),
-			'utf8'
+		const readSource = (file: string) =>
+			fs
+				.readFileSync(path.join(repoRoot, file), 'utf8')
+				.split('\n')
+				.filter((line) => !line.trim().startsWith('#'))
+				.join('\n');
+		const expectOrder = (source: string, ...markers: string[]) => {
+			let previous = -1;
+			for (const marker of markers) {
+				const current = source.indexOf(marker);
+				expect(current).toBeGreaterThan(previous);
+				previous = current;
+			}
+		};
+
+		const buildAction = readSource(
+			'.github/actions/docker-build-push/action.yml'
 		);
-		const mainWorkflow = fs.readFileSync(
-			path.join(repoRoot, '.github/workflows/ci-main.yml'),
-			'utf8'
+		const mainWorkflow = readSource('.github/workflows/ci-main.yml');
+		const storybookWorkflow = readSource(
+			'.github/workflows/ci-storybook-main.yml'
 		);
-		const releaseWorkflow = fs.readFileSync(
-			path.join(repoRoot, '.github/workflows/release-image.yml'),
-			'utf8'
+		const releaseWorkflow = readSource(
+			'.github/workflows/release-image.yml'
+		);
+		const scanScript = readSource('scripts/ci/scan-image-archive.sh');
+		const publishScript = readSource('scripts/ci/publish-image-archive.sh');
+		const composite = 'uses: ./.github/actions/docker-build-push';
+
+		expect(buildAction).toContain('default: linux/amd64,linux/arm64');
+		expect(
+			buildAction.match(/^\s*uses: docker\/build-push-action@/gm)
+		).toHaveLength(1);
+		expect(buildAction).toMatch(
+			/platforms: \$\{\{ inputs\.platforms \}\}\s+push: false\s+outputs: type=oci,/
+		);
+		expect(buildAction).toMatch(/^\s*provenance: mode=max$/m);
+		expect(buildAction).toMatch(/^\s*sbom: true$/m);
+		expect(buildAction).toMatch(
+			/value: \$\{\{ steps\.publish\.outputs\.digest \}\}/
+		);
+		expect(buildAction).toMatch(
+			/IMAGE_ARCHIVE: \$\{\{ steps\.scan\.outputs\.archive \}\}/
+		);
+		expect(buildAction).toMatch(
+			/EXPECTED_ARCHIVE_SHA256: \$\{\{ steps\.scan\.outputs\.archive_sha256 \}\}/
+		);
+		expect(buildAction).toContain(
+			'aquasecurity/setup-trivy@3fb12ec12f41e471780db15c232d5dd185dcb514'
+		);
+		expect(scanScript).toContain(
+			'trivy image --input "$scan_root/$arch" --platform "$platform"'
+		);
+		expect(scanScript).toContain('--exit-code 1 --ignore-unfixed');
+		expect(scanScript).toContain(
+			'--vuln-type os,library --severity CRITICAL,HIGH'
+		);
+		expectOrder(
+			buildAction,
+			'uses: docker/build-push-action@v7',
+			'bash scripts/ci/scan-image-archive.sh',
+			'uses: docker/login-action@v4',
+			'bash scripts/ci/publish-image-archive.sh'
+		);
+		expectOrder(
+			publishScript,
+			'!= "$expected_archive_sha256"',
+			'skopeo copy --all --preserve-digests',
+			'!= "$expected_digest"',
+			"printf 'digest=%s"
 		);
 
-		expect(buildAction).toContain('linux/amd64,linux/arm64');
-		// Provenance and SBOM are conditional on actually pushing: a discarded
-		// validation build must not pay for attestations it throws away. The
-		// guarantee still holds for every published image — ci-main.yml is the
-		// only publishing caller of this action and passes push_to_ghcr: true
-		// (release-image.yml calls docker/build-push-action directly and is
-		// covered by the unconditional assertions further down).
-		expect(buildAction).toMatch(
-			/provenance: \$\{\{ inputs\.push_to_ghcr == 'true' && 'mode=max' \|\| 'false' \}\}/
-		);
-		expect(buildAction).toMatch(
-			/sbom: \$\{\{ inputs\.push_to_ghcr == 'true' \}\}/
-		);
-		expect(mainWorkflow).toContain('push_to_ghcr: true');
-		expect(buildAction).toMatch(
-			/value: \$\{\{ steps\.build\.outputs\.digest \}\}/
-		);
+		for (const tag of [
+			'type=sha',
+			'value=latest',
+			'value=dev',
+			'value=pre-dev'
+		]) {
+			expect(buildAction).toContain(tag);
+		}
+		for (const workflow of [mainWorkflow, storybookWorkflow]) {
+			expect(workflow).toContain(composite);
+			expect(workflow).toContain('push_to_ghcr: true');
+			expect(workflow).not.toMatch(/^\s*platforms:/m);
+		}
+		expect(storybookWorkflow).toContain('dockerfile: Dockerfile.storybook');
 
 		for (const workflow of [mainWorkflow, releaseWorkflow]) {
 			expect(workflow).toContain('id-token: write');
@@ -75,41 +131,53 @@ describe('Matrix-only active frontend artifacts', () => {
 			expect(workflow).toContain(
 				'actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6'
 			);
-			expect(workflow).toContain('subject-digest: ${{ steps.');
+			expect(workflow).toContain('push-to-registry: true');
 		}
+		expect(mainWorkflow).toMatch(
+			/subject-digest: \$\{\{ steps\.image\.outputs\.digest \}\}/
+		);
 
-		// The vulnerability scan has to sit ahead of the publish. Scanning the
-		// pushed digest afterwards can only redden the run: the image is already
-		// in GHCR and the deploy scripts resolve a tag to a digest without ever
-		// reading a workflow result (OpenResilienceInitiative/ORISO-Docs#88).
-		// ci-main.yml publishes through the shared action, so its gate lives
-		// there; release-image.yml calls build-push-action directly and carries
-		// its own.
-		// Comment lines are stripped first: the explanatory comments themselves
-		// quote `push: true`, which would otherwise match ahead of the real step.
-		const withoutComments = (yaml: string) =>
-			yaml
-				.split('\n')
-				.filter((line) => !line.trim().startsWith('#'))
-				.join('\n');
-
-		for (const [rawSource, publishPattern] of [
-			[buildAction, /push: \$\{\{ inputs\.push_to_ghcr \}\}/],
-			[releaseWorkflow, /push: true/]
-		] as const) {
-			const source = withoutComments(rawSource);
-			const scanIndex = source.indexOf(
-				'aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25'
+		expect(
+			releaseWorkflow.match(
+				/uses: \.\/\.github\/actions\/docker-build-push/g
+			)
+		).toHaveLength(2);
+		expect(releaseWorkflow.match(/push_to_ghcr: false/g)).toHaveLength(2);
+		expect(
+			releaseWorkflow.match(
+				/bash scripts\/ci\/publish-image-archive\.sh/g
+			)
+		).toHaveLength(2);
+		expect(releaseWorkflow).not.toMatch(
+			/docker\/build-push-action|^\s*(?:push: true$|platforms:)/m
+		);
+		expect(releaseWorkflow).toContain(
+			"steps.disposition.outputs.mode == 'verify_existing'"
+		);
+		for (const image of ['frontend', 'storybook']) {
+			expect(releaseWorkflow).toContain(
+				'EXPECTED_ARCHIVE_SHA256: ${{ steps.' +
+					image +
+					'_archive.outputs.archive_sha256 }}'
 			);
-			const publishIndex = source.search(publishPattern);
-			expect(scanIndex).toBeGreaterThan(-1);
-			expect(publishIndex).toBeGreaterThan(-1);
-			expect(scanIndex).toBeLessThan(publishIndex);
+			expect(releaseWorkflow).toContain(
+				'subject-digest: ${{ steps.' +
+					image +
+					'_image.outputs.digest }}'
+			);
 		}
-
-		expect(releaseWorkflow).toContain('platforms: linux/amd64,linux/arm64');
-		expect(releaseWorkflow).toContain('provenance: mode=max');
-		expect(releaseWorkflow).toContain('sbom: true');
+		expectOrder(
+			releaseWorkflow,
+			'id: frontend_archive',
+			'id: storybook_archive',
+			'uses: docker/login-action@v4',
+			'Verify tag still absent before publishing',
+			'id: frontend_image',
+			'id: storybook_image',
+			'Verify tag still absent before tagging',
+			'Create and push release tag',
+			'Create GitHub Release'
+		);
 	});
 
 	it('pins every container base used by the release Dockerfiles', () => {

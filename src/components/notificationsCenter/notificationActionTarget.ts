@@ -1,4 +1,8 @@
-import { getEventDescriptor } from './eventDescriptors';
+import { localizedText } from '../../addons/addonLink';
+import {
+	getEventDescriptor,
+	requiresExactActionPath
+} from './eventDescriptors';
 import { EventActionParams } from './eventDescriptors/types';
 
 type Identifier = string | number | null;
@@ -39,6 +43,12 @@ export const EVENT_PARAM_KEYS = [
 	'conversationType',
 	'clientConsent',
 	'caseHandoverRequestId',
+	// #1714: handover display names (CaseHandoverService producers).
+	'requesterName',
+	'initiatorName',
+	// #1714: accepted before the backend emits it, like `matrixEventId`;
+	// absent today, so the wording stays neutral.
+	'accessType',
 	'threadRootId',
 	'mentioned',
 	'seriesId',
@@ -56,7 +66,19 @@ export const EVENT_PARAM_KEYS = [
 	'maintenanceDate',
 	'maintenanceStart',
 	'maintenanceEnd',
-	'statusUrl'
+	'statusUrl',
+	// FE#1952: which call a direct-link knock is for (call.knock.requested).
+	'medium',
+	// ADDON_NOTIFICATION (oriso-addon/v1 contract, section 1).
+	'addon',
+	'appId',
+	'slot',
+	'important',
+	'title',
+	'text',
+	// FE#2252: the invitation a "Neuen Link anfragen" is about
+	// (direct_invitation.renewal_requested), for "Neuen Link senden".
+	'linkId'
 ] as const;
 
 const ISO_DATE = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
@@ -87,6 +109,19 @@ const webUrl = (value: unknown): string | undefined => {
 	} catch {
 		return undefined;
 	}
+};
+
+const localizedTexts = (value: unknown): Record<string, string> | undefined => {
+	if (!value || typeof value !== 'object' || Array.isArray(value)) {
+		return undefined;
+	}
+	const texts = Object.fromEntries(
+		Object.entries(value as Record<string, unknown>).filter(
+			(entry): entry is [string, string] =>
+				typeof entry[1] === 'string' && entry[1].trim() !== ''
+		)
+	);
+	return Object.keys(texts).length ? texts : undefined;
 };
 
 /** Parse only the known, non-content fields accepted by action-target resolvers. */
@@ -124,6 +159,15 @@ export const parseEventActionParams = (raw: unknown): EventActionParams => {
 	params.forcedScopeKey = asNullableString(source.forcedScopeKey);
 	params.threadRootId = asNullableString(source.threadRootId);
 	params.callRoomId = asNullableString(source.callRoomId);
+	if (
+		typeof source.linkId === 'number' ||
+		typeof source.linkId === 'string'
+	) {
+		params.linkId = source.linkId;
+	}
+	if (source.medium === 'AUDIO' || source.medium === 'VIDEO') {
+		params.medium = source.medium;
+	}
 	if (typeof source.isVideo === 'boolean' || source.isVideo === null) {
 		params.isVideo = source.isVideo as boolean | null;
 	}
@@ -137,6 +181,12 @@ export const parseEventActionParams = (raw: unknown): EventActionParams => {
 	params.contentClass = asNullableString(source.contentClass);
 	params.recipientRole = asNullableString(source.recipientRole);
 	params.conversationType = asNullableString(source.conversationType);
+	// #1714: counsellor display names, metadata only (ADR-AT-01).
+	params.requesterName = asNullableString(source.requesterName);
+	params.initiatorName = asNullableString(source.initiatorName);
+	if (source.accessType === 'CO_ACCESS' || source.accessType === 'TAKEOVER') {
+		params.accessType = source.accessType;
+	}
 	const clientConsent = asNullableString(source.clientConsent);
 	if (
 		clientConsent === 'OPT_IN' ||
@@ -171,6 +221,19 @@ export const parseEventActionParams = (raw: unknown): EventActionParams => {
 	if (maintenanceEnd) params.maintenanceEnd = maintenanceEnd;
 	const statusUrl = webUrl(source.statusUrl);
 	if (statusUrl) params.statusUrl = statusUrl;
+	const addon = asNullableString(source.addon);
+	if (addon) params.addon = addon;
+	const appId = asNullableString(source.appId);
+	if (appId) params.appId = appId;
+	const slot = asNullableString(source.slot);
+	if (slot) params.slot = slot;
+	if (typeof source.important === 'boolean') {
+		params.important = source.important;
+	}
+	const addonTitle = localizedTexts(source.title);
+	if (addonTitle) params.addonTitle = addonTitle;
+	const addonText = localizedTexts(source.text);
+	if (addonText) params.addonText = addonText;
 	return params;
 };
 
@@ -223,6 +286,10 @@ export const toInterpolationValues = (
 		: '';
 	values.maintenanceStart ??= '';
 	values.maintenanceEnd ??= '';
+	const addonTitle = localizedText(params?.addonTitle, language);
+	if (addonTitle) values.addonTitle = addonTitle;
+	const addonText = localizedText(params?.addonText, language);
+	if (addonText) values.addonText = addonText;
 	return values;
 };
 
@@ -254,6 +321,14 @@ export const resolveNotificationActionPath = (
 	// the bare sessions root.
 	requestsBasePath?: string | null
 ): string | null => {
+	if (
+		requiresExactActionPath(item.eventType) &&
+		(item.sourceSessionId == null ||
+			String(item.sourceSessionId) !==
+				String(item.params?.sourceSessionId))
+	) {
+		return null;
+	}
 	const target = getEventDescriptor(item.eventType).resolveActionTarget({
 		...(item.params || {}),
 		actionPath: item.actionPath,
@@ -265,7 +340,20 @@ export const resolveNotificationActionPath = (
 	return target.kind === 'conversation' ||
 		target.kind === 'groupChatJoin' ||
 		target.kind === 'request' ||
-		target.kind === 'draft'
+		target.kind === 'draft' ||
+		target.kind === 'addon' ||
+		// FE#1952: where a knock lands once its call is started (or cannot be).
+		target.kind === 'callRoom'
 		? target.path
 		: null;
 };
+
+/** A started call that is already over opens like its `call.ended` card: its conversation. */
+export const resolveEndedCallConversationPath = (
+	item: NotificationActionInput,
+	sessionsBasePath: string
+): string | null =>
+	resolveNotificationActionPath(
+		{ ...item, eventType: 'call.ended' },
+		sessionsBasePath
+	);

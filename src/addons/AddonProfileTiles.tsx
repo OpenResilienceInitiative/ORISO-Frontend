@@ -1,0 +1,51 @@
+import * as React from 'react';
+import { useContext } from 'react';
+import { ActiveSessionContext, LocaleContext } from '../globalState';
+import { Box } from '../components/box/Box';
+import { appTitle, useCaseAddonApps } from './addonRegistry';
+import { AddonBadge } from './AddonBadge';
+import { AddonIcon } from './AddonIcon';
+import { AddonMount } from './AddonMount';
+import { useCaseAskerId } from './useCaseAskerId';
+import './addons.styles';
+
+/** Tiles of add-on apps in the client profile counsellors see (`consultant.asker-profile`). */
+export const AddonProfileTiles = () => {
+	const activeSession = useContext(ActiveSessionContext)?.activeSession;
+	const locale = useContext(LocaleContext)?.locale ?? 'de';
+	const sessionId = activeSession?.item?.id;
+	const agencyId = activeSession?.item?.agencyId;
+	const apps = useCaseAddonApps('consultant.asker-profile', {
+		agencyId,
+		sessionId
+	});
+	const { askerId } = useCaseAskerId(sessionId, apps.length > 0);
+
+	if (apps.length === 0 || !sessionId || !askerId) {
+		return null;
+	}
+	return (
+		<>
+			{apps.map(({ addon, app }) => (
+				<Box key={`${addon.name}/${app.id}`}>
+					<div className="addonTile">
+						<h2 className="addonTile__title">
+							<AddonIcon
+								icon={app.icon}
+								className="addonTile__icon"
+							/>
+							{appTitle(app, locale)}
+							<AddonBadge badge={app.badge} />
+						</h2>
+						<AddonMount
+							addon={addon}
+							app={app}
+							slot="consultant.asker-profile"
+							placement={{ agencyId, sessionId, askerId }}
+						/>
+					</div>
+				</Box>
+			))}
+		</>
+	);
+};

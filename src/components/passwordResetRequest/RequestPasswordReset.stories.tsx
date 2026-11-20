@@ -1,107 +1,59 @@
 import * as React from 'react';
-import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { RequestPasswordReset } from './RequestPasswordReset';
-import { RequestPasswordResetFormView } from './RequestPasswordResetFormView';
-import { PasswordResetSentView } from './PasswordResetSentView';
-import { StageLayout } from '../stageLayout/StageLayout';
-import { GlobalComponentContext } from '../../globalState/provider/GlobalComponentContext';
+import { expect, userEvent, within } from 'storybook/test';
 import { AgencySpecificContext } from '../../globalState/provider/AgencySpecificProvider';
+import { GlobalComponentContext } from '../../globalState/provider/GlobalComponentContext';
 import { Stage } from '../stage/stage';
-import { APP_ORISO_FIGMA_URL } from '../storybookDesignLinks';
-import '../login/login.styles';
-import './requestPasswordReset.styles';
-
-const withStage = (Story: React.ComponentType) => (
-	<AgencySpecificContext.Provider
-		value={{ specificAgency: null, setSpecificAgency: () => {} }}
-	>
-		<GlobalComponentContext.Provider value={{ Stage }}>
-			<Story />
-		</GlobalComponentContext.Provider>
-	</AgencySpecificContext.Provider>
-);
+import { RequestPasswordReset } from './RequestPasswordReset';
 
 const meta = {
 	title: 'Organisms/RequestPasswordReset',
 	component: RequestPasswordReset,
-	tags: ['autodocs'],
-	decorators: [withStage],
+	decorators: [
+		(Story) => (
+			<AgencySpecificContext.Provider
+				value={{ specificAgency: null, setSpecificAgency: () => {} }}
+			>
+				<GlobalComponentContext.Provider value={{ Stage }}>
+					<Story />
+				</GlobalComponentContext.Provider>
+			</AgencySpecificContext.Provider>
+		)
+	],
 	parameters: {
-		design: {
-			type: 'figma',
-			url: APP_ORISO_FIGMA_URL
-		},
-		docs: {
-			description: {
-				component:
-					'ORISO-Helm#72 follow-up: in-app, branded replacement for the ' +
-					'"Passwort vergessen?" flow, which previously redirected to ' +
-					"Keycloak's unbranded hosted pages. Submitting requests a " +
-					'one-time reset email from UserService (mirrors the existing ' +
-					'Magic Link self-service flow) and swaps to the confirmation ' +
-					'state inline, the same way the Login page swaps in its ' +
-					'Magic Link "sent" info text. See the RequestForm and Sent ' +
-					'stories for each screen state on its own.'
-			}
-		}
+		router: { initialPath: '/password-reset' }
 	}
 } satisfies Meta<typeof RequestPasswordReset>;
 
 export default meta;
-type Story = StoryObj<typeof meta>;
 
-/** Live, stateful container — wired to the real submit handler. */
-export const Default: Story = {};
+export const RequiredEmail: StoryObj<typeof meta> = {
+	globals: { locale: 'de' },
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const input = canvas.getByRole('textbox', { name: 'E-Mail' });
+		const submit = canvas.getByRole('button', { name: 'Absenden' });
+		const message = 'Bitte geben Sie zuerst Ihre E-Mail ein.';
 
-/** The request-email screen on its own (matches the design review's step 2). */
-export const RequestForm: Story = {
-	render: () => {
-		const StoryShell = () => {
-			const { Stage: StageComponent } = React.useContext(
-				GlobalComponentContext
-			);
-			const [username, setUsername] = useState('');
-			return (
-				<StageLayout
-					stage={<StageComponent hasAnimation={false} isReady />}
-					showLegalLinks
-				>
-					<div className="loginForm">
-						<div className="loginForm__inner">
-							<RequestPasswordResetFormView
-								username={username}
-								onUsernameChange={(e) =>
-									setUsername(e.target.value)
-								}
-								onSubmit={() => {}}
-								onBackToLogin={() => {}}
-								disabled={!username.trim()}
-							/>
-						</div>
-					</div>
-				</StageLayout>
-			);
-		};
-		return <StoryShell />;
+		await expect(submit).toBeDisabled();
+		await userEvent.type(input, '{Enter}');
+		await expect(input).toHaveAttribute('aria-invalid', 'true');
+		await expect(input).toHaveAccessibleDescription(message);
+		await expect(canvas.getByRole('alert')).toHaveTextContent(message);
+
+		await userEvent.type(input, '   {Enter}');
+		await expect(submit).toBeDisabled();
+		await expect(input).toHaveAccessibleDescription(message);
+
+		await userEvent.clear(input);
+		await userEvent.type(input, 'qa@example.invalid');
+		await expect(input).toHaveAttribute('aria-invalid', 'false');
+		await expect(input).not.toHaveAccessibleDescription();
+		await expect(canvas.queryByRole('alert')).not.toBeInTheDocument();
+		await expect(submit).toBeEnabled();
+
+		await userEvent.clear(input);
+		await userEvent.type(input, '{Enter}');
+		await expect(input).toHaveAccessibleDescription(message);
 	}
-};
-
-/** The confirmation screen on its own (matches the design review's step 3). */
-export const Sent: Story = {
-	render: () => (
-		<StageLayout
-			stage={<Stage hasAnimation={false} isReady />}
-			showLegalLinks
-		>
-			<div className="loginForm">
-				<div className="loginForm__inner">
-					<PasswordResetSentView
-						username="asker@example.com"
-						onBackToLogin={() => {}}
-					/>
-				</div>
-			</div>
-		</StageLayout>
-	)
 };

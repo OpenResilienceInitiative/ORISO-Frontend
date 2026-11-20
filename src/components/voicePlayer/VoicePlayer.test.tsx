@@ -1,7 +1,7 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import * as React from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { VoicePlayer } from './VoicePlayer';
 import { formatClock, getTileLayout } from './voicePlayerLayout';
 
@@ -180,6 +180,23 @@ describe('VoicePlayer, ring variant', () => {
 		expect(screen.getByRole('tooltip').textContent).toContain(
 			'voicePlayer.encrypted'
 		);
+	});
+});
+
+describe('VoicePlayer while the bytes load', () => {
+	it('announces loading outside the button', () => {
+		const { container } = render(
+			<VoicePlayer durationSec={12} onRequestSource={() => {}} />
+		);
+		const status = screen.getByRole('status');
+		expect(status.textContent).toBe('');
+
+		fireEvent.click(
+			container.querySelector('.voicePlayer__toggle') as HTMLElement
+		);
+
+		expect(status.textContent).toBe('voicePlayer.loading');
+		expect(status.closest('button')).toBeNull();
 	});
 });
 

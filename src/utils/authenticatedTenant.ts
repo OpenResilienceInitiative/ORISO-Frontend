@@ -44,3 +44,11 @@ export const subscribeToAuthenticatedTenant = (listener: () => void) => {
 	return () =>
 		window.removeEventListener(AUTH_SESSION_CHANGE_EVENT, listener);
 };
+
+/** Identity scope for async account work; access-token refreshes keep the same key. */
+export const getAuthenticatedAccountIdentity = (): string | null => {
+	const subject = parseJwt(getValueFromCookie('keycloak') ?? '')?.sub;
+	return typeof subject === 'string' && subject
+		? JSON.stringify([subject, getAuthenticatedTenantId()])
+		: null;
+};

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Meta, StoryObj } from '@storybook/react';
+import { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, userEvent, waitFor } from 'storybook/test';
 import { SessionMenu } from './SessionMenu';
@@ -12,6 +12,9 @@ import {
 } from '../chatStage/__storybook__/chatStageFixtures';
 import { phone390Globals } from '../message/messageStoryShell';
 import { SupervisionPanelContext } from '../supervisionPanel/SupervisionPanelContext';
+import { AUTHORITIES, UserDataContext } from '../../globalState';
+import { counsellorUserData } from '../chatStage/__storybook__/chatStageFixtures';
+import type { UserDataInterface } from '../../globalState/interfaces';
 import './sessionMenu.styles.scss';
 
 const hasUserInitiatedStopOrLeaveRequest = {
@@ -40,7 +43,21 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+const stageFrame = (Story: React.ComponentType) => (
+	<div style={{ position: 'relative', padding: 24, minHeight: 520 }}>
+		<Story />
+	</div>
+);
+
+const withStage = (Story: React.ComponentType) => (
+	<ChatStageProviders>{stageFrame(Story)}</ChatStageProviders>
+);
+
+// The menu reads the session and router; the stage provides them (#1338).
 export const Default: Story = {
+	tags: ['autodocs', '!needs-data'],
+	parameters: { router: { initialPath: stageRoute } },
+	decorators: [withStage],
 	args: {
 		hasUserInitiatedStopOrLeaveRequest,
 		isAskerInfoAvailable: true
@@ -87,7 +104,7 @@ function MenuTriggerShapeDemo() {
 }
 
 export const MenuTriggerShape: Story = {
-	tags: ['autodocs'],
+	tags: ['autodocs', '!needs-data'],
 	args: {
 		hasUserInitiatedStopOrLeaveRequest,
 		isAskerInfoAvailable: true
@@ -96,6 +113,9 @@ export const MenuTriggerShape: Story = {
 };
 
 export const AnonymousMobileActions: Story = {
+	tags: ['autodocs', '!needs-data'],
+	parameters: { router: { initialPath: stageRoute } },
+	decorators: [withStage],
 	args: {
 		hasUserInitiatedStopOrLeaveRequest,
 		isAskerInfoAvailable: false,
@@ -139,16 +159,6 @@ const openTheKebab = async (canvasElement: HTMLElement) => {
 	return document.querySelector<HTMLElement>('.sessionMenu__content--open')!;
 };
 
-const stageFrame = (Story: React.ComponentType) => (
-	<div style={{ position: 'relative', padding: 24, minHeight: 520 }}>
-		<Story />
-	</div>
-);
-
-const withStage = (Story: React.ComponentType) => (
-	<ChatStageProviders>{stageFrame(Story)}</ChatStageProviders>
-);
-
 const withGroupStage = (Story: React.ComponentType) => (
 	<ChatStageProviders activeSession={{ ...stageSession(), isGroup: true }}>
 		{stageFrame(Story)}
@@ -175,7 +185,9 @@ const withSupervisionStage = (Story: React.ComponentType) => (
 export const CallsInTheHeader: Story = {
 	name: 'Calls in the header row (desktop, D8 off)',
 	tags: ['autodocs', '!needs-data'],
-	parameters: { router: { initialPath: stageRoute } },
+	parameters: {
+		router: { initialPath: stageRoute }
+	},
 	args: {
 		hasUserInitiatedStopOrLeaveRequest,
 		isAskerInfoAvailable: true
@@ -215,7 +227,9 @@ export const CallsInTheKebabMenu: Story = {
 	name: 'Calls in the kebab menu (phone, D8)',
 	tags: ['autodocs', '!needs-data'],
 	globals: phone390Globals,
-	parameters: { router: { initialPath: stageRoute } },
+	parameters: {
+		router: { initialPath: stageRoute }
+	},
 	args: {
 		hasUserInitiatedStopOrLeaveRequest,
 		isAskerInfoAvailable: true,
@@ -321,7 +335,9 @@ export const GroupOmitsOneToOneAdvice: Story = {
 export const SupervisionUsesCatalogIcon: Story = {
 	name: 'Supervision — catalog icon',
 	tags: ['autodocs', '!needs-data'],
-	parameters: { router: { initialPath: stageRoute } },
+	parameters: {
+		router: { initialPath: stageRoute }
+	},
 	args: {
 		hasUserInitiatedStopOrLeaveRequest,
 		isAskerInfoAvailable: true
@@ -364,5 +380,130 @@ export const SupervisorHasNoCalls: Story = {
 		await expect(
 			canvasElement.querySelector('.sessionMenu__videoCallButtons')
 		).toBeNull();
+	}
+};
+
+/**
+ * FE#2250: the owning counsellor of a 1:1 chat finds "Beratung übergeben"
+ * directly below "Weitere Beratung empfehlen". It opens the same handover
+ * dialog as the profile button (pinned by SessionMenu.caseHandover.test.tsx).
+ */
+export const CaseHandoverBelowRecommend: Story = {
+	name: 'Owner — Beratung übergeben below the recommendation',
+	tags: ['autodocs', '!needs-data'],
+	parameters: { router: { initialPath: stageRoute } },
+	args: {
+		hasUserInitiatedStopOrLeaveRequest,
+		isAskerInfoAvailable: true
+	},
+	decorators: [withStage],
+	play: async ({ canvasElement }) => {
+		const flyout = await openTheKebab(canvasElement);
+		const rows = Array.from(
+			flyout.querySelectorAll<HTMLElement>(
+				'.sessionMenu__item.chatMenuDropdown__item'
+			)
+		);
+		const recommendAt = rows.findIndex(
+			(row) =>
+				row.dataset.cy === 'session-menu-recommend-further-counselling'
+		);
+		await expect(recommendAt).toBeGreaterThanOrEqual(0);
+		await expect(rows[recommendAt + 1]?.dataset.cy).toBe(
+			'session-menu-case-handover'
+		);
+		await expect(rows[recommendAt + 1]?.textContent).toContain(
+			'Beratung übergeben'
+		);
+	}
+};
+
+const askerUserData = {
+	...counsellorUserData,
+	userId: 'asker-storybook',
+	userName: 'sonnenblume',
+	displayName: '',
+	grantedAuthorities: [AUTHORITIES.ASKER_DEFAULT],
+	userRoles: ['USER']
+} as unknown as UserDataInterface;
+
+const askerUserDataValue = {
+	userData: askerUserData,
+	setUserData: () => {},
+	reloadUserData: async () => askerUserData
+};
+
+/** The stage, seen by the advice seeker of the conversation. */
+const withAskerStage = (Story: React.ComponentType) => (
+	<ChatStageProviders>
+		<UserDataContext.Provider value={askerUserDataValue}>
+			{stageFrame(Story)}
+		</UserDataContext.Provider>
+	</ChatStageProviders>
+);
+
+/** Tomorrow, 15:00–16:00: always upcoming, whatever day the story runs. */
+const tomorrowAt = (hour: number) => {
+	const date = new Date();
+	date.setDate(date.getDate() + 1);
+	date.setHours(hour, 0, 0, 0);
+	return date.toISOString();
+};
+
+/**
+ * Only counsellors start calls (product owner, 17 Nov 2026). The advice
+ * seeker sees the same video and audio buttons, but a click opens the
+ * conversation's next appointment instead of a call. The appointment read is
+ * served by a fixture.
+ */
+export const AdviceSeekerCallButtonsShowAppointment: Story = {
+	name: 'Advice seeker — call buttons show the appointment',
+	tags: ['autodocs', '!needs-data'],
+	parameters: { router: { initialPath: stageRoute } },
+	args: {
+		hasUserInitiatedStopOrLeaveRequest,
+		isAskerInfoAvailable: false
+	},
+	decorators: [withAskerStage],
+	beforeEach: () => {
+		const originalFetch = globalThis.fetch;
+		const fixture: typeof fetch = async (input, init) => {
+			const url = new URL(new Request(input, init).url);
+			if (/\/users\/sessions\/-?\d+\/appointments$/.test(url.pathname)) {
+				return Response.json([
+					{
+						id: 'storybook-appointment',
+						sessionId: 1,
+						startTime: tomorrowAt(15),
+						endTime: tomorrowAt(16),
+						status: 'SCHEDULED',
+						kind: 'VIDEO'
+					}
+				]);
+			}
+			return originalFetch(input, init);
+		};
+		globalThis.fetch = fixture;
+		return () => {
+			if (globalThis.fetch === fixture) globalThis.fetch = originalFetch;
+		};
+	},
+	play: async ({ canvasElement }) => {
+		const video = await waitFor(() => {
+			const button = canvasElement.querySelector<HTMLElement>(
+				'[data-cy="session-header-start-video-call"]'
+			);
+			expect(button).not.toBeNull();
+			return button!;
+		});
+		await userEvent.click(video);
+		const card = await waitFor(() => {
+			const found = document.querySelector<HTMLElement>(
+				'[data-testid="asker-call-info-appointment"]'
+			);
+			expect(found).not.toBeNull();
+			return found!;
+		});
+		await expect(card.textContent).toMatch(/Videoanruf|Video call/);
 	}
 };

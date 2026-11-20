@@ -63,6 +63,7 @@ dialect cannot disagree with what Storybook shows.
 | `anruf-erinnerung`                        | asker      | `{{logoHeaderClass}}` `{{logoWordmarkClass}}` `{{callUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}`                                                                                                                                |
 | `anruf-einladung`                         | asker      | `{{logoHeaderClass}}` `{{logoWordmarkClass}}` `{{callUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}`                                                                                                                                |
 | `anruf-verpasst`                          | asker      | `{{logoHeaderClass}}` `{{logoWordmarkClass}}` `{{callUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}`                                                                                                                                |
+| `calendar-move-proposal`                  | consultant | `{{proposerName}}` `{{logoHeaderClass}}` `{{logoWordmarkClass}}` `{{currentDate}}` `{{currentTime}}` `{{proposedDate}}` `{{proposedTime}}` `{{calendarUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}`                               |
 
 Brand placeholders (`platformName`, `primaryColor`, `accentColor`,
 `logoUrl`, `orgName`, `orgAddress`, `contactLine`) appear in every mail and

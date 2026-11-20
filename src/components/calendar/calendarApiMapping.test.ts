@@ -1,0 +1,329 @@
+import { describe, expect, it } from 'vite-plus/test';
+import {
+	blockerToApi,
+	colleagueFromApi,
+	entryFromApi,
+	importFromApi,
+	loadWindow,
+	MAX_WINDOW_DAYS,
+	normalizeImportUrl,
+	proposalFromApi,
+	visibilityFromApi
+} from './calendarApiMapping';
+
+describe('calendarApiMapping', () => {
+	it('maps an own appointment with its kind and conversation', () => {
+		expect(
+			entryFromApi({
+				id: 'a1',
+				type: 'APPOINTMENT',
+				start: '2026-11-16T09:00:00Z',
+				end: '2026-11-16T10:00:00Z',
+				ownerId: 'me',
+				kind: 'PHONE',
+				title: 'ruhiges_yak',
+				sessionId: 4401,
+				movable: true
+			})
+		).toEqual({
+			id: 'a1',
+			type: 'appointment',
+			start: '2026-11-16T09:00:00Z',
+			end: '2026-11-16T10:00:00Z',
+			ownerId: 'me',
+			kind: 'phone',
+			title: 'ruhiges_yak',
+			sessionId: 4401,
+			movable: true
+		});
+	});
+
+	it('marks an advice seeker’s request waiting for confirmation (FE#2287)', () => {
+		const request = entryFromApi({
+			id: 'r1',
+			type: 'APPOINTMENT',
+			start: '2026-11-16T09:00:00Z',
+			end: '2026-11-16T10:00:00Z',
+			ownerId: 'me',
+			kind: 'VIDEO',
+			title: 'ruhiges_yak',
+			sessionId: 4401,
+			movable: false,
+			requested: true
+		});
+		expect(request.requested).toBe(true);
+		expect(request.movable).toBe(false);
+	});
+
+	it('treats an appointment from before the calendar as a video call', () => {
+		const entry = entryFromApi({
+			id: 'a2',
+			type: 'APPOINTMENT',
+			start: '2026-11-16T09:00:00Z',
+			end: '2026-11-16T10:00:00Z',
+			ownerId: 'me',
+			kind: null
+		});
+		expect(entry.kind).toBe('video');
+		expect(entry.movable).toBe(false);
+	});
+
+	it('defaults an appointment whose kind the backend left out', () => {
+		// UserService omits null fields, so the property is missing entirely.
+		const own = entryFromApi({
+			id: 'a3',
+			type: 'APPOINTMENT',
+			start: '2026-11-16T09:00:00Z',
+			end: '2026-11-16T10:00:00Z',
+			ownerId: 'me',
+			movable: true
+		});
+		expect(own.kind).toBe('video');
+		const unknown = entryFromApi({
+			id: 'a4',
+			type: 'APPOINTMENT',
+			start: '2026-11-16T09:00:00Z',
+			end: '2026-11-16T10:00:00Z',
+			ownerId: 'kaya',
+			kind: 'HOLOGRAM' as never
+		});
+		expect(unknown.kind).toBe('video');
+		const group = entryFromApi({
+			id: 'chat-7-0',
+			type: 'GROUP',
+			start: '2026-11-16T09:00:00Z',
+			end: '2026-11-16T10:00:00Z',
+			ownerId: 'me'
+		});
+		expect(group).not.toHaveProperty('kind');
+	});
+
+	it('shows a blocker over whole local days in the all-day row', () => {
+		const start = new Date(2026, 10, 16);
+		const end = new Date(2026, 10, 17);
+		const entry = entryFromApi({
+			id: 'b1',
+			type: 'BLOCKER',
+			start: start.toISOString(),
+			end: end.toISOString(),
+			ownerId: 'me',
+			movable: true
+		});
+		expect(entry.allDay).toBe(true);
+		const timed = entryFromApi({
+			id: 'b2',
+			type: 'BLOCKER',
+			start: new Date(2026, 10, 16, 9).toISOString(),
+			end: new Date(2026, 10, 16, 12).toISOString(),
+			ownerId: 'me'
+		});
+		expect(timed).not.toHaveProperty('allDay');
+	});
+
+	it('takes the all-day flag UserService stores over the range (US#1663)', () => {
+		const entered = entryFromApi({
+			id: 'b3',
+			type: 'BLOCKER',
+			start: new Date(2026, 10, 16, 0, 0).toISOString(),
+			end: new Date(2026, 10, 16, 23, 59, 59, 999).toISOString(),
+			ownerId: 'me',
+			allDay: true
+		});
+		expect(entered.allDay).toBe(true);
+		const midnightToMidnight = entryFromApi({
+			id: 'b4',
+			type: 'BLOCKER',
+			start: new Date(2026, 10, 16).toISOString(),
+			end: new Date(2026, 10, 17).toISOString(),
+			ownerId: 'me',
+			allDay: false
+		});
+		expect(midnightToMidnight).not.toHaveProperty('allDay');
+	});
+
+	it('keeps a colleague entry free of title and conversation when absent', () => {
+		const entry = entryFromApi({
+			id: 'k1',
+			type: 'BUSY',
+			start: '2026-11-16T09:00:00Z',
+			end: '2026-11-16T10:00:00Z',
+			ownerId: 'kaya',
+			title: null,
+			sessionId: null
+		});
+		expect(entry).not.toHaveProperty('title');
+		expect(entry).not.toHaveProperty('sessionId');
+		expect(entry).not.toHaveProperty('kind');
+		expect(entry.type).toBe('busy');
+	});
+
+	it('maps colleagues and the Träger visibility', () => {
+		expect(
+			colleagueFromApi({
+				id: 'b',
+				displayName: 'J. Brandt',
+				agencyName: null,
+				relation: 'SAME_TENANT'
+			})
+		).toEqual({
+			id: 'b',
+			displayName: 'J. Brandt',
+			agencyName: '',
+			relation: 'sameTenant'
+		});
+		// The username tells two of one name apart (US#1663).
+		expect(
+			colleagueFromApi({
+				id: 'b',
+				displayName: 'J. Brandt',
+				agencyName: 'BS Nord',
+				secondaryLabel: 'jbrandt',
+				relation: 'SAME_AGENCY'
+			}).secondaryLabel
+		).toBe('jbrandt');
+		expect(
+			visibilityFromApi({
+				visibilityScope: 'TENANT',
+				showAskerUsernames: true
+			})
+		).toEqual({ scope: 'TENANT', showUsernames: true });
+	});
+
+	it('sends a blocked-time series as its first day plus the rule', () => {
+		const start = new Date(2026, 10, 16, 8, 0);
+		const end = new Date(2026, 10, 16, 12, 0);
+		expect(
+			blockerToApi([
+				{
+					type: 'blocker',
+					start,
+					end,
+					note: '  Teamsitzung ',
+					repeat: { weekdays: [1], until: new Date(2026, 11, 14) }
+				},
+				{
+					type: 'blocker',
+					start: new Date(2026, 10, 23, 8),
+					end: new Date(2026, 10, 23, 12)
+				}
+			])
+		).toEqual({
+			start: start.toISOString(),
+			end: end.toISOString(),
+			note: 'Teamsitzung',
+			repeat: { weekdays: [1], until: '2026-12-14' }
+		});
+	});
+
+	it('sends a single blocked time without a rule', () => {
+		const body = blockerToApi([
+			{
+				type: 'blocker',
+				start: new Date(2026, 10, 16),
+				end: new Date(2026, 10, 16, 23, 59),
+				allDay: true,
+				repeat: { weekdays: [], until: new Date(2026, 11, 1) }
+			}
+		]);
+		expect(body.allDay).toBe(true);
+		expect(body).not.toHaveProperty('repeat');
+		expect(body).not.toHaveProperty('note');
+	});
+
+	it('shows only the host of the private import address', () => {
+		expect(
+			importFromApi({
+				feedUrl: 'https://x/feed.ics',
+				importConfigured: true,
+				importHost: 'outlook.office365.com',
+				importLastSyncAt: '2026-11-16T08:00:00Z'
+			})
+		).toEqual({
+			host: 'outlook.office365.com',
+			lastSyncedAt: '2026-11-16T08:00:00Z',
+			failed: false
+		});
+		expect(
+			importFromApi({
+				feedUrl: 'https://x/feed.ics',
+				importConfigured: false,
+				importError: 'UNREACHABLE'
+			})
+		).toEqual({ failed: true });
+	});
+
+	it('fetches webcal addresses over https', () => {
+		expect(normalizeImportUrl(' webcal://p01.icloud.com/x.ics ')).toBe(
+			'https://p01.icloud.com/x.ics'
+		);
+	});
+
+	it('loads a week around the visible range, never more than UserService allows', () => {
+		const week = loadWindow(new Date(2026, 10, 16), new Date(2026, 10, 23));
+		expect(week.from).toEqual(new Date(2026, 10, 9));
+		expect(week.to).toEqual(new Date(2026, 10, 30));
+		const month = loadWindow(new Date(2026, 9, 26), new Date(2026, 11, 7));
+		const days = (month.to.getTime() - month.from.getTime()) / 86_400_000;
+		expect(days).toBeLessThanOrEqual(MAX_WINDOW_DAYS);
+	});
+});
+
+describe('proposalFromApi (move proposals v1)', () => {
+	const dto = {
+		id: 'p1',
+		entryId: 'a1',
+		start: '2026-11-17T13:00:00Z',
+		end: '2026-11-17T14:00:00Z',
+		entryStart: '2026-11-16T09:00:00Z',
+		entryEnd: '2026-11-16T10:00:00Z',
+		proposerId: 'kaya',
+		proposerName: 'A. Kaya',
+		approverId: 'me',
+		approverName: 'M. Muster',
+		createdAt: '2026-11-15T18:00:00Z'
+	};
+
+	it('keeps both times and both people', () => {
+		expect(proposalFromApi(dto)).toEqual(dto);
+	});
+
+	it('keeps the reason the proposer gave (US#1663)', () => {
+		expect(proposalFromApi({ ...dto, reason: 'Raum belegt' }).reason).toBe(
+			'Raum belegt'
+		);
+		expect('reason' in proposalFromApi({ ...dto, reason: null })).toBe(
+			false
+		);
+	});
+
+	it('leaves out the names UserService did not send', () => {
+		const { proposerName, approverName, createdAt, ...bare } = dto;
+		const mapped = proposalFromApi({ ...bare, proposerName: null });
+		expect(mapped).toEqual(bare);
+		expect('proposerName' in mapped).toBe(false);
+		expect('approverName' in mapped).toBe(false);
+	});
+});
+
+describe('entryFromApi — planned absence (ORISO-Frontend#2303)', () => {
+	it('reads ABSENCE as an all-day absence entry, never movable', () => {
+		expect(
+			entryFromApi({
+				id: 'absence-me',
+				type: 'ABSENCE',
+				start: '2026-12-20T23:00:00Z',
+				end: '2027-01-03T23:00:00Z',
+				ownerId: 'me',
+				movable: false
+			})
+		).toEqual({
+			id: 'absence-me',
+			type: 'absence',
+			start: '2026-12-20T23:00:00Z',
+			end: '2027-01-03T23:00:00Z',
+			ownerId: 'me',
+			allDay: true,
+			movable: false
+		});
+	});
+});

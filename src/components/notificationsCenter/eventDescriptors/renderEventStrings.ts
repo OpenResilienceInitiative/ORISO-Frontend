@@ -14,6 +14,7 @@
  * nothing else here changes — no server-side rendered text is introduced.
  */
 
+import { ADDON_NOTIFICATION_EVENT_TYPE } from './registry';
 import { EventDescriptor } from './types';
 
 /** Minimal translate signature, satisfied by i18next's `t`. */
@@ -36,17 +37,111 @@ export interface RenderedEventStrings {
 	text: string;
 }
 
+/**
+ * Handover events whose wording depends on the frozen server `accessType`
+ * (CO_ACCESS = temporary read access, TAKEOVER = case changes hands).
+ * `withoutAccessType` names the variant used while the producer does not send
+ * the field: `null` keeps the base (takeover) wording, which is only allowed
+ * when the backend can emit nothing else for that event.
+ */
+const HANDOVER_ACCESS_WORDING: Record<
+	string,
+	{ withoutAccessType: 'generic' | null }
+> = {
+	// ORISO-UserService creates colleague offers as TAKEOVER only
+	// (CaseHandoverService#createOffer rejects CO_ACCESS reasons).
+	'case.handover.offer.received': { withoutAccessType: null },
+	// Granted covers both a temporary co-access and a completed takeover.
+	'case.handover.granted': { withoutAccessType: 'generic' }
+};
+
+/**
+ * FE#1952: a direct-link knock names the call it is for. `medium` comes from
+ * the producer's params; without it the base wording ("someone is knocking")
+ * stays true for both media.
+ */
+const MEDIUM_WORDING: Record<string, Record<string, string>> = {
+	'call.knock.requested': { VIDEO: 'video', AUDIO: 'audio' }
+};
+
+const nonEmpty = (value: unknown): string | undefined =>
+	typeof value === 'string' && value.trim() ? value : undefined;
+
+// The add-on's own plain text, never an i18n template: it may contain
+// characters i18next would escape.
+const renderAddonStrings = (
+	descriptor: EventDescriptor,
+	translate: TranslateFn,
+	input: EventStringInput
+): RenderedEventStrings => {
+	const title =
+		nonEmpty(input.interpolation?.addonTitle) ??
+		nonEmpty(input.fallbackTitle);
+	const text =
+		nonEmpty(input.interpolation?.addonText) ??
+		nonEmpty(input.fallbackText);
+	return {
+		title: title ?? translate(descriptor.titleTemplate),
+		text: text ?? (title ? '' : translate(descriptor.textTemplate))
+	};
+};
+
 export const renderEventStrings = (
 	descriptor: EventDescriptor,
 	translate: TranslateFn,
 	input: EventStringInput = {}
 ): RenderedEventStrings => {
-	const interpolation = input.interpolation || {};
-	const title = translate(descriptor.titleTemplate, {
+	if (descriptor.eventType === ADDON_NOTIFICATION_EVENT_TYPE) {
+		return renderAddonStrings(descriptor, translate, input);
+	}
+	const interpolation: Record<string, unknown> = { ...input.interpolation };
+	let titleTemplate = descriptor.titleTemplate;
+	let textTemplate = descriptor.textTemplate;
+	const handover = HANDOVER_ACCESS_WORDING[descriptor.eventType];
+	if (handover) {
+		// #1714: real names from the producer; never a raw {{placeholder}}.
+		interpolation.fromConsultantName =
+			interpolation.initiatorName ||
+			translate('caseHandover.history.unknownColleague');
+		interpolation.toConsultantName =
+			interpolation.requesterName ||
+			translate('caseHandover.history.unknownColleague');
+		// The persisted event owns the access semantics. A reason label can
+		// not reconstruct policy, so an absent accessType falls back to the
+		// wording that is true for every access type this event can carry.
+		const variant =
+			interpolation.accessType === 'CO_ACCESS'
+				? 'coAccess'
+				: interpolation.accessType === 'TAKEOVER'
+					? null
+					: handover.withoutAccessType;
+		if (variant) {
+			titleTemplate = titleTemplate.replace(
+				/\.title$/,
+				`.${variant}.title`
+			);
+			textTemplate = textTemplate.replace(/\.text$/, `.${variant}.text`);
+		}
+	}
+	const mediumVariant =
+		MEDIUM_WORDING[descriptor.eventType]?.[
+			String(interpolation.medium ?? '')
+		];
+	if (mediumVariant) {
+		titleTemplate = titleTemplate.replace(
+			/\.title$/,
+			`.${mediumVariant}.title`
+		);
+		textTemplate = textTemplate.replace(
+			/\.text$/,
+			`.${mediumVariant}.text`
+		);
+	}
+	const title = translate(titleTemplate, {
 		defaultValue: input.fallbackTitle ?? '',
 		...interpolation
 	});
-	const text = translate(descriptor.textTemplate, {
+	const text = translate(textTemplate, {
 		defaultValue: input.fallbackText ?? '',
 		...interpolation
 	});

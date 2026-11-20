@@ -1,11 +1,12 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import {
 	buildRegistrationTopicPresentationGroups,
 	getRegistrationCategoryIcon,
 	getRegistrationCategoryName,
 	RegistrationCategoryId,
 	getRegistrationTopicDisplay,
-	getRegistrationTopicIcon
+	getRegistrationTopicIcon,
+	getRegistrationTopicIconForGroup
 } from './registrationDesign';
 
 import { TopicsDataInterface } from '../../../globalState/interfaces/TopicsDataInterface';
@@ -407,5 +408,169 @@ describe('pinned copy matches the catalogue it is duplicated into', () => {
 				`${locale} category ${id}`
 			).toBe(name);
 		});
+	});
+});
+
+/**
+ * Since the ConsultingTypeService ships the Caritas topics itself (with icons and
+ * every translation) and the platform admin can override them, a topic that carries
+ * an `icon` comes from that catalogue: its texts, pictures and categories win. A
+ * backend without the catalogue sends no `icon`, and the built-in copy stays.
+ */
+describe('topic catalogue from the API', () => {
+	const fromCatalogue = (
+		slug: string,
+		id: number,
+		overrides: Partial<TopicsDataInterface> = {}
+	): TopicsDataInterface => ({
+		...topicBySlug(slug, id),
+		icon: `/service/topic/public/icons/${slug}.png`,
+		...overrides
+	});
+
+	it('shows the text the platform admin saved instead of the built-in copy', () => {
+		const display = getRegistrationTopicDisplay(
+			fromCatalogue('debt', 5, {
+				name: 'Geld & Schulden',
+				description: 'Wir helfen bei Geldsorgen.'
+			}),
+			'de'
+		);
+
+		expect(display).toEqual({
+			title: 'Geld & Schulden',
+			description: 'Wir helfen bei Geldsorgen.'
+		});
+	});
+
+	it('shows the picture the platform admin uploaded for a topic', () => {
+		const ownPicture = 'data:image/png;base64,iVBORw0KGgo=';
+		const topic = fromCatalogue('debt', 5, { icon: ownPicture });
+
+		expect(getRegistrationTopicIcon(topic)).toBe(ownPicture);
+		expect(getRegistrationTopicIconForGroup(topic, 10001)).toBe(ownPicture);
+	});
+
+	it('shows an uploaded topic picture also in the built-in categories', () => {
+		const ownPicture = 'data:image/png;base64,iVBORw0KGgo=';
+		const topics = allTopics.map((topic) =>
+			topic.slug === 'debt' ? { ...topic, icon: ownPicture } : topic
+		);
+
+		const debtRows = buildRegistrationTopicPresentationGroups(topics, 'de')
+			.flatMap(({ topics: rows }) => rows)
+			.filter(({ topic }) => topic.slug === 'debt');
+
+		expect(debtRows.length).toBeGreaterThan(0);
+		debtRows.forEach(({ icon }) => expect(icon).toBe(ownPicture));
+	});
+
+	it('keeps the per-category picture of a shipped Caritas icon', () => {
+		const topic = fromCatalogue('u25-suicide-prevention', 9);
+
+		expect(getRegistrationTopicIconForGroup(topic, 10002)).toBe(
+			getRegistrationTopicIconForGroup(
+				topicBySlug('u25-suicide-prevention', 9),
+				10002
+			)
+		);
+		expect(getRegistrationTopicIcon(topic)).toBe(
+			getRegistrationTopicIcon(topicBySlug('u25-suicide-prevention', 9))
+		);
+	});
+
+	it('loads the shipped icon of a topic the frontend does not know from the topic service', () => {
+		const topic = fromCatalogue('new-topic', 30, {
+			icon: '/service/topic/public/icons/t-05-schulden.png'
+		});
+
+		expect(getRegistrationTopicIcon(topic)).toMatch(
+			/\/service\/topic\/public\/icons\/t-05-schulden\.png$/
+		);
+	});
+
+	const alterGroup = {
+		id: 1,
+		name: 'Alter',
+		icon: '/service/topic/public/icons/cat-02.png',
+		topicIds: [3, 1]
+	};
+	const ownGroup = {
+		id: 7,
+		name: 'Wohnen',
+		icon: 'data:image/png;base64,AAAA',
+		topicIds: [5, 99]
+	};
+	const catalogueTopics = [
+		fromCatalogue('general-social-counselling', 1),
+		fromCatalogue('life-in-old-age', 3),
+		fromCatalogue('debt', 5)
+	];
+
+	it('shows the categories in the order, with the topics and names the platform admin saved', () => {
+		const groups = buildRegistrationTopicPresentationGroups(
+			catalogueTopics,
+			'de',
+			[ownGroup, alterGroup]
+		);
+
+		expect(
+			groups.map(({ id, name, topicIds }) => ({ id, name, topicIds }))
+		).toEqual([
+			{ id: 7, name: 'Wohnen', topicIds: [5] },
+			{ id: 1, name: 'Alter', topicIds: [3, 1] }
+		]);
+		expect(groups[0].icon).toBe('data:image/png;base64,AAAA');
+		expect(groups[1].icon).toBe(getRegistrationCategoryIcon(10001));
+		expect(groups[1].topics[0].icon).toBe(
+			buildRegistrationTopicPresentationGroups(
+				allTopics,
+				'de'
+			)[0].topics.find(({ topic }) => topic.slug === 'life-in-old-age')
+				?.icon
+		);
+	});
+
+	it('shows the shipped picture the platform admin chose for a known category', () => {
+		const [crisisPicture] = buildRegistrationTopicPresentationGroups(
+			catalogueTopics,
+			'de',
+			[{ ...alterGroup, icon: '/service/topic/public/icons/cat-05.png' }]
+		).map(({ icon }) => icon);
+		const [otherShipped] = buildRegistrationTopicPresentationGroups(
+			catalogueTopics,
+			'de',
+			[{ ...alterGroup, icon: '/service/topic/public/icons/cat-06.png' }]
+		).map(({ icon }) => icon);
+
+		expect(crisisPicture).toBe(getRegistrationCategoryIcon(10002));
+		expect(crisisPicture).not.toBe(getRegistrationCategoryIcon(10001));
+		expect(otherShipped).toMatch(
+			/\/service\/topic\/public\/icons\/cat-06\.png$/
+		);
+	});
+
+	it('gives every category its own panel id, also a category the frontend does not know', () => {
+		const groups = buildRegistrationTopicPresentationGroups(
+			catalogueTopics,
+			'de',
+			[ownGroup, alterGroup]
+		);
+
+		expect(groups.map(({ categoryId }) => categoryId)).toEqual([
+			'group-7',
+			'alter'
+		]);
+	});
+
+	it('keeps the built-in categories when the topic service sends no catalogue', () => {
+		const groups = buildRegistrationTopicPresentationGroups(
+			allTopics,
+			'de',
+			[{ id: 1, name: 'Alt', topicIds: [1] }]
+		);
+
+		expect(groups).toHaveLength(6);
+		expect(groups[0].name).toBe('Alter');
 	});
 });

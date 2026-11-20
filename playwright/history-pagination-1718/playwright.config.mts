@@ -18,7 +18,7 @@ export default defineConfig({
 	webServer: {
 		cwd: process.cwd(),
 		command:
-			'node node_modules/vite/bin/vite.js --config playwright/history-pagination-1718/vite.config.mts',
+			'npm exec --no -- vp dev --config playwright/history-pagination-1718/vite.config.mts',
 		url: 'http://127.0.0.1:9021/playwright/history-pagination-1718/index.html',
 		reuseExistingServer: false,
 		timeout: 180000
