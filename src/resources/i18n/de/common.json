@@ -2843,7 +2843,8 @@
 		},
 		"avatar": {
 			"label": "Ihr Bild",
-			"default": "Standard"
+			"default": "Standard",
+			"initials": "Initialen"
 		},
 		"appLanguage": {
 			"info": "Stellen Sie hier die Sprache der Anwendung ein.",

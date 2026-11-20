@@ -820,7 +820,8 @@
 	},
 	"profile": {
 		"avatar": {
-			"label": "Dein Bild"
+			"label": "Dein Bild",
+			"initials": "Initialen"
 		},
 		"appLanguage": {
 			"info": "Stelle hier die Sprache der Anwendung ein."

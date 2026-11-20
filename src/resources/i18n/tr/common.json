@@ -2822,7 +2822,8 @@
 		},
 		"avatar": {
 			"label": "Resminiz",
-			"default": "Varsayılan"
+			"default": "Varsayılan",
+			"initials": "Baş harfler"
 		},
 		"appLanguage": {
 			"info": "Uygulamanın dilini buradan ayarlayın.",
