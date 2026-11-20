@@ -13,14 +13,31 @@ export interface SessionAppointment {
 	/** UTC instants. */
 	startTime: string;
 	endTime: string;
-	status: 'SCHEDULED' | 'CANCELLED';
+	/**
+	 * REQUESTED: an advice seeker's booking waiting for the counsellor
+	 * (FE#2287); DECLINED: a request the counsellor declined.
+	 */
+	status: SessionAppointmentStatus;
 	/** ADR-032 §2a. Absent on appointments made before the calendar. */
 	kind?: SessionAppointmentKind | null;
+	/**
+	 * FE#2287: a DECLINED request nobody answered by its start, declined
+	 * automatically. `noticePending`: its conversation notice is still to be
+	 * posted; claim it first with `apiClaimSessionAppointmentExpiryNotice`.
+	 */
+	expired?: boolean;
+	noticePending?: boolean;
 	/** The asker's counterpart has no displayName; the whole object may be absent. */
 	counterpart?: { username?: string; displayName?: string };
 }
 
 export type SessionAppointmentKind = 'ONSITE' | 'VIDEO' | 'PHONE' | 'CHAT';
+
+export type SessionAppointmentStatus =
+	| 'SCHEDULED'
+	| 'CANCELLED'
+	| 'REQUESTED'
+	| 'DECLINED';
 
 export interface SessionAppointmentSlot {
 	startTime: string;
@@ -28,6 +45,23 @@ export interface SessionAppointmentSlot {
 	/** Left out on a move: the appointment keeps its kind. */
 	kind?: SessionAppointmentKind;
 }
+
+/**
+ * How a free time is booked (FE#2287): INSTANT is scheduled at once, REQUEST
+ * waits for the counsellor to confirm.
+ */
+export type SlotBookingMode = 'INSTANT' | 'REQUEST';
+
+/** A time the asker may book with the counsellor (FE#1050). UTC instants. */
+export interface AppointmentSlot {
+	startTime: string;
+	endTime: string;
+	/** Absent from an older backend: booked at once. */
+	bookingMode?: SlotBookingMode;
+}
+
+/** How a self-booked appointment takes place: what the asker clicked. */
+export type SelfBookingMedium = 'VIDEO' | 'PHONE';
 
 // A backend without these endpoints must leave the app untouched: every
 // failure rejects for the caller to handle, only a 401 keeps the session logic.
@@ -38,11 +72,15 @@ const WRITE_HANDLING = [
 	FETCH_ERRORS.CATCH_ALL_EXCEPT_UNAUTHORIZED
 ];
 
+/**
+ * Rejects with `NO_MATCH` when the backend has no such endpoint (404), so
+ * the caller can tell an older backend from a failed read.
+ */
 export const apiGetUpcomingAppointments = (): Promise<SessionAppointment[]> =>
 	fetchData({
 		url: endpoints.upcomingAppointments,
 		method: FETCH_METHODS.GET,
-		responseHandling: READ_HANDLING
+		responseHandling: [FETCH_ERRORS.NO_MATCH, ...READ_HANDLING]
 	});
 
 export const apiGetSessionAppointments = (
@@ -83,6 +121,88 @@ export const apiCancelSessionAppointment = (
 ): Promise<SessionAppointment> =>
 	fetchData({
 		url: `${endpoints.sessionAppointments(sessionId)}/${appointmentId}/cancel`,
+		method: FETCH_METHODS.POST,
+		responseHandling: WRITE_HANDLING
+	});
+
+/**
+ * FE#1050: the counsellor's free slots that start in [from, to), earliest
+ * first. The server allows at most fourteen days and offers nothing inside
+ * its lead time.
+ */
+export const apiGetAppointmentSlots = (
+	sessionId: number,
+	from: Date,
+	to: Date,
+	medium: SelfBookingMedium
+): Promise<AppointmentSlot[]> => {
+	const query = new URLSearchParams({
+		from: from.toISOString(),
+		to: to.toISOString(),
+		medium
+	});
+	return fetchData({
+		url: `${endpoints.sessionAppointmentSlots(sessionId)}?${query}`,
+		method: FETCH_METHODS.GET,
+		responseHandling: READ_HANDLING
+	});
+};
+
+/**
+ * FE#1050: books one offered slot. A 409 rejects with the `Response`, whose
+ * `X-Reason` tells the cases apart: `SELF_BOOKING_LIMIT_REACHED` (the
+ * conversation already has an upcoming appointment),
+ * `SLOT_OUTSIDE_BOOKING_WINDOW`, or none (the time was taken meanwhile).
+ */
+export const apiBookAppointmentSlot = (
+	sessionId: number,
+	slot: AppointmentSlot & { kind: SelfBookingMedium }
+): Promise<SessionAppointment> =>
+	fetchData({
+		url: `${endpoints.sessionAppointmentSlots(sessionId)}/booking`,
+		method: FETCH_METHODS.POST,
+		bodyData: JSON.stringify(slot),
+		responseHandling: [
+			FETCH_SUCCESS.CONTENT,
+			FETCH_ERRORS.CONFLICT_WITH_RESPONSE,
+			FETCH_ERRORS.CATCH_ALL_EXCEPT_UNAUTHORIZED
+		]
+	});
+
+const decide =
+	(decision: 'confirm' | 'decline') =>
+	(sessionId: number, appointmentId: string): Promise<SessionAppointment> =>
+		fetchData({
+			url: `${endpoints.sessionAppointments(sessionId)}/${appointmentId}/${decision}`,
+			method: FETCH_METHODS.POST,
+			responseHandling: [
+				FETCH_SUCCESS.CONTENT,
+				FETCH_ERRORS.CONFLICT_WITH_RESPONSE,
+				FETCH_ERRORS.CATCH_ALL_EXCEPT_UNAUTHORIZED
+			]
+		});
+
+/**
+ * FE#2287: the counsellor confirms an advice seeker's request; it becomes
+ * SCHEDULED. A 409 rejects with the `Response`: `REQUESTED_TIME_TAKEN` (the
+ * time is no longer free) or `APPOINTMENT_NOT_REQUESTED`.
+ */
+export const apiConfirmSessionAppointment = decide('confirm');
+
+/** FE#2287: the counsellor declines a request; it becomes DECLINED. */
+export const apiDeclineSessionAppointment = decide('decline');
+
+/**
+ * FE#2287: claims the conversation notice of a request that expired
+ * unanswered. Only the first participant's claim succeeds; any later one
+ * rejects (409), so the notice is posted once.
+ */
+export const apiClaimSessionAppointmentExpiryNotice = (
+	sessionId: number,
+	appointmentId: string
+): Promise<unknown> =>
+	fetchData({
+		url: `${endpoints.sessionAppointments(sessionId)}/${appointmentId}/expiry-notice`,
 		method: FETCH_METHODS.POST,
 		responseHandling: WRITE_HANDLING
 	});

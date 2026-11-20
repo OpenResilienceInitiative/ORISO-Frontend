@@ -23,6 +23,7 @@ import { apiGetConsentText } from '../../../api/apiGetConsentText';
 import { apiPatchUserData } from '../../../api/apiPatchUserData';
 import { apiPutSessionConsent } from '../../../api/apiPutSessionConsent';
 import { apiPutSessionData } from '../../../api/apiPutSessionData';
+import { isTakenGuestName } from '../../../api/apiRedeemInviteLink';
 import {
 	DepartmentConsentState,
 	resolveEntryRoomConsent
@@ -66,8 +67,9 @@ export interface LiveChatEntryRoomProps {
 		topicId?: number;
 		tenantId?: number | null;
 		consultingTypeId?: number;
-		/** Redeems the link, sets its tokens, and returns the new session. */
-		redeem: () => Promise<number>;
+		/** Redeems the link under `userId` — the User-ID on the chosen card
+		 *  becomes the login — sets its tokens, and returns the new session. */
+		redeem: (userId: string) => Promise<number>;
 	};
 	/** The topic slug from the link, for the heading. */
 	topicSlug?: string;
@@ -146,9 +148,12 @@ export interface GuestName {
  * The attempt cap keeps a small language pack from spinning here: a short set
  * is better than a hung door.
  */
-const rollGuestNames = (locale: string): GuestName[] => {
+const rollGuestNames = (
+	locale: string,
+	exclude: readonly string[] = []
+): GuestName[] => {
 	const picked: GuestName[] = [];
-	const seen = new Set<string>();
+	const seen = new Set<string>(exclude);
 	for (
 		let attempt = 0;
 		attempt < NAME_CHOICES * 10 && picked.length < NAME_CHOICES;
@@ -433,7 +438,9 @@ const LiveChatEntryRoomContent = ({
 						return;
 					}
 				}
-				id = await invite.redeem();
+				/* The User-ID on the card is the login, not a label on a
+				   server-minted `anon_N` account (ORISO-Frontend#2346). */
+				id = await invite.redeem(chosen.userId);
 				if (cancelled.current) return;
 				setSessionId(id);
 				/* Door samples describe the door, not this session: from here
@@ -458,6 +465,16 @@ const LiveChatEntryRoomContent = ({
 			rememberConfirmedEntryName(id, alias);
 			if (!cancelled.current) setStage('waiting');
 		} catch (error) {
+			/* Somebody took the rolled User-ID between offer and Join: nothing
+			   was created, so offer fresh names and let the guest pick again. */
+			if (isTakenGuestName(error)) {
+				if (!cancelled.current) {
+					setNames(rollGuestNames(locale, [chosen.userId]));
+					setSelectedIndex(0);
+					setContinueFailed(true);
+				}
+				return;
+			}
 			/* Without this the door swallowed the failure: the stage stayed on
 			   `access` and nothing said why. */
 			console.error('live chat entry: could not store the name', error);

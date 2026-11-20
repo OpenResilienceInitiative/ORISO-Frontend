@@ -38,6 +38,23 @@ describe('calendarApiMapping', () => {
 		});
 	});
 
+	it('marks an advice seeker’s request waiting for confirmation (FE#2287)', () => {
+		const request = entryFromApi({
+			id: 'r1',
+			type: 'APPOINTMENT',
+			start: '2026-11-16T09:00:00Z',
+			end: '2026-11-16T10:00:00Z',
+			ownerId: 'me',
+			kind: 'VIDEO',
+			title: 'ruhiges_yak',
+			sessionId: 4401,
+			movable: false,
+			requested: true
+		});
+		expect(request.requested).toBe(true);
+		expect(request.movable).toBe(false);
+	});
+
 	it('treats an appointment from before the calendar as a video call', () => {
 		const entry = entryFromApi({
 			id: 'a2',
@@ -103,6 +120,27 @@ describe('calendarApiMapping', () => {
 		expect(timed).not.toHaveProperty('allDay');
 	});
 
+	it('takes the all-day flag UserService stores over the range (US#1663)', () => {
+		const entered = entryFromApi({
+			id: 'b3',
+			type: 'BLOCKER',
+			start: new Date(2026, 10, 16, 0, 0).toISOString(),
+			end: new Date(2026, 10, 16, 23, 59, 59, 999).toISOString(),
+			ownerId: 'me',
+			allDay: true
+		});
+		expect(entered.allDay).toBe(true);
+		const midnightToMidnight = entryFromApi({
+			id: 'b4',
+			type: 'BLOCKER',
+			start: new Date(2026, 10, 16).toISOString(),
+			end: new Date(2026, 10, 17).toISOString(),
+			ownerId: 'me',
+			allDay: false
+		});
+		expect(midnightToMidnight).not.toHaveProperty('allDay');
+	});
+
 	it('keeps a colleague entry free of title and conversation when absent', () => {
 		const entry = entryFromApi({
 			id: 'k1',
@@ -133,6 +171,16 @@ describe('calendarApiMapping', () => {
 			agencyName: '',
 			relation: 'sameTenant'
 		});
+		// The username tells two of one name apart (US#1663).
+		expect(
+			colleagueFromApi({
+				id: 'b',
+				displayName: 'J. Brandt',
+				agencyName: 'BS Nord',
+				secondaryLabel: 'jbrandt',
+				relation: 'SAME_AGENCY'
+			}).secondaryLabel
+		).toBe('jbrandt');
 		expect(
 			visibilityFromApi({
 				visibilityScope: 'TENANT',
@@ -239,11 +287,43 @@ describe('proposalFromApi (move proposals v1)', () => {
 		expect(proposalFromApi(dto)).toEqual(dto);
 	});
 
+	it('keeps the reason the proposer gave (US#1663)', () => {
+		expect(proposalFromApi({ ...dto, reason: 'Raum belegt' }).reason).toBe(
+			'Raum belegt'
+		);
+		expect('reason' in proposalFromApi({ ...dto, reason: null })).toBe(
+			false
+		);
+	});
+
 	it('leaves out the names UserService did not send', () => {
 		const { proposerName, approverName, createdAt, ...bare } = dto;
 		const mapped = proposalFromApi({ ...bare, proposerName: null });
 		expect(mapped).toEqual(bare);
 		expect('proposerName' in mapped).toBe(false);
 		expect('approverName' in mapped).toBe(false);
+	});
+});
+
+describe('entryFromApi — planned absence (ORISO-Frontend#2303)', () => {
+	it('reads ABSENCE as an all-day absence entry, never movable', () => {
+		expect(
+			entryFromApi({
+				id: 'absence-me',
+				type: 'ABSENCE',
+				start: '2026-12-20T23:00:00Z',
+				end: '2027-01-03T23:00:00Z',
+				ownerId: 'me',
+				movable: false
+			})
+		).toEqual({
+			id: 'absence-me',
+			type: 'absence',
+			start: '2026-12-20T23:00:00Z',
+			end: '2027-01-03T23:00:00Z',
+			ownerId: 'me',
+			allDay: true,
+			movable: false
+		});
 	});
 });

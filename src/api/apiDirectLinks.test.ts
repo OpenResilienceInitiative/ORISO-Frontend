@@ -47,9 +47,25 @@ describe('toDirectLink', () => {
 			agencyId: 11,
 			medium: 'VIDEO',
 			temporary: true,
+			guestAccountMode: 'GUEST_CHOOSES',
 			active: false,
 			url: 'https://app.example/invite/abc'
 		});
+	});
+
+	/* UserService#1662: the mode wins over the old switch, which follows it. */
+	it('reads the guest account mode and derives the temporary mirror from it', () => {
+		const link = toDirectLink({
+			...dto,
+			temporary: true,
+			guestAccountMode: 'PERMANENT'
+		});
+		expect(link?.guestAccountMode).toBe('PERMANENT');
+		expect(link?.temporary).toBe(false);
+		expect(
+			toDirectLink({ ...dto, guestAccountMode: 'TEMPORARY' })
+				?.guestAccountMode
+		).toBe('TEMPORARY');
 	});
 
 	it('makes a relative entry URL absolute on the current host', () => {
@@ -100,6 +116,71 @@ describe('apiGetOwnDirectLinks', () => {
 	it('passes other failures on', async () => {
 		vi.mocked(fetchData).mockRejectedValue(new Error('boom'));
 		await expect(apiGetOwnDirectLinks()).rejects.toThrow('boom');
+	});
+
+	/* #2252 review: the overview, the request pop-ups and the open
+	   conversation all reload on one DIRECT_LINKS_CHANGED event. */
+	it('shares one request between callers while it is running', async () => {
+		vi.mocked(fetchData).mockClear();
+		let answer: (value: unknown) => void = () => undefined;
+		vi.mocked(fetchData).mockReturnValue(
+			new Promise((resolve) => {
+				answer = resolve;
+			})
+		);
+
+		const all = Promise.all([
+			apiGetOwnDirectLinks(),
+			apiGetOwnDirectLinks(),
+			apiGetOwnDirectLinks()
+		]);
+		answer([dto]);
+		const results = await all;
+
+		expect(fetchData).toHaveBeenCalledTimes(1);
+		expect(results.map((links) => links.map((link) => link.id))).toEqual([
+			['7'],
+			['7'],
+			['7']
+		]);
+		/* Each caller gets its own array to keep. */
+		expect(results[0]).not.toBe(results[1]);
+	});
+
+	it('asks again once the earlier request has finished', async () => {
+		vi.mocked(fetchData).mockClear();
+		vi.mocked(fetchData).mockResolvedValue([dto]);
+		await apiGetOwnDirectLinks();
+		await apiGetOwnDirectLinks();
+		expect(fetchData).toHaveBeenCalledTimes(2);
+	});
+
+	/* #2252 review: a read started before a renewal answers with the old
+	   links; a reload after the change must not join it. */
+	it('asks again after a change while an older request is still running', async () => {
+		vi.mocked(fetchData).mockClear();
+		const answers: ((value: unknown) => void)[] = [];
+		vi.mocked(fetchData).mockImplementation(
+			() =>
+				new Promise((resolve) => {
+					answers.push(resolve);
+				})
+		);
+
+		const before = apiGetOwnDirectLinks();
+		notifyDirectLinksChanged();
+		const after = apiGetOwnDirectLinks();
+		/* The older read answers first; it must not free the newer one's
+		   slot, so a third caller still shares the newer read. */
+		answers[0]([{ ...dto, name: 'Alt' }]);
+		await before;
+		const third = apiGetOwnDirectLinks();
+		answers[1]([{ ...dto, name: 'Neu' }]);
+
+		expect(fetchData).toHaveBeenCalledTimes(2);
+		expect((await before)[0].name).toBe('Alt');
+		expect((await after)[0].name).toBe('Neu');
+		expect((await third)[0].name).toBe('Neu');
 	});
 });
 

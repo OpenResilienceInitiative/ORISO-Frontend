@@ -20,9 +20,31 @@ const at = (dayOffset: number, hour: number, minute = 0) =>
 export const ME = 'me';
 
 export const CONVERSATIONS: CalendarConversation[] = [
-	{ sessionId: 4401, username: 'ruhiges_yak' },
-	{ sessionId: 4402, username: 'mutige_eule' },
-	{ sessionId: 4403, username: 'stiller_fuchs' },
+	// FE#2325: real avatars as the conversation list has them — a derived
+	// animal, a picked one, and helle_wolke without avatar data, who keeps
+	// the initials.
+	{
+		sessionId: 4401,
+		username: 'ruhiges_yak',
+		avatar: { userId: '@ruhiges_yak:oriso.test', username: 'ruhiges_yak' }
+	},
+	{
+		sessionId: 4402,
+		username: 'mutige_eule',
+		avatar: {
+			userId: '@mutige_eule:oriso.test',
+			username: 'mutige_eule',
+			choice: { kind: 'animal', file: 'magpie.svg' }
+		}
+	},
+	{
+		sessionId: 4403,
+		username: 'stiller_fuchs',
+		avatar: {
+			userId: '@stiller_fuchs:oriso.test',
+			username: 'stiller_fuchs'
+		}
+	},
 	{ sessionId: 4404, username: 'helle_wolke' }
 ];
 
@@ -286,6 +308,23 @@ export const COLLEAGUE_ENTRIES: CalendarEntry[] = [
 		start: at(0, 14, 30),
 		end: at(0, 15, 30)
 	},
+	// With Kaya: "2 von 4 belegt" for an hour and for two (Frank *16).
+	{
+		id: 'n2',
+		type: 'appointment',
+		kind: 'phone',
+		ownerId: 'nowak',
+		title: 'kurze_lerche',
+		start: at(0, 11),
+		end: at(0, 12)
+	},
+	{
+		id: 'n3',
+		type: 'blocker',
+		ownerId: 'nowak',
+		start: at(3, 9),
+		end: at(3, 11)
+	},
 	{
 		id: 'o1',
 		type: 'appointment',
@@ -339,7 +378,7 @@ export const STORY_PROPOSALS: MoveProposal[] = [
 ];
 
 /**
- * Proposals colleagues sent for one's own appointments ("Offene Anfragen",
+ * Proposals colleagues sent for one's own appointments ("Offene Verschiebungen",
  * receiving side): A. Kaya would move ruhiges_yak's video call to the
  * afternoon, E. Demir stiller_fuchs's visit to Thursday.
  */
@@ -353,7 +392,9 @@ export const STORY_REQUESTS: MoveProposal[] = [
 		entryEnd: at(0, 11),
 		proposerId: 'kaya',
 		proposerName: 'A. Kaya',
-		approverId: ME
+		approverId: ME,
+		// UserService#1663: the proposer may say why.
+		reason: 'Raum 2 ist an dem Vormittag belegt.'
 	},
 	{
 		id: 'r2',
@@ -365,5 +406,24 @@ export const STORY_REQUESTS: MoveProposal[] = [
 		proposerId: 'demir',
 		proposerName: 'E. Demir',
 		approverId: ME
+	}
+];
+
+/**
+ * FE#2287: an advice seeker's request waiting for this counsellor, the day
+ * after tomorrow at 11:00, booked inside the notice period.
+ */
+export const STORY_APPOINTMENT_REQUESTS: CalendarEntry[] = [
+	{
+		id: 'q1',
+		type: 'appointment',
+		kind: 'video',
+		ownerId: ME,
+		sessionId: 4407,
+		title: 'leise_lerche',
+		start: at(1, 11),
+		end: at(1, 12),
+		movable: false,
+		requested: true
 	}
 ];

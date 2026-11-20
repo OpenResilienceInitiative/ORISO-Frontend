@@ -379,6 +379,47 @@ describe('CreateConversationView edit mode (finding 1)', () => {
 		});
 	});
 
+	/* UserService#1662: the circle's guest account mode round-trips. */
+	it('keeps the stored guest account mode on an untouched save', async () => {
+		const payload = await saveUnchanged({
+			...apiSeriesItem,
+			guestAccountMode: 'TEMPORARY'
+		} as typeof editSeriesItem);
+
+		expect(payload).toMatchObject({ guestAccountMode: 'TEMPORARY' });
+	});
+
+	it('saves the guest account mode the counsellor picks for the circle', async () => {
+		vi.mocked(useSession).mockReturnValue(sessionResult(apiSeriesItem));
+		vi.mocked(apiUpdateGroupChat).mockResolvedValue({
+			matrixRoomId: '!room:matrix.example'
+		});
+		vi.mocked(apiGetSessionRoomsByRoomIds).mockResolvedValue({
+			sessions: []
+		} as any);
+
+		renderInUserContext();
+		fireEvent.click(
+			await screen.findByRole('button', {
+				name: 'guestAccountMode.option.GUEST_CHOOSES'
+			})
+		);
+		fireEvent.click(
+			screen.getByRole('option', {
+				name: 'guestAccountMode.option.PERMANENT'
+			})
+		);
+		fireEvent.click(
+			screen.getByRole('button', { name: 'groupChat.circle.saveLabel' })
+		);
+		await waitFor(() =>
+			expect(apiUpdateGroupChat).toHaveBeenCalledTimes(1)
+		);
+		expect(apiUpdateGroupChat.mock.calls[0][1]).toMatchObject({
+			guestAccountMode: 'PERMANENT'
+		});
+	});
+
 	it('lets the owner add a co-moderator while editing a circle', async () => {
 		vi.mocked(useSession).mockReturnValue(sessionResult());
 		vi.mocked(apiGetTenantConsultantList).mockResolvedValue([

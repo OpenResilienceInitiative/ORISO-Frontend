@@ -34,11 +34,19 @@ vi.mock('react-i18next', () => ({
 }));
 const user = vi.hoisted(() => ({ consultant: true, navigate: vi.fn() }));
 vi.mock('react-router-dom', () => ({ useNavigate: () => user.navigate }));
+/* "Direkteinladung erlauben" needs the tenant and agencies; off here. */
+vi.mock('../directLinks/useDirectLinksAllowed', () => ({
+	useDirectLinkMedia: () => []
+}));
 vi.mock('../../hooks/useResponsive', () => ({
 	useResponsive: () => ({ untilM: false })
 }));
 vi.mock('../sessionsList/timeline/useAppointmentNotice', () => ({
 	useAppointmentNotice: () => () => Promise.resolve()
+}));
+// *19: the links box has its own data hooks; not part of these tests.
+vi.mock('./CalendarLinksSection', () => ({
+	CalendarLinksSection: () => null
 }));
 vi.mock('../../globalState', async () => {
 	const React = await import('react');
@@ -49,6 +57,24 @@ vi.mock('../../globalState', async () => {
 	};
 });
 vi.mock('../../api/apiCalendar', () => ({
+	apiCreateColleagueAppointment: vi.fn(() =>
+		Promise.resolve({
+			id: 'm1',
+			type: 'APPOINTMENT',
+			start: '2026-11-19T09:00:00Z',
+			end: '2026-11-19T10:00:00Z',
+			ownerId: 'me',
+			matrixRoomId: '!pair:oriso',
+			chatId: 77
+		})
+	),
+	apiAcceptColleagueAppointment: vi.fn(() => Promise.resolve({})),
+	apiDeclineColleagueAppointment: vi.fn(() => Promise.resolve()),
+	apiCancelColleagueAppointment: vi.fn(() => Promise.resolve()),
+	apiGetCalendarAutoAccept: vi.fn(() =>
+		Promise.resolve({ colleagueIds: [] })
+	),
+	apiSetCalendarAutoAccept: vi.fn((dto) => Promise.resolve(dto)),
 	apiGetCalendarEntries: vi.fn(),
 	apiGetCalendarColleagues: vi.fn(() =>
 		Promise.resolve({
@@ -62,6 +88,9 @@ vi.mock('../../api/apiCalendar', () => ({
 		Promise.resolve({ feedUrl: '', importConfigured: false })
 	),
 	apiGetCalendarWorkingHours: vi.fn(() => Promise.resolve({ windows: [] })),
+	apiGetCalendarConsultationHours: vi.fn(() =>
+		Promise.resolve({ windows: [] })
+	),
 	apiSetCalendarWorkingHours: vi.fn(),
 	apiPutWorkingDayException: vi.fn(),
 	apiDeleteWorkingDayException: vi.fn(),

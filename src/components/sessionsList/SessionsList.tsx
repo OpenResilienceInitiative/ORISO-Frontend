@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useHoldLoginHandover } from '../app/loginHandover';
 import {
 	useCallback,
 	useContext,
@@ -98,10 +99,13 @@ import {
 import {
 	FutureZone,
 	PULL_RELEASE_PX,
+	type FutureZoneExtraRow,
 	type FutureZoneHandle
 } from './timeline/FutureZone';
 import { AppointmentSplitButton } from './timeline/AppointmentSplitButton';
-import { useFutureEntries } from './timeline/useFutureEntries';
+import { FUTURE_MONTHS, useFutureEntries } from './timeline/useFutureEntries';
+import { useAddonCalendarEntries } from '../../addons/addonCalendar';
+import { AddonCalendarPill } from '../../addons/AddonCalendarPill';
 import { useAppointmentActions } from './timeline/useAppointmentActions';
 import { AppointmentDateDialog } from './timeline/AppointmentDateDialog';
 import {
@@ -118,7 +122,11 @@ import { createRefreshThrottle, isRoomInSessions } from './liveListRefresh';
 import { countUnreadSessions } from '../../utils/sessionUnread';
 import { useUnreadVersion } from '../../hooks/useUnreadVersion';
 import { useActiveListItem } from '../../hooks/useActiveListItem';
-import { useSessionListRail } from './SessionListRailContext';
+import {
+	useSessionListRail,
+	useSessionListRailWiden
+} from './SessionListRailContext';
+import { IconSearch } from './SessionsListToolbar';
 import { useCaseHandoverBatch } from './useCaseHandoverBatch';
 import { getFormatChipVisibility } from './formatChipVisibility';
 import { useCounsellorAgencyFormats } from '../../hooks/useCounsellorAgencyFormats';
@@ -172,8 +180,13 @@ import {
 import { DeletedAskerListItem } from './DeletedAskerListItem';
 import {
 	buildDeletedAskerRows,
+	type DeletedAskerRow,
 	placeDeletedAskerRows
 } from './deletedAskerRows';
+import {
+	DELETED_ASKER_ARCHIVED_EVENT,
+	deletedAskerPath
+} from './deletedAskerPath';
 
 /** Keep paging while the display filter hides rows and fewer than this are visible (§5.2). */
 const MIN_VISIBLE_SESSION_ROWS = 10;
@@ -269,6 +282,7 @@ export const SessionsList = ({
 }: SessionsListProps) => {
 	const { t: translate } = useTranslation();
 	const isRail = useSessionListRail();
+	const widenRail = useSessionListRailWiden();
 
 	const { groupId: groupIdFromParam, sessionId: sessionIdFromParam } =
 		useParams<{ groupId: string; sessionId: string }>();
@@ -304,6 +318,9 @@ export const SessionsList = ({
 		);
 
 	const [isLoading, setIsLoading] = useState(true);
+	// Right after sign-in the loading screen waits for this first list, so it
+	// does not pop in while the screen fades out (#2272).
+	useHoldLoginHandover(`sessionsList:${type}`, isLoading);
 	const [currentOffset, setCurrentOffset] = useState(0);
 	const [totalItems, setTotalItems] = useState(0);
 	const hasMoreSessionPages = totalItems > currentOffset + SESSION_COUNT;
@@ -2085,27 +2102,54 @@ export const SessionsList = ({
 	 * deleted advice-seeker chat used to be. Only in the counsellor's unfiltered
 	 * list: a placeholder matches no chip, search, person, centre or topic.
 	 */
-	// Not in the rail: its pills are tabs, and a placeholder is no tab.
-	const showDeletedAskerRows =
-		showConsultantToolbarActions &&
-		!isRail &&
-		sessionListTab !== SESSION_LIST_TAB_ARCHIVE;
+	// Not in the rail: its pills are tabs, and a placeholder is no tab. The
+	// archive tab lists the placeholders the counsellor moved there.
+	const showDeletedAskerRows = showConsultantToolbarActions && !isRail;
+	const showArchivedDeletedAskers =
+		sessionListTab === SESSION_LIST_TAB_ARCHIVE;
 	const [deletedAskerPlaceholders, setDeletedAskerPlaceholders] = useState<
 		DeletedAskerSession[]
 	>([]);
+	// Former sessions already in the archive: a chat whose advice seeker is
+	// only marked for deletion stays out of the active list once archived.
+	const [archivedDeletedAskerIds, setArchivedDeletedAskerIds] = useState<
+		ReadonlySet<number>
+	>(() => new Set());
+	const [deletedAskerReload, setDeletedAskerReload] = useState(0);
+	useEffect(() => {
+		const reload = () => setDeletedAskerReload((count) => count + 1);
+		window.addEventListener(DELETED_ASKER_ARCHIVED_EVENT, reload);
+		return () =>
+			window.removeEventListener(DELETED_ASKER_ARCHIVED_EVENT, reload);
+	}, []);
 	useEffect(() => {
 		if (!showDeletedAskerRows) {
 			setDeletedAskerPlaceholders([]);
+			setArchivedDeletedAskerIds(new Set());
 			return undefined;
 		}
 		const controller = new AbortController();
-		apiGetDeletedAskerSessions(controller.signal).then((placeholders) => {
-			if (!controller.signal.aborted) {
-				setDeletedAskerPlaceholders(placeholders);
-			}
+		Promise.all([
+			showArchivedDeletedAskers
+				? Promise.resolve([])
+				: apiGetDeletedAskerSessions(controller.signal),
+			apiGetDeletedAskerSessions(controller.signal, { archived: true })
+		]).then(([active, archived]) => {
+			if (controller.signal.aborted) return;
+			setDeletedAskerPlaceholders(
+				showArchivedDeletedAskers ? archived : active
+			);
+			setArchivedDeletedAskerIds(
+				new Set(archived.map((entry) => entry.formerSessionId))
+			);
 		});
 		return () => controller.abort();
-	}, [showDeletedAskerRows]);
+	}, [showDeletedAskerRows, showArchivedDeletedAskers, deletedAskerReload]);
+	const openDeletedAsker = useCallback(
+		(row: DeletedAskerRow) =>
+			navigate(deletedAskerPath(row.formerSessionId)),
+		[navigate]
+	);
 	const toolbarNarrowsList =
 		!!sessionToolbarChip ||
 		!!listSearchQuery ||
@@ -2121,7 +2165,9 @@ export const SessionsList = ({
 				(raw: ListItemInterface) =>
 					!raw?.chat &&
 					raw?.user?.deleted &&
-					typeof raw?.session?.id === 'number'
+					typeof raw?.session?.id === 'number' &&
+					(showArchivedDeletedAskers ||
+						!archivedDeletedAskerIds.has(raw.session.id))
 			)
 			.map((raw: ListItemInterface) => ({
 				sessionId: raw.session.id,
@@ -2140,15 +2186,17 @@ export const SessionsList = ({
 				deletedAskerPlaceholders,
 				markedForDeletion,
 				shownSessionIds
-			),
+			).map((row) => ({ ...row, archived: showArchivedDeletedAskers })),
 			totalItems > currentOffset + SESSION_COUNT
 		);
 	}, [
+		archivedDeletedAskerIds,
 		currentOffset,
 		deletedAskerPlaceholders,
 		getLastInteractionTimestamp,
 		groupIdFromParam,
 		sessions,
+		showArchivedDeletedAskers,
 		showDeletedAskerRows,
 		sortedSessions,
 		toolbarNarrowsList,
@@ -2635,6 +2683,34 @@ export const SessionsList = ({
 		() => entriesForList(futureEntries, visibleRooms, hasAnyListFilter),
 		[futureEntries, visibleRooms, hasAnyListFilter]
 	);
+	const addonCalendarEntries = useAddonCalendarEntries({
+		enabled: showTimeline,
+		monthsAhead: FUTURE_MONTHS
+	});
+	// Add-on dates belong to no room, so a list filter hides them like
+	// unmapped appointments.
+	const addonZoneRows = React.useMemo<FutureZoneExtraRow[]>(
+		() =>
+			hasAnyListFilter
+				? []
+				: addonCalendarEntries.map((entry) => ({
+						key: `addon:${entry.addon}:${entry.id}`,
+						start: entry.start,
+						end: entry.end,
+						render: (now: Date) => (
+							<AddonCalendarPill
+								entry={entry}
+								now={now}
+								sessionsBasePath={
+									isAskerList
+										? '/sessions/user/view'
+										: '/sessions/consultant/sessionView'
+								}
+							/>
+						)
+					})),
+		[addonCalendarEntries, hasAnyListFilter, isAskerList]
+	);
 	// Every planned date counts for the clock, whatever the filter shows above.
 	const nextGroupAppointment = React.useMemo(
 		() =>
@@ -2716,6 +2792,20 @@ export const SessionsList = ({
 	// Half / almost all of the list are stops: measured on the whole column,
 	// which does not shrink while the zone opens.
 	const innerWrapperRef = useRef<HTMLDivElement>(null);
+	// The rail keeps the search, as the rail of "Meine Termine" keeps its
+	// search's filter button (Frank, 2026-11-17): one press opens the column
+	// and puts the cursor into the search field.
+	const openSearchFromRail = useCallback(() => {
+		widenRail?.();
+		// After the commit that shows the toolbar again.
+		window.setTimeout(() =>
+			innerWrapperRef.current
+				?.querySelector<HTMLInputElement>(
+					'.sessionsListToolbar__searchInput'
+				)
+				?.focus()
+		);
+	}, [widenRail]);
 	const [timelineListHeight, setTimelineListHeight] = useState(520);
 	useEffect(() => {
 		const el = innerWrapperRef.current;
@@ -2765,31 +2855,33 @@ export const SessionsList = ({
 			});
 	};
 
-	const timelineZone = showTimeline && zoneEntries.length > 0 && (
-		<div
-			className="sessionsList__timeline"
-			data-cy="sessions-list-timeline"
-		>
-			<FutureZone
-				ref={zoneRef}
-				nowRef={nowRef}
-				entries={zoneEntries}
-				role={timelineRole}
-				listHeight={timelineListHeight}
-				initialReveal={timelineSettings.reveal}
-				memoryKey="sessionsList"
-				selectedKey={selectedTwin?.key}
-				onOpen={(entry) => {
-					setSelectedTwin(entry);
-					onAppointmentAction('open', entry);
-				}}
-				onAction={onAppointmentAction}
-				unreadOf={(entry) => isRoomUnread(entry.matrixRoomId)}
-				label={translate('sessionList.timeline.upcoming')}
-				nowLabel={translate('sessionList.timeline.now')}
-			/>
-		</div>
-	);
+	const timelineZone = showTimeline &&
+		zoneEntries.length + addonZoneRows.length > 0 && (
+			<div
+				className="sessionsList__timeline"
+				data-cy="sessions-list-timeline"
+			>
+				<FutureZone
+					ref={zoneRef}
+					nowRef={nowRef}
+					entries={zoneEntries}
+					extraRows={addonZoneRows}
+					role={timelineRole}
+					listHeight={timelineListHeight}
+					initialReveal={timelineSettings.reveal}
+					memoryKey="sessionsList"
+					selectedKey={selectedTwin?.key}
+					onOpen={(entry) => {
+						setSelectedTwin(entry);
+						onAppointmentAction('open', entry);
+					}}
+					onAction={onAppointmentAction}
+					unreadOf={(entry) => isRoomUnread(entry.matrixRoomId)}
+					label={translate('sessionList.timeline.upcoming')}
+					nowLabel={translate('sessionList.timeline.now')}
+				/>
+			</div>
+		);
 
 	return (
 		<div
@@ -3134,6 +3226,18 @@ export const SessionsList = ({
 						</div>
 					</FocusTrap>
 				)}
+			{isRail && showMySessionToolbar && widenRail && (
+				<button
+					type="button"
+					className="sessionsList__railSearch"
+					aria-label={translate('sessionList.toolbar.search.label')}
+					title={translate('sessionList.toolbar.search.label')}
+					onClick={openSearchFromRail}
+					data-cy="session-list-rail-search"
+				>
+					<IconSearch />
+				</button>
+			)}
 			<div className="sessionsList__scrollArea">
 				<div
 					className={clsx('sessionsList__scrollContainer', {
@@ -3168,6 +3272,13 @@ export const SessionsList = ({
 												row={row}
 												locale={defaultLanguage}
 												translate={translate}
+												isActive={
+													location.pathname ===
+													deletedAskerPath(
+														row.formerSessionId
+													)
+												}
+												onOpen={openDeletedAsker}
 											/>
 										)
 									)}
@@ -3311,6 +3422,11 @@ export const SessionsList = ({
 								row={row}
 								locale={defaultLanguage}
 								translate={translate}
+								isActive={
+									location.pathname ===
+									deletedAskerPath(row.formerSessionId)
+								}
+								onOpen={openDeletedAsker}
 							/>
 						))}
 
@@ -3359,7 +3475,10 @@ export const SessionsList = ({
 				)}
 			</div>
 
+			{/* Not in the rail: 80 px set the sentence one letter per line
+			    (Frank, 2026-11-17); the rail's search button stays. */}
 			{!isLoading &&
+				!isRail &&
 				!isCreateChatActive &&
 				!isReloadButtonVisible &&
 				visibleListItemCount === 0 && (

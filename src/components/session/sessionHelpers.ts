@@ -212,6 +212,10 @@ export const prepareMessages = (messagesData): MessageItem[] => {
 				// Relations foundation (#435): relations survive the mapping.
 				replyToEventId: message.replyToEventId || null,
 				threadRootEventId: message.threadRootEventId || null,
+				// ADR-022: answered passages survive the mapping too.
+				...(message.passageReplies
+					? { passageReplies: message.passageReplies }
+					: {}),
 				isEdited: !!message.isEdited,
 				...(message.undecryptableReason
 					? { undecryptableReason: message.undecryptableReason }

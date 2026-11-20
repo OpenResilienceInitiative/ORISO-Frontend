@@ -33,9 +33,28 @@ export const CALENDAR_FACETS: CalendarEntryFacet[] = [
 /** Imported busy time counts as blocked time for filtering. */
 export const facetOf = (entry: CalendarEntry): CalendarEntryFacet => {
 	if (entry.type === 'group') return 'group';
-	if (entry.type === 'blocker' || entry.type === 'busy') return 'blocker';
+	// An absence blocks like an all-day Sperrzeit (Frank, 2026-11-17).
+	if (
+		entry.type === 'blocker' ||
+		entry.type === 'busy' ||
+		entry.type === 'absence'
+	)
+		return 'blocker';
 	return entry.kind ?? 'video';
 };
+
+/**
+ * Whether the display filter shows a facet: not hidden, and among the
+ * "only these" kinds when some are chosen. The grid and the search use
+ * the same rule, so search finds nothing the grid would not show.
+ */
+export const facetShown = (
+	facet: CalendarEntryFacet,
+	onlyFacets: CalendarEntryFacet[],
+	hiddenFacets: CalendarEntryFacet[]
+) =>
+	!hiddenFacets.includes(facet) &&
+	(onlyFacets.length === 0 || onlyFacets.includes(facet));
 
 export const FacetIcon = ({
 	facet,
@@ -70,6 +89,7 @@ export const CalendarEntryGlyph = ({
 }) => {
 	if (
 		entry.type === 'busy' ||
+		entry.type === 'absence' ||
 		(colleague && !entry.kind && entry.type !== 'group')
 	)
 		return <EventBusyOutlinedIcon aria-hidden="true" focusable="false" />;

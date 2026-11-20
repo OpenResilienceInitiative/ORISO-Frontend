@@ -13,6 +13,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { chatTransportService } from '../../services/chatTransportService';
 import { getMatrixClientService } from '../../services/matrixClientRegistry';
+import { useMatrixRoomVersion } from '../../hooks/useMatrixRoomVersion';
 import { extractReactionEvents } from '../../utils/matrixTimelineEventFormatter';
 import {
 	aggregateReactions,
@@ -32,6 +33,11 @@ import {
 } from '../../globalState/helpers/stateHelpers';
 import type { MessageItem } from '../message/MessageItemComponent';
 import { MessageTimeline } from '../session/MessageTimeline';
+import {
+	extractPassageBlurEvents,
+	groupPassageBlurs,
+	withPassageBlurs
+} from '../selectionReply/passageBlurEvents';
 import { buildRoomTimeline } from '../session/roomTimeline';
 import { counterpartReaders } from '../../utils/matrixReadReceipts';
 import { buildReplyQuotePreview } from '../session/replyQuote';
@@ -254,6 +260,9 @@ export const ConversationPreview = ({
 	}, []);
 	const capabilities = access?.capabilities;
 	const readableRoomId = capabilities?.contentHidden ? null : roomId;
+	// A replaced Matrix client has the room only after its first sync:
+	// reload and re-subscribe then instead of staying on the old client.
+	const matrixRoomVersion = useMatrixRoomVersion(readableRoomId);
 	const { limit, status, loadOlder, refreshStatus } = usePreviewHistoryPaging(
 		readableRoomId,
 		captureScroll
@@ -335,15 +344,22 @@ export const ConversationPreview = ({
 			chatTransportService.getMatrixRoomMessages(readableRoomId, limit)
 		);
 		setTimeline({
-			messages: buildRoomTimeline(
-				events,
-				readableRoomId,
-				room,
-				translateRef.current('e2ee.message.encryption.text'),
-				readableRoomId === activeSession?.rid ||
-					readableRoomId === activeSession?.item?.matrixRoomId
-					? counterpartReaders(activeSession, (room as any)?.myUserId)
-					: undefined
+			// A moderator's blur (#2229) hides the passage here as well.
+			messages: withPassageBlurs(
+				buildRoomTimeline(
+					events,
+					readableRoomId,
+					room,
+					translateRef.current('e2ee.message.encryption.text'),
+					readableRoomId === activeSession?.rid ||
+						readableRoomId === activeSession?.item?.matrixRoomId
+						? counterpartReaders(
+								activeSession,
+								(room as any)?.myUserId
+							)
+						: undefined
+				),
+				groupPassageBlurs(extractPassageBlurEvents(events))
 			),
 			reactionEvents: extractReactionEvents(events),
 			activityByEvent: new Map(
@@ -351,7 +367,15 @@ export const ConversationPreview = ({
 			)
 		});
 		refreshStatus();
-	}, [readableRoomId, limit, refreshStatus, activeSession]);
+		// matrixRoomVersion: re-read (and re-subscribe) on the current client.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [
+		readableRoomId,
+		limit,
+		refreshStatus,
+		activeSession,
+		matrixRoomVersion
+	]);
 
 	useEffect(() => {
 		loadMessages();

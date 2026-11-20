@@ -103,6 +103,25 @@ describe('buildGroupChatSeriesRequest', () => {
 		});
 	});
 
+	it('sends the circle’s guest account mode (UserService#1662)', () => {
+		const request = buildGroupChatSeriesRequest({
+			topic: 'Peer support',
+			agencyId: 17,
+			startDate: '2026-08-04',
+			startTime: '18:30',
+			duration: 60,
+			repeatCount: 1,
+			chatInterval: 'WEEKLY',
+			modality: 'TEXT',
+			timezone: 'Europe/Berlin',
+			hintMessage: '',
+			consultantIds: [],
+			guestAccountMode: 'TEMPORARY'
+		});
+
+		expect(request.guestAccountMode).toBe('TEMPORARY');
+	});
+
 	it('does not submit blank group rules that the API rejects', () => {
 		const request = buildGroupChatSeriesRequest({
 			topic: 'Peer support',
@@ -203,6 +222,19 @@ describe('buildGroupChatEditDraft', () => {
 		],
 		assignedAgencies: [{ id: 42 }]
 	};
+
+	/* UserService#1662: the Gesprächskreis guest account mode. */
+	it('carries the guest account mode, GUEST_CHOOSES when the item has none', () => {
+		expect(
+			buildGroupChatEditDraft({
+				...fullSeriesItem,
+				guestAccountMode: 'PERMANENT'
+			}).guestAccountMode
+		).toBe('PERMANENT');
+		expect(buildGroupChatEditDraft(fullSeriesItem).guestAccountMode).toBe(
+			'GUEST_CHOOSES'
+		);
+	});
 
 	it('maps every schedule field, agency and participants from the item', () => {
 		const draft = buildGroupChatEditDraft(fullSeriesItem);

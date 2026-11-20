@@ -68,7 +68,7 @@ const gridSoon = () =>
 const listButton = (name: RegExp) =>
 	Array.from(
 		document.querySelectorAll<HTMLElement>(
-			'[data-cy="calendar-upcoming"] button.calendarSide__row'
+			'[data-cy="calendar-upcoming"] button.tlp__entry'
 		)
 	).find((el) => name.test(el.textContent ?? ''));
 const byCy = (name: string) =>
@@ -78,7 +78,7 @@ describe('CalendarPage — "Beginnt gleich" (review 4577641949)', () => {
 	it('names it in the side list button, not only by colour', () => {
 		page([own('mutige_eule', 5)]);
 		const button = listButton(/mutige_eule/) as HTMLElement;
-		expect(button.className).toContain('calendarSide__row--soon');
+		expect(button.className).toContain('tlp__entry--soon');
 		// The accessible name carries it: the button's text includes it.
 		expect(
 			screen
@@ -97,9 +97,7 @@ describe('CalendarPage — "Beginnt gleich" (review 4577641949)', () => {
 	it('marks one entry, the next, in the grid and the list alike, a group date included', async () => {
 		page([own('later', 10), own('next', 5, 'group')]);
 		await waitFor(() => expect(gridSoon()).toEqual(['next']));
-		expect(
-			document.querySelectorAll('.calendarSide__row--soon')
-		).toHaveLength(1);
+		expect(document.querySelectorAll('.tlp__entry--soon')).toHaveLength(1);
 		expect(listButton(/next/)?.textContent).toContain('calendar.soon');
 		expect(listButton(/later/)?.textContent).not.toContain('calendar.soon');
 		expect(screen.getAllByText('calendar.soon')).toHaveLength(2);
@@ -110,14 +108,12 @@ describe('CalendarPage — "Beginnt gleich" (review 4577641949)', () => {
 		await waitFor(() => expect(gridSoon()).toEqual(['next']));
 		fireEvent.click(byCy('calendar-kinds-button') as HTMLElement);
 		await waitFor(() =>
-			expect(byCy('calendar-kinds-group')).not.toBeNull()
+			expect(byCy('display-filter-show-group')).not.toBeNull()
 		);
-		fireEvent.click(byCy('calendar-kinds-group') as HTMLElement);
+		fireEvent.click(byCy('display-filter-show-group') as HTMLElement);
 		// Hidden in both: "later" is now first in the list and the grid.
 		await waitFor(() => expect(gridSoon()).toEqual(['later']));
-		expect(listButton(/later/)?.className).toContain(
-			'calendarSide__row--soon'
-		);
+		expect(listButton(/later/)?.className).toContain('tlp__entry--soon');
 		expect(listButton(/next/)).toBeUndefined();
 	});
 
@@ -131,8 +127,91 @@ describe('CalendarPage — "Beginnt gleich" (review 4577641949)', () => {
 			expect(document.querySelectorAll('.calEntry')).toHaveLength(1)
 		);
 		expect(gridSoon()).toEqual([]);
-		expect(listButton(/next/)?.className).toContain(
-			'calendarSide__row--soon'
+		expect(listButton(/next/)?.className).toContain('tlp__entry--soon');
+	});
+});
+
+describe('CalendarPage — an entry chosen while a kind filter hides it (review 4589150199)', () => {
+	it('shows its kind again, so the calendar does not land on nothing', async () => {
+		page([own('next', 5, 'group'), own('later', 10)]);
+		fireEvent.click(byCy('calendar-filter-video') as HTMLElement);
+		await waitFor(() =>
+			expect(document.querySelectorAll('.calEntry')).toHaveLength(1)
 		);
+		// "Als Nächstes" still lists the group date the chips hide.
+		fireEvent.click(listButton(/next/) as HTMLElement);
+		fireEvent.click(byCy('calendar-entry-show') as HTMLElement);
+		await waitFor(() =>
+			expect(document.querySelectorAll('.calEntry')).toHaveLength(2)
+		);
+	});
+});
+
+describe('CalendarPage — an own entry chosen while "ich" is muted (review 4589661566)', () => {
+	it('unmutes its owner, so the entry can be opened where it lands', async () => {
+		render(
+			<CalendarPage
+				role="consultant"
+				ownerId="me"
+				now={NOW}
+				entries={[own('next', 5)]}
+				initialView="week"
+				colleagues={[
+					{
+						id: 'kaya',
+						displayName: 'A. Kaya',
+						agencyName: 'Nord',
+						relation: 'sameAgency'
+					}
+				]}
+				initialShownColleagues={['kaya']}
+			/>
+		);
+		fireEvent.click(byCy('calendar-person-me') as HTMLElement);
+		await waitFor(() =>
+			expect(document.querySelector('.calEntry--muted')).not.toBeNull()
+		);
+		fireEvent.click(listButton(/next/) as HTMLElement);
+		fireEvent.click(byCy('calendar-entry-show') as HTMLElement);
+		await waitFor(() =>
+			expect(document.querySelector('.calEntry--muted')).toBeNull()
+		);
+	});
+});
+
+describe('CalendarPage — a colleague entry chosen in search (review 4594535280)', () => {
+	it('lands side by side, where the entry is drawn on its own', async () => {
+		const theirs: CalendarEntry = {
+			...own('kaya-call', 120),
+			ownerId: 'kaya',
+			title: 'mutige_eule'
+		};
+		render(
+			<CalendarPage
+				role="consultant"
+				ownerId="me"
+				now={NOW}
+				entries={[own('next', 5), theirs]}
+				initialView="week"
+				colleagues={[
+					{
+						id: 'kaya',
+						displayName: 'A. Kaya',
+						agencyName: 'Nord',
+						relation: 'sameAgency'
+					}
+				]}
+				initialShownColleagues={['kaya']}
+			/>
+		);
+		fireEvent.change(
+			screen.getAllByPlaceholderText('calendar.search.placeholder')[0],
+			{ target: { value: 'Kaya' } }
+		);
+		fireEvent.click(byCy('calendar-search-kaya-call') as HTMLElement);
+		await waitFor(() =>
+			expect(screen.queryByTestId('calendar-split-view')).not.toBeNull()
+		);
+		expect(byCy('calendar-split-entry-kaya-call')).not.toBeNull();
 	});
 });

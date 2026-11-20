@@ -16,13 +16,16 @@
 import type { CalendarEntry, CalendarRole } from './calendarModel';
 
 export type EntryAction =
+	| 'show'
 	| 'start'
 	| 'chat'
 	| 'join'
 	| 'move'
 	| 'propose'
 	| 'cancel'
-	| 'remove';
+	| 'remove'
+	| 'accept'
+	| 'decline';
 
 /** The kinds that open something to start: video, phone and chat. */
 const STARTABLE = ['video', 'phone', 'chat'];
@@ -53,11 +56,36 @@ export const entryActions = (
 			actions.push('propose');
 		return actions;
 	}
+	if (entry.type === 'appointment' && entry.meeting) {
+		// With a colleague (FE#2305): the invited one answers first; the
+		// internal chat of the two is where they meet. Never dragged: a new
+		// time is a new appointment.
+		const { meeting } = entry;
+		const waiting = meeting.status === 'pending';
+		if (waiting && meeting.invited) {
+			if (can.accept) actions.push('accept');
+			if (can.decline) actions.push('decline');
+		}
+		const chat = !!can.chat && !!meeting.matrixRoomId;
+		if (!waiting && can.start && entry.kind === 'video' && chat)
+			actions.push('start');
+		if (chat) actions.push('chat');
+		if (can.cancel && !(waiting && meeting.invited)) actions.push('cancel');
+		return actions;
+	}
 	if (entry.type === 'appointment') {
-		if (can.start && entry.kind && STARTABLE.includes(entry.kind))
+		const chat = !!can.chat && entry.sessionId !== undefined;
+		// A chat appointment starts in its conversation: "Zum Chat" alone,
+		// not "Chat öffnen" beside it (Frank, 2026-11-16).
+		if (
+			can.start &&
+			entry.kind &&
+			STARTABLE.includes(entry.kind) &&
+			!(entry.kind === 'chat' && chat)
+		)
 			actions.push('start');
 		// "Zum Chat" whenever the appointment belongs to a conversation.
-		if (can.chat && entry.sessionId !== undefined) actions.push('chat');
+		if (chat) actions.push('chat');
 		if (consultant && can.move && entry.movable !== false)
 			actions.push('move');
 		if (consultant && can.cancel) actions.push('cancel');
@@ -88,6 +116,8 @@ export interface MoveProposal {
 	/** The entry's owner, who accepts or declines. */
 	approverId?: string;
 	approverName?: string;
+	/** Why the proposer asks (UserService#1663). */
+	reason?: string;
 	createdAt?: string;
 }
 
@@ -100,6 +130,16 @@ export interface MoveProposal {
 export class ProposalNoLongerValid extends Error {
 	constructor() {
 		super('PROPOSAL_NO_LONGER_VALID');
+	}
+}
+
+/**
+ * FE#2287: confirming an advice seeker's request was refused because the
+ * time is no longer free (UserService `REQUESTED_TIME_TAKEN`).
+ */
+export class RequestedTimeTaken extends Error {
+	constructor() {
+		super('REQUESTED_TIME_TAKEN');
 	}
 }
 

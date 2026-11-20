@@ -11,6 +11,8 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { M3Dialog } from '../m3Dialog/M3Dialog';
 import { Switch } from '../Switch';
+import { M3Checkbox } from '../M3Checkbox';
+import { OrisoSelect } from '../form/OrisoSelect';
 import {
 	HOLIDAY_REGIONS,
 	isHolidayRegion,
@@ -125,6 +127,23 @@ export const WorkingHoursDialog = ({
 					: r
 			)
 		);
+	// One set of hours for the week: Monday's times and pause on every
+	// working day (prototype v17).
+	const monday = rows.find((r) => r.weekday === 1);
+	const copyMonday = () =>
+		monday &&
+		setRows((all) =>
+			all.map((r) =>
+				r.enabled && r.weekday !== 1
+					? {
+							...r,
+							start: monday.start,
+							end: monday.end,
+							pause: { ...monday.pause }
+						}
+					: r
+			)
+		);
 
 	return (
 		<M3Dialog
@@ -223,27 +242,27 @@ export const WorkingHoursDialog = ({
 								className={`calendarHours__row calendarHours__row--pause${pauseOn ? '' : ' calendarHours__row--off'}`}
 								data-cy={`calendar-hours-pause-${row.weekday}`}
 							>
-								<label className="calendarHours__pauseOn">
-									<input
-										type="checkbox"
+								<span className="calendarHours__pauseOn">
+									<M3Checkbox
 										checked={row.pause.enabled}
 										disabled={!row.enabled}
-										aria-label={t(
+										hideLabel
+										label={t(
 											'calendar.workingHours.breakOn',
 											{
 												day: name
 											}
 										)}
-										onChange={(e) =>
+										onChange={(checked) =>
 											updatePause(row.weekday, {
-												enabled: e.target.checked
+												enabled: checked
 											})
 										}
 									/>
 									<span aria-hidden="true">
 										{t('calendar.workingHours.break')}
 									</span>
-								</label>
+								</span>
 								<label className="calendarHours__time">
 									<span className="sr-only">
 										{t('calendar.workingHours.breakFrom', {
@@ -287,60 +306,74 @@ export const WorkingHoursDialog = ({
 						</React.Fragment>
 					);
 				})}
-				<div
-					className="calendarHours__row calendarHours__row--holidays"
-					data-cy="calendar-hours-holidays"
+				<button
+					type="button"
+					className="calendarHours__copy"
+					disabled={!monday?.enabled}
+					onClick={copyMonday}
+					data-cy="calendar-hours-copy-monday"
 				>
-					<Switch
-						checked={holidays}
-						onChange={setHolidays}
-						aria-label={t('calendar.workingHours.holidays')}
-						showIcon={false}
-					/>
-					<span className="calendarHours__holidays">
-						{t('calendar.workingHours.holidays')}
-						<small>{t('calendar.workingHours.holidaysHint')}</small>
-					</span>
-				</div>
-				{holidays && (
-					<div className="calendarHours__region">
-						<label className="calendarHours__time calendarHours__select">
-							<span>{t('calendar.holidays.region')}</span>
-							<select
-								value={region}
-								aria-invalid={regionMissing || undefined}
-								aria-describedby="calendar-hours-next-holiday"
-								onChange={(e) =>
-									setRegion(
-										isHolidayRegion(e.target.value)
-											? e.target.value
-											: ''
-									)
-								}
-								data-cy="calendar-hours-region"
-							>
-								<option value="" disabled>
-									{t('calendar.holidays.choose')}
-								</option>
-								{HOLIDAY_REGIONS.map((code) => (
-									<option key={code} value={code}>
-										{t(`calendar.holidays.regions.${code}`)}
-									</option>
-								))}
-							</select>
-						</label>
-						<p
-							id="calendar-hours-next-holiday"
-							className="calendarHours__next"
-							aria-live="polite"
-							data-cy="calendar-hours-next-holiday"
-						>
-							{regionMissing
-								? t('calendar.holidays.chooseHint')
-								: upcomingText}
-						</p>
+					{t('calendar.workingHours.copyMonday')}
+				</button>
+				{/* Holidays and the Bundesland in one box under the days
+				    (Frank *10: more air, the region choice stands out). */}
+				<div className="calendarHours__holidayBox">
+					<div
+						className="calendarHours__row calendarHours__row--holidays"
+						data-cy="calendar-hours-holidays"
+					>
+						<Switch
+							checked={holidays}
+							onChange={setHolidays}
+							aria-label={t('calendar.workingHours.holidays')}
+							showIcon={false}
+						/>
+						<span className="calendarHours__holidays">
+							{t('calendar.workingHours.holidays')}
+							<small>
+								{t('calendar.workingHours.holidaysHint')}
+							</small>
+						</span>
 					</div>
-				)}
+					{holidays && (
+						<div className="calendarHours__region">
+							{/* The MUI 3 select of the design system, not an own
+							    field (Frank *12). */}
+							<div className="calendarHours__select">
+								<OrisoSelect
+									label={t('calendar.holidays.region')}
+									value={region}
+									error={regionMissing}
+									aria-describedby="calendar-hours-next-holiday"
+									options={HOLIDAY_REGIONS.map((code) => ({
+										value: code,
+										label: t(
+											`calendar.holidays.regions.${code}`
+										)
+									}))}
+									onChange={(event) =>
+										setRegion(
+											isHolidayRegion(event.target.value)
+												? event.target.value
+												: ''
+										)
+									}
+									data-cy="calendar-hours-region"
+								/>
+							</div>
+							<p
+								id="calendar-hours-next-holiday"
+								className="calendarHours__next"
+								aria-live="polite"
+								data-cy="calendar-hours-next-holiday"
+							>
+								{regionMissing
+									? t('calendar.holidays.chooseHint')
+									: upcomingText}
+							</p>
+						</div>
+					)}
+				</div>
 				{invalid.length > 0 && (
 					<p className="calendarDialog__error" role="alert">
 						{t('calendar.workingHours.invalid')}

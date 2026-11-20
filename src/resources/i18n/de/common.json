@@ -1,4 +1,22 @@
 {
+	"addons": {
+		"loadError": "Diese Erweiterung konnte nicht geladen werden.",
+		"notAvailable": "Diese Erweiterung ist nicht verfügbar.",
+		"panel": {
+			"region": "Seitenbereich: {{title}}",
+			"close": "Schließen"
+		},
+		"calendar": {
+			"source": "Aus der Erweiterung „{{title}}“",
+			"allDay": "Ganztägig",
+			"kind": {
+				"appointment": "Termin",
+				"deadline": "Frist",
+				"reminder": "Erinnerung"
+			}
+		},
+		"badge": "Neuigkeiten: {{count}}"
+	},
 	"askerInfo": {
 		"noPrivacyNotice": {
 			"title": "Keine Datenschutzerklärung hinterlegt",
@@ -24,6 +42,8 @@
 		"recoveryIntro": "Bereiten Sie zuerst den Wiederherstellungsschlüssel für Ihr bestehendes Gespräch vor. So bleiben Ihre Nachrichten auf einem neuen Gerät lesbar.",
 		"pending": "Ein vorheriger Versuch ist noch offen. Verwenden Sie dasselbe Passwort, um ihn abzuschließen.",
 		"recoveryError": "Der Wiederherstellungsschlüssel ist noch nicht verfügbar. Versuchen Sie es erneut oder geben Sie Ihren zuvor gespeicherten Schlüssel ein.",
+		"historyError": "Ihr Chatverlauf konnte noch nicht gesichert werden. Bitte versuchen Sie es erneut.",
+		"fallbackKeyHelp": "Ihr Konto ist bereit, aber Ihr Chatverlauf konnte noch nicht mit Ihrem Passwort verknüpft werden. Speichern Sie diesen Wiederherstellungsschlüssel: Sie brauchen ihn, um dieses Gespräch auf einem neuen Gerät zu lesen.",
 		"existingKey": "Zuvor gespeicherter Wiederherstellungsschlüssel (falls benötigt)",
 		"prepare": "Wiederherstellungsschlüssel vorbereiten",
 		"accountChanged": "Das angemeldete Konto hat sich geändert. Laden Sie die Seite für eine sichere Fortsetzung neu.",
@@ -340,7 +360,10 @@
 			"pickDay": "Bitte wählen Sie zuerst einen Tag im Kalender.",
 			"subline": "Wählen Sie einen Tag und danach eine Uhrzeit.",
 			"times": "Freie Zeiten",
-			"weekdays": "S,M,D,M,D,F,S"
+			"weekdays": "S,M,D,M,D,F,S",
+			"legendInstant": "Sofort gebucht",
+			"legendRequest": "Anfrage – Ihre Beratungsperson bestätigt den Termin",
+			"requestTime": "Anfrage"
 		},
 		"availability": {
 			"description": "Geben Sie hier Ihre allgemeine Verfügbarkeit an, damit Ratsuchende Termine bei Ihnen buchen können.",
@@ -738,7 +761,7 @@
 	},
 	"enquiry": {
 		"teamDiscussion": {
-			"open": "Teambesprechung öffnen"
+			"open": "Team-Chat öffnen"
 		},
 		"acceptButton": {
 			"anonymous": "Chat starten",
@@ -2260,7 +2283,15 @@
 			"pendingLead": "{{number}} · {{author}}",
 			"pendingStatus": "Antwort {{number}} an {{author}}, gesammelt für die nächste Nachricht",
 			"remove": "Antwort {{number}} entfernen",
-			"voiceDuration": "Sprachnachricht {{duration}}"
+			"voiceDuration": "Sprachnachricht {{duration}}",
+			"sendFailed": {
+				"title": "Antworten nicht gesendet",
+				"text": "Ihre Antworten auf die markierten Stellen sind noch gesammelt. Bitte senden Sie sie erneut."
+			},
+			"blurFailed": {
+				"title": "Schwärzung nicht gespeichert",
+				"text": "Die Stelle konnte nicht geschwärzt oder die Schwärzung nicht aufgehoben werden. Bitte versuchen Sie es erneut."
+			}
 		},
 		"thread": {
 			"unknownRoot": "Frühere Nachricht",
@@ -2275,6 +2306,20 @@
 		},
 		"deliveryStatus": {
 			"sent": "Gesendet"
+		},
+		"appointmentNotice": {
+			"title": {
+				"created": "Termin vereinbart",
+				"moved": "Termin verschoben",
+				"cancelled": "Termin abgesagt"
+			},
+			"by": "von {{name}}",
+			"before": "Vorher:",
+			"after": "Neu:",
+			"action": {
+				"createNew": "Neuen Termin anlegen",
+				"openCalendar": "Im Kalender öffnen"
+			}
 		}
 	},
 	"navigation": {
@@ -2304,7 +2349,7 @@
 				"nav": "Gespräch",
 				"small": "Nachrichten"
 			},
-			"directLinks": "Meine Direktlinks"
+			"directLinks": "Termine & Direkteinladungen"
 		},
 		"activity": "Zeitstrahl",
 		"language": "Sprache",
@@ -2332,10 +2377,10 @@
 				"open": "Chat öffnen"
 			},
 			"mention": {
-				"title": "Erwähnung in der Team-Besprechung",
+				"title": "Erwähnung im Team-Chat",
 				"from": "Von {{name}}",
 				"several": "{{count}} neue Erwähnungen",
-				"open": "Team-Besprechung öffnen"
+				"open": "Team-Chat öffnen"
 			},
 			"handover": {
 				"title": "Neue Fallübergabe",
@@ -2601,19 +2646,19 @@
 				"text": "Eine Klient:in ist dem Warteraum beigetreten."
 			},
 			"callInvited": {
-				"title": "Einladung zu internem Gruppenanruf",
-				"text": "Sie wurden zu einem internen Gruppenanruf eingeladen."
+				"title": "Einladung zum Anruf",
+				"text": "Sie wurden zu einem Anruf eingeladen."
 			},
 			"callKnockRequested": {
 				"title": "Jemand klopft an",
 				"text": "Eine Person möchte in Ihren Anruf. Treten Sie dem Anruf bei, um sie einzulassen.",
 				"video": {
 					"title": "Jemand klopft an – Videoanruf",
-					"text": "Eine Person möchte über Ihren Direktlink in Ihren Videoanruf. Treten Sie dem Anruf bei, um sie einzulassen."
+					"text": "Eine Person möchte über Ihre Direkteinladung in Ihren Videoanruf. Treten Sie dem Anruf bei, um sie einzulassen."
 				},
 				"audio": {
 					"title": "Jemand klopft an – Audioanruf",
-					"text": "Eine Person möchte über Ihren Direktlink in Ihren Audioanruf. Treten Sie dem Anruf bei, um sie einzulassen."
+					"text": "Eine Person möchte über Ihre Direkteinladung in Ihren Audioanruf. Treten Sie dem Anruf bei, um sie einzulassen."
 				}
 			},
 			"appointmentRequested": {
@@ -2633,8 +2678,8 @@
 				"text": "Eine Übersicht Ihrer anstehenden Termine liegt bereit."
 			},
 			"teamDiscussionNew": {
-				"title": "Team-Besprechung",
-				"text": "{{senderDisplayName}} hat in der Team-Besprechung geschrieben"
+				"title": "Team-Chat",
+				"text": "{{senderDisplayName}} hat im Team-Chat geschrieben"
 			},
 			"firstResponseReceived": {
 				"title": "Ihre ersten Schritte",
@@ -2651,6 +2696,14 @@
 			"sessionAskerDeleted": {
 				"title": "Gelöschte:r Ratsuchende:r",
 				"text": "Ein Chat mit einer ratsuchenden Person wurde gelöscht. Persönliche Daten und Nachrichten sind nicht mehr verfügbar."
+			},
+			"addonNotification": {
+				"title": "Neue Mitteilung einer Erweiterung",
+				"text": "Eine Erweiterung hat eine neue Mitteilung."
+			},
+			"directInvitationRenewalRequested": {
+				"title": "Neuer Link angefragt",
+				"text": "Eine Person möchte einen neuen Link zu Ihrem Termin."
 			}
 		},
 		"error": "Fehlgeschlagen",
@@ -2680,6 +2733,8 @@
 			"systemTag": "Systembenachrichtigung",
 			"messageTag": "Nachrichtenbenachrichtigung",
 			"unreadFilter": "Ungelesen",
+			"mentionsFilter": "Erwähnungen",
+			"openCalendar": "Zum Kalender",
 			"showPreview": "Chat-Vorschau anzeigen",
 			"showDetails": "Details anzeigen",
 			"next": "Nächste Benachrichtigung",
@@ -2712,8 +2767,10 @@
 				"archivedOpenToReply": "Diese Unterhaltung ist archiviert. Öffnen Sie die Unterhaltung, um zu antworten.",
 				"notJoined": "Nur lesen, bis Ihr Beitritt bestätigt und der Raum geladen ist.",
 				"supervisorNoComposer": "Als Supervisor:in können Sie hier reagieren, aber nicht schreiben.",
-				"teamClosed": "Die Teamberatung ist geschlossen.",
+				"teamClosed": "Der Team-Chat ist geschlossen.",
 				"curtained": "Dieser Fall ist für Sie gerade nicht einsehbar.",
+				"hiddenNotYours": "Diese Unterhaltung gehört nicht zu Ihren Fällen. Darum zeigt die Aktivität sie hier nicht.",
+				"hiddenNotJoined": "Sie sind dieser Unterhaltung nicht beigetreten. Darum zeigt die Aktivität sie hier nicht.",
 				"backToConversation": "Zurück zur Unterhaltung",
 				"enquiryOpenToAccept": "Diese Anfrage ist noch nicht angenommen. Öffnen Sie die Unterhaltung, um sie anzunehmen.",
 				"consentOpenToContinue": "Bitte bestätigen Sie zuerst im Chat, wie es weitergeht. Öffnen Sie dazu die Unterhaltung.",
@@ -2809,12 +2866,27 @@
 		},
 		"data": {
 			"agency": {
-				"adminContact": {
-					"error": "Die Admins dieser Beratungsstelle konnten nicht geladen werden. Bitte später erneut versuchen.",
-					"fallbackName": "Beratungsstellen-Admin",
-					"link": "Beratungsstellen-Admin kontaktieren",
-					"none": "Kein Admin per Chat erreichbar – bitte wende dich an die Plattformverwaltung.",
-					"supportEmail": "Support-Adresse:"
+				"contactPerson": {
+					"title": "Ansprechperson",
+					"deputy": "Vertretung",
+					"traegerDefault": "Standard-Ansprechperson des Trägers",
+					"alsoCounsellor": "auch Beratende*r",
+					"startChat": "Chat starten",
+					"startChatWith": "Chat mit {{name}} starten",
+					"fallback": {
+						"heading": "Noch keine Ansprechperson festgelegt — diese Admins sind zuständig:",
+						"agencyAdmins": "Admins der Beratungsstelle",
+						"tenantAdmins": "Admins des Trägers"
+					},
+					"support": {
+						"heading": "Noch keine Ansprechperson festgelegt.",
+						"text": "Bitte wenden Sie sich an den Support:",
+						"none": "Bitte wenden Sie sich an die Plattformverwaltung."
+					},
+					"traegerContactEmail": "Allgemeine Kontaktadresse des Trägers",
+					"loading": "Ansprechperson wird geladen …",
+					"loadError": "Die Ansprechperson konnte gerade nicht geladen werden.",
+					"chatFallbackName": "Ansprechperson der Beratungsstelle"
 				},
 				"label": "Beratungsstelle",
 				"registrationLink": {
@@ -2957,7 +3029,13 @@
 					"label": "Deaktivieren Sie Ihre Abwesenheit, um eine Nachricht zu hinterlegen oder sie zu bearbeiten."
 				},
 				"label": "Hinterlegen Sie eine Abwesenheitsnachricht",
-				"title": "Meine Abwesenheit"
+				"title": "Meine Abwesenheit",
+				"from": "Abwesend von (optional)",
+				"until": "Abwesend bis (optional)",
+				"dateHint": "Ohne Datum gilt die Abwesenheit bis auf Weiteres, bis Sie sie ausschalten. Nach dem Bis-Datum sind Sie automatisch wieder anwesend.",
+				"planned": "Geplant ab {{start}}",
+				"activeUntil": "Abwesend bis einschließlich {{end}}",
+				"invalidRange": "Das Bis-Datum liegt vor dem Von-Datum."
 			},
 			"liveChat": {
 				"title": "Meine Live-Chat Verfügbarkeit",
@@ -3141,6 +3219,8 @@
 				"intro": "Wählen Sie Ihre Benachrichtigungstöne für jeden Bereich getrennt.",
 				"emailNote": "E-Mails werden nur gesendet, wenn Sie nicht innerhalb von fünf Minuten nach dem Ereignis reagieren.",
 				"noSound": "Kein Ton gewählt",
+				"defaultSound": "Standard",
+				"legacySound": "Früherer Ton",
 				"tone": "Ton #{{number}}",
 				"sendByEmail": "Per E-Mail senden",
 				"confirm": "Bestätigen",
@@ -3157,7 +3237,7 @@
 				},
 				"kind": {
 					"new": "Neue Anfrage",
-					"teamDiscussion": "Team-Besprechung",
+					"teamDiscussion": "Team-Chat",
 					"standard": "Standard-Benachrichtigung",
 					"liveChat": "Live-Chat-Nachricht",
 					"mention": "@ Erwähnung",
@@ -3297,26 +3377,35 @@
 					"label": "Download Excel Datei"
 				},
 				"filename": "Statistik Online-Beratung",
-				"title": "Ihre Statistik über Ihren gewählten Beratungszeitraum können Sie hier herunterladen:"
+				"title": "Ihre Statistik über Ihren gewählten Beratungszeitraum können Sie hier herunterladen:",
+				"total": "Gesamt"
 			},
 			"csvHeader": {
-				"numberOfAppointments": "Termine gebucht",
+				"numberOfAppointments": "Termine stattgefunden",
 				"numberOfAssignedSessions": "Beratungen angenommen",
+				"numberOfCancelledAppointments": "Termine abgesagt",
+				"numberOfChatAppointments": "davon Chat",
+				"numberOfOnsiteAppointments": "davon vor Ort",
+				"numberOfPhoneAppointments": "davon Telefon",
 				"numberOfSentMessages": "Nachrichten geschrieben",
 				"numberOfSessionsWhereConsultantWasActive": "Aktive Beratungen",
+				"numberOfVideoAppointments": "davon Video",
+				"period": "Zeitraum",
 				"videoCallDuration": "Dauer von Video-Calls in Minuten:Sekunden"
 			},
 			"period": {
-				"currentMonth": "aktuellen Monats",
-				"currentYear": "aktuellen Jahres",
+				"currentMonth": "diesen Monat",
+				"currentWeek": "diese Woche",
+				"currentYear": "dieses Jahr",
 				"display": {
 					"default": "DD.MM.JJJJ - DD.MM.JJJJ",
 					"prefix": "Im Zeitraum vom ",
 					"suffix": " haben Sie:"
 				},
-				"lastMonth": "letzten Monats",
-				"lastYear": "vergangenen Jahres",
-				"prefix": "Ihre Zahlen des"
+				"lastMonth": "letzten Monat",
+				"lastWeek": "letzte Woche",
+				"lastYear": "letztes Jahr",
+				"prefix": "Ihre Zahlen für"
 			},
 			"title": "Meine Statistik"
 		},
@@ -3471,7 +3560,7 @@
 		"names": {
 			"agency": "Übungsstelle",
 			"topic": "Übung",
-			"teamRoom": "Team-Besprechung (Übung)",
+			"teamRoom": "Team-Chat (Übung)",
 			"supervisionRoom": "Supervision (Übung)"
 		}
 	},
@@ -4606,7 +4695,7 @@
 				"team": "Team Beratung",
 				"directLinkVideo": "Videoanruf",
 				"directLinkAudio": "Audioanruf",
-				"directLinkChat": "Direktlink"
+				"directLinkChat": "Direkteinladung"
 			},
 			"waiting": {
 				"minutes": "wartet seit {{count}} Min.",
@@ -4634,7 +4723,8 @@
 			"channel": {
 				"thread": "Thread:",
 				"supervision": "Supervision:"
-			}
+			},
+			"blurred": "Nachricht mit geschwärzter Stelle"
 		},
 		"reloadButton": {
 			"label": "Erneut laden"
@@ -4707,7 +4797,7 @@
 				"unread": "Ungelesen",
 				"drafts": "Entwürfe",
 				"nearby": "Mail",
-				"directLinks": "Direktlinks",
+				"directLinks": "Direkteinladungen",
 				"other": "Weitere",
 				"create": "Erstellen",
 				"group": "Filter",
@@ -4770,7 +4860,12 @@
 				"notice": {
 					"created": "Termin vereinbart: {{date}}",
 					"moved": "Termin verschoben auf: {{date}}",
-					"cancelled": "Termin abgesagt: {{date}}"
+					"cancelled": "Termin abgesagt: {{date}}",
+					"requested": "Termin angefragt: {{date}} – wartet auf Bestätigung",
+					"confirmed": "Termin bestätigt: {{date}}",
+					"declined": "Terminanfrage abgelehnt: {{date}}",
+					"withdrawn": "Terminanfrage zurückgezogen: {{date}}",
+					"expired": "Terminanfrage abgelaufen: {{date}} – sie wurde bis zum Beginn nicht beantwortet"
 				},
 				"noticeFailed": {
 					"title": "Hinweis nicht gesendet",
@@ -4779,12 +4874,20 @@
 				"cancelFailed": {
 					"title": "Termin nicht abgesagt",
 					"text": "Der Termin konnte nicht abgesagt werden. Bitte versuchen Sie es erneut."
+				},
+				"request": {
+					"marker": "Angefragt",
+					"failedTitle": "Terminanfrage nicht beantwortet",
+					"taken": "Diese Zeit ist inzwischen belegt. Lehnen Sie die Anfrage ab oder schlagen Sie im Chat eine andere Zeit vor.",
+					"failed": "Das hat nicht geklappt. Bitte versuchen Sie es noch einmal."
 				}
 			}
 		},
 		"deletedAsker": {
 			"title": "Gelöschte:r Ratsuchende:r",
-			"hint": "Dieser Chat wurde gelöscht. Persönliche Daten und Nachrichten sind nicht mehr verfügbar."
+			"hint": "Dieser Chat wurde gelöscht. Persönliche Daten und Nachrichten sind nicht mehr verfügbar.",
+			"preview": "Chat wurde gelöscht",
+			"previewArchived": "Gelöscht · im Archiv"
 		}
 	},
 	"statusOverlay": {
@@ -5297,6 +5400,12 @@
 		"timeline": {
 			"join": "Beitreten",
 			"joinFailed": "Der Beitritt ist gerade nicht möglich. Beenden Sie gegebenenfalls Ihren anderen Anruf und versuchen Sie es erneut.",
+			"counsellorCallPending": "Der Anruf hat noch nicht begonnen",
+			"counsellorCallPendingText": "Nur Ihre Beraterin oder Ihr Berater kann den Anruf starten. Sie können beitreten, sobald sie oder er Sie anruft. Bitte warten Sie auf den Anruf.",
+			"leaveRunningCallTitle": "Laufenden Anruf beenden und beitreten?",
+			"leaveRunningCallText": "Ihre Beraterin oder Ihr Berater ruft Sie an. Sie sind noch in einem anderen Anruf; er wird beendet, wenn Sie beitreten.",
+			"leaveRunningCallStay": "Im Anruf bleiben",
+			"leaveRunningCallJoin": "Beenden und beitreten",
 			"endedElsewhere": "Dieser Anruf ist bereits beendet.",
 			"video": {
 				"running": "Videoanruf läuft",
@@ -5316,6 +5425,43 @@
 			"rejectCall": "Video-Call ablehnen",
 			"startCall": "Audio-Call starten",
 			"startVideoCall": "Video-Call starten"
+		},
+		"askerInfo": {
+			"title": "Anrufe startet Ihre Beratungsperson",
+			"description": "Sie können hier keinen Anruf starten. Ihre Beratungsperson ruft Sie zum vereinbarten Termin hier im Gespräch an.",
+			"next": "Ihr nächster Termin",
+			"medium": {
+				"video": "Videoanruf",
+				"phone": "Telefonanruf",
+				"onsite": "Vor Ort",
+				"chat": "Chat"
+			},
+			"none": "Für dieses Gespräch ist noch kein Termin vereinbart.",
+			"requestHint": "Schreiben Sie Ihrer Beratungsperson im Chat, wann es Ihnen passt.",
+			"requestHintBooking": "Wählen Sie eine freie Zeit Ihrer Beratungsperson und buchen Sie den Termin direkt.",
+			"request": "Termin anfragen",
+			"loading": "Der Termin wird geladen …",
+			"error": "Der Termin konnte gerade nicht geladen werden. Bitte versuchen Sie es später noch einmal.",
+			"booking": {
+				"title": "Termin buchen",
+				"description": {
+					"video": "Wählen Sie eine freie Zeit Ihrer Beratungsperson für einen Videoanruf. Mit „Sofort gebucht“ markierte Zeiten stehen gleich fest, Anfragen bestätigt Ihre Beratungsperson.",
+					"phone": "Wählen Sie eine freie Zeit Ihrer Beratungsperson für einen Telefonanruf. Mit „Sofort gebucht“ markierte Zeiten stehen gleich fest, Anfragen bestätigt Ihre Beratungsperson."
+				},
+				"loading": "Freie Zeiten werden geladen …",
+				"error": "Die freien Zeiten konnten gerade nicht geladen werden. Bitte versuchen Sie es später noch einmal.",
+				"none": "Ihre Beratungsperson hat in den nächsten zwei Wochen keine freie Zeit.",
+				"writeInChat": "Im Chat schreiben",
+				"back": "Zurück",
+				"confirm": "Termin buchen",
+				"taken": "Diese Zeit ist gerade vergeben worden. Bitte wählen Sie eine andere.",
+				"failed": "Der Termin konnte nicht gebucht werden. Bitte versuchen Sie es noch einmal.",
+				"booked": "Ihr Termin ist gebucht. Ihre Beratungsperson wird im Chat benachrichtigt.",
+				"limit": "Für dieses Gespräch ist schon ein Termin gebucht.",
+				"confirmRequest": "Termin anfragen",
+				"requested": "Ihre Anfrage ist gesendet. Sie wartet auf die Bestätigung Ihrer Beratungsperson."
+			},
+			"nextRequested": "Ihr angefragter Termin"
 		},
 		"incomingCall": {
 			"description": "ruft an...",
@@ -5445,6 +5591,17 @@
 		"introduction": {
 			"title": "Einführung",
 			"summary": "Lernen Sie die Bereiche der Anwendung kennen. Sie können die Einführung jederzeit erneut starten."
+		},
+		"launcherSwitch": {
+			"title": "Rundgang-Knopf anzeigen",
+			"label": {
+				"on": "An",
+				"off": "Aus"
+			},
+			"hint": {
+				"on": "An: Der Knopf „?“ unten rechts öffnet Ihre Rundgänge. Solange ein Gespräch offen ist, ist er ausgeblendet.",
+				"off": "Aus: Der Knopf „?“ ist ausgeblendet. Ihre Rundgänge finden Sie weiterhin hier."
+			}
 		}
 	},
 	"banner": {
@@ -5680,6 +5837,11 @@
 			"status": {
 				"on": "Supervision an",
 				"off": "Supervision aus"
+			},
+			"plusMenu": {
+				"menuLabel": "Hinzufügen oder übergeben",
+				"supervisionHint": "Eine Kollegin oder ein Kollege schaut mit. Der Fall bleibt bei Ihnen.",
+				"handoverHint": "Der Fall geht ganz an eine Kollegin oder einen Kollegen. Sie geben ihn ab."
 			}
 		}
 	},
@@ -5829,7 +5991,7 @@
 		}
 	},
 	"teamDiscussion": {
-		"title": "Team-Besprechung",
+		"title": "Team-Chat",
 		"startHint": "Besprechung starten",
 		"postCount": "{{count}} Beiträge",
 		"postCount_one": "1 Beitrag",
@@ -5840,7 +6002,7 @@
 		"placeholder": "Nachricht an das Team …",
 		"send": "Senden",
 		"error": {
-			"open": "Die Team-Besprechung konnte nicht geöffnet werden.",
+			"open": "Der Team-Chat konnte nicht geöffnet werden.",
 			"send": "Die Nachricht konnte nicht gesendet werden."
 		}
 	},
@@ -6179,12 +6341,12 @@
 					"intro": "In der Liste wartet eine Übungsanfrage. Klicken Sie darauf, um sie zu öffnen."
 				},
 				"openTeam": {
-					"title": "Teambesprechung öffnen",
-					"intro": "Bei Ihnen ist die Teambesprechung aktiviert: Damit stimmen Sie sich mit Ihrem Team ab, bevor Sie annehmen. Klicken Sie auf „Teambesprechung öffnen“."
+					"title": "Team-Chat öffnen",
+					"intro": "Bei Ihnen ist der Team-Chat aktiviert: Damit stimmen Sie sich mit Ihrem Team ab, bevor Sie annehmen. Klicken Sie auf „Team-Chat öffnen“."
 				},
 				"teamReply": {
 					"title": "Im Team antworten",
-					"intro": "Lesen Sie die Nachricht aus dem Team und schreiben Sie eine Antwort. Wenn Sie die Anfrage annehmen, wird die Teambesprechung geschlossen."
+					"intro": "Lesen Sie die Nachricht aus dem Team und schreiben Sie eine Antwort. Wenn Sie die Anfrage annehmen, wird der Team-Chat geschlossen."
 				},
 				"accept": {
 					"title": "Anfrage annehmen",
@@ -6225,6 +6387,13 @@
 					"intro": "Sie haben eine Supervisor:in hinzugefügt und ihre Antwort gelesen. Mit der Schaltfläche unten beenden Sie die Übung."
 				}
 			}
+		},
+		"launcher": {
+			"eyebrow": "Hilfe",
+			"title": "Rundgänge",
+			"open": "Rundgänge öffnen",
+			"close": "Rundgänge schließen",
+			"manage": "Rundgänge verwalten"
 		}
 	},
 	"weekday": {
@@ -6503,11 +6672,6 @@
 				"label": "Anklopfen",
 				"on": "Gäste warten, bis Sie sie einlassen. Schalten Sie es aus, kommen alle Wartenden sofort herein.",
 				"off": "Gäste kommen ohne Warten direkt in den Anruf."
-			},
-			"temporaryAccount": {
-				"label": "Temporäres Konto",
-				"on": "Gäste bekommen ein Gastkonto, das nach dem Anruf gelöscht wird.",
-				"off": "Gäste melden sich mit einem eigenen Konto an oder legen eines an."
 			},
 			"linkLabel": "Link zum Anruf",
 			"copy": "Kopieren",
@@ -6791,13 +6955,12 @@
 			"invalid": "Bitte geben Sie Ihre fünfstellige Postleitzahl ein."
 		},
 		"card": {
-			"title": "Direktlink",
+			"title": "Direkteinladung",
 			"subtitle": "Für Ratsuchende",
 			"headline": "Ein Link direkt zu Ihnen",
 			"text": "Wer den Link öffnet, landet ohne Umweg bei Ihnen – im Chat, im Audio- oder im Videoanruf.",
 			"topicLabel": "Thema wählen",
 			"mediumLabel": "Art des Kontakts",
-			"temporary": "Temporäres Konto",
 			"temporaryHint": "Das Konto wird nach dem Gespräch gelöscht.",
 			"create": "Link erstellen",
 			"createFailed": "Der Link konnte nicht erstellt werden. Bitte versuchen Sie es erneut.",
@@ -6815,16 +6978,18 @@
 		"temporary": "Temporär",
 		"copy": "Link kopieren",
 		"share": {
-			"title": "Ihr Direktlink ist bereit",
+			"title": "Ihre Direkteinladung ist bereit",
 			"description": "Teilen Sie Link oder QR-Code. Jede Person bekommt ein eigenes Gespräch mit Ihnen.",
+			"descriptionAppointment": "Teilen Sie Link oder QR-Code. Alle, die ihn öffnen, treffen sich mit Ihnen in einem gemeinsamen Gespräch zum Termin.",
+			"descriptionJoin": "Teilen Sie Link oder QR-Code. Wer ihn öffnet, kommt in dieses Gespräch dazu.",
 			"copied": "Kopiert",
 			"share": "Teilen",
-			"qrAlt": "QR-Code zum Direktlink",
+			"qrAlt": "QR-Code zur Direkteinladung",
 			"done": "Fertig",
-			"linkLabel": "Direktlink"
+			"linkLabel": "Direkteinladung"
 		},
 		"list": {
-			"title": "Meine Direktlinks",
+			"title": "Meine Direkteinladungen",
 			"qr": "QR-Code zeigen",
 			"active": "{{name}} aktiv",
 			"edit": "{{name}} bearbeiten"
@@ -6836,23 +7001,23 @@
 			"joinFailed": "Das hat nicht geklappt. Bitte versuchen Sie es erneut."
 		},
 		"page": {
-			"loadFailed": "Ihre Direktlinks konnten nicht geladen werden.",
-			"create": "Neuen Direktlink in „Chat erstellen“ anlegen",
-			"emptyHeadline": "Aktuell gibt es keine Direktlinks",
-			"emptyText": "Einen Direktlink erstellen Sie unter „Chat erstellen“. Er erscheint danach hier.",
-			"loading": "Direktlinks werden geladen",
+			"loadFailed": "Ihre Direkteinladungen konnten nicht geladen werden.",
+			"create": "Neue Direkteinladung in „Chat erstellen“ anlegen",
+			"emptyHeadline": "Aktuell gibt es keine Direkteinladungen",
+			"emptyText": "Eine Direkteinladung erstellen Sie unter „Chat erstellen“. Sie erscheint danach hier.",
+			"loading": "Direkteinladungen werden geladen",
 			"retry": "Erneut versuchen",
-			"toggleFailed": "Der Link konnte nicht umgeschaltet werden. Bitte versuchen Sie es erneut."
+			"toggleFailed": "Der Link konnte nicht umgeschaltet werden. Bitte versuchen Sie es erneut.",
+			"toggleFailedTitle": "Nicht umgeschaltet"
 		},
 		"edit": {
-			"title": "Direktlink bearbeiten",
+			"title": "Direkteinladung bearbeiten",
 			"cancel": "Abbrechen",
 			"save": "Speichern",
 			"name": "Name",
 			"nameRequired": "Bitte geben Sie einen Namen ein.",
 			"topic": "Thema",
 			"mediumFixed": "Art des Kontakts lässt sich nicht ändern",
-			"temporaryHint": "Gilt nur für Personen, die den Link neu öffnen.",
 			"failed": "Die Änderung konnte nicht gespeichert werden. Bitte versuchen Sie es erneut.",
 			"scheduledAt": "Datum und Uhrzeit",
 			"clearScheduledAt": "Entfernen"
@@ -6903,6 +7068,124 @@
 			"text": "Ihre Nachricht ist noch nicht gesendet und bleibt im Eingabefeld. Bitte prüfen Sie Ihre Verbindung und senden Sie erneut."
 		}
 	},
+	"directInvitation": {
+		"dialog": {
+			"roomNotEncrypted": "Für dieses Gespräch kann kein Einladungslink erstellt werden, weil es nicht verschlüsselt ist.",
+			"createTitle": "Direkteinladung erstellen",
+			"editTitle": "Direkteinladung bearbeiten",
+			"description": "Wer den Link öffnet, kommt direkt zu Ihnen. Ein Termin ist optional.",
+			"createAction": "Erstellen",
+			"saveAction": "Speichern",
+			"withAppointment": "Mit Termin",
+			"withAppointmentHint": "Alle, die den Link öffnen, treffen sich in einem gemeinsamen Gespräch. Der Termin steht auch in Ihrem Kalender.",
+			"withoutAppointmentHint": "Ohne Termin bekommt jede Person ein eigenes Gespräch. Der Link gilt, bis Sie ihn löschen.",
+			"inviteOthers": "Weitere Personen per Link einladen",
+			"inviteOthersHint": "Zum Beispiel eine Dolmetscherin. Eingeladene sehen nur Nachrichten ab ihrem Beitritt.",
+			"inviteOthersMediumOff": "Für diese Art sind Direkteinladungen nicht freigegeben. Wählen Sie eine andere Art, um weitere Personen einzuladen.",
+			"validity": {
+				"label": "Gültig nach Terminende",
+				"hint": "Danach verlieren Gäste den Zugang, und das Gespräch wird archiviert.",
+				"end": "Bis zum Ende des Termins",
+				"minutes_one": "{{count}} Minute",
+				"minutes_other": "{{count}} Minuten",
+				"hours_one": "{{count}} Stunde",
+				"hours_other": "{{count}} Stunden",
+				"less": "Kürzer",
+				"more": "Länger"
+			},
+			"access": {
+				"label": "Wer darf hinein?",
+				"guests": "Nur Gäste",
+				"accounts": "Nur mit Konto",
+				"both": "Beides"
+			},
+			"knock": "Anklopfen",
+			"knockHint": "Sie lassen jede Person selbst herein. Das lässt sich im Anruf ändern.",
+			"newPerson": {
+				"option": "Neue Person per Direkteinladung …",
+				"hint": "Diese Person hat noch kein Gespräch mit Ihnen. Im nächsten Schritt erstellen Sie eine Direkteinladung mit diesem Termin.",
+				"action": "Weiter zur Direkteinladung"
+			},
+			"linkFailedTitle": "Einladungslink nicht erstellt",
+			"linkFailedAfterAppointment": "Der Termin ist angelegt, der Einladungslink aber nicht. Bitte versuchen Sie es erneut.",
+			"appointmentSaved": "Der Termin ist angelegt."
+		},
+		"overview": {
+			"title": "Termine & Direkteinladungen",
+			"upcoming": "Anstehende Termine",
+			"withoutAppointment": "Direkteinladungen ohne Termin",
+			"today": "Heute",
+			"tomorrow": "Morgen",
+			"time": "{{start}}–{{end}} Uhr",
+			"validUntil": "Link gültig bis {{date}}",
+			"knockOn": "Mit Anklopfen",
+			"knockOff": "Direkt hinein",
+			"oneToOne": "1:1-Gespräch mit {{name}}",
+			"copy": "Link zu {{name}} kopieren",
+			"copied": "Kopiert",
+			"qr": "QR-Code zu {{name}} zeigen",
+			"edit": "{{name}} bearbeiten",
+			"copyFailed": "Der Link konnte nicht kopiert werden.",
+			"emptyHeadline": "Noch keine Termine und Direkteinladungen",
+			"emptyText": "Erstellen Sie eine Direkteinladung – mit oder ohne Termin. Sie erscheint danach hier.",
+			"create": "Direkteinladung erstellen",
+			"noUpcoming": "Keine anstehenden Termine. Geben Sie einer Direkteinladung ein Datum, oder legen Sie in einem Gespräch über ⋮ einen Termin an.",
+			"noLinks": "Keine Direkteinladungen ohne Termin.",
+			"appointmentName": "Termin",
+			"copyFailedTitle": "Nicht kopiert",
+			"expired": "Abgelaufene Einladungen",
+			"sendNewLink": "Neuen Link senden für {{name}}",
+			"appointmentsFailed": "Die Termine konnten nicht geladen werden.",
+			"appointmentsRetry": "Erneut laden"
+		},
+		"entry": {
+			"beforeStart": {
+				"title": "Ihr Termin",
+				"with": "mit {{name}}",
+				"time": "{{start}}–{{end}} Uhr",
+				"waitingRoom": "Der Warteraum öffnet um {{time}} Uhr, 15 Minuten vor Beginn.",
+				"chatNow": "Schreiben können Sie schon jetzt.",
+				"openChat": "Zum Chat"
+			},
+			"expired": {
+				"title": "Link abgelaufen",
+				"text": "Dieser Link gilt nicht mehr. Fragen Sie einen neuen an – Ihre Beratungsperson wird benachrichtigt.",
+				"request": "Neuen Link anfragen",
+				"sent": "Anfrage gesendet. Sie bekommen einen neuen Link, sobald Ihre Beratungsperson ihn schickt.",
+				"failed": "Die Anfrage hat nicht geklappt. Bitte versuchen Sie es erneut.",
+				"failedTitle": "Anfrage nicht gesendet",
+				"signedOut": "Dieser Link gilt nicht mehr. Einen neuen Link können Sie anfragen, wenn Sie angemeldet sind. Ohne Anmeldung wenden Sie sich bitte direkt an Ihre Beratungsperson.",
+				"signIn": "Anmelden und neuen Link anfragen"
+			},
+			"access": {
+				"guestsOnly": "Dieser Link ist nur für Gäste. Bitte öffnen Sie ihn in einem Fenster, in dem Sie nicht angemeldet sind.",
+				"accountsOnly": "Für diesen Link brauchen Sie ein Konto. Bitte melden Sie sich an oder registrieren Sie sich."
+			},
+			"roomNotEncrypted": "Diese Einladung kann gerade nicht genutzt werden, weil das Gespräch nicht verschlüsselt ist. Bitte wenden Sie sich an die Beraterin oder den Berater.",
+			"roomUnavailable": "Die Unterhaltung ist gerade nicht erreichbar. Bitte versuchen Sie es in einem Moment erneut.",
+			"consent": {
+				"description": "Bitte stimmen Sie der Datenschutzerklärung der Beratungsstelle zu, bevor Sie das Gespräch betreten. Jede Person stimmt für sich selbst zu.",
+				"rejected": "Ohne Ihre Zustimmung können Sie dieses Gespräch nicht betreten. Sie können jederzeit noch zustimmen."
+			}
+		},
+		"notice": {
+			"title": "Neuer Link angefragt",
+			"text": "{{name}} möchte einen neuen Link für „{{invitation}}“.",
+			"someone": "Eine Person",
+			"send": "Neuen Link senden",
+			"failed": "Der neue Link konnte nicht erstellt werden. Bitte versuchen Sie es erneut.",
+			"failedTitle": "Neuer Link nicht erstellt"
+		},
+		"conversation": {
+			"sendNewLink": "Neuen Link senden"
+		},
+		"renewed": {
+			"title": "Neuer Link",
+			"text": "Hier ist der neue Link zum Termin:",
+			"validUntil": "Der neue Link zum Termin gilt bis {{date}}:"
+		},
+		"fromCalendar": "Termin aus dem Kalender: {{range}}. Wählen Sie Thema und Medium, dann erstellen Sie die Direkteinladung."
+	},
 	"calendar": {
 		"bandLoading": "Wird geladen: {{names}}",
 		"colleagueLoadingShort": "wird geladen …",
@@ -6917,7 +7200,6 @@
 		"bandOne": "{{name}} belegt",
 		"colleagueFailedShort": "nicht geladen",
 		"colleagueFailed": "Der Kalender von {{names}} konnte nicht geladen werden; ob alle frei sind, lässt sich so nicht sagen.",
-		"upcomingChat": "Zum Chat mit {{name}}",
 		"chatUnavailable": "Der Chat zu diesem Termin konnte nicht geöffnet werden.",
 		"conversationsFailedAsker": "Ihre Gespräche konnten nicht geladen werden, ein Termin führt so nicht zu seinem Chat.",
 		"create": "Termin anlegen",
@@ -6955,7 +7237,8 @@
 			"group": "Gruppentermin",
 			"blocker": "Sperrzeit",
 			"busy": "Belegt",
-			"colleague": "Belegt"
+			"colleague": "Belegt",
+			"absence": "Abwesend"
 		},
 		"noEvents": "Keine Termine in diesem Zeitraum",
 		"loading": "Termine werden geladen",
@@ -6979,12 +7262,26 @@
 				"incomplete": "Bitte Datum und Uhrzeit wählen.",
 				"past": "Der Eintrag muss in der Zukunft liegen.",
 				"order": "Das Ende muss nach dem Beginn liegen.",
-				"conversation": "Bitte die Beratung wählen, zu der der Termin gehört."
-			}
+				"conversation": "Bitte die Beratung wählen, zu der der Termin gehört.",
+				"colleague": "Bitte eine Kollegin oder einen Kollegen wählen."
+			},
+			"entryKind": "Art des Eintrags",
+			"tabs": {
+				"appointment": "Termin",
+				"blocker": "Sperrzeit",
+				"absence": "Abwesenheit"
+			},
+			"withWhom": "Termin mit",
+			"withConversation": "Ratsuchende Person",
+			"withColleague": "Kolleg:in",
+			"colleague": "Kolleg:in",
+			"colleagueHint": "Der Termin kommt in den internen Chat von Ihnen beiden. Gibt es den noch nicht, wird er angelegt.",
+			"colleagueDescription": "Wählen Sie Tag, Uhrzeit, Art und die Kollegin oder den Kollegen.",
+			"onsiteOnly": "Mit dieser Kollegin oder diesem Kollegen ist kein interner Chat erlaubt. Möglich ist nur ein Termin vor Ort."
 		},
 		"details": {
 			"start": {
-				"video": "Video-Call starten",
+				"video": "Video starten",
 				"phone": "Anruf starten",
 				"chat": "Chat öffnen"
 			},
@@ -6995,7 +7292,7 @@
 			},
 			"move": "Verschieben",
 			"cancel": "Absagen",
-			"remove": "Blockierung entfernen",
+			"remove": "Sperrzeit entfernen",
 			"address": "Adresse",
 			"colleague": "Kalender von {{name}}",
 			"busyHint": "Aus Ihrem eigenen Kalender übernommen. ORISO kennt nur die Zeit.",
@@ -7008,12 +7305,18 @@
 			"confirm": "Trotzdem verschieben"
 		},
 		"soon": "Beginnt gleich",
-		"blockerMoved": "Blockierung verschoben auf {{date}}.",
+		"blockerMoved": "Sperrzeit verschoben auf {{date}}.",
 		"cancelled": "Termin abgesagt. Die ratsuchende Person wird benachrichtigt.",
+		"cancelAsk": {
+			"title": "Termin absagen?",
+			"description": "{{name}}, {{time}}. {{name}} bekommt sofort eine Nachricht, dass der Termin abgesagt ist.",
+			"keep": "Nicht absagen",
+			"confirm": "Absagen"
+		},
 		"created": "Termin angelegt: {{date}}",
 		"undo": "Rückgängig",
 		"syncDialog": {
-			"title": "Kalender-Abgleich",
+			"title": "Mit Outlook oder Google verbinden",
 			"description": "Ihre ORISO-Termine in Outlook, Google oder Apple Kalender – und belegte Zeiten von dort zurück.",
 			"feedTitle": "In Ihrem Kalender abonnieren",
 			"feedText": "Fügen Sie diesen Link in Ihrem Kalender als Abonnement hinzu. Er zeigt nur „ORISO-Termin“ und die Uhrzeit, keine Namen.",
@@ -7049,7 +7352,11 @@
 			"label": "Eintragen",
 			"as": "Eintragen als",
 			"blockerNow": "sofort eingetragen",
-			"outsideHours": "Außerhalb Ihrer Arbeitszeit."
+			"outsideHours": "Außerhalb Ihrer Arbeitszeit.",
+			"who": "Mit wem",
+			"whoPlaceholder": "Mit wem? Name suchen",
+			"conversations": "Gespräche",
+			"noneFound": "Kein Gespräch gefunden."
 		},
 		"blocker": {
 			"menuItem": "Sperrzeit",
@@ -7067,14 +7374,19 @@
 			"conflicts_one": "Überschneidet sich mit {{count}} Termin.",
 			"created": "{{count}} Sperrzeiten eingetragen",
 			"created_one": "{{count}} Sperrzeit eingetragen",
-			"createdSingle": "Sperrzeit eingetragen: {{date}}"
+			"createdSingle": "Sperrzeit eingetragen: {{date}}",
+			"workHint": "Immer gleiche Zeiten, etwa abends und am Wochenende?",
+			"weekly": "Wöchentlich …"
 		},
 		"saveFailed": "Das hat nicht geklappt. Bitte versuchen Sie es noch einmal.",
+		"restoreFailed": "Die Sperrzeit wurde gelöscht und konnte nicht wiederhergestellt werden. Speichern Sie die Serie erneut, um die Zeit wieder zu sperren.",
 		"blockerRemoved": "Sperrzeit entfernt.",
 		"allDay": "ganztägig",
 		"entryMenu": {
 			"back": "Zurück",
 			"cancel": "Absagen",
+			"show": "Zum Termin",
+			"showSub": "Im Kalender zeigen und markieren",
 			"chat": "Zum Chat",
 			"conflicts": "Überschneidet sich mit einem anderen Eintrag.",
 			"date": "Tag",
@@ -7089,7 +7401,15 @@
 			"remove": "Entfernen",
 			"saveMove": "Verschieben",
 			"sendProposal": "Vorschlag senden",
-			"to": "Bis"
+			"to": "Bis",
+			"withYou": "Sie und {{name}}",
+			"startSub": "mit {{name}}",
+			"chatSub": "Gespräch mit {{name}} öffnen",
+			"joinSub": "Videokonferenz öffnen",
+			"moveSub": "Tag und Uhrzeit ändern",
+			"proposeSub": "{{name}} muss bestätigen",
+			"cancelSub": "{{name}} bekommt eine Nachricht",
+			"reason": "Grund (optional)"
 		},
 		"fullscreen": "Vollbild",
 		"fullscreenExit": "Vollbild beenden (Esc)",
@@ -7097,6 +7417,7 @@
 			"label": "Zu einem Tag springen",
 			"today": "Heute",
 			"tomorrow": "Morgen",
+			"dayAfterTomorrow": "Übermorgen",
 			"nextMonday": "Nächster Montag",
 			"inTwoWeeks": "In zwei Wochen",
 			"date": "Datum",
@@ -7106,7 +7427,8 @@
 			"label": "Was anzeigen",
 			"hint": "Abgewählte Arten blenden wir im Kalender und in der Liste aus.",
 			"all": "Alles anzeigen",
-			"customised": "Einige Arten sind ausgeblendet."
+			"customised": "Einige Arten sind ausgeblendet.",
+			"blocker": "Sperrzeiten und Belegt"
 		},
 		"monthMenu": {
 			"label": "Tag eintragen",
@@ -7124,7 +7446,12 @@
 			"bar": "Personen im Kalender",
 			"hint": "Zeigen hebt hervor, Klick blendet aus",
 			"label": "Kalender anzeigen",
+			"alwaysMine": "Ihre Termine sehen Sie immer.",
+			"sameTenant": "gleicher Träger",
+			"wholeAgency": "Ganze Beratungsstelle zeigen",
+			"split": "Nebeneinander ansehen",
 			"me": "Ich",
+			"meAvatar": "ich",
 			"more": "Weitere …"
 		},
 		"proposal": {
@@ -7136,7 +7463,7 @@
 			"withdraw": "Zurückziehen",
 			"sent": "Vorschlag gesendet: {{date}}. {{name}} muss bestätigen.",
 			"withdrawn": "Vorschlag zurückgezogen.",
-			"open": "Offene Anfragen",
+			"open": "Offene Verschiebungen",
 			"proposed": "Vorgeschlagen: {{date}}",
 			"from": "Vorschlag von {{name}}",
 			"someone": "Eine Kollegin oder ein Kollege",
@@ -7152,8 +7479,9 @@
 			"declineLabel": "Vorschlag von {{name}} ablehnen: Der Termin bleibt {{from}}",
 			"declined": "Vorschlag abgelehnt. Der Termin bleibt {{date}}.",
 			"noLongerValid": "Dieser Vorschlag gilt nicht mehr. Der Termin hat sich geändert oder ist vorbei.",
-			"navCount": "{{count}} offene Anfragen",
-			"navCount_one": "{{count}} offene Anfrage"
+			"navCount": "{{count}} offene Verschiebungen",
+			"navCount_one": "{{count}} offene Verschiebung",
+			"reason": "Grund: {{reason}}"
 		},
 		"quick": {
 			"freeUnavailable": "Freie Zeiten gerade nicht verfügbar.",
@@ -7161,29 +7489,40 @@
 			"close": "Schnell eintragen schließen",
 			"date": "Tag",
 			"duration": "Dauer",
-			"freeHalf": "Nächste freie halbe Stunde",
-			"freeHours": "Nächste freie Stunde",
 			"gaps": {
-				"when": "Tag und Uhrzeit",
-				"kind": "Art",
-				"who": "Gespräch"
+				"when": "Tag und Beginn",
+				"kind": "welche Art",
+				"who": "mit wem"
 			},
 			"halfHour": "30 Min",
-			"hint": "Tippen Sie Tag und Uhrzeit, wählen Sie die Art.",
+			"hint": "Art wählen, Tag und Beginn setzen oder eine freie Zeit antippen.",
 			"hour": "1 Std",
 			"kind": "Art",
-			"minutes": "{{count}} Min.",
-			"missing": "Noch offen: {{list}}",
+			"missing": "Noch offen: {{list}}.",
 			"more": "Mehr Angaben …",
-			"placeholder": "z. B. Do 14 Uhr Video",
-			"save": "Hinzufügen",
+			"placeholder": "Mit wem? z. B. „mutige_eule“ oder „Do 14 Uhr“",
+			"save": "Eintragen",
+			"saving": "Wird gespeichert …",
 			"slot": "Länge der freien Zeit",
 			"time": "Beginn",
 			"title": "Schnell eintragen",
-			"who": "Mit wem"
+			"who": "Mit wem",
+			"freeNext": "Nächste freie",
+			"lengthHours": "{{hours}} Std",
+			"lengthMinutes": "{{minutes}} Min",
+			"lengthBoth": "{{hours}} Std {{minutes}} Min",
+			"lengths": {
+				"30": "30 Min",
+				"45": "45 Min",
+				"60": "1 Std",
+				"90": "1½ Std",
+				"120": "2 Std"
+			},
+			"ready": "{{noun}} mit {{name}}",
+			"outsideHours": "außerhalb der Arbeitszeit"
 		},
 		"search": {
-			"placeholder": "Termine suchen",
+			"placeholder": "Suche",
 			"clear": "Suche leeren",
 			"empty": "Nichts gefunden.",
 			"results": "Suchergebnisse"
@@ -7197,14 +7536,21 @@
 			"switcherMenu": "als Menü",
 			"switcherDigits": "als Schalter",
 			"switcherHint": "Wird für Sie gespeichert.",
-			"sync": "Mit Outlook oder Google verbinden"
+			"grips": "Arbeitszeit und Pause ziehen",
+			"gripsSub": "Griffe im Kalender zeigen",
+			"sync": "Mit Outlook oder Google verbinden",
+			"repeatBlocker": "Sperrzeit mit Wiederholung",
+			"switcherMenuSub": "Ein Knopf, die Ansichten im Menü",
+			"switcherDigitsSub": "Alle Ansichten nebeneinander: 1 3 5 7 M L N"
 		},
 		"side": {
 			"resize": "Liste breiter oder schmaler ziehen; Doppelklick klappt sie ein oder aus, Pfeil hoch und runter scrollt sie",
-			"label": "Termine: Suche und Listen"
+			"label": "Termine: Suche und Listen",
+			"now": "Jetzt"
 		},
 		"split": {
 			"empty": "Blenden Sie Kalender von Kolleg:innen ein, um Ihren Tag daneben zu sehen.",
+			"choose": "Kolleg:innen wählen",
 			"free": "alle frei",
 			"label": "Ihr Tag neben Kolleg:innen",
 			"oneDay": "1 Tag",
@@ -7212,6 +7558,11 @@
 			"threeDays": "3 Tage"
 		},
 		"viewMenu": "Ansicht: {{view}}",
+		"header": {
+			"new": "Neu",
+			"newEntry": "Neuer Eintrag",
+			"shared": "Termine"
+		},
 		"when": {
 			"running": "läuft",
 			"inMinutes": "in {{count}} Min.",
@@ -7239,7 +7590,8 @@
 			"summary": "Arbeitszeit {{hours}}",
 			"title": "Arbeitszeit festlegen",
 			"to": "Ende am {{day}}",
-			"tooMany": "Die Arbeitszeit hat höchstens {{max}} Zeitfenster pro Woche; diese Änderung ist nicht gespeichert."
+			"tooMany": "Die Arbeitszeit hat höchstens {{max}} Zeitfenster pro Woche; diese Änderung ist nicht gespeichert.",
+			"copyMonday": "Zeiten und Pause vom Montag für alle Arbeitstage übernehmen"
 		},
 		"grip": {
 			"weekOnly": "Nur zum Teil gespeichert: Die Zeiten für {{weekdays}} sind geändert, {{date}} aber nicht.",
@@ -7343,6 +7695,243 @@
 			"keys": "Eingabe wechselt die Höhe, die Pfeiltasten ziehen die Liste auf oder ein. Ziehen geht auch.",
 			"open": "Liste aufziehen"
 		},
-		"conversationsFailed": "Die Gespräche konnten nicht geladen werden, Termine lassen sich so keinem Gespräch zuordnen."
+		"conversationsFailed": "Die Gespräche konnten nicht geladen werden, Termine lassen sich so keinem Gespräch zuordnen.",
+		"nouns": {
+			"video": "Video-Termin",
+			"phone": "Telefontermin",
+			"onsite": "Termin vor Ort",
+			"chat": "Chat-Termin",
+			"group": "Gruppentermin",
+			"blocker": "Sperrzeit",
+			"busy": "Belegt"
+		},
+		"viewSettings": {
+			"title": "Ansicht · Kalender",
+			"description": "Welche Terminarten der Kalender zeigt, welche einen Knopf in der Arten-Leiste bekommen und wann Sie E-Mails erhalten.",
+			"kindsHeading": "Terminarten",
+			"showColumn": "Im Kalender",
+			"legendShow": "Termine dieser Art erscheinen im Kalender und in der Liste.",
+			"pillColumn": "Als Knopf",
+			"legendPill": "Die Art hat einen Knopf in der Leiste über „Als Nächstes“.",
+			"legendEmail": "E-Mail bei gebuchten, verschobenen und abgesagten Terminen. Gilt für alle Terminarten gemeinsam, wie im Profil.",
+			"showKind": "Im Kalender: {{kind}}",
+			"pillKind": "Als Knopf: {{kind}}",
+			"pillMenu": "Als Knopf wählen: {{kind}}"
+		},
+		"bandCard": {
+			"label": "Wer ist belegt",
+			"back": "Zurück zur Liste",
+			"busy": "Belegt",
+			"free": "Frei",
+			"nobodyFree": "Niemand frei.",
+			"show": "Kalender ansehen",
+			"showLabel": "Kalender von {{name}} ansehen",
+			"ownerOnly": "Nur {{name}} kann das ändern.",
+			"all": "Alle nebeneinander",
+			"create": "Zu dieser Zeit eintragen"
+		},
+		"links": {
+			"title": "Links ohne Termin",
+			"hint": "Einladungslinks, die Sie teilen können: kopieren oder als QR-Code zeigen."
+		},
+		"consultationHours": {
+			"title": "Sprechstunden",
+			"description": "In diesen Zeiten können Ratsuchende selbst einen Termin bei Ihnen buchen. Sie gelten unabhängig von Ihrer Arbeitszeit.",
+			"save": "Sprechstunden speichern",
+			"saved": "Sprechstunden gespeichert",
+			"empty": "Ohne Sprechstunden können Ratsuchende keinen Termin buchen.",
+			"none": "Keine Sprechstunden festgelegt",
+			"autoAccept": "Buchungen automatisch bestätigen",
+			"autoAcceptOn": "Nach der Vorlaufzeit ist ein Termin sofort gebucht; kurzfristige Buchungen sind Anfragen.",
+			"autoAcceptOff": "Jede Buchung ist eine Anfrage, die Sie bestätigen.",
+			"noticeDays": "Vorlaufzeit",
+			"noticeDaysHint": "Innerhalb dieser Tage vor dem Termin wird eine Buchung zur Anfrage.",
+			"noticeDaysOption": "{{count}} Tage",
+			"noticeDaysOption_one": "{{count}} Tag",
+			"slotMinutes": "Dauer eines Termins",
+			"minutes": "{{count}} Min.",
+			"invalid": "Das Ende muss nach dem Beginn liegen.",
+			"loadFailed": "Konnten nicht geladen werden. Erneut versuchen",
+			"overlaps": "Die Zeiten überschneiden sich mit einer weiteren Sprechstunde an diesem Tag."
+		},
+		"appointmentRequest": {
+			"status": "Angefragt · wartet auf Sie",
+			"from": "Anfrage von {{name}}",
+			"menu": "Termin angefragt",
+			"hint": "Bis Sie antworten, ist die Zeit vorgemerkt. Ohne Antwort bis zum Beginn verfällt die Anfrage.",
+			"confirm": "Bestätigen",
+			"confirmHint": "Der Termin wird fest eingetragen",
+			"decline": "Ablehnen",
+			"declineHint": "Die Zeit wird wieder frei",
+			"confirmed": "Termin bestätigt: {{date}}.",
+			"declined": "Terminanfrage abgelehnt: {{date}}."
+		},
+		"absence": {
+			"description": "Wählen Sie die Tage, an denen Sie abwesend sind. Ratsuchende sehen in dieser Zeit Ihre Abwesenheitsnachricht.",
+			"from": "Von",
+			"until": "Bis",
+			"message": "Abwesenheitsnachricht",
+			"messageHint": "Ratsuchende sehen diese Nachricht, können Ihnen aber weiterhin schreiben.",
+			"effect": "Nach dem letzten Tag sind Sie automatisch wieder anwesend. Dieselbe Abwesenheit steht in Ihrem Profil.",
+			"save": "Abwesenheit eintragen",
+			"conflicts": "In diesem Zeitraum liegen {{count}} Termine. Sie bleiben bestehen – sagen Sie sie bei Bedarf selbst ab oder verschieben Sie sie.",
+			"conflicts_one": "In diesem Zeitraum liegt {{count}} Termin. Er bleibt bestehen – sagen Sie ihn bei Bedarf selbst ab oder verschieben Sie ihn.",
+			"saved": "Abwesenheit eingetragen. Sie steht auch in Ihrem Profil."
+		},
+		"meeting": {
+			"accept": "Annehmen",
+			"decline": "Ablehnen",
+			"accepted": "Termin angenommen.",
+			"declined": "Termin abgelehnt.",
+			"cancelled": "Termin abgesagt.",
+			"cancelAsk": "{{name}}, {{time}}. Der Termin verschwindet aus beiden Kalendern.",
+			"cancelSub": "Verschwindet auch bei {{name}}",
+			"chatSub": "Interner Chat mit {{name}}",
+			"pendingInvited": "{{name}} lädt Sie ein. Bitte annehmen oder ablehnen.",
+			"pendingSent": "Angefragt. Wartet auf {{name}}.",
+			"confirmed": "Fest vereinbart mit {{name}}."
+		},
+		"autoAccept": {
+			"menu": "Termine automatisch annehmen …",
+			"menuHint": "Von welchen Kolleg:innen",
+			"title": "Termine automatisch annehmen",
+			"description": "Termine von diesen Kolleg:innen stehen sofort fest in Ihrem Kalender.",
+			"colleagues": "Kolleg:innen",
+			"search": "Namen suchen",
+			"hint": "Termine von allen anderen warten, bis Sie sie annehmen.",
+			"save": "Speichern",
+			"saved": "Liste gespeichert."
+		}
+	},
+	"guestAccountMode": {
+		"label": "Gastkonto",
+		"menuLabel": "Gastkonto wählen",
+		"option": {
+			"TEMPORARY": "Nach der Sitzung löschen",
+			"GUEST_CHOOSES": "Gast wählt",
+			"PERMANENT": "Dauerhaft"
+		},
+		"hint": {
+			"TEMPORARY": "Neue Gäste bekommen ein Konto, das nach dem Gespräch gelöscht wird.",
+			"GUEST_CHOOSES": "Neue Gäste wählen beim Beitreten: ohne Konto oder mit eigenem Konto.",
+			"PERMANENT": "Neue Gäste legen ein eigenes Konto an."
+		},
+		"newGuestsOnly": "Gilt nur für Personen, die den Link neu öffnen.",
+		"entry": {
+			"withoutAccount": "Ohne Konto beitreten",
+			"withAccount": "Konto anlegen",
+			"temporaryNote": "Ihr Zugang wird nach dem Gespräch gelöscht. Sie können ihn später noch behalten.",
+			"accountNote": "Mit einem eigenen Konto können Sie später wiederkommen."
+		},
+		"keep": {
+			"action": "Konto behalten",
+			"actionDescription": "Ihr Konto wird sonst nach dem Gespräch gelöscht.",
+			"title": "Konto behalten",
+			"text": "Ihr Konto wird sonst nach dem Gespräch gelöscht. Legen Sie ein Passwort fest, dann bleibt es erhalten und Sie können sich später wieder anmelden.",
+			"loginName": "Ihr Benutzername: {{name}}",
+			"password": "Passwort",
+			"repeat": "Passwort wiederholen",
+			"mismatch": "Die Passwörter stimmen nicht überein.",
+			"submit": "Konto behalten",
+			"cancel": "Abbrechen",
+			"success": "Ihr Konto bleibt erhalten.",
+			"recoveryPending": "Ihr Konto bleibt erhalten. Um Ihre Nachrichten auf einem anderen Gerät zu lesen, brauchen Sie Ihren Wiederherstellungsschlüssel.",
+			"error": {
+				"badRequest": "Das Passwort erfüllt die Anforderungen nicht.",
+				"forbidden": "Über diese Einladung lässt sich das Konto nicht behalten.",
+				"notFound": "Ihr Konto wurde nicht gefunden. Bitte melden Sie sich neu an.",
+				"conflict": "Ihr Konto wird gerade gelöscht oder ist bereits dauerhaft.",
+				"generic": "Das hat nicht geklappt. Bitte versuchen Sie es erneut."
+			}
+		}
+	},
+	"managePeople": {
+		"self": "(Sie)",
+		"loading": "Wird geladen …",
+		"working": "Wird ausgeführt …",
+		"retry": "Erneut versuchen",
+		"cancel": "Abbrechen",
+		"search": "Nach Name oder Organisation suchen",
+		"noMatches": "Niemand passt zu dieser Suche.",
+		"otherPerson": "Andere Person wählen",
+		"since": "Seit {{date}}",
+		"role": {
+			"owner": "Besitzer:in",
+			"coModerator": "Co-Moderation"
+		},
+		"standing": {
+			"badge": "Fest zugewiesen",
+			"hint": "Vom Admin der Beratungsstelle festgelegt. Supervision bleibt immer an: Sie können die Person wechseln, aber nicht ersatzlos entfernen.",
+			"noReplacement": "Vom Admin der Beratungsstelle festgelegt. Gerade kann niemand sonst an dieser Beratungsstelle übernehmen."
+		},
+		"add": {
+			"action": "Hinzufügen",
+			"labelFor": "{{name}} hinzufügen",
+			"confirm": "{{name}} hinzufügen"
+		},
+		"remove": {
+			"action": "Entfernen",
+			"labelFor": "{{name}} entfernen",
+			"confirm": "Wirklich entfernen?"
+		},
+		"replace": {
+			"action": "Wechseln",
+			"labelFor": "{{name}} wechseln",
+			"title": "Wer soll {{name}} ablösen?",
+			"confirm": "Zu {{name}} wechseln",
+			"pick": "Auswählen",
+			"pickLabelFor": "{{name}} auswählen"
+		},
+		"error": {
+			"members": "Die Liste konnte nicht geladen werden.",
+			"candidates": "Die verfügbaren Personen konnten nicht geladen werden.",
+			"add": "Die Person konnte nicht hinzugefügt werden. Bitte versuchen Sie es erneut.",
+			"remove": "Die Person konnte nicht entfernt werden. Bitte versuchen Sie es erneut.",
+			"replace": "Der Wechsel hat nicht geklappt. Bitte versuchen Sie es erneut.",
+			"refused": "Diese Person kann hier nicht mehr hinzugefügt werden. Ihre Organisation oder dieser Chat lässt es nicht zu. Die Liste ist aktualisiert."
+		},
+		"supervision": {
+			"title": "Supervision verwalten",
+			"description": "Supervisor:innen lesen in diesem Fall mit und sprechen mit Ihnen im Supervisions-Chat.",
+			"membersTitle": "Aktuelle Supervision",
+			"emptyMembers": "Dieser Fall hat noch keine Supervisor:in.",
+			"addTitle": "Supervisor:in hinzufügen",
+			"emptyCandidates": "An dieser Beratungsstelle ist sonst niemand als Supervisor:in markiert. Das legt der Admin der Beratungsstelle fest.",
+			"reasonLabel": "Grund für die Supervision",
+			"reasonPlaceholder": "Warum soll diese Person den Fall supervidieren?",
+			"reasonMissing": "Bitte geben Sie einen Grund an.",
+			"added": "{{name}} supervidiert jetzt diesen Fall."
+		},
+		"internalChat": {
+			"title": "Personen verwalten",
+			"description": "Alle in diesem internen Chat können Kolleg:innen dazuholen.",
+			"membersTitle": "In diesem Chat",
+			"emptyMembers": "In diesem Chat ist noch niemand.",
+			"addTitle": "Kolleg:in hinzufügen",
+			"addNote": "Neue Personen sehen Nachrichten erst ab ihrem Beitritt, nicht die früheren.",
+			"emptyCandidates": "Es können keine weiteren Kolleg:innen zu diesem Chat hinzugefügt werden.",
+			"added": "{{name}} ist jetzt in diesem Chat."
+		},
+		"groupChat": {
+			"title": "Personen verwalten",
+			"description": "Sehen Sie, wer diese Gruppe leitet, und teilen Sie den Link mit allen, die teilnehmen möchten.",
+			"membersTitle": "Moderation",
+			"emptyMembers": "Diese Gruppe hat noch keine Moderation.",
+			"addTitle": "Co-Moderation hinzufügen",
+			"emptyCandidates": "Es können keine weiteren Kolleg:innen zu dieser Gruppe hinzugefügt werden.",
+			"inviteTitle": "Personen einladen",
+			"inviteDescription": "Ratsuchende treten über diesen Link oder QR-Code bei.",
+			"added": "{{name}} moderiert jetzt diese Gruppe mit."
+		}
+	},
+	"deletedAskerSession": {
+		"notice": {
+			"title": "Dieser Chat wurde gelöscht",
+			"deletedOn": "Gelöscht am {{date}}",
+			"text": "Persönliche Daten und Nachrichten der ratsuchenden Person sind nicht mehr verfügbar."
+		},
+		"archiveHint": "Verschieben Sie den Eintrag ins Archiv, damit er aus Ihrer Liste und den Aktivitäten verschwindet.",
+		"archived": "Dieser Eintrag ist im Archiv.",
+		"archiveFailed": "Archivieren hat nicht geklappt. Bitte versuchen Sie es erneut."
 	}
 }

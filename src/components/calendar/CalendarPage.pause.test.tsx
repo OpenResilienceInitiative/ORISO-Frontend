@@ -164,6 +164,40 @@ describe('CalendarPage — grips on the pause', () => {
 	});
 });
 
+describe('CalendarPage — grips switchable in ⋮ (Frank *7.2)', () => {
+	it('hides the working-hours and pause grips and remembers it', async () => {
+		page();
+		await grip('pauseStart');
+		fireEvent.click(
+			document.querySelector(
+				'[data-cy="calendar-settings"]'
+			) as HTMLElement
+		);
+		const toggle = await waitFor(() => {
+			const el = document.querySelector<HTMLElement>(
+				'[data-cy="calendar-settings-grips"]'
+			);
+			expect(el).not.toBeNull();
+			return el as HTMLElement;
+		});
+		expect(toggle.getAttribute('aria-checked')).toBe('true');
+		fireEvent.click(toggle);
+		await waitFor(() =>
+			expect(document.querySelector('[data-grip]')).toBeNull()
+		);
+		cleanup();
+		page();
+		// Still off after a reload.
+		await waitFor(() =>
+			expect(
+				document.querySelector('[data-testid="calendar-view"]')
+			).not.toBeNull()
+		);
+		await act(() => new Promise((done) => window.setTimeout(done, 50)));
+		expect(document.querySelector('[data-grip]')).toBeNull();
+	});
+});
+
 const findCy = (cy: string) =>
 	waitFor(() => {
 		const el = document.querySelector<HTMLElement>(`[data-cy="${cy}"]`);

@@ -47,6 +47,7 @@ import {
 } from '../message/messageStoryShell';
 import { RoomNextAppointment } from '../sessionsList/timeline/AppointmentSplitButton';
 import type { FutureEntry } from '../sessionsList/timeline/timelineModel';
+import { saveMenuEffects } from '../../features/menu-effects/useMenuEffects';
 import './sessionHeader.styles.scss';
 
 const APP_ORISO_CHAT_HEADER_FIGMA_URL =
@@ -899,6 +900,116 @@ export const ActiveConversation: Story = {
 			).toBeNull();
 			expect(canvasElement.textContent).not.toContain('•••');
 		});
+	}
+};
+
+/**
+ * Frank 17.11.2026: on desktop the assigned counsellor's "+" opens a menu —
+ * "Supervisor verwalten" (a colleague watches along, the case stays) and
+ * "Beratung übergeben" (the case moves to a colleague). The phone keeps its
+ * grey "+" ("am Desktop verfügbar") and the ⋮ entry.
+ */
+export const PlusMenuSupervisionOrHandover: Story = {
+	globals: { viewport: { value: 'desktop1366', isRotated: false } },
+	render: () => renderSessionHeader(mockActiveConversation()),
+	play: async ({ canvasElement }) => {
+		const plus = await waitFor(() => {
+			const button = canvasElement.querySelector<HTMLButtonElement>(
+				'.chatroomMainInteractionIcon__add--interactive'
+			);
+			expect(button).not.toBeNull();
+			return button!;
+		});
+		await expect(plus).toHaveAttribute('aria-haspopup', 'menu');
+		await userEvent.click(plus);
+		const menu = await within(document.body).findByRole('menu');
+		await expect(within(menu).getAllByRole('menuitem')).toHaveLength(2);
+		await expect(plus).toHaveAttribute('aria-expanded', 'true');
+	}
+};
+
+/** Review: with the menu open, presses outside it reach the page. A second
+ *  press on "+" hits the "+" itself (browser hit-testing), closes the menu and
+ *  leaves focus on the "+"; a press beside the menu hits the backdrop. */
+export const PlusMenuSecondPressOnPlus: Story = {
+	globals: { viewport: { value: 'desktop1366', isRotated: false } },
+	render: () => renderSessionHeader(mockActiveConversation()),
+	play: async ({ canvasElement }) => {
+		const plus = await waitFor(() => {
+			const button = canvasElement.querySelector<HTMLButtonElement>(
+				'.chatroomMainInteractionIcon__add--interactive'
+			);
+			expect(button).not.toBeNull();
+			return button!;
+		});
+		const hitAt = (el: Element) => {
+			const box = el.getBoundingClientRect();
+			return document.elementFromPoint(
+				box.left + box.width / 2,
+				box.top + box.height / 2
+			);
+		};
+		await userEvent.click(plus);
+		const menu = await within(document.body).findByRole('menu');
+		await waitFor(() =>
+			expect(menu.contains(document.activeElement)).toBe(true)
+		);
+		await expect(plus.contains(hitAt(plus))).toBe(true);
+		await userEvent.click(hitAt(plus) as HTMLElement);
+		await waitFor(() =>
+			expect(within(document.body).queryByRole('menu')).toBeNull()
+		);
+		await expect(plus).toHaveAttribute('aria-expanded', 'false');
+		await expect(document.activeElement).toBe(plus);
+
+		await userEvent.click(plus);
+		const reopened = await within(document.body).findByRole('menu');
+		const box = reopened.getBoundingClientRect();
+		const beside = document.elementFromPoint(
+			Math.min(box.right + 40, window.innerWidth - 4),
+			box.bottom - 4
+		);
+		await expect(beside).not.toBeNull();
+		await expect(beside!.closest('.MuiPopover-root')).toBeNull();
+	}
+};
+
+/** Review: with menu effects off there is no backdrop. A press on a plain,
+ *  non-focusable spot outside the menu still closes it. */
+export const PlusMenuOutsidePressWithoutEffects: Story = {
+	globals: { viewport: { value: 'desktop1366', isRotated: false } },
+	render: () => renderSessionHeader(mockActiveConversation()),
+	play: async ({ canvasElement }) => {
+		saveMenuEffects(false, CONSULTANT_ID);
+		try {
+			const plus = await waitFor(() => {
+				const button = canvasElement.querySelector<HTMLButtonElement>(
+					'.chatroomMainInteractionIcon__add--interactive'
+				);
+				expect(button).not.toBeNull();
+				return button!;
+			});
+			await userEvent.click(plus);
+			await within(document.body).findByRole('menu');
+			await expect(
+				document.querySelector('.orisoMenuBackdrop')
+			).toBeNull();
+			const spot = document.elementFromPoint(
+				window.innerWidth - 4,
+				window.innerHeight - 4
+			) as HTMLElement;
+			await expect(spot.closest('[role="menu"]')).toBeNull();
+			await expect(
+				spot.closest('button, a, input, [tabindex]')
+			).toBeNull();
+			await userEvent.click(spot);
+			await waitFor(() =>
+				expect(within(document.body).queryByRole('menu')).toBeNull()
+			);
+			await expect(plus).toHaveAttribute('aria-expanded', 'false');
+		} finally {
+			saveMenuEffects(true, CONSULTANT_ID);
+		}
 	}
 };
 

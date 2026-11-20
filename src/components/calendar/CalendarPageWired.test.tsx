@@ -32,6 +32,23 @@ vi.mock('./CalendarPage', () => ({
 }));
 const navigate = vi.fn();
 vi.mock('react-router-dom', () => ({ useNavigate: () => navigate }));
+/* "Direkteinladung erlauben" needs the tenant and agencies; off unless a
+   test switches it on. */
+const directLinks = vi.hoisted(() => ({ allowed: false }));
+vi.mock('../directLinks/useDirectLinksAllowed', () => ({
+	useDirectLinkMedia: () =>
+		directLinks.allowed ? ['CHAT', 'AUDIO', 'VIDEO'] : []
+}));
+const { invite } = vi.hoisted(() => ({ invite: vi.fn() }));
+vi.mock('../../api/apiDirectLinks', async (importOriginal) => ({
+	...(await importOriginal<typeof import('../../api/apiDirectLinks')>()),
+	apiCreateSessionDirectInvitation: invite
+}));
+vi.mock('../conversationCreate/directLink/DirectLinkShareDialog', () => ({
+	DirectLinkShareDialog: ({ link }: { link: { url: string } }) => (
+		<div data-testid="share-dialog">{link.url}</div>
+	)
+}));
 // The screen width the media queries answer for. react-responsive takes
 // window.matchMedia when it loads, so the stand-in goes in first.
 const screen = vi.hoisted(() => {
@@ -59,6 +76,10 @@ vi.mock('../sessionsList/timeline/useAppointmentNotice', () => ({
 	useAppointmentNotice: () => sendNotice
 }));
 let consultant = true;
+// *19: the links box has its own data hooks; not part of these tests.
+vi.mock('./CalendarLinksSection', () => ({
+	CalendarLinksSection: () => null
+}));
 vi.mock('../../globalState', async () => {
 	const React = await import('react');
 	return {
@@ -70,12 +91,32 @@ vi.mock('../../globalState', async () => {
 	};
 });
 vi.mock('../../api/apiCalendar', () => ({
+	apiCreateColleagueAppointment: vi.fn(() =>
+		Promise.resolve({
+			id: 'm1',
+			type: 'APPOINTMENT',
+			start: '2026-11-19T09:00:00Z',
+			end: '2026-11-19T10:00:00Z',
+			ownerId: 'me',
+			matrixRoomId: '!pair:oriso',
+			chatId: 77
+		})
+	),
+	apiAcceptColleagueAppointment: vi.fn(() => Promise.resolve({})),
+	apiDeclineColleagueAppointment: vi.fn(() => Promise.resolve()),
+	apiCancelColleagueAppointment: vi.fn(() => Promise.resolve()),
+	apiGetCalendarAutoAccept: vi.fn(() =>
+		Promise.resolve({ colleagueIds: [] })
+	),
+	apiSetCalendarAutoAccept: vi.fn((dto) => Promise.resolve(dto)),
 	apiGetCalendarEntries: vi.fn(),
 	apiGetCalendarColleagues: vi.fn(),
 	apiGetColleagueCalendarEntries: vi.fn(),
 	apiGetCalendarSync: vi.fn(),
 	apiGetCalendarWorkingHours: vi.fn(),
 	apiSetCalendarWorkingHours: vi.fn(),
+	apiGetCalendarConsultationHours: vi.fn(),
+	apiSetCalendarConsultationHours: vi.fn(),
 	apiPutWorkingDayException: vi.fn(),
 	apiDeleteWorkingDayException: vi.fn(),
 	apiCreateCalendarBlocker: vi.fn(),
@@ -141,6 +182,7 @@ const showWeek = () =>
 	);
 
 afterEach(() => {
+	directLinks.allowed = false;
 	cleanup();
 	vi.useRealTimers();
 	screen.width = 1440;
@@ -174,6 +216,7 @@ beforeEach(() => {
 			{ weekday: 1, start: '08:00', end: '18:00' }
 		]
 	});
+	api.apiGetCalendarConsultationHours.mockResolvedValue({ windows: [] });
 });
 
 describe('CalendarPageWired — phone and tablet layout (prototype v15)', () => {
@@ -278,6 +321,191 @@ describe('CalendarPageWired', () => {
 				matrixRoomId: '!room:oriso'
 			})
 		);
+	});
+
+	it('makes an appointment with a colleague and tells them in the internal chat (FE#2305)', async () => {
+		render(<CalendarPageWired />);
+		await showWeek();
+		const start = new Date('2026-11-19T09:00:00Z');
+		const end = new Date('2026-11-19T10:00:00Z');
+		await act(() =>
+			props.onCreate?.([
+				{
+					type: 'appointment',
+					start,
+					end,
+					kind: 'onsite',
+					colleagueId: 'kai'
+				}
+			])
+		);
+		expect(api.apiCreateColleagueAppointment).toHaveBeenCalledWith({
+			colleagueId: 'kai',
+			start: start.toISOString(),
+			end: end.toISOString(),
+			kind: 'ONSITE'
+		});
+		expect(appointments.apiCreateSessionAppointment).not.toHaveBeenCalled();
+		expect(sendNotice).toHaveBeenCalledWith(
+			expect.objectContaining({
+				kind: 'created',
+				sessionId: 77,
+				matrixRoomId: '!pair:oriso'
+			})
+		);
+	});
+
+	it('answers and cancels an appointment with a colleague (FE#2305)', async () => {
+		render(<CalendarPageWired />);
+		await showWeek();
+		const entry = {
+			id: 'm1',
+			type: 'appointment' as const,
+			start: '2026-11-19T09:00:00Z',
+			end: '2026-11-19T10:00:00Z',
+			ownerId: 'me',
+			kind: 'video' as const,
+			meeting: {
+				colleagueId: 'kai',
+				colleagueName: 'Kai',
+				status: 'pending' as const,
+				invited: true,
+				matrixRoomId: '!pair:oriso',
+				chatId: 77
+			}
+		};
+		await act(() => props.onAnswerMeeting?.(entry, 'accept'));
+		expect(api.apiAcceptColleagueAppointment).toHaveBeenCalledWith('m1');
+		await act(() => props.onAnswerMeeting?.(entry, 'decline'));
+		expect(api.apiDeclineColleagueAppointment).toHaveBeenCalledWith('m1');
+		await act(() => props.onCancelAppointment?.(entry));
+		expect(api.apiCancelColleagueAppointment).toHaveBeenCalledWith('m1');
+		expect(appointments.apiCancelSessionAppointment).not.toHaveBeenCalled();
+		expect(sendNotice).toHaveBeenCalledWith(
+			expect.objectContaining({ kind: 'cancelled', sessionId: 77 })
+		);
+	});
+
+	it('reads and saves the auto-accept list (FE#2305)', async () => {
+		api.apiGetCalendarAutoAccept.mockResolvedValue({
+			colleagueIds: ['kai']
+		});
+		render(<CalendarPageWired />);
+		await waitFor(() => expect(props.autoAcceptIds).toEqual(['kai']));
+		await act(() => props.onSaveAutoAccept?.(['kai', 'ada']));
+		expect(api.apiSetCalendarAutoAccept).toHaveBeenCalledWith({
+			colleagueIds: ['kai', 'ada']
+		});
+		await waitFor(() =>
+			expect(props.autoAcceptIds).toEqual(['kai', 'ada'])
+		);
+	});
+
+	describe('one invitation flow with "Chat erstellen" and the 1:1', () => {
+		it('offers the link and the new person only where "Direkteinladung erlauben" allows it', async () => {
+			render(<CalendarPageWired />);
+			await showWeek();
+			expect(props.allowGuestInvite).toBe(false);
+			expect(props.onInviteNewPerson).toBeUndefined();
+		});
+
+		it('hands a new person to "Chat erstellen" with the slot and Art', async () => {
+			directLinks.allowed = true;
+			render(<CalendarPageWired />);
+			await showWeek();
+			expect(props.allowGuestInvite).toBe(true);
+			const start = new Date('2026-11-17T09:00:00Z');
+			const end = new Date('2026-11-17T10:00:00Z');
+			act(() =>
+				props.onInviteNewPerson?.({ start, end, kind: 'onsite' })
+			);
+			expect(navigate).toHaveBeenCalledWith(
+				'/sessions/consultant/sessionView/createGroupChat/',
+				{
+					state: {
+						invitationPreset: {
+							start: start.toISOString(),
+							end: end.toISOString(),
+							kind: 'onsite'
+						}
+					}
+				}
+			);
+		});
+
+		it('binds the invitation to the new appointment and shows its link', async () => {
+			directLinks.allowed = true;
+			appointments.apiCreateSessionAppointment.mockResolvedValue({
+				id: 'a9'
+			} as never);
+			invite.mockResolvedValue({ id: 'l1', url: 'https://x/invite/t1' });
+			const view = render(<CalendarPageWired />);
+			await showWeek();
+			await waitFor(() => expect(props.conversations).toHaveLength(1));
+			const start = new Date('2026-11-17T09:00:00Z');
+			const end = new Date('2026-11-17T10:00:00Z');
+			await act(() =>
+				props.onCreate?.([
+					{
+						type: 'appointment',
+						start,
+						end,
+						kind: 'video',
+						sessionId: 4401,
+						link: {
+							validityMinutes: 1440,
+							access: 'both',
+							knock: true
+						}
+					}
+				])
+			);
+			expect(invite).toHaveBeenCalledWith(4401, {
+				appointmentId: 'a9',
+				medium: 'VIDEO',
+				validityAfterEndMinutes: 1440,
+				accessMode: 'BOTH',
+				knock: true
+			});
+			expect((await view.findByTestId('share-dialog')).textContent).toBe(
+				'https://x/invite/t1'
+			);
+			expect(sendNotice).toHaveBeenCalledWith(
+				expect.objectContaining({ kind: 'created', sessionId: 4401 })
+			);
+		});
+
+		it('keeps the appointment when only its link fails', async () => {
+			directLinks.allowed = true;
+			appointments.apiCreateSessionAppointment.mockResolvedValue({
+				id: 'a9'
+			} as never);
+			invite.mockRejectedValue(new Response(null, { status: 409 }));
+			render(<CalendarPageWired />);
+			await showWeek();
+			await waitFor(() => expect(props.conversations).toHaveLength(1));
+			await expect(
+				act(() =>
+					props.onCreate?.([
+						{
+							type: 'appointment',
+							start: new Date('2026-11-17T09:00:00Z'),
+							end: new Date('2026-11-17T10:00:00Z'),
+							kind: 'video',
+							sessionId: 4401,
+							link: {
+								validityMinutes: 60,
+								access: 'both',
+								knock: true
+							}
+						}
+					])
+				)
+			).resolves.toBeUndefined();
+			expect(sendNotice).toHaveBeenCalledWith(
+				expect.objectContaining({ kind: 'created' })
+			);
+		});
 	});
 
 	it('loads the working hours sorted and saves them through UserService', async () => {
@@ -1903,5 +2131,79 @@ describe('CalendarPageWired — move proposals (contract v1)', () => {
 		expect(props.onProposeMove).toBeUndefined();
 		expect(props.onAcceptProposal).toBeUndefined();
 		expect(props.receivedProposals).toBeUndefined();
+	});
+});
+
+describe('CalendarPageWired — which conversations can be booked (C1, C6)', () => {
+	it("marks a deleted advice seeker and another counsellor's conversation as not bookable", async () => {
+		vi.mocked(
+			sessionList.apiGetConsultantSessionList
+		).mockResolvedValueOnce({
+			sessions: [
+				{
+					session: { id: 1 },
+					user: { username: 'eigene_eule' },
+					consultant: { id: 'me' }
+				},
+				{
+					session: { id: 2 },
+					user: { username: 'geloescht', deleted: true },
+					consultant: { id: 'me' }
+				},
+				{
+					session: { id: 3 },
+					user: { username: 'herbs_antilope' },
+					consultant: { id: 'herb' }
+				}
+			]
+		} as never);
+		render(<CalendarPageWired />);
+		await waitFor(() => expect(props.conversations).toHaveLength(3));
+		expect(
+			props.conversations?.map((c) => [c.sessionId, c.bookable])
+		).toEqual([
+			[1, true],
+			[2, false],
+			[3, false]
+		]);
+	});
+});
+
+describe('CalendarPageWired — Sprechstunden (FE#2287)', () => {
+	it('loads them for a counsellor and saves the whole set', async () => {
+		api.apiGetCalendarConsultationHours.mockResolvedValue({
+			windows: [{ weekday: 2, start: '09:00', end: '12:00' }],
+			autoAccept: false,
+			noticeDays: 2,
+			slotMinutes: 30
+		});
+		render(<CalendarPageWired />);
+		await waitFor(() =>
+			expect(props.consultationHours).toEqual({
+				windows: [{ weekday: 2, start: '09:00', end: '12:00' }],
+				autoAccept: false,
+				noticeDays: 2,
+				slotMinutes: 30
+			})
+		);
+		const next = {
+			windows: [{ weekday: 4, start: '14:00', end: '16:00' }],
+			autoAccept: true,
+			noticeDays: 1,
+			slotMinutes: 60 as const
+		};
+		api.apiSetCalendarConsultationHours.mockResolvedValue(next);
+		await act(() => props.onSaveConsultationHours?.(next));
+		expect(api.apiSetCalendarConsultationHours).toHaveBeenCalledWith(next);
+		expect(props.consultationHours).toEqual(next);
+	});
+
+	it('offers none to edit when they could not be read', async () => {
+		api.apiGetCalendarConsultationHours.mockRejectedValue(new Error('404'));
+		render(<CalendarPageWired />);
+		await waitFor(() =>
+			expect(api.apiGetCalendarConsultationHours).toHaveBeenCalled()
+		);
+		expect(props.consultationHours).toBeUndefined();
 	});
 });

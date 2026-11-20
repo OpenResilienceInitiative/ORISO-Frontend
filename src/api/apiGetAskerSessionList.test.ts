@@ -71,9 +71,9 @@ describe('apiGetAskerSessionList', () => {
 	it('rejects a failed request in strict mode, so the caller can offer a retry', async () => {
 		vi.mocked(fetchData).mockRejectedValueOnce(new Error('503'));
 
-		await expect(
-			apiGetAskerSessionList({ strict: true })
-		).rejects.toThrow('503');
+		await expect(apiGetAskerSessionList({ strict: true })).rejects.toThrow(
+			'503'
+		);
 	});
 
 	it('reads "no content" in strict mode as an asker without sessions, not a failure', async () => {

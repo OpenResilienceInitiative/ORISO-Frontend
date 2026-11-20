@@ -3,6 +3,7 @@ import clsx from 'clsx';
 import { useTranslation } from 'react-i18next';
 
 import { VoicePlayer } from '../voicePlayer/VoicePlayer';
+import type { PassageReplyAudio } from './passageReplyContent';
 
 /**
  * One marked passage answered inside a message: the passage as quoted, and
@@ -18,6 +19,11 @@ export interface PassageReply {
 	start?: number | null;
 	text?: string;
 	voice?: { src: string; durationSec: number } | null;
+	/**
+	 * A clip that arrived over Matrix (ADR-022): encrypted, so it is
+	 * fetched and decrypted on demand through `renderAudio`.
+	 */
+	audio?: PassageReplyAudio | null;
 }
 
 export interface PassageReplyBlocksProps {
@@ -25,6 +31,8 @@ export interface PassageReplyBlocksProps {
 	isMyMessage?: boolean;
 	/** Click on a quote: back to its passage. */
 	onJump?: (reply: PassageReply) => void;
+	/** Plays a clip that arrived over Matrix (`reply.audio`). */
+	renderAudio?: (audio: PassageReplyAudio, index: number) => React.ReactNode;
 }
 
 /**
@@ -34,7 +42,8 @@ export interface PassageReplyBlocksProps {
 export const PassageReplyBlocks = ({
 	replies,
 	isMyMessage,
-	onJump
+	onJump,
+	renderAudio
 }: PassageReplyBlocksProps) => {
 	const { t: translate } = useTranslation();
 	return (
@@ -84,6 +93,9 @@ export const PassageReplyBlocks = ({
 						) : (
 							<div className={quoteClassName}>{quoteBody}</div>
 						)}
+						{!reply.voice &&
+							reply.audio &&
+							renderAudio?.(reply.audio, index)}
 						{reply.voice && (
 							<VoicePlayer
 								src={reply.voice.src}

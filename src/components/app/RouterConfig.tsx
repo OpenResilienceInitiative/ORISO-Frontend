@@ -8,10 +8,13 @@ import {
 	SESSION_TYPE_SESSION
 } from '../session/sessionHelpers';
 import { AskerInfo } from '../askerInfo/AskerInfo';
+import { DirectLinksMoved } from '../directLinks/DirectLinksMoved';
 import { Profile } from '../profile/Profile';
 import { SessionViewEmpty } from '../session/SessionViewEmpty';
 import { CreateConversationView } from '../conversationCreate/CreateConversationView';
 import { GroupChatInfo } from '../groupChat/GroupChatInfo';
+import { DeletedAskerSessionView } from '../deletedAskerSession/DeletedAskerSessionView';
+import { DELETED_ASKER_ROUTE } from '../sessionsList/deletedAskerPath';
 import {
 	ASKER_GROUP_CHAT_ROUTE,
 	CONSULTANT_GROUP_CHAT_ROUTE
@@ -33,9 +36,6 @@ import { ReactComponent as ProfileIconOutline } from '../../resources/img/icons/
 import { ReactComponent as ProfileIconFilled } from '../../resources/img/icons/profil_filled.svg';
 import { ReactComponent as NavCounsellorRequestIcon } from '../../resources/img/icons/navigation/counsellor_request_400.svg';
 import { ReactComponent as NavCounsellorRequestIconFilled } from '../../resources/img/icons/navigation/counsellor_request_filled.svg';
-import { ReactComponent as NavDirectLinksIcon } from '../../resources/img/icons/navigation/schedule_400.svg';
-import { ReactComponent as NavDirectLinksIconFilled } from '../../resources/img/icons/navigation/schedule_filled.svg';
-import { MyDirectLinksPage } from '../directLinks/MyDirectLinksPanel';
 import { ASKER_SESSION_DETAIL_PATH, CREATE_CHAT_PATH } from './routePaths';
 import {
 	NavChatsIcon,
@@ -323,20 +323,6 @@ export const RouterConfigConsultant = (settings: AppConfigInterface): any => {
 				titleKeys: {
 					large: 'navigation.booking.events'
 				}
-			},
-			// #1894: the clock entry, home of the counsellor's direct links
-			// (later also time windows).
-			{
-				// Hidden when no medium is allowed (useDirectLinksAllowed).
-				requiresDirectInvite: true,
-				to: '/direct-links',
-				icon: NavDirectLinksIcon,
-				iconHover: NavDirectLinksIcon,
-				iconFilled: NavDirectLinksIconFilled,
-				navSlot: 'row' as const,
-				titleKeys: {
-					large: 'navigation.consultant.directLinks'
-				}
 			}
 		],
 		listRoutes: [
@@ -374,6 +360,12 @@ export const RouterConfigConsultant = (settings: AppConfigInterface): any => {
 			{
 				path: CONSULTANT_GROUP_CHAT_ROUTE,
 				component: SessionView,
+				type: SESSION_LIST_TYPES.MY_SESSION
+			},
+			// #1159: the notice of a deleted advice-seeker chat
+			{
+				path: DELETED_ASKER_ROUTE,
+				component: DeletedAskerSessionView,
 				type: SESSION_LIST_TYPES.MY_SESSION
 			},
 			// Sessions addressed by their Matrix group id
@@ -455,9 +447,11 @@ export const RouterConfigConsultant = (settings: AppConfigInterface): any => {
 				component: OverviewPage
 			},
 			{
+				// *19 (2026-11-17): the direct links live in the calendar
+				// list now; old bookmarks land there.
 				path: '/direct-links',
 				exact: true,
-				component: MyDirectLinksPage
+				component: DirectLinksMoved
 			},
 			{
 				path: '/profile',

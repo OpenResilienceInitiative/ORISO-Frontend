@@ -11,7 +11,7 @@
  *
  * Move proposals (contract "move proposals v1"): a counsellor proposes a new
  * time for a colleague's appointment and withdraws it; the colleague finds
- * it under "Offene Anfragen" and in the grid, and accepts or declines.
+ * it under "Offene Verschiebungen" and in the grid, and accepts or declines.
  * "Beitreten" has no backend yet: it appears only when the host passes its
  * callback (Storybook does, the app does not).
  *
@@ -29,13 +29,9 @@ import AddIcon from '@mui/icons-material/Add';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
-import FullscreenIcon from '@mui/icons-material/Fullscreen';
-import FullscreenExitIcon from '@mui/icons-material/FullscreenExit';
+import OpenInFullIcon from '@mui/icons-material/OpenInFull';
+import CloseFullscreenIcon from '@mui/icons-material/CloseFullscreen';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import RemoveIcon from '@mui/icons-material/Remove';
-import CalendarMonthOutlinedIcon from '@mui/icons-material/CalendarMonthOutlined';
-import ViewAgendaOutlinedIcon from '@mui/icons-material/ViewAgendaOutlined';
-import ViewWeekOutlinedIcon from '@mui/icons-material/ViewWeekOutlined';
 import { M3Snackbar } from '../m3Snackbar/M3Snackbar';
 import {
 	DEFAULT_VISIBILITY,
@@ -50,12 +46,18 @@ import {
 	type CalendarVisibility,
 	type Colleague
 } from './calendarModel';
-import { facetOf, type CalendarEntryFacet } from './CalendarEntryGlyph';
+import {
+	facetOf,
+	facetShown,
+	type CalendarEntryFacet
+} from './CalendarEntryGlyph';
 import {
 	entryActions,
 	openProposals,
 	ProposalNoLongerValid,
+	RequestedTimeTaken,
 	receivedBy,
+	type EntryAction,
 	type MoveProposal
 } from './calendarActions';
 import {
@@ -63,6 +65,7 @@ import {
 	DESKTOP_VIEWS,
 	FC_VIEW,
 	VIEW_DIGIT,
+	rangeTitleOf,
 	type CalendarViewName,
 	type ViewSwitcherStyle
 } from './calendarViews';
@@ -98,12 +101,16 @@ import {
 	writeEdgeChoice,
 	type EdgeChoice,
 	readRecentColleagues,
+	readShownColleagues,
 	readSwitcherStyle,
 	MAX_RECENT_COLLEAGUES,
 	recentPills,
 	rememberColleague,
 	writeRecentColleagues,
+	writeShownColleagues,
 	writeSwitcherStyle,
+	readShowGrips,
+	writeShowGrips,
 	DEFAULT_LIST_WIDTH,
 	LIST_RAIL_WIDTH,
 	listModeOf,
@@ -140,6 +147,11 @@ import {
 	type CalendarSidebarProps,
 	type FreeHoursState
 } from './CalendarSidebar';
+import {
+	CalendarSettingsDialog,
+	CALENDAR_CHIP_FACETS
+} from './CalendarSettingsDialog';
+import type { ChipView } from '../displayFilter/displayFilterTypes';
 import { CalendarMenu } from './CalendarMenu';
 import {
 	EdgeMenuContent,
@@ -147,31 +159,53 @@ import {
 	type PauseAction,
 	EntryMenuContent,
 	JumpMenuContent,
-	KindsMenuContent,
 	MonthDayMenuContent,
 	PeopleMenuContent,
 	ProposalMenuContent,
+	AppointmentRequestMenuContent,
 	RequestMenuContent,
 	SettingsMenuContent,
 	SlotMenuContent,
 	ViewMenuContent,
+	VIEW_ICON,
 	type SlotChoice
 } from './calendarMenus';
 import { initialsOf } from './CalendarEntryPeek';
+import { avatarToneClass } from './calendarAvatar';
+import { useCreatedFlash } from './useCreatedFlash';
 import { HoverScrollArrows } from '../hoverScrollArrows/HoverScrollArrows';
-import { AppointmentDialog } from './AppointmentDialog';
-import { BlockerDialog } from './BlockerDialog';
+import type { InvitationPreset } from '../directInvitation/invitationModel';
+import type { DirectLinkMedium } from '../conversationCreate/directLink/directLink';
+import { NewEntryDialog } from './NewEntryDialog';
+import { AutoAcceptDialog } from './AutoAcceptDialog';
+import type { AbsenceDraft } from './AbsenceForm';
+import { BlockerCreatedMessage } from './BlockerDialog';
 import { MoveConflictDialog } from './MoveConflictDialog';
 import {
 	WorkingHoursDialog,
 	useWorkingHoursSummary
 } from './WorkingHoursDialog';
+import { ConsultationHoursDialog } from './ConsultationHoursDialog';
+import type { ConsultationHours } from './calendarConsultationHours';
 import {
 	CalendarSyncDialog,
 	type CalendarFeed,
 	type CalendarImport
 } from './CalendarSyncDialog';
 import { useEntryLabel, useRangeFormat } from './useEntryLabel';
+import {
+	bandKey,
+	colleagueBands,
+	currentBand,
+	entriesInBand,
+	type ColleagueBand
+} from './calendarBands';
+import {
+	CalendarBandCard,
+	type BandMoveAction,
+	type CalendarBandCardProps
+} from './CalendarBandCard';
+import { M3Dialog } from '../m3Dialog/M3Dialog';
 import type { QuickKind } from './calendarQuickEntry';
 import { useLiveNow } from './useLiveNow';
 import '../sessionsList/sessionsList.styles.scss';
@@ -211,6 +245,17 @@ export interface CalendarPageProps {
 	/** Weekly working hours; empty = none set, nothing shaded. */
 	workingHours?: WorkingHours;
 	/**
+	 * Sprechstunden and booking settings (FE#2287); absent until loaded,
+	 * and then not offered, so unloaded ones are never saved as empty.
+	 */
+	consultationHours?: ConsultationHours;
+	onSaveConsultationHours?: (
+		hours: ConsultationHours
+	) => void | Promise<unknown>;
+	/** Loading them failed: ⋮ says so and loads them again on a click. */
+	consultationHoursFailed?: boolean;
+	onRetryConsultationHours?: () => void;
+	/**
 	 * The saved schedule has loaded. Until then (or when loading failed)
 	 * neither the dialog nor the grips edit it, so an unloaded schedule is
 	 * never saved as an empty one (review 4574779938), and no time is
@@ -235,6 +280,17 @@ export interface CalendarPageProps {
 	/** Phone: where the bottom sheet starts (default half). */
 	initialSheet?: SheetStop;
 	initialView?: CalendarViewName;
+	/**
+	 * The day to open on: "Im Kalender öffnen" on an appointment's card in
+	 * the chat (`?date=`). Absent: today.
+	 */
+	initialDate?: Date;
+	/**
+	 * Links without an appointment, shown under the list (Frank, 2026-11-17:
+	 * "Meine Direktlinks" moves into the calendar). The wired page passes
+	 * the real links panel, stories a sample.
+	 */
+	linksPanel?: React.ReactNode;
 	/** Storybook: colleagues shown from the start. */
 	initialShownColleagues?: string[];
 	initialFullscreen?: boolean;
@@ -247,6 +303,25 @@ export interface CalendarPageProps {
 	 * that was entered at once.
 	 */
 	onCreate?: (drafts: AppointmentDraft[]) => ChangeResult;
+	/**
+	 * "Neuer Eintrag" → "Abwesenheit": stores the planned absence the
+	 * profile holds (ORISO-Frontend#2303). Without it there is no such tab.
+	 */
+	onSaveAbsence?: (draft: AbsenceDraft) => ChangeResult;
+	/** The absence the profile holds already, to edit it there. */
+	absence?: Partial<AbsenceDraft>;
+	/**
+	 * "Termin": "Weitere Personen per Link einladen" where "Direkteinladung
+	 * erlauben" allows it (as "Termin anlegen" in a 1:1).
+	 */
+	allowGuestInvite?: boolean;
+	/** The media it allows: the link takes the Art's medium. */
+	inviteMedia?: readonly DirectLinkMedium[];
+	/**
+	 * "Termin": "Neue Person per Direkteinladung …" — someone without a
+	 * conversation yet; the page hands the slot to "Chat erstellen".
+	 */
+	onInviteNewPerson?: (preset: InvitationPreset) => void;
 	/**
 	 * The snackbar offers to undo by moving it back. `false`, or a promise
 	 * that rejects or resolves to `false`, refuses the move and puts the
@@ -271,7 +346,7 @@ export interface CalendarPageProps {
 	proposals?: MoveProposal[];
 	/**
 	 * Open move proposals colleagues sent for one's own appointments:
-	 * "Offene Anfragen", answered with the two callbacks below.
+	 * "Offene Verschiebungen", answered with the two callbacks below.
 	 */
 	receivedProposals?: MoveProposal[];
 	/**
@@ -284,9 +359,32 @@ export interface CalendarPageProps {
 	onProposeMove?: (
 		entry: CalendarEntry,
 		start: Date,
-		end: Date
+		end: Date,
+		/** Why one asks, trimmed (UserService#1663). */
+		reason?: string
 	) => void | Promise<unknown>;
 	onWithdrawProposal?: (proposal: MoveProposal) => void | Promise<unknown>;
+	/**
+	 * FE#2287: "Bestätigen" an advice seeker's request. A rejection with
+	 * `RequestedTimeTaken` says the time is no longer free.
+	 */
+	onConfirmRequest?: (entry: CalendarEntry) => ChangeResult;
+	/** FE#2287: "Ablehnen" an advice seeker's request; the time is free. */
+	onDeclineRequest?: (entry: CalendarEntry) => ChangeResult;
+	/**
+	 * An appointment with a colleague (FE#2305): the invited counsellor
+	 * accepts or declines it.
+	 */
+	onAnswerMeeting?: (
+		entry: CalendarEntry,
+		answer: 'accept' | 'decline'
+	) => ChangeResult;
+	/**
+	 * The colleagues whose appointments are accepted automatically; with
+	 * `onSaveAutoAccept` the more menu offers to change the list (FE#2305).
+	 */
+	autoAcceptIds?: string[];
+	onSaveAutoAccept?: (colleagueIds: string[]) => ChangeResult;
 	/** Team meetings and group dates (no backend yet). */
 	onJoin?: (entry: CalendarEntry) => void;
 	/** The visible range changed: load entries for it. */
@@ -336,19 +434,46 @@ type Dialog =
 			slot?: { start: Date; end: Date; kind: AppointmentKind };
 			sessionId?: number;
 	  }
-	| { type: 'blocker'; slot?: { start: Date; end: Date } }
+	| {
+			type: 'blocker';
+			slot?: { start: Date; end: Date };
+			/** Ticked already: "Wöchentlich …" after a single blocker. */
+			weekdays?: number[];
+			/** "Wöchentlich …": the single blocker's all-day state and note. */
+			allDay?: boolean;
+			note?: string;
+			/**
+			 * "Wöchentlich …": the single blocker the series replaces. It
+			 * stays until the series is saved (reviews 4589304582,
+			 * 4589304593, 4589150206).
+			 */
+			replaces?: { entry: CalendarEntry; draft: AppointmentDraft };
+	  }
 	| { type: 'workingHours' }
+	| { type: 'consultationHours' }
 	| { type: 'sync' }
+	| { type: 'autoAccept' }
 	| null;
 
 type Menu =
-	| { type: 'slot'; anchor: MenuAnchor; range: { start: Date; end: Date } }
+	| {
+			type: 'slot';
+			anchor: MenuAnchor;
+			range: { start: Date; end: Date };
+			/** Chosen in the first step: the card asks "Mit wem?". */
+			kind?: AppointmentKind;
+	  }
 	| { type: 'month'; anchor: MenuAnchor; start: Date; days: number }
 	| {
 			type: 'entry';
 			anchor: MenuAnchor;
 			entry: CalendarEntry;
 			mode: 'list' | 'move' | 'propose';
+			/**
+			 * Opened from "Als Nächstes" or the rail, not from the grid:
+			 * "Zum Termin" leads there (Frank, 2026-11-16).
+			 */
+			outside?: boolean;
 	  }
 	| {
 			/** `proposal`: one's own, sent; `request`: one received. */
@@ -358,8 +483,20 @@ type Menu =
 			entry: CalendarEntry;
 	  }
 	| {
-			type: 'settings' | 'view' | 'jump' | 'people' | 'kinds';
+			/** FE#2287: an advice seeker's request, answered like a proposal. */
+			type: 'appointmentRequest';
+			anchor: MenuAnchor;
+			entry: CalendarEntry;
+	  }
+	| {
+			type: 'settings' | 'view' | 'jump' | 'people';
 			anchor: HTMLElement;
+	  }
+	| {
+			/** A colleague band, opened at the band (Frank *16.2). */
+			type: 'band';
+			anchor: MenuAnchor;
+			band: ColleagueBand;
 	  }
 	| {
 			type: 'edge';
@@ -381,6 +518,8 @@ interface Notice {
 	undo?: () => ChangeResult;
 	/** Nothing (or not all) was stored: try the same change again. */
 	retry?: () => void;
+	/** One blocker entered: "Wöchentlich …" turns it into a series. */
+	weekly?: { entry: CalendarEntry; draft: AppointmentDraft };
 }
 
 /**
@@ -410,6 +549,9 @@ const addDays = (date: Date, days: number) => {
 	return next;
 };
 
+/** Below this stage width the header title shrinks from 26 to 22 px. */
+const NARROW_STAGE_PX = 640;
+
 /** Tooltips of the switch and the arrows show at once (Frank). */
 const QuickTip = ({
 	title,
@@ -423,12 +565,6 @@ const QuickTip = ({
 	</Tooltip>
 );
 
-const VIEW_ICON: Partial<Record<CalendarViewName, React.ReactNode>> = {
-	month: <CalendarMonthOutlinedIcon fontSize="small" />,
-	list: <ViewAgendaOutlinedIcon fontSize="small" />,
-	split: <ViewWeekOutlinedIcon fontSize="small" />
-};
-
 export const CalendarPage = ({
 	role,
 	ownerId,
@@ -440,6 +576,10 @@ export const CalendarPage = ({
 	feed,
 	busyImport = {},
 	workingHours = [],
+	consultationHours,
+	onSaveConsultationHours,
+	consultationHoursFailed = false,
+	onRetryConsultationHours,
 	workingHoursLoaded = true,
 	dayExceptions,
 	holidayRegion = null,
@@ -447,14 +587,24 @@ export const CalendarPage = ({
 	phone = compact,
 	initialSheet = 'half',
 	initialView,
+	initialDate,
+	linksPanel,
 	initialShownColleagues = [],
 	initialFullscreen = false,
 	initialSwitcherStyle = 'menu',
 	initialSplitDays = 1,
 	now: fixedNow,
 	onCreate,
+	onSaveAbsence,
+	absence,
+	allowGuestInvite,
+	inviteMedia,
+	onInviteNewPerson,
 	onMove,
 	onCancelAppointment,
+	onAnswerMeeting,
+	autoAcceptIds,
+	onSaveAutoAccept,
 	onRemoveBlocker,
 	onSaveWorkingHours,
 	onSaveDayException,
@@ -465,6 +615,8 @@ export const CalendarPage = ({
 	onWithdrawProposal,
 	onAcceptProposal,
 	onDeclineProposal,
+	onConfirmRequest,
+	onDeclineRequest,
 	onJoin,
 	onStart,
 	onOpenChat,
@@ -489,15 +641,22 @@ export const CalendarPage = ({
 	const summarise = useWorkingHoursSummary();
 	const now = useLiveNow(fixedNow);
 	const consultant = role === 'consultant';
+	// New appointments only for one's own, living conversations (C1, C6).
+	const bookable = useMemo(
+		() => conversations.filter((c) => c.bookable !== false),
+		[conversations]
+	);
 	const views = phone ? COMPACT_VIEWS : DESKTOP_VIEWS;
 	const controller = useCalendarController();
 
-	const [view, setView] = useState<CalendarViewName>(
-		initialView ?? (phone ? 'list' : 'workWeek')
-	);
+	// Without a saved choice the calendar opens as the list (Frank,
+	// 2026-11-17), on the phone and on a wide screen alike.
+	const [view, setView] = useState<CalendarViewName>(initialView ?? 'list');
 	const [title, setTitle] = useState('');
 	/** The day the grid stands on; the split view starts on this day. */
-	const [anchorDate, setAnchorDate] = useState(() => startOfDay(now));
+	const [anchorDate, setAnchorDate] = useState(() =>
+		startOfDay(initialDate ?? now)
+	);
 	const [splitDays, setSplitDays] = useState<SplitDays>(initialSplitDays);
 	const [fullscreen, setFullscreen] = useState(initialFullscreen);
 	// The left column, sized like "Gespräche" and remembered per person
@@ -511,30 +670,71 @@ export const CalendarPage = ({
 	};
 	const listMode = listModeOf(listWidth);
 	const sideScroll = useRef<HTMLDivElement>(null);
+	/**
+	 * A clicked colleague band: on a wide screen its card takes the place
+	 * of the list in the left column, which has room for five or six
+	 * people (Frank, 2026-11-17); in full screen, next to the rail and on
+	 * the phone it opens at the band instead.
+	 */
+	const [sideBand, setSideBand] = useState<ColleagueBand | null>(null);
+	const bandInSide = !compact && !fullscreen && listMode === 'full';
+	useEffect(() => {
+		if (!bandInSide) setSideBand(null);
+	}, [bandInSide]);
+	/** "Kalender ansehen" from a band: where the split view starts. */
+	const [bandSplit, setBandSplit] = useState<{
+		minutes: number;
+		owner?: string;
+	} | null>(null);
 	/** Counts up when "+" in the narrow column asks for the quick entry. */
 	const [quickFocus, setQuickFocus] = useState(0);
 
 	const [switcherStyle, setSwitcherStyle] = useState<ViewSwitcherStyle>(() =>
 		readSwitcherStyle(ownerId, initialSwitcherStyle)
 	);
-	const [shownColleagues, setShownColleagues] = useState<string[]>(
-		initialShownColleagues
-	);
+	// The host's list wins; otherwise the ones shown before the reload,
+	// still in reach (test finding C20).
+	const [startShown] = useState<string[]>(() => {
+		if (initialShownColleagues.length > 0) return initialShownColleagues;
+		const stored = readShownColleagues(ownerId);
+		return colleagues.length > 0
+			? stored.filter((id) => colleagues.some((c) => c.id === id))
+			: stored;
+	});
+	const [shownColleagues, setShownColleagues] =
+		useState<string[]>(startShown);
 	const [recent, setRecent] = useState<string[]>(() => [
-		...initialShownColleagues,
+		...startShown,
 		...readRecentColleagues(ownerId).filter(
-			(id) => !initialShownColleagues.includes(id)
+			(id) => !startShown.includes(id)
 		)
 	]);
 	const [muted, setMuted] = useState<string[]>([]);
+	/** Where "Nebeneinander" scrolls to after an entry was chosen. */
+	const [splitFocus, setSplitFocus] = useState<Date | undefined>();
+	const { flashIds, expectCreated, flash } = useCreatedFlash(
+		entries,
+		ownerId
+	);
 	const [highlight, setHighlight] = useState<CalendarHighlight | null>(null);
 	// Like the session list chips: none selected shows everything, selected
 	// chips narrow to those kinds. "Was anzeigen" hides kinds altogether.
 	const [onlyFacets, setOnlyFacets] = useState<CalendarEntryFacet[]>([]);
 	const [hiddenFacets, setHiddenFacets] = useState<CalendarEntryFacet[]>([]);
+	// "Ansicht · Kalender" (Frank *14): which kinds get a button in the row.
+	const [chipFacets, setChipFacets] =
+		useState<CalendarEntryFacet[]>(CALENDAR_CHIP_FACETS);
+	const [chipView, setChipView] = useState<ChipView>('icons');
+	const [settingsOpen, setSettingsOpen] = useState(false);
+	const viewCustomised =
+		hiddenFacets.length > 0 ||
+		chipFacets.length !== CALENDAR_CHIP_FACETS.length ||
+		chipView !== 'icons';
 	const [menu, setMenu] = useState<Menu>(null);
 	const [dialog, setDialog] = useState<Dialog>(null);
 	const creating = useRef(false);
+	/** "Wöchentlich …" from removing the single blocker to its restore. */
+	const replacing = useRef(false);
 	const [notice, setNotice] = useState<Notice | null>(null);
 	/** A move onto other entries waits for this answer. */
 	const [moveAsk, setMoveAsk] = useState<{
@@ -542,6 +742,8 @@ export const CalendarPage = ({
 		answer: (go: boolean) => void;
 	} | null>(null);
 	/** A new entry onto other entries, made outside a dialog, waits too. */
+	/** "Absagen" asks first: the advice seeker is told at once (test C10). */
+	const [cancelAsk, setCancelAsk] = useState<CalendarEntry | null>(null);
 	const [createAsk, setCreateAsk] = useState<{
 		conflicts: CalendarEntry[];
 		blocker: boolean;
@@ -584,8 +786,7 @@ export const CalendarPage = ({
 		.map((id) => colleagueById[id])
 		.filter(Boolean) as Colleague[];
 	const facetVisible = (facet: CalendarEntryFacet) =>
-		!hiddenFacets.includes(facet) &&
-		(onlyFacets.length === 0 || onlyFacets.includes(facet));
+		facetShown(facet, onlyFacets, hiddenFacets);
 	const visible = useMemo(
 		() =>
 			entries.filter(
@@ -648,6 +849,39 @@ export const CalendarPage = ({
 			),
 		[entries, ownerId, shownColleagues]
 	);
+	// The bands on screen, folded as the time grid folds them. An open band
+	// card shows its band as it is now: it follows a moved or cancelled
+	// entry and a hidden colleague, and closes when the band is gone
+	// (review 4601827605).
+	const bandPeopleKey = shown
+		.filter(
+			(c) =>
+				!failedColleagues.includes(c.id) &&
+				!loadingCalendars.includes(c.id)
+		)
+		.map((c) => c.id)
+		.join(',');
+	const screenBands = useMemo(
+		() =>
+			colleagueBands(
+				busyEntries,
+				bandPeopleKey ? bandPeopleKey.split(',') : []
+			),
+		[busyEntries, bandPeopleKey]
+	);
+	const liveSideBand = sideBand
+		? currentBand(bandKey(sideBand), screenBands)
+		: null;
+	const liveMenuBand =
+		menu?.type === 'band'
+			? currentBand(bandKey(menu.band), screenBands)
+			: null;
+	useEffect(() => {
+		if (sideBand && !liveSideBand) setSideBand(null);
+	}, [sideBand, liveSideBand]);
+	useEffect(() => {
+		if (menu?.type === 'band' && !liveMenuBand) setMenu(null);
+	}, [menu, liveMenuBand]);
 	// "Beginnt gleich" marks one entry, the first of "Als Nächstes", in the
 	// grid and the side list alike (review 4577641949).
 	const soonId = soonEntry(
@@ -663,6 +897,7 @@ export const CalendarPage = ({
 		const next = toggle(shownColleagues, id);
 		setShownColleagues(next);
 		onShownColleaguesChange?.(next);
+		writeShownColleagues(ownerId, next);
 		if (next.includes(id)) {
 			const remembered = rememberColleague(recent, id);
 			setRecent(remembered);
@@ -670,18 +905,49 @@ export const CalendarPage = ({
 		} else setMuted((all) => all.filter((x) => x !== id));
 	};
 
+	/** "Ganze Beratungsstelle zeigen": shows them all, remembers each. */
+	const showColleagues = (ids: string[]) => {
+		const added = ids.filter((id) => !shownColleagues.includes(id));
+		if (added.length === 0) return;
+		const next = [...shownColleagues, ...added];
+		setShownColleagues(next);
+		onShownColleaguesChange?.(next);
+		writeShownColleagues(ownerId, next);
+		const remembered = added.reduce(
+			(all, id) => rememberColleague(all, id),
+			recent
+		);
+		setRecent(remembered);
+		writeRecentColleagues(ownerId, remembered);
+	};
+
 	useEffect(() => {
-		if (initialShownColleagues.length > 0)
-			onShownColleaguesChange?.(initialShownColleagues);
+		if (startShown.length > 0) onShownColleaguesChange?.(startShown);
 		// Only once: the host loads the colleagues shown from the start.
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
+
+	// Colleagues that arrive after the start: drop a remembered one who is
+	// out of reach now, so no empty column waits for them.
+	useEffect(() => {
+		if (colleagues.length === 0) return;
+		const kept = shownColleagues.filter((id) =>
+			colleagues.some((c) => c.id === id)
+		);
+		if (kept.length === shownColleagues.length) return;
+		setShownColleagues(kept);
+		onShownColleaguesChange?.(kept);
+		writeShownColleagues(ownerId, kept);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [colleagues]);
 
 	/**
 	 * Success notice once the change is stored, the failure notice if it
 	 * fails. Says whether it went through: `false` for a refusal or a
 	 * failure, so a moved entry goes back and quick entry keeps its draft.
 	 */
+	const [savingConsultationHours, setSavingConsultationHours] =
+		useState(false);
 	const run = (
 		result: ChangeResult | undefined,
 		success: Notice | ((value: unknown) => Notice),
@@ -705,6 +971,20 @@ export const CalendarPage = ({
 		return done(undefined);
 	};
 
+	/** The planned absence; the dialog that saved it closes once stored. */
+	const saveAbsence = (draft: AbsenceDraft) => {
+		const origin = dialog;
+		const outcome = run(onSaveAbsence?.(draft), {
+			message: t('calendar.absence.saved')
+		});
+		const close = (stored: boolean) => {
+			if (stored)
+				setDialog((current) => (current === origin ? null : current));
+		};
+		if (typeof outcome === 'boolean') close(outcome);
+		else outcome.then(close);
+	};
+
 	/** A room that cannot be opened says so instead of doing nothing. */
 	const openRoom = (
 		open: CalendarPageProps['onStart'],
@@ -720,6 +1000,10 @@ export const CalendarPage = ({
 	const changeView = (next: CalendarViewName) => {
 		setMenu(null);
 		if (next === view) return;
+		// Bands are only in the time grid; the split view starts at 08:00
+		// unless a band asked for its time.
+		setSideBand(null);
+		if (next !== 'split') setBandSplit(null);
 		if (next !== 'split' && view !== 'split')
 			controller.changeView(FC_VIEW[next]);
 		setView(next);
@@ -734,6 +1018,58 @@ export const CalendarPage = ({
 		const day = startOfDay(date);
 		setAnchorDate(day);
 		if (!split) controller.gotoDate(day);
+	};
+	// A search result moves the calendar to its day and scrolls to an hour
+	// before it (prototype v17); month, list and "Nebeneinander" give way to
+	// the days with times. The work week hides Saturday and Sunday, so an
+	// entry on a weekend opens the whole week (review 4589150187).
+	const showEntry = (entry: CalendarEntry) => {
+		// A kind filter may hide the result: show its kind first, or the
+		// calendar lands on nothing (review 4589150199).
+		const facet = facetOf(entry);
+		if (!facetVisible(facet)) {
+			setHiddenFacets((all) => all.filter((f) => f !== facet));
+			setOnlyFacets((all) =>
+				all.length && !all.includes(facet) ? [...all, facet] : all
+			);
+		}
+		// A muted calendar ("ich" off) cannot be clicked: unmute the owner
+		// (review 4589661566).
+		setMuted((all) =>
+			all.includes(entry.ownerId)
+				? all.filter((id) => id !== entry.ownerId)
+				: all
+		);
+		const start = new Date(entry.start);
+		const weekend = start.getDay() === 0 || start.getDay() === 6;
+		// A colleague's entry is only a band in one's own grid; side by
+		// side draws it on its own, with its actions (review 4594535280).
+		const colleagueOnly =
+			entry.ownerId !== ownerId &&
+			!entries.some((e) => e.id === entry.id && e.ownerId === ownerId);
+		if (colleagueOnly) {
+			if (!split) changeView('split');
+		} else if (view === 'month' || view === 'list' || split)
+			changeView(phone ? 'threeDays' : weekend ? 'week' : 'workWeek');
+		else if (view === 'workWeek' && weekend) changeView('week');
+		goTo(start);
+		// The eye finds it where the calendar lands (Frank *7).
+		flash([entry.id]);
+		const before = new Date(
+			Math.max(start.getTime() - 3600000, startOfDay(start).getTime())
+		);
+		// Side by side has its own scroll box (review 4594744890).
+		setSplitFocus(before);
+		setBandSplit(null);
+		const time = `${String(before.getHours()).padStart(2, '0')}:${String(before.getMinutes()).padStart(2, '0')}:00`;
+		// The controller has no scrollToTime; its calendar does.
+		window.setTimeout(() =>
+			(
+				controller as unknown as {
+					calendarApi?: { scrollToTime(time: string): void };
+				}
+			).calendarApi?.scrollToTime(time)
+		);
 	};
 
 	// Turned into a phone, five or seven days become three; back on a
@@ -777,9 +1113,19 @@ export const CalendarPage = ({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [split, anchorDate, splitDays]);
 
+	const shownStart = useRef<number | null>(null);
 	const datesSet = useCallback(
 		(nextTitle: string, start: Date, end: Date) => {
 			setTitle(nextTitle);
+			// Another week or day: a band card of the old one closes
+			// (review 4601827596).
+			if (shownStart.current !== start.getTime()) {
+				if (shownStart.current !== null) {
+					setSideBand(null);
+					setMenu((m) => (m?.type === 'band' ? null : m));
+				}
+				shownStart.current = start.getTime();
+			}
 			const current = controller.getDate();
 			if (current) setAnchorDate(startOfDay(current));
 			onRangeChange?.(start, end);
@@ -790,18 +1136,12 @@ export const CalendarPage = ({
 	const locale = calendarLocale(i18n.language);
 	const rangeTitle = !split
 		? title
-		: splitDays === 1
-			? new Intl.DateTimeFormat(locale, {
-					weekday: 'long',
-					day: 'numeric',
-					month: 'long',
-					year: 'numeric'
-				}).format(anchorDate)
-			: new Intl.DateTimeFormat(locale, {
-					day: 'numeric',
-					month: 'long',
-					year: 'numeric'
-				}).formatRange(anchorDate, addDays(anchorDate, splitDays - 1));
+		: rangeTitleOf(
+				splitDays === 1 ? 'day' : 'threeDays',
+				anchorDate,
+				addDays(anchorDate, splitDays),
+				locale
+			);
 
 	// --- Fullscreen: Escape leaves it, unless a menu or dialog takes it ---
 	useEffect(() => {
@@ -843,6 +1183,13 @@ export const CalendarPage = ({
 				onRemoveBlocker &&
 				createdEntries.length > 0
 					? () => allStored(createdEntries.map(onRemoveBlocker))
+					: undefined,
+			weekly:
+				first.type === 'blocker' &&
+				drafts.length === 1 &&
+				onRemoveBlocker &&
+				createdEntries.length === 1
+					? { entry: createdEntries[0], draft: first }
 					: undefined
 		};
 	};
@@ -880,6 +1227,7 @@ export const CalendarPage = ({
 		const origin = dialog;
 		const closeOrigin = () =>
 			setDialog((current) => (current === origin ? null : current));
+		expectCreated(drafts);
 		const outcome = run(onCreate?.(drafts), createNotice(drafts));
 		if (outcome === true) closeOrigin();
 		if (typeof outcome === 'boolean') return outcome;
@@ -915,14 +1263,43 @@ export const CalendarPage = ({
 	const chooseSlot = (choice: SlotChoice) => {
 		if (menu?.type !== 'slot') return;
 		const range = menu.range;
-		setMenu(null);
-		if (choice === 'blocker')
+		if (choice === 'blocker') {
+			setMenu(null);
 			create([{ type: 'blocker', start: range.start, end: range.end }]);
-		else
-			setDialog({
+		}
+		// An appointment asks "Mit wem?" in the same card (prototype v17).
+		else setMenu({ ...menu, kind: choice });
+	};
+
+	/** "Mit wem?" answered: the appointment is entered at once. */
+	const pickSlotPerson = (sessionId: number) => {
+		if (menu?.type !== 'slot' || !menu.kind) return;
+		const { range, kind } = menu;
+		setMenu(null);
+		if (range.start.getTime() < now.getTime()) {
+			setNotice({ message: t('calendar.dialog.error.past') });
+			return;
+		}
+		create([
+			{
 				type: 'appointment',
-				slot: { ...range, kind: choice }
-			});
+				start: range.start,
+				end: range.end,
+				kind,
+				sessionId
+			}
+		]);
+	};
+
+	/** "Mehr Angaben …" in the slot card: the full dialog, prefilled. */
+	const moreSlotDetails = () => {
+		if (menu?.type !== 'slot') return;
+		const { range, kind } = menu;
+		setMenu(null);
+		setDialog({
+			type: 'appointment',
+			slot: { ...range, kind: kind ?? 'video' }
+		});
 	};
 
 	/**
@@ -997,13 +1374,121 @@ export const CalendarPage = ({
 			);
 	};
 
-	const propose = (entry: CalendarEntry, start: Date, end: Date) => {
+	/**
+	 * "Wöchentlich …" (prototype v17): the blocker form opens with the single
+	 * blocker's time and its weekday ticked. The single blocker stays until
+	 * the series is saved, so closing the form loses nothing.
+	 */
+	const weekly = (current: Notice) => {
+		if (!current.weekly) return;
+		const { draft } = current.weekly;
+		setNotice(null);
+		setDialog({
+			type: 'blocker',
+			slot: { start: draft.start, end: draft.end },
+			weekdays: [draft.start.getDay()],
+			allDay: !!draft.allDay,
+			note: draft.note,
+			replaces: current.weekly
+		});
+	};
+
+	/**
+	 * The series failed after the single blocker went: put it back. The
+	 * open form then replaces the restored one, or nothing if that failed.
+	 * A failed restore says so: the single blocker is gone, and saving the
+	 * form again blocks the time (review 4589615832).
+	 */
+	const restoreBlocker = (replaces: {
+		entry: CalendarEntry;
+		draft: AppointmentDraft;
+	}): Promise<void> => {
+		const follow = (restored: unknown) => {
+			if (restored === false || restored === undefined)
+				setNotice({ message: t('calendar.restoreFailed') });
+			const again =
+				Array.isArray(restored) && restored.length === 1
+					? (restored[0] as CalendarEntry)
+					: undefined;
+			setDialog((current) =>
+				current?.type === 'blocker' && current.replaces === replaces
+					? {
+							...current,
+							replaces: again
+								? { entry: again, draft: replaces.draft }
+								: undefined
+						}
+					: current
+			);
+		};
+		return Promise.resolve()
+			.then(() => onCreate?.([replaces.draft]))
+			.then(follow, () => follow(undefined));
+	};
+
+	/**
+	 * Saving the series: the single blocker goes first, and only once it is
+	 * gone is the series created, so the first date is never blocked twice.
+	 * A refused or failed removal creates nothing and keeps the form open;
+	 * a failed series puts the single blocker back. A second save waits
+	 * until that restore has settled (review 4589615841).
+	 *
+	 * A series fails in three ways: refused (`false`), rejected, or thrown
+	 * at once by the host. All three put the single blocker back and resolve
+	 * to `false`; a throw also says the save failed, as a rejection does
+	 * (review 4595635794).
+	 */
+	const replaceBlocker = (
+		replaces: { entry: CalendarEntry; draft: AppointmentDraft },
+		drafts: AppointmentDraft[]
+	): Promise<boolean> | boolean => {
+		if (creating.current || replacing.current) return false;
+		creating.current = true;
+		replacing.current = true;
+		return Promise.resolve()
+			.then(() => onRemoveBlocker?.(replaces.entry))
+			.then(
+				(value) => value !== false,
+				() => false
+			)
+			.then((removed) => {
+				creating.current = false;
+				if (!removed) {
+					setNotice({ message: t('calendar.saveFailed') });
+					return false;
+				}
+				return Promise.resolve()
+					.then(() => create(drafts, true))
+					.then(
+						(stored) => stored,
+						() => {
+							setNotice({ message: t('calendar.saveFailed') });
+							return false;
+						}
+					)
+					.then((stored) =>
+						stored
+							? stored
+							: restoreBlocker(replaces).then(() => stored)
+					);
+			})
+			.finally(() => {
+				replacing.current = false;
+			});
+	};
+
+	const propose = (
+		entry: CalendarEntry,
+		start: Date,
+		end: Date,
+		reason?: string
+	) => {
 		// UserService refuses a proposed start in the past; say so here.
 		if (start.getTime() < now.getTime()) {
 			setNotice({ message: t('calendar.movePast') });
 			return false;
 		}
-		return run(onProposeMove?.(entry, start, end), {
+		return run(onProposeMove?.(entry, start, end, reason), {
 			message: t('calendar.proposal.sent', {
 				date: format(start, end),
 				name: colleagueById[entry.ownerId]?.displayName ?? ''
@@ -1063,6 +1548,41 @@ export const CalendarPage = ({
 		);
 	};
 
+	/** FE#2287: one answer per request, as for a proposal. */
+	const answerRequest = (
+		entry: CalendarEntry,
+		send: ((entry: CalendarEntry) => ChangeResult) | undefined,
+		success: Notice
+	) => {
+		setMenu(null);
+		if (!send || answeringIds.includes(entry.id)) return;
+		setAnsweringIds((all) => [...all, entry.id]);
+		void Promise.resolve(
+			run(send(entry), success, (error) => ({
+				message:
+					error instanceof RequestedTimeTaken
+						? t('sessionList.timeline.appointment.request.taken')
+						: t('calendar.saveFailed')
+			}))
+		).finally(() =>
+			setAnsweringIds((all) => all.filter((id) => id !== entry.id))
+		);
+	};
+
+	const confirmRequest = (entry: CalendarEntry) =>
+		answerRequest(entry, onConfirmRequest, {
+			message: t('calendar.appointmentRequest.confirmed', {
+				date: format(entry.start, entry.end)
+			})
+		});
+
+	const declineRequest = (entry: CalendarEntry) =>
+		answerRequest(entry, onDeclineRequest, {
+			message: t('calendar.appointmentRequest.declined', {
+				date: format(entry.start, entry.end)
+			})
+		});
+
 	const withdraw = (proposal: MoveProposal) => {
 		setMenu(null);
 		run(onWithdrawProposal?.(proposal), {
@@ -1072,7 +1592,17 @@ export const CalendarPage = ({
 
 	// --- Working-hours grips (own calendar) ---
 	const editHours = workingHoursLoaded && !!onSaveWorkingHours;
-	const gripsOn = consultant && editHours && !!onSaveDayException;
+	const editConsultationHours =
+		consultant && !!consultationHours && !!onSaveConsultationHours;
+	const retryConsultationHours =
+		consultant &&
+		!consultationHours &&
+		consultationHoursFailed &&
+		!!onRetryConsultationHours;
+	const gripsAvailable = consultant && editHours && !!onSaveDayException;
+	// Switchable in ⋮ and kept in this browser (Frank *7.2).
+	const [showGrips, setShowGrips] = useState(() => readShowGrips(ownerId));
+	const gripsOn = gripsAvailable && showGrips;
 	const gripDate = (day: Date) =>
 		new Intl.DateTimeFormat(calendarLocale(i18n.language), {
 			weekday: 'short',
@@ -1405,13 +1935,16 @@ export const CalendarPage = ({
 		move: !!onMove,
 		propose: !!onProposeMove,
 		cancel: !!onCancelAppointment,
-		remove: !!onRemoveBlocker
+		remove: !!onRemoveBlocker,
+		accept: !!onAnswerMeeting,
+		decline: !!onAnswerMeeting
 	};
 
 	const openEntry = (
 		shown: CalendarEntry,
 		anchor: MenuAnchor,
-		mode: 'list' | 'move' = 'list'
+		mode: 'list' | 'move' = 'list',
+		outside = false
 	) => {
 		// Co-access: the colleague's appointment is in one's own calendar
 		// too, with the same id. UserService lets a co-access holder move
@@ -1423,6 +1956,11 @@ export const CalendarPage = ({
 						(e) => e.id === shown.id && e.ownerId === ownerId
 					) ?? shown)
 				: shown;
+		// FE#2287: one's own request is answered, like a proposal.
+		if (entry.requested && entry.ownerId === ownerId) {
+			setMenu({ type: 'appointmentRequest', entry, anchor });
+			return;
+		}
 		const actions = entryActions(entry, { ownerId, role, can });
 		const formMode =
 			mode === 'move'
@@ -1432,21 +1970,147 @@ export const CalendarPage = ({
 						? 'propose'
 						: 'list'
 				: 'list';
-		setMenu({ type: 'entry', entry, anchor, mode: formMode });
+		setMenu({ type: 'entry', entry, anchor, mode: formMode, outside });
+	};
+
+	// --- Colleague bands: who is busy with what (Frank *16.2) ---
+	const openBand = (band: ColleagueBand, el: HTMLElement) => {
+		if (bandInSide) {
+			setMenu(null);
+			setSideBand(band);
+			return;
+		}
+		// At the band's top right; the menu keeps itself on the screen.
+		const box = el.getBoundingClientRect();
+		setMenu({
+			type: 'band',
+			band,
+			anchor: { x: Math.round(box.right), y: Math.round(box.top) }
+		});
+	};
+	/** "Kalender ansehen" or "Alle nebeneinander": an hour before the band. */
+	const showSideBySide = (band: ColleagueBand, owner: string | null) => {
+		const start = band.start;
+		// The band's time, not an entry chosen earlier.
+		setSplitFocus(undefined);
+		setBandSplit({
+			minutes: Math.max(
+				0,
+				start.getHours() * 60 + start.getMinutes() - 60
+			),
+			owner: owner ?? undefined
+		});
+		changeView('split');
+		setAnchorDate(startOfDay(start));
+		// The eye finds that colleague's entries where the calendar lands.
+		if (owner)
+			flash(
+				entriesInBand(band, busyEntries)
+					.find((p) => p.personId === owner)
+					?.entries.map((e) => e.id) ?? []
+			);
+	};
+	/**
+	 * What one may do with a colleague's entry from the card: one's own
+	 * co-access copy moves, a future appointment takes a proposal, the
+	 * rest only its owner changes (UserService, checked 2026-11-16).
+	 */
+	const bandMoveAction = (entry: CalendarEntry): BandMoveAction => {
+		if (new Date(entry.start).getTime() <= now.getTime()) return null;
+		const mine =
+			entry.type === 'appointment'
+				? entries.find(
+						(e) => e.id === entry.id && e.ownerId === ownerId
+					)
+				: undefined;
+		const actions = entryActions(mine ?? entry, { ownerId, role, can });
+		if (actions.includes('move')) return 'move';
+		return actions.includes('propose') ? 'propose' : null;
+	};
+	const bandCardProps = (
+		band: ColleagueBand,
+		variant: 'side' | 'menu'
+	): CalendarBandCardProps => {
+		const busy = new Set(band.busy);
+		const failed = shown.filter((c) => failedColleagues.includes(c.id));
+		const pending = shown.filter(
+			(c) =>
+				loadingCalendars.includes(c.id) &&
+				!failedColleagues.includes(c.id)
+		);
+		const names = (list: Colleague[]) =>
+			list.map((c) => c.displayName).join(', ');
+		// From the menu at the band, the next card opens where it was.
+		const anchorOf = (el: HTMLElement): MenuAnchor =>
+			variant === 'menu' && menu?.type === 'band' ? menu.anchor : el;
+		return {
+			band,
+			busy: entriesInBand(band, busyEntries).flatMap(
+				({ personId, entries: list }) =>
+					colleagueById[personId]
+						? [
+								{
+									colleague: colleagueById[personId],
+									entries: list
+								}
+							]
+						: []
+			),
+			free: shown.filter(
+				(c) =>
+					!busy.has(c.id) &&
+					!failedColleagues.includes(c.id) &&
+					!loadingCalendars.includes(c.id)
+			),
+			unknownNote: pending.length
+				? t('calendar.bandLoading', { names: names(pending) })
+				: failed.length
+					? t('calendar.bandUnknown', { names: names(failed) })
+					: undefined,
+			moveActionOf: bandMoveAction,
+			onShowCalendar: (owner) => showSideBySide(band, owner),
+			onMoveEntry: (entry, el) => openEntry(entry, anchorOf(el), 'move'),
+			onCreate:
+				consultant && onCreate
+					? (el) =>
+							setMenu({
+								type: 'slot',
+								range: { start: band.start, end: band.end },
+								anchor: anchorOf(el)
+							})
+					: undefined,
+			onClose: () =>
+				variant === 'side' ? setSideBand(null) : setMenu(null),
+			variant
+		};
 	};
 
 	const entryAction = (
 		entry: CalendarEntry,
-		action: 'start' | 'chat' | 'join' | 'cancel' | 'remove'
+		action:
+			| 'show'
+			| 'start'
+			| 'chat'
+			| 'join'
+			| 'cancel'
+			| 'remove'
+			| 'accept'
+			| 'decline'
 	) => {
 		setMenu(null);
-		if (action === 'start') openRoom(onStart, entry);
+		if (action === 'accept' || action === 'decline')
+			run(onAnswerMeeting?.(entry, action), {
+				message: t(
+					action === 'accept'
+						? 'calendar.meeting.accepted'
+						: 'calendar.meeting.declined'
+				)
+			});
+		else if (action === 'show') showEntry(entry);
+		else if (action === 'start') openRoom(onStart, entry);
 		else if (action === 'chat') openRoom(onOpenChat, entry);
 		else if (action === 'join') onJoin?.(entry);
-		else if (action === 'cancel')
-			run(onCancelAppointment?.(entry), {
-				message: t('calendar.cancelled')
-			});
+		else if (action === 'cancel') setCancelAsk(entry);
 		else
 			run(onRemoveBlocker?.(entry), {
 				message: t('calendar.blockerRemoved')
@@ -1479,6 +2143,8 @@ export const CalendarPage = ({
 	let menuAlign: 'start' | 'end' = 'start';
 	if (menu?.type === 'slot') {
 		menuLabel = t('calendar.slotMenu.label');
+		// The second step has a search field: a dialog, not a menu.
+		if (menu.kind) menuRole = 'dialog';
 		menuContent = (
 			<SlotMenuContent
 				range={menu.range}
@@ -1490,6 +2156,10 @@ export const CalendarPage = ({
 					)
 				}
 				onChoose={chooseSlot}
+				kind={menu.kind}
+				conversations={bookable}
+				onPick={pickSlotPerson}
+				onMore={moreSlotDetails}
 			/>
 		);
 	} else if (menu?.type === 'month') {
@@ -1524,9 +2194,21 @@ export const CalendarPage = ({
 				}}
 			/>
 		);
+	} else if (menu?.type === 'band') {
+		menuLabel = t('calendar.bandCard.label');
+		menuRole = 'dialog';
+		menuWidth = 320;
+		menuContent = (
+			<CalendarBandCard
+				{...bandCardProps(liveMenuBand ?? menu.band, 'menu')}
+			/>
+		);
 	} else if (menu?.type === 'entry') {
 		const { entry } = menu;
-		const actions = entryActions(entry, { ownerId, role, can });
+		const actions: EntryAction[] = [
+			...(menu.outside ? (['show'] as const) : []),
+			...entryActions(entry, { ownerId, role, can })
+		];
 		const colleague =
 			entry.ownerId !== ownerId
 				? colleagueById[entry.ownerId]
@@ -1546,9 +2228,10 @@ export const CalendarPage = ({
 				ownerId={ownerId}
 				onMode={(mode) => setMenu({ ...menu, mode })}
 				onAction={(action) => entryAction(entry, action)}
-				onMove={(start, end) => {
+				onMove={(start, end, reason) => {
 					setMenu(null);
-					if (menu.mode === 'propose') propose(entry, start, end);
+					if (menu.mode === 'propose')
+						propose(entry, start, end, reason);
 					else move(entry, start, end, true);
 				}}
 			/>
@@ -1582,6 +2265,21 @@ export const CalendarPage = ({
 					onDeclineProposal
 						? () => decline(proposal, entry)
 						: undefined
+				}
+			/>
+		);
+	} else if (menu?.type === 'appointmentRequest') {
+		const { entry } = menu;
+		menuLabel = t('calendar.appointmentRequest.menu');
+		menuContent = (
+			<AppointmentRequestMenuContent
+				entry={entry}
+				busy={answeringIds.includes(entry.id)}
+				onConfirm={
+					onConfirmRequest ? () => confirmRequest(entry) : undefined
+				}
+				onDecline={
+					onDeclineRequest ? () => declineRequest(entry) : undefined
 				}
 			/>
 		);
@@ -1636,12 +2334,49 @@ export const CalendarPage = ({
 				workingHoursSummary={summary}
 				rememberedEdge={gripsOn ? edgeChoice : null}
 				onForgetEdge={forgetEdge}
+				showGrips={showGrips}
+				onShowGrips={
+					gripsAvailable
+						? (show) => {
+								setShowGrips(show);
+								writeShowGrips(ownerId, show);
+							}
+						: undefined
+				}
 				switcherStyle={switcherStyle}
 				onWorkingHours={
 					editHours
 						? () => {
 								setMenu(null);
 								setDialog({ type: 'workingHours' });
+							}
+						: undefined
+				}
+				consultationHoursSummary={
+					consultationHours
+						? summarise(consultationHours.windows)
+						: retryConsultationHours
+							? t('calendar.consultationHours.loadFailed')
+							: undefined
+				}
+				onConsultationHours={
+					editConsultationHours
+						? () => {
+								setMenu(null);
+								setDialog({ type: 'consultationHours' });
+							}
+						: retryConsultationHours
+							? () => {
+									setMenu(null);
+									onRetryConsultationHours?.();
+								}
+							: undefined
+				}
+				onRepeatBlocker={
+					onCreate
+						? () => {
+								setMenu(null);
+								setDialog({ type: 'blocker' });
 							}
 						: undefined
 				}
@@ -1674,6 +2409,14 @@ export const CalendarPage = ({
 							}
 						: undefined
 				}
+				onAutoAccept={
+					onSaveAutoAccept && colleagues.length > 0
+						? () => {
+								setMenu(null);
+								setDialog({ type: 'autoAccept' });
+							}
+						: undefined
+				}
 			/>
 		);
 	} else if (menu?.type === 'view') {
@@ -1694,30 +2437,25 @@ export const CalendarPage = ({
 		menuContent = <JumpMenuContent now={now} onJump={goTo} />;
 	} else if (menu?.type === 'people') {
 		menuLabel = t('calendar.people.label');
+		menuWidth = 300;
 		menuContent = (
 			<PeopleMenuContent
 				colleagues={colleagues}
 				shown={shownColleagues}
 				scopeHint={t(`calendar.scopeHint.${visibility.scope}`)}
 				onToggle={toggleColleague}
-			/>
-		);
-	} else if (menu?.type === 'kinds') {
-		menuLabel = t('calendar.kindsMenu.label');
-		menuAlign = 'end';
-		menuContent = (
-			<KindsMenuContent
-				hidden={hiddenFacets}
-				onToggle={(facet) =>
-					setHiddenFacets((all) => toggle(all, facet))
+				onShowAll={showColleagues}
+				onSideBySide={
+					views.includes('split')
+						? () => changeView('split')
+						: undefined
 				}
-				onShowAll={() => setHiddenFacets([])}
 			/>
 		);
 	}
 
 	const openAt =
-		(type: 'settings' | 'view' | 'jump' | 'people' | 'kinds') =>
+		(type: 'settings' | 'view' | 'jump' | 'people') =>
 		(event: React.MouseEvent<HTMLElement>) =>
 			setMenu({ type, anchor: event.currentTarget });
 
@@ -1746,9 +2484,11 @@ export const CalendarPage = ({
 				))}
 			</div>
 		) : (
+			// A white pill: the view's icon, its name and ▾ (prototype v17);
+			// on the phone and the tablet the icon alone.
 			<button
 				type="button"
-				className="calendarStage__pillButton"
+				className="calendarStage__viewButton"
 				aria-haspopup="menu"
 				aria-expanded={menu?.type === 'view'}
 				aria-label={t('calendar.viewMenu', {
@@ -1757,77 +2497,111 @@ export const CalendarPage = ({
 				onClick={openAt('view')}
 				data-cy="calendar-view-menu"
 			>
-				{t(`calendar.views.${view}`)}
-				<ArrowDropDownIcon fontSize="small" />
+				<span className="calendarStage__viewIcon" aria-hidden="true">
+					{VIEW_ICON[view]}
+				</span>
+				<span className="calendarStage__viewLabel">
+					{t(`calendar.views.${view}`)}
+				</span>
+				<ArrowDropDownIcon fontSize="small" aria-hidden />
 			</button>
 		);
 
+	// "Meine Termine", or "Termine" once colleagues are shown; with "ich"
+	// and every shown colleague as avatars in front and ▾ after it, one
+	// button that opens "Kalender anzeigen" (prototype v17).
+	const headerTitle =
+		shown.length > 0
+			? t('calendar.header.shared')
+			: t('navigation.booking.events');
 	const header = (
 		<header className="calendarStage__header">
-			{shown.length > 0 && (
-				<button
-					type="button"
-					className="calendarStage__avatars"
-					aria-label={t('calendar.people.label')}
-					onClick={openAt('people')}
-				>
-					{shown.slice(0, 4).map((c) => (
-						<span
-							key={c.id}
-							className="calendarStage__avatar"
-							aria-hidden="true"
-						>
-							{initialsOf(c.displayName)}
-						</span>
-					))}
-				</button>
-			)}
-			<h1 className="calendarStage__title">
-				{t('navigation.booking.events')}
-			</h1>
 			{consultant && onCreate && (
-				<QuickTip title={t('calendar.create')}>
+				<QuickTip title={t('calendar.header.newEntry')}>
 					<button
 						type="button"
 						className="calendarStage__create"
-						aria-label={t('calendar.create')}
+						aria-label={t('calendar.header.newEntry')}
 						onClick={() => setDialog({ type: 'appointment' })}
 						data-cy="calendar-create"
 					>
-						<AddIcon fontSize="small" />
+						<AddIcon aria-hidden />
+						<span
+							className="calendarStage__createLabel"
+							aria-hidden="true"
+						>
+							{t('calendar.header.new')}
+						</span>
 					</button>
 				</QuickTip>
 			)}
+			<h1 className="calendarStage__heading">
+				{consultant ? (
+					<button
+						type="button"
+						className="calendarStage__who"
+						aria-haspopup="menu"
+						aria-expanded={menu?.type === 'people'}
+						aria-label={`${headerTitle}, ${t('calendar.people.label')}`}
+						onClick={openAt('people')}
+						data-cy="calendar-who"
+					>
+						<span
+							className="calendarStage__avatars"
+							aria-hidden="true"
+						>
+							<span className="calendarStage__avatar calAvatar--me">
+								{t('calendar.people.meAvatar')}
+							</span>
+							{shown.map((c) => (
+								<span
+									key={c.id}
+									className={`calendarStage__avatar ${avatarToneClass(c.displayName)}`}
+								>
+									{initialsOf(c.displayName)}
+								</span>
+							))}
+						</span>
+						<span className="calendarStage__title">
+							{headerTitle}
+						</span>
+						<ArrowDropDownIcon
+							className="calendarStage__caret"
+							aria-hidden
+						/>
+					</button>
+				) : (
+					<span className="calendarStage__title">{headerTitle}</span>
+				)}
+			</h1>
 			<div className="calendarStage__headerEnd">
 				{viewSwitch}
-				{!compact && (
-					<QuickTip
-						title={
+				<QuickTip
+					title={
+						fullscreen
+							? t('calendar.fullscreenExit')
+							: t('calendar.fullscreen')
+					}
+				>
+					<button
+						type="button"
+						className="calendarStage__round"
+						aria-label={
 							fullscreen
 								? t('calendar.fullscreenExit')
 								: t('calendar.fullscreen')
 						}
+						aria-pressed={fullscreen}
+						onClick={() => setFullscreen((on) => !on)}
+						data-cy="calendar-fullscreen"
 					>
-						<button
-							type="button"
-							className="calendarStage__round"
-							aria-label={
-								fullscreen
-									? t('calendar.fullscreenExit')
-									: t('calendar.fullscreen')
-							}
-							aria-pressed={fullscreen}
-							onClick={() => setFullscreen((on) => !on)}
-							data-cy="calendar-fullscreen"
-						>
-							{fullscreen ? (
-								<FullscreenExitIcon />
-							) : (
-								<FullscreenIcon />
-							)}
-						</button>
-					</QuickTip>
-				)}
+						{fullscreen ? (
+							<CloseFullscreenIcon />
+						) : (
+							<OpenInFullIcon />
+						)}
+					</button>
+				</QuickTip>
 				{consultant && (
 					<QuickTip title={t('calendar.settings.label')}>
 						<button
@@ -1847,6 +2621,8 @@ export const CalendarPage = ({
 		</header>
 	);
 
+	// The date bar: a filled pill (‹ · Heute ▾ · ›) with "Heute" in light
+	// pink, the range title, then − and + (prototype v17).
 	const toolbar = (
 		<div className="calendarStage__toolbar">
 			<div className="calendarStage__nav" role="group">
@@ -1861,27 +2637,29 @@ export const CalendarPage = ({
 						<ChevronLeftIcon fontSize="small" />
 					</button>
 				</QuickTip>
-				<button
-					type="button"
-					className="calendarStage__today"
-					onClick={() => goTo(now)}
-					data-cy="calendar-today"
-				>
-					{t('calendar.today')}
-				</button>
-				<QuickTip title={t('calendar.jump.label')}>
+				<span className="calendarStage__todayPair">
 					<button
 						type="button"
-						className="calendarStage__navButton calendarStage__navButton--drop"
-						aria-label={t('calendar.jump.label')}
-						aria-haspopup="dialog"
-						aria-expanded={menu?.type === 'jump'}
-						onClick={openAt('jump')}
-						data-cy="calendar-jump"
+						className="calendarStage__today"
+						onClick={() => goTo(now)}
+						data-cy="calendar-today"
 					>
-						<ArrowDropDownIcon fontSize="small" />
+						{t('calendar.today')}
 					</button>
-				</QuickTip>
+					<QuickTip title={t('calendar.jump.label')}>
+						<button
+							type="button"
+							className="calendarStage__jump"
+							aria-label={t('calendar.jump.label')}
+							aria-haspopup="dialog"
+							aria-expanded={menu?.type === 'jump'}
+							onClick={openAt('jump')}
+							data-cy="calendar-jump"
+						>
+							<ArrowDropDownIcon fontSize="small" />
+						</button>
+					</QuickTip>
+				</span>
 				<QuickTip title={t('calendar.next')}>
 					<button
 						type="button"
@@ -1897,6 +2675,49 @@ export const CalendarPage = ({
 			<h2 className="calendarStage__range" aria-live="polite">
 				{rangeTitle}
 			</h2>
+			{timeGridShown && (
+				<div
+					className="calendarStage__segmented calendarStage__zoom"
+					role="group"
+					aria-label={t('calendar.zoomLabel')}
+					data-cy="calendar-zoom"
+				>
+					{(
+						[
+							[-1, 'calendar.zoomOut', '\u2212'],
+							[1, 'calendar.zoomIn', '+']
+						] as const
+					).map(([direction, key, glyph]) => {
+						const atBound =
+							direction < 0
+								? slotPx <= ZOOM_MIN
+								: slotPx >= ZOOM_MAX;
+						return (
+							<QuickTip key={key} title={t(key)}>
+								{/* A disabled button gets no hover: the tip sits on the span. */}
+								<span className="calendarStage__zoomTip">
+									<button
+										type="button"
+										className="calendarStage__segment calendarStage__zoomButton"
+										aria-label={t(key)}
+										disabled={atBound}
+										onClick={() =>
+											zoomTo(zoomStep(slotPx, direction))
+										}
+										data-cy={
+											direction < 0
+												? 'calendar-zoom-out'
+												: 'calendar-zoom-in'
+										}
+									>
+										<span aria-hidden="true">{glyph}</span>
+									</button>
+								</span>
+							</QuickTip>
+						);
+					})}
+				</div>
+			)}
 			{split && (
 				<div
 					className="calendarStage__segmented"
@@ -1919,49 +2740,6 @@ export const CalendarPage = ({
 					))}
 				</div>
 			)}
-			{timeGridShown && (
-				<div
-					className="calendarStage__nav calendarStage__zoom"
-					role="group"
-					aria-label={t('calendar.zoomLabel')}
-					data-cy="calendar-zoom"
-				>
-					{(
-						[
-							[-1, 'calendar.zoomOut', <RemoveIcon key="out" />],
-							[1, 'calendar.zoomIn', <AddIcon key="in" />]
-						] as const
-					).map(([direction, key, icon]) => {
-						const atBound =
-							direction < 0
-								? slotPx <= ZOOM_MIN
-								: slotPx >= ZOOM_MAX;
-						return (
-							<QuickTip key={key} title={t(key)}>
-								{/* A disabled button gets no hover: the tip sits on the span. */}
-								<span className="calendarStage__zoomTip">
-									<button
-										type="button"
-										className="calendarStage__navButton"
-										aria-label={t(key)}
-										disabled={atBound}
-										onClick={() =>
-											zoomTo(zoomStep(slotPx, direction))
-										}
-										data-cy={
-											direction < 0
-												? 'calendar-zoom-out'
-												: 'calendar-zoom-in'
-										}
-									>
-										{icon}
-									</button>
-								</span>
-							</QuickTip>
-						);
-					})}
-				</div>
-			)}
 		</div>
 	);
 
@@ -1976,6 +2754,24 @@ export const CalendarPage = ({
 		.map((id) => colleagueById[id])
 		.filter(Boolean)
 		.slice(0, MAX_RECENT_COLLEAGUES) as Colleague[];
+	// White chips: "ich" first, then who is shown; who was shown lately
+	// stays as a dashed chip; "Weitere …" in red opens the people menu
+	// (prototype v17).
+	// Names that repeat get their Beratungsstelle on the chip, so two
+	// "Bart Simpson" can be told apart (test finding C12).
+	const twinNames = new Set(
+		colleagues
+			.map((c) => c.displayName)
+			.filter((name, i, all) => all.indexOf(name) !== i)
+	);
+	// The second hint under a chip: the centre's code always; for a name
+	// that repeats, the username (UserService#1663), else the centre.
+	const chipHint = (colleague: Colleague) =>
+		twinNames.has(colleague.displayName)
+			? colleague.secondaryLabel ||
+				colleague.agencyShort ||
+				colleague.agencyName
+			: colleague.agencyShort;
 	const personChip = (
 		id: string,
 		name: string,
@@ -1986,7 +2782,7 @@ export const CalendarPage = ({
 		<button
 			key={id}
 			type="button"
-			className={`calendarStage__person${colleague && !pressed ? ' calendarStage__person--off' : ''}`}
+			className={`calendarStage__person${colleague && !pressed ? ' calendarStage__person--off' : ''}${colleague ? '' : ' calendarStage__person--me'}`}
 			aria-pressed={pressed}
 			title={colleague?.agencyName}
 			onMouseEnter={() => pressed && setHighlight({ owner: id })}
@@ -1996,27 +2792,29 @@ export const CalendarPage = ({
 			data-cy={`calendar-person-${id}`}
 		>
 			<span
-				className={`calendarStage__personAvatar${colleague ? '' : ' calendarStage__personAvatar--me'}`}
+				className={`calendarStage__personAvatar ${colleague ? avatarToneClass(name) : avatarToneClass('', true)}`}
 				aria-hidden="true"
 			>
-				{colleague ? initialsOf(name) : t('calendar.people.me')}
+				{colleague ? initialsOf(name) : t('calendar.people.meAvatar')}
 			</span>
-			<span>{colleague ? name : t('calendar.myCalendar')}</span>
-			{colleague?.agencyShort && (
+			<span>{colleague ? name : t('calendar.people.me')}</span>
+			{colleague && chipHint(colleague) && (
 				<span className="calendarStage__agency">
-					{colleague.agencyShort}
+					{chipHint(colleague)}
 				</span>
 			)}
 		</button>
 	);
+	// Only while someone is shown or was shown lately (prototype v17).
 	const peopleBar = consultant &&
-		(colleagues.length > 0 || shown.length > 0) && (
+		(shown.length > 0 || hiddenRecent.length > 0) && (
 			<div
 				className="calendarStage__people"
 				role="group"
 				aria-label={t('calendar.people.bar')}
 				title={t('calendar.people.hint')}
 				onMouseLeave={() => setHighlight(null)}
+				data-cy="calendar-people-bar"
 			>
 				<HoverScrollArrows
 					targetRef={peopleRef}
@@ -2071,11 +2869,12 @@ export const CalendarPage = ({
 			now={now}
 			entries={entries}
 			onlyFacets={onlyFacets}
-			hiddenFacets={hiddenFacets}
 			onToggleFacet={(facet) =>
 				setOnlyFacets((all) => toggle(all, facet))
 			}
 			onHighlightFacet={(facet) => setHighlight(facet ? { facet } : null)}
+			facets={chipFacets}
+			view={chipView}
 			className="calendarStage__kinds"
 		/>
 	);
@@ -2176,10 +2975,16 @@ export const CalendarPage = ({
 					{split ? (
 						<CalendarSplitView
 							day={anchorDate}
+							focusTime={splitFocus}
 							days={splitDays}
 							role={role}
 							ownerId={ownerId}
 							colleagues={shown}
+							onChoosePeople={
+								consultant && colleagues.length > 0
+									? openAt('people')
+									: undefined
+							}
 							entries={visible}
 							busyEntries={busyEntries}
 							unavailable={unknown}
@@ -2197,11 +3002,14 @@ export const CalendarPage = ({
 							proposals={gridProposals}
 							highlight={highlight}
 							muted={muted}
+							flashIds={flashIds}
 							onSelectRange={(range, anchor) =>
 								setMenu({ type: 'slot', range, anchor })
 							}
 							onEntryOpen={openEntry}
 							onProposalOpen={openProposal}
+							startMinutes={bandSplit?.minutes}
+							markedOwner={bandSplit?.owner}
 						/>
 					) : (
 						<CalendarView
@@ -2227,6 +3035,7 @@ export const CalendarPage = ({
 							proposals={gridProposals}
 							highlight={highlight}
 							muted={muted}
+							flashIds={flashIds}
 							onSelectRange={(range, anchor) =>
 								setMenu({ type: 'slot', range, anchor })
 							}
@@ -2235,12 +3044,15 @@ export const CalendarPage = ({
 							}
 							onEntryOpen={openEntry}
 							onProposalOpen={openProposal}
+							onBandOpen={openBand}
+							selectedBand={liveSideBand ?? liveMenuBand}
 							onEntryMove={move}
 							onDatesSet={datesSet}
 							onDragChange={setDragging}
 						/>
 					)}
 				</CalendarPager>
+				{view === 'list' && linksPanel}
 			</div>
 			{state === 'loading' && (
 				<div
@@ -2287,15 +3099,18 @@ export const CalendarPage = ({
 		soonId,
 		entries,
 		colleagues,
-		conversations,
+		conversations: bookable,
 		workingHours: workingPlan,
 		workingHoursSummary: summary,
 		onlyFacets,
 		hiddenFacets,
 		onToggleFacet: (facet) => setOnlyFacets((all) => toggle(all, facet)),
 		onHighlightFacet: (facet) => setHighlight(facet ? { facet } : null),
-		kindsMenuOpen: menu?.type === 'kinds',
-		onOpenKinds: (anchor) => setMenu({ type: 'kinds', anchor }),
+		kindsMenuOpen: settingsOpen,
+		onOpenKinds: () => setSettingsOpen(true),
+		kindsCustomised: viewCustomised,
+		chipFacets,
+		chipView,
 		openProposals: allPending,
 		onOpenProposal: (proposal, entry, anchor) =>
 			setMenu({ type: 'proposal', proposal, entry, anchor }),
@@ -2310,10 +3125,8 @@ export const CalendarPage = ({
 			setMenu({ type: 'request', proposal, entry, anchor }),
 		onAcceptRequest: onAcceptProposal ? accept : undefined,
 		onDeclineRequest: onDeclineProposal ? decline : undefined,
-		onOpenEntry: (entry, anchor) => openEntry(entry, anchor),
-		onOpenChat: onOpenChat
-			? (entry) => openRoom(onOpenChat, entry)
-			: undefined,
+		onOpenEntry: (entry, anchor) => openEntry(entry, anchor, 'list', true),
+		onShowEntry: showEntry,
 		shownColleagues,
 		onCreate: onCreate ? create : undefined,
 		freeHoursState,
@@ -2338,7 +3151,13 @@ export const CalendarPage = ({
 		>
 			{!compact && !fullscreen && (
 				<div
-					className={`calendarSide__frame calendarSide__frame--${listMode}`}
+					className={[
+						'calendarSide__frame',
+						`calendarSide__frame--${listMode}`,
+						liveSideBand && 'calendarSide__frame--band'
+					]
+						.filter(Boolean)
+						.join(' ')}
 					style={{ width: listWidth }}
 					data-cy="calendar-side-frame"
 				>
@@ -2352,6 +3171,15 @@ export const CalendarPage = ({
 							setQuickFocus((n) => n + 1);
 						}}
 					/>
+					{liveSideBand && (
+						// Over the list, which keeps its place and state
+						// underneath (and is hidden from the keyboard).
+						<div className="calendarSide__bandCard">
+							<CalendarBandCard
+								{...bandCardProps(liveSideBand, 'side')}
+							/>
+						</div>
+					)}
 					{/* The pink grip of "Gespräche": centred on the column, so
 					    it stays put while the list scrolls. */}
 					<ResizableHandle
@@ -2367,7 +3195,13 @@ export const CalendarPage = ({
 			)}
 			<section
 				ref={stageRef}
-				className="calendarStage"
+				className={
+					// A narrow stage next to the list takes a smaller title
+					// (prototype v17: 22 px under an 1100 px wide app).
+					!compact && stageWidth > 0 && stageWidth < NARROW_STAGE_PX
+						? 'calendarStage calendarStage--narrow'
+						: 'calendarStage'
+				}
 				aria-label={t('navigation.booking.events')}
 				data-split={split || undefined}
 				// The sheet all the way up works like a dialog: what it
@@ -2381,16 +3215,14 @@ export const CalendarPage = ({
 							entries={entries}
 							colleagues={colleagues}
 							shownColleagues={shownColleagues}
-							onOpenEntry={(entry, anchor) =>
-								openEntry(entry, anchor)
-							}
+							onlyFacets={onlyFacets}
+							hiddenFacets={hiddenFacets}
+							onShowEntry={showEntry}
 							leading={
 								<CalendarKindsButton
-									customised={hiddenFacets.length > 0}
-									open={menu?.type === 'kinds'}
-									onOpen={(anchor) =>
-										setMenu({ type: 'kinds', anchor })
-									}
+									customised={viewCustomised}
+									open={settingsOpen}
+									onOpen={() => setSettingsOpen(true)}
 								/>
 							}
 							floating
@@ -2450,36 +3282,113 @@ export const CalendarPage = ({
 				role={menuRole}
 				width={menuWidth}
 				align={menuAlign}
-				focusKey={menu?.type === 'entry' ? menu.mode : menu?.type}
+				focusKey={
+					menu?.type === 'entry'
+						? menu.mode
+						: menu?.type === 'slot'
+							? (menu.kind ?? 'slot')
+							: menu?.type
+				}
 				onClose={() => setMenu(null)}
 				data-cy={menu ? `calendar-menu-${menu.type}` : undefined}
 			>
 				{menuContent}
 			</CalendarMenu>
 
-			{dialog?.type === 'appointment' && (
-				<AppointmentDialog
+			{/* "Neu" and every other way in: one "Neuer Eintrag" with the
+			    tabs Termin | Sperrzeit (prototype v17). */}
+			{/* Mounted only while open: it reads the profile's e-mail settings. */}
+			{settingsOpen && (
+				<CalendarSettingsDialog
 					open
+					onClose={() => setSettingsOpen(false)}
+					hiddenFacets={hiddenFacets}
+					onHiddenChange={setHiddenFacets}
+					chipFacets={chipFacets}
+					onChipsChange={(next) => {
+						setChipFacets(next);
+						// A chosen kind whose button leaves the row would stay
+						// filtered with no way back: clear it (review
+						// 4594645452).
+						setOnlyFacets((all) =>
+							all.filter((facet) => next.includes(facet))
+						);
+					}}
+					chipView={chipView}
+					onChipViewChange={setChipView}
+					fullScreen={compact}
+				/>
+			)}
+			{(dialog?.type === 'appointment' || dialog?.type === 'blocker') && (
+				<NewEntryDialog
+					open
+					initialTab={dialog.type}
 					slot={dialog.slot}
-					initialSessionId={dialog.sessionId}
-					conversations={conversations}
-					entries={entries}
+					initialSessionId={
+						dialog.type === 'appointment'
+							? dialog.sessionId
+							: undefined
+					}
+					initialWeekdays={
+						dialog.type === 'blocker' ? dialog.weekdays : undefined
+					}
+					initialAllDay={
+						dialog.type === 'blocker' ? dialog.allDay : undefined
+					}
+					initialNote={
+						dialog.type === 'blocker' ? dialog.note : undefined
+					}
+					conversations={bookable}
+					colleagues={onCreate ? colleagues : undefined}
+					entries={
+						dialog.type === 'blocker' && dialog.replaces
+							? entries.filter(
+									(e) => e.id !== dialog.replaces?.entry.id
+								)
+							: entries
+					}
 					ownerId={ownerId}
 					now={now}
 					fullScreen={compact}
-					onSave={(draft) => create([draft], true)}
+					onSaveAppointment={(draft) => create([draft], true)}
+					allowGuestInvite={allowGuestInvite}
+					inviteMedia={inviteMedia}
+					onInviteNewPerson={
+						onInviteNewPerson &&
+						((preset) => {
+							setDialog(null);
+							onInviteNewPerson(preset);
+						})
+					}
+					onSaveBlocker={(drafts) =>
+						dialog.type === 'blocker' && dialog.replaces
+							? replaceBlocker(dialog.replaces, drafts)
+							: create(drafts, true)
+					}
+					onWorkingHours={
+						editHours
+							? () => setDialog({ type: 'workingHours' })
+							: undefined
+					}
+					onSaveAbsence={onSaveAbsence ? saveAbsence : undefined}
+					initialAbsence={absence}
 					onClose={() => setDialog(null)}
 				/>
 			)}
-			{dialog?.type === 'blocker' && (
-				<BlockerDialog
+			{dialog?.type === 'autoAccept' && onSaveAutoAccept && (
+				<AutoAcceptDialog
 					open
-					slot={dialog.slot}
-					entries={entries}
-					ownerId={ownerId}
-					now={now}
+					colleagues={colleagues}
+					selected={autoAcceptIds ?? []}
 					fullScreen={compact}
-					onSave={(drafts) => create(drafts, true)}
+					onSave={(ids) => {
+						setDialog(null);
+						run(onSaveAutoAccept(ids), {
+							message: t('calendar.autoAccept.saved', {
+								count: ids.length
+							})
+						});
+					}}
 					onClose={() => setDialog(null)}
 				/>
 			)}
@@ -2504,6 +3413,41 @@ export const CalendarPage = ({
 					onClose={() => setDialog(null)}
 				/>
 			)}
+			{dialog?.type === 'consultationHours' &&
+				editConsultationHours &&
+				consultationHours && (
+					<ConsultationHoursDialog
+						open
+						hours={consultationHours}
+						fullScreen={compact}
+						saving={savingConsultationHours}
+						onSave={(hours) => {
+							/* Open until the save settles: reopened meanwhile, the
+							   dialog would show the old set and save it back over
+							   this one. A failed save keeps the draft for a retry. */
+							const saved = run(
+								onSaveConsultationHours?.(hours),
+								{
+									message: t(
+										'calendar.consultationHours.saved'
+									)
+								}
+							);
+							if (typeof saved === 'boolean') {
+								if (saved) setDialog(null);
+								return;
+							}
+							setSavingConsultationHours(true);
+							void saved.then((ok) => {
+								setSavingConsultationHours(false);
+								if (ok) setDialog(null);
+							});
+						}}
+						onClose={() => {
+							if (!savingConsultationHours) setDialog(null);
+						}}
+					/>
+				)}
 			{dialog?.type === 'sync' && feed && (
 				<CalendarSyncDialog
 					open
@@ -2515,6 +3459,48 @@ export const CalendarPage = ({
 					onSaveImport={(url) => onSaveImport?.(url)}
 					onRemoveImport={() => onRemoveImport?.()}
 					onClose={() => setDialog(null)}
+				/>
+			)}
+			{cancelAsk && (
+				<M3Dialog
+					open
+					data-testid="calendar-cancel-dialog"
+					title={t('calendar.cancelAsk.title')}
+					description={t(
+						cancelAsk.meeting
+							? 'calendar.meeting.cancelAsk'
+							: 'calendar.cancelAsk.description',
+						{
+							name: label(cancelAsk),
+							time: format(cancelAsk.start, cancelAsk.end)
+						}
+					)}
+					severity="error"
+					fullScreen={false}
+					onClose={() => setCancelAsk(null)}
+					closeLabel={t('app.close')}
+					actions={[
+						{
+							label: t('calendar.cancelAsk.keep'),
+							onClick: () => setCancelAsk(null)
+						},
+						{
+							label: t('calendar.cancelAsk.confirm'),
+							primary: true,
+							onClick: () => {
+								const entry = cancelAsk;
+								setCancelAsk(null);
+								run(onCancelAppointment?.(entry), {
+									message: t(
+										entry.meeting
+											? 'calendar.meeting.cancelled'
+											: 'calendar.cancelled'
+									)
+								});
+							},
+							testId: 'calendar-cancel-confirm'
+						}
+					]}
 				/>
 			)}
 			{createAsk && (
@@ -2554,7 +3540,16 @@ export const CalendarPage = ({
 			)}
 			{notice && (
 				<M3Snackbar
-					message={notice.message}
+					message={
+						notice.weekly ? (
+							<BlockerCreatedMessage
+								message={notice.message}
+								onWeekly={() => weekly(notice)}
+							/>
+						) : (
+							notice.message
+						)
+					}
 					action={
 						notice.undo
 							? {

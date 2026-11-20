@@ -1,7 +1,7 @@
 // @vitest-environment oriso-jsdom
 /**
  * Move proposals on the receiving side (contract "move proposals v1"): the
- * colleague's proposal waits under "Offene Anfragen" and dashed in the
+ * colleague's proposal waits under "Offene Verschiebungen" and dashed in the
  * grid; "Annehmen" moves the appointment, "Ablehnen" keeps it. Only a
  * colleague's appointment can be proposed. The grid is a stub that hands
  * out its callbacks.
@@ -111,7 +111,7 @@ const page = (props: Partial<CalendarPageProps> = {}) =>
 const byCy = (name: string) =>
 	document.querySelector<HTMLElement>(`[data-cy="${name}"]`);
 
-describe('CalendarPage — "Offene Anfragen" for proposals received', () => {
+describe('CalendarPage — "Offene Verschiebungen" for proposals received', () => {
 	it('lists who proposes what: the name, the old and the new time', () => {
 		page();
 		const section = byCy('calendar-requests') as HTMLElement;
@@ -143,6 +143,29 @@ describe('CalendarPage — "Offene Anfragen" for proposals received', () => {
 				name: /calendar\.proposal\.declineLabel/
 			}).textContent
 		).toBe('calendar.proposal.decline');
+	});
+
+	it('names which appointment would move: its kind and conversation (test finding C21)', () => {
+		page();
+		const row = byCy('calendar-received-p1') as HTMLElement;
+		const what = byCy('calendar-received-what-p1') as HTMLElement;
+		expect(row.contains(what)).toBe(true);
+		expect(what.textContent).toContain('ruhiges_yak');
+		expect(what.textContent).toContain('calendar.kinds.video');
+	});
+
+	it('shows the reason the colleague gave in the row (US#1663)', () => {
+		page({ receivedProposals: [{ ...REQUEST, reason: 'Raum belegt' }] });
+		const reason = byCy('calendar-received-reason-p1') as HTMLElement;
+		expect(
+			(byCy('calendar-received-p1') as HTMLElement).contains(reason)
+		).toBe(true);
+		expect(reason.textContent).toContain('Raum belegt');
+	});
+
+	it('shows no reason line when the colleague gave none', () => {
+		page();
+		expect(byCy('calendar-received-reason-p1')).toBeNull();
 	});
 
 	it('names the old time from the proposal when the appointment is not loaded', () => {

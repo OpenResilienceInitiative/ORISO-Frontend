@@ -249,6 +249,13 @@ export const EVENT_CASES: ReadonlyArray<EventCase> = [
 		emitted: true,
 		source: `${ES}.createCallKnockRequestedNotification`
 	},
+	// FE#2252: "Neuen Link anfragen" after a Direkteinladung expired.
+	{
+		eventType: 'direct_invitation.renewal_requested',
+		recipients: CONSULTANT,
+		emitted: true,
+		source: `${ES}.createDirectInvitationRenewalRequestedNotification`
+	},
 	// Appointments
 	...[
 		'appointment.requested',
@@ -303,6 +310,12 @@ export const EVENT_CASES: ReadonlyArray<EventCase> = [
 		recipients: CONSULTANT,
 		emitted: true,
 		source: 'DeletedAskerSessionService.recordDeletionAfterCommit'
+	},
+	{
+		eventType: 'ADDON_NOTIFICATION',
+		recipients: BOTH,
+		emitted: true,
+		source: 'AddonNotification (oriso-addon/v1)'
 	},
 	// Drafts never notify on any channel
 	{

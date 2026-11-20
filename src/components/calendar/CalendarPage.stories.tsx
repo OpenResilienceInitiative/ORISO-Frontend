@@ -1,6 +1,8 @@
 import * as React from 'react';
+import type { ConsultationHours } from './calendarConsultationHours';
 import { useEffect, useRef, useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { a11yExcept } from '../../../.storybook/a11yExceptions';
 import {
 	expect,
 	fireEvent,
@@ -35,6 +37,14 @@ import type { DayExceptions, WorkingHours } from './calendarWorkingHours';
 import type { HolidayRegion } from './calendarHolidays';
 import type { SplitDays } from './CalendarSplitView';
 import type { SheetStop } from './CalendarSheet';
+import { MyDirectLinksView } from '../directLinks/MyDirectLinksView';
+import { DirectLinkShareDialog } from '../conversationCreate/directLink/DirectLinkShareDialog';
+import type { DirectLink } from '../conversationCreate/directLink/directLink';
+import { SAMPLE_DIRECT_LINKS } from '../directLinks/directLinkSamples';
+import {
+	CalendarLinksBox,
+	useCalendarLinksLabels
+} from './CalendarLinksSection';
 import {
 	ASKER_ENTRIES,
 	COLLEAGUE_ENTRIES,
@@ -44,11 +54,14 @@ import {
 	ME,
 	OWN_ENTRIES,
 	STORY_NOW,
+	STORY_APPOINTMENT_REQUESTS,
 	STORY_PROPOSALS,
 	STORY_REQUESTS,
 	STORY_WORKING_HOURS
 } from './calendarStoryData';
 import { publishReceivedProposalCount } from './calendarProposalCount';
+import { withPersonAvatars } from './calendarAvatar';
+import { STAGE_LAYOUT } from '../chatStage/stageLayout';
 
 interface HarnessProps {
 	role?: CalendarRole;
@@ -59,13 +72,18 @@ interface HarnessProps {
 	compact?: boolean;
 	/** With `compact`: a phone (three days at most); false = tablet. */
 	phone?: boolean;
-	initialView?: CalendarViewName;
+	/** 'unset' = what a counsellor sees with nothing set (the list, *19). */
+	initialView?: CalendarViewName | 'unset';
+	/** Show "Links ohne Termin" with sample links in the list (*19). */
+	links?: boolean;
 	shownColleagues?: string[];
 	fullscreen?: boolean;
 	switcherStyle?: ViewSwitcherStyle;
 	proposals?: MoveProposal[];
 	/** Proposals colleagues sent for one's own appointments. */
 	requests?: MoveProposal[];
+	/** FE#2287: advice seekers' requests waiting for confirmation. */
+	appointmentRequests?: CalendarEntry[];
 	withProposals?: boolean;
 	workingHours?: WorkingHours;
 	holidayRegion?: HolidayRegion | null;
@@ -138,11 +156,13 @@ const Scenario = ({
 	compact = false,
 	phone,
 	initialView,
+	links = false,
 	shownColleagues = [],
 	fullscreen = false,
 	switcherStyle = 'menu',
 	proposals: initialProposals = [],
 	requests: initialRequests = [],
+	appointmentRequests = [],
 	withProposals = true,
 	workingHours: initialHours = STORY_WORKING_HOURS,
 	holidayRegion: initialRegion = null,
@@ -155,9 +175,25 @@ const Scenario = ({
 	const colleagues =
 		role === 'consultant' ? colleaguesInScope(COLLEAGUES, scope) : [];
 	const [own, setOwn] = useState<CalendarEntry[]>(
-		empty ? [] : role === 'asker' ? ASKER_ENTRIES : OWN_ENTRIES
+		empty
+			? []
+			: role === 'asker'
+				? ASKER_ENTRIES
+				: [...OWN_ENTRIES, ...appointmentRequests]
 	);
 	const [hours, setHours] = useState<WorkingHours>(initialHours);
+	/* Sprechstunden (FE#2287): Tuesday and Thursday mornings, requests
+	   inside two days. */
+	const [consultationHours, setConsultationHours] =
+		React.useState<ConsultationHours>({
+			windows: [
+				{ weekday: 2, start: '09:00', end: '12:00' },
+				{ weekday: 4, start: '14:00', end: '17:00' }
+			],
+			autoAccept: true,
+			noticeDays: 2,
+			slotMinutes: 60
+		});
 	const [region, setRegion] = useState<HolidayRegion | null>(initialRegion);
 	const [exceptions, setExceptions] =
 		useState<DayExceptions>(initialExceptions);
@@ -203,15 +239,20 @@ const Scenario = ({
 		return Promise.resolve(created);
 	};
 
+	// As CalendarPageWired: each appointment gets its conversation's avatar.
+	const conversations = CONVERSATIONS;
 	const page = (
 		<CalendarPage
 			role={role}
 			ownerId={ownerId}
 			state={state}
-			entries={[...own, ...colleagueEntries]}
+			entries={withPersonAvatars(
+				[...own, ...colleagueEntries],
+				conversations
+			)}
 			colleagues={colleagues}
 			visibility={visibility}
-			conversations={CONVERSATIONS}
+			conversations={conversations}
 			workingHours={hours}
 			holidayRegion={region}
 			dayExceptions={exceptions}
@@ -227,7 +268,21 @@ const Scenario = ({
 			compact={compact}
 			phone={phone}
 			initialSheet={initialSheet}
-			initialView={initialView}
+			initialView={
+				initialView === 'unset'
+					? undefined
+					: // Stories keep the grid they were written for; the
+						// list as the default has its own story (*19).
+						(initialView ??
+						((phone ?? compact) ? 'threeDays' : 'workWeek'))
+			}
+			linksPanel={
+				links ? (
+					<CalendarLinksBox>
+						<StoryLinksPanel />
+					</CalendarLinksBox>
+				) : undefined
+			}
 			initialShownColleagues={shownColleagues}
 			initialFullscreen={fullscreen}
 			initialSwitcherStyle={switcherStyle}
@@ -257,6 +312,10 @@ const Scenario = ({
 				setHours(next);
 				setRegion(nextRegion);
 			}}
+			consultationHours={
+				role === 'consultant' ? consultationHours : undefined
+			}
+			onSaveConsultationHours={setConsultationHours}
 			onSaveDayException={(date, windows) =>
 				setExceptions((all) => ({ ...all, [date]: windows }))
 			}
@@ -320,6 +379,32 @@ const Scenario = ({
 							)
 					: undefined
 			}
+			onConfirmRequest={
+				role === 'consultant'
+					? (entry) =>
+							// Like UserService: the request becomes an
+							// ordinary appointment.
+							setOwn((all) =>
+								all.map((e) =>
+									e.id === entry.id
+										? {
+												...e,
+												requested: undefined,
+												movable: true
+											}
+										: e
+								)
+							)
+					: undefined
+			}
+			onDeclineRequest={
+				role === 'consultant'
+					? (entry) =>
+							setOwn((all) =>
+								all.filter((e) => e.id !== entry.id)
+							)
+					: undefined
+			}
 			onJoin={withProposals ? fn() : undefined}
 			onStart={fn()}
 			onOpenChat={fn()}
@@ -377,7 +462,7 @@ const meta: Meta<typeof Harness> = {
 		docs: {
 			description: {
 				component:
-					'FE#1050 / ADR-032, round 2 after Frank\'s prototype (2026-11-14): built like "Gespräche" — left column with search (display filter at its left, as in "Gespräche"), kind chips, open requests, "Als Nächstes" and quick entry with date, start and duration; one row of people above the calendar (shown colleagues pressed, recently shown ones to switch back on, "Weitere …"); stage with header (+, view switch, full screen, ⋮), toolbar (‹ Heute ▾ ›) and the calendar. One colour per kind; working hours shaded; colleague entries with tooltip; pending move proposals dashed. Click an entry for its actions, double-click to move it. Drag over free time → "Eintragen als". Month view: click or drag days → "Tag eintragen". "Nebeneinander": one column per person. Move proposals both ways: one\'s own, dashed and withdrawable; colleagues\' proposals for one\'s own appointments at the top of "Offene Anfragen" with "Annehmen" / "Ablehnen", counted on "Meine Termine". "Beitreten" has no backend yet and appears only here. Sample data.'
+					'FE#1050 / ADR-032, round 2 after Frank\'s prototype (2026-11-14): built like "Gespräche" — left column with search (display filter at its left, as in "Gespräche"), kind chips, open requests, "Als Nächstes" and quick entry with date, start and duration; one row of people above the calendar (shown colleagues pressed, recently shown ones to switch back on, "Weitere …"); stage with header (+, view switch, full screen, ⋮), toolbar (‹ Heute ▾ ›) and the calendar. One colour per kind; working hours shaded; colleague entries with tooltip; pending move proposals dashed. Click an entry for its actions, double-click to move it. Drag over free time → "Eintragen als". Month view: click or drag days → "Tag eintragen". "Nebeneinander": one column per person. Move proposals both ways: one\'s own, dashed and withdrawable; colleagues\' proposals for one\'s own appointments at the top of "Offene Verschiebungen" with "Annehmen" / "Ablehnen", counted on "Meine Termine". "Beitreten" has no backend yet and appears only here. Sample data.'
 			}
 		}
 	},
@@ -414,8 +499,77 @@ const findCy = (cy: string) =>
 const cyEl = (cy: string) =>
 	document.body.querySelector<HTMLElement>(`[data-cy="${cy}"]`)!;
 
+/**
+ * The pink grip of the left column sits as in "Gespräche": centred in the
+ * same 24 px gap between the column and the calendar card, so the pill has
+ * the same room on both sides (Frank, 2026-11-17; `STAGE_LAYOUT`, T34).
+ * `leftEdge` is the right edge of what the column shows.
+ */
+const expectGripAsInGespraeche = async (
+	canvasElement: HTMLElement,
+	leftEdge: () => number
+) => {
+	const pill = canvasElement
+		.querySelector(
+			'[data-cy="calendar-side-resize"] .sessionsList__resizeHandlePill'
+		)!
+		.getBoundingClientRect();
+	const stage = canvasElement
+		.querySelector('.calendarStage')!
+		.getBoundingClientRect();
+	const room = Math.round((STAGE_LAYOUT.LIST_CARD_GAP - pill.width) / 2);
+	await expect({
+		left: Math.round(pill.left - leftEdge()),
+		right: Math.round(stage.left - pill.right),
+		gap: Math.round(stage.left - leftEdge())
+	}).toEqual({ left: room, right: room, gap: STAGE_LAYOUT.LIST_CARD_GAP });
+};
+
+/** Right edge of the left column's content (its widest section). */
+const sideContentRight = (canvasElement: HTMLElement) => () =>
+	Math.max(
+		...Array.from(
+			canvasElement.querySelector('.calendarSide')!.children
+		).map((el) => el.getBoundingClientRect().right)
+	);
+
+/** "Links ohne Termin" with sample links: copy, QR code, on/off. */
+const StoryLinksPanel = () => {
+	const [links, setLinks] = useState<DirectLink[]>(SAMPLE_DIRECT_LINKS);
+	const [qr, setQr] = useState<DirectLink | null>(null);
+	const labels = useCalendarLinksLabels();
+	return (
+		<>
+			<MyDirectLinksView
+				{...labels}
+				state="ready"
+				links={links}
+				onToggle={(id, active) =>
+					setLinks((all) =>
+						all.map((link) =>
+							link.id === id ? { ...link, active } : link
+						)
+					)
+				}
+				onShowQr={setQr}
+				onEdit={() => undefined}
+				onCreate={() => undefined}
+				onRetry={() => undefined}
+				onCopy={() => undefined}
+			/>
+			{qr && (
+				<DirectLinkShareDialog
+					open
+					link={qr}
+					onClose={() => setQr(null)}
+				/>
+			)}
+		</>
+	);
+};
+
 export const WorkWeek: Story = {
-	name: 'Counsellor — work week (default)',
+	name: 'Counsellor — work week',
 	play: async ({ canvasElement }) => {
 		const canvas = canvasOf(canvasElement);
 		await expect(await canvas.findByTestId('calendar-view')).toBeTruthy();
@@ -441,11 +595,16 @@ export const WorkWeek: Story = {
 				'[data-cy="calendar-upcoming"]'
 			)!
 		);
-		// The rows, not the "Zum Chat mit …" buttons beside them.
-		const rows = upcoming
-			.getAllByRole('button')
-			.filter((b) => !b.classList.contains('calendarSide__chat'));
+		// One button per row: "Zum Chat" is in the entry menu (Frank *4).
+		const rows = upcoming.getAllByRole('button');
+		await expect(
+			canvasElement.querySelector('.calendarSide__chat')
+		).toBeNull();
 		await expect(rows[rows.length - 1].textContent).toContain('in 10 Min.');
+		await expectGripAsInGespraeche(
+			canvasElement,
+			sideContentRight(canvasElement)
+		);
 	}
 };
 
@@ -470,8 +629,112 @@ export const Day: Story = {
 };
 
 export const List: Story = {
-	name: 'Counsellor — list',
-	args: { initialView: 'list' }
+	name: 'Counsellor — list (default), with "Links ohne Termin"',
+	args: { initialView: 'unset', links: true },
+	play: async ({ canvasElement }) => {
+		const canvas = canvasOf(canvasElement);
+		// Nothing set: the list is the first view (*19).
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector('[data-cy="calendar-links"]')
+			).not.toBeNull()
+		);
+		const links = within(
+			canvasElement.querySelector<HTMLElement>(
+				'[data-cy="calendar-links"]'
+			)!
+		);
+		await expect(
+			links.getByRole('heading', { name: 'Links ohne Termin' })
+		).toBeTruthy();
+		await expect(links.getByText('Flyer Schule')).toBeTruthy();
+		await expect(canvas.getByTestId('calendar-view')).toBeTruthy();
+		// "Beginnt gleich" stays readable in the list: the row does not take
+		// the red soon fill the red words sit on (review 4589661574).
+		const soonRow = await waitFor(() => {
+			const row = canvasElement.querySelector<HTMLElement>(
+				'.calEntry--listRow.calEntry--soon'
+			);
+			expect(row).not.toBeNull();
+			return row!;
+		});
+		const badge = soonRow.querySelector<HTMLElement>('.calendarSoon')!;
+		await expect(getComputedStyle(soonRow).backgroundColor).not.toBe(
+			getComputedStyle(badge).color
+		);
+	}
+};
+
+/** FE#2325: the 32 px avatar a person has everywhere else, in a list row. */
+const expectRealAvatars = async (canvasElement: HTMLElement) => {
+	const row = await waitFor(() => {
+		const found = canvasElement.querySelector<HTMLElement>(
+			'.calEntry [data-testid="user-avatar"]'
+		);
+		expect(found).not.toBeNull();
+		return found!;
+	});
+	await expect(row.style.width).toBe('32px');
+	// Without avatar data (helle_wolke) the initials stay.
+	await expect(
+		[...canvasElement.querySelectorAll('.calEntry__avatar')].some(
+			(el) => el.textContent === 'HW'
+		)
+	).toBe(true);
+};
+
+export const RealAvatarsList: Story = {
+	name: 'Real avatars — list, 32 px, initials only without avatar (FE#2325)',
+	args: { initialView: 'list' },
+	play: async ({ canvasElement }) => expectRealAvatars(canvasElement)
+};
+
+export const RealAvatarsListDark: Story = {
+	name: 'Real avatars — list, dark (FE#2325)',
+	args: { initialView: 'list' },
+	globals: { scheme: 'dark', backgrounds: { value: 'dark' } },
+	play: async ({ canvasElement }) => expectRealAvatars(canvasElement)
+};
+
+export const RealAvatarsListPhone: Story = {
+	name: 'Real avatars — list, phone 390 px (FE#2325)',
+	args: { initialView: 'list', compact: true },
+	globals: phone390Globals,
+	play: async ({ canvasElement }) => {
+		const avatar = await waitFor(() => {
+			const found = canvasElement.querySelector<HTMLElement>(
+				'.calEntry [data-testid="user-avatar"]'
+			);
+			expect(found).not.toBeNull();
+			return found!;
+		});
+		await expect(avatar.style.width).toBe('32px');
+	}
+};
+
+export const RealAvatarsWeek: Story = {
+	name: 'Real avatars — work week: 32 px where the box has room (FE#2325)',
+	args: { initialView: 'workWeek' },
+	play: async ({ canvasElement }) => {
+		const lead = await waitFor(() => {
+			const found = canvasElement.querySelector<HTMLElement>(
+				'.calEntry__inner--lead [data-testid="user-avatar"]'
+			);
+			expect(found).not.toBeNull();
+			return found!;
+		});
+		await expect(lead.style.width).toBe('32px');
+	}
+};
+
+export const RealAvatarsWeekPhoneDark: Story = {
+	name: 'Real avatars — three days, phone 390 px, dark (FE#2325)',
+	args: { initialView: 'threeDays', compact: true },
+	globals: {
+		...phone390Globals,
+		scheme: 'dark',
+		backgrounds: { value: 'dark' }
+	}
 };
 
 export const ColleaguesShown: Story = {
@@ -537,6 +800,376 @@ export const ColleaguesMonth: Story = {
 	}
 };
 
+/** Names shown in a band, if the stylesheet leaves them visible. */
+const visibleNamesIn = (band: HTMLElement) =>
+	[...band.querySelectorAll<HTMLElement>('.calendarView__bandName')]
+		.filter((name) => name.getBoundingClientRect().width > 0)
+		.map((name) => name.textContent);
+
+export const ColleaguesWhoIsBusy: Story = {
+	name: 'Colleagues shown — who is in each band, where there is room (Frank *16)',
+	args: {
+		scope: 'TENANT',
+		shownColleagues: ['kaya', 'demir', 'hoffmann', 'nowak']
+	},
+	play: async ({ canvasElement }) => {
+		const bandOf = (label: string, name: string) =>
+			[
+				...canvasElement.querySelectorAll<HTMLElement>(
+					'[data-cy="calendar-band"]'
+				)
+			].find(
+				(band) =>
+					band.textContent?.includes(label) &&
+					band.textContent.includes(name)
+			);
+		// Monday 11–12: Kaya and Nowak, an hour tall: one line, the faces
+		// first. At 1280 px a work-week column has no room for two names,
+		// so the faces stand alone rather than as "A. K…, P. No…".
+		const hour = await waitFor(() => {
+			const band = bandOf('2 von 4 belegt', 'P. Nowak');
+			expect(band).toBeTruthy();
+			return band!;
+		});
+		const faces = [
+			...hour.querySelectorAll<HTMLElement>('.calendarView__bandAvatar')
+		].map((face) => face.getBoundingClientRect());
+		await expect(faces.map((face) => face.width)).toEqual([16, 16]);
+		await expect(Math.abs(faces[0].top - faces[1].top)).toBeLessThan(2);
+		await expect(hour.getBoundingClientRect().width).toBeLessThan(150);
+		await expect(visibleNamesIn(hour)).toEqual([]);
+		// One person in an hour: face and name.
+		const single = bandOf('1 von 4 belegt', 'E. Demir');
+		await expect(visibleNamesIn(single!)).toEqual(['E. Demir']);
+		// Thursday 09–11, two hours: one chip per person, as in the bar.
+		const tall = [
+			...canvasElement.querySelectorAll<HTMLElement>(
+				'[data-cy="calendar-band"]'
+			)
+		].find(
+			(band) =>
+				band.textContent?.includes('2 von 4 belegt') &&
+				band.getBoundingClientRect().height >= 84
+		);
+		const chips = [
+			...(tall?.querySelectorAll<HTMLElement>(
+				'.calendarView__bandPerson'
+			) ?? [])
+		].map((chip) => chip.getBoundingClientRect());
+		await expect(chips).toHaveLength(2);
+		await expect(chips[0].height).toBeGreaterThan(16);
+		await expect(chips[1].top).toBeGreaterThan(chips[0].bottom - 1);
+		await expect(visibleNamesIn(tall!)).toEqual(['A. Kaya', 'P. Nowak']);
+		// Half an hour is too short: the count alone.
+		const short = bandOf('2 von 4 belegt', 'E. Demir');
+		await expect(short).toBeTruthy();
+		await expect(visibleNamesIn(short!)).toEqual([]);
+		await expect(short!.textContent).toContain('2 von 4 belegt');
+	}
+};
+
+/** A point on a band that no grip or entry covers. */
+const pointOnBand = (band: HTMLElement) => {
+	const box = band.getBoundingClientRect();
+	const x = box.left + box.width * 0.7;
+	for (let y = box.top + 6; y < box.bottom - 4; y += 4) {
+		const top = document.elementFromPoint(x, y);
+		if (
+			top &&
+			!top.closest('.calendarGrip, .calEntry') &&
+			document.elementsFromPoint(x, y).includes(band)
+		)
+			return { x, y };
+	}
+	return null;
+};
+/** A click without movement, on whatever a real pointer would hit there. */
+const clickAt = async ({ x, y }: { x: number; y: number }) => {
+	const target = document.elementFromPoint(x, y) as HTMLElement;
+	const at = { clientX: x, clientY: y, button: 0 };
+	const pointer = { ...at, isPrimary: true, pointerId: 1 };
+	fireEvent.pointerDown(target, { ...pointer, buttons: 1 });
+	fireEvent.mouseDown(target, { ...at, buttons: 1 });
+	await new Promise((resolve) => setTimeout(resolve, 50));
+	fireEvent.pointerUp(target, pointer);
+	fireEvent.mouseUp(target, at);
+	fireEvent.click(target, { ...at, detail: 1 });
+};
+/** A point in a day's time-grid column with no entry and no band on it. */
+const freePointIn = (root: HTMLElement, date: string) => {
+	const view = root.querySelector('[data-testid="calendar-view"]')!;
+	const columns = view.querySelectorAll<HTMLElement>(
+		`[role="cell"][data-date="${date}"]`
+	);
+	// The first cell is the day's all-day cell, the last its time column.
+	const allDay = columns[0].getBoundingClientRect();
+	const column = columns[columns.length - 1].getBoundingClientRect();
+	const x = column.left + column.width / 2;
+	for (const row of view.querySelectorAll<HTMLElement>('[data-time]')) {
+		const box = row.getBoundingClientRect();
+		const y = box.top + box.height / 2;
+		const top = document.elementFromPoint(x, y);
+		const taken = document
+			.elementsFromPoint(x, y)
+			.some((el) => el.closest('.calEntry, [data-band], .calendarGrip'));
+		if (top && view.contains(top) && !taken && y > allDay.bottom + 2)
+			return { x, y };
+	}
+	throw new Error(`no free time on ${date}`);
+};
+const bandTipText = () =>
+	document.querySelector('[data-cy="calendar-band-peek"]')?.textContent ?? '';
+const slotMenu = () => document.querySelector('[data-cy="calendar-menu-slot"]');
+/** The band card where it takes the list's place. */
+const sideBandCard = () =>
+	document.querySelector<HTMLElement>(
+		'[data-cy="calendar-side-frame"] [data-cy="calendar-band-card"]'
+	);
+
+export const ColleaguesBandClick: Story = {
+	name: 'Colleagues shown — a click on a band opens who is busy, no "Eintragen als" (Frank *16.2)',
+	args: { shownColleagues: ['kaya', 'demir'] },
+	play: async ({ canvasElement }) => {
+		// Measured when used: the grid scrolls to 08:00 once it is laid out.
+		const bandPoints = () =>
+			waitFor(() => {
+				const list = [
+					...canvasElement.querySelectorAll<HTMLElement>(
+						'[data-cy="calendar-band"]'
+					)
+				]
+					.map(pointOnBand)
+					.filter((point) => point !== null);
+				expect(list.length).toBeGreaterThan(1);
+				return list;
+			});
+		await bandPoints();
+		// A click on free time still offers "Eintragen als" …
+		await clickAt(freePointIn(canvasElement, '2026-11-18'));
+		await findCy('calendar-menu-slot');
+		await userEvent.keyboard('{Escape}');
+		await waitFor(() => expect(slotMenu(), 'Escape closes it').toBeNull());
+		// … a click on a band says who is busy, in the left column, and
+		// opens no menu, which would block the pointer for every other band.
+		const [pressed, next] = await bandPoints();
+		await clickAt(pressed);
+		await waitFor(() =>
+			expect(sideBandCard(), 'explained on click').toBeTruthy()
+		);
+		await new Promise((resolve) => setTimeout(resolve, 300));
+		await expect(slotMenu(), 'no menu from a band').toBeNull();
+		// The browser says "mouseover" on the grid's frame once the
+		// selection's shadow is gone; the card stays.
+		fireEvent.mouseOver(document.elementFromPoint(pressed.x, pressed.y)!, {
+			clientX: pressed.x,
+			clientY: pressed.y
+		});
+		await new Promise((resolve) => setTimeout(resolve, 100));
+		await expect(sideBandCard(), 'still explained').toBeTruthy();
+		// Moving on to the next band explains that one.
+		fireEvent.mouseMove(document.elementFromPoint(next.x, next.y)!, {
+			clientX: next.x,
+			clientY: next.y
+		});
+		await waitFor(() =>
+			expect(bandTipText(), 'explained on hover').toContain('Belegt:')
+		);
+		// Dragging over a band still offers "Eintragen als": colleagues
+		// being busy never blocks one's own calendar.
+		const [from] = await bandPoints();
+		const target = document.elementFromPoint(from.x, from.y)!;
+		const press = { button: 0, isPrimary: true, pointerId: 1 };
+		fireEvent.pointerDown(target, {
+			...press,
+			buttons: 1,
+			clientX: from.x,
+			clientY: from.y
+		});
+		fireEvent.mouseDown(target, {
+			button: 0,
+			buttons: 1,
+			clientX: from.x,
+			clientY: from.y
+		});
+		for (const step of [10, 30, 50, 70]) {
+			const at = { clientX: from.x, clientY: from.y + step, buttons: 1 };
+			fireEvent.pointerMove(document, { ...press, ...at });
+			fireEvent.mouseMove(document, at);
+			await new Promise((resolve) => setTimeout(resolve, 20));
+		}
+		const end = { clientX: from.x, clientY: from.y + 70 };
+		fireEvent.pointerUp(document, { ...press, ...end });
+		fireEvent.mouseUp(document, { button: 0, ...end });
+		await findCy('calendar-menu-slot');
+	}
+};
+
+/** Monday 11–12: A. Kaya (video) and P. Nowak (phone), "2 von 4 belegt". */
+const MONDAY_BAND = `${new Date(2026, 10, 16, 11).getTime()}-${new Date(2026, 10, 16, 12).getTime()}`;
+const TEAM = ['kaya', 'demir', 'hoffmann', 'nowak'];
+/** A band by its stretch, and a point on it no entry or grip covers. */
+const bandByKey = (root: HTMLElement, key: string) =>
+	waitFor(() => {
+		const band = root.querySelector<HTMLElement>(`[data-band="${key}"]`);
+		expect(band).toBeTruthy();
+		const point = pointOnBand(band!);
+		expect(point).toBeTruthy();
+		return { band: band!, point: point! };
+	});
+
+export const ColleaguesBandCard: Story = {
+	name: 'Colleagues shown — a click on a band: who is busy, in the left column (Frank *16.2)',
+	args: { scope: 'TENANT', shownColleagues: TEAM },
+	play: async ({ canvasElement }) => {
+		const { band, point } = await bandByKey(canvasElement, MONDAY_BAND);
+		await clickAt(point);
+		const card = await waitFor(() => {
+			expect(sideBandCard()).toBeTruthy();
+			return sideBandCard()!;
+		});
+		const inCard = within(card);
+		// Who is busy with what, and who is free.
+		await expect(
+			inCard.getByTestId('calendar-band-person-kaya').textContent
+		).toContain('Video · 11:00–12:00');
+		await expect(
+			inCard.getByTestId('calendar-band-person-nowak').textContent
+		).toContain('Telefon · 11:00–12:00');
+		const free = inCard.getByTestId('calendar-band-free').textContent;
+		await expect(free).toContain('E. Demir');
+		await expect(free).toContain('K. Hoffmann');
+		// The band is outlined; the list waits under the card, out of reach;
+		// no menu holds the pointer.
+		await waitFor(() => expect(band.dataset.selected).toBe('true'));
+		const list = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="calendar-side"]'
+		)!;
+		await expect(getComputedStyle(list).visibility).toBe('hidden');
+		await expect(
+			document.querySelector('[data-cy^="calendar-menu-"]')
+		).toBeNull();
+		// The card keeps the list's room beside the grip.
+		await expectGripAsInGespraeche(
+			canvasElement,
+			() =>
+				card
+					.closest('.calendarBandCard__frame')!
+					.getBoundingClientRect().right
+		);
+		// Escape gives the list back; a click brings the card again.
+		await waitFor(() =>
+			expect(card.contains(document.activeElement)).toBe(true)
+		);
+		await userEvent.keyboard('{Escape}');
+		await waitFor(() => expect(sideBandCard()).toBeNull());
+		await expect(getComputedStyle(list).visibility).toBe('visible');
+		await clickAt((await bandByKey(canvasElement, MONDAY_BAND)).point);
+		await waitFor(() => expect(sideBandCard()).toBeTruthy());
+		// "Kalender ansehen": side by side on that day, A. Kaya marked.
+		await userEvent.click(
+			within(sideBandCard()!).getByRole('button', {
+				name: 'Kalender von A. Kaya ansehen'
+			})
+		);
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector(
+					'[data-cy="calendar-split-column-kaya"]'
+				)?.classList
+			).toContain('calendarSplit__column--marked')
+		);
+		await expect(sideBandCard()).toBeNull();
+	}
+};
+
+export const ColleaguesBandCardOtherWeek: Story = {
+	name: 'Colleagues shown — the band card closes on another week (review 4601827596)',
+	args: { scope: 'TENANT', shownColleagues: TEAM },
+	play: async ({ canvasElement }) => {
+		await clickAt((await bandByKey(canvasElement, MONDAY_BAND)).point);
+		await waitFor(() => expect(sideBandCard()).toBeTruthy());
+		await userEvent.click(await findCy('calendar-next'));
+		// No card for a band that is no longer on screen; the list is back.
+		await waitFor(() => expect(sideBandCard()).toBeNull());
+		await expect(
+			getComputedStyle(
+				canvasElement.querySelector<HTMLElement>(
+					'[data-cy="calendar-side"]'
+				)!
+			).visibility
+		).toBe('visible');
+		await expect(
+			canvasElement.querySelector('[data-band][data-selected="true"]')
+		).toBeNull();
+	}
+};
+
+export const ColleaguesBandCardActions: Story = {
+	name: 'Colleagues shown — from the band card: propose a new time, or enter one’s own (Frank *16.2)',
+	args: { scope: 'TENANT', shownColleagues: TEAM },
+	play: async ({ canvasElement }) => {
+		await clickAt((await bandByKey(canvasElement, MONDAY_BAND)).point);
+		const card = await waitFor(() => {
+			expect(sideBandCard()).toBeTruthy();
+			return sideBandCard()!;
+		});
+		// A colleague's appointment: a proposal they accept, through the
+		// form the calendar already has.
+		await userEvent.click(
+			within(
+				within(card).getByTestId('calendar-band-person-kaya')
+			).getByRole('button', { name: /Verschiebung vorschlagen/ })
+		);
+		await findCy('calendar-menu-entry');
+		await expect(sideBandCard(), 'the card stays').toBeTruthy();
+		await userEvent.keyboard('{Escape}');
+		await waitFor(() =>
+			expect(
+				document.querySelector('[data-cy="calendar-menu-entry"]')
+			).toBeNull()
+		);
+		// One's own entry at that time: "Eintragen als".
+		await userEvent.click(
+			within(sideBandCard()!).getByRole('button', {
+				name: /Zu dieser Zeit eintragen/
+			})
+		);
+		await findCy('calendar-menu-slot');
+	}
+};
+
+export const ColleaguesBandCardFullscreen: Story = {
+	name: 'Colleagues shown — full screen: the band card opens at the band (Frank *16.2)',
+	args: { scope: 'TENANT', shownColleagues: TEAM, fullscreen: true },
+	play: async ({ canvasElement }) => {
+		await clickAt((await bandByKey(canvasElement, MONDAY_BAND)).point);
+		const menu = within(await findCy('calendar-menu-band'));
+		await expect(
+			menu.getByTestId('calendar-band-person-kaya')
+		).toBeTruthy();
+		await expect(
+			menu.queryByRole('button', { name: 'Zurück zur Liste' })
+		).toBeNull();
+		await expect(sideBandCard()).toBeNull();
+	}
+};
+
+export const ColleaguesBandCardPhone: Story = {
+	name: 'Colleagues shown — phone 390 px: a tap on a band opens the card over the calendar (Frank *16.2)',
+	globals: phone390Globals,
+	args: { scope: 'TENANT', shownColleagues: TEAM, compact: true },
+	play: async ({ canvasElement }) => {
+		await clickAt((await bandByKey(canvasElement, MONDAY_BAND)).point);
+		const menu = within(await findCy('calendar-menu-band'));
+		await expect(
+			menu.getByTestId('calendar-band-person-nowak')
+		).toBeTruthy();
+		await expect(
+			menu.getByTestId('calendar-band-free').textContent
+		).toContain('E. Demir');
+	}
+};
+
 /** Half-hour rows of the time grid (lanes and labels share the height). */
 const slotRows = (root: HTMLElement) => [
 	...root.querySelectorAll<HTMLElement>(
@@ -578,7 +1211,7 @@ export const Zoom: Story = {
 		const height = () =>
 			slotRows(canvasElement)[0].getBoundingClientRect().height;
 		// Starts at today's height.
-		await waitFor(() => expect(height()).toBe(25));
+		await waitFor(() => expect(height()).toBe(22));
 		const zoomIn = canvas.getByRole('button', { name: 'Hineinzoomen' });
 		const zoomOut = canvas.getByRole('button', { name: 'Herauszoomen' });
 		// 10:00–11:00 today, own appointment.
@@ -628,7 +1261,7 @@ export const ZoomSplit: Story = {
 				lines[0].getBoundingClientRect().top
 			);
 		};
-		await expect(hour()).toBe(48);
+		await expect(hour()).toBe(44);
 		const hourEntry = () =>
 			canvasElement.querySelector<HTMLElement>(
 				'[data-cy="calendar-split-entry-a1"]'
@@ -799,11 +1432,13 @@ export const Fullscreen: Story = {
 };
 
 export const PendingProposal: Story = {
-	name: 'Move proposal — pending (dashed, "Offene Anfragen")',
+	name: 'Move proposal — pending (dashed, "Offene Verschiebungen")',
 	args: { shownColleagues: ['kaya'], proposals: STORY_PROPOSALS },
 	play: async ({ canvasElement }) => {
 		const canvas = canvasOf(canvasElement);
-		await expect(await canvas.findByText('Offene Anfragen')).toBeTruthy();
+		await expect(
+			await canvas.findByText('Offene Verschiebungen')
+		).toBeTruthy();
 		await waitFor(() =>
 			expect(
 				canvasElement.querySelectorAll('.calEntry--proposal').length
@@ -827,7 +1462,7 @@ export const WithdrawProposal: Story = {
 			})
 		);
 		await waitFor(() =>
-			expect(canvas.queryByText('Offene Anfragen')).toBeNull()
+			expect(canvas.queryByText('Offene Verschiebungen')).toBeNull()
 		);
 		await expect(
 			await body().findByText('Vorschlag zurückgezogen.')
@@ -844,11 +1479,13 @@ export const ProposeMove: Story = {
 		await userEvent.click(await entryEl(canvasElement, 'k1'));
 		const menu = within(await findCy('calendar-menu-entry'));
 		await userEvent.click(
-			menu.getByRole('menuitem', { name: 'Verschiebung vorschlagen …' })
+			menu.getByRole('menuitem', { name: /^Verschiebung vorschlagen …/ })
 		);
 		await userEvent.click(await findCy('calendar-move-submit'));
 		const canvas = canvasOf(canvasElement);
-		await expect(await canvas.findByText('Offene Anfragen')).toBeTruthy();
+		await expect(
+			await canvas.findByText('Offene Verschiebungen')
+		).toBeTruthy();
 	}
 };
 
@@ -876,7 +1513,11 @@ export const ReceivedRequests: Story = {
 	play: async ({ canvasElement }) => {
 		const section = within(await findCy('calendar-requests'));
 		await expect(
-			section.getByRole('heading', { name: 'Offene Anfragen' })
+			section.getByRole('heading', { name: 'Offene Verschiebungen' })
+		).toBeTruthy();
+		// The reason A. Kaya gave (UserService#1663).
+		await expect(
+			section.getByText('Grund: Raum 2 ist an dem Vormittag belegt.')
 		).toBeTruthy();
 		// Who proposes what: old and new time, also for screen readers.
 		await expect(
@@ -965,6 +1606,104 @@ export const DeclineRequest: Story = {
 	}
 };
 
+/** FE#2287: an advice seeker's request in the grid. */
+const appointmentRequestEl = async (canvasElement: HTMLElement) => {
+	let el: HTMLElement | null = null;
+	await waitFor(() => {
+		el = canvasElement.querySelector<HTMLElement>('[data-entry-id="q1"]');
+		expect(el).toBeTruthy();
+	});
+	return el as unknown as HTMLElement;
+};
+
+export const AppointmentRequest: Story = {
+	name: 'Appointment request — advice seeker asked, dashed until answered (FE#2287)',
+	args: { appointmentRequests: STORY_APPOINTMENT_REQUESTS },
+	play: async ({ canvasElement }) => {
+		const dashed = await appointmentRequestEl(canvasElement);
+		await expect(dashed.className).toContain('calEntry--proposal');
+		await expect(dashed.className).toContain('calEntry--requested');
+		await expect(dashed.textContent).toContain(
+			'Angefragt · wartet auf Sie'
+		);
+		await expect(dashed.getAttribute('aria-label')).toMatch(
+			/leise_lerche · Angefragt · wartet auf Sie, .*11:00–12:00$/
+		);
+	}
+};
+
+export const AppointmentRequestMenu: Story = {
+	name: 'Appointment request — "Bestätigen" / "Ablehnen" like a move proposal',
+	args: { appointmentRequests: STORY_APPOINTMENT_REQUESTS },
+	play: async ({ canvasElement }) => {
+		await userEvent.click(await appointmentRequestEl(canvasElement));
+		const menu = within(await findCy('calendar-menu-appointmentRequest'));
+		await expect(menu.getByText('Termin angefragt')).toBeTruthy();
+		await expect(menu.getByText('Anfrage von leise_lerche')).toBeTruthy();
+		await expect(
+			menu.getByRole('menuitem', { name: /^Bestätigen/ })
+		).toBeTruthy();
+		await expect(
+			menu.getByRole('menuitem', { name: /^Ablehnen/ })
+		).toBeTruthy();
+	}
+};
+
+export const AppointmentRequestConfirm: Story = {
+	name: 'Appointment request — confirmed, an ordinary appointment',
+	args: { appointmentRequests: STORY_APPOINTMENT_REQUESTS },
+	play: async ({ canvasElement }) => {
+		await userEvent.click(await appointmentRequestEl(canvasElement));
+		const menu = within(await findCy('calendar-menu-appointmentRequest'));
+		await userEvent.click(
+			menu.getByRole('menuitem', { name: /^Bestätigen/ })
+		);
+		await expect(
+			await body().findByText(/^Termin bestätigt: .*11:00–12:00\.$/)
+		).toBeTruthy();
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector('[data-entry-id="q1"]')?.className
+			).not.toContain('calEntry--proposal')
+		);
+	}
+};
+
+export const AppointmentRequestDecline: Story = {
+	name: 'Appointment request — declined, the time is free',
+	args: { appointmentRequests: STORY_APPOINTMENT_REQUESTS },
+	play: async ({ canvasElement }) => {
+		await userEvent.click(await appointmentRequestEl(canvasElement));
+		const menu = within(await findCy('calendar-menu-appointmentRequest'));
+		await userEvent.click(
+			menu.getByRole('menuitem', { name: /^Ablehnen/ })
+		);
+		await expect(
+			await body().findByText(
+				/^Terminanfrage abgelehnt: .*11:00–12:00\.$/
+			)
+		).toBeTruthy();
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector('[data-entry-id="q1"]')
+			).toBeNull()
+		);
+	}
+};
+
+export const AppointmentRequestPhone: Story = {
+	name: 'Appointment request — phone 390 px',
+	globals: phone390Globals,
+	args: {
+		compact: true,
+		phone: true,
+		appointmentRequests: STORY_APPOINTMENT_REQUESTS
+	},
+	play: async ({ canvasElement }) => {
+		await appointmentRequestEl(canvasElement);
+	}
+};
+
 export const PhoneRequests: Story = {
 	name: 'Move proposal — received, phone 390 px (the sheet holds it)',
 	globals: phone390Globals,
@@ -972,7 +1711,7 @@ export const PhoneRequests: Story = {
 	play: async () => {
 		await findCy('calendar-sheet');
 		const sheet = within(cyEl('calendar-sheet'));
-		await expect(sheet.getByText('Offene Anfragen')).toBeTruthy();
+		await expect(sheet.getByText('Offene Verschiebungen')).toBeTruthy();
 		await expect(
 			sheet.getByRole('button', {
 				name: /^Vorschlag von A\. Kaya annehmen/
@@ -1015,13 +1754,32 @@ export const EntryActions: Story = {
 	play: async ({ canvasElement }) => {
 		await userEvent.click(await entryEl(canvasElement, 'a1'));
 		const menu = within(await body().findByRole('menu'));
+		// Each item is named by its title and the line under it (prototype
+		// v17 menus): "Video starten mit ruhiges_yak".
 		for (const name of [
-			'Video-Call starten',
-			'Zum Chat',
-			'Verschieben …',
-			'Absagen'
+			/^Video starten mit /,
+			/^Zum Chat Gespräch mit /,
+			/^Verschieben … Tag und Uhrzeit ändern$/,
+			/^Absagen .+ bekommt eine Nachricht$/
 		])
 			await expect(menu.getByRole('menuitem', { name })).toBeTruthy();
+	}
+};
+
+export const CancelAsksFirst: Story = {
+	name: 'Entry actions — "Absagen" asks first',
+	play: async ({ canvasElement }) => {
+		await userEvent.click(await entryEl(canvasElement, 'a1'));
+		await userEvent.click(await findCy('calendar-entry-cancel'));
+		const dialog = await body().findByTestId('calendar-cancel-dialog');
+		await expect(within(dialog).getByText('Termin absagen?')).toBeTruthy();
+		await userEvent.click(
+			within(dialog).getByRole('button', { name: 'Nicht absagen' })
+		);
+		await waitFor(() =>
+			expect(body().queryByTestId('calendar-cancel-dialog')).toBeNull()
+		);
+		await expect(await entryEl(canvasElement, 'a1')).toBeTruthy();
 	}
 };
 
@@ -1079,7 +1837,7 @@ export const SettingsMenu: Story = {
 		const menu = within(await body().findByRole('menu'));
 		await expect(menu.getByText('Mo–Fr 08:00–18:00')).toBeTruthy();
 		await userEvent.click(
-			menu.getByRole('menuitemradio', { name: 'als Schalter' })
+			menu.getByRole('menuitemradio', { name: /^als Schalter/ })
 		);
 		await userEvent.keyboard('{Escape}');
 		await expect(
@@ -1092,7 +1850,7 @@ export const SettingsMenu: Story = {
 		);
 		await userEvent.click(
 			within(await body().findByRole('menu')).getByRole('menuitemradio', {
-				name: 'als Menü'
+				name: /^als Menü/
 			})
 		);
 		await userEvent.keyboard('{Escape}');
@@ -1132,16 +1890,21 @@ export const QuickTyped: Story = {
 		// The fields are what is saved: a changed duration wins.
 		await userEvent.click(await quickDuration());
 		await userEvent.click(
-			await body().findByRole('option', { name: '45 Min.' })
+			await body().findByRole('option', { name: '45 Min' })
 		);
 		await waitFor(async () =>
-			expect((await quickDuration()).textContent).toBe('45 Min.')
+			expect((await quickDuration()).textContent).toBe('45 Min')
 		);
 	}
 };
 
 export const QuickEntry: Story = {
 	name: 'Quick entry — next free half hour',
+	parameters: {
+		// The new half-hour entry is as tall as its duration (21 px at the
+		// default zoom); it stays reachable by keyboard and in the list view.
+		a11y: a11yExcept({ 'target-size': ['.calEntry'] })
+	},
 	play: async ({ canvasElement }) => {
 		const canvas = canvasOf(canvasElement);
 		const quick = within(
@@ -1155,6 +1918,15 @@ export const QuickEntry: Story = {
 		);
 		const pills = quick.getAllByRole('button', { name: /\d/ });
 		await expect(pills.length).toBeGreaterThan(0);
+		// The kind chips lead the box, in one row (Frank *5.1).
+		const kinds = canvasElement.querySelector<HTMLElement>(
+			'.calendarQuick__form > .calendarQuick__kinds:first-child'
+		)!;
+		await expect(kinds).toBeTruthy();
+		const tops = Array.from(kinds.children).map(
+			(chip) => (chip as HTMLElement).offsetTop
+		);
+		await expect(new Set(tops).size).toBe(1);
 		// Half an hour: the free pill fills date, start and 30 minutes.
 		await userEvent.click(await findCy('calendar-quick-slot-30'));
 		await userEvent.click(
@@ -1165,7 +1937,7 @@ export const QuickEntry: Story = {
 		await expect((await quickField('calendar-quick-date')).value).toBe(
 			'16.11.2026'
 		);
-		await expect((await quickDuration()).textContent).toBe('30 Min.');
+		await expect((await quickDuration()).textContent).toBe('30 Min');
 		await userEvent.click(
 			canvasElement.querySelector<HTMLElement>(
 				'[data-cy="calendar-quick-kind-blocker"]'
@@ -1195,6 +1967,36 @@ export const Phone: Story = {
 			menu.getByRole('menuitemcheckbox', { name: /A\. Kaya/ })
 		).toBeTruthy();
 		await userEvent.keyboard('{Escape}');
+	}
+};
+
+export const PhoneTouchTargets: Story = {
+	name: 'Counsellor — phone 390 px, controls at least 44 px (test finding C25)',
+	globals: phone390Globals,
+	args: { compact: true, initialView: 'threeDays' },
+	play: async ({ canvasElement }) => {
+		await findCy('calendar-previous');
+		const tall = (el: Element | null) =>
+			el ? Math.round(el.getBoundingClientRect().height) : 0;
+		const wide = (el: Element | null) =>
+			el ? Math.round(el.getBoundingClientRect().width) : 0;
+		for (const id of [
+			'calendar-previous',
+			'calendar-next',
+			'calendar-jump',
+			'calendar-today'
+		]) {
+			const el = canvasElement.querySelector(`[data-cy="${id}"]`);
+			await expect({ id, h: tall(el) >= 44, w: wide(el) >= 44 }).toEqual({
+				id,
+				h: true,
+				w: true
+			});
+		}
+		const search = canvasElement.querySelector(
+			'.calendarStage__search .sessionsListToolbar__searchInput'
+		);
+		await expect(tall(search)).toBeGreaterThanOrEqual(44);
 	}
 };
 
@@ -1249,7 +2051,9 @@ export const TabletRequests: Story = {
 	play: async () => {
 		await findCy('calendar-sheet');
 		const sheet = cyEl('calendar-sheet');
-		await expect(within(sheet).getByText('Offene Anfragen')).toBeTruthy();
+		await expect(
+			within(sheet).getByText('Offene Verschiebungen')
+		).toBeTruthy();
 		await expect(
 			sheet.querySelector('[data-cy="calendar-upcoming"]')
 		).toBeNull();
@@ -1423,9 +2227,20 @@ export const English: Story = {
 		await expect(
 			await canvas.findByRole('button', { name: 'More …' })
 		).toBeTruthy();
-		await expect(canvas.getByText('My calendar')).toBeTruthy();
-		await expect(canvas.getByText('Quick entry')).toBeTruthy();
-		await expect(canvas.getByRole('button', { name: 'Add' })).toBeTruthy();
+		// v17 header: "New entry" as the + button; quick entry is a region
+		// whose "Add" shows once the box is in use.
+		await expect(
+			canvas.getByRole('button', { name: 'New entry' })
+		).toBeTruthy();
+		const quick = within(
+			canvas.getByRole('region', { name: 'Quick entry' })
+		);
+		await userEvent.click(
+			quick.getByRole('textbox', { name: 'Quick entry' })
+		);
+		await expect(
+			await quick.findByRole('button', { name: 'Add' })
+		).toBeTruthy();
 	}
 };
 
@@ -1434,11 +2249,17 @@ export const CreateAppointment: Story = {
 	play: async ({ canvasElement }) => {
 		const canvas = canvasOf(canvasElement);
 		await userEvent.click(
-			await canvas.findByRole('button', { name: 'Termin anlegen' })
+			await canvas.findByRole('button', { name: 'Neuer Eintrag' })
 		);
-		const dialog = within(
-			await body().findByTestId('calendar-appointment-dialog')
-		);
+		const root = await body().findByTestId('calendar-appointment-dialog');
+		const dialog = within(root);
+		// An icon above the title, "Art" as four tiles (Frank *1, test C7).
+		await expect(
+			root.querySelector('.m3Dialog__heroIcon svg')
+		).toBeTruthy();
+		const phone = dialog.getByRole('button', { name: 'Telefon' });
+		await userEvent.click(phone);
+		await expect(phone.getAttribute('aria-pressed')).toBe('true');
 		await userEvent.click(dialog.getByTestId('calendar-appointment-save'));
 		await expect(await dialog.findByRole('alert')).toBeTruthy();
 	}
@@ -1475,6 +2296,147 @@ export const FilterKinds: Story = {
 			expect(
 				canvasElement.querySelectorAll('.calendarView .calEntry').length
 			).toBe(all)
+		);
+		// The accessibility audit runs after this: let a reload the filter
+		// started finish first, or axe sees the busy overlay over an empty
+		// all-day row (FE#2298 CI, 18 Nov).
+		await waitFor(
+			() =>
+				expect(
+					canvasElement.querySelector(
+						'[data-testid="calendar-loading"]'
+					)
+				).toBeNull(),
+			{ timeout: 5000 }
+		);
+	}
+};
+
+/** Review 4594645452: a chip that leaves the row takes its filter along. */
+export const ChipRemovedClearsFilter: Story = {
+	name: 'Settings — removing a chosen kind button clears its filter',
+	play: async ({ canvasElement }) => {
+		const canvas = canvasOf(canvasElement);
+		await canvas.findByTestId('calendar-view');
+		const count = () =>
+			canvasElement.querySelectorAll('.calendarView .calEntry').length;
+		await waitFor(() => expect(count()).toBeGreaterThan(0));
+		const all = count();
+		await userEvent.click(
+			canvasElement.querySelector<HTMLElement>(
+				'[data-cy="calendar-filter-phone"]'
+			)!
+		);
+		await waitFor(() => expect(count()).toBeLessThan(all));
+		await userEvent.click(
+			canvasElement.querySelector<HTMLElement>(
+				'[data-cy="calendar-kinds-button"]'
+			)!
+		);
+		await userEvent.click(
+			await body().findByRole('button', {
+				name: 'Als Knopf wählen: Telefon'
+			})
+		);
+		await userEvent.click(
+			await body().findByRole('menuitemradio', { name: /^Aus/ })
+		);
+		await waitFor(() => expect(count()).toBe(all));
+	}
+};
+
+/** Frank *14: the filter button opens "Ansicht · Kalender", as in Gespräche. */
+/**
+ * FE#2287: "Sprechstunden" sits under the working hours in ⋮. Advice
+ * seekers book only inside these windows; outside the notice days a
+ * booking is confirmed at once when "Automatisch bestätigen" is on.
+ */
+export const SettingsMenuWithConsultationHours: Story = {
+	name: 'Settings — ⋮ menu with Sprechstunden',
+	play: async ({ canvasElement }) => {
+		const canvas = canvasOf(canvasElement);
+		await userEvent.click(
+			await canvas.findByRole('button', {
+				name: 'Kalender-Einstellungen'
+			})
+		);
+		const menu = within(await body().findByRole('menu'));
+		await expect(
+			menu.getByRole('menuitem', { name: /Sprechstunden/ })
+		).toBeTruthy();
+	}
+};
+
+export const ConsultationHoursSettings: Story = {
+	name: 'Settings — Sprechstunden dialog',
+	play: async ({ canvasElement }) => {
+		const canvas = canvasOf(canvasElement);
+		await userEvent.click(
+			await canvas.findByRole('button', {
+				name: 'Kalender-Einstellungen'
+			})
+		);
+		await userEvent.click(
+			within(await body().findByRole('menu')).getByRole('menuitem', {
+				name: /Sprechstunden/
+			})
+		);
+		const dialog = within(
+			await body().findByTestId('calendar-consultation-hours-dialog')
+		);
+		// The design system's select, like "Bundesland" in the working hours.
+		await expect(
+			dialog.getByRole('combobox', { name: 'Dauer eines Termins' })
+		).toHaveTextContent('60 Min.');
+		await expect(
+			dialog.getByRole('combobox', { name: 'Vorlaufzeit' })
+		).toHaveTextContent('2 Tage');
+		// Show the settings at the end of the dialog, as after scrolling down.
+		dialog
+			.getByRole('combobox', { name: 'Dauer eines Termins' })
+			.scrollIntoView({ block: 'center' });
+	}
+};
+
+export const ViewSettings: Story = {
+	name: 'Settings — "Ansicht · Kalender" dialog',
+	play: async ({ canvasElement }) => {
+		const canvas = canvasOf(canvasElement);
+		await canvas.findByTestId('calendar-view');
+		await userEvent.click(
+			canvasElement.querySelector<HTMLElement>(
+				'[data-cy="calendar-kinds-button"]'
+			)!
+		);
+		await body().findByText('Ansicht · Kalender');
+		// "Als Knopf" off for phone: its button leaves the kind row.
+		await expect(
+			canvasElement.querySelector('[data-cy="calendar-filter-phone"]')
+		).toBeTruthy();
+		await userEvent.click(
+			await body().findByRole('button', {
+				name: 'Als Knopf wählen: Telefon'
+			})
+		);
+		await userEvent.click(
+			await body().findByRole('menuitemradio', { name: /^Aus/ })
+		);
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector('[data-cy="calendar-filter-phone"]')
+			).toBeNull()
+		);
+		// "Im Kalender" off for video: its entries leave the grid.
+		const before = canvasElement.querySelectorAll(
+			'.calendarView .calEntry'
+		).length;
+		await userEvent.click(
+			await body().findByRole('checkbox', { name: 'Im Kalender: Video' })
+		);
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelectorAll('.calendarView .calEntry').length
+			).toBeLessThan(before)
 		);
 	}
 };
@@ -1527,7 +2489,7 @@ export const AdviceSeeker: Story = {
 		const canvas = canvasOf(canvasElement);
 		await expect(await canvas.findByTestId('calendar-view')).toBeTruthy();
 		await expect(
-			canvas.queryByRole('button', { name: 'Termin anlegen' })
+			canvas.queryByRole('button', { name: 'Neuer Eintrag' })
 		).toBeNull();
 		await expect(
 			canvas.queryByRole('button', { name: 'Kalender-Einstellungen' })
@@ -1566,6 +2528,39 @@ const forgetEdgeChoice = () => {
 };
 
 const gripOf = (cy: string) => findCy(`calendar-grip-${cy}`);
+
+const showGripsAgain = () => {
+	try {
+		window.localStorage.removeItem(`oriso.calendar.grips.${ME}`);
+	} catch {
+		// Storage blocked: nothing remembered either.
+	}
+};
+
+export const GripsSwitchedOff: Story = {
+	name: 'Working hours — grips switched off in ⋮',
+	beforeEach: () => {
+		showGripsAgain();
+		return showGripsAgain;
+	},
+	play: async ({ canvasElement }) => {
+		const canvas = canvasOf(canvasElement);
+		await gripOf('2026-11-17-start');
+		await userEvent.click(
+			canvas.getByRole('button', { name: 'Kalender-Einstellungen' })
+		);
+		const toggle = within(await body().findByRole('menu')).getByRole(
+			'menuitemcheckbox',
+			{ name: /Arbeitszeit und Pause ziehen/ }
+		);
+		await expect(toggle.getAttribute('aria-checked')).toBe('true');
+		await userEvent.click(toggle);
+		await userEvent.keyboard('{Escape}');
+		await waitFor(() =>
+			expect(canvasElement.querySelector('[data-grip]')).toBeNull()
+		);
+	}
+};
 
 export const Grips: Story = {
 	name: 'Working hours — grips on the own calendar',
@@ -1789,6 +2784,32 @@ export const SplitGrips: Story = {
 	}
 };
 
+export const PauseLabel: Story = {
+	name: 'Working hours — "Pause" centred between its grips',
+	play: async ({ canvasElement }) => {
+		await canvasOf(canvasElement).findByTestId('calendar-view');
+		const pill = await waitFor(() => {
+			const el = canvasElement.querySelector<HTMLElement>(
+				'.calendarView__breakPill'
+			);
+			expect(el).toBeTruthy();
+			return el!;
+		});
+		const band = pill.closest<HTMLElement>(
+			'.calendarView__offHours--break'
+		)!;
+		const a = pill.getBoundingClientRect();
+		const b = band.getBoundingClientRect();
+		// The pill's middle is the band's middle (Frank *7.3).
+		await expect(
+			Math.abs(a.top + a.height / 2 - (b.top + b.height / 2))
+		).toBeLessThan(2);
+		await expect(
+			Math.abs(a.left + a.width / 2 - (b.left + b.width / 2))
+		).toBeLessThan(2);
+	}
+};
+
 // --- Single pieces ---
 
 export const WorkingHoursPiece: StoryObj = {
@@ -1829,13 +2850,18 @@ export const WorkingHoursPiece: StoryObj = {
 			dialog.getByRole('switch', { name: 'Feiertage frei' })
 		).toBeChecked();
 		const region = dialog.getByRole('combobox', { name: 'Bundesland' });
-		await expect((region as HTMLSelectElement).value).toBe('NW');
+		await expect(region).toHaveTextContent('Nordrhein-Westfalen');
 		await expect(
 			dialog.getByText(
 				'Nächster Feiertag: 1. Weihnachtstag, Fr., 25.12.2026'
 			)
 		).toBeTruthy();
-		await userEvent.selectOptions(region, 'SN');
+		await userEvent.click(region);
+		await userEvent.click(
+			await within(document.body).findByRole('option', {
+				name: 'Sachsen'
+			})
+		);
 		await expect(
 			dialog.getByText(
 				'Nächster Feiertag: Buß- und Bettag, Mi., 18.11.2026'

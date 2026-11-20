@@ -23,6 +23,7 @@ import { apiAddSessionSupervisor } from '../../api/apiAddSessionSupervisor';
 import { apiRemoveSessionSupervisor } from '../../api/apiRemoveSessionSupervisor';
 import { apiSendMessage } from '../../api/apiSendMessage';
 import { ConversationAppointmentSlot } from '../sessionsList/timeline/ConversationAppointmentSlot';
+import { ConversationNewLinkAction } from '../directInvitation/ConversationNewLinkAction';
 import {
 	NotificationsContext,
 	NOTIFICATION_TYPE_SUCCESS,
@@ -102,7 +103,10 @@ import { useTopic } from '../../globalState';
 import { Button, ButtonItem, BUTTON_TYPES } from '../button/Button';
 import { OrisoTextarea } from '../form/OrisoTextarea';
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
-import { useConversationFeatureSettings } from '../../hooks/useConversationFeatureSettings';
+import {
+	useConversationFeatureSettings,
+	useConversationFeatureSettingsSettled
+} from '../../hooks/useConversationFeatureSettings';
 import { SYSTEM_NOTIFICATION_PREFIX } from '../message/messageConstants';
 import { messageEventEmitter } from '../../services/messageEventEmitter';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
@@ -125,7 +129,13 @@ import {
 } from './SupervisorConsultantPicker';
 import { useSupervisorConsultantDirectory } from './useSupervisorConsultantDirectory';
 import { resolveRoomHeaderDensity } from './roomHeaderDensity';
+import { HeaderPlusMenu } from './HeaderPlusMenu';
+import { canRecommendFurtherCounselling } from '../furtherCounselling/furtherCounsellingRules';
+import { useCaseHandoverOffer } from '../caseHandover/useCaseHandoverOffer';
+import { CaseHandoverOffer } from '../caseHandover/CaseHandoverOffer';
+import { isPracticeId, isPracticeRoomId } from '../../practice/practiceIds';
 import { resolveAssignedConsultantLabel } from '../session/assignedConsultantLabel';
+import { AddonSessionActions } from '../../addons/AddonSessionActions';
 export interface SessionHeaderProps {
 	consultantAbsent?: SessionConsultantInterface;
 	hasUserInitiatedStopOrLeaveRequest?: React.MutableRefObject<boolean>;
@@ -201,6 +211,8 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		featureSupervisionAnonymousChatsEnabled = true,
 		featureSupervisionOneOnOneChatsEnabled = true
 	} = useConversationFeatureSettings(getTenantSettings());
+	const areConversationFeaturesSettled =
+		useConversationFeatureSettingsSettled();
 
 	const contact = getContact(activeSession);
 	const userSessionData = contact?.sessionData;
@@ -265,6 +277,13 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		: 'loading';
 	const isLoadingSupervisors = supervisorLoadState === 'loading';
 	const [isSupervisorModalOpen, setIsSupervisorModalOpen] = useState(false);
+	// Frank 17.11.2026: on desktop the "+" also offers "Beratung übergeben"
+	// to the assigned counsellor — the same audience and dialog as the ⋮
+	// entry (FE#2250). The phone keeps its grey "+" and the ⋮ entry.
+	const caseHandover = useCaseHandoverOffer();
+	const plusButtonRef = useRef<HTMLElement | null>(null);
+	const [plusMenuOpen, setPlusMenuOpen] = useState(false);
+	const closePlusMenu = useCallback(() => setPlusMenuOpen(false), []);
 	// FE#1960: "Termin anlegen" is a ⋮ menu entry; the appointment slot
 	// below the header owns the dialog and hands its opener up while
 	// creating is possible.
@@ -273,6 +292,14 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 	>(undefined);
 	const handleCreateAppointmentChange = useCallback(
 		(open?: () => void) => setOpenCreateAppointment(() => open),
+		[]
+	);
+	// #2252: "Neuen Link senden" while an invitation of this chat expired.
+	const [sendNewLink, setSendNewLink] = useState<(() => void) | undefined>(
+		undefined
+	);
+	const handleSendNewLinkChange = useCallback(
+		(open?: () => void) => setSendNewLink(() => open),
 		[]
 	);
 	const [supervisionReason, setSupervisionReason] = useState<string>('');
@@ -1163,10 +1190,41 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 								!activeSession.isGroup &&
 								!activeSession.isEnquiry,
 							isSupervisor,
-							isMobile: untilL
+							isMobile: untilL,
+							isSettled: areConversationFeaturesSettled
 						});
 						const canOpenSupervisorModal =
 							supervisorAddState.mode === 'interactive';
+						/* Practice conversations keep the direct "+": the
+						   supervision tour teaches exactly that click, and a
+						   handover could not leave the practice sandbox. */
+						const isPracticeConversation =
+							isPracticeId(activeSession.item.id) ||
+							isPracticeRoomId(activeSession.item.matrixRoomId);
+						const canHandOverHere =
+							!untilL &&
+							!isPracticeConversation &&
+							canRecommendFurtherCounselling({
+								isRejectedCase:
+									Number(activeSession.item.status) ===
+									STATUS_REJECTED,
+								isSessionOwner:
+									Boolean(activeSession.consultant?.id) &&
+									String(activeSession.consultant.id) ===
+										String(userData.userId),
+								isConsultant: !!hasUserAuthority(
+									AUTHORITIES.CONSULTANT_DEFAULT,
+									userData
+								),
+								isEnquiryList:
+									type === SESSION_LIST_TYPES.ENQUIRY,
+								isSession: Boolean(activeSession.isSession),
+								isGroup: Boolean(activeSession.isGroup),
+								isSupervisor: Boolean(isSupervisor)
+							});
+						/* With the handover the "+" opens a menu; it never waits
+						   for the supervision answer, the menu entry does. */
+						const plusOpensMenu = canHandOverHere;
 						/* FE#1115: only an unaccepted enquiry sweeps; empty ones and waiting
 						   live chats keep their avatar stack. No empty slot is reserved. */
 						const isSearchingForConsultant =
@@ -1189,17 +1247,57 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 										!activeSession.isEnquiry
 									}
 									addLabel={translate(
-										supervisorAddState.labelKey
+										plusOpensMenu
+											? 'sessionHeader.supervisor.plusMenu.menuLabel'
+											: supervisorAddState.labelKey
 									)}
+									addPending={
+										!plusOpensMenu &&
+										supervisorAddState.mode === 'pending'
+									}
+									addExpanded={
+										plusOpensMenu ? plusMenuOpen : undefined
+									}
 									onAddClick={
-										canOpenSupervisorModal
-											? () =>
-													setIsSupervisorModalOpen(
-														true
-													)
-											: undefined
+										plusOpensMenu
+											? (event) => {
+													if (plusMenuOpen) {
+														closePlusMenu();
+														return;
+													}
+													plusButtonRef.current =
+														event.currentTarget;
+													setPlusMenuOpen(true);
+												}
+											: canOpenSupervisorModal
+												? () =>
+														setIsSupervisorModalOpen(
+															true
+														)
+												: undefined
 									}
 								/>
+								{plusOpensMenu && plusMenuOpen && (
+									<HeaderPlusMenu
+										opener={plusButtonRef}
+										supervisionAvailable={
+											canOpenSupervisorModal
+										}
+										supervisionUnavailableLabel={
+											supervisorAddState.mode ===
+											'pending'
+												? undefined
+												: translate(
+														supervisorAddState.labelKey
+													)
+										}
+										onSupervision={() =>
+											setIsSupervisorModalOpen(true)
+										}
+										onHandover={caseHandover.handleOpen}
+										onClose={closePlusMenu}
+									/>
+								)}
 								{!isSearchingForConsultant && (
 									<ParticipantAvatarStack
 										{...HEADER_STACK_PROPS}
@@ -1231,6 +1329,9 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 						)
 					) : null}
 				</div>
+				{hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) &&
+					!activeSession.isGroup &&
+					!activeSession.isEnquiry && <AddonSessionActions />}
 				{/* Anonymous end/delete actions live in SessionMenu on all breakpoints. */}
 				{/* Supervisor Management Button replaced by the "+" overlay on
 				    the avatar stack above. Keeping the render behind a hard
@@ -1283,6 +1384,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 					}
 					callsInMenu={callsInMenu}
 					onCreateAppointment={openCreateAppointment}
+					onSendNewLink={sendNewLink}
 					isAskerInfoAvailable={isAskerInfoAvailable()}
 					bannedUsers={props.bannedUsers}
 					isSupervisor={isSupervisor}
@@ -1349,6 +1451,16 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 					{topic?.name && <SessionTopic name={topic.name} />}
 				</div>
 			)}
+			{activeSession.isSession && isConsultantUser && (
+				<ConversationNewLinkAction
+					sessionId={activeSession.item.id}
+					/* Also archived: the expiry archives the appointment
+					   conversation, and a new link reopens it. The backend
+					   answers only for the invitation's own counsellor. */
+					enabled
+					onChange={handleSendNewLinkChange}
+				/>
+			)}
 			{activeSession.isSession && (isAskerUser || isConsultantUser) && (
 				<ConversationAppointmentSlot
 					onCreateChange={handleCreateAppointmentChange}
@@ -1375,6 +1487,8 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 						email={userData.email}
 					/>
 				)}
+
+			<CaseHandoverOffer handover={caseHandover} presentation="dialog" />
 
 			{/* Supervisor Management Modal - Rendered via Portal */}
 			{isSupervisionEnabledForCurrentChat &&

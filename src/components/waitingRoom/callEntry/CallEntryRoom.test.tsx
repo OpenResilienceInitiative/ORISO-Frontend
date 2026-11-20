@@ -39,13 +39,20 @@ vi.mock('./SpeakerTest', () => ({ SpeakerTest: () => null }));
 vi.mock('./CallEntryIdentity', () => ({
 	CallEntryIdentity: ({
 		username,
-		onUsernameChange
+		onUsernameChange,
+		hidePassword,
+		password
 	}: CallEntryIdentityProps) => (
-		<input
-			aria-label="User-ID"
-			value={username}
-			onChange={(event) => onUsernameChange(event.target.value)}
-		/>
+		<>
+			<input
+				aria-label="User-ID"
+				value={username}
+				onChange={(event) => onUsernameChange(event.target.value)}
+			/>
+			{!hidePassword && (
+				<input aria-label="Passwort" value={password} readOnly />
+			)}
+		</>
 	)
 }));
 
@@ -91,5 +98,67 @@ describe('the User-ID in the call entry room', () => {
 		rerender(room(true));
 
 		expect(field().value).toBe(suggested);
+	});
+});
+
+/* UserService#1662: a link whose mode lets the guest choose. */
+describe('the account choice in the call entry room', () => {
+	afterEach(cleanup);
+
+	const choiceRoom = (temporary: boolean, onToggle = vi.fn()) => (
+		<CallEntryRoom
+			{...({
+				modality: 'video',
+				devices: { camera: [], microphone: [], speaker: [] },
+				micLevel: 0,
+				onJoin: () => undefined,
+				hidePassword: temporary,
+				accountChoice: { temporary, onToggle }
+			} as unknown as CallEntryRoomProps)}
+		/>
+	);
+
+	it('offers an account while joining without one, and says what that means', () => {
+		const onToggle = vi.fn();
+		render(choiceRoom(true, onToggle));
+		expect(
+			screen.getByText('guestAccountMode.entry.temporaryNote')
+		).toBeTruthy();
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'guestAccountMode.entry.withAccount'
+			})
+		);
+		expect(onToggle).toHaveBeenCalledOnce();
+	});
+
+	it('offers to join without an account once the guest chose one', () => {
+		render(choiceRoom(false));
+		expect(
+			screen.getByText('guestAccountMode.entry.accountNote')
+		).toBeTruthy();
+		expect(
+			screen.getByRole('button', {
+				name: 'guestAccountMode.entry.withoutAccount'
+			})
+		).toBeTruthy();
+	});
+
+	it('shows no choice without one', () => {
+		render(room(true));
+		expect(
+			screen.queryByRole('button', { name: /guestAccountMode.entry/ })
+		).toBeNull();
+	});
+
+	it('keeps a working password when the field hides again', () => {
+		const { rerender } = render(choiceRoom(false));
+		const typed = screen.getByLabelText<HTMLInputElement>('Passwort');
+		expect(typed.value).toBe('');
+		rerender(choiceRoom(true));
+		rerender(choiceRoom(false));
+		expect(
+			screen.getByLabelText<HTMLInputElement>('Passwort').value.length
+		).toBeGreaterThanOrEqual(16);
 	});
 });

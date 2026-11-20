@@ -35,6 +35,14 @@ if (typeof window.ResizeObserver === 'undefined')
 	} as unknown as typeof ResizeObserver;
 if (!HTMLElement.prototype.scrollTo)
 	HTMLElement.prototype.scrollTo = () => undefined;
+// jsdom has no PointerEvent: a press would carry no position.
+if (typeof window.PointerEvent === 'undefined')
+	Object.defineProperty(window, 'PointerEvent', {
+		configurable: true,
+		value: class PointerEvent extends MouseEvent {
+			pointerId = 1;
+		}
+	});
 if (!window.matchMedia)
 	window.matchMedia = ((query: string) => ({
 		matches: false,
@@ -104,7 +112,7 @@ const Grid = (
 const bandLabels = () =>
 	Array.from(
 		document.querySelectorAll<HTMLElement>('[data-cy="calendar-band"]')
-	).map((band) => band.textContent);
+	).map((band) => band.querySelector('.calendarView__bandText')?.textContent);
 const shownEntry = (id: string) =>
 	document.querySelector(`[data-entry-id="${id}"]`);
 
@@ -124,6 +132,54 @@ describe('CalendarView — colleagues as bands in the time grid', () => {
 		expect(all).toHaveLength(1);
 	});
 
+	it('shows who is busy in a band, avatar and name like the people chips (Frank *16)', async () => {
+		render(<Grid view="workWeek" />);
+		await waitFor(() => expect(bandLabels()).toHaveLength(3));
+		const people = Array.from(
+			document.querySelectorAll<HTMLElement>('[data-cy="calendar-band"]')
+		).map((band) =>
+			Array.from(
+				band.querySelectorAll<HTMLElement>('.calendarView__bandPerson')
+			).map((person) => [
+				person.querySelector('.calendarView__bandAvatar')?.textContent,
+				person.querySelector('.calendarView__bandName')?.textContent
+			])
+		);
+		// Kaya 10–12, Berg 11–13: in the order of the people bar.
+		expect(people).toEqual([
+			[['AK', 'A. Kaya']],
+			[
+				['AK', 'A. Kaya'],
+				['CB', 'C. Berg']
+			],
+			[['CB', 'C. Berg']]
+		]);
+		// The same colour as the person's chip in the people bar.
+		const avatar = document.querySelector('.calendarView__bandAvatar');
+		expect(avatar?.className).toMatch(/calAvatar--tone-\d/);
+		expect(avatar?.getAttribute('aria-hidden')).toBe('true');
+	});
+
+	it('gives the one colleague shown an avatar and no second name', async () => {
+		render(
+			<Grid
+				view="day"
+				entries={ENTRIES.filter((e) => e.ownerId !== 'berg')}
+				bandPeople={[KAYA]}
+			/>
+		);
+		await waitFor(() => expect(bandLabels()).toHaveLength(1));
+		const band = document.querySelector('[data-cy="calendar-band"]')!;
+		expect(
+			band.querySelector(
+				'.calendarView__bandLabel .calendarView__bandAvatar'
+			)?.textContent
+		).toBe('AK');
+		expect(band.querySelectorAll('.calendarView__bandPerson')).toHaveLength(
+			0
+		);
+	});
+
 	it('names the one colleague shown', async () => {
 		render(
 			<Grid
@@ -134,6 +190,56 @@ describe('CalendarView — colleagues as bands in the time grid', () => {
 		);
 		await waitFor(() => expect(bandLabels()).toHaveLength(1));
 		expect(bandLabels()[0]).toBe('calendar.bandOne {"name":"A. Kaya"}');
+	});
+
+	it('hands a click on a band to the page, which opens the card (Frank *16.2)', async () => {
+		const onBandOpen = vi.fn();
+		render(<Grid view="workWeek" onBandOpen={onBandOpen} />);
+		await waitFor(() => expect(bandLabels()).toHaveLength(3));
+		const second = document.querySelectorAll<HTMLElement>(
+			'[data-cy="calendar-band"]'
+		)[1];
+		fireEvent.pointerDown(second, { clientX: 5, clientY: 5 });
+		fireEvent.click(second, { clientX: 5, clientY: 5 });
+		expect(onBandOpen).toHaveBeenCalledTimes(1);
+		const [band, el] = onBandOpen.mock.calls[0];
+		expect(band.busy).toEqual(['kaya', 'berg']);
+		expect(el).toBe(second);
+	});
+
+	it('takes no drag over a band for a click on it', async () => {
+		const onBandOpen = vi.fn();
+		render(<Grid view="workWeek" onBandOpen={onBandOpen} />);
+		await waitFor(() => expect(bandLabels()).toHaveLength(3));
+		const first = document.querySelector<HTMLElement>(
+			'[data-cy="calendar-band"]'
+		)!;
+		fireEvent.pointerDown(first, { clientX: 5, clientY: 5 });
+		fireEvent.click(first, { clientX: 5, clientY: 60 });
+		expect(onBandOpen).not.toHaveBeenCalled();
+	});
+
+	it('marks the band the card is about', async () => {
+		const { rerender } = render(<Grid view="workWeek" />);
+		await waitFor(() => expect(bandLabels()).toHaveLength(3));
+		const selected = () =>
+			Array.from(
+				document.querySelectorAll<HTMLElement>(
+					'[data-cy="calendar-band"]'
+				)
+			).map((band) => band.dataset.selected === 'true');
+		expect(selected()).toEqual([false, false, false]);
+		rerender(
+			<Grid
+				view="workWeek"
+				selectedBand={{
+					start: new Date(2026, 10, 16, 11),
+					end: new Date(2026, 10, 16, 12),
+					busy: ['kaya', 'berg']
+				}}
+			/>
+		);
+		await waitFor(() => expect(selected()).toEqual([false, true, false]));
 	});
 
 	it('tells who is busy and who is free on hover', async () => {

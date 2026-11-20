@@ -213,13 +213,13 @@ describe('practiceAcceptTour (flow F1)', () => {
 		expect(practiceAcceptTour.when).toBeUndefined();
 	});
 
-	it('warns about the team discussion closing in the team step, before accepting', () => {
+	it('warns about the team chat closing in the team step, before accepting', () => {
 		const teamReply = practiceAcceptTour.steps.find(
 			(s) => s.id === 'team-reply'
 		)!;
 		expect(
 			resolveKey(deTranslations, teamReply.contentKey) as string
-		).toMatch(/Team-?[Bb]esprechung.*(geschlossen|schließt|endet)/);
+		).toMatch(/Team-Chat.*(geschlossen|schließt|endet)/);
 	});
 });
 
@@ -343,7 +343,11 @@ describe('practice tour wiring', () => {
 			'**/*.stories.*',
 			'src/components/productTour/**'
 		]
-	}).map((path) => readFileSync(path, 'utf8'));
+	})
+		// The navigation renders `nav-<slug>` from this map (FE#2340); it is
+		// the one productTour file that holds rendered anchors, not tours.
+		.concat('src/components/productTour/tourCatalogue.ts')
+		.map((path) => readFileSync(path, 'utf8'));
 
 	const targetsOf = (tour: TourDefinition): string[] =>
 		tour.steps.flatMap((step) => {

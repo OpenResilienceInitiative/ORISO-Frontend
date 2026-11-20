@@ -11,11 +11,17 @@
 // Pill entry of the appointment lists (Activity Timeline, counsellor calendar)
 @import './listEntryPill';
 
+// Fixed-height kit textarea (group-chat welcome and rule editors)
+@import './fixedTextareaBox';
+
 // Global topic tag colour tokens + mixins
 @import './topicTag';
 
 // Room-header call controls — one size for the chat header AND the side room
 @import './headerCallButtons';
+
+// Floating action button — one look for every FAB (channel switcher, tour launcher)
+@import './floatingActionButton';
 
 // Formatted message text — one look in the composer AND the message bubble
 @import './richTextContent';

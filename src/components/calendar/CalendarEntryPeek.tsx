@@ -2,27 +2,25 @@
  * The small card that explains an entry without opening it: on a
  * colleague's entry in the grid (name, Beratungsstelle, kind, time) and on
  * a row of "Als Nächstes" (kind, person, full time, place). Shown at once on
- * hover and on keyboard focus (Frank, 2026-11-14).
+ * hover and on keyboard focus (Frank, 2026-11-14). Prototype v17: a 40 px
+ * avatar in the person's colour, "in 10 Min. · Klick öffnet die Aktionen"
+ * under the list's card, and a dark tip over the grid.
  */
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import type { CalendarEntry, Colleague } from './calendarModel';
 import { CalendarEntryGlyph, facetOf } from './CalendarEntryGlyph';
 import type { MoveProposal } from './calendarActions';
+import { CalendarPersonAvatar } from './CalendarPersonAvatar';
+import { AVATAR_SIZES } from '../pseudonym/avatarSizes';
+import { useShortTime } from './calendarShortTime';
 import {
 	useEntryKindLabel,
 	useEntryLabel,
 	useRangeFormat
 } from './useEntryLabel';
 
-/** "A. Kaya" → "AK", "ruhiges_yak" → "RY". */
-export const initialsOf = (name: string) =>
-	name
-		.split(/[\s._-]+/)
-		.filter(Boolean)
-		.slice(0, 2)
-		.map((part) => part[0]!.toUpperCase())
-		.join('');
+export { initialsOf } from './calendarAvatar';
 
 export interface CalendarEntryPeekProps {
 	entry: CalendarEntry;
@@ -33,6 +31,10 @@ export interface CalendarEntryPeekProps {
 	proposalStatus?: string;
 	/** "Klick öffnet die Aktionen" under the card (Als Nächstes). */
 	clickHint?: boolean;
+	/** With the hint: how soon it is, "in 10 Min." (prototype v17). */
+	now?: Date;
+	/** `tip`: the dark tooltip over the grid (prototype v17). */
+	variant?: 'card' | 'tip';
 	role?: 'tooltip';
 	id?: string;
 }
@@ -43,10 +45,13 @@ export const CalendarEntryPeek = ({
 	proposal,
 	proposalStatus,
 	clickHint,
+	now,
+	variant = 'card',
 	role,
 	id
 }: CalendarEntryPeekProps) => {
 	const { t } = useTranslation();
+	const shortTime = useShortTime();
 	const label = useEntryLabel();
 	const format = useRangeFormat();
 	const facet = facetOf(entry);
@@ -58,7 +63,7 @@ export const CalendarEntryPeek = ({
 	const person = colleague?.displayName ?? label(entry, !!colleague);
 	return (
 		<div
-			className={`calendarPeek calendarPeek--k-${facet}`}
+			className={`calendarPeek calendarPeek--k-${facet}${variant === 'tip' ? ' calendarPeek--tip' : ''}`}
 			role={role}
 			id={id}
 		>
@@ -69,9 +74,12 @@ export const CalendarEntryPeek = ({
 				{proposal ? t('calendar.proposal.label') : kindLabel}
 			</span>
 			<span className="calendarPeek__person">
-				<span className="calendarPeek__avatar" aria-hidden="true">
-					{initialsOf(person)}
-				</span>
+				<CalendarPersonAvatar
+					className="calendarPeek__avatar"
+					name={person}
+					avatar={colleague ? undefined : entry.avatar}
+					size={AVATAR_SIZES.session}
+				/>
 				<span className="calendarPeek__name">
 					<strong>{person}</strong>
 					{colleague?.agencyShort && (
@@ -107,7 +115,18 @@ export const CalendarEntryPeek = ({
 			)}
 			{clickHint && (
 				<span className="calendarPeek__hint">
-					{t('calendar.peek.hint')}
+					{[
+						now &&
+							!entry.allDay &&
+							shortTime(
+								new Date(entry.start),
+								now,
+								new Date(entry.end)
+							),
+						t('calendar.peek.hint')
+					]
+						.filter(Boolean)
+						.join(' · ')}
 				</span>
 			)}
 		</div>

@@ -55,10 +55,12 @@ export const profileRoutesSettings = (
 			{
 				// #1979: advice seekers only where the Admin permissions allow
 				// e-mail; the counsellor panel is not governed by them.
+				// UserService#1662: a temporary account has no e-mail until kept.
 				condition: (userData) =>
-					hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
+					!userData?.temporaryAccount &&
+					(hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
 						? usesNewNotifications(settings)
-						: askerHasEmailSettings(settings, tenantSettings),
+						: askerHasEmailSettings(settings, tenantSettings)),
 				component: EmailNotification,
 				column: COLUMN_LEFT,
 				order: 1
@@ -83,7 +85,8 @@ export const profileRoutesSettings = (
 			// Legacy per-browser pop-up switch; the cross-device panel owns
 			// this screen once enableNewNotifications is on (#1551).
 			{
-				condition: () =>
+				condition: (userData) =>
+					!userData?.temporaryAccount &&
 					!usesNewNotifications(settings) &&
 					!!isBrowserNotificationSupported(),
 				component: BrowserNotification,

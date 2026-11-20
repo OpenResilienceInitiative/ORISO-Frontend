@@ -1,7 +1,8 @@
 import * as React from 'react';
 import { useId } from 'react';
 import TuneIcon from '@mui/icons-material/Tune';
-import clsx from 'clsx';
+import { ToggleButton, ToggleButtonGroup } from '@mui/material';
+import CheckIcon from '@mui/icons-material/Check';
 import { M3Dialog } from '../m3Dialog/M3Dialog';
 import { Switch } from '../Switch';
 import {
@@ -137,6 +138,11 @@ export interface DisplayFilterDialogProps {
 	browserUnavailableReason?: string;
 	/** Set while delivery holds pop-ups back (mute, DND): a notice, cells stay editable. */
 	browserMutedNotice?: string;
+	/**
+	 * Which chip-look controls to offer: all (default), only the view (the
+	 * calendar has no unread order to sort by) or none.
+	 */
+	showPresentation?: boolean | 'view';
 }
 
 export interface DisplayFilterColumns {
@@ -161,6 +167,36 @@ export const SESSION_COLUMNS: DisplayFilterColumns = {
  * and sections it really has. Presentational: the caller owns the value
  * (slice 2 store), the e-mail column and the list integration.
  */
+/** M3 segmented button: outlined pill, secondary-container fill when selected. */
+const segmentedSx = {
+	'borderRadius': '999px',
+	'& .MuiToggleButton-root': {
+		'minHeight': 32,
+		'px': '14px',
+		'py': 0,
+		'border': 0,
+		'borderRadius': 0,
+		'textTransform': 'none',
+		'fontSize': 12,
+		'fontWeight': 500,
+		'lineHeight': '16px',
+		'letterSpacing': '0.5px',
+		'color': 'var(--m3-on-surface, #1b1b1c)',
+		'& + .MuiToggleButton-root': {
+			borderLeft: '1px solid var(--m3-outline, #74777f)'
+		},
+		'&.Mui-selected, &.Mui-selected:hover': {
+			backgroundColor: 'var(--m3-secondary-container, #e4e2e2)',
+			color: 'var(--m3-on-secondary-container, #1b1b1c)'
+		},
+		'&.Mui-focusVisible': {
+			outline: '2px solid var(--m3-primary, #a5000a)',
+			outlineOffset: '-2px'
+		},
+		'&.Mui-disabled': { opacity: 0.38 }
+	}
+} as const;
+
 export const DisplayFilterDialog = ({
 	open,
 	onClose,
@@ -180,7 +216,8 @@ export const DisplayFilterDialog = ({
 	icon,
 	email,
 	browserUnavailableReason,
-	browserMutedNotice
+	browserMutedNotice,
+	showPresentation = true
 }: DisplayFilterDialogProps) => {
 	const controlsDisabled = !canWrite || readOnly;
 	// Show-only kinds (the future timeline panel) have no row in the sound
@@ -327,80 +364,139 @@ export const DisplayFilterDialog = ({
 
 			<section
 				className="displayFilterDialog__section"
-				aria-labelledby={`${dialogId}-presentation`}
+				aria-labelledby={
+					showPresentation ? `${dialogId}-presentation` : undefined
+				}
 			>
-				<h3
-					className="displayFilterDialog__sectionTitle"
-					id={`${dialogId}-presentation`}
-				>
-					{labels.presentationHeading}
-				</h3>
-				<fieldset
-					className="displayFilterDialog__view"
-					data-cy="display-filter-view"
-				>
-					<legend className="sr-only">{labels.viewTitle}</legend>
-					<div
-						className="displayFilterDialog__viewOptions"
-						role="radiogroup"
-						aria-label={labels.viewTitle}
-					>
-						{CHIP_VIEWS.map((view) => (
-							<label
-								key={view}
-								className={clsx(
-									'displayFilterDialog__viewOption',
-									presentation.view === view &&
-										'displayFilterDialog__viewOption--selected'
-								)}
+				{showPresentation && (
+					<>
+						<h3
+							className="displayFilterDialog__sectionTitle"
+							id={`${dialogId}-presentation`}
+						>
+							{labels.presentationHeading}
+						</h3>
+						<fieldset
+							className="displayFilterDialog__view"
+							data-cy="display-filter-view"
+						>
+							<legend className="sr-only">
+								{labels.viewTitle}
+							</legend>
+							{/* M3 single-select segmented button (MUI ToggleButtonGroup)
+							    with the radio-group semantics, roving focus and arrow
+							    keys of the radios it replaced; the chosen segment
+							    carries a check (M3), not colour alone. */}
+							<ToggleButtonGroup
+								exclusive
+								role="radiogroup"
+								size="small"
+								className="displayFilterDialog__viewOptions"
+								aria-label={labels.viewTitle}
+								value={presentation.view}
+								disabled={controlsDisabled}
+								onChange={(_, view: ChipView | null) => {
+									if (view) setView(view);
+								}}
+								// The radios it replaced moved with the arrow keys;
+								// MUI's group does not, so keep that here.
+								onKeyDown={(event) => {
+									if (controlsDisabled) return;
+									const step =
+										event.key === 'ArrowRight' ||
+										event.key === 'ArrowDown'
+											? 1
+											: event.key === 'ArrowLeft' ||
+												  event.key === 'ArrowUp'
+												? -1
+												: 0;
+									if (!step) return;
+									event.preventDefault();
+									const index = CHIP_VIEWS.indexOf(
+										presentation.view
+									);
+									const next =
+										CHIP_VIEWS[
+											(index + step + CHIP_VIEWS.length) %
+												CHIP_VIEWS.length
+										];
+									setView(next);
+									event.currentTarget
+										.querySelector<HTMLElement>(
+											`[data-cy="display-filter-view-${next}"]`
+										)
+										?.focus();
+								}}
+								sx={segmentedSx}
 							>
-								<input
-									type="radio"
-									name={`${dialogId}-view`}
-									value={view}
-									checked={presentation.view === view}
-									disabled={controlsDisabled}
-									onChange={() => setView(view)}
-									data-cy={`display-filter-view-${view}`}
-								/>
-								<span>
-									{view === 'icons'
-										? labels.viewIcons
-										: view === 'labels'
-											? labels.viewLabels
-											: labels.viewText}
-								</span>
-							</label>
-						))}
-					</div>
-				</fieldset>
+								{CHIP_VIEWS.map((view) => (
+									<ToggleButton
+										key={view}
+										value={view}
+										disableRipple
+										role="radio"
+										aria-pressed={undefined}
+										aria-checked={
+											presentation.view === view
+										}
+										tabIndex={
+											presentation.view === view ? 0 : -1
+										}
+										data-cy={`display-filter-view-${view}`}
+									>
+										{presentation.view === view && (
+											<CheckIcon
+												aria-hidden
+												sx={{
+													fontSize: 18,
+													mr: 0.5,
+													ml: -0.5
+												}}
+											/>
+										)}
+										{view === 'icons'
+											? labels.viewIcons
+											: view === 'labels'
+												? labels.viewLabels
+												: labels.viewText}
+									</ToggleButton>
+								))}
+							</ToggleButtonGroup>
+						</fieldset>
 
-				<div className="displayFilterDialog__autoRead">
-					<div className="displayFilterDialog__autoReadText">
-						<span
-							className="displayFilterDialog__autoReadTitle"
-							id={`${dialogId}-autosort`}
-						>
-							{labels.autoSort}
-						</span>
-						<span
-							className="displayFilterDialog__autoReadDescription"
-							id={`${dialogId}-autosort-desc`}
-						>
-							{labels.autoSortDescription}
-						</span>
-					</div>
-					<Switch
-						checked={presentation.autoSort}
-						disabled={controlsDisabled}
-						aria-labelledby={`${dialogId}-autosort`}
-						aria-describedby={`${dialogId}-autosort-desc`}
-						data-cy="display-filter-autosort"
-						onChange={(checked) =>
-							onChange({ ...value, autoSort: checked })
-						}
-					/>
-				</div>
+						{showPresentation === true && (
+							<div className="displayFilterDialog__autoRead">
+								<div className="displayFilterDialog__autoReadText">
+									<span
+										className="displayFilterDialog__autoReadTitle"
+										id={`${dialogId}-autosort`}
+									>
+										{labels.autoSort}
+									</span>
+									<span
+										className="displayFilterDialog__autoReadDescription"
+										id={`${dialogId}-autosort-desc`}
+									>
+										{labels.autoSortDescription}
+									</span>
+								</div>
+								<Switch
+									checked={presentation.autoSort}
+									disabled={controlsDisabled}
+									aria-labelledby={`${dialogId}-autosort`}
+									aria-describedby={`${dialogId}-autosort-desc`}
+									data-cy="display-filter-autosort"
+									onChange={(checked) =>
+										onChange({
+											...value,
+											autoSort: checked
+										})
+									}
+								/>
+							</div>
+						)}
+					</>
+				)}
 
 				{panelKinds.map((kind) => (
 					<div

@@ -1,3 +1,9 @@
+import {
+	extractPassageBlurEvents,
+	groupPassageBlurs,
+	PASSAGE_BLUR_EVENT_TYPE,
+	withPassageBlurs
+} from '../selectionReply/passageBlurEvents';
 import { notificationConversationType } from '../erstantwort/notificationConversationType';
 import { isPendingCaseHandoverStatus } from '../../api/apiCaseHandover';
 import * as React from 'react';
@@ -95,6 +101,7 @@ import { HistoryRequestApprovals } from '../historyRequest/HistoryRequestApprova
 const EMPTY_MESSAGES: MessageItem[] = [];
 /** Browsers fire a longer setTimeout immediately. */
 const MAX_TIMEOUT_MS = 2 ** 31 - 1;
+const TIMELINE_REFRESH_WINDOW_MS = 120;
 
 // Practice rooms (FE#1622) have no keys to fetch; parked in the real
 // key-transfer singleton they would be retried on the real client.
@@ -524,13 +531,23 @@ export const SessionStream = ({
 				// Side-room reactions stay out of the client timeline; the
 				// panel renders its bubbles without reactions.
 				const reactionEvents = [...extractReactionEvents(clientEvents)];
+				// Moderator blurs (#2229): position-only events next to the
+				// message, folded onto it here; a lifted blur is redacted.
+				const passageBlurs = groupPassageBlurs(
+					extractPassageBlurEvents(clientEvents)
+				);
 
 				setMessagesItem({
-					messages: prepareRoomMessages(
-						clientEvents,
-						resolvedMatrixRoomId
+					messages: withPassageBlurs(
+						prepareRoomMessages(clientEvents, resolvedMatrixRoomId),
+						passageBlurs
 					),
-					reactionEvents
+					reactionEvents,
+					passageBlurSenders: new Map(
+						[...passageBlurs.values()]
+							.flat()
+							.map((blur) => [blur.id, blur.senderId])
+					)
 				});
 				setSupervisionMessages(
 					supervisionRoomId
@@ -866,11 +883,19 @@ export const SessionStream = ({
 
 		let retryTimer: number | null = null;
 		let earlierRefreshTimer: number | null = null;
+		let trailingRefreshTimer: number | null = null;
 		let receiptRefreshTimer: number | null = null;
 		let arrivalReadTimer: number | null = null;
 		let detachTimelineListeners: Array<() => void> = [];
 		let lastRefreshAt = 0;
+		const cancelTrailingRefresh = () => {
+			if (trailingRefreshTimer !== null) {
+				window.clearTimeout(trailingRefreshTimer);
+				trailingRefreshTimer = null;
+			}
+		};
 		const refreshMessages = () => {
+			cancelTrailingRefresh();
 			lastRefreshAt = Date.now();
 			fetchSessionMessages().catch(() => {
 				// keep UI stable if a timeline event races with navigation
@@ -895,6 +920,8 @@ export const SessionStream = ({
 					// not a message, but still needs a live refresh so
 					// aggregateReactions() picks it up for other members.
 					eventType !== 'm.reaction' &&
+					// A moderator's blur (#2229) shows for everyone at once.
+					eventType !== PASSAGE_BLUR_EVENT_TYPE &&
 					eventType !== 'm.room.redaction'
 				) {
 					return;
@@ -907,6 +934,7 @@ export const SessionStream = ({
 					!toStartOfTimeline &&
 					room?.roomId === clientRoomId &&
 					eventType !== 'm.reaction' &&
+					eventType !== PASSAGE_BLUR_EVENT_TYPE &&
 					eventType !== 'm.room.redaction' &&
 					event?.getSender?.() !== room?.myUserId &&
 					// Only a message the person can read counts; the transport
@@ -930,11 +958,18 @@ export const SessionStream = ({
 					return;
 				}
 
-				// Coalesce encrypted/metadata bursts, but never drop a clear message:
-				// delayed Matrix decryption mutates the event after its fallback rendered.
-				const now = Date.now();
-				const elapsed = now - lastRefreshAt;
-				if (eventType !== 'm.room.message' && elapsed < 120) {
+				// Read once more at the end of the window for encrypted or metadata
+				// events that arrived since the latest read. Clear messages still
+				// refresh immediately, including after delayed Matrix decryption.
+				const remaining =
+					TIMELINE_REFRESH_WINDOW_MS - (Date.now() - lastRefreshAt);
+				if (eventType !== 'm.room.message' && remaining > 0) {
+					if (trailingRefreshTimer === null) {
+						trailingRefreshTimer = window.setTimeout(
+							refreshMessages,
+							remaining
+						);
+					}
 					return;
 				}
 				refreshMessages();
@@ -950,7 +985,7 @@ export const SessionStream = ({
 				.filter(Boolean) as Array<() => void>;
 			// A deletion (ours included) must show at once, not with the next
 			// unrelated event: refresh when the SDK marks the message redacted.
-			// Not refreshMessages(): stamping lastRefreshAt would drop an
+			// Not refreshMessages(): stamping lastRefreshAt would delay an
 			// encrypted message arriving in the same sync batch.
 			const handleRedaction = () => {
 				fetchSessionMessages().catch(() => {
@@ -982,7 +1017,7 @@ export const SessionStream = ({
 				if (receiptRefreshTimer !== null) return;
 				receiptRefreshTimer = window.setTimeout(() => {
 					receiptRefreshTimer = null;
-					// Not refreshMessages(): stamping lastRefreshAt would drop a
+					// Not refreshMessages(): stamping lastRefreshAt would delay a
 					// reaction or redaction arriving in the next 120 ms.
 					fetchSessionMessages().catch(() => {
 						// keep UI stable if a receipt races with navigation
@@ -1050,6 +1085,7 @@ export const SessionStream = ({
 			}
 			if (earlierRefreshTimer !== null)
 				window.clearTimeout(earlierRefreshTimer);
+			cancelTrailingRefresh();
 			if (receiptRefreshTimer !== null)
 				window.clearTimeout(receiptRefreshTimer);
 			if (arrivalReadTimer !== null)
@@ -1768,6 +1804,7 @@ export const SessionStream = ({
 				typingUsers={matrixTypingUsers}
 				messages={messagesItem?.messages}
 				reactionEvents={messagesItem?.reactionEvents || []}
+				passageBlurSenders={messagesItem?.passageBlurSenders}
 				supervisionMessages={supervisionMessages}
 				teamMessages={teamMessages}
 				teamRoomId={teamRoomId}

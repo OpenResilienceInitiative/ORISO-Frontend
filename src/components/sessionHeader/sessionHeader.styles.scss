@@ -735,7 +735,9 @@ $room-header-gap-top: 2px;
 		color: #fff;
 	}
 
-	&__add--interactive {
+	/* The pending "+" stays focusable, so it shares the focus treatment. */
+	&__add--interactive,
+	&__add--pending {
 		cursor: pointer;
 
 		&:focus-visible {
@@ -751,6 +753,12 @@ $room-header-gap-top: 2px;
 	&__add--disabled {
 		cursor: not-allowed;
 		opacity: 0.45;
+	}
+
+	/* Same look as the active "+" so a conversation switch does not flash
+	   grey; only the cursor says it is not ready yet. */
+	&__add--pending {
+		cursor: progress;
 	}
 
 	&__addContent {

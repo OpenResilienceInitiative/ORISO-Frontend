@@ -1,5 +1,6 @@
 // @vitest-environment oriso-jsdom
 /** Matrix is the early trigger; persisted feed events own announcements. */
+import { recordBrowserNotificationsChoice } from '../../utils/notificationSettings/browserMasterSwitch';
 import React from 'react';
 import { messageEventEmitter } from '../../services/messageEventEmitter';
 import { act, cleanup, render, waitFor } from '@testing-library/react';
@@ -228,6 +229,8 @@ describe('WebsocketHandler → new message notification', () => {
 
 	it('stays silent when the cross-device panel is switched off, even with a stale legacy key', async () => {
 		routePanel(true);
+		// FE#1211: "off" is now the user's own choice in this browser.
+		recordBrowserNotificationsChoice(false);
 		localStorage.setItem(
 			'BROWSER_NOTIFICATIONS',
 			JSON.stringify({ enabled: true, newMessage: true })

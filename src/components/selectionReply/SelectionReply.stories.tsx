@@ -13,10 +13,7 @@ import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { useTranslation } from 'react-i18next';
 
 import { SelectionReplyLayer } from './SelectionReplyLayer';
-import type {
-	SelectionAnswer,
-	SelectionVoiceRecorder
-} from './SelectionReplyLayer';
+import type { SelectionVoiceRecorder } from './SelectionReplyLayer';
 import type { SelectionReplyVoice } from './SelectionReplyPopover';
 import { anchorFor, type MarkedPassage } from './useMessageSelection';
 import type { MessageSelection } from './useMessageSelection';
@@ -32,6 +29,11 @@ import { MessageTimeline } from '../session/MessageTimeline';
 import { MessageSubmitInterfaceComponent } from '../messageSubmitInterface/messageSubmitInterfaceComponent';
 import type { ComposerPendingQuote } from '../messageSubmitInterface/ComposerPendingQuotes';
 import type { PassageReply } from './PassageReplyBlocks';
+import {
+	usePassageReplies,
+	type CollectedPassageReply,
+	type PassageReplyToSend
+} from './usePassageReplies';
 import { SidePanel } from '../chatStage/SidePanel';
 import { PanelHeader } from '../chatStage/PanelHeader';
 import { focusSessionChromeOnPointerDown } from '../session/focusSessionChrome';
@@ -169,15 +171,6 @@ const answerMessage = ({
 	passageReplies: replies
 });
 
-const replyOf = (answer: SelectionAnswer): PassageReply => ({
-	eventId: answer.passage.eventId,
-	author: answer.passage.author,
-	excerpt: answer.passage.text,
-	start: answer.passage.start,
-	text: answer.text || undefined,
-	voice: answer.voice
-});
-
 /**
  * Storybook has no microphone: a stand-in that "records" silence of the
  * same length, so the real VoiceNoteRow and VoicePlayer have audio to play.
@@ -230,6 +223,8 @@ type StageProps = {
 	withLongMessage?: boolean;
 	/** Lengths the stand-in microphone reports, one per take. */
 	voiceLengths?: number[];
+	/** The first send fails, as when the connection drops. */
+	failFirstSend?: boolean;
 	height?: number | string;
 };
 
@@ -241,6 +236,7 @@ function SelectionReplyStage({
 	withSentAnswer = true,
 	withLongMessage = false,
 	voiceLengths,
+	failFirstSend = false,
 	height = '100vh'
 }: StageProps) {
 	const { t } = useTranslation();
@@ -272,24 +268,58 @@ function SelectionReplyStage({
 			: []),
 		...(withLongMessage ? [longClientMessage()] : [])
 	]);
-	const [pending, setPending] =
-		useState<ComposerPendingQuote[]>(initialPending);
-	const [voiceTakes, setVoiceTakes] = useState<
-		Record<string, { src: string; durationSec: number }>
-	>(() =>
-		// A collected voice answer keeps its audio when it is sent.
-		Object.fromEntries(
-			initialPending
-				.filter((quote) => quote.voiceDurationSec)
-				.map((quote) => [
-					quote.id,
-					{
-						src: createSilentWavUrl(quote.voiceDurationSec!),
-						durationSec: quote.voiceDurationSec!
+	// The same collect/send state the real chat uses (usePassageReplies):
+	// a collected voice answer keeps its audio until it is sent.
+	const [startPending] = useState<CollectedPassageReply[]>(() =>
+		initialPending.map((quote) => ({
+			...quote,
+			voice: quote.voiceDurationSec
+				? {
+						src: createSilentWavUrl(quote.voiceDurationSec),
+						durationSec: quote.voiceDurationSec
 					}
-				])
-		)
+				: null
+		}))
 	);
+	const sendsLeftToFail = useRef(failFirstSend ? 1 : 0);
+	const sendReplies = useCallback(
+		async (replies: PassageReplyToSend[], text: string) => {
+			if (sendsLeftToFail.current > 0) {
+				sendsLeftToFail.current -= 1;
+				throw new Error('Story: the connection dropped');
+			}
+			setMessages((rows) => [
+				...rows,
+				answerMessage({
+					id: `$a${rows.length + 1}`,
+					replies: replies.map(
+						(reply): PassageReply => ({
+							eventId: reply.eventId,
+							author: reply.author,
+							excerpt: reply.excerpt,
+							start: reply.start,
+							text: reply.text,
+							voice: reply.voice || null
+						})
+					),
+					text,
+					time: nowTime()
+				})
+			]);
+		},
+		[]
+	);
+	const {
+		pending,
+		collect: collectAnswer,
+		sendNow: sendAnswer,
+		sendCollected,
+		remove: removePending
+	} = usePassageReplies({
+		send: sendReplies,
+		conversationKey: CLIENT_ROOM_ID,
+		initialPending: startPending
+	});
 	const [thread, setThread] = useState<MarkedPassage | null>(
 		threadOn || null
 	);
@@ -379,61 +409,6 @@ function SelectionReplyStage({
 			clear();
 		};
 	}, [thread]);
-
-	// Sent from the answer field: it takes everything collected so far
-	// along, so the answers still leave as one message.
-	const sendAnswer = (answer: SelectionAnswer) => {
-		sendReplies([...pending.map(collectedReply), replyOf(answer)], '');
-	};
-
-	const collectAnswer = (answer: SelectionAnswer) => {
-		const id = `q${Date.now()}`;
-		if (answer.voice) {
-			setVoiceTakes((takes) => ({ ...takes, [id]: answer.voice! }));
-		}
-		setPending((rows) => [
-			...rows,
-			{
-				id,
-				eventId: answer.passage.eventId,
-				author: answer.passage.author,
-				excerpt: answer.passage.text,
-				excerptStart: answer.passage.start,
-				replyText: answer.text || undefined,
-				voiceDurationSec: answer.voice?.durationSec ?? null
-			}
-		]);
-	};
-
-	const collectedReply = (quote: ComposerPendingQuote): PassageReply => ({
-		eventId: quote.eventId,
-		author: quote.author,
-		excerpt: quote.excerpt,
-		start: quote.excerptStart,
-		text: quote.replyText,
-		voice: voiceTakes[quote.id] || null
-	});
-
-	const sendReplies = (replies: PassageReply[], text: string) => {
-		setMessages((rows) => [
-			...rows,
-			answerMessage({
-				id: `$a${rows.length + 1}`,
-				replies,
-				text,
-				time: nowTime()
-			})
-		]);
-		setPending([]);
-	};
-
-	// The composer's send: all collected answers and the typed text leave
-	// as ONE message.
-	const sendCollected = (typedText: string) => {
-		if (pending.length) {
-			sendReplies(pending.map(collectedReply), typedText);
-		}
-	};
 
 	const jumpBack = (reply: PassageReply) => {
 		if (contentRef.current) {
@@ -526,11 +501,7 @@ function SelectionReplyStage({
 								compactHeight={Boolean(thread)}
 								flushCorner={thread ? 'bottom-left' : undefined}
 								pendingQuotes={pending}
-								onRemovePendingQuote={(id) =>
-									setPending((rows) =>
-										rows.filter((row) => row.id !== id)
-									)
-								}
+								onRemovePendingQuote={removePending}
 								onSendPendingQuotes={sendCollected}
 								isTyping={noop}
 								language="de"
@@ -903,6 +874,32 @@ const answerRows = (canvasElement: HTMLElement) =>
 	);
 
 /**
+ * Lets React's act() warnings for the composer and the lazily loaded
+ * answer pass, however often they come; every other console error still
+ * reaches story verification. Returns the cleanup for `beforeEach`.
+ */
+const dropHarnessWarnings = () => {
+	const harness = new Set(
+		[
+			...actWarnings({ MessageSubmitInterfaceComponent: 1 }),
+			...suspendedInAct(1)
+		].map((item) => item.message)
+	);
+	const recordError = console.error;
+	console.error = (...args: unknown[]) => {
+		const message = args
+			.map((value) =>
+				value instanceof Error ? value.message : String(value)
+			)
+			.join(' ');
+		if (!harness.has(message)) recordError(...args);
+	};
+	return () => {
+		console.error = recordError;
+	};
+};
+
+/**
  * 8 · Vier Stellen, eine Nachricht: four passages of one long message are
  * marked and commented one after another (voice, text, voice, text) and
  * leave together as ONE message.
@@ -914,19 +911,13 @@ export const FourAnswersLongMessage: Story = {
 		withLongMessage: true,
 		voiceLengths: LONG_STORY_VOICE_LENGTHS
 	},
-	parameters: {
-		verification: {
-			// The composer re-reads its audience (who can see the message)
-			// each time a passage joins it, outside act(): once per passage.
-			// Browser behaviour, counted exactly so any further warning
-			// still fails.
-			expectedErrors: [
-				...actWarnings({ MessageSubmitInterfaceComponent: 4 }),
-				// A lazily loaded piece of the sent answer mounts once.
-				...suspendedInAct(1)
-			]
-		}
-	},
+	// Driving the composer inside userEvent's act() makes React warn when
+	// the composer re-reads its audience and when a lazily loaded piece of
+	// the sent answer mounts. How often depends on timing: CI counted 7
+	// where a local run counts 4 (FE#2282, run 44025123517). The play checks
+	// what goes out, so it drops exactly those two harness warnings, as
+	// story 9 did (b676bb5b0); any other console error still fails.
+	beforeEach: () => dropHarnessWarnings(),
 	play: async ({ canvasElement }) => {
 		await playFourPassages(canvasElement);
 	}
@@ -1135,5 +1126,44 @@ export const SendNowTakesCollected: Story = {
 		await waitFor(() =>
 			expect(field.querySelector('.sendButton--ready')).not.toBeNull()
 		);
+	}
+};
+
+/**
+ * 10 · Senden schlägt fehl: the connection drops on the first send. Both
+ * answers stay collected in the composer (nothing is lost), and the next
+ * press sends them as one message. In the app a notice says so; here the
+ * collection itself is the proof.
+ */
+export const SendFailsKeepsCollected: Story = {
+	name: '10 · Senden schlägt fehl – Antworten bleiben gesammelt',
+	args: {
+		withSentAnswer: false,
+		failFirstSend: true,
+		pending: CollectedInComposer.args!.pending
+	},
+	play: async ({ canvasElement }) => {
+		await waitFor(() =>
+			expect(collectedBars(canvasElement)).toHaveLength(2)
+		);
+		const composerSend = canvasElement.querySelector<HTMLButtonElement>(
+			'.chatStage__mainPane .textarea__buttons button'
+		)!;
+		await waitFor(() => expect(composerSend).toBeEnabled());
+
+		await userEvent.click(composerSend);
+		await waitFor(() =>
+			expect(collectedBars(canvasElement)).toHaveLength(2)
+		);
+		await expect(answerRows(canvasElement)).toHaveLength(0);
+
+		await userEvent.click(composerSend);
+		await waitFor(() => expect(answerRows(canvasElement)).toHaveLength(1));
+		await expect(collectedBars(canvasElement)).toHaveLength(0);
+		await expect(
+			answerRows(canvasElement)[0].querySelectorAll(
+				'[data-cy="passage-reply"]'
+			)
+		).toHaveLength(2);
 	}
 };

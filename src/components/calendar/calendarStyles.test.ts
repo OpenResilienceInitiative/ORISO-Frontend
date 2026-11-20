@@ -33,11 +33,29 @@ describe('calendar stylesheet', () => {
 		expect(pill).toMatch(/@include control-focus-ring\(1px\)/);
 		expect(timeline).toMatch(/@include list-entry-pill(\(|;)/);
 		expect(timeline).toMatch(/@include list-entry-pill-time;/);
-		// "Als Nächstes" in the calendar is the prototype's compact row (36
-		// px, no fill), not the pill; its two-line text is the shared one,
-		// and no copy of the old pill entry is left behind.
+		// "Als Nächstes" in the calendar is the shared pill in the
+		// prototype's card tone (v17), with the shared two-line text, and no
+		// copy of the old pill entry is left behind.
+		expect(calendar).toMatch(
+			/\.calendarSide__row \{\s*@include list-entry-pill;/
+		);
 		expect(calendar).toMatch(/@include list-entry-pill-text;/);
 		expect(calendar).not.toMatch(/\.calendarPage__entry/);
+	});
+
+	it('centres the list grip in a 24 px gap as in Gespräche, not on the shell gutter (Frank *2)', () => {
+		// The column sets its own pair; the shell's 12 px gutter is the
+		// sessions list's. The stories measure 8 px either side of the pill.
+		expect(calendar).toMatch(
+			/\.calendarSide__frame \{[^}]*--pane-gap:\s*24px;[^}]*--pane-inner-gutter:\s*2px;/s
+		);
+		expect(calendar).toMatch(
+			/margin-right: calc\(\s*var\(--pane-gap\) - var\(--pane-inner-gutter\) - #\{\$cal-page-gap\}\s*\);/
+		);
+		expect(calendar).toMatch(/&--rail \{\s*--pane-inner-gutter:\s*12px;/);
+		expect(calendar).toMatch(
+			/^\.calendarPage \{[^}]*gap: \$cal-page-gap;/m
+		);
 	});
 
 	it('takes its breakpoints from the shared mixin, not raw media queries', () => {

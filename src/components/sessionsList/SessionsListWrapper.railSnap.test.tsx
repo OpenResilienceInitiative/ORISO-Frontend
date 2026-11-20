@@ -10,6 +10,7 @@ import {
 	ChatStagePanelProvider,
 	useReportChatStagePanel
 } from '../chatStage/ChatStagePanelContext';
+import { useSessionListRailWiden } from './SessionListRailContext';
 
 /**
  * Review B2 D-4: the list column snaps to the icon rail while a side pane
@@ -19,7 +20,13 @@ import {
  * collapse to a rail beside an ordinary chat.
  */
 vi.mock('./SessionsList', () => ({
-	SessionsList: () => <div data-testid="list" />
+	// Reports whether the rail would offer its search button (onWiden).
+	SessionsList: () => (
+		<div
+			data-testid="list"
+			data-widen={useSessionListRailWiden() ? 'offered' : 'none'}
+		/>
+	)
 }));
 let resizeList: ((width: number) => void) | undefined;
 vi.mock('./ResizableHandle', () => ({
@@ -222,5 +229,24 @@ describe('SessionsListWrapper rail snap (review B2 D-4)', () => {
 		act(() => resizeList?.(420));
 		const wrapper = rerender('thread');
 		expect(wrapper.style.width).toBe(`${STAGE_LAYOUT.RAIL_WIDTH}px`);
+	});
+
+	it('offers no rail search beside a pane when the list could not leave the rail (CodeRabbit)', () => {
+		viewportWidth = 950;
+		const wrapper = renderAt('?channel=thread', 'thread', 80);
+		expect(
+			wrapper
+				.querySelector('[data-testid="list"]')!
+				.getAttribute('data-widen')
+		).toBe('none');
+	});
+
+	it('offers the rail search when the list has room to open', () => {
+		const wrapper = renderAt('', null, 80);
+		expect(
+			wrapper
+				.querySelector('[data-testid="list"]')!
+				.getAttribute('data-widen')
+		).toBe('offered');
 	});
 });

@@ -15,6 +15,8 @@
  */
 
 import { generatePath } from 'react-router-dom';
+import { addonLinkPath } from '../../../addons/addonLink';
+import { DIRECT_INVITATION_RENEWAL_REQUESTED } from './directInvitationEvents';
 import { rewriteLegacyChannelPath } from '../../../utils/channelRoute';
 import {
 	askerGroupChatPath,
@@ -35,6 +37,10 @@ import {
 	parseTopicDuplicateRoomPath,
 	TOPIC_DUPLICATE_SEARCH
 } from '../../session/topicDuplicateRoomRoute';
+import {
+	DELETED_ASKER_BASE_PATH,
+	parseFormerSessionId
+} from '../../sessionsList/deletedAskerPath';
 
 /** Default conversation list base when the consumer does not pass one. */
 const DEFAULT_SESSIONS_BASE_PATH = '/sessions/consultant/sessionView';
@@ -43,6 +49,8 @@ const TOPIC_DUPLICATE_STARTED_EVENT = 'topic_duplicate.started';
 /** An invalid target for these events must not turn into a generic list link. */
 export const requiresExactActionPath = (eventType: string | null | undefined) =>
 	eventType === TOPIC_DUPLICATE_STARTED_EVENT;
+
+export const ADDON_NOTIFICATION_EVENT_TYPE = 'ADDON_NOTIFICATION';
 
 /** i18n key for a family's filter-chip / tag label. */
 export const familyLabelKey = (family: EventFamily): string =>
@@ -173,8 +181,9 @@ const draftTarget = (params: EventActionParams): EventActionTarget => ({
 	path: params.actionPath ?? null
 });
 
-// The consumer routes native ORISO calls through
-// `callManager.startCall(callRoomId, isVideo, true)`. This factory only
+// The consumer joins the running call through
+// `callManager.joinExistingCall` (NotificationsCenter); it never starts a
+// call, which only counsellors do (Frank, 17 Nov 2026). This factory only
 // describes the action; provider-specific video integrations must use their
 // own adapter and must not be introduced as an implicit fallback here.
 const joinTarget = (params: EventActionParams): EventActionTarget => ({
@@ -188,7 +197,52 @@ const statusPageTarget = (params: EventActionParams): EventActionTarget => ({
 	url: params.statusUrl ?? null
 });
 
+const addonTarget = (params: EventActionParams): EventActionTarget => ({
+	kind: 'addon',
+	path:
+		addonLinkPath(
+			{
+				addon: params.addon,
+				appId: params.appId,
+				slot: params.slot,
+				sessionId: params.sourceSessionId
+			},
+			params.sessionsBasePath || DEFAULT_SESSIONS_BASE_PATH
+		) ??
+		params.actionPath ??
+		null
+});
+
+// #1159: a deleted advice-seeker chat opens its deletion notice, where the
+// counsellor archives it. Navigates like a request: never shown inline, there
+// is no conversation left. Entries from before the notice existed carry no
+// path and stay inert. Named, so the exclusion set below recognises it.
+const deletedAskerTarget = (params: EventActionParams): EventActionTarget =>
+	params.actionPath?.startsWith(`${DELETED_ASKER_BASE_PATH}/`) &&
+	parseFormerSessionId(
+		params.actionPath.slice(DELETED_ASKER_BASE_PATH.length + 1)
+	) !== null
+		? { kind: 'request', path: params.actionPath }
+		: { kind: 'none' };
+
 // --- Descriptor factory --------------------------------------------------
+
+/**
+ * Entries whose target is not a conversation: an enquiry nobody accepted yet
+ * (its content stays hidden until then), a draft, a status notice and an
+ * entry with nothing to open. Every other entry opens a conversation, so
+ * Activity shows it inline (Frank, 2026-11-16: "die meisten Fenster
+ * sichtbar", not only messages and calls).
+ */
+const NO_CONVERSATION_TARGETS = new Set<EventDescriptor['resolveActionTarget']>(
+	[
+		requestTarget,
+		requestDeniedTarget,
+		draftTarget,
+		statusPageTarget,
+		deletedAskerTarget
+	]
+);
 
 interface DescriptorSeed {
 	family: EventDescriptor['family'];
@@ -209,7 +263,10 @@ const descriptor = (
 	icon: seed.icon,
 	titleTemplate: `notifications.events.${seed.i18nKey}.title`,
 	textTemplate: `notifications.events.${seed.i18nKey}.text`,
-	resolveActionTarget: seed.resolveActionTarget
+	resolveActionTarget: seed.resolveActionTarget,
+	belongsToConversation: !NO_CONVERSATION_TARGETS.has(
+		seed.resolveActionTarget
+	)
 });
 
 /**
@@ -225,7 +282,8 @@ export const FALLBACK_DESCRIPTOR: EventDescriptor = {
 	icon: 'system',
 	titleTemplate: 'notifications.events.fallback.title',
 	textTemplate: 'notifications.events.fallback.text',
-	resolveActionTarget: conversationTarget
+	resolveActionTarget: conversationTarget,
+	belongsToConversation: false
 };
 
 // --- The registry --------------------------------------------------------
@@ -465,7 +523,8 @@ const seeds: EventDescriptor[] = [
 		i18nKey: 'callMissed',
 		resolveActionTarget: conversationTarget
 	}),
-	// Invitation to an internal (team) group call — Figma 2026-07-12.
+	// Invitation to a call: one-to-one counselling (sessionId) or group
+	// (seriesId). FE#1211: the wording names neither, so it is true for both.
 	descriptor('call.invited', {
 		family: 'calls',
 		category: 'system',
@@ -483,6 +542,16 @@ const seeds: EventDescriptor[] = [
 		icon: 'callStarted',
 		i18nKey: 'callKnockRequested',
 		resolveActionTarget: knockCallTarget
+	}),
+
+	// FE#2252: someone asks for a new link after a Direkteinladung expired;
+	// the card opens the conversation, the pop-up offers "Neuen Link senden".
+	descriptor(DIRECT_INVITATION_RENEWAL_REQUESTED, {
+		family: 'appointments',
+		category: 'system',
+		icon: 'appointmentRequested',
+		i18nKey: 'directInvitationRenewalRequested',
+		resolveActionTarget: conversationTarget
 	}),
 
 	// ----- Appointments family (Figma 2026-07-12; writers still deferred) -----
@@ -548,14 +617,25 @@ const seeds: EventDescriptor[] = [
 		i18nKey: 'serviceNoticePlanned',
 		resolveActionTarget: statusPageTarget
 	}),
-	// #1159: an advice seeker's chat was deleted. Nothing is left to open, so
-	// the row informs and has no action.
+	// #1159: an advice seeker's chat was deleted. The row opens the deletion
+	// notice, from where the counsellor archives it.
 	descriptor('session.asker_deleted', {
 		family: 'system',
 		category: 'system',
 		icon: 'system',
 		i18nKey: 'sessionAskerDeleted',
-		resolveActionTarget: () => ({ kind: 'none' })
+		resolveActionTarget: deletedAskerTarget
+	}),
+
+	// ----- Add-ons (oriso-addon/v1) -----
+	// Title and text come from the add-on per locale (`addonTitle`/`addonText`
+	// params); the templates are the generic wording for OS banners.
+	descriptor(ADDON_NOTIFICATION_EVENT_TYPE, {
+		family: 'system',
+		category: 'system',
+		icon: 'addon',
+		i18nKey: 'addonNotification',
+		resolveActionTarget: addonTarget
 	})
 ];
 

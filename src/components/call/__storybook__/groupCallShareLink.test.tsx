@@ -31,11 +31,9 @@ import {
 } from './groupCallHarness';
 
 /*
- * FE#2233 follow-up (Dev, 16 Nov): in a group call every counsellor's view
- * asked `GET /service/matrix/calls/share-links` every 10 s and always got
- * 404, one browser sent five `POST`s right after joining, and the asking went
- * on after hang-up. A share link exists only for a 1:1 session call
- * (UserService `CallShareLinkService.requireCounsellorCall`).
+ * FE#2233 follow-up (Dev, 16 Nov): the asking for a call's share link must
+ * stop at hang-up. UserService#1662: group calls have a share link as well
+ * (before, an encrypted group call had no binding and answered 404).
  */
 
 const shareLinks = vi.hoisted(() => ({
@@ -46,8 +44,13 @@ const sessionRooms = vi.hoisted(() => ({ byRoomIds: vi.fn() }));
 const widgetHandlers = vi.hoisted(
 	() => new Map<string, (event: unknown) => void>()
 );
+/** Every action the host sends to the call, across widget instances. */
+const widgetSends = vi.hoisted(() => vi.fn());
 
-vi.mock('../../../api/apiCallShareLinkKnock', () => ({
+vi.mock('../../../api/apiCallShareLinkKnock', async (importOriginal) => ({
+	...(await importOriginal<
+		typeof import('../../../api/apiCallShareLinkKnock')
+	>()),
 	apiGetCallShareLinkKnock: shareLinks.get,
 	apiSetCallShareLinkKnock: vi.fn()
 }));
@@ -79,7 +82,10 @@ vi.mock('matrix-widget-api', async (importOriginal) => {
 		ClientWidgetApi: class {
 			public readonly transport = {
 				reply: vi.fn(),
-				send: vi.fn().mockResolvedValue({})
+				send: vi.fn((...args: unknown[]) => {
+					widgetSends(...args);
+					return Promise.resolve({});
+				})
 			};
 			public readonly setViewedRoomId = vi.fn();
 			public readonly updateTheme = vi.fn().mockResolvedValue({});
@@ -225,11 +231,17 @@ describe('GroupCallWidget and the call share link', () => {
 		vi.useRealTimers();
 	});
 
+	/*
+	 * UserService#1662 (Frank, 17 Nov): group calls and Gesprächskreise offer
+	 * the guest link like a 1:1 call. The server binds an encrypted group call
+	 * from its creator's registration and names the creator's Beratungsstelle
+	 * on the link, so the link exists now.
+	 */
 	it.each([
 		['a team group chat', 'INTERNAL_GROUP'],
 		['a Gesprächskreis', 'SELF_HELP']
 	])(
-		'%s never asks for, nor creates, a share link and offers no invite link',
+		'%s keeps its share link and offers the invite link',
 		async (_name, conversationType) => {
 			sessionRooms.byRoomIds.mockResolvedValue(
 				groupChat(conversationType)
@@ -237,11 +249,17 @@ describe('GroupCallWidget and the call share link', () => {
 			answerCall(true);
 
 			const fragment = await joinCall(renderCall());
-			await passTime(35_000);
+			await passTime(25_000);
 
-			expect(shareLinks.get).not.toHaveBeenCalled();
-			expect(shareLinks.create).not.toHaveBeenCalled();
-			expect(fragment.has('orisoInvite')).toBe(false);
+			expect(fragment.get('orisoInvite')).toBe('1');
+			expect(shareLinks.get).toHaveBeenCalledWith({
+				sourceRoomId: FAKE_SIGNAL_ROOM_ID,
+				callId: FAKE_CALL_ID
+			});
+			expect(shareLinks.create).toHaveBeenCalledWith({
+				sourceRoomId: FAKE_SIGNAL_ROOM_ID,
+				callId: FAKE_CALL_ID
+			});
 		}
 	);
 
@@ -299,16 +317,74 @@ describe('GroupCallWidget and the call share link', () => {
 		expect(shareLinks.get.mock.calls.length).toBe(asked);
 	});
 
-	it('a group call hung up stays silent', async () => {
+	/*
+	 * UserService#1662 (Frank, 17 Nov): a group call a plain member or an
+	 * advice seeker started has no binding and gets no link. The counsellor's
+	 * client stops asking after a bounded number of tries, offers no share
+	 * button and creates nothing.
+	 */
+	it('a group call the server cannot share stops asking and offers no link', async () => {
+		shareLinks.get.mockRejectedValue(
+			Object.assign(new Error('CALL_SHARE_LINK_NO_CALL'), {
+				callNotShareable: true
+			})
+		);
+		shareLinks.create.mockResolvedValue(null);
+		sessionRooms.byRoomIds.mockResolvedValue(groupChat('INTERNAL_GROUP'));
+		answerCall(true);
+
+		const view = renderCall();
+		widgetSends.mockClear();
+		const fragment = await joinCall(view);
+		const address = (
+			view.container.querySelector(
+				'.element-call-iframe'
+			) as HTMLIFrameElement
+		).src;
+		await passTime(70_000);
+		const asked = shareLinks.get.mock.calls.length;
+		const created = shareLinks.create.mock.calls.length;
+		expect(asked).toBe(6);
+
+		// The running call drops "Link teilen" live, without a new address.
+		expect(fragment.get('orisoInvite')).toBe('1');
+		const inviteStates = widgetSends.mock.calls.filter(
+			(call) => call[0] === 'org.oriso.call.invite_available'
+		);
+		expect(inviteStates.at(-1)).toEqual([
+			'org.oriso.call.invite_available',
+			{ available: false }
+		]);
+		expect(
+			(
+				view.container.querySelector(
+					'.element-call-iframe'
+				) as HTMLIFrameElement
+			).src
+		).toBe(address);
+
+		await passTime(5 * 60_000);
+
+		expect(shareLinks.get.mock.calls.length).toBe(asked);
+		expect(shareLinks.create.mock.calls.length).toBe(created);
+		expect(view.container.querySelector('.element-call-share')).toBeNull();
+	});
+
+	it('a group call stops asking for its share link once the counsellor hangs up', async () => {
 		sessionRooms.byRoomIds.mockResolvedValue(groupChat('INTERNAL_GROUP'));
 		answerCall(true);
 
 		await joinCall(renderCall());
+		await passTime(15_000);
+		const asked = shareLinks.get.mock.calls.length;
+		const created = shareLinks.create.mock.calls.length;
+		expect(asked).toBeGreaterThan(0);
+
 		await hangUpInCall();
 		await passTime(60_000);
 
 		expect(callManager.getCurrentCall()?.state).toBe('left');
-		expect(shareLinks.get).not.toHaveBeenCalled();
-		expect(shareLinks.create).not.toHaveBeenCalled();
+		expect(shareLinks.get.mock.calls.length).toBe(asked);
+		expect(shareLinks.create.mock.calls.length).toBe(created);
 	});
 });

@@ -6,11 +6,13 @@ import { apiSetLiveChatAvailability } from '../../api/apiSetLiveChatAvailability
 import { clearLiveChatAvailabilityPreference } from '../../utils/liveChatAvailabilityStorage';
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
 import { budibaseLogout } from '../budibase/budibaseLogout';
+import { isConsultantAccessToken } from '../auth/consultantLoginBlock';
 import {
 	getValueFromCookie,
 	removeAllCookies
 } from '../sessionCookie/accessSessionCookie';
 import { sessionKindRegistry } from '../../utils/displayFilter/sessionKindRegistry';
+import { forgetKnownAppointments } from '../sessionsList/timeline/conversationAppointments';
 import { removeTokenExpiryFromLocalStorage } from '../sessionCookie/accessSessionLocalStorage';
 import {
 	getAppSessionScope,
@@ -146,10 +148,16 @@ export const logout = async (
 
 	const serverRequests: Promise<unknown>[] = [];
 	if (hasSession) {
+		// FE#2331: only a counsellor can be live; for anyone else the
+		// endpoint answers 403 on every sign-out.
+		if (isConsultantAccessToken(getValueFromCookie('keycloak'))) {
+			serverRequests.push(
+				runBoundedLogoutRequest((signal) =>
+					apiSetLiveChatAvailability(false, signal)
+				)
+			);
+		}
 		serverRequests.push(
-			runBoundedLogoutRequest((signal) =>
-				apiSetLiveChatAvailability(false, signal)
-			),
 			runBoundedLogoutRequest((signal) => apiKeycloakLogout(signal))
 		);
 		if (featureToolsEnabled) {
@@ -177,6 +185,7 @@ const clearTabSessionRuntime = () => {
 	setMatrixClientServiceRef(null);
 	// User-scoped state must not survive in the next authenticated view.
 	sessionKindRegistry.reset();
+	forgetKnownAppointments();
 	appSnackbarStack.clear();
 };
 
