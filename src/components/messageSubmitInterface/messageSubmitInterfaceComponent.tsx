@@ -251,7 +251,6 @@ export interface MessageSubmitInterfaceComponentProps {
 	onSendButton?: Function;
 	isTyping?: Function;
 	placeholder: string;
-	typingUsers?: string[];
 	language?: string;
 	preselectedFile?: File;
 	handleMessageSendSuccess?: Function;
@@ -502,7 +501,6 @@ export const MessageSubmitInterfaceComponent = ({
 	onSendButton,
 	isTyping,
 	placeholder,
-	typingUsers,
 	language,
 	preselectedFile,
 	handleMessageSendSuccess: onMessageSendSuccess,

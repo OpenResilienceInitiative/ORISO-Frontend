@@ -343,7 +343,11 @@ describe('practice tour wiring', () => {
 			'**/*.stories.*',
 			'src/components/productTour/**'
 		]
-	}).map((path) => readFileSync(path, 'utf8'));
+	})
+		// The navigation renders `nav-<slug>` from this map (FE#2340); it is
+		// the one productTour file that holds rendered anchors, not tours.
+		.concat('src/components/productTour/tourCatalogue.ts')
+		.map((path) => readFileSync(path, 'utf8'));
 
 	const targetsOf = (tour: TourDefinition): string[] =>
 		tour.steps.flatMap((step) => {

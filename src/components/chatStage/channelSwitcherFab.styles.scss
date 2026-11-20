@@ -1,23 +1,17 @@
-// Channel switcher FAB — Figma "FAB menu" 9748:60084 (button). Bound tokens
-// there: tertiary / on-tertiary (FAB), Corner/Extra-large 28, Elevation 3.
+// Channel switcher FAB — Figma "FAB menu" 9748:60084 (button); the shared
+// FAB look lives in `resources/styles/_floatingActionButton.scss`.
 // The list it opens is the channel card (`channelMenu.styles.scss`, T20).
 // Attention state = the unread role every other unread indicator uses.
 
-$switcher-corner: 28px; // Corner/Extra-large
-$switcher-size: 56px;
-$switcher-elevation:
-	0 4px 8px 3px rgba(0, 0, 0, 0.15),
-	0 1px 3px 0 rgba(0, 0, 0, 0.3); // M3/Elevation Light/3
-
 .channelSwitcher {
 	position: absolute;
-	right: 16px;
-	bottom: 16px;
+	right: $fab-edge-gap;
+	bottom: $fab-edge-gap;
 	z-index: 1001; // above the absolute composer (1000) inside .session
 	display: flex;
 	flex-direction: column;
 	align-items: flex-end;
-	gap: 8px;
+	gap: $fab-stack-gap;
 	pointer-events: none;
 
 	& > * {
@@ -44,31 +38,7 @@ $switcher-elevation:
 	}
 
 	&__fab {
-		position: relative;
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		width: $switcher-size;
-		height: $switcher-size;
-		padding: 0;
-		border: 0;
-		border-radius: $switcher-corner;
-		background: var(--m3-tertiary, #565f6a);
-		color: var(--m3-on-tertiary, #fff);
-		box-shadow: $switcher-elevation;
-		cursor: pointer;
-		transition:
-			background-color 160ms ease,
-			transform 160ms ease;
-
-		&:hover {
-			filter: brightness(1.08);
-		}
-
-		&:focus-visible {
-			outline: 2px solid var(--m3-primary, #a5000a);
-			outline-offset: 2px;
-		}
+		@include floating-action-button;
 
 		&--attention {
 			background: var(
@@ -118,11 +88,5 @@ $switcher-elevation:
 		background: var(--m3-surface-container-lowest, #fff);
 		color: var(--oriso-unread-indicator-color, var(--m3-error, #cc0000));
 		box-shadow: 0 0 0 2px var(--m3-surface-container-lowest, #fff);
-	}
-
-	@media (prefers-reduced-motion: reduce) {
-		&__fab {
-			transition: none;
-		}
 	}
 }

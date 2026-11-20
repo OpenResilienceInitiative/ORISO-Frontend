@@ -11,6 +11,7 @@ import {
 	GroupChatAuthorContentDraft,
 	normalizeGroupChatLanguages
 } from './groupChatAuthorContent';
+import { OrisoTextarea } from '../form/OrisoTextarea';
 import { RuleChipsEditor } from './RuleChipsEditor';
 import '../button/button.styles.scss';
 
@@ -269,11 +270,23 @@ export const GroupChatAuthorContentFields = ({
 				id={panelId}
 				aria-labelledby={tabId}
 			>
-				<textarea
+				<OrisoTextarea
+					// Fixed box: 120px on a phone, the column on
+					// desktop; longer text scrolls inside.
+					rows={2}
 					className="createChat__welcomeInput"
-					maxLength={120}
-					aria-label={t('groupChat.create.authorContent.welcome')}
-					placeholder={t('groupChat.create.authorContent.welcome')}
+					fullWidth
+					inputProps={{
+						// A sentence: as a floating label it is cut off on a
+						// phone, so it stays the placeholder (and the name).
+						'aria-label': t(
+							'groupChat.create.authorContent.welcome'
+						),
+						'placeholder': t(
+							'groupChat.create.authorContent.welcome'
+						),
+						'maxLength': 120
+					}}
 					value={
 						value.hintMessageTranslations?.[selectedLanguage] || ''
 					}

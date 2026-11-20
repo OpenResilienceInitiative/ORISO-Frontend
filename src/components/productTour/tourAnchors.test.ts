@@ -21,6 +21,12 @@ const anchorContract: Array<{
 	expected?: RegExp;
 }> = [
 	{
+		// "Where your tours live": the launcher switch in Help → Rundgänge
+		// (the whole Help card is taller than a phone screen).
+		anchor: 'help-tour-switch',
+		sourceFile: 'profile/TourLauncherSwitch.tsx'
+	},
+	{
 		anchor: 'session-composer',
 		sourceFile: 'messageSubmitInterface/TipTapComposer.tsx'
 	},
@@ -44,9 +50,16 @@ const anchorContract: Array<{
 	// conditional: the nav item exists once per role, the card is the first
 	// enquiry of the list.
 	{
+		// Every navigation item gets its `nav-<slug>` from one map…
 		anchor: 'nav-enquiries',
+		sourceFile: 'productTour/tourCatalogue.ts',
+		expected: /'\/sessions\/consultant\/sessionPreview': 'nav-enquiries'/
+	},
+	{
+		// …which the navigation bar renders on every item.
+		anchor: 'nav-<slug>',
 		sourceFile: 'app/NavigationBar.tsx',
-		expected: /data-tour-target=\{[^}]*'nav-enquiries'[^}]*\}/
+		expected: /data-tour-target=\{navTourTarget\(\s*item\.to\s*\)\}/
 	},
 	{
 		anchor: 'enquiry-list-item',
