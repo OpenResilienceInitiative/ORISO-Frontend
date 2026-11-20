@@ -73,8 +73,8 @@ it('shows the canonical title once and keeps the claim in the mobile login heade
 	expect(screen.getByText('app.claim')).toBeTruthy();
 	expect(screen.queryByText('app.stage.mobileHeadline')).toBeNull();
 	expect(
-		screen.getByRole('button', { name: 'app.selectLanguage' })
-	).toBeTruthy();
+		screen.getByRole('button', { name: 'app.selectLanguage' }).classList
+	).toContain('localeSwitchPill--onPrimaryContainer');
 });
 
 describe('StageLayout registration invitation continuity', () => {

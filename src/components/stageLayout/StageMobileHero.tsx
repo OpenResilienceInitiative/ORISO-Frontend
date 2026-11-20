@@ -68,7 +68,11 @@ export const StageMobileHero = ({
 				)}
 				<span className="stageMobileHero__actions">
 					{leadingAction}
-					<LocaleSwitchPill variant="circle" />
+					<LocaleSwitchPill
+						variant={
+							isBranding ? 'circleOnPrimaryContainer' : 'circle'
+						}
+					/>
 					{action}
 				</span>
 			</div>

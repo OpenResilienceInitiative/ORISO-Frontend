@@ -203,6 +203,9 @@
 				white-space: pre;
 				font-family: 'Inter Variable', Arial, sans-serif;
 			}
+			[data-login-curtain-copy='claim'] {
+				white-space: pre-wrap;
+			}
 			[data-login-curtain-shape] {
 				box-sizing: border-box;
 				border: 1px solid currentColor;
@@ -419,7 +422,7 @@
 							parent.appendChild(box);
 							return box;
 						};
-						var drawCopy = function (copy, weight) {
+						var drawCopy = function (kind, copy, weight) {
 							if (
 								!copy ||
 								typeof copy.text !== 'string' ||
@@ -429,7 +432,7 @@
 								return;
 							var box = draw(stage, copy.rect);
 							if (!box) return;
-							box.dataset.loginCurtainCopy = '';
+							box.dataset.loginCurtainCopy = kind;
 							// The snapshot uses viewport percentages. The stage
 							// is only its share of the viewport on one axis.
 							if (curtain.axis === 'horizontal') {
@@ -458,8 +461,8 @@
 							if (!box) return;
 							box.dataset.loginCurtainShape = kind;
 						};
-						drawCopy(curtain.title, '600');
-						drawCopy(curtain.claim, '400');
+						drawCopy('title', curtain.title, '600');
+						drawCopy('claim', curtain.claim, '400');
 						drawShape('sheet', curtain.sheet);
 						if (Array.isArray(curtain.fields)) {
 							curtain.fields.slice(0, 3).forEach(function (rect) {
@@ -515,6 +518,9 @@
 							'oriso-login-handover'
 						);
 						document.documentElement.style.background = '';
+						window.dispatchEvent(
+							new Event('oriso:login-handover-splash-expired')
+						);
 					}, 30000);
 				} catch (e) {}
 			})();

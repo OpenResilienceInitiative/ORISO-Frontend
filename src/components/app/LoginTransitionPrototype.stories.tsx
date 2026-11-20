@@ -180,6 +180,7 @@ const LoginTransitionPrototype = ({
 	);
 	const [phase, setPhase] = useState<Phase>('form');
 	const [code, setCode] = useState(DEMO_CODE);
+	const [hasReplayed, setHasReplayed] = useState(false);
 	const [matrixFailed, setMatrixFailed] = useState(false);
 	const [matrixActive, setMatrixActive] = useState(false);
 	const formRef = useRef<HTMLFormElement>(null);
@@ -260,6 +261,7 @@ const LoginTransitionPrototype = ({
 			<InboxPreview
 				available={phase === 'app'}
 				onReplay={() => {
+					setHasReplayed(true);
 					setCode(DEMO_CODE);
 					setPhase('form');
 				}}
@@ -369,6 +371,7 @@ const LoginTransitionPrototype = ({
 											</span>
 										}
 										value={code}
+										autoFocus={hasReplayed}
 										autoComplete="off"
 										onFocus={warmMatrix}
 										onChange={(event) =>
@@ -539,7 +542,12 @@ export const MatrixKeyboardHandover: Story = {
 				canvas.getByRole('heading', { name: 'Beratungsstelle' })
 			).toHaveFocus()
 		);
-		await userEvent.click(replay);
+		await userEvent.tab({ shift: true });
+		await expect(replay).toHaveFocus();
+		await userEvent.keyboard('{Enter}');
+		await expect(
+			canvas.getByRole('textbox', { name: /code/i })
+		).toHaveFocus();
 		await expect(
 			canvas.getByRole('button', { name: 'Anmelden' })
 		).toBeEnabled();

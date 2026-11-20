@@ -204,6 +204,32 @@ describe('LoginHandoverGate', () => {
 		expect(splash.isConnected).toBe(false);
 	});
 
+	it('shows the live loader after the document curtain watchdog expires', () => {
+		resetLoginHandoverForTests(true);
+		const covered = document.createElement('div');
+		covered.className = 'app__container';
+		const splash = document.createElement('div');
+		splash.id = 'loginHandoverSplash';
+		splash.dataset.loginCurtain = 'vertical';
+		document.body.append(covered, splash);
+		render(<LoginHandoverGate />);
+
+		expect(screen.queryByText('loading')).toBeNull();
+		act(() => {
+			splash.remove();
+			window.dispatchEvent(
+				new Event('oriso:login-handover-splash-expired')
+			);
+		});
+
+		expect(screen.getByText('loading').isConnected).toBe(true);
+		expect(screen.getByRole('status').classList).not.toContain(
+			'loginHandoverScreen--curtainStatus'
+		);
+		expect(isLoginHandoverActive()).toBe(true);
+		expect(covered.hasAttribute('inert')).toBe(true);
+	});
+
 	it('opens the curtain at the readiness cap even if the first view is slow', () => {
 		resetLoginHandoverForTests(true);
 		const splash = document.createElement('div');

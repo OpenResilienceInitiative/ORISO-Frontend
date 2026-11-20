@@ -178,9 +178,8 @@ export const Login = () => {
 		useState<string>('');
 	const [isRequestInProgress, setIsRequestInProgress] =
 		useState<boolean>(false);
-	// Identity of the latest sign-in attempt: a late answer of an earlier
-	// attempt (fields stay editable, the resend-mail path retries) must not
-	// write its message or field marks over newer input.
+	// A late response must never take ownership from a restored or retried form.
+	const loginAttemptRef = useRef(0);
 	const loginFormRef = useRef<HTMLDivElement>(null);
 	const [showFeedback, setShowFeedback] = useState(false);
 	const restoreInputFocus = useRef(false);
@@ -198,6 +197,8 @@ export const Login = () => {
 	useEffect(() => {
 		const restoreLogin = (event: PageTransitionEvent) => {
 			if (!event.persisted) return;
+			loginAttemptRef.current += 1;
+			earlyUserDataRef.current = null;
 			leavingForAppRef.current = false;
 			setShowFeedback(false);
 			setIsRequestInProgress(false);
@@ -206,7 +207,6 @@ export const Login = () => {
 		return () => window.removeEventListener('pageshow', restoreLogin);
 	}, []);
 
-	const loginAttemptRef = useRef(0);
 	const existingSessionLookupRef = useRef(0);
 	const [isMagicTokenLoginAttempted, setIsMagicTokenLoginAttempted] =
 		useState<boolean>(false);
@@ -371,7 +371,7 @@ export const Login = () => {
 	}, []);
 
 	const postLogin = useCallback(
-		() =>
+		(attempt = loginAttemptRef.current) =>
 			(
 				(() => {
 					const early = earlyUserDataRef.current;
@@ -379,6 +379,7 @@ export const Login = () => {
 					return early ?? reloadUserData();
 				})() as Promise<UserDataInterface>
 			).then(async (userData: UserDataInterface) => {
+				if (attempt !== loginAttemptRef.current) return;
 				// A language the person chose on the login screen wins over the
 				// stored profile language, which the app applies after the
 				// redirect. A choice that equals the browser default counts too
@@ -407,11 +408,13 @@ export const Login = () => {
 					await apiPatchUserData(patchedUserData).catch((error) => {
 						/* console.log(error); */
 					});
+					if (attempt !== loginAttemptRef.current) return;
 					await reloadUserData().catch((error) => {
 						/* console.log(error); */
 					});
 				}
 
+				if (attempt !== loginAttemptRef.current) return;
 				const appointment = groupAppointmentRedirect(
 					appointmentSeriesId,
 					userData
@@ -619,6 +622,7 @@ export const Login = () => {
 				username: username,
 				password: password,
 				tenantData: tenant,
+				isCurrentAttempt: isLatestAttempt,
 				...(otp ? { otp } : {}),
 				onCredentialsAccepted: () => {
 					if (!isLatestAttempt()) return;
@@ -651,8 +655,9 @@ export const Login = () => {
 				// consultant-blocked message) before it throws, and those must
 				// neither be overwritten nor counted.
 				.then(
-					() =>
-						postLogin()
+					() => {
+						if (!isLatestAttempt()) return null;
+						return postLogin(attempt)
 							.catch((error: unknown) => {
 								// The consultant block shows its own message before it
 								// throws; anything else (e.g. the user-data reload
@@ -674,12 +679,16 @@ export const Login = () => {
 							})
 							.then(() => {
 								// Still here: the form has something to say.
-								if (!leavingForAppRef.current) {
+								if (
+									isLatestAttempt() &&
+									!leavingForAppRef.current
+								) {
 									earlyUserDataRef.current = null;
 									endLoginHandover();
 								}
 								return null;
-							}),
+							});
+					},
 					(error: unknown) => {
 						// A newer attempt owns the screen and its user data.
 						if (!isLatestAttempt()) return null;

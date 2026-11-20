@@ -149,6 +149,7 @@ async function localLogin(page: Page, origin: string, rejectCode = false) {
 
 for (const scenario of [
 	'slow phone',
+	'wrapped claim on phone',
 	'tablet',
 	'fast desktop',
 	'reduced motion'
@@ -157,7 +158,8 @@ for (const scenario of [
 		page,
 		baseURL
 	}, testInfo) => {
-		const phone = scenario === 'slow phone';
+		const wrappedClaim = scenario === 'wrapped claim on phone';
+		const phone = scenario === 'slow phone' || wrappedClaim;
 		const tablet = scenario === 'tablet';
 		const vertical = phone || tablet;
 		await page.setViewportSize(
@@ -179,6 +181,15 @@ for (const scenario of [
 			listResponse
 		} = await localLogin(page, new URL(baseURL!).origin);
 		try {
+			if (wrappedClaim) {
+				await page
+					.locator('.stageMobileHero__claim')
+					.evaluate((claim) => {
+						claim.textContent =
+							'Wir beraten Sie online und vertraulich, auch wenn persönliche Fragen mehr Platz brauchen.';
+						claim.style.maxWidth = '204px';
+					});
+			}
 			await page.screenshot({ path: testInfo.outputPath('source.png') });
 			const sourceTime = await page.evaluate(
 				() => performance.timeOrigin
@@ -223,6 +234,9 @@ for (const scenario of [
 						range.selectNodeContents(n);
 						return {
 							text: n.textContent,
+							lines: [...range.getClientRects()].filter(
+								(rect) => rect.width > 0
+							).length,
 							rect: range.getBoundingClientRect().toJSON()
 						};
 					})
@@ -231,6 +245,14 @@ for (const scenario of [
 			const bounds = (await stage.boundingBox())!;
 			expect(copyLayout).toHaveLength(2);
 			const [title, claim] = copyLayout;
+			if (phone) expect(title.lines).toBe(1);
+			if (wrappedClaim) {
+				expect(claim.text).toContain('mehr Platz brauchen');
+				expect(claim.lines).toBeGreaterThan(1);
+				expect(claim.rect.bottom).toBeLessThanOrEqual(
+					bounds.y + bounds.height + 1
+				);
+			}
 			for (const copy of copyLayout) {
 				expect(copy.rect.left).toBeGreaterThanOrEqual(bounds.x - 1);
 				expect(copy.rect.right).toBeLessThanOrEqual(

@@ -96,7 +96,9 @@ export const LoginHandoverGate = () => {
 	const sourceCurtain = useLoginHandoverSourceCurtain();
 	const showScreen = active && !sourceCurtain;
 	const [mounted, setMounted] = useState(showScreen);
-	const [documentCurtain] = useState(isLoginHandoverDocumentCurtain);
+	const [documentCurtain, setDocumentCurtain] = useState(
+		isLoginHandoverDocumentCurtain
+	);
 	const screenRef = useRef<HTMLDivElement>(null);
 	// Active on the first render means a new document continues the handover:
 	// the screen is already there (app.html painted its background), so it
@@ -104,9 +106,24 @@ export const LoginHandoverGate = () => {
 	const [continued] = useState(() => isLoginHandoverActive());
 
 	// app.html painted a still of the screen for the document load; once this
-	// live screen is on screen (two frames), the still goes.
+	// live screen is on screen (two frames), the still goes. A document
+	// curtain stays until readiness, with the live loader as its escape hatch.
 	useLayoutEffect(() => {
-		if (!mounted || documentCurtain) return;
+		if (!mounted) return;
+		if (documentCurtain) {
+			const onExpiry = () => setDocumentCurtain(false);
+			window.addEventListener(
+				'oriso:login-handover-splash-expired',
+				onExpiry
+			);
+			if (!isLoginHandoverDocumentCurtain()) onExpiry();
+			return () => {
+				window.removeEventListener(
+					'oriso:login-handover-splash-expired',
+					onExpiry
+				);
+			};
+		}
 		let second = 0;
 		const first = window.requestAnimationFrame(() => {
 			second = window.requestAnimationFrame(removeLoginHandoverSplash);
