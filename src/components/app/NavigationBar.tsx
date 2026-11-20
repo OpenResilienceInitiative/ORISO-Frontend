@@ -38,6 +38,7 @@ import { userHasBudibaseTools } from '../../api/apiGetTools';
 import { browserNotificationsSettings } from '../../utils/notificationHelpers';
 import useIsFirstVisit from '../../utils/useIsFirstVisit';
 import { useResponsive } from '../../hooks/useResponsive';
+import { navTourTarget } from '../productTour/tourCatalogue';
 import {
 	MENUPLACEMENT_RIGHT,
 	MENUPLACEMENT_TOP
@@ -565,12 +566,9 @@ export const NavigationBar = ({
 										)}
 										to={item.to}
 										aria-label={linkLabel}
-										data-tour-target={
-											item.to ===
-											'/sessions/consultant/sessionPreview'
-												? 'nav-enquiries'
-												: undefined
-										}
+										data-tour-target={navTourTarget(
+											item.to
+										)}
 										onMouseEnter={() =>
 											setHoveredNavItem(item.to)
 										}

@@ -5570,6 +5570,17 @@
 		"introduction": {
 			"title": "Tanıtım",
 			"summary": "Uygulamanın bölümlerini tanıyın. Tanıtım turunu istediğiniz zaman yeniden başlatabilirsiniz."
+		},
+		"launcherSwitch": {
+			"title": "Tur düğmesini göster",
+			"label": {
+				"on": "Açık",
+				"off": "Kapalı"
+			},
+			"hint": {
+				"on": "Açık: sağ alttaki „?“ düğmesi turlarınızı açar. Bir görüşme açıkken gizlenir.",
+				"off": "Kapalı: „?“ düğmesi gizli. Turlarınızı yine burada bulabilirsiniz."
+			}
 		}
 	},
 	"consultingTypes": {
@@ -6371,6 +6382,13 @@
 					"intro": "Bir süpervizör eklediniz ve yanıtını okudunuz. Alıştırmayı bitirmek için aşağıdaki düğmeyi kullanın."
 				}
 			}
+		},
+		"launcher": {
+			"eyebrow": "Yardım",
+			"title": "Turlar",
+			"open": "Turları aç",
+			"close": "Turları kapat",
+			"manage": "Turları yönet"
 		}
 	},
 	"weekday": {

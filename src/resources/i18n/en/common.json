@@ -5535,6 +5535,17 @@
 		"introduction": {
 			"title": "Introduction",
 			"summary": "Get to know the areas of the application. You can restart the introduction at any time."
+		},
+		"launcherSwitch": {
+			"title": "Show the tour button",
+			"label": {
+				"on": "On",
+				"off": "Off"
+			},
+			"hint": {
+				"on": "On: the “?” button in the bottom-right corner opens your tours. It is hidden while a conversation is open.",
+				"off": "Off: the “?” button is hidden. You can still find your tours here."
+			}
 		}
 	},
 	"anonymousChat": {
@@ -6286,6 +6297,13 @@
 					"intro": "You added a supervisor and read their reply. Use the button below to end the practice."
 				}
 			}
+		},
+		"launcher": {
+			"eyebrow": "Help",
+			"title": "Tours",
+			"open": "Open tours",
+			"close": "Close tours",
+			"manage": "Manage tours"
 		}
 	},
 	"weekday": {
