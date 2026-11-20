@@ -33,6 +33,7 @@ class MatrixCallService {
 	private activeMediaOptions: MatrixCallOptions | null = null;
 	private eventHandlers: MatrixCallEventHandlers = {};
 	private detachFeedListeners: Array<() => void> = [];
+	private pendingMediaDrains = new Set<() => void>();
 
 	/**
 	 * Initialize call service with Matrix client
@@ -197,18 +198,20 @@ class MatrixCallService {
 	): Promise<void> {
 		const media = client.getMediaHandler();
 		const event = MediaHandlerEvent.LocalStreamsChanged;
-		// SDK 38 can register media after the call has ended without ever
-		// attaching that stream as a call feed. Drain only the displaced client.
+		// SDK 38 can hold local media before a call feed exists, and can
+		// register more after the call has ended. Stop only this client's
+		// tracks. Leave the listener in place for a stream that arrives later.
 		const releaseDisplacedMedia = () => {
 			if (this.client === client || media.userMediaStreams.length === 0)
 				return;
-			media.off(event, releaseDisplacedMedia);
 			media.stopAllStreams();
 		};
 		media.on(event, releaseDisplacedMedia);
+		this.pendingMediaDrains.add(releaseDisplacedMedia);
 		try {
 			await connect();
 		} finally {
+			this.pendingMediaDrains.delete(releaseDisplacedMedia);
 			media.off(event, releaseDisplacedMedia);
 			releaseDisplacedMedia();
 		}
@@ -532,8 +535,13 @@ class MatrixCallService {
 		if (expectedClient && client !== expectedClient) return;
 
 		this.client = null;
+		this.drainDisplacedMedia();
 		client?.removeAllListeners('Call.incoming' as any);
 		this.hangupCall();
+	}
+
+	private drainDisplacedMedia(): void {
+		for (const drain of this.pendingMediaDrains) drain();
 	}
 
 	/**

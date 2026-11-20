@@ -104,6 +104,56 @@ it.each(['answer', 'start'] as const)(
 	}
 );
 
+it.each(['answer', 'start'] as const)(
+	'stops outgoing media acquired before %s completes when the client is displaced',
+	async (direction) => {
+		const sdkDone = Promise.withResolvers<void>();
+		const outgoing = createFixture('old', undefined, sdkDone.promise);
+		const replacement = createFixture('new');
+		const lateStop = vi.fn();
+
+		matrixCallService.initialize(outgoing.client);
+		const connecting = connect(direction, outgoing.call);
+		try {
+			expect(outgoing.acquire).toHaveBeenCalledOnce();
+			expect(outgoing.media.userMediaStreams).toEqual([outgoing.stream]);
+
+			matrixCallService.initialize(replacement.client);
+
+			expect(outgoing.stopTrack).toHaveBeenCalledOnce();
+			expect(outgoing.media.userMediaStreams).toEqual([]);
+			expect(outgoing.media.listenerCount(streamsChanged)).toBe(1);
+
+			const lateStream = {
+				id: 'late',
+				getTracks: () => [{ stop: lateStop }]
+			} as unknown as MediaStream;
+			outgoing.media.userMediaStreams.push(lateStream);
+			outgoing.media.emit(streamsChanged);
+			expect(lateStop).toHaveBeenCalledOnce();
+			expect(outgoing.media.userMediaStreams).toEqual([]);
+
+			await connect(direction, replacement.call);
+			expect(replacement.stopTrack).not.toHaveBeenCalled();
+			expect(replacement.media.userMediaStreams).toEqual([
+				replacement.stream
+			]);
+			expect(matrixCallService.getActiveCall()).toBe(replacement.call);
+
+			sdkDone.resolve();
+			await connecting;
+			expect(outgoing.media.listenerCount(streamsChanged)).toBe(0);
+			expect(replacement.media.listenerCount(streamsChanged)).toBe(0);
+		} finally {
+			sdkDone.resolve();
+			await connecting;
+			matrixCallService.destroy();
+			outgoing.media.stopAllStreams();
+			replacement.media.stopAllStreams();
+		}
+	}
+);
+
 it('keeps media on a replacement using the exact same SDK client', async () => {
 	const mediaReady = Promise.withResolvers<MediaStream>();
 	const fixture = createFixture('reused', mediaReady.promise);
