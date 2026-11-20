@@ -6,7 +6,10 @@ import {
 	it,
 	vi
 } from 'vite-plus/test';
-import type { MatrixEncryptedFile } from '../utils/matrixEncryptedAttachment';
+import {
+	encryptMatrixAttachment,
+	type MatrixEncryptedFile
+} from '../utils/matrixEncryptedAttachment';
 
 const getMediaScannerUrl = vi.fn<() => string>();
 
@@ -59,6 +62,18 @@ const encryptedFile: MatrixEncryptedFile = {
 	iv: 'iv-material',
 	hashes: { sha256: 'hash' },
 	v: 'v2'
+};
+
+const plaintext = new Uint8Array([7, 8, 9]);
+
+const makeApprovedAttachment = async () => {
+	const { encryptedBlob, file } = await encryptMatrixAttachment(
+		new File([plaintext], 'scanner-fixture.bin')
+	);
+	return {
+		file: { ...file, url: encryptedFile.url },
+		ciphertext: await encryptedBlob.arrayBuffer()
+	};
 };
 
 const publicKeyResponse = () =>
@@ -135,14 +150,13 @@ describe('getScannedMediaDownloadPath', () => {
 
 describe('downloadScannedEncryptedMedia', () => {
 	it('forwards the file keys sealed to the scanner public key', async () => {
+		const { file, ciphertext } = await makeApprovedAttachment();
 		fetchMock
 			.mockResolvedValueOnce(publicKeyResponse())
-			.mockResolvedValueOnce(
-				new Response(new Uint8Array([1, 2, 3]), { status: 200 })
-			);
+			.mockResolvedValueOnce(new Response(ciphertext, { status: 200 }));
 		const { downloadScannedEncryptedMedia } = await importModule();
 
-		const outcome = await downloadScannedEncryptedMedia(encryptedFile);
+		const outcome = await downloadScannedEncryptedMedia(file);
 
 		expect(outcome.verdict).toBe('safe');
 
@@ -158,7 +172,7 @@ describe('downloadScannedEncryptedMedia', () => {
 		const body = JSON.parse(request.body as string);
 		expect(Object.keys(body)).toEqual(['encrypted_body']);
 		expect(body.encrypted_body).toEqual({
-			ciphertext: btoa(JSON.stringify({ file: encryptedFile })),
+			ciphertext: btoa(JSON.stringify({ file })),
 			mac: 'mac',
 			ephemeral: 'ephemeral-for-scanner-public-key'
 		});
@@ -181,22 +195,35 @@ describe('downloadScannedEncryptedMedia', () => {
 		expect(JSON.parse(request.body as string).file).toBeUndefined();
 	});
 
-	it('returns the plaintext the scanner released', async () => {
+	it('validates and decrypts the original ciphertext released by the scanner', async () => {
+		const { file, ciphertext } = await makeApprovedAttachment();
 		fetchMock
 			.mockResolvedValueOnce(publicKeyResponse())
-			.mockResolvedValueOnce(
-				new Response(new Uint8Array([7, 8, 9]), { status: 200 })
-			);
+			.mockResolvedValueOnce(new Response(ciphertext, { status: 200 }));
 		const { downloadScannedEncryptedMedia } = await importModule();
 
-		const outcome = await downloadScannedEncryptedMedia(encryptedFile);
+		const outcome = await downloadScannedEncryptedMedia(file);
 
 		expect(outcome.verdict).toBe('safe');
 		expect(
-			outcome.verdict === 'safe'
-				? Array.from(new Uint8Array(outcome.data))
-				: null
-		).toEqual([7, 8, 9]);
+			outcome.verdict === 'safe' ? new Uint8Array(outcome.data) : null
+		).toEqual(plaintext);
+	});
+
+	it('keeps media withheld when the released ciphertext fails validation', async () => {
+		const { file, ciphertext } = await makeApprovedAttachment();
+		const altered = new Uint8Array(ciphertext);
+		altered[0] = (altered[0] ?? 0) ^ 1;
+		fetchMock
+			.mockResolvedValueOnce(publicKeyResponse())
+			.mockResolvedValueOnce(new Response(ciphertext, { status: 200 }));
+		const { downloadScannedEncryptedMedia } = await importModule();
+
+		expect(await downloadScannedEncryptedMedia(file)).toEqual({
+			verdict: 'error',
+			reason: 'invalid-encrypted-response'
+		});
+		expect(fetchMock).toHaveBeenCalledTimes(2);
 	});
 
 	it('blocks a file the scanner rejected', async () => {

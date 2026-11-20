@@ -27,13 +27,15 @@ import {
 	getMediaScannerUrl,
 	isMediaImageCheckConfigured
 } from '../resources/scripts/runtimeConfig';
-import type { MatrixEncryptedFile } from '../utils/matrixEncryptedAttachment';
+import {
+	decryptMatrixAttachment,
+	type MatrixEncryptedFile
+} from '../utils/matrixEncryptedAttachment';
 
 /**
- * `safe` carries the plaintext the scanner released. `blocked` means the
- * scanner judged the file and rejected it. `error` means no judgement could be
- * obtained — treated exactly as strictly as `blocked`, but distinguishable so
- * the UI can say something honest.
+ * `safe` carries locally decrypted bytes from a verified scanner download.
+ * `blocked` means the scanner judged the file and rejected it. `error` keeps
+ * the media withheld when a verdict or verified download is unavailable.
  */
 export type MediaScanOutcome =
 	| { verdict: 'safe'; data: ArrayBuffer }
@@ -198,13 +200,23 @@ export const downloadScannedEncryptedMedia = async (
 	}
 
 	if (response.ok) {
+		let ciphertext: ArrayBuffer;
 		try {
-			return { verdict: 'safe', data: await response.arrayBuffer() };
+			ciphertext = await response.arrayBuffer();
 		} catch (error) {
 			return {
 				verdict: 'error',
 				reason: `unreadable-response: ${(error as Error)?.message}`
 			};
+		}
+		try {
+			const data = await decryptMatrixAttachment(
+				ciphertext,
+				encryptedFile
+			);
+			return { verdict: 'safe', data };
+		} catch {
+			return { verdict: 'error', reason: 'invalid-encrypted-response' };
 		}
 	}
 
