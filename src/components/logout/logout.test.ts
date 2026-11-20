@@ -24,8 +24,13 @@ vi.mock('../../utils/tenantSettingsHelper', () => ({
 	})
 }));
 vi.mock('../budibase/budibaseLogout', () => ({ budibaseLogout: vi.fn() }));
+/* An unsigned JWT is all `logout` reads: the realm roles decide whether the
+   counsellor's Live Chat availability has to be switched off (FE#2331). */
+const accessToken = (roles: string[]) =>
+	`e30.${btoa(JSON.stringify({ realm_access: { roles } }))}.sig`;
+const tokens = vi.hoisted(() => ({ current: '' }));
 vi.mock('../sessionCookie/accessSessionCookie', () => ({
-	getValueFromCookie: vi.fn(() => 'access-token'),
+	getValueFromCookie: vi.fn(() => tokens.current),
 	removeAllCookies: vi.fn()
 }));
 vi.mock('../sessionCookie/accessSessionLocalStorage', () => ({
@@ -55,6 +60,7 @@ describe('logout storage sweep (#1071)', () => {
 	beforeEach(() => {
 		vi.resetModules();
 		vi.clearAllMocks();
+		tokens.current = accessToken(['consultant']);
 		localStorage.clear();
 		sessionStorage.clear();
 	});
@@ -179,6 +185,44 @@ describe('logout storage sweep (#1071)', () => {
 		expect(availabilitySignal?.aborted).toBe(true);
 		expect(keycloakSignal?.aborted).toBe(true);
 		vi.useRealTimers();
+	});
+
+	describe('Live Chat availability (FE#2331)', () => {
+		it('switches a counsellor off on sign-out', async () => {
+			const { apiSetLiveChatAvailability } = await import(
+				'../../api/apiSetLiveChatAvailability'
+			);
+			const { logout } = await import('./logout');
+			await logout(false);
+			await flush();
+
+			expect(apiSetLiveChatAvailability).toHaveBeenCalledWith(
+				false,
+				expect.any(AbortSignal)
+			);
+		});
+
+		it.each([
+			['a Live Chat guest', ['anonymous']],
+			['an asker', ['user']]
+		])(
+			'does not call the counsellor endpoint for %s',
+			async (_who, roles) => {
+				tokens.current = accessToken(roles);
+				const { apiSetLiveChatAvailability } = await import(
+					'../../api/apiSetLiveChatAvailability'
+				);
+				const { apiKeycloakLogout } = await import(
+					'../../api/apiLogoutKeycloak'
+				);
+				const { logout } = await import('./logout');
+				await logout(false);
+				await flush();
+
+				expect(apiSetLiveChatAvailability).not.toHaveBeenCalled();
+				expect(apiKeycloakLogout).toHaveBeenCalledTimes(1);
+			}
+		);
 	});
 
 	// The Keycloak logout is a POST and the draft flush writes: both would be
