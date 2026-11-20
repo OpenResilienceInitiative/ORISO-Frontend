@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useContext, useEffect, useRef, useState } from 'react';
+import { useContext, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
 	autoUpdate,
@@ -66,7 +66,8 @@ export const ToolbarMenu = ({
 	// the call site that reproduced the bug.
 	const modalContext = useContext(ModalContext);
 	const activeOverlayCount = modalContext?.overlays?.length ?? 0;
-	useEffect(() => {
+	// Layout effect: close before the browser paints, so the menu never flashes on top of the overlay.
+	useLayoutEffect(() => {
 		if (activeOverlayCount > 0) {
 			onClose();
 		}
