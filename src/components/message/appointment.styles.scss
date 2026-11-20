@@ -1,15 +1,18 @@
 .appointmentSet {
-	background-color: $white;
-	border: 2px dashed $form-input-border;
+	background-color: var(--m3-surface-container-lowest, $white);
+	color: var(--m3-on-surface, #1a1c1e);
+	border: 2px dashed var(--m3-outline-variant, $form-input-border);
 	border-radius: 0 12px 12px;
 	padding: $grid-base-two;
 	margin-bottom: 12px;
 	display: grid;
 	row-gap: 0.75rem;
-	width: 306px;
+	box-sizing: border-box;
+	width: min(100%, 306px);
+	overflow-wrap: anywhere;
 
 	@include breakpoint($fromLarge) {
-		width: 500px;
+		width: min(100%, 500px);
 	}
 
 	&__title,
@@ -23,19 +26,25 @@
 		margin-bottom: 8px;
 	}
 
-	&__date {
-		font-size: $font-size-h4;
-		line-height: $line-height-quaternary;
+	.text__standard {
+		color: inherit;
+		font-size: calc(
+			#{$font-size-primary} * var(--oriso-personal-text-scale, 1)
+		);
+		line-height: 1.5;
+	}
+
+	&__title,
+	&__date.text__standard,
+	&__time.text__standard {
+		font-size: calc(#{$font-size-h4} * var(--oriso-personal-text-scale, 1));
+		line-height: 1.3;
 		font-family: $font-family-sans-serif;
 		font-weight: $font-weight-medium;
 	}
 
-	&__time {
-		font-size: $font-size-h4;
-		line-height: $line-height-quaternary;
-		font-family: $font-family-sans-serif;
-		font-weight: $font-weight-medium;
-		color: $light-grey;
+	&__time.text__standard {
+		color: var(--m3-on-surface-variant, $light-grey);
 		margin-left: 0.5rem;
 	}
 
@@ -60,10 +69,6 @@
 					display: -webkit-box;
 				}
 			}
-		}
-
-		&__showMore {
-			text-decoration: underline;
 		}
 
 		svg {
@@ -95,11 +100,27 @@
 
 	&--flex {
 		display: flex;
+		flex-wrap: wrap;
 		align-items: center;
 	}
 
-	&--pointer {
-		cursor: pointer;
+	.appointmentSet__action .button__item,
+	.downloadICSFile .button__item {
+		font-size: calc(
+			#{$font-size-primary} * var(--oriso-personal-text-scale, 1)
+		);
+		line-height: 1.5;
+		min-height: 44px;
+		white-space: normal;
+
+		&:focus-visible {
+			outline: 2px solid var(--m3-outline, #747779);
+			outline-offset: 2px;
+		}
+	}
+
+	.appointmentSet__action .button__item {
+		text-decoration: underline;
 	}
 
 	&--primary {

@@ -9,7 +9,7 @@ export const MenuEffectsSettings = () => {
 	const { t } = useTranslation();
 	const { enabled, setEnabled } = useMenuEffects();
 	return (
-		<Stack spacing={1}>
+		<Stack spacing={1} className="menuEffectsSettings">
 			<div className="profile__content__title">
 				<Headline text={t('menuEffects.title')} semanticLevel="5" />
 			</div>

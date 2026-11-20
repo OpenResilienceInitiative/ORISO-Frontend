@@ -110,8 +110,6 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 	}
 
 	.messageSubmit__wrapper {
-		z-index: 2;
-
 		&--withTyping {
 			position: absolute;
 			bottom: 0;
@@ -244,6 +242,9 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		// dead gap under the last one.
 		padding: 16px 16px
 			calc(var(--composer-dock-height, 240px) + #{$grid-base-three});
+
+		// Native focus and scrollIntoView align within the visible timeline.
+		scroll-padding-block-end: var(--composer-dock-height, 0px);
 		background-color: var(--m3-surface-container-lowest, #ffffff);
 
 		@media screen and (width <= 1366px) {
@@ -862,6 +863,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 	border: 1px solid var(--m3-outline-variant, rgba(0, 0, 0, 0.15));
 	border-radius: 999px;
 	background: var(--m3-surface-container, rgba(0, 0, 0, 0.05));
+	color: var(--m3-on-surface, #1b1b1c);
 	font-size: 13px;
 	cursor: pointer;
 
@@ -925,6 +927,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 	border: none;
 	border-bottom: 1px solid var(--m3-outline-variant, rgba(0, 0, 0, 0.08));
 	background: none;
+	color: var(--m3-on-surface, #1b1b1c);
 	text-align: left;
 	cursor: pointer;
 
@@ -935,6 +938,11 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 	&:hover,
 	&:focus-visible {
 		background: var(--m3-surface-container, rgba(0, 0, 0, 0.05));
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--m3-outline, #747878);
+		outline-offset: -3px;
 	}
 }
 

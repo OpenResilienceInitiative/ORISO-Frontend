@@ -2,6 +2,7 @@ import {
 	useCallback,
 	useContext,
 	useEffect,
+	useLayoutEffect,
 	useMemo,
 	useRef,
 	useState,
@@ -25,8 +26,10 @@ import {
 	applyPreviewFromLocation,
 	applyTenantPalette,
 	isThemePreviewRoute,
-	resetTenantPalette
+	resetTenantPalette,
+	resetThemePreviewPalette
 } from './theme/applyTenantTheme';
+import type { ContrastLevel } from './theme/orisoScheme';
 import { captureHeadLook } from './tenantHeadLook';
 
 const getOrCreateHeadNode = (
@@ -56,15 +59,8 @@ const getOrCreateHeadNode = (
 	return node;
 };
 
-const applyTheming = (tenant: TenantDataInterface, previewApplied: boolean) => {
+const applyBranding = (tenant: TenantDataInterface) => {
 	if (tenant.theming) {
-		// Seeds → OrisoScheme engine → --m3-* variables on the document
-		// root. Without a stored seed (or with an invalid one) nothing is
-		// injected and the compiled legacy palette keeps applying (UAT-E).
-		if (!previewApplied) {
-			applyTenantPalette(tenant.theming);
-		}
-
 		getOrCreateHeadNode('meta', { name: 'theme-color' }).setAttribute(
 			'content',
 			tenant.theming.primaryColor
@@ -99,11 +95,28 @@ const applyTheming = (tenant: TenantDataInterface, previewApplied: boolean) => {
 	}
 };
 
-const useTenantTheming = () => {
+interface TenantThemeOptions {
+	scheme?: 'light' | 'dark';
+	textSize?: number;
+	contrast?: ContrastLevel;
+	location?: Pick<Location, 'pathname' | 'search'>;
+	ownsPalette?: boolean;
+}
+
+const useTenantTheming = ({
+	scheme,
+	textSize = 100,
+	contrast = 'standard',
+	location = window.location,
+	ownsPalette = true
+}: TenantThemeOptions = {}) => {
 	const settings = useAppConfig();
 	const tenantContext = useContext(TenantContext);
 	const { locale } = useLocaleData();
 	const { subdomain } = getLocationVariables();
+	const previewSearch = isThemePreviewRoute(location.pathname)
+		? location.search
+		: null;
 	// Resolved from the access token, so it is `null` for an anonymous visitor
 	// and the user's own tenant once they sign in. The providers above the
 	// router do not remount on login, so without this the app would keep
@@ -117,6 +130,68 @@ const useTenantTheming = () => {
 	const linkAgencyId = authenticatedTenantId
 		? null
 		: getLinkAgencyId(window.location.search);
+	const tenantScope = `${authenticatedTenantId ?? ''}|${linkAgencyId ?? ''}`;
+	const personal = scheme !== undefined && previewSearch === null;
+	const appliedContrast = personal ? contrast : 'standard';
+	const [paletteSource, setPaletteSource] = useState<{
+		scope: string;
+		theming: TenantDataInterface['theming'];
+	}>();
+
+	useLayoutEffect(() => {
+		if (!ownsPalette) return;
+		const root = document.documentElement;
+		if (personal) {
+			root.dataset.orisoPersonalScheme = scheme;
+			root.dataset.orisoContrastLevel = appliedContrast;
+		} else {
+			delete root.dataset.orisoPersonalScheme;
+			delete root.dataset.orisoContrastLevel;
+		}
+		if (personal && textSize > 100) {
+			root.dataset.orisoPersonalTextSize = String(textSize);
+		} else {
+			delete root.dataset.orisoPersonalTextSize;
+		}
+		if (!personal || textSize === 100)
+			root.style.removeProperty('--oriso-personal-text-scale');
+		else
+			root.style.setProperty(
+				'--oriso-personal-text-scale',
+				String(textSize / 100)
+			);
+	}, [scheme, textSize, personal, appliedContrast, ownsPalette]);
+
+	useLayoutEffect(() => {
+		if (!ownsPalette) return;
+		resetThemePreviewPalette();
+		if (previewSearch !== null) {
+			resetTenantPalette();
+			if (applyPreviewFromLocation(previewSearch)) return;
+		}
+		const theming =
+			paletteSource?.scope === tenantScope
+				? paletteSource.theming
+				: undefined;
+		if (
+			!applyTenantPalette(
+				theming,
+				document.documentElement,
+				personal ? scheme : undefined,
+				appliedContrast
+			)
+		)
+			resetTenantPalette();
+	}, [
+		paletteSource,
+		scheme,
+		tenantScope,
+		previewSearch,
+		personal,
+		appliedContrast,
+		ownsPalette
+	]);
+
 	const [isLoadingTenant, setIsLoadingTenant] = useState(
 		settings.useTenantService
 	);
@@ -131,7 +206,6 @@ const useTenantTheming = () => {
 	const resetLook = useCallback(() => {
 		restoreDefaultLook.current?.();
 		restoreDefaultLook.current = null;
-		resetTenantPalette();
 	}, []);
 
 	const cypressTenantEnabled = useMemo(
@@ -141,17 +215,6 @@ const useTenantTheming = () => {
 
 	const onTenantServiceResponse = useCallback(
 		(tenant: TenantDataInterface) => {
-			// Theme Builder preview (ORISO-Admin#907): the seeds arrive in the
-			// URL and are independent of tenant resolution, so they are applied
-			// before both branches below. They have to survive a host without a
-			// subdomain (the admin's iframe in local development) and a Träger
-			// that has never saved colours — that admin is precisely the one
-			// choosing them for the first time. The seeds are honoured only on
-			// the demo route, so a link cannot repaint the real app.
-			const previewApplied =
-				isThemePreviewRoute(window.location.pathname) &&
-				applyPreviewFromLocation(window.location.search);
-
 			if (!subdomain && cypressTenantEnabled !== '1') {
 				/* A host without a tenant subdomain (localhost, a bare
 				   domain) keeps the app config as its settings — but the
@@ -200,12 +263,25 @@ const useTenantTheming = () => {
 				}
 
 				restoreDefaultLook.current ??= captureHeadLook();
-				applyTheming(decodedTenant, previewApplied);
+				applyBranding(decodedTenant);
+				if (ownsPalette) {
+					setPaletteSource({
+						scope: tenantScope,
+						theming: decodedTenant.theming
+					});
+				}
 				tenantContext?.setTenant(decodedTenant);
 			}
 			return;
 		},
-		[settings, subdomain, tenantContext, cypressTenantEnabled]
+		[
+			settings,
+			subdomain,
+			tenantContext,
+			cypressTenantEnabled,
+			tenantScope,
+			ownsPalette
+		]
 	);
 
 	useEffect(() => {
@@ -218,7 +294,7 @@ const useTenantTheming = () => {
 		// anonymous response landing after the signed-in one puts the
 		// subdomain tenant back, which is the leak this hook exists to close.
 		let active = true;
-		const requestedTenantId = `${authenticatedTenantId ?? ''}|${linkAgencyId ?? ''}`;
+		const requestedTenantId = tenantScope;
 
 		// The switch starts the moment the token changes, not when the answer
 		// arrives. Until then the context would still hand out the previous
@@ -255,6 +331,7 @@ const useTenantTheming = () => {
 				if (appliedTenantId.current !== requestedTenantId) {
 					appliedTenantId.current = requestedTenantId;
 					resetLook();
+					setPaletteSource(undefined);
 					tenantContext?.setTenant(null as any);
 				}
 			})

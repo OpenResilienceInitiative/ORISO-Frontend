@@ -11,6 +11,8 @@ import {
 	ConsultingTypesContext,
 	E2EEProvider
 } from '../../globalState';
+import { PersonalDisplayEntry } from '../../features/personal-display/PersonalDisplayEntry';
+import { usePersonalDisplay } from '../../features/personal-display/PersonalDisplayProvider';
 import { NavigationBar } from './NavigationBar';
 import { Header } from '../header/Header';
 import { ReleaseNote } from '../releaseNote/ReleaseNote';
@@ -38,6 +40,7 @@ interface RoutingProps {
 }
 
 export const Routing = (props: RoutingProps) => {
+	const { showAskerEntry } = usePersonalDisplay();
 	const location = useLocation();
 	const settings = useAppConfig();
 	const { userData } = useContext(UserDataContext);
@@ -124,6 +127,12 @@ export const Routing = (props: RoutingProps) => {
 								<NavigationBar
 									routerConfig={routerConfig}
 									onLogout={logout}
+									displayEntry={
+										showAskerEntry &&
+										!useEmbeddedNotificationsLayout ? (
+											<PersonalDisplayEntry />
+										) : undefined
+									}
 								/>
 								<section className="contentWrapper">
 									<Header />

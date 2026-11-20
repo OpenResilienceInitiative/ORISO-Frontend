@@ -89,6 +89,7 @@ import { useDockedComposerOffset } from '../chatStage/useDockedComposerOffset';
 import { useComposerFocus } from '../chatStage/useComposerFocus';
 import { ResizableHandle } from '../sessionsList/ResizableHandle';
 import { useResponsive } from '../../hooks/useResponsive';
+import { KeyBackupRecoveryNoticeSlot } from '../E2EEncryptionSupportBanner/KeyBackupRecoveryPrompt';
 import {
 	buildSessionChannelPath,
 	channelFromId,
@@ -2453,7 +2454,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 
 	// ONE breakpoint source for the phone layout (checklist 5): the app's
 	// `fromL` (900 px) = `STAGE_LAYOUT.DESKTOP_MIN_WIDTH`.
-	const { fromL } = useResponsive();
+	const { fromL, untilXS } = useResponsive();
 	const isPhoneLayout = useFrozenPhoneLayout(!fromL);
 
 	// The panel the URL asks for, resolved against what exists. A thread
@@ -3426,6 +3427,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						<div className="session__threadListBar">
 							<button
 								type="button"
+								aria-expanded={isThreadListOpen}
 								className={clsx(
 									'session__threadListToggle',
 									isThreadListOpen &&
@@ -3553,6 +3555,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						<div className="session__gameChromeFadeTarget">
 							<EncryptionBanner />
 						</div>
+					)}
+					{!blocksConversation && untilXS && (
+						<KeyBackupRecoveryNoticeSlot />
 					)}
 					{(!shouldBlockAnonymousInquiryChat ||
 						isInAnonymousWaitingQueuePhase) &&

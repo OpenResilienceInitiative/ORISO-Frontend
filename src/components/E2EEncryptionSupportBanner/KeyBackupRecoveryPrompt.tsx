@@ -1,6 +1,7 @@
 import { UserDataContext } from '../../globalState';
 import { Link } from 'react-router-dom';
 import * as React from 'react';
+import { createPortal } from 'react-dom';
 import { useCallback, useContext, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
@@ -25,6 +26,7 @@ import { logout } from '../logout/logout';
 import {
 	M3_SNACKBAR_ABOVE_NAVIGATION_BOTTOM,
 	M3_SNACKBAR_PHONE_MEDIA,
+	m3SnackbarColors,
 	M3Snackbar
 } from '../m3Snackbar/M3Snackbar';
 import { ReactComponent as RecoverySafeIcon } from '../../resources/img/icons/recovery-safe.svg';
@@ -145,8 +147,56 @@ const recoverySnackbarPlacement = {
 	width: { xs: 'calc(100% - 16px)' }
 } as const;
 
+const recoveryInlineStyle = {
+	'mx': 'auto',
+	'my': 2,
+	'&& .MuiAlert-message, && .MuiAlert-message .MuiButton-root': {
+		fontSize: 'calc(0.875rem * var(--oriso-personal-text-scale, 1))',
+		lineHeight: 1.43
+	},
+	'&& .MuiAlert-message .MuiButton-root': {
+		flexShrink: 1,
+		maxWidth: '100%',
+		whiteSpace: 'normal',
+		overflowWrap: 'anywhere'
+	},
+	'&& .encryption-recovery-snackbar__link': {
+		color: m3SnackbarColors.action,
+		transition: 'none',
+		whiteSpace: 'normal',
+		overflowWrap: 'anywhere'
+	}
+} as const;
+
+const TimelineTarget =
+	React.createContext<React.RefCallback<HTMLDivElement> | null>(null);
+
+/** Narrow chats keep the standing notice in the scrollable timeline. */
+export const KeyBackupRecoveryNoticeSlot = () => {
+	const setTarget = useContext(TimelineTarget);
+	return setTarget && <div ref={setTarget} />;
+};
+
+export const KeyBackupRecoveryBoundary = ({
+	children
+}: React.PropsWithChildren) => {
+	const [timelineTarget, setTimelineTarget] = useState<HTMLDivElement | null>(
+		null
+	);
+	return (
+		<TimelineTarget.Provider value={setTimelineTarget}>
+			<KeyBackupRecoveryPrompt timelineTarget={timelineTarget} />
+			{children}
+		</TimelineTarget.Provider>
+	);
+};
+
 /** Recovery is available inline; opening the restore dialog is always explicit. */
-export const KeyBackupRecoveryPrompt = () => {
+export const KeyBackupRecoveryPrompt = ({
+	timelineTarget
+}: {
+	timelineTarget?: HTMLDivElement | null;
+}) => {
 	const { t } = useTranslation();
 	const { matrixClientService } = useMatrixClient();
 	const passwordMode =
@@ -168,63 +218,57 @@ export const KeyBackupRecoveryPrompt = () => {
 	const signInAgain = status === 'needs-sign-in';
 	// Scoped to the status revision: any change, even via 'pending' back to the same status, reshows it.
 	const dismissKey = `${userId}:${revision}`;
+	const notice = dismissedFor !== dismissKey && (
+		<M3Snackbar
+			role="status"
+			open={!showRecovery}
+			placement={timelineTarget ? 'inline' : 'floating'}
+			sx={timelineTarget ? recoveryInlineStyle : undefined}
+			testId="key-backup-recovery-action"
+			message={
+				<>
+					{eligible && (
+						<span>{t('encryption.saveReminder.unavailable')} </span>
+					)}
+					<span>{t('encryption.passwordRecovery.' + status)}</span>
+					{!signInAgain && (
+						<>
+							{' '}
+							<Link
+								to="/profile/einstellungen/sicherheit"
+								className="encryption-recovery-snackbar__link"
+							>
+								{t('encryption.passwordRecovery.settings')}
+							</Link>
+						</>
+					)}
+				</>
+			}
+			action={
+				signInAgain
+					? {
+							label: t(
+								'encryption.passwordRecovery.reauthenticate'
+							),
+							onClick: () => void logout(),
+							testId: 'key-backup-recovery-sign-in'
+						}
+					: {
+							label: t('encryption.keyBackup.dialog.openVault'),
+							onClick: () => setOpenedFor(userId),
+							testId: 'key-backup-recovery-open'
+						}
+			}
+			actionOnOwnLine
+			onClose={() => setDismissedFor(dismissKey)}
+			closeLabel={t('encryption.keyBackup.snackbar.close')}
+			containerSx={recoverySnackbarPlacement}
+			yieldToOthers
+		/>
+	);
 	return (
 		<>
-			{dismissedFor !== dismissKey && !showRecovery && (
-				<M3Snackbar
-					role="status"
-					testId="key-backup-recovery-action"
-					message={
-						<>
-							{eligible && (
-								<span>
-									{t(
-										'encryption.saveReminder.unavailable'
-									)}{' '}
-								</span>
-							)}
-							<span>
-								{t('encryption.passwordRecovery.' + status)}
-							</span>
-							{!signInAgain && (
-								<>
-									{' '}
-									<Link
-										to="/profile/einstellungen/sicherheit"
-										className="encryption-recovery-snackbar__link"
-									>
-										{t(
-											'encryption.passwordRecovery.settings'
-										)}
-									</Link>
-								</>
-							)}
-						</>
-					}
-					action={
-						signInAgain
-							? {
-									label: t(
-										'encryption.passwordRecovery.reauthenticate'
-									),
-									onClick: () => void logout(),
-									testId: 'key-backup-recovery-sign-in'
-								}
-							: {
-									label: t(
-										'encryption.keyBackup.dialog.openVault'
-									),
-									onClick: () => setOpenedFor(userId),
-									testId: 'key-backup-recovery-open'
-								}
-					}
-					actionOnOwnLine
-					onClose={() => setDismissedFor(dismissKey)}
-					closeLabel={t('encryption.keyBackup.snackbar.close')}
-					containerSx={recoverySnackbarPlacement}
-					yieldToOthers
-				/>
-			)}
+			{timelineTarget ? createPortal(notice, timelineTarget) : notice}
 			{showRecovery && (
 				<KeyBackupRecoveryDialog
 					onClose={() => setOpenedFor(null)}

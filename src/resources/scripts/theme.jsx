@@ -1,10 +1,12 @@
 import { createTheme } from '@mui/material/styles';
 
+const loginUsesDark = () =>
+	document.body?.hasAttribute('data-oriso-login-dark');
+
 const getCssVarValue = (name, fallback = '#000000') => {
-	// If you need a scss variable add a css variable for it in mui-variables-mapping.scss
-	const value = getComputedStyle(document.documentElement)
-		.getPropertyValue(name)
-		.trim();
+	// The anonymous login overlays its palette on body, including portals.
+	const root = loginUsesDark() ? document.body : document.documentElement;
+	const value = getComputedStyle(root).getPropertyValue(name).trim();
 	// Return fallback if value is empty (e.g., in Storybook where CSS vars might not be loaded)
 	return value || fallback;
 };
@@ -20,7 +22,10 @@ const getBrandTextColor = () =>
 // A custom theme for this app. A factory because the --m3-* custom
 // properties change at runtime when a tenant palette is injected
 // (THB-05) — the MUI theme must be re-created from the new values.
-const createAppTheme = () =>
+const createAppTheme = (
+	dark = loginUsesDark() ||
+		document.documentElement.dataset.orisoPersonalScheme === 'dark'
+) =>
 	createTheme({
 		breakpoints: {
 			values: {
@@ -32,6 +37,17 @@ const createAppTheme = () =>
 			}
 		},
 		palette: {
+			...(dark && {
+				mode: 'dark',
+				text: {
+					primary: getCssVarValue('--m3-on-surface'),
+					secondary: getCssVarValue('--m3-on-surface-variant')
+				},
+				background: {
+					default: getCssVarValue('--m3-surface'),
+					paper: getCssVarValue('--m3-surface-container-high')
+				}
+			}),
 			primary: {
 				dark: getCssVarValue('--m3-primary-hover', '#991b1b'),
 				main: getCssVarValue('--m3-primary', '#dc2626'),
@@ -42,7 +58,9 @@ const createAppTheme = () =>
 				)
 			},
 			info: {
-				main: getCssVarValue('--black', '#000000'),
+				main: loginUsesDark()
+					? getCssVarValue('--m3-on-surface', '#e4e2e2')
+					: getCssVarValue('--black', '#000000'),
 				light: getCssVarValue('--m3-on-surface-variant', '#6b7280')
 			},
 			error: {
@@ -58,7 +76,10 @@ const createAppTheme = () =>
 				'"Inter Variable", Arial, sans-serif'
 			),
 			h1: {
-				color: getCssVarValue('--black', '#000000'),
+				color: getCssVarValue(
+					dark ? '--m3-on-surface' : '--black',
+					'#000000'
+				),
 				letterSpacing: 'normal',
 				fontSize: getCssVarValue('--font-size-h1'),
 				lineHeight: '50px',
@@ -66,7 +87,10 @@ const createAppTheme = () =>
 				fontFamily: getCssVarValue('--font-family-sans-serif')
 			},
 			h2: {
-				color: getCssVarValue('--black', '#000000'),
+				color: getCssVarValue(
+					dark ? '--m3-on-surface' : '--black',
+					'#000000'
+				),
 				letterSpacing: 'normal',
 				fontSize: getCssVarValue('--font-size-h2'),
 				lineHeight: '38px',
@@ -74,7 +98,10 @@ const createAppTheme = () =>
 				fontFamily: getCssVarValue('--font-family-sans-serif')
 			},
 			h3: {
-				color: getCssVarValue('--black', '#000000'),
+				color: getCssVarValue(
+					dark ? '--m3-on-surface' : '--black',
+					'#000000'
+				),
 				letterSpacing: 'normal',
 				fontSize: getCssVarValue('--font-size-h3'),
 				lineHeight: '32px',
@@ -82,7 +109,10 @@ const createAppTheme = () =>
 				fontFamily: getCssVarValue('--font-family-sans-serif')
 			},
 			h4: {
-				color: getCssVarValue('--black', '#000000'),
+				color: getCssVarValue(
+					dark ? '--m3-on-surface' : '--black',
+					'#000000'
+				),
 				letterSpacing: 'normal',
 				fontSize: getCssVarValue('--font-size-h4'),
 				lineHeight: '26px',
@@ -90,7 +120,10 @@ const createAppTheme = () =>
 				fontFamily: getCssVarValue('--font-family-sans-serif')
 			},
 			h5: {
-				color: getCssVarValue('--black', '#000000'),
+				color: getCssVarValue(
+					dark ? '--m3-on-surface' : '--black',
+					'#000000'
+				),
 				letterSpacing: 'normal',
 				fontSize: getCssVarValue('--font-size-h5'),
 				lineHeight: '24px',
@@ -99,25 +132,28 @@ const createAppTheme = () =>
 			},
 			body1: {
 				fontFamily: getCssVarValue('--font-family-sans-serif'),
-				color: getCssVarValue('--black', '#000000'),
+				color: getCssVarValue(
+					dark ? '--m3-on-surface' : '--black',
+					'#000000'
+				),
 				lineHeight: getCssVarValue('--line-height-primary'),
 				fontSize: getCssVarValue('--font-size-primary')
 			},
 			body2: {
 				fontFamily: getCssVarValue('--font-family-sans-serif'),
-				color: 'black',
+				color: dark ? getCssVarValue('--m3-on-surface') : 'black',
 				fontSize: getCssVarValue('--font-size-tertiary'),
 				lineHeight: '20px'
 			},
 			subtitle1: {
 				fontFamily: getCssVarValue('--font-family-sans-serif'),
-				color: 'black',
+				color: dark ? getCssVarValue('--m3-on-surface') : 'black',
 				fontSize: '20px',
 				lineHeight: '28px'
 			},
 			subtitle2: {
 				fontFamily: getCssVarValue('--font-family-sans-serif'),
-				color: 'black',
+				color: dark ? getCssVarValue('--m3-on-surface') : 'black',
 				fontSize: '12px',
 				lineHeight: '16px'
 			}

@@ -1,4 +1,24 @@
 {
+	"personalDisplay": {
+		"title": "Görünüm",
+		"accessibility": "Erişilebilirlik",
+		"textSize": "Metin boyutu",
+		"currentSize": "Seçilen metin boyutu",
+		"smaller": "Küçült",
+		"larger": "Büyüt",
+		"contrastLabel": "Kontrast",
+		"contrast": {
+			"standard": "Standart",
+			"medium": "Orta",
+			"high": "Yüksek"
+		},
+		"schemeLabel": "Renk düzeni",
+		"scheme": {
+			"system": "Sistem",
+			"light": "Açık",
+			"dark": "Koyu"
+		}
+	},
 	"addons": {
 		"loadError": "Bu eklenti yüklenemedi.",
 		"notAvailable": "Bu eklenti kullanılamıyor.",
@@ -151,7 +171,7 @@
 		"selectLanguage": "Dil seçin",
 		"stage": {
 			"title": "Danışmanlık\n& Yardım",
-			"mobileHeadline": "Endişeleriniz için burada yer var.",
+
 			"carrierLogoAlt": "{{name}} konumlarının haritasını göster"
 		},
 		"stop": "Dur",
@@ -704,6 +724,7 @@
 		}
 	},
 	"e2ee": {
+		"encryptedConversation": "Uçtan uca şifreli",
 		"attachment": {
 			"decryption_error": "Şifre çözme sırasında hata",
 			"encrypted": "İndirmek için dosyanın şifresini çözme",
@@ -2302,6 +2323,8 @@
 		}
 	},
 	"navigation": {
+		"mobileMenu": "Gezinme",
+		"mobileMore": "Diğer",
 		"appointments": "Video - Tarihler",
 		"asker": {
 			"sessions": {

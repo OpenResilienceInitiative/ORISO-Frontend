@@ -10,6 +10,7 @@ import {
 import { CallTimelineMessage } from '../../message/CallTimelineMessage';
 import '../../message/message.styles.scss';
 import type { CallLifecycleMessage } from '../../../utils/callLifecycleMessage';
+import { applyTenantPalette } from '../../../utils/theme/applyTenantTheme';
 import { JoinGroupChatView } from '../../groupChat/JoinGroupChatView';
 import {
 	buildGroupStageListItem,
@@ -422,6 +423,83 @@ export const CallDevicesOkPhone: Story = {
 		await expectSettled(canvasElement);
 		await expectLivePreview(canvasElement);
 		await expectBottomSheet(canvasElement);
+	}
+};
+
+export const CallDevicesLargeText: Story = {
+	...callMessage,
+	name: 'Call · device check at 200 % · phone 390',
+	globals: { ...phone390Globals, scheme: 'dark', contrast: 'high' },
+	parameters: textOnThePicture,
+	beforeEach: () => {
+		const cleanDevices = withDevices('ok')();
+		const root = document.documentElement;
+		const scale = root.style.getPropertyValue(
+			'--oriso-personal-text-scale'
+		);
+		root.style.setProperty('--oriso-personal-text-scale', '2');
+		return () => {
+			if (scale)
+				root.style.setProperty('--oriso-personal-text-scale', scale);
+			else root.style.removeProperty('--oriso-personal-text-scale');
+			cleanDevices();
+		};
+	},
+	play: async ({ canvasElement, args }) => {
+		await userEvent.click(await callJoin(canvasElement));
+		await expectSettled(canvasElement);
+		await expectLivePreview(canvasElement);
+		const p = page(canvasElement);
+		const enter = await p.findByTestId('knock-wait-join');
+		const mic = await p.findByTestId('device-picker-microphone');
+		await expect(getComputedStyle(enter).fontSize).toBe('28px');
+		await userEvent.click(mic);
+		const option = await p.findByRole('menuitem', {
+			name: 'Jabra Evolve2 Headset'
+		});
+		await expect(getComputedStyle(option).fontSize).toBe('28px');
+		await userEvent.keyboard('{Escape}');
+		await expect(mic).toHaveFocus();
+		await expect(enter).toBeVisible();
+
+		// Apply the app's runtime palette without replaying the Storybook story.
+		const root = canvasElement.ownerDocument.documentElement;
+		const preview = (await dialog(canvasElement)).querySelector('video')!;
+		const stream = preview.srcObject as MediaStream;
+		const originalTracks = stream.getTracks();
+		const requestedTrackCount = fake?.tracks.length;
+		const changePalette = (
+			scheme: 'light' | 'dark',
+			contrast: 'medium' | 'high'
+		) => {
+			root.dataset.orisoPersonalScheme = scheme;
+			root.dataset.orisoContrastLevel = contrast;
+			applyTenantPalette(undefined, root, scheme, contrast);
+		};
+		try {
+			const darkSurface = getComputedStyle(
+				enter.closest('.m3Dialog__surface')!
+			).backgroundColor;
+			changePalette('light', 'medium');
+			await waitFor(() =>
+				expect(
+					getComputedStyle(enter.closest('.m3Dialog__surface')!)
+						.backgroundColor
+				).not.toBe(darkSurface)
+			);
+			await expect(
+				(await dialog(canvasElement)).querySelector('video')
+			).toBe(preview);
+			await expect(preview.srcObject).toBe(stream);
+			await expect(stream.getTracks()).toEqual(originalTracks);
+			await expect(
+				originalTracks.every((track) => track.readyState === 'live')
+			).toBe(true);
+			await expect(fake?.tracks.length).toBe(requestedTrackCount);
+			await expect(args.onJoin).not.toHaveBeenCalled();
+		} finally {
+			changePalette('dark', 'high');
+		}
 	}
 };
 

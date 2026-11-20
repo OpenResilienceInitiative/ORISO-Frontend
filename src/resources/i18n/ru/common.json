@@ -1,4 +1,24 @@
 {
+	"personalDisplay": {
+		"title": "Отображение",
+		"accessibility": "Доступность",
+		"textSize": "Размер текста",
+		"currentSize": "Выбранный размер текста",
+		"smaller": "Уменьшить",
+		"larger": "Увеличить",
+		"contrastLabel": "Контрастность",
+		"contrast": {
+			"standard": "Стандартная",
+			"medium": "Средняя",
+			"high": "Высокая"
+		},
+		"schemeLabel": "Цветовая схема",
+		"scheme": {
+			"system": "Системная",
+			"light": "Светлая",
+			"dark": "Тёмная"
+		}
+	},
 	"addons": {
 		"loadError": "Не удалось загрузить это дополнение.",
 		"notAvailable": "Это дополнение недоступно.",
@@ -151,7 +171,7 @@
 		"selectLanguage": "Выберите язык",
 		"stage": {
 			"title": "Консультации\n& Помощь",
-			"mobileHeadline": "Здесь есть место для ваших забот.",
+
 			"carrierLogoAlt": "Показать карту местоположений {{name}}"
 		},
 		"stop": "Стоп",
@@ -705,6 +725,7 @@
 		}
 	},
 	"e2ee": {
+		"encryptedConversation": "Сквозное шифрование",
 		"attachment": {
 			"decryption_error": "Ошибка при расшифровке",
 			"encrypted": "Расшифровка файла для загрузки",
@@ -2307,6 +2328,8 @@
 		}
 	},
 	"navigation": {
+		"mobileMenu": "Навигация",
+		"mobileMore": "Ещё",
 		"appointments": "Видео - Даты",
 		"asker": {
 			"sessions": {

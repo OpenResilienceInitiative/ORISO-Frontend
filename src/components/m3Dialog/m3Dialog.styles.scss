@@ -45,6 +45,23 @@
 		overflow: hidden;
 	}
 
+	@media (prefers-reduced-motion: no-preference) {
+		.m3Dialog__surface--bottom-sheet {
+			transform: translateY(1.5rem);
+			transition: transform 160ms cubic-bezier(0.3, 0, 1, 1);
+
+			&.m3Dialog__surface--open {
+				transform: none;
+				transition-duration: 220ms;
+				transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
+
+				@starting-style {
+					transform: translateY(1.5rem);
+				}
+			}
+		}
+	}
+
 	/* Round close affordance so its hover state matches the 28px surface
 	   instead of clashing with a square highlight. */
 	&__close {

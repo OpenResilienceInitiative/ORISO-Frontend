@@ -16,7 +16,9 @@ export function NavigationStoryShell({
 	liveChatViaSidebar = true,
 	tenantSettings,
 	appointmentFeatureEnabled,
+	languageOptions,
 	onLogout,
+	displayEntry,
 	className = '',
 	children,
 	...shellProps
@@ -27,7 +29,9 @@ export function NavigationStoryShell({
 	tenantSettings?: Record<string, unknown>;
 	/** Shows the "Meine Termine" rail entry. */
 	appointmentFeatureEnabled?: boolean;
+	languageOptions?: string[];
 	onLogout: () => void;
+	displayEntry?: React.ReactNode;
 }) {
 	const routerConfig = useMemo(() => {
 		const settings = { ...config, ...storybookSettings };
@@ -42,12 +46,14 @@ export function NavigationStoryShell({
 			liveChatViaSidebar={liveChatViaSidebar}
 			tenantSettings={tenantSettings}
 			appointmentFeatureEnabled={appointmentFeatureEnabled}
+			languageOptions={languageOptions}
 		>
 			<div {...shellProps} className={`app__wrapper ${className}`}>
 				{children}
 				<NavigationBar
 					routerConfig={routerConfig}
 					onLogout={onLogout}
+					displayEntry={displayEntry}
 				/>
 			</div>
 		</NavigationStoryProviders>

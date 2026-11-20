@@ -1,4 +1,24 @@
 {
+	"personalDisplay": {
+		"title": "Affichage",
+		"accessibility": "Accessibilité",
+		"textSize": "Taille du texte",
+		"currentSize": "Taille du texte sélectionnée",
+		"smaller": "Réduire",
+		"larger": "Agrandir",
+		"contrastLabel": "Contraste",
+		"contrast": {
+			"standard": "Standard",
+			"medium": "Moyen",
+			"high": "Élevé"
+		},
+		"schemeLabel": "Thème de couleurs",
+		"scheme": {
+			"system": "Système",
+			"light": "Clair",
+			"dark": "Sombre"
+		}
+	},
 	"addons": {
 		"loadError": "Ce module complémentaire n'a pas pu être chargé.",
 		"notAvailable": "Ce module complémentaire n'est pas disponible.",
@@ -151,7 +171,7 @@
 		"selectLanguage": "Choisir la langue",
 		"stage": {
 			"title": "Conseil\nAide et assistance",
-			"mobileHeadline": "Il y a de la place ici pour vos demandes.",
+
 			"carrierLogoAlt": "Afficher la carte des sites de {{name}}"
 		},
 		"stop": "Arrêter",
@@ -704,6 +724,7 @@
 		}
 	},
 	"e2ee": {
+		"encryptedConversation": "Chiffrement de bout en bout",
 		"attachment": {
 			"decryption_error": "Erreur lors du décryptage",
 			"encrypted": "Décrypter le fichier pour le télécharger",
@@ -2302,6 +2323,8 @@
 		}
 	},
 	"navigation": {
+		"mobileMenu": "Navigation",
+		"mobileMore": "Plus",
 		"appointments": "Vidéo - Dates",
 		"asker": {
 			"sessions": {

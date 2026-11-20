@@ -40,6 +40,7 @@ import {
 	mockVisibilityMessageForViewer
 } from './MessageItemComponent.mocks';
 import {
+	MESSAGE_STORY_BACKGROUND,
 	desktop1440Globals,
 	mobileParameters,
 	phone390Globals,
@@ -115,7 +116,7 @@ function MessageItemContextDecorator({
 									padding: compact
 										? '16px 12px'
 										: '24px 16px',
-									background: '#ffffff'
+									background: MESSAGE_STORY_BACKGROUND
 								}}
 							>
 								{children}

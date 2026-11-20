@@ -44,7 +44,8 @@ const profileRoutes = (
 	tenant: TenantDataInterface,
 	selectableLocales: string[],
 	isFirstVisit: boolean,
-	directLinksAllowed = true
+	directLinksAllowed = true,
+	personalDisplayAvailable = false
 ): TabsType =>
 	[
 		{
@@ -235,7 +236,8 @@ const profileRoutes = (
 				selectableLocales,
 				settings,
 				directLinksAllowed,
-				tenant?.settings
+				tenant?.settings,
+				personalDisplayAvailable
 			)
 		},
 		{

@@ -8,6 +8,7 @@ import * as React from 'react';
 import { Navigate } from 'react-router-dom';
 import { loginPathForEmailPreferences } from '../../utils/emailPreferencesReturn';
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { usePersonalDisplayHost } from '../../features/personal-display/PersonalDisplayProvider';
 import { Routing } from './Routing';
 import { AccountSetupGate } from '../twoFactorAuth/AccountSetupGate';
 import { PasswordChangeConfirmation } from '../passwordReset/PasswordChangeConfirmation';
@@ -64,7 +65,7 @@ import { useCall } from '../../globalState/provider/CallProvider';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import { useOneShotSessionFlag } from '../../hooks/useOneShotSessionFlag';
 import { E2EEncryptionSupportBanner } from '../E2EEncryptionSupportBanner/E2EEncryptionSupportBanner';
-import { KeyBackupRecoveryPrompt } from '../E2EEncryptionSupportBanner/KeyBackupRecoveryPrompt';
+import { KeyBackupRecoveryBoundary } from '../E2EEncryptionSupportBanner/KeyBackupRecoveryPrompt';
 import { M3SnackbarHost } from '../m3Snackbar/M3SnackbarHost';
 import { PracticeLayer } from '../../practice/PracticeLayer';
 import { ConsultantRequestCenters } from './ConsultantRequestCenters';
@@ -135,6 +136,7 @@ export const AuthenticatedApp = ({
 	const mounted = useRef(true);
 	const [mountedSession] = useState(getAppSessionScope);
 	const [peerExitPath, setPeerExitPath] = useState<string | null>(null);
+	const { pending: displayPending } = usePersonalDisplayHost(!peerExitPath);
 	const matrixBootstrap = useRef<{
 		controller: AbortController;
 		subject: string | null;
@@ -516,6 +518,8 @@ export const AuthenticatedApp = ({
 		);
 	}
 
+	if (appReady && displayPending) return <Loading />;
+
 	if (appReady && (userData || passwordChangeStatus !== 'hidden')) {
 		let authenticatedContent: React.ReactNode = null;
 		if (userData && passwordChangeStatus !== 'signed-out') {
@@ -530,11 +534,12 @@ export const AuthenticatedApp = ({
 				authenticatedContent = (
 					<>
 						<E2EEncryptionSupportBanner />
-						<KeyBackupRecoveryPrompt />
-						<RecoveryKeySaveReminder />
-						<PracticeLayer>
-							<Routing logout={handleLogout} />
-						</PracticeLayer>
+						<KeyBackupRecoveryBoundary>
+							<RecoveryKeySaveReminder />
+							<PracticeLayer>
+								<Routing logout={handleLogout} />
+							</PracticeLayer>
+						</KeyBackupRecoveryBoundary>
 						<M3SnackbarHost />
 						{hasUserAuthority(
 							AUTHORITIES.CONSULTANT_DEFAULT,

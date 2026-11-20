@@ -218,52 +218,40 @@ $iconSize: 20px;
 		@include control-focus-ring;
 	}
 
-	&__icon--desktop {
-		width: 44px;
-		height: 44px;
-		border-radius: 32px;
-		border: 1px solid #ffd1d1;
-		background: #fff;
-		display: none;
-		align-items: center;
-		justify-content: center;
-		box-sizing: border-box;
-		transition: border-color 160ms ease;
-
-		@include breakpoint($fromLarge) {
-			display: inline-flex;
-		}
-
-		// Highlight the open state without changing the trigger geometry.
-		&[aria-expanded='true'] {
-			@include list-item-active-menu-border;
-		}
-	}
-
-	&__icon--desktop svg {
-		width: 24px;
-		height: 24px;
-		fill: #1e1e1e;
-	}
-
-	&__icon--mobile {
+	&__icon {
 		display: inline-flex;
 		width: 44px;
 		height: 44px;
 		border-radius: 32px;
-		border: 1px solid #ffd1d1;
-		background: #fff;
+		border: 1px solid var(--m3-primary-fixed, #ffdad5);
+		background: var(--m3-surface-container-lowest, #fff);
 		align-items: center;
 		justify-content: center;
 		box-sizing: border-box;
 		transition: border-color 160ms ease;
 
-		@include breakpoint($fromLarge) {
-			display: none;
-		}
-
 		&[aria-expanded='true'] {
 			@include list-item-active-menu-border;
+		}
+
+		svg {
+			width: 24px;
+			height: 24px;
+			fill: var(--m3-on-surface, #1e1e1e);
+		}
+	}
+
+	&__icon--desktop {
+		display: none;
+
+		@include breakpoint($fromLarge) {
+			display: inline-flex;
+		}
+	}
+
+	&__icon--mobile {
+		@include breakpoint($fromLarge) {
+			display: none;
 		}
 	}
 }

@@ -481,6 +481,7 @@
 		"sourcePath": "public/static/anon-animals/magpie.svg",
 		"exportNames": [],
 		"usageFiles": [
+			"src/components/calendar/calendarStoryData.ts",
 			"src/components/profile/AvatarPicker/AvatarPicker.tsx",
 			"src/utils/anonName/data.ts"
 		],
@@ -1239,6 +1240,8 @@
 			"src/components/chatStage/PanelHeader.tsx",
 			"src/components/conversationCreate/BackPill.tsx",
 			"src/components/datepicker/datepicker.styles.scss",
+			"src/components/deletedAskerSession/DeletedAskerNotice.tsx",
+			"src/components/hoverScrollArrows/HoverScrollArrows.tsx",
 			"src/components/legalContent/LegalAnchorChips.tsx",
 			"src/components/profile/Profile.tsx",
 			"src/components/sessionHeader/GroupChatHeader/index.tsx",
@@ -1275,6 +1278,7 @@
 		"exportNames": ["ArrowRightIcon"],
 		"usageFiles": [
 			"src/components/datepicker/datepicker.styles.scss",
+			"src/components/hoverScrollArrows/HoverScrollArrows.tsx",
 			"src/components/legalContent/LegalAnchorChips.tsx",
 			"src/components/mobile/linkMenu/LinkMenu.tsx",
 			"src/resources/img/icons.ts"
@@ -1499,10 +1503,7 @@
 		"fileName": "calendar_outline.svg",
 		"sourcePath": "src/resources/img/icons/calendar_outline.svg",
 		"exportNames": [],
-		"usageFiles": [
-			"src/components/app/RouterConfig.tsx",
-			"src/components/calendar/CalendarPage.tsx"
-		],
+		"usageFiles": ["src/components/app/RouterConfig.tsx"],
 		"usage": "app-used"
 	},
 	{
@@ -1706,7 +1707,6 @@
 			"src/components/call/states/MinimizedCallDock.tsx",
 			"src/components/incomingVideoCall/IncomingVideoCall.tsx",
 			"src/components/message/CallTimelineSystemMessage.tsx",
-			"src/containers/overview/components/BookingEvent/index.tsx",
 			"src/resources/img/icons.ts"
 		],
 		"usage": "app-used"
@@ -1735,7 +1735,10 @@
 		"sourcePath": "src/resources/img/icons/case_handover_200_24px.svg",
 		"exportNames": [],
 		"usageFiles": [
+			"src/components/caseHandover/CaseHandoverOffer.tsx",
 			"src/components/notifications/EventNotice.tsx",
+			"src/components/sessionHeader/HeaderPlusMenu.tsx",
+			"src/components/sessionMenu/SessionMenu.tsx",
 			"src/components/supervisorDialog/SupervisorDialog.tsx"
 		],
 		"usage": "app-used"
@@ -1914,6 +1917,7 @@
 			"src/components/icons/conversationCreateIcons.ts",
 			"src/components/notifications/EventNotice.tsx",
 			"src/components/notifications/LiveChatMessageNotice.tsx",
+			"src/components/profile/AgencyContactPerson.tsx",
 			"src/components/sessionsList/SessionToolbarFilterIcons.tsx",
 			"src/components/sessionsList/timeline/AppointmentKindGlyph.tsx",
 			"src/components/sessionsListItem/SessionListItemComponent.tsx"
@@ -2240,6 +2244,7 @@
 			"src/components/notifications/EventNotice.tsx",
 			"src/components/notifications/LiveChatMessageNotice.tsx",
 			"src/components/notifications/NewEnquiryNotice.tsx",
+			"src/components/productTour/launcher/TourLauncherMenu.tsx",
 			"src/components/session/SessionItemComponent.tsx"
 		],
 		"usage": "app-used"
@@ -2371,7 +2376,10 @@
 		"fileName": "deleted.svg",
 		"sourcePath": "src/resources/img/icons/deleted.svg",
 		"exportNames": [],
-		"usageFiles": ["src/components/message/MessageItemComponent.tsx"],
+		"usageFiles": [
+			"src/components/message/MessageItemComponent.tsx",
+			"src/components/sessionsList/DeletedAskerAvatar.tsx"
+		],
 		"usage": "app-used"
 	},
 	{
@@ -2656,6 +2664,7 @@
 			"src/components/erstantwort/NotificationChoiceCard.tsx",
 			"src/components/profile/EmailNotifications/SetEmailModal/index.tsx",
 			"src/components/serviceExplanation/ServiceExplanation.tsx",
+			"src/components/sessionHeader/ContactSheetRequest.tsx",
 			"src/components/sessionsListItem/sessionsListItemHelpers.ts",
 			"src/resources/img/icons.ts"
 		],
@@ -2728,7 +2737,10 @@
 		"fileName": "fab-menu-close.svg",
 		"sourcePath": "src/resources/img/icons/fab-menu-close.svg",
 		"exportNames": [],
-		"usageFiles": ["src/components/chatStage/ChannelSwitcherFab.tsx"],
+		"usageFiles": [
+			"src/components/chatStage/ChannelSwitcherFab.tsx",
+			"src/components/productTour/launcher/TourLauncherMenu.tsx"
+		],
 		"usage": "app-used"
 	},
 	{
@@ -3085,6 +3097,7 @@
 		"sourcePath": "src/resources/img/icons/inbox.svg",
 		"exportNames": ["InboxIcon"],
 		"usageFiles": [
+			"src/components/deletedAskerSession/DeletedAskerNotice.tsx",
 			"src/components/sessionsListItem/SessionListItemMenu.tsx",
 			"src/resources/img/icons.ts"
 		],
@@ -3269,6 +3282,7 @@
 		"sourcePath": "src/resources/img/icons/location.svg",
 		"exportNames": [],
 		"usageFiles": [
+			"src/components/directInvitation/InvitationsOverview.tsx",
 			"src/components/sessionsList/timeline/AppointmentKindGlyph.tsx"
 		],
 		"usage": "app-used"
@@ -3293,7 +3307,6 @@
 			"src/components/passwordResetRequest/SetNewPassword.tsx",
 			"src/components/registration/welcomeScreen/WelcomeScreen.tsx",
 			"src/components/serviceExplanation/ServiceExplanation.tsx",
-			"src/components/session/EncryptionBanner.tsx",
 			"src/components/temporaryAccount/GuestRetentionDivider.tsx",
 			"src/components/temporaryAccount/TemporaryMessageMarker.tsx",
 			"src/resources/img/icons.ts"
@@ -3412,8 +3425,7 @@
 		"exportNames": [],
 		"usageFiles": [
 			"src/components/call/states/IncomingCallCard.tsx",
-			"src/components/icons/conversationCreateIcons.ts",
-			"src/components/sessionsList/timeline/AppointmentKindGlyph.tsx"
+			"src/components/icons/conversationCreateIcons.ts"
 		],
 		"usage": "app-used"
 	},
@@ -3444,6 +3456,7 @@
 			"src/components/icons/conversationCreateIcons.ts",
 			"src/components/notifications/EventNotice.tsx",
 			"src/components/notifications/LiveChatMessageNotice.tsx",
+			"src/components/profile/AgencyContactPerson.tsx",
 			"src/components/sessionsList/timeline/AppointmentKindGlyph.tsx"
 		],
 		"usage": "app-used"
@@ -3570,8 +3583,8 @@
 		"fileName": "schedule_400.svg",
 		"sourcePath": "src/resources/img/icons/navigation/schedule_400.svg",
 		"exportNames": [],
-		"usageFiles": ["src/components/app/RouterConfig.tsx"],
-		"usage": "app-used"
+		"usageFiles": [],
+		"usage": "catalogued-only"
 	},
 	{
 		"id": "sidebar-icon:schedule:filled",
@@ -3583,8 +3596,8 @@
 		"fileName": "schedule_filled.svg",
 		"sourcePath": "src/resources/img/icons/navigation/schedule_filled.svg",
 		"exportNames": [],
-		"usageFiles": ["src/components/app/RouterConfig.tsx"],
-		"usage": "app-used"
+		"usageFiles": [],
+		"usage": "catalogued-only"
 	},
 	{
 		"id": "ui-icon:new-window:base",
@@ -3692,7 +3705,6 @@
 		"sourcePath": "src/resources/img/icons/open-in-new-tab.svg",
 		"exportNames": [],
 		"usageFiles": [
-			"src/components/notificationsCenter/notificationsCenter.styles.scss",
 			"src/components/notificationsCenter/NotificationsCenter.tsx"
 		],
 		"usage": "app-used"
@@ -3849,7 +3861,6 @@
 			"src/components/askerInfo/AskerInfo.tsx",
 			"src/components/call/states/IncomingCallCard.tsx",
 			"src/components/call/states/MinimizedCallDock.tsx",
-			"src/components/login/Login.tsx",
 			"src/components/message/MessageItemComponent.tsx",
 			"src/components/notificationsCenter/eventDescriptors/icons.tsx",
 			"src/components/passwordResetRequest/RequestPasswordResetFormView.tsx",
@@ -4429,6 +4440,7 @@
 			"src/components/message/ChatSystemMessageCard.tsx",
 			"src/components/message/message.styles.scss",
 			"src/components/message/MessageItemComponent.tsx",
+			"src/components/notificationsCenter/NotificationsCenter.tsx",
 			"src/components/sessionMenu/SessionMenu.tsx",
 			"src/components/sessionsListItem/SessionListItemMenu.tsx",
 			"src/resources/img/icons.ts"
@@ -4688,7 +4700,10 @@
 		"fileName": "tools_filled.svg",
 		"sourcePath": "src/resources/img/icons/tools_filled.svg",
 		"exportNames": [],
-		"usageFiles": ["src/components/app/RouterConfig.tsx"],
+		"usageFiles": [
+			"src/addons/addonNavigation.ts",
+			"src/components/app/RouterConfig.tsx"
+		],
 		"usage": "app-used"
 	},
 	{
@@ -4701,7 +4716,13 @@
 		"fileName": "tools_outline.svg",
 		"sourcePath": "src/resources/img/icons/tools_outline.svg",
 		"exportNames": [],
-		"usageFiles": ["src/components/app/RouterConfig.tsx"],
+		"usageFiles": [
+			"src/addons/AddonCalendarPill.tsx",
+			"src/addons/AddonIcon.tsx",
+			"src/addons/addonNavigation.ts",
+			"src/components/app/RouterConfig.tsx",
+			"src/components/notificationsCenter/eventDescriptors/icons.tsx"
+		],
 		"usage": "app-used"
 	},
 	{
@@ -4988,9 +5009,12 @@
 		"usageFiles": [
 			"src/components/app/inboxNavIconPaths.ts",
 			"src/components/call/callIdentity.ts",
+			"src/components/caseHandover/CaseHandoverOffer.tsx",
 			"src/components/chatStage/ChannelMenu.tsx",
 			"src/components/chatStage/ChannelSwitcherFab.tsx",
 			"src/components/chatStage/PanelHeader.tsx",
+			"src/components/deletedAskerSession/DeletedAskerNotice.tsx",
+			"src/components/directInvitation/ValidityStepper.tsx",
 			"src/components/editableData/EditableData.tsx",
 			"src/components/groupChat/JoinGroupChatView.tsx",
 			"src/components/incomingVideoCall/IncomingVideoCall.tsx",
@@ -5008,6 +5032,7 @@
 			"src/components/session/EnquiryTakenNotice.tsx",
 			"src/components/session/session.styles.scss",
 			"src/components/session/SessionStream.tsx",
+			"src/components/sessionHeader/HeaderPlusMenu.tsx",
 			"src/components/sessionMenu/SessionMenu.tsx",
 			"src/components/sessionMenu/sessionMenuHelpers.ts",
 			"src/components/sessionsList/SessionRailPill.tsx",
@@ -5015,6 +5040,7 @@
 			"src/components/sessionsListItem/SessionListItemComponent.tsx",
 			"src/components/sessionsListItem/SessionListItemMenu.tsx",
 			"src/components/supervisorDialog/SupervisorDialog.tsx",
+			"src/features/personal-display/PersonalDisplayEntry.tsx",
 			"src/resources/img/icons.ts",
 			"src/utils/anonName/data.ts"
 		],

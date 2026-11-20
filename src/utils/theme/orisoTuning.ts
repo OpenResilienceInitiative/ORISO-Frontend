@@ -45,7 +45,7 @@ export const CONTRAST_AA = 4.5;
 export const PRIMARY_TEXT_SURFACE_TONE = 90;
 
 /** Tone recipes for the secondary/tertiary families (light scheme). */
-export const SECONDARY_TONES = { role: 36, container: 46, onContainer: 94 };
+export const SECONDARY_TONES = { role: 36, container: 46, onContainer: 95 };
 export const TERTIARY_TONES = { role: 40, container: 67, onContainer: 24 };
 
 /**

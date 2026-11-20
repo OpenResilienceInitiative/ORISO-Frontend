@@ -1,4 +1,24 @@
 {
+	"personalDisplay": {
+		"title": "Anzeige",
+		"accessibility": "Zugänglichkeit",
+		"textSize": "Textgröße",
+		"currentSize": "Gewählte Textgröße",
+		"smaller": "Kleiner",
+		"larger": "Größer",
+		"contrastLabel": "Kontrast",
+		"contrast": {
+			"standard": "Standard",
+			"medium": "Mittel",
+			"high": "Hoch"
+		},
+		"schemeLabel": "Farbschema",
+		"scheme": {
+			"system": "System",
+			"light": "Hell",
+			"dark": "Dunkel"
+		}
+	},
 	"addons": {
 		"loadError": "Diese Erweiterung konnte nicht geladen werden.",
 		"notAvailable": "Diese Erweiterung ist nicht verfügbar.",
@@ -151,7 +171,7 @@
 		"selectLanguage": "Sprache wählen",
 		"stage": {
 			"title": "Beratung\n& Hilfe",
-			"mobileHeadline": "Hier ist Raum für Ihre Anliegen.",
+
 			"carrierLogoAlt": "Karte der Standorte von {{name}} anzeigen"
 		},
 		"stop": "Stopp",
@@ -699,6 +719,7 @@
 		}
 	},
 	"e2ee": {
+		"encryptedConversation": "Ende-zu-Ende verschlüsselt",
 		"attachment": {
 			"decryption_error": "Fehler beim entschlüsseln",
 			"encrypted": "Datei für Download entschlüsseln",
@@ -2323,6 +2344,8 @@
 		}
 	},
 	"navigation": {
+		"mobileMenu": "Navigation",
+		"mobileMore": "Mehr",
 		"appointments": "Video - Termine",
 		"asker": {
 			"sessions": {

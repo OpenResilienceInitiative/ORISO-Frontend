@@ -6,6 +6,24 @@ import './sessionHeader.styles';
  * The chat header's noninteractive topic strip, also used by protected cases.
  * It is the global topic tag, placed with the header's layout class.
  */
-export const SessionTopic = ({ name }: { name: string }) => (
-	<TopicTag className="sessionInfo__metaInfo__content">{name}</TopicTag>
-);
+export const SessionTopic = ({
+	name,
+	shortName
+}: {
+	name: string;
+	shortName?: string;
+}) => {
+	const short = shortName?.trim();
+	return (
+		<TopicTag className="sessionInfo__metaInfo__content" title={name}>
+			{short && short !== name ? (
+				<>
+					<span aria-hidden="true">{short}</span>
+					<span className="sr-only">{name}</span>
+				</>
+			) : (
+				name
+			)}
+		</TopicTag>
+	);
+};

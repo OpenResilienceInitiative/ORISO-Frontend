@@ -242,3 +242,34 @@ describe('dark scheme preserves the grayish identity', () => {
 		expect(b).toBeGreaterThanOrEqual(r);
 	});
 });
+
+describe('entry-stage brand colours', () => {
+	it.each(['#a5000a', '#1c4f8f', '#f8e71c'])(
+		'keeps the %s artwork and its controls stable across display settings',
+		(primary) => {
+			const roles = [
+				'--oriso-stage-brand',
+				'--oriso-stage-brand-on',
+				'--oriso-stage-brand-container',
+				'--oriso-stage-brand-edge'
+			];
+			const light = computeOrisoPalette({ primary }, 'light').tokens;
+			expect(light[roles[0]]).toBe(primary);
+			for (const scheme of ['light', 'dark'] as const) {
+				for (const contrast of [
+					'standard',
+					'medium',
+					'high'
+				] as const) {
+					const { tokens } = computeOrisoPalette(
+						{ primary },
+						scheme,
+						contrast
+					);
+					for (const role of roles)
+						expect(tokens[role]).toBe(light[role]);
+				}
+			}
+		}
+	);
+});

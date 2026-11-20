@@ -14,7 +14,11 @@
  *
  * Pure module: same input → same output. No DOM, no filesystem.
  */
-import { type OrisoSchemeName, computeOrisoPalette } from './orisoScheme';
+import {
+	type ContrastLevel,
+	type OrisoSchemeName,
+	computeOrisoPalette
+} from './orisoScheme';
 
 /**
  * Where the generated artefact lives, relative to the repo root. Shared by
@@ -33,6 +37,7 @@ const SCHEME_CLASS: Record<'dark' | 'light', string> = {
 interface CallTokenMapping {
 	/** The `--m3-*` role this Compound role reads from. */
 	m3: string;
+	elevatedM3?: string;
 	/**
 	 * Opacity in percent for overlay roles. Emitted as `color-mix`, which
 	 * keeps the engine colour visible in the artefact instead of baking
@@ -68,16 +73,26 @@ export const CALL_TOKEN_MAP: Record<string, CallTokenMapping> = {
 	'--cpd-color-text-secondary': { m3: '--m3-on-surface-variant' },
 	'--cpd-color-text-placeholder': {
 		m3: '--m3-outline',
+		elevatedM3: '--m3-on-surface-variant',
 		note: 'Not a Compound role, but the fork reads it in input/Input.module.css, where it would otherwise resolve to nothing.'
 	},
 	'--cpd-color-text-disabled': { m3: '--m3-outline' },
 	'--cpd-color-text-on-solid-primary': { m3: '--m3-on-primary' },
 	'--cpd-color-text-action-primary': { m3: '--m3-on-surface' },
-	'--cpd-color-text-action-accent': { m3: '--m3-primary' },
-	'--cpd-color-text-critical-primary': { m3: '--m3-error' },
+	'--cpd-color-text-action-accent': {
+		m3: '--m3-primary',
+		elevatedM3: '--oriso-primary-text'
+	},
+	'--cpd-color-text-critical-primary': {
+		m3: '--m3-error',
+		elevatedM3: '--oriso-error-text'
+	},
 	'--cpd-color-text-success-primary': { m3: '--m3-success' },
 	'--cpd-color-text-info-primary': { m3: '--m3-secondary' },
-	'--cpd-color-text-link-external': { m3: '--m3-primary' },
+	'--cpd-color-text-link-external': {
+		m3: '--m3-primary',
+		elevatedM3: '--oriso-primary-text'
+	},
 	'--cpd-color-text-badge-accent': { m3: '--m3-on-primary-container' },
 	'--cpd-color-text-badge-info': { m3: '--m3-on-secondary-container' },
 
@@ -148,6 +163,7 @@ export const CALL_TOKEN_MAP: Record<string, CallTokenMapping> = {
 	'--cpd-color-border-disabled': { m3: '--m3-outline-variant' },
 	'--cpd-color-border-focused': {
 		m3: '--m3-primary',
+		elevatedM3: '--oriso-primary-text',
 		note: 'Not --m3-primary-outline: that role is tuned to stay dark on light brand surfaces, which makes it invisible on a dark canvas (1.5:1). The primary role flips with the scheme and clears 3:1 in both.'
 	},
 	'--cpd-color-border-accent-subtle': { m3: '--m3-primary-fixed-dim' },
@@ -180,12 +196,15 @@ export const UNMAPPED_BY_DESIGN: Record<string, string> = {
 const declaration = (
 	cpdToken: string,
 	mapping: CallTokenMapping,
-	palette: Record<string, string>
+	palette: Record<string, string>,
+	level: ContrastLevel
 ): string => {
-	const value = palette[mapping.m3];
+	const role =
+		level === 'standard' ? mapping.m3 : (mapping.elevatedM3 ?? mapping.m3);
+	const value = palette[role];
 	if (!value) {
 		throw new Error(
-			`callTheme: ${cpdToken} maps to unknown engine role ${mapping.m3}`
+			`callTheme: ${cpdToken} maps to unknown engine role ${role}`
 		);
 	}
 	const rendered =
@@ -198,17 +217,26 @@ const declaration = (
 
 const block = (
 	scheme: Exclude<OrisoSchemeName, 'inverted'>,
-	seed: string
+	seed: string,
+	level: ContrastLevel
 ): string => {
-	const { tokens } = computeOrisoPalette({ primary: seed }, scheme);
+	const { tokens } = computeOrisoPalette({ primary: seed }, scheme, level);
 	const body = Object.entries(CALL_TOKEN_MAP)
-		.map(([cpdToken, mapping]) => declaration(cpdToken, mapping, tokens))
+		.map(([cpdToken, mapping]) =>
+			declaration(cpdToken, mapping, tokens, level)
+		)
 		.join('\n');
 	// The class is doubled to match the specificity Compound uses for its
 	// own per-theme blocks; the layer decides the winner, but equal
 	// specificity keeps that true even if the file is ever imported
 	// outside a layer.
-	const selector = `.${SCHEME_CLASS[scheme]}.${SCHEME_CLASS[scheme]}`;
+	const themeClass = SCHEME_CLASS[scheme];
+	const selector =
+		level === 'medium'
+			? `.${themeClass}[data-oriso-contrast-level="medium"]`
+			: level === 'high'
+				? `.${themeClass}-hc.${themeClass}-hc`
+				: `.${themeClass}.${themeClass}`;
 	return `${selector} {\n${body}\n}`;
 };
 
@@ -231,7 +259,10 @@ export const buildCallThemeCss = (seed: string): string => {
 		' */'
 	].join('\n');
 
-	return [header, '', block('light', seed), '', block('dark', seed), ''].join(
-		'\n'
-	);
+	const levels: ContrastLevel[] = ['standard', 'medium', 'high'];
+	const blocks = levels.flatMap((level) => [
+		block('light', seed, level),
+		block('dark', seed, level)
+	]);
+	return [header, ...blocks].join('\n\n') + '\n';
 };

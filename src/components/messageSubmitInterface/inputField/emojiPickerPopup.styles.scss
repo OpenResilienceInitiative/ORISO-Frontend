@@ -35,7 +35,8 @@
 		height: 380px;
 		display: grid;
 		place-items: center;
-		background: #fff;
+		background: var(--m3-surface, #faf9fa);
+		color: var(--m3-on-surface, #1a1c1e);
 		border-radius: 12px;
 		box-shadow:
 			0 4px 8px 3px rgba(0, 0, 0, 0.08),
@@ -44,18 +45,100 @@
 
 	.EmojiPickerReact {
 		--epr-emoji-size: 22px;
-		--epr-hover-bg-color: var(--m3-primary-fixed, #ffdad5);
-		--epr-focus-bg-color: var(--m3-primary-fixed, #ffdad5);
-		--epr-highlight-color: var(--m3-primary-container, #cc1e1c);
-		--epr-category-icon-active-color: var(--m3-primary-container, #cc1e1c);
-		--epr-text-color: var(--m3-secondary, #4c555f);
-		--epr-search-border-color: var(--m3-primary-fixed-dim, #ffb4aa);
+		--emoji-picker-text-size: calc(
+			1rem * var(--oriso-personal-text-scale, 1)
+		);
+		--epr-search-input-height: calc(
+			1.5 * var(--emoji-picker-text-size) + 1rem
+		);
+		--epr-category-label-height: var(--epr-search-input-height);
+		--epr-bg-color: var(--m3-surface, #faf9fa);
+		--epr-category-label-bg-color: var(--epr-bg-color);
+		--epr-text-color: var(--m3-on-surface, #1a1c1e);
+		--epr-search-input-placeholder-color: var(
+			--m3-on-surface-variant,
+			#444748
+		);
+		--epr-search-input-bg-color: var(
+			--m3-surface-container-highest,
+			#e4e2e2
+		);
+		--epr-search-input-bg-color-active: var(--epr-search-input-bg-color);
+		--epr-hover-bg-color: var(--m3-secondary-container, #e0e3e7);
+		--epr-focus-bg-color: var(--epr-hover-bg-color);
+		--epr-highlight-color: var(
+			--oriso-primary-text,
+			var(--m3-primary, #a5000a)
+		);
+		--epr-category-icon-active-color: var(--epr-highlight-color);
+		--epr-search-border-color: var(--m3-outline, #747779);
 		--epr-picker-border-radius: 12px;
-		--epr-bg-color: #fff;
 
+		container-type: size;
+		container-name: emoji-picker;
 		box-shadow:
 			0 4px 8px 3px rgba(0, 0, 0, 0.08),
 			0 1px 3px rgba(0, 0, 0, 0.2);
 		border: 0;
+
+		input,
+		.epr-emoji-category-label {
+			font-size: var(--emoji-picker-text-size);
+			line-height: 1.5;
+		}
+
+		.epr-emoji-category-label {
+			height: auto;
+			min-height: var(--epr-category-label-height);
+			overflow-wrap: anywhere;
+		}
+
+		// The popup can be shorter than the viewport when the keyboard is open.
+		@container emoji-picker (max-height: 16rem) {
+			.epr-header {
+				--epr-header-padding: 0.1875rem var(--epr-horizontal-padding);
+			}
+
+			.epr-emoji-category-label {
+				min-height: calc(1.5 * var(--emoji-picker-text-size) + 0.5rem);
+			}
+		}
+
+		:is(button, input):focus-visible {
+			outline: 2px solid var(--epr-highlight-color);
+			outline-offset: -2px;
+		}
+
+		@media (forced-colors: active) {
+			border: 1px solid CanvasText;
+
+			:is(button, input):focus-visible {
+				outline-color: Highlight;
+			}
+		}
+	}
+}
+
+/* The vendor sprites supply separate rows for opaque light glyphs. */
+html[data-oriso-personal-scheme='dark'] .emojiPickerPopup .EmojiPickerReact {
+	.epr-cat-btn {
+		background-position-y: calc(
+			var(--epr-category-navigation-button-size) * 2
+		);
+
+		&:hover,
+		&.epr-active {
+			background-position-y: calc(
+				var(--epr-category-navigation-button-size) * 3
+			);
+		}
+	}
+
+	.epr-icn-search {
+		background-position-y: -20px;
+	}
+
+	.epr-icn-clear-search {
+		background-position-y: -40px;
 	}
 }

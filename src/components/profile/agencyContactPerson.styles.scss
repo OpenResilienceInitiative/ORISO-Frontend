@@ -69,6 +69,11 @@
 		line-height: 18px;
 	}
 
+	& &__badge {
+		background-color: var(--m3-tertiary-container, #dce3ef);
+		color: var(--m3-on-tertiary-container, #141c25);
+	}
+
 	&__email {
 		max-width: 100%;
 		overflow-wrap: anywhere;

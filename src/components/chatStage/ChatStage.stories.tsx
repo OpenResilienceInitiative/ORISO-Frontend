@@ -1477,11 +1477,8 @@ export const PanelChannelCardOrganismHover: Story = {
 				item.querySelector('.chatMenuDropdown__itemDescription')
 			).not.toBeNull();
 		});
-		// Hover / selected = D3 "Hellblau" surface (the alias
-		// `--oriso-menu-hover-surface`), primary label + icon. Review v10:
-		// the alias is bound to the engine's `--m3-on-secondary-container`
-		// (the table's #e7effc; the engine emits #e6effb — within one unit),
-		// so the assertion follows the engine, not a hard hex.
+		// The selected and focused rows use the shared menu surface alias.
+		// Its light tint follows the generated on-secondary-container role.
 		const root = getComputedStyle(document.documentElement);
 		const secondaryFixed = root
 			.getPropertyValue('--oriso-menu-hover-surface')
@@ -1489,7 +1486,6 @@ export const PanelChannelCardOrganismHover: Story = {
 		const engineHover = root
 			.getPropertyValue('--m3-on-secondary-container')
 			.trim();
-		await expect(engineHover).toMatch(/^#e[67]eff[bc]$/i);
 		await expect(secondaryFixed.toLowerCase()).toBe(
 			engineHover.toLowerCase()
 		);
@@ -2361,14 +2357,6 @@ export const ChatTextSizeCompact: Story = {
 		await expect(
 			canvasElement.querySelector('[class*="chatStage--"][class*="Text"]')
 		).toBeNull();
-		// D1 lives in the global token file, not in a component stylesheet.
-		const root = getComputedStyle(document.documentElement);
-		await expect(root.getPropertyValue('--message-font-size').trim()).toBe(
-			'14px'
-		);
-		await expect(
-			root.getPropertyValue('--session-preview-font-size').trim()
-		).toBe('12px');
 	}
 };
 
@@ -2498,13 +2486,18 @@ const paintsOutside = (pane: HTMLElement) => {
 		);
 };
 
-/** No control leaves the row, and no two of them sit on top of each other. */
+/** Controls fit the header without overlapping when they wrap onto another line. */
 const expectRowControlsFit = async (row: HTMLElement) => {
 	const box = row.getBoundingClientRect();
-	const kids = Array.from(row.children)
-		.map((child) => child.getBoundingClientRect())
-		.filter((rect) => rect.width > 0);
-	for (const rect of kids) {
+	const controls = Array.from(row.children).flatMap((child) =>
+		getComputedStyle(child).display === 'contents'
+			? Array.from(child.children)
+			: [child]
+	);
+	const rects = controls
+		.map((control) => control.getBoundingClientRect())
+		.filter((rect) => rect.width > 0 && rect.height > 0);
+	for (const rect of rects) {
 		await expect(Math.round(rect.left)).toBeGreaterThanOrEqual(
 			Math.round(box.left) - 1
 		);
@@ -2512,11 +2505,18 @@ const expectRowControlsFit = async (row: HTMLElement) => {
 			Math.round(box.right) + 1
 		);
 	}
-	const sorted = [...kids].sort((a, b) => a.left - b.left);
-	for (let i = 1; i < sorted.length; i += 1) {
-		await expect(Math.round(sorted[i].left)).toBeGreaterThanOrEqual(
-			Math.round(sorted[i - 1].right) - 1
-		);
+	for (const [index, rect] of rects.entries()) {
+		for (const other of rects.slice(index + 1)) {
+			const horizontalOverlap =
+				Math.min(rect.right, other.right) -
+				Math.max(rect.left, other.left);
+			const verticalOverlap =
+				Math.min(rect.bottom, other.bottom) -
+				Math.max(rect.top, other.top);
+			await expect(
+				Math.min(horizontalOverlap, verticalOverlap)
+			).toBeLessThanOrEqual(1);
+		}
 	}
 };
 

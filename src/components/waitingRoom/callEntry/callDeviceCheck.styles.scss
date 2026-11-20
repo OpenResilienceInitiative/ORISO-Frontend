@@ -16,4 +16,44 @@
 .callDeviceCheck__pickers {
 	display: flex;
 	gap: 8px;
+	flex-wrap: wrap;
+
+	> .MuiButtonBase-root {
+		flex-basis: min(100%, calc(9rem * var(--oriso-personal-text-scale, 1)));
+	}
+}
+
+/* The call's existing portal owns the scroll pane and keeps its actions visible. */
+.m3Dialog.knockWaitDialog:has(.callDeviceCheck) {
+	.m3Dialog__title,
+	.m3Dialog__description,
+	.m3Dialog__action {
+		overflow-wrap: anywhere;
+	}
+
+	.m3Dialog__title {
+		font-size: calc(1.5rem * var(--oriso-personal-text-scale, 1));
+		line-height: 1.333;
+	}
+
+	.m3Dialog__description,
+	.m3Dialog__action,
+	.knockWaitDialog__status {
+		font-size: calc(0.875rem * var(--oriso-personal-text-scale, 1));
+		line-height: 1.429;
+	}
+
+	.m3Dialog__action {
+		min-block-size: 40px;
+		block-size: auto;
+	}
+
+	.knockWaitDialog__quiet {
+		font-size: calc(0.75rem * var(--oriso-personal-text-scale, 1));
+		line-height: 1.333;
+	}
+
+	html[data-oriso-personal-scheme='dark'] & .m3Dialog__backdrop {
+		background: color-mix(in srgb, var(--m3-scrim, #000) 74%, transparent);
+	}
 }

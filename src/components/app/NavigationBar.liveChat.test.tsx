@@ -1,6 +1,12 @@
 // @vitest-environment oriso-jsdom
 import * as React from 'react';
-import { cleanup, render, waitFor } from '@testing-library/react';
+import {
+	cleanup,
+	fireEvent,
+	render,
+	screen,
+	waitFor
+} from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import {
 	afterEach,
@@ -69,8 +75,15 @@ const renderNavigation = (liveChatViaSidebar: boolean) =>
 		</MemoryRouter>
 	);
 
-const liveChatEntry = (container: HTMLElement) =>
-	container.querySelector('.navigation__item--liveChatToggle');
+const liveChatEntry = (container: HTMLElement, fromL: boolean) => {
+	if (fromL)
+		return container.querySelector('.navigation__item--liveChatToggle');
+
+	fireEvent.click(container.querySelector('.navigation__mobileMore')!);
+	return screen
+		.getByRole('dialog')
+		.querySelector('.navigation__item--liveChatToggle');
+};
 
 describe('NavigationBar live-chat entry follows the profile preference', () => {
 	beforeEach(() => {
@@ -97,7 +110,7 @@ describe('NavigationBar live-chat entry follows the profile preference', () => {
 				expect(apiGetLiveChatAvailability).toHaveBeenCalled()
 			);
 
-			expect(liveChatEntry(container)).toBeNull();
+			expect(liveChatEntry(container, fromL)).toBeNull();
 		});
 
 		it('shows the live-chat entry when the preference is on', async () => {
@@ -106,7 +119,7 @@ describe('NavigationBar live-chat entry follows the profile preference', () => {
 				expect(apiGetLiveChatAvailability).toHaveBeenCalled()
 			);
 
-			expect(liveChatEntry(container)).not.toBeNull();
+			expect(liveChatEntry(container, fromL)).not.toBeNull();
 		});
 	});
 });

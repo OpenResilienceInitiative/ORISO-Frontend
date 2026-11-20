@@ -1,6 +1,12 @@
 // @vitest-environment oriso-jsdom
 import * as React from 'react';
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import {
+	cleanup,
+	fireEvent,
+	render,
+	screen,
+	waitFor
+} from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { EmojiPickerPopup } from './EmojiPickerPopup';
 
@@ -14,7 +20,7 @@ afterEach(() => cleanup());
 
 vi.mock('emoji-picker-react', () => {
 	const Theme = { LIGHT: 'light', DARK: 'dark', AUTO: 'auto' };
-	const MockPicker = () => <div data-testid="mock-emoji-picker">picker</div>;
+	const MockPicker = () => <input aria-label="Emoji search" />;
 	return { __esModule: true, default: MockPicker, Theme };
 });
 
@@ -48,5 +54,28 @@ describe('EmojiPickerPopup (#835)', () => {
 
 		anchor.remove();
 		clippingHost.remove();
+	});
+	it('restores keyboard focus to the launcher when the picker closes', async () => {
+		const onClose = vi.fn();
+		const { getByRole } = render(
+			<button type="button">More reactions</button>
+		);
+		const launcher = getByRole('button', { name: 'More reactions' });
+		render(
+			<EmojiPickerPopup
+				direction="down"
+				anchorEl={document.body}
+				returnFocusEl={launcher}
+				onPick={() => undefined}
+				onClose={onClose}
+			/>
+		);
+		const input = await screen.findByRole('textbox', {
+			name: 'Emoji search'
+		});
+		input.focus();
+		fireEvent.keyDown(input, { key: 'Escape' });
+		expect(onClose).toHaveBeenCalledOnce();
+		expect(document.activeElement).toBe(launcher);
 	});
 });

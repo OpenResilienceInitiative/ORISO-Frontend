@@ -115,6 +115,7 @@ import {
 	ChatMenuDropdownHeader,
 	ChatMenuDropdownItemContent as SessionMenuItemContent
 } from '../chatMenuDropdown/ChatMenuDropdown';
+import { ContactSheetRequest } from '../sessionHeader/ContactSheetRequest';
 import { sessionMenuOwnsCallControls } from './callControlOwnership';
 import { usePracticeActive } from '../../practice';
 import { useSessionTenantSettings } from '../../hooks/useSessionTenantSettings';
@@ -170,6 +171,7 @@ export interface SessionMenuProps {
 	 * conversation. Set only while there is one.
 	 */
 	onSendNewLink?: () => void;
+	contactSheet?: React.ComponentProps<typeof ContactSheetRequest>;
 }
 
 // #1262 — backend advice-request APIs are not ready (US#1034). Keep the owner-only item visible but inert.
@@ -647,7 +649,10 @@ export const SessionMenu = (props: SessionMenuProps) => {
 		Boolean(props.showMobileEndAnonymousChatAction) ||
 		Boolean(props.showMobileDeleteAnonymousAccountAction) ||
 		Boolean(props.showMobileSupervisionAction);
-	const showSessionMenu = !activeSession.isEnquiry || showAnonymousMobileMenu;
+	const showSessionMenu =
+		!activeSession.isEnquiry ||
+		showAnonymousMobileMenu ||
+		Boolean(props.contactSheet);
 	const chatType: 'anonymous' | 'oneOnOne' | 'group' | 'supervision' =
 		props.isSupervisor
 			? 'supervision'
@@ -1448,6 +1453,13 @@ export const SessionMenu = (props: SessionMenuProps) => {
 									isJoinGroupChatView={
 										props.isJoinGroupChatView
 									}
+								/>
+							)}
+
+							{props.contactSheet && (
+								<ContactSheetRequest
+									key={props.contactSheet.sessionId}
+									{...props.contactSheet}
 								/>
 							)}
 

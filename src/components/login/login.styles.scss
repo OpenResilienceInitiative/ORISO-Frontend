@@ -289,7 +289,7 @@ $link-hover-text-decoration: $link-text-decoration !default;
 		h2 {
 			font-size: 32px;
 			font-weight: 700;
-			color: #1f2937;
+			color: var(--m3-on-surface, #1b1b1c);
 			letter-spacing: -0.5px;
 			margin: 0;
 		}
@@ -425,7 +425,10 @@ $link-hover-text-decoration: $link-text-decoration !default;
 		}
 
 		&:disabled {
-			opacity: 0.5;
+			opacity: 1;
+			background: var(--m3-surface-container-high, #eae7e8);
+			color: var(--m3-on-surface-variant, #444748);
+			box-shadow: none;
 			cursor: not-allowed;
 		}
 	}
@@ -457,7 +460,7 @@ $link-hover-text-decoration: $link-text-decoration !default;
 
 		&__separator {
 			width: 100%;
-			border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+			border-bottom: 1px solid var(--m3-outline-variant, #c4c7c8);
 			text-align: center;
 			height: 18px;
 			margin-bottom: 15px;
@@ -471,10 +474,10 @@ $link-hover-text-decoration: $link-text-decoration !default;
 			span {
 				line-height: 15px;
 				padding: 0 10px;
-				background: white;
+				background: var(--m3-surface-container-lowest, #fff);
 				display: inline-block;
 				margin-top: 10px;
-				color: $text-low-emphasis;
+				color: var(--m3-on-surface, #1b1b1c);
 				text-transform: uppercase;
 				letter-spacing: 1.5px;
 				font-weight: 500;
@@ -557,5 +560,18 @@ $link-hover-text-decoration: $link-text-decoration !default;
 	to {
 		opacity: 1;
 		transform: translateY(0);
+	}
+}
+
+body[data-oriso-login-dark] {
+	color-scheme: dark;
+
+	.loginForm__register__content .text,
+	.stageLayout__toLogin__button .button__item:not(:hover) {
+		color: var(--m3-on-surface, #e4e2e2);
+	}
+
+	.m3Dialog .m3Dialog__backdrop {
+		background: color-mix(in srgb, var(--m3-scrim, #000) 80%, transparent);
 	}
 }

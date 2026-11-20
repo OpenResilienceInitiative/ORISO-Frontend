@@ -391,10 +391,9 @@ describe('newcomer entry for a self-help group link', () => {
 			'[data-cy="registration-handover"]'
 		) as HTMLElement;
 		const text = handover.textContent ?? '';
-		// The cards carry no German fallback any more (dev 939ee899), so the
-		// untranslated test run shows keys: the group's cards, none of the
-		// counselling handover's (which promise an answer and an enquiry).
-		expect(text).toContain('groupChat.info.gallery.steps.alias.title');
+		// The group supplies fallback copy for its cards. The default
+		// counselling cards would still display their keys in this test.
+		expect(text).toContain('Bitte nur mit Alias');
 		expect(text).not.toContain('registration.handover.steps.');
 	});
 
@@ -422,7 +421,7 @@ describe('newcomer entry for a self-help group link', () => {
 		const text =
 			document.querySelector('[data-cy="registration-handover"]')
 				?.textContent ?? '';
-		expect(text).toContain('groupChat.info.gallery.steps.alias.title');
+		expect(text).toContain('Bitte nur mit Alias');
 		expect(text).not.toContain('registration.handover.steps.');
 	});
 
@@ -578,7 +577,7 @@ describe('newcomer entry for a self-help group link', () => {
 		const text =
 			document.querySelector('[data-cy="registration-handover"]')
 				?.textContent ?? '';
-		expect(text).toContain('groupChat.info.gallery.steps.alias.title');
+		expect(text).toContain('Bitte nur mit Alias');
 		expect(text).not.toContain('registration.handover.steps.');
 	});
 
