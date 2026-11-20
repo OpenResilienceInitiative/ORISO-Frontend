@@ -193,6 +193,19 @@ vi.mock('react-router-dom', async () => {
 	};
 });
 
+// The running create request: the one state this suite flips per test.
+const submitState = vi.hoisted(() => ({ pending: false }));
+vi.mock('./useInternalSubsetChatSubmit', async () => {
+	const actual = await vi.importActual<any>('./useInternalSubsetChatSubmit');
+	return {
+		...actual,
+		useInternalSubsetChatSubmit: (...args: unknown[]) => ({
+			...actual.useInternalSubsetChatSubmit(...args),
+			isSubmitting: submitState.pending
+		})
+	};
+});
+
 const renderCreateFlow = () =>
 	render(
 		<MemoryRouter>
@@ -233,6 +246,7 @@ describe('CreateConversationView - leaving the view', () => {
 		resetCounsellorAgencyFormatsForTests();
 		vi.clearAllMocks();
 		viewport.fromL = true;
+		submitState.pending = false;
 	});
 
 	beforeEach(() => {
@@ -310,6 +324,15 @@ describe('CreateConversationView - leaving the view', () => {
 		click(screen.getByTestId('list-gap'));
 		fireEvent.click(await screen.findByTestId('create-discard-input'));
 		expect(routerState.navigate).toHaveBeenCalledWith(LIST);
+	});
+
+	it('stays on the view when Back is used on a phone while a request runs', async () => {
+		viewport.fromL = false;
+		submitState.pending = true;
+		await open();
+		click(await screen.findByLabelText('groupChat.format.back'));
+		expect(routerState.navigate).not.toHaveBeenCalled();
+		expect(screen.getByText('groupChat.format.title')).toBeTruthy();
 	});
 
 	it('returns focus to "Erstellen" once the view has gone', async () => {
