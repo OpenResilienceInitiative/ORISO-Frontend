@@ -89,15 +89,18 @@ $two-factor-auth-overlay-buttons-margin-right: auto !default;
 			justify-items: start;
 			cursor: pointer;
 			margin-top: $grid-base-two;
-			color: var(--m3-primary, $primary);
+			color: var(--oriso-primary-text, var(--m3-primary, $primary));
 			text-decoration: $link-text-decoration;
 
 			.text {
-				color: var(--m3-primary, $primary);
+				color: var(--oriso-primary-text, var(--m3-primary, $primary));
 				margin: auto 0 auto $grid-base;
 
 				&:hover {
-					color: var(--m3-primary, $hover-primary);
+					color: var(
+						--oriso-primary-text,
+						var(--m3-primary, $hover-primary)
+					);
 				}
 			}
 		}

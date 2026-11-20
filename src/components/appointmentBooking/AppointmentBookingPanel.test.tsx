@@ -1,9 +1,22 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 
 import * as React from 'react';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import {
+	act,
+	cleanup,
+	fireEvent,
+	render,
+	screen
+} from '@testing-library/react';
 import dayjs from 'dayjs';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 
 const TRANSLATIONS: Record<string, string> = {
 	'form.calendar.nextMonth': 'Next month',
@@ -16,7 +29,9 @@ vi.mock('react-i18next', () => ({
 			TRANSLATIONS[key] ??
 			(typeof fallback === 'string'
 				? fallback
-				: ((fallback?.defaultValue as string) ?? key))
+				: ((fallback?.defaultValue as string) ?? key)),
+		// The date picker names months in the UI language (test finding C8).
+		i18n: { language: 'en-GB' }
 	})
 }));
 
@@ -168,6 +183,35 @@ describe('AppointmentBookingPanel', () => {
 		expect(
 			screen.getByTestId('appointment-booking-slot-16:00')
 		).toBeTruthy();
+	});
+
+	/* The grid stays open while the clock moves on: a time chosen at 15:30
+	   must not be booked once it has started (CodeRabbit on FE#2298). */
+	it('drops a chosen time once it starts while the panel is open', () => {
+		stubReducedMotion(true);
+		const afternoon = dayjs(FROZEN_NOW)
+			.hour(15)
+			.minute(30)
+			.second(0)
+			.millisecond(0);
+		vi.setSystemTime(afternoon.toDate());
+		const onConfirm = vi.fn();
+		render(
+			<AppointmentBookingPanel onBack={vi.fn()} onConfirm={onConfirm} />
+		);
+		fireEvent.click(screen.getByLabelText(afternoon.format('D MMMM YYYY')));
+		fireEvent.click(screen.getByTestId('appointment-booking-slot-16:00'));
+
+		act(() => {
+			vi.setSystemTime(afternoon.hour(16).minute(1).toDate());
+			vi.advanceTimersByTime(60_000);
+		});
+
+		expect(
+			screen.queryByTestId('appointment-booking-slot-16:00')
+		).toBeNull();
+		fireEvent.click(confirmButton());
+		expect(onConfirm).not.toHaveBeenCalled();
 	});
 
 	/* The last slot of the day gone means no times at all, not an empty grid. */

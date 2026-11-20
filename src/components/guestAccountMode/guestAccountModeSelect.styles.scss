@@ -1,0 +1,19 @@
+/* UserService#1662: the guest account select, one settings row. */
+.guestAccountModeSelect {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	min-width: 0;
+
+	&__label {
+		color: var(--m3-on-surface, #1b1b1c);
+		font-size: 14px;
+		line-height: 20px;
+	}
+
+	&__hint {
+		color: var(--m3-on-surface-variant, #444748);
+		font-size: 12px;
+		line-height: 16px;
+	}
+}

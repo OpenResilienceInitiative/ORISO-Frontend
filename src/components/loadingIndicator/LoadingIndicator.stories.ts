@@ -1,4 +1,4 @@
-import { Meta, StoryObj } from '@storybook/react';
+import { Meta, StoryObj } from '@storybook/react-vite';
 import { LoadingIndicator } from './LoadingIndicator';
 
 const meta = {
@@ -8,7 +8,8 @@ const meta = {
 	parameters: {
 		docs: {
 			description: {
-				component: 'Animated bouncing loading spinner indicator.'
+				component:
+					'Compatibility entry point for the shared orbital Loading component.'
 			}
 		}
 	}

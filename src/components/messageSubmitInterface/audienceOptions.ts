@@ -12,6 +12,9 @@
  */
 
 import { isPracticeId } from '../../practice/practiceIds';
+import { isTechnicalMatrixUser } from '../../utils/systemMatrixUsers';
+import { decodeUsernameSafely } from '../../utils/encryptionHelpers';
+import { isMatrixUserId } from '../../utils/messageMentions';
 
 /** Sentinel option value meaning "everyone in this conversation". */
 export const AUDIENCE_ALL = '__all__';
@@ -48,6 +51,18 @@ export interface AudienceOption {
 }
 
 /**
+ * A group's roster can arrive one member at a time. Keep "everyone" available
+ * throughout, so reconciliation never narrows that choice during hydration.
+ * The selector may still stay hidden when there is only one human counterpart.
+ */
+export const buildAudienceOptions = (
+	recipients: AudienceOption[],
+	allOption: AudienceOption,
+	isGroup = false
+): AudienceOption[] =>
+	isGroup || recipients.length > 1 ? [allOption, ...recipients] : recipients;
+
+/**
  * The selection to use when nothing valid was restored: "all" when the
  * conversation offers it, otherwise the first concrete recipient.
  */
@@ -65,12 +80,14 @@ export const defaultAudienceSelection = (
  *
  * Returns `null` — rather than a default — whenever there is nothing usable,
  * so the caller can tell "the user had no saved choice" apart from "the user
- * deliberately chose everyone". Values whose participant has since left the
- * conversation are dropped instead of invalidating the whole selection.
+ * deliberately chose everyone". By default unavailable participants are
+ * dropped. Groups retain restrictions until the user changes them: a partial
+ * roster cannot prove a participant left, and never permits broader delivery.
  */
 export const restoreAudienceSelection = (
 	rawSaved: string | null | undefined,
-	options: AudienceOption[]
+	options: AudienceOption[],
+	retainRestrictions = false
 ): string[] | null => {
 	if (!rawSaved) {
 		return null;
@@ -87,7 +104,9 @@ export const restoreAudienceSelection = (
 	const available = new Set(options.map((option) => option.value));
 	const valid = parsed.filter(
 		(value): value is string =>
-			typeof value === 'string' && available.has(value)
+			typeof value === 'string' &&
+			!!value.trim() &&
+			(retainRestrictions || available.has(value))
 	);
 	return valid.length > 0 ? valid : null;
 };
@@ -95,14 +114,13 @@ export const restoreAudienceSelection = (
 /**
  * The identifiers of everyone whose role we actually know, grouped by role.
  *
- * Built with the strict normaliser below rather than the composer's fuzzy
- * `getComparableAudienceIds`, which splits an id into tokens of four or more
- * characters — so every participant on the same homeserver shares the
- * homeserver token (`example` for `example.org`), far too loose to decide
- * whether somebody is a moderator.
+ * Built with the strict normaliser below. The composer's old fuzzy matcher
+ * split an id into tokens of four or more characters, so every participant on
+ * the same homeserver shared the homeserver token (`example` for
+ * `example.org`), far too loose to decide whether somebody is a moderator.
  *
- * Recipient collection (`createAudienceCollector`) is strict for the same
- * reason; the fuzzy matcher now survives only in the @-mention provider.
+ * Recipient collection (`createAudienceCollector`) and the @-mention provider
+ * (`resolveMentionCandidates`) are strict for the same reason.
  */
 export interface AudienceRoster {
 	asker: Set<string>;
@@ -137,6 +155,151 @@ export const audienceIdentityKeys = (rawValue?: string | null): Set<string> => {
 	add(withoutAt);
 	add(withoutAt.split(':')[0]);
 	return keys;
+};
+
+/**
+ * Who can be @-mentioned in a room the composer writes to directly, such as
+ * the team discussion (#1998): its joined and invited members, minus the
+ * author.
+ */
+export const roomMentionMemberIds = (
+	room:
+		| {
+				getMembers?: () => Array<{
+					userId?: string;
+					membership?: string;
+				}>;
+		  }
+		| null
+		| undefined,
+	selfMatrixUserId?: string | null
+): string[] =>
+	(room?.getMembers?.() || [])
+		.filter(
+			(member) =>
+				!!member?.userId &&
+				member.userId !== selfMatrixUserId &&
+				(member.membership === 'join' || member.membership === 'invite')
+		)
+		.map((member) => `${member.userId}`);
+
+/**
+ * The @-mention directory of a room whose members are all colleagues, such
+ * as an internal colleague chat (FE#1211). That chat belongs to no
+ * counselling centre, so the agency list cannot name its people; the room
+ * itself can. Keyed by Matrix id, which is also what the mention carries.
+ */
+export const roomMemberMentionDirectory = (
+	room:
+		| {
+				getMembers?: () => Array<{
+					userId?: string;
+					name?: string;
+					membership?: string;
+				}>;
+		  }
+		| null
+		| undefined,
+	selfMatrixUserId?: string | null
+): Map<
+	string,
+	{ displayName: string; username: string; matrixUserId: string }
+> => {
+	const directory = new Map<
+		string,
+		{ displayName: string; username: string; matrixUserId: string }
+	>();
+	(room?.getMembers?.() || []).forEach((member) => {
+		const userId = `${member?.userId || ''}`.trim();
+		if (
+			!isMatrixUserId(userId) ||
+			userId === selfMatrixUserId ||
+			isTechnicalMatrixUser(userId) ||
+			(member.membership !== 'join' && member.membership !== 'invite')
+		) {
+			return;
+		}
+		const username = decodeUsernameSafely(
+			userId.replace(/^@/, '').split(':')[0]
+		);
+		directory.set(userId, {
+			displayName: `${member.name || ''}`.trim() || username,
+			username,
+			matrixUserId: userId
+		});
+	});
+	return directory;
+};
+
+/**
+ * Pairs the agency directory with who is in the room. Exact identity only: a
+ * shared surname or homeserver must never mark somebody as in the chat, and
+ * above all must never put another person's Matrix id on their mention pill.
+ * Somebody who cannot be matched gets no id, so nobody is mentioned by mistake.
+ *
+ * Directory names are decoded; supervisors still arrive with the stored,
+ * encoded name ("enc.…"), so members are compared decoded as well.
+ *
+ * `reachOutsideRoom` is for the team discussion, where the server notifies a
+ * mentioned colleague of the agency who has not opened it yet (#1998): they
+ * stay marked as not in the chat, but their pill carries their own exact id.
+ */
+export const resolveMentionCandidates = (
+	directory: Map<
+		string,
+		{ displayName: string; username: string; matrixUserId?: string | null }
+	>,
+	memberIds: string[],
+	reachOutsideRoom = false
+) => {
+	const inRoom = new Set<string>();
+	const memberIdsByFullId = new Set<string>();
+	const matrixIdsByKey = new Map<string, Set<string>>();
+	memberIds.forEach((memberId) => {
+		if (isMatrixUserId(memberId)) {
+			memberIdsByFullId.add(memberId);
+		}
+		const localPart = memberId.replace(/^@/, '').split(':')[0];
+		[
+			...Array.from(audienceIdentityKeys(memberId)),
+			...Array.from(audienceIdentityKeys(decodeUsernameSafely(localPart)))
+		].forEach((key) => {
+			inRoom.add(key);
+			if (isMatrixUserId(memberId)) {
+				const matches = matrixIdsByKey.get(key) ?? new Set<string>();
+				matches.add(memberId);
+				matrixIdsByKey.set(key, matches);
+			}
+		});
+	});
+	return Array.from(directory.entries()).map(([consultantId, info]) => {
+		const ownMatrixUserId = isMatrixUserId(info.matrixUserId || '')
+			? `${info.matrixUserId}`
+			: undefined;
+		if (ownMatrixUserId) {
+			const isInRoom = memberIdsByFullId.has(ownMatrixUserId);
+			return {
+				id: consultantId,
+				displayName: info.displayName,
+				username: info.username,
+				matrixUserId:
+					isInRoom || reachOutsideRoom ? ownMatrixUserId : undefined,
+				isInRoom
+			};
+		}
+		const keys = Array.from(audienceIdentityKeys(info.username));
+		const matches = new Set(
+			keys.flatMap((key) => [...(matrixIdsByKey.get(key) ?? [])])
+		);
+		return {
+			id: consultantId,
+			displayName: info.displayName,
+			username: info.username,
+			matrixUserId:
+				matches.size === 1 ? matches.values().next().value : undefined,
+			isInRoom: matches.size <= 1 && keys.some((key) => inRoom.has(key))
+		};
+	});
 };
 
 const collectKeys = (values: (string | null | undefined)[]): Set<string> => {
@@ -244,7 +407,12 @@ export const createAudienceCollector = (
 		label: string
 	): boolean => {
 		const compact = `${rawValue || ''}`.trim();
-		if (!compact || isSelf(compact) || has(compact)) {
+		if (
+			!compact ||
+			isTechnicalMatrixUser(compact) ||
+			isSelf(compact) ||
+			has(compact)
+		) {
 			return false;
 		}
 		labelByValue.set(compact, label);
@@ -324,8 +492,17 @@ export const classifyAudienceKind = (
  */
 export const reconcileAudienceSelection = (
 	currentValues: string[],
-	options: AudienceOption[]
+	options: AudienceOption[],
+	retainRestrictions = false
 ): string[] => {
+	// A missing group member may just not have loaded yet. Dropping a stored
+	// restriction would silently broaden delivery; only an explicit choice may.
+	if (
+		retainRestrictions &&
+		currentValues.some((value) => value !== AUDIENCE_ALL)
+	) {
+		return currentValues;
+	}
 	const available = new Set(options.map((option) => option.value));
 	const stillAvailable = currentValues.filter((value) =>
 		available.has(value)
@@ -335,6 +512,17 @@ export const reconcileAudienceSelection = (
 	}
 	return defaultAudienceSelection(options);
 };
+
+/** An unavailable recipient is a reason to ask, never permission to broadcast. */
+export const hasUnresolvedAudienceSelection = (
+	values: string[],
+	options: AudienceOption[]
+): boolean =>
+	values.some(
+		(value) =>
+			value !== AUDIENCE_ALL &&
+			!options.some((option) => option.value === value)
+	);
 
 /**
  * Whether the "Send to" control is shown at all.

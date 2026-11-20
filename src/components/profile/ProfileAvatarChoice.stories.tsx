@@ -10,7 +10,7 @@ import { SessionsDataContext } from '../../globalState/provider/SessionsDataProv
 import { Profile } from './Profile';
 
 /**
- * #878 phase 4 (US#1240): the avatar row in the profile header, on the real
+ * #1540 / US#1240: the bounded avatar grid in General's existing data card, on the real
  * Profile page. The stage answers `PATCH /users/data` like the backend does
  * and hands the stored value back on reload, so a pick survives like in the app.
  */
@@ -64,11 +64,14 @@ const StatefulStage = ({
 			if (/\/users\/data$/.test(url) && method === 'PATCH') {
 				const body = init?.body ?? (await request?.clone().text());
 				const patch = JSON.parse(String(body));
-				// Like the backend: an empty id clears, INITIALS drops a motif.
+				// Standard omits kind and clears both fields; explicit INITIALS survives.
 				stored.current = {
 					...stored.current,
 					...patch,
-					avatarId: patch.avatarId || null
+					avatarId: patch.avatarId || null,
+					...(patch.avatarId === '' && !('avatarKind' in patch)
+						? { avatarKind: null }
+						: {})
 				};
 				return new Response('{}', {
 					status: 200,
@@ -140,16 +143,24 @@ const phone390 = { viewport: { value: 'phone390' } };
 const pickAndKeep = async (canvasElement: HTMLElement, name: string) => {
 	const canvas = within(canvasElement);
 	const row = await canvas.findByRole('radiogroup', { name: 'Ihr Bild' });
+	await expect(row.closest('[data-testid="profile-card"]')).not.toBeNull();
+	await expect(canvasElement.querySelector('.avatarPicker--row')).toBeNull();
 	await expect(
 		within(row).getByRole('radio', { name: 'Standard' })
 	).toHaveAttribute('aria-checked', 'true');
+	within(row).getByRole('radio', { name: 'Standard' }).focus();
+	await userEvent.keyboard('{ArrowRight}');
+	await expect(document.activeElement).toBe(
+		within(row).getAllByRole('radio')[1]
+	);
 	await userEvent.click(within(row).getByRole('radio', { name }));
-	await waitFor(() =>
+	await waitFor(() => {
+		expect(row).not.toHaveAttribute('aria-busy', 'true');
 		expect(within(row).getByRole('radio', { name })).toHaveAttribute(
 			'aria-checked',
 			'true'
-		)
-	);
+		);
+	});
 };
 
 export const AdviceSeeker1440: Story = {
@@ -169,11 +180,92 @@ export const CounsellorWithMotif1440: Story = {
 	decorators: [
 		withStage({ ...consultant, avatarKind: 'ICON', avatarId: 'owl' })
 	],
-	globals: desktop1440
+	globals: desktop1440,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const row = await canvas.findByRole('radiogroup', { name: 'Ihr Bild' });
+		await expect(
+			within(row).getByRole('radio', { name: 'owl' })
+		).toHaveAttribute('aria-checked', 'true');
+		await userEvent.click(
+			within(row).getByRole('radio', { name: 'Standard' })
+		);
+		await waitFor(() => {
+			expect(
+				within(row).getByRole('radio', { name: 'Standard' })
+			).toHaveAttribute('aria-checked', 'true');
+			expect(
+				canvasElement.querySelector('[data-testid="counsellor-avatar"]')
+			).toBeNull();
+		});
+	}
 };
 
 export const AdviceSeeker390: Story = {
 	decorators: [withStage(asker)],
 	globals: phone390,
-	parameters: { router: { initialPath: '/profile' } }
+	parameters: { router: { initialPath: '/profile/allgemeines/privat' } },
+	play: ({ canvasElement }) => pickAndKeep(canvasElement, 'fox')
+};
+
+/** Admin initials stay explicit until Standard is chosen and read back. */
+export const CounsellorWithInitials1440: Story = {
+	decorators: [
+		withStage({ ...consultant, avatarKind: 'INITIALS', avatarId: null })
+	],
+	globals: desktop1440,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const row = await canvas.findByRole('radiogroup', { name: 'Ihr Bild' });
+		const standard = within(row).getByRole('radio', { name: 'Standard' });
+		await expect(standard).toHaveAttribute('aria-checked', 'false');
+		await expect(standard).toHaveAttribute('tabindex', '0');
+		await expect(
+			canvasElement.querySelector('[data-testid="counsellor-avatar"]')
+				?.textContent
+		).toBe('KB');
+		await expect(
+			canvasElement.querySelector('[data-testid="counsellor-avatar"]')
+		).not.toBeNull();
+		await userEvent.click(standard);
+		await waitFor(() => {
+			expect(standard).toHaveAttribute('aria-checked', 'true');
+			expect(
+				canvasElement.querySelector('[data-testid="counsellor-avatar"]')
+			).toBeNull();
+		});
+	}
+};
+
+export const AdviceSeeker834: Story = {
+	decorators: [withStage(asker)],
+	globals: { viewport: { value: 'tablet834' } },
+	parameters: { router: { initialPath: '/profile/allgemeines/privat' } },
+	play: ({ canvasElement }) => pickAndKeep(canvasElement, 'fox')
+};
+
+export const Counsellor390: Story = {
+	decorators: [withStage(consultant)],
+	globals: phone390,
+	parameters: { router: { initialPath: '/profile/allgemeines/oeffentlich' } },
+	play: ({ canvasElement }) => pickAndKeep(canvasElement, 'magpie')
+};
+
+export const Counsellor834: Story = {
+	decorators: [withStage(consultant)],
+	globals: { viewport: { value: 'tablet834' } },
+	parameters: { router: { initialPath: '/profile/allgemeines/oeffentlich' } },
+	play: ({ canvasElement }) => pickAndKeep(canvasElement, 'magpie')
+};
+
+export const CounsellorEnglishStress: Story = {
+	decorators: [
+		withStage({
+			...consultant,
+			displayName: 'Alexandra Charlotte Beispiel-Mustermann',
+			avatarKind: 'ICON',
+			avatarId: 'owl'
+		})
+	],
+	globals: { ...desktop1440, locale: 'en' }
 };

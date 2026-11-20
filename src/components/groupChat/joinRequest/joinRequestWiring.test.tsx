@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import * as React from 'react';
 import {
 	act,
@@ -10,7 +10,7 @@ import {
 	within
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import type { GroupChatJoinRequest } from './joinRequestModel';
 
 vi.mock('react-i18next', () => ({
@@ -333,7 +333,7 @@ describe('JoinRequestCenter — the moderator who is knocked on', () => {
 		]);
 		expect(
 			inStack().getByText(
-				'groupChat.joinRequest.admitted(name=Anna Berg)'
+				'groupChat.joinRequest.admissionQueued(name=Anna Berg)'
 			)
 		).toBeTruthy();
 	});

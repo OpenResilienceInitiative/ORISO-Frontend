@@ -1,9 +1,7 @@
 import * as React from 'react';
 import { useContext } from 'react';
 import { useTranslation } from 'react-i18next';
-// One Material arrow for both directions - the back button mirrors it in CSS.
-// The design uses the arrow-with-tail, not the chevron in arrow-left.svg.
-import { ReactComponent as ArrowIcon } from '../../resources/img/icons/arrow-right-m3.svg';
+import { SideScrollerFooter } from '../sideScrollerFooter/SideScrollerFooter';
 import { AskerInfoActionContext } from './askerInfoActionContext';
 
 export interface AskerInfoFooterProps {
@@ -28,37 +26,22 @@ export const AskerInfoFooter = ({ onLeave }: AskerInfoFooterProps) => {
 	const { hasPendingChange } = useContext(AskerInfoActionContext);
 
 	return (
-		<div className="askerInfo__footer">
-			<button
-				type="button"
-				className="askerInfo__footer__button askerInfo__footer__button--back"
-				onClick={onLeave}
-				aria-label={translate('app.back')}
-				title={translate('app.back')}
-				data-cy="asker-info-footer-back"
-			>
-				<ArrowIcon />
-			</button>
-			{/* `aria-disabled`, not `disabled`: the latter takes the button out
-			    of the tab order and suppresses its `title`, so a keyboard or
-			    screen-reader user gets no signal that a next action exists or
-			    why it is inert. This keeps it reachable and announced as
-			    unavailable, with the click guarded below. */}
-			<button
-				type="button"
-				className={`askerInfo__footer__button askerInfo__footer__button--next${
-					hasPendingChange
-						? ' askerInfo__footer__button--primary'
-						: ''
-				}`}
-				onClick={hasPendingChange ? onLeave : undefined}
-				aria-disabled={!hasPendingChange}
-				aria-label={translate('app.next')}
-				title={translate('app.next')}
-				data-cy="asker-info-footer-next"
-			>
-				<ArrowIcon />
-			</button>
-		</div>
+		<SideScrollerFooter
+			className="askerInfo__footer"
+			back={{
+				label: translate('app.back'),
+				onClick: onLeave,
+				className:
+					'askerInfo__footer__button askerInfo__footer__button--back',
+				dataCy: 'asker-info-footer-back'
+			}}
+			next={{
+				label: translate('app.next'),
+				onClick: hasPendingChange ? onLeave : undefined,
+				ariaDisabled: !hasPendingChange,
+				className: `askerInfo__footer__button askerInfo__footer__button--next${hasPendingChange ? ' askerInfo__footer__button--primary' : ''}`,
+				dataCy: 'asker-info-footer-next'
+			}}
+		/>
 	);
 };

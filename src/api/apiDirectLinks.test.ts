@@ -1,0 +1,327 @@
+// @vitest-environment oriso-jsdom
+import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
+import { fetchData, FETCH_ERRORS, FETCH_METHODS } from './fetchData';
+import {
+	apiCancelOwnCallKnock,
+	apiCreateDirectLink,
+	apiGetOwnCallKnock,
+	apiGetOwnDirectLinks,
+	apiStartDirectLinkConversation,
+	apiUpdateDirectLink,
+	DIRECT_LINKS_CHANGED_EVENT,
+	isInactiveDirectLinkError,
+	isPausedDirectLinkError,
+	notifyDirectLinksChanged,
+	toDirectLink
+} from './apiDirectLinks';
+
+vi.mock('./fetchData', async () => {
+	const actual =
+		await vi.importActual<typeof import('./fetchData')>('./fetchData');
+	return { ...actual, fetchData: vi.fn() };
+});
+
+const dto = {
+	id: 7,
+	token: 'abc',
+	url: 'https://app.example/invite/abc',
+	name: 'Flyer Schule',
+	topicId: 3,
+	topicName: 'Schulden',
+	agencyId: 11,
+	medium: 'VIDEO',
+	temporary: true,
+	active: false,
+	admission: 'KNOCK'
+};
+
+beforeEach(() => vi.clearAllMocks());
+
+describe('toDirectLink', () => {
+	it('maps the UserService DTO onto the tile model', () => {
+		expect(toDirectLink(dto)).toEqual({
+			id: '7',
+			name: 'Flyer Schule',
+			topic: 'Schulden',
+			topicId: 3,
+			agencyId: 11,
+			medium: 'VIDEO',
+			temporary: true,
+			guestAccountMode: 'GUEST_CHOOSES',
+			active: false,
+			url: 'https://app.example/invite/abc'
+		});
+	});
+
+	/* UserService#1662: the mode wins over the old switch, which follows it. */
+	it('reads the guest account mode and derives the temporary mirror from it', () => {
+		const link = toDirectLink({
+			...dto,
+			temporary: true,
+			guestAccountMode: 'PERMANENT'
+		});
+		expect(link?.guestAccountMode).toBe('PERMANENT');
+		expect(link?.temporary).toBe(false);
+		expect(
+			toDirectLink({ ...dto, guestAccountMode: 'TEMPORARY' })
+				?.guestAccountMode
+		).toBe('TEMPORARY');
+	});
+
+	it('makes a relative entry URL absolute on the current host', () => {
+		const link = toDirectLink({ ...dto, url: '/invite/abc' });
+		expect(link.url).toBe(`${window.location.origin}/invite/abc`);
+	});
+
+	it('names an unnamed link after its topic', () => {
+		expect(toDirectLink({ ...dto, name: undefined }).name).toBe('Schulden');
+	});
+
+	it('carries the date and time the counsellor noted (#2142)', () => {
+		expect(
+			toDirectLink({ ...dto, scheduledAt: '2026-11-20T13:30:00Z' })
+				.scheduledAt
+		).toBe('2026-11-20T13:30:00Z');
+		expect(toDirectLink({ ...dto, scheduledAt: null })).not.toHaveProperty(
+			'scheduledAt'
+		);
+	});
+
+	it('drops entries with an unknown medium', () => {
+		expect(toDirectLink({ ...dto, medium: 'FAX' })).toBeNull();
+	});
+});
+
+describe('apiGetOwnDirectLinks', () => {
+	it('reads the caller’s links and keeps valid ones', async () => {
+		vi.mocked(fetchData).mockResolvedValue([dto, { ...dto, medium: 'X' }]);
+
+		const links = await apiGetOwnDirectLinks();
+
+		expect(fetchData).toHaveBeenCalledWith(
+			expect.objectContaining({
+				url: expect.stringMatching(/\/service\/users\/directlinks$/),
+				method: FETCH_METHODS.GET
+			})
+		);
+		expect(links).toHaveLength(1);
+		expect(links[0].id).toBe('7');
+	});
+
+	it('treats an empty answer as no links', async () => {
+		vi.mocked(fetchData).mockRejectedValue(new Error(FETCH_ERRORS.EMPTY));
+		await expect(apiGetOwnDirectLinks()).resolves.toEqual([]);
+	});
+
+	it('passes other failures on', async () => {
+		vi.mocked(fetchData).mockRejectedValue(new Error('boom'));
+		await expect(apiGetOwnDirectLinks()).rejects.toThrow('boom');
+	});
+
+	/* #2252 review: the overview, the request pop-ups and the open
+	   conversation all reload on one DIRECT_LINKS_CHANGED event. */
+	it('shares one request between callers while it is running', async () => {
+		vi.mocked(fetchData).mockClear();
+		let answer: (value: unknown) => void = () => undefined;
+		vi.mocked(fetchData).mockReturnValue(
+			new Promise((resolve) => {
+				answer = resolve;
+			})
+		);
+
+		const all = Promise.all([
+			apiGetOwnDirectLinks(),
+			apiGetOwnDirectLinks(),
+			apiGetOwnDirectLinks()
+		]);
+		answer([dto]);
+		const results = await all;
+
+		expect(fetchData).toHaveBeenCalledTimes(1);
+		expect(results.map((links) => links.map((link) => link.id))).toEqual([
+			['7'],
+			['7'],
+			['7']
+		]);
+		/* Each caller gets its own array to keep. */
+		expect(results[0]).not.toBe(results[1]);
+	});
+
+	it('asks again once the earlier request has finished', async () => {
+		vi.mocked(fetchData).mockClear();
+		vi.mocked(fetchData).mockResolvedValue([dto]);
+		await apiGetOwnDirectLinks();
+		await apiGetOwnDirectLinks();
+		expect(fetchData).toHaveBeenCalledTimes(2);
+	});
+
+	/* #2252 review: a read started before a renewal answers with the old
+	   links; a reload after the change must not join it. */
+	it('asks again after a change while an older request is still running', async () => {
+		vi.mocked(fetchData).mockClear();
+		const answers: ((value: unknown) => void)[] = [];
+		vi.mocked(fetchData).mockImplementation(
+			() =>
+				new Promise((resolve) => {
+					answers.push(resolve);
+				})
+		);
+
+		const before = apiGetOwnDirectLinks();
+		notifyDirectLinksChanged();
+		const after = apiGetOwnDirectLinks();
+		/* The older read answers first; it must not free the newer one's
+		   slot, so a third caller still shares the newer read. */
+		answers[0]([{ ...dto, name: 'Alt' }]);
+		await before;
+		const third = apiGetOwnDirectLinks();
+		answers[1]([{ ...dto, name: 'Neu' }]);
+
+		expect(fetchData).toHaveBeenCalledTimes(2);
+		expect((await before)[0].name).toBe('Alt');
+		expect((await after)[0].name).toBe('Neu');
+		expect((await third)[0].name).toBe('Neu');
+	});
+});
+
+describe('apiUpdateDirectLink', () => {
+	it('sends only the changed fields as PATCH', async () => {
+		vi.mocked(fetchData).mockResolvedValue({ ...dto, active: true });
+
+		const link = await apiUpdateDirectLink('7', { active: true });
+
+		expect(fetchData).toHaveBeenCalledWith(
+			expect.objectContaining({
+				url: expect.stringMatching(/\/service\/users\/directlinks\/7$/),
+				method: FETCH_METHODS.PATCH,
+				bodyData: JSON.stringify({ active: true })
+			})
+		);
+		expect(link.active).toBe(true);
+	});
+
+	it('reads a real 200 answer through fetchData', async () => {
+		const actual =
+			await vi.importActual<typeof import('./fetchData')>('./fetchData');
+		vi.mocked(fetchData).mockImplementation(actual.fetchData);
+		const fetchMock = vi.fn(async () =>
+			Response.json({ ...dto, name: 'Neu' }, { status: 200 })
+		);
+		vi.stubGlobal('fetch', fetchMock);
+		try {
+			const link = await apiUpdateDirectLink('7', { name: 'Neu' });
+			expect(fetchMock).toHaveBeenCalledOnce();
+			expect(link.name).toBe('Neu');
+		} finally {
+			vi.unstubAllGlobals();
+		}
+	});
+
+	it('rejects an answer it cannot read', async () => {
+		vi.mocked(fetchData).mockResolvedValue({});
+		await expect(
+			apiUpdateDirectLink('7', { name: 'Neu' })
+		).rejects.toThrow();
+	});
+});
+
+describe('apiCreateDirectLink', () => {
+	it('posts the new link and answers the tile model', async () => {
+		vi.mocked(fetchData).mockResolvedValue(dto);
+		const link = await apiCreateDirectLink({
+			medium: 'VIDEO',
+			topicId: 3,
+			temporary: true
+		});
+		expect(fetchData).toHaveBeenCalledWith(
+			expect.objectContaining({
+				url: expect.stringMatching(/\/service\/users\/directlinks$/),
+				method: FETCH_METHODS.POST,
+				bodyData: JSON.stringify({
+					medium: 'VIDEO',
+					topicId: 3,
+					temporary: true
+				})
+			})
+		);
+		expect(link.id).toBe('7');
+	});
+
+	it('treats a non-list answer as no links', async () => {
+		vi.mocked(fetchData).mockResolvedValue({});
+		await expect(apiGetOwnDirectLinks()).resolves.toEqual([]);
+	});
+});
+
+describe('the person’s side', () => {
+	it('opens the conversation and reads or withdraws the knock', async () => {
+		vi.mocked(fetchData).mockResolvedValue({});
+		await apiStartDirectLinkConversation('a/b');
+		expect(vi.mocked(fetchData).mock.calls[0][0]).toMatchObject({
+			url: expect.stringMatching(/\/invitelinks\/a%2Fb\/conversations$/),
+			method: FETCH_METHODS.POST
+		});
+		vi.clearAllMocks();
+		vi.mocked(fetchData).mockResolvedValue({});
+		await apiGetOwnCallKnock(5);
+		expect(vi.mocked(fetchData).mock.calls[0][0].url).toMatch(
+			/\/call-knocks\/mine\/5$/
+		);
+		vi.clearAllMocks();
+		vi.mocked(fetchData).mockResolvedValue({});
+		await apiCancelOwnCallKnock(5);
+		expect(vi.mocked(fetchData).mock.calls[0][0]).toMatchObject({
+			method: FETCH_METHODS.DELETE
+		});
+	});
+
+	it('recognises a switched-off link by its 410', () => {
+		expect(
+			isInactiveDirectLinkError(new Response('', { status: 410 }))
+		).toBe(true);
+		expect(
+			isInactiveDirectLinkError(new Response('', { status: 404 }))
+		).toBe(false);
+		expect(isInactiveDirectLinkError(new Error('CATCH_ALL'))).toBe(false);
+	});
+
+	it('recognises a paused link by the reason of its 410', async () => {
+		const refused = (body: string, status = 410) =>
+			new Response(body, { status });
+		await expect(
+			isPausedDirectLinkError(
+				refused('{"reason":"DIRECT_LINK_INACTIVE"}')
+			)
+		).resolves.toBe(true);
+		await expect(
+			isPausedDirectLinkError(refused('{"reason":"INVITE_LINK_PAUSED"}'))
+		).resolves.toBe(false);
+		await expect(isPausedDirectLinkError(refused(''))).resolves.toBe(false);
+		await expect(
+			isPausedDirectLinkError(
+				refused('{"reason":"DIRECT_LINK_INACTIVE"}', 404)
+			)
+		).resolves.toBe(false);
+		await expect(
+			isPausedDirectLinkError(new Error('CATCH_ALL'))
+		).resolves.toBe(false);
+	});
+
+	it('reads the reason without using the response up', async () => {
+		const response = new Response('{"reason":"DIRECT_LINK_INACTIVE"}', {
+			status: 410
+		});
+		await isPausedDirectLinkError(response);
+		expect(response.bodyUsed).toBe(false);
+	});
+});
+
+describe('notifyDirectLinksChanged', () => {
+	it('announces a change on the window', () => {
+		const changed = vi.fn();
+		window.addEventListener(DIRECT_LINKS_CHANGED_EVENT, changed);
+		notifyDirectLinksChanged();
+		window.removeEventListener(DIRECT_LINKS_CHANGED_EVENT, changed);
+		expect(changed).toHaveBeenCalledOnce();
+	});
+});

@@ -1,3 +1,10 @@
+import {
+	MY_LINKS_SETTINGS_PATH,
+	SETTINGS_OVERVIEW_PATH,
+	useDirectLinksAllowed,
+	useDirectLinksRedirect
+} from '../directLinks/useDirectLinksAllowed';
+import { AVATAR_SIZES } from '../pseudonym/avatarSizes';
 import * as React from 'react';
 import { useState, useRef, useContext, useEffect } from 'react';
 import { logout } from '../logout/logout';
@@ -13,9 +20,8 @@ import { ReactComponent as LogoutIcon } from '../../resources/img/icons/out.svg'
 import { ReactComponent as BackIcon } from '../../resources/img/icons/arrow-left.svg';
 import { Text } from '../text/Text';
 import { UserAvatar } from '../message/UserAvatar';
-import { ProfileAvatarChoice } from './ProfileAvatarChoice';
 import { chosenAvatarOf } from '../../utils/avatarChoice';
-import { MatrixClientContext } from '../../globalState/context/MatrixClientContext';
+import { useOwnAvatarUserId } from '../../hooks/useOwnAvatarUserId';
 import './profile.styles';
 import profileRoutes from './profile.routes';
 import {
@@ -54,6 +60,11 @@ import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider
 import { useAppConfig } from '../../hooks/useAppConfig';
 import useIsFirstVisit from '../../utils/useIsFirstVisit';
 import LegalLinks from '../legalLinks/LegalLinks';
+import { useBuildIdentityOwner } from '../app/BuildIdentity';
+import {
+	getBuildCommit,
+	getPlatformVersion
+} from '../../resources/scripts/runtimeConfig';
 
 export const Profile = () => {
 	const settings = useAppConfig();
@@ -62,17 +73,27 @@ export const Profile = () => {
 	const location = useLocation();
 	const { fromL } = useResponsive();
 	const isFirstVisit = useIsFirstVisit();
+	const identityOwner = useBuildIdentityOwner();
+	const showBuildIdentity = Boolean(getPlatformVersion() || getBuildCommit());
 
 	const legalLinks = useContext(LegalLinksContext);
 	const { userData } = useContext(UserDataContext);
 	// #1193 Job 4: the profile shows the same animal other participants see in
 	// the chat, which is derived from the Matrix user id when the client is up.
-	const matrixClientContext = useContext(MatrixClientContext);
-	const ownAvatarUserId =
-		matrixClientContext?.matrixClientService
-			?.getClient?.()
-			?.getUserId?.() || userData.userId;
+	const ownAvatarUserId = useOwnAvatarUserId();
 	const { consultingTypes } = useContext(ConsultingTypesContext);
+	// #1894: Settings → "Meine Links" only while a medium is allowed.
+	const isCounsellor = hasUserAuthority(
+		AUTHORITIES.CONSULTANT_DEFAULT,
+		userData
+	);
+	const directLinksAllowed = useDirectLinksAllowed(isCounsellor);
+	// A bookmarked "Meine Links" goes to the Settings overview instead.
+	useDirectLinksRedirect(
+		isCounsellor,
+		(pathname) => pathname.startsWith(MY_LINKS_SETTINGS_PATH),
+		SETTINGS_OVERVIEW_PATH
+	);
 
 	const visibleElements = (
 		elements: (TabGroups | SingleComponentType | null)[] = []
@@ -118,7 +139,13 @@ export const Profile = () => {
 
 	useEffect(() => {
 		setMobileMenu(
-			profileRoutes(settings, tenant, selectableLocales, isFirstVisit)
+			profileRoutes(
+				settings,
+				tenant,
+				selectableLocales,
+				isFirstVisit,
+				directLinksAllowed
+			)
 				.filter((tab) =>
 					solveTabConditions(tab, userData, consultingTypes ?? [])
 				)
@@ -166,7 +193,8 @@ export const Profile = () => {
 		userData,
 		selectableLocales,
 		tenant,
-		isFirstVisit
+		isFirstVisit,
+		directLinksAllowed
 	]);
 
 	const [subpage, setSubpage] = useState(undefined);
@@ -271,8 +299,23 @@ export const Profile = () => {
 											userData.displayName ||
 											userData.userName
 										}
+										firstName={userData.firstName}
+										lastName={userData.lastName}
+										avatarDisplayName={
+											userData.displayName ||
+											(isConsultant
+												? [
+														userData.firstName,
+														userData.lastName
+													]
+														.filter(Boolean)
+														.join(' ')
+												: userData.userName)
+										}
 										userId={ownAvatarUserId}
-										size="56px"
+										// Saved choices and the stable default share
+										// the same renderer as recipient views.
+										size={AVATAR_SIZES.profile}
 										choice={chosenAvatarOf(userData)}
 									/>
 								</div>
@@ -291,14 +334,16 @@ export const Profile = () => {
 					</div>
 					<div
 						className="profile__nav flex flex__col--grow flex__col--shrink flex--jc-c flex--ai-s flex-l__col--50p"
-						role="tablist"
+						// On phones this row only holds the page title (#1338).
+						role={fromL ? 'tablist' : undefined}
 					>
 						{fromL
 							? profileRoutes(
 									settings,
 									tenant,
 									selectableLocales,
-									isFirstVisit
+									isFirstVisit,
+									directLinksAllowed
 								)
 									.filter((tab) =>
 										solveTabConditions(
@@ -360,9 +405,6 @@ export const Profile = () => {
 						)}
 					</div>
 				</div>
-				{(fromL || !subpage) && (
-					<ProfileAvatarChoice avatarUserId={ownAvatarUserId} />
-				)}
 			</div>
 			<div className="profile__innerWrapper">
 				<div>
@@ -373,7 +415,8 @@ export const Profile = () => {
 									settings,
 									tenant,
 									selectableLocales,
-									isFirstVisit
+									isFirstVisit,
+									directLinksAllowed
 								)
 									.filter((tab) =>
 										solveTabConditions(
@@ -431,7 +474,8 @@ export const Profile = () => {
 									settings,
 									tenant,
 									selectableLocales,
-									isFirstVisit
+									isFirstVisit,
+									directLinksAllowed
 								)
 									.filter((tab) =>
 										solveTabConditions(
@@ -460,7 +504,8 @@ export const Profile = () => {
 								settings,
 								tenant,
 								selectableLocales,
-								isFirstVisit
+								isFirstVisit,
+								directLinksAllowed
 							)
 								.filter((tab) =>
 									solveTabConditions(
@@ -530,7 +575,8 @@ export const Profile = () => {
 											settings,
 											tenant,
 											selectableLocales,
-											isFirstVisit
+											isFirstVisit,
+											directLinksAllowed
 										)[0].url
 									}`}
 									replace
@@ -570,6 +616,12 @@ export const Profile = () => {
 							</a>
 						)}
 					</LegalLinks>
+					{identityOwner && showBuildIdentity && (
+						<div
+							className="profile__footer__identity"
+							ref={identityOwner.setStageTarget}
+						/>
+					)}
 				</div>
 			</div>
 		</div>

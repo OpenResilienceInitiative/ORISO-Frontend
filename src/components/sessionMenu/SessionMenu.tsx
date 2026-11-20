@@ -1,3 +1,11 @@
+import {
+	useConversationFeatureSettings,
+	useConversationFeatureSettingsSettled
+} from '../../hooks/useConversationFeatureSettings';
+import {
+	getSessionMenuAgency,
+	getSessionMenuLegalDepartment
+} from './sessionMenuAgency';
 import { createPortal } from 'react-dom';
 import { MenuBackdrop } from '../chatMenuDropdown/MenuBackdrop';
 import { useChatMenuPosition } from '../chatMenuDropdown/useChatMenuPosition';
@@ -19,9 +27,21 @@ import {
 	UserDataContext,
 	ActiveSessionContext,
 	SessionsDataContext,
-	REMOVE_SESSIONS
+	REMOVE_SESSIONS,
+	NotificationsContext,
+	NOTIFICATION_TYPE_WARNING
 } from '../../globalState';
+import { STATUS_REJECTED } from '../../globalState/interfaces/SessionsDataInterface';
 import { startRoomCall } from '../call/startRoomCall';
+import { StartCallRequest, type CallKind } from '../call/startCallIntent';
+import { callRoomName } from '../call/callRoomName';
+import { canAskerSeeCallInfo } from '../call/askerCallInfo/askerCallInfo';
+import { AskerCallInfo } from '../call/askerCallInfo/AskerCallInfoDialog';
+import { focusChatComposer } from '../call/askerCallInfo/focusChatComposer';
+import { mediumOfCall } from '../call/askerCallInfo/askerSelfBooking';
+import type { SelfBookingMedium } from '../../api/apiSessionAppointments';
+import { useAppointmentNotice } from '../sessionsList/timeline/useAppointmentNotice';
+import { notifyAppointmentsChanged } from '../sessionsList/timeline/conversationAppointments';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import { resolveCallFeatureGates } from '../call/callFeatureGates';
 import {
@@ -37,6 +57,9 @@ import { getModality, Modality } from '../session/getModality';
 import { Overlay, OVERLAY_FUNCTIONS } from '../overlay/Overlay';
 import {
 	archiveSessionSuccessOverlayItem,
+	endTopicDuplicateConfirmOverlayItem,
+	endTopicDuplicateErrorOverlayItem,
+	recommendFurtherCounsellingSuccessOverlayItem,
 	groupChatErrorOverlayItem,
 	leaveGroupChatSecurityOverlayItem,
 	leaveGroupChatSuccessOverlayItem,
@@ -52,8 +75,9 @@ import {
 import { logout } from '../logout/logout';
 import { mobileListView } from '../app/navigationHandler';
 import {
+	canEditGroupChatSettings,
 	canModerateGroupChat,
-	isGroupChatOwner
+	getStoppedGroupChatRemovalIds
 } from '../groupChat/groupChatHelpers';
 import { ReactComponent as LeaveChatIcon } from '../../resources/img/icons/out.svg';
 import { ReactComponent as GroupChatInfoIcon } from '../../resources/img/icons/i.svg';
@@ -68,17 +92,19 @@ import { ReactComponent as ProfileIcon } from '../../resources/img/icons/profil_
 import { ReactComponent as MenuVideoCallIcon } from '../../resources/img/icons/modality-video.svg';
 import { ReactComponent as MenuAudioCallIcon } from '../../resources/img/icons/timeline-add-call.svg';
 import { NotificationConfigDialog } from '../profile/NotificationSettings/NotificationConfigDialog';
+import { notificationRoleFor } from '../profile/NotificationSettings/notificationRole';
 import { useNotificationSettings } from '../../hooks/useNotificationSettings';
 import { LegalLinkMenuIcon } from '../legalLinks/LegalLinkMenuIcon';
 import { getLegalLinkKind } from '../legalLinks/useLegalLinkContent';
 import '../sessionHeader/sessionHeader.styles';
 import './sessionMenu.styles';
 import { Button, BUTTON_TYPES, ButtonItem } from '../button/Button';
-import { ReactComponent as CalendarMonthPlusIcon } from '../../resources/img/icons/calendar-plus.svg';
-import DeleteSession from '../session/DeleteSession';
-import { Text } from '../text/Text';
 import { useSearchParam } from '../../hooks/useSearchParams';
 import { useTranslation } from 'react-i18next';
+import EventOutlinedIcon from '@mui/icons-material/EventOutlined';
+import VerifiedUserOutlinedIcon from '@mui/icons-material/VerifiedUserOutlined';
+import { useKeepAccountDialog } from '../temporaryAccount/KeepAccountEntry';
+import AddLinkOutlinedIcon from '@mui/icons-material/AddLinkOutlined';
 import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider';
 import { useMatrixRoomUsers } from '../../hooks/useMatrixRoomUsers';
 import LegalLinks from '../legalLinks/LegalLinks';
@@ -92,8 +118,27 @@ import {
 import { sessionMenuOwnsCallControls } from './callControlOwnership';
 import { usePracticeActive } from '../../practice';
 import { useSessionTenantSettings } from '../../hooks/useSessionTenantSettings';
+import { hasEmailSettingsPanel } from '../profile/EmailNotifications/emailNotificationAccess';
+import { useTenant } from '../../globalState/provider/TenantProvider';
 import { useSupervisionPanel } from '../supervisionPanel/SupervisionPanelContext';
 import { ReactComponent as SupervisionIcon } from '../../resources/img/icons/supervision_nocirc_400_24px.svg';
+import { ReactComponent as RecommendIcon } from '../../resources/img/icons/arrow-forward.svg';
+import { ReactComponent as EndDuplicateIcon } from '../../resources/img/icons/close-circle.svg';
+import { apiPutEndTopicDuplicate } from '../../api/apiFurtherCounselling';
+import { FETCH_ERRORS } from '../../api/fetchData';
+import {
+	canEndTopicDuplicate,
+	canRecommendFurtherCounselling
+} from '../furtherCounselling/furtherCounsellingRules';
+import { RecommendFurtherCounsellingDialog } from '../furtherCounselling/RecommendFurtherCounsellingDialog';
+import { ReactComponent as HandoverIcon } from '../../resources/img/icons/case_handover_200_24px.svg';
+import { useCaseHandoverOffer } from '../caseHandover/useCaseHandoverOffer';
+import { CaseHandoverOffer } from '../caseHandover/CaseHandoverOffer';
+import { useRecommendAllowedInModality } from '../furtherCounselling/useRecommendAllowedInModality';
+import { getGroupChatInfoLink } from '../groupChat/groupChatInfoLink';
+import { AddonSessionMenuItems } from '../../addons/AddonSessionMenuItems';
+import { useOwnTemporaryAccount } from '../temporaryAccount/temporaryAccountStore';
+import { isAnonymousAsker } from '../termsandconditions/isAnonymousAsker';
 
 export interface SessionMenuProps {
 	hasUserInitiatedStopOrLeaveRequest: React.MutableRefObject<boolean>;
@@ -115,10 +160,30 @@ export interface SessionMenuProps {
 	 * Off by default — B2 sets it from the viewport (`untilL`).
 	 */
 	callsInMenu?: boolean;
+	/**
+	 * FE#1960: opens the 1:1 appointment dialog. Set only while the
+	 * counsellor may create one here and the backend can store it.
+	 */
+	onCreateAppointment?: () => void;
+	/**
+	 * #2252: "Neuen Link senden" for an expired Direkteinladung of this
+	 * conversation. Set only while there is one.
+	 */
+	onSendNewLink?: () => void;
 }
 
 // #1262 — backend advice-request APIs are not ready (US#1034). Keep the owner-only item visible but inert.
 const ADVICE_REQUEST_ENABLED = false;
+
+/** The call controls by kind: header buttons and their menu rows. */
+const CALL_HEADER_BUTTON: Record<CallKind, string> = {
+	video: 'session-header-start-video-call',
+	audio: 'session-header-start-call'
+};
+const CALL_MENU_ROW: Record<CallKind, string> = {
+	video: 'session-menu-start-video-call',
+	audio: 'session-menu-start-call'
+};
 
 export const SessionMenu = (props: SessionMenuProps) => {
 	const { t: translate } = useTranslation();
@@ -136,18 +201,37 @@ export const SessionMenu = (props: SessionMenuProps) => {
 		settings: currentTenantSettings,
 		isLoading: isLoadingTenantSettings
 	} = useSessionTenantSettings(activeSession.item?.id);
-	const { dispatch: sessionsDispatch } = useContext(SessionsDataContext);
+	const effectiveFeatures = useConversationFeatureSettings(
+		currentTenantSettings
+	);
+	const { dispatch: sessionsDispatch, sessions: sessionList } =
+		useContext(SessionsDataContext);
 	// WP-B2: the supervision parallel panel; null outside a session view.
 	const supervisionPanel = useSupervisionPanel();
 	// Practice: no calls, no booking (they would start real network traffic).
 	const isPracticing = usePracticeActive();
+	const isRejectedCase =
+		Number(activeSession.item?.status) === STATUS_REJECTED;
 
 	const [overlayItem, setOverlayItem] = useState(null);
 	const [flyoutOpen, setFlyoutOpen] = useState(null);
 	const menuTriggerRef = useRef<HTMLButtonElement | null>(null);
 	const menuRef = useRef<HTMLDivElement>(null);
+	/*
+	 * FE#1050: the calendar or the overview asked for this conversation's
+	 * video or audio call, but the click's gesture ran out on the way: the
+	 * own button of that kind is focused and marked instead, one click
+	 * starts.
+	 */
+	const [offeredCall, setOfferedCall] = useState<CallKind | null>(null);
+	const [askerCallInfoOpen, setAskerCallInfoOpen] = useState(false);
+	/* FE#1050: what the asker clicked — "Termin anfragen" books that medium. */
+	const [askerCallMedium, setAskerCallMedium] =
+		useState<SelfBookingMedium>('VIDEO');
+	const sendAppointmentNotice = useAppointmentNotice();
 	const closeMenu = useCallback(() => {
 		setFlyoutOpen(false);
+		setOfferedCall(null);
 		menuTriggerRef.current?.focus();
 	}, []);
 	const menuPosition = useChatMenuPosition({
@@ -155,6 +239,17 @@ export const SessionMenu = (props: SessionMenuProps) => {
 		anchorRef: menuTriggerRef,
 		menuRef
 	});
+	const wrapperRef = useRef<HTMLDivElement>(null);
+	const featuresSettled = useConversationFeatureSettingsSettled();
+	const notifications = useContext(NotificationsContext);
+	useEffect(() => {
+		if (!offeredCall || props.callsInMenu) return;
+		wrapperRef.current
+			?.querySelector<HTMLElement>(
+				`[data-cy="${CALL_HEADER_BUTTON[offeredCall]}"]`
+			)
+			?.focus();
+	}, [offeredCall, props.callsInMenu]);
 	useEffect(() => {
 		if (!flyoutOpen) return;
 		const closeIfTriggerHidden = () => {
@@ -177,13 +272,21 @@ export const SessionMenu = (props: SessionMenuProps) => {
 	// conversation menu — same component as in the profile settings, wrapped
 	// in the dialog so the user is NOT thrown out of the current room.
 	const [notifConfigOpen, setNotifConfigOpen] = useState(false);
+	/* UserService#1662: a guest without an account can keep it from here. */
+	const keepAccount = useKeepAccountDialog();
 	const { settings: notifSettings, updateSettings: updateNotifSettings } =
 		useNotificationSettings();
 	const appConfig = useAppConfig();
-	// Settings > Notifications has an email panel only with the toggle, or for counsellors.
-	const hasEmailSettings =
-		!!appConfig?.releaseToggles?.enableNewNotifications ||
-		!!hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData);
+	const notificationRole = notificationRoleFor(userData);
+	// Never link to an e-mail panel the Admin permissions hide (#1979). Read
+	// the merged tenant context, like the Settings panel itself: the
+	// per-session refresh is a raw partial answer and could disagree.
+	const tenant = useTenant();
+	const hasEmailSettings = hasEmailSettingsPanel(
+		appConfig,
+		tenant?.settings,
+		notificationRole === 'consultant'
+	);
 	const [overlayActive, setOverlayActive] = useState(false);
 	const [legalModal, setLegalModal] = useState<{
 		title: string;
@@ -199,19 +302,50 @@ export const SessionMenu = (props: SessionMenuProps) => {
 	const isSessionOwner =
 		Boolean(activeSession.consultant?.id) &&
 		String(activeSession.consultant.id) === String(userData.userId);
-	const showRequestAdvice =
-		isSessionOwner &&
-		hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) &&
-		type !== SESSION_LIST_TYPES.ENQUIRY &&
-		Boolean(activeSession.isSession) &&
+	// FE#1876: the recommend item shares this audience (furtherCounsellingRules).
+	const showRequestAdvice = canRecommendFurtherCounselling({
+		isRejectedCase,
+		isSessionOwner,
+		isConsultant: !!hasUserAuthority(
+			AUTHORITIES.CONSULTANT_DEFAULT,
+			userData
+		),
+		isEnquiryList: type === SESSION_LIST_TYPES.ENQUIRY,
+		isSession: Boolean(activeSession.isSession),
+		isGroup: Boolean(activeSession.isGroup),
+		isSupervisor: Boolean(props.isSupervisor)
+	});
+	// FE#2251: in a live chat only when the counselling centre switched it on.
+	const recommendAllowedInModality = useRecommendAllowedInModality();
+	const showRecommendFurtherCounselling =
+		showRequestAdvice && recommendAllowedInModality;
+	const [recommendDialogOpen, setRecommendDialogOpen] = useState(false);
+	// FE#2250: "Beratung übergeben" — same audience as the recommend item,
+	// same offer flow (and pending state) as the profile button.
+	const showCaseHandover = showRequestAdvice;
+	const caseHandover = useCaseHandoverOffer();
+	const showEndTopicDuplicate =
 		!activeSession.isGroup &&
-		!props.isSupervisor;
+		Boolean(activeSession.isSession) &&
+		canEndTopicDuplicate({
+			isAsker: !!hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData),
+			current: activeSession.item as Parameters<
+				typeof canEndTopicDuplicate
+			>[0]['current'],
+			sessions: Array.isArray(sessionList) ? sessionList : []
+		});
 
 	useEffect(() => {
 		if (!flyoutOpen || menuPosition.visibility !== 'visible') return;
 		const menu = menuRef.current;
-		menu?.querySelector<HTMLElement>(
-			'a[href], button:not(:disabled), [tabindex="0"]'
+		(
+			(offeredCall &&
+				menu?.querySelector<HTMLElement>(
+					`[data-cy="${CALL_MENU_ROW[offeredCall]}"]`
+				)) ||
+			menu?.querySelector<HTMLElement>(
+				'a[href], button:not(:disabled), [tabindex="0"]'
+			)
 		)?.focus();
 		const outside = (event: MouseEvent) => {
 			if (
@@ -259,25 +393,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 			document.removeEventListener('mousedown', outside);
 			document.removeEventListener('keydown', keydown);
 		};
-	}, [flyoutOpen, menuPosition.visibility, closeMenu]);
-
-	const [appointmentFeatureEnabled, setAppointmentFeatureEnabled] =
-		useState(false);
-
-	useEffect(() => {
-		if (!hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)) {
-			const { appointmentFeatureEnabled } = userData;
-			setAppointmentFeatureEnabled(appointmentFeatureEnabled);
-		}
-		if (!activeSession.item?.active || !activeSession.item?.subscribed) {
-			// do not get group members for a chat that has not been started and user is not subscribed
-			return;
-		}
-	}, [activeSession, userData]);
-
-	const handleBookingButton = () => {
-		navigate('/booking/');
-	};
+	}, [flyoutOpen, menuPosition.visibility, closeMenu, offeredCall]);
 
 	const handleStopGroupChat = () => {
 		closeMenu();
@@ -297,15 +413,50 @@ export const SessionMenu = (props: SessionMenuProps) => {
 		setOverlayActive(true);
 	};
 
-	const handleArchiveSession = () => {
+	const handleRecommendFurtherCounselling = () => {
 		closeMenu();
-		menuTriggerRef.current?.focus();
-		setOverlayItem(archiveSessionSuccessOverlayItem);
+		setRecommendDialogOpen(true);
+	};
+
+	const handleCaseHandover = () => {
+		closeMenu();
+		caseHandover.handleOpen();
+	};
+
+	const handleEndTopicDuplicate = () => {
+		closeMenu();
+		setOverlayItem(endTopicDuplicateConfirmOverlayItem);
 		setOverlayActive(true);
 	};
 
+	// The "archived" confirmation is shown only once the server accepted; a
+	// refusal shows the error and leaves the chat where it is.
+	const handleArchiveSession = () => {
+		closeMenu();
+		menuTriggerRef.current?.focus();
+		if (isRequestInProgress) return;
+		setIsRequestInProgress(true);
+		const sessionId = activeSession.item.id;
+		const sessionGroupId = activeSession.item.matrixRoomId;
+		apiPutArchive(sessionId)
+			.then(() => {
+				sessionsDispatch({
+					type: REMOVE_SESSIONS,
+					ids: sessionGroupId ? [sessionGroupId] : [sessionId]
+				});
+				setOverlayItem(archiveSessionSuccessOverlayItem);
+			})
+			.catch(() => setOverlayItem(groupChatErrorOverlayItem))
+			.finally(() => {
+				setOverlayActive(true);
+				setIsRequestInProgress(false);
+			});
+	};
+
 	const handleDearchiveSession = () => {
-		apiPutDearchive(activeSession.item.id)
+		apiPutDearchive(activeSession.item.id, [
+			FETCH_ERRORS.CATCH_ALL_EXCEPT_UNAUTHORIZED
+		])
 			.then(() => {
 				reloadActiveSession();
 				// Short timeout to wait for RC events finished
@@ -321,8 +472,9 @@ export const SessionMenu = (props: SessionMenuProps) => {
 					closeMenu();
 				}, 1000);
 			})
-			.catch((error) => {
-				// console.error(error);
+			.catch(() => {
+				setOverlayItem(groupChatErrorOverlayItem);
+				setOverlayActive(true);
 			});
 	};
 
@@ -344,6 +496,15 @@ export const SessionMenu = (props: SessionMenuProps) => {
 
 			apiPutGroupChat(activeSession.item.id, GROUP_CHAT_API.STOP)
 				.then(() => {
+					const removedIds = getStoppedGroupChatRemovalIds(
+						activeSession.item
+					);
+					if (removedIds) {
+						sessionsDispatch({
+							type: REMOVE_SESSIONS,
+							ids: removedIds
+						});
+					}
 					setOverlayItem(stopGroupChatSuccessOverlayItem);
 				})
 				.catch(() => {
@@ -369,41 +530,51 @@ export const SessionMenu = (props: SessionMenuProps) => {
 					setIsRequestInProgress(false);
 				});
 		} else if (buttonFunction === OVERLAY_FUNCTIONS.REDIRECT) {
+			// A left group must not linger in the list until the next reload (#1923).
+			if (overlayItem === leaveGroupChatSuccessOverlayItem) {
+				sessionsDispatch({
+					type: REMOVE_SESSIONS,
+					ids: activeSession.item.matrixRoomId
+						? [activeSession.item.matrixRoomId]
+						: [activeSession.item.id]
+				});
+			}
 			setRedirectToSessionsList(true);
 		} else if (buttonFunction === OVERLAY_FUNCTIONS.LOGOUT) {
 			logout();
 		} else if (buttonFunction === OVERLAY_FUNCTIONS.ARCHIVE) {
+			// The request already succeeded; this only leaves the archived chat.
+			setOverlayActive(false);
+			setOverlayItem(null);
+			setIsRequestInProgress(false);
+			closeMenu();
+			mobileListView();
+			navigate(listPath);
+		} else if (buttonFunction === 'END_TOPIC_DUPLICATE') {
 			const sessionId = activeSession.item.id;
 			const sessionGroupId = activeSession.item.matrixRoomId;
-
-			apiPutArchive(sessionId)
+			apiPutEndTopicDuplicate(sessionId)
 				.then(() => {
-					// Remove from current sessions list immediately
+					setOverlayActive(false);
+					setOverlayItem(null);
 					sessionsDispatch({
 						type: REMOVE_SESSIONS,
 						ids: sessionGroupId ? [sessionGroupId] : [sessionId]
 					});
-
 					mobileListView();
+					// The archive tab exists only for counsellors.
 					navigate(listPath);
 				})
-				.catch((error) => {
-					// console.error(error);
+				.catch(() => {
+					setOverlayItem(endTopicDuplicateErrorOverlayItem);
 				})
 				.finally(() => {
-					setOverlayActive(false);
-					setOverlayItem(null);
 					setIsRequestInProgress(false);
-					closeMenu();
 				});
 		} else if (buttonFunction === 'GOTO_MANUAL') {
 			navigate('/profile/hilfe/videoCall');
 		}
 	};
-
-	const onSuccessDeleteSession = useCallback(() => {
-		setRedirectToSessionsList(true);
-	}, []);
 
 	//TODO:
 	//enquiries: only RS profil
@@ -415,17 +586,18 @@ export const SessionMenu = (props: SessionMenuProps) => {
 	//list item icons only shown on outside
 
 	const hasMatrixRoom = !!activeSession.item.matrixRoomId;
+	const menuAgency = getSessionMenuAgency(activeSession);
+	const legalDepartment = getSessionMenuLegalDepartment(activeSession);
 	const baseUrl = hasMatrixRoom
 		? `${listPath}/:groupId/:id/:subRoute?/:extraPath?${getSessionListTab()}`
 		: `${listPath}/session/:id/:subRoute?/:extraPath?${getSessionListTab()}`;
 
-	const groupChatInfoLink = hasMatrixRoom
-		? generatePath(baseUrl, {
-				groupId: activeSession.item.matrixRoomId,
-				id: String(activeSession.item.id),
-				subRoute: 'groupChatInfo'
-			})
-		: '';
+	const groupChatInfoLink = getGroupChatInfoLink(
+		listPath,
+		activeSession.item.matrixRoomId,
+		activeSession.item.id,
+		getSessionListTab()
+	);
 	const editGroupChatSettingsLink = hasMatrixRoom
 		? generatePath(baseUrl, {
 				groupId: activeSession.item.matrixRoomId,
@@ -443,6 +615,13 @@ export const SessionMenu = (props: SessionMenuProps) => {
 				id: String(activeSession.item.id),
 				subRoute: 'userProfile'
 			});
+
+	/* FE#2287: without free time only a registered asker is pointed to the
+	   chat; a temporary (direct-link) or anonymous asker is not. Read before
+	   the redirect below so the hook order never changes. */
+	const { account: ownTemporaryAccount } = useOwnTemporaryAccount(
+		!!hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData)
+	);
 
 	if (redirectToSessionsList) {
 		mobileListView();
@@ -480,17 +659,55 @@ export const SessionMenu = (props: SessionMenuProps) => {
 
 	// One gate for every caller: the side room's controls ask the same
 	// question with `chatType: 'supervision'` (`call/callFeatureGates.ts`).
-	const callGates = resolveCallFeatureGates(currentTenantSettings, chatType);
+	const callGates = resolveCallFeatureGates(effectiveFeatures, chatType);
 	const isAudioCallsEnabled = callGates.audio && !isPracticing;
 	const isVideoCallsEnabled = callGates.video && !isPracticing;
 
 	const hasVideoCallFeatures = () =>
+		!isRejectedCase &&
 		hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) &&
 		(activeSession.isSession || activeSession.isGroup) && // 🎯 Enable for both 1-on-1 AND group chats
 		type !== SESSION_LIST_TYPES.ENQUIRY &&
 		consultingType.isVideoCallAllowed;
 
+	// The checks that put the call controls on screen: one place for the
+	// buttons, the menu rows and a start request (FE#1050).
+	const callControlsShown =
+		sessionMenuOwnsCallControls(activeSession.isGroup) &&
+		!isLoadingTenantSettings &&
+		hasVideoCallFeatures() &&
+		!props.isSupervisor;
+	const videoCallShown = callControlsShown && isVideoCallsEnabled;
+	const audioCallShown = callControlsShown && isAudioCallsEnabled;
+
+	// Only counsellors start calls (Frank, 17 Nov 2026). An advice seeker gets
+	// the same buttons, behind the same gates, but they open the next
+	// appointment (or the way to ask for one) instead of a call.
+	const askerCallInfoShown =
+		sessionMenuOwnsCallControls(activeSession.isGroup) &&
+		!isLoadingTenantSettings &&
+		canAskerSeeCallInfo({
+			isAsker: !!hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData),
+			isConsultant: !!hasUserAuthority(
+				AUTHORITIES.CONSULTANT_DEFAULT,
+				userData
+			),
+			isSession: Boolean(activeSession.isSession),
+			isGroup: Boolean(activeSession.isGroup),
+			isEnquiryList: type === SESSION_LIST_TYPES.ENQUIRY,
+			isRejectedCase,
+			isSupervisor: Boolean(props.isSupervisor),
+			videoCallAllowed: Boolean(consultingType?.isVideoCallAllowed)
+		});
+	const askerCanWriteLater =
+		!ownTemporaryAccount && !isAnonymousAsker(userData);
+	const callButtonsShown = callControlsShown || askerCallInfoShown;
+	const videoButtonShown = callButtonsShown && isVideoCallsEnabled;
+	const audioButtonShown = callButtonsShown && isAudioCallsEnabled;
+
 	const handleStartVideoCall = async (isVideoActivated: boolean = false) => {
+		setOfferedCall(null);
+		if (isRejectedCase) return;
 		// The trigger lives in `call/startRoomCall.ts` because the side room needs
 		// the same steps against a different Matrix room. One implementation
 		// serves both callers.
@@ -501,12 +718,116 @@ export const SessionMenu = (props: SessionMenuProps) => {
 			isVideo: isVideoActivated,
 			// Force 1:1 Matrix WebRTC for non-group sessions so audio calls are
 			// not misrouted to Element Call (which always enables video).
-			isGroup: activeSession.isGroup ? true : false
+			isGroup: activeSession.isGroup ? true : false,
+			// #2170: the call is called what the direct link was called.
+			roomName: callRoomName(activeSession.item)
 		});
 	};
 
+	/** A call button: the counsellor's call, or the advice seeker's information. */
+	const handleCallButton = (isVideoActivated: boolean) => {
+		if (askerCallInfoShown) {
+			setOfferedCall(null);
+			setAskerCallMedium(mediumOfCall(isVideoActivated));
+			setAskerCallInfoOpen(true);
+			return;
+		}
+		handleStartVideoCall(isVideoActivated);
+	};
+
+	/** Without a live gesture: the own start control, focused and marked. */
+	const offerCall = (kind: CallKind) => {
+		setOfferedCall(kind);
+		if (!props.callsInMenu) return;
+		const triggers = Array.from(
+			wrapperRef.current?.querySelectorAll<HTMLButtonElement>(
+				'.sessionMenu__icon'
+			) ?? []
+		);
+		menuTriggerRef.current =
+			triggers.find((trigger) => trigger.getClientRects().length > 0) ??
+			triggers[0] ??
+			null;
+		setFlyoutOpen(true);
+	};
+
+	/** A check refuses the call: say so; the conversation stays open. */
+	const refuseCall = (title: string, text = '') =>
+		notifications?.addNotification({
+			notificationType: NOTIFICATION_TYPE_WARNING,
+			title,
+			text,
+			closeable: true,
+			announce: 'status'
+		});
+
 	return (
-		<div className="sessionMenu__wrapper">
+		<div className="sessionMenu__wrapper" ref={wrapperRef}>
+			<StartCallRequest
+				sessionId={activeSession.item?.id}
+				settled={!isLoadingTenantSettings && featuresSettled}
+				calls={{
+					video: {
+						allowed: videoCallShown,
+						start: () => handleStartVideoCall(true),
+						offer: () => offerCall('video'),
+						refuse: () =>
+							refuseCall(
+								translate(
+									'videoCall.overlay.unsupported.headline'
+								),
+								!callGates.video ||
+									!consultingType?.isVideoCallAllowed
+									? translate(
+											'directLink.entry.callsDisabled'
+										)
+									: ''
+							)
+					},
+					audio: {
+						allowed: audioCallShown,
+						start: () => handleStartVideoCall(false),
+						offer: () => offerCall('audio'),
+						refuse: () =>
+							refuseCall(
+								translate('directLink.entry.callsDisabled')
+							)
+					}
+				}}
+			/>
+			{askerCallInfoShown && (
+				<AskerCallInfo
+					sessionId={activeSession.item.id}
+					open={askerCallInfoOpen}
+					medium={askerCallMedium}
+					onClose={() => setAskerCallInfoOpen(false)}
+					onBooked={(appointment) => {
+						notifyAppointmentsChanged();
+						/* The counsellor learns of it as the asker learns of
+						   a counsellor's appointment: a line in the chat. */
+						void sendAppointmentNotice({
+							/* FE#2287: a request waits for the counsellor. */
+							kind:
+								appointment.status === 'REQUESTED'
+									? 'requested'
+									: 'created',
+							start: new Date(appointment.startTime),
+							end: new Date(appointment.endTime),
+							sessionId: activeSession.item.id,
+							matrixRoomId: activeSession.item.matrixRoomId
+						});
+					}}
+					onRequestTime={
+						askerCanWriteLater
+							? () => {
+									setAskerCallInfoOpen(false);
+									// After the dialog has handed focus back to its trigger.
+									window.setTimeout(focusChatComposer, 0);
+								}
+							: undefined
+					}
+				/>
+			)}
 			<MenuBackdrop
 				open={Boolean(flyoutOpen) && !legalModal}
 				onClose={() => {
@@ -514,46 +835,41 @@ export const SessionMenu = (props: SessionMenuProps) => {
 					menuTriggerRef.current?.focus();
 				}}
 			/>
-			{sessionMenuOwnsCallControls(activeSession.isGroup) &&
-				!isLoadingTenantSettings &&
-				hasVideoCallFeatures() &&
-				!props.isSupervisor &&
+			{callButtonsShown &&
 				!props.callsInMenu &&
 				(isAudioCallsEnabled || isVideoCallsEnabled) && (
 					<div
 						className="sessionMenu__videoCallButtons"
 						data-cy="session-header-video-call-buttons"
+						onBlur={() => setOfferedCall(null)}
 					>
-						{isVideoCallsEnabled && (
+						{videoButtonShown && (
 							<Button
-								buttonHandle={() => handleStartVideoCall(true)}
+								buttonHandle={() => handleCallButton(true)}
 								item={buttonStartVideoCall}
+								testingAttribute={CALL_HEADER_BUTTON.video}
+								className={
+									offeredCall === 'video'
+										? 'sessionMenu__callOffer'
+										: undefined
+								}
 							/>
 						)}
-						{isAudioCallsEnabled && (
+						{audioButtonShown && (
 							<Button
-								buttonHandle={() => handleStartVideoCall(false)}
+								buttonHandle={() => handleCallButton(false)}
 								item={buttonStartCall}
+								testingAttribute={CALL_HEADER_BUTTON.audio}
+								className={
+									offeredCall === 'audio'
+										? 'sessionMenu__callOffer'
+										: undefined
+								}
 							/>
 						)}
 					</div>
 				)}
 
-			{!activeSession.isEnquiry &&
-				appointmentFeatureEnabled &&
-				!isPracticing &&
-				!activeSession.isGroup && (
-					<div
-						className="sessionMenu__icon sessionMenu__icon--booking"
-						onClick={handleBookingButton}
-					>
-						<CalendarMonthPlusIcon />
-						<Text
-							type="standard"
-							text={translate('booking.mobile.calendar.label')}
-						/>
-					</div>
-				)}
 			{showSessionMenu && (
 				<>
 					<button
@@ -614,9 +930,16 @@ export const SessionMenu = (props: SessionMenuProps) => {
 							)}
 						>
 							<ChatMenuDropdownHeader
-								subtitle={translate(
-									'groupChat.info.settings.subtitle'
-								)}
+								subtitle={
+									activeSession.isGroup && menuAgency?.name
+										? translate(
+												'groupChat.info.settings.agencyLine',
+												{ name: menuAgency.name }
+											)
+										: translate(
+												'groupChat.info.settings.subtitle'
+											)
+								}
 								title={translate(
 									'groupChat.info.settings.headline'
 								)}
@@ -626,63 +949,122 @@ export const SessionMenu = (props: SessionMenuProps) => {
 							    are rows of this menu instead of header buttons —
 							    the organism's rows (icon · title), same handlers
 							    as the buttons, same feature gates. */}
-							{props.callsInMenu &&
-								sessionMenuOwnsCallControls(
-									activeSession.isGroup
-								) &&
-								!isLoadingTenantSettings &&
-								hasVideoCallFeatures() &&
-								!props.isSupervisor && (
-									<>
-										{/* Review v10: real controls — native buttons
+							{props.callsInMenu && callButtonsShown && (
+								<>
+									{/* Review v10: real controls — native buttons
 										    (role button, keyboard by default) inside the
 										    organism's `role="dialog"` card; the visible
 										    title is the accessible name. A `menuitem`
 										    role needs the organism's container to be a
 										    `role="menu"` — that is the organism-wide
 										    keyboard ticket, not this row. */}
-										{isVideoCallsEnabled && (
-											<button
-												type="button"
-												className="sessionMenu__item chatMenuDropdown__item"
-												onClick={() => {
-													closeMenu();
-													handleStartVideoCall(true);
-												}}
-												data-cy="session-menu-start-video-call"
-											>
-												<SessionMenuItemContent
-													icon={
-														<MenuVideoCallIcon data-icon-id="ui-icon:modality-video:base" />
-													}
-													title={translate(
-														'videoCall.button.startVideoCall'
-													)}
-												/>
-											</button>
+									{videoButtonShown && (
+										<button
+											type="button"
+											className={`sessionMenu__item chatMenuDropdown__item${
+												offeredCall === 'video'
+													? ' sessionMenu__callOffer'
+													: ''
+											}`}
+											onClick={() => {
+												closeMenu();
+												handleCallButton(true);
+											}}
+											data-cy={CALL_MENU_ROW.video}
+										>
+											<SessionMenuItemContent
+												icon={
+													<MenuVideoCallIcon data-icon-id="ui-icon:modality-video:base" />
+												}
+												title={translate(
+													'videoCall.button.startVideoCall'
+												)}
+											/>
+										</button>
+									)}
+									{audioButtonShown && (
+										<button
+											type="button"
+											className={`sessionMenu__item chatMenuDropdown__item${
+												offeredCall === 'audio'
+													? ' sessionMenu__callOffer'
+													: ''
+											}`}
+											onClick={() => {
+												closeMenu();
+												handleCallButton(false);
+											}}
+											data-cy={CALL_MENU_ROW.audio}
+										>
+											<SessionMenuItemContent
+												icon={
+													<MenuAudioCallIcon data-icon-id="ui-icon:timeline-add-call:base" />
+												}
+												title={translate(
+													'videoCall.button.startCall'
+												)}
+											/>
+										</button>
+									)}
+								</>
+							)}
+
+							{props.onCreateAppointment && (
+								<button
+									type="button"
+									className="sessionMenu__item chatMenuDropdown__item"
+									onClick={() => {
+										closeMenu();
+										props.onCreateAppointment?.();
+									}}
+									data-cy="session-menu-create-appointment"
+								>
+									<SessionMenuItemContent
+										icon={<EventOutlinedIcon />}
+										title={translate(
+											'sessionList.timeline.appointment.create'
 										)}
-										{isAudioCallsEnabled && (
-											<button
-												type="button"
-												className="sessionMenu__item chatMenuDropdown__item"
-												onClick={() => {
-													closeMenu();
-													handleStartVideoCall(false);
-												}}
-												data-cy="session-menu-start-call"
-											>
-												<SessionMenuItemContent
-													icon={
-														<MenuAudioCallIcon data-icon-id="ui-icon:timeline-add-call:base" />
-													}
-													title={translate(
-														'videoCall.button.startCall'
-													)}
-												/>
-											</button>
+									/>
+								</button>
+							)}
+
+							{keepAccount.available && (
+								<button
+									type="button"
+									className="sessionMenu__item chatMenuDropdown__item"
+									onClick={() => {
+										closeMenu();
+										keepAccount.openDialog();
+									}}
+									data-cy="session-menu-keep-account"
+								>
+									<SessionMenuItemContent
+										icon={<VerifiedUserOutlinedIcon />}
+										title={translate(
+											'guestAccountMode.keep.action'
 										)}
-									</>
-								)}
+									/>
+								</button>
+							)}
+
+							{props.onSendNewLink && (
+								<button
+									type="button"
+									className="sessionMenu__item chatMenuDropdown__item"
+									onClick={() => {
+										closeMenu();
+										props.onSendNewLink?.();
+									}}
+									data-cy="session-menu-send-new-link"
+								>
+									<SessionMenuItemContent
+										icon={<AddLinkOutlinedIcon />}
+										title={translate(
+											'directInvitation.conversation.sendNewLink'
+										)}
+									/>
+								</button>
+							)}
 
 							{props.isAskerInfoAvailable && (
 								<Link
@@ -699,6 +1081,10 @@ export const SessionMenu = (props: SessionMenuProps) => {
 										shortcut="⇧P"
 									/>
 								</Link>
+							)}
+
+							{!activeSession.isGroup && (
+								<AddonSessionMenuItems onSelect={closeMenu} />
 							)}
 
 							<div
@@ -890,11 +1276,98 @@ export const SessionMenu = (props: SessionMenuProps) => {
 								</div>
 							)}
 
+							{showRecommendFurtherCounselling && (
+								<div
+									className="sessionMenu__item chatMenuDropdown__item"
+									onClick={handleRecommendFurtherCounselling}
+									role="button"
+									tabIndex={0}
+									onKeyDown={(event) => {
+										if (
+											event.key === 'Enter' ||
+											event.key === ' '
+										) {
+											event.preventDefault();
+											event.currentTarget.click();
+										}
+									}}
+									data-cy="session-menu-recommend-further-counselling"
+								>
+									<SessionMenuItemContent
+										icon={<RecommendIcon />}
+										title={translate(
+											'furtherCounselling.menu.recommend'
+										)}
+									/>
+								</div>
+							)}
+
+							{showCaseHandover && (
+								<div
+									className="sessionMenu__item chatMenuDropdown__item"
+									onClick={handleCaseHandover}
+									role="button"
+									tabIndex={0}
+									onKeyDown={(event) => {
+										if (
+											event.key === 'Enter' ||
+											event.key === ' '
+										) {
+											event.preventDefault();
+											event.currentTarget.click();
+										}
+									}}
+									data-cy="session-menu-case-handover"
+								>
+									<SessionMenuItemContent
+										icon={
+											<HandoverIcon
+												aria-hidden="true"
+												focusable="false"
+											/>
+										}
+										title={translate(
+											'caseHandover.offer.open'
+										)}
+									/>
+								</div>
+							)}
+
+							{showEndTopicDuplicate && (
+								<div
+									className="sessionMenu__item chatMenuDropdown__item"
+									onClick={handleEndTopicDuplicate}
+									role="button"
+									tabIndex={0}
+									onKeyDown={(event) => {
+										if (
+											event.key === 'Enter' ||
+											event.key === ' '
+										) {
+											event.preventDefault();
+											event.currentTarget.click();
+										}
+									}}
+									data-cy="session-menu-end-topic-duplicate"
+								>
+									<SessionMenuItemContent
+										icon={<EndDuplicateIcon />}
+										title={translate(
+											'furtherCounselling.menu.endDuplicate'
+										)}
+										description={translate(
+											'furtherCounselling.menu.endDuplicateDescription'
+										)}
+									/>
+								</div>
+							)}
+
 							{!hasUserAuthority(
 								AUTHORITIES.ASKER_DEFAULT,
 								userData
 							) &&
 								type !== SESSION_LIST_TYPES.ENQUIRY &&
+								!isRejectedCase &&
 								activeSession.isSession &&
 								!props.isSupervisor && (
 									<>
@@ -959,52 +1432,8 @@ export const SessionMenu = (props: SessionMenuProps) => {
 									</>
 								)}
 
-							{hasUserAuthority(
-								AUTHORITIES.CONSULTANT_DEFAULT,
-								userData
-							) &&
-								type !== SESSION_LIST_TYPES.ENQUIRY &&
-								activeSession.isSession &&
-								!props.isSupervisor && (
-									<DeleteSession
-										chatId={activeSession.item.id}
-										onSuccess={onSuccessDeleteSession}
-									>
-										{(onClick) => (
-											<div
-												onClick={() => {
-													closeMenu();
-													menuTriggerRef.current?.focus();
-													onClick();
-												}}
-												role="button"
-												tabIndex={0}
-												onKeyDown={(event) => {
-													if (
-														event.key === 'Enter' ||
-														event.key === ' '
-													) {
-														event.preventDefault();
-														event.currentTarget.click();
-													}
-												}}
-												className="sessionMenu__item chatMenuDropdown__item"
-											>
-												<SessionMenuItemContent
-													icon={
-														<TrashIcon data-icon-id="ui-icon:trash:base" />
-													}
-													title={translate(
-														'chatFlyout.remove'
-													)}
-													description={translate(
-														'chatFlyout.removeDescription'
-													)}
-												/>
-											</div>
-										)}
-									</DeleteSession>
-								)}
+							{/* No delete: it removed the chat for the advice seeker too
+							    (ORISO-Admin#1518). Counsellors archive instead. */}
 
 							{activeSession.isGroup && (
 								<SessionMenuFlyoutGroup
@@ -1016,13 +1445,16 @@ export const SessionMenu = (props: SessionMenuProps) => {
 									handleLeaveGroupChat={handleLeaveGroupChat}
 									handleStopGroupChat={handleStopGroupChat}
 									bannedUsers={props.bannedUsers}
+									isJoinGroupChatView={
+										props.isJoinGroupChatView
+									}
 								/>
 							)}
 
 							<div className="legalInformationLinks--menu">
 								<LegalLinks
 									legalLinks={legalLinks}
-									params={{ aid: activeSession?.agency?.id }}
+									params={{ aid: menuAgency?.id }}
 								>
 									{(label, url, rawLabel) => {
 										const kind = getLegalLinkKind(
@@ -1074,6 +1506,11 @@ export const SessionMenu = (props: SessionMenuProps) => {
 					title={legalModal.title}
 					url={legalModal.url}
 					onClose={() => setLegalModal(null)}
+					/* ORISO-Admin#1490: the advice centre's published text, not
+					   the Träger template; tenant text when no department is known. */
+					{...(legalDepartment
+						? { scope: 'agency' as const, ...legalDepartment }
+						: {})}
 				/>
 			)}
 			{overlayActive && (
@@ -1082,6 +1519,27 @@ export const SessionMenu = (props: SessionMenuProps) => {
 					handleOverlay={handleOverlayAction}
 				/>
 			)}
+			{recommendDialogOpen && (
+				<RecommendFurtherCounsellingDialog
+					open
+					sessionId={activeSession.item.id}
+					onClose={() => setRecommendDialogOpen(false)}
+					onSent={() => {
+						setRecommendDialogOpen(false);
+						setOverlayItem(
+							recommendFurtherCounsellingSuccessOverlayItem
+						);
+						setOverlayActive(true);
+					}}
+				/>
+			)}
+			{showCaseHandover && (
+				<CaseHandoverOffer
+					handover={caseHandover}
+					presentation="dialog"
+				/>
+			)}
+			{keepAccount.dialog}
 			<NotificationConfigDialog
 				open={notifConfigOpen}
 				config={notifSettings.notificationConfig}
@@ -1091,6 +1549,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 				}}
 				onClose={() => setNotifConfigOpen(false)}
 				showEmailLink={hasEmailSettings}
+				role={notificationRole}
 			/>
 		</div>
 	);
@@ -1102,7 +1561,8 @@ const SessionMenuFlyoutGroup = ({
 	editGroupChatSettingsLink,
 	handleLeaveGroupChat,
 	handleStopGroupChat,
-	bannedUsers
+	bannedUsers,
+	isJoinGroupChatView
 }: {
 	groupChatInfoLink: string;
 	onOpenInfo: () => void;
@@ -1110,6 +1570,7 @@ const SessionMenuFlyoutGroup = ({
 	handleStopGroupChat: MouseEventHandler;
 	handleLeaveGroupChat: MouseEventHandler;
 	bannedUsers: string[];
+	isJoinGroupChatView?: boolean;
 }) => {
 	const { t: translate } = useTranslation();
 	const { userData } = useContext(UserDataContext);
@@ -1117,11 +1578,22 @@ const SessionMenuFlyoutGroup = ({
 	const matrixRoomUsersContext = useMatrixRoomUsers();
 	const moderators = matrixRoomUsersContext?.moderators || [];
 
+	// Leave/stop only mean something in a running group the user has joined;
+	// the waiting room and the join view show this menu on phones too (#1499).
+	const isRunning =
+		Boolean(activeSession.item.active) && !isJoinGroupChatView;
+	// A sole moderator must not orphan the group; askers may always leave (#1923).
+	const isCounsellor = hasUserAuthority(
+		AUTHORITIES.CONSULTANT_DEFAULT,
+		userData
+	);
+
 	return (
 		<>
-			{activeSession.item.subscribed &&
+			{isRunning &&
+				activeSession.item.subscribed &&
 				!bannedUsers?.includes(userData.userName) &&
-				moderators.length > 1 && (
+				(!isCounsellor || moderators.length > 1) && (
 					<div
 						onClick={handleLeaveGroupChat}
 						role="button"
@@ -1140,9 +1612,9 @@ const SessionMenuFlyoutGroup = ({
 						/>
 					</div>
 				)}
+			{/* Askers who have not joined get the schedule-only Chat-Info. */}
 			{(hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) ||
-				(activeSession.item.subscribed &&
-					!bannedUsers?.includes(userData.userName))) && (
+				!bannedUsers?.includes(userData.userName)) && (
 				<Link
 					to={groupChatInfoLink}
 					onClick={onOpenInfo}
@@ -1154,7 +1626,8 @@ const SessionMenuFlyoutGroup = ({
 					/>
 				</Link>
 			)}
-			{activeSession.item.subscribed &&
+			{isRunning &&
+				activeSession.item.subscribed &&
 				hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) &&
 				canModerateGroupChat(activeSession, userData) && (
 					<div
@@ -1175,8 +1648,8 @@ const SessionMenuFlyoutGroup = ({
 						/>
 					</div>
 				)}
-			{isGroupChatOwner(activeSession, userData) &&
-				!activeSession.item.active && (
+			{editGroupChatSettingsLink &&
+				canEditGroupChatSettings(activeSession, userData) && (
 					<Link
 						to={editGroupChatSettingsLink}
 						state={{

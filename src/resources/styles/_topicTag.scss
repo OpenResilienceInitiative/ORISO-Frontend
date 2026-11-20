@@ -1,0 +1,32 @@
+// The global topic tag ("Themenberatung", e.g. "Familienberatung").
+// One named token set, derived per Träger by the colour engine
+// (src/utils/theme/orisoScheme.ts) and used by every place that draws the
+// topic as a pill: session list, session header, shared <TopicTag>.
+// Imported from settings.scss, which is prepended to every component
+// stylesheet. The literals are the #a5000a result, for the moment before
+// the engine has written the tokens to :root.
+
+$topic-tag-bg: var(--oriso-topic-tag-bg, var(--m3-primary-fixed, #ffdad5));
+$topic-tag-fg: var(
+	--oriso-topic-tag-fg,
+	var(--m3-on-primary-fixed-variant, #930008)
+);
+$topic-tag-active-bg: var(
+	--oriso-topic-tag-active-bg,
+	var(--m3-primary-container, #cc1e1c)
+);
+$topic-tag-active-fg: var(
+	--oriso-topic-tag-active-fg,
+	var(--m3-on-primary-container, #ffe2de)
+);
+
+@mixin topic-tag-colors {
+	background-color: $topic-tag-bg;
+	color: $topic-tag-fg;
+}
+
+// Selected or hovered card: the tag steps up to the brand container.
+@mixin topic-tag-colors-emphasis {
+	background-color: $topic-tag-active-bg;
+	color: $topic-tag-active-fg;
+}

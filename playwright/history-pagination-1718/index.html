@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<title>Local synthetic history fixture</title>
+		<style>
+			html,
+			body,
+			#root {
+				margin: 0;
+				height: 100%;
+				width: 100%;
+			}
+			#root {
+				display: flex;
+				overflow: hidden;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="root"></div>
+		<output
+			id="notification-observations"
+			aria-label="Received event notifications"
+			hidden
+		></output>
+		<script
+			type="module"
+			src="/playwright/history-pagination-1718/harness.tsx"
+		></script>
+	</body>
+</html>

@@ -17,9 +17,7 @@ ${contactLine!''}
 
 ${platformName!''} ብ${orgName!''} ዝቐርብ ኣገልግሎት እዩ።
 
-ቅንብራት: ${settingsUrl!''}
 ሓለዋ ዳታ: ${privacyUrl!''}
 ሕጋዊ ሓበሬታ: ${imprintUrl!''}
-መፍለጢታት ሰርዙ: ${unsubscribeUrl!''}
 
 እዛ ኢመይል ብስርዓት ብቐጥታ ተላኢኻ እያ። በጃኹም ኣይትምለስዋ።

@@ -3,7 +3,7 @@
  * and FreeMarker. Every occurrence flagged by this rule is intended output, not
  * a JavaScript template literal someone forgot to backtick.
  */
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { EMAIL_DIALECTS, EMAIL_IDS, EMAIL_LOCALES, buildEmail } from './index';
 import { emailLogoCell } from './kit/emailAtoms';
 import { toEmailDialectHtml, toEmailDialectText } from './kit/emailDialect';

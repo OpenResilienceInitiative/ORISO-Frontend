@@ -1,16 +1,10 @@
 import * as React from 'react';
-import { useMemo, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, userEvent } from 'storybook/test';
-import { NavigationBar } from './NavigationBar';
-import { RouterConfigConsultant, RouterConfigUser } from './RouterConfig';
-import { config } from '../../resources/scripts/config';
-import {
-	NavigationStoryProviders,
-	storybookSettings
-} from './navigationStoryHelpers';
-import './navigation.styles.scss';
-import './authenticatedApp.styles.scss';
+import { expect, userEvent, waitFor } from 'storybook/test';
+import i18n from '../../i18n';
+import { NavigationStoryShell } from './NavigationStoryShell';
+import './navigationSidebarStory.styles.scss';
 
 const APP_ORISO_CHAT_FIGMA_URL =
 	'https://www.figma.com/design/L2mOFNSGdxPPx1XA4HFAog/App.Oriso?node-id=316-17725&t=XHH5HQNmA8DUWl2U-0';
@@ -27,7 +21,9 @@ function RuntimeNavigationRail({
 	role,
 	layout = 'desktop',
 	railHeightPx,
-	liveChatViaSidebar = true
+	fullMobileShell = false,
+	liveChatViaSidebar = true,
+	tenantSettings
 }: {
 	role: 'consultant' | 'asker';
 	layout?: 'desktop' | 'mobile';
@@ -35,67 +31,61 @@ function RuntimeNavigationRail({
 	liveChatViaSidebar?: boolean;
 	/** Desktop only: force a short rail to exercise vertical scroll + pinned logout */
 	railHeightPx?: number;
+	/** Exercise the production mobile shell and its version overlay. */
+	fullMobileShell?: boolean;
+	/** Träger settings for the story tenant. */
+	tenantSettings?: Record<string, unknown>;
 }) {
 	const [logoutClicked, setLogoutClicked] = useState(false);
 	const isDesktop = layout === 'desktop';
 	const desktopHeight = railHeightPx ?? 860;
 
-	const routerConfig = useMemo(() => {
-		const settings = { ...config, ...storybookSettings };
-		return role === 'consultant'
-			? RouterConfigConsultant(settings)
-			: RouterConfigUser(settings, false);
-	}, [role]);
-
-	const shellStyle = isDesktop
-		? {
-				width: '85px',
-				height: `${desktopHeight}px`,
-				minHeight: railHeightPx ? `${railHeightPx}px` : '720px',
-				background: '#eae7e8',
-				overflow: 'hidden'
-			}
-		: {
-				width: '100%',
-				maxWidth: '375px',
-				height: '76px',
-				background: '#eae7e8',
-				overflow: 'hidden'
-			};
-
 	return (
-		<NavigationStoryProviders
+		<NavigationStoryShell
 			role={role}
 			liveChatViaSidebar={liveChatViaSidebar}
+			tenantSettings={tenantSettings}
+			onLogout={() => setLogoutClicked(true)}
+			className="navigationSidebarStory"
+			data-logout-clicked={logoutClicked}
+			style={
+				{
+					'--storybook-navigation-direction': isDesktop
+						? 'row'
+						: 'column',
+					'--storybook-navigation-width': isDesktop ? '85px' : '100%',
+					'--storybook-navigation-max-width': isDesktop
+						? 'none'
+						: '375px',
+					'--storybook-navigation-height': isDesktop
+						? `${desktopHeight}px`
+						: fullMobileShell
+							? '100vh'
+							: '76px',
+					'--storybook-navigation-min-height': isDesktop
+						? railHeightPx
+							? `${railHeightPx}px`
+							: '720px'
+						: '0',
+					'--storybook-navigation-mobile-height': fullMobileShell
+						? '100vh'
+						: '76px',
+					'--storybook-navigation-menu-height': fullMobileShell
+						? 'auto'
+						: '100%'
+				} as React.CSSProperties
+			}
 		>
-			{/*
-			  app__wrapper is required so production shell + figma nav rules
-			  (authenticatedApp + app-scoped navigation styles) apply in Storybook.
-			*/}
-			<div
-				className="app__wrapper navigationSidebarStory"
-				data-logout-clicked={logoutClicked}
-				style={shellStyle}
-			>
-				<style>
-					{`
-						.navigationSidebarStory.app__wrapper {
-							display: flex;
-							flex-direction: ${isDesktop ? 'row' : 'column'};
-						}
-
-						.navigationSidebarStory .navigation__wrapper {
-							width: ${isDesktop ? '85px' : '100%'};
-							height: 100%;
-						}
-					`}
-				</style>
-				<NavigationBar
-					routerConfig={routerConfig}
-					onLogout={() => setLogoutClicked(true)}
-				/>
-			</div>
-		</NavigationStoryProviders>
+			{fullMobileShell && (
+				<div style={{ flex: 1, minHeight: 0, padding: 24 }}>
+					<h1>Meine Beratungen</h1>
+					<p>Mobile navigation at 375px</p>
+				</div>
+			)}
+			{fullMobileShell && (
+				<div className="app__platformVersion">2.9.14 - abc1234</div>
+			)}
+		</NavigationStoryShell>
 	);
 }
 
@@ -107,9 +97,9 @@ const meta = {
 		role: 'consultant' as const,
 		layout: 'desktop' as const
 	},
+	globals: { backgrounds: { value: 'gray' } },
 	parameters: {
 		layout: 'fullscreen',
-		backgrounds: { default: 'gray' },
 		router: {
 			initialPath: '/sessions/consultant/sessionView/session/3363'
 		},
@@ -143,7 +133,7 @@ const meta = {
 		docs: {
 			description: {
 				component:
-					'Runtime Storybook target for the shared `NavigationBar` (asker + consultant). Desktop: top routes scroll vertically; logout/actions stay pinned. Mobile: routes, Live Chat, language, and logout scroll together in one smooth horizontal bar.'
+					'Runtime Storybook target for the shared `NavigationBar` (asker + consultant). Desktop: top routes scroll vertically; logout/actions stay pinned. Below 900px, including narrow Docs canvases, the menu becomes a full-width horizontal bar. Mobile: routes, Live Chat, language, and logout scroll together in one smooth horizontal bar.'
 			}
 		}
 	}
@@ -168,6 +158,23 @@ export const RuntimeConsultantRail: Story = {
 		await expect(activeSessionsLink).toHaveClass(
 			'navigation__item--active'
 		);
+		// The original CI case renders the first-visit profile badge. Its
+		// navigation owner, not a nameless span, must announce the count.
+		await waitFor(() => {
+			const badge = canvasElement.querySelector(
+				'.navigation__item__count'
+			);
+			expect(badge).not.toBeNull();
+			expect(badge).toHaveTextContent('1');
+			expect(badge).toHaveAttribute('aria-hidden', 'true');
+			expect(badge).not.toHaveAttribute('aria-label');
+			const owner = badge?.closest('a');
+			expect(owner).toHaveAttribute('href', '/profile');
+			expect(owner).not.toHaveAttribute('role');
+			expect(owner).toHaveAccessibleName(
+				`${i18n.t('navigation.myProfile')}, ${i18n.t('sessionList.rail.unreadCount', { count: 1 })}`
+			);
+		});
 
 		const logoutAction = canvasElement.querySelector(
 			'.navigation__item--nav-logout'
@@ -197,6 +204,59 @@ export const RuntimeConsultantRail: Story = {
 
 		await userEvent.click(logoutAction as HTMLElement);
 		await expect(storyShell).toHaveAttribute('data-logout-clicked', 'true');
+	}
+};
+
+/**
+ * *19 (Frank, 2026-11-17): "Meine Direktlinks" moved into the calendar
+ * list, so the clock entry is gone even while a medium is allowed.
+ */
+export const DirectLinksOneMediumAllowed: Story = {
+	name: 'Direct links: no clock entry, the links live in the calendar',
+	args: {
+		role: 'consultant',
+		layout: 'desktop',
+		tenantSettings: {
+			featureDirectInviteChatEnabled: false,
+			featureDirectInviteAudioEnabled: false,
+			featureDirectInviteVideoEnabled: true
+		}
+	},
+	play: async ({ canvasElement }) => {
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector('a[href="/booking/events"]')
+			).not.toBeNull()
+		);
+		await expect(
+			canvasElement.querySelector('a[href="/direct-links"]')
+		).toBeNull();
+	}
+};
+
+/** #1894: with all three media off the clock entry is gone. */
+export const DirectLinksAllMediaOff: Story = {
+	name: 'Direct links: no clock entry when direct invitation is off',
+	args: {
+		role: 'consultant',
+		layout: 'desktop',
+		tenantSettings: {
+			featureDirectInviteChatEnabled: false,
+			featureDirectInviteAudioEnabled: false,
+			featureDirectInviteVideoEnabled: false
+		}
+	},
+	play: async ({ canvasElement }) => {
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector(
+					'a[href="/sessions/consultant/sessionView"]'
+				)
+			).not.toBeNull()
+		);
+		await expect(
+			canvasElement.querySelector('a[href="/direct-links"]')
+		).toBeNull();
 	}
 };
 
@@ -333,5 +393,176 @@ export const RuntimeAskerMobile: Story = {
 		router: {
 			initialPath: '/sessions/user/view/session/123'
 		}
+	}
+};
+
+/** Production shell geometry: scrolling keeps every action reachable at 375px. */
+export const RuntimeConsultantMobile375Shell: Story = {
+	args: { role: 'consultant', layout: 'mobile', fullMobileShell: true },
+	globals: { viewport: { value: 'phone375', isRotated: false } },
+	play: async ({ canvasElement }) => {
+		const container = canvasElement.querySelector(
+			'.navigation__itemContainer'
+		) as HTMLElement;
+		const nav = canvasElement.querySelector(
+			'.navigation__wrapper'
+		) as HTMLElement;
+		const version = canvasElement.querySelector(
+			'.app__platformVersion'
+		) as HTMLElement;
+		const navBounds = nav.getBoundingClientRect();
+		await expect(window.innerWidth).toBe(375);
+		await expect(
+			container.getBoundingClientRect().right
+		).toBeLessThanOrEqual(navBounds.right + 1);
+		await expect(
+			version.getBoundingClientRect().bottom
+		).toBeLessThanOrEqual(navBounds.top);
+		await expect(container.scrollWidth).toBeGreaterThan(
+			container.clientWidth
+		);
+		container.style.scrollBehavior = 'auto';
+		container.scrollLeft = container.scrollWidth;
+		await new Promise((resolve) => requestAnimationFrame(resolve));
+		for (const selector of [
+			'.navigation__item--nav-language',
+			'.navigation__item--nav-logout'
+		]) {
+			const action = canvasElement.querySelector(selector) as HTMLElement;
+			const bounds = action.getBoundingClientRect();
+			await expect(bounds.left).toBeGreaterThanOrEqual(navBounds.left);
+			await expect(bounds.right).toBeLessThanOrEqual(navBounds.right + 1);
+		}
+		const logout = canvasElement.querySelector(
+			'.navigation__item--nav-logout'
+		) as HTMLElement;
+		logout.focus();
+		await expect(logout).toHaveFocus();
+		await userEvent.keyboard('{Enter}');
+		await expect(
+			canvasElement.querySelector('.navigationSidebarStory')
+		).toHaveAttribute('data-logout-clicked', 'true');
+	}
+};
+
+/** How often the badge's registered-enquiry request was answered. */
+const answeredEnquiryFeeds = { registered: 0 };
+
+/**
+ * FE#1435: answers the two enquiry feeds the "Anfragen" badge reads with a
+ * fixed total, installed during render (before the badge's first request)
+ * and restored on unmount.
+ */
+const WithOpenEnquiries = ({
+	total,
+	children
+}: {
+	total: number;
+	children: React.ReactNode;
+}) => {
+	const restore = useRef<(() => void) | null>(null);
+	if (!restore.current) {
+		answeredEnquiryFeeds.registered = 0;
+		const originalFetch = globalThis.fetch;
+		globalThis.fetch = async (input, init) => {
+			const url =
+				typeof input === 'string'
+					? input
+					: input instanceof URL
+						? input.toString()
+						: input.url;
+			if (url.includes('/consultants/enquiries/registered')) {
+				answeredEnquiryFeeds.registered += 1;
+				return new Response(
+					JSON.stringify({
+						sessions: total ? [{}] : [],
+						count: total ? 1 : 0,
+						offset: 0,
+						total
+					}),
+					{
+						status: 200,
+						headers: { 'content-type': 'application/json' }
+					}
+				);
+			}
+			if (url.includes('/consultants/enquiries/anonymous')) {
+				return new Response(null, { status: 204 });
+			}
+			return originalFetch(input, init);
+		};
+		restore.current = () => {
+			globalThis.fetch = originalFetch;
+		};
+	}
+	useEffect(() => () => restore.current?.(), []);
+	return <>{children}</>;
+};
+
+const expectEnquiryBadge = async (canvasElement: HTMLElement, count: number) =>
+	waitFor(() => {
+		const owner = canvasElement.querySelector(
+			'a[href="/sessions/consultant/sessionPreview"]'
+		);
+		const badge = owner?.querySelector('.navigation__item__count');
+		expect(badge).toHaveTextContent(String(count));
+		expect(badge).toHaveAttribute('aria-hidden', 'true');
+		expect(owner).toHaveAccessibleName(
+			`${i18n.t('navigation.consultant.enquiries')}, ${i18n.t('sessionList.rail.openEnquiries', { count })}`
+		);
+	});
+
+export const RuntimeConsultantRailOpenEnquiries: Story = {
+	name: 'Runtime Consultant Rail — open enquiries (FE#1435)',
+	args: { role: 'consultant', layout: 'desktop' },
+	decorators: [
+		(StoryComponent) => (
+			<WithOpenEnquiries total={3}>
+				<StoryComponent />
+			</WithOpenEnquiries>
+		)
+	],
+	play: async ({ canvasElement }) => {
+		await expectEnquiryBadge(canvasElement, 3);
+	}
+};
+
+export const RuntimeConsultantMobileOpenEnquiries: Story = {
+	name: 'Runtime Consultant Mobile — open enquiries (FE#1435)',
+	args: { role: 'consultant', layout: 'mobile' },
+	globals: { viewport: { value: 'phone375', isRotated: false } },
+	decorators: [
+		(StoryComponent) => (
+			<WithOpenEnquiries total={12}>
+				<StoryComponent />
+			</WithOpenEnquiries>
+		)
+	],
+	play: async ({ canvasElement }) => {
+		await expectEnquiryBadge(canvasElement, 12);
+	}
+};
+
+export const RuntimeConsultantRailNoOpenEnquiries: Story = {
+	name: 'Runtime Consultant Rail — nothing open (FE#1435)',
+	args: { role: 'consultant', layout: 'desktop' },
+	decorators: [
+		(StoryComponent) => (
+			<WithOpenEnquiries total={0}>
+				<StoryComponent />
+			</WithOpenEnquiries>
+		)
+	],
+	play: async ({ canvasElement }) => {
+		// The badge's own request came back with 0, then one task for the render.
+		await waitFor(() =>
+			expect(answeredEnquiryFeeds.registered).toBeGreaterThan(0)
+		);
+		await new Promise((resolve) => setTimeout(resolve, 0));
+		await expect(
+			canvasElement.querySelector(
+				'a[href="/sessions/consultant/sessionPreview"] .navigation__item__count'
+			)
+		).toBeNull();
 	}
 };

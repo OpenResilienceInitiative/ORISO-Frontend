@@ -56,6 +56,11 @@ export interface ButtonProps {
 	tabIndex?: number;
 	/** Semantic product-tour anchor, rendered as `data-tour-target`. */
 	tourTarget?: string;
+	ariaHasPopup?: React.AriaAttributes['aria-haspopup'];
+	/** Rendered as given instead of translating `item.label`. */
+	children?: React.ReactNode;
+	/** `submit` keeps the native form submission. */
+	type?: 'button' | 'submit';
 }
 
 export const Button = (props: ButtonProps) => {
@@ -111,7 +116,7 @@ export const Button = (props: ButtonProps) => {
 	};
 
 	const handleButtonClick = (event) => {
-		if (props.disabled || !props.isLink) {
+		if (props.disabled || (!props.isLink && props.type !== 'submit')) {
 			event.preventDefault();
 		}
 
@@ -131,10 +136,12 @@ export const Button = (props: ButtonProps) => {
 		>
 			<button
 				onClick={(event) => handleButtonClick(event)}
+				type={props.type}
 				id={item.id}
 				disabled={props.disabled}
 				title={item.title}
 				aria-label={item.title}
+				aria-haspopup={props.ariaHasPopup}
 				className={`
 					button__item
 					${getButtonClassName(item.type)}
@@ -165,7 +172,7 @@ export const Button = (props: ButtonProps) => {
 					<ReloadIcon className="button__icon" />
 				)}
 				{item.icon && item.icon}
-				{item.label && translate(item.label)}
+				{props.children ?? (item.label && translate(item.label))}
 			</button>
 		</div>
 	);

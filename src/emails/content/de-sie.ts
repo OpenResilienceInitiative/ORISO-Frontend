@@ -276,6 +276,19 @@ export const deSie: Record<EmailId, EmailContent> = {
 		footer
 	},
 
+	'einsicht-angefragt': {
+		subject: 'Neue Benachrichtigung',
+		preheader: 'Bitte melden Sie sich an.',
+		headline: 'Eine Anfrage zu Ihrer Beratung',
+		paragraphs: [
+			'Eine weitere Fachkraft Ihrer Beratungsstelle bittet um Ihre Zustimmung zu einer zeitlich begrenzten Einsichtnahme.',
+			'Prüfen Sie die Anfrage im geschützten Bereich. Ihre bisherige Fachkraft bleibt für Ihre Beratung zuständig.'
+		],
+		cta: { label: 'Anfrage prüfen', href: '{{requestUrl}}' },
+		assurance,
+		footer: { ...footer, links: securityFooter.links }
+	},
+
 	'uebergabe-angefragt': {
 		subject: 'Neue Benachrichtigung',
 		preheader: 'Bitte melden Sie sich an.',
@@ -286,7 +299,7 @@ export const deSie: Record<EmailId, EmailContent> = {
 		],
 		cta: { label: 'Anfrage prüfen', href: '{{requestUrl}}' },
 		assurance,
-		footer
+		footer: { ...footer, links: securityFooter.links }
 	},
 
 	'uebergabe-bestaetigt': {
@@ -359,16 +372,22 @@ export const deSie: Record<EmailId, EmailContent> = {
 	},
 
 	'einmalcode': {
-		subject: 'Ihr Einmalcode für die Anmeldung',
+		subject: 'Ihr Einmalcode',
 		preheader: 'Der Code gilt {{expiryMinutes}} Minuten.',
 		headline: 'Ihr Einmalcode',
-		paragraphs: ['Geben Sie diesen Code im Anmeldefenster ein.'],
+		paragraphs: ['Geben Sie diesen Code in {{platformName}} ein.'],
 		code: { label: 'Code', value: '{{otpCode}}' },
-		cta: { label: 'Zur Anmeldung', href: '{{loginUrl}}' },
+		cta: { label: '{{platformName}} öffnen', href: '{{loginUrl}}' },
+		// Also sent when someone sets up email two-factor login, so the copy
+		// names no purpose and asks for no password change.
 		footnote:
-			'Wenn Sie sich nicht anmelden wollten, ändern Sie bitte Ihr Passwort.',
+			'Wenn Sie diesen Code nicht angefordert haben, können Sie diese E-Mail ignorieren.',
 		assurance: codeAssurance,
-		footer: securityFooter
+		footer: {
+			...securityFooter,
+			automatedNote:
+				'Diese E-Mail enthält einen Sicherheitscode und lässt sich nicht abbestellen. Bitte antworten Sie nicht darauf.'
+		}
 	},
 
 	'einladung-traeger': {
@@ -549,6 +568,23 @@ export const deSie: Record<EmailId, EmailContent> = {
 		footnote:
 			'Diese E-Mail enthält bewusst weder Thema noch Namen oder Teilnehmende.',
 		assurance,
+		footer
+	},
+
+	// A colleague proposes a new time for one of the recipient's appointments
+	// (calendar, ADR-032). Names only the proposing counsellor, never the
+	// advice seeker or anything from the conversation.
+	'calendar-move-proposal': {
+		subject: 'Vorschlag: Termin verschieben',
+		preheader:
+			'{{proposerName}} schlägt eine neue Zeit für einen Ihrer Termine vor.',
+		headline: 'Vorschlag: Termin verschieben',
+		paragraphs: [
+			'{{proposerName}} schlägt vor, Ihren Termin am {{currentDate}} um {{currentTime}} Uhr auf den {{proposedDate}} um {{proposedTime}} Uhr zu verschieben.',
+			'Sie können den Vorschlag im Kalender annehmen oder ablehnen. Bis dahin bleibt der Termin, wo er ist.'
+		],
+		cta: { label: 'Im Kalender ansehen', href: '{{calendarUrl}}' },
+		assurance: staffAssurance,
 		footer
 	}
 };

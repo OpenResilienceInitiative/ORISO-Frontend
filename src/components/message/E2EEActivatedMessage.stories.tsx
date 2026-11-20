@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { E2EEActivatedMessage } from './E2EEActivatedMessage';
 import {
@@ -15,7 +15,8 @@ import './message.styles.scss';
  * matter: the German string is noticeably longer than the English one.
  */
 const meta = {
-	title: 'Components/Chat/E2EEActivatedMessage',
+	id: 'components-chat-e2eeactivatedmessage',
+	title: 'Chat/System messages/Encryption',
 	component: E2EEActivatedMessage,
 	tags: ['autodocs'],
 	parameters: {
@@ -57,8 +58,8 @@ export const Mobile: Story = {
 
 export const InDarkSurface: Story = {
 	name: 'On dark background',
+	globals: { backgrounds: { value: 'dark' } },
 	parameters: {
-		backgrounds: { default: 'dark' },
 		docs: {
 			description: {
 				story: 'The banner is placed on the session background rather than on a bubble. This story surfaces any hard-coded light-only colour.'

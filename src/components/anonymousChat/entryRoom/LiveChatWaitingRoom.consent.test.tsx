@@ -1,7 +1,7 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import * as React from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { LiveChatWaitingRoom } from './LiveChatWaitingRoom';
 
@@ -41,6 +41,32 @@ const startButton = () =>
 const consentBox = () => screen.getByRole('checkbox') as HTMLInputElement;
 
 describe('LiveChatWaitingRoom — the consent gate (#1341)', () => {
+	it('brings the finishing consent into the footer only after a counsellor accepts', () => {
+		const onAccept = vi.fn();
+		const props = {
+			ahead: 1,
+			consentHtml: CONSENT_HTML,
+			onAccept,
+			onLeave: () => {},
+			onMailCounselling: () => {}
+		};
+		const view = render(
+			<LiveChatWaitingRoom {...props} accepted={false} />
+		);
+		expect(screen.queryByRole('checkbox')).toBeNull();
+		view.rerender(<LiveChatWaitingRoom {...props} accepted />);
+		const consent = screen.getByRole('region', { name: 'Sie sind dran.' });
+		expect(
+			consent.closest('[data-cy="registration-footer"]')
+		).not.toBeNull();
+		expect(consent.contains(screen.getByRole('checkbox'))).toBe(true);
+		expect(consentBox().checked).toBe(false);
+		fireEvent.click(startButton());
+		expect(onAccept).not.toHaveBeenCalled();
+		fireEvent.click(consentBox());
+		fireEvent.click(startButton());
+		expect(onAccept).toHaveBeenCalledTimes(1);
+	});
 	/**
 	 * The whole point of item 2. The sentence used to be text above the
 	 * button, so pressing the button *was* the consent; there was no state in
@@ -65,6 +91,13 @@ describe('LiveChatWaitingRoom — the consent gate (#1341)', () => {
 		fireEvent.click(consentBox());
 
 		expect(screen.queryByRole('alert')).toBeNull();
+	});
+
+	it('has the person arrive on the message field of the chat', () => {
+		renderAccepted();
+		expect(startButton().getAttribute('data-cy-closing')).toBe(
+			'messageField'
+		);
 	});
 
 	it('starts the chat once the box is ticked', () => {
@@ -107,6 +140,16 @@ describe('LiveChatWaitingRoom — cancelling asks first (#1341)', () => {
 		fireEvent.click(
 			screen.getByRole('button', { name: /Chat verlassen/i })
 		);
+	it('keeps the cancel control in the consent heading so the primary has its own full-width row', () => {
+		renderAccepted();
+		const consent = screen.getByRole('region', { name: 'Sie sind dran.' });
+		expect(
+			consent.contains(
+				screen.getByRole('button', { name: /Chat verlassen/i })
+			)
+		).toBe(true);
+		expect(consent.contains(startButton())).toBe(false);
+	});
 
 	it('asks before anything leaves, rather than leaving on the first tap', () => {
 		const { onLeave } = renderAccepted();

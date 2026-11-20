@@ -1,9 +1,17 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * #576 — permission gating for OS notifications: no popup without browser
  * permission + user opt-in, and the Safari-safe requestPermission wrapper.
  */
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { recordBrowserNotificationsChoice } from './notificationSettings/browserMasterSwitch';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import {
 	browserNotificationsSettings,
 	optInToBrowserNotifications,
@@ -13,6 +21,7 @@ import {
 } from './notificationHelpers';
 import { notificationSettingsStore } from './notificationSettings/store';
 import { setKindField } from './notificationSettings/notificationConfig';
+import { replaceTenantSettings } from './tenantSettingsHelper';
 import { setAppConfig } from './appConfig';
 
 const constructed: Array<{ title: string; options: any }> = [];
@@ -52,6 +61,7 @@ const routePanel = (crossDevice: boolean) =>
 
 beforeEach(() => {
 	constructed.length = 0;
+	replaceTenantSettings();
 	localStorage.clear();
 	// The store is a module singleton, so opt-in state would otherwise leak
 	// from one test into the next.
@@ -74,11 +84,19 @@ describe('sendNotification permission gate', () => {
 		expect(constructed).toHaveLength(0);
 	});
 
-	it('does NOT create one when the user opt-in toggle is off', () => {
+	it('does NOT create one when the user switched the toggle off', () => {
 		stubNotification('granted');
-		// default localStorage → enabled: false
+		saveBrowserNotificationsSettings({ enabled: false });
 		sendNotification('Hallo', { showAlways: true });
 		expect(constructed).toHaveLength(0);
+	});
+
+	// FE#1211 (Frank, 18 Nov): on once the browser allows it, until the user
+	// decides otherwise in this browser.
+	it('creates one by default once the browser granted permission', () => {
+		stubNotification('granted');
+		sendNotification('Hallo', { showAlways: true });
+		expect(constructed).toHaveLength(1);
 	});
 
 	it('persistent banner mode sets requireInteraction on the OS popup', () => {
@@ -161,6 +179,20 @@ describe('sendNotification permission gate', () => {
 		expect(constructed[0].title).toBe('Hallo');
 	});
 
+	// The app owns the tone (soundPlayback.ts plays it focused or not, also
+	// for "Pop-up ohne Ton" = no tone): the OS must never add its own.
+	it('creates every OS pop-up silent, even when a caller asks for sound', () => {
+		stubNotification('granted');
+		saveBrowserNotificationsSettings({ enabled: true });
+		sendNotification('Hallo', { showAlways: true });
+		sendNotification('Hallo', { showAlways: true, silent: false });
+		expect(constructed).toHaveLength(2);
+		expect(constructed.map((entry) => entry.options.silent)).toEqual([
+			true,
+			true
+		]);
+	});
+
 	/*
 	 * #1211. The cross-device panel (release toggle `enableNewNotifications`)
 	 * writes the settings store; the legacy per-browser panel writes
@@ -191,6 +223,7 @@ describe('sendNotification permission gate', () => {
 		notificationSettingsStore.updateSettings({
 			browserNotifications: { enabled: false }
 		});
+		recordBrowserNotificationsChoice(false);
 
 		sendNotification('Hallo', { showAlways: true });
 
@@ -210,8 +243,9 @@ describe('sendNotification permission gate', () => {
 
 	it('ignores the store while the legacy panel is the routed one', () => {
 		stubNotification('granted');
-		// Nothing the user could have switched on: the cross-device panel is
-		// not rendered, so its state must not decide.
+		// The cross-device panel is not rendered, so its state must not
+		// decide; the legacy switch, here switched off, does.
+		saveBrowserNotificationsSettings({ enabled: false });
 		notificationSettingsStore.updateSettings({
 			browserNotifications: { enabled: true }
 		});
@@ -321,4 +355,55 @@ describe('optInToBrowserNotifications (#1551)', () => {
 		await optInToBrowserNotifications();
 		expect(browserNotificationsSettings().enabled).toBe(false);
 	});
+});
+
+it('checks fresh effective browser policy at the actual OS delivery boundary without changing consultant subscriptions', () => {
+	stubNotification('granted');
+	saveBrowserNotificationsSettings({ enabled: true, newMessage: true });
+	replaceTenantSettings({
+		featureAskerBrowserAgencyCounsellingEnabled: false
+	});
+	sendNotification(
+		'Update',
+		{ showAlways: true },
+		'user',
+		'AGENCY_COUNSELLING'
+	);
+	expect(constructed).toHaveLength(0);
+	sendNotification(
+		'Update',
+		{ showAlways: true },
+		'consultant',
+		'AGENCY_COUNSELLING'
+	);
+	expect(constructed).toHaveLength(1);
+	replaceTenantSettings({
+		featureAskerBrowserAgencyCounsellingEnabled: true
+	});
+	sendNotification(
+		'Update',
+		{ showAlways: true },
+		'user',
+		'AGENCY_COUNSELLING'
+	);
+	expect(constructed).toHaveLength(2);
+	saveBrowserNotificationsSettings({ enabled: false });
+	sendNotification(
+		'Update',
+		{ showAlways: true },
+		'user',
+		'AGENCY_COUNSELLING'
+	);
+	expect(constructed).toHaveLength(2);
+});
+it('applies browser context defaults and denies an unsupported future session context', () => {
+	stubNotification('granted');
+	saveBrowserNotificationsSettings({ enabled: true });
+	sendNotification('Update', { showAlways: true }, 'asker', null);
+	expect(constructed).toHaveLength(1);
+	sendNotification('Update', { showAlways: true }, 'asker', 'UNKNOWN');
+	expect(constructed).toHaveLength(1);
+	replaceTenantSettings({ featureAskerBrowserLiveChatEnabled: false });
+	sendNotification('Update', { showAlways: true }, 'asker', 'LIVE_CHAT');
+	expect(constructed).toHaveLength(1);
 });

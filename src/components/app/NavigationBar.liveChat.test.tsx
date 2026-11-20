@@ -1,8 +1,15 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import * as React from 'react';
-import { render, waitFor } from '@testing-library/react';
+import { cleanup, render, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import { NavigationBar } from './NavigationBar';
 import { NavigationStoryProviders } from './navigationStoryHelpers';
 import { apiGetLiveChatAvailability } from '../../api/apiSetLiveChatAvailability';
@@ -25,6 +32,7 @@ vi.mock('../../hooks/useResponsive', () => ({
 
 vi.mock('../../api/apiSetLiveChatAvailability', () => ({
 	apiGetLiveChatAvailability: vi.fn(() => Promise.resolve(false)),
+	apiGetNewCounsellingAllowed: vi.fn(() => Promise.resolve(null)),
 	apiHeartbeatLiveChatAvailability: vi.fn(() => Promise.resolve(true)),
 	apiSetLiveChatAvailability: vi.fn(() => Promise.resolve())
 }));
@@ -70,7 +78,9 @@ describe('NavigationBar live-chat entry follows the profile preference', () => {
 	});
 
 	afterEach(() => {
+		cleanup();
 		vi.clearAllMocks();
+		expect(document.querySelector('.navigation__wrapper')).toBeNull();
 	});
 
 	describe.each([

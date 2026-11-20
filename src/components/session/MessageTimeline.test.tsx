@@ -1,15 +1,27 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import * as React from 'react';
 import { cleanup, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { MessageTimeline } from './MessageTimeline';
 
 vi.mock('../message/MessageItemComponent', () => ({
 	MessageItemComponent: ({
-		askerMatrixUserId
+		askerMatrixUserId,
+		message
 	}: {
 		askerMatrixUserId?: string;
-	}) => <div data-testid="message" data-asker-id={askerMatrixUserId} />
+		message?: string;
+	}) => (
+		<div data-testid="message" data-asker-id={askerMatrixUserId}>
+			{message}
+		</div>
+	)
+}));
+
+vi.mock('../message/MissingKeyPlaceholder', () => ({
+	MissingKeyPlaceholder: ({ count }: { count: number }) => (
+		<div data-testid="missing-key">{count}</div>
+	)
 }));
 
 vi.mock('../message/MessageSendFailed', () => ({
@@ -19,6 +31,39 @@ vi.mock('../message/MessageSendFailed', () => ({
 afterEach(cleanup);
 
 describe('MessageTimeline identity overrides', () => {
+	it('places a consent continuation between older and newer chat messages', () => {
+		const message = (id: string, time: string) => ({
+			_id: id,
+			message: id,
+			messageDate: { str: '', date: null },
+			messageTime: time,
+			isNotRead: false,
+			t: null,
+			rid: '!main',
+			displayName: 'Client',
+			username: 'client',
+			userId: '@client'
+		});
+		const { container } = render(
+			<MessageTimeline
+				messages={[
+					message('Earlier message', '1000'),
+					message('Later message', '3000')
+				]}
+				clientName="Client"
+				isMyMessage={() => false}
+				handleDecryptionErrors={vi.fn()}
+				handleDecryptionSuccess={vi.fn()}
+				e2eeParams={{} as never}
+				supplement={<p>Consent request</p>}
+				supplementTime={2000}
+			/>
+		);
+		expect(container.textContent).toBe(
+			'Earlier messageConsent requestLater message'
+		);
+	});
+
 	it('uses the room-specific asker identity instead of the message fallback', () => {
 		render(
 			<MessageTimeline
@@ -49,5 +94,51 @@ describe('MessageTimeline identity overrides', () => {
 		expect(
 			screen.getByTestId('message').getAttribute('data-asker-id')
 		).toBe('@side-room-client:oriso.invalid');
+	});
+});
+
+describe('MessageTimeline missing-key messages (#1827)', () => {
+	const row = (id: string, extra: Record<string, unknown> = {}) => ({
+		_id: id,
+		message: id,
+		messageDate: { str: '', date: null },
+		messageTime: '1',
+		isNotRead: false,
+		t: null,
+		rid: '!main',
+		displayName: 'Client',
+		username: 'client',
+		userId: '@client',
+		...extra
+	});
+	const renderRows = (messages: ReturnType<typeof row>[]) =>
+		render(
+			<MessageTimeline
+				messages={messages as never}
+				clientName="Client"
+				isMyMessage={() => false}
+				handleDecryptionErrors={vi.fn()}
+				handleDecryptionSuccess={vi.fn()}
+				e2eeParams={{} as never}
+			/>
+		);
+
+	it('renders consecutive missing-key messages as one placeholder', () => {
+		renderRows([
+			row('a', { undecryptableReason: 'missing-key' }),
+			row('b', { undecryptableReason: 'missing-key' }),
+			row('c', { undecryptableReason: 'missing-key' }),
+			row('readable')
+		]);
+		expect(screen.getAllByTestId('missing-key')).toHaveLength(1);
+		expect(screen.getByTestId('missing-key').textContent).toBe('3');
+		expect(screen.getAllByTestId('message')).toHaveLength(1);
+		expect(screen.getByTestId('message').textContent).toBe('readable');
+	});
+
+	it('keeps a generic undecryptable message as an ordinary row', () => {
+		renderRows([row('Nachricht verschlüsselt')]);
+		expect(screen.queryByTestId('missing-key')).toBeNull();
+		expect(screen.getAllByTestId('message')).toHaveLength(1);
 	});
 });

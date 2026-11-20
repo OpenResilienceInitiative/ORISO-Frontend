@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import React from 'react';
 import {
 	act,
@@ -14,7 +14,7 @@ import {
 	useLocation,
 	useNavigate
 } from 'react-router-dom';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { ProductTourAdapter } from './ProductTourAdapter';
 import { emitTourEvent } from './tourEvents';
 import type { TourDefinition, TourEvent } from './types';
@@ -203,15 +203,20 @@ describe('ProductTourAdapter', () => {
 			});
 		});
 
-		await waitFor(() => expect(joyrideProps!.stepIndex).toBe(2), {
-			timeout: 3000
-		});
-		expect(
-			events.some(
-				(e) => e.event === 'target_missing' && e.stepId === 'second'
-			)
-		).toBe(true);
-		expect(paths).toContain('/third');
+		await waitFor(
+			() => {
+				expect(joyrideProps!.stepIndex).toBe(2);
+				expect(
+					events.some(
+						(e) =>
+							e.event === 'target_missing' &&
+							e.stepId === 'second'
+					)
+				).toBe(true);
+				expect(paths).toContain('/third');
+			},
+			{ timeout: 3000 }
+		);
 	});
 
 	it('persists completed through the terminal callback', async () => {

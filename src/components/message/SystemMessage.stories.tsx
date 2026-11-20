@@ -1,5 +1,5 @@
 import * as React from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { ICON_CALL_OFF, ICON_INFO, SystemMessage } from './SystemMessage';
 import {
@@ -17,7 +17,8 @@ import './message.styles.scss';
  * so a change here is felt in all of them.
  */
 const meta = {
-	title: 'Components/Chat/SystemMessage',
+	id: 'components-chat-systemmessage',
+	title: 'Chat/System messages/General notices',
 	component: SystemMessage,
 	tags: ['autodocs'],
 	parameters: {

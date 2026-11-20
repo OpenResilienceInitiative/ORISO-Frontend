@@ -21,6 +21,7 @@ import {
 	releaseWindowMediaStream,
 	stopMediaStreamTracks
 } from '../../utils/callMediaStreamCleanup';
+import { useRegisterFloatingSurface } from '../floatingSurfaces/floatingSurfaces';
 import './FloatingCallWidget.scss';
 
 const FLOATING_DEFAULT_WIDTH = 460;
@@ -421,6 +422,10 @@ export const FloatingCallWidget: React.FC = () => {
 		setIsFullscreen(!isFullscreen);
 		if (!isFullscreen) setIsMinimized(false);
 	};
+	useRegisterFloatingSurface(
+		'call-widget',
+		!!callData && !callData.usesElementCall && !callData.isGroup
+	);
 	// Only render for 1-on-1 calls (not group calls)
 	// Group calls are handled by GroupCallWidget
 	if (!callData || callData.usesElementCall || callData.isGroup) return null;

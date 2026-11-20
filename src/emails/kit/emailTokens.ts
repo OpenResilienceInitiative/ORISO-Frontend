@@ -95,7 +95,11 @@ export const emailLayout = {
 	width: 600,
 	/** Below this width the stacking media query kicks in. */
 	mobileBreakpoint: 620,
-	logoSize: 36
+	/** Every logo is scaled proportionally to this height. */
+	logoSize: 48,
+	/** Above this intrinsic ratio the wordmark yields on phones. */
+	logoWideRatio: 3,
+	logoWideGutterMobile: 8
 } as const;
 
 /** Brand values a tenant can override per send. */
@@ -105,6 +109,9 @@ export interface EmailBrand {
 	orgAddress: string;
 	contactLine: string;
 	logoUrl: string;
+	/** Optional intrinsic image dimensions; not yet supplied by tenant branding. */
+	logoWidth?: number;
+	logoHeight?: number;
 	primaryColor: string;
 	accentColor: string;
 }
@@ -124,7 +131,7 @@ export const emailDefaultBrand: EmailBrand = {
 };
 
 /** Sample values used by the Storybook previews and the local preview build. */
-export const emailSampleBrand: EmailBrand = {
+export const emailSampleBrand = {
 	platformName: 'Online-Beratung',
 	orgName: 'Caritasverband für die Diözese Mainz e. V.',
 	orgAddress: 'Bahnhofstraße 6, 55116 Mainz',
@@ -135,4 +142,4 @@ export const emailSampleBrand: EmailBrand = {
 	logoUrl: '/logo512.png',
 	primaryColor: '#a5000a',
 	accentColor: '#cc1e1c'
-};
+} satisfies EmailBrand;

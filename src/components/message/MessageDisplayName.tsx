@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { ReactComponent as AgencyIcon } from '../../resources/img/icons/chat-agency-house-heart.svg';
 import { formatMessagePersonName } from './messageNameUtils';
 
 interface MessageDisplayNameProps {
@@ -10,6 +11,8 @@ interface MessageDisplayNameProps {
 	userId: string;
 	username: string;
 	displayName?: string;
+	/** Canonical session alias; retain its exact spelling and numeric suffix. */
+	resolvedDisplayName?: string;
 	firstName?: string;
 	lastName?: string;
 	/**
@@ -25,6 +28,7 @@ export const MessageDisplayName = ({
 	type,
 	username,
 	displayName,
+	resolvedDisplayName,
 	firstName,
 	lastName,
 	subtitle
@@ -47,17 +51,23 @@ export const MessageDisplayName = ({
 	const trimmedSubtitle = (subtitle || '').trim();
 
 	return (
-		<>
+		<div className="messageItem__nameBlock">
 			<div
 				className={`messageItem__username messageItem__username--${type}`}
 			>
-				{getUsernameWithPrefix()}
+				{resolvedDisplayName ?? getUsernameWithPrefix()}
 			</div>
 			{trimmedSubtitle && (
 				<div className="messageItem__usernameSubtitle">
-					{trimmedSubtitle}
+					<AgencyIcon
+						data-testid="agency-icon"
+						className="messageItem__usernameSubtitleIcon"
+						aria-hidden="true"
+						focusable="false"
+					/>
+					<span>{trimmedSubtitle}</span>
 				</div>
 			)}
-		</>
+		</div>
 	);
 };

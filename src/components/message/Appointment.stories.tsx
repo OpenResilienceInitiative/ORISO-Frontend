@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { ALIAS_MESSAGE_TYPES } from '../../api/apiSendAliasMessage';
 import { Appointment } from './Appointment';
@@ -25,7 +25,8 @@ import './message.styles.scss';
  * see `ReassignMessage.stories.tsx` for the routing detail.
  */
 const meta = {
-	title: 'Components/Chat/Appointment',
+	id: 'components-chat-appointment',
+	title: 'Chat/System messages/Appointments',
 	component: Appointment,
 	tags: ['autodocs'],
 	parameters: {

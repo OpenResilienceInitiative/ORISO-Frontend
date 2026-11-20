@@ -1,8 +1,16 @@
 import * as React from 'react';
-import { ReactNode, useEffect, useId, useSyncExternalStore } from 'react';
+import {
+	ReactNode,
+	useEffect,
+	useId,
+	useRef,
+	useSyncExternalStore
+} from 'react';
 import { Alert, Box, Button, IconButton, Snackbar } from '@mui/material';
 import type { SnackbarOrigin, SxProps, Theme } from '@mui/material';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import { COMPOSER_BOTTOM_CLEARANCE } from './composerClearance';
 
 /**
  * The M3 snackbar roles, as the design system publishes them
@@ -65,6 +73,7 @@ export const m3SnackbarActionSx = {
 	'color': m3SnackbarColors.action,
 	'textTransform': 'none',
 	'minWidth': 0,
+	'minHeight': 44,
 	'px': 1,
 	'py': 0.5,
 	/* The label is one word, not a paragraph. Without this the flex row
@@ -130,6 +139,13 @@ export interface M3SnackbarProps {
 	 * so the two can never drift apart.
 	 */
 	placement?: 'floating' | 'inline';
+	/**
+	 * `'error'` is the same dark surface with an error glyph in front of the
+	 * message. The design system draws no error snackbar, and the literal
+	 * error-container role is a loud magenta that belongs to no other surface
+	 * here, so the difference is carried by the glyph and not by a red fill.
+	 */
+	tone?: 'neutral' | 'error';
 	/** Floating only. Defaults to open — an unmounted snackbar is the closed one. */
 	open?: boolean;
 	/** Floating only. `null` (default) keeps it until it is dismissed. */
@@ -151,14 +167,14 @@ export interface M3SnackbarProps {
 	 */
 	containerSx?: SxProps<Theme>;
 	/**
-	 * Floating only. A standing notice steps aside while another floating snackbar is open — M3
-	 * shows one at a time, and both would share the same spot — and returns when it closes.
+	 * Floating only. A standing notice steps aside while another floating snackbar or a dialog is
+	 * open — M3 shows one at a time, and both would share the same spot — and returns when it closes.
 	 */
 	yieldToOthers?: boolean;
 	testId?: string;
 }
 
-/* Floating snackbars that are open and do not yield. */
+/* Open dialogs and floating snackbars that do not yield. */
 const openSnackbars = new Set<string>();
 const openSnackbarListeners = new Set<() => void>();
 const notifyOpenSnackbars = () => openSnackbarListeners.forEach((l) => l());
@@ -174,7 +190,8 @@ const anotherSnackbarOpen = () => openSnackbars.size > 0;
  * Tells standing notices (`yieldToOthers`) that something else now occupies the
  * snackbar spot. Every floating snackbar calls it; the stacked host
  * (`M3SnackbarHost`) calls it while it holds anything, so the two systems can
- * never paint over each other.
+ * never paint over each other. A dialog (`Overlay`, `M3Dialog`) calls it while it is open,
+ * because a notice would rest above the dialog's buttons and take their clicks.
  */
 export const useFloatingSnackbarPresence = (active: boolean) => {
 	const id = useId();
@@ -197,8 +214,7 @@ export const useFloatingSnackbarPresence = (active: boolean) => {
  */
 export const M3_SNACKBAR_PHONE_QUERY = '(max-width: 899.98px)';
 export const M3_SNACKBAR_PHONE_MEDIA = `@media ${M3_SNACKBAR_PHONE_QUERY}`;
-export const M3_SNACKBAR_ABOVE_NAVIGATION_BOTTOM =
-	'calc(88px + env(safe-area-inset-bottom, 0px))';
+export const M3_SNACKBAR_ABOVE_NAVIGATION_BOTTOM = `max(calc(88px + env(safe-area-inset-bottom, 0px)), ${COMPOSER_BOTTOM_CLEARANCE})`;
 
 /** For surfaces that share the snackbar's role but not its anatomy (the join request). */
 export const M3_SNACKBAR_ELEVATION = elevation3;
@@ -219,8 +235,8 @@ export const M3_SNACKBAR_ELEVATION = elevation3;
  *
  * **Structure comes from MUI** — `Snackbar` for the fixed placement and the
  * grow/fade transition, `Alert` for the message/action/close anatomy and its
- * live-region semantics. The icon is switched off (`icon={false}`): M3
- * snackbars carry no severity glyph, and this one is not an error surface.
+ * live-region semantics. The icon is off (`icon={false}`) unless `tone="error"`
+ * asks for it: M3 snackbars carry no severity glyph of their own.
  */
 export const M3Snackbar = ({
 	message,
@@ -229,6 +245,7 @@ export const M3Snackbar = ({
 	onClose,
 	closeLabel,
 	placement = 'floating',
+	tone = 'neutral',
 	open = true,
 	autoHideDuration = null,
 	anchorOrigin = { vertical: 'bottom', horizontal: 'center' },
@@ -247,10 +264,45 @@ export const M3Snackbar = ({
 		() => false
 	);
 	const shown = open && !(yieldToOthers && othersOpen);
+	const actionRef = useRef<HTMLButtonElement>(null);
+	// The action of a yielding notice usually opens the dialog it then yields to. While the
+	// notice is away its button is unmounted, so the dialog's focus restore has no target
+	// on close and focus would fall to <body>. Remember it and hand focus back on return.
+	const returnFocusToAction = useRef(false);
+	useEffect(() => {
+		if (!shown || !returnFocusToAction.current) return undefined;
+		let frame = 0;
+		const deadline = Date.now() + 1000;
+		const restore = () => {
+			const active = document.activeElement;
+			const lost =
+				!active || active === document.body || !active.isConnected;
+			const insideDialog = !!active?.closest?.(
+				'[role="dialog"], .MuiModal-root'
+			);
+			if (lost && actionRef.current) {
+				returnFocusToAction.current = false;
+				actionRef.current.focus();
+				return;
+			}
+			if ((!lost && !insideDialog) || Date.now() > deadline) {
+				// Somebody else already took focus (or the dialog stays): leave it alone.
+				returnFocusToAction.current = false;
+				return;
+			}
+			frame = requestAnimationFrame(restore);
+		};
+		frame = requestAnimationFrame(restore);
+		return () => cancelAnimationFrame(frame);
+	}, [shown]);
 	const actionButton = action && (
 		<Button
+			ref={actionRef}
 			variant="text"
-			onClick={action.onClick}
+			onClick={(event) => {
+				if (yieldToOthers) returnFocusToAction.current = true;
+				action.onClick?.(event);
+			}}
 			data-testid={action.testId ?? `${testId}-action`}
 			sx={m3SnackbarActionSx}
 		>
@@ -291,7 +343,15 @@ export const M3Snackbar = ({
 		actionOnOwnLine && action ? (
 			closeButton || undefined
 		) : action || onClose ? (
-			<Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+			<Box
+				sx={{
+					display: 'flex',
+					alignItems: 'center',
+					gap: 0.5,
+					minWidth: 0,
+					maxWidth: '100%'
+				}}
+			>
 				{actionButton}
 				{closeButton}
 			</Box>
@@ -299,7 +359,16 @@ export const M3Snackbar = ({
 
 	const surface = (
 		<Alert
-			icon={false}
+			icon={
+				tone === 'error' ? (
+					<ErrorOutlineRoundedIcon
+						aria-hidden="true"
+						sx={{ fontSize: 20, color: m3SnackbarColors.action }}
+					/>
+				) : (
+					false
+				)
+			}
 			role={role}
 			action={alertAction}
 			data-testid={testId}
@@ -312,13 +381,18 @@ export const M3Snackbar = ({
 				'borderRadius': M3_SNACKBAR_SHAPE,
 				'boxShadow': elevation3,
 				'alignItems': 'center',
+				'flexWrap': 'wrap',
+				'minWidth': 0,
 				'px': 2,
 				'py': 1,
 				/* MUI reserves a right gutter for the action slot; with the ✕
 				   already carrying its own padding that reads as a hole. */
 				'& .MuiAlert-action': {
 					alignItems: 'center',
-					flexShrink: 0,
+					flexShrink: 1,
+					minWidth: 0,
+					maxWidth: '100%',
+					ml: 'auto',
 					mr: 0,
 					pt: 0,
 					pl: 1
@@ -327,6 +401,8 @@ export const M3Snackbar = ({
 					...messageTypography,
 					py: '6px',
 					minWidth: 0,
+					flex: '1 1 160px',
+					overflow: 'visible',
 					overflowWrap: 'anywhere'
 				},
 				...sx
@@ -339,7 +415,8 @@ export const M3Snackbar = ({
 						display: 'flex',
 						justifyContent: 'flex-end',
 						mt: 0.5,
-						mr: -1
+						minWidth: 0,
+						maxWidth: '100%'
 					}}
 				>
 					{actionButton}
@@ -367,7 +444,16 @@ export const M3Snackbar = ({
 				onClose?.();
 			}}
 			sx={[
-				{ maxWidth: M3_SNACKBAR_MAX_WIDTH, width: '100%' },
+				{
+					maxWidth: M3_SNACKBAR_MAX_WIDTH,
+					width: 'calc(100% - 32px)',
+					...(anchorOrigin.vertical === 'bottom' && {
+						bottom: (theme: Theme) => ({
+							xs: `max(${theme.spacing(1)}, ${COMPOSER_BOTTOM_CLEARANCE})`,
+							sm: `max(${theme.spacing(3)}, ${COMPOSER_BOTTOM_CLEARANCE})`
+						})
+					})
+				},
 				...(Array.isArray(containerSx) ? containerSx : [containerSx])
 			]}
 		>

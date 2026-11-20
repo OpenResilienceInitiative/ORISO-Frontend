@@ -1,7 +1,9 @@
 import {
 	EMAIL_AUDIENCE,
 	EMAIL_IDS,
-	type EmailId
+	INTERNAL_CHAT_EMAIL,
+	type EmailId,
+	type NotificationEmailOccasion
 } from '../../emails/content/emailCatalogue';
 import {
 	ADVICE_SEEKER_SWITCHES,
@@ -15,8 +17,7 @@ import {
 } from '../../components/notificationsCenter/eventDescriptors/registry';
 import type { EventFamily } from '../../components/notificationsCenter/eventDescriptors/types';
 import {
-	areaForFamily,
-	kindForEvent,
+	areaKindForEvent,
 	type NotificationArea,
 	type NotificationKind
 } from './notificationConfig';
@@ -33,7 +34,11 @@ type EmailPreference =
  * A seeded browser descriptor is a UI route, not proof that a producer emits it.
  * Keep an explicit entry for every mail so adding one requires a channel review.
  */
-const BROWSER_ASSOCIATIONS: Record<EmailId, BrowserAssociation> = {
+const BROWSER_ASSOCIATIONS: Record<
+	NotificationEmailOccasion,
+	BrowserAssociation
+> = {
+	'interne-nachricht': { kind: 'unmapped' },
 	'neue-nachricht': { kind: 'descriptor', eventTypes: ['message.new'] },
 	'neue-nachricht-beratung': {
 		kind: 'descriptor',
@@ -56,9 +61,13 @@ const BROWSER_ASSOCIATIONS: Record<EmailId, BrowserAssociation> = {
 	'neue-anfrage': { kind: 'descriptor', eventTypes: ['request.new'] },
 	'direkte-anfrage': { kind: 'unmapped' },
 	'tagesuebersicht': { kind: 'unmapped' },
+	'einsicht-angefragt': {
+		kind: 'descriptor',
+		eventTypes: ['case.handover.consent.requested']
+	},
 	'uebergabe-angefragt': {
 		kind: 'descriptor',
-		eventTypes: ['handover.requested']
+		eventTypes: ['handover.requested', 'case.handover.consent.requested']
 	},
 	'uebergabe-bestaetigt': {
 		kind: 'descriptor',
@@ -86,7 +95,10 @@ const BROWSER_ASSOCIATIONS: Record<EmailId, BrowserAssociation> = {
 	'smtp-test': { kind: 'unmapped' },
 	'anruf-erinnerung': { kind: 'unmapped' },
 	'anruf-einladung': { kind: 'unmapped' },
-	'anruf-verpasst': { kind: 'unmapped' }
+	'anruf-verpasst': { kind: 'unmapped' },
+	// FE#1050: the approver sees the proposal in the calendar and the
+	// "Meine Termine" count; no browser event exists for it.
+	'calendar-move-proposal': { kind: 'unmapped' }
 };
 
 /**
@@ -94,8 +106,12 @@ const BROWSER_ASSOCIATIONS: Record<EmailId, BrowserAssociation> = {
  * another role's switch for the same occasion. These are existing settings,
  * not proof that a sender reaches either role.
  */
-const rolesFor = (id: EmailId): readonly RecipientRole[] => {
-	const roles: RecipientRole[] = [EMAIL_AUDIENCE[id]];
+const rolesFor = (id: NotificationEmailOccasion): readonly RecipientRole[] => {
+	const roles: RecipientRole[] = [
+		id === INTERNAL_CHAT_EMAIL.occasion
+			? INTERNAL_CHAT_EMAIL.audience
+			: EMAIL_AUDIENCE[id]
+	];
 	if (
 		switchForOccasion(ADVICE_SEEKER_SWITCHES, id) &&
 		!roles.includes('asker')
@@ -111,16 +127,19 @@ const rolesFor = (id: EmailId): readonly RecipientRole[] => {
 	return roles;
 };
 
-export function occasionChannelContract(id: EmailId): {
+export function occasionChannelContract(id: NotificationEmailOccasion): {
 	roles: readonly RecipientRole[];
 };
 export function occasionChannelContract(
-	id: EmailId,
+	id: NotificationEmailOccasion,
 	role: RecipientRole
 ):
 	| { emailPreference: EmailPreference; browser: BrowserAssociation }
 	| undefined;
-export function occasionChannelContract(id: EmailId, role?: RecipientRole) {
+export function occasionChannelContract(
+	id: NotificationEmailOccasion,
+	role?: RecipientRole
+) {
 	const roles = rolesFor(id);
 	if (role === undefined) {
 		return { roles };
@@ -165,19 +184,35 @@ export type EventChannelContract = {
 export const resolveEventChannelContract = (
 	eventType: string | null | undefined,
 	recipientRole?: string | null,
-	options: { family?: EventFamily; mentioned?: boolean } = {}
+	options: {
+		family?: EventFamily;
+		mentioned?: boolean;
+		conversationType?: string | null;
+	} = {}
 ): EventChannelContract => {
 	const descriptor = getEventDescriptor(eventType);
 	const family = options.family ?? descriptor.family ?? 'system';
+	const role = recipientRole === 'user' ? 'asker' : recipientRole;
+	const { area, kind } = areaKindForEvent(
+		family,
+		eventType || '',
+		options.mentioned === true
+	);
 	const browser = {
 		family,
-		area: areaForFamily(family),
-		kind: kindForEvent(family, eventType || '', options.mentioned === true)
+		area,
+		// FE#1470: a counsellor's live-chat messages have their own row.
+		kind:
+			kind === 'standard' &&
+			family === 'messages' &&
+			role === 'consultant' &&
+			options.conversationType === 'LIVE_CHAT'
+				? ('liveChat' as const)
+				: kind
 	};
 	if (!isKnownEventType(eventType) || descriptor.eventType !== eventType) {
 		return { association: { kind: 'unknown-event' }, browser };
 	}
-	const role = recipientRole === 'user' ? 'asker' : recipientRole;
 	if (role !== 'asker' && role !== 'consultant' && role !== 'admin') {
 		return { association: { kind: 'unknown-recipient' }, browser };
 	}

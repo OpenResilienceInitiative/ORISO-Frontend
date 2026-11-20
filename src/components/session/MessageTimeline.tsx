@@ -18,12 +18,17 @@ import {
 	MessageItemComponent
 } from '../message/MessageItemComponent';
 import { MessageSendFailed } from '../message/MessageSendFailed';
+import { MissingKeyPlaceholder } from '../message/MissingKeyPlaceholder';
+import { groupMissingKeyMessages } from './missingKeyGroups';
+import { useTranslation } from 'react-i18next';
 import type { AggregatedReaction } from '../../utils/messageRelations';
 
 type MessageItemProps = React.ComponentProps<typeof MessageItemComponent>;
 
 export interface MessageTimelineProps {
 	messages: MessageItem[];
+	supplement?: React.ReactNode;
+	supplementTime?: number;
 	renderMode?: MessageItemProps['renderMode'];
 	/** Key namespace when several timelines render the same ids (thread panel). */
 	keyPrefix?: string;
@@ -48,11 +53,17 @@ export interface MessageTimelineProps {
 	threadSummaryFor?: (
 		messageId: string
 	) => MessageItemProps['threadSummary'] | undefined;
-	onOpenThread?: (message: MessageItem) => void;
+	onOpenThread?: (message: MessageItem, opener?: HTMLElement) => void;
 	resolveReplyQuote?: (
 		replyToEventId?: string | null
 	) => MessageItemProps['replyQuote'];
 	onReplyDirect?: (message: MessageItem) => void;
+	/** Selection reply: jump from a reply's quote back to the quoted passage. */
+	onJumpToReplyQuote?: (message: MessageItem) => void;
+	/** Selection reply: jump from one answered passage back to it. */
+	onJumpToPassage?: MessageItemProps['onJumpToPassage'];
+	/** Moderators: blurred passages offer "Remove blur". */
+	canRemovePassageBlur?: boolean;
 	/** Own messages only — the timeline applies the ownership gate. */
 	onEditDirect?: (message: MessageItem) => void;
 	/** Own messages only — the timeline applies the ownership gate. */
@@ -60,12 +71,16 @@ export interface MessageTimelineProps {
 	reactionsFor?: (messageId: string) => AggregatedReaction[];
 	onReact?: (messageId: string, key: string) => void;
 	onUnreact?: (reactionEventId: string) => void;
+	/** #420 / #1824: rows in the Activity Timeline preview (see MessageItemComponent). */
+	previewMode?: MessageItemProps['previewMode'];
 }
 
 const never = () => false;
 
 export const MessageTimeline = ({
 	messages,
+	supplement,
+	supplementTime,
 	renderMode = 'main',
 	keyPrefix = '',
 	clientName,
@@ -87,82 +102,130 @@ export const MessageTimeline = ({
 	onOpenThread,
 	resolveReplyQuote,
 	onReplyDirect,
+	onJumpToReplyQuote,
+	onJumpToPassage,
+	canRemovePassageBlur,
 	onEditDirect,
 	onDeleteDirect,
 	reactionsFor,
 	onReact,
-	onUnreact
-}: MessageTimelineProps) => (
-	<>
-		{messages.map((message: MessageItem) => {
-			const own = isMyMessage(message.userId);
-			const broke = decryptionFailures?.has(message._id) ?? false;
-			return (
-				<React.Fragment key={`${keyPrefix}${message._id}`}>
-					<MessageItemComponent
-						{...message}
-						clientName={clientName}
-						askerMatrixUserId={
-							askerMatrixUserIdFor
-								? askerMatrixUserIdFor(message)
-								: message.askerMatrixUserId
-						}
-						isOnlyEnquiry={isOnlyEnquiry}
-						showFullContent={showFullContent}
-						hideSystemMessages={hideSystemMessages}
-						isMyMessage={own}
-						isUserBanned={isUserBanned(message.username)}
-						handleDecryptionErrors={handleDecryptionErrors}
-						handleDecryptionSuccess={handleDecryptionSuccess}
-						e2eeParams={e2eeParams}
-						renderMode={renderMode}
-						threadsEnabled={threadsEnabled}
-						threadRootId={threadRootId}
-						forceShow={forceShow}
-						threadSummary={threadSummaryFor?.(message._id)}
-						onOpenThread={
-							onOpenThread
-								? () => onOpenThread(message)
-								: undefined
-						}
-						replyQuote={resolveReplyQuote?.(message.replyToEventId)}
-						onReplyDirect={
-							onReplyDirect
-								? () => onReplyDirect(message)
-								: undefined
-						}
-						onEditDirect={
-							own && onEditDirect
-								? () => onEditDirect(message)
-								: undefined
-						}
-						onDeleteDirect={
-							own && onDeleteDirect
-								? () => onDeleteDirect(message)
-								: undefined
-						}
-						reactions={reactionsFor?.(message._id)}
-						onReact={
-							onReact
-								? (key: string) => onReact(message._id, key)
-								: undefined
-						}
-						onUnreact={onUnreact}
-						encryptionBroke={broke}
-					/>
-					{broke &&
-						(showDecryptionCardFor
-							? showDecryptionCardFor(message)
-							: true) && (
-							<MessageSendFailed
-								messageTime={message.messageTime}
-								isDecryptionFailure
+	onUnreact,
+	previewMode
+}: MessageTimelineProps) => {
+	const { t: translate } = useTranslation();
+	const supplementIndex =
+		supplementTime === undefined
+			? -1
+			: messages.findIndex(
+					(message) => Number(message.messageTime) > supplementTime
+				);
+	// #1827: a run of messages without a key on this device becomes ONE notice.
+	const entries = groupMissingKeyMessages(messages, supplementIndex);
+	return (
+		<>
+			{entries.map((entry) => {
+				if (entry.kind === 'missing-key') {
+					const first = entry.messages[0];
+					const dateKey =
+						first.messageDate?.str || first.messageDate?.date;
+					return (
+						<React.Fragment key={`${keyPrefix}${first._id}`}>
+							{entry.index === supplementIndex && supplement}
+							<MissingKeyPlaceholder
+								count={entry.messages.length}
+								dateLabel={
+									dateKey ? translate(dateKey) : undefined
+								}
 							/>
-						)}
-				</React.Fragment>
-			);
-		})}
-	</>
-);
+						</React.Fragment>
+					);
+				}
+				const { message, index } = entry;
+				const own = isMyMessage(message.userId);
+				const broke = decryptionFailures?.has(message._id) ?? false;
+				return (
+					<React.Fragment key={`${keyPrefix}${message._id}`}>
+						{index === supplementIndex && supplement}
+						<MessageItemComponent
+							{...message}
+							clientName={clientName}
+							askerMatrixUserId={
+								askerMatrixUserIdFor
+									? askerMatrixUserIdFor(message)
+									: message.askerMatrixUserId
+							}
+							isOnlyEnquiry={isOnlyEnquiry}
+							showFullContent={showFullContent}
+							hideSystemMessages={hideSystemMessages}
+							isMyMessage={own}
+							isUserBanned={isUserBanned(message.username)}
+							handleDecryptionErrors={handleDecryptionErrors}
+							handleDecryptionSuccess={handleDecryptionSuccess}
+							e2eeParams={e2eeParams}
+							renderMode={renderMode}
+							threadsEnabled={threadsEnabled}
+							threadRootId={threadRootId}
+							forceShow={forceShow}
+							threadSummary={threadSummaryFor?.(message._id)}
+							onOpenThread={
+								onOpenThread
+									? (opener) => onOpenThread(message, opener)
+									: undefined
+							}
+							replyQuote={resolveReplyQuote?.(
+								message.replyToEventId
+							)}
+							onReplyDirect={
+								onReplyDirect
+									? () => onReplyDirect(message)
+									: undefined
+							}
+							onJumpToReplyQuote={
+								onJumpToReplyQuote && message.replyToEventId
+									? () => onJumpToReplyQuote(message)
+									: undefined
+							}
+							onJumpToPassage={
+								message.passageReplies?.length
+									? onJumpToPassage
+									: undefined
+							}
+							canRemovePassageBlur={canRemovePassageBlur}
+							onEditDirect={
+								own && onEditDirect
+									? () => onEditDirect(message)
+									: undefined
+							}
+							onDeleteDirect={
+								own && onDeleteDirect
+									? () => onDeleteDirect(message)
+									: undefined
+							}
+							reactions={reactionsFor?.(message._id)}
+							onReact={
+								onReact
+									? (key: string) => onReact(message._id, key)
+									: undefined
+							}
+							onUnreact={onUnreact}
+							encryptionBroke={broke}
+							previewMode={previewMode}
+						/>
+						{broke &&
+							(showDecryptionCardFor
+								? showDecryptionCardFor(message)
+								: true) && (
+								<MessageSendFailed
+									messageTime={message.messageTime}
+									isDecryptionFailure
+								/>
+							)}
+					</React.Fragment>
+				);
+			})}
+			{supplementIndex === -1 && supplement}
+		</>
+	);
+};
 
 export default MessageTimeline;

@@ -33,7 +33,8 @@ export const apiPostAdditionalEnquiry = async (
 		bodyData: data,
 		responseHandling: [
 			FETCH_SUCCESS.CONTENT,
-			FETCH_ERRORS.CATCH_ALL,
+			// The dialog explains a refusal by its status (UserService#1646).
+			FETCH_ERRORS.CATCH_ALL_WITH_RESPONSE,
 			FETCH_ERRORS.COUNSELLING_DPA_RESPONSE,
 			FETCH_ERRORS.CONFLICT_WITH_RESPONSE
 		]

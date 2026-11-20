@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * Thread-panel-UX (#435) — per-thread unread state.
  *
@@ -8,7 +8,7 @@
  * "mirror" pattern already used by notificationSettings/store.ts.
  */
 
-import { beforeEach, describe, it, expect } from 'vitest';
+import { beforeEach, describe, it, expect } from 'vite-plus/test';
 import {
 	getThreadLastReadTs,
 	markThreadRead,

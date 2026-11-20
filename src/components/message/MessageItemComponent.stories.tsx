@@ -1,5 +1,5 @@
 import * as React from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { ALIAS_MESSAGE_TYPES } from '../../api/apiSendAliasMessage';
 import {
@@ -13,6 +13,9 @@ import { ConsultantListContext } from '../../globalState/provider/ConsultantList
 import { ServerSettingsContext } from '../../globalState/provider/ServerSettingsProvider';
 import type { UserDataInterface } from '../../globalState/interfaces';
 import { MessageItemComponent, type MessageItem } from './MessageItemComponent';
+import { SUPERVISOR_FEEDBACK_PREFIX } from './messageConstants';
+import { composerHtmlToTransportMarkup } from '../messageSubmitInterface/composerTransportEncoding';
+import { useSilentAudio } from '../voicePlayer/__storybook__/silentAudio';
 import { buildSupervisionTimeline } from '../session/sessionHelpers';
 import {
 	MOCK_ASKER_MATRIX_ID,
@@ -42,7 +45,10 @@ import {
 	phone390Globals,
 	tablet834Globals
 } from './messageStoryShell';
+import { StandingAccessPreferenceStoryFixture } from '../caseHandover/standingAccessPreferenceStoryFixture';
 import './message.styles.scss';
+import englishCatalogue from '../../resources/i18n/en/common.json';
+import frenchCatalogue from '../../resources/i18n/fr/common.json';
 
 /** The shape of a consultant-list entry the bubble reads names from. */
 type ConsultantListEntry = {
@@ -513,6 +519,92 @@ export const NormalMessage: Story = {
 	}
 };
 
+export const EndedCall: Story = {
+	name: 'Ended call with durable attendance',
+	parameters: NormalMessage.parameters,
+	// #1338: the card asks the server whether the call really ended; it did.
+	beforeEach: () => {
+		const realFetch = window.fetch;
+		window.fetch = (async (
+			input: RequestInfo | URL,
+			init?: RequestInit
+		) => {
+			const url = String(
+				typeof input === 'string' || input instanceof URL
+					? input
+					: input.url
+			);
+			if (url.includes('/service/matrix/calls/state')) {
+				return new Response(
+					JSON.stringify({
+						sourceRoomId: '!conversation:example',
+						callId: 'call-story',
+						callRoomId: '!media:example',
+						callType: 'video',
+						invitedAt: Date.parse('2026-09-11T09:00:00Z'),
+						durationSeconds: 125,
+						state: 'ended'
+					}),
+					{
+						status: 200,
+						headers: { 'content-type': 'application/json' }
+					}
+				);
+			}
+			return realFetch(input, init);
+		}) as typeof window.fetch;
+		return () => {
+			window.fetch = realFetch;
+		};
+	},
+	args: {
+		...NormalMessage.args,
+		rid: '!conversation:example',
+		callLifecycle: {
+			callId: 'call-story',
+			roomRef: '!conversation:example',
+			callRoomId: '!media:example',
+			state: 'ended',
+			callType: 'video',
+			startedAt: '2026-09-11T09:00:00Z',
+			endedAt: '2026-09-11T09:02:05Z',
+			durationSeconds: 125,
+			participants: [
+				{ userId: '@alex:example', displayName: 'Alex Test' },
+				{ userId: '@sam:example', displayName: 'Sam Test' }
+			]
+		}
+	},
+	play: async ({ canvas, canvasElement }) => {
+		await waitForMessageEnterAnimation(canvasElement);
+		// #2237: the title is the call type (and topic); the state sits
+		// once, below it.
+		await expect(
+			canvas.getByText(/^(Videoanruf|Video call)( · .+)?$/)
+		).toBeVisible();
+		await expect(canvas.getByText(/^(Beendet|Ended)$/)).toBeVisible();
+		const attendance = within(
+			canvas.getByRole('group', { name: /Teilgenommen|Attended/ })
+		);
+		await expect(
+			attendance.getByRole('img', { name: 'Alex Test' })
+		).toBeVisible();
+		await expect(
+			attendance.getByRole('img', { name: 'Sam Test' })
+		).toBeVisible();
+		await expect(attendance.getAllByRole('img')).toHaveLength(2);
+		await expect(
+			attendance.getByText(/(?:Teilgenommen|Attended) · 2/)
+		).toBeVisible();
+		await expect(canvas.getByText(/02:05/)).toBeVisible();
+		await expect(
+			canvasElement.querySelector(
+				'.messageItem__message:not(.messageItem__message--systemNotification)'
+			)
+		).toBeNull();
+	}
+};
+
 export const SystemNotification: Story = {
 	name: 'System notification',
 	parameters: {
@@ -528,6 +620,17 @@ export const SystemNotification: Story = {
 			message: mockSystemNotificationMessage
 		}),
 		...baseHandlers
+	},
+	play: async ({ canvasElement }) => {
+		await waitFor(() => {
+			const avatar = canvasElement.querySelector<HTMLElement>(
+				'.carimatMessageFrame__avatar'
+			)!;
+			const title = within(canvasElement).getByText('Carimat');
+			expect(title.getBoundingClientRect().left).toBeGreaterThanOrEqual(
+				avatar.getBoundingClientRect().right + 8
+			);
+		});
 	}
 };
 
@@ -550,6 +653,7 @@ export const CaseHandoverGranted: Story = {
 	// Legacy notice label "Counsellor is ill" must render neutrally (#1536).
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
+		await waitFor(() => expect(canvas.getByText('Carimat')).toBeVisible());
 		// Rendered inside the collapsed details panel.
 		await expect(
 			await canvas.findByText(/Unplanned absence|Ungeplant abwesend/)
@@ -800,30 +904,85 @@ export const OutgoingWithReactions: Story = {
 async function assertReactionRailScrollsHorizontally(
 	canvasElement: HTMLElement
 ) {
-	await waitFor(() => {
-		const rail = canvasElement.querySelector(
-			'.messageItem__reactions'
-		) as HTMLElement | null;
-		expect(rail).toBeTruthy();
-		const pills = Array.from(
-			rail!.querySelectorAll('.messageItem__reactionPill')
-		) as HTMLElement[];
-		expect(pills.length).toBeGreaterThan(3);
+	await waitForMessageEnterAnimation(canvasElement);
+	const item = canvasElement.querySelector<HTMLElement>('.messageItem')!;
+	const bubble = item.querySelector<HTMLElement>('.messageItem__message')!;
+	const rail = item.querySelector<HTMLElement>('.messageItem__reactions')!;
+	const pills = Array.from(
+		rail.querySelectorAll<HTMLButtonElement>('button')
+	);
+	expect(pills.length).toBeGreaterThan(3);
 
-		// Single row: every pill shares the same top edge (no vertical stack).
-		const firstTop = pills[0].offsetTop;
-		pills.forEach((pill) => {
-			expect(pill.offsetTop).toBe(firstTop);
-			expect(getComputedStyle(pill).flexShrink).toBe('0');
+	// Constrain the real message's host, rather than asserting CSS declarations.
+	const host = item.parentElement!;
+	const originalWidth = host.style.width;
+	const originalMaxWidth = host.style.maxWidth;
+	try {
+		for (const width of [320, 390, 412, 820, 1440]) {
+			host.style.width = `${width}px`;
+			host.style.maxWidth = '100%';
+			await waitFor(() => {
+				const bounds = host.getBoundingClientRect();
+				for (const element of [
+					bubble,
+					item.querySelector<HTMLElement>('.messageItem__avatar')!,
+					item.querySelector<HTMLElement>(
+						'.messageItem__kebabButton'
+					)!
+				]) {
+					const rect = element.getBoundingClientRect();
+					expect(rect.left).toBeGreaterThanOrEqual(bounds.left - 1);
+					expect(rect.right).toBeLessThanOrEqual(bounds.right + 1);
+				}
+				expect(bubble.scrollWidth).toBeLessThanOrEqual(
+					bubble.clientWidth + 1
+				);
+				pills.forEach((pill) =>
+					expect(pill.offsetTop).toBe(pills[0].offsetTop)
+				);
+			});
+		}
+
+		host.style.width = '320px';
+		expect(rail.scrollWidth).toBeGreaterThan(rail.clientWidth);
+		const initialBubble = bubble.getBoundingClientRect();
+		// Tabbing into an off-screen reaction must bring it into view without
+		// moving the whole message. This is the native button/scroll-container path.
+		pills[0].focus();
+		for (let index = 1; index < pills.length; index++)
+			await userEvent.tab();
+		expect(document.activeElement).toBe(pills[pills.length - 1]);
+		await waitFor(() => {
+			const last = pills[pills.length - 1].getBoundingClientRect();
+			const visible = rail.getBoundingClientRect();
+			expect(last.left).toBeGreaterThanOrEqual(visible.left - 1);
+			expect(last.right).toBeLessThanOrEqual(visible.right + 1);
 		});
-
-		const style = getComputedStyle(rail!);
-		expect(style.flexWrap).toBe('nowrap');
-		expect(style.overflowX).toMatch(/auto|scroll/);
-		expect(style.overflowY).toBe('hidden');
-		// Overflow content must be wider than the visible rail (scrollable).
-		expect(rail!.scrollWidth).toBeGreaterThan(rail!.clientWidth);
-	});
+		expect(bubble.getBoundingClientRect().left).toBeCloseTo(
+			initialBubble.left,
+			0
+		);
+		pills[0].focus();
+		await waitFor(() => expect(rail.scrollLeft).toBe(0));
+		const kebab = item.querySelector<HTMLButtonElement>(
+			'.messageItem__kebabButton'
+		)!;
+		await userEvent.click(kebab);
+		await waitFor(() =>
+			expect(
+				document.querySelector('.messageItem__actionMenuReactionEmoji')
+			).not.toBeNull()
+		);
+		await userEvent.keyboard('{Escape}');
+		await waitFor(() => expect(document.activeElement).toBe(kebab));
+		expect(bubble.getBoundingClientRect().left).toBeCloseTo(
+			initialBubble.left,
+			0
+		);
+	} finally {
+		host.style.width = originalWidth;
+		host.style.maxWidth = originalMaxWidth;
+	}
 }
 
 export const OutgoingWithManyReactions: Story = {
@@ -1099,19 +1258,21 @@ export const KebabActiveState: Story = {
 		await waitFor(() => {
 			const active = canvasElement.querySelector(
 				'.messageItem__kebabIconActive'
-			) as SVGElement;
+			) as HTMLElement;
 			expect(active).toBeTruthy();
 
 			const rect = active.getBoundingClientRect();
 			expect(Math.round(rect.width)).toBe(28);
 			expect(Math.round(rect.height)).toBe(32);
 
-			// The dots must stay white — this is the exact bit the blanket
-			// `path { fill: #17191c }` used to clobber.
-			const dots = active.querySelectorAll('path[fill="white"]');
-			expect(dots.length).toBeGreaterThan(0);
+			// The dots must take the pill's on-colour — this is the exact bit
+			// the blanket `path { fill: #17191c }` used to clobber.
+			const dots = active.querySelectorAll('circle');
+			expect(dots.length).toBe(3);
+			const onColour = getComputedStyle(active).color;
 			dots.forEach((dot) => {
-				expect(getComputedStyle(dot).fill).toBe('rgb(255, 255, 255)');
+				expect(getComputedStyle(dot).fill).toBe(onColour);
+				expect(getComputedStyle(dot).fill).not.toBe('rgb(23, 25, 28)');
 			});
 		});
 
@@ -1168,17 +1329,19 @@ export const KebabActiveStateOutgoing: Story = {
 		await waitFor(() => {
 			const active = canvasElement.querySelector(
 				'.messageItem__kebabIconActive'
-			) as SVGElement;
+			) as HTMLElement;
 			expect(active).toBeTruthy();
 
 			const rect = active.getBoundingClientRect();
 			expect(Math.round(rect.width)).toBe(28);
 			expect(Math.round(rect.height)).toBe(32);
 
-			const dots = active.querySelectorAll('path[fill="white"]');
-			expect(dots.length).toBeGreaterThan(0);
+			const dots = active.querySelectorAll('circle');
+			expect(dots.length).toBe(3);
+			const onColour = getComputedStyle(active).color;
 			dots.forEach((dot) => {
-				expect(getComputedStyle(dot).fill).toBe('rgb(255, 255, 255)');
+				expect(getComputedStyle(dot).fill).toBe(onColour);
+				expect(getComputedStyle(dot).fill).not.toBe('rgb(23, 25, 28)');
 			});
 		});
 
@@ -1374,9 +1537,56 @@ export const ThreadEntryWithLastReply: Story = {
 			Number.parseFloat(getComputedStyle(preview).lineHeight) + 2
 		);
 		await expect(getComputedStyle(preview).textOverflow).toBe('ellipsis');
-		await userEvent.click(entry);
+		const bubble = canvasElement.querySelector<HTMLElement>(
+			'.messageItem__message'
+		)!;
+		const bubbleRect = bubble.getBoundingClientRect();
+		const entryRect = entry.getBoundingClientRect();
+		await expect(Math.abs(entryRect.left - bubbleRect.left)).toBeLessThan(
+			1
+		);
+		await expect(Math.abs(entryRect.right - bubbleRect.right)).toBeLessThan(
+			1
+		);
+		await expect(getComputedStyle(entry).borderRadius).toBe(
+			getComputedStyle(bubble).borderRadius
+		);
+		await expect(entry.scrollWidth).toBeLessThanOrEqual(entry.clientWidth);
+		entry.focus();
+		await userEvent.keyboard('{Enter}');
 		await expect(args.onOpenThread).toHaveBeenCalledTimes(1);
 	}
+};
+
+/** Same reply-entry contract in constrained conversation columns. */
+export const ThreadEntryPhone: Story = {
+	...ThreadEntryWithLastReply,
+	name: 'Thread entry — phone alignment (W02)',
+	render: (args) => (
+		<div style={{ width: 320, maxWidth: '100%' }}>
+			<MessageItemComponent {...args} />
+		</div>
+	)
+};
+
+export const ThreadEntryOutgoing: Story = {
+	...ThreadEntryWithLastReply,
+	name: 'Thread entry — outgoing short message alignment (W02)',
+	args: {
+		...ThreadEntryWithLastReply.args,
+		isMyMessage: true,
+		message: 'Danke.'
+	}
+};
+
+export const ThreadEntryTablet: Story = {
+	...ThreadEntryWithLastReply,
+	name: 'Thread entry — tablet alignment (W02)',
+	render: (args) => (
+		<div style={{ width: 820, maxWidth: '100%' }}>
+			<MessageItemComponent {...args} />
+		</div>
+	)
 };
 
 /* ---------------------------------------------------------------------------
@@ -1387,7 +1597,7 @@ export const ThreadEntryWithLastReply: Story = {
  * side room's timeline. Its `[SYSTEM_NOTIFICATION]` payload carries
  * `type: 'SUPERVISION_NOTICE'`, and that type is what makes
  * `MessageItemComponent` return the **Carimat organism** (`ErstantwortSequence`
- * → `pseudonymCard`) instead of the generic system-notification chrome.
+ * → `CarimatMessageFrame`) instead of the generic system-notification chrome.
  *
  * That was the promise in T49, and until now it could only be seen two levels
  * up — in `Components/Session/SidePanel` "first visit, empty side room" and in
@@ -1458,19 +1668,23 @@ const expectCarimatNoticeStructure = async (canvasElement: HTMLElement) => {
 	expect(
 		notice.querySelector('[data-testid="erstantwort-sequence"]')
 	).not.toBeNull();
-	expect(notice.querySelector('.pseudonymCard')).not.toBeNull();
-	expect(notice.querySelector('.pseudonymCard__avatarFrame')).not.toBeNull();
+	expect(notice.querySelector('.carimatMessageFrame')).not.toBeNull();
+	expect(notice.querySelector('.carimatMessageFrame__avatar')).not.toBeNull();
 	expect(
-		notice.querySelector<HTMLElement>('.pseudonymCard__headerName')
+		notice.querySelector<HTMLElement>('.carimatMessageFrame__name')
 			?.textContent
-	).toBe(SUPERVISION_NOTICE_TITLE);
+	).toBe('Carimat');
+	await waitFor(() =>
+		expect(within(notice).getByText(SUPERVISION_NOTICE_TITLE)).toBeVisible()
+	);
 	expect(
-		notice.querySelector<HTMLElement>('.pseudonymCard__headerSubtitle')
+		notice.querySelector<HTMLElement>('.carimatMessageFrame__subtitle')
 			?.textContent
 	).toMatch(/^(Systembenachrichtigung|System Notification)$/);
 	expect(
-		notice.querySelector<HTMLElement>('.pseudonymCard__bubbleText')
-			?.textContent
+		notice.querySelector<HTMLElement>(
+			'.carimatMessageFrame__bubble .erstantwort__body'
+		)?.textContent
 	).toBe(SUPERVISION_NOTICE_TEXT);
 
 	// No generic system-notification chrome: no kebab, no notification bubble
@@ -1491,6 +1705,42 @@ const expectCarimatNoticeStructure = async (canvasElement: HTMLElement) => {
 	return notice;
 };
 
+/** Header labels must clear the entire avatar frame, including its backdrop. */
+const expectReadableCarimatHeader = async (notice: HTMLElement) => {
+	const card = notice.querySelector<HTMLElement>('.carimatMessageFrame')!;
+	const avatar = notice.querySelector<HTMLElement>(
+		'.carimatMessageFrame__avatar'
+	)!;
+	const labels = notice.querySelectorAll<HTMLElement>(
+		'.carimatMessageFrame__name, .carimatMessageFrame__subtitle'
+	);
+	const originalWidth = card.style.width;
+	const originalMaxWidth = card.style.maxWidth;
+	try {
+		for (const width of [320, 390, 412, 820, 1440]) {
+			card.style.width = `${width}px`;
+			card.style.maxWidth = '100%';
+			await waitFor(() => {
+				for (const label of labels) {
+					const rect = label.getBoundingClientRect();
+					expect(rect.left).toBeGreaterThanOrEqual(
+						avatar.getBoundingClientRect().right + 8
+					);
+					expect(rect.right).toBeLessThanOrEqual(
+						card.getBoundingClientRect().right + 1
+					);
+					expect(label.scrollWidth).toBeLessThanOrEqual(
+						label.clientWidth + 1
+					);
+				}
+			});
+		}
+	} finally {
+		card.style.width = originalWidth;
+		card.style.maxWidth = originalMaxWidth;
+	}
+};
+
 export const SupervisionNotice: Story = {
 	name: 'Supervision notice — Carimat organism, no system chrome (T49)',
 	parameters: {
@@ -1498,7 +1748,7 @@ export const SupervisionNotice: Story = {
 		userData: mockUserData(),
 		docs: {
 			description: {
-				story: 'The side room notice `SUPERVISION_NOTICE`, rendered by `MessageItemComponent` as the **Carimat** sequence (`ErstantwortSequence` → `pseudonymCard`) under the room name — never with the generic system-notification chrome (kebab, bot avatar, `messageItem__message--systemNotification`).'
+				story: 'The side room notice `SUPERVISION_NOTICE`, rendered by `MessageItemComponent` as the **Carimat** sequence (`ErstantwortSequence` → `CarimatMessageFrame`) under the room name — never with the generic system-notification chrome (kebab, bot avatar, `messageItem__message--systemNotification`).'
 			}
 		}
 	},
@@ -1510,8 +1760,35 @@ export const SupervisionNotice: Story = {
 	},
 	play: async ({ canvasElement }) => {
 		const notice = await expectCarimatNoticeStructure(canvasElement);
+		await expectReadableCarimatHeader(notice);
 		// The day pill moves onto the notice when the room already has history.
 		expect(notice.querySelector('.messageDateDivider')).not.toBeNull();
+	}
+};
+
+export const SupervisionNoticeLongHeader: Story = {
+	...SupervisionNotice,
+	name: 'Supervision notice — long translated header',
+	args: {
+		...mockMessageItemComponentProps(
+			buildSupervisionTimeline([], {
+				roomId: SUPERVISION_ROOM_ID,
+				title: 'Supervision und gemeinsame fachliche Beratung innerhalb der Beratungsstelle',
+				description: SUPERVISION_NOTICE_TEXT,
+				askerMatrixUserId: MOCK_ASKER_MATRIX_ID
+			})[0]
+		),
+		...baseHandlers
+	},
+	play: async ({ canvasElement }) => {
+		const notice = await waitFor(() => {
+			const element = canvasElement.querySelector<HTMLElement>(
+				'.messageItem--supervisionNotice'
+			);
+			expect(element).not.toBeNull();
+			return element!;
+		});
+		await expectReadableCarimatHeader(notice);
 	}
 };
 
@@ -1534,7 +1811,7 @@ export const SupervisionNoticeAboveMessage: Story = {
 		await expectCarimatNoticeStructure(canvasElement);
 
 		const rows = canvasElement.querySelectorAll(
-			'.messageItem:not(.pseudonymCard)'
+			'.messageItem[data-message-id]'
 		);
 		expect(rows.length).toBe(2);
 		expect(rows[0].classList).toContain('messageItem--supervisionNotice');
@@ -1575,7 +1852,7 @@ export const SupervisionNoticeEmptyRoom: Story = {
 		// No history, so no day pill — and no crash on the empty date.
 		expect(notice.querySelector('.messageDateDivider')).toBeNull();
 		expect(
-			canvasElement.querySelectorAll('.messageItem:not(.pseudonymCard)')
+			canvasElement.querySelectorAll('.messageItem[data-message-id]')
 				.length
 		).toBe(1);
 	}
@@ -1602,7 +1879,7 @@ export const SupervisionNoticeMobile390: Story = {
 	},
 	play: async ({ canvasElement }) => {
 		const notice = await expectCarimatNoticeStructure(canvasElement);
-		const card = notice.querySelector<HTMLElement>('.pseudonymCard')!;
+		const card = notice.querySelector<HTMLElement>('.carimatMessageFrame')!;
 		const shell = notice.parentElement!;
 		await waitFor(() => {
 			expect(card.getBoundingClientRect().width).toBeGreaterThan(0);
@@ -1747,6 +2024,33 @@ export const AnonymousGuestSeesHistoricalReassignWithoutLegalName: Story = {
 			).toBeGreaterThan(0);
 		});
 		await expect(canvasElement.textContent).not.toContain('Karina');
+		await expect(canvas.getByLabelText('Information')).toBeInTheDocument();
+		const notice = canvasElement.querySelector<HTMLElement>(
+			'.reassignRequestMessage'
+		);
+		const host =
+			notice?.closest<HTMLElement>('.messageItem')?.parentElement;
+		if (!notice || !host) throw new Error('Historical message is missing');
+		const originalWidth = host.style.width;
+		for (const width of [320, 390, 412, 820, 1440]) {
+			host.style.width = `${width}px`;
+			await new Promise((resolve) => requestAnimationFrame(resolve));
+			const icon = notice.querySelector<SVGElement>('svg');
+			const title = notice.querySelector<HTMLElement>('strong');
+			if (!icon || !title)
+				throw new Error('Historical info header is missing');
+			await expect(
+				title.getBoundingClientRect().left
+			).toBeGreaterThanOrEqual(icon.getBoundingClientRect().right + 8);
+
+			await expect(notice.scrollWidth).toBeLessThanOrEqual(
+				notice.clientWidth + 1
+			);
+			await expect(
+				notice.getBoundingClientRect().right
+			).toBeLessThanOrEqual(host.getBoundingClientRect().right + 1);
+		}
+		host.style.width = originalWidth;
 	}
 };
 
@@ -1801,7 +2105,7 @@ export const AnonymousGuestWithoutDisplayNameSeesTheAnchor: Story = {
 			expect(canvasElement.querySelector('.messageItem')).not.toBeNull();
 		});
 		await expect(canvasElement.textContent).not.toContain('Karina P');
-		await expect(canvasElement.textContent).toContain('karina p');
+		await expect(canvasElement.textContent).toContain('karina.p');
 	}
 };
 
@@ -1853,6 +2157,613 @@ export const InternalGroupColleagueName: Story = {
 			expect(canvasElement.querySelector('.messageItem')).not.toBeNull();
 		});
 		await expect(canvasElement.textContent).not.toContain('Angela K');
-		await expect(canvasElement.textContent).toContain('angela k');
+		await expect(canvasElement.textContent).toContain('angela.k');
 	}
+};
+
+export const InformationalGrantedForAsker: Story = {
+	name: 'Persisted handover — passive informational grant',
+	decorators: [
+		(Story) => (
+			<StandingAccessPreferenceStoryFixture
+				sessionId={mockActiveSession1on1().item.id}
+			>
+				<Story />
+			</StandingAccessPreferenceStoryFixture>
+		)
+	],
+	globals: { ...desktop1440Globals, locale: 'de' },
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData({
+			userId: MOCK_ASKER_MATRIX_ID,
+			grantedAuthorities: [AUTHORITIES.ASKER_DEFAULT]
+		})
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: false,
+			userId: 'system',
+			displayName: 'system',
+			username: 'system',
+			message:
+				'[SYSTEM_NOTIFICATION]' +
+				JSON.stringify({
+					type: 'CASE_HANDOVER_GRANTED',
+					description:
+						'Ihre neue Fachkraft hat die Beratung übernommen.',
+					handover: {
+						requestId: 42,
+						clientConsent: 'NONE',
+						accessType: 'TAKEOVER'
+					}
+				})
+		}),
+		...baseHandlers
+	},
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await expect(
+			await canvas.findByText(
+				'Ihre neue Fachkraft hat die Beratung übernommen.'
+			)
+		).toBeInTheDocument();
+		await expect(within(document.body).queryByRole('dialog')).toBeNull();
+		const bubble = canvasElement.querySelector<HTMLElement>(
+			'.messageItem__message--systemNotification'
+		)!;
+		const header = canvasElement.querySelector<HTMLElement>(
+			'.carimatMessageFrame__header'
+		)!;
+		const more = canvas.getByRole('button', {
+			name: /Mehr erfahren|Learn more/
+		});
+		await waitFor(() => {
+			expect(
+				bubble.getBoundingClientRect().top -
+					header.getBoundingClientRect().bottom
+			).toBeLessThanOrEqual(5);
+			expect(more.getBoundingClientRect().width).toBeLessThan(200);
+		});
+		await expect(more).toHaveClass('button__link');
+		await expect(more).toHaveAttribute('aria-haspopup', 'dialog');
+		more.focus();
+		await waitFor(() => {
+			const style = getComputedStyle(more);
+			expect(parseFloat(style.outlineWidth)).toBeGreaterThan(0);
+			expect(parseFloat(style.borderRadius)).toBeGreaterThan(0);
+			expect(more.getBoundingClientRect().height).toBeGreaterThanOrEqual(
+				44
+			);
+			const copy = bubble.querySelector<HTMLElement>(
+				'.messageItem__systemNotificationDescription'
+			)!;
+			expect(bubble.getBoundingClientRect().height).toBeLessThanOrEqual(
+				copy.getBoundingClientRect().height +
+					more.getBoundingClientRect().height +
+					bubble
+						.querySelector<HTMLElement>(
+							'.carimatMessageFrame__topic'
+						)!
+						.getBoundingClientRect().height +
+					bubble
+						.querySelector<HTMLElement>('.messageItem__timeRail')!
+						.getBoundingClientRect().height +
+					44
+			);
+		});
+		await userEvent.click(
+			canvas.getByRole('button', { name: /Mehr erfahren|Learn more/ })
+		);
+		const dialog = within(await within(document.body).findByRole('dialog'));
+		await expect(await dialog.findByRole('switch')).not.toBeChecked();
+	}
+};
+export const InformationalGrantedForAskerMobile: Story = {
+	...InformationalGrantedForAsker,
+	name: 'Persisted informational grant — phone 390',
+	globals: phone390Globals,
+	parameters: {
+		...InformationalGrantedForAsker.parameters,
+		...mobileParameters
+	}
+};
+
+export const InformationalGrantedForAskerTablet: Story = {
+	...InformationalGrantedForAsker,
+	name: 'Persisted informational grant — tablet 834',
+	globals: { ...tablet834Globals, locale: 'de' }
+};
+export const InformationalGrantedForAskerRussianMobile: Story = {
+	...InformationalGrantedForAskerMobile,
+	name: 'Persisted informational grant — Russian phone',
+	globals: { ...phone390Globals, locale: 'ru' },
+	play: async ({ canvasElement }) => {
+		const more = canvasElement.querySelector<HTMLButtonElement>(
+			'.caseHandoverInformational__more button'
+		);
+		await waitFor(() => expect(more).toBeTruthy());
+		await userEvent.click(more!);
+		const dialog = await within(document.body).findByRole('dialog');
+		await expect(
+			await within(dialog).findByRole('switch')
+		).not.toBeChecked();
+		await expect(dialog.scrollWidth).toBeLessThanOrEqual(
+			dialog.clientWidth + 1
+		);
+	}
+};
+export const InformationalGrantedNotificationContinuation: Story = {
+	...InformationalGrantedForAsker,
+	name: 'Persisted informational grant — manual notification continuation',
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await expect(
+			canvasElement.querySelector('.notificationChoiceHost')
+		).toBeNull();
+		await userEvent.click(
+			await canvas.findByRole('button', {
+				name: /Mehr erfahren|Learn more/
+			})
+		);
+		const dialog = within(await within(document.body).findByRole('dialog'));
+		await userEvent.click(
+			dialog.getByRole('button', {
+				name: /Benachrichtigungen einrichten|Set up notifications/
+			})
+		);
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector('.notificationChoiceHost')
+			).toBeTruthy()
+		);
+		await expect(
+			canvasElement
+				.querySelector('.notificationChoiceHost')
+				?.closest('.messageItem__message')
+		).toBeNull();
+		const grant = canvasElement.querySelector<HTMLElement>(
+			'.messageItem__message--systemNotification'
+		)!;
+		const setup = canvasElement
+			.querySelector<HTMLElement>('.notificationChoiceHost')!
+			.closest<HTMLElement>('.erstantwort__bubble')!;
+		await waitFor(() => {
+			const grantBounds = grant.getBoundingClientRect();
+			const setupBounds = setup.getBoundingClientRect();
+			expect(
+				Math.abs(grantBounds.width - setupBounds.width)
+			).toBeLessThanOrEqual(1);
+			expect(
+				Math.abs(grantBounds.left - setupBounds.left)
+			).toBeLessThanOrEqual(1);
+			expect(grant.scrollWidth).toBeLessThanOrEqual(
+				grant.clientWidth + 1
+			);
+		});
+	}
+};
+
+export const InformationalGrantedNotificationContinuationMobile: Story = {
+	...InformationalGrantedNotificationContinuation,
+	name: 'Persisted notification continuation — phone 390',
+	globals: { ...phone390Globals, locale: 'de' }
+};
+export const InformationalGrantedNotificationContinuationTablet: Story = {
+	...InformationalGrantedNotificationContinuation,
+	name: 'Persisted notification continuation — tablet 834',
+	globals: { ...tablet834Globals, locale: 'de' }
+};
+
+export const GrantedPreferenceSaveAndReadBack: Story = {
+	...InformationalGrantedForAsker,
+	name: 'Persisted grant — scoped preference save and readback',
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const more = await canvas.findByRole('button', {
+			name: /Mehr erfahren|Learn more/
+		});
+		await expect(
+			more.closest('.messageItem__message--systemNotification')
+		).toBeTruthy();
+		await expect(
+			canvasElement.querySelectorAll(
+				'.messageItem__message--systemNotification'
+			)
+		).toHaveLength(1);
+		await userEvent.click(more);
+		const page = within(document.body);
+		const control = await page.findByRole('switch');
+		await expect(control).not.toBeChecked();
+		await userEvent.click(control);
+		await waitFor(() =>
+			expect(page.queryByRole('dialog')).not.toBeInTheDocument()
+		);
+		await userEvent.click(more);
+		await expect(await page.findByRole('switch')).toBeChecked();
+	}
+};
+export const GrantedPreferenceSaveAndReadBackMobile: Story = {
+	...GrantedPreferenceSaveAndReadBack,
+	globals: { ...phone390Globals, locale: 'de' },
+	parameters: {
+		...GrantedPreferenceSaveAndReadBack.parameters,
+		...mobileParameters
+	}
+};
+export const GrantedPreferenceSaveAndReadBackTablet: Story = {
+	...GrantedPreferenceSaveAndReadBack,
+	globals: { ...tablet834Globals, locale: 'de' }
+};
+
+export const InitialAcceptanceWithScopedPreference: Story = {
+	...GrantedPreferenceSaveAndReadBack,
+	name: 'Initial acceptance — persisted scoped settings notice',
+	args: {
+		...GrantedPreferenceSaveAndReadBack.args,
+		message:
+			'[SYSTEM_NOTIFICATION]' +
+			JSON.stringify({
+				type: 'INQUIRY_ACCEPTED',
+				title: 'Anfrage angenommen',
+				description:
+					'Die Anfrage wurde angenommen. Sie können das Gespräch beginnen.',
+				username: 'freundliches Alpaka Mika',
+				acceptance: {
+					sessionId: mockActiveSession1on1().item.id,
+					acceptedAt: '2026-10-09T10:20:00Z'
+				}
+			})
+	}
+};
+export const InitialAcceptanceWithScopedPreferenceMobile: Story = {
+	...InitialAcceptanceWithScopedPreference,
+	globals: { ...phone390Globals, locale: 'de' },
+	parameters: {
+		...InitialAcceptanceWithScopedPreference.parameters,
+		...mobileParameters
+	}
+};
+export const InitialAcceptanceWithScopedPreferenceTablet: Story = {
+	...InitialAcceptanceWithScopedPreference,
+	globals: { ...tablet834Globals, locale: 'de' }
+};
+
+// Static entry states: capture these before any save or notification continuation.
+export const InitialAcceptanceDefault: Story = {
+	...InitialAcceptanceWithScopedPreference,
+	name: 'Initial acceptance — default chat notice',
+	play: undefined
+};
+export const InitialAcceptanceDefaultMobile: Story = {
+	...InitialAcceptanceDefault,
+	globals: { ...phone390Globals, locale: 'de' },
+	parameters: { ...InitialAcceptanceDefault.parameters, ...mobileParameters }
+};
+export const InitialAcceptanceDefaultTablet: Story = {
+	...InitialAcceptanceDefault,
+	globals: { ...tablet834Globals, locale: 'de' }
+};
+export const GrantedPreferenceDefault: Story = {
+	...GrantedPreferenceSaveAndReadBack,
+	name: 'Persisted handover — default chat notice',
+	play: undefined
+};
+export const GrantedPreferenceDefaultMobile: Story = {
+	...GrantedPreferenceDefault,
+	globals: { ...phone390Globals, locale: 'de' },
+	parameters: { ...GrantedPreferenceDefault.parameters, ...mobileParameters }
+};
+export const GrantedPreferenceDefaultTablet: Story = {
+	...GrantedPreferenceDefault,
+	globals: { ...tablet834Globals, locale: 'de' }
+};
+
+export const CoAccessPreferenceDefault: Story = {
+	...GrantedPreferenceDefault,
+	name: 'Persisted co-access — support notice, no takeover claim',
+	args: {
+		...GrantedPreferenceDefault.args,
+		message:
+			'[SYSTEM_NOTIFICATION]' +
+			JSON.stringify({
+				type: 'CASE_HANDOVER_GRANTED',
+				description:
+					'Eine weitere Fachkraft hat Zugriff auf diese Beratung erhalten.',
+				handover: {
+					requestId: 42,
+					clientConsent: 'NONE',
+					accessType: 'CO_ACCESS'
+				}
+			})
+	}
+};
+export const CoAccessPreferenceDefaultMobile: Story = {
+	...CoAccessPreferenceDefault,
+	globals: { ...phone390Globals, locale: 'de' },
+	parameters: { ...CoAccessPreferenceDefault.parameters, ...mobileParameters }
+};
+export const CoAccessPreferenceDefaultTablet: Story = {
+	...CoAccessPreferenceDefault,
+	globals: { ...tablet834Globals, locale: 'de' }
+};
+
+// Locale-only variants retain the same production rendering and scoped HTTP fixture.
+const localizedAcceptance = (copy: { title: string; text: string }) => ({
+	...InitialAcceptanceDefault.args,
+	message:
+		'[SYSTEM_NOTIFICATION]' +
+		JSON.stringify({
+			...JSON.parse(
+				(InitialAcceptanceDefault.args!.message as string).replace(
+					'[SYSTEM_NOTIFICATION]',
+					''
+				)
+			),
+			title: copy.title,
+			description: copy.text
+		})
+});
+export const InitialAcceptanceDefaultEnglish: Story = {
+	...InitialAcceptanceDefaultMobile,
+	globals: { ...phone390Globals, locale: 'en' },
+	args: localizedAcceptance(
+		englishCatalogue.notifications.events.inquiryAccepted
+	)
+};
+export const InitialAcceptanceDefaultLongestTranslation: Story = {
+	...InitialAcceptanceDefaultMobile,
+	globals: { ...phone390Globals, locale: 'fr' },
+	args: localizedAcceptance(
+		frenchCatalogue.notifications.events.inquiryAccepted
+	)
+};
+export const GrantedPreferenceDefaultEnglish: Story = {
+	...GrantedPreferenceDefaultMobile,
+	globals: { ...phone390Globals, locale: 'en' }
+};
+export const GrantedPreferenceDefaultLongestTranslation: Story = {
+	...GrantedPreferenceDefaultMobile,
+	globals: { ...phone390Globals, locale: 'fr' }
+};
+export const CoAccessPreferenceDefaultEnglish: Story = {
+	...CoAccessPreferenceDefaultMobile,
+	globals: { ...phone390Globals, locale: 'en' }
+};
+export const CoAccessPreferenceDefaultLongestTranslation: Story = {
+	...CoAccessPreferenceDefaultMobile,
+	globals: { ...phone390Globals, locale: 'fr' }
+};
+
+export const GrantedPreferenceDefaultRussianLabelStress: Story = {
+	...GrantedPreferenceDefaultMobile,
+	globals: { ...phone390Globals, locale: 'ru' }
+};
+
+const SUPERVISION_NOTE =
+	'Du hast das gut eingeordnet. Frag beim nächsten Mal direkt nach dem Mietvertrag, dann sparst du dir den Umweg.';
+
+/** Feedback aus der Supervision: ruhige Outline, Supervisions-Icon, Kennzeichnung neben der Zeit. */
+export const SupervisorFeedback: Story = {
+	name: 'Feedback aus der Supervision',
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData()
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: false,
+			userId: MOCK_ASKER_MATRIX_ID,
+			askerMatrixUserId: MOCK_ASKER_MATRIX_ID,
+			message: `${SUPERVISOR_FEEDBACK_PREFIX} ${SUPERVISION_NOTE}`
+		}),
+		...baseHandlers
+	},
+	play: async ({ canvasElement }) => {
+		const tag = canvasElement.querySelector(
+			'.messageItem__feedbackTag'
+		) as HTMLElement;
+		expect(tag?.textContent).toMatch(/Feedback/);
+		// On the time row, not above the text.
+		expect(tag.parentElement?.className).toContain('messageItem__timeRail');
+		expect(
+			canvasElement.querySelector('.messageItem__supervisionAvatar svg')
+		).toBeTruthy();
+	}
+};
+
+const VoiceNoteMessage = ({
+	seconds,
+	isMyMessage
+}: {
+	seconds: number;
+	isMyMessage: boolean;
+}) => {
+	const src = useSilentAudio(seconds);
+	const name = 'sprachnachricht.webm';
+	return (
+		<MessageItemComponent
+			{...(mockMessageItemComponentProps({
+				isMyMessage,
+				userId: MOCK_ASKER_MATRIX_ID,
+				askerMatrixUserId: MOCK_ASKER_MATRIX_ID,
+				message: ''
+			}) as React.ComponentProps<typeof MessageItemComponent>)}
+			{...baseHandlers}
+			attachments={[
+				{
+					title: name,
+					downloadUrl: src,
+					mediaType: 'audio/webm',
+					size: 48
+				} as never
+			]}
+			file={{ _id: 'voice', name, type: 'audio/webm' } as never}
+		/>
+	);
+};
+
+/** So sieht eine Sprachnachricht versendet im Chat aus, kurz und lang, ein- und ausgehend. */
+export const SentVoiceNotes: Story = {
+	name: 'Sprachnachricht, versendet',
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData()
+	},
+	render: () => (
+		<>
+			<VoiceNoteMessage seconds={6} isMyMessage />
+			<VoiceNoteMessage seconds={14} isMyMessage={false} />
+			<VoiceNoteMessage seconds={95} isMyMessage />
+		</>
+	)
+};
+
+const captionedFile = (isMyMessage: boolean, message: string) => {
+	const props = mockMessageItemComponentProps({
+		isMyMessage,
+		userId: MOCK_ASKER_MATRIX_ID,
+		askerMatrixUserId: MOCK_ASKER_MATRIX_ID,
+		message
+	}) as React.ComponentProps<typeof MessageItemComponent>;
+	return (
+		<MessageItemComponent
+			{...props}
+			{...baseHandlers}
+			attachments={[
+				{
+					title: 'befund.pdf',
+					downloadUrl: 'https://media.storybook.test/befund.pdf',
+					type: 'file',
+					mediaType: 'application/pdf',
+					size: 1_250_000,
+					hasCaption: message !== 'befund.pdf'
+				}
+			]}
+			file={{ name: 'befund.pdf', type: 'application/pdf' }}
+		/>
+	);
+};
+
+/** Was die Empfängerin sieht: eine Nachricht, erst die Datei, darunter der Text. */
+export const FileWithCaption: Story = {
+	name: 'Datei mit Beschriftung, und ohne',
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData()
+	},
+	render: () => (
+		<>
+			{captionedFile(false, 'Bitte Seite 2 lesen')}
+			{captionedFile(true, 'Das ist der **Befund** vom Montag')}
+			{captionedFile(false, 'befund.pdf')}
+		</>
+	),
+	play: async ({ canvasElement }) => {
+		const captions = canvasElement.querySelectorAll(
+			'.messageItem__attachmentCaption'
+		);
+		expect(captions).toHaveLength(2);
+		expect(captions[0].textContent).toBe('Bitte Seite 2 lesen');
+		// The same formatting a text message gets.
+		expect(captions[1].querySelector('strong')?.textContent).toBe('Befund');
+		// Without a caption the name is not repeated as text under the file.
+		expect(canvasElement.textContent).not.toContain('befund.pdfbefund.pdf');
+	}
+};
+
+/**
+ * #2135 battle test: everything the composer can format, sent through the real
+ * send path (`composerHtmlToTransportMarkup`) and shown as it arrives. The
+ * composer and the bubble share `_richTextContent.scss`, so this is also what
+ * the sender saw while writing. The table row lines are what a pasted table
+ * becomes (`flattenPastedTables`).
+ */
+const FORMATTED_COMPOSER_HTML = [
+	'<p style="text-align: left;">Alles, was das Eingabefeld formatiert:</p>',
+	'<h1>Überschrift eins</h1>',
+	'<h2>Überschrift zwei</h2>',
+	'<h3>Überschrift drei</h3>',
+	'<p>Text mit <strong>fett</strong>, <em>kursiv</em>, <u>unterstrichen</u>, <s>durchgestrichen</s> und <code>code</code>.</p>',
+	'<p></p>',
+	'<ol><li><p>Erster Punkt</p></li><li><p>Zweiter Punkt</p><ol><li><p>Unterpunkt</p></li></ol></li><li><p>Dritter Punkt</p></li></ol>',
+	'<ul><li><p>Aufzählung A</p></li><li><p>Aufzählung B</p></li></ul>',
+	'<ul data-type="taskList"><li data-checked="true" data-type="taskItem"><label><input type="checkbox" checked="checked"><span></span></label><div><p>Erledigte Aufgabe</p></div></li><li data-checked="false" data-type="taskItem"><label><input type="checkbox"><span></span></label><div><p>Offene Aufgabe</p></div></li></ul>',
+	'<p>Link: <a target="_blank" rel="noopener noreferrer nofollow" href="https://oriso.org">https://oriso.org</a></p>',
+	'<hr>',
+	'<p>Nach der Linie.</p>',
+	'<blockquote><p>Ein Zitat aus einer Mail</p></blockquote>',
+	'<p>Spalte A | Spalte B</p><p>1 | 2</p>',
+	'<p></p>'
+].join('');
+
+const verifyFormattedMessage = async ({
+	canvasElement
+}: {
+	canvasElement: HTMLElement;
+}) => {
+	const canvas = within(canvasElement);
+	const showMore = canvas.queryByRole('button', {
+		name: /^(Mehr anzeigen|Show more)$/
+	});
+	if (showMore) {
+		await userEvent.click(showMore);
+	}
+	const bubble = canvasElement.querySelector('.messageItem__message');
+	await waitFor(() => expect(bubble?.querySelector('hr')).not.toBeNull());
+	for (const tag of ['h1', 'h2', 'h3', 'ol ol', 'blockquote', 'code']) {
+		expect(bubble?.querySelector(tag)).not.toBeNull();
+	}
+	// The blank line between text keeps one line; the trailing one is dropped.
+	const emptyParagraphs = Array.from(
+		bubble?.querySelectorAll('p:empty') ?? []
+	);
+	expect(emptyParagraphs).toHaveLength(1);
+	expect(emptyParagraphs[0].getBoundingClientRect().height).toBeGreaterThan(
+		0
+	);
+	// A heading reads as a heading, not as a page title.
+	const h1Size = parseFloat(
+		getComputedStyle(bubble?.querySelector('h1') as Element).fontSize
+	);
+	expect(h1Size).toBeLessThanOrEqual(21);
+};
+
+export const FormattedIncoming: Story = {
+	name: 'Formatted message — incoming',
+	globals: desktop1440Globals,
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData()
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: false,
+			userId: MOCK_ASKER_MATRIX_ID,
+			askerMatrixUserId: MOCK_ASKER_MATRIX_ID,
+			message: composerHtmlToTransportMarkup(FORMATTED_COMPOSER_HTML)
+		}),
+		...baseHandlers
+	},
+	play: verifyFormattedMessage
+};
+
+export const FormattedOutgoing: Story = {
+	name: 'Formatted message — outgoing',
+	globals: desktop1440Globals,
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData()
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: true,
+			userId: MOCK_CONSULTANT_MATRIX_ID,
+			displayName: 'Karina P',
+			username: 'karina.p@oriso.invalid',
+			message: composerHtmlToTransportMarkup(FORMATTED_COMPOSER_HTML)
+		}),
+		...baseHandlers
+	},
+	play: verifyFormattedMessage
 };

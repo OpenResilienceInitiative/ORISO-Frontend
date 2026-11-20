@@ -1,7 +1,7 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import * as React from 'react';
 import { renderHook, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import { AppConfigContext } from '../globalState/provider/AppConfigProvider';
 import { AppConfigInterface } from '../globalState/interfaces';
 import useTenantTheming from './useTenantTheming';
@@ -243,5 +243,127 @@ describe('useTenantTheming – Theme Builder preview seeds', () => {
 		renderHook(() => useTenantTheming(), { wrapper });
 
 		await waitFor(() => expect(appliedPrimary()).not.toBe(''));
+	});
+});
+
+/**
+ * #1788: a changed or failed link-selected centre must not leave the previous
+ * centre's title, favicon, theme-color and palette behind.
+ */
+describe('useTenantTheming – restore default look (#1788)', () => {
+	const primary = () =>
+		document.documentElement.style.getPropertyValue('--m3-primary');
+	const themeColor = () =>
+		document
+			.querySelector("meta[name='theme-color']")
+			?.getAttribute('content') ?? null;
+
+	const setAid = (aid: string) =>
+		window.history.replaceState({}, '', `/login?aid=${aid}`);
+
+	beforeEach(() => {
+		mocks.apiGetTenantTheming.mockReset();
+		document.documentElement.removeAttribute('style');
+		document.title = 'ORISO';
+		document.head.innerHTML = `
+			<title>ORISO</title>
+			<meta name="theme-color" content="#000000" />
+			<link rel="icon" type="image/png" sizes="32x32" href="/favicon.ico" />
+		`;
+		location.subdomain = 'beratung';
+		setAid('1');
+	});
+
+	const renderWithAid = () => {
+		let rerender: () => void = () => undefined;
+		const result = renderHook(() => useTenantTheming(), { wrapper });
+		rerender = () => result.rerender();
+		return { ...result, rerender };
+	};
+
+	it('restores the default look when the next lookup fails', async () => {
+		mocks.apiGetTenantTheming.mockResolvedValueOnce(
+			tenantResponse(STORED_ICO)
+		);
+		const { rerender } = renderWithAid();
+		await waitFor(() => expect(document.title).toBe('Beratung'));
+		expect(primary()).not.toBe('');
+
+		mocks.apiGetTenantTheming.mockRejectedValueOnce(new Error('nope'));
+		setAid('2');
+		rerender();
+
+		await waitFor(() => expect(document.title).toBe('ORISO'));
+		expect(themeColor()).toBe('#000000');
+		expect(iconHrefs()).toEqual(['/favicon.ico']);
+		const icon = document.querySelector("link[rel~='icon']");
+		expect(icon?.getAttribute('sizes')).toBe('32x32');
+		expect(icon?.getAttribute('type')).toBe('image/png');
+		expect(primary()).toBe('');
+	});
+
+	it('restores the default look as soon as the aid changes', async () => {
+		mocks.apiGetTenantTheming.mockResolvedValueOnce(
+			tenantResponse(STORED_ICO)
+		);
+		const { rerender } = renderWithAid();
+		await waitFor(() => expect(document.title).toBe('Beratung'));
+
+		let release: (value: unknown) => void = () => undefined;
+		mocks.apiGetTenantTheming.mockReturnValueOnce(
+			new Promise((resolve) => {
+				release = resolve;
+			})
+		);
+		setAid('2');
+		rerender();
+
+		await waitFor(() => expect(document.title).toBe('ORISO'));
+		expect(primary()).toBe('');
+		release({ id: 8, name: 'Zweite Stelle' });
+		await waitFor(() => expect(document.title).toBe('Zweite Stelle'));
+	});
+
+	it('keeps the Theme Builder preview palette when the aid changes and the lookup fails', async () => {
+		window.history.replaceState(
+			{},
+			'',
+			'/theme-demo?themePreviewPrimary=0061ff&aid=1'
+		);
+		mocks.apiGetTenantTheming.mockResolvedValueOnce(
+			tenantResponse(STORED_ICO)
+		);
+		const { rerender } = renderWithAid();
+		await waitFor(() => expect(primary()).not.toBe(''));
+		const preview = primary();
+
+		mocks.apiGetTenantTheming.mockRejectedValueOnce(new Error('nope'));
+		window.history.replaceState(
+			{},
+			'',
+			'/theme-demo?themePreviewPrimary=0061ff&aid=2'
+		);
+		rerender();
+
+		await waitFor(() =>
+			expect(mocks.apiGetTenantTheming).toHaveBeenCalledTimes(2)
+		);
+		await waitFor(() => expect(document.title).toBe('ORISO'));
+		expect(primary()).toBe(preview);
+	});
+
+	it('leaves the single-centre link untouched', async () => {
+		mocks.apiGetTenantTheming.mockResolvedValue(tenantResponse(STORED_ICO));
+		const { rerender } = renderWithAid();
+		await waitFor(() => expect(document.title).toBe('Beratung'));
+
+		rerender();
+
+		await waitFor(() =>
+			expect(mocks.apiGetTenantTheming).toHaveBeenCalled()
+		);
+		expect(document.title).toBe('Beratung');
+		expect(themeColor()).toBe('#123456');
+		expect(primary()).not.toBe('');
 	});
 });

@@ -1,5 +1,8 @@
-import { ALL_ANIMAL_FILES } from './pseudonymGenerator';
-import type { UserDataInterface } from '../globalState/interfaces';
+import {
+	ALL_ANIMAL_FILES,
+	type Avatar,
+	generateAvatarForUser
+} from './pseudonymGenerator';
 
 /** The id the backend and Admin store: the lower-case file stem, e.g. `magpie`. */
 export const avatarIdOfFile = (file: string): string =>
@@ -18,27 +21,57 @@ export const COUNSELLOR_MOTIF_FILES = ALL_ANIMAL_FILES.filter(
 	(file) => avatarIdOfFile(file) !== 'crane'
 );
 
-export interface AvatarChoice {
-	file: string;
-	/** Counsellor motifs sit on primary / on-primary, like in Admin. */
-	onPrimary: boolean;
+export interface AvatarIdentity {
+	avatarKind?: string | null;
+	avatarId?: string | null;
 }
 
-/**
- * What the user picked in their profile (#1240), or null for the default the
- * app derives from the user id. Only counsellors carry `avatarKind`, and they
- * have a motif only with ICON.
- */
+export type AvatarChoice =
+	| { kind: 'animal'; file: string }
+	| { kind: 'motif'; file: string }
+	| { kind: 'initials' };
+
+/** Resolve stored avatar metadata once for own and recipient surfaces. */
 export const chosenAvatarOf = (
-	userData?: Pick<UserDataInterface, 'avatarKind' | 'avatarId'> | null
+	identity?: AvatarIdentity | null
 ): AvatarChoice | null => {
-	if (userData?.avatarKind) {
-		const motif =
-			userData.avatarKind === 'ICON'
-				? avatarFileOfId(userData.avatarId)
-				: null;
-		return motif ? { file: motif, onPrimary: true } : null;
+	if (identity?.avatarKind === 'INITIALS') return { kind: 'initials' };
+	if (identity?.avatarKind === 'ICON') {
+		const file = avatarFileOfId(identity.avatarId);
+		return file ? { kind: 'motif', file } : { kind: 'initials' };
 	}
-	const animal = avatarFileOfId(userData?.avatarId);
-	return animal ? { file: animal, onPrimary: false } : null;
+	if (identity?.avatarKind) return null;
+	const file = avatarFileOfId(identity?.avatarId);
+	return file ? { kind: 'animal', file } : null;
+};
+
+/**
+ * Counsellors always render on the tenant's primary pair (Figma: counsellor
+ * circle is the primary colour). A pick becomes a motif, anything else initials,
+ * so the derived animal palette is reserved for advice seekers.
+ */
+export const counsellorChoiceOf = (
+	choice?: AvatarChoice | null
+): Exclude<AvatarChoice, { kind: 'animal' }> => {
+	if (choice?.kind === 'motif' || choice?.kind === 'initials') return choice;
+	if (choice?.kind === 'animal' && avatarIdOfFile(choice.file) !== 'crane')
+		return { kind: 'motif', file: choice.file };
+	return { kind: 'initials' };
+};
+
+/**
+ * An advice seeker's own animal: the stored pick, on the palette derived from
+ * `seed` as everywhere else. Without a usable pick, the derived animal.
+ * FE#2209: a surface that derives the animal from the id alone shows a
+ * different animal than the one the person chose.
+ */
+export const ownAskerAvatar = (
+	seed: string,
+	identity?: AvatarIdentity | null
+): Avatar => {
+	const derived = generateAvatarForUser(seed);
+	const choice = chosenAvatarOf(identity);
+	return choice?.kind === 'animal'
+		? { ...derived, file: choice.file }
+		: derived;
 };

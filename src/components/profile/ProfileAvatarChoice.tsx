@@ -9,6 +9,7 @@ import {
 	UserDataContext
 } from '../../globalState';
 import { useUserMutate } from '../../hooks/useUserMutate';
+import { useOwnAvatarUserId } from '../../hooks/useOwnAvatarUserId';
 import {
 	ALL_ANIMAL_FILES,
 	generateAvatarForUser
@@ -19,36 +20,37 @@ import {
 	COUNSELLOR_MOTIF_FILES
 } from '../../utils/avatarChoice';
 import { AvatarPicker } from './AvatarPicker/AvatarPicker';
+import { Text } from '../text/Text';
 
 interface ProfileAvatarChoiceProps {
 	/** The id the user's default avatar is derived from (as in the header). */
-	avatarUserId: string;
+	avatarUserId?: string;
 }
 
 /**
- * The avatar row in the profile header (#878 phase 4, US#1240). Counsellors
+ * The existing avatar grid inside General's role-specific data card (#1540, US#1240). Counsellors
  * pick from Admin's motif set, advice seekers an animal; the first tile brings
  * back the default derived from the user id. Saves straight away.
  */
 export const ProfileAvatarChoice = ({
 	avatarUserId
-}: ProfileAvatarChoiceProps) => {
+}: ProfileAvatarChoiceProps = {}) => {
 	const { t: translate } = useTranslation();
 	const { userData } = useContext(UserDataContext);
 	const { addNotification } = useContext(NotificationsContext);
+	const ownAvatarUserId = useOwnAvatarUserId();
+	const seed = avatarUserId ?? ownAvatarUserId;
 	const isConsultant = hasUserAuthority(
 		AUTHORITIES.CONSULTANT_DEFAULT,
 		userData
 	);
-	const derived = useMemo(
-		() => generateAvatarForUser(avatarUserId),
-		[avatarUserId]
-	);
+	const derived = useMemo(() => generateAvatarForUser(seed), [seed]);
 	const askerColors = useMemo(
 		() => ({ bg: derived.bg, iconColor: derived.iconColor }),
 		[derived]
 	);
-	const saved = chosenAvatarOf(userData)?.file ?? null;
+	const choice = chosenAvatarOf(userData);
+	const saved = choice && choice.kind !== 'initials' ? choice.file : null;
 	// Shows the pick at once; the reloaded user data takes over afterwards.
 	const [pending, setPending] = useState<string | null | undefined>();
 
@@ -70,8 +72,8 @@ export const ProfileAvatarChoice = ({
 		setPending(file);
 		const avatarId = file ? avatarIdOfFile(file) : '';
 		mutate(
-			isConsultant
-				? { avatarKind: file ? 'ICON' : 'INITIALS', avatarId }
+			isConsultant && file
+				? { avatarKind: 'ICON', avatarId }
 				: { avatarId }
 		);
 	};
@@ -81,8 +83,9 @@ export const ProfileAvatarChoice = ({
 			className="profile__avatarChoice"
 			data-testid="profile-avatar-choice"
 		>
+			<Text text={translate('profile.avatar.label')} type="standard" />
 			<AvatarPicker
-				layout="row"
+				layout="grid"
 				role={isConsultant ? 'consultant' : 'asker'}
 				files={isConsultant ? COUNSELLOR_MOTIF_FILES : ALL_ANIMAL_FILES}
 				value={pending !== undefined ? pending : saved}
@@ -90,7 +93,11 @@ export const ProfileAvatarChoice = ({
 				label={translate('profile.avatar.label')}
 				defaultTile={{
 					avatar: derived,
-					label: translate('profile.avatar.default')
+					label: translate('profile.avatar.default'),
+					selected:
+						pending !== undefined
+							? pending === null
+							: choice === null
 				}}
 				askerColors={isConsultant ? undefined : askerColors}
 				disabled={loading}

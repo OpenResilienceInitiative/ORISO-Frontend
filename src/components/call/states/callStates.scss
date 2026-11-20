@@ -1,0 +1,583 @@
+/*
+ * The incoming-call card and the minimized dock (FE#1904), in the call
+ * stage's language: plates 1c (control atoms), 2b (Einzelgespräch header)
+ * and 5c (mobile, floating) of "Dynamische Call-Ansichten".
+ */
+
+.call-surface-layer {
+	/*
+	 * Above the app shell (MUI app bar 1100, drawer 1200), below system
+	 * dialogs (MUI modal 1300, snackbar 1400): a consent or session-expiry
+	 * dialog must still be answerable while a call rings.
+	 */
+	--call-surface-z: 1250;
+	/*
+	 * A ringing call is the exception: it must never ring unseen behind the
+	 * full call (10000), the composer (999999) or a dialog (Frank, 28 Oct).
+	 * Close to the browser's maximum, so nothing in the app can cover it.
+	 */
+	--call-incoming-z: 2147483000;
+	--call-hangup: var(--m3-error-container, #de0077);
+	/* Black, not green: the call stays in its own monochrome (Frank, 28 Oct). */
+	--call-answer: #000;
+	--call-motion: 250ms cubic-bezier(0.2, 0, 0, 1);
+	/* The phone dock sits above the bottom navigation, not on it. */
+	--call-dock-bottom-offset: 12px;
+
+	/*
+	 * Not a full-screen sheet: two calls' layers must not lie over each
+	 * other (or over the app) as invisible panes. The card and the dock are
+	 * fixed to the viewport and carry the z-index themselves.
+	 */
+	font-family: $font-family-sans-serif;
+
+	@media (max-width: 599px) {
+		--call-dock-bottom-offset: calc(
+			env(safe-area-inset-bottom, 0px) + 76px
+		);
+	}
+}
+
+.call-visually-hidden {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
+}
+
+/* ── Shared atoms (plate 1c) ─────────────────────────────────────────── */
+
+/* Under the layer, so MUI's own ButtonBase reset does not win the tie. */
+.call-surface-layer .call-fab {
+	width: 56px;
+	height: 56px;
+	border-radius: 50%;
+	color: #fff;
+	transition:
+		filter var(--call-motion),
+		transform var(--call-motion);
+
+	svg {
+		width: 24px;
+		height: 24px;
+	}
+
+	svg path,
+	svg use {
+		fill: currentColor;
+		fill-opacity: 1;
+	}
+
+	&:hover {
+		filter: brightness(0.92);
+	}
+
+	&:focus-visible {
+		outline: 3px solid var(--m3-primary, #a5000a);
+		outline-offset: 3px;
+	}
+
+	/* One handset for answer and hang-up, turned down to end (Frank, 28 Oct). */
+	&--hangup {
+		background: var(--call-hangup);
+
+		svg {
+			transform: rotate(135deg);
+		}
+	}
+
+	&--answer {
+		background: var(--call-answer);
+	}
+}
+
+.call-surface-layer .call-icon-button {
+	width: 40px;
+	height: 40px;
+	border-radius: 100px;
+	color: var(--m3-on-surface-variant, #49454f);
+	flex-shrink: 0;
+	transition: background-color var(--call-motion);
+
+	svg {
+		width: 20px;
+		height: 20px;
+	}
+
+	svg path {
+		fill: currentColor;
+	}
+
+	&:hover {
+		background: rgba(73, 69, 79, 0.08);
+	}
+
+	&:focus-visible {
+		outline: 3px solid var(--m3-primary, #a5000a);
+		outline-offset: 1px;
+	}
+
+	/* An active toggle reads as the control bar's filled state (1c). */
+	&--off {
+		background: var(--m3-secondary-container, #646d78);
+		color: #fbf4d3;
+
+		&:hover {
+			background: var(--m3-secondary, #4c555f);
+		}
+	}
+}
+
+.call-action {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 8px;
+	min-width: 88px;
+
+	&__label {
+		font-size: 13px;
+		line-height: 16px;
+		font-weight: 500;
+		color: var(--m3-on-surface-variant, #444748);
+		text-align: center;
+	}
+}
+
+/* ── Incoming call ───────────────────────────────────────────────────── */
+
+@keyframes call-card-enter {
+	from {
+		opacity: 0;
+		transform: translateY(-12px) scale(0.98);
+	}
+}
+
+@keyframes call-ring-pulse {
+	from {
+		transform: scale(1);
+		opacity: 0.55;
+	}
+	to {
+		transform: scale(1.55);
+		opacity: 0;
+	}
+}
+
+.incoming-call-card {
+	position: fixed;
+	z-index: var(--call-incoming-z);
+	top: 24px;
+	right: 24px;
+	width: 360px;
+	box-sizing: border-box;
+	padding: 28px 24px 24px;
+	border-radius: 28px;
+	background: var(--m3-surface, #fcf9f9);
+	color: var(--m3-on-surface, #1a1c1e);
+	box-shadow:
+		0 4px 8px 3px rgba(0, 0, 0, 0.15),
+		0 1px 3px rgba(0, 0, 0, 0.3);
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	text-align: center;
+	animation: call-card-enter 300ms cubic-bezier(0.2, 0, 0, 1);
+
+	&__ring {
+		position: relative;
+		width: 88px;
+		height: 88px;
+		margin: 8px 0 20px;
+		display: grid;
+		place-items: center;
+
+		> :not(.incoming-call-card__pulse) {
+			position: relative;
+		}
+	}
+
+	&__pulse {
+		position: absolute;
+		inset: 0;
+		border-radius: 50%;
+		background: var(--m3-primary-fixed, #ffdad5);
+		animation: call-ring-pulse 1800ms cubic-bezier(0.2, 0, 0, 1) infinite;
+
+		&--late {
+			animation-delay: 900ms;
+		}
+	}
+
+	&__unknown {
+		width: 88px;
+		height: 88px;
+		border-radius: 50%;
+		background: var(--m3-surface-container-high, #eae7e8);
+		border: 4px solid #fff;
+		box-sizing: border-box;
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+		display: grid;
+		place-items: center;
+		color: var(--m3-on-surface-variant, #444748);
+
+		svg {
+			width: 44px;
+			height: 44px;
+			fill: currentColor;
+		}
+	}
+
+	&__name {
+		margin: 0;
+		font-size: 22px;
+		line-height: 28px;
+		font-weight: 500;
+		max-width: 100%;
+		overflow-wrap: anywhere;
+	}
+
+	&__meta {
+		margin: 6px 0 0;
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		font-size: 13px;
+		line-height: 18px;
+		color: #666469;
+
+		svg {
+			width: 16px;
+			height: 16px;
+		}
+
+		svg path,
+		svg use {
+			fill: currentColor;
+		}
+	}
+
+	&__busy {
+		margin: 16px 0 0;
+		padding: 10px 14px;
+		border-radius: 12px;
+		background: var(--m3-surface-container, #f0edee);
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		text-align: left;
+		font-size: 13px;
+		line-height: 18px;
+		color: var(--m3-on-surface-variant, #444748);
+
+		p {
+			margin: 0;
+		}
+	}
+
+	/* Whom answering ends the call for: their avatar(s), struck through. */
+	&__ending {
+		position: relative;
+		display: inline-flex;
+		flex-shrink: 0;
+		opacity: 0.85;
+
+		> * + * {
+			margin-left: -10px;
+		}
+
+		&::after {
+			content: '';
+			position: absolute;
+			left: -3px;
+			right: -3px;
+			top: 50%;
+			height: 3px;
+			border-radius: 2px;
+			background: var(--call-hangup);
+			box-shadow: 0 0 0 2px var(--m3-surface-container, #f0edee);
+			transform: rotate(-35deg);
+		}
+	}
+
+	&__actions {
+		margin-top: 24px;
+		display: flex;
+		justify-content: center;
+		gap: 48px;
+	}
+
+	@media (max-width: 599px) {
+		top: calc(env(safe-area-inset-top, 0px) + 12px);
+		left: 12px;
+		right: 12px;
+		width: auto;
+		padding: 24px 16px 20px;
+	}
+
+	@media (max-width: 359px) {
+		&__actions {
+			gap: 24px;
+		}
+	}
+
+	/* Landscape phones: a smaller ring, and the card scrolls before the
+	   answer and decline buttons can fall off the screen. */
+	max-height: calc(100dvh - 48px);
+	overflow-y: auto;
+	overscroll-behavior: contain;
+
+	@media (max-height: 500px) {
+		top: calc(env(safe-area-inset-top, 0px) + 12px);
+		max-height: calc(100dvh - 24px);
+		padding: 16px 16px 14px;
+
+		&__ring {
+			width: 56px;
+			height: 56px;
+			margin: 0 0 8px;
+
+			> :not(.incoming-call-card__pulse) {
+				position: absolute;
+				left: 50%;
+				top: 50%;
+				transform: translate(-50%, -50%) scale(0.636);
+			}
+		}
+
+		&__busy {
+			margin-top: 10px;
+		}
+
+		&__actions {
+			margin-top: 12px;
+		}
+	}
+}
+
+/* ── Minimized dock ──────────────────────────────────────────────────── */
+
+@keyframes call-dock-enter {
+	from {
+		opacity: 0;
+		transform: translateY(12px);
+	}
+}
+
+@keyframes call-speaking-bar {
+	0%,
+	100% {
+		transform: scaleY(0.35);
+	}
+	50% {
+		transform: scaleY(1);
+	}
+}
+
+.minimized-call-dock {
+	position: fixed;
+	z-index: var(--call-surface-z);
+	right: 24px;
+	bottom: calc(var(--call-dock-bottom-offset) + 12px);
+	width: 392px;
+	box-sizing: border-box;
+	height: 64px;
+	padding: 0 8px 0 12px;
+	border-radius: 32px;
+	/* White, like the call's own control bar (plate 5b). */
+	background: var(--m3-surface-container-lowest, #fff);
+	box-shadow:
+		0 4px 8px 3px rgba(0, 0, 0, 0.12),
+		0 1px 3px rgba(0, 0, 0, 0.2);
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	animation: call-dock-enter 250ms cubic-bezier(0.2, 0, 0, 1);
+
+	&__who {
+		flex: 1;
+		min-width: 0;
+		display: flex;
+		align-items: center;
+		gap: 10px;
+	}
+
+	&__avatar {
+		position: relative;
+		display: inline-flex;
+		border-radius: 50%;
+		flex-shrink: 0;
+		transition: box-shadow var(--call-motion);
+	}
+
+	&__glyph {
+		width: 40px;
+		height: 40px;
+		border-radius: 50%;
+		display: grid;
+		place-items: center;
+		background: var(--m3-surface-container-high, #eae7e8);
+		color: var(--m3-on-surface-variant, #444748);
+
+		svg {
+			width: 24px;
+			height: 24px;
+		}
+	}
+
+	/* The person speaking is the one the stage lifts; here: a primary ring. */
+	&[data-speaking='true'] &__avatar {
+		box-shadow: 0 0 0 3px var(--m3-primary, #a5000a);
+	}
+
+	&[data-speaking='true'] &__meta {
+		color: var(--m3-primary, #a5000a);
+		font-weight: 500;
+	}
+
+	&__text {
+		min-width: 0;
+		display: flex;
+		flex-direction: column;
+	}
+
+	&__name {
+		font-size: 14px;
+		line-height: 20px;
+		font-weight: 500;
+		color: var(--m3-on-surface, #1a1c1e);
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	&__meta {
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+		font-size: 12px;
+		line-height: 16px;
+		color: #666469;
+		font-variant-numeric: tabular-nums;
+
+		> svg {
+			width: 14px;
+			height: 14px;
+		}
+
+		> svg path,
+		> svg use {
+			fill: currentColor;
+		}
+	}
+
+	&__bars {
+		display: inline-flex;
+		align-items: center;
+		gap: 2px;
+		height: 14px;
+		width: 14px;
+
+		span {
+			width: 3px;
+			height: 100%;
+			border-radius: 2px;
+			background: currentColor;
+			transform-origin: center;
+			animation: call-speaking-bar 900ms ease-in-out infinite;
+
+			&:nth-child(2) {
+				animation-delay: 150ms;
+			}
+
+			&:nth-child(3) {
+				animation-delay: 300ms;
+			}
+		}
+	}
+
+	/* The control bar's atoms: 44px toggles, a 56x48 hang-up stadium (5b). */
+	.call-icon-button {
+		width: 44px;
+		height: 44px;
+
+		svg {
+			width: 24px;
+			height: 24px;
+		}
+	}
+
+	.call-fab--bar {
+		width: 56px;
+		height: 48px;
+		border-radius: 24px;
+		margin-left: 4px;
+	}
+
+	@media (max-width: 599px) {
+		left: 12px;
+		right: 12px;
+		bottom: var(--call-dock-bottom-offset);
+		width: auto;
+		padding: 0 8px;
+	}
+
+	@media (max-width: 359px) {
+		gap: 0;
+
+		&__who {
+			gap: 8px;
+		}
+
+		/* The way back moves into the menu, where it is always listed too. */
+		.call-surface-layer &__expand {
+			display: none;
+		}
+	}
+}
+
+/* MUI portals the menu outside the layer; it uses the shared menu atoms. */
+.call-dock-menu-popper {
+	z-index: 1251; /* just above the dock, still below dialogs */
+}
+
+.chatMenuDropdown.call-dock-menu {
+	/* Wide enough for "Zurück zur großen Ansicht" on one line. */
+	width: max-content;
+	min-width: 240px;
+	max-width: calc(100vw - 24px);
+}
+
+/*
+ * A call ringing while another runs: on a phone the card already names the
+ * running call and the screen has no room for both, so the dock steps back.
+ */
+@media (max-width: 599px) {
+	body:has(.incoming-call-card) .minimized-call-dock {
+		visibility: hidden;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.incoming-call-card,
+	.minimized-call-dock {
+		animation: none;
+	}
+
+	.incoming-call-card__pulse {
+		animation: none;
+		transform: scale(1.18);
+		opacity: 0.6;
+
+		&--late {
+			display: none;
+		}
+	}
+
+	.minimized-call-dock__bars span {
+		animation: none;
+		transform: scaleY(0.7);
+	}
+}

@@ -2,6 +2,7 @@ import clsx from 'clsx';
 import * as React from 'react';
 import type { TFunction } from 'i18next';
 import { useCallback, useRef, useState } from 'react';
+import CloseIcon from '@mui/icons-material/Close';
 import UndoIcon from '@mui/icons-material/Undo';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
@@ -31,6 +32,8 @@ import EventOutlinedIcon from '@mui/icons-material/EventOutlined';
 import { ToolbarButton, ToolbarDivider } from './ToolbarButton';
 import { ToolbarMenu, ToolbarMenuItem } from './ToolbarMenu';
 import { useScrollableBar } from './useScrollableBar';
+import { useChatComposerDisabledFormats } from '../../message/chatMessageConfig';
+import { FORMAT_OF_ACTION } from './extensions/composerFormatGate';
 import type { MenuDirection } from './menuDirection';
 import './composerToolbar.styles.scss';
 
@@ -59,6 +62,12 @@ export interface ComposerToolbarProps {
 	/** Collapse back to the default action bar (Figma close X). */
 	onCollapse: () => void;
 	onExpandToggle: () => void;
+	/**
+	 * The grey format box above the phone composer (Frank, 03.11.): close X,
+	 * bold, italic, text style, list and the rest in the kebab. Navigation and
+	 * maximize stay in the action bar below it.
+	 */
+	inTray?: boolean;
 	translate: TFunction;
 }
 
@@ -114,6 +123,7 @@ export const ComposerToolbar = ({
 	isActionSelected,
 	onCollapse,
 	onExpandToggle,
+	inTray = false,
 	translate
 }: ComposerToolbarProps) => {
 	const [openMenu, setOpenMenu] = useState<ComposerToolbarMenu>(null);
@@ -121,6 +131,16 @@ export const ComposerToolbar = ({
 	// Review v6 (T22): same sideways scrolling as the compact bar.
 	const barRef = useRef<HTMLDivElement | null>(null);
 	useScrollableBar(barRef);
+
+	// Platform setting. Hidden here means only that: the capability stays in the
+	// editor, and a switch back on brings the button back with the next render.
+	const disabledFormats = useChatComposerDisabledFormats();
+	const isOffered = (action: string): boolean => {
+		const format = FORMAT_OF_ACTION[action];
+		return !format || !disabledFormats.has(format);
+	};
+	const offeredItems = (items: ToolbarMenuItem[]): ToolbarMenuItem[] =>
+		items.filter((item) => isOffered(item.key));
 
 	const toggleMenu = useCallback(
 		(menu: Exclude<ComposerToolbarMenu, null>) =>
@@ -185,6 +205,21 @@ export const ComposerToolbar = ({
 		),
 		onSelect: () => onAction(action)
 	}));
+
+	const undoRedoItems: ToolbarMenuItem[] = [
+		{
+			key: 'undo',
+			label: translate('message.submit.toolbar.undo'),
+			glyph: <UndoIcon fontSize="inherit" />,
+			onSelect: () => onAction('undo')
+		},
+		{
+			key: 'redo',
+			label: translate('message.submit.toolbar.redo'),
+			glyph: <RedoIcon fontSize="inherit" />,
+			onSelect: () => onAction('redo')
+		}
+	];
 
 	const overflowItems: ToolbarMenuItem[] = [
 		{
@@ -256,6 +291,9 @@ export const ComposerToolbar = ({
 		}
 	];
 
+	const offeredListItems = offeredItems(listItems);
+	const offeredOverflowItems = offeredItems(overflowItems);
+
 	const MenuChevron =
 		direction === 'up' ? KeyboardArrowUpIcon : KeyboardArrowDownIcon;
 
@@ -306,7 +344,10 @@ export const ComposerToolbar = ({
 
 	return (
 		<div
-			className="composerToolbar"
+			className={clsx(
+				'composerToolbar',
+				inTray && 'composerToolbar--tray'
+			)}
 			data-direction={direction}
 			ref={barRef}
 		>
@@ -349,147 +390,243 @@ export const ComposerToolbar = ({
 				label={translate('message.submit.toolbar.closeTools')}
 				onClick={onCollapse}
 			>
-				<DisabledByDefaultRoundedIcon fontSize="inherit" />
+				{inTray ? (
+					<CloseIcon fontSize="inherit" />
+				) : (
+					<DisabledByDefaultRoundedIcon fontSize="inherit" />
+				)}
 			</ToolbarButton>
 			<ToolbarDivider />
-			<ToolbarButton
-				label={translate('message.submit.toolbar.undo')}
-				onClick={() => onAction('undo')}
-			>
-				<UndoIcon fontSize="inherit" />
-			</ToolbarButton>
-			<ToolbarButton
-				label={translate('message.submit.toolbar.redo')}
-				onClick={() => onAction('redo')}
-			>
-				<RedoIcon fontSize="inherit" />
-			</ToolbarButton>
-			<ToolbarDivider />
-			{renderMenuAnchor(
-				'heading',
-				translate('message.submit.toolbar.heading'),
-				<span className="composerToolbar__hGlyph">H</span>,
-				textStyleItems
-			)}
-			{renderMenuAnchor(
-				'list',
-				translate('message.submit.toolbar.list'),
-				<FormatListBulletedIcon fontSize="inherit" />,
-				listItems
-			)}
-			{!isMobile && (
+			{inTray ? (
+				<>
+					{isOffered('bold') && (
+						<ToolbarButton
+							label={translate('message.submit.toolbar.bold')}
+							onClick={() => onAction('bold')}
+							selected={isActionSelected('bold')}
+						>
+							<FormatBoldIcon fontSize="inherit" />
+						</ToolbarButton>
+					)}
+					{isOffered('italic') && (
+						<ToolbarButton
+							label={translate('message.submit.toolbar.italic')}
+							onClick={() => onAction('italic')}
+							selected={isActionSelected('italic')}
+						>
+							<FormatItalicIcon fontSize="inherit" />
+						</ToolbarButton>
+					)}
+				</>
+			) : (
 				<>
 					<ToolbarButton
-						label={translate('message.submit.toolbar.quote')}
-						onClick={() => onAction('blockquote')}
-						selected={isActionSelected('blockquote')}
+						label={translate('message.submit.toolbar.undo')}
+						onClick={() => onAction('undo')}
 					>
-						<FormatQuoteIcon fontSize="inherit" />
+						<UndoIcon fontSize="inherit" />
 					</ToolbarButton>
 					<ToolbarButton
-						label={translate('message.submit.toolbar.codeBlock')}
-						onClick={() => onAction('codeBlock')}
-						selected={isActionSelected('codeBlock')}
+						label={translate('message.submit.toolbar.redo')}
+						onClick={() => onAction('redo')}
 					>
-						<DataObjectIcon fontSize="inherit" />
-					</ToolbarButton>
-					<ToolbarDivider />
-					<ToolbarButton
-						label={translate('message.submit.toolbar.bold')}
-						onClick={() => onAction('bold')}
-						selected={isActionSelected('bold')}
-					>
-						<FormatBoldIcon fontSize="inherit" />
-					</ToolbarButton>
-					<ToolbarButton
-						label={translate('message.submit.toolbar.italic')}
-						onClick={() => onAction('italic')}
-						selected={isActionSelected('italic')}
-					>
-						<FormatItalicIcon fontSize="inherit" />
-					</ToolbarButton>
-					<ToolbarButton
-						label={translate('message.submit.toolbar.strike')}
-						onClick={() => onAction('strike')}
-						selected={isActionSelected('strike')}
-					>
-						<StrikethroughSIcon fontSize="inherit" />
-					</ToolbarButton>
-					<ToolbarButton
-						label={translate('message.submit.toolbar.code')}
-						onClick={() => onAction('code')}
-						selected={isActionSelected('code')}
-					>
-						<CodeIcon fontSize="inherit" />
-					</ToolbarButton>
-					<ToolbarButton
-						label={translate('message.submit.toolbar.underline')}
-						onClick={() => onAction('underline')}
-						selected={isActionSelected('underline')}
-					>
-						<FormatUnderlinedIcon fontSize="inherit" />
-					</ToolbarButton>
-					{renderMenuAnchor(
-						'highlight',
-						translate('message.submit.toolbar.highlight'),
-						<BorderColorOutlinedIcon fontSize="inherit" />,
-						highlightItems,
-						false
-					)}
-					<ToolbarButton
-						label={translate('message.submit.toolbar.link')}
-						onClick={() => onAction('setLink')}
-					>
-						<LinkIcon fontSize="inherit" />
-					</ToolbarButton>
-					<ToolbarDivider />
-					<ToolbarButton
-						label={translate('message.submit.toolbar.superscript')}
-						onClick={() => onAction('superscript')}
-						selected={isActionSelected('superscript')}
-					>
-						<SuperscriptIcon fontSize="inherit" />
-					</ToolbarButton>
-					<ToolbarButton
-						label={translate('message.submit.toolbar.subscript')}
-						onClick={() => onAction('subscript')}
-						selected={isActionSelected('subscript')}
-					>
-						<SubscriptIcon fontSize="inherit" />
-					</ToolbarButton>
-					<ToolbarDivider />
-					<ToolbarButton
-						label={translate('message.submit.toolbar.addImage')}
-						onClick={() => onAction('insertImageMarker')}
-						text={translate('message.submit.toolbar.addImageShort')}
-					>
-						<AddPhotoAlternateOutlinedIcon fontSize="inherit" />
+						<RedoIcon fontSize="inherit" />
 					</ToolbarButton>
 					<ToolbarDivider />
 				</>
 			)}
+			{isOffered('heading1') &&
+				renderMenuAnchor(
+					'heading',
+					translate('message.submit.toolbar.heading'),
+					<span className="composerToolbar__hGlyph">H</span>,
+					textStyleItems
+				)}
+			{offeredListItems.length > 0 &&
+				renderMenuAnchor(
+					'list',
+					translate('message.submit.toolbar.list'),
+					<FormatListBulletedIcon fontSize="inherit" />,
+					offeredListItems
+				)}
+			{!isMobile && (
+				<>
+					{isOffered('blockquote') && (
+						<ToolbarButton
+							label={translate('message.submit.toolbar.quote')}
+							onClick={() => onAction('blockquote')}
+							selected={isActionSelected('blockquote')}
+						>
+							<FormatQuoteIcon fontSize="inherit" />
+						</ToolbarButton>
+					)}
+					{isOffered('codeBlock') && (
+						<ToolbarButton
+							label={translate(
+								'message.submit.toolbar.codeBlock'
+							)}
+							onClick={() => onAction('codeBlock')}
+							selected={isActionSelected('codeBlock')}
+						>
+							<DataObjectIcon fontSize="inherit" />
+						</ToolbarButton>
+					)}
+					{[
+						'heading1',
+						'bulletList',
+						'orderedList',
+						'taskList',
+						'blockquote',
+						'codeBlock'
+					].some(isOffered) && <ToolbarDivider />}
+					{isOffered('bold') && (
+						<ToolbarButton
+							label={translate('message.submit.toolbar.bold')}
+							onClick={() => onAction('bold')}
+							selected={isActionSelected('bold')}
+						>
+							<FormatBoldIcon fontSize="inherit" />
+						</ToolbarButton>
+					)}
+					{isOffered('italic') && (
+						<ToolbarButton
+							label={translate('message.submit.toolbar.italic')}
+							onClick={() => onAction('italic')}
+							selected={isActionSelected('italic')}
+						>
+							<FormatItalicIcon fontSize="inherit" />
+						</ToolbarButton>
+					)}
+					{isOffered('strike') && (
+						<ToolbarButton
+							label={translate('message.submit.toolbar.strike')}
+							onClick={() => onAction('strike')}
+							selected={isActionSelected('strike')}
+						>
+							<StrikethroughSIcon fontSize="inherit" />
+						</ToolbarButton>
+					)}
+					{isOffered('code') && (
+						<ToolbarButton
+							label={translate('message.submit.toolbar.code')}
+							onClick={() => onAction('code')}
+							selected={isActionSelected('code')}
+						>
+							<CodeIcon fontSize="inherit" />
+						</ToolbarButton>
+					)}
+					{isOffered('underline') && (
+						<ToolbarButton
+							label={translate(
+								'message.submit.toolbar.underline'
+							)}
+							onClick={() => onAction('underline')}
+							selected={isActionSelected('underline')}
+						>
+							<FormatUnderlinedIcon fontSize="inherit" />
+						</ToolbarButton>
+					)}
+					{isOffered('highlight') &&
+						renderMenuAnchor(
+							'highlight',
+							translate('message.submit.toolbar.highlight'),
+							<BorderColorOutlinedIcon fontSize="inherit" />,
+							highlightItems,
+							false
+						)}
+					{isOffered('setLink') && (
+						<ToolbarButton
+							label={translate('message.submit.toolbar.link')}
+							onClick={() => onAction('setLink')}
+						>
+							<LinkIcon fontSize="inherit" />
+						</ToolbarButton>
+					)}
+					{[
+						'bold',
+						'italic',
+						'strike',
+						'code',
+						'underline',
+						'highlight',
+						'setLink'
+					].some(isOffered) && <ToolbarDivider />}
+					{isOffered('superscript') && (
+						<ToolbarButton
+							label={translate(
+								'message.submit.toolbar.superscript'
+							)}
+							onClick={() => onAction('superscript')}
+							selected={isActionSelected('superscript')}
+						>
+							<SuperscriptIcon fontSize="inherit" />
+						</ToolbarButton>
+					)}
+					{isOffered('subscript') && (
+						<ToolbarButton
+							label={translate(
+								'message.submit.toolbar.subscript'
+							)}
+							onClick={() => onAction('subscript')}
+							selected={isActionSelected('subscript')}
+						>
+							<SubscriptIcon fontSize="inherit" />
+						</ToolbarButton>
+					)}
+					{['superscript', 'subscript'].some(isOffered) && (
+						<ToolbarDivider />
+					)}
+					{isOffered('insertImageMarker') && (
+						<>
+							<ToolbarButton
+								label={translate(
+									'message.submit.toolbar.addImage'
+								)}
+								onClick={() => onAction('insertImageMarker')}
+								text={translate(
+									'message.submit.toolbar.addImageShort'
+								)}
+							>
+								<AddPhotoAlternateOutlinedIcon fontSize="inherit" />
+							</ToolbarButton>
+							<ToolbarDivider />
+						</>
+					)}
+				</>
+			)}
 			{isMobile &&
+				(inTray || offeredOverflowItems.length > 0) &&
 				renderMenuAnchor(
 					'overflow',
 					translate('message.submit.toolbar.more'),
 					<MoreVertIcon fontSize="inherit" />,
-					overflowItems,
+					inTray
+						? [
+								...undoRedoItems,
+								...offeredOverflowItems.filter(
+									({ key }) =>
+										key !== 'bold' && key !== 'italic'
+								)
+							]
+						: offeredOverflowItems,
 					false
 				)}
-			<ToolbarButton
-				label={translate(
-					isExpanded
-						? 'message.submit.toolbar.minimize'
-						: 'message.submit.toolbar.maximize'
-				)}
-				onClick={onExpandToggle}
-			>
-				{isExpanded ? (
-					<CloseFullscreenIcon fontSize="inherit" />
-				) : (
-					<OpenInFullIcon fontSize="inherit" />
-				)}
-			</ToolbarButton>
+			{!inTray && (
+				<ToolbarButton
+					label={translate(
+						isExpanded
+							? 'message.submit.toolbar.minimize'
+							: 'message.submit.toolbar.maximize'
+					)}
+					onClick={onExpandToggle}
+				>
+					{isExpanded ? (
+						<CloseFullscreenIcon fontSize="inherit" />
+					) : (
+						<OpenInFullIcon fontSize="inherit" />
+					)}
+				</ToolbarButton>
+			)}
 		</div>
 	);
 };

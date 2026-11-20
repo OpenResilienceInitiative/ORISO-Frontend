@@ -1,3 +1,4 @@
+import { AVATAR_SIZES } from '../pseudonym/avatarSizes';
 import * as React from 'react';
 import { useContext, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -23,12 +24,16 @@ import { generateAvatarForUser } from '../../utils/pseudonymGenerator';
 
 export const AskerInfo = () => {
 	const { t: translate } = useTranslation();
-	const { groupId: groupIdFromParam } = useParams<{ groupId: string }>();
+	const { groupId: groupIdFromParam, sessionId: sessionIdFromParam } =
+		useParams<{ groupId: string; sessionId: string }>();
 	const navigate = useNavigate();
 
 	const { path: listPath } = useContext(SessionTypeContext);
 
-	const { session: activeSession, ready } = useSession(groupIdFromParam);
+	const { session: activeSession, ready } = useSession(
+		groupIdFromParam ?? null,
+		sessionIdFromParam ? parseInt(sessionIdFromParam) : undefined
+	);
 
 	const sessionListTab = useSearchParam<SESSION_LIST_TAB>('sessionListTab');
 
@@ -58,7 +63,7 @@ export const AskerInfo = () => {
 	const { fromL, fromM } = useResponsive();
 	// 100px is the Figma avatar; it drops with the row below $fromMedium
 	// (600px), matching the SCSS breakpoint for the same row.
-	const avatarSize = fromM ? 100 : 64;
+	const avatarSize = fromM ? AVATAR_SIZES.detail : AVATAR_SIZES.phone;
 	useEffect(() => {
 		if (!fromL) {
 			mobileUserProfileView();

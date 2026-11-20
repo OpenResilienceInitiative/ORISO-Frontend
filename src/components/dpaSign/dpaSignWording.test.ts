@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import de from '../../resources/i18n/de/common.json';
 import deInformal from '../../resources/i18n/de@informal/common.json';
 import en from '../../resources/i18n/en/common.json';

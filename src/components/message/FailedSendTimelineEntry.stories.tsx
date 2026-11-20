@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { FailedSendTimelineEntry } from './FailedSendTimelineEntry';
 import { mockMessageItemComponentProps } from './MessageItemComponent.mocks';
@@ -16,7 +16,8 @@ import './message.styles.scss';
  * ever sent to Matrix; both live only in the sender's local timeline.
  */
 const meta = {
-	title: 'Components/Chat/FailedSendTimelineEntry',
+	id: 'components-chat-failedsendtimelineentry',
+	title: 'Chat/System messages/Failed-send timeline',
 	component: FailedSendTimelineEntry,
 	tags: ['autodocs'],
 	/* This entry renders a real MessageItemComponent, which reads the session,

@@ -76,7 +76,7 @@ export const apiAdmitGroupChatJoinRequest = (
 		url: `${base(seriesId)}/${requestId}/admit`,
 		method: FETCH_METHODS.POST,
 		bodyData: JSON.stringify({ role }),
-		responseHandling: handled
+		responseHandling: [...handled, FETCH_ERRORS.COUNSELLING_DPA_RESPONSE]
 	}).then(() => undefined);
 
 export const apiDeclineGroupChatJoinRequest = (

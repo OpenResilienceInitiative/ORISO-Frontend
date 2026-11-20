@@ -13,7 +13,7 @@
  */
 import * as fs from 'fs';
 import * as path from 'path';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { computeOrisoPalette } from './orisoScheme';
 import {
 	collectConsumedM3Tokens,
@@ -55,7 +55,7 @@ const EXACT_CONTRACT_TOKENS: Record<string, string> = {
  *   derives the whole secondary family from one palette instead.
  * - 'Background' (#f3eeee): inconsistent with 'Surface' in the file;
  *   the engine maps background onto the surface role.
- * - Tertiary fixed roles: not consumed anywhere in ORISO. Primary Fixed /
+ * - Unused tertiary fixed roles, except On Tertiary Fixed (timeline body). Primary Fixed /
  *   On Primary Fixed ARE locked — the light brand tint is the chat-bubble
  *   surface of the counselling app; Secondary Fixed since T27 — the menu
  *   organism's hover/selected surface.
@@ -72,6 +72,7 @@ const TOLERANCE_TOKENS: Record<string, string> = {
 	'--m3-on-tertiary': 'On Tertiary',
 	'--m3-tertiary-container': 'Tertiary Container',
 	'--m3-on-tertiary-container': 'On Tertiary Container',
+	'--m3-on-tertiary-fixed': 'On Tertiary Fixed',
 	'--m3-error': 'Error',
 	'--m3-on-error': 'On Error',
 	'--m3-error-container': 'Error Container',
@@ -204,7 +205,11 @@ describe('static :root brand mirrors the engine (#a5000a)', () => {
 		'--m3-primary-hover',
 		'--m3-primary-container',
 		'--m3-on-primary-container',
-		'--m3-primary-outline'
+		'--m3-primary-outline',
+		'--oriso-topic-tag-bg',
+		'--oriso-topic-tag-fg',
+		'--oriso-topic-tag-active-bg',
+		'--oriso-topic-tag-active-fg'
 	])('%s static literal equals the engine value', (token) => {
 		expect(staticValue(token)).toBe(engine[token].toLowerCase());
 	});

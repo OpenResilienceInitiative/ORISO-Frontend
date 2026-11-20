@@ -133,7 +133,8 @@ const WiredInviteEntry = () => {
 };
 
 const meta = {
-	title: 'Group chat/Self-help entry room — wired',
+	id: 'group-chat-self-help-entry-room-wired',
+	title: 'Entry flows/Self-help groups/Invitation flow',
 	component: WiredInviteEntry,
 	parameters: {
 		layout: 'fullscreen',
@@ -183,7 +184,16 @@ const expectEntryScreen = async (canvasElement: HTMLElement) => {
 		page(canvasElement).getByText(
 			'Diese Sitzung endet, wenn Sie den Browser schließen.'
 		)
-	).toBeVisible();
+	).toBeVisible(); /* The step names the group it joins, as the waiting room does (#1689). */
+	const headings = Array.from(
+		canvasElement.ownerDocument.querySelectorAll<HTMLElement>(
+			'[data-cy="group-heading"]'
+		)
+	).filter((el) => el.getClientRects().length > 0);
+	await expect(headings).toHaveLength(1);
+	await expect(headings[0]).toHaveTextContent(
+		'Caritas Berlin, Selbsthilfegruppe Trauer'
+	);
 };
 
 /** 0a — the newcomer follows the link and lands on the entry, not the login. */
@@ -253,5 +263,131 @@ export const LoginKeepsTheLink: Story = {
 		await expect(
 			page(canvasElement).queryByTestId('registration-footer-primary')
 		).toBeNull();
+	}
+};
+
+const BROKEN_LINK = '/login?gcid=15.&aid=88';
+
+/* #921: a cut-off link explains itself instead of registering an account. */
+const expectBrokenLinkExplained = async (canvasElement: HTMLElement) => {
+	const alert = await page(canvasElement).findByRole(
+		'alert',
+		{},
+		{ timeout: 8000 }
+	);
+	await expect(where(canvasElement)).toContain('gcid=15.&aid=88');
+	await expect(
+		page(canvasElement).getByRole('heading', {
+			name: 'Dieser Einladungslink funktioniert nicht.'
+		})
+	).toBeVisible();
+	await expect(alert).toHaveTextContent(
+		'Bitte fragen Sie die Person, die Ihnen den Link geschickt hat, nach einem neuen.'
+	);
+	await expect(
+		page(canvasElement).queryByTestId('registration-footer-primary')
+	).toBeNull();
+	await expect(
+		canvasElement.ownerDocument.querySelector('input[type="password"]')
+	).toBeNull();
+	const box = alert.getBoundingClientRect();
+	await expect(box.right).toBeLessThanOrEqual(window.innerWidth);
+};
+
+export const BrokenLinkDesktop: Story = {
+	name: 'Broken link → explanation · 1366',
+	globals: { viewport: { value: 'desktop1366' } },
+	parameters: { router: { initialPath: BROKEN_LINK } },
+	play: async ({ canvasElement }) => expectBrokenLinkExplained(canvasElement)
+};
+
+export const BrokenLinkMobile: Story = {
+	name: 'Broken link → explanation · 390',
+	globals: phone390Globals,
+	parameters: { router: { initialPath: BROKEN_LINK } },
+	play: async ({ canvasElement }) => expectBrokenLinkExplained(canvasElement)
+};
+
+/* UserService#1662: a signed circle invite reads the circle's guest account
+   mode (GET /users/chat/{id}/invite-context) before the entry shows. The
+   stub answers that request only; everything else goes on as before. */
+const SIGNED_LINK = '/login?gcid=15.q2Vx8mK4TzJ1bR7n&aid=88';
+
+const answerCircleMode = (mode: string) => () => {
+	const originalFetch = globalThis.fetch;
+	globalThis.fetch = async (input, init) => {
+		const url =
+			input instanceof Request
+				? input.url
+				: typeof input === 'string'
+					? input
+					: input.toString();
+		if (url.includes('/users/chat/15/invite-context')) {
+			return new Response(JSON.stringify({ guestAccountMode: mode }), {
+				status: 200,
+				headers: { 'Content-Type': 'application/json' }
+			});
+		}
+		return originalFetch(input, init);
+	};
+	return () => {
+		globalThis.fetch = originalFetch;
+	};
+};
+
+const expectCircleEntry = async (
+	canvasElement: HTMLElement,
+	{ join, passwords }: { join: string; passwords: number }
+) => {
+	await expect(await joinButton(canvasElement)).toHaveTextContent(join);
+	/* The circle fixes the account kind: no switch to the other way. */
+	await expect(
+		page(canvasElement).queryByTestId('registration-footer-secondary')
+	).toBeNull();
+	await expect(
+		canvasElement.ownerDocument.querySelectorAll('input[type="password"]')
+			.length
+	).toBe(passwords);
+};
+
+/** TEMPORARY: only "Der Gruppe beitreten" without an account. */
+export const CircleTemporaryDesktop: Story = {
+	name: 'Gesprächskreis TEMPORARY → nur ohne Konto · 1440',
+	globals: desktop1440Globals,
+	parameters: { router: { initialPath: SIGNED_LINK } },
+	beforeEach: answerCircleMode('TEMPORARY'),
+	play: async ({ canvasElement }) =>
+		expectCircleEntry(canvasElement, {
+			join: 'Der Gruppe beitreten',
+			passwords: 0
+		})
+};
+
+/** PERMANENT: only an account with a password. */
+export const CirclePermanentDesktop: Story = {
+	name: 'Gesprächskreis PERMANENT → nur mit Konto · 1440',
+	globals: desktop1440Globals,
+	parameters: { router: { initialPath: SIGNED_LINK } },
+	beforeEach: answerCircleMode('PERMANENT'),
+	play: async ({ canvasElement }) =>
+		expectCircleEntry(canvasElement, {
+			join: 'Registrieren',
+			passwords: 2
+		})
+};
+
+/** GUEST_CHOOSES: both ways, as before (0a with "Konto anlegen"). */
+export const CircleGuestChoosesDesktop: Story = {
+	name: 'Gesprächskreis GUEST_CHOOSES → Gast wählt · 1440',
+	globals: desktop1440Globals,
+	parameters: { router: { initialPath: SIGNED_LINK } },
+	beforeEach: answerCircleMode('GUEST_CHOOSES'),
+	play: async ({ canvasElement }) => {
+		await expect(await joinButton(canvasElement)).toHaveTextContent(
+			'Der Gruppe beitreten'
+		);
+		await expect(
+			page(canvasElement).getByTestId('registration-footer-secondary')
+		).toHaveTextContent('Konto anlegen');
 	}
 };

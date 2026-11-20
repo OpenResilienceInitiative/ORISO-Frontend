@@ -1,3 +1,4 @@
+import type { AgencyConversationPolicy } from '../interfaces/ConversationFeatureSettings';
 import * as React from 'react';
 import { createContext, useMemo } from 'react';
 import { ExtendedSessionInterface } from '..';
@@ -5,8 +6,12 @@ import { ExtendedSessionInterface } from '..';
 type ActiveSessionContextProps = {
 	children?: React.ReactNode;
 	activeSession: ExtendedSessionInterface | null;
-	reloadActiveSession?: () => void;
+	/** The reload's promise, when the provider has one to hand back. */
+	reloadActiveSession?: () => void | Promise<unknown>;
+	refreshActiveSession?: () => Promise<void>;
 	readActiveSession?: () => void;
+	avatarMembers?: UserService.Schemas.ChatMemberResponseDTO[];
+	agencyFeaturePolicy?: AgencyConversationPolicy;
 };
 
 export const ActiveSessionContext =
@@ -16,11 +21,28 @@ export const ActiveSessionProvider: React.FC<ActiveSessionContextProps> = ({
 	children,
 	activeSession,
 	reloadActiveSession,
-	readActiveSession
+	refreshActiveSession,
+	readActiveSession,
+	avatarMembers,
+	agencyFeaturePolicy
 }) => {
 	const contextValue = useMemo(
-		() => ({ activeSession, reloadActiveSession, readActiveSession }),
-		[activeSession, reloadActiveSession, readActiveSession]
+		() => ({
+			activeSession,
+			reloadActiveSession,
+			refreshActiveSession,
+			readActiveSession,
+			avatarMembers,
+			agencyFeaturePolicy
+		}),
+		[
+			activeSession,
+			reloadActiveSession,
+			refreshActiveSession,
+			readActiveSession,
+			avatarMembers,
+			agencyFeaturePolicy
+		]
 	);
 
 	// Expose active session globally for CallManager to access

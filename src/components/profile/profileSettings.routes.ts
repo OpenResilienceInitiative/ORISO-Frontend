@@ -1,67 +1,50 @@
+import { SecurityPrivacySettings } from './SecurityPrivacySettings';
 import { MenuEffectsSettings } from '../../features/menu-effects/MenuEffectsSettings';
+import { TimelineSettings } from '../timelineSettings/TimelineSettings';
 import { hasUserAuthority, AUTHORITIES } from '../../globalState';
 import { AppConfigInterface } from '../../globalState/interfaces';
+import { TenantDataSettingsInterface } from '../../globalState/interfaces/TenantDataInterface';
 import {
 	COLUMN_LEFT,
 	COLUMN_RIGHT,
 	SingleComponentType,
 	TabGroups
 } from '../../utils/tabsHelper';
-import { PasswordReset } from '../passwordReset/PasswordReset';
-import { TwoFactorAuth } from '../twoFactorAuth/TwoFactorAuth';
-import { EncryptionSettingsPanel } from './EncryptionSettings';
 // import { MagicLinksLoginFeature } from './MagicLinksLoginFeature';
 import { ConsultantNotifications } from './ConsultantNotifications';
 import { EmailNotification } from './EmailNotifications';
 import { NotificationSettingsPanel } from './NotificationSettings';
-import { DeleteAccount } from './DeleteAccount';
 import { Locale } from './Locale';
 import { KeyboardShortcutsSettings } from '../../features/keyboard-shortcuts/components/KeyboardShortcutsSettings';
-import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
-import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined';
-import KeyOutlinedIcon from '@mui/icons-material/KeyOutlined';
 import NotificationsOutlinedIcon from '@mui/icons-material/NotificationsOutlined';
 import LanguageOutlinedIcon from '@mui/icons-material/LanguageOutlined';
 import KeyboardOutlinedIcon from '@mui/icons-material/KeyboardOutlined';
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import NotificationsActiveOutlinedIcon from '@mui/icons-material/NotificationsActiveOutlined';
 import AnimationOutlinedIcon from '@mui/icons-material/AnimationOutlined';
+import EventOutlinedIcon from '@mui/icons-material/EventOutlined';
+import { MyLinksSettings } from '../directLinks/MyDirectLinksPanel';
 import { BrowserNotification } from './BrowserNotifications';
 import { isSupported as isBrowserNotificationSupported } from '../../utils/notificationHelpers';
+import { usesNewNotifications } from '../../utils/newNotificationsToggle';
+import { askerHasEmailSettings } from './EmailNotifications/emailNotificationAccess';
 
 export const profileRoutesSettings = (
 	selectableLocales: string[],
-	settings: AppConfigInterface
+	settings: AppConfigInterface,
+	/** #1894: false when "Direkteinladung erlauben" allows no medium. */
+	directLinksAllowed = true,
+	/** Effective tenant permissions (#1979); absent = server defaults. */
+	tenantSettings?: Partial<TenantDataSettingsInterface> | null
 ): (TabGroups | SingleComponentType)[] => [
 	{
 		title: 'profile.routes.settings.security.title',
 		url: '/sicherheit',
 		elements: [
 			{
-				component: PasswordReset,
-				icon: LockOutlinedIcon,
-				column: COLUMN_LEFT,
+				component: SecurityPrivacySettings,
+				boxed: false,
+				fullWidth: true,
 				order: 1
-			},
-			// {
-			// 	component: MagicLinksLoginFeature,
-			// 	column: COLUMN_LEFT,
-			// 	order: 2
-			// },
-			{
-				condition: (userData) => userData.twoFactorAuth?.isEnabled,
-				component: TwoFactorAuth,
-				icon: ShieldOutlinedIcon,
-				column: COLUMN_LEFT,
-				order: 2
-			},
-			// #437 key backup + recovery: encryption settings (recovery key
-			// setup / restore / reset). Self-handles the no-crypto case.
-			{
-				component: EncryptionSettingsPanel,
-				icon: KeyOutlinedIcon,
-				column: COLUMN_RIGHT,
-				order: 3
 			}
 		]
 	},
@@ -70,15 +53,20 @@ export const profileRoutesSettings = (
 		url: '/email',
 		elements: [
 			{
-				condition: () =>
-					!!settings?.releaseToggles?.enableNewNotifications,
+				// #1979: advice seekers only where the Admin permissions allow
+				// e-mail; the counsellor panel is not governed by them.
+				// UserService#1662: a temporary account has no e-mail until kept.
+				condition: (userData) =>
+					!userData?.temporaryAccount &&
+					(hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
+						? usesNewNotifications(settings)
+						: askerHasEmailSettings(settings, tenantSettings)),
 				component: EmailNotification,
 				column: COLUMN_LEFT,
 				order: 1
 			},
 			{
-				condition: () =>
-					!!settings?.releaseToggles?.enableNewNotifications,
+				condition: () => usesNewNotifications(settings),
 				component: NotificationSettingsPanel,
 				column: COLUMN_RIGHT,
 				order: 1
@@ -88,7 +76,7 @@ export const profileRoutesSettings = (
 					hasUserAuthority(
 						AUTHORITIES.CONSULTANT_DEFAULT,
 						userData
-					) && !settings?.releaseToggles?.enableNewNotifications,
+					) && !usesNewNotifications(settings),
 				component: ConsultantNotifications,
 				icon: NotificationsOutlinedIcon,
 				column: COLUMN_RIGHT,
@@ -97,13 +85,30 @@ export const profileRoutesSettings = (
 			// Legacy per-browser pop-up switch; the cross-device panel owns
 			// this screen once enableNewNotifications is on (#1551).
 			{
-				condition: () =>
-					!settings?.releaseToggles?.enableNewNotifications &&
+				condition: (userData) =>
+					!userData?.temporaryAccount &&
+					!usesNewNotifications(settings) &&
 					!!isBrowserNotificationSupported(),
 				component: BrowserNotification,
 				icon: NotificationsActiveOutlinedIcon,
 				column: COLUMN_LEFT,
 				order: 4
+			}
+		]
+	},
+	// #1894: the same direct links as under the clock entry.
+	{
+		title: 'profile.routes.settings.myLinks',
+		url: '/meine-links',
+		elements: [
+			{
+				condition: (userData) =>
+					directLinksAllowed &&
+					hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData),
+				component: MyLinksSettings,
+				boxed: false,
+				fullWidth: true,
+				order: 1
 			}
 		]
 	},
@@ -116,6 +121,12 @@ export const profileRoutesSettings = (
 				icon: AnimationOutlinedIcon,
 				column: COLUMN_RIGHT,
 				order: 2
+			},
+			{
+				component: TimelineSettings,
+				icon: EventOutlinedIcon,
+				column: COLUMN_RIGHT,
+				order: 3
 			},
 			{
 				condition: () => selectableLocales.length > 1,
@@ -137,14 +148,5 @@ export const profileRoutesSettings = (
 				order: 6
 			}
 		]
-	},
-	{
-		condition: (userData) =>
-			hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData),
-		component: DeleteAccount,
-		icon: DeleteOutlineIcon,
-		boxed: false,
-		order: 99,
-		fullWidth: true
 	}
 ];

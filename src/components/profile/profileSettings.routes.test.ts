@@ -1,10 +1,18 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
+import { SecurityPrivacySettings } from './SecurityPrivacySettings';
 import { profileRoutesSettings } from './profileSettings.routes';
 import { NotificationSettingsPanel } from './NotificationSettings';
 import { EmailNotification } from './EmailNotifications';
 import { ConsultantNotifications } from './ConsultantNotifications';
 import type { AppConfigInterface } from '../../globalState/interfaces';
 import { isTabGroup, solveCondition } from '../../utils/tabsHelper';
+
+vi.mock('./SecurityPrivacySettings', () => ({
+	SecurityPrivacySettings: () => null
+}));
+vi.mock('../timelineSettings/TimelineSettings', () => ({
+	TimelineSettings: () => null
+}));
 
 vi.mock('../../globalState', () => ({
 	hasUserAuthority: () => true,
@@ -68,6 +76,99 @@ describe('Profile settings notification access', () => {
 				expect(shown).toContain(ConsultantNotifications);
 				modern.forEach((panel) => expect(shown).not.toContain(panel));
 			}
+		}
+	);
+});
+
+it('retains the security route with one full-width stable composer', () => {
+	const groups = profileRoutesSettings(['de'], {} as AppConfigInterface);
+	const security = groups.find(
+		(group) => isTabGroup(group) && group.url === '/sicherheit'
+	);
+	expect(isTabGroup(security) && security.elements).toEqual([
+		{
+			component: SecurityPrivacySettings,
+			boxed: false,
+			fullWidth: true,
+			order: 1
+		}
+	]);
+	expect(groups.every(isTabGroup)).toBe(true);
+});
+
+vi.mock('../directLinks/MyDirectLinksPanel', () => ({
+	MyLinksSettings: () => null
+}));
+
+describe('Settings → "Meine Links" (#1894)', () => {
+	it('shows the counsellor’s direct links as their own settings tab', async () => {
+		const { MyLinksSettings } = await import(
+			'../directLinks/MyDirectLinksPanel'
+		);
+		const group = profileRoutesSettings([], {} as AppConfigInterface).find(
+			(entry) => isTabGroup(entry) && entry.url === '/meine-links'
+		);
+		if (!group || !isTabGroup(group)) throw new Error('missing tab');
+
+		expect(group.title).toBe('profile.routes.settings.myLinks');
+		expect(group.elements.map((element) => element.component)).toEqual([
+			MyLinksSettings
+		]);
+		expect(typeof group.elements[0].condition).toBe('function');
+	});
+
+	it.each([
+		[true, 1],
+		[false, 0]
+	])(
+		'shows the tab only while direct invitation allows a medium (%s)',
+		(allowed, visible) => {
+			const group = profileRoutesSettings(
+				[],
+				{} as AppConfigInterface,
+				allowed
+			).find(
+				(entry) => isTabGroup(entry) && entry.url === '/meine-links'
+			);
+			if (!group || !isTabGroup(group)) throw new Error('missing tab');
+			expect(
+				group.elements.filter((entry) =>
+					solveCondition(entry.condition, {} as never, [])
+				)
+			).toHaveLength(visible);
+		}
+	);
+});
+
+describe('Settings for a temporary account (UserService#1662)', () => {
+	const shownFor = (enabled: boolean, userData: object) => {
+		const group = profileRoutesSettings([], {
+			releaseToggles: { enableNewNotifications: enabled }
+		} as AppConfigInterface).find(
+			(entry) => isTabGroup(entry) && entry.url === '/email'
+		);
+		if (!group || !isTabGroup(group)) throw new Error('missing tab');
+		return group.elements
+			.filter((entry) =>
+				solveCondition(entry.condition, userData as never, [])
+			)
+			.map((entry) => entry.component);
+	};
+
+	it.each([true, false])(
+		'hides the e-mail and browser notification panels (modern=%s), and they come back after keeping',
+		async (enabled) => {
+			const { BrowserNotification } = await import(
+				'./BrowserNotifications'
+			);
+			const temporary = shownFor(enabled, { temporaryAccount: true });
+			expect(temporary).not.toContain(EmailNotification);
+			expect(temporary).not.toContain(BrowserNotification);
+
+			const kept = shownFor(enabled, { temporaryAccount: false });
+			expect(kept).toContain(
+				enabled ? EmailNotification : BrowserNotification
+			);
 		}
 	);
 });

@@ -1,10 +1,17 @@
+import { notificationChannelPolicy } from '../components/erstantwort/notificationChannelPolicy';
+import { getTenantSettings } from './tenantSettingsHelper';
 import { v4 as uuidv4 } from 'uuid';
 import { appConfig } from './appConfig';
+import { usesNewNotifications } from './newNotificationsToggle';
 import { isNotificationSuppressed } from './notificationSettings/model';
 import { BannerMode } from './notificationSettings/notificationConfig';
 import { resolveEventChannelContract } from './notificationSettings/occasionChannelContract';
 import { notificationSettingsStore } from './notificationSettings/store';
 import { EventFamily } from '../components/notificationsCenter/eventDescriptors/types';
+import {
+	effectiveBrowserNotificationsEnabled,
+	recordBrowserNotificationsChoice
+} from './notificationSettings/browserMasterSwitch';
 
 type ExtraNotificationOptions = {
 	showAlways?: boolean;
@@ -97,8 +104,7 @@ export const optInToBrowserNotifications = (): Promise<void> =>
  * the user actually made, so only it may decide. Before the config has loaded
  * we assume the legacy panel — that is what shipped.
  */
-const usesCrossDevicePanel = (): boolean =>
-	appConfig?.releaseToggles?.enableNewNotifications === true;
+const usesCrossDevicePanel = (): boolean => usesNewNotifications(appConfig);
 
 /**
  * How the legacy panel's two per-type switches map onto event families. Every
@@ -115,13 +121,20 @@ export const sendNotification = (
 	title: string,
 	opts?: NotificationOptions & ExtraNotificationOptions,
 	/** Internal feed metadata; never copied to the OS notification options. */
-	recipientRole?: string | null
+	recipientRole?: string | null,
+	conversationType?: string | null
 ): void => {
 	// If permissions not granted just ignore the notification because we only asking consultants
 	if (!isSupported() || !hasPermissions(PERMISSION_GRANTED)) {
 		return;
 	}
 
+	if (
+		(recipientRole === 'user' || recipientRole === 'asker') &&
+		!notificationChannelPolicy(getTenantSettings(), conversationType)
+			.browserAllowed
+	)
+		return;
 	const options = opts || {};
 
 	// WP-06 Slice 6a: honour the cross-device settings (account-wide mute,
@@ -146,14 +159,20 @@ export const sendNotification = (
 	if (usesCrossDevicePanel()) {
 		// Master opt-in. The per-type choice is the banner channel of the
 		// event's config row, applied further down.
-		if (!settings.browserNotifications?.enabled) {
+		if (
+			!effectiveBrowserNotificationsEnabled(
+				Boolean(settings.browserNotifications?.enabled)
+			)
+		) {
 			return;
 		}
 	} else {
 		const legacyType = LEGACY_TYPE_BY_FAMILY[family];
 		const legacyAllows = legacyType
 			? isBrowserNotificationTypeEnabled(legacyType)
-			: browserNotificationsSettings().enabled;
+			: effectiveBrowserNotificationsEnabled(
+					browserNotificationsSettings().enabled
+				);
 		if (!legacyAllows) {
 			return;
 		}
@@ -170,7 +189,7 @@ export const sendNotification = (
 		const { area, kind } = resolveEventChannelContract(
 			options.eventType,
 			recipientRole,
-			{ family, mentioned: options.mentioned }
+			{ family, mentioned: options.mentioned, conversationType }
 		).browser;
 		const kindConfig = settings.notificationConfig[area][kind];
 		if (kindConfig.banner === 'off') {
@@ -190,7 +209,10 @@ export const sendNotification = (
 		icon: '/logo192.png',
 		// 'persistent' keeps the banner until dismissed (Chromium honours
 		// requireInteraction; Firefox/Safari fall back to temporary).
-		requireInteraction: bannerMode === 'persistent'
+		requireInteraction: bannerMode === 'persistent',
+		// The app owns the tone (soundPlayback.ts, focused or not, and none
+		// for "Pop-up ohne Ton"): the OS must never add a second one.
+		silent: true
 	});
 
 	notification.onshow = () => {
@@ -224,6 +246,9 @@ export const saveBrowserNotificationsSettings = (settings: {
 	}
 	const next = { ...currentSettings, ...settings };
 	localStorage.setItem('BROWSER_NOTIFICATIONS', JSON.stringify(next));
+	if (settings.enabled !== undefined) {
+		recordBrowserNotificationsChoice(settings.enabled);
+	}
 
 	// Keep the store in step (#1211) so the choice survives the release toggle
 	// being switched on later: the cross-device panel then shows what the user
@@ -249,8 +274,11 @@ export const browserNotificationsSettings = (): {
 export const isBrowserNotificationTypeEnabled = (
 	type: 'initialEnquiry' | 'newMessage'
 ) => {
+	// FE#1211: on by default once the browser allows it; a type the user
+	// never touched counts as on.
 	return (
-		browserNotificationsSettings().enabled &&
-		browserNotificationsSettings()[type]
+		effectiveBrowserNotificationsEnabled(
+			browserNotificationsSettings().enabled
+		) && browserNotificationsSettings()[type] !== false
 	);
 };

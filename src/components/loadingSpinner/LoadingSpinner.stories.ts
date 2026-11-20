@@ -1,4 +1,4 @@
-import { Meta, StoryObj } from '@storybook/react';
+import { Meta, StoryObj } from '@storybook/react-vite';
 import { LoadingSpinner } from './LoadingSpinner';
 
 const meta = {
@@ -9,7 +9,7 @@ const meta = {
 		docs: {
 			description: {
 				component:
-					'LoadingSpinner component for displaying loading states.'
+					'Compact attachment loading using the shared orbital Loading component.'
 			}
 		}
 	}

@@ -1,3 +1,6 @@
+import { a11yExcept } from './a11yExceptions';
+import { a11yVerification } from './a11yVerification';
+import { createTenantPublicStoryFetch } from './tenantPublicFixture';
 // Force MUI styled-engine init before any @mui/* prebundles run.
 // Without this, Vite can crash the preview with "styled_default is not a function".
 import '@mui/material/styles/styled';
@@ -8,11 +11,12 @@ import i18n from 'i18next';
 import { ThemeProvider } from '@mui/material';
 import type { Preview } from '@storybook/react-vite';
 import * as React from 'react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useGlobals } from 'storybook/preview-api';
-import { I18nextProvider } from 'react-i18next';
+import { I18nextProvider, useTranslation } from 'react-i18next';
 import { themes } from 'storybook/theming';
-import theme from '../src/resources/scripts/theme';
+import theme, { createAppTheme } from '../src/resources/scripts/theme';
+import { THEME_APPLIED_EVENT } from '../src/utils/theme/applyTenantTheme';
 import { config } from '../src/resources/scripts/config';
 import { LegalLinksProvider } from '../src/globalState/provider/LegalLinksProvider';
 import { init, FALLBACK_LNG } from '../src/i18n';
@@ -21,7 +25,6 @@ import { Loading } from '../src/components/app/Loading';
 import { Suspense } from 'react';
 import {
 	AppConfigContext,
-	AppConfigProvider,
 	RegistrationContext,
 	UserDataContext,
 	TenantContext,
@@ -33,9 +36,25 @@ import {
 import { Buffer } from 'buffer';
 import {
 	shouldMockStorybookRealtimeUrl,
-	StorybookWebSocketMock
+	StorybookWebSocketMock,
+	trackStorybookRealtimeMock,
+	cleanupStorybookState
 } from './storybookRealtimeMocks';
+import { entryFormDemoGlobalTypes } from './consentCompletionStoryPlay';
+import { WithEntryFormDemo } from './withEntryFormDemo';
 import { orisoSchemeGlobalType, withOrisoScheme } from './withOrisoScheme';
+import {
+	beginStoryVerification,
+	recordUnexpectedRequest
+} from './verification';
+
+import { UrlParamsContext } from '../src/globalState/provider/UrlParamsProvider';
+import { AgencySpecificContext } from '../src/globalState/provider/AgencySpecificProvider';
+import type {
+	AgencyDataInterface,
+	ConsultingTypeInterface,
+	TopicsDataInterface
+} from '../src/globalState/interfaces';
 
 // Some component deps (html parsing in the legal/stage tree) expect Node's Buffer,
 // which the app's webpack provided but Vite does not. Polyfill it globally.
@@ -56,18 +75,9 @@ const mockUserData = {
 		qrCode: ''
 	}
 } as any;
-import { UrlParamsContext } from '../src/globalState/provider/UrlParamsProvider';
-import { AgencySpecificContext } from '../src/globalState/provider/AgencySpecificProvider';
-import type {
-	AgencyDataInterface,
-	ConsultingTypeInterface,
-	TopicsDataInterface
-} from '../src/globalState/interfaces';
 
-// Catch components that throw because they need live app data (session, overlays,
-// notification feed, …) that Storybook can't mock. Instead of a red crash, show a
-// clean "needs live data" panel. The data-sb-needs-data marker lets the automated
-// verification classify these as 'needs-data' rather than as failures.
+// Preserve the visible live-data panel. Ordinary verification retains this
+// fallback as failure evidence, including transient panels replaced before cleanup.
 class StoryErrorBoundary extends React.Component<
 	{ children: React.ReactNode },
 	{ failed: boolean }
@@ -449,6 +459,42 @@ const storybookApiResponse = (url: URL, method: string): Response | null => {
 		return storybookJsonResponse(storybookTopics);
 	}
 
+	// No shipped catalogue in stories: the topic step keeps its built-in clusters.
+	if (url.pathname === '/service/topic-groups') {
+		return storybookJsonResponse({ data: { items: [] } });
+	}
+
+	// A centre with a stored privacy text but no consent sentence of its own: the
+	// client shows its catalogue consent sentence. Ticking the consent box then
+	// raises no "no privacy notice stored" warning (ORISO-AgencyService#366). A
+	// story about authored or missing text sets its own.
+	if (/^\/service\/agencies\/\d+\/topics\/\d+\/legal$/.test(url.pathname)) {
+		return storybookJsonResponse({
+			dpp: {
+				content:
+					'{"de":"<p>Datenschutzerklärung der Beratungsstelle</p>"}',
+				consentText: null
+			},
+			imprint: null
+		});
+	}
+
+	// Every username a story types is free; a taken name is the story's own fixture.
+	if (url.pathname.startsWith('/service/users/availability/')) {
+		return storybookJsonResponse({});
+	}
+
+	// `/service/agencies/101` or `/service/agencies/101,102`: the fixture centres by id.
+	const agencyIds = url.pathname.match(
+		/^\/service\/agencies\/(\d+(?:,\d+)*)$/
+	);
+	if (agencyIds) {
+		const ids = agencyIds[1].split(',').map(Number);
+		return storybookJsonResponse(
+			storybookAgencies.filter((agency) => ids.includes(agency.id))
+		);
+	}
+
 	if (url.pathname.match(/\/service\/agencies(?:\?|$)/)) {
 		return storybookJsonResponse(storybookAgencies);
 	}
@@ -461,10 +507,40 @@ const storybookApiResponse = (url: URL, method: string): Response | null => {
 		return storybookJsonResponse({ languages: ['en', 'ar', 'uk'] });
 	}
 
+	// The "Anfragen" nav badge (FE#1435) asks both enquiry feeds for a total;
+	// by default there is nothing open (204), so no badge appears.
+	if (
+		url.pathname.includes('/service/conversations/consultants/enquiries/')
+	) {
+		return storybookEmptyResponse();
+	}
+
+	// The "Meine Termine" nav badge (FE#1050) counts the move proposals
+	// waiting for the counsellor; by default none. Calendar stories answer
+	// with their own requests.
+	if (
+		url.pathname === '/service/users/calendar/proposals' &&
+		method === 'GET'
+	) {
+		return storybookJsonResponse({ sent: [], received: [] });
+	}
+
 	if (
 		url.pathname.includes('/service/conversations/consultants/availability')
 	) {
 		return storybookJsonResponse({ available: true });
+	}
+
+	// ORISO-UserService#1486: story people are normal accounts (404), so asker
+	// messages carry no guest label and the composer asks nothing.
+	if (url.pathname === '/service/users/temporary-account') {
+		return new Response(null, { status: 404 });
+	}
+
+	// #1894: the counsellor's own direct links (settings "Meine Links"); stories
+	// that show links install their own mock on top.
+	if (url.pathname === '/service/users/directlinks' && method === 'GET') {
+		return storybookJsonResponse([]);
 	}
 
 	if (url.pathname === '/service/users/data') {
@@ -480,7 +556,7 @@ const storybookApiResponse = (url: URL, method: string): Response | null => {
 	}
 
 	if (isStorybookServiceUrl(url) || isStorybookLocalApiUrl(url)) {
-		return storybookJsonResponse({});
+		return recordUnexpectedRequest(new Request(url, { method }));
 	}
 
 	return null;
@@ -564,7 +640,7 @@ const installStorybookRealtimeMocks = () => {
 					});
 				}
 			});
-			return target;
+			return trackStorybookRealtimeMock(target);
 		} as any;
 		StorybookEventSource.CONNECTING = OriginalEventSource.CONNECTING;
 		StorybookEventSource.OPEN = OriginalEventSource.OPEN;
@@ -635,15 +711,39 @@ function MuiStoryShell({
 	Story: React.ComponentType;
 	needsLiveData: boolean;
 }) {
+	// Like the app's AppThemeProvider: MUI reads the --m3-* values when the
+	// theme is created, so a story palette (orisoSeed) needs a fresh theme.
+	// Follow the translation provider's actual language, including direct
+	// language changes in ordinary story controls, rather than a fixed label.
+	const { i18n: storyI18n } = useTranslation();
+	const locale =
+		storyI18n.resolvedLanguage || storyI18n.language || FALLBACK_LNG;
+	useEffect(() => {
+		const previous = document.documentElement.getAttribute('lang');
+		document.documentElement.lang = locale;
+		return () => {
+			if (previous === null)
+				document.documentElement.removeAttribute('lang');
+			else document.documentElement.lang = previous;
+		};
+	}, [locale]);
+	const [muiTheme, setMuiTheme] = useState(() => theme);
+	useEffect(() => {
+		const refresh = () => setMuiTheme(createAppTheme());
+		window.addEventListener(THEME_APPLIED_EVENT, refresh);
+		return () => window.removeEventListener(THEME_APPLIED_EVENT, refresh);
+	}, []);
 	return (
 		<AppConfigContext.Provider value={config}>
 			<LocaleContext.Provider
 				value={{
-					locale: 'de',
+					locale,
 					locales: ['de', 'en'],
 					selectableLocales: ['de', 'en'],
-					setLocale: () => {},
-					initLocale: 'de'
+					setLocale: (language) => {
+						void storyI18n.changeLanguage(language);
+					},
+					initLocale: FALLBACK_LNG
 				}}
 			>
 				<TenantContext.Provider
@@ -736,7 +836,7 @@ function MuiStoryShell({
 												}
 											}}
 										>
-											<ThemeProvider theme={theme}>
+											<ThemeProvider theme={muiTheme}>
 												<LegalLinksProvider
 													legalLinks={[]}
 												>
@@ -768,7 +868,10 @@ function MuiStoryShell({
 	);
 }
 
-export const withMuiTheme = (Story: React.ComponentType, context: any) => {
+export const withMuiTheme = function WithMuiTheme(
+	Story: React.ComponentType,
+	context: any
+) {
 	const [{ locale }] = useGlobals();
 	useEffect(() => {
 		if (locale && typeof locale === 'string') {
@@ -798,7 +901,50 @@ export const withMuiTheme = (Story: React.ComponentType, context: any) => {
 init(config.i18n, null);
 
 const preview: Preview = {
+	async beforeEach(context) {
+		// Snapshot this story's declared permissions; the verification owner below
+		// restores the previous fetch after async cleanup, including failed stories.
+		const tenantFetch = createTenantPublicStoryFetch(
+			globalThis.fetch,
+			window.location.origin,
+			context.parameters.tenantSettings
+		);
+		if (import.meta.env.MODE === 'test') a11yVerification.begin(context);
+		const language = i18n.language;
+		const finish = beginStoryVerification(
+			context.parameters.verification?.expectedErrors,
+			{
+				id: context.id,
+				declaredNeedsData:
+					context.tags?.includes('needs-data') ||
+					context.parameters.needsLiveData === true,
+				cleanup: () =>
+					cleanupStorybookState(async () => {
+						if (language && i18n.language !== language)
+							await i18n.changeLanguage(language);
+					})
+			}
+		);
+		globalThis.fetch = tenantFetch;
+		return () => finish.complete();
+	},
 	parameters: {
+		options: {
+			storySort: {
+				order: [
+					'Entry flows',
+					[
+						'Overview',
+						'Postcode counselling',
+						'Live chat',
+						'Self-help groups',
+						'Temporary guests',
+						'Existing account'
+					],
+					'*'
+				]
+			}
+		},
 		i18n,
 		a11y: {
 			options: {
@@ -811,8 +957,19 @@ const preview: Preview = {
 						'wcag21aa',
 						'wcag22aa'
 					]
+				},
+				rules: {
+					// A plain repeated id (one SVG icon rendered twice) fails only
+					// WCAG 4.1.1, which 2.2 removed. Ids that a label or ARIA
+					// points at stay checked by duplicate-id-aria (#1338).
+					'duplicate-id': { enabled: false },
+					// The palette is a product decision: colours stay as designed
+					// and contrast is handled by the optional high-contrast
+					// appearance (#1134), not by this gate (#1338).
+					'color-contrast': { enabled: false }
 				}
 			},
+			...a11yExcept(),
 			test: 'error'
 		},
 		controls: {
@@ -835,7 +992,15 @@ const preview: Preview = {
 		 * fire at the wrong breakpoint. See ORISO-Frontend#849.
 		 */
 		viewport: {
+			// addon-vitest sizes the rendered iframe from Storybook parameters,
+			// overriding browser.viewport. Keep native story-specific overrides.
+			defaultViewport: 'desktop1280',
 			options: {
+				phone320: {
+					name: 'Phone 320 (smallest supported)',
+					styles: { width: '320px', height: '640px' },
+					type: 'mobile'
+				},
 				phone375: {
 					name: 'Phone 375 (iPhone SE / 8)',
 					styles: { width: '375px', height: '812px' },
@@ -846,59 +1011,92 @@ const preview: Preview = {
 					styles: { width: '390px', height: '844px' },
 					type: 'mobile'
 				},
+				phone412: {
+					name: 'Phone 412 (Pixel / Galaxy)',
+					styles: { width: '412px', height: '915px' },
+					type: 'mobile'
+				},
 				phone390Landscape: {
 					name: 'Phone 390 landscape (844×390)',
 					styles: { width: '844px', height: '390px' },
 					type: 'mobile'
+				},
+				tablet820: {
+					name: 'Tablet 820 (iPad Air portrait, 820x1180)',
+					styles: { width: '820px', height: '1180px' },
+					type: 'tablet'
 				},
 				tablet834: {
 					name: 'Tablet 834 (iPad Air portrait)',
 					styles: { width: '834px', height: '1194px' },
 					type: 'tablet'
 				},
+				desktop1024: {
+					name: 'Desktop 1024 (small laptop, split window)',
+					styles: { width: '1024px', height: '768px' },
+					type: 'desktop'
+				},
 				desktop1280: {
 					name: 'Desktop 1280',
 					styles: { width: '1280px', height: '800px' },
+					type: 'desktop'
+				},
+				desktop1366: {
+					name: 'Desktop 1366 (common laptop)',
+					styles: { width: '1366px', height: '768px' },
+					type: 'desktop'
+				},
+				desktop1280x720: {
+					name: 'Desktop 1920 at 150 % zoom (1280×720 CSS px)',
+					styles: { width: '1280px', height: '720px' },
 					type: 'desktop'
 				},
 				desktop1440: {
 					name: 'Desktop 1440',
 					styles: { width: '1440px', height: '900px' },
 					type: 'desktop'
+				},
+				desktop1920: {
+					name: 'Desktop 1920 (full HD)',
+					styles: { width: '1920px', height: '1080px' },
+					type: 'desktop'
+				},
+				desktop2560: {
+					name: 'Desktop 2560 (QHD, 1440p)',
+					styles: { width: '2560px', height: '1440px' },
+					type: 'desktop'
+				},
+				desktop3840: {
+					name: 'Desktop 3840 (4K UHD)',
+					styles: { width: '3840px', height: '2160px' },
+					type: 'desktop'
 				}
 			}
 		},
+		// Storybook 9+ format: named options here, the active one in `globals.backgrounds`.
 		backgrounds: {
-			default: 'light',
-			values: [
-				{
-					name: 'light',
-					value: '#ffffff'
-				},
-				{
-					name: 'dark',
-					value: '#1a1a1a'
-				},
-				{
-					name: 'gray',
-					value: '#f5f5f5'
-				}
-			]
+			options: {
+				light: { name: 'light', value: '#ffffff' },
+				dark: { name: 'dark', value: '#1a1a1a' },
+				gray: { name: 'gray', value: '#f5f5f5' }
+			}
 		}
 	},
-	globalTypes: orisoSchemeGlobalType,
+	globalTypes: { ...orisoSchemeGlobalType, ...entryFormDemoGlobalTypes },
 	initialGlobals: {
 		locale: FALLBACK_LNG,
 		locales: {
 			de: { icon: '🇩🇪', title: 'Deutsch', right: 'DE' },
 			en: { icon: '🇺🇸', title: 'Englisch', right: 'EN' }
 		},
-		scheme: 'light'
+		scheme: 'light',
+		entryFormDemo: 'manual',
+		backgrounds: { value: 'light' }
 	},
 	tags: ['autodocs'],
-	// The scheme decorator runs outermost so its custom properties are in
-	// place before any component reads them.
-	decorators: [withMuiTheme, withOrisoScheme]
+	// The scheme decorator installs custom properties before the story
+	// components read them.
+	decorators: [withMuiTheme, withOrisoScheme, WithEntryFormDemo]
 };
 
 export default preview;

@@ -1,14 +1,31 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 
 import * as React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import {
+	act,
+	cleanup,
+	render,
+	screen,
+	fireEvent,
+	waitFor
+} from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
+import {
+	setValueInCookie,
+	deleteCookieByName
+} from '../sessionCookie/accessSessionCookie';
 import { ModalContext } from '../../globalState/context/ModalContext';
 import type { OVERLAY_TYPES } from '../../globalState/interfaces/AppConfig/OverlaysConfigInterface';
 import { TwoFactorSetupDialog } from './TwoFactorSetupDialog';
 import { TWO_FACTOR_TYPES, type TwoFactorType } from './twoFactorAuthConstants';
 
+const emailPermission = vi.hoisted(() => ({ allowed: true }));
+vi.mock('../../hooks/useAccountEmailCollectionAllowed', () => ({
+	useAccountEmailCollectionAllowed: () => emailPermission.allowed
+}));
+
 type MuiMockProps = React.PropsWithChildren<{
+	'aria-describedby'?: string;
 	'autoFocus'?: boolean;
 	'className'?: string;
 	'disabled'?: boolean;
@@ -65,6 +82,7 @@ vi.mock('@mui/material', async () => {
 		Box: ({ children, className, id }: MuiMockProps) =>
 			ReactModule.createElement('div', { className, id }, children),
 		Button: ({
+			'aria-describedby': ariaDescribedBy,
 			children,
 			className,
 			disabled,
@@ -73,15 +91,30 @@ vi.mock('@mui/material', async () => {
 		}: MuiMockProps) =>
 			ReactModule.createElement(
 				'button',
-				{ className, disabled, onClick, type: 'button' },
+				{
+					'aria-describedby': ariaDescribedBy,
+					className,
+					disabled,
+					onClick,
+					'type': 'button'
+				},
 				startIcon,
 				children
 			),
-		Dialog: ({ children, className, open }: MuiMockProps) =>
+		Dialog: ({
+			'aria-describedby': ariaDescribedBy,
+			children,
+			className,
+			open
+		}: MuiMockProps) =>
 			open
 				? ReactModule.createElement(
 						'div',
-						{ className, role: 'dialog' },
+						{
+							'aria-describedby': ariaDescribedBy,
+							className,
+							'role': 'dialog'
+						},
 						children
 					)
 				: null,
@@ -262,19 +295,34 @@ const renderDialog = (
 		);
 	};
 
-	render(
+	const view = render(
 		<>
 			<div className="app" />
 			<DialogHarness />
 		</>
 	);
 
-	return { onClose, onDisable, onSetupAborted, onSetupComplete };
+	return {
+		onClose,
+		onDisable,
+		onSetupAborted,
+		onSetupComplete,
+		refresh: (next: typeof overrideProps = {}) => {
+			overrideProps = { ...overrideProps, ...next };
+			view.rerender(
+				<>
+					<div className="app" />
+					<DialogHarness />
+				</>
+			);
+		}
+	};
 };
 
 describe('TwoFactorSetupDialog', () => {
 	afterEach(() => {
 		vi.clearAllMocks();
+		emailPermission.allowed = true;
 		document.body.innerHTML = '';
 	});
 
@@ -610,4 +658,295 @@ describe('TwoFactorSetupDialog', () => {
 			)
 		).toBeTruthy();
 	});
+
+	it('says why the app option cannot be chosen while app 2FA is already active', async () => {
+		renderDialog({ currentType: TWO_FACTOR_TYPES.APP });
+
+		const appButton = await screen.findByRole('button', {
+			name: 'twoFactorAuth.setupDialog.decision.app'
+		});
+		expect(appButton.hasAttribute('disabled')).toBe(true);
+		const hint = screen.getByText(
+			'twoFactorAuth.setupDialog.decision.appActive'
+		);
+		expect(hint.getAttribute('role')).toBe('status');
+		// The disabled button and the dialog itself both point at the hint, so it is read out.
+		expect(appButton.getAttribute('aria-describedby')).toBe(hint.id);
+		expect(
+			screen.getByRole('dialog').getAttribute('aria-describedby')
+		).toContain(hint.id);
+		expect(
+			screen.queryByText('twoFactorAuth.setupDialog.decision.emailActive')
+		).toBeNull();
+	});
+
+	it('says the same for an already active e-mail method', async () => {
+		renderDialog({ currentType: TWO_FACTOR_TYPES.EMAIL });
+
+		const hint = await screen.findByText(
+			'twoFactorAuth.setupDialog.decision.emailActive'
+		);
+		const emailButton = screen.getByRole('button', {
+			name: 'twoFactorAuth.setupDialog.decision.email'
+		});
+		expect(emailButton.getAttribute('aria-describedby')).toBe(hint.id);
+		expect(
+			screen
+				.getByRole('button', {
+					name: 'twoFactorAuth.setupDialog.decision.app'
+				})
+				.getAttribute('aria-describedby')
+		).toBeNull();
+	});
+});
+
+describe('email collection permission', () => {
+	afterEach(() => {
+		cleanup();
+		vi.clearAllMocks();
+		emailPermission.allowed = true;
+		deleteCookieByName('keycloak');
+	});
+
+	it('does not offer a new email factor when collection is forbidden and no address exists', async () => {
+		emailPermission.allowed = false;
+		renderDialog({ email: '' });
+		await screen.findByText('twoFactorAuth.setupDialog.decision.title');
+		expect(
+			screen.getByRole<HTMLButtonElement>('button', {
+				name: 'twoFactorAuth.setupDialog.decision.email'
+			}).disabled
+		).toBe(true);
+		expect(apiPutTwoFactorAuthEmailMock).not.toHaveBeenCalled();
+		emailPermission.allowed = true;
+		deleteCookieByName('keycloak');
+	});
+	it('preserves setup using the unchanged stored address while collection is forbidden', async () => {
+		emailPermission.allowed = false;
+		renderDialog();
+		await screen.findByText('twoFactorAuth.setupDialog.decision.title');
+		clickButton('twoFactorAuth.setupDialog.decision.email');
+		const field = await screen.findByLabelText<HTMLInputElement>(
+			'twoFactorAuth.setupDialog.email.select.input'
+		);
+		expect(field.readOnly).toBe(true);
+		clickButton('twoFactorAuth.setupDialog.action.next');
+		await waitFor(() =>
+			expect(apiPutTwoFactorAuthEmailMock).toHaveBeenCalledWith(
+				'maxmuster@email.de'
+			)
+		);
+		emailPermission.allowed = true;
+		deleteCookieByName('keycloak');
+	});
+
+	it('withdraws a changed pending email when policy is revoked and never advances from the old response', async () => {
+		let finish: () => void;
+		apiPutTwoFactorAuthEmailMock.mockReturnValueOnce(
+			new Promise<void>((resolve) => {
+				finish = resolve;
+			})
+		);
+		const { refresh } = renderDialog();
+		await screen.findByText('twoFactorAuth.setupDialog.decision.title');
+		clickButton('twoFactorAuth.setupDialog.decision.email');
+		fireEvent.change(
+			screen.getByLabelText(
+				'twoFactorAuth.setupDialog.email.select.input'
+			),
+			{ target: { value: 'new@example.test' } }
+		);
+		clickButton('twoFactorAuth.setupDialog.action.next');
+		await waitFor(() =>
+			expect(apiPutTwoFactorAuthEmailMock).toHaveBeenCalledWith(
+				'new@example.test'
+			)
+		);
+		emailPermission.allowed = false;
+		refresh();
+		await waitFor(() =>
+			expect(
+				screen.queryByLabelText(
+					'twoFactorAuth.setupDialog.email.select.input'
+				)
+			).toBeNull()
+		);
+		finish();
+		await waitFor(() =>
+			expect(
+				screen.queryByLabelText(
+					'twoFactorAuth.setupDialog.email.connect.input'
+				)
+			).toBeNull()
+		);
+		expect(apiPostTwoFactorAuthEmailWithCodeMock).not.toHaveBeenCalled();
+	});
+});
+
+describe('email setup request ownership', () => {
+	afterEach(() => {
+		cleanup();
+		vi.clearAllMocks();
+		emailPermission.allowed = true;
+		deleteCookieByName('keycloak');
+	});
+	const held = () => {
+		let resolve: () => void, reject: (reason: Error) => void;
+		const promise = new Promise<void>((yes, no) => {
+			resolve = yes;
+			reject = no;
+		});
+		return {
+			promise,
+			resolve: () => resolve(),
+			reject: (reason: Error) => reject(reason)
+		};
+	};
+	it('does not let an old send rejection overwrite or unlock a reopened pending request', async () => {
+		const old = held(),
+			fresh = held();
+		apiPutTwoFactorAuthEmailMock
+			.mockReturnValueOnce(old.promise)
+			.mockReturnValueOnce(fresh.promise);
+		const { refresh } = renderDialog();
+		await screen.findByText('twoFactorAuth.setupDialog.decision.title');
+		clickButton('twoFactorAuth.setupDialog.decision.email');
+		clickButton('twoFactorAuth.setupDialog.action.next');
+		refresh({ open: false });
+		refresh({ open: true });
+		await screen.findByText('twoFactorAuth.setupDialog.decision.title');
+		clickButton('twoFactorAuth.setupDialog.decision.email');
+		clickButton('twoFactorAuth.setupDialog.action.next');
+		await act(async () => old.reject(new Error('old request')));
+		expect(
+			screen.queryByText('twoFactorAuth.setupDialog.error.emailSend')
+		).toBeNull();
+		expect(
+			screen.getByRole<HTMLButtonElement>('button', {
+				name: 'twoFactorAuth.setupDialog.action.next'
+			}).disabled
+		).toBe(true);
+		await act(async () => fresh.resolve());
+		expect(
+			await screen.findByLabelText(
+				'twoFactorAuth.setupDialog.email.connect.input'
+			)
+		).toBeTruthy();
+	});
+	it.each(['encourage', 'completion'] as const)(
+		'does not finish a closed email lifetime during %s',
+		async (stage) => {
+			const pending = held();
+			apiPutTwoFactorAuthEmailMock.mockResolvedValue(undefined);
+			apiPostTwoFactorAuthEmailWithCodeMock.mockResolvedValue(undefined);
+			apiPatchTwoFactorAuthEncourageMock.mockReturnValue(
+				stage === 'encourage' ? pending.promise : Promise.resolve()
+			);
+			const complete = vi.fn(() =>
+				stage === 'completion' ? pending.promise : Promise.resolve()
+			);
+			const { refresh, onSetupAborted } = renderDialog({
+				onSetupComplete: complete
+			});
+			await screen.findByText('twoFactorAuth.setupDialog.decision.title');
+			clickButton('twoFactorAuth.setupDialog.decision.email');
+			clickButton('twoFactorAuth.setupDialog.action.next');
+			fireEvent.change(
+				await screen.findByLabelText(
+					'twoFactorAuth.setupDialog.email.connect.input'
+				),
+				{ target: { value: '123456' } }
+			);
+			clickButton('twoFactorAuth.setupDialog.action.confirm');
+			await waitFor(() =>
+				expect(
+					stage === 'encourage'
+						? apiPatchTwoFactorAuthEncourageMock
+						: complete
+				).toHaveBeenCalled()
+			);
+			refresh({ open: false });
+			refresh({ open: true });
+			if (stage === 'completion')
+				await act(async () =>
+					pending.reject(new Error('old completion'))
+				);
+			else await act(async () => pending.resolve());
+			if (stage === 'encourage') expect(complete).not.toHaveBeenCalled();
+			expect(onSetupAborted).not.toHaveBeenCalled();
+			expect(
+				screen.queryByText(
+					'twoFactorAuth.setupDialog.email.success.title'
+				)
+			).toBeNull();
+			expect(
+				screen.getByText('twoFactorAuth.setupDialog.decision.title')
+			).toBeTruthy();
+		}
+	);
+	it('does not release a pending APP write when email collection is refreshed', async () => {
+		const app = held();
+		apiPutTwoFactorAuthAppMock.mockReturnValueOnce(app.promise);
+		const { refresh } = renderDialog();
+		await screen.findByText('twoFactorAuth.setupDialog.decision.app');
+		clickButton('twoFactorAuth.setupDialog.decision.app');
+		clickButton('twoFactorAuth.setupDialog.app.install.done');
+		clickButton('twoFactorAuth.setupDialog.action.next');
+		fireEvent.change(
+			await screen.findByLabelText(
+				'twoFactorAuth.setupDialog.app.verify.input'
+			),
+			{ target: { value: '123456' } }
+		);
+		clickButton('twoFactorAuth.setupDialog.action.confirm');
+		await waitFor(() =>
+			expect(apiPutTwoFactorAuthAppMock).toHaveBeenCalledTimes(1)
+		);
+		emailPermission.allowed = false;
+		refresh();
+		expect(
+			screen.getByRole<HTMLButtonElement>('button', {
+				name: 'twoFactorAuth.setupDialog.action.confirm'
+			}).disabled
+		).toBe(true);
+		await act(async () => app.resolve());
+	});
+	it.each(['same identity refresh', 'A-B-A identity transition'] as const)(
+		'keeps the exact postcommit identity lifetime through %s',
+		async (transition) => {
+			const token = (sub: string, serial: number) =>
+				`h.${btoa(JSON.stringify({ sub, tenantId: 1, iat: serial }))}.s`;
+			setValueInCookie('keycloak', token('A', 1));
+			const pending = held();
+			apiPatchTwoFactorAuthEncourageMock.mockReturnValueOnce(
+				pending.promise
+			);
+			apiPutTwoFactorAuthEmailMock.mockResolvedValue(undefined);
+			apiPostTwoFactorAuthEmailWithCodeMock.mockResolvedValue(undefined);
+			const { onSetupComplete } = renderDialog();
+			await screen.findByText('twoFactorAuth.setupDialog.decision.email');
+			clickButton('twoFactorAuth.setupDialog.decision.email');
+			clickButton('twoFactorAuth.setupDialog.action.next');
+			fireEvent.change(
+				await screen.findByLabelText(
+					'twoFactorAuth.setupDialog.email.connect.input'
+				),
+				{ target: { value: '123456' } }
+			);
+			clickButton('twoFactorAuth.setupDialog.action.confirm');
+			await waitFor(() =>
+				expect(apiPatchTwoFactorAuthEncourageMock).toHaveBeenCalled()
+			);
+			act(() => {
+				if (transition === 'A-B-A identity transition')
+					setValueInCookie('keycloak', token('B', 2));
+				setValueInCookie('keycloak', token('A', 3));
+			});
+			await act(async () => pending.resolve());
+			expect(onSetupComplete).toHaveBeenCalledTimes(
+				transition === 'same identity refresh' ? 1 : 0
+			);
+			deleteCookieByName('keycloak');
+		}
+	);
 });

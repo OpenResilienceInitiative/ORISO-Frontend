@@ -1,0 +1,1 @@
+PracticeCards already starts interrupted flows afresh. Normalize only its displayed status; do not change ordinary tutorial cards or backend progress. No new storage or account state writes. Independent planner/verifier reviewed the approach.

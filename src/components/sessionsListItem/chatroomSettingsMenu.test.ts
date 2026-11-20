@@ -3,7 +3,7 @@
  * Settings" menu. Every item the menu renders must resolve to a real handler;
  * actions without a shipped feature behind them are absent, not disabled stubs.
  */
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import {
 	getChatroomSettingsMenuVisibility,
@@ -25,9 +25,10 @@ const consultantSession = (
 	isAgencyCounselling: true,
 	teamDiscussionFeatureEnabled: true,
 	hasExistingTeamDiscussion: false,
-	isGroupChatOwner: false,
+	canEditGroupChatSettings: false,
 	isGroupChatActive: false,
 	hasMatrixRoom: true,
+	isGroupChatSubscribed: false,
 	...overrides
 });
 
@@ -40,7 +41,7 @@ const ownedGroupChat = (
 	consultantSession({
 		isSession: false,
 		isGroup: true,
-		isGroupChatOwner: true,
+		canEditGroupChatSettings: true,
 		isAgencyCounselling: false,
 		...overrides
 	});
@@ -111,43 +112,32 @@ describe('getChatroomSettingsMenuVisibility', () => {
 		});
 	});
 
-	describe('delete — must mirror the session header menu (SessionMenu.tsx)', () => {
-		it('is offered to the assigned consultant on an active session', () => {
+	describe('delete — never offered (ORISO-Admin#1518)', () => {
+		// Deleting hard-deleted the chat for the advice seeker too and could
+		// deactivate their account. Counsellors archive instead; the advice
+		// seeker keeps the whole history until they delete it themselves.
+		const everyRole: ChatroomSettingsMenuInput[] = [
+			consultantSession(),
+			consultantSession({ isArchiveTab: true }),
+			consultantSession({ isSupervisorView: true }),
+			consultantEnquiry(),
+			consultantSession({ isAsker: true, isConsultant: false }),
+			ownedGroupChat()
+		];
+
+		it('exposes no delete flag for any role or list', () => {
+			everyRole.forEach((input) => {
+				expect(
+					getChatroomSettingsMenuVisibility(input)
+				).not.toHaveProperty('showDelete');
+			});
+		});
+
+		it('keeps archive as the counsellor’s way to tidy the list', () => {
 			expect(
 				getChatroomSettingsMenuVisibility(consultantSession())
-					.showDelete
+					.showArchive
 			).toBe(true);
-		});
-
-		it('is withheld on an enquiry', () => {
-			expect(
-				getChatroomSettingsMenuVisibility(consultantEnquiry())
-					.showDelete
-			).toBe(false);
-		});
-
-		it('is withheld from a supervisor observing someone else’s session', () => {
-			expect(
-				getChatroomSettingsMenuVisibility(
-					consultantSession({ isSupervisorView: true })
-				).showDelete
-			).toBe(false);
-		});
-
-		it('is withheld from the asker', () => {
-			expect(
-				getChatroomSettingsMenuVisibility(
-					consultantSession({ isAsker: true, isConsultant: false })
-				).showDelete
-			).toBe(false);
-		});
-
-		it('is withheld when the item is not a session', () => {
-			expect(
-				getChatroomSettingsMenuVisibility(
-					consultantSession({ isSession: false })
-				).showDelete
-			).toBe(false);
 		});
 	});
 
@@ -220,7 +210,10 @@ describe('getChatroomSettingsMenuVisibility', () => {
 		it('is withheld while the group chat is running', () => {
 			expect(
 				getChatroomSettingsMenuVisibility(
-					ownedGroupChat({ isGroupChatActive: true })
+					ownedGroupChat({
+						isGroupChatActive: true,
+						canEditGroupChatSettings: false
+					})
 				).showChatSettings
 			).toBe(false);
 		});
@@ -228,7 +221,7 @@ describe('getChatroomSettingsMenuVisibility', () => {
 		it('is withheld from a consultant who does not own the group chat', () => {
 			expect(
 				getChatroomSettingsMenuVisibility(
-					ownedGroupChat({ isGroupChatOwner: false })
+					ownedGroupChat({ canEditGroupChatSettings: false })
 				).showChatSettings
 			).toBe(false);
 		});
@@ -254,7 +247,7 @@ describe('getChatroomSettingsMenuVisibility', () => {
 		it('is withheld on a one-to-one session, which has no group settings', () => {
 			expect(
 				getChatroomSettingsMenuVisibility(
-					consultantSession({ isGroupChatOwner: true })
+					consultantSession({ canEditGroupChatSettings: true })
 				).showChatSettings
 			).toBe(false);
 		});
@@ -272,7 +265,6 @@ describe('getChatroomSettingsMenuVisibility', () => {
 				getChatroomSettingsMenuVisibility(ownedGroupChat());
 			expect(visibility.showArchive).toBe(false);
 			expect(visibility.showDearchive).toBe(false);
-			expect(visibility.showDelete).toBe(false);
 			expect(visibility.showRequestHelp).toBe(false);
 		});
 	});
@@ -296,7 +288,7 @@ describe('getChatroomSettingsMenuVisibility', () => {
 					'showArchive',
 					'showChatSettings',
 					'showDearchive',
-					'showDelete',
+					'showLeaveGroup',
 					'showRequestHelp'
 				]);
 			});
@@ -356,5 +348,61 @@ describe('withTeamDiscussionParam', () => {
 		const params = new URLSearchParams(result.split('?')[1]);
 		expect(params.get('sessionListTab')).toBe('archive');
 		expect(params.getAll('teamDiscussion')).toEqual(['1']);
+	});
+});
+
+// #1923 — the asker had no way to leave a group from the list.
+describe('getChatroomSettingsMenuVisibility leave group', () => {
+	const askerGroup = (overrides: Partial<ChatroomSettingsMenuInput> = {}) =>
+		consultantSession({
+			isAsker: true,
+			isConsultant: false,
+			isSession: false,
+			isGroup: true,
+			isAgencyCounselling: false,
+			isGroupChatActive: true,
+			isGroupChatSubscribed: true,
+			...overrides
+		});
+
+	it('is offered to an asker who joined a running group', () => {
+		expect(
+			getChatroomSettingsMenuVisibility(askerGroup()).showLeaveGroup
+		).toBe(true);
+	});
+
+	it('is withheld while the group is not running', () => {
+		expect(
+			getChatroomSettingsMenuVisibility(
+				askerGroup({ isGroupChatActive: false })
+			).showLeaveGroup
+		).toBe(false);
+	});
+
+	it('is withheld from an asker who has not joined', () => {
+		expect(
+			getChatroomSettingsMenuVisibility(
+				askerGroup({ isGroupChatSubscribed: false })
+			).showLeaveGroup
+		).toBe(false);
+	});
+
+	it('is withheld from counsellors, who leave from the chat header', () => {
+		expect(
+			getChatroomSettingsMenuVisibility(
+				ownedGroupChat({
+					isGroupChatActive: true,
+					isGroupChatSubscribed: true
+				})
+			).showLeaveGroup
+		).toBe(false);
+	});
+
+	it('is withheld on a one-to-one session', () => {
+		expect(
+			getChatroomSettingsMenuVisibility(
+				askerGroup({ isGroup: false, isSession: true })
+			).showLeaveGroup
+		).toBe(false);
 	});
 });

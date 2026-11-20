@@ -29,6 +29,7 @@ interface AgencySettingsSnapshot {
 	/** Tenant the entries below were fetched for. */
 	tenantId: number | null | undefined;
 	byId: Record<number, AgencySettingsInterface | null>;
+	unavailable: Record<number, true>;
 	/** How many requests per `${tenantId}|${ids}` key have settled. */
 	settled: Record<string, number>;
 	/** Request keys that currently have a fetch in flight. */
@@ -38,11 +39,15 @@ interface AgencySettingsSnapshot {
 let snapshot: AgencySettingsSnapshot = {
 	tenantId: undefined,
 	byId: {},
+	unavailable: {},
 	settled: {},
 	inflight: {}
 };
 const listeners = new Set<() => void>();
-const inFlight = new Map<string, Promise<void>>();
+const inFlight = new Map<
+	string,
+	{ generation: number; request: Promise<void> }
+>();
 const generationByTenant = new Map<number | null, number>();
 
 const subscribe = (listener: () => void) => {
@@ -60,6 +65,7 @@ const emptySnapshot = (
 ): AgencySettingsSnapshot => ({
 	tenantId,
 	byId: {},
+	unavailable: {},
 	settled: {},
 	inflight: {}
 });
@@ -69,7 +75,11 @@ const requestKey = (tenantId: number | null, ids: number[]) =>
 
 const refreshAgencySettings = (tenantId: number | null, ids: number[]) => {
 	const key = requestKey(tenantId, ids);
-	if (inFlight.has(key)) {
+	const currentRequest = inFlight.get(key);
+	if (
+		currentRequest &&
+		currentRequest.generation === generationByTenant.get(tenantId)
+	) {
 		return;
 	}
 	const generation = (generationByTenant.get(tenantId) ?? 0) + 1;
@@ -85,11 +95,14 @@ const refreshAgencySettings = (tenantId: number | null, ids: number[]) => {
 		if (isStale()) return;
 		const current = base();
 		const byId = { ...current.byId };
+		const unavailable = { ...current.unavailable };
 		ids.forEach((id) => {
 			if (id in answers) {
 				byId[id] = answers[id];
+				delete unavailable[id];
 			} else {
 				delete byId[id];
+				unavailable[id] = true;
 			}
 		});
 		const inflight = { ...current.inflight };
@@ -97,6 +110,7 @@ const refreshAgencySettings = (tenantId: number | null, ids: number[]) => {
 		publish({
 			tenantId,
 			byId,
+			unavailable,
 			settled: {
 				...current.settled,
 				[key]: (current.settled[key] ?? 0) + 1
@@ -113,17 +127,30 @@ const refreshAgencySettings = (tenantId: number | null, ids: number[]) => {
 	const request = apiGetAgenciesByIds(ids)
 		.then((agencies) => {
 			const answers: Record<number, AgencySettingsInterface | null> = {};
-			agencies.forEach((agency) => {
-				if (agency?.id != null) {
+			ids.forEach((id) => {
+				const matches = agencies.filter(
+					(candidate) => candidate?.id === id
+				);
+				const agency = matches.length === 1 ? matches[0] : undefined;
+				if (
+					agency?.id != null &&
+					ids.includes(agency.id) &&
+					!(
+						tenantId !== null &&
+						agency.tenantId != null &&
+						agency.tenantId !== tenantId
+					)
+				) {
 					answers[agency.id] = agency.settings ?? null;
 				}
 			});
 			settle(answers);
 		})
-		// Degrade to the Träger's answer: unknown agency settings add no
-		// restriction (the backend still enforces its own gate on create).
+		// A failed authority refresh is distinct from a valid legacy response
+		// without settings; it cannot grant creation from permissive tenant flags.
 		.catch(() => settle({}))
 		.finally(() => {
+			if (inFlight.get(key)?.request !== request) return;
 			inFlight.delete(key);
 			if (snapshot.inflight[key]) {
 				const inflight = { ...snapshot.inflight };
@@ -131,7 +158,7 @@ const refreshAgencySettings = (tenantId: number | null, ids: number[]) => {
 				publish({ ...snapshot, inflight });
 			}
 		});
-	inFlight.set(key, request);
+	inFlight.set(key, { generation, request });
 };
 
 export interface CounsellorAgencyFormats {
@@ -185,9 +212,13 @@ export const useCounsellorAgencyFormats = (
 			settings:
 				agency.id in known
 					? known[agency.id]
-					: (agency.settings ?? null)
+					: (agency.settings ?? null),
+			...((enabled && !(agency.id in known)) ||
+			(current.tenantId === tenantId && current.unavailable[agency.id])
+				? { unavailable: true }
+				: {})
 		}));
-	}, [current, tenantId, userAgencies]);
+	}, [current, tenantId, userAgencies, enabled]);
 
 	const key = requestKey(tenantId, ids);
 	const settledCount =

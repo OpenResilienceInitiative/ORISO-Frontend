@@ -1,5 +1,44 @@
-import { describe, expect, it } from 'vitest';
-import { parseMessagePrefixes, buildVisibleToPrefix } from './messageConstants';
+import { describe, expect, it } from 'vite-plus/test';
+import {
+	parseMessagePrefixes,
+	buildVisibleToPrefix,
+	chatEndedTextKey,
+	SYSTEM_NOTIFICATION_PREFIX
+} from './messageConstants';
+
+describe('USER_LEFT_CHAT: who ended the chat (#1838)', () => {
+	const leftChat = (extra: Record<string, unknown>) =>
+		`${SYSTEM_NOTIFICATION_PREFIX}${JSON.stringify({
+			type: 'USER_LEFT_CHAT',
+			username: 'trout_milan_8303',
+			...extra
+		})}`;
+
+	it.each([
+		[{ endedBy: 'CONSULTANT' }, 'CONSULTANT'],
+		[{ endedBy: 'ADVICE_SEEKER' }, 'ADVICE_SEEKER'],
+		[{}, null],
+		[{ endedBy: 'SOMEONE_ELSE' }, null]
+	])('reads endedBy from %j', (extra, endedBy) => {
+		expect(
+			parseMessagePrefixes(leftChat(extra)).systemNotificationEndedBy
+		).toBe(endedBy);
+	});
+
+	it.each([
+		['ADVICE_SEEKER', true, 'message.userLeftChat'],
+		['ADVICE_SEEKER', false, 'message.youEndedChat'],
+		['CONSULTANT', true, 'message.youEndedChat'],
+		['CONSULTANT', false, 'message.consultantLeftChat'],
+		[null, true, 'message.userLeftChat'],
+		[null, false, 'message.chatEnded']
+	] as const)(
+		'ended by %s, counsellor viewer %s -> %s',
+		(endedBy, viewerIsConsultant, key) => {
+			expect(chatEndedTextKey(endedBy, viewerIsConsultant)).toBe(key);
+		}
+	);
+});
 
 /**
  * ADR-017 hard cut: `[THREAD:…]` no longer carries thread identity. These
@@ -38,5 +77,72 @@ describe('parseMessagePrefixes — ADR-017 thread cosmetic strip', () => {
 
 		expect(parsed.visibleToUserIds).toEqual(['u1']);
 		expect(parsed.cleanedMessage).toBe('inhalt');
+	});
+});
+
+describe('persisted handover grant metadata', () => {
+	const event = (metadata: unknown) =>
+		'[SYSTEM_NOTIFICATION]' +
+		JSON.stringify({
+			type: 'CASE_HANDOVER_GRANTED',
+			description: 'The counsellor has taken over.',
+			handover: metadata
+		});
+	it('keeps the event-time NONE and completed takeover metadata', () => {
+		expect(
+			parseMessagePrefixes(
+				event({
+					requestId: 42,
+					clientConsent: 'NONE',
+					accessType: 'TAKEOVER'
+				})
+			).systemNotificationHandoverGrant
+		).toEqual({
+			requestId: 42,
+			clientConsent: 'NONE',
+			accessType: 'TAKEOVER'
+		});
+	});
+	it.each([
+		undefined,
+		null,
+		{},
+		{ requestId: 0, clientConsent: 'NONE', accessType: 'TAKEOVER' },
+		{ requestId: 42, clientConsent: 'UNKNOWN', accessType: 'TAKEOVER' },
+		{ requestId: 42, clientConsent: 'NONE', accessType: 'UNKNOWN' }
+	])(
+		'does not infer a policy for missing or malformed metadata: %j',
+		(metadata) => {
+			const parsed = parseMessagePrefixes(event(metadata));
+			expect(parsed.systemNotificationHandoverGrant).toBeNull();
+			expect(parsed.systemNotificationDescription).toBe(
+				'The counsellor has taken over.'
+			);
+		}
+	);
+});
+
+describe('persisted initial acceptance metadata', () => {
+	const event = (acceptance: unknown) =>
+		'[SYSTEM_NOTIFICATION]' +
+		JSON.stringify({ type: 'INQUIRY_ACCEPTED', acceptance });
+	it('keeps the exact immutable acceptance scope and timestamp', () => {
+		expect(
+			parseMessagePrefixes(
+				event({ sessionId: 73, acceptedAt: '2026-10-09T10:20:00Z' })
+			).systemNotificationAcceptance
+		).toEqual({ sessionId: 73, acceptedAt: '2026-10-09T10:20:00Z' });
+	});
+	it.each([
+		undefined,
+		{},
+		{ sessionId: 0, acceptedAt: '2026-10-09T10:20:00Z' },
+		{ sessionId: 73, acceptedAt: 'not-a-date' },
+		{ sessionId: 73, acceptedAt: '2026-02-30T10:20:00Z' },
+		{ sessionId: 73, acceptedAt: '2026-10-09T10:20:00' }
+	])('rejects incomplete or invalid acceptance metadata: %j', (metadata) => {
+		expect(
+			parseMessagePrefixes(event(metadata)).systemNotificationAcceptance
+		).toBeNull();
 	});
 });

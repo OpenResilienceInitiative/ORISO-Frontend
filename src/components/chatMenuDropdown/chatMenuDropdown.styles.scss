@@ -17,7 +17,8 @@ $menu-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 	@include list-item-active-menu-border;
 	border-radius: 8px;
 	box-shadow: $menu-elevation;
-	overflow: auto;
+	overflow-x: hidden;
+	overflow-y: auto;
 	z-index: 99999;
 	display: flex;
 	flex-direction: column;
@@ -26,6 +27,11 @@ $menu-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 	transform-origin: top right;
 	color: var(--m3-on-surface, #1b1b1c);
 	overscroll-behavior: contain;
+
+	// Constrained tall menus scroll; their children keep their content height.
+	> * {
+		flex-shrink: 0;
+	}
 
 	&__header {
 		display: flex;
@@ -60,6 +66,29 @@ $menu-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 		margin: 0 0 8px;
 	}
 
+	// Label above a group of items ("Termin"), Body Small strong, grey.
+	&__groupLabel {
+		margin: 0;
+		padding: 10px 8px 4px;
+		font-size: 12px;
+		font-weight: 600;
+		line-height: 16px;
+		color: var(--m3-on-surface-variant, #444748);
+	}
+
+	// A short explanatory line inside the card.
+	&__note {
+		margin: 0;
+		padding: 6px 8px 8px;
+		font-size: 12px;
+		line-height: 17px;
+		color: var(--m3-on-surface-variant, #444748);
+
+		&--warning {
+			color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
+		}
+	}
+
 	&__section {
 		display: flex;
 		flex-direction: column;
@@ -67,6 +96,7 @@ $menu-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 	}
 
 	&__item {
+		flex-shrink: 0;
 		display: flex;
 		align-items: flex-start;
 		gap: 12px;
@@ -99,7 +129,7 @@ $menu-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 
 			.chatMenuDropdown__itemTitle,
 			.chatMenuDropdown__itemShortcut {
-				color: var(--m3-primary, #a5000a);
+				color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 			}
 
 			.chatMenuDropdown__itemDescription {
@@ -107,7 +137,7 @@ $menu-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 			}
 
 			.chatMenuDropdown__itemIcon {
-				color: var(--m3-primary, #a5000a);
+				color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 			}
 		}
 
@@ -155,6 +185,7 @@ $menu-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 	}
 
 	&__itemTitle {
+		overflow-wrap: anywhere;
 		font-size: 16px;
 		font-weight: 400;
 		color: var(--m3-on-surface, #1b1b1c);
@@ -184,6 +215,7 @@ $menu-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 	}
 
 	&__itemDescription {
+		overflow-wrap: anywhere;
 		font-size: 12px;
 		color: var(--m3-on-surface-variant, #444748);
 		line-height: 17px;
@@ -208,5 +240,35 @@ $menu-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 
 	.chatMenuDropdown__itemIcon {
 		margin-top: 0;
+	}
+
+	// Phones (Frank, 28 Oct): bigger touch zones, more air, rounder corners.
+	// Desktop keeps the compact size and its screen space.
+	@media (width <= 599px) {
+		width: 280px;
+		padding: 12px;
+		border-radius: 20px;
+
+		.chatMenuDropdown__item {
+			min-height: 56px;
+			padding: 12px 16px;
+			gap: 16px;
+			border-radius: 14px;
+		}
+
+		.chatMenuDropdown__itemIcon,
+		.chatMenuDropdown__itemIcon svg {
+			width: 24px;
+			height: 24px;
+		}
+
+		.chatMenuDropdown__itemTitle {
+			font-size: 17px;
+		}
+
+		.chatMenuDropdown__itemDescription {
+			font-size: 13px;
+			line-height: 18px;
+		}
 	}
 }
