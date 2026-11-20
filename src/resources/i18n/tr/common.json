@@ -6150,6 +6150,7 @@
 			"back": "Geri",
 			"confirm": "Anladım",
 			"loading": "Yasal metin yükleniyor…",
+			"loadError": { "text": "Yasal metin yüklenemedi. Lütfen daha sonra tekrar deneyin." },
 			"missing": {
 				"text": "Bu hizmet için burada bir hukuki metin tanımlanmamış.",
 				"link": "Tanımlı adrese git"
