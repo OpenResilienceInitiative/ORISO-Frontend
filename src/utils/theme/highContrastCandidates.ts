@@ -398,9 +398,6 @@ const over = (
 const ROW_NAME_INK = '#4f5864';
 const ROW_PREVIEW_INK = '#1e1e1e';
 
-/** settings.scss `$focus-blue`, which Button's `$focus-outline` draws on `:focus`. */
-const BUTTON_FOCUS_BLUE = '#199fff';
-
 /**
  * The foreground/background pairs that meet on screen in the surfaces the
  * comparison page shows. The token on each side is the one the component's
@@ -558,21 +555,21 @@ export const evaluateContrastPairs = (
 		{
 			id: 'focus-ring',
 			group: 'Focus',
-			label: 'Focus ring (--m3-primary-outline)',
+			label: 'Focus ring (--m3-primary)',
 			kind: 'ui',
-			foreground: token('--m3-primary-outline'),
+			foreground: token('--m3-primary'),
 			background: surface,
 			enforced: true
 		},
 		{
 			id: 'focus-ring-button',
 			group: 'Focus',
-			label: 'Button focus ring (hard-coded)',
+			label: 'Button focus ring ($focus-outline)',
 			kind: 'ui',
-			foreground: BUTTON_FOCUS_BLUE,
+			foreground: token('--m3-primary'),
 			background: surface,
-			enforced: false,
-			note: 'button.styles.scss draws .button__item:focus with $focus-outline (settings.scss, $focus-blue #199fff), not a token. Same in every column until Button is wired to --m3-primary-outline.'
+			enforced: true,
+			note: 'button.styles.scss draws .button__item:focus with $focus-outline, which reads --m3-primary (focus ring contract, Frontend#1134). It was the hard-coded $focus-blue #199fff (2.82:1 on white) before.'
 		},
 		{
 			id: 'row-name',
