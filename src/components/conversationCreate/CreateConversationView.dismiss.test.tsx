@@ -335,6 +335,22 @@ describe('CreateConversationView - leaving the view', () => {
 		expect(screen.getByText('groupChat.format.title')).toBeTruthy();
 	});
 
+	it('keeps the Interna card when Back is used on it while a request runs', async () => {
+		viewport.fromL = false;
+		submitState.pending = true;
+		await open();
+		click(await screen.findByText('groupChat.internal.title'));
+		expect(
+			await screen.findByLabelText('groupChat.internal.nameLabel')
+		).toBeTruthy();
+
+		click(screen.getByLabelText('groupChat.format.back'));
+		expect(routerState.navigate).not.toHaveBeenCalled();
+		expect(
+			screen.getByLabelText('groupChat.internal.nameLabel')
+		).toBeTruthy();
+	});
+
 	it('returns focus to "Erstellen" once the view has gone', async () => {
 		const view = await open();
 		fireEvent.keyDown(document.body, { key: 'Escape' });
