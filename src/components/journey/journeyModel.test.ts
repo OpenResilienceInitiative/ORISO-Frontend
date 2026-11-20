@@ -117,3 +117,21 @@ describe('answers leaving the Frontend', () => {
 		]);
 	});
 });
+
+describe('the check-in shows one question per screen (Frank, 2026-11-20)', () => {
+	it('makes one page per question or rating, and a hint travels with the question before which it stands', async () => {
+		const { checkInPages } = await import('./JourneyQuestionPager');
+		const pages = checkInPages(situationStep);
+		expect(pages.map((page) => page.item.id)).toEqual([
+			'situation',
+			'worries',
+			'since'
+		]);
+		expect(pages[2].hints.map((hint) => hint.id)).toEqual(['hint']);
+		expect(
+			checkInPages(arrivalStep).map(
+				(page) => `${page.kind}:${page.item.id}`
+			)
+		).toEqual(['question:note', 'rating:satisfaction', 'rating:feeling']);
+	});
+});

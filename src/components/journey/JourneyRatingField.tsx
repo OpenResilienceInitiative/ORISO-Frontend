@@ -117,7 +117,8 @@ const Stars = ({
 						value={star}
 						checked={value === star}
 						disabled={disabled}
-						onChange={() => onChange(star)}
+						onChange={() => undefined}
+						onClick={() => onChange(star)}
 						aria-label={t('journey.rating.stars', {
 							count: star,
 							max: rating.max

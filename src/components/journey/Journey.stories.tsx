@@ -4,6 +4,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Box } from '@mui/material';
 import { expect, fn, userEvent, within } from 'storybook/test';
 import { RegistrationHeader } from '../registration/registrationHeader/RegistrationHeader';
+import { RegistrationStepNav } from '../registration/registrationStepNav/RegistrationStepNav';
 import { phone375Globals } from '../message/messageStoryShell';
 import { JourneyCheckInStep } from './JourneyCheckInStep';
 import { JourneyChatCard } from './JourneyChatCard';
@@ -54,32 +55,75 @@ const Page = ({ children }: { children: React.ReactNode }) => (
 	</Box>
 );
 
-/** A check-in of `names` steps, standing on `current`, with the journey's own question step in it. */
+/**
+ * A check-in of `names` steps, standing on `current`: the header, one question per screen, and the
+ * registration's own bar, whose "Weiter" lights up only once the step is complete. The whole
+ * thing fits the screen: nothing scrolls (Frank, 2026-11-20).
+ */
 const CheckIn = ({ names, current }: { names: string[]; current: string }) => {
 	const [answers, setAnswers] = useState<StepAnswers>(emptyAnswers);
+	const [complete, setComplete] = useState(false);
 	return (
-		<Page>
-			<RegistrationHeader
-				currentStepName={current}
-				visibleStepNames={names}
-				customSteps={[
-					{ name: 'journey:situation', label: 'Ihre Situation' },
-					{ name: 'journey:family', label: 'Familie' },
-					{ name: 'journey:income', label: 'Einkommen' },
-					{ name: 'journey:wishes', label: 'Wünsche' }
-				]}
-				fullBleed={false}
-			/>
-			<Box sx={{ px: { xs: 2, sm: 4 }, pt: 4 }}>
-				<JourneyCheckInStep
-					step={situationStep}
-					answers={answers}
-					onChange={setAnswers}
-					language="de"
-					kicker="Schuldenberatung"
+		<>
+			<Box
+				data-cy="journey-check-in-screen"
+				sx={{
+					height: '100vh',
+					display: 'grid',
+					gridTemplateRows: 'auto 1fr auto',
+					overflow: 'hidden',
+					backgroundColor: 'var(--m3-background, #fff)'
+				}}
+			>
+				<RegistrationHeader
+					currentStepName={current}
+					visibleStepNames={names}
+					customSteps={[
+						{ name: 'journey:situation', label: 'Ihre Situation' },
+						{ name: 'journey:family', label: 'Familie' },
+						{ name: 'journey:income', label: 'Einkommen' },
+						{ name: 'journey:wishes', label: 'Wünsche' }
+					]}
+					fullBleed={false}
 				/>
+				<Box
+					sx={{
+						px: { xs: 2, sm: 4 },
+						pt: { xs: 2, sm: 3 },
+						overflow: 'hidden'
+					}}
+				>
+					<JourneyCheckInStep
+						step={situationStep}
+						answers={answers}
+						onChange={setAnswers}
+						onCompleteChange={setComplete}
+						language="de"
+						kicker="Schuldenberatung"
+					/>
+				</Box>
+				<Box
+					sx={{
+						px: { xs: 2, sm: 4 },
+						py: 2,
+						borderTop:
+							'1px solid var(--m3-outline-variant, #c4c7c7)'
+					}}
+				>
+					<Box sx={{ maxWidth: 640, mx: 'auto' }}>
+						<RegistrationStepNav
+							prevStepUrl="/registration/topic-selection"
+							backLabel="Zurück"
+							nextStepUrl="/registration/zipcode"
+							nextLabel="Weiter"
+							registerLabel="Registrieren"
+							registeringLabel="Registrieren …"
+							disabledNext={!complete}
+						/>
+					</Box>
+				</Box>
 			</Box>
-		</Page>
+		</>
 	);
 };
 
@@ -106,17 +150,38 @@ export const CheckInTwoSteps: Story = {
 	render: () => <CheckIn names={TWO} current="journey:situation" />
 };
 
-/** Four steps: the journey's question sits between topic and postcode. */
+/**
+ * Four steps, one question per screen: a choice moves on by itself, the next question slides in;
+ * back returns to change it; "Weiter" below lights up only once every required answer is there.
+ */
 export const CheckInFourSteps: Story = {
 	render: () => <CheckIn names={FOUR} current="journey:situation" />,
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
+		await expect(
+			await canvas.findByText('Frage 1 von 3')
+		).toBeInTheDocument();
+		await expect(
+			canvas.queryByText('Was belastet Sie gerade am meisten?')
+		).toBeNull();
 		await userEvent.click(
-			await canvas.findByRole('radio', { name: 'Mahnungen oder Inkasso' })
+			canvas.getByRole('radio', { name: 'Mahnungen oder Inkasso' })
 		);
 		await expect(
-			canvas.getByRole('radio', { name: 'Mahnungen oder Inkasso' })
+			await canvas.findByText('Frage 2 von 3', {}, { timeout: 2000 })
+		).toBeInTheDocument();
+		await userEvent.click(
+			canvas.getByRole('button', { name: 'Vorige Frage' })
+		);
+		await expect(
+			await canvas.findByRole('radio', { name: 'Mahnungen oder Inkasso' })
 		).toBeChecked();
+		await expect(
+			canvasElement.querySelector('[data-cy="journey-check-in-screen"]')!
+				.scrollHeight
+		).toBeLessThanOrEqual(
+			canvasElement.ownerDocument.documentElement.clientHeight + 1
+		);
 	}
 };
 

@@ -7921,6 +7921,13 @@
 			"thanks": "Yanıtlarınız için teşekkürler!",
 			"failed": "Bu işe yaramadı. Yanıtlarınız hâlâ burada – lütfen birazdan tekrar deneyin.",
 			"anonymous": "Yanıtlarınız danışmanlığınızla bağlantı kurulmadan kaydedilir."
+		},
+		"checkIn": {
+			"progress": "Soru {{current}} / {{total}}",
+			"back": "Önceki soru",
+			"next": "İleri",
+			"skip": "Atla",
+			"done": "Tamam – “İleri” sizi sonraki adıma götürür."
 		}
 	}
 }

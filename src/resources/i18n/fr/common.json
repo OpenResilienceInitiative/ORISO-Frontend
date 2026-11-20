@@ -7921,6 +7921,13 @@
 			"thanks": "Merci pour vos réponses !",
 			"failed": "Cela n’a pas fonctionné. Vos réponses sont toujours là – veuillez réessayer dans un instant.",
 			"anonymous": "Vos réponses sont enregistrées sans lien avec votre conseil."
+		},
+		"checkIn": {
+			"progress": "Question {{current}} sur {{total}}",
+			"back": "Question précédente",
+			"next": "Suivant",
+			"skip": "Passer",
+			"done": "Terminé – « Suivant » mène à l’étape suivante."
 		}
 	}
 }

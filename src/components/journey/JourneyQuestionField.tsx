@@ -162,7 +162,10 @@ const ChoiceCard = ({
 				checked={checked}
 				disabled={disabled}
 				required={required}
-				onChange={onSelect}
+				// A radio that is already chosen fires no change: a tap on it must still count, so
+				// a person who went back can confirm the same answer and move on.
+				onChange={type === 'checkbox' ? onSelect : () => undefined}
+				onClick={type === 'radio' ? onSelect : undefined}
 				style={{
 					position: 'absolute',
 					opacity: 0,

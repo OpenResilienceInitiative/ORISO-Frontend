@@ -7836,6 +7836,13 @@
 			"thanks": "Thank you for your answers!",
 			"failed": "That did not work. Your answers are still here – please try again in a moment.",
 			"anonymous": "Your answers are stored without a link to your counselling."
+		},
+		"checkIn": {
+			"progress": "Question {{current}} of {{total}}",
+			"back": "Previous question",
+			"next": "Next",
+			"skip": "Skip",
+			"done": "Done – “Next” takes you to the next step."
 		}
 	}
 }

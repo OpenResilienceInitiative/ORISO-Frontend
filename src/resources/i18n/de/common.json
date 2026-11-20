@@ -7911,6 +7911,13 @@
 			"thanks": "Danke für Ihre Antworten!",
 			"failed": "Das hat nicht geklappt. Ihre Antworten sind noch da – bitte versuchen Sie es gleich noch einmal.",
 			"anonymous": "Ihre Antworten werden ohne Bezug zu Ihrer Beratung gespeichert."
+		},
+		"checkIn": {
+			"progress": "Frage {{current}} von {{total}}",
+			"back": "Vorige Frage",
+			"next": "Weiter",
+			"skip": "Überspringen",
+			"done": "Fertig – mit „Weiter“ geht es zum nächsten Schritt."
 		}
 	}
 }
