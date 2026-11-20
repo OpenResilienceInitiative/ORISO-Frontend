@@ -156,6 +156,7 @@ import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 import {
 	STATUS_EMPTY,
 	STATUS_ENQUIRY,
+	STATUS_FINISHED,
 	STATUS_REJECTED
 } from '../../globalState/interfaces/SessionsDataInterface';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -202,6 +203,7 @@ import {
 	ensureAnonymousChatPreLogoutCleanup,
 	registerAnonymousChatSessionForCleanup
 } from '../../utils/anonymousChatSessionCleanup';
+import { useLastingLiveChatAccount } from '../liveChatConversion/lastingLiveChatAccount';
 import { parseMessagePrefixes } from '../message/messageConstants';
 import { decodeUsername } from '../../utils/encryptionHelpers';
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
@@ -231,6 +233,12 @@ import LegalLinks from '../legalLinks/LegalLinks';
 import { renderToString } from 'react-dom/server';
 import { mobileListView } from '../app/navigationHandler';
 import { UserAvatar } from '../message/UserAvatar';
+import {
+	resolveAnonymousChatDisplayName,
+	resolveAssignedAskerDisplayName
+} from '../../utils/anonymousChatDisplayName';
+import { directAvatarChoice } from '../../utils/sessionAvatarChoice';
+import { counsellorChoiceOf } from '../../utils/avatarChoice';
 import {
 	Dialog,
 	Box as MuiBox,
@@ -272,6 +280,14 @@ import {
 import { loadMessageComposer } from '../app/appChunks';
 const MessageSubmitInterfaceComponent = lazyWithReload(loadMessageComposer);
 
+/** Someone typing in the room right now (#2387). */
+export interface TypingUser {
+	/** Matrix user id: picks the same name and avatar as their messages. */
+	userId: string;
+	/** Matrix member name, for when the session knows no better one. */
+	name: string;
+}
+
 interface SessionItemProps {
 	/**
 	 * Phone: a side panel (thread, supervision, team) fills the screen instead
@@ -306,7 +322,7 @@ interface SessionItemProps {
 	teamDiscussionStatus?: TeamDiscussionStatus;
 	teamDiscussionResolved?: boolean;
 	teamDiscussionError?: boolean;
-	typingUsers: string[];
+	typingUsers: TypingUser[];
 	hasUserInitiatedStopOrLeaveRequest: React.MutableRefObject<boolean>;
 	bannedUsers: string[];
 	refreshMessages?: () => void;
@@ -580,9 +596,23 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		(userData?.userRoles || []).includes('USER');
 	const isAnonymousAskerExperience =
 		isAnonymousChat && isAskerUser && !isConsultantUser;
+	/* US#1601 (FE#2330): a guest who converted to a lasting account signs in
+	   again with an empty sessionStorage. The guest gates below must not come
+	   back for them: they hid the history (with no way out once the chat was
+	   finished) and stored a new random display name. */
+	const isLastingLiveChatAccount =
+		useLastingLiveChatAccount(
+			isAnonymousAskerExperience,
+			userData?.userId
+		) === true;
 	const isAnonymousBreathingGameAvailable = isAnonymousAskerExperience;
 	const sessionStatusNum = Number(activeSession.item?.status);
 	const isRejectedSession = sessionStatusNum === STATUS_REJECTED;
+	/* FE#2330: a converted account sees its finished Live Chat without the
+	   guest gates, so the closed state has to be said here: no composer, the
+	   closed notice and the way on to mail counselling. */
+	const isFinishedLiveChatOfLastingAccount =
+		isLastingLiveChatAccount && sessionStatusNum === STATUS_FINISHED;
 	const privacyAcceptanceRecorded = Boolean(
 		userData?.dataPrivacyConfirmation &&
 			String(userData.dataPrivacyConfirmation).trim() !== ''
@@ -793,25 +823,42 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		robotSequenceVisibleCount >= robotSystemCards.length;
 	const shouldShowRobotTypingIndicator =
 		shouldShowRobotMessages && !areRobotMessagesComplete;
+	// The same name and avatar as the person's messages (#2387): Matrix only
+	// knows the login, so the asker's session alias wins over it.
 	const otherTypingUsers = useMemo(
 		() =>
-			(props.typingUsers || [])
-				.map((entry) => `${entry || ''}`.trim())
-				.filter(Boolean)
-				.filter(
-					(entry, index, source) => source.indexOf(entry) === index
-				),
-		[props.typingUsers]
+			(props.typingUsers || []).map((user) => {
+				const isSessionAsker =
+					user.userId === activeSession.item?.askerMatrixUserId;
+				// Like MessageItem's isUserMessage: group members who are not
+				// moderators are advice seekers too.
+				const isAsker =
+					isSessionAsker ||
+					(activeSession.isGroup &&
+						!activeSession.item?.moderators?.includes(user.userId));
+				const choice = activeSession.isGroup
+					? null
+					: directAvatarChoice(user.userId, activeSession);
+				const alias = isSessionAsker
+					? resolveAssignedAskerDisplayName(activeSession.user)
+					: null;
+				return {
+					userId: user.userId,
+					name: alias || user.name,
+					choice: isAsker ? choice : counsellorChoiceOf(choice)
+				};
+			}),
+		[props.typingUsers, activeSession]
 	);
 	const shouldShowInlineTypingIndicator = otherTypingUsers.length > 0;
 	const typingIndicatorLabel = useMemo(() => {
 		if (otherTypingUsers.length === 1) {
-			return `${otherTypingUsers[0]} ${translate(
+			return `${otherTypingUsers[0].name} ${translate(
 				'typingIndicator.singleUser.typing'
 			)}`;
 		}
 		if (otherTypingUsers.length === 2) {
-			return `${otherTypingUsers[0]} & ${otherTypingUsers[1]} ${translate(
+			return `${otherTypingUsers[0].name} & ${otherTypingUsers[1].name} ${translate(
 				'typingIndicator.twoUsers.typing'
 			)}`;
 		}
@@ -819,7 +866,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			'typingIndicator.multipleUsers.typing'
 		)}`;
 	}, [otherTypingUsers, translate]);
-	const primaryTypingUser = otherTypingUsers[0] || '';
+	const primaryTypingUser = otherTypingUsers[0];
 	const visibleRobotCards = useMemo(
 		() => robotSystemCards.slice(0, Math.max(0, robotSequenceVisibleCount)),
 		[robotSequenceVisibleCount, robotSystemCards]
@@ -1272,6 +1319,18 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		}
 	}, [isAnonymousAskerExperience, pseudonymStorageKey]);
 
+	/* Declared after the sessionStorage read above so it wins on a session
+	   switch: a lasting account has passed the guest gates for good. */
+	useEffect(() => {
+		if (!isLastingLiveChatAccount) return;
+		setPseudonymConfirmed(true);
+		setWaitingGateDismissed(true);
+	}, [
+		isLastingLiveChatAccount,
+		activeSession.item.id,
+		setWaitingGateDismissed
+	]);
+
 	/**
 	 * Confirm the chosen display-name pseudonym for this live-chat session.
 	 * The login User-ID is left unchanged so room membership and keys stay intact.
@@ -1430,7 +1489,11 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	useEffect(() => {
 		ensureAnonymousChatPreLogoutCleanup();
 
-		if (!isAnonymousAskerExperience || !activeSession.item?.id) {
+		if (
+			!isAnonymousAskerExperience ||
+			isLastingLiveChatAccount ||
+			!activeSession.item?.id
+		) {
 			registerAnonymousChatSessionForCleanup(null);
 			return;
 		}
@@ -1445,6 +1508,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		);
 	}, [
 		isAnonymousAskerExperience,
+		isLastingLiveChatAccount,
 		activeSession.item?.id,
 		activeSession.item?.status,
 		activeSession.item?.matrixRoomId,
@@ -1657,7 +1721,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		}
 
 		const contactName =
-			getContact(activeSession)?.username ||
+			resolveAnonymousChatDisplayName(getContact(activeSession)) ||
 			translate('sessionList.user.consultantUnknown');
 		// Backfilled replies precede the newest event already observed. Only
 		// replies appended after that boundary are new-arrival notifications.
@@ -2668,8 +2732,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		translate
 	]);
 
+	// The name the chat header shows: the asker's alias, not the login (#2387).
 	const clientDisplayName =
-		getContact(activeSession)?.username ||
+		resolveAnonymousChatDisplayName(getContact(activeSession)) ||
 		translate('sessionList.user.consultantUnknown');
 
 	// Teamberatung words (Frank, 09.09.). The i18n catalogue is on a drift
@@ -3802,11 +3867,18 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 									<div className="messageItem__messageWrap">
 										<div className="messageItem__avatar">
 											<UserAvatar
-												username={primaryTypingUser}
-												displayName={primaryTypingUser}
-												firstName={primaryTypingUser}
-												lastName=""
-												userId={`typing-${primaryTypingUser}`}
+												username={
+													primaryTypingUser.name
+												}
+												displayName={
+													primaryTypingUser.name
+												}
+												userId={
+													primaryTypingUser.userId
+												}
+												choice={
+													primaryTypingUser.choice
+												}
 												ring={false}
 											/>
 										</div>
@@ -3896,6 +3968,17 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 								'anonymousChat.noAvailability.startMailCounseling'
 							)}
 						</MuiButton>
+					</div>
+				)}
+
+				{isFinishedLiveChatOfLastingAccount && (
+					<div className="session__pseudonymActionBarSlot">
+						<div
+							className="session__anonymousEnquiryClosedNote"
+							role="status"
+						>
+							{translate('anonymousChat.enquiryClosed')}
+						</div>
 					</div>
 				)}
 
@@ -3989,6 +4072,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					/>
 				)}
 				{!isRejectedSession &&
+					!isFinishedLiveChatOfLastingAccount &&
 					canRenderClientComposer({
 						canWriteMessage,
 						isSupervisor: isSupervisorView,
@@ -4034,7 +4118,6 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 													'session__submit-interface--scrolled-up'
 											)}
 											placeholder={getPlaceholder()}
-											typingUsers={props.typingUsers}
 											preselectedFile={draggedFile}
 											handleMessageSendSuccess={
 												handleMessageSendSuccess
@@ -4521,7 +4604,6 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							placeholder={translate(
 								'message.thread.placeholder'
 							)}
-							typingUsers={props.typingUsers}
 							handleMessageSendSuccess={handleMessageSendSuccess}
 							onSendError={handleComposerSendError}
 							retryRequest={

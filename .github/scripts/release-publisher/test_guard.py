@@ -204,7 +204,23 @@ class DecisionAndProof(unittest.TestCase):
 
     def test_workflow_conditions_cover_every_mutating_step(self):
         workflow = (HERE.parent.parent / 'workflows/release-image.yml').read_text()
-        names = ['Run frontend validation and build','Build Storybook static output','Set up QEMU','Login to GitHub Container Registry','Set up Docker Buildx','Build amd64 frontend image locally for scanning','Build amd64 Storybook image locally for scanning','Reject fixable frontend image vulnerabilities','Reject fixable Storybook image vulnerabilities','Verify tag still absent before publishing','Publish versioned frontend Docker image','Publish versioned Storybook Docker image','Sign and publish frontend image provenance','Sign and publish Storybook image provenance','Verify tag still absent before tagging','Create and push release tag','Create GitHub Release','Release summary']
+        names = [
+            'Run frontend validation and build',
+            'Build Storybook static output',
+            'Add the Element Call view pages',
+            'Build and scan the versioned frontend image',
+            'Build and scan the versioned Storybook image',
+            'Login to GitHub Container Registry',
+            'Verify tag still absent before publishing',
+            'Publish the scanned frontend Docker image',
+            'Publish the scanned Storybook Docker image',
+            'Sign and publish frontend image provenance',
+            'Sign and publish Storybook image provenance',
+            'Verify tag still absent before tagging',
+            'Create and push release tag',
+            'Create GitHub Release',
+            'Release summary',
+        ]
         for name in names:
             match = re.search(r'^            - name: ' + re.escape(name) + r'\n(?P<body>.*?)(?=^            - name: |\Z)', workflow, re.MULTILINE | re.DOTALL)
             self.assertIsNotNone(match, name)
@@ -215,7 +231,7 @@ class DecisionAndProof(unittest.TestCase):
         self.assertIn('steps.disposition.outputs.source', workflow)
         self.assertIn('steps.disposition.outputs.frontend_digest', workflow)
         self.assertIn('steps.disposition.outputs.storybook_digest', workflow)
-        self.assertLess(workflow.index('- name: Verify tag still absent before publishing'), workflow.index('- name: Publish versioned frontend Docker image'))
+        self.assertLess(workflow.index('- name: Verify tag still absent before publishing'), workflow.index('- name: Publish the scanned frontend Docker image'))
         self.assertLess(workflow.index('- name: Verify tag still absent before tagging'), workflow.index('- name: Create and push release tag'))
 
 if __name__ == '__main__': unittest.main()
