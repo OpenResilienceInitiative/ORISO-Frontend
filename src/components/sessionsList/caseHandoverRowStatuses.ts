@@ -33,13 +33,12 @@ const readLockedStatus = (candidate: CaseHandoverCandidate) => {
 export interface CandidateRowStatus {
 	lockedStatus?: CaseHandoverRowStatus;
 	invalidatedAt: number;
+	candidateReadAt?: number;
 }
-
-type StatusEntry = CandidateRowStatus & { readAt: number };
 
 type Ledger = {
 	scope: object;
-	entries: Map<number, StatusEntry>;
+	entries: Map<number, CandidateRowStatus>;
 	invalidatedAt: number;
 };
 
@@ -73,7 +72,7 @@ export const useCaseHandoverRowStatuses = (
 						? { ...previous, entries: new Map(previous.entries) }
 						: {
 								scope,
-								entries: new Map<number, StatusEntry>(),
+								entries: new Map<number, CandidateRowStatus>(),
 								invalidatedAt: 0
 							};
 				apply(next);
@@ -92,12 +91,20 @@ export const useCaseHandoverRowStatuses = (
 					const id = row.session?.id;
 					if (id === undefined) continue;
 					const existing = next.entries.get(id);
-					if (existing && readAt <= existing.readAt) continue;
+					if (
+						existing &&
+						readAt <=
+							Math.max(
+								existing.invalidatedAt,
+								existing.candidateReadAt ?? 0
+							)
+					)
+						continue;
 					next.entries.set(id, {
 						lockedStatus: readLockedStatus(row),
 						invalidatedAt:
 							existing?.invalidatedAt ?? next.invalidatedAt,
-						readAt
+						candidateReadAt: readAt
 					});
 				}
 			});
@@ -114,10 +121,7 @@ export const useCaseHandoverRowStatuses = (
 					return;
 				}
 				for (const id of ids) {
-					next.entries.set(id, {
-						invalidatedAt,
-						readAt: invalidatedAt
-					});
+					next.entries.set(id, { invalidatedAt });
 				}
 			});
 		},
@@ -125,14 +129,15 @@ export const useCaseHandoverRowStatuses = (
 	);
 
 	const getRowStatus = useCallback(
-		(id: number): CandidateRowStatus | undefined => {
+		(
+			id: number,
+			includeCandidate = true
+		): CandidateRowStatus | undefined => {
 			if (ledger?.scope !== scope) return undefined;
-			return (
-				ledger.entries.get(id) ??
-				(ledger.invalidatedAt > 0
-					? { invalidatedAt: ledger.invalidatedAt }
-					: undefined)
-			);
+			const entry = ledger.entries.get(id);
+			if (includeCandidate && entry) return entry;
+			const invalidatedAt = entry?.invalidatedAt ?? ledger.invalidatedAt;
+			return invalidatedAt > 0 ? { invalidatedAt } : undefined;
 		},
 		[ledger, scope]
 	);

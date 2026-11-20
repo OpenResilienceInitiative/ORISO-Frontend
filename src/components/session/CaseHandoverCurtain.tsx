@@ -38,10 +38,10 @@ import { useCaseHandoverReasons } from '../caseHandover/useCaseHandoverReasons';
 import { SessionTopic } from '../sessionHeader/SessionTopic';
 import {
 	activateCaseHandoverActor,
-	clearCaseHandoverOperation,
 	clearCaseHandoverOperationIfMatches,
 	getCaseHandoverOperation,
-	getOrCreateCaseHandoverOperation
+	getOrCreateCaseHandoverOperation,
+	isCaseHandoverActorActive
 } from '../caseHandover/caseHandoverOperationStore';
 
 /**
@@ -477,6 +477,22 @@ export const CaseHandoverCurtain = ({
 		return step;
 	}, [canReclaim, status?.status, step]);
 
+	const applyMutationStatus = (
+		nextStatus: CaseHandoverStatus,
+		isCurrentRequest: () => boolean
+	) => {
+		const current = isCurrentRequest();
+		if (nextStatus.sessionId !== sessionId) {
+			if (current) setError(translate('caseHandover.error.failed'));
+			return false;
+		}
+		if (current) onStatusChange(nextStatus);
+		if (isCaseHandoverActorActive(actorId)) {
+			messageEventEmitter.emit({ changedSessionId: sessionId });
+		}
+		return current;
+	};
+
 	const handleReclaim = () => {
 		if (isSubmitting) return;
 		setIsSubmitting(true);
@@ -488,15 +504,7 @@ export const CaseHandoverCurtain = ({
 
 		apiReclaimCaseHandover(sessionId)
 			.then((nextStatus) => {
-				if (!isCurrentRequest()) return;
-				if (nextStatus.sessionId !== sessionId) {
-					setError(translate('caseHandover.error.failed'));
-					return;
-				}
-				onStatusChange(nextStatus);
-				messageEventEmitter.emit({
-					changedSessionId: nextStatus.sessionId
-				});
+				if (!applyMutationStatus(nextStatus, isCurrentRequest)) return;
 				void activeSessionContext
 					?.refreshActiveSession?.()
 					.catch(() => {
@@ -553,18 +561,11 @@ export const CaseHandoverCurtain = ({
 			operation.operationId
 		)
 			.then((nextStatus) => {
-				if (!isCurrentRequest()) {
-					return;
-				}
-				if (nextStatus.sessionId !== requestSessionId) {
-					setError(translate('caseHandover.error.failed'));
-					return;
-				}
-				onStatusChange(nextStatus);
-				messageEventEmitter.emit({
-					changedSessionId: nextStatus.sessionId
-				});
-				clearCaseHandoverOperation(operation);
+				if (!applyMutationStatus(nextStatus, isCurrentRequest)) return;
+				clearCaseHandoverOperationIfMatches(
+					operation,
+					operation.operationId
+				);
 			})
 			.catch(async (requestError) => {
 				if (!isCurrentRequest()) {

@@ -25,9 +25,8 @@ export const useSessionCaseHandoverStatus = ({
 	const mustRead =
 		accessControlled && sessionId !== undefined && !lockedStatus;
 	const invalidatedAt = candidateStatus?.invalidatedAt ?? 0;
-	// Entering search may retain the normal-list row. That row's earlier
-	// access check cannot authorize the candidate's preview.
-	const fromCandidateSearch = candidateStatus !== undefined;
+	// Retained rows need a fresh access check for each newer candidate read.
+	const candidateReadAt = candidateStatus?.candidateReadAt;
 	const read = useMemo(
 		() =>
 			mustRead
@@ -36,7 +35,7 @@ export const useSessionCaseHandoverStatus = ({
 						listScope,
 						sessionId,
 						invalidatedAt,
-						fromCandidateSearch
+						candidateReadAt
 					}
 				: null,
 		[
@@ -45,7 +44,7 @@ export const useSessionCaseHandoverStatus = ({
 			listScope,
 			sessionId,
 			invalidatedAt,
-			fromCandidateSearch
+			candidateReadAt
 		]
 	);
 	const [resolved, setResolved] = useState<{

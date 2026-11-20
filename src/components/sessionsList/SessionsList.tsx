@@ -3328,7 +3328,7 @@ export const SessionsList = ({
 												caseHandoverRowStatus={
 													typeof activeSession.item
 														.id === 'number'
-														? caseHandoverSearch.rowStatuses.get(
+														? caseHandoverSearch.getRowStatus(
 																activeSession
 																	.item.id
 															)

@@ -493,23 +493,18 @@ export const useCaseHandoverSearch = ({
 		[eligibleCases, textCandidates]
 	);
 
-	const rowStatuses = useMemo(() => {
-		const rows = new Map<
-			number,
-			NonNullable<ReturnType<typeof getRowStatus>>
-		>();
-		for (const item of candidateSessions) {
-			const id = item.session?.id;
-			if (id === undefined) continue;
-			const status = getRowStatus(id);
-			if (status) rows.set(id, status);
-		}
-		return rows;
-	}, [candidateSessions, getRowStatus]);
+	const candidateIds = useMemo(
+		() => new Set(candidateSessions.map((item) => item.session?.id)),
+		[candidateSessions]
+	);
+	const getCaseHandoverRowStatus = useCallback(
+		(id: number) => getRowStatus(id, candidateIds.has(id)),
+		[candidateIds, getRowStatus]
+	);
 
 	return {
 		candidateSessions,
-		rowStatuses,
+		getRowStatus: getCaseHandoverRowStatus,
 		invalidateRowStatuses: invalidate,
 		eligibleCases,
 		takeableCases,

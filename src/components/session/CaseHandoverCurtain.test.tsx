@@ -384,32 +384,46 @@ describe('CaseHandoverCurtain request lifecycle', () => {
 		).toBe(false);
 	});
 
-	it('notifies the list only of the case whose access request succeeded', async () => {
-		const resolution = deferred<CaseHandoverStatus>();
-		vi.mocked(apiRequestCaseHandoverAccess).mockReturnValueOnce(
-			resolution.promise
-		);
-		const onListChange = vi.fn();
-		messageEventEmitter.on(onListChange);
-		try {
-			render(
-				<CaseHandoverCurtain
-					actorId="consultant-1"
-					sessionId={1}
-					status={idleStatus(1)}
-					onStatusChange={vi.fn()}
-				/>
+	it.each([
+		['consultant-1', true],
+		['consultant-2', false]
+	])(
+		'notifies the affected case after navigation to %s',
+		async (nextActor, sameActor) => {
+			const resolution = deferred<CaseHandoverStatus>();
+			vi.mocked(apiRequestCaseHandoverAccess).mockReturnValueOnce(
+				resolution.promise
 			);
-			await completeAndSubmitRequest();
-			expect(onListChange).not.toHaveBeenCalled();
-			await act(async () => resolution.resolve(statusFor(1)));
-			expect(onListChange.mock.calls).toEqual([
-				[{ changedSessionId: 1 }]
-			]);
-		} finally {
-			messageEventEmitter.off(onListChange);
+			const onListChange = vi.fn();
+			messageEventEmitter.on(onListChange);
+			try {
+				const { rerender } = render(
+					<CaseHandoverCurtain
+						actorId="consultant-1"
+						sessionId={1}
+						status={idleStatus(1)}
+						onStatusChange={vi.fn()}
+					/>
+				);
+				await completeAndSubmitRequest();
+				expect(onListChange).not.toHaveBeenCalled();
+				rerender(
+					<CaseHandoverCurtain
+						actorId={nextActor}
+						sessionId={2}
+						status={idleStatus(2)}
+						onStatusChange={vi.fn()}
+					/>
+				);
+				await act(async () => resolution.resolve(statusFor(1)));
+				expect(onListChange.mock.calls).toEqual(
+					sameActor ? [[{ changedSessionId: 1 }]] : []
+				);
+			} finally {
+				messageEventEmitter.off(onListChange);
+			}
 		}
-	});
+	);
 
 	it('replays the frozen PULL operation after remount despite a newer revision', async () => {
 		vi.mocked(apiRequestCaseHandoverAccess)

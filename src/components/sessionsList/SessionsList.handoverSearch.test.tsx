@@ -710,9 +710,10 @@ describe('case-handover search — people (FE#1725)', () => {
 			expect(text).toContain('caseHandover.list.awaitingApproval');
 			expect(text).toContain('caseHandover.list.accessDenied');
 		});
+		// The roster and named selection each need current checks for these two rows.
 		expect(
 			http.getHandoverStatus.mock.calls.map(([id]) => id).sort()
-		).toEqual([101, 102]);
+		).toEqual([101, 101, 102, 102]);
 		expect(listText(view)).not.toContain('caseHandover.list.accessGranted');
 
 		await act(async () =>
@@ -720,7 +721,7 @@ describe('case-handover search — people (FE#1725)', () => {
 		);
 		expect(
 			http.getHandoverStatus.mock.calls.map(([id]) => id).sort()
-		).toEqual([101, 102]);
+		).toEqual([101, 101, 102, 102]);
 	});
 
 	it('refreshes the blank roster status with the named result even when the normal list row wins', async () => {
@@ -832,6 +833,78 @@ describe('case-handover search — people (FE#1725)', () => {
 		);
 		expect(listText(view)).not.toContain('caseHandover.list.accessGranted');
 
+		handoverStatusById[12] = 'DENIED';
+		await act(async () => finishStatusRead(handoverStatusOf(12)));
+		expect(listText(view)).toContain('caseHandover.list.accessDenied');
+	});
+
+	it('refreshes a targeted ordinary row outside the search results', async () => {
+		const row = makeCase(
+			12,
+			'Ordinary client twelve',
+			patty,
+			SPRINGFIELD,
+			50000
+		);
+		handoverStatusById = { 12: 'GRANTED' };
+		http.getCandidates.mockResolvedValue({ sessions: [], total: 0 });
+		const view = await ready(renderList([...ownCases, row]));
+		await waitFor(() =>
+			expect(listText(view)).toContain('caseHandover.list.accessGranted')
+		);
+
+		handoverStatusById[12] = 'DENIED';
+		act(() => messageEventEmitter.emit({ changedSessionId: 12 }));
+		await waitFor(() =>
+			expect(listText(view)).toContain('caseHandover.list.accessDenied')
+		);
+		expect(http.getHandoverStatus.mock.calls).toEqual([[12], [12]]);
+	});
+
+	it('rechecks a legacy candidate grant when a newer candidate page retains the same row', async () => {
+		const row = makeCase(
+			12,
+			'Legacy client twelve',
+			patty,
+			SPRINGFIELD,
+			50000
+		);
+		let receiveNamed!: (page: {
+			sessions: ListItemInterface[];
+			total: number;
+		}) => void;
+		handoverStatusById = { 12: 'GRANTED' };
+		http.getCandidates.mockImplementation(({ query }) =>
+			query
+				? new Promise((resolve) => {
+						receiveNamed = resolve;
+					})
+				: Promise.resolve({ sessions: [row], total: 1 })
+		);
+		const view = await ready(renderList());
+		fireEvent.focus(searchbox());
+		await waitFor(() =>
+			expect(personRowsNamed('Patty B.')).toHaveLength(1)
+		);
+		fireEvent.click(personRowsNamed('Patty B.')[0]);
+		await waitFor(() => {
+			expect(receiveNamed).toBeTypeOf('function');
+			expect(listText(view)).toContain('caseHandover.list.accessGranted');
+		});
+
+		let finishStatusRead!: (
+			status: ReturnType<typeof handoverStatusOf>
+		) => void;
+		http.getHandoverStatus.mockReturnValueOnce(
+			new Promise((resolve) => {
+				finishStatusRead = resolve;
+			})
+		);
+		await act(async () => receiveNamed({ sessions: [row], total: 1 }));
+		await waitFor(() =>
+			expect(http.getHandoverStatus.mock.calls).toEqual([[12], [12]])
+		);
+		expect(listText(view)).not.toContain('caseHandover.list.accessGranted');
 		handoverStatusById[12] = 'DENIED';
 		await act(async () => finishStatusRead(handoverStatusOf(12)));
 		expect(listText(view)).toContain('caseHandover.list.accessDenied');
