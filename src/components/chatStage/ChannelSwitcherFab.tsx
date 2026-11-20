@@ -28,6 +28,7 @@ import { ReactComponent as CloseGlyph } from '../../resources/img/icons/fab-menu
 import { ReactComponent as BackGlyph } from '../../resources/img/icons/close.svg';
 import { ReactComponent as MainChatGlyph } from '../../resources/img/icons/speech-bubble.svg';
 import { ChannelMenu } from './ChannelMenu';
+import { useRegisterFloatingSurface } from '../floatingSurfaces/floatingSurfaces';
 import { useChannelMenuPlacement } from './useChannelMenuPlacement';
 import {
 	deriveChannelSwitcherState,
@@ -136,6 +137,7 @@ export const ChannelSwitcherFab = ({
 	// With the back row the card has one more row than the state knows.
 	const menuRows = state.items.length + (insideSecondary ? 1 : 0);
 	const isMenu = menuRows > 1;
+	useRegisterFloatingSurface('channel-switcher', menuRows > 0 && !fabHidden);
 
 	const close = useCallback(() => setOpen(false), []);
 	const closeAndRefocus = useCallback(() => {

@@ -59,6 +59,11 @@ const OWN: CalendarEntry = {
 	end: at(11),
 	ownerId: 'me'
 };
+const EULE_AVATAR = {
+	userId: '@eule:oriso',
+	username: 'mutige_eule',
+	choice: { kind: 'animal' as const, file: 'magpie.svg' }
+};
 const SHORT: CalendarEntry = {
 	...OWN,
 	id: 'short',
@@ -158,6 +163,57 @@ describe('CalendarView — one entry (prototype v17)', () => {
 		await waitFor(() => expect(shown('own')).not.toBeNull());
 		expect(shown('own')!.className).toContain('calEntry--listRow');
 		expect(shown('own')!.querySelector('.calEntry__time')).toBeNull();
+	});
+
+	it('shows the advice seeker’s real avatar at 32 px in the list (FE#2325)', async () => {
+		const withAvatar = { ...OWN, avatar: EULE_AVATAR };
+		render(<Grid view="list" entries={[withAvatar, COLLEAGUE]} />);
+		await waitFor(() => expect(shown('own')).not.toBeNull());
+		const avatar = shown('own')!.querySelector<HTMLElement>(
+			'[data-testid="user-avatar"]'
+		)!;
+		expect(avatar.style.width).toBe('32px');
+		expect(shown('own')!.textContent).not.toContain('ME');
+	});
+
+	it('shows the real avatar at 32 px in an hour of the time grid, the dot in half an hour (FE#2325)', async () => {
+		render(
+			<Grid
+				view="workWeek"
+				entries={[
+					{ ...OWN, avatar: EULE_AVATAR },
+					{ ...SHORT, avatar: EULE_AVATAR }
+				]}
+			/>
+		);
+		await waitFor(() => expect(shown('own')).not.toBeNull());
+		const big = shown('own')!.querySelector<HTMLElement>(
+			'[data-testid="user-avatar"]'
+		)!;
+		expect(big.style.width).toBe('32px');
+		// The avatar leads the box; title and time stand beside it.
+		expect(
+			shown('own')!.querySelector('.calEntry__inner--lead')
+		).not.toBeNull();
+		expect(
+			shown('own')!.querySelector('.calEntry__range')!.textContent
+		).toBe('10:00–11:00');
+		const dot = shown('short')!.querySelector<HTMLElement>(
+			'[data-testid="user-avatar"]'
+		)!;
+		expect(dot.style.width).toBe('18px');
+	});
+
+	it('keeps the initials where the avatar is not known (FE#2325)', async () => {
+		render(<Grid view="list" />);
+		await waitFor(() => expect(shown('own')).not.toBeNull());
+		expect(
+			shown('own')!.querySelector('[data-testid="user-avatar"]')
+		).toBeNull();
+		const fallback =
+			shown('own')!.querySelector<HTMLElement>('.calEntry__avatar')!;
+		expect(fallback.textContent).toBe('ME');
+		expect(fallback.style.width).toBe('32px');
 	});
 
 	it('flashes an entry just created', async () => {

@@ -13,3 +13,9 @@ export interface TourLaunchRequest {
  * carousel requests a run, the host (Walkthrough) renders it.
  */
 export const tourLaunchRequestAtom = atom(null as TourLaunchRequest | null);
+
+/**
+ * The tour on screen right now (or null). The host publishes it; the "?"
+ * launcher steps aside while a tour runs instead of floating over it.
+ */
+export const activeTourIdAtom = atom(null as string | null);

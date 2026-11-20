@@ -31,16 +31,19 @@
 	.keepMessagesDialog__choice {
 		display: flex;
 		align-items: flex-start;
-		gap: 12px;
-		padding: 12px 16px;
+		gap: 4px;
+		margin: 0;
+		padding: 4px 16px 12px 4px;
 		border: 1px solid var(--m3-outline-variant, $line-grey);
 		border-radius: 12px;
 		cursor: pointer;
 
-		input {
-			margin-top: 3px;
-			accent-color: var(--m3-primary, $primary);
+		.MuiRadio-root {
 			flex-shrink: 0;
+		}
+
+		.MuiFormControlLabel-label {
+			padding-top: 9px;
 		}
 
 		&:focus-within {

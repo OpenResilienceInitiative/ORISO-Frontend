@@ -39,6 +39,8 @@ import {
 } from '../../api';
 import { apiPostError, ERROR_LEVEL_WARN } from '../../api/apiPostError';
 import { SESSION_LIST_TAB, SESSION_LIST_TYPES } from './sessionHelpers';
+import type { TypingUser } from './SessionItemComponent';
+import { decodeUsernameSafely } from '../../utils/encryptionHelpers';
 import { buildRoomTimeline } from './roomTimeline';
 import {
 	awaitsDecryption,
@@ -101,6 +103,7 @@ import { HistoryRequestApprovals } from '../historyRequest/HistoryRequestApprova
 const EMPTY_MESSAGES: MessageItem[] = [];
 /** Browsers fire a longer setTimeout immediately. */
 const MAX_TIMEOUT_MS = 2 ** 31 - 1;
+const TIMELINE_REFRESH_WINDOW_MS = 120;
 
 // Practice rooms (FE#1622) have no keys to fetch; parked in the real
 // key-transfer singleton they would be retried on the real client.
@@ -338,7 +341,9 @@ export const SessionStream = ({
 		teamMessageState.roomId === teamRoomId
 			? teamMessageState.messages
 			: EMPTY_MESSAGES;
-	const [matrixTypingUsers, setMatrixTypingUsers] = useState<string[]>([]);
+	const [matrixTypingUsers, setMatrixTypingUsers] = useState<TypingUser[]>(
+		[]
+	);
 	const matrixTypingActivityRef = useRef<Map<string, number>>(new Map());
 	const resolvedChatSession = useMemo(
 		() => chatTransportService.resolveSession(activeSession),
@@ -882,11 +887,19 @@ export const SessionStream = ({
 
 		let retryTimer: number | null = null;
 		let earlierRefreshTimer: number | null = null;
+		let trailingRefreshTimer: number | null = null;
 		let receiptRefreshTimer: number | null = null;
 		let arrivalReadTimer: number | null = null;
 		let detachTimelineListeners: Array<() => void> = [];
 		let lastRefreshAt = 0;
+		const cancelTrailingRefresh = () => {
+			if (trailingRefreshTimer !== null) {
+				window.clearTimeout(trailingRefreshTimer);
+				trailingRefreshTimer = null;
+			}
+		};
 		const refreshMessages = () => {
+			cancelTrailingRefresh();
 			lastRefreshAt = Date.now();
 			fetchSessionMessages().catch(() => {
 				// keep UI stable if a timeline event races with navigation
@@ -949,11 +962,18 @@ export const SessionStream = ({
 					return;
 				}
 
-				// Coalesce encrypted/metadata bursts, but never drop a clear message:
-				// delayed Matrix decryption mutates the event after its fallback rendered.
-				const now = Date.now();
-				const elapsed = now - lastRefreshAt;
-				if (eventType !== 'm.room.message' && elapsed < 120) {
+				// Read once more at the end of the window for encrypted or metadata
+				// events that arrived since the latest read. Clear messages still
+				// refresh immediately, including after delayed Matrix decryption.
+				const remaining =
+					TIMELINE_REFRESH_WINDOW_MS - (Date.now() - lastRefreshAt);
+				if (eventType !== 'm.room.message' && remaining > 0) {
+					if (trailingRefreshTimer === null) {
+						trailingRefreshTimer = window.setTimeout(
+							refreshMessages,
+							remaining
+						);
+					}
 					return;
 				}
 				refreshMessages();
@@ -969,7 +989,7 @@ export const SessionStream = ({
 				.filter(Boolean) as Array<() => void>;
 			// A deletion (ours included) must show at once, not with the next
 			// unrelated event: refresh when the SDK marks the message redacted.
-			// Not refreshMessages(): stamping lastRefreshAt would drop an
+			// Not refreshMessages(): stamping lastRefreshAt would delay an
 			// encrypted message arriving in the same sync batch.
 			const handleRedaction = () => {
 				fetchSessionMessages().catch(() => {
@@ -1001,7 +1021,7 @@ export const SessionStream = ({
 				if (receiptRefreshTimer !== null) return;
 				receiptRefreshTimer = window.setTimeout(() => {
 					receiptRefreshTimer = null;
-					// Not refreshMessages(): stamping lastRefreshAt would drop a
+					// Not refreshMessages(): stamping lastRefreshAt would delay a
 					// reaction or redaction arriving in the next 120 ms.
 					fetchSessionMessages().catch(() => {
 						// keep UI stable if a receipt races with navigation
@@ -1069,6 +1089,7 @@ export const SessionStream = ({
 			}
 			if (earlierRefreshTimer !== null)
 				window.clearTimeout(earlierRefreshTimer);
+			cancelTrailingRefresh();
 			if (receiptRefreshTimer !== null)
 				window.clearTimeout(receiptRefreshTimer);
 			if (arrivalReadTimer !== null)
@@ -1260,23 +1281,29 @@ export const SessionStream = ({
 						now - (lastActivity as number) < MATRIX_TYPING_STALE_MS
 					);
 				})
-				.map((member: any) => {
+				.map((member: any): TypingUser => {
 					const matrixUserId = `${member?.userId || ''}`;
 					const matrixUserName = matrixUserId
 						.split(':')[0]
 						.replace(/^@/, '');
-					return (
-						member?.name ||
-						member?.rawDisplayName ||
-						matrixUserName ||
-						matrixUserId
+					// The member name is the login, often encoded like the
+					// message sender's; the session's name is resolved later.
+					const name = decodeUsernameSafely(
+						`${
+							member?.name ||
+							member?.rawDisplayName ||
+							matrixUserName ||
+							matrixUserId
+						}`.trim()
 					);
+					return { userId: matrixUserId, name };
 				})
-				.map((name: string) => name.trim())
-				.filter(Boolean)
 				.filter(
-					(name: string, index: number, source: string[]) =>
-						source.indexOf(name) === index
+					(user: TypingUser, index: number, source: TypingUser[]) =>
+						user.name &&
+						source.findIndex(
+							(other) => other.userId === user.userId
+						) === index
 				);
 
 			setMatrixTypingUsers(nextTypingUsers);

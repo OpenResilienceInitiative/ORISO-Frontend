@@ -20,9 +20,31 @@ const at = (dayOffset: number, hour: number, minute = 0) =>
 export const ME = 'me';
 
 export const CONVERSATIONS: CalendarConversation[] = [
-	{ sessionId: 4401, username: 'ruhiges_yak' },
-	{ sessionId: 4402, username: 'mutige_eule' },
-	{ sessionId: 4403, username: 'stiller_fuchs' },
+	// FE#2325: real avatars as the conversation list has them — a derived
+	// animal, a picked one, and helle_wolke without avatar data, who keeps
+	// the initials.
+	{
+		sessionId: 4401,
+		username: 'ruhiges_yak',
+		avatar: { userId: '@ruhiges_yak:oriso.test', username: 'ruhiges_yak' }
+	},
+	{
+		sessionId: 4402,
+		username: 'mutige_eule',
+		avatar: {
+			userId: '@mutige_eule:oriso.test',
+			username: 'mutige_eule',
+			choice: { kind: 'animal', file: 'magpie.svg' }
+		}
+	},
+	{
+		sessionId: 4403,
+		username: 'stiller_fuchs',
+		avatar: {
+			userId: '@stiller_fuchs:oriso.test',
+			username: 'stiller_fuchs'
+		}
+	},
 	{ sessionId: 4404, username: 'helle_wolke' }
 ];
 

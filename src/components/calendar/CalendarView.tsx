@@ -82,7 +82,12 @@ import {
 	type ColleagueBand
 } from './calendarBands';
 import { CalendarEntryPeek, initialsOf } from './CalendarEntryPeek';
-import { avatarToneClass } from './calendarAvatar';
+import {
+	ENTRY_DOT_AVATAR_PX,
+	avatarToneClass,
+	entryAvatarSize
+} from './calendarAvatar';
+import { CalendarPersonAvatar } from './CalendarPersonAvatar';
 import { calendarLocale, fullCalendarLocale } from './calendarLocale';
 import { GRID_SLOT_PX } from './calendarZoom';
 import './calendar.styles.scss';
@@ -754,24 +759,40 @@ export const CalendarView = ({
 			viewType.startsWith('dayGrid') &&
 			!info.event.allDay &&
 			info.timeText;
-		// The advice seeker on one's own appointment, the colleague on
-		// theirs: an 18 px avatar in the person's colour.
+		// The advice seeker on one's own appointment with their real avatar
+		// (FE#2325), the colleague on theirs in the colleague's colour.
 		const avatarName = owner
 			? owner.displayName
 			: !proposal && entry.type === 'appointment'
 				? entry.title
 				: undefined;
-		return (
-			<span className="calEntry__inner">
+		const avatarSize = entryAvatarSize(
+			viewType.startsWith('list')
+				? 'list'
+				: viewType.startsWith('timeGrid') && !info.event.allDay
+					? 'timeGrid'
+					: 'dayGrid',
+			start && end ? (end.getTime() - start.getTime()) / 60_000 : 0,
+			slotPx
+		);
+		const avatar = avatarName && (
+			<CalendarPersonAvatar
+				className="calEntry__avatar"
+				name={avatarName}
+				avatar={owner ? undefined : entry.avatar}
+				size={avatarSize}
+			/>
+		);
+		// A 32 px avatar in the time grid leads the box, title and time
+		// beside it; in a list row it sits on the one line.
+		const lead =
+			!!avatar &&
+			avatarSize > ENTRY_DOT_AVATAR_PX &&
+			!viewType.startsWith('list');
+		const body = (
+			<>
 				<span className="calEntry__line">
-					{avatarName && (
-						<span
-							className={`calEntry__avatar ${avatarToneClass(avatarName)}`}
-							aria-hidden="true"
-						>
-							{initialsOf(avatarName)}
-						</span>
-					)}
+					{!lead && avatar}
 					<span className="calEntry__icon">
 						<CalendarEntryGlyph
 							entry={entry}
@@ -803,7 +824,15 @@ export const CalendarView = ({
 						{timeRange(start!, end!)}
 					</span>
 				)}
+			</>
+		);
+		return lead ? (
+			<span className="calEntry__inner calEntry__inner--lead">
+				{avatar}
+				<span className="calEntry__body">{body}</span>
 			</span>
+		) : (
+			<span className="calEntry__inner">{body}</span>
 		);
 	};
 

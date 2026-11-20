@@ -108,6 +108,50 @@ export interface BreathingCompanionProps {
 	 * the component and hands in the i18n resolution (`BreathingCompanionHost`).
 	 */
 	copy?: BreathingCopy;
+	/**
+	 * The on/off control of the options panel. Defaults to a self-drawn
+	 * switch-box so this file keeps React as its only dependency; a host app
+	 * passes its own design-system checkbox (ORISO: `M3Checkbox`).
+	 */
+	toggle?: React.ComponentType<BreathingToggleProps>;
+}
+
+export interface BreathingToggleProps {
+	checked: boolean;
+	disabled?: boolean;
+	label: string;
+	onChange: (checked: boolean) => void;
+}
+
+/** Self-contained default toggle: a button with checkbox semantics. */
+function BuiltInToggle({
+	checked,
+	disabled,
+	label,
+	onChange
+}: BreathingToggleProps) {
+	return (
+		<button
+			type="button"
+			role="checkbox"
+			aria-checked={checked}
+			disabled={disabled}
+			className="bc-toggle"
+			onClick={() => onChange(!checked)}
+		>
+			<span className="bc-toggle-box" aria-hidden="true">
+				{checked && (
+					<svg viewBox="0 0 18 18">
+						<path
+							d="M7 13.2 3.5 9.7l1.4-1.4L7 10.4l6.1-6.1 1.4 1.4z"
+							fill="currentColor"
+						/>
+					</svg>
+				)}
+			</span>
+			{label}
+		</button>
+	);
 }
 
 const PHASE_SECONDS = 5;
@@ -680,7 +724,8 @@ function BreathingScene({
 export default function BreathingCompanion({
 	onClose,
 	reducedMotion,
-	copy = BREATHING_COPY
+	copy = BREATHING_COPY,
+	toggle: Toggle = BuiltInToggle
 }: BreathingCompanionProps) {
 	const rootRef = React.useRef<HTMLElement>(null),
 		sceneRef = React.useRef<HTMLDivElement>(null);
@@ -1115,35 +1160,29 @@ export default function BreathingCompanion({
 			</header>
 			{options && (
 				<div className="bc-options" id={optionsId}>
-					<label>
-						<input
-							type="checkbox"
-							checked={sound}
-							onChange={toggleSound}
-						/>
-						{copy.wind}
-					</label>
-					<label>
-						<input
-							type="checkbox"
-							checked={voice}
-							disabled={!voiceAvailable}
-							onChange={() => {
-								voiceRef.current = !voiceRef.current;
-								setVoice(voiceRef.current);
-								clearSpeech();
-								spokenKey.current = '';
-								if (voiceRef.current) {
-									soundRef.current = true;
-									setSound(true);
-									void prepareSound();
-									if (active && !j.paused)
-										speak(j.phase, `enabled-${j.time}`);
-								}
-							}}
-						/>
-						{copy.voice}
-					</label>
+					<Toggle
+						checked={sound}
+						onChange={toggleSound}
+						label={copy.wind}
+					/>
+					<Toggle
+						checked={voice}
+						disabled={!voiceAvailable}
+						label={copy.voice}
+						onChange={() => {
+							voiceRef.current = !voiceRef.current;
+							setVoice(voiceRef.current);
+							clearSpeech();
+							spokenKey.current = '';
+							if (voiceRef.current) {
+								soundRef.current = true;
+								setSound(true);
+								void prepareSound();
+								if (active && !j.paused)
+									speak(j.phase, `enabled-${j.time}`);
+							}
+						}}
+					/>
 					<small>
 						{voiceAvailable ? copy.voiceHint : copy.voiceMissing}
 					</small>
@@ -1246,7 +1285,7 @@ export default function BreathingCompanion({
 
 const STYLES = `
 .bc-root{--bc-accent:var(--breathing-accent,#a5000a);--bc-text:var(--breathing-text,#191c20);--bc-muted:var(--breathing-muted,#43474e);width:100%;height:100%;min-width:0;min-height:0;box-sizing:border-box;position:relative;isolation:isolate;display:flex;flex-direction:column;background:transparent;color:var(--bc-text);font-family:inherit;padding:clamp(8px,3%,28px);gap:6px;overflow:hidden}
-.bc-root *{box-sizing:border-box}.bc-root button{font:inherit;font-size:14px;color:inherit;background:transparent;border:0;cursor:pointer;min-height:44px;min-width:44px;padding:8px 10px;border-radius:24px;display:inline-flex;align-items:center;justify-content:center;gap:8px;line-height:1.3}.bc-root button:focus-visible,.bc-root input:focus-visible{outline:2px solid var(--bc-accent);outline-offset:2px}.bc-root button:hover{background:color-mix(in srgb,var(--bc-accent) 7%,transparent)}.bc-root button svg{width:18px;height:18px;flex-shrink:0}.bc-root .bc-primary{color:var(--bc-accent);background:color-mix(in srgb,var(--bc-accent) 8%,transparent);padding-inline:18px}.bc-root .bc-header{display:flex;align-items:center;justify-content:space-between;flex:none;gap:0}.bc-root .bc-header-actions{display:flex;align-items:center;gap:0}.bc-root .bc-eyebrow{font-size:12px;color:var(--bc-muted);letter-spacing:.5px;min-width:0}.bc-root .bc-mode{font-size:13px;color:var(--bc-accent);padding-inline:8px;min-width:0}.bc-root .bc-body{position:relative;flex:1;min-height:0;overflow:auto;overscroll-behavior:contain}.bc-root .bc-scene{position:absolute;inset:0;min-height:160px}.bc-root .bc-line{width:100%;height:100%;display:block;color:var(--bc-accent);overflow:visible}.bc-root .bc-orb{position:absolute;width:46px;height:46px;transform:translate(-50%,-50%);border:1px solid color-mix(in srgb,var(--bc-accent) 25%,transparent);border-radius:50%;color:var(--bc-accent);display:grid;place-items:center;pointer-events:none;background:transparent}.bc-root .bc-orb[data-hold=true]{background:color-mix(in srgb,var(--bc-accent) 7%,transparent)}.bc-root .bc-orb>svg{width:24px;height:26px}.bc-root .bc-orb>svg[data-hold=true]{width:17px;height:22px}.bc-root .bc-guidance{position:absolute;bottom:0;left:0;right:0;text-align:center;padding:4px 10px 2px;pointer-events:none}.bc-root .bc-guidance h2{font-size:clamp(21px,3vw,30px);font-weight:400;line-height:1.2;letter-spacing:-.45px;margin:0 0 8px}.bc-root .bc-guidance p{font-size:14px;line-height:1.65;color:var(--bc-muted);margin:0}.bc-root .bc-guidance p:empty{display:none}.bc-root .bc-guidance p span{display:block;text-wrap:balance}.bc-root .bc-footer{display:flex;align-items:center;justify-content:center;flex:none;gap:6px;font-size:13px}.bc-root .bc-footer button{min-width:0;font-size:13px}.bc-root .bc-quote{position:absolute;left:50%;top:43%;transform:translate(-50%,-50%);width:calc(100% - 24px);max-width:410px;line-height:1.7;font-size:19px;font-weight:400;letter-spacing:-.15px;text-align:center;margin:0;overflow-wrap:anywhere}.bc-root .bc-quote strong{font-weight:500;display:inline-block;color:var(--bc-accent)}.bc-root .bc-arrival{position:absolute;transform:translate(-50%,-50%);font-size:19px;line-height:1.7;font-weight:500;color:var(--bc-accent);white-space:nowrap;pointer-events:none}.bc-root .bc-options{flex:none;display:grid;gap:6px;border-block:1px solid color-mix(in srgb,var(--bc-muted) 18%,transparent);padding:8px 4px;color:var(--bc-text);font-size:13px;overflow:auto;max-height:45%}.bc-root .bc-options label{display:flex;align-items:center;min-height:36px;gap:8px;cursor:pointer}.bc-root input{width:18px;height:18px;accent-color:var(--bc-accent)}.bc-root .bc-options small{color:var(--bc-muted);padding-inline-start:26px;font-size:12px}.bc-root .bc-error{font-size:12px;color:var(--bc-muted);flex:none;max-height:50px;overflow:auto}.bc-root .bc-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
+.bc-root *{box-sizing:border-box}.bc-root button{font:inherit;font-size:14px;color:inherit;background:transparent;border:0;cursor:pointer;min-height:44px;min-width:44px;padding:8px 10px;border-radius:24px;display:inline-flex;align-items:center;justify-content:center;gap:8px;line-height:1.3}.bc-root button:focus-visible{outline:2px solid var(--bc-accent);outline-offset:2px}.bc-root button:hover{background:color-mix(in srgb,var(--bc-accent) 7%,transparent)}.bc-root button svg{width:18px;height:18px;flex-shrink:0}.bc-root .bc-primary{color:var(--bc-accent);background:color-mix(in srgb,var(--bc-accent) 8%,transparent);padding-inline:18px}.bc-root .bc-header{display:flex;align-items:center;justify-content:space-between;flex:none;gap:0}.bc-root .bc-header-actions{display:flex;align-items:center;gap:0}.bc-root .bc-eyebrow{font-size:12px;color:var(--bc-muted);letter-spacing:.5px;min-width:0}.bc-root .bc-mode{font-size:13px;color:var(--bc-accent);padding-inline:8px;min-width:0}.bc-root .bc-body{position:relative;flex:1;min-height:0;overflow:auto;overscroll-behavior:contain}.bc-root .bc-scene{position:absolute;inset:0;min-height:160px}.bc-root .bc-line{width:100%;height:100%;display:block;color:var(--bc-accent);overflow:visible}.bc-root .bc-orb{position:absolute;width:46px;height:46px;transform:translate(-50%,-50%);border:1px solid color-mix(in srgb,var(--bc-accent) 25%,transparent);border-radius:50%;color:var(--bc-accent);display:grid;place-items:center;pointer-events:none;background:transparent}.bc-root .bc-orb[data-hold=true]{background:color-mix(in srgb,var(--bc-accent) 7%,transparent)}.bc-root .bc-orb>svg{width:24px;height:26px}.bc-root .bc-orb>svg[data-hold=true]{width:17px;height:22px}.bc-root .bc-guidance{position:absolute;bottom:0;left:0;right:0;text-align:center;padding:4px 10px 2px;pointer-events:none}.bc-root .bc-guidance h2{font-size:clamp(21px,3vw,30px);font-weight:400;line-height:1.2;letter-spacing:-.45px;margin:0 0 8px}.bc-root .bc-guidance p{font-size:14px;line-height:1.65;color:var(--bc-muted);margin:0}.bc-root .bc-guidance p:empty{display:none}.bc-root .bc-guidance p span{display:block;text-wrap:balance}.bc-root .bc-footer{display:flex;align-items:center;justify-content:center;flex:none;gap:6px;font-size:13px}.bc-root .bc-footer button{min-width:0;font-size:13px}.bc-root .bc-quote{position:absolute;left:50%;top:43%;transform:translate(-50%,-50%);width:calc(100% - 24px);max-width:410px;line-height:1.7;font-size:19px;font-weight:400;letter-spacing:-.15px;text-align:center;margin:0;overflow-wrap:anywhere}.bc-root .bc-quote strong{font-weight:500;display:inline-block;color:var(--bc-accent)}.bc-root .bc-arrival{position:absolute;transform:translate(-50%,-50%);font-size:19px;line-height:1.7;font-weight:500;color:var(--bc-accent);white-space:nowrap;pointer-events:none}.bc-root .bc-options{flex:none;display:grid;gap:6px;border-block:1px solid color-mix(in srgb,var(--bc-muted) 18%,transparent);padding:8px 4px;color:var(--bc-text);font-size:13px;overflow:auto;max-height:45%}.bc-root .bc-options{--m3-primary:var(--bc-accent)}.bc-root .bc-options .bc-toggle{justify-content:flex-start;min-height:36px;padding:4px 8px 4px 4px;border-radius:8px;gap:12px}.bc-root .bc-toggle:disabled{opacity:.38;cursor:default}.bc-root .bc-toggle-box{display:inline-grid;place-items:center;width:18px;height:18px;border:2px solid currentColor;border-radius:2px;flex:none}.bc-root .bc-toggle[aria-checked=true] .bc-toggle-box{background:var(--bc-accent);border-color:var(--bc-accent);color:#fff}.bc-root .bc-toggle-box svg{width:14px;height:14px}.bc-root .bc-options small{color:var(--bc-muted);padding-inline-start:44px;font-size:12px}.bc-root .bc-error{font-size:12px;color:var(--bc-muted);flex:none;max-height:50px;overflow:auto}.bc-root .bc-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
 .bc-root[data-stage=intro] .bc-guidance{top:50%;bottom:auto;transform:translateY(-50%)}.bc-root[data-reduced=true] .bc-guidance{top:50%;bottom:auto;transform:translateY(-50%)}.bc-root[data-stage=complete] .bc-guidance{top:auto;bottom:0;transform:none}.bc-root[data-reduced=true] .bc-line,.bc-root[data-reduced=true] .bc-orb,.bc-root[data-reduced=true] .bc-arrival{display:none}
 .bc-root[data-compact=true]{padding:8px;gap:2px}.bc-root[data-compact=true] .bc-wide-label{display:none}.bc-root[data-compact=true] .bc-eyebrow{font-size:11px;max-width:105px}.bc-root[data-compact=true] .bc-header-actions button{padding:8px;min-width:40px;width:40px}.bc-root[data-compact=true] .bc-mode{font-size:12px;padding-inline:5px}.bc-root[data-compact=true] .bc-guidance{padding-inline:4px}.bc-root[data-compact=true] .bc-guidance h2{font-size:21px;margin-bottom:5px}.bc-root[data-compact=true] .bc-guidance p{font-size:13px;line-height:1.5}.bc-root[data-compact=true] .bc-quote{font-size:14px;line-height:1.5;width:calc(100% - 12px);top:43%}.bc-root[data-compact=true] .bc-arrival{font-size:14px;line-height:1.5}.bc-root[data-compact=true] .bc-footer button{font-size:12px;gap:5px;padding-inline:8px}.bc-root[data-compact=true][data-stage=complete] .bc-guidance h2{font-size:17px;margin-bottom:0}
 .bc-root button.bc-orb{padding:0;pointer-events:auto}.bc-root button.bc-orb:disabled{pointer-events:none}.bc-root[data-compact=true] .bc-header-actions button{min-width:44px;width:44px}
