@@ -2064,7 +2064,11 @@
 			},
 			"loadError": "La zone de saisie du chat n'a pas pu être chargée. Veuillez réessayer.",
 			"retry": "Réessayer",
+			"editFailedTitle": "Impossible d’enregistrer la modification",
+			"editFailedText": "Votre texte est toujours dans l’éditeur. Réessayez.",
 			"toolbar": {
+				"selectionFormats": "Mettre en forme la sélection",
+				"slashFormats": "Commandes de mise en forme",
 				"openTools": "Revenir à tous les outils",
 				"closeTools": "Passer aux outils compacts",
 				"more": "Plus d'outils",

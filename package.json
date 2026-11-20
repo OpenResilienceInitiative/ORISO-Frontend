@@ -443,7 +443,6 @@
 					"no-restricted-syntax": [
 						"error",
 						"WithStatement",
-						"WithStatement",
 						{
 							"selector": "JSXOpeningElement[name.name=/^(select|option|textarea)$/]",
 							"message": "Raw <select>/<option>/<textarea> is drawn by the browser and never matches the design. Use OrisoSelect / OrisoMultiSelect / OrisoTextarea from src/components/form/."

@@ -2064,7 +2064,11 @@
 			},
 			"loadError": "Sohbet giriş alanı yüklenemedi. Lütfen tekrar deneyin.",
 			"retry": "Tekrar dene",
+			"editFailedTitle": "Değişiklik kaydedilemedi",
+			"editFailedText": "Metniniz düzenleyicide duruyor. Tekrar deneyin.",
 			"toolbar": {
+				"selectionFormats": "Seçili metni biçimlendir",
+				"slashFormats": "Biçimlendirme komutları",
 				"openTools": "Tüm araçlara geri dön",
 				"closeTools": "Kompakt araçlara geç",
 				"more": "Diğer araçlar",

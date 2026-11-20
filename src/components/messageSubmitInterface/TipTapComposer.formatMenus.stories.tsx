@@ -137,9 +137,31 @@ export const SlashCommands: Story = {
 
 export const Phone: Story = {
 	globals: { viewport: { value: 'phone390' } },
+	args: { initialContent: '<p>Vorhandener Text.</p>' },
+	beforeEach: () => {
+		const nativeMatchMedia = window.matchMedia;
+		window.matchMedia = (query) => {
+			const result = nativeMatchMedia.call(window, query);
+			if (query === '(hover: hover) and (pointer: fine)') {
+				Object.defineProperty(result, 'matches', { value: false });
+			}
+			return result;
+		};
+		return () => {
+			window.matchMedia = nativeMatchMedia;
+		};
+	},
 	play: async ({ canvas, canvasElement }) => {
 		const field = await canvas.findByRole('textbox', { name: 'Nachricht' });
-		await userEvent.type(field, '/liste');
+		await userEvent.click(field);
+		select(field, 1, 18);
+		await expect(field).not.toHaveAttribute('aria-keyshortcuts', 'Alt+F10');
+		await expect(
+			within(canvasElement.ownerDocument.body).queryByRole('toolbar', {
+				name: 'Auswahl formatieren'
+			})
+		).toBeNull();
+		await userEvent.keyboard('{Backspace}/liste');
 		const list = await slashList(canvasElement.ownerDocument);
 		await userEvent.click(
 			within(list).getByRole('option', { name: 'Aufzählung' })

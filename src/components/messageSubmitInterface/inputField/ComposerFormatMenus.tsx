@@ -197,7 +197,7 @@ export const SlashFormatList = React.forwardRef<
 	const [requestedIndex, setRequestedIndex] = useState(0);
 	const itemIndex = Math.min(requestedIndex, items.length - 1);
 	const optionId = `${listId}-${itemIndex}`;
-	const selectedOption = useRef<HTMLDivElement>(null);
+	const selectedOption = useRef<HTMLButtonElement>(null);
 
 	useEffect(() => {
 		const field = editor.view.dom;
@@ -252,11 +252,13 @@ export const SlashFormatList = React.forwardRef<
 				const Glyph = glyphs[format.id];
 				const selected = index === itemIndex;
 				return (
-					<div
+					<button
 						key={format.id}
 						id={`${listId}-${index}`}
 						ref={selected ? selectedOption : undefined}
 						role="option"
+						type="button"
+						tabIndex={-1}
 						aria-selected={selected}
 						className="composerToolbar__menuItem"
 						onMouseEnter={() => setRequestedIndex(index)}
@@ -270,7 +272,7 @@ export const SlashFormatList = React.forwardRef<
 						>
 							/{format[locale]}
 						</span>
-					</div>
+					</button>
 				);
 			})}
 		</div>

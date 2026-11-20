@@ -7,6 +7,7 @@ import React, {
 	useRef
 } from 'react';
 import { EditorContent, useEditor } from '@tiptap/react';
+import useMediaQuery from '@mui/material/useMediaQuery';
 import { Mark, type AnyExtension } from '@tiptap/core';
 import { exitSuggestion } from '@tiptap/suggestion';
 import StarterKit from '@tiptap/starter-kit';
@@ -258,6 +259,10 @@ export const TipTapComposer = forwardRef<
 		ref
 	) => {
 		const { t, i18n } = useTranslation();
+		// Leave room for the browser's native editing menu on touch devices.
+		const supportsSelectionMenu = useMediaQuery(
+			'(hover: hover) and (pointer: fine)'
+		);
 		const formatMenuLanguage = useRef({
 			t,
 			locale: i18n?.resolvedLanguage
@@ -952,7 +957,7 @@ export const TipTapComposer = forwardRef<
 				className="tiptap-composer"
 				data-tour-target="session-composer"
 			>
-				{!readOnly && (
+				{!readOnly && supportsSelectionMenu && (
 					<ComposerSelectionFormatMenu
 						editor={editor}
 						gate={formatGate}
