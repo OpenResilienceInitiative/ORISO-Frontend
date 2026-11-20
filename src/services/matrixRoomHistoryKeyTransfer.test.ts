@@ -1,6 +1,6 @@
 // @vitest-environment oriso-jsdom
 import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
-import { ClientEvent } from 'matrix-js-sdk';
+import { ClientEvent, type MatrixClient } from 'matrix-js-sdk';
 import {
 	MATRIX_HISTORY_KEYS_DIAGNOSTIC_EVENT,
 	MATRIX_HISTORY_KEYS_IMPORTED_EVENT,
@@ -636,6 +636,214 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 		expect(harness.crypto.exportRoomKeys).toHaveBeenCalledTimes(1);
 	});
 
+	describe('overlapping room-key exports', () => {
+		const otherRoomId = '!other-case:matrix';
+		type FixtureKey = { room_id: string; session_id: string };
+
+		const key = (roomId: string, sessionId: string): FixtureKey => ({
+			room_id: roomId,
+			session_id: sessionId
+		});
+
+		const fixture = () => {
+			const harness = buildHarness();
+			harness.client.getRoom.mockImplementation((roomId) =>
+				[ROOM_ID, otherRoomId].includes(roomId) ? harness.room : null
+			);
+			harness.crypto.getUserDeviceInfo.mockResolvedValue(
+				new Map([
+					[
+						PEER,
+						new Map([
+							['ASKER1', { deviceId: 'ASKER1' }],
+							['ASKER2', { deviceId: 'ASKER2' }]
+						])
+					]
+				])
+			);
+			return {
+				...harness,
+				matrixClient: harness.client as unknown as MatrixClient,
+				request(roomId: string, deviceId: string, requestId: string) {
+					harness.emitToDevice(
+						event('org.oriso.room_history_key_request', PEER, {
+							room_id: roomId,
+							request_id: requestId,
+							requester_user_id: PEER,
+							requester_device_id: deviceId
+						})
+					);
+				}
+			};
+		};
+
+		const expectBundle = (
+			harness: ReturnType<typeof fixture>,
+			roomId: string,
+			deviceId: string,
+			requestId: string,
+			keys: FixtureKey[]
+		) =>
+			expect(harness.crypto.encryptToDeviceMessages).toHaveBeenCalledWith(
+				'org.oriso.room_history_key_bundle',
+				[{ userId: PEER, deviceId }],
+				{ room_id: roomId, request_id: requestId, keys }
+			);
+
+		it.each([100, 1_000, 10_000])(
+			'shares one export of %i keys between two rooms and devices',
+			async (size) => {
+				const harness = fixture();
+				const service = new MatrixRoomHistoryKeyTransfer();
+				service.initialize(harness.matrixClient);
+				const pending = Promise.withResolvers<FixtureKey[]>();
+				harness.crypto.exportRoomKeys.mockReturnValue(pending.promise);
+				const first = key(ROOM_ID, 'first');
+				const other = key(otherRoomId, 'other');
+				const unrelated = Array.from({ length: size - 2 }, (_, index) =>
+					key('!unrelated:matrix', `fixture-${index}`)
+				);
+
+				harness.request(ROOM_ID, 'ASKER1', 'first');
+				harness.request(otherRoomId, 'ASKER2', 'other');
+				await vi.waitFor(() =>
+					expect(
+						harness.crypto.getUserDeviceInfo
+					).toHaveBeenCalledTimes(2)
+				);
+				pending.resolve([first, other, ...unrelated]);
+				await vi.waitFor(() =>
+					expect(harness.client.queueToDevice).toHaveBeenCalledTimes(
+						2
+					)
+				);
+
+				expect(harness.crypto.exportRoomKeys).toHaveBeenCalledOnce();
+				expectBundle(harness, ROOM_ID, 'ASKER1', 'first', [first]);
+				expectBundle(harness, otherRoomId, 'ASKER2', 'other', [other]);
+			}
+		);
+
+		it.each(['a replacement client', 'the same reattached client'])(
+			'keeps exports separate for %s and ignores the old completion',
+			async (mode) => {
+				const outgoing = fixture();
+				const current =
+					mode === 'a replacement client' ? fixture() : outgoing;
+				const service = new MatrixRoomHistoryKeyTransfer();
+				const oldExport = Promise.withResolvers<FixtureKey[]>();
+				const newExport = Promise.withResolvers<FixtureKey[]>();
+				outgoing.crypto.exportRoomKeys.mockReturnValue(
+					oldExport.promise
+				);
+				service.initialize(outgoing.matrixClient);
+				outgoing.request(ROOM_ID, 'ASKER1', 'old');
+				await vi.waitFor(() =>
+					expect(
+						outgoing.crypto.exportRoomKeys
+					).toHaveBeenCalledOnce()
+				);
+
+				service.detach();
+				service.initialize(current.matrixClient);
+				current.crypto.exportRoomKeys.mockClear();
+				current.crypto.exportRoomKeys.mockReturnValue(
+					newExport.promise
+				);
+				current.request(otherRoomId, 'ASKER2', 'new');
+				await vi.waitFor(() =>
+					expect(current.crypto.exportRoomKeys).toHaveBeenCalledOnce()
+				);
+
+				oldExport.resolve([key(ROOM_ID, 'stale')]);
+				// Let the old completion run while the replacement export is pending.
+				await new Promise<void>((resolve) => setTimeout(resolve, 0));
+				expect(outgoing.client.queueToDevice).not.toHaveBeenCalled();
+
+				current.crypto.getUserDeviceInfo.mockClear();
+				current.request(ROOM_ID, 'ASKER2', 'also-new');
+				await vi.waitFor(() =>
+					expect(
+						current.crypto.getUserDeviceInfo
+					).toHaveBeenCalledOnce()
+				);
+				const first = key(otherRoomId, 'current-other');
+				const second = key(ROOM_ID, 'current-first');
+				newExport.resolve([first, second]);
+				await vi.waitFor(() =>
+					expect(current.client.queueToDevice).toHaveBeenCalledTimes(
+						2
+					)
+				);
+				expect(current.crypto.exportRoomKeys).toHaveBeenCalledOnce();
+				expectBundle(current, otherRoomId, 'ASKER2', 'new', [first]);
+				expectBundle(current, ROOM_ID, 'ASKER2', 'also-new', [second]);
+			}
+		);
+
+		it('clears a rejected shared export and reads fresh keys after success', async () => {
+			const harness = fixture();
+			const service = new MatrixRoomHistoryKeyTransfer();
+			service.initialize(harness.matrixClient);
+			const pending = Promise.withResolvers<FixtureKey[]>();
+			harness.crypto.exportRoomKeys.mockReturnValue(pending.promise);
+			const clock = vi.spyOn(Date, 'now');
+			const stages: string[] = [];
+			const diagnostic = (e: Event) =>
+				stages.push((e as CustomEvent).detail.stage);
+			window.addEventListener(
+				MATRIX_HISTORY_KEYS_DIAGNOSTIC_EVENT,
+				diagnostic
+			);
+			try {
+				harness.request(ROOM_ID, 'ASKER1', 'failed-first');
+				harness.request(otherRoomId, 'ASKER2', 'failed-other');
+				await vi.waitFor(() =>
+					expect(
+						harness.crypto.getUserDeviceInfo
+					).toHaveBeenCalledTimes(2)
+				);
+				pending.reject(new Error('Synthetic export failure'));
+				await vi.waitFor(() =>
+					expect(
+						stages.filter(
+							(stage) => stage === 'request-handler-failed'
+						)
+					).toHaveLength(2)
+				);
+				expect(harness.crypto.exportRoomKeys).toHaveBeenCalledOnce();
+				expect(harness.client.queueToDevice).not.toHaveBeenCalled();
+
+				const retried = key(ROOM_ID, 'retry');
+				harness.crypto.exportRoomKeys.mockResolvedValue([retried]);
+				// The same requesting device can retry once its existing throttle expires.
+				clock.mockReturnValue(Date.now() + 31_000);
+				harness.request(ROOM_ID, 'ASKER1', 'retry');
+				await vi.waitFor(() =>
+					expect(harness.client.queueToDevice).toHaveBeenCalledOnce()
+				);
+				expectBundle(harness, ROOM_ID, 'ASKER1', 'retry', [retried]);
+
+				const fresh = key(otherRoomId, 'newly-available');
+				harness.crypto.exportRoomKeys.mockResolvedValue([fresh]);
+				harness.request(otherRoomId, 'ASKER1', 'fresh');
+				await vi.waitFor(() =>
+					expect(harness.client.queueToDevice).toHaveBeenCalledTimes(
+						2
+					)
+				);
+				expectBundle(harness, otherRoomId, 'ASKER1', 'fresh', [fresh]);
+				expect(harness.crypto.exportRoomKeys).toHaveBeenCalledTimes(3);
+			} finally {
+				clock.mockRestore();
+				window.removeEventListener(
+					MATRIX_HISTORY_KEYS_DIAGNOSTIC_EVENT,
+					diagnostic
+				);
+			}
+		});
+	});
+
 	describe('incoming request device refresh', () => {
 		const withRustInternals = (
 			harness: ReturnType<typeof buildHarness>,
@@ -829,19 +1037,41 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 		const service = new MatrixRoomHistoryKeyTransfer();
 		service.initialize(harness.client as any);
 
-		harness.emitToDevice(
-			event('org.oriso.room_history_key_request', PEER, {
-				room_id: ROOM_ID,
-				request_id: 'oversized-export',
-				requester_user_id: PEER,
-				requester_device_id: 'ASKER1'
-			})
+		const diagnostic = vi.fn();
+		window.addEventListener(
+			MATRIX_HISTORY_KEYS_DIAGNOSTIC_EVENT,
+			diagnostic
 		);
-		await vi.waitFor(() =>
-			expect(harness.crypto.exportRoomKeys).toHaveBeenCalledOnce()
-		);
-
-		expect(harness.client.encryptAndSendToDevice).not.toHaveBeenCalled();
+		try {
+			harness.emitToDevice(
+				event('org.oriso.room_history_key_request', PEER, {
+					room_id: ROOM_ID,
+					request_id: 'oversized-export',
+					requester_user_id: PEER,
+					requester_device_id: 'ASKER1'
+				})
+			);
+			await vi.waitFor(() =>
+				expect(diagnostic).toHaveBeenCalledWith(
+					expect.objectContaining({
+						detail: {
+							stage: 'request-key-count-rejected',
+							keyCount: 5_001
+						}
+					})
+				)
+			);
+			expect(harness.crypto.exportRoomKeys).toHaveBeenCalledOnce();
+			expect(
+				harness.crypto.encryptToDeviceMessages
+			).not.toHaveBeenCalled();
+			expect(harness.client.queueToDevice).not.toHaveBeenCalled();
+		} finally {
+			window.removeEventListener(
+				MATRIX_HISTORY_KEYS_DIAGNOSTIC_EVENT,
+				diagnostic
+			);
+		}
 	});
 
 	it('emits a minimal diagnostic when an incoming request handler fails', async () => {
