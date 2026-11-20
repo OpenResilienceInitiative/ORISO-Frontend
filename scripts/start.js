@@ -81,7 +81,7 @@ checkBrowsers(paths.appPath, isInteractive)
 		// run on a different port. `choosePort()` Promise resolves to the next free port.
 		return choosePort(HOST, DEFAULT_PORT);
 	})
-	.then((port) => {
+	.then(async (port) => {
 		if (port == null) {
 			// We have not found a port.
 			return;
@@ -122,28 +122,21 @@ checkBrowsers(paths.appPath, isInteractive)
 			port
 		};
 		const devServer = new WebpackDevServer(serverConfig, compiler);
-		// Launch WebpackDevServer.
-		devServer.startCallback(() => {
-			if (isInteractive) {
-				clearConsole();
-			}
+		await devServer.start();
+		if (isInteractive) {
+			clearConsole();
+		}
 
-			console.log(chalk.cyan('Starting the development server...\n'));
-			openBrowser(urls.localUrlForBrowser);
-		});
-
-		['SIGINT', 'SIGTERM'].forEach(function (sig) {
-			process.on(sig, function () {
-				devServer.close();
-				process.exit();
-			});
-		});
+		console.log(chalk.cyan('Starting the development server...\n'));
+		openBrowser(urls.localUrlForBrowser);
 
 		if (process.env.CI !== 'true') {
-			// Gracefully exit when stdin ends
-			process.stdin.on('end', function () {
-				devServer.close();
-				process.exit();
+			// Webpack Dev Server handles termination signals. Also stop on stdin EOF.
+			process.stdin.once('end', () => {
+				devServer.stopCallback((error) => {
+					if (error) console.error(error);
+					process.exit(error ? 1 : 0);
+				});
 			});
 		}
 	})
