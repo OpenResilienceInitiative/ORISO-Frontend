@@ -42,6 +42,8 @@
 		"recoveryIntro": "Önce mevcut görüşmenizin kurtarma anahtarını hazırlayın. Böylece mesajlarınıza yeni bir cihazdan erişebilirsiniz.",
 		"pending": "Önceki bir deneme tamamlanmadı. Tamamlamak için aynı parolayı kullanın.",
 		"recoveryError": "Kurtarma anahtarı henüz kullanılamıyor. Tekrar deneyin veya daha önce kaydettiğiniz anahtarı girin.",
+		"historyError": "Sohbet geçmişiniz henüz güvenceye alınamadı. Lütfen tekrar deneyin.",
+		"fallbackKeyHelp": "Hesabınız hazır, ancak sohbet geçmişiniz henüz şifrenize bağlanamadı. Bu kurtarma anahtarını kaydedin: bu görüşmeyi yeni bir cihazda okumak için ona ihtiyacınız olacak.",
 		"existingKey": "Daha önce kaydedilen kurtarma anahtarı (gerekirse)",
 		"prepare": "Kurtarma anahtarını hazırla",
 		"accountChanged": "Giriş yapılan hesap değişti. Güvenle devam etmek için sayfayı yenileyin.",

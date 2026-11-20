@@ -42,6 +42,8 @@
 		"recoveryIntro": "Préparez d'abord la clé de récupération de votre conversation actuelle. Vos messages resteront ainsi accessibles sur un nouvel appareil.",
 		"pending": "Une tentative précédente est en attente. Utilisez le même mot de passe pour la terminer.",
 		"recoveryError": "La clé de récupération n'est pas encore disponible. Réessayez ou saisissez la clé enregistrée précédemment.",
+		"historyError": "Votre historique de discussion n'a pas encore pu être sécurisé. Veuillez réessayer.",
+		"fallbackKeyHelp": "Votre compte est prêt, mais votre historique de discussion n'a pas encore pu être lié à votre mot de passe. Enregistrez cette clé de récupération : vous en aurez besoin pour lire cette conversation sur un nouvel appareil.",
 		"existingKey": "Clé de récupération enregistrée précédemment (si nécessaire)",
 		"prepare": "Préparer la clé de récupération",
 		"accountChanged": "Le compte connecté a changé. Rechargez la page pour continuer en toute sécurité.",
