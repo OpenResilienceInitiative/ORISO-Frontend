@@ -55,6 +55,16 @@ three parts. Do not write a fourth.
   document load (#1219). Keep the load — it is how browsers offer to save the
   password (#1208) — and keep both sides identical instead.
 
+## UI baselines set by the product owner
+
+- **Waiting-room step cards are a carousel with arrows and dots** (registration,
+  live chat, self-help group information; `HandoverCarousel`). Do not convert
+  them to a static grid or size them so all cards fit side by side without the
+  product owner. Baseline and rules: Storybook "Design principles/Card
+  carousel" (`src/designPrinciples/CardCarousel.mdx`): 1.5 cards at 1440,
+  same size on screen at any zoom (`vw`), width fixed and height adapts
+  (picture cropped, never text), no dead white above the bar.
+
 ## Validation
 
 - Prefer red-green TDD for behavior changes: add or update the smallest test that would fail without the fix, then implement.
