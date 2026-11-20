@@ -16,6 +16,7 @@
  */
 import * as React from 'react';
 import {
+	act,
 	cleanup,
 	fireEvent,
 	render,
@@ -35,6 +36,7 @@ import {
 import { MessageAttachment } from './MessageAttachment';
 import { NotificationsContext } from '../../globalState';
 import { setMatrixClientServiceRef } from '../../services/matrixClientRegistry';
+import { decryptMatrixAttachment } from '../../utils/matrixEncryptedAttachment';
 import { formatMatrixTimelineEvent } from '../../utils/matrixTimelineEventFormatter';
 
 const HOMESERVER = 'https://matrix.test';
@@ -190,6 +192,40 @@ describe('encrypted attachment — the ciphertext fetch', () => {
 			fetchMock.mock.calls[0][1]?.headers?.Authorization;
 		expect(authorization).toBe(`Bearer ${MATRIX_TOKEN}`);
 		expect(authorization).not.toContain(KEYCLOAK_TOKEN);
+	});
+
+	it('shows the existing decryption error if the response body cannot be read', async () => {
+		fetchMock.mockResolvedValueOnce({
+			ok: true,
+			arrayBuffer: async () => {
+				throw new Error('synthetic unreadable response body');
+			}
+		});
+		renderAttachment(encryptedAttachment);
+
+		fireEvent.click(screen.getByRole('button'));
+
+		await screen.findByText('e2ee.attachment.decryption_error');
+		expect(screen.queryByRole('progressbar')).toBeNull();
+		expect(window.URL.createObjectURL).not.toHaveBeenCalled();
+	});
+
+	it('does not create an object URL when decryption completes after unmount', async () => {
+		let finishDecryption: (bytes: ArrayBuffer) => void;
+		const decrypted = new Promise<ArrayBuffer>((resolve) => {
+			finishDecryption = resolve;
+		});
+		vi.mocked(decryptMatrixAttachment).mockReturnValueOnce(decrypted);
+		const view = renderAttachment(encryptedAttachment);
+		fireEvent.click(screen.getByRole('button'));
+		await waitFor(() => expect(decryptMatrixAttachment).toHaveBeenCalled());
+
+		view.unmount();
+		await act(async () => {
+			finishDecryption(new Uint8Array([1]).buffer);
+		});
+
+		expect(window.URL.createObjectURL).not.toHaveBeenCalled();
 	});
 });
 

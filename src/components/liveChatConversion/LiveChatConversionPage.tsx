@@ -1,19 +1,27 @@
 import * as React from 'react';
-import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import {
-	Alert,
-	Box,
-	Button,
-	Stack,
-	TextField,
-	Typography
-} from '@mui/material';
+	useCallback,
+	useContext,
+	useEffect,
+	useMemo,
+	useRef,
+	useState
+} from 'react';
+import type { MatrixClient } from 'matrix-js-sdk';
+import { Alert, Box, Button, Stack, Typography } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 import { UserDataContext } from '../../globalState';
 import { getCurrentAuthSubject } from '../sessionCookie/getMatrixAccessToken';
 import { MATRIX_SESSION_SUBJECT_STORAGE_KEY } from '../../utils/matrixStorageKeys';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
+import {
+	getChatRecoveryPolicy,
+	type ChatRecoveryPolicy
+} from '../../services/chatRecoveryPolicy';
+import { sealRecoveryUnderFirstPassword } from '../../services/authenticatedChatRecovery';
+import { executeWithReadyEncryptionClient } from '../profile/EncryptionSettings/encryptionClient';
+import { OrisoTextField } from '../form/OrisoTextField';
 import { RecoveryKeySaveStep } from '../profile/EncryptionSettings/RecoveryKeySaveStep';
 import { NewRequestDialog } from '../profile/NewRequestDialog/NewRequestDialog';
 import { useFurtherCounsellingPrefill } from '../furtherCounselling/useFurtherCounsellingPrefill';
@@ -25,6 +33,18 @@ import {
 	type ConversionStatus
 } from './liveChatConversionApi';
 import { prepareGuestRecovery } from './prepareGuestRecovery';
+
+/** FE#2334: an unreadable policy keeps today's recovery-key flow. */
+const readRecoveryPolicy = (account: {
+	chatRecoveryMode?: string | null;
+	chatRecoveryPolicyRevision?: number | null;
+}): ChatRecoveryPolicy => {
+	try {
+		return getChatRecoveryPolicy(account);
+	} catch {
+		return { mode: 'RECOVERY_KEY' };
+	}
+};
 
 /** Runs inside AuthenticatedApp: Matrix is bootstrapped for the existing identity first. */
 export const LiveChatConversionPage = () => {
@@ -45,11 +65,20 @@ export const LiveChatConversionPage = () => {
 	const [username, setUsername] = useState<string | null>(null);
 	const [newRequest, setNewRequest] = useState(false);
 	const [signInRequired, setSignInRequired] = useState(false);
+	/* Shown only when sealing under the new password failed after the account
+	   was converted: the key is then the only way back to the history. */
+	const [fallbackKey, setFallbackKey] = useState<string | null>(null);
 	const intent = useRef<string | null>(null);
-	const preparedClient =
-		useRef<
-			ReturnType<NonNullable<typeof matrixClientService>['getClient']>
-		>(null);
+	const preparedClient = useRef<MatrixClient | null>(null);
+	const policy = useMemo(
+		() =>
+			readRecoveryPolicy({
+				chatRecoveryMode: userData?.chatRecoveryMode,
+				chatRecoveryPolicyRevision: userData?.chatRecoveryPolicyRevision
+			}),
+		[userData?.chatRecoveryMode, userData?.chatRecoveryPolicyRevision]
+	);
+	const passwordRecovery = policy.mode === 'LOGIN_PASSWORD';
 	const tr = (name: string, fallback: string) =>
 		t(`liveChatConversion.${name}`, fallback);
 	const currentSubjectMatches = (id: string) =>
@@ -77,57 +106,127 @@ export const LiveChatConversionPage = () => {
 		};
 	}, [userData?.userId, userData?.userName]);
 
+	/**
+	 * Back the guest's chat keys up on this device, on the synced client only:
+	 * the first click used to fail on a client that had not finished its first
+	 * sync (FE#2334). Resolves with the client and the recovery key it proved.
+	 */
+	const prepareOnReadyClient = useCallback(async () => {
+		if (!status || !userData?.userId)
+			throw new Error('Account unavailable');
+		const fresh = await getConversionStatus();
+		if (
+			fresh.userId !== status.userId ||
+			fresh.userId !== userData.userId ||
+			!currentSubjectMatches(fresh.userId)
+		)
+			throw new Error('Account changed');
+		const service = matrixClientService;
+		if (!service) throw new Error('Matrix not ready');
+		const prepared = await executeWithReadyEncryptionClient(
+			undefined,
+			service,
+			async (client) => {
+				if (service.getAuthenticatedSubject() !== fresh.userId)
+					throw new Error('Matrix not ready');
+				const key = await prepareGuestRecovery(client, suppliedKey);
+				if (
+					service.getClient() !== client ||
+					service.getAuthenticatedSubject() !== fresh.userId
+				)
+					throw new Error('Matrix client changed');
+				return { client, key };
+			}
+		);
+		if (!prepared) throw new Error('Matrix not ready');
+		const after = await getConversionStatus();
+		if (
+			after.userId !== fresh.userId ||
+			!currentSubjectMatches(fresh.userId) ||
+			service.getClient() !== prepared.client ||
+			service.getAuthenticatedSubject() !== fresh.userId
+		)
+			throw new Error('Account changed');
+		return prepared;
+	}, [matrixClientService, status, suppliedKey, userData?.userId]);
+
 	const prepare = useCallback(async () => {
 		setBusy(true);
 		setError(null);
 		try {
-			if (!status || !userData?.userId)
-				throw new Error('Account unavailable');
-			const fresh = await getConversionStatus();
-			if (
-				fresh.userId !== status.userId ||
-				fresh.userId !== userData.userId ||
-				!currentSubjectMatches(fresh.userId)
-			)
-				throw new Error('Account changed');
-			const service = matrixClientService;
-			if (!service) throw new Error('Matrix not ready');
-			const { client, result } = await service.holdTokenRefreshDuring(
-				async () => {
-					const client = service.getClient();
-					if (
-						!client ||
-						service.getAuthenticatedSubject() !== fresh.userId
-					)
-						throw new Error('Matrix not ready');
-					const result = await prepareGuestRecovery(
-						client,
-						suppliedKey
-					);
-					if (
-						service.getClient() !== client ||
-						service.getAuthenticatedSubject() !== fresh.userId
-					)
-						throw new Error('Matrix client changed');
-					return { client, result };
-				}
-			);
-			const after = await getConversionStatus();
-			if (
-				after.userId !== fresh.userId ||
-				!currentSubjectMatches(fresh.userId) ||
-				service.getClient() !== client ||
-				service.getAuthenticatedSubject() !== fresh.userId
-			)
-				throw new Error('Account changed');
+			const { client, key: provenKey } = await prepareOnReadyClient();
 			preparedClient.current = client;
-			setKey(result);
+			setKey(provenKey);
 		} catch {
 			setError('recovery');
 		} finally {
 			setBusy(false);
 		}
-	}, [matrixClientService, status, suppliedKey, userData?.userId]);
+	}, [prepareOnReadyClient]);
+
+	/**
+	 * LOGIN_PASSWORD (FE#2334): no recovery key is shown. Back the history up
+	 * first — no conversion without it —, convert, then seal the backup under
+	 * the password just accepted (same contract as keeping a temporary
+	 * account, US#1662). Sealing before the server accepted the password
+	 * could lock the backup under a password that never became the login.
+	 */
+	const submitWithPasswordRecovery = async (password: string) => {
+		if (busy || policy.mode !== 'LOGIN_PASSWORD') return;
+		setBusy(true);
+		setError(null);
+		let prepared: Awaited<ReturnType<typeof prepareOnReadyClient>>;
+		try {
+			prepared = await prepareOnReadyClient();
+		} catch {
+			setError('recovery');
+			setBusy(false);
+			return;
+		}
+		try {
+			const fresh = await getConversionStatus();
+			if (
+				!status ||
+				fresh.userId !== status.userId ||
+				!currentSubjectMatches(fresh.userId) ||
+				matrixClientService?.getClient() !== prepared.client
+			)
+				throw new Error('Account changed');
+			const currentIntent = intent.current ?? crypto.randomUUID();
+			intent.current = currentIntent;
+			const loginName = await convertLiveChatAccount(
+				status.userId,
+				currentIntent,
+				password
+			);
+			const sealed = await sealRecoveryUnderFirstPassword(
+				prepared.client,
+				policy,
+				password,
+				(operation) =>
+					matrixClientService
+						? matrixClientService.holdTokenRefreshDuring(operation)
+						: operation()
+			);
+			if (sealed !== 'ready') setFallbackKey(prepared.key);
+			const finishedOrigin =
+				fresh.finishedOrigin || fresh.state === 'ANONYMOUS_FINISHED';
+			setUsername(loginName);
+			setSignInRequired(finishedOrigin);
+			setStatus({
+				userId: status.userId,
+				username: loginName,
+				state: 'PROMOTED',
+				intentId: currentIntent,
+				finishedOrigin
+			});
+			setSuppliedKey('');
+		} catch {
+			setError('save');
+		} finally {
+			setBusy(false);
+		}
+	};
 
 	const submit = async (password: string) => {
 		if (!key || !keyConfirmed || busy) return;
@@ -244,6 +343,26 @@ export const LiveChatConversionPage = () => {
 
 	if (!status && !error) return <Loading delayMs={0} />;
 
+	if (fallbackKey && status?.state === 'PROMOTED') {
+		return (
+			<Box sx={{ maxWidth: 560, mx: 'auto', p: 3 }}>
+				<Typography component="h1" variant="h4">
+					{tr('title', 'Keep your conversation')}
+				</Typography>
+				<Typography>
+					{tr(
+						'fallbackKeyHelp',
+						'Your account is ready, but your chat history could not be linked to your password yet. Save this recovery key: you need it to read this conversation on a new device.'
+					)}
+				</Typography>
+				<RecoveryKeySaveStep
+					recoveryKey={fallbackKey}
+					onConfirm={() => setFallbackKey(null)}
+				/>
+			</Box>
+		);
+	}
+
 	if (
 		status?.state === 'ALREADY_REGISTERED' ||
 		status?.state === 'PROMOTED'
@@ -309,6 +428,41 @@ export const LiveChatConversionPage = () => {
 					/>
 				</Stack>
 			</Box>
+		);
+	}
+	if (
+		passwordRecovery &&
+		(status?.state === 'ELIGIBLE' ||
+			status?.state === 'ANONYMOUS_FINISHED' ||
+			status?.state === 'PROMOTION_PENDING')
+	) {
+		return (
+			<LiveChatConversionForm
+				loginName={status.username}
+				busy={busy}
+				notice={
+					status.state === 'PROMOTION_PENDING'
+						? tr(
+								'pending',
+								'A previous attempt is pending. Use the same password to finish it.'
+							)
+						: null
+				}
+				error={
+					error === 'save'
+						? tr(
+								'saveError',
+								'The account could not be saved. Please retry with the same password.'
+							)
+						: error === 'recovery'
+							? tr(
+									'historyError',
+									'Your chat history could not be secured yet. Please try again.'
+								)
+							: null
+				}
+				onSubmit={submitWithPasswordRecovery}
+			/>
 		);
 	}
 	if (key && !keyConfirmed) {
@@ -411,7 +565,7 @@ export const LiveChatConversionPage = () => {
 								)}
 							</Alert>
 						)}
-						<TextField
+						<OrisoTextField
 							type="password"
 							autoComplete="off"
 							label={tr(

@@ -1,5 +1,6 @@
 import { apiFinishAnonymousConversation } from '../api/apiFinishAnonymousConversation';
 import { FETCH_ERRORS } from '../api/fetchData';
+import { fetchIsLastingLiveChatAccount } from '../components/liveChatConversion/lastingLiveChatAccount';
 import { addEventListener, removeEventListener } from './eventHandler';
 import { EVENT_PRE_LOGOUT } from '../components/logout/logout';
 import {
@@ -46,6 +47,14 @@ export const finishPendingAnonymousChatSession = async (): Promise<void> => {
 
 	const sessionId = pendingSessionId;
 	pendingSessionId = null;
+
+	/* US#1601 (FE#2330): a converted account keeps its chat. Finishing it here
+	   ended the Live Chat and hid its history on the next sign-in. When the
+	   account state cannot be read, keep the chat as well: an abandoned guest
+	   chat is expired server-side, a finished converted chat cannot be undone. */
+	if ((await fetchIsLastingLiveChatAccount()) !== false) {
+		return;
+	}
 
 	try {
 		await apiFinishAnonymousConversation(sessionId);

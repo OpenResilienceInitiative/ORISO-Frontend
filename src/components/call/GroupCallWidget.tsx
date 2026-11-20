@@ -71,7 +71,12 @@ import { type CallConversation, callPartyOf, counterpartOf } from './callParty';
 import { callWidgetEntryOf } from './callHostContext';
 import { TopicsContext } from '../../globalState/provider/TopicsProvider';
 import { IncomingCallCard } from './states/IncomingCallCard';
+import {
+	isKnockingOnCall,
+	readPendingKnock
+} from '../directLinkEntry/directLinkEntryFlow';
 import { DockedCall } from './states/DockedCall';
+import { useRegisterFloatingSurface } from '../floatingSurfaces/floatingSurfaces';
 import './GroupCallWidget.scss';
 
 const GROUP_DEFAULT_WIDTH = 520;
@@ -1323,6 +1328,13 @@ export const GroupCallWidget: React.FC = () => {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [isDragging, isResizing]);
 
+	// Frank's rule: floating buttons never lie on top of a call (the tour
+	// launcher steps aside while one is on screen).
+	useRegisterFloatingSurface(
+		'call-widget',
+		!isDismissed && !!callData?.usesElementCall
+	);
+
 	// Only render for group calls
 	if (isDismissed || !callData || !callData.usesElementCall) return null;
 
@@ -1331,6 +1343,17 @@ export const GroupCallWidget: React.FC = () => {
 	 * the app behind stays usable. It replaces the old black popup.
 	 */
 	if (callData.isIncoming && callData.state === 'ringing') {
+		/* A person knocking on this call waits in the knock dialog and is let
+		   in by the counsellor; ringing them too leads to "Call access denied". */
+		if (
+			isKnockingOnCall(readPendingKnock(), [
+				callData.signalRoomId,
+				callData.roomId,
+				callData.elementCallRoomId
+			])
+		) {
+			return null;
+		}
 		return (
 			<IncomingCallCard
 				caller={incomingCaller}
