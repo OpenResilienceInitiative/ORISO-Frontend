@@ -4,7 +4,7 @@ import { Box, Typography } from '@mui/material';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { useTranslation } from 'react-i18next';
-import { orisoInputColors } from '../form/orisoInputDesign';
+import { journeyColors, journeyShadow } from './journeyColors';
 import { TEXT_LINES, clampLines } from './journeyTextLimits';
 import { OrisoSelect } from '../form/OrisoSelect';
 import { OrisoTextarea } from '../form/OrisoTextarea';
@@ -27,6 +27,10 @@ export interface JourneyQuestionFieldProps {
 }
 
 const MAX_TEXT = 2000;
+/** Corner radius of an answer card, as the topic cards of the registration. */
+const CARD_RADIUS = 32;
+/** How far the "Etwas anderes" field sits from the card's edge (left, right, bottom). */
+const OTHER_INSET = 12;
 
 /** The words above an answer: the question, "optional" where it is, and its help. */
 const QuestionHead = ({
@@ -55,7 +59,7 @@ const QuestionHead = ({
 					fontSize: { xs: 18, sm: 20 },
 					fontWeight: 600,
 					lineHeight: { xs: '26px', sm: '28px' },
-					color: orisoInputColors.onSurface,
+					color: journeyColors.onSurface,
 					...clampLines(TEXT_LINES.question)
 				}}
 			>
@@ -67,7 +71,7 @@ const QuestionHead = ({
 							ml: 1,
 							fontSize: 14,
 							fontWeight: 400,
-							color: orisoInputColors.onSurfaceVariant
+							color: journeyColors.onSurfaceVariant
 						}}
 					>
 						{t('journey.question.optional')}
@@ -82,7 +86,7 @@ const QuestionHead = ({
 						mt: 0.5,
 						fontSize: 14,
 						lineHeight: '20px',
-						color: orisoInputColors.onSurfaceVariant,
+						color: journeyColors.onSurfaceVariant,
 						...clampLines(TEXT_LINES.help)
 					}}
 				>
@@ -126,12 +130,12 @@ const ChoiceCard = ({
 		sx={{
 			'display': 'block',
 			'position': 'relative',
-			'borderRadius': '32px',
-			'border': `${checked ? 2 : 1}px solid ${checked ? orisoInputColors.primary : orisoInputColors.outline}`,
+			'borderRadius': `${CARD_RADIUS}px`,
+			'border': `${checked ? 2 : 1}px solid ${checked ? journeyColors.primary : journeyColors.outline}`,
 			'margin': checked ? 0 : '1px',
 			'background': checked
-				? orisoInputColors.selectedLayer
-				: `linear-gradient(100deg, ${orisoInputColors.surfaceContainerHigh} 0%, ${orisoInputColors.surfaceContainerLow} 90%)`,
+				? journeyColors.selectedLayer
+				: `linear-gradient(100deg, ${journeyColors.surfaceContainerHigh} 0%, ${journeyColors.surfaceContainerLow} 90%)`,
 			'cursor': disabled ? 'default' : 'pointer',
 			'transition':
 				'transform 240ms cubic-bezier(0.34, 1.24, 0.44, 1), box-shadow 240ms, border-color 160ms, background 160ms',
@@ -139,10 +143,10 @@ const ChoiceCard = ({
 				? undefined
 				: {
 						transform: 'translateY(-2px)',
-						boxShadow: '0 12px 28px rgba(27, 27, 28, 0.10)'
+						boxShadow: journeyShadow('0 12px 28px', 10)
 					},
 			'&:has(input:focus-visible)': {
-				outline: `3px solid ${orisoInputColors.focus}`,
+				outline: `3px solid ${journeyColors.focus}`,
 				outlineOffset: '2px'
 			},
 			'@media (hover: none)': {
@@ -193,12 +197,12 @@ const ChoiceCard = ({
 					display: 'grid',
 					placeItems: 'center',
 					borderRadius: type === 'radio' ? '50%' : '6px',
-					border: `2px solid ${checked ? orisoInputColors.primary : orisoInputColors.outline}`,
+					border: `2px solid ${checked ? journeyColors.primary : journeyColors.outline}`,
 					backgroundColor:
 						checked && type === 'checkbox'
-							? orisoInputColors.primary
+							? journeyColors.primary
 							: 'transparent',
-					color: orisoInputColors.onPrimary
+					color: journeyColors.onPrimary
 				}}
 			>
 				{checked && type === 'radio' && (
@@ -207,7 +211,7 @@ const ChoiceCard = ({
 							width: 10,
 							height: 10,
 							borderRadius: '50%',
-							backgroundColor: orisoInputColors.primary
+							backgroundColor: journeyColors.primary
 						}}
 					/>
 				)}
@@ -220,7 +224,7 @@ const ChoiceCard = ({
 					fontSize: { xs: 16, sm: 17 },
 					fontWeight: 500,
 					lineHeight: '24px',
-					color: orisoInputColors.onSurface
+					color: journeyColors.onSurface
 				}}
 			>
 				{label}
@@ -267,13 +271,13 @@ export const JourneyQuestionField = ({
 					gap: 1.5,
 					p: 2,
 					borderRadius: '12px',
-					backgroundColor: orisoInputColors.surfaceContainer,
-					color: orisoInputColors.onSurface
+					backgroundColor: journeyColors.surfaceContainer,
+					color: journeyColors.onSurface
 				}}
 			>
 				<InfoOutlinedIcon
 					aria-hidden
-					sx={{ color: orisoInputColors.onSurfaceVariant }}
+					sx={{ color: journeyColors.onSurfaceVariant }}
 				/>
 				<Box>
 					<Typography sx={{ fontWeight: 600 }}>
@@ -284,7 +288,7 @@ export const JourneyQuestionField = ({
 							sx={{
 								mt: 0.5,
 								fontSize: 14,
-								color: orisoInputColors.onSurfaceVariant
+								color: journeyColors.onSurfaceVariant
 							}}
 						>
 							{textIn(question.help, language)}
@@ -300,7 +304,7 @@ export const JourneyQuestionField = ({
 		<Typography
 			id={errorId}
 			role="alert"
-			sx={{ mt: 1, fontSize: 14, color: orisoInputColors.error }}
+			sx={{ mt: 1, fontSize: 14, color: journeyColors.error }}
 		>
 			{missingText}
 		</Typography>
@@ -351,7 +355,7 @@ export const JourneyQuestionField = ({
 	 */
 	const otherField = (
 		<Box
-			sx={{ px: { xs: 2, sm: 2.5 }, pb: { xs: 1.25, sm: 1.75 } }}
+			sx={{ px: `${OTHER_INSET}px`, pb: `${OTHER_INSET}px` }}
 			onClick={(event) => event.preventDefault()}
 		>
 			<OrisoTextarea
@@ -372,7 +376,14 @@ export const JourneyQuestionField = ({
 				inputProps={{
 					'aria-label': t('journey.question.otherPlaceholder')
 				}}
-				sx={{ '&': { marginTop: 0 } }}
+				sx={{
+					'&': { marginTop: 0 },
+					// Concentric with the card: inner radius = card radius − inset.
+					'& .MuiOutlinedInput-root, & .MuiOutlinedInput-notchedOutline':
+						{
+							borderRadius: `${CARD_RADIUS - OTHER_INSET}px`
+						}
+				}}
 			/>
 		</Box>
 	);
@@ -439,7 +450,7 @@ export const JourneyQuestionField = ({
 						mt: -1,
 						mb: 1.5,
 						fontSize: 14,
-						color: orisoInputColors.onSurfaceVariant
+						color: journeyColors.onSurfaceVariant
 					}}
 				>
 					{t('journey.question.multiHint')}

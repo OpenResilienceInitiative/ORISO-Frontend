@@ -5,7 +5,7 @@ import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import { useTranslation } from 'react-i18next';
 import { StepTransition } from '../transition/StepTransition';
 import { StepSegments } from '../stepper/atoms/StepSegments';
-import { orisoInputColors } from '../form/orisoInputDesign';
+import { journeyColors } from './journeyColors';
 import { JourneyQuestionField } from './JourneyQuestionField';
 import { JourneyRatingField } from './JourneyRatingField';
 import {
@@ -190,7 +190,7 @@ export const JourneyQuestionPager = ({
 					sx={{
 						fontSize: 14,
 						fontWeight: 600,
-						color: orisoInputColors.onSurfaceVariant
+						color: journeyColors.onSurfaceVariant
 					}}
 				>
 					{t('journey.checkIn.progress', {
@@ -285,11 +285,10 @@ export const JourneyQuestionPager = ({
 								'textTransform': 'none',
 								'fontSize': 16,
 								'fontWeight': 600,
-								'backgroundColor': orisoInputColors.primary,
-								'color': orisoInputColors.onPrimary,
+								'backgroundColor': journeyColors.primary,
+								'color': journeyColors.onPrimary,
 								'&:hover': {
-									backgroundColor:
-										orisoInputColors.primaryDark
+									backgroundColor: journeyColors.primaryDark
 								}
 							}}
 						>
@@ -310,7 +309,7 @@ export const JourneyQuestionPager = ({
 							sx={{
 								textTransform: 'none',
 								fontSize: 16,
-								color: orisoInputColors.primary
+								color: journeyColors.primary
 							}}
 						>
 							{t('journey.checkIn.skip')}
@@ -322,7 +321,7 @@ export const JourneyQuestionPager = ({
 					role="status"
 					sx={{
 						fontSize: 14,
-						color: orisoInputColors.onSurfaceVariant
+						color: journeyColors.onSurfaceVariant
 					}}
 				>
 					{t('journey.checkIn.done')}

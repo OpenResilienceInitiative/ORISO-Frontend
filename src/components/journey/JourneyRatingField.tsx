@@ -4,7 +4,7 @@ import { Box, Slider, Typography } from '@mui/material';
 import StarRoundedIcon from '@mui/icons-material/StarRounded';
 import StarOutlineRoundedIcon from '@mui/icons-material/StarOutlineRounded';
 import { useTranslation } from 'react-i18next';
-import { orisoInputColors } from '../form/orisoInputDesign';
+import { journeyColors } from './journeyColors';
 import { textIn, type JourneyRating } from './journeyModel';
 
 export interface JourneyRatingFieldProps {
@@ -36,7 +36,7 @@ const Label = ({
 				fontSize: 18,
 				fontWeight: 600,
 				lineHeight: '26px',
-				color: orisoInputColors.onSurface
+				color: journeyColors.onSurface
 			}}
 		>
 			{textIn(rating.label, language)}
@@ -47,7 +47,7 @@ const Label = ({
 						ml: 1,
 						fontSize: 14,
 						fontWeight: 400,
-						color: orisoInputColors.onSurfaceVariant
+						color: journeyColors.onSurfaceVariant
 					}}
 				>
 					{t('journey.question.optional')}
@@ -104,10 +104,10 @@ const Stars = ({
 						'cursor': disabled ? 'default' : 'pointer',
 						'color':
 							star <= shown
-								? orisoInputColors.primary
-								: orisoInputColors.outline,
+								? journeyColors.primary
+								: journeyColors.outline,
 						'&:has(input:focus-visible)': {
-							outline: `3px solid ${orisoInputColors.focus}`
+							outline: `3px solid ${journeyColors.focus}`
 						}
 					}}
 				>
@@ -203,12 +203,12 @@ const Range = ({
 				}}
 				slotProps={{ input: { 'aria-labelledby': labelId } }}
 				sx={{
-					'color': orisoInputColors.primary,
+					'color': journeyColors.primary,
 					'mt': 1,
 					'& .MuiSlider-thumb': untouched
 						? {
-								backgroundColor: orisoInputColors.surface,
-								border: `2px solid ${orisoInputColors.outline}`
+								backgroundColor: journeyColors.surface,
+								border: `2px solid ${journeyColors.outline}`
 							}
 						: {},
 					'& .MuiSlider-track': untouched ? { opacity: 0 } : {}
@@ -223,7 +223,7 @@ const Range = ({
 					mt: -0.5,
 					fontSize: 13,
 					lineHeight: '18px',
-					color: orisoInputColors.onSurfaceVariant
+					color: journeyColors.onSurfaceVariant
 				}}
 			>
 				<Box sx={{ textAlign: 'left' }}>{ends[0]}</Box>
@@ -235,7 +235,7 @@ const Range = ({
 					sx={{
 						mt: 1.5,
 						fontSize: 14,
-						color: orisoInputColors.onSurfaceVariant
+						color: journeyColors.onSurfaceVariant
 					}}
 				>
 					{t('journey.rating.moveHint')}
@@ -286,7 +286,7 @@ export const JourneyRatingField = ({
 			{showMissing && value === undefined && (
 				<Typography
 					role="alert"
-					sx={{ mt: 1, fontSize: 14, color: orisoInputColors.error }}
+					sx={{ mt: 1, fontSize: 14, color: journeyColors.error }}
 				>
 					{t('journey.question.missing')}
 				</Typography>

@@ -61,7 +61,7 @@ export const ScrollArrows = ({ rowRef, labels, watch }: ScrollArrowsProps) => {
 				pt: '2px',
 				px: 0.5,
 				// The row fades under the arrow, so it reads as "more this way".
-				background: `linear-gradient(${side === 'back' ? 'to right' : 'to left'}, var(--m3-background, #fff) 55%, transparent)`
+				background: `linear-gradient(${side === 'back' ? 'to right' : 'to left'}, var(--m3-background, #fcf9f9) 55%, transparent)`
 			}}
 		>
 			<IconButton
@@ -74,7 +74,8 @@ export const ScrollArrows = ({ rowRef, labels, watch }: ScrollArrowsProps) => {
 					'height': 40,
 					'backgroundColor': stepperColors.surfaceContainerHighest,
 					'color': stepperColors.onSurfaceVariant,
-					'boxShadow': '0 2px 6px rgba(27, 27, 28, 0.16)',
+					'boxShadow':
+						'0 2px 6px color-mix(in srgb, var(--m3-shadow, #000000) 16%, transparent)',
 					'&:hover': {
 						backgroundColor: stepperColors.surfaceContainerHighest
 					}

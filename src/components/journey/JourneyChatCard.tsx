@@ -7,7 +7,7 @@ import {
 	CarimatMessageBubble,
 	CarimatMessageFrame
 } from '../carimat/CarimatMessageFrame';
-import { orisoInputColors } from '../form/orisoInputDesign';
+import { journeyColors } from './journeyColors';
 import { JourneyStepForm } from './JourneyStepForm';
 import {
 	answerSummary,
@@ -93,7 +93,7 @@ export const JourneyChatCard = ({
 								fontSize: 18,
 								fontWeight: 700,
 								lineHeight: '26px',
-								color: orisoInputColors.onSurface
+								color: journeyColors.onSurface
 							}}
 						>
 							{title}
@@ -101,7 +101,7 @@ export const JourneyChatCard = ({
 					)}
 					{description && (
 						<Typography
-							sx={{ color: orisoInputColors.onSurfaceVariant }}
+							sx={{ color: journeyColors.onSurfaceVariant }}
 						>
 							{description}
 						</Typography>
@@ -117,12 +117,12 @@ export const JourneyChatCard = ({
 									alignItems: 'center',
 									gap: 1,
 									fontWeight: 600,
-									color: orisoInputColors.onSurface
+									color: journeyColors.onSurface
 								}}
 							>
 								<CheckCircleRoundedIcon
 									aria-hidden
-									sx={{ color: orisoInputColors.primary }}
+									sx={{ color: journeyColors.primary }}
 								/>
 								{t('journey.chat.thanks')}
 							</Typography>
@@ -151,7 +151,7 @@ export const JourneyChatCard = ({
 											component="dt"
 											sx={{
 												fontSize: 14,
-												color: orisoInputColors.onSurfaceVariant
+												color: journeyColors.onSurfaceVariant
 											}}
 										>
 											{line.label}
@@ -161,7 +161,7 @@ export const JourneyChatCard = ({
 											sx={{
 												m: 0,
 												fontSize: 14,
-												color: orisoInputColors.onSurface
+												color: journeyColors.onSurface
 											}}
 										>
 											{line.value}
@@ -186,7 +186,7 @@ export const JourneyChatCard = ({
 								<Typography
 									sx={{
 										fontSize: 14,
-										color: orisoInputColors.onSurfaceVariant
+										color: journeyColors.onSurfaceVariant
 									}}
 								>
 									{t('journey.chat.anonymous')}
@@ -197,7 +197,7 @@ export const JourneyChatCard = ({
 									role="alert"
 									sx={{
 										fontSize: 14,
-										color: orisoInputColors.error
+										color: journeyColors.error
 									}}
 								>
 									{t('journey.chat.failed')}
@@ -225,11 +225,11 @@ export const JourneyChatCard = ({
 										'fontSize': 16,
 										'fontWeight': 600,
 										'backgroundColor':
-											orisoInputColors.primary,
-										'color': orisoInputColors.onPrimary,
+											journeyColors.primary,
+										'color': journeyColors.onPrimary,
 										'&:hover': {
 											backgroundColor:
-												orisoInputColors.primaryDark
+												journeyColors.primaryDark
 										}
 									}}
 								>

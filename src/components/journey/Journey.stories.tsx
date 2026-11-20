@@ -6,6 +6,7 @@ import { expect, fn, userEvent, within } from 'storybook/test';
 import { RegistrationHeader } from '../registration/registrationHeader/RegistrationHeader';
 import { RegistrationStepNav } from '../registration/registrationStepNav/RegistrationStepNav';
 import { phone375Globals } from '../message/messageStoryShell';
+import { computeOrisoPalette } from '../../utils/theme/orisoScheme';
 import { JourneyCheckInStep } from './JourneyCheckInStep';
 import { JourneyChatCard } from './JourneyChatCard';
 import { JourneyQuestionField } from './JourneyQuestionField';
@@ -462,4 +463,54 @@ export const ChatSendFailed: Story = {
 			await canvas.findByText(/Das hat nicht geklappt/)
 		).toBeInTheDocument();
 	}
+};
+
+/**
+ * The dark token set of the app's own colour engine (`computeOrisoPalette(…, 'dark')`), set on a
+ * wrapper. The app does not switch it on yet (`ACTIVE_SCHEMES.dark` is false); these stories
+ * check that the journey components hold up once it is, because every colour is a token.
+ */
+const DARK_TOKENS = computeOrisoPalette({ primary: '#A5000A' }, 'dark').tokens;
+
+const Dark = ({ children }: { children: React.ReactNode }) => (
+	<Box
+		data-cy="journey-dark-tokens"
+		style={DARK_TOKENS as React.CSSProperties}
+		sx={{
+			backgroundColor: 'var(--m3-background)',
+			color: 'var(--m3-on-surface)',
+			minHeight: '100vh'
+		}}
+	>
+		{children}
+	</Box>
+);
+
+export const CheckInDarkTokens: Story = {
+	render: () => (
+		<Dark>
+			<CheckIn names={EIGHT} current="journey:income" />
+		</Dark>
+	)
+};
+
+export const CheckInDarkTokensPhone: Story = {
+	globals: phone375Globals,
+	render: CheckInDarkTokens.render
+};
+
+export const ChatDarkTokens: Story = {
+	render: () => (
+		<Dark>
+			<Chat>
+				<JourneyChatCard
+					step={arrivalStep}
+					phase="arrival"
+					language="de"
+					anonymous
+					onSubmit={fn().mockResolvedValue(undefined)}
+				/>
+			</Chat>
+		</Dark>
+	)
 };
