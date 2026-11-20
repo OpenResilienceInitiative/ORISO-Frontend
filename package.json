@@ -220,7 +220,7 @@
 		"typescript": "^5.3.3",
 		"vitest": "5.1.0",
 		"wait-on": "^7.2.0",
-		"webpack": "^5.89.0",
+		"webpack": "5.104.1",
 		"webpack-dev-server": "^4.15.1",
 		"workbox-webpack-plugin": "^7.0.0",
 		"vite-plus": "1.6.0",
