@@ -107,6 +107,18 @@ const matchesFamily = (
 };
 
 /**
+ * Which feed a family chip reads (#594): the profile display filter only
+ * narrows "Alle" (no chip / `all`); a dedicated family chip reads the raw feed
+ * so its event types stay visible there.
+ */
+export const selectFamilyFeedSource = <T>(
+	visibleFeed: ReadonlyArray<T>,
+	rawFeed: ReadonlyArray<T>,
+	family: TimelineFamilyFilter
+): ReadonlyArray<T> =>
+	family && family !== 'all' ? rawFeed : visibleFeed;
+
+/**
  * The families actually present in the feed, in canonical order. Used to render
  * only the relevant chips (plus "All") instead of every possible family.
  */

@@ -7,6 +7,7 @@ import { describe, it, expect } from 'vite-plus/test';
 import {
 	filterTimelineItems,
 	getFamiliesInFeed,
+	selectFamilyFeedSource,
 	TIMELINE_FAMILY_ORDER,
 	TIMELINE_KIND_ORDER
 } from './timelineFilter';
@@ -269,5 +270,29 @@ describe('Sonstiges chip bundles kinds without their own pill (Frank 2026-09-16)
 		expect(kept).toContain('b');
 		expect(kept).toContain('a');
 		expect(kept).not.toContain('c');
+	});
+});
+
+describe('selectFamilyFeedSource (#594)', () => {
+	const raw = feed;
+	// The profile display filter hides the call event from "Alle".
+	const visible = feed.filter((item) => item.eventType !== 'call.started');
+
+	it('reads the display-filtered feed when no family chip is active', () => {
+		expect(selectFamilyFeedSource(visible, raw, null)).toBe(visible);
+		expect(selectFamilyFeedSource(visible, raw, 'all')).toBe(visible);
+	});
+
+	it('reads the raw feed for a dedicated family chip, so hidden event types still show there', () => {
+		const source = selectFamilyFeedSource(visible, raw, 'calls');
+		expect(source).toBe(raw);
+		expect(
+			filterTimelineItems(source, { family: 'calls', query: '', unreadOnly: false }, (i) => i.text).map(
+				(i) => i.id
+			)
+		).toEqual(['5']);
+		expect(
+			filterTimelineItems(visible, { family: 'calls', query: '', unreadOnly: false }, (i) => i.text)
+		).toEqual([]);
 	});
 });

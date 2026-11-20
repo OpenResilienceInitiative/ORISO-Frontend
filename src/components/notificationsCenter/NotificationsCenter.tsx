@@ -31,6 +31,7 @@ import { useActiveListItem } from '../../hooks/useActiveListItem';
 import {
 	filterTimelineItems,
 	getFamiliesInFeed,
+	selectFamilyFeedSource,
 	TIMELINE_KIND_ORDER,
 	TimelineFamilyFilter,
 	TimelineKindId,
@@ -445,10 +446,40 @@ export const NotificationsCenter = () => {
 		timelineFilter,
 		timelineKinds
 	);
+	// Rows the list can actually show before search/unread narrowing: with a
+	// dedicated family chip that is the family's raw rows, not the display-filtered
+	// feed (#594), otherwise hidden event types would keep triggering paging.
+	const pagingRowCount = useMemo(
+		() =>
+			filterTimelineItems(
+				selectFamilyFeedSource(
+					visibleFeed,
+					notificationFeed,
+					activeFamily
+				),
+				{
+					family: activeFamily,
+					query: '',
+					unreadOnly: false,
+					bundledUnderOther: kindsUnderOther(
+						timelineFilter,
+						timelineKinds
+					)
+				},
+				() => ''
+			).length,
+		[
+			activeFamily,
+			notificationFeed,
+			timelineFilter,
+			timelineKinds,
+			visibleFeed
+		]
+	);
 	// A page can be entirely hidden: keep paging until enough is visible.
 	useEffect(() => {
 		if (
-			visibleFeed.length >= MIN_VISIBLE_TIMELINE_ROWS ||
+			pagingRowCount >= MIN_VISIBLE_TIMELINE_ROWS ||
 			notificationFeed.length === 0 ||
 			!hasOlderNotifications ||
 			isLoadingOlderNotifications ||
@@ -463,7 +494,7 @@ export const NotificationsCenter = () => {
 		loadOlderNotifications,
 		notificationFeed.length,
 		olderNotificationsError,
-		visibleFeed.length
+		pagingRowCount
 	]);
 	// #1200: "Mark all as read" is only actionable while something is unread.
 	// The provider's counter is the server-backed total, so unread activity on
@@ -492,10 +523,11 @@ export const NotificationsCenter = () => {
 	// The profile display filter narrows Alle. Dedicated family chips read
 	// the raw feed while retaining Dev's Other bundling and localized search.
 	const filteredFeed = useMemo(() => {
-		const sourceFeed =
-			activeFamily && activeFamily !== 'all'
-				? notificationFeed
-				: visibleFeed;
+		const sourceFeed = selectFamilyFeedSource(
+			visibleFeed,
+			notificationFeed,
+			activeFamily
+		);
 		return filterTimelineItems(
 			sourceFeed,
 			{
