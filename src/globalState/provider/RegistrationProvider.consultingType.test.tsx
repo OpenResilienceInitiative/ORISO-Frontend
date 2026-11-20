@@ -1,7 +1,13 @@
 // @vitest-environment oriso-jsdom
 import * as React from 'react';
 import { useContext } from 'react';
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import {
+	cleanup,
+	fireEvent,
+	render,
+	screen,
+	waitFor
+} from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import {
 	afterEach,
@@ -49,19 +55,33 @@ vi.mock('../../components/registration/accountData/AccountData', () => ({
 const AGENCY_ID = 5;
 
 const Probe = () => {
-	const { registrationData } = useContext(RegistrationContext);
+	const { registrationData, updateRegistrationData } =
+		useContext(RegistrationContext);
 	return (
-		<span data-testid="consulting-type">
-			{registrationData?.agency?.consultingType ?? 'none'}
-		</span>
+		<>
+			<span data-testid="consulting-type">
+				{registrationData?.agency?.consultingType ?? 'none'}
+			</span>
+			<button
+				type="button"
+				onClick={() =>
+					updateRegistrationData({
+						username: 'draft-user',
+						password: 'synthetic-password'
+					})
+				}
+			>
+				Update draft
+			</button>
+		</>
 	);
 };
 
-const renderProvider = () =>
+const renderProvider = (loaded = true) =>
 	render(
 		<UrlParamsContext.Provider
 			value={{
-				loaded: true,
+				loaded,
 				agency: null,
 				consultingType: null,
 				consultant: null,
@@ -83,6 +103,7 @@ const stored = () =>
 
 describe('RegistrationProvider: the consulting type a registration add-on chose', () => {
 	beforeEach(() => {
+		vi.clearAllMocks();
 		vi.mocked(getUrlParameter).mockReturnValue(null);
 		vi.mocked(apiGetConsultingType).mockResolvedValue({ id: 0 } as never);
 		vi.mocked(apiGetAgencyById).mockResolvedValue({
@@ -95,19 +116,24 @@ describe('RegistrationProvider: the consulting type a registration add-on chose'
 	afterEach(cleanup);
 
 	it('survives a reload instead of falling back to the agency default', async () => {
+		const draft = { agencyId: AGENCY_ID, agencyConsultingType: 0 };
 		sessionStorage.setItem(
 			registrationSessionStorageKey,
-			JSON.stringify({ agencyId: AGENCY_ID, agencyConsultingType: 0 })
+			JSON.stringify(draft)
 		);
 
+		vi.mocked(apiGetAgencyById).mockReturnValueOnce(new Promise(() => {}));
+		const firstPage = renderProvider(false);
+		expect(apiGetAgencyById).toHaveBeenCalledWith(AGENCY_ID);
+		expect(screen.queryByTestId('consulting-type')).toBeNull();
+		expect(stored()).toEqual(draft);
+
+		firstPage.unmount();
 		renderProvider();
 
-		await waitFor(() =>
-			expect(screen.getByTestId('consulting-type').textContent).toBe('0')
-		);
-		expect(stored()).toMatchObject({
-			agencyId: AGENCY_ID,
-			agencyConsultingType: 0
+		await waitFor(() => {
+			expect(screen.getByTestId('consulting-type').textContent).toBe('0');
+			expect(stored()).toMatchObject(draft);
 		});
 	});
 
@@ -119,9 +145,22 @@ describe('RegistrationProvider: the consulting type a registration add-on chose'
 
 		renderProvider();
 
-		await waitFor(() =>
-			expect(screen.getByTestId('consulting-type').textContent).toBe('1')
+		await waitFor(() => {
+			expect(screen.getByTestId('consulting-type').textContent).toBe('1');
+			expect(stored().agencyConsultingType).toBe(1);
+		});
+	});
+
+	it('persists an update to a new draft without the password', async () => {
+		renderProvider();
+
+		fireEvent.click(
+			await screen.findByRole('button', { name: 'Update draft' })
 		);
-		expect(stored().agencyConsultingType).toBe(1);
+
+		await waitFor(() =>
+			expect(stored()).toEqual({ username: 'draft-user' })
+		);
+		expect(apiGetAgencyById).not.toHaveBeenCalled();
 	});
 });

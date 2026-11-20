@@ -296,6 +296,9 @@ export function RegistrationProvider({ children }: PropsWithChildren<{}>) {
 	);
 
 	useEffect(() => {
+		// Keep the saved draft intact while its agency and topic data load.
+		if (loading) return;
+
 		// The password stays in memory only — with free stepper navigation the
 		// account step's values are committed on back-navigation too, and a
 		// plaintext password must never be written to sessionStorage.
@@ -309,7 +312,7 @@ export function RegistrationProvider({ children }: PropsWithChildren<{}>) {
 			agencyId: agency?.id,
 			agencyConsultingType: agency?.consultingType
 		});
-	}, [registrationData]);
+	}, [loading, registrationData]);
 
 	useEffect(() => {
 		// Check if agency matches preselected topic
