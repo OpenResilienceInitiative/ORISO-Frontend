@@ -22,6 +22,7 @@ import {
 	type NotificationRole,
 	visibleAreas
 } from '../../../utils/notificationSettings/notificationChannelCapability';
+import { OrisoSelect } from '../../form/OrisoSelect';
 import { ToneControls } from './ToneControls';
 import './notificationConfigDialog.styles.scss';
 
@@ -88,38 +89,45 @@ const KindRow = ({
 			<div className="notifConfig__channels">
 				{/* Banner: off / temporary / persistent (requireInteraction —
 				    Chromium only; Firefox/Safari fall back to temporary). */}
-				<label className="notifConfig__banner">
-					<span>
-						{t('profile.notifications.config.banner.label')}
-					</span>
-					<select
-						className="notifConfig__bannerSelect"
-						value={value.banner}
-						disabled={bannerOff}
-						aria-describedby={bannerOff ? reasonId : undefined}
-						onChange={(e) =>
-							onChange(
-								area,
-								kind,
-								'banner',
-								e.target.value as BannerMode
+				<OrisoSelect
+					className="notifConfig__banner"
+					label={t('profile.notifications.config.banner.label')}
+					value={value.banner}
+					disabled={bannerOff}
+					fullWidth={false}
+					size="small"
+					sx={{ minWidth: 220 }}
+					inputProps={{
+						'aria-describedby': bannerOff ? reasonId : undefined,
+						'data-cy': `notif-banner-${area}-${kind}`
+					}}
+					onChange={(e) =>
+						onChange(
+							area,
+							kind,
+							'banner',
+							e.target.value as BannerMode
+						)
+					}
+					options={[
+						{
+							value: 'off',
+							label: t('profile.notifications.config.banner.off')
+						},
+						{
+							value: 'temporary',
+							label: t(
+								'profile.notifications.config.banner.temporary'
+							)
+						},
+						{
+							value: 'persistent',
+							label: t(
+								'profile.notifications.config.banner.persistent'
 							)
 						}
-						data-cy={`notif-banner-${area}-${kind}`}
-					>
-						<option value="off">
-							{t('profile.notifications.config.banner.off')}
-						</option>
-						<option value="temporary">
-							{t('profile.notifications.config.banner.temporary')}
-						</option>
-						<option value="persistent">
-							{t(
-								'profile.notifications.config.banner.persistent'
-							)}
-						</option>
-					</select>
-				</label>
+					]}
+				/>
 			</div>
 			{reasonKey && (
 				<p

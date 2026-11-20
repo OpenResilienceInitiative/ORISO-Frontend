@@ -16,6 +16,7 @@ import './askerInfo.styles';
 import { AskerInfoTools } from './AskerInfoTools';
 import { Box } from '../box/Box';
 import { AskerInfoPrivacyNote } from './AskerInfoPrivacyNote';
+import { AddonProfileTiles } from '../../addons/AddonProfileTiles';
 
 export const AskerInfoContent = () => {
 	const { tenant } = useContext(TenantContext);
@@ -61,6 +62,7 @@ export const AskerInfoContent = () => {
 					<AskerInfoTools />
 				</Box>
 			)}
+			<AddonProfileTiles />
 			{(isEnquiryAssignAvailable || isOwnerHandoverAvailable) && (
 				<Box>
 					<div className="askerInfo__assign">

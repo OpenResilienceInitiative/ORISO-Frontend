@@ -1,7 +1,7 @@
 // @vitest-environment oriso-jsdom
 import * as React from 'react';
 import { cleanup, render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { AskerInfo } from './AskerInfo';
 import { SessionTypeContext } from '../../globalState';
@@ -25,7 +25,7 @@ const buildSession = (askerMatrixUserId?: string) => ({
 	user: { username: USERNAME },
 	isGroup: false
 });
-const useSessionMock = vi.fn(() => ({
+const useSessionMock = vi.fn((..._args: unknown[]) => ({
 	session: buildSession(ASKER_MATRIX_ID),
 	ready: true
 }));
@@ -40,7 +40,7 @@ vi.mock('react-i18next', () => ({
 	useTranslation: () => ({ t: (key: string) => key })
 }));
 vi.mock('../../hooks/useSession', () => ({
-	useSession: () => useSessionMock()
+	useSession: (...args: unknown[]) => useSessionMock(...args)
 }));
 vi.mock('../../hooks/useSearchParams', () => ({ useSearchParam: () => null }));
 vi.mock('../../hooks/useResponsive', () => ({
@@ -139,5 +139,29 @@ describe('AskerInfo (#1188 job 3: the asker profile shows their animal)', () => 
 		glyphs.forEach((glyph) => {
 			expect(glyph.closest('[aria-hidden="true"]')).not.toBeNull();
 		});
+	});
+
+	it('loads the session by its id on a profile link without a group id', () => {
+		render(
+			<MemoryRouter
+				initialEntries={[
+					'/sessions/consultant/sessionView/session/42/userProfile'
+				]}
+			>
+				<SessionTypeContext.Provider
+					value={
+						{ path: '/sessions/consultant/sessionView' } as never
+					}
+				>
+					<Routes>
+						<Route
+							path="/sessions/consultant/sessionView/session/:sessionId/userProfile"
+							element={<AskerInfo />}
+						/>
+					</Routes>
+				</SessionTypeContext.Provider>
+			</MemoryRouter>
+		);
+		expect(useSessionMock).toHaveBeenLastCalledWith(null, 42);
 	});
 });

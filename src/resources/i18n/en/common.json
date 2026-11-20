@@ -1,4 +1,22 @@
 {
+	"addons": {
+		"loadError": "This add-on could not be loaded.",
+		"notAvailable": "This add-on is not available.",
+		"panel": {
+			"region": "Side panel: {{title}}",
+			"close": "Close"
+		},
+		"calendar": {
+			"source": "From the add-on “{{title}}”",
+			"allDay": "All day",
+			"kind": {
+				"appointment": "Appointment",
+				"deadline": "Deadline",
+				"reminder": "Reminder"
+			}
+		},
+		"badge": "Updates: {{count}}"
+	},
 	"askerInfo": {
 		"noPrivacyNotice": {
 			"title": "No privacy notice stored",
@@ -24,6 +42,8 @@
 		"recoveryIntro": "First prepare the recovery key for your existing conversation. This keeps your messages accessible on a new device.",
 		"pending": "A previous attempt is pending. Use the same password to finish it.",
 		"recoveryError": "The recovery key is not available yet. Retry, or enter the key you saved previously.",
+		"historyError": "Your chat history could not be secured yet. Please try again.",
+		"fallbackKeyHelp": "Your account is ready, but your chat history could not be linked to your password yet. Save this recovery key: you need it to read this conversation on a new device.",
 		"existingKey": "Previously saved recovery key (if needed)",
 		"prepare": "Prepare recovery key",
 		"accountChanged": "The signed-in account changed. Reload to continue safely.",
@@ -2653,6 +2673,10 @@
 				"title": "Deleted advice seeker",
 				"text": "A chat with an advice seeker was deleted. Personal data and messages are no longer available."
 			},
+			"addonNotification": {
+				"title": "New add-on notice",
+				"text": "An add-on has a new notice."
+			},
 			"directInvitationRenewalRequested": {
 				"title": "New link requested",
 				"text": "Someone asks for a new link to your appointment."
@@ -3157,6 +3181,8 @@
 				"intro": "Choose your notification sounds for each area seperately.",
 				"emailNote": "Emails are sent only if you do not respond within five minutes after the event.",
 				"noSound": "No Sound Selected",
+				"defaultSound": "Default",
+				"legacySound": "Earlier tone",
 				"tone": "Sound #{{number}}",
 				"sendByEmail": "Send by Email",
 				"confirm": "Confirm",
@@ -5517,6 +5543,17 @@
 		"introduction": {
 			"title": "Introduction",
 			"summary": "Get to know the areas of the application. You can restart the introduction at any time."
+		},
+		"launcherSwitch": {
+			"title": "Show the tour button",
+			"label": {
+				"on": "On",
+				"off": "Off"
+			},
+			"hint": {
+				"on": "On: the “?” button in the bottom-right corner opens your tours. It is hidden while a conversation is open.",
+				"off": "Off: the “?” button is hidden. You can still find your tours here."
+			}
 		}
 	},
 	"anonymousChat": {
@@ -6268,6 +6305,13 @@
 					"intro": "You added a supervisor and read their reply. Use the button below to end the practice."
 				}
 			}
+		},
+		"launcher": {
+			"eyebrow": "Help",
+			"title": "Tours",
+			"open": "Open tours",
+			"close": "Close tours",
+			"manage": "Manage tours"
 		}
 	},
 	"weekday": {

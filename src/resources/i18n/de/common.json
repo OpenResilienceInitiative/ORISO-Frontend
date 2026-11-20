@@ -1,4 +1,22 @@
 {
+	"addons": {
+		"loadError": "Diese Erweiterung konnte nicht geladen werden.",
+		"notAvailable": "Diese Erweiterung ist nicht verfügbar.",
+		"panel": {
+			"region": "Seitenbereich: {{title}}",
+			"close": "Schließen"
+		},
+		"calendar": {
+			"source": "Aus der Erweiterung „{{title}}“",
+			"allDay": "Ganztägig",
+			"kind": {
+				"appointment": "Termin",
+				"deadline": "Frist",
+				"reminder": "Erinnerung"
+			}
+		},
+		"badge": "Neuigkeiten: {{count}}"
+	},
 	"askerInfo": {
 		"noPrivacyNotice": {
 			"title": "Keine Datenschutzerklärung hinterlegt",
@@ -24,6 +42,8 @@
 		"recoveryIntro": "Bereiten Sie zuerst den Wiederherstellungsschlüssel für Ihr bestehendes Gespräch vor. So bleiben Ihre Nachrichten auf einem neuen Gerät lesbar.",
 		"pending": "Ein vorheriger Versuch ist noch offen. Verwenden Sie dasselbe Passwort, um ihn abzuschließen.",
 		"recoveryError": "Der Wiederherstellungsschlüssel ist noch nicht verfügbar. Versuchen Sie es erneut oder geben Sie Ihren zuvor gespeicherten Schlüssel ein.",
+		"historyError": "Ihr Chatverlauf konnte noch nicht gesichert werden. Bitte versuchen Sie es erneut.",
+		"fallbackKeyHelp": "Ihr Konto ist bereit, aber Ihr Chatverlauf konnte noch nicht mit Ihrem Passwort verknüpft werden. Speichern Sie diesen Wiederherstellungsschlüssel: Sie brauchen ihn, um dieses Gespräch auf einem neuen Gerät zu lesen.",
 		"existingKey": "Zuvor gespeicherter Wiederherstellungsschlüssel (falls benötigt)",
 		"prepare": "Wiederherstellungsschlüssel vorbereiten",
 		"accountChanged": "Das angemeldete Konto hat sich geändert. Laden Sie die Seite für eine sichere Fortsetzung neu.",
@@ -2677,6 +2697,10 @@
 				"title": "Gelöschte:r Ratsuchende:r",
 				"text": "Ein Chat mit einer ratsuchenden Person wurde gelöscht. Persönliche Daten und Nachrichten sind nicht mehr verfügbar."
 			},
+			"addonNotification": {
+				"title": "Neue Mitteilung einer Erweiterung",
+				"text": "Eine Erweiterung hat eine neue Mitteilung."
+			},
 			"directInvitationRenewalRequested": {
 				"title": "Neuer Link angefragt",
 				"text": "Eine Person möchte einen neuen Link zu Ihrem Termin."
@@ -3195,6 +3219,8 @@
 				"intro": "Wählen Sie Ihre Benachrichtigungstöne für jeden Bereich getrennt.",
 				"emailNote": "E-Mails werden nur gesendet, wenn Sie nicht innerhalb von fünf Minuten nach dem Ereignis reagieren.",
 				"noSound": "Kein Ton gewählt",
+				"defaultSound": "Standard",
+				"legacySound": "Früherer Ton",
 				"tone": "Ton #{{number}}",
 				"sendByEmail": "Per E-Mail senden",
 				"confirm": "Bestätigen",
@@ -5569,6 +5595,17 @@
 		"introduction": {
 			"title": "Einführung",
 			"summary": "Lernen Sie die Bereiche der Anwendung kennen. Sie können die Einführung jederzeit erneut starten."
+		},
+		"launcherSwitch": {
+			"title": "Rundgang-Knopf anzeigen",
+			"label": {
+				"on": "An",
+				"off": "Aus"
+			},
+			"hint": {
+				"on": "An: Der Knopf „?“ unten rechts öffnet Ihre Rundgänge. Solange ein Gespräch offen ist, ist er ausgeblendet.",
+				"off": "Aus: Der Knopf „?“ ist ausgeblendet. Ihre Rundgänge finden Sie weiterhin hier."
+			}
 		}
 	},
 	"banner": {
@@ -6343,6 +6380,13 @@
 					"intro": "Sie haben eine Supervisor:in hinzugefügt und ihre Antwort gelesen. Mit der Schaltfläche unten beenden Sie die Übung."
 				}
 			}
+		},
+		"launcher": {
+			"eyebrow": "Hilfe",
+			"title": "Rundgänge",
+			"open": "Rundgänge öffnen",
+			"close": "Rundgänge schließen",
+			"manage": "Rundgänge verwalten"
 		}
 	},
 	"weekday": {

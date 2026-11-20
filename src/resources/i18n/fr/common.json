@@ -1,4 +1,22 @@
 {
+	"addons": {
+		"loadError": "Ce module complémentaire n'a pas pu être chargé.",
+		"notAvailable": "Ce module complémentaire n'est pas disponible.",
+		"panel": {
+			"region": "Panneau latéral : {{title}}",
+			"close": "Fermer"
+		},
+		"calendar": {
+			"source": "De l'extension « {{title}} »",
+			"allDay": "Toute la journée",
+			"kind": {
+				"appointment": "Rendez-vous",
+				"deadline": "Échéance",
+				"reminder": "Rappel"
+			}
+		},
+		"badge": "Nouveautés : {{count}}"
+	},
 	"askerInfo": {
 		"noPrivacyNotice": {
 			"title": "Aucune politique de confidentialité enregistrée",
@@ -24,6 +42,8 @@
 		"recoveryIntro": "Préparez d'abord la clé de récupération de votre conversation actuelle. Vos messages resteront ainsi accessibles sur un nouvel appareil.",
 		"pending": "Une tentative précédente est en attente. Utilisez le même mot de passe pour la terminer.",
 		"recoveryError": "La clé de récupération n'est pas encore disponible. Réessayez ou saisissez la clé enregistrée précédemment.",
+		"historyError": "Votre historique de discussion n'a pas encore pu être sécurisé. Veuillez réessayer.",
+		"fallbackKeyHelp": "Votre compte est prêt, mais votre historique de discussion n'a pas encore pu être lié à votre mot de passe. Enregistrez cette clé de récupération : vous en aurez besoin pour lire cette conversation sur un nouvel appareil.",
 		"existingKey": "Clé de récupération enregistrée précédemment (si nécessaire)",
 		"prepare": "Préparer la clé de récupération",
 		"accountChanged": "Le compte connecté a changé. Rechargez la page pour continuer en toute sécurité.",
@@ -2656,6 +2676,10 @@
 				"title": "Personne en quête de conseil supprimée",
 				"text": "Un chat avec une personne en quête de conseil a été supprimé. Les données personnelles et les messages ne sont plus disponibles."
 			},
+			"addonNotification": {
+				"title": "Nouvelle communication d'une extension",
+				"text": "Une extension a une nouvelle communication."
+			},
 			"directInvitationRenewalRequested": {
 				"title": "Nouveau lien demandé",
 				"text": "Une personne demande un nouveau lien pour votre rendez-vous."
@@ -3143,6 +3167,8 @@
 				"intro": "Choisissez vos sons de notification séparément pour chaque domaine.",
 				"emailNote": "Les e-mails ne sont envoyés que si vous ne réagissez pas dans les cinq minutes suivant l'événement.",
 				"noSound": "Aucun son sélectionné",
+				"defaultSound": "Par défaut",
+				"legacySound": "Ancien son",
 				"tone": "Son n° {{number}}",
 				"sendByEmail": "Envoyer par e-mail",
 				"confirm": "Confirmer",
@@ -5552,6 +5578,17 @@
 		"introduction": {
 			"title": "Visite d’introduction",
 			"summary": "Découvrez les différentes parties de l’application. Vous pouvez relancer l’introduction à tout moment."
+		},
+		"launcherSwitch": {
+			"title": "Afficher le bouton des visites guidées",
+			"label": {
+				"on": "Activé",
+				"off": "Désactivé"
+			},
+			"hint": {
+				"on": "Activé : le bouton « ? » en bas à droite ouvre vos visites guidées. Il est masqué tant qu’une conversation est ouverte.",
+				"off": "Désactivé : le bouton « ? » est masqué. Vous retrouvez toujours vos visites guidées ici."
+			}
 		}
 	},
 	"consultingTypes": {
@@ -6353,6 +6390,13 @@
 					"intro": "Vous avez ajouté un·e superviseur·e et lu sa réponse. Terminez l’exercice avec le bouton ci-dessous."
 				}
 			}
+		},
+		"launcher": {
+			"eyebrow": "Aide",
+			"title": "Visites guidées",
+			"open": "Ouvrir les visites guidées",
+			"close": "Fermer les visites guidées",
+			"manage": "Gérer les visites guidées"
 		}
 	},
 	"weekday": {

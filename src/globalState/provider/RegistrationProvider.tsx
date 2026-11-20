@@ -41,12 +41,16 @@ interface SessionStorageData {
 	password: string;
 	email?: string;
 	agencyId: number;
+	/** A registration add-on can choose another consulting type than the agency's default. */
+	agencyConsultingType?: number;
 	mainTopicId: number;
 	topicGroupId?: number;
 	topicId?: number;
 	zipcode: string;
 	age?: string;
 	state?: string;
+	/** Set by a registration add-on (`registration.agency-finder`), sent with the registration. */
+	registrationRef?: string;
 }
 
 export interface RegistrationData extends SessionStorageData {
@@ -211,9 +215,17 @@ export function RegistrationProvider({ children }: PropsWithChildren<{}>) {
 			}
 			if (registrationData.agencyId) {
 				// Load agency
-				registrationData.agency = await apiGetAgencyById(
+				const agency = await apiGetAgencyById(
 					registrationData.agencyId
 				);
+				registrationData.agency =
+					agency && registrationData.agencyConsultingType != null
+						? {
+								...agency,
+								consultingType:
+									registrationData.agencyConsultingType
+							}
+						: agency;
 			}
 			if (registrationData.topicId) {
 				registrationData.topic = await apiGetTopicById(
@@ -267,10 +279,18 @@ export function RegistrationProvider({ children }: PropsWithChildren<{}>) {
 
 	const updateRegistrationData = useCallback(
 		(data?: Partial<RegistrationData>) => {
-			setRegistrationData((registrationData) => ({
-				...registrationData,
-				...data
-			}));
+			setRegistrationData((registrationData) => {
+				const next = { ...registrationData, ...data };
+				// A registration add-on's ref belongs to the agency it came with: it
+				// goes when that agency is cleared or replaced without a new ref.
+				if (
+					!(data && 'registrationRef' in data) &&
+					next.agency?.id !== registrationData?.agency?.id
+				) {
+					next.registrationRef = undefined;
+				}
+				return next;
+			});
 		},
 		[]
 	);
@@ -286,7 +306,8 @@ export function RegistrationProvider({ children }: PropsWithChildren<{}>) {
 			...sessionStorageData,
 			topicId: topic?.id,
 			mainTopicId: mainTopic?.id,
-			agencyId: agency?.id
+			agencyId: agency?.id,
+			agencyConsultingType: agency?.consultingType
 		});
 	}, [registrationData]);
 
