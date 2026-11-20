@@ -1,0 +1,63 @@
+@import './calendarChosen';
+
+.appointmentKindTiles {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.appointmentKindTiles__label {
+	color: var(--m3-on-surface-variant, #444748);
+	font-size: 12px;
+	font-weight: 500;
+	line-height: 16px;
+}
+
+// "Art": four tiles, two per row on a narrow dialog (prototype v17
+// `.kindgrid`; Frank *1, test C7).
+.calendarDialog__kinds {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 6px;
+
+	@include breakpoint($fromMedium) {
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+	}
+}
+
+.calendarDialog__kindTile {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 4px;
+	min-width: 0;
+	min-height: 64px;
+	padding: 10px 4px;
+	border: 1px solid var(--m3-outline-variant, #c4c7c8);
+	border-radius: 14px;
+	background: var(--m3-surface-container-lowest, #ffffff);
+	color: var(--m3-on-surface, #1b1b1c);
+	font: inherit;
+	font-size: 13px;
+	cursor: pointer;
+
+	span {
+		max-width: 100%;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	&:hover {
+		background: var(--m3-surface-container-low, #f6f3f3);
+	}
+
+	// The calendar's chosen tone, one place for all chosen controls.
+	&[aria-pressed='true'] {
+		@include calendar-chosen($border: true);
+	}
+
+	&:focus-visible {
+		@include control-focus-ring(0);
+	}
+}

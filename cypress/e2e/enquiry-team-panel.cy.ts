@@ -311,6 +311,11 @@ describe('Enquiry team panel — actual app with local service fixtures', () => 
 		cy.intercept('GET', '**/service/users/sessions/room/1375', {
 			sessions: [session]
 		});
+		// Unmocked, this lookup falls through to the dev server; on a slow runner
+		// it outlasts AcceptAssign's 3 s reload, so no reload ever finishes.
+		cy.intercept('GET', '**/service/users/case-handover/candidates*', {
+			sessions: []
+		});
 		cy.intercept(
 			'GET',
 			'**/conversations/consultants/enquiries/registered*',
@@ -546,9 +551,17 @@ describe('Enquiry team panel — actual app with local service fixtures', () => 
 
 		cy.get('[data-cy="enquiry-open-team"]')
 			.should('be.visible')
-			.and('contain.text', 'Teambesprechung öffnen');
+			.and('contain.text', 'Team-Chat öffnen');
 		cy.get('.session__acceptance button').should((buttons) => {
-			expect(buttons).to.have.length(2);
+			expect(buttons).to.have.length(3);
+			expect(buttons[0].getAttribute('data-tour-target')).to.equal(
+				'enquiry-accept-button'
+			);
+			expect(buttons[1].getAttribute('data-cy')).to.equal(
+				'enquiry-open-team'
+			);
+			expect(buttons[2].textContent.trim()).to.equal('Anfrage ablehnen');
+			expect(buttons.eq(2).prop('disabled')).to.equal(false);
 			expect(buttons[0].getBoundingClientRect().height).to.equal(
 				buttons[1].getBoundingClientRect().height
 			);
@@ -571,25 +584,55 @@ describe('Enquiry team panel — actual app with local service fixtures', () => 
 					accept.top
 				);
 				expect(
-					footerRect.right - team.right,
+					footerRect.right - buttons[2].getBoundingClientRect().right,
 					'comfortable right inset'
 				).to.be.closeTo(32, 1);
-			} else if (accept.width + team.width + 16 > footerRect.width - 32) {
-				expect(team.top, 'mobile actions stack').to.be.at.least(
-					accept.bottom
-				);
-				expect(
-					(team.left + team.right) / 2,
-					'mobile team action centered'
-				).to.be.closeTo((footerRect.left + footerRect.right) / 2, 1);
 			} else {
-				expect(team.top, 'tablet actions share a row').to.equal(
-					accept.top
+				// Below desktop the three actions wrap; every row stays centered and
+				// no action overlaps another or leaves the footer.
+				const rects = [
+					accept,
+					team,
+					buttons[2].getBoundingClientRect()
+				];
+				const center = (footerRect.left + footerRect.right) / 2;
+				const rows = new Map<number, DOMRect[]>();
+				for (const rect of rects) {
+					expect(rect.left, 'action inside footer').to.be.at.least(
+						footerRect.left
+					);
+					expect(rect.right, 'action inside footer').to.be.at.most(
+						footerRect.right
+					);
+					const row = [...rows.keys()].find(
+						(top) => Math.abs(top - rect.top) < 1
+					);
+					rows.set(row ?? rect.top, [
+						...(rows.get(row ?? rect.top) ?? []),
+						rect
+					]);
+				}
+				rects.forEach((a, i) =>
+					rects
+						.slice(i + 1)
+						.forEach((b) =>
+							expect(
+								a.right <= b.left ||
+									b.right <= a.left ||
+									a.bottom <= b.top ||
+									b.bottom <= a.top,
+								'actions do not overlap'
+							).to.equal(true)
+						)
 				);
-				expect(
-					(accept.left + team.right) / 2,
-					'tablet actions centered together'
-				).to.be.closeTo((footerRect.left + footerRect.right) / 2, 1);
+				for (const row of rows.values()) {
+					const left = Math.min(...row.map((rect) => rect.left));
+					const right = Math.max(...row.map((rect) => rect.right));
+					expect(
+						(left + right) / 2,
+						'action row centered'
+					).to.be.closeTo(center, 1);
+				}
 			}
 		});
 		cy.screenshot(`enquiry-main-after-close-${width}`, {

@@ -35,6 +35,7 @@ import {
 	RegistrationData
 } from '../../../globalState/provider/RegistrationProvider';
 import { apiGetTopicsData } from '../../../api/apiGetTopicsData';
+import { apiGetTopicGroups } from '../../../api/apiGetTopicGroups';
 import { TopicsDataInterface } from '../../../globalState/interfaces/TopicsDataInterface';
 import { Loading } from '../../../components/app/Loading';
 import TaskAltIcon from '@mui/icons-material/TaskAlt';
@@ -213,7 +214,11 @@ export const TopicSelection: FC<{
 				setValue(topic.id);
 				setTopicGroupId(undefined);
 				setSelectedPlacementId(`list/${topic.id}`);
-				onChange({ mainTopic: topic, topicGroupId: undefined });
+				onChange({
+					mainTopic: topic,
+					topicGroupId: undefined,
+					topicIcon: undefined
+				});
 				return;
 			}
 
@@ -236,7 +241,8 @@ export const TopicSelection: FC<{
 			setSelectedPlacementId(placement.placementId);
 			onChange({
 				mainTopic: placement.topic,
-				topicGroupId: placement.topicGroupId
+				topicGroupId: placement.topicGroupId,
+				topicIcon: placement.icon
 			});
 			setExpandedTopicGroupIds((currentIds) =>
 				currentIds.includes(placement.topicGroupId)
@@ -391,7 +397,8 @@ export const TopicSelection: FC<{
 		if (topics?.length === 1) {
 			setValue(topics[0].id);
 			onChange({
-				mainTopic: topics[0]
+				mainTopic: topics[0],
+				topicIcon: undefined
 			});
 		}
 	}, [topics, onChange]);
@@ -455,12 +462,21 @@ export const TopicSelection: FC<{
 			setLoadError(false);
 
 			try {
+				// LocaleProvider writes the `lang` cookie (which picks the topic language)
+				// in its own effect, after this one: let it run first.
+				await Promise.resolve();
+				if (cancelled) return;
 				const topicsResponse = await apiGetTopicsData();
+				// The categories are optional: without them the built-in clusters apply.
+				const topicGroupsResponse = await apiGetTopicGroups().catch(
+					() => undefined
+				);
 				const filteredTopics = getFilteredTopics(topicsResponse);
 				const presentationGroups =
 					buildRegistrationTopicPresentationGroups(
 						filteredTopics,
-						locale
+						locale,
+						topicGroupsResponse?.data?.items
 					);
 				const nextListView =
 					!!(preselectedAgency || preselectedConsultant) ||
@@ -602,7 +618,8 @@ export const TopicSelection: FC<{
 												);
 												onChange({
 													mainTopic: topic,
-													topicGroupId: undefined
+													topicGroupId: undefined,
+													topicIcon: undefined
 												});
 											}}
 										/>
@@ -822,7 +839,12 @@ export const TopicSelection: FC<{
 													sx={{ p: 0 }}
 													data-cy={`topic-group-${topicGroup.id}-topic-selection-radio-group`}
 												>
-													<List disablePadding>
+													{/* The radiogroup above groups the rows; a
+													    <ul> of non-<li> rows is not a list (#1338). */}
+													<List
+														disablePadding
+														component="div"
+													>
 														{topicGroup.topics.map(
 															(
 																placement,
@@ -880,7 +902,9 @@ export const TopicSelection: FC<{
 																				mainTopic:
 																					placement.topic,
 																				topicGroupId:
-																					topicGroup.id
+																					topicGroup.id,
+																				topicIcon:
+																					placement.icon
 																			}
 																		);
 																	}}
@@ -1053,10 +1077,12 @@ const TopicSelect = ({
 					tabIndex={-1}
 					disableRipple
 					edge="end"
-					onClick={(event) => event.stopPropagation()}
-					onChange={onChange}
-					inputProps={{ 'aria-hidden': true }}
+					// Decorative: the row is the radio. A focusable input inside it
+					// is a second, nested control (#1338). A disabled input swallows
+					// clicks, so the icon lets them through to the row's handler.
+					inputProps={{ 'aria-hidden': true, 'disabled': true }}
 					sx={{
+						pointerEvents: 'none',
 						mt: 0.5,
 						alignSelf: 'flex-start',
 						color: registrationMd3.outline

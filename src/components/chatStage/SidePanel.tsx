@@ -22,6 +22,8 @@ export interface SidePanelProps {
 	/** Optional info banner between header and timeline (e.g. supervision reason). */
 	'banner'?: React.ReactNode;
 	'timeline'?: React.ReactNode;
+	/** Content that is not a message log (e.g. an add-on app); replaces the timeline. */
+	'content'?: React.ReactNode;
 	/** Shown in the timeline slot when `timeline` is empty. */
 	'emptyState'?: React.ReactNode;
 	'composer'?: React.ReactNode;
@@ -40,6 +42,7 @@ export const SidePanel = ({
 	header,
 	banner,
 	timeline,
+	content,
 	emptyState,
 	composer,
 	switcher,
@@ -110,15 +113,24 @@ export const SidePanel = ({
 					{banner}
 				</div>
 			)}
-			<div
-				ref={timelineRef}
-				className="sidePanel__timeline"
-				role="log"
-				aria-live="polite"
-				data-cy="side-panel-timeline"
-			>
-				{hasTimeline ? timeline : emptyState}
-			</div>
+			{content ? (
+				<div
+					className="sidePanel__content"
+					data-cy="side-panel-content"
+				>
+					{content}
+				</div>
+			) : (
+				<div
+					ref={timelineRef}
+					className="sidePanel__timeline"
+					role="log"
+					aria-live="polite"
+					data-cy="side-panel-timeline"
+				>
+					{hasTimeline ? timeline : emptyState}
+				</div>
+			)}
 			{composer && (
 				<div
 					className="sidePanel__composer"

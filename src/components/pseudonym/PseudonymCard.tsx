@@ -1,16 +1,20 @@
 import {
-	CarimatRobotIcon,
-	useAssistantIdentity
-} from '../carimat/AssistantIdentity';
+	CarimatMessageFrame,
+	CarimatMessageBubble
+} from '../carimat/CarimatMessageFrame';
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Pseudonym } from '../../utils/pseudonymGenerator';
 import { AnimalAvatar } from './AnimalAvatar';
+import { AskerDisplayNameField } from './AskerDisplayNameField';
 import { TypewriterText, TypingReveal } from './BotMessageAnimation';
 import './PseudonymCard.styles.scss';
 
 interface PseudonymCardProps {
 	pseudonym: Pseudonym;
+	editable?: boolean;
+	onNameChange?: (value: string) => void;
+	disabled?: boolean;
 	/** Skip the typing-dots phase and reveal immediately. */
 	skipTyping?: boolean;
 	/** Fires once the typewriter has finished writing the message. */
@@ -36,11 +40,13 @@ interface PseudonymCardProps {
  */
 export const PseudonymCard: React.FC<PseudonymCardProps> = ({
 	pseudonym,
+	editable = false,
+	onNameChange,
+	disabled = false,
 	skipTyping = false,
 	onDone
 }) => {
 	const { t } = useTranslation();
-	const { name } = useAssistantIdentity();
 
 	const message = t('anonymousChat.pseudonym.carimatMessage');
 
@@ -56,62 +62,54 @@ export const PseudonymCard: React.FC<PseudonymCardProps> = ({
 	}, [onDone]);
 
 	return (
-		<div className="messageItem pseudonymCard">
-			<div className="messageItem__messageWrap pseudonymCard__wrap">
-				<div className="pseudonymCard__avatarCol">
-					<div className="pseudonymCard__avatarFrame">
-						<div className="pseudonymCard__avatarIcon">
-							<CarimatRobotIcon />
-						</div>
-					</div>
-				</div>
+		<CarimatMessageFrame
+			className="pseudonymCard"
+			subtitle={t('anonymousChat.pseudonym.carimatSubtitle')}
+		>
+			<TypingReveal
+				typingMs={skipTyping ? 0 : 700}
+				bubbleClassName="carimatMessageFrame__bubble"
+			>
+				<CarimatMessageBubble className="">
+					<p className="pseudonymCard__bubbleText">
+						{skipTyping ? (
+							message
+						) : (
+							<TypewriterText
+								text={message}
+								startDelayMs={220}
+								onDone={handleTypewriterDone}
+							/>
+						)}
+					</p>
 
-				<div className="pseudonymCard__contentCol">
-					<div className="pseudonymCard__header">
-						<span className="pseudonymCard__headerName">
-							{name}
-						</span>
-						<span className="pseudonymCard__headerSubtitle">
-							{t('anonymousChat.pseudonym.carimatSubtitle')}
-						</span>
-					</div>
+					{pseudonymRevealed && (
+						<div className="pseudonymCard__displayColumn pseudonymCard__displayColumn--revealed">
+							<div className="pseudonymCard__label">
+								{t('anonymousChat.pseudonym.yourPseudonym')}
+							</div>
 
-					<TypingReveal typingMs={skipTyping ? 0 : 700}>
-						<div className="pseudonymCard__bubble">
-							<p className="pseudonymCard__bubbleText">
-								{skipTyping ? (
-									message
+							<AnimalAvatar
+								avatar={pseudonym.avatar}
+								size={108}
+							/>
+
+							<div className="pseudonymCard__name">
+								{onNameChange ? (
+									<AskerDisplayNameField
+										value={pseudonym.displayName}
+										onChange={onNameChange}
+										editable={editable}
+										disabled={disabled}
+									/>
 								) : (
-									<TypewriterText
-										text={message}
-										startDelayMs={220}
-										onDone={handleTypewriterDone}
-									/>
+									pseudonym.displayName
 								)}
-							</p>
-
-							{pseudonymRevealed && (
-								<div className="pseudonymCard__displayColumn pseudonymCard__displayColumn--revealed">
-									<div className="pseudonymCard__label">
-										{t(
-											'anonymousChat.pseudonym.yourPseudonym'
-										)}
-									</div>
-
-									<AnimalAvatar
-										avatar={pseudonym.avatar}
-										size={108}
-									/>
-
-									<div className="pseudonymCard__name">
-										{pseudonym.displayName}
-									</div>
-								</div>
-							)}
+							</div>
 						</div>
-					</TypingReveal>
-				</div>
-			</div>
-		</div>
+					)}
+				</CarimatMessageBubble>
+			</TypingReveal>
+		</CarimatMessageFrame>
 	);
 };

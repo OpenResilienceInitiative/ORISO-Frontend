@@ -6,7 +6,7 @@
  * honest label — including for askers (explicit product decision: grey out,
  * never hide).
  */
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { getSupervisorAddState } from './getSupervisorAddState';
 
 const consultantDefaults = {
@@ -90,6 +90,60 @@ describe('getSupervisorAddState', () => {
 		).toEqual({
 			mode: 'disabled',
 			labelKey: 'sessionHeader.supervisor.add.disabledUnavailable'
+		});
+	});
+
+	describe('while the agency answer is still loading (no grey flash)', () => {
+		it('is pending, not disabled, for a desktop consultant', () => {
+			expect(
+				getSupervisorAddState({
+					...consultantDefaults,
+					isSupervisionEnabled: false,
+					isSettled: false
+				})
+			).toEqual({
+				mode: 'pending',
+				labelKey: 'sessionHeader.supervisor.modal.title'
+			});
+		});
+
+		it('stays disabled on the phone, where the answer is grey either way', () => {
+			expect(
+				getSupervisorAddState({
+					...consultantDefaults,
+					isSupervisionEnabled: false,
+					isSettled: false,
+					isMobile: true
+				}).mode
+			).toBe('disabled');
+		});
+
+		it('stays disabled for a supervisor and for an asker', () => {
+			expect(
+				getSupervisorAddState({
+					...consultantDefaults,
+					isSupervisor: true,
+					isSettled: false
+				}).mode
+			).toBe('disabled');
+			expect(
+				getSupervisorAddState({
+					...consultantDefaults,
+					isAsker: true,
+					isConsultant: false,
+					isSettled: false
+				}).mode
+			).toBe('disabled');
+		});
+
+		it('is the settled answer once the agency has answered', () => {
+			expect(
+				getSupervisorAddState({
+					...consultantDefaults,
+					isSupervisionEnabled: false,
+					isSettled: true
+				}).labelKey
+			).toBe('sessionHeader.supervisor.add.disabledUnavailable');
 		});
 	});
 });

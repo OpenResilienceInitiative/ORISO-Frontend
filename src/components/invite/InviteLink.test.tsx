@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 
 import * as React from 'react';
 import {
@@ -9,7 +9,14 @@ import {
 	waitFor
 } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import { redeemInviteLink } from '../../api/apiRedeemInviteLink';
 import { apiPostRegistration } from '../../api/apiPostRegistration';
 import { LocaleContext, TenantContext } from '../../globalState';
@@ -36,7 +43,11 @@ vi.mock('../../api/apiRedeemInviteLink', async () => {
 });
 
 vi.mock('../../api/apiPostRegistration', () => ({
-	apiPostRegistration: vi.fn()
+	apiPostRegistration: vi.fn(),
+	// The retry goes through the deadline wrapper; the mocked login behind it
+	// is what these tests watch.
+	autoLoginWithDeadline: async (props: Parameters<typeof autoLogin>[0]) =>
+		(await import('../registration/autoLogin')).autoLogin(props)
 }));
 
 vi.mock('../../api/apiGetAnonymousEnquiryDetails', () => ({
@@ -403,6 +414,7 @@ describe('InviteLink asks who is live before anything is created', () => {
 			)
 		);
 		expect(roomProps.current.invite.consultingTypeId).toBe(1);
+		expect(roomProps.current.invite.tenantId).toBe(1);
 		expect(redeemInviteLink).not.toHaveBeenCalled();
 		expect(applyRedeemSessionCredentials).not.toHaveBeenCalled();
 		expect(
@@ -414,9 +426,15 @@ describe('InviteLink asks who is live before anything is created', () => {
 		renderInvite();
 		await waitFor(() => expect(roomProps.current?.invite?.topicId).toBe(3));
 
-		await expect(roomProps.current.invite.redeem()).resolves.toBe(42);
+		await expect(
+			roomProps.current.invite.redeem('katze_sam_4821')
+		).resolves.toBe(42);
 
-		expect(redeemInviteLink).toHaveBeenCalledWith('token-123');
+		/* The rolled User-ID travels with the redeem and becomes the login. */
+		expect(redeemInviteLink).toHaveBeenCalledWith(
+			'token-123',
+			'katze_sam_4821'
+		);
 		expect(applyRedeemSessionCredentials).toHaveBeenCalled();
 		expect(localStorage.getItem('oriso.invite.session.token-123')).toBe(
 			'42'
@@ -425,17 +443,29 @@ describe('InviteLink asks who is live before anything is created', () => {
 		expect(assignInviteSessionDisplayName).not.toHaveBeenCalled();
 	});
 
-	it('shows the live-chat loader, not the bare registration text, while it looks', async () => {
+	it('keeps the room open when the rolled User-ID was taken meanwhile', async () => {
+		renderInvite();
+		await waitFor(() => expect(roomProps.current?.invite?.topicId).toBe(3));
+		const taken = new Response('', { status: 409 });
+		vi.mocked(redeemInviteLink).mockRejectedValueOnce(taken);
+
+		await expect(
+			roomProps.current.invite.redeem('katze_sam_4821')
+		).rejects.toBe(taken);
+
+		/* Not the unusable-invite page: the link is fine, the room rolls again. */
+		expect(screen.getByTestId('live-chat-entry-room')).toBeTruthy();
+		expect(applyRedeemSessionCredentials).not.toHaveBeenCalled();
+	});
+
+	it('shows a neutral loader while checking the invitation', async () => {
 		vi.mocked(apiGetInviteLinkContext).mockReturnValue(
 			new Promise(() => undefined)
 		);
 		renderInvite();
 
-		await waitFor(() =>
-			expect(screen.getByTestId('live-chat-entry-room').textContent).toBe(
-				'room invite ?'
-			)
-		);
+		await screen.findByRole('status');
+		expect(screen.queryByTestId('live-chat-entry-room')).toBeNull();
 		expect(screen.queryByText('Registrierung läuft...')).toBeNull();
 	});
 });

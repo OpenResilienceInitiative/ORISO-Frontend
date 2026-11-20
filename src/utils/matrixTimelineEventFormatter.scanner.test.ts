@@ -5,7 +5,14 @@
  * the same scanner as everything else — otherwise the one class of file the
  * scanner could always have read keeps a route nothing inspects.
  */
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 
 const getMediaScannerUrl = vi.fn<() => string>();
 

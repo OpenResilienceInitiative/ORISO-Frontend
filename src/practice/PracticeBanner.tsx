@@ -20,6 +20,8 @@ import { PRACTICE_BANNER_RESTING } from './practiceBannerPlacement';
 import { nextPracticeLaunchRequest } from './practiceLaunch';
 import { practiceTours } from './practiceTours';
 import { usePracticeTourProgress } from './usePracticeTourProgress';
+import { holdPracticeExit } from './practiceMode';
+import { versionedTourProgressRepository } from '../components/productTour/versionedTourProgressRepository';
 
 const EDGE_MARGIN = 8;
 const KEY_STEP = 16;
@@ -182,11 +184,22 @@ export const PracticeBanner = ({
 	);
 
 	const endPractice = useCallback(() => {
-		// The host unmounts the adapter without a terminal write, so an ended
-		// run stays "in progress" instead of counting as skipped.
+		if (tour) {
+			// Stop the adapter now, but keep the guard until the ordered reset
+			// settles. A failed save must still release the practice world.
+			const release = holdPracticeExit();
+			void versionedTourProgressRepository
+				.saveProgress({
+					tourId: tour.id,
+					tourVersion: tour.version,
+					status: 'not_started'
+				})
+				.catch(() => {})
+				.finally(release);
+		}
 		setLaunchRequest(null);
-		practice.exit();
-	}, [practice, setLaunchRequest]);
+		void practice.exit();
+	}, [practice, setLaunchRequest, tour]);
 
 	const restartPractice = useCallback(() => {
 		if (!practice.tourId) {

@@ -12,6 +12,7 @@ import {
 	NotificationConfig
 } from '../../../utils/notificationSettings/notificationConfig';
 import type { SoundId } from '../../../utils/notificationSettings/model';
+import type { NotificationRole } from '../../../utils/notificationSettings/notificationChannelCapability';
 import { previewNotificationSound } from '../../../utils/notificationSettings/soundPlayback';
 import { phone390Globals } from '../../message/messageStoryShell';
 import './notificationConfigDialog.styles.scss';
@@ -41,6 +42,7 @@ const InteractiveDialog = () => {
 				</button>
 			)}
 			<NotificationConfigDialog
+				role="consultant"
 				open={open}
 				config={config}
 				onConfirm={(next) => {
@@ -62,10 +64,18 @@ export const UnsavedEmailNavigation: DialogStory = {
 	render: () => <InteractiveDialog />,
 	play: async ({ canvasElement }) => {
 		const doc = canvasElement.ownerDocument;
-		const banner = doc.querySelector<HTMLSelectElement>(
-			'[data-cy="notif-banner-requests-new"]'
-		)!;
-		await userEvent.selectOptions(banner, 'persistent');
+		// Kit select: tone and banner are MUI comboboxes, the banner second.
+		const banner = within(
+			doc.querySelector<HTMLElement>(
+				'[data-cy="notif-row-requests-new"]'
+			)!
+		).getAllByRole('combobox')[1];
+		await userEvent.click(banner);
+		await userEvent.click(
+			await within(doc.body).findByRole('option', {
+				name: /Bleibt bis zum Wegklicken|Stays until dismissed|persistent/
+			})
+		);
 		await userEvent.click(
 			doc.querySelector<HTMLAnchorElement>(
 				'a[href="/profile/einstellungen/email#email-notifications"]'
@@ -76,7 +86,11 @@ export const UnsavedEmailNavigation: DialogStory = {
 				doc.querySelector('[data-testid="notif-discard-changes"]')
 			).toBeVisible()
 		);
-		await expect(banner.value).toBe('persistent');
+		await expect(
+			doc.querySelector<HTMLInputElement>(
+				'[data-cy="notif-banner-requests-new"]'
+			)!.value
+		).toBe('persistent');
 	}
 };
 
@@ -96,19 +110,22 @@ export const DialogMobile: DialogStory = {
 		const bodyOverflows = body.scrollHeight > body.clientHeight;
 		await expect(getComputedStyle(surface).overflowY).toBe('hidden');
 		await expect(getComputedStyle(body).overflowY).toBe('auto');
-		const soundSelect = body.querySelector<HTMLSelectElement>(
-			'.notifConfig__select'
-		)!;
-		const soundSelectWrap = soundSelect.closest<HTMLElement>(
-			'.notifConfig__selectWrap'
-		)!;
+		// The tone picker is the kit select: focus draws the M3 outlined state,
+		// a visibly thicker outline than at rest.
+		const soundSelect = within(body).getAllByRole('combobox')[0];
+		const outline = soundSelect
+			.closest('.MuiOutlinedInput-root')!
+			.querySelector<HTMLElement>('.MuiOutlinedInput-notchedOutline')!;
+		const restWidth = parseFloat(getComputedStyle(outline).borderTopWidth);
 		soundSelect.focus();
-		await expect(getComputedStyle(soundSelectWrap).outlineStyle).toBe(
-			'solid'
+		await waitFor(() =>
+			expect(soundSelect.closest('.MuiOutlinedInput-root')).toHaveClass(
+				'Mui-focused'
+			)
 		);
-		await expect(getComputedStyle(soundSelectWrap).outlineWidth).toBe(
-			'2px'
-		);
+		await expect(
+			parseFloat(getComputedStyle(outline).borderTopWidth)
+		).toBeGreaterThan(restWidth);
 		if (bodyOverflows) {
 			body.scrollTop = body.scrollHeight;
 			await expect(body.scrollTop).toBeGreaterThan(0);
@@ -128,13 +145,27 @@ export const DialogMobile: DialogStory = {
  * The bare body (tabs + rows) without the dialog chrome — handy for isolating
  * layout. Preview here also plays real audio.
  */
-const InteractiveBody = () => {
+const InteractiveBody = ({
+	initialArea = 'requests',
+	role = 'consultant'
+}: {
+	initialArea?: NotificationArea;
+	/** 'unknown' = user data not loaded yet. */
+	role?: NotificationRole | 'unknown';
+}) => {
 	const [config, setConfig] = useState<NotificationConfig>(
 		DEFAULT_NOTIFICATION_CONFIG
 	);
-	const [area, setArea] = useState<NotificationArea>('requests');
+	const [area, setArea] = useState<NotificationArea>(initialArea);
 	return (
-		<div style={{ maxWidth: 560, padding: 16 }}>
+		// The Gespräche tab with the Live-Chat row is 5 rows tall: without the
+		// vertical padding it fits the 1280x800 test frame whole.
+		<div
+			style={{
+				maxWidth: 560,
+				padding: role === 'consultant' ? '0 16px' : 16
+			}}
+		>
 			<NotificationConfigView
 				config={config}
 				activeArea={area}
@@ -152,6 +183,7 @@ const InteractiveBody = () => {
 					}))
 				}
 				onPreview={previewNotificationSound}
+				role={role === 'unknown' ? undefined : role}
 			/>
 		</div>
 	);
@@ -160,3 +192,119 @@ const InteractiveBody = () => {
 type BodyStory = StoryObj<typeof NotificationConfigView>;
 
 export const Body: BodyStory = { render: () => <InteractiveBody /> };
+
+/**
+ * FE#1470: counsellors get their own "Live-Chat-Nachricht" row in Gespräche,
+ * with a tone chosen out of the box — a live-chat seeker is waiting now.
+ */
+export const BodyCounsellorLiveChatRow: BodyStory = {
+	name: 'Body – Berater:in mit Live-Chat-Zeile',
+	render: () => (
+		<InteractiveBody initialArea="conversations" role="consultant" />
+	),
+	play: async ({ canvasElement }) => {
+		const row = canvasElement.querySelector(
+			'[data-cy="notif-row-conversations-liveChat"]'
+		);
+		await expect(row).not.toBeNull();
+		await expect(
+			canvasElement.querySelector(
+				'[data-cy="notif-play-conversations-liveChat"]'
+			)
+		).not.toBeNull();
+	}
+};
+
+/** Advice seekers never see the row: their live-chat messages stay on Standard. */
+export const BodyAdviceSeekerNoLiveChatRow: BodyStory = {
+	name: 'Body – Ratsuchende ohne Live-Chat-Zeile',
+	render: () => <InteractiveBody initialArea="conversations" role="asker" />,
+	play: async ({ canvasElement }) => {
+		await expect(
+			canvasElement.querySelector(
+				'[data-cy="notif-row-conversations-liveChat"]'
+			)
+		).toBeNull();
+	}
+};
+
+const rowIds = (root: Element) =>
+	Array.from(root.querySelectorAll('[data-cy^="notif-row-"]')).map((el) =>
+		el.getAttribute('data-cy')
+	);
+
+/**
+ * #778: rows that can never fire for the viewer's role are not shown. A
+ * counsellor's Anfragen tab keeps "Neue Anfrage" only: Standard reaches
+ * advice seekers and there is no @-mention in this tab.
+ */
+export const BodyCounsellorHidesRowsThatNeverFire: BodyStory = {
+	name: 'Body – Berater:in, Zeilen ohne Auslöser ausgeblendet',
+	render: () => <InteractiveBody initialArea="requests" role="consultant" />,
+	play: async ({ canvasElement }) => {
+		await expect(rowIds(canvasElement)).toEqual([
+			'notif-row-requests-new',
+			'notif-row-requests-teamDiscussion',
+			'notif-row-requests-mention'
+		]);
+		await expect(
+			canvasElement.querySelector<HTMLSelectElement>(
+				'[data-cy="notif-banner-requests-new"]'
+			)!.disabled
+		).toBe(false);
+	}
+};
+
+/** #778: an advice seeker never receives new enquiries or mentions. */
+export const BodyAdviceSeekerHidesRowsThatNeverFire: BodyStory = {
+	name: 'Body – Ratsuchende, Zeilen ohne Auslöser ausgeblendet',
+	render: () => <InteractiveBody initialArea="requests" role="asker" />,
+	play: async ({ canvasElement }) => {
+		await expect(rowIds(canvasElement)).toEqual([
+			'notif-row-requests-standard'
+		]);
+	}
+};
+
+/**
+ * While the user data is loading nobody may see the wrong rows: the neutral
+ * dialog shows every row, all live (Live-Chat row excepted).
+ */
+export const BodyRoleStillLoading: BodyStory = {
+	name: 'Body – Rolle noch nicht geladen',
+	render: () => <InteractiveBody initialArea="requests" role="unknown" />,
+	play: async ({ canvasElement }) => {
+		await expect(rowIds(canvasElement)).toEqual([
+			'notif-row-requests-new',
+			'notif-row-requests-teamDiscussion',
+			'notif-row-requests-standard',
+			'notif-row-requests-mention'
+		]);
+		for (const select of canvasElement.querySelectorAll('select')) {
+			await expect(select.disabled).toBe(false);
+		}
+	}
+};
+
+/** #778 / UserService#1510: ordinary-chat mentions can notify counsellors. */
+export const BodyCounsellorMentionAvailable: BodyStory = {
+	name: 'Body – Berater:in, Erwähnung im Chat verfügbar',
+	render: () => (
+		<InteractiveBody initialArea="conversations" role="consultant" />
+	),
+	play: async ({ canvasElement }) => {
+		const banner = canvasElement.querySelector<HTMLSelectElement>(
+			'[data-cy="notif-banner-conversations-mention"]'
+		)!;
+		await expect(banner.disabled).toBe(false);
+		await expect(banner.hasAttribute('aria-describedby')).toBe(false);
+		await expect(
+			canvasElement.querySelector(
+				'[data-cy="notif-reason-conversations-mention"]'
+			)
+		).toBeNull();
+		await expect(rowIds(canvasElement)).not.toContain(
+			'notif-row-conversations-new'
+		);
+	}
+};

@@ -1,4 +1,17 @@
-import { isAnonymousMatrixUsername } from '../../utils/anonymousChatDisplayName';
+import { decodeUsername } from '../../utils/encryptionHelpers';
+
+// Matrix names of anonymous askers are encoded ("enc.mfxg63s7gezte...");
+// shown as they are they read "enc.mfxg63s7gezte" (#1839).
+const decodeEncodedName = (value: string) => {
+	if (!value.startsWith('enc.')) {
+		return value;
+	}
+	try {
+		return decodeUsername(value).trim() || value;
+	} catch {
+		return value;
+	}
+};
 
 const normalizeMatrixLikeValue = (rawValue?: string) => {
 	const value = (rawValue || '').trim();
@@ -17,26 +30,7 @@ const normalizeMatrixLikeValue = (rawValue?: string) => {
 	if (normalized.includes('@')) {
 		normalized = normalized.split('@')[0];
 	}
-	return normalized.trim();
-};
-
-// Technical usernames ("free_bee_frankie_821") must never surface in the chat
-// UI — turn them into a readable name ("free bee frankie") instead. Names
-// that already contain a space are user-configured display names (technical
-// Matrix identifiers cannot contain spaces) — leave their punctuation alone
-// ("Dr. Kim" stays "Dr. Kim").
-const humanizeTechnicalName = (value: string) => {
-	if (/\s/.test(value) || !/[_.]/.test(value)) {
-		return value;
-	}
-	const words = value
-		.split(/[_.]+/)
-		.map((word) => word.trim())
-		.filter(Boolean);
-	if (words.length > 1 && /^\d+$/.test(words[words.length - 1])) {
-		words.pop();
-	}
-	return words.join(' ') || value;
+	return decodeEncodedName(normalized.trim());
 };
 
 /**
@@ -55,6 +49,10 @@ const humanizeTechnicalName = (value: string) => {
  *   3. the real name, and only when the person has neither of the above, so
  *      the line is never blank.
  *
+ * Both names are shown exactly as written (#1209, #1494). Turning
+ * `quiet_otter_6824` into "quiet otter" dropped the digits, so the bubble no
+ * longer matched the header and two people could read the same.
+ *
  * Callers on advice-seeker-facing surfaces must not supply the real name at
  * all; see `MessageItemComponent`.
  */
@@ -64,22 +62,11 @@ const resolvePreferredName = (
 	firstName?: string,
 	lastName?: string
 ) => {
-	const normalizedDisplayName = normalizeMatrixLikeValue(rawDisplayName);
-	if (normalizedDisplayName) {
-		return humanizeTechnicalName(normalizedDisplayName);
-	}
-
-	// An anonymous User-ID is the platform's identity anchor (#1209), not a
-	// technical name to prettify. Humanising it drops the trailing digits, so
-	// every guest in a room collapses to the same bare word — `anon_5` and
-	// `anon_12` both render as "anon" — and the bubble stops matching the
-	// header and the session list, which already show it raw.
-	const normalizedUsername = normalizeMatrixLikeValue(rawUsername);
-	if (isAnonymousMatrixUsername(normalizedUsername)) {
-		return normalizedUsername;
-	}
-	if (normalizedUsername) {
-		return humanizeTechnicalName(normalizedUsername);
+	const name =
+		normalizeMatrixLikeValue(rawDisplayName) ||
+		normalizeMatrixLikeValue(rawUsername);
+	if (name) {
+		return name;
 	}
 
 	// Last resort only: no published name and no identity anchor at all.

@@ -1,9 +1,11 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import {
 	AUDIENCE_ALL,
 	audienceIdentityKeys,
 	buildAudienceRoster,
+	buildAudienceOptions,
+	hasUnresolvedAudienceSelection,
 	classifyAudienceKind,
 	unmatchedMemberKind,
 	createAudienceCollector,
@@ -15,18 +17,107 @@ import {
 	audienceOptionsReady,
 	audienceSelectionStorageKeyFor,
 	groupAudienceOptions,
+	resolveMentionCandidates,
+	roomMentionMemberIds,
+	roomMemberMentionDirectory,
 	type AudienceOption
 } from './audienceOptions';
+import { encodeUsername } from '../../utils/encryptionHelpers';
 
 const option = (
 	value: string,
 	kind: AudienceOption['kind'] = 'person'
-): AudienceOption => ({ value, label: value, kind });
+): AudienceOption => ({
+	value,
+	label: value,
+	kind
+});
 
 const withAll = (...rest: AudienceOption[]): AudienceOption[] => [
 	{ value: AUDIENCE_ALL, label: 'Send to all', kind: 'all' },
 	...rest
 ];
+
+describe('group audience hydration (#1805)', () => {
+	const allOption = withAll()[0];
+	it('retains a group restriction whose selected member has not loaded yet', () => {
+		const options = buildAudienceOptions(
+			[option('@homer')],
+			allOption,
+			true
+		);
+		const saved = JSON.stringify(['@marge']);
+		expect(restoreAudienceSelection(saved, options, true)).toEqual([
+			'@marge'
+		]);
+		expect(reconcileAudienceSelection(['@marge'], options, true)).toEqual([
+			'@marge'
+		]);
+		expect(hasUnresolvedAudienceSelection(['@marge'], options)).toBe(true);
+		expect(
+			hasUnresolvedAudienceSelection(
+				['@marge'],
+				buildAudienceOptions(
+					[option('@homer'), option('@marge')],
+					allOption,
+					true
+				)
+			)
+		).toBe(false);
+	});
+
+	it('keeps an invalid technical stored choice unresolved until an explicit new choice', () => {
+		const options = buildAudienceOptions(
+			[option('@homer')],
+			allOption,
+			true
+		);
+		const saved = JSON.stringify(['group-chat-system-40']);
+		const selection = restoreAudienceSelection(saved, options, true)!;
+		expect(selection).toEqual(['group-chat-system-40']);
+		expect(hasUnresolvedAudienceSelection(selection, options)).toBe(true);
+		expect(hasUnresolvedAudienceSelection([AUDIENCE_ALL], options)).toBe(
+			false
+		);
+	});
+	it('retains everyone while the group roster arrives in stages', () => {
+		let selection = [AUDIENCE_ALL];
+		for (const recipients of [
+			[],
+			[option('@homer')],
+			[option('@homer'), option('@marge')]
+		]) {
+			const options = buildAudienceOptions(recipients, allOption, true);
+			selection = reconcileAudienceSelection(selection, options);
+			expect(selection).toEqual([AUDIENCE_ALL]);
+		}
+	});
+
+	it('can restore a deliberate everyone selection before the second member arrives', () => {
+		const options = buildAudienceOptions(
+			[option('@homer')],
+			allOption,
+			true
+		);
+		expect(
+			restoreAudienceSelection(JSON.stringify([AUDIENCE_ALL]), options)
+		).toEqual([AUDIENCE_ALL]);
+	});
+
+	it('keeps the existing one-to-one and explicit recipient choices', () => {
+		expect(buildAudienceOptions([option('@homer')], allOption)).toEqual([
+			option('@homer')
+		]);
+		const options = buildAudienceOptions(
+			[option('@homer'), option('@marge')],
+			allOption,
+			true
+		);
+		expect(reconcileAudienceSelection(['@marge'], options)).toEqual([
+			'@marge'
+		]);
+	});
+});
 
 describe('defaultAudienceSelection', () => {
 	it('prefers "all" when the option exists', () => {
@@ -431,6 +522,21 @@ describe('audienceIdentityKeys', () => {
 });
 
 describe('createAudienceCollector', () => {
+	it('excludes technical owners from both session DTO and Matrix identities', () => {
+		const collector = createAudienceCollector(['@bart:predev.oriso.org']);
+		collector.add('group-chat-system-40', 'Technical session owner');
+		collector.add(
+			'@group-chat-system-40:predev.oriso.org',
+			'Technical member'
+		);
+		collector.add('@system:predev.oriso.org', 'System notice sender');
+		collector.add('@agency-12-service:predev.oriso.org', 'Agency service');
+		collector.add('@homer:predev.oriso.org', 'Homer');
+		expect(collector.entries()).toEqual([
+			['@homer:predev.oriso.org', 'Homer']
+		]);
+	});
+
 	/**
 	 * The regression this collector exists for.
 	 *
@@ -587,4 +693,248 @@ describe('audienceSelectionStorageKeyFor', () => {
 			expect(audienceSelectionStorageKeyFor(sessionId)).toBe('');
 		}
 	);
+});
+describe('roomMentionMemberIds', () => {
+	it('offers the joined and invited members, without the author (#1998)', () => {
+		const room = {
+			getMembers: () => [
+				{ userId: '@marge:dev.example', membership: 'join' },
+				{ userId: '@patty:dev.example', membership: 'invite' },
+				{ userId: '@selma:dev.example', membership: 'leave' },
+				{ userId: '@bob:dev.example', membership: 'ban' },
+				{ userId: '@me:dev.example', membership: 'join' },
+				{ membership: 'join' }
+			]
+		};
+		expect(roomMentionMemberIds(room, '@me:dev.example')).toEqual([
+			'@marge:dev.example',
+			'@patty:dev.example'
+		]);
+	});
+
+	it('offers nobody for a room the client does not know yet', () => {
+		expect(roomMentionMemberIds(null)).toEqual([]);
+		expect(roomMentionMemberIds({})).toEqual([]);
+	});
+});
+
+describe('resolveMentionCandidates', () => {
+	const person = (username: string) => ({ displayName: username, username });
+
+	it('matches a decoded directory name to the member Matrix id (#1998)', () => {
+		const directory = new Map([['id-1', person('Hans.Meier')]]);
+		expect(
+			resolveMentionCandidates(directory, ['@hans.meier:dev.example'])
+		).toEqual([
+			{
+				id: 'id-1',
+				displayName: 'Hans.Meier',
+				username: 'Hans.Meier',
+				matrixUserId: '@hans.meier:dev.example',
+				isInRoom: true
+			}
+		]);
+	});
+
+	it('does not pick a server for an ambiguous legacy directory name', () => {
+		const directory = new Map([['id-1', person('hans.meier')]]);
+		const [candidate] = resolveMentionCandidates(directory, [
+			'@hans.meier:dev.example',
+			'@hans.meier:other.example'
+		]);
+		expect(candidate.matrixUserId).toBeUndefined();
+		expect(candidate.isInRoom).toBe(false);
+	});
+
+	it('marks a supervisor known only by the stored name as in the chat', () => {
+		const directory = new Map([['id-1', person('hans.meier')]]);
+		const [candidate] = resolveMentionCandidates(directory, [
+			encodeUsername('hans.meier')
+		]);
+		expect(candidate.isInRoom).toBe(true);
+		expect(candidate.matrixUserId).toBeUndefined();
+	});
+
+	it('never lends a shared surname, or the homeserver, to someone else', () => {
+		const directory = new Map([
+			['id-1', person('hans.meier')],
+			['id-2', person('oriso.admin')]
+		]);
+		const candidates = resolveMentionCandidates(directory, [
+			'@anna.meier:dev.oriso.org'
+		]);
+		candidates.forEach((candidate) => {
+			expect(candidate.isInRoom).toBe(false);
+			expect(candidate.matrixUserId).toBeUndefined();
+		});
+	});
+
+	describe('a colleague who is not in the room (#1998)', () => {
+		const directory = new Map([
+			[
+				'id-1',
+				{
+					...person('hans.meier'),
+					matrixUserId: '@hans.meier:dev.example'
+				}
+			]
+		]);
+
+		it('is reached by their own id where the server allows it', () => {
+			const [candidate] = resolveMentionCandidates(directory, [], true);
+			expect(candidate.isInRoom).toBe(false);
+			expect(candidate.matrixUserId).toBe('@hans.meier:dev.example');
+		});
+
+		it('does not match the same local part on a different homeserver', () => {
+			const [candidate] = resolveMentionCandidates(directory, [
+				'@hans.meier:other.example'
+			]);
+			expect(candidate.isInRoom).toBe(false);
+			expect(candidate.matrixUserId).toBeUndefined();
+		});
+
+		it('keeps the exact member when two servers have the same local part', () => {
+			const [candidate] = resolveMentionCandidates(directory, [
+				'@hans.meier:dev.example',
+				'@hans.meier:other.example'
+			]);
+			expect(candidate.isInRoom).toBe(true);
+			expect(candidate.matrixUserId).toBe('@hans.meier:dev.example');
+		});
+
+		it('gets no id in any other chat', () => {
+			const [candidate] = resolveMentionCandidates(directory, []);
+			expect(candidate.isInRoom).toBe(false);
+			expect(candidate.matrixUserId).toBeUndefined();
+		});
+
+		it('gets no id from an older server or a malformed value', () => {
+			const [withoutId, malformed] = resolveMentionCandidates(
+				new Map([
+					['id-1', person('hans.meier')],
+					[
+						'id-2',
+						{ ...person('anna.meier'), matrixUserId: 'anna.meier' }
+					]
+				]),
+				[],
+				true
+			);
+			expect(withoutId.matrixUserId).toBeUndefined();
+			expect(malformed.matrixUserId).toBeUndefined();
+		});
+	});
+
+	it('finds a member by the directory Matrix id alone', () => {
+		const [candidate] = resolveMentionCandidates(
+			new Map([
+				[
+					'id-1',
+					{
+						...person('hans.meier'),
+						matrixUserId: '@h-meier:dev.example'
+					}
+				]
+			]),
+			['@h-meier:dev.example']
+		);
+		expect(candidate.isInRoom).toBe(true);
+		expect(candidate.matrixUserId).toBe('@h-meier:dev.example');
+	});
+
+	it('survives a member name that only looks encoded', () => {
+		const directory = new Map([['id-1', person('hans.meier')]]);
+		expect(() =>
+			resolveMentionCandidates(directory, ['enc.bad1'])
+		).not.toThrow();
+	});
+});
+
+describe('roomMemberMentionDirectory (FE#1211 internal colleague chat)', () => {
+	// An internal colleague chat has no counselling centre, so the agency
+	// list cannot name its people. Every member of that room is a colleague,
+	// so the room itself is the directory.
+	const room = {
+		getMembers: () => [
+			{
+				userId: '@marge:dev.example',
+				name: 'Marge Simpson',
+				membership: 'join'
+			},
+			{ userId: '@patty:dev.example', name: '', membership: 'invite' },
+			{
+				userId: '@selma:dev.example',
+				name: 'Selma',
+				membership: 'leave'
+			},
+			{
+				userId: '@system:dev.example',
+				name: 'System',
+				membership: 'join'
+			},
+			{
+				userId: '@clancy:dev.example',
+				name: 'Clancy',
+				membership: 'join'
+			}
+		]
+	};
+
+	it('names every joined or invited colleague except the author', () => {
+		const directory = roomMemberMentionDirectory(
+			room,
+			'@clancy:dev.example'
+		);
+		expect(Array.from(directory.entries())).toEqual([
+			[
+				'@marge:dev.example',
+				{
+					displayName: 'Marge Simpson',
+					username: 'marge',
+					matrixUserId: '@marge:dev.example'
+				}
+			],
+			[
+				'@patty:dev.example',
+				{
+					displayName: 'patty',
+					username: 'patty',
+					matrixUserId: '@patty:dev.example'
+				}
+			]
+		]);
+	});
+
+	it('lets every listed colleague be mentioned with their own id', () => {
+		const self = '@clancy:dev.example';
+		const candidates = resolveMentionCandidates(
+			roomMemberMentionDirectory(room, self),
+			roomMentionMemberIds(room, self)
+		);
+		expect(
+			candidates.map(({ displayName, matrixUserId, isInRoom }) => ({
+				displayName,
+				matrixUserId,
+				isInRoom
+			}))
+		).toEqual([
+			{
+				displayName: 'Marge Simpson',
+				matrixUserId: '@marge:dev.example',
+				isInRoom: true
+			},
+			{
+				displayName: 'patty',
+				matrixUserId: '@patty:dev.example',
+				isInRoom: true
+			}
+		]);
+	});
+
+	it('is empty when the room is not loaded yet', () => {
+		expect(
+			roomMemberMentionDirectory(undefined, '@clancy:dev.example').size
+		).toBe(0);
+	});
 });

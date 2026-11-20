@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import {
 	HEADER_COMPACT_WIDTH,
 	HEADER_TITLE_MIN_SHARE,

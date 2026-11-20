@@ -1,5 +1,5 @@
 import * as React from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, within } from 'storybook/test';
 
 import { ErstantwortSequence } from './ErstantwortSequence';
@@ -257,6 +257,33 @@ export const NotificationChoiceWithoutBrowserSupport: Story = {
 };
 
 /**
+ * **A channel that already works says so.** The chosen option carries a check
+ * mark and the word "Active", so nobody has to wonder whether the browser
+ * signal is on. Derived from live account and browser state, never from a click.
+ */
+export const NotificationChoiceActive: Story = {
+	...NotificationChoice,
+	args: {
+		...NotificationChoice.args,
+		slots: {
+			notificationChoice: (
+				<NotificationChoiceCard
+					chosen="BROWSER"
+					controlled
+					onChoose={() => undefined}
+				/>
+			)
+		}
+	},
+	play: async ({ canvas }) => {
+		await expect(canvas.getAllByText(/^(Active|Aktiv)$/)).toHaveLength(1);
+		await expect(
+			canvas.getByRole('button', { pressed: true })
+		).toHaveTextContent(/Active|Aktiv/);
+	}
+};
+
+/**
  * **The device limit, said without scaring anyone.** The reassurance comes
  * first and the limit second, because the limit alone reads as "you are about
  * to lose everything".
@@ -381,7 +408,11 @@ export const Mobile: Story = {
 	globals: phone390Globals
 };
 
-/** Frozen content can be read without leaving the chat or opening setup. */
+/**
+ * Frozen content can be read without leaving the chat or opening setup. One
+ * complete message: greeting, questions (emergency numbers last, red,
+ * collapsed) and goodbye share one bubble (Frank, 15.10.).
+ */
 export const CompactFaq: Story = {
 	args: { bausteine: platformDefaults(OPEN_STATE), skipAnimation: true },
 	play: async ({ canvasElement }) => {
@@ -396,7 +427,13 @@ export const CompactFaq: Story = {
 		).toBeVisible();
 		await userEvent.click(question);
 		await expect(detail).not.toHaveAttribute('open');
-		// Crisis numbers stay outside the collapsed FAQ.
+		// Crisis numbers: last question, collapsed, red with a phone icon.
+		const emergency = canvas
+			.getByText('Wenn es nicht warten kann')
+			.closest('details');
+		await expect(emergency).not.toHaveAttribute('open');
+		await expect(emergency).toHaveClass('erstantwort__faq--emergency');
+		await userEvent.click(canvas.getByText('Wenn es nicht warten kann'));
 		await expect(canvas.getByText(/0800 111 0 111/)).toBeVisible();
 	}
 };

@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import * as React from 'react';
 import {
 	cleanup,
@@ -8,7 +8,14 @@ import {
 	within
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterAll, afterEach, beforeEach, expect, it, vi } from 'vitest';
+import {
+	afterAll,
+	afterEach,
+	beforeEach,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import { createInstance } from 'i18next';
 import { I18nextProvider, initReactI18next } from 'react-i18next';
 import en from '../../../resources/i18n/en/common.json';

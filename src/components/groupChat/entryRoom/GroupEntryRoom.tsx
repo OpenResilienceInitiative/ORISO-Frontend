@@ -1,14 +1,18 @@
 import * as React from 'react';
-import dayjs from 'dayjs';
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useCallback, useContext, useEffect, useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { Box, Typography } from '@mui/material';
 import { Loading } from '../../app/Loading';
+import { useGroupCallerBan } from '../useGroupCallerBan';
+import { WaitingRoomFrame } from '../../waitingRoom/WaitingRoomFrame';
+import { RegistrationFooter } from '../../registrationFooter/RegistrationFooter';
+import { HandoverGateButton } from '../../app/registrationLoader/HandoverGateButton';
 import { useTranslation } from 'react-i18next';
 import {
 	apiGetAskerSessionList,
 	apiGetGroupChatInfo,
 	apiPutGroupChat,
+	FETCH_ERRORS,
 	GROUP_CHAT_API
 } from '../../../api';
 import { apiGetChatRoomById } from '../../../api/apiGetChatRoomById';
@@ -21,10 +25,11 @@ import {
 	UserDataContext
 } from '../../../globalState';
 import { getCounsellingDpaNotification } from '../../../utils/counsellingDpaNotification';
-import { getGroupChatPlannedStart } from '../groupChatDate';
 import { useGroupChatAuthorContent } from '../useGroupChatAuthorContent';
 import { getSessionNavigationPath } from '../../sessionsListItem/sessionsListItemHelpers';
 import { GroupWaitingRoom } from './GroupWaitingRoom';
+import { getGroupWaitingRoomTopic } from './groupWaitingRoomData';
+import { useGroupWaitingRoomSchedule } from './useGroupWaitingRoomSchedule';
 import { translateWithFallback } from '../../../utils/translationFallback';
 import { registrationMd3 } from '../../registration/registrationDesign/registrationDesign';
 import {
@@ -72,22 +77,66 @@ export const GroupEntryRoom = () => {
 		);
 	}
 
-	return <ClientGroupEntryRoom />;
+	return <ClientGroupEntryRoom key={chatIdParam} />;
 };
 
-const EntryRoomLoading = () => (
-	<Box
-		sx={{
-			minHeight: '100vh',
-			display: 'flex',
-			alignItems: 'center',
-			justifyContent: 'center'
-		}}
-		data-cy="group-entry-loading"
-	>
-		<Loading layout="page" />
-	</Box>
-);
+/* The frame stands while the group loads, so the waiting room after
+   "Registrieren" turns into the group's room by its column alone — no
+   full-page spinner in between (#1219). */
+export const EntryRoomLoading = () => {
+	const { t } = useTranslation();
+	return (
+		<WaitingRoomFrame>
+			{/* One column, like every room: the stage's rules for its direct
+			    children would otherwise size the bar as well. */}
+			<Box
+				sx={{
+					width: '100%',
+					minWidth: 0,
+					maxWidth: '100%',
+					flexGrow: 1,
+					minHeight: {
+						xs: 'calc(100vh - 96px)',
+						lg: 'calc(100vh - 128px)'
+					},
+					display: 'flex',
+					flexDirection: 'column'
+				}}
+				data-cy="group-entry-loading"
+			>
+				<Box
+					sx={{
+						flex: 1,
+						display: 'flex',
+						alignItems: 'center',
+						justifyContent: 'center'
+					}}
+				>
+					<Loading />
+				</Box>
+				{/* The room's bar and gate are there from the first frame, so
+				    the room does not grow a footer once the group has loaded.
+				    Nothing here is measurable, so the gate waits without a
+				    fill. */}
+				<RegistrationFooter>
+					<Box sx={{ width: '100%' }}>
+						<HandoverGateButton
+							state="preparing"
+							indeterminate
+							label={translateWithFallback(
+								t,
+								'groupChat.entry.join',
+								'Beitreten'
+							)}
+							status=""
+							testingAttribute="group-entry-loading-gate"
+						/>
+					</Box>
+				</RegistrationFooter>
+			</Box>
+		</WaitingRoomFrame>
+	);
+};
 
 const ClientGroupEntryRoom = () => {
 	const { chatId: chatIdParam } = useParams<{ chatId: string }>();
@@ -100,12 +149,25 @@ const ClientGroupEntryRoom = () => {
 			translateWithFallback(t, `groupChat.entry.${key}`, fallback),
 		[t]
 	);
+	const userData = useContext(UserDataContext)?.userData;
 	const { session, ready, reload } = useGroupChatSession(chatId);
 	const [joinBusy, setJoinBusy] = useState(false);
 	const [joinFailed, setJoinFailed] = useState(false);
+	// #1923: a moderator banned this person; joining again cannot work.
+	const [removed, setRemoved] = useState(false);
 
 	const item = session?.item;
 	const active = Boolean(item?.active);
+	const callerBan = useGroupCallerBan({
+		askerId: hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData)
+			? userData.userId
+			: undefined,
+		chatId: item?.id,
+		roomId: item?.matrixRoomId || session?.rid,
+		active
+	});
+	const isRemoved = removed || callerBan === 'BANNED';
+	const joinBlocked = isRemoved || callerBan === 'PENDING';
 
 	useEffect(() => {
 		if (!item?.id) {
@@ -135,47 +197,18 @@ const ClientGroupEntryRoom = () => {
 		groupChatRulesTranslations: item?.groupChatRulesTranslations
 	});
 
-	/**
-	 * The next dates of a repeating group, for the explainer behind "Mehr
-	 * erfahren" — looked up, never booked (Frank, 2026-09-07). Derived from
-	 * the start and the interval the chat carries; a one-off group has only
-	 * its own date, and a group without a date has none.
-	 */
-	const upcomingDates = useMemo(() => {
-		const start = item ? getGroupChatPlannedStart(item) : null;
-		if (!start) {
-			return undefined;
-		}
-		/* Calendar arithmetic, not fixed milliseconds: a month is not 30 days
-		   (a 31 January start would have shown 2 March), and a day is not
-		   always 24 hours — across the DST change the fixed step moved the
-		   meeting by an hour. */
-		const unit: 'week' | 'day' | 'month' | null =
-			item?.chatInterval === 'WEEKLY'
-				? 'week'
-				: item?.chatInterval === 'DAILY'
-					? 'day'
-					: item?.chatInterval === 'MONTHLY'
-						? 'month'
-						: null;
-		if (!unit) {
-			return [start];
-		}
-		return [0, 1, 2].map((step) => dayjs(start).add(step, unit).toDate());
-	}, [item]);
-
-	const plannedStart = useMemo(
-		() => (item ? getGroupChatPlannedStart(item) : null),
-		[item]
-	);
+	const { plannedStart, upcomingDates, series, durationMinutes } =
+		useGroupWaitingRoomSchedule(item);
 
 	const handleJoin = useCallback(() => {
-		if (!item?.id || joinBusy) {
-			return;
+		if (!item?.id || joinBusy || joinBlocked) {
+			return false;
 		}
 		setJoinBusy(true);
 		setJoinFailed(false);
-		apiPutGroupChat(item.id, GROUP_CHAT_API.JOIN)
+		// Returned so the closing animation keeps the screen covered until the
+		// request has settled and the chat has opened.
+		return apiPutGroupChat(item.id, GROUP_CHAT_API.JOIN)
 			.then(() => {
 				navigate(
 					getSessionNavigationPath({
@@ -192,13 +225,19 @@ const ClientGroupEntryRoom = () => {
 				);
 			})
 			.catch((error) => {
-				const notice = getCounsellingDpaNotification(error, t);
-				if (notice && notifications)
+				const notice = getCounsellingDpaNotification(error, t, {
+					groupJoin: true
+				});
+				if (error?.message === FETCH_ERRORS.USER_BANNED_FROM_CHAT)
+					setRemoved(true);
+				else if (notice && notifications)
 					notifications.addNotification(notice);
 				else setJoinFailed(true);
 				setJoinBusy(false);
+				// The person stays: the closing animation need not wait for a chat.
+				return false;
 			});
-	}, [item, joinBusy, navigate, session?.rid, notifications, t]);
+	}, [item, joinBusy, joinBlocked, navigate, session?.rid, notifications, t]);
 
 	if (!ready) {
 		return <EntryRoomLoading />;
@@ -227,8 +266,10 @@ const ClientGroupEntryRoom = () => {
 		);
 	}
 
-	const topicName =
-		typeof item.topic === 'string' ? item.topic : item.topic?.name;
+	const topicName = getGroupWaitingRoomTopic(
+		item,
+		userData?.dataPrivacyConfirmation
+	);
 	const agencyName = item.assignedAgencies?.[0]?.name;
 
 	return (
@@ -239,33 +280,26 @@ const ClientGroupEntryRoom = () => {
 				agencyId={item.assignedAgencies?.[0]?.id}
 				plannedStart={plannedStart}
 				upcomingDates={upcomingDates}
-				durationMinutes={item.duration}
+				series={series}
+				durationMinutes={durationMinutes}
 				eventId={item.id}
 				welcomeText={authorContent.hintMessage || undefined}
 				rules={authorContent.rules}
 				active={active}
 				onJoin={handleJoin}
 				joinBusy={joinBusy}
+				joinBlocked={joinBlocked}
+				joinNotice={
+					isRemoved
+						? t('groupChat.removed.overlay.headline')
+						: joinFailed
+							? t(
+									'groupChat.joinError.overlay.headline',
+									'Der Beitritt hat nicht geklappt.'
+								)
+							: undefined
+				}
 			/>
-			{joinFailed && (
-				<Typography
-					role="alert"
-					sx={{
-						position: 'fixed',
-						left: 0,
-						right: 0,
-						bottom: 104,
-						textAlign: 'center',
-						color: 'error.main',
-						zIndex: 66
-					}}
-				>
-					{t(
-						'groupChat.joinError.overlay.headline',
-						'Der Beitritt hat nicht geklappt.'
-					)}
-				</Typography>
-			)}
 		</>
 	);
 };

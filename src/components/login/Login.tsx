@@ -5,6 +5,12 @@ import { useNavigate } from 'react-router-dom';
 import { endpoints } from '../../resources/scripts/endpoints';
 import { Button, BUTTON_TYPES, ButtonItem } from '../button/Button';
 import { autoLogin, redirectToApp } from '../registration/autoLogin';
+import {
+	beginLoginHandover,
+	endLoginHandover,
+	persistLoginHandover
+} from '../app/loginHandover';
+import { warmAppChunks, warmCryptoEngine } from '../app/appChunks';
 import { readLastOpenSession } from '../../utils/lastOpenSession';
 import {
 	clearAuthSession,
@@ -36,6 +42,7 @@ import {
 	LocaleContext
 } from '../../globalState';
 import { UserDataInterface } from '../../globalState/interfaces';
+import { getChosenLocale } from '../../globalState/provider/LocaleProvider';
 import '../../resources/styles/styles';
 import './login.styles';
 import useIsFirstVisit from '../../utils/useIsFirstVisit';
@@ -66,6 +73,7 @@ import { apiRequestMagicLinkLogin } from '../../api/apiRequestMagicLinkLogin';
 import { apiConsumeMagicLinkLogin } from '../../api/apiConsumeMagicLinkLogin';
 import { useSearchParam } from '../../hooks/useSearchParams';
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
+import { translateWithFallback } from '../../utils/translationFallback';
 import { budibaseLogout } from '../budibase/budibaseLogout';
 import { GlobalComponentContext } from '../../globalState/provider/GlobalComponentContext';
 import { UrlParamsContext } from '../../globalState/provider/UrlParamsProvider';
@@ -113,6 +121,12 @@ export const Login = () => {
 	const { locale, initLocale } = useContext(LocaleContext);
 	const { tenant } = useContext(TenantContext);
 	const { reloadUserData } = useContext(UserDataContext);
+	/* Started the moment the credentials are accepted, in parallel with the
+	   Matrix token; postLogin picks it up instead of asking a second time. */
+	const earlyUserDataRef = useRef<Promise<UserDataInterface> | null>(null);
+	/* Set once postLogin hands over to the app with a document load: from
+	   then on the handover screen must stay until the page is gone. */
+	const leavingForAppRef = useRef(false);
 	const { Stage } = useContext(GlobalComponentContext);
 	const gcid = useSearchParam<string>('gcid');
 	const appointmentSeriesId = useSearchParam<string>('seriesId');
@@ -328,12 +342,24 @@ export const Login = () => {
 
 	const postLogin = useCallback(
 		() =>
-			reloadUserData().then(async (userData: UserDataInterface) => {
-				// If user has changed language from default but the profile has different language in profile override it
+			(
+				(() => {
+					const early = earlyUserDataRef.current;
+					earlyUserDataRef.current = null;
+					return early ?? reloadUserData();
+				})() as Promise<UserDataInterface>
+			).then(async (userData: UserDataInterface) => {
+				// A language the person chose on the login screen wins over the
+				// stored profile language, which the app applies after the
+				// redirect. A choice that equals the browser default counts too
+				// (#1844); a merely detected language never overwrites the profile.
+				const chosenOnScreen =
+					locale !== initLocale || getChosenLocale() === locale;
 				let patchedUserData = {};
 				if (
-					userData.preferredLanguage !== locale &&
-					locale !== initLocale
+					locale &&
+					chosenOnScreen &&
+					userData.preferredLanguage !== locale
 				) {
 					patchedUserData['preferredLanguage'] = locale;
 				}
@@ -361,6 +387,8 @@ export const Login = () => {
 					userData
 				);
 				if (appointment) {
+					leavingForAppRef.current = true;
+					persistLoginHandover();
 					return redirectToApp(undefined, appointment);
 				}
 
@@ -385,6 +413,8 @@ export const Login = () => {
 					   users work around by reloading. Registration keeps its
 					   client-side nav; it has a handover animation to cover
 					   the gap, and login does not. */
+					leavingForAppRef.current = true;
+					persistLoginHandover();
 					return redirectToApp(gcid, { restorePath, returnTo });
 				}
 			}),
@@ -500,13 +530,26 @@ export const Login = () => {
 					(resolution.outcome === 'unavailable' ||
 						resolution.outcome === 'rate_limited');
 				if (!isShownAtResendLink) {
-					setShowLoginError(translate(resolution.messageKey));
-					// Only a credential problem marks the fields; an outage
-					// or a rate limit is not the user's input being wrong,
-					// and must not leave a stale mark behind.
+					// A refusal that named its wait says so, in the languages
+					// that have that sentence; the others keep the untimed one.
+					setShowLoginError(
+						resolution.preciseMessage
+							? translateWithFallback(
+									translate,
+									resolution.preciseMessage.key,
+									translate(resolution.messageKey) as string,
+									resolution.preciseMessage.values
+								)
+							: translate(resolution.messageKey)
+					);
+					// Only a credential problem marks the fields; an outage,
+					// a rate limit or an unfinished account setup is not the
+					// user's input being wrong, and must not leave a stale
+					// mark behind.
 					setLabelState(
 						resolution.outcome === 'unavailable' ||
-							resolution.outcome === 'rate_limited'
+							resolution.outcome === 'rate_limited' ||
+							resolution.outcome === 'setup_incomplete'
 							? null
 							: VALIDITY_INVALID
 					);
@@ -542,7 +585,21 @@ export const Login = () => {
 				username: username,
 				password: password,
 				tenantData: tenant,
-				...(otp ? { otp } : {})
+				...(otp ? { otp } : {}),
+				onCredentialsAccepted: () => {
+					if (!isLatestAttempt()) return;
+					/* One calm screen from here until the app is ready,
+					   instead of the login page flickering underneath the
+					   tenant switch, the Matrix token and the user data. */
+					leavingForAppRef.current = false;
+					beginLoginHandover();
+					// The app's code and crypto engine download meanwhile.
+					warmAppChunks();
+					warmCryptoEngine();
+					const early = reloadUserData();
+					early.catch(() => undefined);
+					earlyUserDataRef.current = early;
+				}
 			})
 				// Two rejection paths on purpose: only `autoLogin` failures are
 				// login failures. `postLogin` reports its own problems (e.g. the
@@ -557,6 +614,9 @@ export const Login = () => {
 								// failing after a successful token) would otherwise
 								// leave the form silent. Not a login failure, so it is
 								// not counted.
+								if (isLatestAttempt()) {
+									leavingForAppRef.current = false;
+								}
 								if (
 									isLatestAttempt() &&
 									(error as Error | null)?.message !==
@@ -567,8 +627,21 @@ export const Login = () => {
 									);
 								}
 							})
-							.then(() => null),
-					handleAutoLoginFailure
+							.then(() => {
+								// Still here: the form has something to say.
+								if (!leavingForAppRef.current) {
+									earlyUserDataRef.current = null;
+									endLoginHandover();
+								}
+								return null;
+							}),
+					(error: unknown) => {
+						// A newer attempt owns the screen and its user data.
+						if (!isLatestAttempt()) return null;
+						earlyUserDataRef.current = null;
+						endLoginHandover();
+						return handleAutoLoginFailure(error);
+					}
 				)
 				.finally(() => {
 					if (isLatestAttempt()) {

@@ -1,0 +1,210 @@
+[
+  {
+    "filename": "10-after-390x420-de-reason.png",
+    "locale": "de",
+    "viewport": {
+      "width": 390,
+      "height": 420
+    },
+    "step": "reason",
+    "scrollPosition": "body top after normal wheel",
+    "geometry": {
+      "innerWidth": 390,
+      "innerHeight": 420,
+      "dpr": 1,
+      "body": {
+        "clientHeight": 149,
+        "scrollHeight": 620,
+        "scrollTop": 0
+      },
+      "next": {
+        "x": 246,
+        "y": 232,
+        "width": 128,
+        "height": 96
+      }
+    }
+  },
+  {
+    "filename": "11-after-390x420-de-description.png",
+    "locale": "de",
+    "viewport": {
+      "width": 390,
+      "height": 420
+    },
+    "step": "description",
+    "scrollPosition": "body top after normal wheel",
+    "geometry": {
+      "innerWidth": 390,
+      "innerHeight": 420,
+      "dpr": 1,
+      "body": {
+        "clientHeight": 149,
+        "scrollHeight": 821,
+        "scrollTop": 0
+      },
+      "next": {
+        "x": 246,
+        "y": 232,
+        "width": 128,
+        "height": 96
+      }
+    }
+  },
+  {
+    "filename": "10-after-1440x900-en-reason.png",
+    "locale": "en",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "step": "reason",
+    "scrollPosition": "body top after normal wheel",
+    "geometry": {
+      "innerWidth": 1440,
+      "innerHeight": 900,
+      "dpr": 1,
+      "body": {
+        "clientHeight": 655,
+        "scrollHeight": 655,
+        "scrollTop": 0
+      },
+      "next": {
+        "x": 1223,
+        "y": 763,
+        "width": 128,
+        "height": 96
+      }
+    }
+  },
+  {
+    "filename": "11-after-390x844-de-description.png",
+    "locale": "de",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "step": "description",
+    "scrollPosition": "body top after normal wheel",
+    "geometry": {
+      "innerWidth": 390,
+      "innerHeight": 844,
+      "dpr": 1,
+      "body": {
+        "clientHeight": 573,
+        "scrollHeight": 821,
+        "scrollTop": 0
+      },
+      "next": {
+        "x": 246,
+        "y": 656,
+        "width": 128,
+        "height": 96
+      }
+    }
+  },
+  {
+    "filename": "11-after-820x1180-de-description.png",
+    "locale": "de",
+    "viewport": {
+      "width": 820,
+      "height": 1180
+    },
+    "step": "description",
+    "scrollPosition": "body top after normal wheel",
+    "geometry": {
+      "innerWidth": 820,
+      "innerHeight": 1180,
+      "dpr": 1,
+      "body": {
+        "clientHeight": 909,
+        "scrollHeight": 909,
+        "scrollTop": 0
+      },
+      "next": {
+        "x": 676,
+        "y": 992,
+        "width": 128,
+        "height": 96
+      }
+    }
+  },
+  {
+    "filename": "10-after-1440x480-de-reason.png",
+    "locale": "de",
+    "viewport": {
+      "width": 1440,
+      "height": 480
+    },
+    "step": "reason",
+    "scrollPosition": "body top after normal wheel",
+    "geometry": {
+      "innerWidth": 1440,
+      "innerHeight": 480,
+      "dpr": 1,
+      "body": {
+        "clientHeight": 235,
+        "scrollHeight": 510,
+        "scrollTop": 0
+      },
+      "next": {
+        "x": 1223,
+        "y": 343,
+        "width": 128,
+        "height": 96
+      }
+    }
+  },
+  {
+    "filename": "11-after-390x420-fr-description.png",
+    "locale": "fr",
+    "viewport": {
+      "width": 390,
+      "height": 420
+    },
+    "step": "description",
+    "scrollPosition": "body top after normal wheel",
+    "geometry": {
+      "innerWidth": 390,
+      "innerHeight": 420,
+      "dpr": 1,
+      "body": {
+        "clientHeight": 149,
+        "scrollHeight": 801,
+        "scrollTop": 0
+      },
+      "next": {
+        "x": 246,
+        "y": 232,
+        "width": 128,
+        "height": 96
+      }
+    }
+  },
+  {
+    "filename": "11-after-320x568-fr-description.png",
+    "locale": "fr",
+    "viewport": {
+      "width": 320,
+      "height": 568
+    },
+    "step": "description",
+    "scrollPosition": "body top after normal wheel",
+    "geometry": {
+      "innerWidth": 320,
+      "innerHeight": 568,
+      "dpr": 1,
+      "body": {
+        "clientHeight": 297,
+        "scrollHeight": 821,
+        "scrollTop": 0
+      },
+      "next": {
+        "x": 176,
+        "y": 380,
+        "width": 128,
+        "height": 96
+      }
+    }
+  }
+]

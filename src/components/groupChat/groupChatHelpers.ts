@@ -1,4 +1,5 @@
 import { getModality, Modality } from '../session/getModality';
+import type { ExtendedSessionInterface } from '../../globalState/helpers/stateHelpers';
 
 interface GroupChatAuthorizationSession {
 	consultant?: { id?: string };
@@ -35,6 +36,15 @@ export const isGroupChatOwner = (
 		return false;
 	}
 };
+
+export const canEditGroupChatSettings = (
+	activeSession: ExtendedSessionInterface,
+	userData?: GroupChatAuthorizationUser
+): boolean =>
+	activeSession.isGroup === true &&
+	activeSession.item?.active === false &&
+	getModality(activeSession) === Modality.SELF_HELP &&
+	isGroupChatOwner(activeSession, userData);
 
 export const canModerateGroupChat = (
 	activeSession: GroupChatAuthorizationSession,
@@ -76,7 +86,7 @@ export interface GroupChatWaitingAreaVisibility {
  * Which parts of the group-chat waiting area a join view may render.
  *
  * The waiting area — countdown clock, "add to calendar", the netiquette
- * spotlight and the asker-facing "Ihre Beratung öffnet den Raum gleich" copy —
+ * spotlight and the asker-facing "Die Moderation öffnet die Gruppe gleich" copy —
  * belongs to *scheduled* group chats with askers (self-help circles). Internal
  * team chats (ADR-006 `Modality.INTERNAL_GROUP`) are persistent rooms for
  * colleagues: there is no session to wait for, so counting down to one is
@@ -104,4 +114,22 @@ export const getGroupChatWaitingAreaVisibility = (
 		// would just repeat the frame.
 		showRulesHeadline: !showCountdown
 	};
+};
+
+interface StoppedGroupChatItem {
+	id?: number;
+	matrixRoomId?: string | null;
+	repetitive?: boolean;
+}
+
+/**
+ * The session ids to drop from the list once a group chat was stopped: a single
+ * chat is deleted and goes now; a series rolls on to its next room and stays (null).
+ */
+export const getStoppedGroupChatRemovalIds = (
+	item: StoppedGroupChatItem
+): string[] | number[] | null => {
+	if (item.repetitive) return null;
+	if (item.matrixRoomId) return [item.matrixRoomId];
+	return item.id === undefined ? null : [item.id];
 };

@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import React from 'react';
 import {
 	act,
@@ -8,7 +8,14 @@ import {
 	screen
 } from '@testing-library/react';
 import { createStore, Provider } from 'jotai';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import { tourLaunchRequestAtom } from '../components/productTour/tourLaunchState';
 import type { TourDefinition } from '../components/productTour/types';
 import {
@@ -20,6 +27,13 @@ import { PracticeProvider } from './PracticeProvider';
 import { practiceTourProgressAtom } from './usePracticeTourProgress';
 import { PracticeBanner } from './PracticeBanner';
 import { PRACTICE_BANNER_RESTING } from './practiceBannerPlacement';
+import { versionedTourProgressRepository } from '../components/productTour/versionedTourProgressRepository';
+
+vi.mock('../components/productTour/versionedTourProgressRepository', () => ({
+	versionedTourProgressRepository: {
+		saveProgress: vi.fn(() => Promise.resolve())
+	}
+}));
 
 vi.mock('react-i18next', async () => {
 	const { makeTranslate } = await import('./practiceTestTranslate');
@@ -115,6 +129,9 @@ afterEach(() => {
 	exitPracticeMode();
 	vi.restoreAllMocks();
 	vi.unstubAllGlobals();
+	vi.mocked(versionedTourProgressRepository.saveProgress)
+		.mockReset()
+		.mockResolvedValue();
 });
 
 describe('PracticeBanner', () => {
@@ -204,6 +221,71 @@ describe('PracticeBanner', () => {
 	});
 
 	describe('End practice', () => {
+		it('does not end a new run when an earlier cancellation settles', async () => {
+			let settle!: () => void;
+			vi.mocked(
+				versionedTourProgressRepository.saveProgress
+			).mockImplementationOnce(
+				() =>
+					new Promise<void>((resolve) => {
+						settle = resolve;
+					})
+			);
+			renderBanner();
+			fireEvent.click(
+				screen.getByRole('button', { name: 'Übung beenden' })
+			);
+			act(() => enterPracticeMode({ tourId: ACCEPT }));
+			await act(async () => {
+				settle();
+				await Promise.resolve();
+			});
+			expect(isPracticeMode()).toBe(true);
+			expect(screen.getByTestId('practice-banner')).toBeTruthy();
+		});
+		it.each([false, true])(
+			'resets progress and holds the guard until the reset settles (reject: %s)',
+			async (reject) => {
+				let settle!: () => void;
+				vi.mocked(
+					versionedTourProgressRepository.saveProgress
+				).mockImplementationOnce(
+					() =>
+						new Promise<void>((resolve, rejectWrite) => {
+							settle = () =>
+								reject
+									? rejectWrite(new Error('offline'))
+									: resolve();
+						})
+				);
+				const { store } = renderBanner();
+				store.set(tourLaunchRequestAtom, {
+					tourId: ACCEPT,
+					mode: 'start',
+					requestedAt: 1
+				});
+				fireEvent.click(
+					screen.getByRole('button', { name: 'Übung beenden' })
+				);
+				expect(
+					versionedTourProgressRepository.saveProgress
+				).toHaveBeenCalledWith({
+					tourId: ACCEPT,
+					tourVersion: 1,
+					status: 'not_started'
+				});
+				expect(store.get(tourLaunchRequestAtom)).toBeNull();
+				await act(
+					() => new Promise<void>((resolve) => setTimeout(resolve, 0))
+				);
+				expect(isPracticeMode()).toBe(true);
+				await act(async () => {
+					settle();
+					await Promise.resolve();
+				});
+				expect(isPracticeMode()).toBe(false);
+			}
+		);
 		it('stops the tour host and leaves practice mode once the practice views drained', async () => {
 			const { store } = renderBanner();
 			store.set(tourLaunchRequestAtom, {

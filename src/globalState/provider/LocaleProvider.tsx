@@ -9,6 +9,25 @@ import useTenantTheming from '../../utils/useTenantTheming';
 import { LocaleContext, TLocaleContext } from '../context/LocaleContext';
 
 export const STORAGE_KEY_LOCALE = 'locale';
+// #1844: a language the person picked in a switcher during this tab session,
+// as opposed to one detected from the browser.
+const STORAGE_KEY_LOCALE_CHOSEN = 'localeChosen';
+
+export const markLocaleChosen = (locale: string) => {
+	try {
+		sessionStorage.setItem(STORAGE_KEY_LOCALE_CHOSEN, locale);
+	} catch {
+		// Storage can be blocked; the choice then only lasts for this screen.
+	}
+};
+
+export const getChosenLocale = (): string | null => {
+	try {
+		return sessionStorage.getItem(STORAGE_KEY_LOCALE_CHOSEN);
+	} catch {
+		return null;
+	}
+};
 
 /**
  * `init` reconfigures the shared i18n singleton. A tenant switch can start a

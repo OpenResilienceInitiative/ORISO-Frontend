@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { buildEmail, EMAIL_LOCALES } from './index';
 
 describe('required personal consent mail', () => {

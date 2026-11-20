@@ -382,16 +382,19 @@ export const createFakeRestBackend = ({
 			path: at(endpoints.agencyServiceBase, `/${PRACTICE_ID_SEGMENT}`),
 			handle: (_request, [, id]) =>
 				Number(id) === PRACTICE_AGENCY_ID
-					? ok({
-							id: PRACTICE_AGENCY_ID,
-							name: script.names.agency,
-							postcode: '00000',
-							city: '',
-							description: '',
-							teamAgency: true,
-							offline: false,
-							consultingType: practiceCase.session.consultingType
-						} satisfies AgencyService.Schemas.AgencyResponseDTO)
+					? ok([
+							{
+								id: PRACTICE_AGENCY_ID,
+								name: script.names.agency,
+								postcode: '00000',
+								city: '',
+								description: '',
+								teamAgency: true,
+								offline: false,
+								consultingType:
+									practiceCase.session.consultingType
+							} satisfies AgencyService.Schemas.AgencyResponseDTO
+						])
 					: null
 		},
 		// Drafts: every scope (including the shared index row) lives in memory

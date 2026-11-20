@@ -1,4 +1,8 @@
-import { substituteLegalLinks } from '../../../utils/consentText';
+import {
+	ConsentContext,
+	fillConsentPlaceholders,
+	substituteLegalLinks
+} from '../../../utils/consentText';
 import { resolveLegalContent } from '../../../utils/legalContent';
 
 /**
@@ -42,6 +46,8 @@ export interface EntryRoomConsentInput {
 	legalLinksHtml: string;
 	/** Reader's language, for a sentence served as a language map rather than plain HTML. */
 	locale: string;
+	/** Names for the tokens the public legal endpoint leaves raw. */
+	context?: ConsentContext;
 }
 
 export interface EntryRoomConsent {
@@ -70,7 +76,8 @@ export const resolveEntryRoomConsent = ({
 	platformHtml,
 	missingPolicyHtml,
 	legalLinksHtml,
-	locale
+	locale,
+	context = {}
 }: EntryRoomConsentInput): EntryRoomConsent => {
 	if (!hasDepartment) {
 		return { html: platformHtml, versionId: null, readable: true };
@@ -101,7 +108,10 @@ export const resolveEntryRoomConsent = ({
 	}
 
 	return {
-		html: substituteLegalLinks(resolved.html, legalLinksHtml),
+		html: substituteLegalLinks(
+			fillConsentPlaceholders(resolved.html, context),
+			legalLinksHtml
+		),
 		versionId: department.versionId,
 		readable: true
 	};

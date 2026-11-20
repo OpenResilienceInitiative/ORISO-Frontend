@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import * as React from 'react';
 import {
 	cleanup,
@@ -8,7 +8,14 @@ import {
 	waitFor
 } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import { Registration } from '../Registration';
 import {
 	AppConfigContext,
@@ -20,7 +27,10 @@ import {
 import { GlobalComponentContext } from '../../../globalState/provider/GlobalComponentContext';
 import { UrlParamsContext } from '../../../globalState/provider/UrlParamsProvider';
 import { INVITE_LOGIN_STATE } from './groupInviteEntryState';
-import { clearRegistrationSubmitting } from '../registrationSubmission';
+import {
+	clearRegistrationSubmitting,
+	setTemporaryAccountAwaitingLogin
+} from '../registrationSubmission';
 
 vi.mock('lottie-react', () => ({ default: () => null }));
 
@@ -55,18 +65,37 @@ vi.mock('../accountData/AccountData', () => ({
 }));
 
 const apiPostRegistration = vi.fn(() => Promise.resolve());
+const autoLoginWithDeadline = vi.fn(() => Promise.resolve());
 vi.mock('../../../api', async (importOriginal) => ({
 	...(await importOriginal<Record<string, unknown>>()),
 	apiPostRegistration: (...args: unknown[]) =>
 		(apiPostRegistration as any)(...args),
+	autoLoginWithDeadline: (...args: unknown[]) =>
+		(autoLoginWithDeadline as any)(...args),
 	apiGetAskerSessionList: () =>
 		Promise.resolve({ sessions: [{ session: { id: 211 } }] })
 }));
 
+/* UserService#1662: the circle's guest account mode, read before the entry
+   shows. Links without an invite token ask nothing (the old entry). */
+let circleMode: string | Promise<never> = 'GUEST_CHOOSES';
+const apiGetGroupInviteContext = vi.fn(() =>
+	typeof circleMode === 'string'
+		? Promise.resolve({ guestAccountMode: circleMode })
+		: circleMode
+);
+vi.mock('../../../api/apiGetGroupInviteContext', () => ({
+	apiGetGroupInviteContext: (...args: unknown[]) =>
+		(apiGetGroupInviteContext as any)(...args)
+}));
+
 const redirectToApp = vi.fn();
+const redirectToLogin = vi.fn();
+const addNotification = vi.fn();
 vi.mock('../autoLogin', async (importOriginal) => ({
 	...(await importOriginal<Record<string, unknown>>()),
-	redirectToApp: (...args: unknown[]) => redirectToApp(...args)
+	redirectToApp: (...args: unknown[]) => redirectToApp(...args),
+	redirectToLogin: (...args: unknown[]) => redirectToLogin(...args)
 }));
 
 /**
@@ -128,7 +157,7 @@ const renderAt = (
 				value={{ Stage: () => <div /> } as any}
 			>
 				<NotificationsContext.Provider
-					value={{ addNotification: () => undefined } as any}
+					value={{ addNotification } as any}
 				>
 					<TenantContext.Provider value={{ tenant: null } as any}>
 						<LocaleContext.Provider value={{ locale: 'de' } as any}>
@@ -184,9 +213,16 @@ const lastStage = () => stageProps[stageProps.length - 1];
 
 beforeEach(() => {
 	stepPick = null;
+	circleMode = 'GUEST_CHOOSES';
+	apiGetGroupInviteContext.mockClear();
 	stageProps.length = 0;
 	apiPostRegistration.mockClear();
+	autoLoginWithDeadline.mockClear();
 	redirectToApp.mockClear();
+	redirectToLogin.mockClear();
+	addNotification.mockClear();
+	// Document-lived like the submit flag; the mocked redirects never end it.
+	setTemporaryAccountAwaitingLogin(null);
 });
 
 afterEach(() => {
@@ -240,6 +276,33 @@ describe('newcomer entry for a self-help group link', () => {
 		expect(lastStage().loginState).toEqual(INVITE_LOGIN_STATE);
 	});
 
+	it('keeps a signed multi-topic circle invite when signing in from the steps', () => {
+		renderAt('?gcid=19.q2Vx8mK4TzJ1bR7n&aid=19', {
+			agency: { ...agency, topicIds: [17, 18] }
+		});
+
+		expect(screen.getByTestId('step-body')).toBeTruthy();
+		expect(lastStage().showLoginLink).toBe(true);
+		expect(lastStage().loginParams).toBe('gcid=19.q2Vx8mK4TzJ1bR7n&aid=19');
+		expect(lastStage().loginState).toEqual(INVITE_LOGIN_STATE);
+	});
+
+	it('keeps the circle invite when an agency is missing', () => {
+		renderAt('?gcid=19.q2Vx8mK4TzJ1bR7n');
+
+		expect(screen.getByTestId('step-body')).toBeTruthy();
+		expect(lastStage().loginParams).toBe('gcid=19.q2Vx8mK4TzJ1bR7n');
+		expect(lastStage().loginState).toEqual(INVITE_LOGIN_STATE);
+	});
+
+	it('keeps the ordinary registration sign-in free of invite state', () => {
+		renderAt('?gcid=invalid');
+
+		expect(screen.getByTestId('step-body')).toBeTruthy();
+		expect(lastStage().loginParams).toBeUndefined();
+		expect(lastStage().loginState).toBeUndefined();
+	});
+
 	it('joining registers at the group agency and hands the link on to the entry room', async () => {
 		renderAt('?gcid=19&aid=19');
 
@@ -270,6 +333,8 @@ describe('newcomer entry for a self-help group link', () => {
 
 	it('hands the invite token from the link on with the group', async () => {
 		renderAt('?gcid=19.q2Vx8mK4TzJ1bR7n&aid=19');
+		// UserService#1662: the entry waits for the circle's mode.
+		await screen.findByTestId('account-data');
 
 		fireEvent.click(primary());
 
@@ -302,6 +367,11 @@ describe('newcomer entry for a self-help group link', () => {
 		];
 		expect(body.agencyId).toBe('7');
 		expect(body).not.toHaveProperty('groupChatId');
+		// The app must not join the group the registration refused.
+		await waitFor(() => expect(redirectToApp).toHaveBeenCalled());
+		expect(redirectToApp).toHaveBeenCalledWith(undefined, {
+			sessionId: '211'
+		});
 	});
 
 	it('while joining, the screen speaks about the group, not about a counselling enquiry', async () => {
@@ -388,6 +458,8 @@ describe('newcomer entry for a self-help group link', () => {
 
 	it('a link with an invite token still registers a temporary account, and "Konto anlegen" a permanent one', async () => {
 		renderAt('?gcid=19.q2Vx8mK4TzJ1bR7n&aid=19');
+		// UserService#1662: the entry waits for the circle's mode.
+		await screen.findByTestId('account-data');
 		fireEvent.click(primary());
 		await waitFor(() => expect(apiPostRegistration).toHaveBeenCalled());
 		const [, temporaryBody] = apiPostRegistration.mock
@@ -399,6 +471,8 @@ describe('newcomer entry for a self-help group link', () => {
 		clearRegistrationSubmitting();
 		apiPostRegistration.mockClear();
 		renderAt('?gcid=19.q2Vx8mK4TzJ1bR7n&aid=19');
+		// UserService#1662: the entry waits for the circle's mode.
+		await screen.findByTestId('account-data');
 		fireEvent.click(secondary());
 		fireEvent.click(primary());
 		await waitFor(() => expect(apiPostRegistration).toHaveBeenCalled());
@@ -437,11 +511,11 @@ describe('newcomer entry for a self-help group link', () => {
 	   a link without `aid`, or another agency picked in the steps, is an
 	   ordinary registration and must not offer or send the temporary path. */
 	it.each([
-		['the link names no agency', '?gcid=19', 19],
-		['another agency was picked in the steps', '?gcid=19&aid=19', 7]
+		['the link names no agency', '?gcid=19', 19, true],
+		['another agency was picked in the steps', '?gcid=19&aid=19', 7, false]
 	])(
-		'offers no temporary join and never sends one when %s',
-		async (_, search, agencyId) => {
+		'offers no working temporary join and never sends one when %s',
+		async (_, search, agencyId, showsDisabledToggle) => {
 			renderAt(search, {
 				agency: { ...agency, id: agencyId, topicIds: [17, 18] },
 				mainTopic: grief,
@@ -450,9 +524,18 @@ describe('newcomer entry for a self-help group link', () => {
 				password: 'Minted-in-the-test-1'
 			});
 
-			expect(
-				document.querySelector('[data-cy="button-temporary-join"]')
-			).toBeNull();
+			const toggle = document.querySelector(
+				'[data-cy="button-temporary-join"]'
+			) as HTMLButtonElement | null;
+			if (showsDisabledToggle) {
+				// An incomplete link keeps the toggle, disabled and explained.
+				expect(toggle?.disabled).toBe(true);
+				expect(
+					document.querySelector('[data-cy="temporary-join-hint"]')
+				).not.toBeNull();
+			} else {
+				expect(toggle).toBeNull();
+			}
 			fireEvent.click(
 				document.querySelector(
 					'[data-cy="button-register"]'
@@ -556,5 +639,283 @@ describe('newcomer entry for a self-help group link', () => {
 		renderAt('');
 		expect(screen.queryByTestId('account-data')).toBeNull();
 		expect(screen.getByTestId('step-body')).toBeTruthy();
+	});
+});
+
+describe('a broken invite link fails safely (#921)', () => {
+	const refusal = (status: number, reason?: string) =>
+		new Response(null, {
+			status,
+			headers: reason ? { 'X-Reason': reason } : {}
+		});
+
+	it('a link whose gcid is not a group id opens no account step', () => {
+		renderAt('?gcid=19.&aid=19');
+
+		expect(screen.queryByTestId('account-data')).toBeNull();
+		expect(screen.queryByTestId('step-body')).toBeNull();
+		expect(screen.getByRole('alert').textContent).toContain(
+			'registration.groupInvite.invalid.headline'
+		);
+		expect(apiPostRegistration).not.toHaveBeenCalled();
+	});
+
+	it.each([
+		[403, undefined],
+		[404, undefined],
+		[400, 'GROUP_INVITE_INVALID']
+	])(
+		'a join the server refuses (%i %s) explains the link instead of a short generic error',
+		async (status, reason) => {
+			apiPostRegistration.mockImplementationOnce(() =>
+				Promise.reject(refusal(status, reason))
+			);
+			renderAt('?gcid=19.q2Vx8mK4TzJ1bR7n&aid=19');
+			// UserService#1662: the entry waits for the circle's mode.
+			await screen.findByTestId('account-data');
+
+			fireEvent.click(primary());
+
+			await waitFor(() =>
+				expect(screen.getByRole('alert').textContent).toContain(
+					'registration.groupInvite.invalid.headline'
+				)
+			);
+			expect(screen.queryByTestId('account-data')).toBeNull();
+			expect(addNotification).not.toHaveBeenCalled();
+			expect(redirectToApp).not.toHaveBeenCalled();
+		}
+	);
+
+	it.each([500, 400])(
+		'a server failure or plain validation error (%i) keeps the form and the generic error',
+		async (status) => {
+			apiPostRegistration.mockImplementationOnce(() =>
+				Promise.reject(refusal(status))
+			);
+			renderAt('?gcid=19.q2Vx8mK4TzJ1bR7n&aid=19');
+			// UserService#1662: the entry waits for the circle's mode.
+			await screen.findByTestId('account-data');
+
+			fireEvent.click(primary());
+
+			await waitFor(() => expect(addNotification).toHaveBeenCalled());
+			expect(screen.getByTestId('account-data')).toBeTruthy();
+			expect(screen.queryByRole('alert')).toBeNull();
+		}
+	);
+
+	it('the agency data-protection refusal keeps its own notice', async () => {
+		apiPostRegistration.mockImplementationOnce(() =>
+			Promise.reject(refusal(403, 'DPA_NEW_COUNSELLING_NOT_ALLOWED'))
+		);
+		renderAt('?gcid=19.q2Vx8mK4TzJ1bR7n&aid=19');
+		// UserService#1662: the entry waits for the circle's mode.
+		await screen.findByTestId('account-data');
+
+		fireEvent.click(primary());
+
+		await waitFor(() => expect(addNotification).toHaveBeenCalled());
+		expect(addNotification.mock.calls[0][0].id).toBe(
+			'counselling.dpa.restricted'
+		);
+		expect(screen.getByTestId('account-data')).toBeTruthy();
+	});
+
+	it('an ordinary registration refused by the server keeps the generic error', async () => {
+		apiPostRegistration.mockImplementationOnce(() =>
+			Promise.reject(refusal(400))
+		);
+		renderAt('?gcid=19&aid=19', {
+			agency: { ...agency, id: 7 },
+			mainTopic: grief,
+			zipcode: '10115',
+			username: 'ente_yuki_7984',
+			password: 'Minted-in-the-test-1'
+		});
+
+		fireEvent.click(
+			document.querySelector('[data-cy="button-register"]') as Element
+		);
+
+		await waitFor(() => expect(addNotification).toHaveBeenCalled());
+		expect(screen.queryByRole('alert')).toBeNull();
+	});
+});
+
+describe('a temporary join whose sign-in fails after the account exists (#1941)', () => {
+	/* `apiPostRegistration` reports the account through its callback, then
+	   the automatic sign-in gives up — on a slow connection after 20 s. */
+	const signInFailsAfterAccount = () =>
+		apiPostRegistration.mockImplementationOnce(((...args: unknown[]) => {
+			(args[4] as () => void)();
+			return Promise.reject(new Error('AUTO_LOGIN_TIMEOUT'));
+		}) as any);
+	const loginRetry = () =>
+		document.querySelector('[data-cy="group-invite-login-retry"]');
+
+	it('offers the sign-in again instead of a login that asks for a password nobody knows', async () => {
+		signInFailsAfterAccount();
+		renderAt('?gcid=19&aid=19');
+
+		fireEvent.click(primary());
+
+		await waitFor(() => expect(loginRetry()).toBeTruthy());
+		expect(redirectToLogin).not.toHaveBeenCalled();
+		expect(
+			screen.queryByTestId('account-data'),
+			'the name belongs to the new account now; asking it again ends in "already taken"'
+		).toBeNull();
+		expect(
+			screen.queryByTestId('registration-footer-secondary')
+		).toBeNull();
+		expect(primary().textContent).toBe('Der Gruppe beitreten');
+	});
+
+	it('the next press only signs in, with the same credentials, and enters the group', async () => {
+		signInFailsAfterAccount();
+		renderAt('?gcid=19&aid=19');
+		fireEvent.click(primary());
+		await waitFor(() => expect(loginRetry()).toBeTruthy());
+
+		fireEvent.click(primary());
+
+		await waitFor(() =>
+			expect(redirectToApp).toHaveBeenCalledWith('19', {
+				sessionId: '211'
+			})
+		);
+		expect(autoLoginWithDeadline).toHaveBeenCalledWith(
+			expect.objectContaining({
+				username: 'ente_yuki_7984',
+				password: 'Minted-in-the-test-1'
+			})
+		);
+		expect(
+			apiPostRegistration,
+			'never a second account for the same person'
+		).toHaveBeenCalledTimes(1);
+	});
+
+	it('a permanent account still goes to the login — its owner knows the password', async () => {
+		signInFailsAfterAccount();
+		renderAt('?gcid=19&aid=19');
+		fireEvent.click(secondary());
+
+		fireEvent.click(primary());
+
+		await waitFor(() => expect(redirectToLogin).toHaveBeenCalledTimes(1));
+		expect(loginRetry()).toBeNull();
+	});
+});
+
+describe('UserService#1662: the Gesprächskreis entry follows the circle’s guest account mode', () => {
+	const signedLink = '?gcid=19.q2Vx8mK4TzJ1bR7n&aid=19';
+	const registered = async () => {
+		await waitFor(() => expect(apiPostRegistration).toHaveBeenCalled());
+		const [, body] = apiPostRegistration.mock.calls[0] as unknown as [
+			string,
+			Record<string, unknown>
+		];
+		return body;
+	};
+	const multiTopic = {
+		agency: { ...agency, topicIds: [17, 18] },
+		mainTopic: grief,
+		zipcode: '00000',
+		username: 'ente_yuki_7984',
+		password: 'Minted-in-the-test-1'
+	};
+
+	it('waits for the mode instead of offering a way the server may refuse', () => {
+		circleMode = new Promise<never>(() => undefined);
+		renderAt(signedLink);
+
+		expect(screen.queryByTestId('account-data')).toBeNull();
+		expect(
+			document.querySelector('[data-cy="group-invite-loading"]')
+		).not.toBeNull();
+		expect(apiGetGroupInviteContext).toHaveBeenCalledWith(
+			19,
+			'19',
+			'q2Vx8mK4TzJ1bR7n'
+		);
+	});
+
+	it('TEMPORARY: only "Der Gruppe beitreten" without an account, no "Konto anlegen"', async () => {
+		circleMode = 'TEMPORARY';
+		renderAt(signedLink);
+
+		const account = await screen.findByTestId('account-data');
+		expect(account.dataset.temporary).toBe('true');
+		expect(primary().textContent).toBe('Der Gruppe beitreten');
+		expect(
+			screen.queryByTestId('registration-footer-secondary')
+		).toBeNull();
+		fireEvent.click(primary());
+		expect((await registered()).temporary).toBe(true);
+	});
+
+	it('PERMANENT: only an account with a password, no "Ohne Konto beitreten"', async () => {
+		circleMode = 'PERMANENT';
+		renderAt(signedLink);
+
+		const account = await screen.findByTestId('account-data');
+		expect(account.dataset.temporary).toBe('false');
+		expect(primary().textContent).toBe('registration.register');
+		expect(
+			screen.queryByTestId('registration-footer-secondary')
+		).toBeNull();
+		fireEvent.click(primary());
+		expect((await registered()).temporary).toBe(false);
+	});
+
+	it('GUEST_CHOOSES: opens without an account and offers "Konto anlegen"', async () => {
+		circleMode = 'GUEST_CHOOSES';
+		renderAt(signedLink);
+
+		const account = await screen.findByTestId('account-data');
+		expect(account.dataset.temporary).toBe('true');
+		expect(secondary().textContent).toBe('Konto anlegen');
+	});
+
+	it('the four-step fallback offers no temporary join for PERMANENT', async () => {
+		circleMode = 'PERMANENT';
+		renderAt(signedLink, multiTopic);
+
+		await waitFor(() =>
+			expect(apiGetGroupInviteContext).toHaveBeenCalled()
+		);
+		await waitFor(() =>
+			expect(
+				document.querySelector('[data-cy="button-register"]')
+			).not.toBeNull()
+		);
+		expect(
+			document.querySelector('[data-cy="button-temporary-join"]')
+		).toBeNull();
+		fireEvent.click(
+			document.querySelector('[data-cy="button-register"]') as HTMLElement
+		);
+		expect((await registered()).temporary).not.toBe(true);
+	});
+
+	it('the four-step fallback joins temporarily for TEMPORARY, with no toggle', async () => {
+		circleMode = 'TEMPORARY';
+		renderAt(signedLink, multiTopic);
+
+		await waitFor(() =>
+			expect(
+				document.querySelector('[data-cy="button-register"]')
+					?.textContent
+			).toContain('registration.account.temporary.join')
+		);
+		expect(
+			document.querySelector('[data-cy="button-temporary-join"]')
+		).toBeNull();
+		fireEvent.click(
+			document.querySelector('[data-cy="button-register"]') as HTMLElement
+		);
+		expect((await registered()).temporary).toBe(true);
 	});
 });

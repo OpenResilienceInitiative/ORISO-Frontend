@@ -30,6 +30,31 @@ export interface AppConfigInterface extends AppSettingsInterface {
 	};
 	groupChat?: GroupChatConfig;
 	/**
+	 * Settings the counselling centre makes once, for every call it hosts.
+	 */
+	calls?: {
+		/**
+		 * The backdrop world behind the call stage.
+		 *
+		 * The centre's choice, not a participant's: an advice seeker never
+		 * picks it, and a counsellor only from what the centre configured.
+		 * One of the presets `pond.js` defines — `teich`, `fluss`, `nebel`,
+		 * `glut`, `lichtung`, `strom`, `nacht`, `spirale`, `lagerfeuer`,
+		 * `ruhe`, `duene`. An unknown value falls back to the handoff's
+		 * default rather than rendering nothing, so a typo here costs a
+		 * backdrop and not a call.
+		 */
+		atmosphere?: string;
+		/**
+		 * Call design S2: the call draws minimise and full screen in its own
+		 * header and the host hides its corner buttons. On unless set to
+		 * `false` — the kill-switch for an Element Call image that does not
+		 * know `orisoHostChrome` yet and would otherwise show no way to
+		 * minimise.
+		 */
+		hostChrome?: boolean;
+	};
+	/**
 	 * Blocks accounts with the `consultant` realm role from the app login.
 	 * Default off: the block (PR #273) keys on the role every counsellor
 	 * carries and locks the whole professional side out of the platform.

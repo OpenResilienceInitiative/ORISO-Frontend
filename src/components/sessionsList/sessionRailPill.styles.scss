@@ -178,6 +178,13 @@ $rail-pill-padding: 3px;
 		}
 	}
 
+	// Carries the kind of the appointment, and stands out from the quiet marks:
+	// the colour of the split button it replaces in the ultra-thin list.
+	&__mark--appointment {
+		background: var(--m3-secondary-container, #646d78);
+		color: #fff;
+	}
+
 	// The house's unread language: a filled dot in the unread role — the same
 	// token the toolbar badge, the channel card, the FAB and the panel header
 	// use (supervisionPanel/README.md, "One unread role").
@@ -239,6 +246,40 @@ $rail-pill-padding: 3px;
 	padding: 0;
 	margin: 0;
 	list-style: none;
+}
+
+// The rail's search button (Frank, 2026-11-17): what is left of the search
+// pill in 80 px, as the rail of "Meine Termine" keeps its filter button. It
+// opens the column and focuses the search field.
+.sessionsList__railSearch {
+	display: inline-flex;
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	align-self: center;
+	width: 48px;
+	height: 48px;
+	margin: 0 auto 12px;
+	padding: 0;
+	border: 0;
+	border-radius: 24px;
+	background: var(--m3-surface-container-lowest, #ffffff);
+	color: var(--m3-on-surface-variant, #444748);
+	cursor: pointer;
+
+	&:hover {
+		background: var(--m3-hover-layer, #f9eff0);
+	}
+
+	// The same keyboard halo as the rail pills.
+	&:focus-visible {
+		@include list-item-focus-treatment;
+	}
+
+	svg {
+		width: 24px;
+		height: 24px;
+	}
 }
 
 // Tooltip — Frank, 10.09.2026: "einen Tooltip anhängen, quasi rechts."

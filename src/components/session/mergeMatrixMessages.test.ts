@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { mergeMatrixMessages } from './sessionHelpers';
 
 const msg = (id: string, tsMs: number, body = id) => ({

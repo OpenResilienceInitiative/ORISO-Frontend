@@ -1,5 +1,5 @@
 import { endpoints } from '../resources/scripts/endpoints';
-import { fetchData, FETCH_METHODS } from './fetchData';
+import { fetchData, FETCH_ERRORS, FETCH_METHODS } from './fetchData';
 
 export interface ChatOccurrence {
 	seriesId: number;
@@ -24,7 +24,8 @@ export const apiGetChatOccurrences = (
 	});
 	return fetchData({
 		url: `${endpoints.chatSeriesBase}${seriesId}/occurrences?${query}`,
-		method: FETCH_METHODS.GET
+		method: FETCH_METHODS.GET,
+		responseHandling: [FETCH_ERRORS.CATCH_ALL_WITH_RESPONSE]
 	});
 };
 

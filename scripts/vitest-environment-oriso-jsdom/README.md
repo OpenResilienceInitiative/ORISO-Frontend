@@ -1,0 +1,7 @@
+# ORISO jsdom verification environment
+
+Private, dev-only local npm environment package. The `oriso-jsdom` Vitest docblock selects this package; project default node and explicit node selections remain unchanged. It delegates the pinned public builtin jsdom environment and captures structured unhandled exceptions from construction through builtin teardown. It does not classify console text or claim all future asynchronous work is drained.
+
+Builtin jsdom options retain their values; the wrapper supplies an instrumented public VirtualConsole before construction. A caller-provided VirtualConsole is reused, including its listeners; otherwise pinned jsdom 24 default console forwarding is preserved. Only the owned capture listener is removed during cleanup. Invalid options remain failures. A docblock's options are keyed by `oriso-jsdom`; that own property is forwarded as `jsdom` without merging/changing values, matching pinned Vitest's docblock-replaces-project selection. If both keys are explicitly supplied, `oriso-jsdom` wins. No caller option object is mutated.
+
+Native failure also requires the normal verification reporter's public after-pool check and terminal process exit/artifact checks. Literal native case status is distinct from late run failure. VM environment setup is unsupported and fails rather than bypassing capture. Static collection/loader/native-ID parity and full CI are independent acceptance requirements.

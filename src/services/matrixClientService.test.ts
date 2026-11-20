@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import { DeviceIsolationModeKind } from 'matrix-js-sdk/lib/crypto-api';
 import {
 	clearPersistedMatrixDeviceId,
@@ -95,8 +95,10 @@ describe('MatrixClientService', () => {
 		mockedMatrixClient.initRustCrypto.mockImplementation(async () => {
 			callOrder.push('crypto');
 		});
-		mockedMatrixClient.on.mockImplementation(() => {
-			callOrder.push('listener');
+		mockedMatrixClient.on.mockImplementation((eventName: string) => {
+			// Crypto-event listeners (decryption retry) attach here too; the
+			// ordering contract is about the sync listener.
+			if (eventName === 'sync') callOrder.push('listener');
 		});
 		mockedMatrixClient.startClient.mockImplementation(() => {
 			callOrder.push('start');
@@ -933,6 +935,113 @@ describe('MatrixClientService', () => {
 		expect(sendMessage).toHaveBeenCalledOnce();
 	});
 
+	it('reports real uploaded bytes as a percentage', async () => {
+		const uploadContent = vi.fn(async (_blob, options) => {
+			options.progressHandler({ loaded: 25, total: 100 });
+			options.progressHandler({ loaded: 90, total: 100 });
+			return { content_uri: 'mxc://server/file' };
+		});
+		const { client } = createRefreshableClient({
+			uploadContent,
+			sendMessage: vi.fn().mockResolvedValue({ event_id: '$event' })
+		});
+		const service = new MatrixClientService();
+		setClient(service, client);
+		const uploadProgress = vi.fn();
+
+		await service.sendFileMessage(
+			'!room:matrix.localhost',
+			stubTextFile(),
+			{ uploadProgress }
+		);
+
+		expect(uploadProgress.mock.calls.map(([percent]) => percent)).toEqual([
+			25, 90, 100
+		]);
+	});
+
+	it('names a failed token refresh, so a 503 is not just an unknown error', async () => {
+		const uploadContent = vi.fn();
+		const { client } = createRefreshableClient({ uploadContent });
+		const service = new MatrixClientService();
+		setClient(service, client);
+		const cause = new Error('CATCH_ALL');
+		(
+			service as unknown as { ensureFreshToken: () => Promise<void> }
+		).ensureFreshToken = vi.fn().mockRejectedValue(cause);
+
+		await expect(
+			service.sendFileMessage('!room:matrix.localhost', stubTextFile())
+		).rejects.toMatchObject({
+			name: 'MatrixTokenUnavailableError',
+			cause
+		});
+		expect(uploadContent).not.toHaveBeenCalled();
+	});
+
+	it('does not upload when the send was cancelled before the first byte', async () => {
+		const uploadContent = vi.fn();
+		const { client } = createRefreshableClient({ uploadContent });
+		const service = new MatrixClientService();
+		setClient(service, client);
+		const abortController = new AbortController();
+		abortController.abort();
+
+		await expect(
+			service.sendFileMessage('!room:matrix.localhost', stubTextFile(), {
+				abortController
+			})
+		).rejects.toMatchObject({ name: 'AbortError' });
+		expect(uploadContent).not.toHaveBeenCalled();
+	});
+
+	it('sends no message when the cancel comes after the upload finished', async () => {
+		const abortController = new AbortController();
+		const sendMessage = vi.fn();
+		const { client } = createRefreshableClient({
+			uploadContent: vi.fn(async () => {
+				abortController.abort();
+				return { content_uri: 'mxc://server/file' };
+			}),
+			sendMessage
+		});
+		const service = new MatrixClientService();
+		setClient(service, client);
+
+		await expect(
+			service.sendFileMessage('!room:matrix.localhost', stubTextFile(), {
+				abortController
+			})
+		).rejects.toMatchObject({ name: 'AbortError' });
+		expect(sendMessage).not.toHaveBeenCalled();
+	});
+
+	it('drops the failed local echo, so a retry does not show the file twice', async () => {
+		const failedEcho = { getTxnId: () => '$txn' };
+		const cancelPendingEvent = vi.fn();
+		const { client } = createRefreshableClient({
+			uploadContent: vi
+				.fn()
+				.mockResolvedValue({ content_uri: 'mxc://server/file' }),
+			makeTxnId: () => '$txn',
+			sendMessage: vi.fn().mockRejectedValue(
+				Object.assign(new Error('gone'), {
+					httpStatus: 503,
+					event: failedEcho
+				})
+			),
+			cancelPendingEvent,
+			getRoom: () => null
+		});
+		const service = new MatrixClientService();
+		setClient(service, client);
+
+		await expect(
+			service.sendFileMessage('!room:matrix.localhost', stubTextFile())
+		).rejects.toMatchObject({ httpStatus: 503 });
+		expect(cancelPendingEvent).toHaveBeenCalledWith(failedEcho);
+	});
+
 	it('retries the whole file send on the replacement client after an expired token', async () => {
 		const expiredTokenError = {
 			errcode: 'M_UNKNOWN_TOKEN',
@@ -1017,6 +1126,131 @@ describe('MatrixClientService', () => {
 		);
 		expect(cancelPendingEvent).toHaveBeenCalledOnce();
 		expect(cancelPendingEvent).toHaveBeenCalledWith(failedLocalEcho);
+	});
+
+	it('sends answered passages as one event, uploading each clip encrypted first (ADR-022)', async () => {
+		const uploadContent = vi
+			.fn()
+			.mockResolvedValue({ content_uri: 'mxc://server/clip' });
+		const sendMessage = vi.fn().mockResolvedValue({ event_id: '$answer' });
+		const { client } = createRefreshableClient({
+			uploadContent,
+			sendMessage,
+			makeTxnId: () => 'txn-passages'
+		});
+		const service = new MatrixClientService();
+		setClient(service, client);
+		const clip = new File(['abc'], 'voice.webm', { type: 'audio/webm' });
+
+		await service.sendPassageReplies(
+			'!room:matrix.localhost',
+			[
+				{
+					eventId: '$m1',
+					author: 'Lena',
+					excerpt: 'drei Mahnungen',
+					text: 'Schauen wir an.'
+				},
+				{
+					eventId: '$m1',
+					author: 'Lena',
+					excerpt: 'Amtsgericht',
+					voice: { file: clip, durationMs: 4000 }
+				}
+			],
+			'Bis morgen.',
+			{ voice: (sec) => `[voice ${sec}]` }
+		);
+
+		expect(uploadContent).toHaveBeenCalledOnce();
+		expect(uploadContent.mock.calls[0][0]).toBe('encrypted-blob');
+		expect(sendMessage).toHaveBeenCalledOnce();
+		const [roomId, content, txnId] = sendMessage.mock.calls[0];
+		expect(roomId).toBe('!room:matrix.localhost');
+		expect(txnId).toBe('txn-passages');
+		expect(content['org.oriso.passage_replies']).toEqual([
+			{
+				event_id: '$m1',
+				author: 'Lena',
+				excerpt: 'drei Mahnungen',
+				text: 'Schauen wir an.'
+			},
+			{
+				event_id: '$m1',
+				author: 'Lena',
+				excerpt: 'Amtsgericht',
+				audio: {
+					file: {
+						key: {},
+						iv: 'iv',
+						hashes: {},
+						v: 'v2',
+						url: 'mxc://server/clip'
+					},
+					mimetype: 'audio/webm',
+					duration_ms: 4000,
+					size: 3
+				}
+			}
+		]);
+		expect(content['org.oriso.passage_replies_text']).toBe('Bis morgen.');
+	});
+
+	it('sends no passage answers when a clip upload fails', async () => {
+		const sendMessage = vi.fn();
+		const { client } = createRefreshableClient({
+			uploadContent: vi.fn().mockRejectedValue(new Error('upload')),
+			sendMessage
+		});
+		const service = new MatrixClientService();
+		setClient(service, client);
+
+		await expect(
+			service.sendPassageReplies(
+				'!room:matrix.localhost',
+				[
+					{
+						eventId: '$m1',
+						author: 'Lena',
+						excerpt: 'x',
+						voice: {
+							file: new File(['a'], 'v.webm', {
+								type: 'audio/webm'
+							}),
+							durationMs: 1000
+						}
+					}
+				],
+				'',
+				{ voice: () => '' }
+			)
+		).rejects.toThrow('upload');
+		expect(sendMessage).not.toHaveBeenCalled();
+	});
+
+	it('blurs a passage as an org.oriso.passage_blur event holding only the position (#2229)', async () => {
+		const sendEvent = vi.fn().mockResolvedValue({ event_id: '$blur' });
+		const client = { sendEvent };
+		const service = new MatrixClientService();
+		setClient(service, client);
+
+		await service.sendPassageBlur('!room:matrix.localhost', '$msg', {
+			start: 4,
+			length: 12
+		});
+
+		expect(sendEvent).toHaveBeenCalledWith(
+			'!room:matrix.localhost',
+			'org.oriso.passage_blur',
+			{
+				'm.relates_to': {
+					rel_type: 'org.oriso.passage_blur',
+					event_id: '$msg'
+				},
+				'start': 4,
+				'length': 12
+			}
+		);
 	});
 
 	it('edits a message via m.replace, targeting the original event', async () => {

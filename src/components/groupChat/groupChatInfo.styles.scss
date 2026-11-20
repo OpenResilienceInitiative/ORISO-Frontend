@@ -67,10 +67,16 @@ $inputMaxWidth: 500px;
 				}
 
 				&:hover {
-					fill: var(--m3-primary, $primary);
+					fill: var(
+						--oriso-primary-text,
+						var(--m3-primary, $primary)
+					);
 
 					svg path {
-						fill: var(--m3-primary, $primary);
+						fill: var(
+							--oriso-primary-text,
+							var(--m3-primary, $primary)
+						);
 					}
 				}
 			}

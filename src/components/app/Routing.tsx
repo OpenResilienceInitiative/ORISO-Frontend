@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { useContext, useMemo } from 'react';
+import { Suspense, useContext, useMemo } from 'react';
+import { Loading } from './Loading';
 import { Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { RouterConfigUser, RouterConfigConsultant } from './RouterConfig';
 import { AbsenceHandler } from './AbsenceHandler';
@@ -14,14 +15,22 @@ import { NavigationBar } from './NavigationBar';
 import { Header } from '../header/Header';
 import { ReleaseNote } from '../releaseNote/ReleaseNote';
 import { Walkthrough } from '../walkthrough/Walkthrough';
+import { TourLauncherFab } from '../productTour/launcher/TourLauncherFab';
 import { PracticeBanner } from '../../practice/PracticeBanner';
 import { PracticeSurface } from '../../practice/PracticeSurface';
 import { TwoFactorNag } from '../twoFactorAuth/TwoFactorNag';
 import { useAppConfig } from '../../hooks/useAppConfig';
-import { useAskerHasAssignedConsultant } from '../../containers/bookings/hooks/useAskerHasAssignedConsultant';
+import { useAskerHasAssignedConsultant } from '../../hooks/useAskerHasAssignedConsultant';
 import { TermsAndConditions } from '../termsandconditions/TermsAndConditions';
 import NotFound from '../notFound/NotFound';
 import { SessionsZone } from './SessionsZone';
+import { LocaleContext } from '../../globalState';
+import {
+	useAddonRegistry,
+	useAddonRegistryLoader
+} from '../../addons/addonRegistry';
+import { addonNavigationItems } from '../../addons/addonNavigation';
+import { AddonPage } from '../../addons/AddonPage';
 import { toV7Paths } from '../../utils/routeHelpers';
 
 interface RoutingProps {
@@ -34,13 +43,33 @@ export const Routing = (props: RoutingProps) => {
 	const { userData } = useContext(UserDataContext);
 	const { consultingTypes } = useContext(ConsultingTypesContext);
 	const hasAssignedConsultant = useAskerHasAssignedConsultant();
+	const { locale } = useContext(LocaleContext);
+	useAddonRegistryLoader(userData?.userId);
+	const addonRegistry = useAddonRegistry();
 
 	const routerConfig = useMemo(() => {
-		if (hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)) {
-			return RouterConfigConsultant(settings);
-		}
-		return RouterConfigUser(settings, hasAssignedConsultant);
-	}, [userData, settings, hasAssignedConsultant]);
+		const consultant = hasUserAuthority(
+			AUTHORITIES.CONSULTANT_DEFAULT,
+			userData
+		);
+		const base = consultant
+			? RouterConfigConsultant(settings)
+			: RouterConfigUser(settings, hasAssignedConsultant);
+		const addonItems = addonNavigationItems(
+			addonRegistry.addons,
+			consultant ? 'consultant.navigation' : 'asker.navigation',
+			locale
+		);
+		return addonItems.length === 0
+			? base
+			: { ...base, navigation: [...base.navigation, ...addonItems] };
+	}, [
+		userData,
+		settings,
+		hasAssignedConsultant,
+		addonRegistry.addons,
+		locale
+	]);
 
 	const isConsultant = hasUserAuthority(
 		AUTHORITIES.CONSULTANT_DEFAULT,
@@ -83,6 +112,7 @@ export const Routing = (props: RoutingProps) => {
 					<>
 						<Walkthrough />
 						<PracticeBanner />
+						<TourLauncherFab />
 						<E2EEProvider>
 							<div
 								className={`app__wrapper ${
@@ -159,10 +189,12 @@ export const Routing = (props: RoutingProps) => {
 							key={`booking-${path}`}
 							path={rel(path)}
 							element={
-								<div className="contentWrapper__booking">
-									<route.component
-										type={route.type || null}
-									/>
+								<div className="contentWrapper__calendar">
+									<Suspense fallback={<Loading />}>
+										<route.component
+											type={route.type || null}
+										/>
+									</Suspense>
 								</div>
 							}
 						/>
@@ -184,6 +216,15 @@ export const Routing = (props: RoutingProps) => {
 						/>
 					))
 				)}
+
+				<Route
+					path="addons/:addonName/:appId"
+					element={
+						<div className="contentWrapper__addon">
+							<AddonPage />
+						</div>
+					}
+				/>
 
 				{/* Temporary route for 404 page testing */}
 				<Route path="404" element={<NotFound />} />

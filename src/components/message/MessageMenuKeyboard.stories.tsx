@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import messageMeta, { GroupIncoming } from './MessageItemComponent.stories';
 import { mockUserData } from './MessageItemComponent.mocks';

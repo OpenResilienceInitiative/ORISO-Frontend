@@ -23,18 +23,28 @@ export const useUnreadVersion = (): number => {
 	const [version, setVersion] = useState(0);
 
 	useEffect(() => {
-		const client = service?.getClient?.();
-		if (!client) {
-			return undefined;
-		}
-
 		const bump = () => setVersion((current) => current + 1);
-		client.on(RoomEvent.UnreadNotifications as any, bump);
-		client.on(RoomEvent.Receipt as any, bump);
+		let client: ReturnType<NonNullable<typeof service>['getClient']> = null;
+		const detach = () => {
+			client?.removeListener(RoomEvent.UnreadNotifications as any, bump);
+			client?.removeListener(RoomEvent.Receipt as any, bump);
+		};
+		const bindCurrentClient = () => {
+			const next = service?.getClient?.() ?? null;
+			if (next === client) return;
+			detach();
+			client = next;
+			client?.on(RoomEvent.UnreadNotifications as any, bump);
+			client?.on(RoomEvent.Receipt as any, bump);
+			// A replacement may already hold unread state before another event.
+			bump();
+		};
+		const unsubscribe = service?.onClientChange?.(bindCurrentClient);
+		bindCurrentClient();
 
 		return () => {
-			client.removeListener(RoomEvent.UnreadNotifications as any, bump);
-			client.removeListener(RoomEvent.Receipt as any, bump);
+			unsubscribe?.();
+			detach();
 		};
 	}, [service]);
 

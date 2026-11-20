@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import React from 'react';
 import {
 	act,
@@ -8,7 +8,7 @@ import {
 	waitFor
 } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { afterEach, expect, it, vi } from 'vitest';
+import { afterEach, expect, it, vi } from 'vite-plus/test';
 import { SessionsList } from './SessionsList';
 import {
 	SessionsDataContext,
@@ -53,7 +53,10 @@ vi.mock('../displayFilter', async (importOriginal) => ({
 }));
 afterEach(() => cleanup());
 
-function renderEnquiries(dispatch = vi.fn()) {
+function renderEnquiries(
+	dispatch = vi.fn(),
+	type = SESSION_LIST_TYPES.ENQUIRY
+) {
 	return render(
 		<MemoryRouter initialEntries={['/sessions/consultant/sessionPreview']}>
 			<UserDataContext.Provider
@@ -67,7 +70,7 @@ function renderEnquiries(dispatch = vi.fn()) {
 				<SessionTypeContext.Provider
 					value={
 						{
-							type: SESSION_LIST_TYPES.ENQUIRY,
+							type,
 							path: '/sessions/consultant/sessionPreview'
 						} as any
 					}
@@ -209,3 +212,94 @@ it('reconciles on reconnect and coalesces repeated wake-ups without aborting the
 	await act(async () => finish({ sessions: [], total: 0 }));
 	await waitFor(() => expect(getList).toHaveBeenCalledTimes(3));
 });
+
+it('does not restore a finished conversation when an older live refresh resolves after the feed refresh', async () => {
+	getList.mockReset();
+	getList.mockResolvedValue({ sessions: [], total: 0 });
+	const dispatch = vi.fn();
+	const view = renderEnquiries(dispatch, SESSION_LIST_TYPES.MY_SESSION);
+	await waitFor(() =>
+		expect(view.container.querySelector('.skeleton')).toBeNull()
+	);
+	let older!: (value: unknown) => void;
+	let newer!: (value: unknown) => void;
+	getList.mockReturnValueOnce(
+		new Promise((resolve) => {
+			older = resolve;
+		})
+	);
+	getList.mockReturnValueOnce(
+		new Promise((resolve) => {
+			newer = resolve;
+		})
+	);
+	const initialRequests = getList.mock.calls.length;
+	act(() => messageEventEmitter.emit({ roomId: '!finished:oriso' }));
+	act(() =>
+		messageEventEmitter.emit({
+			refreshSessionList: true,
+			source: 'notification-feed'
+		})
+	);
+	await waitFor(() =>
+		expect(getList).toHaveBeenCalledTimes(initialRequests + 2)
+	);
+	dispatch.mockClear();
+	await act(async () => newer({ sessions: [], total: 0 }));
+	expect(dispatch).toHaveBeenCalledTimes(1);
+	await act(async () =>
+		older({
+			sessions: [
+				{ session: { id: 99, matrixRoomId: '!finished:oriso' } }
+			],
+			total: 1
+		})
+	);
+	expect(dispatch).toHaveBeenCalledTimes(1);
+	expect(dispatch.mock.calls[0][0].sessions).toEqual([]);
+});
+
+/*
+ * #2136: on a counsellor's "Gespräch" list a live refresh (a Matrix message
+ * from a room the list does not hold yet) replaces the first page request
+ * while it is still loading. The replaced request may no longer touch the
+ * loading state, so the refresh has to clear it; otherwise a skeleton card
+ * stays below the real rows as an empty "ghost chat" until the next reload.
+ */
+it.each(['abort', 'late-success', 'late-failure'])(
+	'clears the loading card when a live refresh replaces the first counsellor page (%s)',
+	async (settlement) => {
+		getList.mockReset();
+		getList.mockResolvedValue({ sessions: [], total: 0 });
+		let finish!: (value: { sessions: []; total: number }) => void;
+		let fail!: (error: Error) => void;
+		getList.mockReturnValueOnce(
+			new Promise((resolve, reject) => {
+				finish = resolve;
+				fail = reject;
+			})
+		);
+		const view = renderEnquiries(vi.fn(), SESSION_LIST_TYPES.MY_SESSION);
+		await waitFor(() => expect(getList).toHaveBeenCalledTimes(1));
+		expect(view.container.querySelector('.skeleton')).not.toBeNull();
+		let finishRefresh!: (value: { sessions: []; total: number }) => void;
+		getList.mockReturnValueOnce(
+			new Promise((resolve) => {
+				finishRefresh = resolve;
+			})
+		);
+
+		act(() => messageEventEmitter.emit({ roomId: '!unknown:oriso' }));
+		await waitFor(() => expect(getList).toHaveBeenCalledTimes(2));
+		await act(async () => {
+			if (settlement === 'late-success')
+				finish({ sessions: [], total: 999 });
+			else
+				fail(new Error(settlement === 'abort' ? 'ABORT' : 'CATCH_ALL'));
+		});
+		expect(view.container.querySelector('.skeleton')).not.toBeNull();
+
+		await act(async () => finishRefresh({ sessions: [], total: 0 }));
+		expect(view.container.querySelector('.skeleton')).toBeNull();
+	}
+);

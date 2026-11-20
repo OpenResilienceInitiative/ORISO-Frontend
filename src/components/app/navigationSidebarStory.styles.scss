@@ -1,0 +1,26 @@
+.navigationSidebarStory.app__wrapper {
+	display: flex;
+	flex-direction: var(--storybook-navigation-direction);
+	width: var(--storybook-navigation-width);
+	max-width: var(--storybook-navigation-max-width);
+	height: var(--storybook-navigation-height);
+	min-height: var(--storybook-navigation-min-height);
+	overflow: hidden;
+	background: var(--m3-surface-container-high, #eae7e8);
+
+	.navigation__wrapper {
+		width: var(--storybook-navigation-width);
+		height: var(--storybook-navigation-menu-height);
+	}
+
+	@media (width < #{$fromLarge}) {
+		flex-direction: column;
+		width: 100%;
+		height: var(--storybook-navigation-mobile-height);
+		min-height: 0;
+
+		.navigation__wrapper {
+			width: 100%;
+		}
+	}
+}

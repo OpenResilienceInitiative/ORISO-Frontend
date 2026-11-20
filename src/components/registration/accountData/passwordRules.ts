@@ -1,9 +1,13 @@
-import { hasNumber, hasSpecialChar } from '../../../utils/validateInputValue';
+import {
+	PASSWORD_MIN_LENGTH,
+	hasNumber,
+	hasSpecialChar
+} from '../../../utils/validateInputValue';
 
 export const passwordCriteria = [
 	{
 		info: 'registration.account.password.criteria1',
-		validation: (val: string) => val.length >= 16
+		validation: (val: string) => val.length >= PASSWORD_MIN_LENGTH
 	},
 	{
 		info: 'registration.account.password.criteria2',

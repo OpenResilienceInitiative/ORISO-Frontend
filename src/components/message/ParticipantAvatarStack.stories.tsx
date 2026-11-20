@@ -138,23 +138,252 @@ export const OverflowPlusN: Story = {
 			'[data-cy="participant-overflow"]'
 		)!;
 		await expect(chip.textContent).toBe('+2');
-		// The chip is part of the flow: one 28 px step after the last avatar
-		// and fully inside the stack's own box (nothing after the stack can
-		// be painted over).
+		// The chip must start beyond the last full avatar, so an overlapping
+		// avatar never paints over the leading "+" (including phone density).
 		const last = avatars[3].getBoundingClientRect();
 		const chipRect = chip.getBoundingClientRect();
 		const stack = canvasElement
 			.querySelector('[data-cy="participant-stack"]')!
 			.getBoundingClientRect();
-		await expect(Math.round(chipRect.left - last.left)).toBe(STACK_STEP);
+		await expect(chipRect.left).toBeGreaterThanOrEqual(last.right - 0.5);
 		await expect(chipRect.right).toBeLessThanOrEqual(stack.right + 0.5);
 		await expect(getComputedStyle(chip).position).not.toBe('absolute');
 	}
 };
 
+/** `total` participants: the three named ones, then generated names. */
+const crowd = (total: number): StackParticipant[] =>
+	[
+		client,
+		counsellor,
+		supervisor,
+		...Array.from({ length: Math.max(0, total - 3) }, (_, i) => ({
+			userId: `@gast${i}:oriso.invalid`,
+			displayName: `Gast ${i + 1}`
+		}))
+	].slice(0, total);
+
 /**
- * 32 px library variant (Figma master 7608:40689 draws 32 px avatars at a
- * 20 px step — the same 12 px overlap as the 40 px header group).
+ * Design options for the "+N" chip on the conversation card (maxVisible 2),
+ * shown at 40px and at the larger 48px group-chat size. D (badge on the last
+ * avatar, chosen for the card) and E (grey speech bubble) are real
+ * `overflowStyle` values and open the list of the folded people; A–C are
+ * local CSS experiments that stay here.
+ */
+const OVERFLOW_VARIANT_CSS = `
+.ovf { display:flex; align-items:center; gap:36px; padding:16px 0; }
+.ovf__label { width:210px; font:600 13px/1.3 Inter,system-ui,sans-serif; color:#3b3b3b; }
+.ovf__label small { display:block; font-weight:400; color:#6b6b6b; }
+/* B: round chip, same size as the avatars — reads as one more avatar */
+.ovf--round .participantStack__overflow { padding:0; min-width:var(--participant-size); border-radius:50%; font-size:15px; }
+/* C: outlined — quiet, no second pink blob next to the avatars */
+.ovf--outline .participantStack__overflow { padding:0; min-width:var(--participant-size); border-radius:50%;
+  background:transparent; box-shadow:none; border:2px dashed var(--m3-primary-fixed-dim,#ffb4aa); font-size:15px; }
+`;
+
+export const OverflowChipVariants: Story = {
+	name: '"+N" chip — design options for the card',
+	args: { participants: crowd(3) },
+	render: () => {
+		const rows: [string, string, string, 'pill' | 'badge' | 'bubble'][] = [
+			['ovf--now', 'A · Aktuell', 'rosa Pille, Text off-center', 'pill'],
+			['ovf--round', 'B · Runder Chip', 'wie ein vierter Avatar', 'pill'],
+			[
+				'ovf--outline',
+				'C · Gestrichelter Kreis',
+				'leise, „da ist noch mehr“',
+				'pill'
+			],
+			[
+				'ovf--badge',
+				'D · Badge am Avatar (gewählt)',
+				'braucht keine Breite, klickbar',
+				'badge'
+			],
+			[
+				'ovf--bubble',
+				'E · Graue Sprechblase',
+				'klickbar, braucht etwas Breite',
+				'bubble'
+			]
+		];
+		return (
+			<div>
+				<style>{OVERFLOW_VARIANT_CSS}</style>
+				{rows.map(([cls, title, note, overflowStyle]) => (
+					<div key={cls} className={`ovf ${cls}`}>
+						<div className="ovf__label">
+							{title}
+							<small>{note}</small>
+						</div>
+						<ParticipantAvatarStack
+							participants={crowd(3)}
+							size={40}
+							maxVisible={2}
+							overflowStyle={overflowStyle}
+						/>
+						<ParticipantAvatarStack
+							participants={crowd(3)}
+							size={48}
+							overlap={24}
+							maxVisible={2}
+							overflowStyle={overflowStyle}
+						/>
+						<ParticipantAvatarStack
+							participants={crowd(14)}
+							size={48}
+							overlap={24}
+							maxVisible={2}
+							overflowStyle={overflowStyle}
+						/>
+					</div>
+				))}
+			</div>
+		);
+	}
+};
+
+/** Every count the chip can show: 1, 2, 12, 99 and 100+ ("99+"). */
+export const OverflowCounts: Story = {
+	name: '"+N" badge — counts from +1 to 99+',
+	args: { participants: crowd(3) },
+	render: () => (
+		<div style={{ display: 'flex', gap: 48, padding: 16 }}>
+			{[3, 4, 14, 101, 150].map((total) => (
+				<div key={total}>
+					<ParticipantAvatarStack
+						participants={crowd(total)}
+						size={48}
+						overlap={24}
+						maxVisible={2}
+						overflowStyle="badge"
+					/>
+				</div>
+			))}
+		</div>
+	),
+	play: async ({ canvasElement }) => {
+		const chips = [
+			...canvasElement.querySelectorAll<HTMLElement>(
+				'[data-cy="participant-overflow"]'
+			)
+		].map((chip) => chip.textContent);
+		await expect(chips).toEqual(['+1', '+2', '+12', '+99', '99+']);
+	}
+};
+
+/** Click the badge: the folded people open as a list, Escape closes it. */
+export const OverflowBadgeOpensList: Story = {
+	name: '"+N" badge — click opens the list of people',
+	args: { participants: crowd(3) },
+	render: () => (
+		// Stands in for the clickable card; a role-less wrapper keeps the
+		// story clear of the card's own nested-interactive finding.
+		<div
+			style={{ padding: 24, width: 260 }}
+			onClick={() => ((window as any).__cardClicked = true)}
+		>
+			<ParticipantAvatarStack
+				participants={crowd(6)}
+				size={48}
+				overlap={24}
+				maxVisible={2}
+				overflowStyle="badge"
+			/>
+		</div>
+	),
+	play: async ({ canvasElement }) => {
+		// The badge overlaps the last avatar and stays on top while it is hovered.
+		const items = canvasElement.querySelectorAll<HTMLElement>(
+			'.participantStack__item'
+		);
+		const badgeItem = canvasElement.querySelector<HTMLElement>(
+			'.participantStack__item--overflow'
+		)!;
+		const lastAvatar = items[items.length - 2];
+		await userEvent.hover(lastAvatar);
+		await waitFor(() =>
+			expect(Number(lastAvatar.style.zIndex)).toBeLessThan(
+				Number(badgeItem.style.zIndex)
+			)
+		);
+		await userEvent.unhover(lastAvatar);
+
+		(window as any).__cardClicked = false;
+		const chip = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="participant-overflow"]'
+		)!;
+		await expect(chip.getAttribute('aria-expanded')).toBe('false');
+		await userEvent.click(chip);
+
+		const list = await waitFor(() => {
+			const el = document.querySelector<HTMLElement>(
+				'[data-cy="participant-overflow-list"]'
+			);
+			if (!el) throw new Error('list not open');
+			return el;
+		});
+		await expect(chip.getAttribute('aria-expanded')).toBe('true');
+		// The four folded people, in stack order, named.
+		await expect(
+			[...list.querySelectorAll('li')].map((li) =>
+				li.lastElementChild?.textContent?.trim()
+			)
+		).toEqual(['Bettina B.', 'Gast 1', 'Gast 2', 'Gast 3']);
+		// Opening it must not click through to the card around it.
+		await expect((window as any).__cardClicked).toBe(false);
+		// Keyboard users land in the list, and scrolling it keeps it open.
+		await waitFor(() => expect(document.activeElement).toBe(list));
+		list.dispatchEvent(new Event('scroll'));
+		await expect(
+			document.querySelector('[data-cy="participant-overflow-list"]')
+		).toBe(list);
+		// Tab closes it and continues from the badge, not from the portal:
+		// Shift+Tab lands on the avatar right before the badge. Real browser
+		// keys: the simulated Tab cannot follow focus out of a removed node.
+		const browser = await import('@vitest/browser/context');
+		await browser.userEvent.keyboard('{Shift>}{Tab}{/Shift}');
+		await waitFor(() =>
+			expect(
+				document.querySelector('[data-cy="participant-overflow-list"]')
+			).toBeNull()
+		);
+		const avatars = canvasElement.querySelectorAll<HTMLElement>(
+			'[data-cy="participant-avatar"]'
+		);
+		await expect(document.activeElement).toBe(avatars[avatars.length - 1]);
+
+		// A scroll outside closes it and hands focus back to the badge.
+		await userEvent.click(chip);
+		const reopened = await waitFor(() => {
+			const el = document.querySelector<HTMLElement>(
+				'[data-cy="participant-overflow-list"]'
+			);
+			if (!el) throw new Error('list not open');
+			return el;
+		});
+		await waitFor(() => expect(document.activeElement).toBe(reopened));
+		window.dispatchEvent(new Event('scroll'));
+		await waitFor(() => expect(document.activeElement).toBe(chip));
+		await userEvent.click(chip);
+		await waitFor(() =>
+			expect(
+				document.querySelector('[data-cy="participant-overflow-list"]')
+			).not.toBeNull()
+		);
+
+		await userEvent.keyboard('{Escape}');
+		await waitFor(() =>
+			expect(
+				document.querySelector('[data-cy="participant-overflow-list"]')
+			).toBeNull()
+		);
+		await expect(document.activeElement).toBe(chip);
+	}
+};
+
+/**
+ * Preserve the existing 32 px card geometry independently of the header.
  */
 export const Size32: Story = {
 	name: '32 px variant — same 12 px overlap',
@@ -170,5 +399,129 @@ export const Size32: Story = {
 			stackStepFor(32)
 		);
 		await expect(stackStepFor(32)).toBe(20);
+	}
+};
+
+/** Current Figma Avatar Group (7608:40689): 48px circles, 24px overlap. */
+export const Header48: Story = {
+	args: { ...ThreeParticipants.args, size: 48, overlap: 24 },
+	play: async ({ canvasElement }) => {
+		const avatars = canvasElement.querySelectorAll<HTMLElement>(
+			'[data-cy="participant-avatar"]'
+		);
+		const first = avatars[0].getBoundingClientRect();
+		const second = avatars[1].getBoundingClientRect();
+		await expect(Math.round(first.width)).toBe(48);
+		await expect(Math.round(first.right - second.left)).toBe(24);
+		const secondItem = avatars[1].parentElement!;
+		await userEvent.hover(avatars[1]);
+		await waitFor(() =>
+			expect(Number(getComputedStyle(secondItem).zIndex)).toBeGreaterThan(
+				Number(getComputedStyle(avatars[0].parentElement!).zIndex)
+			)
+		);
+		// The full face is painted above the preceding coin without shifting it.
+		await expect(
+			avatars[1].contains(
+				document.elementFromPoint(second.left + 4, second.top + 24)
+			)
+		).toBe(true);
+		await expect(avatars[1].getBoundingClientRect().left).toBe(second.left);
+		await userEvent.unhover(avatars[1]);
+		await waitFor(() =>
+			expect(Number(getComputedStyle(secondItem).zIndex)).toBeLessThan(
+				Number(getComputedStyle(avatars[0].parentElement!).zIndex)
+			)
+		);
+	}
+};
+
+/** The card's 32px avatars and compact phone chip must not obscure "+25". */
+export const Overflow32Phone: Story = {
+	name: '32px phone overflow — complete +25 stays clear of avatars',
+	globals: { viewport: { value: 'phone390' } },
+	args: {
+		participants: Array.from({ length: 27 }, (_, index) => ({
+			userId: `@person-${index}:oriso.invalid`,
+			displayName: `Person ${index + 1}`
+		})),
+		size: 32,
+		maxVisible: 2
+	},
+	play: async ({ canvasElement }) => {
+		const avatars = canvasElement.querySelectorAll(
+			'[data-cy="participant-avatar"]'
+		);
+		const chip = canvasElement.querySelector(
+			'[data-cy="participant-overflow"]'
+		)!;
+		await expect(chip).toHaveTextContent('+25');
+		await expect(chip.getBoundingClientRect().left).toBeGreaterThanOrEqual(
+			avatars[avatars.length - 1].getBoundingClientRect().right - 0.5
+		);
+	}
+};
+
+export const Overflow40Phone: Story = {
+	name: '40px phone overflow — complete +5 stays clear of avatars',
+	globals: { viewport: { value: 'phone390' } },
+	args: { ...OverflowPlusN.args, maxVisible: 1 },
+	play: async ({ canvasElement }) => {
+		const avatar = canvasElement.querySelector(
+			'[data-cy="participant-avatar"]'
+		)!;
+		const chip = canvasElement.querySelector(
+			'[data-cy="participant-overflow"]'
+		)!;
+		await expect(chip).toHaveTextContent('+5');
+		await expect(chip.getBoundingClientRect().left).toBeGreaterThanOrEqual(
+			avatar.getBoundingClientRect().right - 0.5
+		);
+	}
+};
+
+/** Hover-only users can dismiss a name without first focusing the avatar. */
+export const HoverEscape: Story = {
+	args: ThreeParticipants.args,
+	play: async ({ canvasElement }) => {
+		const avatar = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="participant-avatar"]'
+		)!;
+		const tip = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="participant-tooltip"]'
+		)!;
+		await userEvent.hover(avatar);
+		await waitFor(() => expect(tip).toBeVisible());
+		await userEvent.keyboard('{Escape}');
+		await waitFor(() => expect(tip).not.toBeVisible());
+		await expect(tip).toHaveAttribute('aria-hidden', 'true');
+		await userEvent.unhover(avatar);
+		await userEvent.hover(avatar);
+		await waitFor(() => expect(tip).toBeVisible());
+		await userEvent.unhover(avatar);
+	}
+};
+
+/** A tooltip remains available while either its avatar is hovered or focused. */
+export const MixedHoverAndFocus: Story = {
+	args: ThreeParticipants.args,
+	play: async ({ canvasElement }) => {
+		const avatars = canvasElement.querySelectorAll<HTMLElement>(
+			'[data-cy="participant-avatar"]'
+		);
+		const tips = canvasElement.querySelectorAll<HTMLElement>(
+			'[data-cy="participant-tooltip"]'
+		);
+		avatars[0].focus();
+		await userEvent.hover(avatars[1]);
+		await waitFor(() => expect(tips[1]).toBeVisible());
+		await userEvent.unhover(avatars[1]);
+		await waitFor(() => expect(tips[0]).toBeVisible());
+		await userEvent.hover(avatars[0]);
+		avatars[0].blur();
+		await waitFor(() => expect(tips[0]).toBeVisible());
+		await userEvent.keyboard('{Escape}');
+		await waitFor(() => expect(tips[0]).not.toBeVisible());
+		await userEvent.unhover(avatars[0]);
 	}
 };

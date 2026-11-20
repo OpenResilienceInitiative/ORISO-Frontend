@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import React from 'react';
 import {
 	cleanup,
@@ -7,7 +7,7 @@ import {
 	screen,
 	within
 } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import type { TourDefinition } from '../components/productTour/types';
 import { PracticeCards } from './PracticeCards';
 
@@ -141,7 +141,8 @@ describe('PracticeCards', () => {
 		});
 		const accept = await card('Anfrage annehmen');
 
-		expect(within(accept).getByText('In Bearbeitung')).toBeTruthy();
+		expect(within(accept).getByText('Nicht gestartet')).toBeTruthy();
+		expect(within(accept).queryByText('In Bearbeitung')).toBeNull();
 		expect(
 			within(accept).queryByRole('button', { name: /fortsetzen/i })
 		).toBeNull();

@@ -1984,6 +1984,62 @@
 					"preheader": "Korunan geçmişi açmak için giriş yapın."
 				}
 			}
+		},
+		"calendar-move-proposal": {
+			"audience": "consultant",
+			"class": "operational",
+			"unsubscribable": true,
+			"placeholders": [
+				"{{proposerName}}",
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
+				"{{currentDate}}",
+				"{{currentTime}}",
+				"{{proposedDate}}",
+				"{{proposedTime}}",
+				"{{calendarUrl}}",
+				"{{settingsUrl}}",
+				"{{privacyUrl}}",
+				"{{imprintUrl}}",
+				"{{unsubscribeUrl}}"
+			],
+			"tones": {
+				"de-sie": {
+					"lang": "de",
+					"subject": "Vorschlag: Termin verschieben",
+					"preheader": "{{proposerName}} schlägt eine neue Zeit für einen Ihrer Termine vor."
+				},
+				"de-du": {
+					"lang": "de",
+					"subject": "Vorschlag: Termin verschieben",
+					"preheader": "{{proposerName}} schlägt eine neue Zeit für einen deiner Termine vor."
+				},
+				"en": {
+					"lang": "en",
+					"subject": "Proposal: move an appointment",
+					"preheader": "{{proposerName}} suggests a new time for one of your appointments."
+				},
+				"fr": {
+					"lang": "fr",
+					"subject": "Proposition : déplacer un rendez-vous",
+					"preheader": "{{proposerName}} propose un nouvel horaire pour l’un de vos rendez-vous."
+				},
+				"ru": {
+					"lang": "ru",
+					"subject": "Предложение перенести встречу",
+					"preheader": "{{proposerName}} предлагает новое время для одной из Ваших встреч."
+				},
+				"ti": {
+					"lang": "ti",
+					"subject": "ሓሳብ ምቕያር ግዜ ቆጸራ",
+					"preheader": "{{proposerName}} ንሓደ ካብ ቆጸራታትኩም ሓድሽ ግዜ የቕርብ ኣሎ።"
+				},
+				"tr": {
+					"lang": "tr",
+					"subject": "Randevu için yeni zaman önerisi",
+					"preheader": "{{proposerName}}, randevularınızdan biri için yeni bir zaman öneriyor."
+				}
+			}
 		}
 	}
 }

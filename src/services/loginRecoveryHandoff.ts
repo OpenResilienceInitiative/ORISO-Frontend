@@ -160,16 +160,32 @@ const seal = async (
 	sessionStorage.setItem(STORAGE_KEY, JSON.stringify(sealed));
 };
 
-export const stageLoginRecoveryPassword = async (
+export const stageLoginRecoveryPassword = (
 	matrixUserId: string,
 	password: string
+): Promise<void> => stageUntil(matrixUserId, password, Date.now() + TTL_MS);
+
+/**
+ * Hands a consumed password back when its unlock did not finish (#1741), so
+ * a retry or the next load can still use it. Never past the original expiry.
+ */
+export const restageLoginRecoveryPassword = (
+	matrixUserId: string,
+	password: string,
+	expiresAt: number
+): Promise<void> => stageUntil(matrixUserId, password, expiresAt);
+
+const stageUntil = async (
+	matrixUserId: string,
+	password: string,
+	expiresAt: number
 ): Promise<void> => {
 	clearLoginRecoveryPassword();
-	if (!matrixUserId || !password) return;
+	const left = expiresAt - Date.now();
+	if (!matrixUserId || !password || left <= 0) return;
 	const stamp = generation;
-	const expiresAt = Date.now() + TTL_MS;
 	pending = { userId: matrixUserId, password, expiresAt };
-	expiry = setTimeout(clearLoginRecoveryPassword, TTL_MS);
+	expiry = setTimeout(clearLoginRecoveryPassword, left);
 	const keyId = newKeyId();
 	ownKeyId = keyId;
 	try {
@@ -188,7 +204,7 @@ export const stageLoginRecoveryPassword = async (
 const unseal = async (
 	sealed: Sealed,
 	matrixUserId: string
-): Promise<string | null> => {
+): Promise<LoginRecoveryHandoff | null> => {
 	if (typeof sealed.keyId !== 'string' || !sealed.keyId) return null;
 	const key = await takeHandoffKey(sealed.keyId);
 	if (
@@ -206,18 +222,29 @@ const unseal = async (
 		key,
 		fromBase64(sealed.data)
 	);
-	return new TextDecoder().decode(plain);
+	return {
+		password: new TextDecoder().decode(plain),
+		expiresAt: sealed.expiresAt
+	};
 };
+
+export type LoginRecoveryHandoff = { password: string; expiresAt: number };
 
 export const consumeLoginRecoveryPassword = async (
 	matrixUserId: string
-): Promise<string | null> => {
+): Promise<string | null> =>
+	(await consumeLoginRecoveryHandoff(matrixUserId))?.password ?? null;
+
+/** The password with its expiry, so a failed unlock can hand it back. */
+export const consumeLoginRecoveryHandoff = async (
+	matrixUserId: string
+): Promise<LoginRecoveryHandoff | null> => {
 	const value = endPending();
 	const sealed = takeSealed();
 	if (value || !sealed) {
 		dropOwnKeys(sealed);
 		return value?.userId === matrixUserId && value.expiresAt > Date.now()
-			? value.password
+			? { password: value.password, expiresAt: value.expiresAt }
 			: null;
 	}
 	try {

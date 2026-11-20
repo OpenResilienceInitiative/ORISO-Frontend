@@ -66,6 +66,7 @@ export type EventIconId =
 	| 'appointmentBriefing'
 	| 'waitingRoom'
 	| 'teamDiscussion'
+	| 'addon'
 	| 'system';
 
 /**
@@ -92,10 +93,17 @@ export interface EventActionParams {
 	threadRootId?: string | null;
 	/** Whether the recipient was @-mentioned (drives the mention sound slot, #576). */
 	mentioned?: boolean | null;
+	/** Immutable call identity supplied by the authenticated lifecycle producer. */
+	callId?: string | null;
+	callType?: 'audio' | 'video' | null;
 	/** Live-call room id for `join` targets (Slice 5). */
 	callRoomId?: string | null;
 	/** Whether a live call is video (Slice 5). */
 	isVideo?: boolean | null;
+	/** FE#1952: which call a direct-link knock is for. */
+	medium?: 'AUDIO' | 'VIDEO' | null;
+	/** FE#2252: the Direkteinladung a "Neuen Link anfragen" is about. */
+	linkId?: string | number;
 	/** Sender label (metadata only, ADR-AT-01 — never message content). */
 	senderName?: string | null;
 	/** Sender display name for i18n interpolation ({{senderDisplayName}}). */
@@ -107,6 +115,14 @@ export interface EventActionParams {
 	conversationType?: string | null;
 	/** Case Handover consent variant; metadata only, never conversation content. */
 	clientConsent?: 'OPT_IN' | 'OPT_OUT' | 'NONE' | null;
+	/** Exact scoped Case Handover request opened by a recipient offer. */
+	caseHandoverRequestId?: string | number | null;
+	/** Counsellor who receives access (PULL requester or PUSH recipient). */
+	requesterName?: string | null;
+	/** Counsellor who started a PUSH offer. */
+	initiatorName?: string | null;
+	/** Frozen server handover semantics; never inferred from a reason label. */
+	accessType?: 'CO_ACCESS' | 'TAKEOVER' | null;
 	/** Agency the enquiry belongs to (request events). */
 	agencyId?: string | number | null;
 	/** Main topic of the enquiry (request events). */
@@ -135,6 +151,14 @@ export interface EventActionParams {
 	maintenanceEnd?: string | null;
 	/** #876 public status page; only http(s) survives parsing. */
 	statusUrl?: string | null;
+	/** ADDON_NOTIFICATION: the add-on, its app and the slot a click opens. */
+	addon?: string | null;
+	appId?: string | null;
+	slot?: string | null;
+	important?: boolean | null;
+	/** ADDON_NOTIFICATION: plain-text title and text per locale, written by the add-on. */
+	addonTitle?: Record<string, string> | null;
+	addonText?: Record<string, string> | null;
 }
 
 /**
@@ -152,8 +176,17 @@ export type EventActionTarget =
 	| { kind: 'request'; path: string | null }
 	| { kind: 'draft'; forcedScopeKey: string | null; path: string | null }
 	| { kind: 'join'; callRoomId: string | null; isVideo: boolean }
+	// FE#1952: a knock on a direct-link call. One click starts (or is already
+	// in) the call of the conversation `roomId`; `path` opens that conversation.
+	| {
+			kind: 'callRoom';
+			roomId: string | null;
+			isVideo: boolean;
+			path: string | null;
+	  }
 	// #876: opens the public status page in a new tab; never an in-app route.
 	| { kind: 'statusPage'; url: string | null }
+	| { kind: 'addon'; path: string | null }
 	| { kind: 'none' };
 
 /**
@@ -173,4 +206,10 @@ export interface EventDescriptor {
 	textTemplate: string;
 	/** Origin-based action target. Pure — returns a descriptor, never navigates. */
 	resolveActionTarget: (params: EventActionParams) => EventActionTarget;
+	/**
+	 * The entry belongs to a conversation (a case, a group or its call or
+	 * meeting), so Activity shows that conversation like a message entry.
+	 * False for an enquiry not yet accepted, a draft and a status notice.
+	 */
+	belongsToConversation?: boolean;
 }

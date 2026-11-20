@@ -1,7 +1,15 @@
-// @vitest-environment jsdom
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+// @vitest-environment oriso-jsdom
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import {
 	initializeChatRecovery,
+	sealRecoveryUnderFirstPassword,
 	startAuthenticatedChatRecovery
 } from './authenticatedChatRecovery';
 import {
@@ -149,6 +157,34 @@ describe('authenticated setup coordination', () => {
 		);
 		expect(setup).not.toHaveBeenCalled();
 		expect(recover).not.toHaveBeenCalled();
+	});
+	it('announces the commit right before setup and before enrolment, and never once cancelled', async () => {
+		const order: string[] = [];
+		setup.mockImplementation(async () => {
+			order.push('setup');
+			return 'synthetic-key';
+		});
+		enroll.mockImplementation(async () => {
+			order.push('enroll');
+		});
+		await initializeChatRecovery(
+			client(),
+			{ mode: 'LOGIN_PASSWORD', revision: 2 },
+			'synthetic-password',
+			() => false,
+			() => order.push('commit')
+		);
+		expect(order).toEqual(['commit', 'setup', 'commit', 'enroll']);
+
+		const onCommit = vi.fn();
+		await initializeChatRecovery(
+			client(),
+			{ mode: 'LOGIN_PASSWORD', revision: 2 },
+			'synthetic-password',
+			() => true,
+			onCommit
+		);
+		expect(onCommit).not.toHaveBeenCalled();
 	});
 });
 
@@ -416,5 +452,334 @@ describe('automatic recovery runs with token refresh held (#1504)', () => {
 
 		expect(setup).not.toHaveBeenCalled();
 		expect(status).not.toHaveBeenCalled();
+	});
+});
+
+describe('no password in hand on a device without the backup key (#1741)', () => {
+	it('asks an account with password recovery to sign in again, not for a recovery key', async () => {
+		status.mockResolvedValue({ ...healthy, keyStorageOutOfSync: true });
+		evidence.mockResolvedValue(true);
+		await initializeChatRecovery(
+			client(),
+			{ mode: 'LOGIN_PASSWORD', revision: 2 },
+			null
+		);
+		expect(runtimeStatus).toHaveBeenLastCalledWith(
+			'@synthetic:test',
+			'needs-sign-in'
+		);
+	});
+
+	it('hands the password back when the unlock did not finish, so the next load can retry', async () => {
+		const { stageLoginRecoveryPassword, consumeLoginRecoveryPassword } =
+			await import('./loginRecoveryHandoff');
+		await stageLoginRecoveryPassword(
+			'@synthetic:test',
+			'synthetic-password'
+		);
+		recover.mockResolvedValue({ kind: 'retryable-failure' });
+		await startAuthenticatedChatRecovery(
+			client(),
+			{
+				chatRecoveryMode: 'LOGIN_PASSWORD',
+				chatRecoveryPolicyRevision: 2
+			},
+			new WeakSet()
+		);
+		expect(await consumeLoginRecoveryPassword('@synthetic:test')).toBe(
+			'synthetic-password'
+		);
+	});
+
+	it('hands the password back when another tab holds the setup lease', async () => {
+		const { stageLoginRecoveryPassword, consumeLoginRecoveryPassword } =
+			await import('./loginRecoveryHandoff');
+		vi.stubGlobal('navigator', {
+			locks: { request: vi.fn(async (_name, _options, run) => run(null)) }
+		});
+		recover.mockResolvedValue({ kind: 'not-enrolled' });
+		await stageLoginRecoveryPassword(
+			'@synthetic:test',
+			'synthetic-password'
+		);
+		await startAuthenticatedChatRecovery(
+			client(),
+			{
+				chatRecoveryMode: 'LOGIN_PASSWORD',
+				chatRecoveryPolicyRevision: 2
+			},
+			new WeakSet()
+		);
+		expect(runtimeStatus).toHaveBeenLastCalledWith(
+			'@synthetic:test',
+			'busy'
+		);
+		expect(await consumeLoginRecoveryPassword('@synthetic:test')).toBe(
+			'synthetic-password'
+		);
+	});
+
+	it('never hands the password back after the run was cancelled, for example by a logout', async () => {
+		const { stageLoginRecoveryPassword, consumeLoginRecoveryPassword } =
+			await import('./loginRecoveryHandoff');
+		await stageLoginRecoveryPassword(
+			'@synthetic:test',
+			'synthetic-password'
+		);
+		let cancelled = false;
+		recover.mockImplementation(async () => {
+			cancelled = true;
+			return { kind: 'retryable-failure' };
+		});
+		await startAuthenticatedChatRecovery(
+			client(),
+			{
+				chatRecoveryMode: 'LOGIN_PASSWORD',
+				chatRecoveryPolicyRevision: 2
+			},
+			new WeakSet(),
+			() => cancelled
+		);
+		expect(
+			await consumeLoginRecoveryPassword('@synthetic:test')
+		).toBeNull();
+	});
+
+	it('does not keep the password once the unlock has worked or was rejected', async () => {
+		const { stageLoginRecoveryPassword, consumeLoginRecoveryPassword } =
+			await import('./loginRecoveryHandoff');
+		for (const kind of ['ready', 'needs-recovery-key']) {
+			await stageLoginRecoveryPassword(
+				'@synthetic:test',
+				'synthetic-password'
+			);
+			recover.mockResolvedValue({ kind });
+			await startAuthenticatedChatRecovery(
+				client(),
+				{
+					chatRecoveryMode: 'LOGIN_PASSWORD',
+					chatRecoveryPolicyRevision: 2
+				},
+				new WeakSet()
+			);
+			expect(
+				await consumeLoginRecoveryPassword('@synthetic:test')
+			).toBeNull();
+		}
+	});
+});
+
+/**
+ * The account-setup gate's password step (#1917): the counsellor has just set
+ * their OWN password for the first time. Recovery is set up and sealed under
+ * it right there, so a second factor still owed afterwards changes nothing for
+ * encryption. Nothing may ever be sealed under the administrator's password,
+ * and nothing here may hold the password change or the logout up.
+ */
+describe('sealing recovery under the first own password', () => {
+	const policy = { mode: 'LOGIN_PASSWORD', revision: 2 } as const;
+
+	it('sets recovery up and seals the key under the new password', async () => {
+		const c = client();
+		const hold = vi.fn((operation: () => Promise<unknown>) => operation());
+
+		const outcome = await sealRecoveryUnderFirstPassword(
+			c,
+			policy,
+			'new-synthetic',
+			hold as any
+		);
+
+		expect(outcome).toBe('ready');
+		expect(hold).toHaveBeenCalledOnce();
+		expect(setup).toHaveBeenCalledOnce();
+		expect(enroll).toHaveBeenCalledOnce();
+		expect(enroll).toHaveBeenCalledWith(
+			c,
+			'new-synthetic',
+			'synthetic-key',
+			2
+		);
+		expect(runtimeStatus).toHaveBeenLastCalledWith(
+			'@synthetic:test',
+			'ready'
+		);
+	});
+
+	it('seals nothing outside the login-password mode', async () => {
+		const outcome = await sealRecoveryUnderFirstPassword(
+			client(),
+			{ mode: 'RECOVERY_KEY' },
+			'new-synthetic'
+		);
+
+		expect(outcome).toBeUndefined();
+		expect(recover).not.toHaveBeenCalled();
+		expect(setup).not.toHaveBeenCalled();
+		expect(enroll).not.toHaveBeenCalled();
+		expect(runtimeStatus).not.toHaveBeenCalled();
+	});
+
+	it('resolves with a retryable status when sealing fails', async () => {
+		enroll.mockRejectedValue(new Error('homeserver unreachable'));
+
+		await expect(
+			sealRecoveryUnderFirstPassword(client(), policy, 'new-synthetic')
+		).resolves.toBe('retryable-failure');
+		expect(runtimeStatus).toHaveBeenLastCalledWith(
+			'@synthetic:test',
+			'retryable-failure'
+		);
+	});
+
+	it('resolves with a retryable status when even the token hold fails', async () => {
+		await expect(
+			sealRecoveryUnderFirstPassword(
+				client(),
+				policy,
+				'new-synthetic',
+				async () => {
+					throw new Error('refresh failed');
+				}
+			)
+		).resolves.toBe('retryable-failure');
+		expect(runtimeStatus).toHaveBeenLastCalledWith(
+			'@synthetic:test',
+			'retryable-failure'
+		);
+	});
+
+	it('stops a run that has not committed yet at its deadline: no root, no parked key', async () => {
+		vi.useFakeTimers();
+		try {
+			let releaseEvidence!: (value: boolean) => void;
+			evidence.mockReturnValue(
+				new Promise<boolean>((resolve) => {
+					releaseEvidence = resolve;
+				})
+			);
+
+			const outcome = sealRecoveryUnderFirstPassword(
+				client(),
+				policy,
+				'new-synthetic',
+				undefined,
+				1000
+			);
+			await vi.advanceTimersByTimeAsync(1000);
+
+			await expect(outcome).resolves.toBe('retryable-failure');
+			expect(runtimeStatus).toHaveBeenLastCalledWith(
+				'@synthetic:test',
+				'retryable-failure'
+			);
+			const reportsAtDeadline = runtimeStatus.mock.calls.length;
+
+			// The gate logs out now; the late run must not commit anything after it.
+			releaseEvidence(false);
+			await vi.runAllTimersAsync();
+
+			expect(setup).not.toHaveBeenCalled();
+			expect(enroll).not.toHaveBeenCalled();
+			expect(getPendingRecoveryKey('@synthetic:test')).toBeNull();
+			expect(runtimeStatus).toHaveBeenCalledTimes(reportsAtDeadline);
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
+	it('keeps waiting past its deadline once setup has committed, until the key is sealed under the new password', async () => {
+		vi.useFakeTimers();
+		try {
+			let finishSetup!: (key: string) => void;
+			setup.mockReturnValue(
+				new Promise<string>((resolve) => {
+					finishSetup = resolve;
+				})
+			);
+			let finishEnroll!: () => void;
+			enroll.mockReturnValue(
+				new Promise<void>((resolve) => {
+					finishEnroll = resolve;
+				})
+			);
+			const c = client();
+			let settled = false;
+
+			const outcome = sealRecoveryUnderFirstPassword(
+				c,
+				policy,
+				'new-synthetic',
+				undefined,
+				1000
+			).finally(() => {
+				settled = true;
+			});
+			await vi.advanceTimersByTimeAsync(1000);
+			expect(setup).toHaveBeenCalledOnce();
+			expect(settled).toBe(false);
+
+			finishSetup('synthetic-key');
+			await vi.advanceTimersByTimeAsync(0);
+			expect(enroll).toHaveBeenCalledWith(
+				c,
+				'new-synthetic',
+				'synthetic-key',
+				2
+			);
+			expect(settled).toBe(false);
+
+			finishEnroll();
+			await expect(outcome).resolves.toBe('ready');
+			expect(runtimeStatus).toHaveBeenLastCalledWith(
+				'@synthetic:test',
+				'ready'
+			);
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+	it('also waits past its deadline for an envelope write already under way for a parked key', async () => {
+		const { savePendingRecoveryKey } = await import(
+			'./pendingRecoveryKeyStore'
+		);
+		vi.useFakeTimers();
+		try {
+			const c = client();
+			c.secretStorage.getKey.mockResolvedValue(['root', {}]);
+			status.mockResolvedValue(healthy);
+			savePendingRecoveryKey('@synthetic:test', 'waiting-key');
+			let finishEnroll!: () => void;
+			enroll.mockReturnValue(
+				new Promise<void>((resolve) => {
+					finishEnroll = resolve;
+				})
+			);
+			let settled = false;
+
+			const outcome = sealRecoveryUnderFirstPassword(
+				c,
+				policy,
+				'new-synthetic',
+				undefined,
+				1000
+			).finally(() => {
+				settled = true;
+			});
+			await vi.advanceTimersByTimeAsync(1000);
+			expect(setup).not.toHaveBeenCalled();
+			expect(enroll).toHaveBeenCalledWith(
+				c,
+				'new-synthetic',
+				'waiting-key',
+				2
+			);
+			expect(settled).toBe(false);
+
+			finishEnroll();
+			await expect(outcome).resolves.toBe('ready');
+		} finally {
+			vi.useRealTimers();
+		}
 	});
 });

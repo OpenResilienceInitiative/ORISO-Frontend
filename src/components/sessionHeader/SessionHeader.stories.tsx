@@ -2,6 +2,10 @@ import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import {
+	effectiveBackground,
+	wcagContrast
+} from '../../utils/theme/wcagContrast';
+import {
 	ActiveSessionContext,
 	AUTHORITIES,
 	buildExtendedSession,
@@ -32,12 +36,18 @@ import {
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import { SessionHeaderComponent } from './SessionHeaderComponent';
 import { GroupChatHeader } from './GroupChatHeader';
+import { LegalLinksProvider } from '../../globalState/provider/LegalLinksProvider';
+import { config } from '../../resources/scripts/config';
 import { buildStageMatrixClientService } from '../chatStage/__storybook__/ChatStageProviders';
 import {
 	desktop1440Globals,
+	phone375Globals,
 	phone390Globals,
 	tablet834Globals
 } from '../message/messageStoryShell';
+import { RoomNextAppointment } from '../sessionsList/timeline/AppointmentSplitButton';
+import type { FutureEntry } from '../sessionsList/timeline/timelineModel';
+import { saveMenuEffects } from '../../features/menu-effects/useMenuEffects';
 import './sessionHeader.styles.scss';
 
 const APP_ORISO_CHAT_HEADER_FIGMA_URL =
@@ -204,7 +214,17 @@ const buildSingleSession = (
 		''
 	);
 
-const buildGroupSession = (): ExtendedSessionInterface =>
+const buildGroupSession = ({
+	active = true,
+	assignedAgencies = [],
+	repetitive = false,
+	subscribed = true
+}: {
+	active?: boolean;
+	assignedAgencies?: { id: number; name: string }[];
+	repetitive?: boolean;
+	subscribed?: boolean;
+} = {}): ExtendedSessionInterface =>
 	buildExtendedSession(
 		{
 			consultant: {
@@ -217,8 +237,8 @@ const buildGroupSession = (): ExtendedSessionInterface =>
 			},
 			language: 'de',
 			chat: {
-				active: true,
-				assignedAgencies: [],
+				active,
+				assignedAgencies,
 				attachment: null,
 				consultingType: 1,
 				duration: 60,
@@ -230,10 +250,10 @@ const buildGroupSession = (): ExtendedSessionInterface =>
 				messageDate: 1773822900,
 				messagesRead: true,
 				moderators: [],
-				repetitive: false,
+				repetitive,
 				startDate: '2026-03-18',
 				startTime: '10:00',
-				subscribed: true,
+				subscribed,
 				topic: 'Team Austausch',
 				createdAt: '2026-03-18T06:15:00.000Z'
 			} as unknown as GroupChatItemInterface
@@ -444,16 +464,29 @@ const StoryProviders = ({
 
 const noopRef = { current: false };
 
-const renderGroupHeader = (preset: {
-	session: ExtendedSessionInterface;
-	members?: MockMember[];
-}) => (
-	<StoryProviders session={preset.session} members={preset.members}>
-		<GroupChatHeader
-			hasUserInitiatedStopOrLeaveRequest={noopRef}
-			isJoinGroupChatView={false}
-			bannedUsers={[]}
-		/>
+const renderGroupHeader = (
+	preset: {
+		session: ExtendedSessionInterface;
+		members?: MockMember[];
+	},
+	hideTopic = false,
+	userData = storyUserData,
+	bannedUsers: string[] = []
+) => (
+	<StoryProviders
+		session={preset.session}
+		members={preset.members}
+		userData={userData}
+	>
+		{/* The app's own legal links; Storybook's global provider has none. */}
+		<LegalLinksProvider legalLinks={config.legalLinks}>
+			<GroupChatHeader
+				hasUserInitiatedStopOrLeaveRequest={noopRef}
+				isJoinGroupChatView={false}
+				bannedUsers={bannedUsers}
+				hideTopic={hideTopic}
+			/>
+		</LegalLinksProvider>
 	</StoryProviders>
 );
 
@@ -613,6 +646,24 @@ const expectTitleClearOfActions = async (canvasElement: HTMLElement) => {
 	return { titleRect, actionsRect };
 };
 
+const expectHeaderBottomAlignment = async (canvasElement: HTMLElement) => {
+	await document.fonts.ready;
+	const row = canvasElement.querySelector('.sessionInfo__headerWrapper')!;
+	const avatar = canvasElement.querySelector(
+		'[data-cy="participant-avatar"]'
+	)!;
+	const menu = canvasElement.querySelector('#iconH')!;
+	const lineY = row.getBoundingClientRect().bottom - 1;
+	const avatarGap = lineY - avatar.getBoundingClientRect().bottom;
+	const menuGap = lineY - menu.getBoundingClientRect().bottom;
+	await expect(
+		Math.abs(avatarGap - menuGap),
+		`avatar gap ${avatarGap}px; outlined menu gap ${menuGap}px`
+	).toBeLessThan(0.5);
+	await expect(Math.round(avatar.getBoundingClientRect().height)).toBe(48);
+	await expect(Math.round(menu.getBoundingClientRect().height)).toBe(44);
+};
+
 /* ------------------------------------------------------------------ *
  * Meta + stories
  * ------------------------------------------------------------------ */
@@ -655,11 +706,61 @@ type Story = StoryObj<typeof meta>;
 /**
  * Group chat with ≤4 members.
  * Expected (Figma #430): every member avatar is shown (no cap), no overflow badge.
- * TODO: keep verifying against Figma until Fix 1 (GroupChatHeader member logic)
- * is merged — the ≤4 branch now renders all avatars instead of the old 3-cap.
+ * Uses the canonical 48px stack shared with the 1:1 and side-panel headers.
  */
 export const GroupChatSmall: Story = {
-	render: () => renderGroupHeader(mockGroupSessionSmall())
+	render: () => renderGroupHeader(mockGroupSessionSmall()),
+	play: async ({ canvasElement }) => {
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelectorAll('[data-cy="participant-avatar"]')
+			).toHaveLength(4)
+		);
+		for (const avatar of canvasElement.querySelectorAll(
+			'[data-cy="participant-avatar"]'
+		)) {
+			await expect(Math.round(avatar.getBoundingClientRect().width)).toBe(
+				48
+			);
+			await expect(
+				Math.round(avatar.getBoundingClientRect().height)
+			).toBe(48);
+		}
+		await expect(
+			canvasElement.querySelector('.sessionInfo__participant')
+		).toBeNull();
+		await expectHeaderBottomAlignment(canvasElement);
+	}
+};
+
+/** Names appear only on hover/focus; the hovered coin paints above its peers. */
+export const GroupChatHover: Story = {
+	name: 'Group header — hovered avatar comes to the front',
+	render: () => renderGroupHeader(mockGroupSessionSmall()),
+	play: async ({ canvasElement }) => {
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelectorAll('[data-cy="participant-avatar"]')
+			).toHaveLength(4)
+		);
+		const avatars = canvasElement.querySelectorAll<HTMLElement>(
+			'[data-cy="participant-avatar"]'
+		);
+		const avatar = avatars[1];
+		const box = avatar.getBoundingClientRect();
+		await userEvent.hover(avatar);
+		const tip = avatar.parentElement!.querySelector('[role="tooltip"]')!;
+		await waitFor(() => expect(tip).toBeVisible());
+		await expect(tip).toHaveTextContent(avatar.getAttribute('aria-label')!);
+		await expect(
+			avatar.contains(
+				document.elementFromPoint(box.left + 4, box.top + 24)
+			)
+		).toBe(true);
+		await expect(
+			canvasElement.querySelector('.sessionInfo__participant')
+		).toBeNull();
+	}
 };
 
 /**
@@ -672,18 +773,111 @@ export const GroupChatLarge: Story = {
 	play: async ({ canvasElement }) => {
 		await waitFor(() => {
 			const badge = canvasElement.querySelector(
-				'.sessionInfo__memberCount'
+				'[data-cy="participant-overflow"]'
 			);
 			expect(badge).toBeTruthy();
 			expect(
-				canvasElement.querySelector('.sessionInfo__memberCountNumber')
+				canvasElement.querySelector('[data-cy="participant-overflow"]')
 					?.textContent
 			).toContain('+23');
-			// Four stacked avatars, the remaining 23 collapse into the chip.
+			// Current 48px header avatars, the remaining 23 collapse into the chip.
 			expect(
-				canvasElement.querySelectorAll('.sessionInfo__memberBubble')
+				canvasElement.querySelectorAll('[data-cy="participant-avatar"]')
 					.length
 			).toBe(4);
+			for (const avatar of canvasElement.querySelectorAll(
+				'[data-cy="participant-avatar"]'
+			))
+				expect(Math.round(avatar.getBoundingClientRect().width)).toBe(
+					48
+				);
+		});
+	}
+};
+
+/**
+ * Group chat while the privacy gate is open (#1499, Frank's decision): the
+ * group's topic is left out of the header, not dimmed, until the client has
+ * agreed. The avatars stay.
+ */
+/**
+ * D7 on the phone, group chat: the composer's action bar leads with the back
+ * arrow, so the room header shows none — the same rule as the 1:1 header.
+ * Rendered through `SessionHeaderComponent`, exactly as `SessionItemComponent`
+ * mounts it on the phone (`hideBackButton`).
+ */
+const renderGroupHeaderThroughSessionHeader = (hideBackButton: boolean) => {
+	const preset = mockGroupSessionSmall();
+	return (
+		<StoryProviders
+			session={preset.session}
+			members={preset.members}
+			userData={storyUserData}
+		>
+			<LegalLinksProvider legalLinks={config.legalLinks}>
+				<SessionHeaderComponent
+					bannedUsers={[]}
+					hideBackButton={hideBackButton}
+					callsInMenu={hideBackButton}
+				/>
+			</LegalLinksProvider>
+		</StoryProviders>
+	);
+};
+
+export const GroupChatPhoneComposerCarriesBack: Story = {
+	name: 'Group header on the phone — no back arrow, the composer has it (D7)',
+	globals: phone390Globals,
+	render: () => renderGroupHeaderThroughSessionHeader(true),
+	play: async ({ canvasElement }) => {
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector(
+					'[data-cy="group-header-participants"]'
+				)
+			).not.toBeNull()
+		);
+		await expect(
+			canvasElement.querySelector('.sessionInfo__backButton')
+		).toBeNull();
+	}
+};
+
+/** Control: without a composer (privacy gate) the header keeps its arrow. */
+export const GroupChatPhoneWithoutComposerKeepsBack: Story = {
+	name: 'Group header on the phone without a composer — back arrow stays',
+	globals: phone390Globals,
+	render: () => renderGroupHeaderThroughSessionHeader(false),
+	play: async ({ canvasElement }) => {
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector('.sessionInfo__backButton')
+			).not.toBeNull()
+		);
+	}
+};
+
+export const GroupChatBeforeConsentHidesTopic: Story = {
+	render: () => renderGroupHeader(mockGroupSessionSmall(), true),
+	play: async ({ canvasElement }) => {
+		await waitFor(() => {
+			expect(
+				canvasElement.querySelector('.sessionInfo__memberStack')
+			).toBeTruthy();
+		});
+		expect(canvasElement.querySelector('h3')).toBeNull();
+		expect(within(canvasElement).queryByText('Team Austausch')).toBeNull();
+	}
+};
+
+/** After consent the header shows the group's topic as it always did. */
+export const GroupChatAfterConsentShowsTopic: Story = {
+	render: () => renderGroupHeader(mockGroupSessionSmall(), false),
+	play: async ({ canvasElement }) => {
+		await waitFor(() => {
+			expect(
+				within(canvasElement).getByText('Team Austausch')
+			).toBeVisible();
 		});
 	}
 };
@@ -710,6 +904,155 @@ export const ActiveConversation: Story = {
 };
 
 /**
+ * Frank 17.11.2026: on desktop the assigned counsellor's "+" opens a menu —
+ * "Supervisor verwalten" (a colleague watches along, the case stays) and
+ * "Beratung übergeben" (the case moves to a colleague). The phone keeps its
+ * grey "+" ("am Desktop verfügbar") and the ⋮ entry.
+ */
+export const PlusMenuSupervisionOrHandover: Story = {
+	globals: { viewport: { value: 'desktop1366', isRotated: false } },
+	render: () => renderSessionHeader(mockActiveConversation()),
+	play: async ({ canvasElement }) => {
+		const plus = await waitFor(() => {
+			const button = canvasElement.querySelector<HTMLButtonElement>(
+				'.chatroomMainInteractionIcon__add--interactive'
+			);
+			expect(button).not.toBeNull();
+			return button!;
+		});
+		await expect(plus).toHaveAttribute('aria-haspopup', 'menu');
+		await userEvent.click(plus);
+		const menu = await within(document.body).findByRole('menu');
+		await expect(within(menu).getAllByRole('menuitem')).toHaveLength(2);
+		await expect(plus).toHaveAttribute('aria-expanded', 'true');
+	}
+};
+
+/** Review: with the menu open, presses outside it reach the page. A second
+ *  press on "+" hits the "+" itself (browser hit-testing), closes the menu and
+ *  leaves focus on the "+"; a press beside the menu hits the backdrop. */
+export const PlusMenuSecondPressOnPlus: Story = {
+	globals: { viewport: { value: 'desktop1366', isRotated: false } },
+	render: () => renderSessionHeader(mockActiveConversation()),
+	play: async ({ canvasElement }) => {
+		const plus = await waitFor(() => {
+			const button = canvasElement.querySelector<HTMLButtonElement>(
+				'.chatroomMainInteractionIcon__add--interactive'
+			);
+			expect(button).not.toBeNull();
+			return button!;
+		});
+		const hitAt = (el: Element) => {
+			const box = el.getBoundingClientRect();
+			return document.elementFromPoint(
+				box.left + box.width / 2,
+				box.top + box.height / 2
+			);
+		};
+		await userEvent.click(plus);
+		const menu = await within(document.body).findByRole('menu');
+		await waitFor(() =>
+			expect(menu.contains(document.activeElement)).toBe(true)
+		);
+		await expect(plus.contains(hitAt(plus))).toBe(true);
+		await userEvent.click(hitAt(plus) as HTMLElement);
+		await waitFor(() =>
+			expect(within(document.body).queryByRole('menu')).toBeNull()
+		);
+		await expect(plus).toHaveAttribute('aria-expanded', 'false');
+		await expect(document.activeElement).toBe(plus);
+
+		await userEvent.click(plus);
+		const reopened = await within(document.body).findByRole('menu');
+		const box = reopened.getBoundingClientRect();
+		const beside = document.elementFromPoint(
+			Math.min(box.right + 40, window.innerWidth - 4),
+			box.bottom - 4
+		);
+		await expect(beside).not.toBeNull();
+		await expect(beside!.closest('.MuiPopover-root')).toBeNull();
+	}
+};
+
+/** Review: with menu effects off there is no backdrop. A press on a plain,
+ *  non-focusable spot outside the menu still closes it. */
+export const PlusMenuOutsidePressWithoutEffects: Story = {
+	globals: { viewport: { value: 'desktop1366', isRotated: false } },
+	render: () => renderSessionHeader(mockActiveConversation()),
+	play: async ({ canvasElement }) => {
+		saveMenuEffects(false, CONSULTANT_ID);
+		try {
+			const plus = await waitFor(() => {
+				const button = canvasElement.querySelector<HTMLButtonElement>(
+					'.chatroomMainInteractionIcon__add--interactive'
+				);
+				expect(button).not.toBeNull();
+				return button!;
+			});
+			await userEvent.click(plus);
+			await within(document.body).findByRole('menu');
+			await expect(
+				document.querySelector('.orisoMenuBackdrop')
+			).toBeNull();
+			const spot = document.elementFromPoint(
+				window.innerWidth - 4,
+				window.innerHeight - 4
+			) as HTMLElement;
+			await expect(spot.closest('[role="menu"]')).toBeNull();
+			await expect(
+				spot.closest('button, a, input, [tabindex]')
+			).toBeNull();
+			await userEvent.click(spot);
+			await waitFor(() =>
+				expect(within(document.body).queryByRole('menu')).toBeNull()
+			);
+			await expect(plus).toHaveAttribute('aria-expanded', 'false');
+		} finally {
+			saveMenuEffects(true, CONSULTANT_ID);
+		}
+	}
+};
+
+/* The topic tag under the title is small text on a tinted fill: it must reach
+   4.5:1 for every Träger, also a light one (#1499, Träger 2 = #b4ddee). */
+const expectLegibleTopicTag = async (canvasElement: HTMLElement) => {
+	await waitFor(() =>
+		expect(
+			canvasElement.querySelectorAll('.sessionInfo__metaInfo__content')
+				.length
+		).toBeGreaterThan(0)
+	);
+	// The topic is the shared <TopicTag> (global --oriso-topic-tag-* tokens).
+	await expect(
+		canvasElement.querySelectorAll(
+			'.sessionInfo__metaInfo__content.topicTag'
+		).length
+	).toBeGreaterThan(0);
+	for (const tag of Array.from(
+		canvasElement.querySelectorAll(
+			'.sessionInfo__metaInfo__content.topicTag'
+		)
+	)) {
+		await expect(
+			wcagContrast(getComputedStyle(tag).color, effectiveBackground(tag))
+		).toBeGreaterThanOrEqual(4.5);
+	}
+};
+
+export const TopicTagLegible: Story = {
+	name: 'Active conversation — topic tag reaches 4.5:1',
+	render: () => renderSessionHeader(mockActiveConversation()),
+	play: async ({ canvasElement }) => expectLegibleTopicTag(canvasElement)
+};
+
+export const TopicTagLegibleLightBrandColour: Story = {
+	name: 'Active conversation — topic tag reaches 4.5:1 with a light Träger colour',
+	parameters: { orisoSeed: '#b4ddee' },
+	render: () => renderSessionHeader(mockActiveConversation()),
+	play: async ({ canvasElement }) => expectLegibleTopicTag(canvasElement)
+};
+
+/**
  * T4 / Figma 1320:38281: the room's participants as the avatar row —
  * animal for the advice seeker, monograms for the counsellors, 28 px step,
  * latest activity first, hover / focus shows the display name (#1209: the
@@ -731,20 +1074,23 @@ export const ActiveConversationParticipants: Story = {
 		await expect(avatars![0].getAttribute('data-user-id')).toBe(
 			'@bettina.b:matrix.storybook.test'
 		);
-		// T14/T17 — measured in Figma 1320:38281 (get_metadata): 40 px
-		// avatars, 28 px step, the group starts 8 px inside the type pill
+		// Current Avatar Group master 7608:40689: 48 px avatars,
+		// 24 px step; the group still starts 8 px inside the type pill
 		// and the title text follows 6 px after the group.
 		const first = avatars![0].getBoundingClientRect();
 		const second = avatars![1].getBoundingClientRect();
-		await expect(Math.round(first.width)).toBe(40);
-		await expect(Math.round(first.height)).toBe(40);
-		await expect(Math.round(second.left - first.left)).toBe(28);
+		await expect(Math.round(first.width)).toBe(48);
+		await expect(Math.round(first.height)).toBe(48);
+		await expect(Math.round(second.left - first.left)).toBe(24);
 		const pill = canvasElement
 			.querySelector('.chatroomMainInteractionIcon')!
 			.getBoundingClientRect();
-		const stack = canvasElement
-			.querySelector('[data-cy="session-header-participants"]')!
-			.getBoundingClientRect();
+		const stackElement = canvasElement.querySelector(
+			'[data-cy="session-header-participants"]'
+		)!;
+		// The outer white ring and keyboard-focus ring must clear the type pill.
+		await expect(getComputedStyle(stackElement).overflow).toBe('visible');
+		const stack = stackElement.getBoundingClientRect();
 		await expect(Math.round(pill.right - stack.left)).toBe(8);
 		const title = canvasElement
 			.querySelector('.sessionInfo__username h3')!
@@ -775,8 +1121,7 @@ export const ActiveConversationParticipants: Story = {
 			.querySelector('.sessionInfo__username')!
 			.getBoundingClientRect();
 		await expect(tipRect.top).toBeGreaterThan(rowRect.bottom - 1);
-		// No clipping ancestor cuts it off (the tooltip is pointer-events:
-		// none, so elementFromPoint cannot be used here).
+		// No clipping ancestor cuts off the hoverable tooltip.
 		let ancestor = tip.parentElement;
 		while (ancestor && ancestor !== canvasElement) {
 			if (getComputedStyle(ancestor).overflow !== 'visible') {
@@ -798,6 +1143,7 @@ export const ActiveConversationParticipants: Story = {
 			)
 		).toBe(65);
 		await expectTitleClearOfActions(canvasElement);
+		await expectHeaderBottomAlignment(canvasElement);
 	}
 };
 
@@ -849,9 +1195,12 @@ export const ActiveConversationManyParticipantsPhone: Story = {
 			).toBe('+5');
 		});
 		const { titleRect } = await expectTitleClearOfActions(canvasElement);
-		const stack = canvasElement
-			.querySelector('[data-cy="session-header-participants"]')!
-			.getBoundingClientRect();
+		const stackElement = canvasElement.querySelector(
+			'[data-cy="session-header-participants"]'
+		)!;
+		// The outer white ring and keyboard-focus ring must clear the type pill.
+		await expect(getComputedStyle(stackElement).overflow).toBe('visible');
+		const stack = stackElement.getBoundingClientRect();
 		await expect(
 			titleRect.width / (titleRect.width + stack.width)
 		).toBeGreaterThanOrEqual(0.4);
@@ -1070,5 +1419,421 @@ export const RequestStageAccepted: Story = {
 		await expect(
 			canvasElement.querySelector('.consultantSearchLoader--animated')
 		).toBeNull();
+	}
+};
+
+/* ------------------------------------------------------------------ *
+ * Group header ⋮ menu (#1760): one menu for every role, no text button
+ * ------------------------------------------------------------------ */
+
+const groupMenuAgency = [{ id: 101, name: 'Beratungsstelle Mitte' }];
+const storyAskerData = {
+	...storyUserData,
+	userId: 'asker-group-1',
+	userName: 'ruhiges-yak-kim',
+	displayName: 'ruhiges Yak Kim',
+	grantedAuthorities: [AUTHORITIES.ASKER_DEFAULT],
+	userRoles: ['USER']
+};
+const groupMenuPreset = (active = true, subscribed = true) => ({
+	session: buildGroupSession({
+		active,
+		assignedAgencies: groupMenuAgency,
+		repetitive: true,
+		subscribed
+	}),
+	members: makeMembers(4)
+});
+const desktop1366Globals = { viewport: { value: 'desktop1366' } };
+const desktop1920Globals = { viewport: { value: 'desktop1920' } };
+
+/** Opens the visible ⋮ trigger and returns the menu panel. */
+const openGroupMenu = async (canvasElement: HTMLElement) => {
+	const canvas = within(canvasElement);
+	await expect(
+		canvas.queryByRole('link', { name: 'Informationen & Einstellungen' })
+	).toBeNull();
+	const trigger = canvas
+		.getAllByRole('button', { name: 'Weitere Funktionen' })
+		.find((button) => button.getClientRects().length > 0);
+	await expect(trigger).toBeDefined();
+	await expect(trigger).toHaveAttribute('aria-expanded', 'false');
+	trigger!.focus();
+	await userEvent.keyboard('{Enter}');
+	await waitFor(() =>
+		expect(trigger).toHaveAttribute('aria-expanded', 'true')
+	);
+	const menu = document.getElementById('flyout')!;
+	await waitFor(() => expect(menu).toBeVisible());
+	return { menu: within(menu), trigger: trigger! };
+};
+
+const expectSharedEntries = async (menu: ReturnType<typeof within>) => {
+	await expect(
+		menu.getByText('Beratungsstelle: Beratungsstelle Mitte')
+	).toBeVisible();
+	await expect(
+		menu.getByRole('link', { name: /Informationen & Einstellungen/ })
+	).toBeVisible();
+	await expect(
+		menu.getByRole('button', { name: /Datenschutzerklärung/ })
+	).toBeVisible();
+	await expect(menu.getByRole('button', { name: /Impressum/ })).toBeVisible();
+};
+
+export const GroupMenuClosed1366: Story = {
+	name: 'Group menu · closed, no text button (1366)',
+	globals: desktop1366Globals,
+	render: () => renderGroupHeader(groupMenuPreset()),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await expect(
+			canvas.queryByRole('link', {
+				name: 'Informationen & Einstellungen'
+			})
+		).toBeNull();
+		const trigger = canvas
+			.getAllByRole('button', { name: 'Weitere Funktionen' })
+			.find((button) => button.getClientRects().length > 0);
+		await expect(trigger).toHaveAttribute('aria-expanded', 'false');
+	}
+};
+
+export const GroupMenuCounsellor1366: Story = {
+	name: 'Group menu · counsellor, running (1366)',
+	globals: desktop1366Globals,
+	render: () => renderGroupHeader(groupMenuPreset()),
+	play: async ({ canvasElement }) => {
+		const { menu, trigger } = await openGroupMenu(canvasElement);
+		await expectSharedEntries(menu);
+		await expect(menu.getByText('Chat beenden')).toBeVisible();
+		await userEvent.keyboard('{Escape}');
+		await waitFor(() =>
+			expect(trigger).toHaveAttribute('aria-expanded', 'false')
+		);
+	}
+};
+
+/** Before the start the owner also edits the settings; "end chat" is not offered. */
+export const GroupMenuCounsellorWaitingRoom1920: Story = {
+	name: 'Group menu · counsellor, waiting room (1920)',
+	globals: desktop1920Globals,
+	render: () => renderGroupHeader(groupMenuPreset(false)),
+	play: async ({ canvasElement }) => {
+		const { menu } = await openGroupMenu(canvasElement);
+		await expectSharedEntries(menu);
+		await expect(
+			menu.getByRole('link', { name: /Chat-Einstellungen/ })
+		).toBeVisible();
+		await expect(menu.queryByText('Chat beenden')).toBeNull();
+	}
+};
+
+/** An advice seeker gets agency, Chat-Info and legal texts, no moderator actions. */
+export const GroupMenuAsker1366: Story = {
+	name: 'Group menu · advice seeker (1366)',
+	globals: desktop1366Globals,
+	render: () => renderGroupHeader(groupMenuPreset(), false, storyAskerData),
+	play: async ({ canvasElement }) => {
+		const { menu } = await openGroupMenu(canvasElement);
+		await expectSharedEntries(menu);
+		await expect(menu.queryByText('Chat beenden')).toBeNull();
+		await expect(menu.queryByText('Chat-Einstellungen')).toBeNull();
+	}
+};
+
+export const GroupMenuAsker390: Story = {
+	name: 'Group menu · advice seeker (390)',
+	globals: phone390Globals,
+	render: () => renderGroupHeader(groupMenuPreset(), false, storyAskerData),
+	play: async ({ canvasElement }) => {
+		const { menu } = await openGroupMenu(canvasElement);
+		await expectSharedEntries(menu);
+		await expect(menu.queryByText('Chat beenden')).toBeNull();
+	}
+};
+
+export const GroupMenuCounsellor375: Story = {
+	name: 'Group menu · counsellor, waiting room (375)',
+	globals: phone375Globals,
+	render: () => renderGroupHeader(groupMenuPreset(false)),
+	play: async ({ canvasElement }) => {
+		const { menu } = await openGroupMenu(canvasElement);
+		await expectSharedEntries(menu);
+		await expect(
+			menu.getByRole('link', { name: /Chat-Einstellungen/ })
+		).toBeVisible();
+	}
+};
+
+/** Not joined yet: the schedule entry is offered; the dialog leaves out the members. */
+const expectScheduleEntryForGuest: Story['play'] = async ({
+	canvasElement
+}) => {
+	const { menu } = await openGroupMenu(canvasElement);
+	await expectSharedEntries(menu);
+	await expect(menu.queryByText('Chat beenden')).toBeNull();
+	await expect(menu.queryByText('Chat verlassen')).toBeNull();
+	await expect(menu.queryByText('Chat-Einstellungen')).toBeNull();
+};
+
+export const GroupMenuAskerNotJoined1366: Story = {
+	name: 'Group menu · advice seeker, not joined yet (1366)',
+	globals: desktop1366Globals,
+	render: () =>
+		renderGroupHeader(groupMenuPreset(false, false), false, storyAskerData),
+	play: expectScheduleEntryForGuest
+};
+
+export const GroupMenuAskerNotJoined390: Story = {
+	name: 'Group menu · advice seeker, not joined yet (390)',
+	globals: phone390Globals,
+	render: () =>
+		renderGroupHeader(groupMenuPreset(false, false), false, storyAskerData),
+	play: expectScheduleEntryForGuest
+};
+
+/** A banned advice seeker keeps agency and legal texts but gets no Chat-Info. */
+const expectNoChatInfoWhenBanned: Story['play'] = async ({ canvasElement }) => {
+	const { menu } = await openGroupMenu(canvasElement);
+	await expect(
+		menu.getByText('Beratungsstelle: Beratungsstelle Mitte')
+	).toBeVisible();
+	await expect(
+		menu.getByRole('button', { name: /Datenschutzerklärung/ })
+	).toBeVisible();
+	await expect(
+		menu.queryByRole('link', { name: /Informationen & Einstellungen/ })
+	).toBeNull();
+};
+
+export const GroupMenuAskerBanned1366: Story = {
+	name: 'Group menu · banned advice seeker, no Chat-Info (1366)',
+	globals: desktop1366Globals,
+	render: () =>
+		renderGroupHeader(groupMenuPreset(), false, storyAskerData, [
+			storyAskerData.userName
+		]),
+	play: expectNoChatInfoWhenBanned
+};
+
+export const GroupMenuAskerBanned390: Story = {
+	name: 'Group menu · banned advice seeker, no Chat-Info (390)',
+	globals: phone390Globals,
+	render: () =>
+		renderGroupHeader(groupMenuPreset(), false, storyAskerData, [
+			storyAskerData.userName
+		]),
+	play: expectNoChatInfoWhenBanned
+};
+
+/* ------------------------------------------------------------------ *
+ * ADR-021 timeline prototype: the room's next appointment, directly below
+ * the header divider. Not mounted in the real headers until the prototype
+ * is accepted (PR 4 of #1884).
+ * ------------------------------------------------------------------ */
+
+const nextOneToOne: FutureEntry = {
+	key: 'booking-7001',
+	kind: 'one-to-one',
+	sessionId: 4401,
+	title: 'ruhiges Yak Kim',
+	topic: 'Familienberatung',
+	start: new Date('2026-10-29T16:00:00'),
+	modality: 'video',
+	canDuplicate: false
+};
+
+const nextGroupDate: FutureEntry = {
+	key: 'occ-9001-0',
+	kind: 'group',
+	title: 'Elternrunde',
+	topic: 'Familienberatung',
+	start: new Date('2026-11-04T18:00:00'),
+	modality: 'chat',
+	canDuplicate: true,
+	canConfigure: true
+};
+
+const withNextAppointment = (header: React.ReactNode, entry: FutureEntry) => (
+	<>
+		{header}
+		<div style={headerShell} data-cy="story-next-appointment">
+			<RoomNextAppointment entry={entry} role="counsellor" />
+		</div>
+	</>
+);
+
+const expectAppointmentMenu =
+	(label: string, items: string[], hiddenItems: string[] = []) =>
+	async ({ canvasElement }: { canvasElement: HTMLElement }) => {
+		const bar = await waitFor(() => {
+			// The header's own slot may render a bar too: this is the prototype's.
+			const found = canvasElement.querySelector<HTMLElement>(
+				'[data-cy="story-next-appointment"] [data-cy="room-next-appointment"]'
+			);
+			expect(found).not.toBeNull();
+			return found!;
+		});
+		const main = within(bar).getByRole('button', { name: label });
+		// 40px: the compact split button.
+		await expect(Math.round(main.getBoundingClientRect().height)).toBe(40);
+		// Inside the room the main part opens the appointment menu too.
+		await userEvent.click(main);
+		const menu = await waitFor(() => {
+			const found = document.querySelector<HTMLElement>(
+				'[data-cy="timeline-entry-menu"]'
+			);
+			expect(found).not.toBeNull();
+			return found!;
+		});
+		for (const item of items)
+			await expect(within(menu).getByText(item)).toBeVisible();
+		for (const item of hiddenItems)
+			await expect(within(menu).queryByText(item)).toBeNull();
+		await userEvent.keyboard('{Escape}');
+	};
+
+export const NextAppointmentOneToOne: Story = {
+	name: 'Next appointment below the header — 1:1 (timeline prototype)',
+	render: () =>
+		withNextAppointment(
+			renderSessionHeader(mockActiveConversation()),
+			nextOneToOne
+		),
+	play: expectAppointmentMenu('Do 29. Okt 16:00', [
+		'Termin verschieben',
+		'Termin absagen'
+	])
+};
+
+export const NextAppointmentGroup: Story = {
+	name: 'Next appointment below the header — group (timeline prototype)',
+	render: () =>
+		withNextAppointment(
+			renderGroupHeader(mockGroupSessionSmall()),
+			nextGroupDate
+		),
+	play: expectAppointmentMenu('Mi 4. Nov 18:00', [
+		'Termin absagen',
+		'Als Einzeltermin duplizieren',
+		'Gruppe konfigurieren'
+	])
+};
+
+export const NextAppointmentGroupCoModerator: Story = {
+	name: 'Next appointment below the header — co-moderator',
+	render: () =>
+		withNextAppointment(renderGroupHeader(mockGroupSessionSmall()), {
+			...nextGroupDate,
+			canModerate: true,
+			canConfigure: false
+		}),
+	play: expectAppointmentMenu(
+		'Mi 4. Nov 18:00',
+		['Termin absagen', 'Als Einzeltermin duplizieren'],
+		['Gruppe konfigurieren']
+	)
+};
+
+/* ------------------------------------------------------------------ *
+ * FE#1960: the real 1:1 header with its real appointment slot. The row
+ * under the header shows only an existing appointment (ADR-021 §5);
+ * "Termin anlegen" is a row of the ⋮ menu.
+ * ------------------------------------------------------------------ */
+
+/* Built at render time, relative to now: a fixed date stops being
+   "upcoming" once it passes and turns this story red for every PR. */
+const HOUR_MS = 60 * 60 * 1000;
+const makeStoryAppointment = () => {
+	const start = Date.now() + 2 * HOUR_MS;
+	return {
+		id: '6f1c1a70-0000-4000-8000-000000000001',
+		sessionId: 4401,
+		startTime: new Date(start).toISOString(),
+		endTime: new Date(start + HOUR_MS).toISOString(),
+		status: 'SCHEDULED',
+		counterpart: { username: 'ruhiges_yak_kim' }
+	};
+};
+
+const installAppointmentFetch = (items: unknown[]) => {
+	const previous = window.fetch;
+	window.fetch = async (input, init) => {
+		const url =
+			typeof input === 'string'
+				? input
+				: input instanceof URL
+					? input.href
+					: input.url;
+		if (/\/sessions\/4401\/appointments$/.test(url.split('?')[0]))
+			return jsonResponse(items);
+		return previous(input, init);
+	};
+	return () => {
+		window.fetch = previous;
+	};
+};
+
+const HeaderWithAppointments = ({ items }: { items: unknown[] }) => {
+	// Installed during render: the slot fetches from a child effect.
+	const [restore] = React.useState(() => installAppointmentFetch(items));
+	React.useEffect(() => restore, [restore]);
+	return renderSessionHeader(mockActiveConversation());
+};
+
+const openMenuAndFindCreate = async (canvasElement: HTMLElement) => {
+	const trigger = await waitFor(() => {
+		const found = Array.from(
+			canvasElement.querySelectorAll<HTMLButtonElement>(
+				'button.sessionMenu__icon'
+			)
+		).find((button) => button.getClientRects().length > 0);
+		expect(found).toBeDefined();
+		return found!;
+	});
+	await userEvent.click(trigger);
+	const row = await waitFor(() => {
+		const found = document.querySelector<HTMLElement>(
+			'[data-cy="session-menu-create-appointment"]'
+		);
+		expect(found).not.toBeNull();
+		return found!;
+	});
+	return row;
+};
+
+/** No appointment: the header looks as before #2011; ⋮ offers "Termin anlegen". */
+export const OneToOneAppointmentCreateInMenu: Story = {
+	name: '1:1 appointment — none yet, create in ⋮ menu (FE#1960)',
+	render: () => <HeaderWithAppointments items={[]} />,
+	play: async ({ canvasElement }) => {
+		const row = await openMenuAndFindCreate(canvasElement);
+		// The menu fades in: wait for it rather than read it mid-transition.
+		await waitFor(() => expect(row).toBeVisible());
+		await expect(
+			canvasElement.querySelector('[data-cy="room-next-appointment"]')
+		).toBeNull();
+		await expect(
+			canvasElement.querySelector(
+				'[data-cy="create-conversation-appointment"]'
+			)
+		).toBeNull();
+	}
+};
+
+/** One appointment: the row shows only that appointment, no create button. */
+export const OneToOneAppointmentUpcoming: Story = {
+	name: '1:1 appointment — upcoming, no create button beside it (FE#1960)',
+	render: () => <HeaderWithAppointments items={[makeStoryAppointment()]} />,
+	play: async ({ canvasElement }) => {
+		const bar = await waitFor(() => {
+			const found = canvasElement.querySelector(
+				'[data-cy="room-next-appointment"]'
+			);
+			expect(found).not.toBeNull();
+			return found!;
+		});
+		await expect(bar.querySelectorAll('.splitButton')).toHaveLength(1);
 	}
 };

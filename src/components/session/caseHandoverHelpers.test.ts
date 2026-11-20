@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import { STATUS_ENQUIRY, STATUS_ACTIVE } from '../../globalState/interfaces';
 import {
 	isCaseHandoverAccessControlled,

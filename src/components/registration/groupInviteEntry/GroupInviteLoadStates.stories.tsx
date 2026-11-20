@@ -2,6 +2,7 @@ import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import {
+	GroupInviteInvalid,
 	GroupInviteLoadError,
 	GroupInviteLoading
 } from './GroupInviteLoadError';
@@ -122,4 +123,41 @@ export const LoadError390: Story = {
 	globals: phone390Globals,
 	render: LoadErrorStory,
 	play: async ({ canvasElement }) => expectRetry(canvasElement)
+};
+
+/* #921: the server refused the group (unknown, other agency, wrong token). */
+const expectInvalid = async (canvasElement: HTMLElement) => {
+	const alert = page(canvasElement).getByRole('alert');
+	await expect(alert).toHaveTextContent(
+		'Dieser Einladungslink funktioniert nicht.'
+	);
+	await expect(alert).toHaveTextContent(
+		'Der Link ist unvollständig, oder die Gruppe gibt es nicht mehr.'
+	);
+	await expect(alert).toBeVisible();
+	// Retrying cannot repair the link.
+	await expect(
+		page(canvasElement).queryByRole('button', { name: 'Erneut versuchen' })
+	).toBeNull();
+	await expect(alert.getBoundingClientRect().right).toBeLessThanOrEqual(
+		window.innerWidth
+	);
+};
+
+const InvalidStory = (
+	args: React.ComponentProps<typeof GroupInviteLoading>
+) => <GroupInviteInvalid {...args} />;
+
+export const Invalid1366: Story = {
+	name: 'Link refused · 1366',
+	globals: { viewport: { value: 'desktop1366' } },
+	render: InvalidStory,
+	play: async ({ canvasElement }) => expectInvalid(canvasElement)
+};
+
+export const Invalid390: Story = {
+	name: 'Link refused · 390',
+	globals: phone390Globals,
+	render: InvalidStory,
+	play: async ({ canvasElement }) => expectInvalid(canvasElement)
 };

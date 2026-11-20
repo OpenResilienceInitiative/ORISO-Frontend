@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 
 import * as React from 'react';
 import {
@@ -17,7 +17,7 @@ import {
 	expect,
 	it,
 	vi
-} from 'vitest';
+} from 'vite-plus/test';
 import { createInstance } from 'i18next';
 import { I18nextProvider, initReactI18next } from 'react-i18next';
 import { MemoryRouter } from 'react-router-dom';
@@ -25,6 +25,24 @@ import enCommon from '../../../resources/i18n/en/common.json';
 import { UserDataProvider } from '../../../globalState/provider/UserDataProvider';
 import { ModalProvider } from '../../../globalState/provider/ModalProvider';
 import { NewRequestDialog } from './NewRequestDialog';
+import { LiveChatConversionPage } from '../../liveChatConversion/LiveChatConversionPage';
+import { UserDataContext } from '../../../globalState';
+
+vi.mock('../../sessionCookie/getMatrixAccessToken', () => ({
+	getCurrentAuthSubject: () => 'synthetic-asker'
+}));
+vi.mock('../../../globalState/context/MatrixClientContext', () => ({
+	useMatrixClient: () => ({ matrixClientService: null })
+}));
+vi.mock('../../liveChatConversion/liveChatConversionApi', () => ({
+	getConversionStatus: async () => ({
+		userId: 'synthetic-asker',
+		username: 'guest-name',
+		state: 'PROMOTED',
+		intentId: 'intent'
+	}),
+	convertLiveChatAccount: vi.fn()
+}));
 
 // Lottie's module setup needs a browser canvas even when the error overlay
 // renders a static SVG. Only the missing jsdom rendering boundary is supplied.
@@ -96,7 +114,7 @@ const installHttpBoundary = (status: number, reason: string) => {
 		vi.fn(async (request: Request) => {
 			const url = new URL(request.url);
 			if (request.method === 'GET') {
-				if (url.pathname === '/service/agencies/topics') {
+				if (url.pathname === '/service/topic/public') {
 					return Response.json([
 						{ id: 7, name: 'Social counselling' },
 						{ id: 9, name: 'Family counselling' }
@@ -117,6 +135,18 @@ const installHttpBoundary = (status: number, reason: string) => {
 				if (url.pathname === '/service/users/consultants/languages') {
 					return Response.json({ languages: [] });
 				}
+				const legal = url.pathname.match(
+					/^\/service\/agencies\/(\d+)\/topics\/(\d+)\/legal$/
+				);
+				if (legal) {
+					return Response.json({
+						dpp: {
+							content: '<p>Privacy policy</p>',
+							consentText: `I agree to the privacy policy of centre ${legal[1]}.`,
+							versionId: 77
+						}
+					});
+				}
 				if (url.pathname === '/service/users/data') {
 					return Response.json({ userId: 'synthetic-asker' });
 				}
@@ -126,11 +156,15 @@ const installHttpBoundary = (status: number, reason: string) => {
 				url.pathname === '/service/users/askers/session/new'
 			) {
 				submittedRequests.push(await request.json());
+				if (status === 201)
+					return Response.json({ sessionId: 5 }, { status: 201 });
 				return new Response('', {
 					status,
 					headers: { 'X-Reason': reason }
 				});
 			}
+			if (request.method === 'PUT' && url.pathname.includes('/consent'))
+				return new Response('', { status: 200 });
 			throw new Error(
 				`Unexpected HTTP request: ${request.method} ${request.url}`
 			);
@@ -139,6 +173,74 @@ const installHttpBoundary = (status: number, reason: string) => {
 };
 
 describe('New request AVV feedback through the real HTTP and UI boundaries', () => {
+	it('lets the same promoted guest request mail only after centre consent', async () => {
+		installHttpBoundary(201, '');
+		localStorage.setItem('matrix_session_subject', 'synthetic-asker');
+		const user = userEvent.setup();
+		render(
+			<I18nextProvider i18n={translations}>
+				<MemoryRouter
+					initialEntries={[
+						{
+							pathname: '/live-chat/convert',
+							state: { topicId: 7 }
+						}
+					]}
+				>
+					<UserDataContext.Provider
+						value={
+							{
+								userData: {
+									userId: 'synthetic-asker',
+									userName: 'guest-name'
+								},
+								reloadUserData: async () => {},
+								setUserData: () => {}
+							} as never
+						}
+					>
+						<ModalProvider>
+							<LiveChatConversionPage />
+						</ModalProvider>
+					</UserDataContext.Provider>
+				</MemoryRouter>
+			</I18nextProvider>
+		);
+		await user.click(
+			await screen.findByRole('button', {
+				name: 'Start a written request'
+			})
+		);
+		const postcode = await screen.findByRole('spinbutton', {
+			name: 'Your zip code'
+		});
+		await user.type(postcode, '10115');
+		await user.click(
+			await screen.findByRole('radio', { name: 'Existing centre' })
+		);
+		await user.click(
+			screen.getByRole('button', { name: 'Request counselling' })
+		);
+		const consent = await screen.findByRole('checkbox', {
+			name: /privacy policy of centre 42/
+		});
+		expect(submittedRequests).toEqual([]);
+		await user.click(consent);
+		await user.click(
+			screen.getByRole('button', { name: 'Request counselling' })
+		);
+		await waitFor(() =>
+			expect(submittedRequests).toEqual([
+				{
+					agencyId: 42,
+					mainTopicId: 7,
+					postcode: '10115',
+					consultingType: '1'
+				}
+			])
+		);
+	});
+
 	it.each([
 		[
 			403,
@@ -189,7 +291,18 @@ describe('New request AVV feedback through the real HTTP and UI boundaries', () 
 			await user.click(
 				await screen.findByRole('radio', { name: 'Another centre' })
 			);
-			await user.click(screen.getByRole('button', { name: 'Register' }));
+			await user.click(
+				screen.getByRole('button', { name: 'Request counselling' })
+			);
+			// FE#1876: the centre's consent slides up; nothing is sent yet.
+			const consent = await screen.findByRole('checkbox', {
+				name: /privacy policy of centre 43/
+			});
+			expect(submittedRequests).toEqual([]);
+			await user.click(consent);
+			await user.click(
+				screen.getByRole('button', { name: 'Request counselling' })
+			);
 			const expectedRequest = {
 				agencyId: 43,
 				mainTopicId: 9,
@@ -227,7 +340,9 @@ describe('New request AVV feedback through the real HTTP and UI boundaries', () 
 					}) as HTMLInputElement
 				).checked
 			).toBe(true);
-			await user.click(screen.getByRole('button', { name: 'Register' }));
+			await user.click(
+				screen.getByRole('button', { name: 'Request counselling' })
+			);
 			await waitFor(() =>
 				expect(submittedRequests).toEqual([
 					expectedRequest,

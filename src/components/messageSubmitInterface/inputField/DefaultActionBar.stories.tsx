@@ -1,6 +1,6 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, waitFor } from 'storybook/test';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { useTranslation } from 'react-i18next';
 import { DefaultActionBar } from './DefaultActionBar';
 import { phone390Globals } from '../../message/messageStoryShell';
@@ -15,10 +15,12 @@ const ACTION_BAR_FIGMA_URL =
  */
 function BarHarness({
 	width,
-	phone = false
+	phone = false,
+	micUnavailableReason
 }: {
 	width: number;
 	phone?: boolean;
+	micUnavailableReason?: string;
 }) {
 	const { t } = useTranslation();
 	return (
@@ -40,7 +42,9 @@ function BarHarness({
 					onScrollToNewest={() => {}}
 					unreadCount={3}
 					onOpenTools={() => {}}
+					isMobile={phone}
 					showMic
+					micUnavailableReason={micUnavailableReason}
 					isRecording={false}
 					onMicClick={() => {}}
 					isEmojiOpen={false}
@@ -108,13 +112,64 @@ export const Desktop: Story = {
 };
 
 /**
- * Review v6 (T22): on the phone the bar overflows — the end fades, the
- * wheel scrolls it, and scrolled to the end the last icon is whole.
+ * Editing a message (#1142): the mic is unavailable but focusable. Keyboard
+ * focus shows the reason in the house tooltip, not only to assistive tech.
  */
-export const Phone390Scrolls: Story = {
-	name: 'Phone 390 — bar scrolls: fade at the end, wheel travels, last icon whole (review v6)',
+export const EditModeMicFocused: Story = {
+	name: 'Edit mode — unavailable mic explains itself on keyboard focus',
+	render: () => (
+		<div style={{ paddingTop: 48 }}>
+			<BarHarness
+				width={640}
+				micUnavailableReason="Sprachnachrichten sind beim Bearbeiten nicht verfügbar."
+			/>
+		</div>
+	),
+	play: async ({ canvasElement }) => {
+		const mic = within(canvasElement).getByRole('button', {
+			name: /voice|sprach/i
+		});
+		for (let i = 0; i < 10 && document.activeElement !== mic; i++) {
+			await userEvent.tab();
+		}
+		await expect(mic).toHaveAttribute('aria-disabled', 'true');
+		await waitFor(() =>
+			expect(
+				within(document.body).getByRole('tooltip')
+			).toHaveTextContent('Sprachnachrichten sind beim Bearbeiten')
+		);
+	}
+};
+
+/**
+ * Frank (03.11.): on the phone the row holds five buttons and fits, so it
+ * neither fades nor scrolls, and the rest waits behind the plus.
+ */
+export const Phone390Fits: Story = {
+	name: 'Phone 390 — five buttons fit, no fade',
 	globals: phone390Globals,
 	render: () => <BarHarness width={358} phone />,
+	play: async ({ canvasElement }) => {
+		const element = bar(canvasElement);
+		await waitFor(() => {
+			expect(element.querySelectorAll('button')).toHaveLength(5);
+			expect(element.scrollWidth).toBeLessThanOrEqual(
+				element.clientWidth
+			);
+			expect(element.dataset.overflowEnd).toBe('false');
+		});
+		await expect(getComputedStyle(element).maskImage).toBe('none');
+	}
+};
+
+/**
+ * Review v6 (T22): in a narrow pane above the phone width all icons stay in
+ * the row and it overflows — the end fades, the wheel scrolls it, and
+ * scrolled to the end the last icon is whole.
+ */
+export const NarrowPaneScrolls: Story = {
+	name: 'Narrow pane — bar scrolls: fade at the end, wheel travels, last icon whole (review v6)',
+	render: () => <BarHarness width={358} />,
 	play: async ({ canvasElement }) => {
 		const element = bar(canvasElement);
 		await waitFor(() => {

@@ -18,8 +18,11 @@ import { ResizableHandle } from '../../sessionsList/ResizableHandle';
 import { SessionListItemComponent } from '../../sessionsListItem/SessionListItemComponent';
 import { SessionHeaderComponent } from '../../sessionHeader/SessionHeaderComponent';
 import { MessageTimeline } from '../../session/MessageTimeline';
+import { EncryptionBanner } from '../../session/EncryptionBanner';
+import { productionToolbarProps } from '../../sessionsList/__storybook__/productionToolbarProps';
 import {
 	isComposerBusy,
+	BOTTOM_TOLERANCE_PX,
 	isTimelineAtBottom,
 	shouldFollowNewMessage
 } from '../../messageSubmitInterface/timelineFollow';
@@ -241,13 +244,18 @@ function ListColumn({ width, rail }: { width: number; rail: boolean }) {
 					showConsultantActions
 					showCreateGroupChatAction
 					showSupervisionChip
+					{...productionToolbarProps}
 					createGroupChatPath="/sessions/consultant/sessionView/createGroupChat"
 					archiveTabPath="/sessions/consultant/sessionView?sessionListTab=archive"
 					archiveTabActive={false}
 					createGroupChatActive={false}
 				/>
 				<div className="sessionsList__scrollArea">
-					<div className="sessionsList__scrollContainer sessionsList__scrollContainer--hasToolbar">
+					<div
+						className="sessionsList__scrollContainer sessionsList__scrollContainer--hasToolbar"
+						role="list"
+						aria-label="Conversations"
+					>
 						{items.map((item, index) => (
 							<ListRowSession key={item.session!.id} item={item}>
 								<SessionListItemComponent
@@ -256,6 +264,14 @@ function ListColumn({ width, rail }: { width: number; rail: boolean }) {
 									index={index}
 									isBeforeActive={index === activeIndex - 1}
 									isAfterActive={index === activeIndex + 1}
+									grouped
+									isGroupStart={
+										index === 0 || index === activeIndex + 1
+									}
+									isGroupEnd={
+										index === items.length - 1 ||
+										index === activeIndex - 1
+									}
 								/>
 							</ListRowSession>
 						))}
@@ -305,6 +321,7 @@ function MainChat({
 	const phoneHeader = onBack !== undefined;
 	const { t } = useTranslation();
 	const paneRef = useRef<HTMLDivElement | null>(null);
+	const [initialScrollReady, setInitialScrollReady] = useState(false);
 	const fabOffset = useDockedComposerOffset(paneRef);
 	const composing = useComposerFocus(paneRef);
 	// The app opens a conversation at its newest message.
@@ -320,8 +337,32 @@ function MainChat({
 		};
 		toBottom();
 		// Rows animate in and the editor mounts late; settle, then scroll again.
-		const timer = window.setTimeout(toBottom, MOUNT_SETTLE_MS);
+		const timer = window.setTimeout(() => {
+			toBottom();
+			setInitialScrollReady(true);
+		}, MOUNT_SETTLE_MS);
 		return () => window.clearTimeout(timer);
+	}, []);
+	// Like the app: a bar appearing in the header (the 1:1 appointment) shrinks
+	// the timeline without a scroll event; a reader at the end stays there.
+	useEffect(() => {
+		const content =
+			paneRef.current?.querySelector<HTMLElement>('.session__content');
+		if (!content) {
+			return undefined;
+		}
+		let previousHeight = content.clientHeight;
+		const observer = new ResizeObserver(() => {
+			const shrunkBy = previousHeight - content.clientHeight;
+			previousHeight = content.clientHeight;
+			const gap =
+				content.scrollHeight - content.scrollTop - content.clientHeight;
+			if (shrunkBy > 0 && gap - shrunkBy <= BOTTOM_TOLERANCE_PX) {
+				content.scrollTop = content.scrollHeight;
+			}
+		});
+		observer.observe(content);
+		return () => observer.disconnect();
 	}, []);
 
 	const [arrived, setArrived] = useState<ReturnType<typeof mainChatMessages>>(
@@ -388,7 +429,12 @@ function MainChat({
 	);
 
 	return (
-		<div className="chatStage__mainPane" ref={paneRef} data-cy="stage-main">
+		<div
+			className="chatStage__mainPane"
+			ref={paneRef}
+			data-cy="stage-main"
+			data-scroll-ready={initialScrollReady}
+		>
 			{arrivals && arrivals.length > 0 && (
 				<button
 					type="button"
@@ -419,6 +465,10 @@ function MainChat({
 				/>
 			</div>
 			<div className="session__content" id="session-scroll-container">
+				{/* Same frame as `SessionItemComponent`: E2EE banner first. */}
+				<div className="session__gameChromeFadeTarget">
+					<EncryptionBanner />
+				</div>
 				<MessageTimeline
 					messages={messages}
 					renderMode="main"

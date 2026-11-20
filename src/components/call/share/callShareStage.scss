@@ -1,0 +1,125 @@
+/* Story stand-in only: the call stage behind the share surface (#1794). */
+
+.callShareStage {
+	background: var(--m3-surface, #fcf9f9);
+	box-sizing: border-box;
+	display: flex;
+	flex-direction: column;
+	height: 100vh;
+	overflow: hidden;
+	position: relative;
+	width: 100%;
+
+	&__circle {
+		align-self: center;
+		border-radius: 50%;
+		display: flex;
+		height: min(56vh, 72vw);
+		margin: auto;
+		overflow: hidden;
+		transform: translateY(-40px);
+		width: min(56vh, 72vw);
+	}
+
+	&__half {
+		align-items: center;
+		display: flex;
+		flex: 1;
+		font-size: 40px;
+		font-weight: 500;
+		justify-content: center;
+		letter-spacing: 0.5px;
+
+		&--seeker {
+			background: var(--m3-surface-container-high, #eae7e8);
+			color: var(--m3-on-surface-variant, #444748);
+			flex: 1.2;
+		}
+
+		&--counsellor {
+			background: var(--m3-primary, #a5000a);
+			color: var(--m3-on-primary, #ffffff);
+		}
+	}
+
+	/* Plate 2a: pill + "Auflegen", centred, 30px off the bottom. */
+	&__bar {
+		align-items: center;
+		bottom: 30px;
+		display: flex;
+		gap: 10px;
+		left: 50%;
+		position: absolute;
+		transform: translateX(-50%);
+	}
+
+	&__pill {
+		align-items: center;
+		background: var(--m3-surface-container-lowest, #ffffff);
+		border-radius: 32px;
+		box-shadow:
+			0 4px 8px 3px rgba(0, 0, 0, 0.12),
+			0 1px 3px rgba(0, 0, 0, 0.2);
+		box-sizing: border-box;
+		display: flex;
+		gap: 4px;
+		height: 64px;
+		padding: 8px 10px;
+	}
+
+	&__slot {
+		align-items: center;
+		color: var(--m3-on-surface-variant, #444748);
+		display: inline-flex;
+		height: 48px;
+		justify-content: center;
+		width: 48px;
+
+		svg {
+			height: 24px;
+			width: 24px;
+		}
+	}
+
+	&__hangup {
+		align-items: center;
+		background: var(--m3-error-container, #de0077);
+		border-radius: 28px;
+		box-shadow:
+			0 4px 8px 3px rgba(0, 0, 0, 0.14),
+			0 1px 3px rgba(0, 0, 0, 0.2);
+		color: var(--m3-on-primary, #ffffff);
+		display: inline-flex;
+		font-size: 14px;
+		font-weight: 500;
+		gap: 8px;
+		height: 56px;
+		padding: 0 22px;
+	}
+
+	/* Plate 5b: the pill spans the phone, the hang-up sits inside it. */
+	&--phone &__bar {
+		bottom: 26px;
+		left: 16px;
+		right: 16px;
+		transform: none;
+	}
+
+	&--phone &__pill {
+		border-radius: 36px;
+		flex: 1;
+		gap: 0;
+		height: 72px;
+		justify-content: space-between;
+		padding: 0 80px 0 10px;
+	}
+
+	&--phone &__hangup {
+		height: 48px;
+		justify-content: center;
+		padding: 0;
+		position: absolute;
+		right: 14px;
+		width: 56px;
+	}
+}

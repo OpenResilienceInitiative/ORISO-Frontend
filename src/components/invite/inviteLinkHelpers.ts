@@ -29,16 +29,14 @@ export const redirectToInviteSession = (
 /**
  * Give the guest an animal display name for a server-created invite session.
  *
- * A Live Chat link is redeemed server-side: the backend mints the account
- * itself (`anon_1`, `anon_2`, … from AnonymousUsernameRegistry) and hands back
- * tokens, so the pseudonym the legacy branch rolls client-side is never
- * reached. Nothing else fills the gap — no display name is set anywhere for
- * these accounts — and the counsellor ends up looking at `anon_N` for every
- * guest in the queue.
+ * Only for a redeem that did not carry a rolled User-ID (the on-arrival
+ * fallback): the server then rolls an animal User-ID itself
+ * (AnonymousUsernameRegistry) and no display name exists yet. The entry room
+ * sends the guest's own roll instead, which becomes the login
+ * (ORISO-Frontend#2346).
  *
- * The User-ID stays exactly as the backend minted it: it is the identity
- * anchor and the registry's uniqueness key. Only the human-facing name is
- * added, which is where the animal name is meant to live.
+ * The User-ID stays exactly as the backend created it: it is the identity
+ * anchor. Only the human-facing name is added.
  *
  * Best-effort by design. The name is a courtesy, the session is not: if the
  * write fails the guest still gets their chat, and the resolver falls back to

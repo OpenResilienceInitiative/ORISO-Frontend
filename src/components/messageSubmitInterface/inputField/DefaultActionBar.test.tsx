@@ -1,7 +1,14 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import * as React from 'react';
-import { cleanup, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import {
+	cleanup,
+	fireEvent,
+	render,
+	screen,
+	waitFor
+} from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { DefaultActionBar } from './DefaultActionBar';
 
 afterEach(() => cleanup());
@@ -72,6 +79,76 @@ describe('DefaultActionBar', () => {
 				.getByRole('button', { name: 'Voice recording' })
 				.getAttribute('title')
 		).toBe('Record voice message');
+	});
+
+	it('keeps the mic visible but unavailable, focusable and explained when a reason is given', () => {
+		const onMicClick = vi.fn();
+		render(
+			<DefaultActionBar
+				{...baseProps}
+				showMic
+				onMicClick={onMicClick}
+				micUnavailableReason="Not while editing"
+			/>
+		);
+		const mic = screen.getByRole('button', { name: 'Voice recording' });
+		expect(mic.getAttribute('aria-disabled')).toBe('true');
+		expect((mic as HTMLButtonElement).disabled).toBe(false);
+		expect(
+			document.getElementById(mic.getAttribute('aria-describedby')!)
+				?.textContent
+		).toBe('Not while editing');
+		mic.focus();
+		expect(document.activeElement).toBe(mic);
+		fireEvent.click(mic);
+		expect(onMicClick).not.toHaveBeenCalled();
+	});
+
+	it('shows the unavailable reason visibly when the mic gets keyboard focus, and hides it on blur', async () => {
+		const user = userEvent.setup();
+		render(
+			<DefaultActionBar
+				{...baseProps}
+				showMic
+				micUnavailableReason="Not while editing"
+			/>
+		);
+		const mic = screen.getByRole('button', { name: 'Voice recording' });
+		expect(screen.queryByRole('tooltip')).toBeNull();
+		for (let i = 0; i < 10 && document.activeElement !== mic; i++) {
+			await user.tab();
+		}
+		expect(document.activeElement).toBe(mic);
+		expect((await screen.findByRole('tooltip')).textContent).toBe(
+			'Not while editing'
+		);
+		await user.tab();
+		await waitFor(() => expect(screen.queryByRole('tooltip')).toBeNull());
+	});
+
+	it('shows the unavailable reason on a touch tap', async () => {
+		render(
+			<DefaultActionBar
+				{...baseProps}
+				showMic
+				micUnavailableReason="Not while editing"
+			/>
+		);
+		const mic = screen.getByRole('button', { name: 'Voice recording' });
+		fireEvent.touchStart(mic);
+		expect((await screen.findByRole('tooltip')).textContent).toBe(
+			'Not while editing'
+		);
+	});
+
+	it('keeps the default mic free of a custom tooltip', async () => {
+		const user = userEvent.setup();
+		render(<DefaultActionBar {...baseProps} showMic />);
+		const mic = screen.getByRole('button', { name: 'Voice recording' });
+		for (let i = 0; i < 10 && document.activeElement !== mic; i++) {
+			await user.tab();
+		}
+		expect(screen.queryByRole('tooltip')).toBeNull();
 	});
 
 	it('puts every compact control on the larger default action bar', () => {
@@ -152,5 +229,85 @@ describe('DefaultActionBar', () => {
 		expect(
 			arrow.querySelector('.composerToolbar__badge')?.textContent
 		).toBe('99+');
+	});
+	describe('on the phone', () => {
+		it('keeps five buttons in the row and the rest in the plus menu', async () => {
+			render(
+				<DefaultActionBar
+					{...baseProps}
+					showBack
+					onBack={vi.fn()}
+					showMic
+					isMobile
+				/>
+			);
+			expect(screen.getAllByRole('button')).toHaveLength(5);
+			expect(
+				screen.queryByRole('button', { name: 'Mention' })
+			).toBeNull();
+
+			await userEvent.click(
+				screen.getByRole('button', {
+					name: 'message.submit.toolbar.more'
+				})
+			);
+			const items = screen.getAllByRole('menuitem');
+			expect(items.map((item) => item.textContent)).toEqual([
+				'Add attachment',
+				'Emoji panel',
+				'Mention',
+				'message.submit.toolbar.maximize'
+			]);
+		});
+
+		it('runs the chosen action from the plus menu and closes it', async () => {
+			const onEmojiClick = vi.fn();
+			render(
+				<DefaultActionBar
+					{...baseProps}
+					onEmojiClick={onEmojiClick}
+					showMic
+					isMobile
+				/>
+			);
+			await userEvent.click(
+				screen.getByRole('button', {
+					name: 'message.submit.toolbar.more'
+				})
+			);
+			await userEvent.click(
+				screen.getByRole('menuitem', { name: 'Emoji panel' })
+			);
+			expect(onEmojiClick).toHaveBeenCalledTimes(1);
+			expect(screen.queryByRole('menu')).toBeNull();
+		});
+
+		it('hides the attachment entry when uploads are off', async () => {
+			render(
+				<DefaultActionBar
+					{...baseProps}
+					showAttachment={false}
+					showMic
+					isMobile
+				/>
+			);
+			await userEvent.click(
+				screen.getByRole('button', {
+					name: 'message.submit.toolbar.more'
+				})
+			);
+			expect(
+				screen.queryByRole('menuitem', { name: 'Add attachment' })
+			).toBeNull();
+		});
+	});
+
+	it('marks the mic while recording', () => {
+		render(<DefaultActionBar {...baseProps} showMic isRecording />);
+		expect(
+			screen
+				.getByRole('button', { name: 'Voice recording' })
+				.classList.contains('composerToolbar__button--recording')
+		).toBe(true);
 	});
 });
