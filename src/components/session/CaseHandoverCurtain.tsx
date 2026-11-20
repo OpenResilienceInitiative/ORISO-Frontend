@@ -16,6 +16,7 @@ import {
 	CaseHandoverStatus
 } from '../../api/apiCaseHandover';
 import { FETCH_ERRORS } from '../../api/fetchData';
+import { messageEventEmitter } from '../../services/messageEventEmitter';
 import { ActiveSessionContext } from '../../globalState/provider/ActiveSessionProvider';
 import { CaseHandoverReasonList } from '../caseHandover/CaseHandoverReasonList';
 import { OrisoTextarea } from '../form/OrisoTextarea';
@@ -493,6 +494,9 @@ export const CaseHandoverCurtain = ({
 					return;
 				}
 				onStatusChange(nextStatus);
+				messageEventEmitter.emit({
+					changedSessionId: nextStatus.sessionId
+				});
 				void activeSessionContext
 					?.refreshActiveSession?.()
 					.catch(() => {
@@ -557,6 +561,9 @@ export const CaseHandoverCurtain = ({
 					return;
 				}
 				onStatusChange(nextStatus);
+				messageEventEmitter.emit({
+					changedSessionId: nextStatus.sessionId
+				});
 				clearCaseHandoverOperation(operation);
 			})
 			.catch(async (requestError) => {

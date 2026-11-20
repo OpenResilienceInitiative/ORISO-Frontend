@@ -345,6 +345,19 @@ export const SessionsList = ({
 	const [filteredOutNoticeDismissed, setFilteredOutNoticeDismissed] =
 		useState(false);
 	const [caseHandoverBatchMode, setCaseHandoverBatchMode] = useState(false);
+	const showConsultantToolbarActions =
+		type === SESSION_LIST_TYPES.MY_SESSION &&
+		!hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData);
+	const caseHandoverSearch = useCaseHandoverSearch({
+		actorId: userData.userId,
+		enabled: showConsultantToolbarActions,
+		query: sessionToolbarSearch,
+		archived: sessionListTab === SESSION_LIST_TAB_ARCHIVE,
+		keepFound: caseHandoverBatchMode,
+		searchOpen: sessionToolbarSearchOpen
+	});
+	const { invalidateRowStatuses: invalidateCaseHandoverRowStatuses } =
+		caseHandoverSearch;
 	const [caseHandoverReviewOpen, setCaseHandoverReviewOpen] = useState(false);
 	const [caseHandoverWizardStep, setCaseHandoverWizardStep] = useState<
 		'reason' | 'describe'
@@ -1180,13 +1193,15 @@ export const SessionsList = ({
 			timestamp,
 			refreshEnquiryList,
 			refreshSessionList,
-			sessionId
+			sessionId,
+			changedSessionId
 		}: {
 			roomId?: string;
 			timestamp?: number;
 			refreshEnquiryList?: boolean;
 			refreshSessionList?: boolean;
 			sessionId?: number;
+			changedSessionId?: number;
 		}) => {
 			if (sessionId) {
 				dispatch({
@@ -1197,6 +1212,11 @@ export const SessionsList = ({
 
 			if (refreshEnquiryList && type === SESSION_LIST_TYPES.ENQUIRY) {
 				void refetchEnquiryList();
+			}
+
+			const changedId = changedSessionId ?? sessionId;
+			if (changedId !== undefined) {
+				invalidateCaseHandoverRowStatuses([changedId]);
 			}
 
 			if (refreshSessionList && type === SESSION_LIST_TYPES.MY_SESSION) {
@@ -1253,6 +1273,7 @@ export const SessionsList = ({
 	}, [
 		dispatch,
 		handleRIDsRef,
+		invalidateCaseHandoverRowStatuses,
 		refetchEnquiryList,
 		refetchSessionList,
 		sessionsRef,
@@ -1324,9 +1345,6 @@ export const SessionsList = ({
 		loadMoreSessions();
 	}, [loadMoreSessions]);
 
-	const showConsultantToolbarActions =
-		type === SESSION_LIST_TYPES.MY_SESSION &&
-		!hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData);
 	// One source with the create flow: the list must not offer a filter, or an
 	// entry point, for a format this Träger — or every one of the counsellor's
 	// Beratungsstellen — has switched off.
@@ -1347,13 +1365,6 @@ export const SessionsList = ({
 		type === SESSION_LIST_TYPES.MY_SESSION ||
 		type === SESSION_LIST_TYPES.ENQUIRY;
 	const visibleUserDrafts = useRemoteDrafts(showMySessionToolbar);
-	const caseHandoverSearch = useCaseHandoverSearch({
-		enabled: showConsultantToolbarActions,
-		query: sessionToolbarSearch,
-		archived: sessionListTab === SESSION_LIST_TAB_ARCHIVE,
-		keepFound: caseHandoverBatchMode,
-		searchOpen: sessionToolbarSearchOpen
-	});
 	const sessionToolbarSelectedPeople = caseHandoverSearch.selectedPersonIds;
 	const caseHandoverReasons = useCaseHandoverReasons(caseHandoverBatchMode);
 	// A chosen reason that is no longer offered is dropped.
@@ -2253,7 +2264,7 @@ export const SessionsList = ({
 			handleCloseCaseHandoverBatch();
 		}
 	}, [caseHandoverBatchMode, handleCloseCaseHandoverBatch, sessionListTab]);
-	const handleSubmitCaseHandoverBatch = useCallback(() => {
+	const handleSubmitCaseHandoverBatch = useCallback(async () => {
 		if (
 			caseHandoverSelectedIds.length === 0 ||
 			!caseHandoverReasonCode ||
@@ -2265,16 +2276,21 @@ export const SessionsList = ({
 			return;
 		}
 		setCaseHandoverBatchSummary('');
-		void caseHandoverBatch.submit(
-			caseHandoverSelectedIds,
-			caseHandoverReasonCode,
-			caseHandoverExplanation
-		);
+		try {
+			await caseHandoverBatch.submit(
+				caseHandoverSelectedIds,
+				caseHandoverReasonCode,
+				caseHandoverExplanation
+			);
+		} finally {
+			invalidateCaseHandoverRowStatuses(caseHandoverSelectedIds);
+		}
 	}, [
 		caseHandoverBatch,
 		caseHandoverExplanation,
 		caseHandoverReasonCode,
 		caseHandoverSelectedIds,
+		invalidateCaseHandoverRowStatuses,
 		translate
 	]);
 	useEffect(() => {
@@ -3309,6 +3325,15 @@ export const SessionsList = ({
 												</p>
 											)}
 											<SessionListItemComponent
+												caseHandoverRowStatus={
+													typeof activeSession.item
+														.id === 'number'
+														? caseHandoverSearch.rowStatuses.get(
+																activeSession
+																	.item.id
+															)
+														: undefined
+												}
 												defaultLanguage={
 													defaultLanguage
 												}

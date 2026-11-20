@@ -24,6 +24,7 @@ import {
 	type CaseHandoverStatus
 } from '../../api/apiCaseHandover';
 import { CaseHandoverCurtain } from './CaseHandoverCurtain';
+import { messageEventEmitter } from '../../services/messageEventEmitter';
 import {
 	getCaseHandoverOperation,
 	resetCaseHandoverOperationStoreForTests
@@ -381,6 +382,33 @@ describe('CaseHandoverCurtain request lifecycle', () => {
 				}) as HTMLButtonElement
 			).disabled
 		).toBe(false);
+	});
+
+	it('notifies the list only of the case whose access request succeeded', async () => {
+		const resolution = deferred<CaseHandoverStatus>();
+		vi.mocked(apiRequestCaseHandoverAccess).mockReturnValueOnce(
+			resolution.promise
+		);
+		const onListChange = vi.fn();
+		messageEventEmitter.on(onListChange);
+		try {
+			render(
+				<CaseHandoverCurtain
+					actorId="consultant-1"
+					sessionId={1}
+					status={idleStatus(1)}
+					onStatusChange={vi.fn()}
+				/>
+			);
+			await completeAndSubmitRequest();
+			expect(onListChange).not.toHaveBeenCalled();
+			await act(async () => resolution.resolve(statusFor(1)));
+			expect(onListChange.mock.calls).toEqual([
+				[{ changedSessionId: 1 }]
+			]);
+		} finally {
+			messageEventEmitter.off(onListChange);
+		}
 	});
 
 	it('replays the frozen PULL operation after remount despite a newer revision', async () => {

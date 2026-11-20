@@ -3,6 +3,7 @@ import {
 	apiGetCaseHandoverCandidates,
 	apiGetConsultantSessionList
 } from '../../api';
+import { useCaseHandoverRowStatuses } from './caseHandoverRowStatuses';
 import { FETCH_ERRORS } from '../../api/fetchData';
 import type { ListItemInterface } from '../../globalState/interfaces/SessionsDataInterface';
 import {
@@ -48,18 +49,18 @@ export const mergeListItems = (...lists: ListItemInterface[][]) => {
 	return merged;
 };
 
-type CasePage = { sessions?: ListItemInterface[]; total?: number };
+type CasePage<T extends ListItemInterface> = { sessions?: T[]; total?: number };
 
 /**
  * Pages a case list from offset 0 until the reported total, an empty page
  * or (without a total) a short page. `capped` is set when `maxPages`
  * stopped it while more cases may exist.
  */
-const pageThrough = async (
-	fetchPage: (offset: number, count: number) => Promise<CasePage>,
+const pageThrough = async <T extends ListItemInterface>(
+	fetchPage: (offset: number, count: number) => Promise<CasePage<T>>,
 	maxPages = Number.POSITIVE_INFINITY
 ) => {
-	const found: ListItemInterface[] = [];
+	const found: T[] = [];
 	for (let page = 0; page < maxPages; page++) {
 		const { sessions = [], total } = await fetchPage(
 			found.length,
@@ -134,20 +135,26 @@ const fetchPersonCases = async (
 	archived: boolean,
 	signal?: AbortSignal
 ) => {
-	const lists = await Promise.all([
-		...lookupTermsOf(person).map(async (term) =>
-			(await fetchAllCandidates(term, archived, signal)).cases.filter(
-				(item) => personKeysOfSession(item).includes(person.id)
+	const [candidateLists, ownCases] = await Promise.all([
+		Promise.all(
+			lookupTermsOf(person).map(async (term) =>
+				(await fetchAllCandidates(term, archived, signal)).cases.filter(
+					(item) => personKeysOfSession(item).includes(person.id)
+				)
 			)
 		),
-		...(person.role === 'asker'
-			? [fetchOwnListCases(person.id, archived, signal)]
-			: [])
+		person.role === 'asker'
+			? fetchOwnListCases(person.id, archived, signal)
+			: []
 	]);
-	return mergeListItems(...lists);
+	return {
+		candidates: candidateLists.flat(),
+		cases: mergeListItems(...candidateLists, ownCases)
+	};
 };
 
 interface CaseHandoverSearchOptions {
+	actorId: string;
 	/** Counsellor toolbar with handover actions. */
 	enabled: boolean;
 	query: string;
@@ -171,20 +178,29 @@ export type EligibleColleaguesStatus = 'idle' | 'loading' | 'ready' | 'error';
  * colleagues the menu offers, also for role words.
  */
 export const useCaseHandoverSearch = ({
+	actorId,
 	enabled,
 	query,
 	archived,
 	keepFound,
 	searchOpen
 }: CaseHandoverSearchOptions) => {
+	const { startRead, invalidate, getRowStatus } = useCaseHandoverRowStatuses(
+		actorId,
+		archived,
+		enabled
+	);
 	/** Text-query results, tagged with the archive scope they belong to. */
 	const [textResult, setTextResult] = useState<{
+		actorId: string;
 		archived: boolean;
 		cases: ListItemInterface[];
-	}>({ archived, cases: NO_CASES });
+	}>({ actorId, archived, cases: NO_CASES });
 	// Batch mode keeps found cases, but never across the archive scope.
 	const textCandidates =
-		textResult.archived === archived ? textResult.cases : NO_CASES;
+		textResult.actorId === actorId && textResult.archived === archived
+			? textResult.cases
+			: NO_CASES;
 	/** Cases of picked people, by person key. */
 	const [pinned, setPinned] = useState<Record<string, ListItemInterface[]>>(
 		{}
@@ -194,6 +210,7 @@ export const useCaseHandoverSearch = ({
 	>([]);
 	/** Cases I may take over; only their counsellors are listed (FE#1152). */
 	const [eligible, setEligible] = useState<{
+		actorId: string;
 		archived: boolean;
 		cases: ListItemInterface[];
 		/** The page limit stopped the load; more cases may exist. */
@@ -201,7 +218,12 @@ export const useCaseHandoverSearch = ({
 		status: EligibleColleaguesStatus;
 	} | null>(null);
 	// What was loaded for the other archive tab does not count.
-	const eligibleNow = eligible?.archived === archived ? eligible : null;
+	const eligibleNow =
+		eligible &&
+		eligible.actorId === actorId &&
+		eligible.archived === archived
+			? eligible
+			: null;
 	const eligibleCases = eligibleNow?.cases ?? NO_CASES;
 	const eligibleStatus = eligibleNow?.status ?? 'idle';
 	const eligibleCapped = eligibleNow?.capped ?? false;
@@ -209,33 +231,40 @@ export const useCaseHandoverSearch = ({
 	useEffect(() => {
 		const trimmed = query.trim();
 		if (!enabled) {
-			setTextResult({ archived, cases: NO_CASES });
+			setTextResult({ actorId, archived, cases: NO_CASES });
 			return;
 		}
 		if (!trimmed) {
-			if (!keepFound) setTextResult({ archived, cases: NO_CASES });
+			if (!keepFound)
+				setTextResult({ actorId, archived, cases: NO_CASES });
 			return;
 		}
 		const controller = new AbortController();
 		const timeoutId = window.setTimeout(() => {
+			const remember = startRead();
 			apiGetCaseHandoverCandidates({
 				query: trimmed,
 				count: CANDIDATE_PAGE_SIZE,
 				archived,
 				signal: controller.signal
 			})
-				.then(({ sessions = [] }) =>
+				.then(({ sessions = [] }) => {
+					if (controller.signal.aborted) return;
+					remember(sessions);
 					setTextResult((prev) => ({
+						actorId,
 						archived,
 						cases:
-							keepFound && prev.archived === archived
+							keepFound &&
+							prev.actorId === actorId &&
+							prev.archived === archived
 								? mergeListItems(sessions, prev.cases)
 								: sessions
-					}))
-				)
+					}));
+				})
 				.catch((error) => {
 					if (error?.message !== FETCH_ERRORS.ABORT && !keepFound) {
-						setTextResult({ archived, cases: NO_CASES });
+						setTextResult({ actorId, archived, cases: NO_CASES });
 					}
 				});
 		}, SEARCH_DEBOUNCE_MS);
@@ -243,7 +272,7 @@ export const useCaseHandoverSearch = ({
 			window.clearTimeout(timeoutId);
 			controller.abort();
 		};
-	}, [archived, enabled, keepFound, query]);
+	}, [actorId, archived, enabled, keepFound, query, startRead]);
 
 	useEffect(() => {
 		if (!enabled) {
@@ -254,18 +283,36 @@ export const useCaseHandoverSearch = ({
 		let cancelled = false;
 		const controller = new AbortController();
 		setEligible((prev) =>
-			prev?.archived === archived && prev.status !== 'error'
+			prev &&
+			prev.actorId === actorId &&
+			prev.archived === archived &&
+			prev.status !== 'error'
 				? prev
-				: { archived, cases: [], capped: false, status: 'loading' }
+				: {
+						actorId,
+						archived,
+						cases: [],
+						capped: false,
+						status: 'loading'
+					}
 		);
+		const remember = startRead();
 		fetchAllCandidates('', archived, controller.signal, CANDIDATE_MAX_PAGES)
 			.then(({ cases, capped }) => {
-				if (!cancelled)
-					setEligible({ archived, cases, capped, status: 'ready' });
+				if (cancelled) return;
+				remember(cases);
+				setEligible({
+					actorId,
+					archived,
+					cases,
+					capped,
+					status: 'ready'
+				});
 			})
 			.catch(() => {
 				if (!cancelled)
 					setEligible({
+						actorId,
 						archived,
 						cases: [],
 						capped: false,
@@ -276,7 +323,7 @@ export const useCaseHandoverSearch = ({
 			cancelled = true;
 			controller.abort();
 		};
-	}, [archived, enabled, searchOpen]);
+	}, [actorId, archived, enabled, searchOpen, startRead]);
 
 	/**
 	 * Per-person case loads of the current archive scope. Switching the
@@ -299,9 +346,11 @@ export const useCaseHandoverSearch = ({
 	const loadPersonCases = useCallback(
 		(person: SessionSearchPersonResult, scope: boolean) => {
 			const signal = personLoadSignal();
+			const remember = startRead();
 			fetchPersonCases(person, scope, signal)
-				.then((cases) => {
+				.then(({ candidates, cases }) => {
 					if (signal.aborted) return;
+					remember(candidates);
 					setPinned((prev) =>
 						Object.prototype.hasOwnProperty.call(prev, person.id)
 							? {
@@ -316,7 +365,7 @@ export const useCaseHandoverSearch = ({
 				})
 				.catch(() => undefined);
 		},
-		[personLoadSignal]
+		[personLoadSignal, startRead]
 	);
 
 	/**
@@ -325,16 +374,23 @@ export const useCaseHandoverSearch = ({
 	 */
 	const pickedRef = useRef(pickedPeople);
 	pickedRef.current = pickedPeople;
-	const scopeRef = useRef(archived);
+	const scopeRef = useRef({ actorId, archived });
 	useEffect(() => {
-		if (scopeRef.current === archived) return;
-		scopeRef.current = archived;
+		if (scopeRef.current.actorId !== actorId) {
+			scopeRef.current = { actorId, archived };
+			abortPersonLoads();
+			setPickedPeople([]);
+			setPinned({});
+			return;
+		}
+		if (scopeRef.current.archived === archived) return;
+		scopeRef.current = { actorId, archived };
 		abortPersonLoads();
 		const people = pickedRef.current;
 		setPinned(Object.fromEntries(people.map((person) => [person.id, []])));
 		if (!enabled) return;
 		people.forEach((person) => loadPersonCases(person, archived));
-	}, [abortPersonLoads, archived, enabled, loadPersonCases]);
+	}, [abortPersonLoads, actorId, archived, enabled, loadPersonCases]);
 
 	/**
 	 * Picking keeps the text (US3) and loads all of each new person's cases,
@@ -393,8 +449,10 @@ export const useCaseHandoverSearch = ({
 	const reset = useCallback(
 		(keepSessionIds: number[] = []) => {
 			abortPersonLoads();
+			invalidate();
 			const keep = new Set(keepSessionIds.map(String));
 			setTextResult((prev) => ({
+				actorId: prev.actorId,
 				archived: prev.archived,
 				cases: mergeListItems(
 					prev.cases,
@@ -408,12 +466,19 @@ export const useCaseHandoverSearch = ({
 			setPickedPeople([]);
 			setPinned({});
 		},
-		[abortPersonLoads, pinned]
+		[abortPersonLoads, invalidate, pinned]
 	);
 
 	const candidateSessions = useMemo(
-		() => mergeListItems(textCandidates, ...Object.values(pinned)),
-		[pinned, textCandidates]
+		() =>
+			mergeListItems(
+				textCandidates,
+				...(scopeRef.current.actorId === actorId &&
+				scopeRef.current.archived === archived
+					? Object.values(pinned)
+					: [])
+			),
+		[actorId, archived, pinned, textCandidates]
 	);
 	/**
 	 * Cases I may take over: the blank roster plus what a typed query found
@@ -428,8 +493,24 @@ export const useCaseHandoverSearch = ({
 		[eligibleCases, textCandidates]
 	);
 
+	const rowStatuses = useMemo(() => {
+		const rows = new Map<
+			number,
+			NonNullable<ReturnType<typeof getRowStatus>>
+		>();
+		for (const item of candidateSessions) {
+			const id = item.session?.id;
+			if (id === undefined) continue;
+			const status = getRowStatus(id);
+			if (status) rows.set(id, status);
+		}
+		return rows;
+	}, [candidateSessions, getRowStatus]);
+
 	return {
 		candidateSessions,
+		rowStatuses,
+		invalidateRowStatuses: invalidate,
 		eligibleCases,
 		takeableCases,
 		eligibleStatus,
