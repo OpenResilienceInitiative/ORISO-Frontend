@@ -4039,11 +4039,9 @@
 				"body": "መላግቦ ዘይተማልአ እዩ፣ ወይ ጉጅለ ድሕሪ ሕጂ የለን። በጃኹም ነቲ መላግቦ ዝለኣኸልኩም ሰብ ሓድሽ ሕተቱ።"
 			}
 		},
-		"stepFolded": {
-			"before_one": "{{count}} ተዛዚሙ",
-			"before_other": "{{count}} ተዛዚሞም",
-			"after_one": "{{count}} ተወሳኺ",
-			"after_other": "{{count}} ተወሰኽቲ"
+		"stepScroll": {
+			"back": "ዝሓለፉ ስጉምትታት",
+			"forward": "ዝቕጽሉ ስጉምትታት"
 		}
 	},
 	"releaseNote": {

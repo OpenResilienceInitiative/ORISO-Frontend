@@ -9,6 +9,8 @@ import ChatBubbleRoundedIcon from '@mui/icons-material/ChatBubbleRounded';
 import CakeRoundedIcon from '@mui/icons-material/CakeRounded';
 import PublicRoundedIcon from '@mui/icons-material/PublicRounded';
 import QuizRoundedIcon from '@mui/icons-material/QuizRounded';
+import StarRoundedIcon from '@mui/icons-material/StarRounded';
+import InfoRoundedIcon from '@mui/icons-material/InfoRounded';
 import { SvgIconComponent } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { IconStepper } from '../../stepper/molecules/IconStepper';
@@ -98,10 +100,19 @@ export interface RegistrationHeaderProps {
 	 * Steps of a journey's check-in that are not platform steps (questions, ratings): their name
 	 * and the label to show (ORISO-Frontend#2333). They take their place from `visibleStepNames`.
 	 */
-	customSteps?: { name: string; label: string }[];
+	customSteps?: { name: string; label: string; kind?: CustomStepKind }[];
 }
 
-/** Above this many steps the desktop stepper folds the far ones into one marker per side. */
+/** What a journey step asks for; each kind has its own icon in the stepper (Frank, 2026-11-20). */
+export type CustomStepKind = 'question' | 'rating' | 'panel';
+
+const CUSTOM_STEP_ICON: Record<CustomStepKind, SvgIconComponent> = {
+	question: QuizRoundedIcon,
+	rating: StarRoundedIcon,
+	panel: InfoRoundedIcon
+};
+
+/** Above this many steps the desktop stepper scrolls sideways, with arrows over its edges. */
 export const MAX_VISIBLE_STEPS = 5;
 
 /**
@@ -149,7 +160,7 @@ export const RegistrationHeader = ({
 							name,
 							labelKey: '',
 							label: custom.label,
-							Icon: QuizRoundedIcon
+							Icon: CUSTOM_STEP_ICON[custom.kind ?? 'question']
 						}
 					]
 				: [];
@@ -317,9 +328,10 @@ export const RegistrationHeader = ({
 								t(`registration.stepState.${state}`)
 							}
 							maxVisible={MAX_VISIBLE_STEPS}
-							foldedLabel={(side, count) =>
-								t(`registration.stepFolded.${side}`, { count })
-							}
+							scrollLabels={{
+								back: t('registration.stepScroll.back'),
+								forward: t('registration.stepScroll.forward')
+							}}
 						/>
 					</Box>
 				</Box>

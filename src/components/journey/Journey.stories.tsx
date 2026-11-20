@@ -60,7 +60,31 @@ const Page = ({ children }: { children: React.ReactNode }) => (
  * registration's own bar, whose "Weiter" lights up only once the step is complete. The whole
  * thing fits the screen: nothing scrolls (Frank, 2026-11-20).
  */
-const CheckIn = ({ names, current }: { names: string[]; current: string }) => {
+const CUSTOM_STEPS = [
+	{
+		name: 'journey:situation',
+		label: 'Ihre Situation',
+		kind: 'question' as const
+	},
+	{ name: 'journey:family', label: 'Familie', kind: 'question' as const },
+	{ name: 'journey:income', label: 'Einkommen', kind: 'question' as const },
+	{ name: 'journey:wishes', label: 'Zufriedenheit', kind: 'rating' as const },
+	...Array.from({ length: 16 }, (_unused, index) => ({
+		name: `journey:extra${index + 1}`,
+		label: `Frageblock ${index + 1}`,
+		kind: index % 3 === 2 ? ('rating' as const) : ('question' as const)
+	}))
+];
+
+const CheckIn = ({
+	names,
+	current,
+	step = situationStep
+}: {
+	names: string[];
+	current: string;
+	step?: typeof situationStep;
+}) => {
 	const [answers, setAnswers] = useState<StepAnswers>(emptyAnswers);
 	const [complete, setComplete] = useState(false);
 	return (
@@ -78,23 +102,19 @@ const CheckIn = ({ names, current }: { names: string[]; current: string }) => {
 				<RegistrationHeader
 					currentStepName={current}
 					visibleStepNames={names}
-					customSteps={[
-						{ name: 'journey:situation', label: 'Ihre Situation' },
-						{ name: 'journey:family', label: 'Familie' },
-						{ name: 'journey:income', label: 'Einkommen' },
-						{ name: 'journey:wishes', label: 'Wünsche' }
-					]}
+					customSteps={CUSTOM_STEPS}
 					fullBleed={false}
 				/>
 				<Box
 					sx={{
 						px: { xs: 2, sm: 4 },
-						pt: { xs: 2, sm: 3 },
+						py: { xs: 2, sm: 3 },
+						minHeight: 0,
 						overflow: 'hidden'
 					}}
 				>
 					<JourneyCheckInStep
-						step={situationStep}
+						step={step}
 						answers={answers}
 						onChange={setAnswers}
 						onCompleteChange={setComplete}
@@ -185,8 +205,11 @@ export const CheckInFourSteps: Story = {
 	}
 };
 
-/** Eight steps: the desktop stepper folds the far ones ("3 erledigt", "+3") and keeps its width. */
-export const CheckInEightStepsFolds: Story = {
+/**
+ * Eight steps: more than fit, so the stepper scrolls sideways with arrows; the rating step
+ * („Zufriedenheit“) has its own icon next to the question steps.
+ */
+export const CheckInEightSteps: Story = {
 	render: () => <CheckIn names={EIGHT} current="journey:income" />,
 	play: async ({ canvasElement }) => {
 		await within(canvasElement).findByRole('navigation');
@@ -194,21 +217,77 @@ export const CheckInEightStepsFolds: Story = {
 			'[data-cy="icon-stepper"]'
 		) as HTMLElement;
 		await expect(
-			nav.querySelector('[data-cy="icon-stepper-folded-before"]')
-		).not.toBeNull();
-		await expect(
-			nav.querySelector('[data-cy="icon-stepper-folded-after"]')
-		).not.toBeNull();
-		await expect(
 			nav.querySelector('[data-cy="icon-stepper-step-journey:income"]')
 		).not.toBeNull();
 	}
 };
 
-/** On the phone the header is one row, "Schritt 4 von 8", however many steps there are. */
-export const CheckInEightStepsPhone: Story = {
+const TWENTY = [
+	'topic-selection',
+	...CUSTOM_STEPS.slice(0, 16).map((step) => step.name),
+	'zipcode',
+	'agency-selection',
+	'account-data'
+];
+
+/**
+ * Twenty steps: beyond the limit the stepper scrolls sideways like a gallery, with arrows over its
+ * edges; the current step stays in view and every earlier step can still be reached.
+ */
+export const CheckInTwentySteps: Story = {
+	render: () => <CheckIn names={TWENTY} current="journey:extra5" />,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await canvas.findByRole('navigation');
+		await expect(
+			canvasElement.querySelector('[data-cy="icon-stepper"]')
+		).toHaveAttribute('data-scrolls', 'true');
+		await expect(
+			await canvas.findByRole('button', { name: 'Vorige Schritte' })
+		).toBeInTheDocument();
+	}
+};
+
+/** On the phone the header is one row, "Schritt x von n"; many steps become small dots. */
+export const CheckInTwentyStepsPhone: Story = {
 	globals: phone375Globals,
-	render: () => <CheckIn names={EIGHT} current="journey:income" />
+	render: () => <CheckIn names={TWENTY} current="journey:extra5" />
+};
+
+const longStep = {
+	...situationStep,
+	title: {
+		de: 'Ihre finanzielle Situation im Überblick, damit wir passend beraten können'
+	},
+	description: {
+		de: 'Bevor wir loslegen, möchten wir Ihre Lage ein wenig besser verstehen. Diese Fragen helfen der Beratungsstelle, sich vorzubereiten, damit das erste Gespräch gleich weiterhilft. Sie können alles überspringen, was nicht als Pflicht markiert ist, und Ihre Antworten später im Gespräch ergänzen oder ändern. Ihre Angaben sieht nur die Beratungsstelle, die Sie wählen.'
+	},
+	questions: [
+		{
+			...situation,
+			label: {
+				de: 'Wie würden Sie Ihre derzeitige Lage beschreiben, wenn Sie an Ihre Schulden, laufenden Rechnungen und die Briefe denken, die in den letzten Wochen gekommen sind?'
+			}
+		},
+		...(situationStep.questions ?? []).slice(1)
+	]
+};
+
+/**
+ * Very long texts: the step's line stops after four lines and the question after two, with "…";
+ * the Admin editor warns long before (ORISO-Admin#1551).
+ */
+export const CheckInLongTexts: Story = {
+	render: () => (
+		<CheckIn names={FOUR} current="journey:situation" step={longStep} />
+	)
+};
+
+export const CheckInLongTextsPhone: Story = {
+	globals: phone375Globals,
+	render: () => (
+		<CheckIn names={FOUR} current="journey:situation" step={longStep} />
+	)
 };
 
 /** Every kind of question in one step: cards, multiple choice, dropdown, free text, a hint. */
@@ -267,7 +346,7 @@ export const QuestionTypes: Story = {
 		});
 		await userEvent.click(others[0]);
 		await expect(
-			canvas.getByRole('textbox', { name: 'Was genau?' })
+			canvas.getAllByRole('textbox', { name: 'Was genau?' })[0]
 		).toHaveFocus();
 		await userEvent.click(canvas.getByRole('checkbox', { name: 'Miete' }));
 		await userEvent.click(

@@ -31,6 +31,9 @@ export const StepConnector = ({ done, size = 'md' }: StepConnectorProps) => (
 			'flexGrow': 1,
 			'flexShrink': 0,
 			'minWidth': size === 'sm' ? 18 : 24,
+			// With few steps one line would span the whole band (Frank, 2026-11-20: "die lange
+			// rote Linie bei zwei Schritten"); a capped line keeps the steps together, centred.
+			'maxWidth': size === 'sm' ? 96 : 160,
 			'mt': DOT_CENTRE[size],
 			'mx': 0.5,
 			'borderTop': `2.5px dotted ${stepperColors.outline}`,

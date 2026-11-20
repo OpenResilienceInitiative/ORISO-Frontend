@@ -4065,11 +4065,9 @@
 				"body": "Le lien est incomplet, ou le groupe n'existe plus. Veuillez demander un nouveau lien à la personne qui vous l'a envoyé."
 			}
 		},
-		"stepFolded": {
-			"before_one": "{{count}} terminé",
-			"before_other": "{{count}} terminés",
-			"after_one": "{{count}} de plus",
-			"after_other": "{{count}} de plus"
+		"stepScroll": {
+			"back": "Étapes précédentes",
+			"forward": "Étapes suivantes"
 		}
 	},
 	"releaseNote": {

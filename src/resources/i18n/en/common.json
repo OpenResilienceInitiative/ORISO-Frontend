@@ -4031,11 +4031,9 @@
 				"body": "The link is incomplete, or the group no longer exists. Please ask the person who sent you the link for a new one."
 			}
 		},
-		"stepFolded": {
-			"before_one": "{{count}} done",
-			"before_other": "{{count}} done",
-			"after_one": "{{count}} more",
-			"after_other": "{{count}} more"
+		"stepScroll": {
+			"back": "Previous steps",
+			"forward": "Next steps"
 		}
 	},
 	"releaseNote": {

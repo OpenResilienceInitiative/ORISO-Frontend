@@ -5,8 +5,8 @@ import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { useTranslation } from 'react-i18next';
 import { orisoInputColors } from '../form/orisoInputDesign';
+import { TEXT_LINES, clampLines } from './journeyTextLimits';
 import { OrisoSelect } from '../form/OrisoSelect';
-import { OrisoTextField } from '../form/OrisoTextField';
 import { OrisoTextarea } from '../form/OrisoTextarea';
 import {
 	OTHER_OPTION,
@@ -50,12 +50,13 @@ const QuestionHead = ({
 		>
 			<Typography
 				component="span"
+				title={textIn(question.label, language)}
 				sx={{
-					display: 'block',
-					fontSize: 18,
+					fontSize: { xs: 18, sm: 20 },
 					fontWeight: 600,
-					lineHeight: '26px',
-					color: orisoInputColors.onSurface
+					lineHeight: { xs: '26px', sm: '28px' },
+					color: orisoInputColors.onSurface,
+					...clampLines(TEXT_LINES.question)
 				}}
 			>
 				{textIn(question.label, language)}
@@ -76,12 +77,13 @@ const QuestionHead = ({
 			{help && (
 				<Typography
 					component="span"
+					title={help}
 					sx={{
-						display: 'block',
 						mt: 0.5,
 						fontSize: 14,
 						lineHeight: '20px',
-						color: orisoInputColors.onSurfaceVariant
+						color: orisoInputColors.onSurfaceVariant,
+						...clampLines(TEXT_LINES.help)
 					}}
 				>
 					{help}
@@ -92,9 +94,10 @@ const QuestionHead = ({
 };
 
 /**
- * One answer as a card, the way questionnaires that people actually finish do it: the whole row
- * is the target (48 pt and more), the mark sits left, the chosen card is outlined in primary.
- * Under it a real radio or checkbox, so keyboard and screen readers work as with any form.
+ * One answer as a card in the look of the registration's topic cards (Frank, 2026-11-20): round,
+ * large, easy to hit, lifted a little under the pointer. The whole card is the target; a real
+ * radio (single choice) or checkbox (multiple choice) sits under it, so keyboard and screen
+ * readers work as with any form, and the mark on the left keeps the two told apart.
  */
 const ChoiceCard = ({
 	type,
@@ -123,26 +126,31 @@ const ChoiceCard = ({
 		sx={{
 			'display': 'block',
 			'position': 'relative',
-			'borderRadius': '12px',
-			'border': `1px solid ${checked ? orisoInputColors.primary : orisoInputColors.outline}`,
-			'backgroundColor': checked
+			'borderRadius': '32px',
+			'border': `${checked ? 2 : 1}px solid ${checked ? orisoInputColors.primary : orisoInputColors.outline}`,
+			'margin': checked ? 0 : '1px',
+			'background': checked
 				? orisoInputColors.selectedLayer
-				: orisoInputColors.surfaceContainerLowest,
-			'boxShadow': checked
-				? `inset 0 0 0 1px ${orisoInputColors.primary}`
-				: 'none',
+				: `linear-gradient(100deg, ${orisoInputColors.surfaceContainerHigh} 0%, ${orisoInputColors.surfaceContainerLow} 90%)`,
 			'cursor': disabled ? 'default' : 'pointer',
-			'transition': 'background-color 160ms, border-color 160ms',
+			'transition':
+				'transform 240ms cubic-bezier(0.34, 1.24, 0.44, 1), box-shadow 240ms, border-color 160ms, background 160ms',
 			'&:hover': disabled
 				? undefined
 				: {
-						backgroundColor: checked
-							? orisoInputColors.selectedLayer
-							: orisoInputColors.hoverLayer
+						transform: 'translateY(-2px)',
+						boxShadow: '0 12px 28px rgba(27, 27, 28, 0.10)'
 					},
 			'&:has(input:focus-visible)': {
 				outline: `3px solid ${orisoInputColors.focus}`,
 				outlineOffset: '2px'
+			},
+			'@media (hover: none)': {
+				'&:hover': { transform: 'none', boxShadow: 'none' }
+			},
+			'@media (prefers-reduced-motion: reduce)': {
+				'transition': 'none',
+				'&:hover': { transform: 'none' }
 			}
 		}}
 	>
@@ -151,9 +159,9 @@ const ChoiceCard = ({
 				display: 'flex',
 				alignItems: 'center',
 				gap: 1.5,
-				minHeight: 52,
-				px: 2,
-				py: 1.25
+				minHeight: { xs: 54, sm: 64 },
+				px: { xs: 2, sm: 2.5 },
+				py: { xs: 1, sm: 1.5 }
 			}}
 		>
 			<input
@@ -162,6 +170,8 @@ const ChoiceCard = ({
 				checked={checked}
 				disabled={disabled}
 				required={required}
+				// Its own name: the card may hold a text field, which must not become part of it.
+				aria-label={label}
 				// A radio that is already chosen fires no change: a tap on it must still count, so
 				// a person who went back can confirm the same answer and move on.
 				onChange={type === 'checkbox' ? onSelect : () => undefined}
@@ -207,7 +217,8 @@ const ChoiceCard = ({
 			</Box>
 			<Typography
 				sx={{
-					fontSize: 16,
+					fontSize: { xs: 16, sm: 17 },
+					fontWeight: 500,
 					lineHeight: '24px',
 					color: orisoInputColors.onSurface
 				}}
@@ -333,24 +344,31 @@ export const JourneyQuestionField = ({
 	}
 
 	const otherLabel = t('journey.question.other');
-	const otherField = otherChosen && (
+	/*
+	 * "Etwas anderes" brings its text area along at once, so the person can just start typing
+	 * (Frank, 2026-11-20); typing picks the option. Clicks in it stay in it: the card around it
+	 * is a label and would toggle the option otherwise.
+	 */
+	const otherField = (
 		<Box
-			sx={{ px: 2, pb: 1.5 }}
+			sx={{ px: { xs: 2, sm: 2.5 }, pb: { xs: 1.25, sm: 1.75 } }}
 			onClick={(event) => event.preventDefault()}
 		>
-			<OrisoTextField
+			<OrisoTextarea
 				inputRef={otherRef}
 				fullWidth
-				size="small"
+				minRows={1}
+				maxRows={4}
 				disabled={disabled}
-				value={answer?.text ?? ''}
+				value={otherChosen ? (answer?.text ?? '') : ''}
 				placeholder={t('journey.question.otherPlaceholder')}
-				onChange={(event) =>
-					onChange({
-						choices,
-						text: event.target.value.slice(0, MAX_TEXT)
-					})
-				}
+				onChange={(event) => {
+					const text = event.target.value.slice(0, MAX_TEXT);
+					const picked = otherChosen
+						? { choices }
+						: choose(question, answer, OTHER_OPTION);
+					onChange({ ...picked, text });
+				}}
 				inputProps={{
 					'aria-label': t('journey.question.otherPlaceholder')
 				}}
@@ -397,7 +415,7 @@ export const JourneyQuestionField = ({
 					]}
 				/>
 				{otherChosen && (
-					<Box sx={{ mt: 1.5, mx: -2 }}>{otherField}</Box>
+					<Box sx={{ mt: 1.5, mx: -2.5 }}>{otherField}</Box>
 				)}
 				{missing}
 			</Box>

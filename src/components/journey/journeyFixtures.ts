@@ -131,7 +131,7 @@ export const situationStep: JourneyStep = {
 	kind: 'question',
 	title: { de: 'Ihre Situation', en: 'Your situation' },
 	description: {
-		de: 'Zwei kurze Fragen, damit die Beratung gut vorbereitet ist.'
+		de: 'Drei kurze Fragen, damit die Beratung gut vorbereitet ist.'
 	},
 	questions: [situation, worries, since, privacyHint]
 };

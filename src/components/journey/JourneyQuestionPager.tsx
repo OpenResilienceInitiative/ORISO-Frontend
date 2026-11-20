@@ -9,6 +9,7 @@ import { orisoInputColors } from '../form/orisoInputDesign';
 import { JourneyQuestionField } from './JourneyQuestionField';
 import { JourneyRatingField } from './JourneyRatingField';
 import {
+	OTHER_OPTION,
 	isQuestionAnswered,
 	type JourneyQuestion,
 	type JourneyRating,
@@ -78,6 +79,8 @@ export interface JourneyQuestionPagerProps {
 	onChange: (answers: StepAnswers) => void;
 	/** Every required question of the step is answered: the registration may go on. */
 	onCompleteChange?: (complete: boolean) => void;
+	/** Shown above the question counter: the step's kicker, title and line (they stay on top). */
+	header?: React.ReactNode;
 }
 
 /**
@@ -88,6 +91,7 @@ export interface JourneyQuestionPagerProps {
  * answered.
  */
 export const JourneyQuestionPager = ({
+	header,
 	step,
 	answers,
 	language,
@@ -117,7 +121,18 @@ export const JourneyQuestionPager = ({
 	const update = (next: StepAnswers) => {
 		onChange(next);
 		// A one-tap answer moves on, after a moment to see what was chosen.
-		if (answersInOneTap(page) && !isLast && isPageAnswered(page, next)) {
+		// Not while "Etwas anderes" is chosen: the person is typing there.
+		const typing =
+			page.kind === 'question' &&
+			(next.questions[page.item.id]?.choices ?? []).includes(
+				OTHER_OPTION
+			);
+		if (
+			answersInOneTap(page) &&
+			!isLast &&
+			!typing &&
+			isPageAnswered(page, next)
+		) {
 			window.clearTimeout(timer.current);
 			timer.current = window.setTimeout(
 				() => setIndex((current) => current + 1),
@@ -141,8 +156,16 @@ export const JourneyQuestionPager = ({
 				if (delta > SWIPE_PX && index > 0) go(index - 1);
 				if (delta < -SWIPE_PX && !isLast && canGoOn) go(index + 1);
 			}}
-			sx={{ display: 'grid', gap: 2.5, overflow: 'hidden' }}
+			sx={{
+				display: 'flex',
+				flexDirection: 'column',
+				gap: 2,
+				height: '100%',
+				minHeight: 0,
+				overflow: 'hidden'
+			}}
 		>
+			{header}
 			<Box
 				sx={{
 					display: 'flex',
@@ -180,52 +203,72 @@ export const JourneyQuestionPager = ({
 				</Box>
 			</Box>
 
-			<StepTransition
-				viewKey={`${step.id}:${page.item.id}`}
-				order={index}
+			{/*
+			 * The question sits in the middle of the free space; when space is tight its auto
+			 * margins give way and it moves up as far as it has to (Frank, 2026-11-20: not glued
+			 * to the top left above a large empty area).
+			 */}
+			<Box
+				data-cy="journey-question-area"
+				sx={{
+					flex: 1,
+					minHeight: 0,
+					display: 'flex',
+					flexDirection: 'column',
+					// Last resort only: a question too long for the screen scrolls here rather than
+					// being cut off. The text limits (journeyTextLimits) keep this from happening.
+					overflowY: 'auto'
+				}}
 			>
-				<Box sx={{ display: 'grid', gap: 2 }}>
-					{page.hints.map((hint) => (
-						<JourneyQuestionField
-							key={hint.id}
-							question={hint}
-							language={language}
-							onChange={() => undefined}
-						/>
-					))}
-					{page.kind === 'question' ? (
-						<JourneyQuestionField
-							question={page.item}
-							answer={answers.questions[page.item.id]}
-							language={language}
-							onChange={(answer) =>
-								update({
-									...answers,
-									questions: {
-										...answers.questions,
-										[page.item.id]: answer
+				<Box sx={{ my: 'auto', width: '100%' }}>
+					<StepTransition
+						viewKey={`${step.id}:${page.item.id}`}
+						order={index}
+					>
+						<Box sx={{ display: 'grid', gap: 2 }}>
+							{page.hints.map((hint) => (
+								<JourneyQuestionField
+									key={hint.id}
+									question={hint}
+									language={language}
+									onChange={() => undefined}
+								/>
+							))}
+							{page.kind === 'question' ? (
+								<JourneyQuestionField
+									question={page.item}
+									answer={answers.questions[page.item.id]}
+									language={language}
+									onChange={(answer) =>
+										update({
+											...answers,
+											questions: {
+												...answers.questions,
+												[page.item.id]: answer
+											}
+										})
 									}
-								})
-							}
-						/>
-					) : (
-						<JourneyRatingField
-							rating={page.item}
-							value={answers.ratings[page.item.id]}
-							language={language}
-							onChange={(value) =>
-								update({
-									...answers,
-									ratings: {
-										...answers.ratings,
-										[page.item.id]: value
+								/>
+							) : (
+								<JourneyRatingField
+									rating={page.item}
+									value={answers.ratings[page.item.id]}
+									language={language}
+									onChange={(value) =>
+										update({
+											...answers,
+											ratings: {
+												...answers.ratings,
+												[page.item.id]: value
+											}
+										})
 									}
-								})
-							}
-						/>
-					)}
+								/>
+							)}
+						</Box>
+					</StepTransition>
 				</Box>
-			</StepTransition>
+			</Box>
 
 			{!isLast &&
 				(!answersInOneTap(page) || isPageAnswered(page, answers)) && (

@@ -4085,11 +4085,9 @@
 				"body": "Der Link ist unvollständig, oder die Gruppe gibt es nicht mehr. Bitte fragen Sie die Person, die Ihnen den Link geschickt hat, nach einem neuen."
 			}
 		},
-		"stepFolded": {
-			"before_one": "{{count}} erledigt",
-			"before_other": "{{count}} erledigt",
-			"after_one": "{{count}} weiterer",
-			"after_other": "{{count}} weitere"
+		"stepScroll": {
+			"back": "Vorige Schritte",
+			"forward": "Nächste Schritte"
 		}
 	},
 	"releaseNote": {

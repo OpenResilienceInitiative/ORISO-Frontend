@@ -4072,15 +4072,9 @@
 				"body": "Ссылка неполная, или группы больше нет. Попросите у человека, который прислал вам ссылку, новую."
 			}
 		},
-		"stepFolded": {
-			"before_one": "{{count}} выполнен",
-			"before_few": "{{count}} выполнено",
-			"before_many": "{{count}} выполнено",
-			"before_other": "{{count}} выполнено",
-			"after_one": "ещё {{count}}",
-			"after_few": "ещё {{count}}",
-			"after_many": "ещё {{count}}",
-			"after_other": "ещё {{count}}"
+		"stepScroll": {
+			"back": "Предыдущие шаги",
+			"forward": "Следующие шаги"
 		}
 	},
 	"releaseNote": {

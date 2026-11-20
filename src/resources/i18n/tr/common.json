@@ -4065,11 +4065,9 @@
 				"body": "Bağlantı eksik ya da grup artık mevcut değil. Lütfen size bağlantıyı gönderen kişiden yenisini isteyin."
 			}
 		},
-		"stepFolded": {
-			"before_one": "{{count}} tamamlandı",
-			"before_other": "{{count}} tamamlandı",
-			"after_one": "{{count}} adım daha",
-			"after_other": "{{count}} adım daha"
+		"stepScroll": {
+			"back": "Önceki adımlar",
+			"forward": "Sonraki adımlar"
 		}
 	},
 	"releaseNote": {

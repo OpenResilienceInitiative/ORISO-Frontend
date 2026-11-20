@@ -7,6 +7,7 @@ import {
 } from '../registration/registrationDesign/registrationDesign';
 import { JourneyQuestionPager } from './JourneyQuestionPager';
 import { textIn, type JourneyStep, type StepAnswers } from './journeyModel';
+import { TEXT_LINES, clampLines } from './journeyTextLimits';
 
 export interface JourneyCheckInStepProps {
 	step: JourneyStep;
@@ -37,35 +38,44 @@ export const JourneyCheckInStep = ({
 	return (
 		<Box
 			data-cy="journey-check-in-step"
-			sx={{
-				display: 'grid',
-				gap: 2,
-				maxWidth: 640,
-				mx: 'auto',
-				width: '100%'
-			}}
+			sx={{ height: '100%', maxWidth: 640, mx: 'auto', width: '100%' }}
 		>
-			<Box sx={{ display: 'grid', gap: 1 }}>
-				{kicker && (
-					<Typography sx={registrationScreenKickerSx}>
-						{kicker}
-					</Typography>
-				)}
-				<Typography component="h1" sx={registrationScreenTitleSx}>
-					{title}
-				</Typography>
-				{description && (
-					<Typography sx={registrationScreenIntroSx}>
-						{description}
-					</Typography>
-				)}
-			</Box>
 			<JourneyQuestionPager
 				step={step}
 				answers={answers}
 				language={language}
 				onChange={onChange}
 				onCompleteChange={onCompleteChange}
+				header={
+					<Box sx={{ display: 'grid', gap: 1 }}>
+						{kicker && (
+							<Typography sx={registrationScreenKickerSx}>
+								{kicker}
+							</Typography>
+						)}
+						<Typography
+							component="h1"
+							title={title}
+							sx={{
+								...registrationScreenTitleSx,
+								...clampLines(TEXT_LINES.stepTitle)
+							}}
+						>
+							{title}
+						</Typography>
+						{description && (
+							<Typography
+								title={description}
+								sx={{
+									...registrationScreenIntroSx,
+									...clampLines(TEXT_LINES.stepDescription)
+								}}
+							>
+								{description}
+							</Typography>
+						)}
+					</Box>
+				}
 			/>
 		</Box>
 	);

@@ -5,7 +5,7 @@ import { StepDot, StepDotSize } from '../atoms/StepDot';
 import { StepConnector } from '../atoms/StepConnector';
 import { StepLabel } from '../atoms/StepLabel';
 import { stepperColors } from '../stepperDesign';
-import { stepperWindow } from '../stepperWindow';
+import { ScrollArrows } from './ScrollArrows';
 
 export interface IconStepperItem {
 	/** Stable id used for React keys, click callbacks and `data-cy`. */
@@ -35,12 +35,12 @@ export interface IconStepperProps {
 	 */
 	stateLabel?: (state: 'done' | 'active' | 'pending') => string;
 	/**
-	 * Above this many steps the row folds: the steps around the current one stay, the rest
-	 * becomes one marker per side ("3 erledigt", "+4"). Without it every step shows.
+	 * Above this many steps the row scrolls sideways, with arrow buttons over its edges like a
+	 * gallery (Frank, 2026-11-20); the current step is kept in view. Without it every step fits.
 	 */
 	maxVisible?: number;
-	/** Caption of a folded marker, e.g. "3 erledigt" / "4 weitere". */
-	foldedLabel?: (side: 'before' | 'after', count: number) => string;
+	/** Names of the arrow buttons, e.g. "Vorige Schritte" / "Nächste Schritte". */
+	scrollLabels?: { back: string; forward: string };
 }
 
 /**
@@ -60,10 +60,11 @@ export const IconStepper = ({
 	ariaLabel,
 	stateLabel,
 	maxVisible,
-	foldedLabel = (side, count) =>
-		side === 'before' ? `${count} ✓` : `+${count}`
+	scrollLabels = { back: 'Zurück', forward: 'Weiter' }
 }: IconStepperProps) => {
 	const activeRef = useRef<HTMLDivElement>(null);
+	const rowRef = useRef<HTMLDivElement>(null);
+	const scrolls = maxVisible !== undefined && steps.length > maxVisible;
 	const clickable = useMemo(
 		() => new Set(clickableStepNames),
 		[clickableStepNames]
@@ -92,158 +93,121 @@ export const IconStepper = ({
 	}, [currentIndex]);
 
 	return (
-		<Box
-			component="nav"
-			aria-label={ariaLabel}
-			data-cy="icon-stepper"
-			sx={{
-				'display': 'flex',
-				'alignItems': 'flex-start',
-				'width': '100%',
-				'overflowX': { xs: 'auto', md: 'visible' },
-				'scrollbarWidth': 'none',
-				'&::-webkit-scrollbar': { display: 'none' }
-			}}
-		>
-			{stepperWindow(
-				steps.length,
-				currentIndex,
-				maxVisible ?? steps.length
-			).map((slot, position, slots) => {
-				const isLast = position === slots.length - 1;
-				if (slot.kind === 'folded') {
-					const folded = foldedLabel(slot.side, slot.count);
-					const state = slot.side === 'before' ? 'done' : 'pending';
+		<Box sx={{ position: 'relative', width: '100%' }}>
+			<Box
+				component="nav"
+				ref={rowRef}
+				aria-label={ariaLabel}
+				data-cy="icon-stepper"
+				data-scrolls={scrolls ? 'true' : undefined}
+				// A row that scrolls must be reachable by keyboard, so the arrow keys can scroll it.
+				tabIndex={scrolls ? 0 : undefined}
+				sx={{
+					'display': 'flex',
+					'alignItems': 'flex-start',
+					// Few steps sit together in the middle instead of spreading over the band.
+					'justifyContent': scrolls ? 'flex-start' : 'center',
+					'width': '100%',
+					'overflowX': scrolls
+						? 'auto'
+						: { xs: 'auto', md: 'visible' },
+					'scrollBehavior': 'smooth',
+					'scrollbarWidth': 'none',
+					'&::-webkit-scrollbar': { display: 'none' }
+				}}
+			>
+				{steps.map(({ name, label, icon }, index) => {
+					const isLast = index === steps.length - 1;
+					const state =
+						index < currentIndex
+							? 'done'
+							: index === currentIndex
+								? 'active'
+								: 'pending';
+					const isClickable =
+						Boolean(onStepClick) && clickable.has(name);
+					const activate = () => onStepClick?.(name);
+
 					return (
-						<React.Fragment key={`folded-${slot.side}`}>
+						<React.Fragment key={name}>
 							<Box
-								data-cy={`icon-stepper-folded-${slot.side}`}
-								aria-label={folded}
-								role="img"
+								ref={
+									state === 'active' ||
+									(completed && index === steps.length - 1)
+										? activeRef
+										: undefined
+								}
+								aria-current={
+									state === 'active' ? 'step' : undefined
+								}
+								aria-label={
+									stateLabel
+										? `${label}, ${stateLabel(state)}`
+										: isClickable
+											? label
+											: undefined
+								}
+								data-cy={`icon-stepper-step-${name}`}
+								onClick={isClickable ? activate : undefined}
+								onKeyDown={
+									isClickable
+										? (event) => {
+												if (
+													event.key === 'Enter' ||
+													event.key === ' '
+												) {
+													event.preventDefault();
+													activate();
+												}
+											}
+										: undefined
+								}
+								role={isClickable ? 'button' : undefined}
+								tabIndex={isClickable ? 0 : undefined}
 								sx={{
-									display: 'flex',
-									flexDirection: 'column',
-									alignItems: 'center',
-									gap: 0.5,
-									width: size === 'sm' ? 72 : 112,
-									flexShrink: 0
+									'display': 'flex',
+									'flexDirection': 'column',
+									'alignItems': 'center',
+									'gap': 0.5,
+									'width': size === 'sm' ? 72 : 112,
+									'flexShrink': 0,
+									'borderRadius': 2,
+									'cursor': isClickable
+										? 'pointer'
+										: 'default',
+									'outline': 'none',
+									'&:focus-visible': {
+										boxShadow: `0 0 0 3px ${stepperColors.focusLayer}`
+									}
 								}}
 							>
 								<StepDot
 									state={state}
+									icon={icon}
 									size={size}
-									emphasizeActive={false}
-									icon={
-										<Box
-											component="span"
-											aria-hidden
-											sx={{
-												fontSize:
-													size === 'sm' ? 12 : 14,
-												fontWeight: 700,
-												lineHeight: 1
-											}}
-										>
-											{slot.side === 'before'
-												? slot.count
-												: `+${slot.count}`}
-										</Box>
-									}
+									emphasizeActive={emphasizeActive}
 								/>
 								<StepLabel state={state} size={size}>
-									{folded}
+									{label}
 								</StepLabel>
 							</Box>
 							{!isLast && (
 								<StepConnector
-									done={slot.side === 'before'}
+									done={index < currentIndex}
 									size={size}
 								/>
 							)}
 						</React.Fragment>
 					);
-				}
-				const index = slot.index;
-				const { name, label, icon } = steps[index];
-				const state =
-					index < currentIndex
-						? 'done'
-						: index === currentIndex
-							? 'active'
-							: 'pending';
-				const isClickable = Boolean(onStepClick) && clickable.has(name);
-				const activate = () => onStepClick?.(name);
-
-				return (
-					<React.Fragment key={name}>
-						<Box
-							ref={
-								state === 'active' ||
-								(completed && index === steps.length - 1)
-									? activeRef
-									: undefined
-							}
-							aria-current={
-								state === 'active' ? 'step' : undefined
-							}
-							aria-label={
-								stateLabel
-									? `${label}, ${stateLabel(state)}`
-									: isClickable
-										? label
-										: undefined
-							}
-							data-cy={`icon-stepper-step-${name}`}
-							onClick={isClickable ? activate : undefined}
-							onKeyDown={
-								isClickable
-									? (event) => {
-											if (
-												event.key === 'Enter' ||
-												event.key === ' '
-											) {
-												event.preventDefault();
-												activate();
-											}
-										}
-									: undefined
-							}
-							role={isClickable ? 'button' : undefined}
-							tabIndex={isClickable ? 0 : undefined}
-							sx={{
-								'display': 'flex',
-								'flexDirection': 'column',
-								'alignItems': 'center',
-								'gap': 0.5,
-								'width': size === 'sm' ? 72 : 112,
-								'flexShrink': 0,
-								'borderRadius': 2,
-								'cursor': isClickable ? 'pointer' : 'default',
-								'outline': 'none',
-								'&:focus-visible': {
-									boxShadow: `0 0 0 3px ${stepperColors.focusLayer}`
-								}
-							}}
-						>
-							<StepDot
-								state={state}
-								icon={icon}
-								size={size}
-								emphasizeActive={emphasizeActive}
-							/>
-							<StepLabel state={state} size={size}>
-								{label}
-							</StepLabel>
-						</Box>
-						{!isLast && (
-							<StepConnector
-								done={index < currentIndex}
-								size={size}
-							/>
-						)}
-					</React.Fragment>
-				);
-			})}
+				})}
+			</Box>
+			{scrolls && (
+				<ScrollArrows
+					rowRef={rowRef}
+					labels={scrollLabels}
+					watch={currentIndex}
+				/>
+			)}
 		</Box>
 	);
 };
