@@ -1,0 +1,211 @@
+// The same form motion is used by the live login and the Storybook study.
+.loginTransitionPrototype[data-effect='matrix'],
+.loginForm[data-matrix-phase] {
+	--matrix-primary: var(--m3-primary, #a5000a);
+	--matrix-press: var(--m3-primary-hover, var(--matrix-primary));
+	--matrix-button-edge: color-mix(
+		in srgb,
+		var(--matrix-primary) 72%,
+		var(--m3-on-surface, #1d1a1a)
+	);
+	--matrix-travel-x: 1rem;
+	--matrix-travel-y: 0rem;
+
+	:is(.loginForm__actions button, button[type='submit']) {
+		position: relative;
+		overflow: hidden;
+
+		&:enabled {
+			box-shadow: 0 0.18rem 0 var(--matrix-button-edge);
+			transition:
+				transform 90ms ease-out,
+				box-shadow 90ms ease-out,
+				background-color 120ms ease-out;
+		}
+
+		&:enabled:active {
+			transform: translateY(0.14rem);
+			box-shadow: 0 0.025rem 0 var(--matrix-button-edge);
+			background-color: var(--matrix-press);
+		}
+		&:focus-visible {
+			outline: 2px solid var(--m3-outline, #777);
+			outline-offset: 0.25rem;
+		}
+	}
+	&:is(
+		[data-phase='loading'],
+		[data-phase='revealing'],
+		[data-matrix-phase='loading']
+	) {
+		:is(.loginForm__actions button, button[type='submit']) {
+			color: var(--m3-on-primary, #fff);
+			background: var(--matrix-primary);
+			opacity: 1;
+			animation: login-matrix-submit-settle 520ms
+				cubic-bezier(0.2, 0.7, 0.2, 1) both;
+			&::before {
+				content: '';
+				position: absolute;
+				inset: -90% -4%;
+				border-radius: 50%;
+				background: currentColor;
+				pointer-events: none;
+				animation: login-matrix-touch-wave 470ms ease-out both;
+			}
+		}
+	}
+	&[data-phase='revealing'] {
+		.loginMatrixGlyph[data-encoded],
+		.loginMatrixFieldMask {
+			animation: login-matrix-digit-trail 350ms ease-out both;
+		}
+		.loginTransitionPrototype__binary {
+			animation: login-matrix-ink-trail 370ms ease-out both;
+		}
+	}
+
+	.loginMatrixWord {
+		display: inline-block;
+	}
+	.loginMatrixGlyph {
+		display: inline-flex;
+		justify-content: center;
+		transition: transform 120ms ease-out;
+		text-align: center;
+		font-variant-numeric: tabular-nums;
+	}
+	input[data-cipher-masked] {
+		color: transparent;
+		-webkit-text-fill-color: transparent;
+		caret-color: transparent;
+	}
+	.loginMatrixFieldMask {
+		display: flex;
+		align-items: center;
+		position: absolute;
+		overflow: hidden;
+		white-space: pre;
+		pointer-events: none;
+		font-variant-numeric: tabular-nums;
+	}
+	[data-binary-icon] {
+		opacity: 0;
+		transition: opacity 150ms ease-out;
+	}
+	[data-binary-outline='field'] fieldset {
+		border-color: transparent;
+	}
+
+	@media (width < 1200px) {
+		--matrix-travel-x: 0rem;
+		--matrix-travel-y: 1rem;
+	}
+}
+
+.loginMatrixSheet {
+	position: relative;
+}
+
+.loginMatrixCanvas {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	z-index: 1;
+	pointer-events: none;
+	color: var(--m3-primary, #a5000a);
+
+	@media (width >= 1200px) {
+		inset-inline-start: auto;
+		width: min(60vw, 100%);
+	}
+}
+
+.loginMatrixCanvas[data-frozen] {
+	--matrix-travel-x: 1rem;
+	--matrix-travel-y: 0rem;
+
+	animation: login-matrix-ink-trail 370ms ease-out both;
+
+	@media (width < 1200px) {
+		--matrix-travel-x: 0rem;
+		--matrix-travel-y: 1rem;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	:is(
+		.loginTransitionPrototype[data-effect='matrix'],
+		.loginForm[data-matrix-phase]
+	) {
+		:is(.loginForm__actions button, button[type='submit']),
+		:is(.loginForm__actions button, button[type='submit'])::before {
+			animation: none !important;
+			transform: none !important;
+			transition: none !important;
+		}
+	}
+	.loginMatrixCanvas {
+		display: none;
+	}
+}
+
+@keyframes login-matrix-submit-settle {
+	0% {
+		transform: translateY(0.14rem);
+		background-color: var(--matrix-press);
+		box-shadow: 0 0.025rem 0 var(--matrix-button-edge);
+	}
+
+	55% {
+		transform: translateY(-0.035rem);
+	}
+
+	100% {
+		transform: translateY(0);
+		background-color: var(--matrix-primary);
+		box-shadow: 0 0.18rem 0 var(--matrix-button-edge);
+	}
+}
+
+@keyframes login-matrix-touch-wave {
+	from {
+		transform: scale(0.06);
+		opacity: 0.19;
+	}
+
+	to {
+		transform: scale(1.05);
+		opacity: 0;
+	}
+}
+
+// Only converted digits leave a trail, along the departing sheet's axis.
+@keyframes login-matrix-digit-trail {
+	0% {
+		opacity: 1;
+	}
+
+	55% {
+		text-shadow:
+			calc(-0.24 * var(--matrix-travel-x))
+				calc(-0.24 * var(--matrix-travel-y)) 0
+				color-mix(in srgb, currentColor 34%, transparent),
+			calc(-0.52 * var(--matrix-travel-x))
+				calc(-0.52 * var(--matrix-travel-y)) 0
+				color-mix(in srgb, currentColor 15%, transparent);
+	}
+
+	100% {
+		translate: var(--matrix-travel-x) var(--matrix-travel-y);
+		opacity: 0;
+	}
+}
+
+@keyframes login-matrix-ink-trail {
+	to {
+		transform: translate(var(--matrix-travel-x), var(--matrix-travel-y));
+		opacity: 0;
+	}
+}

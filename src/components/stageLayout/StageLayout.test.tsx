@@ -12,6 +12,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { AgencySpecificContext, LocaleContext } from '../../globalState';
 import { StageLayout } from './StageLayout';
+import { StageMobileHero } from './StageMobileHero';
 import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider';
 
 vi.mock('../../hooks/useAppConfig', () => ({
@@ -25,8 +26,12 @@ vi.mock('../../hooks/useAppConfig', () => ({
 
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({
-		t: (key: string) =>
-			key === 'login.register.linkLabel' ? 'Register' : key
+		t: (key: string | string[]) =>
+			Array.isArray(key)
+				? key[0]
+				: key === 'login.register.linkLabel'
+					? 'Register'
+					: key
 	})
 }));
 
@@ -45,6 +50,32 @@ vi.mock('../legalLinks/LegalLinkModal', () => ({
 }));
 
 afterEach(() => vi.unstubAllEnvs());
+
+it('shows the canonical title once and keeps the claim in the mobile login header', () => {
+	render(
+		<LocaleContext.Provider
+			value={{
+				locale: 'de',
+				initLocale: 'de',
+				setLocale: vi.fn(),
+				locales: ['de', 'en'],
+				selectableLocales: ['de', 'en']
+			}}
+		>
+			<StageMobileHero variant="branding" />
+		</LocaleContext.Provider>
+	);
+
+	expect(
+		screen.getByRole('heading', { name: 'app.stage.title' })
+	).toBeTruthy();
+	expect(screen.getAllByText('app.stage.title')).toHaveLength(1);
+	expect(screen.getByText('app.claim')).toBeTruthy();
+	expect(screen.queryByText('app.stage.mobileHeadline')).toBeNull();
+	expect(
+		screen.getByRole('button', { name: 'app.selectLanguage' })
+	).toBeTruthy();
+});
 
 describe('StageLayout registration invitation continuity', () => {
 	it('uses the invitation-aware registration URL supplied by Login', () => {

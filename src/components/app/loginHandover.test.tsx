@@ -11,15 +11,21 @@ import {
 } from 'vite-plus/test';
 import {
 	beginLoginHandover,
+	captureLoginCurtain,
 	endLoginHandover,
+	finishLoginHandover,
 	isLoginHandoverActive,
+	LOGIN_HANDOVER_CONTENT_GRACE_MS,
+	LOGIN_HANDOVER_FINISH_MAX_WAIT_MS,
 	LOGIN_HANDOVER_HTML_CLASS,
 	LOGIN_HANDOVER_MAX_AGE_MS,
 	LOGIN_HANDOVER_STORAGE_KEY,
 	persistLoginHandover,
 	readPendingLoginHandover,
-	resetLoginHandoverForTests
+	resetLoginHandoverForTests,
+	setLoginHandoverHold
 } from './loginHandover';
+import type { LoginHandoverCurtain } from './loginHandoverCurtain';
 import {
 	LOGIN_HANDOVER_FADE_MS,
 	LOGIN_HANDOVER_MAX_VISIBLE_MS,
@@ -29,6 +35,18 @@ import {
 vi.mock('./Loading', () => ({
 	Loading: () => <div role="status">loading</div>
 }));
+
+const curtain: LoginHandoverCurtain = {
+	axis: 'horizontal',
+	split: 40,
+	radius: 0,
+	stageColor: '#a5000a',
+	stageTint: '#da2530',
+	stageShade: '#7c0d15',
+	panelColor: '#faf7f7',
+	inkColor: '#231b1b',
+	fields: []
+};
 
 describe('login handover state', () => {
 	beforeEach(() => {
@@ -89,6 +107,61 @@ describe('login handover state', () => {
 		).toBe(false);
 		expect(document.documentElement.style.background).toBe('');
 	});
+
+	it('serializes only the public curtain appearance for the next document', () => {
+		beginLoginHandover({
+			curtain: {
+				...curtain,
+				password: 'example secret'
+			} as LoginHandoverCurtain
+		});
+		persistLoginHandover();
+		const mark = sessionStorage.getItem(LOGIN_HANDOVER_STORAGE_KEY);
+		expect(mark).not.toContain('example secret');
+		expect(readPendingLoginHandover()?.curtain).toEqual(curtain);
+	});
+
+	it('ignores a curtain with invalid geometry or CSS', () => {
+		const now = Date.now();
+		for (const appearance of [
+			{ ...curtain, split: 1000 },
+			{ ...curtain, panelColor: 'url(https://example.invalid/a)' }
+		]) {
+			sessionStorage.setItem(
+				LOGIN_HANDOVER_STORAGE_KEY,
+				JSON.stringify({ at: now, curtain: appearance })
+			);
+			expect(readPendingLoginHandover()).toEqual({ at: now });
+		}
+	});
+
+	it('captures the visible field geometry and skips an inactive OTP', () => {
+		const root = document.createElement('div');
+		root.innerHTML = `
+			<div class="loginForm__fields">
+				<div class="MuiOutlinedInput-root"><input value="fixture-name"></div>
+				<div class="MuiOutlinedInput-root"><input type="password" value="fixture-password"></div>
+				<div class="loginForm__otp">
+					<div class="MuiOutlinedInput-root"><input value="123456"></div>
+				</div>
+			</div>
+		`;
+		root.querySelectorAll('.MuiOutlinedInput-root').forEach((node) => {
+			vi.spyOn(node, 'getBoundingClientRect').mockReturnValue(
+				new DOMRect(20, 30, 100, 38)
+			);
+		});
+		const withoutOtp = captureLoginCurtain(root);
+		expect(withoutOtp.fields).toHaveLength(2);
+		root.querySelector('.loginForm__otp')?.classList.add(
+			'loginForm__otp--active'
+		);
+		const withOtp = captureLoginCurtain(root);
+		expect(withOtp.fields).toHaveLength(3);
+		expect(JSON.stringify(withOtp)).not.toMatch(
+			/fixture-name|fixture-password|123456/
+		);
+	});
 });
 
 describe('LoginHandoverGate', () => {
@@ -106,6 +179,52 @@ describe('LoginHandoverGate', () => {
 	it('shows nothing without a handover', () => {
 		render(<LoginHandoverGate />);
 		expect(document.querySelector('.loginHandoverScreen')).toBeNull();
+	});
+
+	it('leaves the source login curtain in control of the screen', () => {
+		render(<LoginHandoverGate />);
+		act(() => beginLoginHandover({ curtain }));
+		expect(isLoginHandoverActive()).toBe(true);
+		expect(document.querySelector('.loginHandoverScreen')).toBeNull();
+	});
+
+	it('opens the pre-script curtain when the destination is ready', () => {
+		resetLoginHandoverForTests(true);
+		const splash = document.createElement('div');
+		splash.id = 'loginHandoverSplash';
+		splash.dataset.loginCurtain = 'horizontal';
+		document.body.appendChild(splash);
+		render(<LoginHandoverGate />);
+
+		act(() => finishLoginHandover());
+		expect(splash.dataset.phase).toBeUndefined();
+		act(() => vi.advanceTimersByTime(LOGIN_HANDOVER_CONTENT_GRACE_MS));
+		expect(splash.dataset.phase).toBe('revealing');
+		act(() => vi.advanceTimersByTime(480));
+		expect(splash.isConnected).toBe(false);
+	});
+
+	it('opens the curtain at the readiness cap even if the first view is slow', () => {
+		resetLoginHandoverForTests(true);
+		const splash = document.createElement('div');
+		splash.id = 'loginHandoverSplash';
+		splash.dataset.loginCurtain = 'vertical';
+		document.body.appendChild(splash);
+		setLoginHandoverHold('sessions', true);
+		render(<LoginHandoverGate />);
+
+		act(() => finishLoginHandover());
+		act(() => vi.advanceTimersByTime(LOGIN_HANDOVER_CONTENT_GRACE_MS));
+		expect(splash.dataset.phase).toBeUndefined();
+		act(() =>
+			vi.advanceTimersByTime(
+				LOGIN_HANDOVER_FINISH_MAX_WAIT_MS -
+					LOGIN_HANDOVER_CONTENT_GRACE_MS
+			)
+		);
+		expect(splash.dataset.phase).toBe('revealing');
+		act(() => vi.advanceTimersByTime(480));
+		expect(splash.isConnected).toBe(false);
 	});
 
 	it('fades in on the login page and out when the app is ready', () => {

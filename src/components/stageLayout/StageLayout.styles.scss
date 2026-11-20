@@ -343,6 +343,48 @@
 		}
 	}
 
+	// A single brand surface keeps the overlapping login sheet clean in both
+	// schemes. The language switch sits on the same container as the claim.
+	.stageMobileHero--branding {
+		background: var(--m3-primary-container, #ffdad6);
+		color: var(--m3-on-primary-container, #410002);
+
+		.stageMobileHero__actions {
+			margin-inline-start: auto;
+		}
+
+		.stageMobileHero__claim {
+			color: inherit;
+		}
+
+		&::after {
+			content: none;
+		}
+
+		@media (width < 720px) {
+			--curtain-corner: 1.5rem;
+
+			height: 17rem;
+
+			// Tuck the rounded edge behind the sheet until the curtains part.
+			margin-block-end: calc(-1 * var(--curtain-corner));
+			border-radius: 0 0 var(--curtain-corner) var(--curtain-corner);
+
+			.stageMobileHero__copy {
+				padding-block-end: var(--curtain-corner);
+			}
+		}
+
+		.localeSwitchPill--circle {
+			color: inherit;
+			background: color-mix(in srgb, currentColor 12%, transparent);
+
+			&:hover {
+				background: color-mix(in srgb, currentColor 20%, transparent);
+			}
+		}
+	}
+
 	&__header,
 	&__footer {
 		flex: 0;

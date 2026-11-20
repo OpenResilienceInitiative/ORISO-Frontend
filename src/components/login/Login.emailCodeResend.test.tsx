@@ -123,6 +123,9 @@ const renderLogin = () =>
 const reachEmailCodeStep = async (challenge = emailChallenge()) => {
 	vi.mocked(autoLogin).mockRejectedValueOnce(challenge);
 	const view = renderLogin();
+	expect(
+		view.container.querySelector('#otp')?.closest('[inert]')
+	).toBeTruthy();
 	fireEvent.change(
 		view.container.querySelector('#username') as HTMLInputElement,
 		{ target: { value: 'berater@example.org' } }
@@ -134,6 +137,7 @@ const reachEmailCodeStep = async (challenge = emailChallenge()) => {
 	fireEvent.keyUp(password, { key: 'Enter' });
 	await flush();
 	expect(autoLogin).toHaveBeenCalledTimes(1);
+	expect(view.container.querySelector('#otp')?.closest('[inert]')).toBeNull();
 	return view;
 };
 
@@ -158,6 +162,31 @@ afterEach(() => {
 });
 
 describe('Login e-mail code: resend link (#1338)', () => {
+	it('keeps a submitted code intact and returns focus when the attempt fails', async () => {
+		const { container } = await reachEmailCodeStep();
+		const code = container.querySelector<HTMLInputElement>('#otp')!;
+		expect(document.activeElement).toBe(code);
+		let rejectAttempt!: (reason: Error) => void;
+		vi.mocked(autoLogin).mockReturnValueOnce(
+			new Promise((_, reject) => {
+				rejectAttempt = reject;
+			})
+		);
+		fireEvent.change(code, { target: { value: '654321' } });
+		fireEvent.keyUp(code, { key: 'Enter' });
+		expect(screen.getByText('app.wait')).toBeTruthy();
+		expect(code.closest('.loginForm__pane')?.hasAttribute('inert')).toBe(
+			true
+		);
+		expect(vi.mocked(autoLogin).mock.calls[1][0].otp).toBe('654321');
+		await act(async () => rejectAttempt(new Error('keycloakLogin')));
+		await flush();
+		expect(screen.queryByText('app.wait')).toBeNull();
+		expect(code.closest('[inert]')).toBeNull();
+		expect(code.value).toBe('654321');
+		expect(document.activeElement).toBe(code);
+	});
+
 	it('counts down 30 s after the first mail and sends nothing while it runs', async () => {
 		await reachEmailCodeStep();
 
