@@ -5,7 +5,8 @@ import {
 	fireEvent,
 	render,
 	screen,
-	waitFor
+	waitFor,
+	within
 } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import {
@@ -21,6 +22,8 @@ import { apiGetAgenciesByIds } from '../../api/apiGetAgenciesByIds';
 import { UserDataContext, SessionsDataContext } from '../../globalState';
 import { CreateConversationView } from './CreateConversationView';
 import { conversationAgency } from '../../test/fixtures/conversationPolicyFixtures';
+import { apiCreateInternalSubsetChat } from '../../api/apiCreateInternalSubsetChat';
+import { loadInternalChatColleagues } from './internal/loadInternalChatColleagues';
 import { resetCounsellorAgencyFormatsForTests } from '../../hooks/useCounsellorAgencyFormats';
 
 // react-i18next: identity translator so we can assert on keys.
@@ -80,6 +83,10 @@ vi.mock('../../hooks/useResponsive', () => ({
 vi.mock('../../hooks/useSession', () => ({ useSession: vi.fn() }));
 vi.mock('./internal/loadInternalChatColleagues', () => ({
 	loadInternalChatColleagues: vi.fn().mockResolvedValue([])
+}));
+vi.mock('../../api/apiCreateInternalSubsetChat', async () => ({
+	...(await vi.importActual<any>('../../api/apiCreateInternalSubsetChat')),
+	apiCreateInternalSubsetChat: vi.fn()
 }));
 vi.mock('../../resources/img/icons/group-chat-avatar.svg', () => ({
 	ReactComponent: () => null,
@@ -199,10 +206,13 @@ vi.mock('./useInternalSubsetChatSubmit', async () => {
 	const actual = await vi.importActual<any>('./useInternalSubsetChatSubmit');
 	return {
 		...actual,
-		useInternalSubsetChatSubmit: (...args: unknown[]) => ({
-			...actual.useInternalSubsetChatSubmit(...args),
-			isSubmitting: submitState.pending
-		})
+		useInternalSubsetChatSubmit: (...args: unknown[]) => {
+			const real = actual.useInternalSubsetChatSubmit(...args);
+			return {
+				...real,
+				isSubmitting: submitState.pending || real.isSubmitting
+			};
+		}
 	};
 });
 
@@ -335,14 +345,43 @@ describe('CreateConversationView - leaving the view', () => {
 		expect(screen.getByText('groupChat.format.title')).toBeTruthy();
 	});
 
-	it('keeps the Interna card when Back is used on it while a request runs', async () => {
+	it('keeps the Interna card when Back is used on it while its request runs', async () => {
 		viewport.fromL = false;
-		submitState.pending = true;
+		vi.mocked(loadInternalChatColleagues).mockResolvedValue([
+			{
+				consultantId: 'c-same',
+				displayName: 'Anna Test',
+				agencies: [{ id: 5, name: 'Centre 5' }]
+			}
+		]);
+		// The request never settles: it is still running when Back is used.
+		vi.mocked(apiCreateInternalSubsetChat).mockReturnValue(
+			new Promise(() => undefined)
+		);
 		await open();
 		click(await screen.findByText('groupChat.internal.title'));
-		expect(
-			await screen.findByLabelText('groupChat.internal.nameLabel')
-		).toBeTruthy();
+		click(
+			await screen.findByRole('button', {
+				name: 'groupChat.internal.addPerson'
+			})
+		);
+		click(
+			await within(await screen.findByRole('listbox')).findByText(
+				'Anna Test'
+			)
+		);
+		fireEvent.change(
+			screen.getByLabelText('groupChat.internal.nameLabel'),
+			{ target: { value: 'Fallbesprechung' } }
+		);
+		click(
+			screen.getByRole('button', {
+				name: 'groupChat.internal.createLabel'
+			})
+		);
+		await waitFor(() =>
+			expect(apiCreateInternalSubsetChat).toHaveBeenCalledTimes(1)
+		);
 
 		click(screen.getByLabelText('groupChat.format.back'));
 		expect(routerState.navigate).not.toHaveBeenCalled();
