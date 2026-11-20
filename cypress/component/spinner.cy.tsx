@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { within } from '@testing-library/dom';
 import { mount } from 'cypress/react';
 import { createInstance } from 'i18next';
 import { I18nextProvider } from 'react-i18next';
@@ -18,19 +19,17 @@ describe('Spinner', () => {
 		});
 		mount(
 			<I18nextProvider i18n={translations}>
-				<Spinner className="component-test-spinner" />
+				<Spinner />
 			</I18nextProvider>
 		);
 
-		cy.get('[data-cy-root]')
-			.find('[role="status"].component-test-spinner')
-			.should(($status) => {
-				expect($status).to.have.length(1);
-				expect($status.attr('aria-live')).to.equal('polite');
-				expect(
-					$status.attr('aria-label'),
-					'accessible loading name'
-				).to.equal('Bitte warten');
-			});
+		cy.get('[data-cy-root]').should(($root) => {
+			const status = within($root[0]).getByRole('status');
+			expect(status.getAttribute('aria-live')).to.equal('polite');
+			expect(
+				status.getAttribute('aria-label'),
+				'accessible loading name'
+			).to.equal('Bitte warten');
+		});
 	});
 });
