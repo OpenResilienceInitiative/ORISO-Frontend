@@ -1,27 +1,28 @@
 import React from 'react';
-import { useConsultantBookings } from '../../hooks/useConsultantBookings';
+import { useUpcomingAppointments } from '../../hooks/useUpcomingAppointments';
 import { BookingEvent } from '../BookingEvent';
 import { EmptyType } from '../EmptyState';
 import { OverviewCard } from '../OverviewCard/OverviewCard';
 
 export const BookingCard = () => {
-	const { bookings, isLoading } = useConsultantBookings();
+	const { appointments, isLoading } = useUpcomingAppointments();
 
 	return (
 		<OverviewCard
-			allMessagesPaths="/booking/events/gebuchte"
+			allMessagesPaths="/booking/events"
 			className="bookingCard"
 			title="overview.upcomingAppointments"
-			dataListLength={bookings?.length}
+			dataListLength={appointments.length}
 			emptyType={EmptyType.Termine}
 			isLoading={isLoading}
 		>
 			{!isLoading &&
-				bookings
-					?.slice(0, 9)
-					?.map((booking) => (
-						<BookingEvent key={booking.id} booking={booking} />
-					))}
+				appointments.map((appointment) => (
+					<BookingEvent
+						key={appointment.id}
+						appointment={appointment}
+					/>
+				))}
 		</OverviewCard>
 	);
 };

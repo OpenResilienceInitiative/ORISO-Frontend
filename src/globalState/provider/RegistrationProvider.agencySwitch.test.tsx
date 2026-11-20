@@ -1,9 +1,16 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import * as React from 'react';
 import { useContext } from 'react';
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import {
 	RegistrationContext,
 	RegistrationProvider,
@@ -251,5 +258,128 @@ describe('RegistrationProvider — restoring a subject area at another centre', 
 				String(CARRIED_OVER_TOPIC_ID)
 			)
 		);
+	});
+});
+
+describe('RegistrationProvider — a direct-link topic after a language switch', () => {
+	beforeEach(() => {
+		getUrlParameterMock.mockImplementation((name: string) =>
+			name === 'tid' ? String(URL_TOPIC_ID) : null
+		);
+		sessionStorage.clear();
+	});
+
+	afterEach(() => {
+		cleanup();
+		vi.clearAllMocks();
+	});
+
+	const Refresher = () => {
+		const { registrationData, updateRegistrationData } =
+			useContext(RegistrationContext);
+		return (
+			<>
+				<span data-testid="topic-name">
+					{registrationData?.mainTopic?.name ?? 'none'}
+				</span>
+				<button
+					type="button"
+					onClick={() =>
+						updateRegistrationData({
+							mainTopic: {
+								id: URL_TOPIC_ID,
+								name: 'Addiction'
+							} as never
+						})
+					}
+				>
+					refresh
+				</button>
+			</>
+		);
+	};
+
+	it('drops the picture of an earlier pick when the link names another topic', async () => {
+		sessionStorage.setItem(
+			registrationSessionStorageKey,
+			JSON.stringify({
+				username: '',
+				password: '',
+				mainTopicId: CARRIED_OVER_TOPIC_ID,
+				topicIcon: '/bundled/earlier-pick.png'
+			})
+		);
+		apiGetTopicByIdMock.mockResolvedValue({
+			id: CARRIED_OVER_TOPIC_ID,
+			name: 'Suchtberatung'
+		} as never);
+		const IconProbe = () => {
+			const { registrationData } = useContext(RegistrationContext);
+			return (
+				<span data-testid="topic-icon">
+					{`${registrationData?.mainTopic?.id ?? 'none'}:${registrationData?.topicIcon ?? 'none'}`}
+				</span>
+			);
+		};
+		render(
+			<UrlParamsContext.Provider
+				value={{
+					loaded: true,
+					agency: null,
+					consultingType: null,
+					consultant: null,
+					topic: { id: URL_TOPIC_ID, name: 'Schulden' } as never,
+					slugFallback: undefined,
+					zipcode: undefined
+				}}
+			>
+				<MemoryRouter>
+					<RegistrationProvider>
+						<IconProbe />
+					</RegistrationProvider>
+				</MemoryRouter>
+			</UrlParamsContext.Provider>
+		);
+
+		await waitFor(() =>
+			expect(screen.getByTestId('topic-icon').textContent).toBe(
+				`${URL_TOPIC_ID}:none`
+			)
+		);
+	});
+
+	it('keeps the refreshed copy of the same topic instead of restoring the link one', async () => {
+		render(
+			<UrlParamsContext.Provider
+				value={{
+					loaded: true,
+					agency: null,
+					consultingType: null,
+					consultant: null,
+					topic: { id: URL_TOPIC_ID, name: 'Sucht' } as never,
+					slugFallback: undefined,
+					zipcode: undefined
+				}}
+			>
+				<MemoryRouter>
+					<RegistrationProvider>
+						<Refresher />
+					</RegistrationProvider>
+				</MemoryRouter>
+			</UrlParamsContext.Provider>
+		);
+		await waitFor(() =>
+			expect(screen.getByTestId('topic-name').textContent).toBe('Sucht')
+		);
+
+		screen.getByRole('button', { name: 'refresh' }).click();
+
+		await waitFor(() =>
+			expect(screen.getByTestId('topic-name').textContent).toBe(
+				'Addiction'
+			)
+		);
+		await new Promise((resolve) => setTimeout(resolve, 50));
+		expect(screen.getByTestId('topic-name').textContent).toBe('Addiction');
 	});
 });

@@ -118,5 +118,41 @@ const mergeEnquiryFeeds = (
 	 * actually answered — with an empty registered feed the anonymous feed
 	 * carries the only valid envelope. */
 	const base = registered ?? anonymous ?? ({} as ListItemsResponseInterface);
-	return { ...base, sessions: merged };
+	// Both feeds use the same offset/count window. Pagination must continue
+	// while either feed has another window, regardless of merged row count.
+	return {
+		...base,
+		sessions: merged,
+		total: Math.max(feedTotal(registered), feedTotal(anonymous))
+	};
+};
+
+const feedTotal = (feed: ListItemsResponseInterface | null): number =>
+	Number.isFinite(feed?.total) ? Math.max(0, Number(feed.total)) : 0;
+
+/**
+ * Number of open enquiries the counsellor could take — the "Anfragen" nav
+ * badge (FE#1435). Asks both feeds the list merges for one row and adds up
+ * their server totals; a session sits in only one feed (registration type).
+ * Empty feeds count 0; a failing live-chat feed counts 0 like in the list; a
+ * failing registered feed rejects so the caller keeps the last known count.
+ */
+export const apiGetConsultantEnquiryCount = async (
+	signal?: AbortSignal
+): Promise<number> => {
+	const query = 'count=1&filter=all&offset=0';
+	const [registered, anonymous] = await Promise.all([
+		fetchListUrl(
+			`${endpoints.consultantEnquiriesBase}registered?${query}`,
+			signal
+		).catch((error) => {
+			if (error?.message === FETCH_ERRORS.EMPTY) return null;
+			throw error;
+		}),
+		fetchListUrl(
+			`${endpoints.consultantEnquiriesBase}anonymous?${query}`,
+			signal
+		).catch(() => null)
+	]);
+	return feedTotal(registered) + feedTotal(anonymous);
 };

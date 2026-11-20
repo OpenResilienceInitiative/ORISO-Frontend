@@ -22,16 +22,33 @@
 
 	&__date {
 		display: flex;
+		align-items: center;
 		gap: 10px;
 	}
 
-	&__icon path {
-		fill: #1c1b1f;
+	&__icon {
+		display: inline-flex;
+		flex: none;
+
+		svg {
+			width: 20px;
+			height: 20px;
+		}
+
+		path {
+			fill: #1c1b1f;
+		}
 	}
 
 	&__fullDate {
 		gap: 3px;
 		flex-grow: 1;
+	}
+
+	&__notice {
+		margin: 6px 0 0;
+		font-size: 14px;
+		line-height: 20px;
 	}
 
 	&__start {

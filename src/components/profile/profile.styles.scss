@@ -40,12 +40,15 @@ $profile-footer-justify-content: center !default;
 			border-radius: 0;
 
 			&.active {
-				color: var(--m3-primary, $primary);
+				color: var(--oriso-primary-text, var(--m3-primary, $primary));
 				border-color: var(--m3-primary, $primary);
 			}
 
 			&:hover {
-				color: var(--m3-primary, $hover-primary);
+				color: var(
+					--oriso-primary-text,
+					var(--m3-primary, $hover-primary)
+				);
 			}
 		}
 
@@ -223,6 +226,12 @@ $profile-footer-justify-content: center !default;
 		}
 
 		&__personal_link {
+			&__url {
+				margin-bottom: 0;
+				overflow-wrap: anywhere;
+				user-select: all;
+			}
+
 			& > span,
 			.generateQrCode {
 				margin-right: $grid-base-two;
@@ -386,7 +395,7 @@ $profile-footer-justify-content: center !default;
 		}
 
 		.title {
-			color: var(--m3-primary, $primary);
+			color: var(--oriso-primary-text, var(--m3-primary, $primary));
 			margin-bottom: $grid-base-two;
 		}
 	}
@@ -525,6 +534,10 @@ $profile-footer-justify-content: center !default;
 		&__separator {
 			display: inline-block;
 			margin: 0 8px;
+		}
+
+		&__identity {
+			margin-inline-start: $grid-base-two;
 		}
 	}
 

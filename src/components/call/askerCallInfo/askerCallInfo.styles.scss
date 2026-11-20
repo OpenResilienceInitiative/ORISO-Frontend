@@ -1,0 +1,93 @@
+// The advice seeker's call information (Frank, 17 Nov 2026).
+.askerCallInfo__appointment {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 16px;
+	border: 1px solid var(--m3-outline-variant, #c4c7c5);
+	border-radius: 12px;
+	color: var(--m3-on-surface, #1b1b1f);
+}
+
+.askerCallInfo__label {
+	font-size: 12px;
+	line-height: 16px;
+	letter-spacing: 0.5px;
+	color: var(--m3-on-surface-variant, #44474e);
+}
+
+.askerCallInfo__row {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.askerCallInfo__icon {
+	display: inline-flex;
+	flex: none;
+	color: var(--m3-primary, #3f5f90);
+
+	svg {
+		width: 24px;
+		height: 24px;
+		fill: currentColor;
+	}
+}
+
+.askerCallInfo__details {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.askerCallInfo__slot {
+	font-size: 16px;
+	line-height: 24px;
+	font-weight: 500;
+}
+
+.askerCallInfo__medium,
+.askerCallInfo__hint {
+	font-size: 14px;
+	line-height: 20px;
+	color: var(--m3-on-surface-variant, #44474e);
+}
+
+.askerCallInfo__text,
+.askerCallInfo__hint {
+	margin: 0;
+}
+
+.askerCallInfo__none {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.askerCallInfo__text {
+	font-size: 14px;
+	line-height: 20px;
+	color: var(--m3-on-surface, #1b1b1f);
+}
+
+// Self-booking (FE#1050): a refused booking, above the picker.
+.askerCallInfo__problem {
+	margin: 0 0 16px;
+	padding: 12px 16px;
+	border-radius: 12px;
+	font-size: 14px;
+	line-height: 20px;
+	background: var(--m3-error-container, #ffdad6);
+	color: var(--m3-on-error-container, #410002);
+}
+
+// Self-booking (FE#1050): the confirmation above the booked appointment.
+.askerCallInfo__booked {
+	margin: 0 0 12px;
+	font-size: 14px;
+	line-height: 20px;
+	font-weight: 600;
+
+	// A confirmation, not an error: this theme's primary is red.
+	color: var(--m3-on-surface, #1b1b1f);
+}

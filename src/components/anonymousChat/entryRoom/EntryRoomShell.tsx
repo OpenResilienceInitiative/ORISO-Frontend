@@ -1,8 +1,6 @@
 import * as React from 'react';
-import { useContext } from 'react';
 import { Box, Typography } from '@mui/material';
-import { StageLayout } from '../../stageLayout/StageLayout';
-import { GlobalComponentContext } from '../../../globalState/provider/GlobalComponentContext';
+import { WaitingRoomFrame } from '../../waitingRoom/WaitingRoomFrame';
 import { registrationMd3 } from '../../registration/registrationDesign/registrationDesign';
 
 export interface EntryRoomShellProps {
@@ -11,7 +9,10 @@ export interface EntryRoomShellProps {
 	/** Line 2 — what is happening right now, or who has taken the conversation. */
 	statusLine: string;
 	showLoginLink?: boolean;
-	/** The accepting centre's department, once known — the footer legal links open its documents. */
+	/**
+	 * The department the person registered for — the legal links open its
+	 * documents. Left out before anyone signs up: then the platform's apply.
+	 */
 	department?: { agencyId: number; topicId: number } | null;
 	children: React.ReactNode;
 }
@@ -34,7 +35,6 @@ export const EntryRoomShell = ({
 	department,
 	children
 }: EntryRoomShellProps) => {
-	const { Stage } = useContext(GlobalComponentContext);
 	const heading = (
 		<Box sx={{ textAlign: { xs: 'center', lg: 'left' } }}>
 			<Typography
@@ -65,14 +65,9 @@ export const EntryRoomShell = ({
 		</Box>
 	);
 	return (
-		<StageLayout
-			className="stageLayout--registration"
-			showLegalLinks={true}
+		<WaitingRoomFrame
 			legalDepartment={department}
 			showLoginLink={showLoginLink}
-			showRegistrationLink={false}
-			stage={<Stage hasAnimation={false} isReady={true} />}
-			mobileHero="bar"
 			headerStart={heading}
 		>
 			<Box
@@ -105,6 +100,6 @@ export const EntryRoomShell = ({
 				</Box>
 				{children}
 			</Box>
-		</StageLayout>
+		</WaitingRoomFrame>
 	);
 };

@@ -1,7 +1,8 @@
 import * as React from 'react';
-import MailOutline from '@mui/icons-material/MailOutline';
 import WebOutlined from '@mui/icons-material/WebOutlined';
-import DevicesOutlined from '@mui/icons-material/DevicesOutlined';
+import CheckCircleOutline from '@mui/icons-material/CheckCircleOutline';
+import { ReactComponent as EnvelopeIcon } from '../../resources/img/icons/envelope.svg';
+import { ReactComponent as DevicesIcon } from '../../resources/img/icons/devices.svg';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import './NotificationChoiceCard.styles.scss';
@@ -119,15 +120,39 @@ export const NotificationChoiceCard: React.FC<NotificationChoiceCardProps> = ({
 							aria-hidden
 						>
 							{option.choice === 'EMAIL' ? (
-								<MailOutline />
+								<EnvelopeIcon
+									width={24}
+									height={24}
+									fill="currentColor"
+								/>
 							) : option.choice === 'BROWSER' ? (
 								<WebOutlined />
 							) : (
-								<DevicesOutlined />
+								<DevicesIcon
+									width={24}
+									height={24}
+									fill="currentColor"
+								/>
 							)}
 						</span>
-						<span className="notificationChoiceCard__label">
-							{option.label}
+						<span className="notificationChoiceCard__head">
+							<span className="notificationChoiceCard__label">
+								{option.label}
+							</span>
+							{currentSelection === option.choice && (
+								<span
+									className="notificationChoiceCard__check"
+									data-testid="notificationChoice-check"
+								>
+									<CheckCircleOutline
+										fontSize="small"
+										aria-hidden
+									/>
+									{t(
+										'erstantwort.notificationChoice.optionActive'
+									)}
+								</span>
+							)}
 						</span>
 						{option.hint && (
 							<span className="notificationChoiceCard__hint">

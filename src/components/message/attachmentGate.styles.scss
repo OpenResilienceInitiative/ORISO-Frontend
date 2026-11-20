@@ -1,0 +1,282 @@
+/*
+ * The gate in front of a file (AttachmentGate). Sits on the `attachmentCard`
+ * base, so a file keeps its width and corners from gate to download.
+ */
+.attachmentGate {
+	position: relative;
+	max-width: 340px;
+
+	&__stage {
+		position: relative;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: 12px;
+		aspect-ratio: 16 / 9;
+		width: 100%;
+		max-height: 220px;
+		min-height: 148px;
+		padding: 16px;
+		box-sizing: border-box;
+		overflow: hidden;
+		background:
+			radial-gradient(
+				120% 120% at 20% 0%,
+				var(--m3-primary-fixed, #ffdad5) 0%,
+				transparent 60%
+			),
+			var(--m3-surface-container-high, #eae7e8);
+		color: var(--m3-on-surface-variant, #444748);
+	}
+
+	&__stage &__glyph {
+		width: 40px;
+		height: 40px;
+	}
+
+	&__row {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 12px;
+		padding: 12px;
+		min-width: 0;
+	}
+
+	&__tile {
+		display: flex;
+		flex: 0 0 auto;
+		align-items: center;
+		justify-content: center;
+		width: 44px;
+		height: 44px;
+		border-radius: 12px;
+		background: var(--m3-surface-container-high, #eae7e8);
+		color: var(--m3-on-surface-variant, #444748);
+	}
+
+	&__tile &__glyph {
+		width: 24px;
+		height: 24px;
+	}
+
+	&__text {
+		flex: 1 1 140px;
+		min-width: 0;
+	}
+
+	&__meta,
+	&__note {
+		font-size: 12px;
+		line-height: 16px;
+		color: var(--m3-on-surface-variant, #444748);
+		overflow-wrap: anywhere;
+	}
+
+	&__button {
+		display: inline-flex;
+		flex: 0 0 auto;
+		align-items: center;
+		justify-content: center;
+		gap: 8px;
+		min-height: 40px;
+		padding: 0 16px 0 12px;
+		border: 0;
+		border-radius: 20px;
+		background: var(--m3-primary, #a5000a);
+		color: var(--m3-on-primary, #fff);
+		font-size: 14px;
+		font-weight: 500;
+		line-height: 20px;
+		white-space: nowrap;
+		cursor: pointer;
+		transition: box-shadow 120ms ease;
+
+		svg {
+			width: 18px;
+			height: 18px;
+		}
+
+		&:hover {
+			box-shadow:
+				0 1px 3px rgba(0, 0, 0, 0.3),
+				0 1px 2px rgba(0, 0, 0, 0.15);
+		}
+
+		&:focus-visible {
+			outline: 2px solid var(--m3-primary, #a5000a);
+			outline-offset: 2px;
+		}
+
+		&:disabled {
+			opacity: 0.5;
+			cursor: default;
+		}
+
+		&--quiet {
+			padding: 0 16px;
+			background: transparent;
+			box-shadow: inset 0 0 0 1px var(--m3-outline-variant, #c4c7c8);
+			color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
+		}
+	}
+
+	&__working {
+		padding: 0 12px 10px;
+		font-size: 12px;
+		line-height: 16px;
+		color: var(--m3-on-surface, #1a1c1e);
+	}
+
+	&__checks {
+		display: grid;
+		gap: 6px;
+		margin: 0;
+		padding: 0 12px 10px;
+		list-style: none;
+	}
+
+	&__check {
+		display: flex;
+		align-items: flex-start;
+		gap: 8px;
+		margin: 0;
+		font-size: 12px;
+		line-height: 16px;
+		color: var(--m3-on-surface-variant, #444748);
+
+		&--running {
+			color: var(--m3-on-surface, #1a1c1e);
+		}
+	}
+
+	&__checkMark {
+		display: block;
+		flex: 0 0 auto;
+		box-sizing: border-box;
+		width: 16px;
+		height: 16px;
+		border: 2px solid var(--m3-outline-variant, #c4c7c8);
+		border-radius: 50%;
+
+		svg {
+			display: block;
+			width: 100%;
+			height: 100%;
+		}
+	}
+
+	&__check--running &__checkMark {
+		border-color: var(--m3-primary-fixed, #ffdad5);
+		border-top-color: var(--m3-primary, #a5000a);
+		animation: attachment-gate-spin 900ms linear infinite;
+	}
+
+	&__check--done &__checkMark {
+		border: 0;
+		color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
+	}
+
+	&__bar {
+		position: relative;
+		height: 4px;
+		overflow: hidden;
+		background: var(--m3-primary-fixed, #ffdad5);
+	}
+
+	&__barFill {
+		height: 100%;
+		background: var(--m3-primary, #a5000a);
+		transition: width 200ms linear;
+	}
+
+	&__bar--running &__barFill {
+		width: 40%;
+		animation: attachment-gate-bar 1.4s ease-in-out infinite;
+	}
+
+	/* A soft band runs over the placeholder while the check looks at the file. */
+	&--working &__stage::after {
+		content: '';
+		position: absolute;
+		left: 0;
+		right: 0;
+		top: 0;
+		height: 45%;
+		background: linear-gradient(
+			180deg,
+			transparent,
+			color-mix(in srgb, var(--m3-primary, #a5000a) 16%, transparent)
+		);
+		animation: attachment-gate-scan 1.8s ease-in-out infinite alternate;
+	}
+
+	&--working &__glyph {
+		color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
+		animation: attachment-gate-pulse 1.8s ease-in-out infinite;
+	}
+
+	&--refused &__stage {
+		background: var(--m3-surface-container, #f0edee);
+	}
+
+	&--refused &__glyph,
+	&--refused &__note {
+		color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		&--working &__stage::after {
+			display: none;
+		}
+
+		&--working &__glyph,
+		&__check--running &__checkMark,
+		&__bar--running &__barFill {
+			animation: none;
+		}
+
+		&__bar--running &__barFill {
+			width: 100%;
+			opacity: 0.5;
+		}
+	}
+}
+
+@keyframes attachment-gate-spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+@keyframes attachment-gate-bar {
+	from {
+		transform: translateX(-100%);
+	}
+
+	to {
+		transform: translateX(250%);
+	}
+}
+
+@keyframes attachment-gate-scan {
+	from {
+		transform: translateY(-100%);
+	}
+
+	to {
+		transform: translateY(125%);
+	}
+}
+
+@keyframes attachment-gate-pulse {
+	0%,
+	100% {
+		opacity: 1;
+	}
+
+	50% {
+		opacity: 0.55;
+	}
+}

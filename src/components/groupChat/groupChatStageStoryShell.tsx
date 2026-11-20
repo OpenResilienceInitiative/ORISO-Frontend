@@ -30,6 +30,7 @@ import {
 } from '../app/navigationStoryHelpers';
 import { config } from '../../resources/scripts/config';
 import { SessionsListToolbar } from '../sessionsList/SessionsListToolbar';
+import { productionToolbarProps } from '../sessionsList/__storybook__/productionToolbarProps';
 import type { SessionToolbarChipFilter } from '../sessionsList/sessionToolbarFilters';
 import { SessionListItemComponent } from '../sessionsListItem/SessionListItemComponent';
 import '../app/authenticatedApp.styles.scss';
@@ -220,7 +221,8 @@ const listTranslations: Record<string, string> = {
 	'sessionList.toolbar.chips.liveChat': 'Live Chat',
 	'sessionList.toolbar.chips.internalGroup': 'Interner Gruppenchat',
 	'sessionList.toolbar.chips.supervision': 'Supervision',
-	'sessionList.toolbar.chips.groups': 'Gesprächskreis'
+	'sessionList.toolbar.chips.groups': 'Gesprächskreis',
+	'sessionList.toolbar.chips.other': 'Weitere'
 };
 const translateList = (key: string) => listTranslations[key] || key;
 
@@ -270,7 +272,13 @@ export const GroupStageProviders = ({
 				>
 					<TopicsContext.Provider
 						value={{
-							topics: [groupTopic],
+							// The waiting area looks its rules up by the group's
+							// consulting type id; without that entry it reports
+							// "No topic found" (#1338).
+							topics: [
+								groupTopic,
+								{ ...groupTopic, id: GROUP_CONSULTING_TYPE_ID }
+							],
 							refreshTopics: () => {}
 						}}
 					>
@@ -368,6 +376,8 @@ const StageList = () => {
 					showConsultantActions
 					showCreateGroupChatAction
 					showSupervisionChip={false}
+					showGroupChip
+					{...productionToolbarProps}
 					createGroupChatPath="/sessions/consultant/sessionView/createGroupChat"
 					archiveTabPath="/sessions/consultant/sessionView?sessionListTab=archive"
 					archiveTabActive={false}
@@ -375,11 +385,16 @@ const StageList = () => {
 					chipCounts={{ groups: 1 }}
 				/>
 				<div className="sessionsList__scrollArea">
-					<div className="sessionsList__scrollContainer sessionsList__scrollContainer--hasToolbar">
+					<div
+						className="sessionsList__scrollContainer sessionsList__scrollContainer--hasToolbar"
+						role="list"
+						aria-label="Conversations"
+					>
 						<SessionListItemComponent
 							defaultLanguage="de"
 							handleKeyDownLisItemContent={() => {}}
 							index={0}
+							grouped
 						/>
 					</div>
 				</div>

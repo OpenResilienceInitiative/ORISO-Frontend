@@ -1,0 +1,211 @@
+import { useEffect, useMemo, useSyncExternalStore } from 'react';
+import { AddonApp, AddonSlot, AvailableAddon } from './addonTypes';
+import { AddonRegistryContext, apiGetAddonRegistry } from './addonRegistryApi';
+import { localizedText } from './addonLink';
+
+export interface AddonAppInSlot {
+	addon: AvailableAddon;
+	app: AddonApp;
+}
+
+export interface AddonRegistryState {
+	addons: AvailableAddon[];
+	loaded: boolean;
+	/** An AddonService answered: the instance has add-ons, even when none is visible right now. */
+	available: boolean;
+}
+
+const EMPTY: AddonRegistryState = {
+	addons: [],
+	loaded: false,
+	available: false
+};
+const GLOBAL_KEY = '';
+const NO_CASE_KEY = 'no-case';
+export const REGISTRY_REFRESH_DEBOUNCE_MS = 1000;
+/** Releases and badges can change without a notification the timeline shows. */
+export const REGISTRY_POLL_MS = 60_000;
+
+const registries = new Map<string, AddonRegistryState>();
+const inFlight = new Map<string, Promise<AvailableAddon[] | null>>();
+const publishedGeneration = new Map<string, number>();
+const listeners = new Set<() => void>();
+let generation = 0;
+/** Changes with every login: requests of an earlier identity never publish. */
+let identity = 0;
+let refreshTimer: ReturnType<typeof setTimeout> | undefined;
+
+const notify = () => listeners.forEach((listener) => listener());
+
+const setRegistry = (key: string, next: AddonRegistryState) => {
+	registries.set(key, next);
+	notify();
+};
+
+const subscribe = (listener: () => void) => {
+	listeners.add(listener);
+	return () => listeners.delete(listener);
+};
+
+const contextKey = ({ agencyId, sessionId }: AddonRegistryContext) =>
+	`${agencyId ?? ''}/${sessionId ?? ''}`;
+
+// Header button, side panel and profile tiles of one case share one request.
+const loadRegistry = (key: string, context?: AddonRegistryContext) => {
+	const requestIdentity = identity;
+	const requestGeneration = generation;
+	const requestKey = `${requestIdentity}:${key}#${requestGeneration}`;
+	let request = inFlight.get(requestKey);
+	if (!request) {
+		request = apiGetAddonRegistry(context).finally(() =>
+			inFlight.delete(requestKey)
+		);
+		inFlight.set(requestKey, request);
+	}
+	return request.then((addons) => {
+		if (
+			requestIdentity !== identity ||
+			requestGeneration < (publishedGeneration.get(key) ?? -1)
+		) {
+			return;
+		}
+		// A refresh that fails keeps the last answer: open add-ons stay mounted until the service is back.
+		if (addons === null && registries.get(key)?.available) {
+			return;
+		}
+		publishedGeneration.set(key, requestGeneration);
+		setRegistry(key, {
+			addons: addons ?? [],
+			loaded: true,
+			available: addons !== null
+		});
+	});
+};
+
+const startIdentity = () => {
+	identity += 1;
+	registries.clear();
+	inFlight.clear();
+	publishedGeneration.clear();
+	notify();
+};
+
+export const resetAddonRegistryForTests = () => {
+	startIdentity();
+	clearTimeout(refreshTimer);
+	generation = 0;
+	notify();
+};
+
+/** Loads every registry again, debounced: after an add-on notification and on window focus. */
+export const refreshAddonRegistries = () => {
+	clearTimeout(refreshTimer);
+	refreshTimer = setTimeout(() => {
+		generation += 1;
+		notify();
+	}, REGISTRY_REFRESH_DEBOUNCE_MS);
+};
+
+const useGeneration = () =>
+	useSyncExternalStore(
+		subscribe,
+		() => generation,
+		() => 0
+	);
+
+const useRegistryState = (key: string): AddonRegistryState =>
+	useSyncExternalStore(
+		subscribe,
+		() => registries.get(key) ?? EMPTY,
+		() => EMPTY
+	);
+
+/** Loads the registry for the logged-in user; mounted once, in the app shell's routing. */
+export const useAddonRegistryLoader = (userId: string | undefined) => {
+	const currentGeneration = useGeneration();
+
+	useEffect(() => {
+		startIdentity();
+		return startIdentity;
+	}, [userId]);
+
+	useEffect(() => {
+		if (!userId) {
+			return undefined;
+		}
+		window.addEventListener('focus', refreshAddonRegistries);
+		const poll = setInterval(() => {
+			if (document.visibilityState === 'visible') {
+				refreshAddonRegistries();
+			}
+		}, REGISTRY_POLL_MS);
+		return () => {
+			window.removeEventListener('focus', refreshAddonRegistries);
+			clearInterval(poll);
+		};
+	}, [userId]);
+
+	useEffect(() => {
+		if (userId) {
+			void loadRegistry(GLOBAL_KEY);
+		}
+	}, [userId, currentGeneration]);
+};
+
+/** The registry without context: navigation and places outside a case. */
+export const useAddonRegistry = (): AddonRegistryState =>
+	useRegistryState(GLOBAL_KEY);
+
+/**
+ * The registry for one open case; empty until it is loaded, so nothing shows that the case
+ * does not allow. Waits for the registry without context, which tells that a user is logged in.
+ */
+export const useCaseAddonRegistry = (
+	context: AddonRegistryContext
+): AddonRegistryState => {
+	const currentGeneration = useGeneration();
+	const { loaded: globalLoaded } = useAddonRegistry();
+	const key = globalLoaded && context.sessionId ? contextKey(context) : null;
+	const state = useRegistryState(key ?? NO_CASE_KEY);
+
+	useEffect(() => {
+		if (key) {
+			void loadRegistry(key, context);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [key, currentGeneration]);
+
+	return key ? state : EMPTY;
+};
+
+export const appsInSlot = (
+	addons: AvailableAddon[],
+	slot: AddonSlot
+): AddonAppInSlot[] =>
+	addons.flatMap((addon) =>
+		addon.apps
+			.filter((app) => app.slots.includes(slot))
+			.map((app) => ({ addon, app }))
+	);
+
+export const useCaseAddonApps = (
+	slot: AddonSlot,
+	context: AddonRegistryContext
+): AddonAppInSlot[] => {
+	const { addons } = useCaseAddonRegistry(context);
+	return useMemo(() => appsInSlot(addons, slot), [addons, slot]);
+};
+
+export const findAddonApp = (
+	addons: AvailableAddon[],
+	addonName: string,
+	appId: string
+): AddonAppInSlot | undefined => {
+	const addon = addons.find((candidate) => candidate.name === addonName);
+	const app = addon?.apps.find((candidate) => candidate.id === appId);
+	return addon && app ? { addon, app } : undefined;
+};
+
+/** The title in the user's language, falling back to German and then to any title. */
+export const appTitle = (app: AddonApp, locale: string): string =>
+	localizedText(app.title, locale) ?? app.id;

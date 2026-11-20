@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * The REAL practice tours walk through the REAL app shell pieces
  * (tour host, banner, navigation bar, practice surface + sandbox, session
@@ -17,7 +17,14 @@ import {
 	within
 } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import { Context as ResponsiveContext } from 'react-responsive';
 import { I18nextProvider, initReactI18next } from 'react-i18next';
 import { createInstance } from 'i18next';
@@ -523,13 +530,23 @@ const openThePracticeEnquiry = async () => {
 	pressNext(0);
 
 	// 2: the practice enquiry, the only row of the real list; click it.
-	const row = await expectStep(1);
+	await expectStep(1);
 	expect(route()).toBe(PRACTICE_ENQUIRIES_ROUTE);
 	expect(
 		document.querySelectorAll('[data-cy="session-list-item"]')
 	).toHaveLength(1);
-	expect(row!.textContent).toContain(SCRIPT.cast.asker.displayName);
-	fireEvent.click(row!);
+	const listItemSelector = joyride!.steps[1].target;
+	// Restart remounts the sandbox list. A row captured before that swap is
+	// detached, and fireEvent on it never reaches the tour's document listener.
+	await waitFor(() => {
+		const row = document.querySelector<HTMLElement>(listItemSelector);
+		expect(row?.isConnected).toBe(true);
+		expect(row?.textContent).toContain(SCRIPT.cast.asker.displayName);
+	}, SLOW);
+	await act(async () => {
+		fireEvent.click(document.querySelector<HTMLElement>(listItemSelector)!);
+		await new Promise<void>((resolve) => setTimeout(resolve, 0));
+	});
 };
 
 /** F1 from the accept step on; `at` is the accept step's index. */

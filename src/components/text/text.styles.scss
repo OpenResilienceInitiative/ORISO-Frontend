@@ -61,7 +61,7 @@
 		}
 
 		&--notice {
-			color: var(--m3-primary, $primary);
+			color: var(--oriso-primary-text, var(--m3-primary, $primary));
 		}
 	}
 

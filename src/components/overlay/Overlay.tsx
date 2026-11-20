@@ -17,6 +17,7 @@ import {
 	shouldActivateOverlayFocusTrap,
 	useForeignMuiModalOpen
 } from './useForeignMuiModalOpen';
+import { useFloatingSnackbarPresence } from '../m3Snackbar/M3Snackbar';
 
 export const OVERLAY_FUNCTIONS = {
 	CLOSE: 'CLOSE',
@@ -110,21 +111,13 @@ export const Overlay: FC<OverlayProps> = ({ name, ...overlayProps }) => {
 
 const OverlayContent: FC<Omit<OverlayProps, 'name'>> = (props) => {
 	const { t: translate } = useTranslation();
+	// A standing notice would sit above the dialog and swallow clicks on its buttons.
+	useFloatingSnackbarPresence(true);
 	const [activeStep, setActiveStep] = useState<number>(0);
-	const [activeOverlay, setActiveOverlay] = useState<OverlayItem>(
-		props.item
-			? { ...props.item, ...props.handleOverlay }
-			: props.items[activeStep]
-	);
+	// Derived during render: a copy synced by an effect showed the previous
+	// item for one commit after every change (e.g. a late error alert).
+	const activeOverlay: OverlayItem = props.item ?? props.items[activeStep];
 	const foreignModalOpen = useForeignMuiModalOpen();
-
-	useEffect(() => {
-		setActiveOverlay(
-			props.item
-				? { ...props.item, ...props.handleOverlay }
-				: props.items[activeStep]
-		);
-	}, [props.item, props.items]); // eslint-disable-line react-hooks/exhaustive-deps
 
 	useEffect(() => {
 		document.querySelector('.app')?.classList.add('app--blur');
@@ -133,12 +126,6 @@ const OverlayContent: FC<Omit<OverlayProps, 'name'>> = (props) => {
 			document.querySelector('.app')?.classList.remove('app--blur');
 		};
 	}, []);
-
-	useEffect(() => {
-		if (props.items) {
-			setActiveOverlay(props.items[activeStep]);
-		}
-	}, [activeStep, props.items]);
 
 	const handleButtonClick = (
 		buttonFunction: string,

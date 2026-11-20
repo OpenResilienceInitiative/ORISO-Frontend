@@ -27,6 +27,14 @@ runs:
           # the (previously untested) :dev image on pushes to dev/main.
           run: npm run test:unit
 
+        - name: Preserve unit verification evidence
+          if: always()
+          uses: actions/upload-artifact@v4
+          with:
+              name: frontend-unit-verification-${{ github.job }}
+              path: verification-artifacts/
+              if-no-files-found: warn
+
         - name: Build app
           shell: bash
           run: |

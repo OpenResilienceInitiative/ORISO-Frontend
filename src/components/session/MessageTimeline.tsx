@@ -18,6 +18,9 @@ import {
 	MessageItemComponent
 } from '../message/MessageItemComponent';
 import { MessageSendFailed } from '../message/MessageSendFailed';
+import { MissingKeyPlaceholder } from '../message/MissingKeyPlaceholder';
+import { groupMissingKeyMessages } from './missingKeyGroups';
+import { useTranslation } from 'react-i18next';
 import type { AggregatedReaction } from '../../utils/messageRelations';
 
 type MessageItemProps = React.ComponentProps<typeof MessageItemComponent>;
@@ -55,6 +58,12 @@ export interface MessageTimelineProps {
 		replyToEventId?: string | null
 	) => MessageItemProps['replyQuote'];
 	onReplyDirect?: (message: MessageItem) => void;
+	/** Selection reply: jump from a reply's quote back to the quoted passage. */
+	onJumpToReplyQuote?: (message: MessageItem) => void;
+	/** Selection reply: jump from one answered passage back to it. */
+	onJumpToPassage?: MessageItemProps['onJumpToPassage'];
+	/** Moderators: blurred passages offer "Remove blur". */
+	canRemovePassageBlur?: boolean;
 	/** Own messages only — the timeline applies the ownership gate. */
 	onEditDirect?: (message: MessageItem) => void;
 	/** Own messages only — the timeline applies the ownership gate. */
@@ -62,6 +71,8 @@ export interface MessageTimelineProps {
 	reactionsFor?: (messageId: string) => AggregatedReaction[];
 	onReact?: (messageId: string, key: string) => void;
 	onUnreact?: (reactionEventId: string) => void;
+	/** #420 / #1824: rows in the Activity Timeline preview (see MessageItemComponent). */
+	previewMode?: MessageItemProps['previewMode'];
 }
 
 const never = () => false;
@@ -91,21 +102,45 @@ export const MessageTimeline = ({
 	onOpenThread,
 	resolveReplyQuote,
 	onReplyDirect,
+	onJumpToReplyQuote,
+	onJumpToPassage,
+	canRemovePassageBlur,
 	onEditDirect,
 	onDeleteDirect,
 	reactionsFor,
 	onReact,
-	onUnreact
+	onUnreact,
+	previewMode
 }: MessageTimelineProps) => {
+	const { t: translate } = useTranslation();
 	const supplementIndex =
 		supplementTime === undefined
 			? -1
 			: messages.findIndex(
 					(message) => Number(message.messageTime) > supplementTime
 				);
+	// #1827: a run of messages without a key on this device becomes ONE notice.
+	const entries = groupMissingKeyMessages(messages, supplementIndex);
 	return (
 		<>
-			{messages.map((message: MessageItem, index) => {
+			{entries.map((entry) => {
+				if (entry.kind === 'missing-key') {
+					const first = entry.messages[0];
+					const dateKey =
+						first.messageDate?.str || first.messageDate?.date;
+					return (
+						<React.Fragment key={`${keyPrefix}${first._id}`}>
+							{entry.index === supplementIndex && supplement}
+							<MissingKeyPlaceholder
+								count={entry.messages.length}
+								dateLabel={
+									dateKey ? translate(dateKey) : undefined
+								}
+							/>
+						</React.Fragment>
+					);
+				}
+				const { message, index } = entry;
 				const own = isMyMessage(message.userId);
 				const broke = decryptionFailures?.has(message._id) ?? false;
 				return (
@@ -145,6 +180,17 @@ export const MessageTimeline = ({
 									? () => onReplyDirect(message)
 									: undefined
 							}
+							onJumpToReplyQuote={
+								onJumpToReplyQuote && message.replyToEventId
+									? () => onJumpToReplyQuote(message)
+									: undefined
+							}
+							onJumpToPassage={
+								message.passageReplies?.length
+									? onJumpToPassage
+									: undefined
+							}
+							canRemovePassageBlur={canRemovePassageBlur}
 							onEditDirect={
 								own && onEditDirect
 									? () => onEditDirect(message)
@@ -163,6 +209,7 @@ export const MessageTimeline = ({
 							}
 							onUnreact={onUnreact}
 							encryptionBroke={broke}
+							previewMode={previewMode}
 						/>
 						{broke &&
 							(showDecryptionCardFor

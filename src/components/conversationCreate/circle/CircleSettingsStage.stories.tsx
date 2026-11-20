@@ -2,8 +2,10 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import {
 	desktop1440Globals,
-	phone390Globals
+	phone390Globals,
+	tablet820Globals
 } from '../../message/messageStoryShell';
+import { AuthenticatedBuildIdentityBoundary } from '../../app/BuildIdentity';
 import { CircleSettingsStage, COLLEAGUES } from './circleSettingsStage';
 
 /**
@@ -197,14 +199,91 @@ export const EditorSingleLanguageTenant: Story = {
 	}
 };
 
+export const EditBuildIdentityMobile: Story = {
+	name: 'Schedule editor build identity · 390',
+	globals: phone390Globals,
+	args: {
+		layout: 'mobile',
+		editChatId: 42,
+		prefill: {
+			startDate: '2026-11-14',
+			startTime: '16:00',
+			duration: 60,
+			repeatCount: 2,
+			interval: 'WEEKLY'
+		}
+	},
+	beforeEach: () => {
+		const runtimeWindow: Window & {
+			__ORISO_RUNTIME_CONFIG__?: Record<string, string | undefined>;
+		} = window;
+		const previous = runtimeWindow.__ORISO_RUNTIME_CONFIG__;
+		runtimeWindow.__ORISO_RUNTIME_CONFIG__ = {
+			...previous,
+			REACT_APP_PLATFORM_VERSION: 'v2.0.15'
+		};
+		return () => {
+			runtimeWindow.__ORISO_RUNTIME_CONFIG__ = previous;
+		};
+	},
+	render: (args) => (
+		<AuthenticatedBuildIdentityBoundary>
+			<CircleSettingsStage {...args} />
+		</AuthenticatedBuildIdentityBoundary>
+	),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const identity = canvas.getByTestId('build-identity');
+		const editor = canvasElement.querySelector('.circleSettings');
+		const controls = [/^Text$/, /^DE$/].map((name) =>
+			canvas.getByRole('button', { name })
+		);
+		await expect(editor).toContainElement(identity);
+		await expect(
+			getComputedStyle(identity.parentElement!).position
+		).not.toBe('fixed');
+		for (const control of controls) {
+			control.scrollIntoView({ block: 'center' });
+			control.focus();
+			await userEvent.tab();
+			const row = control.closest('.splitButton')!;
+			const toggle = row.querySelector('.splitButton__trailing');
+			await expect(toggle).toHaveFocus();
+			await expect(rect(identity).top).toBeGreaterThanOrEqual(
+				rect(row).bottom
+			);
+		}
+		identity.scrollIntoView({ block: 'end' });
+		await expect(identity).toBeVisible();
+	}
+};
+
+export const EditBuildIdentityTablet: Story = {
+	...EditBuildIdentityMobile,
+	name: 'Schedule editor build identity · 820',
+	globals: tablet820Globals
+};
+
+export const EditBuildIdentityDesktop: Story = {
+	...EditBuildIdentityMobile,
+	name: 'Schedule editor build identity · 1440',
+	globals: desktop1440Globals,
+	args: { ...EditBuildIdentityMobile.args, layout: 'desktop' }
+};
+
 /*
  * Backend stand-in for the wired create flow: the create POST answers with a
  * room, the session refresh returns the Series behind it. Installed per story
  * on top of the preview's own fetch mock and removed again afterwards.
  */
+/** Body of the last create POST, for stories that check what was sent. */
+let lastCreateBody: { groupChatRulesTranslations?: Record<string, string[]> } =
+	{};
+
 const mockCreateBackend = () => {
 	const previous = globalThis.fetch;
 	const calls: string[] = [];
+	lastCreateBody = {};
 	globalThis.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
 		const url = String(input instanceof Request ? input.url : input);
 		// fetchData calls `fetch(Request)` with no init; the method lives on
@@ -224,6 +303,11 @@ const mockCreateBackend = () => {
 			/\/service\/users\/chat\/(v2\/)?new/.test(url)
 		) {
 			calls.push('create');
+			const body =
+				input instanceof Request
+					? await input.clone().text()
+					: String(init?.body ?? '');
+			lastCreateBody = body ? JSON.parse(body) : {};
 			return json({ matrixRoomId: '!story-room:matrix.storybook.test' });
 		}
 		if (url.includes('/service/users/sessions/room')) {
@@ -305,5 +389,57 @@ export const CreateThenCloseShareDialog: Story = {
 		await waitFor(() =>
 			expect(page(canvasElement).queryByRole('dialog')).toBeNull()
 		);
+	}
+};
+
+const TYPED_RULE = 'Handys bleiben während des Treffens stumm.';
+
+/** Types a rule into the rule field and leaves it there — no "+". */
+const typeRuleWithoutPlus = async (canvasElement: HTMLElement) => {
+	const input = within(canvasElement).getByRole('textbox', {
+		name: 'Regel bearbeiten'
+	});
+	input.scrollIntoView({ block: 'center' });
+	await userEvent.type(input, TYPED_RULE);
+	// Visible straight away as the third chip, not only after "+".
+	await expect(
+		within(canvasElement).getByRole('button', {
+			name: 'Regel 3 bearbeiten'
+		})
+	).toBeVisible();
+};
+
+/**
+ * Dev test of #1499: a rule typed into the field but not confirmed with "+"
+ * was dropped on "Erstellen" without a word. Typing now writes the rule
+ * through, and its chip appears while it is being written.
+ */
+export const RuleTypedWithoutPlus1440: Story = {
+	name: 'Rule typed without "+" · 1440',
+	globals: desktop1440Globals,
+	args: { layout: 'desktop', people: COLLEAGUES },
+	play: async ({ canvasElement }) => typeRuleWithoutPlus(canvasElement)
+};
+
+export const RuleTypedWithoutPlus390: Story = {
+	name: 'Rule typed without "+" · 390',
+	globals: phone390Globals,
+	args: { layout: 'mobile', people: COLLEAGUES },
+	play: async ({ canvasElement }) => typeRuleWithoutPlus(canvasElement)
+};
+
+/** Wired: the typed rule is in the create request "Erstellen" sends. */
+export const RuleTypedWithoutPlusIsCreated: Story = {
+	name: 'Rule typed without "+" → Erstellen sends it (wired) · 1440',
+	globals: desktop1440Globals,
+	args: { layout: 'desktop', people: COLLEAGUES },
+	beforeEach: () => mockCreateBackend().restore,
+	play: async ({ canvasElement }) => {
+		await typeRuleWithoutPlus(canvasElement);
+		await createAndOpenShareDialog(canvasElement);
+		// The German tab is open, so the rule must arrive under `de`.
+		await expect(
+			lastCreateBody.groupChatRulesTranslations?.de || []
+		).toContain(TYPED_RULE);
 	}
 };

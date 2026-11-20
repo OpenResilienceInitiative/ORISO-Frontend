@@ -40,7 +40,11 @@ ARG PORT=80
 # Alpine 3.24 ships the fix in 3.5.8-r0, but the pinned node:22-alpine still
 # carries 3.5.7-r0 and upstream has not rebuilt, so bumping the base digest
 # does not help. Take the patched packages straight from the Alpine repo.
-RUN apk upgrade --no-cache libssl3 libcrypto3
+#
+# CVE-2026-85091: zlib heap buffer overflow in gz_vacate(). Same situation:
+# the pinned base carries 1.3.2-r0, Alpine 3.24 ships the fix in 1.3.2-r1.
+# CVE-2026-107891: Alpine 3.24 fixes musl and musl-utils in 1.2.6-r3.
+RUN apk upgrade --no-cache libssl3 libcrypto3 zlib musl musl-utils
 
 # The node base image bundles an npm whose vendored dependencies (tar,
 # sigstore, picomatch, brace-expansion, undici) carry fixable HIGH/CRITICAL
@@ -50,7 +54,7 @@ RUN apk upgrade --no-cache libssl3 libcrypto3
 # still 6.28.0, so bumping npm alone cannot clear the gate.
 #   brace-expansion 5.0.11 - CVE-2026-102276, CVE-2026-102278
 #   ip-address     10.3.1  - CVE-2026-69192
-#   undici          6.28.1 - CVE-2026-19534
+#   undici          6.29.1 - CVE-2026-19534, CVE-2026-109869
 RUN npm install -g npm@11.18.0 \
 	&& cd /tmp \
 	&& npm pack brace-expansion@5.0.11 \
@@ -75,12 +79,13 @@ RUN npm install -g npm@11.18.0 \
 	&& rm -rf /tmp/tar-patch /tmp/tar-7.5.21.tgz \
 	# CVE-2026-19534: undici DoS via an unrequested WebSocket subprotocol.
 	# npm vendors 6.28.0 up to and including npm@12.1.0; 6.28.1 is the fix.
-	&& npm pack undici@6.28.1 \
+	# CVE-2026-109869: undici DoS via an unhandled stream error; fixed in 6.29.1.
+	&& npm pack undici@6.29.1 \
 	&& mkdir -p /tmp/undici-patch \
-	&& tar -xzf undici-6.28.1.tgz -C /tmp/undici-patch \
+	&& tar -xzf undici-6.29.1.tgz -C /tmp/undici-patch \
 	&& rm -rf /usr/local/lib/node_modules/npm/node_modules/undici \
 	&& mv /tmp/undici-patch/package /usr/local/lib/node_modules/npm/node_modules/undici \
-	&& rm -rf /tmp/undici-patch /tmp/undici-6.28.1.tgz \
+	&& rm -rf /tmp/undici-patch /tmp/undici-6.29.1.tgz \
 	&& npm cache clean --force
 
 USER node

@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { E2EEActivatedMessage } from './E2EEActivatedMessage';
 import {
@@ -58,8 +58,8 @@ export const Mobile: Story = {
 
 export const InDarkSurface: Story = {
 	name: 'On dark background',
+	globals: { backgrounds: { value: 'dark' } },
 	parameters: {
-		backgrounds: { default: 'dark' },
 		docs: {
 			description: {
 				story: 'The banner is placed on the session background rather than on a bubble. This story surfaces any hard-coded light-only colour.'

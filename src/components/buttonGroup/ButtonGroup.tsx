@@ -59,6 +59,7 @@ export interface ButtonGroupItem {
 	testingAttribute?: string;
 	/** Accessible name when the visible label is not enough on its own. */
 	ariaLabel?: string;
+	ariaBusy?: boolean;
 	type?: 'button' | 'submit' | 'reset';
 }
 
@@ -252,6 +253,7 @@ export const ButtonGroup = ({
 						className={itemClassName(item)}
 						disabled={item.disabled}
 						aria-label={item.ariaLabel}
+						aria-busy={item.ariaBusy}
 						data-cy={item.testingAttribute}
 						onClick={item.onClick}
 					>

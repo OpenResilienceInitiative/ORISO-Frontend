@@ -7,7 +7,11 @@ export interface Consultant {
 	lastName: string;
 	displayName: string;
 	username: string;
+	/** Only on the agency roster, so a mention needs no room membership. */
+	matrixUserId?: string | null;
 	isSupervisor?: boolean;
+	/** The counselling centres of this consultant, when the endpoint delivers them. */
+	agencies?: { id: number; name?: string }[];
 }
 
 /**

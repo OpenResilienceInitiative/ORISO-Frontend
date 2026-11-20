@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { counsellorInitials } from './counsellorAvatar';
 
 describe('counsellorInitials', () => {
@@ -24,5 +24,13 @@ describe('counsellorInitials', () => {
 			'AM'
 		);
 		expect(counsellorInitials({ displayName: '   ' })).toBe('');
+	});
+
+	it('keeps the letters to two when upper-casing grows them', () => {
+		// `ﬃ` upper-cases to `FFI`, so picking two letters could leave four
+		// characters in a field that promises one or two.
+		expect(
+			counsellorInitials({ firstName: '\uFB03na', lastName: '\u00DFenz' })
+		).toBe('FF');
 	});
 });

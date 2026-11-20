@@ -11,6 +11,7 @@ import { removeTokenExpiryFromLocalStorage } from '../components/sessionCookie/a
 import { appConfig } from '../utils/appConfig';
 import { RequestLog } from '../utils/requestCollector';
 import { getCounsellingDpaFailure } from './counsellingDpaFailure';
+import { traceHeaders } from '../utils/observability/traceparent';
 
 const nodeEnv: string = process.env.NODE_ENV as string;
 const isLocalDevelopment = nodeEnv === 'development';
@@ -29,6 +30,8 @@ export const FETCH_ERRORS = {
 	BAD_REQUEST: 'BAD_REQUEST',
 	CATCH_ALL: 'CATCH_ALL',
 	CATCH_ALL_WITH_RESPONSE: 'CATCH_ALL_WITH_RESPONSE',
+	/** Like CATCH_ALL, but a 401 still takes the normal session handling (logout). */
+	CATCH_ALL_EXCEPT_UNAUTHORIZED: 'CATCH_ALL_EXCEPT_UNAUTHORIZED',
 	COUNSELLING_DPA_RESPONSE: 'COUNSELLING_DPA_RESPONSE',
 	CONFLICT: 'CONFLICT',
 	CONFLICT_WITH_RESPONSE: 'CONFLICT_WITH_RESPONSE',
@@ -41,6 +44,8 @@ export const FETCH_ERRORS = {
 	UNAUTHORIZED: 'UNAUTHORIZED',
 	PRECONDITION_FAILED: 'PRECONDITION FAILED',
 	TOO_MANY_REQUESTS: 'TOO_MANY_REQUESTS',
+	/** 403 with X-Reason USER_BANNED_FROM_CHAT: a moderator removed the caller. */
+	USER_BANNED_FROM_CHAT: 'USER_BANNED_FROM_CHAT',
 	X_REASON: 'X-Reason'
 };
 
@@ -48,7 +53,9 @@ export const X_REASON = {
 	EMAIL_NOT_AVAILABLE: 'EMAIL_NOT_AVAILABLE',
 	USERNAME_NOT_AVAILABLE: 'USERNAME_NOT_AVAILABLE',
 	USER_ALREADY_REGISTERED_WITH_AGENCY_AND_TOPIC:
-		'USER_ALREADY_REGISTERED_WITH_AGENCY_AND_TOPIC'
+		'USER_ALREADY_REGISTERED_WITH_AGENCY_AND_TOPIC',
+	/** 409 on a case-handover decision: the case owner changed after the request was created. */
+	CASE_OWNER_CHANGED: 'CASE_OWNER_CHANGED'
 };
 
 export const FETCH_SUCCESS = {
@@ -105,6 +112,7 @@ interface FetchDataProps {
 	timeout?: number;
 	signal?: AbortSignal;
 	recoverOnPublicAuthRoute?: boolean;
+	referrerPolicy?: ReferrerPolicy;
 	/**
 	 * Set only by the anonymous retry below. A second 401 is the end of the
 	 * road: it rejects, and it does not log anyone out or leave the page.
@@ -124,6 +132,7 @@ export const fetchData = ({
 	timeout,
 	signal,
 	recoverOnPublicAuthRoute = true,
+	referrerPolicy,
 	isStaleAuthRetry = false
 }: FetchDataProps): Promise<any> =>
 	new Promise((resolve, reject) => {
@@ -150,6 +159,7 @@ export const fetchData = ({
 				timeout,
 				signal,
 				recoverOnPublicAuthRoute: false,
+				referrerPolicy,
 				isStaleAuthRetry: true
 			});
 
@@ -184,6 +194,7 @@ export const fetchData = ({
 			...authorization,
 			'X-CSRF-TOKEN': csrfToken,
 			...headersData,
+			...traceHeaders(url),
 			...localDevelopmentHeader
 		};
 
@@ -207,6 +218,7 @@ export const fetchData = ({
 			method: method,
 			headers: cleanHeaders,
 			credentials: 'include',
+			referrerPolicy,
 			body: bodyData,
 			signal: controller.signal
 		});
@@ -239,6 +251,15 @@ export const fetchData = ({
 					getCounsellingDpaFailure(response)
 				) {
 					reject(response);
+				} else if (
+					response.status === 403 &&
+					responseHandling?.includes(
+						FETCH_ERRORS.USER_BANNED_FROM_CHAT
+					) &&
+					response.headers?.get(FETCH_ERRORS.X_REASON) ===
+						FETCH_ERRORS.USER_BANNED_FROM_CHAT
+				) {
+					reject(new Error(FETCH_ERRORS.USER_BANNED_FROM_CHAT));
 				} else if (responseHandling) {
 					if (
 						response.status === 400 &&
@@ -280,7 +301,11 @@ export const fetchData = ({
 						responseHandling.includes(FETCH_ERRORS.CATCH_ALL) ||
 						responseHandling.includes(
 							FETCH_ERRORS.CATCH_ALL_WITH_RESPONSE
-						)
+						) ||
+						(response.status !== 401 &&
+							responseHandling.includes(
+								FETCH_ERRORS.CATCH_ALL_EXCEPT_UNAUTHORIZED
+							))
 					) {
 						reject(
 							responseHandling.includes(

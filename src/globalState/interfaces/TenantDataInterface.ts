@@ -50,6 +50,16 @@ export interface TenantDataInterface {
 		privacyLanguages?: Record<string, string>;
 	};
 	settings?: TenantDataSettingsInterface;
+	/**
+	 * Who may be picked for an internal group chat (ORISO-TenantService#321).
+	 * Absent on a backend without the setting; read as `AGENCY` then.
+	 */
+	internalGroupChat?: {
+		recipientScope?: {
+			value?: 'PLATFORM' | 'TENANT' | 'AGENCY';
+			mode?: 'ENFORCED' | 'SUGGESTED';
+		} | null;
+	} | null;
 	/** Optional DPO of the Träger, public on the restricted tenant read (ORISO-Admin#1067). */
 	dataProtectionOfficer?: TraegerDpo | null;
 }
@@ -65,6 +75,10 @@ export interface TenantDataSettingsInterface {
 	featureTopicsEnabled: boolean;
 	topicsInRegistrationEnabled: boolean;
 	featureMediaUploadEnabled?: boolean;
+	/** "Direkteinladung erlauben" per medium (TenantService#332); unset = allowed. */
+	featureDirectInviteChatEnabled?: boolean;
+	featureDirectInviteAudioEnabled?: boolean;
+	featureDirectInviteVideoEnabled?: boolean;
 	featureMediaUploadAnonymousChatsEnabled?: boolean;
 	featureMediaUploadOneOnOneChatsEnabled?: boolean;
 	featureMediaUploadGroupChatsEnabled?: boolean;
@@ -107,12 +121,22 @@ export interface TenantDataSettingsInterface {
 	featureVoiceMessagesSupervisionChatsEnabled?: boolean;
 	/** ORISO-Admin#602: explicit false disables asker email invitation; absent keeps legacy behavior. */
 	featureAskerEmailEnabled?: boolean;
+	/** Collection permission, separate from notification delivery. Absent preserves compatibility. */
+	featureAskerEmailCollectionAgencyCounsellingEnabled?: boolean;
+	featureAskerEmailCollectionSelfHelpEnabled?: boolean;
+	/** Free entry of the visible session alias; login User-ID remains unchanged. */
+	featureDisplayNameEditable?: boolean;
+	featureDisplayNameEditableAgencyCounsellingEnabled?: boolean;
+	featureDisplayNameEditableLiveChatEnabled?: boolean;
+	featureDisplayNameEditableSelfHelpEnabled?: boolean;
 	featureAskerEmailAgencyCounsellingEnabled?: boolean;
 	featureAskerEmailLiveChatEnabled?: boolean;
 	featureAskerEmailSelfHelpEnabled?: boolean;
 	featureAskerBrowserAgencyCounsellingEnabled?: boolean;
 	featureAskerBrowserLiveChatEnabled?: boolean;
 	featureAskerBrowserSelfHelpEnabled?: boolean;
+	/** Explicit false: counsellors get no e-mail about internal group chats. */
+	featureConsultantEmailInternalGroupEnabled?: boolean;
 
 	emailVisible?: boolean;
 	emailRequired?: boolean;

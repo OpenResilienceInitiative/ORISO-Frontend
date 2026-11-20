@@ -1,5 +1,5 @@
-// @vitest-environment jsdom
-import { beforeEach, describe, expect, it } from 'vitest';
+// @vitest-environment oriso-jsdom
+import { beforeEach, describe, expect, it } from 'vite-plus/test';
 import { applyBrandingFavicon } from './applyBrandingFavicon';
 
 const ICON = 'data:image/vnd.microsoft.icon;base64,AAABAAEAICAAAA==';

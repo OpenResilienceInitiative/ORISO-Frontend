@@ -1,5 +1,6 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { a11yExcept } from '../../../../.storybook/a11yExceptions';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { createInstance } from 'i18next';
 import { I18nextProvider, initReactI18next } from 'react-i18next';
@@ -12,14 +13,21 @@ import { NewRequestDialog, NewRequestDialogProps } from './NewRequestDialog';
 
 type ReviewArgs = NewRequestDialogProps & {
 	locale: 'de' | 'en' | 'fr';
-	failureStatus: 403 | 502;
+	failureStatus: 400 | 403 | 500 | 502;
+	/** Answer without a DPA X-Reason: the generic refusal path (#1646). */
+	plainFailure?: boolean;
 };
 
 const catalogues = { de: deCommon, en: enCommon, fr: frCommon };
 const submittedRequests: unknown[] = [];
 
 /** Real UI/providers and translations; only the HTTP service boundary is replaced. */
-const RequestReview = ({ locale, failureStatus, ...args }: ReviewArgs) => {
+const RequestReview = ({
+	locale,
+	failureStatus,
+	plainFailure,
+	...args
+}: ReviewArgs) => {
 	const translations = React.useMemo(() => {
 		const instance = createInstance().use(initReactI18next);
 		void instance.init({
@@ -41,20 +49,25 @@ const RequestReview = ({ locale, failureStatus, ...args }: ReviewArgs) => {
 			<UserDataProvider>
 				<ModalProvider>
 					<NewRequestDialog {...args} />
+					{/* The app's error overlay portals into #overlay (index.html). */}
+					{plainFailure && <div id="overlay" />}
 				</ModalProvider>
 			</UserDataProvider>
 		</I18nextProvider>
 	);
 };
 
-const installHttpBoundary = (status: ReviewArgs['failureStatus']) => {
+const installHttpBoundary = (
+	status: ReviewArgs['failureStatus'],
+	plainFailure = false
+) => {
 	const originalFetch = globalThis.fetch;
 	submittedRequests.length = 0;
 	const fixtureFetch: typeof fetch = async (input, init) => {
 		const request = new Request(input, init);
 		const url = new URL(request.url);
 		if (request.method === 'GET') {
-			if (url.pathname === '/service/agencies/topics') {
+			if (url.pathname === '/service/topic/public') {
 				return Response.json([
 					{ id: 7, name: 'Social counselling' },
 					{ id: 9, name: 'Family counselling' }
@@ -72,6 +85,22 @@ const installHttpBoundary = (status: ReviewArgs['failureStatus']) => {
 			if (url.pathname === '/service/users/data') {
 				return Response.json({ userId: 'storybook-asker' });
 			}
+			// FE#1876: the chosen centre's consent sentence (gate 2).
+			const legal = url.pathname.match(
+				/^\/service\/agencies\/(\d+)\/topics\/(\d+)\/legal$/
+			);
+			if (legal) {
+				return Response.json({
+					dpp: {
+						content: '<p>Datenschutzhinweise</p>',
+						consentText:
+							legal[1] === '43'
+								? 'Ich willige in die Datenschutzhinweise von Another centre ein.'
+								: 'Ich willige in die Datenschutzhinweise von Existing centre ein.',
+						versionId: 77
+					}
+				});
+			}
 		}
 		if (
 			request.method === 'POST' &&
@@ -80,12 +109,14 @@ const installHttpBoundary = (status: ReviewArgs['failureStatus']) => {
 			submittedRequests.push(await request.json());
 			return new Response('', {
 				status,
-				headers: {
-					'X-Reason':
-						status === 403
-							? 'DPA_NEW_COUNSELLING_NOT_ALLOWED'
-							: 'DPA_POLICY_UNAVAILABLE'
-				}
+				headers: plainFailure
+					? {}
+					: {
+							'X-Reason':
+								status === 403
+									? 'DPA_NEW_COUNSELLING_NOT_ALLOWED'
+									: 'DPA_POLICY_UNAVAILABLE'
+						}
 			});
 		}
 		// Framework asset reads may use the preview's fetch. An unexpected
@@ -111,6 +142,11 @@ const meta = {
 	component: RequestReview,
 	tags: ['autodocs'],
 	parameters: {
+		// #1338: the dialog's content overlaps its close button's box; the button
+		// itself is as designed.
+		a11y: a11yExcept({
+			'target-size': ['.MuiDialogActions-root .button__item']
+		}),
 		layout: 'fullscreen',
 		docs: {
 			description: {
@@ -130,17 +166,20 @@ const meta = {
 	},
 	argTypes: {
 		locale: { control: 'select', options: ['de', 'en', 'fr'] },
-		failureStatus: { control: false }
+		failureStatus: { control: false },
+		plainFailure: { control: false }
 	},
-	beforeEach: ({ args }) => installHttpBoundary(args.failureStatus)
+	beforeEach: ({ args }) =>
+		installHttpBoundary(args.failureStatus, args.plainFailure)
 } satisfies Meta<ReviewArgs>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const openFailure: Story['play'] = async ({ args }) => {
+/** Fill in a new request for "Another centre", consent, and send it. */
+const submitRequest = async (locale: ReviewArgs['locale']) => {
 	const view = within(document.body);
-	const catalogue = catalogues[args.locale];
+	const catalogue = catalogues[locale];
 	await view.findByRole('radio', { name: 'Existing centre' });
 	await userEvent.click(
 		view.getByRole('combobox', {
@@ -163,6 +202,23 @@ const openFailure: Story['play'] = async ({ args }) => {
 			name: catalogue.profile.data.register.button.label
 		})
 	);
+	// FE#1876: consent first; nothing is sent before it is confirmed.
+	const consent = await view.findByRole('checkbox', {
+		name: /Another centre/
+	});
+	await expect(submittedRequests).toEqual([]);
+	await userEvent.click(consent);
+	await userEvent.click(
+		view.getByRole('button', {
+			name: catalogue.profile.data.register.button.label
+		})
+	);
+};
+
+const openFailure: Story['play'] = async ({ args }) => {
+	const view = within(document.body);
+	const catalogue = catalogues[args.locale];
+	await submitRequest(args.locale);
 	const copy =
 		args.failureStatus === 403
 			? catalogue.counselling.dpa.restricted
@@ -183,6 +239,29 @@ const openFailure: Story['play'] = async ({ args }) => {
 
 export const Ready: Story = {};
 
+/** "Beratung anfragen" slid the centre's consent up; the request waits for it. */
+export const ConsentStep: Story = {
+	play: async ({ args }) => {
+		const view = within(document.body);
+		const catalogue = catalogues[args.locale];
+		await view.findByRole('radio', { name: 'Existing centre' });
+		const request = view.getByRole('button', {
+			name: catalogue.profile.data.register.button.label
+		});
+		await waitFor(() => expect(request).toBeEnabled());
+		await userEvent.click(request);
+		const consent = await view.findByRole('checkbox', {
+			name: /Existing centre/
+		});
+		await expect(consent).not.toBeChecked();
+		await waitFor(() => expect(request).toBeDisabled());
+		await expect(
+			view.getByText(catalogue.furtherCounselling.request.sameTopicInfo)
+		).toBeVisible();
+		await expect(submittedRequests).toEqual([]);
+	}
+};
+
 export const Restricted: Story = { play: openFailure };
 
 export const VerificationUnavailable: Story = {
@@ -193,4 +272,42 @@ export const VerificationUnavailable: Story = {
 export const RestrictedFrench: Story = {
 	args: { locale: 'fr' },
 	play: openFailure
+};
+
+/**
+ * #1646: a refusal without a DPA reason names its cause instead of the
+ * generic "Es ist ein Fehler aufgetreten".
+ */
+const plainFailureHeadline = (
+	locale: ReviewArgs['locale'],
+	status: ReviewArgs['failureStatus']
+) => {
+	const overlay = catalogues[locale].profile.data.registerError.overlay;
+	if (status === 400) return overlay.badRequest;
+	if (status === 403) return overlay.forbidden;
+	return overlay.unavailable;
+};
+
+const openPlainFailure: Story['play'] = async ({ args }) => {
+	await submitRequest(args.locale);
+	const headline = await within(document.body).findByText(
+		plainFailureHeadline(args.locale, args.failureStatus)
+	);
+	// The overlay fades in.
+	await waitFor(() => expect(headline).toBeVisible());
+};
+
+export const RefusedBadRequest: Story = {
+	args: { failureStatus: 400, plainFailure: true },
+	play: openPlainFailure
+};
+
+export const RefusedForbidden: Story = {
+	args: { failureStatus: 403, plainFailure: true },
+	play: openPlainFailure
+};
+
+export const RefusedServerError: Story = {
+	args: { failureStatus: 500, plainFailure: true },
+	play: openPlainFailure
 };

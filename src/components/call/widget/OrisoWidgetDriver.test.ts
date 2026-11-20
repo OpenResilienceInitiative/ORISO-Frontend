@@ -3,7 +3,14 @@ import {
 	SimpleObservable,
 	type IOpenIDUpdate
 } from 'matrix-widget-api';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import type { MatrixClient } from 'matrix-js-sdk';
 
 import { OrisoWidgetDriver } from './OrisoWidgetDriver';
@@ -11,13 +18,35 @@ import { OrisoWidgetDriver } from './OrisoWidgetDriver';
 const CALL_ROOM = '!call:oriso.example';
 const OTHER_ROOM = '!counselling:oriso.example';
 
+/**
+ * Stand-in for Olm: wraps every payload in an `m.room.encrypted` envelope per
+ * device, the same shape `CryptoApi.encryptToDeviceMessages` returns.
+ */
+const createCrypto = () => ({
+	encryptToDeviceMessages: vi.fn(
+		async (
+			_eventType: string,
+			devices: { userId: string; deviceId: string }[],
+			payload: object
+		) => ({
+			eventType: 'm.room.encrypted',
+			batch: devices.map(({ userId, deviceId }) => ({
+				userId,
+				deviceId,
+				payload: { algorithm: 'olm', for: deviceId, inner: payload }
+			}))
+		})
+	)
+});
+
 const createClient = (overrides: Partial<MatrixClient> = {}) =>
 	({
 		sendEvent: vi.fn().mockResolvedValue({ event_id: '$evt' }),
 		sendStateEvent: vi.fn().mockResolvedValue({ event_id: '$state' }),
 		queueToDevice: vi.fn().mockResolvedValue(undefined),
+		sendToDevice: vi.fn().mockResolvedValue({}),
 		encryptAndSendToDevice: vi.fn().mockResolvedValue(undefined),
-		getCrypto: vi.fn().mockReturnValue({}),
+		getCrypto: vi.fn().mockReturnValue(createCrypto()),
 		getUserId: vi.fn().mockReturnValue('@user:oriso.example'),
 		getDeviceId: vi.fn().mockReturnValue('ORISO_WEB_test'),
 		getRoom: vi.fn().mockReturnValue(null),
@@ -227,14 +256,20 @@ describe('OrisoWidgetDriver', () => {
 
 	describe('to-device sending', () => {
 		it('encrypts media keys through the host crypto stack', async () => {
+			const crypto = createCrypto();
+			client = createClient({
+				getCrypto: vi.fn().mockReturnValue(crypto)
+			});
+			driver = new OrisoWidgetDriver(client, CALL_ROOM);
+
 			await driver.sendToDevice('io.element.call.encryption_keys', true, {
 				'@asker:oriso.example': { DEV1: { key: 'a' } },
 				'@counsellor:oriso.example': { DEV2: { key: 'a' } }
 			});
 
-			// Same payload for both devices, so one encrypted send covers both.
-			expect(client.encryptAndSendToDevice).toHaveBeenCalledTimes(1);
-			expect(client.encryptAndSendToDevice).toHaveBeenCalledWith(
+			// Same payload for both devices, so one encryption covers both.
+			expect(crypto.encryptToDeviceMessages).toHaveBeenCalledTimes(1);
+			expect(crypto.encryptToDeviceMessages).toHaveBeenCalledWith(
 				'io.element.call.encryption_keys',
 				[
 					{ userId: '@asker:oriso.example', deviceId: 'DEV1' },
@@ -242,10 +277,87 @@ describe('OrisoWidgetDriver', () => {
 				],
 				{ key: 'a' }
 			);
+		});
+
+		it('sends media keys straight away instead of queueing them (FE#1828)', async () => {
+			// `encryptAndSendToDevice` appends to the client-wide to-device queue,
+			// which sends one batch at a time. A backlog of room-history key
+			// requests (one batch per device) sat in front of the call key and
+			// held it back for 30-60 s, so the peer's video stayed black.
+			await driver.sendToDevice('io.element.call.encryption_keys', true, {
+				'@asker:oriso.example': { DEV1: { key: 'a' } }
+			});
+
+			expect(client.encryptAndSendToDevice).not.toHaveBeenCalled();
+			expect(client.queueToDevice).not.toHaveBeenCalled();
+			expect(client.sendToDevice).toHaveBeenCalledTimes(1);
+			const [eventType, contentMap] = vi.mocked(client.sendToDevice).mock
+				.calls[0];
+			expect(eventType).toBe('m.room.encrypted');
+			expect(
+				Object.fromEntries(
+					Array.from(contentMap, ([userId, byDevice]) => [
+						userId,
+						Object.fromEntries(byDevice)
+					])
+				)
+			).toEqual({
+				'@asker:oriso.example': {
+					DEV1: {
+						algorithm: 'olm',
+						for: 'DEV1',
+						inner: { key: 'a' }
+					}
+				}
+			});
+		});
+
+		it('falls back to the retrying queue when the direct send fails', async () => {
+			vi.mocked(client.sendToDevice).mockRejectedValueOnce(
+				new Error('network down')
+			);
+
+			await driver.sendToDevice('io.element.call.encryption_keys', true, {
+				'@asker:oriso.example': { DEV1: { key: 'a' } }
+			});
+
+			expect(client.queueToDevice).toHaveBeenCalledTimes(1);
+			expect(client.queueToDevice).toHaveBeenCalledWith(
+				expect.objectContaining({
+					eventType: 'm.room.encrypted',
+					batch: [
+						expect.objectContaining({
+							userId: '@asker:oriso.example',
+							deviceId: 'DEV1'
+						})
+					]
+				})
+			);
+		});
+
+		it('sends nothing when no target device is known to the crypto stack', async () => {
+			vi.mocked(
+				(client.getCrypto() as any).encryptToDeviceMessages
+			).mockResolvedValueOnce({
+				eventType: 'm.room.encrypted',
+				batch: []
+			});
+
+			await driver.sendToDevice('io.element.call.encryption_keys', true, {
+				'@asker:oriso.example': { UNKNOWN: { key: 'a' } }
+			});
+
+			expect(client.sendToDevice).not.toHaveBeenCalled();
 			expect(client.queueToDevice).not.toHaveBeenCalled();
 		});
 
 		it('sends one encrypted batch per distinct payload', async () => {
+			const crypto = createCrypto();
+			client = createClient({
+				getCrypto: vi.fn().mockReturnValue(crypto)
+			});
+			driver = new OrisoWidgetDriver(client, CALL_ROOM);
+
 			await driver.sendToDevice('io.element.call.encryption_keys', true, {
 				'@asker:oriso.example': {
 					DEV1: { key: 'a' },
@@ -253,7 +365,8 @@ describe('OrisoWidgetDriver', () => {
 				}
 			});
 
-			expect(client.encryptAndSendToDevice).toHaveBeenCalledTimes(2);
+			expect(crypto.encryptToDeviceMessages).toHaveBeenCalledTimes(2);
+			expect(client.sendToDevice).toHaveBeenCalledTimes(2);
 		});
 
 		it('refuses to send keys when the host has no crypto', async () => {
@@ -389,6 +502,39 @@ describe('OrisoWidgetDriver', () => {
 			expect(
 				out.map((e) => (e as { event_id: string }).event_id)
 			).toEqual(['$3', '$4']);
+		});
+
+		it('reads an identity it may not send', async () => {
+			/*
+			 * The asymmetry that keeps the design's first rule intact.
+			 *
+			 * Identity moved out of room state (which Matrix does not
+			 * encrypt) and into the encrypted timeline, so the widget has to
+			 * be able to READ a timeline event of this type to draw anybody.
+			 * Before the split, both directions of room events were checked
+			 * against one set, so allowing the read would have allowed the
+			 * widget to write somebody else's identity — the one thing the
+			 * call must never decide.
+			 */
+			const IDENTITY = 'org.oriso.call.identity';
+			const d = new OrisoWidgetDriver(
+				clientWithTimeline([
+					eventStub(IDENTITY, '$1', {
+						kind: 'animal',
+						file: 'fox.svg',
+						bg: '#165E83',
+						ink: '#ffffff'
+					})
+				]),
+				CALL_ROOM
+			);
+
+			const out = await d.readRoomEvents(IDENTITY, undefined, 10);
+			expect(out).toHaveLength(1);
+
+			await expect(
+				d.sendEvent(IDENTITY, { kind: 'animal' })
+			).rejects.toThrow(/may not send/);
 		});
 
 		it('returns only what follows `since`', async () => {

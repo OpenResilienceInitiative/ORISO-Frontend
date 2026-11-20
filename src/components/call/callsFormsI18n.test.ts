@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 /**
  * Call widgets, form/modal primitives, and the post-#1242 rescan extras
@@ -24,16 +24,11 @@ const SLICE_FILES = [
 	'src/components/messageSubmitInterface/inputField/EmojiPickerPopup.tsx',
 	'src/components/session/ThreadListPanel.tsx',
 	'src/components/departmentLegal/DepartmentLegalSection.tsx',
-	'src/containers/bookings/components/AssignedCalendars/assignedCalendars.tsx',
-	'src/containers/bookings/components/AvailabilityContainer/availabilityContainer.tsx',
 	'src/components/uiVersionToggle/UIVersionToggle.tsx',
 	'src/components/notFound/NotFound.tsx',
-	'src/containers/bookings/components/Calcom/Cal.tsx',
 	'src/components/message/MessageItemComponent.tsx',
 	'src/components/header/Header.tsx',
 	'src/components/pseudonym/BotMessageAnimation.tsx',
-	'src/containers/bookings/components/BookingReschedule/bookingReschedule.tsx',
-	'src/containers/bookings/components/BookingCancellation/bookingCancellation.tsx',
 	'src/components/draftsCenter/DraftsCenter.tsx',
 	'src/components/app/NavigationBar.tsx',
 	'src/components/session/SessionItemComponent.tsx',

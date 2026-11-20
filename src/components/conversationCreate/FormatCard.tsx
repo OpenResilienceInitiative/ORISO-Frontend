@@ -11,7 +11,7 @@ interface FormatCardProps {
 	title: string;
 	subtitle: string;
 	avatar: React.ReactNode;
-	/** Rendered inside the fixed-height media area. */
+	/** Rendered inside the 16:9 media area. */
 	media?: React.ReactNode;
 	/** Blur/dim the media (internal card once a person is selected). */
 	mediaDimmed?: boolean;

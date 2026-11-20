@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { agencyExcludesTopic } from './agencyTopicMatch';
 
 const agency = (topicIds?: number[]) => ({ id: 7, topicIds }) as any;

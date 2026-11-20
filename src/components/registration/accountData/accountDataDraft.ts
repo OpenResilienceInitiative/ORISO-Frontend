@@ -8,6 +8,7 @@ import type { Pseudonym } from '../../../utils/anonName/engine';
  */
 export interface AccountDataDraft {
 	identity: Pseudonym;
+	generatedUsername?: string;
 	username: string;
 	password: string;
 	repeatPassword: string;

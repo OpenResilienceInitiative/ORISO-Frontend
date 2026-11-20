@@ -1,8 +1,9 @@
 import * as React from 'react';
 import { ReactNode, useId } from 'react';
 import clsx from 'clsx';
-import { Dialog } from '@mui/material';
+import { CircularProgress, Dialog } from '@mui/material';
 import { CrossMarkIcon } from '../../resources/img/icons';
+import { useFloatingSnackbarPresence } from '../m3Snackbar/M3Snackbar';
 import './m3Dialog.styles.scss';
 
 export type M3DialogSeverity = 'info' | 'error';
@@ -14,6 +15,8 @@ export interface M3DialogAction {
 	/** Paints the label in the primary role. Exactly one action should set it. */
 	primary?: boolean;
 	disabled?: boolean;
+	/** Something is under way: a small spinner before the label. */
+	busy?: boolean;
 	/** Overrides the generated `data-testid`. */
 	testId?: string;
 }
@@ -65,6 +68,8 @@ export interface M3DialogProps {
 	 * free so Storybook can render both presentations side by side.
 	 */
 	'fullScreen'?: boolean;
+	/** Keep the content mounted while closed, e.g. to keep its scroll and state. */
+	'keepMounted'?: boolean;
 	'className'?: string;
 	/** DOM id of the dialog surface, for a trigger's `aria-controls`. */
 	'id'?: string;
@@ -107,12 +112,15 @@ export const M3Dialog = ({
 	severity = 'info',
 	width = 560,
 	fullScreen = false,
+	keepMounted = false,
 	className,
 	id,
 	'data-testid': testId
 }: M3DialogProps) => {
 	const titleId = useId();
 	const descriptionId = useId();
+	// A standing notice would sit above the dialog and swallow clicks on its buttons.
+	useFloatingSnackbarPresence(open);
 
 	return (
 		<Dialog
@@ -122,6 +130,7 @@ export const M3Dialog = ({
 			aria-describedby={description ? descriptionId : undefined}
 			maxWidth={false}
 			fullScreen={fullScreen}
+			keepMounted={keepMounted}
 			className={clsx(
 				'm3Dialog',
 				severity === 'error' && 'm3Dialog--error',
@@ -196,8 +205,17 @@ export const M3Dialog = ({
 									)}
 									disabled={action.disabled}
 									onClick={action.onClick}
+									aria-busy={action.busy || undefined}
 									data-testid={action.testId}
 								>
+									{action.busy && (
+										<CircularProgress
+											size={14}
+											thickness={5}
+											color="inherit"
+											aria-hidden
+										/>
+									)}
 									{action.label}
 								</button>
 							))}

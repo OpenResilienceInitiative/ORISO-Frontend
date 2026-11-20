@@ -1,6 +1,7 @@
 type EnquiryListPage<T> = {
 	sessions: T[];
 	total: number;
+	nextOffset?: number;
 };
 
 type RefetchEnquiryListStateOptions<T> = {
@@ -26,14 +27,13 @@ export const refetchEnquiryListState = async <T>({
 	setCurrentOffset
 }: RefetchEnquiryListStateOptions<T>): Promise<void> => {
 	try {
-		const { sessions, total } = await fetchPage();
+		const { sessions, total, nextOffset } = await fetchPage();
 		if (signal?.aborted) return;
 		replaceSessions(sessions);
 		setTotalItems(total);
 		setCurrentOffset(
-			pageSize
-				? Math.max(0, Math.ceil(sessions.length / pageSize) - 1) *
-						pageSize
+			pageSize && nextOffset !== undefined
+				? Math.max(0, nextOffset - pageSize)
 				: 0
 		);
 	} catch (error) {

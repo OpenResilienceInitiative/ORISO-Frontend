@@ -1,3 +1,7 @@
+import type {
+	AgencyFeaturePolicies,
+	ConversationFeatureKey
+} from './ConversationFeatureSettings';
 import { ConsultingTypeInterface } from './ConsultingTypeInterface';
 import { TWO_FACTOR_TYPES } from '../../components/twoFactorAuth/twoFactorAuthConstants';
 
@@ -6,6 +10,13 @@ export interface UserDataInterface {
 	chatRecoveryPolicyRevision?: number | null;
 	absenceMessage?: string;
 	absent?: boolean;
+	/**
+	 * Planned absence (ORISO-Frontend#2303), YYYY-MM-DD, inclusive. Set only
+	 * while the absence is on and not over; absent=false with a start means
+	 * planned, not begun.
+	 */
+	absenceStart?: string | null;
+	absenceEnd?: string | null;
 	agencies: AgencyDataInterface[];
 	appointmentFeatureEnabled?: boolean;
 	available?: boolean;
@@ -20,6 +31,8 @@ export interface UserDataInterface {
 	grantedAuthorities: [string];
 	hasArchive: boolean;
 	isDisplayNameEditable: boolean;
+	/** Read-only server decision from fresh account policy and actual owned seeker contexts. */
+	isAskerEmailCollectionAllowed?: boolean;
 	isWalkThroughEnabled?: boolean;
 	languages?: string[];
 	lastName?: string;
@@ -47,6 +60,18 @@ export interface UserDataInterface {
 	 * predating the flag never send it.
 	 */
 	passwordChangeRequired?: boolean;
+	/**
+	 * UserService#1662: an asker who joined through an invitation without an
+	 * account. Display name, e-mail and notifications stay hidden until the
+	 * account is kept. Optional: older backends never send it.
+	 */
+	temporaryAccount?: boolean;
+	/**
+	 * UserService#1662: the temporary account may be kept ("Konto behalten"
+	 * will succeed). Optional: older backends never send it, and nothing is
+	 * offered then.
+	 */
+	temporaryAccountKeepAllowed?: boolean;
 	userId: string;
 	userName: string;
 	userRoles: string[];
@@ -95,17 +120,24 @@ export interface AgencyDataInterface {
 	departments?: AgencyDepartmentDataInterface[];
 	/**
 	 * The agency's feature settings from the public agency response. The
-	 * group-chat flags are the effective values (Träger AND Beratungsstelle
-	 * combined, AgencyService #293); `null` means no restriction from this
-	 * agency. Older backends omit them.
+	 * canonical permissionPolicies map contains server-resolved values. Older
+	 * flat-only responses retain their restriction-only compatibility semantics.
 	 */
 	settings?: AgencySettingsInterface | null;
 }
 
-export interface AgencySettingsInterface {
-	featureGroupChatV2Enabled?: boolean | null;
-	featureInternalGroupChatEnabled?: boolean | null;
-	featureSelfHelpGroupsEnabled?: boolean | null;
+export interface AgencySettingsInterface
+	extends Partial<Record<ConversationFeatureKey, boolean | null>> {
+	permissionPolicies?: AgencyFeaturePolicies | null;
+	/** "Direkteinladung erlauben" per medium (TenantService#332, AgencyService#347). */
+	featureDirectInviteChatEnabled?: boolean | null;
+	featureDirectInviteAudioEnabled?: boolean | null;
+	featureDirectInviteVideoEnabled?: boolean | null;
+	/**
+	 * Centre-owned "Weitere Beratung im Live-Chat empfehlen" (FE#2251), served
+	 * as stored by the AgencyService: absent or null means off.
+	 */
+	featureLiveChatFurtherCounsellingEnabled?: boolean | null;
 }
 
 export interface AgencyDepartmentDataInterface {

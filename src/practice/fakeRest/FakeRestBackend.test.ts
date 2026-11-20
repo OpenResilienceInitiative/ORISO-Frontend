@@ -1,5 +1,5 @@
-// @vitest-environment jsdom
-import { describe, expect, it, vi } from 'vitest';
+// @vitest-environment oriso-jsdom
+import { describe, expect, it, vi } from 'vite-plus/test';
 import { endpoints } from '../../resources/scripts/endpoints';
 import { createFakeRestBackend } from './FakeRestBackend';
 import { practiceCounsellorFixture } from '../fixtures/practiceCounsellorFixture';
@@ -38,6 +38,20 @@ const backendFor = (
 	});
 
 describe('FakeRestBackend', () => {
+	it('returns the public agency list contract for the reserved practice agency', async () => {
+		const backend = backendFor();
+		const response = await json(
+			await backend.handle(
+				new Request(
+					`${endpoints.agencyServiceBase}/${PRACTICE_AGENCY_ID}`
+				)
+			)
+		);
+		expect(response).toEqual([
+			expect.objectContaining({ id: PRACTICE_AGENCY_ID })
+		]);
+	});
+
 	it('serves only the practice enquiry in the registered enquiry feed', async () => {
 		const backend = backendFor();
 

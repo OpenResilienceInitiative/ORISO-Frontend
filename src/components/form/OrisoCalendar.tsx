@@ -149,7 +149,26 @@ export const OrisoCalendar = ({
 	cancelLabel,
 	okLabel
 }: OrisoCalendarProps) => {
-	const { t } = useTranslation();
+	const { t, i18n } = useTranslation();
+	// dayjs has no locale loaded: names come from Intl in the UI language
+	// ("25. November 2026", not "25 November 2026"; test finding C8).
+	// Without an i18n instance (some test setups) German applies.
+	const language = i18n?.language || 'de';
+	const names = React.useMemo(() => {
+		const lang = language.split('@')[0];
+		const fmt = (options: Intl.DateTimeFormatOptions) =>
+			new Intl.DateTimeFormat(lang, options);
+		const short = fmt({ month: 'short' });
+		const long = fmt({ month: 'long' });
+		const monthYear = fmt({ month: 'long', year: 'numeric' });
+		const day = fmt({ day: 'numeric', month: 'long', year: 'numeric' });
+		return {
+			monthShort: (d: Dayjs) => short.format(d.toDate()),
+			monthLong: (d: Dayjs) => long.format(d.toDate()),
+			monthYear: (d: Dayjs) => monthYear.format(d.toDate()),
+			day: (d: Dayjs) => day.format(d.toDate())
+		};
+	}, [language]);
 	const resolvedCancel = cancelLabel ?? t('form.calendar.cancel');
 	const resolvedOk = okLabel ?? t('form.calendar.ok');
 	const today = dayjs();
@@ -276,7 +295,7 @@ export const OrisoCalendar = ({
 						aria-label={t('form.calendar.selectMonth')}
 						sx={selectorButtonSx}
 					>
-						{viewMonth.format('MMM')}
+						{names.monthShort(viewMonth)}
 						<ArrowDropDownIcon
 							sx={{
 								fontSize: '20px',
@@ -344,7 +363,7 @@ export const OrisoCalendar = ({
 				renderMenuList(
 					Array.from({ length: 12 }, (_, month) => ({
 						key: month,
-						label: dayjs().month(month).format('MMMM'),
+						label: names.monthLong(dayjs().month(month)),
 						selected: viewMonth.month() === month
 					})),
 					(month) => {
@@ -365,7 +384,7 @@ export const OrisoCalendar = ({
 					}
 				)}
 			{view === 'days' && (
-				<Box role="grid" aria-label={viewMonth.format('MMMM YYYY')}>
+				<Box role="grid" aria-label={names.monthYear(viewMonth)}>
 					<Box
 						role="row"
 						sx={{
@@ -411,9 +430,12 @@ export const OrisoCalendar = ({
 								);
 								const isToday = day.isSame(today, 'day');
 
+								// A grid row holds cells: the day button is the cell, and
+								// its selection is the cell's (#1338).
 								return (
 									<ButtonBase
 										key={day.format('YYYY-MM-DD')}
+										role="gridcell"
 										focusRipple
 										autoFocus={Boolean(
 											autoFocus && isSelected
@@ -424,8 +446,8 @@ export const OrisoCalendar = ({
 											maxDate
 										)}
 										onClick={() => handleSelectDay(day)}
-										aria-label={day.format('D MMMM YYYY')}
-										aria-pressed={isSelected}
+										aria-label={names.day(day)}
+										aria-selected={isSelected}
 										className={
 											(isSelected
 												? 'orisoCalendarDay--selected '

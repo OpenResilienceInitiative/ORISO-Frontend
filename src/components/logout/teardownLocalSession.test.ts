@@ -1,5 +1,12 @@
-// @vitest-environment jsdom
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+// @vitest-environment oriso-jsdom
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import {
 	EVENT_PRE_LOGOUT,
 	logout,
@@ -19,6 +26,10 @@ import { getMatrixAccessToken } from '../sessionCookie/getMatrixAccessToken';
 import { fetchData } from '../../api/fetchData';
 import { clearLiveChatAvailabilityPreference } from '../../utils/liveChatAvailabilityStorage';
 import { appSnackbarStack } from '../m3Snackbar/snackbarStack';
+import {
+	getOwnTemporaryAccount,
+	resetTemporaryAccount
+} from '../temporaryAccount/temporaryAccountStore';
 
 vi.mock('../../api/apiLogoutKeycloak', () => ({
 	apiKeycloakLogout: vi.fn().mockResolvedValue(undefined)
@@ -36,7 +47,6 @@ vi.mock('../../utils/tenantSettingsHelper', () => ({
 	})
 }));
 vi.mock('../budibase/budibaseLogout', () => ({ budibaseLogout: vi.fn() }));
-vi.mock('./calcomLogout', () => ({ calcomLogout: vi.fn() }));
 vi.mock('../../services/matrixKeyBackupService', () => ({
 	clearSecretStorageKeys: vi.fn(),
 	secretStorageKeyCallback: vi.fn(async () => null)
@@ -66,6 +76,7 @@ vi.mock('matrix-js-sdk', () => ({
 vi.mock('../../api/fetchData', () => ({
 	FETCH_ERRORS: { CATCH_ALL: 'CATCH_ALL', CONFLICT: 'CONFLICT' },
 	FETCH_METHODS: { GET: 'GET' },
+	FETCH_SUCCESS: { CONTENT: 'CONTENT' },
 	fetchData: vi.fn()
 }));
 
@@ -147,6 +158,20 @@ describe('teardownLocalSession', () => {
 		teardownLocalSession();
 
 		expect(appSnackbarStack.getSnapshot()).toEqual([]);
+	});
+
+	it("forgets the previous guest's temporary account", () => {
+		resetTemporaryAccount({
+			messageRetention: 'GUEST_DECIDES',
+			keepMessages: true
+		});
+
+		teardownLocalSession();
+
+		expect(getOwnTemporaryAccount()).toEqual({
+			status: 'idle',
+			account: null
+		});
 	});
 
 	it('is idempotent, so the auth guard and logout() can both call it', () => {

@@ -1,0 +1,25 @@
+Vorschlag: Termin verschieben
+=============================
+
+${proposerName!''} schlägt vor, Ihren Termin am ${currentDate!''} um ${currentTime!''} Uhr auf den ${proposedDate!''} um ${proposedTime!''} Uhr zu verschieben.
+
+Sie können den Vorschlag im Kalender annehmen oder ablehnen. Bis dahin bleibt der Termin, wo er ist.
+
+Im Kalender ansehen:
+${calendarUrl!''}
+
+----------------------------------------------------------------
+Inhalte aus Beratungen stehen nie in einer E-Mail. Sie sehen sie ausschließlich verschlüsselt nach der Anmeldung.
+
+${orgName!''}
+${orgAddress!''}
+${contactLine!''}
+
+${platformName!''} ist ein Angebot von ${orgName!''}.
+
+Einstellungen: ${settingsUrl!''}
+Datenschutz: ${privacyUrl!''}
+Impressum: ${imprintUrl!''}
+Benachrichtigungen abbestellen: ${unsubscribeUrl!''}
+
+Diese E-Mail wurde automatisch versendet. Bitte antworten Sie nicht darauf.

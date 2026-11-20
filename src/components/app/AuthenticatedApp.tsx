@@ -1,3 +1,7 @@
+import {
+	MatrixBootstrapThrottledError,
+	retryMatrixBootstrap
+} from '../../services/matrixBootstrapRetry';
 import { clearLoginRecoveryPassword } from '../../services/loginRecoveryHandoff';
 import { RecoveryKeySaveReminder } from '../E2EEncryptionSupportBanner/RecoveryKeySaveReminder';
 import * as React from 'react';
@@ -6,6 +10,8 @@ import { loginPathForEmailPreferences } from '../../utils/emailPreferencesReturn
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { Routing } from './Routing';
 import { AccountSetupGate } from '../twoFactorAuth/AccountSetupGate';
+import { PasswordChangeConfirmation } from '../passwordReset/PasswordChangeConfirmation';
+import { PasswordChangeConfirmationContext } from '../passwordReset/PasswordChangeConfirmationContext';
 import {
 	isAccountSetupPending,
 	resolveAccountSetupStep
@@ -21,13 +27,33 @@ import {
 } from '../../globalState';
 import { apiGetConsultingTypes } from '../../api';
 import { Loading } from './Loading';
-import { RegistrationHandover } from './registrationLoader/RegistrationHandover';
+import { PostRegistrationHandover } from './registrationLoader/PostRegistrationHandover';
+import { canCloseHandover } from './registrationLoader/handoverClose';
+import {
+	forgetHandoverDepartment,
+	readHandoverGroupJoin
+} from './registrationLoader/handoverDepartment';
+import {
+	markHandoverMilestone,
+	resetHandoverProgress
+} from './registrationLoader/handoverProgress';
+import { loadEntryScreens } from './appChunks';
+import { useGroupJoinHandoverCopy } from '../groupChat/groupJoinHandoverCopy';
 import { POST_REGISTRATION_LOADER_KEY } from '../registration/autoLogin';
+import { endLoginHandover, finishLoginHandover } from './loginHandover';
 import {
 	handleTokenRefresh,
 	isTokenRefreshUnavailableError
 } from '../auth/auth';
-import { logout, teardownLocalSession } from '../logout/logout';
+import {
+	logout,
+	teardownLocalSession,
+	teardownPeerLocalSession
+} from '../logout/logout';
+import {
+	getAppSessionScope,
+	observeAppSession
+} from '../sessionCookie/observeAppSession';
 import './authenticatedApp.styles';
 import './navigation.styles';
 import { requestPermissions } from '../../utils/notificationHelpers';
@@ -36,20 +62,24 @@ import { useAuthenticatedChatRecovery } from '../../hooks/useAuthenticatedChatRe
 import { usePendingGroupChatJoin } from '../../hooks/usePendingGroupChatJoin';
 import { useCall } from '../../globalState/provider/CallProvider';
 import { useAppConfig } from '../../hooks/useAppConfig';
+import { useOneShotSessionFlag } from '../../hooks/useOneShotSessionFlag';
 import { E2EEncryptionSupportBanner } from '../E2EEncryptionSupportBanner/E2EEncryptionSupportBanner';
 import { KeyBackupRecoveryPrompt } from '../E2EEncryptionSupportBanner/KeyBackupRecoveryPrompt';
 import { M3SnackbarHost } from '../m3Snackbar/M3SnackbarHost';
 import { PracticeLayer } from '../../practice/PracticeLayer';
-import { JoinRequestCenter } from '../groupChat/joinRequest/JoinRequestCenter';
-import { httpJoinRequestTransport } from '../groupChat/joinRequest/httpJoinRequestTransport';
+import { ConsultantRequestCenters } from './ConsultantRequestCenters';
 import {
+	getCurrentAuthSubject,
 	getMatrixAccessToken,
 	persistMatrixLoginData
 } from '../sessionCookie/getMatrixAccessToken';
+import { AUTH_SESSION_CHANGE_EVENT } from '../sessionCookie/accessSessionCookie';
 import { withAuthenticatedSessionContext } from './authenticatedMatrixLoginData';
 import { AuthenticatedBuildIdentityBoundary } from './BuildIdentity';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 import { useDisplayFilterStoreBinding } from '../../hooks/useDisplayFilter';
+import { useTimelineSettingsStoreBinding } from '../../hooks/useTimelineSettings';
+import { useAccountInactivityActivity } from '../../hooks/useAccountInactivityActivity';
 import { displayFilterStore } from '../../utils/displayFilter/store';
 import {
 	clearAuthSession,
@@ -62,11 +92,16 @@ import { withTimeout } from '../../utils/promiseTimeout';
 interface AuthenticatedAppProps {
 	onAppReady: Function;
 	onLogout: Function;
+	/** An authenticated surface outside the counselling app, e.g. a call guest. */
+	content?: React.ReactNode;
+	loginPath?: string;
 }
 
 export const AuthenticatedApp = ({
 	onLogout,
-	onAppReady
+	onAppReady,
+	content,
+	loginPath
 }: AuthenticatedAppProps) => {
 	const { releaseToggles } = useAppConfig();
 	const { setConsultingTypes } = useContext(ConsultingTypesContext);
@@ -76,11 +111,13 @@ export const AuthenticatedApp = ({
 	const { setNotifications } = useContext(NotificationsContext);
 	const callContext = useCall();
 	const { matrixClientService, setMatrixClientService } = useMatrixClient();
+	useAccountInactivityActivity();
 	// #1377: the display-filter store follows the published client (and
 	// detaches on logout, before the storage hygiene runs).
 	useDisplayFilterStoreBinding();
+	useTimelineSettingsStoreBinding();
 	useAuthenticatedChatRecovery(matrixClientService, userData);
-	usePendingGroupChatJoin(userData);
+	const groupJoinSettled = usePendingGroupChatJoin(userData);
 	// Ask for notification permission (incoming calls) on the user's first
 	// gesture — but only inside the authenticated app. This used to sit at
 	// the router root, where the very first click on the LOGIN page popped
@@ -88,45 +125,120 @@ export const AuthenticatedApp = ({
 	// 2026-08-19). Withheld until the profile says the account is the counsellor's
 	// own: an account that still owes its password or second factor takes no calls,
 	// and the dialog would land over the setup gate. Unknown counts as pending here.
-	useNotificationPermission(!!userData && !isAccountSetupPending(userData));
-	const mounted = useRef(true);
-	useEffect(
-		() => () => {
-			mounted.current = false;
-			clearLoginRecoveryPassword();
-		},
-		[]
+	/* UserService#1662: a temporary account is never asked for browser
+	   notifications; it may be once it is kept. */
+	useNotificationPermission(
+		!!userData &&
+			!isAccountSetupPending(userData) &&
+			!userData.temporaryAccount
 	);
+	const mounted = useRef(true);
+	const [mountedSession] = useState(getAppSessionScope);
+	const [peerExitPath, setPeerExitPath] = useState<string | null>(null);
+	const matrixBootstrap = useRef<{
+		controller: AbortController;
+		subject: string | null;
+	} | null>(null);
+	useEffect(() => {
+		mounted.current = true;
+		const onAuthSessionChange = () => {
+			const bootstrap = matrixBootstrap.current;
+			if (bootstrap && bootstrap.subject !== getCurrentAuthSubject()) {
+				bootstrap.controller.abort();
+			}
+		};
+		window.addEventListener(AUTH_SESSION_CHANGE_EVENT, onAuthSessionChange);
+		return () => {
+			window.removeEventListener(
+				AUTH_SESSION_CHANGE_EVENT,
+				onAuthSessionChange
+			);
+			mounted.current = false;
+			matrixBootstrap.current?.controller.abort();
+			clearLoginRecoveryPassword();
+		};
+	}, []);
+
+	useEffect(
+		() =>
+			observeAppSession(() => {
+				if (!mounted.current) return;
+				mounted.current = false;
+				setPeerExitPath(
+					loginPath ??
+						loginPathForEmailPreferences(
+							window.location.pathname + window.location.search
+						)
+				);
+				matrixBootstrap.current?.controller.abort();
+				displayFilterStore.detachClient();
+				teardownPeerLocalSession();
+				setMatrixClientService(null);
+				onLogout();
+			}, mountedSession),
+		[loginPath, mountedSession, onLogout, setMatrixClientService]
+	);
+
+	useEffect(() => {
+		// The previous authenticated tree has been unmounted before navigation.
+		if (peerExitPath) {
+			endLoginHandover();
+			window.location.replace(peerExitPath);
+		}
+	}, [peerExitPath]);
 
 	const [appReady, setAppReady] = useState<boolean>(false);
 	const [loading, setLoading] = useState<boolean>(true);
+	const [passwordChangeStatus, setPasswordChangeStatus] = useState<
+		'hidden' | 'signing-out' | 'signed-out'
+	>('hidden');
+	const showPasswordChangeConfirmation = useCallback(
+		(loginPath: string) => {
+			if (
+				!mounted.current ||
+				getAppSessionScope()?.identity !== mountedSession?.identity
+			)
+				return;
+			setPasswordChangeStatus('signing-out');
+			void logout(false, loginPath, () => {
+				// Revalidation must not mistake this document's sign-out for a peer's.
+				mounted.current = false;
+				setPasswordChangeStatus('signed-out');
+			});
+		},
+		[mountedSession]
+	);
 	/* Every path that ends in `<Navigate to="/login">` below goes through
 	   here: the old session is torn down *before* the login form renders,
 	   so no provider above the router (notification poller, Matrix client)
 	   keeps running on leftover cookies, and the next sign-in starts from a
 	   clean Matrix registry instead of inheriting the old device. */
 	const abandonSession = useCallback(() => {
+		if (!mounted.current) return;
+		matrixBootstrap.current?.controller.abort();
 		displayFilterStore.detachClient();
 		setMatrixClientService(null);
 		teardownLocalSession();
 		setLoading(false);
 	}, [setMatrixClientService]);
 	const [userDataRequested, setUserDataRequested] = useState<boolean>(false);
-	// Freshly-registered askers get a welcome loading animation bridging the
-	// bootstrap below (one-shot flag set just before the post-registration redirect).
-	const [showPostRegLoader, setShowPostRegLoader] = useState<boolean>(() => {
-		const flagged =
-			sessionStorage.getItem(POST_REGISTRATION_LOADER_KEY) === 'true';
-		if (flagged) {
-			sessionStorage.removeItem(POST_REGISTRATION_LOADER_KEY);
-		}
-		/* Someone who registered through a group link is not about to
-		   write an enquiry — the group's entry room is their handover. */
-		const cameForAGroup = Boolean(
-			new URLSearchParams(window.location.search).get('gcid')
-		);
-		return flagged && !cameForAGroup;
-	});
+	// Freshly-registered askers keep the waiting room they saw before the
+	// document load, while the bootstrap below runs (one-shot flag set just
+	// before the post-registration redirect, cleared after the first commit).
+	const postRegFlagged = useOneShotSessionFlag(POST_REGISTRATION_LOADER_KEY);
+	const [showPostRegLoader, setShowPostRegLoader] =
+		useState<boolean>(postRegFlagged);
+	/* Someone who registered through a group link sees the group's words in
+	   the same waiting room, and its button opens the group's entry room
+	   instead of an enquiry. It used to get no waiting room at all here —
+	   a spinner page, then the group (#1219). The URL keeps `gcid` even when
+	   `Registration` did not accept the link, so its decision wins. */
+	const [postRegForGroup] = useState(
+		() =>
+			readHandoverGroupJoin() ??
+			Boolean(new URLSearchParams(window.location.search).get('gcid'))
+	);
+	const groupJoinHandoverCopy = useGroupJoinHandoverCopy();
 
 	useEffect(() => {
 		// CRITICAL: Clear ALL old notifications on app mount (prevents phantom call notifications!)
@@ -148,11 +260,22 @@ export const AuthenticatedApp = ({
 	useEffect(() => {
 		if (!userDataRequested) {
 			setUserDataRequested(true);
+			/* Only for the waiting room: the click on its button must land in
+			   a screen that is already loaded, so "ready" waits for these too.
+			   Started now, in parallel with everything below. */
+			const entryScreens = showPostRegLoader
+				? loadEntryScreens(postRegForGroup).then(
+						() => markHandoverMilestone('screens'),
+						() => markHandoverMilestone('screens')
+					)
+				: Promise.resolve();
 
 			handleTokenRefresh(false)
 				.then(() => {
+					if (!mounted.current) return;
 					Promise.all([reloadUserData(), apiGetConsultingTypes()])
 						.then(([userProfileData, consultingTypes]) => {
+							if (!mounted.current) return null;
 							if (
 								appConfig.blockConsultantAppLogin &&
 								hasUserAuthority(
@@ -172,98 +295,118 @@ export const AuthenticatedApp = ({
 							if (userProfileData.preferredLanguage) {
 								setLocale(userProfileData.preferredLanguage);
 							}
+							markHandoverMilestone('profile');
 							return userProfileData;
 						})
 						.then(async (userProfileData) => {
-							const matrixBootstrapActive = { current: true };
+							if (!userProfileData || !mounted.current) return;
+							const controller = new AbortController();
+							const subject = getCurrentAuthSubject();
+							matrixBootstrap.current = { controller, subject };
+							const isCurrent = () =>
+								mounted.current &&
+								!controller.signal.aborted &&
+								getCurrentAuthSubject() === subject;
+							const startMatrix = async (
+								isActive: () => boolean
+							) => {
+								const loginData = await getMatrixAccessToken();
+								if (!isActive()) return;
+								persistMatrixLoginData(loginData);
+								if (!loginData.homeserverUrl) return;
+								const { MatrixClientService } = await import(
+									'../../services/matrixClientService'
+								);
+								if (!isActive()) return;
+								const clientService = new MatrixClientService();
+								await clientService.initializeClient(
+									withAuthenticatedSessionContext(
+										loginData,
+										hasUserAuthority(
+											AUTHORITIES.ANONYMOUS_DEFAULT,
+											userProfileData
+										)
+									)
+								);
+								if (!isActive()) {
+									clientService.stopAndCleanup();
+									return;
+								}
+
+								setMatrixClientService(clientService);
+								markHandoverMilestone('chat');
+								(window as any).callContext = callContext;
+
+								// Account setup needs the client for key backup. Live
+								// events still wait until the account setup is complete.
+								if (isAccountSetupPending(userProfileData))
+									return;
+
+								const { matrixLiveEventBridge } = await import(
+									'../../services/matrixLiveEventBridge'
+								);
+								if (!isActive()) {
+									clientService.stopAndCleanup();
+									return;
+								}
+								const client = clientService.getClient();
+								if (!client) {
+									throw new Error(
+										'Matrix client missing after initialization'
+									);
+								}
+								matrixLiveEventBridge.initialize(client);
+								markHandoverMilestone('liveEvents');
+							};
+							const connect = async () => {
+								if (!isCurrent()) return;
+								let active = true;
+								try {
+									await withTimeout(
+										startMatrix(
+											() => active && isCurrent()
+										),
+										15_000,
+										'Matrix bootstrap timed out'
+									);
+								} finally {
+									active = false;
+								}
+							};
+							const reportMatrixFailure = (error: unknown) => {
+								if (isCurrent()) {
+									clearLoginRecoveryPassword();
+									console.error(
+										'Matrix bootstrap failed; continuing with non-chat features',
+										error
+									);
+								}
+							};
 							try {
-								await withTimeout(
-									(async () => {
-										const matrixLoginData =
-											await getMatrixAccessToken();
-										persistMatrixLoginData(matrixLoginData);
-										const { homeserverUrl } =
-											matrixLoginData;
-										if (homeserverUrl) {
-											const { MatrixClientService } =
-												await import(
-													'../../services/matrixClientService'
-												);
-											const matrixClientService =
-												new MatrixClientService();
-											await matrixClientService.initializeClient(
-												withAuthenticatedSessionContext(
-													matrixLoginData,
-													hasUserAuthority(
-														AUTHORITIES.ANONYMOUS_DEFAULT,
-														userProfileData
-													)
-												)
-											);
-											if (
-												!matrixBootstrapActive.current ||
-												!mounted.current
-											) {
-												matrixClientService.stopAndCleanup();
-												return;
-											}
-
-											setMatrixClientService(
-												matrixClientService
-											);
-											(window as any).callContext =
-												callContext;
-
-											// Deliberately NOT gated: the client has
-											// already started, and the password step needs
-											// a PREPARED client whenever there is
-											// key-backup material to rotate. What IS
-											// withheld is everything acting on the content:
-											// live events, notifications, the deep link.
-											if (
-												isAccountSetupPending(
-													userProfileData
-												)
-											) {
-												return;
-											}
-
-											const { matrixLiveEventBridge } =
-												await import(
-													'../../services/matrixLiveEventBridge'
-												);
-											if (
-												!matrixBootstrapActive.current ||
-												!mounted.current
-											) {
-												matrixClientService.stopAndCleanup();
-												return;
-											}
-											const matrixClient =
-												matrixClientService.getClient();
-											if (!matrixClient) {
-												throw new Error(
-													'Matrix client missing after initialization'
-												);
-											}
-											matrixLiveEventBridge.initialize(
-												matrixClient
-											);
-										}
-									})(),
-									15_000,
-									'Matrix bootstrap timed out'
-								);
-							} catch (matrixError) {
-								matrixBootstrapActive.current = false;
-								clearLoginRecoveryPassword();
-								console.error(
-									'Matrix bootstrap failed; continuing with non-chat features',
-									matrixError
-								);
+								await connect();
+							} catch (error) {
+								if (
+									error instanceof
+									MatrixBootstrapThrottledError
+								) {
+									// The pending sign-in password has its own expiry and
+									// is still needed if the resumed client restores keys.
+									void retryMatrixBootstrap(
+										connect,
+										error,
+										controller.signal
+									).catch(reportMatrixFailure);
+								} else {
+									reportMatrixFailure(error);
+								}
 							}
 
-							setAppReady(true);
+							/* Without chat (no homeserver, or a failed bootstrap)
+							   these steps are over, not pending. */
+							markHandoverMilestone('chat');
+							markHandoverMilestone('liveEvents');
+							await entryScreens;
+							if (mounted.current) setAppReady(true);
 						})
 						.catch((error) => {
 							console.error(
@@ -304,7 +447,15 @@ export const AuthenticatedApp = ({
 		onAppReady();
 	}, [appReady]); // eslint-disable-line react-hooks/exhaustive-deps
 
+	/* The login handover screen (#2272) stays up until the app is
+	   ready, or until the bootstrap gave up and the login page comes back. */
+	useEffect(() => {
+		if (appReady) finishLoginHandover();
+		else if (!loading) endLoginHandover();
+	}, [appReady, loading]);
+
 	const handleLogout = useCallback(() => {
+		matrixBootstrap.current?.controller.abort();
 		// Synchronously, before the async pre-logout handlers and the storage
 		// purge: a pending display-filter write must not recreate this user's
 		// mirror afterwards (#1377 §7.5). The effect cleanup detaches again.
@@ -330,48 +481,84 @@ export const AuthenticatedApp = ({
 	}, []);
 
 	useEffect(() => {
-		if (handoverEntered && appReady) {
+		if (
+			canCloseHandover({
+				entered: handoverEntered,
+				appReady,
+				groupJoinSettled
+			})
+		) {
 			setShowPostRegLoader(false);
+			resetHandoverProgress();
+			forgetHandoverDepartment();
 		}
-	}, [handoverEntered, appReady]);
+	}, [handoverEntered, appReady, groupJoinSettled]);
+
+	if (peerExitPath) return null;
 
 	// Post-registration: bridge the bootstrap load with the welcome animation,
 	// driven by appReady (the real "everything loaded" signal). Falls through to the
 	// usual branches on error (loading=false, appReady=false → redirect to login).
 	if (showPostRegLoader && (loading || appReady)) {
+		/* The same frame and the same fill `Registration` showed before the
+		   document load, so the person sees one waiting room (#1219). */
 		return (
-			<RegistrationHandover
-				ready={appReady}
+			<PostRegistrationHandover
+				/* After a group link the gate also waits for the assignment,
+				   so the click lands in the group's entry room. */
+				ready={appReady && groupJoinSettled}
 				onEnter={handlePostRegLoaderFinish}
+				copy={postRegForGroup ? groupJoinHandoverCopy : undefined}
+				/* The group's entry room is another waiting room: no message
+				   field to close onto, its own gate does that. */
+				closing={postRegForGroup ? null : undefined}
 			/>
 		);
 	}
 
-	if (appReady) {
-		// Account setup comes before the app, not on top of it: until the counsellor's
-		// own password and a second factor are settled, the only ways on are completing
-		// them or logging out. Replacing the routed app is what makes that true.
-		if (resolveAccountSetupStep(userData) !== null) {
-			return (
-				<AuthenticatedBuildIdentityBoundary>
+	if (appReady && (userData || passwordChangeStatus !== 'hidden')) {
+		let authenticatedContent: React.ReactNode = null;
+		if (userData && passwordChangeStatus !== 'signed-out') {
+			// Complete the counsellor's required account setup before showing routing.
+			if (resolveAccountSetupStep(userData) !== null) {
+				authenticatedContent = (
 					<AccountSetupGate onLogout={handleLogout} />
-				</AuthenticatedBuildIdentityBoundary>
-			);
+				);
+			} else if (content) {
+				authenticatedContent = content;
+			} else {
+				authenticatedContent = (
+					<>
+						<E2EEncryptionSupportBanner />
+						<KeyBackupRecoveryPrompt />
+						<RecoveryKeySaveReminder />
+						<PracticeLayer>
+							<Routing logout={handleLogout} />
+						</PracticeLayer>
+						<M3SnackbarHost />
+						{hasUserAuthority(
+							AUTHORITIES.CONSULTANT_DEFAULT,
+							userData
+						) && <ConsultantRequestCenters />}
+					</>
+				);
+			}
 		}
 
 		return (
-			<AuthenticatedBuildIdentityBoundary>
-				<E2EEncryptionSupportBanner />
-				<KeyBackupRecoveryPrompt />
-				<RecoveryKeySaveReminder />
-				<PracticeLayer>
-					<Routing logout={handleLogout} />
-				</PracticeLayer>
-				<M3SnackbarHost />
-				{hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) && (
-					<JoinRequestCenter transport={httpJoinRequestTransport} />
+			<PasswordChangeConfirmationContext.Provider
+				value={showPasswordChangeConfirmation}
+			>
+				{authenticatedContent !== null && (
+					<AuthenticatedBuildIdentityBoundary>
+						{authenticatedContent}
+					</AuthenticatedBuildIdentityBoundary>
 				)}
-			</AuthenticatedBuildIdentityBoundary>
+				{/* This confirmation survives the local sign-out that removes the form. */}
+				{passwordChangeStatus !== 'hidden' && (
+					<PasswordChangeConfirmation />
+				)}
+			</PasswordChangeConfirmationContext.Provider>
 		);
 	} else if (loading) {
 		return <Loading />;
@@ -379,9 +566,12 @@ export const AuthenticatedApp = ({
 
 	return (
 		<Navigate
-			to={loginPathForEmailPreferences(
-				window.location.pathname + window.location.search
-			)}
+			to={
+				loginPath ??
+				loginPathForEmailPreferences(
+					window.location.pathname + window.location.search
+				)
+			}
 			replace
 		/>
 	);

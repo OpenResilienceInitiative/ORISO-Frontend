@@ -6,10 +6,12 @@ import {
 	UserDataContext,
 	hasUserAuthority
 } from '../../../globalState';
+import { useTenant } from '../../../globalState/provider/TenantProvider';
 import { Headline } from '../../headline/Headline';
 import { Text } from '../../text/Text';
 import { EmailToggle } from './EmailToggle';
 import { NoEmailSet } from './NoEmailSet';
+import { useAccountEmailCollectionAllowed } from '../../../hooks/useAccountEmailCollectionAllowed';
 // This screen's styles live in the shared profile stylesheet, which until now
 // only reached it because a sibling profile component happened to import it
 // first. Carrying its own import means the screen is styled wherever it is
@@ -22,16 +24,19 @@ import {
 	CONSULTANT_SWITCHES,
 	switchForOccasion
 } from './notificationMatrix';
+import { visibleEmailSwitches } from './emailNotificationAccess';
 
 /**
- * E-mail notification settings, as ADR-019 specifies them.
+ * E-mail notification settings follow ADR-024's role boundary, with the
+ * ordinary internal-chat occasion added by UserService#1375.
  *
  * Two lists rather than one filtered by role — four switches for an advice
- * seeker, eight for a counsellor. See `notificationMatrix.ts` for why that
+ * seeker, nine for a counsellor. See `notificationMatrix.ts` for why that
  * distinction is the point rather than an implementation detail.
  */
 export const EmailNotification = () => {
 	const { userData } = React.useContext(UserDataContext);
+	const emailAllowed = useAccountEmailCollectionAllowed();
 	const { t } = useTranslation();
 	const { search, hash } = useLocation();
 	const rootRef = React.useRef<HTMLDivElement>(null);
@@ -40,9 +45,12 @@ export const EmailNotification = () => {
 		AUTHORITIES.CONSULTANT_DEFAULT,
 		userData
 	);
-	const switches = isConsultant
-		? CONSULTANT_SWITCHES
-		: ADVICE_SEEKER_SWITCHES;
+	// #1979: a switch whose mail the Träger switched off is not offered.
+	const tenant = useTenant();
+	const switches = visibleEmailSwitches(
+		isConsultant ? CONSULTANT_SWITCHES : ADVICE_SEEKER_SWITCHES,
+		tenant?.settings
+	);
 
 	// Every ORISO mail's footer links here with `?mail=<occasion>`, so the
 	// recipient lands on the switch that produced the mail in their hand rather
@@ -79,7 +87,7 @@ export const EmailNotification = () => {
 				/>
 			</div>
 
-			{!userData.email && (
+			{!userData.email && emailAllowed && (
 				<div className="notifications__panel">
 					<NoEmailSet />
 				</div>

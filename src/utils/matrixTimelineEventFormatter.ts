@@ -6,12 +6,21 @@ import {
 	stripReplyFallback
 } from './messageRelations';
 import { getMentionedUserIdsFromContent } from './messageMentions';
+import { parseCallLifecycleMessage } from './callLifecycleMessage';
+import {
+	getPassageReplies,
+	getPassageRepliesText,
+	type PassageReplyAudio
+} from '../components/selectionReply/passageReplyContent';
 import { getScannedMediaDownloadPath } from '../services/mediaContentScanner';
 import type {
 	ChatAttachment,
 	ChatFile
 } from '../components/message/chatAttachmentTypes';
-import { isUndecryptedRoomEvent } from './matrixDecryptionFailure';
+import {
+	isMissingKeyDecryptionFailure,
+	isUndecryptedRoomEvent
+} from './matrixDecryptionFailure';
 
 /**
  * Where an attachment's bytes come from.
@@ -41,6 +50,40 @@ const getMatrixMediaRoute = (
 	}
 
 	return { downloadUrl: '', mxcUrl: contentUrl };
+};
+
+/**
+ * A voice clip inside answered passages (ADR-022) as an ordinary encrypted
+ * attachment, so it takes the same media route, scanner gate and player as a
+ * voice note sent on its own. The recorder's file-name convention carries the
+ * length (see voiceMessageFileName.ts).
+ */
+export const passageReplyAudioAttachment = (
+	audio: PassageReplyAudio
+): { attachment: ChatAttachment; file: ChatFile } => {
+	const mediaRoute = getMatrixMediaRoute(audio.file.url);
+	const seconds = Math.max(1, Math.round(audio.durationMs / 1000));
+	const extension = audio.mimetype.includes('ogg')
+		? 'ogg'
+		: audio.mimetype.includes('mp4')
+			? 'm4a'
+			: 'webm';
+	const name = `voice-message-0-s${seconds}-ms${Math.max(
+		1000,
+		Math.round(audio.durationMs)
+	)}.${extension}`;
+	return {
+		attachment: {
+			title: name,
+			downloadUrl: mediaRoute.downloadUrl,
+			type: 'file',
+			mediaType: audio.mimetype,
+			size: audio.size,
+			encryptedFile: audio.file,
+			...(mediaRoute.mxcUrl ? { mxcUrl: mediaRoute.mxcUrl } : {})
+		},
+		file: { name, type: audio.mimetype }
+	};
 };
 
 export const formatMatrixTimelineEvent = (
@@ -83,14 +126,27 @@ export const formatMatrixTimelineEvent = (
 	// The legacy Element quote-fallback in the body would duplicate the quote
 	// we render from the relation, so it is stripped for reply events.
 	const replyToEventId = getReplyToEventId(content);
+	const body = typeof content?.body === 'string' ? content.body : '';
+	const formattedBody =
+		typeof content?.formatted_body === 'string'
+			? content.formatted_body
+			: '';
 	const rawTextContent = isUndecryptedEvent
 		? encryptedFallbackText
 		: content?.msgtype === 'm.text'
-			? content?.formatted_body || content?.body || ''
-			: content?.body || '';
-	const textMessageContent = replyToEventId
-		? stripReplyFallback(rawTextContent)
-		: rawTextContent;
+			? formattedBody || body
+			: body;
+	// ADR-022: several answered passages in one message. The blocks are
+	// rendered from the list; the `body` fallback would repeat them, so the
+	// message text is only what was typed beside them.
+	const passageReplies = isUndecryptedEvent
+		? null
+		: getPassageReplies(content);
+	const textMessageContent = passageReplies
+		? getPassageRepliesText(content)
+		: replyToEventId
+			? stripReplyFallback(rawTextContent)
+			: rawTextContent;
 	const baseMessage: any = {
 		_id:
 			event?.getId?.() || `${senderId}-${event?.getTs?.() || Date.now()}`,
@@ -105,6 +161,19 @@ export const formatMatrixTimelineEvent = (
 	if (replyToEventId) {
 		baseMessage.replyToEventId = replyToEventId;
 	}
+	if (passageReplies) {
+		baseMessage.passageReplies = passageReplies;
+	}
+	if (isUndecryptedEvent && isMissingKeyDecryptionFailure(event)) {
+		// #1827: lets the timeline show an honest "not on this device" notice
+		// instead of the generic encrypted-message text.
+		baseMessage.undecryptableReason = 'missing-key';
+	}
+	const callLifecycle = parseCallLifecycleMessage(content);
+	if (callLifecycle) {
+		baseMessage.callLifecycle = callLifecycle;
+		baseMessage.callLifecycleRevisionTs = event?.getTs?.();
+	}
 	const threadRootEventId = getThreadRootId(content);
 	if (threadRootEventId) {
 		baseMessage.threadRootEventId = threadRootEventId;
@@ -116,6 +185,9 @@ export const formatMatrixTimelineEvent = (
 	if (replaceTargetId) {
 		baseMessage.replaceTargetId = replaceTargetId;
 		baseMessage.editedBody = getEditedBody(content);
+		baseMessage.editedCallLifecycle = parseCallLifecycleMessage(
+			content?.['m.new_content']
+		);
 	}
 	// Intentional mentions (#435): exposed for downstream UI (e.g. the
 	// timeline @mentions filter chip, #420) to test membership against.
@@ -128,8 +200,13 @@ export const formatMatrixTimelineEvent = (
 	if (mediaUrl && content?.msgtype !== 'm.text') {
 		const mediaRoute = getMatrixMediaRoute(mediaUrl);
 		const isEncryptedMedia = Boolean(content?.file?.url);
+		// MSC2530: a `filename` other than `body` makes `body` the caption.
+		const filename =
+			typeof content.filename === 'string' ? content.filename : '';
+		const fileName = filename || body;
+		const hasCaption = Boolean(body && filename && body !== filename);
 		const attachment: ChatAttachment = {
-			title: content.body,
+			title: fileName,
 			downloadUrl: mediaRoute.downloadUrl,
 			type: content.msgtype === 'm.image' ? 'image' : 'file',
 			mediaType: content.info?.mimetype,
@@ -156,8 +233,11 @@ export const formatMatrixTimelineEvent = (
 		if (content.info?.['org.oriso.media_check_state'] === 'blocked') {
 			attachment.mediaCheckState = 'blocked';
 		}
+		if (hasCaption) {
+			attachment.hasCaption = true;
+		}
 		baseMessage.file = {
-			name: content.body,
+			name: fileName,
 			type: content.info?.mimetype || 'application/octet-stream'
 		} satisfies ChatFile;
 		if (isEncryptedMedia) {

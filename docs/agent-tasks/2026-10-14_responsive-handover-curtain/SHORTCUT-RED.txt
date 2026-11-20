@@ -1,0 +1,44 @@
+
+Running 1 test using 1 worker
+
+[1/1] playwright/responsive-handover-1187/persistent-footer.spec.ts:190:5 › reason shortcut hints show the bare digits that select reasons
+  1) playwright/responsive-handover-1187/persistent-footer.spec.ts:190:5 › reason shortcut hints show the bare digits that select reasons
+
+    Error: expect(locator).toHaveText(expected) failed
+
+    Locator: locator('kbd')
+    Timeout: 5000ms
+    - Expected  - 4
+    + Received  + 4
+
+      Array [
+    -   "1",
+    -   "2",
+    -   "3",
+    -   "4",
+    +   "⌘R+1",
+    +   "⌘R+2",
+    +   "⌘R+3",
+    +   "⌘R+4",
+      ]
+
+    Call log:
+      - Expect "toHaveText" with timeout 5000ms
+      - waiting for locator('kbd')
+        9 × locator resolved to 4 elements
+
+
+      195 | 	);
+      196 | 	await page.getByRole('button', { name: /step by step/ }).click();
+    > 197 | 	await expect(page.locator('kbd')).toHaveText(['1', '2', '3', '4']);
+          | 	                                  ^
+      198 | 	await page.getByRole('radio', { name: 'Advice requested' }).click();
+      199 | 	await page.keyboard.press('1');
+      200 | 	await expect(page.getByRole('radio', { name: 'Planned absence' })).toBeChecked();
+        at /Users/frankgerhardt/ORISO/.worktrees/frontend-1187-responsive-handover-curtain/playwright/responsive-handover-1187/persistent-footer.spec.ts:197:36
+
+    Error Context: test-results/responsive-handover-1187/persistent-footer-reason-s-4dea2--digits-that-select-reasons/error-context.md
+
+
+  1 failed
+    playwright/responsive-handover-1187/persistent-footer.spec.ts:190:5 › reason shortcut hints show the bare digits that select reasons

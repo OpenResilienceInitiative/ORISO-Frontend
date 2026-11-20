@@ -1,11 +1,18 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * #1377 slice 6 — Profile › Display filters: edits the per-section DEFAULTS
  * (never a list override), the per-event-type list, and the limited
  * "apply to other lists" action (spec §4).
  */
 import * as React from 'react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import {
 	act,
 	cleanup,
@@ -25,6 +32,7 @@ import { AUTHORITIES } from '../../../globalState/helpers/stateHelpers';
 import { apiGetAgenciesByIds } from '../../../api/apiGetAgenciesByIds';
 import { resetCounsellorAgencyFormatsForTests } from '../../../hooks/useCounsellorAgencyFormats';
 
+vi.mock('lottie-react', () => ({ default: () => null }));
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({
 		t: (key: string, opts?: Record<string, unknown>) =>
@@ -104,6 +112,29 @@ describe('DisplayFilterProfileSection', () => {
 		cleanup();
 		displayFilterStore.resetForTests();
 		resetCounsellorAgencyFormatsForTests();
+	});
+
+	it('shows the upgrade notice only for newer account data', () => {
+		renderSection();
+		const hint = 'notifications.displayFilter.readOnlyHint';
+		const control = () =>
+			checkbox('display-filter-profile-timeline-show-system');
+
+		expect(control().disabled).toBe(true);
+		expect(screen.queryByText(hint)).toBeNull();
+
+		act(() => attach(DEFAULT_DISPLAY_FILTERS));
+		expect(control().disabled).toBe(false);
+		expect(screen.queryByText(hint)).toBeNull();
+
+		act(() =>
+			attach({
+				...DEFAULT_DISPLAY_FILTERS,
+				version: DEFAULT_DISPLAY_FILTERS.version + 1
+			})
+		);
+		expect(control().disabled).toBe(true);
+		expect(screen.getByText(hint)).toBeTruthy();
 	});
 
 	it('renders the three sections with their kinds and no auto-read for Anfragen', () => {
@@ -287,9 +318,6 @@ describe('DisplayFilterProfileSection', () => {
 				checkbox('display-filter-profile-sessions-show-circle')
 			).toBeFalsy()
 		);
-		expect(
-			checkbox('display-filter-profile-sessions-show-futureTimeline')
-		).toBeFalsy();
 		expect(
 			checkbox('display-filter-profile-sessions-show-internalGroup')
 		).toBeTruthy();

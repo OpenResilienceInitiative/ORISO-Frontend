@@ -253,3 +253,51 @@ export const InviteLinkUnavailable: Story = {
 		await expect(args.onCopyInviteLink).not.toHaveBeenCalled();
 	}
 };
+
+/**
+ * OBP 2.1 #107 "Alle sehen alle Rollen": every participant carries a role
+ * badge — the same for advice seekers and counsellors. A supervisor who reads
+ * along is named as such; the ban state stays readable next to the badge.
+ */
+export const RoleBadges: Story = {
+	name: 'Card · role badges for everyone',
+	globals: desktop1440Globals,
+	args: {
+		canModerate: false,
+		participants: [
+			{
+				id: 'p1',
+				name: 'Beraterin Lea Brandt',
+				isModerator: true,
+				roleLabel: 'Berater:in'
+			},
+			{
+				id: 'p2',
+				name: 'Supervisorin Clara Stein',
+				roleLabel: 'Supervisor:in'
+			},
+			{
+				id: 'p3',
+				name: 'sanftes Alpaka Mika',
+				roleLabel: 'Ratsuchende:r'
+			},
+			{
+				id: 'p4',
+				name: 'ruhiges Yak Kim',
+				roleLabel: 'Ratsuchende:r',
+				statusLabel: 'Gebannt'
+			}
+		]
+	},
+	render: (args) => (
+		<div style={{ height: '100vh', display: 'flex', padding: 0 }}>
+			<InCard {...args} />
+		</div>
+	),
+	play: async ({ canvas }) => {
+		await expect(canvas.getByText('Berater:in')).toBeVisible();
+		await expect(canvas.getByText('Supervisor:in')).toBeVisible();
+		await expect(canvas.getAllByText('Ratsuchende:r')).toHaveLength(2);
+		await expect(canvas.getByText('Gebannt')).toBeVisible();
+	}
+};

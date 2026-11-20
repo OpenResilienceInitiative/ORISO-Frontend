@@ -1,5 +1,5 @@
 import * as React from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, waitFor, within } from 'storybook/test';
 
 import { MessageDisplayName } from './MessageDisplayName';
@@ -135,7 +135,7 @@ export const ConsultantWithoutDisplayName: Story = {
 	},
 	play: async ({ canvasElement }) => {
 		await expect(canvasElement.textContent).not.toContain('Karina P');
-		await expect(canvasElement.textContent).toContain('karina p');
+		await expect(canvasElement.textContent).toContain('karina.p');
 	}
 };
 

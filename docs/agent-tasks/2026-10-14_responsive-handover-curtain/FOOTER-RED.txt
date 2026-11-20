@@ -1,0 +1,26 @@
+
+Running 1 test using 1 worker
+
+[1/1] playwright/responsive-handover-1187/persistent-footer.spec.ts:3:5 › protected wizard footer stays visible before and after scrolling a short phone
+  1) playwright/responsive-handover-1187/persistent-footer.spec.ts:3:5 › protected wizard footer stays visible before and after scrolling a short phone
+
+    Error: expect(received).toBeLessThanOrEqual(expected)
+
+    Expected: <= 344
+    Received:    646
+
+      20 | 			const bounds = (await control.boundingBox())!;
+      21 | 			expect(bounds.y).toBeGreaterThanOrEqual(panel.y);
+    > 22 | 			expect(bounds.y + bounds.height).toBeLessThanOrEqual(
+         | 			                                 ^
+      23 | 				Math.min(panel.y + panel.height, viewport.height)
+      24 | 			);
+      25 | 		}
+        at assertFooterVisible (/Users/frankgerhardt/ORISO/.worktrees/frontend-1187-responsive-handover-curtain/playwright/responsive-handover-1187/persistent-footer.spec.ts:22:37)
+        at /Users/frankgerhardt/ORISO/.worktrees/frontend-1187-responsive-handover-curtain/playwright/responsive-handover-1187/persistent-footer.spec.ts:27:2
+
+    Error Context: test-results/responsive-handover-1187/persistent-footer-protecte-64207-ter-scrolling-a-short-phone/error-context.md
+
+
+  1 failed
+    playwright/responsive-handover-1187/persistent-footer.spec.ts:3:5 › protected wizard footer stays visible before and after scrolling a short phone

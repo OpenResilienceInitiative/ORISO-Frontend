@@ -8,10 +8,17 @@ import {
 	SESSION_TYPE_SESSION
 } from '../session/sessionHelpers';
 import { AskerInfo } from '../askerInfo/AskerInfo';
+import { DirectLinksMoved } from '../directLinks/DirectLinksMoved';
 import { Profile } from '../profile/Profile';
 import { SessionViewEmpty } from '../session/SessionViewEmpty';
 import { CreateConversationView } from '../conversationCreate/CreateConversationView';
 import { GroupChatInfo } from '../groupChat/GroupChatInfo';
+import { DeletedAskerSessionView } from '../deletedAskerSession/DeletedAskerSessionView';
+import { DELETED_ASKER_ROUTE } from '../sessionsList/deletedAskerPath';
+import {
+	ASKER_GROUP_CHAT_ROUTE,
+	CONSULTANT_GROUP_CHAT_ROUTE
+} from '../groupChat/consultantGroupChatPath';
 import { AUTHORITIES, hasUserAuthority } from '../../globalState';
 import { AppConfigInterface } from '../../globalState/interfaces';
 import { ReactComponent as OverviewIconOutline } from '../../resources/img/icons/overview_outline.svg';
@@ -29,6 +36,7 @@ import { ReactComponent as ProfileIconOutline } from '../../resources/img/icons/
 import { ReactComponent as ProfileIconFilled } from '../../resources/img/icons/profil_filled.svg';
 import { ReactComponent as NavCounsellorRequestIcon } from '../../resources/img/icons/navigation/counsellor_request_400.svg';
 import { ReactComponent as NavCounsellorRequestIconFilled } from '../../resources/img/icons/navigation/counsellor_request_filled.svg';
+import { ASKER_SESSION_DETAIL_PATH, CREATE_CHAT_PATH } from './routePaths';
 import {
 	NavChatsIcon,
 	NavChatsIconHover,
@@ -39,55 +47,39 @@ import {
 } from './navigationSidebarIcons';
 import { ToolsList } from '../tools/ToolsList';
 import { OverviewPage } from '../../containers/overview/overview';
-import { Booking } from '../../containers/bookings/components/Booking/booking';
-import { BookingCancellation } from '../../containers/bookings/components/BookingCancellation/bookingCancellation';
-import { BookingEvents } from '../../containers/bookings/components/BookingEvents/bookingEvents';
-import { BookingReschedule } from '../../containers/bookings/components/BookingReschedule/bookingReschedule';
 import { NotificationsCenter } from '../notificationsCenter/NotificationsCenter';
 import { DraftsCenter } from '../draftsCenter/DraftsCenter';
 import { lazyWithReload } from '../../utils/chunkLoadRecovery';
+import {
+	loadCalendarPage,
+	loadGroupEntryRoom,
+	loadSessionView,
+	loadWriteEnquiry
+} from './appChunks';
 
-const GroupEntryRoom = lazyWithReload(() =>
-	import('../groupChat/entryRoom/GroupEntryRoom').then((m) => ({
-		default: m.GroupEntryRoom
-	}))
-);
-const SessionView = lazyWithReload(() =>
-	import('../session/SessionView').then((m) => ({ default: m.SessionView }))
-);
-const WriteEnquiry = lazyWithReload(() =>
-	import('../enquiry/WriteEnquiry').then((m) => ({ default: m.WriteEnquiry }))
-);
+const GroupEntryRoom = lazyWithReload(loadGroupEntryRoom);
+const SessionView = lazyWithReload(loadSessionView);
+const WriteEnquiry = lazyWithReload(loadWriteEnquiry);
+const CalendarPageWired = lazyWithReload(loadCalendarPage);
 
-const showAppointmentsMenuItem = (userData, hasAssignedConsultant) => {
-	return (
-		userData.appointmentFeatureEnabled &&
-		(hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) ||
-			(hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) &&
-				hasAssignedConsultant))
-	);
-};
+/**
+ * "Meine Termine" is the calendar of ADR-032 (FE#1050): every counsellor has
+ * one, an advice seeker once a counsellor is assigned. It no longer depends
+ * on the cal.com flag `appointmentFeatureEnabled`.
+ */
+const showAppointmentsMenuItem = (userData, hasAssignedConsultant) =>
+	hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) ||
+	(hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) &&
+		hasAssignedConsultant);
 
 const showToolsMenuItem = (userData, consultingTypes, sessionsData, hasTools) =>
 	hasTools;
 
 const appointmentRoutes = [
 	{
-		path: '/booking',
-		component: Booking
-	},
-	{
-		path: '/booking/cancellation',
-		component: BookingCancellation
-	},
-	{
-		path: '/booking/reschedule',
-		component: BookingReschedule
-	},
-	{
 		path: '/booking/events',
 		exact: false,
-		component: BookingEvents
+		component: CalendarPageWired
 	}
 ];
 
@@ -223,7 +215,12 @@ export const RouterConfigUser = (
 			},
 			// Sessions that have no group id yet (enquiry not started)
 			{
-				path: '/sessions/user/view/session/:sessionId',
+				path: ASKER_SESSION_DETAIL_PATH,
+				component: SessionView,
+				type: SESSION_LIST_TYPES.MY_SESSION
+			},
+			{
+				path: ASKER_GROUP_CHAT_ROUTE,
 				component: SessionView,
 				type: SESSION_LIST_TYPES.MY_SESSION
 			},
@@ -360,6 +357,17 @@ export const RouterConfigConsultant = (settings: AppConfigInterface): any => {
 				component: SessionView,
 				type: SESSION_LIST_TYPES.MY_SESSION
 			},
+			{
+				path: CONSULTANT_GROUP_CHAT_ROUTE,
+				component: SessionView,
+				type: SESSION_LIST_TYPES.MY_SESSION
+			},
+			// #1159: the notice of a deleted advice-seeker chat
+			{
+				path: DELETED_ASKER_ROUTE,
+				component: DeletedAskerSessionView,
+				type: SESSION_LIST_TYPES.MY_SESSION
+			},
 			// Sessions addressed by their Matrix group id
 			{
 				path: '/sessions/consultant/sessionPreview/:groupId/:sessionId',
@@ -382,7 +390,7 @@ export const RouterConfigConsultant = (settings: AppConfigInterface): any => {
 				type: SESSION_LIST_TYPES.MY_SESSION
 			},
 			{
-				path: '/sessions/consultant/sessionView/createGroupChat/',
+				path: CREATE_CHAT_PATH,
 				component: CreateConversationView,
 				type: SESSION_LIST_TYPES.MY_SESSION
 			},
@@ -437,6 +445,13 @@ export const RouterConfigConsultant = (settings: AppConfigInterface): any => {
 			{
 				path: '/overview',
 				component: OverviewPage
+			},
+			{
+				// *19 (2026-11-17): the direct links live in the calendar
+				// list now; old bookmarks land there.
+				path: '/direct-links',
+				exact: true,
+				component: DirectLinksMoved
 			},
 			{
 				path: '/profile',

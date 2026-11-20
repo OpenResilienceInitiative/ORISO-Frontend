@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import {
 	ADVICE_SEEKER_SWITCHES,
 	ALWAYS_SENT_KEYS,
@@ -138,6 +138,19 @@ describe('notification matrix (ADR-019)', () => {
 			}
 			expect(
 				switchForOccasion(CONSULTANT_SWITCHES, 'termin')
+			).toBeUndefined();
+		});
+
+		it("resolves the move proposal footer to the counsellor's appointment flag (FE#1050)", () => {
+			expect(
+				switchForOccasion(CONSULTANT_SWITCHES, 'calendar-move-proposal')
+					?.id
+			).toBe('appointment');
+			expect(
+				switchForOccasion(
+					ADVICE_SEEKER_SWITCHES,
+					'calendar-move-proposal'
+				)
 			).toBeUndefined();
 		});
 

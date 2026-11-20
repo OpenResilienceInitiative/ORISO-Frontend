@@ -1,3 +1,7 @@
+import { apiGetPublicTenantById } from '../../../api/apiGetTenantTheming';
+import type { TenantDataInterface } from '../../../globalState/interfaces';
+import { useTenant } from '../../../globalState/provider/TenantProvider';
+import { isAskerDisplayNameTypingAllowed } from '../../../utils/askerAccountPolicy';
 import * as React from 'react';
 import {
 	useCallback,
@@ -19,6 +23,7 @@ import { apiGetConsentText } from '../../../api/apiGetConsentText';
 import { apiPatchUserData } from '../../../api/apiPatchUserData';
 import { apiPutSessionConsent } from '../../../api/apiPutSessionConsent';
 import { apiPutSessionData } from '../../../api/apiPutSessionData';
+import { isTakenGuestName } from '../../../api/apiRedeemInviteLink';
 import {
 	DepartmentConsentState,
 	resolveEntryRoomConsent
@@ -29,16 +34,25 @@ import { generatePseudonym } from '../../../utils/pseudonymGenerator';
 import type { Pseudonym } from '../../../utils/anonName/engine';
 import { buildInviteSessionAppUrl } from '../../invite/inviteLinkHelpers';
 import { translateWithFallback } from '../../../utils/translationFallback';
+import { normalizePreferredLanguage } from '../../../utils/normalizePreferredLanguage';
 import { EntryRoomShell } from './EntryRoomShell';
 import { LiveChatAccess } from './LiveChatAccess';
 import { LiveChatWaitingRoom } from './LiveChatWaitingRoom';
 import { LiveChatClosed } from './LiveChatClosed';
 import { LiveChatChecking } from './LiveChatChecking';
+import { mailTarget } from '../../liveChatConversion/mailTarget';
 import { EntryRoomView } from './EntryRoomView';
 import {
 	readConfirmedEntryName,
 	rememberConfirmedEntryName
 } from './entryRoomIdentity';
+import {
+	CLOSED_CONFIRMATION_POLLS,
+	createSingleFlightPoll,
+	isNobodyLiveConfirmed,
+	nextUnavailablePollCount
+} from './liveChatAvailability';
+import { useConsentContext } from '../../waitingRoom/useConsentContext';
 
 export interface LiveChatEntryRoomProps {
 	/** The anonymous session this browser already has for the link. Tokens are set. */
@@ -51,9 +65,11 @@ export interface LiveChatEntryRoomProps {
 	invite?: {
 		/** Unknown while the page still reads the link; the room keeps looking. */
 		topicId?: number;
+		tenantId?: number | null;
 		consultingTypeId?: number;
-		/** Redeems the link, sets its tokens, and returns the new session. */
-		redeem: () => Promise<number>;
+		/** Redeems the link under `userId` — the User-ID on the chosen card
+		 *  becomes the login — sets its tokens, and returns the new session. */
+		redeem: (userId: string) => Promise<number>;
 	};
 	/** The topic slug from the link, for the heading. */
 	topicSlug?: string;
@@ -62,8 +78,8 @@ export interface LiveChatEntryRoomProps {
 const POLL_MS = 4000;
 /* The details endpoint deliberately maps a transient availability lookup
    failure to zero. One sample is therefore not enough to call the room
-   closed; a second consecutive poll confirms that nobody is live. */
-const CLOSED_CONFIRMATION_POLLS = 2;
+   closed; a second consecutive poll confirms that nobody is live
+   (`CLOSED_CONFIRMATION_POLLS`, shared with the legacy session dialog). */
 /* Before a name the loader is on screen anyway, so the confirming second look
    comes after a second rather than a full poll: closed has to feel immediate. */
 const CLOSED_CONFIRMATION_MS = 1000;
@@ -132,9 +148,12 @@ export interface GuestName {
  * The attempt cap keeps a small language pack from spinning here: a short set
  * is better than a hung door.
  */
-const rollGuestNames = (locale: string): GuestName[] => {
+const rollGuestNames = (
+	locale: string,
+	exclude: readonly string[] = []
+): GuestName[] => {
 	const picked: GuestName[] = [];
-	const seen = new Set<string>();
+	const seen = new Set<string>(exclude);
 	for (
 		let attempt = 0;
 		attempt < NAME_CHOICES * 10 && picked.length < NAME_CHOICES;
@@ -179,6 +198,33 @@ const LiveChatEntryRoomContent = ({
 	const navigate = useNavigate();
 	const localeContext = useContext(LocaleContext);
 	const locale = localeContext?.locale ?? 'de';
+	const tenant = useTenant();
+	const inviteTenantId = invite?.tenantId;
+	const [inviteTenant, setInviteTenant] =
+		useState<TenantDataInterface | null>(null);
+	useEffect(() => {
+		if (!inviteTenantId || inviteTenantId === tenant?.id) return;
+		let current = true;
+		void apiGetPublicTenantById(inviteTenantId)
+			.then((resolved) => {
+				if (current && resolved?.id === inviteTenantId)
+					setInviteTenant(resolved);
+			})
+			.catch(() => undefined);
+		return () => {
+			current = false;
+		};
+	}, [inviteTenantId, tenant?.id]);
+	const nameSettings =
+		!invite || inviteTenantId === tenant?.id
+			? tenant?.settings
+			: inviteTenant?.id === inviteTenantId
+				? inviteTenant?.settings
+				: undefined;
+	const nameEditable = isAskerDisplayNameTypingAllowed(
+		nameSettings,
+		'LIVE_CHAT'
+	);
 	const legalLinks = useContext(LegalLinksContext);
 	const tr = useCallback(
 		(key: string, fallback: string) =>
@@ -209,6 +255,13 @@ const LiveChatEntryRoomContent = ({
 		rollGuestNames(locale)
 	);
 	const [selectedIndex, setSelectedIndex] = useState(0);
+	const [customDisplayName, setCustomDisplayName] = useState<string | null>(
+		null
+	);
+	const selectedName =
+		nameEditable && customDisplayName !== null
+			? customDisplayName
+			: (names[selectedIndex]?.userId ?? '');
 	const [busy, setBusy] = useState(false);
 	const [ahead, setAhead] = useState<number | null>(null);
 	const [available, setAvailable] = useState<number | null>(null);
@@ -301,25 +354,31 @@ const LiveChatEntryRoomContent = ({
 	const [departmentConsent, setDepartmentConsent] =
 		useState<DepartmentConsentState>({ status: 'idle' });
 
-	const consent = useMemo(
-		() =>
-			resolveEntryRoomConsent({
-				hasDepartment: department !== null,
-				department: departmentConsent,
-				platformHtml: platformConsentHtml,
-				missingPolicyHtml,
-				legalLinksHtml,
-				locale
-			}),
-		[
-			department,
-			departmentConsent,
+	const consentNames = useConsentContext(department);
+	const consent = useMemo(() => {
+		const resolved = resolveEntryRoomConsent({
+			hasDepartment: department !== null,
+			department: departmentConsent,
+			platformHtml: platformConsentHtml,
+			missingPolicyHtml,
 			legalLinksHtml,
 			locale,
-			missingPolicyHtml,
-			platformConsentHtml
-		]
-	);
+			context: consentNames.context
+		});
+		return {
+			...resolved,
+			readable: resolved.readable && !consentNames.pending
+		};
+	}, [
+		consentNames.context,
+		consentNames.pending,
+		department,
+		departmentConsent,
+		legalLinksHtml,
+		locale,
+		missingPolicyHtml,
+		platformConsentHtml
+	]);
 
 	const storageKey = (name: string) => `anonymous-${name}-${sessionId}`;
 	const mark = (name: string, value = '1') => {
@@ -330,12 +389,13 @@ const LiveChatEntryRoomContent = ({
 		}
 	};
 
-	/* A → B: the name goes to the session and the account; the old pseudonym
-	   card did exactly this (SessionItemComponent handleConfirmPseudonym). */
+	/* A → B: persist the session alias; account PATCH only preserves locale.
+	   Asker displayName on account PATCH is not a supported persistence path. */
 	const handleContinue = useCallback(async () => {
 		if (busy) return;
 		const chosen = names[selectedIndex];
-		if (!chosen) return;
+		const alias = selectedName.trim();
+		if (!chosen || !alias || alias.length > 255) return;
 		setBusy(true);
 		setContinueFailed(false);
 		try {
@@ -378,7 +438,9 @@ const LiveChatEntryRoomContent = ({
 						return;
 					}
 				}
-				id = await invite.redeem();
+				/* The User-ID on the card is the login, not a label on a
+				   server-minted `anon_N` account (ORISO-Frontend#2346). */
+				id = await invite.redeem(chosen.userId);
 				if (cancelled.current) return;
 				setSessionId(id);
 				/* Door samples describe the door, not this session: from here
@@ -389,12 +451,30 @@ const LiveChatEntryRoomContent = ({
 			/* One name, everywhere: the counsellor's queue shows the same
 			   string the guest just picked. */
 			await apiPutSessionData(id, {
-				displayName: chosen.userId
+				displayName: alias
 			});
-			await apiPatchUserData({ displayName: chosen.userId });
-			rememberConfirmedEntryName(id, chosen.userId);
+			if (cancelled.current) return;
+			/* The redeem creates the account without a language, so the server
+			   stores German; keep the one the guest is reading, or the app
+			   switches to German when it boots after the gate. The server only
+			   takes ISO codes: 'de@informal' would fail the whole PATCH. */
+			await apiPatchUserData({
+				preferredLanguage: normalizePreferredLanguage(locale)
+			});
+			if (cancelled.current) return;
+			rememberConfirmedEntryName(id, alias);
 			if (!cancelled.current) setStage('waiting');
 		} catch (error) {
+			/* Somebody took the rolled User-ID between offer and Join: nothing
+			   was created, so offer fresh names and let the guest pick again. */
+			if (isTakenGuestName(error)) {
+				if (!cancelled.current) {
+					setNames(rollGuestNames(locale, [chosen.userId]));
+					setSelectedIndex(0);
+					setContinueFailed(true);
+				}
+				return;
+			}
 			/* Without this the door swallowed the failure: the stage stayed on
 			   `access` and nothing said why. */
 			console.error('live chat entry: could not store the name', error);
@@ -402,7 +482,7 @@ const LiveChatEntryRoomContent = ({
 		} finally {
 			if (!cancelled.current) setBusy(false);
 		}
-	}, [busy, names, selectedIndex, sessionId, invite]); // eslint-disable-line react-hooks/exhaustive-deps
+	}, [busy, names, selectedIndex, selectedName, sessionId, invite, locale]); // eslint-disable-line react-hooks/exhaustive-deps
 
 	/* Before any session: who is live for this topic, on the public endpoint
 	   that needs no account. An answered zero needs a second look, because the
@@ -432,7 +512,7 @@ const LiveChatEntryRoomContent = ({
 			} else {
 				failures = 0;
 				setAvailabilityUnknown(false);
-				zeros = next > 0 ? 0 : zeros + 1;
+				zeros = nextUnavailablePollCount(zeros, next);
 				setAvailable(next);
 				setConsecutiveUnavailablePolls(zeros);
 			}
@@ -463,15 +543,15 @@ const LiveChatEntryRoomContent = ({
 		if (stage !== 'waiting' || accepted || sessionId === null)
 			return undefined;
 		let stop = false;
-		let latestPoll = 0;
-		let latestAppliedPoll = 0;
-		const refresh = () => {
-			const poll = ++latestPoll;
-			return apiGetAnonymousEnquiryDetails(sessionId)
+		/* One poll in flight: overlapping answers could land out of order and
+		   feed the confirmed-zero rule non-consecutive samples (#1270). */
+		const pollOnce = createSingleFlightPoll();
+		const fetchPoll = (signal: AbortSignal) =>
+			apiGetAnonymousEnquiryDetails(sessionId, signal)
 				.then((d) => {
-					// A slow response must not overwrite a newer poll's room state.
-					if (stop || poll < latestAppliedPoll) return;
-					latestAppliedPoll = poll;
+					/* A poll given up on after 15 s is stale: keep the last
+					   known state. */
+					if (stop || signal.aborted) return;
 					if (typeof d?.peopleAhead === 'number')
 						setAhead(d.peopleAhead);
 					const nextAvailable =
@@ -480,7 +560,7 @@ const LiveChatEntryRoomContent = ({
 							: null;
 					setAvailable(nextAvailable);
 					setConsecutiveUnavailablePolls((previous) =>
-						nextAvailable === 0 ? previous + 1 : 0
+						nextUnavailablePollCount(previous, nextAvailable)
 					);
 					/* The department coordinate is bound at registration, so it
 					   arrives on the very first poll — the sentence is fetched
@@ -497,7 +577,7 @@ const LiveChatEntryRoomContent = ({
 					if (d?.status === 'IN_PROGRESS') setAccepted(true);
 				})
 				.catch(() => undefined);
-		};
+		const refresh = () => pollOnce(fetchPoll);
 		refresh();
 		const timer = window.setInterval(refresh, POLL_MS);
 		return () => {
@@ -548,8 +628,8 @@ const LiveChatEntryRoomContent = ({
 	   component, then the hand-over — a full load, as the redeem did before,
 	   so the app boots with the tokens the redeem set. */
 	const handleAccept = useCallback(async () => {
-		if (sessionId === null) return;
-		if (busy) return;
+		if (sessionId === null) return false;
+		if (busy) return false;
 		setBusy(true);
 		try {
 			await apiPatchUserData({
@@ -578,8 +658,15 @@ const LiveChatEntryRoomContent = ({
 			mark('inquiry-consent');
 			mark('waiting-dismissed');
 			window.location.href = buildInviteSessionAppUrl(sessionId);
+			/* The page is being replaced: the closing animation keeps its
+			   cover on until it is, instead of opening onto this room again,
+			   and hands it to the next document as the page goes
+			   (closingHandover), which reveals onto the message field. */
+			return new Promise<void>(() => undefined);
 		} catch {
 			if (!cancelled.current) setBusy(false);
+			// The person stays: the closing animation need not wait for a chat.
+			return false;
 		}
 	}, [busy, sessionId, consent]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -597,17 +684,30 @@ const LiveChatEntryRoomContent = ({
 		});
 	}, [sessionId]);
 
-	const goToMail = useCallback(() => navigate('/registration'), [navigate]);
+	const goToMail = useCallback(() => {
+		if (sessionId === null) navigate(mailTarget(null));
+		else
+			navigate(mailTarget(sessionId), {
+				state: { topicId: department?.topicId ?? invite?.topicId }
+			});
+	}, [navigate, sessionId, department?.topicId, invite?.topicId]);
 
-	const nobodyLive =
-		available === 0 &&
-		consecutiveUnavailablePolls >= CLOSED_CONFIRMATION_POLLS;
+	const nobodyLive = isNobodyLiveConfirmed(
+		available,
+		consecutiveUnavailablePolls
+	);
 	const closed =
 		nobodyLive &&
 		!closedDismissed &&
 		(sessionId === null
 			? stage !== 'waiting' && !busy
 			: stage === 'waiting' && !accepted);
+	/* "Ich warte" with a session dismisses the closed page, but the room that is
+	   left must not pretend a counsellor is about to answer (#1270). Driven by
+	   the same confirmed signal as `closed`, so it clears itself the moment the
+	   poll sees somebody live again. */
+	const waitingNobodyLive =
+		nobodyLive && stage === 'waiting' && sessionId !== null && !accepted;
 	const statusLine = closed
 		? tr('status.closed', 'Gerade geschlossen')
 		: stage === 'checking'
@@ -621,18 +721,20 @@ const LiveChatEntryRoomContent = ({
 							'status.accepted',
 							'Eine Beraterin hat Ihr Gespräch angenommen'
 						)
-					: tr(
-							'status.waiting',
-							'Warteraum — freie Beraterin wird gesucht'
-						);
+					: waitingNobodyLive
+						? tr('status.nobodyLive', 'Gerade ist niemand live')
+						: tr(
+								'status.waiting',
+								'Warteraum — freie Beraterin wird gesucht'
+							);
 
 	return (
 		<EntryRoomShell
 			kicker={kicker}
 			statusLine={statusLine}
-			/* Gate 2 (ADR-022): once a centre has taken the conversation its
-			   department governs — before, the platform does. */
-			department={accepted ? department : null}
+			/* No department: the room's legal links stay the platform's; the
+			   accepting centre's documents come with the consent sheet
+			   (Gate 2, ADR-022; Frank, 2026-10-28). */
 		>
 			{/* One view at a time slides in; the frame and the stage stay. */}
 			<EntryRoomView key={closed ? 'closed' : stage}>
@@ -657,12 +759,19 @@ const LiveChatEntryRoomContent = ({
 						selectedIndex={selectedIndex}
 						busy={busy}
 						failed={continueFailed}
-						onSelect={setSelectedIndex}
+						displayName={selectedName}
+						editable={nameEditable}
+						onDisplayNameChange={setCustomDisplayName}
+						onSelect={(index) => {
+							setSelectedIndex(index);
+							setCustomDisplayName(null);
+						}}
 						onReroll={() => {
 							/* A new set, and the first of it taken: the way on
 						   must never need a second click. */
 							setNames(rollGuestNames(locale));
 							setSelectedIndex(0);
+							setCustomDisplayName(null);
 						}}
 						onContinue={() => {
 							void handleContinue();
@@ -683,6 +792,7 @@ const LiveChatEntryRoomContent = ({
 				{stage === 'waiting' && !closed && (
 					<LiveChatWaitingRoom
 						ahead={ahead}
+						nobodyLive={waitingNobodyLive}
 						/* Held only while the department lookup is still in flight —
 					   a poll that reports the coordinate and IN_PROGRESS together
 					   would otherwise show "no policy" for a centre that has one,
@@ -694,9 +804,7 @@ const LiveChatEntryRoomContent = ({
 						department={department}
 						busy={busy}
 						leaveFailed={leaveFailed}
-						onAccept={() => {
-							void handleAccept();
-						}}
+						onAccept={() => handleAccept()}
 						onLeave={handleLeave}
 						onMailCounselling={goToMail}
 					/>

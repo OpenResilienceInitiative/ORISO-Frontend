@@ -28,6 +28,18 @@ export const decodeUsername = (username: string = '') => {
 		: username;
 };
 
+/**
+ * For names that come straight from a list or a room: a value that only looks
+ * encoded must not take the whole list down with it, so it stays as it is.
+ */
+export const decodeUsernameSafely = (username: string = '') => {
+	try {
+		return decodeUsername(username) || username;
+	} catch {
+		return username;
+	}
+};
+
 export function typedArrayToBuffer(array: Uint8Array): ArrayBuffer {
 	const output = new Uint8Array(array.byteLength);
 	output.set(array, 0);

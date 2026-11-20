@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * Authenticated Matrix media (#1487).
  *
@@ -15,7 +15,14 @@
  *      `keycloak` cookie — harmless only while the endpoint ignored
  *      authorization altogether.
  */
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 
 import {
 	createAuthenticatedMatrixMediaObjectUrl,

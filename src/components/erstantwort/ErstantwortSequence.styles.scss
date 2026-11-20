@@ -45,7 +45,7 @@
 	border-radius: 4px 14px 14px 14px;
 }
 
-.erstantwort__bubble--typing {
+.carimatMessageFrame .erstantwort__bubble--typing {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
@@ -133,9 +133,17 @@
 	padding: 12px 0;
 
 	summary {
+		display: flex;
+		align-items: center;
+		gap: 8px;
 		cursor: pointer;
 		font-weight: 600;
 		line-height: 1.4;
+		list-style: none;
+
+		&::-webkit-details-marker {
+			display: none;
+		}
 	}
 
 	p {
@@ -143,22 +151,42 @@
 	}
 }
 
-/* Structured Carimat rows use the same 60px avatar rail and overlap as the
-   consent notice. The human-bubble wrap cap must not shorten this surface. */
-.erstantwort .erstantwort__row .pseudonymCard__wrap {
-	gap: var(--carimat-avatar-gap, 4px);
-	max-width: none;
+.erstantwort__faq:last-child {
+	border-bottom: 1px solid var(--md-sys-color-outline-variant, #ddd);
 }
 
-.erstantwort .pseudonymCard__avatarCol {
-	margin-left: var(--carimat-avatar-ring-offset, -6px);
+.erstantwort__faqLabel {
+	flex: 1;
+	min-width: 0;
 }
 
-.erstantwort .erstantwort__content {
-	margin-left: calc(-1 * var(--carimat-avatar-overlap, 24px));
-	max-width: none;
+.erstantwort__faqChevron {
+	flex: none;
+	transition: transform 0.2s ease;
+
+	.erstantwort__faq[open] & {
+		transform: rotate(180deg);
+	}
 }
 
-.erstantwort .pseudonymCard__header {
-	padding-left: var(--carimat-header-inset, 28px);
+/* Emergency numbers: the last question, collapsed, red text and a phone icon
+   (not colour alone). The divider lines stay neutral — no red frame. */
+.erstantwort__faq--emergency summary {
+	color: var(--m3-primary, #a5000a);
 }
+
+.erstantwort__faq .erstantwort__faqIcon {
+	flex: none;
+	font-size: 20px;
+}
+
+/* One complete message: greeting, questions and goodbye in one bubble. */
+.erstantwort__bubble--message {
+	gap: 12px;
+}
+
+.erstantwort__questions {
+	margin-top: 4px;
+}
+
+/* Avatar/header/bubble geometry belongs to CarimatMessageFrame. */

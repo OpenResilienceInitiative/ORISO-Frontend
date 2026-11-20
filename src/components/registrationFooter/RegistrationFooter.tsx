@@ -8,12 +8,23 @@ import {
 } from '../registration/registrationDesign/registrationDesign';
 import { useKeyboardInset } from '../../utils/useKeyboardInset';
 import { HandoverGateButton } from '../app/registrationLoader/HandoverGateButton';
+import { ClosingFocal } from '../transition/closing/closingFocal';
+import { ClosingSwapResult } from '../transition/closing/playClosingAnimation';
 import { useRegistrationCompletionContent } from '../registration/consentCompletion/RegistrationCompletionContext';
 
 export interface RegistrationFooterAction {
 	/** Already translated. This component never calls `t`. */
 	label: string;
-	onClick?: (event: React.MouseEvent<HTMLElement>) => void;
+	/**
+	 * With `closing`, a promise it returns keeps the screen covered until it
+	 * settles (the group room saves the consent, then joins).
+	 */
+	onClick?: (event: React.MouseEvent<HTMLElement>) => ClosingSwapResult;
+	/**
+	 * Asked before the closing animation starts; `false` keeps the person where
+	 * they are. Only meaningful together with `closing`.
+	 */
+	beforeEnter?: () => boolean;
 	disabled?: boolean;
 	busy?: boolean;
 	status?: string;
@@ -34,6 +45,12 @@ export interface RegistrationFooterAction {
 	 * on (Frank, 2026-09-05: "make here just a round x button").
 	 */
 	round?: boolean;
+	/**
+	 * Where the person arrives after this action. Declared only by the way on
+	 * that leaves the room for a chat or a call; the platform's closing
+	 * animation then plays on the way (ORISO-Frontend#1737).
+	 */
+	closing?: ClosingFocal;
 }
 
 export interface RegistrationFooterProps {
@@ -60,6 +77,18 @@ export interface RegistrationFooterProps {
 	animateIn?: boolean;
 	/** Consent is above the action row, never squeezed into a button column. */
 	consent?: React.ReactNode;
+	/**
+	 * The bar of a room that stands inside the app's chat card rather than on
+	 * the stage: it sits in the flow at the card's bottom edge, as wide as the
+	 * card, instead of being fixed to the window (#1219).
+	 */
+	contained?: boolean;
+	/**
+	 * Give `children` their own row above the primary, the way a written
+	 * secondary gets one — for a room whose quiet actions are more than one
+	 * button (the self-help group's calendar row, #1689).
+	 */
+	stacked?: boolean;
 }
 
 /**
@@ -91,7 +120,9 @@ export const RegistrationFooter = ({
 	secondary,
 	children,
 	animateIn = false,
-	consent
+	consent,
+	contained = false,
+	stacked = false
 }: RegistrationFooterProps) => {
 	/* The bar rides above the software keyboard instead of disappearing behind
 	   it — see `useKeyboardInset`. Written as an inline style rather than into
@@ -99,7 +130,8 @@ export const RegistrationFooter = ({
 	   animates, and a new emotion class per frame is a stylesheet insert per
 	   frame. */
 	const keyboardInset = useKeyboardInset();
-	const stackedActions = Boolean(primary && secondary && !secondary.round);
+	const stackedActions =
+		stacked || Boolean(primary && secondary && !secondary.round);
 	const completion = useRegistrationCompletionContent();
 	const footerRef = React.useRef<HTMLDivElement>(null);
 	const [footerHeight, setFooterHeight] = React.useState(96);
@@ -120,16 +152,20 @@ export const RegistrationFooter = ({
 	return (
 		<>
 			{/* Reserve the real height, including long/mobile consent wording. */}
-			<Box
-				aria-hidden
-				sx={{ height: footerHeight, width: '100%', flexShrink: 0 }}
-			/>
+			{!contained && (
+				<Box
+					aria-hidden
+					sx={{ height: footerHeight, width: '100%', flexShrink: 0 }}
+				/>
+			)}
 			<Box
 				ref={footerRef}
 				data-cy="registration-footer"
 				data-keyboard-inset={keyboardInset || undefined}
 				style={
-					keyboardInset ? { bottom: `${keyboardInset}px` } : undefined
+					keyboardInset && !contained
+						? { bottom: `${keyboardInset}px` }
+						: undefined
 				}
 				sx={{
 					...(animateIn ? footerEnterSx : {}),
@@ -172,7 +208,8 @@ export const RegistrationFooter = ({
 						animation: 'none',
 						transition: 'none'
 					},
-					'zIndex': 65
+					'zIndex': 65,
+					...(contained ? containedSx : {})
 				}}
 			>
 				{consent ?? completion}
@@ -245,6 +282,8 @@ export const RegistrationFooter = ({
 											: 'ready'
 								}
 								onEnter={primary.onClick}
+								closing={primary.closing}
+								beforeEnter={primary.beforeEnter}
 								label={primary.label}
 								status={primary.status ?? ''}
 								indeterminate={primary.busy}
@@ -272,6 +311,21 @@ export const RegistrationFooter = ({
  * blocks would be two keys of the same name in one object, and only the last
  * would survive.
  */
+/**
+ * In the chat card the bar is the card's last row: in the flow, as wide as the
+ * card, and clear of the screen edge (the app's navigation sits below it on a
+ * phone, so there is no safe area to pad against).
+ */
+const containedSx = {
+	position: 'relative',
+	bottom: 'auto',
+	right: 'auto',
+	width: '100%',
+	flexShrink: 0,
+	pb: { xs: '12px', sm: 0 },
+	zIndex: 1
+} as const;
+
 const footerEnterSx = {
 	'animation': `registrationFooterEnter ${registrationMotion.slow} ${registrationMotion.easeOut} both`,
 	'@keyframes registrationFooterEnter': {

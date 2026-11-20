@@ -43,7 +43,7 @@
 		}
 
 		&:hover {
-			color: var(--m3-primary, $primary);
+			color: var(--oriso-primary-text, var(--m3-primary, $primary));
 		}
 
 		&:focus {
@@ -186,13 +186,11 @@
 // The Help learning card owns the outer shell. Its launch options fit that
 // column and stack on phones, so no action is hidden beyond a scroller.
 .tourOverview--embedded {
+	// One row per tour: the Help card lists the introduction and every topic
+	// tour (FE#2340), so side-by-side cards would squeeze the titles.
 	.tourOverview__list {
 		flex-direction: column;
 		overflow-x: visible;
-
-		@include breakpoint($fromXLarge) {
-			flex-direction: row;
-		}
 	}
 
 	.tourOverview__card {

@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { AUTHORITIES } from '../../globalState';
 import { MessageMetaData } from './MessageMetaData';

@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * P2 feed-update signal: the bridge must recognise the content-free
  * `org.oriso.feed.updated` signal UserService sends through Matrix and surface
@@ -10,7 +10,14 @@
  * event type is accepted too, so a future room-based sender needs no frontend
  * change.
  */
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import { createRequire } from 'module';
 import {
 	FEED_UPDATE_BRIDGE_EVENT,

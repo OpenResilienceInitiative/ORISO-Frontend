@@ -1,0 +1,53 @@
+// FE#1725 US23: sticky selection bar below the case list. Buttons come from
+// the shared ButtonGroup; colours are M3 tokens.
+$bb-surface: var(--m3-surface-container-lowest, #ffffff);
+$bb-on-surface: var(--m3-on-surface, #1a1c1e);
+$bb-on-surface-variant: var(--m3-on-surface-variant, #444748);
+$bb-shadow: var(--m3-scrim, #000000);
+
+.caseHandoverBulkBar {
+	position: sticky;
+	bottom: 0;
+	z-index: 5;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 4px 8px;
+	flex-shrink: 0;
+	margin: 0;
+	padding: 12px 16px;
+	border-radius: 16px 16px 0 0;
+	background: $bb-surface;
+
+	// M3 elevation level 2, cast upwards.
+	box-shadow:
+		0 -1px 3px color-mix(in srgb, $bb-shadow 12%, transparent),
+		0 -4px 8px 3px color-mix(in srgb, $bb-shadow 6%, transparent);
+	color: $bb-on-surface;
+	font-size: 14px;
+	line-height: 20px;
+
+	&__count {
+		flex: 1 1 auto;
+		margin: 0;
+		font-weight: 500;
+		white-space: nowrap;
+	}
+
+	&__hint {
+		order: 3;
+		flex: 1 1 100%;
+		margin: 0;
+		color: $bb-on-surface-variant;
+		font-size: 12px;
+		line-height: 16px;
+	}
+}
+
+// Takes the rest of the row and wraps below the count when narrow; the
+// group itself stacks its buttons when they no longer fit side by side.
+.caseHandoverBulkBar .caseHandoverBulkBar__actions {
+	flex: 1 1 240px;
+	width: auto;
+	min-width: 0;
+}
