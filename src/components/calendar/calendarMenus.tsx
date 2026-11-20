@@ -43,13 +43,16 @@ import {
 } from '../chatMenuDropdown/ChatMenuDropdown';
 import { initialsOf } from './CalendarEntryPeek';
 import { avatarToneClass } from './calendarAvatar';
+import { CalendarPersonAvatar } from './CalendarPersonAvatar';
+import { AVATAR_SIZES } from '../pseudonym/avatarSizes';
 import {
 	APPOINTMENT_KINDS,
 	findConflicts,
 	type AppointmentKind,
 	type CalendarConversation,
 	type CalendarEntry,
-	type Colleague
+	type Colleague,
+	type CalendarPersonAvatar as CalendarPersonAvatarIdentity
 } from './calendarModel';
 import { CalendarEntryGlyph, FacetIcon, facetOf } from './CalendarEntryGlyph';
 import type { EntryAction, MoveProposal } from './calendarActions';
@@ -62,6 +65,9 @@ import {
 	type TimeWindow,
 	type WorkEdge
 } from './calendarWorkingHours';
+
+/** "Sie und <Name>": the small stacked avatars, as before. */
+const MINI_AVATAR_PX = 22;
 
 /** What a free range becomes: an appointment kind or a blocker. */
 export type SlotChoice = AppointmentKind | 'blocker';
@@ -149,12 +155,12 @@ const SlotPeopleStep = ({
 							onClick={() => onPick(c.sessionId)}
 							data-cy={`calendar-slot-person-${c.sessionId}`}
 						>
-							<span
-								className={`calendarMenu__avatar ${avatarToneClass(c.username)}`}
-								aria-hidden="true"
-							>
-								{initialsOf(c.username)}
-							</span>
+							<CalendarPersonAvatar
+								className="calendarMenu__avatar"
+								name={c.username}
+								avatar={c.avatar}
+								size={AVATAR_SIZES.session}
+							/>
 							<ChatMenuDropdownItemContent title={c.username} />
 						</ChatMenuDropdownItem>
 					))}
@@ -579,12 +585,12 @@ export const EntryMenuContent = ({
 		<>
 			<div className="calendarMenu__head">
 				{person ? (
-					<span
-						className={`calendarMenu__avatar ${avatarToneClass(person)}`}
-						aria-hidden="true"
-					>
-						{initialsOf(person)}
-					</span>
+					<CalendarPersonAvatar
+						className="calendarMenu__avatar"
+						name={person}
+						avatar={colleague ? undefined : entry.avatar}
+						size={AVATAR_SIZES.session}
+					/>
 				) : (
 					<span
 						className={`calendarMenu__kdot calendarMenu__kind--${facet}`}
@@ -606,21 +612,22 @@ export const EntryMenuContent = ({
 				</span>
 			</p>
 			{partner && (
-				<p className="calendarMenu__who" data-cy="calendar-entry-who">
+				<div className="calendarMenu__who" data-cy="calendar-entry-who">
 					<span className="calendarMenu__stack" aria-hidden="true">
 						<span
 							className={`calendarMenu__mini ${avatarToneClass('', true)}`}
 						>
 							{t('calendar.people.me')}
 						</span>
-						<span
-							className={`calendarMenu__mini ${avatarToneClass(partner)}`}
-						>
-							{initialsOf(partner)}
-						</span>
+						<CalendarPersonAvatar
+							className="calendarMenu__mini"
+							name={partner}
+							avatar={entry.avatar}
+							size={MINI_AVATAR_PX}
+						/>
 					</span>
 					{t('calendar.entryMenu.withYou', { name: partner })}
-				</p>
+				</div>
 			)}
 		</>
 	);
@@ -824,6 +831,8 @@ export const ProposalMenuContent = ({
 interface AnswerMenuContentProps {
 	/** Who asks: avatar and "… von {name}". */
 	name: string;
+	/** The advice seeker's real avatar, when known (FE#2325). */
+	avatar?: CalendarPersonAvatarIdentity;
 	subtitle: string;
 	title: string;
 	/** Falsy entries are left out. */
@@ -844,6 +853,7 @@ interface AnswerMenuContentProps {
  */
 const AnswerMenuContent = ({
 	name,
+	avatar,
 	subtitle,
 	title,
 	notes,
@@ -857,12 +867,12 @@ const AnswerMenuContent = ({
 }: AnswerMenuContentProps) => (
 	<>
 		<div className="calendarMenu__head">
-			<span
-				className={`calendarMenu__avatar ${avatarToneClass(name)}`}
-				aria-hidden="true"
-			>
-				{initialsOf(name)}
-			</span>
+			<CalendarPersonAvatar
+				className="calendarMenu__avatar"
+				name={name}
+				avatar={avatar}
+				size={AVATAR_SIZES.session}
+			/>
 			<ChatMenuDropdownHeader
 				subtitle={subtitle}
 				title={title}
@@ -973,6 +983,7 @@ export const AppointmentRequestMenuContent = ({
 	return (
 		<AnswerMenuContent
 			name={name}
+			avatar={entry.avatar}
 			subtitle={t('calendar.appointmentRequest.from', { name })}
 			title={t('calendar.appointmentRequest.menu')}
 			notes={[

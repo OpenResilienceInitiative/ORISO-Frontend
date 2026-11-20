@@ -667,6 +667,23 @@ $cal-off-hatch: repeating-linear-gradient(
 	padding: 2px 5px;
 }
 
+// FE#2325: a 32 px avatar leads a time-grid box high enough for it; the
+// lines stand beside it.
+.calEntry__inner--lead {
+	flex-direction: row;
+	align-items: flex-start;
+	gap: 6px;
+	padding-left: 3px;
+}
+
+.calEntry__body {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	gap: 1px;
+	min-width: 0;
+}
+
 // Avatar, kind icon, (time,) title, "Beginnt gleich".
 .calEntry__line {
 	display: flex;
@@ -1019,6 +1036,17 @@ $cal-avatar-tones: (#2f5d5a, #7a0e2a, #4b4f7a, #6d3d63, #7a5a1e, #36576e);
 .calAvatar--me {
 	background: var(--m3-primary, #a5000a) !important;
 	color: var(--m3-on-primary, #ffffff) !important;
+}
+
+// FE#2325: the person's real avatar (the shared UserAvatar) inside a
+// calendar avatar slot. The slot only places it; size and colours are the
+// avatar's own.
+.calAvatar--user {
+	width: auto !important;
+	height: auto !important;
+	overflow: visible;
+	background: transparent !important;
+	line-height: 0;
 }
 
 .calendarPeek__name {
