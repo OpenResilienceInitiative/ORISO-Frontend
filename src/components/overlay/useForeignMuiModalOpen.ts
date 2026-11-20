@@ -18,7 +18,11 @@ export const shouldActivateOverlayFocusTrap = (
  * case and the racy real-app case where the MUI dialog appears later.
  */
 export const useForeignMuiModalOpen = () => {
-	const [foreignModalOpen, setForeignModalOpen] = useState(false);
+	// Initialised from the DOM, not `false`: with a modal already mounted the very
+	// first FocusTrap render must already be inactive, or both traps run for one commit.
+	const [foreignModalOpen, setForeignModalOpen] = useState(() =>
+		typeof document === 'undefined' ? false : hasForeignMuiModal()
+	);
 	useEffect(() => {
 		const checkForeignModal = () =>
 			setForeignModalOpen(hasForeignMuiModal());

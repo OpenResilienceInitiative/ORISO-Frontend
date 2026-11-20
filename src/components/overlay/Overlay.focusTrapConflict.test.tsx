@@ -51,6 +51,23 @@ describe('Overlay focus trap vs. a foreign MUI modal (#1326)', () => {
 		);
 	});
 
+	it('releases the trap when a MUI modal mounts after the overlay has rendered', async () => {
+		render(<Probe />);
+		expect((await screen.findByTestId('trap-active')).textContent).toBe(
+			'true'
+		);
+
+		act(() => {
+			const muiModal = document.createElement('div');
+			muiModal.className = 'MuiModal-root';
+			document.body.appendChild(muiModal);
+		});
+
+		await waitFor(() =>
+			expect(screen.getByTestId('trap-active').textContent).toBe('false')
+		);
+	});
+
 	it('re-traps focus once the foreign MUI modal closes', async () => {
 		const muiModal = document.createElement('div');
 		muiModal.className = 'MuiModal-root';
