@@ -1,0 +1,25 @@
+// A fixed-height OrisoTextarea (`rows`): the outlined box keeps its design
+// height (120px in the group-chat welcome and rule editors) and, inside a
+// flex column, can grow to fill it; the text area fills the box and scrolls
+// instead of growing it. Each caller keeps its own flex sizing.
+
+$fixed-textarea-box-min-height: 120px !default;
+
+@mixin fixed-textarea-box($min-height: $fixed-textarea-box-min-height) {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	min-height: $min-height;
+
+	.MuiInputBase-root {
+		flex: 1 1 auto;
+		align-items: stretch;
+		box-sizing: border-box;
+		min-height: $min-height;
+	}
+
+	.MuiInputBase-inputMultiline {
+		height: auto !important;
+		overflow-y: auto !important;
+	}
+}

@@ -158,10 +158,17 @@ export const SystemTone: Story = {
 		const picker = box.getByRole('combobox', {
 			name: 'Ton für Systemmeldungen'
 		});
-		await expect(picker).toHaveValue('ton-2');
-		await expect(picker).toBeEnabled();
+		await expect(picker).toHaveTextContent('Ton #2');
+		await expect(picker).not.toHaveAttribute('aria-disabled');
 
-		await userEvent.selectOptions(picker, 'ton-5');
+		// Kit select: the options open in an MUI menu, not a native list.
+		await userEvent.click(picker);
+		await userEvent.click(
+			await within(canvasElement.ownerDocument.body).findByRole(
+				'option',
+				{ name: 'Ton #5' }
+			)
+		);
 		await expect(
 			notificationSettingsStore.getState().settings.systemTone.sound
 		).toBe('ton-5');
@@ -180,7 +187,13 @@ export const SystemTone: Story = {
 			box.getByRole('button', { name: 'Ton vorhören' })
 		).toBeEnabled();
 		// "No tone": nothing to preview, the muted icon replaces the button.
-		await userEvent.selectOptions(picker, 'none');
+		await userEvent.click(picker);
+		await userEvent.click(
+			await within(canvasElement.ownerDocument.body).findByRole(
+				'option',
+				{ name: 'Kein Ton gewählt' }
+			)
+		);
 		await expect(
 			box.queryByRole('button', { name: 'Ton vorhören' })
 		).toBeNull();
@@ -203,8 +216,8 @@ export const SystemToneSwitchedOff: Story = {
 		const picker = box.getByRole('combobox', {
 			name: 'Ton für Systemmeldungen'
 		});
-		await expect(picker).toHaveValue('ton-9');
-		await expect(picker).toBeDisabled();
+		await expect(picker).toHaveTextContent('Ton #9');
+		await expect(picker).toHaveAttribute('aria-disabled', 'true');
 		await expect(
 			box.getByRole('button', { name: 'Lauter' })
 		).toBeDisabled();

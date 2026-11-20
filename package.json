@@ -51,7 +51,7 @@
 		"@vector-im/compound-design-tokens": "^6.3.0",
 		"@vector-im/compound-web": "^8.2.5",
 		"@vitejs/plugin-react": "6.3.0",
-		"bfj": "^8.0.0",
+		"bfj": "^9.1.4",
 		"browserslist": "^4.22.2",
 		"classnames": "^2.5.1",
 		"clsx": "^1.2.1",
@@ -82,7 +82,7 @@
 		"jotai": "^2.7.0",
 		"js-autocomplete": "^1.0.4",
 		"livekit-client": "^2.16.0",
-		"lodash": "^4.17.21",
+		"lodash": "^4.18.1",
 		"lottie-react": "^2.4.1",
 		"markdown-draft-js": "^2.4.0",
 		"matrix-js-sdk": "^38.4.0",
@@ -103,7 +103,7 @@
 		"react-joyride": "^3.2.0",
 		"react-refresh": "^0.14.0",
 		"react-responsive": "^9.0.2",
-		"react-router-dom": "^7.18.0",
+		"react-router-dom": "^7.18.2",
 		"react-select": "4.3.1",
 		"react-switch": "^7.0.0",
 		"react-use-measure": "^2.1.1",
@@ -186,7 +186,7 @@
 		"eslint-plugin-testing-library": "^6.2.0",
 		"eslint-webpack-plugin": "^4.0.1",
 		"file-loader": "^6.2.0",
-		"glob": "^11.0.3",
+		"glob": "^11.1.0",
 		"html-webpack-plugin": "^5.6.0",
 		"husky": "^8.0.3",
 		"jsdom": "24.1.3",
@@ -284,6 +284,28 @@
 			"react-app",
 			"plugin:cypress/recommended"
 		],
+		"rules": {
+			"no-restricted-imports": [
+				"error",
+				{
+					"paths": [
+						{
+							"name": "antd",
+							"message": "The Frontend does not use Ant Design (ORISO-Admin#1171). Use MUI or the design-system components from Storybook instead."
+						}
+					],
+					"patterns": [
+						{
+							"group": [
+								"antd/*",
+								"@ant-design/*"
+							],
+							"message": "The Frontend does not use Ant Design (ORISO-Admin#1171). Use MUI or the design-system components from Storybook instead."
+						}
+					]
+				}
+			]
+		},
 		"overrides": [
 			{
 				"files": "*.spec.ts",
@@ -332,6 +354,45 @@
 					"testing-library/await-async-events": "error",
 					"testing-library/await-async-queries": "error",
 					"testing-library/await-async-utils": "error"
+				}
+			},
+			{
+				"files": [
+					"src/**/*.tsx"
+				],
+				"excludedFiles": [
+					"src/**/*.test.tsx",
+					"src/**/*.spec.tsx",
+					"src/**/*.stories.tsx",
+					"src/components/form/**",
+					"src/components/M3Checkbox/**",
+					"src/components/checkbox/**",
+					"src/components/radioButton/**",
+					"src/components/Switch/**",
+					"src/components/tagSelect/**",
+					"src/components/devToolbar/**"
+				],
+				"rules": {
+					"no-restricted-syntax": [
+						"error",
+						"WithStatement",
+						{
+							"selector": "JSXOpeningElement[name.name=/^(select|option|textarea)$/]",
+							"message": "Raw <select>/<option>/<textarea> is drawn by the browser and never matches the design. Use OrisoSelect / OrisoMultiSelect / OrisoTextarea from src/components/form/."
+						},
+						{
+							"selector": "JSXOpeningElement[name.name='input'] > JSXAttribute[name.name='type'][value.value=/^(checkbox|radio)$/]",
+							"message": "Raw <input type=\"checkbox|radio\"> is drawn by the browser. Use M3Checkbox, or MUI RadioGroup + FormControlLabel + Radio."
+						},
+						{
+							"selector": "JSXOpeningElement[name.name='input'] > JSXAttribute[name.name='type'] > JSXExpressionContainer > Literal[value=/^(checkbox|radio)$/]",
+							"message": "Raw <input type=\"checkbox|radio\"> is drawn by the browser. Use M3Checkbox, or MUI RadioGroup + FormControlLabel + Radio."
+						},
+						{
+							"selector": "JSXOpeningElement[name.name='NativeSelect']",
+							"message": "MUI NativeSelect opens the browser's own option list. Use OrisoSelect from src/components/form/."
+						}
+					]
 				}
 			}
 		],
@@ -383,9 +444,10 @@
 	},
 	"overrides": {
 		"minimatch@9": "9.0.9",
-		"brace-expansion@1": "^1.1.18",
+		"brace-expansion@1": "^1.1.21",
 		"vite": "npm:@voidzero-dev/vite-plus-core@1.6.0",
-		"vitest": "5.1.0"
+		"vitest": "5.1.0",
+		"immutable@3": "3.8.4"
 	},
 	"prettier": {
 		"trailingComma": "none",
