@@ -1,7 +1,6 @@
 import {
 	Alert,
 	Box,
-	Button,
 	Checkbox,
 	FormControlLabel,
 	FormGroup,
@@ -13,7 +12,6 @@ import * as React from 'react';
 import {
 	Dispatch,
 	FC,
-	ReactNode,
 	SetStateAction,
 	useCallback,
 	useContext,
@@ -36,7 +34,7 @@ import {
 } from '../../../globalState/provider/RegistrationProvider';
 import { LegalLinksContext } from '../../../globalState/provider/LegalLinksProvider';
 import { TenantContext } from '../../../globalState/provider/TenantProvider';
-import { apiGetIsUsernameAvailable } from '../../../api/apiGetIsUsernameAvailable';
+import { useUsernameAvailability } from './useUsernameAvailability';
 import { REGISTRATION_DATA_VALIDATION } from '../registrationDataValidation';
 import { getEmailFeedback } from './emailFeedback';
 import {
@@ -47,6 +45,7 @@ import {
 } from '../registrationDesign/registrationDesign';
 import { OrisoTextField } from '../../form/OrisoTextField';
 import { AnimalAvatar } from '../../pseudonym/AnimalAvatar';
+import { IdentitySuggestButton } from './IdentitySuggestButton';
 import {
 	generateAvatar,
 	generatePassword,
@@ -74,58 +73,13 @@ import genDiceIcon from '../../../resources/img/registration-md3/icons/gen-dice.
 import { DataProtectionConsentLabel } from './DataProtectionConsentLabel';
 import { DataProtectionSnackbar } from './DataProtectionSnackbar';
 import { toRegistrationUsername } from './registrationUsername';
+import {
+	isAskerDisplayNameTypingAllowed,
+	isContextEmailCollectionAllowed
+} from '../../../utils/askerAccountPolicy';
 import { ConsentCompletionPanel } from '../consentCompletion/ConsentCompletionPanel';
+import { usePrivacyNoticeGuard } from '../privacyNotice/usePrivacyNoticeGuard';
 import { useRegistrationCompletion } from '../consentCompletion/RegistrationCompletionContext';
-
-const suggestButtonSx = (filled: boolean) =>
-	({
-		'px': 1,
-		'py': 0.75,
-		'fontSize': 13.5,
-		'lineHeight': '20px',
-		'minWidth': 0,
-		'flex': '1 1 auto',
-		'borderRadius': '8px',
-		'textTransform': 'none',
-		'color': filled ? registrationMd3.onPrimary : registrationMd3.onSurface,
-		'borderColor': registrationMd3.outlineVariant,
-		'backgroundColor': filled ? registrationMd3.primary : undefined,
-		'& .MuiButton-startIcon': {
-			mr: 0.625
-		},
-		'& .registration-suggest-icon': {
-			filter: filled ? 'brightness(0) invert(1)' : 'none',
-			transition: 'filter 140ms ease'
-		},
-		'&:hover': filled
-			? {
-					backgroundColor: registrationMd3.primaryDark
-				}
-			: {
-					'color': registrationMd3.onSecondary,
-					'borderColor': registrationMd3.secondary,
-					'backgroundColor': registrationMd3.secondary,
-					'& .registration-suggest-icon': {
-						filter: 'brightness(0) invert(1)'
-					}
-				},
-		'&&:active, &&:active:hover': {
-			'color': registrationMd3.onPrimary,
-			'WebkitTextFillColor': registrationMd3.onPrimary,
-			'borderColor': registrationMd3.primary,
-			'backgroundColor': registrationMd3.primary,
-			'& .MuiButton-startIcon, & .MuiButton-endIcon': {
-				color: registrationMd3.onPrimary
-			},
-			'& .registration-suggest-icon': {
-				filter: 'brightness(0) invert(1)'
-			}
-		},
-		'&:focus-visible': {
-			outline: `2px solid ${registrationMd3.focus}`,
-			outlineOffset: 2
-		}
-	}) as const;
 
 export const AccountData: FC<{
 	onChange: Dispatch<SetStateAction<Partial<RegistrationData>>>;
@@ -140,6 +94,7 @@ export const AccountData: FC<{
 	 * them", so the shape can be judged in Storybook before it is wired.
 	 */
 	entry?: 'registration' | 'link';
+	conversationType?: 'AGENCY_COUNSELLING' | 'SELF_HELP';
 	/**
 	 * Link entry only: join without ever choosing — or seeing — a password.
 	 *
@@ -184,6 +139,7 @@ export const AccountData: FC<{
 }> = ({
 	onChange,
 	entry = 'registration',
+	conversationType = 'AGENCY_COUNSELLING',
 	temporary = false,
 	compact = false,
 	dataProtection = 'checkbox'
@@ -209,14 +165,27 @@ export const AccountData: FC<{
 	>(restoredDraft?.acceptedConsentBinding ?? null);
 	const [isRepeatPasswordVisible, setIsRepeatPasswordVisible] =
 		useState<boolean>(false);
-	const [username, setUsername] = useState<string>(
-		restoredDraft?.username ?? ''
+	const [generatedUsername, setGeneratedUsername] = useState(
+		() =>
+			restoredDraft?.generatedUsername ?? toRegistrationUsername(identity)
 	);
-	const currentUsername = useRef(username);
+	const [typedUsername, setUsername] = useState<string>(
+		restoredDraft?.username ?? generatedUsername
+	);
+	const currentUsername = useRef(typedUsername);
 	const { tenant } = useContext(TenantContext);
 	const legalLinks = useContext(LegalLinksContext);
-	const emailVisible = tenant?.settings?.emailVisible ?? false;
-	const emailRequired = tenant?.settings?.emailRequired ?? false;
+	const aliasEditable = isAskerDisplayNameTypingAllowed(
+		tenant?.settings,
+		conversationType
+	);
+	const username = aliasEditable ? typedUsername : generatedUsername;
+
+	const emailVisible =
+		isContextEmailCollectionAllowed(tenant?.settings, conversationType) &&
+		(tenant?.settings?.emailVisible ?? false);
+	const emailRequired =
+		emailVisible && (tenant?.settings?.emailRequired ?? false);
 	const [email, setEmail] = useState<string>(restoredDraft?.email ?? '');
 	const [emailWasBlurred, setEmailWasBlurred] = useState<boolean>(false);
 	/* The password was minted for a temporary join and never shown. The flag
@@ -231,14 +200,9 @@ export const AccountData: FC<{
 	// A confirmable email is 2FA's second channel — requiring it here is a
 	// frontend-only guard until the backend module (email confirmation,
 	// persisted preference) lands; see #260.
-	const effectiveEmailRequired = emailRequired || twoFactorAuthEnabled;
-	const [isUsernameAvailable, setIsUsernameAvailable] =
-		useState<boolean>(true);
+	const effectiveEmailRequired =
+		emailVisible && (emailRequired || twoFactorAuthEnabled);
 	const [usernameWasBlurred, setUsernameWasBlurred] =
-		useState<boolean>(false);
-	const [usernameAvailabilityChecked, setUsernameAvailabilityChecked] =
-		useState<boolean>(false);
-	const [usernameAvailabilityFailed, setUsernameAvailabilityFailed] =
 		useState<boolean>(false);
 	const { setDisabledNextButton, registrationData } =
 		useContext(RegistrationContext);
@@ -251,6 +215,13 @@ export const AccountData: FC<{
 	   there is something to consent to. Seeded from the same predicate the
 	   label uses, so the far more common unconfigured case — which issues no
 	   request at all — is never disabled, not even for one frame. */
+	/* A centre with no stored privacy notice gets a warning dialog before the
+	   box is ticked (ORISO-AgencyService#366). */
+	const {
+		guardToggle: guardPrivacyNoticeToggle,
+		dialog: privacyNoticeDialog
+	} = usePrivacyNoticeGuard(agency?.id, mainTopic?.id);
+
 	/* The complete input state the label's answer must match — derived during
 	   render, in the same one place the label derives it, so the two cannot
 	   drift and no input can be forgotten from the comparison. */
@@ -347,9 +318,6 @@ export const AccountData: FC<{
 		(isConsentSentenceResolved && dataProtectionChecked);
 
 	const resetUsernameAvailability = useCallback(() => {
-		setUsernameAvailabilityChecked(false);
-		setIsUsernameAvailable(true);
-		setUsernameAvailabilityFailed(false);
 		setUsernameWasBlurred(false);
 	}, []);
 
@@ -357,6 +325,7 @@ export const AccountData: FC<{
 		(nextIdentity: Pseudonym) => {
 			setIdentity(nextIdentity);
 			const nextUsername = toRegistrationUsername(nextIdentity);
+			setGeneratedUsername(nextUsername);
 			if (nextUsername !== currentUsername.current) {
 				currentUsername.current = nextUsername;
 				setUsername(nextUsername);
@@ -366,22 +335,12 @@ export const AccountData: FC<{
 		[resetUsernameAvailability]
 	);
 
-	useEffect(() => {
-		// Run once so first entry shows the same generated identity until the
-		// user intentionally changes it. When a draft was restored the user's
-		// previous identity/username must NOT be overwritten by a fresh one —
-		// the debounced availability effect below re-checks it anyway.
-		if (!restoredDraft) {
-			applyGeneratedUsername(identity);
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
-
 	/* Keep the draft current on every change so stepper navigation is lossless. */
 	useEffect(() => {
 		setAccountDataDraft({
+			generatedUsername,
 			identity,
-			username,
+			username: typedUsername,
 			password,
 			repeatPassword,
 			acceptedConsentBinding,
@@ -390,8 +349,9 @@ export const AccountData: FC<{
 			passwordMinted
 		});
 	}, [
+		generatedUsername,
 		identity,
-		username,
+		typedUsername,
 		password,
 		repeatPassword,
 		acceptedConsentBinding,
@@ -402,6 +362,11 @@ export const AccountData: FC<{
 
 	const isUsernameLongEnough =
 		REGISTRATION_DATA_VALIDATION.username.validation(username);
+	const {
+		isAvailable: isUsernameAvailable,
+		checked: usernameAvailabilityChecked,
+		failed: usernameAvailabilityFailed
+	} = useUsernameAvailability(username, isUsernameLongEnough);
 	const isPasswordValid = allPasswordCriteriaPass(password);
 	const repeatPasswordMismatch =
 		repeatPassword.length > 0 && repeatPassword !== password;
@@ -424,42 +389,6 @@ export const AccountData: FC<{
 		emailFeedback.isSatisfied;
 
 	useEffect(() => {
-		if (!isUsernameLongEnough) {
-			setIsUsernameAvailable(true);
-			setUsernameAvailabilityChecked(false);
-			setUsernameAvailabilityFailed(false);
-			return;
-		}
-
-		setUsernameAvailabilityChecked(false);
-		setUsernameAvailabilityFailed(false);
-
-		let canceled = false;
-		const timeout = window.setTimeout(async () => {
-			try {
-				const usernameAvailable =
-					await apiGetIsUsernameAvailable(username);
-
-				if (!canceled) {
-					setIsUsernameAvailable(usernameAvailable);
-					setUsernameAvailabilityChecked(true);
-				}
-			} catch {
-				if (!canceled) {
-					setIsUsernameAvailable(true);
-					setUsernameAvailabilityChecked(false);
-					setUsernameAvailabilityFailed(true);
-				}
-			}
-		}, 350);
-
-		return () => {
-			canceled = true;
-			window.clearTimeout(timeout);
-		};
-	}, [isUsernameLongEnough, username]);
-
-	useEffect(() => {
 		if (
 			otherAnswersReady &&
 			// Not merely "the box is ticked": the box may only count once the
@@ -473,7 +402,9 @@ export const AccountData: FC<{
 			onChange({
 				username,
 				password,
-				...(emailVisible && trimmedEmail ? { email: trimmedEmail } : {})
+				// Clear an address previously committed by this step, rather than
+				// leaving it in Registration's merged data when permission changes.
+				email: emailVisible && trimmedEmail ? trimmedEmail : undefined
 			});
 		} else {
 			setDisabledNextButton(true);
@@ -522,7 +453,10 @@ export const AccountData: FC<{
 	} as const;
 
 	const suggestUsername = () =>
-		applyGeneratedUsername(regeneratePseudonym(identity, locale));
+		applyGeneratedUsername({
+			...regeneratePseudonym(identity, locale),
+			avatar: identity.avatar
+		});
 	const suggestAvatar = () =>
 		setIdentity((currentIdentity) => ({
 			...currentIdentity,
@@ -585,39 +519,6 @@ export const AccountData: FC<{
 	const surfaceSx = {
 		'& .MuiOutlinedInput-root': { backgroundColor: 'transparent' }
 	};
-	const suggestButton = (
-		icon: string,
-		label: ReactNode,
-		onClick: () => void,
-		filled = false
-	) => (
-		<Button
-			variant={filled ? 'contained' : 'outlined'}
-			onClick={onClick}
-			startIcon={
-				<Box
-					component="img"
-					className="registration-suggest-icon"
-					src={icon}
-					alt=""
-					sx={{ width: 17, height: 17, flexShrink: 0 }}
-				/>
-			}
-			sx={suggestButtonSx(filled)}
-		>
-			<Box
-				component="span"
-				sx={{
-					overflow: 'hidden',
-					textOverflow: 'ellipsis',
-					whiteSpace: 'nowrap'
-				}}
-			>
-				{label}
-			</Box>
-		</Button>
-	);
-
 	const gap = (full: string) =>
 		compact ? `${parseInt(full, 10) / 2}px` : full;
 	const completionContent = useMemo(
@@ -630,10 +531,14 @@ export const AccountData: FC<{
 						checked={dataProtectionChecked}
 						disabled={!isConsentSentenceResolved}
 						onChange={() =>
-							setAcceptedConsentBinding(
+							guardPrivacyNoticeToggle(
+								() =>
+									setAcceptedConsentBinding(
+										dataProtectionChecked
+											? null
+											: currentConsentBinding
+									),
 								dataProtectionChecked
-									? null
-									: currentConsentBinding
 							)
 						}
 						label={
@@ -668,6 +573,7 @@ export const AccountData: FC<{
 			dataProtectionChecked,
 			isConsentSentenceResolved,
 			currentConsentBinding,
+			guardPrivacyNoticeToggle,
 			agency,
 			mainTopic
 		]
@@ -676,6 +582,7 @@ export const AccountData: FC<{
 
 	return (
 		<Box sx={{ maxWidth: 540, width: '100%', mx: 'auto', ...surfaceSx }}>
+			{privacyNoticeDialog}
 			<Box
 				sx={{
 					display: 'flex',
@@ -741,68 +648,71 @@ export const AccountData: FC<{
 					containerType: 'inline-size'
 				}}
 			>
-				{suggestButton(
-					genUserIcon,
-					t('registration.account.suggest.username'),
-					suggestUsername
-				)}
+				<IdentitySuggestButton
+					icon={genUserIcon}
+					label={t('registration.account.suggest.username')}
+					onClick={suggestUsername}
+				/>
 				{/* A "suggest password" button next to no password field is an
 				    offer that leads nowhere. Same for "all three" — it would
 				    silently re-mint the hidden password the person already
 				    holds. Only identity stays adjustable on a temporary join. */}
-				{showPasswordFields &&
-					suggestButton(
-						genKeyIcon,
-						t('registration.account.suggest.password'),
-						suggestPassword
-					)}
-				{suggestButton(
-					genAvatarIcon,
-					t('registration.account.suggest.avatar'),
-					suggestAvatar
+				{showPasswordFields && (
+					<IdentitySuggestButton
+						icon={genKeyIcon}
+						label={t('registration.account.suggest.password')}
+						onClick={suggestPassword}
+					/>
 				)}
-				{showPasswordFields &&
-					suggestButton(
-						genDiceIcon,
-						<>
-							<Box
-								component="span"
-								sx={{
-									'display': 'none',
-									'@container (min-width: 520px)': {
-										display: 'inline'
-									}
-								}}
-							>
-								{t('registration.account.suggest.all')}
-							</Box>
-							<Box
-								component="span"
-								sx={{
-									'display': 'inline',
-									'@container (min-width: 520px)': {
-										display: 'none'
-									}
-								}}
-							>
-								{t('registration.account.suggest.allShort')}
-							</Box>
-						</>,
-						suggestAll
-					)}
+				<IdentitySuggestButton
+					icon={genAvatarIcon}
+					label={t('registration.account.suggest.avatar')}
+					onClick={suggestAvatar}
+				/>
+				{showPasswordFields && (
+					<IdentitySuggestButton
+						icon={genDiceIcon}
+						label={
+							<>
+								<Box
+									component="span"
+									sx={{
+										'display': 'none',
+										'@container (min-width: 520px)': {
+											display: 'inline'
+										}
+									}}
+								>
+									{t('registration.account.suggest.all')}
+								</Box>
+								<Box
+									component="span"
+									sx={{
+										'display': 'inline',
+										'@container (min-width: 520px)': {
+											display: 'none'
+										}
+									}}
+								>
+									{t('registration.account.suggest.allShort')}
+								</Box>
+							</>
+						}
+						onClick={suggestAll}
+					/>
+				)}
 			</Box>
 
 			<OrisoTextField
 				value={username}
 				onChange={(event) => {
+					if (!aliasEditable) return;
 					const normalizedVal = event.target.value
 						.toLowerCase()
 						.replace(/[^a-z0-9_-]/g, '');
 					if (normalizedVal === currentUsername.current) return;
 					currentUsername.current = normalizedVal;
 					setUsername(normalizedVal);
-					setUsernameAvailabilityChecked(false);
-					setIsUsernameAvailable(true);
 				}}
 				onBlur={() => setUsernameWasBlurred(true)}
 				placeholder={t('registration.account.username.label')}
@@ -811,7 +721,8 @@ export const AccountData: FC<{
 				fullWidth
 				autoComplete="username"
 				inputProps={{
-					'aria-label': t('registration.account.username.label')
+					'aria-label': t('registration.account.username.label'),
+					'readOnly': !aliasEditable
 				}}
 				InputProps={{
 					startAdornment: (

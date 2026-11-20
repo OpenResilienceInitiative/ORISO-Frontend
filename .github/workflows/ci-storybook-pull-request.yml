@@ -1,48 +1,48 @@
 name: Storybook PR Validation
 
 on:
-  pull_request:
+    pull_request:
 
 env:
-  REGISTRY: ghcr.io
-  ORG: openresilienceinitiative
+    REGISTRY: ghcr.io
+    ORG: openresilienceinitiative
 
 concurrency:
-  group: storybook-pr-${{ github.event.pull_request.number }}
-  cancel-in-progress: true
+    group: storybook-pr-${{ github.event.pull_request.number }}
+    cancel-in-progress: true
 
 jobs:
-  validate:
-    name: Storybook Docker validation
-    runs-on: ubuntu-latest
-    timeout-minutes: 25
+    validate:
+        name: Storybook Docker validation
+        runs-on: ubuntu-latest
+        timeout-minutes: 25
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v6
 
-      # Still no node-build step: lint, type-check and unit tests already run in
-      # "Frontend PR Validation" on the same commit, so the app build would only
-      # be duplicated work this job throws away. Storybook itself does have to
-      # be built here — Dockerfile.storybook copies the static output rather
-      # than building it inside the image.
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: npm
+            # Still no node-build step: lint, type-check and unit tests already run in
+            # "Frontend PR Validation" on the same commit, so the app build would only
+            # be duplicated work this job throws away. Storybook itself does have to
+            # be built here — Dockerfile.storybook copies the static output rather
+            # than building it inside the image.
+            - name: Set up Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: '22.23.3'
+                  cache: npm
 
-      - name: Install dependencies
-        run: npm ci --ignore-scripts --legacy-peer-deps
+            - name: Install dependencies
+              run: npm ci --ignore-scripts --legacy-peer-deps
 
-      - name: Build Storybook static output
-        run: npm run build-storybook
+            - name: Build Storybook static output
+              run: npm run build-storybook
 
-      - name: Storybook Docker build validation without publishing
-        uses: ./.github/actions/docker-build-push
-        with:
-          push_to_ghcr: false
-          image_name: oriso-storybook
-          dockerfile: Dockerfile.storybook
-          platforms: linux/amd64
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+            - name: Storybook Docker build validation without publishing
+              uses: ./.github/actions/docker-build-push
+              with:
+                  push_to_ghcr: false
+                  image_name: oriso-storybook
+                  dockerfile: Dockerfile.storybook
+                  platforms: linux/amd64
+                  github_token: ${{ secrets.GITHUB_TOKEN }}

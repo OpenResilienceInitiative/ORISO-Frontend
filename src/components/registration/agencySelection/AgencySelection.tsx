@@ -7,23 +7,137 @@ import {
 	Dispatch,
 	SetStateAction
 } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AgencySelectionResults } from './AgencySelectionResults';
-import { RegistrationContext, RegistrationData } from '../../../globalState';
+import {
+	RegistrationContext,
+	RegistrationData,
+	TenantContext
+} from '../../../globalState';
 import { Box, Typography } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { UrlParamsContext } from '../../../globalState/provider/UrlParamsProvider';
 import { useAgenciesForRegistration } from '../../../containers/registration/hooks/useAgenciesForRegistration';
 import { Loading } from '../../../components/app/Loading';
 import { registrationScreenTitleSx } from '../registrationDesign/registrationDesign';
+import {
+	useRegistrationAddon,
+	useRegistrationTenantId
+} from '../../../addons/registrationAddon';
+import { useAppConfig } from '../../../hooks/useAppConfig';
+import { RegistrationAddonStep } from '../../../addons/RegistrationAddonStep';
+import { useRegistrationAddonComplete } from './useRegistrationAddonComplete';
 
-export const AgencySelection: FC<{
+interface AgencySelectionProps {
 	onChange: Dispatch<SetStateAction<Partial<RegistrationData>>>;
 	nextStepUrl: string;
 	onNextClick(): void;
-}> = ({ nextStepUrl, onNextClick, onChange }) => {
-	const { t } = useTranslation();
+	prevStepUrl?: string | null;
+}
+
+const CenteredLoading = () => (
+	<Box
+		sx={{
+			mt: '80px',
+			width: '100%',
+			display: 'flex',
+			justifyContent: 'center'
+		}}
+	>
+		<Loading />
+	</Box>
+);
+
+/** The agency selection step: an add-on's when the Träger has one, the core's otherwise. */
+export const AgencySelection: FC<AgencySelectionProps> = (props) => {
+	const { tenant } = useContext(TenantContext) ?? {};
+	const { setDisabledNextButton } = useContext(RegistrationContext);
+	const tenantServiceUsed = useAppConfig()?.useTenantService;
+	const tenantId = useRegistrationTenantId(
+		tenant?.id,
+		Boolean(tenant && tenantServiceUsed)
+	);
+	const registrationAddon = useRegistrationAddon(tenantId);
+	const [addonUnavailable, setAddonUnavailable] = useState(false);
+	const loading =
+		tenantId === undefined || registrationAddon.status === 'loading';
+	const addonOwnsStep =
+		loading || (registrationAddon.status === 'ready' && !addonUnavailable);
+
+	useEffect(() => {
+		if (addonOwnsStep) {
+			setDisabledNextButton?.(true);
+		}
+	}, [addonOwnsStep, setDisabledNextButton]);
+
+	if (loading) {
+		return <CenteredLoading />;
+	}
+	if (registrationAddon.status === 'ready' && !addonUnavailable) {
+		return (
+			<AddonAgencySelection
+				{...props}
+				addon={registrationAddon.addon}
+				app={registrationAddon.app}
+				tenantId={tenantId ?? undefined}
+				onUnavailable={() => setAddonUnavailable(true)}
+			/>
+		);
+	}
+	return <CoreAgencySelection {...props} />;
+};
+
+const AddonAgencySelection = ({
+	addon,
+	app,
+	tenantId,
+	onUnavailable,
+	onNextClick,
+	prevStepUrl
+}: AgencySelectionProps &
+	Pick<
+		React.ComponentProps<typeof RegistrationAddonStep>,
+		'addon' | 'app' | 'tenantId' | 'onUnavailable'
+	>) => {
+	const navigate = useNavigate();
 	const { registrationData } = useContext(RegistrationContext);
+	const complete = useRegistrationAddonComplete(onNextClick);
+	const back = React.useCallback(() => {
+		if (prevStepUrl) {
+			navigate(prevStepUrl);
+		}
+	}, [navigate, prevStepUrl]);
+	return (
+		<RegistrationAddonStep
+			addon={addon}
+			app={app}
+			topicId={registrationData?.mainTopic?.id}
+			postcode={registrationData?.zipcode || undefined}
+			tenantId={tenantId}
+			onComplete={complete}
+			onBack={back}
+			onUnavailable={onUnavailable}
+		/>
+	);
+};
+
+const CoreAgencySelection: FC<AgencySelectionProps> = ({
+	nextStepUrl,
+	onNextClick,
+	onChange
+}) => {
+	const { t } = useTranslation();
+	const { registrationData, updateRegistrationData } =
+		useContext(RegistrationContext);
 	const { consultant: preselectedConsultant } = useContext(UrlParamsContext);
+
+	// Whatever is chosen here is the core's choice: an earlier add-on's ref does not go with it.
+	const staleRegistrationRef = registrationData?.registrationRef;
+	useEffect(() => {
+		if (staleRegistrationRef !== undefined) {
+			updateRegistrationData?.({ registrationRef: undefined });
+		}
+	}, [staleRegistrationRef, updateRegistrationData]);
 
 	const { isLoading, agencies } = useAgenciesForRegistration({
 		topic: registrationData.mainTopic,
@@ -39,18 +153,7 @@ export const AgencySelection: FC<{
 	}, [registrationData, preselectedConsultant]);
 
 	if (isLoading) {
-		return (
-			<Box
-				sx={{
-					mt: '80px',
-					width: '100%',
-					display: 'flex',
-					justifyContent: 'center'
-				}}
-			>
-				<Loading />
-			</Box>
-		);
+		return <CenteredLoading />;
 	}
 
 	return (

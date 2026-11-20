@@ -1,6 +1,5 @@
 $icon-size: 24px;
 $icon-size-small: 24px;
-$message-lineheight: 21px;
 
 // T37/D1: the chat text size is ONE switch — the custom properties live in
 // `resources/styles/mui-variables-mapping.scss` (`--message-font-size`,
@@ -56,7 +55,7 @@ $message-avatar-overlap: -19px;
 		text-decoration: underline;
 
 		&:hover {
-			color: var(--m3-primary, $primary);
+			color: var(--oriso-primary-text, var(--m3-primary, $primary));
 			transition: unset;
 		}
 	}
@@ -76,7 +75,7 @@ $message-avatar-overlap: -19px;
 
 		.messageItem__message a,
 		.messageItem__message a:hover {
-			color: var(--m3-primary, $primary);
+			color: var(--oriso-primary-text, var(--m3-primary, $primary));
 		}
 
 		.messageItem__divider {
@@ -202,8 +201,13 @@ $message-avatar-overlap: -19px;
 
 		// Figma 7539-29191: 41px breathing room on the opposite side (the
 		// 60px avatar column minus 19px overlap gives the same 41px on the
-		// avatar side). Desktop cap = wide bubble 770px + avatar column.
-		max-width: min(calc(100% - 41px), 834px);
+		// avatar side). Desktop cap = wide bubble + avatar column. The wide
+		// bubble is 770px unless the platform set another width (Admin ->
+		// Einstellungen -> Chat-Nachrichten).
+		max-width: min(
+			calc(100% - 41px),
+			calc(var(--message-item-max-width-desktop, 770px) + 64px)
+		);
 		position: relative;
 
 		&--left,
@@ -369,10 +373,9 @@ $message-avatar-overlap: -19px;
 		}
 
 		// Scoped to the resting glyph on purpose. The open state renders
-		// `messageItem__kebabIconActive`, a 28×32 red pill that carries its own
-		// white dots and highlights — a blanket `svg { width: 20px }` squashed
-		// it and a blanket `path { fill: #17191c }` painted the white dots
-		// black, so selecting an item turned the button small and dark.
+		// `messageItem__kebabIconActive`, a 28×32 pill with its own dot colour —
+		// a blanket `svg { width: 20px }` squashed it and a blanket
+		// `path { fill: #17191c }` painted the dots dark.
 		.messageItem__kebabIconDefault {
 			width: 20px;
 			height: 20px;
@@ -402,12 +405,24 @@ $message-avatar-overlap: -19px;
 		height: 20px !important;
 	}
 
-	// Figma "Message Menu" (666:25242): open state is a 28×32 red pill with
-	// white dots. It keeps its own geometry and fills — see the note in
-	// `&__kebabButton` for why nothing here may be inherited from the button.
+	// Figma "Message Menu" (666:25242): open state is a 28×32 pill in
+	// primary-container with the library kebab (`stack-vertical.svg`) on top.
+	// See the note in `&__kebabButton` for why nothing here may be inherited.
 	&__kebabIconActive {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
 		width: 28px !important;
 		height: 32px !important;
+		border-radius: 14px;
+		background: var(--m3-primary-container, #cc1e1c);
+		color: var(--m3-on-primary-container, #ffe2de);
+
+		svg {
+			width: 20px;
+			height: 20px;
+			fill: currentcolor;
+		}
 	}
 
 	// Kebab buttons stay in the side-column flow. The old left/right offsets
@@ -451,8 +466,10 @@ $message-avatar-overlap: -19px;
 			height: 12px;
 		}
 
+		// `persons-two-google.svg` ships a 0.6 fill-opacity; the token decides.
 		path {
 			fill: var(--m3-secondary, #4b515a);
+			fill-opacity: 1;
 		}
 	}
 
@@ -582,9 +599,15 @@ $message-avatar-overlap: -19px;
 		background-position: center;
 	}
 
+	// `keyboard_arrow_up.svg` (24 box): at 20px the glyph is the old 10×6;
+	// the negative margins keep the old 10×6 layout footprint.
 	&__visibilityMenuSectionChevronIcon {
-		width: 10px;
-		height: 6px;
+		width: 20px;
+		height: 20px;
+		margin: -7px -5px;
+		flex-shrink: 0;
+		color: var(--m3-secondary, #4c555f);
+		fill: currentcolor;
 		transition: transform 180ms ease;
 		transform: rotate(180deg);
 	}
@@ -681,6 +704,7 @@ $message-avatar-overlap: -19px;
 		svg {
 			width: 16px;
 			height: 16px;
+			fill: currentcolor;
 		}
 	}
 
@@ -745,6 +769,14 @@ $message-avatar-overlap: -19px;
 		}
 	}
 
+	// The system-notice icon (`SystemMessageIcon`) as the avatar of a
+	// platform entry (#2237): its own size and colour, centred in the shared
+	// avatar frame instead of the inline offset it has beside a subject.
+	&__avatar--system .systemMessage__icon {
+		margin: 0;
+		padding: 0;
+	}
+
 	&__content {
 		flex: 1;
 		min-width: 0;
@@ -773,7 +805,7 @@ $message-avatar-overlap: -19px;
 		}
 
 		&--lastRead {
-			color: var(--m3-primary, $primary);
+			color: var(--oriso-primary-text, var(--m3-primary, $primary));
 
 			&::before,
 			&::after {
@@ -786,43 +818,17 @@ $message-avatar-overlap: -19px;
 		}
 	}
 
-	// #1079: a received task list keeps its checkboxes, so it needs the layout
-	// a checklist implies — no bullet next to the box, and the box on the same
-	// line as its text. The input is rendered `disabled` by the sanitizer: this
-	// is the sender's list, the reader only reads it.
-	&__message ul[data-type='taskList'] {
-		list-style: none;
-		padding-left: 0;
-		margin: 0;
-
-		li {
-			display: flex;
-			align-items: flex-start;
-			gap: 8px;
-		}
-
-		label {
-			display: inline-flex;
-			align-items: center;
-
-			// Aligns the box with the first line of a wrapping item.
-			height: $message-lineheight;
-			flex: 0 0 auto;
-		}
-
-		input[type='checkbox'] {
-			margin: 0;
-
-			// Reads as state, not as a control the reader may operate.
-			cursor: default;
-		}
-
-		p {
-			margin: 0;
-		}
+	// #1079: the received task list's input is rendered `disabled` by the
+	// sanitizer — this is the sender's list, the reader only reads it.
+	&__message ul[data-type='taskList'] input[type='checkbox'] {
+		cursor: default;
 	}
 
 	&__message {
+		// Headings, lists, task lists, quotes, rules, code and blank lines look
+		// exactly as they did in the composer (`_richTextContent.scss`).
+		@include rich-text-content;
+
 		color: var(--m3-on-surface, #1d1b20);
 		font-size: var(--message-font-size, 14px);
 		line-height: var(--message-line-height, 20px);
@@ -853,10 +859,10 @@ $message-avatar-overlap: -19px;
 		// stay readable; texts beyond ~4 lines widen to 770px. Mobile keeps
 		// the fluid width from the wrap.
 		@media (width >= 900px) {
-			max-width: 460px;
+			max-width: min(460px, var(--message-item-max-width-desktop, 770px));
 
 			&--wide {
-				max-width: 770px;
+				max-width: var(--message-item-max-width-desktop, 770px);
 			}
 		}
 
@@ -894,35 +900,22 @@ $message-avatar-overlap: -19px;
 			margin-top: $grid-base;
 		}
 
-		p {
-			margin: 0;
-		}
-
-		ul {
-			margin: 0;
-			line-height: 0;
+		// The bubble keeps typed whitespace (`pre-wrap`), but older messages
+		// from the markdown path put line breaks between list tags; inside a
+		// list those must not render as blank lines.
+		ul,
+		ol {
+			white-space: normal;
 		}
 
 		li {
-			line-height: var(--message-line-height, 20px);
-			margin-top: 12px;
-
-			&:first-of-type {
-				margin-top: 0;
-			}
+			white-space: pre-wrap;
 		}
 
-		blockquote {
-			margin: 8px 0;
-			padding: 4px 0 4px 10px;
-			border-left: 3px solid var(--m3-primary-container, #cc1e1c); // incoming + default quote color
-			background: rgba(204, 30, 28, 0.06);
-			background: color-mix(
-				in srgb,
-				var(--m3-primary, #a5000a) 6%,
-				transparent
-			);
-			border-radius: 0 6px 6px 0;
+		.messageItem__attachmentCaption {
+			display: block;
+			margin-top: 8px;
+			overflow-wrap: anywhere;
 		}
 
 		.messageItem__inlineImage {
@@ -976,7 +969,17 @@ $message-avatar-overlap: -19px;
 			text-align: right;
 		}
 
-		span:not(.messageItem__highlight, .messageItem__messageTime) {
+		// Not inside an attachment card: its spans are its layout, and flattening
+		// them ran the file name and the status line together. The same holds
+		// for a reply quote, whose text clamps to two lines as a block, and
+		// for answered passages, which hold quotes and voice players.
+		span:not(
+			.messageItem__highlight,
+			.messageItem__messageTime,
+			.attachmentCard *,
+			.messageItem__replyQuote *,
+			.messageItem__passageReplies *
+		) {
 			display: inline;
 		}
 
@@ -1033,7 +1036,7 @@ $message-avatar-overlap: -19px;
 			// (zugestellt), double check (gelesen) and the failure cross.
 			&--sent svg path,
 			&--read svg path {
-				fill: var(--m3-primary, #a5000a);
+				fill: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 			}
 
 			// Not delivered: red cross, a touch larger to match the denser
@@ -1042,7 +1045,7 @@ $message-avatar-overlap: -19px;
 				height: 14px;
 
 				path {
-					fill: var(--m3-primary, #a5000a);
+					fill: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 				}
 			}
 		}
@@ -1063,7 +1066,7 @@ $message-avatar-overlap: -19px;
 
 			a,
 			a:hover {
-				color: var(--m3-primary, $primary);
+				color: var(--oriso-primary-text, var(--m3-primary, $primary));
 			}
 
 			blockquote {
@@ -1120,6 +1123,7 @@ $message-avatar-overlap: -19px;
 		svg {
 			width: 14px;
 			height: 14px;
+			fill: currentcolor;
 		}
 	}
 
@@ -1165,17 +1169,49 @@ $message-avatar-overlap: -19px;
 		flex-shrink: 0;
 	}
 
+	// Supervisor feedback: the bubble's outline and this one quiet line say it.
+	// It shares the row with the time, so a short note stays a short note.
 	&__feedbackTag {
 		display: inline-flex;
 		align-items: center;
-		padding: 2px 8px;
-		border-radius: 12px;
-		background: rgba(30, 136, 229, 0.12);
-		color: #1e88e5;
+		align-self: flex-end;
+		gap: 4px;
+		margin-right: auto;
+		padding-top: 8px;
+		color: var(--m3-secondary, #4c555f);
 		font-size: 12px;
-		font-weight: 600;
-		margin-bottom: 6px;
-		border: 1px solid rgba(30, 136, 229, 0.35);
+		font-weight: 500;
+		line-height: 16px;
+
+		svg {
+			width: 16px;
+			height: 16px;
+			flex: 0 0 auto;
+
+			* {
+				fill: currentcolor;
+			}
+		}
+	}
+
+	&__supervisionAvatar {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 48px;
+		height: 48px;
+		border-radius: 50%;
+		background: var(--m3-secondary, #4c555f);
+		color: var(--m3-on-secondary, #fff);
+
+		svg {
+			width: 28px;
+			height: 28px;
+
+			* {
+				fill: currentcolor;
+			}
+		}
 	}
 
 	/*
@@ -1204,17 +1240,11 @@ $message-avatar-overlap: -19px;
 
 	&--feedback {
 		.messageItem__message {
-			border: 2px solid rgba(30, 136, 229, 0.6);
+			border: 2px solid var(--m3-secondary, #4c555f);
 		}
 	}
 
 	&--right {
-		.messageItem__feedbackTag {
-			color: $white;
-			background: rgba(255, 255, 255, 0.18);
-			border-color: rgba(255, 255, 255, 0.4);
-		}
-
 		.messageItem__systemNotificationDescription {
 			color: #3b4044;
 		}
@@ -1266,7 +1296,7 @@ $message-avatar-overlap: -19px;
 
 		&:hover {
 			background: var(--m3-primary-fixed, #ffdad5);
-			color: var(--m3-primary, #a5000a);
+			color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 		}
 
 		&:focus-visible {
@@ -1278,6 +1308,16 @@ $message-avatar-overlap: -19px;
 	&__threadButton--right {
 		border-radius: 12px 12px 0 12px;
 		align-self: flex-end;
+	}
+
+	// #420: read-only preview — the thread entry is an indicator, not a button.
+	&__threadButton--static {
+		cursor: default;
+
+		&:hover {
+			background: var(--m3-surface-container-lowest, #fff);
+			color: var(--m3-secondary, #4c555f);
+		}
 	}
 
 	&__threadButtonIcon {
@@ -1323,7 +1363,7 @@ $message-avatar-overlap: -19px;
 			}
 
 			&:hover path {
-				fill: var(--m3-primary, $primary);
+				fill: var(--oriso-primary-text, var(--m3-primary, $primary));
 			}
 
 			&.success {
@@ -1561,10 +1601,13 @@ $message-avatar-overlap: -19px;
 
 	// Color for outgoing messages on the light pink bubble.
 	&--myMessage {
-		color: var(--m3-primary, $primary);
+		color: var(--oriso-primary-text, var(--m3-primary, $primary));
 
 		&:hover {
-			color: var(--m3-primary-hover, $hover-primary);
+			color: var(
+				--oriso-primary-text-hover,
+				var(--m3-primary-hover, $hover-primary)
+			);
 			text-decoration: none;
 		}
 
@@ -1611,6 +1654,34 @@ $message-avatar-overlap: -19px;
 		overflow: hidden;
 		color: inherit;
 		opacity: 0.85;
+	}
+
+	// Selection reply: the quote leads back to the marked passage.
+	&--jump {
+		width: 100%;
+		box-sizing: border-box;
+		border-top: 0;
+		border-right: 0;
+		border-bottom: 0;
+		font: inherit;
+		font-size: 12px;
+		text-align: left;
+		color: inherit;
+		cursor: pointer;
+		transition: background-color 150ms ease;
+
+		&:hover {
+			background: var(--m3-surface-container-high, rgba(0, 0, 0, 0.08));
+		}
+
+		&:focus-visible {
+			outline: 2px solid var(--m3-primary-outline, #930008);
+			outline-offset: 2px;
+		}
+	}
+
+	&--myMessage.messageItem__replyQuote--jump:hover {
+		background: rgba(255, 255, 255, 0.32);
 	}
 }
 
@@ -1673,7 +1744,7 @@ $message-avatar-overlap: -19px;
 		}
 
 		&--mine .messageItem__reactionPillCount {
-			color: var(--m3-primary, #a5000a);
+			color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 		}
 	}
 }
@@ -1747,7 +1818,7 @@ $message-avatar-overlap: -19px;
 	border: 0;
 	border-radius: 18px;
 	background: transparent;
-	color: var(--m3-primary, #a5000a);
+	color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 	font: inherit;
 	font-weight: 600;
 	cursor: pointer;
@@ -1884,4 +1955,73 @@ $message-avatar-overlap: -19px;
 			outline-offset: 1px;
 		}
 	}
+}
+
+// Selection reply (selectionReply/PassageReplyBlocks.tsx).
+// Several passages answered in one message: quote, then its comment.
+.messageItem__passageReplies {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	margin: 0 0 8px;
+	padding: 0;
+	list-style: none;
+}
+
+.messageItem__passageReply {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+
+	.messageItem__replyQuote {
+		margin-bottom: 0;
+	}
+}
+
+.messageItem__passageReplyText {
+	margin: 0;
+	white-space: pre-wrap;
+}
+
+/*
+ * A passage a moderator blurred. The characters are random already
+ * (Zahlensalat); the blurred glyphs on a crisp tinted pill make the hiding
+ * obvious at a glance. Only the glyphs blur, so a focus ring stays sharp.
+ */
+.passageBlur {
+	padding: 0 2px;
+	border-radius: 4px;
+
+	// Darker than every bubble (grey, pink) in light and dark scheme.
+	background: var(--m3-outline-variant, #c4c7c8);
+	color: transparent;
+
+	// Fill wins over every `color` rule: the global `[role='button']:hover`
+	// once painted the salad sharp and red, and the blur seemed gone.
+	-webkit-text-fill-color: transparent;
+	text-shadow: 0 0 6px var(--m3-on-surface, #1b1b1c);
+	user-select: none;
+	-webkit-user-select: none;
+}
+
+.passageBlur--removable {
+	cursor: pointer;
+
+	&:hover {
+		box-shadow: inset 0 0 0 1px var(--m3-outline, #747878);
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--m3-primary, #415f91);
+		outline-offset: 2px;
+	}
+}
+
+.passageBlur__srLabel {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
 }

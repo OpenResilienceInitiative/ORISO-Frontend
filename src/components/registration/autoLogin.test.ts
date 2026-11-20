@@ -3,8 +3,8 @@ import {
 	consumeLoginRecoveryPassword,
 	stageLoginRecoveryPassword
 } from '../../services/loginRecoveryHandoff';
-// @vitest-environment jsdom
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+// @vitest-environment oriso-jsdom
+import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import {
 	autoLogin,
 	buildAppRedirectPath,
@@ -357,6 +357,37 @@ describe('redirectToApp', () => {
 			}).toString()}`
 		);
 	});
+
+	/**
+	 * #1208 job 2 — the post-registration hop must stay a *document*
+	 * navigation. A browser only offers to save the credentials it watched
+	 * the user type when the submitted form is followed by a real page load;
+	 * a same-document react-router hop leaves the submission unconfirmed and
+	 * the save prompt never appears. Chromium, Gecko and WebKit all behave
+	 * this way, which is why the fix is the navigation and not the
+	 * Chromium-only Credential Management API (see #825 and
+	 * `playwright/credential-saving.crossbrowser.spec.ts`).
+	 */
+	it('falls back to a document navigation when no navigate is supplied', () => {
+		const assign = vi.fn();
+		const original = Object.getOwnPropertyDescriptor(window, 'location');
+		Object.defineProperty(window, 'location', {
+			configurable: true,
+			value: { ...window.location, assign }
+		});
+
+		try {
+			redirectToApp(undefined, { sessionId: 34 });
+
+			expect(assign).toHaveBeenCalledWith(
+				'/sessions/user/view/session/34'
+			);
+		} finally {
+			if (original) {
+				Object.defineProperty(window, 'location', original);
+			}
+		}
+	});
 });
 
 describe('redirectToApp restorePath (#1193 Job 3: resume last session)', () => {
@@ -378,6 +409,21 @@ describe('redirectToApp restorePath (#1193 Job 3: resume last session)', () => {
 				undefined,
 				null,
 				'https://evil.example/profile/einstellungen/email'
+			)
+		).toBe('/sessions');
+	});
+
+	// #1795: signed in from a direct link, back to that link.
+	it('returns to the direct link the person signed in from', () => {
+		expect(
+			buildAppRedirectPath(undefined, undefined, null, '/invite/Ab_9-x')
+		).toBe('/invite/Ab_9-x');
+		expect(
+			buildAppRedirectPath(
+				undefined,
+				undefined,
+				null,
+				'//evil.example/invite/x'
 			)
 		).toBe('/sessions');
 	});

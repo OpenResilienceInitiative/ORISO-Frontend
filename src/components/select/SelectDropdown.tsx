@@ -43,6 +43,8 @@ export interface SelectDropdownItem {
 	id: string;
 	selectedOptions: SelectOption[];
 	selectInputLabel?: string;
+	/** Accessible name of the input when no visible label names it. */
+	ariaLabel?: string;
 	placeholder?: string;
 	handleDropdownSelect: Function;
 	useIconOption?: boolean;
@@ -438,6 +440,7 @@ export const SelectDropdown = (props: SelectDropdownItem) => {
 		<div className={clsx(props.className, 'select__wrapper')}>
 			<Select
 				id={props.id}
+				aria-label={props.ariaLabel}
 				className={`select__input ${
 					props.hasError ? 'select__input--error' : ''
 				}`}

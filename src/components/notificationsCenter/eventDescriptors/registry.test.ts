@@ -12,7 +12,7 @@
  * `cypress/e2e/eventDescriptors.cy.ts` logic spec.
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'vite-plus/test';
 import {
 	EVENT_DESCRIPTORS,
 	KNOWN_EVENT_TYPES,
@@ -70,6 +70,7 @@ const KNOWN_ICON_IDS: EventIconId[] = [
 	'appointmentBriefing',
 	'waitingRoom',
 	'teamDiscussion',
+	'addon',
 	'system'
 ];
 
@@ -85,6 +86,7 @@ const EXPECTED_TARGET_KIND: Record<string, string> = {
 	'supervisor.removed': 'conversation',
 	'supervisor.assigned': 'conversation',
 	'counselor.renamed': 'conversation',
+	'topic_duplicate.started': 'conversation',
 	'request.new': 'request',
 	'draft.created': 'draft',
 	'handover.requested': 'conversation',
@@ -95,10 +97,18 @@ const EXPECTED_TARGET_KIND: Record<string, string> = {
 	'case.handover.consent.requested': 'conversation',
 	'case.handover.granted': 'conversation',
 	'case.handover.consent.declined': 'conversation',
+	'case.handover.offer.received': 'conversation',
+	'case.handover.offer.sent': 'conversation',
+	'case.handover.offer.declined': 'conversation',
+	'case.handover.offer.withdrawn': 'conversation',
 	'call.started': 'join',
 	'call.ended': 'conversation',
 	'call.missed': 'conversation',
 	'call.invited': 'conversation',
+	// FE#1952: a knock on a direct-link call opens its conversation.
+	'call.knock.requested': 'callRoom',
+	// FE#2252: "Neuen Link anfragen" opens the invitation's conversation.
+	'direct_invitation.renewal_requested': 'conversation',
 	'group_chat.reminder': 'conversation',
 	'group_chat.opened': 'groupChatJoin',
 	'group_chat.cancelled': 'conversation',
@@ -110,7 +120,10 @@ const EXPECTED_TARGET_KIND: Record<string, string> = {
 	'appointment.cancelled': 'conversation',
 	'appointment.briefing': 'conversation',
 	// #876: a planned maintenance notice links out to the public status page.
-	'service.notice.planned': 'statusPage'
+	'service.notice.planned': 'statusPage',
+	'ADDON_NOTIFICATION': 'addon',
+	// #1159: without the producer's notice path there is nothing to open.
+	'session.asker_deleted': 'none'
 };
 
 // Resolve a dotted i18n key against a loaded common.json object.
@@ -129,10 +142,12 @@ describe('WP-06 event-descriptor registry', () => {
 
 	it('seeds group-chat lifecycle events in the appointments family', () => {
 		// 7 existing + 3 requests (new/denied/waiting-room) + draft.created
-		// + 8 handover + 4 call + 3 group-chat lifecycle + 4 appointments
+		// + 8 handover + 5 call (incl. the FE#1952 direct-link knock)
+		// + 3 group-chat lifecycle + 4 appointments
 		// + team discussion + first response + conversation finished
-		// + planned service notice (#876) = 34.
-		expect(KNOWN_EVENT_TYPES.length).toBe(34);
+		// + service notice, three offer events, deleted advice seeker,
+		// topic duplicate, direct-invitation renewal and add-on notification = 43.
+		expect(KNOWN_EVENT_TYPES.length).toBe(43);
 		[
 			'request.new',
 			'request.denied',
@@ -146,10 +161,15 @@ describe('WP-06 event-descriptor registry', () => {
 			'case.handover.consent.requested',
 			'case.handover.granted',
 			'case.handover.consent.declined',
+			'case.handover.offer.received',
+			'case.handover.offer.sent',
+			'case.handover.offer.declined',
+			'case.handover.offer.withdrawn',
 			'call.started',
 			'call.ended',
 			'call.missed',
 			'call.invited',
+			'call.knock.requested',
 			'group_chat.reminder',
 			'group_chat.opened',
 			'group_chat.cancelled',
@@ -229,6 +249,20 @@ describe('WP-06 event-descriptor registry', () => {
 			});
 		});
 
+		it("moves the team-discussion link's query session id into the path", () => {
+			const target = getEventDescriptor(
+				'team.discussion.new'
+			).resolveActionTarget({
+				actionPath:
+					'/sessions/consultant/sessionPreview?sessionId=42&teamDiscussion=1&roomId=!team42'
+			});
+			// The bare list route renders SessionViewEmpty, not the discussion.
+			expect(target).toEqual({
+				kind: 'conversation',
+				path: '/sessions/consultant/sessionPreview/session/42?teamDiscussion=1&roomId=%21team42'
+			});
+		});
+
 		it('builds a conversation path from sourceSessionId + base when no actionPath', () => {
 			const target = getEventDescriptor(
 				'message.new'
@@ -252,7 +286,29 @@ describe('WP-06 event-descriptor registry', () => {
 
 			expect(target).toEqual({
 				kind: 'groupChatJoin',
-				path: '/sessions/consultant/sessionView/session/42'
+				path: '/sessions/consultant/sessionView/chat/42'
+			});
+		});
+
+		it('a deleted advice seeker opens the deletion notice, never inline', () => {
+			const resolve = getEventDescriptor(
+				'session.asker_deleted'
+			).resolveActionTarget;
+			expect(
+				resolve({
+					actionPath: '/sessions/consultant/sessionView/deleted/77'
+				})
+			).toEqual({
+				kind: 'request',
+				path: '/sessions/consultant/sessionView/deleted/77'
+			});
+			expect(
+				resolve({
+					actionPath: '/sessions/consultant/sessionView/deleted/x'
+				})
+			).toEqual({ kind: 'none' });
+			expect(resolve({ actionPath: '/somewhere/else' })).toEqual({
+				kind: 'none'
 			});
 		});
 
@@ -381,6 +437,71 @@ describe('WP-06 event-descriptor registry', () => {
 			// template is empty, so the server-provided text is used.
 			expect(title).toBe('Activity');
 			expect(text).toBe('Server body');
+		});
+	});
+
+	describe('ADDON_NOTIFICATION (oriso-addon/v1)', () => {
+		const descriptor = getEventDescriptor('ADDON_NOTIFICATION');
+		const translate = (key: string) => {
+			const value = resolveI18nKey(enCommon, key);
+			return typeof value === 'string' ? value : key;
+		};
+
+		it('is a system event with the add-on icon', () => {
+			expect(descriptor).not.toBe(FALLBACK_DESCRIPTOR);
+			expect(descriptor.family).toBe('system');
+			expect(descriptor.icon).toBe('addon');
+		});
+
+		it.each([
+			['asker.navigation', null, '/addons/digisucht-tools/goals'],
+			['consultant.navigation', 42, '/addons/digisucht-tools/goals'],
+			[
+				'consultant.session',
+				42,
+				'/sessions/consultant/sessionView/session/42?addon=digisucht-tools%2Fgoals%2Fconsultant.session'
+			],
+			[
+				'consultant.asker-profile',
+				42,
+				'/sessions/consultant/sessionView/session/42/userProfile'
+			]
+		])('opens the %s target', (slot, sessionId, path) => {
+			expect(
+				descriptor.resolveActionTarget({
+					addon: 'digisucht-tools',
+					appId: 'goals',
+					slot,
+					sourceSessionId: sessionId,
+					sessionsBasePath: '/sessions/consultant/sessionView'
+				})
+			).toEqual({ kind: 'addon', path });
+		});
+
+		it('renders the add-on text instead of a template', () => {
+			expect(
+				renderEventStrings(descriptor, translate, {
+					interpolation: {
+						addonTitle: 'Neues Tool <b>freigegeben</b>',
+						addonText: 'Ihre Beraterin hat „Ziele“ freigegeben.'
+					}
+				})
+			).toEqual({
+				title: 'Neues Tool <b>freigegeben</b>',
+				text: 'Ihre Beraterin hat „Ziele“ freigegeben.'
+			});
+		});
+
+		it('falls back to the server text, then to the generic wording', () => {
+			expect(
+				renderEventStrings(descriptor, translate, {
+					fallbackTitle: 'Server title'
+				})
+			).toEqual({ title: 'Server title', text: '' });
+			expect(renderEventStrings(descriptor, translate)).toEqual({
+				title: 'New add-on notice',
+				text: 'An add-on has a new notice.'
+			});
 		});
 	});
 });

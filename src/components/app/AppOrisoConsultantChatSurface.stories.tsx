@@ -1,14 +1,22 @@
 import * as React from 'react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import PhoneRoundedIcon from '@mui/icons-material/PhoneRounded';
-import VideocamRoundedIcon from '@mui/icons-material/VideocamRounded';
-import SupervisedUserCircleRoundedIcon from '@mui/icons-material/SupervisedUserCircleRounded';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { SessionsListToolbar } from '../sessionsList/SessionsListToolbar';
 import { ResizableHandle } from '../sessionsList/ResizableHandle';
 import type { SessionToolbarChipFilter } from '../sessionsList/sessionToolbarFilters';
 import { SessionListItemComponent } from '../sessionsListItem/SessionListItemComponent';
-import { UserAvatar } from '../message/UserAvatar';
+import { SessionHeaderComponent } from '../sessionHeader/SessionHeaderComponent';
+import { MessageTimeline } from '../session/MessageTimeline';
+import { EncryptionBanner } from '../session/EncryptionBanner';
+import { productionToolbarProps } from '../sessionsList/__storybook__/productionToolbarProps';
+import type { MessageItem } from '../message/MessageItemComponent';
+import { mockE2eeParams } from '../message/MessageItemComponent.mocks';
+import { ComposerStoryDecorator } from '../messageSubmitInterface/__storybook__/composerStoryDecorator';
+import { buildStageMatrixClientService } from '../chatStage/__storybook__/ChatStageProviders';
+import { ServerSettingsContext } from '../../globalState/provider/ServerSettingsProvider';
+import { useResponsive } from '../../hooks/useResponsive';
+import { AVATAR_SIZES } from '../pseudonym/avatarSizes';
 import { MessageSubmitInterfaceComponent } from '../messageSubmitInterface/messageSubmitInterfaceComponent';
 import {
 	ActiveSessionContext,
@@ -42,15 +50,10 @@ import type {
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider';
 import { LanguagesContext } from '../../globalState/provider/LanguagesProvider';
-import { NavigationBar } from './NavigationBar';
-import { RouterConfigConsultant } from './RouterConfig';
 import { Routing } from './Routing';
 import { config } from '../../resources/scripts/config';
-import { MenuVerticalIcon } from '../../resources/img/icons';
-import {
-	NavigationStoryProviders,
-	storybookSettings as navigationStorybookSettings
-} from './navigationStoryHelpers';
+import { NavigationStoryShell } from './NavigationStoryShell';
+import './consultantChatStory.styles.scss';
 import './authenticatedApp.styles.scss';
 import './navigation.styles.scss';
 import '../sessionsList/sessionsList.styles.scss';
@@ -58,6 +61,7 @@ import '../sessionsListItem/sessionsListItem.styles.scss';
 import '../message/message.styles.scss';
 import '../messageSubmitInterface/messageSubmitInterface.styles';
 import '../session/session.styles.scss';
+import '../chatStage/chatStage.styles.scss';
 import '../sessionMenu/sessionMenu.styles.scss';
 import '../chatMenuDropdown/chatMenuDropdown.styles.scss';
 import { focusSessionChromeOnPointerDown } from '../session/focusSessionChrome';
@@ -93,47 +97,20 @@ const labelFallbacks: Record<string, string> = {
 	'sessionList.toolbar.chips.liveChat': 'Live Chat',
 	'sessionList.toolbar.chips.internalGroup': 'Interner Gruppenchat',
 	'sessionList.toolbar.chips.supervision': 'Supervision',
-	'sessionList.toolbar.chips.groups': 'Gesprächskreis'
+	'sessionList.toolbar.chips.groups': 'Gesprächskreis',
+	'sessionList.toolbar.chips.other': 'Weitere'
 };
 
 const translate = (key: string) => labelFallbacks[key] || key;
 
-const mockActiveSession = {
-	rid: null,
-	type: 'session',
-	isGroup: false,
-	isSession: true,
-	item: {
-		id: 0,
-		agencyId: undefined,
-		askerMatrixUserId: 'alice',
-		matrixRoomId: '!storybook:example.org',
-		postcode: 10115,
-		registrationType: REGISTRATION_TYPE_REGISTERED,
-		status: STATUS_ACTIVE,
-		topic: {
-			id: 1,
-			name: 'Suchtprobleme',
-			description: ''
-		},
-		moderators: [],
-		messageDate: Date.now(),
-		messagesRead: false
-	},
-	user: {
-		username: 'sanftes.alpaka.kala@oriso.invalid',
-		displayName: 'Sanftes Alpaka Kala',
-		sessionData: {}
-	},
-	consultant: {
-		consultantId: 'consultant-storybook',
-		id: 'consultant-storybook',
-		username: 'beraterin@example.invalid',
-		displayName: 'Beraterin ORISO',
-		absent: false,
-		absenceMessage: ''
-	}
-} as any;
+const storybookConsultant = {
+	consultantId: 'consultant-storybook',
+	id: 'consultant-storybook',
+	username: 'beraterin@example.invalid',
+	displayName: 'Beraterin ORISO',
+	absent: false,
+	absenceMessage: ''
+};
 
 const mockUserData = {
 	userId: 'consultant-storybook',
@@ -160,6 +137,26 @@ const mockUserData = {
 		qrCode: ''
 	}
 } as any;
+
+/** The advice seeker of the open conversation (FE#2287 page stories). */
+const mockAskerUserData = {
+	...mockUserData,
+	userId: 'asker-storybook',
+	userName: 'sanftes.alpaka.kala@oriso.invalid',
+	displayName: 'Sanftes Alpaka Kala',
+	grantedAuthorities: [AUTHORITIES.ASKER_DEFAULT]
+} as any;
+
+/**
+ * FE#2287 page stories: who looks at the conversation, and what its
+ * appointment API answers (`null`: no answer mocked, as before). Set in a
+ * story's `beforeEach`; every other story keeps the counsellor without them.
+ */
+let surfaceRole: 'consultant' | 'asker' = 'consultant';
+let surfaceAppointments: unknown[] | null = null;
+let surfaceSlots: unknown[] | null = null;
+const surfaceUserData = () =>
+	surfaceRole === 'asker' ? mockAskerUserData : mockUserData;
 
 const appOrisoRouterSettings = {
 	...config,
@@ -283,7 +280,7 @@ const runtimeSessions: ListItemInterface[] = [
 			displayName: 'Ratsuchende...',
 			sessionData: {}
 		},
-		consultant: mockActiveSession.consultant,
+		consultant: storybookConsultant,
 		language: 'de',
 		session: {
 			id: 3361,
@@ -310,7 +307,7 @@ const runtimeSessions: ListItemInterface[] = [
 			displayName: 'Ratsuchender R3',
 			sessionData: {}
 		},
-		consultant: mockActiveSession.consultant,
+		consultant: storybookConsultant,
 		language: 'de',
 		session: {
 			id: 3362,
@@ -337,7 +334,7 @@ const runtimeSessions: ListItemInterface[] = [
 			displayName: 'ruhiges Yak Kim',
 			sessionData: {}
 		},
-		consultant: mockActiveSession.consultant,
+		consultant: storybookConsultant,
 		language: 'de',
 		session: {
 			id: 3363,
@@ -364,7 +361,7 @@ const runtimeSessions: ListItemInterface[] = [
 			displayName: 'Mario K',
 			sessionData: {}
 		},
-		consultant: mockActiveSession.consultant,
+		consultant: storybookConsultant,
 		language: 'de',
 		chat: {
 			id: 9001,
@@ -442,9 +439,34 @@ const requestUrl = (input: RequestInfo | URL): string => {
 };
 
 const findRuntimeSession = (id: number) =>
-	runtimeSessions.find(
+	runtimeListSessions().find(
 		(session) => session.session?.id === id || session.chat?.id === id
 	);
+
+/**
+ * ADR-021 future zone: the group becomes a series with two dates and the
+ * counsellor has one 1:1 booking. Off for every other story.
+ */
+let runtimeTimelineFixtures = false;
+/** No open enquiries: the "Anfragen" list is empty. Off for every other story. */
+let runtimeNoEnquiries = false;
+const inDays = (days: number, hour: number) => {
+	const date = new Date();
+	date.setDate(date.getDate() + days);
+	date.setHours(hour, 0, 0, 0);
+	return date.toISOString();
+};
+const runtimeListSessions = () =>
+	runtimeTimelineFixtures
+		? runtimeSessions.map((session) =>
+				session.chat
+					? {
+							...session,
+							chat: { ...session.chat, repeatCount: 8 }
+						}
+					: session
+			)
+		: runtimeSessions;
 
 let appOrisoRoutingFetchMockDepth = 0;
 let appOrisoRoutingOriginalFetch: typeof globalThis.fetch | null = null;
@@ -475,12 +497,35 @@ const installAppOrisoRoutingFetchMocks = () => {
 
 	globalThis.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
 		const url = requestUrl(input);
-		if (!url.includes('api.storybook.test')) {
+		// The dev Storybook resolves the service origins to its own host
+		// (local .env); the test runner uses the fixed test API host.
+		const sameOriginService = url.startsWith(
+			`${window.location.origin}/service/`
+		);
+		if (!url.includes('api.storybook.test') && !sameOriginService) {
 			return originalFetch(input, init);
 		}
 
 		const parsed = new URL(url);
 		const { pathname } = parsed;
+
+		// The Anfragen list also asks for anonymous live-chat enquiries; none
+		// here, answered like the backend answers an empty feed (204). Unanswered
+		// it logged a console error, which fails the Storybook verification.
+		if (
+			pathname ===
+			'/service/conversations/consultants/enquiries/anonymous'
+		) {
+			return new Response(null, { status: 204 });
+		}
+
+		if (
+			runtimeNoEnquiries &&
+			pathname ===
+				'/service/conversations/consultants/enquiries/registered'
+		) {
+			return storybookJsonResponse({ sessions: [], total: 0 });
+		}
 
 		if (
 			pathname === '/service/users/sessions/consultants' ||
@@ -488,9 +533,42 @@ const installAppOrisoRoutingFetchMocks = () => {
 				'/service/conversations/consultants/enquiries/registered'
 		) {
 			return storybookJsonResponse({
-				sessions: runtimeSessions,
+				sessions: runtimeListSessions(),
 				total: runtimeSessions.length
 			});
+		}
+
+		if (
+			runtimeTimelineFixtures &&
+			pathname === '/service/users/chat-series/9001/occurrences'
+		) {
+			return storybookJsonResponse(
+				[2, 9].map((days, occurrenceIndex) => ({
+					seriesId: 9001,
+					occurrenceIndex,
+					originalStart: inDays(days, 18),
+					start: inDays(days, 18),
+					duration: 60,
+					modality: 'VIDEO'
+				}))
+			);
+		}
+
+		if (
+			runtimeTimelineFixtures &&
+			pathname === '/service/users/appointments/upcoming'
+		) {
+			return storybookJsonResponse([
+				{
+					id: 'storybook-appointment-77',
+					// A conversation the list has not loaded: no room of its own.
+					sessionId: 7777,
+					startTime: inDays(4, 10),
+					endTime: inDays(4, 11),
+					status: 'SCHEDULED',
+					counterpart: { displayName: 'Ratsuchende Lena' }
+				}
+			]);
 		}
 
 		if (pathname === '/service/users/sessions/room') {
@@ -498,14 +576,14 @@ const installAppOrisoRoutingFetchMocks = () => {
 				.split(',')
 				.filter(Boolean);
 			const sessions = ids.length
-				? runtimeSessions.filter((session) =>
+				? runtimeListSessions().filter((session) =>
 						ids.includes(
 							session.session?.matrixRoomId ||
 								session.chat?.matrixRoomId ||
 								''
 						)
 					)
-				: runtimeSessions;
+				: runtimeListSessions();
 			return storybookJsonResponse({ sessions });
 		}
 
@@ -838,63 +916,38 @@ function AppOrisoRoutingRuntimeShell() {
 	);
 }
 
-class ComposerBoundary extends React.Component<
-	{ children: React.ReactNode },
-	{ failed: boolean }
-> {
-	state = { failed: false };
-	static getDerivedStateFromError() {
-		return { failed: true };
-	}
-	render() {
-		if (this.state.failed) {
-			return <StaticComposerFallback />;
-		}
-		return this.props.children;
-	}
-}
-
 function RuntimeSidebar() {
-	const routerConfig = useMemo(() => {
-		return RouterConfigConsultant({
-			...config,
-			...navigationStorybookSettings
-		});
-	}, []);
-
 	return (
-		<div className="appOrisoRuntimeRail" style={styles.navigationRail}>
-			<style>
-				{`
-					.appOrisoRuntimeRail .navigation__wrapper {
-						width: 85px;
-						height: 100%;
-					}
-				`}
-			</style>
-			<NavigationStoryProviders role="consultant">
-				<NavigationBar
-					routerConfig={routerConfig}
-					onLogout={() => {}}
-				/>
-			</NavigationStoryProviders>
-		</div>
+		<NavigationStoryShell
+			role={surfaceRole}
+			className="appOrisoRuntimeRail"
+			onLogout={() => {}}
+		/>
 	);
 }
 
-function AppOrisoRuntimeProviders({ children }: { children: React.ReactNode }) {
+function AppOrisoRuntimeProviders({
+	children,
+	sessions = runtimeSessions
+}: {
+	children: React.ReactNode;
+	sessions?: ListItemInterface[];
+}) {
 	return (
 		<UserDataContext.Provider
 			value={{
-				userData: mockUserData,
-				reloadUserData: async () => mockUserData,
+				userData: surfaceUserData(),
+				reloadUserData: async () => surfaceUserData(),
 				setUserData: () => {}
 			}}
 		>
 			<SessionTypeContext.Provider
 				value={{
 					type: SESSION_LIST_TYPES.MY_SESSION,
-					path: '/sessions/consultant/sessionView'
+					path:
+						surfaceRole === 'asker'
+							? '/sessions/user/view'
+							: '/sessions/consultant/sessionView'
 				}}
 			>
 				<ConsultingTypesContext.Provider
@@ -912,7 +965,7 @@ function AppOrisoRuntimeProviders({ children }: { children: React.ReactNode }) {
 						<SessionsDataContext.Provider
 							value={{
 								ready: true,
-								sessions: runtimeSessions,
+								sessions,
 								dispatch: () => {}
 							}}
 						>
@@ -950,12 +1003,16 @@ function RealSessionListItem({
 	session,
 	index,
 	isBeforeActive = false,
-	isAfterActive = false
+	isAfterActive = false,
+	isGroupStart = true,
+	isGroupEnd = true
 }: {
 	session: ListItemInterface;
 	index: number;
 	isBeforeActive?: boolean;
 	isAfterActive?: boolean;
+	isGroupStart?: boolean;
+	isGroupEnd?: boolean;
 }) {
 	const activeSession = buildExtendedSession(session, '');
 
@@ -973,6 +1030,11 @@ function RealSessionListItem({
 				index={index}
 				isBeforeActive={isBeforeActive}
 				isAfterActive={isAfterActive}
+				// Same grouping `SessionsList` applies outside the rail:
+				// inactive rows join into one block, the active row stands out.
+				grouped
+				isGroupStart={isGroupStart}
+				isGroupEnd={isGroupEnd}
 			/>
 		</ActiveSessionContext.Provider>
 	);
@@ -989,10 +1051,15 @@ function SessionListPanel({
 	const [selectedPeople, setSelectedPeople] = useState<string[]>([]);
 	const [chip, setChip] = useState<SessionToolbarChipFilter | null>('drafts');
 	const listScrollRef = useRef<HTMLDivElement | null>(null);
+	// An advice seeker lists only their own conversation.
+	const consultant = surfaceRole === 'consultant';
+	const listSessions = consultant
+		? consultantChatSessions
+		: [consultantChatListItem];
 
 	return (
 		<aside style={styles.listPanel}>
-			<AppOrisoRuntimeProviders>
+			<AppOrisoRuntimeProviders sessions={listSessions}>
 				<div className="sessionsList__innerWrapper">
 					<SessionsListToolbar
 						translate={translate}
@@ -1007,10 +1074,13 @@ function SessionListPanel({
 								previousChip === nextChip ? null : nextChip
 							)
 						}
-						showConsultantActions
-						showCreateGroupChatAction
-						showSupervisionChip
-						showLiveChatChip
+						{...productionToolbarProps}
+						showConsultantActions={consultant}
+						showCreateGroupChatAction={consultant}
+						showSupervisionChip={consultant}
+						showLiveChatChip={consultant}
+						showGroupChip={consultant}
+						showInternalGroupChip={consultant}
 						createGroupChatPath="/sessions/consultant/sessionView/createGroupChat"
 						archiveTabPath="/sessions/consultant/sessionView?sessionListTab=archive"
 						archiveTabActive={false}
@@ -1028,8 +1098,10 @@ function SessionListPanel({
 							ref={listScrollRef}
 							className="sessionsList__scrollContainer sessionsList__scrollContainer--hasToolbar"
 							style={styles.listScroll}
+							role="list"
+							aria-label="Conversations"
 						>
-							{runtimeSessions.map((session, index) => (
+							{listSessions.map((session, index) => (
 								<RealSessionListItem
 									key={
 										session.session?.id ??
@@ -1039,15 +1111,27 @@ function SessionListPanel({
 									session={session}
 									index={index}
 									isBeforeActive={
-										!!runtimeSessions[index + 1] &&
+										!!listSessions[index + 1] &&
 										isRuntimeSessionActive(
-											runtimeSessions[index + 1]
+											listSessions[index + 1]
 										)
 									}
 									isAfterActive={
-										!!runtimeSessions[index - 1] &&
+										!!listSessions[index - 1] &&
 										isRuntimeSessionActive(
-											runtimeSessions[index - 1]
+											listSessions[index - 1]
+										)
+									}
+									isGroupStart={
+										index === 0 ||
+										isRuntimeSessionActive(
+											listSessions[index - 1]
+										)
+									}
+									isGroupEnd={
+										index === listSessions.length - 1 ||
+										isRuntimeSessionActive(
+											listSessions[index + 1]
 										)
 									}
 								/>
@@ -1066,240 +1150,184 @@ function SessionListPanel({
 	);
 }
 
-function StaticComposerFallback() {
+const consultantMatrixId = '@consultant-storybook:oriso.invalid';
+const runtimeChatListItem = runtimeSessions.find(
+	(item) => item.session?.id === STORY_ACTIVE_SESSION_ID
+)!;
+const consultantChatListItem: ListItemInterface = {
+	...runtimeChatListItem,
+	user: {
+		...runtimeChatListItem.user,
+		username: 'sanftes.alpaka.kala@oriso.invalid',
+		displayName: 'Sanftes Alpaka Kala'
+	},
+	session: {
+		...runtimeChatListItem.session,
+		askerMatrixUserId: '@sanftes.alpaka:oriso.invalid',
+		consultantMatrixUserId: consultantMatrixId,
+		matrixRoomId: '!storybook-room-3363:oriso.invalid',
+		topic: runtimeTopics[1]
+	}
+};
+const consultantChatSessions = runtimeSessions.map((item) =>
+	item.session?.id === STORY_ACTIVE_SESSION_ID ? consultantChatListItem : item
+);
+const consultantChatSession = buildExtendedSession(consultantChatListItem);
+const chatRoomMembers = [
+	{
+		userId: consultantChatSession.item.askerMatrixUserId,
+		name: 'Sanftes Alpaka Kala'
+	},
+	{ userId: consultantMatrixId, name: storybookConsultant.displayName }
+];
+const chatMatrixService = buildStageMatrixClientService({}, chatRoomMembers);
+chatMatrixService.getClient().getUserId = () =>
+	surfaceRole === 'asker'
+		? consultantChatSession.item.askerMatrixUserId
+		: consultantMatrixId;
+const chatEmptyDraftScopes = [
+	`scope:${consultantChatSession.item.id}|thread:main`,
+	`scope:${consultantChatSession.rid}|thread:main`
+];
+const chatMessages: MessageItem[] = [
+	{
+		_id: '$consultant-chat-1',
+		message:
+			'Ich habe heute wieder starkes Verlangen und brauche kurz Orientierung.',
+		messageDate: { str: 'Heute', date: null },
+		messageTime: String(new Date('2026-03-18T09:18:00+01:00').getTime()),
+		displayName: 'Sanftes Alpaka Kala',
+		username: 'sanftes.alpaka.kala@oriso.invalid',
+		askerMatrixUserId: consultantChatSession.item.askerMatrixUserId,
+		userId: consultantChatSession.item.askerMatrixUserId,
+		isNotRead: false,
+		t: null,
+		rid: consultantChatSession.rid
+	},
+	{
+		_id: '$consultant-chat-2',
+		message:
+			'Danke, dass du dich meldest. Lass uns zuerst die nächsten 10 Minuten strukturieren.',
+		messageDate: { str: '', date: null },
+		messageTime: String(new Date('2026-03-18T09:21:00+01:00').getTime()),
+		displayName: storybookConsultant.displayName,
+		username: storybookConsultant.username,
+		askerMatrixUserId: consultantChatSession.item.askerMatrixUserId,
+		userId: consultantMatrixId,
+		isNotRead: false,
+		t: null,
+		rid: consultantChatSession.rid
+	},
+	{
+		_id: '$consultant-chat-3',
+		message: 'Okay. Ich bin gerade zuhause und kann schreiben.',
+		messageDate: { str: '', date: null },
+		messageTime: String(new Date('2026-03-18T09:24:00+01:00').getTime()),
+		displayName: 'Sanftes Alpaka Kala',
+		username: 'sanftes.alpaka.kala@oriso.invalid',
+		askerMatrixUserId: consultantChatSession.item.askerMatrixUserId,
+		userId: consultantChatSession.item.askerMatrixUserId,
+		isNotRead: false,
+		t: null,
+		rid: consultantChatSession.rid
+	}
+];
+const noop = () => {};
+
+/** One identity/provider scope for the production header, timeline and composer. */
+function ConsultantChatProviders({ children }: { children: React.ReactNode }) {
 	return (
-		<div style={styles.staticComposer}>
-			<div style={styles.toolbarStrip}>
-				<span style={styles.iconPill} aria-hidden="true">
-					B
-				</span>
-				<span style={styles.iconPill} aria-hidden="true">
-					I
-				</span>
-				<span style={styles.iconPill} aria-hidden="true">
-					@
-				</span>
-				<span style={styles.iconPill} aria-hidden="true">
-					+
-				</span>
-			</div>
-			<div style={styles.staticInput}>
-				Nachricht an Klient:in schreiben
-			</div>
-			<span style={styles.sendButton} aria-hidden="true">
-				Senden
-			</span>
-		</div>
-	);
-}
-
-function ComposerPreview() {
-	const rootRef = React.useRef<HTMLDivElement>(null);
-
-	useEffect(() => {
-		const frame = window.requestAnimationFrame(() => {
-			rootRef.current
-				?.querySelector<HTMLButtonElement>(
-					'button[aria-label="Back to full editor tools"]'
-				)
-				?.click();
-		});
-
-		return () => window.cancelAnimationFrame(frame);
-	}, []);
-
-	return (
-		<div
-			ref={rootRef}
-			className="session"
-			style={styles.composerSessionShell}
+		<AppOrisoRuntimeProviders
+			sessions={
+				surfaceRole === 'asker'
+					? [consultantChatListItem]
+					: consultantChatSessions
+			}
 		>
-			<MatrixClientContext.Provider
+			<ServerSettingsContext.Provider
 				value={{
-					matrixClientService: null,
-					setMatrixClientService: () => {}
+					settings: [],
+					settingsReady: true,
+					getSetting: () => null
 				}}
 			>
-				<ActiveSessionContext.Provider
-					value={{
-						activeSession: mockActiveSession,
-						reloadActiveSession: () => {}
-					}}
+				<ConsultantListContext.Provider
+					value={{ consultantList: [], setConsultantList: noop }}
 				>
-					<UserDataContext.Provider
-						value={{
-							userData: mockUserData,
-							reloadUserData: async () => mockUserData,
-							setUserData: () => {}
-						}}
+					<ComposerStoryDecorator
+						activeSession={consultantChatSession}
+						userData={surfaceUserData()}
+						roomMembers={chatRoomMembers}
+						emptyDraftScopes={chatEmptyDraftScopes}
+						emptyDraftIndex
 					>
-						<ComposerBoundary>
-							<MessageSubmitInterfaceComponent
-								placeholder="Nachricht an Klient:in schreiben"
-								onSendButton={() => {}}
-								isTyping={() => {}}
-								language="de"
-							/>
-						</ComposerBoundary>
-					</UserDataContext.Provider>
-				</ActiveSessionContext.Provider>
-			</MatrixClientContext.Provider>
-		</div>
+						<MatrixClientContext.Provider
+							value={{
+								matrixClientService: chatMatrixService,
+								setMatrixClientService: noop
+							}}
+						>
+							{children}
+						</MatrixClientContext.Provider>
+					</ComposerStoryDecorator>
+				</ConsultantListContext.Provider>
+			</ServerSettingsContext.Provider>
+		</AppOrisoRuntimeProviders>
 	);
 }
 
 function ChatPanel() {
-	const [menuExpanded, setMenuExpanded] = useState(false);
-
+	const { fromL } = useResponsive();
 	return (
-		<section
-			className="session"
-			tabIndex={-1}
-			onMouseDown={focusSessionChromeOnPointerDown}
-			style={styles.chatPanel}
-			aria-label="Chatraum"
-		>
-			<header style={styles.chatHeader}>
-				<div style={styles.chatTitleCluster}>
-					<UserAvatar
-						username="sanftes.alpaka.kala@oriso.invalid"
-						displayName="Sanftes Alpaka Kala"
-						userId="active-chat"
-						size="32px"
-					/>
+		<ConsultantChatProviders>
+			<section
+				className="session chatStage__card"
+				tabIndex={-1}
+				onMouseDown={focusSessionChromeOnPointerDown}
+				aria-label="Chatraum"
+			>
+				<div className="chatStage__mainPane">
 					<div>
-						<div style={styles.chatTitle}>Sanftes Alpaka Kala</div>
+						<SessionHeaderComponent
+							bannedUsers={[]}
+							hideBackButton={!fromL}
+							callsInMenu={!fromL}
+						/>
 					</div>
-				</div>
-				<div style={styles.headerActions}>
-					<button
-						type="button"
-						aria-label="Audio call preview"
-						disabled
-						style={{
-							...styles.headerActionSoft,
-							...styles.previewAction
-						}}
-					>
-						<PhoneRoundedIcon fontSize="small" />
-					</button>
-					<button
-						type="button"
-						aria-label="Video call preview"
-						disabled
-						style={{
-							...styles.headerActionPrimary,
-							...styles.previewAction
-						}}
-					>
-						<VideocamRoundedIcon fontSize="small" />
-					</button>
-					<button
-						type="button"
-						aria-label="Supervision preview"
-						disabled
-						style={{
-							...styles.headerActionAccent,
-							...styles.previewAction
-						}}
-					>
-						<SupervisedUserCircleRoundedIcon fontSize="small" />
-					</button>
-					<button
-						type="button"
-						className="sessionMenu__icon sessionMenu__icon--desktop"
-						aria-label="More actions"
-						aria-expanded={menuExpanded}
-						onClick={() => setMenuExpanded((open) => !open)}
-						style={styles.headerMenuTrigger}
-					>
-						<MenuVerticalIcon />
-					</button>
-				</div>
-			</header>
-			<div style={styles.topicDivider}>
-				<span style={styles.topicPill}>Suchtprobleme</span>
-			</div>
-			<div style={styles.messageArea} aria-label="Chatverlauf">
-				<div className="messageItem__divider" style={styles.dayDivider}>
-					Heute
-				</div>
-				<div className="messageItem" style={styles.messageItem}>
-					<div className="messageItem__messageWrap">
-						<span className="messageItem__avatar">
-							<UserAvatar
-								username="sanftes.alpaka.kala@oriso.invalid"
-								displayName="Sanftes Alpaka Kala"
-								userId="active-chat"
-								size="32px"
-								ring={false}
+					<div className="session__content" aria-label="Chatverlauf">
+						{/* Same frame as `SessionItemComponent`: E2EE banner first,
+						    then the timeline inside `.message-holder`. */}
+						<div className="session__gameChromeFadeTarget">
+							<EncryptionBanner />
+						</div>
+						<div className="message-holder">
+							<MessageTimeline
+								messages={chatMessages}
+								clientName="Sanftes Alpaka Kala"
+								isMyMessage={(userId) =>
+									userId ===
+									chatMatrixService.getClient().getUserId()
+								}
+								handleDecryptionErrors={noop}
+								handleDecryptionSuccess={noop}
+								e2eeParams={mockE2eeParams()}
 							/>
-						</span>
-						<div className="messageItem__content">
-							<div className="messageItem__header">
-								<span className="messageItem__username messageItem__username--user">
-									Sanftes Alpaka Kala
-								</span>
-								<span className="messageItem__headerTime">
-									09:18
-								</span>
-							</div>
-							<div className="messageItem__message">
-								Ich habe heute wieder starkes Verlangen und
-								brauche kurz Orientierung.
-							</div>
 						</div>
 					</div>
+					<MessageSubmitInterfaceComponent
+						className="session__submit-interface"
+						placeholder={
+							surfaceRole === 'asker'
+								? 'Nachricht schreiben'
+								: 'Nachricht an Klient:in schreiben'
+						}
+						onSendButton={noop}
+						isTyping={noop}
+						language="de"
+					/>
 				</div>
-				<div
-					className="messageItem messageItem--right"
-					style={styles.messageItem}
-				>
-					<div className="messageItem__messageWrap messageItem__messageWrap--right">
-						<div className="messageItem__content">
-							<div className="messageItem__header">
-								<span className="messageItem__headerTime">
-									09:21
-								</span>
-							</div>
-							<div className="messageItem__message">
-								Danke, dass du dich meldest. Lass uns zuerst die
-								nächsten 10 Minuten strukturieren.
-							</div>
-						</div>
-					</div>
-				</div>
-				<div className="messageItem" style={styles.messageItem}>
-					<div className="messageItem__messageWrap">
-						<span className="messageItem__avatar">
-							<UserAvatar
-								username="sanftes.alpaka.kala@oriso.invalid"
-								displayName="Sanftes Alpaka Kala"
-								userId="active-chat"
-								size="32px"
-								ring={false}
-							/>
-						</span>
-						<div className="messageItem__content">
-							<div className="messageItem__header">
-								<span className="messageItem__username messageItem__username--user">
-									Sanftes Alpaka Kala
-								</span>
-								<span className="messageItem__headerTime">
-									09:24
-								</span>
-							</div>
-							<div className="messageItem__message">
-								Okay. Ich bin gerade zuhause und kann schreiben.
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
-			<div style={styles.composerDock}>
-				<ComposerPreview />
-			</div>
-		</section>
+			</section>
+		</ConsultantChatProviders>
 	);
 }
 
@@ -1308,10 +1336,12 @@ function AppOrisoConsultantChatSurface() {
 
 	return (
 		<div
-			style={{
-				...styles.viewport,
-				gridTemplateColumns: `85px ${listWidth}px 24px minmax(0, 1fr)`
-			}}
+			className="appOrisoConsultantChatStory"
+			style={
+				{
+					'--storybook-session-list-width': `${listWidth}px`
+				} as React.CSSProperties
+			}
 		>
 			<RuntimeSidebar />
 			<SessionListPanel width={listWidth} onResize={setListWidth} />
@@ -1326,16 +1356,162 @@ function AppOrisoRoutingFetchMockDecorator({
 }: {
 	children: React.ReactNode;
 }) {
-	useEffect(() => installAppOrisoRoutingFetchMocks(), []);
+	// A layout effect, so the mocks are in place before the list's first
+	// passive-effect fetch (drafts) (#1338).
+	useLayoutEffect(() => installAppOrisoRoutingFetchMocks(), []);
 	return <>{children}</>;
 }
+
+/**
+ * FE#2287: the open conversation's appointment API (GET appointments, free
+ * times, answers). Installed outermost, so it wraps the composer's mocks.
+ */
+function SurfaceAppointmentsFetchMock({
+	children
+}: {
+	children: React.ReactNode;
+}) {
+	useLayoutEffect(() => {
+		const previous = globalThis.fetch;
+		globalThis.fetch = async (
+			input: RequestInfo | URL,
+			init?: RequestInit
+		) => {
+			const url = requestUrl(input);
+			const method = (
+				init?.method ??
+				(input instanceof Request ? input.method : 'GET')
+			).toUpperCase();
+			const path = url.split('?')[0];
+			if (/\/sessions\/3363\/appointment-slots$/.test(path))
+				return storybookJsonResponse(surfaceSlots ?? []);
+			if (
+				/\/sessions\/3363\/appointments$/.test(path) &&
+				method === 'GET'
+			)
+				return storybookJsonResponse(surfaceAppointments ?? []);
+			if (/\/sessions\/3363\/appointment/.test(path))
+				return storybookJsonResponse(
+					(surfaceAppointments ?? [])[0] ?? {}
+				);
+			return previous(input, init);
+		};
+		return () => {
+			globalThis.fetch = previous;
+		};
+	}, []);
+	return <>{children}</>;
+}
+
+const surfaceInDays = (days: number, hour: number) => {
+	const date = new Date();
+	date.setDate(date.getDate() + days);
+	date.setHours(hour, 0, 0, 0);
+	return date.toISOString();
+};
+/** Requested by the advice seeker in three days, waiting for the counsellor. */
+const surfaceRequest = {
+	id: 'storybook-request-3363',
+	sessionId: 3363,
+	startTime: surfaceInDays(3, 10),
+	endTime: surfaceInDays(3, 11),
+	status: 'REQUESTED',
+	kind: 'VIDEO',
+	counterpart: { displayName: 'Sanftes Alpaka Kala' }
+};
+/** Free times two to five days ahead; the first morning only on request. */
+const surfaceFreeTimes = [2, 3, 5].flatMap((days, dayIndex) =>
+	[9, 10, 14].map((hour) => ({
+		startTime: surfaceInDays(days, hour),
+		endTime: surfaceInDays(days, hour + 1),
+		bookingMode: dayIndex === 0 && hour < 12 ? 'REQUEST' : 'INSTANT'
+	}))
+);
+
+const surfaceStory = (
+	role: 'consultant' | 'asker',
+	appointments: unknown[],
+	slots: unknown[] = []
+) => ({
+	decorators: [
+		(Story: React.ComponentType) => (
+			<SurfaceAppointmentsFetchMock>
+				<Story />
+			</SurfaceAppointmentsFetchMock>
+		)
+	],
+	beforeEach: () => {
+		surfaceRole = role;
+		surfaceAppointments = appointments;
+		surfaceSlots = slots;
+		return () => {
+			surfaceRole = 'consultant';
+			surfaceAppointments = null;
+			surfaceSlots = null;
+		};
+	},
+	render: () => <AppOrisoConsultantChatSurface />
+});
+
+/** The split button below the header, once the appointments are read. */
+const SPLIT_BUTTON = '[data-cy="room-next-appointment"] .splitButton__main';
+const splitButtonShown = (canvasElement: HTMLElement) => () => {
+	const found = canvasElement.querySelector<HTMLElement>(SPLIT_BUTTON);
+	if (!found) throw new Error('appointment not shown yet');
+	return found;
+};
+
+/** The visible ⋮ of the conversation header (desktop or phone button). */
+const openHeaderMenu = async (canvasElement: HTMLElement) => {
+	const trigger = await waitFor(
+		() => {
+			const found = Array.from(
+				canvasElement.querySelectorAll<HTMLElement>(
+					'.sessionMenu__icon'
+				)
+			).find((button) => button.getBoundingClientRect().width > 0);
+			if (!found) throw new Error('header menu not shown yet');
+			return found;
+		},
+		{ timeout: 5000 }
+	);
+	await userEvent.click(trigger);
+};
+
+/** The video button: in the header on desktop, a row of ⋮ on phones. */
+const pressVideoButton = async (canvasElement: HTMLElement) => {
+	const inHeader = await waitFor(
+		() => {
+			const header = canvasElement.querySelector('.sessionMenu__icon');
+			if (!header) throw new Error('header not shown yet');
+			return canvasElement.querySelector<HTMLElement>(
+				'[data-cy="session-header-start-video-call"]'
+			);
+		},
+		{ timeout: 5000 }
+	);
+	if (inHeader) {
+		await userEvent.click(inHeader);
+		return;
+	}
+	await openHeaderMenu(canvasElement);
+	await userEvent.click(
+		await waitFor(() => {
+			const row = document.querySelector<HTMLElement>(
+				'[data-cy="session-menu-start-video-call"]'
+			);
+			if (!row) throw new Error('video row not shown yet');
+			return row;
+		})
+	);
+};
 
 const meta = {
 	title: 'App.Oriso/Consultant chat surface',
 	tags: ['autodocs'],
+	globals: { backgrounds: { value: 'gray' } },
 	parameters: {
 		layout: 'fullscreen',
-		backgrounds: { default: 'gray' },
 		router: {
 			initialPath: '/sessions/consultant/sessionView/session/3363'
 		},
@@ -1358,8 +1534,19 @@ const meta = {
 					'Uses production SCSS for #597 focus rings: session list selected (`2px --m3-primary`), ' +
 					'chat panel `.session` active border on chrome focus (not composer selected), ' +
 					'session menu trigger shape on `aria-expanded`, and composer/send styles from ' +
-					'`messageSubmitInterface` / `sendButton`. The runtime shell mounts Routing/SessionsZone ' +
-					'with deterministic fixtures so product-code drift stays visible.'
+					'`messageSubmitInterface` / `sendButton`. Consultant Chat uses the production ' +
+					'`SessionHeaderComponent`, `MessageTimeline` and composer with one synthetic identity. ' +
+					'The separate runtime shell mounts Routing/SessionsZone ' +
+					'with deterministic fixtures so product-code drift stays visible. ' +
+					'Below 900px the active chat sits above the full-width production mobile menu. ' +
+					'Canonical menu variants: ' +
+					'[All menu variants](?path=/docs/components-layout-navigationsidebar--docs), ' +
+					'[Consultant desktop](?path=/story/components-layout-navigationsidebar--runtime-consultant-rail), ' +
+					'[Consultant short rail](?path=/story/components-layout-navigationsidebar--runtime-consultant-rail-short), ' +
+					'[Asker desktop](?path=/story/components-layout-navigationsidebar--runtime-asker-rail), ' +
+					'[Consultant mobile](?path=/story/components-layout-navigationsidebar--runtime-consultant-mobile-375-shell), ' +
+					'[Asker mobile](?path=/story/components-layout-navigationsidebar--runtime-asker-mobile). ' +
+					'For the session list use [Session list column](?path=/story/components-session-list-session-list-column--toolbar-create-chat-and-cards).'
 			}
 		}
 	}
@@ -1369,7 +1556,268 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const ConsultantChat: Story = {
-	render: () => <AppOrisoConsultantChatSurface />
+	render: () => <AppOrisoConsultantChatSurface />,
+	play: async ({ canvasElement }) => {
+		const headerTitle = canvasElement.querySelector('.sessionInfo h3');
+		await expect(headerTitle).not.toBeNull();
+		await expect(headerTitle).toHaveTextContent('Sanftes Alpaka Kala');
+		const header = canvasElement.querySelector('.sessionInfo')!;
+		const mainPane = canvasElement.querySelector('.chatStage__mainPane')!;
+		const topicTags = header.querySelectorAll(
+			'.sessionInfo__metaInfo__content'
+		);
+		await expect(topicTags).toHaveLength(1);
+		await expect(topicTags[0]).toHaveTextContent(/^Suchtprobleme$/);
+		const topicBounds = topicTags[0].getBoundingClientRect();
+		const headerBounds = header.getBoundingClientRect();
+		await expect(topicBounds.left).toBeGreaterThanOrEqual(
+			headerBounds.left
+		);
+		await expect(topicBounds.right).toBeLessThanOrEqual(headerBounds.right);
+		await expect(topicBounds.bottom).toBeLessThanOrEqual(
+			headerBounds.bottom + 1
+		);
+		const headerAvatars = header.querySelectorAll(
+			'[data-cy="session-header-participants"] [data-testid="user-avatar"]'
+		);
+		await expect(headerAvatars.length).toBeGreaterThan(0);
+		for (const avatar of headerAvatars) {
+			await expect(Math.round(avatar.getBoundingClientRect().width)).toBe(
+				48
+			);
+		}
+		await expect(
+			Math.abs(
+				header.getBoundingClientRect().width - mainPane.clientWidth
+			)
+		).toBeLessThanOrEqual(1);
+		await expect(header.getBoundingClientRect().right).toBeLessThanOrEqual(
+			mainPane.getBoundingClientRect().right + 1
+		);
+		const titleStyle = getComputedStyle(headerTitle!);
+		await expect(titleStyle.whiteSpace).toBe('nowrap');
+		await expect(titleStyle.textOverflow).toBe('ellipsis');
+		await expect(
+			headerTitle!.getBoundingClientRect().height
+		).toBeLessThanOrEqual(Number.parseFloat(titleStyle.lineHeight) + 1);
+		await expect(
+			canvasElement.querySelector('.messageDateDivider__pill')
+		).toHaveTextContent('Heute');
+		await waitFor(() => {
+			expect(
+				canvasElement.querySelectorAll('.messageItem__timeRail')
+			).toHaveLength(3);
+		});
+		await expect(
+			Array.from(
+				canvasElement.querySelectorAll('.messageItem__messageTime')
+			).map((time) => time.textContent?.trim())
+		).toEqual(['09:18', '09:21', '09:24']);
+		await expect(
+			canvasElement.querySelectorAll(
+				'.messageItem__avatar [data-testid="user-avatar"]'
+			)
+		).toHaveLength(3);
+		await waitFor(() => {
+			for (const avatar of canvasElement.querySelectorAll(
+				'.messageItem__avatar [data-testid="user-avatar"]'
+			)) {
+				expect(Math.round(avatar.getBoundingClientRect().width)).toBe(
+					AVATAR_SIZES.message
+				);
+			}
+		});
+		const timeline =
+			canvasElement.querySelector<HTMLElement>('.session__content')!;
+		timeline.scrollTop = timeline.scrollHeight;
+		await waitFor(() => {
+			const lastTime = canvasElement
+				.querySelectorAll('.messageItem__timeRail')[2]
+				.getBoundingClientRect();
+			const composer = canvasElement
+				.querySelector('.messageSubmit__wrapper')!
+				.getBoundingClientRect();
+			expect(lastTime.bottom).toBeLessThanOrEqual(composer.top);
+			expect(lastTime.top).toBeGreaterThanOrEqual(
+				timeline.getBoundingClientRect().top
+			);
+		});
+		const rail = canvasElement.querySelector('.appOrisoRuntimeRail');
+		const navigation = rail?.querySelector('.navigation__wrapper');
+		const routes = rail?.querySelectorAll('.navigation__item__top a');
+		await expect(rail).not.toBeNull();
+		await expect(navigation).not.toBeNull();
+		await expect(routes?.length).toBeGreaterThan(1);
+		const first = routes![0].getBoundingClientRect();
+		const second = routes![1].getBoundingClientRect();
+		const bounds = navigation!.getBoundingClientRect();
+		if (window.innerWidth >= 900) {
+			await expect(second.top).toBeGreaterThan(first.top);
+			await expect(Math.abs(second.left - first.left)).toBeLessThan(1);
+			await expect(first.right).toBeLessThanOrEqual(bounds.right + 1);
+		} else {
+			await expect(second.left).toBeGreaterThan(first.left);
+			await expect(Math.abs(second.top - first.top)).toBeLessThan(1);
+			await expect(bounds.width).toBeGreaterThanOrEqual(
+				canvasElement.getBoundingClientRect().width - 1
+			);
+			await expect(bounds.bottom).toBeLessThanOrEqual(window.innerHeight);
+			const chat = canvasElement.querySelector(
+				'.appOrisoConsultantChatStory > .session'
+			);
+			await expect(chat).toBeVisible();
+			await expect(
+				chat!.getBoundingClientRect().bottom
+			).toBeLessThanOrEqual(bounds.top);
+		}
+	}
+};
+
+/**
+ * FE#2287, whole page: the advice seeker's request sits in the split button
+ * below the header, marked "angefragt"; its menu answers it.
+ */
+export const CounsellorAppointmentRequest: Story = {
+	name: 'Appointment request — counsellor answers from the split button',
+	...surfaceStory('consultant', [surfaceRequest]),
+	play: async ({ canvasElement }) => {
+		const button = await waitFor(splitButtonShown(canvasElement), {
+			timeout: 5000
+		});
+		await expect(button).toHaveTextContent(/^Angefragt · /);
+		await userEvent.click(button);
+		const body = within(document.body);
+		await expect(
+			await body.findByRole('menuitem', { name: /Termin bestätigen/ })
+		).toBeVisible();
+		await expect(
+			body.getByRole('menuitem', { name: /Termin ablehnen/ })
+		).toBeVisible();
+	}
+};
+
+/** FE#2287, whole page: the advice seeker withdraws through the same menu. */
+export const AskerAppointmentRequest: Story = {
+	name: 'Appointment request — advice seeker sees it in the split button',
+	...surfaceStory('asker', [surfaceRequest]),
+	play: async ({ canvasElement }) => {
+		const button = await waitFor(splitButtonShown(canvasElement), {
+			timeout: 5000
+		});
+		await expect(button).toHaveTextContent(/^Angefragt · /);
+		await userEvent.click(button);
+		await expect(
+			await within(document.body).findByRole('menuitem', {
+				name: /Anfrage zurückziehen/
+			})
+		).toBeVisible();
+	}
+};
+
+/** "Termin anlegen" stays a row of the header's ⋮ menu. */
+export const CounsellorCreateAppointmentInMenu: Story = {
+	name: 'Appointment — "Termin anlegen" in the header menu',
+	...surfaceStory('consultant', []),
+	play: async ({ canvasElement }) => {
+		await openHeaderMenu(canvasElement);
+		// The menu fades in: wait until the row is visible, not only mounted.
+		await waitFor(() =>
+			expect(
+				document.querySelector(
+					'[data-cy="session-menu-create-appointment"]'
+				)
+			).toBeVisible()
+		);
+	}
+};
+
+/** The advice seeker's video button shows the request instead of calling. */
+export const AskerCallInfoOverConversation: Story = {
+	name: 'Advice seeker — call information over the conversation',
+	...surfaceStory('asker', [surfaceRequest]),
+	play: async ({ canvasElement }) => {
+		await waitFor(splitButtonShown(canvasElement), {
+			timeout: 5000
+		});
+		await pressVideoButton(canvasElement);
+		const dialog = await within(document.body).findByTestId(
+			'asker-call-info'
+		);
+		await waitFor(() => expect(dialog).toBeVisible());
+		await expect(dialog).toHaveTextContent(/Angefragt · /);
+	}
+};
+
+/** Without an appointment, "Termin anfragen" opens the free times. */
+export const AskerSelfBookingOverConversation: Story = {
+	name: 'Advice seeker — free times over the conversation',
+	...surfaceStory('asker', [], surfaceFreeTimes),
+	play: async ({ canvasElement }) => {
+		await pressVideoButton(canvasElement);
+		const body = within(document.body);
+		await userEvent.click(
+			await body.findByTestId('asker-call-info-request')
+		);
+		const dialog = await body.findByRole('dialog', { name: /Termin/ });
+		await waitFor(() => expect(dialog).toBeVisible());
+	}
+};
+
+export const RuntimeRoutingShellFutureZone: Story = {
+	name: 'Runtime Routing Shell — future zone (ADR-021)',
+	decorators: [
+		(Story) => (
+			<AppOrisoRoutingFetchMockDecorator>
+				<Story />
+			</AppOrisoRoutingFetchMockDecorator>
+		)
+	],
+	beforeEach: () => {
+		runtimeTimelineFixtures = true;
+		return () => {
+			runtimeTimelineFixtures = false;
+		};
+	},
+	render: () => <AppOrisoRoutingRuntimeShell />,
+	play: async ({ canvasElement }) => {
+		const zone = await waitFor(
+			() => {
+				const found = canvasElement.querySelector<HTMLElement>(
+					'[data-cy="sessions-list-timeline"]'
+				);
+				if (!found) throw new Error('future zone not mounted yet');
+				return found;
+			},
+			{ timeout: 8000 }
+		);
+		// Two group dates (real room card) and the 1:1 appointment.
+		await waitFor(() =>
+			expect(
+				zone.querySelectorAll('[data-cy="timeline-future"] .tlp__row')
+			).toHaveLength(3)
+		);
+		// The 1:1 appointment of a conversation the list has not loaded yet.
+		expect(
+			Array.from(
+				zone.querySelectorAll('[data-cy="timeline-entry"]'),
+				(entry) => entry.textContent
+			).join('\n')
+		).toContain('Ratsuchende Lena');
+		expect(zone.querySelector('[data-cy="timeline-now"]')).not.toBeNull();
+		// The group's past card carries the clock circle.
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector(
+					'.sessionsList__scrollContainer .upcomingAppointmentClock'
+				)
+			).not.toBeNull()
+		);
+	}
+};
+
+export const ConsultantChatOnPhone: Story = {
+	...ConsultantChat,
+	globals: { viewport: { value: 'phone375', isRotated: false } }
 };
 
 export const RuntimeRoutingShell: Story = {
@@ -1384,272 +1832,106 @@ export const RuntimeRoutingShell: Story = {
 	render: () => <AppOrisoRoutingRuntimeShell />
 };
 
+/**
+ * Frank, 2026-11-17: the collapsed list of "Anfragen" set "Aktuell liegen
+ * keine Erstanfragen vor" one letter per line. The rail now keeps the search
+ * (as the rail of "Meine Termine" does): one press opens the column with the
+ * cursor in the search field. Gespräche shows the same button.
+ */
+export const RailKeepsTheSearch: Story = {
+	name: 'Runtime Routing Shell — rail keeps the search, no empty text',
+	globals: { viewport: { value: 'desktop1024', isRotated: false } },
+	decorators: [
+		(Story) => (
+			<AppOrisoRoutingFetchMockDecorator>
+				<Story />
+			</AppOrisoRoutingFetchMockDecorator>
+		)
+	],
+	beforeEach: () => {
+		runtimeNoEnquiries = true;
+		return () => {
+			runtimeNoEnquiries = false;
+		};
+	},
+	render: () => <AppOrisoRoutingRuntimeShell />,
+	play: async ({ canvasElement }) => {
+		const wrapper = () =>
+			canvasElement.querySelector<HTMLElement>('.sessionsList__wrapper');
+		const handle = await waitFor(() => {
+			const found = canvasElement.querySelector<HTMLElement>(
+				'.sessionsList__wrapper .sessionsList__resizeHandle'
+			);
+			if (!found) throw new Error('list not mounted yet');
+			return found;
+		});
+		handle.focus();
+		handle.dispatchEvent(
+			new KeyboardEvent('keydown', { key: 'Home', bubbles: true })
+		);
+		await waitFor(() =>
+			expect(wrapper()!.getBoundingClientRect().width).toBe(80)
+		);
+		// Gespräche: the rail starts with the search button.
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector(
+					'[data-cy="session-list-rail-search"]'
+				)
+			).not.toBeNull()
+		);
+
+		canvasElement
+			.querySelector<HTMLAnchorElement>(
+				'a[href="/sessions/consultant/sessionPreview"]'
+			)!
+			.click();
+		// Anfragen, empty: the search button, never the sentence.
+		const railSearch = await waitFor(() => {
+			const found = canvasElement.querySelector<HTMLButtonElement>(
+				'[data-cy="session-list-rail-search"]'
+			);
+			if (!found) throw new Error('enquiry rail not mounted yet');
+			return found;
+		});
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector(
+					'[data-tour-target="consultant-enquiries-list"]'
+				)
+			).not.toBeNull()
+		);
+		await new Promise((resolve) => setTimeout(resolve, 500));
+		await expect(
+			canvasElement.querySelector('.sessionsList__emptyState')
+		).toBeNull();
+
+		railSearch.click();
+		await waitFor(() =>
+			expect(wrapper()!.getBoundingClientRect().width).toBe(420)
+		);
+		await waitFor(
+			() =>
+				expect(document.activeElement?.className).toContain(
+					'sessionsListToolbar__searchInput'
+				),
+			{ timeout: 3000 }
+		);
+	}
+};
+
 const styles = {
-	viewport: {
-		display: 'grid',
-		height: 860,
-		minHeight: 720,
-		background: '#EAE7E8',
-		color: '#1D1B20',
-		fontFamily:
-			'Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
-		overflow: 'hidden'
-	} satisfies React.CSSProperties,
-	navigationRail: {
-		width: 85,
-		height: '100%',
-		minHeight: 0,
-		background: '#EAE7E8',
-		overflow: 'hidden'
-	} satisfies React.CSSProperties,
-	sidebar: {
-		display: 'flex',
-		flexDirection: 'column',
-		alignItems: 'center',
-		justifyContent: 'space-between',
-		padding: '24px 10px',
-		background: '#EAE7E8'
-	} satisfies React.CSSProperties,
-	sidebarNav: {
-		display: 'flex',
-		flexDirection: 'column',
-		gap: 14,
-		alignItems: 'center'
-	} satisfies React.CSSProperties,
-	sidebarItem: {
-		border: 0,
-		background: 'transparent',
-		padding: 0,
-		display: 'flex',
-		flexDirection: 'column',
-		alignItems: 'center',
-		gap: 4,
-		color: '#4C555F',
-		fontFamily: 'inherit'
-	} satisfies React.CSSProperties,
-	sidebarButton: {
-		width: 48,
-		height: 48,
-		borderRadius: 12,
-		background: '#E4E2E2',
-		color: '#4C555F',
-		display: 'grid',
-		placeItems: 'center'
-	} satisfies React.CSSProperties,
-	sidebarButtonActive: {
-		background: '#FFDAD5',
-		border: '1px solid #930008',
-		color: '#A5000A'
-	} satisfies React.CSSProperties,
-	sidebarButtonDark: {
-		background: '#410001',
-		color: '#FFFFFF'
-	} satisfies React.CSSProperties,
-	sidebarLabel: {
-		fontSize: 11,
-		lineHeight: '16px',
-		fontWeight: 500,
-		color: '#4C555F',
-		letterSpacing: 0,
-		textAlign: 'center'
-	} satisfies React.CSSProperties,
-	sidebarLabelActive: {
-		color: '#A5000A'
-	} satisfies React.CSSProperties,
 	listPanel: {
 		position: 'relative',
-		background: '#EAE7E8',
-		// `visible` (not `hidden`) so the resize handle can sit in the
-		// 24px gutter column to the right of the panel.
+		background: 'var(--m3-surface-container-high, #eae7e8)',
+		// Keep the real handle visible in the gutter.
 		overflow: 'visible',
 		minHeight: 0,
 		display: 'flex',
 		flexDirection: 'column'
 	} satisfies React.CSSProperties,
-	// Height only — gutters/radius come from sessionsList__scrollContainer.
 	listScroll: {
 		height: 'calc(100% - 118px)',
 		minHeight: 0
-	} satisfies React.CSSProperties,
-	consultingTypeLabel: {
-		marginLeft: 4,
-		color: '#4C555F',
-		fontSize: 12,
-		lineHeight: '16px',
-		fontWeight: 500
-	} satisfies React.CSSProperties,
-	chatPanel: {
-		display: 'grid',
-		gridTemplateRows: '58px auto minmax(0, 1fr) auto',
-		// Layout only — resting/active borders come from `.session` (#597)
-		margin: '16px 8px 16px 0',
-		minWidth: 0,
-		minHeight: 0,
-		height: '100%'
-	} satisfies React.CSSProperties,
-	chatHeader: {
-		display: 'flex',
-		alignItems: 'center',
-		justifyContent: 'space-between',
-		padding: '14px 16px',
-		background: '#FFFFFF'
-	} satisfies React.CSSProperties,
-	chatTitleCluster: {
-		display: 'flex',
-		alignItems: 'center',
-		gap: 8,
-		minWidth: 0
-	} satisfies React.CSSProperties,
-	chatTitle: {
-		fontSize: 22,
-		lineHeight: '28px',
-		fontWeight: 500,
-		color: '#4C555F'
-	} satisfies React.CSSProperties,
-	headerActions: {
-		display: 'flex',
-		alignItems: 'center',
-		gap: 8
-	} satisfies React.CSSProperties,
-	headerMenuTrigger: {
-		// Force visible in Storybook; production toggles via breakpoint
-		display: 'inline-flex',
-		marginLeft: 0
-	} satisfies React.CSSProperties,
-	headerAction: {
-		width: 32,
-		height: 32,
-		borderRadius: 999,
-		border: '1px solid #FFDAD5',
-		background: '#FFFFFF',
-		color: '#410001',
-		display: 'grid',
-		placeItems: 'center'
-	} satisfies React.CSSProperties,
-	headerActionSoft: {
-		width: 32,
-		height: 32,
-		borderRadius: 999,
-		border: 0,
-		background: '#FFE2DE',
-		color: '#A5000A',
-		display: 'grid',
-		placeItems: 'center'
-	} satisfies React.CSSProperties,
-	headerActionPrimary: {
-		width: 32,
-		height: 32,
-		borderRadius: 12,
-		border: 0,
-		background: '#A5000A',
-		color: '#FFFFFF',
-		display: 'grid',
-		placeItems: 'center'
-	} satisfies React.CSSProperties,
-	headerActionAccent: {
-		width: 32,
-		height: 32,
-		borderRadius: 4,
-		border: 0,
-		background: '#CC1E1C',
-		color: '#FFFFFF',
-		display: 'grid',
-		placeItems: 'center'
-	} satisfies React.CSSProperties,
-	previewAction: {
-		opacity: 1,
-		cursor: 'default'
-	} satisfies React.CSSProperties,
-	topicDivider: {
-		borderTop: '1px solid #FFE2DE',
-		paddingLeft: 36,
-		height: 0,
-		position: 'relative',
-		zIndex: 2,
-		background: '#FFFFFF'
-	} satisfies React.CSSProperties,
-	topicPill: {
-		display: 'inline-flex',
-		alignItems: 'center',
-		height: 20,
-		padding: '2px 8px',
-		borderRadius: '0 0 4px 4px',
-		background: '#FFE2DE',
-		color: '#4C555F',
-		fontSize: 12,
-		lineHeight: '16px',
-		fontWeight: 500
-	} satisfies React.CSSProperties,
-	messageArea: {
-		overflow: 'hidden auto',
-		background: '#FFFFFF',
-		minHeight: 0,
-		padding: '32px 40px'
-	} satisfies React.CSSProperties,
-	messageItem: {
-		opacity: 1,
-		animation: 'none'
-	} satisfies React.CSSProperties,
-	dayDivider: {
-		opacity: 1,
-		animation: 'none'
-	} satisfies React.CSSProperties,
-	composerDock: {
-		padding: 0,
-		background: '#FFFFFF'
-	} satisfies React.CSSProperties,
-	composerSessionShell: {
-		position: 'relative',
-		display: 'block',
-		height: 156,
-		minHeight: 156,
-		margin: 0,
-		border: 0,
-		borderRadius: 0,
-		background: 'transparent',
-		overflow: 'visible'
-	} satisfies React.CSSProperties,
-	staticComposer: {
-		display: 'grid',
-		gridTemplateColumns: 'auto minmax(0, 1fr) auto',
-		alignItems: 'center',
-		gap: 12,
-		background: '#FFFFFF',
-		border: '1px solid #E4E2E2',
-		borderRadius: 8,
-		padding: 12
-	} satisfies React.CSSProperties,
-	toolbarStrip: {
-		display: 'flex',
-		gap: 6
-	} satisfies React.CSSProperties,
-	iconPill: {
-		width: 32,
-		height: 32,
-		borderRadius: 16,
-		border: '1px solid #E4E2E2',
-		background: '#F6F3F3',
-		color: '#4C555F',
-		fontWeight: 700,
-		display: 'grid',
-		placeItems: 'center'
-	} satisfies React.CSSProperties,
-	staticInput: {
-		minHeight: 44,
-		display: 'flex',
-		alignItems: 'center',
-		color: '#4C555F'
-	} satisfies React.CSSProperties,
-	sendButton: {
-		minHeight: 44,
-		borderRadius: 22,
-		border: 0,
-		padding: '0 18px',
-		// #597: resting send matches production empty state
-		background: 'var(--m3-primary-fixed-dim, #ffb4aa)',
-		color: '#FFFFFF',
-		fontWeight: 700,
-		display: 'inline-flex',
-		alignItems: 'center'
 	} satisfies React.CSSProperties
 };

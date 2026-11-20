@@ -1,0 +1,35 @@
+import * as React from 'react';
+import { Box, Button, Stack, Typography } from '@mui/material';
+import { useTranslation } from 'react-i18next';
+
+/** No fresh sign-in exists for a guest whose session has already expired. */
+export const LiveChatConversionExpired = () => {
+	const { t } = useTranslation();
+	return (
+		<Box component="main" sx={{ maxWidth: 560, mx: 'auto', p: 3 }}>
+			<Stack spacing={2}>
+				<Typography component="h1" variant="h4">
+					{t(
+						'liveChatConversion.expiredTitle',
+						'This Live Chat session has expired'
+					)}
+				</Typography>
+				<Typography>
+					{t(
+						'liveChatConversion.expiredHelp',
+						'If you already created a password, sign in with it. Otherwise this conversation can no longer be converted here; a new registration starts a separate conversation.'
+					)}
+				</Typography>
+				<Button href="/login" variant="outlined">
+					{t('accountInvite.toLogin', 'Go to sign in')}
+				</Button>
+				<Button href="/registration" variant="contained">
+					{t(
+						'liveChatConversion.newRegistration',
+						'Start a new registration'
+					)}
+				</Button>
+			</Stack>
+		</Box>
+	);
+};

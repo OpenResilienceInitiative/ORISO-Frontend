@@ -91,21 +91,31 @@ export const storybookSettings = {
 export function NavigationStoryProviders({
 	role,
 	liveChatViaSidebar = true,
+	tenantSettings,
+	appointmentFeatureEnabled = false,
 	children
 }: {
 	role: 'consultant' | 'asker';
+	/** Shows the "Meine Termine" rail entry (calendar, FE#1050). */
+	appointmentFeatureEnabled?: boolean;
 	/**
 	 * The consultant's profile preference "Live Chat über Menü Leiste
 	 * aktivieren" (UserService `liveChatViaSidebar`). Defaults to on so the
 	 * rail stories keep showing the Live Chat toggle.
 	 */
 	liveChatViaSidebar?: boolean;
+	/** Extra Träger settings, e.g. "Direkteinladung erlauben" (#1894). */
+	tenantSettings?: Record<string, unknown>;
 	children: React.ReactNode;
 }) {
 	const [userData, setUserData] = useState(() =>
 		role === 'consultant'
-			? { ...consultantUserData, liveChatViaSidebar }
-			: askerUserData
+			? {
+					...consultantUserData,
+					liveChatViaSidebar,
+					appointmentFeatureEnabled
+				}
+			: { ...askerUserData, appointmentFeatureEnabled }
 	);
 
 	/*
@@ -194,7 +204,8 @@ export function NavigationStoryProviders({
 								id: 1,
 								name: 'ORISO Storybook',
 								settings: {
-									featureToolsEnabled: false
+									featureToolsEnabled: false,
+									...tenantSettings
 								}
 							} as any,
 							setTenant: () => {}

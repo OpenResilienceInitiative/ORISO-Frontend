@@ -97,4 +97,43 @@
 			background: transparent;
 		}
 	}
+
+	// Label takes the surrounding text colour (e.g. a split-button segment).
+	// The box sets its own `color` (the tick), so `currentcolor` there would
+	// be white: name the outline token explicitly.
+	&--inherit,
+	&--onPrimary {
+		color: inherit;
+		font: inherit;
+	}
+
+	&--inherit .m3Checkbox__box {
+		border-color: var(--m3-on-surface-variant, #444748);
+	}
+
+	&--onPrimary .m3Checkbox__box {
+		border-color: var(--m3-on-primary, #ffffff);
+	}
+
+	// On a primary fill the ticked box inverts: a white box, primary tick.
+	// The state layer is the segment's on-primary text colour at 12 %.
+	&--onPrimary {
+		.m3Checkbox__input:checked + .m3Checkbox__box {
+			background: var(--m3-surface-container-lowest, #ffffff);
+			border-color: var(--m3-on-primary, #ffffff);
+			color: var(--m3-primary, #a5000a);
+		}
+
+		.m3Checkbox__target:hover::before,
+		.m3Checkbox__input:focus-visible + .m3Checkbox__box::before {
+			background: color-mix(in srgb, currentcolor 12%, transparent);
+		}
+	}
+
+	&--fill {
+		width: 100%;
+		height: 100%;
+		gap: 0;
+		white-space: nowrap;
+	}
 }

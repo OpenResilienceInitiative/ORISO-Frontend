@@ -31,7 +31,8 @@ export interface AnonymousEnquiryDetails {
  * global error page — the waiting-queue UI is allowed to silently degrade.
  */
 export const apiGetAnonymousEnquiryDetails = (
-	sessionId: number | string
+	sessionId: number | string,
+	signal?: AbortSignal
 ): Promise<AnonymousEnquiryDetails> =>
 	fetchData({
 		url: endpoints.anonymousEnquiryDetails(sessionId),
@@ -41,5 +42,6 @@ export const apiGetAnonymousEnquiryDetails = (
 			FETCH_ERRORS.NO_MATCH,
 			FETCH_ERRORS.BAD_REQUEST
 		],
-		method: FETCH_METHODS.GET
+		method: FETCH_METHODS.GET,
+		signal
 	});

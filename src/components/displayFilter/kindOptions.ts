@@ -15,10 +15,10 @@ import { ReactComponent as CallKindIcon } from '../../resources/img/icons/displa
 import { ReactComponent as SystemKindIcon } from '../../resources/img/icons/display-filter-system.svg';
 import { ReactComponent as AppointmentKindIcon } from '../../resources/img/icons/display-filter-appointment.svg';
 import { ReactComponent as OtherKindIcon } from '../../resources/img/icons/display-filter-other.svg';
-import { ReactComponent as FutureTimelineKindIcon } from '../../resources/img/icons/calendar.svg';
 import {
 	ArchiveFilterIcon,
 	CreateChatFilterIcon,
+	DirectLinkFilterIcon,
 	DraftFilterIcon,
 	GroupFilterIcon,
 	InternalGroupFilterIcon,
@@ -48,6 +48,7 @@ export const SESSION_KIND_ICONS: Record<string, KindIcon> = {
 	unread: UnreadFilterIcon as unknown as KindIcon,
 	drafts: DraftFilterIcon as unknown as KindIcon,
 	oneToOne: MailFilterIcon as unknown as KindIcon,
+	directLinks: DirectLinkFilterIcon as unknown as KindIcon,
 	nearby: MailFilterIcon as unknown as KindIcon,
 	liveChat: LiveChatFilterIcon as unknown as KindIcon,
 	internalGroup: InternalGroupFilterIcon as unknown as KindIcon,
@@ -55,7 +56,6 @@ export const SESSION_KIND_ICONS: Record<string, KindIcon> = {
 	supervision: SupervisionFilterIcon as unknown as KindIcon,
 	archive: ArchiveFilterIcon as unknown as KindIcon,
 	appointments: AppointmentKindIcon,
-	futureTimeline: FutureTimelineKindIcon,
 	other: OtherKindIcon
 };
 
@@ -70,8 +70,6 @@ export const sessionKindLabel = (t: Translate, kind: string): string => {
 	switch (kind) {
 		case 'other':
 			return t('notifications.displayFilter.otherKind');
-		case 'futureTimeline':
-			return t('groupChat.futureTimeline.ariaLabel');
 		case 'circle':
 			return t('sessionList.toolbar.chips.groups');
 		case 'archive':

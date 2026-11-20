@@ -1,6 +1,6 @@
 import { readdirSync, readFileSync, statSync } from 'fs';
 import { join, relative } from 'path';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 /**
  * FE-H05 (#178). Caritas is a third party. A Caritas legal URL served as this

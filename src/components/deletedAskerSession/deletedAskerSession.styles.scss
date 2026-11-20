@@ -1,0 +1,125 @@
+// ORISO-Frontend#1159: main window of a deleted advice-seeker chat. Header
+// like every conversation (sessionInfo), body with the platform's system
+// message card and the archive action under it.
+.deletedAskerSession {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	min-height: 0;
+	background: var(--m3-surface, #fff8f7);
+	font-family: $font-family-sans-serif;
+
+	&__info {
+		flex-shrink: 0;
+		padding: 0 16px;
+	}
+
+	&__header {
+		justify-content: flex-start;
+		gap: 12px;
+	}
+
+	&__title {
+		margin: 0;
+		min-width: 0;
+		font-size: 16px;
+		line-height: 24px;
+		font-weight: $font-weight-medium;
+		color: var(--m3-on-surface, #1d1b1b);
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	&__body {
+		flex: 1 1 auto;
+		min-height: 0;
+		overflow-y: auto;
+		padding: 24px 16px;
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+	}
+
+	&__noticeBody {
+		margin: 0;
+	}
+
+	&__actions {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 12px;
+		text-align: center;
+	}
+
+	&__hint,
+	&__archived,
+	&__error {
+		margin: 0;
+		font-size: 14px;
+		line-height: 20px;
+		color: var(--m3-on-surface-variant, #534341);
+	}
+
+	&__archived {
+		display: inline-flex;
+		align-items: center;
+		align-self: center;
+		gap: 8px;
+
+		svg {
+			width: 18px;
+			height: 18px;
+
+			path {
+				fill: currentColor;
+			}
+		}
+	}
+
+	&__error {
+		color: var(--m3-error, #ba1a1a);
+	}
+
+	// Same pill as the other primary actions in the chat window.
+	&__archive {
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		min-height: 40px;
+		padding: 0 24px;
+		border: 0;
+		border-radius: 20px;
+		background: var(--oriso-primary, var(--m3-primary, $primary));
+		color: var(--m3-on-primary, #fff);
+		font-family: inherit;
+		font-size: 14px;
+		line-height: 20px;
+		font-weight: $font-weight-medium;
+		cursor: pointer;
+
+		svg {
+			width: 18px;
+			height: 18px;
+
+			path {
+				fill: currentColor;
+			}
+		}
+
+		&:hover:not(:disabled) {
+			filter: brightness(0.92);
+		}
+
+		&:focus-visible {
+			outline: 2px solid var(--m3-primary, $primary);
+			outline-offset: 2px;
+		}
+
+		&:disabled {
+			opacity: 0.6;
+			cursor: default;
+		}
+	}
+}

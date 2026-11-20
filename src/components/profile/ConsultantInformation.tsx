@@ -22,8 +22,11 @@ import { apiPutConsultantData } from '../../api/apiPutConsultantData';
 import { useTranslation } from 'react-i18next';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import { ProfileAvatarChoice } from './ProfileAvatarChoice';
-
-const PUBLIC_SLUG_PATTERN = /^[a-z]+(-[a-z]+)*$/;
+import {
+	buildPersonalRegistrationLink,
+	isValidPublicSlug,
+	PUBLIC_SLUG_MAX_LENGTH
+} from './publicContactLink';
 
 export const ConsultantInformation = () => {
 	const { t: translate } = useTranslation();
@@ -109,7 +112,7 @@ export const ConsultantInformation = () => {
 		setIsSlugSaveDisabled(
 			isSlugRequestInProgress ||
 				normalizedPublicSlug === currentSlug ||
-				!PUBLIC_SLUG_PATTERN.test(normalizedPublicSlug)
+				!isValidPublicSlug(normalizedPublicSlug)
 		);
 	}, [
 		editedPublicSlug,
@@ -182,7 +185,9 @@ export const ConsultantInformation = () => {
 						)}
 					</div>
 					<Text
-						text={translate('profile.data.publicSlug.info')}
+						text={translate('profile.data.publicSlug.info', {
+							max: PUBLIC_SLUG_MAX_LENGTH
+						})}
 						type="standard"
 						className="tertiary"
 					/>
@@ -196,6 +201,7 @@ export const ConsultantInformation = () => {
 						}
 						isDisabled={!isSlugEditEnabled}
 						onValueIsValid={handleValidPublicSlug}
+						maxLength={PUBLIC_SLUG_MAX_LENGTH}
 					/>
 					<Text
 						text={publicSlugStatusText}
@@ -244,72 +250,83 @@ const PersonalRegistrationLink = ({
 	const settings = useAppConfig();
 
 	const { addNotification } = useContext(NotificationsContext);
+	const registrationLink = buildPersonalRegistrationLink(
+		settings.urls.registration,
+		consultantIdentifier
+	);
 
 	const copyRegistrationLink = useCallback(async () => {
-		await copyTextToClipboard(
-			`${settings.urls.registration}?cid=${consultantIdentifier}`,
-			() => {
-				addNotification({
-					notificationType: NOTIFICATION_TYPE_SUCCESS,
-					title: translate(
-						'profile.data.personal.registrationLink.notification.title'
-					),
-					text: translate(
-						'profile.data.personal.registrationLink.notification.text'
-					)
-				});
-			}
-		);
-	}, [
-		settings.urls.registration,
-		consultantIdentifier,
-		addNotification,
-		translate
-	]);
+		const confirmCopy = () => {
+			addNotification({
+				notificationType: NOTIFICATION_TYPE_SUCCESS,
+				title: translate(
+					'profile.data.personal.registrationLink.notification.title'
+				),
+				text: translate(
+					'profile.data.personal.registrationLink.notification.text'
+				)
+			});
+		};
+		try {
+			// Clipboard API first; it is missing on plain http and can be refused.
+			await navigator.clipboard.writeText(registrationLink);
+			confirmCopy();
+		} catch {
+			await copyTextToClipboard(registrationLink, confirmCopy);
+		}
+	}, [registrationLink, addNotification, translate]);
 
 	return (
-		<div
-			className={`flex flex--wrap flex--ai-c flex-xl--nowrap ${className}`}
-		>
-			<div className="mt--1">
-				<GenerateQrCode
-					url={`${settings.urls.registration}?cid=${consultantIdentifier}`}
-					filename={'kontaktlink'}
-					headline={translate(`qrCode.personal.overlay.headline`)}
-					text={translate(`qrCode.personal.overlay.info`)}
-				/>
-			</div>
-			<div className="flex flex--ai-c flex--nowrap mt--1">
-				<button
-					type="button"
-					className="text--right text--nowrap mr--1 text--tertiary primary button-as-link"
-					tabIndex={0}
-					onClick={copyRegistrationLink}
-					title={translate(
-						'profile.data.personal.registrationLink.title'
-					)}
-					aria-label={translate(
-						'profile.data.personal.registrationLink.title'
-					)}
-				>
-					<CopyIcon className={`copy icn--s`} />{' '}
-					{translate('profile.data.personal.registrationLink.text')}
-				</button>
-				<div className="flex-xl__col--no-grow flex--inline flex--ai-c">
+		<div className={className}>
+			{/* The full link, so counsellors can see (and select) what they hand out. */}
+			<p className="profile__user__personal_link__url text--tertiary mt--1">
+				{registrationLink}
+			</p>
+			<div className="flex flex--wrap flex--ai-c flex-xl--nowrap">
+				<div className="mt--1">
+					<GenerateQrCode
+						url={registrationLink}
+						filename={'kontaktlink'}
+						headline={translate(`qrCode.personal.overlay.headline`)}
+						text={translate(`qrCode.personal.overlay.info`)}
+					/>
+				</div>
+				<div className="flex flex--ai-c flex--nowrap mt--1">
+					<button
+						type="button"
+						className="text--right text--nowrap mr--1 text--tertiary primary button-as-link"
+						tabIndex={0}
+						onClick={copyRegistrationLink}
+						title={translate(
+							'profile.data.personal.registrationLink.title'
+						)}
+						aria-label={translate(
+							'profile.data.personal.registrationLink.title'
+						)}
+					>
+						<CopyIcon className={`copy icn--s`} />{' '}
+						{translate(
+							'profile.data.personal.registrationLink.text'
+						)}
+					</button>
 					<div className="flex-xl__col--no-grow flex--inline flex--ai-c">
-						<Tooltip
-							trigger={
-								<InfoIcon
-									className="icn icn--xl"
-									title={translate('notifications.info')}
-									aria-label={translate('notifications.info')}
-								/>
-							}
-						>
-							{translate(
-								'profile.data.personal.registrationLink.tooltip'
-							)}
-						</Tooltip>
+						<div className="flex-xl__col--no-grow flex--inline flex--ai-c">
+							<Tooltip
+								trigger={
+									<InfoIcon
+										className="icn icn--xl"
+										title={translate('notifications.info')}
+										aria-label={translate(
+											'notifications.info'
+										)}
+									/>
+								}
+							>
+								{translate(
+									'profile.data.personal.registrationLink.tooltip'
+								)}
+							</Tooltip>
+						</div>
 					</div>
 				</div>
 			</div>

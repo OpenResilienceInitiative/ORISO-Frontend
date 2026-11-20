@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useState } from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, fn, userEvent, within } from 'storybook/test';
 import { ReactComponent as CalendarIcon } from '../../resources/img/icons/calendar.svg';
 import { ReactComponent as PersonsIcon } from '../../resources/img/icons/persons.svg';
 import { SplitButton } from './SplitButton';
@@ -106,4 +107,158 @@ const InteractiveDemo = () => {
 export const FullWidthRow: Story = {
 	args: { label: '', onClick: noop },
 	render: () => <InteractiveDemo />
+};
+
+/** `size="compact"`: the 40px M3 small split button (case-handover card). */
+export const Compact: Story = {
+	args: {
+		label: 'Zugriff anfragen',
+		size: 'compact',
+		onClick: fn(),
+		onToggleMenu: fn(),
+		menuLabel: 'Weitere Optionen'
+	},
+	play: async ({ args, canvasElement }) => {
+		const canvas = within(canvasElement);
+		const main = canvas.getByRole('button', { name: 'Zugriff anfragen' });
+		await expect(main.getBoundingClientRect().height).toBe(40);
+		await userEvent.click(main);
+		await expect(args.onClick).toHaveBeenCalledTimes(1);
+		await userEvent.click(
+			canvas.getByRole('button', { name: 'Weitere Optionen' })
+		);
+		await expect(args.onToggleMenu).toHaveBeenCalledTimes(1);
+	}
+};
+
+const onSelectionChange = fn();
+
+const SelectionDemo = ({ initiallyChecked }: { initiallyChecked: boolean }) => {
+	const [checked, setChecked] = useState(initiallyChecked);
+	return (
+		<SplitButton
+			size="compact"
+			// Explicit variants: outlined = not chosen, primary = selected.
+			variant={checked ? 'primary' : 'outlined'}
+			label=""
+			selection={{
+				checked,
+				label: 'Fall auswählen',
+				onChange: (next) => {
+					setChecked(next);
+					onSelectionChange(next);
+				}
+			}}
+			onToggleMenu={noop}
+			menuLabel="Weitere Optionen"
+		/>
+	);
+};
+
+/** `selection`, unticked: outlined segment with an empty shared checkbox. */
+export const SelectionUnselected: Story = {
+	args: { label: '', onClick: noop },
+	render: () => <SelectionDemo initiallyChecked={false} />,
+	play: async ({ canvasElement }) => {
+		onSelectionChange.mockClear();
+		const checkbox = within(canvasElement).getByRole('checkbox', {
+			name: 'Fall auswählen'
+		});
+		await expect(checkbox).not.toBeChecked();
+		await expect(
+			canvasElement.querySelector('.splitButton--outlined')
+		).not.toBeNull();
+		// The empty box must stay visible on a white card (live check FE#1725).
+		const box = canvasElement.querySelector('.m3Checkbox__box')!;
+		const token = document.createElement('span');
+		token.style.color = 'var(--m3-on-surface-variant, #444748)';
+		canvasElement.appendChild(token);
+		await expect(getComputedStyle(box).borderTopColor).toBe(
+			getComputedStyle(token).color
+		);
+		token.remove();
+		await userEvent.click(checkbox);
+		await expect(checkbox).toBeChecked();
+		await expect(onSelectionChange).toHaveBeenCalledWith(true);
+		await expect(
+			canvasElement.querySelector('.splitButton--primary')
+		).not.toBeNull();
+	}
+};
+
+/** `selection`, ticked: filled primary segment, inverted ticked checkbox. */
+export const SelectionSelected: Story = {
+	args: { label: '', onClick: noop },
+	render: () => <SelectionDemo initiallyChecked />,
+	play: async ({ canvasElement }) => {
+		onSelectionChange.mockClear();
+		const checkbox = within(canvasElement).getByRole('checkbox', {
+			name: 'Fall auswählen'
+		});
+		await expect(checkbox).toBeChecked();
+		checkbox.focus();
+		await userEvent.keyboard(' ');
+		await expect(checkbox).not.toBeChecked();
+		await expect(onSelectionChange).toHaveBeenCalledWith(false);
+	}
+};
+
+const FIGMA_SIZES = [
+	{ name: 'XSmall', figma: '32', size: 'xsmall' },
+	{ name: 'Small', figma: '40', size: 'compact' },
+	{ name: 'Medium', figma: '56', size: 'medium' }
+] as const;
+const VARIANTS = ['tonal', 'primary', 'outlined', 'elevated'] as const;
+
+/**
+ * Figma "Split button" (RTUi1rcrEWECXz8rNFmj7Q, 57994:15751). Large (96) and
+ * XLarge (136) exist in Figma only; nothing in the app uses them yet.
+ */
+export const FigmaSizes: Story = {
+	name: 'Figma sizes — XSmall, Small, Medium',
+	args: { label: '', onClick: noop },
+	parameters: { layout: 'padded' },
+	render: () => (
+		<div style={{ display: 'grid', gap: 16 }}>
+			{FIGMA_SIZES.map(({ name, figma, size }) => (
+				<div
+					key={name}
+					style={{
+						display: 'flex',
+						flexWrap: 'wrap',
+						alignItems: 'center',
+						gap: 12
+					}}
+				>
+					<span style={{ width: 96, font: '500 12px/16px Inter' }}>
+						{name} · {figma}px
+					</span>
+					{VARIANTS.map((variant) => (
+						<SplitButton
+							key={variant}
+							size={size}
+							variant={variant}
+							label="Fr 30. Okt 18:00"
+							icon={<CalendarIcon />}
+							onClick={noop}
+							onToggleMenu={noop}
+							menuLabel={`${name} ${variant}`}
+						/>
+					))}
+				</div>
+			))}
+		</div>
+	),
+	play: async ({ canvasElement }) => {
+		const heightOf = (selector: string) =>
+			canvasElement
+				.querySelector<HTMLElement>(`${selector} .splitButton__main`)!
+				.getBoundingClientRect().height;
+		await expect(heightOf('.splitButton--xsmall')).toBe(32);
+		await expect(heightOf('.splitButton--compact')).toBe(40);
+		const label = canvasElement.querySelector<HTMLElement>(
+			'.splitButton--xsmall .splitButton__main'
+		)!;
+		await expect(getComputedStyle(label).fontSize).toBe('14px');
+	}
 };

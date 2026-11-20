@@ -14,16 +14,43 @@
  * (ADR-AT-01 — the server record is text-free).
  */
 
+import { generatePath } from 'react-router-dom';
+import { addonLinkPath } from '../../../addons/addonLink';
+import { DIRECT_INVITATION_RENEWAL_REQUESTED } from './directInvitationEvents';
 import { rewriteLegacyChannelPath } from '../../../utils/channelRoute';
+import {
+	askerGroupChatPath,
+	consultantGroupChatPath,
+	isGroupChatId
+} from '../../groupChat/consultantGroupChatPath';
 import {
 	EventActionParams,
 	EventActionTarget,
 	EventDescriptor,
 	EventFamily
 } from './types';
+import {
+	ASKER_SESSION_DETAIL_PATH,
+	REJECTED_ENQUIRY_QUERY_PARAM
+} from '../../app/routePaths';
+import {
+	parseTopicDuplicateRoomPath,
+	TOPIC_DUPLICATE_SEARCH
+} from '../../session/topicDuplicateRoomRoute';
+import {
+	DELETED_ASKER_BASE_PATH,
+	parseFormerSessionId
+} from '../../sessionsList/deletedAskerPath';
 
 /** Default conversation list base when the consumer does not pass one. */
 const DEFAULT_SESSIONS_BASE_PATH = '/sessions/consultant/sessionView';
+const TOPIC_DUPLICATE_STARTED_EVENT = 'topic_duplicate.started';
+
+/** An invalid target for these events must not turn into a generic list link. */
+export const requiresExactActionPath = (eventType: string | null | undefined) =>
+	eventType === TOPIC_DUPLICATE_STARTED_EVENT;
+
+export const ADDON_NOTIFICATION_EVENT_TYPE = 'ADDON_NOTIFICATION';
 
 /** i18n key for a family's filter-chip / tag label. */
 export const familyLabelKey = (family: EventFamily): string =>
@@ -46,17 +73,81 @@ const buildConversationPath = (params: EventActionParams): string | null => {
 	return null;
 };
 
+const QUERY_SESSION_LIST =
+	/^(\/sessions\/[^/]+\/(?:sessionPreview|sessionView))\/?$/;
+
+// UserService's team-discussion link names the session only in its query
+// (`…/sessionPreview?sessionId=42&teamDiscussion=1`). That list route renders
+// no conversation, so the id moves into the path, the rest of the query stays.
+const withQuerySessionInPath = (path: string | null): string | null => {
+	if (!path) return path;
+	const url = new URL(path, 'http://oriso.invalid');
+	const list = QUERY_SESSION_LIST.exec(url.pathname);
+	const sessionId = url.searchParams.get('sessionId');
+	if (!list || !sessionId) return path;
+	url.searchParams.delete('sessionId');
+	return `${list[1]}/session/${encodeURIComponent(sessionId)}${url.search}${url.hash}`;
+};
+
 // B2 / T24: server action paths may still carry the legacy `threadRootId`
 // (UserService B2 pending) — the frontend contract is `?channel=thread:<id>`,
 // rewritten once here at the boundary.
 const conversationTarget = (params: EventActionParams): EventActionTarget => ({
 	kind: 'conversation',
-	path: rewriteLegacyChannelPath(buildConversationPath(params))
+	path: rewriteLegacyChannelPath(
+		withQuerySessionInPath(buildConversationPath(params))
+	)
+});
+
+const topicDuplicateTarget = (params: EventActionParams): EventActionTarget => {
+	const match = parseTopicDuplicateRoomPath(params.actionPath ?? '');
+	if (
+		params.sessionsBasePath !== DEFAULT_SESSIONS_BASE_PATH ||
+		!match ||
+		String(match.caseId) !== String(params.sourceSessionId) ||
+		match.roomId !== params.roomRef ||
+		params.conversationType !== 'AGENCY_COUNSELLING'
+	) {
+		return { kind: 'conversation', path: null };
+	}
+	return {
+		kind: 'conversation',
+		path: `${DEFAULT_SESSIONS_BASE_PATH}/${match.roomSegment}/${match.caseId}${TOPIC_DUPLICATE_SEARCH}`
+	};
+};
+
+// FE#1952: the person is already waiting, so the knock goes into the call of
+// its conversation (`roomRef`), not only into the conversation.
+const knockCallTarget = (params: EventActionParams): EventActionTarget => ({
+	kind: 'callRoom',
+	roomId:
+		typeof params.roomRef === 'string' && params.roomRef.trim()
+			? params.roomRef
+			: null,
+	isVideo: params.medium === 'VIDEO',
+	path: buildConversationPath(params)
+});
+
+const buildGroupChatPath = ({
+	seriesId,
+	sessionsBasePath
+}: EventActionParams): string | null => {
+	if (!isGroupChatId(seriesId)) return null;
+	return sessionsBasePath === '/sessions/user/view'
+		? askerGroupChatPath(seriesId)
+		: consultantGroupChatPath(seriesId);
+};
+
+const groupChatConversationTarget = (
+	params: EventActionParams
+): EventActionTarget => ({
+	kind: 'conversation',
+	path: buildGroupChatPath(params)
 });
 
 const groupChatJoinTarget = (params: EventActionParams): EventActionTarget => ({
 	kind: 'groupChatJoin',
-	path: buildConversationPath(params)
+	path: buildGroupChatPath(params)
 });
 
 const requestTarget = (params: EventActionParams): EventActionTarget => ({
@@ -64,14 +155,35 @@ const requestTarget = (params: EventActionParams): EventActionTarget => ({
 	path: params.actionPath || params.requestsBasePath || null
 });
 
+const requestDeniedTarget = (params: EventActionParams): EventActionTarget => {
+	// The rejection producer stores the asker path without its view segment.
+	const caseId = /^\/sessions\/user\/(?:view\/)?session\/(\d+)$/.exec(
+		params.actionPath ?? ''
+	)?.[1];
+	if (!caseId) return requestTarget(params);
+
+	const numericId = Number(caseId);
+	const exact =
+		Number.isSafeInteger(numericId) &&
+		numericId > 0 &&
+		caseId === String(params.sourceSessionId);
+	return {
+		kind: 'request',
+		path: exact
+			? `${generatePath(ASKER_SESSION_DETAIL_PATH, { sessionId: caseId })}?${REJECTED_ENQUIRY_QUERY_PARAM}=1`
+			: null
+	};
+};
+
 const draftTarget = (params: EventActionParams): EventActionTarget => ({
 	kind: 'draft',
 	forcedScopeKey: params.forcedScopeKey ?? null,
 	path: params.actionPath ?? null
 });
 
-// The consumer routes native ORISO calls through
-// `callManager.startCall(callRoomId, isVideo, true)`. This factory only
+// The consumer joins the running call through
+// `callManager.joinExistingCall` (NotificationsCenter); it never starts a
+// call, which only counsellors do (Frank, 17 Nov 2026). This factory only
 // describes the action; provider-specific video integrations must use their
 // own adapter and must not be introduced as an implicit fallback here.
 const joinTarget = (params: EventActionParams): EventActionTarget => ({
@@ -85,7 +197,52 @@ const statusPageTarget = (params: EventActionParams): EventActionTarget => ({
 	url: params.statusUrl ?? null
 });
 
+const addonTarget = (params: EventActionParams): EventActionTarget => ({
+	kind: 'addon',
+	path:
+		addonLinkPath(
+			{
+				addon: params.addon,
+				appId: params.appId,
+				slot: params.slot,
+				sessionId: params.sourceSessionId
+			},
+			params.sessionsBasePath || DEFAULT_SESSIONS_BASE_PATH
+		) ??
+		params.actionPath ??
+		null
+});
+
+// #1159: a deleted advice-seeker chat opens its deletion notice, where the
+// counsellor archives it. Navigates like a request: never shown inline, there
+// is no conversation left. Entries from before the notice existed carry no
+// path and stay inert. Named, so the exclusion set below recognises it.
+const deletedAskerTarget = (params: EventActionParams): EventActionTarget =>
+	params.actionPath?.startsWith(`${DELETED_ASKER_BASE_PATH}/`) &&
+	parseFormerSessionId(
+		params.actionPath.slice(DELETED_ASKER_BASE_PATH.length + 1)
+	) !== null
+		? { kind: 'request', path: params.actionPath }
+		: { kind: 'none' };
+
 // --- Descriptor factory --------------------------------------------------
+
+/**
+ * Entries whose target is not a conversation: an enquiry nobody accepted yet
+ * (its content stays hidden until then), a draft, a status notice and an
+ * entry with nothing to open. Every other entry opens a conversation, so
+ * Activity shows it inline (Frank, 2026-11-16: "die meisten Fenster
+ * sichtbar", not only messages and calls).
+ */
+const NO_CONVERSATION_TARGETS = new Set<EventDescriptor['resolveActionTarget']>(
+	[
+		requestTarget,
+		requestDeniedTarget,
+		draftTarget,
+		statusPageTarget,
+		deletedAskerTarget
+	]
+);
 
 interface DescriptorSeed {
 	family: EventDescriptor['family'];
@@ -106,7 +263,10 @@ const descriptor = (
 	icon: seed.icon,
 	titleTemplate: `notifications.events.${seed.i18nKey}.title`,
 	textTemplate: `notifications.events.${seed.i18nKey}.text`,
-	resolveActionTarget: seed.resolveActionTarget
+	resolveActionTarget: seed.resolveActionTarget,
+	belongsToConversation: !NO_CONVERSATION_TARGETS.has(
+		seed.resolveActionTarget
+	)
 });
 
 /**
@@ -122,7 +282,8 @@ export const FALLBACK_DESCRIPTOR: EventDescriptor = {
 	icon: 'system',
 	titleTemplate: 'notifications.events.fallback.title',
 	textTemplate: 'notifications.events.fallback.text',
-	resolveActionTarget: conversationTarget
+	resolveActionTarget: conversationTarget,
+	belongsToConversation: false
 };
 
 // --- The registry --------------------------------------------------------
@@ -206,6 +367,13 @@ const seeds: EventDescriptor[] = [
 		i18nKey: 'counselorRenamed',
 		resolveActionTarget: conversationTarget
 	}),
+	descriptor(TOPIC_DUPLICATE_STARTED_EVENT, {
+		family: 'system',
+		category: 'system',
+		icon: 'system',
+		i18nKey: 'topicDuplicateStarted',
+		resolveActionTarget: topicDuplicateTarget
+	}),
 
 	// ----- Requests family (Slice 2 will persist "New client request") -----
 	descriptor('request.new', {
@@ -215,15 +383,13 @@ const seeds: EventDescriptor[] = [
 		i18nKey: 'requestNew',
 		resolveActionTarget: requestTarget
 	}),
-	// Figma design review 2026-07-12 (Timeline History Pannel): seed the
-	// designed-but-not-yet-emitted types so the frontend is ready the moment a
-	// backend writer appears (Slice-0a philosophy — seed ALL designed types).
+	// A rejected enquiry retains its existing read-only case for the asker.
 	descriptor('request.denied', {
 		family: 'requests',
 		category: 'system',
 		icon: 'requestDenied',
 		i18nKey: 'requestDenied',
-		resolveActionTarget: requestTarget
+		resolveActionTarget: requestDeniedTarget
 	}),
 	// A client entering the live-chat waiting room originates from the
 	// request/enquiry view (WP-06 Tier 3 — descriptor seeded ahead of the
@@ -302,6 +468,37 @@ const seeds: EventDescriptor[] = [
 		i18nKey: 'caseHandoverConsentDeclined',
 		resolveActionTarget: conversationTarget
 	}),
+	descriptor('case.handover.offer.received', {
+		family: 'handover',
+		category: 'system',
+		icon: 'handover',
+		i18nKey: 'caseHandoverOfferReceived',
+		resolveActionTarget: conversationTarget
+	}),
+	// The offering counsellor's side of an offer: sent, declined, withdrawn
+	// (the recipient also gets "withdrawn"). Staff-only: the advice seeker is
+	// never told about a colleague-to-colleague offer.
+	descriptor('case.handover.offer.sent', {
+		family: 'handover',
+		category: 'system',
+		icon: 'handover',
+		i18nKey: 'caseHandoverOfferSent',
+		resolveActionTarget: conversationTarget
+	}),
+	descriptor('case.handover.offer.declined', {
+		family: 'handover',
+		category: 'system',
+		icon: 'handoverDenied',
+		i18nKey: 'caseHandoverOfferDeclined',
+		resolveActionTarget: conversationTarget
+	}),
+	descriptor('case.handover.offer.withdrawn', {
+		family: 'handover',
+		category: 'system',
+		icon: 'handoverDenied',
+		i18nKey: 'caseHandoverOfferWithdrawn',
+		resolveActionTarget: conversationTarget
+	}),
 
 	// ----- Calls family (Slice 5) -----
 	// Live, joinable call -> Join overlay (does not navigate).
@@ -326,12 +523,34 @@ const seeds: EventDescriptor[] = [
 		i18nKey: 'callMissed',
 		resolveActionTarget: conversationTarget
 	}),
-	// Invitation to an internal (team) group call — Figma 2026-07-12.
+	// Invitation to a call: one-to-one counselling (sessionId) or group
+	// (seriesId). FE#1211: the wording names neither, so it is true for both.
 	descriptor('call.invited', {
 		family: 'calls',
 		category: 'system',
 		icon: 'callInvited',
 		i18nKey: 'callInvited',
+		resolveActionTarget: conversationTarget
+	}),
+
+	// FE#1952: someone knocks on the counsellor's direct-link call. One click
+	// takes the counsellor into the call of that conversation, where the knock
+	// notice lets the person in (Frank, 2026-10-30).
+	descriptor('call.knock.requested', {
+		family: 'calls',
+		category: 'system',
+		icon: 'callStarted',
+		i18nKey: 'callKnockRequested',
+		resolveActionTarget: knockCallTarget
+	}),
+
+	// FE#2252: someone asks for a new link after a Direkteinladung expired;
+	// the card opens the conversation, the pop-up offers "Neuen Link senden".
+	descriptor(DIRECT_INVITATION_RENEWAL_REQUESTED, {
+		family: 'appointments',
+		category: 'system',
+		icon: 'appointmentRequested',
+		i18nKey: 'directInvitationRenewalRequested',
 		resolveActionTarget: conversationTarget
 	}),
 
@@ -371,7 +590,7 @@ const seeds: EventDescriptor[] = [
 		category: 'system',
 		icon: 'appointment',
 		i18nKey: 'groupChatReminder',
-		resolveActionTarget: conversationTarget
+		resolveActionTarget: groupChatConversationTarget
 	}),
 	descriptor('group_chat.opened', {
 		family: 'appointments',
@@ -385,7 +604,7 @@ const seeds: EventDescriptor[] = [
 		category: 'system',
 		icon: 'appointment',
 		i18nKey: 'groupChatCancelled',
-		resolveActionTarget: conversationTarget
+		resolveActionTarget: groupChatConversationTarget
 	}),
 
 	// ----- Platform operations (#876) -----
@@ -397,6 +616,26 @@ const seeds: EventDescriptor[] = [
 		icon: 'system',
 		i18nKey: 'serviceNoticePlanned',
 		resolveActionTarget: statusPageTarget
+	}),
+	// #1159: an advice seeker's chat was deleted. The row opens the deletion
+	// notice, from where the counsellor archives it.
+	descriptor('session.asker_deleted', {
+		family: 'system',
+		category: 'system',
+		icon: 'system',
+		i18nKey: 'sessionAskerDeleted',
+		resolveActionTarget: deletedAskerTarget
+	}),
+
+	// ----- Add-ons (oriso-addon/v1) -----
+	// Title and text come from the add-on per locale (`addonTitle`/`addonText`
+	// params); the templates are the generic wording for OS banners.
+	descriptor(ADDON_NOTIFICATION_EVENT_TYPE, {
+		family: 'system',
+		category: 'system',
+		icon: 'addon',
+		i18nKey: 'addonNotification',
+		resolveActionTarget: addonTarget
 	})
 ];
 

@@ -1,3 +1,9 @@
+import { isTechnicalMatrixUser } from '../../../utils/systemMatrixUsers';
+import {
+	HEADER_STACK_AVATAR_SIZE,
+	HEADER_STACK_OVERLAP,
+	STACK_MAX_VISIBLE
+} from '../../message/participantStack';
 /**
  * Pure helpers for the conversation header participant stack (#1193).
  *
@@ -62,6 +68,16 @@ export const sortMembersByActivity = <T extends MemberLike>(
 		return (a.name || a.userId).localeCompare(b.name || b.userId);
 	});
 
+/** Apply before avatar rendering/counting so technical accounts never enter +N. */
+export const getVisibleGroupMembers = <T extends MemberLike>(
+	members: readonly T[],
+	activity: ActivityMap
+): T[] =>
+	sortMembersByActivity(
+		members.filter((member) => !isTechnicalMatrixUser(member.userId)),
+		activity
+	);
+
 export interface AvatarStackMetrics {
 	/** Rendered avatar diameter in px (`.sessionInfo__memberBubble`). */
 	avatarSize: number;
@@ -74,10 +90,10 @@ export interface AvatarStackMetrics {
 }
 
 export const AVATAR_STACK_METRICS: AvatarStackMetrics = {
-	avatarSize: 32,
-	overlap: 10,
+	avatarSize: HEADER_STACK_AVATAR_SIZE,
+	overlap: HEADER_STACK_OVERLAP,
 	chipWidth: 64,
-	maxVisible: 4
+	maxVisible: STACK_MAX_VISIBLE
 };
 
 const stackWidth = (
@@ -89,7 +105,7 @@ const stackWidth = (
 		visible === 0
 			? 0
 			: m.avatarSize + (visible - 1) * (m.avatarSize - m.overlap);
-	const chip = withChip ? m.chipWidth - (visible > 0 ? m.overlap : 0) : 0;
+	const chip = withChip ? m.chipWidth : 0;
 	return avatars + chip;
 };
 

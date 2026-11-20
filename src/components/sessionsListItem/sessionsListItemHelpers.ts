@@ -53,10 +53,10 @@ export const getSessionNavigationPath = ({
 		return `${listPath}/${encodeURIComponent(roomId)}/${sessionId}${tabSuffix}`;
 	}
 	if (isGroup) {
-		// A materialized room may be absent for a future Series occurrence.
-		// Resolve the Series through the supported session-id route instead of
-		// falling into asker-enquiry routing.
-		return `${listPath}/session/${sessionId}${tabSuffix}`;
+		// A future occurrence may not have a Matrix room yet. The consultant
+		// route must keep its chat id distinct from a one-to-one case id.
+		const route = isAsker ? 'session' : 'chat';
+		return `${listPath}/${route}/${sessionId}${tabSuffix}`;
 	}
 
 	// #774: a consultant opening an answered live chat must use the Matrix

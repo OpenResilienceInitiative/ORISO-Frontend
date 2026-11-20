@@ -23,7 +23,10 @@ $animation-easing-title: cubic-bezier(0, 0, 0.5, 1);
 		font-weight: normal;
 
 		&:hover {
-			color: var(--m3-primary-hover, $hover-primary);
+			color: var(
+				--oriso-primary-text-hover,
+				var(--m3-primary-hover, $hover-primary)
+			);
 		}
 	}
 }

@@ -1,3 +1,5 @@
+import { TenantContext } from '../../globalState/provider/TenantProvider';
+import { accountPolicyTenant } from '../../test/fixtures/askerAccountPolicyFixtures';
 import * as React from 'react';
 import { accountConsentPlay } from '../../../.storybook/consentCompletionStoryPlay';
 import { useState } from 'react';
@@ -42,7 +44,22 @@ import {
  * chips would both describe steps the person never walked. What is still
  * missing is only who they are — and, if they want to come back, a password.
  */
+const editableTenant = accountPolicyTenant();
+
 const meta: Meta = {
+	decorators: [
+		(Story) => (
+			<TenantContext.Provider
+				value={{
+					tenant: editableTenant,
+					setTenant: () => {},
+					updateTenantSettings: () => {}
+				}}
+			>
+				<Story />
+			</TenantContext.Provider>
+		)
+	],
 	id: 'registration-entry-room-link-variant',
 	title: 'Entry flows/Temporary guests/Invitation entry',
 	beforeEach: () => clearAccountDataDraft(),

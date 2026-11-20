@@ -2,13 +2,9 @@
  * Draft bookkeeping shared by the composer, the sessions list, and the drafts
  * centre.
  *
- * Drafts themselves are **not** stored here. They live server-side
- * (`useDraftMessage` → `apiUpsertUserDraft` → UserService `/users/drafts`) and
- * are encrypted with the room key for encrypted rooms. The local plaintext
- * store this module used to own was removed for #1071: on the shared PCs that
- * counselling agencies run, anything left in Web Storage is readable by the
- * next person at the machine. Residues from older builds are swept by
- * `purgeLegacyDraftStorage` (`clientStorageHygiene.ts`).
+ * The authenticated draft repository encrypts server-bound content and metadata
+ * in the browser. The previous plaintext Web Storage store was removed for
+ * #1071. Residues from older builds are swept by purgeLegacyDraftStorage.
  */
 export const DRAFTS_UPDATED_EVENT = 'oriso:drafts-updated';
 export const REMOTE_DRAFT_INDEX_SCOPE = 'scope:__draft-index__|thread:main';

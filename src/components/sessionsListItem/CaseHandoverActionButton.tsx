@@ -8,18 +8,24 @@ import {
 	CARD_MENU_LAYER
 } from '../chatMenuDropdown/menuLayers';
 import { useChatMenuPosition } from '../chatMenuDropdown/useChatMenuPosition';
+import { SplitButton, SplitButtonVariant } from '../splitButton/SplitButton';
 import './sessionsListItem.styles';
 
 /**
- * Case-handover split button on a session card. Figma: "CARX — Teamberatung
- * Case Handover", Section 05 states board (node 4028-7250).
+ * Case-handover split button on a session card, built on the `SplitButton`
+ * atom (40px compact size). Figma: "CARX — Teamberatung Case Handover",
+ * Section 05 states board (node 4028-7250).
  *
  * Two modes:
- * - Default: primary segment triggers the access request ("Request access" /
- *   status pills for awaiting, granted, denied), chevron opens a menu with
- *   "Select multiple conversations".
- * - Batch: primary segment is a "Select case" checkbox toggle, chevron menu
- *   offers "Confirm selection" and "Deselect and close".
+ * - Default: outlined "Request access" (status pills for awaiting, granted,
+ *   denied); the chevron opens a menu with "Select multiple conversations".
+ * - Batch (FE#1725): the main segment is the shared M3 checkbox "Select
+ *   case" — outlined while unselected, filled primary once selected. Granted
+ *   or pending cases show their status pill and cannot be selected. The
+ *   chevron offers "Confirm selection" / "Deselect and close"; the list's
+ *   bulk bar is the primary way forward.
+ *
+ * The open (active) case is marked by the card, never by this button.
  */
 
 /** Menu width; applied inline by `useChatMenuPosition`. */
@@ -49,13 +55,13 @@ export interface CaseHandoverActionLabels {
 interface CaseHandoverActionButtonProps {
 	labels: CaseHandoverActionLabels;
 	state: CaseHandoverActionState;
-	/** Card is the active/selected conversation (red emphasis per design). */
-	active?: boolean;
 	batchMode?: boolean;
 	/** Batch mode: this card is part of the current selection. */
 	selected?: boolean;
-	/** Batch mode: card cannot be selected (already granted/pending). */
+	/** Batch mode: the checkbox is inert (e.g. while the status loads). */
 	disabled?: boolean;
+	/** id of the element naming the case (checkbox description). */
+	describedBy?: string;
 	/**
 	 * The card the button sits in; the menu opens beside it, never on top.
 	 * Without it the menu only avoids the chevron.
@@ -67,15 +73,6 @@ interface CaseHandoverActionButtonProps {
 	onConfirmSelection?: () => void;
 	onDeselectAndClose?: () => void;
 }
-
-const IconChevronDown = () => (
-	<svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
-		<path
-			d="M12 15.4L6 9.4L7.4 8L12 12.6L16.6 8L18 9.4L12 15.4Z"
-			fill="currentColor"
-		/>
-	</svg>
-);
 
 const IconCheckSmall = () => (
 	<svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
@@ -129,16 +126,6 @@ const IconXSquareMenu = () => (
 	</svg>
 );
 
-const CheckboxGlyph = ({ selected }: { selected: boolean }) => (
-	<span
-		className={clsx(
-			'sessionsListItem__handoverActionCheckbox',
-			selected && 'sessionsListItem__handoverActionCheckbox--selected'
-		)}
-		aria-hidden
-	/>
-);
-
 const STATE_ICON: Record<CaseHandoverActionState, React.ComponentType | null> =
 	{
 		requestAccess: IconLockedSmall,
@@ -150,10 +137,10 @@ const STATE_ICON: Record<CaseHandoverActionState, React.ComponentType | null> =
 export const CaseHandoverActionButton = ({
 	labels,
 	state,
-	active = false,
 	batchMode = false,
 	selected = false,
 	disabled = false,
+	describedBy,
 	surfaceRef,
 	onRequestAccess,
 	onToggleSelect,
@@ -208,17 +195,22 @@ export const CaseHandoverActionButton = ({
 		};
 	}, [menuOpen]);
 
-	const isStatusPill = !batchMode && state !== 'requestAccess';
-	const label = batchMode
-		? labels.selectCase
-		: state === 'requestAccess'
-			? labels.requestAccess
-			: state === 'awaitingApproval'
-				? labels.awaitingApproval
-				: state === 'accessGranted'
-					? labels.accessGranted
-					: labels.accessDenied;
-	const StateIcon = batchMode ? null : STATE_ICON[state];
+	// Granted/pending cases cannot be requested again, in either mode.
+	const isLocked = state === 'accessGranted' || state === 'awaitingApproval';
+	const isStatusPill = batchMode ? isLocked : state !== 'requestAccess';
+	const isSelection = batchMode && !isLocked;
+	const statusLabel =
+		state === 'awaitingApproval'
+			? labels.awaitingApproval
+			: state === 'accessGranted'
+				? labels.accessGranted
+				: state === 'accessDenied'
+					? labels.accessDenied
+					: labels.requestAccess;
+	const StateIcon = STATE_ICON[state];
+	// Explicit variants: outlined = not chosen, primary = selected.
+	const variant: SplitButtonVariant =
+		isSelection && selected ? 'primary' : 'outlined';
 
 	const menuItems = batchMode
 		? [
@@ -247,32 +239,25 @@ export const CaseHandoverActionButton = ({
 				}
 			];
 
-	const handlePrimaryClick = (event: React.MouseEvent) => {
-		event.stopPropagation();
-		if (batchMode) {
-			onToggleSelect?.();
-			return;
-		}
-		if (state === 'requestAccess') {
-			onRequestAccess?.();
-		}
-	};
-
 	return (
 		<div
 			className={clsx(
 				'sessionsListItem__handoverAction',
-				active && 'sessionsListItem__handoverAction--active',
-				batchMode &&
-					selected &&
-					'sessionsListItem__handoverAction--selected',
 				isStatusPill && 'sessionsListItem__handoverAction--status',
-				state === 'accessDenied' &&
-					'sessionsListItem__handoverAction--denied',
-				disabled && 'sessionsListItem__handoverAction--disabled'
+				isStatusPill &&
+					state === 'accessDenied' &&
+					'sessionsListItem__handoverAction--denied'
 			)}
 			ref={rootRef}
 			data-cy="case-handover-action"
+			// The card underneath opens the session on click/Enter; this
+			// control and its portalled menu must not trigger that.
+			onClick={(event) => event.stopPropagation()}
+			onKeyDown={(event) => {
+				if (event.key === 'Enter' || event.key === ' ') {
+					event.stopPropagation();
+				}
+			}}
 		>
 			<MenuBackdrop
 				open={menuOpen}
@@ -283,52 +268,38 @@ export const CaseHandoverActionButton = ({
 				}}
 				zIndex={CARD_MENU_BACKDROP_LAYER}
 			/>
-			<button
-				type="button"
-				className="sessionsListItem__handoverActionPrimary"
-				onClick={handlePrimaryClick}
-				onKeyDown={(event) => {
-					if (event.key === 'Enter' || event.key === ' ') {
-						event.stopPropagation();
+			<SplitButton
+				size="compact"
+				variant={variant}
+				label={statusLabel}
+				icon={StateIcon ? <StateIcon /> : undefined}
+				mainDisabled={isStatusPill || (isSelection && disabled)}
+				onClick={() => {
+					if (!batchMode && state === 'requestAccess') {
+						onRequestAccess?.();
 					}
 				}}
-				disabled={disabled || (isStatusPill && !batchMode)}
-				aria-pressed={batchMode ? selected : undefined}
-				role={batchMode ? 'checkbox' : undefined}
-				aria-checked={batchMode ? selected : undefined}
-				data-cy="case-handover-action-primary"
-			>
-				{batchMode ? (
-					<CheckboxGlyph selected={selected} />
-				) : (
-					StateIcon && <StateIcon />
-				)}
-				<span className="sessionsListItem__handoverActionLabel">
-					{label}
-				</span>
-			</button>
-			<button
-				type="button"
-				ref={toggleRef}
-				className="sessionsListItem__handoverActionToggle"
-				onClick={(event) => {
-					event.stopPropagation();
-					setMenuOpen(!menuOpen);
-				}}
-				onKeyDown={(event) => {
-					if (event.key === 'Enter' || event.key === ' ') {
-						event.stopPropagation();
-					}
-				}}
-				disabled={disabled}
-				aria-haspopup="menu"
-				aria-expanded={menuOpen}
-				aria-controls={menuOpen ? menuId : undefined}
-				aria-label={labels.menuLabel}
-				data-cy="case-handover-action-menu-toggle"
-			>
-				<IconChevronDown />
-			</button>
+				selection={
+					isSelection
+						? {
+								checked: selected,
+								onChange: () => onToggleSelect?.(),
+								label: labels.selectCase,
+								describedBy,
+								dataCy: 'case-handover-action-select'
+							}
+						: undefined
+				}
+				onToggleMenu={() => setMenuOpen((open) => !open)}
+				open={menuOpen}
+				menuLabel={labels.menuLabel}
+				mainOpensMenu={false}
+				menuPopup="menu"
+				menuId={menuId}
+				trailingRef={toggleRef}
+				mainDataCy="case-handover-action-primary"
+				trailingDataCy="case-handover-action-menu-toggle"
+			/>
 			{menuOpen &&
 				createPortal(
 					<div
@@ -336,6 +307,8 @@ export const CaseHandoverActionButton = ({
 						className="sessionsListItem__handoverActionMenu"
 						role="menu"
 						id={menuId}
+						// Part of the card: keeps the search panel open.
+						data-search-keep-open
 						aria-label={labels.menuLabel}
 						data-placement={placement}
 						style={{ ...menuPosition, zIndex: CARD_MENU_LAYER }}

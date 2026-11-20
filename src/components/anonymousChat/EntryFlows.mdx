@@ -39,6 +39,11 @@ controls and desktop or mobile viewport.
       <td><a href="./?path=/story/registration-entry-room-link-variant--temporary-join-mobile" target="_top">Open mobile</a></td>
     </tr>
     <tr>
+      <td>Counsellor direct link — audio or video call</td>
+      <td><a href="./?path=/story/entry-flows-direct-link-wired-mocked-api--call-guest-video" target="_top">Open desktop</a></td>
+      <td><a href="./?path=/story/entry-flows-direct-link-wired-mocked-api--knock-turned-down" target="_top">Open mobile</a></td>
+    </tr>
+    <tr>
       <td>Existing account — sign in</td>
       <td><a href="./?path=/story/registration-entry-room-log-in--credentials" target="_top">Open desktop</a></td>
       <td><a href="./?path=/story/registration-entry-room-log-in--mobile" target="_top">Open mobile</a></td>
@@ -287,11 +292,35 @@ The entry-room stories show the waiting area before and after the scheduled star
     </tr>
     <tr>
       <td>Entry room</td>
-      <td><a href="./?path=/story/group-chat-self-help-entry-room--waiting-area-overdue" target="_top">2 — Läuft schon</a></td>
+      <td><a href="./?path=/story/group-chat-self-help-entry-room--waiting-area-overdue" target="_top">2 — Termin vorbei, Moderation fehlt noch</a></td>
+    </tr>
+    <tr>
+      <td>Entry room</td>
+      <td><a href="./?path=/story/group-chat-self-help-entry-room--waiting-area-open" target="_top">2c — Gruppe läuft · 1440</a></td>
     </tr>
     <tr>
       <td>Entry room</td>
       <td><a href="./?path=/story/group-chat-self-help-entry-room--waiting-area-mobile" target="_top">3 — Wartebereich, mobil</a></td>
+    </tr>
+    <tr>
+      <td>Entry room</td>
+      <td><a href="./?path=/story/group-chat-self-help-entry-room--waiting-area-calendar-split" target="_top">1c — Kalender neben „Beitreten": geteilte Pille · 1440</a></td>
+    </tr>
+    <tr>
+      <td>Entry room</td>
+      <td><a href="./?path=/story/group-chat-self-help-entry-room--waiting-area-dates" target="_top">1d — Die nächsten Treffen · 1440</a></td>
+    </tr>
+    <tr>
+      <td>Entry room</td>
+      <td><a href="./?path=/story/group-chat-self-help-entry-room--waiting-area-dates-mobile" target="_top">3b — Kalender-Zeile und Termine, mobil</a></td>
+    </tr>
+    <tr>
+      <td>Entry room</td>
+      <td><a href="./?path=/story/group-chat-self-help-entry-room--waiting-area-open-mobile" target="_top">3c — Gruppe läuft, mobil</a></td>
+    </tr>
+    <tr>
+      <td>Entry room</td>
+      <td><a href="./?path=/story/group-chat-self-help-entry-room--waiting-area-consent-mobile" target="_top">3d — Beitreten: Regeln und Einwilligung, mobil</a></td>
     </tr>
     <tr>
       <td>Invitation flow</td>
@@ -331,7 +360,7 @@ The entry-room stories show the waiting area before and after the scheduled star
     </tr>
     <tr>
       <td>Group information — learn more</td>
-      <td><a href="./?path=/story/group-chat-self-help-info--info-gallery-with-appointments" target="_top">3 — Mit Termin-Aktion</a></td>
+      <td><a href="./?path=/story/group-chat-self-help-info--info-gallery-laptop" target="_top">3 — Laptop 1366 × 768, nur Karten</a></td>
     </tr>
   </tbody>
 </table>
@@ -404,6 +433,15 @@ The sign-in form lives under **Existing account**.
     </tr>
   </tbody>
 </table>
+
+## Counsellor direct link
+
+A counsellor's link for a chat, an audio or a video call (#1795). Without an
+account the person creates one: for a chat on the invite page's identity step,
+for a call in the call entry. Signed in, nothing is asked. Every person lands
+in their own conversation with that counsellor; for a call the knock dialog
+then waits over it until the counsellor lets them in, and the call starts.
+The stories run on a mocked UserService.
 
 ## Existing account
 

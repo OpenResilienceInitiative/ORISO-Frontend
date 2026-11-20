@@ -1,0 +1,57 @@
+.appliedTokenInspector {
+	min-width: 0;
+	max-width: 100%;
+	color: var(--m3-on-surface, #1a1c1e);
+	background: var(--m3-surface, #fcf9f9);
+	font-family: var(--font-family-sans-serif);
+
+	&__referencePage {
+		min-width: 0;
+		padding: 1rem;
+	}
+
+	&__scroll {
+		max-width: 100%;
+		overflow-x: auto;
+		margin-block: 1rem;
+
+		&:focus-visible {
+			outline: 2px solid var(--m3-primary-outline, #930008);
+			outline-offset: 2px;
+		}
+	}
+
+	table {
+		width: 100%;
+		min-width: 48rem;
+		border-collapse: collapse;
+	}
+
+	caption,
+	th,
+	td {
+		padding: 0.5rem;
+		text-align: start;
+		vertical-align: top;
+	}
+
+	th,
+	td {
+		border-bottom: 1px solid var(--m3-outline-variant, #c4c7c8);
+	}
+
+	th {
+		word-break: normal;
+		overflow-wrap: normal;
+	}
+
+	strong {
+		white-space: nowrap;
+	}
+
+	code {
+		display: block;
+		overflow-wrap: anywhere;
+		word-break: normal;
+	}
+}

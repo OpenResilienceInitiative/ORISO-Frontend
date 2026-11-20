@@ -1,5 +1,5 @@
-// @vitest-environment jsdom
-import { describe, expect, it, vi } from 'vitest';
+// @vitest-environment oriso-jsdom
+import { describe, expect, it, vi } from 'vite-plus/test';
 import { AUTHORITIES } from '../../globalState';
 import { isTabGroup, solveGroupConditions } from '../../utils/tabsHelper';
 import { profileRoutesHelp } from './profileHelp.routes';
@@ -30,8 +30,18 @@ describe('Profile → Help → Tours (#1526)', () => {
 		);
 	});
 
-	it('hides the tours area from advice seekers', () => {
-		expect(solveGroupConditions(toursGroup(true), asker, [])).toBe(false);
+	it('shows the tours area to advice seekers too (their own tours)', () => {
+		expect(solveGroupConditions(toursGroup(true), asker, [])).toBe(true);
+		expect(solveGroupConditions(toursGroup(false), asker, [])).toBe(false);
+	});
+
+	it('hides the tours area from anonymous live-chat users', () => {
+		const anonymous = {
+			grantedAuthorities: [AUTHORITIES.ANONYMOUS_DEFAULT]
+		};
+		expect(solveGroupConditions(toursGroup(true), anonymous, [])).toBe(
+			false
+		);
 	});
 
 	it('mounts the shared learning card nowhere else in the profile', () => {

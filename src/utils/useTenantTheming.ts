@@ -8,6 +8,7 @@ import {
 	useSyncExternalStore
 } from 'react';
 import { apiGetTenantTheming } from '../api/apiGetTenantTheming';
+import { getLinkAgencyId } from './linkAgencyId';
 import { TenantContext, useLocaleData } from '../globalState';
 import { TenantDataInterface } from '../globalState/interfaces';
 import getLocationVariables from './getLocationVariables';
@@ -23,8 +24,10 @@ import { useAppConfig } from '../hooks/useAppConfig';
 import {
 	applyPreviewFromLocation,
 	applyTenantPalette,
-	isThemePreviewRoute
+	isThemePreviewRoute,
+	resetTenantPalette
 } from './theme/applyTenantTheme';
+import { captureHeadLook } from './tenantHeadLook';
 
 const getOrCreateHeadNode = (
 	tagName: string,
@@ -109,12 +112,27 @@ const useTenantTheming = () => {
 		subscribeToAuthenticatedTenant,
 		getAuthenticatedTenantId
 	);
+	// The Beratungsstelle a shared link names. Read from the address, not the
+	// router: this hook also runs above the router (#1689).
+	const linkAgencyId = authenticatedTenantId
+		? null
+		: getLinkAgencyId(window.location.search);
 	const [isLoadingTenant, setIsLoadingTenant] = useState(
 		settings.useTenantService
 	);
-	// Which tenant the state currently in the context was resolved for. Only
+	// Which request the state currently in the context was resolved for: the
+	// signed-in tenant and, before sign-in, the link's agency (#1782). Only
 	// meaningful once a resolution has succeeded.
-	const appliedTenantId = useRef<number | null | undefined>(undefined);
+	const appliedTenantId = useRef<string | undefined>(undefined);
+	// Takes the document back to the look it had before a tenant was applied.
+	// Set by the first apply, spent by the first restore (#1788).
+	const restoreDefaultLook = useRef<(() => void) | null>(null);
+
+	const resetLook = useCallback(() => {
+		restoreDefaultLook.current?.();
+		restoreDefaultLook.current = null;
+		resetTenantPalette();
+	}, []);
 
 	const cypressTenantEnabled = useMemo(
 		() => (window as any).Cypress?.env('TENANT_ENABLED'),
@@ -143,7 +161,12 @@ const useTenantTheming = () => {
 				   group link's assignment never fired on a single-domain
 				   stand (#974, #1216). App config wins where both speak. */
 				tenantContext?.setTenant({
-					settings: { ...(tenant?.settings ?? {}), ...settings }
+					settings: { ...(tenant?.settings ?? {}), ...settings },
+					// The recipient scope of internal chats (#1772) is not a
+					// feature flag but still only the tenant service knows it.
+					...(tenant?.internalGroupChat && {
+						internalGroupChat: tenant.internalGroupChat
+					})
 				} as any);
 			} else {
 				// ToDo: See VIC-428 + VIC-427
@@ -176,6 +199,7 @@ const useTenantTheming = () => {
 					decodedTenant.name = decodeHTML(tenant.name);
 				}
 
+				restoreDefaultLook.current ??= captureHeadLook();
 				applyTheming(decodedTenant, previewApplied);
 				tenantContext?.setTenant(decodedTenant);
 			}
@@ -194,7 +218,7 @@ const useTenantTheming = () => {
 		// anonymous response landing after the signed-in one puts the
 		// subdomain tenant back, which is the leak this hook exists to close.
 		let active = true;
-		const requestedTenantId = authenticatedTenantId;
+		const requestedTenantId = `${authenticatedTenantId ?? ''}|${linkAgencyId ?? ''}`;
 
 		// The switch starts the moment the token changes, not when the answer
 		// arrives. Until then the context would still hand out the previous
@@ -207,10 +231,11 @@ const useTenantTheming = () => {
 			appliedTenantId.current !== requestedTenantId
 		) {
 			setIsLoadingTenant(true);
+			resetLook();
 			tenantContext?.setTenant(null as any);
 		}
 
-		apiGetTenantTheming()
+		apiGetTenantTheming(linkAgencyId)
 			.then((tenant) => {
 				if (!active) {
 					return;
@@ -229,6 +254,7 @@ const useTenantTheming = () => {
 				// tenant feature off rather than guessing.
 				if (appliedTenantId.current !== requestedTenantId) {
 					appliedTenantId.current = requestedTenantId;
+					resetLook();
 					tenantContext?.setTenant(null as any);
 				}
 			})
@@ -244,7 +270,13 @@ const useTenantTheming = () => {
 		};
 		// False positive
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [tenantContext?.setTenant, subdomain, locale, authenticatedTenantId]);
+	}, [
+		tenantContext?.setTenant,
+		subdomain,
+		locale,
+		authenticatedTenantId,
+		linkAgencyId
+	]);
 
 	return isLoadingTenant;
 };

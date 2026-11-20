@@ -1,19 +1,25 @@
 import * as React from 'react';
+import { createInstance } from 'i18next';
+import { I18nextProvider } from 'react-i18next';
+import de from '../../resources/i18n/de/common.json';
+import tr from '../../resources/i18n/tr/common.json';
+import i18n from '../../i18n';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
-import { setMatrixClientServiceRef } from '../../services/matrixClientRegistry';
+import { useActiveListItem } from '../../hooks/useActiveListItem';
 import {
 	ActiveSessionContext,
 	AUTHORITIES,
 	buildExtendedSession,
 	ConsultingTypesContext,
 	E2EEContext,
+	ModalProvider,
 	SessionTypeContext,
 	SessionsDataContext,
 	TopicsContext,
 	UserDataContext
 } from '../../globalState';
-import { STATUS_EMPTY } from '../../globalState/interfaces';
+import { STATUS_EMPTY, STATUS_ENQUIRY } from '../../globalState/interfaces';
 import type {
 	ConsultingTypeInterface,
 	GroupChatItemInterface,
@@ -27,7 +33,12 @@ import {
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider';
 import { computeOrisoPalette } from '../../utils/theme/orisoScheme';
-import { SessionListItemComponent } from './SessionListItemComponent';
+import {
+	SessionListItemComponent,
+	type SessionCardDatePlacement
+} from './SessionListItemComponent';
+import { setMatrixClientServiceRef } from '../../services/matrixClientRegistry';
+import { seedMatrixRoom } from './__storybook__/runtimeSessionCard';
 import './sessionsListItem.styles.scss';
 
 const APP_ORISO_CHAT_FIGMA_URL =
@@ -165,13 +176,15 @@ const runtimeGroupChat = ({
 	name,
 	lastMessage = '',
 	repetitive = false,
-	conversationType
+	conversationType,
+	active = false
 }: {
 	id: number;
 	name: string;
 	lastMessage?: string;
 	repetitive?: boolean;
 	conversationType?: GroupChatItemInterface['conversationType'];
+	active?: boolean;
 }): ListItemInterface => ({
 	consultant: runtimeSession.consultant,
 	chat: {
@@ -179,9 +192,9 @@ const runtimeGroupChat = ({
 		topic: name,
 		conversationType,
 		repetitive,
-		active: false,
+		active,
 		consultingType: 1,
-		matrixRoomId: `storybook-group-${id}`,
+		matrixRoomId: `!storybook-group-${id}:matrix.example.org`,
 		lastMessage,
 		messageDate: 1773736500,
 		messagesRead: true,
@@ -204,13 +217,24 @@ function RuntimeCard({
 	userData = runtimeUserData,
 	index = 0,
 	isBeforeActive = false,
-	isAfterActive = false
+	isAfterActive = false,
+	grouped = false,
+	isGroupStart = true,
+	isGroupEnd = true,
+	datePlacement = 'corner',
+	listType = SESSION_LIST_TYPES.MY_SESSION
 }: {
 	item: ListItemInterface;
 	userData?: any;
+	/** Which list the card sits in; enquiries carry no ⋮ menu. */
+	listType?: SESSION_LIST_TYPES;
+	datePlacement?: SessionCardDatePlacement;
 	index?: number;
 	isBeforeActive?: boolean;
 	isAfterActive?: boolean;
+	grouped?: boolean;
+	isGroupStart?: boolean;
+	isGroupEnd?: boolean;
 }) {
 	const activeSession = buildExtendedSession(item, '');
 
@@ -224,8 +248,11 @@ function RuntimeCard({
 		>
 			<SessionTypeContext.Provider
 				value={{
-					type: SESSION_LIST_TYPES.MY_SESSION,
-					path: '/sessions/consultant/sessionView'
+					type: listType,
+					path:
+						listType === SESSION_LIST_TYPES.ENQUIRY
+							? '/sessions/consultant/sessionPreview'
+							: '/sessions/consultant/sessionView'
 				}}
 			>
 				<ConsultingTypesContext.Provider
@@ -267,8 +294,12 @@ function RuntimeCard({
 											defaultLanguage="de"
 											handleKeyDownLisItemContent={() => {}}
 											index={index}
+											datePlacement={datePlacement}
 											isBeforeActive={isBeforeActive}
 											isAfterActive={isAfterActive}
+											grouped={grouped}
+											isGroupStart={isGroupStart}
+											isGroupEnd={isGroupEnd}
 										/>
 									</ActiveSessionContext.Provider>
 								</LegalLinksContext.Provider>
@@ -293,6 +324,8 @@ type RuntimeSessionOptions = {
 	viewerId?: string;
 	/** FE#1115: the advice seeker's unaccepted row; no consultant, so the avatar slot holds the magnet. */
 	asSearchingAsker?: boolean;
+	/** FE#2182: the list the card sits in (enquiries carry no ⋮ menu). */
+	listType?: SESSION_LIST_TYPES;
 };
 
 const runtimeSessionItem = ({
@@ -333,10 +366,11 @@ const runtimeViewer = ({
 
 function RuntimeSessionListItem(options: RuntimeSessionOptions = {}) {
 	return (
-		<div style={listShell}>
+		<div style={listShell} role="list" aria-label="Conversations">
 			<RuntimeCard
 				item={runtimeSessionItem(options)}
 				userData={runtimeViewer(options)}
+				listType={options.listType}
 			/>
 		</div>
 	);
@@ -345,9 +379,9 @@ function RuntimeSessionListItem(options: RuntimeSessionOptions = {}) {
 const meta = {
 	title: 'Components/Session/List/SessionListItem',
 	tags: ['autodocs'],
+	globals: { backgrounds: { value: 'gray' } },
 	parameters: {
 		layout: 'fullscreen',
-		backgrounds: { default: 'gray' },
 		router: {
 			initialPath: '/sessions/consultant/sessionView/session/4401'
 		},
@@ -376,20 +410,6 @@ const meta = {
 
 export default meta;
 type Story = StoryObj<typeof meta>;
-
-/**
- * Unread axis (#1147): read state is derived from the Matrix room, not from
- * the DTO's hard-coded `messagesRead`. Seed the registry so the runtime
- * stories pin both visual states.
- */
-const seedMatrixRoom = (unreadCount: number) => {
-	setMatrixClientServiceRef({
-		getClient: () => null,
-		getRoom: () => ({
-			getUnreadNotificationCount: () => unreadCount
-		})
-	} as any);
-};
 
 export const RuntimeComponent: Story = {
 	render: () => {
@@ -515,9 +535,7 @@ export const SupervisedByMe: Story = {
 				badge!.querySelector('svg path[fill="currentColor"]')
 			).not.toBeNull();
 			expect(
-				canvasElement.querySelector(
-					'.sessionsListItem__handoverActionPrimary'
-				)
+				canvasElement.querySelector('[data-cy="case-handover-action"]')
 			).toBeNull();
 		});
 	}
@@ -773,13 +791,18 @@ export const MenuOnThePhone: Story = {
 		return <RuntimeSessionListItem />;
 	},
 	play: async ({ canvasElement }) => {
+		// The 50 ms entrance delay has no transform; its first frame scales
+		// the row to 0.98. Read the settled anchor, like the desktop story.
+		settleCardEntrance(canvasElement);
 		const { menu, trigger } = await openTheMenu(canvasElement);
 		await expect(['below', 'above']).toContain(menu.dataset.placement);
 		// It hangs from the trigger's corner: 2 px below, right edge 4 px in.
-		const pill = trigger.getBoundingClientRect();
-		const hung = menu.getBoundingClientRect();
-		await expect(Math.round(pill.right - hung.right)).toBe(4);
-		await expect(Math.round(hung.top - pill.bottom)).toBe(2);
+		await waitFor(() => {
+			const pill = trigger.getBoundingClientRect();
+			const hung = menu.getBoundingClientRect();
+			expect(Math.round(pill.right - hung.right)).toBe(4);
+			expect(Math.round(hung.top - pill.bottom)).toBe(2);
+		});
 		await expectOnlyTheMenuRinged(canvasElement);
 		// And it stays inside the viewport either way.
 		const box = menu.getBoundingClientRect();
@@ -801,6 +824,8 @@ const CARD_GAP = 12;
 const CARD_CHIP_ROW = 48;
 const CARD_NAME = 24;
 const CARD_LINE = 16;
+/** The clip box reaches this far above the name line for the avatar ring. */
+const CARD_RING_REACH = 2;
 const CARD_LINES = 3;
 /** Where each preview line starts, measured from the avatar's left edge. */
 const CARD_LINE_LEFT = [60, 51, 42];
@@ -820,6 +845,8 @@ type CardPreview = {
 	glyphs?: Array<'thread' | 'voice'>;
 	/** true / false are asserted at desktop width; undefined is not. */
 	truncated?: boolean;
+	/** A moderator blurred a passage of this message (#2229). */
+	blurred?: boolean;
 };
 
 const textMessage = (body: string, thread = false) => ({
@@ -907,6 +934,16 @@ const cardPreviews: CardPreview[] = [
 		text: '0:42',
 		glyphs: ['voice'],
 		truncated: false
+	},
+	{
+		key: 'blurred',
+		label: 'Geschwärzt — die Vorschau zeigt keinen Text (#2229)',
+		content: textMessage(
+			'Ich wohne in der Hauptstraße 5, meine Nummer ist 0151 2345678.'
+		),
+		text: 'Nachricht mit geschwärzter Stelle',
+		blurred: true,
+		truncated: false
 	}
 ];
 
@@ -921,15 +958,38 @@ const seedCardPreviews = () => {
 			const preview = cardPreviews.find(
 				(candidate) => cardRoomId(candidate.key) === roomId
 			);
+			const messageId = `$card-${preview?.key}`;
 			return preview
 				? [
 						{
 							getType: () => 'm.room.message',
+							getId: () => messageId,
 							getClearContent: () => preview.content,
 							getContent: () => preview.content,
 							getSender: () => '@asker-4401:oriso.example',
 							getTs: () => 1_773_822_900_000
-						}
+						},
+						// A moderator's blur: position only, never the text.
+						...(preview.blurred
+							? [
+									{
+										getType: () => 'org.oriso.passage_blur',
+										getId: () => `$blur-${preview.key}`,
+										getContent: () => ({
+											'm.relates_to': {
+												rel_type:
+													'org.oriso.passage_blur',
+												event_id: messageId
+											},
+											'start': 13,
+											'length': 49
+										}),
+										getSender: () =>
+											'@consultant-1:oriso.example',
+										getTs: () => 1_773_822_960_000
+									}
+								]
+							: [])
 					]
 				: [];
 		}
@@ -1053,8 +1113,8 @@ const expectCardLayout = async (
 		await expect(Math.round(name.top)).toBe(Math.round(avatar.top));
 		await expect(Math.round(name.height)).toBe(CARD_NAME);
 
-		// Mail: its word ends under the pill's right edge, centred on the
-		// third line, 16 px above the card's bottom edge.
+		// Mail: its word ends under the pill's right edge, centred on the third
+		// line; the 32 px icon stands 4 px past the 24 px band above the edge.
 		const clip = at('.sessionCard__flow');
 		const mail = at(
 			'.sessionCard__trailing .sessionsListItem__consultingTypeIcon--nearby'
@@ -1069,12 +1129,16 @@ const expectCardLayout = async (
 			Math.abs(labelRange.getBoundingClientRect().right - menu.right)
 		).toBeLessThan(0.5);
 		const thirdLineCentre =
-			clip.top + CARD_NAME + CARD_LINE * 2 + CARD_LINE / 2;
+			clip.top +
+			CARD_RING_REACH +
+			CARD_NAME +
+			CARD_LINE * 2 +
+			CARD_LINE / 2;
 		await expect(
 			Math.abs((mail.top + mail.bottom) / 2 - thirdLineCentre)
 		).toBeLessThanOrEqual(1);
 		await expect(Math.round(box.bottom - CARD_BORDER - mail.bottom)).toBe(
-			CARD_INSET
+			CARD_INSET - 4
 		);
 
 		// The left edge: a steady diagonal, never back to the card's edge.
@@ -1264,8 +1328,9 @@ export const AskerSearchingRow: Story = {
  * ------------------------------------------------------------------ */
 
 const PRIMARY = 'rgb(165, 0, 10)';
+const KIND_GREY = 'rgb(77, 86, 96)'; // --m3-secondary: Mail, Kreis, Interna
 const PRIMARY_CONTAINER = 'rgb(204, 30, 28)';
-const WHITE = 'rgb(255, 255, 255)';
+const ON_PRIMARY_CONTAINER = 'rgb(255, 226, 222)';
 
 /** Waits for the row to render and ends its entrance, so colours are read settled. */
 const settledRows = async (canvasElement: HTMLElement, count = 1) => {
@@ -1286,26 +1351,125 @@ const part = (row: HTMLElement, selector: string) => {
 	return element!;
 };
 
-/** Group rows: the "no topic" chip, two placeholder avatars and a "+1" circle. */
-const expectGroupRow = async (row: HTMLElement, name: string) => {
+/** Real group members: the first two people and the hidden-member count. */
+/** `chip`: the topic chip's text, or null for an Interna card, which has none. */
+const expectGroupRow = async (
+	row: HTMLElement,
+	name: string,
+	count = 3,
+	chip: string | null = null
+) => {
 	await expect(row.classList.contains('sessionsListItem--groupChat')).toBe(
 		true
 	);
-	await expect(part(row, '.sessionsListItem__topic').textContent).toBe(
-		'kein Thema gewählt'
+	if (chip === null) {
+		await expect(row.querySelector('.sessionsListItem__topic')).toBeNull();
+	} else {
+		await expect(part(row, '.sessionsListItem__topic').textContent).toBe(
+			chip
+		);
+	}
+	// Up to four faces; above that one field with the count (Figma 316-16775).
+	await waitFor(() =>
+		expect(
+			row.querySelectorAll('[data-cy="participant-avatar"]')
+		).toHaveLength(count > 3 ? 0 : count)
 	);
-	const stack = part(row, '.sessionsListItem__stackedAvatars');
+	const crowd = row.querySelector('[data-cy="group-card-crowd"]');
+	if (count > 3) await expect(crowd?.textContent).toBe(`${count}`);
+	else await expect(crowd).toBeNull();
 	await expect(
-		stack.querySelectorAll(
-			'.sessionsListItem__avatarWrapper:not(.sessionsListItem__avatarWrapper--plus)'
-		)
-	).toHaveLength(2);
-	await expect(part(stack, '.sessionsListItem__plusAvatar').textContent).toBe(
-		'+1'
-	);
+		row.querySelector('[data-user-id^="placeholder-"]')
+	).toBeNull();
 	await expect(part(row, '.sessionsListItem__username').textContent).toBe(
 		name
 	);
+};
+
+/**
+ * FE#1952: four conversations of one counsellor. The first came in by mail;
+ * the others came in through the counsellor's video, audio and chat direct
+ * link. The card names how each one came in, instead of "Mail" for all.
+ */
+const DIRECT_LINK_ROWS = [
+	{ id: 4501, medium: undefined, user: 'ruhiges_yak' },
+	{ id: 4502, medium: 'VIDEO', user: 'sonnenblume_47' },
+	{ id: 4503, medium: 'AUDIO', user: 'blauer_reiher' },
+	{ id: 4504, medium: 'CHAT', user: 'stiller_fuchs' }
+] as const;
+
+export const DirectLinkConversations: Story = {
+	name: 'Direktlink-Gespräche (FE#1952)',
+	parameters: {
+		router: { initialPath: '/sessions/consultant/sessionView' }
+	},
+	render: () => {
+		seedMatrixRoom(0);
+		return (
+			<div style={listShell} role="list" aria-label="Conversations">
+				{DIRECT_LINK_ROWS.map((row, index) => (
+					<RuntimeCard
+						key={row.id}
+						index={index}
+						grouped
+						isGroupStart={index === 0}
+						isGroupEnd={index === DIRECT_LINK_ROWS.length - 1}
+						item={runtimeSessionItem({
+							sessionOverrides: {
+								id: row.id,
+								matrixRoomId: `!direct-${row.id}:matrix.example.org`,
+								lastMessage: 'Hallo, ich warte im Anruf.',
+								// Unknown to builds before FE#1952: they show "Mail".
+								...({ directLinkMedium: row.medium } as object)
+							},
+							userOverrides: { username: row.user }
+						})}
+					/>
+				))}
+			</div>
+		);
+	}
+};
+
+/**
+ * FE#1952: the selected video direct-link card. Like Mail, the glyph keeps
+ * the primary colour of its label; the active card's black-to-red filter
+ * must not repaint it.
+ */
+export const DirectLinkConversationSelected: Story = {
+	name: 'Direktlink-Gespräch — ausgewählt (FE#1952)',
+	parameters: {
+		router: { initialPath: '/sessions/consultant/sessionView/session/4502' }
+	},
+	render: () => {
+		seedMatrixRoom(0);
+		return (
+			<RuntimeSessionListItem
+				sessionOverrides={{
+					id: 4502,
+					...({ directLinkMedium: 'VIDEO' } as object)
+				}}
+			/>
+		);
+	},
+	play: async ({ canvasElement }) => {
+		const [row] = await settledRows(canvasElement);
+		await expect(row.classList.contains('sessionsListItem--active')).toBe(
+			true
+		);
+		const glyph = part(
+			row,
+			'svg.sessionsListItem__consultingTypeIcon--directLinkIcon'
+		);
+		await expect(getComputedStyle(glyph).filter).toBe('none');
+		const label = part(
+			row,
+			'.sessionsListItem__consultingTypeIcon--directLinkLabel'
+		);
+		await expect(getComputedStyle(glyph).color).toBe(
+			getComputedStyle(label).color
+		);
+	}
 };
 
 /** Resting consultant card: topic and postcode as one pill, Mail, alias preview in italics. */
@@ -1368,7 +1532,8 @@ export const ConsultantSelected: Story = {
 		await expect(card.borderTopWidth).toBe('2px');
 		const topic = getComputedStyle(part(row, '.sessionsListItem__topic'));
 		await expect(topic.backgroundColor).toBe(PRIMARY_CONTAINER);
-		await expect(topic.color).toBe(WHITE);
+		// The global topic tag token (--oriso-topic-tag-active-fg).
+		await expect(topic.color).toBe(ON_PRIMARY_CONTAINER);
 		const postcode = getComputedStyle(
 			part(row, '.sessionsListItem__postcode')
 		);
@@ -1378,7 +1543,7 @@ export const ConsultantSelected: Story = {
 			getComputedStyle(
 				part(row, '.sessionsListItem__consultingTypeIcon--nearbyLabel')
 			).color
-		).toBe(PRIMARY);
+		).toBe(KIND_GREY);
 	}
 };
 
@@ -1416,7 +1581,7 @@ export const StackedListWithSelection: Story = {
 	render: () => {
 		seedMatrixRoom(2);
 		return (
-			<div style={listShell}>
+			<div style={listShell} role="list" aria-label="Conversations">
 				<RuntimeCard
 					index={0}
 					isBeforeActive
@@ -1462,18 +1627,234 @@ export const StackedListWithSelection: Story = {
 	}
 };
 
+/** Selection follows the route like the real list: the group flags come
+ * from the same route-derived active item the card uses, so opening a
+ * card's menu (no navigation) never moves the group boundaries. */
+function GroupedRows({ cards }: { cards: ListItemInterface[] }) {
+	const { isActive } = useActiveListItem();
+	const active = cards.findIndex((item) => {
+		const room = item.chat ?? item.session;
+		return isActive({ groupId: room?.matrixRoomId, sessionId: room?.id });
+	});
+	return (
+		<>
+			{cards.map((item, index) => (
+				<div key={index}>
+					<RuntimeCard
+						index={index}
+						item={item}
+						grouped
+						isBeforeActive={index === active - 1}
+						isAfterActive={active !== -1 && index === active + 1}
+						isGroupStart={index === 0 || index === active + 1}
+						isGroupEnd={
+							index === cards.length - 1 || index === active - 1
+						}
+					/>
+				</div>
+			))}
+		</>
+	);
+}
+
+// The route (story parameter `router.initialPath`) decides the open card.
+const groupedRows = (cards: ListItemInterface[]) => (
+	<GroupedRows cards={cards} />
+);
+
+const cardStyle = (row: HTMLElement) =>
+	getComputedStyle(part(row, '.sessionsListItem__content'));
+const cardBox = (row: HTMLElement) =>
+	part(row, '.sessionsListItem__content').getBoundingClientRect();
+const REST_OUTLINE = 'rgb(255, 180, 170)'; // --m3-primary-fixed-dim
+const FOCUS_RING = 'rgb(165, 0, 10)'; // --m3-primary
+
+/**
+ * Grouped list (Figma 316-17441 / 8609-31260): unselected cards sit flush in
+ * one group with a single white hairline, 24px corners only at the group
+ * ends. The selected card leaves the group with 6px on both sides. Its ring
+ * follows the focus: 1px calm outline while the focus is elsewhere, 2px red
+ * while the card holds it; a keyboard-focused neighbour takes the ring.
+ */
+export const GroupedListWithSelection: Story = {
+	name: 'Liste — gruppiert, Auswahl dazwischen (Ring folgt Fokus)',
+	render: () => {
+		seedMatrixRoom(2);
+		return (
+			<div style={listShell} role="list" aria-label="Conversations">
+				{groupedRows([
+					runtimeGroupChat({ id: 5601, name: 'Elternrunde' }),
+					runtimeGroupChat({ id: 5602, name: 'New Redeploy' }),
+					runtimeSessionItem(),
+					runtimeGroupChat({ id: 5603, name: 'Teamrunde' }),
+					runtimeGroupChat({
+						id: 5604,
+						name: 'Selbsthilfe Mitte'
+					})
+				])}
+			</div>
+		);
+	},
+	play: async ({ canvasElement }) => {
+		const rows = await settledRows(canvasElement, 5);
+		const [first, before, selected, after, last] = rows;
+		await expect(
+			rows.map((row) =>
+				row.classList.contains('sessionsListItem--active')
+			)
+		).toEqual([false, false, true, false, false]);
+
+		// Flush inside a group, 6px around the selected card.
+		await expect(
+			Math.round(cardBox(before).top - cardBox(first).bottom)
+		).toBe(0);
+		await expect(
+			Math.round(cardBox(selected).top - cardBox(before).bottom)
+		).toBe(6);
+		await expect(
+			Math.round(cardBox(after).top - cardBox(selected).bottom)
+		).toBe(6);
+		await expect(
+			Math.round(cardBox(last).top - cardBox(after).bottom)
+		).toBe(0);
+
+		// One hairline between neighbours, never two.
+		await expect(cardStyle(before).borderTopWidth).toBe('0px');
+		await expect(cardStyle(last).borderTopWidth).toBe('0px');
+
+		// Corners: rounded only where a group starts or ends.
+		await expect(cardStyle(first).borderTopLeftRadius).toBe('24px');
+		await expect(cardStyle(first).borderBottomLeftRadius).toBe('0px');
+		await expect(cardStyle(before).borderBottomLeftRadius).toBe('24px');
+		await expect(cardStyle(after).borderTopLeftRadius).toBe('24px');
+		await expect(cardStyle(after).borderBottomLeftRadius).toBe('0px');
+		await expect(cardStyle(last).borderBottomLeftRadius).toBe('24px');
+		await expect(cardStyle(selected).borderTopLeftRadius).toBe('24px');
+
+		// Focus elsewhere: calm 1px outline on the selected card.
+		await waitFor(() =>
+			expect(cardStyle(selected).borderTopColor).toBe(REST_OUTLINE)
+		);
+		await expect(cardStyle(selected).borderTopWidth).toBe('1px');
+
+		// Focus on the selected card: the full 2px ring, size unchanged.
+		const restingHeight = cardBox(selected).height;
+		part(selected, '.sessionsListItem__content').focus();
+		await waitFor(() =>
+			expect(cardStyle(selected).borderTopColor).toBe(FOCUS_RING)
+		);
+		await expect(cardStyle(selected).boxShadow).toContain('inset');
+		await expect(cardBox(selected).height).toBe(restingHeight);
+
+		// The focus moves on: the ring goes with it, the selected card calms down.
+		const neighbourHeight = cardBox(after).height;
+		part(after, '.sessionsListItem__content').focus();
+		await waitFor(() =>
+			expect(cardStyle(selected).borderTopColor).toBe(REST_OUTLINE)
+		);
+		await waitFor(() =>
+			expect(cardStyle(after).boxShadow).toContain('inset')
+		);
+		await expect(cardBox(after).height).toBe(neighbourHeight);
+	}
+};
+
+/** Short list, nothing selected: the last card is rounded at the bottom too. */
+export const GroupedShortList: Story = {
+	name: 'Liste — gruppiert, kurze Liste ohne Auswahl',
+	parameters: {
+		router: { initialPath: '/sessions/consultant/sessionView' }
+	},
+	render: () => {
+		seedMatrixRoom(2);
+		return (
+			<div style={listShell} role="list" aria-label="Conversations">
+				{groupedRows([
+					runtimeGroupChat({ id: 5701, name: 'Elternrunde' }),
+					runtimeSessionItem(),
+					runtimeGroupChat({ id: 5702, name: 'Teamrunde' })
+				])}
+			</div>
+		);
+	},
+	play: async ({ canvasElement }) => {
+		const [first, middle, last] = await settledRows(canvasElement, 3);
+		await expect(
+			Math.round(cardBox(middle).top - cardBox(first).bottom)
+		).toBe(0);
+		await expect(cardStyle(first).borderTopLeftRadius).toBe('24px');
+		await expect(cardStyle(middle).borderTopLeftRadius).toBe('0px');
+		await expect(cardStyle(middle).borderBottomLeftRadius).toBe('0px');
+		await expect(cardStyle(last).borderBottomRightRadius).toBe('24px');
+	}
+};
+
+/** Ten cards: the selection moves with each click and the groups re-form. */
+export const GroupedLongList: Story = {
+	name: 'Liste — gruppiert, zehn Karten (Auswahl wandert)',
+	render: () => {
+		seedMatrixRoom(2);
+		const cards = Array.from({ length: 10 }, (_, i) =>
+			i === 4
+				? runtimeSessionItem()
+				: runtimeGroupChat({ id: 5800 + i, name: `Runde ${i + 1}` })
+		);
+		return (
+			<div style={listShell} role="list" aria-label="Conversations">
+				{groupedRows(cards)}
+			</div>
+		);
+	},
+	play: async ({ canvasElement }) => {
+		const rows = await settledRows(canvasElement, 10);
+		const radii = () =>
+			rows.map((row) => {
+				const s = cardStyle(row);
+				return `${s.borderTopLeftRadius}/${s.borderBottomLeftRadius}`;
+			});
+
+		// Cards 5..9 form one group; 2..4 are square inside their group.
+		await expect(radii()[0]).toBe('24px/0px');
+		await expect(radii()[2]).toBe('0px/0px');
+		await expect(radii()[3]).toBe('0px/24px');
+		await expect(radii()[5]).toBe('24px/0px');
+		await expect(radii()[9]).toBe('0px/24px');
+
+		// Select the eighth card: its neighbours close and open the groups.
+		await userEvent.click(part(rows[7], '.sessionsListItem__content'));
+		await waitFor(() =>
+			expect(rows[7].classList.contains('sessionsListItem--active')).toBe(
+				true
+			)
+		);
+		await expect(
+			rows.filter((r) => r.classList.contains('sessionsListItem--active'))
+		).toHaveLength(1);
+		// The corners ease in (200 ms): read them once they have settled.
+		await waitFor(() => expect(radii()[6]).toBe('0px/24px'));
+		await waitFor(() => expect(radii()[8]).toBe('24px/0px'));
+		await expect(radii()[4]).toBe('0px/0px');
+		await expect(radii()[9]).toBe('0px/24px');
+		await waitFor(() => expect(radii()[7]).toBe('24px/24px'));
+	}
+};
+
 /** A group chat explicitly typed `AGENCY_COUNSELLING` shows the team icon. */
 export const GroupChatRow: Story = {
 	name: 'Gruppe — Beratungsstelle (Team-Symbol)',
 	render: () => {
-		seedMatrixRoom(2);
+		seedMatrixRoom(2).setMessage(
+			'!storybook-group-5501:matrix.example.org',
+			'Willkommen in der Teamrunde'
+		);
 		return (
-			<div style={listShell}>
+			<div style={listShell} role="list" aria-label="Conversations">
 				<RuntimeCard
 					item={runtimeGroupChat({
 						id: 5501,
 						name: 'New Redeploy',
-						conversationType: 'AGENCY_COUNSELLING'
+						conversationType: 'AGENCY_COUNSELLING',
+						lastMessage: 'Willkommen in der Teamrunde'
 					})}
 				/>
 			</div>
@@ -1481,17 +1862,18 @@ export const GroupChatRow: Story = {
 	},
 	play: async ({ canvasElement }) => {
 		const [row] = await settledRows(canvasElement);
-		await expectGroupRow(row, 'New Redeploy');
-		// Own chat without a message yet.
+		await expectGroupRow(row, 'New Redeploy', 3, 'kein Thema gewählt');
+		// The production preview reads the seeded decrypted Matrix event.
 		await expect(part(row, '.sessionsListItem__subject').textContent).toBe(
-			'Sie haben den Chat erstellt.'
+			'Willkommen in der Teamrunde'
 		);
 		await expect(
 			part(row, '.sessionsListItem__consultingTypeIcon--team')
 		).toBeTruthy();
+		// The team icon does not make this row a scheduled circle.
 		await expect(
 			row.querySelector('.sessionsListItem__menuIcon')
-		).not.toBeNull();
+		).toBeNull();
 	}
 };
 
@@ -1532,7 +1914,7 @@ export const InteractiveMenuAndLongContent: Story = {
 	render: () => {
 		seedMatrixRoom(2);
 		return (
-			<div style={listShell}>
+			<div style={listShell} role="list" aria-label="Conversations">
 				<RuntimeCard
 					index={0}
 					item={runtimeSessionItem({
@@ -1618,9 +2000,12 @@ export const InteractiveMenuAndLongContent: Story = {
 export const InternalCounsellorChat: Story = {
 	name: 'Gruppe — Interna (Figma 98-20465)',
 	render: () => {
-		seedMatrixRoom(2);
+		seedMatrixRoom(2).setMessage(
+			'!storybook-group-5503:matrix.example.org',
+			'Das ist schon komisch mit dieser Anfrage.'
+		);
 		return (
-			<div style={listShell}>
+			<div style={listShell} role="list" aria-label="Conversations">
 				<RuntimeCard
 					item={runtimeGroupChat({
 						id: 5503,
@@ -1642,11 +2027,8 @@ export const InternalCounsellorChat: Story = {
 				.textContent
 		).toBe('Interna');
 		await expect(
-			part(
-				row,
-				'.sessionsListItem__consultingTypeIcon--internalIcon'
-			).getAttribute('alt')
-		).toBe('Interna');
+			part(row, '.sessionsListItem__consultingTypeIcon--kindIcon')
+		).toBeTruthy();
 	}
 };
 
@@ -1699,13 +2081,99 @@ export const LiveChat: Story = {
 	}
 };
 
+/** FE#2182/#2183: a live-chat guest who has written nothing yet, waiting 12 minutes. */
+const waitingLiveChatGuest = (): RuntimeSessionOptions => ({
+	lastMessage: '',
+	listType: SESSION_LIST_TYPES.ENQUIRY,
+	sessionOverrides: {
+		registrationType: 'ANONYMOUS' as any,
+		status: STATUS_ENQUIRY,
+		lastMessageType: null as any,
+		messageDate: 0,
+		// Half a minute of slack, so a slow render still reads 12.
+		createDate: new Date(Date.now() - 12.5 * 60 * 1000).toISOString()
+	}
+});
+
+/**
+ * Checks the "name only" card: no ⋮ menu, the top row still as high as the
+ * menu pill, the name centred on the avatar, the Live Chat mark centred on
+ * its label, and the waiting time in the date's place.
+ */
+const expectNameOnlyCard = async (canvasElement: HTMLElement) => {
+	const [row] = await settledRows(canvasElement);
+	await expect(row.querySelector('.sessionsListItem__menuIcon')).toBeNull();
+	await expect(
+		part(row, '.sessionsListItem__rowRight').getBoundingClientRect().height
+	).toBeGreaterThanOrEqual(32);
+	await expect(part(row, '.sessionCard')).toHaveClass(
+		'sessionCard--nameOnly'
+	);
+	const centre = (rect: DOMRect) => rect.top + rect.height / 2;
+	const name = part(row, '.sessionCard__name').getBoundingClientRect();
+	const avatar = part(row, '.sessionCard__avatar').getBoundingClientRect();
+	await expect(Math.abs(centre(name) - centre(avatar))).toBeLessThanOrEqual(
+		1
+	);
+	const mark = part(row, '.sessionsListItem__consultingTypeIcon--liveChat');
+	const glyph = mark.querySelector('svg')!.getBoundingClientRect();
+	const label = part(
+		mark,
+		'.sessionsListItem__consultingTypeIcon--liveChatLabel'
+	).getBoundingClientRect();
+	await expect(Math.abs(centre(glyph) - centre(label))).toBeLessThanOrEqual(
+		1
+	);
+	await expect(part(row, '.sessionsListItem__date').textContent).toBe(
+		'wartet seit 12 Min.'
+	);
+	return row;
+};
+
+/** FE#2182: Anfragen → Live chat, not selected — name only, centred on the avatar. */
+export const NameOnlyLiveChatEnquiry: Story = {
+	name: 'Anfrage, nur Name — nicht ausgewählt (FE#2182)',
+	parameters: {
+		router: { initialPath: '/sessions/consultant/sessionPreview' }
+	},
+	render: () => {
+		seedMatrixRoom(0);
+		return <RuntimeSessionListItem {...waitingLiveChatGuest()} />;
+	},
+	play: async ({ canvasElement }) => {
+		const row = await expectNameOnlyCard(canvasElement);
+		await expect(row).not.toHaveClass('sessionsListItem--active');
+	}
+};
+
+/** FE#2182: the same card selected — the ring changes nothing in the spacing. */
+export const NameOnlyLiveChatEnquirySelected: Story = {
+	name: 'Anfrage, nur Name — ausgewählt (FE#2182)',
+	parameters: {
+		router: {
+			initialPath: '/sessions/consultant/sessionPreview/session/4401'
+		}
+	},
+	render: () => {
+		seedMatrixRoom(0);
+		return <RuntimeSessionListItem {...waitingLiveChatGuest()} />;
+	},
+	play: async ({ canvasElement }) => {
+		const row = await expectNameOnlyCard(canvasElement);
+		await expect(row).toHaveClass('sessionsListItem--active');
+	}
+};
+
 /** Guided self-help group (Figma 115-28318): a recurring group reads as Gesprächskreis. */
 export const GuidedSelfHelpGroup: Story = {
 	name: 'Gruppe — Gesprächskreis (Figma 115-28318)',
 	render: () => {
-		seedMatrixRoom(2);
+		seedMatrixRoom(2).setMessage(
+			'!storybook-group-5504:matrix.example.org',
+			'Das soll aber einzigartig'
+		);
 		return (
-			<div style={listShell}>
+			<div style={listShell} role="list" aria-label="Conversations">
 				<RuntimeCard
 					item={runtimeGroupChat({
 						id: 5504,
@@ -1719,18 +2187,71 @@ export const GuidedSelfHelpGroup: Story = {
 	},
 	play: async ({ canvasElement }) => {
 		const [row] = await settledRows(canvasElement);
-		await expectGroupRow(row, 'Montagsrunde');
+		await expectGroupRow(row, 'Montagsrunde', 3, 'Montagsrunde');
+		await expect(
+			row.querySelector('.sessionsListItem__menuIcon')
+		).not.toBeNull();
 		await expect(
 			part(row, '.sessionsListItem__consultingTypeIcon--selfHelpLabel')
 				.textContent
-		).toBe('Gesprächskreis');
+		).toBe('Kreis');
 		await expect(
-			part(
-				row,
-				'.sessionsListItem__consultingTypeIcon--selfHelpIcon'
-			).getAttribute('alt')
-		).toBe('Gesprächskreis');
+			part(row, '.sessionsListItem__consultingTypeIcon--kindIcon')
+		).toBeTruthy();
 	}
+};
+
+/** FE#1913: a Gesprächskreis chip shows its topic; an Interna card has no chip. */
+const GroupTopicChipPair = () => {
+	seedMatrixRoom(2);
+	return (
+		<div style={listShell} role="list" aria-label="Conversations">
+			<RuntimeCard
+				index={0}
+				item={runtimeGroupChat({
+					id: 5511,
+					name: 'Schulden',
+					repetitive: true
+				})}
+			/>
+			<RuntimeCard
+				index={1}
+				item={runtimeGroupChat({ id: 5512, name: 'Teamrunde' })}
+			/>
+		</div>
+	);
+};
+
+const expectGroupTopicChips = async (canvasElement: HTMLElement) => {
+	const [selfHelp, interna] = await settledRows(canvasElement, 2);
+	await expectGroupRow(selfHelp, 'Schulden', 3, 'Schulden');
+	const chip = part(selfHelp, '.sessionsListItem__topic');
+	await expect(chip.classList.contains('topicTag')).toBe(true);
+	await expect(chip.getBoundingClientRect().width).toBeGreaterThan(0);
+	await expect(
+		part(selfHelp, '.sessionsListItem__consultingTypeIcon--selfHelpLabel')
+			.textContent
+	).toBe('Kreis');
+	await expectGroupRow(interna, 'Teamrunde', 3, null);
+	await expect(
+		part(interna, '.sessionsListItem__consultingTypeIcon--internalLabel')
+			.textContent
+	).toBe('Interna');
+	await expect(canvasElement.textContent).not.toContain('kein Thema gewählt');
+};
+
+export const GroupTopicChip: Story = {
+	name: 'Gruppe — Themen-Chip: Gesprächskreis „Schulden“, Interna ohne Chip',
+	globals: { viewport: { value: 'desktop1366' } },
+	render: () => <GroupTopicChipPair />,
+	play: async ({ canvasElement }) => expectGroupTopicChips(canvasElement)
+};
+
+export const GroupTopicChipOnThePhone: Story = {
+	name: 'Gruppe — Themen-Chip, 390 px',
+	globals: { viewport: { value: 'phone390' } },
+	render: () => <GroupTopicChipPair />,
+	play: async ({ canvasElement }) => expectGroupTopicChips(canvasElement)
 };
 
 /* ------------------------------------------------------------------ *
@@ -1751,14 +2272,14 @@ const rgb = (hex: string) => {
 	return `rgb(${(value >> 16) & 255}, ${(value >> 8) & 255}, ${value & 255})`;
 };
 
-/** Selected card, topic chip and Mail mark follow the tenant's palette instead of the default red. */
+/** Selected card and topic chip follow the tenant's palette; Mail stays grey (Figma 316-16775). */
 export const TenantPrimaryColour: Story = {
-	name: 'Träger-Farbe — Auswahl, Themen-Chip und Mail folgen ihr',
+	name: 'Träger-Farbe — Auswahl und Themen-Chip folgen ihr',
 	render: () => {
 		seedMatrixRoom(2);
 		return (
 			<div style={TENANT_TOKENS as React.CSSProperties}>
-				<div style={listShell}>
+				<div style={listShell} role="list" aria-label="Conversations">
 					<RuntimeCard index={0} item={runtimeSessionItem()} />
 					<RuntimeCard
 						index={1}
@@ -1793,17 +2314,19 @@ export const TenantPrimaryColour: Story = {
 
 		const selectedChip = style(selected, '.sessionsListItem__topic');
 		await expect(selectedChip.backgroundColor).toBe(
-			tenant('--m3-primary-container')
+			tenant('--oriso-topic-tag-active-bg')
 		);
-		await expect(selectedChip.color).toBe(tenant('--m3-on-primary'));
+		await expect(selectedChip.color).toBe(
+			tenant('--oriso-topic-tag-active-fg')
+		);
 		const restingChip = style(resting, '.sessionsListItem__topic');
 		await expect(restingChip.backgroundColor).toBe(
-			tenant('--m3-primary-fixed-dim')
+			tenant('--oriso-topic-tag-bg')
 		);
-		await expect(restingChip.color).toBe(tenant('--m3-on-primary-fixed'));
+		await expect(restingChip.color).toBe(tenant('--oriso-topic-tag-fg'));
 		const restingPostcode = style(resting, '.sessionsListItem__postcode');
 		await expect(restingPostcode.borderTopColor).toBe(
-			tenant('--m3-primary-fixed-dim')
+			tenant('--oriso-topic-tag-bg')
 		);
 		await expect(restingPostcode.color).toBe(
 			tenant('--m3-primary-container')
@@ -1813,11 +2336,11 @@ export const TenantPrimaryColour: Story = {
 			await expect(
 				style(row, '.sessionsListItem__consultingTypeIcon--nearbyLabel')
 					.color
-			).toBe(tenant('--m3-primary'));
+			).toBe(KIND_GREY);
 			await expect(
-				style(row, '.sessionsListItem__consultingTypeIcon--nearbyIcon')
+				style(row, '.sessionsListItem__consultingTypeIcon--kindIcon')
 					.backgroundColor
-			).toBe(tenant('--m3-primary'));
+			).toBe(KIND_GREY);
 		}
 	}
 };
@@ -1848,5 +2371,811 @@ export const AskerEmptyEnquiryRow: Story = {
 		await expect(
 			canvasElement.querySelector('.sessionsListItem__content')
 		).not.toHaveClass('consultantSearchLoaderHost');
+	}
+};
+
+/**
+ * #1306 — the supervisor's row says what it is.
+ *
+ * The badge above is icon-only: the word "Supervision" lives in
+ * `title`/`aria-label`. Measured on dev on 14.09.2026, the only VISIBLE word on
+ * a supervisor's row was "Mail", so the row read as mail counselling to the one
+ * person it is not. The consulting type is not lost — the supervisor reads the
+ * client chat one panel to the right, which says what kind of chat it is.
+ */
+export const SupervisionRowLabel: Story = {
+	name: 'Supervision — the row reads "Supervision", not "Mail" (#1306)',
+	render: () => {
+		seedMatrixRoom(0);
+		return (
+			<RuntimeSessionListItem
+				viewerId={SUPERVISOR_ID}
+				sessionOverrides={{
+					supervision: {
+						supervisedByMe: true,
+						supervisorConsultantIds: [SUPERVISOR_ID],
+						supervisorDisplayNames: ['Sabine Supervisor']
+					}
+				}}
+			/>
+		);
+	},
+	play: async ({ canvasElement }) => {
+		await waitFor(() => {
+			const modality = canvasElement.querySelector(
+				'[data-testid="supervision-modality"]'
+			);
+			expect(modality).not.toBeNull();
+			// Frank, 14.09.2026: "Hauptsache, das Icon ist dabei."
+			expect(modality!.querySelector('svg')).not.toBeNull();
+			// The mail label is gone for this viewer.
+			expect(
+				canvasElement.querySelector(
+					'.sessionsListItem__consultingTypeIcon--nearbyLabel'
+				)
+			).toBeNull();
+		});
+	}
+};
+
+/** A side-room-only message must keep the expanded supervisor card unread. */
+export const SupervisionSideRoomUnread: Story = {
+	name: 'Supervision — unread private message keeps the case unread (#1306)',
+	parameters: {
+		router: { initialPath: '/sessions/consultant/sessionView' }
+	},
+	render: () => {
+		const sideRoomId = '!supervision:matrix.example.org';
+		seedMatrixRoom({ [sideRoomId]: 2 });
+		return (
+			<RuntimeSessionListItem
+				viewerId={SUPERVISOR_ID}
+				sessionOverrides={{
+					supervision: {
+						supervisedByMe: true,
+						supervisorConsultantIds: [SUPERVISOR_ID],
+						supervisorDisplayNames: ['Sabine Supervisor'],
+						sideRoomId
+					}
+				}}
+			/>
+		);
+	},
+	play: async ({ canvasElement }) => {
+		await waitFor(() => {
+			const row = canvasElement.querySelector('.sessionsListItem');
+			expect(row).not.toBeNull();
+			expect(row).not.toHaveClass('sessionsListItem--active');
+			expect(row).not.toHaveClass('sessionsListItem--read');
+			expect(
+				canvasElement.querySelector(
+					'[data-testid="supervision-modality"]'
+				)
+			).not.toBeNull();
+		});
+	}
+};
+
+/**
+ * The label truncates rather than pushing the row apart. "Supervision" fits
+ * German and English; a longer translation must not shove the date out of the
+ * card, and `title` preserves the descriptive supervision tooltip.
+ */
+const longSupervisionLabel =
+	'Supervision mit einer absichtlich sehr langen Bezeichnung';
+const supervisionDescription = 'Supervision – Sie lesen in diesem Chat mit';
+const longSupervisionTranslations = createInstance();
+void longSupervisionTranslations.init({
+	lng: 'de',
+	fallbackLng: 'de',
+	initImmediate: false,
+	defaultNS: 'common',
+	resources: {
+		de: {
+			common: {
+				...de,
+				sessionList: {
+					...de.sessionList,
+					toolbar: {
+						...de.sessionList.toolbar,
+						chips: {
+							...de.sessionList.toolbar.chips,
+							supervision: longSupervisionLabel
+						}
+					}
+				}
+			}
+		}
+	},
+	interpolation: { escapeValue: false }
+});
+
+export const SupervisionRowLabelTruncates: Story = {
+	name: 'Supervision — a long translation truncates instead of pushing (#1306)',
+	render: () => {
+		seedMatrixRoom(0);
+		return (
+			<I18nextProvider i18n={longSupervisionTranslations}>
+				<div style={{ width: 320 }}>
+					<RuntimeSessionListItem
+						viewerId={SUPERVISOR_ID}
+						sessionOverrides={{
+							supervision: {
+								supervisedByMe: true,
+								supervisorConsultantIds: [SUPERVISOR_ID],
+								supervisorDisplayNames: ['Sabine Supervisor']
+							}
+						}}
+					/>
+				</div>
+			</I18nextProvider>
+		);
+	},
+	play: async ({ canvasElement }) => {
+		await waitFor(() => {
+			const label = canvasElement.querySelector(
+				'.sessionsListItem__consultingTypeIcon--supervisionLabel'
+			) as HTMLElement | null;
+			expect(label).not.toBeNull();
+			expect(label!.textContent).toBe(longSupervisionLabel);
+			expect(label!.scrollWidth).toBeGreaterThan(label!.clientWidth);
+			expect(label!.getAttribute('title')).toBe(supervisionDescription);
+			// The row must not grow wider than the card it sits in.
+			const card = canvasElement.querySelector(
+				'.sessionsListItem__content'
+			) as HTMLElement | null;
+			expect(card).not.toBeNull();
+			expect(label!.getBoundingClientRect().right).toBeLessThanOrEqual(
+				card!.getBoundingClientRect().right + 1
+			);
+		});
+	}
+};
+
+/** Selected real group label on its actual surface, using the ordinary provider. */
+const selectedSelfHelpContrast = (
+	scheme: 'light' | 'dark' | 'inverted'
+): Story => ({
+	...GuidedSelfHelpGroup,
+	name: `Selected self-help label — ${scheme}`,
+	globals: { scheme },
+	parameters: {
+		...GuidedSelfHelpGroup.parameters,
+		router: {
+			initialPath: '/sessions/consultant/sessionView/session/5504'
+		}
+	},
+	play: async (context) => {
+		// Keep the real text/icon/group semantics from the original story.
+		await GuidedSelfHelpGroup.play?.(context);
+		const [row] = await settledRows(context.canvasElement);
+		await expect(row.classList.contains('sessionsListItem--active')).toBe(
+			true
+		);
+		const label = part(
+			row,
+			'.sessionsListItem__consultingTypeIcon--selfHelpLabel'
+		);
+		await expect(label).toBeVisible();
+		const expected = computeOrisoPalette(
+			{ primary: '#A5000A' },
+			scheme
+		).tokens;
+		const { page } = await import('@vitest/browser/context');
+		const originalViewport = [window.innerWidth, window.innerHeight];
+		const viewports =
+			scheme === 'light'
+				? [
+						[390, 844],
+						[820, 1180],
+						[1440, 900]
+					]
+				: [originalViewport];
+		try {
+			for (const [width, height] of viewports) {
+				await page.viewport(width, height);
+				await waitFor(() => {
+					expect(window.innerWidth).toBe(width);
+					expect(window.innerHeight).toBe(height);
+				});
+				const actualStyle = getComputedStyle(label);
+				console.info(
+					'shared-svg-contrast-visual',
+					JSON.stringify({
+						case: 'selected-self-help',
+						width: window.innerWidth,
+						height: window.innerHeight,
+						resolvedLanguage: i18n.resolvedLanguage,
+						language: i18n.language,
+						documentLanguage: document.documentElement.lang,
+						scheme,
+						foreground: actualStyle.color,
+						background: getComputedStyle(
+							part(row, '.sessionsListItem__content')
+						).backgroundColor,
+						path: `selected-self-help-${scheme}-${width}x${height}.png`
+					})
+				);
+				await page.screenshot({
+					path: `../../../test-results/shared-svg-contrast/selected-self-help-${scheme}-${width}x${height}.png`
+				});
+			}
+		} finally {
+			await page.viewport(originalViewport[0], originalViewport[1]);
+		}
+		await waitFor(() =>
+			expect(getComputedStyle(label).color).toBe(
+				rgb(expected['--m3-on-surface-variant'])
+			)
+		);
+		// No rule/context exclusion: the ordinary complete-story raw axe audit
+		// still runs, including any independent non-owned findings.
+	}
+});
+
+export const SelectedSelfHelpContrastLight: Story =
+	selectedSelfHelpContrast('light');
+export const SelectedSelfHelpContrastDark: Story =
+	selectedSelfHelpContrast('dark');
+export const SelectedSelfHelpContrastInverted: Story =
+	selectedSelfHelpContrast('inverted');
+
+/** These use the production card, membership hydration and shared stack. */
+export const GroupOneParticipant: Story = {
+	name: 'Gruppe — 1 reale Person',
+	render: () => {
+		seedMatrixRoom(0, 1);
+		return (
+			<div style={listShell} role="list" aria-label="Conversations">
+				<RuntimeCard
+					item={runtimeGroupChat({ id: 5901, name: 'Eine Person' })}
+				/>
+			</div>
+		);
+	},
+	play: async ({ canvasElement }) => {
+		const [row] = await settledRows(canvasElement);
+		await expectGroupRow(row, 'Eine Person', 1);
+	}
+};
+export const GroupTwoParticipants: Story = {
+	name: 'Gruppe — 2 reale Personen, kein Zähler',
+	render: () => {
+		seedMatrixRoom(0, 2);
+		return (
+			<div style={listShell} role="list" aria-label="Conversations">
+				<RuntimeCard
+					item={runtimeGroupChat({ id: 5902, name: 'Zwei Personen' })}
+				/>
+			</div>
+		);
+	},
+	play: async ({ canvasElement }) => {
+		const [row] = await settledRows(canvasElement);
+		await expectGroupRow(row, 'Zwei Personen', 2);
+	}
+};
+export const GroupManyParticipants: Story = {
+	name: 'Gruppe — 27 reale Personen, +25',
+	render: () => {
+		seedMatrixRoom(0, 27);
+		return (
+			<div style={listShell} role="list" aria-label="Conversations">
+				<RuntimeCard
+					item={runtimeGroupChat({
+						id: 5927,
+						name: 'Große Gesprächsrunde mit langem Namen'
+					})}
+				/>
+			</div>
+		);
+	},
+	play: async ({ canvasElement }) => {
+		const [row] = await settledRows(canvasElement);
+		await expectGroupRow(row, 'Große Gesprächsrunde mit langem Namen', 27);
+	}
+};
+const GroupHydrationDemo = () => {
+	const [fixture] = React.useState(() => seedMatrixRoom(0, 3, true));
+	return (
+		<>
+			<button onClick={fixture.finish}>Mitglieder laden</button>
+			<button onClick={() => fixture.setCount(2)}>
+				Person verlässt Gruppe
+			</button>
+			<button onClick={() => fixture.setCount(4)}>
+				Person tritt Gruppe bei
+			</button>
+			<div style={listShell} role="list" aria-label="Conversations">
+				<RuntimeCard
+					item={runtimeGroupChat({
+						id: 5903,
+						name: 'Mitglieder live'
+					})}
+				/>
+			</div>
+		</>
+	);
+};
+export const GroupLoadingAndLiveMembership: Story = {
+	name: 'Gruppe — verzögertes Laden, Person verlässt Gruppe',
+	render: () => <GroupHydrationDemo />,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const [row] = await settledRows(canvasElement);
+		await expect(
+			row.querySelector('[data-cy="group-card-members-loading"]')
+		).not.toBeNull();
+		await expect(
+			row.querySelector('[data-cy="participant-overflow"]')
+		).toBeNull();
+		await userEvent.click(
+			canvas.getByRole('button', { name: 'Mitglieder laden' })
+		);
+		await expectGroupRow(row, 'Mitglieder live');
+		await userEvent.click(
+			canvas.getByRole('button', { name: 'Person verlässt Gruppe' })
+		);
+		await expectGroupRow(row, 'Mitglieder live', 2);
+		await userEvent.click(
+			canvas.getByRole('button', { name: 'Person tritt Gruppe bei' })
+		);
+		await expectGroupRow(row, 'Mitglieder live', 4);
+	}
+};
+
+export const GroupNoParticipants: Story = {
+	name: 'Gruppe — keine Teilnehmenden, fertig geladen',
+	render: () => {
+		seedMatrixRoom(0, 0);
+		return (
+			<div style={listShell} role="list" aria-label="Conversations">
+				<RuntimeCard
+					item={runtimeGroupChat({ id: 5900, name: 'Leere Gruppe' })}
+				/>
+			</div>
+		);
+	},
+	play: async ({ canvasElement }) => {
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector(
+					'[data-cy="group-card-members-empty"]'
+				)
+			).not.toBeNull()
+		);
+		// A real Matrix room with no decrypted preview retains the existing fallback.
+		await expect(
+			canvasElement.querySelector('.sessionsListItem__subject')
+				?.textContent
+		).toBe('Nachricht verschlüsselt');
+	}
+};
+export const GroupMembershipUnavailable: Story = {
+	name: 'Gruppe — Teilnehmende nicht verfügbar',
+	render: () => {
+		seedMatrixRoom(0, 0, false, true);
+		return (
+			<div style={listShell} role="list" aria-label="Conversations">
+				<RuntimeCard
+					item={runtimeGroupChat({
+						id: 5999,
+						name: 'Offline-Gruppe'
+					})}
+				/>
+			</div>
+		);
+	},
+	play: async ({ canvasElement }) => {
+		await waitFor(() =>
+			expect(
+				canvasElement
+					.querySelector('[role="status"]')
+					?.getAttribute('aria-label')
+			).toBe('Teilnehmende konnten nicht geladen werden.')
+		);
+		await expect(
+			canvasElement.querySelector('[data-cy="participant-overflow"]')
+		).toBeNull();
+	}
+};
+export const GroupSelectedWithRealParticipants: Story = {
+	...GroupTwoParticipants,
+	name: 'Gruppe — ausgewählt, 2 reale Personen',
+	parameters: {
+		router: {
+			initialPath:
+				'/sessions/consultant/sessionView/!storybook-group-5902:matrix.example.org/5902'
+		}
+	}
+};
+
+/* ------------------------------------------------------------------ *
+ * #1923: an asker leaves a running group from its card
+ * ------------------------------------------------------------------ */
+
+const groupAsker = {
+	...runtimeUserData,
+	userId: 'asker-5601',
+	userName: 'asker-5601',
+	grantedAuthorities: [AUTHORITIES.ASKER_DEFAULT],
+	userRoles: ['USER']
+};
+
+const AskerInRunningGroup = () => {
+	seedMatrixRoom(2);
+	return (
+		<ModalProvider>
+			<div style={listShell} role="list" aria-label="Conversations">
+				<RuntimeCard
+					userData={groupAsker}
+					item={runtimeGroupChat({
+						id: 5601,
+						name: 'Donnerstagsrunde',
+						conversationType: 'SELF_HELP',
+						active: true
+					})}
+				/>
+			</div>
+			{/* The app shell's portal target for Overlay. */}
+			<div id="overlay" />
+		</ModalProvider>
+	);
+};
+
+/** Leave → confirmation with Leave and Cancel → Cancel keeps the group. */
+const playAskerLeaveConfirmation = async ({
+	canvasElement
+}: {
+	canvasElement: HTMLElement;
+}) => {
+	await settledRows(canvasElement);
+	const { menu } = await openTheMenu(canvasElement);
+	const leave = part(menu, '[data-cy="session-list-menu-leave-group"]');
+	await expect(leave.textContent).toContain('Chat verlassen');
+	await userEvent.click(leave);
+
+	const dialog = await waitFor(() => {
+		const element = document.querySelector<HTMLElement>('.overlay');
+		expect(element).toBeTruthy();
+		return element!;
+	});
+	const page = within(dialog);
+	// The overlay fades in; wait for it instead of reading the first frame.
+	await waitFor(() =>
+		expect(
+			page.getByText('Möchten Sie den Chat wirklich verlassen?')
+		).toBeVisible()
+	);
+	await expect(
+		page.getByRole('button', { name: 'Chat verlassen' })
+	).toBeVisible();
+	const cancel = page.getByRole('button', { name: 'Abbrechen' });
+	const box = cancel.getBoundingClientRect();
+	await expect(box.left).toBeGreaterThanOrEqual(0);
+	await expect(box.right).toBeLessThanOrEqual(window.innerWidth);
+
+	await userEvent.click(cancel);
+	await waitFor(() => expect(document.querySelector('.overlay')).toBeNull());
+	await expect(
+		canvasElement.querySelectorAll('.sessionsListItem--groupChat')
+	).toHaveLength(1);
+};
+
+export const AskerLeavesGroupFromCard: Story = {
+	name: 'Gruppe — Ratsuchende verlassen sie über das Menü (#1923)',
+	globals: { viewport: { value: 'desktop1366' } },
+	render: () => <AskerInRunningGroup />,
+	play: playAskerLeaveConfirmation
+};
+
+export const AskerLeavesGroupFromCardOnThePhone: Story = {
+	name: 'Gruppe verlassen — 390 px (#1923)',
+	globals: { viewport: { value: 'phone390' } },
+	render: () => <AskerInRunningGroup />,
+	play: playAskerLeaveConfirmation
+};
+
+/** A long enquiry topic yields to the waiting time without losing its postcode. */
+export const EnquiryTopicAndWaiting: Story = {
+	name: 'Anfrage — langes Thema und Wartezeit',
+	globals: { viewport: { value: 'phone320' } },
+	parameters: {
+		router: { initialPath: '/sessions/consultant/sessionPreview' }
+	},
+	render: () => {
+		seedMatrixRoom(0);
+		return (
+			<RuntimeSessionListItem
+				listType={SESSION_LIST_TYPES.ENQUIRY}
+				sessionOverrides={{
+					status: STATUS_ENQUIRY,
+					topic: longTopic,
+					postcode: 10551,
+					createDate: new Date(
+						Date.now() - 37.5 * 60 * 1000
+					).toISOString()
+				}}
+			/>
+		);
+	},
+	play: async ({ canvasElement }) => {
+		const [row] = await settledRows(canvasElement);
+		const topic = part(row, '.sessionsListItem__topic');
+		const waiting = part(row, '.sessionsListItem__date--waiting');
+		const postcode = part(row, '.sessionsListItem__postcode');
+		const menu = part(row, '.sessionsListItem__menuIcon');
+		await expect(waiting).toBeVisible();
+		await expect(waiting.textContent).toMatch(/37/);
+		await expect(waiting.scrollWidth).toBeLessThanOrEqual(
+			waiting.clientWidth
+		);
+		await expect(getComputedStyle(topic).display).toBe('block');
+		await expect(getComputedStyle(topic).textOverflow).toBe('ellipsis');
+		await expect(topic.scrollWidth).toBeGreaterThan(topic.clientWidth);
+		// Leave enough content width for the ellipsis, even beside a long translation.
+		await expect(topic.clientWidth).toBeGreaterThan(32);
+		await expect(topic.getBoundingClientRect().right).toBeLessThanOrEqual(
+			postcode.getBoundingClientRect().left + 1
+		);
+		await expect(
+			postcode.getBoundingClientRect().right
+		).toBeLessThanOrEqual(waiting.getBoundingClientRect().left);
+		await expect(waiting.getBoundingClientRect().right).toBeLessThanOrEqual(
+			menu.getBoundingClientRect().left
+		);
+	}
+};
+
+const turkishEnquiry = createInstance();
+void turkishEnquiry.init({
+	lng: 'tr',
+	fallbackLng: 'de',
+	initImmediate: false,
+	defaultNS: 'common',
+	resources: { tr: { common: tr }, de: { common: de } }
+});
+
+/** Turkish and a narrow column preserve the complete waiting time too. */
+export const EnquiryTopicAndWaitingTurkish: Story = {
+	...EnquiryTopicAndWaiting,
+	name: 'Anfrage — langes Thema und Wartezeit auf Türkisch',
+	render: () => {
+		seedMatrixRoom(0);
+		return (
+			<I18nextProvider i18n={turkishEnquiry}>
+				<RuntimeSessionListItem
+					listType={SESSION_LIST_TYPES.ENQUIRY}
+					sessionOverrides={{
+						status: STATUS_ENQUIRY,
+						topic: longTopic,
+						postcode: 10551,
+						createDate: new Date(
+							Date.now() - 37.5 * 60 * 1000
+						).toISOString()
+					}}
+				/>
+			</I18nextProvider>
+		);
+	}
+};
+
+/** A shorter waiting label gives the topic its unused space back. */
+export const EnquiryTopicGrowsWhenWaitIsShort: Story = {
+	name: 'Anfrage — Thema wächst bei kurzer Wartezeit',
+	globals: { viewport: { value: 'phone390' } },
+	parameters: {
+		router: { initialPath: '/sessions/consultant/sessionPreview' }
+	},
+	render: () => {
+		seedMatrixRoom(0);
+		return (
+			<div style={listShell} role="list" aria-label="Conversations">
+				{[1.5, 37.5].map((minutes, index) => (
+					<RuntimeCard
+						key={minutes}
+						index={index}
+						listType={SESSION_LIST_TYPES.ENQUIRY}
+						item={runtimeSessionItem({
+							sessionOverrides: {
+								id: 4401 + index,
+								status: STATUS_ENQUIRY,
+								topic: longTopic,
+								postcode: 10551,
+								createDate: new Date(
+									Date.now() - minutes * 60 * 1000
+								).toISOString()
+							}
+						})}
+					/>
+				))}
+			</div>
+		);
+	},
+	play: async ({ canvasElement }) => {
+		const [shortWait, longerWait] = await settledRows(canvasElement, 2);
+		await expect(
+			part(shortWait, '.sessionsListItem__date--waiting').textContent
+		).toMatch(/1/);
+		await expect(
+			part(longerWait, '.sessionsListItem__date--waiting').textContent
+		).toMatch(/37/);
+		await expect(
+			part(shortWait, '.sessionsListItem__topic').clientWidth
+		).toBeGreaterThan(
+			part(longerWait, '.sessionsListItem__topic').clientWidth
+		);
+	}
+};
+
+const longWaitingTranslation = createInstance();
+void longWaitingTranslation.init({
+	lng: 'de',
+	fallbackLng: 'de',
+	initImmediate: false,
+	defaultNS: 'common',
+	resources: {
+		de: {
+			common: {
+				...de,
+				sessionList: {
+					...de.sessionList,
+					item: {
+						...de.sessionList.item,
+						waiting: {
+							...de.sessionList.item.waiting,
+							minutes:
+								'Die ratsuchende Person wartet seit {{count}} Minuten auf eine Beratung und die Anfrage ist noch offen'
+						}
+					}
+				}
+			}
+		}
+	}
+});
+
+/** A much longer locale string wraps rather than losing the waiting time. */
+export const EnquiryExtraLongWaitingTranslation: Story = {
+	...EnquiryTopicAndWaiting,
+	name: 'Anfrage — besonders lange Wartezeitübersetzung',
+	render: () => {
+		seedMatrixRoom(0);
+		return (
+			<I18nextProvider i18n={longWaitingTranslation}>
+				<RuntimeSessionListItem
+					listType={SESSION_LIST_TYPES.ENQUIRY}
+					sessionOverrides={{
+						status: STATUS_ENQUIRY,
+						topic: longTopic,
+						postcode: 10551,
+						createDate: new Date(
+							Date.now() - 37.5 * 60 * 1000
+						).toISOString()
+					}}
+				/>
+			</I18nextProvider>
+		);
+	}
+};
+
+/** A long waiting label on its own line wraps within the card. */
+export const EnquiryLongWaitOnOwnLine: Story = {
+	name: 'Anfrage — lange Wartezeit in eigener Zeile',
+	globals: { viewport: { value: 'phone320' } },
+	parameters: {
+		router: { initialPath: '/sessions/consultant/sessionPreview' }
+	},
+	render: () => {
+		seedMatrixRoom(0);
+		return (
+			<I18nextProvider i18n={longWaitingTranslation}>
+				<div style={listShell} role="list" aria-label="Conversations">
+					<RuntimeCard
+						datePlacement="line"
+						listType={SESSION_LIST_TYPES.ENQUIRY}
+						item={runtimeSessionItem({
+							sessionOverrides: {
+								status: STATUS_ENQUIRY,
+								topic: longTopic,
+								postcode: 10551,
+								createDate: new Date(
+									Date.now() - 37.5 * 60 * 1000
+								).toISOString()
+							}
+						})}
+					/>
+				</div>
+			</I18nextProvider>
+		);
+	},
+	play: async ({ canvasElement }) => {
+		const [row] = await settledRows(canvasElement);
+		const wait = part(row, '.sessionsListItem__dateLine');
+		await expect(wait.textContent).toMatch(/37/);
+		await expect(wait).toBeVisible();
+		await expect(wait.scrollWidth).toBeLessThanOrEqual(wait.clientWidth);
+		await expect(wait.getBoundingClientRect().right).toBeLessThanOrEqual(
+			window.innerWidth
+		);
+	}
+};
+
+/** A truncated topic without postcode retains its full accessible name. */
+export const EnquiryTopicWithoutPostcode: Story = {
+	name: 'Anfrage — langes Thema ohne Postleitzahl',
+	globals: { viewport: { value: 'phone320' } },
+	parameters: {
+		router: { initialPath: '/sessions/consultant/sessionPreview' }
+	},
+	render: () => {
+		seedMatrixRoom(0);
+		return (
+			<RuntimeSessionListItem
+				listType={SESSION_LIST_TYPES.ENQUIRY}
+				sessionOverrides={{
+					status: STATUS_ENQUIRY,
+					topic: longTopic,
+					postcode: 0,
+					createDate: new Date(
+						Date.now() - 37.5 * 60 * 1000
+					).toISOString()
+				}}
+			/>
+		);
+	},
+	play: async ({ canvasElement }) => {
+		const [row] = await settledRows(canvasElement);
+		const topic = part(row, '.sessionsListItem__topic');
+		const wait = part(row, '.sessionsListItem__date--waiting');
+		await expect(
+			row.querySelector('.sessionsListItem__postcode')
+		).toBeNull();
+		await expect(topic.textContent).toBe(longTopic.name);
+		await expect(topic).toHaveAttribute('title', longTopic.name);
+		await expect(topic.scrollWidth).toBeGreaterThan(topic.clientWidth);
+		await expect(getComputedStyle(topic).textOverflow).toBe('ellipsis');
+		await expect(wait).toBeVisible();
+		await expect(wait.getBoundingClientRect().left).toBeGreaterThanOrEqual(
+			topic.getBoundingClientRect().right
+		);
+	}
+};
+
+/** The explicit off setting continues to hide the date and waiting time. */
+export const EnquiryWaitingHiddenWhenOff: Story = {
+	name: 'Anfrage — Zeitangabe ausgeschaltet',
+	parameters: {
+		router: { initialPath: '/sessions/consultant/sessionPreview' }
+	},
+	render: () => {
+		seedMatrixRoom(0);
+		return (
+			<div style={listShell} role="list" aria-label="Conversations">
+				<RuntimeCard
+					datePlacement="off"
+					listType={SESSION_LIST_TYPES.ENQUIRY}
+					item={runtimeSessionItem({
+						sessionOverrides: {
+							status: STATUS_ENQUIRY,
+							topic: longTopic,
+							postcode: 10551,
+							createDate: new Date(
+								Date.now() - 37.5 * 60 * 1000
+							).toISOString()
+						}
+					})}
+				/>
+			</div>
+		);
+	},
+	play: async ({ canvasElement }) => {
+		const [row] = await settledRows(canvasElement);
+		await expect(row.querySelector('.sessionsListItem__date')).toBeNull();
+		await expect(
+			row.querySelector('.sessionsListItem__dateLine')
+		).toBeNull();
+		await expect(part(row, '.sessionsListItem__topic').textContent).toBe(
+			longTopic.name
+		);
 	}
 };

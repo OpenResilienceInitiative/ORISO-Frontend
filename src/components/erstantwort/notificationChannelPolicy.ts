@@ -1,3 +1,4 @@
+import { isContextEmailCollectionAllowed } from '../../utils/askerAccountPolicy';
 import { TenantDataSettingsInterface } from '../../globalState/interfaces/TenantDataInterface';
 
 /** Effective tenant policy is read-only here; account/device opt-ins remain separate. */
@@ -22,10 +23,31 @@ export const notificationChannelPolicy = (
 		`featureAskerBrowser${context}Enabled` as keyof TenantDataSettingsInterface;
 	return {
 		emailAllowed:
+			context !== 'LiveChat' &&
 			settings?.featureAskerEmailEnabled !== false &&
-			(settings?.[emailKey] === undefined
-				? context !== 'LiveChat'
-				: settings[emailKey] === true),
+			(settings?.[emailKey] === undefined || settings[emailKey] === true),
 		browserAllowed: settings?.[browserKey] !== false
+	};
+};
+
+/** UI solicitation requires both collection and delivery. */
+export const emailCollectionSetupPolicy = (
+	settings: Partial<TenantDataSettingsInterface> | undefined,
+	conversationType: string | null | undefined,
+	/**
+	 * UserService#1662: a temporary account is offered neither e-mail nor
+	 * browser notifications until it is kept (the server refuses both).
+	 */
+	account?: { temporaryAccount?: boolean } | null
+) => {
+	if (account?.temporaryAccount) {
+		return { emailAllowed: false, browserAllowed: false };
+	}
+	const channels = notificationChannelPolicy(settings, conversationType);
+	return {
+		...channels,
+		emailAllowed:
+			channels.emailAllowed &&
+			isContextEmailCollectionAllowed(settings, conversationType)
 	};
 };

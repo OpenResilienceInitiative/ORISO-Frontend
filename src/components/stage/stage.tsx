@@ -27,12 +27,15 @@ export interface StageProps {
 	className?: string;
 	hasAnimation?: boolean;
 	isReady?: boolean;
+	/** Waiting rooms: the legal links open this department's documents. */
+	legalDepartment?: { agencyId: number; topicId: number } | null;
 }
 
 export const Stage = ({
 	className,
 	hasAnimation,
-	isReady = true
+	isReady = true,
+	legalDepartment
 }: StageProps) => {
 	const { t: translate } = useTranslation();
 
@@ -254,6 +257,13 @@ export const Stage = ({
 								rawLabel={rawLabel}
 								url={url}
 								textClassName="stage__legalLinksItem"
+								{...(legalDepartment
+									? {
+											scope: 'agency' as const,
+											agencyId: legalDepartment.agencyId,
+											topicId: legalDepartment.topicId
+										}
+									: {})}
 							/>
 						)}
 					</LegalLinks>

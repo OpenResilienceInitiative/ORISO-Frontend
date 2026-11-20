@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * Unread axis (#1147) — client-side unread derivation.
  *
@@ -8,7 +8,7 @@
  * the "unread" chip filter and the chip counter.
  */
 
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
 import { setMatrixClientServiceRef } from '../services/matrixClientRegistry';
 import {
 	countUnreadSessions,
@@ -97,6 +97,26 @@ describe('isChatItemUnread', () => {
 	afterEach(() => {
 		setMatrixClientServiceRef(null);
 	});
+
+	it.each([true, false, undefined])(
+		'counts a private side-room message only for an explicitly assigned supervisor (%s)',
+		(supervisedByMe) => {
+			setMatrixClientServiceRef({
+				getRoom: (roomId: string) => ({
+					getUnreadNotificationCount: () =>
+						roomId === '!side:hs' ? 2 : 0
+				})
+			} as any);
+			const session = {
+				matrixRoomId: '!main:hs',
+				supervision: { supervisedByMe, sideRoomId: '!side:hs' }
+			};
+			expect(isChatItemUnread(session)).toBe(supervisedByMe === true);
+			expect(countUnreadSessions([{ session }])).toBe(
+				supervisedByMe === true ? 1 : 0
+			);
+		}
+	);
 
 	it('derives unread from the Matrix room even when the DTO claims messagesRead', () => {
 		setMatrixClientServiceRef(

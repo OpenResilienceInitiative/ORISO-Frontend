@@ -7,9 +7,11 @@ import {
 	List,
 	ListItem,
 	ListItemAvatar,
-	NativeSelect,
+	MenuItem,
+	Select,
 	Typography
 } from '@mui/material';
+import { orisoSelectMenuProps } from '../form/orisoInputDesign';
 import {
 	apiChangeGroupChatParticipantRole,
 	apiRemoveGroupChatParticipant,
@@ -40,7 +42,7 @@ const textActionSx = {
 	fontSize: 14,
 	lineHeight: '20px',
 	fontWeight: 500,
-	color: 'var(--m3-primary)'
+	color: 'var(--oriso-primary-text, var(--m3-primary))'
 } as const;
 
 const initialsOf = (name: string) =>
@@ -84,10 +86,37 @@ export const GroupChatRoleManager = ({
 		(item) => item.consultantId === currentUserId && item.role === 'OWNER'
 	);
 
+	// The picker is disabled while its change runs, so focus would fall out
+	// of the row; it returns to the same picker once the request settles.
+	const listRef = React.useRef<HTMLUListElement>(null);
+	const [refocusId, setRefocusId] = React.useState<string | null>(null);
+	React.useEffect(() => {
+		if (pendingId !== null || refocusId === null) return;
+		setRefocusId(null);
+		// Only when focus fell out (the disabled picker dropped it); a user who
+		// moved on keeps their place.
+		const active = document.activeElement;
+		const lost =
+			!active ||
+			active === document.body ||
+			!active.isConnected ||
+			// still on the role menu that is closing
+			!!active.closest('.MuiMenu-root, [role="listbox"]');
+		if (!lost) return;
+		Array.from(
+			listRef.current?.querySelectorAll<HTMLElement>(
+				'[data-role-picker]'
+			) ?? []
+		)
+			.find((node) => node.dataset.rolePicker === refocusId)
+			?.focus();
+	}, [pendingId, refocusId]);
+
 	const updateRole = async (
 		consultantId: string,
 		role: GroupChatParticipantRole
 	) => {
+		setRefocusId(consultantId);
 		setPendingId(consultantId);
 		setError(null);
 		try {
@@ -155,7 +184,7 @@ export const GroupChatRoleManager = ({
 	return (
 		<div className="groupChatInfo__roles">
 			{!hideHeadline && <h4>{translate('groupChat.roles.headline')}</h4>}
-			<List disablePadding>
+			<List disablePadding ref={listRef}>
 				{items.map((participant) => {
 					const isSelf = participant.consultantId === currentUserId;
 					const canManageParticipant =
@@ -199,8 +228,16 @@ export const GroupChatRoleManager = ({
 									{participant.displayName}
 								</Typography>
 								{canManageParticipant ? (
-									<NativeSelect
+									<Select
+										variant="standard"
 										disableUnderline
+										MenuProps={orisoSelectMenuProps}
+										SelectDisplayProps={
+											{
+												'data-role-picker':
+													participant.consultantId
+											} as React.HTMLAttributes<HTMLDivElement>
+										}
 										value={participant.role}
 										disabled={pendingId !== null}
 										inputProps={{
@@ -225,13 +262,13 @@ export const GroupChatRoleManager = ({
 										}}
 									>
 										{EDITABLE_ROLES.map((role) => (
-											<option value={role} key={role}>
+											<MenuItem value={role} key={role}>
 												{translate(
 													`groupChat.roles.${role}`
 												)}
-											</option>
+											</MenuItem>
 										))}
-									</NativeSelect>
+									</Select>
 								) : (
 									<Typography
 										component="span"

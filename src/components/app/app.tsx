@@ -14,6 +14,7 @@ import { WebsocketHandler } from './WebsocketHandler';
 import ErrorBoundary from './ErrorBoundary';
 import { LanguagesProvider } from '../../globalState/provider/LanguagesProvider';
 import { TenantThemingLoader } from './TenantThemingLoader';
+import { LoginHandoverGate } from './LoginHandoverScreen';
 import {
 	AppConfigProvider,
 	InformalProvider,
@@ -35,17 +36,19 @@ import { UrlParamsProvider } from '../../globalState/provider/UrlParamsProvider'
 import { Notifications } from '../notifications/Notifications';
 import { CallProvider } from '../../globalState/provider/CallProvider';
 import { MatrixClientProvider } from '../../globalState/context/MatrixClientContext';
+import { LiveChatConversionPage } from '../liveChatConversion/LiveChatConversionPage';
+import { LiveChatConversionExpired } from '../liveChatConversion/LiveChatConversionExpired';
 import { FloatingCallWidget } from '../call/FloatingCallWidget';
+import { DirectLinkKnockGate } from '../directLinkEntry/DirectLinkKnockGate';
 import { GroupCallWidget } from '../call/GroupCallWidget';
 import { legacyVideoAppointmentRoutes } from '../legacyVideoAppointment/LegacyVideoAppointmentRoutes';
 import { lazyWithReload } from '../../utils/chunkLoadRecovery';
+import { loadAuthenticatedApp, loadVideoCall } from './appChunks';
 
 const Login = lazyWithReload(() =>
 	import('../login/Login').then((m) => ({ default: m.Login }))
 );
-const AuthenticatedApp = lazyWithReload(() =>
-	import('./AuthenticatedApp').then((m) => ({ default: m.AuthenticatedApp }))
-);
+const AuthenticatedApp = lazyWithReload(loadAuthenticatedApp);
 const InviteLink = lazyWithReload(() =>
 	import('../invite/InviteLink').then((m) => ({
 		default: m.InviteLink
@@ -72,7 +75,7 @@ const AccountInviteAcceptance = lazyWithReload(() =>
 	}))
 );
 
-const VideoCall = lazyWithReload(() => import('../videoCall/VideoCall'));
+const VideoCall = lazyWithReload(loadVideoCall);
 
 type TExtraRoute = {
 	route: { path: string | string[] };
@@ -153,6 +156,7 @@ const RouterWrapper = ({ extraRoutes }: RouterWrapperProps) => {
 				<CallProvider>
 					<MatrixClientProvider>
 						<TenantThemingLoader />
+						<LoginHandoverGate />
 						{startWebsocket && <WebsocketHandler />}
 						<Suspense fallback={<Loading />}>
 							<Routes>
@@ -238,6 +242,26 @@ const RouterWrapper = ({ extraRoutes }: RouterWrapperProps) => {
 									element={<VideoCall />}
 								/>
 
+								<Route
+									path="/live-chat/conversion-expired"
+									element={<LiveChatConversionExpired />}
+								/>
+								<Route
+									path="/live-chat/convert"
+									element={
+										<AuthenticatedApp
+											content={<LiveChatConversionPage />}
+											loginPath="/live-chat/conversion-expired"
+											onAppReady={() =>
+												setStartWebsocket(true)
+											}
+											onLogout={() =>
+												setStartWebsocket(false)
+											}
+										/>
+									}
+								/>
+
 								{/* Catch-all: the authenticated app owns its own
 								    routing and redirects to /login when signed out. */}
 								<Route
@@ -257,6 +281,8 @@ const RouterWrapper = ({ extraRoutes }: RouterWrapperProps) => {
 							<NotificationsContainer />
 							<FloatingCallWidget />
 							<GroupCallWidget />
+							{/* #1795 / FE#1893: the knock of a call direct link. */}
+							<DirectLinkKnockGate />
 						</Suspense>
 					</MatrixClientProvider>
 				</CallProvider>

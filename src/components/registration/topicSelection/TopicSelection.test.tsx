@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import * as React from 'react';
 import {
 	cleanup,
@@ -7,7 +7,7 @@ import {
 	screen,
 	waitFor
 } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { TopicSelection } from './TopicSelection';
 import { apiGetTopicGroups } from '../../../api/apiGetTopicGroups';
 import { apiGetTopicsData } from '../../../api/apiGetTopicsData';
@@ -90,7 +90,7 @@ const topicWithSlug = (
 	internalIdentifier: slug
 });
 
-const renderTopicSelection = () =>
+const renderTopicSelection = (onChange = vi.fn()) =>
 	render(
 		<LocaleContext.Provider
 			value={{
@@ -119,7 +119,7 @@ const renderTopicSelection = () =>
 					}}
 				>
 					<TopicSelection
-						onChange={vi.fn()}
+						onChange={onChange}
 						nextStepUrl="/next"
 						onNextClick={vi.fn()}
 					/>
@@ -127,6 +127,61 @@ const renderTopicSelection = () =>
 			</UrlParamsContext.Provider>
 		</LocaleContext.Provider>
 	);
+
+/** Like LocaleProvider: the `lang` cookie the topic API reads is written in the parent's effect. */
+const CookieWritingLocale = ({
+	locale,
+	children
+}: {
+	locale: string;
+	children: React.ReactNode;
+}) => {
+	React.useEffect(() => {
+		document.cookie = `lang=${locale}`;
+	}, [locale]);
+	return (
+		<LocaleContext.Provider
+			value={{
+				locale,
+				initLocale: 'de',
+				setLocale: vi.fn(),
+				locales: ['de', 'en'],
+				selectableLocales: ['de', 'en']
+			}}
+		>
+			{children}
+		</LocaleContext.Provider>
+	);
+};
+
+const selectionIn = (locale: string) => (
+	<CookieWritingLocale locale={locale}>
+		<UrlParamsContext.Provider
+			value={{
+				agency: null,
+				consultingType: null,
+				consultant: null,
+				topic: null,
+				loaded: true,
+				slugFallback: undefined,
+				zipcode: undefined
+			}}
+		>
+			<RegistrationContext.Provider
+				value={{
+					registrationData: {} as RegistrationData,
+					setDisabledNextButton: vi.fn()
+				}}
+			>
+				<TopicSelection
+					onChange={vi.fn()}
+					nextStepUrl="/next"
+					onNextClick={vi.fn()}
+				/>
+			</RegistrationContext.Provider>
+		</UrlParamsContext.Provider>
+	</CookieWritingLocale>
+);
 
 describe('TopicSelection', () => {
 	afterEach(() => {
@@ -271,6 +326,80 @@ describe('TopicSelection', () => {
 		);
 	}, 15000);
 
+	it('shows the categories the topic service ships, in their order and with their pictures', async () => {
+		apiGetTopicsDataMock.mockResolvedValue([
+			{
+				...topic(9, 'Schuldenberatung'),
+				icon: 'data:image/png;base64,AAAA'
+			},
+			{ ...topic(10, 'Mietberatung'), icon: 'data:image/png;base64,BBBB' }
+		]);
+		apiGetTopicGroupsMock.mockResolvedValue({
+			data: {
+				items: [
+					{
+						id: 4,
+						name: 'Wohnen',
+						icon: 'data:image/png;base64,CCCC',
+						topicIds: [10]
+					},
+					{
+						id: 2,
+						name: 'Geld',
+						icon: 'data:image/png;base64,DDDD',
+						topicIds: [9]
+					}
+				]
+			}
+		});
+
+		renderTopicSelection();
+
+		const wohnen = await screen.findByText('Wohnen');
+		const geld = screen.getByText('Geld');
+		expect(
+			wohnen.compareDocumentPosition(geld) &
+				Node.DOCUMENT_POSITION_FOLLOWING
+		).toBeTruthy();
+		expect(
+			document.querySelector('img[src="data:image/png;base64,CCCC"]')
+		).not.toBeNull();
+	});
+
+	it('picks a topic row together with the picture it shows there', async () => {
+		vi.stubGlobal('scrollTo', vi.fn());
+		apiGetTopicsDataMock.mockResolvedValue([
+			{ ...topic(10, 'Mietberatung'), icon: 'data:image/png;base64,BBBB' }
+		]);
+		apiGetTopicGroupsMock.mockResolvedValue({
+			data: {
+				items: [
+					{
+						id: 4,
+						name: 'Wohnen',
+						icon: 'data:image/png;base64,CCCC',
+						topicIds: [10]
+					}
+				]
+			}
+		});
+		const onChange = vi.fn();
+		renderTopicSelection(onChange);
+
+		fireEvent.click(await screen.findByText('Wohnen'));
+		fireEvent.click(await screen.findByText('Mietberatung'));
+
+		await waitFor(() =>
+			expect(onChange).toHaveBeenCalledWith(
+				expect.objectContaining({
+					mainTopic: expect.objectContaining({ id: 10 }),
+					topicGroupId: 4,
+					topicIcon: 'data:image/png;base64,BBBB'
+				})
+			)
+		);
+	});
+
 	it('leaves loading state when the public topics request fails', async () => {
 		apiGetTopicsDataMock.mockRejectedValue(new Error('network'));
 
@@ -313,5 +442,21 @@ describe('TopicSelection', () => {
 		const emptyState = await screen.findByRole('status');
 		expect(emptyState.textContent).toContain('registration.topic.empty');
 		expect(screen.queryByRole('alert')).toBeNull();
+	});
+
+	it('asks for the topics in the new language after a language switch', async () => {
+		const asked: string[] = [];
+		apiGetTopicsDataMock.mockImplementation(async () => {
+			asked.push(/lang=(\w+)/.exec(document.cookie)?.[1] ?? '');
+			return [topic(9, 'Schuldenberatung')];
+		});
+		apiGetTopicGroupsMock.mockResolvedValue({ data: { items: [] } });
+
+		const view = render(selectionIn('de'));
+		await screen.findByText('Schuldenberatung');
+		view.rerender(selectionIn('en'));
+
+		await waitFor(() => expect(asked).toHaveLength(2));
+		expect(asked[1]).toBe('en');
 	});
 });

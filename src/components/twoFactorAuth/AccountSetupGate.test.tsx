@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 
 import * as React from 'react';
 import {
@@ -9,7 +9,7 @@ import {
 	within
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { UserDataContext } from '../../globalState';
 import { AccountSetupGate } from './AccountSetupGate';
 

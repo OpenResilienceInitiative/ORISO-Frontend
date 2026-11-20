@@ -236,7 +236,7 @@
 		}
 
 		&--primary {
-			color: var(--m3-primary, #a5000a);
+			color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 		}
 	}
 

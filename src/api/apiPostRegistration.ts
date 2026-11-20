@@ -5,6 +5,7 @@ import { normalizePreferredLanguage } from '../utils/normalizePreferredLanguage'
 import { FETCH_ERRORS, FETCH_METHODS, fetchData } from './fetchData';
 import { COOKIE_KEY } from '../globalState';
 import { apiGetIsUsernameAvailable } from './apiGetIsUsernameAvailable';
+import { isRegistrationRef } from '../addons/registrationAddon';
 
 /**
  * Registration creates the chat room and invites every counsellor of the
@@ -15,19 +16,54 @@ import { apiGetIsUsernameAvailable } from './apiGetIsUsernameAvailable';
 export const REGISTRATION_TIMEOUT_MS = 120_000;
 
 /**
+ * The automatic login after sign-up (Keycloak, Matrix token, sealing the
+ * recovery password) has no deadline of its own. When one step never settles,
+ * the handover stays on "Encrypting your counselling room …" for good, because
+ * that gate is forced shut while the account is being entered (Dev, 14 Oct
+ * 2026). The account exists by then, so a deadline hands the person to the
+ * normal login, which the caller already does for any failed automatic login.
+ */
+export const AUTO_LOGIN_TIMEOUT_MS = 20_000;
+export const AUTO_LOGIN_TIMEOUT_ERROR = 'AUTO_LOGIN_TIMEOUT';
+
+export const autoLoginWithDeadline = (
+	props: Parameters<typeof autoLogin>[0]
+): Promise<any> =>
+	new Promise((resolve, reject) => {
+		const timer = setTimeout(
+			() => reject(new Error(AUTO_LOGIN_TIMEOUT_ERROR)),
+			AUTO_LOGIN_TIMEOUT_MS
+		);
+		autoLogin(props).then(
+			(value) => {
+				clearTimeout(timer);
+				resolve(value);
+			},
+			(error) => {
+				clearTimeout(timer);
+				reject(error);
+			}
+		);
+	});
+
+/**
  * After a timeout only the server knows whether the account exists. A taken
  * User-ID means it does, and the person must be sent to the login, never back
  * to the form. Any doubt (other error, failed check) keeps today's behaviour.
+ *
+ * The gateway can give up before we do: on Dev it answered 504 after 60 s
+ * while the server went on and created the account (13 Oct 2026), and the
+ * form came back with "This User-ID is already taken". That is a timeout too.
  */
+const isTimeout = (error: unknown): boolean =>
+	(error instanceof Error && error.message === FETCH_ERRORS.TIMEOUT) ||
+	(error as { status?: unknown } | null)?.status === 504;
+
 export const accountExistsAfterTimeout = async (
 	error: unknown,
 	username: string | undefined
 ): Promise<boolean> => {
-	if (
-		!(error instanceof Error) ||
-		error.message !== FETCH_ERRORS.TIMEOUT ||
-		!username
-	) {
+	if (!isTimeout(error) || !username) {
 		return false;
 	}
 	try {
@@ -40,6 +76,7 @@ export const accountExistsAfterTimeout = async (
 type RegistrationPayload = {
 	agencyId?: string;
 	username?: string;
+	displayName?: string;
 	password?: string;
 } & Record<string, unknown>;
 
@@ -59,8 +96,17 @@ export const apiPostRegistration = (
 	onAccountCreated?: () => void
 ): Promise<any> => {
 	removeAllCookies([COOKIE_KEY]);
+	const { displayName, registrationRef, ...registrationData } = data;
+	const trimmedDisplayName =
+		typeof displayName === 'string' ? displayName.trim() : '';
 	const requestData: RegistrationPayload = {
-		...data,
+		...registrationData,
+		...(trimmedDisplayName &&
+		data.groupChatId == null &&
+		data.directLinkToken == null
+			? { displayName: trimmedDisplayName }
+			: {}),
+		...(isRegistrationRef(registrationRef) ? { registrationRef } : {}),
 		...(typeof data.password === 'string' && {
 			password: encodeURIComponent(data.password)
 		}),
@@ -84,7 +130,7 @@ export const apiPostRegistration = (
 		responseHandling: [FETCH_ERRORS.CATCH_ALL_WITH_RESPONSE]
 	}).then(() => {
 		onAccountCreated?.();
-		return autoLogin({
+		return autoLoginWithDeadline({
 			username: data.username || '',
 			password: data.password || '',
 			tenantData: tenant

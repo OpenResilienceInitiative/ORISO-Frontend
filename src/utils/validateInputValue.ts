@@ -19,12 +19,15 @@ export const strengthColor = (count: number) => {
 	if (count >= 4) return 'green';
 };
 
-const PASSWORD_MIN_LENGTH = 8;
+// Single frontend source for the minimum password length; keep in sync with
+// the Keycloak realm password policy. Registration, password change and
+// password reset all use it (OBP 2.1 #116).
+export const PASSWORD_MIN_LENGTH = 16;
 
 export const strengthIndicator = (value: string) => {
 	let passwordStrength: number = 0;
 
-	if (value.length > PASSWORD_MIN_LENGTH) passwordStrength++;
+	if (value.length >= PASSWORD_MIN_LENGTH) passwordStrength++;
 
 	if (hasNumber(value)) passwordStrength++;
 
@@ -54,7 +57,7 @@ export const validatePasswordCriteria = (value: string) => {
 		passwordValidationParams.hasUpperLowerCase = true;
 	if (hasNumber(value)) passwordValidationParams.hasNumber = true;
 	if (hasSpecialChar(value)) passwordValidationParams.hasSpecialChar = true;
-	if (value.length > PASSWORD_MIN_LENGTH)
+	if (value.length >= PASSWORD_MIN_LENGTH)
 		passwordValidationParams.hasMinLength = true;
 
 	return passwordValidationParams;

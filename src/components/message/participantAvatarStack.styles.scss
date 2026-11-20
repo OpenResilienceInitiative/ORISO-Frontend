@@ -1,9 +1,6 @@
-// Participant avatar stack — Figma "Avatar Group" (Room Header All,
-// 1320:38281): 40 px circles, 28 px step (12 px overlap, measured with
-// get_metadata), first participant on top. Tokens are the room header's
-// (`surface-container-lowest` ring, `primary-fixed` chip). The component
-// sets `--participant-size` / `--participant-step`; the defaults here are
-// the Figma header values.
+// Shared avatar stack. Default geometry is retained for existing consumers;
+// current headers supply 48px circles and a 24px step from HEADER_STACK_PROPS.
+// The white ring and count use the shared M3 tokens.
 
 .participantStack {
 	position: relative;
@@ -35,15 +32,22 @@
 		height: var(--participant-size, 40px);
 		border-radius: 50%;
 
-		// Separates overlapping avatars like Figma's white gap.
-		box-shadow: 0 0 0 2px var(--m3-surface-container-lowest, #fff);
+		// Separates overlapping avatars like Figma's white gap. A host whose
+		// surface is not white (the session card while inactive) sets
+		// `--participant-ring` to its own colour, so the gap blends in.
+		box-shadow: 0 0 0 2px
+			var(--participant-ring, var(--m3-surface-container-lowest, #fff));
 		background: var(--m3-surface-container-lowest, #fff);
 		cursor: default;
 		outline: none;
 
 		&:focus-visible {
 			box-shadow:
-				0 0 0 2px var(--m3-surface-container-lowest, #fff),
+				0 0 0 2px
+					var(
+						--participant-ring,
+						var(--m3-surface-container-lowest, #fff)
+					),
 				0 0 0 4px var(--m3-primary, #a5000a);
 		}
 	}
@@ -65,23 +69,22 @@
 		line-height: 16px;
 		letter-spacing: 0.5px;
 		white-space: nowrap;
-		pointer-events: none;
+		pointer-events: auto;
 		visibility: hidden;
 		opacity: 0;
 		transition: opacity 120ms ease;
+
+		// Keep the tooltip hovered while crossing the gap from its avatar.
+		&::before {
+			position: absolute;
+			inset: -6px 0 100%;
+			content: '';
+		}
 	}
 
-	&__item:hover &__tip,
-	&__item:focus-within &__tip,
 	&__item[data-open='true'] &__tip {
 		visibility: visible;
 		opacity: 1;
-	}
-
-	// Escape dismisses a keyboard-open tooltip without moving focus.
-	&__item[data-open='false']:focus-within &__tip {
-		visibility: hidden;
-		opacity: 0;
 	}
 
 	// "+N" — same shape as `.sessionInfo__memberCount` (Figma #430).
@@ -96,22 +99,151 @@
 		border-radius: 20px;
 		box-shadow: 0 0 0 2px var(--m3-surface-container-lowest, #fff);
 		background: var(--m3-primary-fixed, #ffdad5);
-		color: var(--m3-primary, #a5000a);
+		color: var(
+			--oriso-primary-text-on-fixed,
+			var(--oriso-primary-text, var(--m3-primary, #a5000a))
+		);
 		font-size: 14px;
 		font-weight: 600;
 		line-height: 1;
 		white-space: nowrap;
 	}
 
-	// The chip stays in the flow: its item is as wide as the chip, so it
-	// starts one step (28 px) after the last avatar and reserves its own
-	// width (no overlap with the title that follows the stack).
+	// Reserve the chip's own width and clear the previous avatar's overhang.
+	// Applying the gap only to adjacent items keeps chip-only stacks flush.
 	&__item--overflow {
 		width: auto;
 	}
 
+	&__item + &__item--overflow {
+		margin-left: calc(
+			var(--participant-size, 40px) - var(--participant-step, 28px)
+		);
+	}
+
 	&--overflow {
 		padding-right: 0;
+	}
+
+	// Clickable "+N" (badge / bubble): a real button, same chip shape.
+	&__overflow--button {
+		border: 0;
+		cursor: pointer;
+		font-family: inherit;
+
+		&:focus-visible {
+			outline: 2px solid var(--m3-primary, #a5000a);
+			outline-offset: 2px;
+		}
+	}
+
+	// Badge: sits on the last avatar and costs no width.
+	&--badge {
+		// The badge overhangs by 8px; keep the title clear of it.
+		margin-right: 8px;
+		padding-right: 0;
+
+		.participantStack__item--overflow {
+			position: absolute;
+			right: -8px;
+			bottom: -6px;
+			width: auto;
+			height: auto;
+			margin: 0 !important;
+		}
+
+		.participantStack__overflow {
+			// 24px: the smallest target the a11y gate accepts inside a card.
+			height: 24px;
+			min-width: 24px;
+			padding: 0 6px;
+			border-radius: 12px;
+			background: var(--m3-primary-container, #cc1e1c);
+			color: var(--m3-on-primary, #fff);
+			font-size: 12px;
+			transition: background-color 120ms ease;
+
+			&:hover {
+				background: var(--m3-primary, #a5000a);
+			}
+		}
+	}
+
+	// Bubble: a grey speech bubble whose tail points at the avatars.
+	&--bubble {
+		.participantStack__item--overflow {
+			display: flex;
+			align-items: center;
+		}
+
+		.participantStack__overflow {
+			position: relative;
+			height: 28px;
+			min-width: 28px;
+			padding: 0 9px;
+			border-radius: 14px;
+			background: var(--m3-surface-container-high, #ece6e6);
+			color: var(--m3-on-surface, #1e1e1e);
+			font-size: 13px;
+			box-shadow: none;
+			transition: background-color 120ms ease;
+
+			// The tail: a small corner turned towards the avatars.
+			&::after {
+				position: absolute;
+				bottom: 2px;
+				left: -3px;
+				width: 8px;
+				height: 8px;
+				border-radius: 0 0 0 3px;
+				background: inherit;
+				content: '';
+				transform: rotate(45deg);
+			}
+
+			&:hover {
+				background: var(--m3-surface-container-highest, #e0d9d9);
+			}
+		}
+	}
+
+	// The folded people, in the primary colour.
+	&__list {
+		position: fixed;
+		z-index: 1400;
+		width: 240px;
+		max-height: 280px;
+		overflow-y: auto;
+		box-sizing: border-box;
+		padding: 12px;
+		border: 2px solid var(--m3-primary-container, #cc1e1c);
+		border-radius: 16px;
+		background: var(--m3-surface-container-lowest, #fff);
+		box-shadow: 0 6px 20px rgba(0, 0, 0, 0.16);
+	}
+
+	&__listTitle {
+		margin: 0 0 8px;
+		color: var(--m3-primary, #a5000a);
+		font-size: 13px;
+		font-weight: 600;
+		line-height: 18px;
+	}
+
+	&__listItems {
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	&__listItem {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		padding: 4px 0;
+		color: var(--m3-on-surface, #1e1e1e);
+		font-size: 14px;
+		line-height: 20px;
 	}
 
 	// Phone: the compact chip (label/small) keeps the row's width for the title.

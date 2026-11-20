@@ -30,5 +30,7 @@ export const stepperColors = {
 
 export const stepperMotion = {
 	quick: '180ms',
-	standard: '200ms'
+	standard: '200ms',
+	/** The line between two dots travelling to the next one. */
+	travel: '280ms'
 } as const;

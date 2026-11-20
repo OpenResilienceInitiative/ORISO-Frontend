@@ -551,5 +551,19 @@ export const en: Record<EmailId, EmailContent> = {
 			'This email intentionally contains no topic, names or participant details.',
 		assurance,
 		footer
+	},
+
+	'calendar-move-proposal': {
+		subject: 'Proposal: move an appointment',
+		preheader:
+			'{{proposerName}} suggests a new time for one of your appointments.',
+		headline: 'Proposal: move an appointment',
+		paragraphs: [
+			'{{proposerName}} suggests moving your appointment on {{currentDate}} at {{currentTime}} to {{proposedDate}} at {{proposedTime}}.',
+			'You can accept or decline the proposal in your calendar. Until then the appointment stays where it is.'
+		],
+		cta: { label: 'View in calendar', href: '{{calendarUrl}}' },
+		assurance: staffAssurance,
+		footer
 	}
 };

@@ -47,6 +47,7 @@ export type StageProps = {
 	activeLanguages: string[];
 	/** Extra prefill, e.g. a stored repeat count and interval. */
 	prefill?: Partial<CircleSettingsPrefill>;
+	editChatId?: number;
 };
 
 const Rail = ({ layout }: { layout: 'desktop' | 'mobile' }) => {
@@ -114,7 +115,8 @@ const CreateCard = ({
 	layout,
 	people,
 	activeLanguages,
-	prefill
+	prefill,
+	editChatId
 }: StageProps) => {
 	const { t } = useTranslation();
 	const compact = layout === 'mobile';
@@ -133,6 +135,7 @@ const CreateCard = ({
 					activeLanguages={activeLanguages}
 					translationAvailable
 					prefill={{ topic: 'Sucht', modality: 'TEXT', ...prefill }}
+					editChatId={editChatId}
 					topicOptions={TOPICS}
 					people={people}
 					compact={compact}

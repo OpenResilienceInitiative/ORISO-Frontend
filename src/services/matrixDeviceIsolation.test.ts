@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import { DeviceIsolationModeKind } from 'matrix-js-sdk/lib/crypto-api';
 import { applyDeviceIsolationMode } from './matrixDeviceIsolation';
 

@@ -1,3 +1,20 @@
+import {
+	FurtherCounsellingNotice,
+	parseFurtherCounsellingNotice
+} from '../furtherCounselling/furtherCounsellingNotices';
+import {
+	ConsultantRenamedNotice,
+	parseConsultantRenamedNotice
+} from './consultantRenamedNotice';
+import {
+	type AppointmentNotice,
+	parseAppointmentNoticePayload
+} from './appointmentNotice';
+import {
+	DirectInvitationRenewedNotice,
+	parseDirectInvitationRenewedNotice
+} from './directInvitationRenewedNotice';
+
 export const SUPERVISOR_FEEDBACK_PREFIX = '[SUPERVISOR_FEEDBACK]';
 export const SYSTEM_NOTIFICATION_PREFIX = '[SYSTEM_NOTIFICATION]';
 export const SYSTEM_NOTIFICATION_INQUIRY_ACCEPTED = 'INQUIRY_ACCEPTED';
@@ -75,6 +92,29 @@ const parseHandoverGrantMetadata = (
 		: null;
 };
 
+/** Who ended a chat, as USER_LEFT_CHAT carries it (ORISO-Frontend#1838). */
+export type ChatEndedBy = 'CONSULTANT' | 'ADVICE_SEEKER';
+
+const toChatEndedBy = (value: unknown): ChatEndedBy | null =>
+	value === 'CONSULTANT' || value === 'ADVICE_SEEKER' ? value : null;
+
+/**
+ * The words for "the chat ended", seen from the viewer's side. Older events
+ * do not say who ended them: the counsellor keeps the historical "User has
+ * left the chat", the advice seeker reads the neutral line.
+ */
+export const chatEndedTextKey = (
+	endedBy: ChatEndedBy | null,
+	viewerIsConsultant: boolean
+): string => {
+	if (endedBy === (viewerIsConsultant ? 'CONSULTANT' : 'ADVICE_SEEKER')) {
+		return 'message.youEndedChat';
+	}
+	if (endedBy === 'ADVICE_SEEKER') return 'message.userLeftChat';
+	if (endedBy === 'CONSULTANT') return 'message.consultantLeftChat';
+	return viewerIsConsultant ? 'message.userLeftChat' : 'message.chatEnded';
+};
+
 export const parseMessagePrefixes = (message?: string | null) => {
 	if (!message) {
 		return {
@@ -85,12 +125,20 @@ export const parseMessagePrefixes = (message?: string | null) => {
 			systemNotificationDescription: '',
 			systemNotificationType: null as string | null,
 			systemNotificationUsername: '',
+			systemNotificationEndedBy: null as ChatEndedBy | null,
 			systemNotificationReasonLabel: '',
 			systemNotificationExplanation: '',
 			systemNotificationAcceptance:
 				null as InquiryAcceptanceMetadata | null,
 			systemNotificationHandoverGrant:
 				null as HandoverGrantMetadata | null,
+			systemNotificationFurtherCounselling:
+				null as FurtherCounsellingNotice | null,
+			systemNotificationConsultantRenamed:
+				null as ConsultantRenamedNotice | null,
+			systemNotificationDirectInvitationRenewed:
+				null as DirectInvitationRenewedNotice | null,
+			systemNotificationAppointment: null as AppointmentNotice | null,
 			visibleToUserIds: [] as string[]
 		};
 	}
@@ -102,10 +150,18 @@ export const parseMessagePrefixes = (message?: string | null) => {
 	let systemNotificationDescription = '';
 	let systemNotificationType: string | null = null;
 	let systemNotificationUsername = '';
+	let systemNotificationEndedBy: ChatEndedBy | null = null;
 	let systemNotificationReasonLabel = '';
 	let systemNotificationExplanation = '';
 	let systemNotificationAcceptance: InquiryAcceptanceMetadata | null = null;
 	let systemNotificationHandoverGrant: HandoverGrantMetadata | null = null;
+	let systemNotificationFurtherCounselling: FurtherCounsellingNotice | null =
+		null;
+	let systemNotificationConsultantRenamed: ConsultantRenamedNotice | null =
+		null;
+	let systemNotificationDirectInvitationRenewed: DirectInvitationRenewedNotice | null =
+		null;
+	let systemNotificationAppointment: AppointmentNotice | null = null;
 	let visibleToUserIds: string[] = [];
 
 	let keepParsingPrefixes = true;
@@ -167,6 +223,7 @@ export const parseMessagePrefixes = (message?: string | null) => {
 				description?: string;
 				type?: string;
 				username?: string;
+				endedBy?: string;
 				reasonLabel?: string;
 				explanation?: string;
 				handover?: unknown;
@@ -174,6 +231,7 @@ export const parseMessagePrefixes = (message?: string | null) => {
 			};
 			systemNotificationType = parsed?.type?.trim() || null;
 			systemNotificationUsername = parsed?.username?.trim() || '';
+			systemNotificationEndedBy = toChatEndedBy(parsed?.endedBy);
 			systemNotificationTitle = parsed?.title?.trim() || '';
 			systemNotificationDescription = parsed?.description?.trim() || '';
 			systemNotificationReasonLabel = parsed?.reasonLabel?.trim() || '';
@@ -185,6 +243,14 @@ export const parseMessagePrefixes = (message?: string | null) => {
 					parsed?.acceptance
 				);
 			}
+			systemNotificationFurtherCounselling =
+				parseFurtherCounsellingNotice(parsed);
+			systemNotificationConsultantRenamed =
+				parseConsultantRenamedNotice(parsed);
+			systemNotificationDirectInvitationRenewed =
+				parseDirectInvitationRenewedNotice(parsed);
+			systemNotificationAppointment =
+				parseAppointmentNoticePayload(parsed);
 			if (
 				systemNotificationType ===
 				SYSTEM_NOTIFICATION_CASE_HANDOVER_GRANTED
@@ -202,7 +268,11 @@ export const parseMessagePrefixes = (message?: string | null) => {
 			systemNotificationDescription = lines.slice(1).join(' ');
 		}
 		cleanedMessage =
-			systemNotificationDescription || systemNotificationTitle || payload;
+			systemNotificationDescription ||
+			systemNotificationTitle ||
+			// #2252: a "new link" notice previews as its link, never as JSON.
+			systemNotificationDirectInvitationRenewed?.url ||
+			payload;
 	}
 
 	return {
@@ -213,10 +283,28 @@ export const parseMessagePrefixes = (message?: string | null) => {
 		systemNotificationDescription,
 		systemNotificationType,
 		systemNotificationUsername,
+		systemNotificationEndedBy,
 		systemNotificationReasonLabel,
 		systemNotificationExplanation,
 		systemNotificationHandoverGrant,
 		systemNotificationAcceptance,
+		systemNotificationFurtherCounselling,
+		systemNotificationConsultantRenamed,
+		systemNotificationDirectInvitationRenewed,
+		systemNotificationAppointment,
 		visibleToUserIds
 	};
 };
+
+/**
+ * A takeover notice's stored text is frozen in the session's language and
+ * register, so with the new counsellor's name the client words it itself
+ * (#1844). Co-access keeps its stored text: it carries the granted duration.
+ */
+export const isClientWordedTakeover = (
+	parsed: ReturnType<typeof parseMessagePrefixes>
+): boolean =>
+	parsed.systemNotificationType ===
+		SYSTEM_NOTIFICATION_CASE_HANDOVER_GRANTED &&
+	parsed.systemNotificationHandoverGrant?.accessType !== 'CO_ACCESS' &&
+	Boolean(parsed.systemNotificationUsername);

@@ -1,3 +1,4 @@
+import { useDirectLinksAllowed } from '../directLinks/useDirectLinksAllowed';
 import * as React from 'react';
 import {
 	PropsWithChildren,
@@ -37,6 +38,7 @@ import { userHasBudibaseTools } from '../../api/apiGetTools';
 import { browserNotificationsSettings } from '../../utils/notificationHelpers';
 import useIsFirstVisit from '../../utils/useIsFirstVisit';
 import { useResponsive } from '../../hooks/useResponsive';
+import { navTourTarget } from '../productTour/tourCatalogue';
 import {
 	MENUPLACEMENT_RIGHT,
 	MENUPLACEMENT_TOP
@@ -59,12 +61,22 @@ import {
 	LIVE_CHAT_AVAILABILITY_LOSS_TEXT_KEYS,
 	useLiveChatAvailabilityLossNotice
 } from './useLiveChatAvailabilityLossNotice';
+import { useLiveChatDpaRestrictionNotice } from './useLiveChatDpaRestrictionNotice';
+import { useOpenEnquiryCount } from './useOpenEnquiryCount';
+import { useOpenProposalCount } from './useOpenProposalCount';
+import {
+	ENQUIRY_LIST_PATH,
+	NEW_ENQUIRY_NOTICE_ID,
+	NOTIFICATION_TYPE_NEW_ENQUIRY
+} from '../notifications/NewEnquiryNotice';
 
 export interface NavigationBarProps {
 	onLogout: any;
 	routerConfig: any;
 }
 
+/** "Meine Termine": its count is the move proposals waiting (FE#1050). */
+const CALENDAR_PATH = '/booking/events';
 const REGEX_DASH = /\//g;
 const stripLocalePrefix = (label: string) => label.replace(/^\([^)]+\)\s*/, '');
 const hyphenateRailLabel = (label: string, breakAfter: number) => {
@@ -121,7 +133,7 @@ export const NavigationBar = ({
 			error: liveChatError,
 			lostReason: liveChatLostReason
 		}
-	] = useLiveChatAvailable();
+	] = useLiveChatAvailable(isConsultant);
 	const [liveChatViaSidebar] = useLiveChatViaSidebar();
 	// #576: optional global notification-status button in the rail — flips the
 	// account-wide mute (the one switch that overrides everything). Placement
@@ -130,9 +142,12 @@ export const NavigationBar = ({
 	const { settings: notifSettings, updateSettings: updateNotifSettings } =
 		useNotificationSettings();
 	const notifMuted = notifSettings.globalMute;
+	const directLinksAllowed = useDirectLinksAllowed(isConsultant);
 	useLiveChatAvailabilityHeartbeat(isConsultant, liveChatAvailable);
 	// #1485: the one heartbeat owner is also the one that says why it stopped.
 	useLiveChatAvailabilityLossNotice(liveChatLostReason);
+	// #1704: live, but the provider's agreement turns advice seekers away.
+	useLiveChatDpaRestrictionNotice(isConsultant && liveChatAvailable);
 	const { tenant } = useContext(TenantContext);
 
 	const ref_menu = useRef<any[]>([]);
@@ -227,6 +242,14 @@ export const NavigationBar = ({
 			animateNavIconTimeoutRef.current = null;
 		}, 1000);
 	}, [isFirstVisit]);
+	// A timer left running past unmount sets state on a torn-down tree.
+	useEffect(
+		() => () => {
+			clearTimeout(animateNavIconTimeoutRef.current);
+			animateNavIconTimeoutRef.current = null;
+		},
+		[]
+	);
 
 	// #1377 spec §6.3: the Zeitstrahl badge counts VISIBLE unread only (the
 	// server total minus hidden unread rows on loaded pages, an upper bound);
@@ -235,11 +258,46 @@ export const NavigationBar = ({
 	const visibleUnreadCount = notificationsContext?.visibleUnreadCount ?? 0;
 	const hiddenUnreadInLoadedPages =
 		notificationsContext?.hiddenUnreadInLoadedPages ?? 0;
+	// FE#1435: open enquiries on "Anfragen", visible from every section.
+	const openEnquiryCount = useOpenEnquiryCount(isConsultant);
+	// FE#1050: move proposals waiting for an answer, on "Meine Termine".
+	const openProposalCount = useOpenProposalCount(
+		isConsultant &&
+			(routerConfig?.navigation ?? []).some(
+				(item: { to?: string }) => item?.to === CALENDAR_PATH
+			)
+	);
+	const removeNotificationRef = useRef(
+		notificationsContext?.removeNotification
+	);
+	removeNotificationRef.current = notificationsContext?.removeNotification;
+	const previousEnquiryCount = useRef<number | null>(null);
+	useEffect(() => {
+		// The last open enquiry was taken: the new-enquiry pop-up has nothing
+		// left to offer. Only on that drop, never on a stale 0 that a new
+		// enquiry's pop-up meets before the count has reloaded.
+		const previous = previousEnquiryCount.current;
+		previousEnquiryCount.current = openEnquiryCount;
+		if (openEnquiryCount === 0 && previous !== null && previous > 0)
+			removeNotificationRef.current?.(
+				NEW_ENQUIRY_NOTICE_ID,
+				NOTIFICATION_TYPE_NEW_ENQUIRY
+			);
+	}, [openEnquiryCount]);
 	const pathsToShowUnreadMessageNotification = {
 		'/profile':
 			isFirstVisit && !browserNotificationsSettings().visited ? 1 : 0,
-		'/notifications': visibleUnreadCount
+		'/notifications': visibleUnreadCount,
+		[ENQUIRY_LIST_PATH]: openEnquiryCount ?? 0,
+		[CALENDAR_PATH]: openProposalCount ?? 0
 	};
+	/** What the count on an item says, read out with the item's name. */
+	const countKey = (to: string) =>
+		to === ENQUIRY_LIST_PATH
+			? 'sessionList.rail.openEnquiries'
+			: to === CALENDAR_PATH
+				? 'calendar.proposal.navCount'
+				: 'sessionList.rail.unreadCount';
 	const unreadNavTitle = (to: string): string | undefined =>
 		to === '/notifications' && hiddenUnreadInLoadedPages > 0
 			? translate('notifications.displayFilter.badgeHiddenHint', {
@@ -348,19 +406,27 @@ export const NavigationBar = ({
 				figmaConsultantNav && 'navigation__wrapper--figma-consultant'
 			)}
 		>
-			<div className="navigation__itemContainer" role="tablist">
+			{/* One tab stop, arrow keys move between the items: the toolbar role
+			    tells assistive technology so (#1338). */}
+			<div
+				className="navigation__itemContainer"
+				role="toolbar"
+				aria-orientation="vertical"
+			>
 				<NavGroup className="navigation__item__top">
 					{sessions &&
 						routerConfig.navigation
 							.filter(
 								(item: any) =>
-									!item.condition ||
-									item.condition(
-										userData,
-										consultingTypes,
-										sessions,
-										hasTools
-									)
+									(!item.requiresDirectInvite ||
+										directLinksAllowed) &&
+									(!item.condition ||
+										item.condition(
+											userData,
+											consultingTypes,
+											sessions,
+											hasTools
+										))
 							)
 							.map((item, index) => {
 								const Icon = item?.icon;
@@ -372,19 +438,34 @@ export const NavigationBar = ({
 								const isActive =
 									location.pathname.indexOf(item.to) !== -1;
 								const isHovered = hoveredNavItem === item.to;
-								const unreadCount = Number(
-									pathsToShowUnreadMessageNotification[
-										item.to
-									] || 0
+								const addonBadge = Math.max(
+									0,
+									Number(item.badge) || 0
 								);
-								const showUnreadNav =
-									Object.keys(
-										pathsToShowUnreadMessageNotification
-									).includes(item.to) && unreadCount > 0;
-								const label = translate(item.titleKeys.large);
+								const messageCount = Object.keys(
+									pathsToShowUnreadMessageNotification
+								).includes(item.to)
+									? Number(
+											pathsToShowUnreadMessageNotification[
+												item.to
+											] || 0
+										)
+									: 0;
+								// Unread messages win over an add-on badge on the same item.
+								const showsAddonBadge =
+									messageCount === 0 && addonBadge > 0;
+								const unreadCount = showsAddonBadge
+									? addonBadge
+									: messageCount;
+								const showUnreadNav = unreadCount > 0;
+								const label =
+									item.title ??
+									translate(item.titleKeys.large);
 								const unreadLabel = showUnreadNav
 									? translate(
-											'sessionList.rail.unreadCount',
+											showsAddonBadge
+												? 'addons.badge'
+												: countKey(item.to),
 											{
 												count: unreadCount
 											}
@@ -392,8 +473,14 @@ export const NavigationBar = ({
 									: '';
 								// The Link's aria-label is its whole accessible
 								// name, so the count has to be part of it.
+								const unreadTitle =
+									showUnreadNav && !showsAddonBadge
+										? unreadNavTitle(item.to)
+										: undefined;
 								const linkLabel = showUnreadNav
-									? `${label}, ${unreadLabel}`
+									? [label, unreadLabel, unreadTitle]
+											.filter(Boolean)
+											.join(', ')
 									: label;
 								// Desktop rail may hyphenate/wrap; mobile bottom bar
 								// must stay single-line to avoid overlapping neighbors.
@@ -479,12 +566,9 @@ export const NavigationBar = ({
 										)}
 										to={item.to}
 										aria-label={linkLabel}
-										data-tour-target={
-											item.to ===
-											'/sessions/consultant/sessionPreview'
-												? 'nav-enquiries'
-												: undefined
-										}
+										data-tour-target={navTourTarget(
+											item.to
+										)}
 										onMouseEnter={() =>
 											setHoveredNavItem(item.to)
 										}
@@ -499,10 +583,18 @@ export const NavigationBar = ({
 											handleKeyDownMenu(e, index)
 										}
 										ref={(el) => {
-											ref_menu.current[index] = el;
+											if (el) {
+												ref_menu.current[index] = el;
+											} else {
+												// Items can disappear (add-on apps); keep no stale entries at the end.
+												ref_menu.current.length =
+													Math.min(
+														ref_menu.current.length,
+														index
+													);
+											}
 										}}
 										tabIndex={index === 0 ? 0 : -1}
-										role="tab"
 									>
 										{useFigmaSlot ? (
 											<div
@@ -520,11 +612,8 @@ export const NavigationBar = ({
 													<NavigationUnreadIndicator
 														animate={animateNavIcon}
 														count={unreadCount}
-														label={unreadLabel}
 														variant="figma"
-														title={unreadNavTitle(
-															item.to
-														)}
+														title={unreadTitle}
 													/>
 												)}
 											</div>
@@ -546,9 +635,8 @@ export const NavigationBar = ({
 											<NavigationUnreadIndicator
 												animate={animateNavIcon}
 												count={unreadCount}
-												label={unreadLabel}
 												variant="default"
-												title={unreadNavTitle(item.to)}
+												title={unreadTitle}
 											/>
 										)}
 									</Link>
@@ -679,7 +767,6 @@ export const NavigationBar = ({
 								figmaConsultantNav &&
 									'navigation__item--nav-language'
 							)}
-							role="tab"
 							tabIndex={-1}
 							ref={(el) => {
 								ref_local.current = el;
@@ -777,7 +864,7 @@ export const NavigationBar = ({
 							'navigation__item',
 							figmaConsultantNav && 'navigation__item--nav-logout'
 						)}
-						role="tab"
+						role="button"
 						tabIndex={-1}
 						ref={(el) => {
 							ref_logout.current = el;
@@ -867,14 +954,11 @@ const NavGroup = ({
 const NavigationUnreadIndicator = ({
 	animate,
 	count,
-	label,
 	variant = 'default',
 	title
 }: {
 	animate: boolean;
 	count: number;
-	/** Localised "{{count}} new messages" (also part of the link's name). */
-	label: string;
 	variant?: 'default' | 'figma';
 	/** Optional hint (e.g. "up to N hidden", #1377 §6.3). */
 	title?: string;
@@ -883,9 +967,10 @@ const NavigationUnreadIndicator = ({
 
 	useEffect(() => {
 		// After first render wait for initial animation
-		setTimeout(() => {
+		const timeout = setTimeout(() => {
 			setVisible(true);
 		}, 1000);
+		return () => clearTimeout(timeout);
 	}, []);
 
 	const display = count > 99 ? '99+' : String(count);
@@ -900,7 +985,7 @@ const NavigationUnreadIndicator = ({
 				count > 9 && 'navigation__item__count--double',
 				isFigma && 'navigation__item__count--figma'
 			)}
-			aria-label={title ? `${label}, ${title}` : label}
+			aria-hidden="true"
 			title={title}
 		>
 			{isFigma ? (

@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * #994 — one card definition for every attachment state. These tests pin the
  * things that made the old card look unfinished: inline styles, a link that
@@ -6,7 +6,7 @@
  */
 import * as React from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { AttachmentCard } from './AttachmentCard';
 

@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 /**
  * Anonymous chat + waiting-room mini-game used to pass German or English
@@ -8,7 +8,6 @@ import { describe, expect, it } from 'vitest';
  * snapped to one language instead of the `fallbackLng` chain (#1154).
  */
 const SLICE_FILES = [
-	'src/components/anonymousChat/AnonymousChat.tsx',
 	'src/components/anonymousChat/liveChatOpeningHours.ts',
 	'src/components/pseudonym/BreathingTutorialCard.tsx',
 	'src/components/session/SessionItemComponent.tsx'

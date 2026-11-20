@@ -35,6 +35,13 @@
 	--oriso-primary-fixed-dim: #ffb4aa;
 	--oriso-on-primary-fixed: #410001;
 	--oriso-on-primary-fixed-variant: #930008;
+
+	// Global topic tag (Themenberatung): the engine emits these per Träger;
+	// the literals are the #a5000a result (guarded in orisoScheme.test.ts).
+	--oriso-topic-tag-bg: #ffdad5;
+	--oriso-topic-tag-fg: #930008;
+	--oriso-topic-tag-active-bg: #cc1e1c;
+	--oriso-topic-tag-active-fg: #ffe2de;
 	--m3-secondary: #4c555f;
 	--m3-on-secondary: #{$white};
 	--m3-secondary-container: #646d78;
@@ -63,6 +70,7 @@
 	--m3-on-tertiary: #{$white};
 	--m3-tertiary-container: #9ba4b0;
 	--m3-on-tertiary-container: #313a44;
+	--m3-on-tertiary-fixed: #141c25;
 	--m3-surface: #fcf9f9;
 	--m3-on-surface: #1a1c1e;
 	--m3-surface-variant: #e0e3e3;
@@ -83,6 +91,12 @@
 	--m3-on-error: #{$white};
 	--m3-success: #{$form-success};
 	--oriso-app-action: #a5000a;
+
+	// Orbital loader motion roles. These are independent of the M3 interaction
+	// state layers (8/10/16%); colours continue to come from the active scheme.
+	--oriso-loader-trail-opacity: 0.045;
+	--oriso-loader-orbit-opacity: 0.48;
+	--oriso-loader-dot-opacity: 0.9;
 	--oriso-lottie-accent-color: var(--oriso-primary-fixed-dim, #ffb4aa);
 	--oriso-lottie-secondary-color: var(--m3-secondary-container, #646d78);
 

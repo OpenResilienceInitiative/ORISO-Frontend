@@ -53,7 +53,14 @@ export const ListSearchField = ({
 	return (
 		<div className={`sessionsListToolbar__search ${className || ''}`}>
 			<div className="sessionsListToolbar__searchInner">
-				{leading ?? (
+				{/* #2226: the leading slot is the same 48 px filter slot as in
+				    the conversation list (SessionsListToolbar), so both search
+				    fields have the same height and filter glyph. */}
+				{leading ? (
+					<span className="sessionsListToolbar__iconButton sessionsListToolbar__iconButton--filter">
+						{leading}
+					</span>
+				) : (
 					<button
 						type="button"
 						className="sessionsListToolbar__iconButton"
