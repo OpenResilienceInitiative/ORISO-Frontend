@@ -46,6 +46,9 @@ export const useCreateViewExit = ({
 	const [confirmDiscard, setConfirmDiscard] = useState(false);
 
 	const leave = () => {
+		if (isBlocked?.()) {
+			return;
+		}
 		focusReturnRef.current = true;
 		onLeave();
 	};

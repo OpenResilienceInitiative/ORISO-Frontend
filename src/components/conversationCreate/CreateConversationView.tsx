@@ -565,13 +565,17 @@ const CreateConversationFlow = ({
 	});
 
 	const handleBackButton = useCallback(() => {
+		// A running create request cannot be cancelled: stay on the view.
+		if (isSubmitting) {
+			return;
+		}
 		if (step !== 'picker' && formatCount > 1) {
 			setStep('picker');
 			clearError();
 			return;
 		}
 		navigate(consultantConversationList);
-	}, [formatCount, clearError, navigate, step]);
+	}, [formatCount, clearError, navigate, step, isSubmitting]);
 
 	/* The direct link offers every topic of the counsellor's
 	   Beratungsstellen; the id goes to the backend, the name is shown. */

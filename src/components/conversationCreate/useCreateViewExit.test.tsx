@@ -40,6 +40,13 @@ describe('useCreateViewExit', () => {
 		expect(onLeave).not.toHaveBeenCalled();
 	});
 
+	it('stays open on a click outside while a request is running', () => {
+		const onLeave = vi.fn();
+		render(<Harness blocked dirty={false} onLeave={onLeave} />);
+		fireEvent.click(document.body);
+		expect(onLeave).not.toHaveBeenCalled();
+	});
+
 	it('leaves on Escape when idle and clean', () => {
 		const onLeave = vi.fn();
 		render(<Harness blocked={false} dirty={false} onLeave={onLeave} />);
