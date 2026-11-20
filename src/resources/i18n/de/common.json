@@ -3217,6 +3217,8 @@
 				"intro": "Wählen Sie Ihre Benachrichtigungstöne für jeden Bereich getrennt.",
 				"emailNote": "E-Mails werden nur gesendet, wenn Sie nicht innerhalb von fünf Minuten nach dem Ereignis reagieren.",
 				"noSound": "Kein Ton gewählt",
+				"defaultSound": "Standard",
+				"legacySound": "Früherer Ton",
 				"tone": "Ton #{{number}}",
 				"sendByEmail": "Per E-Mail senden",
 				"confirm": "Bestätigen",
@@ -5587,6 +5589,17 @@
 		"introduction": {
 			"title": "Einführung",
 			"summary": "Lernen Sie die Bereiche der Anwendung kennen. Sie können die Einführung jederzeit erneut starten."
+		},
+		"launcherSwitch": {
+			"title": "Rundgang-Knopf anzeigen",
+			"label": {
+				"on": "An",
+				"off": "Aus"
+			},
+			"hint": {
+				"on": "An: Der Knopf „?“ unten rechts öffnet Ihre Rundgänge. Solange ein Gespräch offen ist, ist er ausgeblendet.",
+				"off": "Aus: Der Knopf „?“ ist ausgeblendet. Ihre Rundgänge finden Sie weiterhin hier."
+			}
 		}
 	},
 	"banner": {
@@ -6361,6 +6374,13 @@
 					"intro": "Sie haben eine Supervisor:in hinzugefügt und ihre Antwort gelesen. Mit der Schaltfläche unten beenden Sie die Übung."
 				}
 			}
+		},
+		"launcher": {
+			"eyebrow": "Hilfe",
+			"title": "Rundgänge",
+			"open": "Rundgänge öffnen",
+			"close": "Rundgänge schließen",
+			"manage": "Rundgänge verwalten"
 		}
 	},
 	"weekday": {

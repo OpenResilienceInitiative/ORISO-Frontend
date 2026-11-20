@@ -426,15 +426,36 @@ describe('InviteLink asks who is live before anything is created', () => {
 		renderInvite();
 		await waitFor(() => expect(roomProps.current?.invite?.topicId).toBe(3));
 
-		await expect(roomProps.current.invite.redeem()).resolves.toBe(42);
+		await expect(
+			roomProps.current.invite.redeem('katze_sam_4821')
+		).resolves.toBe(42);
 
-		expect(redeemInviteLink).toHaveBeenCalledWith('token-123');
+		/* The rolled User-ID travels with the redeem and becomes the login. */
+		expect(redeemInviteLink).toHaveBeenCalledWith(
+			'token-123',
+			'katze_sam_4821'
+		);
 		expect(applyRedeemSessionCredentials).toHaveBeenCalled();
 		expect(localStorage.getItem('oriso.invite.session.token-123')).toBe(
 			'42'
 		);
 		/* The guest names themselves before the redeem now; no courtesy name. */
 		expect(assignInviteSessionDisplayName).not.toHaveBeenCalled();
+	});
+
+	it('keeps the room open when the rolled User-ID was taken meanwhile', async () => {
+		renderInvite();
+		await waitFor(() => expect(roomProps.current?.invite?.topicId).toBe(3));
+		const taken = new Response('', { status: 409 });
+		vi.mocked(redeemInviteLink).mockRejectedValueOnce(taken);
+
+		await expect(
+			roomProps.current.invite.redeem('katze_sam_4821')
+		).rejects.toBe(taken);
+
+		/* Not the unusable-invite page: the link is fine, the room rolls again. */
+		expect(screen.getByTestId('live-chat-entry-room')).toBeTruthy();
+		expect(applyRedeemSessionCredentials).not.toHaveBeenCalled();
 	});
 
 	it('shows a neutral loader while checking the invitation', async () => {

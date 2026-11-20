@@ -19,6 +19,7 @@ import { ReactComponent as MaximizeIcon } from '../../../resources/img/icons/max
 import { ReactComponent as CameraOnIcon } from '../../../resources/img/icons/camera-on.svg';
 import { ReactComponent as CameraOffIcon } from '../../../resources/img/icons/camera-off.svg';
 import { CallSurfaceLayer } from './CallSurfaceLayer';
+import { useRegisterFloatingSurface } from '../../floatingSurfaces/floatingSurfaces';
 import './callStates.scss';
 
 export interface MinimizedCallDockProps {
@@ -77,6 +78,7 @@ export const MinimizedCallDock: React.FC<MinimizedCallDockProps> = ({
 	autoFocus = false
 }) => {
 	const { t } = useTranslation();
+	useRegisterFloatingSurface('call-dock');
 	const duration = formatCallDuration(elapsedSeconds);
 	const menuId = React.useId();
 	const [menuAnchor, setMenuAnchor] = React.useState<HTMLElement | null>(

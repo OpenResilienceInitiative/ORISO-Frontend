@@ -3165,6 +3165,8 @@
 				"intro": "Choisissez vos sons de notification séparément pour chaque domaine.",
 				"emailNote": "Les e-mails ne sont envoyés que si vous ne réagissez pas dans les cinq minutes suivant l'événement.",
 				"noSound": "Aucun son sélectionné",
+				"defaultSound": "Par défaut",
+				"legacySound": "Ancien son",
 				"tone": "Son n° {{number}}",
 				"sendByEmail": "Envoyer par e-mail",
 				"confirm": "Confirmer",
@@ -5570,6 +5572,17 @@
 		"introduction": {
 			"title": "Visite d’introduction",
 			"summary": "Découvrez les différentes parties de l’application. Vous pouvez relancer l’introduction à tout moment."
+		},
+		"launcherSwitch": {
+			"title": "Afficher le bouton des visites guidées",
+			"label": {
+				"on": "Activé",
+				"off": "Désactivé"
+			},
+			"hint": {
+				"on": "Activé : le bouton « ? » en bas à droite ouvre vos visites guidées. Il est masqué tant qu’une conversation est ouverte.",
+				"off": "Désactivé : le bouton « ? » est masqué. Vous retrouvez toujours vos visites guidées ici."
+			}
 		}
 	},
 	"consultingTypes": {
@@ -6371,6 +6384,13 @@
 					"intro": "Vous avez ajouté un·e superviseur·e et lu sa réponse. Terminez l’exercice avec le bouton ci-dessous."
 				}
 			}
+		},
+		"launcher": {
+			"eyebrow": "Aide",
+			"title": "Visites guidées",
+			"open": "Ouvrir les visites guidées",
+			"close": "Fermer les visites guidées",
+			"manage": "Gérer les visites guidées"
 		}
 	},
 	"weekday": {
