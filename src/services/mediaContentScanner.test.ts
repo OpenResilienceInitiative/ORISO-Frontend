@@ -12,6 +12,15 @@ import {
 } from '../utils/matrixEncryptedAttachment';
 
 const getMediaScannerUrl = vi.fn<() => string>();
+const matrixClient = {
+	getAccessToken: vi.fn<() => string | null>(),
+	getHomeserverUrl: vi.fn<() => string>()
+};
+const getScannerClient = vi.fn<() => typeof matrixClient | null>();
+
+vi.mock('./matrixClientRegistry', () => ({
+	getMatrixClientService: () => ({ getClient: getScannerClient })
+}));
 
 vi.mock('../resources/scripts/runtimeConfig', () => ({
 	getMediaScannerUrl: () => getMediaScannerUrl()
@@ -97,6 +106,11 @@ beforeEach(async () => {
 	getMediaScannerUrl.mockReturnValue(
 		'https://pre-dev.example.org/_matrix/media_proxy/unstable'
 	);
+	matrixClient.getHomeserverUrl.mockReturnValue(
+		'https://pre-dev.example.org'
+	);
+	matrixClient.getAccessToken.mockReturnValue('synthetic-matrix-token');
+	getScannerClient.mockReturnValue(matrixClient);
 	fetchMock = vi.fn();
 	vi.stubGlobal('fetch', fetchMock);
 });
@@ -169,6 +183,11 @@ describe('downloadScannedEncryptedMedia', () => {
 		expect(downloadUrl).toBe(
 			'https://pre-dev.example.org/_matrix/media_proxy/unstable/download_encrypted'
 		);
+		expect(request.headers).toMatchObject({
+			Authorization: 'Bearer synthetic-matrix-token'
+		});
+		expect(request.redirect).toBe('error');
+		expect(fetchMock.mock.calls[0][1]).toEqual({ redirect: 'error' });
 		const body = JSON.parse(request.body as string);
 		expect(Object.keys(body)).toEqual(['encrypted_body']);
 		expect(body.encrypted_body).toEqual({
@@ -224,6 +243,44 @@ describe('downloadScannedEncryptedMedia', () => {
 			reason: 'invalid-encrypted-response'
 		});
 		expect(fetchMock).toHaveBeenCalledTimes(2);
+	});
+
+	it('keeps the file withheld when there is no Matrix access token', async () => {
+		matrixClient.getAccessToken.mockReturnValue(null);
+		const { downloadScannedEncryptedMedia } = await importModule();
+
+		expect(await downloadScannedEncryptedMedia(encryptedFile)).toEqual({
+			verdict: 'error',
+			reason: 'matrix-session-unavailable'
+		});
+		expect(fetchMock).not.toHaveBeenCalled();
+	});
+
+	it('keeps Matrix credentials and file keys on the configured homeserver origin', async () => {
+		getMediaScannerUrl.mockReturnValue(
+			'https://different.example.org/scanner'
+		);
+		const { downloadScannedEncryptedMedia } = await importModule();
+
+		expect(await downloadScannedEncryptedMedia(encryptedFile)).toEqual({
+			verdict: 'error',
+			reason: 'untrusted-scanner-origin'
+		});
+		expect(fetchMock).not.toHaveBeenCalled();
+	});
+
+	it('does not send a sealed download after the Matrix session changes', async () => {
+		fetchMock.mockImplementationOnce(async () => {
+			getScannerClient.mockReturnValue({ ...matrixClient });
+			return publicKeyResponse();
+		});
+		const { downloadScannedEncryptedMedia } = await importModule();
+
+		expect(await downloadScannedEncryptedMedia(encryptedFile)).toEqual({
+			verdict: 'error',
+			reason: 'matrix-session-unavailable'
+		});
+		expect(fetchMock).toHaveBeenCalledTimes(1);
 	});
 
 	it('blocks a file the scanner rejected', async () => {

@@ -27,6 +27,7 @@ import {
 	getMediaScannerUrl,
 	isMediaImageCheckConfigured
 } from '../resources/scripts/runtimeConfig';
+import { getMatrixClientService } from './matrixClientRegistry';
 import {
 	decryptMatrixAttachment,
 	type MatrixEncryptedFile
@@ -44,6 +45,20 @@ export type MediaScanOutcome =
 
 /** Verdicts the scanner returns about the file itself, rather than about its own health. */
 const REJECTION_REASONS = ['MCS_MEDIA_NOT_CLEAN', 'MCS_MIME_TYPE_FORBIDDEN'];
+
+const isTrustedScannerOrigin = (base: string, homeserver: string): boolean => {
+	try {
+		const scannerUrl = new URL(base, globalThis.location?.href);
+		const homeserverUrl = new URL(homeserver);
+		return (
+			(scannerUrl.protocol === 'https:' ||
+				scannerUrl.protocol === 'http:') &&
+			scannerUrl.origin === homeserverUrl.origin
+		);
+	} catch {
+		return false;
+	}
+};
 
 const MXC_PREFIX = 'mxc://';
 
@@ -95,7 +110,7 @@ export const getScannedMediaDownloadPath = (
 };
 
 const fetchScannerPublicKey = async (base: string): Promise<string> => {
-	const response = await fetch(`${base}/public_key`);
+	const response = await fetch(`${base}/public_key`, { redirect: 'error' });
 	if (!response.ok) {
 		throw new Error(
 			`Content scanner public key request failed: ${response.status}`
@@ -169,6 +184,15 @@ export const downloadScannedEncryptedMedia = async (
 		return { verdict: 'error', reason: 'no-scanner-configured' };
 	}
 
+	const client = getMatrixClientService()?.getClient();
+	const accessToken = client?.getAccessToken();
+	if (!client || !accessToken) {
+		return { verdict: 'error', reason: 'matrix-session-unavailable' };
+	}
+	if (!isTrustedScannerOrigin(base, client.getHomeserverUrl())) {
+		return { verdict: 'error', reason: 'untrusted-scanner-origin' };
+	}
+
 	let encryptedBody;
 	try {
 		const publicKey = await getScannerPublicKey(base);
@@ -185,12 +209,25 @@ export const downloadScannedEncryptedMedia = async (
 		};
 	}
 
+	// Key retrieval can outlive the active Matrix session. Do not submit
+	// credentials for an attachment owned by a previous login.
+	if (
+		getMatrixClientService()?.getClient() !== client ||
+		client.getAccessToken() !== accessToken
+	) {
+		return { verdict: 'error', reason: 'matrix-session-unavailable' };
+	}
+
 	let response: Response;
 	try {
 		response = await fetch(`${base}/download_encrypted`, {
 			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ encrypted_body: encryptedBody })
+			headers: {
+				'Content-Type': 'application/json',
+				'Authorization': `Bearer ${accessToken}`
+			},
+			body: JSON.stringify({ encrypted_body: encryptedBody }),
+			redirect: 'error'
 		});
 	} catch (error) {
 		return {
