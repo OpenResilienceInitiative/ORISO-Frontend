@@ -355,6 +355,45 @@
 					"testing-library/await-async-queries": "error",
 					"testing-library/await-async-utils": "error"
 				}
+			},
+			{
+				"files": [
+					"src/**/*.tsx"
+				],
+				"excludedFiles": [
+					"src/**/*.test.tsx",
+					"src/**/*.spec.tsx",
+					"src/**/*.stories.tsx",
+					"src/components/form/**",
+					"src/components/M3Checkbox/**",
+					"src/components/checkbox/**",
+					"src/components/radioButton/**",
+					"src/components/Switch/**",
+					"src/components/tagSelect/**",
+					"src/components/devToolbar/**"
+				],
+				"rules": {
+					"no-restricted-syntax": [
+						"error",
+						"WithStatement",
+						{
+							"selector": "JSXOpeningElement[name.name=/^(select|option|textarea)$/]",
+							"message": "Raw <select>/<option>/<textarea> is drawn by the browser and never matches the design. Use OrisoSelect / OrisoMultiSelect / OrisoTextarea from src/components/form/."
+						},
+						{
+							"selector": "JSXOpeningElement[name.name='input'] > JSXAttribute[name.name='type'][value.value=/^(checkbox|radio)$/]",
+							"message": "Raw <input type=\"checkbox|radio\"> is drawn by the browser. Use M3Checkbox, or MUI RadioGroup + FormControlLabel + Radio."
+						},
+						{
+							"selector": "JSXOpeningElement[name.name='input'] > JSXAttribute[name.name='type'] > JSXExpressionContainer > Literal[value=/^(checkbox|radio)$/]",
+							"message": "Raw <input type=\"checkbox|radio\"> is drawn by the browser. Use M3Checkbox, or MUI RadioGroup + FormControlLabel + Radio."
+						},
+						{
+							"selector": "JSXOpeningElement[name.name='NativeSelect']",
+							"message": "MUI NativeSelect opens the browser's own option list. Use OrisoSelect from src/components/form/."
+						}
+					]
+				}
 			}
 		],
 		"ignorePatterns": [

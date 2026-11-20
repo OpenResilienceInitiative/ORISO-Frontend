@@ -11,6 +11,9 @@
 // Pill entry of the appointment lists (Activity Timeline, counsellor calendar)
 @import './listEntryPill';
 
+// Fixed-height kit textarea (group-chat welcome and rule editors)
+@import './fixedTextareaBox';
+
 // Global topic tag colour tokens + mixins
 @import './topicTag';
 

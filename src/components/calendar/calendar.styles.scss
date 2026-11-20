@@ -3370,6 +3370,7 @@ $cal-new-pill-hover: #4b4f51;
 	display: flex;
 	flex-direction: column;
 	gap: 0;
+	container: calendar-hours / inline-size;
 }
 
 // Each day is a block: the day with its hours, its pause under it, a
@@ -3406,13 +3407,81 @@ $cal-new-pill-hover: #4b4f51;
 .calendarHours__pauseOn {
 	display: inline-flex;
 	align-items: center;
-	gap: 6px;
+	white-space: nowrap;
+	/* The M3 checkbox brings its own 40px state layer; pull it to the row edge. */
+	margin-inline-start: -11px;
+}
 
-	input {
-		width: 16px;
-		height: 16px;
-		margin: 0;
-		accent-color: var(--m3-primary, #a5000a);
+// Phone (Frank 2026-11-17): one line per day did not fit, the end time
+// ran off the dialog. The day keeps its switch and name on top; the times
+// move to their own line under the name, the pause row lines up with them.
+@container calendar-hours (max-width: 480px) {
+	.calendarHours__row:not(.calendarHours__row--holidays) {
+		grid-template-columns: 52px minmax(0, 1fr) auto minmax(0, 1fr);
+		grid-template-areas:
+			'switch day day day'
+			'. from dash to';
+		gap: 8px;
+
+		> :nth-child(1) {
+			grid-area: switch;
+		}
+
+		> :nth-child(2) {
+			grid-area: day;
+		}
+
+		> :nth-child(3) {
+			grid-area: from;
+		}
+
+		> :nth-child(4) {
+			grid-area: dash;
+		}
+
+		> :nth-child(5) {
+			grid-area: to;
+		}
+	}
+
+	// Same weight as the weekday rule above plus one class, so the pause
+	// row's own areas win.
+	.calendarHours__row.calendarHours__row--pause:not(
+			.calendarHours__row--holidays
+		) {
+		grid-template-areas:
+			'. day day day'
+			'. from dash to';
+		padding-left: 0;
+
+		> :nth-child(1) {
+			grid-area: day;
+		}
+
+		> :nth-child(2) {
+			grid-area: from;
+		}
+
+		> :nth-child(3) {
+			grid-area: dash;
+		}
+
+		> :nth-child(4) {
+			grid-area: to;
+		}
+	}
+
+	.calendarHours__time {
+		min-width: 0;
+
+		input {
+			width: 100%;
+		}
+	}
+
+	// Two classes: the base rule further down would win a tie.
+	.calendarHours .calendarHours__region {
+		padding-left: 0;
 	}
 }
 

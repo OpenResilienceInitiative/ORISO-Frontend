@@ -3165,6 +3165,8 @@
 				"intro": "Choisissez vos sons de notification séparément pour chaque domaine.",
 				"emailNote": "Les e-mails ne sont envoyés que si vous ne réagissez pas dans les cinq minutes suivant l'événement.",
 				"noSound": "Aucun son sélectionné",
+				"defaultSound": "Par défaut",
+				"legacySound": "Ancien son",
 				"tone": "Son n° {{number}}",
 				"sendByEmail": "Envoyer par e-mail",
 				"confirm": "Confirmer",
