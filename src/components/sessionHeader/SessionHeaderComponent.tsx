@@ -523,7 +523,8 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		const selectedConsultantIdForRequest = selectedConsultant.consultantId;
 		const selectedSupervisorName = getConsultantLabel(selectedConsultant);
 		const chatDisplayName =
-			contact?.username || `Session ${activeSession.item.id}`;
+			resolveAnonymousChatDisplayName(contact) ||
+			`Session ${activeSession.item.id}`;
 		try {
 			await apiAddSessionSupervisor(
 				activeSession.item.id,
@@ -589,7 +590,8 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 			? getSupervisorName(supervisorToRemove)
 			: String(supervisorId);
 		const chatDisplayName =
-			contact?.username || `Session ${activeSession.item.id}`;
+			resolveAnonymousChatDisplayName(contact) ||
+			`Session ${activeSession.item.id}`;
 		try {
 			await apiRemoveSessionSupervisor(
 				activeSession.item.id,

@@ -261,9 +261,17 @@ describe('DisplayFilterDialog chip presentation + Träger switch (Frank 2026-09-
 	it('lets the user pick the chip view and auto-sort, stored on the section value', () => {
 		const onValue = vi.fn();
 		render(<Harness onValue={onValue} />);
+		// M3 segmented button with radio-group semantics: one checked radio.
+		expect(
+			screen.getByRole('radiogroup', { name: STORY_LABELS.viewTitle })
+		).toBeTruthy();
 		const textView = screen.getByRole('radio', { name: 'Text' });
 		const iconsView = screen.getByRole('radio', { name: 'Icons' });
-		expect((iconsView as HTMLInputElement).checked).toBe(true);
+		expect(iconsView.getAttribute('aria-checked')).toBe('true');
+		expect(textView.getAttribute('aria-checked')).toBe('false');
+		// Roving focus: only the checked segment is in the tab order.
+		expect(iconsView.tabIndex).toBe(0);
+		expect(textView.tabIndex).toBe(-1);
 		fireEvent.click(textView);
 		expect(
 			(onValue.mock.calls.at(-1)?.[0] as DisplayFilterValue).view
@@ -276,6 +284,40 @@ describe('DisplayFilterDialog chip presentation + Träger switch (Frank 2026-09-
 		expect(
 			(onValue.mock.calls.at(-1)?.[0] as DisplayFilterValue).autoSort
 		).toBe(false);
+	});
+
+	it('moves the chip view with the arrow keys, like a radio group', () => {
+		const onValue = vi.fn();
+		render(<Harness onValue={onValue} />);
+		const lastView = () =>
+			(onValue.mock.calls.at(-1)?.[0] as DisplayFilterValue).view;
+		const iconsView = screen.getByRole('radio', { name: 'Icons' });
+		iconsView.focus();
+		fireEvent.keyDown(iconsView, { key: 'ArrowRight' });
+		expect(lastView()).toBe('labels');
+		expect(document.activeElement).toBe(
+			screen.getByRole('radio', { name: 'Icons + Text' })
+		);
+		fireEvent.keyDown(document.activeElement as HTMLElement, {
+			key: 'ArrowLeft'
+		});
+		expect(lastView()).toBe('icons');
+		expect(document.activeElement).toBe(
+			screen.getByRole('radio', { name: 'Icons' })
+		);
+	});
+
+	it('marks the chosen view with a check, not by colour alone', () => {
+		render(<Harness onValue={vi.fn()} />);
+		const iconsView = screen.getByRole('radio', { name: 'Icons' });
+		expect(
+			iconsView.querySelector('[data-testid="CheckIcon"]')
+		).not.toBeNull();
+		expect(
+			screen
+				.getByRole('radio', { name: 'Text' })
+				.querySelector('[data-testid="CheckIcon"]')
+		).toBeNull();
 	});
 
 	it('locks a deactivated kind (format off, rows exist) and explains why', () => {

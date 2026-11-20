@@ -17,7 +17,8 @@ import {
 	configure,
 	fireEvent,
 	render,
-	screen
+	screen,
+	within
 } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import {
@@ -105,6 +106,14 @@ const EmailDestination = () => {
 	const location = useLocation();
 	return <div>email destination {location.hash}</div>;
 };
+
+/** Opens the tone select of a row (MUI menu, not a native option list). */
+const openTone = (row: string) =>
+	fireEvent.mouseDown(
+		within(screen.getByTestId(`notif-row-${row}`)).getAllByRole(
+			'combobox'
+		)[0]
+	);
 
 describe('NotificationConfigDialog', () => {
 	afterEach(cleanup);
@@ -344,10 +353,12 @@ describe('NotificationConfigView', () => {
 	it('reports a sound change with the chosen tone', () => {
 		const onChange = vi.fn();
 		render(<NotificationConfigView {...baseProps} onChange={onChange} />);
-		const select = screen
-			.getByTestId('notif-row-requests-new')
-			.querySelector('select') as HTMLSelectElement;
-		fireEvent.change(select, { target: { value: 'ton-3' } });
+		openTone('requests-new');
+		fireEvent.click(
+			within(screen.getByRole('listbox')).getByRole('option', {
+				name: 'profile.notifications.config.tone:3'
+			})
+		);
 		expect(onChange).toHaveBeenCalledWith(
 			'requests',
 			'new',
@@ -385,14 +396,48 @@ describe('NotificationConfigView', () => {
 
 	it('offers Sound #1..#12 plus No Sound plus the ring tone', () => {
 		render(<NotificationConfigView {...baseProps} />);
-		const select = screen
-			.getByTestId('notif-row-requests-new')
-			.querySelector('select') as HTMLSelectElement;
+		openTone('requests-new');
+		const options = within(screen.getByRole('listbox')).getAllByRole(
+			'option'
+		);
 		// "no sound" + ring + 12 tones
-		expect(select.options.length).toBe(14);
-		expect(select.options[0].value).toBe('none');
-		expect(select.options[1].value).toBe('ring');
-		expect(select.options[2].value).toBe('ton-1');
+		expect(options.length).toBe(14);
+		expect(options[0].getAttribute('data-value')).toBe('none');
+		expect(options[1].getAttribute('data-value')).toBe('ring');
+		expect(options[2].getAttribute('data-value')).toBe('ton-1');
+	});
+
+	const toneWith = (sound: string) => {
+		const config = {
+			...DEFAULT_NOTIFICATION_CONFIG,
+			requests: {
+				...DEFAULT_NOTIFICATION_CONFIG.requests,
+				new: { ...DEFAULT_NOTIFICATION_CONFIG.requests.new, sound }
+			}
+		} satisfies {
+			requests: { new: { sound: string } };
+		};
+		render(
+			<NotificationConfigView
+				{...baseProps}
+				config={config as typeof DEFAULT_NOTIFICATION_CONFIG}
+			/>
+		);
+		return within(
+			screen.getByTestId('notif-row-requests-new')
+		).getAllByRole('combobox')[0];
+	};
+
+	it("shows a stored 'default' tone as Standard, not as a blank field", () => {
+		expect(toneWith('default').textContent).toBe(
+			'profile.notifications.config.defaultSound'
+		);
+	});
+
+	it('shows a stored tone that is no longer offered as an earlier tone', () => {
+		expect(toneWith('ton-13').textContent).toBe(
+			'profile.notifications.config.legacySound'
+		);
 	});
 
 	it('shows the muted icon and no play button when no sound is chosen', () => {
@@ -575,34 +620,27 @@ describe('Rows that never fire are hidden, rows without a producer yet are disab
 
 		it('is disabled with a visible reason that the controls are described by', () => {
 			renderRows('consultant', 'timeCritical');
-			const banner = screen.getByTestId(
-				'notif-banner-timeCritical-appointment'
-			) as HTMLSelectElement;
-			const tone = screen
-				.getByTestId('notif-row-timeCritical-appointment')
-				.querySelector(
-					'select.notifConfig__select'
-				) as HTMLSelectElement;
+			// Tone and banner are kit selects (MUI comboboxes).
+			const controls = within(
+				screen.getByTestId('notif-row-timeCritical-appointment')
+			).getAllByRole('combobox');
 			const reason = screen.getByTestId(
 				'notif-reason-timeCritical-appointment'
 			);
 			expect(reason.textContent).toBe(notYet.reasonKey);
-			for (const control of [banner, tone]) {
-				expect(control.disabled).toBe(true);
-				// Natively disabled: no redundant aria-disabled.
-				expect(control.hasAttribute('aria-disabled')).toBe(false);
+			expect(controls).toHaveLength(2);
+			for (const control of controls) {
+				expect(control.getAttribute('aria-disabled')).toBe('true');
 				expect(control.getAttribute('aria-describedby')).toBe(
 					reason.id
 				);
 			}
 			// The call row beside it is untouched.
-			expect(
-				(
-					screen.getByTestId(
-						'notif-banner-timeCritical-call'
-					) as HTMLSelectElement
-				).disabled
-			).toBe(false);
+			for (const control of within(
+				screen.getByTestId('notif-row-timeCritical-call')
+			).getAllByRole('combobox')) {
+				expect(control.hasAttribute('aria-disabled')).toBe(false);
+			}
 		});
 
 		it('does not let the disabled row change its settings', () => {

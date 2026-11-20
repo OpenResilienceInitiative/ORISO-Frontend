@@ -76,6 +76,7 @@ import { FETCH_ERRORS } from '../../api/fetchData';
 import { apiSetAbsence } from '../../api/apiSetAbsence';
 import type { AbsenceDraft } from './AbsenceForm';
 import { getSessionNavigationPath } from '../sessionsListItem/sessionsListItemHelpers';
+import { personAvatarOfSession, withPersonAvatars } from './calendarAvatar';
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import {
 	notifyAppointmentsChanged,
@@ -201,7 +202,9 @@ const toConversations = (
 				item.consultant?.displayName ??
 				item.consultant?.username ??
 				String(item.session.id),
-			matrixRoomId: item.session.matrixRoomId
+			matrixRoomId: item.session.matrixRoomId,
+			// FE#2325: the person's real avatar, as in the conversation list.
+			avatar: personAvatarOfSession(item, !!ownUserId)
 		}));
 
 /**
@@ -1193,10 +1196,13 @@ export const CalendarPageWired = () => {
 				: undefined;
 
 	// CalendarPage shows only the colleagues switched on.
-	const entries = [
-		...mergeEntries(own, nearby),
-		...Object.values(colleagueEntries).flat()
-	];
+	const entries = withPersonAvatars(
+		[
+			...mergeEntries(own, nearby),
+			...Object.values(colleagueEntries).flat()
+		],
+		conversations
+	);
 
 	return (
 		<>

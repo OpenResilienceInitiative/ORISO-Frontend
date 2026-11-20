@@ -9,6 +9,7 @@ import { ReactComponent as PhoneIcon } from '../../../resources/img/icons/call.s
 import LockIcon from '@mui/icons-material/Lock';
 import PersonIcon from '@mui/icons-material/Person';
 import { CallSurfaceLayer } from './CallSurfaceLayer';
+import { useRegisterFloatingSurface } from '../../floatingSurfaces/floatingSurfaces';
 import './callStates.scss';
 
 export interface OngoingCall {
@@ -47,6 +48,7 @@ export const IncomingCallCard: React.FC<IncomingCallCardProps> = ({
 	onDecline
 }) => {
 	const { t } = useTranslation();
+	useRegisterFloatingSurface('call-incoming');
 	const titleId = React.useId();
 	const metaId = React.useId();
 	const modality = isVideo ? t('calls.videoCall') : t('calls.audioCall');

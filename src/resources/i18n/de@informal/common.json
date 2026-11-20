@@ -2047,6 +2047,12 @@
 		},
 		"introduction": {
 			"summary": "Lerne die Bereiche der Anwendung kennen. Du kannst die Einführung jederzeit erneut starten."
+		},
+		"launcherSwitch": {
+			"hint": {
+				"on": "An: Der Knopf „?“ unten rechts öffnet deine Rundgänge. Solange ein Gespräch offen ist, ist er ausgeblendet.",
+				"off": "Aus: Der Knopf „?“ ist ausgeblendet. Deine Rundgänge findest du weiterhin hier."
+			}
 		}
 	},
 	"anonymousChat": {

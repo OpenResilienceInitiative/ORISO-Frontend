@@ -236,9 +236,10 @@ export const MoveConflict: Story = {
 		);
 		await waitFor(() => expect(move).toBeEnabled(), ready);
 		await userEvent.click(move);
-		await expect(
-			await within(dialog).findByRole('alert', {}, ready)
-		).toBeVisible();
+		await waitFor(
+			() => expect(within(dialog).getByRole('alert')).toBeVisible(),
+			ready
+		);
 	}
 };
 

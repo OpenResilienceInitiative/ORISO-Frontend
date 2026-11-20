@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
-import { useAtom } from 'jotai';
+import { useAtom, useSetAtom } from 'jotai';
 import { UserDataContext, useTenant } from '../../globalState';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import { useResponsive } from '../../hooks/useResponsive';
@@ -11,7 +11,10 @@ import {
 	consultantWalkthroughTour,
 	frontendTours
 } from '../productTour/tourDefinitions';
-import { tourLaunchRequestAtom } from '../productTour/tourLaunchState';
+import {
+	activeTourIdAtom,
+	tourLaunchRequestAtom
+} from '../productTour/tourLaunchState';
 import { resolveTourSteps } from '../productTour/tourEngine';
 import { getTourHostHooks } from '../productTour/tourHostHooks';
 import { versionedTourProgressRepository } from '../productTour/versionedTourProgressRepository';
@@ -151,6 +154,16 @@ export const Walkthrough = () => {
 	const runTour = activeTour ? resolvedRunRef.current?.tour : undefined;
 
 	const lastStepId = runTour?.steps[runTour.steps.length - 1]?.id;
+
+	// Tells the "?" launcher that a tour is on screen. Only a run that can
+	// actually show (switch on, steps left) counts.
+	const setActiveTourId = useSetAtom(activeTourIdAtom);
+	const shownTourId =
+		settings.enableWalkthrough && runTour?.steps.length ? runTour.id : null;
+	useEffect(() => {
+		setActiveTourId(shownTourId);
+		return () => setActiveTourId(null);
+	}, [shownTourId, setActiveTourId]);
 
 	// Feeds the practice banner's "Step i of N"; inert for the ordinary tours.
 	const reportPracticeProgress = usePracticeTourProgressReporter(runTour);

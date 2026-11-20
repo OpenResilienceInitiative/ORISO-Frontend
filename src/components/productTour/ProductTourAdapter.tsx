@@ -10,12 +10,13 @@ import {
 	reduceTourCallback,
 	resolveTourSteps,
 	routeMatches,
+	targetWaitMs,
 	tourTargetSelector,
 	TourCallbackInput,
 	TourRunState
 } from './tourEngine';
 import { subscribeToTourEvent } from './tourEvents';
-import { waitForTarget } from './targetReadiness';
+import { bringTargetIntoView, waitForTarget } from './targetReadiness';
 import type {
 	TourDefinition,
 	TourEvent,
@@ -254,18 +255,26 @@ export const ProductTourAdapter = ({
 			/* eslint-disable no-await-in-loop, no-continue -- steps are prepared strictly sequentially; a skipped target falls through to the neighboring step */
 			for (let i = index; i >= 0 && i < steps.length; i += direction) {
 				const step = steps[i];
+				let navigated = false;
 				if (step.route) {
 					const current =
 						locationRef.current.pathname +
 						locationRef.current.search;
 					if (current !== step.route) {
 						navigate(step.route);
+						navigated = true;
 					}
 				}
 				if (step.target) {
 					const found = await waitForTarget(
 						tourTargetSelector(step.target),
-						{ timeoutMs: targetTimeoutMs }
+						{
+							timeoutMs: targetWaitMs(
+								step,
+								navigated,
+								targetTimeoutMs
+							)
+						}
 					);
 					if (
 						!mountedRef.current ||
@@ -292,9 +301,11 @@ export const ProductTourAdapter = ({
 						lastSkipped = step;
 						continue;
 					}
-					const rect = document
-						.querySelector(tourTargetSelector(step.target))
-						?.getBoundingClientRect();
+					const targetElement = document.querySelector(
+						tourTargetSelector(step.target)
+					);
+					bringTargetIntoView(targetElement);
+					const rect = targetElement?.getBoundingClientRect();
 					const placement = effectivePlacement(
 						step.placement ?? 'bottom',
 						rect
@@ -578,7 +589,8 @@ export const ProductTourAdapter = ({
 				skipBeacon: true,
 				closeButtonAction: 'skip',
 				// The app shell is a fixed-viewport layout; scrolling the
-				// window would break it and every tour target is in view.
+				// window would break it. Targets below the fold are brought
+				// into their own pane first (`bringTargetIntoView`).
 				skipScroll: true,
 				zIndex: 53,
 				// Guided flows opt out of ESC / overlay-click dismissal so a

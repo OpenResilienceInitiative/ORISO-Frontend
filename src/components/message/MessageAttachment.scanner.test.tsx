@@ -7,7 +7,7 @@
  * half of that: no verdict, nothing rendered and nothing linked.
  */
 import * as React from 'react';
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 import {
 	afterEach,
 	beforeEach,
@@ -18,6 +18,7 @@ import {
 } from 'vite-plus/test';
 
 import { MessageAttachment } from './MessageAttachment';
+import type { ChatAttachment } from './chatAttachmentTypes';
 import { NotificationsContext } from '../../globalState';
 
 const isMediaContentScannerEnabled = vi.fn<() => boolean>();
@@ -58,10 +59,10 @@ const encryptedFile = {
 	},
 	iv: 'iv',
 	hashes: { sha256: 'hash' },
-	v: 'v2'
+	v: 'v2' as const
 };
 
-const encryptedAttachment = {
+const encryptedAttachment: ChatAttachment = {
 	title: 'photo.png',
 	// Encrypted media is located by encryptedFile.url; there is no plain URL.
 	downloadUrl: '',
@@ -70,30 +71,40 @@ const encryptedAttachment = {
 	mediaType: 'image/png',
 	size: 12,
 	encryptedFile
-} as never;
+};
 
 const imageFile = { name: 'photo.png', type: 'image/png' } as never;
 
+const attachmentElement = (extraProps: Record<string, unknown> = {}) => (
+	<NotificationsContext.Provider
+		value={{ addNotification: vi.fn() } as never}
+	>
+		<MessageAttachment
+			attachment={encryptedAttachment}
+			file={imageFile}
+			hasRenderedMessage
+			rid="room-1"
+			// eslint-disable-next-line react/jsx-props-no-spreading
+			{...extraProps}
+		/>
+	</NotificationsContext.Provider>
+);
+
 const renderAttachment = (extraProps: Record<string, unknown> = {}) =>
-	render(
-		<NotificationsContext.Provider
-			value={{ addNotification: vi.fn() } as never}
-		>
-			<MessageAttachment
-				attachment={encryptedAttachment}
-				file={imageFile}
-				hasRenderedMessage
-				rid="room-1"
-				// eslint-disable-next-line react/jsx-props-no-spreading
-				{...extraProps}
-			/>
-		</NotificationsContext.Provider>
-	);
+	render(attachmentElement(extraProps));
+
+const nextAttachment: ChatAttachment = {
+	...encryptedAttachment,
+	title: 'next.png',
+	mxcUrl: 'mxc://hs/media-2',
+	encryptedFile: { ...encryptedFile, url: 'mxc://hs/media-2' }
+};
 
 describe('MessageAttachment with a content scanner deployed', () => {
 	beforeEach(() => {
 		isMediaContentScannerEnabled.mockReturnValue(true);
 		isMediaImageCheckEnabled.mockReturnValue(false);
+		downloadScannedEncryptedMedia.mockReset();
 		window.URL.revokeObjectURL = vi.fn();
 		if (!window.URL.createObjectURL) {
 			window.URL.createObjectURL = vi.fn();
@@ -158,6 +169,66 @@ describe('MessageAttachment with a content scanner deployed', () => {
 
 		const img = await screen.findByRole('img');
 		expect(img.getAttribute('src')).toBe('blob:scanned-photo');
+	});
+
+	it('ignores a scanner success for a replaced attachment', async () => {
+		const safe = {
+			verdict: 'safe' as const,
+			data: new Uint8Array([1, 2, 3]).buffer
+		};
+		let finishFirstScan: (outcome: typeof safe) => void;
+		downloadScannedEncryptedMedia
+			.mockReturnValueOnce(
+				new Promise<typeof safe>((resolve) => {
+					finishFirstScan = resolve;
+				})
+			)
+			.mockResolvedValueOnce(safe);
+		const view = renderAttachment({ mediaCheckState: 'safe' });
+		await waitFor(() =>
+			expect(downloadScannedEncryptedMedia).toHaveBeenCalledWith(
+				encryptedFile
+			)
+		);
+
+		view.rerender(
+			attachmentElement({
+				attachment: nextAttachment,
+				mediaCheckState: 'safe'
+			})
+		);
+		await act(async () => {
+			finishFirstScan(safe);
+		});
+
+		expect(downloadScannedEncryptedMedia).toHaveBeenLastCalledWith(
+			nextAttachment.encryptedFile
+		);
+		expect(screen.getByRole('img', { name: 'next.png' })).toBeTruthy();
+		expect(window.URL.createObjectURL).toHaveBeenCalledTimes(1);
+	});
+
+	it('revokes an owned object URL when the attachment is replaced', async () => {
+		downloadScannedEncryptedMedia
+			.mockResolvedValueOnce({
+				verdict: 'safe',
+				data: new Uint8Array([1, 2, 3]).buffer
+			})
+			.mockReturnValueOnce(new Promise(() => {}));
+		const view = renderAttachment({ mediaCheckState: 'safe' });
+		await screen.findByRole('img', { name: 'photo.png' });
+
+		view.rerender(
+			attachmentElement({
+				attachment: nextAttachment,
+				mediaCheckState: 'safe'
+			})
+		);
+
+		expect(window.URL.revokeObjectURL).toHaveBeenCalledWith(
+			'blob:scanned-photo'
+		);
+		expect(screen.queryByRole('img')).toBeNull();
 	});
 
 	it('neither renders nor links media the scanner rejected', async () => {

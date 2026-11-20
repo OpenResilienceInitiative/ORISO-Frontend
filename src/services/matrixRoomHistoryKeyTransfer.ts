@@ -136,6 +136,9 @@ const refreshHistoryDeviceKeysBestEffort = (
  */
 export class MatrixRoomHistoryKeyTransfer {
 	private client: MatrixClient | null = null;
+	private clientAttachment: {
+		keyExport: Promise<IMegolmSessionData[]> | null;
+	} = { keyExport: null };
 	private readonly lastRequestAt = new Map<string, number>();
 	private readonly lastReasonedRequestAt = new Map<string, number>();
 	private readonly outgoingRequestsInFlight = new Map<string, symbol>();
@@ -190,6 +193,7 @@ export class MatrixRoomHistoryKeyTransfer {
 			this.onReceivedToDeviceMessage
 		);
 		this.client = null;
+		this.clientAttachment = { keyExport: null };
 		this.outgoingRequestsInFlight.clear();
 		// Tell open cards that these requests are gone, so none stays on screen.
 		const dropped = Array.from(this.pendingApprovals.values());
@@ -915,14 +919,20 @@ export class MatrixRoomHistoryKeyTransfer {
 		stillAllowed?: () => boolean
 	): Promise<boolean> {
 		const crypto = client.getCrypto();
-		// The request was checked against this client; a replaced client
-		// (another account) must never send keys for it.
-		if (!crypto || this.client !== client) return false;
-		const keys = (await crypto.exportRoomKeys()).filter(
-			(key) => key.room_id === roomId
-		);
-		if (this.client !== client) return false;
+		const attachment = this.clientAttachment;
+		const isCurrent = () =>
+			this.client === client && this.clientAttachment === attachment;
+		if (!crypto || !isCurrent()) return false;
+
+		// Share the SDK's full export while it is pending. Each request checks
+		// its own permission and room, and the next request can read new keys.
+		attachment.keyExport ??= crypto.exportRoomKeys().finally(() => {
+			attachment.keyExport = null;
+		});
+		const exportedKeys = await attachment.keyExport;
+		if (!isCurrent()) return false;
 		if (stillAllowed && !stillAllowed()) return false;
+		const keys = exportedKeys.filter((key) => key.room_id === roomId);
 		if (keys.length === 0 || keys.length > MAX_KEY_BUNDLE_COUNT) {
 			emitDiagnostic('request-key-count-rejected', {
 				keyCount: keys.length
@@ -938,7 +948,7 @@ export class MatrixRoomHistoryKeyTransfer {
 			[{ userId, deviceId }],
 			{ room_id: roomId, request_id: requestId, keys }
 		);
-		if (this.client !== client) return false;
+		if (!isCurrent()) return false;
 		if (stillAllowed && !stillAllowed()) return false;
 		const queuedForDevice = batch.batch.some(
 			(message) =>
