@@ -39,6 +39,8 @@ import {
 } from '../../api';
 import { apiPostError, ERROR_LEVEL_WARN } from '../../api/apiPostError';
 import { SESSION_LIST_TAB, SESSION_LIST_TYPES } from './sessionHelpers';
+import type { TypingUser } from './SessionItemComponent';
+import { decodeUsernameSafely } from '../../utils/encryptionHelpers';
 import { buildRoomTimeline } from './roomTimeline';
 import {
 	awaitsDecryption,
@@ -339,7 +341,9 @@ export const SessionStream = ({
 		teamMessageState.roomId === teamRoomId
 			? teamMessageState.messages
 			: EMPTY_MESSAGES;
-	const [matrixTypingUsers, setMatrixTypingUsers] = useState<string[]>([]);
+	const [matrixTypingUsers, setMatrixTypingUsers] = useState<TypingUser[]>(
+		[]
+	);
 	const matrixTypingActivityRef = useRef<Map<string, number>>(new Map());
 	const resolvedChatSession = useMemo(
 		() => chatTransportService.resolveSession(activeSession),
@@ -1277,23 +1281,29 @@ export const SessionStream = ({
 						now - (lastActivity as number) < MATRIX_TYPING_STALE_MS
 					);
 				})
-				.map((member: any) => {
+				.map((member: any): TypingUser => {
 					const matrixUserId = `${member?.userId || ''}`;
 					const matrixUserName = matrixUserId
 						.split(':')[0]
 						.replace(/^@/, '');
-					return (
-						member?.name ||
-						member?.rawDisplayName ||
-						matrixUserName ||
-						matrixUserId
+					// The member name is the login, often encoded like the
+					// message sender's; the session's name is resolved later.
+					const name = decodeUsernameSafely(
+						`${
+							member?.name ||
+							member?.rawDisplayName ||
+							matrixUserName ||
+							matrixUserId
+						}`.trim()
 					);
+					return { userId: matrixUserId, name };
 				})
-				.map((name: string) => name.trim())
-				.filter(Boolean)
 				.filter(
-					(name: string, index: number, source: string[]) =>
-						source.indexOf(name) === index
+					(user: TypingUser, index: number, source: TypingUser[]) =>
+						user.name &&
+						source.findIndex(
+							(other) => other.userId === user.userId
+						) === index
 				);
 
 			setMatrixTypingUsers(nextTypingUsers);
