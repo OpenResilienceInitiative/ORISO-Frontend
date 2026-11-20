@@ -8,7 +8,13 @@ describe('Spinner', () => {
 
 		cy.get('[data-cy-root]')
 			.find('[role="status"].component-test-spinner')
-			.should('have.length', 1)
-			.and('have.attr', 'aria-live', 'polite');
+			.should(($status) => {
+				expect($status).to.have.length(1);
+				expect($status.attr('aria-live')).to.equal('polite');
+				expect(
+					$status.attr('aria-label')?.trim(),
+					'accessible loading name'
+				).to.be.a('string').and.not.be.empty;
+			});
 	});
 });
