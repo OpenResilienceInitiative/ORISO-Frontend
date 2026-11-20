@@ -552,7 +552,10 @@ const CreateConversationFlow = ({
 	);
 
 	const { surfaceRef, onInput, discardDialog } = useCreateViewExit({
-		hasExtraInput: () => internalDraft.selectedIds.length > 0,
+		hasExtraInput: () =>
+			internalDraft.selectedIds.length > 0 ||
+			internalDraft.name.trim() !== '',
+		isBlocked: () => isSubmitting,
 		onLeave: () =>
 			navigate(
 				editChatId !== null

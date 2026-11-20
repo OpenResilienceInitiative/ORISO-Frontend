@@ -11,6 +11,8 @@ export const CREATE_TRIGGER_SELECTOR =
 interface CreateViewExitOptions {
 	/** Input held outside the DOM fields (e.g. picked colleagues). */
 	hasExtraInput?: () => boolean;
+	/** True while a request is running: the view must not be left meanwhile. */
+	isBlocked?: () => boolean;
 	/** Closes the view (navigates away); called once the person has agreed. */
 	onLeave: () => void;
 	triggerSelector?: string;
@@ -34,6 +36,7 @@ const fieldHasInput = (field: HTMLElement) => {
  */
 export const useCreateViewExit = ({
 	hasExtraInput,
+	isBlocked,
 	onLeave,
 	triggerSelector = CREATE_TRIGGER_SELECTOR
 }: CreateViewExitOptions) => {
@@ -47,6 +50,11 @@ export const useCreateViewExit = ({
 		onLeave();
 	};
 	const requestClose = () => {
+		// A running create request cannot be cancelled: leaving now would
+		// still create the room after the person chose to discard.
+		if (isBlocked?.()) {
+			return;
+		}
 		const dirty =
 			Boolean(hasExtraInput?.()) ||
 			Array.from(touchedFieldsRef.current).some(fieldHasInput);
