@@ -1,7 +1,7 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Box } from '@mui/material';
-import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
+import { expect, fn, userEvent, within } from 'storybook/test';
 import i18n from '../../i18n';
 import { AccountData } from './accountData/AccountData';
 import { clearAccountDataDraft } from './accountData/accountDataDraft';
@@ -68,7 +68,6 @@ const AccountPolicyFixture = ({
 				}}
 			>
 				<ModalProvider>
-					{surface === 'removal' && <div id="overlay" />}
 					<Box sx={{ width: 'min(520px, 100%)', mx: 'auto', p: 2 }}>
 						{surface === 'registration' ||
 						surface === 'selfHelp' ? (
@@ -235,15 +234,12 @@ export const StoredEmailRemovalConfirmation: Story = {
 				name: i18n.t('profile.unsetEmail.confirmOverlay.button.confirm')
 			})
 		);
-		await waitFor(() =>
-			expect(
-				host.getByRole('heading', {
-					name: i18n.t('profile.unsetEmail.confirmOverlay.headline')
-				})
-			).toBeVisible()
-		);
+		const dialog = await host.findByRole('dialog', {
+			name: i18n.t('profile.unsetEmail.confirmOverlay.headline')
+		});
+		await expect(dialog).toBeVisible();
 		await expect(
-			host.getByText(
+			within(dialog).getByText(
 				i18n.t('twoFactorAuth.email.delete.confirmOverlay.copy')
 			)
 		).toBeVisible();
