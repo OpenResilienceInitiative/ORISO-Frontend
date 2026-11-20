@@ -61,18 +61,16 @@ export const AskerAboutMeData = () => {
 			),
 			nestedComponent: (
 				<>
-					<Text
-						text={translate(
+					<p>
+						{translate(
 							'twoFactorAuth.email.change.confirmOverlay.copy.1'
 						)}
-						type="infoLargeStandard"
-					/>
-					<Text
-						text={translate(
+					</p>
+					<p>
+						{translate(
 							'twoFactorAuth.email.change.confirmOverlay.copy.2'
 						)}
-						type="infoLargeStandard"
-					/>
+					</p>
 				</>
 			),
 			buttonSet: [
