@@ -327,6 +327,22 @@ describe('LegalLinkModal agency hierarchy (#1213)', () => {
 		}
 	);
 
+	it('shows a load error instead of the carrier text or the "no legal text" note when the agency fetch fails', () => {
+		mockedContent.mockReturnValue({
+			kind: 'privacy',
+			content: '<p>Trägertext</p>'
+		});
+		vi.mocked(useDepartmentLegal).mockReturnValue({
+			data: null,
+			loading: false,
+			error: new Error('boom')
+		});
+		renderAgency();
+		expect(screen.getByTestId('legal-load-error')).toBeTruthy();
+		expect(screen.queryByTestId('legal-missing')).toBeNull();
+		expect(screen.queryByText('Trägertext')).toBeNull();
+	});
+
 	it.each(['privacy', 'imprint'] as const)(
 		'uses the carrier %s when the agency has none',
 		(kind) => {
