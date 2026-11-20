@@ -1355,6 +1355,13 @@ const checkQuickReactionRow = async ({
 			document.querySelector('[data-testid="emoji-picker-popup"]')
 		).toBeNull()
 	);
+	// Leave nothing open: the next story's accessibility audit must not see
+	// this story's action menu or emoji picker.
+	await userEvent.keyboard('{Escape}');
+	await waitFor(() => {
+		expect(document.querySelector('.messageItem__actionMenu')).toBeNull();
+		expect(document.querySelector('.EmojiPickerReact')).toBeNull();
+	});
 };
 
 export const QuickReactionsDesktop: Story = {
@@ -1482,6 +1489,18 @@ export const KebabActiveStateOutgoing: Story = {
 			expect(pickerRect.left).toBeGreaterThanOrEqual(0);
 			expect(pickerRect.right).toBeLessThanOrEqual(window.innerWidth);
 		});
+
+		// Close the third-party picker again before the accessibility audit:
+		// its search field carries `aria-controls="epr-search-id"`, which axe
+		// rejects. Whether the audit saw that field depended on how fast the
+		// picker had rendered (the dev run happens to miss it). The menu stays
+		// open, so its own markup is still audited.
+		more.click();
+		await waitFor(() =>
+			expect(
+				document.querySelector('[data-testid="emoji-picker-popup"]')
+			).toBeNull()
+		);
 	}
 };
 
