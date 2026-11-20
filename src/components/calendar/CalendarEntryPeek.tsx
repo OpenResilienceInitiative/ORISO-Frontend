@@ -11,7 +11,8 @@ import { useTranslation } from 'react-i18next';
 import type { CalendarEntry, Colleague } from './calendarModel';
 import { CalendarEntryGlyph, facetOf } from './CalendarEntryGlyph';
 import type { MoveProposal } from './calendarActions';
-import { avatarToneClass } from './calendarAvatar';
+import { CalendarPersonAvatar } from './CalendarPersonAvatar';
+import { AVATAR_SIZES } from '../pseudonym/avatarSizes';
 import { useShortTime } from './calendarShortTime';
 import {
 	useEntryKindLabel,
@@ -19,14 +20,7 @@ import {
 	useRangeFormat
 } from './useEntryLabel';
 
-/** "A. Kaya" → "AK", "ruhiges_yak" → "RY". */
-export const initialsOf = (name: string) =>
-	name
-		.split(/[\s._-]+/)
-		.filter(Boolean)
-		.slice(0, 2)
-		.map((part) => part[0]!.toUpperCase())
-		.join('');
+export { initialsOf } from './calendarAvatar';
 
 export interface CalendarEntryPeekProps {
 	entry: CalendarEntry;
@@ -80,12 +74,12 @@ export const CalendarEntryPeek = ({
 				{proposal ? t('calendar.proposal.label') : kindLabel}
 			</span>
 			<span className="calendarPeek__person">
-				<span
-					className={`calendarPeek__avatar ${avatarToneClass(person)}`}
-					aria-hidden="true"
-				>
-					{initialsOf(person)}
-				</span>
+				<CalendarPersonAvatar
+					className="calendarPeek__avatar"
+					name={person}
+					avatar={colleague ? undefined : entry.avatar}
+					size={AVATAR_SIZES.session}
+				/>
 				<span className="calendarPeek__name">
 					<strong>{person}</strong>
 					{colleague?.agencyShort && (
