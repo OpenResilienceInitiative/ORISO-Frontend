@@ -7,9 +7,9 @@ import { UserDataInterface } from '../../globalState/interfaces';
 /**
  * Whether this user entered through an anonymous path (live chat / external inbound).
  *
- * Read from the granted authority, never from the username. Anonymous users are
- * named `anon_1`, `anon_2`, … and registered users get generated animal names
- * like `schildkroete_hedi_5707`; neither carries a stable prefix, and the name
+ * Read from the granted authority, never from the username. Anonymous guests
+ * and registered users both get generated animal names like
+ * `schildkroete_hedi_5707`; no name carries a stable prefix, and the name
  * is user-facing text that a carrier may allow overwriting. Anonymity is a
  * property of the account, not of its label.
  *

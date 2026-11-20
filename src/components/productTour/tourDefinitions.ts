@@ -121,7 +121,16 @@ export const consultantMailCounsellingTour: TourDefinition = {
 	]
 };
 
+/**
+ * Topic tours, in Frank's priority order (2026-11-18). Offered below the
+ * introduction in Help → Rundgänge and in the "?" launcher; each audience
+ * sees its own (`getAvailableTours`).
+ */
+export const frontendTopicTours: TourDefinition[] = [
+	consultantMailCounsellingTour
+];
+
 export const frontendTours: TourDefinition[] = [
 	consultantWalkthroughTour,
-	consultantMailCounsellingTour
+	...frontendTopicTours
 ];

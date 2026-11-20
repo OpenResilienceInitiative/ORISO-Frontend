@@ -72,6 +72,7 @@ import { callWidgetEntryOf } from './callHostContext';
 import { TopicsContext } from '../../globalState/provider/TopicsProvider';
 import { IncomingCallCard } from './states/IncomingCallCard';
 import { DockedCall } from './states/DockedCall';
+import { useRegisterFloatingSurface } from '../floatingSurfaces/floatingSurfaces';
 import './GroupCallWidget.scss';
 
 const GROUP_DEFAULT_WIDTH = 520;
@@ -1322,6 +1323,13 @@ export const GroupCallWidget: React.FC = () => {
 		// isDragging / isResizing transitions only is intentional.
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [isDragging, isResizing]);
+
+	// Frank's rule: floating buttons never lie on top of a call (the tour
+	// launcher steps aside while one is on screen).
+	useRegisterFloatingSurface(
+		'call-widget',
+		!isDismissed && !!callData?.usesElementCall
+	);
 
 	// Only render for group calls
 	if (isDismissed || !callData || !callData.usesElementCall) return null;

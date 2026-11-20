@@ -1,8 +1,8 @@
 /**
  * Resolves the visible name for anonymous live-chat participants.
- * Historical Matrix usernames were "Anonymous-<timestamp>"; topic-based
- * invite still uses anon_N. The animal display-name lives in displayName
- * after the asker confirms their selection.
+ * Historical Matrix usernames were "Anonymous-<timestamp>" and later anon_N;
+ * new guests get an animal User-ID (ORISO-Frontend#2346). The chosen
+ * display name lives in displayName after the asker confirms it.
  */
 
 export const isAnonymousMatrixUsername = (username?: string): boolean => {

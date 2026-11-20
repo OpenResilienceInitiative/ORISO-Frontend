@@ -60,6 +60,7 @@ import {
 	STORY_WORKING_HOURS
 } from './calendarStoryData';
 import { publishReceivedProposalCount } from './calendarProposalCount';
+import { withPersonAvatars } from './calendarAvatar';
 import { STAGE_LAYOUT } from '../chatStage/stageLayout';
 
 interface HarnessProps {
@@ -238,15 +239,20 @@ const Scenario = ({
 		return Promise.resolve(created);
 	};
 
+	// As CalendarPageWired: each appointment gets its conversation's avatar.
+	const conversations = CONVERSATIONS;
 	const page = (
 		<CalendarPage
 			role={role}
 			ownerId={ownerId}
 			state={state}
-			entries={[...own, ...colleagueEntries]}
+			entries={withPersonAvatars(
+				[...own, ...colleagueEntries],
+				conversations
+			)}
 			colleagues={colleagues}
 			visibility={visibility}
-			conversations={CONVERSATIONS}
+			conversations={conversations}
 			workingHours={hours}
 			holidayRegion={region}
 			dayExceptions={exceptions}
@@ -656,6 +662,78 @@ export const List: Story = {
 		await expect(getComputedStyle(soonRow).backgroundColor).not.toBe(
 			getComputedStyle(badge).color
 		);
+	}
+};
+
+/** FE#2325: the 32 px avatar a person has everywhere else, in a list row. */
+const expectRealAvatars = async (canvasElement: HTMLElement) => {
+	const row = await waitFor(() => {
+		const found = canvasElement.querySelector<HTMLElement>(
+			'.calEntry [data-testid="user-avatar"]'
+		);
+		expect(found).not.toBeNull();
+		return found!;
+	});
+	await expect(row.style.width).toBe('32px');
+	// Without avatar data (helle_wolke) the initials stay.
+	await expect(
+		[...canvasElement.querySelectorAll('.calEntry__avatar')].some(
+			(el) => el.textContent === 'HW'
+		)
+	).toBe(true);
+};
+
+export const RealAvatarsList: Story = {
+	name: 'Real avatars — list, 32 px, initials only without avatar (FE#2325)',
+	args: { initialView: 'list' },
+	play: async ({ canvasElement }) => expectRealAvatars(canvasElement)
+};
+
+export const RealAvatarsListDark: Story = {
+	name: 'Real avatars — list, dark (FE#2325)',
+	args: { initialView: 'list' },
+	globals: { scheme: 'dark', backgrounds: { value: 'dark' } },
+	play: async ({ canvasElement }) => expectRealAvatars(canvasElement)
+};
+
+export const RealAvatarsListPhone: Story = {
+	name: 'Real avatars — list, phone 390 px (FE#2325)',
+	args: { initialView: 'list', compact: true },
+	globals: phone390Globals,
+	play: async ({ canvasElement }) => {
+		const avatar = await waitFor(() => {
+			const found = canvasElement.querySelector<HTMLElement>(
+				'.calEntry [data-testid="user-avatar"]'
+			);
+			expect(found).not.toBeNull();
+			return found!;
+		});
+		await expect(avatar.style.width).toBe('32px');
+	}
+};
+
+export const RealAvatarsWeek: Story = {
+	name: 'Real avatars — work week: 32 px where the box has room (FE#2325)',
+	args: { initialView: 'workWeek' },
+	play: async ({ canvasElement }) => {
+		const lead = await waitFor(() => {
+			const found = canvasElement.querySelector<HTMLElement>(
+				'.calEntry__inner--lead [data-testid="user-avatar"]'
+			);
+			expect(found).not.toBeNull();
+			return found!;
+		});
+		await expect(lead.style.width).toBe('32px');
+	}
+};
+
+export const RealAvatarsWeekPhoneDark: Story = {
+	name: 'Real avatars — three days, phone 390 px, dark (FE#2325)',
+	args: { initialView: 'threeDays', compact: true },
+	globals: {
+		...phone390Globals,
+		scheme: 'dark',
+		backgrounds: { value: 'dark' }
 	}
 };
 

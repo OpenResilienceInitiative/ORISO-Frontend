@@ -2,6 +2,8 @@ import { ACTIONS, EVENTS, STATUS } from 'react-joyride';
 import { describe, expect, it } from 'vite-plus/test';
 import {
 	effectivePlacement,
+	OPTIONAL_SETTLED_TIMEOUT_MS,
+	targetWaitMs,
 	initialTourRunState,
 	isTourAvailable,
 	mapStepsToJoyride,
@@ -435,6 +437,38 @@ describe('effectivePlacement', () => {
 		).toBe('center');
 	});
 
+	it('centers a tall target with no room above or below (auto, top, bottom)', () => {
+		for (const placement of ['auto', 'top', 'bottom'] as const) {
+			expect(
+				effectivePlacement(
+					placement,
+					{ width: 1280, height: 700 },
+					{ width: 1440, height: 900 }
+				)
+			).toBe('center');
+		}
+	});
+
+	it('keeps a side placement next to a tall but narrow target', () => {
+		expect(
+			effectivePlacement(
+				'right',
+				{ width: 300, height: 700 },
+				{ width: 1440, height: 900 }
+			)
+		).toBe('right');
+	});
+
+	it('keeps auto for a target of moderate height', () => {
+		expect(
+			effectivePlacement(
+				'auto',
+				{ width: 1280, height: 400 },
+				{ width: 1440, height: 900 }
+			)
+		).toBe('auto');
+	});
+
 	it('keeps center as center', () => {
 		expect(
 			effectivePlacement(
@@ -622,5 +656,19 @@ describe('resolveTourSteps', () => {
 
 		expect(once.every((s) => s.when === undefined)).toBe(true);
 		expect(twice.map((s) => s.id)).toEqual(['a', 'no-team']);
+	});
+});
+
+describe('targetWaitMs', () => {
+	it('waits briefly for an optional target on a page that is already there', () => {
+		expect(targetWaitMs({ optional: true }, false, 4000)).toBe(
+			OPTIONAL_SETTLED_TIMEOUT_MS
+		);
+	});
+
+	it('keeps the full wait after navigating or for a required target', () => {
+		expect(targetWaitMs({ optional: true }, true, 4000)).toBe(4000);
+		expect(targetWaitMs({ optional: false }, false, 4000)).toBe(4000);
+		expect(targetWaitMs({}, false, 4000)).toBe(4000);
 	});
 });

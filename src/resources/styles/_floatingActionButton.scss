@@ -1,0 +1,47 @@
+// The floating action button of the design system — Figma "FAB menu"
+// 9748:60084. Bound tokens there: tertiary / on-tertiary, Corner/Extra-large
+// 28, Elevation 3. One definition for every FAB (the chat channel switcher,
+// the "?" tour launcher), so a second FAB cannot silently differ.
+
+$fab-size: 56px;
+$fab-corner: 28px; // Corner/Extra-large
+$fab-elevation:
+	0 4px 8px 3px rgba(0, 0, 0, 0.15),
+	0 1px 3px 0 rgba(0, 0, 0, 0.3); // M3/Elevation Light/3
+// Every FAB sits this far from the viewport's (or its card's) edge.
+$fab-edge-gap: 16px;
+
+// Two FABs next to / above each other keep this distance.
+$fab-stack-gap: 8px;
+
+@mixin floating-action-button {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: $fab-size;
+	height: $fab-size;
+	padding: 0;
+	border: 0;
+	border-radius: $fab-corner;
+	background: var(--m3-tertiary, #565f6a);
+	color: var(--m3-on-tertiary, #fff);
+	box-shadow: $fab-elevation;
+	cursor: pointer;
+	transition:
+		background-color 160ms ease,
+		transform 160ms ease;
+
+	&:hover {
+		filter: brightness(1.08);
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--m3-primary, #a5000a);
+		outline-offset: 2px;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		transition: none;
+	}
+}

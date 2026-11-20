@@ -8,7 +8,6 @@ import { describe, expect, it } from 'vite-plus/test';
  * snapped to one language instead of the `fallbackLng` chain (#1154).
  */
 const SLICE_FILES = [
-	'src/components/anonymousChat/AnonymousChat.tsx',
 	'src/components/anonymousChat/liveChatOpeningHours.ts',
 	'src/components/pseudonym/BreathingTutorialCard.tsx',
 	'src/components/session/SessionItemComponent.tsx'

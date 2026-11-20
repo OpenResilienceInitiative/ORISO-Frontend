@@ -64,10 +64,18 @@ export const UnsavedEmailNavigation: DialogStory = {
 	render: () => <InteractiveDialog />,
 	play: async ({ canvasElement }) => {
 		const doc = canvasElement.ownerDocument;
-		const banner = doc.querySelector<HTMLSelectElement>(
-			'[data-cy="notif-banner-requests-new"]'
-		)!;
-		await userEvent.selectOptions(banner, 'persistent');
+		// Kit select: tone and banner are MUI comboboxes, the banner second.
+		const banner = within(
+			doc.querySelector<HTMLElement>(
+				'[data-cy="notif-row-requests-new"]'
+			)!
+		).getAllByRole('combobox')[1];
+		await userEvent.click(banner);
+		await userEvent.click(
+			await within(doc.body).findByRole('option', {
+				name: /Bleibt bis zum Wegklicken|Stays until dismissed|persistent/
+			})
+		);
 		await userEvent.click(
 			doc.querySelector<HTMLAnchorElement>(
 				'a[href="/profile/einstellungen/email#email-notifications"]'
@@ -78,7 +86,11 @@ export const UnsavedEmailNavigation: DialogStory = {
 				doc.querySelector('[data-testid="notif-discard-changes"]')
 			).toBeVisible()
 		);
-		await expect(banner.value).toBe('persistent');
+		await expect(
+			doc.querySelector<HTMLInputElement>(
+				'[data-cy="notif-banner-requests-new"]'
+			)!.value
+		).toBe('persistent');
 	}
 };
 
@@ -98,19 +110,22 @@ export const DialogMobile: DialogStory = {
 		const bodyOverflows = body.scrollHeight > body.clientHeight;
 		await expect(getComputedStyle(surface).overflowY).toBe('hidden');
 		await expect(getComputedStyle(body).overflowY).toBe('auto');
-		const soundSelect = body.querySelector<HTMLSelectElement>(
-			'.notifConfig__select'
-		)!;
-		const soundSelectWrap = soundSelect.closest<HTMLElement>(
-			'.notifConfig__selectWrap'
-		)!;
+		// The tone picker is the kit select: focus draws the M3 outlined state,
+		// a visibly thicker outline than at rest.
+		const soundSelect = within(body).getAllByRole('combobox')[0];
+		const outline = soundSelect
+			.closest('.MuiOutlinedInput-root')!
+			.querySelector<HTMLElement>('.MuiOutlinedInput-notchedOutline')!;
+		const restWidth = parseFloat(getComputedStyle(outline).borderTopWidth);
 		soundSelect.focus();
-		await expect(getComputedStyle(soundSelectWrap).outlineStyle).toBe(
-			'solid'
+		await waitFor(() =>
+			expect(soundSelect.closest('.MuiOutlinedInput-root')).toHaveClass(
+				'Mui-focused'
+			)
 		);
-		await expect(getComputedStyle(soundSelectWrap).outlineWidth).toBe(
-			'2px'
-		);
+		await expect(
+			parseFloat(getComputedStyle(outline).borderTopWidth)
+		).toBeGreaterThan(restWidth);
 		if (bodyOverflows) {
 			body.scrollTop = body.scrollHeight;
 			await expect(body.scrollTop).toBeGreaterThan(0);

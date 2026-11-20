@@ -11,6 +11,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { M3Dialog } from '../m3Dialog/M3Dialog';
 import { Switch } from '../Switch';
+import { M3Checkbox } from '../M3Checkbox';
 import { OrisoSelect } from '../form/OrisoSelect';
 import {
 	HOLIDAY_REGIONS,
@@ -241,27 +242,27 @@ export const WorkingHoursDialog = ({
 								className={`calendarHours__row calendarHours__row--pause${pauseOn ? '' : ' calendarHours__row--off'}`}
 								data-cy={`calendar-hours-pause-${row.weekday}`}
 							>
-								<label className="calendarHours__pauseOn">
-									<input
-										type="checkbox"
+								<span className="calendarHours__pauseOn">
+									<M3Checkbox
 										checked={row.pause.enabled}
 										disabled={!row.enabled}
-										aria-label={t(
+										hideLabel
+										label={t(
 											'calendar.workingHours.breakOn',
 											{
 												day: name
 											}
 										)}
-										onChange={(e) =>
+										onChange={(checked) =>
 											updatePause(row.weekday, {
-												enabled: e.target.checked
+												enabled: checked
 											})
 										}
 									/>
 									<span aria-hidden="true">
 										{t('calendar.workingHours.break')}
 									</span>
-								</label>
+								</span>
 								<label className="calendarHours__time">
 									<span className="sr-only">
 										{t('calendar.workingHours.breakFrom', {
