@@ -83,7 +83,9 @@ jobs:
               # Same flags as .github/actions/node-build: --ignore-scripts for
               # supply-chain hardening, --legacy-peer-deps because @cypress/react@7
               # still peers on @types/react 17.
-              run: npm ci --ignore-scripts --legacy-peer-deps
+              run: |
+                  npm ci --ignore-scripts --legacy-peer-deps
+                  npm run patch:matrix-sdk
 
             - name: Install Chrome for Vitest browser mode
               # --ignore-scripts above skips Playwright's own postinstall, so the
@@ -153,7 +155,9 @@ jobs:
                   cache: npm
 
             - name: Install dependencies
-              run: npm ci --ignore-scripts --legacy-peer-deps
+              run: |
+                  npm ci --ignore-scripts --legacy-peer-deps
+                  npm run patch:matrix-sdk
 
             - name: Install browser test runtimes
               run: |
