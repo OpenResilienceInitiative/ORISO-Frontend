@@ -1,6 +1,6 @@
 import * as React from 'react';
-import { useId, useState } from 'react';
-import { Box, Slider, Typography } from '@mui/material';
+import { useId } from 'react';
+import { Box, Rating, Slider, Typography } from '@mui/material';
 import StarRoundedIcon from '@mui/icons-material/StarRounded';
 import StarOutlineRoundedIcon from '@mui/icons-material/StarOutlineRounded';
 import { useTranslation } from 'react-i18next';
@@ -77,68 +77,34 @@ const Stars = ({
 	name: string;
 }) => {
 	const { t } = useTranslation();
-	const [hover, setHover] = useState<number>();
-	const shown = hover ?? value ?? 0;
 	return (
-		<Box
-			role="radiogroup"
+		<Rating
+			name={name}
+			max={rating.max}
+			value={value ?? null}
+			disabled={disabled}
+			size="large"
 			aria-labelledby={labelId}
-			sx={{ display: 'flex', gap: 0.5 }}
-			onMouseLeave={() => setHover(undefined)}
-		>
-			{Array.from(
-				{ length: rating.max - rating.min + 1 },
-				(_unused, index) => rating.min + index
-			).map((star) => (
-				<Box
-					key={star}
-					component="label"
-					onMouseEnter={() => !disabled && setHover(star)}
-					sx={{
-						'position': 'relative',
-						'display': 'grid',
-						'placeItems': 'center',
-						'width': 48,
-						'height': 48,
-						'borderRadius': '50%',
-						'cursor': disabled ? 'default' : 'pointer',
-						'color':
-							star <= shown
-								? journeyColors.primary
-								: journeyColors.outline,
-						'&:has(input:focus-visible)': {
-							outline: `3px solid ${journeyColors.focus}`
-						}
-					}}
-				>
-					<input
-						type="radio"
-						name={name}
-						value={star}
-						checked={value === star}
-						disabled={disabled}
-						onChange={() => undefined}
-						onClick={() => onChange(star)}
-						aria-label={t('journey.rating.stars', {
-							count: star,
-							max: rating.max
-						})}
-						style={{
-							position: 'absolute',
-							opacity: 0,
-							width: 1,
-							height: 1,
-							margin: 0
-						}}
-					/>
-					{star <= shown ? (
-						<StarRoundedIcon sx={{ fontSize: 36 }} />
-					) : (
-						<StarOutlineRoundedIcon sx={{ fontSize: 36 }} />
-					)}
-				</Box>
-			))}
-		</Box>
+			// A tap on the chosen star would clear it; here it confirms it, so a person who went
+			// back can move on with the same answer.
+			onChange={(_event, next) => onChange(next ?? value ?? rating.min)}
+			getLabelText={(count) =>
+				t('journey.rating.stars', { count, max: rating.max })
+			}
+			icon={<StarRoundedIcon fontSize="inherit" />}
+			emptyIcon={<StarOutlineRoundedIcon fontSize="inherit" />}
+			sx={{
+				'fontSize': 44,
+				'gap': 0.5,
+				'color': journeyColors.primary,
+				'& .MuiRating-iconEmpty': { color: journeyColors.outline },
+				'& .MuiRating-label:has(+ input:focus-visible), & .Mui-focusVisible':
+					{
+						outline: `3px solid ${journeyColors.focus}`,
+						borderRadius: '50%'
+					}
+			}}
+		/>
 	);
 };
 

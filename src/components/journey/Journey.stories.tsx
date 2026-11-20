@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Box } from '@mui/material';
-import { expect, fn, userEvent, within } from 'storybook/test';
+import { expect, fireEvent, fn, userEvent, within } from 'storybook/test';
 import { RegistrationHeader } from '../registration/registrationHeader/RegistrationHeader';
 import { RegistrationStepNav } from '../registration/registrationStepNav/RegistrationStepNav';
 import { phone375Globals } from '../message/messageStoryShell';
@@ -356,9 +356,9 @@ export const QuestionTypes: Story = {
 		await expect(
 			canvas.getByRole('checkbox', { name: 'Familie' })
 		).toBeChecked();
-		await userEvent.click(
-			canvas.getByRole('radio', { name: '4 von 5 Sternen' })
-		);
+		// MUI Rating reads a mouse click from the pointer position; a synthetic click goes to the
+		// star's radio directly (real taps are covered by MUI and the unit test).
+		fireEvent.click(canvas.getByRole('radio', { name: '4 von 5 Sternen' }));
 		await expect(
 			canvas.getByRole('radio', { name: '4 von 5 Sternen' })
 		).toBeChecked();
