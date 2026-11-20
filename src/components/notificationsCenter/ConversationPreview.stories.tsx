@@ -610,11 +610,23 @@ export const EditOwn: Story = {
 			'[data-message-id="$2"] .messageItem__kebabButton'
 		) as HTMLElement;
 		await userEvent.click(own);
-		await expect(
+		await userEvent.click(
 			await within(document.body).findByRole('menuitem', {
 				name: /bearbeiten|edit/i
 			})
-		).toBeInTheDocument();
+		);
+		const composer = canvasElement.querySelector<HTMLElement>(
+			'.conversationPreview__composer'
+		)!;
+		const editor = await within(composer).findByRole('textbox');
+		await expect(editor).toHaveTextContent(
+			'Natürlich — schön, dass Sie sich melden.'
+		);
+		await expect(editor.querySelector('strong')).toHaveTextContent('schön');
+		await userEvent.click(editor);
+		await userEvent.keyboard(' Vielen Dank!');
+		await expect(editor).toHaveTextContent('Vielen Dank!');
+		await expect(writeCalls).toEqual([]);
 	}
 };
 

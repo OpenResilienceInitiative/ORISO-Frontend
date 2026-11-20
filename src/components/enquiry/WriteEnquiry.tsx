@@ -1,13 +1,23 @@
 import * as React from 'react';
-import { useState, useEffect, useContext, useCallback, Suspense } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import {
+	useState,
+	useEffect,
+	useContext,
+	useCallback,
+	useMemo,
+	Suspense
+} from 'react';
+import { Navigate, useParams, useNavigate } from 'react-router-dom';
 import { lazyWithReload } from '../../utils/chunkLoadRecovery';
 
 import { Overlay, OVERLAY_FUNCTIONS, OverlayItem } from '../overlay/Overlay';
-import { BUTTON_TYPES } from '../button/Button';
+import { Button, BUTTON_TYPES } from '../button/Button';
 import { endpoints } from '../../resources/scripts/endpoints';
 import { buildExtendedSession, ActiveSessionProvider } from '../../globalState';
-import { STATUS_EMPTY } from '../../globalState/interfaces';
+import {
+	STATUS_EMPTY,
+	type ListItemInterface
+} from '../../globalState/interfaces';
 
 import {
 	desktopView,
@@ -41,52 +51,101 @@ const MessageSubmitInterfaceComponent = lazyWithReload(loadMessageComposer);
  */
 const ENQUIRY_CONFIRMATION_CLOSE_MS = 3000;
 
+type EnquiryListResult = { requestedId: number | null } & (
+	| { status: 'found'; session: ListItemInterface; isFirstEnquiry: boolean }
+	| { status: 'missing' | 'failed' }
+);
+
 export const WriteEnquiry: React.FC = () => {
 	const { t: translate } = useTranslation();
 	const { sessionId } = useParams<{ sessionId: string }>();
-	const sessionIdFromParam = sessionId ? parseInt(sessionId) : null;
+	const parsedId = Number(sessionId);
+	const invalidSessionId =
+		sessionId !== undefined &&
+		(!/^\d+$/.test(sessionId) ||
+			!Number.isSafeInteger(parsedId) ||
+			parsedId < 1);
+	const requestedId =
+		sessionId !== undefined && !invalidSessionId ? parsedId : null;
 	const navigate = useNavigate();
 
 	const { fixed: fixedLanguages } = useContext(LanguagesContext);
 
-	const [activeSession, setActiveSession] = useState(null);
 	const [overlayActive, setOverlayActive] = useState(false);
 	const [redirectSessionId, setRedirectSessionId] = useState<number | null>(
 		null
 	);
 	const [redirectGroupId, setRedirectGroupId] = useState<string | null>(null);
 	const [selectedLanguage, setSelectedLanguage] = useState(fixedLanguages[0]);
-	const [isFirstEnquiry, setIsFirstEnquiry] = useState(false);
-	const [isLoading, setIsLoading] = useState(true);
-
-	const { session, ready: sessionReady } = useSession(
-		null,
-		sessionIdFromParam
+	const [listResult, setListResult] = useState<EnquiryListResult | null>(
+		null
 	);
+	const [loadAttempt, setLoadAttempt] = useState(0);
+	const { session, ready: sessionReady } = useSession(null, requestedId);
+	// Ignore a previous session retained by the hook while this ID loads.
+	const exactSession =
+		requestedId !== null &&
+		!session?.isGroup &&
+		session?.item?.id === requestedId
+			? session
+			: null;
+	const currentListResult =
+		listResult?.requestedId === requestedId ? listResult : null;
+	const fallback =
+		currentListResult?.status === 'found' ? currentListResult : null;
+	const activeSession = useMemo(
+		() =>
+			exactSession ??
+			(fallback && buildExtendedSession(fallback.session)),
+		[exactSession, fallback]
+	);
+	const isFirstEnquiry = !exactSession && Boolean(fallback?.isFirstEnquiry);
 
 	useEffect(() => {
-		if (!sessionReady && sessionIdFromParam) {
+		if (
+			invalidSessionId ||
+			exactSession ||
+			(requestedId !== null && !sessionReady)
+		) {
 			return;
 		}
-
-		if (!session) {
-			apiGetAskerSessionList().then(({ sessions }) => {
-				if (
-					sessions.length === 1 &&
-					sessions[0]?.session?.status === STATUS_EMPTY
-				) {
-					setIsFirstEnquiry(true);
-					setActiveSession(buildExtendedSession(sessions[0]));
-					setIsLoading(false);
-					return;
+		let cancelled = false;
+		apiGetAskerSessionList({ strict: true })
+			.then(({ sessions }: { sessions: ListItemInterface[] }) => {
+				if (cancelled) return;
+				const candidate = sessions.find(
+					({ chat, session }) =>
+						!chat &&
+						session?.status === STATUS_EMPTY &&
+						(requestedId === null
+							? sessions.length === 1
+							: session.id === requestedId)
+				);
+				if (candidate) {
+					setListResult({
+						requestedId,
+						status: 'found',
+						session: candidate,
+						isFirstEnquiry: sessions.length === 1
+					});
+				} else {
+					setListResult({ requestedId, status: 'missing' });
 				}
+			})
+			.catch(() => {
+				if (!cancelled)
+					setListResult({ requestedId, status: 'failed' });
 			});
-		} else {
-			setActiveSession(session);
-			setIsLoading(false);
-			return;
-		}
-	}, [sessionReady, sessionIdFromParam, session]);
+		return () => {
+			cancelled = true;
+		};
+	}, [
+		exactSession,
+		invalidSessionId,
+		loadAttempt,
+		requestedId,
+		sessionReady
+	]);
 
 	const { fromL } = useResponsive();
 	useEffect(() => {
@@ -181,7 +240,30 @@ export const WriteEnquiry: React.FC = () => {
 		setOverlayActive(true);
 	}, []);
 
-	if (isLoading) {
+	if (!activeSession) {
+		if (invalidSessionId || currentListResult?.status === 'missing') {
+			return <Navigate to={endpoints.userSessionsListView} replace />;
+		}
+		if (currentListResult?.status === 'failed') {
+			return (
+				<div className="enquiry__contentWrapper">
+					<Text
+						text={translate('error.statusCodes.500.description')}
+						type="standard"
+					/>
+					<Button
+						item={{
+							label: translate('sessionList.reloadButton.label'),
+							type: BUTTON_TYPES.SECONDARY
+						}}
+						buttonHandle={() => {
+							setListResult(null);
+							setLoadAttempt((attempt) => attempt + 1);
+						}}
+					/>
+				</div>
+			);
+		}
 		return <Loading />;
 	}
 

@@ -2085,7 +2085,11 @@
 			},
 			"loadError": "Der Chat-Eingabebereich konnte nicht geladen werden. Bitte versuchen Sie es erneut.",
 			"retry": "Erneut versuchen",
+			"editFailedTitle": "Änderung konnte nicht gespeichert werden",
+			"editFailedText": "Ihr Text bleibt im Editor. Versuchen Sie es erneut.",
 			"toolbar": {
+				"selectionFormats": "Auswahl formatieren",
+				"slashFormats": "Formatbefehle",
 				"openTools": "Zurück zu allen Werkzeugen",
 				"closeTools": "Zu den kompakten Werkzeugen wechseln",
 				"more": "Weitere Werkzeuge",

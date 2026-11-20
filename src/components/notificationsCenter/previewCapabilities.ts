@@ -25,7 +25,8 @@ export type PreviewReadOnlyReason =
 	| 'supervisor'
 	| 'notJoined'
 	| 'consentGate'
-	| 'teamClosed';
+	| 'teamClosed'
+	| 'threadsDisabled';
 
 export interface PreviewCapabilities {
 	composer: boolean;
@@ -168,6 +169,13 @@ export const resolvePreviewCapabilities = ({
 	}
 	if (session.isRejected) {
 		return readOnly('rejected');
+	}
+
+	if (
+		channelKind === 'thread' &&
+		(isSideRoom || !threadsEnabled || isAnonymousChat)
+	) {
+		return readOnly('threadsDisabled');
 	}
 
 	// The internal rooms belong to counsellors only (ADR-008 / ADR-016).

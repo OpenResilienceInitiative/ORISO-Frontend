@@ -1810,7 +1810,6 @@ export const SessionStream = ({
 					hasUserInitiatedStopOrLeaveRequest
 				}
 				isTyping={handleSessionTyping}
-				isTypingInRoom={handleSessionTyping}
 				typingUsers={matrixTypingUsers}
 				messages={messagesItem?.messages}
 				reactionEvents={messagesItem?.reactionEvents || []}

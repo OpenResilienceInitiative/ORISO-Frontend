@@ -271,25 +271,35 @@ export const ConversationPreview = ({
 	// #1824: a thread opened from a main-room message stays inside the preview.
 	const shownThreadRootId = threadRootId || openedThreadRootId;
 
-	// D2: reading is explicit — a write, reaction, edit, deletion or the
-	// button sends the receipt; the Timeline card follows only when it went out.
+	const canActOnShownThread =
+		!openedThreadRootId ||
+		Boolean(threadRootId) ||
+		Boolean(capabilities?.threadReply);
+	const canCompose = canActOnShownThread && capabilities?.composer;
+	const scope = useMemo(
+		() => Symbol(`${roomId}|${shownThreadRootId}`),
+		[roomId, shownThreadRootId]
+	);
+
+	// D2: reading is explicit. Keep the receipt bound to the room where the
+	// write happened, and keep the visible feedback bound to that preview.
 	const onConversationReadRef = useRef(onConversationRead);
 	onConversationReadRef.current = onConversationRead;
-	// Which failure to show: a composer send keeps its text; any other
-	// action (reaction, deletion, mark as read) just failed.
+	const shownScopeRef = useRef<symbol | null>(null);
 	const [failure, setFailure] = useState<'send' | 'action' | null>(null);
 	const [markedRead, setMarkedRead] = useState(false);
-	useEffect(() => {
+	useLayoutEffect(() => {
+		shownScopeRef.current = scope;
 		setFailure(null);
 		setMarkedRead(false);
-	}, [roomId, shownThreadRootId]);
-	// The room on screen now; a late write must not touch another one.
-	const shownRoomRef = useRef(roomId);
-	shownRoomRef.current = roomId;
+		return () => {
+			shownScopeRef.current = null;
+		};
+	}, [scope]);
 	const markConversationRead = useCallback(
-		async (readRoomId: string, explicit = false) => {
+		async (readRoomId: string, readScope: symbol, explicit = false) => {
 			const sent = await chatTransportService.markRoomAsRead(readRoomId);
-			if (shownRoomRef.current === readRoomId) {
+			if (shownScopeRef.current === readScope) {
 				if (sent) {
 					setMarkedRead(true);
 				} else if (explicit) {
@@ -305,20 +315,20 @@ export const ConversationPreview = ({
 	);
 	const conversationActions = useConversationActions({
 		roomId,
-		resetKey: `${roomId}|${shownThreadRootId}`,
+		resetKey: scope,
 		onWrite: (writtenRoomId) => {
-			if (shownRoomRef.current === writtenRoomId) {
+			if (shownScopeRef.current === scope) {
 				setFailure(null);
 			}
-			void markConversationRead(writtenRoomId);
+			void markConversationRead(writtenRoomId, scope);
 		},
-		onWriteFailed: (writtenRoomId) => {
-			if (shownRoomRef.current === writtenRoomId) {
+		onWriteFailed: () => {
+			if (shownScopeRef.current === scope) {
 				setFailure('action');
 			}
 		}
 	});
-	const typing = useMatrixTyping(capabilities?.composer ? roomId : null);
+	const typing = useMatrixTyping(canCompose ? roomId : null);
 
 	const activeSession = useMemo(
 		() =>
@@ -482,6 +492,11 @@ export const ConversationPreview = ({
 		[onShownThreadChange]
 	);
 
+	const scrollToNewest = useCallback(() => {
+		const list = listRef.current;
+		if (list) list.scrollTop = list.scrollHeight;
+	}, []);
+
 	// Open at the newest message and follow new ones; when an older page is
 	// prepended, keep the rows the reader is looking at in place (#929).
 	useLayoutEffect(() => {
@@ -498,9 +513,9 @@ export const ConversationPreview = ({
 		}
 		if (appended) {
 			prependAnchor.current = null;
-			list.scrollTop = list.scrollHeight;
+			scrollToNewest();
 		}
-	}, [visibleMessages]);
+	}, [visibleMessages, scrollToNewest]);
 
 	// The preview knows visible messages, not the session's privacy allow-list.
 	// Derive authors from that exact slice; joined room members can include
@@ -532,7 +547,9 @@ export const ConversationPreview = ({
 		/>
 	);
 
-	const readOnlyReason = capabilities?.readOnlyReason ?? null;
+	const readOnlyReason =
+		capabilities?.readOnlyReason ??
+		(canActOnShownThread ? null : 'threadsDisabled');
 	const openButton = onOpenConversation &&
 		OPENS_TO_REPLY.has(readOnlyReason ?? '') && (
 			<button
@@ -569,7 +586,7 @@ export const ConversationPreview = ({
 		);
 	}
 
-	if (visibleMessages.length === 0 && !capabilities?.composer) {
+	if (visibleMessages.length === 0 && !canCompose) {
 		return (
 			<div className="conversationPreview conversationPreview--empty">
 				<p className="conversationPreview__notice">
@@ -582,7 +599,8 @@ export const ConversationPreview = ({
 	}
 
 	const canAct = Boolean(
-		capabilities &&
+		canActOnShownThread &&
+			capabilities &&
 			(capabilities.composer ||
 				capabilities.react ||
 				capabilities.manageOwn)
@@ -642,6 +660,7 @@ export const ConversationPreview = ({
 										onClick={() =>
 											void markConversationRead(
 												roomId,
+												scope,
 												true
 											)
 										}
@@ -689,27 +708,27 @@ export const ConversationPreview = ({
 								: undefined
 						}
 						onReplyDirect={
-							capabilities?.composer && !shownThreadRootId
+							canCompose && !shownThreadRootId
 								? conversationActions.handleReplyDirect
 								: undefined
 						}
 						onEditDirect={
-							capabilities?.manageOwn
+							canActOnShownThread && capabilities?.manageOwn
 								? conversationActions.handleEditDirect
 								: undefined
 						}
 						onDeleteDirect={
-							capabilities?.manageOwn
+							canActOnShownThread && capabilities?.manageOwn
 								? conversationActions.handleDeleteDirect
 								: undefined
 						}
 						onReact={
-							capabilities?.react
+							canActOnShownThread && capabilities?.react
 								? conversationActions.handleReact
 								: undefined
 						}
 						onUnreact={
-							capabilities?.react
+							canActOnShownThread && capabilities?.react
 								? conversationActions.handleUnreact
 								: undefined
 						}
@@ -724,7 +743,7 @@ export const ConversationPreview = ({
 						)}
 					</p>
 				)}
-				{capabilities?.composer ? (
+				{canCompose ? (
 					// The composer's styles live under `.session` (the chat's
 					// card); the host borrows that scope without the card.
 					<div className="session conversationPreview__composerHost">
@@ -743,10 +762,17 @@ export const ConversationPreview = ({
 								// Bound to this render's room: the composer is keyed by
 								// room, so a send finishing after a switch reads its own.
 								handleMessageSendSuccess={() => {
-									setFailure(null);
-									void markConversationRead(roomId);
+									if (shownScopeRef.current === scope) {
+										setFailure(null);
+									}
+									void markConversationRead(roomId, scope);
 								}}
-								onSendError={() => setFailure('send')}
+								onSendError={() => {
+									if (shownScopeRef.current === scope) {
+										setFailure('send');
+									}
+								}}
+								onMobileNavigateBottom={scrollToNewest}
 								threadRootId={shownThreadRootId}
 								replyTo={conversationActions.replyTo}
 								onCancelReply={
@@ -758,7 +784,11 @@ export const ConversationPreview = ({
 								onCancelEdit={
 									conversationActions.handleCancelEdit
 								}
-								messages={messages}
+								messages={
+									capabilities.manageOwn
+										? visibleMessages
+										: undefined
+								}
 								isOwnMessage={isMyMessage}
 								hideSupervisorAudience
 								autoFocusEditor={false}

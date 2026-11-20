@@ -8,6 +8,7 @@ import React, {
 } from 'react';
 import { EditorContent, useEditor } from '@tiptap/react';
 import { Mark, type AnyExtension } from '@tiptap/core';
+import { exitSuggestion } from '@tiptap/suggestion';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
 import Link from '@tiptap/extension-link';
@@ -18,6 +19,7 @@ import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
 import {
 	createMentionExtension,
+	mentionSuggestionKey,
 	MentionProvider
 } from './inputField/extensions/createMentionExtension';
 import {
@@ -49,12 +51,17 @@ import {
 	hasComposerFiles
 } from './composerFileDropPaste';
 import { flattenPastedTables } from './flattenPastedTables';
+import { ComposerSelectionFormatMenu } from './inputField/ComposerFormatMenus';
+import {
+	createSlashFormatExtension,
+	slashFormatSuggestionKey
+} from './inputField/extensions/createSlashFormatExtension';
+import {
+	applyQuickComposerFormat,
+	isQuickComposerFormat,
+	type QuickComposerFormat
+} from './inputField/extensions/quickComposerFormats';
 import './TipTapComposer.styles.scss';
-
-const isMentionSuggestionOpen = (): boolean =>
-	!!document.querySelector(
-		'.mentionList__popup .mentionList, .mentionList[role="listbox"]'
-	);
 
 export interface HighlightSnippetPayload {
 	text: string;
@@ -250,7 +257,12 @@ export const TipTapComposer = forwardRef<
 		},
 		ref
 	) => {
-		const { t } = useTranslation();
+		const { t, i18n } = useTranslation();
+		const formatMenuLanguage = useRef({
+			t,
+			locale: i18n?.resolvedLanguage
+		});
+		formatMenuLanguage.current = { t, locale: i18n?.resolvedLanguage };
 		const editorAccessibleName =
 			placeholder.trim() ||
 			t('enquiry.write.input.placeholder.groupChat');
@@ -332,6 +344,15 @@ export const TipTapComposer = forwardRef<
 					),
 					createComposerFormatGateExtension(formatGate),
 					InsertionMarker,
+					createSlashFormatExtension(formatGate, () => {
+						const { t, locale } = formatMenuLanguage.current;
+						return {
+							locale: locale?.startsWith('de') ? 'de' : 'en',
+							label: t('message.submit.toolbar.slashFormats'),
+							getLabel: (id: QuickComposerFormat) =>
+								t(`message.submit.toolbar.${id}`)
+						};
+					}),
 					...(mentionProvider
 						? [createMentionExtension(mentionProvider)]
 						: [])
@@ -434,8 +455,11 @@ export const TipTapComposer = forwardRef<
 					}
 					return true;
 				},
-				handleKeyDown: (_, event) => {
-					if (isMentionSuggestionOpen()) {
+				handleKeyDown: (view, event) => {
+					if (
+						mentionSuggestionKey.getState(view.state)?.active ||
+						slashFormatSuggestionKey.getState(view.state)?.active
+					) {
 						return false;
 					}
 					return shortcutHandlerRef.current(event);
@@ -444,7 +468,16 @@ export const TipTapComposer = forwardRef<
 			onFocus: () => {
 				onFocusChange?.(true);
 			},
-			onBlur: () => {
+			onBlur: ({ editor: currentEditor }) => {
+				if (
+					slashFormatSuggestionKey.getState(currentEditor.state)
+						?.active
+				) {
+					exitSuggestion(
+						currentEditor.view,
+						slashFormatSuggestionKey
+					);
+				}
 				onFocusChange?.(false);
 				// Deliberately NOT clearing the insertion marker here (#996):
 				// pressing the mic button blurs the editor, so a blur-clear
@@ -645,6 +678,10 @@ export const TipTapComposer = forwardRef<
 				if (!isEditorReady(editor)) {
 					return;
 				}
+				if (isQuickComposerFormat(action)) {
+					applyQuickComposerFormat(editor, formatGate, action);
+					return;
+				}
 				const format = FORMAT_OF_ACTION[action];
 				if (format && !formatGate.isEnabled(format)) {
 					return;
@@ -656,9 +693,6 @@ export const TipTapComposer = forwardRef<
 						return;
 					case 'redo':
 						editor.chain().focus().redo().run();
-						return;
-					case 'bold':
-						editor.chain().focus().toggleBold().run();
 						return;
 					case 'paragraph':
 						editor.chain().focus().setParagraph().run();
@@ -702,9 +736,6 @@ export const TipTapComposer = forwardRef<
 						return;
 					case 'alignRight':
 						editor.chain().focus().setTextAlign('right').run();
-						return;
-					case 'italic':
-						editor.chain().focus().toggleItalic().run();
 						return;
 					case 'underline':
 						editor.chain().focus().toggleUnderline().run();
@@ -750,12 +781,6 @@ export const TipTapComposer = forwardRef<
 							.focus()
 							.setHighlight({ color: '#b3e5fc' })
 							.run();
-						return;
-					case 'bulletList':
-						editor.chain().focus().toggleBulletList().run();
-						return;
-					case 'orderedList':
-						editor.chain().focus().toggleOrderedList().run();
 						return;
 					case 'strike':
 						editor.chain().focus().toggleStrike().run();
@@ -927,6 +952,13 @@ export const TipTapComposer = forwardRef<
 				className="tiptap-composer"
 				data-tour-target="session-composer"
 			>
+				{!readOnly && (
+					<ComposerSelectionFormatMenu
+						editor={editor}
+						gate={formatGate}
+						disabledFormats={disabledFormats}
+					/>
+				)}
 				{showToolbar && (
 					<div className="tiptap-composer__toolbar">
 						<button
@@ -949,7 +981,11 @@ export const TipTapComposer = forwardRef<
 							<button
 								type="button"
 								onClick={() =>
-									editor.chain().focus().toggleBold().run()
+									applyQuickComposerFormat(
+										editor,
+										formatGate,
+										'bold'
+									)
 								}
 								className={
 									editor.isActive('bold') ? 'is-active' : ''
@@ -963,11 +999,11 @@ export const TipTapComposer = forwardRef<
 							<button
 								type="button"
 								onClick={() =>
-									editor
-										.chain()
-										.focus()
-										.toggleBulletList()
-										.run()
+									applyQuickComposerFormat(
+										editor,
+										formatGate,
+										'bulletList'
+									)
 								}
 								className={
 									editor.isActive('bulletList')
@@ -985,11 +1021,11 @@ export const TipTapComposer = forwardRef<
 							<button
 								type="button"
 								onClick={() =>
-									editor
-										.chain()
-										.focus()
-										.toggleOrderedList()
-										.run()
+									applyQuickComposerFormat(
+										editor,
+										formatGate,
+										'orderedList'
+									)
 								}
 								className={
 									editor.isActive('orderedList')
