@@ -112,6 +112,7 @@ $message-system: #8c878c;
 // every seed and keeps the branded tint.
 $message-incoming-bg: var(--m3-surface-container-high, #eae7e8);
 $message-outgoing-bg: var(--m3-primary-fixed, #ffdad5);
+
 // The fixed light surface needs its own foreground in light and dark.
 $message-outgoing-text: var(--m3-on-primary-fixed, #410001);
 
