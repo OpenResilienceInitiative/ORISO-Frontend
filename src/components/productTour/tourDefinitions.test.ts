@@ -153,10 +153,14 @@ describe('consultantMailCounsellingTour', () => {
 });
 
 describe('frontendTours registry', () => {
-	it('lists both consultant tours with unique ids', () => {
+	it("lists the introduction, then the topic tours in Frank's order", () => {
 		const ids = frontendTours.map((t) => t.id);
 		expect(ids).toEqual([
 			'consultant-walkthrough',
+			'consultant-case-handover',
+			'consultant-calendar',
+			'consultant-group-circle',
+			'consultant-profile',
 			'consultant-mail-counselling'
 		]);
 		expect(new Set(ids).size).toBe(ids.length);

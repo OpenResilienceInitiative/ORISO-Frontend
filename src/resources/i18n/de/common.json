@@ -6389,6 +6389,138 @@
 			"open": "Rundgänge öffnen",
 			"close": "Rundgänge schließen",
 			"manage": "Rundgänge verwalten"
+		},
+		"caseHandover": {
+			"title": "Fälle übergeben",
+			"summary": "Eine eigene Beratung an Kolleg:innen übergeben oder Zugriff auf deren Fälle anfragen.",
+			"step": {
+				"intro": {
+					"title": "Übergabe in zwei Richtungen",
+					"intro": "Neu: Fälle wechseln die Zuständigkeit direkt in der Plattform. Sie bieten eine eigene Beratung an oder fragen bei Kolleg:innen Zugriff auf einen Fall an. Der Rundgang zeigt beide Wege, ausgelöst wird dabei nichts."
+				},
+				"offer": {
+					"title": "Eigene Beratung übergeben",
+					"intro": "Über „+“ im Kopf einer geöffneten Beratung wählen Sie „Beratung übergeben“. Sie wählen eine berechtigte Kolleg:in und nennen einen Grund. Bis alle nötigen Zustimmungen vorliegen, bleiben Sie zuständig."
+				},
+				"search": {
+					"title": "Kolleg:in suchen",
+					"intro": "Suchen Sie hier unter „Personen“ nach einer Kolleg:in. Die Liste zeigt dann deren Fälle, die Sie übernehmen dürfen – abhängig von Ihrer Abteilung und Ihren Themen."
+				},
+				"requestAccess": {
+					"title": "Zugriff anfragen",
+					"intro": "Mit „Zugriff anfragen“ bitten Sie um einen Fall und nennen einen Grund. Über ▾ und „Mehrere Fälle auswählen“ fragen Sie mehrere Fälle auf einmal an."
+				},
+				"status": {
+					"title": "Stand verfolgen",
+					"intro": "Am Fall steht der Stand, etwa „Warten auf Freigabe“. Die Antwort der Kolleg:in und – falls die Richtlinie es verlangt – die Zustimmung der ratsuchenden Person sehen Sie im Zeitstrahl."
+				},
+				"done": {
+					"title": "Kurz gesagt",
+					"intro": "Eigene Fälle bieten Sie in der Beratung über „+“ → „Beratung übergeben“ an. Fälle von Kolleg:innen fragen Sie über die Personensuche an. Den Stand finden Sie im Zeitstrahl."
+				}
+			}
+		},
+		"groupCircle": {
+			"title": "Gesprächskreis anlegen",
+			"summary": "Einen moderierten Gesprächskreis anlegen, teilen und starten.",
+			"step": {
+				"intro": {
+					"title": "Gesprächskreise",
+					"intro": "Ein Gesprächskreis ist eine anonyme, von Berater:innen moderierte Gruppe – einmalig oder regelmäßig. Der Rundgang zeigt, wo Sie ihn anlegen. Angelegt wird dabei nichts."
+				},
+				"create": {
+					"title": "Erstellen",
+					"intro": "Über „Erstellen“ in Ihrer Beratungsliste legen Sie neue Unterhaltungen an. Welche Formate Sie sehen, legen Träger und Beratungsstelle fest."
+				},
+				"format": {
+					"title": "Format „Gesprächskreis“",
+					"intro": "Unter „Gesprächsformat wählen“ steht der Gesprächskreis neben den anderen Formaten. Ist nur ein Format freigegeben, entfällt diese Auswahl."
+				},
+				"topic": {
+					"title": "Thema wählen",
+					"intro": "Zuerst wählen Sie „Thema / Fachbereich“. Danach öffnen sich die Einstellungen für den Gesprächskreis."
+				},
+				"settings": {
+					"title": "Einstellen, teilen, starten",
+					"intro": "In den Einstellungen legen Sie Termin, Wiederholungen, Medium und Sprache fest und fügen unter „Weitere Moderation“ Co-Moderator:innen hinzu. Danach teilen Sie den Einladungs-Link oder QR-Code. Teilnehmende warten im Warteraum, bis Sie mit „Chat starten“ beginnen und sie hereinlassen."
+				},
+				"done": {
+					"title": "Bereit",
+					"intro": "Ihre Gesprächskreise erscheinen in Ihrer Beratungsliste. Dort öffnen Sie sie, bearbeiten die Einstellungen und teilen den Link erneut."
+				}
+			}
+		},
+		"profile": {
+			"title": "Ihr Profil",
+			"summary": "Wo Profil, Abwesenheit, Benachrichtigungen, Sicherheit und Anzeige jetzt liegen.",
+			"step": {
+				"overview": {
+					"title": "Ihr Profil",
+					"intro": "Im Profil liegen Ihre Daten und Einstellungen, verteilt auf die Bereiche Allgemeines, Meine Aktivitäten, Einstellungen und Hilfe. Der Rundgang zeigt die wichtigsten Karten."
+				},
+				"public": {
+					"title": "Öffentliche Daten",
+					"intro": "Diese Angaben sehen Ratsuchende: Ihr Name, Ihre Sprachen und Ihre Beratungsstellen. Halten Sie sie aktuell."
+				},
+				"absence": {
+					"title": "Meine Abwesenheit",
+					"intro": "Hier tragen Sie Ihre Abwesenheit ein. Ratsuchende sehen dann Ihre Abwesenheitsnachricht."
+				},
+				"notifications": {
+					"title": "Benachrichtigungen",
+					"intro": "Hier legen Sie fest, worüber Sie per E-Mail und im Browser informiert werden."
+				},
+				"security": {
+					"title": "Sicherheit",
+					"intro": "Unter „Anmeldung & Konto“ ändern Sie Ihr Passwort und verwalten die Zwei-Faktor-Authentifizierung. Neu: die Wiederherstellung alter Nachrichten – richten Sie sie ein, damit Sie verschlüsselte Nachrichten auch auf einem neuen Gerät lesen können."
+				},
+				"display": {
+					"title": "Anzeige",
+					"intro": "Unter „Anzeige“ stellen Sie Effekte, den Zeitstrahl und die Sprache der Oberfläche ein."
+				},
+				"shortcuts": {
+					"title": "Tastaturkürzel",
+					"intro": "Neu: Viele Aktionen erreichen Sie per Tastatur. Hier finden Sie alle Kürzel."
+				},
+				"helpTours": {
+					"title": "Rundgänge",
+					"intro": "Hier starten Sie jeden Rundgang erneut. Mit „Rundgang-Knopf anzeigen“ blenden Sie den Knopf „?“ unten rechts ein oder aus."
+				}
+			}
+		},
+		"calendar": {
+			"title": "Kalender",
+			"summary": "Termine, Sperrzeiten und Abwesenheiten eintragen, Arbeitszeiten festlegen, Kalender verbinden.",
+			"step": {
+				"nav": {
+					"title": "Meine Termine",
+					"intro": "Neu: Ihr Kalender ist Teil der Plattform. Hier sehen Sie alle Termine mit Ratsuchenden – und auf Wunsch die Ihrer Kolleg:innen."
+				},
+				"create": {
+					"title": "Neu eintragen",
+					"intro": "Über „Neu“ tragen Sie einen Termin, eine Sperrzeit oder eine Abwesenheit ein – drei Reiter in einem Dialog."
+				},
+				"viewSwitch": {
+					"title": "Ansicht",
+					"intro": "Wechseln Sie zwischen Tag, Woche, Monat und Liste. Die Liste zeigt außerdem Ihre Links ohne Termin."
+				},
+				"quickEntry": {
+					"title": "Schnell eintragen",
+					"intro": "Ein Eintrag ohne Dialog: Art und Person wählen, Tag und Beginn setzen oder eine freie Zeit antippen, dann „Eintragen“."
+				},
+				"workingHours": {
+					"title": "Arbeitszeit",
+					"intro": "Ihre Arbeitszeit bestimmt, wann Ratsuchende Termine buchen können. Mit „Ändern“ passen Sie sie an."
+				},
+				"settings": {
+					"title": "Kalender-Einstellungen",
+					"intro": "Unter ⋮ legen Sie Arbeitszeit und Sprechstunden fest, tragen Sperrzeiten mit Wiederholung und freie Tage ein und verbinden Outlook oder Google."
+				},
+				"links": {
+					"title": "Links ohne Termin",
+					"intro": "Ihre Direktlinks liegen jetzt hier in der Liste: kopieren, als QR-Code teilen oder bearbeiten."
+				}
+			}
 		}
 	},
 	"weekday": {

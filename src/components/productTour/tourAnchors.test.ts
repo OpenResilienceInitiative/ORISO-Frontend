@@ -84,6 +84,94 @@ const anchorContract: Array<{
 		anchor: 'session-supervisor-add',
 		sourceFile: 'sessionHeader/ChatroomMainInteractionIcon.tsx'
 	},
+	// Use-case tours (FE#2339).
+	{
+		anchor: 'sessions-search',
+		sourceFile: 'sessionsList/SessionsListToolbar.tsx'
+	},
+	{
+		// The first card of the list; the split button forwards it.
+		anchor: 'case-handover-request-access',
+		sourceFile: 'sessionsListItem/SessionListItemComponent.tsx',
+		expected:
+			/index === 0\s*\?\s*'case-handover-request-access'\s*:\s*undefined/
+	},
+	{
+		anchor: 'groupchat-format-circle',
+		sourceFile: 'conversationCreate/CreateConversationView.tsx',
+		expected: /tourTarget="groupchat-format-circle"/
+	},
+	{
+		anchor: 'groupchat-topic-picker',
+		sourceFile: 'conversationCreate/CreateConversationView.tsx',
+		expected: /tourTarget="groupchat-topic-picker"/
+	},
+	// Profile section cards: `tourTarget` in the route files.
+	{
+		anchor: 'profile-public',
+		sourceFile: 'profile/profile.routes.ts',
+		expected: /tourTarget: 'profile-public'/
+	},
+	{
+		anchor: 'profile-absence',
+		sourceFile: 'profile/profile.routes.ts',
+		expected: /tourTarget: 'profile-absence'/
+	},
+	{
+		anchor: 'profile-notifications',
+		sourceFile: 'profile/profileSettings.routes.ts',
+		expected: /tourTarget: 'profile-notifications'/
+	},
+	{
+		anchor: 'profile-security',
+		sourceFile: 'profile/profileSettings.routes.ts',
+		expected: /tourTarget: 'profile-security'/
+	},
+	{
+		anchor: 'profile-display',
+		sourceFile: 'profile/profileSettings.routes.ts',
+		expected: /tourTarget: 'profile-display'/
+	},
+	{
+		anchor: 'profile-shortcuts',
+		sourceFile: 'profile/profileSettings.routes.ts',
+		expected: /tourTarget: 'profile-shortcuts'/
+	},
+	{
+		anchor: 'profile-help-tours',
+		sourceFile: 'profile/profileHelp.routes.ts',
+		expected: /tourTarget: 'profile-help-tours'/
+	},
+	// Calendar (keep edits to the attribute; FE#2326 touches the sidebar).
+	{
+		anchor: 'calendar-create',
+		sourceFile: 'calendar/CalendarPage.tsx'
+	},
+	{
+		anchor: 'calendar-settings',
+		sourceFile: 'calendar/CalendarPage.tsx'
+	},
+	{
+		// Digits and the pill menu never render together; both carry it.
+		anchor: 'calendar-view-switch',
+		sourceFile: 'calendar/CalendarPage.tsx',
+		expected:
+			/data-tour-target="calendar-view-switch"[\s\S]*data-tour-target="calendar-view-switch"/
+	},
+	{
+		// Only while the quick panel is not hidden.
+		anchor: 'calendar-quick-entry',
+		sourceFile: 'calendar/CalendarSidebar.tsx',
+		expected: /\?\s*undefined\s*:\s*'calendar-quick-entry'/
+	},
+	{
+		anchor: 'calendar-working-hours',
+		sourceFile: 'calendar/CalendarSidebar.tsx'
+	},
+	{
+		anchor: 'calendar-links',
+		sourceFile: 'calendar/CalendarLinksSection.tsx'
+	},
 	{
 		anchor: 'supervision-panel',
 		sourceFile: 'session/SessionItemComponent.tsx',
@@ -100,6 +188,26 @@ const passThroughContract: Array<{ sourceFile: string; expected: RegExp }> = [
 	{
 		sourceFile: 'chatStage/SidePanel.tsx',
 		expected: /data-tour-target=\{tourTarget\}/
+	},
+	{
+		sourceFile: 'splitButton/SplitButton.tsx',
+		expected: /data-tour-target=\{tourTarget\}/
+	},
+	{
+		sourceFile: 'sessionsListItem/CaseHandoverActionButton.tsx',
+		expected: /tourTarget=\{tourTarget\}/
+	},
+	{
+		sourceFile: 'conversationCreate/FormatCard.tsx',
+		expected: /data-tour-target=\{tourTarget\}/
+	},
+	{
+		sourceFile: 'profile/ProfileCard.tsx',
+		expected: /data-tour-target=\{tourTarget\}/
+	},
+	{
+		sourceFile: 'profile/ProfileCardList.tsx',
+		expected: /tourTarget=\{element\.tourTarget\}/
 	}
 ];
 

@@ -6399,6 +6399,138 @@
 			"open": "Ouvrir les visites guidées",
 			"close": "Fermer les visites guidées",
 			"manage": "Gérer les visites guidées"
+		},
+		"caseHandover": {
+			"title": "Transférer des dossiers",
+			"summary": "Transférer une de vos consultations à un·e collègue ou demander l'accès à ses dossiers.",
+			"step": {
+				"intro": {
+					"title": "Un transfert dans les deux sens",
+					"intro": "Nouveau : les dossiers changent de responsable directement dans la plateforme. Vous proposez une de vos consultations ou demandez l'accès au dossier d'un·e collègue. Cette visite montre les deux voies sans rien déclencher."
+				},
+				"offer": {
+					"title": "Transférer votre consultation",
+					"intro": "Dans une consultation ouverte, choisissez « + » dans l'en-tête, puis « Transférer la consultation ». Choisissez un·e collègue habilité·e et indiquez un motif. Vous restez responsable jusqu'à ce que toutes les autorisations nécessaires soient réunies."
+				},
+				"search": {
+					"title": "Chercher un·e collègue",
+					"intro": "Cherchez ici un·e collègue sous « Personnes ». La liste affiche alors ses dossiers que vous pouvez reprendre – selon votre service et vos thèmes."
+				},
+				"requestAccess": {
+					"title": "Demander l'accès",
+					"intro": "« Demander l'accès » sollicite un dossier avec un motif. Avec ▾ et « Sélectionner plusieurs dossiers », vous en demandez plusieurs à la fois."
+				},
+				"status": {
+					"title": "Suivre l'état",
+					"intro": "Le dossier affiche son état, par exemple « En attente d'autorisation ». La réponse de votre collègue et, si la règle l'exige, l'accord de la personne accompagnée apparaissent dans la chronologie."
+				},
+				"done": {
+					"title": "En bref",
+					"intro": "Proposez vos dossiers dans la consultation via « + » → « Transférer la consultation ». Demandez ceux de vos collègues via la recherche de personnes. Suivez l'état dans la chronologie."
+				}
+			}
+		},
+		"groupCircle": {
+			"title": "Créer un cercle de parole",
+			"summary": "Créer, partager et lancer un cercle de parole modéré.",
+			"step": {
+				"intro": {
+					"title": "Cercles de parole",
+					"intro": "Un cercle de parole est un groupe anonyme animé par des conseiller·ères – ponctuel ou régulier. Cette visite montre où le créer. Rien n'est créé."
+				},
+				"create": {
+					"title": "Créer",
+					"intro": "« Créer » dans votre liste de consultations lance de nouvelles conversations. Les formats proposés dépendent de l'organisme et du centre de conseil."
+				},
+				"format": {
+					"title": "Le format « Cercle de parole »",
+					"intro": "Sous « Choisir le format d'entretien », le cercle figure à côté des autres formats. Si un seul format est activé, ce choix est sauté."
+				},
+				"topic": {
+					"title": "Choisir un sujet",
+					"intro": "Choisissez d'abord « Sujet / domaine spécialisé ». Les réglages du cercle s'ouvrent ensuite."
+				},
+				"settings": {
+					"title": "Régler, partager, lancer",
+					"intro": "Dans les réglages, vous fixez date, répétitions, média et langue, et ajoutez des co-modérateur·rices sous « Modération supplémentaire ». Partagez ensuite le lien d'invitation ou le QR code. Les participant·es attendent en salle d'attente jusqu'à ce que vous commenciez avec « Démarrer le chat » et les fassiez entrer."
+				},
+				"done": {
+					"title": "Prêt",
+					"intro": "Vos cercles de parole apparaissent dans votre liste de consultations. Ouvrez-les pour modifier les réglages ou repartager le lien."
+				}
+			}
+		},
+		"profile": {
+			"title": "Votre profil",
+			"summary": "Où se trouvent désormais profil, absence, notifications, sécurité et affichage.",
+			"step": {
+				"overview": {
+					"title": "Votre profil",
+					"intro": "Votre profil regroupe vos données et réglages, répartis entre Général, Mes activités, Paramètres et Aide. Cette visite montre les cartes essentielles."
+				},
+				"public": {
+					"title": "Données publiques",
+					"intro": "Les personnes accompagnées voient ces informations : votre nom, vos langues et vos centres de conseil. Tenez-les à jour."
+				},
+				"absence": {
+					"title": "Mon absence",
+					"intro": "Indiquez ici votre absence. Les personnes accompagnées voient alors votre message d'absence."
+				},
+				"notifications": {
+					"title": "Mes notifications",
+					"intro": "Choisissez ici ce qui vous est signalé par e-mail et dans le navigateur."
+				},
+				"security": {
+					"title": "Sécurité",
+					"intro": "Sous « Connexion et compte », vous changez votre mot de passe et gérez l'authentification à deux facteurs. Nouveau : la récupération des anciens messages – configurez-la pour lire vos messages chiffrés aussi sur un nouvel appareil."
+				},
+				"display": {
+					"title": "Affichage",
+					"intro": "Ici, vous réglez les effets, la chronologie et la langue de l'interface."
+				},
+				"shortcuts": {
+					"title": "Raccourcis clavier",
+					"intro": "Nouveau : de nombreuses actions se font au clavier. Tous les raccourcis sont listés ici."
+				},
+				"helpTours": {
+					"title": "Visites guidées",
+					"intro": "Relancez ici n'importe quelle visite. « Afficher le bouton des visites guidées » affiche ou masque le bouton « ? » en bas à droite."
+				}
+			}
+		},
+		"calendar": {
+			"title": "Calendrier",
+			"summary": "Saisir rendez-vous, plages bloquées et absences, définir ses horaires, connecter un agenda.",
+			"step": {
+				"nav": {
+					"title": "Mes rendez-vous",
+					"intro": "Nouveau : votre calendrier fait partie de la plateforme. Il montre tous vos rendez-vous avec les personnes accompagnées – et, si vous le souhaitez, ceux de vos collègues."
+				},
+				"create": {
+					"title": "Nouvelle saisie",
+					"intro": "« Nouveau » ajoute un rendez-vous, une plage bloquée ou une absence – trois onglets dans une seule fenêtre."
+				},
+				"viewSwitch": {
+					"title": "Affichage",
+					"intro": "Passez du jour à la semaine, au mois ou à la liste. La liste affiche aussi vos liens sans rendez-vous."
+				},
+				"quickEntry": {
+					"title": "Saisie rapide",
+					"intro": "Une saisie sans fenêtre : choisissez le type et la personne, fixez le jour et l'heure ou touchez un créneau libre, puis enregistrez."
+				},
+				"workingHours": {
+					"title": "Horaires de travail",
+					"intro": "Vos horaires déterminent quand les personnes accompagnées peuvent réserver. « Modifier » les ajuste."
+				},
+				"settings": {
+					"title": "Paramètres du calendrier",
+					"intro": "Sous ⋮, vous définissez horaires de travail et heures de consultation, saisissez des plages bloquées récurrentes et des jours libres, et connectez Outlook ou Google."
+				},
+				"links": {
+					"title": "Liens sans rendez-vous",
+					"intro": "Vos liens directs se trouvent désormais ici dans la liste : copiez-les, partagez-les en QR code ou modifiez-les."
+				}
+			}
 		}
 	},
 	"weekday": {

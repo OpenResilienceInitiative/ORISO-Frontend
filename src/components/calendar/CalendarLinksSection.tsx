@@ -13,7 +13,11 @@ export const CalendarLinksBox = ({
 }: {
 	children: React.ReactNode;
 }) => (
-	<div className="calendarPage__links" data-cy="calendar-links">
+	<div
+		className="calendarPage__links"
+		data-cy="calendar-links"
+		data-tour-target="calendar-links"
+	>
 		{children}
 	</div>
 );

@@ -85,6 +85,8 @@ export interface SplitButtonProps {
 	trailingDataCy?: string;
 	/** Id of text that describes the main segment (read after its name). */
 	describedBy?: string;
+	/** Product-tour anchor (`data-tour-target`) on the root; inert. */
+	tourTarget?: string;
 }
 
 export const SplitButton = React.forwardRef<HTMLDivElement, SplitButtonProps>(
@@ -116,7 +118,8 @@ export const SplitButton = React.forwardRef<HTMLDivElement, SplitButtonProps>(
 			trailingRef,
 			mainDataCy,
 			trailingDataCy,
-			describedBy
+			describedBy,
+			tourTarget
 		},
 		ref
 	) => {
@@ -137,7 +140,12 @@ export const SplitButton = React.forwardRef<HTMLDivElement, SplitButtonProps>(
 			.join(' ');
 
 		return (
-			<div className={classes} ref={ref} id={id}>
+			<div
+				className={classes}
+				ref={ref}
+				id={id}
+				data-tour-target={tourTarget}
+			>
 				{selection ? (
 					<div className="splitButton__segment splitButton__main splitButton__main--selection">
 						<M3Checkbox
