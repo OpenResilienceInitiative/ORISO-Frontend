@@ -29,6 +29,29 @@
 		/>
 		<meta name="theme-color" content="#cc1e1c" />
 
+		<style>
+			html[data-oriso-system-login] {
+				color-scheme: light dark;
+			}
+			@media (prefers-color-scheme: dark) {
+				html[data-oriso-system-login]:not(.oriso-login-handover),
+				html[data-oriso-system-login]:not(.oriso-login-handover)
+					body:not([data-oriso-login-dark]) {
+					background-color: Canvas;
+				}
+			}
+		</style>
+		<script>
+			if (
+				location.pathname.replace(/\/+$/, '').toLowerCase() === '/login'
+			) {
+				document.documentElement.setAttribute(
+					'data-oriso-system-login',
+					''
+				);
+			}
+		</script>
+
 		<!-- Login handover: the login page marks a sign-in right before its
 		     document load to the app. Before any script or stylesheet arrives,
 		     paint the background that the loading screen had, so the reload

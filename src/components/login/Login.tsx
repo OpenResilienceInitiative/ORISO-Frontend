@@ -20,7 +20,8 @@ import {
 } from '../auth/consultantLoginBlock';
 import { appConfig } from '../../utils/appConfig';
 import { Text } from '../text/Text';
-import { ReactComponent as PersonIcon } from '../../resources/img/icons/person.svg';
+import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
+import VpnKeyOutlinedIcon from '@mui/icons-material/VpnKeyOutlined';
 import { ReactComponent as LockIcon } from '../../resources/img/icons/lock.svg';
 import { ReactComponent as VerifiedIcon } from '../../resources/img/icons/verified.svg';
 import { ReactComponent as ShowPasswordIcon } from '../../resources/img/icons/eye.svg';
@@ -727,6 +728,7 @@ export const Login = () => {
 	return (
 		<>
 			<StageLayout
+				className="stageLayout--brandedArtwork"
 				stage={<Stage hasAnimation={isFirstVisit} isReady={isReady} />}
 				showLegalLinks
 				showRegistrationLink={hasTenant}
@@ -851,10 +853,11 @@ export const Login = () => {
 									InputProps={{
 										startAdornment: (
 											<InputAdornment position="start">
-												<PersonIcon
-													color={
-														orisoInputColors.onSurfaceVariant
-													}
+												<PersonOutlineIcon
+													aria-hidden
+													sx={{
+														color: orisoInputColors.onSurfaceVariant
+													}}
 												/>
 											</InputAdornment>
 										)
@@ -890,10 +893,11 @@ export const Login = () => {
 										InputProps={{
 											startAdornment: (
 												<InputAdornment position="start">
-													<LockIcon
-														color={
-															orisoInputColors.onSurfaceVariant
-														}
+													<VpnKeyOutlinedIcon
+														aria-hidden
+														sx={{
+															color: orisoInputColors.onSurfaceVariant
+														}}
 													/>
 												</InputAdornment>
 											),

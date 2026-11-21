@@ -223,7 +223,7 @@ export const Stage = ({
 					<Headline
 						className="stage__claim"
 						semanticLevel="4"
-						text={translate('app.claim')}
+						text={tenant?.content?.claim || translate('app.claim')}
 					/>
 				</div>
 				{hasAnimation && !isReady ? (

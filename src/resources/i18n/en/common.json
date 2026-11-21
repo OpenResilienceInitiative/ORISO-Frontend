@@ -1,4 +1,24 @@
 {
+	"personalDisplay": {
+		"title": "Display",
+		"accessibility": "Accessibility",
+		"textSize": "Text size",
+		"currentSize": "Selected text size",
+		"smaller": "Smaller",
+		"larger": "Larger",
+		"contrastLabel": "Contrast",
+		"contrast": {
+			"standard": "Standard",
+			"medium": "Medium",
+			"high": "High"
+		},
+		"schemeLabel": "Colour scheme",
+		"scheme": {
+			"system": "System",
+			"light": "Light",
+			"dark": "Dark"
+		}
+	},
 	"addons": {
 		"loadError": "This add-on could not be loaded.",
 		"notAvailable": "This add-on is not available.",
@@ -150,7 +170,7 @@
 		"selectLanguage": "Select language",
 		"stage": {
 			"title": "Consulting & Help",
-			"mobileHeadline": "There is room here for what is on your mind.",
+
 			"carrierLogoAlt": "Show where {{name}} is present"
 		},
 		"stop": "Stop",
@@ -687,6 +707,7 @@
 		}
 	},
 	"e2ee": {
+		"encryptedConversation": "End-to-end encrypted",
 		"attachment": {
 			"decryption_error": "Error while decrypting",
 			"encrypted": "Decrypt file for download",
@@ -2307,6 +2328,8 @@
 		}
 	},
 	"navigation": {
+		"mobileMenu": "Navigation",
+		"mobileMore": "More",
 		"appointments": "Video dates",
 		"asker": {
 			"sessions": {

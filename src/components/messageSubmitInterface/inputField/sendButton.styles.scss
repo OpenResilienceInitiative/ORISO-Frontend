@@ -1,9 +1,9 @@
 /*
  * Send button — Figma "Nachricht senden" (node 489:16565).
  * 48×48, radius bottom-left 24 / top-right 4 (mirrors the input container
- * notch). One paper plane throughout: white icon on primary-fixed-dim when
- * the composer is not selected / empty; rotated up on primary-container when
- * ready. The empty → ready change rotates the plane; sending flies it out,
+ * notch). The empty plane takes the resting surface's ink. The ready plane
+ * uses the same primary/on-primary action pair as other controls.
+ * The empty → ready change rotates the plane; sending flies it out,
  * then it settles back.
  */
 .sendButton {
@@ -13,13 +13,16 @@
 	margin: 0;
 	padding: 0;
 	border: 0;
-	border-radius: 0 4px 0 24px;
+	border-radius: 0 var(--composer-corner, 4px) 0 24px;
 	appearance: none;
 	cursor: pointer;
 	overflow: hidden;
 
-	// #597: resting / not-selected composer — #FFB4AA
-	background-color: var(--m3-primary-fixed-dim, #ffb4aa);
+	background-color: var(
+		--send-rest-surface,
+		var(--m3-primary-fixed-dim, #ffb4aa)
+	);
+	color: var(--send-rest-ink, var(--m3-on-primary-fixed, #410001));
 	transition: background-color 250ms cubic-bezier(0.2, 0, 0, 1);
 
 	&__plane {
@@ -27,7 +30,7 @@
 		inset: 0;
 		display: grid;
 		place-items: center;
-		color: var(--m3-on-primary, #fff);
+		color: inherit;
 
 		// Rest position (empty): plane points to the upper right as drawn.
 		transform: rotate(0deg);
@@ -41,10 +44,10 @@
 		fill: currentColor;
 	}
 
-	// Ready / sending: red container, plane rotated up.
 	&--ready,
 	&--sending {
-		background-color: var(--m3-primary-container, #cc1e1c);
+		background-color: var(--m3-primary, #a5000a);
+		color: var(--m3-on-primary, #fff);
 	}
 
 	&--ready &__plane,
@@ -69,9 +72,18 @@
 	}
 
 	&:focus-visible {
-		outline: 2px solid var(--m3-primary-outline, #ffdad5);
-		outline-offset: 2px;
+		outline: 2px solid currentColor;
+		outline-offset: -4px;
+
+		@media (forced-colors: active) {
+			outline-color: Highlight;
+		}
 	}
+}
+
+[data-oriso-personal-scheme='dark'] .sendButton {
+	--send-rest-surface: var(--m3-surface-container-high, #282829);
+	--send-rest-ink: var(--m3-on-surface-variant, #c4c7c8);
 }
 
 @keyframes send-button-fly-out {

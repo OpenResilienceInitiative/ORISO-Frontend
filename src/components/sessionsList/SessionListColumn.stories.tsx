@@ -229,7 +229,6 @@ function FullColumnPlayground() {
 const meta: Meta = {
 	title: 'Components/Session/List/Session list column',
 	tags: ['autodocs'],
-	globals: { backgrounds: { value: 'gray' } },
 	parameters: {
 		layout: 'fullscreen',
 		design: [
@@ -258,7 +257,10 @@ const meta: Meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+const grayGalleryBackground = { backgrounds: { value: 'gray' } };
+
 export const ToolbarAndCards: Story = {
+	globals: grayGalleryBackground,
 	render: () => <FullColumnPlayground />
 };
 
@@ -294,6 +296,7 @@ function ToolbarCreateChatColumn() {
 }
 
 export const ToolbarCreateChatAndCards: Story = {
+	globals: grayGalleryBackground,
 	render: () => <ToolbarCreateChatColumn />,
 	play: async ({ canvasElement }) => {
 		const createActions = canvasElement.querySelectorAll(
@@ -315,7 +318,10 @@ export const ToolbarCreateChatAndCards: Story = {
 
 export const ToolbarCreateChatOnPhone: Story = {
 	...ToolbarCreateChatAndCards,
-	globals: { viewport: { value: 'phone390', isRotated: false } }
+	globals: {
+		...grayGalleryBackground,
+		viewport: { value: 'phone390', isRotated: false }
+	}
 };
 
 /**
@@ -352,6 +358,7 @@ function EmptyColumn() {
 }
 
 export const EmptyWithSideHairlines: Story = {
+	globals: grayGalleryBackground,
 	render: () => <EmptyColumn />
 };
 
@@ -440,8 +447,7 @@ function SnapDemo({ panelOpen }: { panelOpen: boolean }) {
 				style={{
 					flex: '0 0 auto',
 					width,
-					position: 'relative',
-					background: '#fff'
+					position: 'relative'
 				}}
 				data-cy="snap-column"
 				data-list-mode={rail ? 'rail' : 'expanded'}
@@ -515,7 +521,9 @@ function SnapDemo({ panelOpen }: { panelOpen: boolean }) {
 				style={{
 					flex: 1,
 					margin: `0 ${STAGE_LAYOUT.CARD_MARGIN}px`,
-					background: '#fff',
+					// Test instrument showing the measured width, outside the product column.
+					background: 'var(--m3-surface)',
+					color: 'var(--m3-on-surface)',
 					borderRadius: 16,
 					display: 'grid',
 					placeItems: 'center',

@@ -178,6 +178,9 @@ export const RegistrationFooter = ({
 					'width': { xs: '100vw', lg: '60vw' },
 					'minHeight': { sm: '96px' },
 					'backgroundColor': 'rgba(255, 255, 255, 0.94)',
+					'html[data-oriso-personal-scheme="dark"] &': {
+						backgroundColor: registrationMd3.surfaceContainerLowest
+					},
 					'backdropFilter': 'blur(8px)',
 					'borderTop': `1px solid ${registrationMd3.outlineVariant}`,
 					'display': 'flex',

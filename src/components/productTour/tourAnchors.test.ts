@@ -56,10 +56,12 @@ const anchorContract: Array<{
 		expected: /'\/sessions\/consultant\/sessionPreview': 'nav-enquiries'/
 	},
 	{
-		// …which the navigation bar renders on every item.
+		// Quick links own their tour anchor, including when the same route is
+		// also available in the mobile dialog.
 		anchor: 'nav-<slug>',
 		sourceFile: 'app/NavigationBar.tsx',
-		expected: /data-tour-target=\{navTourTarget\(\s*item\.to\s*\)\}/
+		expected:
+			/data-tour-target=\{\s*inMore\s*\?\s*undefined\s*:\s*navTourTarget\(\s*item\.to\s*\)\s*\}/
 	},
 	{
 		anchor: 'enquiry-list-item',

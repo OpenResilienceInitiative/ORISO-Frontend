@@ -47,7 +47,7 @@ const ORISO_M3_FIGMA_URL =
 	'https://www.figma.com/design/RTUi1rcrEWECXz8rNFmj7Q/Design-System-M3_ORISO?node-id=60853-24182&p=f&t=ieIskw4Lz5hlc7iM-0';
 
 const listShell: React.CSSProperties = {
-	backgroundColor: '#eae7e8',
+	backgroundColor: 'var(--m3-surface-container-high, #eae7e8)',
 	maxWidth: 440,
 	margin: '0 auto',
 	padding: '4px 8px'
@@ -379,7 +379,6 @@ function RuntimeSessionListItem(options: RuntimeSessionOptions = {}) {
 const meta = {
 	title: 'Components/Session/List/SessionListItem',
 	tags: ['autodocs'],
-	globals: { backgrounds: { value: 'gray' } },
 	parameters: {
 		layout: 'fullscreen',
 		router: {
@@ -432,6 +431,14 @@ export const RuntimeComponent: Story = {
 		const canvas = within(canvasElement);
 		await expect(canvas.getAllByText('Mail')).toHaveLength(1);
 		await expect(canvas.queryByRole('img', { name: 'Mail' })).toBeNull();
+	}
+};
+
+export const ContrastWithTenantAccent: Story = {
+	...RuntimeComponent,
+	name: 'Kontrast mit hellem Trägerakzent',
+	parameters: {
+		orisoSeeds: { primary: '#a5000a', accent: '#ffd700', signal: '#db005b' }
 	}
 };
 

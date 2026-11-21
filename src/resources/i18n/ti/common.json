@@ -1,4 +1,24 @@
 {
+	"personalDisplay": {
+		"title": "ምርኢት",
+		"accessibility": "ተበጻሕነት",
+		"textSize": "መጠን ጽሑፍ",
+		"currentSize": "ዝተመርጸ መጠን ጽሑፍ",
+		"smaller": "ኣንእስ",
+		"larger": "ኣዕቢ",
+		"contrastLabel": "ንጽጽር ብርሃን",
+		"contrast": {
+			"standard": "ልሙድ",
+			"medium": "ማእከላይ",
+			"high": "ልዑል"
+		},
+		"schemeLabel": "ሕብራዊ ስርዓት",
+		"scheme": {
+			"system": "ሲስተም",
+			"light": "ብርሃን",
+			"dark": "ጸልማት"
+		}
+	},
 	"addons": {
 		"loadError": "እዚ ተወሳኺ ክጽዓን ኣይከኣለን።",
 		"notAvailable": "እዚ ተወሳኺ ኣይርከብን።",
@@ -151,7 +171,7 @@
 		"selectLanguage": "ቋንቋ ምረጽ",
 		"stage": {
 			"title": "ምኽሪ\n& ሓገዝ",
-			"mobileHeadline": "ኣብዚ ንሻቕሎትኩም ቦታ ኣሎ።",
+
 			"carrierLogoAlt": "ካርታ ናይ ቦታታት {{name}} ኣርእዩ"
 		},
 		"stop": "ደው ኣብል",
@@ -678,6 +698,7 @@
 		}
 	},
 	"e2ee": {
+		"encryptedConversation": "ካብ ጫፍ ናብ ጫፍ ብምስጢር ዝተሓለወ",
 		"attachment": {
 			"decryption_error": "ጌጋ ምፍታሕ",
 			"encrypted": "ፋይል ንምውራድ ዲክሪፕት ምግባር",
@@ -2282,6 +2303,8 @@
 		}
 	},
 	"navigation": {
+		"mobileMenu": "ዳህሳስ",
+		"mobileMore": "ተወሳኺ",
 		"appointments": "ቪድዮ - ቆጸራታት",
 		"asker": {
 			"sessions": {

@@ -29,6 +29,7 @@ import { stopMediaStreamTracks } from '../../../utils/callMediaStreamCleanup';
 import { callMediaErrorMessage } from '../../../utils/callMediaErrorMessage';
 import { ChatroomMainInteractionIcon } from '../ChatroomMainInteractionIcon';
 import { groupChatCallCapabilities } from './groupChatCallCapabilities';
+import { PersonalDisplayEntry } from '../../../features/personal-display/PersonalDisplayEntry';
 import { SessionMenu } from '../../sessionMenu/SessionMenu';
 import { getModality, Modality } from '../../session/getModality';
 import { RoomNextAppointmentSlot } from '../../sessionsList/timeline/RoomNextAppointmentSlot';
@@ -358,7 +359,7 @@ export const GroupChatHeader = ({
 	);
 
 	return (
-		<div className="sessionInfo">
+		<div className="sessionInfo sessionInfo--conversation">
 			<div className="sessionInfo__headerWrapper">
 				{!hideBackButton && (
 					<Link
@@ -450,6 +451,7 @@ export const GroupChatHeader = ({
 					)}
 
 				{/* Chat-Info, legal links and moderator actions for every role. */}
+				<PersonalDisplayEntry placement="conversation" />
 				<SessionMenu
 					hasUserInitiatedStopOrLeaveRequest={
 						hasUserInitiatedStopOrLeaveRequest

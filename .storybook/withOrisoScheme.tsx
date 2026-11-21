@@ -6,11 +6,8 @@
  * from `computeOrisoPalette` at render time — there is no second copy of
  * the palette to go stale.
  *
- * This is a Storybook-only capability. It does not touch
- * `ACTIVE_SCHEMES`: dark stays off for the running app.
- *
- * Expect components to look wrong in dark. That is the finding this
- * switcher exists to surface, not a regression it introduces.
+ * The contrast toolbar uses the same generator as the application. The
+ * Inverted preview continues to use its existing Admin palette.
  */
 import * as React from 'react';
 import { useEffect } from 'react';
@@ -18,8 +15,10 @@ import type { GlobalTypes } from 'storybook/internal/types';
 import { useGlobals, useParameter } from 'storybook/preview-api';
 import {
 	type OrisoSchemeName,
+	type OrisoSeeds,
 	computeOrisoPalette
 } from '../src/utils/theme/orisoScheme';
+import { parseContrastLevel } from '../src/features/personal-display/preferences';
 import { THEME_APPLIED_EVENT } from '../src/utils/theme/applyTenantTheme';
 
 /** The ORISO default tenant; the switcher previews schemes, not seeds. */
@@ -30,6 +29,7 @@ export const STORYBOOK_SEED = '#A5000A';
  * brand colour, e.g. a light one that must still yield legible text.
  */
 export const ORISO_SEED_PARAMETER = 'orisoSeed';
+const ORISO_SEEDS_PARAMETER = 'orisoSeeds';
 
 export const orisoSchemeGlobalType: GlobalTypes = {
 	scheme: {
@@ -38,9 +38,22 @@ export const orisoSchemeGlobalType: GlobalTypes = {
 		toolbar: {
 			icon: 'paintbrush',
 			items: [
-				{ value: 'light', title: 'Light (shipping)' },
-				{ value: 'dark', title: 'Dark (call UI only)' },
+				{ value: 'light', title: 'Light' },
+				{ value: 'dark', title: 'Dark' },
 				{ value: 'inverted', title: 'Inverted (admin)' }
+			],
+			dynamicTitle: true
+		}
+	},
+	contrast: {
+		name: 'Contrast',
+		description: 'ORISO contrast level',
+		toolbar: {
+			icon: 'circlehollow',
+			items: [
+				{ value: 'standard', title: 'Standard' },
+				{ value: 'medium', title: 'Medium' },
+				{ value: 'high', title: 'High' }
 			],
 			dynamicTitle: true
 		}
@@ -53,13 +66,24 @@ const isScheme = (value: unknown): value is OrisoSchemeName =>
 export const withOrisoScheme = function OrisoSchemeDecorator(
 	Story: React.ComponentType
 ): React.ReactElement {
-	const [{ scheme }] = useGlobals();
+	const [{ scheme, contrast }] = useGlobals();
 	const active: OrisoSchemeName = isScheme(scheme) ? scheme : 'light';
 	const seed = useParameter<string>(ORISO_SEED_PARAMETER, STORYBOOK_SEED);
+	const seeds = useParameter<OrisoSeeds | null>(ORISO_SEEDS_PARAMETER, null);
+	const level =
+		active === 'inverted' ? 'standard' : parseContrastLevel(contrast);
 
 	useEffect(() => {
-		const { tokens } = computeOrisoPalette({ primary: seed }, active);
+		const { tokens } = computeOrisoPalette(
+			seeds ?? { primary: seed },
+			active,
+			level
+		);
 		const root = document.documentElement;
+		if (active !== 'inverted') {
+			root.dataset.orisoPersonalScheme = active;
+			root.dataset.orisoContrastLevel = level;
+		}
 		for (const [name, value] of Object.entries(tokens)) {
 			root.style.setProperty(name, value);
 		}
@@ -68,23 +92,30 @@ export const withOrisoScheme = function OrisoSchemeDecorator(
 		// while its content renders dark.
 		document.body.style.backgroundColor = tokens['--m3-surface'];
 		document.body.style.color = tokens['--m3-on-surface'];
-		// Only a story seed rebuilds the MUI theme, so the other stories
-		// render exactly as before.
-		const announce = (): void => {
-			if (seed !== STORYBOOK_SEED) {
-				window.dispatchEvent(new CustomEvent(THEME_APPLIED_EVENT));
-			}
+		const rebuildMui =
+			active === 'dark' ||
+			level !== 'standard' ||
+			seeds !== null ||
+			seed !== STORYBOOK_SEED;
+		const announce = () => {
+			if (!rebuildMui) return;
+			// Include subscribers mounted in the same passive-effect flush.
+			queueMicrotask(() =>
+				window.dispatchEvent(new CustomEvent(THEME_APPLIED_EVENT))
+			);
 		};
 		announce();
-		return (): void => {
+		return () => {
 			for (const name of Object.keys(tokens)) {
 				root.style.removeProperty(name);
 			}
+			delete root.dataset.orisoPersonalScheme;
+			delete root.dataset.orisoContrastLevel;
 			document.body.style.removeProperty('background-color');
 			document.body.style.removeProperty('color');
 			announce();
 		};
-	}, [active, seed]);
+	}, [active, level, seed, seeds]);
 
 	return <Story />;
 };

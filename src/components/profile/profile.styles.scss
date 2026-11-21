@@ -553,7 +553,7 @@ $profile-footer-justify-content: center !default;
 		.headline {
 			font-size: 18px;
 			font-weight: 600;
-			color: #1a1a1a;
+			color: var(--m3-on-surface, #1a1a1a);
 			margin-bottom: 8px;
 		}
 
@@ -565,17 +565,20 @@ $profile-footer-justify-content: center !default;
 	}
 
 	&__data__content {
-		background-color: $white;
+		background-color: var(--m3-surface-container-lowest, $white);
 		padding: 20px 24px;
 		border-radius: 8px;
 		margin-bottom: 16px;
 		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-		border: 1px solid #e5e7eb;
+		border: 1px solid var(--m3-outline-variant, #e5e7eb);
+
+		&:not(a) {
+			color: var(--m3-on-surface, $secondary);
+		}
 
 		&--agencies {
 			padding: 16px 20px;
 			font-weight: 500;
-			color: #374151;
 		}
 	}
 
@@ -788,6 +791,27 @@ $profile-footer-justify-content: center !default;
 			max-width: 460px;
 			margin-top: 8px;
 		}
+	}
+
+	.profile__card__body
+		> .personalDisplayProfile
+		> .personalDisplayProfile__title {
+		flex-direction: row;
+		justify-content: center;
+
+		.headline {
+			font-size: calc(1.5rem * var(--oriso-personal-text-scale, 1));
+			line-height: 1.33;
+			color: inherit;
+			overflow-wrap: anywhere;
+		}
+	}
+}
+
+html[data-oriso-personal-scheme='dark'] .profile__cards {
+	.profile__card__body .profile__content__title .headline,
+	.menuEffectsSettings .text__standard {
+		color: var(--m3-on-surface, #1a1c1e);
 	}
 }
 

@@ -115,6 +115,19 @@
 				background: #ffe69b;
 				padding: 0 2px;
 				border-radius: 3px;
+
+				// TipTap emits inline "color: inherit" on coloured marks. Limit
+				// this override to the light fills supported by the composer.
+				@media (forced-colors: none) {
+					&:not([data-color]),
+					&[data-color='#fff59d' i],
+					&[data-color='#ffcc80' i],
+					&[data-color='#ffcdd2' i],
+					&[data-color='#b2f2bb' i],
+					&[data-color='#b3e5fc' i] {
+						color: var(--m3-on-secondary-fixed, #141c25) !important;
+					}
+				}
 			}
 		}
 	}

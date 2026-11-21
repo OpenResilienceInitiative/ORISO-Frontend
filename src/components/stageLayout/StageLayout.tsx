@@ -122,7 +122,7 @@ export const StageLayout = ({
 								: { href: loginRoute || loginUrl })}
 							color="inherit"
 							aria-label={translate('registration.login.label')}
-							sx={{ color: 'var(--m3-on-primary, #fff)' }}
+							sx={{ color: 'inherit' }}
 						>
 							<LoginDoorIcon color="inherit" />
 						</IconButton>
@@ -229,7 +229,8 @@ export const StageLayout = ({
 								'color': 'var(--m3-on-surface, #1b1b1c)',
 								'borderColor':
 									'var(--m3-outline-variant, #c4c7c8)',
-								'backgroundColor': 'rgba(255, 255, 255, 0.92)',
+								'backgroundColor':
+									'var(--m3-surface-container-lowest, #fff)',
 								'&:hover': {
 									color: 'var(--m3-on-secondary, #ffffff)',
 									borderColor: 'var(--m3-secondary, #4c555f)',

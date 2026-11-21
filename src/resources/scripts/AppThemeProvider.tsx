@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useEffect, useState } from 'react';
+import { useLayoutEffect, useState } from 'react';
 import { ThemeProvider } from '@mui/material';
 import { createAppTheme } from './theme';
 import { THEME_APPLIED_EVENT } from '../../utils/theme/applyTenantTheme';
@@ -13,9 +13,15 @@ export const AppThemeProvider = ({
 }) => {
 	const [theme, setTheme] = useState(() => createAppTheme());
 
-	useEffect(() => {
+	useLayoutEffect(() => {
 		const refresh = () => setTheme(createAppTheme());
 		window.addEventListener(THEME_APPLIED_EVENT, refresh);
+		// A child may have applied its palette before this listener mounted.
+		if (
+			document.body.hasAttribute('data-oriso-login-dark') ||
+			document.documentElement.hasAttribute('data-oriso-personal-scheme')
+		)
+			refresh();
 		return () => window.removeEventListener(THEME_APPLIED_EVENT, refresh);
 	}, []);
 

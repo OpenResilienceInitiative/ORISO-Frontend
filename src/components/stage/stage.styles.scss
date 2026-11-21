@@ -32,12 +32,25 @@ $animation-easing-title: cubic-bezier(0, 0, 0.5, 1);
 }
 
 .stage {
+	--stage-artwork-brand: var(--m3-primary, #{$primary});
+	--stage-artwork-container: var(--m3-primary-container, #da2530);
+	--stage-artwork-edge: var(--m3-primary-hover, #7c0d15);
+	--stage-artwork-on-brand: var(--m3-on-primary, #{$text-invert});
+
+	.stageLayout--brandedArtwork &,
+	.stageLayout--waitingRoom & {
+		--stage-artwork-brand: var(--oriso-stage-brand, #{$primary});
+		--stage-artwork-container: var(--oriso-stage-brand-container, #da2530);
+		--stage-artwork-edge: var(--oriso-stage-brand-edge, #7c0d15);
+		--stage-artwork-on-brand: var(--oriso-stage-brand-on, #{$text-invert});
+	}
+
 	width: 100vw;
 	overflow: hidden;
 	transition: width $animation-duration-width $animation-easing-width;
 	transition-delay: $animation-duration - $animation-duration-width;
 	text-align: center;
-	background-color: var(--m3-primary, $primary);
+	background-color: var(--stage-artwork-brand);
 
 	// Baseline gradient: no color-mix() dependency, one declaration, so
 	// there is nothing here for the production build to treat as a
@@ -56,9 +69,9 @@ $animation-easing-title: cubic-bezier(0, 0, 0.5, 1);
 		),
 		linear-gradient(
 			152deg,
-			var(--m3-primary-container, #da2530) 0%,
-			var(--m3-primary, #c0121f) 46%,
-			var(--m3-primary-hover, #7c0d15) 100%
+			var(--stage-artwork-container) 0%,
+			var(--stage-artwork-brand) 46%,
+			var(--stage-artwork-edge) 100%
 		);
 
 	// Enhanced glow, gated behind a real feature query instead of a second
@@ -92,12 +105,12 @@ $animation-easing-title: cubic-bezier(0, 0, 0.5, 1);
 			),
 			linear-gradient(
 				152deg,
-				var(--m3-primary-container, #da2530) 0%,
-				var(--m3-primary, #c0121f) 46%,
-				var(--m3-primary-hover, #7c0d15) 100%
+				var(--stage-artwork-container) 0%,
+				var(--stage-artwork-brand) 46%,
+				var(--stage-artwork-edge) 100%
 			);
 	}
-	color: var(--m3-on-primary, $text-invert);
+	color: var(--stage-artwork-on-brand);
 	flex-direction: column;
 	align-items: center;
 	justify-content: center;

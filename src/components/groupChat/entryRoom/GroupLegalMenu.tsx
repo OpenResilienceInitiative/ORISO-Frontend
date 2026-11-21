@@ -47,10 +47,14 @@ export const GroupLegalMenu = ({
 				sx={{
 					'width': 34,
 					'height': 34,
-					'color': 'var(--m3-on-primary, #fff)',
+					'color': 'var(--oriso-stage-brand-on, #fff)',
 					'backgroundColor': 'rgba(255, 255, 255, 0.14)',
 					'&:hover': {
 						backgroundColor: 'rgba(255, 255, 255, 0.24)'
+					},
+					'&:focus-visible': {
+						outline: '2px solid currentColor',
+						outlineOffset: 2
 					}
 				}}
 			>

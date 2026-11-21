@@ -13,7 +13,10 @@ export const readCssColor = (
 		return fallbackColor;
 	}
 
-	const value = getComputedStyle(document.documentElement)
+	const themeScope = document.body?.hasAttribute('data-oriso-login-dark')
+		? document.body
+		: document.documentElement;
+	const value = getComputedStyle(themeScope)
 		.getPropertyValue(cssVariableName)
 		.trim();
 

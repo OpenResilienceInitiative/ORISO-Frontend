@@ -6,6 +6,7 @@
  * Traces: UAT-D, UAT-E, UAT-I (Tests #18–#22 in THB — Test Logic).
  */
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
+import { wcagContrast } from './wcagContrast';
 import { computeOrisoPalette } from './orisoScheme';
 import {
 	ACTIVE_SCHEMES,
@@ -527,4 +528,66 @@ describe('resolveTenantSeeds (shared with the call, #2188)', () => {
 			expect(root.style.length).toBe(Object.keys(tokens).length);
 		});
 	});
+});
+
+describe('personal contrast on the app root', () => {
+	it.each(['light', 'dark'] as const)(
+		'removes elevated-only roles when a branded %s palette returns to standard',
+		(scheme) => {
+			const root = freshRoot();
+			const theming = { primaryColor: '#a5000a', signal: '#db005b' };
+			root.style.setProperty('--oriso-personal-text-scale', '1.5');
+			expect(applyTenantPalette(theming, root, scheme, 'high')).toBe(
+				true
+			);
+			expect(root.style.getPropertyValue('--oriso-error-text')).not.toBe(
+				''
+			);
+			expect(applyTenantPalette(theming, root, scheme, 'standard')).toBe(
+				true
+			);
+			expect(root.style.getPropertyValue('--oriso-error-text')).toBe('');
+			expect(
+				root.style.getPropertyValue('--oriso-personal-text-scale')
+			).toBe('1.5');
+
+			const palette = computeOrisoPalette(
+				{ primary: theming.primaryColor, signal: theming.signal },
+				scheme
+			).tokens;
+			expect(root.style.length).toBe(Object.keys(palette).length + 1);
+			Object.entries(palette).forEach(([name, value]) =>
+				expect(root.style.getPropertyValue(name)).toBe(value)
+			);
+		}
+	);
+
+	it.each([
+		undefined,
+		{ primaryColor: 'invalid' },
+		{ primaryColor: '#1a1a1a' }
+	])(
+		'uses the ORISO fallback for a requested high contrast level (%j)',
+		(theming) => {
+			const root = freshRoot();
+			vi.spyOn(console, 'warn').mockImplementation(() => {});
+			const listener = vi.fn();
+			window.addEventListener(THEME_APPLIED_EVENT, listener);
+			try {
+				expect(applyTenantPalette(theming, root, 'light', 'high')).toBe(
+					true
+				);
+				const ink = root.style.getPropertyValue(
+					'--oriso-topic-tag-active-fg'
+				);
+				const fill = root.style.getPropertyValue(
+					'--oriso-topic-tag-active-bg'
+				);
+				expect(wcagContrast(ink, fill)).toBeGreaterThanOrEqual(7);
+				expect(listener).toHaveBeenCalledTimes(1);
+			} finally {
+				window.removeEventListener(THEME_APPLIED_EVENT, listener);
+			}
+		}
+	);
 });

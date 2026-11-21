@@ -8,7 +8,11 @@ import {
 	setRecoveryRuntimeStatus
 } from '../../services/recoveryReminderState';
 import { M3Snackbar } from '../m3Snackbar/M3Snackbar';
-import { KeyBackupRecoveryPrompt } from './KeyBackupRecoveryPrompt';
+import {
+	KeyBackupRecoveryBoundary,
+	KeyBackupRecoveryNoticeSlot,
+	KeyBackupRecoveryPrompt
+} from './KeyBackupRecoveryPrompt';
 import { useComposerDock } from '../messageSubmitInterface/useComposerDock';
 
 const USER_ID = '@recovery-snackbar-story:example.test';
@@ -19,8 +23,8 @@ const service = {
 /**
  * The login-time recovery notice as an M3 snackbar. It used to be a strip
  * pinned above the app shell; now it floats bottom-centre, carries one action
- * ("Verlauf wiederherstellen") and a ✕, comes back on every reload and login until the
- * history is readable, and never pushes the layout.
+ * ("Verlauf wiederherstellen") and a ✕, and comes back on every reload and login until
+ * the history is readable. Narrow conversations place the same notice in the timeline.
  */
 const meta = {
 	id: 'organisms-keybackuprecoverysnackbar',
@@ -275,4 +279,45 @@ export const LeavesComposerUsableDesktop: Story = {
 	...LeavesComposerUsable,
 	name: 'Recovery stays above the growing composer — desktop',
 	globals: { viewport: { value: 'desktop1440' } }
+};
+
+export const InNarrowConversation: Story = {
+	name: 'Narrow conversation at 200%',
+	globals: {
+		viewport: { value: 'phone320' },
+		scheme: 'dark',
+		contrast: 'high'
+	},
+	beforeEach: () => {
+		setRecoveryRuntimeStatus(USER_ID, 'retryable-failure');
+	},
+	render: () => (
+		<KeyBackupRecoveryBoundary>
+			<section
+				aria-label="Chatverlauf"
+				style={
+					{
+						'--oriso-personal-text-scale': 2,
+						'maxBlockSize': '70dvh',
+						'overflowY': 'auto',
+						'padding': '1rem',
+						'fontSize': '1.75rem'
+					} as React.CSSProperties
+				}
+			>
+				<KeyBackupRecoveryNoticeSlot />
+				<p>Wann können wir uns für ein Gespräch Zeit nehmen?</p>
+				<p>Ich bin morgen nachmittags erreichbar.</p>
+			</section>
+		</KeyBackupRecoveryBoundary>
+	),
+	play: async () => {
+		const page = within(document.body);
+		const timeline = page.getByRole('region', { name: 'Chatverlauf' });
+		const notice = within(timeline).getByRole('status');
+		await expect(notice).toBeVisible();
+		const action = within(notice).getByTestId('key-backup-recovery-open');
+		await expect(action).toBeVisible();
+		await expect(timeline.scrollWidth).toBe(timeline.clientWidth);
+	}
 };
