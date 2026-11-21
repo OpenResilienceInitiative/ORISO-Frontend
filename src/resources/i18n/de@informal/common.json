@@ -2459,8 +2459,7 @@
 			"body": "Schön, dass Du Dich gemeldet hast. Deine Nachricht ist bei uns angekommen."
 		},
 		"whoReadsAlong": {
-			"headline": "Wer Deine Nachricht liest",
-			"body": "Deine Nachricht lesen ausschließlich die Fachkräfte der zuständigen Beratungsstelle. Alle sind zur Verschwiegenheit verpflichtet."
+			"headline": "Wer Deine Nachricht liest"
 		},
 		"responseDeadline": {
 			"headline": "Wann Du eine Antwort bekommst",

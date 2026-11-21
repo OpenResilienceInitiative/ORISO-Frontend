@@ -6016,8 +6016,7 @@
 			"body": "Thank you for getting in touch. Your message has reached us."
 		},
 		"whoReadsAlong": {
-			"headline": "Who reads your message",
-			"body": "Only the trained staff of the responsible counselling centre read your message. Everyone there is bound by confidentiality."
+			"headline": "Who reads your message"
 		},
 		"responseDeadline": {
 			"headline": "When you will get a reply",
