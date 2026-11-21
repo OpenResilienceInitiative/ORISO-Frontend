@@ -10,6 +10,7 @@ import {
 	CallState
 } from 'matrix-js-sdk/lib/webrtc/call';
 import { CallFeedEvent } from 'matrix-js-sdk/lib/webrtc/callFeed';
+import type { MediaHandler } from 'matrix-js-sdk/lib/webrtc/mediaHandler';
 import { assertMatrixRoomEncrypted } from '../utils/matrixRoomEncryption';
 
 export interface MatrixCallOptions {
@@ -25,6 +26,28 @@ export interface MatrixCallEventHandlers {
 	onCallError?: (error: Error) => void;
 	onIncomingCall?: (call: MatrixCall) => void;
 }
+
+/**
+ * matrix-js-sdk 38.4.0 keeps the camera/microphone stream that arrives after
+ * the caller hung up while answer() waited for media permission. Stop the
+ * streams this answer() opened if the call ended meanwhile; streams of other
+ * calls and the hand-over to a replacement call (glare) stay untouched.
+ */
+const releaseLateAnswerMedia = (
+	call: MatrixCall,
+	mediaHandler: MediaHandler | undefined,
+	streamsBefore: Set<MediaStream>
+): void => {
+	const { successor } = call as unknown as { successor?: MatrixCall };
+	if (!mediaHandler || !call.callHasEnded() || successor) {
+		return;
+	}
+	for (const stream of [...mediaHandler.userMediaStreams]) {
+		if (!streamsBefore.has(stream)) {
+			mediaHandler.stopUserMediaStream(stream);
+		}
+	}
+};
 
 class MatrixCallService {
 	private client: MatrixClient | null = null;
@@ -169,10 +192,13 @@ class MatrixCallService {
 			});
 
 			// Answer the call (matrix-js-sdk will request media permissions internally)
+			const mediaHandler = this.client?.getMediaHandler();
+			const streamsBefore = new Set(mediaHandler?.userMediaStreams ?? []);
 			await call.answer(
 				true, // audio
 				isVideoCall // video
 			);
+			releaseLateAnswerMedia(call, mediaHandler, streamsBefore);
 
 			// console.log('✅ Call answered successfully');
 		} catch (error) {
