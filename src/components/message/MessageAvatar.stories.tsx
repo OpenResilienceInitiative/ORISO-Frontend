@@ -204,7 +204,7 @@ export const AllVariants: Story = {
 
 /**
  * The 60px message frame draws the white ring (Figma 7539-29194, 6px) on BOTH
- * sides; the animal circle inside it stays 48px and carries no grey outline.
+ * sides; the shared frame also outlines the icon on each side.
  */
 export const WhiteRingOnBothSides: Story = {
 	args: { ...baseIdentity, isGroup: false, size: undefined },
@@ -233,11 +233,14 @@ export const WhiteRingOnBothSides: Story = {
 			) as HTMLElement;
 			const frameStyle = getComputedStyle(frame);
 			expect(parseFloat(frameStyle.borderTopWidth)).toBe(6);
-			expect(frameStyle.borderTopColor).toBe('rgb(255, 255, 255)');
+			expect(frameStyle.borderTopColor).toBe('rgba(0, 0, 0, 0)');
+			expect(frameStyle.backgroundClip).toBe('border-box');
 			expect(frameStyle.backgroundColor).toBe('rgb(255, 255, 255)');
 			const person = frame.querySelector(
 				'[data-testid="user-avatar"]'
 			) as HTMLElement;
+			expect(getComputedStyle(person, '::after').content).toBe('none');
+			expect(person.getBoundingClientRect().width).toBe(48);
 			const circle = person.firstElementChild as HTMLElement;
 			expect(parseFloat(getComputedStyle(circle).borderTopWidth)).toBe(0);
 			expect(getComputedStyle(circle).boxShadow).toBe('none');

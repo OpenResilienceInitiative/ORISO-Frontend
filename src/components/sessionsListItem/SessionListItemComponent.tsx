@@ -1199,6 +1199,7 @@ export const SessionListItemComponent = ({
 		};
 		const railAvatar = activeSession.isGroup ? (
 			<UserAvatar
+				chatOutline
 				username={activeSession.item.matrixRoomId || 'group'}
 				displayName={railName}
 				userId={
@@ -1224,6 +1225,7 @@ export const SessionListItemComponent = ({
 			/>
 		) : (
 			<UserAvatar
+				chatOutline
 				username={activeSession.consultant?.username || 'User'}
 				displayName={railName}
 				userId={
@@ -1857,6 +1859,7 @@ export const SessionListItemComponent = ({
 								/>
 							) : (
 								<UserAvatar
+									chatOutline
 									username={
 										activeSession.consultant?.username ||
 										'User'

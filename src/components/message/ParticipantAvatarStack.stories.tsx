@@ -76,6 +76,15 @@ export const ThreeParticipants: Story = {
 			'[data-cy="participant-avatar"]'
 		);
 		await expect(avatars).toHaveLength(3);
+		for (const avatar of avatars) {
+			const frame = avatar.querySelector<HTMLElement>(
+				'[data-testid="user-avatar"]'
+			)!;
+			await expect(getComputedStyle(frame, '::after').content).toBe(
+				'none'
+			);
+			await expect(getComputedStyle(avatar).boxShadow).toContain('2px');
+		}
 		// Latest activity first: the client wrote last.
 		await expect(avatars[0].getAttribute('data-user-id')).toBe(
 			client.userId

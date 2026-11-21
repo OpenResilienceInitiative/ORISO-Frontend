@@ -1,4 +1,5 @@
 @import '../../resources/styles/settings';
+@import '../message/avatarFrame';
 
 .carimatMessageFrame {
 	margin-bottom: 20px;
@@ -16,7 +17,7 @@
 		width: 60px;
 		flex: 0 0 60px;
 		position: relative;
-		left: var(--carimat-avatar-ring-offset, -6px);
+		left: var(--carimat-avatar-ring-offset, 0px);
 		display: flex;
 		flex-direction: column;
 		align-items: center;
@@ -24,17 +25,7 @@
 	}
 
 	.carimatMessageFrame__avatar {
-		width: 60px;
-		height: 60px;
-		min-width: 60px;
-		min-height: 60px;
-
-		/* The ring is surface backdrop, not an outline stroke. Background paints
-		   beneath this transparent sizing border without misusing a surface role. */
-		border: 6px solid transparent;
-		border-radius: 50%;
-		background: var(--m3-surface, #ffffff);
-		box-sizing: border-box;
+		@include chat-avatar-frame;
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -66,7 +57,7 @@
 		display: flex;
 		flex-direction: column;
 		align-items: stretch;
-		gap: 4px;
+		gap: 0;
 		padding-top: 6px;
 	}
 
