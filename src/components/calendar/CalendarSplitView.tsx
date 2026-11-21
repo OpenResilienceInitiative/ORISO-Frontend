@@ -46,7 +46,12 @@ import {
 } from './CalendarWorkGrip';
 import type { PublicHoliday } from './calendarHolidays';
 import { CalendarEntryPeek, initialsOf } from './CalendarEntryPeek';
-import { avatarToneClass } from './calendarAvatar';
+import {
+	ENTRY_DOT_AVATAR_PX,
+	avatarToneClass,
+	entryAvatarSize
+} from './calendarAvatar';
+import { CalendarPersonAvatar } from './CalendarPersonAvatar';
 import {
 	gridMinutes,
 	type CalendarHighlight,
@@ -621,6 +626,57 @@ export const CalendarSplitView = ({
 		]
 			.filter(Boolean)
 			.join(', ');
+		const avatarSize = entryAvatarSize(
+			'timeGrid',
+			(new Date(entry.end).getTime() - new Date(entry.start).getTime()) /
+				60_000,
+			hourPx / 2
+		);
+		const avatar = avatarName && (
+			<CalendarPersonAvatar
+				className="calEntry__avatar"
+				name={avatarName}
+				avatar={entry.avatar}
+				size={avatarSize}
+			/>
+		);
+		// FE#2325: as in the day grid, a 32 px avatar leads a box high
+		// enough for it.
+		const lead = !!avatar && avatarSize > ENTRY_DOT_AVATAR_PX;
+		const body = (
+			<>
+				<span className="calEntry__line">
+					{!lead && avatar}
+					<span className="calEntry__icon">
+						<CalendarEntryGlyph
+							entry={entry}
+							colleague={colleague}
+						/>
+					</span>
+					<span className="calEntry__title">
+						{proposal
+							? t('calendar.proposal.label')
+							: label(entry, colleague)}
+					</span>
+				</span>
+				{proposal && (
+					<span className="calEntry__status">
+						{proposalStatus(proposal)}
+					</span>
+				)}
+				{!proposal && entry.requested && (
+					<span className="calEntry__status">
+						{t('calendar.appointmentRequest.status')}
+					</span>
+				)}
+				{rangeShown && (
+					<span className="calEntry__range">
+						{clock.format(new Date(entry.start))}–
+						{clock.format(new Date(entry.end))}
+					</span>
+				)}
+			</>
+		);
 		const button = (
 			<button
 				key={proposal ? `p-${proposal.id}` : entry.id}
@@ -637,45 +693,14 @@ export const CalendarSplitView = ({
 				data-entry-id={entry.id}
 				data-cy={`calendar-split-entry-${entry.id}`}
 			>
-				<span className="calEntry__inner">
-					<span className="calEntry__line">
-						{avatarName && (
-							<span
-								className={`calEntry__avatar ${avatarToneClass(avatarName)}`}
-								aria-hidden="true"
-							>
-								{initialsOf(avatarName)}
-							</span>
-						)}
-						<span className="calEntry__icon">
-							<CalendarEntryGlyph
-								entry={entry}
-								colleague={colleague}
-							/>
-						</span>
-						<span className="calEntry__title">
-							{proposal
-								? t('calendar.proposal.label')
-								: label(entry, colleague)}
-						</span>
+				{lead ? (
+					<span className="calEntry__inner calEntry__inner--lead">
+						{avatar}
+						<span className="calEntry__body">{body}</span>
 					</span>
-					{proposal && (
-						<span className="calEntry__status">
-							{proposalStatus(proposal)}
-						</span>
-					)}
-					{!proposal && entry.requested && (
-						<span className="calEntry__status">
-							{t('calendar.appointmentRequest.status')}
-						</span>
-					)}
-					{rangeShown && (
-						<span className="calEntry__range">
-							{clock.format(new Date(entry.start))}–
-							{clock.format(new Date(entry.end))}
-						</span>
-					)}
-				</span>
+				) : (
+					<span className="calEntry__inner">{body}</span>
+				)}
 			</button>
 		);
 		if (!colleague && !proposal) return button;

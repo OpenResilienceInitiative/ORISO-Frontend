@@ -1,0 +1,67 @@
+// The "?" tour launcher (Frank, 2026-11-18): the design system's FAB in the
+// classic bottom-right spot. It only shows while nothing else floats there
+// (`floatingSurfaces`), so two FABs never lie on top of each other. On the
+// phone it sits above the bottom navigation, like the call dock.
+
+$tour-launcher-footer-clearance: 40px;
+
+.tourLauncher {
+	position: fixed;
+	right: $fab-edge-gap;
+
+	// Above the 40 px app footer (privacy, imprint, version) — the FAB must
+	// not cover its links (seen on Dev, FE#2340).
+	bottom: calc(#{$fab-edge-gap} + #{$tour-launcher-footer-clearance});
+
+	// Above the page and the session list, below the composer (1000), MUI
+	// dialogs (1300) and call surfaces (1250+); above Joyride (53) is moot —
+	// the launcher hides while a tour runs.
+	z-index: 900;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+	gap: $fab-stack-gap;
+	pointer-events: none;
+
+	& > * {
+		pointer-events: auto;
+	}
+
+	@media (width <= 899px) {
+		bottom: calc(
+			env(safe-area-inset-bottom, 0px) + 76px + #{$fab-edge-gap}
+		);
+	}
+
+	&__menu {
+		position: absolute;
+		right: 0;
+		bottom: calc(100% + 4px);
+	}
+
+	&__card {
+		max-height: min(520px, calc(100vh - 160px));
+	}
+
+	&__list {
+		margin: 0;
+		padding: 0;
+		list-style: none;
+		overflow-y: auto;
+	}
+
+	&__fab {
+		@include floating-action-button;
+	}
+
+	&__fabIcon {
+		width: 24px;
+		height: 24px;
+		fill: currentcolor;
+
+		&[viewBox='0 0 20 20'] {
+			width: 20px;
+			height: 20px;
+		}
+	}
+}

@@ -38,7 +38,7 @@ export const toPlainText = (value: string): string =>
 		.replace(/\s+/g, ' ')
 		.trim();
 
-const actionForStatus = (status: TourStatus): TourStartMode => {
+export const actionForStatus = (status: TourStatus): TourStartMode => {
 	if (status === 'in_progress') {
 		return 'continue';
 	}

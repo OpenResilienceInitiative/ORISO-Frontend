@@ -310,7 +310,7 @@ describe('SessionsList display filter before Matrix sync', () => {
 					name: 'notifications.displayFilter.button'
 				})
 			);
-			const view = screen.getAllByRole('radio')[0] as HTMLInputElement;
+			const view = screen.getAllByRole('radio')[0] as HTMLButtonElement;
 			expect(view.disabled).toBe(true);
 			expect(
 				screen.queryByText('notifications.displayFilter.readOnlyHint')

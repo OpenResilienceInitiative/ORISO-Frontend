@@ -87,9 +87,8 @@ vi.mock('../../api', async (original) => ({
 	...(await original<any>()),
 	apiRejectEnquiry: (...args: any[]) => boundary.rejectEnquiry(...args)
 }));
-vi.mock('matrix-js-sdk', async (original) => ({
-	...(await original<any>()),
-	createClient: () => boundary.client
+vi.mock('../../services/browserMatrixSdkClient', () => ({
+	createBrowserMatrixSdkClient: () => boundary.client
 }));
 // jsdom gives every node zero layout, so focus-trap sees no tabbable element
 // and throws on activate (the delete confirmation is the first overlay here).
@@ -922,18 +921,27 @@ it('tells the counsellor when a colleague took the enquiry they have open', asyn
 	const view = openEnquiry(SESSION_LIST_TYPES.ENQUIRY, {
 		reloadedConsultant: 'colleague'
 	});
-	await waitFor(() =>
-		expect(
-			screen.getByRole('button', { name: 'enquiry.acceptButton.known' })
-		).toBeTruthy()
-	);
+	const acceptButton = { name: 'enquiry.acceptButton.known' };
+	await screen.findByRole('button', acceptButton);
 	expect(screen.queryByText(TAKEN_HEADLINE)).toBeNull();
-	boundary.sessionRoom.mockResolvedValue({
+	const taken = {
 		sessions: [{ session: { id: 4711, status: 2, matrixRoomId: MAIN } }]
-	});
-	await waitFor(() => expect(screen.getByText(TAKEN_HEADLINE)).toBeTruthy(), {
-		timeout: 10000
-	});
+	};
+	const { promise, resolve } = Promise.withResolvers<typeof taken>();
+	const nextStatus = vi.fn(() => promise);
+	boundary.sessionRoom.mockImplementation(nextStatus);
+	await waitFor(
+		() =>
+			expect(nextStatus).toHaveBeenCalledWith(
+				4711,
+				expect.objectContaining({ aborted: false })
+			),
+		{ timeout: 10000 }
+	);
+	await act(async () => resolve(taken));
+	expect(boundary.reload).toHaveBeenCalledTimes(1);
+	expect(screen.queryByRole('button', acceptButton)).toBeNull();
+	expect(screen.getByText(TAKEN_HEADLINE)).toBeTruthy();
 	fireEvent.click(
 		screen.getByRole('button', {
 			name: 'session.anonymous.takenByOtherConsultant.button.label'

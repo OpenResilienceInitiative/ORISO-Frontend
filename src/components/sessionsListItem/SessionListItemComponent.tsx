@@ -1661,7 +1661,13 @@ export const SessionListItemComponent = ({
 								   pick a topic. Fall back to the "No topic
 								   specified" chip used by group-chat cards
 								   so the topic column is never empty. */}
-								<TopicTag className="sessionsListItem__topic">
+								<TopicTag
+									className="sessionsListItem__topic"
+									title={
+										topic?.name ||
+										translate('groupChat.noTopicSpecified')
+									}
+								>
 									{topic?.name ||
 										translate('groupChat.noTopicSpecified')}
 								</TopicTag>
@@ -1669,7 +1675,10 @@ export const SessionListItemComponent = ({
 							</>
 						) : shouldShowPostcode && topic?.name ? (
 							<div className="sessionsListItem__topicPostcodeGroup">
-								<TopicTag className="sessionsListItem__topic">
+								<TopicTag
+									className="sessionsListItem__topic"
+									title={topic.name}
+								>
 									{topic.name}
 								</TopicTag>
 								<div className="sessionsListItem__postcode">
@@ -1679,7 +1688,10 @@ export const SessionListItemComponent = ({
 						) : (
 							<>
 								{topic?.name && (
-									<TopicTag className="sessionsListItem__topic">
+									<TopicTag
+										className="sessionsListItem__topic"
+										title={topic.name}
+									>
 										{topic.name}
 									</TopicTag>
 								)}
@@ -1698,7 +1710,12 @@ export const SessionListItemComponent = ({
 							</>
 						)}
 					</div>
-					<div className="sessionsListItem__rowRight">
+					<div
+						className={clsx(
+							'sessionsListItem__rowRight',
+							waitingTime && 'sessionsListItem__rowRight--waiting'
+						)}
+					>
 						{datePlacement === 'corner' && (
 							<div
 								className={clsx(
@@ -1741,7 +1758,10 @@ export const SessionListItemComponent = ({
 				</div>
 				{datePlacement === 'line' && (
 					<div
-						className="sessionsListItem__dateLine"
+						className={clsx(
+							'sessionsListItem__dateLine',
+							waitingTime && 'sessionsListItem__dateLine--waiting'
+						)}
 						data-cy="session-card-date-line"
 					>
 						{cardDate}

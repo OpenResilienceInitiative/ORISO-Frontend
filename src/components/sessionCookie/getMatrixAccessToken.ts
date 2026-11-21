@@ -1,4 +1,5 @@
-import { createClient, MatrixClient } from 'matrix-js-sdk';
+import type { MatrixClient } from 'matrix-js-sdk';
+import { createBrowserMatrixSdkClient } from '../../services/browserMatrixSdkClient';
 import { endpoints } from '../../resources/scripts/endpoints';
 import { getMatrixHomeserverUrl } from '../../resources/scripts/runtimeConfig';
 import { fetchData, FETCH_ERRORS, FETCH_METHODS } from '../../api/fetchData';
@@ -401,26 +402,30 @@ export const clearPersistedMatrixDeviceId = (userId: string): void => {
 // Helper function to create Matrix client with stored credentials
 export const createMatrixClient = (
 	loginData: MatrixLoginData,
-	onSdkError?: (...messages: unknown[]) => void
+	onSdkError?: (...messages: unknown[]) => void,
+	isStartupActive?: () => boolean
 ): MatrixClient => {
 	const baseLogger = getMatrixClientLogger();
-	const client = createClient({
-		baseUrl: loginData.homeserverUrl,
-		accessToken: loginData.accessToken,
-		userId: loginData.userId,
-		deviceId: loginData.deviceId,
-		fallbackICEServerAllowed: true,
-		logger: onSdkError
-			? createMatrixErrorAwareLogger(baseLogger, onSdkError)
-			: baseLogger,
-		// #437 key backup + recovery: the SDK pulls the secret-storage key
-		// through this callback during setup/recovery flows (one-shot in-memory
-		// cache, never persisted).
-		cryptoCallbacks: {
-			getSecretStorageKey: (keys, name) =>
-				secretStorageKeyCallback(client, keys, name)
-		}
-	});
+	const client = createBrowserMatrixSdkClient(
+		{
+			baseUrl: loginData.homeserverUrl,
+			accessToken: loginData.accessToken,
+			userId: loginData.userId,
+			deviceId: loginData.deviceId,
+			fallbackICEServerAllowed: true,
+			logger: onSdkError
+				? createMatrixErrorAwareLogger(baseLogger, onSdkError)
+				: baseLogger,
+			// #437 key backup + recovery: the SDK pulls the secret-storage key
+			// through this callback during setup/recovery flows (one-shot in-memory
+			// cache, never persisted).
+			cryptoCallbacks: {
+				getSecretStorageKey: (keys, name) =>
+					secretStorageKeyCallback(client, keys, name)
+			}
+		},
+		isStartupActive
+	);
 	// P0: the SDK sends in the clear into a room its store does not hold yet
 	// (fresh client after a token refresh / device recovery, or before the
 	// first sync). Every client must wait for the synced room or refuse.

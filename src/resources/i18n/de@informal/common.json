@@ -333,6 +333,9 @@
 		"format": {
 			"panelTitle": "Neue Unterhaltung erstellen",
 			"panelMenu": "Weitere Optionen",
+			"discard": {
+				"description": "Deine Eingaben in dieser Karte sind noch nicht gespeichert. Wenn du die Ansicht schließt, gehen sie verloren."
+			},
 			"back": "Zurück",
 			"subtitle": "Wir bieten verschiedene spezialisierte Gesprächsformate für dich und die Ratsuchenden an. Die Auswahl ist von den Trägern und deiner Beratungsstelle frei konfigurierbar."
 		},
@@ -2047,6 +2050,12 @@
 		},
 		"introduction": {
 			"summary": "Lerne die Bereiche der Anwendung kennen. Du kannst die Einführung jederzeit erneut starten."
+		},
+		"launcherSwitch": {
+			"hint": {
+				"on": "An: Der Knopf „?“ unten rechts öffnet deine Rundgänge. Solange ein Gespräch offen ist, ist er ausgeblendet.",
+				"off": "Aus: Der Knopf „?“ ist ausgeblendet. Deine Rundgänge findest du weiterhin hier."
+			}
 		}
 	},
 	"anonymousChat": {

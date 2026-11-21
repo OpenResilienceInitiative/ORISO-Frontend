@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { OrisoTextarea } from '../form/OrisoTextarea';
 import { ReactComponent as CloseIcon } from '../../resources/img/icons/close.svg';
 import { ReactComponent as PlusIcon } from '../../resources/img/icons/plus-mui.svg';
 
@@ -125,12 +126,21 @@ export const RuleChipsEditor = ({
 
 	return (
 		<div className="ruleChipsEditor">
-			<textarea
-				ref={inputRef}
+			<OrisoTextarea
+				// Fixed box: 120px on a phone, the column on
+				// desktop; longer text scrolls inside.
+				rows={2}
+				inputRef={inputRef}
 				className="ruleChipsEditor__input"
-				aria-label={t('groupChat.create.authorContent.ruleEditorLabel')}
-				maxLength={RULE_MAX_LENGTH}
-				placeholder={t('groupChat.create.authorContent.rule')}
+				fullWidth
+				inputProps={{
+					// A sentence: kept as placeholder, not a floating label.
+					'placeholder': t('groupChat.create.authorContent.rule'),
+					'aria-label': t(
+						'groupChat.create.authorContent.ruleEditorLabel'
+					),
+					'maxLength': RULE_MAX_LENGTH
+				}}
 				value={draft}
 				// At the limit a new rule has nowhere to go; a chip still opens
 				// its rule for editing.
