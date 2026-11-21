@@ -2890,7 +2890,9 @@ export const SessionsList = ({
 			data-tour-target={
 				type === SESSION_LIST_TYPES.ENQUIRY
 					? 'consultant-enquiries-list'
-					: 'consultant-sessions-list'
+					: hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData)
+						? 'sessions-list'
+						: 'consultant-sessions-list'
 			}
 		>
 			{/* {showEnquiryFilterChips && (

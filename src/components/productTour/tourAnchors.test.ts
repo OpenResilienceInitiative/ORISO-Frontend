@@ -88,6 +88,53 @@ const anchorContract: Array<{
 		anchor: 'supervision-panel',
 		sourceFile: 'session/SessionItemComponent.tsx',
 		expected: /data-tour-target="supervision-panel"/
+	},
+	// Asker tours (FE#2343). The list wrapper keeps the counsellor anchor and
+	// renders the neutral alias for advice seekers.
+	{
+		anchor: 'sessions-list',
+		sourceFile: 'sessionsList/SessionsList.tsx',
+		expected:
+			/AUTHORITIES\.ASKER_DEFAULT, userData\)\s*\?\s*'sessions-list'\s*:\s*'consultant-sessions-list'/
+	},
+	{
+		anchor: 'profile-overview',
+		sourceFile: 'profile/Profile.tsx'
+	},
+	// Settings cards: anchored inside each card's own component, so the
+	// card shell stays untouched. The three notification variants share one
+	// anchor; only one of them renders the first match.
+	{
+		anchor: 'settings-password',
+		sourceFile: 'passwordReset/PasswordReset.tsx'
+	},
+	{
+		anchor: 'settings-2fa',
+		sourceFile: 'twoFactorAuth/TwoFactorAuth.tsx'
+	},
+	{
+		anchor: 'settings-recovery',
+		sourceFile: 'profile/SecurityPrivacySettings.tsx'
+	},
+	{
+		anchor: 'settings-delete-account',
+		sourceFile: 'profile/DeleteAccount.tsx'
+	},
+	{
+		anchor: 'settings-notifications',
+		sourceFile: 'profile/EmailNotifications/index.tsx'
+	},
+	{
+		anchor: 'settings-notifications',
+		sourceFile: 'profile/NotificationSettings/index.tsx'
+	},
+	{
+		anchor: 'settings-notifications',
+		sourceFile: 'profile/BrowserNotifications/index.tsx'
+	},
+	{
+		anchor: 'settings-display',
+		sourceFile: '../features/menu-effects/MenuEffectsSettings.tsx'
 	}
 ];
 

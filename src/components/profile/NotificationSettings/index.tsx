@@ -91,7 +91,10 @@ export const NotificationSettingsPanel = () => {
 	);
 
 	return (
-		<div className="notifications__content">
+		<div
+			className="notifications__content"
+			data-tour-target="settings-notifications"
+		>
 			<div className="profile__content__title">
 				<Headline
 					text={t('profile.notificationSettings.title')}

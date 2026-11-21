@@ -153,11 +153,13 @@ describe('consultantMailCounsellingTour', () => {
 });
 
 describe('frontendTours registry', () => {
-	it('lists both consultant tours with unique ids', () => {
+	it('lists the introduction first, then the topic tours, with unique ids', () => {
 		const ids = frontendTours.map((t) => t.id);
 		expect(ids).toEqual([
 			'consultant-walkthrough',
-			'consultant-mail-counselling'
+			'consultant-mail-counselling',
+			'asker-first-steps',
+			'asker-settings'
 		]);
 		expect(new Set(ids).size).toBe(ids.length);
 	});
