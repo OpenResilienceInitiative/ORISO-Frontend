@@ -19,6 +19,26 @@ export type UseDepartmentLegalResult = {
 };
 
 /**
+ * The last settled result together with the (agency, topic) it belongs to.
+ * Keeping the key next to the payload is what lets the hook refuse to hand
+ * back a snapshot that was loaded for different identifiers.
+ */
+type DepartmentLegalSnapshot = {
+	key: string | null;
+	data: DepartmentLegalData | null;
+	error: Error | null;
+};
+
+const NO_SNAPSHOT: DepartmentLegalSnapshot = {
+	key: null,
+	data: null,
+	error: null
+};
+
+const snapshotKey = (agencyId: number, topicId: number): string =>
+	`${agencyId}:${topicId}`;
+
+/**
  * Shared department-legal snapshot for a (agency, topic) pair.
  * Multiple callers with the same key resolve the same cached promise.
  */
@@ -29,36 +49,38 @@ export const useDepartmentLegal = (
 ): UseDepartmentLegalResult => {
 	const idsReady = agencyId != null && topicId != null;
 	const enabled = (options.enabled ?? true) && idsReady;
+	const requestedKey =
+		enabled && agencyId != null && topicId != null
+			? snapshotKey(agencyId, topicId)
+			: null;
 
-	const [data, setData] = useState<DepartmentLegalData | null>(null);
-	const [loading, setLoading] = useState(enabled);
-	const [error, setError] = useState<Error | null>(null);
+	const [snapshot, setSnapshot] =
+		useState<DepartmentLegalSnapshot>(NO_SNAPSHOT);
 
 	useEffect(() => {
 		if (!enabled || agencyId == null || topicId == null) {
-			setLoading(false);
 			return;
 		}
 
 		let cancelled = false;
-		setLoading(true);
-		setError(null);
+		const key = snapshotKey(agencyId, topicId);
 
 		getCachedDepartmentLegal(agencyId, topicId)
 			.then((result) => {
 				if (cancelled) {
 					return;
 				}
-				setData(result);
-				setLoading(false);
+				setSnapshot({ key, data: result, error: null });
 			})
 			.catch((err: unknown) => {
 				if (cancelled) {
 					return;
 				}
-				setData(null);
-				setError(err instanceof Error ? err : new Error(String(err)));
-				setLoading(false);
+				setSnapshot({
+					key,
+					data: null,
+					error: err instanceof Error ? err : new Error(String(err))
+				});
 			});
 
 		return () => {
@@ -66,5 +88,18 @@ export const useDepartmentLegal = (
 		};
 	}, [agencyId, topicId, enabled]);
 
-	return { data, loading, error };
+	/* Identifiers can change while a consumer stays mounted — a profile or
+	   session update behind an open legal dialog. The effect only reacts after
+	   that render, so a snapshot held in state would be painted once under the
+	   new agency before the new request is even started. Publishing the
+	   snapshot only for the identifiers it was loaded for closes that window:
+	   a mismatch reads as "still loading", never as the other department's
+	   legal text. */
+	const isCurrent = snapshot.key === requestedKey;
+
+	return {
+		data: isCurrent ? snapshot.data : null,
+		loading: enabled && !isCurrent,
+		error: isCurrent ? snapshot.error : null
+	};
 };

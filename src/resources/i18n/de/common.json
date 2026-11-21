@@ -1836,6 +1836,9 @@
 			"back": "Zurück",
 			"confirm": "Verstanden",
 			"loading": "Der Rechtstext wird geladen …",
+			"loadError": {
+				"text": "Der Rechtstext konnte nicht geladen werden. Bitte versuchen Sie es später erneut."
+			},
 			"missing": {
 				"text": "Für dieses Angebot ist hier kein Rechtstext hinterlegt.",
 				"link": "Zur hinterlegten Adresse"

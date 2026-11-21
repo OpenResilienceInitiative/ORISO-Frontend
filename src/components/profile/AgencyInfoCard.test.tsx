@@ -10,7 +10,9 @@ vi.mock('react-i18next', () => ({
 }));
 
 vi.mock('../departmentLegal/DepartmentLegalSection', () => ({
-	DepartmentLegalSection: () => <div data-testid="department-legal" />
+	DepartmentLegalSection: ({ variant }: { variant?: string }) => (
+		<div data-testid="department-legal" data-variant={variant} />
+	)
 }));
 
 vi.mock('../../api/apiGetAgencyId', () => ({
@@ -65,7 +67,9 @@ describe('AgencyInfoCard', () => {
 		expect(phoneLink.href).toBe('tel:+49301234567');
 
 		expect(screen.getByText('Mo-Fr 9-17 Uhr')).toBeTruthy();
-		expect(screen.getByTestId('department-legal')).toBeTruthy();
+		const legal = screen.getByTestId('department-legal');
+		expect(legal).toBeTruthy();
+		expect(legal.getAttribute('data-variant')).toBe('modal');
 	});
 
 	it('renders structured opening-hour slots readable instead of raw JSON (#1169)', async () => {
