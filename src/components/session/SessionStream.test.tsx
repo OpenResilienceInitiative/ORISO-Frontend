@@ -237,6 +237,14 @@ vi.mock(
 	})
 );
 
+// useMatrixRoomVersion reads the service from the registry when no
+// MatrixClientContext provider is mounted.
+vi.mock('../../services/matrixClientRegistry', async (importOriginal) => ({
+	...(await importOriginal<object>()),
+	getMatrixClientService: () =>
+		mocks.matrixServicePublished ? mocks.matrixClientService : null
+}));
+
 vi.mock('./SessionItemComponent', () => ({
 	SessionItemComponent: (props: any) => {
 		const supplement = props.mainTimelineSupplement;
@@ -2341,6 +2349,106 @@ describe('SessionStream Matrix room lifecycle', () => {
 		expect(cards).toHaveLength(1);
 		expect(cards[0].callLifecycle.state).toBe('ended');
 		expect(cards[0].callLifecycle.durationSeconds).toBe(60);
+	});
+
+	it('shows the supervision side room once the first sync stores it (#2227)', async () => {
+		/*
+		 * A reload starts with an empty Matrix store. During the first sync
+		 * the SDK emits a new room's timeline events BEFORE it stores the
+		 * room, so every read in that window finds no room. The supervisor
+		 * is not a member of the client room, so no later client-room event
+		 * re-reads either: the counsellor's feedback never showed for them.
+		 */
+		const SUPERVISION = '!supervision-sync:matrix.example.org';
+		const listeners: Record<string, ((...args: any[]) => void)[]> = {};
+		const client = {
+			getUserId: () => '@supervisor:matrix.example.org',
+			on: (name: string, listener: (...args: any[]) => void) => {
+				(listeners[name] ||= []).push(listener);
+			},
+			removeListener: (
+				name: string,
+				listener: (...args: any[]) => void
+			) => {
+				listeners[name] = (listeners[name] || []).filter(
+					(candidate) => candidate !== listener
+				);
+			},
+			off: (name: string, listener: (...args: any[]) => void) =>
+				client.removeListener(name, listener)
+		};
+		let roomStored = false;
+		const feedback = {
+			getType: () => 'm.room.message',
+			getContent: () => ({
+				msgtype: 'm.text',
+				body: 'Bitte um Feedback'
+			}),
+			getSender: () => '@counsellor:matrix.example.org',
+			getId: () => '$feedback:matrix.example.org',
+			getTs: () => 1700000000000
+		};
+		const previousGetClient = mocks.matrixClientService.getClient;
+		mocks.matrixClientService.getClient = () => client;
+		mocks.getMatrixRoomMessages.mockImplementation((roomId: string) =>
+			roomId === SUPERVISION && roomStored ? [feedback] : []
+		);
+		mocks.getSessionSupervisors.mockResolvedValueOnce([
+			{
+				id: 7,
+				supervisorConsultantId: 'supervisor-1',
+				supervisorUsername: 'supervisor@example.invalid',
+				matrixRoomId: SUPERVISION
+			}
+		]);
+		try {
+			renderSessionStream({
+				isGroup: false,
+				activeSession: {
+					rid: ROOM_ID,
+					isGroup: false,
+					isSession: true,
+					consultant: { id: 'owner-2' },
+					item: {
+						id: 1,
+						matrixRoomId: ROOM_ID,
+						active: true,
+						status: 2
+					}
+				} as any,
+				userData: {
+					userId: 'supervisor-1',
+					grantedAuthorities: ['AUTHORIZATION_CONSULTANT_DEFAULT']
+				} as any
+			});
+			await waitFor(() =>
+				expect(mocks.getMatrixRoomMessages).toHaveBeenCalledWith(
+					SUPERVISION,
+					100
+				)
+			);
+			expect(mocks.sessionItemProps.supervisionMessages).toHaveLength(0);
+
+			// The first sync stores the room and announces it.
+			roomStored = true;
+			act(() => {
+				(listeners.Room || []).forEach((listener) =>
+					listener({ roomId: SUPERVISION })
+				);
+			});
+
+			await waitFor(() =>
+				expect(mocks.sessionItemProps.supervisionMessages).toHaveLength(
+					1
+				)
+			);
+			expect(mocks.sessionItemProps.supervisionMessages[0]._id).toBe(
+				'$feedback:matrix.example.org'
+			);
+		} finally {
+			mocks.matrixClientService.getClient = previousGetClient;
+			mocks.getMatrixRoomMessages.mockImplementation(() => []);
+		}
 	});
 
 	it('does not curtain a backend-authorized session supervisor', async () => {

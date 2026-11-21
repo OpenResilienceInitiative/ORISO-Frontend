@@ -55,6 +55,7 @@ import { ReactComponent as CheckIcon } from '../../resources/img/illustrations/c
 import { takeSelfLeave } from '../groupChat/selfLeaveGuard';
 import { ReactComponent as XIcon } from '../../resources/img/illustrations/x.svg';
 import './session.styles';
+import { useMatrixRoomVersion } from '../../hooks/useMatrixRoomVersion';
 import useUpdatingRef from '../../hooks/useUpdatingRef';
 import { useSearchParam } from '../../hooks/useSearchParams';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -608,6 +609,27 @@ export const SessionStream = ({
 		]
 	);
 	const fetchSessionMessagesRef = useUpdatingRef(fetchSessionMessages);
+	// #2227: after a reload the Matrix store is empty and every room arrives
+	// with the first sync. The SDK emits a new room's timeline events before
+	// it stores the room, so each read in that window finds no room. A
+	// supervisor is not a member of the client room, so no later client-room
+	// event re-reads either, and the side room stayed empty for them. Read
+	// again once the client has stored a room this view shows.
+	const clientRoomVersion = useMatrixRoomVersion(
+		resolvedChatSession.matrixRoomId
+	);
+	const supervisionRoomVersion = useMatrixRoomVersion(supervisionRoomId);
+	const teamRoomVersion = useMatrixRoomVersion(teamRoomId);
+	useEffect(() => {
+		if (!clientRoomVersion && !supervisionRoomVersion && !teamRoomVersion)
+			return;
+		void fetchSessionMessagesRef.current();
+	}, [
+		clientRoomVersion,
+		supervisionRoomVersion,
+		teamRoomVersion,
+		fetchSessionMessagesRef
+	]);
 	const historyScope = `${userData?.userId}:${matrixClientGeneration}:${activeSession.item.id}:${resolvedChatSession.matrixRoomId}`;
 	const historyScopeRef = useRef(historyScope);
 	historyScopeRef.current = historyScope;
