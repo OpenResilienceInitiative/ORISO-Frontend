@@ -6885,7 +6885,12 @@
 			"microphone": "Mikrofon",
 			"micOn": "Mikrofon an",
 			"micOff": "Mikrofon aus",
-			"micMeter": "Lautstärke Ihres Mikrofons"
+			"micMeter": "Lautstärke Ihres Mikrofons",
+			"cameraNotice": {
+				"permissionDenied": "Ihre Kamera ist für diese Seite blockiert. Erlauben Sie die Kamera in den Website-Einstellungen Ihres Browsers (Schloss-Symbol links neben der Adresse). Das Bild erscheint dann ohne Neuladen.",
+				"deviceBusy": "Ihre Kamera wird gerade von einem anderen Programm verwendet. Schließen Sie es und prüfen Sie dann erneut.",
+				"retry": "Kamera erneut prüfen"
+			}
 		},
 		"ready": {
 			"title": "Kamera und Mikrofon prüfen",

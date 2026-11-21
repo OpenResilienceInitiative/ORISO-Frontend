@@ -6895,7 +6895,12 @@
 			"microphone": "Mikrofon",
 			"micOn": "Mikrofonu aç",
 			"micOff": "Mikrofonu kapat",
-			"micMeter": "Mikrofonunuzun ses düzeyi"
+			"micMeter": "Mikrofonunuzun ses düzeyi",
+			"cameraNotice": {
+				"permissionDenied": "Kameranız bu site için engellendi. Tarayıcınızın site ayarlarında kameraya izin verin (adresin yanındaki kilit simgesi). Görüntü sayfayı yenilemeden görünür.",
+				"deviceBusy": "Kameranızı şu anda başka bir program kullanıyor. Programı kapatın ve tekrar kontrol edin.",
+				"retry": "Kamerayı tekrar kontrol et"
+			}
 		},
 		"ready": {
 			"title": "Kamerayı ve mikrofonu kontrol edin",
