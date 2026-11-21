@@ -42,6 +42,8 @@
 		"recoveryIntro": "Önce mevcut görüşmenizin kurtarma anahtarını hazırlayın. Böylece mesajlarınıza yeni bir cihazdan erişebilirsiniz.",
 		"pending": "Önceki bir deneme tamamlanmadı. Tamamlamak için aynı parolayı kullanın.",
 		"recoveryError": "Kurtarma anahtarı henüz kullanılamıyor. Tekrar deneyin veya daha önce kaydettiğiniz anahtarı girin.",
+		"historyError": "Sohbet geçmişiniz henüz güvenceye alınamadı. Lütfen tekrar deneyin.",
+		"fallbackKeyHelp": "Hesabınız hazır, ancak sohbet geçmişiniz henüz şifrenize bağlanamadı. Bu kurtarma anahtarını kaydedin: bu görüşmeyi yeni bir cihazda okumak için ona ihtiyacınız olacak.",
 		"existingKey": "Daha önce kaydedilen kurtarma anahtarı (gerekirse)",
 		"prepare": "Kurtarma anahtarını hazırla",
 		"accountChanged": "Giriş yapılan hesap değişti. Güvenle devam etmek için sayfayı yenileyin.",
@@ -1262,6 +1264,12 @@
 		"format": {
 			"panelTitle": "Yeni görüşme oluştur",
 			"panelMenu": "Diğer seçenekler",
+			"discard": {
+				"title": "Girdiğiniz bilgiler silinsin mi?",
+				"description": "Bu karttaki bilgiler henüz kaydedilmedi. Bu görünümü kapatırsanız kaybolacaklar.",
+				"keepEditing": "Düzenlemeye devam et",
+				"confirm": "Sil ve kapat"
+			},
 			"cardsPrevious": "Önceki görüşme formatı",
 			"cardsNext": "Sonraki görüşme formatı",
 			"back": "Geri",
@@ -3165,6 +3173,8 @@
 				"intro": "Bildirim seslerinizi her alan için ayrı ayrı seçin.",
 				"emailNote": "E-postalar yalnızca olaydan sonraki beş dakika içinde yanıt vermezseniz gönderilir.",
 				"noSound": "Ses seçilmedi",
+				"defaultSound": "Varsayılan",
+				"legacySound": "Önceki ses",
 				"tone": "Ses #{{number}}",
 				"sendByEmail": "E-posta ile gönder",
 				"confirm": "Onayla",
@@ -5570,6 +5580,17 @@
 		"introduction": {
 			"title": "Tanıtım",
 			"summary": "Uygulamanın bölümlerini tanıyın. Tanıtım turunu istediğiniz zaman yeniden başlatabilirsiniz."
+		},
+		"launcherSwitch": {
+			"title": "Tur düğmesini göster",
+			"label": {
+				"on": "Açık",
+				"off": "Kapalı"
+			},
+			"hint": {
+				"on": "Açık: sağ alttaki „?“ düğmesi turlarınızı açar. Bir görüşme açıkken gizlenir.",
+				"off": "Kapalı: „?“ düğmesi gizli. Turlarınızı yine burada bulabilirsiniz."
+			}
 		}
 	},
 	"consultingTypes": {
@@ -6371,6 +6392,13 @@
 					"intro": "Bir süpervizör eklediniz ve yanıtını okudunuz. Alıştırmayı bitirmek için aşağıdaki düğmeyi kullanın."
 				}
 			}
+		},
+		"launcher": {
+			"eyebrow": "Yardım",
+			"title": "Turlar",
+			"open": "Turları aç",
+			"close": "Turları kapat",
+			"manage": "Turları yönet"
 		}
 	},
 	"weekday": {

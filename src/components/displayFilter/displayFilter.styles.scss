@@ -14,6 +14,19 @@
 		min-width: 0;
 	}
 
+	/* HoverScrollArrows wraps the scroll container and takes its place in the row. */
+	&__arrows {
+		flex: 1 1 auto;
+		min-width: 0;
+
+		/* Its arrow strips end where the chips end, not at the gap under them
+		   (`--filter-chip-row-gap`, set from the scroller's margin). */
+		> [data-cy$='-start'],
+		> [data-cy$='-end'] {
+			bottom: var(--filter-chip-row-gap, 0);
+		}
+	}
+
 	/* Pinned right: the chips scroll under it (spec §3). Same vertical
 	   rhythm as `__chipsRow` (4px top, 48px pill). */
 	&__trailing {
@@ -296,47 +309,6 @@
 	border: 1px solid var(--m3-outline, #74777f);
 	border-radius: 999px;
 	overflow: hidden;
-}
-
-.displayFilterDialog__viewOption {
-	position: relative;
-	display: inline-flex;
-	align-items: center;
-	min-height: 32px;
-	padding: 0 14px;
-	font-size: 12px;
-	font-weight: 500;
-	line-height: 16px;
-	letter-spacing: 0.5px;
-	color: var(--m3-on-surface, #1b1b1c);
-	cursor: pointer;
-
-	& + & {
-		border-left: 1px solid var(--m3-outline, #74777f);
-	}
-
-	input {
-		position: absolute;
-		inset: 0;
-		margin: 0;
-		opacity: 0;
-		cursor: pointer;
-	}
-
-	&--selected {
-		background: var(--m3-secondary-container, #e4e2e2);
-		color: var(--m3-on-secondary-container, #1b1b1c);
-	}
-
-	&:has(input:focus-visible) {
-		outline: 2px solid var(--m3-primary, #a5000a);
-		outline-offset: -2px;
-	}
-
-	&:has(input:disabled) {
-		opacity: 0.38;
-		cursor: default;
-	}
 }
 
 .displayFilterDialog__row--deactivated .displayFilterDialog__kind {
@@ -741,15 +713,14 @@
 		white-space: nowrap;
 	}
 
+	/* No tinted card per kind (Frank 2026-11-17: the light boxes were
+	   removed everywhere else); the table row's hairline stays the divider. */
 	.displayFilterDialog__table .displayFilterDialog__row {
 		display: flex;
 		flex-direction: column;
 		gap: 8px;
-		margin: 0 0 8px;
-		padding: 12px 14px;
-		border: 0;
-		border-radius: 16px;
-		background: var(--m3-surface-container-low, #f7f2f2);
+		margin: 0;
+		padding: 12px 0;
 	}
 
 	.displayFilterDialog__table
@@ -820,7 +791,6 @@
 		padding: 4px 0;
 		border-radius: 0;
 		background: transparent;
-		border-bottom: 1px solid var(--m3-outline-variant, #c4c7c7);
 	}
 
 	.displayFilterDialog__table--quick

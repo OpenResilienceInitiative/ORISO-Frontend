@@ -15,6 +15,7 @@ import { NavigationBar } from './NavigationBar';
 import { Header } from '../header/Header';
 import { ReleaseNote } from '../releaseNote/ReleaseNote';
 import { Walkthrough } from '../walkthrough/Walkthrough';
+import { TourLauncherFab } from '../productTour/launcher/TourLauncherFab';
 import { PracticeBanner } from '../../practice/PracticeBanner';
 import { PracticeSurface } from '../../practice/PracticeSurface';
 import { TwoFactorNag } from '../twoFactorAuth/TwoFactorNag';
@@ -111,6 +112,7 @@ export const Routing = (props: RoutingProps) => {
 					<>
 						<Walkthrough />
 						<PracticeBanner />
+						<TourLauncherFab />
 						<E2EEProvider>
 							<div
 								className={`app__wrapper ${
