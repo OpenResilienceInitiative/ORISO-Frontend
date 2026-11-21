@@ -203,10 +203,11 @@ export const AuthenticatedApp = ({
 			void logout(false, loginPath, () => {
 				// Revalidation must not mistake this document's sign-out for a peer's.
 				mounted.current = false;
+				setMatrixClientService(null);
 				setPasswordChangeStatus('signed-out');
 			});
 		},
-		[mountedSession]
+		[mountedSession, setMatrixClientService]
 	);
 	/* Every path that ends in `<Navigate to="/login">` below goes through
 	   here: the old session is torn down *before* the login form renders,
@@ -217,8 +218,8 @@ export const AuthenticatedApp = ({
 		if (!mounted.current) return;
 		matrixBootstrap.current?.controller.abort();
 		displayFilterStore.detachClient();
-		setMatrixClientService(null);
 		teardownLocalSession();
+		setMatrixClientService(null);
 		setLoading(false);
 	}, [setMatrixClientService]);
 	const [userDataRequested, setUserDataRequested] = useState<boolean>(false);
@@ -307,9 +308,9 @@ export const AuthenticatedApp = ({
 								mounted.current &&
 								!controller.signal.aborted &&
 								getCurrentAuthSubject() === subject;
-							const startMatrix = async (
-								isActive: () => boolean
-							) => {
+							const startMatrix = async (signal: AbortSignal) => {
+								const isActive = () =>
+									!signal.aborted && isCurrent();
 								const loginData = await getMatrixAccessToken();
 								if (!isActive()) return;
 								persistMatrixLoginData(loginData);
@@ -319,15 +320,31 @@ export const AuthenticatedApp = ({
 								);
 								if (!isActive()) return;
 								const clientService = new MatrixClientService();
-								await clientService.initializeClient(
-									withAuthenticatedSessionContext(
-										loginData,
-										hasUserAuthority(
-											AUTHORITIES.ANONYMOUS_DEFAULT,
-											userProfileData
-										)
-									)
+								// Until publication, logout has no registered client to stop.
+								const stopPendingClient = () =>
+									clientService.stopAndCleanup();
+								signal.addEventListener(
+									'abort',
+									stopPendingClient,
+									{ once: true }
 								);
+								try {
+									await clientService.initializeClient(
+										withAuthenticatedSessionContext(
+											loginData,
+											hasUserAuthority(
+												AUTHORITIES.ANONYMOUS_DEFAULT,
+												userProfileData
+											)
+										),
+										isActive
+									);
+								} finally {
+									signal.removeEventListener(
+										'abort',
+										stopPendingClient
+									);
+								}
 								if (!isActive()) {
 									clientService.stopAndCleanup();
 									return;
@@ -360,17 +377,25 @@ export const AuthenticatedApp = ({
 							};
 							const connect = async () => {
 								if (!isCurrent()) return;
-								let active = true;
+								const attempt = new AbortController();
+								const cancelAttempt = () => attempt.abort();
+								controller.signal.addEventListener(
+									'abort',
+									cancelAttempt,
+									{ once: true }
+								);
 								try {
 									await withTimeout(
-										startMatrix(
-											() => active && isCurrent()
-										),
+										startMatrix(attempt.signal),
 										15_000,
 										'Matrix bootstrap timed out'
 									);
 								} finally {
-									active = false;
+									controller.signal.removeEventListener(
+										'abort',
+										cancelAttempt
+									);
+									cancelAttempt();
 								}
 							};
 							const reportMatrixFailure = (error: unknown) => {
@@ -461,11 +486,9 @@ export const AuthenticatedApp = ({
 		// mirror afterwards (#1377 §7.5). The effect cleanup detaches again.
 		displayFilterStore.detachClient();
 		onLogout();
-		// Clear the React context's Matrix client reference on sign-out so a
-		// stale authenticated client cannot survive into a subsequent session
-		// (logout() also resets the module-level registry).
-		setMatrixClientService(null);
-		logout();
+		// Logout needs the registered client until it has flushed pending work
+		// and stopped that client. Then the React context can release it too.
+		void logout(true, undefined, () => setMatrixClientService(null));
 	}, [onLogout, setMatrixClientService]);
 
 	/* The gate opens itself after SLOW_AFTER_MS as an escape hatch, so the

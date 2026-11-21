@@ -15,7 +15,7 @@ import {
 } from './getMatrixAccessToken';
 import { fetchData } from '../../api/fetchData';
 import { getMatrixHomeserverUrl } from '../../resources/scripts/runtimeConfig';
-import { createClient } from 'matrix-js-sdk';
+import { createBrowserMatrixSdkClient } from '../../services/browserMatrixSdkClient';
 import { getMatrixClientLogger } from '../../utils/matrixLogging';
 import { secretStorageKeyCallback } from '../../services/matrixKeyBackupService';
 import { getDeviceSigningAuth } from '../../services/matrixInteractiveAuth';
@@ -30,8 +30,8 @@ vi.mock('../../resources/scripts/endpoints', () => ({
 	}
 }));
 
-vi.mock('matrix-js-sdk', () => ({
-	createClient: vi.fn((config) => ({ config }))
+vi.mock('../../services/browserMatrixSdkClient', () => ({
+	createBrowserMatrixSdkClient: vi.fn((config) => ({ config }))
 }));
 
 vi.mock('../../resources/scripts/runtimeConfig', () => ({
@@ -702,8 +702,9 @@ describe('getMatrixAccessToken', () => {
 			userId: '@consultant:matrix.example.test'
 		});
 
-		const callback = vi.mocked(createClient).mock.calls.at(-1)![0]
-			.cryptoCallbacks!.getSecretStorageKey!;
+		const callback = vi
+			.mocked(createBrowserMatrixSdkClient)
+			.mock.calls.at(-1)![0].cryptoCallbacks!.getSecretStorageKey!;
 		const sdkKeys = { keys: {} };
 		await callback(sdkKeys, 'synthetic-secret');
 		expect(secretStorageKeyCallback).toHaveBeenCalledWith(
@@ -712,17 +713,20 @@ describe('getMatrixAccessToken', () => {
 			'synthetic-secret'
 		);
 
-		expect(createClient).toHaveBeenCalledWith({
-			baseUrl: 'https://matrix.example.test',
-			accessToken: 'matrix-token',
-			userId: '@consultant:matrix.example.test',
-			deviceId: 'ORISO_WEB_TEST_DEVICE',
-			fallbackICEServerAllowed: true,
-			logger: getMatrixClientLogger(),
-			cryptoCallbacks: {
-				getSecretStorageKey: expect.any(Function)
-			}
-		});
+		expect(createBrowserMatrixSdkClient).toHaveBeenCalledWith(
+			{
+				baseUrl: 'https://matrix.example.test',
+				accessToken: 'matrix-token',
+				userId: '@consultant:matrix.example.test',
+				deviceId: 'ORISO_WEB_TEST_DEVICE',
+				fallbackICEServerAllowed: true,
+				logger: getMatrixClientLogger(),
+				cryptoCallbacks: {
+					getSecretStorageKey: expect.any(Function)
+				}
+			},
+			undefined
+		);
 		expect(client).toEqual({
 			config: {
 				baseUrl: 'https://matrix.example.test',
