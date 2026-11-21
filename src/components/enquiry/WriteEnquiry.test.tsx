@@ -8,11 +8,14 @@ import {
 	screen
 } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useNavigate } from 'react-router-dom';
-import { afterEach, expect, it, vi } from 'vite-plus/test';
+import { afterEach, beforeEach, expect, it, vi } from 'vite-plus/test';
 import { STATUS_EMPTY } from '../../globalState/interfaces';
 import { WriteEnquiry } from './WriteEnquiry';
 
-const fetchSessions = vi.hoisted(() => vi.fn());
+const { fetchSessions, useSessionMock } = vi.hoisted(() => ({
+	fetchSessions: vi.fn(),
+	useSessionMock: vi.fn()
+}));
 
 vi.mock('../../api', () => ({ apiGetAskerSessionList: fetchSessions }));
 vi.mock('../../globalState', () => ({
@@ -35,7 +38,7 @@ vi.mock('../../globalState', () => ({
 	})
 }));
 vi.mock('../../hooks/useSession', () => ({
-	useSession: () => ({ session: null, ready: true })
+	useSession: useSessionMock
 }));
 vi.mock('../../hooks/useResponsive', () => ({
 	useResponsive: () => ({ fromL: true })
@@ -81,26 +84,34 @@ const EnquiryNavigation = () => {
 	);
 };
 
-const openEnquiry = (id?: number) =>
-	render(
-		<MemoryRouter initialEntries={[`${writeRoute}${id ? '/' + id : ''}`]}>
-			<EnquiryNavigation />
-			<Routes>
-				<Route
-					path="/sessions/user/view/write/:sessionId?"
-					element={<WriteEnquiry />}
-				/>
-				<Route
-					path="/sessions/user/view"
-					element={<div>Enquiry list</div>}
-				/>
-			</Routes>
-		</MemoryRouter>
-	);
+const enquiryRoute = (id?: number | string) => (
+	<MemoryRouter
+		initialEntries={[`${writeRoute}${id === undefined ? '' : '/' + id}`]}
+	>
+		<EnquiryNavigation />
+		<Routes>
+			<Route
+				path="/sessions/user/view/write/:sessionId?"
+				element={<WriteEnquiry />}
+			/>
+			<Route
+				path="/sessions/user/view"
+				element={<div>Enquiry list</div>}
+			/>
+		</Routes>
+	</MemoryRouter>
+);
+
+const openEnquiry = (id?: number | string) => render(enquiryRoute(id));
+
+beforeEach(() => {
+	useSessionMock.mockReturnValue({ session: null, ready: true });
+});
 
 afterEach(() => {
 	cleanup();
 	fetchSessions.mockReset();
+	useSessionMock.mockReset();
 });
 
 it('returns to the list when there is no first enquiry to write', async () => {
@@ -116,6 +127,69 @@ it('does not open a different enquiry for a stale detail link', async () => {
 
 	expect(await screen.findByText('Enquiry list')).toBeTruthy();
 	expect(screen.queryByRole('textbox', { name: 'Composer' })).toBeNull();
+});
+
+it.each(['0', 'not-an-id', '9007199254740992'])(
+	'rejects invalid enquiry ID %s before loading a destination',
+	async (id) => {
+		openEnquiry(id);
+
+		expect(await screen.findByText('Enquiry list')).toBeTruthy();
+		expect(fetchSessions).not.toHaveBeenCalled();
+		expect(screen.queryByRole('textbox', { name: 'Composer' })).toBeNull();
+	}
+);
+
+it('waits for the exact enquiry from the session hook', async () => {
+	useSessionMock.mockReturnValue({
+		session: { item: { id: 19 }, consultant: {} },
+		ready: false
+	});
+	const { rerender } = openEnquiry(42);
+	expect(screen.getByRole('status').textContent).toBe('Loading');
+	expect(fetchSessions).not.toHaveBeenCalled();
+	expect(screen.queryByRole('textbox', { name: 'Composer' })).toBeNull();
+
+	useSessionMock.mockReturnValue({
+		session: { item: { id: 42 }, consultant: {} },
+		ready: true
+	});
+	rerender(enquiryRoute(42));
+
+	expect((await screen.findByTestId('enquiry-destination')).textContent).toBe(
+		'42'
+	);
+	expect(fetchSessions).not.toHaveBeenCalled();
+});
+
+it('starts the list lookup when the hook is ready without a session', async () => {
+	useSessionMock.mockReturnValue({ session: null, ready: false });
+	fetchSessions.mockResolvedValue({ sessions: [rawEnquiry(42)] });
+	const { rerender } = openEnquiry(42);
+	expect(screen.getByRole('status').textContent).toBe('Loading');
+	expect(fetchSessions).not.toHaveBeenCalled();
+
+	useSessionMock.mockReturnValue({ session: null, ready: true });
+	rerender(enquiryRoute(42));
+
+	expect((await screen.findByTestId('enquiry-destination')).textContent).toBe(
+		'42'
+	);
+	expect(fetchSessions).toHaveBeenCalledOnce();
+});
+
+it('uses the enquiry list when the hook returns a group with the same ID', async () => {
+	useSessionMock.mockReturnValue({
+		session: { isGroup: true, item: { id: 42 }, consultant: {} },
+		ready: true
+	});
+	fetchSessions.mockResolvedValue({ sessions: [rawEnquiry(42)] });
+	openEnquiry(42);
+
+	expect((await screen.findByTestId('enquiry-destination')).textContent).toBe(
+		'42'
+	);
+	expect(fetchSessions).toHaveBeenCalledOnce();
 });
 
 it('lets the asker retry a temporary list failure on the same route', async () => {

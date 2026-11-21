@@ -10,7 +10,10 @@ import {
 	mockComposerAskerData,
 	storybookGroupRoomMembers
 } from './__storybook__/composerStoryDecorator';
-import { COMPOSER_MOBILE_BREAKPOINT } from './inputField/composerResize';
+import {
+	COMPOSER_MAX_VIEWPORT_FRACTION,
+	COMPOSER_MOBILE_BREAKPOINT
+} from './inputField/composerResize';
 import './messageSubmitInterface.styles.scss';
 import '../session/session.styles.scss';
 import { resetTemporaryAccount } from '../temporaryAccount/temporaryAccountStore';
@@ -311,13 +314,14 @@ async function expectCompactFirstDrag(
 			pointerType
 		})
 	);
-	if (pointerType === 'touch') {
-		await waitFor(() =>
-			expect(
-				Math.abs(shell.getBoundingClientRect().height - initial - 20)
-			).toBeLessThan(2)
+	await waitFor(() => {
+		expect(shell).not.toHaveClass(
+			'textarea__wrapper-send-message--resizing'
 		);
-	}
+		expect(
+			Math.abs(shell.getBoundingClientRect().height - initial - 20)
+		).toBeLessThan(2);
+	});
 }
 
 /** A first drag starts from the visible compact height without focusing both borders. */
@@ -417,6 +421,79 @@ export const CompactHandleClickThenFocus: Story = {
 		await userEvent.click(editor);
 		await waitFor(() =>
 			expect(Math.round(shell.getBoundingClientRect().height)).toBe(196)
+		);
+	}
+};
+
+export const CompactComposerAfterViewportResize: Story = {
+	name: 'Mobile composer reclamps a manual height after rotation',
+	globals: phone390Globals,
+	render: () => <ComposerShell autoFocusEditor={false} />,
+	play: async ({ canvasElement }) => {
+		const browser = await import('@vitest/browser/context').catch(
+			() => null
+		);
+		if (!browser) return;
+
+		const initialWidth = window.innerWidth;
+		const initialHeight = window.innerHeight;
+		const handle = await within(canvasElement).findByRole('button', {
+			name: /ziehen, um den editor zu vergrößern/i
+		});
+		const shell = handle.closest<HTMLElement>(
+			'.textarea__wrapper-send-message'
+		)!;
+		const readHeight = () =>
+			Math.round(shell.getBoundingClientRect().height);
+		const landscapeHeight = 390;
+		const viewportCap = Math.round(
+			landscapeHeight * COMPOSER_MAX_VIEWPORT_FRACTION
+		);
+
+		handle.dispatchEvent(
+			new KeyboardEvent('keydown', { key: 'End', bubbles: true })
+		);
+		await waitFor(() => expect(readHeight()).toBeGreaterThan(viewportCap));
+
+		try {
+			await browser.page.viewport(844, landscapeHeight);
+			await waitFor(() => {
+				expect(window.innerHeight).toBe(landscapeHeight);
+				expect(readHeight()).toBeLessThanOrEqual(viewportCap);
+			});
+		} finally {
+			await browser.page.viewport(initialWidth, initialHeight);
+		}
+	}
+};
+
+export const CompactHandleTapThenFocus: Story = {
+	name: 'Mobile handle tap keeps the composer compact until editor focus',
+	globals: phone390Globals,
+	render: () => <ComposerShell autoFocusEditor={false} />,
+	play: async ({ canvasElement }) => {
+		const handle = await within(canvasElement).findByRole('button', {
+			name: /ziehen, um den editor zu vergrößern/i
+		});
+		const shell = handle.closest<HTMLElement>(
+			'.textarea__wrapper-send-message'
+		)!;
+		const readHeight = () =>
+			Math.round(shell.getBoundingClientRect().height);
+		const initialHeight = readHeight();
+
+		await userEvent.pointer([
+			{ keys: '[TouchA>]', target: handle },
+			{ keys: '[/TouchA]' }
+		]);
+		expect(shell.style.getPropertyValue('--composer-height')).toBe('');
+		expect(readHeight()).toBe(initialHeight);
+
+		await userEvent.click(
+			shell.querySelector<HTMLElement>('[contenteditable="true"]')!
+		);
+		await waitFor(() =>
+			expect(readHeight()).toBeGreaterThan(initialHeight)
 		);
 	}
 };
@@ -759,6 +836,9 @@ export const SessionHeightReset: Story = {
 		const dragHandle = await canvas.findByRole('button', {
 			name: /ziehen, um den editor zu vergrößern/i
 		});
+		const originalShell = dragHandle.closest<HTMLElement>(
+			'.textarea__wrapper-send-message'
+		)!;
 		dragHandle.focus();
 		// Dispatch on the handle rather than via `userEvent.keyboard`, which
 		// sends to whatever holds focus. The composer's editor takes focus back
@@ -769,14 +849,11 @@ export const SessionHeightReset: Story = {
 		dragHandle.dispatchEvent(
 			new KeyboardEvent('keydown', { key: 'End', bubbles: true })
 		);
-		await waitFor(() => {
-			const shell = canvasElement.querySelector<HTMLElement>(
-				'.textarea__wrapper-send-message'
-			);
-			expect(shell?.getBoundingClientRect().height || 0).toBeGreaterThan(
-				196
-			);
-		});
+		await waitFor(() =>
+			expect(
+				originalShell.getBoundingClientRect().height
+			).toBeGreaterThan(196)
+		);
 
 		await userEvent.click(
 			canvas.getByRole('button', { name: 'Gespräch wechseln' })
@@ -785,8 +862,13 @@ export const SessionHeightReset: Story = {
 			const shell = canvasElement.querySelector<HTMLElement>(
 				'.textarea__wrapper-send-message'
 			);
+			if (!shell)
+				throw new Error(
+					'composer not mounted after conversation switch'
+				);
+			expect(shell).toBe(originalShell);
 			expect(
-				Math.round(shell?.getBoundingClientRect().height || 0)
+				Math.round(shell.getBoundingClientRect().height)
 			).toBeLessThan(150);
 		});
 	}

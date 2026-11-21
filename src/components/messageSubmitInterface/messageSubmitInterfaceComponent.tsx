@@ -53,6 +53,7 @@ import { getMenuDirection } from './inputField/menuDirection';
 import {
 	calculateAutoComposerHeight,
 	clampComposerHeight as clampComposerHeightPure,
+	COMPOSER_MOBILE_BREAKPOINT,
 	FLUSH_CONTEXT_BAR_RESERVE,
 	getEffectiveComposerHeight,
 	getComposerHeightBounds as getComposerHeightBoundsPure,
@@ -500,6 +501,11 @@ const AudienceModeratorIcon = () => (
 
 const VOICE_RECORDING_MIN_HEIGHT = 144;
 
+const getComposerViewport = () =>
+	typeof window === 'undefined'
+		? { width: 1280, height: 800 }
+		: { width: window.innerWidth, height: window.innerHeight };
+
 export const MessageSubmitInterfaceComponent = ({
 	className,
 	onSendButton,
@@ -727,9 +733,10 @@ export const MessageSubmitInterfaceComponent = ({
 			currentEditScope.current = null;
 		};
 	}, [editScope]);
-	const [isMobileViewport, setIsMobileViewport] = useState<boolean>(() =>
-		typeof window !== 'undefined' ? window.innerWidth <= 899 : false
-	);
+	const [composerViewport, setComposerViewport] =
+		useState(getComposerViewport);
+	const isMobileViewport =
+		composerViewport.width <= COMPOSER_MOBILE_BREAKPOINT;
 	const [isExpandedComposer, setIsExpandedComposer] = useState(false);
 	// Inside the Drafts center iframe the embedding page widens the frame.
 	const composerOwnerId = useId();
@@ -4074,8 +4081,15 @@ export const MessageSubmitInterfaceComponent = ({
 		if (typeof window === 'undefined') {
 			return;
 		}
-		const handleResize = () =>
-			setIsMobileViewport(window.innerWidth <= 899);
+		const handleResize = () => {
+			const viewport = getComposerViewport();
+			setComposerViewport((previous) =>
+				previous.width === viewport.width &&
+				previous.height === viewport.height
+					? previous
+					: viewport
+			);
+		};
 		handleResize();
 		window.addEventListener('resize', handleResize);
 		return () => window.removeEventListener('resize', handleResize);
@@ -4107,38 +4121,47 @@ export const MessageSubmitInterfaceComponent = ({
 		composerHeight === null;
 
 	const getComposerHeightBounds = useCallback(
-		() =>
+		(
+			viewport = composerViewport,
+			compact = compactHeight || isIdleEmptyComposer
+		) =>
 			getComposerHeightBoundsPure({
-				viewportWidth: window.innerWidth,
-				viewportHeight: window.innerHeight,
-				compact: compactHeight || isIdleEmptyComposer,
+				viewportWidth: viewport.width,
+				viewportHeight: viewport.height,
+				compact,
 				flush: flushCorner !== undefined,
 				hostHeight: composerHostHeight
 			}),
-		[compactHeight, isIdleEmptyComposer, flushCorner, composerHostHeight]
+		[
+			composerViewport,
+			compactHeight,
+			isIdleEmptyComposer,
+			flushCorner,
+			composerHostHeight
+		]
 	);
 
-	// The frame and viewport budget different amounts of room for the editor.
-	// Apply the new limits when either changes, while focus leaves a drag alone.
-	const composerLayout = isMobileViewport
-		? 'mobile'
-		: flushCorner
-			? 'flush'
-			: 'framed';
-	const previousComposerLayout = useRef(composerLayout);
+	// Only geometry constrains a saved manual height. Focusing an idle editor
+	// changes its resting size without altering the existing drag height.
+	const { minHeight: manualMinHeight, maxHeight: manualMaxHeight } =
+		getComposerHeightBounds(composerViewport, compactHeight);
 	useLayoutEffect(() => {
-		if (previousComposerLayout.current === composerLayout) return;
-		previousComposerLayout.current = composerLayout;
 		setComposerHeight((height) =>
 			height === null
 				? null
-				: clampComposerHeightPure(height, getComposerHeightBounds())
+				: clampComposerHeightPure(height, {
+						minHeight: manualMinHeight,
+						maxHeight: manualMaxHeight
+					})
 		);
-	}, [composerLayout, getComposerHeightBounds]);
+	}, [manualMinHeight, manualMaxHeight]);
 
 	const clampComposerHeight = useCallback(
 		(height: number) =>
-			clampComposerHeightPure(height, getComposerHeightBounds()),
+			clampComposerHeightPure(
+				height,
+				getComposerHeightBounds(getComposerViewport())
+			),
 		[getComposerHeightBounds]
 	);
 
@@ -4267,7 +4290,6 @@ export const MessageSubmitInterfaceComponent = ({
 				getComposerHeightBounds().minHeight;
 
 			setComposerHeight(startHeight);
-			target.focus({ preventScroll: true });
 			composerResizeStartRef.current = {
 				pointerId: e.pointerId,
 				startY: e.clientY,
@@ -4275,6 +4297,7 @@ export const MessageSubmitInterfaceComponent = ({
 				previousHeight: composerHeight,
 				moved: false
 			};
+			target.focus({ preventScroll: true });
 			setIsComposerResizing(true);
 
 			try {
@@ -4331,6 +4354,25 @@ export const MessageSubmitInterfaceComponent = ({
 			setComposerHeight
 		]
 	);
+
+	const selectComposerFromControl = (
+		event:
+			| React.FocusEvent<HTMLDivElement>
+			| React.MouseEvent<HTMLDivElement>
+	) => {
+		// A pointer press on the resize handle focuses the button for keyboard
+		// access. Its ensuing click must also leave the mobile editor at rest.
+		if (
+			isMobileViewport &&
+			(composerResizeStartRef.current ||
+				('detail' in event && event.detail > 0)) &&
+			event.target instanceof Element &&
+			event.target.closest('.dragHandle')
+		) {
+			return;
+		}
+		setIsComposerSelected(true);
+	};
 
 	const handleComposerResizeKeyDown = useCallback(
 		(e: React.KeyboardEvent<HTMLButtonElement>) => {
@@ -4462,9 +4504,9 @@ export const MessageSubmitInterfaceComponent = ({
 						ref={composerCardRef}
 						data-flush-corner={flushCorner}
 						data-accent={accent}
-						onFocusCapture={() => setIsComposerSelected(true)}
+						onFocusCapture={selectComposerFromControl}
 						onPointerDownCapture={clearAutoFocusMark}
-						onClickCapture={() => setIsComposerSelected(true)}
+						onClickCapture={selectComposerFromControl}
 						onKeyDownCapture={() => {
 							clearAutoFocusMark();
 							setIsComposerSelected(true);
