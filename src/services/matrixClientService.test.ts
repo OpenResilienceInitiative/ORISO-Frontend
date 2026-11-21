@@ -833,6 +833,10 @@ describe('MatrixClientService', () => {
 			}
 		});
 		mockedMatrixClient.sendMessage.mockResolvedValue({ event_id: '$sent' });
+		// The recovered client's sync has delivered the joined room.
+		mockedMatrixClient.getRoom.mockReturnValue({
+			getMyMembership: () => 'join'
+		});
 		vi.mocked(getMatrixAccessToken).mockResolvedValueOnce({
 			userId: '@alice:matrix.localhost',
 			accessToken: 'fresh-token',
@@ -1672,9 +1676,17 @@ describe('MatrixClientService', () => {
 			callOrder.push('send');
 			return { event_id: '$event' };
 		});
+		// Sync delivers the joined room only after the join (P0: sending
+		// before that would leave the SDK unable to encrypt).
+		let syncedRoom: { getMyMembership: () => string } | null = null;
+		joinRoom.mockImplementation(async () => {
+			callOrder.push('join');
+			syncedRoom = { getMyMembership: () => 'join' };
+			return { roomId: '!room:example.org' };
+		});
 		const service = new MatrixClientService();
 		setClient(service, {
-			getRoom: () => null,
+			getRoom: () => syncedRoom,
 			joinRoom,
 			sendMessage
 		});
@@ -1684,6 +1696,28 @@ describe('MatrixClientService', () => {
 		expect(joinRoom).toHaveBeenCalledWith('!room:example.org');
 		expect(sendMessage).toHaveBeenCalled();
 		expect(callOrder).toEqual(['join', 'send']);
+	});
+
+	it('refuses to send when the joined room never reaches the client store, so nothing leaves in plaintext (P0)', async () => {
+		const sendMessage = vi.fn();
+		const service = new MatrixClientService();
+		(
+			service as unknown as {
+				sendRoomWaitOptions: { waitMs: number; pollIntervalMs: number };
+			}
+		).sendRoomWaitOptions = { waitMs: 30, pollIntervalMs: 10 };
+		setClient(service, {
+			getRoom: () => null,
+			joinRoom: vi
+				.fn()
+				.mockResolvedValue({ roomId: '!room:example.org' }),
+			sendMessage
+		});
+
+		await expect(
+			service.sendMessage('!room:example.org', 'Hello after accept')
+		).rejects.toMatchObject({ name: 'MatrixRoomNotSyncedError' });
+		expect(sendMessage).not.toHaveBeenCalled();
 	});
 
 	it('refreshes an expired token during join and retries join before sending', async () => {
@@ -1708,9 +1742,14 @@ describe('MatrixClientService', () => {
 			deviceId: 'DEVICE_ONE',
 			homeserverUrl: 'http://matrix.localhost:18008'
 		});
-		mockedMatrixClient.getRoom.mockReturnValue(null);
-		mockedMatrixClient.joinRoom.mockResolvedValue({
-			roomId: '!room:example.org'
+		let refreshedClientRoom: { getMyMembership: () => string } | null =
+			null;
+		mockedMatrixClient.getRoom.mockImplementation(
+			() => refreshedClientRoom
+		);
+		mockedMatrixClient.joinRoom.mockImplementation(async () => {
+			refreshedClientRoom = { getMyMembership: () => 'join' };
+			return { roomId: '!room:example.org' };
 		});
 		mockedMatrixClient.sendMessage.mockResolvedValue({
 			event_id: '$event'
