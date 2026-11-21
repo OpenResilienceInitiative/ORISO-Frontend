@@ -27,53 +27,59 @@ const createVideoStream = (id: string) => {
 };
 
 const setUp = () => {
-	const mediaReady = Promise.withResolvers<MediaStream>();
 	const independent = createVideoStream('independent');
-	const late = createVideoStream('late-answer');
+	const calls = new Map<string, MatrixCall>();
 	const client = {
 		deviceId: 'fixture-device',
 		getDeviceId: () => 'fixture-device',
 		getUserId: () => '@fixture:example.invalid',
 		getMediaHandler: () => media,
 		isFallbackICEServerAllowed: () => false,
-		callEventHandler: { calls: new Map() },
+		callEventHandler: { calls },
 		on: vi.fn(),
 		removeAllListeners: vi.fn()
 	} as unknown as MatrixClient;
 	const media = new MediaHandler(client);
 	media.userMediaStreams.push(independent.stream);
+	// Each answer() waits for its own permission prompt, in call order.
+	const prompts: Array<PromiseWithResolvers<MediaStream>> = [];
 	vi.spyOn(media, 'getUserMediaStream').mockImplementation(async () => {
-		const stream = await mediaReady.promise;
+		const prompt = Promise.withResolvers<MediaStream>();
+		prompts.push(prompt);
+		const stream = await prompt.promise;
 		media.userMediaStreams.push(stream);
 		return stream;
 	});
-	const call = new MatrixCall({
-		client,
-		roomId: '!fixture:example.invalid'
-	});
-	Object.defineProperties(call, {
-		opponentPartyId: { value: 'caller-device' },
-		hasRemoteUserMediaVideoTrack: { value: true }
-	});
-	matrixCallService.initialize(client);
-	const hangUp = () =>
-		call.onHangupReceived({
-			version: '1',
-			call_id: call.callId,
-			party_id: 'caller-device'
+	const incomingCall = (roomId: string) => {
+		const call = new MatrixCall({ client, roomId });
+		Object.defineProperties(call, {
+			opponentPartyId: { value: 'caller-device' },
+			hasRemoteUserMediaVideoTrack: { value: true }
 		});
-	return { call, media, mediaReady, independent, late, hangUp };
+		calls.set(call.callId, call);
+		const hangUp = () =>
+			call.onHangupReceived({
+				version: '1',
+				call_id: call.callId,
+				party_id: 'caller-device'
+			});
+		return { call, hangUp };
+	};
+	matrixCallService.initialize(client);
+	return { media, prompts, independent, incomingCall };
 };
 
 describe('matrixCallService.answerCall', () => {
 	it('releases media that arrives after the incoming call ends', async () => {
-		const { call, media, mediaReady, independent, late, hangUp } = setUp();
+		const { media, prompts, independent, incomingCall } = setUp();
+		const { call, hangUp } = incomingCall('!first:example.invalid');
+		const late = createVideoStream('late-answer');
 
 		const answer = matrixCallService.answerCall(call, true);
 		expect(call.state).toBe(CallState.WaitLocalMedia);
 		hangUp();
 		expect(call.state).toBe(CallState.Ended);
-		mediaReady.resolve(late.stream);
+		prompts[0].resolve(late.stream);
 		await answer;
 
 		expect(late.stop).toHaveBeenCalledOnce();
@@ -82,18 +88,75 @@ describe('matrixCallService.answerCall', () => {
 	});
 
 	it('keeps late media when a replacement call takes over', async () => {
-		const { call, media, mediaReady, independent, late, hangUp } = setUp();
+		const { media, prompts, independent, incomingCall } = setUp();
+		const { call, hangUp } = incomingCall('!first:example.invalid');
+		const late = createVideoStream('late-answer');
 		Object.defineProperty(call, 'successor', { value: {} });
 
 		const answer = matrixCallService.answerCall(call, true);
 		hangUp();
-		mediaReady.resolve(late.stream);
+		prompts[0].resolve(late.stream);
 		await answer;
 
 		expect(late.stop).not.toHaveBeenCalled();
 		expect(media.userMediaStreams).toEqual([
 			independent.stream,
 			late.stream
+		]);
+	});
+
+	it('releases the media of two overlapping calls that both end', async () => {
+		const { media, prompts, independent, incomingCall } = setUp();
+		const first = incomingCall('!first:example.invalid');
+		const second = incomingCall('!second:example.invalid');
+		const firstLate = createVideoStream('first-late');
+		const secondLate = createVideoStream('second-late');
+
+		const firstAnswer = matrixCallService.answerCall(first.call, true);
+		first.hangUp();
+		const secondAnswer = matrixCallService.answerCall(second.call, true);
+		second.hangUp();
+		prompts[1].resolve(secondLate.stream);
+		prompts[0].resolve(firstLate.stream);
+		await Promise.all([firstAnswer, secondAnswer]);
+
+		expect(firstLate.stop).toHaveBeenCalledOnce();
+		expect(secondLate.stop).toHaveBeenCalledOnce();
+		expect(independent.stop).not.toHaveBeenCalled();
+		expect(media.userMediaStreams).toEqual([independent.stream]);
+	});
+
+	it('keeps the media of a second call that is still running', async () => {
+		const { media, prompts, independent, incomingCall } = setUp();
+		const first = incomingCall('!first:example.invalid');
+		const second = incomingCall('!second:example.invalid');
+		const firstLate = createVideoStream('first-late');
+		const secondLive = createVideoStream('second-live');
+		// The second call connects: its feed holds the stream it got.
+		let secondFeedStream: MediaStream | undefined;
+		vi.spyOn(second.call, 'answerWithCallFeeds').mockImplementation(
+			(feeds) => {
+				secondFeedStream = feeds[0].stream;
+			}
+		);
+		Object.defineProperty(second.call, 'localUsermediaStream', {
+			get: () => secondFeedStream
+		});
+
+		const firstAnswer = matrixCallService.answerCall(first.call, true);
+		first.hangUp();
+		const secondAnswer = matrixCallService.answerCall(second.call, true);
+		prompts[1].resolve(secondLive.stream);
+		await secondAnswer;
+		prompts[0].resolve(firstLate.stream);
+		await firstAnswer;
+
+		expect(firstLate.stop).toHaveBeenCalledOnce();
+		expect(secondLive.stop).not.toHaveBeenCalled();
+		expect(independent.stop).not.toHaveBeenCalled();
+		expect(media.userMediaStreams).toEqual([
+			independent.stream,
+			secondLive.stream
 		]);
 	});
 });

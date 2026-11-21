@@ -10,7 +10,7 @@ import {
 	CallState
 } from 'matrix-js-sdk/lib/webrtc/call';
 import { CallFeedEvent } from 'matrix-js-sdk/lib/webrtc/callFeed';
-import type { MediaHandler } from 'matrix-js-sdk/lib/webrtc/mediaHandler';
+import { MediaHandlerEvent } from 'matrix-js-sdk/lib/webrtc/mediaHandler';
 import { assertMatrixRoomEncrypted } from '../utils/matrixRoomEncryption';
 
 export interface MatrixCallOptions {
@@ -30,21 +30,31 @@ export interface MatrixCallEventHandlers {
 /**
  * matrix-js-sdk 38.4.0 keeps the camera/microphone stream that arrives after
  * the caller hung up while answer() waited for media permission. Stop the
- * streams this answer() opened if the call ended meanwhile; streams of other
- * calls and the hand-over to a replacement call (glare) stay untouched.
+ * streams this answer() opened if the call ended meanwhile. Streams that a
+ * call still running uses (a second incoming call), and the hand-over to a
+ * replacement call (glare), stay untouched.
  */
 const releaseLateAnswerMedia = (
 	call: MatrixCall,
-	mediaHandler: MediaHandler | undefined,
+	client: MatrixClient,
 	streamsBefore: Set<MediaStream>
 ): void => {
 	const { successor } = call as unknown as { successor?: MatrixCall };
-	if (!mediaHandler || !call.callHasEnded() || successor) {
+	if (call.state !== CallState.Ended || successor) {
 		return;
 	}
-	for (const stream of [...mediaHandler.userMediaStreams]) {
-		if (!streamsBefore.has(stream)) {
-			mediaHandler.stopUserMediaStream(stream);
+	const media = client.getMediaHandler();
+	const liveCalls = [...(client.callEventHandler?.calls.values() ?? [])];
+	const inUse = new Set(
+		liveCalls
+			.filter(
+				(other) => other !== call && other.state !== CallState.Ended
+			)
+			.map((other) => other.localUsermediaStream)
+	);
+	for (const stream of [...media.userMediaStreams]) {
+		if (!streamsBefore.has(stream) && !inUse.has(stream)) {
+			media.stopUserMediaStream(stream);
 		}
 	}
 };
@@ -55,6 +65,7 @@ class MatrixCallService {
 	private activeMediaOptions: MatrixCallOptions | null = null;
 	private eventHandlers: MatrixCallEventHandlers = {};
 	private detachFeedListeners: Array<() => void> = [];
+	private pendingMediaDrains = new Set<() => void>();
 
 	/**
 	 * Initialize call service with Matrix client
@@ -64,7 +75,7 @@ class MatrixCallService {
 		handlers: MatrixCallEventHandlers = {}
 	): void {
 		if (this.client && this.client !== client) {
-			this.client.removeAllListeners('Call.incoming' as any);
+			this.detach();
 		}
 
 		this.client = client;
@@ -87,7 +98,8 @@ class MatrixCallService {
 	 * Start a voice or video call
 	 */
 	public async startCall(options: MatrixCallOptions): Promise<MatrixCall> {
-		if (!this.client) {
+		const client = this.client;
+		if (!client) {
 			throw new Error('Matrix client not initialized');
 		}
 
@@ -114,7 +126,7 @@ class MatrixCallService {
 
 			// Wait for Matrix client to sync and find the room
 			// console.log('🔍 Looking for room:', options.roomId);
-			let room = this.client.getRoom(options.roomId);
+			let room = client.getRoom(options.roomId);
 
 			if (!room) {
 				// console.log('⏳ Room not found yet, waiting for sync...');
@@ -122,7 +134,12 @@ class MatrixCallService {
 				// Wait up to 10 seconds for room to appear
 				for (let i = 0; i < 20; i++) {
 					await new Promise((resolve) => setTimeout(resolve, 500));
-					room = this.client.getRoom(options.roomId);
+					if (this.client !== client) {
+						throw new Error(
+							'Matrix client changed before starting the call'
+						);
+					}
+					room = client.getRoom(options.roomId);
 					if (room) {
 						// console.log('✅ Room found after waiting!');
 						break;
@@ -131,7 +148,7 @@ class MatrixCallService {
 
 				if (!room) {
 					// console.error('❌ Room still not found after 10 seconds');
-					// console.error('❌ Available rooms:', this.client.getRooms().map((r: any) => r.roomId));
+					// console.error('❌ Available rooms:', client.getRooms().map((r: any) => r.roomId));
 					throw new Error(
 						'Room not found. The Matrix client may not have finished syncing, or you may not be a member of this room.'
 					);
@@ -140,9 +157,9 @@ class MatrixCallService {
 				// console.log('✅ Room found immediately!');
 			}
 
-			assertMatrixRoomEncrypted(this.client, options.roomId);
+			assertMatrixRoomEncrypted(client, options.roomId);
 
-			const call = this.client.createCall(options.roomId) as MatrixCall;
+			const call = client.createCall(options.roomId) as MatrixCall;
 
 			if (!call) {
 				throw new Error('Failed to create call');
@@ -152,9 +169,8 @@ class MatrixCallService {
 			this.setupCallEventListeners(call, options);
 
 			// Place the call (matrix-js-sdk will request media permissions internally)
-			await call.placeCall(
-				true, // audio
-				options.isVideoCall // video
+			await this.withCallMedia(client, () =>
+				call.placeCall(true, options.isVideoCall)
 			);
 
 			// console.log('✅ Call placed successfully');
@@ -162,7 +178,7 @@ class MatrixCallService {
 			return call;
 		} catch (error) {
 			// console.error('❌ Failed to start call:', error);
-			if (this.eventHandlers.onCallError) {
+			if (this.client === client && this.eventHandlers.onCallError) {
 				this.eventHandlers.onCallError(error as Error);
 			}
 			throw error;
@@ -178,10 +194,12 @@ class MatrixCallService {
 		localVideoElement?: HTMLVideoElement,
 		remoteVideoElement?: HTMLVideoElement
 	): Promise<void> {
+		const client = this.client;
 		try {
 			// console.log('📞 Answering call...');
 
-			assertMatrixRoomEncrypted(this.client, call.roomId);
+			if (!client) throw new Error('Matrix client not initialized');
+			assertMatrixRoomEncrypted(client, call.roomId);
 
 			this.activeCall = call;
 			this.setupCallEventListeners(call, {
@@ -192,21 +210,46 @@ class MatrixCallService {
 			});
 
 			// Answer the call (matrix-js-sdk will request media permissions internally)
-			const mediaHandler = this.client?.getMediaHandler();
-			const streamsBefore = new Set(mediaHandler?.userMediaStreams ?? []);
-			await call.answer(
-				true, // audio
-				isVideoCall // video
+			const streamsBefore = new Set(
+				client.getMediaHandler().userMediaStreams
 			);
-			releaseLateAnswerMedia(call, mediaHandler, streamsBefore);
+			await this.withCallMedia(client, () =>
+				call.answer(true, isVideoCall)
+			);
+			releaseLateAnswerMedia(call, client, streamsBefore);
 
 			// console.log('✅ Call answered successfully');
 		} catch (error) {
 			// console.error('❌ Failed to answer call:', error);
-			if (this.eventHandlers.onCallError) {
+			if (this.client === client && this.eventHandlers.onCallError) {
 				this.eventHandlers.onCallError(error as Error);
 			}
 			throw error;
+		}
+	}
+
+	private async withCallMedia(
+		client: MatrixClient,
+		connect: () => Promise<void>
+	): Promise<void> {
+		const media = client.getMediaHandler();
+		const event = MediaHandlerEvent.LocalStreamsChanged;
+		// SDK 38 can hold local media before a call feed exists, and can
+		// register more after the call has ended. Stop only this client's
+		// tracks. Leave the listener in place for a stream that arrives later.
+		const releaseDisplacedMedia = () => {
+			if (this.client === client || media.userMediaStreams.length === 0)
+				return;
+			media.stopAllStreams();
+		};
+		media.on(event, releaseDisplacedMedia);
+		this.pendingMediaDrains.add(releaseDisplacedMedia);
+		try {
+			await connect();
+		} finally {
+			this.pendingMediaDrains.delete(releaseDisplacedMedia);
+			media.off(event, releaseDisplacedMedia);
+			releaseDisplacedMedia();
 		}
 	}
 
@@ -237,15 +280,14 @@ class MatrixCallService {
 	 * Hangup the active call
 	 */
 	public hangupCall(): void {
-		if (this.activeCall) {
-			// console.log('📞 Hanging up call...');
-			try {
-				this.activeCall.hangup('user_hangup' as any, false);
-				this.cleanup();
-				// console.log('✅ Call ended');
-			} catch (error) {
-				// console.error('❌ Error hanging up call:', error);
-			}
+		const call = this.activeCall;
+		if (!call) return;
+		try {
+			call.hangup('user_hangup' as any, false);
+		} catch {
+			// Local media still needs to be released if signaling fails.
+		} finally {
+			this.cleanup(call);
 		}
 	}
 
@@ -313,6 +355,7 @@ class MatrixCallService {
 
 		// Call state changed
 		call.on(CallEvent.State as any, (state: CallState) => {
+			if (this.activeCall !== call) return;
 			// console.log('📞 Call state changed:', state);
 
 			if (this.eventHandlers.onCallStateChanged) {
@@ -325,18 +368,20 @@ class MatrixCallService {
 				if (this.eventHandlers.onCallEnded) {
 					this.eventHandlers.onCallEnded();
 				}
-				this.cleanup();
+				this.cleanup(call);
 			}
 		});
 
 		// Feeds changed (local/remote streams)
 		call.on(CallEvent.FeedsChanged as any, () => {
+			if (this.activeCall !== call) return;
 			// console.log('📞 Feeds changed');
 			this.bindFeedStreamListeners(call, options);
 			this.handleFeedsChanged(call, options);
 		});
 
 		call.on(CallEvent.PeerConnectionCreated as any, () => {
+			if (this.activeCall !== call) return;
 			this.bindPeerConnectionListeners(call, options);
 		});
 
@@ -345,6 +390,7 @@ class MatrixCallService {
 
 		// Call error
 		call.on(CallEvent.Error as any, (error: Error) => {
+			if (this.activeCall !== call) return;
 			// console.error('📞 Call error:', error);
 			if (this.eventHandlers.onCallError) {
 				this.eventHandlers.onCallError(error);
@@ -353,11 +399,12 @@ class MatrixCallService {
 
 		// Call hangup
 		call.on(CallEvent.Hangup as any, () => {
+			if (this.activeCall !== call) return;
 			// console.log('📞 Call hangup event');
 			if (this.eventHandlers.onCallEnded) {
 				this.eventHandlers.onCallEnded();
 			}
-			this.cleanup();
+			this.cleanup(call);
 		});
 	}
 
@@ -502,34 +549,35 @@ class MatrixCallService {
 	/**
 	 * Cleanup call resources
 	 */
-	private cleanup(): void {
+	private cleanup(call: MatrixCall): void {
+		if (this.activeCall !== call) return;
+
 		this.detachFeedListeners.forEach((detach) => detach());
 		this.detachFeedListeners = [];
-
-		if (this.activeCall) {
-			// Stop all media tracks
-			try {
-				const localFeed = this.activeCall.localUsermediaFeed;
-				if (localFeed) {
-					localFeed.stream
-						?.getTracks()
-						.forEach((track) => track.stop());
-				}
-			} catch (error) {
-				// console.error('Error stopping media tracks:', error);
-			}
-
-			this.activeCall = null;
+		try {
+			call.localUsermediaFeed?.stream
+				?.getTracks()
+				.forEach((track) => track.stop());
+		} catch {
+			// The SDK may already have released the local feed.
 		}
+
+		this.activeCall = null;
 		this.activeMediaOptions = null;
 	}
 
-	public detach(): void {
-		if (this.client) {
-			this.client.removeAllListeners('Call.incoming' as any);
-		}
-		this.hangupCall();
+	public detach(expectedClient?: MatrixClient): void {
+		const client = this.client;
+		if (expectedClient && client !== expectedClient) return;
+
 		this.client = null;
+		this.drainDisplacedMedia();
+		client?.removeAllListeners('Call.incoming' as any);
+		this.hangupCall();
+	}
+
+	private drainDisplacedMedia(): void {
+		for (const drain of this.pendingMediaDrains) drain();
 	}
 
 	/**

@@ -10,6 +10,7 @@ import {
 } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { CaseHandoverCurtain } from './CaseHandoverCurtain';
+import { messageEventEmitter } from '../../services/messageEventEmitter';
 import { ActiveSessionProvider } from '../../globalState/provider/ActiveSessionProvider';
 import {
 	apiReclaimCaseHandover,
@@ -33,6 +34,7 @@ vi.mock('../../api/apiCaseHandover', () => ({
 afterEach(() => {
 	cleanup();
 	vi.clearAllMocks();
+	vi.restoreAllMocks();
 });
 
 const statusFor = (
@@ -78,7 +80,8 @@ describe('CaseHandoverCurtain reclaim', () => {
 		expect(screen.queryByText('caseHandover.error.failed')).toBeNull();
 	});
 
-	it('does not apply a late reclaim response after switching cases', async () => {
+	it('refreshes the old list row without updating the new curtain after reclaim', async () => {
+		const emit = vi.spyOn(messageEventEmitter, 'emit');
 		let finishReclaim: (status: CaseHandoverStatus) => void;
 		vi.mocked(apiReclaimCaseHandover).mockReturnValue(
 			new Promise((resolve) => {
@@ -110,6 +113,7 @@ describe('CaseHandoverCurtain reclaim', () => {
 			)
 		);
 
+		expect(emit.mock.calls).toEqual([[{ changedSessionId: 5 }]]);
 		expect(onStatusChange).not.toHaveBeenCalled();
 		expect(refreshActiveSession).not.toHaveBeenCalled();
 	});
