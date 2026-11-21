@@ -126,6 +126,11 @@ const Specimen = (): React.ReactElement => (
 				➤
 			</button>
 		</div>
+		<div className="focusRingContract__onPrimary" data-testid="on-primary">
+			<button type="button" className="focusRingContract__onPrimaryLink">
+				Link on the primary stage
+			</button>
+		</div>
 	</div>
 );
 
@@ -137,7 +142,7 @@ const meta: Meta<typeof Specimen> = {
 		docs: {
 			description: {
 				component:
-					'One keyboard focus ring for ORISO (Frontend#1134, ADR-037). Colour `--m3-primary` of the active scheme (light 7.7:1, dark 10.9:1 on the page surface), width 2 px, offset 2 px, drawn by `$focus-outline` or `@include control-focus-ring(...)`. On a primary fill use `@include control-focus-ring-on-fill` (on-primary ring inside the fill). Replaced: `$focus-blue` #199fff (2.82:1 on white) and `--m3-primary-outline` (1.98:1 on the dark surface). Exception: the dark video stage of the group call keeps its own white ring.'
+					'One keyboard focus ring for ORISO (Frontend#1134, ADR-037). Colour `--m3-primary` of the active scheme (light 7.7:1, dark 10.9:1 on the page surface), width 2 px, offset 2 px, drawn by `$focus-outline` or `@include control-focus-ring(...)`. On a primary fill use `@include control-focus-ring-on-fill` (on-primary ring inside the fill). Replaced: `$focus-blue` #199fff (2.82:1 on white) and `--m3-primary-outline` (1.98:1 on the dark surface). On a primary-painted surface (login stage) set `--oriso-focus-ring-color: var(--m3-on-primary)` on the surface. Exception: the dark video stage of the group call keeps its own white ring.'
 			}
 		}
 	}
@@ -175,6 +180,25 @@ const play: Story['play'] = async ({ canvasElement }) => {
 			toRgb('var(--m3-on-primary)', canvas)
 		);
 	}, WAIT);
+
+	// A surface painted in the primary role (login stage) scopes
+	// --oriso-focus-ring-color to on-primary, so the ring stays visible.
+	const stage = view.getByTestId('on-primary');
+	const link = view.getByRole('button', {
+		name: 'Link on the primary stage'
+	});
+	await tabTo(link);
+	await waitFor(() => {
+		expect(toRgb(getComputedStyle(link).outlineColor, canvas)).toEqual(
+			toRgb('var(--m3-on-primary)', canvas)
+		);
+	}, WAIT);
+	await expect(
+		contrast(
+			toRgb(getComputedStyle(link).outlineColor, canvas),
+			toRgb(getComputedStyle(stage).backgroundColor, canvas)
+		)
+	).toBeGreaterThanOrEqual(MIN_NON_TEXT_CONTRAST);
 };
 
 export const Light: Story = { globals: { scheme: 'light' }, play };

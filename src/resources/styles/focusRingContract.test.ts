@@ -57,6 +57,12 @@ describe('focus ring contract', () => {
 		);
 	});
 
+	it('switches the ring to on-primary on the primary-painted login stage', () => {
+		expect(read('src/components/stage/stage.styles.scss')).toMatch(
+			/\.stage \{[^}]*--oriso-focus-ring-color: var\(--m3-on-primary,/
+		);
+	});
+
 	it('keeps colours that fail in a scheme out of every outline', () => {
 		const offenders = scssFiles(resolve(root, 'src'))
 			.map((path) => relative(root, path))
