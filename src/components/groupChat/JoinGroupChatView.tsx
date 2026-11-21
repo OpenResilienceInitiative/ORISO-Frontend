@@ -154,6 +154,13 @@ export const JoinGroupChatView = ({
 				: undefined;
 	const navigate = useNavigate();
 	const location = useLocation();
+	// Where the moderator is now: a START answer only hands the call request
+	// to the room it was pressed in (CodeRabbit on FE#2483).
+	const whereNow = React.useRef({
+		key: location.key,
+		chatId: activeSession.item.id
+	});
+	whereNow.current = { key: location.key, chatId: activeSession.item.id };
 
 	const startButtonItem: ButtonItem = useMemo(
 		() => ({
@@ -307,11 +314,16 @@ export const JoinGroupChatView = ({
 			!activeSession.item.active
 				? GROUP_CHAT_API.START
 				: GROUP_CHAT_API.JOIN;
+		const pressedIn = { key: location.key, chatId: activeSession.item.id };
 		return apiPutGroupChat(activeSession.item.id, groupChatApiCall)
 			.then(() => {
+				const stillHere =
+					whereNow.current.key === pressedIn.key &&
+					whereNow.current.chatId === pressedIn.chatId;
 				if (
 					groupChatApiCall === GROUP_CHAT_API.START &&
-					moderatorCallKind
+					moderatorCallKind &&
+					stillHere
 				)
 					navigate(
 						{

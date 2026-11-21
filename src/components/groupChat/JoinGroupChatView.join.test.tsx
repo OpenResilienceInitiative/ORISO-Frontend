@@ -5,10 +5,20 @@ import {
 	act,
 	cleanup,
 	fireEvent,
-	render,
+	render as renderWithoutRouter,
 	screen,
 	waitFor
 } from '@testing-library/react';
+import { MemoryRouter, useLocation, useNavigate } from 'react-router-dom';
+
+/* Every view here runs inside a real router (FE#2483 review). */
+const ROOM_PATH = '/sessions/consultant/sessionView/room/15';
+const render = (ui: React.ReactElement) =>
+	renderWithoutRouter(ui, {
+		wrapper: ({ children }) => (
+			<MemoryRouter initialEntries={[ROOM_PATH]}>{children}</MemoryRouter>
+		)
+	});
 import {
 	afterEach,
 	beforeEach,
@@ -50,18 +60,8 @@ vi.mock('../../globalState', async () => {
 		})
 	};
 });
-/* Frank, 21 Nov: the moderator starts a call circle's call directly. */
-const navigate = vi.hoisted(() => vi.fn());
-vi.mock('react-router-dom', () => ({
-	Navigate: () => null,
-	useNavigate: () => navigate,
-	useLocation: () => ({
-		pathname: '/sessions/consultant/sessionView/room/15',
-		search: '',
-		hash: '',
-		state: null,
-		key: 'k'
-	})
+vi.mock('../../hooks/useConversationFeatureSettings', () => ({
+	useConversationFeatureSettingsSettled: () => true
 }));
 vi.mock('../../api', () => ({
 	apiGetGroupChatInfo: vi.fn(() => new Promise(() => undefined)),
@@ -191,6 +191,9 @@ vi.mock('./entryRoom/GroupWaitingRoom', () => ({
 }));
 
 const { JoinGroupChatView } = await import('./JoinGroupChatView');
+const { GroupCallStartRequest } = await import(
+	'../sessionHeader/GroupChatHeader/GroupCallStartRequest'
+);
 const { apiPutGroupChat } = await import('../../api');
 const { apiGetChatOccurrences } = await import(
 	'../../api/apiGetChatOccurrences'
@@ -213,7 +216,6 @@ describe('JoinGroupChatView — the embedded room hands its join request back', 
 		gateProps.value = undefined;
 		admission.options = undefined;
 		window.sessionStorage.clear();
-		navigate.mockReset();
 		reloadActiveSession.mockReset();
 	});
 	afterEach(cleanup);
@@ -283,16 +285,58 @@ describe('JoinGroupChatView — the embedded room hands its join request back', 
 		});
 	});
 
-	/* Frank, 21 Nov 2026 ("Call direkt starten"): in an audio or video circle
-	   the moderator starts the call from the waiting room; the chat starts on
-	   the way, and the conversation's own call button takes the request. */
+	/* Frank, 21 Nov 2026 ("Call direkt starten"), FE#2482: in an audio or
+	   video circle the moderator starts the call from the waiting room. The
+	   chat starts, the session reloads into the group chat, and the group
+	   header (GroupCallStartRequest, real StartCallRequest, real router)
+	   takes the request with its own checks. */
 	describe('a moderator starts a call circle with its call', () => {
 		const counsellor = {
 			userName: 'counsellor',
 			grantedAuthorities: ['AUTHORIZATION_CREATE_NEW_CHAT']
 		};
-		const renderAs = (item: Record<string, unknown>) =>
-			render(
+		const call = {
+			start: vi.fn(),
+			offer: vi.fn(),
+			refuse: vi.fn(),
+			where: '' as string
+		};
+		const setGesture = (isActive: boolean) =>
+			Object.defineProperty(navigator, 'userActivation', {
+				value: { isActive },
+				configurable: true
+			});
+		/* The app's own swap: the join view until the reload says the chat
+		   is active, then the group chat with its header's call request. */
+		const Handoff = ({
+			modality,
+			gates = { video: true, audio: true }
+		}: {
+			modality: string;
+			gates?: { video: boolean; audio: boolean };
+		}) => {
+			const [item, setItem] = React.useState<Record<string, unknown>>({
+				id: 15,
+				active: false,
+				modality
+			});
+			const reload = React.useCallback(
+				() =>
+					new Promise<void>((resolve) =>
+						setTimeout(() => {
+							setItem((current) => ({
+								...current,
+								active: true
+							}));
+							resolve();
+						}, 20)
+					),
+				[]
+			);
+			const location = useLocation();
+			const navigate = useNavigate();
+			call.where = location.pathname;
+			return (
 				<UserDataContext.Provider
 					value={{ userData: counsellor } as never}
 				>
@@ -300,18 +344,36 @@ describe('JoinGroupChatView — the embedded room hands its join request back', 
 						value={
 							{
 								activeSession: { item },
-								reloadActiveSession
+								reloadActiveSession: reload
 							} as never
 						}
 					>
-						<JoinGroupChatView />
+						<button
+							onClick={() =>
+								navigate(
+									'/sessions/consultant/sessionView/other/16'
+								)
+							}
+						>
+							leave
+						</button>
+						{item.active ? (
+							<GroupCallStartRequest
+								sessionId={item.id as number}
+								video={gates.video}
+								audio={gates.audio}
+								start={call.start}
+								offer={call.offer}
+								refuse={call.refuse}
+							/>
+						) : (
+							<JoinGroupChatView />
+						)}
 					</ActiveSessionContext.Provider>
 				</UserDataContext.Provider>
 			);
-		const startInRoom = async (item: Record<string, unknown>) => {
-			vi.mocked(apiPutGroupChat).mockResolvedValue(undefined as never);
-			reloadActiveSession.mockResolvedValue(undefined);
-			renderAs(item);
+		};
+		const pressStart = async () => {
 			const enter = gateProps.value?.onEnter;
 			if (enter) await act(async () => void (await enter()));
 			else
@@ -321,45 +383,110 @@ describe('JoinGroupChatView — the embedded room hands its join request back', 
 				});
 		};
 
+		beforeEach(() => {
+			call.start.mockReset();
+			call.offer.mockReset();
+			call.refuse.mockReset();
+			vi.mocked(apiPutGroupChat).mockResolvedValue(undefined as never);
+			setGesture(true);
+		});
+
 		it.each([
-			['VIDEO', 'video'],
-			['AUDIO', 'audio']
+			['VIDEO', true],
+			['AUDIO', false]
 		])(
-			'starts the chat and asks the conversation to start the %s call',
-			async (modality, kind) => {
-				await startInRoom({ id: 15, active: false, modality });
+			'starts the %s call once, through the group header, after the chat started',
+			async (modality, isVideo) => {
+				render(<Handoff modality={modality} />);
+				await pressStart();
 				expect(apiPutGroupChat).toHaveBeenCalledWith(15, '/start');
-				expect(navigate).toHaveBeenCalledWith(
-					expect.objectContaining({
-						pathname: '/sessions/consultant/sessionView/room/15'
-					}),
-					{
-						replace: true,
-						state: { startCall: { sessionId: 15, kind } }
-					}
+				await waitFor(() =>
+					expect(call.start).toHaveBeenCalledTimes(1)
 				);
-				expect(reloadActiveSession).toHaveBeenCalled();
+				expect(call.start).toHaveBeenCalledWith(isVideo);
+				expect(call.offer).not.toHaveBeenCalled();
+				expect(call.refuse).not.toHaveBeenCalled();
+				// The request is gone from the history entry: no second start.
+				await new Promise((resolve) => setTimeout(resolve, 50));
+				expect(call.start).toHaveBeenCalledTimes(1);
 			}
 		);
 
+		it('points at the call button when the click no longer counts as a gesture', async () => {
+			setGesture(false);
+			render(<Handoff modality="VIDEO" />);
+			await pressStart();
+			await waitFor(() =>
+				expect(call.offer).toHaveBeenCalledWith('video')
+			);
+			expect(call.start).not.toHaveBeenCalled();
+		});
+
+		it("refuses when the group's own checks do not allow the call", async () => {
+			render(
+				<Handoff
+					modality="VIDEO"
+					gates={{ video: false, audio: true }}
+				/>
+			);
+			await pressStart();
+			await waitFor(() =>
+				expect(call.refuse).toHaveBeenCalledWith('video')
+			);
+			expect(call.start).not.toHaveBeenCalled();
+		});
+
 		it('keeps a text circle as it was: the chat starts, no call', async () => {
-			await startInRoom({ id: 15, active: false, modality: 'TEXT' });
+			render(<Handoff modality="TEXT" />);
+			await pressStart();
 			expect(apiPutGroupChat).toHaveBeenCalledWith(15, '/start');
-			expect(navigate).not.toHaveBeenCalled();
-			expect(reloadActiveSession).toHaveBeenCalled();
+			await new Promise((resolve) => setTimeout(resolve, 60));
+			expect(call.start).not.toHaveBeenCalled();
+			expect(call.offer).not.toHaveBeenCalled();
+			expect(call.refuse).not.toHaveBeenCalled();
+		});
+
+		it('asks for no call when the moderator left the room while the start was pending', async () => {
+			let answer: () => void = () => undefined;
+			vi.mocked(apiPutGroupChat).mockImplementation(
+				() =>
+					new Promise((resolve) => {
+						answer = () => resolve(undefined as never);
+					}) as never
+			);
+			render(<Handoff modality="VIDEO" />);
+			const enter = gateProps.value?.onEnter;
+			let pending: unknown;
+			act(() => {
+				pending = enter
+					? enter()
+					: (fireEvent.click(screen.getByText('join')),
+						joinResult.value);
+			});
+			fireEvent.click(screen.getByText('leave'));
+			expect(call.where).toBe(
+				'/sessions/consultant/sessionView/other/16'
+			);
+			await act(async () => {
+				answer();
+				await pending;
+				await new Promise((resolve) => setTimeout(resolve, 60));
+			});
+			expect(call.where).toBe(
+				'/sessions/consultant/sessionView/other/16'
+			);
+			expect(call.start).not.toHaveBeenCalled();
+			expect(call.offer).not.toHaveBeenCalled();
+			expect(call.refuse).not.toHaveBeenCalled();
 		});
 
 		it('asks for no call when the start is refused', async () => {
 			vi.mocked(apiPutGroupChat).mockRejectedValue(new Error('CONFLICT'));
-			renderAs({ id: 15, active: false, modality: 'VIDEO' });
-			const enter = gateProps.value?.onEnter;
-			if (enter) await act(async () => void (await enter()));
-			else
-				await act(async () => {
-					fireEvent.click(screen.getByText('join'));
-					await joinResult.value;
-				});
-			expect(navigate).not.toHaveBeenCalled();
+			render(<Handoff modality="VIDEO" />);
+			await pressStart();
+			await new Promise((resolve) => setTimeout(resolve, 60));
+			expect(call.start).not.toHaveBeenCalled();
+			expect(call.refuse).not.toHaveBeenCalled();
 		});
 	});
 
